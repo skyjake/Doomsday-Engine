@@ -26,3 +26,4 @@ Linux
 - audio subsystem (sound/music, using OpenAL/FMOD?)
 - "setres" when gamemode!=GS_LEVEL doesn't update OpenGL viewport?
 - plugin loading
+- place defs/data/runtime in appropriate directories (/usr/share/...)
