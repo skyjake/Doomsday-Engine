@@ -95,6 +95,12 @@ void Sv_StopSound(int sound_id, mobj_t *origin)
 
 	Sv_IdentifySoundOrigin(&origin, &sector, &poly);
 
+/*#ifdef _DEBUG
+	Con_Printf("Sv_StopSound: id=%i origin=%i(%p) sec=%i poly=%i\n",
+		sound_id, origin? origin->thinker.id : 0, origin,
+		sector, poly);
+#endif*/
+
 	// Send the stop sound delta to everybody.
 	// Volume zero means silence.
 	Sv_NewSoundDelta(sound_id, origin, sector, poly, 0, false, -1);
