@@ -179,5 +179,6 @@ extern fixed_t  mapgravity;		   // Gravity for the current map.
 void            P_ValidateLevel(void);
 void            P_LoadBlockMap(int lump);
 void            P_LoadReject(int lump);
+void            P_PolyobjChanged(polyobj_t *po);
 
 #endif
