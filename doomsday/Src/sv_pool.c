@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.8  2003/06/27 20:13:36  skyjake
+//** Added maxed mobj Z coords, fixed initial side deltas, sector height deltas
+//**
 //** Revision 1.7  2003/06/24 21:16:02  skyjake
 //** Complete rewrite of delta pools
 //**
@@ -51,6 +54,10 @@ END_PROF_TIMERS()
 #define REG_MOBJ_HASH_SIZE			1024
 #define REG_MOBJ_HASH_FUNCTION_MASK	0x3ff
 
+// Maximum difference in plane height where the absolute height doesn't
+// need to be sent.
+#define PLANE_SKIP_LIMIT	(40*FRACUNIT)
+
 // Heap relations.
 #define HEAP_PARENT(i)		(((i) + 1)/2 - 1)
 #define HEAP_LEFT(i)		(2*(i) + 1)
@@ -81,6 +88,10 @@ typedef struct register_s
 {
 	// The time the register was last updated.
 	int gametic;
+
+	// True if this register contains a read-only copy of the initial state
+	// of the world.
+	boolean isInitial;
 
 	// The mobjs are stored in a hash for efficiency (ID is the key).
 	mobjhash_t mobjs[REG_MOBJ_HASH_SIZE];
@@ -193,6 +204,10 @@ void Sv_InitPools(void)
 	// Store the current state of the world into both the registers.
 	Sv_RegisterWorld(&worldRegister, false);
 	Sv_RegisterWorld(&initialRegister, true);
+
+#ifdef _DEBUG
+	Con_Printf("Sv_InitPools: World has been registered.\n");
+#endif
 }
 
 /*
@@ -230,6 +245,8 @@ void Sv_InitPoolForClient(int clientNumber)
 	Sv_GenerateNewDeltas(&initialRegister, clientNumber, false);
 
 	// No frames have yet been sent for this client.
+	// The first frame is processed a bit more thoroughly than the others
+	// (e.g. *all* sides are compared, not just a portion).
 	pools[clientNumber].isFirst = true;
 }
 
@@ -336,19 +353,39 @@ void Sv_RegisterRemoveMobj(register_t *reg, reg_mobj_t *regMo)
 }
 
 /*
+ * If the mobj is on the floor, returns MININT. If the mobj is touching the
+ * ceiling, returns MAXINT. Otherwise returns the Z coordinate. The maxed-out
+ * coordinate is stored in the register.
+ */
+fixed_t Sv_GetMaxedMobjZ(const mobj_t *mo)
+{
+	if(mo->z == mo->floorz)
+	{
+		return DDMININT;
+	}
+	if(mo->z + mo->height == mo->ceilingz)
+	{
+		return DDMAXINT;
+	}
+	return mo->z;
+}
+
+/*
  * Store the state of the mobj into the register-mobj.
  * Called at register init and after each delta generation cycle.
  */
 void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mo)
 {
-	// (dt_mobj_t == mobj_t)
+	// (dt_mobj_t <=> mobj_t)
 	// Just copy the data we need.
 	reg->thinker.id = mo->thinker.id;
 	reg->dplayer = mo->dplayer;
 	reg->subsector = mo->subsector;
 	reg->x = mo->x;
 	reg->y = mo->y;
-	reg->z = mo->z;
+	reg->z = Sv_GetMaxedMobjZ(mo);
+	reg->floorz = mo->floorz;
+	reg->ceilingz = mo->ceilingz;
 	reg->momx = mo->momx;
 	reg->momy = mo->momy;
 	reg->momz = mo->momz;
@@ -466,7 +503,7 @@ boolean Sv_RegisterCompareMobj
 	// FIXME: Make sure this test actually works!!
 	if((r->x + age * r->momx) != s->x) df |= MDF_POS_X;
 	if((r->y + age * r->momy) != s->y) df |= MDF_POS_Y;
-	if((r->z + age * r->momz) != s->z) df |= MDF_POS_Z;
+	if((r->z + age * r->momz) != Sv_GetMaxedMobjZ(s)) df |= MDF_POS_Z;
 
 	if(r->momx != s->momx) df |= MDF_MOM_X;
 	if(r->momy != s->momy) df |= MDF_MOM_Y;
@@ -573,7 +610,33 @@ boolean Sv_RegisterCompareSector
 	if(r->rgb[1] != s->rgb[1]) df |= SDF_COLOR_GREEN;
 	if(r->rgb[2] != s->rgb[2]) df |= SDF_COLOR_BLUE;
 
-	// FIXME: ceilingheight and floorheight
+	// The cases where an immediate change to a plane's height is needed:
+	// 1) Plane is not moving, but the heights are different. This means
+	//    the plane's height was changed unpredictably.
+	// 2) Plane is moving, but there is a large difference in the heights.
+	//    The clientside height should be fixed.
+		
+	// Should we make an immediate change in floor height?
+	if(!r->planes[PLN_FLOOR].speed && !s->planes[PLN_FLOOR].speed)
+	{
+		if(r->floorHeight != s->floorheight) df |= SDF_FLOOR_HEIGHT;
+	}
+	else
+	{
+		if(abs(r->floorHeight - s->floorheight) > PLANE_SKIP_LIMIT)
+			df |= SDF_FLOOR_HEIGHT;			
+	}
+
+	// How about the ceiling?
+	if(!r->planes[PLN_CEILING].speed && !s->planes[PLN_CEILING].speed)
+	{
+		if(r->ceilingHeight != s->ceilingheight) df |= SDF_CEILING_HEIGHT;
+	}
+	else
+	{
+		if(abs(r->ceilingHeight - s->ceilingheight) > PLANE_SKIP_LIMIT)
+			df |= SDF_CEILING_HEIGHT;			
+	}
 
 	// Check planes, too.
 	if(r->planes[PLN_FLOOR].target != s->planes[PLN_FLOOR].target)
@@ -615,6 +678,14 @@ boolean Sv_RegisterCompareSector
 		{
 			Sv_RegisterSector(r, number);
 		}
+	}
+
+	if(doUpdate)
+	{
+		// The plane heights should be tracked regardless of the 
+		// change flags.
+		r->floorHeight = s->floorheight;
+		r->ceilingHeight = s->ceilingheight;
 	}
 
 	d->delta.flags = df;
@@ -728,6 +799,9 @@ void Sv_RegisterWorld(register_t *reg, boolean isInitial)
 
 	memset(reg, 0, sizeof(*reg));
 	reg->gametic = gametic;
+
+	// Is this the initial state?
+	reg->isInitial = isInitial;
 
 /*	if(!isInitial)
 	{
@@ -1202,15 +1276,27 @@ uint Sv_DeltaAge(const delta_t *delta)
  * if the mobj may have been destroyed and should not be processed.
  */
 fixed_t Sv_MobjDistance
-	(const mobj_t *mo, const ownerinfo_t *info, boolean mayBeGone)
+	(const mobj_t *mo, const ownerinfo_t *info, boolean isReal)
 {
-	if(mayBeGone && !P_IsUsedMobjID(mo->thinker.id))
+	fixed_t z;
+
+	if(isReal && !P_IsUsedMobjID(mo->thinker.id))
 	{
 		// This mobj does not exist any more!
 		return DDMAXINT;
 	}
+
+	z = mo->z;
+
+	// Registered mobjs may have a maxed out Z coordinate.
+	if(!isReal)
+	{
+		if(z == DDMININT) z = mo->floorz;
+		if(z == DDMAXINT) z = mo->ceilingz - mo->height;
+	}
+
 	return P_ApproxDistance3(info->x - mo->x, info->y - mo->y,
-		info->z - (mo->z + mo->height/2));
+		info->z - (z + mo->height/2));
 }
 
 /*
@@ -1832,9 +1918,22 @@ void Sv_NewSideDeltas(register_t *reg, boolean doUpdate, pool_t **targets)
 	sidedelta_t delta;
 	int i, start, end;
 
-	start = shift * numsides / numShifts;
-	end = ++shift * numsides / numShifts;
-	shift %= numShifts;
+	// When comparing against an initial register, always compare all
+	// sides (since the comparing is only done once, not continuously).
+	if(reg->isInitial)
+	{
+		start = 0;
+		end = numsides;
+	}
+	else
+	{
+		// Because there are so many sides in a typical map, the number
+		// of compared sides soon accumulates to millions. To reduce the
+		// load, we'll check only a portion of all sides for a frame.
+		start = shift * numsides / numShifts;
+		end = ++shift * numsides / numShifts;
+		shift %= numShifts;
+	}
 
 	for(i = start; i < end; i++)
 	{
@@ -1851,13 +1950,6 @@ void Sv_NewSideDeltas(register_t *reg, boolean doUpdate, pool_t **targets)
 		}
 
 		END_PROF( PROF_GEN_SIDE_COMPARE );
-
-		/*if(doUpdate)
-		{
-			BEGIN_PROF( PROF_GEN_SIDE_UPDATE );
-			Sv_RegisterSide(&reg->sides[i], i);
-			END_PROF( PROF_GEN_SIDE_UPDATE );
-		}*/
 	}
 }
 
@@ -1873,6 +1965,9 @@ void Sv_NewPolyDeltas(register_t *reg, boolean doUpdate, pool_t **targets)
 	{
 		if(Sv_RegisterComparePoly(reg, i, &delta))
 		{
+#ifdef _DEBUG
+			Con_Printf("Sv_NewPolyDeltas: Change in %i\n", i);
+#endif
 			Sv_AddDeltaToPools(&delta, targets);
 		}
 
@@ -2300,7 +2395,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 		// Changes in speed are noticeable.
 		if(df & PODF_SPEED) score *= 1.2f;
 	}
-
+	
 	// This is the final score. Only positive scores are accepted in
 	// the frame (deltas with nonpositive scores as ignored).
 	return (delta->score = score) > 0;
