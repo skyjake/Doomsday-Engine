@@ -2019,6 +2019,7 @@ int DefsHook(int hook_type, int parm, void *data)
 			M_TranslatePath(fn, temp);
 			if(!M_FileExists(temp))
 				continue;
+
 			ReadDehacked(temp);
 		}
 	}
