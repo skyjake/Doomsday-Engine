@@ -33,6 +33,12 @@ BEGIN_PROF_TIMERS()
 	PROF_REND_SUB_OCCLUDE,
 	PROF_REND_SUB_ADD_SPRITES,
 	PROF_REND_SUB_SEGS,
+	PROF_REND_WALLSEG_1,
+	PROF_REND_WALLSEG_2,
+	PROF_REND_WALLSEG_CADD,
+	PROF_REND_WALLSEG_3,
+	PROF_REND_WALLSEG_4,
+	PROF_REND_WALLSEG_5,
 	PROF_REND_SUB_PLANE_1,
 	PROF_REND_PREP_FLAT,
 	PROF_REND_SUB_PLANE_2,
@@ -152,6 +158,12 @@ void Rend_Reset(void)
 	PRINT_PROF( PROF_REND_SUB_OCCLUDE );
 	PRINT_PROF( PROF_REND_SUB_ADD_SPRITES );
 	PRINT_PROF( PROF_REND_SUB_SEGS );
+	PRINT_PROF( PROF_REND_WALLSEG_1 );
+	PRINT_PROF( PROF_REND_WALLSEG_2 );
+	PRINT_PROF( PROF_REND_WALLSEG_CADD );
+	PRINT_PROF( PROF_REND_WALLSEG_3 );
+	PRINT_PROF( PROF_REND_WALLSEG_4 );
+	PRINT_PROF( PROF_REND_WALLSEG_5 );
 	PRINT_PROF( PROF_REND_SUB_PLANES );
 	PRINT_PROF( PROF_REND_SUB_PLANE_1 );
 	PRINT_PROF( PROF_REND_PREP_FLAT );
@@ -495,17 +507,19 @@ int Rend_MidTexturePos(float *top, float *bottom, float *texoffy,
 //===========================================================================
 void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 {
-	int				segindex, sectorlight;
-	sector_t		*backsec;
-	side_t			*sid;
-	line_t			*ldef;
-	float			ffloor, fceil, bfloor, bceil, fsh, bsh, mceil, tcyoff;
-	rendpoly_t		quad;
-	float			*v1, *v2;
-	byte			topvis, midvis, botvis;
+	int			segindex, sectorlight;
+	sector_t	*backsec;
+	side_t		*sid;
+	line_t		*ldef;
+	float		ffloor, fceil, bfloor, bceil, fsh, bsh, mceil, tcyoff;
+	rendpoly_t	quad;
+	float		*v1, *v2;
+	byte		topvis, midvis, botvis;
 
 	// Let's first check which way this seg is facing.
 	if(!Rend_FixedSegFacingDir(seg)) return;
+
+	BEGIN_PROF( PROF_REND_WALLSEG_1 );
 
 	segindex = GET_SEG_IDX(seg);
 	backsec  = seg->backsector;
@@ -516,7 +530,6 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 	fsh      = fceil - ffloor;
 
 	// Init the quad.
-//	memset(&quad, 0, sizeof(quad));	
 	quad.type = RP_QUAD;
 	quad.flags = 0;
 	quad.tex.detail = NULL;
@@ -541,19 +554,21 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 	ldef->flags |= ML_MAPPED;
 
 	// Some texture coordinates.
-	quad.texoffx = FIX2FLT(sid->textureoffset) + FIX2FLT(seg->offset);
 	quad.length = seg->length;
+	quad.texoffx = FIX2FLT(sid->textureoffset + seg->offset);
 	tcyoff = FIX2FLT(sid->rowoffset);
 
 	// Calculate the color at both vertices.
-	/*sectorlight = LevelFullBright? 255 : frontsec->lightlevel;
-	if(sectorlight < r_ambient) sectorlight = r_ambient;*/
 	sectorlight = Rend_SectorLight(frontsec);
 	RL_VertexColors(&quad, sectorlight, frontsec->rgb);
+
+	END_PROF( PROF_REND_WALLSEG_1 );
 
 	// The middle texture, single sided.
 	if(sid->midtexture && !backsec)
 	{
+		BEGIN_PROF( PROF_REND_WALLSEG_2 );
+
 		quad.tex.id = curtex = GL_PrepareTexture(sid->midtexture);		
 		quad.tex.detail = texdetail;
 		quad.texoffy = tcyoff;
@@ -579,8 +594,12 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 		Rend_PolyTextureBlend(sid->midtexture, &quad);
 		RL_AddPoly(&quad);
 
+		BEGIN_PROF( PROF_REND_WALLSEG_CADD );
 		// This is guaranteed to be a solid segment.
 		C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
+		END_PROF( PROF_REND_WALLSEG_CADD );
+
+		END_PROF( PROF_REND_WALLSEG_2 );
 	}
 
 	// Restore original type, height division may change this.
@@ -612,6 +631,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 	{
 		boolean mid_covers_top = false;
 
+		BEGIN_PROF( PROF_REND_WALLSEG_3 );
+
 		bsh = bceil - bfloor;
 
 		// Determine which parts of the segment are visible.
@@ -642,6 +663,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			RL_AddPoly(&quad);
 		}
 
+		END_PROF( PROF_REND_WALLSEG_3 );
+
 		// Quite probably a masked texture. Won't be drawn if a visible
 		// top or bottom texture is missing.
 		if(sid->midtexture)
@@ -652,6 +675,9 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				rfceil = FIX2FLT(frontsec->ceilingheight),
 				rffloor = FIX2FLT(frontsec->floorheight);
 			float gaptop, gapbottom;
+
+			BEGIN_PROF( PROF_REND_WALLSEG_4 );
+
 			quad.top = gaptop = MIN_OF(rbceil, rfceil);
 			quad.bottom = gapbottom = MAX_OF(rbfloor, rffloor);
 
@@ -691,7 +717,9 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				Rend_PolyTextureBlend(sid->midtexture, &quad);
 				RL_AddPoly(&quad);
 			}
+			END_PROF( PROF_REND_WALLSEG_4 );
 		}
+		BEGIN_PROF( PROF_REND_WALLSEG_5 );
 		// Upper wall.
 		if(topvis && !(frontsec->ceilingpic == skyflatnum 
 			&& backsec->ceilingpic == skyflatnum)
@@ -795,6 +823,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			Rend_PolyTextureBlend(sid->bottomtexture, &quad);
 			RL_AddPoly(&quad);
 		}
+		END_PROF( PROF_REND_WALLSEG_5 );
 	}
 }
 
@@ -887,20 +916,21 @@ void Rend_RenderPlane
 	(planeinfo_t *plane, dynlight_t *lights, subsector_t *subsector, 
 	 sectorinfo_t *sin)
 {
+	rendpoly_t poly;
 	sector_t *sector = subsector->sector, *link = NULL;
 	int planepic;
 	float height;
 
-	plane->poly.lights = lights;
+	// We're creating a flat.
+	poly.type = RP_FLAT;
+	poly.lights = lights;
 
 	if(plane->isfloor)
 	{
 		// Determine the height of the floor.
 		if(sin->linkedfloor)
 		{
-			plane->poly.sector 
-				= link 
-				= R_GetLinkedSector(sin->linkedfloor, true);
+			poly.sector = link = R_GetLinkedSector(sin->linkedfloor, true);
 
 			// This sector has an invisible floor.
 			height = SECT_FLOOR(link);
@@ -908,7 +938,7 @@ void Rend_RenderPlane
 		}
 		else
 		{
-			plane->poly.sector = sector;
+			poly.sector = sector;
 			height = sin->visfloor;
 			planepic = sector->floorpic;
 		}
@@ -918,9 +948,7 @@ void Rend_RenderPlane
 		// This is a ceiling plane.
 		if(sin->linkedceil)
 		{
-			plane->poly.sector 
-				= link 
-				= R_GetLinkedSector(sin->linkedceil, false);
+			poly.sector = link = R_GetLinkedSector(sin->linkedceil, false);
 
 			// This sector has an invisible ceiling.
 			height = SECT_CEIL(link);
@@ -928,7 +956,7 @@ void Rend_RenderPlane
 		}
 		else
 		{
-			plane->poly.sector = sector;
+			poly.sector = sector;
 			height = sin->visceil + sector->skyfix;
 			planepic = sector->ceilingpic;
 		}
@@ -942,16 +970,17 @@ void Rend_RenderPlane
 
 		// The sky?
 		if(planepic == skyflatnum)
-			plane->poly.flags |= RPF_SKY_MASK;
+			plane->flags |= RPF_SKY_MASK;
 		else
-			plane->poly.flags &= ~RPF_SKY_MASK;
+			plane->flags &= ~RPF_SKY_MASK;
 
 		// A glowing texture?
 		if(R_FlatFlags(planepic) & TXF_GLOW) 
-			plane->poly.flags |= RPF_GLOW;
+			plane->flags |= RPF_GLOW;
 		else
-			plane->poly.flags &= ~RPF_GLOW;
+			plane->flags &= ~RPF_GLOW;
 	}
+	poly.flags = plane->flags;
 	END_PROF( PROF_REND_SUB_PLANE_1 );
 
 	// Is the plane visible?
@@ -961,36 +990,35 @@ void Rend_RenderPlane
 		// Check for sky.
 		if(plane->pic == skyflatnum) 
 		{
-			//poly.flags |= RPF_SKY_MASK;
-			//poly.lights = NULL;
+			poly.lights = NULL;
 			skyhemispheres |= (plane->isfloor? SKYHEMI_LOWER : SKYHEMI_UPPER);
 		}
 		else
 		{
-			plane->poly.tex.id = curtex = GL_PrepareFlat(planepic);
-			plane->poly.tex.detail = texdetail;
-			plane->poly.tex.width = texw;
-			plane->poly.tex.height = texh;
+			poly.tex.id = curtex = GL_PrepareFlat(planepic);
+			poly.tex.detail = texdetail;
+			poly.tex.width = texw;
+			poly.tex.height = texh;
 			if(plane->isfloor)
 			{
-				plane->poly.texoffx = sector->flooroffx;
-				plane->poly.texoffy = sector->flooroffy;
+				poly.texoffx = sector->flooroffx;
+				poly.texoffy = sector->flooroffy;
 			}
 			else
 			{
-				plane->poly.texoffx = sector->ceiloffx;
-				plane->poly.texoffy = sector->ceiloffy;
+				poly.texoffx = sector->ceiloffx;
+				poly.texoffy = sector->ceiloffy;
 			}	
 		}
-		plane->poly.top = height;
+		poly.top = height;
 
 		BEGIN_PROF( PROF_REND_PREP_FLAT );
-		RL_PrepareFlat(&plane->poly, subsector);
+		RL_PrepareFlat(plane, &poly, subsector);
 		END_PROF( PROF_REND_PREP_FLAT );
 
 		BEGIN_PROF( PROF_REND_SUB_PLANE_2 );
-		Rend_PolyFlatBlend(plane->pic, &plane->poly);
-		RL_AddPoly(&plane->poly);
+		Rend_PolyFlatBlend(plane->pic, &poly);
+		RL_AddPoly(&poly);
 		END_PROF( PROF_REND_SUB_PLANE_2 );
 	}
 }
