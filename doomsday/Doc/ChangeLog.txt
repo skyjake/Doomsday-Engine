@@ -46,6 +46,17 @@ Network:
 * portable low-level implementation (TCP/UDP sockets), needs testing!
 
 
+Version 1.7.15
+--------------
++ merged some interesting stuff from 1.8/nix: FakeRadio, sky color
+* use the "no compression" hint when loading lightmaps
+* increased maximum number of particle generators to 256
+- fixed State -> Execute definition patching
+
+jDoom:
++ option '-nodefaultfx': skip default Lights.ded and Particles.ded
+
+
 Version 1.7.14-4
 ----------------
 + cmd 'playsound': play a sound effect locally
