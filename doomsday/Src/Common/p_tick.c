@@ -66,21 +66,23 @@ void P_RunPlayers(void)
 	// For the local player, this is always the cmd of the current tick.
 	// For remote players, this might be a predicted cmd or a real cmd
 	// from the past.
-	for(i=0; i<MAXPLAYERS; i++)
+	for(i = 0; i < MAXPLAYERS; i++)
 		if(players[i].plr->ingame)
 		{
-			// Get the command for the player.
-			Net_GetTicCmd(&players[i].cmd, i);
-			
-			// Check for special buttons (pause and netsave).
-			G_SpecialButton(&players[i]);
-			
-			// The player thinks.
-			switch(gamestate)
+			// Get all the commands for the player.
+			while(Net_GetTicCmd(&players[i].cmd, i))
 			{
-			case GS_LEVEL:
-				if(!pausestate) P_PlayerThink(&players[i]);
-				break;
+				// Check for special buttons (pause and netsave).
+				G_SpecialButton(&players[i]);
+			
+				// The player thinks.
+				if(gamestate == GS_LEVEL && !pausestate)
+				{
+					P_PlayerThink(&players[i]);
+				}
+
+				// Local players run one tic at a time.
+				/*if(players[i].plr->flags & DDPF_LOCAL) break;*/
 			}
 		}
 }
