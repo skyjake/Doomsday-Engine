@@ -17,6 +17,19 @@ Flag { ID = "gnf_scalerate"; Value = 0x400; }
 
 Flag { ID = "pt_point"; Value = 1; }
 Flag { ID = "pt_line"; Value = 2; }
+Flag { ID = "pt_tex00"; Value = 100; }
+Flag { ID = "pt_tex01"; Value = 101; }
+Flag { ID = "pt_tex02"; Value = 102; }
+Flag { ID = "pt_tex03"; Value = 103; }
+Flag { ID = "pt_tex04"; Value = 104; }
+Flag { ID = "pt_tex05"; Value = 105; }
+Flag { ID = "pt_tex06"; Value = 106; }
+Flag { ID = "pt_tex07"; Value = 107; }
+Flag { ID = "pt_tex08"; Value = 108; }
+Flag { ID = "pt_tex09"; Value = 109; }
+Flag { ID = "pt_tex10"; Value = 110; }
+Flag { ID = "pt_tex11"; Value = 111; }
+# These really go up to pt_tex31.
 
 Flag { ID = "ptf_stagetouch"; Value = 0x1; }
 Flag { ID = "ptf_stagevtouch"; Value = 0x20; }
