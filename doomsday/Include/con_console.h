@@ -8,7 +8,7 @@
 
 typedef struct
 {
-	char cmdLine[1024];
+	char cmdLine[2048];
 	int argc;
 	char *argv[MAX_ARGS];
 } cmdargs_t;
