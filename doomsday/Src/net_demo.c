@@ -77,7 +77,7 @@ extern float net_connecttime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char demo_path[128] = "demo\\";
+char demoPath[128] = "demo\\";
 int demotic = 0;
 LZFILE *playdemo = 0;	
 int playback = false;		
@@ -89,7 +89,7 @@ boolean demo_onground;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static demotimer_t writeinfo[MAXPLAYERS];
+static demotimer_t writeInfo[MAXPLAYERS];
 static demotimer_t readinfo;
 static float start_fov;
 static int demostarttic;
@@ -102,7 +102,7 @@ static int demostarttic;
 void Demo_Init(void)
 {
 	// Make sure the demo path is there.
-	M_CheckPath(demo_path);
+	M_CheckPath(demoPath);
 }
 
 //==========================================================================
@@ -110,31 +110,31 @@ void Demo_Init(void)
 //	Open a demo file and begin recording.
 //	Returns false if the recording can't be begun.
 //==========================================================================
-boolean Demo_BeginRecording(char *filename, int playernum)
+boolean Demo_BeginRecording(char *fileName, int playerNum)
 {
 	char buf[200];
-	client_t *cl = clients + playernum;
+	client_t *cl = clients + playerNum;
 	
 	// Is a demo already being recorded for this client?
 	if(cl->recording 
 		|| playback
-		|| (isDedicated && !playernum)
-		|| !players[playernum].ingame) 
+		|| (isDedicated && !playerNum)
+		|| !players[playerNum].ingame) 
 		return false;
 
 	// Compose the real file name.
-	strcpy(buf, demo_path);
-	strcat(buf, filename);
+	strcpy(buf, demoPath);
+	strcat(buf, fileName);
 
 	// Open the demo file.
 	cl->demo = lzOpen(buf, "wp");
 	if(!cl->demo) return false;	// Couldn't open it!
 	cl->recording = true;
-	cl->recordpaused = false;
-	writeinfo[playernum].first = true;
-	writeinfo[playernum].canwrite = false;
-	writeinfo[playernum].cameratimer = 0;
-	writeinfo[playernum].fov = -1;	// Must be written in the first packet.
+	cl->recordPaused = false;
+	writeInfo[playerNum].first = true;
+	writeInfo[playerNum].canwrite = false;
+	writeInfo[playerNum].cameratimer = 0;
+	writeInfo[playerNum].fov = -1;	// Must be written in the first packet.
 
 	if(isServer)
 	{
@@ -144,7 +144,7 @@ boolean Demo_BeginRecording(char *filename, int playernum)
 		// Servers need to send a handshake packet.
 		// It only needs to recorded in the demo file, though.
 		allowSending = false;
-		Sv_Handshake(playernum, false);
+		Sv_Handshake(playerNum, false);
 		// Enable sending to network.
 		allowSending = true;
 	}
@@ -162,43 +162,43 @@ boolean Demo_BeginRecording(char *filename, int playernum)
 //===========================================================================
 // Demo_PauseRecording
 //===========================================================================
-void Demo_PauseRecording(int playernum)
+void Demo_PauseRecording(int playerNum)
 {
-	client_t *cl = clients + playernum;
+	client_t *cl = clients + playerNum;
 
 	// A demo is not being recorded?
-	if(!cl->recording || cl->recordpaused) return;
+	if(!cl->recording || cl->recordPaused) return;
 	// All packets will be written for the same tic.
-	writeinfo[playernum].pausetime = demotic;	
-	cl->recordpaused = true;
+	writeInfo[playerNum].pausetime = demotic;	
+	cl->recordPaused = true;
 }
 
 //===========================================================================
 // Demo_ResumeRecording
 //	Resumes a paused recording.
 //===========================================================================
-void Demo_ResumeRecording(int playernum)
+void Demo_ResumeRecording(int playerNum)
 {
-	client_t *cl = clients + playernum;
+	client_t *cl = clients + playerNum;
 
 	// Not recording or not paused?
-	if(!cl->recording || !cl->recordpaused) return;
-	Demo_WriteLocalCamera(playernum);
-	cl->recordpaused = false;
+	if(!cl->recording || !cl->recordPaused) return;
+	Demo_WriteLocalCamera(playerNum);
+	cl->recordPaused = false;
 	// When the demo is read there can't be a jump in the timings, so we
 	// have to make it appear the pause never happened; begintime is 
 	// moved forwards.
-	writeinfo[playernum].begintime += 
-		demotic - writeinfo[playernum].pausetime;
+	writeInfo[playerNum].begintime += 
+		demotic - writeInfo[playerNum].pausetime;
 }
 
 //===========================================================================
 // Demo_StopRecording
 //	Stop recording a demo.
 //===========================================================================
-void Demo_StopRecording(int playernum)
+void Demo_StopRecording(int playerNum)
 {
-	client_t *cl = clients + playernum;
+	client_t *cl = clients + playerNum;
 
 	// A demo is not being recorded?
 	if(!cl->recording) return;
@@ -211,35 +211,35 @@ void Demo_StopRecording(int playernum)
 //===========================================================================
 // Demo_WritePacket
 //===========================================================================
-void Demo_WritePacket(int playernum)
+void Demo_WritePacket(int playerNum)
 {
 	LZFILE *file;
 	demopacket_header_t hdr;
-	demotimer_t *inf = writeinfo + playernum;
+	demotimer_t *inf = writeInfo + playerNum;
 	byte ptime;
 
-	if(playernum == NSP_BROADCAST) 
+	if(playerNum == NSP_BROADCAST) 
 	{
 		Demo_BroadcastPacket();	
 		return;
 	}
 
 	// Is this client recording?
-	if(!clients[playernum].recording) return;
+	if(!clients[playerNum].recording) return;
 	if(!inf->canwrite)
 	{
 		if(netbuffer.msg.type != psv_handshake) return;
 		// The handshake has arrived. Now we can begin writing.
 		inf->canwrite = true;
 	}
-	if(clients[playernum].recordpaused)
+	if(clients[playerNum].recordPaused)
 	{
 		// Some types of packet are not written in record-paused mode.
 		if(netbuffer.msg.type == psv_sound
 			|| netbuffer.msg.type == DDPT_MESSAGE) return;
 	}
 
-	file = clients[playernum].demo;
+	file = clients[playerNum].demo;
 
 #ifdef _DEBUG
 	if(!file) Con_Error("Demo_WritePacket: No demo file!\n");
@@ -247,7 +247,7 @@ void Demo_WritePacket(int playernum)
 
 	if(!inf->first)
 	{
-		ptime = (clients[playernum].recordpaused? 
+		ptime = (clients[playerNum].recordPaused? 
 			inf->pausetime : demotic) - inf->begintime;
 	}
 	else
@@ -275,7 +275,7 @@ void Demo_BroadcastPacket(void)
 	for(i = 0; i < MAXPLAYERS; i++) Demo_WritePacket(i);
 }
 
-boolean Demo_BeginPlayback(char *filename)
+boolean Demo_BeginPlayback(char *fileName)
 {
 	char buf[256];
 	int i;
@@ -286,7 +286,7 @@ boolean Demo_BeginPlayback(char *filename)
 	for(i = 0; i < MAXPLAYERS; i++)
 		if(clients[i].recording) return false;
 	// Open the demo file.
-	sprintf(buf, "%s%s", Dir_IsAbsolute(filename)? "" : demo_path, filename);
+	sprintf(buf, "%s%s", Dir_IsAbsolute(fileName)? "" : demoPath, fileName);
 	playdemo = lzOpen(buf, "rp");
 	if(!playdemo) return false;	// Failed to open the file.
 	// OK, let's begin the demo.
@@ -405,11 +405,11 @@ void Demo_WriteLocalCamera(int plnum)
 	mobj_t *mo = players[plnum].mo;
 	int z;
 	byte flags;
-	boolean incfov = (writeinfo[plnum].fov != fieldOfView);
+	boolean incfov = (writeInfo[plnum].fov != fieldOfView);
 
 	if(!mo) return;
 
-	Msg_Begin(clients[plnum].recordpaused? pkt_democam_resume 
+	Msg_Begin(clients[plnum].recordPaused? pkt_democam_resume 
 		: pkt_democam);
 	// Flags.
 	flags = (mo->z <= mo->floorz? LCAMF_ONGROUND : 0) // On ground?
@@ -435,7 +435,7 @@ void Demo_WriteLocalCamera(int plnum)
 	if(incfov) 
 	{
 		Msg_WriteShort(fieldOfView/180 * DDMAXSHORT);
-		writeinfo[plnum].fov = fieldOfView;
+		writeInfo[plnum].fov = fieldOfView;
 	}
 	Net_SendBuffer(plnum, SPF_DONT_SEND);
 }
@@ -531,11 +531,14 @@ void Demo_ReadLocalCamera(void)
 // Demo_Ticker
 //	Called once per tic.
 //==========================================================================
-void Demo_Ticker(void)
+void Demo_Ticker(timespan_t time)
 {
+	static trigger_t fixed = { 1/35.0 };
 	ddplayer_t *pl = players + consoleplayer;
 	int i;
-	
+
+	if(!M_CheckTrigger(&fixed, time)) return;
+
 	// Only playback is handled.
 	if(playback)
 	{
@@ -549,14 +552,14 @@ void Demo_Ticker(void)
 	}
 	else
 	{
-		for(i=0; i<MAXPLAYERS; i++)
+		for(i = 0; i < MAXPLAYERS; i++)
 			if(players[i].ingame 
 				&& clients[i].recording
-				&& !clients[i].recordpaused
-				&& ++writeinfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
+				&& !clients[i].recordPaused
+				&& ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
 			{
 				// It's time to write local view angles and coords.
-				writeinfo[i].cameratimer = 0;
+				writeInfo[i].cameratimer = 0;
 				Demo_WriteLocalCamera(i);
 			}
 	}
@@ -573,7 +576,7 @@ int CCmdPlayDemo(int argc, char **argv)
 {
 	if(argc != 2)
 	{
-		Con_Printf("Usage: %s (filename)\n", argv[0]);
+		Con_Printf("Usage: %s (fileName)\n", argv[0]);
 		return true;
 	}
 	Con_Printf("Playing demo \"%s\"...\n", argv[1]);
@@ -594,12 +597,12 @@ int CCmdRecordDemo(int argc, char **argv)
 	}
 	if(isClient && argc != 2)
 	{
-		Con_Printf("Usage: %s (filename)\n", argv[0]);
+		Con_Printf("Usage: %s (fileName)\n", argv[0]);
 		return true;
 	}
 	if(isServer && (argc < 2 || argc > 3))
 	{
-		Con_Printf("Usage: %s (filename) (plnum)\n", argv[0]);
+		Con_Printf("Usage: %s (fileName) (plnum)\n", argv[0]);
 		Con_Printf("(plnum) is the player which will be recorded.\n");
 		return true;
 	}
@@ -621,7 +624,7 @@ int CCmdPauseDemo(int argc, char **argv)
 		Con_Printf("Not recording for player %i.\n", plnum);
 		return false;
 	}
-	if(clients[plnum].recordpaused)
+	if(clients[plnum].recordPaused)
 	{
 		Demo_ResumeRecording(plnum);
 		Con_Printf("Demo recording of player %i resumed.\n", plnum);

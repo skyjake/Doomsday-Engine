@@ -38,7 +38,7 @@ extern boolean clientPaused;
 void Cl_InitID(void);
 void Cl_CleanUp();
 void Cl_GetPackets(void);
-void Cl_Ticker(void);
+void Cl_Ticker(timespan_t time);
 int Cl_GameReady();
 void Cl_SendHello(void);
 

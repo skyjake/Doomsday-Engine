@@ -378,10 +378,14 @@ int UI_Responder(event_t *ev)
 	return true;
 }
 
-void UI_Ticker(void)
+void UI_Ticker(timespan_t time)
 {
+	static trigger_t fixed = { 1/35.0 };
+
 	if(!ui_active) return;
 	if(!ui_page) return;
+	if(!M_CheckTrigger(&fixed, time)) return;
+
 	// Call the active page's ticker.
 	ui_page->ticker(ui_page);
 }

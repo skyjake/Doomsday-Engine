@@ -25,9 +25,6 @@
 #include "dd_share.h"	// For event_t.
 #include "con_decl.h"
 
-extern event_t	events[MAXEVENTS];
-extern int		eventhead;
-extern int		eventtail;
 extern int		repWait1, repWait2;
 extern int		mouseFilter;
 extern int		mouseDisableX, mouseDisableY;
@@ -39,6 +36,9 @@ extern boolean	showScanCodes;
 extern int		shiftDown, altDown;
 
 void DD_InitInput(void);
+void DD_ShutdownInput(void);
+void DD_StartInput(void);
+void DD_StopInput(void);
 
 void DD_ReadKeyboard(void);
 void DD_ReadMouse(void);
@@ -46,6 +46,7 @@ void DD_ReadJoystick(void);
 
 void DD_PostEvent(event_t *ev);
 void DD_ProcessEvents(void);
+void DD_ClearEvents(void);
 void DD_ClearKeyRepeaters(void);
 byte DD_ScanToKey(byte scan);
 byte DD_KeyToScan(byte key);

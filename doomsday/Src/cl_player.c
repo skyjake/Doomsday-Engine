@@ -78,13 +78,13 @@ void Cl_InitPlayers(void)
 	{
 		players[i].psprites[0].stateptr = NULL;
 		players[i].psprites[1].stateptr = NULL;
-		memset(clients[i].lastcmd, 0, sizeof(*clients[i].lastcmd));
+		memset(clients[i].lastCmd, 0, sizeof(*clients[i].lastCmd));
 	}
 }
 
 //==========================================================================
 // Cl_LocalCommand
-//	Updates the state of the local player by looking at lastcmd.
+//	Updates the state of the local player by looking at lastCmd.
 //==========================================================================
 void Cl_LocalCommand(void)
 {
@@ -95,7 +95,7 @@ void Cl_LocalCommand(void)
 	if(leveltic < 10)
 	{
 		// In the very beginning of a level, moving is not allowed.
-		memset(cl->lastcmd, 0, sizeof(*cl->lastcmd));
+		memset(cl->lastCmd, 0, sizeof(*cl->lastCmd));
 		if(s->cmo)
 		{
 			s->cmo->mo.momx = 0;
@@ -103,8 +103,8 @@ void Cl_LocalCommand(void)
 		}
 	}
 
-	s->forwardmove = cl->lastcmd->forwardmove * 2048;
-	s->sidemove = cl->lastcmd->sidemove * 2048;
+	s->forwardmove = cl->lastCmd->forwardmove * 2048;
+	s->sidemove = cl->lastCmd->sidemove * 2048;
 	s->angle = pl->clAngle;
 	s->turndelta = 0;
 }

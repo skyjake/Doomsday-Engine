@@ -1225,6 +1225,10 @@ void R_SetupLevel(char *level_id, int flags)
 				Con_Executef(false, cmd);
 			}
 		}
+
+		// Clear any input events that might have accumulated during the
+		// setup period.
+		DD_ClearEvents();
 		
 		// Now that the setup is done, let's reset the tictimer so it'll
 		// appear that no time has passed during the setup.
@@ -1233,7 +1237,7 @@ void R_SetupLevel(char *level_id, int flags)
 		// Kill all local commands.
 		for(i = 0; i < MAXPLAYERS; i++)
 		{
-			clients[i].numtics = 0;
+			clients[i].numTics = 0;
 		}
 
 		// Reset the level tick timer.
@@ -1424,8 +1428,7 @@ void R_UpdatePlanes(void)
 		// Floor height.
 		if(!sin->linkedfloor) 
 		{
-			sin->visfloor = FIX2FLT(sec->floorheight)
-				+ sin->visflooroffset;
+			sin->visfloor = FIX2FLT(sec->floorheight);
 		}
 		else
 		{
@@ -1437,8 +1440,7 @@ void R_UpdatePlanes(void)
 		// Ceiling height.
 		if(!sin->linkedceil)
 		{
-			sin->visceil = FIX2FLT(sec->ceilingheight)
-				+ sin->visceiloffset;
+			sin->visceil = FIX2FLT(sec->ceilingheight);
 		}
 		else
 		{

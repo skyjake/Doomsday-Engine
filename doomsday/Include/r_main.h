@@ -40,7 +40,6 @@ extern	int			extralight;
 extern	fixed_t		viewcos, viewsin;
 extern	int			skyflatnum;
 extern	int			rend_info_tris;
-extern	int			rend_camera_smooth;
 
 void		R_Init (void);
 void		R_Update (void);

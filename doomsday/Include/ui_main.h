@@ -197,7 +197,7 @@ void UI_ClearTextures(void);
 void UI_InitPage(ui_page_t *page, ui_object_t *objects);
 void UI_SetPage(ui_page_t *page);
 int UI_Responder(event_t *ev);
-void UI_Ticker(void);
+void UI_Ticker(timespan_t time);
 void UI_Drawer(void);
 int UI_CountObjects(ui_object_t *list);
 void UI_FlagGroup(ui_object_t *list, int group, int flags, int set);

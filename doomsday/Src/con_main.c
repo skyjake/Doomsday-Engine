@@ -48,13 +48,13 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SC_EMPTY_QUOTE		-1
+#define SC_EMPTY_QUOTE	-1
 
 // Length of the print buffer. Used in Con_Printf. If console messages are
 // longer than this, an error will occur.
-#define PRBUFF_LEN			8000
+#define PRBUFF_LEN		8000
 
-#define OBSOLETE	CVF_NO_ARCHIVE|CVF_HIDE
+#define OBSOLETE		CVF_NO_ARCHIVE|CVF_HIDE
 
 // Macros for accessing the console command values through the void ptr.
 #define CV_INT(var)		(*(int*) var->ptr)
@@ -75,22 +75,19 @@ enum
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
+typedef struct calias_s {
 	char *name;
 	char *command;
 } calias_t;
 
-typedef struct
-{
-	unsigned int	marker : 31;	// The tic on which the cmd should be executed.
-	unsigned int	used : 1;		// Is this in use?
-	char			subcmd[1024];	// A single command w/args.
+typedef struct execbuff_s {
+	boolean	used;				// Is this in use?
+	timespan_t when;			// System time when to execute the command.
+	char subCmd[1024];			// A single command w/args.
 } execbuff_t;
 
-typedef struct
-{
-	char word[64];					// 64 chars MAX for words.
+typedef struct knownword_S {
+	char word[64];				// 64 chars MAX for words.
 } knownword_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -140,8 +137,8 @@ D_CMD(TranslateFont);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int executeSubCmd(const char *subcmd);
-static void SplitIntoSubCommands(const char *command, int markerOffset);
+static int executeSubCmd(const char *subCmd);
+void Con_SplitIntoSubCommands(const char *command, timespan_t markerOffset);
 calias_t *Con_GetAlias(const char *name);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -338,7 +335,6 @@ cvar_t engineCVars[] =
 	"rend-halo-fade-near",	CVF_NO_MAX,	CVT_FLOAT,	&haloFadeMin,	0, 0,	"Distance to begin fading halos.",
 	// * Render-Camera
 	"rend-camera-fov",		0,			CVT_FLOAT,	&fieldOfView,	1, 179, "Field of view.",
-	"rend-camera-smooth",	0,			CVT_INT,	&rend_camera_smooth, 0, 1, "1=Filter camera movement between game tics.",
 	// * Render-Texture
 	"rend-tex",				CVF_NO_ARCHIVE,	CVT_INT, &renderTextures,0, 1,	"1=Render with textures.",
 	"rend-tex-gamma",		CVF_PROTECTED, CVT_INT,	&usegamma,		0, 4,	"The gamma correction level (0-4).",
@@ -543,7 +539,7 @@ ccmd_t engineCCmds[] =
 knownword_t *knownWords = 0;	// The list of known words (for completion).
 int numKnownWords = 0;
 
-char trimmed_float_buffer[32];	// Returned by TrimmedFloat().
+char trimmedFloatBuffer[32];	// Returned by TrimmedFloat().
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -551,8 +547,8 @@ static boolean ConsoleInited;	// Has Con_Init() been called?
 static boolean ConsoleActive;	// Is the console active?
 static float ConsoleY;			// Where the console bottom is currently?
 static float ConsoleDestY;		// Where the console bottom should be?
-static int ConsoleTime;			// How many ticks has the console been open?
-static int ConsoleBlink;		// Cursor blink timer.
+static timespan_t ConsoleTime;	// How many seconds has the console been open?
+static float ConsoleBlink;		// Cursor blink timer (35 Hz tics).
 
 static float funnyAng;
 static boolean openingOrClosing = true;
@@ -669,11 +665,11 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 
 char *TrimmedFloat(float val)
 {
-	char *ptr = trimmed_float_buffer;
+	char *ptr = trimmedFloatBuffer;
 
 	sprintf(ptr, "%f", val);
 	// Get rid of the extra zeros.
-	for(ptr += strlen(ptr)-1; ptr >= trimmed_float_buffer; ptr--)
+	for(ptr += strlen(ptr)-1; ptr >= trimmedFloatBuffer; ptr--)
 	{
 		if(*ptr == '0') *ptr = 0;
 		else if(*ptr == '.') 
@@ -683,7 +679,7 @@ char *TrimmedFloat(float val)
 		}
 		else break;
 	}
-	return trimmed_float_buffer;
+	return trimmedFloatBuffer;
 }
 
 //--------------------------------------------------------------------------
@@ -1094,20 +1090,20 @@ void Con_Send(const char *command, int silent)
 	Net_SendBuffer(0, SPF_ORDERED);
 }
 
-static void ClearExecBuffer()
+void Con_ClearExecBuffer()
 {
 	free(exBuff);
 	exBuff = NULL;
 	exBuffSize = 0;
 }
 
-static void QueueCmd(char *singleCmd, int at_tic)
+void Con_QueueCmd(const char *singleCmd, timespan_t atSecond)
 {
-	execbuff_t	*ptr = NULL;
-	int			i;
+	execbuff_t *ptr = NULL;
+	int	i;
 
 	// Look for an empty spot.
-	for(i=0; i<exBuffSize; i++)
+	for(i = 0; i < exBuffSize; i++)
 		if(!exBuff[i].used)
 		{
 			ptr = exBuff + i;
@@ -1118,11 +1114,11 @@ static void QueueCmd(char *singleCmd, int at_tic)
 	{
 		// No empty places, allocate a new one.
 		exBuff = realloc(exBuff, sizeof(execbuff_t) * ++exBuffSize);
-		ptr = exBuff + exBuffSize-1;
+		ptr = exBuff + exBuffSize - 1;
 	}
 	ptr->used = true;
-	strcpy(ptr->subcmd, singleCmd);
-	ptr->marker = at_tic;
+	strcpy(ptr->subCmd, singleCmd);
+	ptr->when = atSecond;
 }
 
 void Con_Shutdown()
@@ -1176,47 +1172,54 @@ void Con_Shutdown()
 	caliases = NULL;
 	numCAliases = 0;
 
-	ClearExecBuffer();
+	Con_ClearExecBuffer();
 }
 
-// Returns false if an executed command fails.
-static boolean CheckExecBuffer()
+/*
+ * The execbuffer is used to schedule commands for later.
+ * Returns false if an executed command fails.
+ */
+boolean Con_CheckExecBuffer(void)
 {
-	boolean alldone;
+	boolean allDone;
 	boolean	ret = true;
 	int		i, count = 0;
 	char	storage[256];
 	
 	do // We'll keep checking until all is done.
 	{
-		alldone = true;
+		allDone = true;
+
 		// Execute the commands marked for this or a previous tic.
-		for(i=0; i<exBuffSize; i++)
+		for(i = 0; i < exBuffSize; i++)
 		{	
 			execbuff_t *ptr = exBuff + i;
-			if(!ptr->used || ptr->marker > (unsigned) systics) continue;
+			if(!ptr->used || ptr->when > sysTime) continue;
 			// We'll now execute this command.
 			curExec = ptr;
 			ptr->used = false;
-			strcpy(storage, ptr->subcmd);
+			strcpy(storage, ptr->subCmd);
 			if(!executeSubCmd(storage)) ret = false;
-			alldone = false;
+			allDone = false;
 		}
 
 		if(count++ > 100)
 		{
-			Con_Message("Console execution buffer overflow! Everything canceled.\n");
-			ClearExecBuffer();
+			Con_Message("Console execution buffer overflow! "
+				"Everything canceled.\n");
+			Con_ClearExecBuffer();
 			break;
 		}
 	}
-	while(!alldone);
+	while(!allDone);
 	return ret;
 }
 
-void Con_Ticker(void)
+void Con_Ticker(timespan_t time)
 {
-	CheckExecBuffer();
+	float step = time * 35;
+
+	Con_CheckExecBuffer();
 
 	if(ConsoleY == 0) openingOrClosing = true;
 
@@ -1225,25 +1228,25 @@ void Con_Ticker(void)
 	{
 		float diff = (ConsoleDestY - ConsoleY)/4;
 		if(diff < 1) diff = 1;
-		ConsoleY += diff;		
+		ConsoleY += diff * step;		
 		if(ConsoleY > ConsoleDestY) ConsoleY = ConsoleDestY;
 	}
 	else if(ConsoleDestY < ConsoleY)
 	{
 		float diff = (ConsoleY - ConsoleDestY)/4;
 		if(diff < 1) diff = 1;
-		ConsoleY -= diff;		
+		ConsoleY -= diff * step;		
 		if(ConsoleY < ConsoleDestY) ConsoleY = ConsoleDestY;
 	}
 
 	if(ConsoleY == ConsoleOpenY) openingOrClosing = false;
 
-	funnyAng += consoleTurn/10000.0f;//.002f;
+	funnyAng += step * consoleTurn / 10000;
 
 	if(!ConsoleActive) return;	// We have nothing further to do here.
 
-	ConsoleTime++;		// Increase the ticker.
-	ConsoleBlink++;		// Cursor blink timer (0 = visible).
+	ConsoleTime += time;		// Increase the ticker.
+	ConsoleBlink += step;		// Cursor blink timer (0 = visible).
 }
 
 cbline_t *Con_GetBufferLine(int num)
@@ -1338,12 +1341,12 @@ static void printcvar(cvar_t *var, char *prefix)
 
 /*
  * expandWithArguments
- *	expcommand gets reallocated in the expansion process.
+ *	expCommand gets reallocated in the expansion process.
  *	This could be bit more clever.
  */
-static void expandWithArguments(char **expcommand, cmdargs_t *args)
+static void expandWithArguments(char **expCommand, cmdargs_t *args)
 {
-	char *text = *expcommand;
+	char *text = *expCommand;
 	int size = strlen(text)+1;
 	int	i, p, off;
 
@@ -1364,7 +1367,7 @@ static void expandWithArguments(char **expcommand, cmdargs_t *args)
 			memmove(text+i, text+i+2, size-i-2);
 			// Reallocate.
 			off = strlen(substr);
-			text = *expcommand = realloc(*expcommand, size+=off-2);
+			text = *expCommand = realloc(*expCommand, size+=off-2);
 			if(off)
 			{
 				// Make room for the insert.
@@ -1377,11 +1380,11 @@ static void expandWithArguments(char **expcommand, cmdargs_t *args)
 		{
 			// First get rid of the %0.
 			memmove(text+i, text+i+2, size-i-2);
-			text = *expcommand = realloc(*expcommand, size-=2);
+			text = *expCommand = realloc(*expCommand, size-=2);
 			for(p=args->argc-1; p>0; p--)
 			{
 				off = strlen(args->argv[p])+1;
-				text = *expcommand = realloc(*expcommand, size+=off);
+				text = *expCommand = realloc(*expCommand, size+=off);
 				memmove(text+i+off, text+i, size-i-off);
 				text[i] = ' ';
 				memcpy(text+i+1, args->argv[p], off-1);
@@ -1394,13 +1397,13 @@ static void expandWithArguments(char **expcommand, cmdargs_t *args)
  * executeSubCmd
  *	The command is executed forthwith!!
  */
-static int executeSubCmd(const char *subcmd)
+static int executeSubCmd(const char *subCmd)
 {
 	int			i;
 	char		prefix;
 	cmdargs_t	args;
 
-	PrepareCmdArgs(&args, subcmd);
+	PrepareCmdArgs(&args, subCmd);
 	if(!args.argc) return true;
 
 	if(args.argc == 1)	// An action?
@@ -1417,15 +1420,15 @@ static int executeSubCmd(const char *subcmd)
 	}
 
 	// If logged in, send command to server at this point.
-	if(net_loggedin)
+	if(netLoggedIn)
 	{
 		// We have logged in on the server. Send the command there.
-		Con_Send(subcmd, ConsoleSilent);		
+		Con_Send(subCmd, ConsoleSilent);		
 		return true;
 	}
 
 	// Try to find a matching command.
-	for(i=0; i<numCCmds; i++)
+	for(i = 0; i < numCCmds; i++)
 		if(!stricmp(ccmds[i].name, args.argv[0]))
 		{
 			int cret = ccmds[i].func(args.argc, args.argv);
@@ -1513,14 +1516,14 @@ static int executeSubCmd(const char *subcmd)
 		if(!stricmp(args.argv[0], caliases[i].name))
 		{
 			calias_t *cal = caliases + i;
-			char *expcommand;
+			char *expCommand;
 			// Expand the command with arguments.
-			expcommand = malloc(strlen(cal->command)+1);
-			strcpy(expcommand, cal->command);
-			expandWithArguments(&expcommand, &args);
+			expCommand = malloc(strlen(cal->command)+1);
+			strcpy(expCommand, cal->command);
+			expandWithArguments(&expCommand, &args);
 			// Do it, man!
-			SplitIntoSubCommands(expcommand, 0);
-			free(expcommand);
+			Con_SplitIntoSubCommands(expCommand, 0);
+			free(expCommand);
 			return true;
 		}
 
@@ -1529,49 +1532,52 @@ static int executeSubCmd(const char *subcmd)
 	return false;
 }
 
-// Splits the command into subcommands and queues them into the 
-// execution buffer.
-static void SplitIntoSubCommands(const char *command, int markerOffset)
+/*
+ * Splits the command into subcommands and queues them into the 
+ * execution buffer.
+ */
+void Con_SplitIntoSubCommands(const char *command, timespan_t markerOffset)
 {
-	int			gpos = 0, scpos = 0;
-	char		subcmd[1024];
-	int			nextsub = false;
-	int			ret = true, inquotes = false, escape = false;
+	int	gPos = 0, scPos = 0;
+	char subCmd[2048];
+	int	nextSub = false;
+	int	ret = true, inQuotes = false, escape = false;
 
 	// Is there a command to execute?
 	if(!command || command[0] == 0) return;
 
 	// Jump over initial semicolons.
-	while(command[gpos] == ';' && command[gpos] != 0) gpos++;
+	while(command[gPos] == ';' && command[gPos] != 0) gPos++;
+
 	// The command may actually contain many commands, separated
 	// with semicolons. This isn't a very clear algorithm...
-	for(strcpy(subcmd, ""); command[gpos];)
+	for(strcpy(subCmd, ""); command[gPos];)
 	{
 		escape = false;
-		if(inquotes && command[gpos] == '\\') // Escape sequence?
+		if(inQuotes && command[gPos] == '\\') // Escape sequence?
 		{
-			subcmd[scpos++] = command[gpos++];
+			subCmd[scPos++] = command[gPos++];
 			escape = true;
 		}
-		if(command[gpos] == '"' && !escape) 
-			inquotes = !inquotes;
+		if(command[gPos] == '"' && !escape) 
+			inQuotes = !inQuotes;
 
 		// Collect characters.
-		subcmd[scpos++] = command[gpos++];
-		if(subcmd[0] == ' ') scpos = 0;	// No spaces in the beginning.
+		subCmd[scPos++] = command[gPos++];
+		if(subCmd[0] == ' ') scPos = 0;	// No spaces in the beginning.
 
-		if((command[gpos] == ';' && !inquotes) || command[gpos] == 0)
+		if((command[gPos] == ';' && !inQuotes) || command[gPos] == 0)
 		{
-			while(command[gpos] == ';' && command[gpos] != 0) gpos++;
+			while(command[gPos] == ';' && command[gPos] != 0) gPos++;
 			// The subcommand ends.
-			subcmd[scpos] = 0;
+			subCmd[scPos] = 0;
 		}
 		else continue;
 	
 		// Queue it.
-		QueueCmd(subcmd, systics + markerOffset); 
+		Con_QueueCmd(subCmd, sysTime + markerOffset); 
 		
-		scpos = 0;
+		scPos = 0;
 	}
 }
 
@@ -1586,8 +1592,8 @@ int Con_Execute(const char *command, int silent)
 
 	if(silent) ConsoleSilent = true;
 	
-	SplitIntoSubCommands(command, 0);
-	ret = CheckExecBuffer();
+	Con_SplitIntoSubCommands(command, 0);
+	ret = Con_CheckExecBuffer();
 
 	if(silent) ConsoleSilent = false;
 	return ret;
@@ -2141,7 +2147,6 @@ void Con_Drawer(void)
 	// The command line.
 	strcpy(buff, ">");
 	strcat(buff, cmdLine);
-	//if(ConsoleTime & 0x10) strcat(buff, "_");
 
 	if(Cfont.Filter) Cfont.Filter(buff);
 	if(consoleShadowText)
@@ -2173,7 +2178,7 @@ void Con_Drawer(void)
 		(ConsoleY*gtosMulY-fontScaledY)/Cfont.sizeY,
 		k, Cfont.height,
 		CcolYellow[0], CcolYellow[1], CcolYellow[2],
-		closeFade * (ConsoleBlink & 0x10? .2f : .5f));
+		closeFade * ( ((int)ConsoleBlink) & 0x10? .2f : .5f ));
 	gl.Enable(DGL_TEXTURING);
 
 	// Restore the original matrices.
@@ -2726,23 +2731,24 @@ D_CMD(DeleteBind)
 //===========================================================================
 int CCmdWait(int argc, char **argv)
 {
-	int off;
+	timespan_t offset;
 
 	if(argc != 3)
 	{
-		Con_Printf( "Usage: %s (tics) (cmd)\n", argv[0]);
-		Con_Printf( "For example, '%s 35 \"echo End\"'.\n", argv[0]);
+		Con_Printf("Usage: %s (tics) (cmd)\n", argv[0]);
+		Con_Printf("For example, '%s 35 \"echo End\"'.\n", argv[0]);
 		return true;
 	}
-	off = atoi(argv[1]);
-	if(off < 0) off = 0;
-	SplitIntoSubCommands(argv[2], off);
+	offset = strtod(argv[1], NULL) / 35; // Offset in seconds.
+	if(offset < 0) offset = 0;
+	Con_SplitIntoSubCommands(argv[2], offset);
 	return true;
 }
 
 D_CMD(Repeat)
 {
-	int count, off, interval;
+	int count;
+	timespan_t interval, offset;
 
 	if(argc != 4)
 	{
@@ -2751,21 +2757,21 @@ D_CMD(Repeat)
 		return true;
 	}
 	count = atoi(argv[1]);
-	interval = atoi(argv[2]);
-	off = 0;
+	interval = strtod(argv[2], NULL) / 35; // In seconds.
+	offset = 0;
 	while(count-- > 0)
 	{
-		off += interval;
-		SplitIntoSubCommands(argv[3], off);
+		offset += interval;
+		Con_SplitIntoSubCommands(argv[3], offset);
 	}
 	return true;
 }
 
 D_CMD(Echo)
 {
-	int		i;
+	int	i;
 
-	for(i=1; i<argc; i++) Con_Printf( "%s\n", argv[i]);
+	for(i = 1; i < argc; i++) Con_Printf( "%s\n", argv[i]);
 	return true;
 }
 

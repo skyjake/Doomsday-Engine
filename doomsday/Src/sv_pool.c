@@ -25,6 +25,9 @@
 
 /*
  * $Log$
+ * Revision 1.15  2003/09/08 22:19:40  skyjake
+ * Float timing loop, use timespan_t in tickers, style cleanup
+ *
  * Revision 1.14  2003/09/04 16:56:49  skyjake
  * Added a proper GPL banner
  *
@@ -459,8 +462,8 @@ void Sv_RegisterPlayer(dt_player_t *reg, int number)
 	client_t *c = clients + number;
 
 	reg->mobj = p->mo? p->mo->thinker.id : 0;
-	reg->forwardMove = c->lastcmd->forwardmove;
-	reg->sideMove = c->lastcmd->sidemove;
+	reg->forwardMove = c->lastCmd->forwardmove;
+	reg->sideMove = c->lastCmd->sidemove;
 	reg->angle = p->mo? p->mo->angle : 0;
 	reg->turnDelta = p->mo? p->mo->angle - p->lastangle : 0;
 	reg->friction = p->mo && gx.MobjFriction? gx.MobjFriction(p->mo) 

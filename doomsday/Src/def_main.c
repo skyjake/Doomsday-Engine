@@ -96,8 +96,8 @@ static mobjinfo_t *gettingFor;
 //===========================================================================
 void Def_Init(void)
 {
-	extern char defsFileName[256];
-	extern char topDefsFileName[256];
+	extern filename_t defsFileName;
+	extern filename_t topDefsFileName;
 	int c;
 
 	// Sprite name list.

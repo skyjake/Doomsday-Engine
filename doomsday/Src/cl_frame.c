@@ -330,7 +330,7 @@ void Cl_FrameReceived(void)
 	gotFirstFrame = true;
 
 #if _DEBUG
-	if(!game_ready) Con_Message("Got frame but GAME NOT READY!\n");
+	if(!gameReady) Con_Message("Got frame but GAME NOT READY!\n");
 #endif
 
 	// Frame time, lowest byte of gametic.

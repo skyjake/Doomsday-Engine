@@ -22,6 +22,6 @@
 #ifndef __DOOMSDAY_PLAY_TICK_H__
 #define __DOOMSDAY_PLAY_TICK_H__
 
-void P_Ticker(void);
+void P_Ticker(timespan_t time);
 
 #endif 

@@ -27,7 +27,7 @@
 extern int demotic, playback;
 
 void Demo_Init(void);
-void Demo_Ticker(void);
+void Demo_Ticker(timespan_t time);
 
 boolean Demo_BeginRecording(char *filename, int playernum);
 void Demo_StopRecording(int playernum);

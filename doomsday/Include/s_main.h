@@ -22,6 +22,8 @@
 #ifndef __DOOMSDAY_SOUND_MAIN_H__
 #define __DOOMSDAY_SOUND_MAIN_H__
 
+#include "de_defs.h"
+
 #define SF_RANDOM_SHIFT		0x1		// Random frequency shift.
 #define SF_RANDOM_SHIFT2	0x2		// 2x bigger random frequency shift.
 #define SF_GLOBAL_EXCLUDE	0x4		// Exclude all emitters.

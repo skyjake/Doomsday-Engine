@@ -143,17 +143,23 @@ typedef struct
 	// ID number. Each client has a unique ID number.
 	id_t	id;
 
+	// The local command buffer is used for storing tic commands generated
+	// on the local computer. They will be sent to the server.
+	int		numLocal;
+	byte	*localCmds;
+	int		localCmdLock;
+
 	// Ticcmd buffer. The server uses this when clients send it ticcmds.
-	byte	*ticcmds;		
+	byte	*ticCmds;		
 
 	// Number of tics in the buffer.
-	int		numtics;	
+	int		numTics;	
 
 	// Index of the first tic in the buffer.
-	int		firsttic;
+	int		firstTic;
 
 	// Last command executed, reused if a new one isn't found.
-	ticcmd_t *lastcmd;	
+	ticcmd_t *lastCmd;	
 
 	int		lastTransmit;
 
@@ -163,9 +169,6 @@ typedef struct
 
 	// Gametic when the client entered the game.
 	int		enterTime;
-
-	// Client time. Updated as cmds are received from the client. 
-	/* int		time; */
 
 	// Client-reported time of the last processed ticcmd.
 	// Older or as old tics than this are discarded.
@@ -182,9 +185,6 @@ typedef struct
 	// A record of the past few acknowledgement times.
 	uint	ackTimes[NUM_ACK_TIMES];
 	int		ackIdx;
-
-/*	int		lag;
-	int		lagStress;*/
 
 	// Clients use this to determine how long ago they received the
 	// last update of this client.
@@ -221,13 +221,10 @@ typedef struct
 	// Demo recording file (being recorded if not NULL).
 	LZFILE	*demo;
 	boolean	recording;
-	boolean recordpaused;
+	boolean recordPaused;
 
 	// View console. Which player this client is viewing?
 	int		viewConsole;
-
-	/*int		errorPos;
-	vertex_t error[NUM_CERR];*/
 } 
 client_t;
 
@@ -310,9 +307,10 @@ void	Net_PingResponse(void);
 void	Net_ShowPingSummary(int player);
 void	Net_ShowChatMessage();
 int		Net_TimeDelta(byte now, byte then);
+void	Net_NewLocalCmd(ticcmd_t *cmd, int pNum);
 int		Net_GetTicCmd(void *cmd, int player);
 void	Net_Update(void);
-void	Net_Ticker(void);
+void	Net_Ticker(timespan_t time);
 void	Net_Drawer(void);
 void	Net_ResetTimer(void);
 

@@ -27,7 +27,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_network.h"
 #include "de_system.h"
+#include "de_play.h"
 #include "de_misc.h"
 #include "de_ui.h"
 
@@ -35,8 +37,11 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DEFAULT_INPUT_RATE	35	// Hz
+#define MAXEVENTS			256	// Size of the input event buffer.
+
 #define KBDQUESIZE		32
-#define MAX_DOWNKEYS	16		// Most keyboards support 6 or 7.
+#define MAX_DOWNKEYS	32	
 
 #define SC_RSHIFT       0x36
 #define SC_LSHIFT       0x2a
@@ -66,9 +71,12 @@ typedef struct repeater_s
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+int			inputRate = DEFAULT_INPUT_RATE;
+
 event_t		events[MAXEVENTS];
-int			eventhead;
-int			eventtail;
+int			eventHead;
+int			eventTail;
+int			eventCount;
 
 int			mouseFilter = 0;		// No filtering by default.
 int			mouseInverseY = false;
@@ -159,6 +167,10 @@ static char defaultShiftTable[96] =	// Contains characters 32 to 127.
 /* 120 */	'X', 'Y', 'Z', 0, 0, 0, 0, 0
 };
 
+static boolean	stopInputThread = false;
+static int		inputThreadHandle;
+static int		eventQueueMutex;
+
 static repeater_t keyReps[MAX_DOWNKEYS];
 static int		oldMouseX, oldMouseY;
 static int		oldMouseButtons = 0;
@@ -220,15 +232,6 @@ void DD_DefaultKeyMapping(void)
 			&& defaultShiftTable[i - 32]? defaultShiftTable[i - 32] : i;
 		altKeyMappings[i] = i;
 	}
-}
-
-//===========================================================================
-// DD_InitInput
-//	Initializes the key mappings to the default values.
-//===========================================================================
-void DD_InitInput(void)
-{
-	DD_DefaultKeyMapping();
 }
 
 //===========================================================================
@@ -353,18 +356,20 @@ int CCmdKeyMap(int argc, char **argv)
 //==========================================================================
 // DD_ProcessEvents
 //	Send all the events of the given timestamp down the responder chain.
+//	This is called from the refresh thread.
 //==========================================================================
 void DD_ProcessEvents(void)
 {
 	event_t *ev;
 
-	DD_ReadMouse();
-	DD_ReadJoystick();
-	DD_ReadKeyboard();
+	// No new events will be posted until the currently queued ones 
+	// have been processed.
+	Sys_AcquireMutex(eventQueueMutex);
 
-	for(; eventtail != eventhead; eventtail = (++eventtail)&(MAXEVENTS-1))
+	for(; eventTail != eventHead; eventTail = (++eventTail)&(MAXEVENTS-1))
 	{
-		ev = &events[eventtail];
+		ev = &events[eventTail];
+		--eventCount;
 
 		// Track the state of Shift and Alt.
 		if(ev->data1 == DDKEY_RSHIFT)
@@ -380,13 +385,18 @@ void DD_ProcessEvents(void)
 	
 		// Does the special responder use this event?
 		if(gx.PrivilegedResponder)
+		{
 			if(gx.PrivilegedResponder(ev)) continue;
+		}
 
 		if(UI_Responder(ev)) continue;
+
 		// The console.
 		if(Con_Responder(ev)) continue;
+
 		// The menu.
 		if(gx.MN_Responder(ev)) continue;
+
 		// The game responder only returns true if the bindings 
 		// can't be used (like when chatting).
 		if(gx.G_Responder(ev)) continue;
@@ -394,16 +404,41 @@ void DD_ProcessEvents(void)
 		// The bindings responder.
 		B_Responder(ev);
 	}
+
+	// New events can be posted again.
+	Sys_ReleaseMutex(eventQueueMutex);
 }
 
-//==========================================================================
-// DD_PostEvent
-//	Called by the I/O functions when input is detected.
-//==========================================================================
+/*
+ * Clear the input event queue.
+ */
+void DD_ClearEvents(void)
+{
+	Sys_AcquireMutex(eventQueueMutex);
+
+	eventHead = eventTail;
+	eventCount = 0;
+
+	// New events can be posted again.
+	Sys_ReleaseMutex(eventQueueMutex);
+}
+
+/*
+ * Called by the I/O functions when input is detected.
+ */
 void DD_PostEvent(event_t *ev)
 {
-	events[eventhead] = *ev;
-	eventhead = (++eventhead)&(MAXEVENTS-1);
+	// We don't want to overflow the queue.
+	if(eventCount == MAXEVENTS - 1) return;
+
+	// Only one thread can access the queue at a time.
+	Sys_AcquireMutex(eventQueueMutex);
+
+	events[eventHead] = *ev;
+	eventHead = (++eventHead) & (MAXEVENTS - 1);
+	eventCount++;
+
+	Sys_ReleaseMutex(eventQueueMutex);
 }
 
 //===========================================================================
@@ -443,9 +478,9 @@ void DD_ClearKeyRepeaters(void)
 	memset(keyReps, 0, sizeof(keyReps));
 }
 
-//===========================================================================
-// DD_ReadKeyboard
-//===========================================================================
+/*
+ * Poll keyboard input and generate events.
+ */
 void DD_ReadKeyboard(void)
 {
 	event_t			ev;
@@ -532,10 +567,9 @@ void DD_ReadKeyboard(void)
 	}
 }
 
-//===========================================================================
-// DD_ReadMouse
-//	Mouse events.
-//===========================================================================
+/*
+ * Poll mouse input and generate events.
+ */
 void DD_ReadMouse(void)
 {
 	event_t ev;
@@ -600,10 +634,9 @@ void DD_ReadMouse(void)
 	oldMouseButtons = mouse.buttons;
 }
 
-//===========================================================================
-// DD_JoyAxisClamp
-//	Applies the dead zone and clamps the value to -100...100.
-//===========================================================================
+/*
+ * Applies the dead zone and clamps the value to -100...100.
+ */
 void DD_JoyAxisClamp(int *val)
 {
 	if(abs(*val) < joyDeadZone)
@@ -621,9 +654,9 @@ void DD_JoyAxisClamp(int *val)
 	if(*val < -100) *val = -100;
 }
 
-//===========================================================================
-// DD_ReadJoystick
-//===========================================================================
+/*
+ * Poll joystick input and generate events.
+ */
 void DD_ReadJoystick(void)
 {
 	event_t		ev;
@@ -712,4 +745,100 @@ void DD_ReadJoystick(void)
 	CLAMP(ev.data2);
 
 	DD_PostEvent(&ev);
+}
+
+/*
+ * The input thread is started right before the main loop is entered.
+ * The thread's task is to poll controllers for input, generate input
+ * events that the refresh thread will respond to, and generate ticcmds
+ * for local players. The commands are generated by examining the current
+ * state of the controls assigned for the player.
+ *
+ * The input thread operates at a fixed frequency. For historical reasons, 
+ * 35 Hz seems appropriate.
+ */
+int DD_InputThread(void *parm)
+{
+	double nowTime = Sys_GetSeconds(), lastTime;
+	int i;
+
+	// This global variable will be set to true when the input thread 
+	// should exit.
+	stopInputThread = false;
+
+	while(!stopInputThread)
+	{
+		lastTime = nowTime;
+		
+		// Poll controllers for input.
+		DD_ReadMouse();
+		DD_ReadJoystick();
+		DD_ReadKeyboard();
+
+		// Generate ticcmds for local players.
+		for(i = 0; i < DDMAXPLAYERS; i++)
+			if(players[i].ingame && players[i].flags && DDPF_LOCAL)
+			{
+				// Build a command for this player.
+				P_BuildCommand(i);
+			}
+		
+		// Wait until enough time has passed.
+		while((nowTime = Sys_GetSeconds()) - lastTime < 1.0/inputRate
+			&& !stopInputThread)
+		{
+			// Let's sleep for a while.
+			Sys_Sleep(350/inputRate);
+		}
+
+		lastTime = nowTime;
+	}
+	return 0;
+}
+
+/*
+ * Start the input thread, which will periodically generate input events.
+ */
+void DD_StartInput(void)
+{
+	inputThreadHandle = Sys_StartThread(DD_InputThread, NULL, 0);
+}
+
+/*
+ * Stop the input thread. Blocks until the thread has been terminated.
+ */
+void DD_StopInput(void)
+{
+	// Tell the input thread to immediately break the loop and exit.
+	stopInputThread = true;
+
+	while(!Sys_GetThreadExitCode(inputThreadHandle, NULL))
+	{
+		// Let's wait for a short while.
+		Sys_Sleep(1);
+	}
+}
+
+/*
+ * Initializes the key mappings to the default values.
+ */
+void DD_InitInput(void)
+{
+	// A mutex is used to control access to the event queue. The input 
+	// threads writes to the queue and the refresh queue reads events 
+	// from it.
+	eventQueueMutex = Sys_CreateMutex("EventQueueMutex");
+
+	DD_DefaultKeyMapping();
+}
+
+/*
+ * Shut down the input subsystem. The input thread is stopped.
+ */
+void DD_ShutdownInput(void)
+{
+	DD_StopInput();
+
+	Sys_DestroyMutex(eventQueueMutex);
+	eventQueueMutex = 0;
 }

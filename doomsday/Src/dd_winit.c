@@ -369,6 +369,9 @@ void DD_Shutdown()
 	extern memzone_t *mainzone;
 	int i;
 
+	// Stop the input thread. Blocks until the thread has been terminated.
+	DD_ShutdownInput();
+
 	DD_ShutdownHelp();
 	Zip_Shutdown();
 

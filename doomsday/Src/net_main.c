@@ -70,9 +70,6 @@ extern boolean	net_showskew;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte			*localticcmds;
-int				numlocal;		// Number of cmds in the buffer.
-
 ddplayer_t		players[MAXPLAYERS];
 client_t		clients[MAXPLAYERS];// All network data for the players.
 
@@ -83,7 +80,6 @@ int				consoleplayer;
 int				displayplayer;
 
 int             gametic;
-int				lasttime, availabletics, realtics;
 
 // Gotframe is true if a frame packet has been received.
 int				gotframe = false;
@@ -128,7 +124,7 @@ cvar_t netCVars[] =
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int coordTimer = 0;
+static timespan_t lastNetUpdate;
 
 // CODE --------------------------------------------------------------------
 
@@ -176,30 +172,32 @@ id_t Net_GetPlayerID(int player)
 // Net_SendBuffer
 //	Sends the contents of the netbuffer.
 //===========================================================================
-void Net_SendBuffer(int to_player, int sp_flags)
+void Net_SendBuffer(int toPlayer, int spFlags)
 {
 	// Don't send anything during demo playback.
 	if(playback) return;
 
 	// Update the length of the message.
 	netbuffer.length = netbuffer.cursor - netbuffer.msg.data;
-	netbuffer.player = to_player;
+	netbuffer.player = toPlayer;
 
 	// A rebound packet?
-	if(sp_flags & SPF_REBOUND)
+	if(spFlags & SPF_REBOUND_FROM)
 	{
+		// FIXME: From which player?
+		//fromPlayer = spFlags & 0xff;
 		reboundstore = netbuffer;
 		reboundpacket = true;
 		return;
 	}
 
-	Demo_WritePacket(to_player);
+	Demo_WritePacket(toPlayer);
 
 	// Can we send the packet?
-	if(sp_flags & SPF_DONT_SEND) return;
+	if(spFlags & SPF_DONT_SEND) return;
 
 	// Send the packet to the network.
-	N_SendPacket(sp_flags);
+	N_SendPacket(spFlags);
 }
 
 // Returns false if there are no packets waiting.
@@ -251,13 +249,13 @@ boolean Net_GetPacket(void)
 // Net_SendPacket
 //	This is the public interface of the message sender.
 //===========================================================================
-void Net_SendPacket(int to_player, int type, void *data, int length)
+void Net_SendPacket(int toPlayer, int type, void *data, int length)
 {
 	int flags = 0;
 	
 	// What kind of delivery to use?
-	if(to_player & DDSP_CONFIRM) flags |= SPF_CONFIRM;
-	if(to_player & DDSP_ORDERED) flags |= SPF_ORDERED;
+	if(toPlayer & DDSP_CONFIRM) flags |= SPF_CONFIRM;
+	if(toPlayer & DDSP_ORDERED) flags |= SPF_ORDERED;
 
 	Msg_Begin(type);
 	if(data) Msg_Write(data, length);
@@ -271,8 +269,8 @@ void Net_SendPacket(int to_player, int type, void *data, int length)
 	{
 		// The server can send packets to any player.
 		// Only allow sending to the sixteen possible players.
-		Net_SendBuffer(to_player & DDSP_ALL_PLAYERS? NSP_BROADCAST 
-			: (to_player & 0xf), flags); 
+		Net_SendBuffer(toPlayer & DDSP_ALL_PLAYERS? NSP_BROADCAST 
+			: (toPlayer & 0xf), flags); 
 	}
 }
 
@@ -371,125 +369,91 @@ int CCmdChat(int argc, char **argv)
 	return true;
 }
 
-// Returns a pointer to a new local ticcmd so it can be built.
-// Returns NULL if the buffer is full.
-ticcmd_t *Net_LocalCmd()
+/*
+ * Insert a new command into the player's local command buffer.
+ * Called in the input thread. The refresh thread sends the accumulated
+ * commads to the server. 
+ *
+ * FIXME: Why doesn't the input thread send them immediately?!
+ */
+void Net_NewLocalCmd(ticcmd_t *cmd, int pNum)
 {
-	// Check that the localtics buffer still has room.
-	if(numlocal == LOCALTICS) return NULL;
-	// One more command. The counter is cleared when the cmds are sent.
-	return (ticcmd_t*) &localticcmds[TICCMD_IDX(numlocal++)]; 
+	client_t *cl = clients + pNum;
+
+	// Acquire exclusive usage on the local buffer.
+	Sys_AcquireMutex(cl->localCmdLock);
+
+	if(cl->numLocal != LOCALTICS) 
+	{
+		// Copy the new command into the buffer.
+		memcpy(&cl->localCmds[TICCMD_IDX(cl->numLocal++)], cmd, TICCMD_SIZE);
+	}
+
+	Sys_ReleaseMutex(cl->localCmdLock);
 }
 
 /*
- * After a long period with no updates (map setup), calling this will
- * reset the tictimer so that no time seems to have passed.
+ * Returns true if the specified player is a real local player.
  */
-void Net_ResetTimer(void)
+boolean Net_IsLocalPlayer(int pNum)
 {
-	lasttime = Sys_GetTime();
+	return players[pNum].ingame && (players[pNum].flags & DDPF_LOCAL);
 }
 
 /*
- * Build ticcmds for console player, sends out a packet.
+ * Periodically send accumulated local commands to the server.
+ * This is called in the refresh thread.
  */
-void Net_Update(void)
+void Net_SendCommandsToServer(timespan_t time)
 {
-	static int ticSendTimer = 0;
-	int nowtime;
-	int newtics;
-	int	i;
-
-	// Check time.
-	nowtime = Sys_GetTime();
-
-	// Synchronize tics with game time, not the clock?
-	if(!net_ticsync) nowtime = gametic;
-
-	if(firstNetUpdate)
+	static trigger_t watch = { CLIENT_TICCMD_INTERVAL/35.0 };
+	byte *msg;
+	int i;
+	
+	if(isClient && M_CheckTrigger(&watch, time)) return;
+		
+	// Send the commands of all local players.
+	for(i = 0; i < DDMAXPLAYERS; i++)
 	{
-		firstNetUpdate = false;
-		lasttime = nowtime;
-	}
-	newtics = nowtime - lasttime;
-	if(newtics <= 0) goto listen;	// Nothing new to update.
+		if(!Net_IsLocalPlayer(i)) continue;
 
-	lasttime = nowtime;
-
-	// Realtics counts the actual time that has passed.
-	realtics += newtics;
-
-	// Build new ticcmds for console player.
-	for(i = 0; i < newtics; i++)
-	{
-		DD_StartTic();
-		DD_ProcessEvents();	
-
-		/*Con_Printf("mktic:%i gt:%i newtics:%i >> %i\n", 
-				maketic, gametic, newtics, maketic-gametic);*/
-
-		if(playback)
-		{
-			numlocal = 0;
-			if(availabletics < LOCALTICS) availabletics++;
-		}
-		else if(!isDedicated && !ui_active)
-		{
-			// Place the new ticcmd in the local ticcmds buffer.
-			ticcmd_t *cmd = Net_LocalCmd();
-			if(cmd)
-			{
-				gx.BuildTicCmd(cmd);
-				// Set the time stamp. Only the lowest byte is stored.
-				//cmd->time = gametic + availabletics;
-				// Availabletics counts the tics that have cmds.
-				availabletics++;
-				if(isClient)
-				{
-					// When not playing a demo, this is the last command.
-					// It is used in local movement prediction.
-					memcpy(clients[consoleplayer].lastcmd, cmd, sizeof(*cmd));
-				}
-			}
-		}
-	}
-
-	// This is as far as dedicated servers go.
-	if(isDedicated) goto listen;
-
-	// Clients don't send commands on every tic.
-	ticSendTimer += newtics;
-	if(!isClient || ticSendTimer > CLIENT_TICCMD_INTERVAL)
-	{
-		byte *msg;
-
-		ticSendTimer = 0;
+		Sys_AcquireMutex(clients[i].localCmdLock);
 
 		// The game will pack the commands into a buffer. The returned
 		// pointer points to a buffer that contains its size and the
 		// packed commands.
-		msg = (byte*) gx.NetPlayerEvent(numlocal, DDPE_WRITE_COMMANDS, 
-			localticcmds);
+		msg = (byte*) gx.NetPlayerEvent(clients[i].numLocal, 
+			DDPE_WRITE_COMMANDS, clients[i].localCmds);
 
 		Msg_Begin(pcl_commands);
 		Msg_Write(msg + 2, *(ushort*) msg);
 
 		// Send the packet to the server, i.e. player zero.
-		Net_SendBuffer(0, isClient? 0 : SPF_REBOUND);
+		Net_SendBuffer(0, isClient? 0 : (SPF_REBOUND_FROM | i));
 
 		// The buffer is cleared.
-		numlocal = 0;
+		clients[i].numLocal = 0;
+		Sys_ReleaseMutex(clients[i].localCmdLock);
 	}
+}
 
-	// Clients will periodically send their coordinates to the server so
-	// any prediction errors can be fixed. Client movement is almost 
-	// entirely local.
-	coordTimer -= newtics;
-	if(isClient && allowFrames && coordTimer < 0
-		&& players[consoleplayer].mo)
+/*
+ * Clients will periodically send their coordinates to the server so
+ * any prediction errors can be fixed. Client movement is almost 
+ * entirely local.
+ */
+void Net_SendCoordsToServer(timespan_t time)
+{
+	static trigger_t watch;
+
+	watch.duration = net_coordtime/35.0f;
+	if(!M_CheckTrigger(&watch, time)) return; // It's too soon.
+
+	// FIXME: Multiple local players?
+	if(isClient && allowFrames && players[consoleplayer].mo)
 	{
 		mobj_t *mo = players[consoleplayer].mo;
-		coordTimer = net_coordtime; // 35/2
+
 		Msg_Begin(pkt_coords);
 		Msg_WriteShort(mo->x >> 16);
 		Msg_WriteShort(mo->y >> 16);
@@ -504,52 +468,144 @@ void Net_Update(void)
 		}
 		Net_SendBuffer(0, 0);
 	}
+}
+
+/*
+ * After a long period with no updates (map setup), calling this will
+ * reset the tictimer so that no time seems to have passed.
+ */
+void Net_ResetTimer(void)
+{
+	lastNetUpdate = Sys_GetSeconds();
+}
+
+/*
+ * Build ticCmds for console player, sends out a packet.
+ */
+void Net_Update(void)
+{
+	timespan_t nowTime = Sys_GetSeconds(), newTime;
+
+	// Synchronize tics with game time, not the clock?
+	//if(!net_ticsync) nowtime = gametic;
+
+	if(firstNetUpdate)
+	{
+		firstNetUpdate = false;
+		lastNetUpdate = nowTime;
+	}
+	newTime = nowTime - lastNetUpdate;
+	if(newTime <= 0) goto listen;	// Nothing new to update.
+
+	lastNetUpdate = nowTime;
+
+	// Begin by processing input events. Events will be sent down the 
+	// responder chain until the queue is empty.
+	DD_ProcessEvents();
+
+#if 0
+	// Build new ticCmds for console player.
+	for(i = 0; i < newtics; i++)
+	{
+		DD_ProcessEvents();	
+
+		/*Con_Printf("mktic:%i gt:%i newtics:%i >> %i\n", 
+				maketic, gametic, newtics, maketic-gametic);*/
+
+		if(playback)
+		{
+			numlocal = 0;
+			if(availabletics < LOCALTICS) availabletics++;
+		}
+		else if(!isDedicated && !ui_active)
+		{
+			// Place the new ticcmd in the local ticCmds buffer.
+			ticcmd_t *cmd = Net_LocalCmd();
+			if(cmd)
+			{
+				gx.BuildTicCmd(cmd);
+				// Set the time stamp. Only the lowest byte is stored.
+				//cmd->time = gametic + availabletics;
+				// Availabletics counts the tics that have cmds.
+				availabletics++;
+				if(isClient)
+				{
+					// When not playing a demo, this is the last command.
+					// It is used in local movement prediction.
+					memcpy(clients[consoleplayer].lastCmd, cmd, sizeof(*cmd));
+				}
+			}
+		}
+	}
+#endif
+
+	// This is as far as dedicated servers go.
+	if(isDedicated) goto listen;
+
+	// Clients don't send commands on every tic.
+	Net_SendCommandsToServer(newTime);
+
+	// Clients will periodically send their coordinates to the server so
+	// any prediction errors can be fixed. Client movement is almost 
+	// entirely local.
+	Net_SendCoordsToServer(newTime);
 
 listen:
 	// Listen for packets. Call the correct packet handler.
 	if(isClient) 
-		Cl_GetPackets();
-	else // Single-player or server.
-		Sv_GetPackets();
-}
-
-//===========================================================================
-// Net_AllocArrays
-//	Called from Net_Init to initialize the ticcmd arrays.
-//===========================================================================
-void Net_AllocArrays(void)
-{
-	int		i;
-
-	// Local ticcmds are stored into this array before they're copied
-	// to netplayer[0]'s ticcmds buffer.
-	localticcmds = calloc(LOCALTICS, TICCMD_SIZE);
-	numlocal = 0;	// Nothing in the buffer.
-
-	for(i = 0; i < MAXPLAYERS; i++)
 	{
-		memset(clients+i, 0, sizeof(clients[i]));
-		// The server stores ticcmds sent by the clients to these
-		// buffers.
-		clients[i].ticcmds = calloc(BACKUPTICS, TICCMD_SIZE);
-		// The last cmd that was executed is stored here.
-		clients[i].lastcmd = calloc(1, TICCMD_SIZE);
-		clients[i].runTime = -1;
+		Cl_GetPackets();
+	}
+	else 
+	{
+		// Single-player or server.
+		Sv_GetPackets();
 	}
 }
 
+/*
+ * Called from Net_Init to initialize the ticcmd arrays.
+ */
+void Net_AllocArrays(void)
+{
+	char lockName[40];
+	client_t *cl;
+	int	i;
+
+	memset(clients, 0, sizeof(clients));
+
+	for(i = 0, cl = clients; i < MAXPLAYERS; i++, cl++)
+	{
+		// A mutex is used to control access to the local commands buffer.
+		sprintf(lockName, "LocalCmdMutex%02i", i);
+		cl->localCmdLock = Sys_CreateMutex(lockName);
+		cl->localCmds = calloc(LOCALTICS, TICCMD_SIZE);		
+
+		// The server stores ticCmds sent by the clients to these
+		// buffers.
+		cl->ticCmds = calloc(BACKUPTICS, TICCMD_SIZE);
+
+		// The last cmd that was executed is stored here.
+		cl->lastCmd = calloc(1, TICCMD_SIZE);
+		cl->runTime = -1;
+	}
+}
+
+/*
+ * Called at shutdown.
+ */
 void Net_DestroyArrays(void)
 {
 	int i;
 
-	free(localticcmds);
-	localticcmds = NULL;
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
-		free(clients[i].ticcmds);
-		free(clients[i].lastcmd);
-		clients[i].ticcmds = NULL;
-		clients[i].lastcmd = NULL;
+		Sys_DestroyMutex(clients[i].localCmdLock);
+		free(clients[i].localCmds);
+		free(clients[i].ticCmds);
+		free(clients[i].lastCmd);
+		clients[i].ticCmds = NULL;
+		clients[i].lastCmd = NULL;
 	}
 }
 
@@ -658,7 +714,7 @@ int Net_TimeDelta(byte now, byte then)
 //===========================================================================
 // Net_GetTicCmd
 //	This is a bit complicated and quite possibly unnecessarily so. The 
-//	idea is, however, that because the ticcmds sent by clients arrive in 
+//	idea is, however, that because the ticCmds sent by clients arrive in 
 //	bursts, we'll preserve the motion by 'executing' the commands in the
 //	same order in which they were generated. If the client's connection
 //	lags a lot, the difference between the serverside and clientside 
@@ -671,10 +727,8 @@ int Net_GetTicCmd(void *pCmd, int player)
 {
 	client_t *client = &clients[player];
 	ticcmd_t *cmd = pCmd;
-/*	int doMerge = false;
-	int future;*/
 
-	if(client->numtics <= 0) 
+	if(client->numTics <= 0) 
 	{
 		// No more commands for this player.
 		return false;
@@ -682,89 +736,24 @@ int Net_GetTicCmd(void *pCmd, int player)
 
 	// Return the next ticcmd from the buffer.
 	// There will be one less tic in the buffer after this.
-	client->numtics--;
-	memcpy(cmd, &client->ticcmds[ TICCMD_IDX(client->firsttic++) ], 
+	client->numTics--;
+	memcpy(cmd, &client->ticCmds[ TICCMD_IDX(client->firstTic++) ], 
 		TICCMD_SIZE);
 
 	// This is the new last command.
-	memcpy(client->lastcmd, cmd, TICCMD_SIZE);
+	memcpy(client->lastCmd, cmd, TICCMD_SIZE);
 
-	// Make sure the firsttic index is in range.
-	client->firsttic %= BACKUPTICS;
+	// Make sure the firstTic index is in range.
+	client->firstTic %= BACKUPTICS;
 	return true;
+}
 
-#if 0
-	//Con_Printf("GetTicCmd: Cl=%i, GT=%i (%i)...\n", player, gametic, (byte)gametic);
-
-	// Check the lag stress.
-/*	if(cl->lagStress > net_stressmargin)
-	{
-		// Command lag should be increased, we're running out of cmds.
-		cl->lagStress -= net_stressmargin;
-		memcpy(cmd, cl->lastcmd, TICCMD_SIZE);	// Repeat lastcmd.
-		//Con_Printf("  Increasing lag\n");
-		return true;
-	}
-	else if(cl->lagStress < -net_stressmargin)
-	{
-		// Command lag should be decreased.
-		cl->lagStress += net_stressmargin;
-		cl->runTime++;
-		//Con_Printf("  Decreasing lag\n");
-	}*/
-
-	for(;;)
-	{
-		if(Net_TimeDelta(gametic, cl->runTime) <= 0)
-		{
-			//Con_Printf("  Running in the future! Rt=%i\n", cl->runTime);
-			future = true;
-			//cl->lagStress++;
-		}
-		else 
-		{
-			future = false;
-		}
-		// Are there any commands left for this player?
-		if(!cl->numtics) 
-		{
-			cl->lagStress++;
-			// Reuse the last command.
-			memcpy(cmd, cl->lastcmd, TICCMD_SIZE);
-			// Runtime advances.
-			if(!future) cl->runTime++;
-			//Con_Printf("  Out of Cmds! Rt set to %i\n", cl->runTime);
-			return false; 
-		}
-		// There's at least one command in the buffer.
-		// There will be one less tic in the buffer after this.
-		cl->numtics--;
-		memcpy(cmd, &cl->ticcmds[TICCMD_IDX(cl->firsttic++)], TICCMD_SIZE);
-		// Make sure the firsttic iterator is in range.
-		if(cl->firsttic >= BACKUPTICS) cl->firsttic = 0;
-		// Do we need to do any merging?
-		if(doMerge && gx.DiscardTicCmd) gx.DiscardTicCmd(cl->lastcmd, cmd);
-		// This is the new last command.
-		memcpy(cl->lastcmd, cmd, TICCMD_SIZE);
-		// Check that the command is valid (not if its tick has already passed).
-		if(Net_TimeDelta(cl->runTime, cmd->time) >= 0)
-		{
-			//Con_Printf("  Obsolete Cmd! Rt=%i Ct=%i\n", cl->runTime, cmd->time);
-			// Cmd is too old. Go to next command and merge this one with it.
-			doMerge = true;
-			continue;
-		}		
-		cl->runTime = cmd->time;
-		// Note command lag.
-		cl->lag = Sv_Latency(cmd->time);
-		// The local player doesn't need lag stress, because we know it's
-		// always running exactly synced with the server, i.e. itself.
-		if(player && cl->numtics > 1) cl->lagStress--;
-		//Con_Printf("  CmdLag=%i\n", cl->lag);
-		break;
-	}
-	return true;
-#endif
+/*
+ * Insert a new command into the player's tic command buffer.
+ */
+void Net_AddTicCmd(ticcmd_t *command, int player)
+{
+	
 }
 
 //===========================================================================
@@ -775,13 +764,13 @@ void Net_Drawer(void)
 {
 	char buf[160], tmp[40];
 	int i, c;
-	boolean show_blink_r = false;
+	boolean showBlinkRec = false;
 
 	for(i = 0; i < MAXPLAYERS; i++)
 		if(players[i].ingame && clients[i].recording) 
-			show_blink_r = true;
+			showBlinkRec = true;
 
-	if(!net_dev && !show_blink_r && !consoleShowFPS) return;
+	if(!net_dev && !showBlinkRec && !consoleShowFPS) return;
 
 	// Go into screen projection mode.
 	gl.MatrixMode(DGL_PROJECTION);
@@ -789,14 +778,14 @@ void Net_Drawer(void)
 	gl.LoadIdentity();
 	gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
 	
-	if(show_blink_r && gametic & 8)
+	if(showBlinkRec && gametic & 8)
 	{
 		strcpy(buf, "[");
 		for(i = c = 0; i < MAXPLAYERS; i++)
 		{
 			if(!players[i].ingame || !clients[i].recording) continue;
 			if(c++) strcat(buf, ",");
-			sprintf(tmp, "%i:%s", i, clients[i].recordpaused? "-P-" : "REC");
+			sprintf(tmp, "%i:%s", i, clients[i].recordPaused? "-P-" : "REC");
 			strcat(buf, tmp);
 		}
 		strcat(buf, "]");
@@ -806,20 +795,7 @@ void Net_Drawer(void)
 		gl.Color3f(1, 1, 1);
 		FR_TextOut(buf, i - 10, 10);
 	}
-	if(net_dev)
-	{
-/*		gl.Color3f(1, 1, 1);
-		sprintf(buf, "G%i", gametic);
-		FR_TextOut(buf, 10, 10);
-		for(i = 0, cl = clients; i<MAXPLAYERS; i++, cl++)
-			if(players[i].ingame)
-			{
-				sprintf(buf, "%02i:%+04i[%+03i](%02d/%03i) pf:%x", i, cl->lag,
-					cl->lagStress, cl->numtics, cl->runTime, 
-					players[i].flags);
-				FR_TextOut(buf, 10, 10+10*(i+1));
-			}*/
-	}
+
 	if(consoleShowFPS)
 	{
 		int x, y = 30, w, h;
@@ -897,26 +873,22 @@ uint Net_GetAckThreshold(int clientNumber)
 	return threshold;
 }
 
-int Sv_GetRegisteredMobj(pool_t*, thid_t, mobjdelta_t*);
-
 //===========================================================================
 // Net_Ticker
 //===========================================================================
-void Net_Ticker(void)
+void Net_Ticker(timespan_t time)
 {
-	int		i;
+	int	i;
 	client_t *cl;
-	static int monitorCount = 0;
-	static int dampenCount = 0;
 
-	N_Ticker();
+	// Low-level ticker.
+	N_Ticker(time);
 
 	if(net_dev)
 	{
-		static int printTimer = 0;
-		if(printTimer++ > TICSPERSEC)
+		static trigger_t printer = { 1 };
+		if(M_CheckTrigger(&printer, time))
 		{
-			printTimer = 0;
 			for(i = 0; i < MAXPLAYERS; i++)
 			{
 				if(Sv_IsFrameTarget(i))
@@ -930,7 +902,7 @@ void Net_Ticker(void)
 						Sv_GetMaxFrameSize(i));
 				}
 				if(players[i].ingame)
-					Con_Message("%i: cmds=%i\n", i, clients[i].numtics);
+					Con_Message("%i: cmds=%i\n", i, clients[i].numTics);
 			}
 		}
 	}

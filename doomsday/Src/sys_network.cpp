@@ -38,6 +38,9 @@
 
 /*
  * $Log$
+ * Revision 1.7  2003/09/08 22:19:40  skyjake
+ * Float timing loop, use timespan_t in tickers, style cleanup
+ *
  * Revision 1.6  2003/09/03 20:53:49  skyjake
  * Added a proper GPL banner
  *
@@ -253,7 +256,7 @@ static netmessage_t *gMsgHead, *gMsgTail;
 
 // A mutex is used to protect the addition and removal of messages from
 // the message queue.
-static HANDLE gMsgMutex;
+static int gMsgMutex;
 
 // The master action queue.
 static masteraction_t masterQueue[MASTER_QUEUE_LEN];
@@ -284,6 +287,7 @@ static uint gNumSentBytes;
 
 // CODE --------------------------------------------------------------------
 
+#if 0
 /*
  * Acquire or release ownership of the message queue mutex.
  * Returns true if successful.
@@ -306,6 +310,7 @@ boolean N_LockQueue(boolean doAcquire)
 	}
 	return true;
 }
+#endif
 
 /*
  * Generate a new, non-zero message ID.
@@ -684,7 +689,8 @@ void N_SMSReset(store_t *store)
  */
 void N_PostMessage(netmessage_t *msg)
 {
-	N_LockQueue(true);
+	// Lock the message queue.
+	Sys_AcquireMutex(gMsgMutex);
 
 	// This will be the latest message.
 	msg->next = NULL;
@@ -701,7 +707,7 @@ void N_PostMessage(netmessage_t *msg)
 	// If there is no head, this'll be the first message.
 	if(gMsgHead == NULL) gMsgHead = msg;
 
-	N_LockQueue(false);
+	Sys_ReleaseMutex(gMsgMutex);
 }
 
 /*
@@ -715,7 +721,7 @@ netmessage_t* N_GetMessage(void)
 {
 	if(gMsgHead == NULL) return NULL;
 
-	N_LockQueue(true);
+	Sys_AcquireMutex(gMsgMutex);
 
 	// This is the message we'll return.
 	netmessage_t *msg = gMsgHead;
@@ -726,7 +732,7 @@ netmessage_t* N_GetMessage(void)
 	// Advance the head pointer.
 	gMsgHead = gMsgHead->next;
 
-	N_LockQueue(false);
+	Sys_ReleaseMutex(gMsgMutex);
 
 	// Identify the sender.
 	msg->player = N_IdentifyPlayer(msg->sender);
@@ -1089,7 +1095,7 @@ boolean N_CheckDirectPlay(void)
 void N_Init(void)
 {
 	// Create a mutex for the message queue.
-	gMsgMutex = CreateMutex(NULL, FALSE, MSG_MUTEX_NAME);
+	gMsgMutex = Sys_CreateMutex(MSG_MUTEX_NAME);
 
 	N_SockInit();
 	N_MasterInit();
@@ -1108,8 +1114,8 @@ void N_Shutdown(void)
 	N_SockShutdown();
 
 	// Close the handle of the message queue mutex.
-	CloseHandle(gMsgMutex);
-	gMsgMutex = NULL;
+	Sys_DestroyMutex(gMsgMutex);
+	gMsgMutex = 0;
 
 #ifdef COUNT_BYTE_FREQS
 	Con_Printf("Total number of bytes: %i\n", gTotalByteCount);
@@ -1812,10 +1818,6 @@ void N_MAPost(masteraction_t act)
 {
 	masterQueue[mqHead] = act;
 	mqHead = (++mqHead) % MASTER_QUEUE_LEN;
-/*
-	if(mqHead == mqTail) 
-		I_Error("N_MAPost: master action queue overflow!\n");
-*/
 }
 
 /*
@@ -1896,16 +1898,17 @@ void N_PrintServerInfo(int index, serverinfo_t *info)
 /*
  * Handles low-level net tick stuff: communication with the master server.
  */
-void N_Ticker(void)
+void N_Ticker(timespan_t time)
 {
 	masteraction_t act;
 	int	i, num;
+	static trigger_t heartBeat = { MASTER_HEARTBEAT };
 
 	if(netgame)
 	{
 		// Update master every 2 minutes.
 		if(masterAware && gCurrentProvider == NSP_TCPIP 
-			&& !(systics % (MASTER_HEARTBEAT*TICRATE)))
+			&& M_CheckTrigger(&heartBeat, time))
 		{
 			N_MasterAnnounceServer(true);
 		}
@@ -2235,7 +2238,7 @@ boolean N_Connect(int index)
 	// Connection has been established, stop any enumerations.
 	N_StopLookingForHosts();
 
-	handshake_received = false;
+	handshakeReceived = false;
 	netgame = true; // Allow sending/receiving of packets.
 	isServer = false;
 	isClient = true;

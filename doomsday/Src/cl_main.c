@@ -30,6 +30,7 @@
 #include "de_system.h"
 #include "de_network.h"
 #include "de_graphics.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -148,8 +149,8 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	for(i = 0; i < MAXPLAYERS; i++)
 		players[i].ingame = (shake.playerMask & (1<<i)) != 0;	
 	consoleplayer = displayplayer = shake.yourConsole;
-	clients[consoleplayer].numtics = 0;
-	clients[consoleplayer].firsttic = 0;
+	clients[consoleplayer].numTics = 0;
+	clients[consoleplayer].firstTic = 0;
 
 	isClient = true;
 	isServer = false;
@@ -321,9 +322,14 @@ void Cl_GetPackets(void)
 //===========================================================================
 // Cl_Ticker
 //===========================================================================
-void Cl_Ticker(void)
+void Cl_Ticker(timespan_t time)
 {
+	static trigger_t fixed = { 1.0/35 };
+
 	if(!Cl_GameReady() || clientPaused) return;
+
+	if(!M_CheckTrigger(&fixed, time)) return;
+
 	Cl_LocalCommand();
 	Cl_PredictMovement();	
 	Cl_MovePsprites();

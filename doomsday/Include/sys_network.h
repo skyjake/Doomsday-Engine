@@ -38,10 +38,10 @@ typedef enum serviceprovider_e {
 } serviceprovider_t;
 
 // Send Packet flags:
-#define SPF_REBOUND		0x00020000	// Write only to local loopback
-#define SPF_DONT_SEND	0x00040000	// Don't really send out anything
-#define SPF_CONFIRM		0x40000000	// Make sure it's received
-#define SPF_ORDERED		0x80000000	// Send in order & confirm
+#define SPF_REBOUND_FROM	0x00020000	// Write only to local loopback
+#define SPF_DONT_SEND		0x00040000	// Don't really send out anything
+#define SPF_CONFIRM			0x40000000	// Make sure it's received
+#define SPF_ORDERED			0x80000000	// Send in order & confirm
 
 // If a master action fails, the action queue is emptied.
 typedef enum {
@@ -88,7 +88,7 @@ uint	N_GetSendQueueSize(int player);
 void	N_TerminateClient(int console);
 
 void	N_Update();
-void	N_Ticker(void);
+void	N_Ticker(timespan_t time);
 const char* N_GetProtocolName(void);
 
 int		N_GetHostCount(void);

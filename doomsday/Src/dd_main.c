@@ -48,19 +48,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
+typedef struct ddvalue_s {
 	int *readPtr;
 	int *writePtr;
 } ddvalue_t;
-
-typedef struct
-{
-	char *name;
-	void (*func)(char **args, int tag);
-	int requiredArgs;
-	int tag;
-} execOpt_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -84,10 +75,6 @@ static void ExecOptionFILE(char **args, int tag);
 static void ExecOptionMAXZONE(char **args, int tag);
 static void CreateSavePath(void);
 static void WarpCheck(void);
-
-#ifdef TIMEBOMB
-static void DoTimeBomb(void);
-#endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -113,13 +100,12 @@ boolean singletics;			// debug flag to cancel adaptiveness
 int isDedicated = false;
 int maxzone = 0x2000000;	// Default zone heap. (32meg)
 boolean autostart;
-FILE *debugfile;
 
 char *iwadlist[MAXWADFILES];
 char *defaultWads = ""; // A list of wad names, whitespace in between (in .cfg).
-char configFileName[256];
-char defsFileName[256], topDefsFileName[256];
-char ddBasePath[256] = "";	// Doomsday root directory is at...?
+filename_t configFileName;
+filename_t defsFileName, topDefsFileName;
+filename_t ddBasePath = "";	// Doomsday root directory is at...?
 
 int queryResult = 0;
 

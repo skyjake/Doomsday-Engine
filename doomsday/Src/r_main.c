@@ -66,7 +66,6 @@ int			viewangleoffset = 0;
 int			validcount = 1;	// increment every time a check is made
 int			framecount;		// just for profiling purposes
 int			rend_info_tris = 0;
-int			rend_camera_smooth = false;
 fixed_t		viewx, viewy, viewz;
 float		viewfrontvec[3], viewupvec[3], viewsidevec[3];
 fixed_t		viewxOffset = 0, viewyOffset = 0, viewzOffset = 0;
@@ -265,138 +264,34 @@ void R_SetupFrame(ddplayer_t *player)
 	extern int BorderRefreshCount;
 	int tableAngle;
 	float yawRad, pitchRad;
-	viewer_t sharpView, smoothView;
-	double nowTime;
-	sector_t *sector;
-	float timePos;
-	int i;
+	viewer_t viewer;
 
 	// Reset the DGL triangle counter.
 	gl.GetInteger(DGL_POLY_COUNT);
 
 	viewplayer = player;
 
-	sharpView.angle = (isClient? player->clAngle : player->mo->angle)
+	viewer.angle = (isClient? player->clAngle : player->mo->angle)
 		+ viewangleoffset;
-	sharpView.pitch = isClient? player->clLookDir : player->lookdir;
-	sharpView.x = player->mo->x + viewxOffset;
-	sharpView.y = player->mo->y + viewyOffset;
-	sharpView.z = player->viewz + viewzOffset;
+	viewer.pitch = isClient? player->clLookDir : player->lookdir;
+	viewer.x = player->mo->x + viewxOffset;
+	viewer.y = player->mo->y + viewyOffset;
+	viewer.z = player->viewz + viewzOffset;
+
 	// Check that the viewz doesn't go too high or low.
-	if(sharpView.z > player->mo->ceilingz - 4*FRACUNIT)
-		sharpView.z = player->mo->ceilingz - 4*FRACUNIT;
-	if(sharpView.z < player->mo->floorz + 4*FRACUNIT)
-		sharpView.z = player->mo->floorz + 4*FRACUNIT;
-
-	// Camera smoothing is only enabled if the frame rate is above 35.
-	if(!rend_camera_smooth || resetNextViewer
-		|| DD_GetFrameRate() < 35)
+	if(viewer.z > player->mo->ceilingz - 4*FRACUNIT)
 	{
-		resetNextViewer = false;
-
-		// Just view from the sharp position.
-		R_SetViewPos(&sharpView);
-		lastSharpFrameTime = Sys_GetTimef();
-		memcpy(&lastSharpView[0], &sharpView, sizeof(sharpView));
-		memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
-
-		// $smoothplane: Reset the plane height trackers.
-		for(i = 0; i < numsectors; i++)
-		{
-			secinfo[i].visceiloffset = secinfo[i].visflooroffset = 0;
-
-			// Reset the old Z values.
-			sector = SECTOR_PTR(i);
-			secinfo[i].oldfloor[0] 
-				= secinfo[i].oldfloor[1] 
-				= sector->floorheight;
-			secinfo[i].oldceil[0] 
-				= secinfo[i].oldceil[1] 
-				= sector->ceilingheight;
-		}
+		viewer.z = player->mo->ceilingz - 4*FRACUNIT;
 	}
-	else 
+	if(viewer.z < player->mo->floorz + 4*FRACUNIT)
 	{
-		static int oldgtic = 0;
-		nowTime = Sys_GetTimef();
-		if(gametic != oldgtic)
-		{
-			// The game tic has changed, which means we have an updated
-			// sharp camera position. However, the position is at the 
-			// beginning of the tic and we are most likely not at a sharp
-			// tic boundary, in time. We will update lastSharpFrameTime
-			// so it tells the time of the new sharp position, and then
-			// move the viewer positions one step back in the buffer.
-			// The effect of this is that [0] is the previous sharp position
-			// and [1] is the current one.
-			oldgtic = gametic;
-			lastSharpFrameTime += (int) (nowTime - lastSharpFrameTime);
-			memcpy(&lastSharpView[0], &lastSharpView[1], sizeof(viewer_t));
-			memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
-			R_CheckViewerLimits(lastSharpView, &sharpView);
-
-			// $smoothplane: Roll the height tracker buffers.
-			for(i = 0; i < numsectors; i++)
-			{
-				sector = SECTOR_PTR(i);
-				secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
-				secinfo[i].oldfloor[1] = sector->floorheight;
-
-				if(abs(secinfo[i].oldfloor[0] - secinfo[i].oldfloor[1])
-					>= MAX_SMOOTH_PLANE_MOVE)
-				{
-					// Too fast: make an instantaneous jump.
-					secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
-				}
-		
-				secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
-				secinfo[i].oldceil[1] = sector->ceilingheight;
-
-				if(abs(secinfo[i].oldceil[0] - secinfo[i].oldceil[1])
-					>= MAX_SMOOTH_PLANE_MOVE)
-				{
-					// Too fast: make an instantaneous jump.
-					secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
-				}
-			}
-		}
-		if(nowTime - lastSharpFrameTime > 1)
-		{
-			// This'll synchronize our frame timing with the game tics.
-			lastSharpFrameTime = nowTime - 1;
-		}
-		// Calculate the smoothed camera position, which is somewhere between
-		// the previous and current sharp positions. This introduces a slight
-		// delay (max. 1/35 sec) to the movement of the smoothed camera.
-		timePos = nowTime - lastSharpFrameTime;
-		R_InterpolateViewer(lastSharpView, &sharpView, timePos, &smoothView);
-		R_SetViewPos(&smoothView);
-
-		// $smoothplane: Set the visible offsets.
-		for(i = 0; i < numsectors; i++)
-		{
-			sector = SECTOR_PTR(i);
-
-			secinfo[i].visflooroffset 
-				= FIX2FLT(secinfo[i].oldfloor[0]*(1 - timePos)
-				+ sector->floorheight*timePos - 
-				sector->floorheight);
-
-			secinfo[i].visceiloffset 
-				= FIX2FLT(secinfo[i].oldceil[0]*(1 - timePos)
-				+ sector->ceilingheight*timePos	
-				- sector->ceilingheight);
-		}
-
-/*		Con_Printf("%.3f: s%.4f e%.4f = %.4f\n", 
-			nowTime - lastSharpFrameTime, 
-			lastSharpView[0].angle/(float)ANGLE_MAX,
-			sharpView.angle/(float)ANGLE_MAX,
-			smoothView.angle/(float)ANGLE_MAX);*/
+		viewer.z = player->mo->floorz + 4*FRACUNIT;
 	}
+
+	R_SetViewPos(&viewer);
 
 	extralight = player->extralight;
-	tableAngle = viewangle>>ANGLETOFINESHIFT;
+	tableAngle = viewangle >> ANGLETOFINESHIFT;
 	viewsin = finesine[tableAngle];
 	viewcos = finecosine[tableAngle];
 	validcount++;

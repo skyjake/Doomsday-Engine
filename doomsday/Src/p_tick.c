@@ -24,6 +24,7 @@
 #include "de_base.h"
 #include "de_render.h"
 #include "de_play.h"
+#include "de_misc.h"
 
 #include "r_sky.h"
 
@@ -73,11 +74,13 @@ void P_MobjTicker(mobj_t *mo)
 // P_Ticker
 //	Doomsday's own play-ticker.
 //===========================================================================
-void P_Ticker(void)
+void P_Ticker(timespan_t time)
 {
 	thinker_t *th;
+	static trigger_t fixed = { 1.0/35 };
 
 	if(!thinkercap.next) return; // Not initialized yet.
+	if(!M_CheckTrigger(&fixed, time)) return;
 
 	// New ptcgens for planes?
 	P_CheckPtcPlanes();	

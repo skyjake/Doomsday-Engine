@@ -154,8 +154,6 @@ typedef struct {
 	boolean		permanentlink;
 	float		bounds[4];				// Bounding box for the sector.
 	int			flags;
-	fixed_t		oldfloor[2], oldceil[2];
-	float		visflooroffset, visceiloffset;
 	int			addspritecount;			// frame number of last R_AddSprites
 } sectorinfo_t;
 
