@@ -1,8 +1,8 @@
 
                           Doomsday Engine Sources
                           -----------------------
-                              August 29, 2004
-                          (engine version 1.8.2)
+                              October 23, 2004
+                          (engine version 1.8.3)
 
                 by Jaakko Keränen <skyjake@doomsdayhq.com>
                 
@@ -16,7 +16,7 @@ RELEASE NOTES:
 The Doomsday Engine source code is distributed under the GNU General Public
 License (see LICENSE in the root directory).
 
-The code in this package was used to build the 1.8.2 release.
+The code in this package was used to build the 1.8.3 release.
 
 The placement of some files was changed in 1.7.6; you shouldn't install
 this package on top of a previous Doomsday Sources tree unless it's newer
