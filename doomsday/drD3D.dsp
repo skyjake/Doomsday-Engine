@@ -137,6 +137,10 @@ SOURCE=.\Src\drD3D\window.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\Include\drD3D\box.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\dglib.h
 # End Source File
 # Begin Source File
