@@ -1021,8 +1021,35 @@ void R_SetupLevel(char *level_id, int flags)
 		// Run the special level setup command, which the user may alias to 
 		// do something useful.
 		if(level_id && level_id[0])
-			Con_Executef(false, "init-%s", level_id);
+		{
+			char cmd[80];
+			sprintf(cmd, "init-%s", level_id);
+			if(Con_GetCommand(cmd))
+			{
+				Con_Executef(false, cmd);
+			}
+		}
+		
+		// Now that the setup is done, let's reset the tictimer so it'll
+		// appear that no time has passed during the setup.
+		Net_ResetTimer();
 		return;
+	}
+
+	if(isServer)
+	{
+		// Whenever the map changes, remote players must tell us when 
+		// they're ready to begin receiving frames.
+		for(i = 0; i < MAXPLAYERS; i++)
+		{
+			if(!(players[i].flags & DDPF_LOCAL) && clients[i].connected)
+			{
+#ifdef _DEBUG
+				Con_Printf("Cl%i NOT READY ANY MORE!\n", i);
+#endif
+				clients[i].ready = false;
+			}
+		}
 	}
 
 	Con_InitProgress("Setting up level...", 100);
@@ -1055,7 +1082,7 @@ void R_SetupLevel(char *level_id, int flags)
 	if(flags & DDSLF_REVERB) S_CalcSectorReverbs();
 	
 	DL_InitBlockMap();	
-	Cl_CleanClientMobjs();
+	Cl_Reset();
 	RL_DeleteLists();
 	GL_DeleteRawImages();
 	Con_Progress(10, 0);
@@ -1102,7 +1129,10 @@ void R_SetupLevel(char *level_id, int flags)
 	R_ResetViewer();
 
 	// Do network init: Initialize Delta Pools.
-	if(!(flags & DDSLF_NO_SERVER)) Sv_InitPools();
+	if(!(flags & DDSLF_NO_SERVER)) 
+	{
+		Sv_InitPools();
+	}
 
 	Con_Progress(10, 0); // 50%.
 }
