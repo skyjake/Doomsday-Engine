@@ -39,11 +39,12 @@ typedef enum
 
 // Standard dimensions.
 #define UI_BORDER		(screenWidth/120)			// All borders are this wide.
-#define UI_SHADOW_OFFSET (screenWidth/320)
+#define UI_SHADOW_OFFSET (MIN_OF(3, screenWidth/320))
 #define UI_TITLE_HGT	(ui_fonthgt + UI_BORDER*2)
-#define UI_BUTTON_BORDER ((2*UI_BORDER)/3)
+#define UI_BUTTON_BORDER (UI_BORDER)
 #define UI_BAR_WDH		(UI_BORDER * 3)
-#define UI_BAR_BORDER	(UI_BORDER/2)
+#define UI_BAR_BORDER	(UI_BORDER / 2)
+#define UI_BAR_BUTTON_BORDER (3 * UI_BAR_BORDER / 2)
 #define UI_MAX_COLUMNS	10		// Maximum columns for list box.
 
 // Object flags.
@@ -167,9 +168,15 @@ extern ui_page_t *ui_page;		// Active page.
 extern boolean ui_active;
 extern ui_color_t ui_colors[];
 
+extern int uiMouseWidth;
+extern int uiMouseHeight;
+
 // Functions.
 void UI_Init(void);
 void UI_End(void);
+void UI_LoadTextures(void);
+void UI_ClearTextures(void);
+DGLuint UI_LoadGraphics(const char *name, boolean grayscale);
 void UI_InitPage(ui_page_t *page, ui_object_t *objects);
 void UI_SetPage(ui_page_t *page);
 int UI_Responder(event_t *ev);
@@ -208,6 +215,7 @@ int UI_MouseInsideBox(int x, int y, int w, int h);
 int UI_MouseInside(ui_object_t *ob);
 int UI_MouseResting(ui_page_t *page);
 int UI_ListFindItem(ui_object_t *ob, int data_value);
+void UI_DrawLogo(int x, int y, int w, int h);
 void UI_DrawMouse(int x, int y);
 void UI_DrawTitle(ui_page_t *page);
 void UI_DrawTitleEx(char *text, int height);
@@ -215,10 +223,12 @@ void UI_MixColors(ui_color_t *a, ui_color_t *b, ui_color_t *dest, float amount);
 void UI_ColorA(ui_color_t *color, float alpha);
 void UI_Color(ui_color_t *color);
 void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start, ui_color_t *end, float start_alpha, float end_alpha);
+void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main, ui_color_t *secondary, float alpha, float bottom_alpha);
 void UI_Gradient(int x, int y, int w, int h, ui_color_t *top, ui_color_t *bottom, float top_alpha, float bottom_alpha);
+void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t *top, ui_color_t *bottom, float top_alpha, float bottom_alpha);
 void UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left, ui_color_t *right, float left_alpha, float right_alpha);
-void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t *hi, ui_color_t *med, ui_color_t *low);
-void UI_DrawRectEx(int x, int y, int w, int h, int brd, ui_color_t *hi, ui_color_t *med, ui_color_t *low, float alpha);
+void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t *color, float alpha);
+void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled, ui_color_t *top, ui_color_t *bottom, float alpha, float bottom_alpha);
 void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi, ui_color_t *med, ui_color_t *low, float alpha);
 void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha, ui_color_t *background, boolean down, boolean disabled, int arrow);
 void UI_TextOut(char *text, int x, int y);

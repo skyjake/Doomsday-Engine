@@ -9,10 +9,16 @@ Version 1.7.12 (work in progress)
 + option -leaveramp: don't reset color settings back to previous values
   at shutdown
 + JWADs: IWAD supplements (uses normal WAD loading order)
++ Data\Graphics directory: Doomsday's graphics resources (UI textures)
++ cvars 'ui-cursor-width', 'ui-cursor-height': UI mouse cursor size
++ added new cvar controls to the Control Panel (e.g. multitex, HUD mirror)
+* the first incarnation of the Doomsday UI theme, "Gradient", was 
+  replaced with a much more polished theme, "Plastic"
+* UI mouse cursor size and movement depend on display resolution
 * music data will not be cached into the memory zone while loading 
   (large MP3s wasted a lot of space) 
 * paths that contain the base path are normally printed without the base
-- removed obsolete settings from Control Panel: Network
+- removed obsolete settings from Control Panel
 - removed detail texture maximum distance cvar and Control Panel slider
 - removed cvars 'rend-light-clip', 'rend-light-shrink'
 - fixed: possible crash in Con_Error()
@@ -36,6 +42,9 @@ Definitions:
 * maximum number of submodels is now 8
 * Map Info definitions can be copied
 * 'InFine' is an alternative name for the 'Finale' definition
+
+Network:
+- fixed: server increased a client's bandwidth rating too rapidly
 
 Sound:
 * sounds from PWADs are not replaced with automatic external resources
@@ -92,6 +101,7 @@ Renderer:
 - fixed: shiny skins on HUD models
 - fixed: console text gibberish on the first time the console is drawn
 - fixed: cvar 'rend-tex' (render with textures)
+- fixed: shadows fade away smoothly at maximum distance
 
 drOpenGL:
 + support for multitexturing
