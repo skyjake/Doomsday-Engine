@@ -403,6 +403,10 @@ SOURCE=.\Src\rend_clip.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\rend_decor.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\rend_dyn.c
 # End Source File
 # Begin Source File
@@ -909,6 +913,10 @@ SOURCE=.\Include\de_render.h
 # Begin Source File
 
 SOURCE=.\Include\rend_clip.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\rend_decor.h
 # End Source File
 # Begin Source File
 
