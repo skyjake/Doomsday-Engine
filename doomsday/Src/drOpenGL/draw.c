@@ -318,7 +318,7 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 			glEnableClientState(GL_COLOR_ARRAY);
 	}
 	
-	for(i = 0; i < maxTexUnits; i++)
+	for(i = 0; i < maxTexUnits && i < MAX_TEX_UNITS; i++)
 	{
 		if(coords & (1 << i))
 		{
@@ -335,6 +335,10 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 			}
 		}
 	}
+
+#ifdef _DEBUG
+	CheckError();
+#endif
 }
 
 //===========================================================================
@@ -360,7 +364,7 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 			glDisableClientState(GL_COLOR_ARRAY);
 	}
 
-	for(i = 0; i < maxTexUnits; i++)
+	for(i = 0; i < maxTexUnits && i < MAX_TEX_UNITS; i++)
 	{
 		if(coords & (1 << i))
 		{
@@ -377,6 +381,10 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 			}
 		}
 	}
+
+#ifdef _DEBUG
+	CheckError();
+#endif
 }
 
 //===========================================================================
@@ -416,7 +424,7 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
 		}
 	}
 
-	for(i = 0; i < numCoords; i++)
+	for(i = 0; i < numCoords && i < MAX_TEX_UNITS; i++)
 	{
 		if(coords[i])
 		{
@@ -441,6 +449,10 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
 		// 'lock' is the number of vertices to lock.
 		glLockArraysEXT(0, lock);
 	}
+
+#ifdef _DEBUG
+	CheckError();
+#endif
 }
 
 //===========================================================================
@@ -452,6 +464,10 @@ void DG_UnlockArrays(void)
 	{
 		glUnlockArraysEXT();
 	}
+
+#ifdef _DEBUG
+	CheckError();
+#endif
 }
 
 //===========================================================================
@@ -467,7 +483,7 @@ void DG_ArrayElement(int index)
 	{
 		int i;
 
-		for(i = 0; i < maxTexUnits; i++)
+		for(i = 0; i < maxTexUnits && i < MAX_TEX_UNITS; i++)
 		{
 			if(arrays[AR_TEXCOORD0 + i].enabled)
 			{
@@ -509,4 +525,8 @@ void DG_DrawElements(int type, int count, unsigned int *indices)
 		}
 		glEnd();
 	}
+
+#ifdef _DEBUG
+	CheckError();
+#endif
 }
