@@ -147,6 +147,10 @@ SOURCE=.\Src\dd_winit.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\dd_zip.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\dd_zone.c
 # End Source File
 # End Group
@@ -629,6 +633,10 @@ SOURCE=.\Include\dd_wad.h
 # Begin Source File
 
 SOURCE=.\Include\dd_winit.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\dd_zip.h
 # End Source File
 # Begin Source File
 
