@@ -35,7 +35,7 @@ BEGIN_PROF_TIMERS()
 	PROF_RL_RENDER_MASKED
 END_PROF_TIMERS()
 
-#define MAX_TEX_UNITS		4		// Only two used, really.
+#define MAX_TEX_UNITS		8		// Only two used, really.
 #define RL_HASH_SIZE		128
 
 // Number of extra bytes to keep allocated in the end of each rendering list.
@@ -1346,7 +1346,7 @@ void RL_AddPoly(rendpoly_t *poly)
 	rendlist_t	*li;
 	primhdr_t	*hdr;
 	dynlight_t	*dyn;
-	boolean		useLights = false;
+	boolean		useLights = false, multitexFirstLight = true;
 	
 	if(poly->flags & RPF_MASKED)
 	{
@@ -1488,6 +1488,9 @@ void RL_DrawPrimitives(int conditions, rendlist_t *list)
 			RL_Bind(hdr->light->texture);
 			RL_FloatRGB(hdr->light->color, color);
 			gl.SetFloatv(DGL_ENV_COLOR, color);
+			// Make sure the light is not repeated.
+			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 		}
 
 		// Render a primitive (or two) as a triangle fan.
@@ -1599,8 +1602,11 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		return 0;
 
 	case LM_LIGHTS:
-		RL_Bind(list->tex.id);
 		// The light lists only contain dynlight primitives.
+		RL_Bind(list->tex.id);
+		// Make sure the texture is not repeated.
+		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 		return 0;
 
 	case LM_BLENDED_MOD_TEXTURE:
