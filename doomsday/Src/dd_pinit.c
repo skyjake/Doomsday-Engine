@@ -25,6 +25,10 @@
 
 #include <stdarg.h>
 
+#ifdef WIN32
+#  include "de_platform.h"
+#endif
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -38,6 +42,11 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+#ifdef WIN32
+// This is called by the main engine.
+extern GETGAMEAPI GetGameAPI;
+#endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

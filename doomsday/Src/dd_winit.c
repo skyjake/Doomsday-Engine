@@ -63,6 +63,7 @@ HWND hWndMain;			// The window handle to the main window.
 HINSTANCE hInstApp;		// Instance handle to the application.
 HINSTANCE hInstGame;	// Instance handle to the game DLL.
 HINSTANCE hInstPlug[MAX_PLUGS];	// Instances to plugin DLLs.
+GETGAMEAPI GetGameAPI;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -119,7 +120,6 @@ BOOL InitInstance(HINSTANCE hInst, int cmdShow)
 BOOL InitGameDLL(void)
 {
 	char *dllName = NULL;	// Pointer to the filename of the game DLL.
-	GETGAMEAPI GetGameAPI = NULL;
 
 	// First we need to locate the dll name among the command line arguments.
 	DD_CheckArg("-game", &dllName);
@@ -220,12 +220,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	if(!InitApplication(hInstance))
 	{
-		ErrorBox(true, "Couldn't initialize application.");
+		DD_ErrorBox(true, "Couldn't initialize application.");
 		return FALSE;
 	}
 	if(!InitInstance(hInstance, nCmdShow)) 
 	{
-		ErrorBox(true, "Couldn't initialize instance.");
+		DD_ErrorBox(true, "Couldn't initialize instance.");
 		return FALSE;
 	}
 
