@@ -554,10 +554,13 @@ void Net_DestroyArrays(void)
 	int i;
 
 	free(localticcmds);
-	for(i=0; i<MAXPLAYERS; i++)
+	localticcmds = NULL;
+	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		free(clients[i].ticcmds);
 		free(clients[i].lastcmd);
+		clients[i].ticcmds = NULL;
+		clients[i].lastcmd = NULL;
 	}
 }
 
