@@ -14,6 +14,7 @@ Version 1.8.5
 + cvar 'rend-model-shiny-strength': shininess factor for all models (0..1)
 + Model -> Sub -> Blending mode: select a blending mode (bm_* flag)
 + bm_* flags in Flags.ded (blending modes)
++ cvars 'conopen', 'conclose', 'contoggle': open/close console prompt
 * detail textures can now use external resources instead of WAD lumps
   (Detail -> File)
 * external resources can be located in relation to Doomsday base path
