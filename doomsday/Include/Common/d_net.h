@@ -41,7 +41,8 @@ enum
 	GPT_PLAYER_STATE2,
 	GPT_YELLOW_MESSAGE,		// jHexen: yellow message.
 	GPT_PAUSE,
-	GPT_FINALE2
+	GPT_FINALE2,
+	GPT_CHEAT_REQUEST
 };
 
 // This packet is sent by servers to clients when the game state
@@ -89,6 +90,7 @@ typedef struct
 
 // Player state update II flags.
 #define PSF2_OWNED_WEAPONS	0x00000001
+#define PSF2_STATE			0x00000002	// Includes cheatflags.
 
 #ifdef __JDOOM__
 #define PSF_REBORN			0x37f7

@@ -36,12 +36,11 @@
 void SB_ChangePlayerClass(player_t *player, int newclass);
 #endif
 
-extern int netsv_allow_sendmsg;
+extern int netSvAllowSendMsg;
 
 // PUBLIC DATA --------------------------------------------------------------
 
-boolean		handshake_received = false;
-char		msgbuff[256];
+char msgBuff[256];
 
 // PRIVATE DATA -------------------------------------------------------------
 
@@ -184,18 +183,18 @@ void D_ChatSound(void)
 //===========================================================================
 void D_NetMessageEx(char *msg, boolean play_sound)
 {
-	strcpy(msgbuff, msg);
+	strcpy(msgBuff, msg);
 	// This is intended to be a local message. Let's make sure P_SetMessage
 	// doesn't forward it anywhere.
-	netsv_allow_sendmsg = false;
+	netSvAllowSendMsg = false;
 #if __JDOOM__
-	P_SetMessage(players + consoleplayer, msgbuff);
+	P_SetMessage(players + consoleplayer, msgBuff);
 #else
-	MN_TextFilter(msgbuff);
-	P_SetMessage(players + consoleplayer, msgbuff, true);
+	MN_TextFilter(msgBuff);
+	P_SetMessage(players + consoleplayer, msgBuff, true);
 #endif
 	if(play_sound) D_ChatSound();
-	netsv_allow_sendmsg = true;
+	netSvAllowSendMsg = true;
 }
 
 //===========================================================================
@@ -367,9 +366,9 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		if(showmsg)
 		{
 			// Print a notification.
-			sprintf(msgbuff, "%s joined the game", 
+			sprintf(msgBuff, "%s joined the game", 
 				Net_GetPlayerName(plrNumber));
-			D_NetMessage(msgbuff);
+			D_NetMessage(msgBuff);
 		}
 	}
 	else if(peType == DDPE_EXIT)
@@ -386,8 +385,8 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		players[plrNumber].playerstate = PST_GONE;
 
 		// Print a notification.
-		sprintf(msgbuff, "%s left the game", Net_GetPlayerName(plrNumber));
-		D_NetMessage(msgbuff);
+		sprintf(msgBuff, "%s left the game", Net_GetPlayerName(plrNumber));
+		D_NetMessage(msgBuff);
 
 		if(IS_SERVER) P_DealPlayerStarts();
 	}
@@ -403,13 +402,13 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		// If there are more than two players, include the name of
 		// the player who sent this.
 		if(num > 2)
-			sprintf(msgbuff, "%s: %s", Net_GetPlayerName(plrNumber), data);
+			sprintf(msgBuff, "%s: %s", Net_GetPlayerName(plrNumber), data);
 		else
-			strcpy(msgbuff, data);
+			strcpy(msgBuff, data);
 
 		// The chat message is already echoed by the console.
 		cfg.echoMsg = false;
-		D_NetMessage(msgbuff);
+		D_NetMessage(msgBuff);
 		cfg.echoMsg = oldecho;
 	}
 	return true;
@@ -529,6 +528,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 			// A player has changed color or other settings.
 			NetSv_ChangePlayerInfo(fromplayer, data);
 			break;
+
+		case GPT_CHEAT_REQUEST:
+			NetSv_DoCheat(fromplayer, data);
+			break;
 		}
 		return;
 	}
@@ -547,8 +550,8 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 
 	case GPT_MESSAGE:
 #ifdef __JDOOM__
-		strcpy(msgbuff, data);
-		P_SetMessage(&players[consoleplayer], msgbuff);
+		strcpy(msgBuff, data);
+		P_SetMessage(&players[consoleplayer], msgBuff);
 #else
 		P_SetMessage(&players[consoleplayer], data, true);
 #endif
@@ -632,10 +635,11 @@ ccmd_t netCCmds[] =
 
 cvar_t netCVars[] =
 {
-	"MapCycle",	CVF_HIDE|CVF_NO_ARCHIVE, CVT_CHARPTR, &map_cycle, 0, 0, "Map rotation sequence.",
+	"MapCycle",	CVF_HIDE|CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle, 0, 0, "Map rotation sequence.",
 	
-	"server-game-mapcycle",	0, CVT_CHARPTR, &map_cycle, 0, 0, "Map rotation sequence.",
-	"server-game-mapcycle-noexit", 0, CVT_BYTE, &map_cycle_noexit, 0, 1, "1=Disable exit buttons during map rotation.",
+	"server-game-mapcycle",	0, CVT_CHARPTR, &mapCycle, 0, 0, "Map rotation sequence.",
+	"server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1, "1=Disable exit buttons during map rotation.",
+	"server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1, "1=Allow cheating in multiplayer games (god, noclip, give).",
 	NULL
 };
 

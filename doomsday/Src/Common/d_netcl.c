@@ -25,7 +25,8 @@
 #endif
 
 #include "p_saveg.h"
-#include "d_Net.h"
+#include "d_net.h"
+#include "d_netsv.h"
 #include "f_infine.h"
 
 // External Data ---------------------------------------------------------
@@ -190,6 +191,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
 	player_t *pl = &players[plrNum];
 	unsigned int flags;
+	byte b;
 	int i, k;
 
 	if(!Get(DD_GAME_READY)) return;
@@ -202,6 +204,28 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 		k = NetCl_ReadShort();
 		for(i = 0; i < NUMWEAPONS; i++) 
 			pl->weaponowned[i] = (k & (1<<i)) != 0;
+	}
+
+	if(flags & PSF2_STATE)
+	{
+		b = NetCl_ReadByte();
+		pl->playerstate = b & 0xf;
+#ifndef __JHEXEN__
+		pl->armortype = b >> 4;
+#endif
+		// Set or clear the DEAD flag for this player.
+		if(pl->playerstate == PST_LIVE)
+			pl->plr->flags &= ~DDPF_DEAD;
+		else
+			pl->plr->flags |= DDPF_DEAD;
+
+		pl->cheats = NetCl_ReadByte();
+
+		// Set or clear the NOCLIP flag.
+		if(pl->cheats & CF_NOCLIP)
+			pl->plr->flags |= DDPF_NOCLIP;
+		else
+			pl->plr->flags &= ~DDPF_NOCLIP;
 	}
 }
 
@@ -677,4 +701,22 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 	*size = out - start;
 
 	return msg;
+}
+
+/*
+ * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing
+ * netgame cheating, the cheat will be executed on the server.
+ */
+void NetCl_CheatRequest(const char *command)
+{
+	char msg[40];
+
+	// Copy the cheat command into a NULL-terminated buffer.
+	memset(msg, 0, sizeof(msg));
+	strncpy(msg, command, sizeof(msg) - 1);
+
+	if(IS_CLIENT)
+		Net_SendPacket(DDSP_CONFIRM, GPT_CHEAT_REQUEST, msg, strlen(msg) + 1);
+	else
+		NetSv_DoCheat(consoleplayer, msg);
 }

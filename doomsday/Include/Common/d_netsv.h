@@ -13,8 +13,9 @@
 #include "../JHexen/P_local.h"
 #endif
 
-extern boolean	cycling_maps, map_cycle_noexit;
-extern char		*map_cycle;
+extern boolean	cyclingMaps, mapCycleNoExit;
+extern int		netSvAllowCheats;
+extern char		*mapCycle;
 extern char		gameConfigString[128];
 
 void P_Telefrag(mobj_t *thing);
@@ -41,6 +42,7 @@ void NetSv_FragsForAll(player_t *player);
 void NetSv_KillMessage(player_t *killer, player_t *fragged);
 void NetSv_UpdateGameConfig(void);
 void NetSv_Paused(boolean isPaused);
+void NetSv_DoCheat(int player, const char *data);
 
 int CCmdMapCycle(int argc, char **argv);
 
