@@ -25,6 +25,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+// $smoothplane: Maximum speed for a smoothed plane.
+#define MAX_SMOOTH_PLANE_MOVE	(64*FRACUNIT)
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct viewer_s {
@@ -218,7 +221,7 @@ void R_SetViewPos(viewer_t *v)
 
 //===========================================================================
 // R_CheckViewerLimits
-//	The elements whose difference is too large for interpolation will be 
+//	The components whose difference is too large for interpolation will be 
 //	snapped to the sharp values.
 //===========================================================================
 void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
@@ -238,6 +241,7 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 //===========================================================================
 // R_SetupFrame
 //	Prepare rendering the view of the given player.
+//	Also handles smoothing of camera and plane movement.
 //===========================================================================
 void R_SetupFrame(ddplayer_t *player)
 {
@@ -246,6 +250,9 @@ void R_SetupFrame(ddplayer_t *player)
 	float yawRad, pitchRad;
 	viewer_t sharpView, smoothView;
 	double nowTime;
+	sector_t *sector;
+	float timePos;
+	int i;
 
 	// Reset the DGL triangle counter.
 	gl.GetInteger(DGL_POLY_COUNT);
@@ -267,11 +274,27 @@ void R_SetupFrame(ddplayer_t *player)
 	if(!rend_camera_smooth || resetNextViewer)
 	{
 		resetNextViewer = false;
+
 		// Just view from the sharp position.
 		R_SetViewPos(&sharpView);
 		lastSharpFrameTime = Sys_GetTimef();
 		memcpy(&lastSharpView[0], &sharpView, sizeof(sharpView));
 		memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
+
+		// $smoothplane: Reset the plane height trackers.
+		for(i = 0; i < numsectors; i++)
+		{
+			secinfo[i].visceilingoffset = secinfo[i].visflooroffset = 0;
+
+			// Reset the old Z values.
+			sector = SECTOR_PTR(i);
+			secinfo[i].oldfloor[0] 
+				= secinfo[i].oldfloor[1] 
+				= sector->floorheight;
+			secinfo[i].oldceiling[0] 
+				= secinfo[i].oldceiling[1] 
+				= sector->ceilingheight;
+		}
 	}
 	else 
 	{
@@ -282,7 +305,7 @@ void R_SetupFrame(ddplayer_t *player)
 			// The game tic has changed, which means we have an updated
 			// sharp camera position. However, the position is at the 
 			// beginning of the tic and we are most likely not at a sharp
-			// tic boundary in time. We will update lastSharpFrameTime
+			// tic boundary, in time. We will update lastSharpFrameTime
 			// so it tells the time of the new sharp position, and then
 			// move the viewer positions one step back in the buffer.
 			// The effect of this is that [0] is the previous sharp position
@@ -292,6 +315,31 @@ void R_SetupFrame(ddplayer_t *player)
 			memcpy(&lastSharpView[0], &lastSharpView[1], sizeof(viewer_t));
 			memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
 			R_CheckViewerLimits(lastSharpView, &sharpView);
+
+			// $smoothplane: Roll the height tracker buffers.
+			for(i = 0; i < numsectors; i++)
+			{
+				sector = SECTOR_PTR(i);
+				secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
+				secinfo[i].oldfloor[1] = sector->floorheight;
+
+				if(abs(secinfo[i].oldfloor[0] - secinfo[i].oldfloor[1])
+					>= MAX_SMOOTH_PLANE_MOVE)
+				{
+					// Too fast: make an instantaneous jump.
+					secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
+				}
+		
+				secinfo[i].oldceiling[0] = secinfo[i].oldceiling[1];
+				secinfo[i].oldceiling[1] = sector->ceilingheight;
+
+				if(abs(secinfo[i].oldceiling[0] - secinfo[i].oldceiling[1])
+					>= MAX_SMOOTH_PLANE_MOVE)
+				{
+					// Too fast: make an instantaneous jump.
+					secinfo[i].oldceiling[0] = secinfo[i].oldceiling[1];
+				}
+			}
 		}
 		if(nowTime - lastSharpFrameTime > 1)
 		{
@@ -299,11 +347,27 @@ void R_SetupFrame(ddplayer_t *player)
 			lastSharpFrameTime = nowTime - 1;
 		}
 		// Calculate the smoothed camera position, which is somewhere between
-		// the previous and current sharp positions. This introduces slight
+		// the previous and current sharp positions. This introduces a slight
 		// delay (max. 1/35 sec) to the movement of the smoothed camera.
-		R_InterpolateViewer(lastSharpView, &sharpView,
-			nowTime - lastSharpFrameTime, &smoothView);
+		timePos = nowTime - lastSharpFrameTime;
+		R_InterpolateViewer(lastSharpView, &sharpView, timePos, &smoothView);
 		R_SetViewPos(&smoothView);
+
+		// $smoothplane: Set the visible offsets.
+		for(i = 0; i < numsectors; i++)
+		{
+			sector = SECTOR_PTR(i);
+
+			secinfo[i].visflooroffset 
+				= FIX2FLT(secinfo[i].oldfloor[0]*(1 - timePos)
+				+ sector->floorheight*timePos - 
+				sector->floorheight);
+
+			secinfo[i].visceilingoffset 
+				= FIX2FLT(secinfo[i].oldceiling[0]*(1 - timePos)
+				+ sector->ceilingheight*timePos	
+				- sector->ceilingheight);
+		}
 
 /*		Con_Printf("%.3f: s%.4f e%.4f = %.4f\n", 
 			nowTime - lastSharpFrameTime, 
