@@ -35,6 +35,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+// FakeRadio should not be rendered.
+#define RWSF_NO_RADIO 0x100
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -58,6 +61,7 @@ byte    fogColor[4];
 float   fieldOfView = 95.0f;
 float   maxLightDist = 1024;
 boolean smoothTexAnim = true;
+int     useShinySurfaces = true;
 
 float   vx, vy, vz, vang, vpitch;
 float   viewsidex, viewsidey;
@@ -88,6 +92,10 @@ void Rend_Register(void)
 	C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1,
 			   "1=Enable interpolated texture animation.");
 
+	C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1,
+              "1=Enable shiny textures on surfaces of the map.");
+    
+    RL_Register();
     Rend_ModelRegister();
 	Rend_RadioRegister();
 }
@@ -264,17 +272,138 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
 }
 
 //===========================================================================
-// Rend_CheckDiv
-//  Returns true if the quad has a division at the specified height.
+// Rend_AddShinyWallSeg
+//  The poly that is passed as argument to this function must not be
+//  modified because others may be using it afterwards.  A shiny wall
+//  segment polygon is created.
 //===========================================================================
-int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
+void Rend_AddShinyWallSeg(int texture, const rendpoly_t *poly)
 {
-	int     i;
+    rendpoly_t q;
+    ded_reflection_t *ref = NULL;
+    texture_t *texptr = NULL;
+   
+    if(!useShinySurfaces)
+    {
+        // Shiny surfaces are not enabled.
+        return;
+    }
 
-	for(i = 0; i < quad->divs[side].num; i++)
-		if(quad->divs[side].pos[i] == height)
-			return true;
-	return false;
+    // Get the surface reflection properties of this texture.
+    texptr = textures[texturetranslation[texture].current];
+    ref = texptr->reflection;
+    if(ref == NULL)
+    {
+        // The surface doesn't shine.
+        return;
+    }
+
+    // Make sure the texture has been loaded.
+    if(!GL_LoadReflectionMap(ref))
+    {
+        // Can't shine because there is no shiny map.
+        return;
+    }
+
+    // We're going to modify the polygon quite a bit.
+    memcpy(&q, poly, sizeof(rendpoly_t));
+    
+    // Make it a shiny polygon.
+    q.flags |= RPF_SHINY;
+    q.blendmode = ref->blend_mode;
+    q.tex.id = ref->use_shiny->shiny_tex;
+	q.tex.detail = NULL;
+    q.intertex.detail = NULL;
+    q.interpos = 0;
+
+    // Strength of the shine.
+    q.vertices[0].color.rgba[3] =
+        q.vertices[1].color.rgba[3] = (DGLubyte) (255 * ref->shininess);
+
+    // The mask texture is stored in the intertex.
+    if(ref->use_mask && ref->use_mask->mask_tex)
+    {
+        q.intertex.id = ref->use_mask->mask_tex;
+        q.tex.width = q.intertex.width = texptr->width * ref->mask_width;
+        q.tex.height = q.intertex.height = texptr->height * ref->mask_height;
+    }
+    else
+    {
+        // No mask.
+        q.intertex.id = 0;
+    }
+
+    RL_AddPoly(&q);
+}
+
+//===========================================================================
+// Rend_AddShinyFlat
+//  The poly that is passed as argument to this function WILL be modified
+//  during the execution of this function.
+//===========================================================================
+void RL_AddShinyFlat(planeinfo_t *plane, rendpoly_t *poly,
+                     subsector_t *subsector)
+{
+    int i;
+    flat_t *flat = NULL;
+    ded_reflection_t *ref = NULL;
+
+    if(!useShinySurfaces)
+    {
+        // Shiny surfaces are not enabled.
+        return;
+    }
+
+    // Figure out what kind of surface properties have been defined
+    // for the texture in question.
+    flat = R_GetFlat(plane->pic);
+    if(flat->translation.current != plane->pic)
+    {
+        // The flat is currently translated to another one.
+        flat = R_GetFlat(flat->translation.current);
+    }
+    ref = flat->reflection;
+    if(ref == NULL)
+    {
+        // Unshiny.
+        return;
+    }
+
+    // Make sure the texture has been loaded.
+    if(!GL_LoadReflectionMap(ref))
+    {
+        // Can't shine because there is no shiny map.
+        return;
+    }
+    
+    // Make it a shiny polygon.
+    poly->lights = NULL;
+    poly->flags = RPF_SHINY;
+    poly->blendmode = ref->blend_mode;
+    poly->tex.id = ref->use_shiny->shiny_tex;
+	poly->tex.detail = NULL;
+    poly->intertex.detail = NULL;
+    poly->interpos = 0;
+
+    // Set shine strength.
+    for(i = 0; i < poly->numvertices; ++i)
+    {
+        poly->vertices[i].color.rgba[3] = (DGLubyte) (255 * ref->shininess);
+    }
+
+    // Set the mask texture.
+    if(ref->use_mask && ref->use_mask->mask_tex)
+    {
+        poly->intertex.id = ref->use_mask->mask_tex;
+        poly->tex.width = poly->intertex.width = 64 * ref->mask_width;
+        poly->tex.height = poly->intertex.height = 64 * ref->mask_height;
+    }
+    else
+    {
+        poly->intertex.id = 0;
+    }
+
+    RL_AddPoly(poly);
 }
 
 //===========================================================================
@@ -330,6 +459,20 @@ void Rend_PolyFlatBlend(int flat, rendpoly_t *poly)
 	poly->intertex.height = texh;
 	poly->intertex.detail = texdetail;
 	poly->interpos = ptr->translation.inter;
+}
+
+//===========================================================================
+// Rend_CheckDiv
+//  Returns true if the quad has a division at the specified height.
+//===========================================================================
+int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
+{
+	int     i;
+
+	for(i = 0; i < quad->divs[side].num; i++)
+		if(quad->divs[side].pos[i] == height)
+			return true;
+	return false;
 }
 
 //===========================================================================
@@ -570,7 +713,11 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 		Rend_PolyTextureBlend(sid->midtexture, &quad);
 		RL_AddPoly(&quad);
-		Rend_RadioWallSection(seg, &quad);
+        if(!(flags & RWSF_NO_RADIO))
+        {
+            Rend_RadioWallSection(seg, &quad);
+        }
+        Rend_AddShinyWallSeg(sid->midtexture, &quad);
 
 		// This is guaranteed to be a solid segment.
 		C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
@@ -692,7 +839,13 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				Rend_PolyTextureBlend(sid->midtexture, &quad);
 				RL_AddPoly(&quad);
 				if(!texmask)
-					Rend_RadioWallSection(seg, &quad);
+                {
+                    if(!(flags & RWSF_NO_RADIO))
+                    {
+                        Rend_RadioWallSection(seg, &quad);
+                    }
+                    Rend_AddShinyWallSeg(sid->midtexture, &quad);
+                }
 			}
 		}
 
@@ -749,7 +902,11 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 			Rend_PolyTextureBlend(sid->toptexture, &quad);
 			RL_AddPoly(&quad);
-			Rend_RadioWallSection(seg, &quad);
+            Rend_AddShinyWallSeg(sid->toptexture, &quad);
+            if(!(flags & RWSF_NO_RADIO))
+            {
+                Rend_RadioWallSection(seg, &quad);
+            }
 
 			// Restore original type, height division may change this.
 			quad.type = RP_QUAD;
@@ -758,7 +915,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 		// Lower wall.
 		// If no textures have been assigned to the segment, we won't
 		// draw anything.
-		if(						/*(sid->bottomtexture || sid->midtexture || sid->toptexture) && */
+		if(/*(sid->bottomtexture || sid->midtexture || sid->toptexture) && */
 			  bfloor > ffloor && !(frontsec->floorpic == skyflatnum &&
 								   backsec->floorpic == skyflatnum)
 			  //&& (!sid->midtexture || sid->bottomtexture)
@@ -805,7 +962,11 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 			Rend_PolyTextureBlend(sid->bottomtexture, &quad);
 			RL_AddPoly(&quad);
-			Rend_RadioWallSection(seg, &quad);
+            if(!(flags & RWSF_NO_RADIO))
+            {
+                Rend_RadioWallSection(seg, &quad);
+            }
+            Rend_AddShinyWallSeg(sid->bottomtexture, &quad);
 		}
 	}
 }
@@ -997,6 +1158,9 @@ void Rend_RenderPlane(planeinfo_t *plane, dynlight_t *lights,
 
 		Rend_PolyFlatBlend(plane->pic, &poly);
 		RL_AddPoly(&poly);
+
+        // Add a shine to this flat existence.
+        RL_AddShinyFlat(plane, &poly, subsector);
 	}
 }
 
@@ -1058,6 +1222,12 @@ void Rend_RenderSubsector(int ssecidx)
 	}
 	Rend_OccludeSubsector(ssec, true);
 
+    if(ssec->poly)
+    {
+        // Polyobjs don't obstruct, do clip lights with another algorithm.
+        DL_ClipBySight(ssecidx);
+    }
+    
 	// Mark the particle generators in the sector visible.
 	PG_SectorIsVisible(sect);
 
@@ -1076,8 +1246,10 @@ void Rend_RenderSubsector(int ssecidx)
 
 	// Is there a polyobj on board?
 	if(ssec->poly)
+    {
 		for(i = 0; i < ssec->poly->numsegs; i++)
-			Rend_RenderWallSeg(ssec->poly->segs[i], sect, 0);
+			Rend_RenderWallSeg(ssec->poly->segs[i], sect, RWSF_NO_RADIO);
+    }
 
 	subin = &subsecinfo[ssecidx];
 	Rend_RenderPlane(&subin->floor, floorLightLinks[ssecidx], ssec, sin);
