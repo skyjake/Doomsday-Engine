@@ -198,6 +198,18 @@ int Def_GetStateNum(char *id)
 	return -1;
 }
 
+int Def_GetModelNum(const char *id)
+{
+	int i;
+
+	if(!id[0]) return -1;
+
+	for(i = 0; i < defs.count.models.num; i++)
+		if(!strcmp(defs.models[i].id, id))
+			return i;
+	return -1;
+}
+
 int Def_GetSoundNum(char *id)
 {
 	int i;

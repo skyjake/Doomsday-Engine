@@ -53,6 +53,7 @@ typedef struct
 typedef struct modeldef_s
 {
 	int				order;
+	char			id[33];
 
 	state_t			*state;		// Pointer to the states list (in dd_defns.c).
 	int				flags;
@@ -87,6 +88,7 @@ void R_ShutdownModels(void);
 void R_ClearModelPath(void);
 void R_AddModelPath(char *addPath, boolean append);
 float R_CheckModelFor(mobj_t *mo, modeldef_t **mdef, modeldef_t **nextmdef);
+modeldef_t *R_CheckIDModelFor(const char *id);
 void R_SetSpriteReplacement(int sprite, char *modelname);
 int R_FindModelFile(const char *filename, char *outfn);
 byte *R_LoadSkin(model_t *mdl, int skin, int *width, int *height, int *pxsize);
