@@ -31,6 +31,7 @@ void			GL_ShutdownVarFont(void);
 unsigned char	*GL_GrabScreen(void);
 
 extern int		screenWidth, screenHeight, screenBits;
+extern int		numTexUnits;
 extern int		defResX, defResY;
 extern float	nearClip, farClip;
 extern int		viewph, viewpw, viewpx, viewpy;
