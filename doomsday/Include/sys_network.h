@@ -31,16 +31,7 @@ extern          "C" {
 
 #include "con_decl.h"
 
-	typedef enum serviceprovider_e {
-		NSP_NONE,
-		NSP_TCPIP,
-		NSP_IPX,
-		NSP_MODEM,
-		NSP_SERIAL,
-		NUM_NSP
-	} serviceprovider_t;
-
-	// If a master action fails, the action queue is emptied.
+ 	// If a master action fails, the action queue is emptied.
 	typedef enum {
 		MAC_REQUEST,			   // Retrieve the list of servers from the master.
 		MAC_WAIT,				   // Wait for the server list to arrive.
@@ -51,19 +42,10 @@ extern          "C" {
 	extern boolean  allowSending;
 	extern int      maxQueuePackets;
 
-	extern serviceprovider_t netCurrentProvider;
 	extern boolean  netServerMode;
 
-	extern int      nptActive;
 	extern char    *nptIPAddress;
 	extern int      nptIPPort;
-	extern int      nptModem;
-	extern char    *nptPhoneNum;
-	extern int      nptSerialPort;
-	extern int      nptSerialBaud;
-	extern int      nptSerialStopBits;
-	extern int      nptSerialParity;
-	extern int      nptSerialFlowCtrl;
 
 	extern char    *serverName, *serverInfo, *playerName;
 	extern int      serverData[];
@@ -75,11 +57,11 @@ extern          "C" {
 	void		    N_Register(void);
 	void            N_SystemInit(void);
 	void            N_SystemShutdown(void);
-	boolean         N_InitService(serviceprovider_t provider,
-								  boolean inServerMode);
+	boolean         N_InitService(boolean inServerMode);
 	void            N_ShutdownService(void);
 	boolean         N_IsAvailable(void);
 	boolean         N_UsingInternet(void);
+	void		    N_PrintInfo(void);
 	boolean         N_LookForHosts(void);
 	void            N_Listen(void);
 
@@ -100,10 +82,6 @@ extern          "C" {
 
 	int             N_GetHostCount(void);
 	boolean         N_GetHostInfo(int index, struct serverinfo_s *info);
-	unsigned int    N_GetServiceProviderCount(serviceprovider_t type);
-	boolean         N_GetServiceProviderName(serviceprovider_t type,
-											 unsigned int index, char *name,
-											 int maxLength);
 
 #ifdef __cplusplus
 }

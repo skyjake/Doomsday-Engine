@@ -104,30 +104,14 @@ void    N_IPToString(char *buf, IPaddress *ip);
 
 uint    maxDatagramSize = MAX_DATAGRAM_SIZE;
 
-// Settings for the various network protocols.
-// Most recently used provider: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial.
-int     nptActive;
-
-// TCP/IP:
 char   *nptIPAddress = "";
 int     nptIPPort = 0;			// This is the port *we* use to communicate.
 int     nptUDPPort = 0;
 int     defaultTCPPort = DEFAULT_TCP_PORT;
 int     defaultUDPPort = DEFAULT_UDP_PORT;
 
-// Modem:
-int     nptModem = 0;			// Selected modem device index.
-char   *nptPhoneNum = "";
-
-// Serial:
-int     nptSerialPort = 0;
-int     nptSerialBaud = 57600;
-int     nptSerialStopBits = 0;
-int     nptSerialParity = 0;
-int     nptSerialFlowCtrl = 4;
-
 // Operating mode of the currently active service provider.
-serviceprovider_t netCurrentProvider = NSP_NONE;
+boolean netIsActive = false;
 boolean netServerMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -147,8 +131,6 @@ static volatile boolean stopReceiver;
 
 void N_Register(void)
 {
-	C_VAR_INT("net-protocol", &nptActive, 0, 0, 3,
-			  "Network protocol: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial link.");
 	C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0,
 				  "TCP/IP address for searching servers.");
 	C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0,
@@ -157,20 +139,6 @@ void N_Register(void)
 			  "TCP port to use for control connections.");
 	C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0,
 			  "UDP port to use for client data traffic.");
-	C_VAR_INT("net-modem", &nptModem, CVF_NO_MAX, 0, 0,
-			  "Index of the selected modem.");
-	C_VAR_CHARPTR("net-modem-phone", &nptPhoneNum, 0, 0, 0,
-				  "Phone number to dial to when connecting.");
-	C_VAR_INT("net-serial-port", &nptSerialPort, CVF_NO_MAX, 0, 0,
-			  "COM port to use for serial link connection.");
-	C_VAR_INT("net-serial-baud", &nptSerialBaud, CVF_NO_MAX, 0, 0,
-			  "Baud rate for serial link connections.");
-	C_VAR_INT("net-serial-stopbits", &nptSerialStopBits, 0, 0, 2,
-			  "0=1 bit, 1=1.5 bits, 2=2 bits.");
-	C_VAR_INT("net-serial-parity", &nptSerialParity, 0, 0, 3,
-			  "0=None, 1=odd, 2=even, 3=mark parity.");
-	C_VAR_INT("net-serial-flowctrl", &nptSerialFlowCtrl, 0, 0, 4,
-			  "0=None, 1=XON/XOFF, 2=RTS, 3=DTR, 4=RTS/DTR flow control.");
 }
 
 /*
@@ -558,22 +526,6 @@ void N_SystemShutdown(void)
 	SDLNet_Quit();
 }
 
-unsigned int N_GetServiceProviderCount(serviceprovider_t type)
-{
-	// Only TCP/IP.
-	return type == NSP_TCPIP ? 1 : 0;
-}
-
-boolean N_GetServiceProviderName(serviceprovider_t type, unsigned int index,
-								 char *name, int maxLength)
-{
-	if(type != NSP_TCPIP || index != 0)
-		return false;
-	if(name)
-		strncpy(name, "TCP/IP", maxLength);
-	return true;
-}
-
 /*
  * Convert an IPaddress to a string.
  */
@@ -614,12 +566,12 @@ Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
  * mode.  If a service provider has already been initialized, it will
  * be shut down first.  Returns true if successful.
  */
-boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
+boolean N_InitService(boolean inServerMode)
 {
 	IPaddress ip;
 	Uint16  port;
 
-	if(netCurrentProvider == provider && netServerMode == inServerMode)
+	if(N_IsAvailable() && netServerMode == inServerMode)
 	{
 		// Nothing to change.
 		return true;
@@ -628,24 +580,11 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 	// Get rid of the currently active service provider.
 	N_ShutdownService();
 
-	if(provider == NSP_NONE)
-	{
-		// Nothing further to do.
-		return true;
-	}
-	if(provider != NSP_TCPIP)
-	{
-		// Only TCP/IP is supported.
-		Con_Message("N_InitService: Provider not supported.\n");
-		return false;
-	}
-
 	if(inServerMode)
 	{
 		port = (!nptIPPort ? defaultTCPPort : nptIPPort);
 
-		VERBOSE(Con_Message
-				("N_InitService: Listening TCP socket on port %i.\n", port));
+		Con_Message("N_InitService: Listening TCP socket on port %i.\n", port);
 
 		// Open a listening TCP socket. It will accept client
 		// connections.
@@ -675,55 +614,23 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 		located.valid = false;
 	}
 
-	// FIXME: When entering server mode, why must be close and re-open
-	// the incoming UDP port? It's the same either way...
-
-	/*  port = nptUDPPort;
-	   if(!port) port = defaultUDPPort;
-	   inSock = SDLNet_UDP_Open(port);
-	   for(i = 0; !inSock && i < MAX_NODES; i++)
-	   {
-	   port = defaultUDPPort + i;
-	   VERBOSE( Con_Message("N_InitService: Trying alternative incoming "
-	   "UDP port (%i).\n", port) );
-	   inSock = SDLNet_UDP_Open(port);
-	   }
-	   recvUDPPort = port; */
-
 	// Open the socket that will be used for UDP communications.
 	recvUDPPort =
 		N_OpenUDPSocket((UDPsocket *) &inSock, nptUDPPort, defaultUDPPort);
-	VERBOSE(Con_Message
-			("N_InitService: Incoming UDP port %i.\n", recvUDPPort));
+	Con_Message("N_InitService: In/out UDP port %i.\n", recvUDPPort);
 
 	// Success.
-	nptActive = provider - 1;	// -1 to match old values: 0=TCP/IP...
+	netIsActive = true;
 	netServerMode = inServerMode;
-	netCurrentProvider = provider;
 
 	// Did we fail in opening the UDP port?
 	if(!inSock)
 	{
-		Con_Message("N_InitService: Failed to open incoming UDP port.\n");
+		Con_Message("N_InitService: Failed to open in/out UDP port.\n");
 		Con_Message("  %s\n", SDLNet_GetError());
 		N_ShutdownService();
 		return false;
 	}
-
-	// Open the port for outgoing UDP communications.
-	/*  port = nptUDPOutPort;
-	   if(!port && inServerMode) port = defaultUDPPort + 1;
-	   if(port)
-	   {
-	   VERBOSE( Con_Message("N_InitService: Outgoing UDP port %i.\n", port) );
-	   }
-	   if(!(outSock = SDLNet_UDP_Open(port)))
-	   {
-	   Con_Message("N_InitService: Couldn't open outgoing UDP socket.\n");
-	   N_ShutdownService();
-	   return false;
-	   }
-	 */
 
 	// Start the UDP receiver right away.
 	N_StartReceiver();
@@ -753,16 +660,8 @@ void N_ShutdownService(void)
 	// Any queued messages will be destroyed.
 	N_ClearMessages();
 
-	// Kill the UDP transmitter thread.
+	// Kill the transmission threads.
 	N_StopTransmitter(&sendQ);
-
-	/*  
-	   // Close the outgoing UDP socket.
-	   sock = outSock;
-	   outSock = NULL;
-	   SDLNet_UDP_Close(sock);
-	 */
-
 	N_StopReceiver();
 
 	if(netServerMode)
@@ -785,8 +684,7 @@ void N_ShutdownService(void)
 		located.valid = false;
 	}
 
-	// Reset the current provider's info.
-	netCurrentProvider = NSP_NONE;
+	netIsActive = false;
 	netServerMode = false;
 }
 
@@ -796,7 +694,7 @@ void N_ShutdownService(void)
  */
 boolean N_IsAvailable(void)
 {
-	return netCurrentProvider != NSP_NONE;
+	return netIsActive;
 }
 
 /*
@@ -804,7 +702,7 @@ boolean N_IsAvailable(void)
  */
 boolean N_UsingInternet(void)
 {
-	return netCurrentProvider == NSP_TCPIP;
+	return netIsActive;
 }
 
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
@@ -1145,12 +1043,6 @@ boolean N_Disconnect(void)
 	Net_StopGame();
 	N_ClearMessages();
 
-	/*  
-	   // Exit the session, but reinit the client interface.
-	   gClient->Close(0);
-	   N_InitDPObject(false);
-	 */
-
 	// Tell the Game that disconnecting is now complete.
 	if(gx.NetDisconnect)
 		gx.NetDisconnect(false);
@@ -1176,7 +1068,7 @@ boolean N_ServerOpen(void)
 
 	// Let's make sure the correct service provider is initialized
 	// in server mode.
-	if(!N_InitService(netCurrentProvider, true))
+	if(!N_InitService(true))
 	{
 		Con_Message("N_ServerOpen: Failed to initialize server mode.\n");
 		return false;
@@ -1218,7 +1110,7 @@ boolean N_ServerClose(void)
 	Net_StopGame();
 
 	// Exit server mode.
-	N_InitService(netCurrentProvider, false);
+	N_InitService(false);
 
 	if(gx.NetServerStop)
 		gx.NetServerStop(false);
@@ -1375,4 +1267,12 @@ void N_Listen(void)
 	{
 		// Clientside listening.
 	}
+}
+
+/*
+ * Called from "net info".
+ */
+void N_PrintInfo(void)
+{
+	// TODO: Print information about send queues, ports, etc.
 }
