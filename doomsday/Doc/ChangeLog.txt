@@ -39,6 +39,8 @@ KickStart:
 * Cheb's KickStart v2.09 replaces the ancient v1.6
 
 jDoom:
++ game modes: doom1-share, doom1, doom1-ultimate, doom2, doom2-plut, 
+  doom2-tnt
 + automap added to Options -> Controls (under Misc.)
 + cvar game-corpse-sliding: corpses slide down stairs and ledges 
   (defaults to zero due to some bad behaviour; e.g. exit room of D2/22)
@@ -47,7 +49,12 @@ jDoom:
 - A_Tracer() used to spawn puffs that were identical to bullet puffs, 
   this caused complications with particle generators
 
+jHeretic:
++ game modes: heretic-share, heretic (normal registered), heretic-ext 
+  (has episodes 4, 5)
+
 jHexen:
++ game modes: hexen, hexen-dk (Death Kings of Dark Citadel)
 - fixed: sound sequence delays with repeating sounds (sequence updater
   didn't get correct information about currently playing sound effects)
   
