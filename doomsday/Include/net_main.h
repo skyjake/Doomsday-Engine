@@ -314,6 +314,7 @@ void	Net_Ticker(timespan_t time);
 void	Net_Drawer(void);
 void	Net_ResetTimer(void);
 
+boolean	Net_IsLocalPlayer(int pNum);
 void	Net_SetInitialAckTime(int clientNumber, uint period);
 void	Net_SetAckTime(int clientNumber, uint period);
 uint	Net_GetAckTime(int clientNumber);
