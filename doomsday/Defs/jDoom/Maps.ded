@@ -15,459 +15,188 @@ Map Info {
   };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M2";
   Name = "E1M2: Nuclear Plant";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M3";
   Name = "E1M3: Toxin Refinery";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M4";
   Name = "E1M4: Command Control";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M5";
   Name = "E1M5: Phobos Lab";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M6";
   Name = "E1M6: Central Processing";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M7";
   Name = "E1M7: Computer Station";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M8";
   Name = "E1M8: Phobos Anomaly";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E1M9";
   Name = "E1M9: Military Base";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M1";
   Name = "E2M1: Deimos Anomaly";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Sky Layer 1 {
-    Flags = "slf_enable";
     Texture = "SKY2";
   };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M2";
   Name = "E2M2: Containment Area";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M3";
   Name = "E2M3: Refinery";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M4";
   Name = "E2M4: Deimos Lab";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M5";
   Name = "E2M5: Command Center";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M6";
   Name = "E2M6: Halls of the Damned";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M7";
   Name = "E2M7: Spawning Vats";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M8";
   Name = "E2M8: Tower of Babel";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E2M9";
   Name = "E2M9: Fortress of Mystery";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M1";
   Name = "E3M1: Hell Keep";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Sky Layer 1 {
-    Flags = "slf_enable";
     Texture = "SKY3";
   };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M2";
   Name = "E3M2: Slough of Despair";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M3";
   Name = "E3M3: Pandemonium";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M4";
   Name = "E3M4: House of Pain";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M5";
   Name = "E3M5: Unholy Cathedral";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M6";
   Name = "E3M6: Mt. Erebus";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M7";
   Name = "E3M7: Limbo";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M8";
   Name = "E3M8: Dis";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E3M9";
   Name = "E3M9: Warrens";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M1";
   Name = "E4M1: Hell Beneath";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Sky Layer 1 {
-    Flags = "slf_enable";
     Texture = "SKY4";
   };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M2";
   Name = "E4M2: Perfect Hatred";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M3";
   Name = "E4M3: Sever The Wicked";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M4";
   Name = "E4M4: Unruly Evil";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M5";
   Name = "E4M5: They Will Repent";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M6";
   Name = "E4M6: Against Thee Wickedly";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M7";
   Name = "E4M7: And Hell Followed";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M8";
   Name = "E4M8: Unto The Cruel";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
-Map Info {
+Copy Map Info {
   ID = "E4M9";
   Name = "E4M9: Fear";
-  Author = "id Software";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY4";
-  };
 }
 
 Map Info {
