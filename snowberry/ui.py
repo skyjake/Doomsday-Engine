@@ -1180,6 +1180,11 @@ INITIAL_SASH_POS = 210
 class MainFrame (wx.Frame):
     def __init__(self, title):
         wx.Frame.__init__(self, None, -1, title, size = (900, 500))
+
+        # Set the icon for the frame.
+        icon = wx.Icon('graphics/snowberry.ico', wx.BITMAP_TYPE_ICO)
+        self.SetIcon(icon)
+        
         #self.Iconize(True)
         self.Hide()
 
