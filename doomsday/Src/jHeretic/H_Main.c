@@ -886,6 +886,26 @@ void status(char *msg)
 	Con_Message("%s\n", msg);
 }
 
+/*
+ * Set the game mode string.
+ */
+void H_IdentifyVersion(void)
+{
+	// The game mode string is used in netgames.
+	strcpy(gameModeString, "heretic");
+
+	if(W_CheckNumForName("E2M1") == -1)
+	{ 
+		// Can't find episode 2 maps, must be the shareware WAD
+		strcpy(gameModeString, "heretic-share");
+	}
+	else if(W_CheckNumForName("EXTENDED") != -1)
+	{ 
+		// Found extended lump, must be the extended WAD
+		strcpy(gameModeString, "heretic-ext");
+	}
+}
+
 //===========================================================================
 // H_PostInit
 //===========================================================================
@@ -908,20 +928,15 @@ void H_PostInit(void)
 
 	G_SetGlowing();
 
-	// The game mode string is used in netgames.
-	strcpy(gameModeString, "heretic");
-
 	if(W_CheckNumForName("E2M1") == -1)
 	{ // Can't find episode 2 maps, must be the shareware WAD
 		shareware = true;
 		borderLumps[0] = "FLOOR04";
 		R_SetBorderGfx(borderLumps);
-		strcpy(gameModeString, "heretic-share");
 	}
 	else if(W_CheckNumForName("EXTENDED") != -1)
 	{ // Found extended lump, must be the extended WAD
 		ExtendedWAD = true;
-		strcpy(gameModeString, "heretic-ext");
 	}
 
 	//

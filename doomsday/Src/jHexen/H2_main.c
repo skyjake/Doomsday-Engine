@@ -237,19 +237,25 @@ void H2_PreInit(void)
 	cfg.bobView = cfg.bobWeapon = 1;
 }
 
-void H2_PostInit(void)
+/*
+ * Set the game mode string.
+ */
+void H2_IdentifyVersion(void)
 {
-	int	pClass, p;
-
 	// Determine the game mode.
 	strcpy(gameModeString, "hexen");
 	
 	// This is not a very accurate test...
 	if(W_CheckNumForName("MAP59") >= 0 && W_CheckNumForName("MAP60") >= 0)
 	{
-		// It must be Death Kings!
+		// It must be Deathkings!
 		strcpy(gameModeString, "hexen-dk");
 	}
+}
+
+void H2_PostInit(void)
+{
+	int	pClass, p;
 
 	Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "jHexen "
 		VERSIONTEXT"\n");
