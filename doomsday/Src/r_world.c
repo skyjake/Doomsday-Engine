@@ -1159,20 +1159,28 @@ void R_UpdatePlanes(void)
 		R_SetSectorLinks(sec);
 		// Floor height.
 		if(!sin->linkedfloor) 
-			sin->visfloor = FIX2FLT(sec->floorheight);
+		{
+			sin->visfloor = FIX2FLT(sec->floorheight)
+				+ sin->visflooroffset;
+		}
 		else
 		{
 			sin->visfloor = FIX2FLT(R_GetLinkedSector
 				(sin->linkedfloor, true)->floorheight);
 		}
+		
+
 		// Ceiling height.
 		if(!sin->linkedceiling)
-			sin->visceiling = FIX2FLT(sec->ceilingheight);
+		{
+			sin->visceiling = FIX2FLT(sec->ceilingheight)
+				+ sin->visceilingoffset;
+		}
 		else
 		{
 			sin->visceiling = FIX2FLT(R_GetLinkedSector
 				(sin->linkedceiling, false)->ceilingheight);
-		}
+		}		
 	}
 }
 
