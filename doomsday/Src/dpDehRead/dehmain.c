@@ -440,7 +440,7 @@ static BOOL HandleKey (const struct Key *keys, void *structure,
 	return true;
 }
 
-static BOOL ReadChars (char **stuff, int size)
+static BOOL ReadChars (char **stuff, int size, boolean skipJunk)
 {
 	char *str = *stuff;
 
@@ -460,6 +460,14 @@ static BOOL ReadChars (char **stuff, int size)
 	} while (--size);
 
 	*str = 0;
+
+	if(skipJunk)
+	{
+		// Skip anything else on the line.
+		while(*PatchPt != '\n' && *PatchPt != 0)
+			PatchPt++;
+	}
+
 	return true;
 }
 
@@ -1471,8 +1479,8 @@ int PatchText (int oldSize)
 		goto donewithtext;
 	}
 
-	good = ReadChars (&oldStr, oldSize);
-	good += ReadChars (&newStr, newSize);
+	good = ReadChars (&oldStr, oldSize, false);
+	good += ReadChars (&newStr, newSize, true);
 
 	if (!good) 
 	{
@@ -1488,7 +1496,11 @@ int PatchText (int oldSize)
 		goto donewithtext;
 	}
 
-	if(verbose) LPrintf ("Searching for text:\n%s\n", oldStr);
+	if(verbose) 
+	{
+		LPrintf ("Searching for text:\n%s\n", oldStr);
+		LPrintf ("<< TO BE REPLACED WITH:\n%s\n>>\n", newStr);
+	}
 	good = false;
 
 	// Search through sprite names
