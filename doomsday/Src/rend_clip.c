@@ -17,6 +17,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef _DEBUG
+#include <assert.h>
+#endif
+
 #include <stdlib.h>
 
 #include "de_base.h"
@@ -26,16 +30,33 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXCLIPNODES	128		// We can have this many nodes at once.
-#define DEFOCCNODES		2048	// Hard-coded limits suck...
+//#define MAXCLIPNODES	128		// We can have this many nodes at once.
+//#define DEFOCCNODES		2048	// Hard-coded limits suck...
 
 // Occlusion node flags.
-#define OCNF_USED		0x1
+//#define OCNF_USED		0x1
 #define OCNF_TOPHALF	0x2		// Otherwise bottom half.
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct rovernode_s {
+	struct rovernode_s *next, *prev;
+} rovernode_t;
+
+typedef struct rover_s {
+	rovernode_t *first;
+	rovernode_t *last;
+	rovernode_t *rover;
+} rover_t;
+
+typedef struct clipnode_s {
+	rovernode_t	rover;
+	struct clipnode_s *prev, *next;	// Previous and next nodes.
+	binangle_t	start, end;			// The start and end angles 
+} clipnode_t;						// (start < end).
+
 typedef struct occnode_s {
+	rovernode_t	rover;
 	struct occnode_s *next, *prev;
 	byte		flags;			// Used and tophalf.
 	binangle_t	start, end;		// Start and end angles of the segment (s<e).
@@ -48,23 +69,31 @@ typedef struct occnode_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-int		C_IsAngleVisible(binangle_t bang);
-void	C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle);
+int	C_IsAngleVisible(binangle_t bang);
+void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle);
 static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle);
+clipnode_t *C_AngleClippedBy(binangle_t bang);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-clipnode_t	*clipnodes;		// The list of clipnodes.
-clipnode_t	*cliphead;		// The head node.
-int			maxnumnodes=0;		
+// The list of clipnodes.
+//clipnode_t	*clipFirst, *clipLast, *clipRover;
+rover_t		clipNodes;
 
-int			maxOccNodes = DEFOCCNODES; 
-occnode_t	*occnodes;		// The list of occlusion nodes.
-occnode_t	*occhead;		// The head occlusion node.
-occnode_t	*orangeCursor;
-int			highOccNodes;
+// Head of the clipped regions list.
+clipnode_t	*clipHead;		// The head node.
+
+// The list of occlusion nodes.
+//occnode_t	*occNodes, *occRover;
+rover_t		occNodes;
+
+// Head of the occlusion range list.
+occnode_t	*occHead;		// The head occlusion node.
+
+/*occnode_t	*orangeCursor;
+int			highOccNodes;*/
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -72,26 +101,113 @@ static binangle_t anglist[MAX_POLY_SIDES];
 
 // CODE --------------------------------------------------------------------
 
-static void C_CountNodes()
+/*static void C_CountNodes()
 {
 	int	i;
 	clipnode_t *ci;
-	for(i=0, ci=cliphead; ci; i++, ci=ci->next);
+	for(i=0, ci=clipHead; ci; i++, ci=ci->next);
 	if(i > maxnumnodes) maxnumnodes = i;
-}
+}*/
 
 static int C_CountUsedOranges(void)
 {
 	int cnt;
 	occnode_t *orange;
-	for(cnt = 0, orange = occhead; orange; orange = orange->next, cnt++);
+	for(cnt = 0, orange = occHead; orange; orange = orange->next, cnt++);
 	return cnt;
 }
 
 static void C_CountOranges(void)
 {
-	int i = C_CountUsedOranges();
-	if(i > highOccNodes) highOccNodes = i;
+/*	int i = C_CountUsedOranges();
+	if(i > highOccNodes) highOccNodes = i;*/
+}
+
+//===========================================================================
+// C_RoverInit
+//===========================================================================
+void C_RoverInit(rover_t *rover)
+{
+	memset(rover, 0, sizeof(*rover));
+}
+
+//===========================================================================
+// C_RoverRewind
+//===========================================================================
+void C_RoverRewind(rover_t *r)
+{
+	r->rover = r->first;
+}
+
+//===========================================================================
+// C_RoverGet
+//===========================================================================
+void *C_RoverGet(rover_t *r)
+{
+	void *node;
+
+	if(!r->rover) return NULL;
+
+	// We'll use this.
+	node = r->rover;
+	r->rover = r->rover->next;
+	return node;
+}
+
+//===========================================================================
+// C_RoverAdd
+//===========================================================================
+void C_RoverAdd(rover_t *r, void *node)
+{
+	// Link it to the start of the rover's list.
+	if(!r->last) r->last = node;
+	if(r->first) r->first->prev = node;
+	((rovernode_t*)node)->next = r->first;
+	((rovernode_t*)node)->prev = NULL;
+	r->first = node;	
+}
+
+//===========================================================================
+// C_RoverRemove
+//===========================================================================
+void C_RoverRemove(rover_t *r, void *node)
+{
+#ifdef _DEBUG
+	assert(r->last != NULL);
+#endif
+
+	if(node == r->last)
+	{
+#ifdef _DEBUG
+		assert(r->rover == NULL);
+#endif
+		// We can only remove the last if all nodes are already in use.
+		r->rover = node;
+	}
+	else
+	{
+		// Unlink from the list entirely.
+		((rovernode_t*)node)->next->prev = ((rovernode_t*)node)->prev;
+		if(((rovernode_t*)node)->prev) 
+		{
+			((rovernode_t*)node)->prev->next = ((rovernode_t*)node)->next;
+		}
+		else
+		{
+			r->first = r->first->next;
+			r->first->prev = NULL;
+		}
+
+		// Put it back to the end of the list.
+		r->last->next = node;
+		((rovernode_t*)node)->prev = r->last;
+		((rovernode_t*)node)->next = NULL;
+		r->last = node;
+
+		// If all were in use, set the rover here. Otherwise the rover
+		// can stay where it is.
+		if(!r->rover) r->rover = r->last;
+	}
 }
 
 //===========================================================================
@@ -99,15 +215,18 @@ static void C_CountOranges(void)
 //===========================================================================
 void C_Init(void)
 {
-	if(ArgCheckWith("-maxor", 1)) // Maximum number of occlusion ranges.
+/*	if(ArgCheckWith("-maxor", 1)) // Maximum number of occlusion ranges.
 	{
 		maxOccNodes = atoi(ArgNext());
 		if(maxOccNodes < DEFOCCNODES) maxOccNodes = DEFOCCNODES;
-	}
+	}*/
 
-	clipnodes = Z_Calloc(sizeof(clipnode_t)*MAXCLIPNODES, PU_STATIC, 0);
+	C_RoverInit(&clipNodes);
+	C_RoverInit(&occNodes);
+
+/*	clipnodes = Z_Calloc(sizeof(clipnode_t)*MAXCLIPNODES, PU_STATIC, 0);
 	occnodes = Z_Calloc(sizeof(occnode_t)*maxOccNodes, PU_STATIC, 0);
-	orangeCursor = occnodes;
+	orangeCursor = occnodes;*/
 }
 
 //===========================================================================
@@ -115,8 +234,12 @@ void C_Init(void)
 //===========================================================================
 void C_ClearRanges(void)
 {
-	memset(clipnodes, 0, sizeof(clipnode_t)*MAXCLIPNODES);
-	cliphead = 0;
+	/*memset(clipnodes, 0, sizeof(clipnode_t)*MAXCLIPNODES);*/
+	clipHead = NULL;
+
+	// Rewind the rover.
+	C_RoverRewind(&clipNodes);
+	
 
 /*#if _DEBUG
 	{
@@ -126,9 +249,13 @@ void C_ClearRanges(void)
 	}
 #endif*/
 
-	memset(occnodes, 0, sizeof(occnode_t)*maxOccNodes);
-	orangeCursor = occnodes;
-	occhead = 0;
+	/*memset(occnodes, 0, sizeof(occnode_t)*maxOccNodes);
+	orangeCursor = occnodes;*/
+	occHead = NULL;
+
+	// Rewind the rover.
+	//occRover = occNodes;
+	C_RoverRewind(&occNodes);
 }
 
 //===========================================================================
@@ -137,37 +264,37 @@ void C_ClearRanges(void)
 //===========================================================================
 static clipnode_t *C_NewRange(binangle_t stAng, binangle_t endAng)	
 {
-	int			i;
-	clipnode_t	*cnode;
+	clipnode_t *node;
 
-	for(i = 0; i < MAXCLIPNODES; i++) if(!clipnodes[i].used) break;
-	if(i == MAXCLIPNODES) 
-		Con_Error("C_NewRange: Out of clipnodes (max %d).\n", MAXCLIPNODES);
+	if((node = C_RoverGet(&clipNodes)) == NULL)
+	{
+		// Allocate a new node and add it to head the list.
+		node = Z_Malloc(sizeof(clipnode_t), PU_STATIC, NULL);
+		C_RoverAdd(&clipNodes, node);
+	}
+
 	// Initialize the node.
-	cnode = clipnodes+i;
-	cnode->used = 1;
-	cnode->start = stAng;
-	cnode->end = endAng;
-	cnode->prev = cnode->next = NULL;
-	return cnode;
+	node->start = stAng;
+	node->end = endAng;
+	node->prev = node->next = NULL;
+	return node;
 }
 
 //===========================================================================
 // C_RemoveRange
 //===========================================================================
-static void C_RemoveRange(clipnode_t *crange)
+static void C_RemoveRange(clipnode_t *node)
 {
-#if _DEBUG
-	if(!crange->used) Con_Error("Tried to remove an unused range.\n");
-#endif
-
 	// If this is the head, move it.
-	if(cliphead == crange) cliphead = crange->next;
+	if(clipHead == node) clipHead = node->next;
 
-	crange->used = 0;
-	if(crange->prev) crange->prev->next = crange->next;
-	if(crange->next) crange->next->prev = crange->prev;
-	crange->prev = crange->next = 0;
+	// Unlink from the clipper.
+	if(node->prev) node->prev->next = node->next;
+	if(node->next) node->next->prev = node->prev;
+	node->prev = node->next = 0;
+
+	// Move this node to the free node rover.
+	C_RoverRemove(&clipNodes, node);
 }
 
 //===========================================================================
@@ -177,29 +304,21 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 {
 	clipnode_t	*ci, *crange;
 
-	//printf( "=== C_AddRange(%x,%x):\n",startAngle,endAngle);
-
-	/*if(startAngle == endAngle)
-	{
-		//printf( "  range has no length, skipping\n");
-		return;
-	}*/
-
 	// This range becomes a solid segment: cut everything away from the 
 	// corresponding occlusion range.
 	C_CutOcclusionRange(startAngle, endAngle);
 
 	// If there is no head, this will be the first range.
-	if(!cliphead)
+	if(!clipHead)
 	{
-		cliphead = C_NewRange(startAngle, endAngle);
-		//printf( "  new head node added, %x => %x\n", cliphead->start, cliphead->end);
+		clipHead = C_NewRange(startAngle, endAngle);
+		//printf( "  new head node added, %x => %x\n", clipHead->start, clipHead->end);
 		return;
 	}
 
 	// There are previous ranges. Check that the new range isn't contained
 	// by any of them.
-	for(ci = cliphead; ci; ci = ci->next)
+	for(ci = clipHead; ci; ci = ci->next)
 	{
 		//printf( "      %p: %4x => %4x (%d)\n",ci,ci->start,ci->end,ci->used);
 		if(startAngle >= ci->start && endAngle <= ci->end)
@@ -213,7 +332,7 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 	}
 
 	// Now check if any of the old ranges are contained by the new one.
-	for(ci = cliphead; ci;)
+	for(ci = clipHead; ci;)
 	{
 		//printf( "loop2\n");
 		if(ci->start >= startAngle && ci->end <= endAngle)
@@ -223,7 +342,7 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 			// We must do this in order to keep the loop from breaking.
 			ci = ci->next;	
 			C_RemoveRange(crange);
-			//if(!ci) ci = cliphead;
+			//if(!ci) ci = clipHead;
 			//if(!ci) break;
 			continue;
 		}	
@@ -233,9 +352,9 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 	// Now it is possible that the new range overlaps one or two old ranges.
 	// If two are overlapped, they are consecutive. First we'll try to find
 	// a range that overlaps the beginning.
-	for(crange = 0, ci = cliphead; ci; ci = ci->next)
+	for(crange = 0, ci = clipHead; ci; ci = ci->next)
 	{
-		// In preparation of the next stage, find a good spot for the range.
+		// In preparation for the next stage, find a good spot for the range.
 		if(ci->start < endAngle) crange = ci; // Add after this one.
 
 		//printf( "loop3\n");
@@ -289,62 +408,45 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 	// the others. We still need to find a good place for it. Crange will mark
 	// the spot. 
 	
-	//printf( "  range doesn't overlap old ones:\n");
-/*	crange = 0;
-	for(ci=cliphead; ci; ci=ci->next)
-	{
-	//	//printf( "loop4\n");
-		if(ci->start < endAngle) // Is this a suitable spot?
-			crange = ci; // Add after this one.
-		else break;	// We're done.
-	}*/
 	if(!crange)
 	{
-		//printf( "    no suitable new spot, adding to head\n");
 		// We have a new head node.
-		crange = cliphead;
-		cliphead = C_NewRange(startAngle, endAngle);
-		cliphead->next = crange;
-		if(crange) crange->prev = cliphead;
-		return;
+		crange = clipHead;
+		clipHead = C_NewRange(startAngle, endAngle);
+		clipHead->next = crange;
+		if(crange) crange->prev = clipHead;
 	}
-	//printf("  spot found, adding after %x => %x\n",crange->start,crange->end);
-	// Add the new range after crange.
-	ci = C_NewRange(startAngle, endAngle);
-	ci->next = crange->next;
-	if(ci->next) ci->next->prev = ci;
-	ci->prev = crange;
-	crange->next = ci;
+	else
+	{
+		// Add the new range after crange.
+		ci = C_NewRange(startAngle, endAngle);
+		ci->next = crange->next;
+		if(ci->next) ci->next->prev = ci;
+		ci->prev = crange;
+		crange->next = ci;
+	}
 }
 
 //===========================================================================
 // C_NewOcclusionRange
 //===========================================================================
 occnode_t *C_NewOcclusionRange
-	(binangle_t stAng, binangle_t endAng, float *normal, boolean tophalf)
+	(binangle_t stAng, binangle_t endAng, float *normal, boolean topHalf)
 {
-	occnode_t *startNode = orangeCursor;
-	occnode_t *last = occnodes + maxOccNodes-1;
-
-	do 
+	occnode_t *node;
+	
+	if((node = C_RoverGet(&occNodes)) == NULL)
 	{
-		if(++orangeCursor > last) 
-			orangeCursor = occnodes;
-		if(orangeCursor == startNode) // Full circle?
-		{
-			Con_Error("C_NewOcclusionRange: Out of oranges (max %i).\n",
-				maxOccNodes);
-		}
+		// Allocate a new node.
+		node = Z_Malloc(sizeof(occnode_t), PU_STATIC, NULL);
+		C_RoverAdd(&occNodes, node);
 	}
-	while(orangeCursor->flags & OCNF_USED);
-
-	// Initialize the node.
-	orangeCursor->flags = OCNF_USED;	// Clear other flags.
-	if(tophalf) orangeCursor->flags |= OCNF_TOPHALF;
-	orangeCursor->start = stAng;
-	orangeCursor->end = endAng;
-	memcpy(orangeCursor->normal, normal, sizeof(orangeCursor->normal));
-	return orangeCursor;
+	
+	node->flags = (topHalf? OCNF_TOPHALF : 0);
+	node->start = stAng;
+	node->end = endAng;
+	memcpy(node->normal, normal, sizeof(node->normal));
+	return node;
 }
 
 //===========================================================================
@@ -352,17 +454,13 @@ occnode_t *C_NewOcclusionRange
 //===========================================================================
 void C_RemoveOcclusionRange(occnode_t *orange)
 {
-#if _DEBUG
-	if(!(orange->flags & OCNF_USED)) 
-		Con_Error("Tried to remove an unused orange.\n");
-#endif
-
 	// If this is the head, move it to the next one.
-	if(occhead == orange) occhead = orange->next;
+	if(occHead == orange) occHead = orange->next;
 
-	orange->flags = 0;
 	if(orange->prev) orange->prev->next = orange->next;
 	if(orange->next) orange->next->prev = orange->prev;
+
+	C_RoverRemove(&occNodes, orange);
 }
 
 //===========================================================================
@@ -370,7 +468,7 @@ void C_RemoveOcclusionRange(occnode_t *orange)
 //	The given range must be safe.
 //===========================================================================
 void C_AddOcclusionRange
-	(binangle_t start, binangle_t end, float *normal, boolean tophalf)
+	(binangle_t start, binangle_t end, float *normal, boolean topHalf)
 {
 	occnode_t *orange, *newor, *last;
 
@@ -378,18 +476,14 @@ void C_AddOcclusionRange
 	if(start > end) return;
 
 	// A new range will be added.
-	newor = C_NewOcclusionRange(start, end, normal, tophalf);
-
-#if _DEBUG
-	C_CountOranges();
-#endif
+	newor = C_NewOcclusionRange(start, end, normal, topHalf);
 
 	// Are there any previous occlusion nodes?
-	if(!occhead)
+	if(!occHead)
 	{
 		// No; this is the first.
-		occhead = newor;
-		occhead->next = occhead->prev = NULL;
+		occHead = newor;
+		occHead->next = occHead->prev = NULL;
 		return;
 	}
 
@@ -397,7 +491,7 @@ void C_AddOcclusionRange
 	// contained by the new orange. But how to do the check efficiently?
 
 	// Add the new occlusion range to the appropriate position.
-	for(orange = occhead; orange; last = orange, orange = orange->next)
+	for(orange = occHead; orange; last = orange, orange = orange->next)
 		// The list of oranges is sorted by the start angle.
 		// Find the first range whose start is greater than the new one.
 		if(orange->start > start) 
@@ -409,7 +503,7 @@ void C_AddOcclusionRange
 			if(newor->prev) 
 				newor->prev->next = newor;
 			else
-				occhead = newor; // We have a new head.
+				occHead = newor; // We have a new head.
 			return;
 		}
 
@@ -427,7 +521,7 @@ void C_OrangeRanger(int mark)
 {
 	occnode_t *orange;
 
-	for(orange = occhead; orange; orange = orange->next)
+	for(orange = occHead; orange; orange = orange->next)
 		if(orange->prev && orange->prev->start > orange->start)
 			Con_Error("C_OrangeRanger(%i): Orange order has failed.\n", mark);
 }
@@ -440,7 +534,7 @@ void C_OcclusionLister(char *title)
 	occnode_t *orange;
 
 	printf("*** %s:\n", title);
-	for(orange = occhead; orange; orange = orange->next)
+	for(orange = occHead; orange; orange = orange->next)
 		printf("  %04x-%04x (%i)\n",
 		orange->start, orange->end, (orange->flags & OCNF_TOPHALF)!=0);
 }
@@ -457,7 +551,7 @@ void C_MergeOccludes(void)
 	binangle_t crossAngle;
 	float cross[3];
 
-	for(orange = occhead; orange && orange->next; orange = next)
+	for(orange = occHead; orange && orange->next; orange = next)
 	{
 		next = orange->next;
 
@@ -542,14 +636,14 @@ void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
 	// Find the node after which it's OK to add oranges cut in half.
 	// (Must preserve the ascending order of the start angles.)
 	after = NULL;
-	for(orange = occhead; orange; orange = orange->next)
+	for(orange = occHead; orange; orange = orange->next)
 	{
 		// We want the orange with the smallest start angle, but one that 
 		// starts after the cut range has ended.
 		if(orange->start < endAngle) after = orange; else break;
 	}
 
-	for(orange = occhead; orange; orange = next)
+	for(orange = occHead; orange; orange = next)
 	{
 		// In case orange is removed, take a copy of the next one.
 		next = orange->next;
@@ -603,8 +697,8 @@ void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
 			else
 			{
 				// Add to the head.
-				part->next = occhead;
-				occhead = part;
+				part->next = occHead;
+				occHead = part;
 			}
 			if(part->next) part->next->prev = part;
 			// Modify the start part.
@@ -641,9 +735,9 @@ void C_Ranger(void)
 	clipnode_t *ci;
 
 	//printf("Ranger:\n");
-	for(ci=cliphead; ci; ci=ci->next)
+	for(ci = clipHead; ci; ci = ci->next)
 	{
-		if(ci==cliphead)
+		if(ci == clipHead)
 		{
 			if(ci->prev != 0)
 				Con_Error("Cliphead->prev != 0.\n");
@@ -654,19 +748,16 @@ void C_Ranger(void)
 			if(ci->prev->next != ci)
 				Con_Error("Prev->next != this\n");
 		}
-		else if(ci != cliphead) Con_Error("prev == null, this isn't cliphead.\n");
+		else if(ci != clipHead) 
+		{
+			Con_Error("prev == null, this isn't clipHead.\n");
+		}
 
 		if(ci->next)
 		{
 			if(ci->next->prev != ci)
 				Con_Error("Next->prev != this\n");
 		}
-
-		/*printf( "  %p: %04x => %04x ", ci, ci->start, ci->end);
-		if(ci->prev)
-			printf( "(gap: %d)\n", ci->start-ci->prev->end);
-		else
-			printf( "\n");*/
 	}
 }
 
@@ -733,13 +824,6 @@ void C_SafeAddOcclusionRange
 #endif
 
 	}
-/*#if _DEBUG
-	{
-		char buf[30];
-		sprintf(buf, "ADDED <%04x-%04x>", startAngle, endAngle);
-		C_OcclusionLister(buf);
-	}
-#endif*/
 }
 
 //===========================================================================
@@ -800,7 +884,7 @@ boolean C_IsPointOccluded(float *viewrelpoint)
 	binangle_t angle = C_PointToAngle(viewrelpoint);
 	occnode_t *orange;
 
-	for(orange = occhead; orange; orange = orange->next)
+	for(orange = occHead; orange; orange = orange->next)
 	{
 		if(angle < orange->start || angle > orange->end) continue;
 		if(orange->start > angle) return false; // No more possibilities.
@@ -857,7 +941,7 @@ boolean C_IsSegOccluded
 	// startAngle and endAngle are the real, safe range. It's first clipped
 	// by any available clipnodes. We already know that no clipnode fully 
 	// contains the test range.
-	for(ci = cliphead; ci; ci = ci->next)
+	for(ci = clipHead; ci; ci = ci->next)
 	{
 		// Does this clipnode partially overlap the test range?
 		if(startAngle >= ci->start && startAngle <= ci->end)
@@ -875,7 +959,7 @@ boolean C_IsSegOccluded
 	// In the beginning we have occluded nothing, i.e. up to the start angle.
 	occAngle = startAngle;
 
-	for(orange = occhead; orange; orange = orange->next)
+	for(orange = occHead; orange; orange = orange->next)
 	{
 		if(occAngle >= endAngle) return true; // Fully occluded.
 		
@@ -1015,7 +1099,7 @@ static int C_IsRangeVisible(binangle_t startAngle, binangle_t endAngle)
 {
 	clipnode_t	*ci;
 	
-	for(ci=cliphead; ci; ci=ci->next)
+	for(ci=clipHead; ci; ci=ci->next)
 		if(startAngle >= ci->start && endAngle <= ci->end)
 			return false;
 	// No node fully contained the specified range.
@@ -1060,7 +1144,7 @@ int C_IsAngleVisible(binangle_t bang)
 {
 	clipnode_t	*ci;
 
-	for(ci=cliphead; ci; ci=ci->next)
+	for(ci = clipHead; ci; ci = ci->next)
 		if(bang > ci->start && bang < ci->end) return false;
 	// No one clipped this angle.
 	return true;
@@ -1070,7 +1154,7 @@ clipnode_t *C_AngleClippedBy(binangle_t bang)
 {
 	clipnode_t	*ci;
 
-	for(ci=cliphead; ci; ci=ci->next)
+	for(ci=clipHead; ci; ci=ci->next)
 		if(bang > ci->start && bang < ci->end) return ci;
 	// No one clipped this angle.
 	return 0;
@@ -1117,4 +1201,13 @@ int C_CheckSubsector(subsector_t *ssec)
 	}
 	// All clipped away, the subsector cannot be seen.
 	return 0;
+}
+
+//===========================================================================
+// C_IsFull
+//	Returns true if clipnodes cover the whole range [0,360] degrees.
+//===========================================================================
+boolean C_IsFull(void)
+{
+	return clipHead && clipHead->start == 0 && clipHead->end == BANG_MAX;
 }
