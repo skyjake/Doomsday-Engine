@@ -81,7 +81,7 @@ typedef struct vissprite_s {
 			float           bottom;
 			struct vissprite_wall_vertex_s {
 				float           pos[2];	// x and y coordinates.
-				int             color;
+				unsigned char   color[4];
 			} vertices[2];
 			float           texc[2][2];	// u and v coordinates.
 			struct dynlight_s *light;

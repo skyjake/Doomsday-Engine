@@ -226,6 +226,9 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
 	}
 	else
 	{
+		RL_SelectTexUnits(1);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+    
 		RL_Bind(vis->data.wall.texture);
 		normal = DGL_TEXTURE0;
 	}
@@ -262,7 +265,7 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
 
 	gl.Begin(DGL_QUADS);
 
-	gl.Color4ubv(&vis->data.wall.vertices[0].color);
+	gl.Color4ubv(vis->data.wall.vertices[0].color);
 	gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][VX],
 					   vis->data.wall.texc[1][VY]);
 	if(withDyn)
@@ -282,7 +285,7 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
 	gl.Vertex3f(vis->data.wall.vertices[0].pos[VX], vis->data.wall.top,
 				vis->data.wall.vertices[0].pos[VY]);
 
-	gl.Color4ubv(&vis->data.wall.vertices[1].color);
+	gl.Color4ubv(vis->data.wall.vertices[1].color);
 	gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
 					   vis->data.wall.texc[0][VY]);
 	if(withDyn)

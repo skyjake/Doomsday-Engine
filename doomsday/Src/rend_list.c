@@ -256,7 +256,7 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	vissprite_t *vis = R_NewVisSprite();
 	byte    brightest[3];
 	dynlight_t *dyn;
-	int     i;
+	int     i, c;
 
 	vis->type = VSPR_MASKED_WALL;
 	vis->distance = (poly->vertices[0].dist + poly->vertices[1].dist) / 2;
@@ -268,9 +268,12 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	{
 		vis->data.wall.vertices[i].pos[VX] = poly->vertices[i].pos[VX];
 		vis->data.wall.vertices[i].pos[VY] = poly->vertices[i].pos[VY];
-		memcpy(&vis->data.wall.vertices[i].color, poly->vertices[i].color.rgba,
-			   3);
-		vis->data.wall.vertices[i].color |= 0xff000000;	// Alpha.
+        for(c = 0; c < 3; ++c)
+        {
+            vis->data.wall.vertices[i].color[c] = 
+                poly->vertices[i].color.rgba[c];
+        }
+        vis->data.wall.vertices[i].color[3] = 255; // Alpha.
 	}
 	vis->data.wall.texc[0][VX] = poly->texoffx / (float) poly->tex.width;
 	vis->data.wall.texc[1][VX] =

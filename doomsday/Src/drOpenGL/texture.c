@@ -172,7 +172,7 @@ DGLuint DG_NewTexture(void)
 	DGLuint texName;
 
 	// Generate a new texture name and bind it.
-	glGenTextures(1, &texName);
+	glGenTextures(1, (GLuint*) &texName);
 	glBindTexture(GL_TEXTURE_2D, texName);
 	return texName;
 }
@@ -416,13 +416,19 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 			case DGL_COLOR_INDEX_8:
 				loadFormat = GL_RGB;
 				for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 3)
-					memcpy(pixel, palette[bdata[i]].color, 3);
+                {
+                    pixel[CR] = palette[bdata[i]].color[CR];
+                    pixel[CG] = palette[bdata[i]].color[CG];
+                    pixel[CB] = palette[bdata[i]].color[CB];
+                } 
 				break;
 
 			case DGL_COLOR_INDEX_8_PLUS_A8:
 				for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 4)
 				{
-					memcpy(pixel, palette[bdata[i]].color, 3);
+                    pixel[CR] = palette[bdata[i]].color[CR];
+                    pixel[CG] = palette[bdata[i]].color[CG];
+                    pixel[CB] = palette[bdata[i]].color[CB];
 					pixel[CA] = bdata[numPixels + i];
 				}
 				break;
@@ -480,11 +486,11 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 //===========================================================================
 // DG_DeleteTextures
 //===========================================================================
-void DG_DeleteTextures(int num, DGLuint * names)
+void DG_DeleteTextures(int num, DGLuint *names)
 {
 	if(!num || !names)
 		return;
-	glDeleteTextures(num, names);
+	glDeleteTextures(num, (GLuint*) names);
 }
 
 //===========================================================================
@@ -522,11 +528,13 @@ void DG_GetTexParameterv(int level, int pname, int *v)
 	switch (pname)
 	{
 	case DGL_WIDTH:
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, v);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, 
+            (GLint*) v);
 		break;
 
 	case DGL_HEIGHT:
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, v);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, 
+            (GLint*) v);
 		break;
 	}
 }

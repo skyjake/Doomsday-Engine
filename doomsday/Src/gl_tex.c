@@ -2997,7 +2997,7 @@ void GL_GetSpriteColor(int pnum, unsigned char *rgb)
 {
 	if(pnum > numspritelumps - 1)
 		return;
-	memcpy(rgb, &spritelumps[pnum].color, 3);
+	memcpy(rgb, spritelumps[pnum].color.rgb, 3);
 }
 
 //===========================================================================
