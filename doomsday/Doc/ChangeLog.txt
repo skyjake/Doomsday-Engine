@@ -4,6 +4,18 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.alpha-3
+-------------------
+! Alpha Release
++ multiple viewports
++ local players are automatically assigned to different viewports
++ ccmd 'viewgrid': set up the viewport grid
++ clientside turning/looking
+* basic toggle controls once again included in ticcmds
+* distinction between stick and pointer controller axes
+* engine handles all controls
+
+
 Version 1.8.alpha-2
 -------------------
 ! Alpha Release
