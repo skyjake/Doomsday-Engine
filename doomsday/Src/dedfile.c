@@ -1,4 +1,5 @@
 // Doomsday Engine Definition File Management.
+// (there are more intelligent ways to do all of this...)
 
 #include "dedfile.h"
 #include <stdio.h>
@@ -87,6 +88,7 @@ void DED_Destroy(ded_t *ded)
 		free(ded->values[i].text);
 	}
 	free(ded->values);
+	free(ded->decorations);
 	free(ded->sectors);
 }
 
@@ -336,6 +338,29 @@ void DED_RemoveFinale(ded_t *ded, int index)
 	free(ded->finales[index].script);
 	DED_DelEntry(index, (void**) &ded->finales, &ded->count.finales,
 		sizeof(ded_finale_t));
+}
+
+int DED_AddDecoration(ded_t *ded)
+{
+	ded_decor_t *decor = DED_NewEntry( (void**) &ded->decorations,
+		&ded->count.decorations, sizeof(ded_decor_t));
+	int i;
+
+	// Init some default values.
+	for(i = 0; i < DED_DECOR_NUM_LIGHTS; i++)
+	{
+		// The color (0,0,0) means the light is not active.
+		decor->lights[i].elevation = 1;
+		decor->lights[i].radius = 1;
+	}
+
+	return decor - ded->decorations;
+}
+
+void DED_RemoveDecoration(ded_t *ded, int index)
+{
+	DED_DelEntry(index, (void**) &ded->decorations, &ded->count.decorations,
+		sizeof(ded_decor_t));
 }
 
 int DED_AddSector(ded_t *ded, int id)

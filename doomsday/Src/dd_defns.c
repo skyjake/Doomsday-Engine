@@ -261,6 +261,24 @@ ded_mapinfo_t *Def_GetMapInfo(char *map_id)
 	return 0;
 }
 
+ded_decor_t *Def_GetDecoration(int number, boolean is_texture, boolean has_ext)
+{
+	ded_decor_t *def;
+	int i;
+
+	for(i = defs.count.decorations.num - 1, def = defs.decorations + i; 
+		i >= 0; i--, def--)
+	{
+		if(!def->is_texture == !is_texture && number == def->surface_index)
+		{
+			// Is this suitable?
+			if(R_IsAllowedDecoration(def, number, has_ext))
+				return def;
+		}
+	}
+	return 0;
+}
+
 int Def_GetFlagValue(char *flag)
 {
 	int i;
@@ -591,7 +609,6 @@ void Def_Read(void)
 	Def_CountMsg(count_sounds.num, "sound effects");
 
 	// Music.
-//	DED_NewEntries(&music, &num_music, sizeof(*music), defs.num_music);
 	for(i = 0; i < defs.count.music.num; i++)
 	{
 		ded_music_t *mus = defs.music + i;
@@ -646,6 +663,14 @@ void Def_Read(void)
 	// Detail textures. Initialize later...
 	Def_CountMsg(defs.count.details.num, "detail textures");
 
+	// Surface decorations.
+	for(i = 0; i < defs.count.decorations.num; i++)
+	{
+		ded_decor_t *decor = defs.decorations + i;
+		decor->flags = Def_EvalFlags(decor->flags_str);
+	}
+	Def_CountMsg(defs.count.decorations.num, "surface decorations");
+
 	// Other data:
 	Def_CountMsg(defs.count.mapinfo.num, "map infos");
 	Def_CountMsg(defs.count.finales.num, "finales");
@@ -684,6 +709,17 @@ void Def_PostInit(void)
 		details[i].detail_lump = W_CheckNumForName
 			(defs.details[i].detail_lump);
 		details[i].gltex = -1; //~0;	// Not loaded.
+	}
+
+	for(i = 0; i < defs.count.decorations.num; i++)
+	{
+		ded_decor_t *decor = defs.decorations + i;
+		
+		decor->surface_index = -1;
+		if(decor->is_texture)
+			decor->surface_index = R_CheckTextureNumForName(decor->surface);
+		else
+			decor->surface_index = W_CheckNumForName(decor->surface);
 	}
 }
 

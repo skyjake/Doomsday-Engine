@@ -7,6 +7,8 @@
 //**
 //** A GHASTLY MESS!!! This should be rewritten.
 //**
+//** You have been warned!
+//**
 //** At the moment the idea is that a lot of macros are used to read
 //** a more or less fixed structure of definitions, and if an error
 //** occurs then "goto out_of_here;". It leads to a lot more code 
@@ -79,6 +81,8 @@
 #define RV_FLT(lab, X)	if(ISLABEL(lab)) { READFLT(X); } else
 #define RV_VEC(lab, X, N)	if(ISLABEL(lab)) { int b; FINDBEGIN; \
 						for(b=0; b<N; b++) {READFLT(X[b])} ReadToken(); } else
+#define RV_IVEC(lab, X, N)	if(ISLABEL(lab)) { int b; FINDBEGIN; \
+						for(b=0; b<N; b++) {READINT(X[b])} ReadToken(); } else
 #define RV_NBVEC(lab, X, N)	if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
 #define RV_STR(lab, X)	if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)	if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
@@ -384,6 +388,29 @@ void DED_InitReader(char *buffer)
 	dedend = false;
 }
 
+//===========================================================================
+// DED_CheckCondition
+//	Return true if the condition passes. The condition token can be a 
+//	command line option or a game mode.
+//===========================================================================
+boolean DED_CheckCondition(const char *cond, boolean expected)
+{
+	boolean value = false;
+
+	if(cond[0] == '-')
+	{
+		// It's a command line option.
+		value = (ArgCheck(token) != 0);
+	}
+	else if(isalnum(cond[0]))
+	{
+		// Then it must be a game mode.
+		value = !stricmp(cond, gx.Get(DD_GAME_MODE));
+	}
+	
+	return value == expected;
+}
+
 //==========================================================================
 // DED_ReadData
 //	Reads definitions from the given buffer.
@@ -409,6 +436,7 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 	int prev_dtldef_idx = -1; // For "Copy".
 	ded_ptcgen_t *gen;
 	int prev_gendef_idx = -1; // For "Copy".
+	int prev_decordef_idx = -1; // For "Copy".
 	ded_finale_t *fin;
 	ded_linetype_t *l;
 	ded_sectortype_t *sec;
@@ -451,7 +479,7 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 				ReadToken();
 			}
 #if !__DEDMAN__
-			if(sub == (ArgCheck(token) != 0))
+			if(DED_CheckCondition(token, sub))
 			{
 				// Ah, we're done. Get out of here.
 				goto ded_end_read; 
@@ -481,7 +509,7 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 				ReadToken();
 			}
 #if !__DEDMAN__
-			if(sub == (ArgCheck(token) != 0))
+			if(DED_CheckCondition(token, sub))
 			{
 				idx = DED_AddInclude(ded, "");
 				READSTR(tmp);
@@ -1110,6 +1138,66 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 				else RV_END
 				CHECKSC;
 			}
+		}
+		if(ISTOKEN("Decoration"))
+		{
+			ded_decor_t *decor;
+
+			idx = DED_AddDecoration(ded);
+			decor = ded->decorations + idx;
+			sub = 0;
+			if(prev_decordef_idx >= 0 && bCopyNext) 
+			{
+				// Should we copy the previous definition?
+				memcpy(decor, ded->decorations + prev_decordef_idx, 
+					sizeof(*decor));
+			}
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("Flags", decor->flags_str)
+				if(ISLABEL("Texture"))
+				{
+					READSTR(decor->surface)
+					decor->is_texture = true;
+				}
+				else if(ISLABEL("Flat"))
+				{
+					READSTR(decor->surface)
+					decor->is_texture = false;
+				}
+				else if(ISLABEL("Light"))
+				{
+					ded_decorlight_t *dl = decor->lights + sub;
+					if(sub == DED_DECOR_NUM_LIGHTS)
+					{
+						SetError("Too many lights in decoration."); 
+						retval = false; 
+						goto ded_end_read;
+					}
+					FINDBEGIN;
+					for(;;)
+					{
+						READLABEL;
+						RV_VEC("Offset", dl->pos, 2)
+						RV_FLT("Distance", dl->elevation)
+						RV_VEC("Color", dl->color, 3)
+						RV_FLT("Radius", dl->radius)
+						RV_FLT("Halo radius", dl->halo_radius)
+						RV_IVEC("Pattern offset", dl->pattern_offset, 2)
+						RV_IVEC("Pattern skip", dl->pattern_skip, 2)
+						RV_IVEC("Levels", dl->light_levels, 2)
+						RV_INT("Flare texture", dl->flare_texture)
+						RV_END
+						CHECKSC;
+					}
+					sub++;
+				} 
+				else RV_END
+				CHECKSC;
+			}						
+			prev_decordef_idx = idx;
 		}
 		if(ISTOKEN("Line"))		// Line Type
 		{
