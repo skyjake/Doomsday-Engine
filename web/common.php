@@ -20,6 +20,8 @@ function page_header( $title )
   /* The link bar. */
   echo "<tr><td class=\"linkbar\">\n";
   linkbar();
+
+  echo '<tr><td class="shadow">' . "\n";
   
   /* Contents of the page. */
   echo "<tr><td class=\"contentbar\">\n";
