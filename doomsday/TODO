@@ -1,0 +1,23 @@
+Doomsday Project 1.8 TODO
+-------------------------
+$Id$
+by Jaakko Keränen <jaakko.keranen@iki.fi>
+
+All Platforms
+=============
+- fix "settics"
+- ack packets using the TCP connection
+- new integrated playsim core in the engine
+- move polyobj management into the engine
+- move XG into the engine
+- move ACS into the engine
+- shaders
+- model rendering plugins
+- MD3 support
+- new portable launcher
+- ambient sounds (sound decorations)
+
+Linux
+=====
+- audio subsystem (sound/music, using OpenAL/FMOD?)
+- "setres" when gamemode!=GS_LEVEL doesn't update OpenGL viewport?
