@@ -8,8 +8,9 @@ Version 1.7.12 (work in progress)
 --------------
 + texture/flat animation sequences defined using Group defs (Anim.ded)
 + tgf_smooth: interpolate between steps in texture/flat animation
-* renderer uses multitexturing for detail textures, dynamic lights and
-  interpolated texture animation
++ model blending modes: subtract and reverse subtract
+* renderer uses multitexturing for detail textures, dynamic lights,
+  interpolated texture animation and model shiny skins
 * if multitexturing is available, masked walls will get one dynamic 
   light (previously masked walls were not lit by dynlights)
 * dynamic light polygons are no longer clipped
@@ -50,9 +51,11 @@ jDoom:
 - fixed: intermissions/finales in Plut/TNT
 
 jHeretic:
+* player mobj selector is set to match currently used weapon
 * titlescreen sequence defined as an InFine script (ID = "title")
 
 jHexen:
+* player mobj selector is set to match currently used weapon
 * titlescreen sequence defined as an InFine script (ID = "title")
 
 InFine:
