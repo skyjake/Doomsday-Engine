@@ -4,6 +4,12 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.0
+-------------
+- fixed: game clock must not be running while map is being loaded
+- fixed: mobj Z coordinate when sector has a fake floor
+
+
 Version 1.8.0-rc3
 -----------------
 * use TCP connection for sending reliable data (game setup, etc.)
