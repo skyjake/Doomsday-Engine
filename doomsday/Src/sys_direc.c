@@ -143,7 +143,7 @@ int Dir_FileID(const char *str)
 	_fullpath(temp, str, 255);
 	strupr(temp);
 	for(i = 0, ptr = temp; *ptr; ptr++, i++)
-		((unsigned char *) &id)[i % 4] ^= ((*ptr) << (i % 3 - 1));
+		((unsigned char *) &id)[i % 4] += ((*ptr) << (i % 3 - 1));
 	return id;
 }
 
