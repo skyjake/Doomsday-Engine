@@ -137,6 +137,7 @@ int XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling, int data, void *c
 void XS_InitStairBuilder(void);
 int XSTrav_BuildStairs(struct sector_s *sector, boolean ceiling, int data, void *context);
 int XSTrav_SectorSound(struct sector_s *sec, boolean ceiling, int data, void *context);
+int XSTrav_MimicSector(struct sector_s *sector, boolean ceiling, int data, void *context);
 void XS_SetSectorType(struct sector_s *sec, int special);
 void XS_ChangePlaneTexture(struct sector_s *sector, boolean ceiling, int tex);
 xgplanemover_t *XS_GetPlaneMover(struct sector_s *sector, boolean ceiling);

@@ -24,6 +24,7 @@ enum // Line type classes.
 	LTC_WALL_TEXTURE,
 	LTC_COMMAND,
 	LTC_SOUND,			// Play a sector sound.
+	LTC_MIMIC_SECTOR,
 	NUM_LINE_CLASSES
 };
 
