@@ -28,12 +28,14 @@
 extern "C" {
 #endif
 
-// Caller cleans the stack in the __cdecl calling convention.
-// This means the caller doesn't have to know the right number 
-// of arguments for the function. Most Doomsday functions use
-// __stdcall, where the function clears up the stack itself.
-// This means the caller must put the right number of arguments
-// on the stack or Bad Things will happen.
+/*
+ * Caller cleans the stack in the __cdecl calling convention.
+ * This means the caller doesn't have to know the right number 
+ * of arguments for the function. Most Doomsday functions use
+ * __stdcall, where the function clears up the stack itself.
+ * This means the caller must put the right number of arguments
+ * on the stack or Bad Things will happen.
+ */
 #define C_DECL __cdecl 
 
 #include <stdlib.h>
@@ -46,26 +48,24 @@ extern "C" {
 // General Definitions and Macros
 //
 //------------------------------------------------------------------------
+
 /*	
+ * Version number rules: (major).(minor).(revision)
+ *
+ * Major version will be 1 for now (few things short of a complete 
+ * rewrite will increase the major version).
+ *
+ * Minor version increases with important feature releases.
+ * NOTE: No extra zeros. Numbering goes from 1 to 9 and continues from
+ * 10 like 'normal' numbers.
+ *
+ * Revision number increases with each small (maintenance) release.
+ */
 
-Version number rules: (major).(minor).(revision)
-	
-- Major version will be 1 for now (few things short of a complete 
-  rewrite will increase the major version).
-	
-- Minor version increases with non-beta releases.
-  NOTE: No extra zeros. Numbering goes from 1 to 9 and continues from
-  10 like 'normal' numbers.
-
-- Revision number increases with each small (beta/patch) release, and 
-  goes back to zero for non-beta ones.
-
-*/
-
-// Version constant. Use this to verify in the DLL that the engine
-// is new enough. 
-#define DOOMSDAY_VERSION		10712
-#define DOOMSDAY_VERSION_TEXT	"1.7.12"
+// Version constants. The Game module can use DOOMSDAY_VERSION to verify 
+// that the engine is new enough. 
+#define DOOMSDAY_VERSION		10800
+#define DOOMSDAY_VERSION_TEXT	"1.8.0"
 
 #define DDMAXPLAYERS			16
 
@@ -258,9 +258,6 @@ enum
 // Fixed-Point Math
 //
 //------------------------------------------------------------------------
-
-typedef int fixed_t;
-typedef unsigned angle_t;
 
 #define	FRACBITS			16
 #define	FRACUNIT			(1<<FRACBITS)
@@ -523,13 +520,6 @@ typedef struct
 	fixed_t			x,y,z;
 } degenmobj_t;
 
-// Dlights are hitting this seg. Affects rendering order/blending.
-//#define DDSEGF_DLIGHT		0x1	
-
-// Dlights are hitting the floor/ceiling of this subsector.
-//#define DDSUBF_DLIGHT_FLOOR		0x1
-//#define DDSUBF_DLIGHT_CEILING	0x2
-//#define DDSUBF_CLEAR_MASK		0x3		// Flags that are cleared every frame.
 #define DDSUBF_MIDPOINT			0x80	// Midpoint is tri-fan centre.
 
 typedef struct
@@ -626,19 +616,16 @@ subsector_t;
 //------------------------------------------------------------------------
 
 /* 
-
-Linknodes are used when linking mobjs to lines. Each mobj has a ring
-of linknodes, each node pointing to a line the mobj has been linked to.
-Correspondingly each line has a ring of nodes, with pointers to the 
-mobjs that are linked to that particular line. This way it is possible
-that a single mobj is linked simultaneously to multiple lines (which 
-is common).
-
-All these rings are maintained by P_(Un)LinkThing(). 
-
-*/
-typedef struct linknode_s
-{
+ * Linknodes are used when linking mobjs to lines. Each mobj has a ring
+ * of linknodes, each node pointing to a line the mobj has been linked to.
+ * Correspondingly each line has a ring of nodes, with pointers to the 
+ * mobjs that are linked to that particular line. This way it is possible
+ * that a single mobj is linked simultaneously to multiple lines (which 
+ * is common).
+ * 
+ * All these rings are maintained by P_(Un)LinkThing(). 
+ */
+typedef struct linknode_s {
 	nodeindex_t		prev, next;
 	void			*ptr;
 	int				data;
@@ -935,8 +922,7 @@ typedef struct
 #endif
 
 // Console command.
-typedef struct
-{
+typedef struct ccmd_s {
 	char		*name;
 	int			(*func)(int argc, char **argv);
 	char		*help;		// A short help text.
@@ -962,8 +948,7 @@ typedef enum
 cvartype_t;
 
 // Console variable.
-typedef struct
-{
+typedef struct cvar_s {
 	char		*name;
 	int			flags;
 	cvartype_t	type;
@@ -978,6 +963,28 @@ typedef struct
 // Networking
 //
 //------------------------------------------------------------------------
+
+/* 
+ * Tick Commands. Usually only a part of this data is transferred over 
+ * the network. In addition to tick commands, clients will sent 'impulses'
+ * to the server when they want to change a weapon, use an artifact, or
+ * maybe commit suicide.
+ */
+typedef struct ticcmd_s {
+	char		forwardMove;		//*2048 for real move
+	char		sideMove;			//*2048 for real move
+	char		upMove;				//*2048 for real move
+	ushort		angle;				// <<16 for angle (view angle)
+	short		pitch;				// View pitch
+	short		actions;			// On/off action flags
+} ticcmd_t;
+
+// Tick Command Action Flags
+#define TCAF_ATTACK			0x01
+#define TCAF_USE			0x02
+#define TCAF_JUMP			0x04
+#define TCAF_ATTACK2		0x08	// Secondary attack, not implemented
+#define TCAF_CROUCH			0x10	// Not implemented
 
 // Network Player Events
 enum
@@ -1112,9 +1119,6 @@ typedef struct
 // Player sprite flags.
 #define DDPSPF_RENDERED		0x1			// Was rendered.
 
-// The psprite offsets are only sent to clients.
-//#define DDPSPF_OFFSET		0x2			// Offset x/y is non-zero.
-
 enum // Psprite states.
 {
 	DDPSP_BOBBING,
@@ -1126,10 +1130,8 @@ enum // Psprite states.
 // Player sprites.
 typedef struct						
 {
-	//int sprite;							// -1 if not in use.
-	//int frame; //, nextframe;
 	state_t *stateptr;
-	int tics; //, nexttime;
+	int tics;
 	float light, alpha;			
 	float x, y;	
 	int flags;
