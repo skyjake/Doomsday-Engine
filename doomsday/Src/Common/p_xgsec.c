@@ -198,6 +198,9 @@ void XS_SetSectorType(struct sector_s *sec, int special)
 
 	if(XS_GetType(special))
 	{
+		XG_Dev("XS_SetSectorType: Sector %i, type %i", sec - sectors,
+			special);
+
 		sec->special = special;
 
 		// All right, do the init.
@@ -256,6 +259,9 @@ void XS_SetSectorType(struct sector_s *sec, int special)
 	}
 	else
 	{
+		XG_Dev("XS_SetSectorType: Sector %i, NORMAL TYPE %i", sec - sectors,
+			special);
+
 		// Free previously allocated XG data.
 		if(sec->xg) Z_Free(sec->xg);
 		sec->xg = NULL;
@@ -271,12 +277,6 @@ void XS_Init(void)
 {
 	int i;
 	sector_t *sec;
-
-	/*for(i=0; i<20; i++)
-	{
-		gi.Message("%c", 'a' + (int)(13 + 12.5*sin(2*PI*(i/20.0))));
-	}
-	gi.Message("\n");*/
 
 	// Allocate stair builder data.
 	builder = Z_Malloc(numsectors, PU_LEVEL, 0);
@@ -303,6 +303,10 @@ void XS_SectorSound(sector_t *sec, int snd)
 
 void XS_MoverStopped(xgplanemover_t *mover, boolean done)
 {
+	XG_Dev("XS_MoverStopped: Sector %i (done=%i, origin line=%i)", 
+		mover->sector - sectors, done, 
+		mover->origin? mover->origin - lines : -1);
+
 	if(done)
 	{
 		if(mover->flags & PMF_ACTIVATE_WHEN_DONE
@@ -486,25 +490,25 @@ void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex)
 {
 	int oldtex = ceiling? sector->ceilingpic : sector->floorpic;
 
+	XG_Dev("XS_ChangePlaneTexture: Sector %i, %s, pic %i",
+		sector - sectors, ceiling? "ceiling" : "floor", tex);
+
 	if(ceiling) 
 		sector->ceilingpic = tex; 
 	else 
 		sector->floorpic = tex;
-
-	// Tell the engine about this.
-/*	gi.Sv_SectorReport(sector, ceiling, ceiling? sector->ceilingheight 
-		: sector->floorheight, 0, ceiling? tex : -1, !ceiling? tex : -1);*/
 }
 
 // One plane can get listed multiple times.
 int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, 
-					   int *heightlist, int *piclist, int *lightlist)
+					   int *heightlist, int *piclist, int *lightlist,
+					   sector_t **sectorlist)
 {	
 	int i, count = 0;
 	line_t *lin;
 	sector_t *other;
 
-	for(i=0; i<sector->linecount; i++)
+	for(i = 0; i < sector->linecount; i++)
 	{
 		lin = sector->Lines[i];
 		// Only accept two-sided lines.
@@ -518,6 +522,7 @@ int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling,
 		if(piclist) piclist[count] = ceiling? other->ceilingpic 
 			: other->floorpic;
 		if(lightlist) lightlist[count] = other->lightlevel;
+		if(sectorlist) sectorlist[count] = other;
 		// Increment counter.
 		count++;
 	}
@@ -643,12 +648,31 @@ int XS_TextureHeight(line_t *line, int part)
 	return DDMAXINT;
 }
 
-boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, 
-					int *height, int *pic)
+/*
+ * Returns a pointer to the first sector with the tag.
+ */
+sector_t *XS_FindTagged(int tag)
+{
+	int k;
+
+	for(k = 0; k < numsectors; k++)
+	{
+		if(sectors[k].tag == tag) return sectors + k;
+	}
+	return NULL;
+}
+
+boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
+					int *height, int *pic, sector_t **planesector)
 {
 	int i = 0, k, num;
 	int heights[MAX_VALS], pics[MAX_VALS];
+	sector_t *sectorlist[MAX_VALS];
 	boolean ceiling;
+	sector_t *iter;
+
+	XG_Dev("XS_GetPlane: Line %i, sector %i, ref (%i, %i)", 
+		actline? actline - lines : -1, sector - sectors, ref, refdata);
 
 	if(ref == SPREF_NONE) 
 	{
@@ -658,12 +682,66 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
 	// Init the values to the current sector's floor.
 	if(height) *height = sector->floorheight;
 	if(pic) *pic = sector->floorpic;
+	if(planesector) *planesector = sector;
+
+	// First try the non-comparative, iterative sprefs.
+	iter = NULL;
+	switch(ref)
+	{
+	case SPREF_SECTOR_TAGGED_FLOOR:
+	case SPREF_SECTOR_TAGGED_CEILING:
+		if(!(iter = XS_FindTagged(sector->tag))) return false;
+		break;
+
+	case SPREF_LINE_TAGGED_FLOOR:
+	case SPREF_LINE_TAGGED_CEILING:
+		if(!actline) return false;
+		if(!(iter = XS_FindTagged(actline->tag))) return false;
+		break;
+
+	case SPREF_TAGGED_FLOOR:
+	case SPREF_TAGGED_CEILING:
+	case SPREF_ACT_TAGGED_FLOOR:
+	case SPREF_ACT_TAGGED_CEILING:
+		if(!(iter = XS_FindTagged(refdata))) return false;
+		break;
+
+	case SPREF_INDEX_FLOOR:
+	case SPREF_INDEX_CEILING:
+		if(refdata < 0 || refdata >= numsectors) return false;
+		iter = sectors + refdata;
+		break;
+
+	default:
+		// No iteration.
+		break;
+	}
+
+	// Did we find the plane through iteration?
+	if(iter)
+	{
+		if(planesector) *planesector = iter;
+		if(ref >= SPREF_SECTOR_TAGGED_FLOOR
+			&& ref <= SPREF_INDEX_FLOOR)
+		{
+			if(height) *height = iter->floorheight;
+			if(pic) *pic = iter->floorpic;
+		}
+		else
+		{
+			if(height) *height = iter->ceilingheight;
+			if(pic) *pic = iter->ceilingpic;
+		}
+		return true;
+	}
+
 	if(ref == SPREF_MY_FLOOR)
 	{
 		if(!actline || !actline->frontsector) return false;
 		// Actline's front floor.
 		if(height) *height = actline->frontsector->floorheight;
 		if(pic) *pic = actline->frontsector->floorpic;
+		if(planesector) *planesector = actline->frontsector;
 		return true;
 	}
 	if(ref == SPREF_MY_CEILING) 
@@ -672,6 +750,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
 		// Actline's front ceiling.
 		if(height) *height = actline->frontsector->ceilingheight;
 		if(pic) *pic = actline->frontsector->ceilingpic;
+		if(planesector) *planesector = actline->frontsector;
 		return true;
 	}
 	if(ref == SPREF_ORIGINAL_FLOOR)
@@ -737,13 +816,14 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
 		|| ref == SPREF_LOWEST_CEILING 
 		|| ref == SPREF_NEXT_HIGHEST_CEILING
 		|| ref == SPREF_NEXT_LOWEST_CEILING);
-	num = XS_AdjoiningPlanes(sector, ceiling, heights, pics, NULL);
+	num = XS_AdjoiningPlanes(sector, ceiling, heights, pics, NULL, sectorlist);
 
 	if(!num)
 	{
 		// Add self.
 		heights[0] = ceiling? sector->ceilingheight : sector->floorheight;
 		pics[0] = ceiling? sector->ceilingpic : sector->floorpic;
+		sectorlist[0] = sector;
 		num = 1;
 	}
 
@@ -772,6 +852,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref,
 	// Set the values.
 	if(height) *height = heights[i];
 	if(pic) *pic = pics[i];
+	if(planesector) *planesector = sectorlist[i];
 	return true;
 }
 
@@ -792,6 +873,9 @@ int XSTrav_MovePlane(sector_t *sector, boolean ceiling,
 	int flat, st;
 	boolean playsound = line->xg->idata;
 	
+	XG_Dev("XSTrav_MovePlane: Sector %i (by line %i of type %i)", 
+		sector - sectors, line - lines, info->id);
+
 	// i2: destination type (zero, relative to current, surrounding 
 	//     highest/lowest floor/ceiling)
 	// i3: flags (PMF_*)
@@ -814,7 +898,7 @@ int XSTrav_MovePlane(sector_t *sector, boolean ceiling,
 	mover->origin = line;
 		
 	// Setup the thinker and add it to the list.
-	XS_GetPlane(line, sector, info->iparm[2], &mover->destination, 0);
+	XS_GetPlane(line, sector, info->iparm[2], 0, &mover->destination, 0, 0);
 	mover->destination += FRACUNIT * info->fparm[2];
 	mover->speed = FRACUNIT * info->fparm[0];
 	mover->crushspeed = FRACUNIT * info->fparm[1];
@@ -823,7 +907,7 @@ int XSTrav_MovePlane(sector_t *sector, boolean ceiling,
 	mover->flags = info->iparm[3];
 	mover->endsound = playsound? info->iparm[5] : 0;
 	mover->movesound = playsound? info->iparm[6] : 0;
-	if(!XS_GetPlane(line, sector, info->iparm[9], 0, &mover->setflat))
+	if(!XS_GetPlane(line, sector, info->iparm[9], 0, 0, &mover->setflat, 0))
 		mover->setflat = info->iparm[10];
 
 	// Init timer.
@@ -846,7 +930,7 @@ int XSTrav_MovePlane(sector_t *sector, boolean ceiling,
 		XS_SectorSound(sector, info->iparm[4]);
 
 	// Change texture?
-	if(!XS_GetPlane(line, sector, info->iparm[7], 0, &flat))
+	if(!XS_GetPlane(line, sector, info->iparm[7], 0, 0, &flat, 0))
 		flat = info->iparm[8];
 	if(flat > 0) XS_ChangePlaneTexture(sector, ceiling, flat);
 
@@ -867,6 +951,10 @@ int XSTrav_MovePlane(sector_t *sector, boolean ceiling,
 	{
 		XS_SetSectorType(sector, st);
 	}
+	else
+	{
+		XG_Dev("XSTrav_MovePlane: SECTOR TYPE NOT SET (nothing referenced)");
+	}
 
 	// Change sector type in the end of move?
 	st = info->iparm[14];
@@ -875,6 +963,11 @@ int XSTrav_MovePlane(sector_t *sector, boolean ceiling,
 	{
 		// OK, found one or more.
 		mover->setsector = st;
+	}
+	else
+	{
+		XG_Dev("XSTrav_MovePlane: SECTOR TYPE WON'T BE SET (nothing "
+			"referenced)");
 	}
 
 	return true; // Keep looking.
@@ -954,7 +1047,10 @@ int XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
 	boolean picstop = info->iparm[2] != 0;
 	boolean spread = info->iparm[3] != 0;
 	int mypic;
-	
+
+	XG_Dev("XSTrav_BuildStairs: Sector %i, %s", sector - sectors,
+		ceiling? "ceiling" : "floor");
+
 	// i2: (true/false) stop when texture changes
 	// i3: (true/false) spread build? 
 
@@ -1042,8 +1138,11 @@ int XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling, int data,
 	// i2: (spref) texture origin
 	// i3: texture number (flat), used with SPREF_NONE
 
-	if(!XS_GetPlane(line, sec, info->iparm[2], 0, &pic))
+	if(!XS_GetPlane(line, sec, info->iparm[2], 0, 0, &pic, 0))
 		pic = info->iparm[3];
+	else
+		XG_Dev("XSTrav_PlaneTexture: Sector %i, couldn't find suitable",
+			sec - sectors);
 
 	// Set the texture.
 	XS_ChangePlaneTexture(sec, ceiling, pic);
@@ -1096,7 +1195,8 @@ int XSTrav_SectorLight(sector_t *sector, boolean ceiling, int data,
 		case LIGHTREF_LOWEST:
 		case LIGHTREF_NEXT_HIGHEST:
 		case LIGHTREF_NEXT_LOWEST:
-			num = XS_AdjoiningPlanes(sector, ceiling, NULL, NULL, levels);
+			num = XS_AdjoiningPlanes(sector, ceiling, NULL, NULL, levels, 
+				NULL);
 			
 			// Were there adjoining sectors?
 			if(!num) break;
@@ -1147,7 +1247,7 @@ int XSTrav_SectorLight(sector_t *sector, boolean ceiling, int data,
 			memset(usergb, 0, 3);
 			break;
 		}
-		for(num=0; num<3; num++)
+		for(num = 0; num < 3; num++)
 		{
 			i = usergb[num] + info->iparm[7+num];
 			if(i < 0) i = 0; 
@@ -1155,6 +1255,73 @@ int XSTrav_SectorLight(sector_t *sector, boolean ceiling, int data,
 			sector->rgb[num] = i;
 		}
 	}
+	return true;
+}
+
+int XSTrav_MimicSector
+	(sector_t *sector, boolean ceiling, int data, void *context)
+{
+	line_t *line = (line_t*) data;
+	linetype_t *info = context;
+	sector_t *from = NULL;
+	int refdata;
+
+	// Set the spref data parameter (tag or index).
+	switch(info->iparm[2])
+	{
+	case SPREF_TAGGED_FLOOR:
+	case SPREF_TAGGED_CEILING:
+	case SPREF_INDEX_FLOOR:
+	case SPREF_INDEX_CEILING:
+		refdata = info->iparm[3];
+		break;
+
+	case SPREF_ACT_TAGGED_FLOOR:
+	case SPREF_ACT_TAGGED_CEILING:
+		refdata = info->act_tag;
+		break;
+
+	default:
+		refdata = 0;
+		break;
+	}
+	
+	// If can't apply to a sector, just skip it.
+	if(!XS_GetPlane(line, sector, info->iparm[2], refdata, 0, 0, &from))
+	{
+		XG_Dev("XSTrav_MimicSector: No suitable neighbor "
+			"for %i.\n", sector - sectors);
+		return true;
+	}
+
+	// Mimicing itself is pointless.
+	if(from == sector) return true;
+
+	XG_Dev("XSTrav_MimicSector: Sector %i mimicking sector %i",
+		sector - sectors, from - sectors);
+
+	// Copy the properties of the target sector.
+	sector->lightlevel = from->lightlevel;
+	memcpy(sector->rgb, from->rgb, sizeof(from->rgb));
+	memcpy(sector->reverb, from->reverb, sizeof(from->reverb));
+	memcpy(sector->planes, from->planes, sizeof(from->planes));
+	sector->ceilingpic = from->ceilingpic;
+	sector->floorpic = from->floorpic;
+	sector->ceilingheight = from->ceilingheight;
+	sector->floorheight = from->floorheight;
+	sector->flooroffx = from->flooroffx;
+	sector->flooroffy = from->flooroffy;
+	sector->ceiloffx = from->ceiloffx;
+	sector->ceiloffy = from->ceiloffy;
+	P_ChangeSector(sector, false);
+
+	// Copy type as well.
+	XS_SetSectorType(sector, from->special);
+	if(from->xg)
+	{
+		memcpy(sector->xg, from->xg, sizeof(xgsector_t));
+	}
+	
 	return true;
 }
 
@@ -1395,7 +1562,7 @@ void XS_UpdateLight(sector_t *sec)
 	}
 
 	// Red, green and blue.
-	for(i=0; i<3; i++)
+	for(i = 0; i < 3; i++)
 	{
 		fn = &xg->rgb[i];
 		if(!UPDFUNC(fn)) continue;
@@ -1414,6 +1581,16 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 	line_t line;
 	xgline_t xgline;
 	linetype_t *ltype;
+
+/*
+	XG_Dev("XS_DoChain: %s, sector %i (activating=%i)",
+		  ch == XSCE_FLOOR? "FLOOR" 
+		: ch == XSCE_CEILING? "CEILING" 
+		: ch == XSCE_INSIDE? "INSIDE" 
+		: ch == XSCE_TICKER? "TICKER" 
+		: ch == XSCE_FUNCTION? "FUNCTION" 
+		: "???", sec - sectors, activating);
+*/
 
 	if(ch < XSCE_NUM_CHAINS)
 	{
@@ -1444,6 +1621,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 	if(!ltype)
 	{
 		// What is this? There is no such XG line type.
+		XG_Dev("XS_DoChain: Unknown XG line type %i", line.special);
 		return;
 	}
 	memcpy(&line.xg->info, ltype, sizeof(*ltype));
@@ -1457,7 +1635,18 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 		if(ch < XSCE_NUM_CHAINS)
 		{
 			// Decrease counter.
-			if(info->count[ch] > 0) info->count[ch]--;		
+			if(info->count[ch] > 0) 
+			{
+				info->count[ch]--;		
+
+				XG_Dev("XS_DoChain: %s, sector %i (activating=%i): Counter now at %i",
+					  ch == XSCE_FLOOR? "FLOOR" 
+					: ch == XSCE_CEILING? "CEILING" 
+					: ch == XSCE_INSIDE? "INSIDE" 
+					: ch == XSCE_TICKER? "TICKER" 
+					: ch == XSCE_FUNCTION? "FUNCTION" 
+					: "???", sec - sectors, activating, info->count[ch]);
+			}
 		}
 	}
 }
@@ -1507,12 +1696,12 @@ type_passes:
 	{
 	case XSCE_FLOOR:
 		// Is it touching the floor?
-		if(mo->z > mo->floorz) return true; 		
+		if(mo->z > sec->floorheight) return true; 		
 		break;
 
 	case XSCE_CEILING:
 		// Is it touching the ceiling?
-		if(mo->z + mo->height < mo->ceilingz) return true;
+		if(mo->z + mo->height < sec->ceilingheight) return true;
 		break;
 
 	default:
