@@ -18,6 +18,8 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "r_extres.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -206,6 +208,20 @@ void S_LocalSoundAtVolumeFrom
 		M_PrependBasePath(info->external, buf);
 		if((samp.data = WAV_Load(buf, &samp.bytesper, &samp.rate, 
 			&samp.numsamples)))
+		{
+			// Loading was successful!
+			needfree = true;
+			samp.bytesper /= 8; // Was returned as bits.
+		}
+	}
+	
+	// If external didn't succeed, let's try the default resource dir.
+	if(!samp.data)
+	{
+		char resFn[256];
+		if(R_FindResource(RC_SFX, info->lumpname, NULL, resFn)
+			&& (samp.data = WAV_Load(resFn, &samp.bytesper, &samp.rate,
+				&samp.numsamples)))
 		{
 			// Loading was successful!
 			needfree = true;

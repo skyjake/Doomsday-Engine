@@ -217,7 +217,7 @@ enum
 	DD_MAP_NAME,
 	DD_MAP_AUTHOR,
 	DD_MAP_MUSIC,
-	DD_HIGHRES_TEXTURE_PATH,		// TGA texture directory.
+	DD_HIGHRES_TEXTURE_PATH,		// TGA texture directory (obsolete).
 	DD_WINDOW_HANDLE
 };
 

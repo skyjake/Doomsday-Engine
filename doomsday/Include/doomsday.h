@@ -144,6 +144,7 @@ void		P_RemoveThinker(thinker_t *thinker);
 
 // Refresh.
 int			DD_GetFrameRate(void);
+void		R_SetDataPath(const char *path);
 void		R_SetupLevel(char *level_id, int flags);
 void		R_PrecacheLevel(void);
 void		R_RenderPlayerView(ddplayer_t *player);

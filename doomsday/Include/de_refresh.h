@@ -11,5 +11,6 @@
 #include "r_draw.h"
 #include "r_world.h"
 #include "r_util.h"
+#include "r_extres.h"
 
 #endif 

@@ -12,7 +12,9 @@
 #include "de_system.h"
 #include "de_audio.h"
 #include "de_misc.h"
+
 #include "sys_audio.h"
+#include "r_extres.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -237,9 +239,8 @@ int Mus_GetMUS(ded_music_t *def)
 }
 
 /*
- * Mus_GetExt
- *	Returns true if there is an external file name (that exists!).
- *	Ext songs can be either in external files or non-MUS lumps.
+ * Returns true if there is an external file name (that exists!).
+ * Ext songs can be either in external files or non-MUS lumps.
  */
 int Mus_GetExt(ded_music_t *def, char *path)
 {
@@ -263,6 +264,10 @@ int Mus_GetExt(ded_music_t *def, char *path)
 		Con_Message("Mus_GetExt: Song %s: %s not found.\n",
 			def->id, def->path.path);
 	}
+
+	// Try the resource locator.
+	if(R_FindResource(RC_MUSIC, def->lumpname, NULL, path)) 
+		return true; // Got it!
 
 	lumpnum = W_CheckNumForName(def->lumpname);
 	if(lumpnum < 0) return false; // No such lump.
@@ -290,11 +295,10 @@ int Mus_GetCD(ded_music_t *def)
 }
 
 /*
- * Mus_Start
- *	Start playing a song. The chosen interface depends on what's available
- *	and what kind of resources have been associated with the song. Returns
- *	true if the song is successfully played. Any previously playing song
- *	is stopped.
+ * Start playing a song. The chosen interface depends on what's available
+ * and what kind of resources have been associated with the song. Returns
+ * true if the song is successfully played. Any previously playing song
+ * is stopped.
  */
 int Mus_Start(ded_music_t *def, boolean looped)
 {

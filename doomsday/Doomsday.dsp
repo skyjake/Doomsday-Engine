@@ -367,6 +367,10 @@ SOURCE=.\Src\r_draw.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\r_extres.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\r_main.c
 # End Source File
 # Begin Source File
@@ -853,6 +857,10 @@ SOURCE=.\Include\r_data.h
 # Begin Source File
 
 SOURCE=.\Include\r_draw.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\r_extres.h
 # End Source File
 # Begin Source File
 
