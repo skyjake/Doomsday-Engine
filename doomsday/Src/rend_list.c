@@ -44,7 +44,8 @@ END_PROF_TIMERS()
 // FIXME: Rlist allocation could be dynamic.
 #define MAX_RLISTS			1024 
 
-#define IS_MTEX_DETAILS		(r_detail && useMultiTexDetails && numTexUnits > 1)
+#define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && defs.count.details.num > 0)
+#define IS_MTEX_DETAILS		(MTEX_DETAILS_ENABLED && numTexUnits > 1)
 #define IS_MTEX_LIGHTS		(!IS_MTEX_DETAILS && !useFog && useMultiTexLights \
 							&& numTexUnits > 1 && envModAdd)
 
@@ -1790,6 +1791,7 @@ void RL_SetupPassState(listmode_t mode)
 
 	case LM_WITHOUT_TEXTURE:
 		RL_SelectTexUnits(0);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
 		gl.Disable(DGL_ALPHA_TEST);
 		gl.Enable(DGL_DEPTH_WRITE);
 		gl.Enable(DGL_DEPTH_TEST);
@@ -1976,7 +1978,7 @@ void RL_LockVertices(void)
 	// We're only locking the vertex and color arrays, so disable the
 	// texcoord arrays for now. Every pass will enable/disable the texcoords
 	// that are needed.
-	gl.DisableArrays(0, 0, 0xf);
+	gl.DisableArrays(0, 0, DGL_ALL_BITS);
 
 	// Actually, don't lock anything. (Massive slowdown?)
 	gl.Arrays(vertices, colors, 0, NULL, 0 /*numVertices*/);
@@ -2162,7 +2164,7 @@ void RL_RenderAllLists(void)
 
 	// Return to the normal GL state.
 	RL_SelectTexUnits(1);
-	gl.DisableArrays(true, true, 0xf);
+	gl.DisableArrays(true, true, DGL_ALL_BITS);
 	gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
 	gl.Enable(DGL_DEPTH_WRITE);
 	gl.Enable(DGL_DEPTH_TEST);
