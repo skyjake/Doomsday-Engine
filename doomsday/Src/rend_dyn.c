@@ -694,38 +694,6 @@ void DL_CreateGlowLights
 		// Only do what's told.
 		if(g == 0 && !glow_ceil || g == 1 && !glow_floor) continue;
 
-		// top and bottom are the coordinates for the light.
-		/*top    = segtop;
-		bottom = segbottom;*/
-	
-
-		/*
-		// Clip.						
-		if(g == 0) // Ceiling glow.
-		{
-			limit = ceil - glowHeight;
-			// Too low?
-			if(top < limit) continue;
-			// Clip the bottom.
-			if(bottom < limit) bottom = limit;
-		}
-		else // Floor glow.
-		{
-			limit = floor + glowHeight;
-			// Too high?
-			if(bottom > limit) continue;
-			// Clip the top.
-			if(top > limit) top = limit;
-		}*/
-
-		/*glow.type = rp_quad;
-		glow.length = seg->length;
-		glow.flags = RPF_WALL_GLOW | RPF_LIGHT;
-		glow.vertices[0].pos[VX] = FIX2FLT(seg->v1->x);
-		glow.vertices[0].pos[VY] = FIX2FLT(seg->v1->y);
-		glow.vertices[1].pos[VX] = FIX2FLT(seg->v2->x);
-		glow.vertices[1].pos[VY] = FIX2FLT(seg->v2->y);*/
-
 		// Calculate texture coords for the light.
 		// The horizontal direction is easy.
 		s[0] = 0;
@@ -767,27 +735,6 @@ void DL_CreateGlowLights
 			// is way too bright.
 			if(useFog) dyn->color[i] *= glowFogBright;
 		}
-		//glow.top = FIX2FLT(top) - dlContract;
-		//glow.bottom = FIX2FLT(bottom) + dlContract;
-		// texoffx will store the height.
-		//glow.texoffx = g? -glowHeight : glowHeight;	
-		
-	
-		//glow.texoffx = glow.texoffy = 0;
-		/*if(g == 0) // Ceiling glow.
-		{
-			glow.texoffy = FIX2FLT(sect->ceilingheight - top);
-		}
-		else // Floor glow.
-		{
-			// We need to set texoffy so that the bottom of the texture
-			// meets bottom height.
-			glow.texoffy = FIX2FLT(bottom - sect->floorheight);
-		}*/
-		//RL_AddPoly(&glow);
-		// Mark the segment for dlight rendering.
-		//seg->flags |= DDSEGF_DLIGHT;
-
 		DL_SegLink(dyn, segindex, part);
 	}
 }
@@ -1063,6 +1010,7 @@ void DL_AddLuminous(mobj_t *thing)
 			// Use the sprite's (amplified) color.
 			GL_GetSpriteColor(lum->patch, lum->rgb);
 		}
+		lum->flareMul = 1;
 
 		// Approximate the distance in 3D.
 		lum->distance = P_ApproxDistance3(thing->x - viewx, 
