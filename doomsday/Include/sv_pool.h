@@ -25,7 +25,7 @@ typedef enum
 #define MDF_MOM_Z		0x0020
 #define MDF_MOM			0x0038
 #define MDF_ANGLE		0x0040
-//#define MDF_TICS		0x0080
+#define MDF_LONG_FLOORCLIP 0x0080
 //#define MDF_SPRITE	0x0100
 #define MDF_SELSPEC		0x0200	// Only during transfer.
 #define MDF_SELECTOR	0x0400
@@ -195,5 +195,7 @@ extern int net_fullsecupd;
 extern int net_maxsecupd;
 
 extern pool_t pools[];
+
+void Sv_ShutdownPools(void);
 
 #endif

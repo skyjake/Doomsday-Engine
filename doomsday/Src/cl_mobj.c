@@ -304,7 +304,13 @@ int Cl_ReadMobjDelta(void)
 	// Radius, height and floorclip are all bytes.
 	if(df & MDF_RADIUS) d->radius = Msg_ReadByte() << FRACBITS;
 	if(df & MDF_HEIGHT) d->height = Msg_ReadByte() << FRACBITS;
-	if(df & MDF_FLOORCLIP) d->floorclip = Msg_ReadByte() << 14;
+	if(df & MDF_FLOORCLIP) 
+	{
+		if(df & MDF_LONG_FLOORCLIP)
+			d->floorclip = Msg_ReadPackedShort() << 14;
+		else
+			d->floorclip = Msg_ReadByte() << 14;
+	}
 
 	// Link again.
 	if(!linked && !d->dplayer)	

@@ -20,6 +20,7 @@ extern int net_remoteuser;	// The client who is currently logged in.
 extern char *net_password;	// Remote login password.
 
 // sv_main.c
+void Sv_Shutdown(void);
 void Sv_StartNetGame();
 boolean Sv_PlayerArrives(unsigned int nodeID, char *name);
 void Sv_PlayerLeaves(unsigned int nodeID);
