@@ -2,8 +2,7 @@
 
 Header { Version = 5; }
 
-# This file is skipped if not Doom I.
-SkipIf doom2;
+# This file is skipped if not Doom I/II.
 SkipIf doom2-plut;
 SkipIf doom2-tnt;
 
@@ -37,7 +36,7 @@ Decoration {
 Copy Decoration {
   Flat = "CEIL1_3";
   Light {
-    Halo radius = .8;
+    Halo radius = .6;
     # React to sector lightlevel.
     Levels { 80 190 };
   };
