@@ -687,11 +687,11 @@ SOURCE=.\Include\con_config.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\con_console.h
+SOURCE=.\Include\con_decl.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\con_decl.h
+SOURCE=.\Include\con_main.h
 # End Source File
 # Begin Source File
 
