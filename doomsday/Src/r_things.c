@@ -520,6 +520,7 @@ void R_ProjectPlayerSprites(void)
 
 		vis->issprite = true;
 		vis->distance = 4;
+		vis->mo.subsector = viewplayer->mo->subsector;
 		vis->mo.mf = mf;
 		vis->mo.nextmf = nextmf;
 		vis->mo.flags = 0;
