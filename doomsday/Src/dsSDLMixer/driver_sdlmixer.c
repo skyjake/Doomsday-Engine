@@ -94,6 +94,8 @@ static char *song;
 
 static Mix_Music *currentMusic;
 
+static char *midiCommand = "timidity";
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -113,8 +115,19 @@ static void Error()
 
 int DS_Init(void)
 {
+	cvar_t cvarMidiCommand = {
+		"music-midi-command",
+		0,
+		CVT_CHARPTR,
+		&midiCommand,
+		0, 0, 
+		"Command to execute to play a MIDI file. Default: \"timidity\""
+	};
+	
 	if(initOk)
 		return true;
+
+	Con_AddVariable(&cvarMidiCommand);
 
 	// Are we in verbose mode?  
 	if((verbose = ArgExists("-verbose")))
@@ -608,6 +621,6 @@ void *DM_Mus_SongBuffer(int length)
 int	DM_Mus_Play(int looped)
 {
 	convertMusToMidi(song, songSize, BUFFERED_MUSIC_FILE);
-	Mix_SetMusicCMD("timidity");
+	Mix_SetMusicCMD(midiCommand);
 	return playFile(BUFFERED_MUSIC_FILE, looped);
 }
