@@ -77,10 +77,7 @@ int				gotframe = false;
 boolean			firstNetUpdate = true;
 
 boolean			monitorSendQueue = false;
-//boolean			net_timerefresh = false;
 boolean			net_showlatencies = false;
-//int				net_stressmargin = 10;
-//int				net_dampentime = 7;
 boolean			net_dev = false;
 int				net_dontsleep = false;
 int				net_ticsync = true;
@@ -95,44 +92,22 @@ netbuffer_t	reboundstore;
 cvar_t netCVars[] =
 {
 	"net_MSQ",			OBSOLETE,			CVT_BYTE,	&monitorSendQueue,	0, 1,	"Monitor send queue.",
-//	"net_TimeRefresh",	OBSOLETE,			CVT_BYTE,	&net_timerefresh,	0, 1,	"Time client refresh.",
 	"net_Latencies",	OBSOLETE,			CVT_BYTE,	&net_showlatencies,	0, 1,	"Show client latencies.",
-//	"net_StressDampen",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_dampentime,	0, 0,	"CmdLag stress dampening interval, in tics.",
-//	"net_StressMargin",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_stressmargin,	0, 0,	"CmdLag stress margin, in tics.",
-//	"net_SkewDampen",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_skewdampen,	0, 0,	"Client time skew dampening, in frames.",
-//	"net_ShowSkew",		OBSOLETE,			CVT_BYTE,	&net_showskew,		0, 1,	"Show client time skew.",
 	"net_Dev",			OBSOLETE,			CVT_BYTE,	&net_dev,			0, 1,	"Network development mode.",
 	"net_DontSleep",	OBSOLETE,			CVT_BYTE,	&net_dontsleep,		0, 1,	"1=Don't sleep while waiting for tics.",
-	"net_FrameInterval", OBSOLETE|CVF_NO_MAX, CVT_INT,	&frame_interval,	0, 0,	"Minimum number of tics between sent frames.",
-//	"net_ResendTime",	OBSOLETE|CVF_NO_MAX,	CVT_INT,	&net_resendtime,	0, 0,	"Number of tics to wait before resending delta sets.",
+	"net_FrameInterval", OBSOLETE|CVF_NO_MAX, CVT_INT,	&frameInterval,		0, 0,	"Minimum number of tics between sent frames.",
 	"net_Password",		OBSOLETE,			CVT_CHARPTR, &net_password,		0, 0,	"Password for remote login.",
-//	"net_ShowSets",		OBSOLETE,			CVT_BYTE,	&net_showsets,		0, 1,	"1=Show what goes in delta sets.",
-//	"net_MaxDif",		OBSOLETE,			CVT_INT,	&net_maxdif,		0, 256,	"Maximum difference between client pos vs. real pos.",
-//	"net_MinSecUpdate",	OBSOLETE|CVF_NO_MAX,	CVT_INT,	&net_minsecupd,		0, 0,	"Block range for forced sector deltas.",
-//	"net_FullSecUpdate", OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_fullsecupd,	0, 0,	"Block range for full (w/reject) sector deltas.",
-//	"net_MaxSecUpdate", OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_maxsecupd,		0, 0,	"Maximum block range for sector deltas.",
 //--------------------------------------------------------------------------
 // Some of these are obsolete...
 //--------------------------------------------------------------------------
 	"net-queue-show",		0,			CVT_BYTE,	&monitorSendQueue,	0, 1,	"Monitor send queue.",
-//	"net-stress-dampen",	CVF_NO_MAX, CVT_INT,	&net_dampentime,	0, 0,	"CmdLag stress dampening interval, in tics.",
-//	"net-stress-margin",	CVF_NO_MAX, CVT_INT,	&net_stressmargin,	0, 0,	"CmdLag stress margin, in tics.",
 	"net-dev",				0,			CVT_BYTE,	&net_dev,			0, 1,	"Network development mode.",
 	"net-nosleep",			0,			CVT_BYTE,	&net_dontsleep,		0, 1,	"1=Don't sleep while waiting for tics.",
-//	"client-skew-dampen",	CVF_NO_MAX,	CVT_INT,	&net_skewdampen,	0, 0,	"Client time skew dampening, in frames.",
-//	"client-skew-show",		0,			CVT_BYTE,	&net_showskew,		0, 1,	"Show client time skew.",
 	"client-pos-interval",	CVF_NO_MAX,	CVT_INT,	&net_coordtime,		0, 0,	"Number of tics between client coord packets.",
 	"client-connect-timeout", CVF_NO_MAX, CVT_FLOAT, &net_connecttimeout, 0, 0, "Maximum number of seconds to attempt connecting to a server.",
 	"server-password",		0,			CVT_CHARPTR, &net_password,		0, 0,	"Password for remote login.",
-//	"server-delta-show",	0,			CVT_BYTE,	&net_showsets,		0, 1,	"1=Show what goes in delta sets.",
-//	"server-refresh-show",	0,			CVT_BYTE,	&net_timerefresh,	0, 1,	"Time client refresh.",
 	"server-latencies",		0,			CVT_BYTE,	&net_showlatencies,	0, 1,	"Show client latencies.",
-	"server-frame-interval", CVF_NO_MAX, CVT_INT,	&frame_interval,	0, 0,	"Minimum number of tics between sent frames.",
-//	"server-frame-resend",	CVF_NO_MAX,	CVT_INT,	&net_resendtime,	0, 0,	"Number of tics to wait before resending delta sets.",
-//	"server-dif-max",		0,			CVT_INT,	&net_maxdif,		0, 256,	"Maximum difference between client pos vs. real pos.",
-//	"server-sector-min",	CVF_NO_MAX,	CVT_INT,	&net_minsecupd,		0, 0,	"Block range for forced sector deltas.",
-//	"server-sector-full",	CVF_NO_MAX,	CVT_INT,	&net_fullsecupd,	0, 0,	"Block range for full (w/reject) sector deltas.",
-//	"server-sector-max",	CVF_NO_MAX,	CVT_INT,	&net_maxsecupd,		0, 0,	"Maximum block range for sector deltas.",
+	"server-frame-interval", CVF_NO_MAX, CVT_INT,	&frameInterval,		0, 0,	"Minimum number of tics between sent frames.",
 	"server-player-limit",	0,			CVT_INT,	&sv_maxPlayers,		0, MAXPLAYERS, "Maximum number of players on the server.",
 	NULL
 };
@@ -496,7 +471,7 @@ void Net_Update(void)
 	// any prediction errors can be fixed. Client movement is almost 
 	// entirely local.
 	coordTimer -= newtics;
-	if(isClient && allow_frames && coordTimer < 0
+	if(isClient && allowFrames && coordTimer < 0
 		&& players[consoleplayer].mo)
 	{
 		mobj_t *mo = players[consoleplayer].mo;
@@ -833,14 +808,15 @@ void Net_Drawer(void)
 	}
 	if(consoleShowFPS)
 	{
-		int x, y = 30, w = 70, h;
+		int x, y = 30, w, h;
 		sprintf(buf, "%i FPS", DD_GetFrameRate());
+		w = FR_TextWidth(buf) + 16;
 		h = FR_TextHeight(buf) + 16;
 		x = screenWidth - w - 10;
-		UI_DrawRectEx(x, y, w, h, 4, 
-			UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW), .5f);
-		UI_Gradient(x + 4, y + 4, w - 8, h - 8, 
+		UI_GradientEx(x, y, w, h, 6, 
 			UI_COL(UIC_BG_MEDIUM), UI_COL(UIC_BG_LIGHT), .5f, .5f);
+		UI_DrawRectEx(x, y, w, h, 6, false,
+			UI_COL(UIC_BRD_HI), NULL, .5f, -1);
 		UI_Color(UI_COL(UIC_TEXT));
 		UI_TextOutEx(buf, x + 8, y + h/2, false, true, UI_COL(UIC_TEXT), 1);
 	}
@@ -975,11 +951,12 @@ void Net_Ticker(void)
 			{
 				if(Sv_IsFrameTarget(i))
 				{
-					Con_Message("%i(rdy%i): avg=%05ims thres=%05ims bwr=%05i "
+					Con_Message("%i(rdy%i): avg=%05ims thres=%05ims bwr=%05i (adj:%i) "
 						"maxfs=%05ib\n",
 						i, clients[i].ready, Net_GetAckTime(i), 
 						Net_GetAckThreshold(i),
-						clients[i].bandwidthRating, 
+						clients[i].bandwidthRating,
+						clients[i].bwrAdjustTime,
 						Sv_GetMaxFrameSize(i));
 				}
 				if(players[i].ingame)
