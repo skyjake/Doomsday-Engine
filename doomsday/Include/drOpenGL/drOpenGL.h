@@ -16,6 +16,7 @@
 #include "../dglib.h"
 
 #define USE_MULTITEXTURE	1
+#define MAX_TEX_UNITS		8
 
 #define DROGL_VERSION		210
 #define DROGL_VERSION_TEXT	"2.1.0"
@@ -24,19 +25,23 @@
 enum { VX, VY, VZ };
 enum { CR, CG, CB, CA };
 
+typedef enum arraytype_e {
+	AR_VERTEX,
+	AR_COLOR,
+	AR_TEXCOORD0,
+	AR_TEXCOORD1,
+	AR_TEXCOORD2,
+	AR_TEXCOORD3,
+	AR_TEXCOORD4,
+	AR_TEXCOORD5,
+	AR_TEXCOORD6,
+	AR_TEXCOORD7
+} arraytype_t;
+
 typedef struct
 {
 	unsigned char color[4];
 } rgba_t;
-
-typedef struct glvertex_s { 
-	float pos[3];
-	float color[4];
-	float tex[2];
-	float tex2[2];
-	float tex3[2];
-	float tex4[2];
-} glvertex_t;
 
 
 //-------------------------------------------------------------------------
@@ -45,6 +50,8 @@ typedef struct glvertex_s {
 extern int			useFog, maxTexSize;
 extern int			palExtAvailable, sharedPalExtAvailable;
 extern boolean		texCoordPtrEnabled;
+extern boolean		allowCompression;
+extern boolean		noArrays;
 extern int			verbose;
 extern int			useAnisotropic;
 extern float		maxAniso;
@@ -58,6 +65,7 @@ void DG_Clear(int bufferbits);
 //
 extern int			polyCounter;
 
+void InitArrays(void);
 void CheckError(void);
 void DG_Begin(int mode);
 void DG_End(void);
@@ -78,6 +86,7 @@ void DG_TexCoord2fv(float *data);
 void DG_Vertices2ftv(int num, gl_ft2vertex_t *data);
 void DG_Vertices3ftv(int num, gl_ft3vertex_t *data);
 void DG_Vertices3fctv(int num, gl_fct3vertex_t *data);
+void DG_DisableArrays(int vertices, int colors, int coords);
 
 
 //-------------------------------------------------------------------------
