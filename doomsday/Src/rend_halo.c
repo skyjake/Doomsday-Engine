@@ -67,7 +67,7 @@ flare_t flares[NUM_FLARES] =
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int				haloMode = 5, haloBright = 50, haloSize = 50;
+int				haloMode = 5, haloBright = 35, haloSize = 50;
 int				haloOccludeSpeed = 48;
 float			haloZMagDiv = 100, haloMinRadius = 20;
 float			haloDimStart = 10, haloDimEnd = 100;
@@ -413,7 +413,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 	float			cliprange = farClip - nearClip;
 	float			color[4], radx, rady, scale, turnangle = 0;
 	float			fadefactor = 1, secbold, secdimfactor;
-	float			coloraverage, f, distancedim;
+	float			coloraverage, f, distancedim, lum_distance;
 	flare_t			*fl;
 
 	// Is this source eligible for a halo?
@@ -425,16 +425,18 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 	//---DEBUG---
 //	if(!primary) return;
 
+	lum_distance = FIX2FLT(lum->distance);
+
 	if(lum->flags & LUMF_NOHALO
-		|| !sourcevis->distance
-		|| haloFadeMax && sourcevis->distance > haloFadeMax) return; 
+		|| lum_distance == 0
+		|| haloFadeMax && lum_distance > haloFadeMax) return; 
 
 	if(haloFadeMax 
 		&& haloFadeMax != haloFadeMin
-		&& sourcevis->distance < haloFadeMax
-		&& sourcevis->distance >= haloFadeMin) 
+		&& lum_distance < haloFadeMax
+		&& lum_distance >= haloFadeMin) 
 	{
-		fadefactor = (sourcevis->distance - haloFadeMin) 
+		fadefactor = (lum_distance - haloFadeMin) 
 			/ (haloFadeMax - haloFadeMin);
 	}
 
@@ -530,7 +532,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 	//overallbrightness = lum->flaresize/25 * coloraverage;
 
 	// Small flares have stronger dimming.
-	f = sourcevis->distance/lum->flaresize;
+	f = lum_distance/lum->flaresize;
 	if(haloDimStart 
 		&& haloDimStart < haloDimEnd
 		&& f > haloDimStart)
@@ -547,7 +549,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		if(i)
 		{
 			// Secondary flare dimming?
-			f = minHaloSize*lum->flaresize/sourcevis->distance;
+			f = minHaloSize*lum->flaresize/lum_distance;
 			if(f > 1) f = 1;
 		}
 		f *= distancedim;
@@ -557,7 +559,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 			+ coloraverage*coloraverage/5);
 		
 		radius = lum->flaresize * (1 - coloraverage/3) 
-			+ sourcevis->distance/haloZMagDiv;
+			+ lum_distance/haloZMagDiv;
 		if(radius < haloMinRadius) radius = haloMinRadius;
 		radius *= occlusionfactor;
 				
@@ -584,7 +586,15 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 */
 		gl.Color4fv(color);
 
-		if(lum->flaresize > 45 
+		if(primary && lum->flaretex)
+		{
+			// Set texture explicitly.
+			if(lum->flaretex == 1)
+				tex = GL_PrepareLightTexture();
+			else
+				tex = GL_PrepareFlareTexture(lum->flaretex - 2);
+		}
+		else if(lum->flaresize > 45 
 			|| coloraverage > .90 && lum->flaresize > 20)
 		{
 			// The "Very Bright" condition.
