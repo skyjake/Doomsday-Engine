@@ -51,6 +51,9 @@ Version 1.7.14-2
 ! Patch
 - fixed: 873878: Ogg/Mp3 in PK3 Virtual Folder Structure Not Playing
 
+jDoom:
++ cvar 'menu-quitsound': play a random sound when quitting
+
 
 Version 1.7.14-1
 ----------------
