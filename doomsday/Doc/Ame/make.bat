@@ -9,11 +9,11 @@ shift
 goto check
         
 :html
-for %%f in (*.ame) do amethyst -dHTML -ic:\amethyst -eHTML -ohtml\%%f %%f
+for %%f in (*.ame) do amethyst -dHTML -id:\amethyst -eHTML -ohtml\%%f %%f
 goto next
 
 :txt
-for %%f in (*.ame) do amethyst -dTXT -ic:\amethyst -eTXT -otxt\%%f %%f
+for %%f in (*.ame) do amethyst -dTXT -id:\amethyst -eTXT -otxt\%%f %%f
 goto next
 
 :end
