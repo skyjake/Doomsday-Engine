@@ -273,7 +273,7 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
 	{
 		Con_Error("PO_RotatePolyobj: Invalid polyobj number: %d\n", num);
 	}
-	an = (po->angle+angle)>>ANGLETOFINESHIFT;
+	an = (po->angle + angle) >> ANGLETOFINESHIFT;
 
 	PO_UnLinkPolyobj(po);
 
