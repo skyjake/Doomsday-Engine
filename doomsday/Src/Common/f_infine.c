@@ -193,6 +193,7 @@ boolean brief_disabled = false;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 boolean fi_active = false;
+boolean fi_cmd_executed = false;	// Set to true after first command.
 
 // Time is measured in seconds.
 // Colors are floating point and [0,1].
@@ -351,6 +352,8 @@ void FI_StartScript(char *finalescript, boolean after)
     gamestate = GS_INFINE;
     automapactive = false;
 	fi_active = true;
+	// Nothing is drawn until a cmd has been executed.
+	fi_cmd_executed = false;	
 	is_after = after;
 	cp = script = finalescript;	
 	fi_timer = 0;
@@ -366,7 +369,7 @@ void FI_StartScript(char *finalescript, boolean after)
 	fi_waitingpic = NULL;
 	memset(fi_goto, 0, sizeof(fi_goto));
 	GL_SetFilter(0);		// Clear the current filter.
-	for(c = 0; c < 3; c++) FI_InitValue(fi_bgcolor + c, 0);
+	for(c = 0; c < 3; c++) FI_InitValue(fi_bgcolor + c, 1);
 	memset(fi_pics, 0, sizeof(fi_pics));
 	memset(fi_imgoffset, 0, sizeof(fi_imgoffset));
 	memset(fi_text, 0, sizeof(fi_text));
@@ -594,6 +597,9 @@ void FI_Execute(char *cmd)
 	char *oldcp;
 
 	if(!strcmp(cmd, ";")) return; // Allowed garbage.
+
+	// We're now going to execute a command.
+	fi_cmd_executed = true;
 
 	// Is this a command we know how to execute?
 	for(i = 0; fi_commands[i].token; i++)
@@ -1157,7 +1163,8 @@ void FI_Drawer(void)
 	fipic_t *pic;
 	fitext_t *tex;
 
-	if(!fi_active) return;
+	// Don't draw anything until we are sure the script has started.
+	if(!fi_active || !fi_cmd_executed) return;
 
 	// Draw the background.
 	if(fi_bgflat >= 0)
