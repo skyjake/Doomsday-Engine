@@ -294,5 +294,6 @@ int		R_SetTextureTranslation(int tex, int translateTo);
 void	R_SetAnimGroup(int type, int number, int group);
 boolean	R_IsCustomTexture(int texture);
 boolean	R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal);
+boolean	R_IsValidLightDecoration(ded_decorlight_t *lightDef);
 
 #endif
