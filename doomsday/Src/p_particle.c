@@ -882,9 +882,9 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
 		hardRadius = FRACUNIT;
 
 	// Check the new Z position only if not stuck to a plane.
+	z = pt->pos[VZ] + pt->mov[VZ];
 	if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT)
 	{
-		z = pt->pos[VZ] + pt->mov[VZ];
 		if(z > pt->sector->ceilingheight - hardRadius)
 		{
 			// The Z is through the roof! 
