@@ -42,6 +42,7 @@ drOpenGL:
 + NV_texture_env_combine4 or ATI_texture_env_combine3 required when 
   rendering dynamic lights with multitexturing
 + support for SGIS_generate_mipmap
+- removed -vtxar option (arrays are used always)
 
 jDoom:
 + crosshair alpha slider added to the HUD menu
