@@ -16,8 +16,9 @@
  */
 
 /*
- * rend_list.c: Doomsday Rendering Lists v3.1
+ * rend_list.c: Doomsday Rendering Lists v3.2
  *
+ * 3.2 -- Shiny walls and floors
  * 3.1 -- Support for multiple shadow textures
  * 3.0 -- Multitexturing
  */
@@ -38,7 +39,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_TEX_UNITS		8	// Only two used, really.
+#define MAX_TEX_UNITS		8	// Only two used, actually.
 #define RL_HASH_SIZE		128
 
 // Number of extra bytes to keep allocated in the end of each rendering list.
@@ -60,6 +61,7 @@
 #define DCF_SET_LIGHT_ENV			(DCF_SET_LIGHT_ENV0 | DCF_SET_LIGHT_ENV1)
 #define DCF_JUST_ONE_LIGHT			0x00000010
 #define DCF_MANY_LIGHTS				0x00000020
+#define DCF_SET_BLEND_MODE          0x00000040 // primitive-specific blending
 #define DCF_SKIP					0x80000000
 
 // List Modes.
@@ -81,7 +83,10 @@ typedef enum listmode_e {
 	LM_BLENDED_MOD_TEXTURE,
 	LM_ALL_DETAILS,
 	LM_BLENDED_DETAILS,
-	LM_SHADOW
+	LM_SHADOW,
+    LM_SHINY,
+    LM_MASKED_SHINY,
+    LM_ALL_SHINY
 } listmode_t;
 
 // Types of rendering primitives.
@@ -98,6 +103,7 @@ enum {
 	TCA_DETAIL,					// Detail texture coordinates.
 	TCA_BLEND_DETAIL,			// Blendtarget's detail texture coordinates.
 	TCA_LIGHT,					// Glow texture coordinates.
+    //TCA_SHINY,                  // Shiny surface coordinates.
 	NUM_TEXCOORD_ARRAYS
 };
 
@@ -117,6 +123,9 @@ typedef struct primhdr_s {
 	// Generic data, common to all polys.
 	primtype_t type;
 	short   flags;				// RPF_*
+
+    // Primitive-specific blending mode.
+    byte    blendMode;          // BM_*
 
 	// Number of vertices in the primitive.
 	uint    primSize;
@@ -188,6 +197,8 @@ float   detailFactor = .5f;
 //float             detailMaxDist = 256;
 float   detailScale = 4;
 
+float   blackColor[4] = { 0, 0, 0, 0 };
+
 typedef struct listhash_s {
 	rendlist_t *first, *last;
 } listhash_t;
@@ -220,17 +231,25 @@ static listhash_t litHash[RL_HASH_SIZE];
 // Additional light primitives.
 static listhash_t dynHash[RL_HASH_SIZE];
 
+// Shiny surfaces.
+static listhash_t shinyHash[RL_HASH_SIZE];
+
 static listhash_t shadowHash[RL_HASH_SIZE];
 static rendlist_t skyMaskList;
 
 // CODE --------------------------------------------------------------------
+
+void RL_Register(void)
+{
+    // TODO: Move cvars here.
+}
 
 //===========================================================================
 // RL_AddMaskedPoly
 //  This doesn't create a rendering primitive but a vissprite! The vissprite
 //  represents the masked poly and will be rendered during the rendering 
 //  of sprites. This is necessary because all masked polygons must be 
-//  rendered back-to-front, or there might be alpha artifacts along edges.
+//  rendered back-to-front, or there will be alpha artifacts along edges.
 //===========================================================================
 void RL_AddMaskedPoly(rendpoly_t *poly)
 {
@@ -325,7 +344,8 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 		// Check for torch.
 		if(viewplayer->fixedcolormap)
 		{
-			// Colormap 1 is the brightest. I'm guessing 16 would be the darkest.
+			// Colormap 1 is the brightest. I'm guessing 16 would be
+			// the darkest.
 			int     ll = 16 - viewplayer->fixedcolormap;
 			float   d = (1024 - vtx->dist) / 512.0f;
 			float   newmin = d * ll / 15.0f;
@@ -455,6 +475,7 @@ void RL_Init(void)
 	RL_ClearHash(litHash);
 	RL_ClearHash(dynHash);
 	RL_ClearHash(shadowHash);
+    RL_ClearHash(shinyHash);
 
 	memset(&skyMaskList, 0, sizeof(skyMaskList));
 }
@@ -571,6 +592,7 @@ void RL_DeleteLists(void)
 	RL_DeleteHash(litHash);
 	RL_DeleteHash(dynHash);
 	RL_DeleteHash(shadowHash);
+    RL_DeleteHash(shinyHash);
 
 	RL_DestroyList(&skyMaskList);
 
@@ -626,6 +648,7 @@ void RL_ClearLists(void)
 	RL_RewindHash(litHash);
 	RL_RewindHash(dynHash);
 	RL_RewindHash(shadowHash);
+    RL_RewindHash(shinyHash);
 
 	RL_RewindList(&skyMaskList);
 
@@ -663,7 +686,11 @@ rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
 	}
 
 	// Choose the correct hash table.
-	if(poly->flags & RPF_SHADOW)
+    if(poly->flags & RPF_SHINY)
+    {
+        table = shinyHash;
+    }
+    else if(poly->flags & RPF_SHADOW)
 	{
 		table = shadowHash;
 	}
@@ -754,7 +781,7 @@ rendlist_t *RL_GetLightListFor(DGLuint texture)
 // RL_AllocateData
 //  Returns a pointer to the start of the allocated data.
 //===========================================================================
-void   *RL_AllocateData(rendlist_t * list, int bytes)
+void *RL_AllocateData(rendlist_t *list, int bytes)
 {
 	int     required;
 	int     startOffset = list->cursor - list->data;
@@ -839,14 +866,14 @@ void RL_AllocateIndices(rendlist_t * list, int numIndices)
 //===========================================================================
 // RL_QuadTexCoords
 //===========================================================================
-void RL_QuadTexCoords(gl_texcoord_t * tc, rendpoly_t *poly, gltexture_t * tex)
+void RL_QuadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 {
 	float   width, height;
 
 	if(!tex->id)
 		return;
 
-	if(poly->flags & RPF_SHADOW)
+    if(poly->flags & RPF_SHADOW)
 	{
 		// Shadows use the width and height from the polygon itself.
 		width = poly->tex.width;
@@ -876,6 +903,53 @@ void RL_QuadTexCoords(gl_texcoord_t * tc, rendpoly_t *poly, gltexture_t * tex)
 	tc[1].st[0] = tc[2].st[0] = tc[0].st[0] + poly->length / width;
 	tc[2].st[1] = tc[3].st[1] =
 		tc[0].st[1] + (poly->top - poly->bottom) / height;
+}
+
+static float RL_ShinyVertical(float dy, float dx)
+{
+    return ( (atan(dy/dx) / (PI/2)) + 1 ) / 2;
+}
+
+//===========================================================================
+// RL_QuadShinyTexCoords
+//===========================================================================
+void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
+                           gltexture_t *tex)
+{
+    vec2_t surface;
+    vec2_t view;
+    float dot, distance;
+    int i;
+
+    // Quad surface vector.
+    V2_Set(surface,
+           (poly->vertices[1].pos[VX] - poly->vertices[0].pos[VX]) /
+           poly->length,
+           (poly->vertices[1].pos[VY] - poly->vertices[0].pos[VY]) /
+           poly->length);
+
+    // Calculate coordinates based on viewpoint and surface normal.
+    for(i = 0; i < 2; ++i)
+    {
+        // View vector.
+        V2_Set(view,
+               vx - poly->vertices[i].pos[VX],
+               vz - poly->vertices[i].pos[VY]);
+
+        distance = V2_Normalize(view);
+        
+        dot = V2_DotProduct(surface, view);
+
+        // Horizontal coordinates.
+        tc[ (i == 0 ? 0 : 1) ].st[0] = tc[ (i == 0 ? 3 : 2) ].st[0] = dot;
+
+        // Vertical coordinates.
+        tc[ (i == 0 ? 0 : 1) ].st[1] =
+            RL_ShinyVertical(vy - poly->top, distance);
+
+        tc[ (i == 0 ? 2 : 3) ].st[1] =
+            RL_ShinyVertical(vy - poly->bottom, distance);
+    }
 }
 
 //===========================================================================
@@ -913,7 +987,7 @@ void RL_QuadColors(gl_color_t * color, rendpoly_t *poly)
 		memset(color, 255, 4 * 4);
 		return;
 	}
-	if(poly->flags & RPF_SHADOW)
+	if(poly->flags & (RPF_SHADOW | RPF_SHINY))
 	{
 		memcpy(color[0].rgba, poly->vertices[0].color.rgba, 4);
 		memcpy(color[1].rgba, poly->vertices[1].color.rgba, 4);
@@ -957,6 +1031,36 @@ void RL_QuadLightCoords(gl_texcoord_t * tc, dynlight_t *dyn)
 }
 
 //===========================================================================
+// RL_FlatShinyTexCoords
+//===========================================================================
+void RL_FlatShinyTexCoords(gl_texcoord_t *tc, float xy[2], float height)
+{
+    vec2_t view, start;
+    float distance;
+    float offset;
+    
+    // View vector.
+    V2_Set(view, vx - xy[VX], vz - xy[VY]);
+
+    distance = V2_Normalize(view);
+    if(distance < 10)
+    {
+        // Too small distances cause an ugly 'crunch' below and above
+        // the viewpoint.
+        distance = 10;
+    }
+
+    // Offset from the normal view plane.
+    V2_Set(start, vx, vz);
+
+    offset = ((start[VY] - xy[VY]) * sin(.4f)/*viewfrontvec[VX]*/ -
+			  (start[VX] - xy[VX]) * cos(.4f)/*viewfrontvec[VZ]*/);
+    
+    tc->st[0] = ((RL_ShinyVertical(offset, distance) - .5f) * 2) + .5f;
+    tc->st[1] = RL_ShinyVertical(vy - height, distance);
+}
+
+//===========================================================================
 // RL_FlatDetailTexCoords
 //===========================================================================
 void RL_FlatDetailTexCoords(gl_texcoord_t * tc, float xy[2], rendpoly_t *poly,
@@ -966,6 +1070,7 @@ void RL_FlatDetailTexCoords(gl_texcoord_t * tc, float xy[2], rendpoly_t *poly,
 		(xy[VX] +
 		 poly->texoffx) / tex->detail->width * detailScale *
 		tex->detail->scale;
+
 	tc->st[1] =
 		(-xy[VY] -
 		 poly->texoffy) / tex->detail->height * detailScale *
@@ -1001,7 +1106,7 @@ void RL_InterpolateTexCoordT(gl_texcoord_t * tc, uint index, uint top,
 //===========================================================================
 // RL_WriteQuad
 //===========================================================================
-void RL_WriteQuad(rendlist_t * list, rendpoly_t *poly)
+void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 {
 	uint    base;
 	primhdr_t *hdr = NULL;
@@ -1019,25 +1124,46 @@ void RL_WriteQuad(rendlist_t * list, rendpoly_t *poly)
 	hdr->indices[2] = base + 2;
 	hdr->indices[3] = base + 3;
 
+    // Primitive-specific blending mode.
+    hdr->blendMode = poly->blendmode;
+
 	// Primary texture coordinates.
-	RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
+    if(poly->flags & RPF_SHINY)
+    {
+        
+        // Shiny environmental texture coordinates.
+        RL_QuadShinyTexCoords(&texCoords[TCA_MAIN][base], poly, &poly->tex);
 
-	// Blend texture coordinates.
-	if(list->intertex.id)
-	{
-		RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly, &list->intertex);
-	}
+        // Mask texture coordinates.
+        if(list->intertex.id)
+        {
+            RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly, &poly->tex);
+        }
+    }
+    else
+    {
+        // Normal primary texture coordinates.
+        RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
 
-	// Detail texture coordinates.
-	if(list->tex.detail)
-	{
-		RL_QuadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly, &list->tex);
-	}
-	if(list->intertex.detail)
-	{
-		RL_QuadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
-							   &list->intertex);
-	}
+        // Blend texture coordinates.
+        if(list->intertex.id)
+        {
+            RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly,
+                             &list->intertex);
+        }
+
+        // Detail texture coordinates.
+        if(list->tex.detail)
+        {
+            RL_QuadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly,
+                                   &list->tex);
+        }
+        if(list->intertex.detail)
+        {
+            RL_QuadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
+                                   &list->intertex);
+        }
+    }
 
 	// Colors.
 	RL_QuadColors(&colors[base], poly);
@@ -1090,21 +1216,39 @@ void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
 	hdr = list->last;
 	hdr->indices[0] = base;
 
+    // Primitive-specific blending mode.
+    hdr->blendMode = poly->blendmode;
+    
 	// The first four vertices are the normal quad corner points.
-	RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
-	if(list->intertex.id)
-	{
-		RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly, &list->intertex);
-	}
-	if(list->tex.detail)
-	{
-		RL_QuadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly, &list->tex);
-	}
-	if(list->intertex.detail)
-	{
-		RL_QuadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
-							   &list->intertex);
-	}
+    if(poly->flags & RPF_SHINY)
+    {
+        // Shiny environmental texture coordinates.
+        RL_QuadShinyTexCoords(&texCoords[TCA_MAIN][base], poly, &poly->tex);
+        if(list->intertex.id)
+        {
+            RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly, &poly->tex);
+        }
+    }
+    else
+    {
+        // Primary texture coordinates.
+        RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
+        if(list->intertex.id)
+        {
+            RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly,
+                             &list->intertex);
+        }
+        if(list->tex.detail)
+        {
+            RL_QuadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly,
+                                   &list->tex);
+        }
+        if(list->intertex.detail)
+        {
+            RL_QuadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
+                                   &list->intertex);
+        }
+    }
 	RL_QuadColors(&colors[base], poly);
 	RL_QuadVertices(&vertices[base], poly);
 
@@ -1212,7 +1356,7 @@ void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
 //===========================================================================
 // RL_WriteFlat
 //===========================================================================
-void RL_WriteFlat(rendlist_t * list, rendpoly_t *poly)
+void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 {
 	rendpoly_vertex_t *vtx;
 	gl_color_t *col;
@@ -1234,6 +1378,9 @@ void RL_WriteFlat(rendlist_t * list, rendpoly_t *poly)
 		list->last->indices[i] = base + i;
 	}
 
+    // Primitive-specific blending mode.
+    list->last->blendMode = poly->blendmode;
+    
 	for(i = 0, vtx = poly->vertices; i < poly->numvertices; i++, vtx++)
 	{
 		// Coordinates.
@@ -1251,16 +1398,26 @@ void RL_WriteFlat(rendlist_t * list, rendpoly_t *poly)
 		// Primary texture coordinates.
 		if(list->tex.id)
 		{
-			tc = &texCoords[TCA_MAIN][base + i];
-			tc->st[0] =
-				(vtx->pos[VX] +
-				 poly->texoffx) /
-				(poly->flags & RPF_SHADOW ? poly->tex.width : list->tex.width);
-			tc->st[1] =
-				(-vtx->pos[VY] -
-				 poly->texoffy) /
-				(poly->flags & RPF_SHADOW ? poly->tex.height : list->tex.
-				 height);
+            tc = &texCoords[TCA_MAIN][base + i];
+            if(!(poly->flags & RPF_SHINY))
+            {
+                // Normal texture coordinates.
+                tc->st[0] =
+                    (vtx->pos[VX] +
+                     poly->texoffx) /
+                    (poly->flags & RPF_SHADOW ? poly->tex.width :
+                     list->tex.width);
+                tc->st[1] =
+                    (-vtx->pos[VY] -
+                     poly->texoffy) /
+                    (poly->flags & RPF_SHADOW ? poly->tex.height :
+                     list->tex.height);
+            }
+            else
+            {
+                // Calculate shiny coordinates.
+                RL_FlatShinyTexCoords(tc, vtx->pos, poly->top);
+            }
 		}
 
 		// Detail texture coordinates.
@@ -1291,9 +1448,13 @@ void RL_WriteFlat(rendlist_t * list, rendpoly_t *poly)
 		if(list->intertex.id)
 		{
 			tc = &texCoords[TCA_BLEND][base + i];
-			tc->st[0] = (vtx->pos[VX] + poly->texoffx) / list->intertex.width;
+			tc->st[0] = (vtx->pos[VX] + poly->texoffx) /
+                (poly->flags & RPF_SHINY ? poly->tex.width :
+                 list->intertex.width);
 			tc->st[1] =
-				(-vtx->pos[VY] - poly->texoffy) / list->intertex.height;
+				(-vtx->pos[VY] - poly->texoffy) /
+                (poly->flags & RPF_SHINY ? poly->tex.height :
+                 list->intertex.height);
 		}
 
 		// Color.
@@ -1302,7 +1463,7 @@ void RL_WriteFlat(rendlist_t * list, rendpoly_t *poly)
 		{
 			memset(col->rgba, 255, 4);
 		}
-		else if(poly->flags & RPF_SHADOW)
+		else if(poly->flags & (RPF_SHADOW | RPF_SHINY))
 		{
 			memcpy(col->rgba, vtx->color.rgba, 4);
 		}
@@ -1440,7 +1601,7 @@ void RL_AddPoly(rendpoly_t *poly)
 	}
 
 	// Are lights allowed?
-	if(!(poly->flags & (RPF_SKY_MASK | RPF_SHADOW)))
+	if(!(poly->flags & (RPF_SKY_MASK | RPF_SHADOW | RPF_SHINY)))
 	{
 		// In multiplicative mode, glowing surfaces are fullbright.
 		// Rendering lights on them would be pointless.
@@ -1571,6 +1732,12 @@ void RL_DrawPrimitives(int conditions, rendlist_t * list)
 			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 		}
+
+        if(conditions & DCF_SET_BLEND_MODE)
+        {
+            // Primitive-specific blending.  Not used in all lists.
+            GL_BlendMode(hdr->blendMode);
+        }
 
 		// Render a primitive (or two) as a triangle fan.
 		if(hdr->type == PT_FAN)
@@ -1783,6 +1950,25 @@ int RL_SetupListState(listmode_t mode, rendlist_t * list)
 		}
 		return 0;
 
+    case LM_MASKED_SHINY:
+        // The intertex holds the info for the mask texture.
+        RL_BindTo(1, list->intertex.id);
+		gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+		gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
+		gl.SetInteger(DGL_ENV_ALPHA, 255);
+    case LM_ALL_SHINY:
+    case LM_SHINY:
+		RL_BindTo(mode == LM_MASKED_SHINY ? 0 : 0, list->tex.id);
+		// Make sure the texture is not clamped.
+		gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+		gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
+        // Render all primitives.
+        if(mode == LM_ALL_SHINY)
+            return DCF_SET_BLEND_MODE;
+        else
+            return DCF_SET_BLEND_MODE |
+                (mode == LM_MASKED_SHINY ? DCF_BLEND : DCF_NO_BLEND);
+        
 	default:
 		break;
 	}
@@ -1794,7 +1980,7 @@ int RL_SetupListState(listmode_t mode, rendlist_t * list)
 //===========================================================================
 // RL_FinishListState
 //===========================================================================
-void RL_FinishListState(listmode_t mode, rendlist_t * list)
+void RL_FinishListState(listmode_t mode, rendlist_t *list)
 {
 	switch (mode)
 	{
@@ -1809,12 +1995,18 @@ void RL_FinishListState(listmode_t mode, rendlist_t * list)
 			gl.PopMatrix();
 		}
 		break;
+
+    case LM_SHINY:
+    case LM_ALL_SHINY:
+    case LM_MASKED_SHINY:
+        GL_BlendMode(BM_NORMAL);
+        break;
 	}
 }
 
 //===========================================================================
 // RL_SetupPassState
-//  Setup GL state for an entire rendering pass.
+//  Setup GL state for an entire rendering pass (compassing multiple lists).
 //===========================================================================
 void RL_SetupPassState(listmode_t mode)
 {
@@ -2038,6 +2230,51 @@ void RL_SetupPassState(listmode_t mode)
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 		break;
 
+    case LM_SHINY:
+        RL_SelectTexUnits(1);
+        RL_SelectTexCoordArray(0, TCA_MAIN);
+        gl.SetInteger(DGL_MODULATE_TEXTURE, 1); // 8 for multitexture
+        gl.Disable(DGL_ALPHA_TEST);
+        gl.Disable(DGL_DEPTH_WRITE);
+        gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		if(useFog)
+		{
+            // Fog makes the shininess diminish in the distance.
+			gl.Enable(DGL_FOG);
+			gl.Fogv(DGL_FOG_COLOR, blackColor);
+		}
+        else
+        {
+            gl.Disable(DGL_FOG);
+        }
+        gl.Enable(DGL_BLENDING);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE); // Purely additive.
+        break;
+
+    case LM_MASKED_SHINY:
+        RL_SelectTexUnits(2);
+        RL_SelectTexCoordArray(0, TCA_MAIN);
+        RL_SelectTexCoordArray(1, TCA_BLEND); // the mask
+        gl.SetInteger(DGL_MODULATE_TEXTURE, 8); // same as with details
+        gl.Disable(DGL_ALPHA_TEST);
+        gl.Disable(DGL_DEPTH_WRITE);
+        gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		if(useFog)
+		{
+            // Fog makes the shininess diminish in the distance.
+			gl.Enable(DGL_FOG);
+			gl.Fogv(DGL_FOG_COLOR, blackColor);
+		}
+        else
+        {
+            gl.Disable(DGL_FOG);
+        }
+        gl.Enable(DGL_BLENDING);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE); // Purely additive.
+        break;
+        
 	default:
 		break;
 	}
@@ -2284,6 +2521,31 @@ void RL_RenderAllLists(void)
 		}
 	}
 
+    /*
+     * Shiny Surfaces Pass
+     */
+    // Draw the shiny environment surfaces.
+    //
+    // If we have two texture units, the shiny masks will be
+    // enabled.  Otherwise the masks are ignored.  The shine is
+    // basically specular environmental additive light, multiplied
+    // by the mask so that black texels in the mask produce areas
+    // without shine.
+    //
+    // Walls with holes (so called 'masked textures') cannot be
+    // shiny.
+    count = RL_CollectLists(shinyHash, lists);
+    if(numTexUnits > 1)
+    {
+        // Render masked shiny surfaces in a separate pass.
+        RL_RenderLists(LM_SHINY, lists, count);
+        RL_RenderLists(LM_MASKED_SHINY, lists, count);
+    }
+    else
+    {
+        RL_RenderLists(LM_ALL_SHINY, lists, count);
+    }
+    
 	/*
 	 * Shadow Pass: Objects and FakeRadio
 	 */
