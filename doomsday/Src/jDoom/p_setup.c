@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.7  2003/07/12 22:26:35  skyjake
+// Comment
+//
 // Revision 1.6  2003/07/03 20:51:38  skyjake
 // Subtract 4 ("gNd2") from GL verts lump length
 //
@@ -734,7 +737,7 @@ void P_GetMapLumpName(int episode, int map, char *lumpName)
 
 //===========================================================================
 // P_MapExists
-//	Returns true if the specified ep/map is loaded.
+//	Returns true if the specified ep/map exists in a WAD.
 //===========================================================================
 boolean P_MapExists(int episode, int map)
 {
