@@ -44,6 +44,7 @@ char *		M_SkipLine(char *str);
 void		M_WriteCommented(FILE *file, char *text);
 void		M_WriteTextEsc(FILE *file, char *text);
 boolean		M_IsComment(char *text);
+char *		M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator, char *buf, unsigned int bufLength);
 
 // Random numbers.
 byte		M_Random(void);
