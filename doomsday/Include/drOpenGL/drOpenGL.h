@@ -16,7 +16,7 @@
 #include "../dglib.h"
 
 #define USE_MULTITEXTURE	1
-#define MAX_TEX_UNITS		8
+#define MAX_TEX_UNITS		2	// More won't be used.
 
 #define DROGL_VERSION		210
 #define DROGL_VERSION_TEXT	"2.1.0"
