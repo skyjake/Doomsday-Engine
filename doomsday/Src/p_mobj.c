@@ -61,6 +61,9 @@ fixed_t		tmx, tmy, tmz, tmheight;*/
 // if within "tmfloorz - tmceilingz".
 //boolean		floatok;
 
+// If set to true, P_CheckPosition will skip the mobj hit test.
+boolean		dontHitMobjs = false;
+
 fixed_t		tmfloorz;
 fixed_t		tmceilingz;
 fixed_t		tmdropoffz;
@@ -275,13 +278,16 @@ boolean P_CheckPosition2(mobj_t* thing, fixed_t x, fixed_t y, fixed_t z)
     yl = (data.box[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
     yh = (data.box[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 	
-    for (bx=xl ; bx<=xh ; bx++)
-		for (by=yl ; by<=yh ; by++)
-			if (!P_BlockThingsIterator(bx, by, PIT_CheckThing, &data))
-			{
-				result = false;
-				goto checkpos_done;
-			}
+	if(!dontHitMobjs)
+	{
+		for (bx=xl ; bx<=xh ; bx++)
+			for (by=yl ; by<=yh ; by++)
+				if (!P_BlockThingsIterator(bx, by, PIT_CheckThing, &data))
+				{
+					result = false;
+					goto checkpos_done;
+				}
+	}
 			
 	// check lines
 	xl = (data.box[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
