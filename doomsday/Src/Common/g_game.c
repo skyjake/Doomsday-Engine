@@ -1464,6 +1464,10 @@ void G_Ticker (void)
     
 	if(IS_CLIENT && !Get(DD_GAME_READY)) return;
 
+#if _DEBUG
+	Z_CheckHeap();
+#endif
+
     // do player reborns if needed
     for (i = 0; i < MAXPLAYERS; i++) 
 	{
@@ -2367,6 +2371,13 @@ void G_TeleportNewMap(int map, int position)
 
 void G_DoTeleportNewMap(void)
 {
+	// Clients trust the server in these things.
+	if(IS_CLIENT) 
+	{
+		gameaction = ga_nothing;
+		return;
+	}
+
 	SV_HxMapTeleport(LeaveMap, LeavePosition);
 	gamestate = GS_LEVEL;
 	gameaction = ga_nothing;
