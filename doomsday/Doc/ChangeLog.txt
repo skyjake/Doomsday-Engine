@@ -4,6 +4,12 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.7.10
+--------------
+jHeretic:
+- fixed: interlude screen wouldn't show seconds if they're zero
+
+
 Version 1.7.9
 -------------
 + external resource locator (in Data\Game\: Textures\, Patches\, Music\
