@@ -62,6 +62,8 @@ static boolean useMouse, useJoystick;
 static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;
 
+static int wheelCount;
+
 // CODE --------------------------------------------------------------------
 
 void I_Register(void)
@@ -280,7 +282,7 @@ void I_PollEvents(void)
 
 	while(SDL_PollEvent(&event))
 	{
-		switch (event.type)
+		switch(event.type)
 		{
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
@@ -288,6 +290,13 @@ void I_PollEvents(void)
 			e->event = (event.type == SDL_KEYDOWN ? IKE_KEY_DOWN : IKE_KEY_UP);
 			e->code = I_TranslateKeyCode(event.key.keysym.sym);
 			//printf("sdl:%i code:%i\n", event.key.keysym.sym, e->code);
+			break;
+
+		case SDL_MOUSEBUTTONDOWN:
+			if(event.button.button == SDL_BUTTON_WHEELUP)
+				wheelCount++;
+			if(event.button.button == SDL_BUTTON_WHEELDOWN)
+				wheelCount--;
 			break;
 
 		case SDL_QUIT:
@@ -418,9 +427,12 @@ void I_GetMouseState(mousestate_t * state)
 	// The buttons bitfield is ordered according to the numbering.
 	for(i = 4; i < 8; i++)
 	{
-		if(buttons & SDL_BUTTON(i + 1))
-			state->buttons |= 1 << i;
+		if(buttons & SDL_BUTTON(i))
+			state->buttons |= 1 << (i - 1);
 	}
+
+ 	state->z = wheelCount * 20;
+	wheelCount = 0;
 }
 
 //===========================================================================
