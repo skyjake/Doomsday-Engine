@@ -410,7 +410,8 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 			for(i=numlights; i<MAX_MODEL_LIGHTS; i++) 
 				lights[i].dist = DDMAXINT;
 			mlSpr = spr;
-			DL_RadiusIterator(spr->mo.gx, spr->mo.gy, dlMaxRad << FRACBITS, modelLighter);
+			DL_RadiusIterator(spr->mo.subsector, spr->mo.gx, spr->mo.gy, 
+				dlMaxRad << FRACBITS, modelLighter);
 
 			// Calculate the directions and intensities of the lights.
 			for(i=numlights, light=lights+1; i<modelLight; i++, light++)
