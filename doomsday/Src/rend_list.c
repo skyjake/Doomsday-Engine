@@ -187,8 +187,11 @@ extern float		maxLightDist;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int					numrlists=0;			// Number of rendering lists.
+int					numrlists = 0;			// Number of rendering lists.
 boolean				renderTextures = true;
+
+// Intensity of angle-based wall lighting.
+float				rend_light_wall_angle = 1;
 
 // Rendering parameters for detail textures.
 float				detailFactor = .5f;
@@ -275,7 +278,7 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, byte *rgb)
 	{
 		// Do a lighting adjustment based on orientation.
 		lightlevel += (poly->vertices[1].pos[VY] - poly->vertices[0].pos[VY]) 
-			/ poly->length * 18;	// * 16
+			/ poly->length * 18 * rend_light_wall_angle;
 		if(lightlevel < 0) lightlevel = 0;
 		if(lightlevel > 255) lightlevel = 255;
 	}

@@ -59,6 +59,7 @@ typedef struct {
 #define RLPF_NORMAL		0
 #define RLPF_REVERSE	1
 
+extern float	rend_light_wall_angle;
 extern float	detailFactor, detailMaxDist, detailScale;
 
 void RL_Init();
