@@ -396,8 +396,8 @@ boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 			continue;
 
 		// Do we support the format of this file?
-		if(header->compression != ZFC_NO_COMPRESSION
-		   || header->compressedSize != header->size)
+		if(header->compression != ZFC_NO_COMPRESSION ||
+		   header->compressedSize != header->size)
 		{
 			Con_Error("Zip_Open: %s: '%s' is compressed.\n  Compression is "
 					  "not supported.\n", M_Pretty(fileName), buf);

@@ -837,8 +837,8 @@ void DM_WinCDUpdate(void)
 		return;
 
 	// Check for looping.
-	if(cdPlayTrack && cdLooping
-	   && Sys_GetSeconds() - cdStartTime > cdTrackLength)
+	if(cdPlayTrack && cdLooping &&
+	   Sys_GetSeconds() - cdStartTime > cdTrackLength)
 	{
 		// Restart the track.
 		DM_WinCDPlay(cdPlayTrack, true);

@@ -116,8 +116,8 @@ void P_DoTick(void)
 
 #if __JDOOM__
 	// pause if in menu and at least one tic has been run
-	if(!IS_NETGAME && menuactive && !Get(DD_PLAYBACK)
-	   && players[consoleplayer].plr->viewz != 1)
+	if(!IS_NETGAME && menuactive && !Get(DD_PLAYBACK) &&
+	   players[consoleplayer].plr->viewz != 1)
 		return;
 
 #elif __JHERETIC__

@@ -34,11 +34,11 @@ boolean         P_BlockPolyobjsIterator(int x, int y,
 										boolean (*func) (polyobj_t *, void *),
 										void *data);
 
-boolean         P_SubsectorBoxIteratorv(arvec2_t box, sector_t * sector,
+boolean         P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
 										boolean (*func) (subsector_t *,
 														 void *), void *parm);
 
-boolean         P_SubsectorBoxIterator(fixed_t *box, sector_t * sector,
+boolean         P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
 									   boolean (*func) (subsector_t *, void *),
 									   void *parm);
 

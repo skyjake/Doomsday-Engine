@@ -282,8 +282,8 @@ line_t *R_GetLineForSide(int sideNumber)
 		return NULL;
 
 	for(i = 0; i < sector->linecount; i++)
-		if(sector->lines[i]->sidenum[0] == sideNumber
-		   || sector->lines[i]->sidenum[1] == sideNumber)
+		if(sector->lines[i]->sidenum[0] == sideNumber ||
+		   sector->lines[i]->sidenum[1] == sideNumber)
 		{
 			return sector->lines[i];
 		}
@@ -297,7 +297,7 @@ line_t *R_GetLineForSide(int sideNumber)
 //  that completely surround the sector. Uses the well-known algorithm 
 //  described here: http://www.alienryderflex.com/polygon/
 //===========================================================================
-boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t * sector)
+boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 {
 	int     i;
 	boolean isOdd = false;
@@ -306,8 +306,8 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t * sector)
 	for(i = 0; i < sector->linecount; i++)
 	{
 		// Skip lines that aren't sector boundaries.
-		if(sector->lines[i]->frontsector == sector
-		   && sector->lines[i]->backsector == sector)
+		if(sector->lines[i]->frontsector == sector &&
+		   sector->lines[i]->backsector == sector)
 			continue;
 
 		// It shouldn't matter whether the line faces inward or outward.

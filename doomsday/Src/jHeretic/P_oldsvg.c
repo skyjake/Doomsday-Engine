@@ -88,7 +88,7 @@ static void SV_v13_ReadPlayer(player_t * pl)
 	SV_v13_ReadLong();			// rain2
 }
 
-static void SV_v13_ReadMobj(mobj_t * mo)
+static void SV_v13_ReadMobj(mobj_t *mo)
 {
 	// Clear everything first.
 	memset(mo, 0, sizeof(*mo));

@@ -403,7 +403,8 @@ static int findWeapon(player_t * plr, boolean forward)
 		if(i < 0)
 			i = NUMWEAPONS - 2;
 #  elif __JHEXEN__
-		c < NUMWEAPONS; c++, forward ? i++ : i--)
+		c < NUMWEAPONS;
+		c++, forward ? i++ : i--)
 	{
 		if(i > NUMWEAPONS - 1)
 			i = 0;
@@ -787,8 +788,8 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 		}
 	}
 	// Check Tome of Power and other artifact hotkeys.
-	if(actions[A_TOMEOFPOWER].on && !cmd->arti
-	   && !players[consoleplayer].powers[pw_weaponlevel2])
+	if(actions[A_TOMEOFPOWER].on && !cmd->arti &&
+	   !players[consoleplayer].powers[pw_weaponlevel2])
 	{
 		actions[A_TOMEOFPOWER].on = false;
 		cmd->arti = arti_tomeofpower;
@@ -885,9 +886,8 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 		actions[A_PANIC].on = false;	// Use one of each artifact
 		cmd->arti = NUMARTIFACTS;
 	}
-	else if(players[consoleplayer].plr->mo && actions[A_HEALTH].on
-			&& !cmd->arti
-			&& (players[consoleplayer].plr->mo->health < MAXHEALTH))
+	else if(players[consoleplayer].plr->mo && actions[A_HEALTH].on &&
+			!cmd->arti && (players[consoleplayer].plr->mo->health < MAXHEALTH))
 	{
 		actions[A_HEALTH].on = false;
 		cmd->arti = arti_health;
@@ -917,8 +917,8 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 		actions[A_EGG].on = false;
 		cmd->arti = arti_egg;
 	}
-	else if(actions[A_INVULNERABILITY].on && !cmd->arti
-			&& !players[consoleplayer].powers[pw_invulnerability])
+	else if(actions[A_INVULNERABILITY].on && !cmd->arti &&
+			!players[consoleplayer].powers[pw_invulnerability])
 	{
 		actions[A_INVULNERABILITY].on = false;
 		cmd->arti = arti_invulnerability;
@@ -993,8 +993,8 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	}
 	else if(actions[A_WEAPONCYCLE2].on)	// Shotgun/super sg.
 	{
-		if(ISWPN(wp_shotgun) && GOTWPN(wp_supershotgun)
-		   && gamemode == commercial)
+		if(ISWPN(wp_shotgun) && GOTWPN(wp_supershotgun) &&
+		   gamemode == commercial)
 			i = wp_supershotgun;
 		else if(ISWPN(wp_supershotgun))
 			i = wp_shotgun;
@@ -1050,9 +1050,9 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 			{
 #  ifdef __JHERETIC__
 				// Staff and Gautlets are on the same key.
-				if(i == wp_staff
-				   && players[consoleplayer].readyweapon != wp_gauntlets
-				   && players[consoleplayer].weaponowned[wp_gauntlets])
+				if(i == wp_staff &&
+				   players[consoleplayer].readyweapon != wp_gauntlets &&
+				   players[consoleplayer].weaponowned[wp_gauntlets])
 				{
 					i = wp_gauntlets;
 				}
@@ -1128,8 +1128,8 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	{
 		G_AdjustAngle(cplr, turn);
 #endif
-		if(strafe || (!cfg.usemlook && !actions[A_MLOOK].on)
-		   || players[consoleplayer].playerstate == PST_DEAD)
+		if(strafe || (!cfg.usemlook && !actions[A_MLOOK].on) ||
+		   players[consoleplayer].playerstate == PST_DEAD)
 		{
 			forward += mousey;
 		}
@@ -1181,11 +1181,10 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	cmd->forwardMove += forward;
 	cmd->sideMove += side;
 
-	if(cfg.lookSpring && !actions[A_MLOOK].on
-	   && (cmd->forwardMove > MAXPLMOVE / 3
-		   || cmd->forwardMove < -MAXPLMOVE / 3
-		   || cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3
-		   || mlook_pressed))
+	if(cfg.lookSpring && !actions[A_MLOOK].on &&
+	   (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3
+		|| cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3 ||
+		mlook_pressed))
 
 		/*      if(abs(forward) >= forwardmove[0]
 		   || abs(side) >= sidemove[0]
@@ -1289,8 +1288,8 @@ void G_DoLoadLevel(void)
 		if(players[i].plr->ingame && players[i].playerstate == PST_DEAD)
 			players[i].playerstate = PST_REBORN;
 #if __JHEXEN__
-		if(!netgame || (netgame != 0 && deathmatch != 0)
-		   || firstFragReset == 1)
+		if(!netgame || (netgame != 0 && deathmatch != 0) ||
+		   firstFragReset == 1)
 		{
 			memset(players[i].frags, 0, sizeof(players[i].frags));
 			firstFragReset = 0;
@@ -1344,8 +1343,8 @@ int CCmdCycleSpy(int argc, char **argv)
 			{
 				Set(DD_DISPLAYPLAYER, 0);
 			}
-		} while(!players[displayplayer].plr->ingame
-				&& displayplayer != consoleplayer);
+		} while(!players[displayplayer].plr->ingame &&
+				displayplayer != consoleplayer);
 	}
 #endif
 	return true;
@@ -1376,11 +1375,11 @@ boolean G_Responder(event_t *ev)
 
 #else
 	// any other key pops up menu if in demos
-	if(gameaction == ga_nothing && !singledemo
-	   && (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
+	if(gameaction == ga_nothing && !singledemo &&
+	   (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
 	{
-		if(ev->type == ev_keydown || ev->type == ev_mousebdown
-		   || ev->type == ev_joybdown)
+		if(ev->type == ev_keydown || ev->type == ev_mousebdown ||
+		   ev->type == ev_joybdown)
 		{
 			M_StartControlPanel();
 			return false;
@@ -2114,7 +2113,7 @@ void G_DummySpawnPlayer(int playernum)
 //===========================================================================
 // G_QueueBody
 //===========================================================================
-void G_QueueBody(mobj_t * body)
+void G_QueueBody(mobj_t *body)
 {
 	// flush an old corpse if needed 
 	if(bodyqueslot >= BODYQUESIZE)
@@ -3205,17 +3204,17 @@ void P_Thrust3D(player_t * player, angle_t angle, float lookdir,
 //===========================================================================
 // P_IsCamera
 //===========================================================================
-boolean P_IsCamera(mobj_t * mo)
+boolean P_IsCamera(mobj_t *mo)
 {
 	// Client mobjs do not have thinkers and thus cannot be cameras.
-	return (mo->thinker.function && mo->player
-			&& mo->player->plr->flags & DDPF_CAMERA);
+	return (mo->thinker.function && mo->player &&
+			mo->player->plr->flags & DDPF_CAMERA);
 }
 
 //===========================================================================
 // P_CameraXYMovement
 //===========================================================================
-int P_CameraXYMovement(mobj_t * mo)
+int P_CameraXYMovement(mobj_t *mo)
 {
 	if(!P_IsCamera(mo))
 		return false;
@@ -3247,7 +3246,7 @@ int P_CameraXYMovement(mobj_t * mo)
 //===========================================================================
 // P_CameraZMovement
 //===========================================================================
-int P_CameraZMovement(mobj_t * mo)
+int P_CameraZMovement(mobj_t *mo)
 {
 	if(!P_IsCamera(mo))
 		return false;

@@ -241,8 +241,8 @@ void M_DrawControlsMenu(void)
 			{
 				spacecat(prbuff, token + 1);
 			}
-			if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT))
-			   || token[0] == '-')
+			if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT)) ||
+			   token[0] == '-')
 			{
 				spacecat(prbuff, token);
 			}
@@ -335,9 +335,9 @@ int findtoken(char *string, char *token, char *delim)
 int D_PrivilegedResponder(event_t *event)
 {
 	// We're interested in key or button down events.
-	if(grabbing
-	   && (event->type == ev_keydown || event->type == ev_mousebdown
-		   || event->type == ev_joybdown || event->type == ev_povdown))
+	if(grabbing &&
+	   (event->type == ev_keydown || event->type == ev_mousebdown ||
+		event->type == ev_joybdown || event->type == ev_povdown))
 	{
 		// We'll grab this event.
 		char    cmd[256], buff[256], evname[80];

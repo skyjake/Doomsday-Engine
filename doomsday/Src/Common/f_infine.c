@@ -753,8 +753,8 @@ int FI_Briefing(int episode, int map)
 	ddfinale_t fin;
 
 	// If we're already in the INFINE state, don't start a finale.
-	if(brief_disabled || gamestate == GS_INFINE || IS_CLIENT
-	   || Get(DD_PLAYBACK))
+	if(brief_disabled || gamestate == GS_INFINE || IS_CLIENT ||
+	   Get(DD_PLAYBACK))
 		return false;
 
 	// Is there such a finale definition?
@@ -778,8 +778,8 @@ int FI_Debriefing(int episode, int map)
 	ddfinale_t fin;
 
 	// If we're already in the INFINE state, don't start a finale.
-	if(brief_disabled || gamestate == GS_INFINE || IS_CLIENT
-	   || Get(DD_PLAYBACK))
+	if(brief_disabled || gamestate == GS_INFINE || IS_CLIENT ||
+	   Get(DD_PLAYBACK))
 		return false;
 
 	// Is there such a finale definition?
@@ -915,9 +915,9 @@ void FI_Execute(char *cmd)
 					break;
 				}
 			// Should we skip this command?
-			if((fi->skipnext && !fi_commands[i].when_cond_skipping)
-			   || ((fi->skipping || fi->gotoskip)
-				   && !fi_commands[i].when_skipping))
+			if((fi->skipnext && !fi_commands[i].when_cond_skipping) ||
+			   ((fi->skipping || fi->gotoskip) &&
+				!fi_commands[i].when_skipping))
 			{
 				// While not DO-skipping, the condskip has now been done.
 				if(!fi->dolevel)
@@ -1068,8 +1068,8 @@ fipic_t *FI_FindPic(const char *handle)
 
 	for(i = 0; i < MAX_PICS; i++)
 	{
-		if(fi->pics[i].object.used
-		   && !stricmp(fi->pics[i].object.handle, handle))
+		if(fi->pics[i].object.used &&
+		   !stricmp(fi->pics[i].object.handle, handle))
 		{
 			return fi->pics + i;
 		}
@@ -1086,8 +1086,8 @@ fitext_t *FI_FindText(const char *handle)
 
 	for(i = 0; i < MAX_TEXT; i++)
 	{
-		if(fi->text[i].object.used
-		   && !stricmp(fi->text[i].object.handle, handle))
+		if(fi->text[i].object.used &&
+		   !stricmp(fi->text[i].object.handle, handle))
 		{
 			return fi->text + i;
 		}
@@ -1318,8 +1318,8 @@ void FI_Ticker(void)
 			}
 		}
 		// Is the text object fully visible?
-		tex->flags.all_visible = (!tex->wait
-								  || tex->pos >= FI_TextObjectLength(tex));
+		tex->flags.all_visible = (!tex->wait ||
+								  tex->pos >= FI_TextObjectLength(tex));
 	}
 
 	// If we're waiting, don't execute any commands.
@@ -1348,8 +1348,8 @@ void FI_Ticker(void)
 
 	// Execute commands until a wait time is set or we reach the end of
 	// the script. If the end is reached, the finale really ends (FI_End).
-	while(fi_active && !fi->wait && !fi->waitingtext && !fi->waitingpic
-		  && !(last = !FI_ExecuteNextCommand()));
+	while(fi_active && !fi->wait && !fi->waitingtext && !fi->waitingpic &&
+		  !(last = !FI_ExecuteNextCommand()));
 
 	// The script has ended!
 	if(last)
@@ -1416,8 +1416,8 @@ boolean FI_IsMenuTrigger(event_t *ev)
 int FI_AteEvent(event_t *ev)
 {
 	// We'll never eat key/mb/jb up events.
-	if(ev->type == ev_keyup || ev->type == ev_mousebup
-	   || ev->type == ev_joybup)
+	if(ev->type == ev_keyup || ev->type == ev_mousebup ||
+	   ev->type == ev_joybup)
 		return false;
 
 	return fi->eatevents;
@@ -1455,8 +1455,8 @@ int FI_Responder(event_t *ev)
 		return FI_AteEvent(ev);
 
 	// We are only interested in key/button presses.
-	if(ev->type != ev_keydown && ev->type != ev_mousebdown
-	   && ev->type != ev_joybdown)
+	if(ev->type != ev_keydown && ev->type != ev_mousebdown &&
+	   ev->type != ev_joybdown)
 		return FI_AteEvent(ev);
 
 	// We're not interested in the Escape key.
@@ -1693,8 +1693,8 @@ void FI_DrawText(fitext_t * tex)
 		}
 		// Let's do Y-clipping (in case of tall text blocks).
 		if(tex->object.scale[1].value * y + tex->object.y.value >=
-		   -tex->object.scale[1].value * tex->lineheight
-		   && tex->object.scale[1].value * y + tex->object.y.value < 200)
+		   -tex->object.scale[1].value * tex->lineheight &&
+		   tex->object.scale[1].value * y + tex->object.y.value < 200)
 		{
 			x += FI_DrawChar(tex->flags.centered ? x - linew / 2 : x, y, ch,
 							 tex->flags.font_b);

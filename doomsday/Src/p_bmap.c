@@ -290,7 +290,7 @@ boolean P_BlockPolyobjsIterator(int x, int y,
 //  Same as the fixed-point version of this routine, but the bounding box
 //  is specified using an vec2_t array (see m_vector.c).
 //===========================================================================
-boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t * sector,
+boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
 								boolean (*func) (subsector_t *, void *),
 								void *parm)
 {
@@ -332,10 +332,10 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t * sector,
 						continue;
 
 					// Check the bounds.
-					if(sub->bbox[1].x < box[0][VX]
-					   || sub->bbox[0].x > box[1][VX]
-					   || sub->bbox[1].y < box[0][VY]
-					   || sub->bbox[0].y > box[1][VY])
+					if(sub->bbox[1].x < box[0][VX] ||
+					   sub->bbox[0].x > box[1][VX] ||
+					   sub->bbox[1].y < box[0][VY] ||
+					   sub->bbox[0].y > box[1][VY])
 						continue;
 
 					if(!func(sub, parm))
@@ -351,7 +351,7 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t * sector,
 // P_SubsectorBoxIterator
 //  Returns false only if the iterator func returns false.
 //===========================================================================
-boolean P_SubsectorBoxIterator(fixed_t *box, sector_t * sector,
+boolean P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
 							   boolean (*func) (subsector_t *, void *),
 							   void *parm)
 {

@@ -211,8 +211,8 @@ void P_CalcHeight(player_t * player)
 			Set(DD_VIEWZ_OFFSET, bob);
 	}
 
-	if(player->plr->mo->floorclip && player->playerstate != PST_DEAD
-	   && player->plr->mo->z <= player->plr->mo->floorz)
+	if(player->plr->mo->floorclip && player->playerstate != PST_DEAD &&
+	   player->plr->mo->z <= player->plr->mo->floorz)
 	{
 		player->plr->viewz -= player->plr->mo->floorclip;
 	}
@@ -263,8 +263,8 @@ void P_MovePlayer(player_t * player)
 	else
 	{
 
-		onground = (player->plr->mo->z <= player->plr->mo->floorz
-					|| (player->plr->mo->flags2 & MF2_ONMOBJ));
+		onground = (player->plr->mo->z <= player->plr->mo->floorz ||
+					(player->plr->mo->flags2 & MF2_ONMOBJ));
 
 		if(cmd->forwardMove)
 		{
@@ -370,8 +370,8 @@ void P_DeathThink(player_t * player)
 	P_MovePsprites(player);
 
 	onground = (player->plr->mo->z <= player->plr->mo->floorz);
-	if(player->plr->mo->type == MT_BLOODYSKULL
-	   || player->plr->mo->type == MT_ICECHUNK)
+	if(player->plr->mo->type == MT_BLOODYSKULL ||
+	   player->plr->mo->type == MT_ICECHUNK)
 	{							// Flying bloody skull or flying ice chunk
 		player->plr->viewheight = 6 * FRACUNIT;
 		player->plr->deltaviewheight = 0;
@@ -650,8 +650,8 @@ void P_PlayerJump(player_t * player)
 	float   power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
 
 	// Check if we are allowed to jump.
-	if((mo->z > mo->floorz && !(mo->flags2 & MF2_ONMOBJ))
-	   || player->jumpTics > 0)
+	if((mo->z > mo->floorz && !(mo->flags2 & MF2_ONMOBJ)) ||
+	   player->jumpTics > 0)
 		return;
 
 	if(IS_CLIENT && netJumpPower <= 0)
@@ -743,8 +743,8 @@ void P_PlayerThink(player_t * player)
 	{
 		P_MovePlayer(player);
 		pmo = player->plr->mo;
-		if(player->powers[pw_speed] && !(leveltime & 1)
-		   && P_ApproxDistance(pmo->momx, pmo->momy) > 12 * FRACUNIT)
+		if(player->powers[pw_speed] && !(leveltime & 1) &&
+		   P_ApproxDistance(pmo->momx, pmo->momy) > 12 * FRACUNIT)
 		{
 			mobj_t *speedMo;
 			int     playerNum;
@@ -798,25 +798,25 @@ void P_PlayerThink(player_t * player)
 	switch (player->class)
 	{
 	case PCLASS_FIGHTER:
-		if(player->plr->mo->momz <= -35 * FRACUNIT
-		   && player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics
-		   && !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, player->plr->mo))
+		if(player->plr->mo->momz <= -35 * FRACUNIT &&
+		   player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics &&
+		   !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, player->plr->mo))
 		{
 			S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, player->plr->mo);
 		}
 		break;
 	case PCLASS_CLERIC:
-		if(player->plr->mo->momz <= -35 * FRACUNIT
-		   && player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics
-		   && !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, player->plr->mo))
+		if(player->plr->mo->momz <= -35 * FRACUNIT &&
+		   player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics &&
+		   !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, player->plr->mo))
 		{
 			S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, player->plr->mo);
 		}
 		break;
 	case PCLASS_MAGE:
-		if(player->plr->mo->momz <= -35 * FRACUNIT
-		   && player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics
-		   && !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, player->plr->mo))
+		if(player->plr->mo->momz <= -35 * FRACUNIT &&
+		   player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics &&
+		   !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, player->plr->mo))
 		{
 			S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, player->plr->mo);
 		}
@@ -903,8 +903,8 @@ void P_PlayerThink(player_t * player)
 	{
 		if(player->class == PCLASS_CLERIC)
 		{
-			if(!(leveltime & 7) && player->plr->mo->flags & MF_SHADOW
-			   && !(player->plr->mo->flags2 & MF2_DONTDRAW))
+			if(!(leveltime & 7) && player->plr->mo->flags & MF_SHADOW &&
+			   !(player->plr->mo->flags2 & MF2_DONTDRAW))
 			{
 				player->plr->mo->flags &= ~MF_SHADOW;
 				if(!(player->plr->mo->flags & MF_ALTSHADOW))
@@ -1026,9 +1026,9 @@ void P_PlayerThink(player_t * player)
 
 			if(newtorch[playerNumber])
 			{
-				if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7
-				   || dp->fixedcolormap + newtorchdelta[playerNumber] < 1
-				   || newtorch[playerNumber] == dp->fixedcolormap)
+				if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7 ||
+				   dp->fixedcolormap + newtorchdelta[playerNumber] < 1 ||
+				   newtorch[playerNumber] == dp->fixedcolormap)
 				{
 					newtorch[playerNumber] = 0;
 				}
@@ -1106,7 +1106,7 @@ void P_ArtiTeleportOther(player_t * player)
 	}
 }
 
-void P_TeleportToPlayerStarts(mobj_t * victim)
+void P_TeleportToPlayerStarts(mobj_t *victim)
 {
 	int     i, selections = 0;
 	fixed_t destX, destY;
@@ -1128,7 +1128,7 @@ void P_TeleportToPlayerStarts(mobj_t * victim)
 	//S_StartSound(NULL, sfx_wpnup); // Full volume laugh
 }
 
-void P_TeleportToDeathmatchStarts(mobj_t * victim)
+void P_TeleportToDeathmatchStarts(mobj_t *victim)
 {
 	int     i, selections;
 	fixed_t destX, destY;
@@ -1155,7 +1155,7 @@ void P_TeleportToDeathmatchStarts(mobj_t * victim)
 // PROC P_TeleportOther
 //
 //----------------------------------------------------------------------------
-void P_TeleportOther(mobj_t * victim)
+void P_TeleportOther(mobj_t *victim)
 {
 	if(victim->player)
 	{
@@ -1184,7 +1184,7 @@ void P_TeleportOther(mobj_t * victim)
 #define BLAST_SPEED			20*FRACUNIT
 #define BLAST_FULLSTRENGTH	255
 
-void ResetBlasted(mobj_t * mo)
+void ResetBlasted(mobj_t *mo)
 {
 	mo->flags2 &= ~MF2_BLASTED;
 	if(!(mo->flags & MF_ICECORPSE))
@@ -1193,7 +1193,7 @@ void ResetBlasted(mobj_t * mo)
 	}
 }
 
-void P_BlastMobj(mobj_t * source, mobj_t * victim, fixed_t strength)
+void P_BlastMobj(mobj_t *source, mobj_t *victim, fixed_t strength)
 {
 	angle_t angle, ang;
 	mobj_t *mo;
@@ -1312,8 +1312,8 @@ void P_BlastRadius(player_t * player)
 		{
 			continue;
 		}
-		else if(!(mo->flags & MF_COUNTKILL) && !(mo->player)
-				&& !(mo->flags & MF_MISSILE))
+		else if(!(mo->flags & MF_COUNTKILL) && !(mo->player) &&
+				!(mo->flags & MF_MISSILE))
 		{						// Must be monster, player, or missile
 			continue;
 		}
@@ -1376,10 +1376,10 @@ boolean P_HealRadius(player_t * player)
 		switch (player->class)
 		{
 		case PCLASS_FIGHTER:	// Radius armor boost
-			if((P_GiveArmor(mo->player, ARMOR_ARMOR, 1))
-			   || (P_GiveArmor(mo->player, ARMOR_SHIELD, 1))
-			   || (P_GiveArmor(mo->player, ARMOR_HELMET, 1))
-			   || (P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
+			if((P_GiveArmor(mo->player, ARMOR_ARMOR, 1)) ||
+			   (P_GiveArmor(mo->player, ARMOR_SHIELD, 1)) ||
+			   (P_GiveArmor(mo->player, ARMOR_HELMET, 1)) ||
+			   (P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
 			{
 				effective = true;
 				S_StartSound(SFX_MYSTICINCANT, mo);
@@ -1395,8 +1395,8 @@ boolean P_HealRadius(player_t * player)
 			break;
 		case PCLASS_MAGE:		// Radius mana boost
 			amount = 50 + (P_Random() % 50);
-			if((P_GiveMana(mo->player, MANA_1, amount))
-			   || (P_GiveMana(mo->player, MANA_2, amount)))
+			if((P_GiveMana(mo->player, MANA_1, amount)) ||
+			   (P_GiveMana(mo->player, MANA_2, amount)))
 			{
 				effective = true;
 				S_StartSound(SFX_MYSTICINCANT, mo);
@@ -1735,7 +1735,7 @@ boolean P_UseArtifact(player_t * player, artitype_t arti)
 //
 //============================================================================
 
-void C_DECL A_SpeedFade(mobj_t * actor)
+void C_DECL A_SpeedFade(mobj_t *actor)
 {
 	actor->flags |= MF_SHADOW;
 	actor->flags &= ~MF_ALTSHADOW;

@@ -255,7 +255,7 @@ static void SV_ReadPlayer(player_t * pl)
    SV_WriteLong(0);
    } */
 
-static void SV_ReadMobj(mobj_t * mo)
+static void SV_ReadMobj(mobj_t *mo)
 {
 	// List: thinker links.
 	SV_ReadLong();

@@ -506,9 +506,9 @@ int D_NetWorldEvent(int type, int parm, void *data)
 		// High word: sector number, low word: sound id.
 		if(parm & 0xffff)
 			S_StartSound(parm & 0xffff,
-						 (mobj_t *) & sectors[parm >> 16].soundorg);
+						 (mobj_t *) &sectors[parm >> 16].soundorg);
 		else
-			S_StopSound(0, (mobj_t *) & sectors[parm >> 16].soundorg);
+			S_StopSound(0, (mobj_t *) &sectors[parm >> 16].soundorg);
 		break;
 
 	case DDWE_DEMO_END:

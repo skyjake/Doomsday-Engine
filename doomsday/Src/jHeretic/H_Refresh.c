@@ -171,8 +171,8 @@ void R_DrawPSprite(pspdef_t * psp)
 	   }
 	   }    
 	   else */
-	if(viewplayer->powers[pw_invisibility] > 4 * 32
-	   || viewplayer->powers[pw_invisibility] & 8)
+	if(viewplayer->powers[pw_invisibility] > 4 * 32 ||
+	   viewplayer->powers[pw_invisibility] & 8)
 	{
 		// Invisibility
 		//vis->colormap = spritelights[MAXLIGHTSCALE-1];
@@ -253,7 +253,7 @@ void R_InitTranslationTables(void)
 //===========================================================================
 // R_SetDoomsdayFlags
 //===========================================================================
-void R_SetDoomsdayFlags(mobj_t * mo)
+void R_SetDoomsdayFlags(mobj_t *mo)
 {
 	// Client mobjs can't be set here.
 	if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
@@ -308,9 +308,9 @@ void R_SetDoomsdayFlags(mobj_t * mo)
 	else if(mo->flags & MF_SHADOW)
 		mo->ddflags |= DDMF_ALTSHADOW;
 
-	if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE))
-	   || mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE
-								   && !(mo->flags & MF_VIEWALIGN)))
+	if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
+	   mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
+								!(mo->flags & MF_VIEWALIGN)))
 		mo->ddflags |= DDMF_VIEWALIGN;
 
 	mo->ddflags |= mo->flags & MF_TRANSLATION;

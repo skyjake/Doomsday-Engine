@@ -12,7 +12,7 @@ void            SV_SaveClient(unsigned int gameid);
 void            SV_ClientSaveGameFile(unsigned int game_id, char *str);
 void            SV_LoadClient(unsigned int gameid);
 
-unsigned short  SV_ThingArchiveNum(mobj_t * mo);
+unsigned short  SV_ThingArchiveNum(mobj_t *mo);
 mobj_t         *SV_GetArchiveThing(int num);
 
 void            SV_Write(void *data, int len);

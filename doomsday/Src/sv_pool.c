@@ -325,7 +325,7 @@ void Sv_RegisterRemoveMobj(cregister_t * reg, reg_mobj_t * regMo)
  * ceiling, returns MAXINT. Otherwise returns the Z coordinate. The maxed-out
  * coordinate is stored in the register.
  */
-fixed_t Sv_GetMaxedMobjZ(const mobj_t * mo)
+fixed_t Sv_GetMaxedMobjZ(const mobj_t *mo)
 {
 	if(mo->z == mo->floorz)
 	{
@@ -342,7 +342,7 @@ fixed_t Sv_GetMaxedMobjZ(const mobj_t * mo)
  * Store the state of the mobj into the register-mobj.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterMobj(dt_mobj_t * reg, const mobj_t * mo)
+void Sv_RegisterMobj(dt_mobj_t * reg, const mobj_t *mo)
 {
 	// (dt_mobj_t <=> mobj_t)
 	// Just copy the data we need.
@@ -400,8 +400,8 @@ void Sv_RegisterPlayer(dt_player_t * reg, int number)
 	reg->sideMove = c->lastCmd->sideMove;
 	reg->angle = p->mo ? p->mo->angle : 0;
 	reg->turnDelta = p->mo ? p->mo->angle - p->lastangle : 0;
-	reg->friction = p->mo
-		&& gx.MobjFriction ? gx.MobjFriction(p->mo) : DEFAULT_FRICTION;
+	reg->friction = p->mo &&
+		gx.MobjFriction ? gx.MobjFriction(p->mo) : DEFAULT_FRICTION;
 	reg->extraLight = p->extralight;
 	reg->fixedColorMap = p->fixedcolormap;
 	reg->filter = p->filter;
@@ -460,7 +460,7 @@ void Sv_RegisterPoly(dt_poly_t * reg, int number)
 /*
  * Returns true if the result is not void.
  */
-boolean Sv_RegisterCompareMobj(cregister_t * reg, const mobj_t * s,
+boolean Sv_RegisterCompareMobj(cregister_t * reg, const mobj_t *s,
 							   mobjdelta_t * d)
 {
 	int     df;
@@ -658,8 +658,8 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
 	{
 		df |= SDF_FLOOR_SPEED;
 	}
-	if(r->planes[PLN_FLOOR].texmove[0] != s->planes[PLN_FLOOR].texmove[0]
-	   || r->planes[PLN_FLOOR].texmove[1] != s->planes[PLN_FLOOR].texmove[1])
+	if(r->planes[PLN_FLOOR].texmove[0] != s->planes[PLN_FLOOR].texmove[0] ||
+	   r->planes[PLN_FLOOR].texmove[1] != s->planes[PLN_FLOOR].texmove[1])
 	{
 		df |= SDF_FLOOR_TEXMOVE;
 	}
@@ -788,7 +788,7 @@ boolean Sv_RegisterComparePoly(cregister_t * reg, int number, polydelta_t * d)
 /*
  * Returns true if the mobj can be excluded from delta processing.
  */
-boolean Sv_IsMobjIgnored(mobj_t * mo)
+boolean Sv_IsMobjIgnored(mobj_t *mo)
 {
 	return (mo->ddflags & DDMF_LOCAL) != 0;
 }
@@ -911,8 +911,8 @@ boolean Sv_IsSoundDelta(const void *delta)
 {
 	const delta_t *d = delta;
 
-	return (d->type == DT_SOUND || d->type == DT_MOBJ_SOUND
-			|| d->type == DT_SECTOR_SOUND || d->type == DT_POLY_SOUND);
+	return (d->type == DT_SOUND || d->type == DT_MOBJ_SOUND ||
+			d->type == DT_SECTOR_SOUND || d->type == DT_POLY_SOUND);
 }
 
 /*
@@ -922,8 +922,8 @@ boolean Sv_IsStartSoundDelta(const void *delta)
 {
 	const sounddelta_t *d = delta;
 
-	return Sv_IsSoundDelta(delta) && (d->delta.flags & SNDDF_VOLUME
-									  && d->volume > 0);
+	return Sv_IsSoundDelta(delta) && (d->delta.flags & SNDDF_VOLUME &&
+									  d->volume > 0);
 }
 
 /*
@@ -933,8 +933,8 @@ boolean Sv_IsStopSoundDelta(const void *delta)
 {
 	const sounddelta_t *d = delta;
 
-	return Sv_IsSoundDelta(delta) && (d->delta.flags & SNDDF_VOLUME
-									  && d->volume <= 0);
+	return Sv_IsSoundDelta(delta) && (d->delta.flags & SNDDF_VOLUME &&
+									  d->volume <= 0);
 }
 
 /*
@@ -942,8 +942,8 @@ boolean Sv_IsStopSoundDelta(const void *delta)
  */
 boolean Sv_IsNullMobjDelta(const void *delta)
 {
-	return ((const delta_t *) delta)->type == DT_MOBJ
-		&& ((const delta_t *) delta)->flags & MDFC_NULL;
+	return ((const delta_t *) delta)->type == DT_MOBJ &&
+		((const delta_t *) delta)->flags & MDFC_NULL;
 }
 
 /*
@@ -951,8 +951,8 @@ boolean Sv_IsNullMobjDelta(const void *delta)
  */
 boolean Sv_IsCreateMobjDelta(const void *delta)
 {
-	return ((const delta_t *) delta)->type == DT_MOBJ
-		&& ((const delta_t *) delta)->flags & MDFC_CREATE;
+	return ((const delta_t *) delta)->type == DT_MOBJ &&
+		((const delta_t *) delta)->flags & MDFC_CREATE;
 }
 
 /*
@@ -1305,7 +1305,7 @@ uint Sv_DeltaAge(const delta_t * delta)
  * Approximate the distance to the given sector. Set 'mayBeGone' to true
  * if the mobj may have been destroyed and should not be processed.
  */
-fixed_t Sv_MobjDistance(const mobj_t * mo, const ownerinfo_t * info,
+fixed_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t * info,
 						boolean isReal)
 {
 	fixed_t z;
@@ -1740,8 +1740,8 @@ void Sv_PoolMobjRemoved(pool_t * pool, thid_t id)
 	{
 		next = delta->next;
 
-		if(delta->state == DELTA_NEW && delta->type == DT_MOBJ
-		   && delta->id == id)
+		if(delta->state == DELTA_NEW && delta->type == DT_MOBJ &&
+		   delta->id == id)
 		{
 			// This must be removed!
 			Sv_RemoveDelta(pool, delta);
@@ -2098,7 +2098,7 @@ void Sv_NewPolyDeltas(cregister_t * reg, boolean doUpdate, pool_t ** targets)
  * ASSUME: No two sounds with the same ID play at the same time from the 
  *         same origin.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t * emitter, int sourceSector,
+void Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector,
 					  int sourcePoly, float volume, boolean isRepeating,
 					  int justForClient)
 {
@@ -2152,9 +2152,9 @@ boolean Sv_IsFrameTarget(int number)
 {
 	// Local players receive frames only when they're recording a demo.
 	// Clients must tell us they are ready before we can begin sending.
-	return (players[number].ingame && !(players[number].flags & DDPF_LOCAL)
-			&& clients[number].ready) || (players[number].flags & DDPF_LOCAL
-										  && clients[number].recording);
+	return (players[number].ingame && !(players[number].flags & DDPF_LOCAL) &&
+			clients[number].ready) || (players[number].flags & DDPF_LOCAL &&
+									   clients[number].recording);
 }
 
 /*
@@ -2322,13 +2322,13 @@ delta_t *Sv_PoolQueueExtract(pool_t * pool)
 		big = i;
 
 		// Which child is more important?
-		if(left < pool->queueSize
-		   && pool->queue[left]->score > pool->queue[i]->score)
+		if(left < pool->queueSize &&
+		   pool->queue[left]->score > pool->queue[i]->score)
 		{
 			big = left;
 		}
-		if(right < pool->queueSize
-		   && pool->queue[right]->score > pool->queue[big]->score)
+		if(right < pool->queueSize &&
+		   pool->queue[right]->score > pool->queue[big]->score)
 		{
 			big = right;
 		}
@@ -2586,9 +2586,9 @@ void Sv_AckDeltaSet(int consoleNumber, int set, byte resent)
 		for(delta = pool->hash[i].first; delta; delta = next)
 		{
 			next = delta->next;
-			if(delta->state == DELTA_UNACKED
-			   && ((!resent && delta->set == set)
-				   || (resent && delta->resend == resent)))
+			if(delta->state == DELTA_UNACKED &&
+			   ((!resent && delta->set == set) ||
+				(resent && delta->resend == resent)))
 			{
 				// Register the ack time only for the first acked delta.
 				if(!ackTimeRegistered)

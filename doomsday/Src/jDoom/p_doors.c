@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.5  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -206,7 +209,7 @@ void T_VerticalDoor(vldoor_t * door)
 // Move a locked door up/down
 //
 
-int EV_DoLockedDoor(line_t * line, vldoor_e type, mobj_t * thing)
+int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 {
 	player_t *p;
 
@@ -257,7 +260,7 @@ int EV_DoLockedDoor(line_t * line, vldoor_e type, mobj_t * thing)
 	return EV_DoDoor(line, type);
 }
 
-int EV_DoDoor(line_t * line, vldoor_e type)
+int EV_DoDoor(line_t *line, vldoor_e type)
 {
 	int     secnum, rtn;
 	sector_t *sec;
@@ -337,7 +340,7 @@ int EV_DoDoor(line_t * line, vldoor_e type)
 //
 // EV_VerticalDoor : open a door manually, no tag value
 //
-void EV_VerticalDoor(line_t * line, mobj_t * thing)
+void EV_VerticalDoor(line_t *line, mobj_t *thing)
 {
 	player_t *player;
 	int     secnum;
@@ -483,7 +486,7 @@ void EV_VerticalDoor(line_t * line, mobj_t * thing)
 //
 // Spawn a door that closes after 30 seconds
 //
-void P_SpawnDoorCloseIn30(sector_t * sec)
+void P_SpawnDoorCloseIn30(sector_t *sec)
 {
 	vldoor_t *door;
 
@@ -505,7 +508,7 @@ void P_SpawnDoorCloseIn30(sector_t * sec)
 //
 // Spawn a door that opens after 5 minutes
 //
-void P_SpawnDoorRaiseIn5Mins(sector_t * sec, int secnum)
+void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
 {
 	vldoor_t *door;
 
@@ -581,7 +584,7 @@ void P_InitSlidingDoorFrames(void)
 // Return index into "slideFrames" array
 // for which door type to use
 //
-int P_FindSlidingDoorType(line_t * line)
+int P_FindSlidingDoorType(line_t *line)
 {
 	int     i;
 	int     val;
@@ -638,8 +641,8 @@ void T_SlidingDoor(slidedoor_t * door)
 		if(!door->timer--)
 		{
 			// CAN DOOR CLOSE?
-			if(door->frontsector->thinglist != NULL
-			   || door->backsector->thinglist != NULL)
+			if(door->frontsector->thinglist != NULL ||
+			   door->backsector->thinglist != NULL)
 			{
 				door->timer = SDOORWAIT;
 				break;
@@ -677,7 +680,7 @@ void T_SlidingDoor(slidedoor_t * door)
 	}
 }
 
-void EV_SlidingDoor(line_t * line, mobj_t * thing)
+void EV_SlidingDoor(line_t *line, mobj_t *thing)
 {
 	sector_t *sec;
 	slidedoor_t *door;

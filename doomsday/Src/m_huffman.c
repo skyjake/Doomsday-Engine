@@ -219,13 +219,13 @@ huffnode_t *Huff_QueueExtract(huffqueue_t * queue)
 		small = i;
 
 		// Which child has smaller freq?
-		if(left < queue->count
-		   && queue->nodes[left]->freq < queue->nodes[i]->freq)
+		if(left < queue->count &&
+		   queue->nodes[left]->freq < queue->nodes[i]->freq)
 		{
 			small = left;
 		}
-		if(right < queue->count
-		   && queue->nodes[right]->freq < queue->nodes[small]->freq)
+		if(right < queue->count &&
+		   queue->nodes[right]->freq < queue->nodes[small]->freq)
 		{
 			small = right;
 		}

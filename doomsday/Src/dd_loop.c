@@ -359,8 +359,8 @@ void DD_TryRunTics(void)
 		  (counts =
 		   (isDedicated || netgame || ui_active ? realtics : availabletics)))
 	{
-		if((!isDedicated && rend_camera_smooth) || net_dontsleep
-		   || !net_ticsync)
+		if((!isDedicated && rend_camera_smooth) || net_dontsleep ||
+		   !net_ticsync)
 			break;
 		Sys_Sleep(3);
 		Net_Update();

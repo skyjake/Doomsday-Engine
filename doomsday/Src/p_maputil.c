@@ -102,7 +102,7 @@ fixed_t P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz)
 // P_LineUnitVector
 //  Returns a two-component float unit vector parallel to the line.
 //===========================================================================
-void P_LineUnitVector(line_t * line, float *unitvec)
+void P_LineUnitVector(line_t *line, float *unitvec)
 {
 	float   dx = FIX2FLT(line->dx), dy = FIX2FLT(line->dy);
 	float   len = M_ApproxDistancef(dx, dy);
@@ -123,7 +123,7 @@ void P_LineUnitVector(line_t * line, float *unitvec)
 //  Either end or fixpoint must be specified. The distance is measured 
 //  (approximately) in 3D. Start must always be specified.
 //===========================================================================
-float P_MobjPointDistancef(mobj_t * start, mobj_t * end, float *fixpoint)
+float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
 {
 	if(!start)
 		return 0;
@@ -211,7 +211,7 @@ float P_FloatInterceptVertex(fvertex_t * start, fvertex_t * end,
 //  (0,1) = top left; (2,3) = bottom right
 //  Assumes sectors are always closed.
 //===========================================================================
-void P_SectorBoundingBox(sector_t * sec, float *bbox)
+void P_SectorBoundingBox(sector_t *sec, float *bbox)
 {
 	float   x, y;
 	int     i;
@@ -247,7 +247,7 @@ void P_SectorBoundingBox(sector_t * sec, float *bbox)
    ==================
  */
 
-int P_PointOnLineSide(fixed_t x, fixed_t y, line_t * line)
+int P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line)
 {
 	return !line->dx ? x <= line->v1->x ? line->dy > 0 : line->dy <
 		0 : !line->dy ? y <= line->v1->y ? line->dx < 0 : line->dx >
@@ -267,7 +267,7 @@ int P_PointOnLineSide(fixed_t x, fixed_t y, line_t * line)
    =================
  */
 
-int P_BoxOnLineSide(fixed_t *tmbox, line_t * ld)
+int P_BoxOnLineSide(fixed_t *tmbox, line_t *ld)
 {
 	switch (ld->slopetype)
 	{
@@ -328,7 +328,7 @@ int P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t * line)
    ==============
  */
 
-void P_MakeDivline(line_t * li, divline_t * dl)
+void P_MakeDivline(line_t *li, divline_t * dl)
 {
 	dl->x = li->v1->x;
 	dl->y = li->v1->y;
@@ -370,7 +370,7 @@ fixed_t P_InterceptVector(divline_t * v2, divline_t * v1)
 fixed_t opentop, openbottom, openrange;
 fixed_t lowfloor;
 
-void P_LineOpening(line_t * linedef)
+void P_LineOpening(line_t *linedef)
 {
 	sector_t *front, *back;
 
@@ -448,7 +448,7 @@ mobj_t *P_GetBlockRootXY(int x, int y)
 // P_UnlinkFromSector
 //  Only call if it is certain the thing is linked to a sector!
 //===========================================================================
-void P_UnlinkFromSector(mobj_t * thing)
+void P_UnlinkFromSector(mobj_t *thing)
 {
 	// Two links to update: 
 	// 1) The link to us from the previous node (sprev, always set) will
@@ -468,7 +468,7 @@ void P_UnlinkFromSector(mobj_t * thing)
 // P_UnlinkFromBlock
 //  Only call if it is certain that the thing is linked to a block!
 //===========================================================================
-void P_UnlinkFromBlock(mobj_t * thing)
+void P_UnlinkFromBlock(mobj_t *thing)
 {
 	(thing->bnext->bprev = thing->bprev)->bnext = thing->bnext;
 	// Not linked any more.
@@ -480,7 +480,7 @@ void P_UnlinkFromBlock(mobj_t * thing)
 //  Unlinks the thing from all the lines it's been linked to. Can be called
 //  without checking that the list does indeed contain lines.
 //===========================================================================
-void P_UnlinkFromLines(mobj_t * thing)
+void P_UnlinkFromLines(mobj_t *thing)
 {
 	linknode_t *tn = thingnodes.nodes;
 	nodeindex_t nix;
@@ -510,7 +510,7 @@ void P_UnlinkFromLines(mobj_t * thing)
 // P_UnlinkThing
 //  Unlinks a thing from everything it has been linked to.
 //==========================================================================
-void P_UnlinkThing(mobj_t * thing)
+void P_UnlinkThing(mobj_t *thing)
 {
 	if(IS_SECTOR_LINKED(thing))
 		P_UnlinkFromSector(thing);
@@ -524,7 +524,7 @@ void P_UnlinkThing(mobj_t * thing)
 //  The given line might cross the thing. If necessary, link the mobj 
 //  into the line's ring.
 //===========================================================================
-boolean PIT_LinkToLines(line_t * ld, void *parm)
+boolean PIT_LinkToLines(line_t *ld, void *parm)
 {
 	linelinker_data_t *data = parm;
 	fixed_t bbox[4];
@@ -534,10 +534,10 @@ boolean PIT_LinkToLines(line_t * ld, void *parm)
 	ORDER(ld->v1->x, ld->v2->x, bbox[BOXLEFT], bbox[BOXRIGHT]);
 	ORDER(ld->v1->y, ld->v2->y, bbox[BOXBOTTOM], bbox[BOXTOP]);
 
-	if(data->box[BOXRIGHT] <= bbox[BOXLEFT]
-	   || data->box[BOXLEFT] >= bbox[BOXRIGHT]
-	   || data->box[BOXTOP] <= bbox[BOXBOTTOM]
-	   || data->box[BOXBOTTOM] >= bbox[BOXTOP])
+	if(data->box[BOXRIGHT] <= bbox[BOXLEFT] ||
+	   data->box[BOXLEFT] >= bbox[BOXRIGHT] ||
+	   data->box[BOXTOP] <= bbox[BOXBOTTOM] ||
+	   data->box[BOXBOTTOM] >= bbox[BOXTOP])
 		// Bounding boxes do not overlap.
 		return true;
 
@@ -568,7 +568,7 @@ boolean PIT_LinkToLines(line_t * ld, void *parm)
 // P_LinkToLines
 //  The thing must be currently unlinked.
 //===========================================================================
-void P_LinkToLines(mobj_t * thing)
+void P_LinkToLines(mobj_t *thing)
 {
 	int     xl, yl, xh, yh, bx, by;
 	linelinker_data_t data;
@@ -600,7 +600,7 @@ void P_LinkToLines(mobj_t * thing)
 //  Sets thing->subsector properly. Calling with flags==0 only updates
 //  the subsector pointer. Can be called without unlinking first.
 //==========================================================================
-void P_LinkThing(mobj_t * thing, byte flags)
+void P_LinkThing(mobj_t *thing, byte flags)
 {
 	sector_t *sec;
 	mobj_t *root;
@@ -676,8 +676,8 @@ boolean P_BlockThingsIterator(int x, int y, boolean (*func) (mobj_t *, void *),
 //  The callback function will be called once for each line that crosses
 //  trough the object. This means all the lines will be two-sided.
 //===========================================================================
-boolean P_ThingLinesIterator(mobj_t * thing,
-							 boolean (*func) (line_t *, void *), void *data)
+boolean P_ThingLinesIterator(mobj_t *thing, boolean (*func) (line_t *, void *),
+							 void *data)
 {
 	nodeindex_t nix;
 	linknode_t *tn = thingnodes.nodes;
@@ -699,7 +699,7 @@ boolean P_ThingLinesIterator(mobj_t * thing,
 //  (totally or partly inside). This is not a 3D check; the thing may 
 //  actually reside above or under the sector.
 //===========================================================================
-boolean P_ThingSectorsIterator(mobj_t * thing,
+boolean P_ThingSectorsIterator(mobj_t *thing,
 							   boolean (*func) (sector_t *, void *),
 							   void *data)
 {
@@ -743,7 +743,7 @@ boolean P_ThingSectorsIterator(mobj_t * thing,
 //===========================================================================
 // P_LineThingsIterator
 //===========================================================================
-boolean P_LineThingsIterator(line_t * line, boolean (*func) (mobj_t *, void *),
+boolean P_LineThingsIterator(line_t *line, boolean (*func) (mobj_t *, void *),
 							 void *data)
 {
 	void   *linkstore[MAXLINKED], **end = linkstore, **it;
@@ -765,7 +765,7 @@ boolean P_LineThingsIterator(line_t * line, boolean (*func) (mobj_t *, void *),
 //  (Lovely name; actually this is a combination of SectorThings and 
 //  a bunch of LineThings iterations.)
 //===========================================================================
-boolean P_SectorTouchingThingsIterator(sector_t * sector,
+boolean P_SectorTouchingThingsIterator(sector_t *sector,
 									   boolean (*func) (mobj_t *, void *),
 									   void *data)
 {
@@ -829,15 +829,15 @@ int     ptflags;
    ==================
  */
 
-boolean PIT_AddLineIntercepts(line_t * ld, void *data)
+boolean PIT_AddLineIntercepts(line_t *ld, void *data)
 {
 	int     s1, s2;
 	fixed_t frac;
 	divline_t dl;
 
 	// avoid precision problems with two routines
-	if(trace.dx > FRACUNIT * 16 || trace.dy > FRACUNIT * 16
-	   || trace.dx < -FRACUNIT * 16 || trace.dy < -FRACUNIT * 16)
+	if(trace.dx > FRACUNIT * 16 || trace.dy > FRACUNIT * 16 ||
+	   trace.dx < -FRACUNIT * 16 || trace.dy < -FRACUNIT * 16)
 	{
 		s1 = P_PointOnDivlineSide(ld->v1->x, ld->v1->y, &trace);
 		s2 = P_PointOnDivlineSide(ld->v2->x, ld->v2->y, &trace);
@@ -879,7 +879,7 @@ boolean PIT_AddLineIntercepts(line_t * ld, void *data)
    ==================
  */
 
-boolean PIT_AddThingIntercepts(mobj_t * thing, void *data)
+boolean PIT_AddThingIntercepts(mobj_t *thing, void *data)
 {
 	fixed_t x1, y1, x2, y2;
 	int     s1, s2;

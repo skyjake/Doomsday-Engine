@@ -157,9 +157,9 @@ static void P_LightningFlash(void)
 			tempSec = sectors;
 			for(i = 0; i < numsectors; i++, tempSec++)
 			{
-				if(tempSec->ceilingpic == skyflatnum
-				   || tempSec->special == LIGHTNING_SPECIAL
-				   || tempSec->special == LIGHTNING_SPECIAL2)
+				if(tempSec->ceilingpic == skyflatnum ||
+				   tempSec->special == LIGHTNING_SPECIAL ||
+				   tempSec->special == LIGHTNING_SPECIAL2)
 				{
 					if(*tempLight < tempSec->lightlevel - 4)
 					{
@@ -175,9 +175,9 @@ static void P_LightningFlash(void)
 			tempSec = sectors;
 			for(i = 0; i < numsectors; i++, tempSec++)
 			{
-				if(tempSec->ceilingpic == skyflatnum
-				   || tempSec->special == LIGHTNING_SPECIAL
-				   || tempSec->special == LIGHTNING_SPECIAL2)
+				if(tempSec->ceilingpic == skyflatnum ||
+				   tempSec->special == LIGHTNING_SPECIAL ||
+				   tempSec->special == LIGHTNING_SPECIAL2)
 				{
 					tempSec->lightlevel = *tempLight;
 					tempLight++;
@@ -196,9 +196,9 @@ static void P_LightningFlash(void)
 	foundSec = false;
 	for(i = 0; i < numsectors; i++, tempSec++)
 	{
-		if(tempSec->ceilingpic == skyflatnum
-		   || tempSec->special == LIGHTNING_SPECIAL
-		   || tempSec->special == LIGHTNING_SPECIAL2)
+		if(tempSec->ceilingpic == skyflatnum ||
+		   tempSec->special == LIGHTNING_SPECIAL ||
+		   tempSec->special == LIGHTNING_SPECIAL2)
 		{
 			*tempLight = tempSec->lightlevel;
 			if(tempSec->special == LIGHTNING_SPECIAL)
@@ -307,9 +307,9 @@ void P_InitLightning(void)
 	secCount = 0;
 	for(i = 0; i < numsectors; i++)
 	{
-		if(sectors[i].ceilingpic == skyflatnum
-		   || sectors[i].special == LIGHTNING_SPECIAL
-		   || sectors[i].special == LIGHTNING_SPECIAL2)
+		if(sectors[i].ceilingpic == skyflatnum ||
+		   sectors[i].special == LIGHTNING_SPECIAL ||
+		   sectors[i].special == LIGHTNING_SPECIAL2)
 		{
 			secCount++;
 		}

@@ -164,8 +164,8 @@ int CCmdPing(int argc, char **argv)
 			count = atoi(argv[1]);
 	}
 	// Check that the given parameters are valid.
-	if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= MAXPLAYERS
-	   || dest == consoleplayer || (dest && !players[dest].ingame))
+	if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= MAXPLAYERS ||
+	   dest == consoleplayer || (dest && !players[dest].ingame))
 		return false;
 
 	Net_SendPing(dest, count);

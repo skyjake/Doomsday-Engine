@@ -64,7 +64,7 @@ void    G_BuildTiccmd(void *cmd);
 void    D_Display(void);
 int     D_PrivilegedResponder(event_t *event);
 void    D_DefaultBindings();
-fixed_t P_GetMobjFriction(mobj_t * mo);
+fixed_t P_GetMobjFriction(mobj_t *mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -482,8 +482,8 @@ void D_PostInit(void)
 	Con_FPrintf(CBLF_RULER, "");
 
 	// Plutonia and TNT automatically turn on the full sky.
-	if(gamemode == commercial
-	   && (gamemission == pack_plut || gamemission == pack_tnt))
+	if(gamemode == commercial &&
+	   (gamemission == pack_plut || gamemission == pack_tnt))
 	{
 		Con_SetInteger("rend-sky-full", 1);
 	}

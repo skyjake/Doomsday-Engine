@@ -148,7 +148,7 @@ void            R_ProjectSprite(struct mobj_s *thing);
 void            R_ProjectPlayerSprites(void);
 void            R_ProjectDecoration(struct mobj_s *source);
 void            R_SortVisSprites(void);
-void            R_AddSprites(sector_t * sec);
+void            R_AddSprites(sector_t *sec);
 void            R_AddPSprites(void);
 void            R_DrawSprites(void);
 void            R_InitSprites(void);

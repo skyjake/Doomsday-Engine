@@ -499,6 +499,7 @@ void Con_Init()
 	registerCommands();
 	registerVariables();
 
+	Rend_Register();
 	Net_Register();
 	I_Register();
 	H_Register();
@@ -798,8 +799,8 @@ void Con_Shutdown()
 			// Multiple vars could be using the same pointer,
 			// make sure it gets freed only once.
 			for(k = i; k < numCVars; k++)
-				if(cvars[k].type == CVT_CHARPTR
-				   && ptr == *(char **) cvars[k].ptr)
+				if(cvars[k].type == CVT_CHARPTR &&
+				   ptr == *(char **) cvars[k].ptr)
 				{
 					cvars[k].flags &= ~CVF_CAN_FREE;
 				}
@@ -1115,8 +1116,8 @@ static int executeSubCmd(const char *subCmd)
 			cvar_t *var = cvars + i;
 			boolean out_of_range = false, setting = false;
 
-			if(args.argc == 2
-			   || (args.argc == 3 && !stricmp(args.argv[1], "force")))
+			if(args.argc == 2 ||
+			   (args.argc == 3 && !stricmp(args.argv[1], "force")))
 			{
 				char   *argptr = args.argv[args.argc - 1];
 				boolean forced = args.argc == 3;
@@ -1135,9 +1136,9 @@ static int executeSubCmd(const char *subCmd)
 				{
 					byte    val = (byte) strtol(argptr, NULL, 0);
 
-					if(!forced
-					   && ((!(var->flags & CVF_NO_MIN) && val < var->min)
-						   || (!(var->flags & CVF_NO_MAX) && val > var->max)))
+					if(!forced &&
+					   ((!(var->flags & CVF_NO_MIN) && val < var->min) ||
+						(!(var->flags & CVF_NO_MAX) && val > var->max)))
 						out_of_range = true;
 					else
 						CV_BYTE(var) = val;
@@ -1146,9 +1147,9 @@ static int executeSubCmd(const char *subCmd)
 				{
 					int     val = strtol(argptr, NULL, 0);
 
-					if(!forced
-					   && ((!(var->flags & CVF_NO_MIN) && val < var->min)
-						   || (!(var->flags & CVF_NO_MAX) && val > var->max)))
+					if(!forced &&
+					   ((!(var->flags & CVF_NO_MIN) && val < var->min) ||
+						(!(var->flags & CVF_NO_MAX) && val > var->max)))
 						out_of_range = true;
 					else
 						CV_INT(var) = val;
@@ -1157,9 +1158,9 @@ static int executeSubCmd(const char *subCmd)
 				{
 					float   val = strtod(argptr, NULL);
 
-					if(!forced
-					   && ((!(var->flags & CVF_NO_MIN) && val < var->min)
-						   || (!(var->flags & CVF_NO_MAX) && val > var->max)))
+					if(!forced &&
+					   ((!(var->flags & CVF_NO_MIN) && val < var->min) ||
+						(!(var->flags & CVF_NO_MAX) && val > var->max)))
 						out_of_range = true;
 					else
 						CV_FLOAT(var) = val;
@@ -1369,8 +1370,8 @@ static void completeWord()
 		cp--;
 
 	// Rewind the word pointer until space or a semicolon is found.
-	while(cp > 0 && cmdLine[cp - 1] != ' ' && cmdLine[cp - 1] != ';'
-		  && cmdLine[cp - 1] != '"')
+	while(cp > 0 && cmdLine[cp - 1] != ' ' && cmdLine[cp - 1] != ';' &&
+		  cmdLine[cp - 1] != '"')
 		cp--;
 
 	// Now cp is at the beginning of the word that needs completing.
@@ -1461,8 +1462,8 @@ boolean Con_Responder(event_t *event)
 	if(!ConsoleActive)
 	{
 		// In this case we are only interested in the activation key.
-		if(event->type == ev_keydown
-		   && event->data1 == consoleActiveKey /* && !MenuActive */ )
+		if(event->type == ev_keydown &&
+		   event->data1 == consoleActiveKey /* && !MenuActive */ )
 		{
 			Con_Open(true);
 			return true;
@@ -3065,10 +3066,12 @@ static void registerVariables(void)
 	C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1,
 			   "1=Enable surface light decorations.");
 	C_VAR_FLOAT("rend-light-decor-plane-far", &decorPlaneMaxDist, CVF_NO_MAX,
-				0, 0, "Maximum distance at which plane light "
+				0, 0,
+				"Maximum distance at which plane light "
 				"decorations are visible.");
 	C_VAR_FLOAT("rend-light-decor-wall-far", &decorWallMaxDist, CVF_NO_MAX, 0,
-				0, "Maximum distance at which wall light decorations "
+				0,
+				"Maximum distance at which wall light decorations "
 				"are visible.");
 	C_VAR_FLOAT("rend-light-decor-plane-bright", &decorPlaneFactor, 0, 0, 10,
 				"Brightness of plane light decorations.");
@@ -3100,9 +3103,6 @@ static void registerVariables(void)
 				"Distance at which halos are no longer visible.");
 	C_VAR_FLOAT("rend-halo-fade-near", &haloFadeMin, CVF_NO_MAX, 0, 0,
 				"Distance to begin fading halos.");
-	// * Render-FakeRadio
-	C_VAR_INT("rend-fakeradio", &rendFakeRadio, 0, 0, 1,
-			  "1=Enable simulated radiosity lighting.");
 	// * Render-Camera
 	C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179, "Field of view.");
 	C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, 0, 0, 1,
@@ -3190,7 +3190,7 @@ static void registerVariables(void)
 				"When FOV > 90 player weapon is shifted downward.");
 	// * Render-Mobj
 	C_VAR_INT("rend-mobj-smooth-move", &r_use_srvo, 0, 0, 2,
-		"1=Use short-range visual offsets for models.\n"
+			  "1=Use short-range visual offsets for models.\n"
 			  "2=Use SRVO for sprites, too (unjags actor movement).");
 	C_VAR_INT("rend-mobj-smooth-turn", &r_use_srvo_angle, 0, 0, 1,
 			  "1=Use separate visual angle for mobjs (unjag actors).");

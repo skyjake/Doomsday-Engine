@@ -106,7 +106,7 @@ void T_VerticalDoor(vldoor_t * door)
 			case vd_open:
 				door->sector->specialdata = NULL;
 				P_RemoveThinker(&door->thinker);	// unlink and free
-				S_StopSound(0, (mobj_t *) & door->sector->soundorg);
+				S_StopSound(0, (mobj_t *) &door->sector->soundorg);
 				break;
 			default:
 				break;
@@ -124,7 +124,7 @@ void T_VerticalDoor(vldoor_t * door)
 //
 //----------------------------------------------------------------------------
 
-int EV_DoDoor(line_t * line, vldoor_e type, fixed_t speed)
+int EV_DoDoor(line_t *line, vldoor_e type, fixed_t speed)
 {
 	int     secnum;
 	int     retcode;
@@ -185,7 +185,7 @@ int EV_DoDoor(line_t * line, vldoor_e type, fixed_t speed)
 //  EV_VerticalDoor : open a door manually, no tag value
 //
 //==================================================================
-void EV_VerticalDoor(line_t * line, mobj_t * thing)
+void EV_VerticalDoor(line_t *line, mobj_t *thing)
 {
 	player_t *player;
 	int     secnum;
@@ -323,7 +323,7 @@ void EV_VerticalDoor(line_t * line, mobj_t * thing)
 //  Spawn a door that closes after 30 seconds
 //
 //==================================================================
-void P_SpawnDoorCloseIn30(sector_t * sec)
+void P_SpawnDoorCloseIn30(sector_t *sec)
 {
 	vldoor_t *door;
 
@@ -344,7 +344,7 @@ void P_SpawnDoorCloseIn30(sector_t * sec)
 //  Spawn a door that opens after 5 minutes
 //
 //==================================================================
-void P_SpawnDoorRaiseIn5Mins(sector_t * sec, int secnum)
+void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
 {
 	vldoor_t *door;
 

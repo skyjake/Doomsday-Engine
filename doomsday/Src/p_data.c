@@ -129,7 +129,7 @@ void P_LoadBlockMap(int lump)
 	blockrings = Z_Malloc(count, PU_LEVEL, 0);
 	memset(blockrings, 0, count);
 	for(i = 0; i < bmapwidth * bmapheight; i++)
-		blockrings[i].next = blockrings[i].prev = (mobj_t *) & blockrings[i];
+		blockrings[i].next = blockrings[i].prev = (mobj_t *) &blockrings[i];
 }
 
 /* 

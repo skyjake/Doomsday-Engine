@@ -1188,8 +1188,8 @@ void MN_Drawer(void)
 		x = CurrentMenu->x;
 		y = CurrentMenu->y;
 		for(i = 0, item = CurrentMenu->items + CurrentMenu->firstItem;
-			i < CurrentMenu->numVisItems
-			&& CurrentMenu->firstItem + i < CurrentMenu->itemCount;
+			i < CurrentMenu->numVisItems &&
+			CurrentMenu->firstItem + i < CurrentMenu->itemCount;
 			i++, y += CurrentMenu->itemHeight, item++)
 		{
 			if(item->type != ITT_EMPTY || item->text)
@@ -1865,8 +1865,8 @@ static void DrawControlsMenu(void)
 	// Draw the page arrows.
 	token = (!menu->firstItem || MenuTime & 8) ? "invgeml2" : "invgeml1";
 	GL_DrawPatch_CS(menu->x, menu->y - 16, W_GetNumForName(token));
-	token = (menu->firstItem + menu->numVisItems >= menu->itemCount
-			 || MenuTime & 8) ? "invgemr2" : "invgemr1";
+	token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
+			 MenuTime & 8) ? "invgemr2" : "invgemr1";
 	GL_DrawPatch_CS(312 - menu->x, menu->y - 16, W_GetNumForName(token));
 
 	for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
@@ -1893,8 +1893,8 @@ static void DrawControlsMenu(void)
 		{
 			if(token[0] == '+')
 				spacecat(prbuff, token + 1);
-			if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT))
-			   || token[0] == '-')
+			if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT)) ||
+			   token[0] == '-')
 				spacecat(prbuff, token);
 			token = strtok(NULL, " ");
 		}
@@ -2590,9 +2590,9 @@ int findtoken(char *string, char *token, char *delim)
 int H2_PrivilegedResponder(event_t *event)
 {
 	// We're interested in key or button down events.
-	if(grabbing
-	   && (event->type == ev_keydown || event->type == ev_mousebdown
-		   || event->type == ev_joybdown || event->type == ev_povdown))
+	if(grabbing &&
+	   (event->type == ev_keydown || event->type == ev_mousebdown ||
+		event->type == ev_joybdown || event->type == ev_povdown))
 	{
 		// We'll grab this event.
 		char    cmd[256], buff[256], evname[80];
@@ -2948,8 +2948,8 @@ boolean MN_Responder(event_t *event)
 		default:
 			for(i = firstVI; i <= lastVI /*CurrentMenu->itemCount */ ; i++)
 			{
-				if(CurrentMenu->items[i].text
-				   && CurrentMenu->items[i].type != ITT_EMPTY)
+				if(CurrentMenu->items[i].text &&
+				   CurrentMenu->items[i].type != ITT_EMPTY)
 				{
 					if(toupper(key) == toupper(CurrentMenu->items[i].text[0]))
 					{
@@ -3007,8 +3007,8 @@ boolean MN_Responder(event_t *event)
 				slotptr++;
 				return (true);
 			}
-			if(((key >= '0' && key <= '9') || key == ' ' || key == ','
-				|| key == '.' || key == '-') && !shiftdown)
+			if(((key >= '0' && key <= '9') || key == ' ' || key == ',' ||
+				key == '.' || key == '-') && !shiftdown)
 			{
 				*textBuffer++ = key;
 				*textBuffer = ASCII_CURSOR;

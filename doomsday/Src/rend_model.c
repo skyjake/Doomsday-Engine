@@ -495,8 +495,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 	byte    byteAlpha;
 	blendmode_t blending = BM_NORMAL;
 	DGLuint skinTexture, shinyTexture;
-	int     zSign = (spr->type == VSPR_HUD_MODEL
-					 && mirrorHudModels != 0 ? -1 : 1);
+	int     zSign = (spr->type == VSPR_HUD_MODEL &&
+					 mirrorHudModels != 0 ? -1 : 1);
 
 	if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0)
 	{
@@ -507,9 +507,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 	// Submodel can define a custom Transparency level.
 	customAlpha = 1 - smf->alpha / 255.0f;
 
-	if(missileBlend
-	   && (spr->data.mo.flags & DDMF_BRIGHTSHADOW
-		   || subFlags & MFF_BRIGHTSHADOW))
+	if(missileBlend &&
+	   (spr->data.mo.flags & DDMF_BRIGHTSHADOW || subFlags & MFF_BRIGHTSHADOW))
 	{
 		alpha = .80f;
 		blending = BM_ADD;
@@ -579,8 +578,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 	// Scale interpos. Intermark becomes zero and endmark becomes one.
 	// (Full sub-interpolation!) But only do it for the standard 
 	// interrange. If a custom one is defined, don't touch interpos.
-	if(mf->interrange[0] == 0 && mf->interrange[1] == 1
-	   || subFlags & MFF_WORLD_TIME_ANIM)
+	if(mf->interrange[0] == 0 && mf->interrange[1] == 1 ||
+	   subFlags & MFF_WORLD_TIME_ANIM)
 	{
 		endPos = (mf->internext ? mf->internext->intermark : 1);
 		inter = (inter - mf->intermark) / (endPos - mf->intermark);
@@ -722,8 +721,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 		color[3] = byteAlpha / 255.0f;
 		Mod_FixedVertexColors(numVerts, modelColors, color);
 	}
-	else if((spr->data.mo.lightlevel < 0 || subFlags & MFF_FULLBRIGHT)
-			&& !(subFlags & MFF_DIM))
+	else if((spr->data.mo.lightlevel < 0 || subFlags & MFF_FULLBRIGHT) &&
+			!(subFlags & MFF_DIM))
 	{
 		// Fullbright white.
 		ambient[0] = ambient[1] = ambient[2] = 1;
@@ -870,9 +869,9 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 		gl.Disable(DGL_CULL_FACE);
 
 	// Render using multiple passes? 
-	if(!modelShinyMultitex || shininess <= 0 || byteAlpha < 255
-	   || blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR)
-	   || numTexUnits < 2 || !envModAdd)
+	if(!modelShinyMultitex || shininess <= 0 || byteAlpha < 255 ||
+	   blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR) ||
+	   numTexUnits < 2 || !envModAdd)
 	{
 		// The first pass can be skipped if it won't be visible.
 		if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
@@ -1036,8 +1035,8 @@ void Rend_RenderModel(vissprite_t * spr)
 		// Plane glow?
 		if(spr->data.mo.hasglow)
 		{
-			if(spr->data.mo.ceilglow[0] || spr->data.mo.ceilglow[1]
-			   || spr->data.mo.ceilglow[2])
+			if(spr->data.mo.ceilglow[0] || spr->data.mo.ceilglow[1] ||
+			   spr->data.mo.ceilglow[2])
 			{
 				light = lights + numLights++;
 				light->used = true;
@@ -1050,8 +1049,8 @@ void Rend_RenderModel(vissprite_t * spr)
 				scaleFloatRgb(light->color, spr->data.mo.ceilglow, dist);
 				scaleAmbientRgb(ambientColor, spr->data.mo.ceilglow, dist / 3);
 			}
-			if(spr->data.mo.floorglow[0] || spr->data.mo.floorglow[1]
-			   || spr->data.mo.floorglow[2])
+			if(spr->data.mo.floorglow[0] || spr->data.mo.floorglow[1] ||
+			   spr->data.mo.floorglow[2])
 			{
 				light = lights + numLights++;
 				light->used = true;
@@ -1088,8 +1087,8 @@ void Rend_RenderModel(vissprite_t * spr)
 	for(i = 0; i < MAX_FRAME_MODELS; i++)
 		if(mf->sub[i].model)
 		{
-			boolean disableZ = (mf->flags & MFF_DISABLE_Z_WRITE
-								|| mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
+			boolean disableZ = (mf->flags & MFF_DISABLE_Z_WRITE ||
+								mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
 
 			if(disableZ)
 				gl.Disable(DGL_DEPTH_WRITE);

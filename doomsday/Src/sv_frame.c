@@ -191,8 +191,8 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
 	byte    moreFlags = 0;
 
 	// Do we have fast momentum?
-	if(abs(d->momx) >= MOM_FAST_LIMIT || abs(d->momy) >= MOM_FAST_LIMIT
-	   || abs(d->momz) >= MOM_FAST_LIMIT)
+	if(abs(d->momx) >= MOM_FAST_LIMIT || abs(d->momy) >= MOM_FAST_LIMIT ||
+	   abs(d->momz) >= MOM_FAST_LIMIT)
 	{
 		df |= MDF_MORE_FLAGS;
 		moreFlags |= MDFE_FAST_MOM;
@@ -776,8 +776,8 @@ void Sv_SendFrame(int playerNumber)
 	   #endif */
 
 	// Keep writing until the maximum size is reached.
-	while((delta = Sv_PoolQueueExtract(pool)) != NULL
-		  && (lastStart = Msg_Offset()) < maxFrameSize)
+	while((delta = Sv_PoolQueueExtract(pool)) != NULL &&
+		  (lastStart = Msg_Offset()) < maxFrameSize)
 	{
 		oldResend = 0;
 

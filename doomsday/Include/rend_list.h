@@ -42,10 +42,10 @@ extern float    detailFactor, detailScale;
 void            RL_Init();
 void            RL_ClearLists();
 void            RL_DeleteLists();
-void            RL_AddPoly(rendpoly_t * poly);
-void            RL_PrepareFlat(planeinfo_t * plane, rendpoly_t * poly,
-							   subsector_t * subsector);
-void            RL_VertexColors(rendpoly_t * poly, int lightlevel,
+void            RL_AddPoly(rendpoly_t *poly);
+void            RL_PrepareFlat(planeinfo_t *plane, rendpoly_t *poly,
+							   subsector_t *subsector);
+void            RL_VertexColors(rendpoly_t *poly, int lightlevel,
 								const byte *rgb);
 void            RL_RenderAllLists();
 

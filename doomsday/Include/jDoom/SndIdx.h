@@ -115,7 +115,10 @@ typedef enum {
 	sfx_skesit,					   // 106
 	sfx_skeatk,					   // 107
 	sfx_radio,					   // 108
-	NUMSFX						   // 109
+	sfx_wsplash,				   // 109
+	sfx_nsplash,				   // 110
+	sfx_blurb,					   // 111
+	NUMSFX						   // 112
 } sfxenum_t;
 
 // Music.

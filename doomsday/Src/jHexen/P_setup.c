@@ -785,7 +785,7 @@ void P_GroupLines(void)
 
 // (0,1) = top left; (2,3) = bottom right
 // Assumes sectors are always closed.
-void P_SectorBoundingBox(sector_t * sec, float *bbox)
+void P_SectorBoundingBox(sector_t *sec, float *bbox)
 {
 	float   x, y;
 	int     i;
@@ -938,8 +938,8 @@ void P_CalcSectorReverbs()
 		{
 			// Is this subsector close enough?
 			if(sub->midpoint.x > bbox[BLEFT] && sub->midpoint.x < bbox[BRIGHT]
-			   && sub->midpoint.y > bbox[BTOP]
-			   && sub->midpoint.y < bbox[BBOTTOM])
+			   && sub->midpoint.y > bbox[BTOP] &&
+			   sub->midpoint.y < bbox[BBOTTOM])
 			{
 				//Con_Message( "- sub %i within, own:%i\n", i, sub->sector == sec);
 				k++;
@@ -1006,7 +1006,7 @@ void P_CalcSectorReverbs()
 //===========================================================================
 // P_PointLineDistance
 //===========================================================================
-fixed_t P_PointLineDistance(line_t * line, fixed_t x, fixed_t y,
+fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
 							fixed_t *offset)
 {
 	float   a[2], b[2], c[2], d[2], len;
@@ -1053,8 +1053,8 @@ void P_TurnTorchesToFaceWalls()
 		for(k = 0, iter = sec->thinglist; k < MAXLIST - 1 && iter;
 			iter = iter->snext)
 		{
-			if(iter->type == MT_ZWALLTORCH
-			   || iter->type == MT_ZWALLTORCH_UNLIT)
+			if(iter->type == MT_ZWALLTORCH ||
+			   iter->type == MT_ZWALLTORCH_UNLIT)
 				tlist[k++] = iter;
 		}
 
@@ -1072,8 +1072,8 @@ void P_TurnTorchesToFaceWalls()
 					P_ApproxDistance(li->v2->x - li->v1->x,
 									 li->v2->y - li->v1->y);
 				dist = P_PointLineDistance(li, iter->x, iter->y, &off);
-				if(off > -minrad && off < linelen + minrad
-				   && (!closestline || dist < closestdist) && dist >= 0)
+				if(off > -minrad && off < linelen + minrad &&
+				   (!closestline || dist < closestdist) && dist >= 0)
 				{
 					closestdist = dist;
 					closestline = li;

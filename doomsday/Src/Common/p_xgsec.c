@@ -54,7 +54,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    XS_DoChain(sector_t * sec, int ch, int activating, void *act_thing);
+void    XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -89,7 +89,7 @@ sectortype_t *XS_GetType(int id)
 	return NULL;
 }
 
-void XF_Init(sector_t * sec, function_t * fn, char *func, int min, int max,
+void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
 			 float scale, float offset)
 {
 	xgsector_t *xg = sec->xg;
@@ -181,7 +181,7 @@ void XF_Init(sector_t * sec, function_t * fn, char *func, int min, int max,
 	fn->oldvalue = -scale + offset;
 }
 
-int XLTrav_LineAngle(line_t * line, int data, void *context)
+int XLTrav_LineAngle(line_t *line, int data, void *context)
 {
 	sector_t *sec = (sector_t *) data;
 
@@ -301,7 +301,7 @@ void XS_Init(void)
 	}
 }
 
-void XS_SectorSound(sector_t * sec, int snd)
+void XS_SectorSound(sector_t *sec, int snd)
 {
 	if(!snd)
 		return;
@@ -448,14 +448,14 @@ void XS_PlaneMover(xgplanemover_t * mover)
 		else
 		{
 			// Make sure both the planes are where we started from.
-			if((!mover->ceiling || follows)
-			   && mover->sector->floorheight != floor)
+			if((!mover->ceiling || follows) &&
+			   mover->sector->floorheight != floor)
 			{
 				T_MovePlane(mover->sector, mover->speed, floor, docrush, false,
 							-dir);
 			}
-			if((mover->ceiling || follows)
-			   && mover->sector->ceilingheight != ceil)
+			if((mover->ceiling || follows) &&
+			   mover->sector->ceilingheight != ceil)
 			{
 				T_MovePlane(mover->sector, mover->speed, ceil, docrush, true,
 							-dir);
@@ -467,7 +467,7 @@ void XS_PlaneMover(xgplanemover_t * mover)
 
 // Returns a new thinker for handling the specified plane.
 // Removes any existing thinkers associated with the plane.
-xgplanemover_t *XS_GetPlaneMover(sector_t * sector, boolean ceiling)
+xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
 {
 	thinker_t *th;
 	xgplanemover_t *mover;
@@ -492,7 +492,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t * sector, boolean ceiling)
 	return mover;
 }
 
-void XS_ChangePlaneTexture(sector_t * sector, boolean ceiling, int tex)
+void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex)
 {
 	XG_Dev("XS_ChangePlaneTexture: Sector %i, %s, pic %i", sector - sectors,
 		   ceiling ? "ceiling" : "floor", tex);
@@ -504,8 +504,8 @@ void XS_ChangePlaneTexture(sector_t * sector, boolean ceiling, int tex)
 }
 
 // One plane can get listed multiple times.
-int XS_AdjoiningPlanes(sector_t * sector, boolean ceiling, int *heightlist,
-					   int *piclist, int *lightlist, sector_t ** sectorlist)
+int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
+					   int *piclist, int *lightlist, sector_t **sectorlist)
 {
 	int     i, count = 0;
 	line_t *lin;
@@ -604,7 +604,7 @@ int XS_GetTexH(int tex)
 
 // Really an XL_* function!
 // 0=top, 1=mid, 2=bottom. Returns MAXINT if not height n/a.
-int XS_TextureHeight(line_t * line, int part)
+int XS_TextureHeight(line_t *line, int part)
 {
 	side_t *side;
 	int     snum = 0;
@@ -683,8 +683,8 @@ sector_t *XS_FindTagged(int tag)
 	return NULL;
 }
 
-boolean XS_GetPlane(line_t * actline, sector_t * sector, int ref, int refdata,
-					int *height, int *pic, sector_t ** planesector)
+boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
+					int *height, int *pic, sector_t **planesector)
 {
 	int     i = 0, k, num;
 	int     heights[MAX_VALS], pics[MAX_VALS];
@@ -864,9 +864,9 @@ boolean XS_GetPlane(line_t * actline, sector_t * sector, int ref, int refdata,
 	}
 	// We need to figure out the heights of the adjoining sectors.
 	// The results will be stored in the heights array.
-	ceiling = (ref == SPREF_HIGHEST_CEILING || ref == SPREF_LOWEST_CEILING
-			   || ref == SPREF_NEXT_HIGHEST_CEILING
-			   || ref == SPREF_NEXT_LOWEST_CEILING);
+	ceiling = (ref == SPREF_HIGHEST_CEILING || ref == SPREF_LOWEST_CEILING ||
+			   ref == SPREF_NEXT_HIGHEST_CEILING ||
+			   ref == SPREF_NEXT_LOWEST_CEILING);
 	num = XS_AdjoiningPlanes(sector, ceiling, heights, pics, NULL, sectorlist);
 
 	if(!num)
@@ -911,7 +911,7 @@ boolean XS_GetPlane(line_t * actline, sector_t * sector, int ref, int refdata,
 	return true;
 }
 
-int XSTrav_HighestSectorType(sector_t * sec, boolean ceiling, int data,
+int XSTrav_HighestSectorType(sector_t *sec, boolean ceiling, int data,
 							 void *context)
 {
 	int    *type = context;
@@ -921,7 +921,7 @@ int XSTrav_HighestSectorType(sector_t * sec, boolean ceiling, int data,
 	return true;				// Keep looking...
 }
 
-int XSTrav_MovePlane(sector_t * sector, boolean ceiling, int data,
+int XSTrav_MovePlane(sector_t *sector, boolean ceiling, int data,
 					 void *context)
 {
 	line_t *line = (line_t *) data;
@@ -1038,7 +1038,7 @@ void XS_InitStairBuilder(void)
 	memset(builder, 0, numsectors);
 }
 
-boolean XS_DoBuild(sector_t * sector, boolean ceiling, line_t * origin,
+boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
 				   linetype_t * info, int stepcount)
 {
 	static int firstheight;
@@ -1100,7 +1100,7 @@ boolean XS_DoBuild(sector_t * sector, boolean ceiling, line_t * origin,
 	return true;
 }
 
-int XSTrav_BuildStairs(sector_t * sector, boolean ceiling, int data,
+int XSTrav_BuildStairs(sector_t *sector, boolean ceiling, int data,
 					   void *context)
 {
 	boolean found = true;
@@ -1224,7 +1224,7 @@ int XSTrav_SectorType(struct sector_s *sec, boolean ceiling, int data,
 	return true;
 }
 
-int XSTrav_SectorLight(sector_t * sector, boolean ceiling, int data,
+int XSTrav_SectorLight(sector_t *sector, boolean ceiling, int data,
 					   void *context)
 {
 	line_t *line = (line_t *) data;
@@ -1331,7 +1331,7 @@ int XSTrav_SectorLight(sector_t * sector, boolean ceiling, int data,
 	return true;
 }
 
-int XSTrav_MimicSector(sector_t * sector, boolean ceiling, int data,
+int XSTrav_MimicSector(sector_t *sector, boolean ceiling, int data,
 					   void *context)
 {
 	line_t *line = (line_t *) data;
@@ -1439,7 +1439,7 @@ float XF_GetValue(function_t * fn, int pos)
  *  Repeat counting is handled here.
  *  Poke should be true only if fn->pos is really about to move.
  */
-int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t * sec)
+int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t *sec)
 {
 	int     startpos = pos;
 	int     c;
@@ -1527,8 +1527,8 @@ int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t * sec)
 		else if(fn->func[pos] == '.')
 			break;
 		// Is it a value, then?
-		if(isalpha(fn->func[pos]) || fn->func[pos] == '/'
-		   || fn->func[pos] == '%')
+		if(isalpha(fn->func[pos]) || fn->func[pos] == '/' ||
+		   fn->func[pos] == '%')
 			break;
 		// A bad character, skip it.
 		pos++;
@@ -1538,7 +1538,7 @@ int XF_FindNextPos(function_t * fn, int pos, boolean poke, sector_t * sec)
 }
 
 // Tick the function, update value.
-void XF_Ticker(function_t * fn, sector_t * sec)
+void XF_Ticker(function_t * fn, sector_t *sec)
 {
 	int     next;
 	float   inter;
@@ -1600,7 +1600,7 @@ void XF_Ticker(function_t * fn, sector_t * sec)
 	fn->value = fn->value * fn->scale + fn->offset;
 }
 
-void XS_UpdatePlanes(sector_t * sec)
+void XS_UpdatePlanes(sector_t *sec)
 {
 	xgsector_t *xg = sec->xg;
 	function_t *fn;
@@ -1632,7 +1632,7 @@ void XS_UpdatePlanes(sector_t * sec)
 	}
 }
 
-void XS_UpdateLight(sector_t * sec)
+void XS_UpdateLight(sector_t *sec)
 {
 	xgsector_t *xg = sec->xg;
 	function_t *fn;
@@ -1664,7 +1664,7 @@ void XS_UpdateLight(sector_t * sec)
 	}
 }
 
-void XS_DoChain(sector_t * sec, int ch, int activating, void *act_thing)
+void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 {
 	xgsector_t *xg = sec->xg;
 	sectortype_t *info = &xg->info;
@@ -1690,8 +1690,8 @@ void XS_DoChain(sector_t * sec, int ch, int activating, void *act_thing)
 			return;
 
 		// How's the time?
-		if(flevtime < info->start[ch]
-		   || (info->end[ch] > 0 && flevtime > info->end[ch]))
+		if(flevtime < info->start[ch] ||
+		   (info->end[ch] > 0 && flevtime > info->end[ch]))
 			return;				// Not operating at this time.
 
 		// Time to try the chain. Reset timer.
@@ -1745,7 +1745,7 @@ void XS_DoChain(sector_t * sec, int ch, int activating, void *act_thing)
 	}
 }
 
-int XSTrav_SectorChain(sector_t * sec, mobj_t * mo, int ch)
+int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
 {
 	xgsector_t *xg = sec->xg;
 	sectortype_t *info = &xg->info;
@@ -1809,7 +1809,7 @@ int XSTrav_SectorChain(sector_t * sec, mobj_t * mo, int ch)
 	return true;
 }
 
-int XSTrav_Wind(sector_t * sec, mobj_t * mo, int data)
+int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
 {
 	sectortype_t *info = &sec->xg->info;
 	float   ang = PI * info->wind_angle / 180;
@@ -1822,15 +1822,15 @@ int XSTrav_Wind(sector_t * sec, mobj_t * mo, int data)
 	}
 
 	// Does wind affect this sort of things?
-	if((info->flags & STF_PLAYER_WIND && mo->player)
-	   || (info->flags & STF_OTHER_WIND && !mo->player)
-	   || (info->flags & STF_MONSTER_WIND && mo->flags & MF_COUNTKILL)
-	   || (info->flags & STF_MISSILE_WIND && mo->flags & MF_MISSILE))
+	if((info->flags & STF_PLAYER_WIND && mo->player) ||
+	   (info->flags & STF_OTHER_WIND && !mo->player) ||
+	   (info->flags & STF_MONSTER_WIND && mo->flags & MF_COUNTKILL) ||
+	   (info->flags & STF_MISSILE_WIND && mo->flags & MF_MISSILE))
 	{
-		if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND))
-		   || (info->flags & STF_FLOOR_WIND && mo->z <= mo->floorz)
-		   || (info->flags & STF_CEILING_WIND
-			   && mo->z + mo->height >= mo->ceilingz))
+		if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND)) ||
+		   (info->flags & STF_FLOOR_WIND && mo->z <= mo->floorz) ||
+		   (info->flags & STF_CEILING_WIND &&
+			mo->z + mo->height >= mo->ceilingz))
 		{
 			// Apply vertical wind.
 			mo->momz += FRACUNIT * info->vertical_wind;
@@ -1846,8 +1846,8 @@ int XSTrav_Wind(sector_t * sec, mobj_t * mo, int data)
 }
 
 // Returns true if true was returned for each mobj.
-int XS_TraverseMobjs(sector_t * sec, int data,
-					 int (*func) (sector_t * sec, mobj_t * mo, int data))
+int XS_TraverseMobjs(sector_t *sec, int data,
+					 int (*func) (sector_t *sec, mobj_t *mo, int data))
 {
 	mobj_t *mo;
 
@@ -1873,7 +1873,7 @@ void XS_ConstrainPlaneOffset(float *offset)
  * XS_Think
  *  Called for Extended Generalized sectors.
  */
-void XS_Think(sector_t * sector)
+void XS_Think(sector_t *sector)
 {
 	xgsector_t *xg = sector->xg;
 	sectortype_t *info = &xg->info;
@@ -2168,11 +2168,11 @@ int CCmdMovePlane(int argc, char **argv)
 	// Check that the destination is valid.
 	if(!isBoth)
 	{
-		if(isCeiling
-		   && mover->destination < sector->floorheight + 4 * FRACUNIT)
+		if(isCeiling &&
+		   mover->destination < sector->floorheight + 4 * FRACUNIT)
 			mover->destination = sector->floorheight + 4 * FRACUNIT;
-		if(!isCeiling
-		   && mover->destination > sector->ceilingheight - 4 * FRACUNIT)
+		if(!isCeiling &&
+		   mover->destination > sector->ceilingheight - 4 * FRACUNIT)
 			mover->destination = sector->ceilingheight - 4 * FRACUNIT;
 	}
 

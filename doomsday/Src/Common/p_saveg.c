@@ -111,7 +111,7 @@ void SV_InitThingArchive(void)
 // Called by the write code to get archive numbers.
 // If the mobj is already archived, the existing number is returned.
 // Number zero is not used.
-unsigned short SV_ThingArchiveNum(mobj_t * mo)
+unsigned short SV_ThingArchiveNum(mobj_t *mo)
 {
 	int     i;
 	int     first_empty = -1;
@@ -138,7 +138,7 @@ unsigned short SV_ThingArchiveNum(mobj_t * mo)
 }
 
 // Used by the read code when mobjs are read.
-void SV_SetArchiveThing(mobj_t * mo, int num)
+void SV_SetArchiveThing(mobj_t *mo, int num)
 {
 	if(!num)
 		return;
@@ -368,7 +368,7 @@ void SV_ReadPlayer(player_t * pl)
 	pl->update = PSF_REBORN;
 }
 
-void SV_WriteMobj(mobj_t * mobj)
+void SV_WriteMobj(mobj_t *mobj)
 {
 	mobj_t  mo;
 
@@ -461,7 +461,7 @@ void SV_WriteMobj(mobj_t * mobj)
 	SV_WriteByte(mo.translucency);
 }
 
-void SV_ReadMobj(mobj_t * mo)
+void SV_ReadMobj(mobj_t *mo)
 {
 	int     ver = SV_ReadByte();
 
@@ -576,7 +576,7 @@ enum {
 	sc_xg1
 } sectorclass_e;
 
-void SV_WriteSector(sector_t * sec)
+void SV_WriteSector(sector_t *sec)
 {
 	int     type;
 
@@ -614,7 +614,7 @@ void SV_WriteSector(sector_t * sec)
 	}
 }
 
-void SV_ReadSector(sector_t * sec)
+void SV_ReadSector(sector_t *sec)
 {
 	int     type;
 
@@ -650,7 +650,7 @@ void SV_ReadSector(sector_t * sec)
 		SV_ReadXGSector(sec);
 }
 
-void SV_WriteLine(line_t * li)
+void SV_WriteLine(line_t *li)
 {
 	lineclass_t type = li->xg ? lc_xg1 : lc_normal;
 	int     i;
@@ -682,7 +682,7 @@ void SV_WriteLine(line_t * li)
 	}
 }
 
-void SV_ReadLine(line_t * li)
+void SV_ReadLine(line_t *li)
 {
 	enum lineclass_e type;
 	int     i;
@@ -1145,8 +1145,8 @@ void P_UnArchiveSpecials(void)
 			ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVEL, NULL);
 			SV_Read(ceiling, sizeof(*ceiling));
 #ifdef _DEBUG
-			if((int) ceiling->sector >= numsectors
-			   || (int) ceiling->sector < 0)
+			if((int) ceiling->sector >= numsectors ||
+			   (int) ceiling->sector < 0)
 				Con_Error("tc_ceiling: bad sector number\n");
 #endif
 			ceiling->sector = &sectors[(int) ceiling->sector];

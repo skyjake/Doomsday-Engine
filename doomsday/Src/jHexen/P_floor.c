@@ -31,7 +31,7 @@ extern fixed_t FloatBobOffsets[64];
 //      Move a plane (floor or ceiling) and check for crushing
 //
 //==================================================================
-result_e T_MovePlane(sector_t * sector, fixed_t speed, fixed_t dest, int crush,
+result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest, int crush,
 					 int floorOrCeiling, int direction)
 {
 	boolean flag;
@@ -225,10 +225,10 @@ void T_MoveFloor(floormove_t * floor)
 
 	if(floor->type == FLEV_RAISEBUILDSTEP)
 	{
-		if((floor->direction == 1
-			&& floor->sector->floorheight >= floor->stairsDelayHeight)
-		   || (floor->direction == -1
-			   && floor->sector->floorheight <= floor->stairsDelayHeight))
+		if((floor->direction == 1 &&
+			floor->sector->floorheight >= floor->stairsDelayHeight) ||
+		   (floor->direction == -1 &&
+			floor->sector->floorheight <= floor->stairsDelayHeight))
 		{
 			floor->delayCount = floor->delayTotal;
 			floor->stairsDelayHeight += floor->stairsDelayHeightDelta;
@@ -237,7 +237,7 @@ void T_MoveFloor(floormove_t * floor)
 	if(res == RES_PASTDEST)
 	{
 		floor->sector->planes[PLN_FLOOR].speed = 0;
-		SN_StopSequence((mobj_t *) & floor->sector->soundorg);
+		SN_StopSequence((mobj_t *) &floor->sector->soundorg);
 		if(floor->delayTotal)
 		{
 			floor->delayTotal = 0;
@@ -283,7 +283,7 @@ void T_MoveFloor(floormove_t * floor)
 //      HANDLE FLOOR TYPES
 //
 //==================================================================
-int EV_DoFloor(line_t * line, byte *args, floor_e floortype)
+int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
 {
 	int     secnum;
 	int     rtn;
@@ -312,8 +312,8 @@ int EV_DoFloor(line_t * line, byte *args, floor_e floortype)
 		floor->type = floortype;
 		floor->crush = 0;
 		floor->speed = args[1] * (FRACUNIT / 8);
-		if(floortype == FLEV_LOWERTIMES8INSTANT
-		   || floortype == FLEV_RAISETIMES8INSTANT)
+		if(floortype == FLEV_LOWERTIMES8INSTANT ||
+		   floortype == FLEV_RAISETIMES8INSTANT)
 		{
 			floor->speed = 2000 << FRACBITS;
 		}
@@ -401,7 +401,7 @@ int EV_DoFloor(line_t * line, byte *args, floor_e floortype)
 	}
 	if(rtn)
 	{
-		SN_StartSequence((mobj_t *) & floor->sector->soundorg,
+		SN_StartSequence((mobj_t *) &floor->sector->soundorg,
 						 SEQ_PLATFORM + floor->sector->seqType);
 	}
 	return rtn;
@@ -413,7 +413,7 @@ int EV_DoFloor(line_t * line, byte *args, floor_e floortype)
 //
 //============================================================================
 
-int EV_DoFloorAndCeiling(line_t * line, byte *args, boolean raise)
+int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
 {
 	boolean floor, ceiling;
 	int     secnum;
@@ -473,7 +473,7 @@ static int StartHeight;
 //
 //==========================================================================
 
-static void QueueStairSector(sector_t * sec, int type, int height)
+static void QueueStairSector(sector_t *sec, int type, int height)
 {
 	if((QueueTail + 1) % STAIR_QUEUE_SIZE == QueueHead)
 	{
@@ -514,7 +514,7 @@ static sector_t *DequeueStairSector(int *type, int *height)
 //
 //==========================================================================
 
-static void ProcessStairSector(sector_t * sec, int type, int height,
+static void ProcessStairSector(sector_t *sec, int type, int height,
 							   stairs_e stairsType, int delay, int resetDelay)
 {
 	int     i;
@@ -568,7 +568,7 @@ static void ProcessStairSector(sector_t * sec, int type, int height,
 	default:
 		break;
 	}
-	SN_StartSequence((mobj_t *) & sec->soundorg, SEQ_PLATFORM + sec->seqType);
+	SN_StartSequence((mobj_t *) &sec->soundorg, SEQ_PLATFORM + sec->seqType);
 	//
 	// Find next sector to raise
 	// Find nearby sector with sector special equal to type
@@ -580,16 +580,16 @@ static void ProcessStairSector(sector_t * sec, int type, int height,
 			continue;
 		}
 		tsec = (sec->Lines[i])->frontsector;
-		if(tsec->special == type + STAIR_SECTOR_TYPE && !tsec->specialdata
-		   && tsec->floorpic == Texture && tsec->validcount != Validcount)
+		if(tsec->special == type + STAIR_SECTOR_TYPE && !tsec->specialdata &&
+		   tsec->floorpic == Texture && tsec->validcount != Validcount)
 		{
 			QueueStairSector(tsec, type ^ 1, height);
 			tsec->validcount = Validcount;
 			//tsec->special = 0;
 		}
 		tsec = (sec->Lines[i])->backsector;
-		if(tsec->special == type + STAIR_SECTOR_TYPE && !tsec->specialdata
-		   && tsec->floorpic == Texture && tsec->validcount != Validcount)
+		if(tsec->special == type + STAIR_SECTOR_TYPE && !tsec->specialdata &&
+		   tsec->floorpic == Texture && tsec->validcount != Validcount)
 		{
 			QueueStairSector(tsec, type ^ 1, height);
 			tsec->validcount = Validcount;
@@ -606,7 +606,7 @@ static void ProcessStairSector(sector_t * sec, int type, int height,
 //      up or down.
 //==================================================================
 
-int EV_BuildStairs(line_t * line, byte *args, int direction,
+int EV_BuildStairs(line_t *line, byte *args, int direction,
 				   stairs_e stairsType)
 {
 	int     secnum;
@@ -677,7 +677,7 @@ void T_BuildPillar(pillar_t * pillar)
 	if(res1 == RES_PASTDEST && res2 == RES_PASTDEST)
 	{
 		pillar->sector->specialdata = NULL;
-		SN_StopSequence((mobj_t *) & pillar->sector->soundorg);
+		SN_StopSequence((mobj_t *) &pillar->sector->soundorg);
 		P_TagFinished(pillar->sector->tag);
 		P_RemoveThinker(&pillar->thinker);
 	}
@@ -689,7 +689,7 @@ void T_BuildPillar(pillar_t * pillar)
 //
 //=========================================================================
 
-int EV_BuildPillar(line_t * line, byte *args, boolean crush)
+int EV_BuildPillar(line_t *line, byte *args, boolean crush)
 {
 	int     secnum;
 	sector_t *sec;
@@ -750,7 +750,7 @@ int EV_BuildPillar(line_t * line, byte *args, boolean crush)
 		pillar->ceilingdest = newHeight;
 		pillar->direction = 1;
 		pillar->crush = crush * args[3];
-		SN_StartSequence((mobj_t *) & pillar->sector->soundorg,
+		SN_StartSequence((mobj_t *) &pillar->sector->soundorg,
 						 SEQ_PLATFORM + pillar->sector->seqType);
 	}
 	return rtn;
@@ -762,7 +762,7 @@ int EV_BuildPillar(line_t * line, byte *args, boolean crush)
 //
 //=========================================================================
 
-int EV_OpenPillar(line_t * line, byte *args)
+int EV_OpenPillar(line_t *line, byte *args)
 {
 	int     secnum;
 	sector_t *sec;
@@ -820,7 +820,7 @@ int EV_OpenPillar(line_t * line, byte *args)
 								  sec->ceilingheight - pillar->ceilingdest));
 		}
 		pillar->direction = -1;	// open the pillar
-		SN_StartSequence((mobj_t *) & pillar->sector->soundorg,
+		SN_StartSequence((mobj_t *) &pillar->sector->soundorg,
 						 SEQ_PLATFORM + pillar->sector->seqType);
 	}
 	return rtn;
@@ -832,7 +832,7 @@ int EV_OpenPillar(line_t * line, byte *args)
 //
 //=========================================================================
 
-int EV_FloorCrushStop(line_t * line, byte *args)
+int EV_FloorCrushStop(line_t *line, byte *args)
 {
 	thinker_t *think;
 	floormove_t *floor;
@@ -852,7 +852,7 @@ int EV_FloorCrushStop(line_t * line, byte *args)
 			continue;
 		}
 		// Completely remove the crushing floor
-		SN_StopSequence((mobj_t *) & floor->sector->soundorg);
+		SN_StopSequence((mobj_t *) &floor->sector->soundorg);
 		floor->sector->specialdata = NULL;
 		P_TagFinished(floor->sector->tag);
 		P_RemoveThinker(&floor->thinker);

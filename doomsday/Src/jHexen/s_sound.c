@@ -108,9 +108,8 @@ void S_StartSong(int song, boolean loop)
 		{
 			track = P_GetMapCDTrack(gamemap);
 		}
-		if(track == gi.CD(DD_GET_CURRENT_TRACK, 0)
-		   && gi.CD(DD_GET_TIME_LEFT, 0) > 0
-		   && gi.CD(DD_STATUS, 0) == DD_PLAYING)
+		if(track == gi.CD(DD_GET_CURRENT_TRACK, 0) &&
+		   gi.CD(DD_GET_TIME_LEFT, 0) > 0 && gi.CD(DD_STATUS, 0) == DD_PLAYING)
 		{
 			// The chosen track is already playing.
 			return;
@@ -216,9 +215,9 @@ void S_StartSongName(char *songLump, boolean loop)
 		   cdTrack = P_GetCDStartTrack();
 		   }
 		 */
-		if(!cdTrack
-		   || (cdTrack == gi.CD(DD_GET_CURRENT_TRACK, 0)
-			   && gi.CD(DD_GET_TIME_LEFT, 0) > 0))
+		if(!cdTrack ||
+		   (cdTrack == gi.CD(DD_GET_CURRENT_TRACK, 0) &&
+			gi.CD(DD_GET_TIME_LEFT, 0) > 0))
 		{
 			return;
 		}
@@ -305,7 +304,7 @@ void S_StopSoundID(int sound_id)
 //
 //==========================================================================
 
-void S_StopSound(mobj_t * origin)
+void S_StopSound(mobj_t *origin)
 {
 	int     i;
 
@@ -341,7 +340,7 @@ void S_StopAllSound(void)
 //
 //==========================================================================
 
-void S_SoundLink(mobj_t * oldactor, mobj_t * newactor)
+void S_SoundLink(mobj_t *oldactor, mobj_t *newactor)
 {
 	int     i;
 
@@ -437,7 +436,7 @@ void S_GetChannelInfo(SoundInfo_t * s)
 //
 //==========================================================================
 
-boolean S_GetSoundPlayingInfo(mobj_t * mobj, int sound_id)
+boolean S_GetSoundPlayingInfo(mobj_t *mobj, int sound_id)
 {
 	int     i;
 

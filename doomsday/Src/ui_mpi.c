@@ -471,9 +471,9 @@ void MPIUpdateFound(ui_object_t * ob)
 
 	// Show IWAD warning?
 	UI_FlagGroup(ob_client, 5, UIF_HIDDEN,
-				 !(lst_found.count >= 1 && lst_found.selection >= 0
-				   && lstit_found[lst_found.selection].data != -1
-				   && lstit_found[lst_found.selection].data != (int) my_crc));
+				 !(lst_found.count >= 1 && lst_found.selection >= 0 &&
+				   lstit_found[lst_found.selection].data != -1 &&
+				   lstit_found[lst_found.selection].data != (int) my_crc));
 
 	if(searching)
 	{
@@ -526,8 +526,8 @@ void MPIUpdateFound(ui_object_t * ob)
 			N_MasterGet(i, &info);
 
 			// Is this suitable?
-			if(info.version != DOOMSDAY_VERSION
-			   || stricmp(info.game, gx.Get(DD_GAME_ID)) || !info.canJoin)
+			if(info.version != DOOMSDAY_VERSION ||
+			   stricmp(info.game, gx.Get(DD_GAME_ID)) || !info.canJoin)
 				continue;
 
 			MPIFormatServerInfo(lstit_found[k].text, &info);

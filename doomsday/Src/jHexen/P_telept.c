@@ -53,7 +53,7 @@ mobj_t *P_SpawnTeleFog(int x, int y)
 //
 //==========================================================================
 
-boolean P_Teleport(mobj_t * thing, fixed_t x, fixed_t y, angle_t angle,
+boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
 				   boolean useFog)
 {
 	fixed_t oldx;
@@ -127,8 +127,8 @@ boolean P_Teleport(mobj_t * thing, fixed_t x, fixed_t y, angle_t angle,
 	}
 	if(thing->flags2 & MF2_FLOORCLIP)
 	{
-		if(thing->z == thing->subsector->sector->floorheight
-		   && P_GetThingFloorType(thing) > FLOOR_SOLID)
+		if(thing->z == thing->subsector->sector->floorheight &&
+		   P_GetThingFloorType(thing) > FLOOR_SOLID)
 		{
 			thing->floorclip = 10 * FRACUNIT;
 		}
@@ -157,7 +157,7 @@ boolean P_Teleport(mobj_t * thing, fixed_t x, fixed_t y, angle_t angle,
 //
 //==========================================================================
 
-boolean EV_Teleport(int tid, mobj_t * thing, boolean fog)
+boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
 {
 	int     i;
 	int     count;

@@ -403,7 +403,7 @@ void R_GetPatchInfo(int lump, spriteinfo_t *info)
 // R_VisualRadius
 //  Returns the radius of the mobj as it would visually appear to be.
 //===========================================================================
-int R_VisualRadius(mobj_t * mo)
+int R_VisualRadius(mobj_t *mo)
 {
 	modeldef_t *mf, *nextmf;
 	spriteinfo_t sprinfo;
@@ -466,7 +466,7 @@ vissprite_t *R_NewVisSprite(void)
 //===========================================================================
 // R_ProjectDecoration
 //===========================================================================
-void R_ProjectDecoration(mobj_t * source)
+void R_ProjectDecoration(mobj_t *source)
 {
 	float   v1[2];
 	vissprite_t *vis;
@@ -594,7 +594,7 @@ float R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz)
 // R_ProjectSprite
 //  Generates a vissprite for a thing if it might be visible.
 //===========================================================================
-void R_ProjectSprite(mobj_t * thing)
+void R_ProjectSprite(mobj_t *thing)
 {
 	sector_t *sect = thing->subsector->sector;
 	fixed_t trx, try;
@@ -649,8 +649,8 @@ void R_ProjectSprite(mobj_t * thing)
 	if(useModels)
 	{
 		interp = R_CheckModelFor(thing, &mf, &nextmf);
-		if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && r_maxmodelz
-		   && distance > r_maxmodelz)
+		if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && r_maxmodelz &&
+		   distance > r_maxmodelz)
 		{
 			// Don't use a 3D model.
 			mf = nextmf = NULL;
@@ -807,9 +807,8 @@ void R_ProjectSprite(mobj_t * thing)
 		}
 		else
 		{
-			vis->data.mo.yaw = (r_use_srvo_angle && !netgame
-								&& !playback ? (thing->
-												visangle << 16) : thing->
+			vis->data.mo.yaw = (r_use_srvo_angle && !netgame &&
+								!playback ? (thing->visangle << 16) : thing->
 								angle) / (float) ANGLE_MAX *-360;
 		}
 
@@ -840,8 +839,8 @@ void R_ProjectSprite(mobj_t * thing)
 	vis->data.mo.patch = lump;
 
 	// Set light level.
-	if((LevelFullBright || thing->frame & FF_FULLBRIGHT)
-	   && (!mf || !(mf->sub[0].flags & MFF_DIM)))
+	if((LevelFullBright || thing->frame & FF_FULLBRIGHT) &&
+	   (!mf || !(mf->sub[0].flags & MFF_DIM)))
 	{
 		vis->data.mo.lightlevel = -1;
 	}
@@ -870,9 +869,9 @@ void R_ProjectSprite(mobj_t * thing)
 	}
 
 	// Short-range visual offsets.
-	if(((vis->data.mo.mf && r_use_srvo > 0)
-		|| (!vis->data.mo.mf && r_use_srvo > 1)) && thing->state
-	   && thing->tics >= 0)
+	if(((vis->data.mo.mf && r_use_srvo > 0) ||
+		(!vis->data.mo.mf && r_use_srvo > 1)) && thing->state &&
+	   thing->tics >= 0)
 	{
 		float   mul =
 			(thing->tics - frameTimePos) / (float) thing->state->tics;
@@ -922,7 +921,7 @@ void R_ProjectSprite(mobj_t * thing)
    ========================
  */
 
-void R_AddSprites(sector_t * sec)
+void R_AddSprites(sector_t *sec)
 {
 	mobj_t *thing;
 	spriteinfo_t spriteInfo;
@@ -946,8 +945,8 @@ void R_AddSprites(sector_t * sec)
 		R_GetSpriteInfo(thing->sprite, thing->frame, &spriteInfo);
 		visibleTop = thing->z + (spriteInfo.height << FRACBITS);
 
-		if(sec->ceilingpic == skyflatnum
-		   && visibleTop > sec->ceilingheight + (sec->skyfix << FRACBITS))
+		if(sec->ceilingpic == skyflatnum &&
+		   visibleTop > sec->ceilingheight + (sec->skyfix << FRACBITS))
 		{
 			// Raise sector skyfix.
 			sec->skyfix = ((visibleTop - sec->ceilingheight) >> FRACBITS) + 16;	// Add some leeway.
@@ -1019,7 +1018,7 @@ void R_SortVisSprites(void)
  * Returns the current floatbob offset for the mobj, if the mobj is flagged
  * for bobbing.
  */
-fixed_t R_GetBobOffset(mobj_t * mo)
+fixed_t R_GetBobOffset(mobj_t *mo)
 {
 	if(mo->ddflags & DDMF_BOB)
 	{

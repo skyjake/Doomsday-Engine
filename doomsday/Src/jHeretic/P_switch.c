@@ -146,7 +146,7 @@ void P_InitSwitchList(void)
 //  Start a button counting down till it turns off.
 //
 //==================================================================
-void P_StartButton(line_t * line, bwhere_e w, int texture, int time)
+void P_StartButton(line_t *line, bwhere_e w, int texture, int time)
 {
 	int     i;
 
@@ -157,7 +157,7 @@ void P_StartButton(line_t * line, bwhere_e w, int texture, int time)
 			buttonlist[i].where = w;
 			buttonlist[i].btexture = texture;
 			buttonlist[i].btimer = time;
-			buttonlist[i].soundorg = (mobj_t *) & line->frontsector->soundorg;
+			buttonlist[i].soundorg = (mobj_t *) &line->frontsector->soundorg;
 			return;
 		}
 
@@ -170,7 +170,7 @@ void P_StartButton(line_t * line, bwhere_e w, int texture, int time)
 //  Tell it if switch is ok to use again (1=yes, it's a button).
 //
 //==================================================================
-void P_ChangeSwitchTexture(line_t * line, int useAgain)
+void P_ChangeSwitchTexture(line_t *line, int useAgain)
 {
 	int     texTop;
 	int     texMid;
@@ -226,7 +226,7 @@ void P_ChangeSwitchTexture(line_t * line, int useAgain)
    ===============================================================================
  */
 
-boolean P_UseSpecialLine(mobj_t * thing, line_t * line)
+boolean P_UseSpecialLine(mobj_t *thing, line_t *line)
 {
 	// Extended functionality overrides old.
 	if(XL_UseLine(line, 0, thing))

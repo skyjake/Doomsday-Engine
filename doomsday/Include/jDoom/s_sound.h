@@ -9,7 +9,7 @@
 #define sfx_chat (gamemode == commercial? sfx_radio : sfx_tink)
 
 void            S_LevelMusic(void);
-void            S_SectorSound(sector_t * sector, int sound_id);
+void            S_SectorSound(sector_t *sector, int sound_id);
 
 /*
    typedef struct

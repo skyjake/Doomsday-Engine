@@ -28,7 +28,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static boolean CheckedLockedDoor(mobj_t * mo, byte lock);
+static boolean CheckedLockedDoor(mobj_t *mo, byte lock);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -159,7 +159,7 @@ void P_InitTerrainTypes(void)
 //      Return sector_t * of sector next to current. NULL if not two-sided line
 //
 //==================================================================
-sector_t *getNextSector(line_t * line, sector_t * sec)
+sector_t *getNextSector(line_t *line, sector_t *sec)
 {
 	if(!(line->flags & ML_TWOSIDED))
 		return NULL;
@@ -175,7 +175,7 @@ sector_t *getNextSector(line_t * line, sector_t * sec)
 //      FIND LOWEST FLOOR HEIGHT IN SURROUNDING SECTORS
 //
 //==================================================================
-fixed_t P_FindLowestFloorSurrounding(sector_t * sec)
+fixed_t P_FindLowestFloorSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -199,7 +199,7 @@ fixed_t P_FindLowestFloorSurrounding(sector_t * sec)
 //      FIND HIGHEST FLOOR HEIGHT IN SURROUNDING SECTORS
 //
 //==================================================================
-fixed_t P_FindHighestFloorSurrounding(sector_t * sec)
+fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -223,7 +223,7 @@ fixed_t P_FindHighestFloorSurrounding(sector_t * sec)
 //      FIND NEXT HIGHEST FLOOR IN SURROUNDING SECTORS
 //
 //==================================================================
-fixed_t P_FindNextHighestFloor(sector_t * sec, int currentheight)
+fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
 {
 	int     i;
 	int     h;
@@ -259,7 +259,7 @@ fixed_t P_FindNextHighestFloor(sector_t * sec, int currentheight)
 //      FIND LOWEST CEILING IN THE SURROUNDING SECTORS
 //
 //==================================================================
-fixed_t P_FindLowestCeilingSurrounding(sector_t * sec)
+fixed_t P_FindLowestCeilingSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -283,7 +283,7 @@ fixed_t P_FindLowestCeilingSurrounding(sector_t * sec)
 //      FIND HIGHEST CEILING IN THE SURROUNDING SECTORS
 //
 //==================================================================
-fixed_t P_FindHighestCeilingSurrounding(sector_t * sec)
+fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -399,7 +399,7 @@ boolean EV_SectorSoundChange(byte *args)
 //
 //============================================================================
 
-static boolean CheckedLockedDoor(mobj_t * mo, byte lock)
+static boolean CheckedLockedDoor(mobj_t *mo, byte lock)
 {
 	extern int TextKeyMessages[11];
 	char    LockedBuffer[80];
@@ -429,7 +429,7 @@ static boolean CheckedLockedDoor(mobj_t * mo, byte lock)
 //
 //==========================================================================
 
-boolean EV_LineSearchForPuzzleItem(line_t * line, byte *args, mobj_t * mo)
+boolean EV_LineSearchForPuzzleItem(line_t *line, byte *args, mobj_t *mo)
 {
 	player_t *player;
 	int     i;
@@ -489,8 +489,8 @@ boolean EV_LineSearchForPuzzleItem(line_t * line, byte *args, mobj_t * mo)
 //
 //============================================================================
 
-boolean P_ExecuteLineSpecial(int special, byte *args, line_t * line, int side,
-							 mobj_t * mo)
+boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
+							 mobj_t *mo)
 {
 	boolean buttonSuccess;
 
@@ -824,8 +824,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t * line, int side,
 //
 //============================================================================
 
-boolean P_ActivateLine(line_t * line, mobj_t * mo, int side,
-					   int activationType)
+boolean P_ActivateLine(line_t *line, mobj_t *mo, int side, int activationType)
 {
 	int     lineActivation;
 	boolean repeat;
@@ -854,8 +853,8 @@ boolean P_ActivateLine(line_t * line, mobj_t * mo, int side,
 	{							// clear the special on non-retriggerable lines
 		line->special = 0;
 	}
-	if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT)
-	   && buttonSuccess)
+	if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
+	   buttonSuccess)
 	{
 		P_ChangeSwitchTexture(line, repeat);
 	}

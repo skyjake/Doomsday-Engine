@@ -568,8 +568,8 @@ static void HandleArgs(int state)
 	{
 		for(p = 0; p < Argc(); p++)
 		{
-			if(stricmp(Argv(p), "-file") && stricmp(Argv(p), "-iwad")
-			   && stricmp(Argv(p), "-f"))
+			if(stricmp(Argv(p), "-file") && stricmp(Argv(p), "-iwad") &&
+			   stricmp(Argv(p), "-f"))
 				continue;
 			while(++p != Argc() && !ArgIsOption(p))
 				DD_AddStartupWAD(Argv(p));
@@ -770,8 +770,8 @@ void DD_SetInteger(int ddvalue, int parm)
 		else if(ddvalue == DD_TRANSLATED_SPRITE_TEXTURE)
 		{
 			// See DD_TSPR_PARM in dd_share.h.
-			int     lump = parm & 0xffffff; 
-			int     cls = (parm >> 24) & 0xf; 
+			int     lump = parm & 0xffffff;
+			int     cls = (parm >> 24) & 0xf;
 			int     table = (parm >> 28) & 0xf;
 
 			if(table)
@@ -782,8 +782,8 @@ void DD_SetInteger(int ddvalue, int parm)
 		else if(ddvalue == DD_TEXTURE_GLOW)
 		{
 			// See DD_TGLOW_PARM in dd_share.h.
-			int     tnum = parm & 0xffff; 
-			int     istex = (parm & 0x80000000) != 0; 
+			int     tnum = parm & 0xffff;
+			int     istex = (parm & 0x80000000) != 0;
 			int     glowstate = (parm & 0x10000) != 0;
 
 			if(istex)

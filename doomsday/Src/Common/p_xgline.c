@@ -52,7 +52,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    XL_ChangeTexture(line_t * line, int sidenum, int section, int texture);
+void    XL_ChangeTexture(line_t *line, int sidenum, int section, int texture);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -156,7 +156,7 @@ float XG_RandomPercentFloat(float value, int percent)
 	return value * (1 + i);
 }
 
-void XL_SetLineType(line_t * line, int id)
+void XL_SetLineType(line_t *line, int id)
 {
 	if(XL_GetType(id))
 	{
@@ -200,8 +200,8 @@ void XL_Init(void)
 	}
 }
 
-int XL_TraversePlanes(line_t * line, int reftype, int ref, int data,
-					  void *context, int (*func) (sector_t * sector,
+int XL_TraversePlanes(line_t *line, int reftype, int ref, int data,
+					  void *context, int (*func) (sector_t *sector,
 												  boolean ceiling, int data,
 												  void *context))
 {
@@ -237,18 +237,18 @@ int XL_TraversePlanes(line_t * line, int reftype, int ref, int data,
 			   (sectors + i, reftype == LPREF_TAGGED_CEILINGS, data, context))
 				return false;
 		}
-		if((reftype == LPREF_LINE_TAGGED_FLOORS
-			|| reftype == LPREF_LINE_TAGGED_CEILINGS)
-		   && sectors[i].tag == line->tag)
+		if((reftype == LPREF_LINE_TAGGED_FLOORS ||
+			reftype == LPREF_LINE_TAGGED_CEILINGS) &&
+		   sectors[i].tag == line->tag)
 		{
 			if(!func
 			   (sectors + i, reftype == LPREF_LINE_TAGGED_CEILINGS, data,
 				context))
 				return false;
 		}
-		if((reftype == LPREF_ACT_TAGGED_FLOORS
-			|| reftype == LPREF_ACT_TAGGED_CEILINGS) && sectors[i].xg
-		   && sectors[i].xg->info.act_tag == ref)
+		if((reftype == LPREF_ACT_TAGGED_FLOORS ||
+			reftype == LPREF_ACT_TAGGED_CEILINGS) && sectors[i].xg &&
+		   sectors[i].xg->info.act_tag == ref)
 		{
 			if(!func
 			   (sectors + i, reftype == LPREF_ACT_TAGGED_CEILINGS, data,
@@ -264,8 +264,8 @@ int XL_TraversePlanes(line_t * line, int reftype, int ref, int data,
  *      Returns false if func returns false, otherwise true.
  *      Stops checking when false is returned.
  */
-int XL_TraverseLines(line_t * line, int reftype, int ref, int data,
-					 void *context, int (*func) (line_t * line, int data,
+int XL_TraverseLines(line_t *line, int reftype, int ref, int data,
+					 void *context, int (*func) (line_t *line, int data,
 												 void *context))
 {
 	int     i;
@@ -309,13 +309,13 @@ int XL_TraverseLines(line_t * line, int reftype, int ref, int data,
 	return true;
 }
 
-int XLTrav_ChangeLineType(line_t * line, int data, void *context)
+int XLTrav_ChangeLineType(line_t *line, int data, void *context)
 {
 	XL_SetLineType(line, data);
 	return true;				// Keep looking.
 }
 
-int XLTrav_ChangeWallTexture(line_t * line, int data, void *context)
+int XLTrav_ChangeWallTexture(line_t *line, int data, void *context)
 {
 	linetype_t *info = context;
 	side_t *side;
@@ -344,7 +344,7 @@ int XLTrav_ChangeWallTexture(line_t * line, int data, void *context)
 	return true;
 }
 
-int XLTrav_Activate(line_t * line, int data, void *context)
+int XLTrav_Activate(line_t *line, int data, void *context)
 {
 	XL_LineEvent(XLE_CHAIN, 0, line, 0, context);
 	return true;				// Keep looking.
@@ -355,14 +355,14 @@ int XLTrav_Activate(line_t * line, int data, void *context)
 //      If data=true, the line will receive a chain event if not activate.
 //      If data=false, then ... if active.
 //===========================================================================
-int XLTrav_SmartActivate(line_t * line, int data, void *context)
+int XLTrav_SmartActivate(line_t *line, int data, void *context)
 {
 	if(data != line->xg->active)
 		XL_LineEvent(XLE_CHAIN, 0, line, 0, context);
 	return true;
 }
 
-int XLTrav_LineCount(line_t * line, int data, void *context)
+int XLTrav_LineCount(line_t *line, int data, void *context)
 {
 	if(!line->xg)
 		return true;			// Must have extended type.
@@ -373,7 +373,7 @@ int XLTrav_LineCount(line_t * line, int data, void *context)
 	return true;
 }
 
-int XLTrav_DisableLine(line_t * line, int data, void *context)
+int XLTrav_DisableLine(line_t *line, int data, void *context)
 {
 	if(!line->xg)
 		return true;
@@ -381,7 +381,7 @@ int XLTrav_DisableLine(line_t * line, int data, void *context)
 	return true;				// Keep looking.
 }
 
-int XLTrav_QuickActivate(line_t * line, int data, void *context)
+int XLTrav_QuickActivate(line_t *line, int data, void *context)
 {
 	if(!line->xg)
 		return true;
@@ -391,7 +391,7 @@ int XLTrav_QuickActivate(line_t * line, int data, void *context)
 }
 
 // Returns true if the line is active.
-int XLTrav_CheckLine(line_t * line, int data, void *context)
+int XLTrav_CheckLine(line_t *line, int data, void *context)
 {
 	if(!line->xg)
 		return false;			// Stop checking!
@@ -400,7 +400,7 @@ int XLTrav_CheckLine(line_t * line, int data, void *context)
 
 // Checks if the given lines are active or inactive.
 // Returns true if all are in the specified state.
-boolean XL_CheckLineStatus(line_t * line, int reftype, int ref, int active)
+boolean XL_CheckLineStatus(line_t *line, int reftype, int ref, int active)
 {
 	return XL_TraverseLines(line, reftype, ref, active, 0, XLTrav_CheckLine);
 }
@@ -458,7 +458,7 @@ boolean XL_SwitchSwap(short *tex)
 	return false;
 }
 
-void XL_SwapSwitchTextures(line_t * line, int snum)
+void XL_SwapSwitchTextures(line_t *line, int snum)
 {
 	int     sidenum = line->sidenum[snum];
 	side_t *side;
@@ -475,7 +475,7 @@ void XL_SwapSwitchTextures(line_t * line, int snum)
 }
 
 // Changes texture of the given line.
-void XL_ChangeTexture(line_t * line, int sidenum, int section, int texture)
+void XL_ChangeTexture(line_t *line, int sidenum, int section, int texture)
 {
 	side_t *side = sides + line->sidenum[sidenum];
 
@@ -494,8 +494,8 @@ void XL_ChangeTexture(line_t * line, int sidenum, int section, int texture)
 }
 
 // Apply the function defined by the line's class and parameters.
-void XL_DoFunction(linetype_t * info, line_t * line, int sidenum,
-				   mobj_t * act_thing)
+void XL_DoFunction(linetype_t * info, line_t *line, int sidenum,
+				   mobj_t *act_thing)
 {
 	xgline_t *xg = line->xg;
 	player_t *activator = act_thing->player;
@@ -738,7 +738,7 @@ void XL_DoFunction(linetype_t * info, line_t * line, int sidenum,
 	}
 }
 
-void XL_Message(mobj_t * act, char *msg, boolean global)
+void XL_Message(mobj_t *act, char *msg, boolean global)
 {
 	player_t *pl;
 	int     i;
@@ -786,8 +786,8 @@ void XL_Message(mobj_t * act, char *msg, boolean global)
 /*
  * XL_ActivateLine
  */
-void XL_ActivateLine(boolean activating, linetype_t * info, line_t * line,
-					 int sidenum, mobj_t * data)
+void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
+					 int sidenum, mobj_t *data)
 {
 	xgline_t *xg = line->xg;
 	mobj_t *activator_thing = (mobj_t *) data;
@@ -858,8 +858,8 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t * line,
 	xg->timer = 0;				// Reset timer.
 
 	// Activate lines with a matching tag with Group Activation.
-	if((activating && info->flags2 & LTF2_GROUP_ACT)
-	   || (!activating && info->flags2 & LTF2_GROUP_DEACT))
+	if((activating && info->flags2 & LTF2_GROUP_ACT) ||
+	   (!activating && info->flags2 & LTF2_GROUP_DEACT))
 	{
 		XL_TraverseLines(line, LREF_LINE_TAGGED, true, activating, 0,
 						 XLTrav_SmartActivate);
@@ -875,9 +875,9 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t * line,
 
 	// Should we apply the function of the line? Functions are defined by
 	// the class of the line type.
-	if(((activating && info->flags2 & LTF2_WHEN_ACTIVATED)
-		|| (!activating && info->flags2 & LTF2_WHEN_DEACTIVATED))
-	   && (!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1))
+	if(((activating && info->flags2 & LTF2_WHEN_ACTIVATED) ||
+		(!activating && info->flags2 & LTF2_WHEN_DEACTIVATED)) &&
+	   (!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1))
 	{
 		XL_DoFunction(info, line, sidenum, activator_thing);
 	}
@@ -890,7 +890,7 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t * line,
 /*
  * XL_CheckKeys
  */
-boolean XL_CheckKeys(mobj_t * mo, int flags2)
+boolean XL_CheckKeys(mobj_t *mo, int flags2)
 {
 	player_t *act = mo->player;
 
@@ -928,7 +928,7 @@ boolean XL_CheckKeys(mobj_t * mo, int flags2)
 // Returns true if the event is processed.
 // Line must be extended.
 // Most conditions use AND (act method, game mode and difficult use OR).
-int XL_LineEvent(int evtype, int linetype, line_t * line, int sidenum,
+int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
 				 void *data)
 {
 	xgline_t *xg = line->xg;
@@ -972,8 +972,8 @@ int XL_LineEvent(int evtype, int linetype, line_t * line, int sidenum,
 
 	// Check restrictions and conditions that will prevent processing
 	// the event.
-	if((active && info->act_type == LTACT_COUNTED_OFF)
-	   || (!active && info->act_type == LTACT_COUNTED_ON))
+	if((active && info->act_type == LTACT_COUNTED_OFF) ||
+	   (!active && info->act_type == LTACT_COUNTED_ON))
 	{
 		// Can't be processed at this time.
 		XG_Dev("  Line %i: Active=%i, type=%i ABORTING EVENT", line - lines,
@@ -983,51 +983,49 @@ int XL_LineEvent(int evtype, int linetype, line_t * line, int sidenum,
 	// Check the type of the event vs. the requirements of the line.
 	if(evtype == XLE_CHAIN)
 		goto type_passes;
-	if(evtype == XLE_USE
-	   && ((info->flags & LTF_PLAYER_USE_A && activator && !active)
-		   || (info->flags & LTF_OTHER_USE_A && !activator && !active)
-		   || (info->flags & LTF_PLAYER_USE_D && activator && active)
-		   || (info->flags & LTF_OTHER_USE_D && !activator && active)))
+	if(evtype == XLE_USE &&
+	   ((info->flags & LTF_PLAYER_USE_A && activator && !active) ||
+		(info->flags & LTF_OTHER_USE_A && !activator && !active) ||
+		(info->flags & LTF_PLAYER_USE_D && activator && active) ||
+		(info->flags & LTF_OTHER_USE_D && !activator && active)))
 		goto type_passes;
-	if(evtype == XLE_SHOOT
-	   && ((info->flags & LTF_PLAYER_SHOOT_A && activator && !active)
-		   || (info->flags & LTF_OTHER_SHOOT_A && !activator && !active)
-		   || (info->flags & LTF_PLAYER_SHOOT_D && activator && active)
-		   || (info->flags & LTF_OTHER_SHOOT_D && !activator && active)))
+	if(evtype == XLE_SHOOT &&
+	   ((info->flags & LTF_PLAYER_SHOOT_A && activator && !active) ||
+		(info->flags & LTF_OTHER_SHOOT_A && !activator && !active) ||
+		(info->flags & LTF_PLAYER_SHOOT_D && activator && active) ||
+		(info->flags & LTF_OTHER_SHOOT_D && !activator && active)))
 		goto type_passes;
-	if(evtype == XLE_CROSS
-	   && ((info->flags & LTF_PLAYER_CROSS_A && activator && !active)
-		   || (info->flags & LTF_MONSTER_CROSS_A
-			   && activator_thing->flags & MF_COUNTKILL && !active)
-		   || (info->flags & LTF_MISSILE_CROSS_A
-			   && activator_thing->flags & MF_MISSILE && !active)
-		   || (info->flags & LTF_ANY_CROSS_A && !active)
-		   || (info->flags & LTF_PLAYER_CROSS_D && activator && active)
-		   || (info->flags & LTF_MONSTER_CROSS_D
-			   && activator_thing->flags & MF_COUNTKILL && active)
-		   || (info->flags & LTF_MISSILE_CROSS_D
-			   && activator_thing->flags & MF_MISSILE && active)
-		   || (info->flags & LTF_ANY_CROSS_D && active)))
+	if(evtype == XLE_CROSS &&
+	   ((info->flags & LTF_PLAYER_CROSS_A && activator && !active) ||
+		(info->flags & LTF_MONSTER_CROSS_A &&
+		 activator_thing->flags & MF_COUNTKILL && !active) ||
+		(info->flags & LTF_MISSILE_CROSS_A &&
+		 activator_thing->flags & MF_MISSILE && !active) ||
+		(info->flags & LTF_ANY_CROSS_A && !active) ||
+		(info->flags & LTF_PLAYER_CROSS_D && activator && active) ||
+		(info->flags & LTF_MONSTER_CROSS_D &&
+		 activator_thing->flags & MF_COUNTKILL && active) ||
+		(info->flags & LTF_MISSILE_CROSS_D &&
+		 activator_thing->flags & MF_MISSILE && active) ||
+		(info->flags & LTF_ANY_CROSS_D && active)))
 		goto type_passes;
-	if(evtype == XLE_HIT
-	   && ((info->flags & LTF_PLAYER_HIT_A && activator && !active)
-		   || (info->flags & LTF_OTHER_HIT_A && !activator && !active)
-		   || (info->flags & LTF_MONSTER_HIT_A
-			   && activator_thing->flags & MF_COUNTKILL && !active)
-		   || (info->flags & LTF_MISSILE_HIT_A
-			   && activator_thing->flags & MF_MISSILE && !active)
-		   || (info->flags & LTF_ANY_HIT_A && !active)
-		   || (info->flags & LTF_PLAYER_HIT_D && activator && active)
-		   || (info->flags & LTF_OTHER_HIT_D && !activator && active)
-		   || (info->flags & LTF_MONSTER_HIT_D
-			   && activator_thing->flags & MF_COUNTKILL && active)
-		   || (info->flags & LTF_MISSILE_HIT_D
-			   && activator_thing->flags & MF_MISSILE && active)
-		   || (info->flags & LTF_ANY_HIT_D && active)))
+	if(evtype == XLE_HIT &&
+	   ((info->flags & LTF_PLAYER_HIT_A && activator && !active) ||
+		(info->flags & LTF_OTHER_HIT_A && !activator && !active) ||
+		(info->flags & LTF_MONSTER_HIT_A &&
+		 activator_thing->flags & MF_COUNTKILL && !active) ||
+		(info->flags & LTF_MISSILE_HIT_A && activator_thing->flags & MF_MISSILE
+		 && !active) || (info->flags & LTF_ANY_HIT_A && !active) ||
+		(info->flags & LTF_PLAYER_HIT_D && activator && active) ||
+		(info->flags & LTF_OTHER_HIT_D && !activator && active) ||
+		(info->flags & LTF_MONSTER_HIT_D &&
+		 activator_thing->flags & MF_COUNTKILL && active) ||
+		(info->flags & LTF_MISSILE_HIT_D && activator_thing->flags & MF_MISSILE
+		 && active) || (info->flags & LTF_ANY_HIT_D && active)))
 		goto type_passes;
-	if(evtype == XLE_TICKER
-	   && ((info->flags & LTF_TICKER_A && !active)
-		   || (info->flags & LTF_TICKER_D && active)))
+	if(evtype == XLE_TICKER &&
+	   ((info->flags & LTF_TICKER_A && !active) ||
+		(info->flags & LTF_TICKER_D && active)))
 		goto type_passes;
 
 	// Type doesn't pass, sorry.
@@ -1062,8 +1060,8 @@ int XL_LineEvent(int evtype, int linetype, line_t * line, int sidenum,
 			return false;
 		}
 	}
-	if((evtype == XLE_USE || evtype == XLE_SHOOT || evtype == XLE_CROSS)
-	   && !(info->flags2 & LTF2_TWOSIDED))
+	if((evtype == XLE_USE || evtype == XLE_SHOOT || evtype == XLE_CROSS) &&
+	   !(info->flags2 & LTF2_TWOSIDED))
 	{
 		// Only allow (de)activation from the front side.
 		if(sidenum != 0)
@@ -1082,17 +1080,17 @@ int XL_LineEvent(int evtype, int linetype, line_t * line, int sidenum,
 	}
 
 	// More requirements.
-	if(info->flags2 & LTF2_HEALTH_ABOVE
-	   && activator_thing->health <= info->aparm[0])
+	if(info->flags2 & LTF2_HEALTH_ABOVE &&
+	   activator_thing->health <= info->aparm[0])
 		return false;
-	if(info->flags2 & LTF2_HEALTH_BELOW
-	   && activator_thing->health >= info->aparm[1])
+	if(info->flags2 & LTF2_HEALTH_BELOW &&
+	   activator_thing->health >= info->aparm[1])
 		return false;
-	if(info->flags2 & LTF2_POWER_ABOVE
-	   && (!activator || activator->armorpoints <= info->aparm[2]))
+	if(info->flags2 & LTF2_POWER_ABOVE &&
+	   (!activator || activator->armorpoints <= info->aparm[2]))
 		return false;
-	if(info->flags2 & LTF2_POWER_BELOW
-	   && (!activator || activator->armorpoints >= info->aparm[3]))
+	if(info->flags2 & LTF2_POWER_BELOW &&
+	   (!activator || activator->armorpoints >= info->aparm[3]))
 		return false;
 	if(info->flags2 & LTF2_LINE_ACTIVE)
 		if(!XL_CheckLineStatus(line, info->aparm[4], info->aparm[5], true))
@@ -1188,7 +1186,7 @@ int XL_LineEvent(int evtype, int linetype, line_t * line, int sidenum,
 }
 
 // Returns true if the event was processed.
-int XL_CrossLine(line_t * line, int sidenum, mobj_t * thing)
+int XL_CrossLine(line_t *line, int sidenum, mobj_t *thing)
 {
 	if(!line->xg)
 		return false;
@@ -1196,7 +1194,7 @@ int XL_CrossLine(line_t * line, int sidenum, mobj_t * thing)
 }
 
 // Returns true if the event was processed.
-int XL_UseLine(line_t * line, int sidenum, mobj_t * thing)
+int XL_UseLine(line_t *line, int sidenum, mobj_t *thing)
 {
 	if(!line->xg)
 		return false;
@@ -1204,22 +1202,21 @@ int XL_UseLine(line_t * line, int sidenum, mobj_t * thing)
 }
 
 // Returns true if the event was processed.
-int XL_ShootLine(line_t * line, int sidenum, mobj_t * thing)
+int XL_ShootLine(line_t *line, int sidenum, mobj_t *thing)
 {
 	if(!line->xg)
 		return false;
 	return XL_LineEvent(XLE_SHOOT, 0, line, sidenum, thing);
 }
 
-int XL_HitLine(line_t * line, int sidenum, mobj_t * thing)
+int XL_HitLine(line_t *line, int sidenum, mobj_t *thing)
 {
 	if(!line->xg)
 		return false;
 	return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(line_t * line, int chain, boolean activating,
-				mobj_t * act_thing)
+void XL_DoChain(line_t *line, int chain, boolean activating, mobj_t *act_thing)
 {
 	line_t  dummy;
 	xgline_t dummyxg;
@@ -1238,7 +1235,7 @@ void XL_DoChain(line_t * line, int chain, boolean activating,
 	XL_LineEvent(XLE_CHAIN, chain, &dummy, 0, act_thing);
 }
 
-void XL_ChainSequenceThink(line_t * line)
+void XL_ChainSequenceThink(line_t *line)
 {
 	xgline_t *xg = line->xg;
 	linetype_t *info = &xg->info;
@@ -1271,8 +1268,8 @@ void XL_ChainSequenceThink(line_t * line)
 			xg->chidx++;
 
 			// Are we out of chains?
-			if((xg->chidx == DDLT_MAX_PARAMS || !info->iparm[xg->chidx])
-			   && info->iparm[0] & CHSF_LOOP)
+			if((xg->chidx == DDLT_MAX_PARAMS || !info->iparm[xg->chidx]) &&
+			   info->iparm[0] & CHSF_LOOP)
 			{
 				// Loop back to beginning.
 				xg->chidx = 1;
@@ -1295,7 +1292,7 @@ void XL_ChainSequenceThink(line_t * line)
 }
 
 // Called once a tic for each XG line.
-void XL_Think(line_t * line)
+void XL_Think(line_t *line)
 {
 	xgline_t *xg = line->xg;
 	linetype_t *info = &xg->info;
@@ -1315,9 +1312,9 @@ void XL_Think(line_t * line)
 	}
 
 	// Activation by ticker.
-	if((info->ticker_end <= 0
-		|| (levtime >= info->ticker_start && levtime <= info->ticker_end))
-	   && xg->ticker_timer > info->ticker_interval)
+	if((info->ticker_end <= 0 ||
+		(levtime >= info->ticker_start && levtime <= info->ticker_end)) &&
+	   xg->ticker_timer > info->ticker_interval)
 	{
 		if(info->flags & LTF_TICKER)
 		{
@@ -1325,9 +1322,9 @@ void XL_Think(line_t * line)
 			XL_LineEvent(XLE_TICKER, 0, line, 0, &dummything);
 		}
 		// How about some forced functions?
-		if(((info->flags2 & LTF2_WHEN_ACTIVE && xg->active)
-			|| (info->flags2 & LTF2_WHEN_INACTIVE && !xg->active))
-		   && (!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1))
+		if(((info->flags2 & LTF2_WHEN_ACTIVE && xg->active) ||
+			(info->flags2 & LTF2_WHEN_INACTIVE && !xg->active)) &&
+		   (!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1))
 		{
 			XL_DoFunction(info, line, 0, xg->activator);
 		}
@@ -1336,11 +1333,10 @@ void XL_Think(line_t * line)
 	XL_ChainSequenceThink(line);
 
 	// Check for automatical (de)activation.
-	if(((info->act_type == LTACT_COUNTED_OFF
-		 || info->act_type == LTACT_FLIP_COUNTED_OFF) && xg->active)
-	   ||
-	   ((info->act_type == LTACT_COUNTED_ON
-		 || info->act_type == LTACT_FLIP_COUNTED_ON) && !xg->active))
+	if(((info->act_type == LTACT_COUNTED_OFF ||
+		 info->act_type == LTACT_FLIP_COUNTED_OFF) && xg->active) ||
+	   ((info->act_type == LTACT_COUNTED_ON ||
+		 info->act_type == LTACT_FLIP_COUNTED_ON) && !xg->active))
 	{
 		if(info->act_time >= 0 && xg->timer > FLT2TIC(info->act_time))
 		{

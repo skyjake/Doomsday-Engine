@@ -36,9 +36,9 @@ void            P_SpawnSpecials(void);
 void            P_UpdateSpecials(void);
 
 // when needed
-boolean         P_ExecuteLineSpecial(int special, byte *args, line_t * line,
-									 int side, mobj_t * mo);
-boolean         P_ActivateLine(line_t * ld, mobj_t * mo, int side,
+boolean         P_ExecuteLineSpecial(int special, byte *args, line_t *line,
+									 int side, mobj_t *mo);
+boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
 							   int activationType);
 //boolean P_UseSpecialLine ( mobj_t *thing, line_t *line);
 //void    P_ShootSpecialLine ( mobj_t *thing, line_t *line);
@@ -50,17 +50,17 @@ void            P_PlayerOnSpecialFlat(player_t * player, int floorType);
 //int twoSided(int sector,int line);
 //sector_t *getSector(int currentSector,int line,int side);
 //side_t  *getSide(int currentSector,int line, int side);
-fixed_t         P_FindLowestFloorSurrounding(sector_t * sec);
-fixed_t         P_FindHighestFloorSurrounding(sector_t * sec);
-fixed_t         P_FindNextHighestFloor(sector_t * sec, int currentheight);
-fixed_t         P_FindLowestCeilingSurrounding(sector_t * sec);
-fixed_t         P_FindHighestCeilingSurrounding(sector_t * sec);
+fixed_t         P_FindLowestFloorSurrounding(sector_t *sec);
+fixed_t         P_FindHighestFloorSurrounding(sector_t *sec);
+fixed_t         P_FindNextHighestFloor(sector_t *sec, int currentheight);
+fixed_t         P_FindLowestCeilingSurrounding(sector_t *sec);
+fixed_t         P_FindHighestCeilingSurrounding(sector_t *sec);
 
 //int P_FindSectorFromLineTag(line_t  *line,int start);
 int             P_FindSectorFromTag(int tag, int start);
 
 //int P_FindMinSurroundingLight(sector_t *sector,int max);
-sector_t       *getNextSector(line_t * line, sector_t * sec);
+sector_t       *getNextSector(line_t *line, sector_t *sec);
 line_t         *P_FindLine(int lineTag, int *searchPosition);
 
 //
@@ -119,9 +119,9 @@ typedef struct {
 
 void            T_Phase(phase_t * phase);
 void            T_Light(light_t * light);
-void            P_SpawnPhasedLight(sector_t * sector, int base, int index);
-void            P_SpawnLightSequence(sector_t * sector, int indexStep);
-boolean         EV_SpawnLight(line_t * line, byte *arg, lighttype_t type);
+void            P_SpawnPhasedLight(sector_t *sector, int base, int index);
+void            P_SpawnLightSequence(sector_t *sector, int indexStep);
+boolean         EV_SpawnLight(line_t *line, byte *arg, lighttype_t type);
 
 #if 0
 typedef struct {
@@ -169,18 +169,18 @@ typedef struct {
 #define LIGHT_SEQUENCE_ALT      4
 
 void            T_LightFlash(lightflash_t * flash);
-void            P_SpawnLightFlash(sector_t * sector);
+void            P_SpawnLightFlash(sector_t *sector);
 void            T_StrobeFlash(strobe_t * flash);
-void            P_SpawnStrobeFlash(sector_t * sector, int fastOrSlow,
+void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow,
 								   int inSync);
-void            EV_StartLightStrobing(line_t * line);
-void            EV_TurnTagLightsOff(line_t * line);
-void            EV_LightTurnOn(line_t * line, int bright);
+void            EV_StartLightStrobing(line_t *line);
+void            EV_TurnTagLightsOff(line_t *line);
+void            EV_LightTurnOn(line_t *line, int bright);
 void            T_Glow(glow_t * g);
-void            P_SpawnGlowingLight(sector_t * sector);
+void            P_SpawnGlowingLight(sector_t *sector);
 void            T_Phase(phase_t * phase);
-void            P_SpawnPhasedLight(sector_t * sector, int base, int index);
-void            P_SpawnLightSequence(sector_t * sector, int indexStep);
+void            P_SpawnPhasedLight(sector_t *sector, int base, int index);
+void            P_SpawnLightSequence(sector_t *sector, int indexStep);
 #endif
 
 /*
@@ -216,7 +216,7 @@ typedef struct {
 
 extern button_t buttonlist[MAXBUTTONS];
 
-void            P_ChangeSwitchTexture(line_t * line, int useAgain);
+void            P_ChangeSwitchTexture(line_t *line, int useAgain);
 void            P_InitSwitchList(void);
 
 /*
@@ -266,11 +266,11 @@ typedef struct {
 extern plat_t  *activeplats[MAXPLATS];
 
 void            T_PlatRaise(plat_t * plat);
-int             EV_DoPlat(line_t * line, byte *args, plattype_e type,
+int             EV_DoPlat(line_t *line, byte *args, plattype_e type,
 						  int amount);
 void            P_AddActivePlat(plat_t * plat);
 void            P_RemoveActivePlat(plat_t * plat);
-void            EV_StopPlat(line_t * line, byte *args);
+void            EV_StopPlat(line_t *line, byte *args);
 
 /*
    ===============================================================================
@@ -301,8 +301,8 @@ typedef struct {
 #define VDOORSPEED FRACUNIT*2
 #define VDOORWAIT 150
 
-boolean         EV_VerticalDoor(line_t * line, mobj_t * thing);
-int             EV_DoDoor(line_t * line, byte *args, vldoor_e type);
+boolean         EV_VerticalDoor(line_t *line, mobj_t *thing);
+int             EV_DoDoor(line_t *line, byte *args, vldoor_e type);
 void            T_VerticalDoor(vldoor_t * door);
 
 //void P_SpawnDoorCloseIn30(sector_t *sec);
@@ -344,11 +344,11 @@ typedef struct {
 
 extern ceiling_t *activeceilings[MAXCEILINGS];
 
-int             EV_DoCeiling(line_t * line, byte *args, ceiling_e type);
+int             EV_DoCeiling(line_t *line, byte *args, ceiling_e type);
 void            T_MoveCeiling(ceiling_t * ceiling);
 void            P_AddActiveCeiling(ceiling_t * c);
 void            P_RemoveActiveCeiling(ceiling_t * c);
-int             EV_CeilingCrushStop(line_t * line, byte *args);
+int             EV_CeilingCrushStop(line_t *line, byte *args);
 
 /*
    ===============================================================================
@@ -431,19 +431,19 @@ typedef enum {
 	STAIRS_PHASED
 } stairs_e;
 
-result_e        T_MovePlane(sector_t * sector, fixed_t speed, fixed_t dest,
+result_e        T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
 							int crush, int floorOrCeiling, int direction);
 
-int             EV_BuildStairs(line_t * line, byte *args, int direction,
+int             EV_BuildStairs(line_t *line, byte *args, int direction,
 							   stairs_e type);
-int             EV_DoFloor(line_t * line, byte *args, floor_e floortype);
+int             EV_DoFloor(line_t *line, byte *args, floor_e floortype);
 void            T_MoveFloor(floormove_t * floor);
 void            T_BuildPillar(pillar_t * pillar);
 void            T_FloorWaggle(floorWaggle_t * waggle);
-int             EV_BuildPillar(line_t * line, byte *args, boolean crush);
-int             EV_OpenPillar(line_t * line, byte *args);
-int             EV_DoFloorAndCeiling(line_t * line, byte *args, boolean raise);
-int             EV_FloorCrushStop(line_t * line, byte *args);
+int             EV_BuildPillar(line_t *line, byte *args, boolean crush);
+int             EV_OpenPillar(line_t *line, byte *args);
+int             EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise);
+int             EV_FloorCrushStop(line_t *line, byte *args);
 boolean         EV_StartFloorWaggle(int tag, int height, int speed, int offset,
 									int timer);
 
@@ -453,9 +453,9 @@ boolean         EV_StartFloorWaggle(int tag, int height, int speed, int offset,
 //
 //--------------------------------------------------------------------------
 
-boolean         P_Teleport(mobj_t * thing, fixed_t x, fixed_t y, angle_t angle,
+boolean         P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
 						   boolean useFog);
-boolean         EV_Teleport(int tid, mobj_t * thing, boolean fog);
+boolean         EV_Teleport(int tid, mobj_t *thing, boolean fog);
 
 //--------------------------------------------------------------------------
 //
@@ -511,9 +511,9 @@ typedef struct {
 } acsstore_t;
 
 void            P_LoadACScripts(int lump);
-boolean         P_StartACS(int number, int map, byte *args, mobj_t * activator,
-						   line_t * line, int side);
-boolean         P_StartLockedACS(line_t * line, byte *args, mobj_t * mo,
+boolean         P_StartACS(int number, int map, byte *args, mobj_t *activator,
+						   line_t *line, int side);
+boolean         P_StartLockedACS(line_t *line, byte *args, mobj_t *mo,
 								 int side);
 boolean         P_TerminateACS(int number, int map);
 boolean         P_SuspendACS(int number, int map);

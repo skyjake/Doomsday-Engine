@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.9  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.8  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -380,7 +383,7 @@ boolean P_GivePower(player_t * player, int power)
 //
 // P_TouchSpecialThing
 //
-void P_TouchSpecialThing(mobj_t * special, mobj_t * toucher)
+void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 {
 	player_t *player;
 	fixed_t delta;
@@ -701,7 +704,7 @@ void P_TouchSpecialThing(mobj_t * special, mobj_t * toucher)
 //===========================================================================
 // P_KillMobj
 //===========================================================================
-void P_KillMobj(mobj_t * source, mobj_t * target)
+void P_KillMobj(mobj_t *source, mobj_t *target)
 {
 	mobjtype_t item;
 	mobj_t *mo;
@@ -760,8 +763,8 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 
 	}
 
-	if(target->health < -target->info->spawnhealth
-	   && target->info->xdeathstate)
+	if(target->health < -target->info->spawnhealth &&
+	   target->info->xdeathstate)
 	{
 		P_SetMobjState(target, target->info->xdeathstate);
 	}
@@ -815,7 +818,7 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 //  Source can be NULL for slime, barrel explosions
 //  and other environmental stuff.
 //===========================================================================
-void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
+void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 				  int damage)
 {
 	unsigned ang;
@@ -846,9 +849,9 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 	// Some close combat weapons should not
 	// inflict thrust and push the victim out of reach,
 	// thus kick away unless using the chainsaw.
-	if(inflictor && !(target->flags & MF_NOCLIP)
-	   && (!source || !source->player
-		   || source->player->readyweapon != wp_chainsaw))
+	if(inflictor && !(target->flags & MF_NOCLIP) &&
+	   (!source || !source->player ||
+		source->player->readyweapon != wp_chainsaw))
 	{
 		ang =
 			R_PointToAngle2(inflictor->x, inflictor->y, target->x, target->y);
@@ -856,8 +859,8 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		thrust = damage * (FRACUNIT >> 3) * 100 / target->info->mass;
 
 		// make fall forwards sometimes
-		if(damage < 40 && damage > target->health
-		   && target->z - inflictor->z > 64 * FRACUNIT && (P_Random() & 1))
+		if(damage < 40 && damage > target->health &&
+		   target->z - inflictor->z > 64 * FRACUNIT && (P_Random() & 1))
 		{
 			ang += ANG180;
 			thrust *= 4;
@@ -888,24 +891,24 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 			if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
 				return;
 			// Same color, no damage?
-			if(cfg.noTeamDamage
-			   && cfg.PlayerColor[player - players] ==
+			if(cfg.noTeamDamage &&
+			   cfg.PlayerColor[player - players] ==
 			   cfg.PlayerColor[source->player - players])
 				return;
 		}
 
 		// end of game hell hack
-		if(target->subsector->sector->special == 11
-		   && damage >= target->health)
+		if(target->subsector->sector->special == 11 &&
+		   damage >= target->health)
 		{
 			damage = target->health - 1;
 		}
 
 		// Below certain threshold,
 		// ignore damage in GOD mode, or with INVUL power.
-		if(damage < 1000
-		   && ((player->cheats & CF_GODMODE)
-			   || player->powers[pw_invulnerability]))
+		if(damage < 1000 &&
+		   ((player->cheats & CF_GODMODE) ||
+			player->powers[pw_invulnerability]))
 		{
 			return;
 		}
@@ -956,8 +959,8 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		return;
 	}
 
-	if((P_Random() < target->info->painchance)
-	   && !(target->flags & MF_SKULLFLY))
+	if((P_Random() < target->info->painchance) &&
+	   !(target->flags & MF_SKULLFLY))
 	{
 		target->flags |= MF_JUSTHIT;	// fight back!
 
@@ -966,15 +969,15 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 
 	target->reactiontime = 0;	// we're awake now...   
 
-	if((!target->threshold || target->type == MT_VILE) && source
-	   && source != target && source->type != MT_VILE)
+	if((!target->threshold || target->type == MT_VILE) && source &&
+	   source != target && source->type != MT_VILE)
 	{
 		// if not intent on another player,
 		// chase after this one
 		target->target = source;
 		target->threshold = BASETHRESHOLD;
-		if(target->state == &states[target->info->spawnstate]
-		   && target->info->seestate != S_NULL)
+		if(target->state == &states[target->info->spawnstate] &&
+		   target->info->seestate != S_NULL)
 			P_SetMobjState(target, target->info->seestate);
 	}
 }

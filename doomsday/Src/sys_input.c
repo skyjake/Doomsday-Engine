@@ -377,10 +377,9 @@ int I_Init(void)
 	if(FAILED
 	   (hr =
 		CoCreateInstance(&CLSID_DirectInput8, NULL, CLSCTX_INPROC_SERVER,
-						 &IID_IDirectInput8, &dInput))
-	   || FAILED(hr =
-				 IDirectInput8_Initialize(dInput, hInstApp,
-										  DIRECTINPUT_VERSION)))
+						 &IID_IDirectInput8, &dInput)) ||
+	   FAILED(hr =
+			  IDirectInput8_Initialize(dInput, hInstApp, DIRECTINPUT_VERSION)))
 	{
 		Con_Message("I_Init: DirectInput 8 init failed (0x%x).\n", hr);
 		// Try DInput3 instead.
@@ -388,8 +387,8 @@ int I_Init(void)
 		if(FAILED
 		   (hr =
 			CoCreateInstance(&CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER,
-							 &IID_IDirectInput2W, &dInput))
-		   || FAILED(hr = IDirectInput2_Initialize(dInput, hInstApp, 0x0300)))
+							 &IID_IDirectInput2W, &dInput)) ||
+		   FAILED(hr = IDirectInput2_Initialize(dInput, hInstApp, 0x0300)))
 		{
 			Con_Message
 				("I_Init: failed to create DirectInput 3 object (0x%x).\n",

@@ -104,7 +104,7 @@ mobj_t *onmobj;					//generic global onmobj...used for landing on pods/players
    ==================
  */
 
-boolean PIT_StompThing(mobj_t * thing, void *data)
+boolean PIT_StompThing(mobj_t *thing, void *data)
 {
 	fixed_t blockdist;
 
@@ -136,7 +136,7 @@ boolean PIT_StompThing(mobj_t * thing, void *data)
    ===================
  */
 
-boolean P_TeleportMove(mobj_t * thing, fixed_t x, fixed_t y)
+boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y)
 {
 	int     xl, xh, yl, yh, bx, by;
 	subsector_t *newsubsec;
@@ -214,12 +214,12 @@ boolean P_TeleportMove(mobj_t * thing, fixed_t x, fixed_t y)
    ==================
  */
 
-boolean PIT_CheckLine(line_t * ld, void *data)
+boolean PIT_CheckLine(line_t *ld, void *data)
 {
-	if(tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-	   || tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-	   || tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-	   || tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+	if(tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
+	   tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
+	   tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+	   tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
 	{
 		return (true);
 	}
@@ -259,8 +259,8 @@ boolean PIT_CheckLine(line_t * ld, void *data)
 		{						// Explicitly blocking everything
 			return (false);
 		}
-		if(!tmthing->player && ld->flags & ML_BLOCKMONSTERS
-		   && tmthing->type != MT_POD)
+		if(!tmthing->player && ld->flags & ML_BLOCKMONSTERS &&
+		   tmthing->type != MT_POD)
 		{						// Block monsters only
 			return (false);
 		}
@@ -294,7 +294,7 @@ boolean PIT_CheckLine(line_t * ld, void *data)
 //
 //---------------------------------------------------------------------------
 
-boolean PIT_CheckThing(mobj_t * thing, void *data)
+boolean PIT_CheckThing(mobj_t *thing, void *data)
 {
 	fixed_t blockdist;
 	boolean solid;
@@ -315,18 +315,18 @@ boolean PIT_CheckThing(mobj_t * thing, void *data)
 	}
 	if(tmthing->flags2 & MF2_PASSMOBJ)
 	{							// check if a mobj passed over/under another object
-		if((tmthing->type == MT_IMP || tmthing->type == MT_WIZARD)
-		   && (thing->type == MT_IMP || thing->type == MT_WIZARD))
+		if((tmthing->type == MT_IMP || tmthing->type == MT_WIZARD) &&
+		   (thing->type == MT_IMP || thing->type == MT_WIZARD))
 		{						// don't let imps/wizards fly over other imps/wizards
 			return false;
 		}
-		if(tmthing->z > thing->z + thing->height
-		   && !(thing->flags & MF_SPECIAL))
+		if(tmthing->z > thing->z + thing->height &&
+		   !(thing->flags & MF_SPECIAL))
 		{
 			return (true);
 		}
-		else if(tmthing->z + tmthing->height < thing->z
-				&& !(thing->flags & MF_SPECIAL))
+		else if(tmthing->z + tmthing->height < thing->z &&
+				!(thing->flags & MF_SPECIAL))
 		{						// under thing
 			return (true);
 		}
@@ -382,8 +382,8 @@ boolean PIT_CheckThing(mobj_t * thing, void *data)
 			S_StartSound(sfx_ripslop, tmthing);
 			damage = ((P_Random() & 3) + 2) * tmthing->damage;
 			P_DamageMobj(thing, tmthing, tmthing->target, damage);
-			if(thing->flags2 & MF2_PUSHABLE
-			   && !(tmthing->flags2 & MF2_CANNOTPUSH))
+			if(thing->flags2 & MF2_PUSHABLE &&
+			   !(tmthing->flags2 & MF2_CANNOTPUSH))
 			{					// Push thing
 				thing->momx += tmthing->momx >> 2;
 				thing->momy += tmthing->momy >> 2;
@@ -431,7 +431,7 @@ boolean PIT_CheckThing(mobj_t * thing, void *data)
 //
 //---------------------------------------------------------------------------
 
-boolean PIT_CheckOnmobjZ(mobj_t * thing, void *data)
+boolean PIT_CheckOnmobjZ(mobj_t *thing, void *data)
 {
 	fixed_t blockdist;
 
@@ -480,7 +480,7 @@ boolean PIT_CheckOnmobjZ(mobj_t * thing, void *data)
 //
 //----------------------------------------------------------------------------
 
-boolean P_TestMobjLocation(mobj_t * mobj)
+boolean P_TestMobjLocation(mobj_t *mobj)
 {
 	int     flags;
 
@@ -489,8 +489,8 @@ boolean P_TestMobjLocation(mobj_t * mobj)
 	if(P_CheckPosition(mobj, mobj->x, mobj->y))
 	{							// XY is ok, now check Z
 		mobj->flags = flags;
-		if((mobj->z < mobj->floorz)
-		   || (mobj->z + mobj->height > mobj->ceilingz))
+		if((mobj->z < mobj->floorz) ||
+		   (mobj->z + mobj->height > mobj->ceilingz))
 		{						// Bad Z
 			return (false);
 		}
@@ -526,7 +526,7 @@ boolean P_TestMobjLocation(mobj_t * mobj)
    ==================
  */
 
-boolean P_CheckPosition(mobj_t * thing, fixed_t x, fixed_t y)
+boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
 {
 	int     xl, xh, yl, yh, bx, by;
 	subsector_t *newsubsec;
@@ -598,7 +598,7 @@ boolean P_CheckPosition(mobj_t * thing, fixed_t x, fixed_t y)
 //      Checks if the new Z position is legal
 //=============================================================================
 
-mobj_t *P_CheckOnmobj(mobj_t * thing)
+mobj_t *P_CheckOnmobj(mobj_t *thing)
 {
 	int     xl, xh, yl, yh, bx, by;
 	subsector_t *newsubsec;
@@ -666,7 +666,7 @@ mobj_t *P_CheckOnmobj(mobj_t * thing)
 //      Fake the zmovement so that we can check if a move is legal
 //=============================================================================
 
-void P_FakeZMovement(mobj_t * mo)
+void P_FakeZMovement(mobj_t *mo)
 {
 	int     dist;
 	int     delta;
@@ -690,8 +690,8 @@ void P_FakeZMovement(mobj_t * mo)
 				mo->z += FLOATSPEED;
 		}
 	}
-	if(mo->player && mo->flags2 & MF2_FLY && !(mo->z <= mo->floorz)
-	   && leveltime & 2)
+	if(mo->player && mo->flags2 & MF2_FLY && !(mo->z <= mo->floorz) &&
+	   leveltime & 2)
 	{
 		mo->z += finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK];
 	}
@@ -748,7 +748,7 @@ void P_FakeZMovement(mobj_t * mo)
 //
 //==========================================================================
 
-void CheckMissileImpact(mobj_t * mobj)
+void CheckMissileImpact(mobj_t *mobj)
 {
 	int     i;
 
@@ -777,7 +777,7 @@ void CheckMissileImpact(mobj_t * mobj)
    ===================
  */
 
-boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y)
+boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y)
 {
 	fixed_t oldx, oldy;
 	int     side, oldside;
@@ -797,9 +797,8 @@ boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y)
 			return false;
 		}
 		floatok = true;
-		if(!(thing->flags & MF_TELEPORT)
-		   && tmceilingz - thing->z < thing->height
-		   && !(thing->flags2 & MF2_FLY))
+		if(!(thing->flags & MF_TELEPORT) &&
+		   tmceilingz - thing->z < thing->height && !(thing->flags2 & MF2_FLY))
 		{						// mobj must lower itself to fit
 			CheckMissileImpact(thing);
 			return false;
@@ -811,8 +810,8 @@ boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y)
 				thing->momz = -8 * FRACUNIT;
 				return false;
 			}
-			else if(thing->z < tmfloorz
-					&& tmfloorz - tmdropoffz > 24 * FRACUNIT)
+			else if(thing->z < tmfloorz &&
+					tmfloorz - tmdropoffz > 24 * FRACUNIT)
 			{
 				thing->momz = 8 * FRACUNIT;
 				return false;
@@ -829,8 +828,8 @@ boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y)
 		{
 			CheckMissileImpact(thing);
 		}
-		if(!(thing->flags & (MF_DROPOFF | MF_FLOAT))
-		   && tmfloorz - tmdropoffz > 24 * FRACUNIT)
+		if(!(thing->flags & (MF_DROPOFF | MF_FLOAT)) &&
+		   tmfloorz - tmdropoffz > 24 * FRACUNIT)
 		{						// Can't move over a dropoff
 			return false;
 		}
@@ -850,8 +849,8 @@ boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y)
 
 	P_SetThingPosition(thing);
 
-	if(thing->flags2 & MF2_FOOTCLIP
-	   && P_GetThingFloorType(thing) != FLOOR_SOLID)
+	if(thing->flags2 & MF2_FOOTCLIP &&
+	   P_GetThingFloorType(thing) != FLOOR_SOLID)
 	{
 		thing->flags2 |= MF2_FEETARECLIPPED;
 	}
@@ -880,7 +879,7 @@ boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y)
 	return true;
 }
 
-boolean P_TryMove(mobj_t * thing, fixed_t x, fixed_t y)
+boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y)
 {
 	boolean res = P_TryMove2(thing, x, y);
 
@@ -909,7 +908,7 @@ boolean P_TryMove(mobj_t * thing, fixed_t x, fixed_t y)
    ==================
  */
 
-boolean P_ThingHeightClip(mobj_t * thing)
+boolean P_ThingHeightClip(mobj_t *thing)
 {
 	boolean onfloor;
 
@@ -961,7 +960,7 @@ fixed_t tmxmove, tmymove;
    ==================
  */
 
-void P_HitSlideLine(line_t * ld)
+void P_HitSlideLine(line_t *ld)
 {
 	int     side;
 	angle_t lineangle, moveangle, deltaangle;
@@ -1059,7 +1058,7 @@ boolean PTR_SlideTraverse(intercept_t * in)
    ==================
  */
 
-void P_SlideMove(mobj_t * mo)
+void P_SlideMove(mobj_t *mo)
 {
 	fixed_t leadx, leady;
 	fixed_t trailx, traily;
@@ -1399,7 +1398,7 @@ boolean PTR_ShootTraverse(intercept_t * in)
    =================
  */
 
-fixed_t P_AimLineAttack(mobj_t * t1, angle_t angle, fixed_t distance)
+fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance)
 {
 	fixed_t x2, y2;
 
@@ -1441,7 +1440,7 @@ fixed_t P_AimLineAttack(mobj_t * t1, angle_t angle, fixed_t distance)
    =================
  */
 
-void P_LineAttack(mobj_t * t1, angle_t angle, fixed_t distance, fixed_t slope,
+void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope,
 				  int damage)
 {
 	fixed_t x2, y2;
@@ -1545,7 +1544,7 @@ int     bombdamage;
    =================
  */
 
-boolean PIT_RadiusAttack(mobj_t * thing, void *data)
+boolean PIT_RadiusAttack(mobj_t *thing, void *data)
 {
 	fixed_t dx, dy, dist;
 
@@ -1553,8 +1552,8 @@ boolean PIT_RadiusAttack(mobj_t * thing, void *data)
 	{
 		return true;
 	}
-	if(thing->type == MT_MINOTAUR || thing->type == MT_SORCERER1
-	   || thing->type == MT_SORCERER2)
+	if(thing->type == MT_MINOTAUR || thing->type == MT_SORCERER1 ||
+	   thing->type == MT_SORCERER2)
 	{							// Episode 2 and 3 bosses take no damage from PIT_RadiusAttack
 		return (true);
 	}
@@ -1586,7 +1585,7 @@ boolean PIT_RadiusAttack(mobj_t * thing, void *data)
    =================
  */
 
-void P_RadiusAttack(mobj_t * spot, mobj_t * source, int damage)
+void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage)
 {
 	int     x, y, xl, xh, yl, yh;
 	fixed_t dist;
@@ -1638,7 +1637,7 @@ boolean nofit;
    ===============
  */
 
-boolean PIT_ChangeSector(mobj_t * thing, void *data)
+boolean PIT_ChangeSector(mobj_t *thing, void *data)
 {
 	mobj_t *mo;
 
@@ -1685,7 +1684,7 @@ boolean PIT_ChangeSector(mobj_t * thing, void *data)
 //===========================================================================
 // P_ChangeSector
 //===========================================================================
-boolean P_ChangeSector(sector_t * sector, boolean crunch)
+boolean P_ChangeSector(sector_t *sector, boolean crunch)
 {
 	//int           x,y;
 

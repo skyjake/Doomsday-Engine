@@ -90,8 +90,8 @@ int F_MatchName(const char *string, const char *pattern)
 			st++;
 			continue;
 		}
-		if(*st != '?'
-		   && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
+		if(*st != '?' &&
+		   (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
 		{
 			// A mismatch. Hmm. Go back to a previous *.
 			while(st >= pattern && *st != '*')

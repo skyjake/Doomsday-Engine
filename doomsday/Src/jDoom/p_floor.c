@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.5  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -67,7 +70,7 @@ static const char
 //
 // Move a plane (floor or ceiling) and check for crushing
 //
-result_e T_MovePlane(sector_t * sector, fixed_t speed, fixed_t dest,
+result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
 					 boolean crush, int floorOrCeiling, int direction)
 {
 	boolean flag;
@@ -304,7 +307,7 @@ void T_MoveFloor(floormove_t * floor)
 //
 // HANDLE FLOOR TYPES
 //
-int EV_DoFloor(line_t * line, floor_e floortype)
+int EV_DoFloor(line_t *line, floor_e floortype)
 {
 	int     secnum;
 	int     rtn;
@@ -488,7 +491,7 @@ int EV_DoFloor(line_t * line, floor_e floortype)
 //
 // BUILD A STAIRCASE!
 //
-int EV_BuildStairs(line_t * line, stair_e type)
+int EV_BuildStairs(line_t *line, stair_e type)
 {
 	int     secnum;
 	int     height;

@@ -143,8 +143,8 @@ void HU_UpdatePlayerSprite(int pnum)
 		ddpsp->alpha = 1;
 
 #if __JDOOM__
-		if(pl->powers[pw_invisibility] > 4 * 32
-		   || pl->powers[pw_invisibility] & 8)
+		if(pl->powers[pw_invisibility] > 4 * 32 ||
+		   pl->powers[pw_invisibility] & 8)
 		{
 			// shadow draw
 			ddpsp->alpha = .25f;
@@ -167,8 +167,8 @@ void HU_UpdatePlayerSprite(int pnum)
 		}
 
 #elif __JHERETIC__
-		if(pl->powers[pw_invisibility] > 4 * 32
-		   || pl->powers[pw_invisibility] & 8)
+		if(pl->powers[pw_invisibility] > 4 * 32 ||
+		   pl->powers[pw_invisibility] & 8)
 		{
 			// shadow draw
 			ddpsp->alpha = .25f;

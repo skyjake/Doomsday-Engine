@@ -50,7 +50,7 @@
 //===========================================================================
 // P_MobjTicker
 //===========================================================================
-void P_MobjTicker(mobj_t * mo)
+void P_MobjTicker(mobj_t *mo)
 {
 	lumobj_t *lum = DL_GetLuminous(mo->light);
 	int     i;

@@ -537,8 +537,8 @@ static void DrDeathTally(void)
 				}
 			}
 		}
-		if(showTotals && players[i].plr->ingame
-		   && !((slaughterboy & (1 << i)) && !(intertime & 16)))
+		if(showTotals && players[i].plr->ingame &&
+		   !((slaughterboy & (1 << i)) && !(intertime & 16)))
 		{
 			DrNumber(totalFrags[i], TALLY_TOTALS_X, y, 1000);
 		}

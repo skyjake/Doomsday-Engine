@@ -136,26 +136,25 @@ void            P_RespawnSpecials(void);
 
 mobj_t         *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
 
-void            P_RemoveMobj(mobj_t * th);
-boolean         P_SetMobjState(mobj_t * mobj, statenum_t state);
-void            P_MobjThinker(mobj_t * mobj);
+void            P_RemoveMobj(mobj_t *th);
+boolean         P_SetMobjState(mobj_t *mobj, statenum_t state);
+void            P_MobjThinker(mobj_t *mobj);
 
 void            P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
 mobj_t         *P_SpawnCustomPuff(fixed_t x, fixed_t y, fixed_t z,
 								  mobjtype_t type);
 void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
-mobj_t         *P_SpawnMissile(mobj_t * source, mobj_t * dest,
-							   mobjtype_t type);
-void            P_SpawnPlayerMissile(mobj_t * source, mobjtype_t type);
+mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
+void            P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
 void            P_SpawnPlayer(mapthing_t * mthing, int pnum);
 mobj_t         *P_SpawnTeleFog(int x, int y);
 
-void            P_SetDoomsdayFlags(mobj_t * mo);
+void            P_SetDoomsdayFlags(mobj_t *mo);
 
 //
 // P_ENEMY
 //
-void            P_NoiseAlert(mobj_t * target, mobj_t * emmiter);
+void            P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 
 extern mobj_t  *braintargets[64];
 extern int      numbraintargets;
@@ -238,8 +237,8 @@ extern int      braintargeton;
 
    #define P_PathTraverse       gi.PathTraverse */
 
-void            P_UnsetThingPosition(mobj_t * thing);
-void            P_SetThingPosition(mobj_t * thing);
+void            P_UnsetThingPosition(mobj_t *thing);
+void            P_SetThingPosition(mobj_t *thing);
 
 int             P_Massacre(void);
 
@@ -255,29 +254,29 @@ extern fixed_t  tmceilingz;
 
 extern line_t  *ceilingline;
 
-boolean         P_CheckPosition(mobj_t * thing, fixed_t x, fixed_t y);
-boolean         P_CheckPosition2(mobj_t * thing, fixed_t x, fixed_t y,
+boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
+boolean         P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y,
 								 fixed_t z);
-boolean         P_TryMove(mobj_t * thing, fixed_t x, fixed_t y,
+boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y,
 						  boolean dropoff);
-boolean         P_TeleportMove(mobj_t * thing, fixed_t x, fixed_t y);
-void            P_SlideMove(mobj_t * mo);
+boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y);
+void            P_SlideMove(mobj_t *mo);
 
 //boolean P_CheckSight (mobj_t* t1, mobj_t* t2);
 void            P_UseLines(player_t * player);
 
 //#define P_CheckSight  gi.CheckSight
 
-boolean         P_ChangeSector(sector_t * sector, boolean crunch);
+boolean         P_ChangeSector(sector_t *sector, boolean crunch);
 
 extern mobj_t  *linetarget;		   // who got hit (or NULL)
 
-fixed_t         P_AimLineAttack(mobj_t * t1, angle_t angle, fixed_t distance);
+fixed_t         P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance);
 
-void            P_LineAttack(mobj_t * t1, angle_t angle, fixed_t distance,
+void            P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
 							 fixed_t slope, int damage);
 
-void            P_RadiusAttack(mobj_t * spot, mobj_t * source, int damage);
+void            P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage);
 
 //
 // P_SETUP
@@ -297,12 +296,12 @@ void            P_RadiusAttack(mobj_t * spot, mobj_t * source, int damage);
 extern int      maxammo[NUMAMMO];
 extern int      clipammo[NUMAMMO];
 
-void            P_TouchSpecialThing(mobj_t * special, mobj_t * toucher);
+void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 
-void            P_DamageMobj(mobj_t * target, mobj_t * inflictor,
-							 mobj_t * source, int damage);
+void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+							 int damage);
 
-void            P_ExplodeMissile(mobj_t * mo);
+void            P_ExplodeMissile(mobj_t *mo);
 
 //
 // P_SPEC
@@ -313,6 +312,9 @@ void            P_ExplodeMissile(mobj_t * mo);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2004/05/30 08:42:35  skyjake
+// Tweaked indentation style
+//
 // Revision 1.5  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

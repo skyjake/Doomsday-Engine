@@ -120,8 +120,8 @@ void Con_Progress(int count, int flags)
 	if(!GL_IsInited())
 		return;
 
-	if(flags & PBARF_DONTSHOW && progress < progress_max
-	   && progress_shown + 5 >= progress)
+	if(flags & PBARF_DONTSHOW && progress < progress_max &&
+	   progress_shown + 5 >= progress)
 		return;					// Don't show yet.
 
 	progress_shown = progress;

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/05/30 08:42:42  skyjake
+// Tweaked indentation style
+//
 // Revision 1.9  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -132,10 +135,10 @@ void P_CheckPlayerJump(player_t * player)
 {
 	ticcmd_t *cmd = &player->cmd;
 
-	if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0)
-	   && P_IsPlayerOnGround(player) && !(cmd->actions & BT_SPECIAL)
-	   && !(cmd->actions & BT_CHANGE) && cmd->actions & BT_JUMP
-	   && player->jumptics <= 0)
+	if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0) &&
+	   P_IsPlayerOnGround(player) && !(cmd->actions & BT_SPECIAL) &&
+	   !(cmd->actions & BT_CHANGE) && cmd->actions & BT_JUMP &&
+	   player->jumptics <= 0)
 	{
 		// Jump, then!
 		player->plr->mo->momz =
@@ -193,8 +196,8 @@ void P_MovePlayer(player_t * player)
 					 cmd->sideMove * movemul);
 		}
 
-		if((cmd->forwardMove || cmd->sideMove)
-		   && player->plr->mo->state == &states[S_PLAY])
+		if((cmd->forwardMove || cmd->sideMove) &&
+		   player->plr->mo->state == &states[S_PLAY])
 		{
 			P_SetMobjState(player->plr->mo, S_PLAY_RUN1);
 		}
@@ -481,8 +484,8 @@ void P_PlayerThink(player_t * player)
 	if(cmd->actions & BT_SPECIAL)
 	{
 		// There might be a special weapon change.
-		if(cmd->actions & (BTS_NEXTWEAPON | BTS_PREVWEAPON)
-		   && !(cmd->actions & BTS_PAUSE))
+		if(cmd->actions & (BTS_NEXTWEAPON | BTS_PREVWEAPON) &&
+		   !(cmd->actions & BTS_PAUSE))
 		{
 			player->pendingweapon =
 				P_PlayerFindWeapon(player,
@@ -525,8 +528,8 @@ void P_PlayerThink(player_t * player)
 		{
 			// Do not go to plasma or BFG in shareware,
 			//  even if cheated.
-			if((newweapon != wp_plasma && newweapon != wp_bfg)
-			   || (gamemode != shareware))
+			if((newweapon != wp_plasma && newweapon != wp_bfg) ||
+			   (gamemode != shareware))
 			{
 				player->pendingweapon = newweapon;
 			}

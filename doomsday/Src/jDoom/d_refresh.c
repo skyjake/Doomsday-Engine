@@ -262,9 +262,9 @@ void D_Display(void)
 			Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
 			GL_SetFilter(players[displayplayer].plr->filter);	// $democam
 			// How about fullbright?
-			Set(DD_FULLBRIGHT, (player->powers[pw_infrared] > 4 * 32)
-				|| (player->powers[pw_infrared] & 8)
-				|| player->powers[pw_invulnerability] > 30);
+			Set(DD_FULLBRIGHT, (player->powers[pw_infrared] > 4 * 32) ||
+				(player->powers[pw_infrared] & 8) ||
+				player->powers[pw_invulnerability] > 30);
 
 			// Render the view with possible custom filters.
 			R_RenderPlayerView(players[displayplayer].plr);
@@ -290,10 +290,9 @@ void D_Display(void)
 		fullscreen = viewheight == 200;
 		HU_Drawer();
 		// Need to update the borders?
-		if(oldgamestate != GS_LEVEL
-		   ||
-		   ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive
-			 || cfg.sbarscale < 20)))
+		if(oldgamestate != GS_LEVEL ||
+		   ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
+			 cfg.sbarscale < 20)))
 		{
 			// Update the borders.
 			GL_Update(DDUF_BORDER);
@@ -338,7 +337,7 @@ void D_Display(void)
 //===========================================================================
 // P_SetDoomsdayFlags
 //===========================================================================
-void P_SetDoomsdayFlags(mobj_t * mo)
+void P_SetDoomsdayFlags(mobj_t *mo)
 {
 	// Client mobjs can't be set here.
 	if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
@@ -378,9 +377,9 @@ void P_SetDoomsdayFlags(mobj_t * mo)
 	else if(mo->flags & MF_SHADOW)
 		mo->ddflags |= DDMF_SHADOW;
 
-	if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE))
-	   || mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE
-								   && !(mo->flags & MF_VIEWALIGN)))
+	if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
+	   mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
+								!(mo->flags & MF_VIEWALIGN)))
 		mo->ddflags |= DDMF_VIEWALIGN;
 
 	mo->ddflags |= mo->flags & MF_TRANSLATION;

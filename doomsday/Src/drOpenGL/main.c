@@ -115,9 +115,9 @@ int fullscreenMode(int width, int height, int bpp)
 		if(!EnumDisplaySettings(NULL, i, &testMode))
 			break;
 
-		if(testMode.dmPelsWidth == (unsigned) width
-		   && testMode.dmPelsHeight == (unsigned) height
-		   && testMode.dmBitsPerPel == (unsigned) bpp)
+		if(testMode.dmPelsWidth == (unsigned) width &&
+		   testMode.dmPelsHeight == (unsigned) height &&
+		   testMode.dmBitsPerPel == (unsigned) bpp)
 		{
 			// This looks promising. We'll take the one that best matches
 			// the current refresh rate.

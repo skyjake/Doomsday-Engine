@@ -27,8 +27,8 @@ void T_PlatRaise(plat_t * plat)
 			S_SectorSound(plat->sector, sfx_stnmov);
 		}
 		//gi.Sv_PlaneSound(plat->sector, false, sfx_stnmov, 31);
-		if(plat->type == raiseAndChange
-		   || plat->type == raiseToNearestAndChange)
+		if(plat->type == raiseAndChange ||
+		   plat->type == raiseToNearestAndChange)
 		{
 			if(!(leveltime & 7))
 			{
@@ -96,7 +96,7 @@ void T_PlatRaise(plat_t * plat)
 //  "amount" is only used for SOME platforms.
 //
 //==================================================================
-int EV_DoPlat(line_t * line, plattype_e type, int amount)
+int EV_DoPlat(line_t *line, plattype_e type, int amount)
 {
 	plat_t *plat;
 	int     secnum;
@@ -189,21 +189,21 @@ void P_ActivateInStasis(int tag)
 	int     i;
 
 	for(i = 0; i < MAXPLATS; i++)
-		if(activeplats[i] && (activeplats[i])->tag == tag
-		   && (activeplats[i])->status == in_stasis)
+		if(activeplats[i] && (activeplats[i])->tag == tag &&
+		   (activeplats[i])->status == in_stasis)
 		{
 			(activeplats[i])->status = (activeplats[i])->oldstatus;
 			(activeplats[i])->thinker.function = T_PlatRaise;
 		}
 }
 
-void EV_StopPlat(line_t * line)
+void EV_StopPlat(line_t *line)
 {
 	int     j;
 
 	for(j = 0; j < MAXPLATS; j++)
-		if(activeplats[j] && ((activeplats[j])->status != in_stasis)
-		   && ((activeplats[j])->tag == line->tag))
+		if(activeplats[j] && ((activeplats[j])->status != in_stasis) &&
+		   ((activeplats[j])->tag == line->tag))
 		{
 			(activeplats[j])->oldstatus = (activeplats[j])->status;
 			(activeplats[j])->status = in_stasis;

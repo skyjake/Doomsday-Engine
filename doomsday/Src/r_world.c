@@ -44,7 +44,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    R_PrepareSubsector(subsector_t * sub);
+void    R_PrepareSubsector(subsector_t *sub);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -81,8 +81,7 @@ static float skyColorBalance;
 //  We mustn't create links which form loops. This will start looking
 //  from destlink, and if it finds startsec we're in trouble.
 //===========================================================================
-boolean R_IsValidLink(sector_t * startsec, sector_t * destlink,
-					  boolean is_floor)
+boolean R_IsValidLink(sector_t *startsec, sector_t *destlink, boolean is_floor)
 {
 	sector_t *sec = destlink;
 	sector_t *link;
@@ -118,7 +117,7 @@ boolean R_IsValidLink(sector_t * startsec, sector_t * destlink,
 //  Called every frame. Sector heights may change at any time 
 //  without notice.
 //===========================================================================
-void R_SetSectorLinks(sector_t * sec)
+void R_SetSectorLinks(sector_t *sec)
 {
 	int     i = GET_SECTOR_IDX(sec), k;
 	sector_t *back;
@@ -287,8 +286,8 @@ fvertex_t *edgeClipper(int *numpoints, fvertex_t * points, int numclippers,
 
 		if(previdx < 0)
 			previdx = num - 1;
-		if(points[i].x == points[previdx].x
-		   && points[i].y == points[previdx].y)
+		if(points[i].x == points[previdx].x &&
+		   points[i].y == points[previdx].y)
 		{
 			// This point (i) must be removed.
 			memmove(points + i, points + i + 1,
@@ -307,7 +306,7 @@ fvertex_t *edgeClipper(int *numpoints, fvertex_t * points, int numclippers,
 //
 //==========================================================================
 
-void R_ConvexClipper(subsector_t * ssec, int num, divline_t * list)
+void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
 {
 	int     numclippers = num + ssec->linecount;
 	fdivline_t *clippers =
@@ -381,7 +380,7 @@ void R_ConvexClipper(subsector_t * ssec, int num, divline_t * list)
 	Z_Free(clippers);
 }
 
-void R_PrepareSubsector(subsector_t * sub)
+void R_PrepareSubsector(subsector_t *sub)
 {
 	int     j, num = sub->numverts;
 
@@ -543,8 +542,8 @@ void R_SkyFix(void)
 				continue;
 
 			// Both the front and back sectors must have the sky ceiling.
-			if(front->ceilingpic != skyflatnum
-			   || back->ceilingpic != skyflatnum)
+			if(front->ceilingpic != skyflatnum ||
+			   back->ceilingpic != skyflatnum)
 				continue;
 
 			f = (front->ceilingheight >> FRACBITS) + front->skyfix;
@@ -602,7 +601,7 @@ static float TriangleArea(fvertex_t * o, fvertex_t * s, fvertex_t * t)
 // R_TestTriFan
 //  Returns true if 'base' is a good tri-fan base.
 //===========================================================================
-int R_TestTriFan(subsector_t * sub, int base)
+int R_TestTriFan(subsector_t *sub, int base)
 {
 #define TRIFAN_LIMIT	0.1
 	int     i, a, b;
@@ -666,7 +665,7 @@ void R_SubsectorPlanes(void)
 	}
 }
 
-void R_SetVertexOwner(int idx, sector_t * secptr)
+void R_SetVertexOwner(int idx, sector_t *secptr)
 {
 	int     i;
 	vertexowner_t *own;
@@ -771,7 +770,7 @@ void R_InitVertexOwners(void)
 // R_GetContainingSectorOf
 //  The test is done on subsectors.
 //===========================================================================
-sector_t *R_GetContainingSectorOf(sector_t * sec)
+sector_t *R_GetContainingSectorOf(sector_t *sec)
 {
 	int     i;
 	float   cdiff = -1, diff;
@@ -789,8 +788,8 @@ sector_t *R_GetContainingSectorOf(sector_t * sec)
 		if(other == sec)
 			continue;			// Don't try on self!
 		memcpy(outer, secinfo[i].bounds, sizeof(outer));
-		if(inner[BLEFT] >= outer[BLEFT] && inner[BRIGHT] <= outer[BRIGHT]
-		   && inner[BTOP] >= outer[BTOP] && inner[BBOTTOM] <= outer[BBOTTOM])
+		if(inner[BLEFT] >= outer[BLEFT] && inner[BRIGHT] <= outer[BRIGHT] &&
+		   inner[BTOP] >= outer[BTOP] && inner[BBOTTOM] <= outer[BBOTTOM])
 		{
 			// Inside! Now we must test each of the subsectors. Otherwise
 			// we can't be sure...
@@ -835,8 +834,8 @@ void R_InitSectorInfo(void)
 		for(k = 0; k < sec->linecount; k++)
 		{
 			lin = sec->lines[k];
-			if(!lin->frontsector || !lin->backsector
-			   || lin->frontsector != lin->backsector)
+			if(!lin->frontsector || !lin->backsector ||
+			   lin->frontsector != lin->backsector)
 			{
 				dohack = false;
 				break;
@@ -856,10 +855,10 @@ void R_InitSectorInfo(void)
 		}
 
 		// Is this sector large enough to be a dominant light source?
-		if(info->lightsource == NULL
-		   && (sec->ceilingpic == skyflatnum || sec->floorpic == skyflatnum)
-		   && info->bounds[BRIGHT] - info->bounds[BLEFT] > DOMINANT_SIZE
-		   && info->bounds[BBOTTOM] - info->bounds[BTOP] > DOMINANT_SIZE)
+		if(info->lightsource == NULL &&
+		   (sec->ceilingpic == skyflatnum || sec->floorpic == skyflatnum) &&
+		   info->bounds[BRIGHT] - info->bounds[BLEFT] > DOMINANT_SIZE &&
+		   info->bounds[BBOTTOM] - info->bounds[BTOP] > DOMINANT_SIZE)
 		{
 			// All sectors touching this one will be affected.
 			for(k = 0; k < sec->linecount; k++)
@@ -880,8 +879,8 @@ void R_InitSectorInfo(void)
 //===========================================================================
 // R_InitPlanePoly
 //===========================================================================
-void R_InitPlanePoly(planeinfo_t * plane, boolean reverse,
-					 subsector_t * subsector)
+void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
+					 subsector_t *subsector)
 {
 	int     numvrts;
 	fvertex_t *vrts, *vtx, *pv;
@@ -1059,9 +1058,9 @@ void R_SetupSky(void)
 
 	// Calculate a balancing factor, so the light in the non-skylit
 	// sectors won't appear too bright.
-	if(false
-	   && (mapinfo->sky_color[0] > 0 || mapinfo->sky_color[1] > 0
-		   || mapinfo->sky_color[2] > 0))
+	if(false &&
+	   (mapinfo->sky_color[0] > 0 || mapinfo->sky_color[1] > 0 ||
+		mapinfo->sky_color[2] > 0))
 	{
 		skyColorBalance =
 			(0 +
@@ -1079,7 +1078,7 @@ void R_SetupSky(void)
  * verts[0] is the leftmost vertex and verts[1] is the rightmost
  * vertex, when the line lies at the edge of `sector.'
  */
-void R_OrderVertices(line_t * line, sector_t * sector, vertex_t * verts[2])
+void R_OrderVertices(line_t *line, sector_t *sector, vertex_t * verts[2])
 {
 	if(sector == line->frontsector)
 	{
@@ -1097,7 +1096,7 @@ void R_OrderVertices(line_t * line, sector_t * sector, vertex_t * verts[2])
  * A neighbour is a line that shares a vertex with 'line', and faces
  * the specified sector.  Finds both the left and right neighbours.
  */
-void R_FindLineNeighbors(sector_t * sector, line_t * line,
+void R_FindLineNeighbors(sector_t *sector, line_t *line,
 						 struct line_s **neighbors, int alignment)
 {
 	struct line_s *other;
@@ -1155,8 +1154,8 @@ void R_FindLineNeighbors(sector_t * sector, line_t * line,
  * Browse through the lines in backSector.  The backNeighbor is the
  * line that 1) isn't realNeighbor and 2) connects to commonVertex.
  */
-void R_FindBackNeighbor(sector_t * backSector, line_t * realNeighbor,
-						vertex_t * commonVertex, line_t ** backNeighbor)
+void R_FindBackNeighbor(sector_t *backSector, line_t *realNeighbor,
+						vertex_t * commonVertex, line_t **backNeighbor)
 {
 	int     i;
 	line_t *line;
@@ -1221,8 +1220,8 @@ void R_InitLineInfo(void)
 			for(j = 0; j < 2; j++)
 			{
 				// Neighbour must be two-sided.
-				if(side->neighbor[j] && side->neighbor[j]->frontsector
-				   && side->neighbor[j]->backsector)
+				if(side->neighbor[j] && side->neighbor[j]->frontsector &&
+				   side->neighbor[j]->backsector)
 				{
 					side->proxsector[j] =
 						(side->neighbor[j]->frontsector ==
@@ -1496,7 +1495,7 @@ void R_ClearSectorFlags(void)
 //===========================================================================
 // R_GetLinkedSector
 //===========================================================================
-sector_t *R_GetLinkedSector(sector_t * startsec, boolean getfloor)
+sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor)
 {
 	sector_t *sec = startsec;
 	sector_t *link;
@@ -1591,7 +1590,7 @@ const char *R_GetCurrentLevelID(void)
 /* 
  * Sector light color may be affected by the sky light color.
  */
-const byte *R_GetSectorLightColor(sector_t * sector)
+const byte *R_GetSectorLightColor(sector_t *sector)
 {
 	sector_t *src;
 	int     i;

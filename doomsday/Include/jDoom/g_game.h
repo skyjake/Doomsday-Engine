@@ -75,12 +75,15 @@ void            G_ScreenShot(void);
 
 void            G_PrepareWIData(void);
 
-void            G_QueueBody(mobj_t * body);
+void            G_QueueBody(mobj_t *body);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.7  2004/05/30 08:42:35  skyjake
+// Tweaked indentation style
+//
 // Revision 1.6  2004/05/29 18:19:58  skyjake
 // Refined indentation style
 //

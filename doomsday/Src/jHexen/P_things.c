@@ -26,8 +26,8 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static boolean ActivateThing(mobj_t * mobj);
-static boolean DeactivateThing(mobj_t * mobj);
+static boolean ActivateThing(mobj_t *mobj);
+static boolean DeactivateThing(mobj_t *mobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -393,7 +393,7 @@ boolean EV_ThingDestroy(int tid)
 //
 //==========================================================================
 
-static boolean ActivateThing(mobj_t * mobj)
+static boolean ActivateThing(mobj_t *mobj)
 {
 	if(mobj->flags & MF_COUNTKILL)
 	{							// Monster
@@ -475,7 +475,7 @@ static boolean ActivateThing(mobj_t * mobj)
 //
 //==========================================================================
 
-static boolean DeactivateThing(mobj_t * mobj)
+static boolean DeactivateThing(mobj_t *mobj)
 {
 	if(mobj->flags & MF_COUNTKILL)
 	{							// Monster

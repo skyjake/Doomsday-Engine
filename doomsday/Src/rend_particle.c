@@ -233,7 +233,7 @@ static pglink_t *PG_GetLink(void)
 //===========================================================================
 // PG_LinkPtcGen
 //===========================================================================
-void PG_LinkPtcGen(ptcgen_t * gen, sector_t * sector)
+void PG_LinkPtcGen(ptcgen_t * gen, sector_t *sector)
 {
 	int     si = GET_SECTOR_IDX(sector);
 	pglink_t *link;
@@ -282,7 +282,7 @@ void PG_InitForNewFrame(void)
 //  The given sector is visible. All PGs in it should be rendered.
 //  Scans PG links.
 //===========================================================================
-void PG_SectorIsVisible(sector_t * sector)
+void PG_SectorIsVisible(sector_t *sector)
 {
 	pglink_t *it = pgLinks[GET_SECTOR_IDX(sector)];
 
@@ -382,13 +382,13 @@ int PG_ListVisibleParticles(void)
 			{
 				hasLines = true;
 			}
-			else if(stagetype >= PTC_TEXTURE
-					&& stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
+			else if(stagetype >= PTC_TEXTURE &&
+					stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
 			{
 				hasPoints[stagetype - PTC_TEXTURE + 1] = true;
 			}
-			else if(stagetype >= PTC_MODEL
-					&& stagetype < PTC_MODEL + MAX_PTC_MODELS)
+			else if(stagetype >= PTC_MODEL &&
+					stagetype < PTC_MODEL + MAX_PTC_MODELS)
 			{
 				hasModels = true;
 			}
@@ -489,8 +489,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		dst = &gen->def->stages[pt->stage];
 
 		// Only render one type of particles.
-		if((rtype == PTC_MODEL && dst->model < 0)
-		   || (rtype != PTC_MODEL && st->type != rtype))
+		if((rtype == PTC_MODEL && dst->model < 0) ||
+		   (rtype != PTC_MODEL && st->type != rtype))
 		{
 			continue;
 		}
@@ -632,9 +632,9 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		if(using_texture >= 0)
 		{
 			// Should the particle be flat against a plane?         
-			if(st->flags & PTCF_PLANE_FLAT && pt->sector
-			   && (pt->sector->floorheight + 2 * FRACUNIT >= pt->pos[VZ]
-				   || pt->sector->ceilingheight - 2 * FRACUNIT <= pt->pos[VZ]))
+			if(st->flags & PTCF_PLANE_FLAT && pt->sector &&
+			   (pt->sector->floorheight + 2 * FRACUNIT >= pt->pos[VZ] ||
+				pt->sector->ceilingheight - 2 * FRACUNIT <= pt->pos[VZ]))
 			{
 				gl.TexCoord2f(0, 0);
 				gl.Vertex3f(center[VX] - size, center[VY], center[VZ] - size);

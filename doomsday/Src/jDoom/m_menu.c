@@ -2235,9 +2235,9 @@ boolean M_Responder(event_t *ev)
 			if(ch != 32)
 				if(ch - HU_FONTSTART < 0 || ch - HU_FONTSTART >= HU_FONTSIZE)
 					break;
-			if(ch >= 32 && ch <= 127 && saveCharIndex < SAVESTRINGSIZE - 1
-			   && M_StringWidth(savegamestrings[saveSlot],
-								hu_font) < (SAVESTRINGSIZE - 2) * 8)
+			if(ch >= 32 && ch <= 127 && saveCharIndex < SAVESTRINGSIZE - 1 &&
+			   M_StringWidth(savegamestrings[saveSlot],
+							 hu_font) < (SAVESTRINGSIZE - 2) * 8)
 			{
 				savegamestrings[saveSlot][saveCharIndex++] = ch;
 				savegamestrings[saveSlot][saveCharIndex] = 0;
@@ -2250,8 +2250,8 @@ boolean M_Responder(event_t *ev)
 	// Take care of any messages that need input
 	if(messageToPrint)
 	{
-		if(messageNeedsInput == true
-		   && !(ch == ' ' || ch == 'n' || ch == 'y' || ch == DDKEY_ESCAPE))
+		if(messageNeedsInput == true &&
+		   !(ch == ' ' || ch == 'n' || ch == 'y' || ch == DDKEY_ESCAPE))
 			return false;
 
 		menuactive = messageLastMenuActive;
@@ -2402,8 +2402,8 @@ boolean M_Responder(event_t *ev)
 			{
 				itemOn++;
 			}
-		} while(currentMenu->items[itemOn].type == ITT_EMPTY
-				&& i++ < currentMenu->itemCount);
+		} while(currentMenu->items[itemOn].type == ITT_EMPTY &&
+				i++ < currentMenu->itemCount);
 		menu_color = 0;
 		S_LocalSound(sfx_pstop, NULL);
 		return (true);
@@ -2420,8 +2420,8 @@ boolean M_Responder(event_t *ev)
 			{
 				itemOn--;
 			}
-		} while(currentMenu->items[itemOn].type == ITT_EMPTY
-				&& i++ < currentMenu->itemCount);
+		} while(currentMenu->items[itemOn].type == ITT_EMPTY &&
+				i++ < currentMenu->itemCount);
 		menu_color = 0;
 		S_LocalSound(sfx_pstop, NULL);
 		return (true);
@@ -2442,8 +2442,8 @@ boolean M_Responder(event_t *ev)
 
 				//Ensure cursor points to editable item     Anon $09 add next 3 lines
 				firstVI = currentMenu->firstItem;
-				while(currentMenu->items[itemOn].type == ITT_EMPTY
-					  && itemOn > firstVI)
+				while(currentMenu->items[itemOn].type == ITT_EMPTY &&
+					  itemOn > firstVI)
 					itemOn--;
 
 				// Make a sound, too.
@@ -2522,8 +2522,8 @@ boolean M_Responder(event_t *ev)
 	default:
 		for(i = firstVI; i <= lastVI; i++)
 		{
-			if(currentMenu->items[i].text
-			   && currentMenu->items[i].type != ITT_EMPTY)
+			if(currentMenu->items[i].text &&
+			   currentMenu->items[i].type != ITT_EMPTY)
 			{
 				if(toupper(ch) == toupper(currentMenu->items[i].text[0]))
 				{
@@ -2634,8 +2634,8 @@ void M_Drawer(void)
 	int     start;
 	float   scale;
 	int     w, h, off_x, off_y;
-	boolean allowScaling = (currentMenu != &ReadDef1
-							&& currentMenu != &ReadDef2);
+	boolean allowScaling = (currentMenu != &ReadDef1 &&
+							currentMenu != &ReadDef2);
 
 	inhelpscreens = false;
 

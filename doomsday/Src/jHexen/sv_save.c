@@ -118,9 +118,9 @@ static void ArchiveMisc(void);
 static void UnarchiveMisc(void);
 static void SetMobjArchiveNums(void);
 static void RemoveAllThinkers(void);
-static void MangleMobj(mobj_t * mobj);
-static void RestoreMobj(mobj_t * mobj);
-static int GetMobjNum(mobj_t * mobj);
+static void MangleMobj(mobj_t *mobj);
+static void RestoreMobj(mobj_t *mobj);
+static int GetMobjNum(mobj_t *mobj);
 static void SetMobjPtr(int *archiveNum);
 static void MangleSSThinker(ssthinker_t * sst);
 static void RestoreSSThinker(ssthinker_t * sst);
@@ -1291,7 +1291,7 @@ static void SetMobjArchiveNums(void)
 //==========================================================================
 // ArchiveMobj
 //==========================================================================
-void ArchiveMobj(mobj_t * original)
+void ArchiveMobj(mobj_t *original)
 {
 	mobj_t  temp, *mo;
 
@@ -1343,7 +1343,7 @@ void ArchiveMobj(mobj_t * original)
 //==========================================================================
 // UnarchiveMobj
 //==========================================================================
-void UnarchiveMobj(mobj_t * mo)
+void UnarchiveMobj(mobj_t *mo)
 {
 	int     version = GET_BYTE;
 
@@ -1505,7 +1505,7 @@ static void UnarchiveMobjs(void)
 //
 //==========================================================================
 
-static void MangleMobj(mobj_t * mobj)
+static void MangleMobj(mobj_t *mobj)
 {
 	boolean corpse;
 
@@ -1588,7 +1588,7 @@ static void MangleMobj(mobj_t * mobj)
 //
 //==========================================================================
 
-static int GetMobjNum(mobj_t * mobj)
+static int GetMobjNum(mobj_t *mobj)
 {
 	if(mobj == NULL)
 	{
@@ -1607,7 +1607,7 @@ static int GetMobjNum(mobj_t * mobj)
 //
 //==========================================================================
 
-static void RestoreMobj(mobj_t * mobj)
+static void RestoreMobj(mobj_t *mobj)
 {
 	// Restore DDMF flags set only in P_SpawnMobj. R_SetAllDoomsdayFlags
 	// might not set these because it only iterates seclinked mobjs.
@@ -1825,7 +1825,7 @@ static void MangleScript(acs_t * script)
 {
 	script->ip = (int *) ((int) (script->ip) - (int) ActionCodeBase);
 	script->line =
-		script->line ? (line_t *) (script->line - lines) : (line_t *) - 1;
+		script->line ? (line_t *) (script->line - lines) : (line_t *) -1;
 	script->activator = (mobj_t *) GetMobjNum(script->activator);
 }
 
@@ -2002,7 +2002,7 @@ static void ArchiveSounds(void)
 		StreamOutLong(node->currentSoundID);
 		for(i = 0; i < po_NumPolyobjs; i++)
 		{
-			if(node->mobj == (mobj_t *) & polyobjs[i].startSpot)
+			if(node->mobj == (mobj_t *) &polyobjs[i].startSpot)
 			{
 				break;
 			}
@@ -2059,11 +2059,11 @@ static void UnarchiveSounds(void)
 		secNum = GET_LONG;
 		if(!polySnd)
 		{
-			sndMobj = (mobj_t *) & sectors[secNum].soundorg;
+			sndMobj = (mobj_t *) &sectors[secNum].soundorg;
 		}
 		else
 		{
-			sndMobj = (mobj_t *) & polyobjs[secNum].startSpot;
+			sndMobj = (mobj_t *) &polyobjs[secNum].startSpot;
 		}
 		SN_StartSequence(sndMobj, sequence);
 		SN_ChangeNodeData(i, seqOffset, delayTics, volume, soundID);

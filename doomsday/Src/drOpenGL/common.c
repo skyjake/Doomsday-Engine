@@ -967,8 +967,8 @@ int DG_Project(int num, gl_fc3vertex_t * inVertices,
 			out->pos[VY] = (float) FLIP(y);
 			out->pos[VZ] = (float) z;
 			// Check that it's truly visible.
-			if(out->pos[VX] < 0 || out->pos[VY] < 0
-			   || out->pos[VX] >= screenWidth || out->pos[VY] >= screenHeight)
+			if(out->pos[VX] < 0 || out->pos[VY] < 0 ||
+			   out->pos[VX] >= screenWidth || out->pos[VY] >= screenHeight)
 				continue;
 			memcpy(out->color, in->color, sizeof(in->color));
 			numOut++;

@@ -18,7 +18,7 @@ extern int      netSvAllowCheats;
 extern char    *mapCycle;
 extern char     gameConfigString[128];
 
-void            P_Telefrag(mobj_t * thing);
+void            P_Telefrag(mobj_t *thing);
 
 void            NetSv_NewPlayerEnters(int plrnumber);
 void           *NetSv_ReadCommands(byte *msg, uint size);
@@ -30,8 +30,8 @@ void            NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 void            NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum,
 									   int flags, boolean reliable);
 void            NetSv_PSpriteChange(int plrNum, int state);
-void            NetSv_Sound(mobj_t * origin, int sound_id, int toPlr);	// toPlr=0: broadcast.
-void            NetSv_SoundAtVolume(mobj_t * origin, int sound_id, int volume,
+void            NetSv_Sound(mobj_t *origin, int sound_id, int toPlr);	// toPlr=0: broadcast.
+void            NetSv_SoundAtVolume(mobj_t *origin, int sound_id, int volume,
 									int toPlr);
 void            NetSv_Intermission(int flags, int state, int time);
 void            NetSv_Finale(int flags, char *script, boolean *conds,

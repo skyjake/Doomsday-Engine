@@ -183,8 +183,8 @@ boolean DS_EAXHasSupport(int property)
 	has_support = SUCCEEDED(hr =
 							IKsPropertySet_QuerySupport(eax_listener,
 														&DSPROPSETID_EAX_ListenerProperties,
-														property, &support))
-		&& (support & EAXSUP) == EAXSUP;
+														property, &support)) &&
+		(support & EAXSUP) == EAXSUP;
 
 	if(verbose)
 		Con_Message("DS_EAXHasSupport: Property %i => %s\n", property,
@@ -247,11 +247,11 @@ int DS_EAXInit(void)
 		return false;
 
 	// Check for EAX support.
-	if(!DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ENVIRONMENT)
-	   || !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ROOM)
-	   || !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_DECAYTIME)
-	   || !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ROOMHF)
-	   || !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR))
+	if(!DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ENVIRONMENT) ||
+	   !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ROOM) ||
+	   !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_DECAYTIME) ||
+	   !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ROOMHF) ||
+	   !DS_EAXHasSupport(DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR))
 	{
 		Con_Message("DS_EAXInit: Required EAX support missing.\n");
 		IKsPropertySet_Release(eax_listener);

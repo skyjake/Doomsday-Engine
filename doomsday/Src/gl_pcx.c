@@ -53,8 +53,8 @@ int PCX_MemoryGetSize(void *imageData, int *w, int *h)
 {
 	pcx_t  *hdr = (pcx_t *) imageData;
 
-	if(hdr->manufacturer != 0x0a || hdr->version != 5 || hdr->encoding != 1
-	   || hdr->bits_per_pixel != 8)
+	if(hdr->manufacturer != 0x0a || hdr->version != 5 || hdr->encoding != 1 ||
+	   hdr->bits_per_pixel != 8)
 		return false;
 	if(w)
 		*w = hdr->xmax + 1;
@@ -103,8 +103,8 @@ byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
 	byte   *pix;
 
 	// Check the format.
-	if(pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1
-	   || pcx->bits_per_pixel != 8)
+	if(pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 ||
+	   pcx->bits_per_pixel != 8)
 	{
 		//Con_Message("PCX_Load: unsupported format.\n");
 		return NULL;

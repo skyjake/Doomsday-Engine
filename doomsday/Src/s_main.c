@@ -82,8 +82,8 @@ boolean S_Init(void)
 	sfx_ok = Sfx_Init();
 	mus_ok = Mus_Init();
 
-	Con_Message("S_Init: %s.\n", sfx_ok
-				&& mus_ok ? "OK" : "Errors during initialization.");
+	Con_Message("S_Init: %s.\n", sfx_ok &&
+				mus_ok ? "OK" : "Errors during initialization.");
 	return (sfx_ok && mus_ok);
 }
 
@@ -211,7 +211,7 @@ boolean S_IsRepeating(int idFlags)
 //  Flags can be included in the sound ID number (DDSF_*).
 //  Returns nonzero if a sound was started.
 //===========================================================================
-int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t * origin,
+int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
 							 float *fixedPos, float volume)
 {
 	int     soundId = soundIdAndFlags & ~DDSF_FLAG_MASK;
@@ -226,8 +226,8 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t * origin,
 	if(isDedicated)
 		return false;
 
-	if(soundId <= 0 || soundId >= defs.count.sounds.num || sfx_volume <= 0
-	   || volume <= 0)
+	if(soundId <= 0 || soundId >= defs.count.sounds.num || sfx_volume <= 0 ||
+	   volume <= 0)
 		return false;			// This won't play...
 
 #if _DEBUG
@@ -247,8 +247,8 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t * origin,
 	isRepeating = S_IsRepeating(soundIdAndFlags);
 
 	// Check the distance (if applicable).
-	if(!(info->flags & SF_NO_ATTENUATION)
-	   && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
+	if(!(info->flags & SF_NO_ATTENUATION) &&
+	   !(soundIdAndFlags & DDSF_NO_ATTENUATION))
 	{
 		// If origin is too far, don't even think about playing the sound.
 		if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedPos) >
@@ -289,8 +289,8 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t * origin,
 	// Let's play it.
 	result =
 		Sfx_StartSound(sample, volume, freq, origin, fixedPos,
-					   (info->flags & SF_NO_ATTENUATION
-						|| soundIdAndFlags & DDSF_NO_ATTENUATION ?
+					   (info->flags & SF_NO_ATTENUATION ||
+						soundIdAndFlags & DDSF_NO_ATTENUATION ?
 						SF_NO_ATTENUATION : 0) | (isRepeating ? SF_REPEAT : 0)
 					   | (info->flags & SF_DONT_STOP ? SF_DONT_STOP : 0));
 
@@ -303,7 +303,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t * origin,
 //  This is a public sound interface.
 //  Returns nonzero if a sound was started.
 //===========================================================================
-int S_LocalSoundAtVolume(int sound_id, mobj_t * origin, float volume)
+int S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
 	return S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, volume);
 }
@@ -313,7 +313,7 @@ int S_LocalSoundAtVolume(int sound_id, mobj_t * origin, float volume)
 //  This is a public sound interface.
 //  Returns nonzero if a sound was started.
 //===========================================================================
-int S_LocalSound(int sound_id, mobj_t * origin)
+int S_LocalSound(int sound_id, mobj_t *origin)
 {
 	// Play local sound at max volume.
 	return S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, 1);
@@ -334,7 +334,7 @@ int S_LocalSoundFrom(int sound_id, float *fixedpos)
 //  Play a world sound. All players in the game will hear it.
 //  Returns nonzero if a sound was started.
 //=========================================================================
-int S_StartSound(int sound_id, mobj_t * origin)
+int S_StartSound(int sound_id, mobj_t *origin)
 {
 	// The sound is audible to everybody.
 	Sv_Sound(sound_id, origin, SVSF_TO_ALL);
@@ -348,7 +348,7 @@ int S_StartSound(int sound_id, mobj_t * origin)
 //  Play a world sound. All players in the game will hear it.
 //  Returns nonzero if a sound was started.
 //=========================================================================
-int S_StartSoundAtVolume(int sound_id, mobj_t * origin, float volume)
+int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
 	Sv_SoundAtVolume(sound_id, origin, volume, SVSF_TO_ALL);
 	Sfx_StartLogical(sound_id, origin, S_IsRepeating(sound_id));
@@ -362,7 +362,7 @@ int S_StartSoundAtVolume(int sound_id, mobj_t * origin, float volume)
 //  Play a player sound. Only the specified player will hear it.
 //  Returns nonzero if a sound was started (always).
 //=========================================================================
-int S_ConsoleSound(int sound_id, mobj_t * origin, int target_console)
+int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 {
 	Sv_Sound(sound_id, origin, target_console);
 
@@ -380,7 +380,7 @@ int S_ConsoleSound(int sound_id, mobj_t * origin, int target_console)
 //  If origin == NULL, stops all sounds with the ID.
 //  Otherwise both ID and origin must match.
 //===========================================================================
-void S_StopSound(int sound_id, mobj_t * emitter)
+void S_StopSound(int sound_id, mobj_t *emitter)
 {
 	// Sfx provides a routine for this.
 	Sfx_StopSound(sound_id, emitter);
@@ -401,7 +401,7 @@ void S_StopSound(int sound_id, mobj_t * emitter)
 //  emitter. If sound_id is zero, returns true if the source is emitting
 //  any sounds. An exported function.
 //===========================================================================
-int S_IsPlaying(int sound_id, mobj_t * emitter)
+int S_IsPlaying(int sound_id, mobj_t *emitter)
 {
 	// The Logical Sound Manager (under Sfx) provides a routine for this.
 	return Sfx_IsPlaying(sound_id, emitter);

@@ -49,7 +49,7 @@
 /*
  * Tell clients to play a sound with full volume.
  */
-void Sv_Sound(int sound_id, mobj_t * origin, int toPlr)
+void Sv_Sound(int sound_id, mobj_t *origin, int toPlr)
 {
 	Sv_SoundAtVolume(sound_id, origin, 1, toPlr);
 }
@@ -57,7 +57,7 @@ void Sv_Sound(int sound_id, mobj_t * origin, int toPlr)
 /*
  * Finds the sector/polyobj to whom the origin mobj belong.
  */
-void Sv_IdentifySoundOrigin(mobj_t ** origin, int *sector, int *poly)
+void Sv_IdentifySoundOrigin(mobj_t **origin, int *sector, int *poly)
 {
 	*sector = *poly = -1;
 
@@ -82,7 +82,7 @@ void Sv_IdentifySoundOrigin(mobj_t ** origin, int *sector, int *poly)
 /*
  * Tell clients to play a sound.
  */
-void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t * origin, float volume,
+void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
 					  int toPlr)
 {
 	int     sound_id = (sound_id_and_flags & ~DDSF_FLAG_MASK);
@@ -102,7 +102,7 @@ void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t * origin, float volume,
  * This is called when the server needs to tell clients to stop 
  * a sound.
  */
-void Sv_StopSound(int sound_id, mobj_t * origin)
+void Sv_StopSound(int sound_id, mobj_t *origin)
 {
 	int     sector, poly;
 

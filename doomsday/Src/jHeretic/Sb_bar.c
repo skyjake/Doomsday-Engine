@@ -422,8 +422,8 @@ void SB_Ticker(void)
 		HealthMarker += delta;
 	}
 	// Tome of Power countdown sound.
-	if(players[consoleplayer].powers[pw_weaponlevel2]
-	   && players[consoleplayer].powers[pw_weaponlevel2] < cfg.tomeSound * 35)
+	if(players[consoleplayer].powers[pw_weaponlevel2] &&
+	   players[consoleplayer].powers[pw_weaponlevel2] < cfg.tomeSound * 35)
 	{
 		int     timeleft = players[consoleplayer].powers[pw_weaponlevel2] / 35;
 
@@ -774,11 +774,11 @@ void SB_Drawer(void)
 	// Flight icons
 	if(CPlayer->powers[pw_flight])
 	{
-		int     offset = (cfg.showFullscreenMana && cfg.screenblocks > 10
-						  && CPlayer->readyweapon > 0
-						  && CPlayer->readyweapon < 7) ? 43 : 0;
-		if(CPlayer->powers[pw_flight] > BLINKTHRESHOLD
-		   || !(CPlayer->powers[pw_flight] & 16))
+		int     offset = (cfg.showFullscreenMana && cfg.screenblocks > 10 &&
+						  CPlayer->readyweapon > 0 &&
+						  CPlayer->readyweapon < 7) ? 43 : 0;
+		if(CPlayer->powers[pw_flight] > BLINKTHRESHOLD ||
+		   !(CPlayer->powers[pw_flight] & 16))
 		{
 			frame = (leveltime / 3) & 15;
 			if(CPlayer->plr->mo->flags2 & MF2_FLY)
@@ -944,8 +944,8 @@ void DrawMainBar(void)
 		//UpdateState |= I_STATBAR;
 		GL_Update(DDUF_STATBAR);
 	}
-	else if(oldarti != CPlayer->readyArtifact
-			|| oldartiCount != CPlayer->inventory[inv_ptr].count)
+	else if(oldarti != CPlayer->readyArtifact ||
+			oldartiCount != CPlayer->inventory[inv_ptr].count)
 	{
 		GL_DrawPatch(180, 161, PatchBLACKSQ);
 		if(CPlayer->readyArtifact > 0)
@@ -1062,8 +1062,8 @@ void DrawInventoryBar(void)
 	for(i = 0; i < 7; i++)
 	{
 		//V_DrawPatch(50+i*31, 160, W_CacheLumpName("ARTIBOX", PU_CACHE));
-		if(CPlayer->inventorySlotNum > x + i
-		   && CPlayer->inventory[x + i].type != arti_none)
+		if(CPlayer->inventorySlotNum > x + i &&
+		   CPlayer->inventory[x + i].type != arti_none)
 		{
 			GL_DrawPatch(50 + i * 31, 160,
 						 W_GetNumForName(patcharti
@@ -1165,8 +1165,8 @@ void DrawFullScreenStuff(void)
 		for(i = 0; i < 7; i++)
 		{
 			GL_DrawFuzzPatch(50 + i * 31, 168, W_GetNumForName("ARTIBOX"));
-			if(CPlayer->inventorySlotNum > x + i
-			   && CPlayer->inventory[x + i].type != arti_none)
+			if(CPlayer->inventorySlotNum > x + i &&
+			   CPlayer->inventory[x + i].type != arti_none)
 			{
 				GL_DrawPatch(50 + i * 31, 168,
 							 W_GetNumForName(patcharti

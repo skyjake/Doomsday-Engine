@@ -461,8 +461,8 @@ void GL_LoadLightMap(ded_lightmap_t * map)
 	else if(map->id[0])			// Not an empty string.
 	{
 		// Search an external resource.
-		if(R_FindResource(RC_LIGHTMAP, map->id, "-ck", resource)
-		   && GL_LoadImage(&image, resource, false))
+		if(R_FindResource(RC_LIGHTMAP, map->id, "-ck", resource) &&
+		   GL_LoadImage(&image, resource, false))
 		{
 			if(!image.isMasked)
 			{
@@ -1183,8 +1183,8 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
 			if(gl.
 			   TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
 						DGL_COLOR_INDEX_8, levelWidth, levelHeight,
-						generateMipmaps
-						&& canGenMips ? DGL_TRUE : generateMipmaps ? -i :
+						generateMipmaps &&
+						canGenMips ? DGL_TRUE : generateMipmaps ? -i :
 						DGL_FALSE, idxBuffer) != DGL_OK)
 			{
 				Con_Error
@@ -1352,8 +1352,8 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 		if(dt->detail_lump < 0)
 			continue;
 
-		if((is_wall_texture && index == dt->wall_texture)
-		   || (!is_wall_texture && index == dt->flat_lump))
+		if((is_wall_texture && index == dt->wall_texture) ||
+		   (!is_wall_texture && index == dt->flat_lump))
 		{
 			if(dtdef)
 				*dtdef = defs.details + i;
@@ -1393,8 +1393,8 @@ unsigned int GL_BindTexFlat(flat_t * fl)
 	}
 
 	// Is there a high resolution version?
-	if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump))
-	   && (flatptr = GL_LoadHighResFlat(&image, lumpinfo[lump].name)) != NULL)
+	if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
+	   (flatptr = GL_LoadHighResFlat(&image, lumpinfo[lump].name)) != NULL)
 	{
 		RGBData = true;
 		freeptr = true;
@@ -1909,8 +1909,8 @@ DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 	filename_t fileName;
 	DGLuint texture = 0;
 
-	if(R_FindResource(RC_GRAPHICS, name, NULL, fileName)
-	   && GL_LoadImage(&image, fileName, false))
+	if(R_FindResource(RC_GRAPHICS, name, NULL, fileName) &&
+	   GL_LoadImage(&image, fileName, false))
 	{
 		// Too big for us?
 		if(image.width > maxTexSize || image.height > maxTexSize)
@@ -1984,8 +1984,8 @@ boolean GL_BufferTexture(texture_t * tex, byte *buffer, int width, int height,
 	{
 		patch = W_CacheLumpNum(tex->patches[i].patch, PU_CACHE);
 		// Check for big patches?
-		if(patch->height > tex->height && has_big_patch
-		   && *has_big_patch < patch->height)
+		if(patch->height > tex->height && has_big_patch &&
+		   *has_big_patch < patch->height)
 		{
 			*has_big_patch = patch->height;
 		}
@@ -2039,8 +2039,8 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx))
-		   && GL_LoadHighResTexture(&image, tex->name) != NULL)
+		if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx)) &&
+		   GL_LoadHighResTexture(&image, tex->name) != NULL)
 		{
 			// High resolution texture loaded.
 			RGBData = true;
@@ -2231,8 +2231,8 @@ static void ColorOutlines(byte *buffer, int width, int height)
 					for(a = -1; a <= 1; a++)
 					{
 						// First check that the pixel is OK.
-						if((!a && !b) || i + a < 0 || k + b < 0
-						   || i + a >= width || k + b >= height)
+						if((!a && !b) || i + a < 0 || k + b < 0 ||
+						   i + a >= width || k + b >= height)
 							continue;
 
 						ptr = buffer + i + a + (k + b) * width;
@@ -2344,8 +2344,8 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx))
-		   && GL_LoadHighResTexture(&image, textures[idx]->name) != NULL)
+		if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx)) &&
+		   GL_LoadHighResTexture(&image, textures[idx]->name) != NULL)
 		{
 			// High resolution texture loaded.
 			RGBData = true;
@@ -2738,9 +2738,9 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 			strcpy(resource, lumpinfo[spritelumps[pnum].lump].name);
 		}
 
-		if(!noHighResPatches
-		   && R_FindResource(RC_PATCH, resource, "-ck", fileName)
-		   && GL_LoadImage(&image, fileName, false) != NULL)
+		if(!noHighResPatches &&
+		   R_FindResource(RC_PATCH, resource, "-ck", fileName) &&
+		   GL_LoadImage(&image, fileName, false) != NULL)
 		{
 			// The buffer is now filled with the data.
 		}
@@ -2801,12 +2801,10 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 
 		// Is there an external resource for this image? For HUD sprites,
 		// first try the HUD version of the resource.
-		if(!noHighResPatches
-		   &&
-		   ((spriteMode == 1
-			 && R_FindResource(RC_PATCH, hudResource, "-ck", fileName))
-			|| R_FindResource(RC_PATCH, lumpinfo[lumpNum].name, "-ck",
-							  fileName))
+		if(!noHighResPatches &&
+		   ((spriteMode == 1 &&
+			 R_FindResource(RC_PATCH, hudResource, "-ck", fileName)) ||
+			R_FindResource(RC_PATCH, lumpinfo[lumpNum].name, "-ck", fileName))
 		   && GL_LoadImage(&image, fileName, false) != NULL)
 		{
 			// A high-resolution version of this sprite has been found.
@@ -3028,8 +3026,8 @@ unsigned int GL_SetRawImage(int lump, int part)
 		// First try to find an external resource.
 		filename_t fileName;
 
-		if(R_FindResource(RC_PATCH, lumpinfo[lump].name, NULL, fileName)
-		   && GL_LoadImage(&image, fileName, false) != NULL)
+		if(R_FindResource(RC_PATCH, lumpinfo[lump].name, NULL, fileName) &&
+		   GL_LoadImage(&image, fileName, false) != NULL)
 		{
 			// We have the image in the buffer. We'll upload it as one
 			// big texture.
@@ -3170,10 +3168,10 @@ void GL_SetPatch(int lump)
 
 		// Let's first try the resource locator and see if there is a
 		// 'high-resolution' version available.
-		if(!noHighResPatches
-		   && (loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump))
-		   && R_FindResource(RC_PATCH, lumpinfo[lump].name, "-ck", fileName)
-		   && GL_LoadImage(&image, fileName, false))
+		if(!noHighResPatches &&
+		   (loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
+		   R_FindResource(RC_PATCH, lumpinfo[lump].name, "-ck", fileName) &&
+		   GL_LoadImage(&image, fileName, false))
 		{
 			// This is our texture! No mipmaps are generated.
 			lumptexinfo[lump].tex[0] =
@@ -3705,8 +3703,8 @@ boolean GL_IsColorKeyed(const char *path)
 //===========================================================================
 boolean GL_ColorKey(byte *color)
 {
-	return color[CB] == 0xff && ((color[CR] == 0xff && color[CG] == 0)
-								 || (color[CR] == 0 && color[CG] == 0xff));
+	return color[CB] == 0xff && ((color[CR] == 0xff && color[CG] == 0) ||
+								 (color[CR] == 0 && color[CG] == 0xff));
 }
 
 //===========================================================================

@@ -136,7 +136,7 @@ void Sfx_DestroyLogical(logicsound_t * node)
  * 'world class' sound is started, regardless of whether it's actually
  * started on the local system.
  */
-void Sfx_StartLogical(int id, mobj_t * origin, boolean isRepeating)
+void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
 {
 	logicsound_t *node;
 	uint    length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
@@ -161,7 +161,7 @@ void Sfx_StartLogical(int id, mobj_t * origin, boolean isRepeating)
  *
  * id=0, origin=0: stop everything
  */
-int Sfx_StopLogical(int id, mobj_t * origin)
+int Sfx_StopLogical(int id, mobj_t *origin)
 {
 	logicsound_t *it, *next;
 	int     stopCount = 0;
@@ -241,7 +241,7 @@ void Sfx_PurgeLogical(void)
  *
  * id=0: true if any sounds are playing using the specified origin
  */
-boolean Sfx_IsPlaying(int id, mobj_t * origin)
+boolean Sfx_IsPlaying(int id, mobj_t *origin)
 {
 	uint    nowTime = Sys_GetRealTime();
 	logicsound_t *it;
@@ -251,8 +251,8 @@ boolean Sfx_IsPlaying(int id, mobj_t * origin)
 	{
 		for(it = Sfx_LogicHash(id)->first; it; it = it->next)
 		{
-			if(it->id == id && it->origin == origin
-			   && (it->endTime > nowTime || it->isRepeating))
+			if(it->id == id && it->origin == origin &&
+			   (it->endTime > nowTime || it->isRepeating))
 			{
 				// This one is still playing.
 				return true;
@@ -266,8 +266,8 @@ boolean Sfx_IsPlaying(int id, mobj_t * origin)
 		{
 			for(it = logicHash[i].first; it; it = it->next)
 			{
-				if(it->origin == origin
-				   && (it->endTime > nowTime || it->isRepeating))
+				if(it->origin == origin &&
+				   (it->endTime > nowTime || it->isRepeating))
 				{
 					// This one is playing.
 					return true;

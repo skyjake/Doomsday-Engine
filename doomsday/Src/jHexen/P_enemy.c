@@ -31,7 +31,7 @@ boolean fastMonsters = false;
 
 mobj_t *soundtarget;
 
-void P_RecursiveSound(sector_t * sec, int soundblocks)
+void P_RecursiveSound(sector_t *sec, int soundblocks)
 {
 	int     i;
 	line_t *check;
@@ -88,7 +88,7 @@ void P_RecursiveSound(sector_t * sec, int soundblocks)
 //
 //----------------------------------------------------------------------------
 
-void P_NoiseAlert(mobj_t * target, mobj_t * emmiter)
+void P_NoiseAlert(mobj_t *target, mobj_t *emmiter)
 {
 	soundtarget = target;
 	Validcount++;
@@ -101,7 +101,7 @@ void P_NoiseAlert(mobj_t * target, mobj_t * emmiter)
 //
 //----------------------------------------------------------------------------
 
-boolean P_CheckMeleeRange(mobj_t * actor)
+boolean P_CheckMeleeRange(mobj_t *actor)
 {
 	mobj_t *mo;
 	fixed_t dist;
@@ -137,7 +137,7 @@ boolean P_CheckMeleeRange(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-boolean P_CheckMeleeRange2(mobj_t * actor)
+boolean P_CheckMeleeRange2(mobj_t *actor)
 {
 	mobj_t *mo;
 	fixed_t dist;
@@ -173,7 +173,7 @@ boolean P_CheckMeleeRange2(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-boolean P_CheckMissileRange(mobj_t * actor)
+boolean P_CheckMissileRange(mobj_t *actor)
 {
 	fixed_t dist;
 
@@ -228,7 +228,7 @@ fixed_t yspeed[8] =
 extern line_t *spechit[MAXSPECIALCROSS];
 extern int numspechit;
 
-boolean P_Move(mobj_t * actor)
+boolean P_Move(mobj_t *actor)
 {
 	fixed_t tryx, tryy, stepx, stepy;
 	line_t *ld;
@@ -309,7 +309,7 @@ boolean P_Move(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-boolean P_TryWalk(mobj_t * actor)
+boolean P_TryWalk(mobj_t *actor)
 {
 	if(!P_Move(actor))
 	{
@@ -334,7 +334,7 @@ dirtype_t opposite[] =
 
 dirtype_t diags[] = { DI_NORTHWEST, DI_NORTHEAST, DI_SOUTHWEST, DI_SOUTHEAST };
 
-void P_NewChaseDir(mobj_t * actor)
+void P_NewChaseDir(mobj_t *actor)
 {
 	fixed_t deltax, deltay;
 	dirtype_t d[3];
@@ -449,7 +449,7 @@ void P_NewChaseDir(mobj_t * actor)
 #define MONS_LOOK_RANGE (16*64*FRACUNIT)
 #define MONS_LOOK_LIMIT 64
 
-boolean P_LookForMonsters(mobj_t * actor)
+boolean P_LookForMonsters(mobj_t *actor)
 {
 	int     count;
 	mobj_t *mo;
@@ -491,8 +491,8 @@ boolean P_LookForMonsters(mobj_t * actor)
 		}
 		if(actor->type == MT_MINOTAUR)
 		{
-			if((mo->type == MT_MINOTAUR)
-			   && (mo->target != ((player_t *) actor->special1)->plr->mo))
+			if((mo->type == MT_MINOTAUR) &&
+			   (mo->target != ((player_t *) actor->special1)->plr->mo))
 			{
 				continue;
 			}
@@ -514,7 +514,7 @@ boolean P_LookForMonsters(mobj_t * actor)
    ================
  */
 
-boolean P_LookForPlayers(mobj_t * actor, boolean allaround)
+boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 {
 	int     c;
 	int     stop;
@@ -565,9 +565,9 @@ boolean P_LookForPlayers(mobj_t * actor, boolean allaround)
 		{						// Player is invisible
 			if((P_ApproxDistance
 				(player->plr->mo->x - actor->x,
-				 player->plr->mo->y - actor->y) > 2 * MELEERANGE)
-			   && P_ApproxDistance(player->plr->mo->momx,
-								   player->plr->mo->momy) < 5 * FRACUNIT)
+				 player->plr->mo->y - actor->y) > 2 * MELEERANGE) &&
+			   P_ApproxDistance(player->plr->mo->momx,
+								player->plr->mo->momy) < 5 * FRACUNIT)
 			{					// Player is sneaking - can't detect
 				return (false);
 			}
@@ -608,7 +608,7 @@ boolean P_LookForPlayers(mobj_t * actor, boolean allaround)
    ==============
  */
 
-void C_DECL A_Look(mobj_t * actor)
+void C_DECL A_Look(mobj_t *actor)
 {
 	mobj_t *targ;
 
@@ -658,7 +658,7 @@ void C_DECL A_Look(mobj_t * actor)
    ==============
  */
 
-void C_DECL A_Chase(mobj_t * actor)
+void C_DECL A_Chase(mobj_t *actor)
 {
 	int     delta;
 
@@ -795,7 +795,7 @@ void C_DECL A_Chase(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_FaceTarget(mobj_t * actor)
+void C_DECL A_FaceTarget(mobj_t *actor)
 {
 	if(!actor->target)
 	{
@@ -818,7 +818,7 @@ void C_DECL A_FaceTarget(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_Pain(mobj_t * actor)
+void C_DECL A_Pain(mobj_t *actor)
 {
 	if(actor->info->painsound)
 	{
@@ -832,7 +832,7 @@ void C_DECL A_Pain(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SetInvulnerable(mobj_t * actor)
+void C_DECL A_SetInvulnerable(mobj_t *actor)
 {
 	actor->flags2 |= MF2_INVULNERABLE;
 }
@@ -843,7 +843,7 @@ void C_DECL A_SetInvulnerable(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_UnSetInvulnerable(mobj_t * actor)
+void C_DECL A_UnSetInvulnerable(mobj_t *actor)
 {
 	actor->flags2 &= ~MF2_INVULNERABLE;
 }
@@ -854,7 +854,7 @@ void C_DECL A_UnSetInvulnerable(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SetReflective(mobj_t * actor)
+void C_DECL A_SetReflective(mobj_t *actor)
 {
 	actor->flags2 |= MF2_REFLECTIVE;
 
@@ -870,7 +870,7 @@ void C_DECL A_SetReflective(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_UnSetReflective(mobj_t * actor)
+void C_DECL A_UnSetReflective(mobj_t *actor)
 {
 	actor->flags2 &= ~MF2_REFLECTIVE;
 
@@ -888,7 +888,7 @@ void C_DECL A_UnSetReflective(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-boolean P_UpdateMorphedMonster(mobj_t * actor, int tics)
+boolean P_UpdateMorphedMonster(mobj_t *actor, int tics)
 {
 	mobj_t *fog;
 	fixed_t x;
@@ -956,7 +956,7 @@ boolean P_UpdateMorphedMonster(mobj_t * actor, int tics)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_PigLook(mobj_t * actor)
+void C_DECL A_PigLook(mobj_t *actor)
 {
 	if(P_UpdateMorphedMonster(actor, 10))
 	{
@@ -971,7 +971,7 @@ void C_DECL A_PigLook(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_PigChase(mobj_t * actor)
+void C_DECL A_PigChase(mobj_t *actor)
 {
 	if(P_UpdateMorphedMonster(actor, 3))
 	{
@@ -986,7 +986,7 @@ void C_DECL A_PigChase(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_PigAttack(mobj_t * actor)
+void C_DECL A_PigAttack(mobj_t *actor)
 {
 	if(P_UpdateMorphedMonster(actor, 18))
 	{
@@ -1009,7 +1009,7 @@ void C_DECL A_PigAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_PigPain(mobj_t * actor)
+void C_DECL A_PigPain(mobj_t *actor)
 {
 	A_Pain(actor);
 	if(actor->z <= actor->floorz)
@@ -1018,7 +1018,7 @@ void C_DECL A_PigPain(mobj_t * actor)
 	}
 }
 
-void FaceMovementDirection(mobj_t * actor)
+void FaceMovementDirection(mobj_t *actor)
 {
 	switch (actor->movedir)
 	{
@@ -1062,20 +1062,20 @@ void FaceMovementDirection(mobj_t * actor)
 //  args[4]         charge duration countdown
 //----------------------------------------------------------------------------
 
-void C_DECL A_MinotaurFade0(mobj_t * actor)
+void C_DECL A_MinotaurFade0(mobj_t *actor)
 {
 	actor->flags &= ~MF_ALTSHADOW;
 	actor->flags |= MF_SHADOW;
 }
 
-void C_DECL A_MinotaurFade1(mobj_t * actor)
+void C_DECL A_MinotaurFade1(mobj_t *actor)
 {
 	// Second level of transparency
 	actor->flags &= ~MF_SHADOW;
 	actor->flags |= MF_ALTSHADOW;
 }
 
-void C_DECL A_MinotaurFade2(mobj_t * actor)
+void C_DECL A_MinotaurFade2(mobj_t *actor)
 {
 	// Make fully visible
 	actor->flags &= ~MF_SHADOW;
@@ -1089,9 +1089,9 @@ void C_DECL A_MinotaurFade2(mobj_t * actor)
 // 
 //----------------------------------------------------------------------------
 
-void C_DECL A_MinotaurLook(mobj_t * actor);
+void C_DECL A_MinotaurLook(mobj_t *actor);
 
-void C_DECL A_MinotaurRoam(mobj_t * actor)
+void C_DECL A_MinotaurRoam(mobj_t *actor)
 {
 	unsigned int *starttime = (unsigned int *) actor->args;
 
@@ -1132,7 +1132,7 @@ void C_DECL A_MinotaurRoam(mobj_t * actor)
 //----------------------------------------------------------------------------
 #define MINOTAUR_LOOK_DIST		(16*54*FRACUNIT)
 
-void C_DECL A_MinotaurLook(mobj_t * actor)
+void C_DECL A_MinotaurLook(mobj_t *actor)
 {
 	mobj_t *mo = NULL;
 	player_t *player;
@@ -1207,7 +1207,7 @@ void C_DECL A_MinotaurLook(mobj_t * actor)
 	}
 }
 
-void C_DECL A_MinotaurChase(mobj_t * actor)
+void C_DECL A_MinotaurChase(mobj_t *actor)
 {
 	unsigned int *starttime = (unsigned int *) actor->args;
 
@@ -1223,8 +1223,8 @@ void C_DECL A_MinotaurChase(mobj_t * actor)
 	if(P_Random() < 30)
 		A_MinotaurLook(actor);	// adjust to closest target
 
-	if(!actor->target || (actor->target->health <= 0)
-	   || !(actor->target->flags & MF_SHOOTABLE))
+	if(!actor->target || (actor->target->health <= 0) ||
+	   !(actor->target->flags & MF_SHOOTABLE))
 	{							// look for a new target
 		P_SetMobjState(actor, S_MNTR_LOOK1);
 		return;
@@ -1273,7 +1273,7 @@ void C_DECL A_MinotaurChase(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_MinotaurAtk1(mobj_t * actor)
+void C_DECL A_MinotaurAtk1(mobj_t *actor)
 {
 	if(!actor->target)
 		return;
@@ -1295,7 +1295,7 @@ void C_DECL A_MinotaurAtk1(mobj_t * actor)
 
 #define MNTR_CHARGE_SPEED (23*FRACUNIT)
 
-void C_DECL A_MinotaurDecide(mobj_t * actor)
+void C_DECL A_MinotaurDecide(mobj_t *actor)
 {
 	angle_t angle;
 	mobj_t *target = actor->target;
@@ -1305,10 +1305,10 @@ void C_DECL A_MinotaurDecide(mobj_t * actor)
 		return;
 	dist = P_ApproxDistance(actor->x - target->x, actor->y - target->y);
 
-	if(target->z + target->height > actor->z
-	   && target->z + target->height < actor->z + actor->height
-	   && dist < 16 * 64 * FRACUNIT && dist > 1 * 64 * FRACUNIT
-	   && P_Random() < 230)
+	if(target->z + target->height > actor->z &&
+	   target->z + target->height < actor->z + actor->height &&
+	   dist < 16 * 64 * FRACUNIT && dist > 1 * 64 * FRACUNIT &&
+	   P_Random() < 230)
 	{							// Charge attack
 		// Don't call the state function right away
 		P_SetMobjStateNF(actor, S_MNTR_ATK4_1);
@@ -1319,8 +1319,8 @@ void C_DECL A_MinotaurDecide(mobj_t * actor)
 		actor->momy = FixedMul(MNTR_CHARGE_SPEED, finesine[angle]);
 		actor->args[4] = 35 / 2;	// Charge duration
 	}
-	else if(target->z == target->floorz && dist < 9 * 64 * FRACUNIT
-			&& P_Random() < 100)
+	else if(target->z == target->floorz && dist < 9 * 64 * FRACUNIT &&
+			P_Random() < 100)
 	{							// Floor fire attack
 		P_SetMobjState(actor, S_MNTR_ATK3_1);
 		actor->special2 = 0;
@@ -1339,7 +1339,7 @@ void C_DECL A_MinotaurDecide(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_MinotaurCharge(mobj_t * actor)
+void C_DECL A_MinotaurCharge(mobj_t *actor)
 {
 	mobj_t *puff;
 
@@ -1367,7 +1367,7 @@ void C_DECL A_MinotaurCharge(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_MinotaurAtk2(mobj_t * actor)
+void C_DECL A_MinotaurAtk2(mobj_t *actor)
 {
 	mobj_t *mo;
 	angle_t angle;
@@ -1403,7 +1403,7 @@ void C_DECL A_MinotaurAtk2(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_MinotaurAtk3(mobj_t * actor)
+void C_DECL A_MinotaurAtk3(mobj_t *actor)
 {
 	mobj_t *mo;
 	player_t *player;
@@ -1441,7 +1441,7 @@ void C_DECL A_MinotaurAtk3(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_MntrFloorFire(mobj_t * actor)
+void C_DECL A_MntrFloorFire(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -1460,7 +1460,7 @@ void C_DECL A_MntrFloorFire(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_Scream(mobj_t * actor)
+void C_DECL A_Scream(mobj_t *actor)
 {
 	int     sound;
 
@@ -1573,7 +1573,7 @@ void C_DECL A_Scream(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_NoBlocking(mobj_t * actor)
+void C_DECL A_NoBlocking(mobj_t *actor)
 {
 	actor->flags &= ~MF_SOLID;
 
@@ -1598,7 +1598,7 @@ void C_DECL A_NoBlocking(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_Explode(mobj_t * actor)
+void C_DECL A_Explode(mobj_t *actor)
 {
 	int     damage;
 	int     distance;
@@ -1674,8 +1674,8 @@ void C_DECL A_Explode(mobj_t * actor)
 		break;
 	}
 	P_RadiusAttack(actor, actor->target, damage, distance, damageSelf);
-	if(actor->z <= actor->floorz + (distance << FRACBITS)
-	   && actor->type != MT_POISONCLOUD)
+	if(actor->z <= actor->floorz + (distance << FRACBITS) &&
+	   actor->type != MT_POISONCLOUD)
 	{
 		P_HitFloor(actor);
 	}
@@ -1725,7 +1725,7 @@ int P_Massacre(void)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_SkullPop(mobj_t * actor)
+void C_DECL A_SkullPop(mobj_t *actor)
 {
 	mobj_t *mo;
 	player_t *player;
@@ -1761,7 +1761,7 @@ void C_DECL A_SkullPop(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_CheckSkullFloor(mobj_t * actor)
+void C_DECL A_CheckSkullFloor(mobj_t *actor)
 {
 	if(actor->z <= actor->floorz)
 	{
@@ -1776,7 +1776,7 @@ void C_DECL A_CheckSkullFloor(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_CheckSkullDone(mobj_t * actor)
+void C_DECL A_CheckSkullDone(mobj_t *actor)
 {
 	if(actor->special2 == 666)
 	{
@@ -1790,7 +1790,7 @@ void C_DECL A_CheckSkullDone(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_CheckBurnGone(mobj_t * actor)
+void C_DECL A_CheckBurnGone(mobj_t *actor)
 {
 	if(actor->special2 == 666)
 	{
@@ -1804,7 +1804,7 @@ void C_DECL A_CheckBurnGone(mobj_t * actor)
 //
 //----------------------------------------------------------------------------
 
-void C_DECL A_FreeTargMobj(mobj_t * mo)
+void C_DECL A_FreeTargMobj(mobj_t *mo)
 {
 	mo->momx = mo->momy = mo->momz = 0;
 	mo->z = mo->ceilingz + 4 * FRACUNIT;
@@ -1830,7 +1830,7 @@ mobj_t *corpseQueue[CORPSEQUEUESIZE];
 int     corpseQueueSlot;
 
 // throw another corpse on the queue
-void C_DECL A_QueueCorpse(mobj_t * actor)
+void C_DECL A_QueueCorpse(mobj_t *actor)
 {
 	mobj_t *corpse;
 
@@ -1845,7 +1845,7 @@ void C_DECL A_QueueCorpse(mobj_t * actor)
 }
 
 // Remove a mobj from the queue (for resurrection)
-void C_DECL A_DeQueueCorpse(mobj_t * actor)
+void C_DECL A_DeQueueCorpse(mobj_t *actor)
 {
 	int     slot;
 
@@ -1926,7 +1926,7 @@ void P_InitCreatureCorpseQueue(boolean corpseScan)
 mobj_t *bodyque[BODYQUESIZE];
 int     bodyqueslot;
 
-void C_DECL A_AddPlayerCorpse(mobj_t * actor)
+void C_DECL A_AddPlayerCorpse(mobj_t *actor)
 {
 	if(bodyqueslot >= BODYQUESIZE)
 	{							// Too many player corpses - remove an old one
@@ -1942,7 +1942,7 @@ void C_DECL A_AddPlayerCorpse(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentUnHide(mobj_t * actor)
+void C_DECL A_SerpentUnHide(mobj_t *actor)
 {
 	actor->flags2 &= ~MF2_DONTDRAW;
 	actor->floorclip = 24 * FRACUNIT;
@@ -1954,7 +1954,7 @@ void C_DECL A_SerpentUnHide(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentHide(mobj_t * actor)
+void C_DECL A_SerpentHide(mobj_t *actor)
 {
 	actor->flags2 |= MF2_DONTDRAW;
 	actor->floorclip = 0;
@@ -1966,7 +1966,7 @@ void C_DECL A_SerpentHide(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentChase(mobj_t * actor)
+void C_DECL A_SerpentChase(mobj_t *actor)
 {
 	int     delta;
 	int     oldX, oldY, oldFloor;
@@ -2083,7 +2083,7 @@ void C_DECL A_SerpentChase(mobj_t * actor)
 // Raises the hump above the surface by raising the floorclip level
 //============================================================================
 
-void C_DECL A_SerpentRaiseHump(mobj_t * actor)
+void C_DECL A_SerpentRaiseHump(mobj_t *actor)
 {
 	actor->floorclip -= 4 * FRACUNIT;
 }
@@ -2094,7 +2094,7 @@ void C_DECL A_SerpentRaiseHump(mobj_t * actor)
 // 
 //============================================================================
 
-void C_DECL A_SerpentLowerHump(mobj_t * actor)
+void C_DECL A_SerpentLowerHump(mobj_t *actor)
 {
 	actor->floorclip += 4 * FRACUNIT;
 }
@@ -2107,7 +2107,7 @@ void C_DECL A_SerpentLowerHump(mobj_t * actor)
 //          to missile attack
 //============================================================================
 
-void C_DECL A_SerpentHumpDecide(mobj_t * actor)
+void C_DECL A_SerpentHumpDecide(mobj_t *actor)
 {
 	if(actor->type == MT_SERPENTLEADER)
 	{
@@ -2145,7 +2145,7 @@ void C_DECL A_SerpentHumpDecide(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentBirthScream(mobj_t * actor)
+void C_DECL A_SerpentBirthScream(mobj_t *actor)
 {
 	S_StartSound(SFX_SERPENT_BIRTH, actor);
 }
@@ -2156,7 +2156,7 @@ void C_DECL A_SerpentBirthScream(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentDiveSound(mobj_t * actor)
+void C_DECL A_SerpentDiveSound(mobj_t *actor)
 {
 	S_StartSound(SFX_SERPENT_ACTIVE, actor);
 }
@@ -2168,7 +2168,7 @@ void C_DECL A_SerpentDiveSound(mobj_t * actor)
 // Similar to A_Chase, only has a hardcoded entering of meleestate
 //============================================================================
 
-void C_DECL A_SerpentWalk(mobj_t * actor)
+void C_DECL A_SerpentWalk(mobj_t *actor)
 {
 	int     delta;
 
@@ -2266,7 +2266,7 @@ void C_DECL A_SerpentWalk(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentCheckForAttack(mobj_t * actor)
+void C_DECL A_SerpentCheckForAttack(mobj_t *actor)
 {
 	if(!actor->target)
 	{
@@ -2303,7 +2303,7 @@ void C_DECL A_SerpentCheckForAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentChooseAttack(mobj_t * actor)
+void C_DECL A_SerpentChooseAttack(mobj_t *actor)
 {
 	if(!actor->target || P_CheckMeleeRange(actor))
 	{
@@ -2321,7 +2321,7 @@ void C_DECL A_SerpentChooseAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentMeleeAttack(mobj_t * actor)
+void C_DECL A_SerpentMeleeAttack(mobj_t *actor)
 {
 	if(!actor->target)
 	{
@@ -2344,7 +2344,7 @@ void C_DECL A_SerpentMeleeAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentMissileAttack(mobj_t * actor)
+void C_DECL A_SerpentMissileAttack(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -2361,7 +2361,7 @@ void C_DECL A_SerpentMissileAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentHeadPop(mobj_t * actor)
+void C_DECL A_SerpentHeadPop(mobj_t *actor)
 {
 	P_SpawnMobj(actor->x, actor->y, actor->z + 45 * FRACUNIT, MT_SERPENT_HEAD);
 }
@@ -2372,7 +2372,7 @@ void C_DECL A_SerpentHeadPop(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentSpawnGibs(mobj_t * actor)
+void C_DECL A_SerpentSpawnGibs(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -2411,7 +2411,7 @@ void C_DECL A_SerpentSpawnGibs(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_FloatGib(mobj_t * actor)
+void C_DECL A_FloatGib(mobj_t *actor)
 {
 	actor->floorclip -= FRACUNIT;
 }
@@ -2422,7 +2422,7 @@ void C_DECL A_FloatGib(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SinkGib(mobj_t * actor)
+void C_DECL A_SinkGib(mobj_t *actor)
 {
 	actor->floorclip += FRACUNIT;
 }
@@ -2433,7 +2433,7 @@ void C_DECL A_SinkGib(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_DelayGib(mobj_t * actor)
+void C_DECL A_DelayGib(mobj_t *actor)
 {
 	actor->tics -= P_Random() >> 2;
 }
@@ -2444,7 +2444,7 @@ void C_DECL A_DelayGib(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_SerpentHeadCheck(mobj_t * actor)
+void C_DECL A_SerpentHeadCheck(mobj_t *actor)
 {
 	if(actor->z <= actor->floorz)
 	{
@@ -2466,7 +2466,7 @@ void C_DECL A_SerpentHeadCheck(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_CentaurAttack(mobj_t * actor)
+void C_DECL A_CentaurAttack(mobj_t *actor)
 {
 	if(!actor->target)
 	{
@@ -2484,7 +2484,7 @@ void C_DECL A_CentaurAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_CentaurAttack2(mobj_t * actor)
+void C_DECL A_CentaurAttack2(mobj_t *actor)
 {
 	if(!actor->target)
 	{
@@ -2500,7 +2500,7 @@ void C_DECL A_CentaurAttack2(mobj_t * actor)
 //
 //  Spawn shield/sword sprites when the centaur pulps //============================================================================
 
-void C_DECL A_CentaurDropStuff(mobj_t * actor)
+void C_DECL A_CentaurDropStuff(mobj_t *actor)
 {
 	mobj_t *mo;
 	angle_t angle;
@@ -2541,7 +2541,7 @@ void C_DECL A_CentaurDropStuff(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_CentaurDefend(mobj_t * actor)
+void C_DECL A_CentaurDefend(mobj_t *actor)
 {
 	A_FaceTarget(actor);
 	if(P_CheckMeleeRange(actor) && P_Random() < 32)
@@ -2557,7 +2557,7 @@ void C_DECL A_CentaurDefend(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopAttack(mobj_t * actor)
+void C_DECL A_BishopAttack(mobj_t *actor)
 {
 	if(!actor->target)
 	{
@@ -2579,7 +2579,7 @@ void C_DECL A_BishopAttack(mobj_t * actor)
 //      Spawns one of a string of bishop missiles
 //============================================================================
 
-void C_DECL A_BishopAttack2(mobj_t * actor)
+void C_DECL A_BishopAttack2(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -2604,7 +2604,7 @@ void C_DECL A_BishopAttack2(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopMissileWeave(mobj_t * actor)
+void C_DECL A_BishopMissileWeave(mobj_t *actor)
 {
 	fixed_t newX, newY;
 	int     weaveXY, weaveZ;
@@ -2632,7 +2632,7 @@ void C_DECL A_BishopMissileWeave(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopMissileSeek(mobj_t * actor)
+void C_DECL A_BishopMissileSeek(mobj_t *actor)
 {
 	P_SeekerMissile(actor, ANGLE_1 * 2, ANGLE_1 * 3);
 }
@@ -2643,7 +2643,7 @@ void C_DECL A_BishopMissileSeek(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopDecide(mobj_t * actor)
+void C_DECL A_BishopDecide(mobj_t *actor)
 {
 	if(P_Random() < 220)
 	{
@@ -2661,7 +2661,7 @@ void C_DECL A_BishopDecide(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopDoBlur(mobj_t * actor)
+void C_DECL A_BishopDoBlur(mobj_t *actor)
 {
 	actor->special1 = (P_Random() & 3) + 3;	// Random number of blurs
 	if(P_Random() < 120)
@@ -2685,7 +2685,7 @@ void C_DECL A_BishopDoBlur(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopSpawnBlur(mobj_t * actor)
+void C_DECL A_BishopSpawnBlur(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -2715,7 +2715,7 @@ void C_DECL A_BishopSpawnBlur(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopChase(mobj_t * actor)
+void C_DECL A_BishopChase(mobj_t *actor)
 {
 	actor->z -= FloatBobOffsets[actor->special2] >> 1;
 	actor->special2 = (actor->special2 + 4) & 63;
@@ -2728,7 +2728,7 @@ void C_DECL A_BishopChase(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopPuff(mobj_t * actor)
+void C_DECL A_BishopPuff(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -2746,7 +2746,7 @@ void C_DECL A_BishopPuff(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_BishopPainBlur(mobj_t * actor)
+void C_DECL A_BishopPainBlur(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -2771,7 +2771,7 @@ void C_DECL A_BishopPainBlur(mobj_t * actor)
 //
 //============================================================================
 
-static void DragonSeek(mobj_t * actor, angle_t thresh, angle_t turnMax)
+static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
 {
 	int     dir;
 	int     dist;
@@ -2810,8 +2810,8 @@ static void DragonSeek(mobj_t * actor, angle_t thresh, angle_t turnMax)
 	angle = actor->angle >> ANGLETOFINESHIFT;
 	actor->momx = FixedMul(actor->info->speed, finecosine[angle]);
 	actor->momy = FixedMul(actor->info->speed, finesine[angle]);
-	if(actor->z + actor->height < target->z
-	   || target->z + target->height < actor->z)
+	if(actor->z + actor->height < target->z ||
+	   target->z + target->height < actor->z)
 	{
 		dist = P_ApproxDistance(target->x - actor->x, target->y - actor->y);
 		dist = dist / actor->info->speed;
@@ -2901,7 +2901,7 @@ static void DragonSeek(mobj_t * actor, angle_t thresh, angle_t turnMax)
 //
 //============================================================================
 
-void C_DECL A_DragonInitFlight(mobj_t * actor)
+void C_DECL A_DragonInitFlight(mobj_t *actor)
 {
 	int     search;
 
@@ -2924,7 +2924,7 @@ void C_DECL A_DragonInitFlight(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_DragonFlight(mobj_t * actor)
+void C_DECL A_DragonFlight(mobj_t *actor)
 {
 	angle_t angle;
 
@@ -2939,8 +2939,8 @@ void C_DECL A_DragonFlight(mobj_t * actor)
 		angle =
 			R_PointToAngle2(actor->x, actor->y, actor->target->x,
 							actor->target->y);
-		if(abs(actor->angle - angle) < ANGLE_45 / 2
-		   && P_CheckMeleeRange(actor))
+		if(abs(actor->angle - angle) < ANGLE_45 / 2 &&
+		   P_CheckMeleeRange(actor))
 		{
 			P_DamageMobj(actor->target, actor, actor, HITDICE(8));
 			S_StartSound(SFX_DRAGON_ATTACK, actor);
@@ -2963,7 +2963,7 @@ void C_DECL A_DragonFlight(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_DragonFlap(mobj_t * actor)
+void C_DECL A_DragonFlap(mobj_t *actor)
 {
 	A_DragonFlight(actor);
 	if(P_Random() < 240)
@@ -2982,7 +2982,7 @@ void C_DECL A_DragonFlap(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_DragonAttack(mobj_t * actor)
+void C_DECL A_DragonAttack(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -2995,7 +2995,7 @@ void C_DECL A_DragonAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_DragonFX2(mobj_t * actor)
+void C_DECL A_DragonFX2(mobj_t *actor)
 {
 	mobj_t *mo;
 	int     i;
@@ -3021,7 +3021,7 @@ void C_DECL A_DragonFX2(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_DragonPain(mobj_t * actor)
+void C_DECL A_DragonPain(mobj_t *actor)
 {
 	A_Pain(actor);
 	if(!actor->special1)
@@ -3036,7 +3036,7 @@ void C_DECL A_DragonPain(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_DragonCheckCrash(mobj_t * actor)
+void C_DECL A_DragonCheckCrash(mobj_t *actor)
 {
 	if(actor->z <= actor->floorz)
 	{
@@ -3051,7 +3051,7 @@ void C_DECL A_DragonCheckCrash(mobj_t * actor)
 //
 // A_DemonAttack1 (melee)
 //
-void C_DECL A_DemonAttack1(mobj_t * actor)
+void C_DECL A_DemonAttack1(mobj_t *actor)
 {
 	if(P_CheckMeleeRange(actor))
 	{
@@ -3062,7 +3062,7 @@ void C_DECL A_DemonAttack1(mobj_t * actor)
 //
 // A_DemonAttack2 (missile)
 //
-void C_DECL A_DemonAttack2(mobj_t * actor)
+void C_DECL A_DemonAttack2(mobj_t *actor)
 {
 	mobj_t *mo;
 	int     fireBall;
@@ -3087,7 +3087,7 @@ void C_DECL A_DemonAttack2(mobj_t * actor)
 // A_DemonDeath
 //
 
-void C_DECL A_DemonDeath(mobj_t * actor)
+void C_DECL A_DemonDeath(mobj_t *actor)
 {
 	mobj_t *mo;
 	angle_t angle;
@@ -3170,7 +3170,7 @@ void C_DECL A_DemonDeath(mobj_t * actor)
 //
 //===========================================================================
 
-void C_DECL A_Demon2Death(mobj_t * actor)
+void C_DECL A_Demon2Death(mobj_t *actor)
 {
 	mobj_t *mo;
 	angle_t angle;
@@ -3252,7 +3252,7 @@ void C_DECL A_Demon2Death(mobj_t * actor)
 // Sink a mobj incrementally into the floor
 //
 
-boolean A_SinkMobj(mobj_t * actor)
+boolean A_SinkMobj(mobj_t *actor)
 {
 	if(actor->floorclip < actor->info->height)
 	{
@@ -3276,7 +3276,7 @@ boolean A_SinkMobj(mobj_t * actor)
 // Raise a mobj incrementally from the floor to 
 // 
 
-boolean A_RaiseMobj(mobj_t * actor)
+boolean A_RaiseMobj(mobj_t *actor)
 {
 	int     done = true;
 
@@ -3320,13 +3320,13 @@ boolean A_RaiseMobj(mobj_t * actor)
 // A_WraithInit
 //
 
-void C_DECL A_WraithInit(mobj_t * actor)
+void C_DECL A_WraithInit(mobj_t *actor)
 {
 	actor->z += 48 << FRACBITS;
 	actor->special1 = 0;		// index into floatbob
 }
 
-void C_DECL A_WraithRaiseInit(mobj_t * actor)
+void C_DECL A_WraithRaiseInit(mobj_t *actor)
 {
 	actor->flags2 &= ~MF2_DONTDRAW;
 	actor->flags2 &= ~MF2_NONSHOOTABLE;
@@ -3334,7 +3334,7 @@ void C_DECL A_WraithRaiseInit(mobj_t * actor)
 	actor->floorclip = actor->info->height;
 }
 
-void C_DECL A_WraithRaise(mobj_t * actor)
+void C_DECL A_WraithRaise(mobj_t *actor)
 {
 	if(A_RaiseMobj(actor))
 	{
@@ -3345,7 +3345,7 @@ void C_DECL A_WraithRaise(mobj_t * actor)
 	P_SpawnDirt(actor, actor->radius);
 }
 
-void C_DECL A_WraithMelee(mobj_t * actor)
+void C_DECL A_WraithMelee(mobj_t *actor)
 {
 	int     amount;
 
@@ -3358,7 +3358,7 @@ void C_DECL A_WraithMelee(mobj_t * actor)
 	}
 }
 
-void C_DECL A_WraithMissile(mobj_t * actor)
+void C_DECL A_WraithMissile(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -3373,7 +3373,7 @@ void C_DECL A_WraithMissile(mobj_t * actor)
 // A_WraithFX2 - spawns sparkle tail of missile
 //
 
-void C_DECL A_WraithFX2(mobj_t * actor)
+void C_DECL A_WraithFX2(mobj_t *actor)
 {
 	mobj_t *mo;
 	angle_t angle;
@@ -3406,7 +3406,7 @@ void C_DECL A_WraithFX2(mobj_t * actor)
 }
 
 // Spawn an FX3 around the actor during attacks
-void C_DECL A_WraithFX3(mobj_t * actor)
+void C_DECL A_WraithFX3(mobj_t *actor)
 {
 	mobj_t *mo;
 	int     numdropped = P_Random() % 15;
@@ -3426,7 +3426,7 @@ void C_DECL A_WraithFX3(mobj_t * actor)
 }
 
 // Spawn an FX4 during movement
-void C_DECL A_WraithFX4(mobj_t * actor)
+void C_DECL A_WraithFX4(mobj_t *actor)
 {
 	mobj_t *mo;
 	int     chance = P_Random();
@@ -3477,13 +3477,13 @@ void C_DECL A_WraithFX4(mobj_t * actor)
 	}
 }
 
-void C_DECL A_WraithLook(mobj_t * actor)
+void C_DECL A_WraithLook(mobj_t *actor)
 {
 	//  A_WraithFX4(actor);     // too expensive
 	A_Look(actor);
 }
 
-void C_DECL A_WraithChase(mobj_t * actor)
+void C_DECL A_WraithChase(mobj_t *actor)
 {
 	int     weaveindex = actor->special1;
 
@@ -3502,7 +3502,7 @@ void C_DECL A_WraithChase(mobj_t * actor)
 // Ettin AI
 //============================================================================
 
-void C_DECL A_EttinAttack(mobj_t * actor)
+void C_DECL A_EttinAttack(mobj_t *actor)
 {
 	if(P_CheckMeleeRange(actor))
 	{
@@ -3510,7 +3510,7 @@ void C_DECL A_EttinAttack(mobj_t * actor)
 	}
 }
 
-void C_DECL A_DropMace(mobj_t * actor)
+void C_DECL A_DropMace(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -3532,7 +3532,7 @@ void C_DECL A_DropMace(mobj_t * actor)
 // special2         whether strafing or not
 //============================================================================
 
-void C_DECL A_FiredSpawnRock(mobj_t * actor)
+void C_DECL A_FiredSpawnRock(mobj_t *actor)
 {
 	mobj_t *mo;
 	int     x, y, z;
@@ -3575,7 +3575,7 @@ void C_DECL A_FiredSpawnRock(mobj_t * actor)
 	actor->flags &= ~MF_JUSTATTACKED;
 }
 
-void C_DECL A_FiredRocks(mobj_t * actor)
+void C_DECL A_FiredRocks(mobj_t *actor)
 {
 	A_FiredSpawnRock(actor);
 	A_FiredSpawnRock(actor);
@@ -3584,7 +3584,7 @@ void C_DECL A_FiredRocks(mobj_t * actor)
 	A_FiredSpawnRock(actor);
 }
 
-void C_DECL A_FiredAttack(mobj_t * actor)
+void C_DECL A_FiredAttack(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -3593,7 +3593,7 @@ void C_DECL A_FiredAttack(mobj_t * actor)
 		S_StartSound(SFX_FIRED_ATTACK, actor);
 }
 
-void C_DECL A_SmBounce(mobj_t * actor)
+void C_DECL A_SmBounce(mobj_t *actor)
 {
 	// give some more momentum (x,y,&z)
 	actor->z = actor->floorz + FRACUNIT;
@@ -3604,7 +3604,7 @@ void C_DECL A_SmBounce(mobj_t * actor)
 
 #define FIREDEMON_ATTACK_RANGE	64*8*FRACUNIT
 
-void C_DECL A_FiredChase(mobj_t * actor)
+void C_DECL A_FiredChase(mobj_t *actor)
 {
 	int     weaveindex = actor->special1;
 	mobj_t *target = actor->target;
@@ -3693,7 +3693,7 @@ void C_DECL A_FiredChase(mobj_t * actor)
 	}
 }
 
-void C_DECL A_FiredSplotch(mobj_t * actor)
+void C_DECL A_FiredSplotch(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -3719,7 +3719,7 @@ void C_DECL A_FiredSplotch(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceGuyLook(mobj_t * actor)
+void C_DECL A_IceGuyLook(mobj_t *actor)
 {
 	fixed_t dist;
 	fixed_t an;
@@ -3743,7 +3743,7 @@ void C_DECL A_IceGuyLook(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceGuyChase(mobj_t * actor)
+void C_DECL A_IceGuyChase(mobj_t *actor)
 {
 	fixed_t dist;
 	fixed_t an;
@@ -3775,7 +3775,7 @@ void C_DECL A_IceGuyChase(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceGuyAttack(mobj_t * actor)
+void C_DECL A_IceGuyAttack(mobj_t *actor)
 {
 	fixed_t an;
 
@@ -3802,7 +3802,7 @@ void C_DECL A_IceGuyAttack(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceGuyMissilePuff(mobj_t * actor)
+void C_DECL A_IceGuyMissilePuff(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -3816,9 +3816,9 @@ void C_DECL A_IceGuyMissilePuff(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceGuyDie(mobj_t * actor)
+void C_DECL A_IceGuyDie(mobj_t *actor)
 {
-	void C_DECL A_FreezeDeathChunks(mobj_t * actor);
+	void C_DECL A_FreezeDeathChunks(mobj_t *actor);
 
 	actor->momx = 0;
 	actor->momy = 0;
@@ -3833,7 +3833,7 @@ void C_DECL A_IceGuyDie(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceGuyMissileExplode(mobj_t * actor)
+void C_DECL A_IceGuyMissileExplode(mobj_t *actor)
 {
 	mobj_t *mo;
 	int     i;
@@ -3888,24 +3888,24 @@ void C_DECL A_IceGuyMissileExplode(mobj_t * actor)
 #define BALL2_ANGLEOFFSET	(ANGLE_MAX/3)
 #define BALL3_ANGLEOFFSET	((ANGLE_MAX/3)*2)
 
-void C_DECL A_SorcBallOrbit(mobj_t * actor);
-void C_DECL A_SorcSpinBalls(mobj_t * actor);
-void C_DECL A_SpeedBalls(mobj_t * actor);
-void C_DECL A_SlowBalls(mobj_t * actor);
-void C_DECL A_StopBalls(mobj_t * actor);
-void C_DECL A_AccelBalls(mobj_t * actor);
-void C_DECL A_DecelBalls(mobj_t * actor);
-void C_DECL A_SorcBossAttack(mobj_t * actor);
-void C_DECL A_SpawnFizzle(mobj_t * actor);
-void C_DECL A_CastSorcererSpell(mobj_t * actor);
-void C_DECL A_SorcUpdateBallAngle(mobj_t * actor);
-void C_DECL A_BounceCheck(mobj_t * actor);
-void C_DECL A_SorcFX1Seek(mobj_t * actor);
-void C_DECL A_SorcOffense1(mobj_t * actor);
-void C_DECL A_SorcOffense2(mobj_t * actor);
+void C_DECL A_SorcBallOrbit(mobj_t *actor);
+void C_DECL A_SorcSpinBalls(mobj_t *actor);
+void C_DECL A_SpeedBalls(mobj_t *actor);
+void C_DECL A_SlowBalls(mobj_t *actor);
+void C_DECL A_StopBalls(mobj_t *actor);
+void C_DECL A_AccelBalls(mobj_t *actor);
+void C_DECL A_DecelBalls(mobj_t *actor);
+void C_DECL A_SorcBossAttack(mobj_t *actor);
+void C_DECL A_SpawnFizzle(mobj_t *actor);
+void C_DECL A_CastSorcererSpell(mobj_t *actor);
+void C_DECL A_SorcUpdateBallAngle(mobj_t *actor);
+void C_DECL A_BounceCheck(mobj_t *actor);
+void C_DECL A_SorcFX1Seek(mobj_t *actor);
+void C_DECL A_SorcOffense1(mobj_t *actor);
+void C_DECL A_SorcOffense2(mobj_t *actor);
 
 // Spawn spinning balls above head - actor is sorcerer
-void C_DECL A_SorcSpinBalls(mobj_t * actor)
+void C_DECL A_SorcSpinBalls(mobj_t *actor)
 {
 	mobj_t *mo;
 	fixed_t z;
@@ -3935,7 +3935,7 @@ void C_DECL A_SorcSpinBalls(mobj_t * actor)
 // A_SorcBallOrbit() ==========================================
 //
 
-void C_DECL A_SorcBallOrbit(mobj_t * actor)
+void C_DECL A_SorcBallOrbit(mobj_t *actor)
 {
 	int     x, y;
 	angle_t angle, baseangle;
@@ -3980,9 +3980,9 @@ void C_DECL A_SorcBallOrbit(mobj_t * actor)
 		A_SorcUpdateBallAngle(actor);
 		break;
 	case SORC_STOPPING:		// Balls stopping
-		if((parent->special2 == actor->type)
-		   && (parent->args[1] > SORCBALL_SPEED_ROTATIONS)
-		   && (abs(angle - (parent->angle >> ANGLETOFINESHIFT)) < (30 << 5)))
+		if((parent->special2 == actor->type) &&
+		   (parent->args[1] > SORCBALL_SPEED_ROTATIONS) &&
+		   (abs(angle - (parent->angle >> ANGLETOFINESHIFT)) < (30 << 5)))
 		{
 			// Can stop now
 			actor->target->args[3] = SORC_FIRESPELL;
@@ -4069,7 +4069,7 @@ void C_DECL A_SorcBallOrbit(mobj_t * actor)
 //
 // Set balls to speed mode - actor is sorcerer
 //
-void C_DECL A_SpeedBalls(mobj_t * actor)
+void C_DECL A_SpeedBalls(mobj_t *actor)
 {
 	actor->args[3] = SORC_ACCELERATE;	// speed mode
 	actor->args[2] = SORCBALL_TERMINAL_SPEED;	// target speed
@@ -4078,7 +4078,7 @@ void C_DECL A_SpeedBalls(mobj_t * actor)
 //
 // Set balls to slow mode - actor is sorcerer
 //
-void C_DECL A_SlowBalls(mobj_t * actor)
+void C_DECL A_SlowBalls(mobj_t *actor)
 {
 	actor->args[3] = SORC_DECELERATE;	// slow mode
 	actor->args[2] = SORCBALL_INITIAL_SPEED;	// target speed
@@ -4088,7 +4088,7 @@ void C_DECL A_SlowBalls(mobj_t * actor)
 // Instant stop when rotation gets to ball in special2
 //      actor is sorcerer
 //
-void C_DECL A_StopBalls(mobj_t * actor)
+void C_DECL A_StopBalls(mobj_t *actor)
 {
 	int     chance = P_Random();
 
@@ -4099,8 +4099,8 @@ void C_DECL A_StopBalls(mobj_t * actor)
 	{
 		actor->special2 = MT_SORCBALL2;	// Blue
 	}
-	else if((actor->health < (actor->info->spawnhealth >> 1))
-			&& (chance < 200))
+	else if((actor->health < (actor->info->spawnhealth >> 1)) &&
+			(chance < 200))
 	{
 		actor->special2 = MT_SORCBALL3;	// Green
 	}
@@ -4114,7 +4114,7 @@ void C_DECL A_StopBalls(mobj_t * actor)
 //
 // Increase ball orbit speed - actor is ball
 //
-void C_DECL A_AccelBalls(mobj_t * actor)
+void C_DECL A_AccelBalls(mobj_t *actor)
 {
 	mobj_t *sorc = actor->target;
 
@@ -4134,7 +4134,7 @@ void C_DECL A_AccelBalls(mobj_t * actor)
 }
 
 // Decrease ball orbit speed - actor is ball
-void C_DECL A_DecelBalls(mobj_t * actor)
+void C_DECL A_DecelBalls(mobj_t *actor)
 {
 	mobj_t *sorc = actor->target;
 
@@ -4149,7 +4149,7 @@ void C_DECL A_DecelBalls(mobj_t * actor)
 }
 
 // Update angle if first ball - actor is ball
-void C_DECL A_SorcUpdateBallAngle(mobj_t * actor)
+void C_DECL A_SorcUpdateBallAngle(mobj_t *actor)
 {
 	if(actor->type == MT_SORCBALL1)
 	{
@@ -4158,7 +4158,7 @@ void C_DECL A_SorcUpdateBallAngle(mobj_t * actor)
 }
 
 // actor is ball
-void C_DECL A_CastSorcererSpell(mobj_t * actor)
+void C_DECL A_CastSorcererSpell(mobj_t *actor)
 {
 	mobj_t *mo;
 	int     spell = actor->type;
@@ -4225,7 +4225,7 @@ void C_DECL A_CastSorcererSpell(mobj_t * actor)
  */
 
 // actor is ball
-void C_DECL A_SorcOffense1(mobj_t * actor)
+void C_DECL A_SorcOffense1(mobj_t *actor)
 {
 	mobj_t *mo;
 	angle_t ang1, ang2;
@@ -4252,7 +4252,7 @@ void C_DECL A_SorcOffense1(mobj_t * actor)
 }
 
 // Actor is ball
-void C_DECL A_SorcOffense2(mobj_t * actor)
+void C_DECL A_SorcOffense2(mobj_t *actor)
 {
 	angle_t ang1;
 	mobj_t *mo;
@@ -4279,14 +4279,14 @@ void C_DECL A_SorcOffense2(mobj_t * actor)
 }
 
 // Resume ball spinning
-void C_DECL A_SorcBossAttack(mobj_t * actor)
+void C_DECL A_SorcBossAttack(mobj_t *actor)
 {
 	actor->args[3] = SORC_ACCELERATE;
 	actor->args[2] = SORCBALL_INITIAL_SPEED;
 }
 
 // spell cast magic fizzle
-void C_DECL A_SpawnFizzle(mobj_t * actor)
+void C_DECL A_SpawnFizzle(mobj_t *actor)
 {
 	fixed_t x, y, z;
 	fixed_t dist = 5 * FRACUNIT;
@@ -4316,7 +4316,7 @@ void C_DECL A_SpawnFizzle(mobj_t * actor)
 // Yellow spell - offense
 //============================================================================
 
-void C_DECL A_SorcFX1Seek(mobj_t * actor)
+void C_DECL A_SorcFX1Seek(mobj_t *actor)
 {
 	A_BounceCheck(actor);
 	P_SeekerMissile(actor, ANGLE_1 * 2, ANGLE_1 * 6);
@@ -4334,7 +4334,7 @@ void C_DECL A_SorcFX1Seek(mobj_t * actor)
 //============================================================================
 
 // Split ball in two
-void C_DECL A_SorcFX2Split(mobj_t * actor)
+void C_DECL A_SorcFX2Split(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -4358,7 +4358,7 @@ void C_DECL A_SorcFX2Split(mobj_t * actor)
 }
 
 // Orbit FX2 about sorcerer
-void C_DECL A_SorcFX2Orbit(mobj_t * actor)
+void C_DECL A_SorcFX2Orbit(mobj_t *actor)
 {
 	angle_t angle;
 	fixed_t x, y, z;
@@ -4414,7 +4414,7 @@ void C_DECL A_SorcFX2Orbit(mobj_t * actor)
 // Green spell - spawn bishops
 //============================================================================
 
-void C_DECL A_SpawnBishop(mobj_t * actor)
+void C_DECL A_SpawnBishop(mobj_t *actor)
 {
 	mobj_t *mo;
 
@@ -4436,12 +4436,12 @@ void C_DECL A_SpawnBishop(mobj_t * actor)
    }
  */
 
-void C_DECL A_SmokePuffExit(mobj_t * actor)
+void C_DECL A_SmokePuffExit(mobj_t *actor)
 {
 	P_SpawnMobj(actor->x, actor->y, actor->z, MT_MNTRSMOKEEXIT);
 }
 
-void C_DECL A_SorcererBishopEntry(mobj_t * actor)
+void C_DECL A_SorcererBishopEntry(mobj_t *actor)
 {
 	P_SpawnMobj(actor->x, actor->y, actor->z, MT_SORCFX3_EXPLOSION);
 	S_StartSound(actor->info->seesound, actor);
@@ -4451,7 +4451,7 @@ void C_DECL A_SorcererBishopEntry(mobj_t * actor)
 // FX4 - rapid fire balls
 //============================================================================
 
-void C_DECL A_SorcFX4Check(mobj_t * actor)
+void C_DECL A_SorcFX4Check(mobj_t *actor)
 {
 	if(actor->special2-- <= 0)
 	{
@@ -4463,7 +4463,7 @@ void C_DECL A_SorcFX4Check(mobj_t * actor)
 // Ball death - spawn stuff
 //============================================================================
 
-void C_DECL A_SorcBallPop(mobj_t * actor)
+void C_DECL A_SorcBallPop(mobj_t *actor)
 {
 	S_StartSound(SFX_SORCERER_BALLPOP, NULL);
 	actor->flags &= ~MF_NOGRAVITY;
@@ -4476,7 +4476,7 @@ void C_DECL A_SorcBallPop(mobj_t * actor)
 	actor->args[3] = 5;			// Bounce time in seconds
 }
 
-void C_DECL A_BounceCheck(mobj_t * actor)
+void C_DECL A_BounceCheck(mobj_t *actor)
 {
 	if(actor->args[4]-- <= 0)
 	{
@@ -4509,7 +4509,7 @@ void C_DECL A_BounceCheck(mobj_t * actor)
 //============================================================================
 #define CLASS_BOSS_STRAFE_RANGE	64*10*FRACUNIT
 
-void C_DECL A_FastChase(mobj_t * actor)
+void C_DECL A_FastChase(mobj_t *actor)
 {
 	int     delta;
 	fixed_t dist;
@@ -4639,34 +4639,34 @@ void C_DECL A_FastChase(mobj_t * actor)
 	}
 }
 
-void C_DECL A_FighterAttack(mobj_t * actor)
+void C_DECL A_FighterAttack(mobj_t *actor)
 {
-	extern void C_DECL A_FSwordAttack2(mobj_t * actor);
+	extern void C_DECL A_FSwordAttack2(mobj_t *actor);
 
 	if(!actor->target)
 		return;
 	A_FSwordAttack2(actor);
 }
 
-void C_DECL A_ClericAttack(mobj_t * actor)
+void C_DECL A_ClericAttack(mobj_t *actor)
 {
-	extern void C_DECL A_CHolyAttack3(mobj_t * actor);
+	extern void C_DECL A_CHolyAttack3(mobj_t *actor);
 
 	if(!actor->target)
 		return;
 	A_CHolyAttack3(actor);
 }
 
-void C_DECL A_MageAttack(mobj_t * actor)
+void C_DECL A_MageAttack(mobj_t *actor)
 {
-	extern void C_DECL A_MStaffAttack2(mobj_t * actor);
+	extern void C_DECL A_MStaffAttack2(mobj_t *actor);
 
 	if(!actor->target)
 		return;
 	A_MStaffAttack2(actor);
 }
 
-void C_DECL A_ClassBossHealth(mobj_t * actor)
+void C_DECL A_ClassBossHealth(mobj_t *actor)
 {
 	if(netgame && !deathmatch)	// co-op only
 	{
@@ -4684,7 +4684,7 @@ void C_DECL A_ClassBossHealth(mobj_t * actor)
 //
 //===========================================================================
 
-void C_DECL A_CheckFloor(mobj_t * actor)
+void C_DECL A_CheckFloor(mobj_t *actor)
 {
 	if(actor->z <= actor->floorz)
 	{
@@ -4700,7 +4700,7 @@ void C_DECL A_CheckFloor(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_FreezeDeath(mobj_t * actor)
+void C_DECL A_FreezeDeath(mobj_t *actor)
 {
 	actor->tics = 75 + P_Random() + P_Random();
 	actor->flags |= MF_SOLID | MF_SHOOTABLE | MF_NOBLOOD;
@@ -4730,7 +4730,7 @@ void C_DECL A_FreezeDeath(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceSetTics(mobj_t * actor)
+void C_DECL A_IceSetTics(mobj_t *actor)
 {
 	int     floor;
 
@@ -4752,7 +4752,7 @@ void C_DECL A_IceSetTics(mobj_t * actor)
 //
 //============================================================================
 
-void C_DECL A_IceCheckHeadDone(mobj_t * actor)
+void C_DECL A_IceCheckHeadDone(mobj_t *actor)
 {
 	if(actor->special2 == 666)
 	{
@@ -4769,7 +4769,7 @@ void C_DECL A_IceCheckHeadDone(mobj_t * actor)
 #ifdef WIN32
 #  pragma optimize("g", off)
 #endif
-void C_DECL A_FreezeDeathChunks(mobj_t * actor)
+void C_DECL A_FreezeDeathChunks(mobj_t *actor)
 {
 	int     i;
 	mobj_t *mo;
@@ -4864,19 +4864,19 @@ void C_DECL A_FreezeDeathChunks(mobj_t * actor)
 #define KORAX_COMMAND_HEIGHT	(120*FRACUNIT)
 #define KORAX_COMMAND_OFFSET	(27*FRACUNIT)
 
-void    KoraxFire1(mobj_t * actor, int type);
-void    KoraxFire2(mobj_t * actor, int type);
-void    KoraxFire3(mobj_t * actor, int type);
-void    KoraxFire4(mobj_t * actor, int type);
-void    KoraxFire5(mobj_t * actor, int type);
-void    KoraxFire6(mobj_t * actor, int type);
-void    KSpiritInit(mobj_t * spirit, mobj_t * korax);
+void    KoraxFire1(mobj_t *actor, int type);
+void    KoraxFire2(mobj_t *actor, int type);
+void    KoraxFire3(mobj_t *actor, int type);
+void    KoraxFire4(mobj_t *actor, int type);
+void    KoraxFire5(mobj_t *actor, int type);
+void    KoraxFire6(mobj_t *actor, int type);
+void    KSpiritInit(mobj_t *spirit, mobj_t *korax);
 
 #define KORAX_TID					(245)
 #define KORAX_FIRST_TELEPORT_TID	(248)
 #define KORAX_TELEPORT_TID			(249)
 
-void C_DECL A_KoraxChase(mobj_t * actor)
+void C_DECL A_KoraxChase(mobj_t *actor)
 {
 	mobj_t *spot;
 	int     lastfound;
@@ -4924,18 +4924,18 @@ void C_DECL A_KoraxChase(mobj_t * actor)
 	}
 }
 
-void C_DECL A_KoraxStep(mobj_t * actor)
+void C_DECL A_KoraxStep(mobj_t *actor)
 {
 	A_Chase(actor);
 }
 
-void C_DECL A_KoraxStep2(mobj_t * actor)
+void C_DECL A_KoraxStep2(mobj_t *actor)
 {
 	S_StartSound(SFX_KORAX_STEP, NULL);
 	A_Chase(actor);
 }
 
-void C_DECL A_KoraxBonePop(mobj_t * actor)
+void C_DECL A_KoraxBonePop(mobj_t *actor)
 {
 	fixed_t x, y, z;
 	mobj_t *mo;
@@ -4973,7 +4973,7 @@ void C_DECL A_KoraxBonePop(mobj_t * actor)
 	P_StartACS(255, 0, args, actor, NULL, 0);	// Death script
 }
 
-void KSpiritInit(mobj_t * spirit, mobj_t * korax)
+void KSpiritInit(mobj_t *spirit, mobj_t *korax)
 {
 	int     i;
 	mobj_t *tail, *next;
@@ -4998,7 +4998,7 @@ void KSpiritInit(mobj_t * spirit, mobj_t * korax)
 	tail->special1 = 0;			// last tail bit
 }
 
-void C_DECL A_KoraxDecide(mobj_t * actor)
+void C_DECL A_KoraxDecide(mobj_t *actor)
 {
 	if(P_Random() < 220)
 	{
@@ -5010,7 +5010,7 @@ void C_DECL A_KoraxDecide(mobj_t * actor)
 	}
 }
 
-void C_DECL A_KoraxMissile(mobj_t * actor)
+void C_DECL A_KoraxMissile(mobj_t *actor)
 {
 	int     type = P_Random() % 6;
 	int     sound;
@@ -5056,7 +5056,7 @@ void C_DECL A_KoraxMissile(mobj_t * actor)
 }
 
 // Call action code scripts (250-254)
-void C_DECL A_KoraxCommand(mobj_t * actor)
+void C_DECL A_KoraxCommand(mobj_t *actor)
 {
 	byte    args[5];
 	fixed_t x, y, z;
@@ -5124,7 +5124,7 @@ void C_DECL A_KoraxCommand(mobj_t * actor)
 //          6   lower right
 
 // Arm 1 projectile
-void KoraxFire1(mobj_t * actor, int type)
+void KoraxFire1(mobj_t *actor, int type)
 {
 	mobj_t *mo;
 	angle_t ang;
@@ -5138,7 +5138,7 @@ void KoraxFire1(mobj_t * actor, int type)
 }
 
 // Arm 2 projectile
-void KoraxFire2(mobj_t * actor, int type)
+void KoraxFire2(mobj_t *actor, int type)
 {
 	mobj_t *mo;
 	angle_t ang;
@@ -5152,7 +5152,7 @@ void KoraxFire2(mobj_t * actor, int type)
 }
 
 // Arm 3 projectile
-void KoraxFire3(mobj_t * actor, int type)
+void KoraxFire3(mobj_t *actor, int type)
 {
 	mobj_t *mo;
 	angle_t ang;
@@ -5166,7 +5166,7 @@ void KoraxFire3(mobj_t * actor, int type)
 }
 
 // Arm 4 projectile
-void KoraxFire4(mobj_t * actor, int type)
+void KoraxFire4(mobj_t *actor, int type)
 {
 	mobj_t *mo;
 	angle_t ang;
@@ -5180,7 +5180,7 @@ void KoraxFire4(mobj_t * actor, int type)
 }
 
 // Arm 5 projectile
-void KoraxFire5(mobj_t * actor, int type)
+void KoraxFire5(mobj_t *actor, int type)
 {
 	mobj_t *mo;
 	angle_t ang;
@@ -5194,7 +5194,7 @@ void KoraxFire5(mobj_t * actor, int type)
 }
 
 // Arm 6 projectile
-void KoraxFire6(mobj_t * actor, int type)
+void KoraxFire6(mobj_t *actor, int type)
 {
 	mobj_t *mo;
 	angle_t ang;
@@ -5207,7 +5207,7 @@ void KoraxFire6(mobj_t * actor, int type)
 	mo = P_SpawnKoraxMissile(x, y, z, actor, actor->target, type);
 }
 
-void C_DECL A_KSpiritWeave(mobj_t * actor)
+void C_DECL A_KSpiritWeave(mobj_t *actor)
 {
 	fixed_t newX, newY;
 	int     weaveXY, weaveZ;
@@ -5229,7 +5229,7 @@ void C_DECL A_KSpiritWeave(mobj_t * actor)
 	actor->special2 = weaveZ + (weaveXY << 16);
 }
 
-void C_DECL A_KSpiritSeeker(mobj_t * actor, angle_t thresh, angle_t turnMax)
+void C_DECL A_KSpiritSeeker(mobj_t *actor, angle_t thresh, angle_t turnMax)
 {
 	int     dir;
 	int     dist;
@@ -5265,8 +5265,8 @@ void C_DECL A_KSpiritSeeker(mobj_t * actor, angle_t thresh, angle_t turnMax)
 	actor->momx = FixedMul(actor->info->speed, finecosine[angle]);
 	actor->momy = FixedMul(actor->info->speed, finesine[angle]);
 
-	if(!(leveltime & 15) || actor->z > target->z + (target->info->height)
-	   || actor->z + actor->height < target->z)
+	if(!(leveltime & 15) || actor->z > target->z + (target->info->height) ||
+	   actor->z + actor->height < target->z)
 	{
 		newZ = target->z + ((P_Random() * target->info->height) >> 8);
 		deltaZ = newZ - actor->z;
@@ -5292,7 +5292,7 @@ void C_DECL A_KSpiritSeeker(mobj_t * actor, angle_t thresh, angle_t turnMax)
 	return;
 }
 
-void C_DECL A_KSpiritRoam(mobj_t * actor)
+void C_DECL A_KSpiritRoam(mobj_t *actor)
 {
 	if(actor->health-- <= 0)
 	{
@@ -5314,7 +5314,7 @@ void C_DECL A_KSpiritRoam(mobj_t * actor)
 	}
 }
 
-void C_DECL A_KBolt(mobj_t * actor)
+void C_DECL A_KBolt(mobj_t *actor)
 {
 	// Countdown lifetime
 	if(actor->special1-- <= 0)
@@ -5326,7 +5326,7 @@ void C_DECL A_KBolt(mobj_t * actor)
 #define KORAX_BOLT_HEIGHT		48*FRACUNIT
 #define KORAX_BOLT_LIFETIME		3
 
-void C_DECL A_KBoltRaise(mobj_t * actor)
+void C_DECL A_KBoltRaise(mobj_t *actor)
 {
 	mobj_t *mo;
 	fixed_t z;

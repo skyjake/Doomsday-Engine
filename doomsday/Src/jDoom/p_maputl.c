@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.8  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.7  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -71,7 +74,7 @@ static const char
 //  lookups maintaining lists ot things inside
 //  these structures need to be updated.
 //===========================================================================
-void P_UnsetThingPosition(mobj_t * thing)
+void P_UnsetThingPosition(mobj_t *thing)
 {
 	P_UnlinkThing(thing);
 }
@@ -81,7 +84,7 @@ void P_UnsetThingPosition(mobj_t * thing)
 //  Links a thing into both a block and a subsector based on it's x,y.
 //  Sets thing->subsector properly.
 //===========================================================================
-void P_SetThingPosition(mobj_t * thing)
+void P_SetThingPosition(mobj_t *thing)
 {
 	P_LinkThing(thing,
 				(!(thing->
@@ -114,7 +117,7 @@ static mobj_t *tmthing;
 // PIT_ApplyTorque
 //  Modified by jk @ 5/29/02
 //===========================================================================
-static boolean PIT_ApplyTorque(line_t * ld, void *data)
+static boolean PIT_ApplyTorque(line_t *ld, void *data)
 {
 	mobj_t *mo = tmthing;
 	fixed_t dist;
@@ -137,8 +140,8 @@ static boolean PIT_ApplyTorque(line_t * ld, void *data)
 		(ld->dy >> FRACBITS) * (ld->v1->x >> FRACBITS);
 
 	if(dist < 0 ?				// drop off direction
-	   ld->frontsector->floorheight < mo->z
-	   && ld->backsector->floorheight >= mo->z : ld->backsector->floorheight <
+	   ld->frontsector->floorheight < mo->z &&
+	   ld->backsector->floorheight >= mo->z : ld->backsector->floorheight <
 	   mo->z && ld->frontsector->floorheight >= mo->z)
 	{
 		// At this point, we know that the object straddles a two-sided
@@ -197,7 +200,7 @@ static boolean PIT_ApplyTorque(line_t * ld, void *data)
 //  Applies "torque" to objects, based on all contacted linedefs.
 //  Modified by jk @ 5/29/02
 //===========================================================================
-void P_ApplyTorque(mobj_t * mo)
+void P_ApplyTorque(mobj_t *mo)
 {
 	int     flags = mo->intflags;	//Remember the current state, for gear-change
 

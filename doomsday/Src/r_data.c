@@ -295,8 +295,8 @@ boolean R_IsInAnimGroup(int groupNum, int type, int number)
 	if(!group)
 		return false;
 
-	if((type == DD_TEXTURE && !(group->flags & AGF_TEXTURE))
-	   || (type == DD_FLAT && !(group->flags & AGF_FLAT)))
+	if((type == DD_TEXTURE && !(group->flags & AGF_TEXTURE)) ||
+	   (type == DD_FLAT && !(group->flags & AGF_FLAT)))
 	{
 		// Not the right type.
 		return false;
@@ -747,8 +747,8 @@ boolean R_IsCustomTexture(int texture)
 //===========================================================================
 boolean R_IsValidLightDecoration(ded_decorlight_t * lightDef)
 {
-	return lightDef->color[0] != 0 || lightDef->color[1] != 0
-		|| lightDef->color[2] != 0;
+	return lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
+		lightDef->color[2] != 0;
 }
 
 //===========================================================================

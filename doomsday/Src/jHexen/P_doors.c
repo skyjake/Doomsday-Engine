@@ -39,7 +39,7 @@ void T_VerticalDoor(vldoor_t * door)
 			{
 			case DREV_NORMAL:
 				door->direction = -1;	// time to go back down
-				SN_StartSequence((mobj_t *) & door->sector->soundorg,
+				SN_StartSequence((mobj_t *) &door->sector->soundorg,
 								 SEQ_DOOR_STONE + door->sector->seqType);
 				break;
 			case DREV_CLOSE30THENOPEN:
@@ -69,7 +69,7 @@ void T_VerticalDoor(vldoor_t * door)
 						false, 1, door->direction);
 		if(res == RES_PASTDEST)
 		{
-			SN_StopSequence((mobj_t *) & door->sector->soundorg);
+			SN_StopSequence((mobj_t *) &door->sector->soundorg);
 			switch (door->type)
 			{
 			case DREV_NORMAL:
@@ -104,7 +104,7 @@ void T_VerticalDoor(vldoor_t * door)
 						door->direction);
 		if(res == RES_PASTDEST)
 		{
-			SN_StopSequence((mobj_t *) & door->sector->soundorg);
+			SN_StopSequence((mobj_t *) &door->sector->soundorg);
 			switch (door->type)
 			{
 			case DREV_NORMAL:
@@ -133,7 +133,7 @@ void T_VerticalDoor(vldoor_t * door)
 //
 //----------------------------------------------------------------------------
 
-int EV_DoDoor(line_t * line, byte *args, vldoor_e type)
+int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
 {
 	int     secnum;
 	int     retcode;
@@ -181,7 +181,7 @@ int EV_DoDoor(line_t * line, byte *args, vldoor_e type)
 		door->type = type;
 		door->speed = speed;
 		door->topwait = args[2];	// line->arg3
-		SN_StartSequence((mobj_t *) & door->sector->soundorg,
+		SN_StartSequence((mobj_t *) &door->sector->soundorg,
 						 SEQ_DOOR_STONE + door->sector->seqType);
 	}
 	return (retcode);
@@ -192,7 +192,7 @@ int EV_DoDoor(line_t * line, byte *args, vldoor_e type)
 //      EV_VerticalDoor : open a door manually, no tag value
 //
 //==================================================================
-boolean EV_VerticalDoor(line_t * line, mobj_t * thing)
+boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
 {
 	int     secnum;
 	sector_t *sec;
@@ -259,7 +259,7 @@ boolean EV_VerticalDoor(line_t * line, mobj_t * thing)
 	//
 	door->topheight = P_FindLowestCeilingSurrounding(sec);
 	door->topheight -= 4 * FRACUNIT;
-	SN_StartSequence((mobj_t *) & door->sector->soundorg,
+	SN_StartSequence((mobj_t *) &door->sector->soundorg,
 					 SEQ_DOOR_STONE + door->sector->seqType);
 	return true;
 }

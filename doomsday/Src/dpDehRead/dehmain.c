@@ -413,8 +413,8 @@ char   *COM_Parse(char *data)
 	}
 
 	// parse single characters
-	if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' || c == ':'
-	   || /*[RH] */ c == '=')
+	if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' || c == ':' ||
+	   /*[RH] */ c == '=')
 	{
 		com_token[len] = c;
 		len++;
@@ -429,8 +429,8 @@ char   *COM_Parse(char *data)
 		data++;
 		len++;
 		c = *data;
-		if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\''
-		   || c == ':' || c == '=')
+		if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' ||
+		   c == ':' || c == '=')
 			break;
 	} while(c > 32);
 

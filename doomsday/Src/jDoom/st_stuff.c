@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.11  2004/05/30 08:42:42  skyjake
+// Tweaked indentation style
+//
 // Revision 1.10  2004/05/29 18:19:59  skyjake
 // Refined indentation style
 //
@@ -555,8 +558,8 @@ boolean ST_Responder(event_t *ev)
 			}
 			// Simplified, accepting both "noclip" and "idspispopd".
 			// no clipping mode cheat
-			else if(cht_CheckCheat(&cheat_noclip, ev->data1)
-					|| cht_CheckCheat(&cheat_commercial_noclip, ev->data1))
+			else if(cht_CheckCheat(&cheat_noclip, ev->data1) ||
+					cht_CheckCheat(&cheat_commercial_noclip, ev->data1))
 			{
 				cht_NoClipFunc(plyr);
 			}
@@ -670,8 +673,8 @@ void ST_updateFaceWidget(void)
 
 	if(priority < 8)
 	{
-		if(plyr->damagecount && plyr->attacker
-		   && plyr->attacker != plyr->plr->mo)
+		if(plyr->damagecount && plyr->attacker &&
+		   plyr->attacker != plyr->plr->mo)
 		{
 			// being attacked
 			priority = 7;
@@ -909,8 +912,8 @@ void ST_doPaletteStuff(void)
 		palette += STARTBONUSPALS;
 	}
 
-	else if(plyr->powers[pw_ironfeet] > 4 * 32
-			|| plyr->powers[pw_ironfeet] & 8)
+	else if(plyr->powers[pw_ironfeet] > 4 * 32 ||
+			plyr->powers[pw_ironfeet] & 8)
 		palette = RADIATIONPAL;
 	else
 		palette = 0;
@@ -1078,8 +1081,8 @@ void ST_doFullscreenStuff(void)
 		pos = 68;
 	}
 
-	if(cfg.hudShown[HUD_AMMO]
-	   && weaponinfo[plr->readyweapon].ammo != am_noammo)
+	if(cfg.hudShown[HUD_AMMO] &&
+	   weaponinfo[plr->readyweapon].ammo != am_noammo)
 	{
 		spr = ammo_sprite[weaponinfo[plr->readyweapon].ammo];
 		ST_drawHUDSprite(spr, pos + 2, h_height - 2, HOT_BLEFT);

@@ -31,7 +31,7 @@ void            PG_InitTextures(void);
 void            PG_ShutdownTextures(void);
 void            PG_InitForLevel(void);
 void            PG_InitForNewFrame(void);
-void            PG_SectorIsVisible(sector_t * sector);
+void            PG_SectorIsVisible(sector_t *sector);
 void            PG_Render(void);
 
 #endif

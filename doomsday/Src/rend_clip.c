@@ -587,9 +587,8 @@ void C_MergeOccludes(void)
 		{
 			if(orange->start != other->start)
 				break;
-			if(orange->end != other->end
-			   || (other->flags & OCNF_TOPHALF) !=
-			   (orange->flags & OCNF_TOPHALF))
+			if(orange->end != other->end ||
+			   (other->flags & OCNF_TOPHALF) != (orange->flags & OCNF_TOPHALF))
 				continue;
 			goto try_merge;
 		}
@@ -1176,8 +1175,8 @@ static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle)
 	if(startAngle > endAngle)
 	{
 		// The range wraps around.
-		return (C_IsRangeVisible(startAngle, BANG_MAX)
-				|| C_IsRangeVisible(0, endAngle));
+		return (C_IsRangeVisible(startAngle, BANG_MAX) ||
+				C_IsRangeVisible(0, endAngle));
 	}
 	return C_IsRangeVisible(startAngle, endAngle);
 }
@@ -1217,7 +1216,7 @@ clipnode_t *C_AngleClippedBy(binangle_t bang)
 }
 
 // Returns 1 if the subsector might be visible.
-int C_CheckSubsector(subsector_t * ssec)
+int C_CheckSubsector(subsector_t *ssec)
 {
 	int     i;
 

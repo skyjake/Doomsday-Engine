@@ -143,8 +143,8 @@ void   *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
 			   }
 			   else 
 			   { */
-			if(wave_format->wBitsPerSample != 8
-			   && wave_format->wBitsPerSample != 16)
+			if(wave_format->wBitsPerSample != 8 &&
+			   wave_format->wBitsPerSample != 16)
 			{
 				Con_Message("WAV_MemoryLoad: Not a 8/16 bit WAVE.\n");
 				return NULL;

@@ -274,9 +274,9 @@ void W_RemoveLumpsWithHandle(DFILE * handle)
 		}
 		// Does a region end?
 		if(first >= 0)
-			if(lumpinfo[i].handle != handle || i == numlumps - 1
-			   || MarkerForGroup(lumpinfo[i].name, true)
-			   || MarkerForGroup(lumpinfo[i].name, false))
+			if(lumpinfo[i].handle != handle || i == numlumps - 1 ||
+			   MarkerForGroup(lumpinfo[i].name, true) ||
+			   MarkerForGroup(lumpinfo[i].name, false))
 			{
 				if(lumpinfo[i].handle == handle && i == numlumps - 1)
 					i++;		// Also free the last one.
@@ -357,8 +357,8 @@ int MarkerForGroup(char *name, boolean begin)
 	int     i;
 
 	for(i = 1; i < NUM_LGTAGS; i++)
-		if(!strnicmp(name, begin ? groups[i].start : groups[i].end, 8)
-		   || !strnicmp(name + 1, begin ? groups[i].start : groups[i].end, 7))
+		if(!strnicmp(name, begin ? groups[i].start : groups[i].end, 8) ||
+		   !strnicmp(name + 1, begin ? groups[i].start : groups[i].end, 7))
 			return i;
 
 	// No matches...
@@ -1255,8 +1255,8 @@ void W_GetPWADFileNames(char *buf, int bufSize, char separator)
 			char    temp[256];
 
 			Dir_FileName(records[i].filename, temp);
-			if(!stricmp(temp + strlen(temp) - 3, "gwa")
-			   || !stricmp(temp, "doomsday.wad"))
+			if(!stricmp(temp + strlen(temp) - 3, "gwa") ||
+			   !stricmp(temp, "doomsday.wad"))
 				continue;
 			M_LimitedStrCat(temp, 64, separator, buf, bufSize);
 		}

@@ -163,8 +163,8 @@ void H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 
 	lum_distance = FIX2FLT(lum->distance);
 
-	if(lum->flags & LUMF_NOHALO || lum_distance == 0
-	   || (haloFadeMax && lum_distance > haloFadeMax))
+	if(lum->flags & LUMF_NOHALO || lum_distance == 0 ||
+	   (haloFadeMax && lum_distance > haloFadeMax))
 		return;
 
 	if(haloFadeMax && haloFadeMax != haloFadeMin && lum_distance < haloFadeMax
@@ -323,8 +323,8 @@ void H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 			else
 				tex = GL_PrepareFlareTexture(lum->flareTex - 2);
 		}
-		else if(lum->flareSize > 45
-				|| (coloraverage > .90 && lum->flareSize > 20))
+		else if(lum->flareSize > 45 ||
+				(coloraverage > .90 && lum->flareSize > 20))
 		{
 			// The "Very Bright" condition.
 			radius *= .65f;

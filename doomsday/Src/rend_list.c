@@ -232,7 +232,7 @@ static rendlist_t skyMaskList;
 //  of sprites. This is necessary because all masked polygons must be 
 //  rendered back-to-front, or there might be alpha artifacts along edges.
 //===========================================================================
-void RL_AddMaskedPoly(rendpoly_t * poly)
+void RL_AddMaskedPoly(rendpoly_t *poly)
 {
 	vissprite_t *vis = R_NewVisSprite();
 	byte    brightest[3];
@@ -288,7 +288,7 @@ void RL_AddMaskedPoly(rendpoly_t * poly)
 //  Color distance attenuation, extralight, fixedcolormap.
 //  "Torchlight" is white, regardless of the original RGB.
 //===========================================================================
-void RL_VertexColors(rendpoly_t * poly, int lightlevel, const byte *rgb)
+void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 {
 	int     i;
 	float   light, real, minimum;
@@ -360,8 +360,8 @@ void RL_VertexColors(rendpoly_t * poly, int lightlevel, const byte *rgb)
 //===========================================================================
 // RL_PrepareFlat
 //===========================================================================
-void RL_PrepareFlat(planeinfo_t * plane, rendpoly_t * poly,
-					subsector_t * subsector)
+void RL_PrepareFlat(planeinfo_t *plane, rendpoly_t *poly,
+					subsector_t *subsector)
 {
 	int     i;
 
@@ -651,7 +651,7 @@ rendlist_t *RL_CreateList(listhash_t * hash)
 //===========================================================================
 // RL_GetListFor
 //===========================================================================
-rendlist_t *RL_GetListFor(rendpoly_t * poly, boolean useLights)
+rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
 {
 	listhash_t *hash, *table;
 	rendlist_t *dest, *convertable = NULL;
@@ -692,8 +692,8 @@ rendlist_t *RL_GetListFor(rendpoly_t * poly, boolean useLights)
 			}
 
 			// Possibly an exact match?
-			if(poly->intertex.id == dest->intertex.id
-			   && poly->interpos == dest->interpos)
+			if(poly->intertex.id == dest->intertex.id &&
+			   poly->interpos == dest->interpos)
 			{
 				return dest;
 			}
@@ -839,7 +839,7 @@ void RL_AllocateIndices(rendlist_t * list, int numIndices)
 //===========================================================================
 // RL_QuadTexCoords
 //===========================================================================
-void RL_QuadTexCoords(gl_texcoord_t * tc, rendpoly_t * poly, gltexture_t * tex)
+void RL_QuadTexCoords(gl_texcoord_t * tc, rendpoly_t *poly, gltexture_t * tex)
 {
 	float   width, height;
 
@@ -881,7 +881,7 @@ void RL_QuadTexCoords(gl_texcoord_t * tc, rendpoly_t * poly, gltexture_t * tex)
 //===========================================================================
 // RL_QuadDetailTexCoords
 //===========================================================================
-void RL_QuadDetailTexCoords(gl_texcoord_t * tc, rendpoly_t * poly,
+void RL_QuadDetailTexCoords(gl_texcoord_t * tc, rendpoly_t *poly,
 							gltexture_t * tex)
 {
 	float   mul = tex->detail->scale * detailScale;
@@ -901,7 +901,7 @@ void RL_QuadDetailTexCoords(gl_texcoord_t * tc, rendpoly_t * poly,
 //===========================================================================
 // RL_QuadColors
 //===========================================================================
-void RL_QuadColors(gl_color_t * color, rendpoly_t * poly)
+void RL_QuadColors(gl_color_t * color, rendpoly_t *poly)
 {
 	if(poly->flags & RPF_SKY_MASK)
 	{
@@ -935,7 +935,7 @@ void RL_QuadColors(gl_color_t * color, rendpoly_t * poly)
 //===========================================================================
 // RL_QuadVertices
 //===========================================================================
-void RL_QuadVertices(gl_vertex_t * v, rendpoly_t * poly)
+void RL_QuadVertices(gl_vertex_t * v, rendpoly_t *poly)
 {
 	v[0].xyz[0] = v[3].xyz[0] = poly->vertices[0].pos[VX];
 	v[0].xyz[1] = v[1].xyz[1] = poly->top;
@@ -948,7 +948,7 @@ void RL_QuadVertices(gl_vertex_t * v, rendpoly_t * poly)
 //===========================================================================
 // RL_QuadLightCoords
 //===========================================================================
-void RL_QuadLightCoords(gl_texcoord_t * tc, dynlight_t * dyn)
+void RL_QuadLightCoords(gl_texcoord_t * tc, dynlight_t *dyn)
 {
 	tc[0].st[0] = tc[3].st[0] = dyn->s[0];
 	tc[0].st[1] = tc[1].st[1] = dyn->t[0];
@@ -959,7 +959,7 @@ void RL_QuadLightCoords(gl_texcoord_t * tc, dynlight_t * dyn)
 //===========================================================================
 // RL_FlatDetailTexCoords
 //===========================================================================
-void RL_FlatDetailTexCoords(gl_texcoord_t * tc, float xy[2], rendpoly_t * poly,
+void RL_FlatDetailTexCoords(gl_texcoord_t * tc, float xy[2], rendpoly_t *poly,
 							gltexture_t * tex)
 {
 	tc->st[0] =
@@ -1001,7 +1001,7 @@ void RL_InterpolateTexCoordT(gl_texcoord_t * tc, uint index, uint top,
 //===========================================================================
 // RL_WriteQuad
 //===========================================================================
-void RL_WriteQuad(rendlist_t * list, rendpoly_t * poly)
+void RL_WriteQuad(rendlist_t * list, rendpoly_t *poly)
 {
 	uint    base;
 	primhdr_t *hdr = NULL;
@@ -1055,7 +1055,7 @@ void RL_WriteQuad(rendlist_t * list, rendpoly_t * poly)
 //===========================================================================
 // RL_WriteDivQuad
 //===========================================================================
-void RL_WriteDivQuad(rendlist_t * list, rendpoly_t * poly)
+void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
 {
 	gl_vertex_t *v;
 	uint    base;
@@ -1212,7 +1212,7 @@ void RL_WriteDivQuad(rendlist_t * list, rendpoly_t * poly)
 //===========================================================================
 // RL_WriteFlat
 //===========================================================================
-void RL_WriteFlat(rendlist_t * list, rendpoly_t * poly)
+void RL_WriteFlat(rendlist_t * list, rendpoly_t *poly)
 {
 	rendpoly_vertex_t *vtx;
 	gl_color_t *col;
@@ -1331,8 +1331,8 @@ void RL_EndWrite(rendlist_t * list)
 //===========================================================================
 // RL_WriteDynLight
 //===========================================================================
-void RL_WriteDynLight(rendlist_t * list, dynlight_t * dyn, primhdr_t * prim,
-					  rendpoly_t * poly)
+void RL_WriteDynLight(rendlist_t * list, dynlight_t *dyn, primhdr_t * prim,
+					  rendpoly_t *poly)
 {
 	uint    i, base;
 	gl_texcoord_t *tc;
@@ -1423,7 +1423,7 @@ void RL_WriteDynLight(rendlist_t * list, dynlight_t * dyn, primhdr_t * prim,
 // RL_AddPoly
 //  Adds the given poly onto the correct list.
 //===========================================================================
-void RL_AddPoly(rendpoly_t * poly)
+void RL_AddPoly(rendpoly_t *poly)
 {
 	rendlist_t *li;
 	primhdr_t *hdr;
@@ -1444,9 +1444,9 @@ void RL_AddPoly(rendpoly_t * poly)
 	{
 		// In multiplicative mode, glowing surfaces are fullbright.
 		// Rendering lights on them would be pointless.
-		if(!IS_MUL
-		   || !(poly->flags & RPF_GLOW
-				|| (poly->sector && poly->sector->lightlevel >= 250)))
+		if(!IS_MUL ||
+		   !(poly->flags & RPF_GLOW ||
+			 (poly->sector && poly->sector->lightlevel >= 250)))
 		{
 			// Surfaces lit by dynamic lights may need to be rendered 
 			// differently than non-lit surfaces.

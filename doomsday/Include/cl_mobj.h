@@ -54,6 +54,6 @@ void            Cl_ReadMobjDelta2(boolean allowCreate, boolean skip);
 void            Cl_ReadNullMobjDelta2(boolean skip);
 clmobj_t       *Cl_FindMobj(thid_t id);
 void            Cl_CheckMobj(clmobj_t * cmo, boolean justCreated);
-void            Cl_UpdateRealPlayerMobj(mobj_t * mo, mobj_t * clmo, int flags);
+void            Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags);
 
 #endif

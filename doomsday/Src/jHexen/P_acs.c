@@ -322,8 +322,8 @@ void P_CheckACSStore(void)
 
 static char ErrorMsg[128];
 
-boolean P_StartACS(int number, int map, byte *args, mobj_t * activator,
-				   line_t * line, int side)
+boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
+				   line_t *line, int side)
 {
 	int     i;
 	acs_t  *script;
@@ -416,7 +416,7 @@ static boolean AddToACSStore(int map, int number, byte *args)
 //
 //==========================================================================
 
-boolean P_StartLockedACS(line_t * line, byte *args, mobj_t * mo, int side)
+boolean P_StartLockedACS(line_t *line, byte *args, mobj_t *mo, int side)
 {
 	int     i;
 	int     lock;
@@ -464,8 +464,8 @@ boolean P_TerminateACS(int number, int map)
 	{							// Script not found
 		return false;
 	}
-	if(ACSInfo[infoIndex].state == ASTE_INACTIVE
-	   || ACSInfo[infoIndex].state == ASTE_TERMINATING)
+	if(ACSInfo[infoIndex].state == ASTE_INACTIVE ||
+	   ACSInfo[infoIndex].state == ASTE_TERMINATING)
 	{							// States that disallow termination
 		return false;
 	}
@@ -488,9 +488,9 @@ boolean P_SuspendACS(int number, int map)
 	{							// Script not found
 		return false;
 	}
-	if(ACSInfo[infoIndex].state == ASTE_INACTIVE
-	   || ACSInfo[infoIndex].state == ASTE_SUSPENDED
-	   || ACSInfo[infoIndex].state == ASTE_TERMINATING)
+	if(ACSInfo[infoIndex].state == ASTE_INACTIVE ||
+	   ACSInfo[infoIndex].state == ASTE_SUSPENDED ||
+	   ACSInfo[infoIndex].state == ASTE_TERMINATING)
 	{							// States that disallow suspension
 		return false;
 	}
@@ -569,8 +569,8 @@ void P_TagFinished(int tag)
 	}
 	for(i = 0; i < ACScriptCount; i++)
 	{
-		if(ACSInfo[i].state == ASTE_WAITINGFORTAG
-		   && ACSInfo[i].waitValue == tag)
+		if(ACSInfo[i].state == ASTE_WAITINGFORTAG &&
+		   ACSInfo[i].waitValue == tag)
 		{
 			ACSInfo[i].state = ASTE_RUNNING;
 		}
@@ -593,8 +593,8 @@ void P_PolyobjFinished(int po)
 	}
 	for(i = 0; i < ACScriptCount; i++)
 	{
-		if(ACSInfo[i].state == ASTE_WAITINGFORPOLY
-		   && ACSInfo[i].waitValue == po)
+		if(ACSInfo[i].state == ASTE_WAITINGFORPOLY &&
+		   ACSInfo[i].waitValue == po)
 		{
 			ACSInfo[i].state = ASTE_RUNNING;
 		}
@@ -613,8 +613,8 @@ static void ScriptFinished(int number)
 
 	for(i = 0; i < ACScriptCount; i++)
 	{
-		if(ACSInfo[i].state == ASTE_WAITINGFORSCRIPT
-		   && ACSInfo[i].waitValue == number)
+		if(ACSInfo[i].state == ASTE_WAITINGFORSCRIPT &&
+		   ACSInfo[i].waitValue == number)
 		{
 			ACSInfo[i].state = ASTE_RUNNING;
 		}
@@ -1582,7 +1582,7 @@ static int CmdSectorSound(void)
 	mobj = NULL;
 	if(ACScript->line)
 	{
-		mobj = (mobj_t *) & ACScript->line->frontsector->soundorg;
+		mobj = (mobj_t *) &ACScript->line->frontsector->soundorg;
 	}
 	volume = Pop();
 #if _DEBUG
@@ -1640,7 +1640,7 @@ static int CmdSoundSequence(void)
 	mobj = NULL;
 	if(ACScript->line)
 	{
-		mobj = (mobj_t *) & ACScript->line->frontsector->soundorg;
+		mobj = (mobj_t *) &ACScript->line->frontsector->soundorg;
 	}
 	SN_StartSequenceName(mobj, ACStrings[Pop()]);
 	return SCRIPT_CONTINUE;

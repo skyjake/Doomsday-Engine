@@ -16,6 +16,9 @@
 //
 //
 // $Log$
+// Revision 1.8  2004/05/30 08:42:42  skyjake
+// Tweaked indentation style
+//
 // Revision 1.7  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -170,7 +173,7 @@ void P_InitSwitchList(void)
 //
 // Start a button counting down till it turns off.
 //
-void P_StartButton(line_t * line, bwhere_e w, int texture, int time)
+void P_StartButton(line_t *line, bwhere_e w, int texture, int time)
 {
 	int     i;
 
@@ -192,7 +195,7 @@ void P_StartButton(line_t * line, bwhere_e w, int texture, int time)
 			buttonlist[i].where = w;
 			buttonlist[i].btexture = texture;
 			buttonlist[i].btimer = time;
-			buttonlist[i].soundorg = (mobj_t *) & line->frontsector->soundorg;
+			buttonlist[i].soundorg = (mobj_t *) &line->frontsector->soundorg;
 			return;
 		}
 	}
@@ -204,7 +207,7 @@ void P_StartButton(line_t * line, bwhere_e w, int texture, int time)
 // Function that changes wall texture.
 // Tell it if switch is ok to use again (1=yes, it's a button).
 //
-void P_ChangeSwitchTexture(line_t * line, int useAgain)
+void P_ChangeSwitchTexture(line_t *line, int useAgain)
 {
 	int     texTop;
 	int     texMid;
@@ -277,7 +280,7 @@ void P_ChangeSwitchTexture(line_t * line, int useAgain)
 // Called when a thing uses a special line.
 // Only the front sides of lines are usable.
 //
-boolean P_UseSpecialLine(mobj_t * thing, line_t * line, int side)
+boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
 {
 
 	// Extended functionality overrides old.

@@ -555,8 +555,8 @@ void HU_Ticker(void)
 	if(showMessages || message_dontfuckwithme)
 	{
 		// display message if necessary
-		if((plr->message && !message_nottobefuckedwith)
-		   || (plr->message && message_dontfuckwithme))
+		if((plr->message && !message_nottobefuckedwith) ||
+		   (plr->message && message_dontfuckwithme))
 		{
 			//HUlib_addMessageToSText(&w_message, 0, plr->message);
 			HUMsg_Message(plr->message);

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.8  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.7  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -114,7 +117,7 @@ int     numspechit;
 //
 // PIT_StompThing
 //
-boolean PIT_StompThing(mobj_t * thing, void *data)
+boolean PIT_StompThing(mobj_t *thing, void *data)
 {
 	fixed_t blockdist;
 
@@ -146,7 +149,7 @@ boolean PIT_StompThing(mobj_t * thing, void *data)
 // P_TeleportMove
 //  Also stomps on things.
 //===========================================================================
-boolean P_TeleportMove(mobj_t * thing, fixed_t x, fixed_t y)
+boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y)
 {
 	int     xl;
 	int     xh;
@@ -220,29 +223,29 @@ boolean P_TeleportMove(mobj_t * thing, fixed_t x, fixed_t y)
 // $unstuck: used to test intersection between thing and line
 // assuming NO movement occurs -- used to avoid sticky situations.
 
-static int untouched(line_t * ld)
+static int untouched(line_t *ld)
 {
 	fixed_t x, y, tmbbox[4];
 
 	return (tmbbox[BOXRIGHT] =
-			(x = tmthing->x) + tmthing->radius) <= ld->bbox[BOXLEFT]
-		|| (tmbbox[BOXLEFT] = x - tmthing->radius) >= ld->bbox[BOXRIGHT]
-		|| (tmbbox[BOXTOP] =
-			(y = tmthing->y) + tmthing->radius) <= ld->bbox[BOXBOTTOM]
-		|| (tmbbox[BOXBOTTOM] = y - tmthing->radius) >= ld->bbox[BOXTOP]
-		|| P_BoxOnLineSide(tmbbox, ld) != -1;
+			(x = tmthing->x) + tmthing->radius) <= ld->bbox[BOXLEFT] ||
+		(tmbbox[BOXLEFT] = x - tmthing->radius) >= ld->bbox[BOXRIGHT] ||
+		(tmbbox[BOXTOP] =
+		 (y = tmthing->y) + tmthing->radius) <= ld->bbox[BOXBOTTOM] ||
+		(tmbbox[BOXBOTTOM] = y - tmthing->radius) >= ld->bbox[BOXTOP] ||
+		P_BoxOnLineSide(tmbbox, ld) != -1;
 }
 
 //
 // PIT_CheckLine
 // Adjusts tmfloorz and tmceilingz as lines are contacted
 //
-boolean PIT_CheckLine(line_t * ld, void *data)
+boolean PIT_CheckLine(line_t *ld, void *data)
 {
-	if(tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-	   || tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-	   || tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-	   || tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+	if(tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
+	   tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
+	   tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+	   tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
 		return true;
 
 	if(P_BoxOnLineSide(tmbbox, ld) != -1)
@@ -268,9 +271,9 @@ boolean PIT_CheckLine(line_t * ld, void *data)
 	if(!ld->backsector)			// one sided line
 	{
 		blockline = ld;
-		return tmunstuck && !untouched(ld)
-			&& FixedMul(tmx - tmthing->x, ld->dy) > FixedMul(tmy - tmthing->y,
-															 ld->dx);
+		return tmunstuck && !untouched(ld) &&
+			FixedMul(tmx - tmthing->x, ld->dy) > FixedMul(tmy - tmthing->y,
+														  ld->dx);
 	}
 
 	if(!(tmthing->flags & MF_MISSILE))
@@ -320,7 +323,7 @@ boolean PIT_CheckLine(line_t * ld, void *data)
 //===========================================================================
 // PIT_CheckThing
 //===========================================================================
-boolean PIT_CheckThing(mobj_t * thing, void *data)
+boolean PIT_CheckThing(mobj_t *thing, void *data)
 {
 	fixed_t blockdist;
 	boolean solid, overlap = false;
@@ -372,12 +375,11 @@ boolean PIT_CheckThing(mobj_t * thing, void *data)
 			return true;		// underneath
 
 		// Don't hit same species as originator.
-		if(tmthing->target
-		   && (tmthing->target->type == thing->type
-			   || (tmthing->target->type == MT_KNIGHT
-				   && thing->type == MT_BRUISER)
-			   || (tmthing->target->type == MT_BRUISER
-				   && thing->type == MT_KNIGHT)))
+		if(tmthing->target &&
+		   (tmthing->target->type == thing->type ||
+			(tmthing->target->type == MT_KNIGHT && thing->type == MT_BRUISER)
+			|| (tmthing->target->type == MT_BRUISER &&
+				thing->type == MT_KNIGHT)))
 		{
 			if(thing == tmthing->target)
 				return true;
@@ -460,7 +462,7 @@ boolean PIT_CheckThing(mobj_t * thing, void *data)
 //  numspeciallines
 //
 
-boolean P_CheckPosition2(mobj_t * thing, fixed_t x, fixed_t y, fixed_t z)
+boolean P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
 {
 	int     xl;
 	int     xh;
@@ -534,7 +536,7 @@ boolean P_CheckPosition2(mobj_t * thing, fixed_t x, fixed_t y, fixed_t z)
 	return true;
 }
 
-boolean P_CheckPosition(mobj_t * thing, fixed_t x, fixed_t y)
+boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
 {
 	return P_CheckPosition2(thing, x, y, DDMAXINT);
 }
@@ -545,7 +547,7 @@ boolean P_CheckPosition(mobj_t * thing, fixed_t x, fixed_t y)
 // crossing special lines unless MF_TELEPORT is set.
 //
 // killough $dropoff_fix
-boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y, boolean dropoff)
+boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 {
 	fixed_t oldx;
 	fixed_t oldy;
@@ -570,14 +572,14 @@ boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y, boolean dropoff)
 
 		if(tmceilingz - tmfloorz < thing->height ||	// doesn't fit
 		   // mobj must lower to fit
-		   (floatok = true, !(thing->flags & MF_TELEPORT)
-			&& tmceilingz - thing->z < thing->height) ||
+		   (floatok = true, !(thing->flags & MF_TELEPORT) &&
+			tmceilingz - thing->z < thing->height) ||
 		   // too big a step up
-		   (!(thing->flags & MF_TELEPORT)
-			&& tmfloorz - thing->z > 24 * FRACUNIT))
+		   (!(thing->flags & MF_TELEPORT) &&
+			tmfloorz - thing->z > 24 * FRACUNIT))
 		{
-			return tmunstuck && !(ceilingline && untouched(ceilingline))
-				&& !(floorline && untouched(floorline));
+			return tmunstuck && !(ceilingline && untouched(ceilingline)) &&
+				!(floorline && untouched(floorline));
 		}
 
 		// killough 3/15/98: Allow certain objects to drop off
@@ -594,16 +596,16 @@ boolean P_TryMove2(mobj_t * thing, fixed_t x, fixed_t y, boolean dropoff)
 			else
 			{
 				// set felldown if drop > 24
-				felldown = !(thing->flags & MF_NOGRAVITY)
-					&& thing->z - tmfloorz > 24 * FRACUNIT;
+				felldown = !(thing->flags & MF_NOGRAVITY) &&
+					thing->z - tmfloorz > 24 * FRACUNIT;
 			}
 		}
 
 		// killough $dropoff: prevent falling objects from going up too many steps
-		if(!thing->player && thing->intflags & MIF_FALLING
-		   && tmfloorz - thing->z > FixedMul(thing->momx,
-											 thing->momx) +
-		   FixedMul(thing->momy, thing->momy))
+		if(!thing->player && thing->intflags & MIF_FALLING &&
+		   tmfloorz - thing->z > FixedMul(thing->momx,
+										  thing->momx) + FixedMul(thing->momy,
+																  thing->momy))
 		{
 			return false;
 		}
@@ -688,7 +690,7 @@ ret_stuck_test:
 	return true;
 }
 
-boolean P_TryMove(mobj_t * thing, fixed_t x, fixed_t y, boolean dropoff)
+boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 {
 	// killough $dropoff_fix
 	boolean res = P_TryMove2(thing, x, y, dropoff);
@@ -713,7 +715,7 @@ boolean P_TryMove(mobj_t * thing, fixed_t x, fixed_t y, boolean dropoff)
 // the z will be set to the lowest value
 // and false will be returned.
 //
-boolean P_ThingHeightClip(mobj_t * thing)
+boolean P_ThingHeightClip(mobj_t *thing)
 {
 	boolean onfloor;
 
@@ -765,7 +767,7 @@ fixed_t tmymove;
 // Adjusts the xmove / ymove
 // so that the next move will slide along the wall.
 //
-void P_HitSlideLine(line_t * ld)
+void P_HitSlideLine(line_t *ld)
 {
 	int     side;
 
@@ -872,7 +874,7 @@ boolean PTR_SlideTraverse(intercept_t * in)
 //
 // This is a kludgy mess.
 //
-void P_SlideMove(mobj_t * mo)
+void P_SlideMove(mobj_t *mo)
 {
 	fixed_t leadx;
 	fixed_t leady;
@@ -1143,10 +1145,10 @@ boolean PTR_ShootTraverse(intercept_t * in)
 
 		// Is it a sky hack wall? If the hitpoint is above the visible 
 		// line, no puff must be shown.
-		if(li->backsector && li->frontsector->ceilingpic == skyflatnum
-		   && li->backsector->ceilingpic == skyflatnum
-		   && (z > li->frontsector->ceilingheight
-			   || z > li->backsector->ceilingheight))
+		if(li->backsector && li->frontsector->ceilingpic == skyflatnum &&
+		   li->backsector->ceilingpic == skyflatnum &&
+		   (z > li->frontsector->ceilingheight ||
+			z > li->backsector->ceilingheight))
 			return false;
 
 		// This is subsector where the trace originates.
@@ -1183,8 +1185,8 @@ boolean PTR_ShootTraverse(intercept_t * in)
 			divisor = 2;
 
 			// We must not hit a sky plane.
-			if((z > ctop && contact->sector->ceilingpic == skyflatnum)
-			   || (z < cbottom && contact->sector->floorpic == skyflatnum))
+			if((z > ctop && contact->sector->ceilingpic == skyflatnum) ||
+			   (z < cbottom && contact->sector->floorpic == skyflatnum))
 				return false;
 
 			// Find the approximate hitpoint by stepping back and
@@ -1272,7 +1274,7 @@ boolean PTR_ShootTraverse(intercept_t * in)
 //
 // P_AimLineAttack
 //
-fixed_t P_AimLineAttack(mobj_t * t1, angle_t angle, fixed_t distance)
+fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance)
 {
 	fixed_t x2;
 	fixed_t y2;
@@ -1322,7 +1324,7 @@ fixed_t P_AimLineAttack(mobj_t * t1, angle_t angle, fixed_t distance)
 // If damage == 0, it is just a test trace
 // that will leave linetarget set.
 //
-void P_LineAttack(mobj_t * t1, angle_t angle, fixed_t distance, fixed_t slope,
+void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope,
 				  int damage)
 {
 	fixed_t x2;
@@ -1417,7 +1419,7 @@ int     bombdamage;
 // "bombsource" is the creature
 // that caused the explosion at "bombspot".
 //
-boolean PIT_RadiusAttack(mobj_t * thing, void *data)
+boolean PIT_RadiusAttack(mobj_t *thing, void *data)
 {
 	fixed_t dx;
 	fixed_t dy;
@@ -1459,7 +1461,7 @@ boolean PIT_RadiusAttack(mobj_t * thing, void *data)
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
-void P_RadiusAttack(mobj_t * spot, mobj_t * source, int damage)
+void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage)
 {
 	int     x;
 	int     y;
@@ -1505,7 +1507,7 @@ boolean nofit;
 //===========================================================================
 // PIT_ChangeSector
 //===========================================================================
-boolean PIT_ChangeSector(mobj_t * thing, void *data)
+boolean PIT_ChangeSector(mobj_t *thing, void *data)
 {
 	mobj_t *mo;
 
@@ -1568,7 +1570,7 @@ boolean PIT_ChangeSector(mobj_t * thing, void *data)
 //===========================================================================
 // P_ChangeSector
 //===========================================================================
-boolean P_ChangeSector(sector_t * sector, boolean crunch)
+boolean P_ChangeSector(sector_t *sector, boolean crunch)
 {
 	/*int       x;
 	   int      y; */

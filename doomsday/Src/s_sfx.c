@@ -155,7 +155,7 @@ void Sfx_AllowRefresh(boolean allow)
 //  Stop all sounds of the group. If an emitter is specified, only its
 //  sounds are checked.
 //===========================================================================
-void Sfx_StopSoundGroup(int group, mobj_t * emitter)
+void Sfx_StopSoundGroup(int group, mobj_t *emitter)
 {
 	sfxchannel_t *ch;
 	int     i;
@@ -164,10 +164,9 @@ void Sfx_StopSoundGroup(int group, mobj_t * emitter)
 		return;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
-		if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING)
-		   || ch->buffer->sample->group != group || (emitter
-													 && ch->emitter !=
-													 emitter))
+		if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING) ||
+		   ch->buffer->sample->group != group || (emitter &&
+												  ch->emitter != emitter))
 			continue;
 		// This channel must stop.
 		driver->Stop(ch->buffer);
@@ -180,7 +179,7 @@ void Sfx_StopSoundGroup(int group, mobj_t * emitter)
 //  zero, all sounds are stopped. If emitter is not NULL, then the channel's 
 //  emitter mobj must match it. Returns the number of samples stopped.
 //===========================================================================
-int Sfx_StopSound(int id, mobj_t * emitter)
+int Sfx_StopSound(int id, mobj_t *emitter)
 {
 	sfxchannel_t *ch;
 	int     i, stopCount = 0;
@@ -189,10 +188,9 @@ int Sfx_StopSound(int id, mobj_t * emitter)
 		return false;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
-		if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING)
-		   || (id && ch->buffer->sample->id != id) || (emitter
-													   && ch->emitter !=
-													   emitter))
+		if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING) ||
+		   (id && ch->buffer->sample->id != id) || (emitter &&
+													ch->emitter != emitter))
 			continue;
 
 		// Can it be stopped?
@@ -291,7 +289,7 @@ int Sfx_CountPlaying(int id)
 // Sfx_Priority
 //  The priority of a sound is affected by distance, volume and age.
 //===========================================================================
-float Sfx_Priority(mobj_t * emitter, float *fixpos, float volume, int starttic)
+float Sfx_Priority(mobj_t *emitter, float *fixpos, float volume, int starttic)
 {
 	// In five seconds all priority of a sound is gone.
 	float   timeoff = 1000 * (Sys_GetTime() - starttic) / (5.0f * TICSPERSEC);
@@ -401,8 +399,8 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
 			driver->Setv(buf, SFXBP_POSITION, ch->pos);
 		}
 		// If the sound is emitted by the listener, speed is zero.
-		if(ch->emitter && ch->emitter != listener
-		   && P_IsMobjThinker(ch->emitter->thinker.function))
+		if(ch->emitter && ch->emitter != listener &&
+		   P_IsMobjThinker(ch->emitter->thinker.function))
 		{
 			vec[VX] = FIX2FLT(ch->emitter->momx) * TICSPERSEC;
 			vec[VY] = FIX2FLT(ch->emitter->momy) * TICSPERSEC;
@@ -418,8 +416,8 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
 	}
 	else						// This is a 2D buffer.
 	{
-		if(ch->flags & SFXCF_NO_ORIGIN
-		   || (ch->emitter && ch->emitter == listener))
+		if(ch->flags & SFXCF_NO_ORIGIN ||
+		   (ch->emitter && ch->emitter == listener))
 		{
 			dist = 1;
 			pan = 0;
@@ -581,9 +579,9 @@ sfxchannel_t *Sfx_ChannelFindVacant(boolean use3d, int bytes, int rate,
 
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
-		if(!ch->buffer || ch->buffer->flags & SFXBF_PLAYING
-		   || use3d != ((ch->buffer->flags & SFXBF_3D) != 0)
-		   || ch->buffer->bytes != bytes || ch->buffer->rate != rate)
+		if(!ch->buffer || ch->buffer->flags & SFXBF_PLAYING ||
+		   use3d != ((ch->buffer->flags & SFXBF_3D) != 0) ||
+		   ch->buffer->bytes != bytes || ch->buffer->rate != rate)
 			continue;
 		// What about the sample?
 		if(sampleid > 0)
@@ -615,7 +613,7 @@ sfxchannel_t *Sfx_ChannelFindVacant(boolean use3d, int bytes, int rate,
 //  The 'sample' pointer must be persistent. No copying is done here.
 //===========================================================================
 int Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
-				   mobj_t * emitter, float *fixedpos, int flags)
+				   mobj_t *emitter, float *fixedpos, int flags)
 {
 	sfxchannel_t *ch, *selch, *prioch;
 	sfxinfo_t *info;
@@ -624,8 +622,8 @@ int Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
 	boolean have_channel_prios = false;
 	boolean play3d = sfx_3d && (emitter || fixedpos);
 
-	if(!sfx_avail || sample->id < 1 || sample->id >= defs.count.sounds.num
-	   || volume <= 0)
+	if(!sfx_avail || sample->id < 1 || sample->id >= defs.count.sounds.num ||
+	   volume <= 0)
 		return false;
 
 	// Calculate the new sound's priority.
@@ -648,11 +646,10 @@ int Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
 			for(selch = NULL, i = 0, ch = channels; i < num_channels;
 				i++, ch++)
 			{
-				if(ch->buffer && ch->buffer->flags & SFXBF_PLAYING
-				   && ch->buffer->sample->id == sample->id
-				   && myprio >= channel_prios[i] && (!selch
-													 || channel_prios[i] <=
-													 lowprio))
+				if(ch->buffer && ch->buffer->flags & SFXBF_PLAYING &&
+				   ch->buffer->sample->id == sample->id &&
+				   myprio >= channel_prios[i] && (!selch ||
+												  channel_prios[i] <= lowprio))
 				{
 					selch = ch;
 					lowprio = channel_prios[i];
@@ -724,8 +721,8 @@ int Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
 			}
 			// Are we more important than this sound?
 			// We want to choose the lowest priority sound.
-			if(myprio >= channel_prios[i]
-			   && (!prioch || channel_prios[i] <= lowprio))
+			if(myprio >= channel_prios[i] &&
+			   (!prioch || channel_prios[i] <= lowprio))
 			{
 				prioch = ch;
 				lowprio = channel_prios[i];
@@ -745,8 +742,8 @@ int Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
 	}
 
 	// Does our channel need to be reformatted?
-	if(selch->buffer->rate != sample->rate
-	   || selch->buffer->bytes != sample->bytesper)
+	if(selch->buffer->rate != sample->rate ||
+	   selch->buffer->bytes != sample->bytesper)
 	{
 		driver->Destroy(selch->buffer);
 		// Create a new buffer with the correct format.

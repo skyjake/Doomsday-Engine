@@ -200,13 +200,13 @@ dynlight_t *DL_New(float *s, float *t)
 /*
  * Links the dynlight node to the list.
  */
-void DL_Link(dynlight_t * dyn, dynlight_t ** list, int index)
+void DL_Link(dynlight_t *dyn, dynlight_t **list, int index)
 {
 	dyn->next = list[index];
 	list[index] = dyn;
 }
 
-void DL_SegLink(dynlight_t * dyn, int index, int segPart)
+void DL_SegLink(dynlight_t *dyn, int index, int segPart)
 {
 	switch (segPart)
 	{
@@ -275,7 +275,7 @@ lumcontact_t *DL_NewContact(lumobj_t * lum)
  * This called if a light passes the sector spread test.
  * Returns true because this function is also used as an iterator.
  */
-boolean DL_AddContact(subsector_t * subsector, void *lum)
+boolean DL_AddContact(subsector_t *subsector, void *lum)
 {
 	lumcontact_t *con = DL_NewContact(lum);
 	lumcontact_t **list = subContacts + GET_SUBSECTOR_IDX(subsector);
@@ -409,7 +409,7 @@ boolean DL_SegTexCoords(float *t, float top, float bottom, lumobj_t * lum)
 // DL_ProcessWallSeg
 //  The front sector must be given because of polyobjs.
 //===========================================================================
-void DL_ProcessWallSeg(lumobj_t * lum, seg_t * seg, sector_t * frontsec)
+void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
 {
 	int     present = 0;
 	sector_t *backsec = seg->backsector;
@@ -464,8 +464,8 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t * seg, sector_t * frontsec)
 		}
 		// The top texture can't be present when front and back sectors
 		// both have the sky ceiling.
-		if(frontsec->ceilingpic == skyflatnum
-		   && backsec->ceilingpic == skyflatnum)
+		if(frontsec->ceilingpic == skyflatnum &&
+		   backsec->ceilingpic == skyflatnum)
 		{
 			present &= ~SEG_TOP;
 		}
@@ -584,7 +584,7 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t * seg, sector_t * frontsec)
  * Generates one dynlight node per plane glow. The light is attached to 
  * the appropriate seg part.
  */
-void DL_CreateGlowLights(seg_t * seg, int part, float segtop, float segbottom,
+void DL_CreateGlowLights(seg_t *seg, int part, float segtop, float segbottom,
 						 boolean glow_floor, boolean glow_ceil)
 {
 	dynlight_t *dyn;
@@ -661,7 +661,7 @@ void DL_CreateGlowLights(seg_t * seg, int part, float segtop, float segbottom,
 /*
  * If necessary, generate dynamic lights for plane glow.
  */
-void DL_ProcessWallGlow(seg_t * seg, sector_t * sect)
+void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
 {
 	boolean do_floor = (R_FlatFlags(sect->floorpic) & TXF_GLOW) != 0;
 	boolean do_ceil = (R_FlatFlags(sect->ceilingpic) & TXF_GLOW) != 0;
@@ -818,7 +818,7 @@ lumobj_t *DL_GetLuminous(int index)
 //  Registers the given thing as a luminous, light-emitting object.
 //  Note that this is called each frame for each luminous object!
 //===========================================================================
-void DL_AddLuminous(mobj_t * thing)
+void DL_AddLuminous(mobj_t *thing)
 {
 	spritedef_t *sprdef;
 	spriteframe_t *sprframe;
@@ -829,8 +829,8 @@ void DL_AddLuminous(mobj_t * thing)
 	ded_light_t *def = 0;
 	modeldef_t *mf, *nextmf;
 
-	if((thing->frame & FF_FULLBRIGHT && !(thing->ddflags & DDMF_DONTDRAW))
-	   || thing->ddflags & DDMF_ALWAYSLIT)
+	if((thing->frame & FF_FULLBRIGHT && !(thing->ddflags & DDMF_DONTDRAW)) ||
+	   thing->ddflags & DDMF_ALWAYSLIT)
 	{
 		// Determine the sprite frame lump of the source.
 		sprdef = &sprites[thing->sprite];
@@ -961,7 +961,7 @@ void DL_AddLuminous(mobj_t * thing)
 //===========================================================================
 // DL_ContactSector
 //===========================================================================
-void DL_ContactSector(lumobj_t * lum, fixed_t *box, sector_t * sector)
+void DL_ContactSector(lumobj_t * lum, fixed_t *box, sector_t *sector)
 {
 	P_SubsectorBoxIterator(box, sector, DL_AddContact, lum);
 }
@@ -969,15 +969,15 @@ void DL_ContactSector(lumobj_t * lum, fixed_t *box, sector_t * sector)
 //===========================================================================
 // DLIT_ContactFinder
 //===========================================================================
-boolean DLIT_ContactFinder(line_t * line, void *data)
+boolean DLIT_ContactFinder(line_t *line, void *data)
 {
 	contactfinder_data_t *light = data;
 	sector_t *source, *dest;
 	lineinfo_t *info;
 	float   distance;
 
-	if(!line->backsector || !line->frontsector
-	   || line->frontsector == line->backsector)
+	if(!line->backsector || !line->frontsector ||
+	   line->frontsector == line->backsector)
 	{
 		// Line must be between two different sectors.
 		return true;
@@ -1000,27 +1000,27 @@ boolean DLIT_ContactFinder(line_t * line, void *data)
 		return true;
 	}
 
-	if(dest->validcount >= light->firstValid
-	   && dest->validcount <= validcount + 1)
+	if(dest->validcount >= light->firstValid &&
+	   dest->validcount <= validcount + 1)
 	{
 		// This was already spreaded to.
 		return true;
 	}
 
 	// Is this line inside the light's bounds?
-	if(line->bbox[BOXRIGHT] <= light->box[BOXLEFT]
-	   || line->bbox[BOXLEFT] >= light->box[BOXRIGHT]
-	   || line->bbox[BOXTOP] <= light->box[BOXBOTTOM]
-	   || line->bbox[BOXBOTTOM] >= light->box[BOXTOP])
+	if(line->bbox[BOXRIGHT] <= light->box[BOXLEFT] ||
+	   line->bbox[BOXLEFT] >= light->box[BOXRIGHT] ||
+	   line->bbox[BOXTOP] <= light->box[BOXBOTTOM] ||
+	   line->bbox[BOXBOTTOM] >= light->box[BOXTOP])
 	{
 		// The line is not inside the light's bounds.
 		return true;
 	}
 
 	// Can the spread happen?
-	if(dest->ceilingheight <= dest->floorheight
-	   || dest->ceilingheight <= source->floorheight
-	   || dest->floorheight >= source->ceilingheight)
+	if(dest->ceilingheight <= dest->floorheight ||
+	   dest->ceilingheight <= source->floorheight ||
+	   dest->floorheight >= source->ceilingheight)
 	{
 		// No; destination sector is closed with no height.
 		return true;
@@ -1039,8 +1039,8 @@ boolean DLIT_ContactFinder(line_t * line, void *data)
 		 FIX2FLT(line->v1->x -
 				 light->lum->thing->x) * FIX2FLT(line->dy)) / info->length;
 
-	if((source == line->frontsector && distance < 0)
-	   || (source == line->backsector && distance > 0))
+	if((source == line->frontsector && distance < 0) ||
+	   (source == line->backsector && distance > 0))
 	{
 		// Can't spread in this direction.
 		return true;
@@ -1133,7 +1133,7 @@ void DL_FindContacts(lumobj_t * lum)
 //===========================================================================
 // DL_SpreadBlocks
 //===========================================================================
-void DL_SpreadBlocks(subsector_t * subsector)
+void DL_SpreadBlocks(subsector_t *subsector)
 {
 	int     xl, xh, yl, yh, x, y, *count;
 	lumobj_t *iter;
@@ -1239,7 +1239,7 @@ void DL_LinkLuminous()
 // DL_IsTexUsed
 //  Returns true if the texture is already used in the list of dynlights.
 //===========================================================================
-boolean DL_IsTexUsed(dynlight_t * node, DGLuint texture)
+boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
 {
 	for(; node; node = node->next)
 		if(node->texture == texture)
@@ -1382,7 +1382,7 @@ DGLuint DL_GetFlatDecorLightMap(int pic)
 /*
  * Process dynamic lights for the specified subsector.
  */
-void DL_ProcessSubsector(subsector_t * ssec)
+void DL_ProcessSubsector(subsector_t *ssec)
 {
 	int     i;
 	byte   *seg;
@@ -1413,9 +1413,9 @@ void DL_ProcessSubsector(subsector_t * ssec)
 		DL_LightIteratorFunc(con->lum, &fi);
 
 	// Check glowing planes.
-	if(useWallGlow
-	   && (R_FlatFlags(sect->floorpic) & TXF_GLOW
-		   || R_FlatFlags(sect->ceilingpic) & TXF_GLOW))
+	if(useWallGlow &&
+	   (R_FlatFlags(sect->floorpic) & TXF_GLOW ||
+		R_FlatFlags(sect->ceilingpic) & TXF_GLOW))
 	{
 		// The wall segments.
 		for(i = 0, seg = segs + SEGIDX(ssec->firstline); i < ssec->linecount;
@@ -1471,7 +1471,7 @@ void DL_InitForNewFrame()
  * Calls func for all luminous objects within the specified range from (x,y).
  * 'subsector' is the subsector in which (x,y) resides.
  */
-boolean DL_RadiusIterator(subsector_t * subsector, fixed_t x, fixed_t y,
+boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
 						  fixed_t radius, boolean (*func) (lumobj_t *,
 														   fixed_t))
 {

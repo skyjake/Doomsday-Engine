@@ -608,8 +608,8 @@ void WI_DrawPatch(int x, int y, int lump)
 	strcpy(def, "Patch Replacement|");
 	strcat(def, name);
 
-	if(!cfg.usePatchReplacement || !W_IsFromIWAD(lump)
-	   || !Def_Get(DD_DEF_VALUE, def, &string))
+	if(!cfg.usePatchReplacement || !W_IsFromIWAD(lump) ||
+	   !Def_Get(DD_DEF_VALUE, def, &string))
 	{
 		// Replacement string not found, draw the patch.
 		GL_DrawPatch(x, y, lump);
@@ -677,8 +677,8 @@ void WI_drawOnLnode(int n, dpatch_t * c)
 		top = lnodes[wbs->epsd][n].y - SHORT(c[i].topoffset);
 		right = left + SHORT(c[i].width);
 		bottom = top + SHORT(c[i].height);
-		if(left >= 0 && right < SCREENWIDTH && top >= 0
-		   && bottom < SCREENHEIGHT)
+		if(left >= 0 && right < SCREENWIDTH && top >= 0 &&
+		   bottom < SCREENHEIGHT)
 			fits = true;
 		else
 			i++;

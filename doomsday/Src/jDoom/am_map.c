@@ -1297,8 +1297,8 @@ void AM_drawWalls(void)
 					else
 						AM_drawMline(&l, WALLCOLORS + lightlev);
 				}
-				else if(cfg.automapShowDoors
-						&& AM_getDoorColor(lines[i].special, false))
+				else if(cfg.automapShowDoors &&
+						AM_getDoorColor(lines[i].special, false))
 				{
 					AM_drawMline(&l, AM_getDoorColor(lines[i].special, false));
 				}
@@ -1345,8 +1345,8 @@ void AM_drawWalls(void)
 				if((lines[i].flags & LINE_NEVERSEE) && !cheating)
 					continue;
 
-				if(lines[i].backsector && cfg.automapShowDoors
-				   && AM_getDoorColor(lines[i].special, true))
+				if(lines[i].backsector && cfg.automapShowDoors &&
+				   AM_getDoorColor(lines[i].special, true))
 				{
 					AM_drawMlineGlow(&l,
 									 AM_getDoorColor(lines[i].special, true));

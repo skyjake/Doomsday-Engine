@@ -181,8 +181,8 @@ int N_MasterSendAnnouncement(void *parm)
 	communicating = false;
 
 	// If the master responds "OK" return true, otherwise false.
-	return length >= strlen(responseOK)
-		&& !strncmp(buf, responseOK, strlen(responseOK));
+	return length >= strlen(responseOK) &&
+		!strncmp(buf, responseOK, strlen(responseOK));
 }
 
 /*

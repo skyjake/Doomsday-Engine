@@ -206,10 +206,10 @@ boolean CT_Responder(event_t *ev)
 	}
 	else
 	{
-		if(ev->data1 == ' ' || ev->data1 == ',' || ev->data1 == '.'
-		   || (ev->data1 >= '0' && ev->data1 <= '9') || ev->data1 == '\''
-		   || ev->data1 == DDKEY_BACKSPACE || ev->data1 == '-'
-		   || ev->data1 == '=')
+		if(ev->data1 == ' ' || ev->data1 == ',' || ev->data1 == '.' ||
+		   (ev->data1 >= '0' && ev->data1 <= '9') || ev->data1 == '\'' ||
+		   ev->data1 == DDKEY_BACKSPACE || ev->data1 == '-' ||
+		   ev->data1 == '=')
 		{
 			CT_queueChatChar(ev->data1);
 			return true;
@@ -291,8 +291,8 @@ void CT_Ticker(void)
 					{
 						// Send to all of the destination color.
 						for(j = 0; j < MAXPLAYERS; j++)
-							if(players[j].plr->ingame
-							   && cfg.PlayerColor[j] + 1 == chat_dest)
+							if(players[j].plr->ingame &&
+							   cfg.PlayerColor[j] + 1 == chat_dest)
 								CT_SendMsg(j, plr_lastmsg);
 					}
 					S_LocalSound(sfx_chat, NULL);

@@ -734,8 +734,7 @@ modeldef_t *R_CheckIDModelFor(const char *id)
 //  state and tics of the mobj. Returns the modeldefs that are in effect 
 //  at the moment (interlinks checked appropriately).
 //===========================================================================
-float R_CheckModelFor(mobj_t * mo, modeldef_t ** modef,
-					  modeldef_t ** nextmodef)
+float R_CheckModelFor(mobj_t *mo, modeldef_t ** modef, modeldef_t ** nextmodef)
 {
 	float   interp = -1;
 	state_t *st = mo->state;
@@ -809,10 +808,10 @@ float R_CheckModelFor(mobj_t * mo, modeldef_t ** modef,
 			// Current modef doesn't interpolate to the end, find the
 			// proper destination modef (it isn't just the next one).
 			// Scan the states that follow (and interlinks of each).
-			while(max--
-				  && (!it->model
-					  || GetStateModel(it, mo->selector)->interrange[0] > 0)
-				  && it->nextstate > 0)
+			while(max-- &&
+				  (!it->model ||
+				   GetStateModel(it, mo->selector)->interrange[0] > 0) &&
+				  it->nextstate > 0)
 			{
 				// Scan interlinks, then go to the next state.
 				if((mdit = GetStateModel(it, mo->selector)) && mdit->internext)
@@ -1024,8 +1023,8 @@ modeldef_t *R_GetModelDef(int state, float intermark, int select)
 
 	// First try to find an existing modef.
 	for(i = 0; i < nummodels; i++)
-		if(models[i].state == &states[state]
-		   && models[i].intermark == intermark && models[i].select == select)
+		if(models[i].state == &states[state] &&
+		   models[i].intermark == intermark && models[i].select == select)
 		{
 			// Models are loaded in reverse order; this one already has 
 			// a model.
@@ -1274,8 +1273,8 @@ void R_InitModels(void)
 		{
 			// Same state and a bigger order are the requirements.
 			if(other->state == me->state && other->def > me->def	// Defined after me.
-			   && other->intermark > me->intermark
-			   && other->intermark < minmark)
+			   && other->intermark > me->intermark &&
+			   other->intermark < minmark)
 			{
 				minmark = other->intermark;
 				closest = other;
@@ -1294,8 +1293,8 @@ void R_InitModels(void)
 		{
 			// Same state and a bigger order are the requirements.
 			if(other->state == me->state && other->def > me->def	// Defined after me.
-			   && other->select > me->select && other->select < minsel
-			   && other->intermark >= me->intermark)
+			   && other->select > me->select && other->select < minsel &&
+			   other->intermark >= me->intermark)
 			{
 				minsel = other->select;
 				closest = other;
@@ -1422,7 +1421,7 @@ void R_PrecacheSkinsForState(int stateIndex)
 //  The skins are also bound here once so they should be ready for use the 
 //  next time they're needed.
 //===========================================================================
-void R_PrecacheSkinsForMobj(mobj_t * mo)
+void R_PrecacheSkinsForMobj(mobj_t *mo)
 {
 	int     i;
 	modeldef_t *modef;

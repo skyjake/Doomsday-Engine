@@ -349,7 +349,7 @@ void            Sv_RatePool(pool_t * pool);
 delta_t        *Sv_PoolQueueExtract(pool_t * pool);
 void            Sv_AckDeltaSet(int consoleNumber, int set, byte resent);
 
-void            Sv_NewSoundDelta(int soundId, mobj_t * emitter,
+void            Sv_NewSoundDelta(int soundId, mobj_t *emitter,
 								 int sourceSector, int sourcePoly,
 								 float volume, boolean isRepeating,
 								 int justForClient);

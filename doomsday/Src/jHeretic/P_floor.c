@@ -15,7 +15,7 @@
 //  Move a plane (floor or ceiling) and check for crushing
 //
 //==================================================================
-result_e T_MovePlane(sector_t * sector, fixed_t speed, fixed_t dest,
+result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
 					 boolean crush, int floorOrCeiling, int direction)
 {
 	boolean flag;
@@ -243,7 +243,7 @@ void T_MoveFloor(floormove_t * floor)
 //  HANDLE FLOOR TYPES
 //
 //==================================================================
-int EV_DoFloor(line_t * line, floor_e floortype)
+int EV_DoFloor(line_t *line, floor_e floortype)
 {
 	int     secnum;
 	int     rtn;
@@ -392,7 +392,7 @@ int EV_DoFloor(line_t * line, floor_e floortype)
 //  BUILD A STAIRCASE!
 //
 //==================================================================
-int EV_BuildStairs(line_t * line, fixed_t stepDelta)
+int EV_BuildStairs(line_t *line, fixed_t stepDelta)
 {
 	int     secnum;
 	int     height;

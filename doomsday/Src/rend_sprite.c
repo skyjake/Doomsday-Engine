@@ -242,8 +242,8 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
 		{
 			gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 1 : 0);
 		}
-		if(vis->data.wall.texc[0][VX] < 0 || vis->data.wall.texc[0][VX] > 1
-		   || vis->data.wall.texc[1][VX] < 0 || vis->data.wall.texc[1][VX] > 1)
+		if(vis->data.wall.texc[0][VX] < 0 || vis->data.wall.texc[0][VX] > 1 ||
+		   vis->data.wall.texc[1][VX] < 0 || vis->data.wall.texc[1][VX] > 1)
 		{
 			// The texcoords are out of the normal [0,1] range.
 			gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
@@ -420,8 +420,8 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist)
 
 	if(!fdist)
 		return true;
-	if(slRGB1[0] == 0xff && slRGB1[1] == 0xff && slRGB1[2] == 0xff
-	   && slRGB2[0] == 0xff && slRGB2[1] == 0xff && slRGB2[2] == 0xff)
+	if(slRGB1[0] == 0xff && slRGB1[1] == 0xff && slRGB1[2] == 0xff &&
+	   slRGB2[0] == 0xff && slRGB2[1] == 0xff && slRGB2[2] == 0xff)
 		return false;			// No point in continuing, light is already white.
 
 	zfactor =
@@ -638,8 +638,8 @@ void Rend_RenderSprite(vissprite_t * spr)
 		if(spr->data.mo.flags & DDMF_FITTOP && top > spr->data.mo.secceil)
 			top = spr->data.mo.secceil;
 		// Check bottom.
-		if(!(spr->data.mo.flags & DDMF_NOFITBOTTOM)
-		   && top - sprh < spr->data.mo.secfloor)
+		if(!(spr->data.mo.flags & DDMF_NOFITBOTTOM) &&
+		   top - sprh < spr->data.mo.secfloor)
 			top = spr->data.mo.secfloor + sprh;
 	}
 	// Adjust by the floor clip.
@@ -650,8 +650,8 @@ void Rend_RenderSprite(vissprite_t * spr)
 	flip = spr->data.mo.flip;
 
 	// Should we apply a SRVO?
-	if(spr->data.mo.visoff[VX] || spr->data.mo.visoff[VY]
-	   || spr->data.mo.visoff[VZ])
+	if(spr->data.mo.visoff[VX] || spr->data.mo.visoff[VY] ||
+	   spr->data.mo.visoff[VZ])
 	{
 		usingSRVO = true;
 		gl.MatrixMode(DGL_MODELVIEW);

@@ -55,9 +55,9 @@ void S_LevelMusic(void)
 //  Doom-like sector sounds: when a new sound starts, stop any old ones
 //  from the same origin.
 //===========================================================================
-void S_SectorSound(sector_t * sec, int id)
+void S_SectorSound(sector_t *sec, int id)
 {
-	mobj_t *origin = (mobj_t *) & sec->soundorg;
+	mobj_t *origin = (mobj_t *) &sec->soundorg;
 
 	S_StopSound(0, origin);
 	S_StartSound(id, origin);

@@ -28,9 +28,9 @@ void    PO_Init(int lump);
 
 static polyobj_t *GetPolyobj(int polyNum);
 static int GetPolyobjMirror(int poly);
-static void ThrustMobj(mobj_t * mobj, seg_t * seg, polyobj_t * po);
+static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po);
 static void InitBlockMap(void);
-static void IterFindPolySegs(int x, int y, seg_t ** segList);
+static void IterFindPolySegs(int x, int y, seg_t **segList);
 static void SpawnPolyobj(int index, int tag, boolean crush);
 static void TranslateToStartSpot(int tag, int originX, int originY);
 
@@ -86,7 +86,7 @@ void T_RotatePoly(polyevent_t * pe)
 			{
 				poly->specialdata = NULL;
 			}
-			SN_StopSequence((mobj_t *) & poly->startSpot);
+			SN_StopSequence((mobj_t *) &poly->startSpot);
 			P_PolyobjFinished(poly->tag);
 			P_RemoveThinker(&pe->thinker);
 			poly->angleSpeed = 0;
@@ -104,7 +104,7 @@ void T_RotatePoly(polyevent_t * pe)
 //
 //==========================================================================
 
-boolean EV_RotatePoly(line_t * line, byte *args, int direction,
+boolean EV_RotatePoly(line_t *line, byte *args, int direction,
 					  boolean overRide)
 {
 	int     mirror;
@@ -150,7 +150,7 @@ boolean EV_RotatePoly(line_t * line, byte *args, int direction,
 	pe->speed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
 	poly->specialdata = pe;
 	poly->angleSpeed = pe->speed;
-	SN_StartSequence((mobj_t *) & poly->startSpot,
+	SN_StartSequence((mobj_t *) &poly->startSpot,
 					 SEQ_DOOR_STONE + poly->seqType);
 
 	while(mirror = GetPolyobjMirror(polyNum))
@@ -195,7 +195,7 @@ boolean EV_RotatePoly(line_t * line, byte *args, int direction,
 			Con_Error("EV_RotatePoly:  Invalid polyobj num: %d\n", polyNum);
 		}
 		polyNum = mirror;
-		SN_StartSequence((mobj_t *) & poly->startSpot,
+		SN_StartSequence((mobj_t *) &poly->startSpot,
 						 SEQ_DOOR_STONE + poly->seqType);
 	}
 	return true;
@@ -223,7 +223,7 @@ void T_MovePoly(polyevent_t * pe)
 			{
 				poly->specialdata = NULL;
 			}
-			SN_StopSequence((mobj_t *) & poly->startSpot);
+			SN_StopSequence((mobj_t *) &poly->startSpot);
 			P_PolyobjFinished(poly->tag);
 			P_RemoveThinker(&pe->thinker);
 			poly->speed = 0;
@@ -243,7 +243,7 @@ void T_MovePoly(polyevent_t * pe)
 //
 //==========================================================================
 
-boolean EV_MovePoly(line_t * line, byte *args, boolean timesEight,
+boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight,
 					boolean overRide)
 {
 	int     mirror;
@@ -284,7 +284,7 @@ boolean EV_MovePoly(line_t * line, byte *args, boolean timesEight,
 	pe->angle = an >> ANGLETOFINESHIFT;
 	pe->xSpeed = FixedMul(pe->speed, finecosine[pe->angle]);
 	pe->ySpeed = FixedMul(pe->speed, finesine[pe->angle]);
-	SN_StartSequence((mobj_t *) & poly->startSpot,
+	SN_StartSequence((mobj_t *) &poly->startSpot,
 					 SEQ_DOOR_STONE + poly->seqType);
 
 	/*poly->dest.x = poly->startSpot.x + FixedMul(pe->dist, finecosine[pe->angle]);
@@ -318,7 +318,7 @@ boolean EV_MovePoly(line_t * line, byte *args, boolean timesEight,
 		pe->xSpeed = FixedMul(pe->speed, finecosine[pe->angle]);
 		pe->ySpeed = FixedMul(pe->speed, finesine[pe->angle]);
 		polyNum = mirror;
-		SN_StartSequence((mobj_t *) & poly->startSpot,
+		SN_StartSequence((mobj_t *) &poly->startSpot,
 						 SEQ_DOOR_STONE + poly->seqType);
 
 		/*poly->dest.x = poly->startSpot.x + FixedMul(pe->dist, finecosine[pe->angle]);
@@ -346,7 +346,7 @@ void T_PolyDoor(polydoor_t * pd)
 		if(!--pd->tics)
 		{
 			poly = GetPolyobj(pd->polyobj);
-			SN_StartSequence((mobj_t *) & poly->startSpot,
+			SN_StartSequence((mobj_t *) &poly->startSpot,
 							 SEQ_DOOR_STONE + poly->seqType);
 
 			// Movement is about to begin. Update the destination.
@@ -365,7 +365,7 @@ void T_PolyDoor(polydoor_t * pd)
 			if(pd->dist <= 0)
 			{
 				poly = GetPolyobj(pd->polyobj);
-				SN_StopSequence((mobj_t *) & poly->startSpot);
+				SN_StopSequence((mobj_t *) &poly->startSpot);
 				if(!pd->close)
 				{
 					pd->dist = pd->totalDist;
@@ -405,7 +405,7 @@ void T_PolyDoor(polydoor_t * pd)
 				PO_SetDestination(GetPolyobj(pd->polyobj), pd->dist,
 								  pd->direction, pd->speed);
 				pd->close = false;
-				SN_StartSequence((mobj_t *) & poly->startSpot,
+				SN_StartSequence((mobj_t *) &poly->startSpot,
 								 SEQ_DOOR_STONE + poly->seqType);
 			}
 		}
@@ -422,7 +422,7 @@ void T_PolyDoor(polydoor_t * pd)
 			if(pd->dist <= 0)
 			{
 				poly = GetPolyobj(pd->polyobj);
-				SN_StopSequence((mobj_t *) & poly->startSpot);
+				SN_StopSequence((mobj_t *) &poly->startSpot);
 				if(!pd->close)
 				{
 					pd->dist = pd->totalDist;
@@ -453,7 +453,7 @@ void T_PolyDoor(polydoor_t * pd)
 				pd->dist = pd->totalDist - pd->dist;
 				pd->speed = -pd->speed;
 				pd->close = false;
-				SN_StartSequence((mobj_t *) & poly->startSpot,
+				SN_StartSequence((mobj_t *) &poly->startSpot,
 								 SEQ_DOOR_STONE + poly->seqType);
 			}
 		}
@@ -469,7 +469,7 @@ void T_PolyDoor(polydoor_t * pd)
 //
 //==========================================================================
 
-boolean EV_OpenPolyDoor(line_t * line, byte *args, podoortype_t type)
+boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
 {
 	int     mirror;
 	int     polyNum;
@@ -505,7 +505,7 @@ boolean EV_OpenPolyDoor(line_t * line, byte *args, podoortype_t type)
 		pd->direction = an >> ANGLETOFINESHIFT;
 		pd->xSpeed = FixedMul(pd->speed, finecosine[pd->direction]);
 		pd->ySpeed = FixedMul(pd->speed, finesine[pd->direction]);
-		SN_StartSequence((mobj_t *) & poly->startSpot,
+		SN_StartSequence((mobj_t *) &poly->startSpot,
 						 SEQ_DOOR_STONE + poly->seqType);
 	}
 	else if(type == PODOOR_SWING)
@@ -515,7 +515,7 @@ boolean EV_OpenPolyDoor(line_t * line, byte *args, podoortype_t type)
 		pd->speed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
 		pd->totalDist = args[2] * (ANGLE_90 / 64);
 		pd->dist = pd->totalDist;
-		SN_StartSequence((mobj_t *) & poly->startSpot,
+		SN_StartSequence((mobj_t *) &poly->startSpot,
 						 SEQ_DOOR_STONE + poly->seqType);
 	}
 
@@ -546,7 +546,7 @@ boolean EV_OpenPolyDoor(line_t * line, byte *args, podoortype_t type)
 			pd->direction = an >> ANGLETOFINESHIFT;
 			pd->xSpeed = FixedMul(pd->speed, finecosine[pd->direction]);
 			pd->ySpeed = FixedMul(pd->speed, finesine[pd->direction]);
-			SN_StartSequence((mobj_t *) & poly->startSpot,
+			SN_StartSequence((mobj_t *) &poly->startSpot,
 							 SEQ_DOOR_STONE + poly->seqType);
 		}
 		else if(type == PODOOR_SWING)
@@ -556,7 +556,7 @@ boolean EV_OpenPolyDoor(line_t * line, byte *args, podoortype_t type)
 			pd->speed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
 			pd->totalDist = args[2] * (ANGLE_90 / 64);
 			pd->dist = pd->totalDist;
-			SN_StartSequence((mobj_t *) & poly->startSpot,
+			SN_StartSequence((mobj_t *) &poly->startSpot,
 							 SEQ_DOOR_STONE + poly->seqType);
 		}
 		polyNum = mirror;
@@ -613,7 +613,7 @@ static int GetPolyobjMirror(int poly)
 //
 //==========================================================================
 
-static void ThrustMobj(mobj_t * mobj, seg_t * seg, polyobj_t * po)
+static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
 {
 	int     thrustAngle;
 	int     thrustX;
@@ -1193,7 +1193,7 @@ static void InitBlockMap(void)
 //      count the number of segs in the polyobj
 //==========================================================================
 
-static void IterFindPolySegs(int x, int y, seg_t ** segList)
+static void IterFindPolySegs(int x, int y, seg_t **segList)
 {
 	int     i;
 
@@ -1240,8 +1240,8 @@ static void SpawnPolyobj(int index, int tag, boolean crush)
 	{
 		if(!segs[i].linedef)
 			continue;
-		if(segs[i].linedef->special == PO_LINE_START
-		   && segs[i].linedef->arg1 == tag)
+		if(segs[i].linedef->special == PO_LINE_START &&
+		   segs[i].linedef->arg1 == tag)
 		{
 			if(polyobjs[index].Segs)
 			{
@@ -1262,8 +1262,8 @@ static void SpawnPolyobj(int index, int tag, boolean crush)
 			polyobjs[index].crush = crush;
 			polyobjs[index].tag = tag;
 			polyobjs[index].seqType = segs[i].linedef->arg3;
-			if(polyobjs[index].seqType < 0
-			   || polyobjs[index].seqType >= SEQTYPE_NUMSEQ)
+			if(polyobjs[index].seqType < 0 ||
+			   polyobjs[index].seqType >= SEQTYPE_NUMSEQ)
 			{
 				polyobjs[index].seqType = 0;
 			}
@@ -1281,8 +1281,8 @@ static void SpawnPolyobj(int index, int tag, boolean crush)
 			{
 				if(!segs[i].linedef)
 					continue;
-				if(segs[i].linedef->special == PO_LINE_EXPLICIT
-				   && segs[i].linedef->arg1 == tag)
+				if(segs[i].linedef->special == PO_LINE_EXPLICIT &&
+				   segs[i].linedef->arg1 == tag)
 				{
 					if(!segs[i].linedef->arg2)
 					{
@@ -1310,9 +1310,8 @@ static void SpawnPolyobj(int index, int tag, boolean crush)
 			{
 				if(!segs[i].linedef)
 					continue;
-				if(segs[i].linedef->special == PO_LINE_EXPLICIT
-				   && segs[i].linedef->arg1 == tag
-				   && segs[i].linedef->arg2 == j)
+				if(segs[i].linedef->special == PO_LINE_EXPLICIT &&
+				   segs[i].linedef->arg1 == tag && segs[i].linedef->arg2 == j)
 				{
 					segs[i].linedef->special = 0;
 					segs[i].linedef->arg1 = 0;
@@ -1326,8 +1325,8 @@ static void SpawnPolyobj(int index, int tag, boolean crush)
 				{
 					if(!segs[i].linedef)
 						continue;
-					if(segs[i].linedef->special == PO_LINE_EXPLICIT
-					   && segs[i].linedef->arg1 == tag)
+					if(segs[i].linedef->special == PO_LINE_EXPLICIT &&
+					   segs[i].linedef->arg1 == tag)
 					{
 						Con_Error
 							("SpawnPolyobj:  Missing explicit line %d for poly %d\n",

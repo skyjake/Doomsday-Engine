@@ -257,11 +257,11 @@ int TGA_Load32_rgba8888(DFILE * file, int w, int h, uChar * buffer)
 
 	// Read and check the header.
 	F_Read(&header, sizeof(header), file);
-	if(header.imageType != 2
-	   || (header.imagePixelSize != 32 && header.imagePixelSize != 24)
-	   || (header.imageDescriptor.attributeBits != 8
-		   && header.imageDescriptor.attributeBits != 0)
-	   || header.imageDescriptor.screenOrigin != TGA_SCREEN_ORIGIN_LOWER)
+	if(header.imageType != 2 ||
+	   (header.imagePixelSize != 32 && header.imagePixelSize != 24) ||
+	   (header.imageDescriptor.attributeBits != 8 &&
+		header.imageDescriptor.attributeBits != 0) ||
+	   header.imageDescriptor.screenOrigin != TGA_SCREEN_ORIGIN_LOWER)
 	{
 		// May or may not get displayed...
 		printf("loadTGA32_rgba8888: I don't know this format!\n");

@@ -220,9 +220,9 @@ boolean CT_Responder(event_t *ev)
 		{
 			sendto = CT_PLR_PLAYER8;
 		}
-		if(sendto == 0
-		   || (sendto != CT_PLR_ALL && !players[sendto - 1].plr->ingame)
-		   || sendto == consoleplayer + 1)
+		if(sendto == 0 ||
+		   (sendto != CT_PLR_ALL && !players[sendto - 1].plr->ingame) ||
+		   sendto == consoleplayer + 1)
 		{
 			return false;
 		}
@@ -284,10 +284,10 @@ boolean CT_Responder(event_t *ev)
 				return true;
 			}
 		}
-		if(ev->data1 == ' ' || ev->data1 == ',' || ev->data1 == '.'
-		   || (ev->data1 >= '0' && ev->data1 <= '9') || ev->data1 == '\''
-		   || ev->data1 == DDKEY_BACKSPACE || ev->data1 == '-'
-		   || ev->data1 == '=')
+		if(ev->data1 == ' ' || ev->data1 == ',' || ev->data1 == '.' ||
+		   (ev->data1 >= '0' && ev->data1 <= '9') || ev->data1 == '\'' ||
+		   ev->data1 == DDKEY_BACKSPACE || ev->data1 == '-' ||
+		   ev->data1 == '=')
 		{
 			CT_queueChatChar(ev->data1);
 			return true;
@@ -366,9 +366,9 @@ void CT_Ticker(void)
 				   { */
 				strcpy(plr_lastmsg[i], chat_msg[i]);
 				//}
-				if(i != consoleplayer
-				   && (chat_dest[i] == consoleplayer + 1
-					   || chat_dest[i] == CT_PLR_ALL) && *chat_msg[i])
+				if(i != consoleplayer &&
+				   (chat_dest[i] == consoleplayer + 1 ||
+					chat_dest[i] == CT_PLR_ALL) && *chat_msg[i])
 				{
 					/*          
 					   P_SetMessage(&players[consoleplayer], plr_lastmsg[i], 

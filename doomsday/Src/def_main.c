@@ -971,8 +971,8 @@ boolean DD_HasMobjState(int mobj_num, int state_num)
 	};
 
 	for(i = 0; i < 8; i++)
-		if(statelist[i] > 0
-		   && DD_SameStateSequence(target, states + statelist[i]))
+		if(statelist[i] > 0 &&
+		   DD_SameStateSequence(target, states + statelist[i]))
 			return true;
 	// Not here...
 	return false;

@@ -142,8 +142,8 @@ void HUMsg_Ticker(void)
 	if(msgcount)
 	{
 		yoffset = 0;
-		if(messages[firstmsg].time >= 0
-		   && messages[firstmsg].time <= LINEHEIGHT_A)
+		if(messages[firstmsg].time >= 0 &&
+		   messages[firstmsg].time <= LINEHEIGHT_A)
 		{
 			yoffset = LINEHEIGHT_A - messages[firstmsg].time;
 		}

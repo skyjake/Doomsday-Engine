@@ -223,7 +223,7 @@ void Cl_SetThingPosition(clmobj_t * cmo)
 /*
  * Change the state of a mobj.
  */
-void Cl_SetThingState(mobj_t * mo, int stnum)
+void Cl_SetThingState(mobj_t *mo, int stnum)
 {
 	if(stnum < 0)
 		return;
@@ -314,7 +314,7 @@ void Cl_CheckMobj(clmobj_t * cmo, boolean justCreated)
  * The client mobj is always unlinked. Only the *real* mobj is visible.
  * (The real mobj was created by the Game.)
  */
-void Cl_UpdateRealPlayerMobj(mobj_t * mo, mobj_t * clmo, int flags)
+void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
 {
 #if _DEBUG
 	if(!mo || !clmo)
@@ -424,8 +424,8 @@ int Cl_ReadMobjDelta(void)
 	d = &cmo->mo;
 
 	// Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-	if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked
-	   && !d->dplayer)
+	if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked &&
+	   !d->dplayer)
 	{
 		linked = false;
 		Cl_UnsetThingPosition(cmo);
@@ -577,8 +577,8 @@ void Cl_MoveThing(clmobj_t * cmo)
 	{
 		// Missiles don't hit mobjs only after a short delay. This'll
 		// allow the missile to move free of the shooter. (Quite a hack!)
-		if(mo->ddflags & DDMF_MISSILE
-		   && Sys_GetRealTime() - cmo->time < MISSILE_FREE_MOVE_TIME)
+		if(mo->ddflags & DDMF_MISSILE &&
+		   Sys_GetRealTime() - cmo->time < MISSILE_FREE_MOVE_TIME)
 		{
 			// The mobj should be allowed to move freely though mobjs.
 			// Use the quick and dirty global variable.
@@ -662,7 +662,7 @@ void Cl_MoveThing(clmobj_t * cmo)
 /*
  * Decrement tics counter and changes the state of the thing if necessary.
  */
-void Cl_AnimateThing(mobj_t * mo)
+void Cl_AnimateThing(mobj_t *mo)
 {
 	if(!mo->state || mo->tics < 0)
 		return;					// In stasis.
@@ -892,8 +892,8 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 		d = &cmo->mo;
 
 		// Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked
-		   && !d->dplayer)
+		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked &&
+		   !d->dplayer)
 		{
 			linked = false;
 			Cl_UnsetThingPosition(cmo);
@@ -1015,8 +1015,8 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 			Cl_SetThingPosition(cmo);
 		}
 
-		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z)
-		   || moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
+		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z) ||
+		   moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
 		{
 			// This'll update floorz and ceilingz.
 			Cl_CheckMobj(cmo, justCreated);

@@ -105,7 +105,8 @@ void Net_Register(void)
 	C_VAR_INT("client-pos-interval", &net_coordtime, CVF_NO_MAX, 0, 0,
 			  "Number of tics between client coord packets.");
 	C_VAR_FLOAT("client-connect-timeout", &net_connecttimeout, CVF_NO_MAX, 0,
-				0, "Maximum number of seconds to attempt connecting "
+				0,
+				"Maximum number of seconds to attempt connecting "
 				"to a server.");
 	C_VAR_CHARPTR("server-password", &net_password, 0, 0, 0,
 				  "Password for remote login.");
@@ -284,9 +285,9 @@ void Net_ShowChatMessage()
 int CCmdChat(int argc, char **argv)
 {
 	char    buffer[100];
-	int     i, mode = !stricmp(argv[0], "chat")
-		|| !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum")
-		|| !stricmp(argv[0], "sayNum") ? 1 : 2;
+	int     i, mode = !stricmp(argv[0], "chat") ||
+		!stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
+		!stricmp(argv[0], "sayNum") ? 1 : 2;
 	unsigned short mask = 0;
 
 	if(argc == 1)
@@ -1379,9 +1380,9 @@ int CCmdNet(int argc, char **argv)
 	{
 		if(!stricmp(argv[1], "init"))
 		{
-			serviceprovider_t sp = (!stricmp(argv[2], "tcp/ip")
-									|| !stricmp(argv[2],
-												"tcpip")) ? NSP_TCPIP :
+			serviceprovider_t sp = (!stricmp(argv[2], "tcp/ip") ||
+									!stricmp(argv[2],
+											 "tcpip")) ? NSP_TCPIP :
 				!stricmp(argv[2], "ipx") ? NSP_IPX : !stricmp(argv[2],
 															  "serial") ?
 				NSP_SERIAL : !stricmp(argv[2], "modem") ? NSP_MODEM : NSP_NONE;

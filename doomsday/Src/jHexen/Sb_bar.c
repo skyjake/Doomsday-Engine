@@ -1030,8 +1030,8 @@ static void DrawAnimatedIcons(void)
 	// Wings of wrath
 	if(CPlayer->powers[pw_flight])
 	{
-		if(CPlayer->powers[pw_flight] > BLINKTHRESHOLD
-		   || !(CPlayer->powers[pw_flight] & 16))
+		if(CPlayer->powers[pw_flight] > BLINKTHRESHOLD ||
+		   !(CPlayer->powers[pw_flight] & 16))
 		{
 			frame = (leveltime / 3) & 15;
 			if(CPlayer->plr->mo->flags2 & MF2_FLY)
@@ -1066,8 +1066,8 @@ static void DrawAnimatedIcons(void)
 	// Speed Boots
 	if(CPlayer->powers[pw_speed])
 	{
-		if(CPlayer->powers[pw_speed] > BLINKTHRESHOLD
-		   || !(CPlayer->powers[pw_speed] & 16))
+		if(CPlayer->powers[pw_speed] > BLINKTHRESHOLD ||
+		   !(CPlayer->powers[pw_speed] & 16))
 		{
 			frame = (leveltime / 3) & 15;
 			GL_DrawPatch(60 + leftoff, 19, SpinSpeedLump + frame);
@@ -1078,8 +1078,8 @@ static void DrawAnimatedIcons(void)
 	// Defensive power
 	if(CPlayer->powers[pw_invulnerability])
 	{
-		if(CPlayer->powers[pw_invulnerability] > BLINKTHRESHOLD
-		   || !(CPlayer->powers[pw_invulnerability] & 16))
+		if(CPlayer->powers[pw_invulnerability] > BLINKTHRESHOLD ||
+		   !(CPlayer->powers[pw_invulnerability] & 16))
 		{
 			frame = (leveltime / 3) & 15;
 			GL_DrawPatch(260, 19, SpinDefenseLump + frame);
@@ -1090,8 +1090,8 @@ static void DrawAnimatedIcons(void)
 	// Minotaur Active
 	if(CPlayer->powers[pw_minotaur])
 	{
-		if(CPlayer->powers[pw_minotaur] > BLINKTHRESHOLD
-		   || !(CPlayer->powers[pw_minotaur] & 16))
+		if(CPlayer->powers[pw_minotaur] > BLINKTHRESHOLD ||
+		   !(CPlayer->powers[pw_minotaur] & 16))
 		{
 			frame = (leveltime / 3) & 15;
 			GL_DrawPatch(300, 19, SpinMinotaurLump + frame);
@@ -1220,8 +1220,8 @@ void DrawMainBar(void)
 		oldarti = -1;			// so that the correct artifact fills in after the flash
 		GL_Update(DDUF_STATBAR);
 	}
-	else if(oldarti != CPlayer->readyArtifact
-			|| oldartiCount != CPlayer->inventory[inv_ptr].count)
+	else if(oldarti != CPlayer->readyArtifact ||
+			oldartiCount != CPlayer->inventory[inv_ptr].count)
 	{
 		if(CPlayer->readyArtifact > 0)
 		{
@@ -1363,8 +1363,8 @@ void DrawInventoryBar(void)
 	GL_DrawPatch(38, 162, PatchNumINVBAR);
 	for(i = 0; i < 7; i++)
 	{
-		if(CPlayer->inventorySlotNum > x + i
-		   && CPlayer->inventory[x + i].type != arti_none)
+		if(CPlayer->inventorySlotNum > x + i &&
+		   CPlayer->inventory[x + i].type != arti_none)
 		{
 			GL_DrawPatch(50 + i * 31, 163,
 						 W_GetNumForName(patcharti
@@ -1574,8 +1574,8 @@ void DrawFullScreenStuff(void)
 		for(i = 0; i < 7; i++)
 		{
 			GL_DrawFuzzPatch(50 + i * 31, 168, W_GetNumForName("ARTIBOX"));
-			if(CPlayer->inventorySlotNum > x + i
-			   && CPlayer->inventory[x + i].type != arti_none)
+			if(CPlayer->inventorySlotNum > x + i &&
+			   CPlayer->inventory[x + i].type != arti_none)
 			{
 				GL_DrawPatch(49 + i * 31, 167, W_GetNumForName(patcharti[CPlayer->inventory[x + i].type]));	//, PU_CACHE));
 
@@ -1682,8 +1682,8 @@ static boolean canCheat()
 #ifdef _DEBUG
 	return true;
 #else
-	return !(gameskill == sk_nightmare || (netgame && !netcheat)
-			 || players[consoleplayer].health <= 0);
+	return !(gameskill == sk_nightmare || (netgame && !netcheat) ||
+			 players[consoleplayer].health <= 0);
 #endif
 }
 

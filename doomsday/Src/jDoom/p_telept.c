@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.7  2004/05/30 08:42:42  skyjake
+// Tweaked indentation style
+//
 // Revision 1.6  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -60,7 +63,7 @@ static const char
 //
 // TELEPORTATION
 //
-int EV_Teleport(line_t * line, int side, mobj_t * thing)
+int EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
 	int     i;
 	int     tag;

@@ -483,8 +483,8 @@ boolean AM_Responder(event_t *ev)
 	rc = false;
 	if(!automapactive)
 	{
-		if(ev->type == ev_keydown && ev->data1 == AM_STARTKEY
-		   && gamestate == GS_LEVEL)
+		if(ev->type == ev_keydown && ev->data1 == AM_STARTKEY &&
+		   gamestate == GS_LEVEL)
 		{
 			AM_Start();
 			viewactive = false;

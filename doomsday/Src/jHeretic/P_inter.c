@@ -432,7 +432,7 @@ boolean P_GivePower(player_t * player, powertype_t power)
 //
 //---------------------------------------------------------------------------
 
-boolean P_GiveArtifact(player_t * player, artitype_t arti, mobj_t * mo)
+boolean P_GiveArtifact(player_t * player, artitype_t arti, mobj_t *mo)
 {
 	int     i;
 
@@ -477,11 +477,11 @@ boolean P_GiveArtifact(player_t * player, artitype_t arti, mobj_t * mo)
 //
 //---------------------------------------------------------------------------
 
-void P_SetDormantArtifact(mobj_t * arti)
+void P_SetDormantArtifact(mobj_t *arti)
 {
 	arti->flags &= ~MF_SPECIAL;
-	if(deathmatch && (arti->type != MT_ARTIINVULNERABILITY)
-	   && (arti->type != MT_ARTIINVISIBILITY))
+	if(deathmatch && (arti->type != MT_ARTIINVULNERABILITY) &&
+	   (arti->type != MT_ARTIINVISIBILITY))
 	{
 		P_SetMobjState(arti, S_DORMANTARTI1);
 	}
@@ -498,7 +498,7 @@ void P_SetDormantArtifact(mobj_t * arti)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_RestoreArtifact(mobj_t * arti)
+void C_DECL A_RestoreArtifact(mobj_t *arti)
 {
 	arti->flags |= MF_SPECIAL;
 	P_SetMobjState(arti, arti->info->spawnstate);
@@ -511,7 +511,7 @@ void C_DECL A_RestoreArtifact(mobj_t * arti)
 //
 //----------------------------------------------------------------------------
 
-void P_HideSpecialThing(mobj_t * thing)
+void P_HideSpecialThing(mobj_t *thing)
 {
 	thing->flags &= ~MF_SPECIAL;
 	thing->flags2 |= MF2_DONTDRAW;
@@ -526,7 +526,7 @@ void P_HideSpecialThing(mobj_t * thing)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_RestoreSpecialThing1(mobj_t * thing)
+void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
 {
 	if(thing->type == MT_WMACE)
 	{							// Do random mace placement
@@ -542,7 +542,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t * thing)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_RestoreSpecialThing2(mobj_t * thing)
+void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
 {
 	thing->flags |= MF_SPECIAL;
 	P_SetMobjState(thing, thing->info->spawnstate);
@@ -554,7 +554,7 @@ void C_DECL A_RestoreSpecialThing2(mobj_t * thing)
 //
 //---------------------------------------------------------------------------
 
-void P_TouchSpecialThing(mobj_t * special, mobj_t * toucher)
+void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 {
 	int     i;
 	player_t *player;
@@ -905,7 +905,7 @@ void P_TouchSpecialThing(mobj_t * special, mobj_t * toucher)
 //
 //---------------------------------------------------------------------------
 
-void P_KillMobj(mobj_t * source, mobj_t * target)
+void P_KillMobj(mobj_t *source, mobj_t *target)
 {
 	target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
 	target->flags |= MF_CORPSE | MF_DROPOFF;
@@ -971,8 +971,8 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 			return;
 		}
 	}
-	if(target->health < -(target->info->spawnhealth >> 1)
-	   && target->info->xdeathstate)
+	if(target->health < -(target->info->spawnhealth >> 1) &&
+	   target->info->xdeathstate)
 	{							// Extreme death
 		P_SetMobjState(target, target->info->xdeathstate);
 	}
@@ -990,7 +990,7 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 //
 //---------------------------------------------------------------------------
 
-void P_MinotaurSlam(mobj_t * source, mobj_t * target)
+void P_MinotaurSlam(mobj_t *source, mobj_t *target)
 {
 	angle_t angle;
 	fixed_t thrust;
@@ -1013,7 +1013,7 @@ void P_MinotaurSlam(mobj_t * source, mobj_t * target)
 //
 //---------------------------------------------------------------------------
 
-void P_TouchWhirlwind(mobj_t * target)
+void P_TouchWhirlwind(mobj_t *target)
 {
 	int     randVal;
 
@@ -1060,8 +1060,8 @@ boolean P_ChickenMorphPlayer(player_t * player)
 
 	if(player->chickenTics)
 	{
-		if((player->chickenTics < CHICKENTICS - TICSPERSEC)
-		   && !player->powers[pw_weaponlevel2])
+		if((player->chickenTics < CHICKENTICS - TICSPERSEC) &&
+		   !player->powers[pw_weaponlevel2])
 		{						// Make a super chicken
 			P_GivePower(player, pw_weaponlevel2);
 		}
@@ -1108,7 +1108,7 @@ boolean P_ChickenMorphPlayer(player_t * player)
 //
 //---------------------------------------------------------------------------
 
-boolean P_ChickenMorph(mobj_t * actor)
+boolean P_ChickenMorph(mobj_t *actor)
 {
 	mobj_t *fog;
 	mobj_t *chicken;
@@ -1225,8 +1225,8 @@ void P_AutoUseHealth(player_t * player, int saveHealth)
 			P_PlayerRemoveArtifact(player, superSlot);
 		}
 	}
-	else if((gameskill == sk_baby)
-			&& (superCount * 100 + normalCount * 25 >= saveHealth))
+	else if((gameskill == sk_baby) &&
+			(superCount * 100 + normalCount * 25 >= saveHealth))
 	{							// Use mystic urns and quartz flasks
 		count = (saveHealth + 24) / 25;
 		saveHealth -= count * 25;
@@ -1260,7 +1260,7 @@ void P_AutoUseHealth(player_t * player, int saveHealth)
    ==================
  */
 
-void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
+void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 				  int damage)
 {
 	unsigned ang;
@@ -1378,26 +1378,26 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		}
 	}
 	// Push the target unless source is using the gauntlets
-	if(inflictor
-	   && (!source || !source->player
-		   || source->player->readyweapon != wp_gauntlets)
-	   && !(inflictor->flags2 & MF2_NODMGTHRUST))
+	if(inflictor &&
+	   (!source || !source->player ||
+		source->player->readyweapon != wp_gauntlets) &&
+	   !(inflictor->flags2 & MF2_NODMGTHRUST))
 	{
 		ang =
 			R_PointToAngle2(inflictor->x, inflictor->y, target->x, target->y);
 		//thrust = damage*(FRACUNIT>>3)*100/target->info->mass;
 		thrust = damage * (FRACUNIT >> 3) * 150 / target->info->mass;
 		// make fall forwards sometimes
-		if((damage < 40) && (damage > target->health)
-		   && (target->z - inflictor->z > 64 * FRACUNIT) && (P_Random() & 1))
+		if((damage < 40) && (damage > target->health) &&
+		   (target->z - inflictor->z > 64 * FRACUNIT) && (P_Random() & 1))
 		{
 			ang += ANG180;
 			thrust *= 4;
 		}
 		ang >>= ANGLETOFINESHIFT;
-		if(source && source->player && (source == inflictor)
-		   && source->player->powers[pw_weaponlevel2]
-		   && source->player->readyweapon == wp_staff)
+		if(source && source->player && (source == inflictor) &&
+		   source->player->powers[pw_weaponlevel2] &&
+		   source->player->readyweapon == wp_staff)
 		{
 			// Staff power level 2
 			target->momx += FixedMul(10 * FRACUNIT, finecosine[ang]);
@@ -1432,9 +1432,9 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		//  damage = target->health - 1;
 		//}
 
-		if(damage < 1000
-		   && ((player->cheats & CF_GODMODE)
-			   || player->powers[pw_invulnerability]))
+		if(damage < 1000 &&
+		   ((player->cheats & CF_GODMODE) ||
+			player->powers[pw_invulnerability]))
 		{
 			return;
 		}
@@ -1500,9 +1500,9 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		}
 		if(player && inflictor && !player->chickenTics)
 		{						// Check for flame death
-			if((inflictor->flags2 & MF2_FIREDAMAGE)
-			   || ((inflictor->type == MT_PHOENIXFX1) && (target->health > -50)
-				   && (damage > 25)))
+			if((inflictor->flags2 & MF2_FIREDAMAGE) ||
+			   ((inflictor->type == MT_PHOENIXFX1) && (target->health > -50) &&
+				(damage > 25)))
 			{
 				target->flags2 |= MF2_FIREDAMAGE;
 			}
@@ -1510,22 +1510,22 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		P_KillMobj(source, target);
 		return;
 	}
-	if((P_Random() < target->info->painchance)
-	   && !(target->flags & MF_SKULLFLY))
+	if((P_Random() < target->info->painchance) &&
+	   !(target->flags & MF_SKULLFLY))
 	{
 		target->flags |= MF_JUSTHIT;	// fight back!
 		P_SetMobjState(target, target->info->painstate);
 	}
 	target->reactiontime = 0;	// we're awake now...
-	if(!target->threshold && source && !(source->flags2 & MF2_BOSS)
-	   && !(target->type == MT_SORCERER2 && source->type == MT_WIZARD))
+	if(!target->threshold && source && !(source->flags2 & MF2_BOSS) &&
+	   !(target->type == MT_SORCERER2 && source->type == MT_WIZARD))
 	{
 		// Target actor is not intent on another actor,
 		// so make him chase after source
 		target->target = source;
 		target->threshold = BASETHRESHOLD;
-		if(target->state == &states[target->info->spawnstate]
-		   && target->info->seestate != S_NULL)
+		if(target->state == &states[target->info->spawnstate] &&
+		   target->info->seestate != S_NULL)
 		{
 			P_SetMobjState(target, target->info->seestate);
 		}

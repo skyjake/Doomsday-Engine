@@ -16,7 +16,7 @@
 // P_UnsetThingPosition
 //  Unlinks a thing from everything it has been linked to.
 //===========================================================================
-void P_UnsetThingPosition(mobj_t * thing)
+void P_UnsetThingPosition(mobj_t *thing)
 {
 	P_UnlinkThing(thing);
 }
@@ -26,7 +26,7 @@ void P_UnsetThingPosition(mobj_t * thing)
 //  Links a thing into both a block and a subsector based on it's x,y.
 //  Sets thing->subsector properly.
 //===========================================================================
-void P_SetThingPosition(mobj_t * thing)
+void P_SetThingPosition(mobj_t *thing)
 {
 	P_LinkThing(thing,
 				(!(thing->

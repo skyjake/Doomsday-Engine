@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.9  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -222,25 +225,25 @@ boolean P_CheckAmmo(player_t * player)
 	// Preferences are set here.
 	do
 	{
-		if(player->weaponowned[wp_plasma]
-		   && player->ammo[am_cell] >= weaponinfo[wp_plasma].pershot
-		   && (gamemode != shareware))
+		if(player->weaponowned[wp_plasma] &&
+		   player->ammo[am_cell] >= weaponinfo[wp_plasma].pershot &&
+		   (gamemode != shareware))
 		{
 			player->pendingweapon = wp_plasma;
 		}
-		else if(player->weaponowned[wp_supershotgun]
-				&& player->ammo[am_shell] > weaponinfo[wp_supershotgun].pershot
-				&& (gamemode == commercial))
+		else if(player->weaponowned[wp_supershotgun] &&
+				player->ammo[am_shell] > weaponinfo[wp_supershotgun].pershot &&
+				(gamemode == commercial))
 		{
 			player->pendingweapon = wp_supershotgun;
 		}
-		else if(player->weaponowned[wp_chaingun]
-				&& player->ammo[am_clip] >= weaponinfo[wp_chaingun].pershot)
+		else if(player->weaponowned[wp_chaingun] &&
+				player->ammo[am_clip] >= weaponinfo[wp_chaingun].pershot)
 		{
 			player->pendingweapon = wp_chaingun;
 		}
-		else if(player->weaponowned[wp_shotgun]
-				&& player->ammo[am_shell] >= weaponinfo[wp_shotgun].pershot)
+		else if(player->weaponowned[wp_shotgun] &&
+				player->ammo[am_shell] >= weaponinfo[wp_shotgun].pershot)
 		{
 			player->pendingweapon = wp_shotgun;
 		}
@@ -252,14 +255,14 @@ boolean P_CheckAmmo(player_t * player)
 		{
 			player->pendingweapon = wp_chainsaw;
 		}
-		else if(player->weaponowned[wp_missile]
-				&& player->ammo[am_misl] >= weaponinfo[wp_missile].pershot)
+		else if(player->weaponowned[wp_missile] &&
+				player->ammo[am_misl] >= weaponinfo[wp_missile].pershot)
 		{
 			player->pendingweapon = wp_missile;
 		}
-		else if(player->weaponowned[wp_bfg]
-				&& player->ammo[am_cell] > weaponinfo[wp_bfg].pershot
-				&& (gamemode != shareware))
+		else if(player->weaponowned[wp_bfg] &&
+				player->ammo[am_cell] > weaponinfo[wp_bfg].pershot &&
+				(gamemode != shareware))
 		{
 			player->pendingweapon = wp_bfg;
 		}
@@ -321,8 +324,8 @@ void C_DECL A_WeaponReady(player_t * player, pspdef_t * psp)
 	DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
 
 	// get out of attack state
-	if(player->plr->mo->state == &states[S_PLAY_ATK1]
-	   || player->plr->mo->state == &states[S_PLAY_ATK2])
+	if(player->plr->mo->state == &states[S_PLAY_ATK1] ||
+	   player->plr->mo->state == &states[S_PLAY_ATK2])
 	{
 		P_SetMobjState(player->plr->mo, S_PLAY);
 	}
@@ -347,9 +350,9 @@ void C_DECL A_WeaponReady(player_t * player, pspdef_t * psp)
 	//  the missile launcher and bfg do not auto fire
 	if(player->cmd.actions & BT_ATTACK)
 	{
-		if(!player->attackdown
-		   || (player->readyweapon != wp_missile
-			   && player->readyweapon != wp_bfg))
+		if(!player->attackdown ||
+		   (player->readyweapon != wp_missile &&
+			player->readyweapon != wp_bfg))
 		{
 			player->attackdown = true;
 			P_FireWeapon(player);
@@ -376,8 +379,8 @@ void C_DECL A_ReFire(player_t * player, pspdef_t * psp)
 {
 	// check for fire
 	//  (if a weaponchange is pending, let it go through instead)
-	if((player->cmd.actions & BT_ATTACK)
-	   && player->pendingweapon == wp_nochange && player->health)
+	if((player->cmd.actions & BT_ATTACK) &&
+	   player->pendingweapon == wp_nochange && player->health)
 	{
 		//if(IS_CLIENT) gi.conprintf( "client refire: atk=%i\n", player->cmd.actions & BT_ATTACK);
 		player->refire++;
@@ -633,7 +636,7 @@ void C_DECL A_FirePlasma(player_t * player, pspdef_t * psp)
 //
 fixed_t bulletslope;
 
-void P_BulletSlope(mobj_t * mo)
+void P_BulletSlope(mobj_t *mo)
 {
 	angle_t an;
 
@@ -656,7 +659,7 @@ void P_BulletSlope(mobj_t * mo)
 //
 // P_GunShot
 //
-void P_GunShot(mobj_t * mo, boolean accurate)
+void P_GunShot(mobj_t *mo, boolean accurate)
 {
 	angle_t angle;
 	int     damage;
@@ -798,7 +801,7 @@ void C_DECL A_Light2(player_t * player, pspdef_t * psp)
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
 //
-void C_DECL A_BFGSpray(mobj_t * mo)
+void C_DECL A_BFGSpray(mobj_t *mo)
 {
 	int     i;
 	int     j;

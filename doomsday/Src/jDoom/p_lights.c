@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.5  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -78,7 +81,7 @@ void T_FireFlicker(fireflicker_t * flick)
 //
 // P_SpawnFireFlicker
 //
-void P_SpawnFireFlicker(sector_t * sector)
+void P_SpawnFireFlicker(sector_t *sector)
 {
 	fireflicker_t *flick;
 
@@ -129,7 +132,7 @@ void T_LightFlash(lightflash_t * flash)
 // After the map has been loaded, scan each sector
 // for specials that spawn thinkers
 //
-void P_SpawnLightFlash(sector_t * sector)
+void P_SpawnLightFlash(sector_t *sector)
 {
 	lightflash_t *flash;
 
@@ -180,7 +183,7 @@ void T_StrobeFlash(strobe_t * flash)
 // After the map has been loaded, scan each sector
 // for specials that spawn thinkers
 //
-void P_SpawnStrobeFlash(sector_t * sector, int fastOrSlow, int inSync)
+void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
 {
 	strobe_t *flash;
 
@@ -210,7 +213,7 @@ void P_SpawnStrobeFlash(sector_t * sector, int fastOrSlow, int inSync)
 //
 // Start strobing lights (usually from a trigger)
 //
-void EV_StartLightStrobing(line_t * line)
+void EV_StartLightStrobing(line_t *line)
 {
 	int     secnum;
 	sector_t *sec;
@@ -229,7 +232,7 @@ void EV_StartLightStrobing(line_t * line)
 //
 // TURN LINE'S TAG LIGHTS OFF
 //
-void EV_TurnTagLightsOff(line_t * line)
+void EV_TurnTagLightsOff(line_t *line)
 {
 	int     i;
 	int     j;
@@ -263,7 +266,7 @@ void EV_TurnTagLightsOff(line_t * line)
 //
 // TURN LINE'S TAG LIGHTS ON
 //
-void EV_LightTurnOn(line_t * line, int bright)
+void EV_LightTurnOn(line_t *line, int bright)
 {
 	int     i;
 	int     j;
@@ -330,7 +333,7 @@ void T_Glow(glow_t * g)
 	}
 }
 
-void P_SpawnGlowingLight(sector_t * sector)
+void P_SpawnGlowingLight(sector_t *sector)
 {
 	glow_t *g;
 

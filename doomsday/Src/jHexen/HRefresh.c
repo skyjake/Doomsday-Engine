@@ -363,8 +363,8 @@ int H2_GetFilterColor(int filter)
 	else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
 		// Light Yellow?
 		return FMAKERGBA(1, 1, .5, (filter - STARTBONUSPALS + 1) / 16.0);
-	else if(filter >= STARTPOISONPALS
-			&& filter < STARTPOISONPALS + NUMPOISONPALS)
+	else if(filter >= STARTPOISONPALS &&
+			filter < STARTPOISONPALS + NUMPOISONPALS)
 		// Green?
 		return FMAKERGBA(0, 1, 0, (filter - STARTPOISONPALS + 1) / 16.0);
 	else if(filter >= STARTSCOURGEPAL)

@@ -201,8 +201,8 @@ void UI_InitPage(ui_page_t * page, ui_object_t * objects)
 	for(i = 0; i < page->count; i++)
 	{
 		objects[i].flags &= ~UIF_FOCUS;
-		if(objects[i].type == UI_TEXT || objects[i].type == UI_BOX
-		   || objects[i].type == UI_META)
+		if(objects[i].type == UI_TEXT || objects[i].type == UI_BOX ||
+		   objects[i].type == UI_META)
 			objects[i].flags |= UIF_NO_FOCUS;
 		if(objects[i].flags & UIF_DEFAULT)
 			deffocus = objects + i;
@@ -577,9 +577,9 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
 				else if(page->focus >= page->count)
 					page->focus = 0;
 			}
-			while(++k < page->count
-				  && (page->objects[page->focus].
-					  flags & (UIF_DISABLED | UIF_NO_FOCUS | UIF_HIDDEN)));
+			while(++k < page->count &&
+				  (page->objects[page->focus].
+				   flags & (UIF_DISABLED | UIF_NO_FOCUS | UIF_HIDDEN)));
 			// Flag the new focus object.
 			page->objects[page->focus].flags |= UIF_FOCUS;
 			return true;		// The event was used.
@@ -635,8 +635,8 @@ void UIPage_Ticker(ui_page_t * page)
 	page->timer++;
 
 	// Check mouse resting.
-	if(abs(ui_cx - ui_rest_cx) > ui_rest_offset_limit
-	   || abs(ui_cy - ui_rest_cy) > ui_rest_offset_limit)
+	if(abs(ui_cx - ui_rest_cx) > ui_rest_offset_limit ||
+	   abs(ui_cy - ui_rest_cy) > ui_rest_offset_limit)
 	{
 		// Restart resting period.
 		ui_rest_cx = ui_cx;
@@ -662,8 +662,8 @@ void UIPage_Drawer(ui_page_t * page)
 		if(ob->flags & UIF_HIDDEN || !ob->drawer)
 			continue;
 		ob->drawer(ob);
-		if(ob->flags & UIF_FOCUS
-		   && (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
+		if(ob->flags & UIF_FOCUS &&
+		   (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
 		{
 			t = (1 + sin(page->timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
 			UI_MixColors(UI_COL(UIC_BRD_LOW), UI_COL(UIC_BRD_HI), &focuscol,
@@ -713,8 +713,8 @@ int UIButton_Responder(ui_object_t * ob, event_t *ev)
 			return true;
 		}
 	}
-	else if((ev->type == ev_mousebdown && UI_MouseInside(ob))
-			|| (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
+	else if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
+			(ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
 	{
 		if(ob->type == UI_BUTTON)
 		{
@@ -821,8 +821,8 @@ int UIEdit_Responder(ui_object_t * ob, event_t *ev)
 			break;
 
 		default:
-			if((int) strlen(ob->text) < dat->maxlen && ev->data1 >= 32
-			   && (ev->data1 <= 127 || ev->data1 >= DD_HIGHEST_KEYCODE))
+			if((int) strlen(ob->text) < dat->maxlen && ev->data1 >= 32 &&
+			   (ev->data1 <= 127 || ev->data1 >= DD_HIGHEST_KEYCODE))
 			{
 				memmove(ob->text + dat->cp + 1, ob->text + dat->cp,
 						strlen(ob->text) - dat->cp);
@@ -832,8 +832,8 @@ int UIEdit_Responder(ui_object_t * ob, event_t *ev)
 		}
 		return true;
 	}
-	else if((ev->type == ev_mousebdown && UI_MouseInside(ob))
-			|| (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
+	else if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
+			(ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
 	{
 		// Activate and capture.
 		ob->flags |= UIF_ACTIVE;

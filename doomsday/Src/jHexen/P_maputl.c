@@ -13,7 +13,7 @@
 #include "h2def.h"
 #include "p_local.h"
 
-static mobj_t *RoughBlockCheck(mobj_t * mo, int index);
+static mobj_t *RoughBlockCheck(mobj_t *mo, int index);
 
 /*
    ===================
@@ -294,7 +294,7 @@ static mobj_t *RoughBlockCheck(mobj_t * mo, int index);
    ===================
  */
 
-void P_UnsetThingPosition(mobj_t * thing)
+void P_UnsetThingPosition(mobj_t *thing)
 {
 	P_UnlinkThing(thing);
 }
@@ -310,7 +310,7 @@ void P_UnsetThingPosition(mobj_t * thing)
    ===================
  */
 
-void P_SetThingPosition(mobj_t * thing)
+void P_SetThingPosition(mobj_t *thing)
 {
 	P_LinkThing(thing,
 				(!(thing->
@@ -734,7 +734,7 @@ int     ptflags;
 //      distance is in MAPBLOCKUNITS
 //===========================================================================
 
-mobj_t *P_RoughMonsterSearch(mobj_t * mo, int distance)
+mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
 {
 	int     blockX;
 	int     blockY;
@@ -841,7 +841,7 @@ mobj_t *P_RoughMonsterSearch(mobj_t * mo, int distance)
 //===========================================================================
 // RoughBlockCheck
 //===========================================================================
-static mobj_t *RoughBlockCheck(mobj_t * mo, int index)
+static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 {
 	mobj_t *link, *root = P_GetBlockRootIdx(index);
 	mobj_t *master;
@@ -857,12 +857,10 @@ static mobj_t *RoughBlockCheck(mobj_t * mo, int index)
 			if((link->flags & MF_COUNTKILL) || (link->player && (link != mo)))
 			{
 				if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
-				   || ((link->type == MT_MINOTAUR)
-					   && (((mobj_t *) link->special1) == mo)) || (netgame
-																   &&
-																   !deathmatch
-																   && link->
-																   player))
+				   || ((link->type == MT_MINOTAUR) &&
+					   (((mobj_t *) link->special1) == mo)) || (netgame &&
+																!deathmatch &&
+																link->player))
 					continue;
 
 				if(P_CheckSight(mo, link))
@@ -873,15 +871,14 @@ static mobj_t *RoughBlockCheck(mobj_t * mo, int index)
 		else if(mo->type == MT_MINOTAUR)	// looking around minotaur
 		{
 			master = (mobj_t *) mo->special1;
-			if((link->flags & MF_COUNTKILL)
-			   || (link->player && (link != master)))
+			if((link->flags & MF_COUNTKILL) ||
+			   (link->player && (link != master)))
 			{
 				if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
-				   || ((link->type == MT_MINOTAUR)
-					   && (link->special1 == mo->special1)) || (netgame
-																&& !deathmatch
-																&& link->
-																player))
+				   || ((link->type == MT_MINOTAUR) &&
+					   (link->special1 == mo->special1)) || (netgame &&
+															 !deathmatch &&
+															 link->player))
 					continue;
 
 				if(P_CheckSight(mo, link))
@@ -891,12 +888,12 @@ static mobj_t *RoughBlockCheck(mobj_t * mo, int index)
 		}
 		else if(mo->type == MT_MSTAFF_FX2)	// bloodscourge
 		{
-			if((link->flags & MF_COUNTKILL
-				|| (link->player && link != mo->target))
-			   && !(link->flags2 & MF2_DORMANT))
+			if((link->flags & MF_COUNTKILL ||
+				(link->player && link != mo->target)) &&
+			   !(link->flags2 & MF2_DORMANT))
 			{
-				if(!(link->flags & MF_SHOOTABLE) || netgame && !deathmatch
-				   && link->player)
+				if(!(link->flags & MF_SHOOTABLE) || netgame && !deathmatch &&
+				   link->player)
 					continue;
 
 				if(P_CheckSight(mo, link))
@@ -916,12 +913,12 @@ static mobj_t *RoughBlockCheck(mobj_t * mo, int index)
 		}
 		else					// spirits
 		{
-			if((link->flags & MF_COUNTKILL
-				|| (link->player && link != mo->target))
-			   && !(link->flags2 & MF2_DORMANT))
+			if((link->flags & MF_COUNTKILL ||
+				(link->player && link != mo->target)) &&
+			   !(link->flags2 & MF2_DORMANT))
 			{
-				if(!(link->flags & MF_SHOOTABLE) || netgame && !deathmatch
-				   && link->player || link == mo->target)
+				if(!(link->flags & MF_SHOOTABLE) || netgame && !deathmatch &&
+				   link->player || link == mo->target)
 					continue;
 
 				if(P_CheckSight(mo, link))

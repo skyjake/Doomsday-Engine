@@ -145,9 +145,9 @@ boolean P_CheckSpot(int playernum, mapthing_t * mthing, boolean doTeleSpark)
 		// first spawn of level, before corpses
 		for(i = 0; i < playernum; i++)
 		{
-			if(players[i].plr->mo
-			   && players[i].plr->mo->x == mthing->x << FRACBITS
-			   && players[i].plr->mo->y == mthing->y << FRACBITS)
+			if(players[i].plr->mo &&
+			   players[i].plr->mo->x == mthing->x << FRACBITS &&
+			   players[i].plr->mo->y == mthing->y << FRACBITS)
 				return false;
 		}
 		return true;

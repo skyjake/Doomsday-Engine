@@ -45,7 +45,7 @@
 //  The actor has taken a step, set the corresponding short-range visual
 //  offset.
 //==========================================================================
-void P_SetThingSRVO(mobj_t * mo, int stepx, int stepy)
+void P_SetThingSRVO(mobj_t *mo, int stepx, int stepy)
 {
 	// Shift to 8.8 fixed point.
 	mo->srvo[0] = (-stepx) >> 8;
@@ -57,7 +57,7 @@ void P_SetThingSRVO(mobj_t * mo, int stepx, int stepy)
 //  The actor has taken a step, set the corresponding short-range visual
 //  offset.
 //==========================================================================
-void P_SetThingSRVOZ(mobj_t * mo, int stepz)
+void P_SetThingSRVOZ(mobj_t *mo, int stepz)
 {
 	// Shift to 8.8 fixed point.
 	mo->srvo[2] = (-stepz) >> 8;
@@ -70,7 +70,7 @@ void P_SetThingSRVOZ(mobj_t * mo, int stepz)
 //  Real-life analogy: angular momentum (you can't suddenly just take a
 //  90 degree turn in zero time).
 //==========================================================================
-void P_SRVOAngleTicker(mobj_t * mo)
+void P_SRVOAngleTicker(mobj_t *mo)
 {
 	short   target, step, diff;
 	int     lstep, hgt;
@@ -124,7 +124,7 @@ void P_SRVOAngleTicker(mobj_t * mo)
 //  The thing's timer has run out, which means the thing has completed its
 //  step. Or there has been a teleport.
 //==========================================================================
-void P_ClearThingSRVO(mobj_t * mo)
+void P_ClearThingSRVO(mobj_t *mo)
 {
 	memset(mo->srvo, 0, sizeof(mo->srvo));
 }
@@ -147,7 +147,7 @@ void P_ClearThingSRVO(mobj_t * mo)
 //  The first three bits of the selector special byte contain a
 //  relative health level.
 //===========================================================================
-void P_UpdateHealthBits(mobj_t * mobj)
+void P_UpdateHealthBits(mobj_t *mobj)
 {
 	int     i;
 
@@ -167,7 +167,7 @@ void P_UpdateHealthBits(mobj_t * mobj)
 // P_UpdateMobjFlags
 //  Update gravity-related flags for Doomsday.
 //===========================================================================
-void P_UpdateMobjFlags(mobj_t * mobj)
+void P_UpdateMobjFlags(mobj_t *mobj)
 {
 	/*  if(mobj->flags & MF_NOGRAVITY || mobj->flags2 & MF2_FLOATBOB)
 	   mobj->ddflags |= DDMF_NOGRAVITY;

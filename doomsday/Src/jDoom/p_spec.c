@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.9  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.8  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -253,7 +256,7 @@ int twoSided(int sector, int line)
 // Return sector_t * of sector next to current.
 // NULL if not two-sided line
 //
-sector_t *getNextSector(line_t * line, sector_t * sec)
+sector_t *getNextSector(line_t *line, sector_t *sec)
 {
 	if(!(line->flags & ML_TWOSIDED))
 		return NULL;
@@ -268,7 +271,7 @@ sector_t *getNextSector(line_t * line, sector_t * sec)
 // P_FindLowestFloorSurrounding()
 // FIND LOWEST FLOOR HEIGHT IN SURROUNDING SECTORS
 //
-fixed_t P_FindLowestFloorSurrounding(sector_t * sec)
+fixed_t P_FindLowestFloorSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -293,7 +296,7 @@ fixed_t P_FindLowestFloorSurrounding(sector_t * sec)
 // P_FindHighestFloorSurrounding()
 // FIND HIGHEST FLOOR HEIGHT IN SURROUNDING SECTORS
 //
-fixed_t P_FindHighestFloorSurrounding(sector_t * sec)
+fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -322,7 +325,7 @@ fixed_t P_FindHighestFloorSurrounding(sector_t * sec)
 // 20 adjoining sectors max!
 #define MAX_ADJOINING_SECTORS    	20
 
-fixed_t P_FindNextHighestFloor(sector_t * sec, int currentheight)
+fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
 {
 	int     i;
 	int     h;
@@ -369,7 +372,7 @@ fixed_t P_FindNextHighestFloor(sector_t * sec, int currentheight)
 //
 // FIND LOWEST CEILING IN THE SURROUNDING SECTORS
 //
-fixed_t P_FindLowestCeilingSurrounding(sector_t * sec)
+fixed_t P_FindLowestCeilingSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -393,7 +396,7 @@ fixed_t P_FindLowestCeilingSurrounding(sector_t * sec)
 //
 // FIND HIGHEST CEILING IN THE SURROUNDING SECTORS
 //
-fixed_t P_FindHighestCeilingSurrounding(sector_t * sec)
+fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
 {
 	int     i;
 	line_t *check;
@@ -417,7 +420,7 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t * sec)
 //
 // RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
 //
-int P_FindSectorFromLineTag(line_t * line, int start)
+int P_FindSectorFromLineTag(line_t *line, int start)
 {
 	int     i;
 
@@ -431,7 +434,7 @@ int P_FindSectorFromLineTag(line_t * line, int start)
 //
 // Find minimum light from an adjacent sector
 //
-int P_FindMinSurroundingLight(sector_t * sector, int max)
+int P_FindMinSurroundingLight(sector_t *sector, int max)
 {
 	int     i;
 	int     min;
@@ -464,7 +467,7 @@ int P_FindMinSurroundingLight(sector_t * sector, int max)
 // Called every time a thing origin is about
 //  to cross a line with a non 0 special.
 //
-void P_CrossSpecialLine(int linenum, int side, mobj_t * thing)
+void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
 {
 	line_t *line;
 	int     ok;
@@ -929,7 +932,7 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t * thing)
 // P_ShootSpecialLine - IMPACT SPECIALS
 // Called when a thing shoots a special line.
 //
-void P_ShootSpecialLine(mobj_t * thing, line_t * line)
+void P_ShootSpecialLine(mobj_t *thing, line_t *line)
 {
 	int     ok;
 
@@ -1132,7 +1135,7 @@ void P_UpdateSpecials(void)
 //
 // Special Stuff that can not be categorized
 //
-int EV_DoDonut(line_t * line)
+int EV_DoDonut(line_t *line)
 {
 	sector_t *s1;
 	sector_t *s2;
@@ -1156,8 +1159,8 @@ int EV_DoDonut(line_t * line)
 		s2 = getNextSector(s1->Lines[0], s1);
 		for(i = 0; i < s2->linecount; i++)
 		{
-			if((!s2->Lines[i]->flags & ML_TWOSIDED)
-			   || (s2->Lines[i]->backsector == s1))
+			if((!s2->Lines[i]->flags & ML_TWOSIDED) ||
+			   (s2->Lines[i]->backsector == s1))
 				continue;
 			s3 = s2->Lines[i]->backsector;
 

@@ -563,10 +563,10 @@ sfxsample_t *Sfx_Cache(int id)
 		// If the sound has an invalid lumpname, search external anyway.
 		// If the original sound is from a PWAD, we won't look for an
 		// external resource (probably a custom sound).
-		if((info->lumpnum < 0 || W_IsFromIWAD(info->lumpnum))
-		   && R_FindResource(RC_SFX, info->lumpname, NULL, buf)
-		   && (samp.data =
-			   WAV_Load(buf, &samp.bytesper, &samp.rate, &samp.numsamples)))
+		if((info->lumpnum < 0 || W_IsFromIWAD(info->lumpnum)) &&
+		   R_FindResource(RC_SFX, info->lumpname, NULL, buf) &&
+		   (samp.data =
+			WAV_Load(buf, &samp.bytesper, &samp.rate, &samp.numsamples)))
 		{
 			// Loading was successful!
 			needFree = true;
@@ -580,10 +580,13 @@ sfxsample_t *Sfx_Cache(int id)
 		// Try loading from the lump.
 		if(info->lumpnum < 0)
 		{
-			Con_Message("Sfx_Cache: Sound %s has a missing lump: '%s'.\n",
-						info->id, info->lumpname);
-			Con_Message("  Verifying... The lump number is %i.\n",
-						W_CheckNumForName(info->lumpname));
+			if(verbose)
+			{
+				Con_Message("Sfx_Cache: Sound %s has a missing lump: '%s'.\n",
+							info->id, info->lumpname);
+				Con_Message("  Verifying... The lump number is %i.\n",
+							W_CheckNumForName(info->lumpname));
+			}
 			return NULL;
 		}
 

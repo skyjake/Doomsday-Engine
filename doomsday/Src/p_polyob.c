@@ -42,17 +42,17 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void UpdateSegBBox(seg_t * seg);
+static void UpdateSegBBox(seg_t *seg);
 static void RotatePt(int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
 					 fixed_t startSpotY);
-static boolean CheckMobjBlocking(seg_t * seg, polyobj_t * po);
+static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Called when the polyobj hits a mobj.
-void    (*po_callback) (mobj_t * mobj, void *seg, void *po);
+void    (*po_callback) (mobj_t *mobj, void *seg, void *po);
 
 byte   *polyobjs;				// list of all poly-objects on the level
 int     po_NumPolyobjs;
@@ -90,7 +90,7 @@ polyobj_t *GetPolyobj(int polyNum)
 //==========================================================================
 // UpdateSegBBox
 //==========================================================================
-void UpdateSegBBox(seg_t * seg)
+void UpdateSegBBox(seg_t *seg)
 {
 	line_t *line;
 
@@ -467,7 +467,7 @@ void PO_LinkPolyobj(polyobj_t * po)
 //==========================================================================
 // CheckMobjBlocking
 //==========================================================================
-static boolean CheckMobjBlocking(seg_t * seg, polyobj_t * po)
+static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po)
 {
 	mobj_t *mobj, *root;
 	int     i, j;
@@ -498,7 +498,7 @@ static boolean CheckMobjBlocking(seg_t * seg, polyobj_t * po)
 	{
 		for(i = left; i <= right; i++)
 		{
-			root = (mobj_t *) & blockrings[j + i];
+			root = (mobj_t *) &blockrings[j + i];
 			for(mobj = root->bnext; mobj != root; mobj = mobj->bnext)
 			{
 				if(mobj->ddflags & DDMF_SOLID || mobj->dplayer)
@@ -508,10 +508,10 @@ static boolean CheckMobjBlocking(seg_t * seg, polyobj_t * po)
 					tmbbox[BOXLEFT] = mobj->x - mobj->radius;
 					tmbbox[BOXRIGHT] = mobj->x + mobj->radius;
 
-					if(tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-					   || tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-					   || tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-					   || tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+					if(tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
+					   tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
+					   tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+					   tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
 					{
 						continue;
 					}

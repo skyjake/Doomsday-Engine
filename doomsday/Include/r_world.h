@@ -32,16 +32,16 @@ extern int      rendSkyLight;	   // cvar
 #define MIF_DRAW_SPHERE		0x2	   // Always draw the sky sphere.
 
 const char     *R_GetCurrentLevelID(void);
-const byte     *R_GetSectorLightColor(sector_t * sector);
+const byte     *R_GetSectorLightColor(sector_t *sector);
 void            R_SetupLevel(char *level_id, int flags);
 void            R_SetupFog(void);
 void            R_SetupSky(void);
-void            R_SetSectorLinks(sector_t * sec);
-sector_t       *R_GetLinkedSector(sector_t * startsec, boolean getfloor);
+void            R_SetSectorLinks(sector_t *sec);
+sector_t       *R_GetLinkedSector(sector_t *startsec, boolean getfloor);
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
 void            R_SkyFix(void);
-void            R_OrderVertices(line_t * line, sector_t * sector,
+void            R_OrderVertices(line_t *line, sector_t *sector,
 								vertex_t * verts[2]);
 
 #endif

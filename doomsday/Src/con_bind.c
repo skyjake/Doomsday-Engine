@@ -438,8 +438,8 @@ int CCmdBind(int argc, char **argv)
 	char    validEventName[16], buff[80];
 	char    prefix = '+', *begin;
 	event_t event;
-	int     repeat = !stricmp(argv[0], "bindr")
-		|| !stricmp(argv[0], "safebindr");
+	int     repeat = !stricmp(argv[0], "bindr") ||
+		!stricmp(argv[0], "safebindr");
 	int     safe = !strnicmp(argv[0], "safe", 4);
 
 	if(argc < 2 || argc > 3)

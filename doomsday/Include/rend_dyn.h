@@ -90,19 +90,19 @@ void            DL_ClearForFrame();
 void            DL_InitForNewFrame();
 int             DL_NewLuminous(void);
 lumobj_t       *DL_GetLuminous(int index);
-void            DL_ProcessSubsector(subsector_t * ssec);
-void            DL_ProcessWallSeg(lumobj_t * lum, seg_t * seg,
-								  sector_t * frontsector);
+void            DL_ProcessSubsector(subsector_t *ssec);
+void            DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg,
+								  sector_t *frontsector);
 dynlight_t     *DL_GetSegLightLinks(int seg, int whichpart);
 
 // Helpers.
-boolean         DL_RadiusIterator(subsector_t * subsector, fixed_t x,
-								  fixed_t y, fixed_t radius,
-								  boolean (*func) (lumobj_t *, fixed_t));
+boolean         DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
+								  fixed_t radius, boolean (*func) (lumobj_t *,
+																   fixed_t));
 boolean         DL_BoxIterator(fixed_t box[4], void *ptr,
 							   boolean (*func) (lumobj_t *, void *));
 
-int             Rend_SubsectorClipper(fvertex_t * out, subsector_t * sub,
+int             Rend_SubsectorClipper(fvertex_t * out, subsector_t *sub,
 									  float x, float y, float radius);
 
 #endif

@@ -71,9 +71,9 @@ void            Sfx_EndFrame(void);
 void            Sfx_PurgeCache(void);
 void            Sfx_RefreshChannels(void);
 int             Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
-							   mobj_t * emitter, float *fixedpos, int flags);
-int             Sfx_StopSound(int id, mobj_t * emitter);
-void            Sfx_StopSoundGroup(int group, mobj_t * emitter);
+							   mobj_t *emitter, float *fixedpos, int flags);
+int             Sfx_StopSound(int id, mobj_t *emitter);
+void            Sfx_StopSoundGroup(int group, mobj_t *emitter);
 int             Sfx_CountPlaying(int id);
 void            Sfx_UnloadSoundID(int id);
 

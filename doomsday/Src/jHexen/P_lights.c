@@ -101,7 +101,7 @@ void T_Light(light_t * light)
 //
 //============================================================================
 
-boolean EV_SpawnLight(line_t * line, byte *arg, lighttype_t type)
+boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
 {
 	light_t *light;
 	sector_t *sec;
@@ -248,7 +248,7 @@ void T_Phase(phase_t * phase)
 //
 //==========================================================================
 
-void P_SpawnPhasedLight(sector_t * sector, int base, int index)
+void P_SpawnPhasedLight(sector_t *sector, int base, int index)
 {
 	phase_t *phase;
 
@@ -276,7 +276,7 @@ void P_SpawnPhasedLight(sector_t * sector, int base, int index)
 //
 //==========================================================================
 
-void P_SpawnLightSequence(sector_t * sector, int indexStep)
+void P_SpawnLightSequence(sector_t *sector, int indexStep)
 {
 	sector_t *sec;
 	sector_t *nextSec;

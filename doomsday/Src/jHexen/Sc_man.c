@@ -253,8 +253,8 @@ boolean SC_GetString(void)
 		while(*ScriptPtr != ASCII_QUOTE)
 		{
 			*text++ = *ScriptPtr++;
-			if(ScriptPtr == ScriptEndPtr
-			   || text == &sc_String[MAX_STRING_SIZE - 1])
+			if(ScriptPtr == ScriptEndPtr ||
+			   text == &sc_String[MAX_STRING_SIZE - 1])
 			{
 				break;
 			}
@@ -266,8 +266,8 @@ boolean SC_GetString(void)
 		while((*ScriptPtr > 32) && (*ScriptPtr != ASCII_COMMENT))
 		{
 			*text++ = *ScriptPtr++;
-			if(ScriptPtr == ScriptEndPtr
-			   || text == &sc_String[MAX_STRING_SIZE - 1])
+			if(ScriptPtr == ScriptEndPtr ||
+			   text == &sc_String[MAX_STRING_SIZE - 1])
 			{
 				break;
 			}

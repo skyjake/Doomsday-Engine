@@ -253,7 +253,7 @@ int Cl_ReadPlayerDelta(void)
 // Cl_ThrustMul
 //  Thrust (with a multiplier).
 //==========================================================================
-void Cl_ThrustMul(mobj_t * mo, angle_t angle, fixed_t move, fixed_t thmul)
+void Cl_ThrustMul(mobj_t *mo, angle_t angle, fixed_t move, fixed_t thmul)
 {
 	// Make a fine angle.
 	angle >>= ANGLETOFINESHIFT;
@@ -265,7 +265,7 @@ void Cl_ThrustMul(mobj_t * mo, angle_t angle, fixed_t move, fixed_t thmul)
 //==========================================================================
 // Cl_Thrust
 //==========================================================================
-void Cl_Thrust(mobj_t * mo, angle_t angle, fixed_t move)
+void Cl_Thrust(mobj_t *mo, angle_t angle, fixed_t move)
 {
 	Cl_ThrustMul(mo, angle, move, FRACUNIT);
 }
@@ -279,7 +279,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
 	int     num = pl - players;
 	playerstate_t *st = playerstate + num;
 
-	mobj_t /* *clmo = &st->cmo->mo, */  * mo = pl->mo;
+	mobj_t /* *clmo = &st->cmo->mo, */ *mo = pl->mo;
 
 	if(!mo)
 		return;

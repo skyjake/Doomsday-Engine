@@ -39,6 +39,7 @@ extern boolean  useFog;
 extern byte     fogColor[4];
 extern int      r_ambient;
 
+void            Rend_Register(void);
 void            Rend_Init(void);
 void            Rend_Reset(void);
 
@@ -49,7 +50,7 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 
 float           Rend_PointDist3D(float c[3]);
 float           Rend_SignedPointDist2D(float c[2]);
-int             Rend_SectorLight(sector_t * sec);
+int             Rend_SectorLight(sector_t *sec);
 int             Rend_SegFacingDir(float v1[2], float v2[2]);
 int             Rend_MidTexturePos(float *top, float *bottom, float *texoffy,
 								   float tcyoff, boolean lower_unpeg);

@@ -244,8 +244,8 @@ void S_CalcSectorReverbs(void)
 			rev = sub_reverb + i;
 			// Is this subsector close enough?
 			if(sub->midpoint.x > bbox[BLEFT] && sub->midpoint.x < bbox[BRIGHT]
-			   && sub->midpoint.y > bbox[BTOP]
-			   && sub->midpoint.y < bbox[BBOTTOM])
+			   && sub->midpoint.y > bbox[BTOP] &&
+			   sub->midpoint.y < bbox[BBOTTOM])
 			{
 				//ST_Message( "- sub %i within, own:%i\n", i, sub->sector == sec);
 				k++;

@@ -371,9 +371,9 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 	}
 	else						// Use true color textures.
 	{
-		int     alphachannel = (format == DGL_RGBA)
-			|| (format == DGL_COLOR_INDEX_8_PLUS_A8)
-			|| (format == DGL_LUMINANCE_PLUS_A8);
+		int     alphachannel = (format == DGL_RGBA) ||
+			(format == DGL_COLOR_INDEX_8_PLUS_A8) ||
+			(format == DGL_LUMINANCE_PLUS_A8);
 		int     i, colorComps = alphachannel ? 4 : 3;
 		int     numPixels = width * height;
 		byte   *buffer;
@@ -505,8 +505,8 @@ void DG_TexParameter(int pname, int param)
 						DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER : pname ==
 						DGL_MAG_FILTER ? GL_TEXTURE_MAG_FILTER : pname ==
 						DGL_WRAP_S ? GL_TEXTURE_WRAP_S : GL_TEXTURE_WRAP_T,
-						(param >= DGL_NEAREST
-						 && param <=
+						(param >= DGL_NEAREST &&
+						 param <=
 						 DGL_LINEAR_MIPMAP_LINEAR) ? mlevs[param -
 														   DGL_NEAREST] : param
 						== DGL_CLAMP ? GL_CLAMP : GL_REPEAT);

@@ -35,14 +35,14 @@ void T_PlatRaise(plat_t * plat)
 		{
 			plat->count = plat->wait;
 			plat->status = PLAT_DOWN;
-			SN_StartSequence((mobj_t *) & plat->sector->soundorg,
+			SN_StartSequence((mobj_t *) &plat->sector->soundorg,
 							 SEQ_PLATFORM + plat->sector->seqType);
 		}
 		else if(res == RES_PASTDEST)
 		{
 			plat->count = plat->wait;
 			plat->status = PLAT_WAITING;
-			SN_StopSequence((mobj_t *) & plat->sector->soundorg);
+			SN_StopSequence((mobj_t *) &plat->sector->soundorg);
 			switch (plat->type)
 			{
 			case PLAT_DOWNWAITUPSTAY:
@@ -69,7 +69,7 @@ void T_PlatRaise(plat_t * plat)
 			default:
 				break;
 			}
-			SN_StopSequence((mobj_t *) & plat->sector->soundorg);
+			SN_StopSequence((mobj_t *) &plat->sector->soundorg);
 		}
 		break;
 	case PLAT_WAITING:
@@ -79,7 +79,7 @@ void T_PlatRaise(plat_t * plat)
 				plat->status = PLAT_UP;
 			else
 				plat->status = PLAT_DOWN;
-			SN_StartSequence((mobj_t *) & plat->sector->soundorg,
+			SN_StartSequence((mobj_t *) &plat->sector->soundorg,
 							 SEQ_PLATFORM + plat->sector->seqType);
 		}
 		//      case PLAT_IN_STASIS:
@@ -93,7 +93,7 @@ void T_PlatRaise(plat_t * plat)
 //      "amount" is only used for SOME platforms.
 //
 //==================================================================
-int EV_DoPlat(line_t * line, byte *args, plattype_e type, int amount)
+int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
 {
 	plat_t *plat;
 	int     secnum;
@@ -183,7 +183,7 @@ int EV_DoPlat(line_t * line, byte *args, plattype_e type, int amount)
 			break;
 		}
 		P_AddActivePlat(plat);
-		SN_StartSequence((mobj_t *) & sec->soundorg,
+		SN_StartSequence((mobj_t *) &sec->soundorg,
 						 SEQ_PLATFORM + sec->seqType);
 	}
 	return rtn;
@@ -195,8 +195,8 @@ void P_ActivateInStasis(int tag)
 	int     i;
 
 	for(i = 0; i < MAXPLATS; i++)
-		if(activeplats[i] && (activeplats[i])->tag == tag
-		   && (activeplats[i])->status == PLAT_IN_STASIS)
+		if(activeplats[i] && (activeplats[i])->tag == tag &&
+		   (activeplats[i])->status == PLAT_IN_STASIS)
 		{
 			(activeplats[i])->status = (activeplats[i])->oldstatus;
 			(activeplats[i])->thinker.function = T_PlatRaise;
@@ -204,7 +204,7 @@ void P_ActivateInStasis(int tag)
 }
 #endif
 
-void EV_StopPlat(line_t * line, byte *args)
+void EV_StopPlat(line_t *line, byte *args)
 {
 	int     i;
 

@@ -18,7 +18,7 @@ mobj_t *P_SpawnTeleFog(int x, int y)
 //
 //----------------------------------------------------------------------------
 
-boolean P_Teleport(mobj_t * thing, fixed_t x, fixed_t y, angle_t angle)
+boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
 {
 	fixed_t oldx;
 	fixed_t oldy;
@@ -85,8 +85,8 @@ boolean P_Teleport(mobj_t * thing, fixed_t x, fixed_t y, angle_t angle)
 		thing->reactiontime = 18;
 	}
 	thing->angle = angle;
-	if(thing->flags2 & MF2_FOOTCLIP
-	   && P_GetThingFloorType(thing) != FLOOR_SOLID)
+	if(thing->flags2 & MF2_FOOTCLIP &&
+	   P_GetThingFloorType(thing) != FLOOR_SOLID)
 	{
 		thing->flags2 |= MF2_FEETARECLIPPED;
 	}
@@ -114,7 +114,7 @@ boolean P_Teleport(mobj_t * thing, fixed_t x, fixed_t y, angle_t angle)
 //
 //----------------------------------------------------------------------------
 
-boolean EV_Teleport(line_t * line, int side, mobj_t * thing)
+boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
 	int     i;
 	int     tag;

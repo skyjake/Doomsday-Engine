@@ -117,8 +117,8 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
 	client_t *cl = clients + playerNum;
 
 	// Is a demo already being recorded for this client?
-	if(cl->recording || playback || (isDedicated && !playerNum)
-	   || !players[playerNum].ingame)
+	if(cl->recording || playback || (isDedicated && !playerNum) ||
+	   !players[playerNum].ingame)
 		return false;
 
 	// Compose the real file name.
@@ -239,8 +239,8 @@ void Demo_WritePacket(int playerNum)
 	if(clients[playerNum].recordPaused)
 	{
 		// Some types of packet are not written in record-paused mode.
-		if(netBuffer.msg.type == psv_sound
-		   || netBuffer.msg.type == DDPT_MESSAGE)
+		if(netBuffer.msg.type == psv_sound ||
+		   netBuffer.msg.type == DDPT_MESSAGE)
 			return;
 	}
 
@@ -576,9 +576,9 @@ void Demo_Ticker(timespan_t time)
 	else
 	{
 		for(i = 0; i < MAXPLAYERS; i++)
-			if(players[i].ingame && clients[i].recording
-			   && !clients[i].recordPaused
-			   && ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
+			if(players[i].ingame && clients[i].recording &&
+			   !clients[i].recordPaused &&
+			   ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
 			{
 				// It's time to write local view angles and coords.
 				writeInfo[i].cameratimer = 0;

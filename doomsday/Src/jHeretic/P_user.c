@@ -166,8 +166,8 @@ void P_CalcHeight(player_t * player)
 		if(plrmo->z <= plrmo->floorz)
 			player->plr->viewz += bob;
 	}
-	if(plrmo->flags2 & MF2_FEETARECLIPPED && player->playerstate != PST_DEAD
-	   && plrmo->z <= plrmo->floorz)
+	if(plrmo->flags2 & MF2_FEETARECLIPPED && player->playerstate != PST_DEAD &&
+	   plrmo->z <= plrmo->floorz)
 	{
 		player->plr->viewz -= FOOTCLIPSIZE;
 	}
@@ -616,10 +616,9 @@ void P_CheckPlayerJump(player_t * player)
 {
 	ticcmd_t *cmd = &player->cmd;
 
-	if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0)
-	   && (P_IsPlayerOnGround(player) || player->plr->mo->flags2 & MF2_ONMOBJ)
-	   && (cmd->arti != 0xff && cmd->arti & AFLAG_JUMP)
-	   && player->jumpTics <= 0)
+	if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0) &&
+	   (P_IsPlayerOnGround(player) || player->plr->mo->flags2 & MF2_ONMOBJ) &&
+	   (cmd->arti != 0xff && cmd->arti & AFLAG_JUMP) && player->jumpTics <= 0)
 	{
 		// Jump, then!
 		player->plr->mo->momz =
@@ -960,9 +959,8 @@ void P_PlayerThink(player_t * player)
 	{
 		if(!--player->powers[pw_weaponlevel2])
 		{
-			if((player->readyweapon == wp_phoenixrod)
-			   && (player->psprites[ps_weapon].state !=
-				   &states[S_PHOENIXREADY])
+			if((player->readyweapon == wp_phoenixrod) &&
+			   (player->psprites[ps_weapon].state != &states[S_PHOENIXREADY])
 			   && (player->psprites[ps_weapon].state != &states[S_PHOENIXUP]))
 			{
 				P_SetPsprite(player, ps_weapon, S_PHOENIXREADY);
@@ -970,8 +968,8 @@ void P_PlayerThink(player_t * player)
 				player->refire = 0;
 				player->update |= PSF_AMMO;
 			}
-			else if((player->readyweapon == wp_gauntlets)
-					|| (player->readyweapon == wp_staff))
+			else if((player->readyweapon == wp_gauntlets) ||
+					(player->readyweapon == wp_staff))
 			{
 				player->pendingweapon = player->readyweapon;
 				player->update |= PSF_PENDING_WEAPON;
@@ -1018,9 +1016,9 @@ void P_PlayerThink(player_t * player)
 		{
 			if(newtorch)
 			{
-				if(player->plr->fixedcolormap + newtorchdelta > 7
-				   || player->plr->fixedcolormap + newtorchdelta < 1
-				   || newtorch == player->plr->fixedcolormap)
+				if(player->plr->fixedcolormap + newtorchdelta > 7 ||
+				   player->plr->fixedcolormap + newtorchdelta < 1 ||
+				   newtorch == player->plr->fixedcolormap)
 				{
 					newtorch = 0;
 				}

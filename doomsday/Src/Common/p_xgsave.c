@@ -42,7 +42,7 @@
 
 // CODE --------------------------------------------------------------------
 
-void SV_WriteXGLine(line_t * li)
+void SV_WriteXGLine(line_t *li)
 {
 	xgline_t *xg = li->xg;
 	linetype_t *info = &xg->info;
@@ -69,7 +69,7 @@ void SV_WriteXGLine(line_t * li)
 	SV_WriteFloat(xg->chtimer);
 }
 
-void SV_ReadXGLine(line_t * li)
+void SV_ReadXGLine(line_t *li)
 {
 	xgline_t *xg;
 

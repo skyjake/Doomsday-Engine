@@ -133,8 +133,8 @@ void GL_Update(int flags)
 void GL_DoUpdate(void)
 {
 	// Check for color adjustment changes.
-	if(oldgamma != vid_gamma || oldcontrast != vid_contrast
-	   || oldbright != vid_bright)
+	if(oldgamma != vid_gamma || oldcontrast != vid_contrast ||
+	   oldbright != vid_bright)
 		GL_SetGamma();
 
 	if(UpdateState == I_NOUPDATE)

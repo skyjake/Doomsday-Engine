@@ -407,8 +407,8 @@ boolean AM_Responder(event_t *ev)
 	rc = false;
 	if(!automapactive)
 	{
-		if(ev->type == ev_keydown && ev->data1 == AM_STARTKEY
-		   && gamestate == GS_LEVEL)
+		if(ev->type == ev_keydown && ev->data1 == AM_STARTKEY &&
+		   gamestate == GS_LEVEL)
 		{
 			AM_Start();
 			SB_state = -1;
@@ -1511,8 +1511,8 @@ void AM_DrawDeathmatchStats(void)
 	yPosition = 15;
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
-		if(order[i] < 0 || !players[order[i]].plr
-		   || !players[order[i]].plr->ingame)
+		if(order[i] < 0 || !players[order[i]].plr ||
+		   !players[order[i]].plr->ingame)
 		{
 			continue;
 		}

@@ -96,7 +96,7 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
 		V2_Intersection(norm1, line1, origin, line2, rp);
 }
 
-void R_ShadowDelta(pvec2_t delta, line_t * line, sector_t * frontSector)
+void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
 {
 	if(line->frontsector == frontSector)
 	{
@@ -110,12 +110,12 @@ void R_ShadowDelta(pvec2_t delta, line_t * line, sector_t * frontSector)
 	}
 }
 
-lineinfo_side_t *R_GetShadowLineSideInfo(shadowpoly_t * poly)
+lineinfo_side_t *R_GetShadowLineSideInfo(shadowpoly_t *poly)
 {
 	return &LINE_INFO(poly->line)->side[poly->flags & SHPF_FRONTSIDE ? 0 : 1];
 }
 
-line_t *R_GetShadowNeighbor(shadowpoly_t * poly, boolean left, boolean back)
+line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
 {
 	lineinfo_side_t *side = R_GetShadowLineSideInfo(poly);
 	line_t **neighbors = (back ? side->backneighbor : side->neighbor);
@@ -126,7 +126,7 @@ line_t *R_GetShadowNeighbor(shadowpoly_t * poly, boolean left, boolean back)
 /*
  * Returns a pointer to the sector the shadow polygon belongs in.
  */
-sector_t *R_GetShadowSector(shadowpoly_t * poly)
+sector_t *R_GetShadowSector(shadowpoly_t *poly)
 {
 	return poly->flags & SHPF_FRONTSIDE ? poly->line->frontsector : poly->
 		line->backsector;
@@ -135,7 +135,7 @@ sector_t *R_GetShadowSector(shadowpoly_t * poly)
 /*
  * Returns a pointer to the sector in the left/right proximity.
  */
-sector_t *R_GetShadowProximity(shadowpoly_t * poly, boolean left)
+sector_t *R_GetShadowProximity(shadowpoly_t *poly, boolean left)
 {
 	lineinfo_side_t *side = R_GetShadowLineSideInfo(poly);
 
@@ -145,7 +145,7 @@ sector_t *R_GetShadowProximity(shadowpoly_t * poly, boolean left)
 /*
  * May return false when dealing with backneighbors.
  */
-boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t * poly,
+boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
 							 boolean leftCorner, boolean back)
 {
 	sector_t *sector = R_GetShadowSector(poly);
@@ -196,7 +196,7 @@ float R_ShadowEdgeWidth(const pvec2_t edge)
  * Sets the shadow edge offsets.  If the associated line does not have
  * neighbors, it can't have a shadow.
  */
-void R_ShadowEdges(shadowpoly_t * poly)
+void R_ShadowEdges(shadowpoly_t *poly)
 {
 	vec2_t  left, right;
 	int     side;
@@ -238,7 +238,7 @@ void R_ShadowEdges(shadowpoly_t * poly)
 /*
  * Link a shadowpoly to a subsector.
  */
-void R_LinkShadow(shadowpoly_t * poly, subsector_t * subsector)
+void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
 {
 	subsectorinfo_t *info = SUBSECT_INFO(subsector);
 	shadowlink_t *link;
@@ -267,7 +267,7 @@ void R_LinkShadow(shadowpoly_t * poly, subsector_t * subsector)
  * If the shadow polygon (parm) contacts the subsector, link the poly
  * to the subsector's shadow list.
  */
-boolean RIT_ShadowSubsectorLinker(subsector_t * subsector, void *parm)
+boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
 {
 	shadowpoly_t *poly = parm;
 	vec2_t  corners[4], a, b, mid;
@@ -372,7 +372,7 @@ boolean R_ResolveStep(const pvec2_t outer, const pvec2_t inner, pvec2_t offset)
  * closer to the outer corner points.  Other corner points remain
  * unmodified.
  */
-void R_ResolveOverlaps(shadowpoly_t * polys, int count, sector_t * sector)
+void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
 {
 #define OVERLAP_LEFT	0x01
 #define OVERLAP_RIGHT	0x02
@@ -471,7 +471,7 @@ void R_ResolveOverlaps(shadowpoly_t * polys, int count, sector_t * sector)
  * New shadowpolys will be allocated from the storage.  If it is NULL,
  * the number of polys required is returned.
  */
-int R_MakeShadowEdges(shadowpoly_t * storage)
+int R_MakeShadowEdges(shadowpoly_t *storage)
 {
 	int     i, j, counter;
 	sector_t *sector;

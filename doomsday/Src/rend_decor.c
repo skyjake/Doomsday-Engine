@@ -284,14 +284,14 @@ boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
 
 	return viewx > bounds[BLEFT] - maxDist && viewx < bounds[BRIGHT] + maxDist
 		&& viewy > bounds[BBOTTOM] - maxDist && viewy < bounds[BTOP] + maxDist
-		&& viewz > bounds[BFLOOR] - maxDist
-		&& viewz < bounds[BCEILING] + maxDist;
+		&& viewz > bounds[BFLOOR] - maxDist &&
+		viewz < bounds[BCEILING] + maxDist;
 }
 
 /*
  * Returns > 0 if the sector lightlevel passes the limit condition.
  */
-float Rend_CheckSectorLight(sector_t * sector, ded_decorlight_t * lightDef)
+float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t * lightDef)
 {
 	int     lightlevel = sector->lightlevel;
 	float   factor;
@@ -333,7 +333,7 @@ void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
 /*
  * Generate decorations for the specified section of a line.
  */
-void Rend_DecorateLineSection(line_t * line, side_t * side, int texture,
+void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
 							  float top, float bottom, float texOffY)
 {
 	lineinfo_t *linfo = &lineinfo[GET_LINE_IDX(line)];
@@ -427,7 +427,7 @@ void Rend_DecorateLineSection(line_t * line, side_t * side, int texture,
 /*
  * Returns the side that faces the sector (if any).
  */
-side_t *R_GetSectorSide(line_t * line, sector_t * sector)
+side_t *R_GetSectorSide(line_t *line, sector_t *sector)
 {
 	side_t *side = SIDE_PTR(line->sidenum[0]);
 
@@ -441,7 +441,7 @@ side_t *R_GetSectorSide(line_t * line, sector_t * sector)
 /*
  * Return true if the line is within the visible decoration 'box'.
  */
-boolean Rend_LineDecorationBounds(line_t * line)
+boolean Rend_LineDecorationBounds(line_t *line)
 {
 	fixed_t bounds[6];
 	sector_t *sector;
@@ -472,7 +472,7 @@ boolean Rend_LineDecorationBounds(line_t * line)
 /*
  * Return true if the sector is within the visible decoration 'box'.
  */
-boolean Rend_SectorDecorationBounds(sector_t * sector, sectorinfo_t * sin)
+boolean Rend_SectorDecorationBounds(sector_t *sector, sectorinfo_t *sin)
 {
 	fixed_t bounds[6];
 
@@ -515,9 +515,9 @@ void Rend_DecorateLine(int index)
 		backFloor = SECT_FLOOR(line->backsector);
 
 		// Is there a top section visible on either side?
-		if(backCeil != frontCeil
-		   && (line->backsector->ceilingpic != skyflatnum
-			   || line->frontsector->ceilingpic != skyflatnum))
+		if(backCeil != frontCeil &&
+		   (line->backsector->ceilingpic != skyflatnum ||
+			line->frontsector->ceilingpic != skyflatnum))
 		{
 			if(frontCeil > backCeil)
 			{
@@ -543,9 +543,9 @@ void Rend_DecorateLine(int index)
 		}
 
 		// Is there a bottom section visible?
-		if(backFloor != frontFloor
-		   && (line->backsector->floorpic != skyflatnum
-			   || line->frontsector->floorpic != skyflatnum))
+		if(backFloor != frontFloor &&
+		   (line->backsector->floorpic != skyflatnum ||
+			line->frontsector->floorpic != skyflatnum))
 		{
 			if(frontFloor > backFloor)
 			{

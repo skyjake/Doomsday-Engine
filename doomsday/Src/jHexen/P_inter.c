@@ -45,14 +45,14 @@ int     TextKeyMessages[] = {
 	TXT_TXT_KEY_CASTLE
 };
 
-static void SetDormantArtifact(mobj_t * arti);
+static void SetDormantArtifact(mobj_t *arti);
 static void TryPickupArtifact(player_t * player, artitype_t artifactType,
-							  mobj_t * artifact);
+							  mobj_t *artifact);
 static void TryPickupWeapon(player_t * player, pclass_t weaponClass,
-							weapontype_t weaponType, mobj_t * weapon,
+							weapontype_t weaponType, mobj_t *weapon,
 							char *message);
 static void TryPickupWeaponPiece(player_t * player, pclass_t matchClass,
-								 int pieceValue, mobj_t * pieceMobj);
+								 int pieceValue, mobj_t *pieceMobj);
 
 #ifdef __NeXT__
 extern void strupr(char *s);
@@ -164,7 +164,7 @@ void P_ClearMessage(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_HideSpecialThing(mobj_t * thing)
+void P_HideSpecialThing(mobj_t *thing)
 {
 	thing->flags &= ~MF_SPECIAL;
 	thing->flags2 |= MF2_DONTDRAW;
@@ -209,8 +209,8 @@ boolean P_GiveMana(player_t * player, manatype_t mana, int count)
 	{
 		player->mana[mana] = MAX_MANA;
 	}
-	if(player->class == PCLASS_FIGHTER && player->readyweapon == WP_SECOND
-	   && mana == MANA_1 && prevMana <= 0)
+	if(player->class == PCLASS_FIGHTER && player->readyweapon == WP_SECOND &&
+	   mana == MANA_1 && prevMana <= 0)
 	{
 		P_SetPsprite(player, ps_weapon, S_FAXEREADY_G);
 	}
@@ -225,7 +225,7 @@ boolean P_GiveMana(player_t * player, manatype_t mana, int count)
 //==========================================================================
 
 static void TryPickupWeapon(player_t * player, pclass_t weaponClass,
-							weapontype_t weaponType, mobj_t * weapon,
+							weapontype_t weaponType, mobj_t *weapon,
 							char *message)
 {
 	boolean remove;
@@ -446,7 +446,7 @@ static void TryPickupWeapon(player_t * player, pclass_t weaponClass,
 //==========================================================================
 
 static void TryPickupWeaponPiece(player_t * player, pclass_t matchClass,
-								 int pieceValue, mobj_t * pieceMobj)
+								 int pieceValue, mobj_t *pieceMobj)
 {
 	boolean remove;
 	boolean checkAssembled;
@@ -755,7 +755,7 @@ boolean P_GivePower(player_t * player, powertype_t power)
 //==========================================================================
 
 static void TryPickupArtifact(player_t * player, artitype_t artifactType,
-							  mobj_t * artifact)
+							  mobj_t *artifact)
 {
 	//static char *artifactMessages[NUMARTIFACTS] =
 	int     artifactMessages[NUMARTIFACTS] = {
@@ -831,7 +831,7 @@ static void TryPickupArtifact(player_t * player, artitype_t artifactType,
 //
 //---------------------------------------------------------------------------
 
-boolean P_GiveArtifact(player_t * player, artitype_t arti, mobj_t * mo)
+boolean P_GiveArtifact(player_t * player, artitype_t arti, mobj_t *mo)
 {
 	int     i;
 	int     j;
@@ -849,8 +849,8 @@ boolean P_GiveArtifact(player_t * player, artitype_t arti, mobj_t * mo)
 		if(arti < arti_firstpuzzitem)
 		{
 			i = 0;
-			while(player->inventory[i].type < arti_firstpuzzitem
-				  && i < player->inventorySlotNum)
+			while(player->inventory[i].type < arti_firstpuzzitem &&
+				  i < player->inventorySlotNum)
 			{
 				i++;
 			}
@@ -907,7 +907,7 @@ boolean P_GiveArtifact(player_t * player, artitype_t arti, mobj_t * mo)
 //
 //==========================================================================
 
-static void SetDormantArtifact(mobj_t * arti)
+static void SetDormantArtifact(mobj_t *arti)
 {
 	arti->flags &= ~MF_SPECIAL;
 	if(deathmatch && !(arti->flags2 & MF2_DROPPED))
@@ -937,7 +937,7 @@ static void SetDormantArtifact(mobj_t * arti)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_RestoreArtifact(mobj_t * arti)
+void C_DECL A_RestoreArtifact(mobj_t *arti)
 {
 	arti->flags |= MF_SPECIAL;
 	P_SetMobjState(arti, arti->info->spawnstate);
@@ -952,7 +952,7 @@ void C_DECL A_RestoreArtifact(mobj_t * arti)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_RestoreSpecialThing1(mobj_t * thing)
+void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
 {
 	thing->flags2 &= ~MF2_DONTDRAW;
 	S_StartSound(SFX_RESPAWN, thing);
@@ -964,7 +964,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t * thing)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_RestoreSpecialThing2(mobj_t * thing)
+void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
 {
 	thing->flags |= MF_SPECIAL;
 	P_SetMobjState(thing, thing->info->spawnstate);
@@ -976,7 +976,7 @@ void C_DECL A_RestoreSpecialThing2(mobj_t * thing)
 //
 //---------------------------------------------------------------------------
 
-void P_TouchSpecialThing(mobj_t * special, mobj_t * toucher)
+void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 {
 	player_t *player;
 	fixed_t delta;
@@ -1333,7 +1333,7 @@ mobj_t *ActiveMinotaur(player_t * master)
 //
 //---------------------------------------------------------------------------
 
-void P_KillMobj(mobj_t * source, mobj_t * target)
+void P_KillMobj(mobj_t *source, mobj_t *target)
 {
 	int     dummy;
 	mobj_t *master;
@@ -1342,8 +1342,8 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 	target->flags |= MF_CORPSE | MF_DROPOFF;
 	target->flags2 &= ~MF2_PASSMOBJ;
 	target->height >>= 2;
-	if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL)
-	   && target->special)
+	if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
+	   target->special)
 	{							// Initiate monster death actions
 		if(target->type == MT_SORCBOSS)
 		{
@@ -1456,24 +1456,24 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 		// mobj death, record as player's kill in netgame + coop
 		// could not find MF_ targets->flags that indicated *only*
 		// enemies (not trees, pots, etc), so built a list
-		if(netgame && !deathmatch && source && source->player
-		   && source->player->plr && (target->type == MT_CENTAUR
-									  || target->type == MT_CENTAURLEADER
-									  || target->type == MT_DEMON
-									  || target->type == MT_DEMON2
-									  || target->type == MT_ETTIN
-									  || target->type == MT_PIG
-									  || target->type == MT_FIREDEMON
-									  || target->type == MT_SERPENT
-									  || target->type == MT_SERPENTLEADER
-									  || target->type == MT_WRAITH
-									  || target->type == MT_WRAITHB
-									  || target->type == MT_BISHOP
-									  || target->type == MT_ICEGUY
-									  || target->type == MT_FIGHTER_BOSS
-									  || target->type == MT_CLERIC_BOSS
-									  || target->type == MT_MAGE_BOSS
-									  || target->type == MT_MINOTAUR))
+		if(netgame && !deathmatch && source && source->player &&
+		   source->player->plr && (target->type == MT_CENTAUR ||
+								   target->type == MT_CENTAURLEADER ||
+								   target->type == MT_DEMON ||
+								   target->type == MT_DEMON2 ||
+								   target->type == MT_ETTIN ||
+								   target->type == MT_PIG ||
+								   target->type == MT_FIREDEMON ||
+								   target->type == MT_SERPENT ||
+								   target->type == MT_SERPENTLEADER ||
+								   target->type == MT_WRAITH ||
+								   target->type == MT_WRAITHB ||
+								   target->type == MT_BISHOP ||
+								   target->type == MT_ICEGUY ||
+								   target->type == MT_FIGHTER_BOSS ||
+								   target->type == MT_CLERIC_BOSS ||
+								   target->type == MT_MAGE_BOSS ||
+								   target->type == MT_MINOTAUR))
 		{
 			source->player->frags[0]++;
 		}
@@ -1481,8 +1481,8 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 
 	if(target->flags2 & MF2_FIREDAMAGE)
 	{
-		if(target->type == MT_FIGHTER_BOSS || target->type == MT_CLERIC_BOSS
-		   || target->type == MT_MAGE_BOSS)
+		if(target->type == MT_FIGHTER_BOSS || target->type == MT_CLERIC_BOSS ||
+		   target->type == MT_MAGE_BOSS)
 		{
 			switch (target->type)
 			{
@@ -1573,16 +1573,16 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 	{
 		target->height = 24 * FRACUNIT;
 	}
-	if(target->health < -(target->info->spawnhealth >> 1)
-	   && target->info->xdeathstate)
+	if(target->health < -(target->info->spawnhealth >> 1) &&
+	   target->info->xdeathstate)
 	{							// Extreme death
 		P_SetMobjState(target, target->info->xdeathstate);
 	}
 	else
 	{							// Normal death
-		if((target->type == MT_FIREDEMON)
-		   && (target->z <= target->floorz + 2 * FRACUNIT)
-		   && (target->info->xdeathstate))
+		if((target->type == MT_FIREDEMON) &&
+		   (target->z <= target->floorz + 2 * FRACUNIT) &&
+		   (target->info->xdeathstate))
 		{
 			// This is to fix the imps' staying in fall state
 			P_SetMobjState(target, target->info->xdeathstate);
@@ -1602,7 +1602,7 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
 //
 //---------------------------------------------------------------------------
 
-void P_MinotaurSlam(mobj_t * source, mobj_t * target)
+void P_MinotaurSlam(mobj_t *source, mobj_t *target)
 {
 	angle_t angle;
 	fixed_t thrust;
@@ -1682,7 +1682,7 @@ boolean P_MorphPlayer(player_t * player)
 //
 //---------------------------------------------------------------------------
 
-boolean P_MorphMonster(mobj_t * actor)
+boolean P_MorphMonster(mobj_t *actor)
 {
 	mobj_t *master, *monster, *fog;
 	mobjtype_t moType;
@@ -1791,8 +1791,8 @@ void P_AutoUseHealth(player_t * player, int saveHealth)
 			P_PlayerRemoveArtifact(player, superSlot);
 		}
 	}
-	else if((gameskill == sk_baby)
-			&& (superCount * 100 + normalCount * 25 >= saveHealth))
+	else if((gameskill == sk_baby) &&
+			(superCount * 100 + normalCount * 25 >= saveHealth))
 	{							// Use mystic urns and quartz flasks
 		count = (saveHealth + 24) / 25;
 		saveHealth -= count * 25;
@@ -1826,7 +1826,7 @@ void P_AutoUseHealth(player_t * player, int saveHealth)
    ==================
  */
 
-void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
+void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 				  int damageP)
 {
 	unsigned ang;
@@ -1855,15 +1855,14 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 	// use the cvar damage multiplier netMobDamageModifier
 	// only if the inflictor is not a player 
 	if(inflictor && !inflictor->player && inflictor->type != MT_PLAYER_FIGHTER
-	   && inflictor->type != MT_PLAYER_MAGE
-	   && inflictor->type != MT_PLAYER_CLERIC && (!source
-												  || (source && !source->player
-													  && source->type !=
-													  MT_PLAYER_FIGHTER
-													  && source->type !=
-													  MT_PLAYER_MAGE
-													  && source->type !=
-													  MT_PLAYER_CLERIC)))
+	   && inflictor->type != MT_PLAYER_MAGE &&
+	   inflictor->type != MT_PLAYER_CLERIC && (!source ||
+											   (source && !source->player &&
+												source->type !=
+												MT_PLAYER_FIGHTER &&
+												source->type != MT_PLAYER_MAGE
+												&& source->type !=
+												MT_PLAYER_CLERIC)))
 	{
 		// means inflictor->type == MT_PLAYER(CLASS)
 		//damage = (int) ((float) damage * netMobDamageModifier);
@@ -1910,9 +1909,9 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 	{
 		target->player->update |= PSF_HEALTH;
 
-		if(damage < 1000
-		   && ((target->player->cheats & CF_GODMODE)
-			   || target->player->powers[pw_invulnerability]))
+		if(damage < 1000 &&
+		   ((target->player->cheats & CF_GODMODE) ||
+			target->player->powers[pw_invulnerability]))
 		{
 			return;
 		}
@@ -1953,8 +1952,8 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		case MT_TELOTHER_FX4:
 		case MT_TELOTHER_FX5:
 			if((target->flags & MF_COUNTKILL) && (target->type != MT_SERPENT)
-			   && (target->type != MT_SERPENTLEADER)
-			   && (!(target->flags2 & MF2_BOSS)))
+			   && (target->type != MT_SERPENTLEADER) &&
+			   (!(target->flags2 & MF2_BOSS)))
 			{
 				P_TeleportOther(target);
 			}
@@ -2031,8 +2030,8 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		}
 	}
 	// Push the target unless source is using the gauntlets
-	if(inflictor && (!source || !source->player)
-	   && !(inflictor->flags2 & MF2_NODMGTHRUST))
+	if(inflictor && (!source || !source->player) &&
+	   !(inflictor->flags2 & MF2_NODMGTHRUST))
 	{
 		ang =
 			R_PointToAngle2(inflictor->x, inflictor->y, target->x, target->y);
@@ -2041,8 +2040,8 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 			Con_Error("P_DamageMobj: No target->info->mass!\n");
 		thrust = damage * (FRACUNIT >> 3) * 150 / target->info->mass;
 		// make fall forwards sometimes
-		if((damage < 40) && (damage > target->health)
-		   && (target->z - inflictor->z > 64 * FRACUNIT) && (P_Random() & 1))
+		if((damage < 40) && (damage > target->health) &&
+		   (target->z - inflictor->z > 64 * FRACUNIT) && (P_Random() & 1))
 		{
 			ang += ANG180;
 			thrust *= 4;
@@ -2162,8 +2161,8 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 				source = master;
 			}
 		}
-		if(source && (source->player)
-		   && (source->player->readyweapon == WP_FOURTH))
+		if(source && (source->player) &&
+		   (source->player->readyweapon == WP_FOURTH))
 		{
 			// Always extreme death from fourth weapon
 			target->health = -5000;
@@ -2171,12 +2170,12 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		P_KillMobj(source, target);
 		return;
 	}
-	if((P_Random() < target->info->painchance)
-	   && !(target->flags & MF_SKULLFLY))
+	if((P_Random() < target->info->painchance) &&
+	   !(target->flags & MF_SKULLFLY))
 	{
-		if(inflictor
-		   && (inflictor->type >= MT_LIGHTNING_FLOOR
-			   && inflictor->type <= MT_LIGHTNING_ZAP))
+		if(inflictor &&
+		   (inflictor->type >= MT_LIGHTNING_FLOOR &&
+			inflictor->type <= MT_LIGHTNING_ZAP))
 		{
 			if(P_Random() < 96)
 			{
@@ -2186,12 +2185,12 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 			else
 			{					// "electrocute" the target
 				target->frame |= FF_FULLBRIGHT;
-				if(target->flags & MF_COUNTKILL && P_Random() < 128
-				   && !S_IsPlaying(SFX_PUPPYBEAT, target))
+				if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
+				   !S_IsPlaying(SFX_PUPPYBEAT, target))
 				{
-					if((target->type == MT_CENTAUR)
-					   || (target->type == MT_CENTAURLEADER)
-					   || (target->type == MT_ETTIN))
+					if((target->type == MT_CENTAUR) ||
+					   (target->type == MT_CENTAURLEADER) ||
+					   (target->type == MT_ETTIN))
 					{
 						S_StartSound(SFX_PUPPYBEAT, target);
 					}
@@ -2204,12 +2203,12 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 			P_SetMobjState(target, target->info->painstate);
 			if(inflictor && inflictor->type == MT_POISONCLOUD)
 			{
-				if(target->flags & MF_COUNTKILL && P_Random() < 128
-				   && !S_IsPlaying(SFX_PUPPYBEAT, target))
+				if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
+				   !S_IsPlaying(SFX_PUPPYBEAT, target))
 				{
-					if((target->type == MT_CENTAUR)
-					   || (target->type == MT_CENTAURLEADER)
-					   || (target->type == MT_ETTIN))
+					if((target->type == MT_CENTAUR) ||
+					   (target->type == MT_CENTAURLEADER) ||
+					   (target->type == MT_ETTIN))
 					{
 						S_StartSound(SFX_PUPPYBEAT, target);
 					}
@@ -2218,20 +2217,20 @@ void P_DamageMobj(mobj_t * target, mobj_t * inflictor, mobj_t * source,
 		}
 	}
 	target->reactiontime = 0;	// we're awake now...
-	if(!target->threshold && source && !(source->flags2 & MF2_BOSS)
-	   && !(target->type == MT_BISHOP) && !(target->type == MT_MINOTAUR))
+	if(!target->threshold && source && !(source->flags2 & MF2_BOSS) &&
+	   !(target->type == MT_BISHOP) && !(target->type == MT_MINOTAUR))
 	{
 		// Target actor is not intent on another actor,
 		// so make him chase after source
-		if((target->type == MT_CENTAUR && source->type == MT_CENTAURLEADER)
-		   || (target->type == MT_CENTAURLEADER && source->type == MT_CENTAUR))
+		if((target->type == MT_CENTAUR && source->type == MT_CENTAURLEADER) ||
+		   (target->type == MT_CENTAURLEADER && source->type == MT_CENTAUR))
 		{
 			return;
 		}
 		target->target = source;
 		target->threshold = BASETHRESHOLD;
-		if(target->state == &states[target->info->spawnstate]
-		   && target->info->seestate != S_NULL)
+		if(target->state == &states[target->info->spawnstate] &&
+		   target->info->seestate != S_NULL)
 		{
 			P_SetMobjState(target, target->info->seestate);
 		}
@@ -2259,8 +2258,8 @@ void P_FallingDamage(player_t * player)
 		return;
 	}
 	damage = ((FixedMul(dist, dist) / 10) >> FRACBITS) - 24;
-	if(player->plr->mo->momz > -39 * FRACUNIT
-	   && damage > player->plr->mo->health && player->plr->mo->health != 1)
+	if(player->plr->mo->momz > -39 * FRACUNIT &&
+	   damage > player->plr->mo->health && player->plr->mo->health != 1)
 	{							// No-death threshold
 		damage = player->plr->mo->health - 1;
 	}
@@ -2274,7 +2273,7 @@ void P_FallingDamage(player_t * player)
 //
 //==========================================================================
 
-void P_PoisonPlayer(player_t * player, mobj_t * poisoner, int poison)
+void P_PoisonPlayer(player_t * player, mobj_t *poisoner, int poison)
 {
 	if((player->cheats & CF_GODMODE) || player->powers[pw_invulnerability])
 	{
@@ -2294,7 +2293,7 @@ void P_PoisonPlayer(player_t * player, mobj_t * poisoner, int poison)
 //
 //==========================================================================
 
-void P_PoisonDamage(player_t * player, mobj_t * source, int damage,
+void P_PoisonDamage(player_t * player, mobj_t *source, int damage,
 					boolean playPainSound)
 {
 	mobj_t *target;
@@ -2315,14 +2314,13 @@ void P_PoisonDamage(player_t * player, mobj_t * source, int damage,
 		// Take half damage in trainer mode
 		damage >>= 1;
 	}
-	if(damage < 1000
-	   && ((player->cheats & CF_GODMODE)
-		   || player->powers[pw_invulnerability]))
+	if(damage < 1000 &&
+	   ((player->cheats & CF_GODMODE) || player->powers[pw_invulnerability]))
 	{
 		return;
 	}
-	if(damage >= player->health && ((gameskill == sk_baby) || deathmatch)
-	   && !player->morphTics)
+	if(damage >= player->health && ((gameskill == sk_baby) || deathmatch) &&
+	   !player->morphTics)
 	{							// Try to use some inventory health
 		P_AutoUseHealth(player, damage - player->health + 1);
 	}

@@ -305,7 +305,7 @@ void SN_InitSequenceScript(void)
 //
 //==========================================================================
 
-void SN_StartSequence(mobj_t * mobj, int sequence)
+void SN_StartSequence(mobj_t *mobj, int sequence)
 {
 	seqnode_t *node;
 
@@ -340,7 +340,7 @@ void SN_StartSequence(mobj_t * mobj, int sequence)
 //
 //==========================================================================
 
-void SN_StartSequenceName(mobj_t * mobj, char *name)
+void SN_StartSequenceName(mobj_t *mobj, char *name)
 {
 	int     i;
 
@@ -360,7 +360,7 @@ void SN_StartSequenceName(mobj_t * mobj, char *name)
 //
 //==========================================================================
 
-void SN_StopSequence(mobj_t * mobj)
+void SN_StopSequence(mobj_t *mobj)
 {
 	seqnode_t *node;
 

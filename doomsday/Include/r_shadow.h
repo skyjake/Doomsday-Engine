@@ -23,8 +23,8 @@
 #define __DOOMSDAY_REFRESH_SHADOW_H__
 
 void            R_InitSectorShadows(void);
-line_t         *R_GetShadowNeighbor(shadowpoly_t * poly, boolean left,
+line_t         *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left,
 									boolean back);
-sector_t       *R_GetShadowSector(shadowpoly_t * poly);
+sector_t       *R_GetShadowSector(shadowpoly_t *poly);
 
 #endif

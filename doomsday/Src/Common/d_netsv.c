@@ -154,8 +154,8 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
 	{
 		if(isspace(*ptr))
 			continue;
-		if(*ptr == ',' || *ptr == '+' || *ptr == ';' || *ptr == '/'
-		   || *ptr == '\\')
+		if(*ptr == ',' || *ptr == '+' || *ptr == ';' || *ptr == '/' ||
+		   *ptr == '\\')
 		{
 			// These symbols are allowed to combine "time" and "frags".
 			// E.g. "Time:10/Frags:5" or "t:30, f:10"
@@ -342,8 +342,8 @@ void NetSv_CheckCycling(void)
 					return;
 				}
 			}
-			if(rules.usetime
-			   && leveltime > (rules.time * 60 - 29) * TICSPERSEC)
+			if(rules.usetime &&
+			   leveltime > (rules.time * 60 - 29) * TICSPERSEC)
 			{
 				// Time runs out!
 				cycleMode = CYCLE_COUNTDOWN;
@@ -401,8 +401,8 @@ void NetSv_CheckCycling(void)
 
 	case CYCLE_COUNTDOWN:
 		if(cycleCounter == 30 * TICSPERSEC || cycleCounter == 15 * TICSPERSEC
-		   || cycleCounter == 10 * TICSPERSEC
-		   || cycleCounter == 5 * TICSPERSEC)
+		   || cycleCounter == 10 * TICSPERSEC ||
+		   cycleCounter == 5 * TICSPERSEC)
 		{
 			sprintf(msg, "--- WARPING IN %i SECONDS ---",
 					cycleCounter / TICSPERSEC);
@@ -471,7 +471,7 @@ int CCmdMapCycle(int argc, char **argv)
 	return true;
 }
 
-void P_Telefrag(mobj_t * thing)
+void P_Telefrag(mobj_t *thing)
 {
 	P_TeleportMove(thing, thing->x, thing->y);
 }
@@ -547,9 +547,9 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
 	int     i, fl;
 
 	// Check that this is a valid call.
-	if(IS_CLIENT || !pl->plr->ingame
-	   || (destPlrNum >= 0 && destPlrNum < MAXPLAYERS
-		   && !players[destPlrNum].plr->ingame))
+	if(IS_CLIENT || !pl->plr->ingame ||
+	   (destPlrNum >= 0 && destPlrNum < MAXPLAYERS &&
+		!players[destPlrNum].plr->ingame))
 		return;
 
 	// Include the player number if necessary.
@@ -594,9 +594,9 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	byte    buffer[UPD_BUFFER_LEN], *ptr = buffer, fl;
 	int     i, k;
 
-	if(IS_CLIENT || !pl->plr->ingame
-	   || (destPlrNum >= 0 && destPlrNum < MAXPLAYERS
-		   && !players[destPlrNum].plr->ingame))
+	if(IS_CLIENT || !pl->plr->ingame ||
+	   (destPlrNum >= 0 && destPlrNum < MAXPLAYERS &&
+		!players[destPlrNum].plr->ingame))
 		return;
 
 	// Include the player number if necessary.
@@ -1169,8 +1169,8 @@ void NetSv_Ticker(void)
 			palette += STARTBONUSPALS;
 		}
 #ifdef __JDOOM__
-		else if(plr->powers[pw_ironfeet] > 4 * 32
-				|| plr->powers[pw_ironfeet] & 8)
+		else if(plr->powers[pw_ironfeet] > 4 * 32 ||
+				plr->powers[pw_ironfeet] & 8)
 			palette = 13;		//RADIATIONPAL;
 #elif __JHEXEN__
 		else if(plr->poisoncount)

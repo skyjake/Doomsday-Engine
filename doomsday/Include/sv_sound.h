@@ -40,9 +40,9 @@
 #define SVSF_TO_ALL		0x00000010
 #define SVSF_MASK		0x7fffffff
 
-void            Sv_Sound(int sound_id, mobj_t * origin, int toPlr);
-void            Sv_SoundAtVolume(int sound_id_and_flags, mobj_t * origin,
+void            Sv_Sound(int sound_id, mobj_t *origin, int toPlr);
+void            Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin,
 								 float volume, int toPlr);
-void            Sv_StopSound(int sound_id, mobj_t * origin);
+void            Sv_StopSound(int sound_id, mobj_t *origin);
 
 #endif

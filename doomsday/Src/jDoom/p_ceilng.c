@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/05/30 08:42:41  skyjake
+// Tweaked indentation style
+//
 // Revision 1.5  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -181,7 +184,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
 // EV_DoCeiling
 // Move a ceiling up/down and all around!
 //
-int EV_DoCeiling(line_t * line, ceiling_e type)
+int EV_DoCeiling(line_t *line, ceiling_e type)
 {
 	int     secnum;
 	int     rtn;
@@ -293,14 +296,14 @@ void P_RemoveActiveCeiling(ceiling_t * c)
 //
 // Restart a ceiling that's in-stasis
 //
-void P_ActivateInStasisCeiling(line_t * line)
+void P_ActivateInStasisCeiling(line_t *line)
 {
 	int     i;
 
 	for(i = 0; i < MAXCEILINGS; i++)
 	{
-		if(activeceilings[i] && (activeceilings[i]->tag == line->tag)
-		   && (activeceilings[i]->direction == 0))
+		if(activeceilings[i] && (activeceilings[i]->tag == line->tag) &&
+		   (activeceilings[i]->direction == 0))
 		{
 			activeceilings[i]->direction = activeceilings[i]->olddirection;
 			activeceilings[i]->thinker.function	/*.acp1 */
@@ -313,7 +316,7 @@ void P_ActivateInStasisCeiling(line_t * line)
 // EV_CeilingCrushStop
 // Stop a ceiling from crushing!
 //
-int EV_CeilingCrushStop(line_t * line)
+int EV_CeilingCrushStop(line_t *line)
 {
 	int     i;
 	int     rtn;
@@ -321,8 +324,8 @@ int EV_CeilingCrushStop(line_t * line)
 	rtn = 0;
 	for(i = 0; i < MAXCEILINGS; i++)
 	{
-		if(activeceilings[i] && (activeceilings[i]->tag == line->tag)
-		   && (activeceilings[i]->direction != 0))
+		if(activeceilings[i] && (activeceilings[i]->tag == line->tag) &&
+		   (activeceilings[i]->direction != 0))
 		{
 			activeceilings[i]->olddirection = activeceilings[i]->direction;
 			activeceilings[i]->thinker.function = NULL;

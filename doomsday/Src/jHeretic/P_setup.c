@@ -610,7 +610,7 @@ static void projectVector(float a[2], float b[2], float *a_on_b)
 }
 #endif
 
-fixed_t P_PointLineDistance(line_t * line, fixed_t x, fixed_t y,
+fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
 							fixed_t *offset)
 {
 	float   a[2], b[2], c[2], d[2], len;
@@ -706,8 +706,8 @@ void P_MoveThingsOutOfWalls()
 					P_ApproxDistance(li->v2->x - li->v1->x,
 									 li->v2->y - li->v1->y);
 				dist = P_PointLineDistance(li, iter->x, iter->y, &off);
-				if(off > -minrad && off < linelen + minrad
-				   && (!closestline || dist < closestdist) && dist >= 0)
+				if(off > -minrad && off < linelen + minrad &&
+				   (!closestline || dist < closestdist) && dist >= 0)
 				{
 					closestdist = dist;
 					closestline = li;
@@ -768,10 +768,10 @@ void P_TurnGizmosAwayFromDoors()
 			{
 				li = lines + k;
 				// It must be a special line with a back sector.
-				if(!li->backsector
-				   || (li->special != 32 && li->special != 33
-					   && li->special != 34 && li->special != 26
-					   && li->special != 27 && li->special != 28))
+				if(!li->backsector ||
+				   (li->special != 32 && li->special != 33 && li->special != 34
+					&& li->special != 26 && li->special != 27 &&
+					li->special != 28))
 					continue;
 				linelen =
 					P_ApproxDistance(li->v2->x - li->v1->x,

@@ -111,8 +111,8 @@ ptcgen_t *P_NewPtcGen(void)
 			ok = true;
 			break;
 		}
-		else if(!(active_ptcgens[i]->flags & PGF_STATIC)
-				&& (oldest < 0 || active_ptcgens[i]->age > maxage))
+		else if(!(active_ptcgens[i]->flags & PGF_STATIC) &&
+				(oldest < 0 || active_ptcgens[i]->age > maxage))
 		{
 			oldest = i;
 			maxage = active_ptcgens[i]->age;
@@ -204,7 +204,7 @@ void P_PresimParticleGen(ptcgen_t * gen, int tics)
 //  Creates a new mobj-triggered particle generator based on the given 
 //  definition. The generator is added to the list of active ptcgens.
 //===========================================================================
-void P_SpawnParticleGen(ded_ptcgen_t * def, mobj_t * source)
+void P_SpawnParticleGen(ded_ptcgen_t * def, mobj_t *source)
 {
 	ptcgen_t *gen;
 
@@ -233,7 +233,7 @@ void P_SpawnParticleGen(ded_ptcgen_t * def, mobj_t * source)
 //  Creates a new flat-triggered particle generator based on the given 
 //  definition. The generator is added to the list of active ptcgens.
 //===========================================================================
-void P_SpawnPlaneParticleGen(ded_ptcgen_t * def, sector_t * sec,
+void P_SpawnPlaneParticleGen(ded_ptcgen_t * def, sector_t *sec,
 							 boolean is_ceiling)
 {
 	ptcgen_t *gen;
@@ -351,8 +351,8 @@ void P_NewParticle(ptcgen_t * gen)
 	if(gen->source)
 	{
 		inter = R_CheckModelFor(gen->source, &mf, &nextmf);
-		if(((!mf || !useModels) && def->flags & PGF_MODEL_ONLY)
-		   || (mf && useModels && mf->flags & MFF_NO_PARTICLES))
+		if(((!mf || !useModels) && def->flags & PGF_MODEL_ONLY) ||
+		   (mf && useModels && mf->flags & MFF_NO_PARTICLES))
 			return;
 	}
 
@@ -482,9 +482,9 @@ void P_NewParticle(ptcgen_t * gen)
 														gen->sector->
 														floorheight - 2 * i);
 		}
-		else if(gen->flags & PGF_FLOOR_SPAWN
-				|| (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN))
-					&& !gen->ceiling))
+		else if(gen->flags & PGF_FLOOR_SPAWN ||
+				(!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
+				 !gen->ceiling))
 		{
 			// Spawn on the floor.
 			pt->pos[VZ] = gen->sector->floorheight + i;
@@ -622,7 +622,7 @@ void P_ManyNewParticles(ptcgen_t * gen)
 //===========================================================================
 // PIT_CheckLinePtc
 //===========================================================================
-boolean PIT_CheckLinePtc(line_t * ld, void *data)
+boolean PIT_CheckLinePtc(line_t *ld, void *data)
 {
 	fixed_t bbox[4];
 	fixed_t ceil, floor;
@@ -632,8 +632,8 @@ boolean PIT_CheckLinePtc(line_t * ld, void *data)
 	ORDER(ld->v1->x, ld->v2->x, bbox[BOXLEFT], bbox[BOXRIGHT]);
 	ORDER(ld->v1->y, ld->v2->y, bbox[BOXBOTTOM], bbox[BOXTOP]);
 
-	if(mbox[BOXRIGHT] <= bbox[BOXLEFT] || mbox[BOXLEFT] >= bbox[BOXRIGHT]
-	   || mbox[BOXTOP] <= bbox[BOXBOTTOM] || mbox[BOXBOTTOM] >= bbox[BOXTOP])
+	if(mbox[BOXRIGHT] <= bbox[BOXLEFT] || mbox[BOXLEFT] >= bbox[BOXRIGHT] ||
+	   mbox[BOXTOP] <= bbox[BOXBOTTOM] || mbox[BOXBOTTOM] >= bbox[BOXTOP])
 	{
 		return true;			// Bounding box misses the line completely.
 	}
@@ -681,11 +681,11 @@ int P_TouchParticle(particle_t * pt, ptcstage_t * stage,
 		pt->stage = -1;
 		return false;
 	}
-	if(stage->flags & PTCF_STAGE_TOUCH
-	   || (touchWall && stage->flags & PTCF_STAGE_WALL_TOUCH) || (!touchWall
-																  && stage->
-																  flags &
-																  PTCF_STAGE_FLAT_TOUCH))
+	if(stage->flags & PTCF_STAGE_TOUCH ||
+	   (touchWall && stage->flags & PTCF_STAGE_WALL_TOUCH) || (!touchWall &&
+															   stage->
+															   flags &
+															   PTCF_STAGE_FLAT_TOUCH))
 	{
 		// Particle advances to the next stage.
 		pt->tics = 0;
@@ -801,8 +801,8 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
 	pt->mov[VZ] -= FixedMul(mapgravity, st->gravity);
 
 	// Vector force.
-	if(stDef->vector_force[VX] != 0 || stDef->vector_force[VY] != 0
-	   || stDef->vector_force[VZ] != 0)
+	if(stDef->vector_force[VX] != 0 || stDef->vector_force[VY] != 0 ||
+	   stDef->vector_force[VZ] != 0)
 	{
 		int     i;
 
@@ -813,8 +813,8 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
 	// Sphere force pull and turn.
 	// Only applicable to sourced or untriggered generators. For other
 	// types it's difficult to define the center coordinates.
-	if(st->flags & PTCF_SPHERE_FORCE
-	   && (gen->source || gen->flags & PGF_UNTRIGGERED))
+	if(st->flags & PTCF_SPHERE_FORCE &&
+	   (gen->source || gen->flags & PGF_UNTRIGGERED))
 	{
 		fixed_t delta[3], dist;
 		fixed_t cross[3];
@@ -858,8 +858,8 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
 			}
 
 			// Rotate!
-			if(gen->def->force_axis[VX] || gen->def->force_axis[VY]
-			   || gen->def->force_axis[VZ])
+			if(gen->def->force_axis[VX] || gen->def->force_axis[VY] ||
+			   gen->def->force_axis[VZ])
 			{
 				P_FixedCrossProduct(gen->def->force_axis, delta, cross);
 				for(x = 0; x < 3; x++)
@@ -958,9 +958,9 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
 				// If the particle is in the opening of a 2-sided line, it's
 				// quite likely that it shouldn't be here...
 				if(P_GetParticleZ(pt) >
-				   MAX_OF(front->floorheight, back->floorheight)
-				   && P_GetParticleZ(pt) < MIN_OF(front->ceilingheight,
-												  back->ceilingheight))
+				   MAX_OF(front->floorheight, back->floorheight) &&
+				   P_GetParticleZ(pt) < MIN_OF(front->ceilingheight,
+											   back->ceilingheight))
 				{
 					// Kill the particle.
 					pt->stage = -1;
@@ -1073,9 +1073,9 @@ void P_PtcGenThinker(ptcgen_t * gen)
 	}
 
 	// Spawn new particles?
-	if((gen->age <= def->spawn_age || def->spawn_age < 0)
-	   && (gen->source || gen->sector || gen->type >= 0
-		   || gen->flags & PGF_UNTRIGGERED))
+	if((gen->age <= def->spawn_age || def->spawn_age < 0) &&
+	   (gen->source || gen->sector || gen->type >= 0 ||
+		gen->flags & PGF_UNTRIGGERED))
 	{
 		if(gen->flags & PGF_PARTS_PER_128 || gen->flags & PGF_SCALED_RATE)
 		{
@@ -1109,8 +1109,8 @@ void P_PtcGenThinker(ptcgen_t * gen)
 		if(pt->tics-- <= 0)
 		{
 			// Advance to next stage.
-			if(++pt->stage == MAX_PTC_STAGES
-			   || gen->stages[pt->stage].type == PTC_NONE)
+			if(++pt->stage == MAX_PTC_STAGES ||
+			   gen->stages[pt->stage].type == PTC_NONE)
 			{
 				// Kill the particle.
 				pt->stage = -1;
@@ -1162,8 +1162,8 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
 					if(groups[g].flags & AGF_PRECACHE)
 						continue;
 
-					if(R_IsInAnimGroup(groups[g].id, DD_FLAT, def->flat_num)
-					   && R_IsInAnimGroup(groups[g].id, DD_FLAT, flatpic))
+					if(R_IsInAnimGroup(groups[g].id, DD_FLAT, def->flat_num) &&
+					   R_IsInAnimGroup(groups[g].id, DD_FLAT, flatpic))
 					{
 						// Both are in this group! This def will do.
 						return def;
@@ -1181,13 +1181,13 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
 // P_HasActivePtcGen
 //  Returns true iff there is an active ptcgen for the given plane.
 //===========================================================================
-boolean P_HasActivePtcGen(sector_t * sector, int is_ceiling)
+boolean P_HasActivePtcGen(sector_t *sector, int is_ceiling)
 {
 	int     i;
 
 	for(i = 0; i < MAX_ACTIVE_PTCGENS; i++)
-		if(active_ptcgens[i] && active_ptcgens[i]->sector == sector
-		   && active_ptcgens[i]->ceiling == is_ceiling)
+		if(active_ptcgens[i] && active_ptcgens[i]->sector == sector &&
+		   active_ptcgens[i]->ceiling == is_ceiling)
 			return true;
 	return false;
 }
@@ -1296,7 +1296,7 @@ void P_SpawnMapParticleGens(char *map_id)
 // P_SpawnDamageParticleGen
 //  A public function (games can call this directly).
 //===========================================================================
-void P_SpawnDamageParticleGen(mobj_t * mo, mobj_t * inflictor, int amount)
+void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
 {
 	ptcgen_t *gen;
 	ded_ptcgen_t *def;

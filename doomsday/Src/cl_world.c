@@ -227,8 +227,8 @@ void Cl_AddMover(int sectornum, movertype_t type, fixed_t dest, fixed_t speed)
 
 	// Remove any existing movers for the same plane.
 	for(i = 0; i < MAX_MOVERS; i++)
-		if(activemovers[i] && activemovers[i]->sector == sector
-		   && activemovers[i]->type == type)
+		if(activemovers[i] && activemovers[i]->sector == sector &&
+		   activemovers[i]->type == type)
 		{
 			Cl_RemoveActiveMover(activemovers[i]);
 		}
@@ -302,8 +302,8 @@ void Cl_PolyMoverThinker(polymover_t * mover)
 	{
 		// How much to go?
 		dist = poly->destAngle - poly->angle;
-		if((abs(dist >> 4) <= abs(((signed) poly->angleSpeed) >> 4)
-			&& poly->destAngle != -1) || !poly->angleSpeed)
+		if((abs(dist >> 4) <= abs(((signed) poly->angleSpeed) >> 4) &&
+			poly->destAngle != -1) || !poly->angleSpeed)
 		{
 			// We'll arrive at the destination.
 			mover->rotate = false;
@@ -397,8 +397,8 @@ mover_t *Cl_GetActiveMover(int sectornum, movertype_t type)
 	int     i;
 
 	for(i = 0; i < MAX_MOVERS; i++)
-		if(activemovers[i] && activemovers[i]->sectornum == sectornum
-		   && activemovers[i]->type == type)
+		if(activemovers[i] && activemovers[i]->sectornum == sectornum &&
+		   activemovers[i]->type == type)
 		{
 			return activemovers[i];
 		}

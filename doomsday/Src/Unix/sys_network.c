@@ -1058,8 +1058,8 @@ boolean N_Connect(int index)
 
 	// What is the reply?
 	memset(buf, 0, sizeof(buf));
-	if(SDLNet_TCP_Recv(svNode->sock, buf, 64) <= 0
-	   || strncmp(buf, "ENTER ", 6))
+	if(SDLNet_TCP_Recv(svNode->sock, buf, 64) <= 0 ||
+	   strncmp(buf, "ENTER ", 6))
 	{
 		SDLNet_TCP_Close(svNode->sock);
 		memset(svNode, 0, sizeof(svNode));

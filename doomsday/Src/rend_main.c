@@ -78,6 +78,11 @@ static boolean firstsubsector;	// No range checking for the first one.
 
 // CODE --------------------------------------------------------------------
 
+void Rend_Register(void)
+{
+	Rend_RadioRegister();
+}
+
 //===========================================================================
 // Rend_SignedPointDist2D
 //===========================================================================
@@ -206,7 +211,7 @@ int Rend_SegFacingDir(float v1[2], float v2[2])
 //===========================================================================
 // Rend_FixedSegFacingDir
 //===========================================================================
-int Rend_FixedSegFacingDir(seg_t * seg)
+int Rend_FixedSegFacingDir(seg_t *seg)
 {
 	// The dot product. (1 if facing front.)
 	return FIX2FLT(seg->v1->y - seg->v2->y) * FIX2FLT(seg->v1->x - viewx) +
@@ -253,7 +258,7 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
 // Rend_CheckDiv
 //  Returns true if the quad has a division at the specified height.
 //===========================================================================
-int Rend_CheckDiv(rendpoly_t * quad, int side, float height)
+int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 {
 	int     i;
 
@@ -266,15 +271,15 @@ int Rend_CheckDiv(rendpoly_t * quad, int side, float height)
 //===========================================================================
 // Rend_PolyTextureBlend
 //===========================================================================
-void Rend_PolyTextureBlend(int texture, rendpoly_t * poly)
+void Rend_PolyTextureBlend(int texture, rendpoly_t *poly)
 {
 	translation_t *xlat = &texturetranslation[texture];
 
 	// If fog is active, inter=0 is accepted as well. Otherwise flickering
 	// may occur if the rendering passes don't match for blended and
 	// unblended surfaces.
-	if(!smoothTexAnim || numTexUnits < 2 || !texture
-	   || xlat->current == xlat->next || (!useFog && xlat->inter <= 0))
+	if(!smoothTexAnim || numTexUnits < 2 || !texture ||
+	   xlat->current == xlat->next || (!useFog && xlat->inter <= 0))
 	{
 		// No blending for you, my friend.
 		memset(&poly->intertex, 0, sizeof(poly->intertex));
@@ -293,18 +298,17 @@ void Rend_PolyTextureBlend(int texture, rendpoly_t * poly)
 //===========================================================================
 // Rend_PolyFlatBlend
 //===========================================================================
-void Rend_PolyFlatBlend(int flat, rendpoly_t * poly)
+void Rend_PolyFlatBlend(int flat, rendpoly_t *poly)
 {
 	flat_t *ptr = R_GetFlat(flat);
 
 	// If fog is active, inter=0 is accepted as well. Otherwise flickering
 	// may occur if the rendering passes don't match for blended and
 	// unblended surfaces.
-	if(!smoothTexAnim || numTexUnits < 2
-	   || ptr->translation.current == ptr->translation.next || (!useFog
-																&& ptr->
-																translation.
-																inter <= 0))
+	if(!smoothTexAnim || numTexUnits < 2 ||
+	   ptr->translation.current == ptr->translation.next || (!useFog &&
+															 ptr->translation.
+															 inter <= 0))
 	{
 		memset(&poly->intertex, 0, sizeof(poly->intertex));
 		poly->interpos = 0;
@@ -324,8 +328,8 @@ void Rend_PolyFlatBlend(int flat, rendpoly_t * poly)
 //  Division will only happen if it must be done.
 //  Converts quads to divquads.
 //===========================================================================
-void Rend_WallHeightDivision(rendpoly_t * quad, seg_t * seg,
-							 sector_t * frontsec, int mode)
+void Rend_WallHeightDivision(rendpoly_t *quad, seg_t *seg, sector_t *frontsec,
+							 int mode)
 {
 	int     i, k, vtx[2];		// Vertex indices.
 	vertexowner_t *own;
@@ -474,7 +478,7 @@ int Rend_MidTexturePos(float *top, float *bottom, float *texoffy, float tcyoff,
 //  This seriously needs to be rewritten! Witness the accumulation of hacks
 //  on kludges...
 //===========================================================================
-void Rend_RenderWallSeg(seg_t * seg, sector_t * frontsec, int flags)
+void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 {
 	int     segindex, sectorlight;
 	sector_t *backsec;
@@ -575,9 +579,8 @@ void Rend_RenderWallSeg(seg_t * seg, sector_t * frontsec, int flags)
 	// The skyfix?
 	if(frontsec->skyfix)
 	{
-		if(!backsec
-		   || (backsec
-			   && (bceil + backsec->skyfix < fceil + frontsec->skyfix)))
+		if(!backsec ||
+		   (backsec && (bceil + backsec->skyfix < fceil + frontsec->skyfix)))
 		{
 			quad.flags = RPF_SKY_MASK;
 			quad.top = fceil + frontsec->skyfix;
@@ -602,12 +605,12 @@ void Rend_RenderWallSeg(seg_t * seg, sector_t * frontsec, int flags)
 		botvis = (bfloor > ffloor);
 
 		// Missing top or bottom textures don't occlude visibility.
-		if((bsh <= 0 || bceil <= ffloor || bfloor >= fceil)
-		   && !(topvis && !sid->toptexture && sid->midtexture) && !(botvis
-																	&& !sid->
-																	bottomtexture
-																	&& sid->
-																	midtexture)
+		if((bsh <= 0 || bceil <= ffloor || bfloor >= fceil) &&
+		   !(topvis && !sid->toptexture && sid->midtexture) && !(botvis &&
+																 !sid->
+																 bottomtexture
+																 && sid->
+																 midtexture)
 		   /*&& (sid->toptexture || sid->midtexture || sid->bottomtexture) */ )
 		{
 			// The backsector has no space. This is a solid segment.
@@ -615,10 +618,10 @@ void Rend_RenderWallSeg(seg_t * seg, sector_t * frontsec, int flags)
 		}
 
 		// Needs skyfix?
-		if(bsh <= 0 && frontsec->ceilingpic == skyflatnum
-		   && fceil + frontsec->skyfix > bceil && (!sid->toptexture
-												   || backsec->ceilingpic ==
-												   skyflatnum))
+		if(bsh <= 0 && frontsec->ceilingpic == skyflatnum &&
+		   fceil + frontsec->skyfix > bceil && (!sid->toptexture ||
+												backsec->ceilingpic ==
+												skyflatnum))
 		{
 			quad.flags = RPF_SKY_MASK;
 			quad.top = fceil + frontsec->skyfix;
@@ -685,9 +688,9 @@ void Rend_RenderWallSeg(seg_t * seg, sector_t * frontsec, int flags)
 		}
 
 		// Upper wall.
-		if(topvis
-		   && !(frontsec->ceilingpic == skyflatnum
-				&& backsec->ceilingpic == skyflatnum) && !mid_covers_top)
+		if(topvis &&
+		   !(frontsec->ceilingpic == skyflatnum &&
+			 backsec->ceilingpic == skyflatnum) && !mid_covers_top)
 		{
 			float   topwh = fceil - bceil;
 
@@ -747,8 +750,8 @@ void Rend_RenderWallSeg(seg_t * seg, sector_t * frontsec, int flags)
 		// If no textures have been assigned to the segment, we won't
 		// draw anything.
 		if(						/*(sid->bottomtexture || sid->midtexture || sid->toptexture) && */
-			  bfloor > ffloor && !(frontsec->floorpic == skyflatnum
-								   && backsec->floorpic == skyflatnum)
+			  bfloor > ffloor && !(frontsec->floorpic == skyflatnum &&
+								   backsec->floorpic == skyflatnum)
 			  //&& (!sid->midtexture || sid->bottomtexture)
 			)
 		{
@@ -801,7 +804,7 @@ void Rend_RenderWallSeg(seg_t * seg, sector_t * frontsec, int flags)
 //===========================================================================
 // Rend_SectorLight
 //===========================================================================
-int Rend_SectorLight(sector_t * sec)
+int Rend_SectorLight(sector_t *sec)
 {
 	int     i;
 
@@ -820,7 +823,7 @@ int Rend_SectorLight(sector_t * sec)
 //  the remaining faces, i.e. the forward facing segs. This is done before 
 //  rendering segs, so solid segments cut out all unnecessary oranges.
 //===========================================================================
-void Rend_OccludeSubsector(subsector_t * sub, boolean forward_facing)
+void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 {
 	sector_t *front = sub->sector, *back;
 	int     i, segfacing;
@@ -863,8 +866,8 @@ void Rend_OccludeSubsector(subsector_t * sub, boolean forward_facing)
 		if(back->floorpic != skyflatnum || front->floorpic != skyflatnum)
 		{
 			// Do the floors create an occlusion?           
-			if((backh[0] > fronth[0] && vy <= backh[0])
-			   || (backh[0] < fronth[0] && vy >= fronth[0]))
+			if((backh[0] > fronth[0] && vy <= backh[0]) ||
+			   (backh[0] < fronth[0] && vy >= fronth[0]))
 			{
 				C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]), false);	// Occlude down.
 			}
@@ -873,8 +876,8 @@ void Rend_OccludeSubsector(subsector_t * sub, boolean forward_facing)
 		if(back->ceilingpic != skyflatnum || front->ceilingpic != skyflatnum)
 		{
 			// Do the ceilings create an occlusion?
-			if((backh[1] < fronth[1] && vy >= backh[1])
-			   || (backh[1] > fronth[1] && vy <= fronth[1]))
+			if((backh[1] < fronth[1] && vy >= backh[1]) ||
+			   (backh[1] > fronth[1] && vy <= fronth[1]))
 			{
 				C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]), true);	// Occlude up.
 			}
@@ -885,8 +888,8 @@ void Rend_OccludeSubsector(subsector_t * sub, boolean forward_facing)
 //===========================================================================
 // Rend_RenderPlane
 //===========================================================================
-void Rend_RenderPlane(planeinfo_t * plane, dynlight_t * lights,
-					  subsector_t * subsector, sectorinfo_t * sin)
+void Rend_RenderPlane(planeinfo_t *plane, dynlight_t *lights,
+					  subsector_t *subsector, sectorinfo_t *sin)
 {
 	rendpoly_t poly;
 	sector_t *sector = subsector->sector, *link = NULL;

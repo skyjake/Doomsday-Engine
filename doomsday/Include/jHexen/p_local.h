@@ -109,8 +109,8 @@ void            P_PlayerRemoveArtifact(player_t * player, int slot);
 void            P_PlayerUseArtifact(player_t * player, artitype_t arti);
 boolean         P_UseArtifact(player_t * player, artitype_t arti);
 int             P_GetPlayerNum(player_t * player);
-void            P_TeleportOther(mobj_t * victim);
-void            ResetBlasted(mobj_t * mo);
+void            P_TeleportOther(mobj_t *victim);
+void            ResetBlasted(mobj_t *mo);
 
 // ***** P_MOBJ *****
 
@@ -133,61 +133,60 @@ extern mobjtype_t PuffType;
 extern mobj_t  *MissileMobj;
 
 mobj_t         *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
-void            P_RemoveMobj(mobj_t * th);
-boolean         P_SetMobjState(mobj_t * mobj, statenum_t state);
-boolean         P_SetMobjStateNF(mobj_t * mobj, statenum_t state);
-void            P_ThrustMobj(mobj_t * mo, angle_t angle, fixed_t move);
-int             P_FaceMobj(mobj_t * source, mobj_t * target, angle_t *delta);
-boolean         P_SeekerMissile(mobj_t * actor, angle_t thresh,
+void            P_RemoveMobj(mobj_t *th);
+boolean         P_SetMobjState(mobj_t *mobj, statenum_t state);
+boolean         P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
+void            P_ThrustMobj(mobj_t *mo, angle_t angle, fixed_t move);
+int             P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
+boolean         P_SeekerMissile(mobj_t *actor, angle_t thresh,
 								angle_t turnMax);
-void            P_MobjThinker(mobj_t * mobj);
-void            P_BlasterMobjThinker(mobj_t * mobj);
+void            P_MobjThinker(mobj_t *mobj);
+void            P_BlasterMobjThinker(mobj_t *mobj);
 void            P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
 void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
 void            P_BloodSplatter(fixed_t x, fixed_t y, fixed_t z,
-								mobj_t * originator);
+								mobj_t *originator);
 void            P_BloodSplatter2(fixed_t x, fixed_t y, fixed_t z,
-								 mobj_t * originator);
-void            P_RipperBlood(mobj_t * mo);
-int             P_GetThingFloorType(mobj_t * thing);
-int             P_HitFloor(mobj_t * thing);
-boolean         P_CheckMissileSpawn(mobj_t * missile);
-mobj_t         *P_SpawnMissile(mobj_t * source, mobj_t * dest,
-							   mobjtype_t type);
+								 mobj_t *originator);
+void            P_RipperBlood(mobj_t *mo);
+int             P_GetThingFloorType(mobj_t *thing);
+int             P_HitFloor(mobj_t *thing);
+boolean         P_CheckMissileSpawn(mobj_t *missile);
+mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
 mobj_t         *P_SpawnMissileXYZ(fixed_t x, fixed_t y, fixed_t z,
-								  mobj_t * source, mobj_t * dest,
+								  mobj_t *source, mobj_t *dest,
 								  mobjtype_t type);
-mobj_t         *P_SpawnMissileAngle(mobj_t * source, mobjtype_t type,
+mobj_t         *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type,
 									angle_t angle, fixed_t momz);
-mobj_t         *P_SpawnMissileAngleSpeed(mobj_t * source, mobjtype_t type,
+mobj_t         *P_SpawnMissileAngleSpeed(mobj_t *source, mobjtype_t type,
 										 angle_t angle, fixed_t momz,
 										 fixed_t speed);
 void            P_SpawnPlayer(mapthing_t * mthing, int playernum);
-mobj_t         *P_SpawnPlayerMissile(mobj_t * source, mobjtype_t type);
-mobj_t         *P_SPMAngle(mobj_t * source, mobjtype_t type, angle_t angle);
-mobj_t         *P_SPMAngleXYZ(mobj_t * source, fixed_t x, fixed_t y, fixed_t z,
+mobj_t         *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
+mobj_t         *P_SPMAngle(mobj_t *source, mobjtype_t type, angle_t angle);
+mobj_t         *P_SPMAngleXYZ(mobj_t *source, fixed_t x, fixed_t y, fixed_t z,
 							  mobjtype_t type, angle_t angle);
 void            P_CreateTIDList(void);
-void            P_RemoveMobjFromTIDList(mobj_t * mobj);
-void            P_InsertMobjIntoTIDList(mobj_t * mobj, int tid);
+void            P_RemoveMobjFromTIDList(mobj_t *mobj);
+void            P_InsertMobjIntoTIDList(mobj_t *mobj, int tid);
 mobj_t         *P_FindMobjFromTID(int tid, int *searchPosition);
 mobj_t         *P_SpawnKoraxMissile(fixed_t x, fixed_t y, fixed_t z,
-									mobj_t * source, mobj_t * dest,
+									mobj_t *source, mobj_t *dest,
 									mobjtype_t type);
 
-int             P_GetMobjFriction(mobj_t * mo);
+int             P_GetMobjFriction(mobj_t *mo);
 mobj_t         *P_SpawnTeleFog(int x, int y);
 
 // ***** P_ENEMY *****
 
-void            P_NoiseAlert(mobj_t * target, mobj_t * emmiter);
+void            P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 int             P_Massacre(void);
-boolean         A_RaiseMobj(mobj_t * actor);
-boolean         A_SinkMobj(mobj_t * actor);
-void C_DECL     A_NoBlocking(mobj_t * actor);
-boolean         P_LookForMonsters(mobj_t * actor);
+boolean         A_RaiseMobj(mobj_t *actor);
+boolean         A_SinkMobj(mobj_t *actor);
+void C_DECL     A_NoBlocking(mobj_t *actor);
+boolean         P_LookForMonsters(mobj_t *actor);
 void            P_InitCreatureCorpseQueue(boolean corpseScan);
-void C_DECL     A_DeQueueCorpse(mobj_t * actor);
+void C_DECL     A_DeQueueCorpse(mobj_t *actor);
 
 // ***** P_MAPUTL *****
 
@@ -198,9 +197,9 @@ extern intercept_t intercepts[MAXINTERCEPTS], *intercept_p;
 #define PT_ADDTHINGS    2
 #define PT_EARLYOUT     4
 
-void            P_UnsetThingPosition(mobj_t * thing);
-void            P_SetThingPosition(mobj_t * thing);
-mobj_t         *P_RoughMonsterSearch(mobj_t * mo, int distance);
+void            P_UnsetThingPosition(mobj_t *thing);
+void            P_SetThingPosition(mobj_t *thing);
+mobj_t         *P_RoughMonsterSearch(mobj_t *mo, int distance);
 
 // ***** P_MAP *****
 
@@ -210,30 +209,30 @@ extern int      tmfloorpic;
 extern mobj_t  *BlockingMobj;
 
 extern line_t  *ceilingline;
-boolean         P_TestMobjLocation(mobj_t * mobj);
-boolean         P_CheckPosition(mobj_t * thing, fixed_t x, fixed_t y);
-mobj_t         *P_CheckOnmobj(mobj_t * thing);
-void            P_FakeZMovement(mobj_t * mo);
-boolean         P_TryMove(mobj_t * thing, fixed_t x, fixed_t y);
-boolean         P_TeleportMove(mobj_t * thing, fixed_t x, fixed_t y);
-void            P_SlideMove(mobj_t * mo);
-void            P_BounceWall(mobj_t * mo);
+boolean         P_TestMobjLocation(mobj_t *mobj);
+boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
+mobj_t         *P_CheckOnmobj(mobj_t *thing);
+void            P_FakeZMovement(mobj_t *mo);
+boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y);
+boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y);
+void            P_SlideMove(mobj_t *mo);
+void            P_BounceWall(mobj_t *mo);
 
 //boolean P_CheckSight(mobj_t *t1, mobj_t *t2);
 void            P_UseLines(player_t * player);
 boolean         P_UsePuzzleItem(player_t * player, int itemType);
-void            PIT_ThrustSpike(mobj_t * actor);
+void            PIT_ThrustSpike(mobj_t *actor);
 
-boolean         P_ChangeSector(sector_t * sector, int crunch);
+boolean         P_ChangeSector(sector_t *sector, int crunch);
 
 extern mobj_t  *PuffSpawned;	   // true if a puff was spawned
 extern mobj_t  *linetarget;		   // who got hit (or NULL)
-fixed_t         P_AimLineAttack(mobj_t * t1, angle_t angle, fixed_t distance);
+fixed_t         P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance);
 
-void            P_LineAttack(mobj_t * t1, angle_t angle, fixed_t distance,
+void            P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
 							 fixed_t slope, int damage);
 
-void            P_RadiusAttack(mobj_t * spot, mobj_t * source, int damage,
+void            P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage,
 							   int distance, boolean damageSource);
 
 // ***** P_SETUP *****
@@ -262,17 +261,16 @@ void            P_SetMessage(player_t * player, char *message, boolean ultmsg);
 void            P_SetYellowMessage(player_t * player, char *message,
 								   boolean ultmsg);
 void            P_ClearMessage(player_t * player);
-void            P_TouchSpecialThing(mobj_t * special, mobj_t * toucher);
-void            P_DamageMobj(mobj_t * target, mobj_t * inflictor,
-							 mobj_t * source, int damage);
+void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
+void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+							 int damage);
 void            P_FallingDamage(player_t * player);
-void            P_PoisonPlayer(player_t * player, mobj_t * poisoner,
+void            P_PoisonPlayer(player_t * player, mobj_t *poisoner,
 							   int poison);
-void            P_PoisonDamage(player_t * player, mobj_t * source, int damage,
+void            P_PoisonDamage(player_t * player, mobj_t *source, int damage,
 							   boolean playPainSound);
 boolean         P_GiveMana(player_t * player, manatype_t mana, int count);
-boolean         P_GiveArtifact(player_t * player, artitype_t arti,
-							   mobj_t * mo);
+boolean         P_GiveArtifact(player_t * player, artitype_t arti, mobj_t *mo);
 boolean         P_GiveArmor(player_t * player, armortype_t armortype,
 							int amount);
 boolean         P_GiveBody(player_t * player, int num);
@@ -286,9 +284,9 @@ void            AM_Ticker(void);
 void            AM_Drawer(void);
 
 // ***** A_ACTION *****
-boolean         A_LocalQuake(byte *args, mobj_t * victim);
-void            P_SpawnDirt(mobj_t * actor, fixed_t radius);
-void C_DECL     A_BridgeRemove(mobj_t * actor);
+boolean         A_LocalQuake(byte *args, mobj_t *victim);
+void            P_SpawnDirt(mobj_t *actor, fixed_t radius);
+void C_DECL     A_BridgeRemove(mobj_t *actor);
 
 // ***** SB_BAR *****
 
@@ -344,12 +342,12 @@ extern int      po_NumPolyobjs;
 
 void            T_PolyDoor(polydoor_t * pd);
 void            T_RotatePoly(polyevent_t * pe);
-boolean         EV_RotatePoly(line_t * line, byte *args, int direction,
+boolean         EV_RotatePoly(line_t *line, byte *args, int direction,
 							  boolean overRide);
 void            T_MovePoly(polyevent_t * pe);
-boolean         EV_MovePoly(line_t * line, byte *args, boolean timesEight,
+boolean         EV_MovePoly(line_t *line, byte *args, boolean timesEight,
 							boolean overRide);
-boolean         EV_OpenPolyDoor(line_t * line, byte *args, podoortype_t type);
+boolean         EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type);
 
 #define polyobjs			((polyobj_t*) *gi.polyobjs)
 #define po_NumPolyobjs		(*gi.numpolyobjs)

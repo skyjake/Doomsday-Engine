@@ -1000,8 +1000,8 @@ void Sv_ClientCoords(int playerNum)
 	boolean onFloor = false;
 
 	// If mobj or player is invalid, the message is discarded.
-	if(!mo || !players[playerNum].ingame
-	   || players[playerNum].flags & DDPF_DEAD)
+	if(!mo || !players[playerNum].ingame ||
+	   players[playerNum].flags & DDPF_DEAD)
 		return;
 
 	clx = Msg_ReadShort() << 16;

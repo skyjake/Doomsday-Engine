@@ -160,9 +160,8 @@ void DD_DumpKeyMappings(char *fileName)
 	for(i = 0; i < 256; i++)
 	{
 		fprintf(file, "%03i\t", i);
-		fprintf(file, !isspace(keyMappings[i])
-				&& isprint(keyMappings[i]) ? "%c\n" : "%03i\n",
-				keyMappings[i]);
+		fprintf(file, !isspace(keyMappings[i]) &&
+				isprint(keyMappings[i]) ? "%c\n" : "%03i\n", keyMappings[i]);
 	}
 
 	fprintf(file, "\n+Shift\n");
@@ -171,8 +170,8 @@ void DD_DumpKeyMappings(char *fileName)
 		if(shiftKeyMappings[i] == i)
 			continue;
 		fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
-		fprintf(file, !isspace(shiftKeyMappings[i])
-				&& isprint(shiftKeyMappings[i]) ? "%c\n" : "%03i\n",
+		fprintf(file, !isspace(shiftKeyMappings[i]) &&
+				isprint(shiftKeyMappings[i]) ? "%c\n" : "%03i\n",
 				shiftKeyMappings[i]);
 	}
 
@@ -182,8 +181,8 @@ void DD_DumpKeyMappings(char *fileName)
 		if(altKeyMappings[i] == i)
 			continue;
 		fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
-		fprintf(file, !isspace(altKeyMappings[i])
-				&& isprint(altKeyMappings[i]) ? "%c\n" : "%03i\n",
+		fprintf(file, !isspace(altKeyMappings[i]) &&
+				isprint(altKeyMappings[i]) ? "%c\n" : "%03i\n",
 				altKeyMappings[i]);
 	}
 	fclose(file);
@@ -199,8 +198,8 @@ void DD_DefaultKeyMapping(void)
 	for(i = 0; i < 256; i++)
 	{
 		keyMappings[i] = scantokey[i];
-		shiftKeyMappings[i] = i >= 32 && i <= 127
-			&& defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
+		shiftKeyMappings[i] = i >= 32 && i <= 127 &&
+			defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
 		altKeyMappings[i] = i;
 	}
 }
