@@ -613,9 +613,9 @@ void DS_DSoundRefresh(sfxbuffer_t *buf)
 	// Slightly redundant... (used = now - start)
 	usedtime = nowtime - (buf->endtime - DS_DSoundBufferLength(buf));
 
-	// Approximate the current playing position (-0.05 sec for safety; we don't
+	// Approximate the current playing position (-0.1 sec for safety; we don't
 	// want to overwrite stuff before it gets played).
-	usedsec = usedtime / 1000.0f - 0.05f;
+	usedsec = usedtime / 1000.0f - 0.1f;
 	if(usedsec <= 0) 
 	{
 		// This means the update is a bit early; let's wait for the 
