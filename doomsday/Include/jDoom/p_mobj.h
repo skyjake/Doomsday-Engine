@@ -222,7 +222,8 @@ enum {
 // Map Object definition.
 typedef struct mobj_s
 {
-	struct ddmobj_base_s;	// Defined in dd_share.h; required mobj elements.
+	// Defined in dd_share.h; required mobj elements.
+	DD_BASE_MOBJ_ELEMENTS()
 
     mobjinfo_t*	info;		// &mobjinfo[mobj->type]
     int			flags;
@@ -270,6 +271,12 @@ typedef struct mobj_s
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/01/07 20:44:40  skyjake
+// Merged from branch-nix
+//
+// Revision 1.4.4.1  2003/11/19 17:08:47  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.4  2003/06/23 08:16:28  skyjake
 // Removed alpha
 //
@@ -283,3 +290,4 @@ typedef struct mobj_s
 // Initial checkin
 //
 //-----------------------------------------------------------------------------
+

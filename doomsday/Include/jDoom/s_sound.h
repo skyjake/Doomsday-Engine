@@ -4,7 +4,7 @@
 //#include "d_player.h"
 #include "r_defs.h"
 
-#include "sndidx.h"	// Sfx and music indices.
+#include "SndIdx.h"	// Sfx and music indices.
 
 #define sfx_chat (gamemode == commercial? sfx_radio : sfx_tink)
 
@@ -77,3 +77,4 @@ void S_SetSfxVolume(int volume);
 */
 
 #endif
+

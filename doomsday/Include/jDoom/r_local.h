@@ -34,29 +34,5 @@
 
 void R_CachePatch(dpatch_t *dp, char *name);
 
-//
-// Separate header file for each module.
-//
-//#include "r_main.h"
-//#include "r_bsp.h"
-//#include "r_segs.h"
-//#include "r_plane.h"
-//#include "r_data.h"
-//#include "r_things.h"
-//#include "r_draw.h"
 
 #endif		// __R_LOCAL__
-//-----------------------------------------------------------------------------
-//
-// $Log$
-// Revision 1.2  2003/02/27 23:14:31  skyjake
-// Obsolete jDoom files removed
-//
-// Revision 1.1  2003/02/26 19:18:42  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:13  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------

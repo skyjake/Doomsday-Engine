@@ -76,6 +76,12 @@ extern char *mapnamesp[32], *mapnamest[32];
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2004/01/07 20:44:40  skyjake
+// Merged from branch-nix
+//
+// Revision 1.1.4.1  2003/11/19 17:08:47  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.1  2003/02/26 19:18:28  skyjake
 // Initial checkin
 //
@@ -84,3 +90,4 @@ extern char *mapnamesp[32], *mapnamest[32];
 //
 //
 //-----------------------------------------------------------------------------
+

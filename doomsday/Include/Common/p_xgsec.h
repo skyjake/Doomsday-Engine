@@ -105,14 +105,15 @@ typedef struct
 	boolean ceiling;			// True if operates on the ceiling.
 	
 	int flags;	
-	line_t *origin;				
+	struct line_s *origin;				
 
 	fixed_t destination;
 	fixed_t speed;				// Signed.
 	fixed_t crushspeed;			// Signed (speed to use when crushing).
 
 	int setflat;				// Set flat when move done.
-	int setsector;				// Sector type to set when move done (-1 if no change).
+	int setsector;				// Sector type to set when move done
+								// (-1 if no change).
 	int startsound;				// Played after waiting.
 	int endsound;				// Play when move done.
 	int movesound;				// Sound to play while moving.

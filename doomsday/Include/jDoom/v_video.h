@@ -115,6 +115,12 @@ V_MarkRect
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2004/01/07 20:44:40  skyjake
+// Merged from branch-nix
+//
+// Revision 1.1.4.1  2003/11/19 17:08:47  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.1  2003/02/26 19:18:51  skyjake
 // Initial checkin
 //
@@ -123,3 +129,4 @@ V_MarkRect
 //
 //
 //-----------------------------------------------------------------------------
+

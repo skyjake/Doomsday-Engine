@@ -71,8 +71,6 @@ extern fixed_t		finetangent[FINEANGLES/2];
 #define SLOPEBITS		11
 #define DBITS			(FRACBITS-SLOPEBITS)
 
-typedef unsigned angle_t;
-
 
 // Effective size is 2049;
 // The +1 size is to handle the case when x==y
@@ -92,6 +90,12 @@ SlopeDiv
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.3  2004/01/07 20:44:40  skyjake
+// Merged from branch-nix
+//
+// Revision 1.2.4.1  2003/11/19 17:08:47  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.2  2003/02/27 23:14:31  skyjake
 // Obsolete jDoom files removed
 //
@@ -99,3 +103,4 @@ SlopeDiv
 // Initial checkin
 //
 //-----------------------------------------------------------------------------
+

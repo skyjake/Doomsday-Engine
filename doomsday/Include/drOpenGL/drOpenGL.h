@@ -22,9 +22,17 @@
 #ifndef __DROPENGL_H__
 #define __DROPENGL_H__
 
-#define WIN32_LEAN_AND_MEAN
+#ifdef WIN32
+#	define WIN32_LEAN_AND_MEAN
+#	include <windows.h>
+#endif
 
-#include <windows.h>
+#ifdef UNIX
+#	include <SDL/SDL.h>
+#	include "atiext.h"
+#	define wglGetProcAddress SDL_GL_GetProcAddress
+#endif
+
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glu.h>
@@ -64,6 +72,7 @@ typedef struct rgba_s {
 //-------------------------------------------------------------------------
 // main.c
 //
+extern int			screenWidth, screenHeight;
 extern int			useFog, maxTexSize;
 extern int			palExtAvailable, sharedPalExtAvailable;
 extern boolean		texCoordPtrEnabled;
@@ -73,8 +82,10 @@ extern int			verbose;
 extern int			useAnisotropic;
 extern float		maxAniso;
 extern int			maxTexUnits;
+extern boolean		wireframeMode;
 
 void DG_Clear(int bufferbits);
+void activeTexture(const GLenum texture);
 
 
 //-------------------------------------------------------------------------
@@ -87,9 +98,9 @@ void CheckError(void);
 void DG_Begin(int mode);
 void DG_End(void);
 void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
-void DG_Color3ubv(void *data);
+void DG_Color3ubv(DGLubyte *data);
 void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
-void DG_Color4ubv(void *data);
+void DG_Color4ubv(DGLubyte *data);
 void DG_Color3f(float r, float g, float b);
 void DG_Color3fv(float *data);
 void DG_Color4f(float r, float g, float b, float a);
@@ -127,10 +138,13 @@ int	DG_Bind(DGLuint texture);
 //-------------------------------------------------------------------------
 // ext.c
 //
+#ifdef WIN32
 extern PFNGLCLIENTACTIVETEXTUREARBPROC	glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
 extern PFNGLMULTITEXCOORD2FARBPROC	glMultiTexCoord2fARB;
 extern PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
+#endif
+
 extern PFNGLBLENDEQUATIONEXTPROC	glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC		glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;

@@ -66,6 +66,8 @@ typedef struct jdoom_config_s
 	boolean coopRespawnItems;
 	float	automapAlpha, automapLineAlpha;
 	int		automapRotate;
+	boolean	automapShowDoors;
+	float	automapDoorGlow;
 	int		msgCount;
 	float	msgScale;
 	int		msgUptime;

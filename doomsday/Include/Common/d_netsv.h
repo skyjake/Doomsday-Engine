@@ -2,15 +2,15 @@
 #define __NETSV_H__
 
 #ifdef __JDOOM__
-#include "../JDoom/p_local.h"
+#include "../jDoom/p_local.h"
 #endif
 
 #ifdef __JHERETIC__
-#include "../JHeretic/P_local.h"
+#include "../jHeretic/P_local.h"
 #endif
 
 #ifdef __JHEXEN__
-#include "../JHexen/P_local.h"
+#include "../jHexen/p_local.h"
 #endif
 
 extern boolean	cyclingMaps, mapCycleNoExit;
@@ -43,6 +43,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged);
 void NetSv_UpdateGameConfig(void);
 void NetSv_Paused(boolean isPaused);
 void NetSv_DoCheat(int player, const char *data);
+void NetSv_SendJumpPower(int target, float power);
 
 int CCmdMapCycle(int argc, char **argv);
 

@@ -2,10 +2,10 @@
 #define __NETCL_H__
 
 #ifdef __JHERETIC__
-#include "../JHeretic/DoomDef.h"
+#include "../jHeretic/Doomdef.h"
 #endif
 
-#include "d_Net.h"
+#include "d_net.h"
 
 void *NetCl_WriteCommands(ticcmd_t *cmd, int count);
 void NetCl_UpdateGameState(byte *data);
@@ -13,6 +13,7 @@ void NetCl_CheatRequest(const char *command);
 void NetCl_UpdatePlayerState(byte *data, int plrNum);
 void NetCl_UpdatePlayerState2(byte *data, int plrNum);
 void NetCl_UpdatePSpriteState(byte *data);
+void NetCl_UpdateJumpPower(void *data);
 void NetCl_Intermission(byte *data);
 void NetCl_Finale(int packetType, byte *data);
 void NetCl_UpdatePlayerInfo(byte *data);

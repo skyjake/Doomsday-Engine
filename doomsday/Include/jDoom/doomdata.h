@@ -120,7 +120,7 @@ typedef struct
 #define ML_DONTPEGTOP		8
 
 // lower texture unpegged
-#define ML_DONTPEGBOTTOM	16	
+#define ML_DONTPEGBOTTOM	16
 
 // In AutoMap: don't map as two sided: IT'S A SECRET!
 #define ML_SECRET		32
@@ -133,7 +133,6 @@ typedef struct
 
 // Set if already seen, thus drawn in automap.
 #define ML_MAPPED		256
-
 
 
 
@@ -217,6 +216,12 @@ typedef struct
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2004/01/07 20:44:40  skyjake
+// Merged from branch-nix
+//
+// Revision 1.1.4.1  2003/11/19 17:08:47  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.1  2003/02/26 19:18:26  skyjake
 // Initial checkin
 //
@@ -225,4 +230,5 @@ typedef struct
 //
 //
 //-----------------------------------------------------------------------------
+
 
