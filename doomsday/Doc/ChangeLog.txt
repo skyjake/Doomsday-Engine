@@ -4,6 +4,119 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.alpha-1
+-------------------
+! Alpha Release
++ Linux support
++ accurate measurement of time (variable-length ticks); game code still
+  untouched, uses 35 Hz legacy timing
+* independent input->ticcmd generator (stub only)
+
+Renderer:
++ FakeRadio: simulated radiosity lighting (cvar 'rend-fakeradio')
++ smart texture filtering (modified hq2x, 'rend-tex-filter-smart')
+- removed smooth camera hack ('rend-camera-smooth')
+
+Network:
+* portable low-level implementation (TCP/UDP sockets), needs testing!
+
+
+Version 1.7.14-1
+----------------
+! Maintenance Release
+- fixed: 'df_worldtime' was behaving strangely
+
+
+Version 1.7.14
+--------------
+! Maintenance Release
++ Model -> Sub -> Skin file: file name of the skin (can be anything; use
+  this if it isn't possible to use the model's skin list)
++ Map Info -> Sky Model -> Layer: associate sky model with a sky layer;
+  model is hidden if sky layer is not enabled
++ Generator -> Submodel: submodel # to use as generator origin
++ particle generator sounds: Sound, Volume, Hit sound, Hit volume added
+  to Generator -> Stage
++ Generator -> Init Vector Rnd: init-time random component of Vector
++ Generator -> Stage -> Force: linear force
++ model flag 'df_notexcomp': disable texture compression for all skins
+  of the associated model
++ model flag 'df_worldtime': model's interpos depends on world time
++ generator flag 'gnf_srcdir': rotate particle vector
++ generator flag 'gnf_extra': additional generator for a mobj state
++ cvar 'rend-tex-filter': use bilinear filtering on textures
+* a particle generator can have up to 32 stages
+* models close to the viewpoint won't disappear
+* max number of data files increased from 128 to 1024 (-file)
+- fixed: crash when map doesn't have any REJECT data
+- fixed: confusion/crash when requesting a lump with no name
+- fixed: edge artifacts around translucent sprites
+- fixed: sfx sometimes pop with the default sound driver (DS8)
+- fixed: loading DEDs from virtual directories
+- fixed: particle center offset angle
+- fixed: loading order of 3D models (mixed up demon/spectre skins)
+- fixed: lighting on vertically inverted models
+- quietly allow the use of undefined sprite frames (object hidden)
+
+jDoom:
+* "Read This" screens are not affected by menu-scale, skull hidden
+
+jHeretic:
+- game can only be saved during normal game play
+- fixed: cycling down from Elvenwand skips Staff (bug 813773)
+
+jHexen:
++ lava and fire textures glow
+* support for the Hexen 4-level demo
+
+
+Version 1.7.13
+--------------
+! Maintenance Release
+* model offset and scale are interpolated (Model -> Offset XYZ,
+  Model -> Scale XYZ)
+* overridden model defs are no longer loaded at all (bug 760099)
+* number of screenshots is not limited to 100
+* screenshot file names are selected according to game mode
+- fixed: semicolon in bindings (key name "smcln")
+- fixed: music volume = zero prevents songs from changing
+- fixed: halos flicker sometimes through doors
+- a shadow is not rendered if it would be above the object
+- fixed: crash when loading external resources of color-mapped sprites
+
+Network:
+- fixed: player gets stuck in enemies
+- fixed: player gets stuck in a moving plane (elevator, door)
+- fixed: crash in clmobj handling
+- fixed: recording demos with multiple local players
+- fixed: clientside jumping power, jumping enabled
+- fixed: player start spot selection (especially TNT/Plutonia)
+- fixed: mobj Z coordinates were sometimes incorrect on clientside
+- fixed: server didn't increase client's bandwidth rating, ever
+- fixed: WAD warning box in Client Setup screen was in the wrong place
+- fixed: halos weren't always displayed correctly on clientside
+
+drD3D:
++ option -triple: enable triple buffering in fullscreen mode
+
+XG:
+- XG should always be disabled on clientside
+
+jDoom:
++ cvar 'map-door-colors': show colors of locked doors in automap
++ cvar 'map-door-glow': locked doors have a glow around them (1=normal)
+* Plutonia/TNT will automatically set rend-sky-full
+- fixed: bullet puffs in face (bug 740767)
+- fixed: main menu item spacing too tight
+- fixed: STARMS was used in the status bar when in deathmatch
+
+jHeretic:
++ cvar 'player-jump-power'
+
+jHexen:
++ cvar 'player-jump-power'
+
+
 Version 1.7.12
 --------------
 + option -leaveramp: don't reset color settings back to previous values
