@@ -22,6 +22,9 @@ CONTENTS: @contents{1}
 	@row
 		@file{deng-(version).zip} @tab jDoom, jHeretic, jHexen (for Windows)
 	@row
+		@file{deng-(version).dmg.gz} @tab Compressed disk image containing 
+		jDoom, jHeretic, jHexen (for Mac OS X 10.3)
+	@row
 		@file{deng-(version).tar.gz} @tab Source code (for Linux)
 	}
 
@@ -33,9 +36,9 @@ CONTENTS: @contents{1}
 	Downloading one or more resource pack is optional.
 	The packages are called jDRP, jHRP, and jXRP. These stand for "jDoom/jHeretic/jHexen Resource Pack". You can download the packs from @link{http://www.doomsdayhq.com/}.
     
-@item Windows 98 (or newer), or Linux.
+@item Windows 98 (or newer), Mac OS X 10.3, or Linux.
 
-@item DirectX 8.0 (or newer).
+@item On Windows, DirectX 8.0 (or newer) is required.
 
 @item A display adapter capable of 3D hardware acceleration.
 

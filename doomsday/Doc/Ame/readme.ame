@@ -11,8 +11,8 @@ CONTENTS: @contents{1}
 
 @chapter{ Introduction }
 
-The Doomsday Engine is an enhanced Doom source port for the Windows
-and Linux platforms. It is based on the source code of id Software's
+The Doomsday Engine is an enhanced Doom source port for the Windows, 
+Mac OS X, and Linux platforms. It is based on the source code of id Software's
 Doom and Raven Software's Heretic and Hexen. The Doomsday Engine and
 the associated ports of Doom, Heretic and Hexen have been under
 development since 1999. The first versions were released in late 1999
@@ -53,6 +53,7 @@ Sound:
 @list/thin{
 @item Plays music using standard Windows MIDI routines
 @item Win32: supports DirectSound, DirectSound3D, EAX 2.0 and A3D 3.0
+@item Mac: QuickTime
 @item Linux: SDL_mixer, OpenAL
 @item Uses FMOD (@link{http://www.fmod.org/}) to play music files such as MP3
 @item 3D sound effects
@@ -83,8 +84,8 @@ Other:
 @list{
 @item Pentium 166 (or equivalent) with 64Mb of RAM (providing that
 	3D models and special effects are disabled)
-@item Windows 98 (or newer)
-@item DirectX 8 (or newer)
+@item Windows 98 (or newer), Mac OS X 10.3, or Linux
+@item DirectX 8 (or newer) on Windows
 @item A display adapter capable of 3D hardware acceleration
 @item At least one WAD file from the original Doom, Heretic, Hexen, etc.
 }
