@@ -1,4 +1,4 @@
-SUBDIRS = dpDehRead jDoom jHeretic jHexen $(OPTIONAL_SUBDIRS)
+SUBDIRS = dpDehRead dpMapLoad jDoom jHeretic jHexen $(OPTIONAL_SUBDIRS)
 
 bin_PROGRAMS = doomsday
 
@@ -7,8 +7,8 @@ DEFS = -DUNIX -DNO_FIXED_ASM -D__DOOMSDAY__ -DNORANGECHECKING	   \
 -DDENG_LIBRARY_DIR=\"$(libdir)\" -DDENG_BASE_DIR=\"$(pkgdatadir)\"
 doomsday_CFLAGS = @SDL_CFLAGS@ $(LTDLINCL)
 doomsday_LDFLAGS = -export-dynamic "-dlopen" self @SDL_LIBS@ -lSDL_net \
--lpng -lncurses
-doomsday_LDADD = $(LIBLTDL) 
+-lpng -lncurses 
+doomsday_LDADD = $(LIBLTDL)
 
 doomsday_SOURCES = cl_frame.c cl_main.c cl_mobj.c cl_player.c	       \
 cl_sound.c cl_world.c con_action.c con_bar.c con_bind.c con_config.c   \
