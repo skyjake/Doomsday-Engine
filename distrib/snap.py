@@ -47,7 +47,7 @@ includeDefs = ['Anim.ded', 'Finales.ded', 'jDoom.ded', 'jHeretic.ded',
 
 if '-def' in sys.argv:
 	for game in ['jDoom', 'jHeretic', 'jHexen']:
-		gameDir = 'Defs\\' + game
+		gameDir = os.path.join( 'Defs', game )
 		defDir = os.path.join( baseDir, gameDir )
 		for file in os.listdir( defDir ):
 			# Should this be included?
