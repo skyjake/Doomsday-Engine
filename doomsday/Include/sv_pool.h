@@ -271,6 +271,28 @@ sounddelta_t;
 #define POOL_HASH_SIZE				1024
 #define POOL_HASH_FUNCTION_MASK		0x3ff
 
+/*
+ * The missile record contains an entry for each missile mobj that 
+ * the client has acknowledged. Since missiles move predictably, 
+ * we do not need to sent the coordinates in every delta. The record 
+ * is checked every time a missile delta is added to a pool.
+ */
+#define POOL_MISSILE_HASH_SIZE		256
+
+typedef struct misrecord_s
+{
+	struct misrecord_s *next, *prev;
+	thid_t id;
+	//fixed_t momx, momy, momz;
+}
+misrecord_t;
+
+typedef struct mislink_s 
+{
+	misrecord_t *first, *last;
+}
+mislink_t;
+
 typedef struct deltalink_s
 {
 	// Links to the first and last delta in the hash key.
@@ -315,6 +337,10 @@ typedef struct pool_s
 	// The delta hash table holds all kinds of deltas.
 	deltalink_t hash[POOL_HASH_SIZE];
 	
+	// The missile record is used to detect when the mobj coordinates need
+	// not be sent.
+	mislink_t misHash[POOL_MISSILE_HASH_SIZE];
+
 	// The priority queue (a heap). Built when the pool contents are rated.
 	// Contains pointers to deltas in the hash. Becomes invalid when deltas
 	// are removed from the hash!
