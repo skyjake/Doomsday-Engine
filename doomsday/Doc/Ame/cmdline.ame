@@ -54,6 +54,10 @@ $--------------------------------------------------------------------
 	@opt{-stdbasedir} @tab @opt{-sbd} @tab
 	Use the standard base directory (@file{..\..}).
 @row
+	@opt{-savedir P} @tab @tab
+	Changes the directory where savegames will be placed.
+	The default is @file{savegame}.
+@row
 	@opt{-out F} @tab @tab
 	Redirects output to the given file. By default all
     messages are printed to @file{Doomsday.out}.
