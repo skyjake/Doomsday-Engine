@@ -34,11 +34,10 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int gametic;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 float			weaponOffsetScale = 0.3183f;	// 1/Pi
+int				weaponOffsetScaleY = 1000;
 float			weaponFOVShift = 45;
 int				alwaysAlign = 0;
 int				r_nospritez = false;
@@ -67,6 +66,27 @@ int				newvissprite;
 int				r_maxmodelz = 1500;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// The floatbob offsets from Hexen.
+static fixed_t bobOffsets[64] =
+{
+	0, 51389, 102283, 152192,
+	200636, 247147, 291278, 332604,
+	370727, 405280, 435929, 462380,
+	484378, 501712, 514213, 521763,
+	524287, 521763, 514213, 501712,
+	484378, 462380, 435929, 405280,
+	370727, 332604, 291278, 247147,
+	200636, 152192, 102283, 51389,
+	-1, -51390, -102284, -152193,
+	-200637, -247148, -291279, -332605,
+	-370728, -405281, -435930, -462381,
+	-484380, -501713, -514215, -521764,
+	-524288, -521764, -514214, -501713,
+	-484379, -462381, -435930, -405280,
+	-370728, -332605, -291279, -247148,
+	-200637, -152193, -102284, -51389
+};
 
 // CODE --------------------------------------------------------------------
 
@@ -474,7 +494,7 @@ void R_ProjectPlayerSprites(void)
 		vis->mo.inter = R_CheckModelFor(&dummy, &mf, &nextmf);
 		if(!mf)
 		{
-			// No, draw a 2D sprite instead (in R_DrawPlayerSprites).
+			// No, draw a 2D sprite instead (in Rend_DrawPlayerSprites).
 			continue;
 		}
 		// Mark this sprite rendered.
@@ -501,7 +521,8 @@ void R_ProjectPlayerSprites(void)
 		vis->mo.floorclip = 0;
 		// Offsets to rotation angles.
 		vis->mo.v2[VX] = psp->x * weaponOffsetScale - 90;
-		vis->mo.v2[VY] = (32-psp->y) * weaponOffsetScale;
+		vis->mo.v2[VY] = (32 - psp->y) * weaponOffsetScale 
+			* weaponOffsetScaleY/1000.0f;
 		// Is the FOV shift in effect?
 		if(weaponFOVShift > 0 && fieldOfView > 90)
 			vis->mo.v2[VY] -= weaponFOVShift * (fieldOfView - 90)/90;
@@ -682,6 +703,11 @@ void R_ProjectSprite (mobj_t *thing)
 
 	// Foot clipping.
 	vis->mo.floorclip = thing->floorclip;
+	if(thing->ddflags & DDMF_BOB)
+	{
+		// Bobbing is applied to the floorclip.
+		vis->mo.floorclip += R_GetBobOffset(thing);
+	}
 	
 	// The start and end vertices.
 	vis->mo.v1[VX] = v1[VX];
@@ -700,7 +726,7 @@ void R_ProjectSprite (mobj_t *thing)
 		}
 		else if(mf->sub[0].flags & MFF_SPIN)
 		{
-			vis->mo.yaw = 70 * gametic/35.0f + (int)thing % 360;
+			vis->mo.yaw = 70 * leveltic/35.0f + (int)thing % 360;
 		}
 		else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
 		{
@@ -718,7 +744,8 @@ void R_ProjectSprite (mobj_t *thing)
 		if(mf->sub[0].flags & MFF_IDANGLE)
 		{
 			// Multiply with an arbitrary factor.
-			vis->mo.yaw += (thing->thinker.id * 27) % 360; 
+			vis->mo.yaw += (thing->thinker.id * 26
+				+ ((unsigned)thing>>8)) % 360; 
 		}
 
 		if(mf->sub[0].flags & MFF_ALIGN_PITCH)
@@ -908,3 +935,16 @@ void R_SortVisSprites (void)
 	}
 }
 
+/*
+ * Returns the current floatbob offset for the mobj, if the mobj is flagged
+ * for bobbing.
+ */
+fixed_t R_GetBobOffset(mobj_t *mo)
+{
+	if(mo->ddflags & DDMF_BOB)
+	{
+		return bobOffsets[(mo->thinker.id * 26 + ((unsigned)mo >> 8)
+			+ leveltic) & 63];
+	}
+	return 0;
+}

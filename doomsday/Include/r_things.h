@@ -91,11 +91,9 @@ typedef struct
 	float			flarex;			// Offset to flare.
 	float			flarey;
 	float			lumsize;
-	float			tc[2];			// Texture coordinates.
+	float			tc[2][2];		// Prepared texture coordinates.
 	DGLuint			tex;			// Name of the associated DGL texture.
-	DGLuint			hudtex;
-	short			hudwidth;
-	short			hudheight;
+	DGLuint			hudtex;			// Name of the HUD sprite texture.
 	rgbcol_t		color;			// Average color, for lighting.
 } spritelump_t;
 
@@ -106,6 +104,7 @@ extern	int				numspritelumps;
 extern	int				pspOffX, pspOffY;
 extern	int				alwaysAlign;
 extern	float			weaponOffsetScale, weaponFOVShift;
+extern	int				weaponOffsetScaleY;
 extern	int				r_maxmodelz, r_nospritez;
 extern	int				r_use_srvo, r_use_srvo_angle;
 extern  vissprite_t     vissprites[MAXVISSPRITES], *vissprite_p;
@@ -114,6 +113,7 @@ extern  vissprite_t     vsprsortedhead;
 
 void	R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 int		R_VisualRadius(mobj_t *mo);
+fixed_t	R_GetBobOffset(mobj_t *mo);
 void	R_ProjectSprite(mobj_t *thing);
 void	R_ProjectPlayerSprites(void);
 void	R_ProjectDecoration(mobj_t *source);
