@@ -502,3 +502,13 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
 
 	return P_SightPathTraverse(t1->x, t1->y, t2->x, t2->y);
 }
+
+boolean P_CheckLineSight(float from[3], float to[3])
+{
+	sightzstart = from[VZ]*FRACUNIT;
+	topslope = to[VZ]*FRACUNIT + FRACUNIT - sightzstart;
+	bottomslope = to[VZ]*FRACUNIT - FRACUNIT - sightzstart;
+
+	return P_SightPathTraverse(from[VX] * FRACUNIT, from[VY] * FRACUNIT,
+                               to[VX] * FRACUNIT, to[VY] * FRACUNIT);
+}
