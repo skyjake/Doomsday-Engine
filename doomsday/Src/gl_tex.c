@@ -3050,6 +3050,9 @@ DGLuint GL_PrepareLightTexture(void)
 		}
 #endif*/
 
+		// We don't want to compress the flares (banding would be noticeable).
+		gl.Disable(DGL_TEXTURE_COMPRESSION);
+
 		dltexname = gl.NewTexture();
 		// No mipmapping or resizing is needed, upload directly.
 		gl.TexImage(DGL_LUMINANCE_PLUS_A8, 64, 64, 0, image);
@@ -3057,6 +3060,9 @@ DGLuint GL_PrepareLightTexture(void)
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+		// Enable texture compression as usual.
+		gl.Enable(DGL_TEXTURE_COMPRESSION);
 
 		Z_Free(image);
 	}
@@ -3125,13 +3131,17 @@ DGLuint GL_PrepareFlareTexture(int flare)
 	if(flare < 0 || flare >= NUM_FLARES) return 0;
 
 	// What size? Hardcoded dimensions... argh.
-	w = h = flare==2? 128 : 64;
+	w = h = (flare == 2? 128 : 64);
 
 	if(!flaretexnames[flare])
 	{
-		byte *image = W_CacheLumpName(flare==0? "FLARE" : flare==1? "BRFLARE" : "BIGFLARE", PU_CACHE);
+		byte *image = W_CacheLumpName(flare==0? "FLARE" 
+			: flare==1? "BRFLARE" : "BIGFLARE", PU_CACHE);
 		if(!image)
 			Con_Error("GL_PrepareFlareTexture: flare texture %i not found!\n", flare);
+
+		// We don't want to compress the flares (banding would be noticeable).
+		gl.Disable(DGL_TEXTURE_COMPRESSION);
 
 		flaretexnames[flare] = gl.NewTexture();
 		gl.TexImage(DGL_LUMINANCE, w, h, 0, image);
@@ -3139,6 +3149,9 @@ DGLuint GL_PrepareFlareTexture(int flare)
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+		// Allow texture compression as usual.
+		gl.Enable(DGL_TEXTURE_COMPRESSION);
 	}
 	texmask = 0;
 	texw = w;
