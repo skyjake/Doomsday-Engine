@@ -141,11 +141,6 @@ void R_DrawMapTitle(void)
 	int y = 12;
 	char *lname, *lauthor;
 
-/*	char buf[80];
-	sprintf(buf, "png: %i\n", 
-		(players[consoleplayer].plr->mo->ddflags & DDMF_NOGRAVITY) != 0);
-	MN_DrTextA_CS(buf, 60, 60);*/
-
 	if(!cfg.mapTitle || actual_leveltime > 6*35) return;
 	
 	// Make the text a bit smaller.
