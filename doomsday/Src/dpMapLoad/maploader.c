@@ -43,6 +43,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 typedef struct {
 	char    identification[4];
