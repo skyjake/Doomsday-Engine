@@ -41,7 +41,8 @@ float	shadowFactor = 0.5f;
 //===========================================================================
 void Rend_ProcessThingShadow(mobj_t *mo)
 {
-	float		height, moh, halfmoh, color, pos[2], z;
+	fixed_t		moz;
+	float		height, moh, halfmoh, color, pos[2];
 	sector_t	*sec = mo->subsector->sector;
 	int			radius, i;
 	rendpoly_t	poly;
@@ -60,12 +61,16 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 	}
 
 	// Check the height.
-	z = FIX2FLT( mo->floorz );
-	height = FIX2FLT( mo->z - mo->floorz );
+	moz = mo->z - mo->floorclip;
+	if(mo->ddflags & DDMF_BOB)
+	{
+		moz -= R_GetBobOffset(mo);
+	}
+	height = FIX2FLT( moz - mo->floorz );
 	moh = FIX2FLT( mo->height );
 	if(!moh) moh = 1;
 	if(height > moh) return;	// Too far.
-	if(mo->z + mo->height < mo->floorz) return;
+	if(moz + mo->height < mo->floorz) return;
 	
 	// Calculate the strength of the shadow.
 	color = shadowFactor 
@@ -91,7 +96,7 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 				(prim->texoffy - vtx->pos[VY])/prim->shadowradius);*/
 	poly.texoffx = pos[VX] + radius;
 	poly.texoffy = pos[VY] + radius;
-	poly.top = FIX2FLT( mo->floorz ) + 0.1f;
+	poly.top = FIX2FLT( mo->floorz ) + 0.2f;
 
 	poly.numvertices = 4;
 	poly.vertices[0].pos[VX] = pos[VX] - radius;
@@ -141,6 +146,7 @@ void Rend_RenderShadows(void)
 //===========================================================================
 boolean Rend_ProcessThingShadow(mobj_t *mo, subsector_t *sub)
 {
+	fixed_t		moz;
 	sector_t	*sec = sub->sector;
 	float		height, moh, halfmoh, color, pos[2], z;
 	int			radius;
