@@ -1,6 +1,8 @@
 #ifndef __DOOMSDAY_CLIENT_H__
 #define __DOOMSDAY_CLIENT_H__
 
+#include "p_mobj.h"
+
 #define	SHORTP(x)		(*(short*) (x))
 #define	USHORTP(x)		(*(unsigned short*) (x))
 
