@@ -34,9 +34,6 @@ typedef struct playerstate_s
 	int			friction;
 } playerstate_t;
 
-// 
-// cl_main.c
-//
 extern boolean handshake_received;
 extern int game_ready;
 extern boolean net_loggedin;
@@ -48,22 +45,5 @@ void Cl_GetPackets(void);
 void Cl_Ticker(void);
 int Cl_GameReady();
 void Cl_SendHello(void);
-
-//
-// cl_player.c
-//
-extern int psp_move_speed;
-extern int cplr_thrust_mul;
-extern playerstate_t playerstate[MAXPLAYERS];
-
-void Cl_InitPlayers(void);
-void Cl_LocalCommand(void);
-void Cl_MovePlayer(ddplayer_t *pl);
-void Cl_MoveLocalPlayer(int dx, int dy, int dz, boolean onground);
-int Cl_ReadPlayerDelta(void);
-void Cl_ReadPlayerDelta2(void);
-void Cl_UpdatePlayerPos(ddplayer_t *pl);
-void Cl_MovePsprites(void);
-void Cl_CoordsReceived(void);
 
 #endif
