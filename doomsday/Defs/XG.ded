@@ -22,6 +22,7 @@ Flag { ID = "ltc_plane_texture"; Value = 0x11; }
 Flag { ID = "ltc_wall_texture"; Value = 0x12; }
 Flag { ID = "ltc_command"; Value = 0x13; }
 Flag { ID = "ltc_sound"; Value = 0x14; }
+Flag { ID = "ltc_mimic_sector"; Value = 0x15; }
 Flag { ID = "ltf_active"; Value = 0x1; }
 Flag { ID = "ltf_player_use_a"; Value = 0x2; }
 Flag { ID = "ltf_other_use_a"; Value = 0x4; }
@@ -158,6 +159,16 @@ Flag { ID = "spref_min_top_texture"; Value = 0x11; }
 Flag { ID = "spref_max_bottom_texture"; Value = 0x12; }
 Flag { ID = "spref_max_mid_texture"; Value = 0x13; }
 Flag { ID = "spref_max_top_texture"; Value = 0x14; }
+Flag { ID = "spref_sector_tagged_floor"; Value = 0x15; }
+Flag { ID = "spref_line_tagged_floor"; Value = 0x16; }
+Flag { ID = "spref_tagged_floor"; Value = 0x17; }
+Flag { ID = "spref_act_tagged_floor"; Value = 0x18; }
+Flag { ID = "spref_index_floor"; Value = 0x19; }
+Flag { ID = "spref_sector_tagged_ceiling"; Value = 0x20; }
+Flag { ID = "spref_line_tagged_ceiling"; Value = 0x21; }
+Flag { ID = "spref_tagged_ceiling"; Value = 0x22; }
+Flag { ID = "spref_act_tagged_ceiling"; Value = 0x23; }
+Flag { ID = "spref_index_ceiling"; Value = 0x24; }
 Flag { ID = "lightref_none"; }
 Flag { ID = "lightref_my"; Value = 0x1; }
 Flag { ID = "lightref_original"; Value = 0x2; }
