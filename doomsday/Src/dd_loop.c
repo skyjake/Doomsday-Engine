@@ -77,6 +77,15 @@ static int lastFrameCount;
 // CODE --------------------------------------------------------------------
 
 /*
+ * Register console variables for main loop.
+ */
+void DD_RegisterLoop(void)
+{
+    C_VAR_INT("refresh-rate-maximum", &maxFrameRate, 0, 35, 1000,
+        "Maximum limit for the frame rate (default: 200).");
+}
+
+/*
  * This is the refresh thread (the main thread).
  * There is no return from here.
  */

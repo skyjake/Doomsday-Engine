@@ -499,6 +499,7 @@ void Con_Init()
 	registerCommands();
 	registerVariables();
 
+    DD_RegisterLoop();
 	DD_RegisterInput();
 	R_Register();
 	Rend_Register();

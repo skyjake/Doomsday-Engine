@@ -24,6 +24,7 @@
 
 extern timespan_t sysTime, gameTime, demoTime, levelTime;
 
+void            DD_RegisterLoop(void);
 void            DD_GameLoop(void);
 void            DD_DrawAndBlit(void);
 void            DD_StartFrame(void);
