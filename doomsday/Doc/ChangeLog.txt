@@ -11,6 +11,7 @@ Version 1.8.alpha-1
 + accurate measurement of time (variable-length ticks); game code still
   untouched, uses 35 Hz legacy timing
 * independent input->ticcmd generator (stub only)
+* now uses the SDL library (http://www.libsdl.org/)
 
 Renderer:
 + FakeRadio: simulated radiosity lighting (cvar 'rend-fakeradio')

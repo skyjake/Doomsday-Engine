@@ -1250,7 +1250,8 @@ scaled to the range {-0.333 0.333} we get the zero we wanted.
         # <range-length> is the number of seconds it takes for one 
         # animation cycle to run from start to finish (Inter 0...1).
         # <interpos-offset> is added to the Inter calculated from world
-        # time and <range-length> (offset should be 0...1).
+        # time and <range-length> (offset should be 0...1). If the offset
+        # is -1, a random offset is used for each object.
 
     Flags = "";
         # Flags for the whole model, including all the submodels.
