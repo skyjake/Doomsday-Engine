@@ -391,6 +391,10 @@ SOURCE=.\Src\r_model.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\r_sky.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\r_things.c
 # End Source File
 # Begin Source File
@@ -941,6 +945,10 @@ SOURCE=.\Include\r_main.h
 # Begin Source File
 
 SOURCE=.\Include\r_model.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\r_sky.h
 # End Source File
 # Begin Source File
 
