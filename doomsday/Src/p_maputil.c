@@ -65,11 +65,22 @@ float P_AccurateDistance(fixed_t dx, fixed_t dy)
 // P_ApproxDistance
 //	Gives an estimation of distance (not exact).
 //===========================================================================
-fixed_t P_ApproxDistance (fixed_t dx, fixed_t dy)
+fixed_t P_ApproxDistance(fixed_t dx, fixed_t dy)
 {
 	dx = abs(dx);
 	dy = abs(dy);
 	return dx + dy - ((dx < dy? dx : dy) >> 1);
+}
+
+//===========================================================================
+// P_ApproxDistance3
+//	Gives an estimation of 3D distance (not exact).
+//	The Z axis aspect ratio is corrected.
+//===========================================================================
+fixed_t P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz)
+{
+	return P_ApproxDistance(P_ApproxDistance(dx, dy), 
+		FixedMul(dz, 1.2f*FRACUNIT));
 }
 
 //===========================================================================
