@@ -254,12 +254,12 @@ void DS_Load(sfxbuffer_t * buf, struct sfxsample_s *sample)
 	// We will transfer the sample to SDL_mixer by converting it to
 	// WAVE format.
 	strcpy(conv, "RIFF");
-	*(Uint32 *) (conv + 4) = 4 + 8 + 16 + 8 + sample->size;
+	*(Uint32 *) (conv + 4) = ULONG(4 + 8 + 16 + 8 + sample->size);
 	strcpy(conv + 8, "WAVE");
 
 	// Format chunk.
 	strcpy(conv + 12, "fmt ");
-	*(Uint32 *) (conv + 16) = 16;
+	*(Uint32 *) (conv + 16) = ULONG(16);
 	/*  WORD    wFormatTag;         // Format category
 	   WORD wChannels;          // Number of channels
 	   uint dwSamplesPerSec;    // Sampling rate
@@ -267,16 +267,16 @@ void DS_Load(sfxbuffer_t * buf, struct sfxsample_s *sample)
 	   WORD wBlockAlign;        // Data block size
 	   WORD wBitsPerSample;     // Sample size
 	 */
-	*(Uint16 *) (conv + 20) = 1;
-	*(Uint16 *) (conv + 22) = 1;
-	*(Uint32 *) (conv + 24) = sample->rate;
-	*(Uint32 *) (conv + 28) = sample->rate * sample->bytesper;
-	*(Uint16 *) (conv + 32) = sample->bytesper;
-	*(Uint16 *) (conv + 34) = sample->bytesper * 8;
+	*(Uint16 *) (conv + 20) = USHORT(1);
+	*(Uint16 *) (conv + 22) = USHORT(1);
+	*(Uint32 *) (conv + 24) = ULONG(sample->rate);
+	*(Uint32 *) (conv + 28) = ULONG(sample->rate * sample->bytesper);
+	*(Uint16 *) (conv + 32) = USHORT(sample->bytesper);
+	*(Uint16 *) (conv + 34) = USHORT(sample->bytesper * 8);
 
 	// Data chunk.
 	strcpy(conv + 36, "data");
-	*(Uint32 *) (conv + 40) = sample->size;
+	*(Uint32 *) (conv + 40) = ULONG(sample->size);
 	memcpy(conv + 44, sample->data, sample->size);
 
 	buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
