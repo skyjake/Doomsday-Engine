@@ -105,4 +105,6 @@ boolean         DL_BoxIterator(fixed_t box[4], void *ptr,
 int             Rend_SubsectorClipper(fvertex_t * out, subsector_t *sub,
 									  float x, float y, float radius);
 
+void            DL_ClipBySight(int ssecidx);
+
 #endif
