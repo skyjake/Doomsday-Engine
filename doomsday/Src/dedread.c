@@ -40,7 +40,8 @@
 
 // Some macros.
 #define STOPCHAR(x)	(isspace(x) || x == ';' || x == '#' || x == '{' \
-					|| x == '}' || x == '=' || x == '"' || x == '*')
+					|| x == '}' || x == '=' || x == '"' || x == '*' \
+					|| x == '|')
 
 #define ISTOKEN(X)	(!stricmp(token, X))
 
@@ -63,11 +64,13 @@
 
 #define READLABEL_NOBREAK	if(!ReadLabel(label)) { retval = false; goto ded_end_read; }
 
-#define READBYTE(X)	if(!ReadByte(&X)) { retval = false; goto ded_end_read; }
-#define READINT(X)	if(!ReadInt(&X, false)) { retval = false; goto ded_end_read; }
-#define READUINT(X)	if(!ReadInt(&X, true)) { retval = false; goto ded_end_read; }
-#define READFLT(X)	if(!ReadFloat(&X)) { retval = false; goto ded_end_read; }
-#define READNBYTEVEC(X,N) if(!ReadNByteVector(X, N)) { retval = false; goto ded_end_read; }
+#define FAILURE		retval = false; goto ded_end_read;
+#define READBYTE(X)	if(!ReadByte(&X)) { FAILURE }
+#define READINT(X)	if(!ReadInt(&X, false)) { FAILURE }
+#define READUINT(X)	if(!ReadInt(&X, true)) { FAILURE }
+#define READFLT(X)	if(!ReadFloat(&X)) { FAILURE }
+#define READNBYTEVEC(X,N) if(!ReadNByteVector(X, N)) { FAILURE }
+#define READFLAGS(X,P) if(!ReadFlags(&X, P)) { FAILURE }
 
 #define RV_BYTE(lab, X)	if(ISLABEL(lab)) { READBYTE(X); } else
 #define RV_INT(lab, X)	if(ISLABEL(lab)) { READINT(X); } else
@@ -81,6 +84,7 @@
 #define RV_STR(lab, X)	if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)	if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
 								I = strtol(token,0,0); } else
+#define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
 #define RV_END			{ SetError2("Unknown label.", label); retval = false; goto ded_end_read; }
 
 // TYPES -------------------------------------------------------------------
@@ -106,6 +110,7 @@ typedef struct dedsource_s {
 
 char token[128];
 char dedReadError[512];
+char unreadToken[128];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -195,9 +200,18 @@ void SkipComment()
 //==========================================================================
 int ReadToken()
 {
-	int ch = FGetC();
+	int ch;
 	char *out = token;
 
+	// Has a token been unread?
+	if(unreadToken[0])
+	{
+		strcpy(token, unreadToken);
+		strcpy(unreadToken, "");
+		return true;
+	}
+
+	ch = FGetC();
 	if(source->atEnd) return false;
 
 	// Skip whitespace and comments in the beginning.
@@ -225,6 +239,15 @@ int ReadToken()
 	// Put the last read character back in the stream.
 	FUngetC(ch);
 	return true;
+}
+
+//===========================================================================
+// UnreadToken
+//===========================================================================
+void UnreadToken(const char *token)
+{
+	// The next time ReadToken() is called, this is returned.
+	strcpy(unreadToken, token);
 }
 
 //==========================================================================
@@ -358,6 +381,51 @@ int ReadFloat(float *dest)
 		return false;
 	}
 	*dest = (float) strtod(token, 0);
+	return true;
+}
+
+//===========================================================================
+// ReadFlags
+//===========================================================================
+int ReadFlags(unsigned int *dest, const char *prefix)
+{
+	char flag[1024];
+
+	// By default, no flags are set.
+	*dest = 0;
+
+	ReadToken();
+	UnreadToken(token);
+	if(ISTOKEN("\""))
+	{
+		// The old format.
+		if(!ReadString(flag, sizeof(flag))) return false;
+		*dest = Def_EvalFlags(flag);
+		return true;
+	}
+
+	for(;;)
+	{
+		// Read the flag.
+		ReadToken();
+		if(prefix)
+		{
+			strcpy(flag, prefix);
+			strcat(flag, token);
+		}
+		else
+		{
+			strcpy(flag, token);
+		}
+		*dest |= Def_EvalFlags(flag);
+		
+		if(!ReadToken()) break;
+		if(!ISTOKEN("|")) // | is required for multiple flags.
+		{
+			UnreadToken(token);
+			break;
+		}
+	}
 	return true;
 }
 
@@ -614,7 +682,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_STR("Mus prefix", dummy)
 				RV_STR("Text prefix", dummy)
 				RV_STR("Model path", ded->model_path)
-				RV_STR("Common model flags", ded->model_flags)
+				RV_FLAGS("Common model flags", ded->model_flags, "df_")
 				RV_FLT("Default model scale", ded->model_scale)
 				RV_FLT("Default model offset", ded->model_offset)
 				RV_END
@@ -669,9 +737,9 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_FLT("Height", mo->height)
 				RV_INT("Mass", mo->mass)
 				RV_INT("Damage", mo->damage)
-				RV_STR("Flags", mo->flags[0])
-				RV_STR("Flags2", mo->flags[1])
-				RV_STR("Flags3", mo->flags[2])
+				RV_FLAGS("Flags", mo->flags[0], "mf_")
+				RV_FLAGS("Flags2", mo->flags[1], "mf2_")
+				RV_FLAGS("Flags3", mo->flags[2], "mf3_")
 				RV_INT("Misc1", mo->misc[0])
 				RV_INT("Misc2", mo->misc[1])
 				RV_INT("Misc3", mo->misc[2])
@@ -690,7 +758,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			{
 				READLABEL;
 				RV_STR("ID", st->id)
-				RV_STR("Flags", st->flags)
+				RV_FLAGS("Flags", st->flags, "statef_")
 				RV_STR("Sprite", st->sprite.id)
 				RV_INT("Frame", st->frame)
 				RV_INT("Tics", st->tics)
@@ -738,7 +806,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_FLT("Green", lig->color[1])
 				RV_FLT("Blue", lig->color[2])
 				RV_VEC("Color", lig->color, 3)
-				RV_STR("Flags", lig->flags_string)
+				RV_FLAGS("Flags", lig->flags, "lgf_")
 				RV_STR("Top map", lig->up.id)
 				RV_STR("Bottom map", lig->down.id)
 				RV_STR("Side map", lig->sides.id)
@@ -768,9 +836,9 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_INT("Off", mdl->off)
 				RV_STR("Sprite", mdl->sprite.id)
 				RV_INT("Sprite frame", mdl->spriteframe)
-				RV_STR("Group", mdl->group)
+				RV_FLAGS("Group", mdl->group, "mg_")
 				RV_INT("Selector", mdl->selector)
-				RV_STR("Flags", mdl->flags)
+				RV_FLAGS("Flags", mdl->flags, "df_")
 				RV_FLT("Inter", mdl->intermark)
 				RV_INT("Skin tics", mdl->skintics)
 				RV_FLT("Resize", mdl->resize)
@@ -799,7 +867,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						RV_INT("Skin", mdl->sub[sub].skin)
 						RV_INT("Skin range", mdl->sub[sub].skinrange)
 						RV_VEC("Offset XYZ", mdl->sub[sub].offset, 3)
-						RV_STR("Flags", mdl->sub[sub].flags)
+						RV_FLAGS("Flags", mdl->sub[sub].flags, "df_")
 						RV_FLT("Transparent", mdl->sub[sub].alpha)
 						RV_FLT("Parm", mdl->sub[sub].parm)
 						RV_BYTE("Selskin mask", mdl->sub[sub].selskinbits[0])
@@ -823,13 +891,13 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				int i;
 				if(!strcmp(mdl->state, "-"))		strcpy(mdl->state,		prevmdl->state);
 				if(!strcmp(mdl->sprite.id, "-"))	strcpy(mdl->sprite.id,	prevmdl->sprite.id);
-				if(!strcmp(mdl->group, "-"))		strcpy(mdl->group,		prevmdl->group);
-				if(!strcmp(mdl->flags, "-"))		strcpy(mdl->flags,		prevmdl->flags);
+				//if(!strcmp(mdl->group, "-"))		strcpy(mdl->group,		prevmdl->group);
+				//if(!strcmp(mdl->flags, "-"))		strcpy(mdl->flags,		prevmdl->flags);
 				for(i = 0; i < DED_MAX_SUB_MODELS; i++)
 				{
 					if(!strcmp(mdl->sub[i].filename.path, "-"))	strcpy(mdl->sub[i].filename.path,	prevmdl->sub[i].filename.path);
 					if(!strcmp(mdl->sub[i].frame, "-"))			strcpy(mdl->sub[i].frame,			prevmdl->sub[i].frame);
-					if(!strcmp(mdl->sub[i].flags, "-"))			strcpy(mdl->sub[i].flags,			prevmdl->sub[i].flags);
+					//if(!strcmp(mdl->sub[i].flags, "-"))			strcpy(mdl->sub[i].flags,			prevmdl->sub[i].flags);
 				}
 			}
 			prev_modef_idx = idx;			
@@ -852,7 +920,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_INT("Priority", snd->priority)
 				RV_INT("Max channels", snd->channels)
 				RV_INT("Group", snd->group)
-				RV_STR("Flags", snd->flags)
+				RV_FLAGS("Flags", snd->flags, "sf_")
 				RV_STR("Ext", snd->ext.path)
 				RV_STR("File", snd->ext.path)
 				RV_STR("File name", snd->ext.path)
@@ -897,7 +965,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_STR("ID", mi->id)
 				RV_STR("Name", mi->name)
 				RV_STR("Author", mi->author)
-				RV_STR("Flags", mi->flags)
+				RV_FLAGS("Flags", mi->flags, "mif_")
 				RV_STR("Music", mi->music)
 				RV_FLT("Par time", mi->partime)
 				RV_FLT("Fog color R", mi->fog_color[0])
@@ -917,7 +985,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 					for(;;)
 					{
 						READLABEL;
-						RV_STR("Flags", sl->flags)
+						RV_FLAGS("Flags", sl->flags, "slf_")
 						RV_STR("Texture", sl->texture)
 						RV_FLT("Offset", sl->offset)
 						RV_FLT("Color limit", sl->color_limit)
@@ -1141,7 +1209,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_STR("Alt mobj", gen->type2)
 				RV_STR("Damage mobj", gen->damage)
 				RV_STR("Map", gen->map)
-				RV_STR("Flags", gen->flags_string)
+				RV_FLAGS("Flags", gen->flags, "gnf_")
 				RV_FLT("Speed", gen->speed)
 				RV_FLT("Speed Rnd", gen->spd_variance)
 				RV_VEC("Vector", gen->vector, 3)
@@ -1175,16 +1243,19 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 					for(;;)
 					{
 						READLABEL;
-						RV_STR("Type", st->type)
+						RV_FLAGS("Type", st->type, "pt_")
 						RV_INT("Tics", st->tics)
 						RV_FLT("Rnd", st->variance)
 						RV_VEC("Color", st->color, 4)
 						RV_FLT("Radius", st->radius)
 						RV_FLT("Radius rnd", st->radius_variance)
-						RV_STR("Flags", st->flags)
+						RV_FLAGS("Flags", st->flags, "ptf_")
 						RV_FLT("Bounce", st->bounce)
 						RV_FLT("Gravity", st->gravity)
 						RV_FLT("Resistance", st->resistance)
+						RV_STR("Frame", st->frame_name)
+						RV_STR("End frame", st->end_frame_name)
+						RV_VEC("Spin", st->spin, 2)
 						RV_END
 						CHECKSC;
 					}
@@ -1251,7 +1322,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			for(;;)
 			{
 				READLABEL;
-				RV_STR("Flags", decor->flags_str)
+				RV_FLAGS("Flags", decor->flags, "dcf_")
 				if(ISLABEL("Texture"))
 				{
 					READSTR(decor->surface)
@@ -1328,7 +1399,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 					}
 					grp->count = ++sub;
 				}
-				else RV_STR("Flags", grp->flags)
+				else RV_FLAGS("Flags", grp->flags, "tgf_")
 				RV_END
 				CHECKSC;
 			}
@@ -1345,11 +1416,11 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				READLABEL;
 				RV_INT("ID", l->id)
 				RV_STR("Comment", l->comment)
-				RV_STR("Flags", l->flags[0])
-				RV_STR("Flags2", l->flags[1])
-				RV_STR("Flags3", l->flags[2])
-				RV_STR("Class", l->line_class)
-				RV_STR("Type", l->act_type)
+				RV_FLAGS("Flags", l->flags[0], "ltf_")
+				RV_FLAGS("Flags2", l->flags[1], "ltf2_")
+				RV_FLAGS("Flags3", l->flags[2], "ltf3_")
+				RV_FLAGS("Class", l->line_class, "ltc_")
+				RV_FLAGS("Type", l->act_type, "lat_")
 				RV_INT("Count", l->act_count)
 				RV_FLT("Time", l->act_time)
 				RV_INT("Act tag", l->act_tag)
@@ -1357,22 +1428,22 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_INT("Ap1", l->aparm[1])
 				RV_INT("Ap2", l->aparm[2])
 				RV_INT("Ap3", l->aparm[3])
-				RV_STR("Ap4", l->aparm_str[0])
-				RV_INT("Ap5", l->aparm[4])
-				RV_STR("Ap6", l->aparm_str[1])
-				RV_INT("Ap7", l->aparm[5])
-				RV_INT("Ap8", l->aparm[6])
-				RV_STR("Ap9", l->aparm_str[2])
+				RV_FLAGS("Ap4", l->aparm[4], "lref_")
+				RV_INT("Ap5", l->aparm[5])
+				RV_FLAGS("Ap6", l->aparm[6], "lref_")
+				RV_INT("Ap7", l->aparm[7])
+				RV_INT("Ap8", l->aparm[8])
+				RV_STR("Ap9", l->aparm9)
 				RV_INT("Health above", l->aparm[0])
 				RV_INT("Health below", l->aparm[1])
 				RV_INT("Power above", l->aparm[2])
 				RV_INT("Power below", l->aparm[3])
-				RV_STR("Line act lref", l->aparm_str[0])
-				RV_INT("Line act lrefd", l->aparm[4])
-				RV_STR("Line inact lref", l->aparm_str[1])
-				RV_INT("Line inact lrefd", l->aparm[5])
-				RV_INT("Color", l->aparm[6])
-				RV_STR("Thing type", l->aparm_str[2])
+				RV_FLAGS("Line act lref", l->aparm[4], "lref_")
+				RV_INT("Line act lrefd", l->aparm[5])
+				RV_FLAGS("Line inact lref", l->aparm[6], "lref_")
+				RV_INT("Line inact lrefd", l->aparm[7])
+				RV_INT("Color", l->aparm[8])
+				RV_STR("Thing type", l->aparm9)
 				RV_FLT("Ticker start time", l->ticker_start)
 				RV_FLT("Ticker end time", l->ticker_end)
 				RV_INT("Ticker tics", l->ticker_interval)
@@ -1381,7 +1452,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_INT("Event chain", l->ev_chain)
 				RV_INT("Act chain", l->act_chain)
 				RV_INT("Deact chain", l->deact_chain)
-				RV_STR("Wall section", l->wallsection)
+				RV_FLAGS("Wall section", l->wallsection, "lws_")
 				RV_STR("Act texture", l->act_tex)
 				RV_STR("Deact texture", l->deact_tex)
 				RV_STR("Act message", l->act_msg)
@@ -1448,16 +1519,16 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				READLABEL;
 				RV_INT("ID", sec->id)
 				RV_STR("Comment", sec->comment)
-				RV_STR("Flags", sec->flags)
+				RV_FLAGS("Flags", sec->flags, "stf_")
 				RV_INT("Act tag", sec->act_tag)
 				RV_INT("Floor chain", sec->chain[0])
 				RV_INT("Ceiling chain", sec->chain[1])
 				RV_INT("Inside chain", sec->chain[2])
 				RV_INT("Ticker chain", sec->chain[3])
-				RV_STR("Floor chain flags", sec->chain_flags[0])
-				RV_STR("Ceiling chain flags", sec->chain_flags[1])
-				RV_STR("Inside chain flags", sec->chain_flags[2])
-				RV_STR("Ticker chain flags", sec->chain_flags[3])
+				RV_FLAGS("Floor chain flags", sec->chain_flags[0], "scef_")
+				RV_FLAGS("Ceiling chain flags", sec->chain_flags[1], "scef_")
+				RV_FLAGS("Inside chain flags", sec->chain_flags[2], "scef_")
+				RV_FLAGS("Ticker chain flags", sec->chain_flags[3], "scef_")
 				RV_FLT("Floor chain start time", sec->start[0])
 				RV_FLT("Ceiling chain start time", sec->start[1])
 				RV_FLT("Inside chain start time", sec->start[2])
