@@ -228,15 +228,20 @@ void IN_InitStats(void)
 		}
 	}
 
+	time = leveltime/35;
+	hours = time/3600;
+	time -= hours*3600;
+	minutes = time/60;
+	time -= minutes*60;
+	seconds = time;
+
+#ifdef _DEBUG
+	Con_Printf("%i %i %i\n", hours, minutes, seconds);
+#endif
+
 	if(!IS_NETGAME)
 	{
 		gametype = SINGLE;
-		time = leveltime/35;
-		hours = time/3600;
-		time -= hours*3600;
-		minutes = time/60;
-		time -= minutes*60;
-		seconds = time;
 	}
 	else if(/*IS_NETGAME && */!deathmatch)
 	{
@@ -928,11 +933,8 @@ void IN_DrawTime(int x, int y, int h, int m, int s)
 		IN_DrawNumber(m, x, y, 2);
 	}
 	x += 34;
-	if(s)
-	{
-		IN_DrTextB(":", x-8, y);
-		IN_DrawNumber(s, x, y, 2);
-	}
+	IN_DrTextB(":", x-8, y);
+	IN_DrawNumber(s, x, y, 2);
 }
 
 //========================================================================
