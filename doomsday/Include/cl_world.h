@@ -12,8 +12,9 @@ int Cl_ReadSectorDelta(void);
 int Cl_ReadLumpDelta(void);
 int Cl_ReadSideDelta(void);
 int Cl_ReadPolyDelta(void);
-void Cl_ReadSectorDelta2(void);
-void Cl_ReadSideDelta2(void);
-void Cl_ReadPolyDelta2(void);
+
+void Cl_ReadSectorDelta2(boolean skip);
+void Cl_ReadSideDelta2(boolean skip);
+void Cl_ReadPolyDelta2(boolean skip);
 
 #endif 
