@@ -683,6 +683,9 @@ int DD_GetInteger(int ddvalue)
 		// How about some specials?
 		switch(ddvalue)
 		{
+		case DD_DYNLIGHT_TEXTURE:
+			return dltexname;
+
 		case DD_TRACE_ADDRESS:
 			return (int) &trace;
 			
