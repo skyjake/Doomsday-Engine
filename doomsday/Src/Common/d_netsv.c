@@ -434,9 +434,9 @@ void NetSv_NewPlayerEnters(int plrnumber)
 }
 
 //===========================================================================
-// NetSv_SendMessage
+// NetSv_SendMessageEx
 //===========================================================================
-void NetSv_SendMessage(int plrNum, char *msg)
+void NetSv_SendMessageEx(int plrNum, char *msg, boolean yellow)
 {
 	if(IS_CLIENT || !netsv_allow_sendmsg) return;
 	if(plrNum >= 0 && plrNum < MAXPLAYERS)
@@ -446,8 +446,25 @@ void NetSv_SendMessage(int plrNum, char *msg)
 		// Also show locally. No sound is played!
 		D_NetMessageNoSound(msg); 
 	}
-	Net_SendPacket(plrNum | DDSP_RELIABLE, GPT_MESSAGE,
-		msg, strlen(msg)+1);
+	Net_SendPacket(plrNum | DDSP_RELIABLE, 
+		yellow? GPT_YELLOW_MESSAGE : GPT_MESSAGE,
+		msg, strlen(msg) + 1);
+}
+
+//===========================================================================
+// NetSv_SendMessage
+//===========================================================================
+void NetSv_SendMessage(int plrNum, char *msg)
+{
+	NetSv_SendMessageEx(plrNum, msg, false);
+}
+
+//===========================================================================
+// NetSv_SendYellowMessage
+//===========================================================================
+void NetSv_SendYellowMessage(int plrNum, char *msg)
+{
+	NetSv_SendMessageEx(plrNum, msg, true);
 }
 
 //===========================================================================

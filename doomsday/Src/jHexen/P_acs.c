@@ -1554,17 +1554,19 @@ static int CmdBeginPrint(void)
 
 static int CmdEndPrint(void)
 {
-	player_t *player;
-
 	if(ACScript->activator && ACScript->activator->player)
 	{
-		player = ACScript->activator->player;
+		P_SetMessage(ACScript->activator->player, PrintBuffer, true);
 	}
 	else
 	{
-		player = &players[consoleplayer];
+		int i;
+		// Send to everybody.
+		for(i = 0; i < MAXPLAYERS; i++)
+			if(players[i].plr->ingame)
+				P_SetMessage(&players[i], PrintBuffer, true);
 	}
-	P_SetMessage(player, PrintBuffer, true);
+
 	return SCRIPT_CONTINUE;
 }
 

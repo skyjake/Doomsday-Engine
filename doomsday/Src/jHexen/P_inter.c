@@ -68,7 +68,7 @@ void P_SetMessage(player_t *player, char *message, boolean ultmsg)
 {
 	extern boolean messageson;
 	extern int echoMsg;
-	
+
 	if((player->ultimateMessage || !messageson) && !ultmsg)
 	{
 		return;
@@ -109,7 +109,10 @@ void P_SetYellowMessage(player_t *player, char *message, boolean ultmsg)
 {
 	extern boolean messageson;
 	extern int echoMsg;
-	
+
+	// Servers are responsible for sending these messages to the clients.
+	NetSv_SendYellowMessage(player - players, message);
+
 	if((player->ultimateMessage || !messageson) && !ultmsg)
 	{
 		return;
@@ -131,14 +134,10 @@ void P_SetYellowMessage(player_t *player, char *message, boolean ultmsg)
 	}
 	if(player == &players[consoleplayer])
 	{
-		//BorderTopRefresh = true;
 		GL_Update(DDUF_TOP);
 	}
 	// Also show the message in the console.
 	if(echoMsg) Con_FPrintf(CBLF_CYAN, "%s\n", message);
-
-	// Servers are responsible for sending these messages to the clients.
-	NetSv_SendMessage(player - players, message);
 }
 
 //==========================================================================

@@ -549,6 +549,12 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 #endif
 		break;
 
+#ifdef __JHEXEN__
+	case GPT_YELLOW_MESSAGE:
+		P_SetYellowMessage(&players[consoleplayer], data, true);
+		break;
+#endif
+
 	case GPT_CONSOLEPLAYER_STATE:
 		NetCl_UpdatePlayerState(data, consoleplayer);
 		break;

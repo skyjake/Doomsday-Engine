@@ -21,6 +21,7 @@ void P_Telefrag(mobj_t *thing);
 void NetSv_NewPlayerEnters(int plrnumber);
 void NetSv_SendGameState(int flags, int to);
 void NetSv_SendMessage(int plrNum, char *msg);
+void NetSv_SendYellowMessage(int plrNum, char *msg);
 void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean reliable);
 void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean reliable);
 void NetSv_PSpriteChange(int plrNum, int state);
