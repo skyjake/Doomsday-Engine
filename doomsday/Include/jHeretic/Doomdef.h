@@ -540,12 +540,6 @@ extern boolean cdrom; // true if cd-rom mode active ("-cdrom")
 
 extern boolean deathmatch; // only if started as net death
 
-//extern boolean netgame; // only true if >1 player
-//#define netgame			gi.Get(DD_NETGAME)
-//#define server			gi.Get(DD_SERVER)
-
-//extern boolean playeringame[MAXPLAYERS];
-
 #define consoleplayer	Get(DD_CONSOLEPLAYER)
 #define displayplayer	Get(DD_DISPLAYPLAYER)
 
@@ -574,28 +568,17 @@ extern	int			levelstarttic;		// gametic at level start
 extern	int			leveltime;			// tics in game play for par
 extern	int			actual_leveltime;
 
-//extern	ticcmd_t	netcmds[MAXPLAYERS][BACKUPTICS];
-//extern int ticdup;
 #define ticdup			1 //gi.Get(DD_TICDUP)
 
-//#define	MAXNETNODES		8
-//extern	ticcmd_t		localcmds[BACKUPTICS];
 extern int rndindex;
 
-//extern int gametic, maketic;
 #define gametic		Get(DD_GAMETIC)
 #define maketic		Get(DD_MAKETIC)
 
-//extern	int        	nettics[MAXNETNODES];
-
-//#define SAVEGAMESIZE 0x80000
 #define SAVESTRINGSIZE 24
-//extern byte *savebuffer;
-//extern byte *save_p;
 
 extern mapthing_t *deathmatch_p;
 extern mapthing_t deathmatchstarts[16];
-//extern mapthing_t *playerstart_p, playerstarts[MAXPLAYERS];
 
 extern int viewwindowx;
 extern int viewwindowy;
@@ -624,36 +607,10 @@ extern boolean autostart;
 ===============================================================================
 */
 
-// Memory zone handled by Doomsday.
-/*#define	Z_Malloc		gi.Z_Malloc
-#define Z_Free			gi.Z_Free
-#define Z_FreeTags		gi.Z_FreeTags
-#define Z_ChangeTag		gi.Z_ChangeTag
-#define Z_CheckHeap		gi.Z_CheckHeap*/
-
-/*
-void	W_InitMultipleFiles (char **filenames);
-
-int		W_CheckNumForName (char *name);
-int		W_GetNumForName (char *name);
-
-int		W_LumpLength (int lump);
-void	W_ReadLump (int lump, void *dest);
-
-void	*W_CacheLumpNum (int lump, int tag);
-void	*W_CacheLumpName (char *name, int tag);
-*/
-
-/*#define W_LumpLength		gi.W_LumpLength
-#define W_CacheLumpNum		gi.W_CacheLumpNum
-#define W_CacheLumpName		gi.W_CacheLumpName
-#define W_GetNumForName		gi.W_GetNumForName
-#define W_CheckNumForName	gi.W_CheckNumForName*/
-
-
 //----------
 //BASE LEVEL
 //----------
+void H_IdentifyVersion(void);
 void D_DoomMain (void);
 void D_StartTitle (void);
 void IncThermo(void);
@@ -714,32 +671,8 @@ void I_Init (void);
 // called by D_DoomMain
 // determines the hardware configuration and sets up the video mode
 
-//void I_Error (char *error, ...);
-//#define I_Error		gi.Error
-// called by anything that can generate a terminal error
-// bad exit with diagnostic message
-
-//void I_Quit (void);
-//#define I_Quit		gi.Quit
-// called by M_Responder when quit is selected
-// clean exit, displays sell blurb
-
-//void I_SetPalette (byte *palette);
-// takes full 8 bit values
-
-//void I_Update(void);
-// Copy buffer to video
-
-//void I_WipeUpdate(wipe_t wipe);
-// Copy buffer to video with wipe effect
-
-//void I_WaitVBL(int count);
-// wait for vertical retrace or pause a bit
-
 void I_BeginRead (void);
 void I_EndRead (void);
-
-//void I_Tactile (int on, int off, int total);
 
 //----
 //GAME
@@ -755,8 +688,6 @@ void G_DeferedInitNew (skill_t skill, int episode, int map);
 // can be called by the startup code or M_Responder
 // a normal game starts at map 1, but a warp test can start elsewhere
 
-//boolean G_CheckDemoStatus (void);
-
 void G_DeferedPlayDemo (char *demo);
 
 void G_LoadGame (char *name);
@@ -771,16 +702,6 @@ void G_DoReborn (int playernum);
 void G_StopDemo(void);
 void G_DemoEnds(void);
 void G_DemoAborted(void);
-
-// called by M_Responder
-
-// Support routines for saving games
-//void SV_Open(char *fileName);
-//void SV_Close(char *fileName);
-//void SV_Write(void *buffer, int size);
-//void SV_WriteByte(byte val);
-//void SV_WriteWord(unsigned short val);
-//void SV_WriteLong(unsigned int val);
 
 void G_RecordDemo (skill_t skill, int numplayers, int episode
 	, int map, char *name);
@@ -814,40 +735,17 @@ void P_SetupLevel (int episode, int map, int playermask, skill_t skill);
 void P_Init (void);
 // called by startup code
 
-//void R_RenderPlayerView (player_t *player);
-// called by G_Drawer
-
 void R_Init (void);
 // called by startup code
 
-//void R_DrawViewBorder (void);
-//void R_DrawTopBorder (void);
-// if the view size is not full screen, draws a border around it
-
 void R_SetViewSize (int blocks, int detail);
 // called by M_Responder
-
-/*
-//int	R_FlatNumForName (char *name);
-#define R_FlatNumForName	gi.R_FlatNumForName
-
-//int	R_TextureNumForName (char *name);
-#define R_TextureNumForName	gi.R_TextureNumForName
-
-//int	R_CheckTextureNumForName (char *name);
-#define R_CheckTextureNumForName	gi.R_CheckTextureNumForName
-*/
-// called by P_Ticker for switches and animations
-// returns the texture number for the texture name
 
 
 //----
 //MISC
 //----
 #define myargc	Argc()
-
-//#define M_CheckParm		gi.CheckParm
-// returns the position of the given parameter in the arg list (0 if not found)
 
 void strcatQuoted(char *dest, char *src);
 
@@ -872,14 +770,7 @@ void M_ClearBox (fixed_t *box);
 void M_AddToBox (fixed_t *box, fixed_t x, fixed_t y);
 // bounding box functions
 
-/*#define M_WriteFile		gi.WriteFile
-#define M_ReadFile		gi.ReadFile*/
-
 void G_DoScreenShot (void);
-
-/*void M_LoadDefaults (void);
-
-void M_SaveDefaults (void);*/
 
 int M_DrawText (int x, int y, boolean direct, char *string);
 
