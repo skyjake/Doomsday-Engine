@@ -6,6 +6,9 @@
 
 #define	MAXINTERCEPTS	128
 
+#define IS_SECTOR_LINKED(thing)		((thing)->sprev != NULL)
+#define IS_BLOCK_LINKED(thing)		((thing)->bnext != NULL)
+
 extern fixed_t opentop, openbottom, openrange, lowfloor;
 extern divline_t trace;
 

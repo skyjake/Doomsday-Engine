@@ -472,8 +472,8 @@ void P_UnlinkFromLines(mobj_t *thing)
 //==========================================================================
 void P_UnlinkThing(mobj_t *thing)
 {
-	if(thing->sprev) P_UnlinkFromSector(thing);
-	if(thing->bnext) P_UnlinkFromBlock(thing);
+	if(IS_SECTOR_LINKED(thing)) P_UnlinkFromSector(thing);
+	if(IS_BLOCK_LINKED(thing)) P_UnlinkFromBlock(thing);
 	P_UnlinkFromLines(thing);
 }
 
