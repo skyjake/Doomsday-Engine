@@ -36,13 +36,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#ifndef true
-#define true 1
-#endif
-
-#ifndef false
-#define false 0
-#endif
+#define MAX_RECUR_DEPTH		30
 
 // Some macros.
 #define STOPCHAR(x)	(isspace(x) || x == ';' || x == '#' || x == '{' \
@@ -59,8 +53,8 @@
 
 #define CHECKSC		ReadToken(); if(!ISTOKEN(";")) { MISSING_SC_ERROR; }
 
-#define FINDBEGIN	while(!ISTOKEN("{") && !dedend) ReadToken(); 
-#define FINDEND		while(!ISTOKEN("}") && !dedend) ReadToken(); 
+#define FINDBEGIN	while(!ISTOKEN("{") && !source->atEnd) ReadToken(); 
+#define FINDEND		while(!ISTOKEN("}") && !source->atEnd) ReadToken(); 
 
 #define ISLABEL(X)	(!stricmp(label, X))
 
@@ -87,9 +81,17 @@
 #define RV_STR(lab, X)	if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)	if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
 								I = strtol(token,0,0); } else
-#define RV_END			{ SetError("Unknown label."); retval = false; goto ded_end_read; }
+#define RV_END			{ SetError2("Unknown label.", label); retval = false; goto ded_end_read; }
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct dedsource_s {
+	char *buffer;
+	char *pos;
+	boolean atEnd;
+	int lineNumber;
+	const char *fileName;
+} dedsource_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -101,14 +103,13 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char	token[128];
-char	dedReadError[256];
-int		lineNumber;
+char token[128];
+char dedReadError[512];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char *sourceBuffer, *sourcePos;
-static boolean dedend = true;
+static dedsource_t sourceStack[MAX_RECUR_DEPTH];
+static dedsource_t *source;	// Points to the current source.
 
 // CODE --------------------------------------------------------------------
 
@@ -117,7 +118,19 @@ static boolean dedend = true;
 //==========================================================================
 void SetError(char *str)
 {
-	sprintf(dedReadError, "Line %i: %s", lineNumber, str);
+	sprintf(dedReadError, "Error in %s:\n  Line %i: %s", 
+		source? source->fileName : "?",
+		source? source->lineNumber : 0, str);
+}
+
+//==========================================================================
+// SetError2
+//==========================================================================
+void SetError2(char *str, char *more)
+{
+	sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)", 
+		source? source->fileName : "?",
+		source? source->lineNumber : 0, str, more);
 }
 
 //==========================================================================
@@ -127,10 +140,10 @@ void SetError(char *str)
 //==========================================================================
 int FGetC()
 {
-	int ch = (unsigned char) *sourcePos; 
+	int ch = (unsigned char) *source->pos; 
 
-	if(ch) sourcePos++; else dedend = true;	
-	if(ch == '\n') lineNumber++;
+	if(ch) source->pos++; else source->atEnd = true;	
+	if(ch == '\n') source->lineNumber++;
 	if(ch == '\r') return FGetC();
 	return ch;
 }
@@ -141,9 +154,9 @@ int FGetC()
 //==========================================================================
 int FUngetC(int ch)
 {
-	if(dedend) return 0;
-	if(ch == '\n') lineNumber--;
-	if(sourcePos > sourceBuffer) sourcePos--;
+	if(source->atEnd) return 0;
+	if(ch == '\n') source->lineNumber--;
+	if(source->pos > source->buffer) source->pos--;
 	return ch;
 }
 
@@ -159,11 +172,11 @@ void SkipComment()
 	if(ch == '\n') return; // Comment ends right away.
 	if(ch != '>') // Single-line comment?
 	{
-		while(FGetC() != '\n' && !dedend);
+		while(FGetC() != '\n' && !source->atEnd);
 	}
 	else // Multiline comment?
 	{
-		while(!dedend)
+		while(!source->atEnd)
 		{
 			ch = FGetC();
 			if(seq) 
@@ -184,14 +197,14 @@ int ReadToken()
 	int ch = FGetC();
 	char *out = token;
 
-	if(dedend) return false;
+	if(source->atEnd) return false;
 
 	// Skip whitespace and comments in the beginning.
 	while((ch == '#' || isspace(ch))) 
 	{
 		if(ch == '#') SkipComment();
 		ch = FGetC();
-		if(dedend) return false;
+		if(source->atEnd) return false;
 	}
 	// Always store the first character.
 	*out++ = ch;
@@ -201,7 +214,7 @@ int ReadToken()
 		*out = 0;
 		return true;
 	}
-	while(!STOPCHAR(ch) && !dedend)
+	while(!STOPCHAR(ch) && !source->atEnd)
 	{
 		// Store the character in the buffer.
 		ch = FGetC();
@@ -233,7 +246,7 @@ int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
 	ch = FGetC();
 	while(esc || ch != '"')	// The string-end-character.
 	{
-		if(dedend) return false;
+		if(source->atEnd) return false;
 		// If a newline is found, skip all whitespace that follows.
 		if(newl)
 		{
@@ -357,7 +370,7 @@ int ReadLabel(char *label)
 	for(;;)
 	{
 		ReadToken();
-		if(dedend)
+		if(source->atEnd)
 		{
 			SetError("Unexpected end of file.");
 			return false;
@@ -377,15 +390,69 @@ int ReadLabel(char *label)
 		strcat(label, token);
 	}
 	return true;
-}					
+}		
+
+//===========================================================================
+// DED_Include
+//===========================================================================
+void DED_Include(ded_t *ded, char *fileName, directory_t *dir)
+{
+	char tmp[256], path[256];
+
+	M_TranslatePath(fileName, tmp);
+	if(!Dir_IsAbsolute(tmp))
+	{
+		sprintf(path, "%s%s", dir->path, tmp);
+	}
+	else
+	{
+		strcpy(path, tmp);
+	}
+	Def_ReadProcessDED(path);
+	strcpy(token, "");
+}
 
 //===========================================================================
 // DED_InitReader
 //===========================================================================
-void DED_InitReader(char *buffer)
+void DED_InitReader(char *buffer, const char *fileName)
 {
-	sourcePos = sourceBuffer = buffer;
-	dedend = false;
+	if(source && source - sourceStack >= MAX_RECUR_DEPTH)
+	{
+		Con_Error("DED_InitReader: Include recursion is too deep.\n");
+	}
+
+	if(!source)
+	{
+		// This'll be the first source.
+		source = sourceStack;
+	}
+	else
+	{
+		// Take the next entry in the stack.
+		source++;
+	}
+
+	source->pos = source->buffer = buffer;
+	source->atEnd = false;
+	source->lineNumber = 1;
+	source->fileName = fileName;
+}
+
+//===========================================================================
+// DED_CloseReader
+//===========================================================================
+void DED_CloseReader(void)
+{
+	if(source == sourceStack)
+	{
+		source = NULL;
+	}
+	else
+	{
+		memset(source, 0, sizeof(*source));
+		source--;
+	}
 }
 
 //===========================================================================
@@ -416,10 +483,11 @@ boolean DED_CheckCondition(const char *cond, boolean expected)
 //	Reads definitions from the given buffer.
 //	The definition is being loaded from 'sourcefile' (DED or WAD).
 //	The buffer must be null-terminated.
+//	'sourceFile' is just FYI.
 //==========================================================================
-int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
-				 const char *sourceFile) // Just informational...
+int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 {
+	char dummy[128];
 	int idx, retval = true;
 	char label[128], tmp[256];
 	ded_mobj_t *mo;
@@ -446,21 +514,11 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 	int bCopyNext = false;
 	directory_t fileDir;
 
-#if !__DEDMAN__
 	// For including other files -- we must know where we are.
 	Dir_FileDir(sourceFile, &fileDir);
-#endif
 
-	lineNumber = 1;
-	if(bDestroyOld)
-	{
-		// Clear all existing definitions.
-		DED_Destroy(ded);
-		DED_Init(ded);
-	}
-
-	// Start parsing the data...
-	DED_InitReader(buffer);
+	// Get the next entry from the source stack.
+	DED_InitReader(buffer, sourceFile);
 
 	while(ReadToken())
 	{
@@ -478,26 +536,21 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 				sub = 0;
 				ReadToken();
 			}
-#if !__DEDMAN__
 			if(DED_CheckCondition(token, sub))
 			{
 				// Ah, we're done. Get out of here.
 				goto ded_end_read; 
 			}
-#endif
 			CHECKSC;
 		}
 		if(ISTOKEN("Include"))
 		{
 			// A new include.
-			idx = DED_AddInclude(ded, "");
 			READSTR(tmp);
-#if !__DEDMAN__
-			M_TranslatePath(tmp, tmp);
-			if(!Dir_IsAbsolute(tmp))
-#endif
-				sprintf(ded->includes[idx].path, "%s%s", fileDir.path, tmp);
 			CHECKSC;
+
+			DED_Include(ded, tmp, &fileDir);
+			strcpy(label, "");
 		}
 		if(ISTOKEN("IncludeIf")) // An optional include.
 		{
@@ -508,50 +561,47 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 				sub = 0; 
 				ReadToken();
 			}
-#if !__DEDMAN__
 			if(DED_CheckCondition(token, sub))
 			{
-				idx = DED_AddInclude(ded, "");
 				READSTR(tmp);
-				M_TranslatePath(tmp, tmp);
-				if(!Dir_IsAbsolute(tmp))
-					sprintf(ded->includes[idx].path, "%s%s", fileDir.path, tmp);
+				CHECKSC;
+
+				DED_Include(ded, tmp, &fileDir);
+				strcpy(label, "");
 			}
 			else
-#endif
 			{
 				// Arg not found; just skip it.
 				READSTR(tmp);
+				CHECKSC;
 			}
-			CHECKSC;
 		}
 		if(ISTOKEN("ModelPath"))
 		{
 			// A new model path. Append to the list.
 			READSTR(label);
 			CHECKSC;
-#if !__DEDMAN__
 			R_AddModelPath(label, true);
-#endif
 		}
 		if(ISTOKEN("Header"))
 		{
 			FINDBEGIN;
 			// If we're appending an existing definition, skip the header.
-			if(!bDestroyOld)
+			/*if(!bDestroyOld)
 			{
 				while(!ISTOKEN("}") && !dedend) ReadToken();
 			}
-			else for(;;)
+			else */
+			for(;;)
 			{
 				READLABEL;
 				RV_INT("Version", ded->version)
-				RV_STR("Thing prefix", ded->mobj_prefix)
-				RV_STR("State prefix", ded->state_prefix)
-				RV_STR("Sprite prefix", ded->sprite_prefix)
-				RV_STR("Sfx prefix", ded->sfx_prefix)
-				RV_STR("Mus prefix", ded->mus_prefix)
-				RV_STR("Text prefix", ded->text_prefix)
+				RV_STR("Thing prefix", dummy)
+				RV_STR("State prefix", dummy)
+				RV_STR("Sprite prefix", dummy)
+				RV_STR("Sfx prefix", dummy)
+				RV_STR("Mus prefix", dummy)
+				RV_STR("Text prefix", dummy)
 				RV_STR("Model path", ded->model_path)
 				RV_STR("Common model flags", ded->model_flags)
 				RV_FLT("Default model scale", ded->model_scale)
@@ -1118,7 +1168,7 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 					FINDBEGIN;
 					ptr = temp;
 					ReadToken();
-					while(!ISTOKEN("}") && !dedend)
+					while(!ISTOKEN("}") && !source->atEnd)
 					{
 						if(ptr != temp) *ptr++ = ' ';
 						strcpy(ptr, token);
@@ -1131,7 +1181,7 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 						}
 						ReadToken();
 						// Skip all semicolons.
-						while(ISTOKEN(";") && !dedend) ReadToken();
+						while(ISTOKEN(";") && !source->atEnd) ReadToken();
 					}
 					fin->script = realloc(temp, strlen(temp) + 1);
 				}
@@ -1386,7 +1436,10 @@ int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
 	
 ded_end_read:
 	free(rootstr);
-//	fclose(file);
+
+	// Free the source stack entry we were using.
+	DED_CloseReader();
+
 	return retval;
 }
 
@@ -1394,7 +1447,7 @@ ded_end_read:
 // DED_Read
 //	Returns true if the file was successfully loaded.
 //===========================================================================
-int DED_Read(ded_t *ded, const char *sPathName, int bDestroyOld)
+int DED_Read(ded_t *ded, const char *sPathName)
 {
 	DFILE *file;
 	char *defData;
@@ -1402,53 +1455,41 @@ int DED_Read(ded_t *ded, const char *sPathName, int bDestroyOld)
 	int result;
 	char translated[256];
 
-#if !__DEDMAN__
 	M_TranslatePath(sPathName, translated);
-#else
-	strcpy(translated, sPathName);
-#endif
 	if((file = F_Open(translated, "rb")) == NULL)
 	{
-		lineNumber = 0;
 		SetError("File can't be opened for reading.");
 		return false;
 	}
 	// Allocate a large enough buffer and read the file.
-#if __DEDMAN__
-	fseek(file, 0, SEEK_END);
-#else
 	F_Seek(file, 0, SEEK_END);
-#endif
 	len = F_Tell(file);
 	F_Rewind(file);
 	defData = calloc(len + 1, 1);
 	F_Read(defData, len, file);
 	F_Close(file);
 	// Parse the definitions.
-	result = DED_ReadData(ded, bDestroyOld, defData, translated);
+	result = DED_ReadData(ded, defData, translated);
 	// Now we can free the buffer.
 	free(defData);
 	return result;
 }
 
-#if !__DEDMAN__
 //===========================================================================
 // DED_ReadLump
 //	Reads definitions from the given lump.
 //===========================================================================
-int DED_ReadLump(ded_t *ded, int lump, int bDestroyOld)
+int DED_ReadLump(ded_t *ded, int lump)
 {
 	int result;
 
 	if(lump < 0 || lump >= numlumps) 
 	{
-		lineNumber = 0;
 		SetError("Bad lump number.");
 		return false;
 	}
-	result = DED_ReadData(ded, bDestroyOld, W_CacheLumpNum(lump, PU_STATIC),
+	result = DED_ReadData(ded, W_CacheLumpNum(lump, PU_STATIC),
 		W_LumpSourceFile(lump));
 	W_ChangeCacheTag(lump, PU_CACHE);
 	return result;
 }
-#endif
