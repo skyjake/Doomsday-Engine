@@ -388,77 +388,6 @@ void Cl_RemoveMovers()
 	}
 }
 
-void Cl_HandleSectorUpdate()
-{
-/*	fixed_t dest, speed;
-	packet_sectorupdate_t upd;
-	sector_t *sec;
-
-	while(!Msg_End())
-	{
-		Msg_Read(&upd, sizeof(upd));
-		if(upd.sector >= numsectors) break; // Bugger.
-		sec = SECTOR_PTR(upd.sector);
-		if(upd.flags & DDSU_FLOOR_HEIGHT)
-		{
-			sec->floorheight = Msg_ReadShort() << FRACBITS; 
-		}
-		if(upd.flags & DDSU_FLOOR_MOVING)
-		{
-			dest = Msg_ReadShort() << FRACBITS;
-			speed = Msg_ReadShort() << 8;
-			Cl_AddMover(upd.sector, mvt_floor, dest, speed, -1);
-		}
-		if(upd.flags & DDSU_FLOORPIC)
-		{
-			sec->floorpic = Msg_ReadShort();// + W_CheckNumForName("F_START") + 1;
-		}	
-		if(upd.flags & DDSU_CEILING_HEIGHT)
-		{
-			sec->ceilingheight = Msg_ReadShort() << FRACBITS;
-		}			
-		if(upd.flags & DDSU_CEILING_MOVING)
-		{
-			dest = Msg_ReadShort() << FRACBITS;
-			speed = Msg_ReadShort() << 8;
-			Cl_AddMover(upd.sector, mvt_ceiling, dest, speed, -1);
-		}
-		if(upd.flags & DDSU_CEILINGPIC)
-		{
-			sec->ceilingpic = Msg_ReadShort();
-		}	
-		if(upd.flags & DDSU_LIGHT_LEVEL)
-		{
-			sec->lightlevel = Msg_ReadByte();
-		}
-	}*/
-}
-
-void Cl_HandleWallUpdate()
-{
-/*	packet_wallupdate_t upd;
-	side_t *side;
-
-	while(!Msg_End())
-	{
-		Msg_Read(&upd, sizeof(upd));
-		if(upd.side >= numsides) break; // Bugger.
-		side = SIDE_PTR(upd.side);
-		if(upd.flags & DDWU_TOP)
-		{
-			side->toptexture = Msg_ReadShort();
-		}
-		if(upd.flags & DDWU_MID)
-		{
-			side->midtexture = Msg_ReadShort();
-		}
-		if(upd.flags & DDWU_BOTTOM)
-		{
-			side->bottomtexture = Msg_ReadShort();
-		}
-	}*/
-}
-
 mover_t *Cl_GetActiveMover(int sectornum, movertype_t type)
 {
 	int i;
@@ -471,21 +400,6 @@ mover_t *Cl_GetActiveMover(int sectornum, movertype_t type)
 			return activemovers[i];
 		}
 	return NULL;
-}
-
-void Cl_HandlePlaneSound()
-{
-	int sectornum = Msg_ReadShort();
-	movertype_t type;
-	int pace = Msg_ReadByte();
-	mover_t *mov;
-
-	type = pace & 0x80? mvt_ceiling : mvt_floor;
-	// Try to find the mover.
-	mov = Cl_GetActiveMover(sectornum, type);
-	if(!mov) return;
-	//mov->sound_id = Msg_ReadShort();
-	//mov->sound_pace = pace & 0x7f;
 }
 
 //===========================================================================
@@ -514,6 +428,8 @@ int Cl_ReadLumpDelta(void)
 // Cl_ReadSectorDelta
 //	Reads a sector delta from the message buffer and applies it to 
 //	the world. Returns false only if the end marker is found.
+//
+//	THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
 //==========================================================================
 int Cl_ReadSectorDelta(void)
 {
@@ -582,6 +498,8 @@ int Cl_ReadSectorDelta(void)
 // Cl_ReadSideDelta
 //	Reads a side delta from the message buffer and applies it to 
 //	the world. Returns false only if the end marker is found.
+//
+//	THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
 //==========================================================================
 int Cl_ReadSideDelta(void)
 {
@@ -628,6 +546,8 @@ int Cl_ReadSideDelta(void)
 // Cl_ReadPolyDelta
 //	Reads a poly delta from the message buffer and applies it to 
 //	the world. Returns false only if the end marker is found.
+//
+//	THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
 //==========================================================================
 int Cl_ReadPolyDelta(void)
 {
@@ -662,4 +582,171 @@ int Cl_ReadPolyDelta(void)
 
 	// Continue reading.
 	return true;
+}
+
+/*
+ * Reads a sector delta from the psv_frame2 message buffer and applies it 
+ * to the world.
+ */
+void Cl_ReadSectorDelta2(void)
+{
+	unsigned short num;
+	sector_t *sec;
+	int df;
+
+	// Sector index number.
+	num = Msg_ReadShort();
+
+#ifdef _DEBUG
+	if(num >= numsectors)
+	{
+		// This is worrisome.
+		Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
+	}
+#endif
+
+	sec = SECTOR_PTR(num);
+
+	// Flags.
+	df = Msg_ReadPackedShort();
+
+	if(df & SDF_FLOORPIC) 
+		sec->floorpic = Cl_TranslateLump( Msg_ReadPackedShort() );
+	if(df & SDF_CEILINGPIC) 
+		sec->ceilingpic = Cl_TranslateLump( Msg_ReadPackedShort() );
+	if(df & SDF_LIGHT) sec->lightlevel = Msg_ReadByte();
+	if(df & SDF_FLOOR_HEIGHT) 
+		sec->floorheight = Msg_ReadShort() << 16;
+	if(df & SDF_CEILING_HEIGHT)
+		sec->ceilingheight = Msg_ReadShort() << 16;
+	if(df & SDF_FLOOR_TARGET)
+		sec->planes[PLN_FLOOR].target = Msg_ReadShort() << 16;
+	if(df & SDF_FLOOR_SPEED)
+	{
+		sec->planes[PLN_FLOOR].speed 
+			= Msg_ReadByte() << (df & SDF_FLOOR_SPEED_44? 12 : 15);
+	}
+	if(df & SDF_FLOOR_TEXMOVE)
+	{
+		sec->planes[PLN_FLOOR].texmove[0] = Msg_ReadShort() << 8;
+		sec->planes[PLN_FLOOR].texmove[1] = Msg_ReadShort() << 8;
+	}
+	if(df & SDF_CEILING_TARGET)
+		sec->planes[PLN_CEILING].target = Msg_ReadShort() << 16;
+	if(df & SDF_CEILING_SPEED)
+	{
+		sec->planes[PLN_CEILING].speed 
+			= Msg_ReadByte() << (df & SDF_CEILING_SPEED_44? 12 : 15);
+	}
+	if(df & SDF_CEILING_TEXMOVE)
+	{
+		sec->planes[PLN_CEILING].texmove[0] = Msg_ReadShort() << 8;
+		sec->planes[PLN_CEILING].texmove[1] = Msg_ReadShort() << 8;
+	}
+	if(df & SDF_COLOR_RED) sec->rgb[0] = Msg_ReadByte();
+	if(df & SDF_COLOR_GREEN) sec->rgb[1] = Msg_ReadByte();
+	if(df & SDF_COLOR_BLUE) sec->rgb[2] = Msg_ReadByte();
+
+	// Do we need to start any moving planes?
+	if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
+	{
+		Cl_AddMover(num, mvt_floor, sec->planes[PLN_FLOOR].target, 
+			sec->planes[PLN_FLOOR].speed);
+	}
+	if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
+	{
+		Cl_AddMover(num, mvt_ceiling, sec->planes[PLN_CEILING].target,
+			sec->planes[PLN_CEILING].speed);
+	}
+}
+
+/*
+ * Reads a side delta from the message buffer and applies it to the world.
+ */
+void Cl_ReadSideDelta2(void)
+{
+	unsigned short num;
+	side_t *sid;
+	int df;
+
+	num = Msg_ReadShort();
+
+#ifdef _DEBUG
+	if(num >= numsides)
+	{
+		// This is worrisome.
+		Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
+	}
+#endif
+
+	sid = SIDE_PTR(num);
+
+	// Flags.
+	df = Msg_ReadByte();
+
+	if(df & SIDF_TOPTEX) 
+		sid->toptexture = Msg_ReadPackedShort();
+	if(df & SIDF_MIDTEX) 
+		sid->midtexture = Msg_ReadPackedShort();
+	if(df & SIDF_BOTTOMTEX) 
+		sid->bottomtexture = Msg_ReadPackedShort();
+	if(df & SIDF_LINE_FLAGS)
+	{
+		byte updatedFlags = Msg_ReadByte();
+		line_t *line = R_GetLineForSide(num);
+
+		if(line)
+		{
+			// The delta includes the entire lowest byte.
+			line->flags &= ~0xff;
+			line->flags |= updatedFlags;
+#if _DEBUG
+			Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n", 
+				GET_LINE_IDX(line), updatedFlags);
+#endif
+		}
+	}
+}
+
+/*
+ * Reads a poly delta from the message buffer and applies it to 
+ * the world.
+ */
+void Cl_ReadPolyDelta2(void)
+{
+	int df;
+	unsigned short num;
+	polyobj_t *po;
+
+	num = Msg_ReadPackedShort();
+
+#ifdef _DEBUG
+	if(num >= po_NumPolyobjs)
+	{
+		// This is worrisome.
+		Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
+	}
+#endif
+
+	po = PO_PTR(num);
+
+	// Flags.
+	df = Msg_ReadByte();
+
+	if(df & PODF_DEST_X) 
+		po->dest.x = (Msg_ReadShort() << 16) + ((char)Msg_ReadByte() << 8);
+	if(df & PODF_DEST_Y)
+		po->dest.y = (Msg_ReadShort() << 16) + ((char)Msg_ReadByte() << 8);
+	if(df & PODF_SPEED) 
+		po->speed = Msg_ReadShort() << 8;
+	if(df & PODF_DEST_ANGLE) 
+		po->destAngle = Msg_ReadShort() << 16;
+	if(df & PODF_ANGSPEED) 
+		po->angleSpeed = Msg_ReadShort() << 16;
+	if(df & PODF_PERPETUAL_ROTATE) 
+		po->destAngle = -1;
+
+	// Update the polyobj's mover thinkers.
+	Cl_SetPolyMover(num, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),
+		df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));
 }
