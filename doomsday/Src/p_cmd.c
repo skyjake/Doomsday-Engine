@@ -69,7 +69,7 @@ void P_BuildCommand(int playerNumber)
 	pos = P_ControlGetAxis(playerNumber, "walk");
 
 	// The player's class affects the movement speed.
-	cmd.forwardMove = (char) (0x10 * -pos);
+	cmd.forwardMove = (char) (0x10 * pos);
 
 	// The command is now complete.  Insert it into the client's
 	// command buffer, where it will be read from by the refresh
