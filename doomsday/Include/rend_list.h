@@ -12,24 +12,20 @@
 // Rendpoly flags.
 #define RPF_MASKED		0x0001	// Use the special list for masked textures.
 #define RPF_SKY_MASK	0x0004	// A sky mask polygon.
-#define RPF_LIGHT		0x0008	// A dynamic light.
+//#define RPF_LIGHT		0x0008	// A dynamic light.
 #define RPF_DLIT		0x0010	// Normal list: poly is dynamically lit.
 #define RPF_GLOW		0x0020	// Multiply original vtx colors.
 #define RPF_DETAIL		0x0040	// Render with detail (incl. vtx distances)
-#define RPF_WALL_GLOW	0x0080	// Used with RPF_LIGHT.
+//#define RPF_WALL_GLOW	0x0080	// Used with RPF_LIGHT.
 #define RPF_SHADOW		0x0100
+#define RPF_DONE		0x8000	// This poly has already been drawn.
 
 typedef enum {
-	rp_none,
-	rp_quad,					// Wall segment.
-	rp_divquad,					// Divided wall segment.
-	rp_flat						// Floor or ceiling.
+	RP_NONE,
+	RP_QUAD,					// Wall segment.
+	RP_DIVQUAD,					// Divided wall segment.
+	RP_FLAT						// Floor or ceiling.
 } rendpolytype_t;
-
-typedef enum {
-	rl_quads,					// Normal or divided wall segments.
-	rl_flats					// Planes (floors or ceilings).
-} rendlisttype_t;
 
 typedef struct {
 	float pos[2];				// X and Y coordinates.
@@ -45,8 +41,14 @@ typedef struct {
 	int texw, texh;				// Texture width and height.
 	float texoffx, texoffy;		// Texture coordinates for left/top (in real texcoords).
 	DGLuint tex;				// Used for masked textures.
+	DGLuint blendtex;			// Used for blended textures.
+	int blendtexw, blendtexh;	// Blend texture width and height.
+	float blendpos;				// Blending strength (0..1).
 	detailinfo_t *detail;		// Detail texture name and dimensions.
-	struct lumobj_s *light;		// Used with RPF_LIGHT.
+	struct dynlight_s *lights;	// List of lights that affect this poly.
+	uint numlights;
+
+	// The geometry:
 	float top, bottom;			
 	float length;
 	int numvertices;			// Number of vertices for the poly.
