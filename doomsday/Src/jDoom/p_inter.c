@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/06/30 00:03:44  skyjake
+// Only fixmom on damage
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -880,7 +883,12 @@ void P_DamageMobj
 		ang >>= ANGLETOFINESHIFT;
 		target->momx += FixedMul (thrust, finecosine[ang]);
 		target->momy += FixedMul (thrust, finesine[ang]);
-		if(target->dplayer) target->dplayer->flags |= DDPF_FIXPOS;
+		if(target->dplayer) 
+		{
+			// Only fix momentum. Otherwise clients will find it difficult
+			// to escape from the damage inflictor.
+			target->dplayer->flags |= DDPF_FIXMOM;
+		}
 		
 		// killough $dropoff_fix: thrust objects hanging off ledges
 		if (target->intflags & MIF_FALLING && target->gear >= MAXGEAR)
