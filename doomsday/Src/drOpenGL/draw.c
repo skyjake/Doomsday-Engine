@@ -501,7 +501,11 @@ void DG_UnlockArrays(void)
 //===========================================================================
 void DG_DrawElements(int type, int count, unsigned int *indices)
 {
-	if(type == DGL_TRIANGLES) 
+	if(type == DGL_TRIANGLE_FAN)
+	{
+		glDrawElements(GL_TRIANGLE_FAN, count, GL_UNSIGNED_INT, indices);
+	}
+	else if(type == DGL_TRIANGLES) 
 	{
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, indices);
 	}
