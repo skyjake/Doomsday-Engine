@@ -359,8 +359,9 @@ custom-cmdline: Custom options
 #
 # Help
 #
-help-welcome = "Welcome to Snowberry. Select a profile from the
-list on the left."
+help-welcome = "Welcome to Snowberry. This is a launcher application 
+that lets you launch <b>Doomsday Engine</b> with ease. Select a game profile 
+from the list on the left."
 
 help-command = "To start a game, press the <b>Play</b> button."
 
