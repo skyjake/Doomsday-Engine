@@ -773,6 +773,7 @@ void H2_Main(void);
 // parses command line options
 // if not overrided, calls N_AdvanceDemo
 
+void H2_IdentifyVersion(void);
 void H2_StartTitle(void);
 void H2_SetFilter(int filter);
 int H2_GetFilterColor(int filter);
