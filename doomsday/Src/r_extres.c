@@ -41,6 +41,16 @@ char dataPath[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// Command line options for setting the path explicitly.
+static char *explicitOption[NUM_RESOURCE_CLASSES][2] =
+{
+	{ "-texdir",	"-texdir2" },
+	{ "-patdir",	"-patdir2" },
+	{ "-lmdir",		"-lmdir2" },
+	{ "-musdir",	"-musdir2" },
+	{ "-sfxdir",	"-sfxdir2" }
+};
+
 // Class paths.
 static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] = 
 {
@@ -95,7 +105,7 @@ void R_SetDataPath(const char *path)
 	for(i = 0; i < NUM_RESOURCE_CLASSES; i++)
 	{
 		// The -texdir option specifies a path to look for TGA textures.
-		if(i == RC_TEXTURE && ArgCheckWith("-texdir", 1))
+		if(ArgCheckWith(explicitOption[i][0], 1))
 		{
 			M_TranslatePath(ArgNext(), classInfo[i].path);
 			Dir_ValidDir(classInfo[i].path);
@@ -109,7 +119,7 @@ void R_SetDataPath(const char *path)
 		}
 		
 		// The overriding path.
-		if(i == RC_TEXTURE && ArgCheckWith("-texdir2", 1))
+		if(ArgCheckWith(explicitOption[i][1], 1))
 		{
 			M_TranslatePath(ArgNext(), classInfo[i].overridePath);
 			Dir_ValidDir(classInfo[i].overridePath);
@@ -117,6 +127,26 @@ void R_SetDataPath(const char *path)
 
 		VERBOSE2( Con_Message("  %i: %s (%s)\n", i, 
 			classInfo[i].path, classInfo[i].overridePath) );
+	}
+}
+
+/*
+ * If the origPath is a relative path, the data path is added in 
+ * front of it.
+ */
+void R_PrependDataPath(const char *origPath, char *newPath)
+{
+	char buf[300];
+
+	if(Dir_IsAbsolute(origPath)) 
+	{
+		// Can't prepend to absolute paths.
+		strcpy(newPath, origPath);
+	}
+	else
+	{
+		sprintf(buf, "%s%s", dataPath, origPath);
+		strcpy(newPath, buf);
 	}
 }
 
@@ -192,10 +222,10 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
 	int i;
 	
 	// The tries:
-	// 1. override + game
-	// 2. override
-	// 3. game
-	// 4. default
+	// 0. override + game
+	// 1. override
+	// 2. game
+	// 3. default
 	for(i = 0; i < 4; i++)
 	{
 		// First try the overriding path, if it's set.

@@ -31,10 +31,11 @@ $--------------------------------------------------------------------
 @row
 	@opt{ -- } @tab @tab
 	Stop processing options. Anything after this is discarded.
-	Useful for example in response files.
+	Useful in response files.
 @row
 	@opt{-verbose} @tab @opt{-v} @tab
-	Be more verbose with console messages.
+	Be more verbose with console messages. Two @opt{-verbose}
+	options	gives even more messages (e.g. @opt{-v -v}).
 @row
 	@opt{-userdir P} @tab @opt{-ud} @tab
 	Sets the working directory. By default the engine
@@ -270,6 +271,16 @@ $--------------------------------------------------------------------
 	can be used to override textures in the normal
 	texture directory (@opt{-texdir}).
 @row
+	@opt{-patdir P} @tab @tab
+	Sets the directory where external resources for patches
+	are loaded. Defaults to @file{Data\<Game>\Patches}.
+@row
+	@opt{-patdir2 P} @tab @tab
+	Secondary directory for searching external resources for
+	patches. This is checked first, so it can be used for
+	overriding resources in the normal @file{Patches}
+	directory.
+@row
 	@opt{-fontdir P} @tab @opt{-fd} @tab
 	Looks in the given directory @file{P} for the font files.
 	Defaults to @file{ Data\Fonts\ }.
@@ -354,6 +365,18 @@ $--------------------------------------------------------------------
 @row
 	@opt{ -sfxchan N } @tab @tab
 	Set the number of sound channels. 16 is the default.
+@row
+	@opt{-musdir P} @tab @tab
+	Same as @opt{-patdir} but for music resources.
+@row
+	@opt{-musdir2 P} @tab @tab
+	Same as @opt{-patdir2} but for music resources.
+@row
+	@opt{-sfxdir P} @tab @tab
+	Same as @opt{-patdir} but for sound effect resources.
+@row
+	@opt{-sfxdir2 P} @tab @tab
+	Same as @opt{-patdir2} but for sound effect resources.
 @row
 	@opt{ -mdvol } @tab @tab
 	Multiply the volume of all MIDI notes by two. The volume is
