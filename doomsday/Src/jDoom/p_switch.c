@@ -16,6 +16,9 @@
 //
 //
 // $Log$
+// Revision 1.3  2003/08/24 00:17:10  skyjake
+// Changed variable naming style
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -375,7 +378,7 @@ P_UseSpecialLine
 		
 	case 11:
 		// Exit level
-		if(cycling_maps && map_cycle_noexit) break;
+		if(cyclingMaps && mapCycleNoExit) break;
 		P_ChangeSwitchTexture(line,0);
 		G_ExitLevel ();
 		break;
@@ -448,7 +451,7 @@ P_UseSpecialLine
 		
 	case 51:
 		// Secret EXIT
-		if(cycling_maps && map_cycle_noexit) break;
+		if(cyclingMaps && mapCycleNoExit) break;
 		P_ChangeSwitchTexture(line,0);
 		G_SecretExitLevel ();
 		break;

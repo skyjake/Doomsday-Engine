@@ -261,7 +261,7 @@ boolean P_UseSpecialLine ( mobj_t *thing, line_t *line)
 				P_ChangeSwitchTexture(line,0);
 			break;
 		case 11:		// Exit level
-			if(cycling_maps && map_cycle_noexit) break;
+			if(cyclingMaps && mapCycleNoExit) break;
 			G_ExitLevel ();
 			P_ChangeSwitchTexture(line,0);
 			break;
@@ -310,7 +310,7 @@ boolean P_UseSpecialLine ( mobj_t *thing, line_t *line)
 				P_ChangeSwitchTexture(line,0);
 			break;
 		case 51:		// Secret EXIT
-			if(cycling_maps && map_cycle_noexit) break;
+			if(cyclingMaps && mapCycleNoExit) break;
 			G_SecretExitLevel ();
 			P_ChangeSwitchTexture(line,0);
 			break;

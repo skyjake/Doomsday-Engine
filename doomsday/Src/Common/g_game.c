@@ -2426,7 +2426,7 @@ void G_DoTeleportNewMap(void)
  
 void G_ExitLevel (void) 
 { 
-	if(cycling_maps && map_cycle_noexit) return;
+	if(cyclingMaps && mapCycleNoExit) return;
 
     secretexit = false; 
     gameaction = ga_completed; 
@@ -2434,7 +2434,7 @@ void G_ExitLevel (void)
 
 void G_SecretExitLevel (void) 
 { 
-	if(cycling_maps && map_cycle_noexit) return;
+	if(cyclingMaps && mapCycleNoExit) return;
 
 #if __JDOOM__
     // IF NO WOLF3D LEVELS, NO SECRET EXIT!
@@ -2458,7 +2458,7 @@ void G_SecretExitLevel (void)
 
 void G_Completed(int map, int position)
 {
-	if(cycling_maps && map_cycle_noexit) return;
+	if(cyclingMaps && mapCycleNoExit) return;
 
 	gameaction = ga_completed;
 	LeaveMap = map;
