@@ -138,6 +138,7 @@ typedef struct
 
 typedef struct
 {
+	ded_stringid_t	id;				// Optional identifier for the definition.
 	ded_stateid_t	state;
 	int				off;
 	ded_sprid_t		sprite;			// Only used by autoscale.

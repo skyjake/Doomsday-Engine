@@ -753,6 +753,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			for(;;)
 			{
 				READLABEL;
+				RV_STR("ID", mdl->id)
 				RV_STR("State", mdl->state)
 				RV_INT("Off", mdl->off)
 				RV_STR("Sprite", mdl->sprite.id)
