@@ -1237,6 +1237,7 @@ unsigned int GL_BindTexFlat(flat_t *fl)
 	boolean RGBData = false, freeptr = false;
 	ded_detailtexture_t *def;
 	image_t image;
+	boolean hasExternal = false;
 
 	if(lump >= numlumps	|| lump == skyflatnum)
 	{
@@ -1253,6 +1254,8 @@ unsigned int GL_BindTexFlat(flat_t *fl)
 		width   = image.width;
 		height  = image.height;
 		pixSize = image.pixelSize;
+
+		hasExternal = true;
 	}
 	else
 	{
@@ -1292,6 +1295,9 @@ unsigned int GL_BindTexFlat(flat_t *fl)
 	gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 	
 	if(freeptr) M_Free(flatptr);
+
+	// Is there a surface decoration for this flat?
+	fl->decoration = Def_GetDecoration(lump, false, hasExternal);
 
 	// The name of the texture is returned.
 	return name;
@@ -1715,10 +1721,12 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 unsigned int GL_PrepareTexture(int idx)
 {
 	ded_detailtexture_t *def;
+	int			originalIndex = idx;
 	texture_t	*tex;
 	boolean		alphaChannel = false, RGBData = false;
 	int			i;
 	image_t		image;
+	boolean		hasExternal = false;
 
 	if(idx == 0)
 	{
@@ -1739,6 +1747,7 @@ unsigned int GL_PrepareTexture(int idx)
 			// High resolution texture loaded.
 			RGBData = true;
 			alphaChannel = (image.pixelSize == 4);
+			hasExternal = true;
 		}
 		else
 		{
@@ -1789,17 +1798,37 @@ unsigned int GL_PrepareTexture(int idx)
 		/*if(alphaChannel)
 		{
 			// Don't tile masked textures vertically.
-			//---DEBUG---
-			//gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 		}*/
 
 		GL_DestroyImage(&image);
+
+		// Is there a decoration for this surface?
+		textures[idx]->decoration = Def_GetDecoration(idx, true, hasExternal);
 	}
-	texw = textures[idx]->width;
-	texh = textures[idx]->height;
-	texmask = textures[idx]->masked;
-	texdetail = textures[idx]->detail.tex? &textures[idx]->detail : 0;
-	return textures[idx]->tex;
+	return GL_GetTextureInfo(originalIndex);
+}
+
+//===========================================================================
+// GL_GetTextureInfo
+//	Returns the texture name, if it has been prepared.
+//===========================================================================
+DGLuint GL_GetTextureInfo(int index)
+{
+	texture_t *tex;
+
+	if(!index) return 0;
+	
+	// Translate the texture.
+	index = texturetranslation[index];
+	tex = textures[index];
+
+	// Set the global texture info variables.
+	texw = tex->width;
+	texh = tex->height;
+	texmask = tex->masked;
+	texdetail = tex->detail.tex? &tex->detail : 0;
+	return tex->tex;
 }
 
 //===========================================================================
