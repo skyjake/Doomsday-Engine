@@ -1154,10 +1154,20 @@ void P_MobjThinker(mobj_t *mobj)
 		ResetBlasted(mobj);
 	}
 	if(mobj->flags2 & MF2_FLOATBOB)
-	{ // Floating item bobbing motion (special1 is height)
+	{ 
+		// Floating item bobbing motion (special1 is height)
 		mobj->z = mobj->floorz +
 					mobj->special1 +
 					FloatBobOffsets[(mobj->health++)&63];
+
+		// HACK: If we are bobbing into the floor, raise special1 height.
+		// Only affects Weapon Pieces.
+		if(mobj->type >= MT_FW_SWORD1 
+			&& mobj->type <= MT_MW_STAFF3
+			&& mobj->z < mobj->floorz)
+		{
+			mobj->special1 += mobj->floorz - mobj->z;
+		}
 	}
 	else if((mobj->z != mobj->floorz) || mobj->momz || BlockingMobj)
 	{	// Handle Z momentum and gravity
