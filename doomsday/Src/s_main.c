@@ -362,7 +362,8 @@ void S_StopSound(int sound_id, mobj_t *emitter)
 //===========================================================================
 // S_IsPlaying
 //	Returns true if an instance of the sound is playing with the given
-//	emitter.
+//	emitter. If sound_id is zero, returns true if the source is emitting
+//	any sounds.
 //===========================================================================
 int S_IsPlaying(int sound_id, mobj_t *emitter)
 {
