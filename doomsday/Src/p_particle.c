@@ -604,6 +604,19 @@ float P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptc_index)
 }
 
 //===========================================================================
+// P_GetParticleZ
+//	A particle may be attached to the floor or ceiling of the sector.
+//===========================================================================
+fixed_t P_GetParticleZ(particle_t *pt)
+{
+	if(pt->pos[VZ] == DDMAXINT)
+		return pt->sector->ceilingheight - 2*FRACUNIT;
+	if(pt->pos[VZ] == DDMININT)
+		return pt->sector->floorheight + 2*FRACUNIT;
+	return pt->pos[VZ];
+}
+
+//===========================================================================
 // P_MoveParticle
 //	The movement is done in two steps: 
 //	Z movement is done first. Skyflat kills the particle.
@@ -615,6 +628,7 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 	int x, y, z, xl, xh, yl, yh, bx, by;
 	ptcstage_t *st = gen->stages + pt->stage;
 	boolean zbounce = false;
+	boolean hitFloor;
 	fixed_t hardRadius = st->radius/2;
 
 	// Changes to momentum.
@@ -632,7 +646,8 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 		{
 			delta[VX] = pt->pos[VX] - gen->source->x;
 			delta[VY] = pt->pos[VY] - gen->source->y;
-			delta[VZ] = pt->pos[VZ] - (gen->source->z + gen->center[VZ]);
+			delta[VZ] = P_GetParticleZ(pt) 
+				- (gen->source->z + gen->center[VZ]);
 		}
 		else
 		{
@@ -684,37 +699,55 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 	// collisions.
 	if(st->flags & PTCF_PLANE_FLAT) hardRadius = FRACUNIT;
 
-	// Check the new Z position.
-	z = pt->pos[VZ] + pt->mov[VZ];
-	if(z > pt->sector->ceilingheight - hardRadius)
+	// Check the new Z position only if not stuck to a plane.
+	if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT)
 	{
-		// The Z is through the roof! 
-		if(pt->sector->ceilingpic == skyflatnum) 
+		z = pt->pos[VZ] + pt->mov[VZ];
+		if(z > pt->sector->ceilingheight - hardRadius)
 		{
-			// Special case: particle gets lost in the sky.
-			pt->stage = -1;
-			return;
+			// The Z is through the roof! 
+			if(pt->sector->ceilingpic == skyflatnum) 
+			{
+				// Special case: particle gets lost in the sky.
+				pt->stage = -1;
+				return;
+			}
+			if(!P_TouchParticle(pt, st, false)) return;
+			z = pt->sector->ceilingheight - hardRadius;
+			zbounce = true;
+			hitFloor = false;
 		}
-		if(!P_TouchParticle(pt, st, false)) return;
-		z = pt->sector->ceilingheight - hardRadius;
-		zbounce = true;
-	}
-	// Also check the floor.
-	if(z < pt->sector->floorheight + hardRadius)
-	{
-		if(pt->sector->floorpic == skyflatnum) 
+		// Also check the floor.
+		if(z < pt->sector->floorheight + hardRadius)
 		{
-			pt->stage = -1;
-			return;
+			if(pt->sector->floorpic == skyflatnum) 
+			{
+				pt->stage = -1;
+				return;
+			}
+			if(!P_TouchParticle(pt, st, false)) return;
+			z = pt->sector->floorheight + hardRadius;
+			zbounce = true;
+			hitFloor = true;
 		}
-		if(!P_TouchParticle(pt, st, false)) return;
-		z = pt->sector->floorheight + hardRadius;
-		zbounce = true;
+		if(zbounce) 
+		{
+			pt->mov[VZ] = FixedMul(-pt->mov[VZ], st->bounce);
+			if(!pt->mov[VZ])
+			{
+				// The particle has stopped moving. This means its Z-movement 
+				// has ceased because of the collision with a plane. Plane-flat
+				// particles will stick to the plane.
+				if(st->flags & PTCF_PLANE_FLAT)
+				{
+					z = hitFloor? DDMININT : DDMAXINT;
+				}
+			}
+		}
+		
+		// Move to the new Z coordinate.
+		pt->pos[VZ] = z;
 	}
-	if(zbounce) pt->mov[VZ] = FixedMul(-pt->mov[VZ], st->bounce);
-
-	// Move to the new Z coordinate.
-	pt->pos[VZ] = z;
 
 	// Now check the XY direction. 
 	// - Check if the movement crosses any solid lines.
@@ -739,8 +772,9 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 			{
 				// If the particle is in the opening of a 2-sided line, it's
 				// quite likely that it shouldn't be here...
-				if(pt->pos[VZ] > MAX_OF(front->floorheight, back->floorheight)
-					&& pt->pos[VZ] < MIN_OF(front->ceilingheight, 
+				if(P_GetParticleZ(pt) > MAX_OF(front->floorheight, 
+					back->floorheight) 
+					&& P_GetParticleZ(pt) < MIN_OF(front->ceilingheight, 
 					back->ceilingheight))
 				{
 					// Kill the particle.

@@ -3,6 +3,7 @@
 
 #define MAX_ACTIVE_PTCGENS	96
 #define MAX_PTC_STAGES		DED_PTC_STAGES
+#define MAX_PTC_TEXTURES	32			// Maximum # of textures in particle system
 
 // Generator flags
 #define PGF_STATIC				0x1		// Can't be replaced by anything.
@@ -26,7 +27,10 @@ enum
 {
 	PTC_NONE,
 	PTC_POINT,
-	PTC_LINE
+	PTC_LINE,
+	// New types can be added here.
+	PTC_TEXTURE = 100
+	// ...followed by MAX_PTC_TEXTURES types.
 } ptc_type_e;
 
 // Particle flags
@@ -92,5 +96,6 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount);
 void P_CheckPtcPlanes(void);
 
 float P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptc_index);
+fixed_t P_GetParticleZ(particle_t *pt);
 
 #endif

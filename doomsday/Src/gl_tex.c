@@ -1534,6 +1534,7 @@ byte *GL_LoadHighRes(char *name, char *path, char *altPath, char *prefix,
 
 //===========================================================================
 // GL_LoadHighResTexture
+//	The returned buffer must be freed with M_Free.
 //===========================================================================
 byte *GL_LoadHighResTexture
 	(char *name, int *width, int *height, int *pixsize, boolean *masked)
@@ -1544,11 +1545,13 @@ byte *GL_LoadHighResTexture
 
 //===========================================================================
 // GL_LoadHighResFlat
+//	The returned buffer must be freed with M_Free.
 //===========================================================================
 byte *GL_LoadHighResFlat(char *name, int *width, int *height, int *pixsize)
 {
 	boolean masked;
 	
+	// FIXME: Why no subdir named "Flats"?
 	return GL_LoadHighRes(name, hiTexPath, hiTexPath2, "Flat-", width, 
 		height, pixsize, &masked, false);
 }

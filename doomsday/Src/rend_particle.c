@@ -5,6 +5,11 @@
 //**
 //** Rendering of particle generators.
 //**
+//** $Log$
+//** Revision 1.2  2003/02/28 10:42:15  skyjake
+//** Added textured particles, planeflat sticks to planes
+//**
+//**
 //**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
@@ -20,6 +25,9 @@
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
+
+// Point + custom textures.
+#define NUM_TEX_NAMES (1 + MAX_PTC_TEXTURES)
 
 // TYPES -------------------------------------------------------------------
 
@@ -50,7 +58,7 @@ extern float	vang, vpitch;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-DGLuint			ptctexname;	// Name of the particle texture.
+DGLuint			ptctexname[NUM_TEX_NAMES]; 
 int				rend_particle_nearlimit = 0;
 float			rend_particle_diffuse = 4;
 
@@ -61,7 +69,7 @@ static pglink_t *pgstore;
 static int		pgcursor, pgmax;
 static porder_t	*order;
 static int		numparts;
-static boolean	haspoints, haslines, hasnoblend, hasblend;
+static boolean	haspoints[NUM_TEX_NAMES], haslines, hasnoblend, hasblend;
 
 // CODE --------------------------------------------------------------------
 
@@ -89,6 +97,10 @@ void PG_InitTextures(void)
 	// We need to generate the texture, I see.
 	byte *image = Z_Malloc(64 * 64, PU_STATIC, 0);
 	byte *data = W_CacheLumpName("DLIGHT", PU_CACHE);
+	int i;
+
+	// Clear the texture names array.
+	memset(ptctexname, 0, sizeof(ptctexname));
 
 	if(!data) Con_Error("PG_InitTextures: No DLIGHT texture.\n");
 
@@ -99,7 +111,8 @@ void PG_InitTextures(void)
 	memset(image, 255, 32 * 32);		
 
 	// No further mipmapping or resizing is needed, upload directly.
-	ptctexname = gl.NewTexture();
+	// The zeroth texture is the default: a blurred point.
+	ptctexname[0] = gl.NewTexture();
 	gl.TexImage(DGL_LUMINANCE_PLUS_A8, 32, 32, 0, image);
 	gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
 	gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
@@ -107,6 +120,43 @@ void PG_InitTextures(void)
 	gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
 	Z_Free(image);
+
+	// Load any custom particle textures. They are loaded from the 
+	// highres texture directory and are named "ParticleNN.(tga|png|pcx)".
+	// The first is "Particle00". (based on Leesz' textured particles mod)
+	for(i = 0; i < MAX_PTC_TEXTURES; i++)
+	{
+		char filename[80];
+		int width, height, pixsize;
+		boolean masked;
+
+		// Try to load the texture.
+		sprintf(filename, "Particle%02i", i);
+		if(!(image = GL_LoadHighResTexture(filename, &width, &height, 
+			&pixsize, &masked)))
+		{
+			if(verbose) Con_Message("PG_InitTextures: %s not found.\n", 
+				filename);
+			continue;
+		}
+
+		// Create a new texture and upload the image.
+		ptctexname[i + 1] = gl.NewTexture();
+		if(verbose) 
+		{
+			Con_Message("PG_InitTextures: Texture %02i: %i * %i * %i\n", 
+				i, width, height, pixsize);
+		}
+		gl.TexImage(pixsize == 4? DGL_RGBA : DGL_RGB, 
+			width, height, 0, image);
+		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+		// Free the buffer.
+		M_Free(image);
+	}
 }
 
 //===========================================================================
@@ -114,8 +164,8 @@ void PG_InitTextures(void)
 //===========================================================================
 void PG_ShutdownTextures(void)
 {
-	gl.DeleteTextures(1, &ptctexname);
-	ptctexname = 0;
+	gl.DeleteTextures(NUM_TEX_NAMES, ptctexname);
+	memset(ptctexname, 0, sizeof(ptctexname));
 }
 
 //===========================================================================
@@ -225,13 +275,14 @@ int __cdecl PG_Sorter(const void *pt1, const void *pt2)
 //===========================================================================
 int PG_ListVisibleParticles(void)
 {
-	int i, p, m;
+	int i, p, m, stagetype;
 	fixed_t maxdist, mindist = FRACUNIT * rend_particle_nearlimit; 
 	ptcgen_t *gen;
 	ded_ptcgen_t *def;
 	particle_t *pt;
 
-	haspoints = haslines = hasblend = hasnoblend = false;
+	haslines = hasblend = hasnoblend = false;
+	memset(haspoints, 0, sizeof(haspoints));
 
 	// First count how many particles are in the visible generators.
 	for(i = 0, numparts = 0; i < MAX_ACTIVE_PTCGENS; i++)
@@ -246,6 +297,8 @@ int PG_ListVisibleParticles(void)
 	// Allocate the rendering order list.
 	order = Z_Malloc(sizeof(*order) * numparts, PU_STATIC, 0);
 
+	// Fill in the order list and see what kind of particles we'll
+	// need to render.
 	for(i = 0, m = 0; i < MAX_ACTIVE_PTCGENS; i++)
 	{
 		gen = active_ptcgens[i];
@@ -265,10 +318,22 @@ int PG_ListVisibleParticles(void)
 			if(!order[m].distance) order[m].distance = 1;
 			if(maxdist && order[m].distance > maxdist) continue; // Too far.
 			if(order[m].distance < mindist) continue; // Too near.
-			if(gen->stages[pt->stage].type == PTC_POINT)
-				haspoints = true;
-			if(gen->stages[pt->stage].type == PTC_LINE)
+
+			stagetype = gen->stages[pt->stage].type;
+			if(stagetype == PTC_POINT)
+			{
+				haspoints[0] = true;
+			}
+			else if(stagetype == PTC_LINE)
+			{
 				haslines = true;
+			}
+			else if(stagetype >= PTC_TEXTURE
+				&& stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
+			{
+				haspoints[stagetype - PTC_TEXTURE + 1] = true;
+			}
+
 			if(gen->flags & PGF_ADD_BLEND)
 				hasblend = true;
 			else
@@ -305,6 +370,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	particle_t		*pt;
 	ded_ptcstage_t	*dst, *next_dst;
 	int				i, c;
+	int				using_texture = -1;
 
 	// viewsidevec points to the left.
 	for(i = 0; i < 3; i++)
@@ -313,11 +379,17 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		rightoff[i] = viewupvec[i] - viewsidevec[i];
 	}
 
+	// Should we use a texture?
 	if(rtype == PTC_POINT)
+		using_texture = 0;
+	else if(rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES)
+		using_texture = rtype - PTC_TEXTURE + 1;
+
+	if(using_texture >= 0)
 	{
 		gl.Disable(DGL_DEPTH_WRITE);
 		gl.Disable(DGL_CULL_FACE);
-		gl.Bind(ptctexname);
+		gl.Bind(ptctexname[using_texture]);
 		gl.Begin(DGL_QUADS); // A waste of vertices and triangles, but...
 		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
 	}
@@ -397,10 +469,10 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 
 		center[VX] = FIX2FLT(pt->pos[VX]);
 		center[VZ] = FIX2FLT(pt->pos[VY]);
-		center[VY] = FIX2FLT(pt->pos[VZ]);
+		center[VY] = FIX2FLT(P_GetParticleZ(pt));
 
 		// The vertices, please.
-		if(rtype == PTC_POINT)
+		if(using_texture >= 0)
 		{
 			// Should the particle be flat against a plane?			
 			if(st->flags & PTCF_PLANE_FLAT
@@ -482,7 +554,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 					center[VZ] - size*rightoff[VZ]);
 			}
 		}
-		else // Line?
+		else // It's a line.
 		{
 			gl.Vertex3f(center[VX], center[VY], center[VZ]);
 			gl.Vertex3f(center[VX] - FIX2FLT(pt->mov[VX]),
@@ -493,7 +565,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	
 	gl.End();
 
-	if(rtype == PTC_POINT) 
+	if(using_texture >= 0) 
 	{
 		gl.Enable(DGL_DEPTH_WRITE);
 		gl.Enable(DGL_CULL_FACE);
@@ -503,6 +575,33 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	{
 		gl.Enable(DGL_TEXTURING);
 	}
+}
+
+//===========================================================================
+// PG_RenderPass
+//	
+//===========================================================================
+void PG_RenderPass(boolean use_blending)
+{
+	int i;
+
+	// Set blending mode.
+	if(use_blending) 
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+
+	if(haslines) 
+		PG_RenderParticles(PTC_LINE, use_blending);
+	
+	for(i = 0; i < NUM_TEX_NAMES; i++)
+		if(haspoints[i]) 
+		{
+			PG_RenderParticles(!i? PTC_POINT : PTC_TEXTURE + i - 1, 
+				use_blending);
+		}
+
+	// Restore blending mode.
+	if(use_blending)
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
 //===========================================================================
@@ -520,18 +619,21 @@ void PG_Render(void)
 	// Render all the visible particles.
 	if(hasnoblend)
 	{
-		if(haslines) PG_RenderParticles(PTC_LINE, false);
-		if(haspoints) PG_RenderParticles(PTC_POINT, false);
+		PG_RenderPass(false);
+/*		if(haslines) PG_RenderParticles(PTC_LINE, false);
+		if(haspoints) PG_RenderParticles(PTC_POINT, false);*/
 	}
 	if(hasblend)
 	{
 		// A second pass with additive blending.
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+/*		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
 		if(haslines) PG_RenderParticles(PTC_LINE, true);
 		if(haspoints) PG_RenderParticles(PTC_POINT, true);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);*/
+		PG_RenderPass(true);
 	}
 
 	// Free the list allocated in PG_ListVisibleParticles.
+	// FIXME: Is this necessary?
 	Z_Free(order);
 }
