@@ -283,8 +283,9 @@ enum {VX, VY, VZ};	// Vertex indices.
 #define IS_NETGAME		Get(DD_NETGAME)
 #define IS_DEDICATED	Get(DD_DEDICATED)
 
+void D_IdentifyVersion(void);
 void D_SetPlayerPtrs(void);
-char *D_Get(int id);
+char* D_Get(int id);
 
 enum {BOXTOP,BOXBOTTOM,BOXLEFT,BOXRIGHT};	// bbox coordinates
 
