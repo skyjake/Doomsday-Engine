@@ -752,8 +752,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 		if(back->floorpic != skyflatnum || front->floorpic != skyflatnum)
 		{
 			// Do the floors create an occlusion?			
-			if(backh[0] > fronth[0] && vy < backh[0]
-				|| backh[0] < fronth[0] && vy > fronth[0])
+			if(backh[0] > fronth[0] && vy <= backh[0]
+				|| backh[0] < fronth[0] && vy >= fronth[0])
 			{
 				C_AddViewRelOcclusion(startv, endv, 
 					MAX_OF(fronth[0], backh[0]), false); // Occlude down.
@@ -763,8 +763,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 		if(back->ceilingpic != skyflatnum || front->ceilingpic != skyflatnum)
 		{
 			// Do the ceilings create an occlusion?
-			if(backh[1] < fronth[1] && vy > backh[1]
-				|| backh[1] > fronth[1] && vy < fronth[1])
+			if(backh[1] < fronth[1] && vy >= backh[1]
+				|| backh[1] > fronth[1] && vy <= fronth[1])
 			{
 				C_AddViewRelOcclusion(startv, endv, 
 					MIN_OF(fronth[1], backh[1]), true); // Occlude up.
