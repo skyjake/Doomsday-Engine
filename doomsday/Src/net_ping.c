@@ -37,6 +37,8 @@ void Net_ShowPingSummary(int player)
 	float avgTime = 0, loss;
 	int	i, goodCount = 0;
 
+	if(player < 0) return;
+
 	for(i=0; i<ping->total; i++)
 	{
 		if(ping->times[i] < 0) continue;
