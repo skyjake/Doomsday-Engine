@@ -13,12 +13,16 @@ EXPORTS
 	DG_Scissor
 	DG_GetInteger
 	DG_GetIntegerv
-	DG_SetInteger
 	DG_GetString
+	DG_SetInteger
+	DG_SetFloatv
 	DG_Enable
 	DG_Disable
+	DG_EnableArrays
+	DG_DisableArrays
+	DG_Arrays
+	DG_UnlockArrays
 	DG_Func
-	DG_ZBias
 	DG_NewTexture
 	DG_DeleteTextures
 	DG_TexImage
@@ -51,9 +55,13 @@ EXPORTS
 	DG_Vertex3fv
 	DG_TexCoord2f
 	DG_TexCoord2fv
+	DG_MultiTexCoord2f
+	DG_MultiTexCoord2fv
 	DG_Vertices2ftv
 	DG_Vertices3ftv
 	DG_Vertices3fctv
+	DG_ArrayElement
+	DG_DrawElements
 	DG_Grab
 	DG_Fog
 	DG_Fogv
