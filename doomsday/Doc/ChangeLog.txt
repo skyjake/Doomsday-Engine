@@ -1,0 +1,22 @@
+
+                        Doomsday Engine Change Log
+                        ==========================
+               Legend: + added, - fixed, * improved/changed
+
+
+Version 1.7.7
+-------------
++ switch texture pairs (SW1/SW2) are precached at the same time
++ "Generator:Stage:Radius rnd": Randomness of particle radius
++ sound-info shows sound names as well as ID numbers
++ support for textured particles
+* flat particles stick to planes
+- high-resolution flats with 4 channels (alpha) were loaded incorrectly
+- sector lightlevel overflow in sectordelta (e.g. on jHexen map 26)
+- alternative texture path must be tried first when loading hires images
+  (-texdir2)
+
+* jDoom: cvar player-air-movement: player movement speed while airborne 
+  (0-32); use only small values in netgames
+  
+- jHeretic: blinking statbar borders fixed
