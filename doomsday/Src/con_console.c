@@ -467,7 +467,7 @@ ccmd_t engineCCmds[] =
 	"pausedemo",	CCmdPauseDemo,		"Pause/resume demo recording.",
 	"demolump",		CCmdDemoLump,		"Write a reference lump file for a demo.",
 	"kick",			CCmdKick,			"Kick client out of the game.",
-	"settics",		CCmdSetTicks,		"Set number of game tics per second.",
+	"settics",		CCmdSetTicks,		"Set number of game tics per second (default: 35).",
 	"playext",		CCmdPlayExt,		"Play an external music file.",
 	"playmusic",	CCmdPlayMusic,		"Play a song, an external music file or a CD track.",
 	"stopmusic",	CCmdStopMusic,		"Stop any currently playing music.",
