@@ -134,7 +134,6 @@ calias_t *Con_GetAlias(const char *name);
 
 extern HWND hWndMain;
 extern boolean paletted, r_s3tc;	// Use GL_EXT_paletted_texture
-extern boolean renderTextures;
 
 extern cvar_t netCVars[], inputCVars[];
 
@@ -297,6 +296,7 @@ cvar_t engineCVars[] =
 	"rend-light-radius-scale",	0,		CVT_FLOAT,	&dlRadFactor,	0.1f, 10, "A multiplier for dynlight radii (default: 1).",
 	"rend-light-radius-max", 0,			CVT_INT,	&dlMaxRad,		64,	512, "Maximum radius of dynamic lights (default: 128).",
 	"rend-light-wall-angle", CVF_NO_MAX, CVT_FLOAT,	&rend_light_wall_angle, 0, 0, "Intensity of angle-based wall light.",
+	"rend-light-multitex",	0,			CVT_INT,	&useMultiTexLights, 0, 1, "1=Use multitexturing when rendering dynamic lights.",
 	// * Render-Light-Decor
 	"rend-light-decor",		0,			CVT_BYTE,	&useDecorations, 0, 1,	"1=Enable surface light decorations.",
 	"rend-light-decor-plane-far", CVF_NO_MAX, CVT_FLOAT, &decorPlaneMaxDist, 0, 0, "Maximum distance at which plane light decorations are visible.",
@@ -319,7 +319,7 @@ cvar_t engineCVars[] =
 	"rend-camera-fov",		0,			CVT_FLOAT,	&fieldOfView,	1, 179, "Field of view.",
 	"rend-camera-smooth",	0,			CVT_INT,	&rend_camera_smooth, 0, 1, "1=Filter camera movement between game tics.",
 	// * Render-Texture
-	"rend-tex",				CVF_NO_ARCHIVE,	CVT_BYTE, &renderTextures,0, 1,	"1=Render with textures.",
+	"rend-tex",				CVF_NO_ARCHIVE,	CVT_INT, &renderTextures,0, 1,	"1=Render with textures.",
 	"rend-tex-gamma",		CVF_PROTECTED, CVT_INT,	&usegamma,		0, 4,	"The gamma correction level (0-4).",
 	"rend-tex-mipmap",		CVF_PROTECTED, CVT_INT,	&mipmapping,	0, 5,	"The mipmapping mode for textures.",
 	"rend-tex-paletted",	CVF_PROTECTED, CVT_BYTE, &paletted,		0, 1,	"1=Use the GL_EXT_shared_texture_palette extension.",
@@ -331,6 +331,7 @@ cvar_t engineCVars[] =
 	"rend-tex-detail-scale", CVF_NO_MIN|CVF_NO_MAX, CVT_FLOAT, &detailScale, 0, 0, "Global detail texture factor.",
 	"rend-tex-detail-strength", 0,		CVT_FLOAT,	&detailFactor, 0, 10,	"Global detail texture strength factor.",
 	"rend-tex-detail-far",	CVF_NO_MAX, CVT_FLOAT,	&detailMaxDist,	1, 0,	"Maximum distance where detail textures are visible.",
+	"rend-tex-detail-multitex", 0,		CVT_INT,	&useMultiTexDetails, 0, 1,	"1=Use multitexturing when rendering detail textures.",
 	// * Render-Sky
 	"rend-sky-detail",		CVF_PROTECTED, CVT_INT,	&skyDetail,		3, 7,	"Number of sky sphere quadrant subdivisions.",
 	"rend-sky-rows",		CVF_PROTECTED, CVT_INT,	&skyRows,		1, 8,	"Number of sky sphere rows.",
