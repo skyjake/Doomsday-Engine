@@ -34,6 +34,8 @@ shift
 goto fileloop
 
 :loopdone
+CD ..\distrib
+
 echo Uploading to The Mirror...
 ftpscrpt -f z:\scripts\mirror-snapshot.scp
 
@@ -41,4 +43,4 @@ echo Uploading to Fourwinds...
 ftpscrpt -f z:\scripts\snapshot.scp
 
 echo Done.
-CD ..\distrib
+
