@@ -188,7 +188,7 @@ typedef struct
 	ded_string_t	author;		// Author of the map.
 	ded_flags_t		flags;		// Flags.
 	ded_musicid_t	music;		// Music to play.
-	float			partime;	// Partime, in seconds.
+	float			partime;	// Par time, in seconds.
 	float			fog_color[3]; // Fog color (RGB).
 	float			fog_start;
 	float			fog_end;
@@ -381,6 +381,23 @@ typedef struct ded_decor_s
 	ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
 } ded_decor_t;
 
+typedef struct ded_group_member_s
+{
+	char			name[9];
+	float			tics;
+	float			random_tics;
+} ded_group_member_t;
+
+#define DED_GROUP_NUM_MEMBERS	64
+
+typedef struct ded_group_s 
+{
+	int				is_texture;		// Group of textures?
+	ded_flags_t		flags;
+	int				count;
+	ded_group_member_t members[DED_GROUP_NUM_MEMBERS];
+} ded_group_t;
+
 // The ded_t structure encapsulates all the data one definition file 
 // can contain. This is only an internal representation of the data.
 // An ASCII version is written and read by DED_Write() and DED_Read() 
@@ -393,23 +410,12 @@ typedef struct ded_decor_s
 typedef struct ded_s
 {
 	int			version;			// DED version number.
-	/*
-	char		mobj_prefix[10];	// Prefix for mobj type constants.
-	char		state_prefix[10];	// Prefix for state constants.
-	char		sprite_prefix[10];	// Prefix for sprite constants.
-	*/
 	char		model_path[256];	// Directories for searching MD2s.
 	ded_flags_t	model_flags;		// Default values for models.
 	float		model_scale;		
 	float		model_offset;		
-	/*
-	char		sfx_prefix[10];		// Prefix for sfx constants.
-	char		mus_prefix[10];		// Prefix for mus constants.
-	char		text_prefix[10];	// Prefix for text constants.
-	*/
 
 	struct ded_counts_s {
-		//ded_count_t includes;
 		ded_count_t	flags;
 		ded_count_t	mobjs;
 		ded_count_t	states;
@@ -426,12 +432,10 @@ typedef struct ded_s
 		ded_count_t	ptcgens;
 		ded_count_t	finales;
 		ded_count_t decorations;
+		ded_count_t groups;
 		ded_count_t	lines;
 		ded_count_t	sectors;
 	} count;
-
-	// Include other DED files.
-	//ded_path_t	*includes;
 
 	// Flag values (for all types of data).
 	ded_flag_t	*flags;
@@ -480,6 +484,9 @@ typedef struct ded_s
 
 	// Decorations.
 	ded_decor_t *decorations;
+
+	// Texture groups.
+	ded_group_t *groups;
 	
 	// XG line types.
 	ded_linetype_t *lines;
@@ -494,7 +501,6 @@ void DED_Destroy(ded_t *ded);
 int DED_Read(ded_t *ded, const char *sPathName);
 int DED_ReadLump(ded_t *ded, int lump);
 
-//int DED_AddInclude(ded_t *ded, char *inc);
 int DED_AddFlag(ded_t *ded, char *name, int value);
 int DED_AddMobj(ded_t *ded, char *idstr);
 int DED_AddState(ded_t *ded, char *id);
@@ -511,10 +517,10 @@ int DED_AddDetail(ded_t *ded, const char *lumpname);
 int DED_AddPtcGen(ded_t *ded, const char *state);
 int DED_AddFinale(ded_t *ded);
 int DED_AddDecoration(ded_t *ded);
+int DED_AddGroup(ded_t *ded);
 int DED_AddSector(ded_t *ded, int id);
 int DED_AddLine(ded_t *ded, int id);
 
-//void DED_RemoveInclude(ded_t *ded, int index);
 void DED_RemoveFlag(ded_t *ded, int index);
 void DED_RemoveMobj(ded_t *ded, int index);
 void DED_RemoveState(ded_t *ded, int index);
@@ -531,6 +537,7 @@ void DED_RemoveDetail(ded_t *ded, int index);
 void DED_RemovePtcGen(ded_t *ded, int index);
 void DED_RemoveFinale(ded_t *ded, int index);
 void DED_RemoveDecoration(ded_t *ded, int index);
+void DED_RemoveGroup(ded_t *ded, int index);
 void DED_RemoveSector(ded_t *ded, int index);
 void DED_RemoveLine(ded_t *ded, int index);
 
