@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/02/11 10:36:02  skyjake
+// Cleanup
+//
 // Revision 1.5  2004/01/19 19:20:31  skyjake
 // Renamed ticcmd_t members (now uses common ticcmd)
 //
@@ -147,7 +150,7 @@ void P_CheckPlayerJump(player_t *player)
 //
 // P_MovePlayer
 //
-void P_MovePlayer (player_t* player)
+void P_MovePlayer(player_t* player)
 {
 	mobj_t*			plrmo = player->plr->mo;
     ticcmd_t*		cmd;
@@ -438,6 +441,9 @@ void P_PlayerThink (player_t* player)
    
     // chain saw run forward
     cmd = &player->cmd;
+
+	//Con_Printf("cmd.angle=%04x\n", cmd->angle);
+	
     if (player->plr->mo->flags & MF_JUSTATTACKED)
     {
 		cmd->angle = plrmo->angle >> 16;	// Don't turn.
@@ -457,7 +463,7 @@ void P_PlayerThink (player_t* player)
     // Move around.
     // Reactiontime is used to prevent movement
     //  for a bit after a teleport.
-    if (player->plr->mo->reactiontime)
+    if (player->plr->mo->reactiontime > 0)
 		player->plr->mo->reactiontime--;
     else
 		P_MovePlayer (player);
