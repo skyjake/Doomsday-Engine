@@ -86,10 +86,11 @@ void Rend_DrawPlayerSprites(void)
 	// Cameramen have no psprites.
 	if(viewplayer->flags & DDPF_CAMERA) return; 
 
-	for(i = 0, psp = viewplayer->psprites; i<DDMAXPSPRITES; i++, psp++)
+	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
 	{
 		if(psp->flags & DDPSPF_RENDERED 
 			|| !psp->stateptr) continue; // Not used.
+
 		// Draw it.
 		psp->flags |= DDPSPF_RENDERED;
 		R_GetSpriteInfo(psp->stateptr->sprite, 

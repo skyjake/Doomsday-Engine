@@ -482,18 +482,25 @@ void GL_Restore2DState(int step)
 	switch(step)
 	{
 	case 1:
+		// After Restore Step 1 normal player sprites are rendered.
 		gl.MatrixMode(DGL_PROJECTION);
 		gl.LoadIdentity();
 		gl.Ortho(0, 0, 320, (320*viewheight)/viewwidth, -1, 1);
 		gl.MatrixMode(DGL_MODELVIEW);
 		gl.LoadIdentity();
+
+		// Depth testing must be disabled so that psprite 1 will be drawn
+		// on top of psprite 0 (Doom plasma rifle fire).
+		gl.Disable(DGL_DEPTH_TEST);
 		break;
 
 	case 2:
+		// After Restore Step 2 nothing special happens.
 		gl.Viewport(0, 0, screenWidth, screenHeight);
 		break;
 
 	case 3:
+		// After Restore Step 3 we're back in 2D rendering mode.
 		gl.MatrixMode(DGL_PROJECTION);
 		gl.PopMatrix();
 		gl.MatrixMode(DGL_MODELVIEW);
