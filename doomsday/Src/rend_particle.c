@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.7  2003/05/25 19:28:38  skyjake
+//** Fixed bug 743201
+//**
 //** Revision 1.6  2003/05/23 22:07:54  skyjake
 //** Modified verbosity
 //**
@@ -452,7 +455,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		for(c = 0; c < 4; c++)
 		{
 			color[c] = dst->color[c]*inv_mark + next_dst->color[c]*mark;
-			if(!(st->flags & PTCF_BRIGHT) && c < 3) 
+			if(!(st->flags & PTCF_BRIGHT) && c < 3 && !LevelFullBright) 
 			{
 				// This is a simplified version of sectorlight (no distance
 				// attenuation).
