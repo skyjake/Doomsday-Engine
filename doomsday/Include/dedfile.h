@@ -393,19 +393,23 @@ typedef struct ded_decor_s
 typedef struct ded_s
 {
 	int			version;			// DED version number.
+	/*
 	char		mobj_prefix[10];	// Prefix for mobj type constants.
 	char		state_prefix[10];	// Prefix for state constants.
 	char		sprite_prefix[10];	// Prefix for sprite constants.
+	*/
 	char		model_path[256];	// Directories for searching MD2s.
 	ded_flags_t	model_flags;		// Default values for models.
 	float		model_scale;		
 	float		model_offset;		
+	/*
 	char		sfx_prefix[10];		// Prefix for sfx constants.
 	char		mus_prefix[10];		// Prefix for mus constants.
 	char		text_prefix[10];	// Prefix for text constants.
+	*/
 
 	struct ded_counts_s {
-		ded_count_t includes;
+		//ded_count_t includes;
 		ded_count_t	flags;
 		ded_count_t	mobjs;
 		ded_count_t	states;
@@ -427,7 +431,7 @@ typedef struct ded_s
 	} count;
 
 	// Include other DED files.
-	ded_path_t	*includes;
+	//ded_path_t	*includes;
 
 	// Flag values (for all types of data).
 	ded_flag_t	*flags;
@@ -487,10 +491,10 @@ typedef struct ded_s
 // Routines for managing DED files.
 void DED_Init(ded_t *ded);
 void DED_Destroy(ded_t *ded);
-int DED_Read(ded_t *ded, const char *sPathName, int bDestroyOld);
-int DED_ReadLump(ded_t *ded, int lump, int bDestroyOld);
+int DED_Read(ded_t *ded, const char *sPathName);
+int DED_ReadLump(ded_t *ded, int lump);
 
-int DED_AddInclude(ded_t *ded, char *inc);
+//int DED_AddInclude(ded_t *ded, char *inc);
 int DED_AddFlag(ded_t *ded, char *name, int value);
 int DED_AddMobj(ded_t *ded, char *idstr);
 int DED_AddState(ded_t *ded, char *id);
@@ -510,7 +514,7 @@ int DED_AddDecoration(ded_t *ded);
 int DED_AddSector(ded_t *ded, int id);
 int DED_AddLine(ded_t *ded, int id);
 
-void DED_RemoveInclude(ded_t *ded, int index);
+//void DED_RemoveInclude(ded_t *ded, int index);
 void DED_RemoveFlag(ded_t *ded, int index);
 void DED_RemoveMobj(ded_t *ded, int index);
 void DED_RemoveState(ded_t *ded, int index);

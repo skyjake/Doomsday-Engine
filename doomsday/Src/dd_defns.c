@@ -335,6 +335,7 @@ void Def_InitTextDef(ddtext_t *txt, char *str)
 	txt->text = realloc(txt->text, strlen(txt->text) + 1);
 }
 
+/*
 //===========================================================================
 // Def_ReadIncludedDEDs
 //===========================================================================
@@ -355,6 +356,7 @@ void Def_ReadIncludedDEDs(directory_t *mydir)
 		Dir_ChDir(mydir);
 	}
 }
+*/
 
 //===========================================================================
 // Def_ReadDEDFile
@@ -365,14 +367,18 @@ int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
 	// Skip directories.
 	if(type == FT_DIRECTORY) return true;
 
-	if(M_CheckFileID(fn) 
-		&& !DED_Read(&defs, fn, read_count==1))
+	if(M_CheckFileID(fn))
 	{
-		// Damn.
-		Con_Error("ReadDEDFile: Reading of %s failed.\n  %s\n", 
-			fn, dedReadError);
+		if(!DED_Read(&defs, fn))
+		{
+			// Damn.
+			Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
+		}	
+		else if(verbose) 
+		{
+			Con_Message("DED done: %s\n", fn);
+		}
 	}
-	if(verbose) Con_Message("ReadDEDFile: %s\n", fn);
 	// Continue processing files.
 	return true;
 }
@@ -383,19 +389,36 @@ int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
 void Def_ReadProcessDED(const char *fileName)
 {
 	char fn[256];
+	directory_t oldDir;
 	directory_t dir;
+	boolean changed = false;
+
+	Dir_GetDir(&oldDir);
 
 	// Change to the directory of the file we're about to read.
 	Dir_FileName(fileName, fn);
 	Dir_FileDir(fileName, &dir);
-	if(Dir_ChDir(&dir)) // Make sure the directory exists.
-	{
-		if(strchr(fn, '*') || strchr(fn, '?'))
-			F_ForAll(fn, 0, Def_ReadDEDFile);
-		else
-			Def_ReadDEDFile(fn, FT_NORMAL, 0);
 
-		Def_ReadIncludedDEDs(&dir);
+	if(!Dir_IsEqual(&dir, &oldDir))
+	{
+		changed = true;
+		if(!Dir_ChDir(&dir)) 
+		{
+			// The directory doesn't exist, which means the DED file 
+			// doesn't, either.
+			return;
+		}
+	}
+
+	if(strchr(fn, '*') || strchr(fn, '?'))
+		F_ForAll(fn, 0, Def_ReadDEDFile);
+	else
+		Def_ReadDEDFile(fn, FT_NORMAL, 0);
+
+	if(changed)
+	{
+		// Back to the original directory.
+		Dir_ChDir(&oldDir);
 	}
 }
 
@@ -421,7 +444,7 @@ void Def_ReadLumpDefs(void)
 		if(!strnicmp(lumpinfo[i].name, "DD_DEFNS", 8))
 		{
 			c++;
-			if(!DED_ReadLump(&defs, i, false))
+			if(!DED_ReadLump(&defs, i))
 			{
 				Con_Error("DD_ReadLumpDefs: Parse error when reading "
 					"DD_DEFNS from\n  %s.\n", W_LumpSourceFile(i));
@@ -435,7 +458,7 @@ void Def_ReadLumpDefs(void)
 	}
 
 	// Read any included files.
-	Def_ReadIncludedDEDs(&ddRuntimeDir);
+	//Def_ReadIncludedDEDs(&ddRuntimeDir);
 }
 
 //===========================================================================
@@ -483,6 +506,11 @@ void Def_Read(void)
 	}	
 
 	first_ded = true;
+
+	// Clear all existing definitions.
+	DED_Destroy(&defs);
+	DED_Init(&defs);
+
 	for(read_count = 0, i = 0; dedfiles[i]; i++)
 	{
 		Dir_ChDir(&ddRuntimeDir);
@@ -504,13 +532,15 @@ void Def_Read(void)
 		Con_Error("DD_ReadDefs: No state or mobj definitions found!\n");
 	
 	// Sprite names.
-	DED_NewEntries(&sprnames, &count_sprnames, sizeof(*sprnames), defs.count.sprites.num);
+	DED_NewEntries(&sprnames, &count_sprnames, sizeof(*sprnames), 
+		defs.count.sprites.num);
 	for(i = 0; i < count_sprnames.num; i++) 
 		strcpy(sprnames[i].name, defs.sprites[i].id);
 	Def_CountMsg(count_sprnames.num, "sprite names");
 
 	// States.
-	DED_NewEntries(&states, &count_states, sizeof(*states), defs.count.states.num);
+	DED_NewEntries(&states, &count_states, sizeof(*states), 
+		defs.count.states.num);
 	for(i = 0; i < count_states.num; i++)
 	{
 		ded_state_t *dst = defs.states + i;
