@@ -4,6 +4,7 @@
 #define MAX_ACTIVE_PTCGENS	96
 #define MAX_PTC_STAGES		DED_PTC_STAGES
 #define MAX_PTC_TEXTURES	32			// Maximum # of textures in particle system
+#define MAX_PTC_MODELS		100
 
 // Generator flags
 #define PGF_STATIC				0x1		// Can't be replaced by anything.
@@ -34,8 +35,9 @@ enum
 	PTC_POINT,
 	PTC_LINE,
 	// New types can be added here.
-	PTC_TEXTURE = 100
+	PTC_TEXTURE = 100,
 	// ...followed by MAX_PTC_TEXTURES types.
+	PTC_MODEL = 1000
 } ptc_type_e;
 
 // Particle flags
@@ -48,6 +50,10 @@ enum
 #define PTCF_STAGE_FLAT_TOUCH 0x40	// Touch a flat => end stage.
 #define PTCF_WALL_FLAT		0x80	// Touches a wall => render as flat.
 #define PTCF_SPHERE_FORCE	0x100
+#define PTCF_ZERO_YAW		0x200	// Set particle yaw to zero.
+#define PTCF_ZERO_PITCH		0x400	// Set particle pitch to zero.
+#define PTCF_RANDOM_YAW		0x800	
+#define PTCF_RANDOM_PITCH	0x1000
 
 typedef struct
 {
@@ -57,6 +63,7 @@ typedef struct
 	int				mov[3];			// Momentum.
 	sector_t		*sector;		// Updated when needed.
 	line_t			*contact;		// Updated when lines hit/avoided.
+	ushort			yaw, pitch;		// Rotation angles (0-65536 => 0-360).
 } particle_t;
 
 typedef struct
