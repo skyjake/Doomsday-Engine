@@ -448,16 +448,18 @@ boolean EV_LineSearchForPuzzleItem(line_t *line, byte *args, mobj_t *mo)
 			{
 				// A puzzle item was found for the line
 				P_PlayerRemoveArtifact(player, i);
+				if(arti < arti_firstpuzzitem)
+				{
+					S_ConsoleSound(SFX_ARTIFACT_USE, NULL, 
+						player - players);
+				}
+				else
+				{
+					S_ConsoleSound(SFX_PUZZLE_SUCCESS, NULL, 
+						player - players);
+				}
 				if(player == &players[consoleplayer])
 				{
-					if(arti < arti_firstpuzzitem)
-					{
-						S_StartSound(SFX_ARTIFACT_USE, NULL);
-					}
-					else
-					{
-						S_StartSound(SFX_PUZZLE_SUCCESS, NULL);
-					}
 					ArtifactFlash = 4;
 				}
 				return true;
