@@ -501,6 +501,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 	ded_mapinfo_t *mi;
 	ded_str_t *tn;
 	ded_value_t *val;
+	int prev_mapinfo_idx = -1; // For "Copy".
 	ded_detailtexture_t *dtl;
 	int prev_dtldef_idx = -1; // For "Copy".
 	ded_ptcgen_t *gen;
@@ -873,6 +874,12 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			// A new map info.
 			idx = DED_AddMapInfo(ded, "");
 			mi = ded->mapinfo + idx;
+			if(prev_mapinfo_idx >= 0 && bCopyNext) 
+			{
+				// Should we copy the previous definition?
+				memcpy(mi, ded->mapinfo + prev_mapinfo_idx, sizeof(*mi));
+			}
+			prev_mapinfo_idx = idx;
 			FINDBEGIN;
 			for(;;)
 			{
@@ -895,7 +902,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_FLT("Horizon offset", mi->horizon_offset)
 				if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
 				{
-					ded_skylayer_t *sl = mi->sky_layers + atoi(label+10)-1;
+					ded_skylayer_t *sl = mi->sky_layers + atoi(label+10) - 1;
 					FINDBEGIN;
 					for(;;)
 					{
@@ -904,6 +911,26 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						RV_STR("Texture", sl->texture)
 						RV_FLT("Offset", sl->offset)
 						RV_FLT("Color limit", sl->color_limit)
+						RV_END
+						CHECKSC;
+					}
+				}
+				else if(ISLABEL("Sky Model 1") || ISLABEL("Sky Model 2")
+					|| ISLABEL("Sky Model 3") || ISLABEL("Sky Model 4")
+					|| ISLABEL("Sky Model 5") || ISLABEL("Sky Model 6")
+					|| ISLABEL("Sky Model 7") || ISLABEL("Sky Model 8"))
+				{
+					ded_skymodel_t *sm = mi->sky_models + atoi(label+10) - 1;
+					FINDBEGIN;
+					for(;;)
+					{
+						READLABEL;
+						RV_STR("ID", sm->id)
+						RV_FLT("Frame interval", sm->frame_interval)
+						RV_FLT("Yaw", sm->yaw)
+						RV_FLT("Yaw speed", sm->yaw_speed)
+						RV_VEC("Offset factor", sm->coord_factor, 3)
+						RV_VEC("Color", sm->color, 4)
 						RV_END
 						CHECKSC;
 					}

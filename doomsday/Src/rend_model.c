@@ -167,9 +167,9 @@ boolean Mod_LightIterator(lumobj_t *lum, fixed_t xyDist)
 	return true;
 }
 
-//===========================================================================
-// Mod_GetVisibleFrame
-//===========================================================================
+/*
+ * Return a pointer to the visible model frame.
+ */
 model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
 {
 	model_t *mdl = modellist[mf->sub[subnumber].model];
@@ -536,15 +536,24 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		inter = (inter - mf->intermark) / (endPos - mf->intermark);		
 	}
 
-	// Check for possible interpolation.
-	if(frameInter 
-		&& mfNext
-		&& !(subFlags & MFF_DONT_INTERPOLATE))
+	// Do we have a sky model here?
+	if(spr->issprite == 3)
 	{
-		if(mfNext->sub[number].model == smf->model)
+		// Sky models are animated differently.
+		// Always interpolate, if there's animation.
+		nextFrame = mdl->frames + (smf->frame + 1) % mdl->info.numFrames;
+	}
+	else
+	{
+		// Check for possible interpolation.
+		if(frameInter 
+			&& mfNext
+			&& !(subFlags & MFF_DONT_INTERPOLATE))
 		{
-			nextFrame = Mod_GetVisibleFrame(mfNext, number, spr->mo.id);
-			//nextvtx = nextframe->vertices;
+			if(mfNext->sub[number].model == smf->model)
+			{
+				nextFrame = Mod_GetVisibleFrame(mfNext, number, spr->mo.id);
+			}
 		}
 	}
 
@@ -623,9 +632,19 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		+ mf->offset[VY] + spr->mo.visoff[VZ];
 
 	// Calculate lighting.
-	if((spr->mo.lightlevel < 0 || subFlags & MFF_FULLBRIGHT) 
+	if(spr->issprite == 3)
+	{	
+		// Skymodels don't have light, only color.
+		color[0] = spr->mo.rgb[0] / 255.0f;
+		color[1] = spr->mo.rgb[1] / 255.0f;
+		color[2] = spr->mo.rgb[2] / 255.0f;
+		color[3] = byteAlpha / 255.0f;
+		Mod_FixedVertexColors(numVerts, modelColors, color);
+	}
+	else if((spr->mo.lightlevel < 0 || subFlags & MFF_FULLBRIGHT) 
 		&& !(subFlags & MFF_DIM)) 
 	{
+		// Fullbright white.
 		ambient[0] = ambient[1] = ambient[2] = 1;
 		Mod_FullBrightVertexColors(numVerts, modelColors, byteAlpha);
 	}

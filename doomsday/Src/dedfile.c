@@ -226,9 +226,21 @@ int DED_AddMapInfo(ded_t *ded, char *str)
 {
 	ded_mapinfo_t *inf = DED_NewEntry( (void**) &ded->mapinfo,
 		&ded->count.mapinfo, sizeof(ded_mapinfo_t));
+	int i;
+
 	strcpy(inf->id, str);
 	inf->gravity = 1;
 	inf->sky_height = .666667f;
+
+	for(i = 0; i < NUM_SKY_MODELS; i++)
+	{
+		inf->sky_models[i].frame_interval = 1;
+		inf->sky_models[i].color[0] = 1;
+		inf->sky_models[i].color[1] = 1;
+		inf->sky_models[i].color[2] = 1;
+		inf->sky_models[i].color[3] = 1;
+	}
+
 	return inf - ded->mapinfo;
 }
 

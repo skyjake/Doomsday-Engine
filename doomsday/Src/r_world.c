@@ -1132,6 +1132,9 @@ void R_SetupSky(void)
 			Rend_SkyParams(i, DD_DISABLE, 0);
 		}
 	}
+
+	// Any sky models to setup? Models will override the normal sphere.
+	R_SetupSkyModels(mapinfo);
 }
 
 //===========================================================================

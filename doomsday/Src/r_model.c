@@ -701,6 +701,21 @@ static modeldef_t *GetStateModel(state_t *st, int select)
 }
 
 //===========================================================================
+// R_CheckIDModelFor
+//===========================================================================
+modeldef_t *R_CheckIDModelFor(const char *id)
+{
+	int i;
+
+	if(!id[0]) return NULL;
+
+	for(i = 0; i < nummodels; i++)
+		if(!strcmp(models[i].id, id))
+			return models + i;
+	return NULL;
+}
+
+//===========================================================================
 // R_CheckModelFor
 //	Is there a model for this mobj? The decision is made based on the 
 //	state and tics of the mobj. Returns the modeldefs that are in effect 
@@ -884,6 +899,28 @@ float R_GetModelVisualRadius(modeldef_t *mf)
 }
 
 //===========================================================================
+// R_GetIDModelDef
+//	Create a new modeldef or find an existing one. This is for ID'd models.
+//===========================================================================
+modeldef_t *R_GetIDModelDef(const char *id)
+{
+	modeldef_t *md;
+
+	// ID defined?
+	if(!id[0]) return NULL;
+
+	// First try to find an existing modef.
+	if((md = R_CheckIDModelFor(id)) != NULL)
+		return md;
+
+	// Get a new entry.
+	md = models + nummodels++;
+	memset(md, 0, sizeof(*md));
+	strcpy(md->id, id);
+	return md;
+}
+
+//===========================================================================
 // R_GetModelDef
 //	Create a new modeldef or find an existing one. There can be only one
 //	model definition associated with a state/intermark pair. 
@@ -938,20 +975,27 @@ void R_SetupModel(ded_model_t *def)
 	int i, k, statenum = Def_GetStateNum(def->state);
 	float min[3], max[3];
 
-	if(statenum < 0)
+	// Is this an ID'd model?
+	if((modef = R_GetIDModelDef(def->id)) == NULL)
 	{
-		Con_Message("R_SetupModel: Undefined state '%s'.\n", def->state);
-		return; 
-	}
-	
-	BEGIN_PROF( PROF_GET_MODEL_DEF );
-	modef = R_GetModelDef(statenum + def->off, def->intermark, def->selector);
-	END_PROF( PROF_GET_MODEL_DEF );
+		// No, normal State-model.
+		if(statenum < 0)
+		{
+			Con_Message("R_SetupModel: Undefined state '%s'.\n", def->state);
+			return; 
+		}
+		
+		BEGIN_PROF( PROF_GET_MODEL_DEF );
+		modef = R_GetModelDef(statenum + def->off, def->intermark, 
+			def->selector);
+		END_PROF( PROF_GET_MODEL_DEF );
 
-	if(!modef) 
-	{
-		Con_Message("R_SetupModel: Invalid: %s +%i.\n", def->state, def->off);
-		return; // Can't get a modef, quit!
+		if(!modef) 
+		{
+			Con_Message("R_SetupModel: Invalid: %s +%i.\n", def->state, 
+				def->off);
+			return; // Can't get a modef, quit!
+		}
 	}
 
 	BEGIN_PROF( PROF_DATA_INIT );
@@ -1016,7 +1060,7 @@ void R_SetupModel(ded_model_t *def)
 	{
 		R_ScaleModel(modef, modef->resize, modef->offset[VY]);
 	}
-	else if(modef->sub[0].flags & MFF_AUTOSCALE)
+	else if(modef->state && modef->sub[0].flags & MFF_AUTOSCALE)
 	{
 		int sprNum = Def_GetSpriteNum(def->sprite.id);
 		int sprFrame = def->spriteframe;
@@ -1028,19 +1072,22 @@ void R_SetupModel(ded_model_t *def)
 		R_ScaleModelToSprite(modef, sprNum, sprFrame);
 	}
 
-	// Associate this modeldef with its state.
-	if(!modef->state->model)
+	if(modef->state)
 	{
-		// No modef; use this.
-		modef->state->model = modef;
-	}
-	else // Must check intermark; smallest wins!
-	{
-		modeldef_t *other = (modeldef_t*) modef->state->model;
-		if(modef->intermark <= other->intermark // Should never be ==
-			&& modef->select == other->select
-			|| modef->select < other->select) // Smallest selector?
+		// Associate this modeldef with its state.
+		if(!modef->state->model)
+		{
+			// No modef; use this.
 			modef->state->model = modef;
+		}
+		else // Must check intermark; smallest wins!
+		{
+			modeldef_t *other = (modeldef_t*) modef->state->model;
+			if(modef->intermark <= other->intermark // Should never be ==
+				&& modef->select == other->select
+				|| modef->select < other->select) // Smallest selector?
+				modef->state->model = modef;
+		}
 	}
 
 	// Particle offset?
@@ -1106,7 +1153,6 @@ void R_InitModels(void)
 	// There can't be more modeldefs than there are DED Models.
 	// There can be fewer, though.
 	maxmodels = defs.count.models.num;
-	//models = Z_Malloc(sizeof(modeldef_t) * maxmodels, PU_MODEL, 0);
 	models = malloc(sizeof(modeldef_t) * maxmodels);
 	nummodels = 0;
 

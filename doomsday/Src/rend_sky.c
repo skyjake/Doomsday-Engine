@@ -14,6 +14,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 
@@ -29,6 +30,15 @@ typedef struct
 {
 	float x,y,z;
 } skyvertex_t;
+
+typedef struct skymodel_s {
+	ded_skymodel_t *def;
+	modeldef_t *model;	
+	int frame;
+	int timer;
+	int maxTimer;
+	float yaw;
+} skymodel_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -46,8 +56,13 @@ extern byte			topLineRGB[3];
 
 skylayer_t	skyLayers[MAXSKYLAYERS];
 int			firstLayer, activeLayers;
+
+skymodel_t	skyModels[NUM_SKY_MODELS];
+boolean		skyModelsInited = false;
+
 skyvertex_t	*skyVerts = NULL;	// Vertices for the upper hemisphere.
 int			numSkyVerts = 0;
+
 int			skyDetail = 6, simpleSky;
 int			skyColumns, skyRows = 3;
 int			skyhemispheres;
@@ -64,6 +79,131 @@ static boolean		yflip;
 static fadeout_t	*currentFO;
 
 // CODE --------------------------------------------------------------------
+
+//===========================================================================
+// R_SetupSkyModels
+//	The sky models are set up using the data in the definition.
+//===========================================================================
+void R_SetupSkyModels(ded_mapinfo_t *info)
+{
+	int i;
+	ded_skymodel_t *def;
+	skymodel_t *sky;
+
+	// Clear the whole sky models data.
+	memset(skyModels, 0, sizeof(skyModels));
+
+	// The normal sphere is used if no models will be set up.
+	skyModelsInited = false;
+
+	for(i = 0, def = info->sky_models, sky = skyModels; 
+		i < NUM_SKY_MODELS; i++, def++, sky++)
+	{
+		// Is the model ID set?
+		if((sky->model = R_CheckIDModelFor(def->id)) == NULL) 
+			continue;
+
+		// There is a model here.
+		skyModelsInited = true;
+
+		sky->def = def;
+		sky->maxTimer = (int) (TICSPERSEC * def->frame_interval);
+		sky->yaw = def->yaw;
+	}
+}
+
+//===========================================================================
+// R_SkyTicker
+//	Animate sky models.
+//===========================================================================
+void R_SkyTicker(void)
+{
+	int i;
+	skymodel_t *sky;
+
+	if(!skyModelsInited) return;
+
+	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
+	{
+		if(!sky->def) continue;
+
+		// Turn the model.
+		sky->yaw += sky->def->yaw_speed / TICSPERSEC;
+
+		// Is it time to advance to the next frame?
+		if(++sky->timer >= sky->maxTimer)
+		{
+			sky->timer = 0;
+			sky->frame++;
+		}
+	}
+}
+
+//===========================================================================
+// Rend_RenderSkyModels
+//===========================================================================
+void Rend_RenderSkyModels(void)
+{
+	int i, k;
+	float inter;
+	skymodel_t *sky;
+	vissprite_t vis;
+	float pos[3];
+
+	gl.MatrixMode(DGL_MODELVIEW);
+	gl.PushMatrix();
+
+	// Setup basic translation.
+	gl.Translatef(vx, vy, vz);
+
+	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
+	{
+		if(!sky->def) continue;
+
+		// Calculate the coordinates for the model.
+		pos[0] = vx * -sky->def->coord_factor[0];
+		pos[1] = vy * -sky->def->coord_factor[1];
+		pos[2] = vz * -sky->def->coord_factor[2];
+
+		inter = sky->timer / (float) sky->maxTimer;
+
+		// Setup a dummy vissprite with all the information.
+		memset(&vis, 0, sizeof(vis));
+
+		vis.issprite = 3; // Sky model.
+		vis.distance = 1;
+		vis.mo.gx = FRACUNIT * pos[0];
+		vis.mo.gy = FRACUNIT * pos[2];
+		vis.mo.gz = vis.mo.gzt = FRACUNIT * pos[1];
+		vis.mo.v1[0] = pos[0];
+		vis.mo.v1[1] = pos[2];
+		vis.mo.inter = inter;
+		vis.mo.mf = sky->model;
+		for(k = 0; k < DED_MAX_SUB_MODELS; k++)
+		{
+			model_t *mdl = modellist[sky->model->sub[k].model];
+			if(!sky->model->sub[k].model) continue;
+			// Modify the modeldef itself: set the current frame.
+			sky->model->sub[k].frame 
+				= sky->frame % mdl->info.numFrames;
+		}
+		vis.mo.yaw = sky->yaw;
+		vis.mo.lightlevel = -1; // Fullbright.
+		for(k = 0; k < 3; k++)
+		{
+			vis.mo.rgb[k] = sky->def->color[k] * 255;
+		}
+		vis.mo.alpha = sky->def->color[3];
+
+		Rend_RenderModel(&vis);
+	}
+
+	// We don't want that anything interferes with what was drawn.
+	gl.Clear(DGL_DEPTH_BUFFER_BIT);
+
+	gl.MatrixMode(DGL_MODELVIEW);
+	gl.PopMatrix();
+}
 
 // Calculate the vertex and texture coordinates.
 static void SkyVertex(int r, int c)
@@ -250,10 +390,20 @@ void Rend_RenderSkyHemisphere(int whichHemi)
 	}
 }
 
+//===========================================================================
+// Rend_RenderSky
+//===========================================================================
 void Rend_RenderSky(int hemis)
 {
 	// IS there a sky to be rendered?
 	if(!hemis || firstLayer == -1) return;
+
+	// If sky models have been inited, they will be used.
+	if(skyModelsInited)
+	{
+		Rend_RenderSkyModels();
+		return;
+	}
 
 	// Always render the full sky?
 	if(r_fullsky) hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;

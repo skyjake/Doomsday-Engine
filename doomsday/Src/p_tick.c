@@ -66,6 +66,7 @@ void P_Ticker(void)
 	// New ptcgens for planes?
 	P_CheckPtcPlanes();	
 	R_AnimateAnimGroups();
+	R_SkyTicker();
 
 	// Check all mobjs.
 	for(th = thinkercap.next; th != &thinkercap; th = th->next)
