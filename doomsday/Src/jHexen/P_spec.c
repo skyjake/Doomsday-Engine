@@ -1036,7 +1036,7 @@ void P_SpawnSpecials (void)
 	//      Init special SECTORs
 	//
 	sector = sectors;
-	for (i=0 ; i<numsectors ; i++, sector++)
+	for(i = 0; i < numsectors; i++, sector++)
 	{
 		// Clients do not spawn sector specials.
 		if(IS_CLIENT) break;
@@ -1134,8 +1134,10 @@ void P_SpawnSpecials (void)
 	for (i = 0;i < MAXBUTTONS;i++)
 		memset(&buttonlist[i],0,sizeof(button_t));
 
+	/*
 	// Initialize flat and texture animations
 	P_InitFTAnims();
+	*/
 }
 
 //==========================================================================
