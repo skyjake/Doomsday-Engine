@@ -14,6 +14,7 @@ Version 1.7.9 (work in progress)
 * crosshair color alpha (cmd "crosshair color", var "view-cross-a")
 - DirectSound 8: fixed a problem with buffer loading; using -csd should 
   no longer be necessary
+- Sound definition patching fixed (Ext/Group keys were ignored)
 
 jDoom:
 + automap added to Options -> Controls (under Misc.)

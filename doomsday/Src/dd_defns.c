@@ -560,12 +560,14 @@ void Def_Read(void)
 	Def_CountMsg(defs.count.lights.num, "lights");
 
 	// Sound effects.
-	DED_NewEntries(&sounds, &count_sounds, sizeof(*sounds), defs.count.sounds.num);
+	DED_NewEntries(&sounds, &count_sounds, sizeof(*sounds), 
+		defs.count.sounds.num);
 	for(i = 0; i < count_sounds.num; i++)
 	{
 		ded_sound_t *snd = defs.sounds + i;
 		// Make sure duplicate defs overwrite the earliest.
 		sfxinfo_t *si = sounds + Def_GetSoundNum(snd->id);
+		strcpy(si->id, snd->id);
 		strcpy(si->lumpname, snd->lumpname);
 		si->lumpnum = W_CheckNumForName(snd->lumpname);
 		strcpy(si->name, snd->name);
@@ -576,6 +578,8 @@ void Def_Read(void)
 		si->priority = snd->priority;
 		si->channels = snd->channels;
 		si->flags = Def_EvalFlags(snd->flags);
+		si->group = snd->group;
+		strcpy(si->external, snd->ext.path);
 	}
 	Def_CountMsg(count_sounds.num, "sound effects");
 

@@ -890,7 +890,7 @@ void Sfx_StartSound
 {
 	sfxchannel_t	*ch, *selch, *prioch;
 	sfxcache_t		*chsamp;
-	ded_sound_t		*def;
+	sfxinfo_t		*info;
 	int				i, count, nowtime;
 	float			myprio, lowprio;
 	boolean			have_channel_prios = false;
@@ -911,15 +911,15 @@ void Sfx_StartSound
 	myprio = Sfx_Priority(emitter, fixedpos, volume, nowtime);
 
 	// Check that there aren't already too many channels playing this sample.
-	def = &defs.sounds[sample->id];
-	if(def->channels > 0)
+	info = sounds + sample->id;
+	if(info->channels > 0)
 	{
 		// The decision to stop channels is based on priorities.
 		Sfx_GetChannelPriorities(channel_prios);
 		have_channel_prios = true;
 
 		count = Sfx_CountPlaying(sample->id);
-		while(count >= def->channels)
+		while(count >= info->channels)
 		{
 			// Stop the lowest priority sound of the playing instances,
 			// again noting sounds that are more important than us.

@@ -147,7 +147,6 @@ void S_LocalSoundAtVolumeFrom
 	int sound_id = sound_id_and_flags & ~DDSF_FLAG_MASK;
 	sfxsample_t samp;
 	sfxinfo_t *info;
-	ded_sound_t *def;
 	float freq = 1;
 	int i;
 	unsigned short *sp = NULL;
@@ -195,17 +194,16 @@ void S_LocalSoundAtVolumeFrom
 			> sound_max_distance) return;
 	}
 
-	def = defs.sounds + sound_id;
 	samp.id = sound_id;	
-	samp.group = def->group;
+	samp.group = info->group;
 	samp.data = NULL;
 
 	// Has an external sound file been defined?
-	if(def->ext.path[0])
+	if(info->external[0])
 	{
 		// Yes, try loading. Like music, the file name is relative to the
 		// base path.
-		M_PrependBasePath(def->ext.path, buf);
+		M_PrependBasePath(info->external, buf);
 		if((samp.data = WAV_Load(buf, &samp.bytesper, &samp.rate, 
 			&samp.numsamples)))
 		{
@@ -222,7 +220,7 @@ void S_LocalSoundAtVolumeFrom
 		if(info->lumpnum < 0)
 		{
 			Con_Error("S_LocalSound: Sound %s has a bad lump: '%s'.\n",
-				def->id, def->lumpname);
+				info->id, info->lumpname);
 		}
 		sp = W_CacheLumpNum(info->lumpnum, PU_STATIC);
 		
@@ -236,7 +234,7 @@ void S_LocalSoundAtVolumeFrom
 			{
 				// Abort...
 				Con_Message("S_LocalSound: WAV data in lump %s is bad.\n",
-					def->lumpname);
+					info->lumpname);
 				W_CacheLumpNum(info->lumpnum, PU_CACHE);
 				return;
 			}			
@@ -267,9 +265,9 @@ void S_LocalSoundAtVolumeFrom
 
 	// If the sound has an exclusion group, either all or the same emitter's
 	// iterations of this sound will stop.
-	if(def->group)
+	if(info->group)
 	{
-		Sfx_StopSoundGroup(def->group,
+		Sfx_StopSoundGroup(info->group,
 			info->flags & SF_GLOBAL_EXCLUDE? NULL : origin);
 	}
 

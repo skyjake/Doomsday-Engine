@@ -17,6 +17,7 @@ typedef struct sfxinfo_s
 	void *data;				// Pointer to sound data.
 	int lumpnum;
 	char lumpname[9];		// Actual lump name of the sound (full name).
+	char id[32];			// Identifier name (from the def).
 	char name[32];			// Long name.
 	struct sfxinfo_s *link;	// Link to another sound.
 	int link_pitch;
@@ -25,6 +26,8 @@ typedef struct sfxinfo_s
 	int channels;			// Max. channels for the sound to occupy.
 	int usefulness;			// Used to determine when to cache out.
 	int flags;
+	int group;
+	char external[256];		// Path to external file.
 } sfxinfo_t;
 
 extern ded_t		defs;		// The main definitions database.
