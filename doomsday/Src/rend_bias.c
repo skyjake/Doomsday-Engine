@@ -121,8 +121,8 @@ static int editActive = false; // Edit mode active?
 static int editGrabbed = -1;
 static int editHidden = false;
 static int editShowAll = false;
+static int editShowIndices = true;
 static int editHueCircle = false;
-//static int editSelector = -1;
 static float hueDistance = 100;
 static vec3_t hueOrigin, hueSide, hueUp;
 
@@ -157,6 +157,9 @@ void SB_Register(void)
 
     C_VAR_INT("edit-bias-show-sources", &editShowAll, 0, 0, 1,
               "1=Show all light sources.");
+
+    C_VAR_INT("edit-bias-show-indices", &editShowIndices, 0, 0, 1,
+              "1=Show source indices in 3D view.");
     
     // Commands for light editing.
 	C_CMD("bledit", BLEditor, "Enter bias light edit mode.");
@@ -1935,6 +1938,37 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
     gl.End();
 }
 
+static void SBE_DrawIndex(source_t *src)
+{
+    char buf[80];
+    float eye[3] = { vx, vz, vy };
+    float scale = M_Distance(src->pos, eye)/(screenWidth/2);
+
+    if(!editShowIndices)
+        return;
+    
+    gl.Disable(DGL_DEPTH_TEST);
+    gl.Enable(DGL_TEXTURING);
+    
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PushMatrix();
+    gl.Translatef(src->pos[VX], src->pos[VZ], src->pos[VY]);
+    gl.Rotatef(-vang + 180, 0, 1, 0);
+    gl.Rotatef(vpitch, 1, 0, 0);
+    gl.Scalef(-scale, -scale, 1);
+    
+    // Show the index number of the source.
+    sprintf(buf, "%i", src - sources);
+    UI_TextOutEx(buf, 2, 2, false, false, UI_COL(UIC_TITLE),
+                 1 - M_Distance(src->pos, eye)/2000);
+
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
+
+    gl.Enable(DGL_DEPTH_TEST);
+    gl.Disable(DGL_TEXTURING);
+}
+
 static void SBE_DrawSource(source_t *src)
 {
     float col[4], d;
@@ -1948,6 +1982,7 @@ static void SBE_DrawSource(source_t *src)
     col[3] = 1.0f / d;
 
     SBE_DrawStar(src->pos, 25 + src->intensity/20, col);
+    SBE_DrawIndex(src);
 }
 
 static void SBE_HueOffset(double angle, float *offset)
@@ -2109,6 +2144,7 @@ void SBE_DrawCursor(void)
     }
 
     SBE_DrawStar(s->pos, size, col);
+    SBE_DrawIndex(s);
 
     // Show if the source is locked.
     if(s->flags & BLF_LOCKED)
