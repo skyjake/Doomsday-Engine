@@ -79,10 +79,11 @@ typedef struct {
 		char    is_patch:1;		// Raw image or patch.
 		char    done:1;			// Animation finished (or repeated).
 		char    is_rect:1;
+		char    is_ximage:1;	// External graphics resource.
 	} flags;
 	int     seq;
 	int     seq_wait[MAX_SEQUENCE], seq_timer;
-	short   lump[MAX_SEQUENCE];
+	int     lump[MAX_SEQUENCE];
 	char    flip[MAX_SEQUENCE];
 	short   sound[MAX_SEQUENCE];
 
@@ -172,6 +173,7 @@ void    FIC_GoTo(void);
 void    FIC_Marker(void);
 void    FIC_Image(void);
 void    FIC_ImageAt(void);
+void    FIC_XImage(void);
 void    FIC_Delete(void);
 void    FIC_Patch(void);
 void    FIC_SetPatch(void);
@@ -313,6 +315,7 @@ static ficmd_t fi_commands[] = {
 	// Pics
 	{"image", 2, FIC_Image},	// image (handle) (raw-image-lump)
 	{"imageat", 4, FIC_ImageAt},	// imageat (handle) (x) (y) (raw)
+	{"ximage", 2, FIC_XImage},	// ximage (handle) (ext-gfx-filename)
 	{"patch", 4, FIC_Patch},	// patch (handle) (x) (y) (patch)
 	{"set", 2, FIC_SetPatch},	// set (handle) (lump)
 	{"clranim", 1, FIC_ClearAnim},	// clranim (handle)
@@ -472,6 +475,13 @@ void FI_NewState(const char *script)
 	fi->cp = fi->script;
 }
 
+void FI_DeleteXImage(fipic_t *pic)
+{
+	gl.DeleteTextures(1, &pic->lump[0]);
+	pic->lump[0] = 0;
+	pic->flags.is_ximage = false;
+}
+
 //===========================================================================
 // FI_PopState
 //===========================================================================
@@ -499,6 +509,15 @@ void FI_PopState(void)
 		if(fi->text[i].text)
 		{
 			Z_Free(fi->text[i].text);
+		}
+	}
+
+	// Delete external images.
+	for(i = 0; i < MAX_PICS; i++)
+	{
+		if(fi->pics[i].flags.is_ximage)
+		{
+			FI_DeleteXImage(fi->pics + i);
 		}
 	}
 
@@ -1033,8 +1052,12 @@ fihandler_t *FI_GetHandler(int code)
 //===========================================================================
 // FI_ClearAnimation
 //===========================================================================
-void FI_ClearAnimation(fipic_t * pic)
+void FI_ClearAnimation(fipic_t *pic)
 {
+	// Kill the old texture.
+	if(pic->flags.is_ximage)
+		FI_DeleteXImage(pic);
+
 	memset(pic->lump, -1, sizeof(pic->lump));
 	memset(pic->flip, 0, sizeof(pic->flip));
 	memset(pic->sound, -1, sizeof(pic->sound));
@@ -1046,7 +1069,7 @@ void FI_ClearAnimation(fipic_t * pic)
 //===========================================================================
 // FI_GetNextSeq
 //===========================================================================
-int FI_GetNextSeq(fipic_t * pic)
+int FI_GetNextSeq(fipic_t *pic)
 {
 	int     i;
 
@@ -1075,6 +1098,26 @@ fipic_t *FI_FindPic(const char *handle)
 		}
 	}
 	return NULL;
+}
+
+void FI_InitRect(fipic_t *pic)
+{
+	int     i;
+
+	FI_InitValue(&pic->object.x, 0);
+	FI_InitValue(&pic->object.y, 0);
+	FI_InitValue(&pic->object.scale[0], 1);
+	FI_InitValue(&pic->object.scale[1], 1);
+
+	// Default colors.
+	for(i = 0; i < 4; i++)
+	{
+		FI_InitValue(&pic->object.color[i], 1);
+		FI_InitValue(&pic->other_color[i], 1);
+		// Edge alpha is zero by default.
+		FI_InitValue(&pic->edge_color[i], i < 3 ? 1 : 0);
+		FI_InitValue(&pic->other_edge_color[i], i < 3 ? 1 : 0);
+	}
 }
 
 //===========================================================================
@@ -1709,7 +1752,7 @@ void FI_DrawText(fitext_t * tex)
 //===========================================================================
 // FI_GetTurnCenter
 //===========================================================================
-void FI_GetTurnCenter(fipic_t * pic, float *center)
+void FI_GetTurnCenter(fipic_t *pic, float *center)
 {
 	if(pic->flags.is_rect)
 	{
@@ -1792,30 +1835,49 @@ void FI_Drawer(void)
 		// Draw it.
 		if(pic->flags.is_rect)
 		{
-			// The fill.
-			gl.Disable(DGL_TEXTURING);
+			if(pic->flags.is_ximage)
+			{
+				gl.Enable(DGL_TEXTURING);
+				gl.Bind(pic->lump[sq]);
+			}
+			else
+			{
+				// The fill.
+				gl.Disable(DGL_TEXTURING);
+			}
 
 			gl.Begin(DGL_QUADS);
-			FI_UseColor(pic->object.color, 4);
-			gl.Vertex2f(0, 0);
-			gl.Vertex2f(1, 0);
-			FI_UseColor(pic->other_color, 4);
-			gl.Vertex2f(1, 1);
-			gl.Vertex2f(0, 1);
+			{
+				FI_UseColor(pic->object.color, 4);
+				gl.TexCoord2f(0, 0);
+				gl.Vertex2f(0, 0);
+				gl.TexCoord2f(1, 0);
+				gl.Vertex2f(1, 0);
+				FI_UseColor(pic->other_color, 4);
+				gl.TexCoord2f(1, 1);
+				gl.Vertex2f(1, 1);
+				gl.TexCoord2f(0, 1);
+				gl.Vertex2f(0, 1);
+			}
 			gl.End();
 
+			// The edges never have a texture.
+			gl.Disable(DGL_TEXTURING);
+
 			gl.Begin(DGL_LINES);
-			FI_UseColor(pic->edge_color, 4);
-			gl.Vertex2f(0, 0);
-			gl.Vertex2f(1, 0);
-			gl.Vertex2f(1, 0);
-			FI_UseColor(pic->other_edge_color, 4);
-			gl.Vertex2f(1, 1);
-			gl.Vertex2f(1, 1);
-			gl.Vertex2f(0, 1);
-			gl.Vertex2f(0, 1);
-			FI_UseColor(pic->edge_color, 4);
-			gl.Vertex2f(0, 0);
+			{
+				FI_UseColor(pic->edge_color, 4);
+				gl.Vertex2f(0, 0);
+				gl.Vertex2f(1, 0);
+				gl.Vertex2f(1, 0);
+				FI_UseColor(pic->other_edge_color, 4);
+				gl.Vertex2f(1, 1);
+				gl.Vertex2f(1, 1);
+				gl.Vertex2f(0, 1);
+				gl.Vertex2f(0, 1);
+				FI_UseColor(pic->edge_color, 4);
+				gl.Vertex2f(0, 0);
+			}
 			gl.End();
 
 			gl.Enable(DGL_TEXTURING);
@@ -1850,9 +1912,7 @@ void FI_Drawer(void)
 	}
 
 	// Filter on top of everything.
-	if(							/*fi->filter[0].value > 0 || fi->filter[1].value > 0 
-								   || fi->filter[2].value > 0 || */
-		  fi->filter[3].value > 0)
+	if(fi->filter[3].value > 0)
 	{
 		// Only draw if necessary.
 		gl.Disable(DGL_TEXTURING);
@@ -2116,6 +2176,7 @@ void FIC_Image(void)
 	pic->lump[0] = W_CheckNumForName(FI_GetToken());
 	pic->flags.is_patch = false;
 	pic->flags.is_rect = false;
+	pic->flags.is_ximage = false;
 }
 
 void FIC_ImageAt(void)
@@ -2128,6 +2189,23 @@ void FIC_ImageAt(void)
 	pic->lump[0] = W_CheckNumForName(FI_GetToken());
 	pic->flags.is_patch = false;
 	pic->flags.is_rect = false;
+	pic->flags.is_ximage = false;
+}
+
+void FIC_XImage(void)
+{
+	fipic_t *pic = FI_GetPic(FI_GetToken());
+	const char *fileName;
+
+	FI_ClearAnimation(pic);
+
+	// Load the external resource.
+	fileName = FI_GetToken();
+	pic->lump[0] = GL_LoadGraphics(fileName, 0);
+
+	pic->flags.is_patch = false;
+	pic->flags.is_rect = true;
+	pic->flags.is_ximage = true;
 }
 
 void FIC_Patch(void)
@@ -2373,7 +2451,8 @@ void FIC_ObjectAngle(void)
 void FIC_Rect(void)
 {
 	fipic_t *pic = FI_GetPic(FI_GetToken());
-	int     i;
+
+	FI_InitRect(pic);
 
 	// Position and size.
 	FI_InitValue(&pic->object.x, FI_GetFloat());
@@ -2383,17 +2462,8 @@ void FIC_Rect(void)
 
 	pic->flags.is_rect = true;
 	pic->flags.is_patch = false;
+	pic->flags.is_ximage = false;
 	pic->flags.done = true;
-
-	// Default colors.
-	for(i = 0; i < 4; i++)
-	{
-		FI_InitValue(&pic->object.color[i], 1);
-		FI_InitValue(&pic->other_color[i], 1);
-		// Edge alpha is zero by default.
-		FI_InitValue(&pic->edge_color[i], i < 3 ? 1 : 0);
-		FI_InitValue(&pic->other_edge_color[i], i < 3 ? 1 : 0);
-	}
 }
 
 void FIC_FillColor(void)

@@ -10,6 +10,9 @@ Version 1.8.0-rc3
 - fixed: mouse wheel events in Linux
 - fixed: opening control panel in dedicated mode
 
+InFine:
++ 'XImage' command: set an external graphics resource to a Rect
+
 
 Version 1.8.0-rc2
 -----------------

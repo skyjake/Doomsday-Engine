@@ -319,6 +319,9 @@ $-------------------------------------------------------------------------
 @item{ @cmd{Rect} (rect-id) (x) (y) (width) (height) }
 	Create a rectangle object.
 
+@item{ @cmd{XImage} (rect-id) (external-gfx-resource) }
+	Change the background of a rectangle object to the specified graphics resource. Do not use a file name extension (for example, @cmd{XImage R "Mouse"}).
+
 @item{ @cmd{FillColor} (rect-id) (@cmd{TOP}|@cmd{BOTTOM}|@cmd{BOTH}) (r) (g) (b) (a)}
 	Change the fill color of a rectangle object. You can create a gradient by setting the @cmd{TOP} and @cmd{BOTTOM} colors to different values.
 
