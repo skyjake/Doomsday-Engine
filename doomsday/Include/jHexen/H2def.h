@@ -63,7 +63,7 @@
 
 // Version numbering changes: 200 means JHexen v1.0.
 #define VERSION 200
-#define VERSION_TEXT "1.2.7"
+#define VERSION_TEXT "1.2.8"
 
 #ifdef RANGECHECK
 #define VERSIONTEXT "Version "VERSION_TEXT" +R "__DATE__" ("VER_ID")"
@@ -770,16 +770,12 @@ void H2_Main(void);
 // not a globally visible function, just included for source reference
 // calls all startup code
 // parses command line options
-// if not overrided, calls N_AdvanceDemo
 
 void H2_IdentifyVersion(void);
-void H2_StartTitle(void);
 void H2_SetFilter(int filter);
 int H2_GetFilterColor(int filter);
 
 char *G_Get(int id);
-
-extern boolean advancedemo;
 
 //----
 //GAME

@@ -22,7 +22,7 @@
 #endif
 
 #define VERSION 210
-#define VERSION_TEXT "1.3.7"
+#define VERSION_TEXT "1.3.8"
 #define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JHERETIC_VER_ID")"
 
 #include "../doomsday.h"
@@ -610,7 +610,6 @@ extern boolean autostart;
 //----------
 void H_IdentifyVersion(void);
 void D_DoomMain (void);
-void D_StartTitle (void);
 void IncThermo(void);
 void InitThermo(int max);
 void tprintf(char *string, int initflag);
@@ -675,8 +674,6 @@ void I_EndRead (void);
 //----
 //GAME
 //----
-
-extern boolean advancedemo;
 
 void G_DeathMatchSpawnPlayer (int playernum);
 
