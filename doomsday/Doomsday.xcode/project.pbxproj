@@ -372,6 +372,7 @@
 				B0A809B206F23A00007AEB2E,
 				B0A809B406F23A00007AEB2E,
 				B0237B4B06F374840059676A,
+				B07080D807877828002F5DC2,
 			);
 			isa = PBXApplicationTarget;
 			name = Doomsday;
@@ -6582,6 +6583,18 @@
 			isa = PBXBuildFile;
 			settings = {
 			};
+		};
+		B07080D707877828002F5DC2 = {
+			containerPortal = 29B97313FDCFA39411CA2CEA;
+			isa = PBXContainerItemProxy;
+			proxyType = 1;
+			remoteGlobalIDString = B0237C1C06F4421A0059676A;
+			remoteInfo = jHexen;
+		};
+		B07080D807877828002F5DC2 = {
+			isa = PBXTargetDependency;
+			target = B0237C1C06F4421A0059676A;
+			targetProxy = B07080D707877828002F5DC2;
 		};
 		B073ED2E06F463100003D2C9 = {
 			fileRef = B0D5B6E206EE44EA00B98CC8;
