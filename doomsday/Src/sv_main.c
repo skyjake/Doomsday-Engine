@@ -213,8 +213,6 @@ void Sv_HandlePacket(void)
 			Net_SendBuffer(from, SPF_CONFIRM);
 			// Send welcome string.
 			Sv_SendText(from, SV_CONSOLE_FLAGS, SV_WELCOME_STRING"\n");
-			// Send position and view angles.
-			//players[from].flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
 		}
 		break;
 
@@ -379,7 +377,19 @@ void Sv_GetPackets(void)
 			// delta sets.
 			while(!Msg_End())
 			{
-				Sv_AckDeltaSet(netbuffer.player, Msg_ReadByte());
+				Sv_AckDeltaSet(netbuffer.player, Msg_ReadByte(), 0);
+			}
+			break;
+
+		case pcl_acks:
+			// The client is acknowledging both entire sets and resent deltas.
+			// The first byte contains the acked set.
+			Sv_AckDeltaSet(netbuffer.player, Msg_ReadByte(), 0);
+
+			// The rest of the packet contains resend IDs.
+			while(!Msg_End())
+			{
+				Sv_AckDeltaSet(netbuffer.player, 0, Msg_ReadByte());
 			}
 			break;
 
@@ -584,10 +594,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
 		Sv_InitPoolForClient(playernum);
 	}
 
-	players[playernum].flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
-
-	// This player can't be a camera.
-	//players[playernum].flags &= ~DDPF_CAMERA;
+	players[playernum].flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 }
 
 void Sv_StartNetGame()
@@ -715,21 +722,21 @@ boolean Sv_CheckBandwidth(int playerNumber)
 {
 	client_t *client = &clients[playerNumber];
 	uint qSize = N_GetSendQueueSize(playerNumber);
-	uint limit = 1000;
+	uint limit = Sv_GetMaxFrameSize(playerNumber);
 
 	// If there are too many messages in the queue, the player's bandwidth
 	// is overrated.
 	if(qSize > limit)
 	{
 		// Drop faster to allow the send queue to clear out sooner.
-		client->bandwidthRating -= 2;
+		client->bandwidthRating -= 5;
 	}
 
-/*	// If the send queue is practically empty, we can use more bandwidth.
+	// If the send queue is practically empty, we can use more bandwidth.
 	if(qSize < limit/20)
 	{
 		client->bandwidthRating++;
-	}*/
+	}
 
 	// Do not go past the boundaries, though.
 	if(client->bandwidthRating < 0)
@@ -742,7 +749,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 	}
 
 	// New messages will not be sent if there's too much already.
-	return qSize < 3*limit;
+	return qSize <= 3*limit;
 }
 
 /*
@@ -787,8 +794,6 @@ void Sv_ClientCoords(int playerNum)
 		{
 			mo->z = mo->floorz;
 		}
-		/*if(mo->z < mo->subsector->sector->floorheight) 
-			mo->z = mo->subsector->sector->floorheight;*/
 	}
 }
 
