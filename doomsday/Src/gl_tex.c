@@ -507,6 +507,79 @@ void GL_DeleteLightMap(ded_lightmap_t * map)
 }
 
 //===========================================================================
+// GL_LoadReflectionMap
+//  Loads both the shiny texture and the mask.  Returns true if there is
+//  a reflection map to can be used.
+//===========================================================================
+boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
+{
+    ded_reflection_t *ref;
+
+    if(loading_ref == NULL)
+    {
+        return false;
+    }
+
+    // First try the shiny texture map.
+    ref = loading_ref->use_shiny;
+    if(!ref)
+    {
+        // Not shiny at all.
+        return false;
+    }
+
+    if(ref->shiny_tex == 0)
+    {
+        // Need to load the shiny texture.
+        ref->shiny_tex = GL_LoadGraphics2(RC_LIGHTMAP, ref->shiny_map.path,
+                                          LGM_NORMAL, false);
+        if(ref->shiny_tex == 0)
+        {
+            VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
+                               ref->shiny_map.path));
+        }
+    }
+    
+    // Also load the mask, if one has been specified.
+    if(loading_ref->use_mask)
+    {
+        ref = loading_ref->use_mask;
+        
+        if(ref->mask_tex == 0)
+        {
+            ref->mask_tex = GL_LoadGraphics2(RC_LIGHTMAP,
+                                             ref->mask_map.path,
+                                             LGM_NORMAL, true);
+            if(ref->mask_tex == 0)
+            {
+                VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
+                                   ref->mask_map.path));
+            }
+        }
+    }
+
+    return true;
+}
+
+//===========================================================================
+// GL_DeleteReflectionMap
+//===========================================================================
+void GL_DeleteReflectionMap(ded_reflection_t *ref)
+{
+    if(ref->shiny_tex)
+    {
+        gl.DeleteTextures(1, &ref->shiny_tex);
+        ref->shiny_tex = 0;
+    }
+
+    if(ref->mask_tex)
+    {
+        gl.DeleteTextures(1, &ref->mask_tex);
+        ref->mask_tex = 0;
+    }
+}
+
+//===========================================================================
 // GL_LoadSystemTextures
 //  Prepares all the system textures (dlight, ptcgens).
 //===========================================================================
@@ -651,6 +724,12 @@ void GL_ClearRuntimeTextures(void)
 	for(i = 0; i < defs.count.details.num; i++)
 		details[i].gltex = 0;
 
+    // Surface reflection textures and masks.
+    for(i = 0; i < defs.count.reflections.num; i++)
+    {
+        GL_DeleteReflectionMap(&defs.reflections[i]);
+    }
+    
 	// Flare textures.
 	gl.DeleteTextures(NUM_FLARES, flaretexnames);
 	memset(flaretexnames, 0, sizeof(flaretexnames));
@@ -1304,7 +1383,8 @@ DGLuint GL_LoadDetailTexture(int num, float contrast)
 				if(lumpinfo[num].size != 64 * 64)
 				{
 					Con_Message
-						("GL_LoadDetailTexture: Must be 256x256, 128x128 or 64x64.\n");
+						("GL_LoadDetailTexture: Must be 256x256, "
+                         "128x128 or 64x64.\n");
 					W_ChangeCacheTag(num, PU_CACHE);
 					return 0;
 				}
@@ -1338,7 +1418,7 @@ DGLuint GL_LoadDetailTexture(int num, float contrast)
 //  (not too time-critical).
 //===========================================================================
 DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
-								ded_detailtexture_t ** dtdef)
+								ded_detailtexture_t **dtdef)
 {
 	int     i;
 	detailtex_t *dt;
@@ -1356,15 +1436,29 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 		   (!is_wall_texture && index == dt->flat_lump))
 		{
 			if(dtdef)
+            {
 				*dtdef = defs.details + i;
+            }
 
 			// Hey, a match. Load this?
-			if(!dt->gltex)
-			{
-				dt->gltex =
-					GL_LoadDetailTexture(dt->detail_lump,
-										 defs.details[i].strength);
-			}
+            if(!dt->gltex)
+            {
+                if(defs.details[i].is_external)
+                {
+                    // Load from an external file (current unused).
+                    // FIXME: This doesn't handle contrast.
+                    dt->gltex =
+                        GL_LoadGraphics2(RC_TEXTURE,
+                                         defs.details[i].detail_lump,
+                                         LGM_NORMAL, true);
+                }
+                else
+                {
+                    dt->gltex =
+                        GL_LoadDetailTexture(dt->detail_lump,
+                                             defs.details[i].strength);
+                }
+            }
 			return dt->gltex;
 		}
 	}
@@ -1448,6 +1542,9 @@ unsigned int GL_BindTexFlat(flat_t * fl)
 
 	// Is there a surface decoration for this flat?
 	fl->decoration = Def_GetDecoration(lump, false, hasExternal);
+
+    // Get the surface reflection for this flat.
+    fl->reflection = Def_GetReflection(lump, false);
 
 	// The name of the texture is returned.
 	return name;
@@ -1899,17 +1996,19 @@ byte   *GL_LoadHighResFlat(image_t * img, char *name)
 }
 
 //===========================================================================
-// GL_LoadGraphics
-//  Set grayscale to 2 to include an alpha channel. Set to 3 to make the
+// GL_LoadGraphics2
+//  Extended version that uses a custom resource class.
+//  Set mode to 2 to include an alpha channel. Set to 3 to make the
 //  actual pixel colors all white.
 //===========================================================================
-DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
+DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
+                         gfxmode_t mode, boolean useMipmap)
 {
 	image_t image;
 	filename_t fileName;
 	DGLuint texture = 0;
 
-	if(R_FindResource(RC_GRAPHICS, name, NULL, fileName) &&
+	if(R_FindResource(resClass, name, NULL, fileName) &&
 	   GL_LoadImage(&image, fileName, false))
 	{
 		// Too big for us?
@@ -1946,17 +2045,27 @@ DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 		gl.TexImage(image.pixelSize ==
 					2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
 					3 ? DGL_RGB : image.pixelSize ==
-					4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height, 0,
+					4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height,
+                    useMipmap ? DGL_TRUE : DGL_FALSE,
 					image.pixels);
 		gl.Enable(DGL_TEXTURE_COMPRESSION);
-		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+        gl.TexParameter(DGL_MIN_FILTER,
+                        useMipmap ? glmode[mipmapping] : DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
 		GL_DestroyImage(&image);
 	}
 	return texture;
+}
+
+//===========================================================================
+// GL_LoadGraphics
+//===========================================================================
+DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
+{
+    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, false);
 }
 
 //===========================================================================
@@ -2108,6 +2217,9 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
 
 		// Is there a decoration for this surface?
 		textures[idx]->decoration = Def_GetDecoration(idx, true, hasExternal);
+
+        // Get the reflection for this surface.
+        textures[idx]->reflection = Def_GetReflection(idx, true);
 	}
 	return GL_GetTextureInfo2(originalIndex, translate);
 }
