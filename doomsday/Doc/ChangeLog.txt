@@ -20,7 +20,8 @@ Version 1.7.11
 * mobj floatbobbing is done by engine (clientside), DDMF_BOB added
 * client is allowed some movement while airborne (easier jumping)
 * by default, external resources are no longer loaded for textures from
-  PWADs; use the -pwadtex option to change this
+  PWADs; use the -pwadtex option to change this 
+  (cvar 'rend-tex-external-always')
 * console command line cursor can be moved left and right
 * default key repeat interval is now 3 tics (was 4)
 * braces { and } are equivalent to quotes, e.g.:
