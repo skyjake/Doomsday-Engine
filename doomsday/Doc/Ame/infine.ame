@@ -1,0 +1,497 @@
+@include{jake.ah}
+@macro{TITLE}{ InFine Scripts }
+@macro{VERSION}{ Version 1.1 }
+
+@require{amestd}
+@include{darktable}
+
+@begin
+
+CONTENTS: @contents{1}
+
+$-------------------------------------------------------------------------
+@chapter{ What is InFine? }
+
+InFine is a very simple scripting language used to describe the animations that are played as interludes and finales in jDoom, jHeretic and jHexen. It can also be used to define introductory animations (InFine scripts can be played before or after any map); briefings and debriefings if you will.
+
+Once a script starts playing, its commands will be executed until a wait or a pause command is encountered. The script ends when the last command of the script is executed. This means if you forgot to use any wait or pause commands the script will end immediately.
+
+Almost all numeric values (coordinates, colors, scale factors) are interpolated, i.e. their value can change gradually. The @cmd{In} command is used to set the interpolation timer, which will be effective until the next time @cmd{In} is issued. Note that interpolation only occurs while the script is waiting for something. Otherwise the script commands are executed one after another with no delay in between.
+
+The player can interact with the animation by pressing a key on the
+keyboard or a mouse or a joystick button. This will trigger a skip event
+(see the @cmd{CanSkip}, @cmd{NoSkip} and @cmd{SkipHere} commands).
+
+$-------------------------------------------------------------------------
+@chapter{ Script Syntax }
+
+@list{
+@item Commands are case-insensitive (some arguments are not, however).
+
+@item Whitespace (spaces, tabs, newlines) is ignored.
+
+@item Comments are ignored. Comments are lines that begin with the hash
+character (#), or anything that begins with #> and ends in <#.
+
+@item The general syntax of a command is:
+
+@samp{(command) (arg-1) ... (arg-N) }
+
+Some commands don't need any arguments. Note that only whitespace separates the arguments. All commands have a fixed number of arguments.
+
+@item Semicolons (;) are used to mark the end of a compound. Don't use semicolons elsewhere. An example of how semicolons are used:
+
+@samp{@pre{IF commercial DO
+  MusicOnce "dm2ttl"
+  Wait 13
+;}}
+
+@item Strings can be split onto multiple lines (like in DED files, see Text definitions in the DED Reference).
+}
+
+$-------------------------------------------------------------------------
+@chapter{ Coordinates and Values }
+
+The whole screen is thought to be 320 pixels wide and 200 pixels tall, regardless of the actual display resolution. You can freely use fractional pixels (e.g. 104.5) for more accurate placement of objects.
+
+Color values are floating-point numbers, and must be between zero and one.
+An alpha value of zero means fully transparent and one means opaque.
+
+Time is generally specified in seconds.
+
+$-------------------------------------------------------------------------
+@chapter{ Drawing Order }
+
+@list{
+@item Background flat (or a single-color background).
+
+@item Picture objects (globally offseted with @cmd{OffX} and @cmd{OffY}), in the order in which they were created.
+
+@item Text objects, in the order in which they were created.
+
+@item Filter.
+}
+
+Restrictions imposed by this order:
+
+@list{
+@item Text can't be hidden behind pictures.
+@item Background flat can't be scrolled.
+@item Filter always affects everything.
+}
+
+$-------------------------------------------------------------------------
+@chapter{ Commands }
+
+$-------------------------------------------------------------------------
+@section{ Run Control }
+
+@deflist{
+@item{ @cmd{DO} }
+	Begin a compound. A semicolon ends the compound.
+
+@samp{@pre{IF commercial DO
+  #> Here can be multiple commands
+     spanning multiple lines. <#
+;
+ELSE DO
+  # More commands.
+;}}
+
+@item{ @cmd{END} }
+    End the script immediately. Normally a script ends when there are no more commands to execute.
+
+@item{ @cmd{IF} (condition) }
+
+    The command following @cmd{IF} and its condition are only executed if the condition evaluates to true. The condition can be one of the following:
+
+@table{28 72}{
+MODE:(game-mode) @tab True if the current game mode is (game-mode). The possible game mode strings are listed in the Doomsday Readme. For example:
+@cmd{MODE:doom2-plut} @row
+secret @tab True when a level was exited through a secret exit                    button. @row
+netgame @tab True in multiplayer games. @row
+deathmatch @tab True in deathmatch games. @row
+shareware @tab True when a shareware WAD is being used (DOOM 1, Heretic). Always false for DOOM II, Final DOOM and Hexen. @row
+ultimate @tab True if the game mode is "doom1-ultimate" (Doom). @row
+commercial @tab True if the game mode is "doom2" (Doom). @row
+leavehub @tab True if a hub has just been exited (Hexen). @row
+fighter @tab True if the player's class is Fighter (Hexen). @row
+cleric @tab True if the player's class is Cleric (Hexen). @row
+mage @tab True if the player's class is Mage (Hexen).
+}
+
+@item{ @cmd{IFNOT} (condition) }
+	The command following @cmd{IFNOT} and its condition are only executed if the condition evaluates to false. The same conditions are used as with @cmd{IF}.
+
+@item{ @cmd{ELSE} }
+	Use with @cmd{IF} and @cmd{IFNOT} to provide an alternative execution path.
+
+@item{ @cmd{MARKER} (marker-id) }
+    Marks a position in the script that can be jumped to with the @cmd{goto} command. Don't use duplicate marker IDs.
+
+@item{ @cmd{GOTO} (marker-id) }
+    Jumps to the given marker. The marker is searched starting from the
+    beginning of the script, so jumps can be made both forward and
+    backward. If the given marker is not found, the script ends.
+
+@item{ @cmd{Pause} }
+	Pauses the execution of the script and starts waiting for the player to press a key or a button. This command is not affected by the @cmd{CanSkip} and @cmd{NoSkip} commands. When a script is paused and the player causes a skip event, only the pause mode ends, no actual skipping happens.
+
+@item{ @cmd{In} (time-sec) }
+    Sets the interpolation timer, which is used by many commands (color
+    settings, coordinates, etc.) to determine how quickly the changes will
+    be effective. Example:
+
+	@code{In 2 Filter 0 0 0 1 @br Wait 2}
+
+    The interpolation timer is set to two seconds with the @cmd{In} command. The @cmd{Filter} command changes the screen filter to opaque black but because the interpolation timer is set to a non-zero value, the change will be gradual. In this case it will take two seconds. The @cmd{Wait} command pauses the script for two seconds, during which the filter will have time to interpolate to its destination color, i.e. opaque black.
+
+@item{ @cmd{Tic} }
+    Pauses the script for one tic, i.e. 28.6 milliseconds (1/35 sec).
+
+@item{ @cmd{Wait} (time-sec) }
+    Pauses the script for the specified number of seconds.
+
+@item{ @cmd{WaitAnim} (pic-id) }
+    Pauses the script until the specified picture finishes its animation
+    sequence.
+
+@item{ @cmd{WaitText} (text-id) }
+    Pauses the script until the specified text object has finished typing
+    its text.
+
+@item{ @cmd{CanSkip} }
+	Allows the player to skip in the script by pressing a key or a button. When skipping, if no @cmd{SkipHere} is encountered, all the commands from the current position to the end of the script are ignored and the execution of the script ends. @cmd{CanSkip} is the default mode.
+
+@item{ @cmd{NoSkip} }
+    Disable skipping. The execution of the script will continue non-
+    interactively. Nothing happens even if the player presses a key or a
+    button.
+
+@item{ @cmd{SkipHere} }
+    This command only has an effect when a skip is in progress (the player
+    has pressed a key or a button and skipping is enabled). The skipping
+    will stop at this command and the execution of the script continues
+    normally from the command following @cmd{SkipHere}. Note that all the
+    skipped commands were ignored.
+
+@item{ @cmd{Events} }
+	Enable interactive mode. After the @cmd{Events} command has been executed, the script will begin tracking input events.
+
+@item{ @cmd{NoEvents} }
+	Disable interactive mode. This is the default. When the script is not interactive, any input events will be ignored.
+
+@item{ @cmd{OnKey} (key-name) (marker) }
+	When a keyboard input event is detected, execution will jump to (marker). This command will only have an effect in interactive mode. Note that input events are only detected during wait periods. (key-name) must be one of the symbolic key names used by the console command @cmd{bind}.
+
+@item{ @cmd{UnsetKey} (key-name) }
+	Clear the marker name bound to the key. (key-name) must be one of the symbolic key names used by the console command @cmd{bind}.
+}
+
+$-------------------------------------------------------------------------
+@section{ Game Control }
+
+@deflist{
+@item{ @cmd{PlayDemo} (filename) }
+	Play back a demo file. After the demo ends, the InFine script resumes execution.
+
+@item{ @cmd{Cmd} (console-command) }
+	Execute a console command.
+
+@item{ @cmd{Trigger} }
+	When the trigger is enabled, any input events detected during the execution of the script will activate the game menu. The trigger is enabled by default.
+
+@item{ @cmd{NoTrigger} }
+	Disable the trigger. Input events detected during the execution of the script won't activate the game menu.
+}
+
+$-------------------------------------------------------------------------
+@section{ Audio }
+
+@deflist{
+@item{ @cmd{Sound} (sound-id) }
+    Play the specified sound. There must be a Sound definition with the
+    given ID.
+
+@item{ @cmd{SoundAt} (sound-id) (volume) }
+    Play a sound at the specified volume. The volume must be between zero
+    and one, one being the maximum.
+
+@item{ @cmd{SeeSound} (thing-type) }
+    Play the "see" sound of the given thing. There must be a Thing
+    definition with a matching ID.
+
+@item{ @cmd{DieSound} (thing-type) }
+    Play the "death" sound of the given thing. There must be a Thing
+    definition with a matching ID.
+
+@item{ @cmd{Music} (music-id) }
+    Start playing a song. There must a Music definition with a matching ID.
+    (Except in Hexen, where songs are identified by their lump names.) The
+    song is played in looped mode.
+
+@item{ @cmd{MusicOnce} (music-id) }
+    Same as @cmd{music}, but (if possible) plays the song only once.
+
+@item{ @cmd{NoMusic} }
+    Stop the currently playing song.
+}
+
+$-------------------------------------------------------------------------
+@section{ Screen Control }
+
+@deflist{
+@item{ @cmd{Color} (red) (green) (blue) }
+    Set the background color. If no background flat is specified, the whole
+    screen is filled with this color. The color values are given as
+    floating-point numbers, and must be between zero and one. The default
+    background color is white (@cmd{Color 1 1 1}).
+
+@item{ @cmd{ColorAlpha} (red) (green) (blue) (alpha) }
+	Set the background color and alpha. Set alpha to zero to make the background fully transparent.
+
+@item{ @cmd{Flat} (flat-lump) }
+    Set the flat that is used as a tiled background. Give the name of the
+    flat as an argument, for example:
+
+	@code{flat FLOOR4_8}
+
+    The flat will be tinted with the background color.
+
+@item{ @cmd{NoFlat} }
+    Clears the currently selected background flat.
+
+@item{ @cmd{OffX} (pixels) }
+    A general X offset that affects all pictures. @cmd{OffX 160} would appear to move the origin of the screen 160 pixels to the right (half a
+    screen). Note that only picture objects are affected.
+
+@item{ @cmd{OffY} (pixels) }
+    A general Y offset that affects all pictures.
+
+@item{ @cmd{Filter} (red) (green) (blue) (alpha) }
+    Set the screen filter. The alpha value defines how strong the filter
+    appears, the following would make the whole screen red:
+
+	@code{Filter 1 0 0 1}
+}
+
+$-------------------------------------------------------------------------
+@section{ Objects }
+
+@deflist{
+@item{ @cmd{Del} (object-id) }
+    Delete an object.
+
+@item{ @cmd{X} (object-id) (x) }
+	Move the specified object to the given X coordinate.
+
+@item{ @cmd{Y} (object-id) (y) }
+	Move the specified object to the given Y coordinate.
+
+@item{ @cmd{Angle} (object-id) (degrees) }
+	Rotate the specified object. Positive angles rotate the object in the clockwise direction.
+
+@item{ @cmd{Sx} (object-id) (scale) }
+	Scale the specified object with the given horizontal scaling factor.
+
+@item{ @cmd{Sy} (object-id) (scale) }
+	Scale the specified object with the given vertical scaling factor.
+
+@item{ @cmd{Scale} (object-id) (scale) }
+	Scale the specified object with the given scaling factor.
+
+@item{ @cmd{ScaleXY} (object-id) (x-scale) (y-scale) }
+	Scale the specified object with the given horizontal and vertical
+	scaling factors.
+
+@item{ @cmd{RGB} (object-id) (red) (green) (blue) }
+	Set the specified object's color. The color values are floating-point
+	numbers between zero and one.
+
+@item{ @cmd{Alpha} (object-id) (alpha) }
+	Set the specified object's alpha level. The alpha level is a floating- point number between zero and one, zero being fully transparent and one fully opaque.
+}
+
+$-------------------------------------------------------------------------
+@subsec{ Rectangles }
+
+@deflist{
+@item{ @cmd{Rect} (rect-id) (x) (y) (width) (height) }
+	Create a rectangle object.
+
+@item{ @cmd{FillColor} (rect-id) (@cmd{TOP}|@cmd{BOTTOM}|@cmd{BOTH}) (r) (g) (b) (a)}
+	Change the fill color of a rectangle object. You can create a gradient by setting the @cmd{TOP} and @cmd{BOTTOM} colors to different values.
+
+@item{ @cmd{EdgeColor} (rect-id) (@cmd{TOP}|@cmd{BOTTOM}|@cmd{BOTH}) (r) (g) (b) (a)}
+	Change the edge color of a rectangle object. You can create a gradient by setting the @cmd{TOP} and @cmd{BOTTOM} colors to different values.
+}
+
+$-------------------------------------------------------------------------
+@subsec{ Pictures }
+
+@deflist{
+@item{ @cmd{Image} (pic-id) (image-lump) }
+    Create a picture object. It will be associated with the ID of your
+    choosing. The ID can be any text string but naturally it's best to use
+    descriptive IDs like "back". The (image-lump) is the name of a lump
+    that contains a 320x200 raw image. Raw images are usually exactly 64000
+    bytes long. You can also insert a PCX image directly into a WAD file
+    and specify its lump name; the @cmd{Image} command accepts PCX images as well as normal raw images.
+
+@item{ @cmd{ImageAt} (pic-id) (x) (y) (image-lump) }
+    Works like "image", but lets you specify the initial location of the
+    image. This is not usually needed since the default initial location is
+    (0,0) and images cover the whole screen (320x200).
+
+@item{ @cmd{Patch} (pic-id) (x) (y) (patch-lump) }
+    Create a picture object out of a patch image. Patches are the internal
+    image format of DOOM. It's most commonly used by the sprites (all
+    sprite frames as patches). Patches can have transparent pixels (e.g.
+    all the characters of the DOOM font are patches). (pic-id) is a text
+    string of your choosing. (patch-lump) is the name of the lump that
+    contains the patch image.
+
+@item{ @cmd{Set} (pic-id) (patch-lump) }
+    Set the patch of an existing picture object. Only the patch lump of the
+    picture object is changed, other parameters like position and scaling
+    remain the same.
+
+@item{ @cmd{ClrAnim} (pic-id) }
+    Clear the specified picture object's animation sequence.
+
+@item{ @cmd{Anim} (pic-id) (patch-lump) (time-sec) }
+    Append a new frame to the picture's animation sequence. (time-sec) is
+    the number of seconds that the new frame will last.
+
+@item{ @cmd{ImageAnim} (pic-id) (image-lump) (time-sec) }
+    Append a new frame to the picture's animation sequence. The frame is a
+    raw image (320x200 fullscreen image, can also be a PCX image). You
+    can't use @cmd{Anim} and @cmd{ImageAnim} in the same picture's animation.
+
+@item{ @cmd{PicSound} (pic-id) (sound-id) }
+    Associate a sound with the last frame of the specified picture's
+    animation sequence. A sound definition with (sound-id) must exist.
+
+@item{ @cmd{Repeat} (pic-id) }
+    End the picture's animation sequence in a repeat marker. When the
+    repeat marker is reached, the animation will continue from the first
+    frame of the sequence.
+
+@item{ @cmd{States} (pic-id) (state-id) (count) }
+    Append (count) frames to the specified picture's animation sequence,
+    starting from the the state (state-id). For example:
+
+	@code{States mo BOSS_RUN1 12}
+
+    This will append 12 frames starting from the state BOSS_RUN1 to the
+    animation sequence of the picture object named "mo".
+}
+
+$-------------------------------------------------------------------------
+@subsec{ Text }
+
+@deflist{
+@item{ @cmd{Text} (text-id) (initial-x) (initial-y) (string) }
+
+    Create a text object with the ID (text-id). The ID is a text string of your choosing. You will need it when you later refer to the text object. The text object's upper left corner is placed at the given initial coordinates. In jDoom the text is red by default. In jHeretic and jHexen the default color is white.
+
+    Escape sequences that can be used in the text string:
+
+@table{20 80}{
+	\n @tab     Newline @row
+	\" @tab     Double quote (") @row
+	\_ @tab     Space @row
+	\w @tab     Pause of 0.5 seconds @row
+	\W @tab     Pause of 1 second @row
+	\p @tab     Pause of 5 seconds @row
+	\P @tab     Pause of 10 seconds @row
+	\0 @tab     Text color changed to the text object's color @row
+	\1 @tab     Predefined color 1 @row
+	\2 @tab     Predefined color 2 @row
+	 : @tab @row
+	\9 @tab     Predefined color 9
+}
+
+@item{ @cmd{TextDef} (text-id) (initial-x) (initial-y) (def-id) }
+    Create a text object with the ID (text-id). Works like @cmd{Text}, but the text itself is taken from the Text definition with the ID (def-id).
+
+@item{ @cmd{TextLump} (text-id) (initial-x) (initial-y) (lump) }
+    Create a text object with the ID (text-id). Works like @cmd{Text}, but the text itself is taken from the lump named (lump).
+
+@item{ @cmd{SetText} (text-id) (string) }
+    Change a text object's text to the given string. No other properties of
+    the object are modified.
+
+@item{ @cmd{SetTextDef} (text-id) (text-id) }
+    Change a text object's text to the string from the Text definition with
+    the ID (text-id).
+
+@item{ @cmd{PreColor} (color-number) (red) (green) (blue) }
+    Modify a predefined color. The color values must be floating-point
+    values between zero and one. There are nine color settings you can use
+    as (color-number): 1-9. For example, this'll change the predefined
+    color number 4 to bright green.
+
+    @code{PreColor 4 0 1 0}
+
+    By default all the predefined colors are set to white (1 1 1). Use the
+    escape sequences \1...\9 in the text string of a text object to force
+    the text to be drawn using a predefined color.
+
+@item{ @cmd{Center} (text-id) }
+    The text of the specified text object will be drawn centered
+    horizontally around the X coordinate of the object. 160 is the middle
+    of the screen.
+
+@item{ @cmd{NoCenter} (text-id) }
+    The text of the specified text object will be drawn in the normal
+    fashion, flushed to the left. The X coordinate of the object specifies
+    the left edge of the text.
+
+@item{ @cmd{Scroll} (text-id) (speed) }
+    Set a scrolling speed for the specified text object. Scrolling means
+    that the object is automatically moved upwards. (speed) is the number
+    of 35 Hz tics in which the object moves upward one pixel. If (speed) is
+    zero, the scrolling is stopped. At the speed of 1, the object will move
+    upwards 35 pixels per second. That is the fastest speed you can achieve
+    using this command. Note that you can scroll the text however you want
+    with the @cmd{In} and @cmd{Y} commands.
+
+@item{ @cmd{Pos} (text-id) (type-pos) }
+    Set the text object's cursor to the given position. The cursor is
+    actually a counter that counts how many characters of the text object's
+    text string are visible. The command
+
+    @code{Pos mytext 0}
+
+    would rewind the text object "mytext" so that it would start typing
+    its text from the beginning.
+
+@item{ @cmd{Rate} (text-id) (rate-tics) }
+    Set the typing speed of the specified text object. The typing rate is
+    given as the number of 35 Hz tics to wait after typing each character.
+    This means at the rate of 1 the text is typed at 35 characters per
+    second. At rate 2 the speed would be 17 characters per second, and so
+    on. 35 characters per second is the fastest speed possible. At rate
+    zero the whole text is immediately visible.
+
+@item{ @cmd{FontA} (text-id) }
+    Set a text object's font to Font A, which is the smaller of the
+    available fonts. The line height is modified to match the font.
+
+@item{ @cmd{FontB} (text-id) }
+    Set a text object's font to Font B, which is the larger of the
+    available fonts. The line height is modified to match the font. Note
+    that jHeretic and jHexen have only colored versions of Font B
+    (jHeretic: green, jHexen: red), which rather limits the set of colors
+    you can use with this font.
+
+@item{ @cmd{LineHgt} (text-id) (pixels) }
+    Set the line height of a text object. The default setting depends on
+    the game you're using.
+}
+
+$-------------------------------------------------------------------------
+@chapter{ Links }
+
+Doomsday Engine: @link{http://www.doomsdayhq.com/}

@@ -1,6 +1,6 @@
 @include{jake.ah}
 @macro{TITLE}{ The Doomsday Engine }
-@macro{VERSION}{ Version 1.7.12 }
+@macro{VERSION}{ Version 1.7.14 }
 
 @require{amestd}
 @include{darktable}
@@ -126,10 +126,9 @@ downloaded from:
 
 
 
-$ Various technical details.
-@chapter{ Details }
+@chapter{ Running from the Command Line }
 
-@section{ Paths and the Command Line }
+@section{ File Paths on the Command Line }
 
 There are a few things you should know about the handling of relative
 paths. First of all, these are the directories that the engine is working
@@ -189,6 +188,8 @@ data related to it would lead to fatal errors.
 
 
 
+@chapter{ Data and Definitions Files }
+
 @section{ PK3 Files }
 
 Doomsday supports the PK3 (i.e. ZIP) format. Compression is not allowed. If you try to load a compressed PK3/ZIP file, you will get an error message.
@@ -234,21 +235,21 @@ Virtual files (from a PK3 or a WAD) in the @file{Auto} directories will also be 
 
 
 
-@section{ Dehacked Patches }
+@chapter{ Graphics }
 
-Most features of Dehacked are supported by Doomsday's Dehacked reader.
-The loader will print a message during startup if an unsupported
-feature is used.
+@section{ 3D Models as Particles }
 
-Let's say you have the Dehacked patch @file{file.deh} in your runtime
-directory. Then you can use the command line option
-@opt{-deh file.deh} to load it at startup.
+3D models can be used as particles in a particle generator. There are two things that need to be done. In the particle generator definition, set the particle stage's type to one of the @opt{pt_model} flags. The following would make the stage use particle model number 13:
 
-If a lump named @file{DEHACKED} is found in a WAD, it will be
-automatically applied when the WAD is loaded. Normally only the last
-@file{DEHACKED} lump is used if a lump with that name is found
-in multiple WADs. Use the option @opt{-alldehs} to make the engine
-apply all found @file{DEHACKED} lumps.
+@code{Type = "pt_model13";}
+
+In the particle stage definition, remember to set a color for the stage. If the color is not specified, the default values will result in a completely transparent particle model.
+
+The model definition must have a matching ID. For example, particle model number 13 uses the following ID:
+
+@code{ID = "Particle13";}
+
+For further details see the DED Reference.
 
 
 
@@ -287,7 +288,7 @@ External resources are divided into a number of classes. Each class has its own 
 	@header{Resource Class} @tab @header{Description}
 @row{single}
 	Textures @tab Textures for walls and flats (floors and ceilings) @row
-	Patches @tab Graphics for menus, fonts, background pictures @row
+	Patches @tab Graphics for menus, fonts and sprite frames @row
 	LightMaps @tab Textures for dynamic lights @row
 	Music @tab Background music @row
 	Sfx @tab Sound effects
@@ -320,7 +321,8 @@ Below is a list of all the game modes supported by jDoom, jHeretic and jHexen.
 	@tab heretic-ext @tab Heretic: Shadow of the Serpent Riders (has episodes 4, 5) @row
 
 	jHexen @tab hexen @tab Hexen @row
-	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel
+	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel @row
+	@tab hexen-demo @tab The 4-level Hexen Demo
 }
 
 For example, textures meant only for Final Doom: Plutonia Experiment would be placed in the directory @file{ Data\jDoom\Textures\doom2-plut\ }.
@@ -473,6 +475,26 @@ Doomsday will automatically detect the format of a sample if it's loaded from a 
 
 
 
+@chapter{ Plugins }
+
+@section{ Dehacked Patches }
+
+Most features of Dehacked are supported by Doomsday's Dehacked reader.
+The loader will print a message during startup if an unsupported
+feature is used.
+
+Let's say you have the Dehacked patch @file{file.deh} in your runtime
+directory. Then you can use the command line option
+@opt{-deh file.deh} to load it at startup.
+
+If a lump named @file{DEHACKED} is found in a WAD, it will be
+automatically applied when the WAD is loaded. Normally only the last
+@file{DEHACKED} lump is used if a lump with that name is found
+in multiple WADs. Use the option @opt{-alldehs} to make the engine
+apply all found @file{DEHACKED} lumps.
+
+
+
 @chapter{ Known Issues }
 
 @list{
@@ -520,7 +542,7 @@ generously contributing essential computer hardware components! :-)
 
 @strong{William Mull}, for hosting the j-sites and bearing with me.
 
-@strong{Patrick Farrell}, for providing FTP space for the Doomsday project.
+@strong{James Bunting} and @strong{Patrick Farrell}, for providing FTP space for the Doomsday project.
 
 @strong{Darin Petersen}, for the very useful MD2 export tool QTiP.
 

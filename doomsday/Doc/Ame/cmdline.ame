@@ -218,12 +218,12 @@ $--------------------------------------------------------------------
 @row
 	@opt{ -width N } @tab @opt{ -w } @tab
 	Game window width or horizontal display resolution. The
-	default value for this is taken from the @var{defResX}
+	default value for this is taken from the @var{vid-res-x}
 	console variable.
 @row
 	@opt{ -height N } @tab @opt{ -h } @tab
 	Game window height or vertical display resolution. The
-	default value for this is taken from the @var{defResY}
+	default value for this is taken from the @var{vid-res-y}
 	console variable.
 @row
 	@opt{ -winsize N N } @tab @opt{ -wh } @tab
@@ -368,6 +368,9 @@ $--------------------------------------------------------------------
 	Display the Direct3D configuration dialog. The
 	dialog is otherwise only shown if @kbd{Ctrl}, @kbd{Shift} or
 	@kbd{Alt} is held down when the game is started.
+@row
+	@opt{-triple} @tab @tab
+	Enable triple buffering.
 @row
 	@opt{-texbits N} @tab @tab
 	Set texture bit depth. Won't affect the default

@@ -1,10 +1,11 @@
 
                           Doomsday Engine Sources
                           -----------------------
-                              August 31, 2003
-                          (engine version 1.7.12)
+                             October 12, 2003
+                          (engine version 1.7.14)
 
                 by Jaakko Keränen <skyjake@doomsdayhq.com>
+                
                         http://www.doomsdayhq.com/
                        http://deng.sourceforge.net/
 
@@ -15,7 +16,7 @@ RELEASE NOTES:
 The Doomsday Engine source code is distributed under the GNU General Public
 License (see LICENSE in the root directory).
 
-The code in this package was used to build the 1.7.12 release.
+The code in this package was used to build the 1.7.14 release.
 
 The placement of some files was changed in 1.7.6; you shouldn't install
 this package on top of a previous Doomsday Sources tree unless it's newer
