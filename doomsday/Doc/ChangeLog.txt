@@ -8,15 +8,24 @@ Version 1.7.11 (work in progress)
 --------------
 ! Bugfixes Only
 * revised server delta generation: fixed-size frames, prioritized 
-  contents, sounds are stored inside frames (not separate packets)
+  contents, sounds are stored inside frames (not separate packets),
+  redundant missile coordinates not sent
 * revised clientside handling of frames: collision detection for 
   movement prediction, missiles hidden on impact
 * revised low-level networking: implement confirmed/ordered packets 
   manually, detect duplicates, Huffman encoding (60%-70% compression)
-+ ccmd 'huffman': print Huffman efficiency and number of bytes sent
++ cmd 'huffman': print Huffman efficiency and number of bytes sent
 * mobj translucency 0-255 (selector still overrides)
 * mobj floatbobbing is done by engine (clientside), DDMF_BOB added
 * client is allowed some movement while airborne (easier jumping)
+* console command line cursor can be moved left and right
+* default key repeat interval is now 3 tics (was 4)
+* cmd 'listcmds' prints a description for each command
++ cmd 'toggle': toggle a cvar's value between zero and nonzero
++ cmd 'if': execute a command if the condition is true (tests cvar 
+  values)
+- included DED files are read immediately after the Include directive
+  has been encountered
 - fixed: pausing the game also stops spinning models, floatbob
 - external music was not loaded correctly from virtual files
 - fixed: clientside mobjs and players on moving planes
@@ -32,12 +41,16 @@ Version 1.7.11 (work in progress)
 - fixed: mobj translucency didn't affect the shadow
 - fixed: incoming message queue protected by a mutex
 - music is not restarted if it's already playing
+- fixed: finding model files/skins with base-relative paths
   
 jDoom:
 + cvar 'view-bob-weapon-switch-lower': if zero, HUD weapon is not 
   lowered during a weapon switch
++ value 'Weapon Info|*|Static': if nonzero, HUD weapon is not lowered
+  during a weapon switch
 * game-corpse-time: corpses fade smoothly 
 - fixed: button deactivation sound
+- fixed: crash when "kill" used when not in a map
 
 jHeretic:
 * game-corpse-time: corpses fade smoothly 
@@ -54,6 +67,7 @@ jHexen:
 - fixed: dedicated server deadlock when monsters don't find any players
 - fixed: crash when minotaur vanishes and master is dead
 - fixed: 'use artifact' sounds not audible on clientside
+- fixed: crash when "kill" used when not in a map
 
 InFine:
 * server sends condition truth values to clients (secret, leavehub)
