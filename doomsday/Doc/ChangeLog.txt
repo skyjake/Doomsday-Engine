@@ -4,8 +4,10 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.7.10
+Version 1.7.10 (work in progress)
 --------------
++ sprite frames can be replaced with external resources (Patches)
+
 jHeretic:
 - fixed: interlude screen wouldn't show seconds if they're zero
 

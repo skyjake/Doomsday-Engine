@@ -1,6 +1,6 @@
 @include{jake.ah}
 @macro{TITLE}{ The Doomsday Engine }
-@macro{VERSION}{ Version 1.7.9 }
+@macro{VERSION}{ Version 1.7.10 }
 
 @require{amestd}
 @include{darktable}
@@ -15,9 +15,7 @@ The Doomsday Engine is an enhanced and extended Win32 version of the DOOM engine
 
 Doomsday is a direct descendant of JHexen. The first version of JHexen was released in October 1999. Subsequently the first version of Doomsday was released in February 2000.
 
-The engine, jDoom, jHeretic and jHexen are being developed by Jaakko
-Keränen. Of late an increasing number of people has been involved in the
-project (see @ref{acks}{Acknowledgements}).
+The engine, jDoom, jHeretic and jHexen are being developed by Jaakko Keränen. Of late an increasing number of people has been involved in the project (see @ref{acks}{Acknowledgements}).
 
 @section{ Features }
 
@@ -365,6 +363,20 @@ Patches are images that are commonly used in game menus and intermission screens
 The original data lumps are required even if an external resource is found, because the original data includes information about offsets and the on-screen size of the patch. This means the image from the external resource can be of any arbitrary resolution: it will be scaled to match the original patch.
 
 Currently external patch resources are not precached, which may cause slight delays when the patches are first loaded.
+
+
+
+@section{ Sprite Frames }
+
+Sprite frames are patches. They can be replaced with external resources just like all other patches. The same restrictions apply, though: the dimensions of the external resource do not affect the actual size of the sprite frame. This means the external resources must really be @em{high-resolution} versions of the original images. Otherwise the size and/or aspect ratio will not be right for the resource.
+
+For example, in order to replace the Doom medikit (lump name MEDIA0), one would place the file @file{media0.png} into the @file{Patches} directory.
+
+Color-mapped versions of sprite frames can have external resources, too. To indicate that a resource is color-mapped, its name is formed like this:
+
+@ind{@file{(patchName)-table(classNum)(tableNum).ext}}
+
+@file{(patchName)} is the sprite frame lump name. @file{(classNum)} is the number of the color translation class. This number is always zero in jDoom and jHeretic. In jHexen, it's the player's class (0=Fighter, 1=Cleric, 2=Mage). @file{tableNum} is the index number of the color translation table. jDoom and jHeretic have 4 tables, jHexen has 8. For example: @file{playa1-table01-ck.png} would be the Doom player sprite frame A1 with color table 1. The @file{-ck} suffix makes the image color keyed (i.e. special colors indicate transparent pixels).
 
 
 
