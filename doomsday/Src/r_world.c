@@ -24,6 +24,16 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct subsecnode_s {
+	struct subsecnode_s *next;
+	subsector_t *subsector;
+} subsecnode_t;
+
+typedef struct subsecmap_s {
+	subsecnode_t *nodes;
+	uint count;
+} subsecmap_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -67,7 +77,7 @@ boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
 
 	for(;;)
 	{
-		sin = secinfo + GET_SECTOR_IDX(sec);
+		sin = SECT_INFO(sec);
 		// Advance to the linked sector.
 		if(is_floor)
 		{
@@ -852,8 +862,13 @@ void R_InitSubsectorInfo(void)
 	subsectorinfo_t *info;
 	sector_t *sector;
 
-	subsecinfo = Z_Calloc(sizeof(subsectorinfo_t) * numsubsectors, 
-		PU_LEVEL, 0);
+	// This is quite large, don't allocate from the zone.
+	i = sizeof(subsectorinfo_t) * numsubsectors;
+#ifdef _DEBUG
+	Con_Printf("R_InitSubsectorInfo: %i bytes.\n", i);
+#endif
+	subsecinfo = realloc(subsecinfo, i);
+	memset(subsecinfo, 0, i);
 	
 	for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
 	{
@@ -870,6 +885,86 @@ void R_InitSubsectorInfo(void)
 	}
 }
 
+//===========================================================================
+// R_InitSubsectorBlockMap
+//===========================================================================
+void R_InitSubsectorBlockMap(void)
+{
+	int i, xl, xh, yl, yh, x, y;
+	subsector_t *sub, **ptr;
+	uint startTime = Sys_GetRealTime();
+	subsecnode_t *iter, *next;
+	subsecmap_t *map, *block;
+
+	// The subsector blockmap is tagged as PU_LEVEL.
+	subsectorblockmap = Z_Calloc(bmapwidth * bmapheight 
+		* sizeof(subsector_t**), PU_LEVEL, 0);
+
+	// We'll construct the links using nodes.
+	map = calloc(bmapwidth * bmapheight, sizeof(subsecmap_t));
+
+	// Process all the subsectors in the map.
+	for(i = 0; i < numsubsectors; i++)
+	{
+		sub = SUBSECTOR_PTR(i);
+		if(!sub->sector) continue;
+		
+		// Blockcoords to link to.
+		xl = ( FLT2FIX(sub->bbox[0].x) - bmaporgx ) >> MAPBLOCKSHIFT;
+		xh = ( FLT2FIX(sub->bbox[1].x) - bmaporgx ) >> MAPBLOCKSHIFT;
+		yl = ( FLT2FIX(sub->bbox[0].y) - bmaporgy ) >> MAPBLOCKSHIFT;
+		yh = ( FLT2FIX(sub->bbox[1].y) - bmaporgy ) >> MAPBLOCKSHIFT;
+
+		for(x = xl; x <= xh; x++)
+			for(y = yl; y <= yh; y++)		
+			{
+				if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
+				{
+					Con_Printf("sub%i: out: x=%i, y=%i\n", i, x, y);
+					continue;
+				}
+
+				// Create a new node.
+				iter = malloc(sizeof(subsecnode_t));
+				iter->subsector = sub;
+
+				// Link to the temporary map.
+				block = &map[x + y * bmapwidth];
+				iter->next = block->nodes;
+				block->nodes = iter;
+				block->count++;
+			}
+	}
+
+	// Create the actual links by 'hardening' the lists into arrays.
+	for(i = 0, block = map; i < bmapwidth * bmapheight; i++, block++)
+		if(block->count > 0)
+		{
+			// An NULL-terminated array of pointers to subsectors.
+			ptr = subsectorblockmap[i] = Z_Malloc((block->count + 1) 
+				* sizeof(subsector_t*),	PU_LEVEL, NULL);
+			
+			// Copy pointers to the array, delete the nodes.
+			for(iter = block->nodes; iter; iter = next) 
+			{
+				*ptr++ = iter->subsector;
+				// Kill the node.
+				next = iter->next;
+				free(iter);
+			}
+
+			// Terminate.
+			*ptr = NULL;
+		}
+
+	// Free the temporary link map.
+	free(map);
+
+	// How much time did we spend?
+	VERBOSE( Con_Message("R_InitSubsectorBlockMap: Done in %.2f seconds.\n", 
+		(Sys_GetRealTime() - startTime) / 1000.0f) );
+}
+
 //==========================================================================
 // R_InitPolyBlockMap
 //	Allocates and clears the polyobj blockmap.
@@ -882,9 +977,9 @@ void R_InitPolyBlockMap(void)
 		Con_Message("R_InitPolyBlockMap: w=%i h=%i\n", bmapwidth, bmapheight);
 	}
 
-	polyblockmap = Z_Malloc(bmapwidth*bmapheight*sizeof(polyblock_t*),
+	polyblockmap = Z_Malloc(bmapwidth * bmapheight * sizeof(polyblock_t*),
 		PU_LEVEL, 0);
-	memset(polyblockmap, 0, bmapwidth*bmapheight*sizeof(polyblock_t*));
+	memset(polyblockmap, 0, bmapwidth * bmapheight * sizeof(polyblock_t*));
 }
 
 /*
@@ -1073,10 +1168,11 @@ void R_SetupLevel(char *level_id, int flags)
 	{
 		// Init polyobj blockmap.
 		R_InitPolyBlockMap();
-
+	
 		// Initialize node piles and line rings.
 		NP_Init(&thingnodes, 256); // Allocate a small pile.
 		NP_Init(&linenodes, numlines + 1000);
+
 		// Allocate the rings.
 		linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVEL, 0);
 		for(i = 0; i < numlines; i++)
@@ -1168,6 +1264,10 @@ void R_SetupLevel(char *level_id, int flags)
 	R_InitSectorInfo();
 	R_InitSubsectorInfo();
 	R_InitLineInfo();
+
+	// Init blockmap for searching subsectors.
+	R_InitSubsectorBlockMap();
+
 	Con_Progress(10, 0);
 
 	if(flags & DDSLF_FIX_SKY) R_SkyFix();
@@ -1255,7 +1355,7 @@ sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor)
 
 	for(;;)
 	{
-		sin = secinfo + GET_SECTOR_IDX(sec);
+		sin = SECT_INFO(sec);
 		if(getfloor)
 		{
 			if(!sin->linkedfloor) return sec;
