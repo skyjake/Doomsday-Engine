@@ -27,6 +27,15 @@
 
 #define OBSOLETE		CVF_NO_ARCHIVE|CVF_HIDE	// Old ccmds.
 
+// The threshold is the average ack time * mul.
+#define ACK_THRESHOLD_MUL		3
+
+// Never wait a too short time for acks.
+#define ACK_MINIMUM_THRESHOLD	50
+
+// Clients don't send commands on every tic.
+#define CLIENT_TICCMD_INTERVAL	3
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -42,8 +51,8 @@ extern void ST_NetDone(void);
 
 extern int		net_skewdampen;		// In frames.
 extern boolean	net_showskew;
-extern int		latest_frame_size;
-extern netdata_t latest_frame_packet;
+//extern int		latest_frame_size;
+//extern netdata_t latest_frame_packet;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -68,10 +77,10 @@ int				gotframe = false;
 boolean			firstNetUpdate = true;
 
 boolean			monitorSendQueue = false;
-boolean			net_timerefresh = false;
+//boolean			net_timerefresh = false;
 boolean			net_showlatencies = false;
-int				net_stressmargin = 10;
-int				net_dampentime = 7;
+//int				net_stressmargin = 10;
+//int				net_dampentime = 7;
 boolean			net_dev = false;
 int				net_dontsleep = false;
 int				net_ticsync = true;
@@ -86,44 +95,44 @@ netbuffer_t	reboundstore;
 cvar_t netCVars[] =
 {
 	"net_MSQ",			OBSOLETE,			CVT_BYTE,	&monitorSendQueue,	0, 1,	"Monitor send queue.",
-	"net_TimeRefresh",	OBSOLETE,			CVT_BYTE,	&net_timerefresh,	0, 1,	"Time client refresh.",
+//	"net_TimeRefresh",	OBSOLETE,			CVT_BYTE,	&net_timerefresh,	0, 1,	"Time client refresh.",
 	"net_Latencies",	OBSOLETE,			CVT_BYTE,	&net_showlatencies,	0, 1,	"Show client latencies.",
-	"net_StressDampen",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_dampentime,	0, 0,	"CmdLag stress dampening interval, in tics.",
-	"net_StressMargin",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_stressmargin,	0, 0,	"CmdLag stress margin, in tics.",
-	"net_SkewDampen",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_skewdampen,	0, 0,	"Client time skew dampening, in frames.",
-	"net_ShowSkew",		OBSOLETE,			CVT_BYTE,	&net_showskew,		0, 1,	"Show client time skew.",
+//	"net_StressDampen",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_dampentime,	0, 0,	"CmdLag stress dampening interval, in tics.",
+//	"net_StressMargin",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_stressmargin,	0, 0,	"CmdLag stress margin, in tics.",
+//	"net_SkewDampen",	OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_skewdampen,	0, 0,	"Client time skew dampening, in frames.",
+//	"net_ShowSkew",		OBSOLETE,			CVT_BYTE,	&net_showskew,		0, 1,	"Show client time skew.",
 	"net_Dev",			OBSOLETE,			CVT_BYTE,	&net_dev,			0, 1,	"Network development mode.",
 	"net_DontSleep",	OBSOLETE,			CVT_BYTE,	&net_dontsleep,		0, 1,	"1=Don't sleep while waiting for tics.",
 	"net_FrameInterval", OBSOLETE|CVF_NO_MAX, CVT_INT,	&frame_interval,	0, 0,	"Minimum number of tics between sent frames.",
-	"net_ResendTime",	OBSOLETE|CVF_NO_MAX,	CVT_INT,	&net_resendtime,	0, 0,	"Number of tics to wait before resending delta sets.",
+//	"net_ResendTime",	OBSOLETE|CVF_NO_MAX,	CVT_INT,	&net_resendtime,	0, 0,	"Number of tics to wait before resending delta sets.",
 	"net_Password",		OBSOLETE,			CVT_CHARPTR, &net_password,		0, 0,	"Password for remote login.",
-	"net_ShowSets",		OBSOLETE,			CVT_BYTE,	&net_showsets,		0, 1,	"1=Show what goes in delta sets.",
-	"net_MaxDif",		OBSOLETE,			CVT_INT,	&net_maxdif,		0, 256,	"Maximum difference between client pos vs. real pos.",
-	"net_MinSecUpdate",	OBSOLETE|CVF_NO_MAX,	CVT_INT,	&net_minsecupd,		0, 0,	"Block range for forced sector deltas.",
-	"net_FullSecUpdate", OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_fullsecupd,	0, 0,	"Block range for full (w/reject) sector deltas.",
-	"net_MaxSecUpdate", OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_maxsecupd,		0, 0,	"Maximum block range for sector deltas.",
+//	"net_ShowSets",		OBSOLETE,			CVT_BYTE,	&net_showsets,		0, 1,	"1=Show what goes in delta sets.",
+//	"net_MaxDif",		OBSOLETE,			CVT_INT,	&net_maxdif,		0, 256,	"Maximum difference between client pos vs. real pos.",
+//	"net_MinSecUpdate",	OBSOLETE|CVF_NO_MAX,	CVT_INT,	&net_minsecupd,		0, 0,	"Block range for forced sector deltas.",
+//	"net_FullSecUpdate", OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_fullsecupd,	0, 0,	"Block range for full (w/reject) sector deltas.",
+//	"net_MaxSecUpdate", OBSOLETE|CVF_NO_MAX, CVT_INT,	&net_maxsecupd,		0, 0,	"Maximum block range for sector deltas.",
 //--------------------------------------------------------------------------
 // Some of these are obsolete...
 //--------------------------------------------------------------------------
 	"net-queue-show",		0,			CVT_BYTE,	&monitorSendQueue,	0, 1,	"Monitor send queue.",
-	"net-stress-dampen",	CVF_NO_MAX, CVT_INT,	&net_dampentime,	0, 0,	"CmdLag stress dampening interval, in tics.",
-	"net-stress-margin",	CVF_NO_MAX, CVT_INT,	&net_stressmargin,	0, 0,	"CmdLag stress margin, in tics.",
+//	"net-stress-dampen",	CVF_NO_MAX, CVT_INT,	&net_dampentime,	0, 0,	"CmdLag stress dampening interval, in tics.",
+//	"net-stress-margin",	CVF_NO_MAX, CVT_INT,	&net_stressmargin,	0, 0,	"CmdLag stress margin, in tics.",
 	"net-dev",				0,			CVT_BYTE,	&net_dev,			0, 1,	"Network development mode.",
 	"net-nosleep",			0,			CVT_BYTE,	&net_dontsleep,		0, 1,	"1=Don't sleep while waiting for tics.",
-	"client-skew-dampen",	CVF_NO_MAX,	CVT_INT,	&net_skewdampen,	0, 0,	"Client time skew dampening, in frames.",
-	"client-skew-show",		0,			CVT_BYTE,	&net_showskew,		0, 1,	"Show client time skew.",
+//	"client-skew-dampen",	CVF_NO_MAX,	CVT_INT,	&net_skewdampen,	0, 0,	"Client time skew dampening, in frames.",
+//	"client-skew-show",		0,			CVT_BYTE,	&net_showskew,		0, 1,	"Show client time skew.",
 	"client-pos-interval",	CVF_NO_MAX,	CVT_INT,	&net_coordtime,		0, 0,	"Number of tics between client coord packets.",
 	"client-connect-timeout", CVF_NO_MAX, CVT_FLOAT, &net_connecttimeout, 0, 0, "Maximum number of seconds to attempt connecting to a server.",
 	"server-password",		0,			CVT_CHARPTR, &net_password,		0, 0,	"Password for remote login.",
-	"server-delta-show",	0,			CVT_BYTE,	&net_showsets,		0, 1,	"1=Show what goes in delta sets.",
-	"server-refresh-show",	0,			CVT_BYTE,	&net_timerefresh,	0, 1,	"Time client refresh.",
+//	"server-delta-show",	0,			CVT_BYTE,	&net_showsets,		0, 1,	"1=Show what goes in delta sets.",
+//	"server-refresh-show",	0,			CVT_BYTE,	&net_timerefresh,	0, 1,	"Time client refresh.",
 	"server-latencies",		0,			CVT_BYTE,	&net_showlatencies,	0, 1,	"Show client latencies.",
 	"server-frame-interval", CVF_NO_MAX, CVT_INT,	&frame_interval,	0, 0,	"Minimum number of tics between sent frames.",
-	"server-frame-resend",	CVF_NO_MAX,	CVT_INT,	&net_resendtime,	0, 0,	"Number of tics to wait before resending delta sets.",
-	"server-dif-max",		0,			CVT_INT,	&net_maxdif,		0, 256,	"Maximum difference between client pos vs. real pos.",
-	"server-sector-min",	CVF_NO_MAX,	CVT_INT,	&net_minsecupd,		0, 0,	"Block range for forced sector deltas.",
-	"server-sector-full",	CVF_NO_MAX,	CVT_INT,	&net_fullsecupd,	0, 0,	"Block range for full (w/reject) sector deltas.",
-	"server-sector-max",	CVF_NO_MAX,	CVT_INT,	&net_maxsecupd,		0, 0,	"Maximum block range for sector deltas.",
+//	"server-frame-resend",	CVF_NO_MAX,	CVT_INT,	&net_resendtime,	0, 0,	"Number of tics to wait before resending delta sets.",
+//	"server-dif-max",		0,			CVT_INT,	&net_maxdif,		0, 256,	"Maximum difference between client pos vs. real pos.",
+//	"server-sector-min",	CVF_NO_MAX,	CVT_INT,	&net_minsecupd,		0, 0,	"Block range for forced sector deltas.",
+//	"server-sector-full",	CVF_NO_MAX,	CVT_INT,	&net_fullsecupd,	0, 0,	"Block range for full (w/reject) sector deltas.",
+//	"server-sector-max",	CVF_NO_MAX,	CVT_INT,	&net_maxsecupd,		0, 0,	"Maximum block range for sector deltas.",
 	"server-player-limit",	0,			CVT_INT,	&sv_maxPlayers,		0, MAXPLAYERS, "Maximum number of players on the server.",
 	NULL
 };
@@ -237,7 +246,7 @@ boolean Net_GetPacket(void)
 	return true;
 }
 
-boolean Net_GetLatestFramePacket(void)
+/*boolean Net_GetLatestFramePacket(void)
 {
 	if(!isClient || !latest_frame_size) return false;
 	// Place the latest frame packet to the netbuffer.
@@ -247,7 +256,7 @@ boolean Net_GetLatestFramePacket(void)
 	// Clear the buffer.
 	latest_frame_size = 0;
 	return true;
-}
+}*/
 
 //===========================================================================
 // Net_SendPacket
@@ -255,7 +264,11 @@ boolean Net_GetLatestFramePacket(void)
 //===========================================================================
 void Net_SendPacket(int to_player, int type, void *data, int length)
 {
-	boolean reliable = (to_player & DDSP_RELIABLE) != 0;
+	int flags = 0;
+	
+	// What kind of delivery to use?
+	if(to_player & DDSP_CONFIRM) flags |= SPF_CONFIRM;
+	if(to_player & DDSP_ORDERED) flags |= SPF_ORDERED;
 
 	Msg_Begin(type);
 	if(data) Msg_Write(data, length);
@@ -263,14 +276,14 @@ void Net_SendPacket(int to_player, int type, void *data, int length)
 	if(isClient)
 	{
 		// As a client we can only send messages to the server.
-		Net_SendBuffer(0, reliable? SPF_RELIABLE : 0);
+		Net_SendBuffer(0, flags);
 	}
 	else
 	{
 		// The server can send packets to any player.
 		// Only allow sending to the sixteen possible players.
 		Net_SendBuffer(to_player & DDSP_ALL_PLAYERS? NSP_BROADCAST 
-			: (to_player & 0xf), reliable? SPF_RELIABLE : 0); 
+			: (to_player & 0xf), flags); 
 	}
 }
 
@@ -347,18 +360,18 @@ int CCmdChat(int argc, char **argv)
 	{
 		if(mask == (unsigned short) ~0) 
 		{
-			Net_SendBuffer(NSP_BROADCAST, SPF_RELIABLE);
+			Net_SendBuffer(NSP_BROADCAST, SPF_ORDERED);
 		}
 		else 
 		{
 			for(i = 1; i < MAXPLAYERS; i++) 
 				if(players[i].ingame && mask & (1 << i)) 
-					Net_SendBuffer(i, SPF_RELIABLE);
+					Net_SendBuffer(i, SPF_ORDERED);
 		}
 	}
 	else
 	{
-		Net_SendBuffer(0, SPF_RELIABLE);
+		Net_SendBuffer(0, SPF_ORDERED);
 	}
 	
 	// Show the message locally.
@@ -379,17 +392,21 @@ ticcmd_t *Net_LocalCmd()
 	return (ticcmd_t*) &localticcmds[TICCMD_IDX(numlocal++)]; 
 }
 
+/*
+ * After a long period with no updates (map setup), calling this will
+ * reset the tictimer so that no time seems to have passed.
+ */
 void Net_ResetTimer(void)
 {
 	lasttime = Sys_GetTime();
 }
 
-//===========================================================================
-// Net_Update
-//	Builds ticcmds for console player, sends out a packet.
-//===========================================================================
+/*
+ * Build ticcmds for console player, sends out a packet.
+ */
 void Net_Update(void)
 {
+	static int ticSendTimer = 0;
 	int nowtime;
 	int newtics;
 	int	i;
@@ -440,7 +457,7 @@ void Net_Update(void)
 				availabletics++;
 				if(isClient)
 				{
-					// When not playing a demo, this the last command.
+					// When not playing a demo, this is the last command.
 					// It is used in local movement prediction.
 					memcpy(clients[consoleplayer].lastcmd, cmd, sizeof(*cmd));
 				}
@@ -451,8 +468,11 @@ void Net_Update(void)
 	// This is as far as dedicated servers go.
 	if(isDedicated) goto listen;
 
-	if(!isClient || N_CheckSendQueue(0))
+	if(!isClient || ++ticSendTimer > CLIENT_TICCMD_INTERVAL)
 	{
+		// Clients don't send commands on every tic.
+		ticSendTimer = 0;
+
 		// Send the proper number of tics to the server.
 		// If we are the server, the tics will rebound back to us.
 		Msg_Begin(pkt_ticcmd);
@@ -570,7 +590,7 @@ void Net_StopGame(void)
 		// We are an open server. This means we should inform all the 
 		// connected clients that the server is about to close.
 		Msg_Begin(psv_server_close);
-		Net_SendBuffer(NSP_BROADCAST, SPF_RELIABLE);
+		Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
 	}
 	else
 	{
@@ -645,15 +665,35 @@ int Net_TimeDelta(byte now, byte then)
 //===========================================================================
 int Net_GetTicCmd(void *pCmd, int player)
 {
-	client_t *cl = &clients[player];
+	client_t *client = &clients[player];
 	ticcmd_t *cmd = pCmd;
-	int doMerge = false;
-	int future;
+/*	int doMerge = false;
+	int future;*/
 
+	if(client->numtics <= 0) 
+	{
+		// No more commands for this player.
+		return false;
+	}
+
+	// Return the next ticcmd from the buffer.
+	// There will be one less tic in the buffer after this.
+	client->numtics--;
+	memcpy(cmd, &client->ticcmds[ TICCMD_IDX(client->firsttic++) ], 
+		TICCMD_SIZE);
+
+	// This is the new last command.
+	memcpy(client->lastcmd, cmd, TICCMD_SIZE);
+
+	// Make sure the firsttic index is in range.
+	client->firsttic %= BACKUPTICS;
+	return true;
+
+#if 0
 	//Con_Printf("GetTicCmd: Cl=%i, GT=%i (%i)...\n", player, gametic, (byte)gametic);
 
 	// Check the lag stress.
-	if(cl->lagStress > net_stressmargin)
+/*	if(cl->lagStress > net_stressmargin)
 	{
 		// Command lag should be increased, we're running out of cmds.
 		cl->lagStress -= net_stressmargin;
@@ -667,7 +707,7 @@ int Net_GetTicCmd(void *pCmd, int player)
 		cl->lagStress += net_stressmargin;
 		cl->runTime++;
 		//Con_Printf("  Decreasing lag\n");
-	}
+	}*/
 
 	for(;;)
 	{
@@ -720,6 +760,7 @@ int Net_GetTicCmd(void *pCmd, int player)
 		break;
 	}
 	return true;
+#endif
 }
 
 //===========================================================================
@@ -728,7 +769,6 @@ int Net_GetTicCmd(void *pCmd, int player)
 //===========================================================================
 void Net_Drawer(void)
 {
-	client_t *cl;
 	char buf[160], tmp[40];
 	int i, c;
 	boolean show_blink_r = false;
@@ -764,7 +804,7 @@ void Net_Drawer(void)
 	}
 	if(net_dev)
 	{
-		gl.Color3f(1, 1, 1);
+/*		gl.Color3f(1, 1, 1);
 		sprintf(buf, "G%i", gametic);
 		FR_TextOut(buf, 10, 10);
 		for(i = 0, cl = clients; i<MAXPLAYERS; i++, cl++)
@@ -774,7 +814,7 @@ void Net_Drawer(void)
 					cl->lagStress, cl->numtics, cl->runTime, 
 					players[i].flags);
 				FR_TextOut(buf, 10, 10+10*(i+1));
-			}
+			}*/
 	}
 	if(consoleShowFPS)
 	{
@@ -793,6 +833,63 @@ void Net_Drawer(void)
 	// Restore original matrix.
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PopMatrix();
+}
+
+/*
+ * Maintain the ack threshold average.
+ */
+void Net_SetAckTime(int clientNumber, uint period)
+{
+	client_t *client = &clients[clientNumber];
+
+	// Add the new time into the array.
+	client->ackTimes[ client->ackIdx++ ] = period;
+	client->ackIdx %= NUM_ACK_TIMES;
+}
+
+/*
+ * Returns the average ack time of the client.
+ */
+uint Net_GetAckTime(int clientNumber)
+{
+	client_t *client = &clients[clientNumber];
+	uint average = 0;
+	int i;
+
+	// Calculate the average.
+	for(i = 0; i < NUM_ACK_TIMES; i++)
+	{
+		average += client->ackTimes[i];
+	}
+	return average / NUM_ACK_TIMES;
+}
+
+/*
+ * Sets all the ack times. Used to initial the ack times for new clients.
+ */
+void Net_SetInitialAckTime(int clientNumber, uint period)
+{
+	int i;
+
+	for(i = 0; i < NUM_ACK_TIMES; i++)
+	{
+		clients[clientNumber].ackTimes[i] = period;
+	}
+}
+
+/*
+ * The ack threshold is the maximum period of time to wait before 
+ * deciding an ack is not coming. The minimum threshold is 100 ms.
+ */
+uint Net_GetAckThreshold(int clientNumber)
+{
+	uint threshold = Net_GetAckTime(clientNumber) * ACK_THRESHOLD_MUL;
+
+	if(threshold < ACK_MINIMUM_THRESHOLD)
+	{
+		threshold = ACK_MINIMUM_THRESHOLD;
+	}
+	return threshold;
 }
 
 int Sv_GetRegisteredMobj(pool_t*, thid_t, mobjdelta_t*);
@@ -853,7 +950,28 @@ void Net_Ticker(void)
 	}
 #endif
 
-	if(dampenCount-- <= 0)
+	if(net_dev)
+	{
+		static int printTimer = 0;
+		if(printTimer++ > TICSPERSEC)
+		{
+			printTimer = 0;
+			for(i = 0; i < MAXPLAYERS; i++)
+			{
+				if(Sv_IsFrameTarget(i))
+				{
+					Con_Message("%i(rdy%i): avg=%05ims thres=%05ims bwr=%05i "
+						"maxfs=%05ib\n",
+						i, clients[i].ready, Net_GetAckTime(i), 
+						Net_GetAckThreshold(i),
+						clients[i].bandwidthRating, 
+						Sv_GetMaxFrameSize(i));
+				}
+			}
+		}
+	}
+
+/*	if(dampenCount-- <= 0)
 	{
 		dampenCount = net_dampentime;
 		// Dampen lag stress.
@@ -865,9 +983,9 @@ void Net_Ticker(void)
 			else if(clients[i].lagStress < 0)
 				clients[i].lagStress++;
 		}
-	}
+	}*/
 
-	if(net_showlatencies)
+	/*if(net_showlatencies)
 	{
 		Con_Printf("G%i ", gametic);
 		for(i=0, cl=clients; i<MAXPLAYERS; i++, cl++)
@@ -875,7 +993,7 @@ void Net_Ticker(void)
 				Con_Printf("%02i:%+04i[%+03i](%02d/%03i) ", i, gametic - cl->time,
 					cl->lagStress, cl->numtics, cl->runTime);
 		Con_Printf("\n");
-	}
+	}*/
 
 	// The following stuff is only for netgames.
 	if(!netgame) return;
@@ -890,7 +1008,7 @@ void Net_Ticker(void)
 	}*/
 
 	// Check the pingers.
-	for(i=0, cl=clients; i<MAXPLAYERS; i++, cl++)
+	for(i = 0, cl = clients; i < MAXPLAYERS; i++, cl++)
 	{
 		// Clients can only ping the server.
 		if(isClient && i || i == consoleplayer) continue;
@@ -968,7 +1086,7 @@ int CCmdSetName(int argc, char **argv)
 	// Serverplayers can update their name right away.
 	if(!isClient) strcpy(clients[0].name, info.name);
 
-	Net_SendPacket(DDSP_RELIABLE | (isClient? 0 : DDSP_ALL_PLAYERS),
+	Net_SendPacket(DDSP_CONFIRM | (isClient? 0 : DDSP_ALL_PLAYERS),
 		pkt_player_info, &info, sizeof(info));			
 	return true;
 }
