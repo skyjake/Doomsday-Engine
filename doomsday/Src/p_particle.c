@@ -464,6 +464,12 @@ boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
 {
 	ptcgen_t *gen = parm;
 
+	// If the clmobj is not valid at the moment, don't do anything.
+	if(cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
+	{
+		return true;
+	}
+
 	if(cmo->mo.type != gen->type && cmo->mo.type != gen->type2) 
 	{
 		// Type mismatch.
