@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.8  2003/08/24 00:18:49  skyjake
+// Correct menu item case
+//
 // Revision 1.7  2003/08/19 16:32:39  skyjake
 // Added menu glitter (using the dynlight texture)
 //
@@ -337,13 +340,13 @@ enum
 
 MenuItem_t MainItems[] =
 {
-	{ ITT_EFUNC, "NEW GAME", M_NewGame, 0 },// "M_NGAME" },
-	{ ITT_EFUNC, "MULTIPLAYER", SCEnterMultiplayerMenu, 0 },
-	{ ITT_EFUNC, "OPTIONS", M_Options, 0 },// "M_OPTION" },
-	{ ITT_EFUNC, "LOAD GAME", M_LoadGame, 0 },// "M_LOADG" },
-	{ ITT_EFUNC, "SAVE GAME", M_SaveGame, 0 },// "M_SAVEG" },
-	{ ITT_EFUNC, "READ THIS!", M_ReadThis, 0 },// "M_RDTHIS" },
-	{ ITT_EFUNC, "QUIT GAME", M_QuitDOOM, 0 } // "M_QUITG" }
+	{ ITT_EFUNC, "New Game", M_NewGame, 0 },// "M_NGAME" },
+	{ ITT_EFUNC, "Multiplayer", SCEnterMultiplayerMenu, 0 },
+	{ ITT_EFUNC, "Options", M_Options, 0 },// "M_OPTION" },
+	{ ITT_EFUNC, "Load Game", M_LoadGame, 0 },// "M_LOADG" },
+	{ ITT_EFUNC, "Save Game", M_SaveGame, 0 },// "M_SAVEG" },
+	{ ITT_EFUNC, "Read This!", M_ReadThis, 0 },// "M_RDTHIS" },
+	{ ITT_EFUNC, "Quit Game", M_QuitDOOM, 0 } // "M_QUITG" }
 };
 
 Menu_t MainDef =
@@ -509,14 +512,14 @@ Menu_t SaveDef =
 
 static MenuItem_t OptionsItems[] =
 {
-	{ ITT_EFUNC, "END GAME", M_EndGame, 0 },
-	{ ITT_EFUNC, "CONTROL PANEL", M_OpenDCP, 0 },
-	{ ITT_SETMENU, "GAMEPLAY...", NULL, MENU_GAMEPLAY },
-	{ ITT_SETMENU, "HUD...", NULL, MENU_HUD },
-	{ ITT_SETMENU, "SOUND...", NULL, MENU_OPTIONS2 },
-	{ ITT_SETMENU, "CONTROLS...", NULL, MENU_CONTROLS },
-	{ ITT_SETMENU, "MOUSE...", NULL, MENU_MOUSE },
-	{ ITT_SETMENU, "JOYSTICK...", NULL, MENU_JOYSTICK }
+	{ ITT_EFUNC, "end game", M_EndGame, 0 },
+	{ ITT_EFUNC, "control panel", M_OpenDCP, 0 },
+	{ ITT_SETMENU, "gameplay...", NULL, MENU_GAMEPLAY },
+	{ ITT_SETMENU, "hud...", NULL, MENU_HUD },
+	{ ITT_SETMENU, "sound...", NULL, MENU_OPTIONS2 },
+	{ ITT_SETMENU, "controls...", NULL, MENU_CONTROLS },
+	{ ITT_SETMENU, "mouse...", NULL, MENU_MOUSE },
+	{ ITT_SETMENU, "joystick...", NULL, MENU_JOYSTICK }
 
 //	{ ITT_SETMENU, "GRAPHICS...", NULL, MENU_GRAPHICS },
 //	{ ITT_SETMENU, "OTHER...", NULL, MENU_OPTIONS2 },
@@ -537,9 +540,9 @@ static Menu_t OptionsDef =
 
 static MenuItem_t Options2Items[] =
 {
-	{ ITT_LRFUNC, "SFX VOLUME", M_SfxVol, 0 },
-	{ ITT_LRFUNC, "MUSIC VOLUME", M_MusicVol, 0 },
-	{ ITT_EFUNC, "AUDIO PANEL", M_OpenDCP, 1 },
+	{ ITT_LRFUNC, "sfx volume", M_SfxVol, 0 },
+	{ ITT_LRFUNC, "music volume", M_MusicVol, 0 },
+	{ ITT_EFUNC, "audio panel", M_OpenDCP, 1 },
 };
 
 static Menu_t Options2Def =
@@ -555,11 +558,11 @@ static Menu_t Options2Def =
 
 static MenuItem_t GameplayItems[] =
 {
-	{ ITT_EFUNC, "MESSAGES :", M_ChangeMessages, 0 },
-	{ ITT_EFUNC, "ALWAYS RUN :", M_AlwaysRun, 0 },
-	{ ITT_EFUNC, "LOOKSPRING :", M_LookSpring, 0 },
-	{ ITT_EFUNC, "AUTOAIM :", M_NoAutoAim, 0 },
-	{ ITT_EFUNC, "JUMPING :", M_AllowJump, 0 },
+	{ ITT_EFUNC, "messages :", M_ChangeMessages, 0 },
+	{ ITT_EFUNC, "always run :", M_AlwaysRun, 0 },
+	{ ITT_EFUNC, "lookspring :", M_LookSpring, 0 },
+	{ ITT_EFUNC, "autoaim :", M_NoAutoAim, 0 },
+	{ ITT_EFUNC, "jumping :", M_AllowJump, 0 },
 };
 
 static Menu_t GameplayDef =
@@ -575,19 +578,19 @@ static Menu_t GameplayDef =
 
 static MenuItem_t HUDItems[] =
 {
-	{ ITT_EFUNC, "SHOW HEALTH :", M_HUDInfo, HUD_HEALTH },
-	{ ITT_EFUNC, "SHOW AMMO :", M_HUDInfo, HUD_AMMO },
-	{ ITT_EFUNC, "SHOW KEYS :", M_HUDInfo, HUD_KEYS },
-	{ ITT_EFUNC, "SHOW ARMOR :", M_HUDInfo, HUD_ARMOR },
-	{ ITT_LRFUNC, "SCALE", M_HUDScale, 0 },
-	{ ITT_LRFUNC, "COLOR RED    ", M_HUDRed, 0 },
-	{ ITT_LRFUNC, "COLOR GREEN", M_HUDGreen, 0 },
-	{ ITT_LRFUNC, "COLOR BLUE  ", M_HUDBlue, 0 },
-	{ ITT_LRFUNC, "CROSSHAIR :", M_Xhair, 0 },
-	{ ITT_LRFUNC, "CROSSHAIR SIZE", M_XhairSize, 0 },
-	{ ITT_LRFUNC, "CROSSHAIR ALPHA", M_XhairAlpha, 0 },
-	{ ITT_LRFUNC, "SCREEN SIZE", M_SizeDisplay, 0 },
-	{ ITT_LRFUNC, "STATUS BAR SIZE", M_SizeStatusBar, 0}
+	{ ITT_EFUNC, "show health :", M_HUDInfo, HUD_HEALTH },
+	{ ITT_EFUNC, "show ammo :", M_HUDInfo, HUD_AMMO },
+	{ ITT_EFUNC, "show keys :", M_HUDInfo, HUD_KEYS },
+	{ ITT_EFUNC, "show armor :", M_HUDInfo, HUD_ARMOR },
+	{ ITT_LRFUNC, "scale", M_HUDScale, 0 },
+	{ ITT_LRFUNC, "color red    ", M_HUDRed, 0 },
+	{ ITT_LRFUNC, "color green", M_HUDGreen, 0 },
+	{ ITT_LRFUNC, "color blue  ", M_HUDBlue, 0 },
+	{ ITT_LRFUNC, "crosshair :", M_Xhair, 0 },
+	{ ITT_LRFUNC, "crosshair size", M_XhairSize, 0 },
+	{ ITT_LRFUNC, "crosshair alpha", M_XhairAlpha, 0 },
+	{ ITT_LRFUNC, "screen size", M_SizeDisplay, 0 },
+	{ ITT_LRFUNC, "status bar size", M_SizeStatusBar, 0}
 };
 
 static Menu_t HUDDef =
@@ -603,10 +606,10 @@ static Menu_t HUDDef =
 
 static MenuItem_t InputItems[] =
 {
-	{ ITT_EFUNC, "MOUSE LOOK :", M_MouseLook, 0 },
-	{ ITT_EFUNC, "INVERSE LOOK :", M_MouseLookInverse, 0 },
-	{ ITT_LRFUNC, "X SENSITIVITY", M_MouseXSensi, 0 },
-	{ ITT_LRFUNC, "Y SENSITIVITY", M_MouseYSensi, 0 },
+	{ ITT_EFUNC, "mouse look :", M_MouseLook, 0 },
+	{ ITT_EFUNC, "inverse look :", M_MouseLookInverse, 0 },
+	{ ITT_LRFUNC, "x sensitivity", M_MouseXSensi, 0 },
+	{ ITT_LRFUNC, "y sensitivity", M_MouseYSensi, 0 },
 };
 
 static Menu_t InputDef = 
@@ -622,17 +625,17 @@ static Menu_t InputDef =
 
 static MenuItem_t JoyItems[] =
 {
-	{ ITT_LRFUNC, "X AXIS :", M_JoyAxis, 0 << 8 },
-	{ ITT_LRFUNC, "Y AXIS :", M_JoyAxis, 1 << 8 },
-	{ ITT_LRFUNC, "Z AXIS :", M_JoyAxis, 2 << 8 },
-	{ ITT_LRFUNC, "RX AXIS :", M_JoyAxis, 3 << 8 },
-	{ ITT_LRFUNC, "RY AXIS :", M_JoyAxis, 4 << 8 },
-	{ ITT_LRFUNC, "RZ AXIS :", M_JoyAxis, 5 << 8 },
-	{ ITT_LRFUNC, "SLIDER 1 :", M_JoyAxis, 6 << 8 },
-	{ ITT_LRFUNC, "SLIDER 2 :", M_JoyAxis, 7 << 8 },
-	{ ITT_EFUNC, "ENABLE JOY LOOK :", M_JoyLook, 0 },
-	{ ITT_EFUNC, "INVERSE LOOK :", M_InverseJoyLook, 0 },
-	{ ITT_EFUNC, "POV LOOK :", M_POVLook, 0 }
+	{ ITT_LRFUNC, "x axis :", M_JoyAxis, 0 << 8 },
+	{ ITT_LRFUNC, "y axis :", M_JoyAxis, 1 << 8 },
+	{ ITT_LRFUNC, "z axis :", M_JoyAxis, 2 << 8 },
+	{ ITT_LRFUNC, "rx axis :", M_JoyAxis, 3 << 8 },
+	{ ITT_LRFUNC, "ry axis :", M_JoyAxis, 4 << 8 },
+	{ ITT_LRFUNC, "rz axis :", M_JoyAxis, 5 << 8 },
+	{ ITT_LRFUNC, "slider 1 :", M_JoyAxis, 6 << 8 },
+	{ ITT_LRFUNC, "slider 2 :", M_JoyAxis, 7 << 8 },
+	{ ITT_EFUNC, "enable joy look :", M_JoyLook, 0 },
+	{ ITT_EFUNC, "inverse look :", M_InverseJoyLook, 0 },
+	{ ITT_EFUNC, "pov look :", M_POVLook, 0 }
 };
 
 static Menu_t JoyDef =
@@ -2028,35 +2031,27 @@ void M_WriteText2
 	(int x, int y, char *string, dpatch_t *font, 
 	 float red, float green, float blue)
 {
-	M_WriteText3(x, y, string, font, red, green, blue, true);
+	M_WriteText3(x, y, string, font, red, green, blue, true, 0);
 }
 
 /*
  * Write a string using a colored, custom font.
  * Also do a type-in effect.
  */
-void
-M_WriteText3
-( int		x,
- int		y,
- char*		string,
- dpatch_t	*font,
- float		red,
- float		green,
- float		blue,
- boolean	dotypein
- )
+void M_WriteText3
+	(int x, int y, const char *string, dpatch_t *font, 
+	 float red, float green, float blue, boolean doTypeIn, int initialCount)
 {
     int		w, h;
-    char*	ch;
+    const char *ch;
     int		c;
     int		cx;
     int		cy;
-	int		count = 0, maxcount = typein_time*2, yoff;
+	int		count = initialCount, maxCount = typein_time*2, yoff;
 	float	flash;
 
 	// Disable type-in?
-	if(!dotypein || cfg.menuEffects > 0) maxcount = 0xffff;
+	if(!doTypeIn || cfg.menuEffects > 0) maxCount = 0xffff;
 
 	if(red >= 0) gl.Color4f(red, green, blue, menu_alpha);
 
@@ -2070,28 +2065,28 @@ M_WriteText3
 		count++;
 		yoff = 0;
 		flash = 0;
-		if(count == maxcount) 
+		if(count == maxCount) 
 		{
 			flash = 1;
 			if(red >= 0) gl.Color4f(1, 1, 1, 1);
 		}
-		else if(count + 1 == maxcount)
+		else if(count + 1 == maxCount)
 		{
 			flash = 0.5f;
 			if(red >= 0) gl.Color4f((1+red)/2,
 				(1+green)/2, (1+blue)/2, menu_alpha);
 		}
-		else if(count + 2 == maxcount)
+		else if(count + 2 == maxCount)
 		{
 			flash = 0.25f;
 			if(red >= 0) gl.Color4f(red, green, blue, menu_alpha);
 		}
-		else if(count + 3 == maxcount)
+		else if(count + 3 == maxCount)
 		{
 			flash = 0.12f;
 			if(red >= 0) gl.Color4f(red, green, blue, menu_alpha);
 		}
-		else if(count > maxcount) 
+		else if(count > maxCount) 
 		{
 			break;
 		}
@@ -2110,10 +2105,8 @@ M_WriteText3
 			continue;
 		}
 	
-		w = SHORT (font[c].width);
-		h = SHORT (font[c].height);
-		/*if (cx+w > SCREENWIDTH)
-			break;*/
+		w = SHORT(font[c].width);
+		h = SHORT(font[c].height);
 		GL_DrawPatch_CS(cx, cy + yoff, font[c].lump);
 
 		if(flash > 0)
@@ -2147,9 +2140,10 @@ void M_WriteMenuText(Menu_t *menu, int index, char *text)
 
 void M_DrawTitle(char *text, int y)
 {
-	M_WriteText2(160 - M_StringWidth(text, hu_font_b)/2,
+	WI_DrawParamText(160 - M_StringWidth(text, hu_font_b)/2,
 		y, text, hu_font_b,
-		cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2]);
+		cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
+		true, true);
 }
 
 //
@@ -2161,43 +2155,6 @@ M_WriteText
  int		y,
  char*		string)
 {
-/*    int		w;
-    char*	ch;
-    int		c;
-    int		cx;
-    int		cy;
-	
-	
-    ch = string;
-    cx = x;
-    cy = y;
-	
-    while(1)
-    {
-		c = *ch++;
-		if (!c)
-			break;
-		if (c == '\n')
-		{
-			cx = x;
-			cy += 12;
-			continue;
-		}
-		
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE)
-		{
-			cx += 4;
-			continue;
-		}
-		
-		w = SHORT (hu_font[c].patch->width);
-		if (cx+w > SCREENWIDTH)
-			break;
-		GL_DrawPatch(cx, cy, hu_font[c].lump);
-		cx+=w;
-    }*/
-
 	M_WriteText2(x, y, string, hu_font, 1, 1, 1);
 }
 
@@ -2833,10 +2790,12 @@ void M_Drawer (void)
 				b = cfg.menuColor[2];
 			}
 
-			M_WriteText2(x, 
+			WI_DrawParamText(x, 
 				y + currentMenu->itemHeight - currentMenu->font[0].height - 1, 
 				currentMenu->items[i].text,
-				currentMenu->font, r, g, b);
+				currentMenu->font, r, g, b, 
+				currentMenu->font == hu_font_b, // case scale for fontb
+				true);
 		}
 		y += currentMenu->itemHeight;
     }
@@ -2910,8 +2869,8 @@ void M_Ticker (void)
 		}
 		else
 		{
-			mfAngle[i] += mfSpeeds[i]/2;
-			mfPosAngle[i] -= 3*mfSpeeds[!i];
+			mfAngle[i] += mfSpeeds[i]/4;
+			mfPosAngle[i] -= 1.5f * mfSpeeds[!i];
 			mfPos[i][VX] = 320 + 320*cos(mfPosAngle[i]/180*PI);
 			mfPos[i][VY] = 240 + 240*sin(mfPosAngle[i]/180*PI);
 		}
