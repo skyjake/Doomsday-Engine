@@ -10,6 +10,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
+#include <ctype.h>
 #include "doomdef.h"
 #include "m_random.h"
 #include "m_swap.h"
@@ -384,34 +385,28 @@ float WI_ParseFloat(char **str)
 }
 
 /*
- * This routine tests for a string-replacement for the patch. If one is
- * found, it's used instead of the original graphic. 
- *
- * If the patch is not in an IWAD, it won't be replaced!
+ * Draw a string of text controlled by parameter blocks.
  */
-void WI_DrawPatch(int x, int y, int lump)
+void WI_DrawParamText
+	(int x, int y, char *string, dpatch_t *defFont, float defRed,
+	 float defGreen, float defBlue, boolean defCase, boolean defTypeIn)
 {
-	char def[80], temp[256], *string, *end;
-	const char *name = W_LumpName(lump);
-	dpatch_t *font = hu_font_b;
-	float r = 1, g = 0, b = 0;
+	char temp[256], *end;
+	dpatch_t *font = defFont;
+	float r = defRed, g = defGreen, b = defBlue;
 	float offX = 0, offY = 0;
-	float scaleX = 1, scaleY = 1, angle = 0;
+	float scaleX = 1, scaleY = 1, angle = 0, extraScale;
 	float cx = x, cy = y;
-
-	// "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
-
-	strcpy(def, "Patch Replacement|");
-	strcat(def, name);
-
-	if(!cfg.usePatchReplacement 
-		|| !W_IsFromIWAD(lump) 
-		|| !Def_Get(DD_DEF_VALUE, def, &string))
-	{
-		// Replacement string not found, draw the patch.
-		GL_DrawPatch(x, y, lump);
-		return;
-	}
+	int charCount = 0;
+	boolean typeIn = defTypeIn;
+	boolean caseScale = defCase;
+	struct { float scale, offset; } caseMod[2]; // 1=upper, 0=lower
+	int curCase;
+	
+	caseMod[0].scale = 1;
+	caseMod[0].offset = 3;
+	caseMod[1].scale = 1.25f;
+	caseMod[1].offset = 0;
 
 	while(*string)
 	{
@@ -434,6 +429,50 @@ void WI_DrawPatch(int x, int y, int lump)
 					font = hu_font_b;
 					string += 5;
 				}
+				else if(!strnicmp(string, "flash", 5))
+				{
+					string += 5;
+					typeIn = true;
+				}
+				else if(!strnicmp(string, "noflash", 7))
+				{
+					string += 7;
+					typeIn = false;
+				}
+				else if(!strnicmp(string, "case", 4))
+				{
+					caseScale = true;
+				}
+				else if(!strnicmp(string, "nocase", 6))
+				{
+					caseScale = false;
+				}
+				else if(!strnicmp(string, "ups", 3))
+				{
+					string += 3;
+					caseMod[1].scale = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "upo", 3))
+				{
+					string += 3;
+					caseMod[1].offset = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "los", 3))
+				{
+					string += 3;
+					caseMod[0].scale = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "loo", 3))
+				{
+					string += 3;
+					caseMod[0].offset = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "break", 5))
+				{
+					string += 5;
+					cx = x;
+					cy += scaleY * SHORT(font[0].height);
+				}				
 				else if(!strnicmp(string, "r", 1))
 				{
 					string++;
@@ -482,7 +521,7 @@ void WI_DrawPatch(int x, int y, int lump)
 				else
 				{
 					// Unknown, skip it.
-					string++;
+					if(*string != '}') string++;
 				}
 			}
 
@@ -490,42 +529,96 @@ void WI_DrawPatch(int x, int y, int lump)
 			if(*string) string++;
 		}
 
-		// Find the end of the visible part of the string.
-		for(end = string; *end && *end != '{'; end++);
-		
-		strncpy(temp, string, end - string);
-		temp[end - string] = 0;
-		string = end; // Continue from here.
-
-		// Setup the scaling.
-		gl.MatrixMode(DGL_MODELVIEW);
-		gl.PushMatrix();
-
-		// Rotate.
-		if(angle != 0)
+		for(end = string; *end && *end != '{';)
 		{
-			// The origin is the specified (x,y) for the patch.
-			// We'll undo the VGA aspect ratio (otherwise the result would
-			// be skewed).
-			gl.Translatef(x, y, 0);
-			gl.Scalef(1, 200.0f/240.0f, 1);
-			gl.Rotatef(angle, 0, 0, 1);
-			gl.Scalef(1, 240.0f/200.0f, 1);
-			gl.Translatef(-x, -y, 0);
+			if(caseScale)
+			{
+				curCase = -1;
+				// Select a substring with characters of the same case
+				// (or whitespace).
+				for(; *end && *end != '{'; end++)
+				{
+					// We can skip whitespace.
+					if(isspace(*end)) continue;
+		
+					if(curCase < 0)
+						curCase = isupper(*end);
+					else if(curCase != isupper(*end))
+						break;
+				}
+			}
+			else
+			{
+				// Find the end of the visible part of the string.
+				for(; *end && *end != '{'; end++);
+			}
+			
+			strncpy(temp, string, end - string);
+			temp[end - string] = 0;
+			string = end; // Continue from here.
+
+			// Setup the scaling.
+			gl.MatrixMode(DGL_MODELVIEW);
+			gl.PushMatrix();
+
+			// Rotate.
+			if(angle != 0)
+			{
+				// The origin is the specified (x,y) for the patch.
+				// We'll undo the VGA aspect ratio (otherwise the result would
+				// be skewed).
+				gl.Translatef(x, y, 0);
+				gl.Scalef(1, 200.0f/240.0f, 1);
+				gl.Rotatef(angle, 0, 0, 1);
+				gl.Scalef(1, 240.0f/200.0f, 1);
+				gl.Translatef(-x, -y, 0);
+			}
+
+			gl.Translatef(cx + offX, 
+				cy + offY + (caseScale? caseMod[curCase].offset : 0), 0);
+			extraScale = (caseScale? caseMod[curCase].scale : 1);
+			gl.Scalef(scaleX, scaleY * extraScale, 1);
+
+			// Draw it.
+			M_WriteText3(0, 0, temp, font, r, g, b, typeIn, 
+				typeIn? charCount : 0);
+			charCount += strlen(temp);
+
+			// Advance the current position.
+			cx += scaleX * M_StringWidth(temp, font);
+
+			gl.MatrixMode(DGL_MODELVIEW);
+			gl.PopMatrix();
 		}
-
-		gl.Translatef(cx + offX, cy + offY, 0);
-		gl.Scalef(scaleX, scaleY, 1);
-
-		// Draw it.
-		M_WriteText3(0, 0, temp, font, r, g, b, false);
-
-		gl.MatrixMode(DGL_MODELVIEW);
-		gl.PopMatrix();
-
-		// Advance the current position.
-		cx += scaleX * M_StringWidth(temp, font);
 	}
+}
+
+/*
+ * This routine tests for a string-replacement for the patch. If one is
+ * found, it's used instead of the original graphic. 
+ *
+ * If the patch is not in an IWAD, it won't be replaced!
+ */
+void WI_DrawPatch(int x, int y, int lump)
+{
+	char def[80], *string;
+	const char *name = W_LumpName(lump);
+
+	// "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
+
+	strcpy(def, "Patch Replacement|");
+	strcat(def, name);
+
+	if(!cfg.usePatchReplacement 
+		|| !W_IsFromIWAD(lump) 
+		|| !Def_Get(DD_DEF_VALUE, def, &string))
+	{
+		// Replacement string not found, draw the patch.
+		GL_DrawPatch(x, y, lump);
+		return;
+	}
+
+	WI_DrawParamText(x, y, string, hu_font_b, 1, 0, 0, false, false);
 }
 
 void WI_slamBackground(void)
