@@ -162,7 +162,7 @@ char *Net_GetPlayerName(int player)
 //===========================================================================
 // Net_GetPlayerID
 //===========================================================================
-id_t Net_GetPlayerID(int player)
+ident_t Net_GetPlayerID(int player)
 {
 	if(!clients[player].connected) return 0;
 	return clients[player].id;
