@@ -61,7 +61,7 @@ int			joySensitivity = 5;
 int			joyDeadZone = 10;
 
 // The initial and secondary repeater delays (tics).
-int			repWait1 = 15, repWait2 = 4; 
+int			repWait1 = 15, repWait2 = 3; 
 int			mouseDisableX = false, mouseDisableY = false;
 boolean		shiftDown = false, altDown = false;
 boolean		showScanCodes = false;
