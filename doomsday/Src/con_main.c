@@ -2864,6 +2864,26 @@ void Con_Error(const char *error, ...)
 	exit(1);
 }
 
+/*
+ * Console command to open/close the console prompt.
+ */
+int CCmdOpenClose(int argc, char **argv)
+{
+    if(!stricmp(argv[0], "conopen"))
+    {
+        Con_Open(true);
+    }
+    else if(!stricmp(argv[0], "conclose"))
+    {
+        Con_Open(false);
+    }
+    else
+    {
+        Con_Open(!ConsoleActive);
+    }
+    return true; 
+}
+
 D_CMD(SkyDetail);
 D_CMD(Fog);
 D_CMD(Bind);
@@ -2899,8 +2919,11 @@ static void registerCommands(void)
 	C_CMD("chatto", Chat, "Send a chat message to the specified player.");
 	C_CMD("clear", Console, "Clear the console buffer.");
 	C_CMD("clearbinds", ClearBindings, "Deletes all existing bindings.");
+    C_CMD("conclose", OpenClose, "Close the console prompt.");
 	C_CMD("conlocp", MakeCamera, "Connect a local player.");
 	C_CMD("connect", Connect, "Connect to a server using TCP/IP.");
+    C_CMD("conopen", OpenClose, "Open the console prompt.");
+    C_CMD("contoggle", OpenClose, "Open/close the console prompt.");
 	C_CMD("dec", AddSub, "Subtract 1 from a cvar.");
 	C_CMD("delbind", DeleteBind,
 		  "Deletes all bindings to the given console command.");
