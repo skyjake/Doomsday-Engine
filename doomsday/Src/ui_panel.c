@@ -980,9 +980,23 @@ void CP_Drawer(ui_page_t *page)
 	}
 }
 
-//===========================================================================
-// CCmdOpenPanel
-//===========================================================================
+/*
+ * Initializes all slider objects.
+ */
+void CP_InitCvarSliders(ui_object_t *ob)
+{
+	for(; ob->type; ob++)
+		if(ob->action == CP_CvarSlider)
+		{
+			uidata_slider_t *slid = ob->data;
+			slid->value = slid->floatmode? Con_GetFloat(slid->data)
+				: Con_GetInteger(slid->data);
+		}
+}
+
+/*
+ * Initialize and open the Control Panel.
+ */
 int CCmdOpenPanel(int argc, char **argv)
 {
 	int i, k;
@@ -1058,13 +1072,8 @@ int CCmdOpenPanel(int argc, char **argv)
 			uidata_edit_t *ed = ob->data;
 			strncpy(ed->ptr, Con_GetString(ed->data), ed->maxlen);
 		}
-		if(ob->action == CP_CvarSlider)
-		{
-			uidata_slider_t *slid = ob->data;
-			slid->value = slid->floatmode? Con_GetFloat(slid->data)
-				: Con_GetInteger(slid->data);
-		}
 	}
+	CP_InitCvarSliders(ob_panel);
 
 	// Update width the current resolution.
 	ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
