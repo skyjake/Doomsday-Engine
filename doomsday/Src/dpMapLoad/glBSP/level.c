@@ -666,7 +666,13 @@ void FindPolyobjSectors(void)
 
 /* ----- analysis routines ----------------------------- */
 
-static int VertexCompare(const void *p1, const void *p2)
+#ifdef WIN32
+#  define C_DECL __cdecl
+#else
+#  define C_DECL
+#endif
+
+static int C_DECL VertexCompare(const void *p1, const void *p2)
 {
   int vert1 = ((const uint16_g *) p1)[0];
   int vert2 = ((const uint16_g *) p2)[0];
@@ -683,7 +689,7 @@ static int VertexCompare(const void *p1, const void *p2)
   return (int)A->y - (int)B->y;
 }
 
-static int SidedefCompare(const void *p1, const void *p2)
+static int C_DECL SidedefCompare(const void *p1, const void *p2)
 {
   int comp;
 
@@ -1016,7 +1022,7 @@ static INLINE_G int TransformAngle(angle_g angle)
   return (result & 0xFFFF);
 }
 
-static int SegCompare(const void *p1, const void *p2)
+static int C_DECL SegCompare(const void *p1, const void *p2)
 {
   const seg_t *A = ((const seg_t **) p1)[0];
   const seg_t *B = ((const seg_t **) p2)[0];

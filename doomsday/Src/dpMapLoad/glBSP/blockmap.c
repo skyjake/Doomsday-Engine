@@ -264,7 +264,11 @@ static void CreateBlockmap(void)
 }
 
 
-static int BlockCompare(const void *p1, const void *p2)
+static int 
+#ifdef WIN32
+__cdecl
+#endif
+BlockCompare(const void *p1, const void *p2)
 {
   int blk_num1 = ((const uint16_g *) p1)[0];
   int blk_num2 = ((const uint16_g *) p2)[0];
