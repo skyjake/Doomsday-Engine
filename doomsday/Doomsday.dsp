@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /Gz /MT /W3 /GX /Ot /Oi /Oy /Ob1 /Gf /Gy /I "./Include" /I "./Include/jtNet2" /D "__DOOMSDAY__" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /Gs /c
+# ADD CPP /nologo /Gz /MT /W3 /GX /Z7 /Ot /Oi /Oy /Ob1 /Gf /Gy /I "./Include" /I "./Include/jtNet2" /D "__DOOMSDAY__" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /Gs /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40b /d "NDEBUG"
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
 # ADD LINK32 wsock32.lib libpng.lib libz.lib fmodvc.lib lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386 /libpath:"./Bin/Release"
-# SUBTRACT LINK32 /profile /debug
+# SUBTRACT LINK32 /profile /incremental:yes /debug
 
 !ELSEIF  "$(CFG)" == "Doomsday - Win32 Debug"
 
@@ -504,6 +504,14 @@ SOURCE=.\Src\m_args.c
 # Begin Source File
 
 SOURCE=.\Src\m_bams.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Src\m_filehash.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Src\Common\m_fixed.c
 # End Source File
 # Begin Source File
 
@@ -1028,11 +1036,19 @@ SOURCE=.\Include\m_bams.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Include\m_filehash.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\m_misc.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\Include\m_nodepile.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\m_profiler.h
 # End Source File
 # Begin Source File
 
