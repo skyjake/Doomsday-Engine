@@ -187,6 +187,9 @@ Flag { ID = "stf_windmonster"; Value = 0x20; }
 Flag { ID = "stf_windmissile"; Value = 0x40; }
 Flag { ID = "stf_windany"; Value = 0x18; }
 Flag { ID = "stf_tagtexmove"; Value = 0x80; }
+Flag { ID = "stf_tagwind"; Value = 0x100; }
+Flag { ID = "stf_floorwind"; Value = 0x200; }
+Flag { ID = "stf_ceilingwind"; Value = 0x400; }
 Flag { ID = "scef_player_a"; Value = 0x1; }
 Flag { ID = "scef_other_a"; Value = 0x2; }
 Flag { ID = "scef_monster_a"; Value = 0x4; }
@@ -199,6 +202,3 @@ Flag { ID = "scef_monster_d"; Value = 0x100; }
 Flag { ID = "scef_missile_d"; Value = 0x200; }
 Flag { ID = "scef_any_d"; Value = 0x400; }
 Flag { ID = "scef_ticker_d"; Value = 0x800; }
-Flag { ID = "stf_tagwind"; Value = 0x100; }
-Flag { ID = "stf_floorwind"; Value = 0x200; }
-Flag { ID = "stf_ceilingwind"; Value = 0x400; }
