@@ -269,7 +269,7 @@ static char *shortNameForKey(int ddkey)
 /*
  * getByShortName
  */
-static const int getByShortName(char *key)
+static const int getByShortName(const char *key)
 {
 	int		i;
 
@@ -551,4 +551,14 @@ int B_BindingsForCommand(char *command, char *buffer)
 		}
 	}
 	return count;
+}
+
+/*
+ * Return the key code that corresponds the given key identifier name.
+ * This is a public function.
+ */
+int DD_GetKeyCode(const char *key)
+{
+	int code = getByShortName(key);
+	return code? code : key[0];
 }

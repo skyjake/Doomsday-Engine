@@ -2,7 +2,7 @@ NAME			"DOOMSDAY"
 DESCRIPTION		"The Doomsday Engine"
 
 ; Highest ordinal is currently 
-; --> 235 <--
+; --> 236 <--
 
 ; Other available ordinals: 158, 175
 
@@ -29,6 +29,7 @@ EXPORTS
 
 ; Base: Input.
 	DD_ClearKeyRepeaters	@13 NONAME
+	DD_GetKeyCode			@236 NONAME
 
 ; Base: WAD.
 	W_CheckNumForName	@14 NONAME

@@ -34,6 +34,7 @@ int			Def_EvalFlags(char *flags);
 
 // Base: Input.
 void		DD_ClearKeyRepeaters(void);
+int			DD_GetKeyCode(const char *name);
 
 // Base: WAD.
 int			W_CheckNumForName(char *name);
