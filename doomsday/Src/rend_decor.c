@@ -237,7 +237,9 @@ void Rend_AddLightDecoration
 	lum->thing = &source->thing;
 	lum->center = 0;
 	lum->flags = LUMF_CLIPPED;
-	lum->tex = lum->floortex = lum->ceiltex = GL_PrepareLightTexture();
+	lum->tex = def->sides.tex;
+	lum->ceiltex = def->up.tex;
+	lum->floortex = def->down.tex;
 
 	// These are the same rules as in DL_ThingRadius().
 	lum->radius = def->radius * 40 * dlRadFactor;
@@ -280,15 +282,6 @@ boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
 		&& viewy < bounds[BTOP]     + maxDist
 		&& viewz > bounds[BFLOOR]   - maxDist
 		&& viewz < bounds[BCEILING] + maxDist;
-}
-
-/*
- * Returns true if the given light decoration definition is valid.
- */
-boolean Rend_IsValidLightDecoration(ded_decorlight_t *lightDef)
-{
-	return lightDef->color[0] != 0 || lightDef->color[1] != 0 
-		|| lightDef->color[2] != 0;
 }
 
 /*
@@ -379,7 +372,7 @@ void Rend_DecorateLineSection
 		lightDef = def->lights + i;
 
 		// No more?
-		if(!Rend_IsValidLightDecoration(lightDef)) break;
+		if(!R_IsValidLightDecoration(lightDef)) break;
 
 		// Does it pass the sectorlight limitation?
 		if((brightMul = Rend_CheckSectorLight(side->sector, lightDef)) <= 0)
@@ -612,7 +605,7 @@ void Rend_DecoratePlane
 		lightDef = def->lights + i;
 
 		// No more?
-		if(!Rend_IsValidLightDecoration(lightDef)) break;
+		if(!R_IsValidLightDecoration(lightDef)) break;
 
 		// Does it pass the sectorlight limitation?
 		if((brightMul = Rend_CheckSectorLight(sector, lightDef)) <= 0)

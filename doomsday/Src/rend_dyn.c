@@ -1058,8 +1058,17 @@ void DL_AddLuminous(mobj_t *thing)
 			lum->xyscale = 1;
 
 		// Use the same default light texture for all directions.
-		lum->tex = lum->ceiltex = lum->floortex 
-			= GL_PrepareLightTexture();
+		if(def)
+		{
+			lum->tex = def->sides.tex;
+			lum->ceiltex = def->up.tex;
+			lum->floortex = def->down.tex;
+		}
+		else
+		{
+			lum->tex = lum->ceiltex = lum->floortex 
+				= GL_PrepareLightTexture();
+		}
 	}
 }
 
@@ -1508,7 +1517,7 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, flatitervars_t *fi)
 
 	//fi->poly->light = lum;
 
-	if(applyCeiling > 0)
+	if(applyCeiling > 0 && lum->ceiltex)
 	{
 		// Check that the height difference is tolerable.
 		cdiff = fi->fceil - z;
@@ -1533,7 +1542,7 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, flatitervars_t *fi)
 		}
 	}
 
-	if(applyFloor > 0)
+	if(applyFloor > 0 && lum->floortex)
 	{
 		fdiff = z - fi->ffloor;
 		if(fdiff < 0) fdiff = 0;
@@ -1556,6 +1565,10 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, flatitervars_t *fi)
 			DL_Link(dyn, floorLightLinks, GET_SUBSECTOR_IDX(fi->subsector));
 		}
 	}
+
+	// If the light has no texture for the 'sides', there's no point in
+	// going through the wall segments.
+	if(!lum->tex) return true;
 
 	// The wall segments.
 	for(i = 0, seg = segs + SEGIDX(fi->subsector->firstline); 

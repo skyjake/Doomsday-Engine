@@ -720,8 +720,6 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			for(;;)
 			{
 				READLABEL;
-				//RV_STR("Sprite", lig->sprite.id)
-				//RV_INT("Frame", lig->frame)
 				RV_STR("State", lig->state)
 				RV_FLT("X Offset", lig->xoffset)
 				RV_FLT("Y Offset", lig->yoffset)
@@ -731,6 +729,9 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_FLT("Blue", lig->color[2])
 				RV_VEC("Color", lig->color, 3)
 				RV_STR("Flags", lig->flags_string)
+				RV_STR("Top map", lig->up.id)
+				RV_STR("Bottom map", lig->down.id)
+				RV_STR("Side map", lig->sides.id)
 				RV_END
 				CHECKSC;
 			}
@@ -1239,6 +1240,9 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						RV_IVEC("Pattern skip", dl->pattern_skip, 2)
 						RV_IVEC("Levels", dl->light_levels, 2)
 						RV_INT("Flare texture", dl->flare_texture)
+						RV_STR("Top map", dl->up.id)
+						RV_STR("Bottom map", dl->down.id)
+						RV_STR("Side map", dl->sides.id)
 						RV_END
 						CHECKSC;
 					}

@@ -746,7 +746,7 @@ void Def_PostInit(void)
 			(defs.details[i].detail_lump);
 		details[i].gltex = 0; // Not loaded.
 	}
-
+	
 	// Surface decorations.
 	for(i = 0; i < defs.count.decorations.num; i++)
 	{
@@ -763,6 +763,45 @@ void Def_PostInit(void)
 	for(i = 0; i < defs.count.groups.num; i++)
 	{
 		R_InitAnimGroup(defs.groups + i);
+	}
+}
+
+//===========================================================================
+// Def_SetLightMap
+//===========================================================================
+void Def_SetLightMap
+	(ded_lightmap_t *map, const char *id, unsigned int texture)
+{
+	if(stricmp(map->id, id)) return; // Not the same lightmap?
+	map->tex = texture;
+}
+
+//===========================================================================
+// Def_LightMapLoaded
+//===========================================================================
+void Def_LightMapLoaded(const char *id, unsigned int texture)
+{
+	int i, k;
+	ded_decor_t *decor;
+
+	// Load lightmaps.
+	for(i = 0; i < defs.count.lights.num; i++)
+	{
+		Def_SetLightMap(&defs.lights[i].up, id, texture);
+		Def_SetLightMap(&defs.lights[i].down, id, texture);
+		Def_SetLightMap(&defs.lights[i].sides, id, texture);
+	}
+	for(i = 0, decor = defs.decorations; i < defs.count.decorations.num; 
+		i++, decor++)
+	{
+		for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+		{
+			if(!R_IsValidLightDecoration(&decor->lights[k]))
+				break;
+			Def_SetLightMap(&decor->lights[k].up, id, texture);
+			Def_SetLightMap(&decor->lights[k].down, id, texture);
+			Def_SetLightMap(&decor->lights[k].sides, id, texture);
+		}
 	}
 }
 

@@ -124,6 +124,7 @@ DGLuint			glowtexname;
 static boolean	texInited = false;	// Init done.
 static boolean	allowMaskedTexEnlarge = false;
 static boolean	noHighResTex = false;
+static boolean	noHighResPatches = false;
 static boolean	highResWithPWAD = false;
 
 // Raw screen lumps (just lump numbers).
@@ -342,8 +343,9 @@ void GL_InitTextureManager(void)
 	// that have taller patches than they are themselves.
 	allowMaskedTexEnlarge = ArgExists("-bigmtex");
 
-	// The -nohitex option disables the high resolution TGA textures.
+	// Disable the use of 'high resolution' textures?
 	noHighResTex = ArgExists("-nohightex");
+	noHighResPatches = ArgExists("-nohighpat");
 
 	// Should we allow using external resources with PWAD textures?
 	highResWithPWAD = ArgExists("-pwadtex");
@@ -430,15 +432,102 @@ void GL_DestroySkinNames(void)
 }
 
 //===========================================================================
+// GL_LoadLightMap
+//	Lightmaps should be monochrome images.
+//===========================================================================
+void GL_LoadLightMap(ded_lightmap_t *map)
+{
+	image_t image;
+	char resource[256];
+
+	if(map->tex) return; // Already loaded.
+
+	// Default texture name.
+	map->tex = dltexname;
+
+	if(!strcmp(map->id, "-"))
+	{
+		// No lightmap, if we don't know where to find the map.
+		map->tex = 0;
+	}
+	else if(map->id[0]) // Not an empty string.
+	{
+		// Search an external resource.
+		if(R_FindResource(RC_LIGHTMAP, map->id, "-ck", resource)
+			&& GL_LoadImage(&image, resource, false))
+		{
+			if(!image.isMasked)
+			{
+				// An alpha channel is required. If one is not in the
+				// image data, we'll generate it. 
+				GL_ConvertToAlpha(&image);
+			}
+
+			map->tex = gl.NewTexture();
+
+			// Upload the texture.
+			// No mipmapping or resizing is needed, upload directly.
+			gl.TexImage(image.pixelSize == 2? DGL_LUMINANCE_PLUS_A8
+				: image.pixelSize == 3? DGL_RGB : DGL_RGBA, 
+				image.width, image.height, 0, image.pixels);
+			GL_DestroyImage(&image);
+
+			gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
+			gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+			// Copy this to all defs with the same lightmap.
+			Def_LightMapLoaded(map->id, map->tex);
+		}
+	}
+}
+
+//===========================================================================
+// GL_DeleteLightMap
+//===========================================================================
+void GL_DeleteLightMap(ded_lightmap_t *map)
+{
+	if(map->tex != dltexname)
+	{
+		gl.DeleteTextures(1, &map->tex);
+	}
+	map->tex = 0;
+}
+
+//===========================================================================
 // GL_LoadSystemTextures
 //	Prepares all the system textures (dlight, ptcgens).
 //===========================================================================
 void GL_LoadSystemTextures(void)
 {
+	int i, k;
+	ded_decor_t *decor;
+
 	if(!texInited) return;
 
 	dltexname = GL_PrepareLightTexture();
 	glowtexname = GL_PrepareGlowTexture();
+
+	// Load lightmaps.
+	for(i = 0; i < defs.count.lights.num; i++)
+	{
+		GL_LoadLightMap(&defs.lights[i].up);
+		GL_LoadLightMap(&defs.lights[i].down);
+		GL_LoadLightMap(&defs.lights[i].sides);
+	}
+	for(i = 0, decor = defs.decorations; i < defs.count.decorations.num; 
+		i++, decor++)
+	{
+		for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+		{
+			if(!R_IsValidLightDecoration(&decor->lights[k]))
+				break;
+			GL_LoadLightMap(&decor->lights[k].up);
+			GL_LoadLightMap(&decor->lights[k].down);
+			GL_LoadLightMap(&decor->lights[k].sides);
+		}
+	}
 
 	// Load particle textures.
 	PG_InitTextures();
@@ -451,7 +540,29 @@ void GL_LoadSystemTextures(void)
 //===========================================================================
 void GL_ClearSystemTextures(void)
 {
+	int i, k;
+	ded_decor_t *decor;
+
 	if(!texInited) return;
+
+	for(i = 0; i < defs.count.lights.num; i++)
+	{
+		GL_DeleteLightMap(&defs.lights[i].up);
+		GL_DeleteLightMap(&defs.lights[i].down);
+		GL_DeleteLightMap(&defs.lights[i].sides);
+	}
+	for(i = 0, decor = defs.decorations; i < defs.count.decorations.num; 
+		i++, decor++)
+	{
+		for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+		{
+			if(!R_IsValidLightDecoration(&decor->lights[k]))
+				break;
+			GL_DeleteLightMap(&decor->lights[k].up);
+			GL_DeleteLightMap(&decor->lights[k].down);
+			GL_DeleteLightMap(&decor->lights[k].sides);
+		}
+	}
 
 	gl.DeleteTextures(1, &dltexname);
 	gl.DeleteTextures(1, &glowtexname);
@@ -1448,6 +1559,29 @@ void TranslatePatch(patch_t *patch, byte *transTable)
 }
 
 //===========================================================================
+// GL_ConvertToAlpha
+//===========================================================================
+void GL_ConvertToAlpha(image_t *image)
+{
+	int p, total = image->width * image->height;
+	byte *ptr = image->pixels;
+
+	// Average the RGB colors.
+	for(p = 0; p < total; p++, ptr += image->pixelSize)
+	{
+		image->pixels[p] = (ptr[0] + ptr[1] + ptr[2]) / 3;
+	}
+	for(p = 0; p < total; p++)
+	{
+		// Move the average color to the alpha channel, make the
+		// actual color white.
+		image->pixels[total + p] = image->pixels[p];
+		image->pixels[p] = 255;
+	}
+	image->pixelSize = 2;
+}
+
+//===========================================================================
 // GL_LoadImage
 //	Loads PCX, TGA and PNG images. The returned buffer must be freed 
 //	with M_Free. Color keying is done if "-ck." is found in the filename.
@@ -1469,7 +1603,9 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 			return NULL; // Not found.
 	}
 	else
+	{
 		strcpy(img->fileName, imagefn);
+	}
 
 	// We know how to load PCX, TGA and PNG.
 	M_GetFileExt(img->fileName, ext);
@@ -1478,6 +1614,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 		img->pixels = PCX_AllocLoad(img->fileName, &img->width, 
 			&img->height, NULL);
 		img->pixelSize = 3; // PCXs can't be masked.
+		img->originalBits = 8;
 	}
 	else if(!strcmp(ext, "tga"))
 	{
@@ -1491,7 +1628,16 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 		img->pixels = M_Malloc(4 * img->width * img->height);
 		format = TGA_Load32_rgba8888(file, img->width, img->height, 
 			img->pixels);
-		img->pixelSize = (format == TGA_TARGA24? 3 : 4);
+		if(format == TGA_TARGA24)
+		{
+			img->pixelSize = 3;
+			img->originalBits = 24;
+		}
+		else
+		{
+			img->pixelSize = 4;
+			img->originalBits = 32;
+		}
 		F_Close(file);
 	}
 	else if(!strcmp(ext, "png"))
@@ -1500,6 +1646,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 
 		img->pixels = PNG_Load(img->fileName, &img->width, &img->height, 
 			&img->pixelSize);
+		img->originalBits = 8 * img->pixelSize;
 
 		END_PROF( PROF_PNG_LOAD );
 
@@ -1541,6 +1688,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 		}
 		// Color keying is done; now we have 4 bytes per pixel.
 		img->pixelSize = 4;
+		img->originalBits = 32; // Effectively...
 	}
 
 	// Any alpha pixels?
@@ -2804,7 +2952,8 @@ void GL_SetPatch(int lump)
 
 		// Let's first try the resource locator and see if there is a
 		// 'high-resolution' version available.
-		if(!noHighResTex
+		if(!noHighResPatches
+			&& (loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump))
 			&& R_FindResource(RC_PATCH, lumpinfo[lump].name, "-ck", fileName)
 			&& GL_LoadImage(&image, fileName, false))
 		{

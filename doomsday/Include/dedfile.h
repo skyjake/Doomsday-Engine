@@ -101,6 +101,11 @@ typedef struct
 	int				misc[NUM_STATE_MISC];
 } ded_state_t;
 
+typedef struct ded_lightmap_s {
+	ded_stringid_t	id;
+	unsigned int	tex;			// Runtime
+} ded_lightmap_t;
+
 typedef struct
 {
 	ded_stateid_t	state;
@@ -110,6 +115,7 @@ typedef struct
 	float			color[3];		// Red Green Blue (0,1)
 	ded_flags_t		flags_string;	
 	int				flags;			// Runtime
+	ded_lightmap_t	up, down, sides;
 } ded_light_t;
 
 typedef struct
@@ -366,7 +372,7 @@ typedef struct
 	int				pattern_skip[2]; 
 	int				light_levels[2];// Fade by sector lightlevel.
 	int				flare_texture;
-	//ded_string_t	texture;		// DL map to use (later...).
+	ded_lightmap_t	up, down, sides;
 } ded_decorlight_t;
 
 // There is a fixed number of light decorations in each decoration.
