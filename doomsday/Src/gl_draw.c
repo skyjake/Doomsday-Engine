@@ -334,24 +334,42 @@ int GL_DrawFilter()
 	return 1;
 }
 
+//===========================================================================
+// GL_DrawPSprite
+//===========================================================================
 void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
 {
-	int		w, h;
+	int	w, h;
+	int w2, h2;
+	float s, t;
+	spritelump_t *slump = spritelumps + lump;
+
+	if(flip) flip = 1; // Make sure it's zero or one.
 
 	GL_SetSprite(lump);
-	w = spritelumps[lump].width;
-	h = spritelumps[lump].height;
+	w = slump->width;
+	h = slump->height;
+	w2 = CeilPow2(w);
+	h2 = CeilPow2(h);
 
-	if(flip) flip = 1; // Ensure it's zero or one.
+	// Let's calculate texture coordinates.
+	// To remove a possible edge artifact, move the corner a bit up/left.
+	s = slump->tc[VX] - 0.4f/w2;
+	t = slump->tc[VY] - 0.4f/h2;
 
 	gl.Begin(DGL_QUADS);
-	Rend_SpriteTexCoord(lump, flip, 0);
+	
+	gl.TexCoord2f(flip * s, 0);
 	gl.Vertex2f(x, y);
-	Rend_SpriteTexCoord(lump, !flip, 0);
+
+	gl.TexCoord2f(!flip * s, 0);
 	gl.Vertex2f(x + w*scale, y);
-	Rend_SpriteTexCoord(lump, !flip, 1);
+	
+	gl.TexCoord2f(!flip * s, t);
 	gl.Vertex2f(x + w*scale, y + h*scale);
-	Rend_SpriteTexCoord(lump, flip, 1);
+	
+	gl.TexCoord2f(flip * s, t);
 	gl.Vertex2f(x, y+h*scale);
+
 	gl.End();
 }
