@@ -12,6 +12,9 @@ Version 1.7.10 (work in progress)
 + after runtime directory has been searched, data files are also 
   searched from the default data directory (e.g. Data\jDoom\):
   "-file Test.wad" will load Data\jDoom\Test.wad
++ WAD, LMP, PK3 and ZIP files from the Data\Game\Auto directory are 
+  always loaded automatically
++ WAD/PK3 files can be loaded from virtual files (inside PK3s)
 + sprite frames can be replaced with external resources (Patches)
 + raw screens can be replaced with external resources (Patches)
 + sound flag 'sf_dontstop' (0x20): sound does not stop even if emitter 
@@ -29,6 +32,7 @@ jHeretic:
 jHexen:
 * Pause key is now the default binding for pause (was P)
 - fixed: weapon pieces bob only partially
+- fixed: screen border flicker in fullscreen mode
 
 
 Version 1.7.9
