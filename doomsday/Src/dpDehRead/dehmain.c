@@ -652,6 +652,7 @@ int HandleMode(const char *mode, int num)
 	return i;
 }
 
+/*
 char *GenerateDEHFlags(unsigned int flags)
 {
 	int i, k, max = -1;
@@ -668,6 +669,7 @@ char *GenerateDEHFlags(unsigned int flags)
 	i = DED_AddFlag(ded, buf, flags);
 	return ded->flags[i].id;
 }
+*/
 
 int PatchThing (int thingy)
 {
@@ -851,8 +853,7 @@ int PatchThing (int thingy)
 				}
 				if (vchanged)
 				{
-					//info->flags = value;
-					strcpy(info->flags[0], GenerateDEHFlags(value));
+					info->flags[0] = value;
 
 					if(value & 0x100) // Spawnceiling?
 						checkHeight = true;
@@ -864,7 +865,7 @@ int PatchThing (int thingy)
 				}
 				if (v2changed)
 					//info->flags2 = value2;
-					strcpy(info->flags[1], GenerateDEHFlags(value2));
+					info->flags[1] = value2;
 				if(verbose) LPrintf("Bits: %d,%d (0x%08x,0x%08x)\n", value, value2, value, value2);
 			}
 			else LPrintf(unknown_str, Line1, "Thing", thingNum);
