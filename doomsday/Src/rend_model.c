@@ -29,29 +29,34 @@
 
 // MACROS ------------------------------------------------------------------
 
-//#define RENDER_AS_TRIANGLES
-
+#define MAX_VERTS			4096
 #define MAX_MODEL_LIGHTS	10
 #define DOTPROD(a, b)		(a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)			qatan2(y,x)
-#define QASIN(x)				asin(x) // FIXME: Precalculate arcsin.
+#define QASIN(x)			asin(x) // FIXME: Precalculate arcsin.
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
-	boolean		used;
-	fixed_t		dist;		// Only an approximation.
-	lumobj_t	*lum;
-	float		vector[3];	// Light direction vector.
-	float		color[3];	// How intense the light is (0..1, RGB).
-} mlight_t;
+typedef enum rendcmd_e {
+	RC_COMMAND_COORDS,
+	RC_OTHER_COORDS
+} rendcmd_t;
 
 typedef struct {
+	boolean		used;
+	fixed_t		dist;			// Only an approximation.
+	lumobj_t	*lum;
+	float		worldVector[3];	// Light direction vector (world space).
+	float		vector[3];		// Light direction vector (model space).
+	float		color[3];		// How intense the light is (0..1, RGB).
+} mlight_t;
+
+/*typedef struct {
 	float		vertex[3];
 	float		shinytexcoord[2];
 	float		color[3];
 	float		normal[3];
-} mvertex_t;
+} mvertex_t;*/
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -84,10 +89,20 @@ static mlight_t lights[MAX_MODEL_LIGHTS] =
 	// The first light is the world light.
 	false, 0, NULL, { 0, 0, 0 }, { 1, 1, 1 }
 };
+static int numLights;
 
 // Parameters for the modelLighter.
 // Global variables as parameters. Urgh.
 static vissprite_t *mlSpr;
+
+// Fixed-size vertex arrays for the model.
+static glvertex_t modelVertices[MAX_VERTS];
+static glvertex_t modelNormals[MAX_VERTS];
+static glcolor_t modelColors[MAX_VERTS];
+static gltexcoord_t modelTexCoords[MAX_VERTS];
+
+static float modelCenter[3];
+static float ambientColor[3];
 
 // CODE --------------------------------------------------------------------
 
@@ -119,13 +134,13 @@ static void scaleFloatRgb(float *out, byte *in, float mul)
 }
 
 //===========================================================================
-// modelLighter
+// Mod_LightIterator
 //===========================================================================
-static boolean modelLighter(lumobj_t *lum, fixed_t xy_dist)
+boolean Mod_LightIterator(lumobj_t *lum, fixed_t xyDist)
 {
-	fixed_t		z_dist = ((mlSpr->mo.gz + mlSpr->mo.gzt) >> 1) 
+	fixed_t		zDist = ((mlSpr->mo.gz + mlSpr->mo.gzt) >> 1) 
 					- (lum->thing->z + FRACUNIT*lum->center);
-	fixed_t		dist = P_ApproxDistance(xy_dist, z_dist);
+	fixed_t		dist = P_ApproxDistance(xyDist, zDist);
 	int			i, maxIndex;
 	fixed_t		maxDist = -1;
 	mlight_t	*light;
@@ -135,7 +150,7 @@ static boolean modelLighter(lumobj_t *lum, fixed_t xy_dist)
 
 	// See if this lumobj is close enough to make it to the list.
 	// (In most cases it should be the case.)
-	for(i = 1, light = lights+1; i < modelLight; i++, light++)
+	for(i = 1, light = lights + 1; i < modelLight; i++, light++)
 	{
 		if(light->dist > maxDist)
 		{
@@ -143,34 +158,39 @@ static boolean modelLighter(lumobj_t *lum, fixed_t xy_dist)
 			maxIndex = i;
 		}
 	}
-	// Now we know the farthest light on the current list.
+	// Now we know the farthest light on the current list (at maxIndex).
 	if(dist < maxDist)
 	{
 		// The new light is closer. Replace the old max.
 		lights[maxIndex].lum = lum;
 		lights[maxIndex].dist = dist;
+		lights[maxIndex].used = true;
+		if(numLights < maxIndex + 1) numLights = maxIndex + 1;
 	}
 	return true;
 }
 
 //===========================================================================
-// R_GetVisibleFrame
+// Mod_GetVisibleFrame
 //===========================================================================
-dmd_frame_t *R_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
+model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
 {
 	model_t *mdl = modellist[mf->sub[subnumber].model];
 	int index = mf->sub[subnumber].frame;
 	
 	if(mf->flags & MFF_IDFRAME)
+	{
 		index += mobjid % mf->sub[subnumber].framerange;
+	}
 	if(index >= mdl->info.numFrames)
 	{
-		Con_Error("R_GetVisibleFrame: Frame index out of bounds.\n"
+		Con_Error("Mod_GetVisibleFrame: Frame index out of bounds.\n"
 			"  (Model: %s)\n", mdl->fileName);
 	}
 	return mdl->frames + index;
 }
 
+#if 0
 //===========================================================================
 // R_RenderModel
 //	This has swollen somewhat; a rewrite would be in order!
@@ -186,9 +206,6 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 	int				pass, i, k, c, count, sectorlight;
 	dmd_glCommandVertex_t *glc;
 	dmd_vertex_t *vtx, *nextvtx;
-#if RENDER_AS_TRIANGLES
-	md2_triangle_t	*tri;
-#endif
 	int				additiveBlending = 0; // +1 or -1
 	boolean			lightVertices = false;
 	float			alpha, customAlpha, yawAngle, pitchAngle;
@@ -210,9 +227,6 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 	float			sh_u, sh_v, sh_ang, sh_pnt, *nptr;
 	float			delta[3], mdl_nyaw, mdl_npitch;
 	float			lodFactor;
-#if RENDER_AS_TRIANGLES
-	float			skinWidth, skinHeight;
-#endif
 	int				activeLod = 0;
 
 	// Distance reduces shininess (if not truly shiny).
@@ -513,10 +527,6 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 	// Prepare the vertices (calculate interpolated coordinates,
 	// lighting, texture coordinates, normals).
 	numVertices = mdl->info.numVertices;
-#if RENDER_AS_TRIANGLES
-	skinWidth = mdl->header.skinWidth;
-	skinHeight = mdl->header.skinHeight;
-#endif
 	vertices = Z_Malloc(sizeof(mvertex_t) * numVertices, PU_STATIC, 0);
 
 	// Calculate the suitable LOD.
@@ -682,45 +692,6 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 			break;
 		}
 
-#if RENDER_AS_TRIANGLES
-		// Render as 'separate' triangles.
-		gl.Begin(DGL_TRIANGLES);
-		count = mdl->header.numTriangles;
-		model_tri_count += count; 
-		for(i = 0, tri = mdl->triangles; i < count; i++, tri++)
-			for(k = 0; k < 3; k++)
-			{
-				mVtx = vertices + tri->vertexIndices[k];
-				if(pass == 0) 
-				{
-					// Regular pass: just use the texcoord at the vertex.
-					// FIXME: These could be calculated when the model is
-					// loaded, but I doubt it makes that big a difference.
-					gl.TexCoord2f(
-						mdl->texCoords[tri->textureIndices[k]].s/skinWidth,
-						mdl->texCoords[tri->textureIndices[k]].t/skinHeight);
-				}
-				else if(pass == 1)
-				{
-					sh_u = mVtx->shinytexcoord[VX];
-					gl.TexCoord2f(sh_u, mVtx->shinytexcoord[VY]);
-				}
-				
-				// Also calculate the light level at the vertex?
-				if(pass == 0 && lightVertices) 
-				{
-					memcpy(vtxLight, mVtx->color, sizeof(mVtx->color));
-					vtxLight[3] = alpha;
-
-					// Set the color.
-					gl.Color4fv(vtxLight);								
-				}
-				gl.Vertex3fv(mVtx->vertex);
-			}
-		gl.End();
-
-#else // Render as strips/fans (more efficient!).
-
 		// Draw the triangles using the GL commands.
 		ptr = (byte*) mdl->lods[activeLod].glCommands;
 		while(*ptr)
@@ -759,8 +730,6 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 			gl.End();
 		}
 		
-#endif
-
 		// Restore old rendering state.
 		switch(pass)
 		{
@@ -788,9 +757,514 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 		// Change to normal blending.
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 	}
+}
+#endif
 
-/*#if _DEBUG
-	ST_Message("numseqs:%i avglen:%i\n", numseqs, 
-		seqlen/(numseqs+(numseqs==0)));
-#endif*/
+/*
+ * Render a set of GL commands using the given data.
+ */
+void Mod_RenderCommands
+	(rendcmd_t mode, void *glCommands, uint numVertices, glvertex_t *vertices, 
+	 glcolor_t *colors, gltexcoord_t *texCoords)
+{
+	byte *pos;
+	glcommand_vertex_t *v;
+	int count;
+
+	// Disable all vertex arrays.
+	gl.DisableArrays(true, true, 0xf);
+
+	// Load and lock the vertex array.
+	gl.Arrays(vertices, colors, 0, NULL, numVertices);
+
+	for(pos = glCommands; *pos; )
+	{
+		count = *(int*) pos;
+		pos += 4;
+
+		// The type of primitive depends on the sign.
+		gl.Begin(count > 0? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
+		if(count < 0) count = -count;
+
+		// Increment the total model triangle counter.
+		model_tri_count += count - 2;
+
+		while(count--)
+		{	
+			v = (glcommand_vertex_t*) pos;
+			pos += sizeof(glcommand_vertex_t);
+
+			if(mode == RC_COMMAND_COORDS)
+				gl.TexCoord2fv(&v->s);
+
+			gl.ArrayElement(v->index);
+		}
+		
+		// The primitive is complete.
+		gl.End();
+	}
+	
+	gl.UnlockArrays();
+}
+
+/*
+ * Interpolate linearly between two sets of vertices.
+ */
+void Mod_LerpVertices
+	(float pos, int count, model_vertex_t *start, model_vertex_t *end,
+	 glvertex_t *out)
+{
+	int i;
+	float inv;
+
+	if(start == end || pos == 0)
+	{
+		for(i = 0; i < count; i++, start++, out++)
+		{
+			out->xyz[0] = start->xyz[0];
+			out->xyz[1] = start->xyz[1];
+			out->xyz[2] = start->xyz[2];
+		}
+		return;
+	}
+
+	inv = 1 - pos;
+	for(i = 0; i < count; i++, start++, end++, out++)
+	{
+		out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
+		out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
+		out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
+	}
+}
+
+/*
+ * Interpolate between two sets of normals.
+ */
+void Mod_LerpNormals
+	(float pos, int count, model_vertex_t *start, model_vertex_t *end, 
+	 glvertex_t *out)
+{
+	int i;
+	float inv, length;
+
+	if(start == end || pos == 0)
+	{
+		for(i = 0; i < count; i++, start++, out++)
+		{
+			out->xyz[0] = start->xyz[0];
+			out->xyz[1] = start->xyz[1];
+			out->xyz[2] = start->xyz[2];
+		}
+		return;
+	}
+
+	inv = 1 - pos;
+	for(i = 0; i < count; i++, start++, end++, out++)
+	{
+		out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
+		out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
+		out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
+
+		// Normals must stay normal.
+		length = M_ApproxDistance3f(out->xyz[0], out->xyz[1], out->xyz[2]);
+		if(length)
+		{
+		/*	out->xyz[0] /= length;
+			out->xyz[1] /= length;
+			out->xyz[2] /= length;*/
+		}
+	}
+}
+
+/*
+ * Calculate vertex lighting.
+ */
+void Mod_VertexColors
+	(int count, glcolor_t *out, glvertex_t *normal, byte alpha)
+{
+	int i, k;
+	float color[3], dot;
+	mlight_t *light;
+
+	for(i = 0; i < count; i++, out++, normal++)
+	{
+		// Begin with total darkness.
+		memset(color, 0, sizeof(color));
+					
+		// Add light from each source.
+		for(k = 0, light = lights; k < numLights; k++, light++)
+		{
+			if(!light->used) continue;
+			dot = DOTPROD(light->vector, normal->xyz); 
+			dot *= 1.2f; // Looks-good factor :-).
+			if(dot <= 0) continue; // No light from the wrong side.
+			if(dot > 1) dot = 1;
+			color[0] += dot * light->color[0];
+			color[1] += dot * light->color[1];
+			color[2] += dot * light->color[2];
+		}
+			
+		// Check for ambient and convert to ubyte.
+		for(k = 0; k < 3; k++)
+		{
+			if(color[k] < ambientColor[k]) color[k] = ambientColor[k];
+			if(color[k] > 1) color[k] = 1;
+
+			// This is the final color.
+			out->rgba[k] = (byte) (255 * color[k]);
+		}
+		out->rgba[3] = alpha;
+	}
+}
+
+/*
+ * Set all the colors in the array to bright white.
+ */
+void Mod_FullBrightVertexColors(int count, glcolor_t *colors, byte alpha)
+{
+	for(; count-- > 0; colors++)
+	{
+		memset(colors->rgba, 255, 3);
+		colors->rgba[3] = alpha;
+	}
+}
+
+/*
+ * Render a submodel from the vissprite.
+ */
+void Mod_RenderSubModel(vissprite_t *spr, int number)
+{
+	modeldef_t *mf = spr->mo.mf, *mfNext = spr->mo.nextmf;
+	submodeldef_t *smf = &mf->sub[number];
+	model_t	*mdl = modellist[smf->model];
+	model_frame_t *frame = Mod_GetVisibleFrame(mf, number, spr->mo.id);
+	model_frame_t *nextFrame = NULL;
+	int mainFlags = mf->flags;
+	int	subFlags = smf->flags;
+	int numVerts;
+	int	useSkin;
+	int	i, c;
+	float inter, endPos;
+	float yawAngle, pitchAngle;
+	float alpha, customAlpha;
+	float dist, intensity, lightCenter[3];
+	mlight_t *light;
+	byte byteAlpha;
+
+	if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0) 
+	{
+		// Why bother? It's infinitely small...
+		return;	
+	}
+
+	// Submodel can define a custom Transparency level.
+	customAlpha = 1 - smf->alpha/255.0f;
+
+	if(missileBlend && (spr->mo.flags & DDMF_BRIGHTSHADOW
+		|| subFlags & MFF_BRIGHTSHADOW))
+	{
+		alpha = .80f;	
+		//additiveBlending = 1;
+	}
+	else if(subFlags & MFF_BRIGHTSHADOW2)
+	{
+		alpha = customAlpha; 
+		//additiveBlending = 1;
+	}
+	else if(subFlags & MFF_DARKSHADOW)
+	{
+		alpha = customAlpha; 
+		//additiveBlending = -1;
+	}
+	else if(spr->mo.flags & DDMF_SHADOW || subFlags & MFF_SHADOW2)
+		alpha = .2f; 
+	else if(spr->mo.flags & DDMF_ALTSHADOW || subFlags & MFF_SHADOW1)
+		alpha = .62f;	
+	else
+		alpha = customAlpha;
+
+	// More custom alpha?
+	if(spr->mo.alpha >= 0) alpha *= spr->mo.alpha;
+	if(alpha <= 0) return; // Fully transparent.
+	if(alpha > 1) alpha = 1;
+	byteAlpha = alpha * 255;
+
+	useSkin = smf->skin;
+
+	// Selskin overrides the skin range.
+	if(subFlags & MFF_SELSKIN)
+	{
+		i = (spr->mo.selector >> DDMOBJ_SELECTOR_SHIFT)
+			& mf->def->sub[number].selskinbits[0]; // Selskin mask
+		c = mf->def->sub[number].selskinbits[1]; // Selskin shift
+		if(c > 0) i >>= c; else i <<= -c;
+		if(i > 7) i = 7; // Maximum number of skins for selskin.
+		if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
+		useSkin = mf->def->sub[number].selskins[i];
+	}
+
+	// Is there a skin range for this frame?
+	// (During model setup skintics and skinrange are set to >0.)
+	if(smf->skinrange > 1)
+	{
+		// What rule to use for determining the skin?
+		useSkin += (subFlags & MFF_IDSKIN? spr->mo.id
+			: gametic/mf->skintics) % smf->skinrange;
+	}
+
+	inter = spr->mo.inter;
+
+	// Scale interpos. Intermark becomes zero and endmark becomes one.
+	// (Full sub-interpolation!) But only do it for the standard interrange.
+	// If a custom one is defined, don't touch interpos.
+	if(mf->interrange[0] == 0 && mf->interrange[1] == 1)
+	{
+		endPos = (mf->internext? mf->internext->intermark : 1);
+		inter = (inter - mf->intermark) / (endPos - mf->intermark);		
+	}
+
+	// Check for possible interpolation.
+	if(frameInter 
+		&& mfNext
+		&& !(subFlags & MFF_DONT_INTERPOLATE))
+	{
+		if(mfNext->sub[number].model == smf->model)
+		{
+			nextFrame = Mod_GetVisibleFrame(mfNext, number, spr->mo.id);
+			//nextvtx = nextframe->vertices;
+		}
+	}
+
+	// Need translation?
+	if(subFlags & MFF_SKINTRANS) 
+		useSkin = (spr->mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
+
+	yawAngle = spr->mo.yaw;
+	pitchAngle = spr->mo.pitch;
+	
+	// Setup transformation.
+	gl.MatrixMode(DGL_MODELVIEW);
+	gl.PushMatrix();
+
+	// Model space => World space
+	gl.Translatef(spr->mo.v1[VX] + mf->offset[VX] + spr->mo.visoff[VX], 
+		FIX2FLT(spr->mo.gz) + mf->offset[VY] + spr->mo.visoff[VZ] 
+		- FIX2FLT(spr->mo.floorclip), spr->mo.v1[VY] + mf->offset[VZ] 
+		+ spr->mo.visoff[VY]);
+
+	// Model rotation.
+	gl.Rotatef(spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle, 0, 1, 0);
+	gl.Rotatef(spr->mo.viewaligned? spr->mo.v2[VY] : pitchAngle, 0, 0, 1); 
+
+	// Scaling and model space offset.
+	gl.Scalef(mf->scale[VX], mf->scale[VY], mf->scale[VZ]);
+	gl.Translatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
+	
+	// Now we can draw.
+	if(!nextFrame) 
+	{
+		// If not interpolating, use the same frame as interpolation target.
+		// The lerp routines will recognize this special case.
+		nextFrame = frame;
+	}
+	numVerts = mdl->info.numVertices;
+	if(inter < 0) inter = 0;
+	if(inter > 1) inter = 1;
+
+	// Coordinates to the center of the model.
+	modelCenter[VX] = FIX2FLT(spr->mo.gx) + mf->offset[VX] 
+		+ spr->mo.visoff[VX];
+	modelCenter[VY] = FIX2FLT(spr->mo.gy) + mf->offset[VZ] 
+		+ spr->mo.visoff[VY];
+	modelCenter[VZ] = FIX2FLT((spr->mo.gz + spr->mo.gzt) >> 1) 
+		+ mf->offset[VY] + spr->mo.visoff[VZ];
+
+	// Interpolate vertices and normals.
+	Mod_LerpVertices(inter, numVerts, frame->vertices, nextFrame->vertices,
+		modelVertices);
+	Mod_LerpNormals(inter, numVerts, frame->normals, nextFrame->normals,
+		modelNormals);
+
+	// Calculate lighting.
+	if((spr->mo.lightlevel < 0 || subFlags & MFF_FULLBRIGHT) 
+		&& !(subFlags & MFF_DIM)) 
+	{
+		Mod_FullBrightVertexColors(numVerts, modelColors, byteAlpha);
+	}
+	else
+	{
+		// Calculate color for light sources nearby.
+		// Rotate light vectors to model's space.
+		for(i = 0, light = lights; i < numLights; i++, light++)
+		{
+			if(!light->used) continue;
+			if(light->lum)
+			{
+				dist = FIX2FLT(light->dist);				
+
+				// The intensity of the light.
+				intensity = (1 - dist/(light->lum->radius*2)) * 2;
+				if(intensity < 0) intensity = 0;
+				if(intensity > 1) intensity = 1;
+
+				if(intensity == 0)
+				{
+					// No point in lighting with this!
+					light->used = false;
+					continue;
+				}
+
+				// The center of the light source.
+				lightCenter[VX] = FIX2FLT(light->lum->thing->x);
+				lightCenter[VY] = FIX2FLT(light->lum->thing->y);
+				lightCenter[VZ] = FIX2FLT(light->lum->thing->z) 
+					+ light->lum->center;
+
+				// Calculate the normalized direction vector, 
+				// pointing out of the model.
+				for(c = 0; c < 3; c++) 
+				{
+					light->vector[c] = (lightCenter[c] - modelCenter[c]) 
+						/ dist;
+					// ...and the color of the light.
+					light->color[c] = light->lum->rgb[c]/255.0f * intensity;
+				}
+			}
+			else
+			{
+				memcpy(lights[i].vector, lights[i].worldVector,
+					sizeof(lights[i].vector));
+			}
+			// We must transform the light vector to model space.
+			M_RotateVector(light->vector, -yawAngle, -pitchAngle);				
+		}
+		Mod_VertexColors(numVerts, modelColors, modelNormals, byteAlpha);
+	}
+
+	gl.Disable(DGL_TEXTURING);
+	Mod_RenderCommands(RC_COMMAND_COORDS, mdl->lods[0].glCommands,
+		numVerts, modelVertices, modelColors, NULL);
+	gl.Enable(DGL_TEXTURING);
+
+	// We're done!
+	gl.MatrixMode(DGL_MODELVIEW);
+	gl.PopMatrix();
+}
+
+/*
+ * Render all the submodels of a model.
+ */
+void Rend_RenderModel(vissprite_t *spr)
+{
+	modeldef_t *mf = spr->mo.mf;
+	rendpoly_t quad;
+	int i;
+	float dist;
+	mlight_t *light;
+
+	if(!mf) return;
+
+	numLights = 0;
+
+	// This way the distance darkening has an effect.
+	quad.vertices[0].dist = Rend_PointDist2D(spr->mo.v1);
+	quad.numvertices = 1;
+	RL_VertexColors(&quad, 
+		r_ambient > spr->mo.lightlevel? r_ambient : spr->mo.lightlevel, 
+		spr->mo.rgb);
+
+	// Determine the ambient light affecting the model.
+	for(i = 0; i < 3; i++)
+	{
+		if(!modelLight)
+			ambientColor[i] = quad.vertices[0].color.rgba[i] / 255.0f;
+		else
+		{
+			ambientColor[i] = quad.vertices[0].color.rgba[i] / 150.0f;
+			if(ambientColor[i] > 1) ambientColor[i] = 1;
+		}
+	}
+
+	if(modelLight)
+	{
+		memset(lights, 0, sizeof(lights));
+
+		// The model should always be lit with world light. 
+		numLights++;
+		lights[0].used = true;
+
+		// Set the correct intensity.
+		for(i = 0; i < 3; i++) 
+		{
+			lights[0].worldVector[i] = worldLight[i];
+			lights[0].color[i] = ambientColor[i];// * 1.8f;
+			// Now we can diminish the actual ambient light that
+			// hits the object. (Gotta have some contrast.)
+			ambientColor[i] *= .5f; //.9f;
+		}
+
+		// Rotate the light direction to model space.
+		//M_RotateVector(lights[0].vector, -yawAngle, -pitchAngle);
+
+		// Plane glow?
+		if(spr->mo.hasglow)
+		{
+			if(spr->mo.ceilglow[0] 
+				|| spr->mo.ceilglow[1] 
+				|| spr->mo.ceilglow[2])
+			{
+				light = lights + numLights++;
+				light->used = true;
+				memcpy(light->worldVector, &ceilingLight, sizeof(ceilingLight));
+				//M_RotateVector(light->vector, -yawAngle, -pitchAngle);
+				dist = 1 - (spr->mo.secceil - FIX2FLT(spr->mo.gzt)) 
+					/ glowHeight;
+				scaleFloatRgb(light->color, spr->mo.ceilglow, dist);
+				scaleAmbientRgb(ambientColor, spr->mo.ceilglow, dist/3);
+			}
+			if(spr->mo.floorglow[0] 
+				|| spr->mo.floorglow[1] 
+				|| spr->mo.floorglow[2])
+			{
+				light = lights + numLights++;
+				light->used = true;
+				memcpy(light->worldVector, &floorLight, sizeof(floorLight));
+				//M_RotateVector(light->vector, -yawAngle, -pitchAngle);
+				dist = 1 - (FIX2FLT(spr->mo.gz) - spr->mo.secfloor) 
+					/ glowHeight;
+				scaleFloatRgb(light->color, spr->mo.floorglow, dist);
+				scaleAmbientRgb(ambientColor, spr->mo.floorglow, dist/3);
+			}
+		}
+	}
+
+	// Add extra light using dynamic lights.
+	if(modelLight > numLights && dlInited)
+	{
+		// Find the nearest sources of light. They will be used to
+		// light the vertices. First initialize the array.
+		for(i = numLights; i < MAX_MODEL_LIGHTS; i++) 
+			lights[i].dist = DDMAXINT;
+		mlSpr = spr;
+		DL_RadiusIterator(spr->mo.subsector, spr->mo.gx, spr->mo.gy, 
+			dlMaxRad << FRACBITS, Mod_LightIterator);
+	}
+
+	// Don't use too many lights.
+	if(numLights > modelLight) numLights = modelLight;
+
+	// Render all the models associated with the vissprite.
+	for(i = 0; i < MAX_FRAME_MODELS; i++)
+		if(mf->sub[i].model)
+		{
+			boolean disableZ = (mf->flags & MFF_DISABLE_Z_WRITE
+				|| mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
+
+			if(disableZ) gl.Disable(DGL_DEPTH_WRITE);
+
+			// Render the submodel.
+			Mod_RenderSubModel(spr, i);
+
+			if(disableZ) gl.Enable(DGL_DEPTH_WRITE);
+		}
 }
