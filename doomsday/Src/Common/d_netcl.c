@@ -183,32 +183,6 @@ void NetCl_UpdateGameState(byte *data)
 	Net_SendPacket(DDSP_CONFIRM, DDPT_OK, NULL, 0);
 }
 
-#if 0
-void NetCl_SpawnMissile(int type, fixed_t x, fixed_t y, fixed_t z, 
-						fixed_t momx, fixed_t momy, fixed_t momz)
-{
-	mobj_t *mis = P_SpawnMobj(x, y, z, type);
-
-	mis->angle = R_PointToAngle2(x, y, x+momx, y+momy);
-	mis->momx = momx;
-	mis->momy = momy;
-	mis->momz = momz;
-
-	// Also play seesound.
-	if(mis->info->seesound)
-	{
-		S_StartSound(mis, mis->info->seesound);
-	}
-
-#ifdef __JHERETIC__
-	if(type == MT_MACEFX1)
-	{
-		mis->special1 = 16; // tics till dropoff
-	}
-#endif
-}
-#endif
-
 //===========================================================================
 // NetCl_UpdatePlayerState2
 //===========================================================================
@@ -441,19 +415,6 @@ void NetCl_UpdatePSpriteState(byte *data)
 	P_SetPsprite(&players[consoleplayer], ps_weapon, s);
 }
 
-#if 0
-void NetCl_PlaySectorSound(byte *data)
-{
-	int sound, sector;
-
-	NetCl_SetReadBuffer(data);
-	sound = NetCl_ReadByte();
-	sector = NetCl_ReadShort();
-	S_StartSound( (mobj_t*) &sectors[sector].soundorg, sound);
-//	Con_Printf("NetCl_PlaySectorSound: id=%i\n", sound);
-}
-#endif
-
 void NetCl_Intermission(byte *data)
 {
 	int	flags;
@@ -643,4 +604,74 @@ void NetCl_Paused(boolean setPause)
 {
 	paused = (setPause != 0);
 	DD_SetInteger(DD_CLIENT_PAUSED, paused);
+}
+
+/*
+ * Write a DDPT_COMMANDS (32) packet. Returns a pointer to a static
+ * buffer that contains the data (kludge to work around the parameter
+ * passing from the engine).
+ */
+void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
+{
+	static byte msg[1024];	// A shared buffer.
+	ushort *size = (ushort*) msg;
+	byte *out = msg + 2, *flags, *start = out;
+	ticcmd_t prev;
+	int i;
+
+	// Always compare against the previous command.
+	memset(&prev, 0, sizeof(prev));
+
+	for(i = 0; i < count; i++, cmd++)
+	{
+		flags = out++;
+		*flags = 0;
+
+		// What has changed?
+		if(cmd->forwardmove != prev.forwardmove)
+		{
+			*flags |= CMDF_FORWARDMOVE;
+			*out++ = cmd->forwardmove;
+		}
+		if(cmd->sidemove != prev.sidemove)
+		{
+			*flags |= CMDF_SIDEMOVE;
+			*out++ = cmd->sidemove;
+		}
+		if(cmd->angle != prev.angle)
+		{
+			*flags |= CMDF_ANGLE;
+			*((unsigned short*)out)++ = cmd->angle;
+		}
+		if(cmd->lookdir != prev.lookdir)
+		{
+			*flags |= CMDF_LOOKDIR;
+			*((short*)out)++ = cmd->lookdir;
+		}
+		if(cmd->buttons != prev.buttons)
+		{
+			*flags |= CMDF_BUTTONS;
+			*out++ = cmd->buttons;
+		}
+#ifndef __JDOOM__
+		if(cmd->lookfly != prev.lookfly)
+		{
+			*flags |= CMDF_LOOKFLY;
+			*out++ = cmd->lookfly;
+		}
+		if(cmd->arti != prev.arti)
+		{
+			*flags |= CMDF_ARTI;
+			*out++ = cmd->arti;
+		}
+#endif
+		
+		memcpy(&prev, cmd, sizeof(*cmd));		
+	}
+
+	// First two bytes contain the size of the buffer (not included in
+	// the actual packet).
+	*size = out - start;
+
+	return msg;
 }

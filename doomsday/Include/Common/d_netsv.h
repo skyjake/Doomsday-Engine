@@ -20,6 +20,7 @@ extern char		gameConfigString[128];
 void P_Telefrag(mobj_t *thing);
 
 void NetSv_NewPlayerEnters(int plrnumber);
+void *NetSv_ReadCommands(byte *msg, uint size);
 void NetSv_SendGameState(int flags, int to);
 void NetSv_SendMessage(int plrNum, char *msg);
 void NetSv_SendYellowMessage(int plrNum, char *msg);

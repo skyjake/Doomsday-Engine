@@ -1153,3 +1153,53 @@ void NetSv_Ticker(void)
 		players[i].update = 0;
 	}
 }
+
+
+/*
+ * Unravel a DDPT_COMMANDS (32) packet. Returns a pointer to a static
+ * buffer that contains the ticcmds (kludge to work around the parameter
+ * passing from the engine).
+ */
+void *NetSv_ReadCommands(byte *msg, uint size)
+{
+#define MAX_COMMANDS 30
+	static byte data[2 + sizeof(ticcmd_t) * MAX_COMMANDS];
+	ticcmd_t *cmd;
+	byte *end = msg + size, flags;
+	ushort *count = (ushort*) data;
+
+	memset(data, 0, sizeof(data));
+
+	// The first two bytes of the data contain the number of commands.
+	*count = 0;
+
+	// The first command.
+	cmd = (void*) (data + 2);
+
+	while(msg < end)
+	{
+		// One more command.
+		*count += 1;		
+
+		// First the flags.
+		flags = *msg++;
+
+		if(flags & CMDF_FORWARDMOVE) cmd->forwardmove = *msg++;
+		if(flags & CMDF_SIDEMOVE) cmd->sidemove = *msg++;
+		if(flags & CMDF_ANGLE) cmd->angle = *((short*)msg)++;
+		if(flags & CMDF_LOOKDIR) cmd->lookdir = *((short*)msg)++;
+		if(flags & CMDF_BUTTONS) cmd->buttons = *msg++;
+#ifndef __JDOOM__
+		if(flags & CMDF_LOOKFLY) cmd->lookfly = *msg++;
+		if(flags & CMDF_ARTI) cmd->arti = *msg++;
+#endif
+
+		// Copy to next command (only differences have been written).
+		memcpy(cmd + 1, cmd, sizeof(ticcmd_t));
+
+		// Move to next command.
+		cmd++;
+	}
+
+	return data;
+}

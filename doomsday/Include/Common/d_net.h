@@ -122,6 +122,16 @@ typedef struct
 #define FINF_AFTER			0x08		// Otherwise before.
 #define FINF_SKIP			0x10
 
+// Ticcmd flags.
+#define CMDF_FORWARDMOVE	0x01
+#define CMDF_SIDEMOVE		0x02
+#define CMDF_ANGLE			0x04
+#define CMDF_LOOKDIR		0x08
+#define CMDF_BUTTONS		0x10
+#define CMDF_LOOKFLY		0x20
+#define CMDF_ARTI			0x40
+#define CMDF_MORE_FLAGS		0x80		// Reserved for extensions.
+
 // Networking.
 int D_NetServerOpen(int before);
 int D_NetServerClose(int before);

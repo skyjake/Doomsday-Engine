@@ -331,9 +331,24 @@ int D_NetDisconnect(int before)
 
 int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 {
+	// Kludge: To preserve the ABI, these are done through player events.
+	// (They are, sort of.)
+	if(peType == DDPE_WRITE_COMMANDS)
+	{
+		// It's time to send ticcmds to the server.
+		// 'plrNumber' contains the number of commands.
+		return (int) NetCl_WriteCommands(data, plrNumber);
+	}
+	else if(peType == DDPE_READ_COMMANDS)
+	{
+		// Read ticcmds sent by a client.
+		// 'plrNumber' is the length of the packet.
+		return (int) NetSv_ReadCommands(data, plrNumber);
+	}
+	
 	// If this isn't a netgame, we won't react.
 	if(!IS_NETGAME) return true;
-
+	
 	if(peType == DDPE_ARRIVAL)
 	{
 		boolean showmsg = true;
@@ -534,11 +549,6 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		// Tell the engine we're ready to proceed. It'll start handling
 		// the world updates after this variable is set.
 		Set(DD_GAME_READY, true);
-
-		// Tell the server that we're ready. 
-		// Note: This *must be* done, or the server won't know if we're 
-		// ready to begin.
-		/* Net_SendPacket(DDSP_ORDERED, DDPT_OK, NULL, 0); */
 		break;
 
 	case GPT_MESSAGE:
