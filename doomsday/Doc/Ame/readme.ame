@@ -491,12 +491,14 @@ Doomsday will automatically detect the format of a sample if it's loaded from a 
 
 
 
-@chapter{ Acknowledgements }
+@chapter{ Acknowledgements and Thanks }
 
 @a{acks}
 @strong{id Software}, for creating DOOM and then releasing its source code.
 
 @strong{Raven Software}, for creating Heretic and Hexen and then releasing their source code.
+
+@strong{Daniel Swanson}, for maintaining the jDoom Resource Pack and creating the Doomsday Engine logo.
 
 @strong{Abbs}, for maintaining the jDoom model pack and doing wonderful work on the models and particle effects.
 
