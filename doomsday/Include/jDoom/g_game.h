@@ -33,6 +33,8 @@
 //
 void G_DeathMatchSpawnPlayer (int playernum);
 
+boolean G_ValidateMap(int *episode, int *map);
+
 void G_InitNew (skill_t skill, int episode, int map);
 
 // Can be called by the startup code or M_Responder.
@@ -79,6 +81,9 @@ void G_PrepareWIData(void);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/07/12 22:10:51  skyjake
+// Added map validation routine
+//
 // Revision 1.1  2003/02/26 19:18:27  skyjake
 // Initial checkin
 //
