@@ -9,6 +9,9 @@
 //** This file is way too long.
 //**
 //** $Log$
+//** Revision 1.4  2003/06/28 16:00:14  skyjake
+//** Use Huffman encoding when sending data
+//**
 //** Revision 1.3  2003/06/27 20:20:28  skyjake
 //** Protect incoming message queue using a mutex
 //**
@@ -49,12 +52,16 @@ extern "C"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
+#include "de_misc.h"
 
 #include "ui_mpi.h"
 
 }
 
 // MACROS ------------------------------------------------------------------
+
+// Uncomment to enable the byte frequency counter.
+//#define COUNT_BYTE_FREQS
 
 #define MASTER_HEARTBEAT	120 // seconds
 
@@ -238,6 +245,17 @@ static char *protocolNames[NUM_NSP] = {
 // The Sent Message Store: list of sent or queued messages waiting to be 
 // confirmed.
 static store_t stores[MAXPLAYERS];
+
+#ifdef COUNT_BYTE_FREQS
+static uint gByteCounts[256];
+static uint gTotalByteCount;
+#endif
+
+// Number of bytes of outgoing data transmitted.
+static uint gNumOutBytes;
+
+// Number of bytes sent over the network (compressed).
+static uint gNumSentBytes;
 
 // CODE --------------------------------------------------------------------
 
@@ -677,15 +695,29 @@ netmessage_t* N_GetMessage(void)
 }
 
 /*
+ * Free the DP buffer.
+ */
+void N_ReturnBuffer(DPNHANDLE handle)
+{
+	if(gServerMode)
+	{
+		gServer->ReturnBuffer(handle, 0);
+	}
+	else
+	{
+		gClient->ReturnBuffer(handle, 0);
+	}
+}
+
+/*
  * Frees the message.
  */
 void N_ReleaseMessage(netmessage_t *msg)
 {
-	if(gServerMode)
-		gServer->ReturnBuffer(msg->handle, 0);
-	else
-		gClient->ReturnBuffer(msg->handle, 0);
-
+	if(msg->handle) 
+	{
+		N_ReturnBuffer(msg->handle);
+	}
 	free(msg);
 }
 
@@ -1038,6 +1070,23 @@ void N_Shutdown(void)
 	// Close the handle of the message queue mutex.
 	CloseHandle(gMsgMutex);
 	gMsgMutex = NULL;
+
+#ifdef COUNT_BYTE_FREQS
+	Con_Printf("Total number of bytes: %i\n", gTotalByteCount);
+	for(int i = 0; i < 256; i++)
+	{
+		Con_Printf("%.12lf, ", gByteCounts[i] / (double) gTotalByteCount);
+		if(i % 4 == 3) Con_Printf("\n");
+	}
+	Con_Printf("\n");
+#endif
+
+	if(ArgExists("-huffavg"))
+	{
+		Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
+			"bytes)\n", 100 - (100.0f * gNumSentBytes) / gNumOutBytes,
+			gNumOutBytes, gNumSentBytes);
+	}
 }
 
 /*
@@ -1298,6 +1347,14 @@ void N_SendDataBuffer(void *data, uint size, DPNID destination)
 	DPNHANDLE asyncHandle = 0;
 	DPN_BUFFER_DESC buffer;
 
+/*#ifdef COUNT_BYTE_FREQS
+	for(uint i = 0; i < size; i++)
+	{
+		gByteCounts[ ((byte*)data)[i] ]++;
+	}
+	gTotalByteCount += size;
+#endif*/
+	
 	buffer.dwBufferSize = size;
 	buffer.pBufferData = (byte*) data;
 
@@ -1326,10 +1383,6 @@ void N_SendDataBuffer(void *data, uint size, DPNID destination)
  */
 void N_SendPacket(int flags)
 {
-	//int msgId;
-	//int priority = flags & SPF_PRIORITY_MASK;
-	//DWORD sendFlags = 0;
-
 	int i, dest = 0;
 	sentmessage_t *sentMsg;
 	void *data;
@@ -1337,8 +1390,6 @@ void N_SendPacket(int flags)
 
 	// Is the network available?
 	if(!allowSending || !N_IsAvailable()) return;
-
-	//Con_Message("N_SendPacket: p=%i, flags=%x\n", netbuffer.player, flags);
 
 	// Figure out the destination DPNID.
 	if(gServerMode)
@@ -1369,44 +1420,6 @@ void N_SendPacket(int flags)
 		}
 	}
 
-/*	if(!priority)
-	{
-		// Non-reliable messages go first by default.
-		if(!(flags & SPF_RELIABLE)) priority = 10;
-	}*/
-
-	/*// Priority gets a flag.
-	if(priority >= 10) sendFlags |= DPNSEND_PRIORITY_HIGH;
-*/
-	
-
-	// Reliable delivery.
-	/*if(flags & SPF_RELIABLE) 
-		sendFlags |= DPNSEND_GUARANTEED;
-	else
-		sendFlags |= DPNSEND_NOCOMPLETE*//* | DPNSEND_NONSEQUENTIAL*//*;*/
-
-	//DPNHANDLE asyncHandle = 0;
-	
-	/*DPN_BUFFER_DESC buffer;
-	buffer.dwBufferSize = netbuffer.headerLength + netbuffer.length;
-	buffer.pBufferData = (byte*) &netbuffer.msg;*/
-
-	// DirectPlay flags.
-/*	DWORD sendFlags = DPNSEND_NOLOOPBACK | DPNSEND_NONSEQUENTIAL
-		| DPNSEND_NOCOMPLETE;
-
-	if(gServerMode)
-	{
-		hr = gServer->SendTo(dest, &buffer, 1, SEND_TIMEOUT, 0, 
-			&asyncHandle, sendFlags);
-	}
-	else
-	{
-		hr = gClient->Send(&buffer, 1, SEND_TIMEOUT, 0, 
-			&asyncHandle, sendFlags);
-	}*/
-
 	boolean isQueued = false;
 
 	if(flags & SPF_ORDERED)
@@ -1421,19 +1434,33 @@ void N_SendPacket(int flags)
 		}
 	}
 
+	// Do we need to generate an ID for the message?
+	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
+	{
+		netbuffer.msg.id = N_GetNewMsgID(netbuffer.player);
+	}
+	else
+	{
+		// Normal, unconfirmed messages do not use IDs.
+		netbuffer.msg.id = 0;
+	}
+
 	// This is what will be sent.
-	data = &netbuffer.msg;
-	size = netbuffer.headerLength + netbuffer.length;
+	gNumOutBytes += netbuffer.headerLength + netbuffer.length;
+
+	// Compress using Huffman codes.
+	data = Huff_Encode( (byte*) &netbuffer.msg, 
+		netbuffer.headerLength + netbuffer.length, &size);
+
+	// This many bytes are actually sent.
+	gNumSentBytes += size;
 
 	// Ordered and confirmed messages are placed in the Store until they
 	// have been acknowledged.
 	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
 	{
-		// Generate an ID for the message.
-		netbuffer.msg.id = N_GetNewMsgID(netbuffer.player);
-		
-		sentMsg = N_SMSCreate(netbuffer.player, netbuffer.msg.id, dest,
-			data, size);
+		sentMsg = N_SMSCreate(netbuffer.player, netbuffer.msg.id, 
+			dest, data, size);
 		
 		if(flags & SPF_ORDERED)
 		{
@@ -1449,17 +1476,8 @@ void N_SendPacket(int flags)
 			return;
 		}
 	}
-	else
-	{
-		// Normal, unconfirmed messages do not use IDs.
-		netbuffer.msg.id = 0;
-	}
 
 	N_SendDataBuffer(data, size, dest);
-
-	/*
-	Con_Message("N_SendPacket: sz=%i [%x]\n", buffer.dwBufferSize, hr);
-	*/
 }
 
 /*
@@ -1481,6 +1499,22 @@ int N_IdentifyPlayer(DPNID id)
 
 	// Clients receive messages only from the server.
 	return 0;
+}
+
+/*
+ * Send a Confirmation of Delivery message. 
+ */
+void N_SendConfirmation(msgid_t id, DPNID where)
+{
+	uint size;
+
+	// All data is sent using Huffman codes.
+	void *data = Huff_Encode((byte*)&id, 2, &size);
+	N_SendDataBuffer(data, size, where);
+
+	// Increase the counters.
+	gNumOutBytes += 2;
+	gNumSentBytes += size;
 }
 
 /*
@@ -1506,6 +1540,14 @@ netmessage_t *N_GetNextMessage(void)
 			continue;
 		}
 
+		// Decode the Huffman codes. The returned buffer is static, so it 
+		// doesn't need to be freed (not thread-safe, though).
+		msg->data = Huff_Decode(msg->data, msg->size, &msg->size);
+
+		// The DP buffer can be freed.
+		N_ReturnBuffer(msg->handle);
+		msg->handle = NULL;
+
 		// First check the message ID (in the first two bytes).
 		msgid_t id = *(msgid_t*) msg->data;
 		if(id)
@@ -1524,8 +1566,9 @@ netmessage_t *N_GetNextMessage(void)
 			else
 			{
 				// The arrival of this message must be confirmed. Send a reply
-				// immediately. 
-				N_SendDataBuffer(&id, 2, msg->sender);
+				// immediately. Writes to the Huffman encoding buffer.
+				N_SendConfirmation(id, msg->sender);
+				//N_SendDataBuffer(&id, 2, msg->sender);
 
 /*#ifdef _DEBUG
 				Con_Printf("N_GetNextMessage: Acknowledged arrival of "
@@ -1591,32 +1634,12 @@ boolean	N_GetPacket()
 	memcpy(&netbuffer.msg, msg->data, 
 		MIN_OF(sizeof(netbuffer.msg), msg->size));
 
-/*	if(gServerMode)
-	{
-		// What is the corresponding player number? Only the server keeps
-		// a list of all the IDs.
-		for(i = 0; i < MAXPLAYERS; i++)
-			if(clients[i].nodeID == msg->sender)
-			{
-				netbuffer.player = i;
-				break;
-			}
-	}
-	else
-	{
-		// Clients receive messages only from the server.
-		netbuffer.player = 0;
-	}*/
-
 	// The message can now be freed.
 	N_ReleaseMessage(msg);
 
 	// We have no idea who sent this (on serverside).
 	if(netbuffer.player == -1) return false;
 
-/*#ifdef _DEBUG
-	assert(netbuffer.player != -1);
-#endif*/
 	return true;
 }
 
@@ -1659,27 +1682,6 @@ uint N_GetSendQueueSize(int player)
 
 	return numBytes;
 }
-
-/*
- * Returns true if the send queue for the player is good for additional
- * data. If not, new data shouldn't be sent until the queue has cleared up.
- */
-/*boolean N_CheckSendQueue(int player)
-{
-	// Servers send packets to themselves only when they're recording a demo.
-	if(isServer && players[player].flags & DDPF_LOCAL) 
-		return clients[player].recording;
-
-	// During demo playback no sending can be done.
-	if(!N_IsAvailable() || playback) 
-		return false;
-
-	// No sending to disconnected players or self.
-	if(!clients[player].connected || player == consoleplayer) 
-		return false;
-
-	return N_GetSendQueueCount(player) <= (DWORD) maxQueuePackets;
-}*/
 
 const char* N_GetProtocolName(void)
 {
