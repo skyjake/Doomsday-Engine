@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/08/18 16:40:37  skyjake
+// Precache fonts
+//
 // Revision 1.3  2003/06/03 15:19:52  skyjake
 // Cleanups
 //
@@ -1224,6 +1227,9 @@ void R_CachePatch(dpatch_t *dp, char *name)
 	dp->height = patch->height;
 	dp->leftoffset = patch->leftoffset;
 	dp->topoffset = patch->topoffset;
+
+	// Precache the texture while we're at it.
+	GL_SetPatch(dp->lump);
 }
 
 void ST_loadGraphics(void)
