@@ -48,7 +48,8 @@ static char *explicitOption[NUM_RESOURCE_CLASSES][2] =
 	{ "-patdir",	"-patdir2" },
 	{ "-lmdir",		"-lmdir2" },
 	{ "-musdir",	"-musdir2" },
-	{ "-sfxdir",	"-sfxdir2" }
+	{ "-sfxdir",	"-sfxdir2" },
+	{ "-gfxdir",	"-gfxdir2" }
 };
 
 // Class paths.
@@ -58,7 +59,8 @@ static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] =
 	"Patches\\",
 	"LightMaps\\",
 	"Music\\",
-	"Sfx\\"
+	"Sfx\\",
+	"Graphics\\"
 };
 
 // Recognized extensions (in order of importance). "*" means 'anything'.
@@ -74,7 +76,9 @@ static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] =
 	{ ".mp3", ".ogg", ".wav", ".mod", ".it", ".mid", "*", NULL },
 
 	// Only WAV files for sound effects.
-	{ ".wav", NULL }
+	{ ".wav", NULL },
+
+	{ ".png", ".tga", ".pcx", NULL }
 };
 
 static resclass_t classInfo[NUM_RESOURCE_CLASSES];
@@ -86,7 +90,7 @@ static resclass_t classInfo[NUM_RESOURCE_CLASSES];
  */
 void R_InitExternalResources(void)
 {
-	R_SetDataPath("}Data\\");
+	R_InitDataPaths("}Data\\", false);
 }
 
 /*
@@ -102,6 +106,14 @@ const char *R_GetDataPath(void)
  */
 void R_SetDataPath(const char *path)
 {
+	R_InitDataPaths(path, true);
+}
+
+/*
+ * Set the data path. The game module is responsible for calling this.
+ */
+void R_InitDataPaths(const char *path, boolean justGamePaths)
+{
 	int i;
 
 	M_TranslatePath(path, dataPath);
@@ -109,9 +121,13 @@ void R_SetDataPath(const char *path)
 	VERBOSE( Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)) );
 
 	// Update the paths of each class.
-	memset(classInfo, 0, sizeof(classInfo));
 	for(i = 0; i < NUM_RESOURCE_CLASSES; i++)
 	{
+		// The Graphics class resources are under Doomsday's control.
+		if(justGamePaths && i == RC_GRAPHICS) continue;
+
+		memset(&classInfo[i], 0, sizeof(classInfo[i]));
+
 		// The -texdir option specifies a path to look for TGA textures.
 		if(ArgCheckWith(explicitOption[i][0], 1))
 		{
