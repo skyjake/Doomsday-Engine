@@ -269,7 +269,6 @@ int grayMipmap(int format, int width, int height, void *data)
 		if(w > 1) w >>= 1;
 		if(h > 1) h >>= 1;
 
-		// The texture has no mipmapping, just one level.
 		glTexImage2D(GL_TEXTURE_2D, i + 1, ChooseFormat(1), w, h, 0, 
 			GL_LUMINANCE, GL_UNSIGNED_BYTE, faded);
 	} 

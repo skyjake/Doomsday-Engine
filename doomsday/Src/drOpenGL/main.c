@@ -1022,20 +1022,6 @@ int DG_Enable(int cap)
 		enablePalTexExt(DGL_TRUE);
 		break;
 
-/*	case DGL_DETAIL_TEXTURE_MODE:
-		glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, midGray);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB, GL_PRIMARY_COLOR_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, GL_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-		break;*/
-
 	case DGL_TEXTURE0:
 	case DGL_TEXTURE1:
 	case DGL_TEXTURE2:
@@ -1110,11 +1096,6 @@ void DG_Disable(int cap)
 	case DGL_PALETTED_TEXTURES:
 		enablePalTexExt(DGL_FALSE);
 		break;
-
-/*	case DGL_DETAIL_TEXTURE_MODE:
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		break;*/
 
 	case DGL_TEXTURE0:
 	case DGL_TEXTURE1:
@@ -1203,13 +1184,15 @@ void DG_Func(int func, int param1, int param2)
 	}
 }
 
+/*
 //===========================================================================
 // DG_ZBias
 //===========================================================================
 void DG_ZBias(int level)
 {
-	//glDepthRange(level*.0022f, 1);
+	glDepthRange(level*.0022f, 1);
 }
+*/
 
 //===========================================================================
 // DG_MatrixMode
