@@ -56,18 +56,6 @@ typedef struct detailinfo_s {
 	float	maxdist;
 } detailinfo_t;
 
-typedef struct glvertex_s {
-	float xyz[4];		// The fourth is padding.
-} glvertex_t;
-
-typedef struct gltexcoord_s {
-	float st[2];
-} gltexcoord_t;
-
-typedef struct glcolor_s {
-	byte rgba[4];
-} glcolor_t;
-
 typedef struct gltexture_s {
 	DGLuint	id;
 	ushort	width, height;
