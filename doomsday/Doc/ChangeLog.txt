@@ -19,9 +19,11 @@ Version 1.7.12 (work in progress)
 - fixed: possible crash in Con_Error()
 
 Sound:
-* sounds from PWADs are not replaced by automatic external resources
+* sounds from PWADs are not replaced with automatic external resources
 
 Refresh:
++ up to eight sky models can be defined in a Map Info definition
++ named Model definitions (Model:ID), not assigned to any state
 + lightmap resources are read from the Data\x\LightMaps directory
 + 'Top map', 'Bottom map', 'Side map' added to Light defs and
   Decoration:Light defs (name of lightmap to use; empty means default,
@@ -51,7 +53,8 @@ Refresh:
 - fixed: Generator Center angle (Y) offset was ignored with mobj sources
 
 Renderer:
-+ blending modes: subtract and reverse subtract
++ sky models
++ blending modes: subtract, reverse subtract, multiply, inverse multiply
 + cvar 'rend-model-mirror-hud': mirror HUD weapon models
 + cvar 'rend-dev-wireframe': render player view in wireframe mode
 + cvar 'rend-dev-freeze': stop updating rendering lists (for debugging)
@@ -83,7 +86,7 @@ drOpenGL:
 + support for EXT_texture_compression_s3tc
 + option -notexcomp: disable texture compression
 + option -novtxar: disable vertex arrays
-* vertex arrays are disabled by default is driver's OpenGL version is
+* vertex arrays are disabled by default if driver's OpenGL version is
   older than 1.3 (otherwise enabled)
 * texture compression enabled by default (use -notexcomp to disable)
 
