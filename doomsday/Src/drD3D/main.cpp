@@ -29,11 +29,11 @@ Window		*window;
 boolean		verbose, diagnose = false;
 
 // Limits and capabilities.
-int			maxTexSize, maxAniso;
+int			maxTexSize, maxTextures, maxStages, maxAniso;
 boolean		useBadAlpha;
 
 // Availability flags.
-boolean		availPalTex;
+boolean		availPalTex, availMulAdd;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -96,7 +96,7 @@ int DG_Init(int width, int height, int bpp, int mode)
 		Con_Error("DG_Init: Failed to initialize Direct3D.\n");
 		return DGL_ERROR;
 	}
-	InitVertexBuffers();
+	//InitVertexBuffers();
 	InitDraw();
 	InitMatrices();
 	InitState();
@@ -116,7 +116,7 @@ void DG_Shutdown(void)
 
 	ShutdownTextures();
 	ShutdownMatrices();
-	ShutdownVertexBuffers();
+	//ShutdownVertexBuffers();
 	ShutdownDirect3D();
 	delete window;
 	window = NULL;
@@ -128,8 +128,8 @@ void DG_Shutdown(void)
 void DG_Clear(int bufferbits)
 {
 	dev->Clear(0, NULL, 
-		  (bufferbits & DGL_COLOR_BUFFER_BIT? D3DCLEAR_TARGET : 0)
-		| (bufferbits & DGL_DEPTH_BUFFER_BIT? D3DCLEAR_ZBUFFER : 0), 
+		(bufferbits & DGL_COLOR_BUFFER_BIT? D3DCLEAR_TARGET : 0) |
+		(bufferbits & DGL_DEPTH_BUFFER_BIT? D3DCLEAR_ZBUFFER : 0), 
 		0, 1, 0);
 }
 
