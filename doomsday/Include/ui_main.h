@@ -185,6 +185,7 @@ void UI_Capture(ui_object_t *ob);
 int UIPage_Responder(ui_page_t *page, event_t *ev);
 void UIPage_Ticker(ui_page_t *page);
 void UIPage_Drawer(ui_page_t *page);
+void UIFrame_Drawer(ui_object_t *ob);
 void UIText_Drawer(ui_object_t *ob);
 int UIButton_Responder(ui_object_t *ob, event_t *ev);
 void UIButton_Drawer(ui_object_t *ob);
@@ -224,6 +225,7 @@ void UI_TextOut(char *text, int x, int y);
 void UI_TextOutEx(char *text, int x, int y, int horiz_center, int vert_center, ui_color_t *color, float alpha);
 int UI_TextOutWrap(char *text, int x, int y, int w, int h);
 int UI_TextOutWrapEx(char *text, int x, int y, int w, int h, ui_color_t *color, float alpha);
+void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text);
 
 // Console commands.
 D_CMD( UIColor );
