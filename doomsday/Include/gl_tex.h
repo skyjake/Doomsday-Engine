@@ -55,6 +55,7 @@ byte *			GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath);
 byte *			GL_LoadImageCK(image_t *img, const char *imagefn, boolean useModelPath);
 byte *			GL_LoadTexture(image_t *img, char *name);
 void			GL_DestroyImage(image_t *img);
+DGLuint			GL_GetTextureInfo(int index);
 DGLuint			GL_PrepareTexture(int idx); 
 DGLuint			GL_PrepareFlat(int idx);
 DGLuint			GL_PrepareLightTexture(void);	// The dynamic light map.
