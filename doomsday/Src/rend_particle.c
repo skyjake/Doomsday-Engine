@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.6  2003/05/23 22:07:54  skyjake
+//** Modified verbosity
+//**
 //** Revision 1.5  2003/04/16 09:49:42  skyjake
 //** -nohightex must only affect walls/flats
 //**
@@ -153,11 +156,10 @@ void PG_InitTextures(void)
 
 		// Create a new texture and upload the image.
 		ptctexname[i + 1] = gl.NewTexture();
-		if(verbose) 
-		{
-			Con_Message("PG_InitTextures: Texture %02i: %i * %i * %i\n", 
-				i, width, height, pixsize);
-		}
+
+		VERBOSE( Con_Message("PG_InitTextures: Texture %02i: %i * %i * %i\n",
+			i, width, height, pixsize) );
+
 		gl.TexImage(pixsize == 4? DGL_RGBA : DGL_RGB, 
 			width, height, 0, image);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
