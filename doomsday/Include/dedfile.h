@@ -187,7 +187,17 @@ typedef struct
 	float			color_limit;
 } ded_skylayer_t;
 
+typedef struct ded_skymodel_s {
+	ded_stringid_t	id;
+	float			frame_interval; // Seconds per frame.
+	float			yaw;
+	float			yaw_speed;		// Angles per second.
+	float			coord_factor[3];
+	float			color[4];	// RGBA
+} ded_skymodel_t;
+
 #define NUM_SKY_LAYERS		2
+#define NUM_SKY_MODELS		8
 
 typedef struct
 {
@@ -206,6 +216,7 @@ typedef struct
 	float			sky_height;
 	float			horizon_offset;
 	ded_skylayer_t	sky_layers[NUM_SKY_LAYERS];
+	ded_skymodel_t	sky_models[NUM_SKY_MODELS];
 } ded_mapinfo_t;
 
 typedef struct

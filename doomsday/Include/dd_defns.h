@@ -58,6 +58,7 @@ void Def_ReadProcessDED(const char *fileName);
 
 int Def_GetStateNum(char *id);
 int Def_GetSpriteNum(char *name);
+int Def_GetModelNum(const char *id);
 int Def_GetMusicNum(char *id);
 int Def_EvalFlags(char *ptr);
 ded_mapinfo_t *Def_GetMapInfo(char *map_id);

@@ -30,6 +30,9 @@ extern int skyDetail, skyRows, simpleSky;
 extern float skyDist;
 extern int r_fullsky;
 
+void R_SetupSkyModels(ded_mapinfo_t *info);
+void R_SkyTicker(void);
+
 // Functions:
 void Rend_RenderSky(int hemis);
 
