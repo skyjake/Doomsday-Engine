@@ -80,6 +80,14 @@ static boolean firstsubsector;	// No range checking for the first one.
 
 void Rend_Register(void)
 {
+	C_VAR_INT("rend-dev-freeze", &freezeRLs, 0, 0, 1,
+			  "1=Stop updating rendering lists.");
+	
+	C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179, "Field of view.");
+
+	C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1,
+			   "1=Enable interpolated texture animation.");
+
 	Rend_RadioRegister();
 }
 

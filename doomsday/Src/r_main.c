@@ -82,11 +82,39 @@ float   frameTimePos;			// 0...1: fractional part for sharp game tics
 static viewer_t lastSharpView[2];
 static boolean resetNextViewer = true;
 
+// BSP cvars.
+static int bspBuild = true;
+static int bspCache = true;
+static int bspFactor = 7;
+
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-// R_InitSkyMap
-//==========================================================================
+/*
+ * Register console variables.
+ */
+void R_Register(void)
+{
+	C_VAR_BYTE("rend-info-tris", &rend_info_tris, 0, 0, 1,
+			   "1=Print triangle count after rendering a frame.");
+
+	C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, 0, 0, 1,
+			  "1=Filter camera movement between game tics.");
+
+	C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1,
+			  "1=Build GL nodes when loading a map.");
+
+	C_VAR_INT("bsp-cache", &bspCache, 0, 0, 1,
+			  "1=Load generated GL nodes data from the bspcache directory.\n"
+			  "0=Always generate new GL data.");
+
+	C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0,
+			  "glBSP: changes the cost assigned to SEG splits (default: 7).");
+}
+
+/*
+ * The skyflat is the special flat used for surfaces that should show
+ * a view of the sky.
+ */
 void R_InitSkyMap(void)
 {
 	skyflatnum = R_FlatNumForName(skyflatname);

@@ -499,6 +499,7 @@ void Con_Init()
 	registerCommands();
 	registerVariables();
 
+	R_Register();
 	Rend_Register();
 	Net_Register();
 	I_Register();
@@ -3032,15 +3033,11 @@ static void registerVariables(void)
 				"Display brightness: -1=dark, 0=normal, 1=light.");
 
 	// Render
-	C_VAR_INT("rend-dev-freeze", &freezeRLs, 0, 0, 1,
-			  "1=Stop updating rendering lists.");
 	C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1,
 			  "1=Render player view in wireframe mode.");
 	C_VAR_INT("rend-dev-framecount", &framecount, CVF_PROTECTED, 0, 0,
 			  "Frame counter.");
 	// * Render-Info
-	C_VAR_BYTE("rend-info-tris", &rend_info_tris, 0, 0, 1,
-			   "1=Print triangle count after rendering a frame.");
 	C_VAR_BYTE("rend-info-lums", &rend_info_lums, 0, 0, 1,
 			   "1=Print lumobj count after rendering a frame.");
 	// * Render-Light
@@ -3108,10 +3105,6 @@ static void registerVariables(void)
 				"Distance at which halos are no longer visible.");
 	C_VAR_FLOAT("rend-halo-fade-near", &haloFadeMin, CVF_NO_MAX, 0, 0,
 				"Distance to begin fading halos.");
-	// * Render-Camera
-	C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179, "Field of view.");
-	C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, 0, 0, 1,
-			  "1=Filter camera movement between game tics.");
 	// * Render-Texture
 	C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1,
 			  "1=Render with textures.");
@@ -3139,8 +3132,6 @@ static void registerVariables(void)
 				"Global detail texture strength factor.");
 	C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1,
 			  "1=Use multitexturing when rendering detail textures.");
-	C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1,
-			   "1=Enable interpolated texture animation.");
 	// * Render-Sky
 	C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7,
 			  "Number of sky sphere quadrant subdivisions.");
