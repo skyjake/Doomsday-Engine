@@ -316,7 +316,7 @@ void DD_Main(void)
 	DD_InitInput();
 
 	// Any startup hooks?
-	Plug_DoHook(HOOK_STARTUP);
+	Plug_DoHook(HOOK_STARTUP, 0, 0);
 
 	DD_AddStartupWAD("}Data\\Doomsday.wad");
 	R_InitExternalResources();
@@ -535,8 +535,8 @@ void DD_Main(void)
 	if(isDedicated)
 		Con_Open(true);
 
-	Plug_DoHook(HOOK_INIT);		// Any initialization hooks?
-	Con_UpdateKnownWords();		// For word completion (with Tab).
+	Plug_DoHook(HOOK_INIT, 0, 0);	// Any initialization hooks?
+	Con_UpdateKnownWords();			// For word completion (with Tab).
 
 	// Client connection command.
 	if(ArgCheckWith("-connect", 1))
@@ -723,6 +723,9 @@ int DD_GetInteger(int ddvalue)
 		// How about some specials?
 		switch (ddvalue)
 		{
+		case DD_GAME_EXPORTS:
+			return (int) &gx;
+			
 		case DD_DYNLIGHT_TEXTURE:
 			return lightingTexNames[LST_DYNAMIC];
 
