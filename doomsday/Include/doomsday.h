@@ -71,6 +71,7 @@ extern          "C" {
 	const char     *W_LumpSourceFile(int lump);
 	uint            W_CRCNumber(void);
 	boolean         W_IsFromIWAD(int lump);
+	int             W_OpenAuxiliary(const char *filename);
 
 	// Base: Zone.
 	void           *_DECALL Z_Malloc(size_t size, int tag, void *ptr);
@@ -119,6 +120,9 @@ extern          "C" {
 	void            Sys_Sleep(int millisecs);
 	int             Sys_CriticalMessage(char *msg);
 	void            Sys_Quit(void);
+
+	// System: Files.
+	unsigned int	F_LastModified(const char *fileName);
 
 	// Network.
 	void            Net_SendPacket(int to_player, int type, void *data,
