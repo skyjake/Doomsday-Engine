@@ -1171,8 +1171,7 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
 	for(i = 0; i < backSector->linecount; i++)
 	{
 		line = backSector->lines[i];
-		if(R_IsEquivalent(line, realNeighbor) ||
-		   R_IsEquivalent(line, self))
+		if(R_IsEquivalent(line, realNeighbor) || R_IsEquivalent(line, self))
 			continue;
 		if(line->frontsector == line->backsector)
 			continue;
@@ -1236,8 +1235,8 @@ void R_InitLineInfo(void)
 				{
 					side->proxsector[j] =
 						(side->neighbor[j]->frontsector ==
-						 sector ? side->neighbor[j]->backsector :
-						 side->neighbor[j]->frontsector);
+						 sector ? side->neighbor[j]->backsector : side->
+						 neighbor[j]->frontsector);
 
 					// Find the backneighbour.  They are the
 					// neighbouring lines in the backsectors of the
@@ -1246,7 +1245,7 @@ void R_InitLineInfo(void)
 									   side->neighbor[j], vertices[j],
 									   &side->backneighbor[j]);
 
-					/*assert(side->backneighbor[j] != line);*/
+					/*assert(side->backneighbor[j] != line); */
 				}
 				else
 				{

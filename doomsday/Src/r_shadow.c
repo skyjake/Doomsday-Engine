@@ -98,7 +98,7 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
 		plen = V2_Length(lp);
 		if(plen > 0 && plen > len1)
 		{
-			V2_Scale(lp, len1/plen);
+			V2_Scale(lp, len1 / plen);
 		}
 	}
 	if(rp)
@@ -107,7 +107,7 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
 		plen = V2_Length(rp);
 		if(plen > 0 && plen > len2)
 		{
-			V2_Scale(rp, len2/plen);
+			V2_Scale(rp, len2 / plen);
 		}
 	}
 }
@@ -144,8 +144,8 @@ line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
  */
 sector_t *R_GetShadowSector(shadowpoly_t *poly)
 {
-	return poly->flags & SHPF_FRONTSIDE ? poly->line->frontsector :
-		poly->line->backsector;
+	return poly->flags & SHPF_FRONTSIDE ? poly->line->frontsector : poly->
+		line->backsector;
 }
 
 /*
@@ -173,7 +173,7 @@ boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
 	// The (back)neighbour.
 	if(NULL == (neighbor = R_GetShadowNeighbor(poly, leftCorner, back)))
 		return false;
-	
+
 	R_ShadowDelta(leftCorner ? left : right, neighbor,
 				  !back ? sector : R_GetShadowProximity(poly, leftCorner));
 

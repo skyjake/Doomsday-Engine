@@ -403,7 +403,8 @@ static int findWeapon(player_t *plr, boolean forward)
 		if(i < 0)
 			i = NUMWEAPONS - 2;
 #  elif __JHEXEN__
-		c < NUMWEAPONS; c++, forward ? i++ : i--)
+		c < NUMWEAPONS;
+		c++, forward ? i++ : i--)
 	{
 		if(i > NUMWEAPONS - 1)
 			i = 0;
