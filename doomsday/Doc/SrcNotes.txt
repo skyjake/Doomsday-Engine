@@ -1,8 +1,8 @@
 
                           Doomsday Engine Sources
                           -----------------------
-                              March 16, 2003
-                          (engine version 1.7.8)
+                               May 28, 2003
+                          (engine version 1.7.9)
 
                 by Jaakko Keränen <skyjake@doomsdayhq.com>
                         http://www.doomsdayhq.com/
@@ -15,7 +15,7 @@ RELEASE NOTES:
 The Doomsday Engine source code is distributed under the GNU General Public
 License (see LICENSE in the root directory).
 
-The code in this package was used to build the 1.7.8 release.
+The code in this package was used to build the 1.7.9 release.
 
 The placement of some files was changed in 1.7.6; you shouldn't install
 this package on top of a previous Doomsday Sources tree unless it's newer
@@ -25,7 +25,7 @@ The source code is more or less in a state of disarray. This tends to
 happen when you take three separate code bases and try to fit them
 together. The files of the engine, many of which I've written myself from
 scratch, are more organized but lack a coherent style. Things like function
-header comments, variable naming convention and the use of whitespace have
+header comments, variable naming conventions and the use of whitespace have
 varied over time and been influenced by the various styles used in the
 original Doom, Heretic and Hexen sources. You'll find that much of the code
 is not very pretty.
@@ -41,9 +41,9 @@ Source code and Microsoft Visual C++ 6.0 project files for
 - drOpenGL: Doomsday OpenGL Renderer
 - drD3D: Doomsday Direct3D Renderer
 - dpDehRead: DeHackEd Reader Plugin
-- dsA3D: sound routines for A3D
-- dsCompat: sound routines for DirectSound 6
-- jtNet2
+- dsA3D: Sound routines for A3D
+- dsCompat: Sound routines for DirectSound 6
+- jtNet2 (obsolete)
 
 Documentation
 
@@ -64,7 +64,7 @@ REQUIREMENTS:
 Microsoft Visual C++ 6.0
 DirectX 8.0 SDK (or newer)
 EAX 2.0 SDK
-A3D 3.0 SDK (needed for building dsA3D)
+A3D 3.0 SDK (needed only for building dsA3D)
 FMOD SDK (http://fmod.org/)
 
 ...........................................................................
