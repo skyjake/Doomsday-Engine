@@ -3840,7 +3840,7 @@ State {
   ID = "DSGUNFLASH2";
   Sprite = "SHT2";
   Frame = 32777;
-  Tics = 4;
+  Tics = 3;
   Action = "A_Light2";
   Next state = "LIGHTDONE";
 }
@@ -3975,7 +3975,7 @@ State {
   ID = "MISSILEFLASH1";
   Sprite = "MISF";
   Frame = 32768;
-  Tics = 3;
+  Tics = 1; #3;
   Action = "A_Light1";
   Next state = "MISSILEFLASH2";
 }
