@@ -58,6 +58,7 @@ char    dataPath[256];
 // Command line options for setting the path explicitly.
 static char *explicitOption[NUM_RESOURCE_CLASSES][2] = {
 	{"-texdir", "-texdir2"},
+	{"-flatdir", "-flatdir2"},
 	{"-patdir", "-patdir2"},
 	{"-lmdir", "-lmdir2"},
 	{"-musdir", "-musdir2"},
@@ -68,6 +69,7 @@ static char *explicitOption[NUM_RESOURCE_CLASSES][2] = {
 // Class paths.
 static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] = {
 	"Textures\\",
+    "Flats\\",
 	"Patches\\",
 	"LightMaps\\",
 	"Music\\",
@@ -78,6 +80,7 @@ static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] = {
 // Recognized extensions (in order of importance). "*" means 'anything'.
 static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
 	// Graphics favor quality.
+	{".png", ".tga", ".pcx", NULL},
 	{".png", ".tga", ".pcx", NULL},
 	{".png", ".tga", ".pcx", NULL},
 	{".png", ".tga", ".pcx", NULL},

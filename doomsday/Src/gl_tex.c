@@ -1963,8 +1963,8 @@ void GL_DestroyImage(image_t * img)
 // GL_LoadHighRes
 //  Name must end in \0.
 //===========================================================================
-byte   *GL_LoadHighRes(image_t * img, char *name, char *prefix,
-					   boolean allowColorKey)
+byte *GL_LoadHighRes(image_t *img, char *name, char *prefix,
+                     boolean allowColorKey, resourceclass_t resClass)
 {
 	filename_t resource, fileName;
 
@@ -1972,7 +1972,7 @@ byte   *GL_LoadHighRes(image_t * img, char *name, char *prefix,
 	sprintf(resource, "%s%s", prefix, name);
 
 	if(!R_FindResource
-	   (RC_TEXTURE, resource, allowColorKey ? "-ck" : NULL, fileName))
+	   (resClass, resource, allowColorKey ? "-ck" : NULL, fileName))
 	{
 		// There is no such external resource file.
 		return NULL;
@@ -1986,9 +1986,9 @@ byte   *GL_LoadHighRes(image_t * img, char *name, char *prefix,
 //  Use this when loading custom textures from the Data\*\Textures dir.
 //  The returned buffer must be freed with M_Free.
 //===========================================================================
-byte   *GL_LoadTexture(image_t * img, char *name)
+byte *GL_LoadTexture(image_t * img, char *name)
 {
-	return GL_LoadHighRes(img, name, "", true);
+	return GL_LoadHighRes(img, name, "", true, RC_TEXTURE);
 }
 
 //===========================================================================
@@ -1996,7 +1996,7 @@ byte   *GL_LoadTexture(image_t * img, char *name)
 //  Use this when loading high-res wall textures.
 //  The returned buffer must be freed with M_Free.
 //===========================================================================
-byte   *GL_LoadHighResTexture(image_t * img, char *name)
+byte *GL_LoadHighResTexture(image_t * img, char *name)
 {
 	if(noHighResTex)
 		return NULL;
@@ -2007,11 +2007,19 @@ byte   *GL_LoadHighResTexture(image_t * img, char *name)
 // GL_LoadHighResFlat
 //  The returned buffer must be freed with M_Free.
 //===========================================================================
-byte   *GL_LoadHighResFlat(image_t * img, char *name)
+byte *GL_LoadHighResFlat(image_t * img, char *name)
 {
+    byte *ptr;
+    
 	if(noHighResTex)
 		return NULL;
-	return GL_LoadHighRes(img, name, "Flat-", false);
+
+    // First try the Flats category.
+    if((ptr = GL_LoadHighRes(img, name, "", false, RC_FLAT)) != NULL)
+        return ptr;
+
+    // Try the old-fashioned "Flat-NAME" in the Textures category.
+    return GL_LoadHighRes(img, name, "Flat-", false, RC_TEXTURE);
 }
 
 //===========================================================================
