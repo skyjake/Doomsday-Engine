@@ -21,6 +21,7 @@
 #include "../doomsday.h"
 #include "../dd_api.h"
 #include "g_dgl.h"
+#include "version.h"
 
 #define Set DD_SetInteger
 #define Get DD_GetInteger
@@ -31,38 +32,17 @@
 #define strncasecmp strnicmp
 #endif
 
-// Uncomment, to enable all timebomb stuff
+/*// Uncomment, to enable all timebomb stuff
 //#define TIMEBOMB
 #define TIMEBOMB_YEAR	95		// years since 1900
 #define TIMEBOMB_STARTDATE	268	// initial date (9/26)
 #define TIMEBOMB_ENDDATE	301	// end date (10/29)
+*/
 
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
 #ifndef NORANGECHECKING
 #define RANGECHECK
-#endif
-
-// Past distributions
-//#define VERSIONTEXT "ID V1.2"
-//#define VERSIONTEXT "RETAIL STORE BETA"		// 9/26/95
-//#define VERSIONTEXT "DVL BETA 10 05 95" // Used for GT for testing
-//#define VERSIONTEXT "DVL BETA 10 07 95" // Just an update for Romero
-//#define VERSIONTEXT "FINAL 1.0 (10 13 95)" // Just an update for Romero
-
-#ifndef VER_ID
-//#define VER_ID "DVL"
-#define VER_ID "Doomsday"
-#endif
-
-// Version numbering changes: 200 means JHexen v1.0.
-#define VERSION 200
-#define VERSION_TEXT "1.2.10"
-
-#ifdef RANGECHECK
-#define VERSIONTEXT "Version "VERSION_TEXT" +R "__DATE__" ("VER_ID")"
-#else
-#define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("VER_ID")"
 #endif
 
 // all exterior data is defined here

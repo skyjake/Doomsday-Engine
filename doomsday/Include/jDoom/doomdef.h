@@ -33,6 +33,7 @@
 #include "../doomsday.h"
 #include "../dd_api.h"
 #include "g_dgl.h"
+#include "version.h"
 
 #define Set			DD_SetInteger
 #define Get			DD_GetInteger
@@ -43,25 +44,6 @@ extern game_export_t	gx;
 //
 // Global parameters/defines.
 //
-// DOOM version
-//enum { VERSION =  110 };
-
-#ifndef JDOOM_VER_ID
-#ifdef _DEBUG
-#define JDOOM_VER_ID "+D Doomsday"
-#else
-#define JDOOM_VER_ID "Doomsday"
-#endif
-#endif
-
-// My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT "1.15.0"
-#define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JDOOM_VER_ID")"
-
-// All the versions of Doom have different savegame IDs, but
-// 500 will be the savegame base from now on.
-#define SAVE_VERSION_BASE	500
-#define SAVE_VERSION		(SAVE_VERSION_BASE + gamemode)
 
 #define mobjinfo	(*gi.mobjinfo)
 #define states		(*gi.states)

@@ -38,6 +38,7 @@ extern "C" {
  */
 
 #include <stdlib.h>
+#include "dd_version.h"
 #include "dd_types.h"
 #include "p_think.h"
 #include "def_share.h"
@@ -47,24 +48,6 @@ extern "C" {
 // General Definitions and Macros
 //
 //------------------------------------------------------------------------
-
-/*	
- * Version number rules: (major).(minor).(revision)
- *
- * Major version will be 1 for now (few things short of a complete 
- * rewrite will increase the major version).
- *
- * Minor version increases with important feature releases.
- * NOTE: No extra zeros. Numbering goes from 1 to 9 and continues from
- * 10 like 'normal' numbers.
- *
- * Revision number increases with each small (maintenance) release.
- */
-
-// Version constants. The Game module can use DOOMSDAY_VERSION to verify 
-// that the engine is new enough. 
-#define DOOMSDAY_VERSION		10800
-#define DOOMSDAY_VERSION_TEXT	"1.8.0"
 
 #define DDMAXPLAYERS			16
 
