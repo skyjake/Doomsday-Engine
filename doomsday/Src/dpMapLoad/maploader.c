@@ -97,7 +97,7 @@ static void GetWorkDir(char *dir, int mainLump)
 	M_ExtractFileBase(sourceFile, base);
 
 	for(i = 0; sourceFile[i]; ++i)
-		identifier ^= sourceFile[i] << (i % 12);
+		identifier ^= sourceFile[i] << ((i * 3) % 11);
 	
 	// The work directory path is relative to the runtime directory.
 	sprintf(dir, "%s%s\\%s-%04X\\", bspDir, gex->Get(DD_GAME_MODE),
