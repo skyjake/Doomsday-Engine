@@ -531,6 +531,10 @@ SOURCE=.\Src\Common\m_fixed.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\m_huffman.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\m_misc.c
 # End Source File
 # Begin Source File
@@ -1089,6 +1093,10 @@ SOURCE=.\Include\m_bams.h
 # Begin Source File
 
 SOURCE=.\Include\m_filehash.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\m_huffman.h
 # End Source File
 # Begin Source File
 
