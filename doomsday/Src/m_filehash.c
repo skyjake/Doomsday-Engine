@@ -1,11 +1,25 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** M_FILEHASH.C
-//**
-//** Finding files *fast*.
-//**
-//**************************************************************************
+/*
+ * m_filehash.c: File Name Hash Table
+ *
+ * Finding files *fast*.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -167,12 +181,6 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
 	M_RemoveBasePath(path, relPath);
 	strlwr(relPath);
 
-/*	if(!relPath[0] || Dir_IsAbsolute(relPath))
-	{
-		// All absolute paths get their own node.
-		return FH_DirecNode(relPath, NULL);
-	}*/
-
 	tokPath = cursor = malloc(strlen(relPath) + 1);
 	strcpy(tokPath, relPath);
 	parent = NULL;
@@ -187,35 +195,6 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
 	free(tokPath);
 	return node;
 }
-
-/*
- * A new directory node is created if one does not exist for the path.
- */
-/*direcnode_t *FH_GetDirecNode(const char *path)
-{
-	direcnode_t *node = FH_BuildDirecNodes(path);
-
-	// Try to find a matching path in the existing directories.
-	for(node = gDirecFirst; node; node = node->next)
-		if(!strcmp(node->path, path)) 
-			return node;
-
-	// It doesn't exist yet, let's add a new node to the end.
-	node = malloc(sizeof(*node));
-	node->next = NULL;
-	if(gDirecLast) gDirecLast->next = node;
-	gDirecLast = node;
-	if(!gDirecFirst) gDirecFirst = node;
-	
-	// Make a copy of the path.
-	node->path = malloc(strlen(path) + 1);
-	strcpy(node->path, path);
-
-	// No files yet.
-	node->count = 0;
-	
-	return node;
-}*/
 
 /*
  * This is hash function. It uses the base part of the file name to
@@ -279,16 +258,6 @@ void FH_AddFile(const char *filePath, direcnode_t *dir)
  */
 int FH_ProcessFile(const char *fn, filetype_t type, void *parm)
 {
-	//direcnode_t *directory = parm;
-
-/*	if(type == FT_DIRECTORY)
-	{
-		// Subdirectories are processed recursively.
-		//FH_AddDirectory(fn);
-	}
-	else 
-	{*/
-	
 	char path[256], *pos;
 
 	if(type != FT_NORMAL) return true;

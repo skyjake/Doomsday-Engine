@@ -36,4 +36,4 @@ int			ArgExists(char *check);
 int			ArgIsOption(int i);
 int			ArgRecognize(char *first, char *second);
 
-#endif //__COMMAND_LINE_ARGS_H__
+#endif /* __COMMAND_LINE_ARGS_H__ */
