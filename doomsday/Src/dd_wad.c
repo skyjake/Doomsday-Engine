@@ -26,7 +26,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "de_base.h"
 #include "de_console.h"
