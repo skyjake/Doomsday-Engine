@@ -1471,11 +1471,8 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 	M_GetFileExt(img->fileName, ext);
 	if(!strcmp(ext, "pcx"))
 	{
-		if(!PCX_GetSize(img->fileName, &img->width, &img->height)) 
-			return NULL;
-
-		img->pixels = M_Malloc(4 * img->width * img->height);
-		PCX_Load(img->fileName, img->width, img->height, img->pixels);
+		img->pixels = PCX_AllocLoad(img->fileName, &img->width, 
+			&img->height, NULL);
 		img->pixelSize = 3; // PCXs can't be masked.
 	}
 	else if(!strcmp(ext, "tga"))
