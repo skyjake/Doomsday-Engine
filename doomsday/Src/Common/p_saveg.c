@@ -82,8 +82,8 @@ typedef struct
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 LZFILE *savefile;
-char save_path[128] = "savegame\\";
-char client_save_path[128] = "savegame\\client\\";
+char save_path[128]; /* = "savegame\\"; */
+char client_save_path[128]; /* = "savegame\\client\\"; */
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -761,6 +761,9 @@ void P_UnArchivePlayers(boolean *infile, boolean *loaded)
 				// Later references to the player number 'i' must be
 				// translated!
 				SaveToRealPlayer[i] = j;
+#ifdef _DEBUG
+				Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
+#endif
 				break;
 			}
 		if(!player)
@@ -1247,19 +1250,28 @@ void P_UnArchiveBrain(void)
 }
 #endif
 
+/*
+ * Initialize the savegame directories. If the directories do not 
+ * exist, they are created.
+ */
 void SV_Init(void)
 {
-	int p = ArgCheck("-savedir");
-
-    if(p && p < Argc()-1)
+	if(ArgCheckWith("-savedir", 1))
     {
-		strcpy(save_path, Argv(p+1));
+		strcpy(save_path, ArgNext());
 		// Add a trailing backslash is necessary.
 		if(save_path[strlen(save_path)-1] != '\\')
 			strcat(save_path, "\\");
-		strcpy(client_save_path, save_path);
-		strcat(client_save_path, "client\\");
     }
+	else
+	{
+		// Use the default path.
+		sprintf(save_path, "savegame\\%s\\", G_Get(DD_GAME_MODE));
+	}
+
+	// Build the client save path.
+	strcpy(client_save_path, save_path);
+	strcat(client_save_path, "client\\");
 
 	// Check that the save paths exist.
 	M_CheckPath(save_path);
@@ -1398,7 +1410,7 @@ int SV_LoadGame(char *filename)
 		return false;
 	}
 #ifdef __JDOOM__
-	if(hdr.gamemode != gamemode && !ArgCheck("-nosavecheck"))
+	if(hdr.gamemode != gamemode && !ArgExists("-nosavecheck"))
 	{
 		Con_Message("SV_LoadGame: savegame not from gamemode %i.\n", gamemode);
 		return false;
