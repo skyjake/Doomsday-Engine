@@ -28,7 +28,7 @@ void            DD_GameLoop(void);
 void            DD_DrawAndBlit(void);
 void            DD_StartFrame(void);
 void            DD_EndFrame(void);
-int             DD_GetFrameRate(void);
+float			DD_GetFrameRate(void);
 void			DD_ResetTimer(void);
 
 #endif

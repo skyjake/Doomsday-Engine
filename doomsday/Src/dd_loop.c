@@ -70,7 +70,8 @@ timespan_t sysTime, gameTime, demoTime, levelTime;
 
 static double lastFrameTime;
 
-static int lastfpstic = 0, fpsnum = 0, lastfc = 0;
+static float fps;
+static int lastFrameCount;
 
 // CODE --------------------------------------------------------------------
 
@@ -181,7 +182,9 @@ void DD_StartFrame(void)
 {
 	S_StartFrame();
 	if(gx.BeginFrame)
+	{
 		gx.BeginFrame();
+	}
 }
 
 //===========================================================================
@@ -189,15 +192,19 @@ void DD_StartFrame(void)
 //===========================================================================
 void DD_EndFrame(void)
 {
+	uint nowTime = Sys_GetRealTime();
+	static uint lastFpsTime = 0;
+	
 	// Increment the frame counter.
 	framecount++;
 
-	// Count the frames.
-	if(Sys_GetTime() - 35 >= lastfpstic)
+	// Count the frames every other second.
+	if(nowTime - 2000 >= lastFpsTime)
 	{
-		lastfpstic = Sys_GetTime();
-		fpsnum = framecount - lastfc;
-		lastfc = framecount;
+		fps = (framecount - lastFrameCount) /
+			((nowTime - lastFpsTime)/1000.0f);
+		lastFpsTime = nowTime;
+		lastFrameCount = framecount;
 	}
 
 	if(gx.EndFrame)
@@ -209,9 +216,9 @@ void DD_EndFrame(void)
 //===========================================================================
 // DD_GetFrameRate
 //===========================================================================
-int DD_GetFrameRate(void)
+float DD_GetFrameRate(void)
 {
-	return fpsnum;
+	return fps;
 }
 
 /*
@@ -223,6 +230,7 @@ void DD_Ticker(timespan_t time)
 	static trigger_t fixed = { 1 / 35.0 };
 
 	// Demo ticker. Does stuff like smoothing of view angles.
+	Net_BuildLocalCommands(time);
 	Demo_Ticker(time);
 	P_Ticker(time);
 
@@ -235,13 +243,13 @@ void DD_Ticker(timespan_t time)
 
 			gx.Ticker( /* time */ );	// Game DLL.
 
-			// Client/server ticks.  These are placed here because
+			// Server ticks.  These are placed here because
 			// they still rely on fixed ticks and thus it's best to
 			// keep them in sync with the fixed game ticks.
 			if(isClient)
-				Cl_Ticker( /*time */ );
+				Cl_Ticker( /* time */ );
 			else
-				Sv_Ticker( /*time */ );
+				Sv_Ticker( /* time */ );
 
 			// This is needed by rend_camera_smooth.  It needs to know
 			// when the world tic has occured so the next sharp
@@ -346,6 +354,9 @@ void DD_RunTics(void)
 		ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
 		frameTime -= ticLength;
 
+		// Process input events.
+		DD_ProcessEvents();
+		
 		// Call all the tickers.
 		DD_Ticker(ticLength);
 
