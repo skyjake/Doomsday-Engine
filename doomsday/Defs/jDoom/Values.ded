@@ -37,13 +37,22 @@ Header { Version = 5; }
 #   scalex=1.0  X scaling factor.
 #   scaley=1.0  Y scaling factor.
 #   angle=0.0   Rotation angle (around initial origin).
+#   flash       Enable flashy type-in effect.
+#   noflash     Disable it (the default).
+#   case        Enable case-based scaling.
+#   nocase      Disable it (the default).
+#   ups=1.25    Upper case Y scale.
+#   upo=0.0     Upper case Y offset.
+#   los=1.0     Lower case Y scale.
+#   loo=3.0     Lower case Y offset.
+#   break       Start a new line.
 #
 # An example: 
 # 
 # Values {
 #   Patch Replacement {
-#     M_DOOM = "{angle=35; R=.5; G=1; B=.5; scale=3}G{scale=2;y=10}ONE {
-#       scale=3;y=0;angle=60}F{ scale = 2; y = 10 }ISHING";
+#     M_DOOM = "{R=.5; G=1; B=.5; scale=3}G{scale=2;y=10}ONE {
+#       scale=3;y=0}F{ scale = 2; y = 10 }I{break}SHING";
 #   };
 # }
 
