@@ -690,7 +690,7 @@ typedef struct ddmobj_base_s
 	short			visangle;			/* visual angle ("angle-servo") */ 
 	int				selector;			/* multipurpose info */ 
 	int				validcount;			/* used in iterating */
-	void			*light;				/* pointer to the lumobj, or NULL */
+	int				light;				/* index+1 of the lumobj, or 0 */
 	byte			halofactor;			/* strength of halo */
 } ddmobj_base_t;
 
