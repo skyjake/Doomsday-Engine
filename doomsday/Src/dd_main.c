@@ -59,9 +59,6 @@ int CheckArg(char *tag, char **value);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void DD_StartTitle(void);
-void DD_PageTicker(void);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void PageDrawer(void);
