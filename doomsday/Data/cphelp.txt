@@ -108,16 +108,6 @@ cvar = rend-light-radius-max
 def = 256
 desc = The maximum radius a dynamic light can have. This is just a limit: to make the lights larger, you also need to increase the Dynamic light radius factor.
 
-[Clip dyn]
-cvar = rend-light-clip
-def = Yes
-desc = Dynamic lights are clipped to subsector and light boundaries so that the resulting dynamic light polygons only cover the lit area of each subsector. This introduces a slight computational overhead but usually results in faster performance because of decreased polygon size and overdraw.
-
-[Lightpoly edge]
-cvar = rend-light-shrink
-def = 0.02
-desc = All edges of dynamic light polygons are moved toward the center of the polygon. Can be used to reduce the visual artifact where overlapping dynamic light polygons cause stray pixels along surface edges. Too large values result in unlit gaps along surface edges.
-
 [Floor/ceiling glow on w]
 cvar = rend-glow-wall
 def = Yes
