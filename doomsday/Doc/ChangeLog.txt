@@ -33,6 +33,7 @@ Version 1.7.9 (work in progress)
 - DirectSound 8: fixed a problem with buffer loading; using -csd should 
   no longer be necessary
 - Sound definition patching fixed (Ext/Group keys were ignored)
+- fixed bug 712332: when server pauses a netgame, all clients will pause
 
 KickStart:
 * Cheb's KickStart v2.09 replaces the ancient v1.6
@@ -49,6 +50,10 @@ jDoom:
 jHexen:
 - fixed: sound sequence delays with repeating sounds (sequence updater
   didn't get correct information about currently playing sound effects)
+  
+drOpenGL/drD3D:
++ -refresh option
+* closest available refresh rate selected
 
 
 Version 1.7.8
