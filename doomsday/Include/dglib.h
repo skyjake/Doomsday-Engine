@@ -1,6 +1,7 @@
 //===========================================================================
+// $Id$
 // Doomsday Graphics Library
-//	This header file is used by everyone who wants to use DGL.
+// This header file is read by all modules that use DGL.
 //===========================================================================
 #ifndef __DOOMSDAY_GL_SHARED_H__
 #define __DOOMSDAY_GL_SHARED_H__
@@ -65,16 +66,16 @@ typedef struct
 
 enum
 {
-	DGL_FALSE						= 0,
-	DGL_TRUE						= 1,
+	DGL_FALSE						= 0x0000,
+	DGL_TRUE						= 0x0001,
 
 	// Return codes
-	DGL_ERROR						= 0,
-	DGL_OK							= 1,
+	DGL_ERROR						= 0x0000,
+	DGL_OK							= 0x0001,
 	DGL_UNSUPPORTED,
 
-	DGL_MODE_WINDOW					= 0,
-	DGL_MODE_FULLSCREEN				= 1,
+	DGL_MODE_WINDOW					= 0x0000,
+	DGL_MODE_FULLSCREEN				= 0x0001,
 
 	// Formats
 	DGL_RGB							= 0x1000,
@@ -124,25 +125,24 @@ enum
 
 	// Caps
 	DGL_TEXTURING					= 0x5000,
-	DGL_BLENDING,
-	DGL_DEPTH_TEST,
-	DGL_ALPHA_TEST,
-	DGL_SCISSOR_TEST,
-	DGL_CULL_FACE,
-	DGL_COLOR_WRITE,
-	DGL_DEPTH_WRITE,
-	DGL_FOG,
-	DGL_PALETTED_TEXTURES,
-	DGL_DETAIL_TEXTURE_MODE,
-	DGL_PALETTED_GENMIPS,
-	DGL_MODULATE_ADD_COMBINE,
-	DGL_MODULATE_TEXTURE,
-	DGL_BLENDING_OP,
-	DGL_WIREFRAME_MODE,
-	DGL_TEXTURE_COMPRESSION,
+	DGL_BLENDING					= 0x5001,
+	DGL_DEPTH_TEST					= 0x5002,
+	DGL_ALPHA_TEST					= 0x5003,
+	DGL_SCISSOR_TEST				= 0x5004,
+	DGL_CULL_FACE					= 0x5005,
+	DGL_COLOR_WRITE					= 0x5006,
+	DGL_DEPTH_WRITE					= 0x5007,
+	DGL_FOG							= 0x5008,
+	DGL_PALETTED_TEXTURES			= 0x5009,
+	DGL_PALETTED_GENMIPS			= 0x500B,
+	DGL_MODULATE_ADD_COMBINE		= 0x500C,
+	DGL_MODULATE_TEXTURE			= 0x500D,
+	DGL_BLENDING_OP					= 0x500E,
+	DGL_WIREFRAME_MODE				= 0x500F,
+	DGL_TEXTURE_COMPRESSION			= 0x5010,
 
 	DGL_TEXTURE0					= 0x5F00,
-	DGL_TEXTURE1,
+	DGL_TEXTURE1					= 0x5F01,
 	DGL_TEXTURE2,
 	DGL_TEXTURE3,
 	DGL_TEXTURE4,
@@ -177,7 +177,7 @@ enum
 	DGL_NOTEQUAL,
 
 	// Miscellaneous
-	DGL_MIN_FILTER					= 0xf000,
+	DGL_MIN_FILTER					= 0xF000,
 	DGL_MAG_FILTER,
 	DGL_NEAREST,
 	DGL_LINEAR,
@@ -205,8 +205,9 @@ enum
 	DGL_CW,
 
 	// Various bits
-	DGL_COLOR_BUFFER_BIT		= 0x1,
-	DGL_DEPTH_BUFFER_BIT		= 0x2,
+	DGL_COLOR_BUFFER_BIT			= 0x00000001,
+	DGL_DEPTH_BUFFER_BIT			= 0x00000002,
+	DGL_ALL_BITS					= 0xFFFFFFFF
 };
 
 #endif
