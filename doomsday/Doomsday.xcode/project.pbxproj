@@ -311,6 +311,7 @@
 		};
 		29B97317FDCFA39411CA2CEA = {
 			children = (
+				B0BBED3007DB998600663713,
 				089C165CFE840E0CC02AAC07,
 			);
 			isa = PBXGroup;
@@ -391,7 +392,7 @@
 	<key>CFBundleExecutable</key>
 	<string>Doomsday</string>
 	<key>CFBundleIconFile</key>
-	<string></string>
+	<string>deng.icns</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -568,6 +569,7 @@
 			files = (
 				089C165EFE840E0CC02AAC07,
 				B0A8094E06F1F45D007AEB2E,
+				B0BBED3107DB998600663713,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6770,6 +6772,19 @@
 			isa = PBXTargetDependency;
 			target = B0D5B7DE06EF6D1000B98CC8;
 			targetProxy = B0A809B306F23A00007AEB2E;
+		};
+		B0BBED3007DB998600663713 = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.icns;
+			path = deng.icns;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		B0BBED3107DB998600663713 = {
+			fileRef = B0BBED3007DB998600663713;
+			isa = PBXBuildFile;
+			settings = {
+			};
 		};
 		B0CB90BA078B393C007EE194 = {
 			fileEncoding = 5;
