@@ -27,6 +27,11 @@
 #define MAX_READ	8192
 #define ISSPACE(c)	((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
+typedef struct trigger_s {
+	timespan_t duration;
+	timespan_t accum;
+} trigger_t;
+
 extern int	read_count;
 extern int	rndindex;
 
@@ -83,6 +88,9 @@ void		M_PointCrossProduct(float *v1, float *v2, float *v3, float *out);
 void		M_RotateVector(float vec[3], float degYaw, float degPitch);
 void		M_ProjectPointOnLinef(fixed_t *point, fixed_t *linepoint, fixed_t *delta, float gap, float *result);
 float		M_CycleIntoRange(float value, float length);
+
+// Time utilities.
+boolean		M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime);
 
 // Other utilities.
 int			M_ScreenShot(char *filename, int bits);

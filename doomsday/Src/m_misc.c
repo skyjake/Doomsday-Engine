@@ -922,10 +922,9 @@ void M_ReplaceFileExt(char *path, char *newext)
 	}
 }
 
-//===========================================================================
-// M_Pretty
-//	Return a prettier copy of the original path.
-//===========================================================================
+/*
+ * Return a prettier copy of the original path.
+ */
 const char *M_Pretty(const char *path)
 {
 #define MAX_BUFS 8
@@ -942,4 +941,21 @@ const char *M_Pretty(const char *path)
 
 	// We don't know how to make this prettier.
 	return path;
+}
+
+/*
+ * Advances time and return true if the trigger is triggered.
+ */
+boolean M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime)
+{
+	trigger->accum += advanceTime;
+
+	if(trigger->accum >= trigger->duration)
+	{
+		trigger->accum -= trigger->duration;
+		return true;
+	}
+
+	// It wasn't triggered.
+	return false;
 }
