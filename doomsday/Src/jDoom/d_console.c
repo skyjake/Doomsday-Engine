@@ -198,6 +198,7 @@ cvar_t gameCVars[] =
 	"menu-flash-b",		0,			CVT_FLOAT,	&cfg.flashcolor[2],			0, 1,	"Menu selection flash color, blue component.",
 	"menu-flash-speed",	0,			CVT_INT,	&cfg.flashspeed,			0, 50,	"Menu selection flash speed.",
 	"menu-turningskull",0,			CVT_BYTE,	&cfg.turningSkull,			0, 1,	"1=Menu skull turns at slider items.",
+	
 	"hud-health",		0,			CVT_BYTE,	&cfg.hudShown[HUD_HEALTH],	0, 1,	"1=Show health in HUD.",
 	"hud-armor",		0,			CVT_BYTE,	&cfg.hudShown[HUD_ARMOR],	0, 1,	"1=Show armor in HUD.",
 	"hud-ammo",			0,			CVT_BYTE,	&cfg.hudShown[HUD_AMMO],	0, 1,	"1=Show ammo in HUD.",
@@ -217,6 +218,7 @@ cvar_t gameCVars[] =
 	"view-cross-size", CVF_NO_MAX,	CVT_INT,	&cfg.xhairSize,		0, 0,	"Crosshair size: 1=Normal.",
 	"view-bob-height",	0,			CVT_FLOAT,	&cfg.bobView,		0, 1,	"Scale for viewheight bobbing.",
 	"view-bob-weapon",	0,			CVT_FLOAT,	&cfg.bobWeapon,		0, 1,	"Scale for player weapon bobbing.",
+	"view-bob-weapon-switch-lower", 0, CVT_BYTE, &cfg.bobWeaponLower, 0, 1,	"HUD weapon lowered during weapon switching.",
 
 	"music-custom",		0,			CVT_BYTE,	&cfg.customMusic,		0, 1,	"1=Enable custom (external) music files.",
 
