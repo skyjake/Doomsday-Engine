@@ -392,7 +392,6 @@ class Profile:
         else:
             usedAddons = self.getUsedAddons()
 
-            print usedAddons
             finalAddons = []
 
             # Any boxes?
@@ -413,7 +412,6 @@ class Profile:
         # Apply load order.
         self.sortByLoadOrder(finalAddons)
 
-        print finalAddons
         return finalAddons                
 
     def getKeywords(self):
