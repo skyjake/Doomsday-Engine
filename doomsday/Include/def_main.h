@@ -84,6 +84,7 @@ ded_mapinfo_t  *Def_GetMapInfo(char *map_id);
 ded_light_t    *Def_GetLightDef(int spr, int frame);
 ded_decor_t    *Def_GetDecoration(int number, boolean is_texture,
 								  boolean has_ext);
+ded_reflection_t *Def_GetReflection(int number, boolean is_texture);
 int             Def_Get(int type, char *id, void *out);
 boolean         Def_SameStateSequence(state_t * snew, state_t * sold);
 void            Def_LightMapLoaded(const char *id, unsigned int texture);
