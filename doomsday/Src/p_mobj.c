@@ -171,9 +171,16 @@ boolean PIT_CheckThing (mobj_t* thing, checkpos_data_t *tm)
 		&& (tm->thing->dplayer /* || thing->dplayer */
 			|| thing->ddflags & DDMF_NOGRAVITY))
 	{
-		if(thing->z > tm->z+tm->height 
-			|| thing->z+thing->height < tm->z)	// under or over it
+		if(thing->z > tm->z + tm->height)
+		{
+			// We're under it.
+			return true;
+		}
+		else if(thing->z + thing->height < tm->z)
+		{
+			// We're over it.
 			return true; 
+		}
 		overlap = true;
 	}
 	if(abs(thing->x - tm->x) >= blockdist 
@@ -185,10 +192,18 @@ boolean PIT_CheckThing (mobj_t* thing, checkpos_data_t *tm)
 	if(overlap /*&& thing->ddflags & DDMF_SOLID*/)
 	{
 		// How are we positioned?
-		if(tm->z > thing->z + thing->height - 24*FRACUNIT)
+		if(tm->z >= thing->z + thing->height - 24*FRACUNIT)
 		{
+			// Above, allowing stepup.
 			tm->thing->onmobj = thing;
 			tm->floorz = thing->z + thing->height;
+			return true;
+		}
+		
+		// Under, then?
+		if(tm->z + tm->height < thing->z)
+		{
+			tm->ceilingz = thing->z;
 			return true;
 		}
 	}
@@ -293,6 +308,22 @@ boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y)
     floatok = false;
     if(!P_CheckPosition2(thing, x, y, thing->z))
 	{
+/*		if(thing->onmobj)
+		{
+			mobj_t *blocking = thing->onmobj;
+
+			// Can we step on the mobj? (Hardcoded 24 stepup.)
+			if(blocking->z + blocking->height - thing->z > 24*FRACUNIT
+				|| ( blocking->subsector->sector->ceilingheight
+					- (blocking->z + blocking->height) < thing->height )
+				|| ( tmceilingz - (blocking->z + blocking->height) 
+					< thing->height ))
+			{
+				// Can't step up.
+				return false;
+			}
+		}*/
+
 		if(!thing->onmobj || thing->wallhit)
 			return false;		// Solid wall or thing.
 	}
