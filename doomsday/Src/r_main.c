@@ -148,14 +148,12 @@ void R_Update(void)
 
 	// Go back to startup-screen mode.
 	Con_StartupInit();
-	//GL_ShutdownTextureManager();
 	GL_TotalReset(true);
 	GL_TotalReset(false);
 	R_UpdateData();
 	R_InitSprites();	// Fully reinitialize sprites.
 	R_InitSkyMap();
 	R_UpdateTranslationTables();
-	//GL_InitRefresh();
 	// Re-read definitions.
 	Def_Read();
 	Def_PostInit();
@@ -460,6 +458,10 @@ void R_RenderPlayerView(ddplayer_t *player)
 		i = gl.GetInteger(DGL_POLY_COUNT);
 		Con_Printf("Tris: %-4i (Mdl=%-4i)\n", i, model_tri_count); 
 		model_tri_count = 0;
+	}
+	if(rend_info_lums)
+	{
+		Con_Printf("LumObjs: %-4i\n", numLuminous);
 	}
 }
 
