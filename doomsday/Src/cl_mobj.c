@@ -52,7 +52,7 @@ extern playerstate_t playerstate[MAXPLAYERS];
 
 cmhash_t cmHash[HASH_SIZE];
 
-int	predict_tics = 70;
+//int	predict_tics = 70;
 
 // Time skew tells whether client time is running before or after frame time.
 //int net_timeskew = 0;			
@@ -219,23 +219,32 @@ void Cl_SetThingState(mobj_t *mo, int stnum)
  */
 void Cl_CheckMobj(mobj_t *mo)
 {
-#if _DEBUG
-	int oldz = mo->z;
-#endif
+	boolean onFloor = false, inCeiling = false;
+
+	if(mo->z == DDMININT) 
+	{
+		onFloor = true;
+		mo->z = mo->floorz;
+	}
+	if(mo->z == DDMAXINT)
+	{
+		inCeiling = true;
+		mo->z = mo->ceilingz - mo->height;
+	}
 
 	// Find out floor and ceiling z.
 	P_CheckPosition2(mo, mo->x, mo->y, mo->z);	
 	mo->floorz = tmfloorz;
 	mo->ceilingz = tmceilingz;
 
-	// Fix the Z coordinate, if necessary.
-	/*if(!(mo->ddflags & DDMF_GOINGROUND))
-		if(mo->z < mo->floorz) mo->z = mo->floorz;*/
-
-/*#if _DEBUG
-	if(oldz != mo->z)
-		CON_Printf("Cl_CheckMobj: fixed Z from %x to %x\n", oldz, mo->z);
-#endif*/
+	if(onFloor)
+	{
+		mo->z = mo->floorz;
+	}
+	if(inCeiling)
+	{
+		mo->z = mo->ceilingz - mo->height;
+	}
 }
 
 /*
@@ -440,7 +449,6 @@ int Cl_ReadMobjDelta(void)
 void Cl_InitClientMobjs()
 {
 	previous_time = gametic;
-//	latest_frame_size = 0;
 	
 	// List of client mobjs.
 	memset(cmHash, 0, sizeof(cmHash));
@@ -632,10 +640,10 @@ void Cl_PredictMovement(void)
 	uint nowTime = Sys_GetRealTime();
 
 	// Only predict up to a certain number of tics.
-	if(predicted_tics && predicted_tics >= predict_tics) 
+/*	if(predicted_tics && predicted_tics >= predict_tics) 
 	{
 		return;
-	}
+	}*/
 
 	predicted_tics++;
 
@@ -849,6 +857,16 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
 		d->z = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
 	}
 
+	// When these flags are set, the normal Z coord is not included.
+	if(moreFlags & MDFE_Z_FLOOR)
+	{
+		d->z = DDMININT;
+	}
+	if(moreFlags & MDFE_Z_CEILING)
+	{
+		d->z = DDMAXINT;
+	}
+
 #ifdef _DEBUG
 	if(!d->x && !d->y)
 	{
@@ -924,7 +942,8 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
 			Cl_SetThingPosition(cmo);
 		}
 		
-		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z))
+		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z)
+			|| moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
 		{
 			// This'll update floorz and ceilingz.
 			Cl_CheckMobj(d);
