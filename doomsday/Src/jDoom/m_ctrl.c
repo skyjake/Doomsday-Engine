@@ -183,9 +183,6 @@ Menu_t ControlsDef =
 
 static boolean SCControlConfig(int option)
 {
-	if(grabbing != NULL) 
-		Con_Error("SCControlConfig: grabbing is not NULL!!!\n");
-	
 	grabbing = controls + option;
 	return true;
 }
@@ -231,13 +228,6 @@ void M_DrawControlsMenu(void)
 	M_WriteText2(160-M_StringWidth(buff, hu_font_a)/2, 
 		menu->y-14, buff, hu_font_a, 1, 0, 0);
 
-	// Draw the page arrows.
-	/*token = (!menu->firstItem || MenuTime&8)? "invgeml2" : "invgeml1";
-	gi.GL_DrawPatchCS(menu->x, menu->y-16, W_GetNumForName(token));
-	token = (menu->firstItem+menu->numVisItems >= menu->itemCount || MenuTime&8)? 
-		"invgemr2" : "invgemr1";
-	gi.GL_DrawPatchCS(312-menu->x, menu->y-16, W_GetNumForName(token));*/
-
 	for(i=0; i<menu->numVisItems && menu->firstItem+i < menu->itemCount; i++, item++)
 	{
 		if(item->type == ITT_EMPTY) continue;
@@ -265,9 +255,6 @@ void M_DrawControlsMenu(void)
 			token = strtok(NULL, " ");
 		}
 		strupr(prbuff);
-		/*for(k=0; prbuff[k]; k++)
-			if(prbuff[k] < 32 || prbuff[k] > 'Z')
-				prbuff[k] = ' ';*/
 
 		if(grabbing == ctrl)
 		{
@@ -275,7 +262,6 @@ void M_DrawControlsMenu(void)
 			spacecat(prbuff, "...");
 		}
 
-		//MN_DrTextA_CS(prbuff, menu->x+134, menu->y + i*menu->itemHeight);
 		M_WriteText2(menu->x+134, menu->y + i*menu->itemHeight, 
 			prbuff, hu_font_a, 1, 1, 1);
 	}
