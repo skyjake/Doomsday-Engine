@@ -27,7 +27,7 @@
 // removed from the hash. Under normal circumstances, the special
 // status should be removed fairly quickly (a matter of out-of-sequence
 // frames or sounds playing before a mobj is sent).
-#define	CLMOBJ_TIMEOUT	10000	// 10 seconds
+#define	CLMOBJ_TIMEOUT	20000	// 20 seconds
 
 // TYPES -------------------------------------------------------------------
 
@@ -748,9 +748,9 @@ void Cl_DestroyMobj(clmobj_t *cmo)
  */
 void Cl_RevealMobj(clmobj_t *cmo)
 {
-#ifdef _DEBUG
+/*#ifdef _DEBUG
 	Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
-#endif
+#endif*/
 
 	cmo->flags &= ~CLMF_HIDDEN;
 
@@ -795,9 +795,9 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
 			// delta arrives. (created, but not linked to the world)
 			cmo->flags |= CLMF_HIDDEN;		
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
 			Con_Printf("Cl_RMD2: Mobj %i created as Hidden.\n", id);
-#endif
+#endif*/
 		}
 	}
 
