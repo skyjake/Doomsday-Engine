@@ -374,6 +374,61 @@ void RL_PrepareFlat
 }
 
 //===========================================================================
+// RL_SelectTexUnits
+//	The first selected unit is active after this call.
+//===========================================================================
+void RL_SelectTexUnits(int count)
+{
+	int i;
+
+	// Disable extra units.
+	for(i = numTexUnits - 1; i >= count; i--) 
+		gl.Disable(DGL_TEXTURE0 + i);
+
+	// Enable the selected units.
+	for(i = count - 1; i >= 0; i--)
+	{
+		if(i >= numTexUnits) continue;
+
+		gl.Enable(DGL_TEXTURE0 + i);
+		// Enable the texcoord array for this unit.
+		gl.EnableArrays(0, 0, 0x1 << i);
+	}
+}
+
+//===========================================================================
+// RL_SelectTexCoordArray
+//===========================================================================
+void RL_SelectTexCoordArray(int unit, int index)
+{
+	void *coords[MAX_TEX_UNITS];
+
+	// Does this unit exist?
+	if(unit >= numTexUnits)	return;
+
+	memset(coords, 0, sizeof(coords));
+	coords[unit] = texCoords[index];
+	gl.Arrays(NULL, NULL, numTexUnits, coords, 0);
+}
+
+//===========================================================================
+// RL_Bind
+//===========================================================================
+void RL_Bind(DGLuint texture)
+{
+	gl.Bind(renderTextures? texture : 0);
+}
+
+//===========================================================================
+// RL_BindTo
+//===========================================================================
+void RL_BindTo(int unit, DGLuint texture)
+{
+	gl.SetInteger(DGL_ACTIVE_TEXTURE, unit);
+	gl.Bind(renderTextures? texture : 0);
+}
+
+//===========================================================================
 // RL_ClearHash
 //===========================================================================
 void RL_ClearHash(listhash_t *hash)
@@ -1371,21 +1426,6 @@ void RL_AddPoly(rendpoly_t *poly)
 }
 
 //===========================================================================
-// RL_SelectTexCoordArray
-//===========================================================================
-void RL_SelectTexCoordArray(int unit, int index)
-{
-	void *coords[MAX_TEX_UNITS];
-
-	// Does this unit exist?
-	if(unit >= numTexUnits)	return;
-
-	memset(coords, 0, sizeof(coords));
-	coords[unit] = texCoords[index];
-	gl.Arrays(NULL, NULL, numTexUnits, coords, 0);
-}
-
-//===========================================================================
 // RL_FloatRGB
 //===========================================================================
 void RL_FloatRGB(byte *rgb, float *dest)
@@ -1444,7 +1484,7 @@ void RL_DrawPrimitives(int conditions, rendlist_t *list)
 			// Use the correct texture and color for the light.
 			gl.SetInteger(DGL_ACTIVE_TEXTURE, 
 				conditions & DCF_SET_LIGHT_ENV0? 0 : 1);
-			gl.Bind(hdr->light->texture);
+			RL_Bind(hdr->light->texture);
 			RL_FloatRGB(hdr->light->color, color);
 			gl.SetFloatv(DGL_ENV_COLOR, color);
 		}
@@ -1470,29 +1510,6 @@ void RL_DrawPrimitives(int conditions, rendlist_t *list)
 }
 
 //===========================================================================
-// RL_SelectTexUnits
-//	The first selected unit is active after this call.
-//===========================================================================
-void RL_SelectTexUnits(int count)
-{
-	int i;
-
-	// Disable extra units.
-	for(i = numTexUnits - 1; i >= count; i--) 
-		gl.Disable(DGL_TEXTURE0 + i);
-
-	// Enable the selected units.
-	for(i = count - 1; i >= 0; i--)
-	{
-		if(i >= numTexUnits) continue;
-
-		gl.Enable(DGL_TEXTURE0 + i);
-		// Enable the texcoord array for this unit.
-		gl.EnableArrays(0, 0, 0x1 << i);
-	}
-}
-
-//===========================================================================
 // RL_BlendState
 //===========================================================================
 void RL_BlendState(rendlist_t *list, int modMode)
@@ -1504,11 +1521,8 @@ void RL_BlendState(rendlist_t *list, int modMode)
 
 	RL_SelectTexUnits(2);
 
-	gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
-	gl.Bind(list->tex.id);
-
-	gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
-	gl.Bind(list->intertex.id);
+	RL_BindTo(0, list->tex.id);
+	RL_BindTo(1, list->intertex.id);
 
 	gl.SetInteger(DGL_MODULATE_TEXTURE, modMode);
 	gl.SetInteger(DGL_ENV_ALPHA, list->interpos * 256);
@@ -1549,20 +1563,18 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		{
 			// Normal modulation.
 			RL_SelectTexUnits(1);
-			gl.Bind(list->tex.id);
+			RL_Bind(list->tex.id);
 			gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
 		}
 		return 0;
 
 	case LM_LIGHT_MOD_TEXTURE:
 		// Modulate sector light, dynamic light and regular texture.
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
-		gl.Bind(list->tex.id);
+		RL_BindTo(1, list->tex.id);
 		return DCF_SET_LIGHT_ENV0 | DCF_JUST_ONE_LIGHT | DCF_NO_BLEND;
 
 	case LM_TEXTURE_PLUS_LIGHT:
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
-		gl.Bind(list->tex.id);
+		RL_BindTo(0, list->tex.id);
 		return DCF_SET_LIGHT_ENV1 | DCF_NO_BLEND;
 
 	case LM_FIRST_LIGHT:
@@ -1586,7 +1598,7 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		return 0;
 
 	case LM_LIGHTS:
-		gl.Bind(list->tex.id);
+		RL_Bind(list->tex.id);
 		// The light lists only contain dynlight primitives.
 		return 0;
 
@@ -1607,7 +1619,7 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		}
 		// No modulation at all.
 		RL_SelectTexUnits(1);
-		gl.Bind(list->tex.id);
+		RL_Bind(list->tex.id);
 		gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
 		return (mode == LM_MOD_TEXTURE_MANY_LIGHTS? DCF_MANY_LIGHTS : 0);
 
@@ -1618,22 +1630,20 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		{
 			RL_SelectTexUnits(2);
 			gl.SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
-			gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
-			gl.Bind(list->tex.id);
-			gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
-			gl.Bind(list->tex.detail->tex);
+			RL_BindTo(0, list->tex.id);
+			RL_BindTo(1, list->tex.detail->tex);
 		}
 		else
 		{
 			RL_SelectTexUnits(1);
 			gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
-			gl.Bind(list->tex.id);
+			RL_Bind(list->tex.id);
 		}
 		return 0;
 
 	case LM_ALL_DETAILS:
 		if(!list->tex.detail) break;
-		gl.Bind(list->tex.detail->tex);
+		RL_Bind(list->tex.detail->tex);
 		// Render all surfaces on the list.
 		return 0;
 
@@ -1644,17 +1654,15 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		{
 			RL_SelectTexUnits(2);
 			gl.SetInteger(DGL_MODULATE_TEXTURE, 8);
-			gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
-			gl.Bind(list->tex.id);
-			gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
-			gl.Bind(list->tex.detail->tex);
+			RL_BindTo(0, list->tex.id);
+			RL_BindTo(1, list->tex.detail->tex);
 		}
 		else
 		{
 			// Normal modulation.
 			RL_SelectTexUnits(1);
 			gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
-			gl.Bind(list->tex.id);
+			RL_Bind(list->tex.id);
 		}
 		return 0;
 
@@ -1663,18 +1671,14 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		if(!list->intertex.id) break;
 		if(!list->tex.detail || !list->intertex.detail) break;
 	
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
-		gl.Bind(list->tex.detail->tex);
-
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
-		gl.Bind(list->intertex.detail->tex);
-
+		RL_BindTo(0, list->tex.detail->tex);
+		RL_BindTo(1, list->intertex.detail->tex);
 		gl.SetInteger(DGL_ENV_ALPHA, list->interpos * 256);		
 		return 0;
 
 	case LM_SHADOW:
 		// Render all primitives (on the shadowList).
-		gl.Bind(list->tex.id);
+		RL_Bind(list->tex.id);
 		return 0;
 	}
 
@@ -2181,7 +2185,5 @@ void RL_RenderAllLists(void)
 	END_PROF( PROF_RL_RENDER_MASKED );
 
 	END_PROF( PROF_RL_RENDER_ALL );
-
-/*	if(!renderTextures) gl.Enable(DGL_TEXTURING);*/
 }
 
