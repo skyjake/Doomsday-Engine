@@ -55,7 +55,7 @@ extern int dlMaxRad;
 
 boolean useFog = false;			// Is the fog in use?
 byte    fogColor[4];
-float   fieldOfView = 90.0f;
+float   fieldOfView = 95.0f;
 float   maxLightDist = 1024;
 boolean smoothTexAnim = true;
 

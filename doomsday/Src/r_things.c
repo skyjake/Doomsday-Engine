@@ -583,6 +583,11 @@ float R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz)
 				 (100 * FIX2FLT(momz), 100 * P_AccurateDistance(momx, momy)));
 }
 
+/*
+ * Determine the correct Z coordinate for the mobj.  The visible Z
+ * coordinate may be slightly different than the actual Z coordinate
+ * due to smoothed plane movement.
+ */ 
 boolean RIT_VisMobjZ(sector_t *sector, void *data)
 {
 	vissprite_t *vis = data;
@@ -590,7 +595,8 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
 	assert(sector != NULL);
 	assert(data != NULL);
 
-	if(projectedThing->z == sector->floorheight)
+	if(vis->data.mo.flooradjust &&
+	   projectedThing->z == sector->floorheight)
 	{
 		vis->data.mo.gz = FRACUNIT * SECT_FLOOR(sector);
 	}
@@ -772,6 +778,9 @@ void R_ProjectSprite(mobj_t *thing)
 	vis->data.mo.gy = thing->y;
 	vis->data.mo.gz = thing->z;
 
+	vis->data.mo.flooradjust =
+		(fabs(SECT_FLOOR(sect) - FIX2FLT(sect->floorheight)) < 8);
+	
 	// The thing's Z coordinate must match the actual visible
 	// floor/ceiling height.  When using smoothing, this requires
 	// iterating through the sectors (planes) in the vicinity.
@@ -787,6 +796,7 @@ void R_ProjectSprite(mobj_t *thing)
 	vis->data.mo.viewaligned = align;
 
 	vis->data.mo.secfloor = SECT_FLOOR(thing->subsector->sector);
+
 	vis->data.mo.secceil = SECT_CEIL(thing->subsector->sector);
 
 	if(thing->ddflags & DDMF_TRANSLATION)

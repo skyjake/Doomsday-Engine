@@ -72,6 +72,7 @@ typedef struct vissprite_s {
 			float           yaw, pitch;	// For models.
 			float           inter; // Frame interpolation, 0..1
 			struct lumobj_s *light;	// For the halo (NULL if no halo).
+			boolean		    flooradjust; // Allow moving sprite to match visible floor.
 		} mo;
 		struct vissprite_wall_s {
 			int             texture;

@@ -638,7 +638,8 @@ void Rend_RenderSprite(vissprite_t * spr)
 		if(spr->data.mo.flags & DDMF_FITTOP && top > spr->data.mo.secceil)
 			top = spr->data.mo.secceil;
 		// Check bottom.
-		if(!(spr->data.mo.flags & DDMF_NOFITBOTTOM) &&
+		if(spr->data.mo.flooradjust &&
+		   !(spr->data.mo.flags & DDMF_NOFITBOTTOM) &&
 		   top - sprh < spr->data.mo.secfloor)
 			top = spr->data.mo.secfloor + sprh;
 	}
