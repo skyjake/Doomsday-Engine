@@ -4,6 +4,8 @@
 #ifndef __DOOMSDAY_REND_LIST_H__
 #define __DOOMSDAY_REND_LIST_H__
 
+#include "r_data.h"
+
 #define RL_MAX_POLY_SIDES	64
 #define RL_MAX_DIVS			64
 
