@@ -200,6 +200,9 @@ void S_LocalSoundAtVolumeFrom
 	samp.group = info->group;
 	samp.data = NULL;
 
+	// FIXME: The external resources are reloaded *EVERY* time the 
+	// sound is played?! Get it from the cache, man!
+
 	// Has an external sound file been defined?
 	if(info->external[0])
 	{
@@ -235,8 +238,9 @@ void S_LocalSoundAtVolumeFrom
 		// Try loading from the lump.
 		if(info->lumpnum < 0)
 		{
-			Con_Error("S_LocalSound: Sound %s has a bad lump: '%s'.\n",
+			Con_Message("S_LocalSound: Sound %s has a missing lump: '%s'.\n",
 				info->id, info->lumpname);
+			return;
 		}
 		sp = W_CacheLumpNum(info->lumpnum, PU_STATIC);
 		
