@@ -6,6 +6,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DD_PROFILE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -19,6 +21,20 @@
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
+
+BEGIN_PROF_TIMERS()
+	PROF_REND_MAP,
+	PROF_REND_INIT,
+	PROF_REND_INIT_LIGHTS,
+	PROF_REND_NODES,
+	PROF_REND_SHADOWS,
+	
+	PROF_REND_SUB_LIGHTS,
+	PROF_REND_SUB_OCCLUDE,
+	PROF_REND_SUB_ADD_SPRITES,
+	PROF_REND_SUB_SEGS,
+	PROF_REND_SUB_PLANES
+END_PROF_TIMERS()
 
 enum // For Wall Height Division.
 {
@@ -124,9 +140,19 @@ void Rend_Reset(void)
 {
 	// Textures are deleted (at least skies need this???).
 	GL_ClearRuntimeTextures();
-	RL_DeleteLists();	// The rendering lists are destroyed.
 	DL_Clear();
-	//H_Clear();
+
+	PRINT_PROF( PROF_REND_MAP );
+	PRINT_PROF( PROF_REND_INIT );
+	PRINT_PROF( PROF_REND_INIT_LIGHTS );
+	PRINT_PROF( PROF_REND_NODES );
+	PRINT_PROF( PROF_REND_SHADOWS );
+
+	PRINT_PROF( PROF_REND_SUB_LIGHTS );
+	PRINT_PROF( PROF_REND_SUB_OCCLUDE );
+	PRINT_PROF( PROF_REND_SUB_ADD_SPRITES );
+	PRINT_PROF( PROF_REND_SUB_SEGS );
+	PRINT_PROF( PROF_REND_SUB_PLANES );
 }
 
 //===========================================================================
@@ -226,79 +252,6 @@ static int __cdecl DivSortDescend(const void *e1, const void *e2)
 	if(f2 > f1) return 1;
 	return 0;
 }
-
-#ifdef _MSC_VER
-// Bravo, Microsoft.
-#pragma optimize("g",off)
-#endif
-
-// Called before rendering a frame to update sectorflags.
-/*void R_CheckInvisPlanes(void)
-{
-	int i, k;
-	boolean hackfloor, hackceil;
-	sector_t *sec, *back;
-	side_t *sid, *frontsid, *backsid;
-
-	return;
-
-	for(i=0; i<numsectors; i++)
-	{
-		sectorflags[i] &= ~(SECF_INVIS_FLOOR|SECF_INVIS_CEILING);
-		sec = SECTOR_PTR(i);
-		hackfloor = true;
-		hackceil = true;
-		for(k=0; k<sec->linecount; k++)
-		{
-			if(!hackfloor && !hackceil) break;
-			if(!sec->lines[k]->backsector 
-				|| !sec->lines[k]->frontsector) goto next_sector; 
-			// Check which way the line is facing.		
-			sid = SIDE_PTR(sec->lines[k]->sidenum[0]);
-			if(sid->sector == sec)
-			{
-				frontsid = sid;
-				backsid = SIDE_PTR(sec->lines[k]->sidenum[1]);
-			}
-			else
-			{
-				frontsid = SIDE_PTR(sec->lines[k]->sidenum[1]);
-				backsid = sid;
-			}
-			back = backsid->sector;
-			if(back == sec) continue;
-			// Check the conditions that prevent the invis plane.
-			if(back->floorheight == sec->floorheight)
-				hackfloor = false;
-			else
-			{
-				if(back->floorheight > sec->floorheight)
-					sid = frontsid;
-				else
-					sid = backsid;
-				if(sid->bottomtexture) hackfloor = false;
-			}
-			if(back->ceilingheight == sec->ceilingheight)
-				hackceil = false;
-			else 
-			{
-				if(back->ceilingheight < sec->ceilingheight)
-					sid = frontsid;
-				else
-					sid = backsid;
-				if(sid->toptexture) hackceil = false;
-			}
-		}
-		if(hackfloor) sectorflags[i] |= SECF_INVIS_FLOOR;
-		if(hackceil) sectorflags[i] |= SECF_INVIS_CEILING;
-
-next_sector:;
-	}
-}*/
-
-#ifdef _MSC_VER
-#pragma optimize("",on)
-#endif
 
 //===========================================================================
 // Rend_CheckDiv
@@ -855,6 +808,8 @@ void Rend_RenderSubsector(int ssecidx)
 		firstsubsector = false;
 	}
 
+	BEGIN_PROF( PROF_REND_SUB_LIGHTS );
+
 	// Mark the sector visible for this frame.
 	sin->flags |= SIF_VISIBLE;
 
@@ -867,8 +822,12 @@ void Rend_RenderSubsector(int ssecidx)
 	if(useDynLights) 
 		DL_ProcessSubsector(&poly, ssec);
 
+	END_PROF( PROF_REND_SUB_LIGHTS );
+
 /*	if(useShadows)
 		Rend_SubsectorShadows(ssec); */
+
+	BEGIN_PROF( PROF_REND_SUB_OCCLUDE );
 
 	Rend_OccludeSubsector(ssec, false);
 	// Determine which dynamic light sources in the subsector get clipped.
@@ -884,13 +843,21 @@ void Rend_RenderSubsector(int ssecidx)
 	}
 	Rend_OccludeSubsector(ssec, true);
 
+	END_PROF( PROF_REND_SUB_OCCLUDE );
+
 	// Mark the particle generators in the sector visible.
 	PG_SectorIsVisible(sect);
+
+	BEGIN_PROF( PROF_REND_SUB_ADD_SPRITES );
 
 	// Sprites for this sector have to be drawn. This must be done before
 	// the segments of this subsector are added to the clipper. Otherwise
 	// the sprites would get clipped by them, and that wouldn't be right.
 	R_AddSprites(sect);
+
+	END_PROF( PROF_REND_SUB_ADD_SPRITES );
+
+	BEGIN_PROF( PROF_REND_SUB_SEGS );
 
 	// Draw the walls.
 	for(i = 0, seg = segs+SEGIDX(ssec->firstline); i < ssec->linecount; 
@@ -905,7 +872,11 @@ void Rend_RenderSubsector(int ssecidx)
 		for(i = 0; i < ssec->poly->numsegs; i++)
 			Rend_RenderWallSeg(ssec->poly->segs[i], sect, 0);
 
+	END_PROF( PROF_REND_SUB_SEGS );
+
 	sectorlight = Rend_SectorLight(sect);
+
+	BEGIN_PROF( PROF_REND_SUB_PLANES );
 
 	// The floor.
 	memset(&poly, 0, sizeof(poly));
@@ -989,6 +960,8 @@ void Rend_RenderSubsector(int ssecidx)
 		RL_PrepareFlat(&poly, 0, 0, RLPF_REVERSE, ssec);
 		RL_AddPoly(&poly);
 	}
+
+	END_PROF( PROF_REND_SUB_PLANES );
 }
 
 //===========================================================================
@@ -1029,6 +1002,8 @@ void Rend_RenderMap(void)
 {
 	binangle_t	viewside;
 
+	BEGIN_PROF( PROF_REND_MAP );
+
 	// Set to true if dynlights are inited for this frame.
 	dlInited = false;
 
@@ -1040,6 +1015,8 @@ void Rend_RenderMap(void)
 
 	if(!freezeRLs)
 	{
+		BEGIN_PROF( PROF_REND_INIT );
+
 		// Prepare for rendering.
 		R_UpdatePlanes();		// Update all planes.
 		RL_ClearLists();		// Clear the lists for new quads.
@@ -1047,6 +1024,10 @@ void Rend_RenderMap(void)
 		R_ClearSectorFlags();
 		DL_ClearForFrame();		// Zeroes the links.
 
+		END_PROF( PROF_REND_INIT );
+
+		BEGIN_PROF( PROF_REND_INIT_LIGHTS );
+	
 		// Generate surface decorations for the frame.
 		Rend_InitDecorationsForFrame();
 
@@ -1055,6 +1036,8 @@ void Rend_RenderMap(void)
 		{
 			DL_InitForNewFrame(); 
 		}
+
+		END_PROF( PROF_REND_INIT_LIGHTS );
 
 		// Add the backside clipping range (if vpitch allows).
 		if(vpitch <= 90-yfov/2 && vpitch >= -90+yfov/2)
@@ -1073,14 +1056,20 @@ void Rend_RenderMap(void)
 		// We don't want subsector clipchecking for the first subsector.
 		firstsubsector = true;
 
-		Rend_RenderNode(numnodes-1);		
+		BEGIN_PROF( PROF_REND_NODES );
+		Rend_RenderNode(numnodes - 1);
+		END_PROF( PROF_REND_NODES );
 
 		// Make vissprites of all the visible decorations.
 		Rend_ProjectDecorations();
 
+		BEGIN_PROF( PROF_REND_SHADOWS );
 		Rend_RenderShadows();
+		END_PROF( PROF_REND_SHADOWS );
 	}
 	RL_RenderAllLists();
+
+	END_PROF( PROF_REND_MAP );
 }
 
 
