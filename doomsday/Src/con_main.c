@@ -2922,6 +2922,7 @@ static void registerCommands(void)
 	C_CMD("listcmds", ListCmds, "List all console commands.");
 	C_CMD("listfiles", ListFiles,
 		  "List all the loaded data files and show information about them.");
+	C_CMD("listmaps", ListMaps, "List all loaded maps.");
 	C_CMD("listvars", ListVars,
 		  "List all console variables and their values.");
 	C_CMD("load", LoadFile, "Load a data file (a WAD or a lump).");
