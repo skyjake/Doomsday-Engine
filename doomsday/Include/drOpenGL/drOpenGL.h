@@ -119,6 +119,7 @@ extern PFNGLCLIENTACTIVETEXTUREARBPROC	glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
 extern PFNGLMULTITEXCOORD2FARBPROC	glMultiTexCoord2fARB;
 extern PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
+extern PFNGLBLENDEQUATIONEXTPROC	glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC		glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;
 
@@ -128,6 +129,7 @@ extern int extNvTexEnvComb;
 extern int extAtiTexEnvComb;
 extern int extAniso;
 extern int extGenMip;
+extern int extBlendSub;
 
 void initExtensions(void);
 
