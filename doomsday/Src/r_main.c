@@ -428,7 +428,9 @@ void R_SetupFrame(ddplayer_t *player)
 		if(frameTimePos < 0) 
 		{
 			VERBOSE(Con_Printf("Correcting frametime (%f).\n", frameTimePos));
-			frameTimePos = 0;
+
+			// This'll cause a slight accelerated step forward in time.
+			frameTimePos /= 2;
 		}
 
 		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
