@@ -2974,8 +2974,7 @@ void M_Init(void)
 		M_SetNumItems(&EpiDef, 3);
 		item = &MainItems[readthis];
 		item->func = M_ReadThis;
-		item->text = "READ THIS!";
-		//item->lumpname = "M_RDTHIS";
+		item->text = "Read This!";
 		M_SetNumItems(&MainDef, 7);
 		MainDef.y = 64;
 		break;
