@@ -583,7 +583,7 @@ extern          "C" {
 		struct sector_s *sector;
 		unsigned short  linecount;
 		unsigned short  firstline;
-		struct polyobj_s *poly;	   // NULL if there is no polyobj
+        struct polyobj_s *poly;	   // NULL if there is no polyobj
 		// Sorted edge vertices for rendering floors and ceilings.
 		char            numverts;
 		fvertex_t      *verts;	   // A list of edge vertices.
