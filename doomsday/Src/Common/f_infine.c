@@ -39,9 +39,9 @@
 #define STACK_SIZE		16		// Size of the InFine state stack.
 #define MAX_TOKEN_LEN	8192
 #define MAX_SEQUENCE	64
-#define MAX_PICS		64
-#define MAX_TEXT		32
-#define MAX_HANDLERS	64
+#define MAX_PICS		128
+#define MAX_TEXT		64
+#define MAX_HANDLERS	128
 
 #define FI_REPEAT		-2
 
@@ -69,23 +69,31 @@ typedef struct {
 	fivalue_t color[4];
 	fivalue_t scale[2];
 	fivalue_t x, y;
+	fivalue_t angle;
+	//byte centered[2];		// Should be centered in X/Y direction?
+} fiobj_t;
+
+typedef struct {
+	fiobj_t object;
 	struct {
 		char is_patch : 1;	// Raw image or patch.
 		char done : 1;		// Animation finished (or repeated).
+		char is_rect : 1;
 	} flags;
 	int seq;
 	int seq_wait[MAX_SEQUENCE], seq_timer;
 	short lump[MAX_SEQUENCE];
 	char flip[MAX_SEQUENCE];
 	short sound[MAX_SEQUENCE];
+
+	// For rectangle-objects.
+	fivalue_t other_color[4];
+	fivalue_t edge_color[4];
+	fivalue_t other_edge_color[4];
 } fipic_t;
 
 typedef struct {
-	boolean used;
-	handle_t handle;
-	fivalue_t color[4];
-	fivalue_t scale[2];
-	fivalue_t x, y;
+	fiobj_t object;
 	struct { 
 		char centered : 1;
 		char font_b : 1;
@@ -164,7 +172,7 @@ void FIC_GoTo(void);
 void FIC_Marker(void);
 void FIC_Image(void);
 void FIC_ImageAt(void);
-void FIC_DeletePic(void);
+void FIC_Delete(void);
 void FIC_Patch(void);
 void FIC_SetPatch(void);
 void FIC_Anim(void);
@@ -173,10 +181,18 @@ void FIC_StateAnim(void);
 void FIC_Repeat(void);
 void FIC_ClearAnim(void);
 void FIC_PicSound(void);
-void FIC_PicOffX(void);
-void FIC_PicOffY(void);
-void FIC_PicRGB(void);
-void FIC_PicAlpha(void);
+void FIC_ObjectOffX(void);
+void FIC_ObjectOffY(void);
+void FIC_ObjectScaleX(void);
+void FIC_ObjectScaleY(void);
+void FIC_ObjectScale(void);
+void FIC_ObjectScaleXY(void);
+void FIC_ObjectRGB(void);
+void FIC_ObjectAlpha(void);
+void FIC_ObjectAngle(void);
+void FIC_Rect(void);
+void FIC_FillColor(void);
+void FIC_EdgeColor(void);
 void FIC_OffsetX(void);
 void FIC_OffsetY(void);
 void FIC_Sound(void);
@@ -206,9 +222,6 @@ void FIC_TextPos(void);
 void FIC_TextRate(void);
 void FIC_TextLineHeight(void);
 void FIC_NoMusic(void);
-void FIC_PicScaleX(void);
-void FIC_PicScaleY(void);
-void FIC_PicScale(void);
 void FIC_TextScaleX(void);
 void FIC_TextScaleY(void);
 void FIC_TextScale(void);
@@ -281,19 +294,28 @@ static ficmd_t fi_commands[] =
 	{ "musiconce", 1,	FIC_MusicOnce }, // musiconce (musicname)
 	{ "nomusic", 0,		FIC_NoMusic },
 
+	// Objects
+	{ "del", 1,			FIC_Delete }, // del (handle)
+	{ "x", 2,			FIC_ObjectOffX },	// x (handle) (x)
+	{ "y", 2,			FIC_ObjectOffY },	// y (handle) (y)
+	{ "sx", 2,			FIC_ObjectScaleX }, // sx (handle) (x)
+	{ "sy", 2,			FIC_ObjectScaleY }, // sy (handle) (y)
+	{ "scale", 2,		FIC_ObjectScale },	// scale (handle) (factor)
+	{ "scalexy", 3,		FIC_ObjectScaleXY }, // scalexy (handle) (x) (y)
+	{ "rgb", 4,			FIC_ObjectRGB },	// rgb (handle) (r) (g) (b)
+	{ "alpha", 2,		FIC_ObjectAlpha },	// alpha (handle) (alpha)
+	{ "angle", 2,		FIC_ObjectAngle },	// angle (handle) (degrees)
+
+	// Rects
+	{ "rect", 5,		FIC_Rect },		// rect (hndl) (x) (y) (w) (h)
+	{ "fillcolor", 6,	FIC_FillColor }, // fillcolor (h) (top/bottom/both) (r) (g) (b) (a)
+	{ "edgecolor", 6,	FIC_EdgeColor }, // edgecolor (h) (top/bottom/both) (r) (g) (b) (a)
+
 	// Pics
-	{ "delpic", 1,		FIC_DeletePic }, // delpic (handle)
 	{ "image", 2,		FIC_Image },	// image (handle) (raw-image-lump)
 	{ "imageat", 4,		FIC_ImageAt },	// imageat (handle) (x) (y) (raw)
 	{ "patch", 4,		FIC_Patch },	// patch (handle) (x) (y) (patch)
 	{ "set", 2,			FIC_SetPatch },	// set (handle) (lump)
-	{ "x", 2,			FIC_PicOffX },	// x (handle) (x)
-	{ "y", 2,			FIC_PicOffY },	// y (handle) (y)
-	{ "sx", 2,			FIC_PicScaleX }, // sx (handle) (x)
-	{ "sy", 2,			FIC_PicScaleY }, // sy (handle) (y)
-	{ "scale", 3,		FIC_PicScale }, // scale (handle) (x) (y)
-	{ "rgb", 4,			FIC_PicRGB },	// rgb (handle) (r) (g) (b)
-	{ "alpha", 2,		FIC_PicAlpha },	// alpha (handle) (alpha)
 	{ "clranim", 1,		FIC_ClearAnim }, // clranim (handle)
 	{ "anim", 3,		FIC_Anim },		// anim (handle) (patch) (time)
 	{ "imageanim", 3,	FIC_AnimImage }, // imageanim (hndl) (raw-img) (time)
@@ -302,20 +324,12 @@ static ficmd_t fi_commands[] =
 	{ "states", 3,		FIC_StateAnim }, // states (handle) (state) (count)
 
 	// Text	
-	{ "deltext", 1,		FIC_DeleteText }, // deltext (hndl)
 	{ "text", 4,		FIC_Text },		// text (hndl) (x) (y) (string)
 	{ "textdef", 4,		FIC_TextFromDef }, // textdef (hndl) (x) (y) (txt-id)
 	{ "textlump", 4,	FIC_TextFromLump }, // textlump (hndl) (x) (y) (lump)
 	{ "settext", 2,		FIC_SetText },	// settext (handle) (newtext)
 	{ "settextdef", 2,	FIC_SetTextDef }, // settextdef (handle) (txt-id)
 	{ "precolor", 4,	FIC_TextColor }, // precolor (num) (r) (g) (b)
-	{ "textrgb", 4,		FIC_TextRGB },	// textrgb (handle) (r) (g) (b)
-	{ "textalpha", 2,	FIC_TextAlpha }, // textalpha (handle) (alpha)
-	{ "tx", 2,			FIC_TextOffX },	// tx (handle) (x)
-	{ "ty", 2,			FIC_TextOffY },	// ty (handle) (y)
-	{ "tsx", 2,			FIC_TextScaleX }, // tsx (handle) (x)
-	{ "tsy", 2,			FIC_TextScaleY }, // tsy (handle) (y)
-	{ "textscale", 3,	FIC_TextScale }, // textscale (handle) (x) (y)
 	{ "center", 1,		FIC_TextCenter }, // center (handle)
 	{ "nocenter", 1,	FIC_TextNoCenter }, // nocenter (handle)
 	{ "scroll", 2,		FIC_TextScroll }, // scroll (handle) (speed)
@@ -325,28 +339,35 @@ static ficmd_t fi_commands[] =
 	{ "fontb", 1,		FIC_FontB },	// fontb (handle)
 	{ "linehgt", 2,		FIC_TextLineHeight }, // linehgt (hndl) (hgt)
 
-	// Advanced Control
+	// Game Control
 	{ "playdemo", 1,	FIC_PlayDemo },	// playdemo (filename)
 	{ "cmd", 1,			FIC_Command },	// cmd (console command)
 	{ "trigger", 0,		FIC_ShowMenu },
 	{ "notrigger", 0,	FIC_NoShowMenu },
+
+	// Deprecated Pic commands
+	{ "delpic", 1,		FIC_Delete },	// delpic (handle)
+
+	// Deprecated Text commands
+	{ "deltext", 1,		FIC_DeleteText }, // deltext (hndl)
+	{ "textrgb", 4,		FIC_TextRGB },	// textrgb (handle) (r) (g) (b)
+	{ "textalpha", 2,	FIC_TextAlpha }, // textalpha (handle) (alpha)
+	{ "tx", 2,			FIC_TextOffX },	// tx (handle) (x)
+	{ "ty", 2,			FIC_TextOffY },	// ty (handle) (y)
+	{ "tsx", 2,			FIC_TextScaleX }, // tsx (handle) (x)
+	{ "tsy", 2,			FIC_TextScaleY }, // tsy (handle) (y)
+	{ "textscale", 3,	FIC_TextScale }, // textscale (handle) (x) (y)
 
 	{ NULL, 0, NULL }
 };
 
 static fistate_t fi_statestack[STACK_SIZE];
 static fistate_t *fi;	// Pointer to the current state in the stack.
-
-static boolean condition_presets[NUM_FICONDS];
-
-//static char *script, *cp;
-//static infinemode_t fi_mode;
-//static int fi_timer;
-
 static char fi_token[MAX_TOKEN_LEN];
-
 static fipic_t fi_dummypic;
 static fitext_t fi_dummytext;
+
+static boolean condition_presets[NUM_FICONDS];
 
 #if !__JDOOM__
 static int FontABase, FontBBase;
@@ -1011,21 +1032,82 @@ int FI_GetNextSeq(fipic_t *pic)
 }
 
 //===========================================================================
+// FI_FindPic
+//===========================================================================
+fipic_t *FI_FindPic(const char *handle)
+{
+	int i;
+
+	if(!handle) return NULL;
+
+	for(i = 0; i < MAX_PICS; i++)
+	{
+		if(fi->pics[i].object.used
+			&& !stricmp(fi->pics[i].object.handle, handle))
+		{
+			return fi->pics + i;
+		}
+	}
+	return NULL;
+}
+
+//===========================================================================
+// FI_FindText
+//===========================================================================
+fitext_t *FI_FindText(const char *handle)
+{
+	int i;
+
+	for(i = 0; i < MAX_TEXT; i++)
+	{
+		if(fi->text[i].object.used
+			&& !stricmp(fi->text[i].object.handle, handle))
+		{
+			return fi->text + i;
+		}
+	}
+	return NULL;
+}
+
+//===========================================================================
+// FI_FindObject
+//===========================================================================
+fiobj_t *FI_FindObject(const char *handle)
+{
+	fipic_t *pic;
+	fitext_t *text;
+
+	// First check all pics.
+	if((pic = FI_FindPic(handle)) != NULL)
+	{
+		return &pic->object;
+	}
+		
+	// Then check text objects.
+	if((text = FI_FindText(handle)) != NULL)
+	{
+		return &text->object;
+	}
+
+	return NULL;
+}
+
+//===========================================================================
 // FI_GetPic
 //===========================================================================
-fipic_t *FI_GetPic(char *handle)
+fipic_t *FI_GetPic(const char *handle)
 {
 	int i;
 	fipic_t *unused = NULL;
 
 	for(i = 0; i < MAX_PICS; i++)
 	{
-		if(!fi->pics[i].used)
+		if(!fi->pics[i].object.used)
 		{
 			if(!unused) unused = fi->pics + i;
 			continue;
 		}
-		if(!stricmp(fi->pics[i].handle, handle))
+		if(!stricmp(fi->pics[i].object.handle, handle))
 			return fi->pics + i;
 	}
 	
@@ -1036,10 +1118,10 @@ fipic_t *FI_GetPic(char *handle)
 		return &fi_dummypic; // No more space.
 	}
 	memset(unused, 0, sizeof(*unused));
-	strncpy(unused->handle, handle, sizeof(unused->handle) - 1);
-	unused->used = true;
-	for(i = 0; i < 4; i++) FI_InitValue(&unused->color[i], 1);
-	for(i = 0; i < 2; i++) FI_InitValue(&unused->scale[i], 1);
+	strncpy(unused->object.handle, handle, sizeof(unused->object.handle) - 1);
+	unused->object.used = true;
+	for(i = 0; i < 4; i++) FI_InitValue(&unused->object.color[i], 1);
+	for(i = 0; i < 2; i++) FI_InitValue(&unused->object.scale[i], 1);
 	FI_ClearAnimation(unused);
 	return unused;
 }
@@ -1054,12 +1136,12 @@ fitext_t *FI_GetText(char *handle)
 
 	for(i = 0; i < MAX_TEXT; i++)
 	{
-		if(!fi->text[i].used)
+		if(!fi->text[i].object.used)
 		{
 			if(!unused) unused = fi->text + i;
 			continue;
 		}
-		if(!stricmp(fi->text[i].handle, handle))
+		if(!stricmp(fi->text[i].object.handle, handle))
 			return fi->text + i;
 	}
 	
@@ -1071,19 +1153,19 @@ fitext_t *FI_GetText(char *handle)
 	}
 	if(unused->text) Z_Free(unused->text);
 	memset(unused, 0, sizeof(*unused));
-	strncpy(unused->handle, handle, sizeof(unused->handle) - 1);
-	unused->used = true;
+	strncpy(unused->object.handle, handle, sizeof(unused->object.handle) - 1);
+	unused->object.used = true;
 	unused->wait = 3;
 #if __JDOOM__
 	unused->lineheight = 11;
-	FI_InitValue(&unused->color[0], 1); // Red text by default.
+	FI_InitValue(&unused->object.color[0], 1); // Red text by default.
 #else
 	unused->lineheight = 9;
 	// White text.
-	for(i = 0; i < 3; i++) FI_InitValue(&unused->color[i], 1); 
+	for(i = 0; i < 3; i++) FI_InitValue(&unused->object.color[i], 1); 
 #endif
-	FI_InitValue(&unused->color[3], 1); // Opaque.
-	for(i = 0; i < 2; i++) FI_InitValue(&unused->scale[i], 1);
+	FI_InitValue(&unused->object.color[3], 1); // Opaque.
+	for(i = 0; i < 2; i++) FI_InitValue(&unused->object.scale[i], 1);
 	return unused;
 }
 
@@ -1097,6 +1179,18 @@ void FI_SetText(fitext_t *tex, char *str)
 	if(tex->text) Z_Free(tex->text); // Free any previous text.
 	tex->text = Z_Malloc(len, PU_STATIC, 0);
 	memcpy(tex->text, str, len);
+}
+
+//===========================================================================
+// FI_ObjectThink
+//===========================================================================
+void FI_ObjectThink(fiobj_t *obj)
+{
+	FI_ValueThink(&obj->x);
+	FI_ValueThink(&obj->y);
+	FI_ValueArrayThink(obj->scale, 2);
+	FI_ValueArrayThink(obj->color, 4);
+	FI_ValueThink(&obj->angle);
 }
 
 //===========================================================================
@@ -1130,11 +1224,11 @@ void FI_Ticker(void)
 	for(i = 0; i < 9; i++) FI_ValueArrayThink(fi->textcolor[i], 3);
 	for(i = 0, pic = fi->pics; i < MAX_PICS; i++, pic++)
 	{
-		if(!pic->used) continue;
-		FI_ValueThink(&pic->x);
-		FI_ValueThink(&pic->y);
-		FI_ValueArrayThink(pic->scale, 2);
-		FI_ValueArrayThink(pic->color, 4);
+		if(!pic->object.used) continue;
+		FI_ObjectThink(&pic->object);
+		FI_ValueArrayThink(pic->other_color, 4);
+		FI_ValueArrayThink(pic->edge_color, 4);
+		FI_ValueArrayThink(pic->other_edge_color, 4);
 		// If animating, decrease the sequence timer.
 		if(pic->seq_wait[pic->seq])	
 		{
@@ -1166,11 +1260,8 @@ void FI_Ticker(void)
 	// Text objects.
 	for(i = 0, tex = fi->text; i < MAX_TEXT; i++, tex++)
 	{
-		if(!tex->used) continue;
-		FI_ValueThink(&tex->x);
-		FI_ValueThink(&tex->y);
-		FI_ValueArrayThink(tex->scale, 2);
-		FI_ValueArrayThink(tex->color, 4);
+		if(!tex->object.used) continue;
+		FI_ObjectThink(&tex->object);
 		if(tex->wait)
 		{
 			if(--tex->timer <= 0)
@@ -1184,8 +1275,8 @@ void FI_Ticker(void)
 			if(--tex->scroll_timer <= 0)
 			{
 				tex->scroll_timer = tex->scroll_wait;
-				tex->y.target -= 1;
-				tex->y.steps = tex->scroll_wait;
+				tex->object.y.target -= 1;
+				tex->object.y.steps = tex->scroll_wait;
 			}
 		}
 		// Is the text object fully visible?
@@ -1407,6 +1498,22 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
 }
 
 //===========================================================================
+// FI_UseColor
+//===========================================================================
+void FI_UseColor(fivalue_t *color, int components)
+{
+	if(components == 3)
+	{
+		gl.Color3f(color[0].value, color[1].value, color[2].value);
+	}
+	else if(components == 4)
+	{
+		gl.Color4f(color[0].value, color[1].value, color[2].value, 
+			color[3].value);
+	}
+}
+
+//===========================================================================
 // FI_UseTextColor
 //===========================================================================
 void FI_UseTextColor(fitext_t *tex, int idx)
@@ -1414,15 +1521,14 @@ void FI_UseTextColor(fitext_t *tex, int idx)
 	if(!idx)
 	{
 		// The default color of the text.
-		gl.Color4f(tex->color[0].value, tex->color[1].value,
-			tex->color[2].value, tex->color[3].value);
+		FI_UseColor(tex->object.color, 4);
 	}
 	else
 	{
 		gl.Color4f(fi->textcolor[idx - 1][0].value,
 			fi->textcolor[idx - 1][1].value,
 			fi->textcolor[idx - 1][2].value,
-			tex->color[3].value);
+			tex->object.color[3].value);
 	}
 }
 
@@ -1451,6 +1557,17 @@ int FI_TextObjectLength(fitext_t *tex)
 }
 
 //===========================================================================
+// FI_Rotate
+//===========================================================================
+void FI_Rotate(float angle)
+{
+	// Counter the VGA aspect ratio.
+	gl.Scalef(1, 200.0f/240.0f, 1);
+	gl.Rotatef(angle, 0, 0, 1);
+	gl.Scalef(1, 240.0f/200.0f, 1);
+}
+
+//===========================================================================
 // FI_DrawText
 //===========================================================================
 void FI_DrawText(fitext_t *tex)
@@ -1462,8 +1579,9 @@ void FI_DrawText(fitext_t *tex)
 
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PushMatrix();
-	gl.Translatef(tex->x.value, tex->y.value, 0);	
-	gl.Scalef(tex->scale[0].value, tex->scale[1].value, 1);
+	gl.Translatef(tex->object.x.value, tex->object.y.value, 0);	
+	FI_Rotate(tex->object.angle.value);
+	gl.Scalef(tex->object.scale[0].value, tex->object.scale[1].value, 1);
 
 	// Set color zero (the normal color).
 	FI_UseTextColor(tex, 0);
@@ -1508,11 +1626,12 @@ void FI_DrawText(fitext_t *tex)
 			if(*ptr == '_') ch = ' ';
 		}
 		// Let's do Y-clipping (in case of tall text blocks).
-		if(tex->scale[1].value * y + tex->y.value >= -tex->scale[1].value * tex->lineheight
-			&& tex->scale[1].value * y + tex->y.value < 200)
+		if(tex->object.scale[1].value * y + tex->object.y.value 
+			>= -tex->object.scale[1].value * tex->lineheight
+			&& tex->object.scale[1].value * y + tex->object.y.value < 200)
 		{
-			x += FI_DrawChar(tex->flags.centered? x - linew/2 : x, y, ch,
-				tex->flags.font_b);
+			x += FI_DrawChar(tex->flags.centered? x - linew/2 : x, y, 
+				ch, tex->flags.font_b);
 		}
 		cnt++;	// Actual character drawn.
 	}
@@ -1522,12 +1641,39 @@ void FI_DrawText(fitext_t *tex)
 }
 
 //===========================================================================
+// FI_GetTurnCenter
+//===========================================================================
+void FI_GetTurnCenter(fipic_t *pic, float *center)
+{
+	if(pic->flags.is_rect)
+	{
+		center[VX] = center[VY] = .5f;
+	}
+	else if(pic->flags.is_patch) 
+	{
+		spriteinfo_t info;
+		R_GetPatchInfo(pic->lump[pic->seq], &info);
+		center[VX] = info.width/2 - info.offset;
+		center[VY] = info.height/2 - info.topOffset;
+	}
+	else
+	{
+		center[VX] = 160;
+		center[VY] = 100;
+	}
+
+	center[VX] *= pic->object.scale[VX].value;
+	center[VY] *= pic->object.scale[VY].value;
+}
+
+//===========================================================================
 // FI_Drawer
 //	Drawing is the most complex task here.
 //===========================================================================
 void FI_Drawer(void)
 {
 	int i, sq;
+	float mid[2];
 	fipic_t *pic;
 	fitext_t *tex;
 
@@ -1537,8 +1683,7 @@ void FI_Drawer(void)
 	// Draw the background.
 	if(fi->bgflat >= 0)
 	{
-		gl.Color4f(fi->bgcolor[0].value, fi->bgcolor[1].value, 
-			fi->bgcolor[2].value, fi->bgcolor[3].value);
+		FI_UseColor(fi->bgcolor, 4);
 		GL_SetFlat(fi->bgflat);
 		GL_DrawRectTiled(0, 0, 320, 200, 64, 64);
 	}
@@ -1555,44 +1700,81 @@ void FI_Drawer(void)
 	// Draw images.
 	for(i = 0, pic = fi->pics; i < MAX_PICS; i++, pic++)
 	{
-		if(!pic->used) continue;
+		// Fully transparent pics will not be drawn.
+		if(!pic->object.used 
+			|| pic->object.color[3].value == 0) continue;
+
 		sq = pic->seq;
 
 		GL_SetNoTexture(); // Hmm...
-		gl.Color4f(pic->color[0].value, pic->color[1].value, 
-			pic->color[2].value, pic->color[3].value);
+		FI_UseColor(pic->object.color, 4);
+		FI_GetTurnCenter(pic, mid);
+		
+		// Setup the transformation.
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PushMatrix();
+		gl.Translatef(pic->object.x.value - fi->imgoffset[0].value, 
+			pic->object.y.value - fi->imgoffset[1].value, 0);
+		gl.Translatef(mid[VX], mid[VY], 0);
+		FI_Rotate(pic->object.angle.value);
+		// Move to origin.
+		gl.Translatef(-mid[VX], -mid[VY], 0);
+		gl.Scalef((pic->flip[sq]? -1 : 1) * pic->object.scale[0].value, 
+			pic->object.scale[1].value, 1);
 		
 		// Draw it.
-		if(pic->flags.is_patch) 
+		if(pic->flags.is_rect)
 		{
-			// Setup the transformation matrix we need.
-			gl.MatrixMode(DGL_MODELVIEW);
-			gl.PushMatrix();
-			gl.Translatef(pic->x.value - fi->imgoffset[0].value, 
-				pic->y.value - fi->imgoffset[1].value, 0);
-			gl.Scalef((pic->flip[sq]? -1 : 1) * pic->scale[0].value, 
-				pic->scale[1].value, 1);
+			// The fill.
+			gl.Disable(DGL_TEXTURING);
 
+			gl.Begin(DGL_QUADS);
+			FI_UseColor(pic->object.color, 4);
+			gl.Vertex2f(0, 0);
+			gl.Vertex2f(1, 0);
+			FI_UseColor(pic->other_color, 4);
+			gl.Vertex2f(1, 1);
+			gl.Vertex2f(0, 1);
+			gl.End();			
+			
+			gl.Begin(DGL_LINES);
+			FI_UseColor(pic->edge_color, 4);
+			gl.Vertex2f(0, 0);
+			gl.Vertex2f(1, 0);
+			gl.Vertex2f(1, 0);
+			FI_UseColor(pic->other_edge_color, 4);
+			gl.Vertex2f(1, 1);
+			gl.Vertex2f(1, 1);
+			gl.Vertex2f(0, 1);
+			gl.Vertex2f(0, 1);
+			FI_UseColor(pic->edge_color, 4);
+			gl.Vertex2f(0, 0);
+			gl.End();
+
+			gl.Enable(DGL_TEXTURING);
+		}
+		else if(pic->flags.is_patch) 
+		{
 			GL_DrawPatch_CS(0, 0, pic->lump[sq]);
-
-			// Restore original transformation.
-			gl.MatrixMode(DGL_MODELVIEW);
-			gl.PopMatrix();
 		}
 		else
 		{
 			GL_DrawRawScreen_CS(pic->lump[sq], 
-				pic->x.value - fi->imgoffset[0].value, 
-				pic->y.value - fi->imgoffset[1].value,
-				(pic->flip[sq]? -1 : 1) * pic->scale[0].value,
-				pic->scale[1].value);
+				0, //pic->object.x.value - fi->imgoffset[0].value, 
+				0, //pic->object.y.value - fi->imgoffset[1].value,
+				1, //(pic->flip[sq]? -1 : 1) * pic->object.scale[0].value,
+				1); //pic->object.scale[1].value);
 		}
+
+		// Restore original transformation.
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PopMatrix();
 	}
 
 	// Draw text.
 	for(i = 0, tex = fi->text; i < MAX_TEXT; i++, tex++)
 	{
-		if(!tex->used || !tex->text) continue;
+		if(!tex->object.used || !tex->text) continue;
 		FI_DrawText(tex);
 	}
 
@@ -1603,8 +1785,7 @@ void FI_Drawer(void)
 	{
 		// Only draw if necessary.
 		gl.Disable(DGL_TEXTURING);
-		gl.Color4f(fi->filter[0].value, fi->filter[1].value,
-			fi->filter[2].value, fi->filter[3].value);
+		FI_UseColor(fi->filter, 4);
 		gl.Begin(DGL_QUADS);
 		gl.Vertex2f(0, 0);
 		gl.Vertex2f(320, 0);
@@ -1841,10 +2022,14 @@ void FIC_Marker(void)
 	if(!stricmp(fi->gototarget, fi_token)) fi->gotoskip = false;
 }
 
-void FIC_DeletePic(void)
+void FIC_Delete(void)
 {
-	fipic_t *pic = FI_GetPic(FI_GetToken());
-	pic->used = false;
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+
+	if(obj)
+	{
+		obj->used = false;
+	}
 }
 
 void FIC_Image(void)
@@ -1854,28 +2039,31 @@ void FIC_Image(void)
 	FI_ClearAnimation(pic);
 	pic->lump[0] = W_CheckNumForName(FI_GetToken());
 	pic->flags.is_patch = false;
+	pic->flags.is_rect = false;
 }
 
 void FIC_ImageAt(void)
 {
 	fipic_t *pic = FI_GetPic(FI_GetToken());
 
-	FI_InitValue(&pic->x, FI_GetFloat());
-	FI_InitValue(&pic->y, FI_GetFloat());
+	FI_InitValue(&pic->object.x, FI_GetFloat());
+	FI_InitValue(&pic->object.y, FI_GetFloat());
 	FI_ClearAnimation(pic);
 	pic->lump[0] = W_CheckNumForName(FI_GetToken());
 	pic->flags.is_patch = false;
+	pic->flags.is_rect = false;
 }
 
 void FIC_Patch(void)
 {
 	fipic_t *pic = FI_GetPic(FI_GetToken());
 
-	FI_InitValue(&pic->x, FI_GetFloat());
-	FI_InitValue(&pic->y, FI_GetFloat());
+	FI_InitValue(&pic->object.x, FI_GetFloat());
+	FI_InitValue(&pic->object.y, FI_GetFloat());
 	FI_ClearAnimation(pic);
 	pic->lump[0] = W_CheckNumForName(FI_GetToken());
 	pic->flags.is_patch = true;
+	pic->flags.is_rect = false;
 }
 
 void FIC_SetPatch(void)
@@ -1883,6 +2071,7 @@ void FIC_SetPatch(void)
 	fipic_t *pic = FI_GetPic(FI_GetToken());
 	pic->lump[0] = W_CheckNumForName(FI_GetToken());
 	pic->flags.is_patch = true;
+	pic->flags.is_rect = false;
 }
 
 void FIC_ClearAnim(void)
@@ -1920,6 +2109,7 @@ void FIC_AnimImage(void)
 	pic->lump[i] = lump;
 	pic->seq_wait[i] = time;
 	pic->flags.is_patch = false;
+	pic->flags.is_rect = false;
 	pic->flags.done = false;
 }
 
@@ -1941,6 +2131,7 @@ void FIC_StateAnim(void)
 
 	// Animate N states starting from the given one.
 	pic->flags.is_patch = true;
+	pic->flags.is_rect = false;
 	pic->flags.done = false;
 	for(; count > 0 && st > 0; count--)
 	{
@@ -1966,30 +2157,221 @@ void FIC_PicSound(void)
 	pic->sound[i] = Def_Get(DD_DEF_SOUND, FI_GetToken(), 0);
 }
 
-void FIC_PicOffX(void)
+void FIC_ObjectOffX(void)
 {
-	fipic_t *pic = FI_GetPic(FI_GetToken());
-	FI_SetValue(&pic->x, FI_GetFloat());
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	float value = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(&obj->x, value);
+	}
 }
 
-void FIC_PicOffY(void)
+void FIC_ObjectOffY(void)
 {
-	fipic_t *pic = FI_GetPic(FI_GetToken());
-	FI_SetValue(&pic->y, FI_GetFloat());
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	float value = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(&obj->y, value);
+	}
 }
 
-void FIC_PicRGB(void)
+void FIC_ObjectRGB(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	fipic_t *pic = FI_FindPic(obj? obj->handle : NULL);
+	int i;
+	
+	for(i = 0; i < 3; i++) 
+	{
+		if(obj)
+		{
+			float value = FI_GetFloat();
+			FI_SetValue(obj->color + i, value);
+
+			if(pic && pic->flags.is_rect)
+			{
+				// This affects all the colors.
+				FI_SetValue(pic->other_color + i, value);
+				FI_SetValue(pic->edge_color + i, value);
+				FI_SetValue(pic->other_edge_color + i, value);
+			}
+		}
+		else
+		{
+			FI_GetFloat();
+		}
+	}
+}
+
+void FIC_ObjectAlpha(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	fipic_t *pic = FI_FindPic(obj? obj->handle : NULL);
+	float value = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(obj->color + 3, value);
+
+		if(pic && pic->flags.is_rect)
+		{
+			FI_SetValue(pic->other_color + 3, value);
+			/*FI_SetValue(pic->edge_color + 3, value);
+			FI_SetValue(pic->other_edge_color + 3, value);*/
+		}
+	}
+}
+
+void FIC_ObjectScaleX(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	float value = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(&obj->scale[0], value);
+	}
+}
+
+void FIC_ObjectScaleY(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	float value = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(&obj->scale[1], value);
+	}
+}
+
+void FIC_ObjectScale(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	float value = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(&obj->scale[0], value);
+		FI_SetValue(&obj->scale[1], value);
+	}
+}
+
+void FIC_ObjectScaleXY(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	float x = FI_GetFloat();
+	float y = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(&obj->scale[0], x);
+		FI_SetValue(&obj->scale[1], y);
+	}
+}
+
+void FIC_ObjectAngle(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	float value = FI_GetFloat();
+
+	if(obj)
+	{
+		FI_SetValue(&obj->angle, value);
+	}
+}
+
+void FIC_Rect(void)
 {
 	fipic_t *pic = FI_GetPic(FI_GetToken());
 	int i;
-	
-	for(i = 0; i < 3; i++) FI_SetValue(pic->color + i, FI_GetFloat());
+
+	// Position and size.
+	FI_InitValue(&pic->object.x, FI_GetFloat());
+	FI_InitValue(&pic->object.y, FI_GetFloat());
+	FI_InitValue(&pic->object.scale[0], FI_GetFloat());
+	FI_InitValue(&pic->object.scale[1], FI_GetFloat());
+
+	pic->flags.is_rect = true;
+	pic->flags.is_patch = false;
+	pic->flags.done = true;
+
+	// Default colors.
+	for(i = 0; i < 4; i++)
+	{
+		FI_InitValue(&pic->object.color[i], 1);
+		FI_InitValue(&pic->other_color[i], 1);
+		// Edge alpha is zero by default.
+		FI_InitValue(&pic->edge_color[i], i < 3? 1 : 0);
+		FI_InitValue(&pic->other_edge_color[i], i < 3? 1 : 0);
+	}
 }
 
-void FIC_PicAlpha(void)
+void FIC_FillColor(void)
 {
-	fipic_t *pic = FI_GetPic(FI_GetToken());
-	FI_SetValue(pic->color + 3, FI_GetFloat());
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	fipic_t *pic;
+	int which = 0;
+	int i;
+	float color;
+	
+	if(!obj)
+	{
+		// Skip the parms.
+		for(i = 0; i < 5; i++) FI_GetToken();
+		return;
+	}
+
+	pic = FI_GetPic(obj->handle);
+
+	// Which colors to modify?
+	FI_GetToken();
+	if(!stricmp(fi_token, "top")) which |= 1;
+	else if(!stricmp(fi_token, "bottom")) which |= 2;
+	else which = 3;
+
+	for(i = 0; i < 4; i++) 
+	{
+		color = FI_GetFloat();
+
+		if(which & 1) FI_SetValue(obj->color + i, color);
+		if(which & 2) FI_SetValue(pic->other_color + i, color);
+	}
+}
+
+void FIC_EdgeColor(void)
+{
+	fiobj_t *obj = FI_FindObject(FI_GetToken());
+	fipic_t *pic;
+	int which = 0;
+	int i;
+	float color;
+	
+	if(!obj)
+	{
+		// Skip the parms.
+		for(i = 0; i < 5; i++) FI_GetToken();
+		return;
+	}
+
+	pic = FI_GetPic(obj->handle);
+
+	// Which colors to modify?
+	FI_GetToken();
+	if(!stricmp(fi_token, "top")) which |= 1;
+	else if(!stricmp(fi_token, "bottom")) which |= 2;
+	else which = 3;
+
+	for(i = 0; i < 4; i++) 
+	{
+		color = FI_GetFloat();
+
+		if(which & 1) FI_SetValue(pic->edge_color + i, color);
+		if(which & 2) FI_SetValue(pic->other_edge_color + i, color);
+	}
 }
 
 void FIC_OffsetX(void)
@@ -2051,8 +2433,8 @@ void FIC_Text(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
 
-	FI_InitValue(&tex->x, FI_GetFloat());
-	FI_InitValue(&tex->y, FI_GetFloat());
+	FI_InitValue(&tex->object.x, FI_GetFloat());
+	FI_InitValue(&tex->object.y, FI_GetFloat());
 	FI_SetText(tex, FI_GetToken());
 	tex->pos = 0; // Restart the text.
 }
@@ -2062,8 +2444,8 @@ void FIC_TextFromDef(void)
 	fitext_t *tex = FI_GetText(FI_GetToken());
 	char *str;
 
-	FI_InitValue(&tex->x, FI_GetFloat());
-	FI_InitValue(&tex->y, FI_GetFloat());
+	FI_InitValue(&tex->object.x, FI_GetFloat());
+	FI_InitValue(&tex->object.y, FI_GetFloat());
 	if(!Def_Get(DD_DEF_TEXT, FI_GetToken(), &str))
 		str = "(undefined)"; // Not found!
 	FI_SetText(tex, str);
@@ -2076,8 +2458,8 @@ void FIC_TextFromLump(void)
 	int lnum, buflen, i, incount;
 	char *data, *str, *out;
 	
-	FI_InitValue(&tex->x, FI_GetFloat());
-	FI_InitValue(&tex->y, FI_GetFloat());
+	FI_InitValue(&tex->object.x, FI_GetFloat());
+	FI_InitValue(&tex->object.y, FI_GetFloat());
 	lnum = W_CheckNumForName(FI_GetToken());
 	if(lnum < 0)
 		FI_SetText(tex, "(not found)");
@@ -2126,7 +2508,7 @@ void FIC_SetTextDef(void)
 void FIC_DeleteText(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	tex->used = false;
+	tex->object.used = false;
 	if(tex->text)
 	{
 		// Free the memory allocated for the text string.
@@ -2149,25 +2531,26 @@ void FIC_TextRGB(void)
 {
 	int i;
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	for(i = 0; i < 3; i++) FI_SetValue(&tex->color[i], FI_GetFloat());
+	for(i = 0; i < 3; i++) 
+		FI_SetValue(&tex->object.color[i], FI_GetFloat());
 }
 
 void FIC_TextAlpha(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	FI_SetValue(&tex->color[3], FI_GetFloat());
+	FI_SetValue(&tex->object.color[3], FI_GetFloat());
 }
 
 void FIC_TextOffX(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	FI_SetValue(&tex->x, FI_GetFloat());
+	FI_SetValue(&tex->object.x, FI_GetFloat());
 }
 
 void FIC_TextOffY(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	FI_SetValue(&tex->y, FI_GetFloat());
+	FI_SetValue(&tex->object.y, FI_GetFloat());
 }
 
 void FIC_TextCenter(void)
@@ -2236,42 +2619,23 @@ void FIC_NoMusic(void)
 	S_StopMusic();
 }
 
-void FIC_PicScaleX(void)
-{
-	fipic_t *pic = FI_GetPic(FI_GetToken());
-	FI_SetValue(&pic->scale[0], FI_GetFloat());
-}
-
-void FIC_PicScaleY(void)
-{
-	fipic_t *pic = FI_GetPic(FI_GetToken());
-	FI_SetValue(&pic->scale[1], FI_GetFloat());
-}
-
-void FIC_PicScale(void)
-{
-	fipic_t *pic = FI_GetPic(FI_GetToken());
-	FI_SetValue(&pic->scale[0], FI_GetFloat());
-	FI_SetValue(&pic->scale[1], FI_GetFloat());
-}
-
 void FIC_TextScaleX(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	FI_SetValue(&tex->scale[0], FI_GetFloat());
+	FI_SetValue(&tex->object.scale[0], FI_GetFloat());
 }
 
 void FIC_TextScaleY(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	FI_SetValue(&tex->scale[1], FI_GetFloat());
+	FI_SetValue(&tex->object.scale[1], FI_GetFloat());
 }
 
 void FIC_TextScale(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
-	FI_SetValue(&tex->scale[0], FI_GetFloat());
-	FI_SetValue(&tex->scale[1], FI_GetFloat());
+	FI_SetValue(&tex->object.scale[0], FI_GetFloat());
+	FI_SetValue(&tex->object.scale[1], FI_GetFloat());
 }
 
 void FIC_PlayDemo(void)
