@@ -172,10 +172,13 @@ void Mus_Shutdown(void)
 		return;
 	mus_avail = false;
 
-#ifdef WIN32
 	// Shut down the drivers. They shut down their interfaces automatically.
+#ifdef WIN32
 	musd_fmod.Shutdown();
 	musd_win.Shutdown();
+#endif
+#ifdef UNIX
+	musd_loaded.Shutdown();
 #endif
 
 	// No more interfaces.
