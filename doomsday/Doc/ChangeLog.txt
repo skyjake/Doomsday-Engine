@@ -11,7 +11,6 @@ Version 1.7.12 (work in progress)
 + JWADs: IWAD supplements (uses normal WAD loading order)
 * music data will not be cached into the memory zone while loading 
   (large MP3s wasted a lot of space) 
-* 'InFine' is an alternative name for the 'Finale' definition
 * paths that contain the base path are normally printed without the base
 - removed obsolete settings from Control Panel: Network
 - removed detail texture maximum distance cvar and Control Panel slider
@@ -21,13 +20,23 @@ Version 1.7.12 (work in progress)
 Sound:
 * sounds from PWADs are not replaced with automatic external resources
 
-Refresh:
-+ up to eight sky models can be defined in a Map Info definition
-+ named Model definitions (Model:ID), not assigned to any state
-+ lightmap resources are read from the Data\x\LightMaps directory
+Definitions:
++ added Defs/Doomsday.ded: include definitions shared by all games
 + 'Top map', 'Bottom map', 'Side map' added to Light defs and
   Decoration:Light defs (name of lightmap to use; empty means default,
   "-" is none)
++ up to eight sky models can be defined in a Map Info definition
++ added an ID key to the Model definition
+* Defs/Doomsday.ded is always read first
+* Flag definitions moved to Defs/Flags.ded
+* XG definitions moved to Defs/XG.ded
+* maximum number of submodels is now 8
+* Map Info definitions can be copied
+* 'InFine' is an alternative name for the 'Finale' definition
+
+Refresh:
++ named Model definitions (Model:ID), not assigned to any state
++ lightmap resources are read from the Data\x\LightMaps directory
 + texture/flat animation sequences defined using Group defs (Anim.ded)
 + "tgf_smooth": interpolate between steps in texture/flat animation
 + particle generator flag "gnf_group": triggered by all in the flat's
@@ -36,12 +45,7 @@ Refresh:
   blending for particles
 + particle generator flags "gnf_blendmul", "gnf_blendimul": normal and
   inverse multiplicative blending for particles
-+ added Defs/Doomsday.ded: include definitions shared by all games
 + option -nohighpat: disable high-resolution patches
-* Defs/Doomsday.ded is always read first
-* Flag definitions moved to Defs/Flags.ded
-* XG definitions moved to Defs/XG.ded
-* maximum number of submodels is now 8
 * texture/flat groups can be used purely for precaching
 * detail texture contrast is preprocessed: there will be multiple 
   instances of the same texture with different contrast levels (needs
