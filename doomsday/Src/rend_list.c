@@ -47,7 +47,9 @@ END_PROF_TIMERS()
 // FIXME: Rlist allocation could be dynamic.
 #define MAX_RLISTS			1024 
 
-#define IS_MUL_MODE			(!dlBlend && !whitefog)
+#define IS_MUL				(!dlBlend && !useFog)
+#define IS_MTEX_DETAILS		(r_detail && useMultiTexDetails && numTexUnits > 1)
+#define IS_MTEX_LIGHTS		(!IS_MTEX_DETAILS && !useFog && useMultiTexLights && numTexUnits > 1)
 
 /*
 #define BYTESIZE		1
@@ -63,44 +65,65 @@ END_PROF_TIMERS()
 #define DETAILBIAS		0
 */
 
-/*#define IFCOL	if(with_col)
-#define IFDET	if(with_det)
-#define IFTEX	if(with_tex)
-#define IFTC	if(with_tex || with_det)*/
-
 // Drawing condition flags.
 #define DCF_NO_LIGHTS				0x00000001
-#define DCF_FEW_LIGHTS				0x00000002
+#define DCF_WITH_LIGHTS				0x00000002
+/*#define DCF_FEW_LIGHTS				0x00000002
 #define DCF_FIRST_UNIT_LIGHTS		0x00000004
 #define DCF_EXTRA_UNIT_LIGHTS		0x00000008
-#define	DCF_NO_SINGLE_PASS_TEXTURE	0x00000010
+#define	DCF_NO_SINGLE_PASS_TEXTURE	0x00000010*/
 #define DCF_NO_BLEND				0x00000020
 #define DCF_BLEND					0x00000040
+#define DCF_SET_LIGHT_ENV0			0x00000080
+#define DCF_SET_LIGHT_ENV1			0x00000100
+#define DCF_SET_LIGHT_ENV			(DCF_SET_LIGHT_ENV0 | DCF_SET_LIGHT_ENV1)
+#define DCF_JUST_ONE_LIGHT			0x00000200
+#define DCF_MANY_LIGHTS				0x00000400
+#define DCF_SKIP					0x80000000
 
 // List Modes.
 typedef enum listmode_e
 {
 	// Major modes:
+	LM_SKYMASK,
+	LM_ALL,
+	LM_LIGHT_MOD_TEXTURE,
+	LM_FIRST_LIGHT,
+	LM_TEXTURE_PLUS_LIGHT,
+	LM_UNBLENDED_TEXTURE_AND_DETAIL,
+	LM_BLENDED,
+	LM_BLENDED_FIRST_LIGHT,
+	LM_NO_LIGHTS,
+	LM_WITHOUT_TEXTURE,
+	LM_LIGHTS,
+	LM_MOD_TEXTURE,
+	LM_MOD_TEXTURE_MANY_LIGHTS,
+	LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL,
+	LM_BLENDED_MOD_TEXTURE,
+	LM_ALL_DETAILS,
+	LM_BLENDED_DETAILS,
+	LM_SHADOW,
+
 	LM_NORMAL_MUL,			// normal surfaces (multiplicative lights)
 	LM_NORMAL_ADD,			// normal surfaces (additive lights)
 
 	// Minor modes:
 	LM_MUL_SINGLE_PASS,
-	LM_NO_LIGHTS,
+
 	LM_FEW_LIGHTS,
 	LM_MANY_LIGHTS,
 	LM_EXTRA_LIGHTS,
 	LM_NEEDS_TEXTURE,
 	
 	// Submodes:
-	LMS_LAST_UNIT_TEXTURE_ONLY,
+/*	LMS_LAST_UNIT_TEXTURE_ONLY,
 	LMS_LIGHTS_TEXTURE_MUL,
 	LMS_Z_DONE,
 	LMS_LIGHTS_ADD_FIRST,
 	LMS_LIGHTS_ADD_SUBSEQUENT,
 	LMS_TEXTURE_MUL,
 	LMS_SINGLE_TEXTURE,
-
+*/
 /*
 	LID_SKYMASK,				// Draw only into Z-buffer.
 	//LID_NORMAL,					// Normal walls and planes (dlBlend=1, fog).
@@ -115,13 +138,13 @@ typedef enum listmode_e
 }
 listmode_t;
 
-// Lists for skymask.
+/*// Lists for skymask.
 enum
 {
 	RLSKY_FLATS,
 	RLSKY_WALLS,
 	NUM_RLSKY
-};
+};*/
 
 // Lists for dynamic lights.
 /*enum
@@ -135,7 +158,9 @@ enum
 // Types of rendering primitives.
 typedef enum primtype_e
 {
-	PT_TRIANGLES			// Used for most stuff.
+	PT_TRIANGLES,			// Used for most stuff.
+	PT_FAN,
+	PT_DOUBLE_FAN,
 } 
 primtype_t;
 
@@ -145,9 +170,8 @@ enum
 	TCA_MAIN,				// Main texture.
 	TCA_BLEND,				// Blendtarget texture.
 	TCA_DETAIL,				// Detail texture coordinates.
-	TCA_LIGHT1,				// The first dynamic lights. Only #TU-1 of these
-	TCA_LIGHT2,				//	will be actually used.
-	TCA_LIGHT3,
+	TCA_BLEND_DETAIL,		// Blendtarget's detail texture coordinates.
+	TCA_LIGHT,				// Glow texture coordinates.
 	NUM_TEXCOORD_ARRAYS
 };
 
@@ -187,26 +211,30 @@ typedef struct primhdr_s
 	primtype_t type;	
 	short flags;				// RPF_*.
 
+	// Number of vertices in the primitive.
+	uint primSize;
+
 	// Elements in the vertex array for this primitive. 
 	// The indices are always contiguous: indices[0] is the base, and 
 	// indices[1...n] > indices[0]. 
 	// All indices in the range indices[0]...indices[n] are used by this
 	// primitive (some are shared).
 	// Since everything is triangles, count is a multiple of 3.
-	uint numIndices;	
+	ushort numIndices;	
 	uint *indices;
 
-	// Number of vertices in the primitive.
-	uint primSize;
+	ushort beginOther;
+
+	dynlight_t *light;
 
 	// Dynamic lights on the surface.
-	ushort numLights;
-	dynlight_t *lights;
+	/*ushort numLights;
+	dynlight_t *lights;*/
 	
 	// Array of texture coordinates for lights. There is a texcoord for
 	// each element of the primitive. These can be accessed with:
 	// primSize * light + (indices[i] - indices[0])
-	gltexcoord_t *lightCoords;	
+	//gltexcoord_t *lightCoords;	
 
 	/*union primhdr_data_u {
 		//lumobj_t	*light;			// For RPF_LIGHT polygons.
@@ -215,62 +243,9 @@ typedef struct primhdr_s
 }
 primhdr_t;
 
-// The primitive data follows immediately after the header.
-
-// Primvertices are used by the datablocks to store vertex data.
-// 2D vertex.
-/*typedef struct primvertex2_s
-{
-	float	pos[2];				// X and Y coordinates.
-	byte	color[4];			// Color of the vertex (RGBA).
-	float	dist;				// Distance to the vertex.
-}
-primvertex2_t;
-
-typedef struct texcoord_s
-{
-	float	s, t;
-}
-texcoord_t;
-
-typedef struct color3_s
-{
-	float	rgb[3];
-}
-color3_t;*/
-
-// Data for a quad (wall segment).
-/*typedef struct primquad_s
-{
-	float	length;				// Length of the wall segment.
-	float	top, bottom;		// Top and bottom heights.
-	primvertex2_t vertices[2];	// Start and end vertex.
-} 
-primquad_t;
-
-// Data for a divquad (wall segment with divided sides).
-typedef struct primdivquad_s
-{
-	primquad_t quad;			// The data for a normal quad.
-	int		numdivs[2];			// Number of divisions for start and end.
-	float	divs[1];			// Really [numdivs[0] + numdivs[1]].
-	// The division heights follow:	first numdivs[0] floats and then
-	// numdivs[1] floats.
-}
-primdivquad_t;*/
-
-// Data for a flat (planes).
-/*typedef struct primflat_s
-{
-	float	z;					// Z height.
-	int		numvertices;		// Number of vertices for the poly.		
-	primvertex2_t vertices[1];	// Really [numvertices].
-}
-primflat_t;*/
-
 // Rendering List 'has' flags.
-#define RLHAS_DLIT		0x1		// Primitives with dynamic lights.
-#define RLHAS_DETAIL	0x2		// ...with RPF_DETAIL.
+#define RLF_LIGHTS		0x1		// Primitives are dynamic lights.
+#define RLF_BLENDED		0x2		// List contains only texblended prims.
 
 /*
  * The rendering list. When the list is resized, pointers in the primitives
@@ -279,28 +254,15 @@ primflat_t;*/
 typedef struct rendlist_s
 {
 	struct rendlist_s *next;
-	DGLuint	tex;				// The name of the texture for this list.
-	int		texw, texh;			// Width and height of the texture.
-	DGLuint	intertex;			// Secondary tex to be used in interpolation.
-	int		intertexw, intertexh;
+	int		flags;
+	gltexture_t tex, intertex;
 	float	interpos;			// 0 = primary, 1 = secondary texture
-	detailinfo_t *detail;		// Detail texture name and dimensions.
 	int		size;				// Number of bytes allocated for the data.
 	byte	*data;				// Data for a number of polygons (The List).
 	byte	*cursor;			// A pointer to data, for reading/writing.
 	primhdr_t *last;			// Pointer to the last primitive (or NULL).
-	int		has;				
 }
 rendlist_t;
-
-/*typedef struct divquaddata_s 
-{
-	primdivquad_t *quad;
-	float zpos[2];
-	float height;
-	float *heights[2];
-}
-divquaddata_t;*/
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -316,12 +278,14 @@ void RL_SetupState(listmode_t mode, rendlist_t *list);
 
 extern int			skyhemispheres;
 extern int			useDynLights, dlBlend, simpleSky;
-extern boolean		whitefog;
+extern boolean		useFog;
 extern float		maxLightDist;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean				renderTextures = true;
+int					renderTextures = true;
+int					useMultiTexLights = true;
+int					useMultiTexDetails = true;
 
 // Intensity of angle-based wall lighting.
 float				rend_light_wall_angle = 1;
@@ -351,27 +315,30 @@ static glcolor_t *colors;
 
 static uint numVertices, maxVertices;
 
-static uint numIndices;
-static uint indices[MAX_INDICES];
+//static uint numIndices;
+//static uint indices[MAX_INDICES];
 
 /*
  * The rendering lists.
  */
 //static rendlist_t rlists[MAX_RLISTS]; // The list of rendering lists.
-static listhash_t list_hash[RL_HASH_SIZE];
 
-static rendlist_t mask_rlists[NUM_RLSKY];
-/*static rendlist_t dl_rlists[NUM_RLDYN];
-static rendlist_t shadow_rlist;*/
+// Surfaces without lights.
+static listhash_t plainHash[RL_HASH_SIZE];
 
-static rendlist_t *ptr_mask_rlists[NUM_RLSKY];
-/*static rendlist_t *ptr_dl_rlists[NUM_RLDYN];
-static rendlist_t *ptr_shadow_rlist[1] = { &shadow_rlist };*/
+// Surfaces with lights.
+static listhash_t litHash[RL_HASH_SIZE];
+
+// Additional light primitives.
+static listhash_t dynHash[RL_HASH_SIZE];
+
+static rendlist_t skyMaskList;
+static rendlist_t shadowList;
 
 // The rendering state for RL_Draw(Div)Quad and RL_DrawFlat.
-static int with_tex, with_col, with_det;
+//static int with_tex, with_col, with_det;
 //static float rl_texw, rl_texh;
-static detailinfo_t *rl_detail;
+//static detailinfo_t *rl_detail;
 
 
 // CODE --------------------------------------------------------------------
@@ -392,7 +359,7 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	
 	vis->issprite = false;
 	vis->distance = (poly->vertices[0].dist + poly->vertices[1].dist) / 2;
-	vis->wall.texture = poly->tex;
+	vis->wall.texture = poly->tex.id;
 	vis->wall.masked = texmask;	// Store texmask status in flip.
 	vis->wall.top = poly->top;
 	vis->wall.bottom = poly->bottom;
@@ -400,14 +367,14 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	{
 		vis->wall.vertices[i].pos[VX] = poly->vertices[i].pos[VX];
 		vis->wall.vertices[i].pos[VY] = poly->vertices[i].pos[VY];
-		memcpy(&vis->wall.vertices[i].color, poly->vertices[i].color.rgb, 3);
+		memcpy(&vis->wall.vertices[i].color, poly->vertices[i].color.rgba, 3);
 		vis->wall.vertices[i].color |= 0xff000000; // Alpha.
 	}
-	vis->wall.texc[0][VX] = poly->texoffx / (float) poly->texw;
-	vis->wall.texc[1][VX] = vis->wall.texc[0][VX] + poly->length/poly->texw;
-	vis->wall.texc[0][VY] = poly->texoffy / (float) poly->texh;
+	vis->wall.texc[0][VX] = poly->texoffx / (float) poly->tex.width;
+	vis->wall.texc[1][VX] = vis->wall.texc[0][VX] + poly->length/poly->tex.width;
+	vis->wall.texc[0][VY] = poly->texoffy / (float) poly->tex.height;
 	vis->wall.texc[1][VY] = vis->wall.texc[0][VY] 
-		+ (poly->top - poly->bottom)/poly->texh;
+		+ (poly->top - poly->bottom)/poly->tex.height;
 }
 
 //===========================================================================
@@ -417,8 +384,8 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 //===========================================================================
 void RL_VertexColors(rendpoly_t *poly, int lightlevel, byte *rgb)
 {
-	int		i, c;
-	float	light, real, minimum;
+	int i;
+	float light, real, minimum;
 	rendpoly_vertex_t *vtx;
 	boolean usewhite;
 
@@ -433,7 +400,7 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, byte *rgb)
 
 	light = lightlevel / 255.0f;
 
-	for(i=0, vtx=poly->vertices; i<poly->numvertices; i++, vtx++)
+	for(i = 0, vtx = poly->vertices; i < poly->numvertices; i++, vtx++)
 	{
 		usewhite = false;
 
@@ -462,78 +429,49 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, byte *rgb)
 		if(real < 0) real = 0;
 		if(real > 1) real = 1;
 
-		for(c=0; c<3; c++)
-			vtx->color.rgb[c] = (DGLubyte) ((usewhite? 0xff : rgb[c]) * real);
+		if(usewhite)
+		{
+			vtx->color.rgba[0] 
+				= vtx->color.rgba[1]
+				= vtx->color.rgba[2]
+				= (DGLubyte) (0xff * real);
+		}
+		else
+		{
+			vtx->color.rgba[0] = (DGLubyte) (rgb[0] * real);
+			vtx->color.rgba[1] = (DGLubyte) (rgb[1] * real);
+			vtx->color.rgba[2] = (DGLubyte) (rgb[2] * real);
+		}
 	}
 }
 
 //===========================================================================
 // RL_PrepareFlat
 //===========================================================================
-void RL_PrepareFlat(rendpoly_t *poly, int numvrts, fvertex_t *vrts, 
-					int dir, subsector_t *subsector)
+void RL_PrepareFlat
+	(rendpoly_t *poly, subsector_t *subsector)
 {
-	float distances[MAX_POLY_SIDES];
-	fvertex_t *vtx;
-	int	i, lightlevel = poly->vertices[0].color.rgb[CR];
-	rendpoly_vertex_t *rpv;
-
-	if(!numvrts || !vrts)
-	{
-		// Take the subsector's vertices.
-		numvrts = subsector->numverts;
-		vrts = subsector->verts;
-	}
-
-	// We're preparing a plane here.
-	poly->type = RP_FLAT;	
+	int	i;
 
 	// Calculate the distance to each vertex.
-	for(i = 0; i < numvrts; i++) distances[i] = Rend_PointDist2D(&vrts[i].x);
+	for(i = 0; i < poly->numvertices; i++)
+	{
+		poly->vertices[i].dist = Rend_PointDist2D(poly->vertices[i].pos);
+	}
 
-	// Copy the vertices to the poly.
-	if(subsector && subsector->flags & DDSUBF_MIDPOINT)
-	{
-		// Triangle fan base is the midpoint of the subsector.
-		poly->numvertices = 2 + numvrts;
-		poly->vertices[0].pos[VX] = subsector->midpoint.x;
-		poly->vertices[0].pos[VY] = subsector->midpoint.y;
-		poly->vertices[0].dist = Rend_PointDist2D(&subsector->midpoint.x);
-		
-		vtx = vrts + (!dir? 0 : numvrts-1);
-		rpv = poly->vertices + 1;
-	}
-	else
-	{
-		poly->numvertices = numvrts;
-		// The first vertex is always the same: vertex zero.
-		rpv = poly->vertices;
-		rpv->pos[VX] = vrts[0].x;
-		rpv->pos[VY] = vrts[0].y;
-		rpv->dist = distances[0];
-
-		vtx = vrts + (!dir? 1 : numvrts-1);
-		rpv++; 
-		numvrts--;
-	}
-	// Add the rest of the vertices.
-	for(; numvrts > 0; numvrts--, (!dir? vtx++ : vtx--), rpv++)
-	{
-		rpv->pos[VX] = vtx->x;
-		rpv->pos[VY] = vtx->y;
-		rpv->dist = distances[vtx - vrts];
-	}
-	if(poly->numvertices > numvrts)
-	{
-		// Readd the first vertex so the triangle fan wraps around.
-		memcpy(rpv, poly->vertices + 1, sizeof(*rpv));
-	}
-	
 	// Calculate the color for each vertex.
-	RL_VertexColors(poly, lightlevel, subsector->sector->rgb);
+	RL_VertexColors(poly, Rend_SectorLight(poly->sector), poly->sector->rgb);
 }
 
 // The Rendering Lists -----------------------------------------------------
+
+//===========================================================================
+// RL_ClearHash
+//===========================================================================
+void RL_ClearHash(listhash_t *hash)
+{
+	memset(hash, 0, sizeof(listhash_t) * RL_HASH_SIZE);
+}
 
 //===========================================================================
 // RL_Init
@@ -541,23 +479,12 @@ void RL_PrepareFlat(rendpoly_t *poly, int numvrts, fvertex_t *vrts,
 //===========================================================================
 void RL_Init(void)
 {
-	int i;
+	RL_ClearHash(plainHash);
+	RL_ClearHash(litHash);
+	RL_ClearHash(dynHash);
 
-	for(i = 0; i < NUM_RLSKY; i++)
-	{
-		ptr_mask_rlists[i] = &mask_rlists[i];
-	}
-/*	for(i = 0; i < NUM_RLDYN; i++)
-	{
-		ptr_dl_rlists[i] = &dl_rlists[i];
-	}*/
-
-	//numrlists = 0;
-	//memset(rlists, 0, sizeof(rlists));
-	memset(list_hash, 0, sizeof(list_hash));
-	memset(mask_rlists, 0, sizeof(mask_rlists));
-	//memset(dl_rlists, 0, sizeof(dl_rlists));
-	//memset(&shadow_rlist, 0, sizeof(shadow_rlist));
+	memset(&skyMaskList, 0, sizeof(skyMaskList));
+	memset(&shadowList, 0, sizeof(shadowList));
 }
 
 //===========================================================================
@@ -633,10 +560,32 @@ void RL_DestroyList(rendlist_t *rl)
 #endif
 
 	rl->cursor = NULL;
-	rl->detail = NULL;
+	rl->tex.detail = NULL;
+	rl->intertex.detail = NULL;
 	rl->last = NULL;
 	rl->size = 0;
-	rl->has = false;
+	rl->flags = 0;
+//	rl->has = false;
+}
+
+//===========================================================================
+// RL_DeleteHash
+//===========================================================================
+void RL_DeleteHash(listhash_t *hash)
+{
+	int i;
+	rendlist_t *list, *next;
+
+	for(i = 0; i < RL_HASH_SIZE; i++)
+	{
+		for(list = hash[i].first; list; list = next)
+		{
+			next = list->next;
+			RL_DestroyList(list);
+			Z_Free(list);
+		}
+	}
+	RL_ClearHash(hash);
 }
 
 //===========================================================================
@@ -645,24 +594,15 @@ void RL_DestroyList(rendlist_t *rl)
 //===========================================================================
 void RL_DeleteLists(void)
 {
-	int	i;
-	rendlist_t *list, *next;
-
 	// Delete all lists.
-	//for(i = 0; i < numrlists; i++) RL_DestroyList(&rlists[i]);
-	for(i = 0; i < RL_HASH_SIZE; i++)
-	{
-		for(list = list_hash[i].first; list; list = next)
-		{
-			next = list->next;
-			RL_DestroyList(list);
-			Z_Free(list);
-		}
-	}
-	memset(list_hash, 0, sizeof(list_hash));
-	for(i = 0; i < NUM_RLSKY; i++) RL_DestroyList(&mask_rlists[i]);
+	RL_DeleteHash(plainHash);
+	RL_DeleteHash(litHash);
+	RL_DeleteHash(dynHash);
+	
+	//for(i = 0; i < NUM_RLSKY; i++) RL_DestroyList(&mask_rlists[i]);
+	RL_DestroyList(&skyMaskList);
 //	for(i = 0; i < NUM_RLDYN; i++) RL_DestroyList(&dl_rlists[i]);
-//	RL_DestroyList(&shadow_rlist);
+	RL_DestroyList(&shadowList);
 	//numrlists = 0;
 
 	RL_DestroyVertices();
@@ -690,12 +630,28 @@ void RL_RewindList(rendlist_t *rl)
 {
 	rl->cursor = rl->data;
 	rl->last = NULL;
-	rl->has = 0;
+	rl->flags = 0;
+	rl->tex.detail = NULL;
+	rl->intertex.detail = NULL;
 
 	// The interpolation target must be explicitly set (in RL_AddPoly).
-	rl->intertex = 0;
-	rl->intertexw = 0;
-	rl->intertexh = 0;
+	memset(&rl->intertex, 0, sizeof(rl->intertex));
+	rl->interpos = 0;
+}
+
+//===========================================================================
+// RL_RewindHash
+//===========================================================================
+void RL_RewindHash(listhash_t *hash)
+{
+	int i;
+	rendlist_t *list;
+
+	for(i = 0; i < RL_HASH_SIZE; i++)
+	{
+		for(list = hash[i].first; list; list = list->next)
+			RL_RewindList(list);
+	}
 }
 
 //===========================================================================
@@ -704,144 +660,131 @@ void RL_RewindList(rendlist_t *rl)
 //===========================================================================
 void RL_ClearLists(void)
 {
-	int	i;
-	rendlist_t *list;
-
 	// Clear the vertex array.
 	RL_ClearVertices();
 
-	//for(i = 0; i < numrlists; i++) RL_RewindList(&rlists[i]);
-	for(i = 0; i < RL_HASH_SIZE; i++)
-	{
-		for(list = list_hash[i].first; list; list = list->next)
-			RL_RewindList(list);
-	}
-	for(i = 0; i < NUM_RLSKY; i++) RL_RewindList(&mask_rlists[i]);
-//	for(i = 0; i < NUM_RLDYN; i++) RL_RewindList(&dl_rlists[i]);
-//	RL_RewindList(&shadow_rlist);
+	RL_RewindHash(plainHash);
+	RL_RewindHash(litHash);
+	RL_RewindHash(dynHash);
 
-	// Types for the 'static' lists.
-//	mask_rlists[RLSKY_WALLS].type = rl_quads;
-//	mask_rlists[RLSKY_FLATS].type = rl_flats;
-/*	dl_rlists[RLDYN_WALLS].type = dl_rlists[RLDYN_GLOW].type = rl_quads;
-	dl_rlists[RLDYN_FLATS].type = rl_flats;
-	shadow_rlist.type = rl_flats;*/
-
-	// Dynamic light textures.
-/*	dl_rlists[RLDYN_WALLS].tex = dltexname;
-	dl_rlists[RLDYN_FLATS].tex = dltexname;
-	dl_rlists[RLDYN_GLOW].tex = glowtexname;*/
+	RL_RewindList(&skyMaskList);
+	RL_RewindList(&shadowList);
 
 	// FIXME: Does this belong here?
 	skyhemispheres = 0;
 }
 
 //===========================================================================
+// RL_CreateList
+//===========================================================================
+rendlist_t *RL_CreateList(listhash_t *hash)
+{
+	rendlist_t *list = Z_Calloc(sizeof(rendlist_t), PU_STATIC, 0);
+
+	if(hash->last) hash->last->next = list;
+	hash->last = list;
+	if(!hash->first) hash->first = list;
+	return list;
+}
+
+//===========================================================================
 // RL_GetListFor
 //===========================================================================
-rendlist_t *RL_GetListFor(rendpoly_t *poly)
+rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
 {
-//	int type;
-	listhash_t *hash;
+	listhash_t *hash, *table;
 	rendlist_t *dest, *convertable = NULL;
 	
 	// Check for specialized rendering lists first.
-/*	if(poly->flags & RPF_SHADOW)
+	if(poly->flags & RPF_SHADOW)
 	{
-		return &shadow_rlist;
-	}*/
+		memcpy(&shadowList.tex, &poly->tex, sizeof(poly->tex));
+		return &shadowList;
+	}
 	if(poly->flags & RPF_SKY_MASK)
 	{
-		return &mask_rlists[poly->type==RP_QUAD? RLSKY_WALLS : RLSKY_FLATS];
+		return &skyMaskList;
 	}
-/*	if(poly->flags & RPF_WALL_GLOW)
-	{
-		return &dl_rlists[RLDYN_GLOW];
-	}
-	if(poly->flags & RPF_LIGHT) // Dynamic lights?
-	{
-		return &dl_rlists[poly->type==rp_quad? RLDYN_WALLS : RLDYN_FLATS];
-	}*/
 
-	// Find a suitable normal list. 
-	//type = (poly->type == rp_flat? rl_flats : rl_quads);
+	// Choose the correct hash table.
+	table = (useLights? litHash : plainHash);
 
-	hash = &list_hash[ poly->tex % RL_HASH_SIZE ];
+	// Find/create a list in the hash.
+	hash = &table[ poly->tex.id % RL_HASH_SIZE ];
 	for(dest = hash->first; dest; dest = dest->next)
 	{
-		if(dest->tex == poly->tex)// && dest->type == type)
+		if(dest->tex.id == poly->tex.id)
 		{
-			if(!poly->blendtex && !dest->intertex)
+			if(!poly->intertex.id && !dest->intertex.id)
 			{
 				// This will do great.
 				return dest;
 			}
 
 			// Is this eligible for conversion to a blended list?
-			if(poly->blendtex && !dest->last && !convertable)
+			if(poly->intertex.id && !dest->last && !convertable)
 			{
 				// If necessary, this empty list will be selected.
 				convertable = dest;
 			}
 
 			// Possibly an exact match?
-			if(poly->blendtex == dest->intertex
-				&& poly->blendpos == dest->interpos)
+			if(poly->intertex.id == dest->intertex.id
+				&& poly->interpos == dest->interpos)
 			{
 				return dest;
 			}
-
-			/*if(dest->intertex != poly->blendtex)
-				continue;
-				&& (dest->intertex != poly->blendtex
-					|| dest->interpos != poly->blendpos))
-			{
-				// This list does not match the blending parameters.
-				continue;
-			}*/
-			
-			// This is it.
-			//return dest;
 		}
 	}
-
-#ifdef _DEBUG
-	if(poly->tex == poly->blendtex)
-	{
-		poly->tex = poly->tex;
-	}
-#endif
 
 	// Did we find a convertable list?
 	if(convertable)
 	{
 		// This list is currently empty.
-		convertable->intertex  = poly->blendtex;
-		convertable->intertexw = poly->blendtexw;
-		convertable->intertexh = poly->blendtexh;
-		convertable->interpos  = poly->blendpos;
+		memcpy(&convertable->intertex, &poly->intertex, 
+			sizeof(poly->intertex));
+		convertable->interpos = poly->interpos;
 		return convertable;
 	}
 
 	// Create a new list.
-	dest = Z_Calloc(sizeof(rendlist_t), PU_STATIC, 0);
-	if(hash->last) hash->last->next = dest;
-	hash->last = dest;
-	if(!hash->first) hash->first = dest;
+	dest = RL_CreateList(hash);
 
 	// Init the info.
-	dest->tex = poly->tex;
-	dest->texw = poly->texw;
-	dest->texh = poly->texh;
-	dest->detail = poly->detail;
+	dest->tex.id = poly->tex.id;
+	dest->tex.width = poly->tex.width;
+	dest->tex.height = poly->tex.height;
 
-	if(poly->blendtex)
+	if(poly->intertex.id)
 	{
-		dest->intertex  = poly->blendtex;
-		dest->intertexw = poly->blendtexw;
-		dest->intertexh = poly->blendtexh;
-		dest->interpos  = poly->blendpos;
+		memcpy(&dest->intertex, &poly->intertex, sizeof(poly->intertex));
+		dest->interpos = poly->interpos;
 	}
+
+	return dest;
+}
+
+//===========================================================================
+// RL_GetLightListFor
+//===========================================================================
+rendlist_t *RL_GetLightListFor(DGLuint texture)
+{
+	listhash_t *hash;
+	rendlist_t *dest;
+
+	// Find/create a list in the hash.
+	hash = &dynHash[ texture % RL_HASH_SIZE ];
+	for(dest = hash->first; dest; dest = dest->next)
+	{
+		if(dest->tex.id == texture) 
+		{
+			return dest;
+		}
+	}
+
+	// There isn't a list for this yet.
+	dest = RL_CreateList(hash);
+	dest->tex.id = texture;
 
 	return dest;
 }
@@ -903,11 +846,11 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
 			{
 				hdr->indices = (uint*) (list->data 
 					+ ((byte*) hdr->indices - oldData));
-				if(hdr->lightCoords)
+				/*if(hdr->lightCoords)
 				{
 					hdr->lightCoords = (gltexcoord_t*) (list->data 
 						+ ((byte*) hdr->lightCoords - oldData));
-				}
+				}*/
 
 				// Check here in the end; primitive composition may be 
 				// in progress.
@@ -932,6 +875,7 @@ void RL_AllocateIndices(rendlist_t *list, int numIndices)
 		sizeof(*list->last->indices) * numIndices);
 }
 
+/*
 //===========================================================================
 // RL_AllocateLightCoords
 //===========================================================================
@@ -941,7 +885,9 @@ void RL_AllocateLightCoords(rendlist_t *list)
 		sizeof(*list->last->lightCoords) * list->last->primSize
 		* (list->last->numLights - maxArrayLights));
 }
+*/
 
+/*
 //===========================================================================
 // RL_TexCoordArray
 //===========================================================================
@@ -957,36 +903,46 @@ gltexcoord_t *RL_TexCoordArray(rendlist_t *list, int index)
 			* list->last->primSize ];
 	}
 }
+*/
 
 //===========================================================================
 // RL_QuadTexCoords
 //===========================================================================
-void RL_QuadTexCoords(gltexcoord_t *tc, rendpoly_t *poly, rendlist_t *list)
+void RL_QuadTexCoords(gltexcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 {
+	if(!tex->id) return;
+
 	tc[0].st[0] = tc[3].st[0] 
-		= poly->texoffx / list->texw;
+		= poly->texoffx / tex->width;
 	tc[0].st[1]	= tc[1].st[1]
-		= poly->texoffy / list->texh;
+		= poly->texoffy / tex->height;
 	tc[1].st[0] = tc[2].st[0]
-		= tc[0].st[0] + poly->length / list->texw;
+		= tc[0].st[0] + poly->length / tex->width;
 	tc[2].st[1] = tc[3].st[1]
-		= tc[0].st[1] + (poly->top - poly->bottom) / list->texh;
+		= tc[0].st[1] + (poly->top - poly->bottom) / tex->height;
 }
 
 //===========================================================================
-// RL_QuadInterTexCoords
+// RL_QuadDetailTexCoords
 //===========================================================================
-void RL_QuadInterTexCoords
-	(gltexcoord_t *tc, rendpoly_t *poly, rendlist_t *list)
+void RL_QuadDetailTexCoords
+	(gltexcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 {
+	float mul = tex->detail->scale * detailScale;
+
 	tc[0].st[0] = tc[3].st[0] 
-		= poly->texoffx / list->intertexw;
+		= poly->texoffx / tex->detail->width;
 	tc[0].st[1]	= tc[1].st[1]
-		= poly->texoffy / list->intertexh;
+		= poly->texoffy / tex->detail->height;
 	tc[1].st[0] = tc[2].st[0]
-		= tc[0].st[0] + poly->length / list->intertexw;
+		= (tc[0].st[0] + poly->length / tex->detail->width) * mul;
 	tc[2].st[1] = tc[3].st[1]
-		= tc[0].st[1] + (poly->top - poly->bottom) / list->intertexh;
+		= (tc[0].st[1] + (poly->top - poly->bottom) 
+		  / tex->detail->height) * mul;
+	tc[0].st[0] *= mul;
+	tc[0].st[1]	*= mul;
+	tc[1].st[1] *= mul;
+	tc[3].st[0] *= mul;
 }
 
 //===========================================================================
@@ -994,16 +950,21 @@ void RL_QuadInterTexCoords
 //===========================================================================
 void RL_QuadColors(glcolor_t *color, rendpoly_t *poly)
 {
+	if(poly->flags & RPF_SKY_MASK)
+	{
+		// Sky mask doesn't need a color.
+		return;
+	}
 	if(poly->flags & RPF_GLOW)
 	{
 		memset(color, 255, 4 * 4);
 		return;
 	}
 
-	memcpy(color[0].rgba, poly->vertices[0].color.rgb, 3);
-	memcpy(color[1].rgba, poly->vertices[1].color.rgb, 3);
-	memcpy(color[2].rgba, poly->vertices[1].color.rgb, 3);
-	memcpy(color[3].rgba, poly->vertices[0].color.rgb, 3);
+	memcpy(color[0].rgba, poly->vertices[0].color.rgba, 3);
+	memcpy(color[1].rgba, poly->vertices[1].color.rgba, 3);
+	memcpy(color[2].rgba, poly->vertices[1].color.rgba, 3);
+	memcpy(color[3].rgba, poly->vertices[0].color.rgba, 3);
 
 	// No alpha.
 	color[0].rgba[3] = color[1].rgba[3] 
@@ -1036,6 +997,18 @@ void RL_QuadLightCoords(gltexcoord_t *tc, dynlight_t *dyn)
 }
 
 //===========================================================================
+// RL_FlatDetailTexCoords
+//===========================================================================
+void RL_FlatDetailTexCoords
+	(gltexcoord_t *tc, float xy[2], rendpoly_t *poly, gltexture_t *tex)
+{
+	tc->st[0] = (xy[VX] + poly->texoffx) / tex->detail->width
+		* detailScale * tex->detail->scale;
+	tc->st[1] = (-xy[VY] - poly->texoffy) / tex->detail->height
+		* detailScale * tex->detail->scale;
+}
+
+//===========================================================================
 // RL_InterpolateTexCoordT
 //	Inter = 0 in the bottom. Only 't' is affected.
 //===========================================================================
@@ -1054,7 +1027,6 @@ void RL_InterpolateTexCoordT
 void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 {
 	uint base;
-	dynlight_t *dyn;
 	primhdr_t *hdr = NULL;
 
 	// A quad is composed of two triangles.
@@ -1063,22 +1035,37 @@ void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 	base = RL_AllocateVertices(list->last->primSize);
 
 	// Setup the indices (in strip order).
-	RL_AllocateIndices(list, 6);
+	RL_AllocateIndices(list, 4/*6*/);
 	hdr = list->last;
 	hdr->indices[0] = base;
 	hdr->indices[1] = base + 1;
-	hdr->indices[2] = base + 3;
+	hdr->indices[2] = base + 2;
+	hdr->indices[3] = base + 3;
+
+	/*hdr->indices[2] = base + 3;
 	hdr->indices[3] = base + 3;
 	hdr->indices[4] = base + 1;
-	hdr->indices[5] = base + 2;
+	hdr->indices[5] = base + 2;*/
 	
 	// Primary texture coordinates.
-	RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, list);
+	RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
 
 	// Blend texture coordinates.
-	if(list->intertex)
+	if(list->intertex.id)
 	{
-		RL_QuadInterTexCoords(&texCoords[TCA_BLEND][base], poly, list);
+		RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly, &list->intertex);
+	}
+
+	// Detail texture coordinates.
+	if(list->tex.detail)
+	{
+		RL_QuadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly,
+			&list->tex);
+	}
+	if(list->intertex.detail)
+	{
+		RL_QuadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
+			&list->intertex);
 	}
 
 	// Colors.
@@ -1087,12 +1074,10 @@ void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 	// Vertices.
 	RL_QuadVertices(&vertices[base], poly);
 
-	// Texture coordinates for lights.
-	RL_AllocateLightCoords(list);
-
-	for(dyn = list->last->lights; dyn; dyn = dyn->next)
+	// Light texture coordinates.
+	if(list->last->light && IS_MTEX_LIGHTS)
 	{
-		RL_QuadLightCoords( RL_TexCoordArray(list, dyn->index), dyn );
+		RL_QuadLightCoords(&texCoords[TCA_LIGHT][base], list->last->light);
 	}
 }
 
@@ -1103,7 +1088,6 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 {
 	glvertex_t *v;
 	uint base;
-	dynlight_t *dyn;
 	uint sideBase[2];
 	int i, side, other, index, top, bottom, div;
 	float z, height = poly->top - poly->bottom, inter;
@@ -1123,27 +1107,50 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 	// 3---------<--[2]
 	//
 
+	list->last->type = PT_DOUBLE_FAN;
+
 	// A divquad is composed of two triangle fans.
 	list->last->primSize = 4 + poly->divs[0].num + poly->divs[1].num;
 	base = RL_AllocateVertices(list->last->primSize);
 
 	// Allocate the indices.
-	RL_AllocateIndices(list, 3 * (list->last->primSize - 2));
-	list->last->indices[0] = base;
+	RL_AllocateIndices(list, 3 + poly->divs[1].num + 
+		3 + poly->divs[0].num
+		/*3 * (list->last->primSize - 2)*/);
+
+	hdr = list->last;		
+	hdr->indices[0] = base;
 
 	// The first four vertices are the normal quad corner points.
-	RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, list);		
-	if(list->intertex)
-		RL_QuadInterTexCoords(&texCoords[TCA_BLEND][base], poly, list);
+	RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
+	if(list->intertex.id)
+	{
+		RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly, &list->intertex);
+	}
+	if(list->tex.detail)
+	{
+		RL_QuadDetailTexCoords(&texCoords[TCA_DETAIL][base], poly,
+			&list->tex);
+	}
+	if(list->intertex.detail)
+	{
+		RL_QuadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base], poly,
+			&list->intertex);
+	}
 	RL_QuadColors(&colors[base], poly);
 	RL_QuadVertices(&vertices[base], poly);
 
 	// Texture coordinates for lights (normal quad corners).
-	RL_AllocateLightCoords(list);
+	if(hdr->light && IS_MTEX_LIGHTS)
+	{
+		RL_QuadLightCoords(&texCoords[TCA_LIGHT][base], hdr->light);
+	}
+
+	/*RL_AllocateLightCoords(list);
 	for(dyn = list->last->lights; dyn; dyn = dyn->next)
 	{
 		RL_QuadLightCoords( RL_TexCoordArray(list, dyn->index), dyn );
-	}
+	}*/
 
 	// Index of the indices array.
 	index = 0;
@@ -1151,8 +1158,6 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 	// First vertices of each side (1=right, 0=left).
 	sideBase[1] = base + 4;
 	sideBase[0] = sideBase[1] + poly->divs[1].num;
-
-	hdr = list->last;
 
 	// Set the rest of the indices and init the division vertices.
 	for(side = 0; side < 2; side++)	// Left->right is side zero.
@@ -1163,34 +1168,54 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 		top    = base + (!side? 1 : 0);
 		bottom = base + (!side? 2 : 3);
 
-		// Number of vertices per side: 2 + numdivs
-		for(i = 0; i <= poly->divs[other].num; i++)
+		// Here begins the other triangle fan.
+		if(side) hdr->beginOther = index;
+
+		// The fan origin is the same for all the triangles.
+		hdr->indices[index++] = base + (!side? 0 : 2);
+
+		// The first (top/bottom) vertex of the side.
+		hdr->indices[index++] = base + (!side? 1 : 3);
+
+		// The division vertices.
+		for(i = 0; i < poly->divs[other].num; i++)
 		{
-			// The fan origin is the same for all the triangles.
-			hdr->indices[index++] = base + (!side? 0 : 2);
-			
-			if(i == 0)
+			// A division vertex of the other side.
+			hdr->indices[index++] = div = sideBase[other] + i;
+
+			// Division height of this vertex.
+			z = poly->divs[other].pos[i];
+
+			// We'll init this vertex by interpolating.
+			inter = (z - poly->bottom) / height;
+
+			if(!(poly->flags & RPF_SKY_MASK))
 			{
-				// The first (top/bottom) vertex of the side.
-				hdr->indices[index++] = base + (!side? 1 : 3);
-			}
-			else
-			{
-				// A division vertex of the other side.
-				hdr->indices[index++] = div = sideBase[other] + i - 1;
-
-				// Division height of this vertex.
-				z = poly->divs[other].pos[i - 1];
-
-				// We'll init this vertex by interpolating.
-				inter = (z - poly->bottom) / height;
-
 				// Primary texture coordinates.
 				RL_InterpolateTexCoordT(texCoords[TCA_MAIN], div, 
 					top, bottom, inter);
+
+				// Detail texture coordinates.
+				if(poly->tex.detail)
+				{
+					RL_InterpolateTexCoordT(texCoords[TCA_DETAIL], div,
+						top, bottom, inter);
+				}
+				if(poly->intertex.detail)
+				{
+					RL_InterpolateTexCoordT(texCoords[TCA_BLEND_DETAIL], div,
+						top, bottom, inter);
+				}
+
+				// Light coordinates.
+				if(hdr->light && IS_MTEX_LIGHTS)
+				{
+					RL_InterpolateTexCoordT(texCoords[TCA_LIGHT], div, 
+						top, bottom, inter);
+				}
 				
 				// Blend texture coordinates.
-				if(list->intertex)
+				if(list->intertex.id)
 				{
 					RL_InterpolateTexCoordT(texCoords[TCA_BLEND], div,
 						top, bottom, inter);
@@ -1198,38 +1223,17 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 
 				// Color.
 				memcpy(&colors[div], &colors[top], sizeof(glcolor_t));
-
-				// Vertex.
-				v = &vertices[div];
-				v->xyz[0] = vertices[top].xyz[0];
-				v->xyz[1] = z;
-				v->xyz[2] = vertices[top].xyz[2];
-
-				// Light coordinates for each light.
-				for(dyn = hdr->lights; dyn; dyn = dyn->next)
-				{
-					RL_InterpolateTexCoordT( 
-						RL_TexCoordArray(list, dyn->index),
-						div - base, 
-						top - base, 
-						bottom - base,
-						inter );
-				}
 			}
 
-			// The next vertex of the side (last of the triangle).
-			if(i == poly->divs[other].num)
-			{
-				// The last (bottom/top) vertex of the side.
-				hdr->indices[index++] = base + (!side? 2 : 0);
-			}
-			else
-			{
-				// A division vertex of the other side. Will be inited
-				// on the next iteration.
-				hdr->indices[index++] = sideBase[other] + i;
-			}
+			// Vertex.
+			v = &vertices[div];
+			v->xyz[0] = vertices[top].xyz[0];
+			v->xyz[1] = z;
+			v->xyz[2] = vertices[top].xyz[2];
 		}
+
+		// The last (bottom/top) vertex of the side.
+		hdr->indices[index++] = base + (!side? 2 : 0);
 	}
 }
 
@@ -1243,41 +1247,72 @@ void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 	gltexcoord_t *tc;
 	glvertex_t *v;
 	uint base;
-	dynlight_t *dyn;
-	int i, k;
+	int i;
 
 	// A flat is composed of N triangles, where N = poly->numvertices - 2.
 	list->last->primSize = poly->numvertices;
 	base = RL_AllocateVertices(list->last->primSize);
 
 	// Allocate the indices.
-	RL_AllocateIndices(list, 3 * (list->last->primSize - 2));
+	RL_AllocateIndices(list, poly->numvertices);
 
 	// Setup indices in a triangle fan.
-	for(i = 0, k = 0; i < poly->numvertices - 2; i++)
+	for(i = 0; i < poly->numvertices; i++)
 	{
-		// All triangles share the first vertex.
-		list->last->indices[k++] = base;
-		list->last->indices[k++] = base + i + 1;
-		list->last->indices[k++] = base + i + 2;
+		list->last->indices[i] = base + i;
 	}
 
 	// Allocate texture coordinates for lights.
-	RL_AllocateLightCoords(list);
+	//RL_AllocateLightCoords(list);
 
 	for(i = 0, vtx = poly->vertices; i < poly->numvertices; i++, vtx++)
 	{
+		// Coordinates.
+		v = &vertices[base + i];
+		v->xyz[0] = vtx->pos[VX];
+		v->xyz[1] = poly->top;
+		v->xyz[2] = vtx->pos[VY];
+
+		if(poly->flags & RPF_SKY_MASK) 
+		{
+			// Skymask polys don't need any further data.
+			continue;
+		}
+
 		// Primary texture coordinates.
 		tc = &texCoords[TCA_MAIN][base + i];
-		tc->st[0] = (vtx->pos[VX] + poly->texoffx) / list->texw;
-		tc->st[1] = (-vtx->pos[VY] - poly->texoffy) / list->texh;
+		tc->st[0] = (vtx->pos[VX] + poly->texoffx) / list->tex.width;
+		tc->st[1] = (-vtx->pos[VY] - poly->texoffy) / list->tex.height;
+
+		// Detail texture coordinates.
+		if(list->tex.detail)
+		{
+			RL_FlatDetailTexCoords(&texCoords[TCA_DETAIL][base + i], 
+				vtx->pos, poly, &list->tex);
+		}
+		if(list->intertex.detail)
+		{
+			RL_FlatDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base + i],
+				vtx->pos, poly, &list->intertex);
+		}
+
+		// Light coordinates.
+		if(list->last->light && IS_MTEX_LIGHTS)
+		{
+			tc = &texCoords[TCA_LIGHT][base + i];
+			tc->st[0] = (vtx->pos[VX] + list->last->light->s[0]) 
+				* list->last->light->s[1];
+			tc->st[1] = (-vtx->pos[VY] + list->last->light->t[0]) 
+				* list->last->light->t[1];
+		}
 
 		// Blend texture coordinates.
-		if(list->intertex)
+		if(list->intertex.id)
 		{
 			tc = &texCoords[TCA_BLEND][base + i];
-			tc->st[0] = (vtx->pos[VX] + poly->texoffx) / list->intertexw;
-			tc->st[1] = (-vtx->pos[VY] - poly->texoffy) / list->intertexh;
+			tc->st[0] = (vtx->pos[VX] + poly->texoffx) / list->intertex.width;
+			tc->st[1] = (-vtx->pos[VY] - poly->texoffy) 
+				/ list->intertex.height;
 		}
 
 		// Color.
@@ -1286,26 +1321,118 @@ void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 		{
 			memset(col->rgba, 255, 4);
 		}
+		else if(poly->flags & RPF_SHADOW)
+		{
+			memcpy(col->rgba, vtx->color.rgba, 4);
+		}
 		else
 		{
-			memcpy(col->rgba, vtx->color.rgb, 3);
+			memcpy(col->rgba, vtx->color.rgba, 3);
 			col->rgba[3] = 255;
 		}
-		
-		// Coordinates.
-		v = &vertices[base + i];
-		v->xyz[0] = vtx->pos[VX];
-		v->xyz[1] = poly->top;
-		v->xyz[2] = vtx->pos[VY];
+	}
+}
 
-		// Lights.
-		for(dyn = list->last->lights; dyn; dyn = dyn->next)
+//===========================================================================
+// RL_EndWrite
+//===========================================================================
+void RL_EndWrite(rendlist_t *list)
+{
+	// The primitive has been written, update the size in the header.
+	list->last->size = list->cursor - (byte*)list->last;
+
+	// Write the end marker (which will be overwritten by the next
+	// primitive). The idea is that this zero is interpreted as the
+	// size of the following primhdr.
+	*(int*) list->cursor = 0;
+}
+
+//===========================================================================
+// RL_WriteDynLight
+//===========================================================================
+void RL_WriteDynLight
+	(rendlist_t *list, dynlight_t *dyn, primhdr_t *prim, rendpoly_t *poly)
+{
+	uint i, base;
+	gltexcoord_t *tc;
+	glcolor_t *col;
+
+	list->last = RL_AllocateData(list, sizeof(primhdr_t));
+
+	list->last->size = 0;
+	list->last->type = prim->type;
+	list->last->flags = 0;
+	list->last->numIndices = prim->numIndices;
+	list->last->indices = RL_AllocateData(list, sizeof(uint) 
+		* list->last->numIndices);
+	list->last->beginOther = prim->beginOther;
+
+	// Make copies of the original vertices.
+	list->last->primSize = prim->primSize;
+	base = RL_AllocateVertices(prim->primSize);
+	memcpy(&vertices[base], &vertices[prim->indices[0]], prim->primSize 
+		* sizeof(glvertex_t));
+
+	// Copy the vertex order from the original.
+	for(i = 0; i < prim->numIndices; i++)
+	{
+		list->last->indices[i] = base + prim->indices[i] - prim->indices[0];
+	}
+
+	for(i = 0; i < prim->primSize; i++)
+	{
+		// Each vertex uses the light's color.
+		col = &colors[base + i];
+		memcpy(col->rgba, dyn->color, 3);
+		col->rgba[3] = 255;
+	}
+
+	// Texture coordinates need a bit of calculation.
+	tc = &texCoords[TCA_MAIN][base];
+	if(poly->type == RP_FLAT)
+	{
+		for(i = 0; i < prim->primSize; i++)
 		{
-			tc = RL_TexCoordArray(list, dyn->index);
-			tc[i].st[0] = (vtx->pos[VX] + dyn->s[0]) * dyn->s[1];
-			tc[i].st[1] = (-vtx->pos[VY] + dyn->t[0]) * dyn->t[1];
+			tc[i].st[0] = (vertices[base + i].xyz[0] + dyn->s[0]) * dyn->s[1];
+			tc[i].st[1] = (-vertices[base + i].xyz[2] + dyn->t[0]) * dyn->t[1];
 		}
 	}
+	else 
+	{
+		RL_QuadLightCoords(tc, dyn);
+
+		if(poly->type == RP_DIVQUAD)
+		{
+			int side, other, top, bottom, sideBase[2];
+			float height = poly->top - poly->bottom;
+
+			// First vertices of each side (1=right, 0=left).
+			sideBase[1] = base + 4;
+			sideBase[0] = sideBase[1] + poly->divs[1].num;
+
+			// Set the rest of the indices and init the division vertices.
+			for(side = 0; side < 2; side++)	// Left->right is side zero.
+			{
+				other = !side;
+
+				// The actual top/bottom corner vertex.
+				top    = base + (!side? 1 : 0);
+				bottom = base + (!side? 2 : 3);
+
+				// Number of vertices per side: 2 + numdivs
+				for(i = 1; i <= poly->divs[other].num; i++)
+				{
+					RL_InterpolateTexCoordT(texCoords[TCA_MAIN], 
+						sideBase[other] + i - 1, 
+						top, bottom, (poly->divs[other].pos[i - 1] 
+						- poly->bottom) / height);
+				}
+			}
+		}
+	}
+
+	// The dynlight has been written.
+	RL_EndWrite(list);
 }
 
 //===========================================================================
@@ -1314,11 +1441,10 @@ void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 //===========================================================================
 void RL_AddPoly(rendpoly_t *poly)
 {
-	rendlist_t		*li;
-	int				i;
-	float			mindist;
-	primhdr_t		*hdr;
-	dynlight_t		*dyn;
+	rendlist_t	*li;
+	primhdr_t	*hdr;
+	dynlight_t	*dyn;
+	boolean		useLights = false;
 	
 	if(poly->flags & RPF_MASKED)
 	{
@@ -1332,69 +1458,75 @@ void RL_AddPoly(rendpoly_t *poly)
 	BEGIN_PROF( PROF_RL_ADD_POLY );
 	BEGIN_PROF( PROF_RL_GET_LIST );
 
+	// Are lights allowed?
+	if(!(poly->flags & (RPF_SKY_MASK | RPF_SHADOW)))
+	{
+		// In multiplicative mode, glowing surfaces are fullbright.
+		// Rendering lights on them would be pointless.
+		if(!IS_MUL || !( poly->flags & RPF_GLOW	
+			|| poly->sector && poly->sector->lightlevel >= 250 ))
+		{
+			// Surfaces lit by dynamic lights may need to be rendered 
+			// differently than non-lit surfaces.
+			if(poly->lights) 
+			{
+				useLights = true;
+				//hdr->flags |= RPF_DYNLIT;
+			}
+		}
+	}
+
 	// Find/create a rendering list for the polygon's texture.
-	li = RL_GetListFor(poly);
+	li = RL_GetListFor(poly, useLights);
+	
+	// The entire list will use the same detail textures.
+	li->tex.detail = poly->tex.detail;
+	li->intertex.detail = poly->intertex.detail;
 
 	END_PROF( PROF_RL_GET_LIST );
 
+#if 0
 	// Calculate the distance to each vertex.
-	if(!(poly->flags & (RPF_SKY_MASK | RPF_SHADOW)))
+	if(poly->detail && !(poly->flags & (RPF_SKY_MASK | RPF_SHADOW)))
 	{
 		// This is a "normal" poly. 
 		for(i = 0; i < poly->numvertices; i++)
 		{
 			// See if we need to calculate distances.
 			if(poly->type != RP_FLAT)
-				poly->vertices[i].dist = Rend_PointDist2D(poly->vertices[i].pos);
+			{
+				poly->vertices[i].dist 
+					= Rend_PointDist2D(poly->vertices[i].pos);
+			}
 			// What is the minimum distance?
-			if(!i || poly->vertices[i].dist < mindist)
-				mindist = poly->vertices[i].dist;
+			if(!i || poly->vertices[i].dist < minDist)
+				minDist = poly->vertices[i].dist;
 		}
-		if(mindist < detailMaxDist)	// Detail limit.
+		if(minDist < detailMaxDist)	// Detail limit.
 		{
 			poly->flags |= RPF_DETAIL;	// Eligible for a detail texture.
-			if(poly->detail) li->has |= RLHAS_DETAIL;
+			//if(poly->detail) li->flags |= RLF_DETAIL;
 		}
-
-		// Should we take note of texture interpolation? 
-		/*if(poly->blendtex && !li->intertex)
-		{
-			li->intertex  = poly->blendtex;
-			li->intertexw = poly->blendtexw;
-			li->intertexh = poly->blendtexh;
-			li->interpos  = poly->blendpos;
-		}*/
 	}
+#endif
 
 	// This becomes the new last primitive.
 	li->last = hdr = RL_AllocateData(li, sizeof(primhdr_t));
 
-	//(primhdr_t*) li->cursor;
-	//li->cursor += sizeof(*hdr);
-
-	hdr->size = 0;
-	hdr->type = PT_TRIANGLES;
+	hdr->size    = 0;
+	hdr->type    = PT_FAN; //PT_TRIANGLES;
 	hdr->indices = NULL;
-	hdr->flags = poly->flags;
-	hdr->lights = poly->lights;
-	hdr->numLights = 0;
-	hdr->lightCoords = NULL;
-
-	// In multiplicative mode, glowing surfaces are fullbright.
-	// Rendering lights on them would be pointless.
-	if(poly->flags & RPF_GLOW && IS_MUL_MODE)
-	{
-		hdr->lights = NULL;
-	}
+	hdr->flags   = poly->flags;
+	hdr->light   = (useLights? poly->lights : NULL);
 
 	// Light indices.
-	for(i = 0, dyn = hdr->lights; dyn; dyn = dyn->next)
+/*	for(i = 0, dyn = hdr->lights; dyn; dyn = dyn->next)
 	{
 		hdr->numLights++;
 		dyn->index = i++;
-	}
+	}*/
 
-	if(hdr->lights) li->has |= RLHAS_DLIT;
+	//if(hdr->lights) li->has |= RLHAS_DLIT;
 	
 	switch(poly->type)
 	{
@@ -1411,96 +1543,19 @@ void RL_AddPoly(rendpoly_t *poly)
 		break;
 	}
 	
+	RL_EndWrite(li);
 
-/*	hdr->ptr = NULL;
-	hdr->flags = poly->flags;
-	hdr->type = poly->type;
-	hdr->texoffx = poly->texoffx;
-	hdr->texoffy = poly->texoffy;
-	// The light data is needed for calculating texture coordinates 
-	// for RPF_LIGHT polygons.
-	hdr->lights = poly->lights;
-
-//	hdr->alpha = (poly->flags & RPF_ALPHA? poly->alpha : 1);
-
-	// Type specific data.
-	switch(poly->type)
-	{
-	case rp_quad:
-	case rp_divquad:
-		pq = (primquad_t*) li->cursor;
-		pq->top = poly->top;
-		pq->bottom = poly->bottom;
-		pq->length = poly->length;
-		for(i = 0, vtx = poly->vertices, pv2 = pq->vertices; i < 2; 
-			i++, vtx++, pv2++)
+	// Generate a dynlight primitive for each of the lights affecting 
+	// the surface. Multitexturing may be used for the first light, so 
+	// it's skipped.
+	if(useLights)
+		for(dyn = (IS_MTEX_LIGHTS? li->last->light->next : li->last->light);
+			dyn; dyn = dyn->next)
 		{
-			pv2->pos[VX] = vtx->pos[VX];
-			pv2->pos[VY] = vtx->pos[VY];
-			pv2->dist = vtx->dist;
-			if(poly->flags & RPF_GLOW)
-				memset(pv2->color, 255, 4);
-			else
-			{
-				pv2->color[CR] = vtx->color.rgb[CR];
-				pv2->color[CG] = vtx->color.rgb[CG];
-				pv2->color[CB] = vtx->color.rgb[CB];
-				pv2->color[CA] = 255;
-			}
+			RL_WriteDynLight( RL_GetLightListFor(dyn->texture), dyn, 
+				li->last, poly );
 		}
-		// Divquads need the division info.
-		if(poly->type == rp_divquad)
-		{
-			pdq = (primdivquad_t*) pq;
-			for(i = 0, k = 0; i < 2; i++)
-			{
-				pdq->numdivs[i] = poly->divs[i].num;
-				for(d = 0; d < pdq->numdivs[i]; d++)
-					pdq->divs[k++] = poly->divs[i].pos[d];
-			}
-			// Move the cursor forward the necessary amount.
-			li->cursor += sizeof(*pdq) + sizeof(float)*(k - 1);
-		}
-		else
-		{
-			// Move the cursor forward the necessary amount.
-			li->cursor += sizeof(*pq);
-		}
-		break;
-
-	case rp_flat:
-		pf = (primflat_t*) li->cursor;
-		pf->numvertices = poly->numvertices;
-		pf->z = poly->top;
-		for(i = 0, vtx = poly->vertices, pv2 = pf->vertices; 
-			i < pf->numvertices; i++, vtx++, pv2++)
-		{
-			pv2->pos[VX] = vtx->pos[VX];
-			pv2->pos[VY] = vtx->pos[VY];
-			pv2->dist = vtx->dist;
-			if(poly->flags & RPF_GLOW)
-				memset(pv2->color, 255, 4);
-			else
-			{
-				pv2->color[CR] = vtx->color.rgb[CR];
-				pv2->color[CG] = vtx->color.rgb[CG];
-				pv2->color[CB] = vtx->color.rgb[CB];
-				pv2->color[CA] = 255;
-			}
-		}
-		// Move the cursor forward.
-		li->cursor += sizeof(*pf) + sizeof(*pv2)*(pf->numvertices - 1);
-		break;
-	}
-*/	
-	// The primitive has been written, update the size in the header.
-	li->last->size = li->cursor - (byte*)li->last;
-
-	// Write the end marker (which will be overwritten by the next
-	// primitive). The idea is that this zero is interpreted as the
-	// size of the following primhdr.
-	*(int*) li->cursor = 0;
-
+	
 	END_PROF( PROF_RL_ADD_POLY );
 }
 
@@ -1517,721 +1572,15 @@ void RL_QuadTexCoords(primhdr_t *prim, primquad_t *quad, texcoord_t *tex)
 }
 */
 
-#if 0
 //===========================================================================
-// RL_QuadDetailTexCoords
+// RL_SelectTexCoordArray
 //===========================================================================
-void RL_QuadDetailTexCoords
-	(primhdr_t *prim, primquad_t *quad, texcoord_t *tex)
-{
-	float mul = rl_detail->scale * detailScale;
-	int i;
-
-	tex[0].s = prim->texoffx/rl_detail->width;
-	tex[0].t = prim->texoffy/rl_detail->height;
-	tex[1].s = tex[0].s + quad->length/rl_detail->width;
-	tex[1].t = tex[0].t + (quad->top - quad->bottom)/rl_detail->height;
-	for(i = 0; i < 2; i++) 
-	{
-		tex[i].s *= mul;
-		tex[i].t *= mul;
-	}
-}
-
-//===========================================================================
-// RL_DetailDistFactor
-//===========================================================================
-float RL_DetailDistFactor(primvertex2_t *vertices, int idx)
-{
-	float f = 1 - vertices[idx].dist 
-		/ (rl_detail->maxdist? rl_detail->maxdist : detailMaxDist);
-	// Clamp to [0,1].
-	if(f > 1) f = 1;
-	if(f < 0) f = 0;
-	return f;
-}
-
-//===========================================================================
-// RL_DetailColor
-//===========================================================================
-void RL_DetailColor(color3_t *col, primvertex2_t *vertices, int num) 
-{
-	float mul;
-	int i, k;
-
-	// Also calculate the color for the detail texture.
-	// It's <vertex-color> * <distance-factor> * <detail-factor>.
-	for(i = 0; i < num; i++)
-	{
-		mul = RL_DetailDistFactor(vertices, i) 
-			* detailFactor 
-			* rl_detail->strength;
-		for(k = 0; k < 3; k++)
-			col[i].rgb[k] = vertices[i].color[k]/255.0f * mul;
-	}
-}	
-
-//===========================================================================
-// RL_DrawQuad
-//===========================================================================
-void RL_DrawQuad(primhdr_t *prim)
-{
-	primquad_t *quad = (primquad_t*) ((byte*)prim + sizeof(*prim));
-	primvertex2_t *vtx = quad->vertices;
-	color3_t detail_color[2];
-	texcoord_t texcoord[2];
-
-	// Calculate normal texture coordinates.
-	IFTEX	RL_QuadTexCoords(prim, quad, texcoord);
-
-	// Calculate detail texture coordinates and detail color.
-	IFDET {
-		RL_QuadDetailTexCoords(prim, quad, texcoord);
-		RL_DetailColor(detail_color, vtx, 2);
-	}
-
-	// Dynamic light polygons are the same color all over.
-	//if(prim->flags & RPF_LIGHT) gl.Color3ubv(vtx[0].color);
-
-	// Start side.
-	IFCOL	gl.Color3ubv(vtx[0].color);
-	IFDET	gl.Color3fv(detail_color[0].rgb);
-	IFTC	gl.TexCoord2f(texcoord[0].s, texcoord[1].t);
-			gl.Vertex3f(vtx[0].pos[VX], quad->bottom, vtx[0].pos[VY]);
-		
-	IFTC	gl.TexCoord2f(texcoord[0].s, texcoord[0].t);
-			gl.Vertex3f(vtx[0].pos[VX], quad->top, vtx[0].pos[VY]);
-		
-	// End side.
-	IFCOL	gl.Color3ubv(vtx[1].color);
-	IFDET	gl.Color3fv(detail_color[1].rgb);
-	IFTC	gl.TexCoord2f(texcoord[1].s, texcoord[0].t);
-			gl.Vertex3f(vtx[1].pos[VX], quad->top, vtx[1].pos[VY]);
-		
-	IFTC	gl.TexCoord2f(texcoord[1].s, texcoord[1].t);
-			gl.Vertex3f(vtx[1].pos[VX], quad->bottom, vtx[1].pos[VY]);
-}
-
-//===========================================================================
-// RL_GetDivQuad
-//===========================================================================
-void RL_GetDivQuad(primhdr_t *prim, divquaddata_t *div)
-{
-	div->quad = (primdivquad_t*) ((byte*)prim + sizeof(*prim));
-	div->zpos[0] = div->quad->quad.top;
-	div->zpos[1] = div->quad->quad.bottom;
-	div->height = div->zpos[0] - div->zpos[1];
-	div->heights[0] = div->quad->divs;
-	div->heights[1] = div->quad->divs + div->quad->numdivs[0];
-}
-
-//===========================================================================
-// RL_DrawDivQuad
-//	DivQuads are rendered as two triangle fans.
-//===========================================================================
-void RL_DrawDivQuad(primhdr_t *prim)
-{
-	divquaddata_t div;
-/*	primdivquad_t *divquad = (primdivquad_t*) ((byte*)prim + sizeof(*prim));
-	primvertex2_t *vtx = divquad->quad.vertices;
-	float zpos[2] = { divquad->quad.top, divquad->quad.bottom }, z;
-	float *divpos[2];*/
-	primvertex2_t *vtx;
-	color3_t detail_color[2];
-	texcoord_t tc[2];
-	int i, side, other;
-	float z;
-
-	/*divpos[0] = divquad->divs;
-	divpos[1] = divquad->divs + divquad->numdivs[0];*/
-
-	RL_GetDivQuad(prim, &div);
-	vtx = div.quad->quad.vertices;
-	
-	// Calculate texture coordinates.
-	IFTEX
-	{
-		RL_QuadTexCoords(prim, &div.quad->quad, tc);
-	}
-	IFDET 
-	{ 
-		RL_QuadDetailTexCoords(prim, &div.quad->quad, tc);
-		RL_DetailColor(detail_color, vtx, 2);
-	}
-
-	// Dynamic light polygons are the same color all over.
-	/*if(prim->flags & RPF_LIGHT) gl.Color3ubv(vtx[0].color);*/
-
-	// A more general algorithm is used for divquads.
-	for(side = 0; side < 2; side++)	// Left->right is side zero.
-	{
-		other = !side;
-
-		// We'll render two fans.
-		gl.Begin(DGL_TRIANGLE_FAN);
-
-		// The origin vertex.
-		IFCOL	gl.Color3ubv(vtx[side].color);
-		IFTC	gl.TexCoord2f(tc[side].s, tc[side].t);
-		IFDET	gl.Color3fv(detail_color[side].rgb);
-				gl.Vertex3f(vtx[side].pos[VX], div.zpos[side], vtx[side].pos[VY]);
-
-		for(i = 0; i <= div.quad->numdivs[other] + 1; i++)
-		{
-			// The vertex on the opposite side.
-			IFCOL	gl.Color3ubv(vtx[other].color);
-			IFDET	gl.Color3fv(detail_color[other].rgb);
-			if(!i) // The top/bottom vertex.
-			{
-				IFTC gl.TexCoord2f(tc[other].s, tc[side].t);
-				gl.Vertex3f(vtx[other].pos[VX], div.zpos[side], 
-					vtx[other].pos[VY]);
-			}
-			else if(i == div.quad->numdivs[other] + 1) // The bottom/top vertex.
-			{
-				IFTC gl.TexCoord2f(tc[other].s, tc[other].t);
-				gl.Vertex3f(vtx[other].pos[VX], div.zpos[other], 
-					vtx[other].pos[VY]);
-			}
-			else // A division vertex.
-			{
-				z = div.heights[other][i - 1];
-				IFTC { 
-					// Calculate the texture coordinate.
-					gl.TexCoord2f(tc[other].s, (z - div.zpos[1]) / div.height
-						* (tc[0].t - tc[1].t) + tc[1].t);
-				}					
-				gl.Vertex3f(vtx[other].pos[VX], z, vtx[other].pos[VY]);
-			}
-		}
-		
-		gl.End();
-	}
-}
-
-//===========================================================================
-// RL_FloatRGB
-//===========================================================================
-void RL_FloatRGB(byte *rgb, float *dest)
-{
-	int i;
-
-	for(i = 0; i < 3; i++)
-	{
-		dest[i] = rgb[i] / 255.0f;
-	}
-	dest[3] = 1;
-}
-
-//===========================================================================
-// RL_DrawSinglePassQuad
-//===========================================================================
-void RL_DrawSinglePassQuad(primhdr_t *prim)
-{
-	primquad_t *quad = (primquad_t*) ((byte*)prim + sizeof(*prim));
-	primvertex2_t *vtx = quad->vertices;
-	dynlight_t *dyn = prim->lights;
-	//DGLuint currentTexture = gl.GetInteger(DGL_TEXTURE_BINDING);
-	texcoord_t texcoord[2];
-	float lightcolor[4];
-
-	// Calculate normal texture coordinates.
-	RL_QuadTexCoords(prim, quad, texcoord);
-
-	//if(dyn->texture != currentTexture)
-	//{
-	// Must change textures.
-	gl.End();
-	gl.Bind(dyn->texture);
-	RL_FloatRGB(dyn->color, lightcolor);
-	gl.SetFloatv(DGL_ENV_COLOR, lightcolor);
-
-	gl.Begin(DGL_QUADS);
-//}
-
-	// Start side.
-	gl.Color3ubv(vtx[0].color);
-	gl.TexCoord2f(dyn->s[0], dyn->t[1]);
-	gl.MultiTexCoord2f(DGL_TEXTURE1, texcoord[0].s, texcoord[1].t);
-	gl.Vertex3f(vtx[0].pos[VX], quad->bottom, vtx[0].pos[VY]);
-		
-	gl.TexCoord2f(dyn->s[0], dyn->t[0]);
-	gl.MultiTexCoord2f(DGL_TEXTURE1, texcoord[0].s, texcoord[0].t);
-	gl.Vertex3f(vtx[0].pos[VX], quad->top, vtx[0].pos[VY]);
-	
-	// End side.
-	gl.Color3ubv(vtx[1].color);
-	gl.TexCoord2f(dyn->s[1], dyn->t[0]);
-	gl.MultiTexCoord2f(DGL_TEXTURE1, texcoord[1].s, texcoord[0].t);
-	gl.Vertex3f(vtx[1].pos[VX], quad->top, vtx[1].pos[VY]);
-		
-	gl.TexCoord2f(dyn->s[1], dyn->t[1]);
-	gl.MultiTexCoord2f(DGL_TEXTURE1, texcoord[1].s, texcoord[1].t);
-	gl.Vertex3f(vtx[1].pos[VX], quad->bottom, vtx[1].pos[VY]);
-}
-
-//===========================================================================
-// RL_DrawQuadLights
-//	Draw lights for a normal quad (non-div'd).
-//===========================================================================
-void RL_DrawQuadLights(primhdr_t *prim)
-{
-	primquad_t *quad = (primquad_t*) ((byte*)prim + sizeof(*prim));
-	primvertex2_t *vtx = quad->vertices;
-	dynlight_t *dyn;
-	DGLuint currentTexture = gl.GetInteger(DGL_TEXTURE_BINDING);
-	
-	for(dyn = prim->lights; dyn; dyn = dyn->next)
-	{
-		if(dyn->texture != currentTexture)
-		{
-			// Must change textures.
-			gl.End();
-			gl.Bind(currentTexture = dyn->texture);
-			gl.Begin(DGL_QUADS);
-		}
-
-		// Dynamic light polygons are the same color all over.
-		gl.Color3ubv(dyn->color);
-
-		// Start side.
-		gl.TexCoord2f(dyn->s[0], dyn->t[1]);
-		gl.Vertex3f(vtx[0].pos[VX], quad->bottom, vtx[0].pos[VY]);
-			
-		gl.TexCoord2f(dyn->s[0], dyn->t[0]);
-		gl.Vertex3f(vtx[0].pos[VX], quad->top, vtx[0].pos[VY]);
-		
-		// End side.
-		gl.TexCoord2f(dyn->s[1], dyn->t[0]);
-		gl.Vertex3f(vtx[1].pos[VX], quad->top, vtx[1].pos[VY]);
-			
-		gl.TexCoord2f(dyn->s[1], dyn->t[1]);
-		gl.Vertex3f(vtx[1].pos[VX], quad->bottom, vtx[1].pos[VY]);
-	}
-}
-
-//===========================================================================
-// RL_DrawDivQuadLights
-//===========================================================================
-void RL_DrawDivQuadLights(primhdr_t *prim)
-{
-	divquaddata_t div;
-	primvertex2_t *vtx;
-	dynlight_t *dyn;
-	int i, side, other;
-
-	RL_GetDivQuad(prim, &div);
-	vtx = div.quad->quad.vertices;
-
-	for(dyn = prim->lights; dyn; dyn = dyn->next)
-	{
-		gl.Bind(dyn->texture);
-		gl.Color3ubv(dyn->color);
-		
-		// A more general algorithm is used for divquads.
-		for(side = 0; side < 2; side++)	// Left->right is side zero.
-		{
-			other = !side;
-			
-			// We'll render two fans.
-			gl.Begin(DGL_TRIANGLE_FAN);
-			
-			// The origin vertex.
-			gl.TexCoord2f(dyn->s[side], dyn->t[side]);
-			gl.Vertex3f(vtx[side].pos[VX], div.zpos[side], vtx[side].pos[VY]);
-			
-			for(i = 0; i <= div.quad->numdivs[other] + 1; i++)
-			{
-				// The vertex on the opposite side.
-				if(!i) 				
-				{
-					// The top/bottom vertex.
-					gl.TexCoord2f(dyn->s[other], dyn->t[side]);
-					gl.Vertex3f(vtx[other].pos[VX], div.zpos[side], 
-						vtx[other].pos[VY]);
-				}
-				else if(i == div.quad->numdivs[other] + 1) 
-				{
-					// The bottom/top vertex.
-					gl.TexCoord2f(dyn->s[other], dyn->t[other]);
-					gl.Vertex3f(vtx[other].pos[VX], div.zpos[other], 
-						vtx[other].pos[VY]);
-				}
-				else // A division vertex.
-				{
-					float z = div.heights[other][i - 1];
-
-					// Interpolate the texture coordinate.
-					gl.TexCoord2f(dyn->s[other], (z - div.zpos[1]) 
-						/ div.height * (dyn->t[0] - dyn->t[1]) + dyn->t[1]);
-
-					gl.Vertex3f(vtx[other].pos[VX], z, vtx[other].pos[VY]);
-				}
-			}
-			
-			gl.End();
-		}
-	}
-}
-
-//===========================================================================
-// RL_DrawSinglePassFlat
-//===========================================================================
-void RL_DrawSinglePassFlat(primhdr_t *prim)
-{
-	primflat_t *flat = (primflat_t*) ((byte*)prim + sizeof(*prim));
-	primvertex2_t *vtx;
-	dynlight_t *dyn = prim->lights;
-	float lightcolor[4];
-	int i;
-
-#ifdef _DEBUG
-	if(dyn->next)
-	{
-		Con_Error("RL_DrawSinglePassFlat: More than one light.\n");
-	}
-#endif
-
-	gl.Bind(dyn->texture);
-	RL_FloatRGB(dyn->color, lightcolor);
-	gl.SetFloatv(DGL_ENV_COLOR, lightcolor);
-
-	// In a fan all the triangles share the first vertex.
-	gl.Begin(DGL_TRIANGLE_FAN);
-	for(i = 0, vtx = flat->vertices; i < flat->numvertices; i++, vtx++)
-	{
-		gl.Color3ubv(vtx->color);
-
-		gl.MultiTexCoord2f(DGL_TEXTURE0,
-			(vtx->pos[VX] + dyn->s[0]) * dyn->s[1], 
-			(-vtx->pos[VY] + dyn->t[0]) * dyn->t[1]);
-
-		gl.MultiTexCoord2f(DGL_TEXTURE1, 
-			(vtx->pos[VX] + prim->texoffx)/rl_texw,
-			(-vtx->pos[VY] - prim->texoffy)/rl_texh);
-
-		gl.Vertex3f(vtx->pos[VX], flat->z, vtx->pos[VY]);
-	}
-	gl.End();
-}
-
-//===========================================================================
-// RL_DrawFlatLights
-//===========================================================================
-void RL_DrawFlatLights(primhdr_t *prim)
-{
-	primflat_t *flat = (primflat_t*) ((byte*)prim + sizeof(*prim));
-	primvertex2_t *vtx;
-	dynlight_t *dyn;
-	int i;
-
-	for(dyn = prim->lights; dyn; dyn = dyn->next)
-	{
-		gl.Bind(dyn->texture);
-		gl.Color3ubv(dyn->color);
-
-		// In a fan all the triangles share the first vertex.
-		gl.Begin(DGL_TRIANGLE_FAN);
-		for(i = 0, vtx = flat->vertices; i < flat->numvertices; i++, vtx++)
-		{
-			gl.TexCoord2f((vtx->pos[VX] + dyn->s[0]) * dyn->s[1], 
-				(-vtx->pos[VY] + dyn->t[0]) * dyn->t[1]);
-			gl.Vertex3f(vtx->pos[VX], flat->z, vtx->pos[VY]);
-		}
-		gl.End();
-	}
-}
-
-//===========================================================================
-// RL_DrawFlat
-//===========================================================================
-void RL_DrawFlat(primhdr_t *prim)
-{
-	primflat_t *flat = (primflat_t*) ((byte*)prim + sizeof(*prim));
-	primvertex2_t *vtx = flat->vertices;
-	color3_t detail_color[RL_MAX_POLY_SIDES];
-//	lumobj_t *lum = prim->light;
-	//float dlsize, dloffx, dloffy;
-	int i;
-
-	// Dynamic light polygons are the same color all over.
-/*	if(prim->flags & RPF_LIGHT) 
-	{
-		// For light polys the texture offset is global.
-		dloffx = FIX2FLT(lum->thing->x) + lum->radius;
-		dloffy = FIX2FLT(lum->thing->y) + lum->radius;
-		dlsize = lum->radius*2;
-
-		gl.Color3ubv(vtx[0].color);
-	}
-
-	// Shadow polygons use only one color, too.
-	if(prim->flags & RPF_SHADOW)
-	{
-		gl.Color3ubv(vtx[0].color);
-	}*/
-
-	// Detail texture coordinates and color.
-	IFDET RL_DetailColor(detail_color, vtx, flat->numvertices);
-
-	// In a fan all the triangles share the first vertex.
-	gl.Begin(DGL_TRIANGLE_FAN);
-	for(i = 0; i < flat->numvertices; i++, vtx++)
-	{
-/*		if(prim->flags & RPF_LIGHT)
-		{
-			gl.TexCoord2f((dloffx - vtx->pos[VX])/dlsize,
-				(dloffy - vtx->pos[VY])/dlsize); 
-		}
-		else if(prim->flags & RPF_SHADOW)
-		{
-			gl.TexCoord2f((prim->texoffx - vtx->pos[VX])/prim->shadowradius,
-				(prim->texoffy - vtx->pos[VY])/prim->shadowradius);
-		}
-		else*/
-		{
-			IFCOL gl.Color3ubv(vtx->color);
-			IFTEX gl.TexCoord2f((vtx->pos[VX] + prim->texoffx)/rl_texw,
-				(-vtx->pos[VY] - prim->texoffy)/rl_texh);
-			IFDET { 
-				gl.Color3fv(detail_color[i].rgb);
-				gl.TexCoord2f((vtx->pos[VX] + prim->texoffx)/rl_detail->width
-					* detailScale * rl_detail->scale, 
-					(-vtx->pos[VY] - prim->texoffy)/rl_detail->height
-					* detailScale * rl_detail->scale);
-			}
-		}
-		gl.Vertex3f(vtx->pos[VX], flat->z, vtx->pos[VY]);
-	}
-	gl.End();
-}
-#endif
-
-#if 0
-	byte		*cursor;
-	boolean		blank_dlight = false;
-	primhdr_t	*prim, *firstdq = 0, *prevdq = 0;
-	boolean		isquads;
-	boolean		skipdlit = (lid==LID_NORMAL_DLIT);
-	boolean		onlydlit = (lid==LID_DLIT_NOTEX 
-							|| lid==LID_DLIT_TEXTURED 
-							|| lid==LID_LIGHTS);
-	boolean		onlydetail = (lid==LID_DETAILS);
-	boolean		skipsinglesrc = ((lid==LID_NORMAL_DLIT || lid==LID_LIGHTS 
-							|| lid==LID_DLIT_NOTEX) && multiTexLights);
-	boolean		onlysinglesrc = false;
-
-	// Is there any point in processing this list?
-	if(onlydlit && !(li->has & RLHAS_DLIT)
-		|| onlydetail && !(li->has & RLHAS_DETAIL)) return;
-
-	// What data to include in the drawing?
-	// These control the operation of the primitive drawing routines.
-	switch(lid)
-	{
-	case LID_SKYMASK:
-		with_tex = with_col = with_det = false;
-		break;
-
-	case LID_NORMAL:
-	case LID_NORMAL_DLIT:
-		with_tex = with_col = true;
-		with_det = false;
-		gl.Bind(li->tex);
-		rl_texw = li->texw;
-		rl_texh = li->texh;
-		break;
-
-/*	case LID_SHADOWS:
-		with_tex = with_col = true;
-		with_det = false;
-		gl.Bind(GL_PrepareLightTexture());
-		break;*/
-
-	case LID_DLIT_NOTEX:
-		with_col = true;
-		with_tex = with_det = false;
-		break;
-
-	case LID_DLIT_TEXTURED:
-		with_tex = true;
-		with_det = with_col = false;
-		gl.Bind(li->tex);
-		rl_texw = li->texw;
-		rl_texh = li->texh;
-		break;
-
-/*	case LID_DYNAMIC_LIGHTS:
-		gl.Bind(li->tex);
-		with_tex = true;
-		with_col = with_det = false;
-		break;*/
-
-	case LID_LIGHTS:
-		// Texture will be changed when necessary.
-		with_tex = true;
-		with_col = with_det = false;
-		break;
-
-	case LID_SINGLE_PASS_LIGHTS:
-		// This is only done when multitexturing is supported.
-		// Let's set up the environments.
-		with_col = with_tex = true;
-		with_det = false;
-		rl_texw = li->texw;
-		rl_texh = li->texh;
-
-		gl.SetInteger(DGL_MODULATE_TEXTURE, li->tex);
-
-		// We are only interesting in polys with a single light source.
-		// All polys that we render will be marked RPF_DONE.
-		onlysinglesrc = true;
-		break;
-
-	case LID_DETAILS:
-		// li->detail can't be NULL at this stage.
-		gl.Bind(li->detail->tex);
-		rl_detail = li->detail;
-		with_det = true;		
-		with_col = with_tex = false;
-		break;
-	}
-
-	// Does the list contain flats or quads?
-	isquads = (li->type == rl_quads);
-		
-	// Step #1: Render normal quads or flats. If DLIT primitives are
-	// encountered, they are skipped and marked for later rendering.
-	if(isquads) gl.Begin(DGL_QUADS);
-	for(cursor = li->data;;)
-	{
-		// Get primitive at cursor, move cursor to the next one.
-		prim = (primhdr_t*) cursor;
-		if(!prim->size) break;	// This is the last.
-		cursor += prim->size;	// Advance cursor to the next primitive.
-
-		// Should we render only the DLIT primitives?
-		if(prim->flags & RPF_DONE
-			|| onlydlit && !prim->lights
-			|| onlydetail && !(prim->flags & RPF_DETAIL))
-			continue;
-
-		// Should we skip everything with a single light?
-		if(prim->lights && !prim->lights->next)
-		{
-			if(skipsinglesrc) continue;
-		}
-		else if(onlysinglesrc) continue;
-
-		// What do we have here?
-		if(prim->type == rp_divquad) 
-		{
-			// There are divquads to render. We'll draw them in Step #2.
-			// Let's set up a simple linked list through all divquads.
-			prim->ptr = NULL; 
-			if(!firstdq) firstdq = prim;
-			if(prevdq) prevdq->ptr = prim;
-			prevdq = prim;
-		}
-		if(skipdlit && prim->lights)
-		{
-			// In dlBlend mode zero the real texture is multiplied on the
-			// lit surface during a later stage.
-			blank_dlight = true;
-			continue;
-		}
-		if(prim->type == rp_divquad) continue;
-
-		switch(lid)
-		{
-		case LID_LIGHTS:
-			if(isquads)
-				RL_DrawQuadLights(prim);
-			else
-				RL_DrawFlatLights(prim);
-			break;
-
-		case LID_SINGLE_PASS_LIGHTS:	
-			if(isquads)
-				RL_DrawSinglePassQuad(prim);
-			else
-				RL_DrawSinglePassFlat(prim);
-			break;
-
-		default:
-			// Draw the primitive.
-			if(isquads) 
-				RL_DrawQuad(prim);
-			else
-				RL_DrawFlat(prim); // Flats are triangle fans.
-			break;
-		}
-	}
-	if(isquads) gl.End();
-
-	// Step #2: Need to draw some divided walls? They're drawn separately 
-	// because they're composed of triangles, not quads.
-	if(firstdq)
-	{
-		for(prim = firstdq; prim; prim = prim->ptr) 
-		{
-			// Skip primitives that have already been drawn.
-			if(prim->flags & RPF_DONE) continue;
-
-			// Should we skip everything with a single light?
-			if(prim->lights && !prim->lights->next)
-			{
-				if(skipsinglesrc) continue;
-			}
-			else if(onlysinglesrc) continue;
-
-			// Don't draw DLIT divquads.
-			if(prim->lights && skipdlit) continue;
-
-			switch(lid)
-			{
-			case LID_LIGHTS:
-				RL_DrawDivQuadLights(prim);
-				break;
-
-			case LID_SINGLE_PASS_LIGHTS:
-				break;
-			
-			default:
-				RL_DrawDivQuad(prim);
-				break;
-			}
-		}
-	}
-
-	// Step #3: Need to draw some dlit polys? They're drawn blank, 
-	// with no textures. Dynlights are drawn on them and finally the 
-	// textures (multiply-blend).
-	if(blank_dlight) // This only happens with LID_NORMAL_DLIT.
-	{
-		// Start a 2nd pass, of sorts.
-		gl.Disable(DGL_TEXTURING);
-		RL_DoList(LID_DLIT_NOTEX, li);
-		gl.Enable(DGL_TEXTURING);
-	}
-
-	switch(lid)
-	{
-	case LID_SINGLE_PASS_LIGHTS:
-		gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
-		break;
-	}
-#endif
-
-//===========================================================================
-// RL_SetTexCoordArray
-//===========================================================================
-void RL_SetTexCoordArray(int unit, primhdr_t *prim, int index)
+void RL_SelectTexCoordArray(int unit, /*primhdr_t *prim,*/ int index)
 {
 	void *coords[MAX_TEX_UNITS];
 
 	memset(coords, 0, sizeof(coords));
-	if(index < maxArrayLights)
+/*	if(index < maxArrayLights)
 	{
 		// Coordinates are in the main array.
 		coords[unit] = texCoords[TCA_LIGHT1 + index];
@@ -2245,7 +1594,8 @@ void RL_SetTexCoordArray(int unit, primhdr_t *prim, int index)
 		coords[unit] = prim->lightCoords 
 			+ (index - maxArrayLights) * prim->primSize
 			- prim->indices[0];
-	}
+	}*/
+	coords[unit] = texCoords[index];
 	gl.Arrays(NULL, NULL, numTexUnits, coords, 0);
 }
 
@@ -2263,6 +1613,7 @@ void RL_FloatRGB(byte *rgb, float *dest)
 	dest[3] = 1;
 }
 
+/*
 //===========================================================================
 // RL_Clear
 //===========================================================================
@@ -2289,6 +1640,7 @@ void RL_Primitive(primhdr_t *prim)
 #endif
 }
 
+
 //===========================================================================
 // RL_Draw
 //===========================================================================
@@ -2300,6 +1652,7 @@ void RL_Draw(void)
 
 	END_PROF( PROF_RL_DRAW_ELEMS );
 }
+*/
 
 //===========================================================================
 // RL_DrawPrimitives
@@ -2309,24 +1662,37 @@ void RL_Draw(void)
 void RL_DrawPrimitives(int conditions, rendlist_t *list)
 {
 	primhdr_t *hdr;
-	dynlight_t *dyn;
+	//dynlight_t *dyn;
 	float color[4];
-	int i;
+	//int i;
+	boolean bypass = false;
+
+	// Should we just skip all this?
+	if(conditions & DCF_SKIP) return;
 
 	// Is blending allowed?
-	if(conditions & DCF_NO_BLEND && list->intertex) return;
+	if(conditions & DCF_NO_BLEND && list->intertex.id) return;
+
+	// Should all blended primitives be included?
+	if(conditions & DCF_BLEND && list->intertex.id)
+	{
+		// The other conditions will be bypassed.
+		bypass = true;
+	}
 
 	BEGIN_PROF( PROF_RL_DRAW_PRIMS );
 
-	RL_Clear();
+//	RL_Clear();
 
 	// Compile our list of indices.
 	for(hdr = (primhdr_t*) list->data; hdr->size; 
 		hdr = (primhdr_t*) ((byte*) hdr + hdr->size))
 	{
 		// FIXME: Precalculate the condition flags for all primitives.
-		if(!conditions
-			|| conditions & DCF_NO_LIGHTS && !hdr->numLights
+		//if(!conditions
+			//|| conditions & DCF_NO_LIGHTS && !(hdr->flags & RPF_DYNLIT)
+			//|| conditions & DCF_WITH_LIGHTS && hdr->flags & RPF_DYNLIT
+/*			|| conditions & DCF_NO_LIGHTS && !hdr->numLights
 			|| conditions & DCF_FEW_LIGHTS 
 				&& hdr->numLights > 0
 				&& hdr->numLights <= maxArrayLights
@@ -2337,10 +1703,45 @@ void RL_DrawPrimitives(int conditions, rendlist_t *list)
 			|| conditions & DCF_NO_SINGLE_PASS_TEXTURE
 				&& hdr->numLights > maxArrayLights
 			|| conditions & DCF_BLEND
-				&& list->intertex)
-		{
-			RL_Primitive(hdr);
+				&& list->intertex)*/
+		//{
+			//RL_Primitive(hdr);
 
+			// Check for skip conditions.
+			if(!bypass)
+			{
+				if(conditions & DCF_JUST_ONE_LIGHT && hdr->light->next)
+					continue;
+
+				if(conditions & DCF_MANY_LIGHTS && !hdr->light->next)
+					continue;
+			}
+			
+			if(conditions & DCF_SET_LIGHT_ENV)
+			{
+				// Use the correct texture and color for the light.
+				gl.SetInteger(DGL_ACTIVE_TEXTURE, 
+					conditions & DCF_SET_LIGHT_ENV0? 0 : 1);
+				gl.Bind(hdr->light->texture);
+				RL_FloatRGB(hdr->light->color, color);
+				gl.SetFloatv(DGL_ENV_COLOR, color);
+			}
+
+			if(hdr->type == PT_FAN)
+			{
+				gl.DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, 
+					hdr->indices);
+			}
+			else if(hdr->type == PT_DOUBLE_FAN)
+			{
+				gl.DrawElements(DGL_TRIANGLE_FAN, hdr->beginOther,
+					hdr->indices);
+
+				gl.DrawElements(DGL_TRIANGLE_FAN, 
+					hdr->numIndices - hdr->beginOther, 
+					hdr->indices + hdr->beginOther);
+			}
+/*
 			if(conditions & ( DCF_FEW_LIGHTS 
 				| DCF_FIRST_UNIT_LIGHTS
 				| DCF_EXTRA_UNIT_LIGHTS ))
@@ -2407,10 +1808,11 @@ void RL_DrawPrimitives(int conditions, rendlist_t *list)
 				}
 				RL_Clear();
 			}
-		}
+*/
+		//}
 	}
 
-	RL_Draw();	
+	//RL_Draw();	
 
 	END_PROF( PROF_RL_DRAW_PRIMS );
 }
@@ -2419,7 +1821,7 @@ void RL_DrawPrimitives(int conditions, rendlist_t *list)
 // RL_DoList
 //	This gets called repeatedly; only change GL state when you have to.
 //===========================================================================
-void RL_DoList(listmode_t mode, rendlist_t *list)
+/*void RL_DoList(listmode_t mode, rendlist_t *list)
 {
 	// What kind of primitives should we draw?
 	switch(mode)
@@ -2433,15 +1835,15 @@ void RL_DoList(listmode_t mode, rendlist_t *list)
 		break;
 
 	case LM_MANY_LIGHTS:
-		//RL_DrawPrimitives(DCF_FIRST_UNIT_LIGHTS | DCF_BLEND, list);
+		RL_DrawPrimitives(DCF_FIRST_UNIT_LIGHTS | DCF_BLEND, list);
 		break;
 
 	case LM_EXTRA_LIGHTS:
-		//RL_DrawPrimitives(DCF_EXTRA_UNIT_LIGHTS, list);
+		RL_DrawPrimitives(DCF_EXTRA_UNIT_LIGHTS, list);
 		break;
 
 	case LM_NEEDS_TEXTURE:
-		//RL_DrawPrimitives(DCF_NO_SINGLE_PASS_TEXTURE | DCF_BLEND, list);
+		RL_DrawPrimitives(DCF_NO_SINGLE_PASS_TEXTURE | DCF_BLEND, list);
 		break;
 
 	default:
@@ -2449,7 +1851,8 @@ void RL_DoList(listmode_t mode, rendlist_t *list)
 		return;
 	}
 }
-
+*/
+/*
 //===========================================================================
 // RL_SetupState
 //	The GL state includes setting up the correct vertex arrays.
@@ -2507,12 +1910,6 @@ void RL_SetupState(listmode_t mode, rendlist_t *list)
 		gl.Disable(DGL_DEPTH_WRITE);
 		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
 		break;
-
-	/*case LMS_LIGHTS_ADD:
-		// All texture stages will be used for rendering dynamic lights.
-		// Result is alpha tested and additively blended.
-		gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 0);
-		break;*/
 
 	case LMS_LIGHTS_ADD_FIRST:
 		// First pass of the LIGHTS_ADD.
@@ -2598,11 +1995,12 @@ void RL_SetupState(listmode_t mode, rendlist_t *list)
 
 	END_PROF( PROF_RL_SETUP_STATE );
 }
+*/
 
 //===========================================================================
 // RL_CleanupState
 //===========================================================================
-void RL_CleanupState(listmode_t mode)
+/*void RL_CleanupState(listmode_t mode)
 {
 	switch(mode)
 	{
@@ -2617,57 +2015,457 @@ void RL_CleanupState(listmode_t mode)
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 		break;
 	}
-}
+}*/
 
 //===========================================================================
-// RL_DoLists
-//	Major GL state changes are done here.
+// RL_SelectTexUnits
+//	The first selected unit is active after this call.
 //===========================================================================
-void RL_DoLists(listmode_t mode, rendlist_t **lists, int num)
+void RL_SelectTexUnits(int count)
 {
 	int i;
 
-	for(i = 0; i < num; i++)
+	// Disable extra units.
+	for(i = numTexUnits - 1; i >= count; i--) 
+		gl.Disable(DGL_TEXTURE0 + i);
+
+	// Enable the selected units.
+	for(i = count - 1; i >= 0; i--)
 	{
-		// Is there something in this list?
-		if(lists[i]->last) 
+		gl.Enable(DGL_TEXTURE0 + i);
+		// Enable texture coordinates for this unit.
+		gl.EnableArrays(0, 0, 0x1 << i);
+	}
+}
+
+//===========================================================================
+// RL_BlendState
+//===========================================================================
+void RL_BlendState(rendlist_t *list, int modMode)
+{
+	RL_SelectTexUnits(2);
+
+	gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
+	gl.Bind(list->tex.id);
+
+	gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+	gl.Bind(list->intertex.id);
+
+	gl.SetInteger(DGL_MODULATE_TEXTURE, modMode);
+	gl.SetInteger(DGL_ENV_ALPHA, list->interpos * 256);
+}
+
+//===========================================================================
+// RL_DetailFogState
+//===========================================================================
+void RL_DetailFogState(void)
+{
+	// The fog color alpha is probably meaningless?
+	byte midGray[4] = { 0x80, 0x80, 0x80, fogColor[3] };
+	gl.Enable(DGL_FOG);
+	gl.Fogv(DGL_FOG_COLOR, midGray);
+}
+
+//===========================================================================
+// RL_SetupListState
+//	Set per-list GL state.
+//	Returns the conditions to select primitives.
+//===========================================================================
+int RL_SetupListState(listmode_t mode, rendlist_t *list)
+{
+	switch(mode)
+	{
+	case LM_SKYMASK:
+		// Render all primitives on the list without discrimination.
+		return 0;
+
+	case LM_ALL:		// All surfaces.
+		// Should we do blending?
+		if(list->intertex.id)
 		{
-			// Per-list GL state?
-			switch(mode)
-			{
-			case LM_NO_LIGHTS:
-			case LM_FEW_LIGHTS:
-				gl.SetInteger(DGL_ACTIVE_TEXTURE, numTexUnits - 1);
-				gl.Bind(lists[i]->tex);
-				break;
-
-			case LM_NEEDS_TEXTURE:
-				RL_SetupState(LMS_TEXTURE_MUL, lists[i]);
-				break;
-			}
-
-			RL_DoList(mode, lists[i]);
+			// Blend between two textures, modulate with primary color.
+			RL_BlendState(list, 2);
 		}
+		else
+		{
+			// Normal modulation.
+			RL_SelectTexUnits(1);
+			gl.Bind(list->tex.id);
+			gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+		}
+		return 0;
+
+	case LM_LIGHT_MOD_TEXTURE:
+		// Modulate sector light, dynamic light and regular texture.
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+		gl.Bind(list->tex.id);
+		return DCF_SET_LIGHT_ENV0 | DCF_JUST_ONE_LIGHT | DCF_NO_BLEND;
+
+	case LM_TEXTURE_PLUS_LIGHT:
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
+		gl.Bind(list->tex.id);
+		return DCF_SET_LIGHT_ENV1 | DCF_NO_BLEND;
+
+	case LM_FIRST_LIGHT:
+		// Draw all primitives with more than one light
+		// and all primitives which will have a blended texture.
+		return DCF_SET_LIGHT_ENV0 | DCF_MANY_LIGHTS | DCF_BLEND;
+
+	case LM_BLENDED:
+		// Only render the blended surfaces.
+		if(!list->intertex.id) return DCF_SKIP;
+		RL_BlendState(list, 2);
+		return 0;
+
+	case LM_BLENDED_FIRST_LIGHT:
+		// Only blended surfaces.
+		if(!list->intertex.id) return DCF_SKIP;
+		return DCF_SET_LIGHT_ENV0;
+
+	case LM_WITHOUT_TEXTURE:
+		// Only render the primitives affected by dynlights.
+		return 0;
+
+	case LM_LIGHTS:
+		gl.Bind(list->tex.id);
+		// The light lists only contain dynlight primitives.
+		return 0;
+
+	case LM_BLENDED_MOD_TEXTURE:
+		// Blending required.
+		if(!list->intertex.id) break;
+	case LM_MOD_TEXTURE:
+	case LM_MOD_TEXTURE_MANY_LIGHTS:
+		// Texture for surfaces with (many) dynamic lights.
+		// Should we do blending?
+		if(list->intertex.id)
+		{
+			// Mode 3 actually just disables the second texture stage,
+			// which would modulate with primary color.
+			RL_BlendState(list, 3);
+			// Render all primitives.
+			return 0;
+		}
+		// No modulation at all.
+		RL_SelectTexUnits(1);
+		gl.Bind(list->tex.id);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
+		return (mode == LM_MOD_TEXTURE_MANY_LIGHTS? DCF_MANY_LIGHTS : 0);
+
+	case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+		// Blending is not done now.
+		if(list->intertex.id) break;
+		if(list->tex.detail)
+		{
+			RL_SelectTexUnits(2);
+			gl.SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
+			gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
+			gl.Bind(list->tex.id);
+			gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+			gl.Bind(list->tex.detail->tex);
+		}
+		else
+		{
+			RL_SelectTexUnits(1);
+			gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
+			gl.Bind(list->tex.id);
+		}
+		return 0;
+
+	case LM_ALL_DETAILS:
+		if(!list->tex.detail) break;
+		gl.Bind(list->tex.detail->tex);
+		// Render all surfaces on the list.
+		return 0;
+
+	case LM_UNBLENDED_TEXTURE_AND_DETAIL:
+		// Only unblended. Details are optional.
+		if(list->intertex.id) break;
+		if(list->tex.detail)
+		{
+			RL_SelectTexUnits(2);
+			gl.SetInteger(DGL_MODULATE_TEXTURE, 8);
+			gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
+			gl.Bind(list->tex.id);
+			gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+			gl.Bind(list->tex.detail->tex);
+		}
+		else
+		{
+			// Normal modulation.
+			RL_SelectTexUnits(1);
+			gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+			gl.Bind(list->tex.id);
+		}
+		return 0;
+
+	case LM_BLENDED_DETAILS:
+		// We'll only render blended primitives.
+		if(!list->intertex.id) break;
+		if(!list->tex.detail || !list->intertex.detail) break;
+	
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
+		gl.Bind(list->tex.detail->tex);
+
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+		gl.Bind(list->intertex.detail->tex);
+
+		gl.SetInteger(DGL_ENV_ALPHA, list->interpos * 256);		
+		return 0;
+
+	case LM_SHADOW:
+		// Render all primitives (on the shadowList).
+		gl.Bind(list->tex.id);
+		return 0;
+	}
+
+	// Unknown mode, let's not draw anything.
+	return DCF_SKIP;
+}
+
+//===========================================================================
+// RL_SetupPassState
+//	Setup GL state for an entire rendering pass.
+//===========================================================================
+void RL_SetupPassState(listmode_t mode)
+{
+	switch(mode)
+	{
+	case LM_SKYMASK:
+		RL_SelectTexUnits(0);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+		// We don't want to write to the color buffer.
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE);
+		// No need for fog.
+		if(useFog) gl.Disable(DGL_FOG);
+		break;
+
+	case LM_BLENDED:
+		RL_SelectTexUnits(2);
+	case LM_ALL:
+		// The first texture unit is used for the main texture.
+		RL_SelectTexCoordArray(0, TCA_MAIN);
+		RL_SelectTexCoordArray(1, TCA_BLEND);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+		// Fog is allowed during this pass.
+		if(useFog) gl.Enable(DGL_FOG);
+		// All of the surfaces are opaque.
+		gl.Disable(DGL_BLENDING);
+		break;
+
+	case LM_LIGHT_MOD_TEXTURE:
+	case LM_TEXTURE_PLUS_LIGHT:
+		// Modulate sector light, dynamic light and regular texture.
+		RL_SelectTexUnits(2);
+		if(mode == LM_LIGHT_MOD_TEXTURE)
+		{
+			RL_SelectTexCoordArray(0, TCA_LIGHT);
+			RL_SelectTexCoordArray(1, TCA_MAIN);
+			gl.SetInteger(DGL_MODULATE_TEXTURE, 4); // Light * texture.
+		}
+		else
+		{
+			RL_SelectTexCoordArray(0, TCA_MAIN);
+			RL_SelectTexCoordArray(1, TCA_LIGHT);
+			gl.SetInteger(DGL_MODULATE_TEXTURE, 5); // Texture + light.
+		}
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+		// Fog is allowed during this pass.
+		if(useFog) gl.Enable(DGL_FOG);
+		// All of the surfaces are opaque.
+		gl.Disable(DGL_BLENDING);
+		break;
+
+	case LM_FIRST_LIGHT:
+		// One light, no texture.
+		RL_SelectTexUnits(1);
+		RL_SelectTexCoordArray(0, TCA_LIGHT);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 6);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+		// Fog is allowed during this pass.
+		if(useFog) gl.Disable(DGL_FOG);
+		// All of the surfaces are opaque.
+		gl.Disable(DGL_BLENDING);
+		break;
+
+	case LM_BLENDED_FIRST_LIGHT:
+		// One additive light, no texture.
+		RL_SelectTexUnits(1);
+		RL_SelectTexCoordArray(0, TCA_LIGHT);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 7); // Add light, no color.
+		gl.Enable(DGL_ALPHA_TEST);
+		gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 1);
+		gl.Disable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		// Fog is allowed during this pass.
+		if(useFog) gl.Disable(DGL_FOG);
+		// All of the surfaces are opaque.
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
+		break;
+
+	case LM_WITHOUT_TEXTURE:
+		RL_SelectTexUnits(0);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+		// Fog must be disabled during this pass.
+		gl.Disable(DGL_FOG);
+		// All of the surfaces are opaque.
+		gl.Disable(DGL_BLENDING);
+		break;
+
+	case LM_LIGHTS:
+		RL_SelectTexUnits(1);
+		RL_SelectTexCoordArray(0, TCA_MAIN);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+		gl.Enable(DGL_ALPHA_TEST);
+		gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 1);
+		gl.Disable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		// Fog would mess with the color (this is an additive pass).
+		gl.Disable(DGL_FOG);
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+		break;
+
+	case LM_MOD_TEXTURE:
+	case LM_MOD_TEXTURE_MANY_LIGHTS:
+	case LM_BLENDED_MOD_TEXTURE:
+		// The first texture unit is used for the main texture.
+		RL_SelectTexCoordArray(0, TCA_MAIN);
+		RL_SelectTexCoordArray(1, TCA_BLEND);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Disable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		// All of the surfaces are opaque.
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ZERO);
+		// Fog would mess with the color (this is a multiplicative pass).
+		gl.Disable(DGL_FOG);
+		break;
+
+	case LM_UNBLENDED_TEXTURE_AND_DETAIL:
+		RL_SelectTexCoordArray(0, TCA_MAIN);
+		RL_SelectTexCoordArray(1, TCA_DETAIL);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+		// All of the surfaces are opaque.
+		gl.Disable(DGL_BLENDING);
+		// Fog is allowed.
+		if(useFog) gl.Enable(DGL_FOG);
+		break;
+
+	case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+		RL_SelectTexCoordArray(0, TCA_MAIN);
+		RL_SelectTexCoordArray(1, TCA_DETAIL);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Disable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		// All of the surfaces are opaque.
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ZERO);
+		// This is a multiplicative pass.
+		gl.Disable(DGL_FOG);
+		break;
+	
+	case LM_ALL_DETAILS:
+		RL_SelectTexUnits(1);
+		RL_SelectTexCoordArray(0, TCA_DETAIL);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 0);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Disable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		// All of the surfaces are opaque.
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
+		// Use fog to fade the details, if fog is enabled.
+		if(useFog) RL_DetailFogState();
+		break;
+
+	case LM_BLENDED_DETAILS:
+		RL_SelectTexUnits(2);
+		RL_SelectTexCoordArray(0, TCA_DETAIL);
+		RL_SelectTexCoordArray(1, TCA_BLEND_DETAIL);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 3);
+		gl.Disable(DGL_ALPHA_TEST);
+		gl.Disable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		// All of the surfaces are opaque.
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
+		// Use fog to fade the details, if fog is enabled.
+		if(useFog) RL_DetailFogState();
+		break;
+
+	case LM_SHADOW:
+		// A bit like 'negative lights'.
+		RL_SelectTexUnits(1);
+		RL_SelectTexCoordArray(0, TCA_MAIN);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+		gl.Enable(DGL_ALPHA_TEST);
+		gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 1);
+		gl.Disable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		// Set normal fog, if it's enabled.
+		if(useFog)
+		{
+			gl.Enable(DGL_FOG);
+			gl.Fogv(DGL_FOG_COLOR, fogColor);
+		}
+		gl.Enable(DGL_BLENDING);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+		break;
 	}
 }
 
 //===========================================================================
 // RL_RenderLists
-//	Renders the given lists. RL_DoList does the actual work, we just set
-//	up and restore the DGL state here.
+//	Renders the given lists. They must not be empty.
 //===========================================================================
 void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 {
-//	int i;
+	int i;
 
-	// If there are just a few empty lists, no point in setting and 
-	// restoring the state.
-	/*if(num <= 3) // Covers dynlights and skymask.
+	// If the first list is empty, we do nothing. Normally we expect
+	// all lists to contain something.
+	if(!num || lists[0]->last == NULL) return;
+
+	// Setup GL state that's common to all the lists in this mode.
+	RL_SetupPassState(mode);
+
+	// Draw each given list.
+	for(i = 0; i < num; i++)
 	{
-		for(i = 0; i < num; i++) if(lists[i]->last) break;
-		if(i == num) return; // Nothing to do!
-	}*/
-	
+		// Setup GL state for this list, and
+		// draw the necessary subset of primitives on the list.
+		RL_DrawPrimitives( RL_SetupListState(mode, lists[i]), lists[i] );
+	}
+
+#if false
 	if(mode == LM_NORMAL_MUL)
 	{
 		// First all the primitives that can be completed in a single pass.
@@ -2709,6 +2507,7 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 
 		RL_CleanupState(LM_MUL_SINGLE_PASS);
 	}
+#endif
 
 #if 0
 	// Setup the state.
@@ -2735,7 +2534,7 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 #if 0
 		gl.ZBias(SHADOWBIAS);
 #endif
-		if(whitefog) gl.Disable(DGL_FOG);
+		if(useFog) gl.Disable(DGL_FOG);
 		gl.Disable(DGL_DEPTH_WRITE);
 		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
 		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
@@ -2757,7 +2556,7 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 		gl.ZBias(DYNLIGHTBIAS);
 #endif
 		// Disable fog.
-		if(whitefog) gl.Disable(DGL_FOG);
+		if(useFog) gl.Disable(DGL_FOG);
 		// This'll allow multiple light quads to be rendered on top of 
 		// each other.
 		gl.Disable(DGL_DEPTH_WRITE);
@@ -2838,7 +2637,7 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 		gl.ZBias(0);
 #endif
 		gl.Enable(DGL_DEPTH_WRITE);
-		if(whitefog) gl.Enable(DGL_FOG);
+		if(useFog) gl.Enable(DGL_FOG);
 		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 		break;*/
@@ -2855,7 +2654,7 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 #if 0
 		gl.ZBias(0);
 #endif
-		if(whitefog) gl.Enable(DGL_FOG);
+		if(useFog) gl.Enable(DGL_FOG);
 		gl.Enable(DGL_DEPTH_WRITE);
 		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA); 
@@ -2874,69 +2673,254 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 }
 
 //===========================================================================
-// RL_RenderAllLists
+// RL_CollectLists
+//	Extracts a selection of lists from the hash.
 //===========================================================================
-void RL_RenderAllLists(void)
+uint RL_CollectLists(listhash_t *table, rendlist_t **lists) //, int proFlags, int conFlags)
 {
-	// Multiplicative lights?
-	//boolean muldyn = !dlBlend && !whitefog; 
-
-	// Pointers to all the rendering lists.
-	rendlist_t *it, *rlists[MAX_RLISTS];
-	int i, numrlists = 0;
-	
-	BEGIN_PROF( PROF_RL_RENDER_ALL );
+	rendlist_t *it;
+	uint i, count = 0;
 
 	// Collect a list of rendering lists.
 	for(i = 0; i < RL_HASH_SIZE; i++)
 	{
-		for(it = list_hash[i].first; it; it = it->next)
+		for(it = table[i].first; it; it = it->next)
 		{
-			if(it->last != NULL)
+			// Only non-empty lists are collected.
+			if(it->last != NULL
+				/*&& (it->flags & proFlags) == proFlags
+				&& (it->flags & conFlags) == 0*/)
 			{
-				rlists[ numrlists++ ] = it;
+#ifdef _DEBUG
+				if(count == MAX_RLISTS)
+				{
+					Con_Error("RL_CollectLists: Ran out of MAX_RLISTS.\n");
+				}
+#endif
+				lists[ count++ ] = it;
 			}
 		}
 	}
+	return count;
+}
 
-/*	if(!renderTextures) gl.Disable(DGL_TEXTURING);*/
+//===========================================================================
+// RL_LockVertices
+//===========================================================================
+void RL_LockVertices(void)
+{
+	// We're only locking the vertex and color arrays, so disable the
+	// texcoord arrays for now. Every pass will enable/disable the texcoords
+	// that are needed.
+	gl.DisableArrays(0, 0, 0xf);
+
+	// Actually, don't lock anything. (Massive slowdown?)
+	gl.Arrays(vertices, colors, 0, NULL, 0 /*numVertices*/);
+}
+
+//===========================================================================
+// RL_UnlockVertices
+//===========================================================================
+void RL_UnlockVertices(void)
+{
+	// Nothing was locked.
+	//gl.UnlockArrays();
+}
+
+//===========================================================================
+// RL_RenderAllLists
+//	We have several different paths to accommodate both multitextured 
+//	details	and dynamic lights. Details take precedence (they always cover 
+//	entire primitives, and usually *all* of the surfaces in a scene).
+//===========================================================================
+void RL_RenderAllLists(void)
+{
+	// Pointers to all the rendering lists.
+	rendlist_t *lists[MAX_RLISTS];
+	uint count;
+
+	BEGIN_PROF( PROF_RL_RENDER_ALL );
 
 	// The sky might be visible. Render the needed hemispheres.
 	Rend_RenderSky(skyhemispheres);				
 
-#if 0
+	RL_LockVertices();
+
 	// Mask the sky in the Z-buffer.
-	RL_RenderLists(LID_SKYMASK, ptr_mask_rlists, NUM_RLSKY);
-#endif
-
-/*	if(!renderTextures) gl.Disable(DGL_TEXTURING);*/
-
-	BEGIN_PROF( PROF_RL_RENDER_NORMAL );
+	lists[0] = &skyMaskList;
+	RL_RenderLists(LM_SKYMASK, lists, 1);
 
 	// Render the real surfaces of the visible world.
-	RL_RenderLists(IS_MUL_MODE? LM_NORMAL_MUL : LM_NORMAL_ADD,
-		rlists, numrlists);
+	BEGIN_PROF( PROF_RL_RENDER_NORMAL );
+	
+/*
+ * Unlit Primitives
+ */
+	// Collect all normal lists.
+	count = RL_CollectLists(plainHash, lists);
+	if(IS_MTEX_DETAILS)
+	{
+		// Draw details for unblended surfaces in this pass.
+		RL_RenderLists(LM_UNBLENDED_TEXTURE_AND_DETAIL, lists, count);
+
+		// Blended surfaces.
+		RL_RenderLists(LM_BLENDED, lists, count);
+	}
+	else
+	{
+		// Blending is done during this pass.
+		RL_RenderLists(LM_ALL, lists, count);
+	}
+
+/*
+ * Lit Primitives
+ */
+	// Then the lit primitives.
+	count = RL_CollectLists(litHash, lists);
+
+	// If multitexturing is available, we'll use it to our advantage
+	// when rendering lights.
+	if(IS_MTEX_LIGHTS) 
+	{
+		if(IS_MUL)
+		{
+			// All (unblended) surfaces with exactly one light can be 
+			// rendered in a single pass.
+			RL_RenderLists(LM_LIGHT_MOD_TEXTURE, lists, count);
+
+			// Render surfaces with many lights without a texture, just 
+			// with the first light.
+			RL_RenderLists(LM_FIRST_LIGHT, lists, count);
+		}
+		else // Additive ('foggy') lights.
+		{
+			RL_RenderLists(LM_TEXTURE_PLUS_LIGHT, lists, count);
+
+			// Render surfaces with blending.
+			RL_RenderLists(LM_BLENDED, lists, count);
+
+			// Render the first light for surfaces with blending.
+			// (Not optimal but shouldn't matter; texture is changed for 
+			// each primitive.)
+			RL_RenderLists(LM_BLENDED_FIRST_LIGHT, lists, count);
+		}
+	}
+	else // Multitexturing is not available for lights.
+	{
+		if(IS_MUL)
+		{
+			// Render all lit surfaces without a texture.
+			RL_RenderLists(LM_WITHOUT_TEXTURE, lists, count);
+		}
+		else
+		{
+			if(IS_MTEX_DETAILS) // Draw detail textures using multitexturing.
+			{
+				// Unblended surfaces with a detail.
+				RL_RenderLists(LM_UNBLENDED_TEXTURE_AND_DETAIL, lists, count);
+
+				// Blended surfaces without details.
+				RL_RenderLists(LM_BLENDED, lists, count);
+				
+				// Details for blended surfaces.
+				RL_RenderLists(LM_BLENDED_DETAILS, lists, count);
+			}
+			else
+			{
+				RL_RenderLists(LM_ALL, lists, count);
+			}
+		}
+	}
+
+/*
+ * Dynamic Lights
+ */
+	// Draw all dynamic lights (always additive).
+	count = RL_CollectLists(dynHash, lists);
+	RL_RenderLists(LM_LIGHTS, lists, count);
+
+/*
+ * Texture Modulation Pass
+ */
+	if(IS_MUL)
+	{
+		// Finish the lit surfaces that didn't yet get a texture.
+		count = RL_CollectLists(litHash, lists);
+		if(IS_MTEX_DETAILS)
+		{
+			RL_RenderLists(LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL, lists, count);
+			RL_RenderLists(LM_BLENDED_MOD_TEXTURE, lists, count);
+			RL_RenderLists(LM_BLENDED_DETAILS, lists, count);
+		}
+		else
+		{
+			if(IS_MTEX_LIGHTS)
+			{
+				RL_RenderLists(LM_MOD_TEXTURE_MANY_LIGHTS, lists, count);
+			}
+			else
+			{
+				RL_RenderLists(LM_MOD_TEXTURE, lists, count);			
+			}
+		}
+	}	
+
+/*
+ * Detail Modulation Pass
+ */
+	// If multitexturing is not available for details, we need to apply 
+	// them as an extra pass over all the detailed surfaces.
+	if(r_detail)
+	{
+		// Render detail textures for all surfaces that need them.
+		count = RL_CollectLists(plainHash, lists);
+		if(IS_MTEX_DETAILS)
+		{
+			// Blended detail textures.
+			RL_RenderLists(LM_BLENDED_DETAILS, lists, count);
+
+			/*if(!IS_MUL)
+			{
+				count = RL_CollectLists(litHash, lists);
+				RL_RenderLists(LM_BLENDED_DETAILS, lists, count);
+			}*/
+		}
+		else
+		{
+			RL_RenderLists(LM_ALL_DETAILS, lists, count);
+
+			count = RL_CollectLists(litHash, lists);
+			RL_RenderLists(LM_ALL_DETAILS, lists, count);
+		}
+	}
+
+	// Render object shadows.
+	lists[0] = &shadowList;
+	RL_RenderLists(LM_SHADOW, lists, 1);
 
 	END_PROF( PROF_RL_RENDER_NORMAL );
 
-	// Render object shadows.
-//	RL_RenderLists(LID_SHADOWS, ptr_shadow_rlist, 1);
+	RL_UnlockVertices();
 
-/*	BEGIN_PROF( PROF_RL_RENDER_LIGHT );
-
-	// Render dynamic lights.
-	if(dlBlend != 3)
-		RL_RenderLists(LID_DYNAMIC_LIGHTS, ptr_dl_rlists, NUM_RLDYN);
-
-	// Apply the dlit pass?
-	if(muldyn) RL_RenderLists(LID_DLIT_TEXTURED, rlists, numrlists);
-
-	END_PROF( PROF_RL_RENDER_LIGHT );*/
-
-#if 0
-	// Render the detail texture pass?
-	if(r_detail) RL_RenderLists(LID_DETAILS, rlists, numrlists);
-#endif
+	// Return to the normal GL state.
+	RL_SelectTexUnits(1);
+	gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+	gl.Enable(DGL_DEPTH_WRITE);
+	gl.Enable(DGL_DEPTH_TEST);
+	gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+	gl.Enable(DGL_ALPHA_TEST);
+	gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 0);
+	gl.Enable(DGL_BLENDING);
+	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+	if(useFog) 
+	{
+		gl.Enable(DGL_FOG);
+		gl.Fogv(DGL_FOG_COLOR, fogColor);
+	}
+	else
+	{
+		gl.Disable(DGL_FOG);
+	}
 
 	BEGIN_PROF( PROF_RL_RENDER_MASKED );
 
