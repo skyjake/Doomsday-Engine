@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/04/16 09:50:06  skyjake
+// Cvar for sliding corpses
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -253,23 +256,25 @@ void P_XYMovement (mobj_t* mo)
     if (mo->z > mo->floorz && !mo->onmobj)
 		return;		// no friction when airborne
 
-	// killough $dropoff_fix: add objects falling off ledges
-	if((mo->flags & MF_CORPSE || mo->intflags & MIF_FALLING)
-		&& !mo->player) // Does not apply to players! -jk
-/*	if (mo->flags & MF_CORPSE && mo->z > mo->dropoffz)*/
-    {
-		// do not stop sliding
-		//  if halfway off a step with some momentum
-		if (mo->momx > FRACUNIT/4
-			|| mo->momx < -FRACUNIT/4
-			|| mo->momy > FRACUNIT/4
-			|| mo->momy < -FRACUNIT/4)
+	if(cfg.slidingCorpses)
+	{
+		// killough $dropoff_fix: add objects falling off ledges
+		if((mo->flags & MF_CORPSE || mo->intflags & MIF_FALLING)
+			&& !mo->player) // Does not apply to players! -jk
 		{
-			if (mo->floorz != mo->subsector->sector->floorheight)
-				return;
+			// do not stop sliding
+			//  if halfway off a step with some momentum
+			if (mo->momx > FRACUNIT/4
+				|| mo->momx < -FRACUNIT/4
+				|| mo->momy > FRACUNIT/4
+				|| mo->momy < -FRACUNIT/4)
+			{
+				if (mo->floorz != mo->subsector->sector->floorheight)
+					return;
+			}
 		}
-    }
-	
+	}
+
 	// Stop player walking animation.
 	if(player
 		&& mo->momx > -STANDSPEED
@@ -288,9 +293,8 @@ void P_XYMovement (mobj_t* mo)
 		&& mo->momx < STOPSPEED
 		&& mo->momy > -STOPSPEED
 		&& mo->momy < STOPSPEED
-		&& (!player
-			|| (player->cmd.forwardmove== 0
-		&& player->cmd.sidemove == 0 ) ) )
+		&& (!player || (player->cmd.forwardmove == 0 
+			&& player->cmd.sidemove == 0)))
     {
 		mo->momx = 0;
 		mo->momy = 0;
@@ -566,8 +570,9 @@ void P_MobjThinker (mobj_t* mobj)
 		if(mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
 			return;       // killough - mobj was removed
 	}
+	// non-sentient objects at rest
 	else if(!(mobj->momx | mobj->momy) && !sentient(mobj)
-		&& !(mobj->player))	// non-sentient objects at rest
+		&& !(mobj->player) && cfg.slidingCorpses)	
 	{                                 
 		// killough 9/12/98: objects fall off ledges if they are hanging off
 		// slightly push off of ledge if hanging more than halfway off
@@ -597,19 +602,19 @@ void P_MobjThinker (mobj_t* mobj)
 	// killough $dropoff_fix: objects fall off ledges if they are hanging off
 	// slightly push off of ledge if hanging more than halfway off
 
-/*	if (mobj->z > mobj->dropoffz &&		// Only objects contacting drop off
-		!(mobj->flags & MF_NOGRAVITY))	// Only objects which fall
-		P_ApplyTorque(mobj);				// Apply torque*/
-
-
-	if ((mobj->flags & MF_CORPSE ? mobj->z > mobj->dropoffz :
-		mobj->z - mobj->dropoffz > FRACUNIT*24)		// Only objects contacting drop off
-		&& !(mobj->flags & MF_NOGRAVITY))	// Only objects which fall
-		P_ApplyTorque(mobj);				// Apply torque
-	else
+	if(cfg.slidingCorpses)
 	{
-		mobj->intflags &= ~MIF_FALLING;
-		mobj->gear = 0;  // Reset torque
+		if ((mobj->flags & MF_CORPSE ? mobj->z > mobj->dropoffz :
+			mobj->z - mobj->dropoffz > FRACUNIT*24)	// Only objects contacting drop off
+			&& !(mobj->flags & MF_NOGRAVITY))	// Only objects which fall
+		{
+			P_ApplyTorque(mobj);				// Apply torque
+		}
+		else
+		{
+			mobj->intflags &= ~MIF_FALLING;
+			mobj->gear = 0;  // Reset torque
+		}
 	}
 
 	// $vanish: dead monsters disappear after some time

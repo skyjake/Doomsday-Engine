@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/04/16 09:50:06  skyjake
+// Cvar for sliding corpses
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -39,10 +42,9 @@ rcsid[] = "$Id$";
 
 #include <stdlib.h>
 
-
 #include "doomdef.h"
+#include "d_config.h"
 #include "p_local.h"
-
 
 // State.
 #include "r_state.h"
@@ -119,7 +121,8 @@ static boolean PIT_ApplyTorque(line_t *ld, void *data)
 		
 	if (dist < 0 ?                               // drop off direction
 		ld->frontsector->floorheight < mo->z &&
-		ld->backsector->floorheight >= mo->z :
+		ld->backsector->floorheight >= mo->z 
+		:
 		ld->backsector->floorheight < mo->z &&
 		ld->frontsector->floorheight >= mo->z)
 	{
@@ -177,7 +180,10 @@ static boolean PIT_ApplyTorque(line_t *ld, void *data)
 void P_ApplyTorque(mobj_t *mo)
 {
 	int flags = mo->intflags; //Remember the current state, for gear-change
-	
+
+	// 2003-4-16 (jk): corpse sliding anomalies, made configurable
+	if(!cfg.slidingCorpses) return;
+
 	tmthing = mo;
 	validcount++; // prevents checking same line twice
 	

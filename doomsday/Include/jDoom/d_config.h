@@ -34,6 +34,7 @@ typedef struct jdoom_config_s
 	int		jumpEnabled/* = false*/;
 	float	jumpPower;
 	int		airborneMovement;
+	int		slidingCorpses;
 	int		sbarscale;
 	boolean	echoMsg;
 	int		lookSpeed;

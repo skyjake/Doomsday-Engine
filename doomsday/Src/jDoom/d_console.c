@@ -157,6 +157,8 @@ cvar_t gameCVars[] =
 	"MsgBlink", OBSOLETE, CVT_BYTE, &cfg.msgBlink, 0, 1, "1=HUD messages blink when they're printed.", 
 	"CorpseTime", OBSOLETE|CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0, "Corpse vanish time in seconds, 0=disabled.", 
 
+	"game-corpsetime", OBSOLETE|CVF_NO_MAX,	CVT_INT,	&cfg.corpseTime,	0, 0,	"Corpse vanish time in seconds, 0=disabled.",
+
 //===========================================================================
 // New names (1.13.0 =>)
 //===========================================================================
@@ -256,7 +258,8 @@ cvar_t gameCVars[] =
 	
 	"game-fastmonsters", 0,			CVT_BYTE,	&fastparm,			0, 1,	"1=Fast monsters in non-demo single player.",
 	"game-zclip",		0,			CVT_BYTE,	&cfg.moveCheckZ,	0, 1,	"1=Allow mobjs to move under/over each other.",
-	"game-corpsetime",	CVF_NO_MAX,	CVT_INT,	&cfg.corpseTime,	0, 0,	"Corpse vanish time in seconds, 0=disabled.",
+	"game-corpse-time",	CVF_NO_MAX,	CVT_INT,	&cfg.corpseTime,	0, 0,	"Corpse vanish time in seconds, 0=disabled.",
+	"game-corpse-sliding", 0,		CVT_BYTE,	&cfg.slidingCorpses, 0, 1,	"1=Corpses slide down stairs and ledges.",
 	"msg-secret",		0,			CVT_INT,	&cfg.secretMsg,		0, 1,	"1=Announce the discovery of secret areas.",
 
 	"menu-scale",		0,			CVT_FLOAT,	&cfg.menuScale,		.1f, 1,	"Scaling for menus.",
