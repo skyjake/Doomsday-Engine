@@ -15,7 +15,8 @@ enum
 	VSPR_MASKED_WALL,
 	VSPR_MAP_OBJECT,
 	VSPR_HUD_MODEL,
-	VSPR_SKY_MODEL
+	VSPR_SKY_MODEL,
+	VSPR_PARTICLE_MODEL
 };
 
 // A vissprite_t is a thing or masked wall that will be drawn during 
@@ -116,6 +117,7 @@ extern	int				pspOffX, pspOffY;
 extern	int				alwaysAlign;
 extern	float			weaponOffsetScale, weaponFOVShift;
 extern	int				weaponOffsetScaleY;
+extern	float			modelSpinSpeed;
 extern	int				r_maxmodelz, r_nospritez;
 extern	int				r_use_srvo, r_use_srvo_angle;
 extern  vissprite_t     vissprites[MAXVISSPRITES], *vissprite_p;
