@@ -178,6 +178,7 @@ int FR_GetFontIdx(int id)
 	for(i = 0; i < numFonts; i++)
 		if(fonts[i].id == id)
 			return i;
+	Con_Message("FR_GetFontIdx: Unknown ID %i.\n", id);
 	return -1;
 }
 
@@ -299,26 +300,16 @@ int FR_PrepareFont(char *name)
 		int     gdires;
 		char   *winfontname;
 		int     pointsize;
-	} fontmapper[] =
-	{
-		{
-		"Fixed", SYSTEM_FIXED_FONT},
-		{
-		"Fixed12", 0, "Fixedsys", 12},
-		{
-		"System", SYSTEM_FONT},
-		{
-		"System12", 0, "System", 12},
-		{
-		"Large", 0, "MS Sans Serif", 18},
-		{
-		"Small7", 0, "Small Fonts", 7},
-		{
-		"Small8", 0, "Small Fonts", 8},
-		{
-		"Small10", 0, "Small Fonts", 10},
-		{
-		NULL, 0}
+	} fontmapper[] = {
+		{"Fixed", SYSTEM_FIXED_FONT},
+		{"Fixed12", 0, "Fixedsys", 12},
+		{"System", SYSTEM_FONT},
+		{"System12", 0, "System", 12},
+		{"Large", 0, "MS Sans Serif", 18},
+		{"Small7", 0, "Small Fonts", 7},
+		{"Small8", 0, "Small Fonts", 8},
+		{"Small10", 0, "Small Fonts", 10},
+		{NULL, 0}
 	};
 #endif
 	char    buf[64];

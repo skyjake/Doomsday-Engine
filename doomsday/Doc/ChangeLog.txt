@@ -6,6 +6,7 @@
 
 Version 1.8.2
 -------------
+- fixed: console font disappearance
 + added control panel setting for rend-tex-filter-smart
 - adjusted particle Z coordinate when touching a plane
 - fixed fatal error when building GL nodes for a map in the end of the 

@@ -103,6 +103,7 @@ float   nearClip, farClip;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initOk = false;
+static boolean varFontInited = false;
 
 static gramp_t original_gamma_ramp;
 static boolean gamma_support = false;
@@ -369,7 +370,7 @@ void GL_InitVarFont(void)
 {
 	int     old_font;
 
-	if(novideo)
+	if(novideo || varFontInited)
 		return;
 	old_font = FR_GetCurrent();
 	FR_PrepareFont(screenHeight < 300 ? "Small7" : screenHeight <
@@ -378,6 +379,7 @@ void GL_InitVarFont(void)
 				   600 ? "System" : screenHeight < 800 ? "System12" : "Large");
 	glFontVariable = FR_GetCurrent();
 	FR_SetFont(old_font);
+	varFontInited = true;
 }
 
 //===========================================================================
@@ -385,11 +387,12 @@ void GL_InitVarFont(void)
 //===========================================================================
 void GL_ShutdownVarFont(void)
 {
-	if(novideo)
+	if(novideo || !varFontInited)
 		return;
 	FR_DestroyFont(glFontVariable);
 	FR_SetFont(glFontFixed);
 	glFontVariable = glFontFixed;
+	varFontInited = false;
 }
 
 //===========================================================================
