@@ -16,7 +16,10 @@ Version 1.7.7
 - alternative texture path must be tried first when loading hires images
   (-texdir2)
 
-* jDoom: cvar player-air-movement: player movement speed while airborne 
+jDoom:
+* cvar player-air-movement: player movement speed while airborne 
   (0-32); use only small values in netgames
   
-- jHeretic: blinking statbar borders fixed
+jHeretic:
+- blinking statbar borders fixed
+
