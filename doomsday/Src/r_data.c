@@ -685,6 +685,16 @@ boolean R_IsCustomTexture(int texture)
 }
 
 //===========================================================================
+// R_IsValidLightDecoration
+//	Returns true if the given light decoration definition is valid.
+//===========================================================================
+boolean R_IsValidLightDecoration(ded_decorlight_t *lightDef)
+{
+	return lightDef->color[0] != 0 || lightDef->color[1] != 0 
+		|| lightDef->color[2] != 0;
+}
+
+//===========================================================================
 // R_IsAllowedDecoration
 //	Returns true if the given decoration works under the specified 
 //	circumstances.
