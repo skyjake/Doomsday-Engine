@@ -18,6 +18,8 @@
 #include "de_render.h"
 #include "de_graphics.h"
 
+#include "cl_def.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MAXSKYLAYERS		2		
@@ -59,6 +61,7 @@ int			firstLayer, activeLayers;
 
 skymodel_t	skyModels[NUM_SKY_MODELS];
 boolean		skyModelsInited = false;
+boolean		alwaysDrawSphere = false;
 
 skyvertex_t	*skyVerts = NULL;	// Vertices for the upper hemisphere.
 int			numSkyVerts = 0;
@@ -93,6 +96,9 @@ void R_SetupSkyModels(ded_mapinfo_t *info)
 	// Clear the whole sky models data.
 	memset(skyModels, 0, sizeof(skyModels));
 
+	// Normally the sky sphere is not drawn if models are in use.
+	alwaysDrawSphere = (Def_EvalFlags(info->flags) & MIF_DRAW_SPHERE) != 0;
+
 	// The normal sphere is used if no models will be set up.
 	skyModelsInited = false;
 
@@ -109,6 +115,7 @@ void R_SetupSkyModels(ded_mapinfo_t *info)
 		sky->def = def;
 		sky->maxTimer = (int) (TICSPERSEC * def->frame_interval);
 		sky->yaw = def->yaw;
+		sky->frame = sky->model->sub[0].frame;
 	}
 }
 
@@ -121,7 +128,7 @@ void R_SkyTicker(void)
 	int i;
 	skymodel_t *sky;
 
-	if(!skyModelsInited) return;
+	if(!skyModelsInited || clientPaused) return;
 
 	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
 	{
@@ -131,7 +138,7 @@ void R_SkyTicker(void)
 		sky->yaw += sky->def->yaw_speed / TICSPERSEC;
 
 		// Is it time to advance to the next frame?
-		if(++sky->timer >= sky->maxTimer)
+		if(sky->maxTimer > 0 && ++sky->timer >= sky->maxTimer)
 		{
 			sky->timer = 0;
 			sky->frame++;
@@ -165,18 +172,20 @@ void Rend_RenderSkyModels(void)
 		pos[1] = vy * -sky->def->coord_factor[1];
 		pos[2] = vz * -sky->def->coord_factor[2];
 
-		inter = sky->timer / (float) sky->maxTimer;
+		inter = (sky->maxTimer > 0? sky->timer / (float) sky->maxTimer : 0);
 
 		// Setup a dummy vissprite with all the information.
 		memset(&vis, 0, sizeof(vis));
 
-		vis.issprite = 3; // Sky model.
+		vis.type = VSPR_SKY_MODEL;
 		vis.distance = 1;
 		vis.mo.gx = FRACUNIT * pos[0];
 		vis.mo.gy = FRACUNIT * pos[2];
 		vis.mo.gz = vis.mo.gzt = FRACUNIT * pos[1];
 		vis.mo.v1[0] = pos[0];
 		vis.mo.v1[1] = pos[2];
+		vis.mo.v2[0] = sky->def->rotate[0];
+		vis.mo.v2[1] = sky->def->rotate[1];
 		vis.mo.inter = inter;
 		vis.mo.mf = sky->model;
 		for(k = 0; k < DED_MAX_SUB_MODELS; k++)
@@ -399,40 +408,42 @@ void Rend_RenderSky(int hemis)
 	if(!hemis || firstLayer == -1) return;
 
 	// If sky models have been inited, they will be used.
+	if(!skyModelsInited || alwaysDrawSphere)
+	{
+		// Always render the full sky?
+		if(r_fullsky) hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;
+
+		// We don't want anything written in the depth buffer, not yet.
+		gl.Disable(DGL_DEPTH_TEST);
+		gl.Disable(DGL_DEPTH_WRITE);
+		// Disable culling, all triangles face the viewer.
+		gl.Disable(DGL_CULL_FACE);
+		gl.DisableArrays(true, true, 0xf);
+
+		// Setup a proper matrix.
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PushMatrix();
+		gl.Translatef(vx, vy, vz);
+		gl.Scalef(skyDist, skyDist, skyDist);
+		
+		// Draw the possibly visible hemispheres.
+		if(hemis & SKYHEMI_LOWER) Rend_RenderSkyHemisphere(SKYHEMI_LOWER);
+		if(hemis & SKYHEMI_UPPER) Rend_RenderSkyHemisphere(SKYHEMI_UPPER);
+		
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PopMatrix();
+
+		// Enable the disabled things.
+		gl.Enable(DGL_CULL_FACE);
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+	}
+
+	// How about some 3D models?
 	if(skyModelsInited)
 	{
 		Rend_RenderSkyModels();
-		return;
 	}
-
-	// Always render the full sky?
-	if(r_fullsky) hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;
-
-	// We don't want anything written in the depth buffer, not yet.
-	gl.Disable(DGL_DEPTH_TEST);
-	gl.Disable(DGL_DEPTH_WRITE);
-	// Disable culling, all triangles face the viewer.
-	gl.Disable(DGL_CULL_FACE);
-	gl.DisableArrays(true, true, 0xf);
-
-	// Setup a proper matrix.
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.PushMatrix();
-	//gl.LoadIdentity();
-	gl.Translatef(vx, vy, vz);
-	gl.Scalef(skyDist, skyDist, skyDist);
-	
-	// Draw the possibly visible hemispheres.
-	if(hemis & SKYHEMI_LOWER) Rend_RenderSkyHemisphere(SKYHEMI_LOWER);
-	if(hemis & SKYHEMI_UPPER) Rend_RenderSkyHemisphere(SKYHEMI_UPPER);
-	
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.PopMatrix();
-
-	// Enable the disabled things.
-	gl.Enable(DGL_CULL_FACE);
-	gl.Enable(DGL_DEPTH_WRITE);
-	gl.Enable(DGL_DEPTH_TEST);
 }
 
 //===========================================================================
