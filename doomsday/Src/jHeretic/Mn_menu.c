@@ -883,10 +883,7 @@ void MN_DrTextAGreen_CS(char *text, int x, int y)
 {
 	int color[4];
 
-	gl.GetIntegerv(DGL_R, &color[0]);
-	gl.GetIntegerv(DGL_G, &color[1]);
-	gl.GetIntegerv(DGL_B, &color[2]);
-	gl.GetIntegerv(DGL_A, &color[3]);
+	gl.GetIntegerv(DGL_RGBA, color);
 
 	// Set a green color, but retain alpha.
 	gl.Color4ub(102, 204, 102, color[3]);
