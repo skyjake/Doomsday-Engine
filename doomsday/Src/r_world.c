@@ -1352,6 +1352,10 @@ void R_SetupLevel(char *level_id, int flags)
 	{
 		if(loadInStartupMode)
 			Con_StartupDone();
+
+		// Run any commands specified in Map Info.
+		if(mapinfo && mapinfo->execute)
+			Con_Execute(mapinfo->execute, true);
 		
 		// The level setup has been completed.  Run the special level
 		// setup command, which the user may alias to do something

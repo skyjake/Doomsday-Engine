@@ -9,6 +9,7 @@ Version 1.8.1
 + dpMapLoad: glBSP 1.96 as a plugin, run on the fly when necessary
 + rend-halo-realistic: use only more realistic halos (slightly smaller,
   dimmer), no secondary lens flares; enabled by default
+- fixed: Map Info -> Execute
 - fixed: camera position smoothing wasn't synced correctly to frames
 - fixed: FakeRadio bug where vertical shadows were rendered above and
   under the left and right edge of an opening in a straight wall
@@ -19,12 +20,17 @@ Version 1.8.1
 - mouse filter is more careful not to ever lose any mickeys
 - all pending ticcmds are always processed immediately (excessive
   buffering no longer a danger)
+- fixed several endianness issues to allow building on a big endian arch
 * tuned up handling of ticcmds during transfer from client to server
 * particle movement is smoothed
 * now mouse look is always as smooth as it can be, also when
   'rend-camera-smooth' is disabled
 * all games use the same keyboard look scheme (jDoom's was different)
 * framerate is measured more accurately
++ ccmd 'message': display a local game message
+
+jDoom:
+- fixed: '-warp' made fonts disappear
 
 Win32:
 - too many console messages caused a crash during startup (extra verbosity)
