@@ -142,6 +142,7 @@ enum
 	DD_PSPRITE_SPEED,
 	DD_CPLAYER_THRUST_MUL,
 	DD_CLIENT_PAUSED,
+	DD_WEAPON_OFFSET_SCALE_Y,	// 1000x
 	DD_LAST_VALUE,
 
 	// General constants (not to be used with Get/Set).
@@ -634,7 +635,7 @@ typedef struct linknode_s
 #define DDMF_LIGHTSCALE		0x00000180	// Light scale (0: full, 3: 1/4).
 #define DDMF_LIGHTOFFSET	0x0000f000	// How to offset light (along Z axis)
 #define DDMF_RESERVED		0x00030000	// don't touch these!! (translation class)
-#define DDMF_GOINGROUND		0x00040000	// Allow to go in the ground.
+#define DDMF_BOB			0x00040000	// Bob the Z coord up and down.
 #define DDMF_LOWGRAVITY		0x00080000	// 1/8th gravity (predict)
 #define DDMF_MISSILE		0x00100000	// client removes mobj upon impact
 #define DDMF_FLY			0x00200000	// flying object (doesn't matter if airborne)
