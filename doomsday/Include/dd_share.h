@@ -44,7 +44,7 @@ Version number rules: (major).(minor).(revision)
 // Version constant. Use this to verify in the DLL that the engine
 // is new enough. 
 #define DOOMSDAY_VERSION		10711
-#define DOOMSDAY_VERSION_TEXT	"1.7.11/net"
+#define DOOMSDAY_VERSION_TEXT	"1.7.11/net2"
 
 #define DDMAXPLAYERS			16
 
@@ -958,7 +958,9 @@ enum
 	DDPE_ARRIVAL,				// A player has arrived.
 	DDPE_EXIT,					// A player has exited the game.
 	DDPE_CHAT_MESSAGE,			// A player has sent a chat message.
-	DDPE_DATA_CHANGE			// The data for this player has been changed.
+	DDPE_DATA_CHANGE,			// The data for this player has been changed.
+	DDPE_WRITE_COMMANDS,
+	DDPE_READ_COMMANDS
 };	
 
 // World events (handled by clients)
@@ -1012,11 +1014,9 @@ typedef struct
 #define DDPT_HELLO				0
 #define DDPT_OK					1
 #define DDPT_CANCEL				2
-#define DDPT_FIRST_WORLD_EVENT	32
-//#define DDPT_PLANE_SOUND		32
+#define DDPT_COMMANDS			32
 #define DDPT_FIRST_GAME_EVENT	64
 #define DDPT_MESSAGE			67
-//#define DDPT_SOUND			71
 
 // SendPacket flags (OR with to_player).
 #define DDSP_ORDERED		0x20000000	// Confirm delivery in correct order.
