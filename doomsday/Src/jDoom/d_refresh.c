@@ -345,6 +345,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
 	// Local objects aren't sent to clients.
 	if(mo->flags & MF_LOCAL) mo->ddflags |= DDMF_LOCAL;
 	if(mo->flags & MF_SOLID) mo->ddflags |= DDMF_SOLID;
+	if(mo->flags & MF_NOGRAVITY) mo->ddflags |= DDMF_NOGRAVITY;
 	if(mo->flags & MF_MISSILE) 
 	{
 		mo->ddflags |= DDMF_MISSILE;
