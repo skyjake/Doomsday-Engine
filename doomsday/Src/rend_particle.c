@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.4  2003/03/14 15:42:38  skyjake
+//** Only report first missing Particle*
+//**
 //** Revision 1.3  2003/02/28 13:44:34  skyjake
 //** Removed code that was commented out
 //**
@@ -100,6 +103,7 @@ void PG_InitTextures(void)
 	byte *image = Z_Malloc(64 * 64, PU_STATIC, 0);
 	byte *data = W_CacheLumpName("DLIGHT", PU_CACHE);
 	int i;
+	boolean reported = false;
 
 	// Clear the texture names array.
 	memset(ptctexname, 0, sizeof(ptctexname));
@@ -137,8 +141,10 @@ void PG_InitTextures(void)
 		if(!(image = GL_LoadHighResTexture(filename, &width, &height, 
 			&pixsize, &masked)))
 		{
-			if(verbose) Con_Message("PG_InitTextures: %s not found.\n", 
-				filename);
+			// Just show the first 'not found'.
+			if(verbose && !reported) 
+				Con_Message("PG_InitTextures: %s not found.\n", filename);
+			reported = true;
 			continue;
 		}
 
