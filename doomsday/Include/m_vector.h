@@ -22,10 +22,13 @@
 #ifndef __DOOMSDAY_MISC_VECTOR_H__
 #define __DOOMSDAY_MISC_VECTOR_H__
 
-typedef float   vectorcomp_t;
-typedef vectorcomp_t vec2_t[2];
+typedef float         vectorcomp_t;
+typedef vectorcomp_t  vec2_t[2];
+typedef vectorcomp_t  vec3_t[3];
 typedef vectorcomp_t *pvec2_t;
-typedef vec2_t *arvec2_t;
+typedef vectorcomp_t *pvec3_t;
+typedef vec2_t       *arvec2_t;
+typedef vec3_t       *arvec3_t;
 
 void            V2_Set(pvec2_t vec, vectorcomp_t x, vectorcomp_t y);
 void            V2_SetFixed(pvec2_t vec, fixed_t x, fixed_t y);
