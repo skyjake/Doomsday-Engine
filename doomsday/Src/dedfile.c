@@ -320,7 +320,12 @@ int DED_AddPtcGen(ded_t *ded, const char *state)
 {
 	ded_ptcgen_t *gen = DED_NewEntry( (void**) &ded->ptcgens,
 		&ded->count.ptcgens, sizeof(ded_ptcgen_t));
+	int i;
+
 	strcpy(gen->state, state);
+	for(i = 0; i < DED_PTC_STAGES; i++)
+		gen->stages[i].model = -1;
+
 	return gen - ded->ptcgens;
 }
 
@@ -399,6 +404,7 @@ int DED_AddLine(ded_t *ded, int id)
 	ded_linetype_t *li = DED_NewEntry( (void**) &ded->lines,
 		&ded->count.lines, sizeof(ded_linetype_t));
 	li->id = id;
+	//li->act_count = -1;
 	return li - ded->lines;
 }
 
