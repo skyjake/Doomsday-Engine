@@ -240,7 +240,7 @@ int Mus_GetMUS(ded_music_t *def)
 	if(!Mus_IsMUSLump(lumpnum)) return false;
 
 	ptr = imus->SongBuffer(len = W_LumpLength(lumpnum));
-	memcpy(ptr, W_CacheLumpNum(lumpnum, PU_CACHE), len);
+	W_ReadLump(lumpnum, ptr);
 	return true;
 }
 
@@ -293,7 +293,7 @@ int Mus_GetExt(ded_music_t *def, char *path)
 	// Take a copy. Might be a big one (since it could be an MP3), so 
 	// use the standard memory allocation routines.
 	ptr = iext->SongBuffer(len = W_LumpLength(lumpnum));
-	memcpy(ptr, W_CacheLumpNum(lumpnum, PU_CACHE), len);
+	W_ReadLump(lumpnum, ptr);
 	return true;
 }
 
@@ -425,13 +425,13 @@ int CCmdPlayMusic(int argc, char **argv)
 			if(Mus_IsMUSLump(i) && imus)
 			{
 				ptr = imus->SongBuffer(len = W_LumpLength(i));
-				memcpy(ptr, W_CacheLumpNum(i, PU_CACHE), len);
+				W_ReadLump(i, ptr);
 				return imus->Play(true);
 			}
 			else if(!Mus_IsMUSLump(i) && iext)
 			{
 				ptr = iext->SongBuffer(len = W_LumpLength(i));
-				memcpy(ptr, W_CacheLumpNum(i, PU_CACHE), len);
+				W_ReadLump(i, ptr);
 				return iext->PlayBuffer(true);
 			}
 		}
