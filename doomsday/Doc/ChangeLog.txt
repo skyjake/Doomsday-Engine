@@ -22,9 +22,14 @@ Network:
 * portable low-level implementation (TCP/UDP sockets), needs testing!
 
 
+Version 1.7.14-2
+----------------
+! Patch
+- fixed: 873878: Ogg/Mp3 in PK3 Virtual Folder Structure Not Playing
+
 Version 1.7.14-1
 ----------------
-! Maintenance Release
+! Patch
 - fixed: 'df_worldtime' was behaving strangely
 
 
