@@ -4,7 +4,7 @@ DESCRIPTION		"The Doomsday Engine"
 ; Highest ordinal is currently 
 ; --> 235 <--
 
-; Other available ordinals: -
+; Other available ordinals: 158, 175
 
 
 EXPORTS
@@ -257,7 +257,6 @@ EXPORTS
 	DED_Init			@155 NONAME
 	DED_Destroy			@156 NONAME
 	DED_Read			@157 NONAME
-	DED_AddInclude		@158 NONAME
 	DED_AddFlag			@159 NONAME
 	DED_AddMobj			@160 NONAME
 	DED_AddState		@161 NONAME
@@ -274,7 +273,6 @@ EXPORTS
 	DED_AddPtcGen		@172 NONAME
 	DED_AddSector		@173 NONAME
 	DED_AddLine			@174 NONAME
-	DED_RemoveInclude	@175 NONAME
 	DED_RemoveFlag		@176 NONAME
 	DED_RemoveMobj		@177 NONAME
 	DED_RemoveState		@178 NONAME
