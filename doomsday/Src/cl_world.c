@@ -132,7 +132,7 @@ void Cl_RemoveActiveMover(mover_t *mover)
 {
 	int		i;
 
-	for(i=0; i<MAX_MOVERS; i++)
+	for(i = 0; i < MAX_MOVERS; i++)
 		if(activemovers[i] == mover)
 		{
 			P_RemoveThinker(&mover->thinker);
@@ -149,7 +149,7 @@ void Cl_RemoveActivePoly(polymover_t *mover)
 {
 	int i;
 
-	for(i=0; i<MAX_MOVERS; i++)
+	for(i = 0; i < MAX_MOVERS; i++)
 		if(activepolys[i] == mover)
 		{
 			P_RemoveThinker(&mover->thinker);
@@ -169,14 +169,6 @@ void Cl_MoverThinker(mover_t *mover)
 
 	if(!Cl_GameReady()) return; // Can we think yet?
 
-	// Should we play a sound?
-/*	if(mover->sound_id && mover->sound_pace && 
-		!(gametic % mover->sound_pace))
-	{
-		gx.NetWorldEvent(DDWE_SECTOR_SOUND, 
-			(mover->sectornum << 16) | mover->sound_id, NULL);
-	}*/
-
 	// How's the gap?
 	if(abs(mover->destination - *current) > abs(mover->speed))
 	{
@@ -187,45 +179,30 @@ void Cl_MoverThinker(mover_t *mover)
 	{
 		// We have reached the destination.
 		*current = mover->destination;
-		// Is a texture change in order?
-		/*if(mover->floorpic >= 0)
-		{
-			mover->sector->floorpic = mover->floorpic;
-		}*/
+
 		// This thinker can now be removed.
 		remove = true;
 	}
-	// Moving floors often act as lifts, etc. The ride should be smooth.
-	//if(mover->type == mvt_floor)
-//	{
-//		mobj_t *mo;
-		// Adjust the mobjs linked to this sector.
-/*		for(mo=mover->sector->thinglist; mo; mo=mo->snext)
-		{
-			if(mo->z < mover->sector->floorheight)
-			{
-				mo->z = mover->sector->floorheight;
-				//mo->momz = mover->speed;
-			}
-		}*/
+
 	P_ChangeSector(mover->sector);
-	//}
+
 	// Can we remove this thinker?
 	if(remove) Cl_RemoveActiveMover(mover);
 }
 
 void Cl_AddMover(int sectornum, movertype_t type, fixed_t dest, fixed_t speed)
-				 //int floorpic)
 {
 	sector_t	*sector;
 	int			i;
 	mover_t		*mov;
 
+	if(speed == 0) return;
+
 	if(sectornum >= numsectors) return;
 	sector = SECTOR_PTR(sectornum);
 
 	// Remove any existing movers for the same plane.
-	for(i=0; i<MAX_MOVERS; i++)
+	for(i = 0; i < MAX_MOVERS; i++)
 		if(activemovers[i] 
 			&& activemovers[i]->sector == sector 
 			&& activemovers[i]->type == type)
@@ -233,19 +210,18 @@ void Cl_AddMover(int sectornum, movertype_t type, fixed_t dest, fixed_t speed)
 			Cl_RemoveActiveMover(activemovers[i]);
 		}
 
-	if(!speed) // Lightspeed?
+	/*if(!speed) // Lightspeed?
 	{
 		// Change immediately.
 		if(type == mvt_ceiling)
 			sector->ceilingheight = dest;
 		else
 			sector->floorheight = dest;
-		//if(floorpic >= 0) sector->floorpic = floorpic;
 		return;
-	}
+	}*/
 
 	// Add a new mover.
-	for(i=0; i<MAX_MOVERS; i++)
+	for(i = 0; i < MAX_MOVERS; i++)
 		if(activemovers[i] == NULL)
 		{
 			// Allocate a new mover_t thinker.
@@ -253,13 +229,12 @@ void Cl_AddMover(int sectornum, movertype_t type, fixed_t dest, fixed_t speed)
 			memset(mov, 0, sizeof(mover_t));
 			mov->thinker.function = Cl_MoverThinker;			
 			mov->type = type;
-			//mov->floorpic = floorpic;
 			mov->sectornum = sectornum;
 			mov->sector = SECTOR_PTR(sectornum);
 			mov->destination = dest;
 			mov->speed = abs(speed); 
-			mov->current = type==mvt_floor? 
-				&mov->sector->floorheight : &mov->sector->ceilingheight;
+			mov->current = (type == mvt_floor? 
+				&mov->sector->floorheight : &mov->sector->ceilingheight);
 			// Set the right sign for speed.
 			if(mov->destination < *mov->current) mov->speed = -mov->speed;
 			
@@ -327,7 +302,7 @@ polymover_t *Cl_FindActivePoly(int number)
 {
 	int i;
 
-	for(i=0; i<MAX_MOVERS; i++)
+	for(i = 0; i < MAX_MOVERS; i++)
 		if(activepolys[i] && activepolys[i]->number == number)
 			return activepolys[i];
 	return NULL;
@@ -373,7 +348,7 @@ void Cl_RemoveMovers()
 {
 	int	i;
 
-	for(i=0; i<MAX_MOVERS; i++)
+	for(i = 0; i < MAX_MOVERS; i++)
 	{
 		if(activemovers[i])
 		{
@@ -392,7 +367,7 @@ mover_t *Cl_GetActiveMover(int sectornum, movertype_t type)
 {
 	int i;
 
-	for(i=0; i<MAX_MOVERS; i++)
+	for(i = 0; i < MAX_MOVERS; i++)
 		if(activemovers[i] 
 			&& activemovers[i]->sectornum == sectornum
 			&& activemovers[i]->type == type)
@@ -593,6 +568,7 @@ void Cl_ReadSectorDelta2(void)
 	unsigned short num;
 	sector_t *sec;
 	int df;
+	boolean wasChanged = false;
 
 	// Sector index number.
 	num = Msg_ReadShort();
@@ -608,7 +584,7 @@ void Cl_ReadSectorDelta2(void)
 	sec = SECTOR_PTR(num);
 
 	// Flags.
-	df = Msg_ReadPackedShort();
+	df = Msg_ReadShort();
 
 	if(df & SDF_FLOORPIC) 
 		sec->floorpic = Cl_TranslateLump( Msg_ReadPackedShort() );
@@ -616,9 +592,15 @@ void Cl_ReadSectorDelta2(void)
 		sec->ceilingpic = Cl_TranslateLump( Msg_ReadPackedShort() );
 	if(df & SDF_LIGHT) sec->lightlevel = Msg_ReadByte();
 	if(df & SDF_FLOOR_HEIGHT) 
+	{
 		sec->floorheight = Msg_ReadShort() << 16;
+		wasChanged = true;
+	}
 	if(df & SDF_CEILING_HEIGHT)
+	{
 		sec->ceilingheight = Msg_ReadShort() << 16;
+		wasChanged = true;
+	}
 	if(df & SDF_FLOOR_TARGET)
 		sec->planes[PLN_FLOOR].target = Msg_ReadShort() << 16;
 	if(df & SDF_FLOOR_SPEED)
@@ -646,6 +628,13 @@ void Cl_ReadSectorDelta2(void)
 	if(df & SDF_COLOR_RED) sec->rgb[0] = Msg_ReadByte();
 	if(df & SDF_COLOR_GREEN) sec->rgb[1] = Msg_ReadByte();
 	if(df & SDF_COLOR_BLUE) sec->rgb[2] = Msg_ReadByte();
+
+	// If the plane heights were changed, we need to update the mobjs in
+	// the sector.
+	if(wasChanged)
+	{
+		P_ChangeSector(sec);
+	}
 
 	// Do we need to start any moving planes?
 	if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
