@@ -6,6 +6,10 @@
 
 Version 1.7.12 (work in progress)
 --------------
++ texture/flat animation sequences defined using Group defs (Anim.ded)
++ tgf_smooth: interpolate between steps in texture/flat animation
+* renderer uses multitexturing for detail textures, dynamic lights and
+  interpolated texture animation
 + option -leaveramp: don't reset color settings back to previous values
   at shutdown
 + particle generator flag "gnf_group": triggered by all in the flat's
@@ -13,10 +17,17 @@ Version 1.7.12 (work in progress)
 + cmd 'startinf (scriptid)' (and 'stopinf')
 * 'InFine' is an alternative name for the 'Finale' definition
 - removed obsolete settings from Control Panel: Network
+- fixed: stray pixels along polygon edges in dynamically lit areas
+- fixed: detail texture blending when fog is enabled
+- fixed: object shadows weren't affected by fog
+- fixed: skymask holes in skyfixed sectors
 - fixed: particles sliding over ledges
 - fixed: console text gibberish on the first time the console is drawn
 - fixed: possible crash in Con_Error()
 - fixed: Generator Center angle (Y) offset was ignored with mobj sources
+
+drOpenGL:
+* support for multitexturing
 
 jDoom:
 + crosshair alpha slider added to the HUD menu
