@@ -18,7 +18,7 @@
 #define SECF_INVIS_CEILING	0x2
 
 #define SECT_FLOOR(x)	(secinfo[GET_SECTOR_IDX(x)].visfloor)
-#define SECT_CEIL(x)	(secinfo[GET_SECTOR_IDX(x)].visceiling)
+#define SECT_CEIL(x)	(secinfo[GET_SECTOR_IDX(x)].visceil)
 
 // Flags for decorations.
 #define DCRF_NO_IWAD	0x1		// Don't use if from IWAD.
@@ -44,50 +44,6 @@ enum
 	BOXRIGHT
 };
 
-// This is the dummy mobj_t used for blockring roots.
-// It has some excess information since it has to be compatible with 
-// regular mobjs (otherwise the rings don't really work).
-// Note: the thinker and x,y,z data could be used for something else...
-typedef struct linkmobj_s
-{
-	thinker_t		thinker;
-	fixed_t			x,y,z;	
-	struct mobj_s	*next, *prev;
-} linkmobj_t;
-
-typedef struct 
-{
-	float	visfloor, visceiling;	// Visible floor and ceiling, floats.
-	sector_t *linkedfloor;			// Floor attached to another sector.
-	sector_t *linkedceiling;		// Ceiling attached to another sector.
-	boolean permanentlink;
-	float	bounds[4];				// Bounding box for the sector.
-	int		flags;
-	fixed_t oldfloor[2], oldceiling[2];
-	float	visflooroffset, visceilingoffset;
-} sectorinfo_t;
-
-typedef struct
-{
-	float	length;					// Accurate length.
-} lineinfo_t;
-
-typedef struct polyblock_s
-{
-	polyobj_t *polyobj;
-	struct polyblock_s *prev;
-	struct polyblock_s *next;
-} polyblock_t;
-
-typedef struct vertexowner_s
-{
-	unsigned short	num;			// Number of owners.
-	unsigned short	*list;			// Sector indices.
-} vertexowner_t;
-
-// The sector divisions list is similar to vertexowners.
-typedef struct vertexowner_s sector_divisions_t;
-
 // Detail texture information.
 typedef struct detailinfo_s {
 	DGLuint	tex;
@@ -97,8 +53,119 @@ typedef struct detailinfo_s {
 	float	maxdist;
 } detailinfo_t;
 
-typedef struct
+typedef struct gltexture_s
 {
+	DGLuint	id;
+	ushort	width, height;
+	detailinfo_t *detail;
+}
+gltexture_t;
+
+#define RL_MAX_POLY_SIDES	64
+#define RL_MAX_DIVS			64
+
+// Rendpoly flags.
+#define RPF_MASKED		0x0001	// Use the special list for masked textures.
+#define RPF_SKY_MASK	0x0004	// A sky mask polygon.
+#define RPF_LIGHT		0x0008	// A dynamic light.
+#define RPF_DYNLIT		0x0010	// Normal list: poly is dynamically lit.
+#define RPF_GLOW		0x0020	// Multiply original vtx colors.
+#define RPF_DETAIL		0x0040	// Render with detail (incl. vtx distances)
+#define RPF_SHADOW		0x0100
+#define RPF_DONE		0x8000	// This poly has already been drawn.
+
+typedef enum {
+	RP_NONE,
+	RP_QUAD,					// Wall segment.
+	RP_DIVQUAD,					// Divided wall segment.
+	RP_FLAT						// Floor or ceiling.
+} rendpolytype_t;
+
+typedef struct {
+	float pos[2];				// X and Y coordinates.
+	gl_rgba_t color;			// Color of the vertex.
+	float dist;					// Distance to the vertex.
+} rendpoly_vertex_t;
+
+// rendpoly_t is only for convenience; the data written in the rendering
+// list data buffer is taken from this struct.
+typedef struct {
+	rendpolytype_t type;		
+	short flags;				// RPF_*.
+	//int texw, texh;				// Texture width and height.
+	float texoffx, texoffy;		// Texture coordinates for left/top (in real texcoords).
+	gltexture_t tex;
+	gltexture_t intertex;
+	//DGLuint tex;				// Used for masked textures.
+	//DGLuint blendtex;			// Used for blended textures.
+	//int blendtexw, blendtexh;	// Blend texture width and height.
+	float interpos;				// Blending strength (0..1).
+	//detailinfo_t *detail;		// Detail texture name and dimensions.
+	struct dynlight_s *lights;	// List of lights that affect this poly.
+	uint numlights;
+	sector_t *sector;			// The sector this poly belongs to (if any).
+
+	// The geometry:
+	float top, bottom;			
+	float length;
+	byte numvertices;			// Number of vertices for the poly.
+	rendpoly_vertex_t vertices[RL_MAX_POLY_SIDES];
+	struct div_t {
+		byte num;
+		float pos[RL_MAX_DIVS];
+	} divs[2];					// For wall segments (two vertices).
+} rendpoly_t;
+
+// This is the dummy mobj_t used for blockring roots.
+// It has some excess information since it has to be compatible with 
+// regular mobjs (otherwise the rings don't really work).
+// Note: the thinker and x,y,z data could be used for something else...
+typedef struct linkmobj_s {
+	thinker_t		thinker;
+	fixed_t			x,y,z;	
+	struct mobj_s	*next, *prev;
+} linkmobj_t;
+
+typedef struct {
+	float		visfloor, visceil;		// Visible floor and ceiling, floats.
+	sector_t	*linkedfloor;			// Floor attached to another sector.
+	sector_t	*linkedceil;			// Ceiling attached to another sector.
+	boolean		permanentlink;
+	float		bounds[4];				// Bounding box for the sector.
+	int			flags;
+	fixed_t		oldfloor[2], oldceil[2];
+	float		visflooroffset, visceiloffset;
+} sectorinfo_t;
+
+typedef struct planeinfo_s {
+	rendpoly_t	poly;
+	int			pic;
+	boolean		isfloor;
+} planeinfo_t;
+
+typedef struct subsectorinfo_s {
+	planeinfo_t	floor, ceil;
+} subsectorinfo_t;
+
+typedef struct {
+	float	length;					// Accurate length.
+} lineinfo_t;
+
+typedef struct polyblock_s {
+	polyobj_t *polyobj;
+	struct polyblock_s *prev;
+	struct polyblock_s *next;
+} polyblock_t;
+
+typedef struct vertexowner_s {
+	unsigned short	num;			// Number of owners.
+	unsigned short	*list;			// Sector indices.
+} vertexowner_t;
+
+// The sector divisions list is similar to vertexowners.
+typedef struct vertexowner_s sector_divisions_t;
+
+typedef struct {
 	int		originx;	// block origin (allways UL), which has allready
 	int		originy;	// accounted  for the patch's internal origin
 	int		patch;
@@ -106,8 +173,7 @@ typedef struct
 
 // a maptexturedef_t describes a rectangular texture, which is composed of one
 // or more mappatch_t structures that arrange graphic patches
-typedef struct
-{
+typedef struct {
 	char		name[9];		// for switch changing, etc; ends in \0
 	short		width;
 	short		height;
@@ -119,23 +185,20 @@ typedef struct
 	byte		ingroup;		// True if texture belongs to some animgroup.
 	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
 	texpatch_t	patches[1];		// [patchcount] drawn back to front
-								//  into the cached texture
-} texture_t;
+} texture_t;					//   into the cached texture
 
-typedef struct
-{
+typedef struct {
 	byte		rgb[3];
 } rgbcol_t;
 
-typedef struct translation_s 
-{
+typedef struct translation_s {
 	int current;
 	int next;
 	float inter;
 } translation_t;
 
-typedef struct flat_s
-{
+typedef struct flat_s {
+	struct flat_s *next;
 	int			lump;
 	translation_t translation;
 	short		flags;
@@ -145,22 +208,19 @@ typedef struct flat_s
 	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
 } flat_t;
 
-typedef struct lumptexinfo_s
-{
+typedef struct lumptexinfo_s {
 	DGLuint		tex[2];		// Names of the textures (two parts for big ones)
 	unsigned short width[2], height;
 	short		offx, offy;
 } lumptexinfo_t;
 
-typedef struct animframe_s
-{
+typedef struct animframe_s {
 	int number;
 	ushort tics;
 	ushort random;
 } animframe_t;
 
-typedef struct animgroup_s
-{
+typedef struct animgroup_s {
 	int id;
 	int flags;
 	int index;
@@ -172,6 +232,7 @@ typedef struct animgroup_s
 
 extern vertexowner_t *vertexowners;
 extern sectorinfo_t *secinfo;
+extern subsectorinfo_t *subsecinfo;
 extern lineinfo_t *lineinfo;
 extern nodeindex_t *linelinks;
 extern short *blockmaplump;			// offsets in blockmap are from here
@@ -192,25 +253,25 @@ extern  translation_t	*texturetranslation;	// for global animation
 extern	int				numgroups;
 extern	animgroup_t		*groups;
 extern	int				LevelFullBright;
-extern  int             numflats;
-extern	flat_t			*flats;
 extern	int				r_texglow;
 extern	int				r_precache_sprites, r_precache_skins;
 
 void    R_InitData(void);
 void	R_UpdateData(void);
+void	R_ShutdownData(void);
 void	R_PrecacheLevel(void);
 void	R_InitAnimGroup(ded_group_t *def);
 boolean	R_IsInAnimGroup(int groupNum, int type, int number);
 void	R_AnimateAnimGroups(void);
 int		R_TextureFlags(int texture);
 int		R_FlatFlags(int flat);
-flat_t*	R_FindFlat(int lumpnum);	// May return NULL.
-flat_t*	R_GetFlat(int lumpnum);		// Creates new entries.
+flat_t* R_FindFlat(int lumpnum);	// May return NULL.
+flat_t* R_GetFlat(int lumpnum);		// Creates new entries.
+flat_t** R_CollectFlats(int *count);
 int		R_FlatNumForName (char *name);
 int		R_CheckTextureNumForName (char *name);
 int		R_TextureNumForName (char *name);
-char *	R_TextureNameForNum(int num);
+char*	R_TextureNameForNum(int num);
 int		R_SetFlatTranslation(int flat, int translateTo);
 int		R_SetTextureTranslation(int tex, int translateTo);
 void	R_SetAnimGroup(int type, int number, int group);
