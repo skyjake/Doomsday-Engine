@@ -51,6 +51,8 @@
 //104
 		1058C7A0FEA54F0111CA2CBB = {
 			children = (
+				B0CB9105078B4FFB007EE194,
+				B0CB9106078B4FFB007EE194,
 				B0D5B5AC06EE30E200B98CC8,
 				B0134EC106ECD8B8007861F2,
 				B0134EC206ECD8B8007861F2,
@@ -355,7 +357,7 @@
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "\"$(HOME)/Library/Frameworks\" /Users/jaakko/Library/Frameworks";
 				HEADER_SEARCH_PATHS = "\"$(HOME)/Library/Frameworks/SDL.framework/Headers\"";
-				INSTALL_PATH = /;
+				INSTALL_PATH = ./;
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = "-DUNIX -DMACOSX -DNO_FIXED_ASM -D__DOOMSDAY__ -DNORANGECHECKING -DDENG_BASE_DIR=\\\\\\\"./\\\\\\\" -DDENG_LIB_DIR=\\\\\\\"./\\\\\\\" -I./Include/Unix -I./Include -I/sw/include/libpng12";
 				OTHER_LDFLAGS = "-framework SDL -lncurses -lz /sw/lib/libpng12.a";
@@ -376,7 +378,7 @@
 			);
 			isa = PBXApplicationTarget;
 			name = Doomsday;
-			productInstallPath = /;
+			productInstallPath = ./;
 			productName = Doomsday;
 			productReference = 17587328FF379C6511CA2CBB;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -6765,6 +6767,64 @@
 			target = B0D5B7DE06EF6D1000B98CC8;
 			targetProxy = B0A809B306F23A00007AEB2E;
 		};
+		B0CB90BA078B393C007EE194 = {
+			fileEncoding = 5;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = driver.h;
+			path = Src/dsSDLMixer/driver.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		B0CB90BB078B393C007EE194 = {
+			fileRef = B0CB90BA078B393C007EE194;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		B0CB90ED078B3DCD007EE194 = {
+			fileEncoding = 5;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = qt.c;
+			path = Src/dsSDLMixer/qt.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		B0CB90EE078B3DCD007EE194 = {
+			fileRef = B0CB90ED078B3DCD007EE194;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		B0CB9105078B4FFB007EE194 = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = Carbon.framework;
+			path = /System/Library/Frameworks/Carbon.framework;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		B0CB9106078B4FFB007EE194 = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = QuickTime.framework;
+			path = /System/Library/Frameworks/QuickTime.framework;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		B0CB9107078B4FFB007EE194 = {
+			fileRef = B0CB9105078B4FFB007EE194;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		B0CB9108078B4FFB007EE194 = {
+			fileRef = B0CB9106078B4FFB007EE194;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		B0D5B4D406EE08B700B98CC8 = {
 			fileRef = B013509406EDE24E007861F2;
 			isa = PBXBuildFile;
@@ -6818,6 +6878,7 @@
 		B0D5B5B606EE323600B98CC8 = {
 			buildActionMask = 2147483647;
 			files = (
+				B0CB90BB078B393C007EE194,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6827,6 +6888,7 @@
 			files = (
 				B0D5B5C506EE336400B98CC8,
 				B0D5B5C606EE336400B98CC8,
+				B0CB90EE078B3DCD007EE194,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6836,6 +6898,8 @@
 			files = (
 				B0D5B5CC06EE354A00B98CC8,
 				B0D5B5CB06EE354100B98CC8,
+				B0CB9107078B4FFB007EE194,
+				B0CB9108078B4FFB007EE194,
 			);
 			isa = PBXFrameworksBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6914,6 +6978,8 @@
 		};
 		B0D5B5C106EE333600B98CC8 = {
 			children = (
+				B0CB90ED078B3DCD007EE194,
+				B0CB90BA078B393C007EE194,
 				B0D5B5C206EE336400B98CC8,
 				B0D5B5C306EE336400B98CC8,
 				B0D5B5C406EE336400B98CC8,
@@ -9169,6 +9235,7 @@
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = "NO_FIXED_ASM UNIX MACOSX";
 				INFOPLIST_FILE = "drOpenGL-Info.plist";
+				INSTALL_MODE_FLAG = "a-w,a+rX,u+w";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
 				LIBRARY_STYLE = BUNDLE;
 				OTHER_CFLAGS = "";
