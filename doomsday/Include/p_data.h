@@ -159,6 +159,8 @@ extern byte		*lines;
 extern int		numsides;
 extern byte		*sides;
 
+extern subsector_t ***subsectorblockmap; // array of subsec* arrays
+
 extern fixed_t	mapgravity;				// Gravity for the current map.
 
 void P_ValidateLevel(void);
