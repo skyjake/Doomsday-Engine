@@ -581,7 +581,7 @@ ui_object_t ob_panel[] =
 	{ UI_BUTTON2,	0,	0,				680, 250, 70, 55,	"con-key-show", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 310, 0, 55,	"Command completion with Tab", UIText_Drawer },
 	{ UI_LIST,		0,	0,				680, 310, 300, 120,	"",			UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_con_completion },
-	{ UI_TEXT,		0,	0,				300, 435, 0, 55,	"Background translucency", UIText_Drawer },
+	{ UI_TEXT,		0,	0,				300, 435, 0, 55,	"Background opacity", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 435, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_con_alpha },
 	{ UI_TEXT,		0,	0,				300, 495, 0, 55,	"Background light", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 495, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_con_light },
