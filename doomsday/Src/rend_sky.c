@@ -132,7 +132,7 @@ void Rend_SkyRenderer(int hemi)
 
 		// Draw the cap.
 		gl.Begin(DGL_TRIANGLE_FAN);
-		for(c=0; c<skyColumns; c++) CapSideVertex(0, c);
+		for(c = 0; c < skyColumns; c++) CapSideVertex(0, c);
 		gl.End();
 
 		// If we are doing a colored fadeout...
@@ -219,9 +219,12 @@ void Rend_RenderSkyHemisphere(int whichHemi)
 
 	// First render the cap and the background for fadeouts, if needed.
 	// The color for both is the current fadeout color.
-	Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP | (currentFO->use? SKYHEMI_FADEOUT_BG : 0));
+	Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP 
+		| (currentFO->use? SKYHEMI_FADEOUT_BG : 0));
 
-	for(i=firstLayer, slayer=skyLayers+firstLayer; i<MAXSKYLAYERS; i++, slayer++)
+	for(i=firstLayer, slayer=skyLayers+firstLayer; i<MAXSKYLAYERS; 
+		i++, slayer++)
+	{
 		if(slayer->flags & SLF_ENABLED)
 		{
 			resetup = false;
@@ -235,13 +238,15 @@ void Rend_RenderSkyHemisphere(int whichHemi)
 			if(!GL_GetTextureName(slayer->texture)) resetup = true;
 
 			// The texture is actually loaded when an update is done.
-			gl.Bind(GL_PrepareSky(slayer->texture,	slayer->flags&SLF_MASKED? true : false));
+			gl.Bind(GL_PrepareSky(slayer->texture,
+				slayer->flags&SLF_MASKED? true : false));
 
 			if(resetup) SetupFadeout(slayer);
 
 			skyTexOff = slayer->offset;
 			Rend_SkyRenderer(whichHemi);
 		}
+	}
 }
 
 void Rend_RenderSky(int hemis)
@@ -255,6 +260,7 @@ void Rend_RenderSky(int hemis)
 	if(r_fullsky) hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;
 
 	// We don't want anything written in the depth buffer, not yet.
+	gl.Disable(DGL_DEPTH_TEST);
 	gl.Disable(DGL_DEPTH_WRITE);
 	// Disable culling, all triangles face the viewer.
 	gl.Disable(DGL_CULL_FACE);
@@ -276,6 +282,7 @@ void Rend_RenderSky(int hemis)
 	// Enable the disabled things.
 	gl.Enable(DGL_CULL_FACE);
 	gl.Enable(DGL_DEPTH_WRITE);
+	gl.Enable(DGL_DEPTH_TEST);
 }
 
 //===========================================================================
