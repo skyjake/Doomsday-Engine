@@ -490,7 +490,8 @@ void DS_DSoundLoad(sfxbuffer_t *buf, struct sfxsample_s *sample)
 	{
 		// Set the end marker since we already know it.
 		buf->cursor = wrote_bytes;
-		memset((char*)data + wrote_bytes, 0, locked_bytes - wrote_bytes);
+		memset((char*)data + wrote_bytes, buf->bytes == 1? 128 : 0, 
+			locked_bytes - wrote_bytes);
 	}
 	else
 	{
@@ -596,7 +597,7 @@ static boolean InRange(uint pos, uint start, uint end)
 //===========================================================================
 void DS_DSoundRefresh(sfxbuffer_t *buf)
 {
-	DWORD play, /*write,*/ bytes[2], dose, fill;
+	DWORD play, bytes[2], dose, fill;
 	void *data[2];
 	int write_bytes, i;
 	float usedsec;
@@ -604,14 +605,6 @@ void DS_DSoundRefresh(sfxbuffer_t *buf)
 
 	// Can only be done if there is a sample and the buffer is playing.
 	if(!buf->sample || !(buf->flags & SFXBF_PLAYING)) return;
-
-/*	// Get the "write range" in the buffer.
-	if(FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(DSBuf(buf),
-		&play, &write)))
-	{
-		// This is not going to sound good.
-		return;
-	}*/
 
 	// Have we passed the predicted end of sample?
 	// Note: this test fails if the game has been running for about
@@ -637,24 +630,6 @@ void DS_DSoundRefresh(sfxbuffer_t *buf)
 		return;
 	}
 	play = (int) (usedsec * buf->freq * buf->bytes) % buf->length;
-
-	// We are allowed to write after the write cursor until the play
-	// cursor is reached. Calculate how much this is, starting from
-	// our buffer cursor position. If our cursor is not in the allowed
-	// write range, we can't do anything.
-
-	/*if(InRange(buf->cursor, play, write))
-	{
-		// Tricky; for some reason the play/write zone has gotten
-		// too far ahead and now it's overlapping our buffer cursor.
-		// This means Windows has been doing its usual resource 
-		// hogging once again... Must amend the situation so that we don't
-		// get an instant replay of the buffer contents. Move buffer cursor
-		// to the write cursor, and write from there.
-
-		// Doesn't work with all sound cards, so let's just wait it out. 
-		return;
-	}*/
 
 	// Calculate how many bytes we must write (from buffer cursor up to 
 	// play cursor).
@@ -1113,3 +1088,4 @@ void DS_DSoundListenerv(int property, float *values)
 		DS_DSoundListener(property, 0);
 	}
 }
+

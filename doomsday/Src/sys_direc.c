@@ -23,9 +23,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
+
+#if defined(WIN32)
+#	include <direct.h>
+#endif
+#if defined(UNIX)
+#	include <unistd.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
-#include <direct.h>
 #include <ctype.h>
 
 #include "de_base.h"
@@ -57,8 +65,11 @@ void Dir_GetDir(directory_t *dir)
 
 	dir->drive = _getdrive();
 	_getcwd(dir->path, 255);
+
+#ifdef WIN32
 	if(dir->path[strlen(dir->path)-1] != '\\')
 		strcat(dir->path, "\\");
+#endif
 
 	/* VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) ); */
 }
@@ -98,7 +109,9 @@ void Dir_FileDir(const char *str, directory_t *dir)
 	_fullpath(temp, pth, 255);
 	_splitpath(temp, dir->path, pth, 0, 0);
 	strcat(dir->path, pth);
+#ifdef WIN32
 	dir->drive = toupper(dir->path[0]) - 'A' + 1;
+#endif
 }
 
 void Dir_FileName(const char *str, char *name)
@@ -141,8 +154,21 @@ boolean Dir_IsEqual(directory_t *a, directory_t *b)
 int Dir_IsAbsolute(const char *str)
 {
 	if(!str) return 0;
-	if(str[0] == '\\' || str[0] == '/' || str[1] == ':') return 1;
-	return 0;
+	if(str[0] == '\\' || str[0] == '/' || str[1] == ':') return true;
+	return false;
+}
+
+/*
+ * Converts directory slashes to the correct type of slash.
+ */
+void Dir_FixSlashes(char *path)
+{
+	int i, len = strlen(path);
+	
+	for(i = 0; i < len; i++)
+	{
+		if(path[i] == DIR_WRONG_SEP_CHAR) path[i] = DIR_SEP_CHAR;
+	}
 }
 
 //===========================================================================
@@ -155,14 +181,15 @@ void Dir_ValidDir(char *str)
 {
 	int i, len = strlen(str);
 
-	// DOS-ify slashes.
-	for(i = 0; i < len; i++) if(str[i] == '/') str[i] = '\\';
+	if(!len) return; // Nothing to do.
+
+	Dir_FixSlashes(str);
 
 	// Remove whitespace from the end.
 	for(i = len - 1; isspace(str[i]) && i >= 0; i--) str[i] = 0; 
 
-	// Make sure it's valid.
-	if(str[len - 1] != '\\') strcat(str, "\\");
+	// Make sure it ends in a directory separator character.
+	if(str[len - 1] != DIR_SEP_CHAR) strcat(str, DIR_SEP_STR);
 }
 
 //===========================================================================

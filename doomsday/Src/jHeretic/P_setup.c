@@ -1,10 +1,10 @@
 
 // P_main.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
-#include "s_sound.h"
+#include "Soundst.h"
+#include "S_sound.h"
 #include "r_common.h"
 #include <stdlib.h>
 #include <ctype.h>
@@ -602,12 +602,14 @@ void P_GroupLines (void)
 
 //=============================================================================
 
+#if 0
 static void projectVector(float a[2], float b[2], float *a_on_b)
 {
 	float	factor = (a[0]*b[0] + a[1]*b[1]) / (b[0]*b[0] + b[1]*b[1]);
 	a_on_b[0] = factor * b[0];
 	a_on_b[1] = factor * b[1];
 }
+#endif
 
 fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y, fixed_t *offset)
 {
@@ -988,3 +990,4 @@ void P_Init (void)
 	P_InitTerrainTypes();
 	P_InitLava();
 }
+

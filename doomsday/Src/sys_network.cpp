@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,9 @@
 
 /*
  * $Log$
+ * Revision 1.9  2004/01/08 12:22:05  skyjake
+ * Merged from branch-nix
+ *
  * Revision 1.8  2003/09/09 21:38:24  skyjake
  * Renamed mutex routines to Sys_Lock and Sys_Unlock
  *
@@ -75,7 +78,6 @@
 
 extern "C" 
 {
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -83,7 +85,6 @@ extern "C"
 #include "de_misc.h"
 
 #include "ui_mpi.h"
-
 }
 
 // MACROS ------------------------------------------------------------------
@@ -94,21 +95,8 @@ extern "C"
 // Uncomment to test random packet loss.
 //#define RANDOM_PACKET_LOSS
 
-#define MASTER_HEARTBEAT	120 // seconds
-
-#define MASTER_QUEUE_LEN	16
-#define NETEVENT_QUEUE_LEN	32
 #define SEND_TIMEOUT		15000	// 15 seconds
 #define RELEASE(x)			if(x) ((x)->Release(), (x)=NULL)
-
-#define MSG_MUTEX_NAME		"MsgQueueMutex"
-
-// Net events.
-typedef enum neteventtype_e {
-	NE_CLIENT_ENTRY,
-	NE_CLIENT_EXIT,
-	NE_END_CONNECTION
-} neteventtype_t;
 
 // The player context value is used to identify the host player 
 // on serverside.
@@ -123,14 +111,6 @@ enum splisttype_t {
 	SPL_SERIAL,
 	NUM_SP_LISTS
 };
-
-// Flags for the sent message store (for to-be-confirmed messages):
-#define SMSF_ORDERED	0x1	// Block other ordered messages until confirmed
-#define SMSF_QUEUED		0x2	// Ordered message waiting to be sent
-#define SMSF_CONFIRMED	0x4	// Delivery has been confirmed! (OK to remove)
-
-// Length of the received message ID history.
-#define STORE_HISTORY_SIZE	100
 
 // TYPES -------------------------------------------------------------------
 
@@ -148,38 +128,6 @@ typedef struct hostnode_s {
 	serverinfo_t info;
 } hostnode_t;
 
-typedef struct netevent_s {
-	neteventtype_t type;
-	DPNID id;
-} netevent_t;
-
-typedef struct netmessage_s {
-	struct netmessage_s *next;
-	DPNID sender;
-	int player;			// Set in N_GetMessage().
-	unsigned int size;
-	byte *data;
-	DPNHANDLE handle;
-} netmessage_t;
-
-typedef struct sentmessage_s {
-	struct sentmessage_s *next, *prev;
-	struct store_s *store;
-	msgid_t id;
-	uint timeStamp;
-	int flags;
-	DPNID destination;
-	unsigned int size;
-	void *data;
-} sentmessage_t;
-
-typedef struct store_s {
-	sentmessage_t *first, *last;
-	msgid_t idCounter;
-	msgid_t history[STORE_HISTORY_SIZE];
-	int historyIdx;
-} store_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -188,25 +136,10 @@ typedef struct store_s {
 
 boolean	N_InitDPObject(boolean inServerMode);
 void	N_StopLookingForHosts(void);
-boolean	N_Disconnect(void);
-int		N_IdentifyPlayer(DPNID id);
-void	N_SendDataBuffer(void *data, uint size, DPNID destination);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-boolean		allowSending = true;
-
-netbuffer_t	netbuffer;
-int			maxQueuePackets = 0;
-
-char		*serverName = "Doomsday";
-char		*serverInfo = "Multiplayer game server";
-char		*playerName = "Player";
-
-// Some parameters passed to master server.
-int			serverData[3];
 
 // Settings for the various network protocols.
 // Most recently used provider: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial.
@@ -224,15 +157,9 @@ int			nptSerialStopBits = 0;
 int			nptSerialParity = 0;
 int			nptSerialFlowCtrl = 4;
 
-// Master server info. Hardcoded defaults.
-char		*masterAddress = "www.doomsdayhq.com"; 
-int			masterPort = 0; // Uses 80 by default.
-char		*masterPath = "/master.php";
-boolean		masterAware = false;		
-
 // Operating mode of the currently active service provider.
-serviceprovider_t gCurrentProvider = NSP_NONE;
-boolean		gServerMode = false;
+serviceprovider_t netCurrentProvider = NSP_NONE;
+boolean		netServerMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -254,103 +181,18 @@ static hostnode_t *gHostRoot;
 static int gHostCount;
 static DPNHANDLE gEnumHandle;
 
-// The message queue: list of incoming messages waiting for processing.
-static netmessage_t *gMsgHead, *gMsgTail;
-
-// A mutex is used to protect the addition and removal of messages from
-// the message queue.
-static int gMsgMutex;
-
-// The master action queue.
-static masteraction_t masterQueue[MASTER_QUEUE_LEN];
-static int mqHead, mqTail;
-
-// The net event queue (player arrive/leave).
-static netevent_t netEventQueue[NETEVENT_QUEUE_LEN];
-static int neqHead, neqTail;
-
 static char *protocolNames[NUM_NSP] = { 
 	"??", "TCP/IP", "IPX", "Modem", "Serial Link"
 };
-
-// The Sent Message Store: list of sent or queued messages waiting to be 
-// confirmed.
-static store_t stores[MAXPLAYERS];
 
 #ifdef COUNT_BYTE_FREQS
 static uint gByteCounts[256];
 static uint gTotalByteCount;
 #endif
 
-// Number of bytes of outgoing data transmitted.
-static uint gNumOutBytes;
-
-// Number of bytes sent over the network (compressed).
-static uint gNumSentBytes;
-
 // CODE --------------------------------------------------------------------
 
 #if 0
-/*
- * Acquire or release ownership of the message queue mutex.
- * Returns true if successful.
- */
-boolean N_LockQueue(boolean doAcquire)
-{
-	if(doAcquire)
-	{
-		// Five seconds is plenty.
-		if(WaitForSingleObject(gMsgMutex, 5000) == WAIT_TIMEOUT) 
-		{
-			// Couldn't lock it.
-			return false;
-		}
-	}
-	else
-	{
-		// Release it, then.
-		ReleaseMutex(gMsgMutex);
-	}
-	return true;
-}
-#endif
-
-/*
- * Generate a new, non-zero message ID.
- */
-ushort N_GetNewMsgID(int player)
-{
-	msgid_t *c = &stores[player].idCounter;
-
-	while(!++*c);
-	return *c;
-}
-
-/*
- * Register the ID number in the history of received IDs.
- */
-void N_HistoryAdd(int player, msgid_t id)
-{
-	store_t *store = &stores[player];
-	store->history[ store->historyIdx++ ] = id;
-	store->historyIdx %= STORE_HISTORY_SIZE;
-}
-
-/*
- * Returns true if the ID is already in the history.
- */
-boolean N_HistoryCheck(int player, msgid_t id)
-{
-	store_t *store = &stores[player];
-	int i;
-
-	for(i = 0; i < STORE_HISTORY_SIZE; i++)
-	{
-		if(store->history[i] == id) return true;
-	}
-	return false;
-}
-
 /*
  * Converts the normal string to a wchar string. MaxLen is the length of
  * the destination string.
@@ -367,38 +209,6 @@ void N_StrWide(WCHAR *wstr, const char *str, int maxLen)
 void N_StrNarrow(char *str, const WCHAR *wstr, int maxLen)
 {
 	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, maxLen, 0, 0);
-}
-
-/*
- * Add a net event to the queue, to wait for processing.
- */
-void N_NEPost(netevent_t *nev)
-{
-	netEventQueue[neqHead] = *nev;
-	++neqHead %= NETEVENT_QUEUE_LEN;
-}
-
-/*
- * Returns true if there are net events waiting to be processed.
- * N_GetPacket() will not return a packet until all net events have
- * processed.
- */
-boolean N_NEPending(void)
-{
-	return neqHead != neqTail;
-}
-
-/*
- * Get a net event from the queue. Returns true if an event was 
- * returned.
- */
-boolean N_NEGet(netevent_t *nev)
-{
-	// Empty queue?
-	if(!N_NEPending()) return false;	
-	*nev = netEventQueue[neqTail];
-	++neqTail %= NETEVENT_QUEUE_LEN;
-	return true;
 }
 
 /*
@@ -461,333 +271,17 @@ void N_ClearHosts(void)
 }
 
 /*
- * Add a new message to the Sent Message Store.
- */
-sentmessage_t *N_SMSCreate
-	(int player, msgid_t id, DPNID destID, void *data, uint length)
-{
-	store_t *store = &stores[player];
-	sentmessage_t *msg = (sentmessage_t*) calloc(sizeof(sentmessage_t), 1);
-
-	msg->store = store;
-	msg->id = id;
-	msg->destination = destID;
-	msg->timeStamp = Sys_GetRealTime();
-	msg->data = malloc(length);
-	memcpy(msg->data, data, length);
-	msg->size = length;
-
-	// Link it to the end of the Send Message Store.
-	if(store->last)
-	{
-		msg->prev = store->last;
-		store->last->next = msg;
-	}
-	store->last = msg;
-	if(!store->first)
-	{
-		store->first = msg;
-	}
-
-	return msg;
-}
-
-/*
- * Destroy the message from the Sent Message Store.
- * This is done during N_Update(), so it never conflicts with the creation
- * of SMS nodes.
- */
-void N_SMSDestroy(sentmessage_t *msg)
-{
-	store_t *store = msg->store;
-
-	// First unlink.
-	if(store->first == msg)
-	{
-		store->first = msg->next;
-	}
-	if(msg->prev)
-	{
-		msg->prev->next = msg->next;
-	}
-	if(msg->next)
-	{
-		msg->next->prev = msg->prev;
-	}
-	if(store->last == msg)
-	{
-		store->last = msg->prev;
-	}
-	msg->prev = msg->next = NULL;
-
-	free(msg->data);
-	free(msg);
-}
-
-/*
- * Returns true if the Send Message Store contains any ordered messages.
- * Ordered messages are sent in order, one at a time.
- */
-boolean N_SMSContainsOrdered(int player)
-{
-	store_t *store = &stores[player];
-
-	for(sentmessage_t *msg = store->first; msg; msg = msg->next)
-	{
-		if(msg->flags & SMSF_CONFIRMED) 
-		{
-			continue;
-		}
-		if(msg->flags & SMSF_ORDERED) return true;
-	}
-	return false;
-}
-
-/*
- * Resends a message from the Sent Message Store.
- */
-void N_SMSResend(sentmessage_t *msg)
-{
-	// It's now no longer queued.
-	msg->flags &= ~SMSF_QUEUED;
-
-	// Update the timestamp on the message.
-	msg->timeStamp = Sys_GetRealTime();
-
-	N_SendDataBuffer(msg->data, msg->size, msg->destination);
-
-/*#ifdef _DEBUG
-	Con_Printf("N_SMSResend: T%i:%i.\n", msg->store - stores, msg->id);
-#endif*/
-}
-
-/*
- * Finds the next queued message and sends it.
- */
-void N_SMSUnqueueNext(sentmessage_t *msg)
-{
-	for(; msg; msg = msg->next)
-	{
-		if(msg->flags & SMSF_CONFIRMED) continue;
-		if(msg->flags & SMSF_QUEUED)
-		{
-/*#ifdef _DEBUG
-			Con_Printf("N_SMSUnqueueNext: Unqueueing T%i:%i.\n", 
-				msg->store - stores, msg->id);
-#endif*/
-			N_SMSResend(msg);
-			return;
-		}
-	}
-}
-
-/*
- * Marks the specified message confirmed. It will be removed in N_Update().
- */
-void N_SMSConfirm(int player, msgid_t id)
-{
-	store_t *store = &stores[player];
-
-	for(sentmessage_t *msg = store->first; msg; msg = msg->next)
-	{
-		if(msg->flags & SMSF_CONFIRMED) continue;
-		if(msg->id == id)
-		{
-			msg->flags |= SMSF_CONFIRMED;
-			
-			// Note how long it took to confirm the message.
-			Net_SetAckTime(player, Sys_GetRealTime() - msg->timeStamp);
-
-/*#ifdef _DEBUG
-			Con_Printf("N_SMSConfirm: T%i:%i has been delivered in %ims!\n", 
-				msg->store - stores, msg->id, 
-				Sys_GetRealTime() - msg->timeStamp);
-#endif*/
-
-			if(msg->flags & SMSF_ORDERED)
-			{
-				// The confirmation of an ordered message allows the
-				// next queued message to be sent.
-				N_SMSUnqueueNext(msg);
-			}
-			return;
-		}
-	}
-}
-
-/*
- * Remove the confirmed messages from the Sent Message Store.
- * Called from N_Update().
- */
-void N_SMSDestroyConfirmed(void)
-{
-	sentmessage_t *msg, *next = NULL;
-	int i;
-
-	for(i = 0; i < MAXPLAYERS; i++)
-	{
-		for(msg = stores[i].first; msg; msg = next)
-		{
-			next = msg->next;
-			if(msg->flags & SMSF_CONFIRMED)
-			{
-				N_SMSDestroy(msg);
-			}
-		}
-	}
-}
-
-/*
- * Resend all unconfirmed messages that are older than the client's
- * ack threshold.
- */
-void N_SMSResendTimedOut(void)
-{
-	sentmessage_t *msg;
-	uint nowTime = Sys_GetRealTime(), threshold;
-	int i;
-
-	for(i = 0; i < MAXPLAYERS; i++)
-	{
-		threshold = Net_GetAckThreshold(i);
-
-		for(msg = stores[i].first; msg; msg = msg->next)
-		{
-			if(msg->flags & (SMSF_CONFIRMED | SMSF_QUEUED))
-			{
-				// Confirmed messages will soon be removed and queued
-				// haven't been sent yet.
-				continue;
-			}
-
-			if(nowTime - msg->timeStamp > threshold)			
-			{
-				// This will now be resent.
-				N_SMSResend(msg);
-			}
-		}
-	}
-}
-
-/*
- * Reset the Sent Message Store back to defaults.
- */
-void N_SMSReset(store_t *store)
-{
-	// Destroy all the messages in the store.
-	while(store->first)
-	{
-		N_SMSDestroy(store->first);
-	}
-
-	// Reset everything back to zero.
-	memset(store, 0, sizeof(*store));
-}
-
-/*
- * Adds the given netmessage_s to the queue of received messages.
- * Before calling this, allocate the message using malloc().
- * We use a mutex to synchronize access to the message queue.
- * This is called in the DirectPlay thread.
- */
-void N_PostMessage(netmessage_t *msg)
-{
-	// Lock the message queue.
-	Sys_Lock(gMsgMutex);
-
-	// This will be the latest message.
-	msg->next = NULL;
-
-	if(gMsgTail)
-	{
-		// There are previous messages.
-		gMsgTail->next = msg;
-	}
-
-	// The tail pointer points to the last message.
-	gMsgTail = msg;
-
-	// If there is no head, this'll be the first message.
-	if(gMsgHead == NULL) gMsgHead = msg;
-
-	Sys_Unlock(gMsgMutex);
-}
-
-/*
- * Extracts the next message from the queue of received messages.
- * Returns NULL if no message is found. The caller must release the
- * message when it's no longer needed, using N_ReleaseMessage().
- * We use a mutex to synchronize access to the message queue.
- * This is called in the Doomsday thread.
- */
-netmessage_t* N_GetMessage(void)
-{
-	if(gMsgHead == NULL) return NULL;
-
-	Sys_Lock(gMsgMutex);
-
-	// This is the message we'll return.
-	netmessage_t *msg = gMsgHead;
-
-	// If there are no more messages, the tail pointer must be cleared, too.
-	if(!gMsgHead->next) gMsgTail = NULL;
-
-	// Advance the head pointer.
-	gMsgHead = gMsgHead->next;
-
-	Sys_Unlock(gMsgMutex);
-
-	// Identify the sender.
-	msg->player = N_IdentifyPlayer(msg->sender);
-
-	return msg;
-}
-
-/*
  * Free the DP buffer.
  */
-void N_ReturnBuffer(DPNHANDLE handle)
+void N_ReturnBuffer(void *handle)
 {
-	if(gServerMode)
+	if(netServerMode)
 	{
 		gServer->ReturnBuffer(handle, 0);
 	}
 	else
 	{
 		gClient->ReturnBuffer(handle, 0);
-	}
-}
-
-/*
- * Frees the message.
- */
-void N_ReleaseMessage(netmessage_t *msg)
-{
-	if(msg->handle) 
-	{
-		N_ReturnBuffer(msg->handle);
-	}
-	free(msg);
-}
-
-/*
- * Empties the message buffers.
- */
-void N_ClearMessages(void)
-{
-	netmessage_t *msg;
-
-	while((msg = N_GetMessage()) != NULL)
-		N_ReleaseMessage(msg);
-
-	// The queue is now empty.
-	gMsgHead = gMsgTail = NULL;
-
-	// Also clear the sent message store.
-	for(int i = 0; i < MAXPLAYERS; i++)
-	{
-		while(stores[i].first)
-			N_SMSDestroy(stores[i].first);
 	}
 }
 
@@ -1095,13 +589,8 @@ boolean N_CheckDirectPlay(void)
  * Initialize the low-level network subsystem. This is called always 
  * during startup (via Sys_Init()).
  */
-void N_Init(void)
+void N_SystemInit(void)
 {
-	// Create a mutex for the message queue.
-	gMsgMutex = Sys_CreateMutex(MSG_MUTEX_NAME);
-
-	N_SockInit();
-	N_MasterInit();
 	N_InitDirectPlay();
 }
 
@@ -1109,16 +598,10 @@ void N_Init(void)
  * Shut down the low-level network interface. Called during engine 
  * shutdown (not before).
  */
-void N_Shutdown(void)
+void N_SystemShutdown(void)
 {
 	N_ShutdownService();
 	N_ShutdownDirectPlay();
-	N_MasterShutdown();
-	N_SockShutdown();
-
-	// Close the handle of the message queue mutex.
-	Sys_DestroyMutex(gMsgMutex);
-	gMsgMutex = 0;
 
 #ifdef COUNT_BYTE_FREQS
 	Con_Printf("Total number of bytes: %i\n", gTotalByteCount);
@@ -1129,11 +612,6 @@ void N_Shutdown(void)
 	}
 	Con_Printf("\n");
 #endif
-
-	if(ArgExists("-huffavg"))
-	{
-		Con_Execute("huffman", false);
-	}
 }
 
 /*
@@ -1267,7 +745,7 @@ boolean N_InitDPObject(boolean inServerMode)
 boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 {
 	if(!N_CheckDirectPlay()) return false;
-	if(gCurrentProvider == provider && gServerMode == inServerMode)
+	if(netCurrentProvider == provider && netServerMode == inServerMode)
 	{
 		// Nothing to change.
 		return true;
@@ -1303,11 +781,11 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 
 	// A smashing success.
 	nptActive        = provider - 1; // -1 to match old values: 0=TCP/IP...
-	gCurrentProvider = provider;
-	gServerMode      = inServerMode;
+	netCurrentProvider = provider;
+	netServerMode      = inServerMode;
 
 	Con_Message("N_InitService: %s in %s mode.\n", N_GetProtocolName(),
-		gServerMode? "server" : "client");
+		netServerMode? "server" : "client");
 	return true;
 }
 
@@ -1328,7 +806,7 @@ void N_ShutdownService(void)
 	// The list of found hosts can be deleted.
 	N_ClearHosts();
 
-	if(gServerMode)
+	if(netServerMode)
 		gServer->Close(0);
 	else
 		gClient->Close(0);
@@ -1340,8 +818,8 @@ void N_ShutdownService(void)
 	RELEASE( gHostAddress );
 
 	// Reset the current provider's info.
-	gCurrentProvider = NSP_NONE;
-	gServerMode      = false;
+	netCurrentProvider = NSP_NONE;
+	netServerMode      = false;
 }
 
 /*
@@ -1350,7 +828,15 @@ void N_ShutdownService(void)
  */
 boolean	N_IsAvailable(void)
 {
-	return gCurrentProvider != NSP_NONE;
+	return netCurrentProvider != NSP_NONE;
+}
+
+/*
+ * Returns true if the internet is available.
+ */
+boolean N_UsingInternet(void)
+{
+	return netCurrentProvider == NSP_TCPIP;
 }
 
 /*
@@ -1370,7 +856,7 @@ void N_SetPlayerInfo(void)
 	// SetClientInfo fails without a handle...
 	DPNHANDLE handle = 0; 
 
-	if(gServerMode)
+	if(netServerMode)
 	{
 		// This is not used anywhere?
 		gServer->SetServerInfo(&info, NULL, &handle, 0);
@@ -1389,7 +875,7 @@ void N_SetPlayerInfo(void)
  * Send the buffer to the destination. For clients, the server is the only
  * possible destination (doesn't depend on the value of 'destination').
  */
-void N_SendDataBuffer(void *data, uint size, DPNID destination)
+void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 {
 	DPNHANDLE asyncHandle = 0;
 	DPN_BUFFER_DESC buffer;
@@ -1416,7 +902,7 @@ void N_SendDataBuffer(void *data, uint size, DPNID destination)
 	DWORD sendFlags = DPNSEND_NOLOOPBACK | DPNSEND_NONSEQUENTIAL
 		| DPNSEND_NOCOMPLETE;
 
-	if(gServerMode)
+	if(netServerMode)
 	{
 		hr = gServer->SendTo(destination, &buffer, 1, SEND_TIMEOUT, 0, 
 			&asyncHandle, sendFlags);
@@ -1429,281 +915,13 @@ void N_SendDataBuffer(void *data, uint size, DPNID destination)
 }
 
 /*
- * Send the data in the netbuffer. The message is sent using an 
- * unreliable, nonsequential (i.e. fast) method.
- * 
- * Handles broadcasts using recursion.
- * Clients can only send stuff to the server.
- */
-void N_SendPacket(int flags)
-{
-	int i, dest = 0;
-	sentmessage_t *sentMsg;
-	void *data;
-	uint size;
-
-	// Is the network available?
-	if(!allowSending || !N_IsAvailable()) return;
-
-	// Figure out the destination DPNID.
-	if(gServerMode)
-	{
-		if(netbuffer.player >= 0 && netbuffer.player < MAXPLAYERS)
-		{
-			if(players[ netbuffer.player ].flags & DDPF_LOCAL
-				|| !clients[ netbuffer.player ].connected) 
-			{
-				// Do not send anything to local or disconnected players.
-				return;
-			}
-
-			dest = clients[ netbuffer.player ].nodeID;
-		}
-		else
-		{
-			// Broadcast to all non-local players, using recursive calls.
-			for(i = 0; i < MAXPLAYERS; i++)
-			{
-				netbuffer.player = i;
-				N_SendPacket(flags);
-			}
-
-			// Reset back to -1 to notify of the broadcast.
-			netbuffer.player = NSP_BROADCAST;
-			return;
-		}
-	}
-
-	boolean isQueued = false;
-
-	if(flags & SPF_ORDERED)
-	{
-		// If the Store already contains an ordered message for this player, 
-		// this new one will be queued. The queue-status is lifted (and the 
-		// message sent) when the previous ordered message is acknowledged.
-		if(N_SMSContainsOrdered(netbuffer.player))
-		{
-			// Queued messages will not be sent yet.
-			isQueued = true;
-		}
-	}
-
-	// Do we need to generate an ID for the message?
-	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
-	{
-		netbuffer.msg.id = N_GetNewMsgID(netbuffer.player);
-	}
-	else
-	{
-		// Normal, unconfirmed messages do not use IDs.
-		netbuffer.msg.id = 0;
-	}
-
-	// This is what will be sent.
-	gNumOutBytes += netbuffer.headerLength + netbuffer.length;
-
-	// Compress using Huffman codes.
-	data = Huff_Encode( (byte*) &netbuffer.msg, 
-		netbuffer.headerLength + netbuffer.length, &size);
-
-	// This many bytes are actually sent.
-	gNumSentBytes += size;
-
-	// Ordered and confirmed messages are placed in the Store until they
-	// have been acknowledged.
-	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
-	{
-		sentMsg = N_SMSCreate(netbuffer.player, netbuffer.msg.id, 
-			dest, data, size);
-		
-		if(flags & SPF_ORDERED)
-		{
-			// This message will block other ordered messages to 
-			// this player.
-			sentMsg->flags |= SMSF_ORDERED;
-		}
-			
-		if(isQueued)
-		{
-			// The message will not be sent at this time.
-			sentMsg->flags |= SMSF_QUEUED;
-			return;
-		}
-	}
-
-	N_SendDataBuffer(data, size, dest);
-}
-
-/*
- * Returns the player number that corresponds the DPNID.
- */
-int N_IdentifyPlayer(DPNID id)
-{
-	if(gServerMode)
-	{
-		// What is the corresponding player number? Only the server keeps
-		// a list of all the IDs.
-		for(int i = 0; i < MAXPLAYERS; i++)
-			if(clients[i].nodeID == id)
-				return i;
-
-		// Bogus?
-		return -1;
-	}
-
-	// Clients receive messages only from the server.
-	return 0;
-}
-
-/*
- * Send a Confirmation of Delivery message. 
- */
-void N_SendConfirmation(msgid_t id, DPNID where)
-{
-	uint size;
-
-	// All data is sent using Huffman codes.
-	void *data = Huff_Encode((byte*)&id, 2, &size);
-	N_SendDataBuffer(data, size, where);
-
-	// Increase the counters.
-	gNumOutBytes += 2;
-	gNumSentBytes += size;
-}
-
-/*
- * Returns the next message waiting in the incoming message queue.
- * Confirmations are handled here.
- *
- * NOTE: Skips all messages from unknown DPNIDs!
- */
-netmessage_t *N_GetNextMessage(void)
-{
-	netmessage_t *msg;
-
-	while((msg = N_GetMessage()) != NULL)
-	{
-		if(msg->player < 0)
-		{
-			// From an unknown ID?
-			N_ReleaseMessage(msg);
-
-/*#ifdef _DEBUG
-			Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
-#endif*/
-			continue;
-		}
-
-		// Decode the Huffman codes. The returned buffer is static, so it 
-		// doesn't need to be freed (not thread-safe, though).
-		msg->data = Huff_Decode(msg->data, msg->size, &msg->size);
-
-		// The DP buffer can be freed.
-		N_ReturnBuffer(msg->handle);
-		msg->handle = NULL;
-
-		// First check the message ID (in the first two bytes).
-		msgid_t id = *(msgid_t*) msg->data;
-		if(id)
-		{
-			// Confirmations of delivery are not time-critical, so they can 
-			// be done here.
-			if(msg->size == 2)
-			{
-				// All the message contains is a short? This is a confirmation
-				// from the receiver. The message will be removed from the SMS
-				// in N_Update().
-				N_SMSConfirm(msg->player, id);
-				N_ReleaseMessage(msg);
-				continue;
-			}
-			else
-			{
-				// The arrival of this message must be confirmed. Send a reply
-				// immediately. Writes to the Huffman encoding buffer.
-				N_SendConfirmation(id, msg->sender);
-
-/*#ifdef _DEBUG
-				Con_Printf("N_GetNextMessage: Acknowledged arrival of "
-					"F%i:%i.\n", msg->player, id);
-#endif*/
-			}
-
-			// It's possible that a message times out just before the 
-			// confirmation is received. It's also possible that the message
-			// was received, but the confirmation was lost. In these cases, 
-			// the recipient will get a second copy of the message. We keep 
-			// track of the ID numbers in order to detect this.
-			if(N_HistoryCheck(msg->player, id))
-			{
-/*#ifdef _DEBUG
-				Con_Printf("N_GetNextMessage: DUPE of F%i:%i.\n", 
-					msg->player, id);
-#endif*/
-				// This is a duplicate!
-				N_ReleaseMessage(msg);
-				continue;
-			}
-
-			// Record this ID in the history of received messages.
-			N_HistoryAdd(msg->player, id);
-		}
-		return msg;
-	}
-
-	// There are no more messages.
-	return NULL;
-}
-
-/*
- * A message is extracted from the message queue. Returns true if a message
- * is successfully extracted.
- */
-boolean	N_GetPacket()
-{
-	netmessage_t *msg;
-
-	// If there are net events pending, let's not return any 
-	// packets yet. The net events may need to be processed before 
-	// the packets.
-	if(!N_IsAvailable() || N_NEPending()) return false;
-
-	netbuffer.player = -1;
-	netbuffer.length = 0;
-
-	if((msg = N_GetNextMessage()) == NULL)
-	{
-		// No messages at this time.
-		return false;
-	}
-
-	/*
-	Con_Message("N_GetPacket: from=%x, len=%i\n", msg->sender, msg->size);
-	*/
-
-	// There was a packet!
-	netbuffer.player = msg->player;
-	netbuffer.length = msg->size - netbuffer.headerLength;	
-	memcpy(&netbuffer.msg, msg->data, 
-		MIN_OF(sizeof(netbuffer.msg), msg->size));
-
-	// The message can now be freed.
-	N_ReleaseMessage(msg);
-
-	// We have no idea who sent this (on serverside).
-	if(netbuffer.player == -1) return false;
-
-	return true;
-}
-
-/*
  * Returns the number of messages waiting in the player's send queue.
  */
 uint N_GetSendQueueCount(int player)
 {
 	DWORD numMessages = 0;
 
-	if(gServerMode)
+	if(netServerMode)
 	{
 		gServer->GetSendQueueInfo(clients[player].nodeID, 
 			&numMessages, NULL, 0);
@@ -1723,7 +941,7 @@ uint N_GetSendQueueSize(int player)
 {
 	DWORD numBytes = 0;
 
-	if(gServerMode)
+	if(netServerMode)
 	{
 		gServer->GetSendQueueInfo(clients[player].nodeID, 
 			NULL, &numBytes, 0);
@@ -1738,226 +956,36 @@ uint N_GetSendQueueSize(int player)
 
 const char* N_GetProtocolName(void)
 {
-	return protocolNames[ gCurrentProvider ];
+	return protocolNames[ netCurrentProvider ];
 }
 
 /*
- * The event list is checked for arrivals and exits, and the 'clients'
- * and 'players' arrays are updated accordingly.
+ * Returns the player name associated with the given network node.
  */
-void N_Update(void)
+boolean N_GetNodeName(nodeid_t id, char *name)
 {
-	netevent_t event;
 	DPN_PLAYER_INFO *info = NULL;
 	DWORD size = 0;
 	char name[256];
 
-	// Remove all confirmed messages in the Send Message Store.
-	N_SMSDestroyConfirmed();
-
-	// Resend unconfirmed, timed-out messages.
-	N_SMSResendTimedOut();
-
-	// Are there any events to process?
-	while(N_NEGet(&event))
+	// First determine how much memory is needed. (Don't you love
+	// the ease of use of this API?)
+	if((hr = gServer->GetClientInfo(event.id, info, &size, 0)) ==
+	   DPNERR_BUFFERTOOSMALL)
 	{
-		switch(event.type)
-		{
-		case NE_CLIENT_ENTRY:
-			// Find out the name of the new player.
-			memset(name, 0, sizeof(name));
-
-			// First determine how much memory is needed. (Don't you love
-			// the ease of use of this API?)
-			if((hr = gServer->GetClientInfo(event.id, info, &size, 0)) 
-				== DPNERR_BUFFERTOOSMALL)
-			{
-				// Allocate enough memory and get the data.
-				info = (DPN_PLAYER_INFO*) calloc(size, 1);
-				info->dwSize = sizeof(*info);
-				gServer->GetClientInfo(event.id, info, &size, 0);
-				strncpy(name, (const char*) info->pvData, sizeof(name) - 1);
-				free(info);
-			}
-			else
-			{
-				// If this happens, DP has fouled up.
-				strcpy(name, "-nobody-");
-			}
-
-			// Assign a console to the new player.
-			Sv_PlayerArrives(event.id, name);
-			break;
-
-		case NE_CLIENT_EXIT:
-			if(N_IdentifyPlayer(event.id) >= 0)
-			{
-				// Clear this client's Sent Message Store.
-				N_SMSReset(&stores[ N_IdentifyPlayer(event.id) ]);
-			}
-			Sv_PlayerLeaves(event.id);
-			break;
-
-		case NE_END_CONNECTION:
-			// A client receives this event when the connection is 
-			// terminated.
-			if(netgame)
-			{
-				// We're still in a netgame, which means we didn't disconnect
-				// voluntarily.
-				Con_Message("N_Update: Connection was terminated.\n");
-				N_Disconnect();
-			}
-			break;
-		}
-	}
-}
-
-/*
- * Add a master action command to the queue. The master action stuff 
- * really doesn't belong in this file...
- */
-void N_MAPost(masteraction_t act)
-{
-	masterQueue[mqHead] = act;
-	mqHead = (++mqHead) % MASTER_QUEUE_LEN;
-}
-
-/*
- * Get a master action command from the queue.
- */
-boolean N_MAGet(masteraction_t *act)
-{
-	// Empty queue?
-	if(mqHead == mqTail) return false;	
-	*act = masterQueue[mqTail];
-	return true;
-}
-
-/*
- * Remove a master action command from the queue.
- */
-void N_MARemove(void)
-{
-	if(mqHead != mqTail) mqTail = (++mqTail) % MASTER_QUEUE_LEN;
-}
-
-/*
- * Clear the master action command queue.
- */
-void N_MAClear(void)
-{
-	mqHead = mqTail = 0;
-}
-
-/*
- * Returns true if the master action command queue is empty.
- */
-boolean N_MADone(void)
-{
-	return (mqHead == mqTail);
-}
-
-/*
- * Prints server/host information into the console. The header line is 
- * printed if 'info' is NULL.
- */
-void N_PrintServerInfo(int index, serverinfo_t *info)
-{
-	if(!info)
-	{
-		Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n", 
-			"Name:");
+		// Allocate enough memory and get the data.
+		info = (DPN_PLAYER_INFO*) calloc(size, 1);
+		info->dwSize = sizeof(*info);
+		gServer->GetClientInfo(event.id, info, &size, 0);
+		strncpy(name, (const char*) info->pvData, sizeof(name) - 1);
+		free(info);
+		return true;
 	}
 	else
 	{
-		Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", 
-			index, info->name,
-			info->players, info->maxPlayers,
-			info->canJoin? ' ':'*', info->version, info->game,
-			info->address, info->port);
-		Con_Printf("    %s (%s:%x) p:%ims %-40s\n", info->map, info->iwad, 
-			info->wadNumber, info->ping, info->description);
-
-		Con_Printf("    %s %s\n", info->gameMode, info->gameConfig);
-
-		// Optional: PWADs in use.
-		if(info->pwads[0])
-			Con_Printf("    PWADs: %s\n", info->pwads);
-
-		// Optional: names of players.
-		if(info->clientNames[0])
-			Con_Printf("    Players: %s\n", info->clientNames);
-
-		// Optional: data values.
-		if(info->data[0] || info->data[1] || info->data[2])
-		{
-			Con_Printf("    Data: (%08x, %08x, %08x)\n", 
-				info->data[0], info->data[1], info->data[2]);
-		}
-	}
-}
-
-/*
- * Handles low-level net tick stuff: communication with the master server.
- */
-void N_Ticker(timespan_t time)
-{
-	masteraction_t act;
-	int	i, num;
-	static trigger_t heartBeat = { MASTER_HEARTBEAT };
-
-	if(netgame)
-	{
-		// Update master every 2 minutes.
-		if(masterAware && gCurrentProvider == NSP_TCPIP 
-			&& M_CheckTrigger(&heartBeat, time))
-		{
-			N_MasterAnnounceServer(true);
-		}
-	}
-
-	// Is there a master action to worry about?
-	if(N_MAGet(&act))
-	{
-		switch(act)
-		{
-		case MAC_REQUEST:
-			// Send the request for servers.
-			N_MasterRequestList();
-			N_MARemove();					
-			break;
-
-		case MAC_WAIT:
-			// Handle incoming messages.
-			if(N_MasterGet(0, 0) >= 0)
-			{
-				// The list has arrived!
-				N_MARemove();
-			}
-			break;
-
-		case MAC_LIST:
-			//Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n", "Name:");
-			N_PrintServerInfo(0, NULL);
-			num = i = N_MasterGet(0, 0);
-			while(--i >= 0)
-			{
-				serverinfo_t info;
-				N_MasterGet(i, &info);
-				/*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", 
-					i, info.name,
-					info.players, info.maxPlayers,
-					info.canJoin? ' ':'*', info.version, info.game,
-					info.address, info.port);
-				Con_Printf("    %s (%x) %s\n", info.map, info.data[0], 
-					info.description);*/
-				N_PrintServerInfo(i, &info);
-			}
-			Con_Printf("%i server%s found.\n", num, num!=1? "s were" : " was");
-			N_MARemove();			
-			break;
-		}
+		// If this happens, DP has fouled up.
+		strcpy(name, "-nobody-");
+		return false;
 	}
 }
 
@@ -1970,7 +998,7 @@ boolean N_ServerOpen(void)
 
 	// Let's make sure the correct service provider is initialized
 	// in server mode.
-	N_InitService(gCurrentProvider, true);
+	N_InitService(netCurrentProvider, true);
 
 	Demo_StopPlayback();
 
@@ -2009,7 +1037,7 @@ boolean N_ServerOpen(void)
 	// server is started.
 	if(gx.NetServerStart) gx.NetServerStart(false);
 
-	if(masterAware && gCurrentProvider == NSP_TCPIP)
+	if(masterAware && N_UsingInternet())
 		N_MasterAnnounceServer(true);
 
 	return true;
@@ -2022,7 +1050,7 @@ boolean N_ServerClose(void)
 {
 	if(!N_IsAvailable()) return false;
 
-	if(masterAware && gCurrentProvider == NSP_TCPIP)
+	if(masterAware && N_UsingInternet())
 	{
 		N_MAClear();
 
@@ -2041,22 +1069,13 @@ boolean N_ServerClose(void)
 }
 
 /*
- * The client is removed from the game without delay. This is used when the
- * server needs to terminate a client's connection abnormally.
+ * The client is removed from the game without delay. This is used
+ * when the server needs to terminate a client's connection
+ * abnormally.
  */
-void N_TerminateClient(int console)
+void N_TerminateNode(nodeid_t id)
 {
-	if(!N_IsAvailable() 
-		|| !clients[console].connected 
-		|| !gServerMode) return;
-
-	Con_Message("N_TerminateClient: '%s' from console %i.\n", 
-		clients[console].name, console);
-
-	// Clear this client's Sent Message Store.
-	N_SMSReset(&stores[console]);
-
-	gServer->DestroyClient(clients[console].nodeID, NULL, 0, 0);
+	gServer->DestroyClient(id, NULL, 0, 0);
 }
 
 /*
@@ -2070,13 +1089,13 @@ void N_SetTargetHostAddress(void)
 	// Release a previously created host address.
 	RELEASE( gHostAddress );
 
-	if((gHostAddress = N_NewAddress(gCurrentProvider)) == NULL)
+	if((gHostAddress = N_NewAddress(netCurrentProvider)) == NULL)
 	{
 		Con_Message("N_SetTargetHostAddress: Failed! [%x]\n", hr);
 		return;
 	}
 	
-	switch(gCurrentProvider)
+	switch(netCurrentProvider)
 	{
 	case NSP_TCPIP:
 		if(nptIPAddress[0])
@@ -2118,7 +1137,7 @@ void N_SetTargetHostAddress(void)
  */
 void N_StopLookingForHosts(void)
 {
-	if(!N_IsAvailable() || gServerMode || !gEnumHandle) return;
+	if(!N_IsAvailable() || netServerMode || !gEnumHandle) return;
 	gClient->CancelAsyncOperation(gEnumHandle, 0);
 	gEnumHandle = 0;
 }
@@ -2129,7 +1148,7 @@ void N_StopLookingForHosts(void)
 boolean N_LookForHosts(void)
 {
 	// We must be a client.
-	if(!N_IsAvailable() || gServerMode) return false;
+	if(!N_IsAvailable() || netServerMode) return false;
 
 	// Is the enumeration already in progress?
 	if(gEnumHandle) 
@@ -2205,7 +1224,7 @@ boolean N_GetHostInfo(int index, serverinfo_t *info)
  */
 boolean N_Connect(int index)
 {
-	if(!N_IsAvailable() || gServerMode) return false;
+	if(!N_IsAvailable() || netServerMode) return false;
 
 	hostnode_t *host = N_GetHost(index);
 	if(!host)
@@ -2274,328 +1293,5 @@ boolean N_Disconnect(void)
 	// Tell the Game that disconnecting is now complete.
 	if(gx.NetDisconnect) gx.NetDisconnect(false);
 
-	return true;
-}
-
-/*
- * The 'net' console command.
- */
-int CCmdNet(int argc, char **argv)
-{
-	int		i;
-	boolean success = true;
-
-	if(argc == 1)	// No args?
-	{
-		Con_Printf("Usage: %s (cmd/args)\n", argv[0]);
-		Con_Printf("Commands:\n");
-		Con_Printf("  init tcpip/ipx/modem/serial\n");
-		Con_Printf("  shutdown\n");
-		Con_Printf("  setup client\n");
-		Con_Printf("  setup server\n");
-		Con_Printf("  info\n");
-		Con_Printf("  announce\n");
-		Con_Printf("  request\n");
-		Con_Printf("  search (local or targeted query)\n");
-		Con_Printf("  servers (asks the master server)\n");
-		Con_Printf("  connect (idx)\n");
-		Con_Printf("  mconnect (m-idx)\n");
-		Con_Printf("  disconnect\n");
-		Con_Printf("  server go/start\n");
-		Con_Printf("  server close/stop\n");
-		return true;
-	}
-	if(argc == 2)	// One argument?
-	{
-		if(!stricmp(argv[1], "shutdown"))
-		{
-			if(N_IsAvailable())
-			{
-				Con_Printf("Shutting down %s.\n", N_GetProtocolName());
-				N_ShutdownService();
-			}
-			else
-			{
-				success = false;
-			}
-		}
-		else if(!stricmp(argv[1], "announce"))
-		{
-			N_MasterAnnounceServer(true);
-		}
-		else if(!stricmp(argv[1], "request"))
-		{
-			N_MasterRequestList();
-		}			
-		else if(!stricmp(argv[1], "modems"))
-		{
-			/* -- DISABLED --
-			int num;
-			char **modemList = jtNetGetStringList(JTNET_MODEM_LIST, &num);
-			if(modemList == NULL)
-			{
-				Con_Printf( "No modem list available.\n");
-			}
-			else for(i=0; i<num; i++)
-			{
-				Con_Printf( "%d: %s\n", i, modemList[i]);
-			}
-			*/
-		}
-		else if(!stricmp(argv[1], "search"))
-		{
-			success = N_LookForHosts();
-		}
-		else if(!stricmp(argv[1], "servers")) 
-		{
-			N_MAPost(MAC_REQUEST);
-			N_MAPost(MAC_WAIT);
-			N_MAPost(MAC_LIST);
-		}
-		else if(!stricmp(argv[1], "info"))
-		{
-			if(isServer)
-			{
-				Con_Printf( "Clients:\n");
-				for(i = 0; i < MAXPLAYERS; i++)
-				{
-					if(!clients[i].connected) continue;
-					Con_Printf("%i: node %x, entered at %i (ingame:%i)\n", 
-						i, clients[i].nodeID, clients[i].enterTime, 
-						players[i].ingame);
-				}
-			}
-			
-			Con_Printf("Network game: %s\n", netgame? "yes" : "no");
-			Con_Printf("Server: %s\n", isServer? "yes" : "no");
-			Con_Printf("Client: %s\n", isClient? "yes" : "no");
-			Con_Printf("Console number: %i\n", consoleplayer);
-			Con_Printf("TCP/IP address: %s\n", nptIPAddress);
-			Con_Printf("TCP/IP port: %d (0x%x)\n", nptIPPort, nptIPPort);
-			Con_Printf("Modem: %d (%s)\n", 0, "?" /*jtNetGetInteger(JTNET_MODEM),
-				jtNetGetString(JTNET_MODEM)*/);
-			/*Con_Printf("Phone number: %s\n", jtNetGetString(JTNET_PHONE_NUMBER));*/
-			Con_Printf("Serial: COM %d, baud %d, stop %d, parity %d, "
-				"flow %d\n", nptSerialPort, nptSerialBaud, nptSerialStopBits,
-				nptSerialParity, nptSerialFlowCtrl);
-			/*if((i = jtNetGetInteger(JTNET_BANDWIDTH)) != 0)
-				Con_Printf("Bandwidth: %i bps\n", i);
-			Con_Printf("Est. latency: %i ms\n", jtNetGetInteger(JTNET_EST_LATENCY));
-			Con_Printf("Packet header: %i bytes\n", jtNetGetInteger(JTNET_PACKET_HEADER_SIZE));
-			*/
-		}
-		else if(!stricmp(argv[1], "disconnect"))
-		{
-			if(!netgame)
-			{
-				Con_Printf("This client is not connected to a server.\n");
-				return false;
-			}
-			if(!isClient)
-			{
-				Con_Printf("This is not a client.\n");
-				return false;
-			}
-
-			if((success = N_Disconnect()) != false)
-			{
-				Con_Message("Disconnected.\n");
-			}
-		}
-		else 
-		{
-			Con_Printf( "Bad arguments.\n");
-			return false; // Bad args.
-		}
-	}
-	if(argc == 3)	// Two arguments?
-	{
-		if(!stricmp(argv[1], "init"))
-		{
-			serviceprovider_t sp = (!stricmp(argv[2], "tcp/ip") 
-					|| !stricmp(argv[2], "tcpip"))? NSP_TCPIP
-				: !stricmp(argv[2], "ipx")? NSP_IPX
-				: !stricmp(argv[2], "serial")? NSP_SERIAL
-				: !stricmp(argv[2], "modem")? NSP_MODEM
-				: NSP_NONE;
-
-			if(sp == NSP_NONE)
-			{
-				Con_Message("%s is not a supported service provider.\n", 
-					argv[2]);
-				return false;
-			}
-
-			// Init the service (assume client mode).
-			if( (success = N_InitService(sp, false)) )
-				Con_Message("Network initialization OK.\n");
-			else
-				Con_Message("Network initialization failed!\n");
-
-			// Let everybody know of this.
-			CmdReturnValue = success;
-		}
-		else if(!stricmp(argv[1], "server"))
-		{
-			if(!stricmp(argv[2], "go") || !stricmp(argv[2], "start"))
-			{
-				if(netgame)
-				{
-					Con_Printf("Already in a netgame.\n");
-					return false;
-				}
-
-				CmdReturnValue = success = N_ServerOpen();
-
-				if(success)
-				{
-					Con_Message("Server \"%s\" started.\n", serverName);
-				}
-			}
-			else if(!stricmp(argv[2], "close") || !stricmp(argv[2], "stop"))
-			{
-				if(!isServer)
-				{
-					Con_Printf( "This is not a server!\n");
-					return false;
-				}
-
-				// Close the server and kick everybody out.
-				if((success = N_ServerClose()) != false)
-				{
-					Con_Message("Server \"%s\" closed.\n", serverName);
-				}
-			}
-			else
-			{
-				Con_Printf("Bad arguments.\n");
-				return false;
-			}
-		}
-		else if(!stricmp(argv[1], "connect"))
-		{	
-			int idx;
-
-			if(netgame)
-			{
-				Con_Printf("Already connected.\n");
-				return false;
-			}
-
-			idx = strtol(argv[2], NULL, 10);		
-			CmdReturnValue = success = N_Connect(idx);
-
-			if(success)
-			{
-				Con_Message("Connected.\n");
-			}
-		}
-		else if(!stricmp(argv[1], "mconnect"))
-		{
-			serverinfo_t info;
-			if(N_MasterGet(strtol(argv[2], 0, 0), &info))
-			{
-				// Connect using TCP/IP.
-				return Con_Executef(false, "connect %s %i", info.address, 
-					info.port);
-			}
-			else return false;
-		}
-		else if(!stricmp(argv[1], "setup"))
-		{
-			// Start network setup.
-			DD_NetSetup(!stricmp(argv[2], "server"));
-			CmdReturnValue = true;
-		}
-	}
-/*	if(argc >= 3)
-	{
-		// TCP/IP settings.
-		if(!stricmp(argv[1], "tcpip") || !stricmp(argv[1], "tcp/ip"))
-		{
-			if(!stricmp(argv[2], "address") && argc > 3)
-			{
-				success = jtNetSetString(JTNET_TCPIP_ADDRESS, argv[3]);
-				Con_Printf( "TCP/IP address: %s\n", argv[3]);
-			}
-			else if(!stricmp(argv[2], "port") && argc > 3)
-			{
-				int val = strtol(argv[3], NULL, 0);
-				success = jtNetSetInteger(JTNET_TCPIP_PORT, val);
-				Con_Printf( "TCP/IP port: %d\n", val);
-			}
-		}
-		// Modem settings.
-		if(!stricmp(argv[1], "modem"))
-		{
-			if(!stricmp(argv[2], "phone"))
-			{
-				success = jtNetSetString(JTNET_PHONE_NUMBER, argv[3]);
-				Con_Printf( "Modem phone number: %s\n", argv[3]);
-			}
-			else 
-			{
-				int val = strtol(argv[2], NULL, 0);
-				char **modemList = jtNetGetStringList(JTNET_MODEM_LIST, NULL);
-				success = jtNetSetInteger(JTNET_MODEM, val);
-				if(success)
-				{
-					Con_Printf( "Selected modem: %d, %s\n", val, modemList[val]);
-				}
-			}
-		}
-		// Serial settings.
-		else if(!stricmp(argv[1], "serial"))
-		{
-			if(!stricmp(argv[2], "com"))
-			{
-				int val = strtol(argv[3], NULL, 0);
-				success = jtNetSetInteger(JTNET_COMPORT, val);
-				if(success) Con_Printf( "COM port: %d\n", val);
-			}
-			else if(!stricmp(argv[2], "baud"))
-			{
-				int val = strtol(argv[3], NULL, 0);
-				success = jtNetSetInteger(JTNET_BAUDRATE, val);
-				if(success) Con_Printf( "Baud rate: %d\n", val);
-			}
-			else if(!stricmp(argv[2], "stop"))
-			{
-				int val = strtol(argv[3], NULL, 0);
-				success = jtNetSetInteger(JTNET_STOPBITS, val);
-				if(success) Con_Printf( "Stopbits: %d\n", val);
-			}
-			else if(!stricmp(argv[2], "parity"))
-			{
-				int val = strtol(argv[3], NULL, 0);
-				success = jtNetSetInteger(JTNET_PARITY, val);
-				if(success) Con_Printf( "Parity: %d\n", val);
-			}
-			else if(!stricmp(argv[2], "flow"))
-			{
-				int val = strtol(argv[3], NULL, 0);
-				success = jtNetSetInteger(JTNET_FLOWCONTROL, val);
-				if(success) Con_Printf( "Flow control: %d\n", val);
-			}
-		}
-	}*/
-	return success;
-}
-
-/*
- * Console command for printing the Huffman efficiency.
- */
-int CCmdHuffmanStats(int argc, char **argv)
-{
-	if(!gNumOutBytes)
-	{
-		Con_Printf("Nothing has been sent yet.\n");
-	}
-	else
-	{
-		Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
-			"bytes)\n", 100 - (100.0f * gNumSentBytes) / gNumOutBytes,
-			gNumOutBytes, gNumSentBytes);
-	}
 	return true;
 }

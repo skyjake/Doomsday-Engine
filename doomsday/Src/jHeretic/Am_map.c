@@ -1,11 +1,12 @@
 
 // AM_map.c
 
-#include "DoomDef.h"
-#include "P_local.h"
-#include "AM_map.h"
-#include "AM_data.h"
 #include <stdio.h>
+
+#include "Doomdef.h"
+#include "P_local.h"
+#include "Am_map.h"
+#include "AM_data.h"
 #include "settings.h"
 
 #define LINEHEIGHT_A 10
@@ -133,24 +134,10 @@ static byte cheatcount=0;
 
 extern boolean viewactive;
 
-static byte antialias[NUMALIAS][8]=
-{
-	{96, 97, 98, 99, 100, 101, 102, 103},
-	{110, 109, 108, 107, 106, 105, 104, 103},
-	{75, 76, 77, 78, 79, 80, 81, 103}
-};
-/*
-static byte *aliasmax[NUMALIAS] = {
-	&antialias[0][7], &antialias[1][7], &antialias[2][7]
-};*/
-
-//static byte *maplump; // pointer to the raw data for the automap background.
 static int maplumpnum;
-static short mapystart=0; // y-value for the start of the map bitmap...used in the paralax stuff.
+static short mapystart=0; // y-value for the start of the map
+						  // bitmap...used in the paralax stuff.
 static short mapxstart=0; //x-value for the bitmap.
-
-//byte screens[][SCREENWIDTH*SCREENHEIGHT];
-//void V_MarkRect (int x, int y, int width, int height);
 
 // Functions
 
@@ -1039,7 +1026,7 @@ void AM_OGL_SetupState()
 {
 	int scrwidth = Get(DD_SCREEN_WIDTH);
 	int scrheight = Get(DD_SCREEN_HEIGHT);
-	float xs = scrwidth/320.0f, ys = scrheight/200.0f;
+	float /*xs = scrwidth/320.0f,*/ ys = scrheight/200.0f;
 
 	// Let's set up a scissor box to clip the map lines and stuff.
 	// Store the old scissor state.
@@ -1172,4 +1159,5 @@ void AM_Drawer(void)
 
 	if(cfg.counterCheat) AM_drawCounters();
 }
+
 

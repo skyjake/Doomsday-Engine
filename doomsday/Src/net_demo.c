@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -228,16 +228,19 @@ void Demo_WritePacket(int playerNum)
 	if(!clients[playerNum].recording) return;
 	if(!inf->canwrite)
 	{
-		if(netbuffer.msg.type != psv_handshake) return;
+		if(netBuffer.msg.type != psv_handshake) return;
 		// The handshake has arrived. Now we can begin writing.
 		inf->canwrite = true;
 	}
 	if(clients[playerNum].recordPaused)
 	{
 		// Some types of packet are not written in record-paused mode.
-		if(netbuffer.msg.type == psv_sound
-			|| netbuffer.msg.type == DDPT_MESSAGE) return;
+		if(netBuffer.msg.type == psv_sound
+			|| netBuffer.msg.type == DDPT_MESSAGE) return;
 	}
+
+	// This counts as an update. (We know the client is alive.)
+	clients[playerNum].updateCount = UPDATECOUNT;
 
 	file = clients[playerNum].demo;
 
@@ -259,12 +262,12 @@ void Demo_WritePacket(int playerNum)
 	lzWrite(&ptime, 1, file);
 
 	// The header.
-	hdr.length = 1/*netbuffer.headerLength*/ + netbuffer.length;
+	hdr.length = 1/*netBuffer.headerLength*/ + netBuffer.length;
 	lzWrite(&hdr, sizeof(hdr), file);
 
 	// Write the packet itself.
-	lzPutC(netbuffer.msg.type, file);
-	lzWrite(netbuffer.msg.data, netbuffer.length, file);
+	lzPutC(netBuffer.msg.type, file);
+	lzWrite(netBuffer.msg.data, netBuffer.length, file);
 }
 
 void Demo_BroadcastPacket(void)
@@ -367,15 +370,15 @@ boolean Demo_ReadPacket(void)
 	lzRead(&hdr, sizeof(hdr), playdemo);
 
 	// Get the packet.
-	netbuffer.length = hdr.length - 1/*netbuffer.headerLength*/;
-	netbuffer.player = 0;	// From the server.
-	netbuffer.msg.id = 0;
-	netbuffer.msg.type = lzGetC(playdemo);
-	lzRead(netbuffer.msg.data, netbuffer.length, playdemo);
-	netbuffer.cursor = netbuffer.msg.data;
+	netBuffer.length = hdr.length - 1/*netBuffer.headerLength*/;
+	netBuffer.player = 0;	// From the server.
+	netBuffer.msg.id = 0;
+	netBuffer.msg.type = lzGetC(playdemo);
+	lzRead(netBuffer.msg.data, netBuffer.length, playdemo);
+	netBuffer.cursor = netBuffer.msg.data;
 
 /*	Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime, 
-		hdr.angle, hdr.lookdir, hdr.length, netbuffer.msg.type);*/
+		hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type);*/
 
 	// Read the next packet time.
 	ptime = lzGetC(playdemo);
@@ -457,7 +460,7 @@ void Demo_ReadLocalCamera(void)
 	
 	if(!mo) return;
 
-	if(netbuffer.msg.type == pkt_democam_resume) 
+	if(netBuffer.msg.type == pkt_democam_resume) 
 	{
 		intertics = 1;
 	}
@@ -682,3 +685,4 @@ int CCmdDemoLump(int argc, char **argv)
 	strncpy(buf, argv[1], 64);
 	return M_WriteFile(argv[2], buf, 64);
 }
+

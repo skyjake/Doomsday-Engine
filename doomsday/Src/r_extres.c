@@ -146,7 +146,6 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
 		if(ArgCheckWith(explicitOption[i][0], 1))
 		{
 			M_TranslatePath(ArgNext(), classInfo[i].path);
-			Dir_ValidDir(classInfo[i].path);
 		}
 		else
 		{
@@ -155,14 +154,15 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
 			strcpy(classInfo[i].path, dataPath);
 			strcat(classInfo[i].path, defaultResourcePath[i]);
 		}
-		
+		Dir_ValidDir(classInfo[i].path);
+			
 		// The overriding path.
 		if(ArgCheckWith(explicitOption[i][1], 1))
 		{
 			M_TranslatePath(ArgNext(), classInfo[i].overridePath);
-			Dir_ValidDir(classInfo[i].overridePath);
 		}
-
+		Dir_ValidDir(classInfo[i].overridePath);
+		
 		VERBOSE2( Con_Message("  %i: %s (%s)\n", i, 
 			M_Pretty(classInfo[i].path), 
 			M_Pretty(classInfo[i].overridePath)) );

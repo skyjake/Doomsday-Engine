@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,19 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include "de_platform.h"
+
+#ifdef WIN32
+#	include <direct.h>
+#endif
+
+#ifdef UNIX
+#	include <ctype.h>
+#	include <SDL.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <direct.h>
 #include <time.h>
 #include <string.h>
 
@@ -42,9 +50,11 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "dd_pinit.h"
+
 // MACROS ------------------------------------------------------------------
 
-#define MAXWADFILES 128
+#define MAXWADFILES 1024
 
 // TYPES -------------------------------------------------------------------
 
@@ -55,33 +65,27 @@ typedef struct ddvalue_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void R_ExecuteSetViewSize(void);
 void G_CheckDemoStatus();
 void F_Drawer(void);
 boolean F_Responder(event_t *ev);
 void S_InitScript(void);
 void Net_Drawer(void);
-void ErrorBox(boolean error, char *format, ...);
-int CheckArg(char *tag, char **value);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void PageDrawer(void);
 static void HandleArgs(int state);
-static void CheckRecordFrom(void);
-static void ExecOptionFILE(char **args, int tag);
-static void ExecOptionMAXZONE(char **args, int tag);
-static void CreateSavePath(void);
-static void WarpCheck(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean		renderTextures;
-extern char			skyflatname[9];
+#ifdef WIN32
 extern HWND			hWndMain;
 extern HINSTANCE	hInstDGL;
+#endif
+
+extern int			renderTextures;
+extern char			skyflatname[9];
 extern fixed_t		mapgravity;
 extern int			gotframe;
 
@@ -100,6 +104,7 @@ boolean singletics;			// debug flag to cancel adaptiveness
 int isDedicated = false;
 int maxzone = 0x2000000;	// Default zone heap. (32meg)
 boolean autostart;
+FILE *outFile;				// Output file for console messages.
 
 char *iwadlist[MAXWADFILES];
 char *defaultWads = ""; // A list of wad names, whitespace in between (in .cfg).
@@ -111,10 +116,6 @@ int queryResult = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int WarpMap;
-static int demosequence;
-static int pagetic;
-static char *pagename;
 static char *wadfiles[MAXWADFILES];
 
 // CODE --------------------------------------------------------------------
@@ -140,7 +141,6 @@ void DD_AddIWAD(const char *path)
 #define ATWSEPS ",; \t"
 static void AddToWadList(char *list)
 {
-	int	i=0;
 	int len = strlen(list);
 	char *buffer = malloc(len+1), *token;
 	
@@ -186,6 +186,7 @@ void DD_AddAutoData(boolean loadFiles)
 	for(i = 0; extensions[i]; i++)
 	{
 		sprintf(pattern, "%sAuto\\*.%s", R_GetDataPath(), extensions[i]);
+		Dir_FixSlashes(pattern);
 		F_ForAll(pattern, (void*) loadFiles, autoDataAdder);
 	}
 }
@@ -228,10 +229,9 @@ void DD_Verbosity(void)
 //===========================================================================
 void DD_Main(void)
 {
-	int		p;
-	char	buff[10];
-	FILE	*newout;
-	char	*outfilename = "Doomsday.out";
+	int	p;
+	char buff[10];
+	char *outfilename = "Doomsday.out";
 	boolean	userdir_ok = true;
 	
 	DD_Verbosity();
@@ -244,18 +244,27 @@ void DD_Main(void)
 	}
 
 	// We'll redirect stdout to a log file.
-	CheckArg("-out", &outfilename);
-	newout = freopen(outfilename, "w", stdout);
-	if(!newout) ErrorBox(false, "Redirection of stdout failed. "
-		"You won't see anything that's printf()ed.");
-	setbuf(stdout, NULL);
+	DD_CheckArg("-out", &outfilename);
+	outFile = fopen(outfilename, "w");
+	if(!outFile)
+	{
+		DD_ErrorBox(false, "Couldn't open message output file.");
+	}
+	setbuf(outFile, NULL); // Don't buffer much.
 	
 	// The current working directory is the runtime dir.
 	Dir_GetDir(&ddRuntimeDir);
 	
 	// The standard base directory is two levels upwards.
 	if(ArgCheck("-stdbasedir"))
+	{
+#ifdef WIN32	
 		strcpy(ddBasePath, "..\\..\\");
+#endif
+#ifdef UNIX
+		strcpy(ddBasePath, "../../");
+#endif
+	}
 	
 	if(ArgCheckWith("-basedir", 1))
 	{
@@ -275,6 +284,9 @@ void DD_Main(void)
 	SW_Init();
 	
 	Con_Message("Executable: "DOOMSDAY_VERSIONTEXT".\n");
+
+	// Information about the memory zone.
+	Z_PrintStatus();
 	
 	// Print the used command line.
 	if(verbose)
@@ -300,8 +312,6 @@ void DD_Main(void)
 	if(!userdir_ok) Con_Message("--(!)-- User directory not found "
 		"(check -userdir).\n");
 	
-	Con_Message("Z_Init: Init zone memory allocation daemon.\n");
-	Z_Init();
 	bamsInit();		// Binary angle calculations.
 
 	// Initialize the zip file database.
@@ -386,7 +396,8 @@ void DD_Main(void)
 	
 	// Now that we've read the WADs we can initialize definitions.
 	Def_Read();
-	
+
+#ifdef WIN32
 	if(ArgCheck("-nowsk")) // No Windows system keys?
 	{
 		// Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
@@ -394,6 +405,7 @@ void DD_Main(void)
 		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
 		Con_Message("Windows system keys disabled.\n");
 	}
+#endif
 	
 	if(ArgCheckWith("-dumplump", 1))
 	{
@@ -421,8 +433,9 @@ void DD_Main(void)
 		{
 			strncpy(buff, lumpinfo[p].name, 8);
 			buff[8] = 0;
-			printf("%04d - %-8s (hndl: %d, pos: %d, size: %d)\n",
-				p, buff, lumpinfo[p].handle, lumpinfo[p].position, lumpinfo[p].size);
+			printf("%04i - %-8s (hndl: %p, pos: %i, size: %i)\n",
+				   p, buff, lumpinfo[p].handle, lumpinfo[p].position,
+				   lumpinfo[p].size);
 		}
 		Con_Error("---End of lumps---\n");
 	}
@@ -458,7 +471,7 @@ void DD_Main(void)
 	// Try to load the autoexec file. This is done here to make sure
 	// everything is initialized: the user can do here anything that
 	// s/he'd be able to do in the game.
-	Con_ParseCommands("autoexec.cfg", false);
+	Con_ParseCommands("Autoexec.cfg", false);
 	
 	// Parse additional files.
 	if(ArgCheckWith("-parse", 1))
@@ -651,7 +664,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &openbottom,		0 },
 	{ &lowfloor,		0 },
 	{ &isDedicated,		0 },
-	{ &novideo,			0 },
+	{ (int*)&novideo,	0 },
 	{ &defs.count.mobjs.num, 0 },
 	{ &mapgravity,		&mapgravity },
 	{ &gotframe,		0 },
@@ -664,7 +677,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &pspOffY,			&pspOffY },
 	{ &psp_move_speed,	&psp_move_speed },
 	{ &cplr_thrust_mul,	&cplr_thrust_mul },
-	{ &clientPaused,	&clientPaused },
+	{ (int*)&clientPaused, (int*)&clientPaused },
 	{ &weaponOffsetScaleY, &weaponOffsetScaleY }
 };
 
@@ -679,7 +692,7 @@ int DD_GetInteger(int ddvalue)
 		switch(ddvalue)
 		{
 		case DD_DYNLIGHT_TEXTURE:
-			return dltexname;
+			return lightingTexNames[LST_DYNAMIC];
 
 		case DD_TRACE_ADDRESS:
 			return (int) &trace;
@@ -698,9 +711,11 @@ int DD_GetInteger(int ddvalue)
 		case DD_MAP_MUSIC:
 			if(mapinfo) return Def_GetMusicNum(mapinfo->music);
 			return -1;
-			
+
+#ifdef WIN32
 		case DD_WINDOW_HANDLE:
 			return (int) hWndMain;
+#endif
 		}
 		return 0;
 	}
@@ -765,3 +780,24 @@ ddplayer_t *DD_GetPlayer(int number)
 {
 	return (ddplayer_t*) &players[number];
 }
+
+#ifdef UNIX
+/*
+ * Some routines are not available on the *nix platform.
+ */
+char *strupr(char *string)
+{
+	char *ch = string;
+	
+	for(; *ch; ch++) *ch = toupper(*ch);
+	return string;
+}
+
+char *strlwr(char *string)
+{
+	char *ch = string;
+
+	for(; *ch; ch++) *ch = tolower(*ch);
+	return string;
+}
+#endif

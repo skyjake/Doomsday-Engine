@@ -1161,3 +1161,4 @@ line_t *P_FindLine(int lineTag, int *searchPosition)
 	*searchPosition = -1;
 	return NULL;
 }
+

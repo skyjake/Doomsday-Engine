@@ -7,7 +7,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef __JDOOM__
 #include "doomdef.h"
+#endif
+
+#ifdef __JHERETIC__
+#include "Doomdef.h"
+#endif
+
 #include "p_xg.h"
 
 // MACROS ------------------------------------------------------------------

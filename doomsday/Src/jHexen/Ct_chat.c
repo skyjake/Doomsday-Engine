@@ -550,3 +550,4 @@ void CT_ClearChatMessage(int player)
 	msgptr[player] = 0;
 	msglen[player] = 0;
 }
+

@@ -278,8 +278,10 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
 //
 //============================================================================
 
+#ifdef WIN32
 // I guess the compiler gets confused by the multitude of P_Random()s...
 #pragma optimize("g", off)
+#endif
 void C_DECL A_LeafSpawn(mobj_t *actor)
 {
 	mobj_t *mo;
@@ -298,7 +300,9 @@ void C_DECL A_LeafSpawn(mobj_t *actor)
 		}
 	}
 }
+#ifdef WIN32
 #pragma optimize("", on)
+#endif
 
 //============================================================================
 //
@@ -1328,3 +1332,4 @@ void C_DECL A_NoGravity(mobj_t *actor)
 {
 	actor->flags |= MF_NOGRAVITY;
 }
+

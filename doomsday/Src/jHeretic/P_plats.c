@@ -1,9 +1,9 @@
 
 // P_plats.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 
 plat_t	*activeplats[MAXPLATS];
 
@@ -237,3 +237,4 @@ void P_RemoveActivePlat(plat_t *plat)
 		}
 	Con_Error ("P_RemoveActivePlat: can't find plat!");
 }
+

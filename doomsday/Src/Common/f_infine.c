@@ -14,17 +14,17 @@
 #if __JDOOM__
 #include "doomdef.h"
 #include "doomstat.h"
-#include "d_netjd.h"
+#include "d_netJD.h"
 #include "m_swap.h"
 #include "v_video.h"
 #include "s_sound.h"
 #include "hu_stuff.h"
 
 #elif __JHERETIC__
-#include "doomdef.h"
-#include "am_map.h"
-#include "s_sound.h"
-#include "soundst.h"
+#include "Doomdef.h"
+#include "Am_map.h"
+#include "S_sound.h"
+#include "Soundst.h"
 
 #elif __JHEXEN__
 #include "h2def.h"
@@ -904,9 +904,9 @@ void FI_Execute(char *cmd)
 					break;
 				}
 			// Should we skip this command?
-			if(fi->skipnext && !fi_commands[i].when_cond_skipping 
-				|| (fi->skipping || fi->gotoskip) 
-					&& !fi_commands[i].when_skipping) 
+			if((fi->skipnext && !fi_commands[i].when_cond_skipping)	||
+			   ((fi->skipping || fi->gotoskip)
+				&& !fi_commands[i].when_skipping)) 
 			{
 				// While not DO-skipping, the condskip has now been done.
 				if(!fi->dolevel) 
@@ -1767,11 +1767,13 @@ void FI_Drawer(void)
 		}
 		else
 		{
+			// FIXME: The raw screen drawer should not ignore rotation.
+			// It should allow the caller to set up a transformation matrix.
 			GL_DrawRawScreen_CS(pic->lump[sq], 
-				0, //pic->object.x.value - fi->imgoffset[0].value, 
-				0, //pic->object.y.value - fi->imgoffset[1].value,
-				1, //(pic->flip[sq]? -1 : 1) * pic->object.scale[0].value,
-				1); //pic->object.scale[1].value);
+				pic->object.x.value - fi->imgoffset[0].value, 
+				pic->object.y.value - fi->imgoffset[1].value,
+				(pic->flip[sq]? -1 : 1) * pic->object.scale[0].value,
+				pic->object.scale[1].value);
 		}
 
 		// Restore original transformation.
@@ -2676,3 +2678,4 @@ void FIC_NoShowMenu(void)
 {
 	fi->showmenu = false;
 }
+

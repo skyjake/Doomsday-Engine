@@ -1,9 +1,9 @@
 
 // P_Spec.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 
 // Macros
 
@@ -1285,3 +1285,4 @@ void P_AmbientSound(void)
 		}
 	} while(done == false);
 }
+

@@ -14,7 +14,7 @@
 #include "doomdef.h"
 #include "d_config.h"
 #elif __JHERETIC__
-#include "doomdef.h"
+#include "Doomdef.h"
 #include "settings.h"
 #elif __JHEXEN__
 #include "h2def.h"
@@ -158,14 +158,15 @@ int CCmdCrosshair(int argc, char **argv)
 	}
 	else if(argc == 5 || argc == 6) // Color.
 	{
-		int i;
+		int i, val;
 		if(stricmp(argv[1], "color")) return false;
 		for(i = 0; i < argc - 2; i++) 
 		{
-			cfg.xhairColor[i] = strtol(argv[2 + i], NULL, 0);
+			val = strtol(argv[2 + i], NULL, 0);
 			// Clamp.
-			if(cfg.xhairColor[i] < 0) cfg.xhairColor[i] = 0;
-			if(cfg.xhairColor[i] > 255) cfg.xhairColor[i] = 255;
+			if(val < 0) val = 0;
+			if(val > 255) val = 255;
+			cfg.xhairColor[i] = val;
 		}
 		Con_Printf( "Crosshair color set to (%d, %d, %d, %d).\n", 
 			cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2],

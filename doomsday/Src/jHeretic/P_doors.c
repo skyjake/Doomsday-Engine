@@ -1,9 +1,9 @@
 
 // P_doors.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 
 //==================================================================
 //==================================================================
@@ -360,3 +360,4 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
 	door->topwait = VDOORWAIT;
 	door->topcountdown = 5*60*35;
 }
+

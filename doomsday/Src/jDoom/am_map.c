@@ -10,6 +10,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
+#include <math.h>
 
 #include "doomdef.h"
 #include "d_config.h"
@@ -26,7 +27,7 @@
 #include "dstrings.h"
 
 #include "am_map.h"
-#include "mn_def.h"
+#include "Mn_def.h"
 #include "m_menu.h"
 #include "hu_stuff.h"
 #include "wi_stuff.h"
@@ -796,7 +797,7 @@ void AM_doFollowPlayer(void)
 //
 void AM_updateLightLev(void)
 {
-    static nexttic = 0;
+    static int nexttic = 0;
     //static int litelevels[] = { 0, 3, 5, 6, 6, 7, 7, 7 };
     static int litelevels[] = { 0, 4, 7, 10, 12, 14, 15, 15 };
     static int litelevelscnt = 0;
@@ -1078,6 +1079,36 @@ AM_drawFline
 }
 */
 
+int AM_getDoorColor(int special, boolean glowColor)
+{
+	// The colors are from the Doom PLAYPAL.
+	switch(special)
+	{
+	default:
+		// If it's not a door, zero is returned.
+		break;
+
+	case 32:		// Blue locked door open
+	case 26:		// Blue Door/Locked
+	case 99: 
+	case 133:
+		return glowColor? 198 : 195;
+	
+	case 33:		// Red locked door open
+	case 28:		// Red Door /Locked
+	case 134: 
+	case 135:
+		return glowColor? 174 : 170;
+
+	case 34:		// Yellow locked door open
+	case 27:		// Yellow Door /Locked
+	case 136: 
+	case 137:
+		return glowColor? 231 : 224;
+	}
+	return 0;
+}
+
 //
 // Clip lines, draw visible part sof lines.
 //
@@ -1091,7 +1122,89 @@ AM_drawMline
 	gl.Vertex2f(FIX2FLT(CXMTOFX(ml->b.x)), FIX2FLT(CYMTOFX(ml->b.y)));
 }
 
+void AM_drawMlineGlow(mline_t *ml, int color)
+{
+	float a[2], b[2], normal[2], unit[2], thickness;
+	float length, dx, dy;
 
+	// Scale thickness according to map zoom.
+	thickness = cfg.automapDoorGlow * FIX2FLT(scale_mtof) * 2.5f + 3;
+	
+	GL_SetColor2(color, cfg.automapLineAlpha/3);
+	a[VX] = FIX2FLT(CXMTOFX(ml->a.x));
+	a[VY] = FIX2FLT(CYMTOFX(ml->a.y));
+	b[VX] = FIX2FLT(CXMTOFX(ml->b.x));
+	b[VY] = FIX2FLT(CYMTOFX(ml->b.y));
+
+	dx = b[VX] - a[VX];
+	dy = b[VY] - a[VY];
+	length = sqrt(dx * dx + dy * dy);
+	if(length <= 0) return;
+
+	unit[VX] = dx / length;
+	unit[VY] = dy / length;
+	normal[VX] = unit[VY];
+	normal[VY] = -unit[VX];
+
+	// Start of the line.
+	gl.TexCoord2f(0, 0);
+	gl.Vertex2f(
+		a[VX] - unit[VX] * thickness + normal[VX] * thickness,
+		a[VY] - unit[VY] * thickness + normal[VY] * thickness);
+
+	gl.TexCoord2f(0.5f, 0);
+	gl.Vertex2f(
+		a[VX] + normal[VX] * thickness,
+		a[VY] + normal[VY] * thickness);
+
+	gl.TexCoord2f(0.5f, 1);
+	gl.Vertex2f(
+		a[VX] - normal[VX] * thickness,
+		a[VY] - normal[VY] * thickness);
+
+	gl.TexCoord2f(0, 1);
+	gl.Vertex2f(
+		a[VX] - unit[VX] * thickness - normal[VX] * thickness,
+		a[VY] - unit[VY] * thickness - normal[VY] * thickness);
+
+	// The middle part of the line.
+	gl.TexCoord2f(0.5f, 0);
+	gl.Vertex2f(
+		a[VX] + normal[VX] * thickness,
+		a[VY] + normal[VY] * thickness);
+	gl.Vertex2f(
+		b[VX] + normal[VX] * thickness,
+		b[VY] + normal[VY] * thickness);
+
+	gl.TexCoord2f(0.5f, 1);
+	gl.Vertex2f(
+		b[VX] - normal[VX] * thickness,
+		b[VY] - normal[VY] * thickness);
+	gl.Vertex2f(
+		a[VX] - normal[VX] * thickness,
+		a[VY] - normal[VY] * thickness);
+
+	// End of the line.
+	gl.TexCoord2f(0.5f, 0);
+	gl.Vertex2f(
+		b[VX] + normal[VX] * thickness,
+		b[VY] + normal[VY] * thickness);
+
+	gl.TexCoord2f(1, 0);
+	gl.Vertex2f(
+		b[VX] + unit[VX] * thickness + normal[VX] * thickness,
+		b[VY] + unit[VY] * thickness + normal[VY] * thickness);
+
+	gl.TexCoord2f(1, 1);
+	gl.Vertex2f(
+		b[VX] + unit[VX] * thickness - normal[VX] * thickness,
+		b[VY] + unit[VY] * thickness - normal[VY] * thickness);
+
+	gl.TexCoord2f(0.5f, 1);
+	gl.Vertex2f(
+		b[VX] - normal[VX] * thickness,
+		b[VY] - normal[VY] * thickness);
+}
 
 //
 // Draws flat (floor/ceiling tile) aligned grid lines.
@@ -1149,7 +1262,7 @@ void AM_drawWalls(void)
     static mline_t l;
 
 	gl.Begin(DGL_LINES);
-    for (i=0;i<numlines;i++)
+    for(i = 0; i < numlines; i++)
     {
 		l.a.x = lines[i].v1->x;
 		l.a.y = lines[i].v1->y;
@@ -1172,7 +1285,7 @@ void AM_drawWalls(void)
 				continue;
 			if (!lines[i].backsector)
 			{
-				AM_drawMline(&l, WALLCOLORS+lightlev);
+				AM_drawMline(&l, WALLCOLORS + lightlev);
 			}
 			else
 			{
@@ -1185,6 +1298,11 @@ void AM_drawWalls(void)
 					if (cheating) AM_drawMline(&l, SECRETWALLCOLORS + lightlev);
 					else AM_drawMline(&l, WALLCOLORS+lightlev);
 				}
+				else if (cfg.automapShowDoors
+					&& AM_getDoorColor(lines[i].special, false))
+				{
+					AM_drawMline(&l, AM_getDoorColor(lines[i].special, false));
+				}
 				else if (lines[i].backsector->floorheight
 					!= lines[i].frontsector->floorheight) 
 				{
@@ -1193,11 +1311,11 @@ void AM_drawWalls(void)
 				else if (lines[i].backsector->ceilingheight
 					!= lines[i].frontsector->ceilingheight) 
 				{
-					AM_drawMline(&l, CDWALLCOLORS+lightlev); // ceiling level change
+					AM_drawMline(&l, CDWALLCOLORS + lightlev); // ceiling level change
 				}
 				else if (cheating) 
 				{
-					AM_drawMline(&l, TSWALLCOLORS+lightlev);
+					AM_drawMline(&l, TSWALLCOLORS + lightlev);
 				}
 			}
 		}
@@ -1207,6 +1325,39 @@ void AM_drawWalls(void)
 		}
     }
 	gl.End();
+
+	// Any glows?
+	if(cfg.automapDoorGlow > 0)
+	{
+		gl.Enable( DGL_TEXTURING );
+		gl.Bind( Get(DD_DYNLIGHT_TEXTURE) );
+		gl.Func( DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE );
+		gl.Begin( DGL_QUADS );
+
+		for(i = 0; i < numlines; i++)
+		{
+			l.a.x = lines[i].v1->x;
+			l.a.y = lines[i].v1->y;
+			l.b.x = lines[i].v2->x;
+			l.b.y = lines[i].v2->y;
+			if(cheating || (lines[i].flags & ML_MAPPED))
+			{
+				if((lines[i].flags & LINE_NEVERSEE) && !cheating)
+					continue;
+
+				if(lines[i].backsector
+					&& cfg.automapShowDoors
+					&& AM_getDoorColor(lines[i].special, true))
+				{
+					AM_drawMlineGlow(&l, 
+						AM_getDoorColor(lines[i].special, true));
+				}
+			}
+		}
+		gl.End();
+		gl.Func( DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA );
+		gl.Disable( DGL_TEXTURING );
+	}
 }
 
 
@@ -1377,7 +1528,7 @@ void AM_GL_SetupState()
 {
 	int scrwidth = Get(DD_SCREEN_WIDTH);
 	int scrheight = Get(DD_SCREEN_HEIGHT);
-	float xs = scrwidth/320.0f, ys = scrheight/200.0f;
+	float /*xs = scrwidth/320.0f,*/ ys = scrheight/200.0f;
 
 	// Let's set up a scissor box to clip the map lines and stuff.
 	// Store the old scissor state.
@@ -1536,7 +1687,7 @@ void AM_drawFragsTable(void)
 		// A colon.
 		M_WriteText2(320 - w - 5, y, ":", hu_font_a, -1, -1, -1);
 		// The frags count.
-		itoa(totalFrags[choose], tmp, 10);
+		sprintf(tmp, "%i", totalFrags[choose]);
 		M_WriteText2(320 - w, y, tmp, hu_font_a, 1, 1, 1);
 		// Mark to ignore in the future.
 		totalFrags[choose] = FRAGS_DRAWN;
@@ -1569,4 +1720,5 @@ void AM_Drawer (void)
 	if(cfg.counterCheat) AM_drawCounters();
 	if(deathmatch) AM_drawFragsTable();
 }
+
 

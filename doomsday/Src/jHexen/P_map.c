@@ -2365,3 +2365,4 @@ boolean P_ChangeSector (sector_t *sector, int crunch)
 	return nofit;
 }
 
+

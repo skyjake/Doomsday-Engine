@@ -1,4 +1,4 @@
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
 #include "R_local.h"
 #include "settings.h"
@@ -226,7 +226,7 @@ void R_DrawPlayerSprites(ddplayer_t *viewplr)
 #endif
 
 
-void R_Init(void)
+void R_InitTranslationTables(void)
 {
 	byte	*translationtables = (byte*) Get(DD_TRANSLATIONTABLES_ADDRESS);
 	int		i;
@@ -379,3 +379,4 @@ void H_SetFilter(int filter)
 {
 	GL_SetFilter(H_GetFilterColor(filter));		
 }
+

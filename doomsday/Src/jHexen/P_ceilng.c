@@ -292,3 +292,4 @@ int EV_CeilingCrushStop(line_t *line, byte *args)
 	}
 	return rtn;
 }
+

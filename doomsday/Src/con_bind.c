@@ -29,15 +29,13 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
+typedef struct {
 	event_t	event;
 	int		flags;
 	char	*command;
 } binding_t;
 
-typedef struct
-{
+typedef struct {
 	int		key;	// DDKEY
 	char	*name;
 } keyname_t;
@@ -80,6 +78,8 @@ static keyname_t keyNames[] =
 	{ DDKEY_END,		"end" },
 	{ DDKEY_BACKSPACE,	"bkspc" },
 	{ ' ',				"space" },
+	{ ';',				"smcln" },
+	{ '\"',				"quote" },
 	{ DDKEY_F10,		"f10" },
 	{ DDKEY_F11,		"f11" },
 	{ DDKEY_F12,		"f12" },
@@ -213,7 +213,10 @@ void B_DeleteBindingIdx(int index)
 
 	free(binds[index].command);
 	if(index < numBinds-1) // If not the last one, do some rollback.
-		memmove(binds+index, binds+index+1, sizeof(binding_t)*(numBinds-index-1));
+	{
+		memmove(binds+index, binds+index+1,
+				sizeof(binding_t) * (numBinds-index-1));
+	}
 	binds = realloc(binds, sizeof(binding_t)* --numBinds);
 }
 
@@ -236,7 +239,8 @@ void B_Bind(event_t *event, char *command)
 	bnd->command = realloc(bnd->command, strlen(command)+1);
 	strcpy(bnd->command, command);
 
-//	Con_Printf( "B_Bind: evtype:%d data:%d cmd:%s\n", bnd->event.type, bnd->event.data1, bnd->command);
+//	Con_Printf( "B_Bind: evtype:%d data:%d cmd:%s\n", bnd->event.type,
+//	bnd->event.data1, bnd->command);
 }
 
 /*
@@ -244,9 +248,9 @@ void B_Bind(event_t *event, char *command)
  */
 void B_ClearBinding(char *command)
 {
-	int		i;
+	int i;
 
-	for(i=0; i<numBinds; i++)
+	for(i = 0; i < numBinds; i++)
 		if(!stricmp(binds[i].command, command))
 			B_DeleteBindingIdx(i--);
 }
@@ -422,12 +426,6 @@ int CCmdBind(int argc, char **argv)
 	int repeat = !stricmp(argv[0], "bindr") || !stricmp(argv[0], "safebindr");
 	int safe = !strnicmp(argv[0], "safe", 4);
 
-/*	{
-		int i;
-		for(i=0; i<argc; i++)
-			Con_Printf( "%s ", argv[i]);
-		Con_Printf( "\n");
-	}*/
 	if(argc < 2 || argc > 3)
 	{
 		Con_Printf( "Usage: %s (event) (cmd)\n", argv[0]);
@@ -528,13 +526,15 @@ int CCmdListBindings(int argc, char **argv)
 
 void B_WriteToFile(FILE *file)
 {
-	int		i;
-	char	buffer[20];
+	int i;
+	char buffer[20];
 
-	for(i=0; i<numBinds; i++)
+	for(i = 0; i < numBinds; i++)
 	{
 		B_EventBuilder(buffer, &binds[i].event, false);
-		fprintf(file, "bind %s \"", buffer);
+		fprintf(file, "bind ");
+		fprintf(file, "%s", buffer);
+		fprintf(file, " \"");
 		M_WriteTextEsc(file, binds[i].command);
 		fprintf(file, "\"\n");
 	}
@@ -574,3 +574,4 @@ int DD_GetKeyCode(const char *key)
 	int code = getByShortName(key);
 	return code? code : key[0];
 }
+

@@ -531,3 +531,4 @@ static boolean DeactivateThing(mobj_t *mobj)
 	}
 	return true;
 }
+

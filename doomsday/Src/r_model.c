@@ -24,7 +24,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <io.h>
+#include "de_platform.h"
+
 #include <ctype.h>
 #include <math.h>
 
@@ -83,8 +84,6 @@ float avertexnormals[NUMVERTEXNORMALS][3] = {
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int	mdefCount = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -573,6 +572,26 @@ void R_LoadModelDMD(DFILE *file, model_t *mo)
 }
 
 //===========================================================================
+// R_RegisterModelSkin
+//===========================================================================
+void R_RegisterModelSkin(model_t *mdl, int index)
+{
+	filename_t buf;
+
+	memset(buf, 0, sizeof(buf));
+	memcpy(buf, mdl->skins[index].name, 64);
+	
+	mdl->skins[index].id = R_RegisterSkin(buf, mdl->fileName, 
+		mdl->skins[index].name);
+
+	if(mdl->skins[index].id < 0)
+	{
+		// Not found!
+		VERBOSE( Con_Printf("  %s (#%i) not found.\n", buf, index) );
+	}
+}
+
+//===========================================================================
 // R_LoadModel
 //	Finds the existing model or loads in a new one.
 //===========================================================================
@@ -581,7 +600,7 @@ int R_LoadModel(char *origfn)
 	int		i, index;
 	model_t	*mdl;
 	DFILE	*file = NULL;
-	char	buf[256], filename[256];
+	char	filename[256];
 		
 	if(!origfn[0]) return 0;	// No model specified.
 
@@ -644,29 +663,20 @@ int R_LoadModel(char *origfn)
 
 	END_PROF( PROF_LM_LOADERS );
 
-	BEGIN_PROF( PROF_LM_SKINS );
-
-	// Determine the actual (full) paths.
-	for(i = 0; i < mdl->info.numSkins; i++)
-	{
-		memset(buf, 0, sizeof(buf));
-		memcpy(buf, mdl->skins[i].name, 64);
-		
-		mdl->skins[i].id = R_RegisterSkin(buf, filename, mdl->skins[i].name);
-		if(mdl->skins[i].id < 0)
-		{
-			// Not found!
-			VERBOSE( Con_Printf("  %s (%s, #%i) not found.\n", buf, 
-				origfn, i) );
-		}
-	}
-
-	END_PROF( PROF_LM_SKINS );
-
 	// We're done.
 	mdl->loaded = true;
-	strcpy(mdl->fileName, filename);
+	mdl->allowTexComp = true;
 	F_Close(file);
+	strcpy(mdl->fileName, filename);
+
+	// Determine the actual (full) paths.
+	BEGIN_PROF( PROF_LM_SKINS );
+	for(i = 0; i < mdl->info.numSkins; i++)
+	{
+		R_RegisterModelSkin(mdl, i);
+	}
+	END_PROF( PROF_LM_SKINS );
+
 	return index;
 }
 
@@ -864,8 +874,8 @@ float R_GetModelHRange(int model, int frame, float *top, float *bottom)
 void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 {
 	submodeldef_t	*smf = &mf->sub[0];
-	model_frame_t	*mFrame = R_GetModelFrame(smf->model, smf->frame);
-	int				i, num = modellist[smf->model]->info.numVertices;
+/*	model_frame_t	*mFrame = R_GetModelFrame(smf->model, smf->frame); */
+	int				i; /*, num = modellist[smf->model]->info.numVertices; */
 	float			top, bottom, height;
 	float			scale;
 
@@ -913,6 +923,38 @@ float R_GetModelVisualRadius(modeldef_t *mf)
 }
 
 //===========================================================================
+// R_NewModelSkin
+//	Allocate room for a new skin file name. This allows using more than
+//	the maximum number of skins.
+//===========================================================================
+short R_NewModelSkin(model_t *mdl, const char *fileName)
+{
+	int added = mdl->info.numSkins, i;
+
+	mdl->skins = realloc(mdl->skins, sizeof(dmd_skin_t) 
+		* ++mdl->info.numSkins);
+	memset(mdl->skins + added, 0, sizeof(dmd_skin_t));
+	strncpy(mdl->skins[added].name, fileName, 64);
+	R_RegisterModelSkin(mdl, added);
+
+	// Did we get a dupe?
+	for(i = 0; i < mdl->info.numSkins - 1; i++)
+	{
+		if(mdl->skins[i].id == mdl->skins[added].id)
+		{
+			// This is the same skin file.
+			// We did a lot of unnecessary work...
+			mdl->info.numSkins--;
+			mdl->skins = realloc(mdl->skins, sizeof(dmd_skin_t) 
+				* mdl->info.numSkins);
+			return i;
+		}
+	}
+
+	return added;
+}
+
+//===========================================================================
 // R_GetIDModelDef
 //	Create a new modeldef or find an existing one. This is for ID'd models.
 //===========================================================================
@@ -952,9 +994,9 @@ modeldef_t *R_GetModelDef(int state, float intermark, int select)
 			&& models[i].intermark == intermark
 			&& models[i].select == select) 
 		{
-			// This is an exact match; use it.
-			models[i].order = mdefCount++;
-			return models + i;
+			// Models are loaded in reverse order; this one already has 
+			// a model.
+			return NULL;
 		}
 	
 	// This is impossible, but checking won't hurt...
@@ -963,7 +1005,6 @@ modeldef_t *R_GetModelDef(int state, float intermark, int select)
 	md = models + nummodels++;
 	memset(md, 0, sizeof(*md));
 	// Set initial data.
-	md->order = mdefCount++;
 	md->state = &states[state];
 	md->intermark = intermark;
 	md->select = select;
@@ -1003,12 +1044,7 @@ void R_SetupModel(ded_model_t *def)
 			def->selector);
 		END_PROF( PROF_GET_MODEL_DEF );
 
-		if(!modef) 
-		{
-			Con_Message("R_SetupModel: Invalid: %s +%i.\n", def->state, 
-				def->off);
-			return; // Can't get a modef, quit!
-		}
+		if(!modef) return; // Can't get a modef, quit!
 	}
 
 	BEGIN_PROF( PROF_DATA_INIT );
@@ -1053,7 +1089,16 @@ void R_SetupModel(ded_model_t *def)
 		if(sub->framerange < 1) sub->framerange = 1;
 		// Submodel-specific flags cancel out model-scope flags!
 		sub->flags = model_scope_flags ^ subdef->flags;
-		sub->skin = subdef->skin;
+		if(subdef->skinfilename.path[0])
+		{
+			// A specific file name has been given for the skin.
+			sub->skin = R_NewModelSkin(modellist[sub->model], 
+				subdef->skinfilename.path);
+		}
+		else
+		{
+			sub->skin = subdef->skin;
+		}
 		sub->skinrange = subdef->skinrange;
 		// Skin range must always be greater than zero.
 		if(sub->skinrange < 1) sub->skinrange = 1;
@@ -1064,6 +1109,13 @@ void R_SetupModel(ded_model_t *def)
 			subdef->filename.path, NULL);
 
 		END_PROF( PROF_REGISTER_SKIN );
+
+		// Should we allow texture compression with this model?
+		if(sub->flags & MFF_NO_TEXCOMP)
+		{
+			// All skins of this model will no longer use compression.
+			modellist[sub->model]->allowTexComp = false;
+		}
 	}
 
 	BEGIN_PROF( PROF_SCALING );
@@ -1096,41 +1148,41 @@ void R_SetupModel(ded_model_t *def)
 		else // Must check intermark; smallest wins!
 		{
 			modeldef_t *other = (modeldef_t*) modef->state->model;
-			if(modef->intermark <= other->intermark // Should never be ==
-				&& modef->select == other->select
+			if((modef->intermark <= other->intermark // Should never be ==
+				&& modef->select == other->select)
 				|| modef->select < other->select) // Smallest selector?
 				modef->state->model = modef;
 		}
 	}
 
-	// Particle offset?
-	if(modef->flags & MFF_PARTICLE_SUB1	
-		&& modef->sub[1].model)
+	// Calculate the particle offset for each submodel.
+	for(i = 0, sub = modef->sub; i < MAX_FRAME_MODELS; i++, sub++)
 	{
-		R_GetModelBounds(modef->sub[1].model, modef->sub[1].frame, min, max);
-		// Apply the various scalings and offsets.
-		for(i = 0; i < 3; i++)
+		if(!sub->model) 
 		{
-			// The coordinate systems are mixed up badly...
-			// MD2:        +Z is up
-			// Offset/DGL: +Y is up
-			// Game:       +Z is up
-			k = i; //i==1? 2 : i==2? 1 : 0;
-			modef->ptcoffset[i] = ((max[k] + min[k])/2
-				+ modef->sub[1].offset[i]) * modef->scale[i] 
-				+ modef->offset[i];
+			memset(modef->ptcoffset[i], 0, sizeof(modef->ptcoffset[i]));
+			continue;
 		}
-	}
-	else
-	{
-		memset(modef->ptcoffset, 0, sizeof(modef->ptcoffset));
+	
+		R_GetModelBounds(sub->model, sub->frame, min, max);
+
+		// Apply the various scalings and offsets.
+		for(k = 0; k < 3; k++)
+		{
+			modef->ptcoffset[i][k] = ((max[k] + min[k])/2 + sub->offset[k]) 
+				* modef->scale[k] + modef->offset[k];
+		}
 	}
 
 	// Calculate visual radius for shadows.
 	if(def->shadowradius)
+	{
 		modef->visualradius = def->shadowradius;
+	}
 	else
+	{
 		modef->visualradius = R_GetModelVisualRadius(modef);
+	}
 
 	END_PROF( PROF_SCALING );
 }
@@ -1174,7 +1226,7 @@ void R_InitModels(void)
 
 	// Read in the model files and their data, 'n stuff.
 	// Use the latest definition available for each sprite ID.
-	for(i = 0; i < defs.count.models.num; i++) 
+	for(i = defs.count.models.num - 1; i >= 0; --i) 
 	{
 		Con_Progress(1, PBARF_DONTSHOW);
 		R_SetupModel(defs.models + i);
@@ -1185,15 +1237,15 @@ void R_InitModels(void)
 	// is important. We want to allow "patch" definitions, right?
 	
 	// For each modeldef we will find the "next" def.
-	for(i = 0, me = models; i < nummodels; i++, me++)
+	for(i = nummodels - 1, me = models + i; i >= 0; --i, --me)
 	{
 		minmark = 2; // max = 1, so this is "out of bounds".
 		closest = NULL;
-		for(k = 0, other = models; k < nummodels; k++, other++)
+		for(k = nummodels - 1, other = models + k; k >= 0; --k, --other)
 		{
 			// Same state and a bigger order are the requirements.
 			if(other->state == me->state 
-				&& other->order > me->order // Loaded after me.
+				&& other->def > me->def // Defined after me.
 				&& other->intermark > me->intermark
 				&& other->intermark < minmark)
 			{
@@ -1205,16 +1257,16 @@ void R_InitModels(void)
 	}
 
 	// Create selectlinks.
-	for(i = 0, me = models; i < nummodels; i++, me++)
+	for(i = nummodels - 1, me = models + i; i >= 0; --i, --me)
 	{
 		minsel = DDMAXINT;
 		closest = NULL;
 		// Start scanning from the next definition.
-		for(k = 0, other = models; k < nummodels; k++, other++)
+		for(k = nummodels - 1, other = models + k; k >= 0; --k, --other)
 		{
 			// Same state and a bigger order are the requirements.
 			if(other->state == me->state 
-				&& other->order > me->order // Loaded after me.
+				&& other->def > me->def // Defined after me.
 				&& other->select > me->select
 				&& other->select < minsel
 				&& other->intermark >= me->intermark)
@@ -1365,4 +1417,5 @@ void R_PrecacheSkinsForMobj(mobj_t *mo)
 		R_PrecacheModelSkins(modef);
 	}
 }
+
 

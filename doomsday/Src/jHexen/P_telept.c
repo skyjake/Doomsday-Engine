@@ -191,3 +191,4 @@ boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
 	if (!mo) Con_Error("Can't find teleport mapspot\n");
 	return P_Teleport(thing, mo->x, mo->y, mo->angle, fog);
 }
+

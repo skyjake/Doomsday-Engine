@@ -265,7 +265,7 @@ int Rend_SegFacingPoint(float v1[2], float v2[2], float pnt[2])
 	return 0;	// Facing away.
 }
 
-static int __cdecl DivSortAscend(const void *e1, const void *e2)
+static int C_DECL DivSortAscend(const void *e1, const void *e2)
 {
 	float f1 = *(float*) e1, f2 = *(float*) e2;
 
@@ -274,7 +274,7 @@ static int __cdecl DivSortAscend(const void *e1, const void *e2)
 	return 0;
 }
 
-static int __cdecl DivSortDescend(const void *e1, const void *e2)
+static int C_DECL DivSortDescend(const void *e1, const void *e2)
 {
 	float f1 = *(float*) e1, f2 = *(float*) e2;
 
@@ -465,7 +465,6 @@ int Rend_MidTexturePos(float *top, float *bottom, float *texoffy,
 					   float tcyoff, boolean lower_unpeg)
 {
 	float openingTop = *top, openingBottom = *bottom;
-	float offset = 0;	
 
 	if(openingTop <= openingBottom) return false;
 
@@ -499,7 +498,8 @@ int Rend_MidTexturePos(float *top, float *bottom, float *texoffy,
 //===========================================================================
 // Rend_RenderWallSeg
 //	The sector height should've been checked by now.
-//	This seriously needs to be rewritten!
+//	This seriously needs to be rewritten! Witness the accumulation of hacks
+//	on kludges...
 //===========================================================================
 void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 {
@@ -556,7 +556,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 	// Calculate the color at both vertices.
 	sectorlight = Rend_SectorLight(frontsec);
-	RL_VertexColors(&quad, sectorlight, frontsec->rgb);
+	RL_VertexColors(&quad, sectorlight, R_GetSectorLightColor(frontsec));
 
 	END_PROF( PROF_REND_WALLSEG_1 );
 
@@ -589,6 +589,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 		Rend_PolyTextureBlend(sid->midtexture, &quad);
 		RL_AddPoly(&quad);
+		Rend_RadioWallSection(seg, &quad);
 
 		BEGIN_PROF( PROF_REND_WALLSEG_CADD );
 		// This is guaranteed to be a solid segment.
@@ -622,6 +623,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			RL_AddPoly(&quad);
 		}
 	}
+	
 	// If there is a back sector we may need upper and lower walls.
 	if(backsec)	// A twosided seg?
 	{
@@ -713,10 +715,12 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 				Rend_PolyTextureBlend(sid->midtexture, &quad);
 				RL_AddPoly(&quad);
+				if(!texmask) Rend_RadioWallSection(seg, &quad);
 			}
 			END_PROF( PROF_REND_WALLSEG_4 );
 		}
 		BEGIN_PROF( PROF_REND_WALLSEG_5 );
+		
 		// Upper wall.
 		if(topvis && !(frontsec->ceilingpic == skyflatnum 
 			&& backsec->ceilingpic == skyflatnum)
@@ -767,10 +771,12 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 			Rend_PolyTextureBlend(sid->toptexture, &quad);
 			RL_AddPoly(&quad);
+			Rend_RadioWallSection(seg, &quad);
 
 			// Restore original type, height division may change this.
 			quad.type = RP_QUAD;
 		}
+		
 		// Lower wall.
 		// If no textures have been assigned to the segment, we won't
 		// draw anything.
@@ -822,6 +828,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			
 			Rend_PolyTextureBlend(sid->bottomtexture, &quad);
 			RL_AddPoly(&quad);
+			Rend_RadioWallSection(seg, &quad);
 		}
 		END_PROF( PROF_REND_WALLSEG_5 );
 	}
@@ -888,8 +895,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 		if(back->floorpic != skyflatnum || front->floorpic != skyflatnum)
 		{
 			// Do the floors create an occlusion?			
-			if(backh[0] > fronth[0] && vy <= backh[0]
-				|| backh[0] < fronth[0] && vy >= fronth[0])
+			if((backh[0] > fronth[0] && vy <= backh[0])	||
+			   (backh[0] < fronth[0] && vy >= fronth[0]))
 			{
 				C_AddViewRelOcclusion(startv, endv, 
 					MAX_OF(fronth[0], backh[0]), false); // Occlude down.
@@ -899,8 +906,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 		if(back->ceilingpic != skyflatnum || front->ceilingpic != skyflatnum)
 		{
 			// Do the ceilings create an occlusion?
-			if(backh[1] < fronth[1] && vy >= backh[1]
-				|| backh[1] > fronth[1] && vy <= fronth[1])
+			if((backh[1] < fronth[1] && vy >= backh[1]) ||
+			   (backh[1] > fronth[1] && vy <= fronth[1]))
 			{
 				C_AddViewRelOcclusion(startv, endv, 
 					MIN_OF(fronth[1], backh[1]), true); // Occlude up.
@@ -984,8 +991,8 @@ void Rend_RenderPlane
 	END_PROF( PROF_REND_SUB_PLANE_1 );
 
 	// Is the plane visible?
-	if(plane->isfloor && vy > height
-		|| !plane->isfloor && vy < height) 
+	if((plane->isfloor && vy > height) ||
+	   (!plane->isfloor && vy < height))
 	{
 		// Check for sky.
 		if(plane->pic == skyflatnum) 
@@ -1064,6 +1071,10 @@ void Rend_RenderSubsector(int ssecidx)
 	if(useDynLights) DL_ProcessSubsector(ssec);
 
 	END_PROF( PROF_REND_SUB_LIGHTS );
+
+	// Prepare for FakeRadio.
+	Rend_RadioInitForSector(sect);
+	Rend_RadioSubsectorEdges(ssec);
 
 	BEGIN_PROF( PROF_REND_SUB_OCCLUDE );
 
@@ -1299,3 +1310,4 @@ int CCmdFog(int argc, char **argv)
 	// Exit with a success.
 	return true;
 }
+

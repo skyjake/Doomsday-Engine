@@ -59,3 +59,12 @@ fixed_t FixedDiv2(fixed_t a, fixed_t b)
 }
 
 #endif
+
+fixed_t FixedDiv(fixed_t a, fixed_t b)
+{
+	if((abs(a)>>14) >= abs(b))
+	{
+		return((a^b)<0 ? DDMININT : DDMAXINT);
+	}
+	return(FixedDiv2(a, b));
+}

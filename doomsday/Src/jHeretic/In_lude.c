@@ -6,8 +6,8 @@
 ========================
 */
 
-#include "DoomDef.h"
-#include "soundst.h"
+#include "Doomdef.h"
+#include "Soundst.h"
 #include "settings.h"
 
 #define NUMTEAMS	4	// Four colors, four teams.
@@ -1058,3 +1058,4 @@ void IN_DrTextB(char *text, int x, int y)
 		}
 	}
 }
+

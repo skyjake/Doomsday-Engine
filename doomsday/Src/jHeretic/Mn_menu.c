@@ -2,17 +2,17 @@
 // MN_menu.c
 
 #include <ctype.h>
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "f_infine.h"
 #include "P_local.h"
 #include "R_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 #include "Mn_def.h"
 
 #define NUMSAVESLOTS	8
 
-#define		CVAR(typ, x)	(*(typ*)Con_GetVariable(x)->ptr)
+#define CVAR(typ, x)	(*(typ*)Con_GetVariable(x)->ptr)
 
 // Control flags.
 #define CLF_ACTION		0x1		// The control is an action (+/- in front).
@@ -35,7 +35,6 @@ typedef struct
 void S_LevelMusic(void);
 
 static char *yesno[2] = { "NO", "YES" };
-static char *onoff[2] = { "OFF", "ON" };
 
 // Private Functions
 static void InitFonts(void);
@@ -57,57 +56,26 @@ static boolean SCMouseXSensi(int option);
 static boolean SCMouseYSensi(int option);
 static boolean SCMouseLook(int option);
 static boolean SCMouseLookInverse(int option);
-static boolean SCInverseY(int option);
+//static boolean SCInverseY(int option);
 static boolean SCJoyLook(int option);
 static boolean SCPOVLook(int option);
 static boolean SCInverseJoyLook(int option);
-static boolean SCEnableJoy(int option);
 static boolean SCJoyAxis(int option);
-//static boolean SCYAxis(int option);
-//static boolean SCZAxis(int option);
 static boolean SCFullscreenMana(int option);
 static boolean SCFullscreenArmor(int option);
 static boolean SCFullscreenKeys(int option);
 static boolean SCLookSpring(int option);
 static boolean SCAutoAim(int option);
-static boolean SCSkyDetail(int option);
-static boolean SCUseModels(int option);
-static boolean SCMipmapping(int option);
-static boolean SCLinearRaw(int option);
-static boolean SCForceTexReload(int option);
-static boolean SCResSelector(int option);
-static boolean SCResMakeCurrent(int option);
-static boolean SCResMakeDefault(int option);
 static boolean SCStatusBarSize(int option);
-static boolean SCMusicDevice(int option);
 static boolean SCAlwaysRun(int option);
 static boolean SCAllowJump(int option);
 static boolean SCControlConfig(int option);
-static boolean SCJoySensi(int option);
 static boolean SCCrosshair(int option);
 static boolean SCCrosshairSize(int option);
-//static boolean SCBorderUpdate(int option);
-static boolean SCTexQuality(int option);
-static boolean SCFPSCounter(int option);
-static boolean SCIceCorpse(int option);
-static boolean SCDynLights(int option);
-static boolean SCDLBlend(int option);
-static boolean SCDLIntensity(int option);
-static boolean SCFlares(int option);
-static boolean SCFlareIntensity(int option);
-static boolean SCFlareSize(int option);
-static boolean SCSpriteAlign(int option);
-static boolean SCSpriteBlending(int option);
-static boolean SCSpriteLight(int option);
 static boolean SCOpenDCP(int option);
 static boolean SCMapKills(int option);
 static boolean SCMapItems(int option);
 static boolean SCMapSecrets(int option);
-
-static boolean SC3DSounds(int option);
-static boolean SCReverbVolume(int option);
-static boolean SCSfxFrequency(int option);
-static boolean SCSfx16bit(int option);
 
 static void DrawMainMenu(void);
 static void DrawEpisodeMenu(void);
@@ -115,10 +83,7 @@ static void DrawSkillMenu(void);
 static void DrawOptionsMenu(void);
 static void DrawOptions2Menu(void);
 static void DrawGameplayMenu(void);
-static void DrawGraphicsMenu(void);
 static void DrawHUDMenu(void);
-static void DrawEffectsMenu(void);
-static void DrawResolutionMenu(void);
 static void DrawMouseOptsMenu(void);
 static void DrawControlsMenu(void);
 static void DrawJoyConfigMenu(void);
@@ -260,7 +225,7 @@ Menu_t *CurrentMenu;
 int CurrentItPos;
 static int MenuEpisode;
 int MenuTime;
-static boolean soundchanged;
+//static boolean soundchanged;
 
 boolean askforquit;
 boolean typeofask;
@@ -507,82 +472,6 @@ static Menu_t GameplayMenu =
 	MN_DrTextA_CS, 9,
 	0, 5
 };
-
-/*static MenuItem_t GraphicsItems[] = 
-{
-	{ ITT_SETMENU, "RESOLUTION...", NULL, 0, MENU_RESOLUTION },
-	{ ITT_SETMENU, "EFFECTS...", NULL, 0, MENU_EFFECTS },
-	{ ITT_EFUNC, "3D MODELS :", SCUseModels, 0, MENU_NONE },
-	{ ITT_LRFUNC, "SKY DETAIL :", SCSkyDetail, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_LRFUNC, "MIPMAPPING :", SCMipmapping, 0, MENU_NONE },
-	{ ITT_EFUNC, "SMOOTH GFX :", SCLinearRaw, 0, MENU_NONE },
-	//{ ITT_EFUNC, "UPDATE BORDERS :", SCBorderUpdate, 0, MENU_NONE },
-	{ ITT_LRFUNC, "TEX QUALITY :", SCTexQuality, 0, MENU_NONE },
-	{ ITT_EFUNC, "FORCE TEX RELOAD", SCForceTexReload, 0, MENU_NONE }
-};
-
-static Menu_t GraphicsMenu =
-{
-	58, 30,
-	DrawGraphicsMenu,
-	10, GraphicsItems,
-	0,
-	MENU_OPTIONS,
-	MN_DrTextA_CS, 10,
-	0, 10
-};*/
-
-/*static MenuItem_t EffectsItems[] =
-{
-	{ ITT_EFUNC, "FPS COUNTER :", SCFPSCounter, 0, MENU_NONE },
-	{ ITT_EFUNC, "DYNAMIC LIGHTS :", SCDynLights, 0, MENU_NONE },
-	{ ITT_LRFUNC, "DYNLIGHT BLENDING :", SCDLBlend, 0, MENU_NONE },
-	{ ITT_EFUNC, "LIGHTS ON SPRITES :", SCSpriteLight, 0, MENU_NONE },
-	{ ITT_LRFUNC, "DYNLIGHT INTENSITY :", SCDLIntensity, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_LRFUNC, "LENS FLARES :", SCFlares, 0, MENU_NONE },
-	{ ITT_LRFUNC, "FLARE INTENSITY :", SCFlareIntensity, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_LRFUNC, "FLARE SIZE :", SCFlareSize, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_LRFUNC, "ALIGN SPRITES TO :", SCSpriteAlign, 0, MENU_NONE },
-	{ ITT_EFUNC, "SPRITE BLENDING :", SCSpriteBlending, 0, MENU_NONE }
-};
-
-static Menu_t EffectsMenu =
-{
-	60, 25,
-	DrawEffectsMenu,
-	16, EffectsItems,
-	0,
-	MENU_GRAPHICS,
-	MN_DrTextA_CS, 10,
-	0, 16
-};*/
-
-/*static MenuItem_t ResolutionItems[] =
-{
-	{ ITT_LRFUNC, "RESOLUTION :", SCResSelector, 0, MENU_NONE },
-	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_EFUNC, "USE", SCResMakeCurrent, 0, MENU_NONE },
-	{ ITT_EFUNC, "SET DEFAULT", SCResMakeDefault, 0, MENU_NONE }
-};
-
-static Menu_t ResolutionMenu =
-{
-	88, 60,
-	DrawResolutionMenu,
-	4, ResolutionItems,
-	0,
-	MENU_GRAPHICS,
-	MN_DrTextB_CS, ITEM_HEIGHT,
-	0, 4
-};*/
 
 static MenuItem_t ControlsItems[] =
 {
@@ -1728,176 +1617,6 @@ static boolean SCCrosshairSize(int option)
 	return true;
 }
 
-static boolean SCUseModels(int option)
-{
-	CVAR(int, "usemodels") ^= 1;
-	return true;
-}
-
-static boolean SCSkyDetail(int option)
-{
-	int skyDetail = Get(DD_SKY_DETAIL);
-
-	if(option == RIGHT_DIR)
-	{
-		if(skyDetail < 7)
-		{
-			skyDetail++;
-		}
-	}
-	else if(skyDetail > 3)
-	{
-		skyDetail--;
-	}
-	Rend_SkyParams(DD_SKY, DD_COLUMNS, skyDetail);
-	return true;
-}
-
-static boolean SCMipmapping(int option)
-{
-	int mipmapping = Get(DD_MIPMAPPING);
-
-	if(option == RIGHT_DIR)
-	{
-		if(mipmapping < 5) mipmapping++;
-	}
-	else if(mipmapping > 0) mipmapping--;
-
-	GL_TextureFilterMode(DD_TEXTURES, mipmapping);
-	return true;
-}
-
-static boolean SCLinearRaw(int option)
-{
-	int linearRaw = Get(DD_SMOOTH_IMAGES);
-
-	linearRaw ^= 1;
-	if(linearRaw)
-	{
-		P_SetMessage(&players[consoleplayer], "GRAPHICS SCREENS USE LINEAR INTERPOLATION", true);
-	}
-	else
-	{
-		P_SetMessage(&players[consoleplayer], "GRAPHICS SCREENS AREN'T INTERPOLATED", true);
-	}
-	S_LocalSound(sfx_chat, NULL);
-	GL_TextureFilterMode(DD_RAWSCREENS, linearRaw);
-	return true;
-}
-
-/*static boolean SCBorderUpdate(int option)
-{
-	cvar_t	*cv = Con_GetVariable("borderupd");
-
-	P_SetMessage(&players[consoleplayer], (*(int*) cv->ptr ^= 1)? 
-		"BORDERS UPDATED EVERY FRAME" : "BORDERS UPDATED WHEN NEEDED", true);
-	S_LocalSound(sfx_chat, NULL);
-	return true;
-}*/
-
-static void ChangeIntCVar(char *name, int delta)
-{
-	cvar_t	*cv = Con_GetVariable(name);
-	int		val = *(int*) cv->ptr;
-
-	val += delta;
-	if(val > cv->max) val = cv->max;
-	if(val < cv->min) val = cv->min;
-	*(int*) cv->ptr = val;
-}
-
-static boolean SCTexQuality(int option)
-{
-	ChangeIntCVar("r_texquality", option==RIGHT_DIR? 1 : -1);
-	return true;
-}
-
-static boolean SCForceTexReload(int option)
-{
-	Con_Execute("texreset", false);
-	P_SetMessage(&players[consoleplayer], "ALL TEXTURES DELETED", true);
-	return true;
-}
-
-static boolean SCFPSCounter(int option)
-{
-	cfg.showFPS ^= 1;
-	S_LocalSound(sfx_chat, NULL);
-	return true;
-}
-
-static boolean SCDynLights(int option)
-{
-	cvar_t	*cvDL = Con_GetVariable("dynlights");
-
-	P_SetMessage(&players[consoleplayer], (*(int*) cvDL->ptr ^= 1)? 
-		"DYNAMIC LIGHTS ENABLED" : "DYNAMIC LIGHTS DISABLED", true);
-	S_LocalSound(sfx_chat, NULL);
-	return true;
-}
-
-static boolean SCDLBlend(int option)
-{
-	ChangeIntCVar("dlblend", option==RIGHT_DIR? 1 : -1);
-	return true;
-}
-
-static boolean SCDLIntensity(int option)
-{
-	cvar_t	*cv = Con_GetVariable("dlfactor");
-	float	val = *(float*) cv->ptr;
-
-	val += option==RIGHT_DIR? .1f : -.1f;
-	if(val > cv->max) val = cv->max;
-	if(val < cv->min) val = cv->min;
-	*(float*) cv->ptr = val;
-	return true;
-}
-
-static boolean SCFlares(int option)
-{
-	ChangeIntCVar("flares", option==RIGHT_DIR? 1 : -1);
-	return true;
-}
-
-static boolean SCFlareIntensity(int option)
-{
-	ChangeIntCVar("flareintensity", option==RIGHT_DIR? 10 : -10);
-	return true;
-}
-
-static boolean SCFlareSize(int option)
-{
-	ChangeIntCVar("flaresize", option==RIGHT_DIR? 1 : -1);
-	return true;
-}
-
-static boolean SCSpriteAlign(int option)
-{
-	ChangeIntCVar("spralign", option==RIGHT_DIR? 1 : -1);
-	return true;
-}
-
-static boolean SCSpriteBlending(int option)
-{
-	cvar_t *cv = Con_GetVariable("sprblend");
-
-	P_SetMessage(&players[consoleplayer], (*(int*) cv->ptr ^= 1)? 
-		"ADDITIVE BLENDING FOR EXPLOSIONS" : "NO SPRITE BLENDING", true);
-	S_LocalSound(sfx_chat, NULL);
-	return true;
-}
-
-static boolean SCSpriteLight(int option)
-{
-	cvar_t *cv = Con_GetVariable("sprlight");
-
-	P_SetMessage(&players[consoleplayer], (*(int*) cv->ptr ^= 1)? 
-		"SPRITES LIT BY DYNAMIC LIGHTS" : "SPRITES NOT LIT BY LIGHTS", true);
-	S_LocalSound(sfx_chat, NULL);
-	return true;
-}
-
 //---------------------------------------------------------------------------
 //
 // PROC DrawMouseOptsMenu
@@ -1990,8 +1709,8 @@ static void DrawControlsMenu(void)
 		{
 			if(token[0] == '+')
 				spacecat(prbuff, token+1);
-			if(token[0] == '*' && !(ctrl->flags & CLF_REPEAT) || token[0] == '-')
-				spacecat(prbuff, token);
+			if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT)) ||
+			   token[0] == '-') spacecat(prbuff, token);
 			token = strtok(NULL, " ");
 		}
 		strupr(prbuff);
@@ -2007,18 +1726,6 @@ static void DrawControlsMenu(void)
 
 		MN_DrTextA_CS(prbuff, menu->x+134, menu->y + i*menu->itemHeight);
 	}
-}
-
-static boolean SCJoySensi(int option)
-{
-	int *val = &CVAR(int, "i_joySensi");
-
-	if(option == RIGHT_DIR)
-	{
-		if(*val < 9) (*val)++;
-	}
-	else if(*val > 1) (*val)--;
-	return true;
 }
 
 static void DrawJoyConfigMenu()
@@ -2189,7 +1896,11 @@ static boolean SCSaveGame(int option)
 {
 	char *ptr;
 
-	if(!usergame)
+	// Can't save if not in a level.
+	if(!usergame
+		|| IS_CLIENT
+		|| Get(DD_PLAYBACK) 
+		|| gamestate != GS_LEVEL) 
 	{
 		// Can't save if not playing.
 		FileMenuKeySteal = false;
@@ -2262,76 +1973,6 @@ static boolean SCSkill(int option)
 	MN_DeactivateMenu();
 	return true;
 }
-
-//---------------------------------------------------------------------------
-//
-// PROC SCMouseSensi
-//
-//---------------------------------------------------------------------------
-
-static boolean SCMouseSensi(int option)
-{
-	if(option == RIGHT_DIR)
-	{
-		if(cfg.mouseSensiX < 9)
-		{
-			cfg.mouseSensiX++;
-		}
-	}
-	else if(cfg.mouseSensiX)
-	{
-		cfg.mouseSensiX--;
-	}
-	cfg.mouseSensiY = cfg.mouseSensiX;
-	return true;
-}
-
-/*//---------------------------------------------------------------------------
-//
-// PROC SCSfxVolume
-//
-//---------------------------------------------------------------------------
-
-static boolean SCSfxVolume(int option)
-{
-	if(option == RIGHT_DIR)
-	{
-		if(snd_MaxVolume < 15)
-		{
-			snd_MaxVolume++;
-		}
-	}
-	else if(snd_MaxVolume)
-	{
-		snd_MaxVolume--;
-	}
-	S_SetMaxVolume(false); // don't recalc the sound curve, yet
-	soundchanged = true; // we'll set it when we leave the menu
-	return true;
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC SCMusicVolume
-//
-//---------------------------------------------------------------------------
-
-static boolean SCMusicVolume(int option)
-{
-	if(option == RIGHT_DIR)
-	{
-		if(snd_MusicVolume < 15)
-		{
-			snd_MusicVolume++;
-		}
-	}
-	else if(snd_MusicVolume)
-	{
-		snd_MusicVolume--;
-	}
-	S_SetMusicVolume();
-	return true;
-}*/
 
 static boolean SCSfxVolume(int option)
 {
@@ -2522,12 +2163,6 @@ static boolean SCInverseJoyLook(int option)
 	return true;
 }
 
-static boolean SCEnableJoy(int option)
-{
-	CVAR(int, "i_usejoystick") ^= 1;
-	return true;
-}
-
 static boolean SCJoyAxis(int option)
 {
 	if(option & RIGHT_DIR)
@@ -2578,6 +2213,7 @@ static boolean SCMouseLookInverse(int option)
 	return true;
 }
 
+/*
 static boolean SCInverseY(int option)
 {
 	int val = Get(DD_MOUSE_INVERSE_Y);
@@ -2588,6 +2224,7 @@ static boolean SCInverseY(int option)
 	S_LocalSound(sfx_chat, NULL);
 	return true;
 }
+*/
 
 //---------------------------------------------------------------------------
 //
@@ -2791,10 +2428,7 @@ boolean MN_Responder(event_t *event)
 	int key;
 	int i;
 	MenuItem_t *item;
-	extern boolean automapactive;
 	char *textBuffer;
-
-	//if(F_Responder(event)) return true;
 
 	if(event->data1 == DDKEY_RSHIFT)
 	{

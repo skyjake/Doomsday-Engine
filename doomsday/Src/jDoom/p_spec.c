@@ -15,6 +15,12 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2004/01/08 12:25:16  skyjake
+// Merged from branch-nix
+//
+// Revision 1.4.4.1  2003/11/19 17:07:14  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.4  2003/07/29 16:35:53  skyjake
 // Disabled old texture anim code
 //
@@ -1408,3 +1414,4 @@ void P_SpawnSpecials (void)
 	// Init extended generalized lines and sectors.
 	XG_Init();
 }
+

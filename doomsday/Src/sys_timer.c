@@ -23,9 +23,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
+#include "de_platform.h"
+
+#ifdef WIN32
+#	include <mmsystem.h>
+#endif
+
+#ifdef UNIX
+#	include <SDL.h>
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -48,8 +54,6 @@ float ticsPerSecond = TICSPERSEC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean	timerInstalled = false;
-
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -57,8 +61,9 @@ static boolean	timerInstalled = false;
 //==========================================================================
 void Sys_ShutdownTimer(void)
 {
-	timerInstalled = false;
+#ifdef WIN32
 	timeEndPeriod(1);
+#endif
 }
 
 //==========================================================================
@@ -67,7 +72,9 @@ void Sys_ShutdownTimer(void)
 void Sys_InitTimer(void)
 {
 	Con_Message("Sys_InitTimer.\n");
+#ifdef WIN32	
 	timeBeginPeriod(1);
+#endif
 }
 
 //===========================================================================
@@ -78,7 +85,12 @@ unsigned int Sys_GetRealTime (void)
 {
 	static boolean first = true;
 	static DWORD start;
+#ifdef WIN32
 	DWORD now = timeGetTime();
+#endif
+#ifdef UNIX
+	Uint32 now = SDL_GetTicks();
+#endif
 
 	if(first)
 	{

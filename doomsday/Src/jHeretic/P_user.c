@@ -1,10 +1,10 @@
 
 // P_user.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
 #include "p_view.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 
 void P_PlayerNextArtifact(player_t *player);
@@ -613,13 +613,15 @@ void P_CheckPlayerJump(player_t *player)
 	ticcmd_t *cmd = &player->cmd;
 
 	if(cfg.jumpEnabled 
+		&& (!IS_CLIENT || netJumpPower > 0)
 		&& (P_IsPlayerOnGround(player)
 			|| player->plr->mo->flags2 & MF2_ONMOBJ)
 		&& (cmd->arti != 0xff && cmd->arti & AFLAG_JUMP)
 		&& player->jumpTics <= 0)
 	{
 		// Jump, then!
-		player->plr->mo->momz = FRACUNIT * 9;
+		player->plr->mo->momz = FRACUNIT 
+			* (IS_CLIENT? netJumpPower : cfg.jumpPower);
 		player->plr->mo->flags2 &= ~MF2_ONMOBJ;
 		player->jumpTics = 24;
 	}
@@ -791,7 +793,7 @@ void P_PlayerThink(player_t *player)
 	// Selector 7 = Mace
 	// Selector 8 = Gauntlets
 	// Selector 9 = Beak
-	plrmo->selector = plrmo->selector & ~DDMOBJ_SELECTOR_MASK 
+	plrmo->selector = (plrmo->selector & ~DDMOBJ_SELECTOR_MASK)
 		| (player->readyweapon + 1);
 
 	P_CameraThink(player); // $democam
@@ -864,12 +866,12 @@ void P_PlayerThink(player_t *player)
 		// The actual changing of the weapon is done when the weapon
 		// psprite can do it (A_WeaponReady), so it doesn't happen in
 		// the middle of an attack.
-		newweapon = (cmd->buttons&BT_WEAPONMASK)>>BT_WEAPONSHIFT;
-		if(newweapon == wp_staff && player->weaponowned[wp_gauntlets]
+		newweapon = (cmd->buttons & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
+		/*if(newweapon == wp_staff && player->weaponowned[wp_gauntlets]
 			&& !(player->readyweapon == wp_gauntlets))
 		{
 			newweapon = wp_gauntlets;
-		}
+		}*/
 		if(player->weaponowned[newweapon]
 			&& newweapon != player->readyweapon)
 		{
@@ -1318,7 +1320,7 @@ boolean P_UseArtifact(player_t *player, artitype_t arti)
 			angle = player->plr->mo->angle>>ANGLETOFINESHIFT;
 			mo = P_SpawnMobj(player->plr->mo->x+24*finecosine[angle],
 				player->plr->mo->y+24*finesine[angle], player->plr->mo->z - 15*FRACUNIT*
-				(player->plr->mo->flags2&MF2_FEETARECLIPPED != 0), MT_FIREBOMB);
+				((player->plr->mo->flags2 & MF2_FEETARECLIPPED) != 0), MT_FIREBOMB);
 			mo->target = player->plr->mo;
 			break;
 		case arti_egg:
@@ -1343,4 +1345,5 @@ boolean P_UseArtifact(player_t *player, artitype_t arti)
 	}
 	return(true);
 }
+
 

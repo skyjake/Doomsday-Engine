@@ -4753,7 +4753,9 @@ void C_DECL A_IceCheckHeadDone(mobj_t *actor)
 //
 //============================================================================
 
+#ifdef WIN32
 #pragma optimize("g", off)
+#endif
 void C_DECL A_FreezeDeathChunks(mobj_t *actor)
 {
 	int i;
@@ -4816,7 +4818,9 @@ void C_DECL A_FreezeDeathChunks(mobj_t *actor)
 	P_SetMobjState(actor, S_FREETARGMOBJ);
 	actor->flags2 |= MF2_DONTDRAW;
 }
+#ifdef WIN32
 #pragma optimize("", on)
+#endif
 
 //===========================================================================
 // Korax Variables
@@ -5322,4 +5326,5 @@ void C_DECL A_KBoltRaise(mobj_t *actor)
 		// Maybe cap it off here
 	}
 }
+
 

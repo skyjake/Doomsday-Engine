@@ -88,9 +88,9 @@ static boolean iwadLoaded = false;
 
 static grouping_t groups[] =
 {
-	"", "",
-	"F_START", "F_END",		// Flats
-	"S_START", "S_END"		// Sprites
+	{ "", "" },
+	{ "F_START", "F_END" },		// Flats
+	{ "S_START", "S_END" }		// Sprites
 };
 
 static lumpinfo_t *PrimaryLumpInfo;
@@ -99,7 +99,6 @@ static void **PrimaryLumpCache;
 static lumpinfo_t *AuxiliaryLumpInfo;
 static int AuxiliaryNumLumps;
 static void **AuxiliaryLumpCache;
-static int AuxiliaryHandle = 0;
 boolean AuxiliaryOpened = false;
 
 // CODE --------------------------------------------------------------------
@@ -572,7 +571,10 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 		strcpy(buff + strlen(buff)-3, "gwa");
 
 		// If GL data exists, load it.
-		if(F_Access(buff)) W_AddFile(buff, allowDuplicate);
+		if(F_Access(buff))
+		{
+			W_AddFile(buff, allowDuplicate);
+		}
 	}	
 
 	return true;
@@ -586,8 +588,8 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 
 boolean W_RemoveFile(char *filename)
 {
-	int				idx = W_RecordGetIdx(filename), oldnum = numlumps;
-	filerecord_t	*rec;
+	int			 idx = W_RecordGetIdx(filename);
+	filerecord_t *rec;
 
 	if(idx == -1) return false;	// No such file loaded.
 	rec = records + idx;
@@ -935,6 +937,9 @@ int W_CheckNumForName(char *name)
 	char name8[9];
 	int v1, v2;
 	lumpinfo_t *lump_p;
+
+	// If the name string is empty, don't bother to search.
+	if(!name[0]) return -1;
 
 	// Make the name into two integers for easy compares
 	strncpy(name8, name, 8);

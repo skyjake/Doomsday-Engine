@@ -10,18 +10,23 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <lzss.h>
-#include "doomdef.h"
-#include "dstrings.h"
-#include "f_infine.h"
+#include <LZSS.h>
+
+#ifdef __JHERETIC__
+#include "Doomdef.h"
+#include "Dstrings.h"
+#endif
 
 #ifdef __JDOOM__
+#include "doomdef.h"
+#include "dstrings.h"
 #include "p_local.h"
 #include "g_game.h"
 #include "doomstat.h"
 #include "r_state.h"
 #endif 
 
+#include "f_infine.h"
 #include "p_oldsvg.h"
 #include "d_net.h"
 #include "p_svtexarc.h"
@@ -53,6 +58,11 @@
 #define MAX_ARCHIVED_THINGS		1024
 
 // TYPES -------------------------------------------------------------------
+
+typedef enum lineclass_e {
+	lc_normal,
+	lc_xg1
+} lineclass_t;
 
 typedef struct
 {
@@ -456,7 +466,7 @@ void SV_ReadMobj(mobj_t *mo)
 		// Version 2 has mobj archive numbers.
 		SV_SetArchiveThing(mo, SV_ReadShort());
 		// The reference will be updated after all mobjs are loaded.
-		mo->target = (mobj_t*) SV_ReadShort();
+		mo->target = (mobj_t*)(int) SV_ReadShort();
 	}
 
     // Info for drawing: position.
@@ -639,15 +649,9 @@ void SV_ReadSector(sector_t *sec)
 	if(type == sc_xg1) SV_ReadXGSector(sec);
 }
 
-enum 
-{
-	lc_normal,
-	lc_xg1
-} lineclass_e;
-
 void SV_WriteLine(line_t *li)
 {
-	enum lineclass_e type = li->xg? lc_xg1 : lc_normal;
+	lineclass_t type = li->xg? lc_xg1 : lc_normal;
 	int i;
 	side_t *si;
 
@@ -1276,6 +1280,8 @@ void SV_Init(void)
 	// Check that the save paths exist.
 	M_CheckPath(save_path);
 	M_CheckPath(client_save_path);
+	M_TranslatePath(save_path, save_path);
+	M_TranslatePath(client_save_path, client_save_path);
 }
 
 void SV_SaveGameFile(int slot, char *str)

@@ -1,6 +1,6 @@
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 
 //==================================================================
 //==================================================================
@@ -481,3 +481,4 @@ int EV_BuildStairs(line_t *line, fixed_t stepDelta)
 	}
 	return(rtn);
 }
+

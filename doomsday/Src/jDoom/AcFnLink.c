@@ -81,3 +81,4 @@ actionlink_t actionlinks[] =
 	{ "A_XScream", A_XScream },
 	{ 0, 0 }
 };
+

@@ -91,3 +91,4 @@ byte gammatable[5][256] =
 
 int	usegamma;
 			 
+

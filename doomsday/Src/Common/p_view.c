@@ -14,7 +14,7 @@
 # include "d_config.h"
 # include "g_common.h"
 #elif __JHERETIC__
-# include "doomdef.h"
+# include "Doomdef.h"
 # include "settings.h"
 #elif __JHEXEN__
 # include "h2def.h"
@@ -201,3 +201,4 @@ void P_CalcHeight(player_t* player)
 		}
 	}
 }
+

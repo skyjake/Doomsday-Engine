@@ -704,7 +704,8 @@ void DL_CreateGlowLights
 	for(g = 0; g < 2; g++)
 	{
 		// Only do what's told.
-		if(g == 0 && !glow_ceil || g == 1 && !glow_floor) continue;
+		if((g == 0 && !glow_ceil) ||
+		   (g == 1 && !glow_floor)) continue;
 
 		// Calculate texture coords for the light.
 		// The horizontal direction is easy.
@@ -735,7 +736,7 @@ void DL_CreateGlowLights
 		}
 
 		dyn = DL_New(s, t);
-		dyn->texture = GL_PrepareGlowTexture();
+		dyn->texture = GL_PrepareLSTexture(LST_GRADIENT);
 		
 		GL_GetFlatColor(g? sect->floorpic : sect->ceilingpic, dyn->color);
 
@@ -911,7 +912,7 @@ int DL_NewLuminous(void)
 //===========================================================================
 lumobj_t *DL_GetLuminous(int index)
 {
-	if(!index) return NULL;
+	if(index <= 0 || index > numLuminous) return NULL;
 	return luminousList + index - 1;
 }
 
@@ -1047,8 +1048,8 @@ void DL_AddLuminous(mobj_t *thing)
 		}
 		else
 		{
-			lum->tex = lum->ceilTex = lum->floorTex 
-				= GL_PrepareLightTexture();
+			lum->tex = lum->ceilTex = lum->floorTex =
+				GL_PrepareLSTexture(LST_DYNAMIC);
 		}
 	}
 }
@@ -1134,8 +1135,8 @@ boolean DLIT_ContactFinder(line_t *line, void *data)
 		* FIX2FLT(line->dx)	- FIX2FLT(line->v1->x - light->lum->thing->x) 
 		* FIX2FLT(line->dy) ) / info->length;
 
-	if(source == line->frontsector && distance < 0
-		|| source == line->backsector && distance > 0)
+	if((source == line->frontsector && distance < 0) ||
+	   (source == line->backsector && distance > 0))
 	{
 		// Can't spread in this direction.
 		return true;
@@ -1569,7 +1570,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
 void DL_InitForNewFrame()
 {
 	sector_t	*seciter;
-	int			i, done = false;
+	int			i;
 
 	BEGIN_PROF( PROF_DYN_INIT_DEL );
 

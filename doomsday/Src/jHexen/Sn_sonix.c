@@ -532,3 +532,4 @@ void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume,
 	node->sequencePtr += seqOffset;
 	node->currentSoundID = currentSoundID;
 }
+

@@ -151,7 +151,9 @@ float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
 //	Determines on which side of dline the point is. Returns true if the
 //	point is on the line or on the right side.
 //==========================================================================
+#ifdef WIN32
 #pragma optimize("g", off)
+#endif
 int P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline)
 {
 /*
@@ -184,7 +186,8 @@ float P_FloatInterceptVertex
             (XB-XA)(YD-YC)-(YB-YA)(XD-XC)
 	*/
 
-	float r = ((ay-cy)*(dx-cx)-(ax-cx)*(dy-cy)) / ((bx-ax)*(dy-cy)-(by-ay)*(dx-cx));
+	float r = ((ay-cy)*(dx-cx)-(ax-cx)*(dy-cy))
+		/ ((bx-ax)*(dy-cy)-(by-ay)*(dx-cx));
 	/*
 	    XI=XA+r(XB-XA)
         YI=YA+r(YB-YA)
@@ -193,7 +196,9 @@ float P_FloatInterceptVertex
 	inter->y = ay + r*(by-ay);
 	return r;
 }
+#ifdef WIN32
 #pragma optimize("", on)
+#endif
 
 //===========================================================================
 // P_SectorBoundingBox
@@ -498,8 +503,9 @@ void P_UnlinkThing(mobj_t *thing)
 //	The given line might cross the thing. If necessary, link the mobj 
 //	into the line's ring.
 //===========================================================================
-boolean PIT_LinkToLines(line_t *ld, linelinker_data_t *data)
+boolean PIT_LinkToLines(line_t *ld, void *parm)
 {
+	linelinker_data_t *data = parm;
 	fixed_t bbox[4];
 	nodeindex_t nix;
 
@@ -623,114 +629,6 @@ void P_LinkThing(mobj_t *thing, byte flags)
 		// Link to all contacted lines.
 		P_LinkToLines(thing);
 	}
-}
-
-
-/*
-===============================================================================
-
-						BLOCK MAP ITERATORS
-
-For each line/thing in the given mapblock, call the passed function.
-If the function returns false, exit with false without checking anything else.
-Linkstore is collected before any callbacks are called (not done for line
-iterators since those can't change).
-
-===============================================================================
-*/
-
-//===========================================================================
-// P_BlockLinesIterator
-//	The validcount flags are used to avoid checking lines that are marked 
-//	in multiple mapblocks, so increment validcount before the first call 
-//	to P_BlockLinesIterator, then make one or more calls to it.
-//===========================================================================
-boolean P_BlockLinesIterator
-	(int x, int y, boolean(*func)(line_t*,void*), void *data)
-{
-	int			offset;
-	short		*list;
-	line_t		*ld;
-	int			i;
-	polyblock_t *polyLink, *polyNext;
-	seg_t		**tempSeg;
-	
-	if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
-		return true;
-
-	offset = y*bmapwidth+x;
-
-	polyLink = polyblockmap[offset];
-	while(polyLink)
-	{
-		polyNext = polyLink->next;
-		if(polyLink->polyobj)
-		{
-			if(polyLink->polyobj->validcount != validcount)
-			{
-				polyLink->polyobj->validcount = validcount;
-				tempSeg = polyLink->polyobj->segs;
-				for(i = 0; i < polyLink->polyobj->numsegs; i++, tempSeg++)
-				{
-					if((*tempSeg)->linedef->validcount == validcount)
-					{
-						continue;
-					}
-					(*tempSeg)->linedef->validcount = validcount;
-					if(!func((*tempSeg)->linedef, data))
-					{
-						return false;
-					}
-				}
-			}
-		}
-		polyLink = polyNext;
-	}
-
-	offset = *(blockmap+offset);
-
-	for ( list = blockmaplump+offset ; *list != -1 ; list++)
-	{
-		ld = LINE_PTR(*list);
-		if (ld->validcount == validcount)
-			continue;		// line has already been checked
-		ld->validcount = validcount;
-		
-		if(!func(ld, data)) return false;
-	}
-	
-	return true;		// everything was checked
-}
-
-//===========================================================================
-// P_BlockPolyobjsIterator
-//	The validcount flags are used to avoid checking polys
-//	that are marked in multiple mapblocks, so increment validcount 
-//	before the first call, then make one or more calls to it.
-//===========================================================================
-boolean P_BlockPolyobjsIterator
-	(int x, int y, boolean(*func)(polyobj_t*,void*), void *data)
-{
-	polyblock_t *polyLink, *polyNext;
-	
-	if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
-		return true;
-
-	polyLink = polyblockmap[y*bmapwidth + x];
-	while(polyLink)
-	{
-		polyNext = polyLink->next;
-		if(polyLink->polyobj)
-		{
-			if(polyLink->polyobj->validcount != validcount)
-			{
-				polyLink->polyobj->validcount = validcount;
-				if(!func(polyLink->polyobj, data)) return false;
-			}
-		}
-		polyLink = polyNext;
-	}
-	return true;
 }
 
 //===========================================================================
@@ -874,71 +772,6 @@ boolean P_SectorTouchingThingsIterator
 		}
 	}
 	DO_LINKS(it, end);	
-	return true;
-}
-
-//===========================================================================
-// P_SubsectorBoxIterator
-//	Returns false only if the iterator func returns false.
-//===========================================================================
-boolean P_SubsectorBoxIterator
-	(fixed_t *box, sector_t *sector, boolean (*func)(subsector_t*, void*), 
-	 void *parm)
-{
-	subsector_t *sub, **iter;
-	subsectorinfo_t *info;
-	fvertex_t minBox, maxBox;
-	static int localValidCount = 0;
-	int xl, xh, yl, yh, x, y;
-
-	// All iterated subsectors are within this bounding box.
-	minBox.x = box[BOXLEFT] >> FRACBITS;
-	minBox.y = box[BOXBOTTOM] >> FRACBITS;
-	maxBox.x = box[BOXRIGHT] >> FRACBITS;
-	maxBox.y = box[BOXTOP] >> FRACBITS;
-
-	// This is only used here.
-	localValidCount++;
-
-	// Blockcoords to check.
-	xl = (box[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
-	xh = (box[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
-	yl = (box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-	yh = (box[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
-
-	for(x = xl; x <= xh; x++)
-	{
-		for(y = yl; y <= yh; y++)
-		{
-			if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
-				continue;
-
-			if((iter = subsectorblockmap[x + y * bmapwidth]) == NULL)
-				continue;
-
-			for(; *iter; iter++)
-			{
-				sub = *iter;
-				info = SUBSECT_INFO(sub);
-
-				if(info->validcount != localValidCount)
-				{
-					info->validcount = localValidCount;
-
-					// Check the sector restriction.
-					if(sector && sub->sector != sector) continue;
-					
-					// Check the bounds.
-					if(sub->bbox[1].x < minBox.x
-						|| sub->bbox[0].x > maxBox.x
-						|| sub->bbox[1].y < minBox.y
-						|| sub->bbox[0].y > maxBox.y) continue;
-
-					if(!func(sub, parm)) return false;
-				}
-			}
-		}
-	}
 	return true;
 }
 
@@ -1200,92 +1033,3 @@ boolean P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
 //
 	return P_TraverseIntercepts ( trav, FRACUNIT );
 }
-
-
-/*------------OBSOLETE------------*/
-#if 0 
-//==========================================================================
-// CheckSectorLinks
-//	Checks that a sector's sectorlinks is OK (all the links are good, the
-//	ring is not looped).
-//==========================================================================
-static void CheckSectorLinks(sector_t *sector)
-{
-#if _DEBUG // Only if debugging.
-	mobj_t *mo, *last;
-	
-	if(!sector->thinglist) return;
-
-	validcount++;
-	for(mo = sector->thinglist; mo; mo = mo->snext)
-	{
-		last = mo;
-		if(mo->valid == validcount)
-		{
-			I_Error("CheckSectorLinks: Illegal forward ring!\n");
-		}
-		mo->valid = validcount;
-	}
-
-	validcount++;
-	for(mo = last; mo; mo = mo->sprev)
-	{
-		if(mo->valid == validcount)
-		{
-			I_Error("CheckSectorLinks: Illegal backward ring!\n");
-		}
-		mo->valid = validcount;
-	}
-#endif
-}
-
-//==========================================================================
-// AssertSectorLinks
-//	Checks that the given mobj is in fact (not) linked to the sector.
-//==========================================================================
-void AssertSectorLinks(sector_t *sector, mobj_t *thing, int isLinked)
-{
-#if _DEBUG
-	mobj_t *mo;
-	
-	for(mo = sector->thinglist; mo; mo = mo->snext)
-	{
-		if(isLinked && mo == thing) return;
-		if(!isLinked && mo == thing)
-		{
-			I_Error("AssertSectorLinks: Thing %p is already linked to the sector.\n", thing);
-		}
-	}
-	if(!isLinked) return;
-
-	I_Error("AssertSectorLinks: Thing %p not in the sector.\n", thing);
-#endif
-}
-
-//==========================================================================
-// AssertBlockLinks
-//	Checks that the given mobj is in fact (not) linked to the block.
-//==========================================================================
-void AssertBlockLinks(mobj_t *head, mobj_t *thing, int isLinked)
-{
-#if _DEBUG
-	mobj_t *mo;
-
-	if(head == NULL_ROOT) return;
-
-	for(mo = head; mo; mo = mo->bnext)
-	{
-		if(isLinked && mo == thing) return;
-		if(!isLinked && mo == thing)
-		{
-			I_Error("AssertBlockLinks: Thing %p (%x) is already linked to the block.\n", 
-				thing, thing->ddflags);
-		}
-	}
-	if(!isLinked) return;
-
-	I_Error("AssertBlockLinks: Thing %p (%x) not in the block.\n", thing, 
-		thing->ddflags);
-#endif
-}
-#endif /*---OBSOLETE---*/

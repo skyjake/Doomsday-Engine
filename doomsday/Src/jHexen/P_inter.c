@@ -2364,3 +2364,4 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
 	}
 */
 }
+

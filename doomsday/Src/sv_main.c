@@ -36,6 +36,11 @@
 // unlimited with this score.
 #define MAX_BANDWIDTH_RATING	100
 
+// Maximum length of a token in the textual representation of
+// serverinfo.
+#define	TOKEN_LEN 128
+#define VALID_LABEL_LEN	16
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -78,7 +83,7 @@ void Sv_GetInfo(serverinfo_t *info)
 		sizeof(info->gameConfig) - 1);
 	strncpy(info->name, serverName, sizeof(info->name) - 1);
 	strncpy(info->description, serverInfo, sizeof(info->description) - 1);
-	info->players = Sv_GetNumPlayers();
+	info->numPlayers = Sv_GetNumPlayers();
 
 	// The server player is there, it's just hidden.
 	info->maxPlayers = MAXPLAYERS - (isDedicated? 1 : 0);
@@ -112,6 +117,161 @@ void Sv_GetInfo(serverinfo_t *info)
 
 	// This should be a CRC number that describes all the loaded data.
 	info->wadNumber = W_CRCNumber();
+}
+
+/*
+ * Returns the length of the string.
+ */
+int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
+{
+	int i;
+	
+	Str_Appendf(msg, "port:%i\n", info->port);
+	Str_Appendf(msg, "name:%s\n", info->name);
+	Str_Appendf(msg, "info:%s\n", info->description);
+	Str_Appendf(msg, "ver:%i\n", info->version);
+	Str_Appendf(msg, "game:%s\n", info->game);
+	Str_Appendf(msg, "mode:%s\n", info->gameMode);
+	Str_Appendf(msg, "setup:%s\n", info->gameConfig);
+	Str_Appendf(msg, "iwad:%s\n", info->iwad);
+	Str_Appendf(msg, "wcrc:%i\n", info->wadNumber);
+	Str_Appendf(msg, "pwads:%s\n", info->pwads);
+	Str_Appendf(msg, "map:%s\n", info->map);
+	Str_Appendf(msg, "nump:%i\n", info->numPlayers);
+	Str_Appendf(msg, "maxp:%i\n", info->maxPlayers);
+	Str_Appendf(msg, "open:%i\n", info->canJoin);
+	Str_Appendf(msg, "plrn:%s\n", info->clientNames);
+	for(i = 0; i < sizeof(info->data)/sizeof(info->data[0]); i++)
+	{
+		Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
+	}
+	return Str_Length(msg);
+}
+
+/*
+ * Extracts the label and value from a string.  'max' is the maximum
+ * allowed length of a token, including terminating \0.
+ */
+static boolean Sv_Tokenize(const char *line, char *label, char *value,
+						   int max)
+{
+	const char *src = line;
+	const char *colon = strchr(src, ':');
+
+	// The colon must exist near the beginning.
+	if(!colon || colon - src >= VALID_LABEL_LEN) return false;
+
+	// Copy the label.
+	memset(label, 0, max);
+	strncpy(label, src, MIN_OF(colon - src, max - 1));
+
+	// Copy the value.
+	memset(value, 0, max);
+	strncpy(value, colon + 1, 
+		MIN_OF(strlen(line) - (colon - src + 1), max - 1));
+
+	// Everything is OK.
+	return true;
+}
+
+/*
+ * Converts textual data to a serverinfo struct. Returns true if the
+ * label/value pair is recognized.
+ */
+boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
+{
+	char label[TOKEN_LEN], value[TOKEN_LEN];
+	
+	// Extract the label and value. The maximum length of a value is
+	// TOKEN_LEN. Labels are returned in lower case.
+	if(!Sv_Tokenize(valuePair, label, value, sizeof(value)))
+	{
+		// Badly formed lines are ignored.
+		return false;
+	}
+
+	if(!strcmp(label, "at"))
+	{
+		strncpy(info->address, value, sizeof(info->address) - 1);
+	}
+	else if(!strcmp(label, "port"))
+	{
+		info->port = strtol(value, 0, 0);
+	}
+	else if(!strcmp(label, "ver"))
+	{
+		info->version = strtol(value, 0, 0);
+	}
+	else if(!strcmp(label, "map"))
+	{
+		strncpy(info->map, value, sizeof(info->map) - 1);
+	}
+	else if(!strcmp(label, "game"))
+	{
+		strncpy(info->game, value, sizeof(info->game) - 1);
+	}
+	else if(!strcmp(label, "name"))
+	{
+		strncpy(info->name, value, sizeof(info->name) - 1);
+	}
+	else if(!strcmp(label, "info"))
+	{
+		strncpy(info->description, value, sizeof(info->description) - 1);
+	}
+	else if(!strcmp(label, "nump"))
+	{
+		info->numPlayers = strtol(value, 0, 0);
+	}
+	else if(!strcmp(label, "maxp"))
+	{
+		info->maxPlayers = strtol(value, 0, 0);
+	}
+	else if(!strcmp(label, "open"))
+	{
+		info->canJoin = strtol(value, 0, 0);
+	}
+	else if(!strcmp(label, "mode"))
+	{
+		strncpy(info->gameMode, value, sizeof(info->gameMode) - 1);
+	}
+	else if(!strcmp(label, "setup"))
+	{
+		strncpy(info->gameConfig, value, sizeof(info->gameConfig) - 1);
+	}
+	else if(!strcmp(label, "iwad"))
+	{
+		strncpy(info->iwad, value, sizeof(info->iwad) - 1);
+	}
+	else if(!strcmp(label, "wcrc"))
+	{
+		info->wadNumber = strtol(value, 0, 0);
+	}
+	else if(!strcmp(label, "pwads"))
+	{
+		strncpy(info->pwads, value, sizeof(info->pwads) - 1);
+	}
+	else if(!strcmp(label, "plrn"))
+	{
+		strncpy(info->clientNames, value, sizeof(info->clientNames) - 1);
+	}
+	else if(!strcmp(label, "data0"))
+	{
+		info->data[0] = strtol(value, 0, 16);
+	}
+	else if(!strcmp(label, "data1"))
+	{
+		info->data[1] = strtol(value, 0, 16);
+	}
+	else if(!strcmp(label, "data2"))
+	{
+		info->data[2] = strtol(value, 0, 16);
+	}
+	else
+	{
+		// Unknown labels are ignored.
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -151,7 +311,7 @@ void Sv_FixLocalAngles()
 void Sv_HandlePacket(void)
 {
 	id_t id;
-	int i, mask, from = netbuffer.player;
+	int i, mask, from = netBuffer.player;
 	ddplayer_t *pl = &players[from];
 	client_t *sender = &clients[from];
 	playerinfo_packet_t info;
@@ -159,7 +319,7 @@ void Sv_HandlePacket(void)
 	char *msg;
 	char buf[17];
 
-	switch(netbuffer.msg.type)
+	switch(netBuffer.msg.type)
 	{
 	case pcl_hello:
 	case pcl_hello2:
@@ -189,7 +349,7 @@ void Sv_HandlePacket(void)
 		// This is OK.
 		sender->id = id;
 		
-		if(netbuffer.msg.type == pcl_hello2)
+		if(netBuffer.msg.type == pcl_hello2)
 		{
 			// Check the game mode (max 16 chars).
 			Msg_Read(buf, 16);
@@ -258,8 +418,8 @@ void Sv_HandlePacket(void)
 		// Is the message for us?
 		mask = Msg_ReadShort();	
 		// Copy the message into a buffer.
-		msg = Z_Malloc(netbuffer.length - 3, PU_STATIC, 0);
-		strcpy(msg, netbuffer.cursor);
+		msg = Z_Malloc(netBuffer.length - 3, PU_STATIC, 0);
+		strcpy(msg, netBuffer.cursor);
 		// Message for us? Show it locally.
 		if(mask & 1) 
 		{
@@ -303,19 +463,19 @@ void Sv_Login(void)
 {
 	if(net_remoteuser) 
 	{
-		Sv_SendText(netbuffer.player, SV_CONSOLE_FLAGS,
+		Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
 			"Sv_Login: A client is already logged in.\n");
 		return;
 	}
 	// Check the password.
-	if(strcmp(netbuffer.cursor, net_password))
+	if(strcmp(netBuffer.cursor, net_password))
 	{
-		Sv_SendText(netbuffer.player, SV_CONSOLE_FLAGS,
+		Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
 			"Sv_Login: Invalid password.\n");
 		return;
 	}
 	// OK!
-	net_remoteuser = netbuffer.player;
+	net_remoteuser = netBuffer.player;
 	Con_Printf("Sv_Login: %s (client %i) logged in.\n",
 		clients[net_remoteuser].name, net_remoteuser);
 	// Send a confirmation packet to the client.
@@ -348,12 +508,12 @@ void Sv_ExecuteCommand(void)
 	silent = (len & 0x8000) != 0;
 	len &= 0x7fff;
 	// Verify using string length.
-	if(strlen(netbuffer.cursor) != (unsigned) len-1)
+	if(strlen(netBuffer.cursor) != (unsigned) len-1)
 	{
 		Con_Printf("Sv_ExecuteCommand: Damaged packet?\n");
 		return;
 	}
-	Con_Execute(netbuffer.cursor, silent);		
+	Con_Execute(netBuffer.cursor, silent);		
 }
 
 /*
@@ -368,11 +528,11 @@ void Sv_GetPackets(void)
 
 	while(Net_GetPacket())
 	{
-		switch(netbuffer.msg.type)
+		switch(netBuffer.msg.type)
 		{
 		case pcl_commands:
 			// Determine who sent this packet.
-			netconsole = netbuffer.player;
+			netconsole = netBuffer.player;
 			if(netconsole < 0 || netconsole >= MAXPLAYERS) continue; 
 			
 			sender = &clients[netconsole];
@@ -387,8 +547,8 @@ void Sv_GetPackets(void)
 			
 			// Unpack the commands in the packet. Since the game defines the
 			// ticcmd_t structure, it is the only one who can do this.
-			unpacked = (byte*) gx.NetPlayerEvent(netbuffer.length, 
-				DDPE_READ_COMMANDS, netbuffer.msg.data);
+			unpacked = (byte*) gx.NetPlayerEvent(netBuffer.length, 
+				DDPE_READ_COMMANDS, netBuffer.msg.data);
 
 			// The first two bytes contain the number of commands.
 			num = *(ushort*) unpacked;
@@ -419,30 +579,30 @@ void Sv_GetPackets(void)
 			// delta sets.
 			while(!Msg_End())
 			{
-				Sv_AckDeltaSet(netbuffer.player, Msg_ReadByte(), 0);
+				Sv_AckDeltaSet(netBuffer.player, Msg_ReadByte(), 0);
 			}
 			break;
 
 		case pcl_acks:
 			// The client is acknowledging both entire sets and resent deltas.
 			// The first byte contains the acked set.
-			Sv_AckDeltaSet(netbuffer.player, Msg_ReadByte(), 0);
+			Sv_AckDeltaSet(netBuffer.player, Msg_ReadByte(), 0);
 
 			// The rest of the packet contains resend IDs.
 			while(!Msg_End())
 			{
-				Sv_AckDeltaSet(netbuffer.player, 0, Msg_ReadByte());
+				Sv_AckDeltaSet(netBuffer.player, 0, Msg_ReadByte());
 			}
 			break;
 
 		case pkt_coords:
-			Sv_ClientCoords(netbuffer.player);
+			Sv_ClientCoords(netBuffer.player);
 			break;
 
 		case pcl_ack_shake:
 			// The client has acknowledged our handshake.
 			// Note the time (this isn't perfectly accurate, though).
-			netconsole = netbuffer.player;
+			netconsole = netBuffer.player;
 			if(netconsole < 0 || netconsole >= MAXPLAYERS) continue; 
 
 			sender = &clients[netconsole];
@@ -476,12 +636,12 @@ void Sv_GetPackets(void)
 			break;
 
 		default:
-			if(netbuffer.msg.type >= pkt_game_marker)
+			if(netBuffer.msg.type >= pkt_game_marker)
 			{
 				// A client has sent a game specific packet.
-				gx.HandlePacket(netbuffer.player,
-					netbuffer.msg.type, netbuffer.msg.data,
-					netbuffer.length);
+				gx.HandlePacket(netBuffer.player,
+					netBuffer.msg.type, netBuffer.msg.data,
+					netBuffer.length);
 			}
 		}
 	}
@@ -780,8 +940,8 @@ boolean Sv_CheckBandwidth(int playerNumber)
 	// is overrated.
 	if(qSize > limit)
 	{
-		// Drop faster to allow the send queue to clear out sooner.
-		client->bandwidthRating -= 5;
+		// Drop quickly to allow the send queue to clear out sooner.
+		client->bandwidthRating -= 10;
 	}
 
 	// If the send queue is practically empty, we can use more bandwidth.
@@ -815,7 +975,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
  */
 void Sv_ClientCoords(int playerNum)
 {
-	client_t *cl = clients + playerNum;
+/*	client_t *cl = clients + playerNum; */
 	mobj_t *mo = players[playerNum].mo;
 	int clx, cly, clz;
 	boolean onFloor = false;
@@ -837,7 +997,7 @@ void Sv_ClientCoords(int playerNum)
 	// If we aren't about to forcibly change the client's position, update 
 	// with new pos if it's valid.
 	if(!(players[playerNum].flags & DDPF_FIXPOS)
-		&& P_CheckPosition2(mo, clx, cly, clz)) // But it must be a valid pos.
+		&& P_CheckPosXYZ(mo, clx, cly, clz)) // But it must be a valid pos.
 	{
 		P_UnlinkThing(mo);
 		mo->x = clx;
@@ -870,4 +1030,5 @@ int CCmdLogout(int argc, char **argv)
 	net_remoteuser = 0;
 	return true;
 }
+
 

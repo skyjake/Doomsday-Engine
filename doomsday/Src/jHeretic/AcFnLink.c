@@ -132,3 +132,4 @@ actionlink_t actionlinks[] =
 	{ "A_WizAtk3", A_WizAtk3 },
 	{ 0, 0 }
 };
+

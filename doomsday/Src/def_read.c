@@ -994,6 +994,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_FLT("Gravity", mi->gravity)
 				RV_FLT("Sky height", mi->sky_height)
 				RV_FLT("Horizon offset", mi->horizon_offset)
+				RV_VEC("Sky light color", mi->sky_color, 3)
 				if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
 				{
 					ded_skylayer_t *sl = mi->sky_layers + atoi(label+10) - 1;
@@ -1082,7 +1083,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				if(ISLABEL("Texture"))
 				{
 					// A new texture name.
-					tn = DED_NewEntry(&ded->tenviron[idx].textures,
+					tn = DED_NewEntry((void**)&ded->tenviron[idx].textures,
 						&ded->tenviron[idx].count, sizeof(*tn));
 					FINDBEGIN;
 					for(;;)
@@ -1665,3 +1666,4 @@ int DED_ReadLump(ded_t *ded, int lump)
 	W_ChangeCacheTag(lump, PU_CACHE);
 	return result;
 }
+

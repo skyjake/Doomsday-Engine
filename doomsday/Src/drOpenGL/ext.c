@@ -28,7 +28,11 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define GETPROC(x)	x = (void*)wglGetProcAddress(#x)
+#ifdef WIN32
+#	define GETPROC(x)	x = (void*)wglGetProcAddress(#x)
+#elif defined(UNIX)
+#	define GETPROC(x)	x = SDL_GL_GetProcAddress(#x)
+#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -48,10 +52,12 @@ int	extLockArray;
 int extGenMip;
 int extS3TC;
 
+#ifdef WIN32
 PFNGLCLIENTACTIVETEXTUREPROC	glClientActiveTextureARB;
 PFNGLACTIVETEXTUREARBPROC		glActiveTextureARB;
 PFNGLMULTITEXCOORD2FARBPROC		glMultiTexCoord2fARB;
 PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
+#endif
 
 PFNGLBLENDEQUATIONEXTPROC		glBlendEquationEXT;
 
@@ -132,7 +138,9 @@ void initExtensions(void)
 	// EXT_blend_subtract
 	if(query("GL_EXT_blend_subtract", &extBlendSub))
 	{
+//#ifdef WIN32
 		GETPROC( glBlendEquationEXT );
+//#endif
 	}
 
 	// ARB_texture_env_combine
@@ -167,11 +175,13 @@ void initExtensions(void)
 	// ARB_multitexture 
 	if(query("GL_ARB_multitexture", &extMultiTex))
 	{
+#ifdef WIN32
 		// Get the function pointers.
 		GETPROC( glClientActiveTextureARB );
 		GETPROC( glActiveTextureARB );
 		GETPROC( glMultiTexCoord2fARB );
 		GETPROC( glMultiTexCoord2fvARB );
+#endif
 	}
 #endif
 
@@ -182,3 +192,4 @@ void initExtensions(void)
 		glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 	}
 }
+

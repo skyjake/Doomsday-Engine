@@ -23,7 +23,6 @@
 #define NUMALIAS 3 // Number of antialiased lines.
 
 int cheating = 0;
-static int grid = 0;
 
 static int leveljuststarted = 1; // kluge until AM_LevelInit() is called
 
@@ -33,7 +32,6 @@ static int finit_height = SCREENHEIGHT-SBARHEIGHT/*-3*/;
 static int f_x, f_y; // location of window on screen
 static int f_w, f_h; // size of window on screen
 static int lightlev; // used for funky strobing effect
-static byte *fb; // pseudo-frame buffer
 static int amclock;
 
 static mpoint_t m_paninc; // how far the window pans each tic (map coords)
@@ -79,13 +77,6 @@ static unsigned ShowKillsCount = 0;
 
 extern boolean viewactive;
 
-static byte antialias[NUMALIAS][8]=
-{
-	{ 83, 84, 85, 86, 87, 88, 89, 90 },
-	{ 96, 96, 95, 94, 93, 92, 91, 90 },
-	{ 107, 108, 109, 110, 111, 112, 89, 90 }
-};
-
 static int their_colors[] =
 {
 	AM_PLR1_COLOR,
@@ -98,19 +89,12 @@ static int their_colors[] =
 	AM_PLR8_COLOR
 };
 
-/*
-static byte *aliasmax[NUMALIAS] = {
-	&antialias[0][7], &antialias[1][7], &antialias[2][7]
-};*/
-
 //static byte *maplump; // pointer to the raw data for the automap background.
 static int maplumpnum;
 static short mapystart=0; // y-value for the start of the map bitmap...used in
 										//the parallax stuff.
 static short mapxstart=0; //x-value for the bitmap.
 
-//byte screens[][SCREENWIDTH*SCREENHEIGHT];
-//void V_MarkRect (int x, int y, int width, int height);
 
 // Functions
 
@@ -1322,7 +1306,7 @@ void AM_OGL_SetupState()
 {
 	int scrwidth = Get(DD_SCREEN_WIDTH);
 	int scrheight = Get(DD_SCREEN_HEIGHT);
-	float xs = scrwidth/320.0f, ys = scrheight/200.0f;
+	float /*xs = scrwidth/320.0f,*/ ys = scrheight/200.0f;
 
 	// Let's set up a scissor box to clip the map lines and stuff.
 	// Store the old scissor state.
@@ -1519,3 +1503,4 @@ static void DrawWorldTimer(void)
 		}
 	}
 }
+

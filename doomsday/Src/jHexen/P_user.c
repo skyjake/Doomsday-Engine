@@ -640,15 +640,18 @@ boolean P_UndoPlayerMorph(player_t *player)
 void P_PlayerJump(player_t *player)
 {
 	mobj_t *mo = player->plr->mo;
+	float power = (IS_CLIENT? netJumpPower : cfg.jumpPower);
 
 	// Check if we are allowed to jump.
 	if((mo->z > mo->floorz && !(mo->flags2 & MF2_ONMOBJ))
 		|| player->jumpTics > 0) return;
 
+	if(IS_CLIENT && netJumpPower <= 0) return;
+
 	if(player->morphTics) // Pigs don't jump that high.
-		mo->momz = 6*FRACUNIT;
+		mo->momz = (2*power/3) * FRACUNIT;
 	else 
-		mo->momz = 9*FRACUNIT;
+		mo->momz = power * FRACUNIT;
 	
 	mo->flags2 &= ~MF2_ONMOBJ;
 	player->jumpTics = 18; 
@@ -1853,3 +1856,4 @@ void P_ClientSideThink()
 	mo->angle = dpl->clAngle;
 	dpl->lookdir = dpl->clLookDir;
 }
+

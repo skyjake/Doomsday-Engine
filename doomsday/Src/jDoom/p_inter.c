@@ -15,6 +15,18 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2004/01/08 12:25:15  skyjake
+// Merged from branch-nix
+//
+// Revision 1.4.2.1.2.2  2003/11/22 18:09:10  skyjake
+// Cleanup
+//
+// Revision 1.4.2.1.2.1  2003/11/19 17:07:13  skyjake
+// Modified to compile with gcc and -DUNIX
+//
+// Revision 1.4.2.1  2003/09/07 22:21:37  skyjake
+// Dropped ammo offset 3 units in random direction
+//
 // Revision 1.4  2003/08/24 00:17:37  skyjake
 // Separate function for giving backpack
 //
@@ -39,7 +51,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifdef WIN32
 #pragma optimize("g", off)
+#endif
 
 static const char
 rcsid[] = "$Id$";
@@ -60,11 +74,8 @@ rcsid[] = "$Id$";
 
 #include "s_sound.h"
 
-#include "d_netjd.h"
+#include "d_netJD.h"
 
-#ifdef __GNUG__
-#pragma implementation "p_inter.h"
-#endif
 #include "p_inter.h"
 
 
@@ -721,7 +732,6 @@ P_TouchSpecialThing
 	S_ConsoleSound(sound, NULL, player - players);
 }
 
-
 //===========================================================================
 // P_KillMobj
 //===========================================================================
@@ -729,6 +739,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 {
     mobjtype_t	item;
     mobj_t		*mo;
+	angle_t		angle;
 	
     target->flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 	
@@ -822,8 +833,9 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 	
 	// Don't drop at the exact same place, causes Z flickering with 
 	// 3D sprites.
-    mo = P_SpawnMobj(target->x + ((M_Random()-M_Random())<<12), 
-		target->y + ((M_Random()-M_Random())<<12), 
+	angle = M_Random() << (24 - ANGLETOFINESHIFT);
+    mo = P_SpawnMobj(target->x + 3 * finecosine[angle], 
+		target->y + 3 * finesine[angle], 
 		ONFLOORZ, item);
     mo->flags |= MF_DROPPED;	// special versions of items
 }
@@ -1012,4 +1024,5 @@ void P_DamageMobj
 			P_SetMobjState (target, target->info->seestate);
     }
 }
+
 

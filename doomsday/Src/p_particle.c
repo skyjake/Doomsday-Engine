@@ -26,6 +26,7 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_refresh.h"
+#include "de_audio.h"
 #include "de_misc.h"
 
 #include <math.h>
@@ -46,6 +47,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high);
 void P_PtcGenThinker(ptcgen_t *gen);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -166,6 +168,12 @@ void P_InitParticleGen(ptcgen_t *gen, ded_ptcgen_t *def)
 	{
 		gen->center[i] = FRACUNIT * def->center[i];
 		gen->vector[i] = FRACUNIT * def->vector[i];
+	}
+
+	// Apply a random component to the spawn vector.
+	if(def->init_vec_variance > 0)
+	{
+		P_Uncertain(gen->vector, 0, def->init_vec_variance * FRACUNIT);
 	}
 
 	// Mark everything unused.
@@ -302,6 +310,21 @@ void P_SetParticleAngles(particle_t *pt, int flags)
 }
 
 //===========================================================================
+// P_ParticleSound
+//===========================================================================
+void P_ParticleSound(fixed_t pos[3], ded_embsound_t *sound)
+{
+	int i;
+	float orig[3];
+	
+	// Is there any sound to play?
+	if(!sound->id || sound->volume <= 0) return;
+	
+	for(i = 0; i < 3; i++) orig[i] = FIX2FLT(pos[i]);
+	S_LocalSoundAtVolumeFrom(sound->id, NULL, orig, sound->volume);
+}
+
+//===========================================================================
 // P_NewParticle
 //	Spawns a new particle.
 //===========================================================================
@@ -319,8 +342,8 @@ void P_NewParticle(ptcgen_t *gen)
 	if(gen->source)
 	{
 		inter = R_CheckModelFor(gen->source, &mf, &nextmf);
-		if((!mf || !useModels) && def->flags & PGF_MODEL_ONLY
-			|| mf && useModels && mf->flags & MFF_NO_PARTICLES) return;
+		if(((!mf || !useModels) && def->flags & PGF_MODEL_ONLY) ||
+		   (mf && useModels && mf->flags & MFF_NO_PARTICLES)) return;
 	}
 
 	// Keep the spawn cursor in the valid range.
@@ -358,6 +381,16 @@ void P_NewParticle(ptcgen_t *gen)
 	// The source is a mobj?
 	if(gen->source) 
 	{
+		if(gen->flags & PGF_RELATIVE_VECTOR)
+		{
+			// Rotate the vector using the source angle.
+			float temp[3] = { FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY]), 0 };
+			// Player visangles have some problems, let's not use them.
+			M_RotateVector(temp, gen->source->angle 
+				/ (float)ANG180 * -180 + 90, 0);
+			pt->mov[VX] = temp[VX] * FRACUNIT;
+			pt->mov[VY] = temp[VY] * FRACUNIT;
+		}
 		if(gen->flags & PGF_RELATIVE_VELOCITY)
 		{
 			pt->mov[VX] += gen->source->momx;
@@ -378,24 +411,31 @@ void P_NewParticle(ptcgen_t *gen)
 		// Calculate XY center with mobj angle.
 		ang = (r_use_srvo_angle? (gen->source->visangle << 16)
 			: gen->source->angle)
-			+ gen->center[VY] / 180.0f * ANG180;
+			+ FIX2FLT(gen->center[VY]) / 180.0f * ANG180;
 		ang2 = (ang + ANG90) >> ANGLETOFINESHIFT;
 		ang >>= ANGLETOFINESHIFT;
 		pt->pos[VX] += FixedMul(finecosine[ang], gen->center[VX]);
 		pt->pos[VY] += FixedMul(finesine[ang], gen->center[VX]);
 
 		// There might be an offset from the model of the mobj.
-		if(mf)
+		if(mf && (mf->sub[0].flags & MFF_PARTICLE_SUB1 || def->submodel >= 0))
 		{
+			int subidx = 1; // Default to submodel #1.
 			float off[3];
-			memcpy(off, mf->ptcoffset, sizeof(off));
+
+			// Select the right submodel to use as the origin.
+			if(def->submodel >= 0)
+			{
+				subidx = def->submodel;
+			}
+			memcpy(off, mf->ptcoffset[subidx], sizeof(off));
 			
 			// Interpolate the offset.
 			if(inter > 0 && nextmf)
 				for(i = 0; i < 3; i++)
 				{
-					off[i] += (nextmf->ptcoffset[i] - mf->ptcoffset[i]) 
-						* inter;
+					off[i] += (nextmf->ptcoffset[subidx][i] 
+						- mf->ptcoffset[subidx][i]) * inter;
 				}
 			
 			// Apply it to the particle coords.
@@ -417,9 +457,9 @@ void P_NewParticle(ptcgen_t *gen)
 				+ FixedMul(M_Random() << 8, gen->sector->ceilingheight
 				- gen->sector->floorheight - 2*i);
 		}
-		else if(gen->flags & PGF_FLOOR_SPAWN
-			|| !(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) 
-			&& !gen->ceiling)
+		else if(gen->flags & PGF_FLOOR_SPAWN ||
+				(!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) 
+				 && !gen->ceiling))
 		{
 			// Spawn on the floor.
 			pt->pos[VZ] = gen->sector->floorheight + i;
@@ -483,6 +523,9 @@ spawn_failed:
 	// a two-sided line.
 	pt->sector = gen->sector? gen->sector 
 		: R_PointInSubsector(pt->pos[VX], pt->pos[VY])->sector;
+
+	// Play a stage sound?
+	P_ParticleSound(pt->pos, &def->stages[pt->stage].sound);
 }
 
 //===========================================================================
@@ -590,17 +633,22 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
 // P_TouchParticle
 //	Particle touches something solid. Returns false iff the particle dies.
 //===========================================================================
-int P_TouchParticle(particle_t *pt, ptcstage_t *stage, boolean touchWall)
+int P_TouchParticle
+	(particle_t *pt, ptcstage_t *stage, ded_ptcstage_t *stageDef, 
+	 boolean touchWall)
 {
+	// Play a hit sound.
+	P_ParticleSound(pt->pos, &stageDef->hit_sound);
+
 	if(stage->flags & PTCF_DIE_TOUCH) 
 	{
 		// Particle dies from touch.
 		pt->stage = -1;
 		return false;
 	}
-	if(stage->flags & PTCF_STAGE_TOUCH
-		|| touchWall && stage->flags & PTCF_STAGE_WALL_TOUCH
-		|| !touchWall && stage->flags & PTCF_STAGE_FLAT_TOUCH)
+	if(stage->flags & PTCF_STAGE_TOUCH ||
+	   (touchWall && stage->flags & PTCF_STAGE_WALL_TOUCH) ||
+	   (!touchWall && stage->flags & PTCF_STAGE_FLAT_TOUCH))
 	{
 		// Particle advances to the next stage.
 		pt->tics = 0;
@@ -696,7 +744,7 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 {
 	int x, y, z, xl, xh, yl, yh, bx, by;
 	ptcstage_t *st = gen->stages + pt->stage;
-
+	ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
 	boolean zBounce = false;
 	boolean hitFloor;
 	fixed_t hardRadius = st->radius/2;
@@ -706,6 +754,16 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
 	// Changes to momentum.
 	pt->mov[VZ] -= FixedMul(mapgravity, st->gravity);
+
+	// Vector force.
+	if(stDef->vector_force[VX] != 0
+		|| stDef->vector_force[VY] != 0
+		|| stDef->vector_force[VZ] != 0)
+	{
+		int i;
+		for(i = 0; i < 3; i++)
+			pt->mov[i] += FRACUNIT * stDef->vector_force[i];
+	}
 
 	// Sphere force pull and turn.
 	// Only applicable to sourced or untriggered generators. For other
@@ -785,7 +843,7 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 				pt->stage = -1;
 				return;
 			}
-			if(!P_TouchParticle(pt, st, false)) return;
+			if(!P_TouchParticle(pt, st, stDef, false)) return;
 			z = pt->sector->ceilingheight - hardRadius;
 			zBounce = true;
 			hitFloor = false;
@@ -798,7 +856,7 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 				pt->stage = -1;
 				return;
 			}
-			if(!P_TouchParticle(pt, st, false)) return;
+			if(!P_TouchParticle(pt, st, stDef, false)) return;
 			z = pt->sector->floorheight + hardRadius;
 			zBounce = true;
 			hitFloor = true;
@@ -890,7 +948,7 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 				int normal[2], dotp;
 				
 				// Must survive the touch.
-				if(!P_TouchParticle(pt, st, true)) return;
+				if(!P_TouchParticle(pt, st, stDef, true)) return;
 
 				// There was a hit! Calculate bounce vector.
 				// - Project movement vector on the normal of hitline.
@@ -1006,6 +1064,9 @@ void P_PtcGenThinker(ptcgen_t *gen)
 
 			// Change in particle angles?
 			P_SetParticleAngles(pt, def->stages[pt->stage].flags);
+
+			// A sound?
+			P_ParticleSound(pt->pos, &def->stages[pt->stage].sound);
 		}
 		// Try to move.
 		P_MoveParticle(gen, pt);

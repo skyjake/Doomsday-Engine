@@ -79,7 +79,7 @@ static int FontBLumpBase;
 static signed int totalFrags[MAXPLAYERS];
 
 static int HubCount;
-static char *HubText;
+//static char *HubText;
 
 // CODE --------------------------------------------------------------------
 

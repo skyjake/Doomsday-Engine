@@ -2,7 +2,7 @@ NAME			"DOOMSDAY"
 DESCRIPTION		"The Doomsday Engine"
 
 ; Highest ordinal is currently 
-; --> 242 <--
+; --> 243 <--
 
 ; Other available ordinals: 158, 175
 
@@ -101,6 +101,7 @@ EXPORTS
 ; Play.
 	P_AccurateDistance		@57 NONAME
 	P_ApproxDistance		@58 NONAME
+	P_ApproxDistance3		@243 NONAME
 	P_PointOnLineSide		@59 NONAME
 	P_BoxOnLineSide			@60 NONAME
 	P_MakeDivline			@61 NONAME

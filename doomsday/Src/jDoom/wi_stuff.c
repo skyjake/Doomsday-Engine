@@ -18,7 +18,7 @@
 #include "r_local.h"
 #include "s_sound.h"
 #include "doomstat.h"
-#include "d_netjd.h"
+#include "d_netJD.h"
 #include "wi_stuff.h"
 #include "d_config.h"
 #include "m_menu.h"
@@ -544,8 +544,8 @@ void WI_DrawParamText
 					if(isspace(*end)) continue;
 		
 					if(curCase < 0)
-						curCase = isupper(*end);
-					else if(curCase != isupper(*end))
+						curCase = (isupper(*end) != 0);
+					else if(curCase != (isupper(*end) != 0))
 						break;
 				}
 			}
@@ -1193,8 +1193,8 @@ void WI_drawDeathmatchStats(void)
 			// If more than 1 member, show the member count.
 			if(teaminfo[i].members > 1)
 			{
-				char tmp[4];
-				itoa(teaminfo[i].members, tmp, 10);
+				char tmp[20];
+				sprintf(tmp, "%i", teaminfo[i].members);
 				M_WriteText2(x - p[i].width/2 + 1, 
 					DM_MATRIXY - WI_SPACINGY + p[i].height - 8, 
 					tmp, hu_font_a, 1, 1, 1);
@@ -1442,8 +1442,8 @@ void WI_drawNetgameStats(void)
 		// If more than 1 member, show the member count.
 		if(teaminfo[i].members > 1)
 		{
-			char tmp[4];
-			itoa(teaminfo[i].members, tmp, 10);
+			char tmp[40];
+			sprintf(tmp, "%i", teaminfo[i].members);
 			M_WriteText2(x - p[i].width + 1, y + p[i].height - 8, tmp,
 				hu_font_a, 1, 1, 1);
 		}
@@ -2038,3 +2038,4 @@ void WI_SetState(stateenum_t st)
 	if(st == ShowNextLoc) WI_initShowNextLoc();
 	if(st == NoState) WI_initNoState();
 }
+

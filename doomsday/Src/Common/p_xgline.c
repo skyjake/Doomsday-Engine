@@ -12,10 +12,9 @@
 #include <time.h>
 #include <stdarg.h>
 
+#ifdef __JDOOM__
 #include "doomdef.h"
 #include "p_local.h"
-
-#ifdef __JDOOM__
 #include "doomstat.h"
 #include "d_config.h"
 #include "s_sound.h"
@@ -26,9 +25,10 @@
 #endif
 
 #ifdef __JHERETIC__
+#include "Doomdef.h"
+#include "P_local.h"
 #include "settings.h"
-#include "p_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #endif
 
 #include "d_net.h"
@@ -60,7 +60,7 @@ void XL_ChangeTexture(line_t *line, int sidenum, int section, int texture);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-mobj_t				dummything;
+struct mobj_s		dummything;
 int					xgDev;		// Print dev messages.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -95,8 +95,12 @@ void XG_Init(void)
 
 void XG_Ticker(void)
 {
-	XL_Ticker();	// Think for lines.
 	XS_Ticker();	// Think for sectors.
+	
+	// Clients rely on the server, they don't do XG themselves.
+	if(IS_CLIENT) return;
+
+	XL_Ticker();	// Think for lines.
 }
 
 /*
@@ -104,6 +108,9 @@ void XG_Ticker(void)
  */
 void XG_Update(void)
 {
+	// Clients rely on the server, they don't do XG themselves.
+	if(IS_CLIENT) return;
+
 	XG_ReadTypes();
 	XS_Update();
 	XL_Update();
@@ -175,12 +182,10 @@ void XL_Init(void)
 {
 	int i;
 
-/*#ifdef _DEBUG
-	gi.Message("XL_Init: linetype=%i sectortype=%i\n", sizeof(linetype_t),
-		sizeof(sectortype_t));
-#endif*/
-
 	memset(&dummything, 0, sizeof(dummything));
+
+	// Clients rely on the server, they don't do XG themselves.
+	if(IS_CLIENT) return;
 
 	for(i = 0; i < numlines; i++)
 	{
@@ -768,7 +773,7 @@ void XL_ActivateLine(boolean activating, linetype_t *info, line_t *line,
 {
 	xgline_t *xg = line->xg;
 	mobj_t *activator_thing = (mobj_t*) data;
-	player_t *activator = activator_thing->player;
+//	player_t *activator = activator_thing->player;
 	degenmobj_t *soundorg;
 
 	XG_Dev("XL_ActivateLine: %s line %i, side %i", activating?
@@ -780,7 +785,7 @@ void XL_ActivateLine(boolean activating, linetype_t *info, line_t *line,
 		return; // The line is disabled.
 	}
 
-	if(activating && xg->active || !activating && !xg->active) 
+	if((activating && xg->active) || (!activating && !xg->active)) 
 	{
 		XG_Dev("  Line is ALREADY %s, ABORTING", activating? "ACTIVE"
 			: "INACTIVE");
@@ -831,8 +836,8 @@ void XL_ActivateLine(boolean activating, linetype_t *info, line_t *line,
 	xg->timer = 0;				// Reset timer.
 
 	// Activate lines with a matching tag with Group Activation.
-	if(activating && info->flags2 & LTF2_GROUP_ACT
-		|| !activating && info->flags2 & LTF2_GROUP_DEACT)
+	if((activating && info->flags2 & LTF2_GROUP_ACT)
+		|| (!activating && info->flags2 & LTF2_GROUP_DEACT))
 	{
 		XL_TraverseLines(line, LREF_LINE_TAGGED, true, activating, 0,
 			XLTrav_SmartActivate);
@@ -848,9 +853,9 @@ void XL_ActivateLine(boolean activating, linetype_t *info, line_t *line,
 
 	// Should we apply the function of the line? Functions are defined by
 	// the class of the line type.
-	if((activating && info->flags2 & LTF2_WHEN_ACTIVATED
-		|| !activating && info->flags2 & LTF2_WHEN_DEACTIVATED)
-		&& (!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1))
+	if(((activating && info->flags2 & LTF2_WHEN_ACTIVATED)
+		|| (!activating && info->flags2 & LTF2_WHEN_DEACTIVATED))
+	   && (!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1))
 	{
 		XL_DoFunction(info, line, sidenum, activator_thing);
 	}
@@ -870,12 +875,12 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
 	int num = 6;
 	char *keystr[] = { "BLUE KEYCARD", "YELLOW KEYCARD", "RED KEYCARD",
 		"BLUE SKULL KEY", "YELLOW SKULL KEY", "RED SKULL KEY" };
-	int *keys = act->cards;
+	int *keys = (int*) act->cards;
 	int badsound = sfx_oof;
 #elif defined __JHERETIC__
 	int num = 3;
 	char *keystr[] = { "YELLOW KEY", "GREEN KEY", "BLUE KEY" };
-	int *keys = act->keys;
+	boolean *keys = act->keys;
 	int badsound = sfx_plroof;
 #endif
 	int i;
@@ -908,6 +913,9 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
 	player_t *activator = activator_thing->player;
 	int i;
 
+	// Clients rely on the server, they don't do XG themselves.
+	if(IS_CLIENT) return false;
+
 	XG_Dev("XL_LineEvent: %s line %i, side %i (chained type %i)",
 		EVTYPESTR(evtype), line - lines, sidenum, linetype);
 
@@ -937,8 +945,8 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
 
 	// Check restrictions and conditions that will prevent processing
 	// the event.
-	if(active && info->act_type == LTACT_COUNTED_OFF
-		|| !active && info->act_type == LTACT_COUNTED_ON)
+	if((active && info->act_type == LTACT_COUNTED_OFF)
+		|| (!active && info->act_type == LTACT_COUNTED_ON))
 	{
 		// Can't be processed at this time.
 		XG_Dev("  Line %i: Active=%i, type=%i ABORTING EVENT", 
@@ -989,9 +997,9 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
 				&& activator_thing->flags & MF_MISSILE && active)
 			|| (info->flags & LTF_ANY_HIT_D && active)))
 		goto type_passes;
-	if(evtype == XLE_TICKER	
-		&& (info->flags & LTF_TICKER_A && !active)
-			|| (info->flags & LTF_TICKER_D && active))
+	if(evtype == XLE_TICKER
+	   && ((info->flags & LTF_TICKER_A && !active) ||
+		   (info->flags & LTF_TICKER_D && active)))
 		goto type_passes;
 		
 	// Type doesn't pass, sorry.
@@ -1286,10 +1294,10 @@ void XL_Think(line_t *line)
 	XL_ChainSequenceThink(line);
 
 	// Check for automatical (de)activation.
-	if((info->act_type == LTACT_COUNTED_OFF 
-		|| info->act_type == LTACT_FLIP_COUNTED_OFF) && xg->active
-		|| (info->act_type == LTACT_COUNTED_ON 
-		|| info->act_type == LTACT_FLIP_COUNTED_ON) && !xg->active)
+	if(((info->act_type == LTACT_COUNTED_OFF ||
+		 info->act_type == LTACT_FLIP_COUNTED_OFF) && xg->active)
+	   || ((info->act_type == LTACT_COUNTED_ON ||
+			info->act_type == LTACT_FLIP_COUNTED_ON) && !xg->active))
 	{
 		if(info->act_time >= 0 && xg->timer > FLT2TIC(info->act_time))
 		{
@@ -1349,3 +1357,4 @@ void XL_Update(void)
 			lines[i].special = 0;
 		}
 }
+

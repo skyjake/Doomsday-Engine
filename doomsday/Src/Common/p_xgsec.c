@@ -11,10 +11,9 @@
 #include <math.h>
 #include <ctype.h>
 
+#ifdef __JDOOM__
 #include "doomdef.h"
 #include "p_local.h"
-
-#ifdef __JDOOM__
 #include "p_spec.h"
 #include "doomstat.h"
 #include "d_config.h"
@@ -25,9 +24,10 @@
 #endif
 
 #ifdef __JHERETIC__
+#include "Doomdef.h"
 #include "settings.h"
-#include "p_local.h"
-#include "soundst.h"
+#include "P_local.h"
+#include "Soundst.h"
 #endif
 
 #include "p_xgline.h"
@@ -73,7 +73,6 @@ static sectortype_t	sectypebuffer;
 
 sectortype_t *XS_GetType(int id)
 {
-	sectortype_t *t = &sectypebuffer;
 	sectortype_t *ptr;
 
 	// Try finding it from the DDXGDATA lump.
@@ -282,7 +281,10 @@ void XS_Init(void)
 	builder = Z_Malloc(numsectors, PU_LEVEL, 0);
 	memset(builder, 0, numsectors);
 
-	for(i=0; i<numsectors; i++)
+/*	// Clients rely on the server, they don't do XG themselves.
+	if(IS_CLIENT) return;*/
+
+	for(i = 0; i < numsectors; i++)
 	{
 		sec = &sectors[i];
 		sec->origfloor = sec->floorheight;
@@ -488,8 +490,6 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
 
 void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex)
 {
-	int oldtex = ceiling? sector->ceilingpic : sector->floorpic;
-
 	XG_Dev("XS_ChangePlaneTexture: Sector %i, %s, pic %i",
 		sector - sectors, ceiling? "ceiling" : "floor", tex);
 
@@ -1599,7 +1599,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 
 		// How's the time?
 		if(flevtime < info->start[ch] ||
-			info->end[ch] > 0 && flevtime > info->end[ch]) 
+			(info->end[ch] > 0 && flevtime > info->end[ch])) 
 			return; // Not operating at this time.
 
 		// Time to try the chain. Reset timer.
@@ -1719,16 +1719,23 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
 	sectortype_t *info = &sec->xg->info;
 	float ang = PI * info->wind_angle / 180;
 
+	if(IS_CLIENT)
+	{
+		// Clientside wind only affects the local player.
+		if(!mo->player || mo->player != &players[consoleplayer])
+			return true;
+	}
+
 	// Does wind affect this sort of things?
-	if(info->flags & STF_PLAYER_WIND && mo->player
-		|| info->flags & STF_OTHER_WIND && !mo->player
-		|| info->flags & STF_MONSTER_WIND && mo->flags & MF_COUNTKILL
-		|| info->flags & STF_MISSILE_WIND && mo->flags & MF_MISSILE)
+	if((info->flags & STF_PLAYER_WIND && mo->player)
+	   || (info->flags & STF_OTHER_WIND && !mo->player)
+	   || (info->flags & STF_MONSTER_WIND && mo->flags & MF_COUNTKILL)
+	   || (info->flags & STF_MISSILE_WIND && mo->flags & MF_MISSILE))
 	{
 		if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND))
-			|| info->flags & STF_FLOOR_WIND && mo->z <= mo->floorz
-			|| info->flags & STF_CEILING_WIND 
-				&& mo->z + mo->height >= mo->ceilingz)
+		   || (info->flags & STF_FLOOR_WIND && mo->z <= mo->floorz)
+		   || (info->flags & STF_CEILING_WIND &&
+			   mo->z + mo->height >= mo->ceilingz))
 		{
 			// Apply vertical wind.
 			mo->momz += FRACUNIT * info->vertical_wind;
@@ -1777,69 +1784,72 @@ void XS_Think(sector_t *sector)
 	
 	if(xg->disabled) return; // This sector is disabled.
 
-	// Function tickers.
-	for(i=0; i<2; i++) XF_Ticker(&xg->plane[i], sector);
-	XF_Ticker(&xg->light, sector);
-	for(i=0; i<3; i++) XF_Ticker(&xg->rgb[i], sector);
-
-	// Update linked functions.
-	for(i=0; i<3; i++)
+	if(!IS_CLIENT)
 	{
-		if(i < 2 && xg->plane[i].link)
-			xg->plane[i].value = xg->plane[i].link->value;
-		if(xg->rgb[i].link)
-			xg->rgb[i].value = xg->rgb[i].link->value;
-	}
-	if(xg->light.link)
-		xg->light.value = xg->light.link->value;
+		// Function tickers.
+		for(i = 0; i < 2; i++) XF_Ticker(&xg->plane[i], sector);
+		XF_Ticker(&xg->light, sector);
+		for(i = 0; i < 3; i++) XF_Ticker(&xg->rgb[i], sector);
 
-	// Update planes.
-	XS_UpdatePlanes(sector);
-
-	// Update sector light.
-	XS_UpdateLight(sector);
-
-	// Decrement chain timers.
-	for(i=0; i<XSCE_NUM_CHAINS; i++) xg->chain_timer[i]--;
-
-	// Floor chain. Check any mobjs that are touching the floor of the sector.
-	if(info->chain[XSCE_FLOOR] 
-		&& xg->chain_timer[XSCE_FLOOR] <= 0)
-	{
-		XS_TraverseMobjs(sector, XSCE_FLOOR, XSTrav_SectorChain);
-	}
-
-	// Ceiling chain. Check any mobjs that are touching the ceiling.
-	if(info->chain[XSCE_CEILING]
-		&& xg->chain_timer[XSCE_CEILING] <= 0)
-	{
-		XS_TraverseMobjs(sector, XSCE_CEILING, XSTrav_SectorChain);
-	}
-
-	// Inside chain. Check any sectorlinked mobjs.
-	if(info->chain[XSCE_INSIDE]
-		&& xg->chain_timer[XSCE_INSIDE] <= 0)
-	{
-		XS_TraverseMobjs(sector, XSCE_INSIDE, XSTrav_SectorChain);
-	}
-
-	// Ticker chain. Send an activate event if TICKER_D flag is not set.
-	if(info->chain[XSCE_TICKER]
-		&& xg->chain_timer[XSCE_TICKER] <= 0)
-	{
-		XS_DoChain(sector, XSCE_TICKER, 
-			!(info->chain_flags[XSCE_TICKER] & SCEF_TICKER_D),
-			&dummything);
-	}
-
-	// Play ambient sounds.
-	if(xg->info.ambient_sound)
-	{
-		if(xg->timer-- < 0)
+		// Update linked functions.
+		for(i = 0; i < 3; i++)
 		{
-			xg->timer = XG_RandomInt(FLT2TIC(xg->info.sound_interval[0]), 
-				FLT2TIC(xg->info.sound_interval[1]));
-			S_SectorSound(sector, xg->info.ambient_sound);
+			if(i < 2 && xg->plane[i].link)
+				xg->plane[i].value = xg->plane[i].link->value;
+			if(xg->rgb[i].link)
+				xg->rgb[i].value = xg->rgb[i].link->value;
+		}
+		if(xg->light.link)
+			xg->light.value = xg->light.link->value;
+
+		// Update planes.
+		XS_UpdatePlanes(sector);
+
+		// Update sector light.
+		XS_UpdateLight(sector);
+
+		// Decrement chain timers.
+		for(i = 0; i < XSCE_NUM_CHAINS; i++) xg->chain_timer[i]--;
+
+		// Floor chain. Check any mobjs that are touching the floor of the sector.
+		if(info->chain[XSCE_FLOOR] 
+			&& xg->chain_timer[XSCE_FLOOR] <= 0)
+		{
+			XS_TraverseMobjs(sector, XSCE_FLOOR, XSTrav_SectorChain);
+		}
+
+		// Ceiling chain. Check any mobjs that are touching the ceiling.
+		if(info->chain[XSCE_CEILING]
+			&& xg->chain_timer[XSCE_CEILING] <= 0)
+		{
+			XS_TraverseMobjs(sector, XSCE_CEILING, XSTrav_SectorChain);
+		}
+
+		// Inside chain. Check any sectorlinked mobjs.
+		if(info->chain[XSCE_INSIDE]
+			&& xg->chain_timer[XSCE_INSIDE] <= 0)
+		{
+			XS_TraverseMobjs(sector, XSCE_INSIDE, XSTrav_SectorChain);
+		}
+
+		// Ticker chain. Send an activate event if TICKER_D flag is not set.
+		if(info->chain[XSCE_TICKER]
+			&& xg->chain_timer[XSCE_TICKER] <= 0)
+		{
+			XS_DoChain(sector, XSCE_TICKER, 
+				!(info->chain_flags[XSCE_TICKER] & SCEF_TICKER_D),
+				&dummything);
+		}
+
+		// Play ambient sounds.
+		if(xg->info.ambient_sound)
+		{
+			if(xg->timer-- < 0)
+			{
+				xg->timer = XG_RandomInt(FLT2TIC(xg->info.sound_interval[0]), 
+					FLT2TIC(xg->info.sound_interval[1]));
+				S_SectorSound(sector, xg->info.ambient_sound);
+			}
 		}
 	}
 
@@ -1852,14 +1862,6 @@ void XS_Think(sector_t *sector)
 	sector->ceiloffx -= cos(ang) * xg->info.texmove_speed[1];
 	sector->ceiloffy -= sin(ang) * xg->info.texmove_speed[1];
 
-	// Keep the offsets inside the flat pattern.
-	/*
-	XS_ConstrainPlaneOffset(&sector->flooroffx);
-	XS_ConstrainPlaneOffset(&sector->flooroffy);
-	XS_ConstrainPlaneOffset(&sector->ceiloffx);
-	XS_ConstrainPlaneOffset(&sector->ceiloffy);
-	*/
-
 	// Wind for all sectorlinked mobjs.
 	if(xg->info.wind_speed || xg->info.vertical_wind)
 	{
@@ -1871,7 +1873,7 @@ void XS_Ticker(void)
 {
 	int i;
 
-	for(i=0; i<numsectors; i++)
+	for(i = 0; i < numsectors; i++)
 	{
 		if(!sectors[i].xg) continue; // Normal sector.
 		XS_Think(sectors + i);

@@ -6,9 +6,9 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 
 #define QUEUESIZE	128

@@ -15,6 +15,18 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/01/08 12:25:16  skyjake
+// Merged from branch-nix
+//
+// Revision 1.5.2.1.2.2  2003/11/22 18:09:10  skyjake
+// Cleanup
+//
+// Revision 1.5.2.1.2.1  2003/11/19 17:07:14  skyjake
+// Modified to compile with gcc and -DUNIX
+//
+// Revision 1.5.2.1  2003/09/07 22:21:04  skyjake
+// STARMS background is not used in deathmatch, cleanup
+//
 // Revision 1.5  2003/08/24 00:16:48  skyjake
 // Netgame-aware cheats, "give p" => backpack
 //
@@ -30,9 +42,6 @@
 // Revision 1.1  2003/02/26 19:22:09  skyjake
 // Initial checkin
 //
-// Revision 1.1  2002/09/29 01:11:48  Jaakko
-// Added Doomsday sources
-//
 //
 // DESCRIPTION:
 //	Status bar code.
@@ -41,7 +50,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifdef WIN32
 #pragma warning(disable:4761)
+#endif
 
 static const char
 rcsid[] = "$Id$";
@@ -255,23 +266,6 @@ enum
  // DETH title
 #define ST_DETHX			109
 #define ST_DETHY			191
-
-//Incoming messages window location
-//UNUSED
-// #define ST_MSGTEXTX	   (viewwindowx)
-// #define ST_MSGTEXTY	   (viewwindowy+viewheight-18)
-#define ST_MSGTEXTX			0
-#define ST_MSGTEXTY			0
-// Or shall I say, in lines?
-#define ST_MSGHEIGHT		1
-
-#define ST_OUTTEXTX			0
-#define ST_OUTTEXTY			6
-
-// Width, in characters again.
-#define ST_OUTWIDTH			52 
- // Height, in lines. 
-#define ST_OUTHEIGHT		1
 
 #define ST_MAPWIDTH	\
     (strlen(mapnames[(gameepisode-1)*9+(gamemap-1)]))
@@ -543,7 +537,6 @@ ST_Responder (event_t* ev)
 			break;
 			
 		case AM_MSGEXITED:
-			//	fprintf(stderr, "AM exited\n");
 			st_gamestate = FirstPersonState;
 			break;
 		}
@@ -829,27 +822,12 @@ void ST_updateWidgets(void)
     int		i;
 	
     // must redirect the pointer if the ready weapon has changed.
-    //  if (w_ready.data != plyr->readyweapon)
-    //  {
     if (weaponinfo[plyr->readyweapon].ammo == am_noammo)
 		w_ready.num = &largeammo;
     else
 		w_ready.num = &plyr->ammo[weaponinfo[plyr->readyweapon].ammo];
-    //{
-    // static int tic=0;
-    // static int dir=-1;
-    // if (!(tic&15))
-    //   plyr->ammo[weaponinfo[plyr->readyweapon].ammo]+=dir;
-    // if (plyr->ammo[weaponinfo[plyr->readyweapon].ammo] == -100)
-    //   dir = 1;
-    // tic++;
-    // }
+
     w_ready.data = plyr->readyweapon;
-	
-    // if (*w_ready.on)
-    //  STlib_updateNum(&w_ready, true);
-    // refresh weapon change
-    //  }
 	
     // update keycard multiple widgets
     for (i=0;i<3;i++)
@@ -918,18 +896,11 @@ int D_GetFilterColor(int filter)
 	return rgba;
 }
 
-/*void D_SetFilter(int filter)
-{
-	GL_SetFilter(D_GetFilterColor(filter));		
-}*/
-
 static int st_palette = 0;
 
 void ST_doPaletteStuff(void)
 {
-	
     int		palette;
-	//    byte*	pal;
     int		cnt;
     int		bzc;
 	
@@ -973,7 +944,6 @@ void ST_doPaletteStuff(void)
     if (palette != st_palette)
     {
 		st_palette = palette;
-		//D_SetFilter(palette);
 		plyr->plr->filter = D_GetFilterColor(palette); // $democam
     }
 }
@@ -990,7 +960,7 @@ void ST_drawWidgets(boolean refresh)
 	
     STlib_updateNum(&w_ready, refresh);
 	
-    for (i=0;i<4;i++)
+    for(i = 0; i < 4; i++)
     {
 		STlib_updateNum(&w_ammo[i], refresh);
 		STlib_updateNum(&w_maxammo[i], refresh);
@@ -999,14 +969,18 @@ void ST_drawWidgets(boolean refresh)
     STlib_updatePercent(&w_health, refresh);
     STlib_updatePercent(&w_armor, refresh);
 	
-    STlib_updateBinIcon(&w_armsbg, refresh);
+	if(st_armson)
+	{
+		// The STARMS background is not used in deathmatch.
+		STlib_updateBinIcon(&w_armsbg, refresh);
+	}
 	
-    for (i=0;i<6;i++)
+    for(i = 0; i < 6; i++)
 		STlib_updateMultIcon(&w_arms[i], refresh);
 	
     STlib_updateMultIcon(&w_faces, refresh);
 	
-    for (i=0;i<3;i++)
+    for(i = 0; i < 3; i++)
 		STlib_updateMultIcon(&w_keyboxes[i], refresh);
 	
     STlib_updateNum(&w_frags, refresh);
@@ -1040,28 +1014,6 @@ void ST_doRefresh(void)
 	}
 }
 
-void ST_diffDraw(void)
-{
-    // update all widgets
-    ST_drawWidgets(false);
-}
-
-/*void ST_spriteLumpSize(int sprite, int spritelump, int *w, int *h)
-{
-	int	res;
-
-	gi.Set(DD_SPRITE_SIZE_QUERY, spritelump);
-	res = gi.Get(DD_QUERY_RESULT);
-	*w = res >> 16;
-	*h = res & 0xffff;
-	if(sprite == SPR_ROCK)
-	{
-		// Must scale it a bit.
-		*w /= 1.5;
-		*h /= 1.5;
-	}
-}*/
-
 void ST_HUDSpriteSize(int sprite, int *w, int *h)
 {
 	spriteinfo_t	sprInfo;
@@ -1069,7 +1021,7 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
 	R_GetSpriteInfo(sprite, 0, &sprInfo);
 	*w = sprInfo.width;
 	*h = sprInfo.height;
-	//ST_spriteLumpSize(sprite, sprInfo.lump, w, h);
+
 	if(sprite == SPR_ROCK)
 	{
 		// Must scale it a bit.
@@ -1113,7 +1065,6 @@ void ST_doFullscreenStuff(void)
 	player_t *plr = &players[displayplayer];
 	char buf[20];
 	int w, h, pos=0, spr, i;
-	boolean active = true;
 	int	h_width = 320 / cfg.hudScale, h_height = 200 / cfg.hudScale;
 	int ammo_sprite[NUMAMMO] =
 	{
@@ -1205,16 +1156,10 @@ void ST_Drawer (boolean fullscreen, boolean refresh)
     // Do red-/gold-shifts from damage/items
     ST_doPaletteStuff();
 
-    // If just after ST_Start(), refresh all
-    /*if(st_firsttime) */
-
 	if(st_statusbaron) 
 		ST_doRefresh();
 	else
 		ST_doFullscreenStuff();
-    
-	// Otherwise, update as little as possible
-    //else ST_diffDraw();
 }
 
 void R_CachePatch(dpatch_t *dp, char *name)
@@ -1274,13 +1219,9 @@ void ST_loadGraphics(void)
 		sprintf(namebuf, "STGNUM%d", i+2);
 
 		// gray #
-		/*arms[i][0] = (patch_t *) W_CacheLumpNum(arms_i[i][0] = 
-			W_GetNumForName(namebuf));*/
 		R_CachePatch(&arms[i][0], namebuf);
 
 		// yellow #
-		/*arms[i][1] = shortnum[i+2]; 
-		arms_i[i][1] = shortnum_i[i+2];*/
 		memcpy(&arms[i][1], &shortnum[i+2], sizeof(dpatch_t));
     }
 
@@ -1332,39 +1273,7 @@ void ST_loadData(void)
 
 void ST_unloadGraphics(void)
 {
-#if 0
-    int i;
-
-    // unload the numbers, tall and short
-    for (i=0;i<10;i++)
-    {
-		Z_ChangeTag(tallnum[i].patch, PU_CACHE);
-		Z_ChangeTag(shortnum[i].patch, PU_CACHE);
-    }
-    // unload tall percent
-    Z_ChangeTag(tallpercent.patch, PU_CACHE); 
-
-    // unload arms background
-    Z_ChangeTag(armsbg.patch, PU_CACHE); 
-
-    // unload gray #'s
-    for (i=0;i<6;i++)
-		Z_ChangeTag(arms[i][0].patch, PU_CACHE);
-    
-    // unload the key cards
-	for (i=0;i<NUMCARDS;i++)
-		Z_ChangeTag(keys[i].patch, PU_CACHE);
-
-    Z_ChangeTag(sbar.patch, PU_CACHE);
-    Z_ChangeTag(faceback.patch, PU_CACHE);
-
-    for (i=0;i<ST_NUMFACES;i++)
-		Z_ChangeTag(faces[i].patch, PU_CACHE);
-
-    // Note: nobody ain't seen no unloading
-    //   of stminus yet. Dude.
-    
-#endif
+	// Nothing to do.
 }
 
 void ST_unloadData(void)
@@ -1374,7 +1283,6 @@ void ST_unloadData(void)
 
 void ST_initData(void)
 {
-	
     int		i;
 	
     st_firsttime = true;
@@ -1393,21 +1301,21 @@ void ST_initData(void)
 	
     st_oldhealth = -1;
 	
-    for (i=0;i<NUMWEAPONS;i++)
+    for(i = 0; i < NUMWEAPONS; i++)
+	{
 		oldweaponsowned[i] = plyr->weaponowned[i];
+	}
 	
-    for (i=0;i<3;i++)
+    for(i = 0; i < 3; i++)
+	{
 		keyboxes[i] = -1;
+	}
 	
-    STlib_init();
-	
+    STlib_init();	
 }
-
-
 
 void ST_createWidgets(void)
 {
-
     int i;
 
     // ready weapon ammo
@@ -1440,14 +1348,14 @@ void ST_createWidgets(void)
 		      &st_statusbaron);
 
     // weapons owned
-    for(i=0;i<6;i++)
+    for(i = 0; i < 6; i++)
     {
-	STlib_initMultIcon(&w_arms[i],
-			   ST_ARMSX+(i%3)*ST_ARMSXSPACE,
-			   ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-			   arms[i], 
-			   (int *) &plyr->weaponowned[i+1],
-			   &st_armson);
+		STlib_initMultIcon(&w_arms[i],
+			ST_ARMSX+(i%3)*ST_ARMSXSPACE,
+			ST_ARMSY+(i/3)*ST_ARMSYSPACE,
+			arms[i], 
+			(int *) &plyr->weaponowned[i+1],
+			&st_armson);
     }
 
     // frags sum
@@ -1582,11 +1490,7 @@ void ST_Start (void)
 
 void ST_Stop (void)
 {
-    if (st_stopped)
-	return;
-
-    //I_SetPalette (W_CacheLumpNum (lu_palette, PU_CACHE));
-
+    if (st_stopped) return;
     st_stopped = true;
 }
 

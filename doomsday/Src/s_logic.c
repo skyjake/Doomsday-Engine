@@ -274,3 +274,4 @@ boolean Sfx_IsPlaying(int id, mobj_t *origin)
 	// The sound was not found.
 	return false;
 }
+

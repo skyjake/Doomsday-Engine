@@ -1,9 +1,9 @@
 
 // P_telept.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 
 mobj_t *P_SpawnTeleFog(int x, int y)
 {
@@ -158,3 +158,4 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
 	}
 	return(false);
 }
+

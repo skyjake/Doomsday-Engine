@@ -1,32 +1,32 @@
 #if __JDOOM__
-#include "../JDoom/doomdef.h"
-#include "../JDoom/doomstat.h"
-#include "../JDoom/d_main.h"
-#include "../JDoom/d_config.h"
-#include "../JDoom/p_local.h"
-#include "../JDoom/s_sound.h"
-#include "../JDoom/g_game.h"
-#include "../JDoom/m_menu.h"
-#include "../JDoom/hu_stuff.h"
-#include "../JDoom/st_stuff.h"
+#include "../jDoom/doomdef.h"
+#include "../jDoom/doomstat.h"
+#include "../jDoom/d_main.h"
+#include "../jDoom/d_config.h"
+#include "../jDoom/p_local.h"
+#include "../jDoom/s_sound.h"
+#include "../jDoom/g_game.h"
+#include "../jDoom/m_menu.h"
+#include "../jDoom/hu_stuff.h"
+#include "../jDoom/st_stuff.h"
 #endif
 
 #if __JHERETIC__
-#include "../JHeretic/DoomDef.h"
-#include "../JHeretic/P_local.h"
-#include "../JHeretic/soundst.h"
-#include "../JHeretic/settings.h"
+#include "../jHeretic/Doomdef.h"
+#include "../jHeretic/P_local.h"
+#include "../jHeretic/Soundst.h"
+#include "../jHeretic/settings.h"
 #endif
 
 #if __JHEXEN__
-#include "../JHexen/H2def.h"
-#include "../JHexen/P_local.h"
-#include "../JHexen/soundst.h"
-#include "../JHexen/settings.h"
+#include "../jHexen/h2def.h"
+#include "../jHexen/p_local.h"
+#include "../jHexen/soundst.h"
+#include "../jHexen/settings.h"
 #endif
 
 #include "g_common.h"
-#include "d_Net.h"
+#include "d_net.h"
 
 // TYPES --------------------------------------------------------------------
 
@@ -40,7 +40,8 @@ extern int netSvAllowSendMsg;
 
 // PUBLIC DATA --------------------------------------------------------------
 
-char msgBuff[256];
+char	msgBuff[256];
+float	netJumpPower = 9;
 
 // PRIVATE DATA -------------------------------------------------------------
 
@@ -56,8 +57,8 @@ int CCmdSetColor(int argc, char **argv)
 
 	if(argc != 2)
 	{
-		Con_Printf( "Usage: %s (color)\n", argv[0]);
-		Con_Printf( "Color #%i uses the player number as color.\n",
+		Con_Printf("Usage: %s (color)\n", argv[0]);
+		Con_Printf("Color #%i uses the player number as color.\n",
 			numColors);
 		return true;
 	}
@@ -402,7 +403,8 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		// If there are more than two players, include the name of
 		// the player who sent this.
 		if(num > 2)
-			sprintf(msgBuff, "%s: %s", Net_GetPlayerName(plrNumber), data);
+			sprintf(msgBuff, "%s: %s", Net_GetPlayerName(plrNumber),
+					(const char*)data);
 		else
 			strcpy(msgBuff, data);
 
@@ -445,6 +447,9 @@ int D_NetWorldEvent(int type, int parm, void *data)
 		for(i = 0; i < MAXPLAYERS; i++)
 			if(players[i].plr->ingame && i != parm)
 				NetSv_SendPlayerInfo(i, parm);
+
+		// Send info about our jump power.
+		NetSv_SendJumpPower(parm, cfg.jumpEnabled? cfg.jumpPower : 0);
 		break;
 
 	//
@@ -614,8 +619,13 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		NetCl_Paused(bData[0]);
 		break;
 
+	case GPT_JUMP_POWER:
+		NetCl_UpdateJumpPower(data);
+		break;
+
 	default:
-		Con_Message( "H_HandlePacket: received unknown packet, type=%i.\n", type);
+		Con_Message("H_HandlePacket: Received unknown packet, "
+			"type=%i.\n", type);
 	}
 }
 
@@ -623,14 +633,14 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 
 ccmd_t netCCmds[] =
 {
-	"setcolor",		CCmdSetColor,	"Set player color.",
-	"setmap",		CCmdSetMap,		"Set map.",
+	{ "setcolor",	CCmdSetColor,	"Set player color." },
+	{ "setmap",		CCmdSetMap,		"Set map." },
 #if __JHEXEN__
-	"setclass",		CCmdSetClass,	"Set player class.",
+	{ "setclass",	CCmdSetClass,	"Set player class." },
 #endif
-	"startcycle",	CCmdMapCycle,	"Begin map rotation.",
-	"endcycle",		CCmdMapCycle,	"End map rotation.",
-	NULL
+	{ "startcycle",	CCmdMapCycle,	"Begin map rotation." },
+	{ "endcycle",	CCmdMapCycle,	"End map rotation." },
+	{ NULL }
 };
 
 cvar_t netCVars[] =
@@ -654,3 +664,4 @@ void D_NetConsoleRegistration(void)
 	for(i = 0; netCCmds[i].name; i++) Con_AddCommand(netCCmds + i);
 	for(i = 0; netCVars[i].name; i++) Con_AddVariable(netCVars + i);
 }
+

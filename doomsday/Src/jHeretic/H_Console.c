@@ -10,8 +10,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
-#include "DoomDef.h"
-#include "soundst.h"
+#include "Doomdef.h"
+#include "Soundst.h"
 #include "settings.h"
 #include "f_infine.h"
 
@@ -213,6 +213,7 @@ cvar_t gameCVars[] =
 
 	"view-ringfilter",		0,			CVT_INT,	&cfg.ringFilter,	1, 2,	"Ring effect filter. 1=Brownish, 2=Blue.",
 	"player-jump",			0,			CVT_INT,	&cfg.jumpEnabled,	0, 1,	"1=Allow jumping.",
+	"player-jump-power",	0,			CVT_FLOAT,	&cfg.jumpPower,		0, 100,	"Jump power.",
 	"hud-tome-timer",	CVF_NO_MAX,		CVT_INT,	&cfg.tomeCounter,	0, 0,	"Countdown seconds for the Tome of Power.",
 	"hud-tome-sound",	CVF_NO_MAX,		CVT_INT,	&cfg.tomeSound,		0, 0,	"Seconds for countdown sound of Tome of Power.",
 	"game-fastmonsters",	0,			CVT_BYTE,	&cfg.fastMonsters,	0, 1,	"1=Fast monsters in non-demo single player.",

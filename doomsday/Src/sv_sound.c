@@ -119,3 +119,4 @@ void Sv_StopSound(int sound_id, mobj_t *origin)
 	// Volume zero means silence.
 	Sv_NewSoundDelta(sound_id, origin, sector, poly, 0, false, -1);
 }
+

@@ -1,7 +1,7 @@
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 
 //==================================================================
 //==================================================================
@@ -238,3 +238,4 @@ int	EV_CeilingCrushStop(line_t	*line)
 
 	return rtn;
 }
+

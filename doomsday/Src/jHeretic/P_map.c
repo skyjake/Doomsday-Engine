@@ -1,8 +1,8 @@
 // P_map.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 
 /*
@@ -1712,4 +1712,5 @@ boolean P_ChangeSector (sector_t *sector, boolean crunch)
 		
 	return nofit;
 }
+
 

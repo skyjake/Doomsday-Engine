@@ -114,17 +114,6 @@ void R_ViewWindow(int x, int y, int w, int h)
 }
 
 //===========================================================================
-// R_ExecuteSetViewSize
-//===========================================================================
-void R_ExecuteSetViewSize (void)
-{
-	setsizeneeded = false;
-/*	centery = viewheight/2;
-	centerx = viewwidth/2; */
-	R_DrawViewBorder ();    // erase old menu stuff
-}
-
-//===========================================================================
 // R_Init
 //	One-time initialization of the refresh daemon. Called by DD_Main.
 //	GL has not yet been inited.
@@ -261,7 +250,6 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 //===========================================================================
 void R_SetupFrame(ddplayer_t *player)
 {
-	extern int BorderRefreshCount;
 	int tableAngle;
 	float yawRad, pitchRad;
 	viewer_t viewer;
@@ -504,3 +492,4 @@ void R_InitLightTables (void)
 //===========================================================================
 // <<< OBSOLETE <<<
 //===========================================================================
+

@@ -1,6 +1,6 @@
 // Backwards compatible savegame reader.
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
 
 #define VERSIONSIZE 16
@@ -8,253 +8,143 @@
 
 byte *savebuffer, *save_p;
 
-static byte SV_ReadByte()
+/*
+static byte SV_v13_ReadByte()
 {
 	return *save_p++;
 }
 
-static short SV_ReadShort()
+static short SV_v13_ReadShort()
 {
 	save_p += 2;
 	return *(short*) (save_p-2);
 }
+*/
 
-static long SV_ReadLong()
+static long SV_v13_ReadLong()
 {
 	save_p += 4;
 	return *(int*) (save_p-4);
 }
 
-static void SV_Read(void *data, int len)
+static void SV_v13_Read(void *data, int len)
 {
 	memcpy(data, save_p, len);
 	save_p += len;
 }
 
-/*// Writes out a backwards compatible version of player_t.
-void SV_WritePlayer(player_t *pl)
-{
-	int temp[] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
-	ddplayer_t *ddpl = pl->plr;
-
-	SV_WriteLong(0);					// mo
-	SV_WriteLong(pl->playerstate);	
-	SV_Write(temp, 10);					// ticcmd_t
-	SV_WriteLong(ddpl->viewz);
-	SV_WriteLong(pl->plr->viewheight);
-	SV_WriteLong(pl->deltaviewheight);
-	SV_WriteLong(pl->bob);
-	SV_WriteLong(pl->flyheight);
-	SV_WriteLong(ddpl->lookdir);
-	SV_WriteLong(pl->centering);
-	SV_WriteLong(pl->health);
-	SV_WriteLong(pl->armorpoints);
-	SV_WriteLong(pl->armortype);
-	SV_Write(pl->inventory, 4 * 2*14);
-	SV_WriteLong(pl->readyArtifact);
-	SV_WriteLong(pl->artifactCount);
-	SV_WriteLong(pl->inventorySlotNum);
-	SV_Write(pl->powers, 4 * 9);
-	SV_Write(pl->keys, 4 * 3);
-	SV_WriteLong(pl->backpack);
-	SV_Write(pl->frags, 4 * 4);
-	SV_WriteLong(pl->readyweapon);
-	SV_WriteLong(pl->pendingweapon);
-	SV_Write(pl->weaponowned, 4 * 9);
-	SV_Write(pl->ammo, 4 * 6);
-	SV_Write(pl->maxammo, 4 * 6);
-	SV_WriteLong(pl->attackdown);
-	SV_WriteLong(pl->usedown);
-	SV_WriteLong(pl->cheats);
-	SV_WriteLong(pl->refire);
-	SV_WriteLong(pl->killcount);
-	SV_WriteLong(pl->itemcount);
-	SV_WriteLong(pl->secretcount);
-	SV_WriteLong(0);					// message, char*
-	SV_WriteLong(pl->messageTics);
-	SV_WriteLong(pl->damagecount);
-	SV_WriteLong(pl->bonuscount);
-	SV_WriteLong(pl->flamecount);
-	SV_WriteLong(0);					// attacker
-	SV_WriteLong(ddpl->extralight);
-	SV_WriteLong(ddpl->fixedcolormap);
-	SV_WriteLong(pl->colormap);
-	SV_Write(pl->psprites, 16*2);
-	SV_WriteLong(pl->didsecret);
-	SV_WriteLong(pl->chickenTics);
-	SV_WriteLong(pl->chickenPeck);
-	SV_WriteLong(0);					// rain1
-	SV_WriteLong(0);					// rain2
-}*/
-
-static void SV_ReadPlayer(player_t *pl)
+static void SV_v13_ReadPlayer(player_t *pl)
 {
 	byte temp[12];
 	ddplayer_t *ddpl = pl->plr;
 
-	SV_ReadLong();						// mo
-	pl->playerstate = SV_ReadLong();	
-	SV_Read(temp, 10);					// ticcmd_t
-	ddpl->viewz = SV_ReadLong();
-	ddpl->viewheight = SV_ReadLong();
-	ddpl->deltaviewheight = SV_ReadLong();
-	pl->bob = SV_ReadLong();
-	pl->flyheight = SV_ReadLong();
-	ddpl->lookdir = SV_ReadLong();
-	pl->centering = SV_ReadLong();
-	pl->health = SV_ReadLong();
-	pl->armorpoints = SV_ReadLong();
-	pl->armortype = SV_ReadLong();
-	SV_Read(pl->inventory, 4 * 2 * 14);
-	pl->readyArtifact = SV_ReadLong();
-	pl->artifactCount = SV_ReadLong();
-	pl->inventorySlotNum = SV_ReadLong();
-	SV_Read(pl->powers, 4 * 9);
-	SV_Read(pl->keys, 4 * 3);
-	pl->backpack = SV_ReadLong();
-	SV_Read(pl->frags, 4 * 4);
-	pl->readyweapon = SV_ReadLong();
-	pl->pendingweapon = SV_ReadLong();
-	SV_Read(pl->weaponowned, 4 * 9);
-	SV_Read(pl->ammo, 4 * 6);
-	SV_Read(pl->maxammo, 4 * 6);
-	pl->attackdown = SV_ReadLong();
-	pl->usedown = SV_ReadLong();
-	pl->cheats = SV_ReadLong();
-	pl->refire = SV_ReadLong();
-	pl->killcount = SV_ReadLong();
-	pl->itemcount = SV_ReadLong();
-	pl->secretcount = SV_ReadLong();
-	SV_ReadLong();					// message, char*
-	pl->messageTics = SV_ReadLong();
-	pl->damagecount = SV_ReadLong();
-	pl->bonuscount = SV_ReadLong();
-	pl->flamecount = SV_ReadLong();
-	SV_ReadLong();					// attacker
-	ddpl->extralight = SV_ReadLong();
-	ddpl->fixedcolormap = SV_ReadLong();
-	pl->colormap = SV_ReadLong();
-	SV_Read(pl->psprites, 16*2);
-	pl->didsecret = SV_ReadLong();
-	pl->chickenTics = SV_ReadLong();
-	pl->chickenPeck = SV_ReadLong();
-	SV_ReadLong();					// rain1
-	SV_ReadLong();					// rain2
+	SV_v13_ReadLong();						// mo
+	pl->playerstate = SV_v13_ReadLong();	
+	SV_v13_Read(temp, 10);					// ticcmd_t
+	ddpl->viewz = SV_v13_ReadLong();
+	ddpl->viewheight = SV_v13_ReadLong();
+	ddpl->deltaviewheight = SV_v13_ReadLong();
+	pl->bob = SV_v13_ReadLong();
+	pl->flyheight = SV_v13_ReadLong();
+	ddpl->lookdir = SV_v13_ReadLong();
+	pl->centering = SV_v13_ReadLong();
+	pl->health = SV_v13_ReadLong();
+	pl->armorpoints = SV_v13_ReadLong();
+	pl->armortype = SV_v13_ReadLong();
+	SV_v13_Read(pl->inventory, 4 * 2 * 14);
+	pl->readyArtifact = SV_v13_ReadLong();
+	pl->artifactCount = SV_v13_ReadLong();
+	pl->inventorySlotNum = SV_v13_ReadLong();
+	SV_v13_Read(pl->powers, 4 * 9);
+	SV_v13_Read(pl->keys, 4 * 3);
+	pl->backpack = SV_v13_ReadLong();
+	SV_v13_Read(pl->frags, 4 * 4);
+	pl->readyweapon = SV_v13_ReadLong();
+	pl->pendingweapon = SV_v13_ReadLong();
+	SV_v13_Read(pl->weaponowned, 4 * 9);
+	SV_v13_Read(pl->ammo, 4 * 6);
+	SV_v13_Read(pl->maxammo, 4 * 6);
+	pl->attackdown = SV_v13_ReadLong();
+	pl->usedown = SV_v13_ReadLong();
+	pl->cheats = SV_v13_ReadLong();
+	pl->refire = SV_v13_ReadLong();
+	pl->killcount = SV_v13_ReadLong();
+	pl->itemcount = SV_v13_ReadLong();
+	pl->secretcount = SV_v13_ReadLong();
+	SV_v13_ReadLong();					// message, char*
+	pl->messageTics = SV_v13_ReadLong();
+	pl->damagecount = SV_v13_ReadLong();
+	pl->bonuscount = SV_v13_ReadLong();
+	pl->flamecount = SV_v13_ReadLong();
+	SV_v13_ReadLong();					// attacker
+	ddpl->extralight = SV_v13_ReadLong();
+	ddpl->fixedcolormap = SV_v13_ReadLong();
+	pl->colormap = SV_v13_ReadLong();
+	SV_v13_Read(pl->psprites, 16*2);
+	pl->didsecret = SV_v13_ReadLong();
+	pl->chickenTics = SV_v13_ReadLong();
+	pl->chickenPeck = SV_v13_ReadLong();
+	SV_v13_ReadLong();					// rain1
+	SV_v13_ReadLong();					// rain2
 }
 
-/*void SV_WriteMobj(mobj_t *mo)
-{
-	// The thinker is 3 ints long.
-	SV_WriteLong(0);
-	SV_WriteLong(0);
-	SV_WriteLong(0);
-	
-	SV_WriteLong(mo->x);
-	SV_WriteLong(mo->y);
-	SV_WriteLong(mo->z);
-
-	// Sector links.
-	SV_WriteLong(0);
-	SV_WriteLong(0);
-
-	SV_WriteLong(mo->angle);
-	SV_WriteLong(mo->sprite);
-	SV_WriteLong(mo->frame);
-
-	// Block links.
-	SV_WriteLong(0);
-	SV_WriteLong(0);
-
-	// Subsector.
-	SV_WriteLong(0);
-
-	SV_WriteLong(mo->floorz);
-	SV_WriteLong(mo->ceilingz);
-	SV_WriteLong(mo->radius);
-	SV_WriteLong(mo->height);
-	SV_WriteLong(mo->momx);
-	SV_WriteLong(mo->momy);
-	SV_WriteLong(mo->momz);
-
-	SV_WriteLong(mo->validcount);
-
-	SV_WriteLong(mo->type);
-	SV_WriteLong(0);	// info
-	SV_WriteLong(mo->tics);
-	SV_WriteLong((int)mo->state);	
-	SV_WriteLong(mo->damage);
-	SV_WriteLong(mo->flags);
-	SV_WriteLong(mo->flags2);
-	SV_WriteLong(mo->special1);
-	SV_WriteLong(mo->special2);
-	SV_WriteLong(mo->health);
-	SV_WriteLong(mo->movedir);
-	SV_WriteLong(mo->movecount);
-	SV_WriteLong(0);	// target
-	SV_WriteLong(mo->reactiontime);
-	SV_WriteLong(mo->threshold);
-	SV_WriteLong((int)mo->player);
-	SV_WriteLong(mo->lastlook);
-	SV_Write(&mo->spawnpoint, 10);
-}*/
-
-static void SV_ReadMobj(mobj_t *mo)
+static void SV_v13_ReadMobj(mobj_t *mo)
 {
 	// Clear everything first.
 	memset(mo, 0, sizeof(*mo));
 
 	// The thinker is 3 ints long.
-	SV_ReadLong();
-	SV_ReadLong();
-	SV_ReadLong();
+	SV_v13_ReadLong();
+	SV_v13_ReadLong();
+	SV_v13_ReadLong();
 	
-	mo->x = SV_ReadLong();
-	mo->y = SV_ReadLong();
-	mo->z = SV_ReadLong();
+	mo->x = SV_v13_ReadLong();
+	mo->y = SV_v13_ReadLong();
+	mo->z = SV_v13_ReadLong();
 
 	// Sector links.
-	SV_ReadLong();
-	SV_ReadLong();
+	SV_v13_ReadLong();
+	SV_v13_ReadLong();
 
-	mo->angle = SV_ReadLong();
-	mo->sprite = SV_ReadLong();
-	mo->frame = SV_ReadLong();
+	mo->angle = SV_v13_ReadLong();
+	mo->sprite = SV_v13_ReadLong();
+	mo->frame = SV_v13_ReadLong();
 
 	// Block links.
-	SV_ReadLong();
-	SV_ReadLong();
+	SV_v13_ReadLong();
+	SV_v13_ReadLong();
 
 	// Subsector.
-	SV_ReadLong();
+	SV_v13_ReadLong();
 
-	mo->floorz = SV_ReadLong();
-	mo->ceilingz = SV_ReadLong();
-	mo->radius = SV_ReadLong();
-	mo->height = SV_ReadLong();
-	mo->momx = SV_ReadLong();
-	mo->momy = SV_ReadLong();
-	mo->momz = SV_ReadLong();
+	mo->floorz = SV_v13_ReadLong();
+	mo->ceilingz = SV_v13_ReadLong();
+	mo->radius = SV_v13_ReadLong();
+	mo->height = SV_v13_ReadLong();
+	mo->momx = SV_v13_ReadLong();
+	mo->momy = SV_v13_ReadLong();
+	mo->momz = SV_v13_ReadLong();
 
-	mo->valid = SV_ReadLong();
+	mo->valid = SV_v13_ReadLong();
 
-	mo->type = SV_ReadLong();
-	SV_ReadLong();	// info
-	mo->tics = SV_ReadLong();
-	mo->state = (state_t*) SV_ReadLong();	
-	mo->damage = SV_ReadLong();
-	mo->flags = SV_ReadLong();
-	mo->flags2 = SV_ReadLong();
-	mo->special1 = SV_ReadLong();
-	mo->special2 = SV_ReadLong();
-	mo->health = SV_ReadLong();
-	mo->movedir = SV_ReadLong();
-	mo->movecount = SV_ReadLong();
-	SV_ReadLong();	// target
-	mo->reactiontime = SV_ReadLong();
-	mo->threshold = SV_ReadLong();
-	mo->player = (player_t*) SV_ReadLong();
-	mo->lastlook = SV_ReadLong();
-	SV_Read(&mo->spawnpoint, 10);
+	mo->type = SV_v13_ReadLong();
+	SV_v13_ReadLong();	// info
+	mo->tics = SV_v13_ReadLong();
+	mo->state = (state_t*) SV_v13_ReadLong();	
+	mo->damage = SV_v13_ReadLong();
+	mo->flags = SV_v13_ReadLong();
+	mo->flags2 = SV_v13_ReadLong();
+	mo->special1 = SV_v13_ReadLong();
+	mo->special2 = SV_v13_ReadLong();
+	mo->health = SV_v13_ReadLong();
+	mo->movedir = SV_v13_ReadLong();
+	mo->movecount = SV_v13_ReadLong();
+	SV_v13_ReadLong();	// target
+	mo->reactiontime = SV_v13_ReadLong();
+	mo->threshold = SV_v13_ReadLong();
+	mo->player = (player_t*) SV_v13_ReadLong();
+	mo->lastlook = SV_v13_ReadLong();
+	SV_v13_Read(&mo->spawnpoint, 10);
 }
 
 /*
@@ -275,7 +165,7 @@ void P_v13_UnArchivePlayers (void)
 			continue;
 		//SV_PlayerConverter(players+i, (saveplayer_t*) save_p, false);
 		//save_p += sizeof(saveplayer_t);
-		SV_ReadPlayer(players+i);
+		SV_v13_ReadPlayer(players+i);
 		players[i].plr->mo = NULL;		// will be set when unarc thinker
 		players[i].message = NULL;
 		players[i].attacker = NULL;
@@ -433,7 +323,7 @@ void P_v13_UnArchiveThinkers (void)
 			mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
 			//SV_MobjConverter(mobj, (savemobj_t*) save_p, false);
 			//save_p += sizeof(savemobj_t);
-			SV_ReadMobj(mobj);
+			SV_v13_ReadMobj(mobj);
 			mobj->state = &states[(int)mobj->state];
 			mobj->target = NULL;
 			if (mobj->player)

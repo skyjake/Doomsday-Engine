@@ -163,9 +163,10 @@ void Rend_DrawPlayerSprites(void)
 			}
 			else
 			{
-				GL_SetColorAndAlpha(psp[i].light * (sec->rgb[CR]/255.0f), 
-					psp[i].light * (sec->rgb[CG]/255.0f), 
-					psp[i].light * (sec->rgb[CB]/255.0f), 
+				const byte *secRGB = R_GetSectorLightColor(sec);
+				GL_SetColorAndAlpha(psp[i].light * (secRGB[CR]/255.0f), 
+					psp[i].light * (secRGB[CG]/255.0f), 
+					psp[i].light * (secRGB[CB]/255.0f), 
 					psp[i].alpha);
 			}
 
@@ -191,7 +192,7 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
 	// Do we have a dynamic light to blend with?
 	// This only happens when multitexturing is enabled.
-	if(vis->wall.light)
+	if(vis->data.wall.light)
 	{
 		if(IS_MUL)
 		{
@@ -208,18 +209,18 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 		gl.SetInteger(DGL_MODULATE_TEXTURE, IS_MUL? 4 : 5); 
 
 		// The dynamic light.
-		RL_BindTo(IS_MUL? 0 : 1, vis->wall.light->texture);
-		RL_FloatRGB(vis->wall.light->color, color);
+		RL_BindTo(IS_MUL? 0 : 1, vis->data.wall.light->texture);
+		RL_FloatRGB(vis->data.wall.light->color, color);
 		gl.SetFloatv(DGL_ENV_COLOR, color);
 
 		// The actual texture.
-		RL_BindTo(IS_MUL? 1 : 0, vis->wall.texture);
+		RL_BindTo(IS_MUL? 1 : 0, vis->data.wall.texture);
 
 		withDyn = true;
 	}
 	else
 	{
-		RL_Bind(vis->wall.texture);
+		RL_Bind(vis->data.wall.texture);
 		normal = DGL_TEXTURE0;
 	}
 
@@ -229,14 +230,16 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 	// Most masked walls need wrapping, though. What we need to do is
 	// look at the texture coordinates and see if they require texture
 	// wrapping.
-	if(vis->wall.masked)
+	if(vis->data.wall.masked)
 	{
 		if(withDyn)
 		{
 			gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 1 : 0);
 		}
-		if(vis->wall.texc[0][VX] < 0 || vis->wall.texc[0][VX] > 1 
-			|| vis->wall.texc[1][VX] < 0 || vis->wall.texc[1][VX] > 1)
+		if(vis->data.wall.texc[0][VX] < 0 ||
+		   vis->data.wall.texc[0][VX] > 1 ||
+		   vis->data.wall.texc[1][VX] < 0 ||
+		   vis->data.wall.texc[1][VX] > 1)
 		{
 			// The texcoords are out of the normal [0,1] range.
 			gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
@@ -255,43 +258,49 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
 	gl.Begin(DGL_QUADS);
 
-	gl.Color4ubv(&vis->wall.vertices[0].color);
-	gl.MultiTexCoord2f(normal, vis->wall.texc[0][VX], vis->wall.texc[1][VY]);
+	gl.Color4ubv(&vis->data.wall.vertices[0].color);
+	gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][VX],
+					   vis->data.wall.texc[1][VY]);
 	if(withDyn)
 	{
-		gl.MultiTexCoord2f(dyn, vis->wall.light->s[0], vis->wall.light->t[1]);
+		gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
+						   vis->data.wall.light->t[1]);
 	}
-	gl.Vertex3f(vis->wall.vertices[0].pos[VX], 
-		vis->wall.bottom, 
-		vis->wall.vertices[0].pos[VY]);
+	gl.Vertex3f(vis->data.wall.vertices[0].pos[VX], 
+		vis->data.wall.bottom, 
+		vis->data.wall.vertices[0].pos[VY]);
 
-	gl.MultiTexCoord2fv(normal, vis->wall.texc[0]);
+	gl.MultiTexCoord2fv(normal, vis->data.wall.texc[0]);
 	if(withDyn)
 	{
-		gl.MultiTexCoord2f(dyn, vis->wall.light->s[0], vis->wall.light->t[0]);
+		gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
+						   vis->data.wall.light->t[0]);
 	}
-	gl.Vertex3f(vis->wall.vertices[0].pos[VX], 
-		vis->wall.top, 
-		vis->wall.vertices[0].pos[VY]);
+	gl.Vertex3f(vis->data.wall.vertices[0].pos[VX], 
+		vis->data.wall.top, 
+		vis->data.wall.vertices[0].pos[VY]);
 
-	gl.Color4ubv(&vis->wall.vertices[1].color);
-	gl.MultiTexCoord2f(normal, vis->wall.texc[1][VX], vis->wall.texc[0][VY]);
+	gl.Color4ubv(&vis->data.wall.vertices[1].color);
+	gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
+					   vis->data.wall.texc[0][VY]);
 	if(withDyn)
 	{
-		gl.MultiTexCoord2f(dyn, vis->wall.light->s[1], vis->wall.light->t[0]);
+		gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
+						   vis->data.wall.light->t[0]);
 	}
-	gl.Vertex3f(vis->wall.vertices[1].pos[VX], 
-		vis->wall.top, 
-		vis->wall.vertices[1].pos[VY]);
+	gl.Vertex3f(vis->data.wall.vertices[1].pos[VX], 
+		vis->data.wall.top, 
+		vis->data.wall.vertices[1].pos[VY]);
 
-	gl.MultiTexCoord2fv(normal, vis->wall.texc[1]);
+	gl.MultiTexCoord2fv(normal, vis->data.wall.texc[1]);
 	if(withDyn)
 	{
-		gl.MultiTexCoord2f(dyn, vis->wall.light->s[1], 	vis->wall.light->t[1]);
+		gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
+						   vis->data.wall.light->t[1]);
 	}
-	gl.Vertex3f(vis->wall.vertices[1].pos[VX], 
-		vis->wall.bottom, 
-		vis->wall.vertices[1].pos[VY]);
+	gl.Vertex3f(vis->data.wall.vertices[1].pos[VX], 
+		vis->data.wall.bottom, 
+		vis->data.wall.vertices[1].pos[VY]);
 
 	gl.End();
 
@@ -341,9 +350,9 @@ void Rend_DrawMasked (void)
 			{
 				// This is a mobj.
 				// There might be a model for this sprite, let's see.
-				if(!spr->mo.mf)
+				if(!spr->data.mo.mf)
 				{
-					if(spr->mo.patch >= 0)
+					if(spr->data.mo.patch >= 0)
 					{
 						// Render an old fashioned sprite.
 						// Ah, the nostalgia...
@@ -357,7 +366,7 @@ void Rend_DrawMasked (void)
 					Rend_RenderModel(spr);
 				}
 				// How about a halo?
-				if(spr->mo.light) 
+				if(spr->data.mo.light) 
 				{
 					H_RenderHalo(spr, true);
 					haloDrawn = true;
@@ -374,7 +383,7 @@ void Rend_DrawMasked (void)
 			for(spr = vsprsortedhead.next ; spr != &vsprsortedhead; 
 				spr = spr->next)
 			{
-				if(spr->type && spr->mo.light)
+				if(spr->type && spr->data.mo.light)
 					H_RenderHalo(spr, false);
 			}
 
@@ -403,8 +412,8 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist)
 	float		fdist = FIX2FLT(dist);
 	fvertex_t	lightVec = 
 	{ 
-		FIX2FLT(slSpr->mo.gx - lum->thing->x), 
-		FIX2FLT(slSpr->mo.gy - lum->thing->y) 
+		FIX2FLT(slSpr->data.mo.gx - lum->thing->x), 
+		FIX2FLT(slSpr->data.mo.gy - lum->thing->y) 
 	};
 	float		directness, side, inleft, inright, zfactor;
 	
@@ -413,7 +422,7 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist)
 		&& slRGB2[0] == 0xff && slRGB2[1] == 0xff && slRGB2[2] == 0xff)
 		return false; // No point in continuing, light is already white.
 
-	zfactor = (FIX2FLT(slSpr->mo.gz + slSpr->mo.gzt)/2 
+	zfactor = (FIX2FLT(slSpr->data.mo.gz + slSpr->data.mo.gzt)/2 
 		- (FIX2FLT(lum->thing->z) + lum->center)) / dlMaxRad;
 	if(zfactor < 0) zfactor = -zfactor;
 	if(zfactor > 1) return true; // Too high or low.
@@ -506,22 +515,22 @@ void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
 //===========================================================================
 void Rend_RenderSprite(vissprite_t *spr)
 {
-	int			patch = spr->mo.patch;
+	int			patch = spr->data.mo.patch;
 	float		bot, top;
 	int			i, sprh;
 	float		v1[2];
 	DGLubyte	alpha;
 	boolean		additiveBlending = false, flip, restoreMatrix = false;
-	boolean		usingSRVO = false;
+	boolean		usingSRVO = false, restoreZ = false;
 	rendpoly_t	tempquad;
 
 	// Do we need to translate any of the colors?
-	if(spr->mo.flags & DDMF_TRANSLATION)
+	if(spr->data.mo.flags & DDMF_TRANSLATION)
 	{
 		// We need to prepare a translated version of the sprite.
 		GL_SetTranslatedSprite(patch, 
-			(spr->mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT, 
-			spr->mo.class);
+			(spr->data.mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT, 
+			spr->data.mo.class);
 	}
 	else
 	{
@@ -531,34 +540,34 @@ void Rend_RenderSprite(vissprite_t *spr)
 	sprh = spritelumps[patch].height;
 
 	// Set the lighting and alpha.
-	if(missileBlend && spr->mo.flags & DDMF_BRIGHTSHADOW)
+	if(missileBlend && spr->data.mo.flags & DDMF_BRIGHTSHADOW)
 	{
 		alpha = 204;	// 80 %.
 		additiveBlending = true;
 	}
-	else if(spr->mo.flags & DDMF_SHADOW)
+	else if(spr->data.mo.flags & DDMF_SHADOW)
 		alpha = 51;//85;		// One third.
-	else if(spr->mo.flags & DDMF_ALTSHADOW)
+	else if(spr->data.mo.flags & DDMF_ALTSHADOW)
 		alpha = 160;	// Two thirds.
 	else
 		alpha = 255;
 
 	// Sprite has a custom alpha multiplier?
-	if(spr->mo.alpha >= 0) alpha *= spr->mo.alpha;
+	if(spr->data.mo.alpha >= 0) alpha *= spr->data.mo.alpha;
 
-	if(spr->mo.lightlevel < 0)
+	if(spr->data.mo.lightlevel < 0)
 	{
 		gl.Color4ub(0xff, 0xff, 0xff, alpha);
 	}
 	else
 	{
-		v1[VX] = Q_FIX2FLT(spr->mo.gx);
-		v1[VY] = Q_FIX2FLT(spr->mo.gy);
+		v1[VX] = Q_FIX2FLT(spr->data.mo.gx);
+		v1[VY] = Q_FIX2FLT(spr->data.mo.gy);
 		tempquad.vertices[0].dist = Rend_PointDist2D(v1);
 		tempquad.numvertices = 1;
 		RL_VertexColors(&tempquad, 
-			r_ambient > spr->mo.lightlevel? r_ambient : spr->mo.lightlevel,
-			spr->mo.rgb);
+			r_ambient > spr->data.mo.lightlevel? r_ambient : spr->data.mo.lightlevel,
+			spr->data.mo.rgb);
 
 		// Add extra light using dynamic lights.
 		if(litSprites)
@@ -569,28 +578,28 @@ void Rend_RenderSprite(vissprite_t *spr)
 			slSpr = spr;
 			slRGB1 = tempquad.vertices[0].color.rgba;
 			slRGB2 = tempquad.vertices[1].color.rgba;
-			slViewVec.x = FIX2FLT(spr->mo.gx - viewx);
-			slViewVec.y = FIX2FLT(spr->mo.gy - viewy);
+			slViewVec.x = FIX2FLT(spr->data.mo.gx - viewx);
+			slViewVec.y = FIX2FLT(spr->data.mo.gy - viewy);
 			len = sqrt(slViewVec.x*slViewVec.x + slViewVec.y*slViewVec.y);
 			if(len)
 			{
 				slViewVec.x /= len;
 				slViewVec.y /= len;
-				DL_RadiusIterator(spr->mo.subsector, spr->mo.gx, spr->mo.gy, 
+				DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx, spr->data.mo.gy, 
 					dlMaxRad << FRACBITS, Rend_SpriteLighter);
 			}
 			// Check floor and ceiling for glow. They count as ambient light.
-			if(spr->mo.hasglow)
+			if(spr->data.mo.hasglow)
 			{
-				len = 1 - (FIX2FLT(spr->mo.gz) - spr->mo.secfloor) / glowHeight;
+				len = 1 - (FIX2FLT(spr->data.mo.gz) - spr->data.mo.secfloor) / glowHeight;
 				for(i = 0; i < 2; i++)
 					Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgba,
-						spr->mo.floorglow, len);
+						spr->data.mo.floorglow, len);
 
-				len = 1 - (spr->mo.secceil - FIX2FLT(spr->mo.gzt)) / glowHeight;
+				len = 1 - (spr->data.mo.secceil - FIX2FLT(spr->data.mo.gzt)) / glowHeight;
 				for(i = 0; i < 2; i++)
 					Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgba,
-						spr->mo.ceilglow, len);
+						spr->data.mo.ceilglow, len);
 			}				
 		}
 		gl.Color4ub(tempquad.vertices[0].color.rgba[CR],
@@ -601,38 +610,38 @@ void Rend_RenderSprite(vissprite_t *spr)
 
 	// We must find the correct positioning using the sector floor and ceiling
 	// heights as an aid.
-	top = FIX2FLT(spr->mo.gzt);
+	top = FIX2FLT(spr->data.mo.gzt);
 	// Sprite fits in, adjustment possible?
-	if(sprh < spr->mo.secceil - spr->mo.secfloor)	
+	if(sprh < spr->data.mo.secceil - spr->data.mo.secfloor)	
 	{
 		// Check top.
-		if(spr->mo.flags & DDMF_FITTOP && top > spr->mo.secceil) 
-			top = spr->mo.secceil;
+		if(spr->data.mo.flags & DDMF_FITTOP && top > spr->data.mo.secceil) 
+			top = spr->data.mo.secceil;
 		// Check bottom.
-		if(!(spr->mo.flags & DDMF_NOFITBOTTOM) && top-sprh < spr->mo.secfloor)
-			top = spr->mo.secfloor+sprh;
+		if(!(spr->data.mo.flags & DDMF_NOFITBOTTOM) && top-sprh < spr->data.mo.secfloor)
+			top = spr->data.mo.secfloor+sprh;
 	}
 	// Adjust by the floor clip.
-	top -= FIX2FLT(spr->mo.floorclip);
+	top -= FIX2FLT(spr->data.mo.floorclip);
 	bot = top - sprh;
 
 	// Should the texture be flipped?
-	flip = spr->mo.flip;
+	flip = spr->data.mo.flip;
 
 	// Should we apply a SRVO?
-	if(spr->mo.visoff[VX] || spr->mo.visoff[VY] || spr->mo.visoff[VZ])
+	if(spr->data.mo.visoff[VX] || spr->data.mo.visoff[VY] || spr->data.mo.visoff[VZ])
 	{
 		usingSRVO = true;
 		gl.MatrixMode(DGL_MODELVIEW);
 		gl.PushMatrix();
-		gl.Translatef(spr->mo.visoff[VX], spr->mo.visoff[VZ], 
-			spr->mo.visoff[VY]);
+		gl.Translatef(spr->data.mo.visoff[VX], spr->data.mo.visoff[VZ], 
+			spr->data.mo.visoff[VY]);
 	}
 
 	// Do we need to do some aligning?
-	if(spr->mo.viewaligned || alwaysAlign >= 2)
+	if(spr->data.mo.viewaligned || alwaysAlign >= 2)
 	{
-		float centerx = FIX2FLT(spr->mo.gx), centery = FIX2FLT(spr->mo.gy);
+		float centerx = FIX2FLT(spr->data.mo.gx), centery = FIX2FLT(spr->data.mo.gy);
 		float centerz = (top+bot)/2;
 		// We must set up a modelview transformation matrix.
 		restoreMatrix = true;
@@ -640,14 +649,15 @@ void Rend_RenderSprite(vissprite_t *spr)
 		gl.PushMatrix();
 		// Rotate around the center of the sprite.
 		gl.Translatef(centerx, centerz, centery);
-		if(!spr->mo.viewaligned)
+		if(!spr->data.mo.viewaligned)
 		{
-			float s_dx = spr->mo.v1[VX] - spr->mo.v2[VX];
-			float s_dy = spr->mo.v1[VY] - spr->mo.v2[VY];
+			float s_dx = spr->data.mo.v1[VX] - spr->data.mo.v2[VX];
+			float s_dy = spr->data.mo.v1[VY] - spr->data.mo.v2[VY];
 			if(alwaysAlign == 2) // restricted camera alignment
 			{
 				float dx = centerx - vx, dy = centery - vz;	
-				float spriteAngle = BANG2DEG(bamsAtan2(centerz-vy, sqrt(dx*dx + dy*dy)));
+				float spriteAngle = BANG2DEG
+					( bamsAtan2(centerz - vy, sqrt(dx*dx + dy*dy)) );
 				if(spriteAngle > 180) spriteAngle -= 360;
 				if(fabs(spriteAngle) > maxSpriteAngle)
 				{
@@ -678,14 +688,21 @@ void Rend_RenderSprite(vissprite_t *spr)
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
 	}
 
+	// Transparent sprites shouldn't be written to the Z buffer.
+	if(alpha < 250 || additiveBlending) 
+	{
+		restoreZ = true;
+		gl.Disable(DGL_DEPTH_WRITE);
+	}
+
 	// Render the sprite.
 	gl.Begin(DGL_QUADS);
 	Rend_SpriteTexCoord(patch, flip, 1);
-	gl.Vertex3f(spr->mo.v1[VX], bot, spr->mo.v1[VY]);
+	gl.Vertex3f(spr->data.mo.v1[VX], bot, spr->data.mo.v1[VY]);
 	Rend_SpriteTexCoord(patch, flip, 0);
-	gl.Vertex3f(spr->mo.v1[VX], top, spr->mo.v1[VY]);
+	gl.Vertex3f(spr->data.mo.v1[VX], top, spr->data.mo.v1[VY]);
 
-	if(litSprites && spr->mo.lightlevel >= 0)
+	if(litSprites && spr->data.mo.lightlevel >= 0)
 	{
 		gl.Color4ub(tempquad.vertices[1].color.rgba[CR],
 			tempquad.vertices[1].color.rgba[CG],
@@ -693,9 +710,9 @@ void Rend_RenderSprite(vissprite_t *spr)
 			alpha);
 	}
 	Rend_SpriteTexCoord(patch, !flip, 0);
-	gl.Vertex3f(spr->mo.v2[VX], top, spr->mo.v2[VY]);
+	gl.Vertex3f(spr->data.mo.v2[VX], top, spr->data.mo.v2[VY]);
 	Rend_SpriteTexCoord(patch, !flip, 1);
-	gl.Vertex3f(spr->mo.v2[VX], bot, spr->mo.v2[VY]);
+	gl.Vertex3f(spr->data.mo.v2[VX], bot, spr->data.mo.v2[VY]);
 	gl.End();
 
 /*	// This mirroring would be excellent if it were properly clipped.
@@ -734,4 +751,11 @@ void Rend_RenderSprite(vissprite_t *spr)
 		// Change to normal blending.
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 	}
+
+	if(restoreZ)
+	{
+		// Enable Z-writing again.
+		gl.Enable(DGL_DEPTH_WRITE);
+	}
 }
+

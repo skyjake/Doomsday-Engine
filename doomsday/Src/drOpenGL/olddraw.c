@@ -507,3 +507,4 @@ void Vertices3fctv(int num, gl_fct3vertex_t *data)
 		Vertex3fv(data->pos);
 	}
 }
+

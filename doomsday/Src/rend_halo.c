@@ -103,288 +103,14 @@ void H_Register(void)
 {
 	cvar_t cvars[] =
 	{
-		"rend-halo-zmag-div",	CVF_NO_MAX,	CVT_FLOAT,	&haloZMagDiv,	1, 1,	"Halo Z magnification.",
-		"rend-halo-radius-min", CVF_NO_MAX, CVT_FLOAT,	&haloMinRadius,	0, 0,	"Minimum halo radius.",
-		"rend-halo-dim-near",	CVF_NO_MAX,	CVT_FLOAT,	&haloDimStart,	0, 0,	"Halo dimming relative start distance.",
-		"rend-halo-dim-far",	CVF_NO_MAX,	CVT_FLOAT,	&haloDimEnd,	0, 0,	"Halo dimming relative end distance.",
-		NULL
+		{ "rend-halo-zmag-div",	CVF_NO_MAX,	CVT_FLOAT,	&haloZMagDiv,	1, 1,	"Halo Z magnification." },
+		{ "rend-halo-radius-min", CVF_NO_MAX, CVT_FLOAT,	&haloMinRadius,	0, 0,	"Minimum halo radius." },
+		{ "rend-halo-dim-near",	CVF_NO_MAX,	CVT_FLOAT,	&haloDimStart,	0, 0,	"Halo dimming relative start distance." },
+		{ "rend-halo-dim-far",	CVF_NO_MAX,	CVT_FLOAT,	&haloDimEnd,	0, 0,	"Halo dimming relative end distance." },
+		{ NULL }
 	};
 	Con_AddVariableList(cvars);
 }
-
-#if 0
-//===========================================================================
-// H_Clear
-//	Free the halo data. Done at shutdown.
-//===========================================================================
-void H_Clear()
-{
-	if(haloData) Z_Free(haloData);
-	haloData = 0;
-	dataSize = 0;
-	usedData = 0;
-}
-
-//===========================================================================
-// H_InitForNewFrame
-//	Prepares the list of halos to render. Goes through the luminousList.
-//===========================================================================
-void H_InitForNewFrame()
-{
-	extern float vx, vy, vz;
-	float		vpos[3] = { vx, vy, vz };
-	int			i, c, neededSize = numLuminous;
-	lumobj_t	*lum;
-	gl_fc3vertex_t *vtx;
-	float		factor;
-
-	// Allocate a large enough buffer for the halo data.
-	if(neededSize > dataSize)
-	{
-		dataSize = neededSize;
-		if(haloData) Z_Free(haloData);
-		haloData = Z_Malloc(sizeof(*haloData) * dataSize, PU_STATIC, 0);
-	}
-
-	// Is there something to do?
-	if(!dataSize || !haloData || !neededSize)
-	{
-		usedData = 0;
-		return;
-	}
-
-	for(i = 0, vtx = haloData, lum = luminousList; i < numLuminous; i++, lum++)
-	{
-		if(!(lum->flags & LUMF_RENDERED)
-			|| lum->flags & LUMF_NOHALO) continue;
-		// Insert the data into the halodata buffer.
-		vtx->pos[VX] = FIX2FLT(lum->thing->x) + FIX2FLT(viewsin) * lum->xoff;
-		vtx->pos[VY] = FIX2FLT(lum->thing->z) + lum->center;
-		vtx->pos[VZ] = FIX2FLT(lum->thing->y) - FIX2FLT(viewcos) * lum->xoff;
-
-		// Do some offseting for viewaligned sprites.
-		if(1/*lum->thing->ddflags & DDMF_VIEWALIGN || alwaysAlign || useModels*/)
-		{
-			float dst[3], d;
-			for(c=0; c<3; c++) dst[c] = vtx->pos[c] - vpos[c];
-			d = sqrt(dst[0]*dst[0] + dst[1]*dst[1] + dst[2]*dst[2]);
-			if(d == 0) d = .0001f;
-			for(c=0; c<3; c++) dst[c] /= d;
-			for(c=0; c<3; c++)
-			{
-				vtx->pos[c] -= dst[c] 
-					* (lum->thing->radius>>FRACBITS)
-					* lum->xyscale // From model def.
-					* flareZOffset;
-			}
-		}
-
-		if(flareFadeMax && FIX2FLT(lum->distance) < flareFadeMax)
-		{
-			if(FIX2FLT(lum->distance) < flareFadeMin) continue;
-			factor = (FIX2FLT(lum->distance) - flareFadeMin) 
-				/ (flareFadeMax - flareFadeMin);
-		}
-		else
-		{
-			factor = 1;
-		}
-		for(c = 0; c < 3; c++) vtx->color[c] = lum->rgb[c] / 255.0f * factor;
-		vtx->color[CA] = lum->flareSize / 255.0f;
-		vtx++;
-	}
-	// Project the vertices.
-	usedData = gl.Project(vtx - haloData, haloData, haloData);
-}
-
-static void H_DrawRect(float x, float y, float size)
-{
-	gl.TexCoord2f(0, 0);
-	gl.Vertex2f(x-size, y-size);
-
-	gl.TexCoord2f(1, 0);
-	gl.Vertex2f(x+size, y-size);
-
-	gl.TexCoord2f(1, 1);
-	gl.Vertex2f(x+size, y+size);
-
-	gl.TexCoord2f(0, 1);
-	gl.Vertex2f(x-size, y+size);
-}
-
-//===========================================================================
-// H_Render
-//	This must be called when the renderer is in player sprite rendering 
-//	mode: 2D projection to the game view. What will happen is that each 
-//	point in the haloData buffer gets a halo if it passes the Z buffer 
-//	test. 
-//
-//	Can only be called once per frame!
-//===========================================================================
-void H_Render(void)
-{
-	int			k, i, num = usedData, tex, numRenderedFlares;
-	float		centerX = viewpx + viewpw/2.0f;
-	float		centerY = viewpy + viewph/2.0f;
-	gl_fc3vertex_t *vtx;
-	float		radius, size, clipRange = farClip-nearClip, secDiff[2];
-	float		factor = flareBoldness/100.0f;
-	//float		scaler = 2 - flareSize/10.0f;
-	float		viewscaler = viewwidth/320.0f;
-	float		flareSizeFactor, secondaryAlpha;
-	boolean		needScissor = false;
-	int			*readData, *iter;
-	float		*zValues;
-	int			oldFog;
-
-	if(!num || !haloData || !dataSize) return;
-
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.LoadIdentity();
-	gl.MatrixMode(DGL_PROJECTION);
-	gl.LoadIdentity();
-	gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
-
-	// Setup the appropriate state.
-	gl.Disable(DGL_DEPTH_TEST);
-	gl.Disable(DGL_CULL_FACE);
-	gl.GetIntegerv(DGL_FOG, &oldFog);
-	if(oldFog) gl.Disable(DGL_FOG);
-
-	// Do we need to scissor the flares to the view window?
-	if(viewph != screenHeight)
-	{
-		needScissor = true;
-		gl.Enable(DGL_SCISSOR_TEST);
-		gl.Scissor(viewpx, viewpy, viewpw, viewph);
-	}
-
-	// First determine which of the halos are worth rendering.
-	// Fill the Single Pixels inquiry.
-	readData = Z_Malloc(sizeof(int)*(2 + num*2), PU_STATIC, 0);
-	zValues = Z_Malloc(sizeof(float) * num, PU_STATIC, 0);
-	readData[0] = DGL_SINGLE_PIXELS;
-	readData[1] = num;
-	for(i = 0, vtx = haloData, iter = readData + 2; i<num; 
-		i++, vtx++, iter += 2)
-	{
-		iter[0] = (int) vtx->pos[VX];
-		iter[1] = (int) vtx->pos[VY];
-	}
-/*		ptr = haloData + i*8;
-		// Read the depth value.
-		glReadPixels(ptr[HDO_X], ptr[HDO_Y], 1, 1, GL_DEPTH_COMPONENT,
-			GL_FLOAT, &depth);
-
-		if(depth < ptr[HDO_Z]-.0001) ptr[HDO_TOKEN] = 0;
-
-		// Obviously, this test is not the best way to do things.
-		// First of all, the sprite itself may be in front of the
-		// flare when the sprite is viewed from up or down. Also,
-		// the Z buffer is not the most accurate thing in the world,
-		// so errors may occur.
-	}*/
-	gl.ReadPixels(readData, DGL_DEPTH_COMPONENT, zValues);
-	for(i=0, vtx=haloData; i<num; i++, vtx++)
-	{
-		//printf( "%i: %f\n", i, zValues[i]);
-		if(zValues[i] < vtx->pos[VZ] - Z_TEST_BIAS) 
-			vtx->pos[VX] = -1;	// This marks the halo off-screen.
-	}
-	Z_Free(readData);
-	Z_Free(zValues);
-
-	// Additive blending.
-	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-
-	gl.MatrixMode(DGL_TEXTURE);
-	gl.PushMatrix();
-	for(i=0, vtx=haloData; i<num; i++, vtx++)
-	{
-		if(vtx->pos[VX] == -1) continue; // Blocked flare?
-
-		radius = vtx->color[CA] * 10;
-		if(radius > 1.5) radius = 1.5;
-
-		// Determine the size of the halo.
-		flareSizeFactor = (farClip - clipRange*vtx->pos[VZ]) * radius;
-		size = flareSizeFactor * screenHeight/2000.0f * viewscaler;
-	
-		// Determine the offset to the main secondary flare.
-		secDiff[0] = 2 * (centerX - vtx->pos[VX]);
-		secDiff[1] = 2 * (centerY - vtx->pos[VY]);
-
-		// The rotation (around the center of the flare texture).
-		gl.LoadIdentity();
-		gl.Translatef(.5, .5, 0);
-		gl.Rotatef(BANG2DEG(bamsAtan2(2*secDiff[1], -2*secDiff[0])), 0, 0, 1);
-		gl.Translatef(-.5, -.5, 0);
-
-		// If the source object is small enough, don't render
-		// secondary flares.
-		if(flareSizeFactor < minFlareSize*.667f) // Two thirds, completely vanish.
-		{
-			numRenderedFlares = 1;
-			// No secondary flares rendered.
-		}
-		else if(flareSizeFactor < minFlareSize)
-		{
-			numRenderedFlares = haloMode;
-			secondaryAlpha = (3*flareSizeFactor - 2*minFlareSize) / minFlareSize;
-		}
-		else
-		{
-			numRenderedFlares = haloMode;
-			secondaryAlpha = 1;
-		}
-		if(numRenderedFlares > 1)
-		{
-			float dim1 = fabs(secDiff[0] / viewpw);
-			float dim2 = fabs(secDiff[1] / viewph);
-			// Diminish secondary flares as they approach view borders.
-			secondaryAlpha *= 1 - (dim1 > dim2? dim1 : dim2);
-		}
-		//if(radius < .3 && flare->size < 1) continue;
-		for(k = 0; k < numRenderedFlares; k++)
-		{
-			flare_t *flare = flares + k;
-
-			// The color and the alpha.
-			vtx->color[CA] = factor * flare->alpha;
-			if(k) vtx->color[CA] *= secondaryAlpha;
-			
-			tex = flare->texture;
-			if(!k && tex == 2)
-			{
-				if(radius < .9 && radius >= .5) tex = 1;
-			}
-			GL_BindTexture(tex < 0? GL_PrepareLightTexture() 
-				: GL_PrepareFlareTexture(tex));
-			
-			// Don't wrap the texture.
-			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-			gl.Begin(DGL_QUADS);
-			gl.Color4fv(vtx->color);
-			H_DrawRect(vtx->pos[VX] + flare->offset*secDiff[0], 
-				vtx->pos[VY] + flare->offset*secDiff[1], 
-				size * flare->size);
-			gl.End();
-		}
-	}
-	// Pop back the original texture matrix.
-	gl.PopMatrix();
-
-	// Restore normal rendering state.
-	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-	gl.Enable(DGL_DEPTH_TEST);
-	gl.Enable(DGL_CULL_FACE);
-	if(needScissor)	gl.Disable(DGL_SCISSOR_TEST);
-	if(oldFog) gl.Enable(DGL_FOG);
-}
-
-#endif
 
 //===========================================================================
 // H_SetupState
@@ -422,28 +148,19 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 	float			leftoff[3], rightoff[3], center[3], radius;
 	float			halopos[3], occlusionfactor;
 	int				i, k, tex;
-	lumobj_t		*lum = sourcevis->mo.light;
-	mobj_t			*mo = lum->thing;
-	float			cliprange = farClip - nearClip;
+	lumobj_t		*lum = sourcevis->data.mo.light;
+//	mobj_t			*mo = lum->thing;
+//	float			cliprange = farClip - nearClip;
 	float			color[4], radx, rady, scale, turnangle = 0;
 	float			fadefactor = 1, secbold, secdimfactor;
 	float			coloraverage, f, distancedim, lum_distance;
 	flare_t			*fl;
 
-	// Is this source eligible for a halo?
-/*	if(!(lum->flags & LUMF_RENDERED) 
-		|| lum->flags & LUMF_NOHALO
-		|| sourcevis->distance > haloFadeMax) 
-		return;*/
-
-	//---DEBUG---
-//	if(!primary) return;
-
 	lum_distance = FIX2FLT(lum->distance);
 
 	if(lum->flags & LUMF_NOHALO
 		|| lum_distance == 0
-		|| haloFadeMax && lum_distance > haloFadeMax) return; 
+		|| (haloFadeMax && lum_distance > haloFadeMax)) return; 
 
 	if(haloFadeMax 
 		&& haloFadeMax != haloFadeMin
@@ -452,28 +169,6 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 	{
 		fadefactor = (lum_distance - haloFadeMin) 
 			/ (haloFadeMax - haloFadeMin);
-	}
-
-	// Set the high bit of halofactor if the light is clipped. This will 
-	// make P_Ticker diminish the factor to zero. Take the first step here
-	// and now, though.
-	if(lum->flags & LUMF_CLIPPED)
-	{
-		if(mo->halofactor & 0x80)
-		{
-			i = (lum->thing->halofactor & 0x7f) - haloOccludeSpeed;
-			if(i < 0) i = 0;
-			lum->thing->halofactor = i;
-		}
-	}
-	else
-	{
-		if(!(mo->halofactor & 0x80))
-		{
-			i = (lum->thing->halofactor & 0x7f) + haloOccludeSpeed;
-			if(i > 127) i = 127;
-			lum->thing->halofactor = 0x80 | i;
-		}
 	}
 
 	occlusionfactor = (lum->thing->halofactor & 0x7f) / 127.0f;
@@ -492,10 +187,12 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 	// Setup the proper DGL state.
 	if(primary) H_SetupState(true);
 
-	center[VX] = FIX2FLT( sourcevis->mo.gx ) + sourcevis->mo.visoff[VX];
-	center[VZ] = FIX2FLT( sourcevis->mo.gy ) + sourcevis->mo.visoff[VY];
-	center[VY] = FIX2FLT( sourcevis->mo.gz ) + lum->center 
-		+ sourcevis->mo.visoff[VZ];
+	center[VX] = FIX2FLT( sourcevis->data.mo.gx )
+		+ sourcevis->data.mo.visoff[VX];
+	center[VZ] = FIX2FLT( sourcevis->data.mo.gy )
+		+ sourcevis->data.mo.visoff[VY];
+	center[VY] = FIX2FLT( sourcevis->data.mo.gz ) + lum->center 
+		+ sourcevis->data.mo.visoff[VZ];
 
 	// Apply the flare's X offset. (Positive is to the right.)
 	for(i = 0; i < 3; i++) center[i] -= lum->xOff * viewsidevec[i];
@@ -604,12 +301,12 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		{
 			// Set texture explicitly.
 			if(lum->flareTex == 1)
-				tex = GL_PrepareLightTexture();
+				tex = GL_PrepareLSTexture(LST_DYNAMIC);
 			else
 				tex = GL_PrepareFlareTexture(lum->flareTex - 2);
 		}
 		else if(lum->flareSize > 45 
-			|| coloraverage > .90 && lum->flareSize > 20)
+			|| (coloraverage > .90 && lum->flareSize > 20))
 		{
 			// The "Very Bright" condition.
 			radius *= .65f;
@@ -621,7 +318,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		else 
 		{
 			if(!i)
-				tex = GL_PrepareLightTexture();
+				tex = GL_PrepareLSTexture(LST_DYNAMIC);
 			else 
 				tex = GL_PrepareFlareTexture(fl->texture);
 		}

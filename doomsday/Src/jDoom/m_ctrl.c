@@ -3,13 +3,19 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "m_menu.h"
-#include "mn_def.h"
-#include "d_action.h"
+#include "Mn_def.h"
+#include "D_Action.h"
 #include "hu_stuff.h"
 #include "s_sound.h"
 #include "g_game.h"
 
-static boolean SCControlConfig(int option);
+#ifdef __JDOOM__
+#	define CTLCFG_TYPE void
+#else
+#	define CTLCFG_TYPE static boolean
+#endif
+
+CTLCFG_TYPE SCControlConfig(int option);
 
 void M_DrawControlsMenu(void);
 
@@ -180,37 +186,21 @@ Menu_t ControlsDef =
 	0, 16
 };
 
-
-static boolean SCControlConfig(int option)
+CTLCFG_TYPE SCControlConfig(int option)
 {
 	grabbing = controls + option;
+#ifndef __JDOOM__
 	return true;
+#endif
 }
 
 void spacecat(char *str, const char *catstr)
 {
 	if(str[0]) strcat(str, " ");
-	
-	// Also do some filtering.
-	/*switch(catstr[0])
-	{
-	case '\\':
-		strcat(str, "bkslash");
-		break;
-	
-	case '[':
-		strcat(str, "sqbtopen");
-		break;
 
-	case ']':
-		strcat(str, "sqbtclose");
-		break;*/
-
-	//default:
+	if(!stricmp(catstr, "smcln")) catstr = ";";
 
 	strcat(str, catstr);
-	
-	//}
 }
 
 void M_DrawControlsMenu(void)
@@ -228,7 +218,8 @@ void M_DrawControlsMenu(void)
 	M_WriteText2(160-M_StringWidth(buff, hu_font_a)/2, 
 		menu->y-12, buff, hu_font_a, 1, .7f, .3f);
 
-	for(i=0; i<menu->numVisItems && menu->firstItem+i < menu->itemCount; i++, item++)
+	for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount; 
+		i++, item++)
 	{
 		if(item->type == ITT_EMPTY) continue;
 		
@@ -249,9 +240,14 @@ void M_DrawControlsMenu(void)
 		while(token)
 		{
 			if(token[0] == '+')
+			{
 				spacecat(prbuff, token+1);
-			if(token[0] == '*' && !(ctrl->flags & CLF_REPEAT) || token[0] == '-')
+			}
+			if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT)) ||
+			   token[0] == '-')
+			{
 				spacecat(prbuff, token);
+			}
 			token = strtok(NULL, " ");
 		}
 		strupr(prbuff);
@@ -276,7 +272,7 @@ void D_DefaultBindings()
 	event_t		event;
 	
 	// Check all Controls.
-	for(i=0; controls[i].command[0]; i++)
+	for(i = 0; controls[i].command[0]; i++)
 	{
 		ctr = controls + i;
 		// If this command is bound to something, skip it.
@@ -346,19 +342,7 @@ int D_PrivilegedResponder(event_t *event)
 		// Check for a cancel.
 		if(event->type == ev_keydown)
 		{
-			/*
-			if(event->data1 == '`') // Tilde clears everything.
-			{
-				if(grabbing->flags & CLF_ACTION)
-					sprintf(cmd, "delbind +%s -%s", grabbing->command,
-						grabbing->command);
-				else
-					sprintf(cmd, "delbind \"%s\"", grabbing->command);
-				Con_Execute(cmd, true);
-				grabbing = NULL;
-				return true;
-			}
-			else */if(event->data1 == DDKEY_ESCAPE)
+			if(event->data1 == DDKEY_ESCAPE)
 			{
 				grabbing = NULL;
 				return true;
@@ -379,8 +363,9 @@ int D_PrivilegedResponder(event_t *event)
 				strcpy(buff, "");
 			}
 		if(!del) sprintf(buff, "\"%s\"", grabbing->command);
-		sprintf(cmd, "%s %s %s", grabbing->flags & CLF_REPEAT? "bindr" : "bind",
-			evname+1, buff);
+		sprintf(cmd, "%s %s %s", 
+			grabbing->flags & CLF_REPEAT? "bindr" : "bind",
+			evname + 1, buff);
 		Con_Execute(cmd, false);
 		// We've finished the grab.
 		grabbing = NULL;
@@ -397,3 +382,4 @@ int D_PrivilegedResponder(event_t *event)
 	}
 	return false;
 }
+

@@ -759,7 +759,7 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
 	
 	if(startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
 	{
-		if(target = RoughBlockCheck(mo, startY*bmapwidth+startX))
+		if((target = RoughBlockCheck(mo, startY*bmapwidth+startX)) != NULL)
 		{ // found a target right away
 			return target;
 		}
@@ -865,10 +865,10 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 				(link->player && (link != mo)))
 			{
 				if(!(link->flags & MF_SHOOTABLE)
-					|| link->flags2 & MF2_DORMANT
-					|| (link->type == MT_MINOTAUR) &&
-						(((mobj_t*)link->special1) == mo)
-					|| netgame && !deathmatch && link->player) 
+				   || link->flags2 & MF2_DORMANT
+				   || ( (link->type == MT_MINOTAUR) &&
+						(((mobj_t*)link->special1) == mo) )
+				   || (netgame && !deathmatch && link->player)) 
 					continue;
 				
 				if(P_CheckSight(mo, link)) return link;
@@ -883,9 +883,9 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 			{
 				if(!(link->flags & MF_SHOOTABLE)
 					|| link->flags2 & MF2_DORMANT
-					|| (link->type == MT_MINOTAUR) &&
-						(link->special1 == mo->special1)
-					|| netgame && !deathmatch && link->player)
+					|| ((link->type == MT_MINOTAUR) &&
+						(link->special1 == mo->special1))
+					|| (netgame && !deathmatch && link->player))
 					continue;
 
 				if(P_CheckSight(mo, link)) return link;
@@ -934,3 +934,4 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 	}
 	return NULL;
 }
+

@@ -1,13 +1,15 @@
 
 // P_pspr.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 #include <math.h>
 
+#ifdef WIN32
 #pragma optimize("g", off) // MSVC's buggy optimizations...
+#endif
 
 // Macros
 
@@ -1077,7 +1079,7 @@ void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
 	if(IS_CLIENT) return;
 	pmo = player->plr->mo;
 	ball = P_SpawnMobj(pmo->x, pmo->y, pmo->z+28*FRACUNIT 
-		- FOOTCLIPSIZE*(pmo->flags2&MF2_FEETARECLIPPED != 0), MT_MACEFX2);
+		- FOOTCLIPSIZE*((pmo->flags2 & MF2_FEETARECLIPPED) != 0), MT_MACEFX2);
 	ball->momz = 2*FRACUNIT+(((int)player->plr->lookdir)<<(FRACBITS-5));
 	angle = pmo->angle;
 	ball->target = pmo;
@@ -1920,3 +1922,4 @@ void P_MovePsprites(player_t *player)
 	player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
 	player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
 }
+

@@ -6,9 +6,8 @@
 #include "doomstat.h"
 #include "d_main.h"
 #include "d_config.h"
-#include "d_netjd.h"
+#include "d_netJD.h"
 #include "g_game.h"
-#include "r_main.h"
 #include "s_sound.h"
 #include "hu_stuff.h"
 #include "m_menu.h"
@@ -192,6 +191,8 @@ cvar_t gameCVars[] =
 	"map-alpha",		0,			CVT_FLOAT,	&cfg.automapAlpha, 0, 1,	"Alpha level of the automap background.",
 	"map-alpha-lines",	0,			CVT_FLOAT,	&cfg.automapLineAlpha, 0, 1, "Alpha level of automap lines.",
 	"map-rotate",		0,			CVT_INT,	&cfg.automapRotate, 0, 1,	"1=Automap turns with player, up=forward.",
+	"map-door-colors",	0,			CVT_BYTE,	&cfg.automapShowDoors, 0, 1, "1=Show door colors in automap.",
+	"map-door-glow",	0,			CVT_FLOAT,	&cfg.automapDoorGlow, 0, 200, "Door glow thickness in the automap (with map-door-colors).",
 
 	"menu-flash-r",		0,			CVT_FLOAT,	&cfg.flashcolor[0],			0, 1,	"Menu selection flash color, red component.",
 	"menu-flash-g",		0,			CVT_FLOAT,	&cfg.flashcolor[1],			0, 1,	"Menu selection flash color, green component.",
@@ -349,8 +350,6 @@ ccmd_t gameCCmds[] =
 
 // Private Data -----------------------------------------------------------
 
-static char playDemoName[10];
-
 // Code -------------------------------------------------------------------
 
 void D_ConsoleRegistration()
@@ -423,13 +422,14 @@ int CCmdPause(int argc, char **argv)
 	return true;
 }
 
-void ConTextOut(char *text, int x, int y)
+int ConTextOut(char *text, int x, int y)
 {
 	extern int typein_time;
 	int old = typein_time;
 	typein_time = 0xffffff;
 	M_WriteText2(x, y, text, hu_font_a, -1, -1, -1);
 	typein_time = old;
+	return 0;
 }
 
 int ConTextWidth(char *text)
@@ -456,3 +456,4 @@ int CCmdDoomFont(int argc, char **argv)
 	Con_SetFont(&cfont);
 	return true;
 }
+

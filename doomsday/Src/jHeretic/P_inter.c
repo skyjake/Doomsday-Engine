@@ -1,9 +1,9 @@
 
 // P_inter.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 
 #define BONUSADD 6
@@ -1537,3 +1537,4 @@ void P_DamageMobj
 		}
 	}
 }
+

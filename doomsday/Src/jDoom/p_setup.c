@@ -15,6 +15,12 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/01/08 12:25:16  skyjake
+// Merged from branch-nix
+//
+// Revision 1.9.4.1  2003/11/19 17:07:13  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.9  2003/08/30 22:47:20  skyjake
 // Removed obsolete, ancient light decorations
 //
@@ -54,7 +60,7 @@ rcsid[] = "$Id$";
 
 #include "doomdef.h"
 #include "d_config.h"
-#include "d_netjd.h"
+#include "d_netJD.h"
 
 #include <math.h>
 
@@ -836,6 +842,7 @@ void P_Init (void)
 	GetDefInt("Player|Green Armor", &armorpoints[0]);
 	GetDefInt("Player|Blue Armor", &armorpoints[1]);
 }
+
 
 
 

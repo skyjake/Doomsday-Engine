@@ -90,6 +90,7 @@ int	R_PointOnSide (fixed_t x, fixed_t y, node_t *node)
 	return 1;			// back side
 }
 
+/*
 //===========================================================================
 // R_PointOnSegSide
 //===========================================================================
@@ -137,6 +138,7 @@ int	R_PointOnSegSide (fixed_t x, fixed_t y, seg_t *line)
 		return 0;		// front side
 	return 1;			// back side
 }
+*/
 
 //===========================================================================
 // R_SlopeDiv
@@ -307,7 +309,7 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 		vi = sector->lines[i]->v1;
 		vj = sector->lines[i]->v2;
 				
-		if(vi->y < y && vj->y >= y || vj->y < y && vi->y >= y) 
+		if((vi->y < y && vj->y >= y) || (vj->y < y && vi->y >= y)) 
 		{
 			if(vi->x + FixedMul(FixedDiv(y - vi->y, vj->y - vi->y),
 				vj->x - vi->x) < x) 
@@ -340,3 +342,4 @@ int R_GetSectorNumForDegen(void *degenmobj)
 	}
 	return -1;
 }
+

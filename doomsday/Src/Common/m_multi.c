@@ -3,36 +3,33 @@
 
 // TODO: Remove unnecessary SC* declarations and other unused code.
 
-#ifdef __JHEXEN__
-#include "h2def.h"
-#else
+#if defined __JDOOM__
 #include "doomdef.h"
-#endif
-
-#ifdef __JDOOM__
 #include "doomstat.h"
 #include "m_menu.h"
 #include "d_config.h"
 #include "hu_stuff.h"
 #include "m_misc.h"
 #include "m_random.h"
-#endif
-
-#ifdef __JHERETIC__
-#include "settings.h"
-#include "soundst.h"
-#endif
-
-#ifdef __JHEXEN__
-#include "settings.h"
-#include "soundst.h"
-#else
 #include "s_sound.h"
 #include "dstrings.h"
-#endif
-
+#include "p_local.h"
+#include "Mn_def.h"
+#elif defined __JHERETIC__
+#include "Doomdef.h"
+#include "settings.h"
+#include "Soundst.h"
+#include "P_local.h"
+#include "Mn_def.h"
+//#include "s_sound.h"
+//#include "Dstrings.h"
+#elif defined __JHEXEN__
+#include "h2def.h"
+#include "settings.h"
+#include "soundst.h"
 #include "p_local.h"
 #include "mn_def.h"
+#endif
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -106,7 +103,11 @@ static char shiftTable[59] =	// Contains characters 32 to 90.
 };
 
 static EditField_t plrNameEd;
-static int plrColor, plrClass;
+static int plrColor;
+
+#ifdef __JHEXEN__
+static int plrClass;
+#endif
 
 // Menus ------------------------------------------------------------------
 
@@ -326,9 +327,9 @@ void Notify(char *msg)
 
 void DrANumber(int number, int x, int y)
 {
-	char buff[16];
+	char buff[40];
 
-	itoa(number, buff, 10);
+	sprintf(buff, "%i", number);
 #ifdef __JDOOM__
 	M_WriteText2(x, y, buff, hu_font_a, 1, 1, 1);
 #else
@@ -398,7 +399,7 @@ void DrawGameSetupMenu(void)
 	char	*dmText[3] = { "NO", "YES", "YES" };
 #endif
 	Menu_t	*menu = &GameSetupMenu;
-	int		x = menu->x + 112, y = menu->y, h = menu->itemHeight, idx;
+	int		idx;
 #if __JHEXEN__
 	char	*mapName = P_GetMapName(P_TranslateMap(cfg.netMap));
 #endif
@@ -852,7 +853,7 @@ boolean SCGameSetupHealthMod(int option)
 
 void MN_TickerEx(void)	// The extended ticker.
 {
-	static int UpdateCount = 0, FrameTimer = 0;
+	static int FrameTimer = 0;
 
 	if(currentMenu == &PlayerSetupMenu)
 	{

@@ -304,3 +304,4 @@ sfxinfo_t S_sfx[] =
 	{ "PuppyBeat", "", 30, -1, NULL, 0, 2, 1 },
 	{ "MysticIncant", "", 32, -1, NULL, 0, 4, 1 }
 };
+

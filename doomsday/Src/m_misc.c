@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,16 +21,27 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <direct.h>
 #include <fcntl.h>
-#include <stdlib.h>
+
+#if defined(WIN32)
+#include <direct.h>
 #include <io.h>
 #include <conio.h>
+#endif
+
+#if defined(UNIX)
+#include <unistd.h>
+#include <string.h>
+#endif
+
+#include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-#include <lzss.h>
+#include <LZSS.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -691,7 +702,6 @@ void M_ForceUppercase(char *text)
 void M_WriteCommented(FILE *file, char *text)
 {
 	char *buff = malloc(strlen(text)+1), *line;
-	int	i = 0;
 
 	strcpy(buff, text);
 	line = strtok(buff, "\n");
@@ -837,6 +847,7 @@ void M_TranslatePath(const char *path, char *translated)
 	{
 		strcpy(translated, path);
 	}
+	Dir_FixSlashes(translated);
 }
 
 //===========================================================================
@@ -863,11 +874,11 @@ boolean M_CheckPath(char *path)
 	char full[256];
 	char buf[256], *ptr, *endptr;
 
-	if(!access(path, 0)) return true; // Quick test.
-
 	// Convert all backslashes to normal slashes.
 	strcpy(full, path);
-	while((ptr = strchr(full, '\\')) != 0) *ptr = '/';
+	Dir_FixSlashes(full);
+	
+	if(!access(full, 0)) return true; // Quick test.
 
 	// Check and create the path in segments.
 	ptr = full;
@@ -879,9 +890,13 @@ boolean M_CheckPath(char *path)
 		if(access(buf, 0))
 		{
 			// Path doesn't exist, create it.
-			mkdir(buf);		
+#if defined(WIN32)
+			mkdir(buf);
+#elif defined(UNIX)
+			mkdir(buf, 0775);
+#endif
 		}
-		strcat(buf, "\\");
+		strcat(buf, DIR_SEP_STR);
 		ptr = endptr + 1;
 		if(!endptr) break;
 	}
@@ -936,6 +951,7 @@ const char *M_Pretty(const char *path)
 	{
 		str = buffers[index++ % MAX_BUFS];
 		M_RemoveBasePath(path, str);
+		Dir_FixSlashes(str);
 		return str;
 	}
 

@@ -191,6 +191,7 @@ cvar_t gameCVars[] =
 	"player-class",				0,			CVT_BYTE,	&cfg.netClass,		0, 2,	"Player class in multiplayer games.",
 	"player-color",				0,			CVT_BYTE,	&cfg.netColor,		0, 8,	"Player color: 0=blue, 1=red, 2=yellow, 3=green, 4=jade, 5=white,\n6=hazel, 7=purple, 8=auto.",
 	"player-camera-noclip",		0,			CVT_INT,	&cfg.cameraNoClip,	0, 1,	"1=Camera players have no movement clipping.",
+	"player-jump-power",		0,			CVT_FLOAT,	&cfg.jumpPower,		0, 100,	"Jump power.",
 	"server-game-deathmatch",	0,			CVT_BYTE,	&cfg.netDeathmatch,	0, 1,	"1=Start multiplayers games as deathmatch.",
 	"server-game-map",			0,			CVT_BYTE,	&cfg.netMap,		1, 99,	"Map to use in multiplayer games.",
 	"server-game-mod-damage",	0,			CVT_BYTE,	&cfg.netMobDamageModifier, 1, 100,	"Enemy (mob) damage modifier, multiplayer (1..100).",
@@ -347,3 +348,4 @@ DEFCC(CCmdTest)
 	return true;
 }
 #endif
+

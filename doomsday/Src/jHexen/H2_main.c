@@ -14,14 +14,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <direct.h>
+//#include <direct.h>
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include "h2def.h"
 #include "p_local.h"
 #include "soundst.h"
-#include "Settings.h"
+#include "settings.h"
 #include "h2_actn.h"
 #include "d_net.h"
 #include "g_update.h"
@@ -67,8 +67,6 @@ void H2_PageTicker(void);*/
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void HandleArgs();
-//static boolean CheckRecordFrom(void);
-static void DrawAndBlit(void);
 static void ExecOptionSCRIPTS(char **args, int tag);
 static void ExecOptionDEVMAPS(char **args, int tag);
 static void ExecOptionSKILL(char **args, int tag);
@@ -211,17 +209,13 @@ void H2_PreInit(void)
 	cfg.joyaxis[0] = JOYAXIS_TURN;
 	cfg.joyaxis[1] = JOYAXIS_MOVE;
 	cfg.screenblocks = cfg.setblocks = 10;
-//	cfg.menuScale = .9f;
 	cfg.showFullscreenMana = 1;
-	//cfg.showFullscreenArmor = 1;
-	//cfg.showFullscreenKeys = 1;
-	//cfg.tomeCounter = 10;
-	//cfg.tomeSound = 3;
 	cfg.lookSpeed = 3;
 	cfg.xhairSize = 1;
 	for(i = 0; i < 4; i++) cfg.xhairColor[i] = 255;	
-	//cfg.netJumping = true;
-	//cfg.netEpisode = 1;
+	cfg.jumpEnabled = true;	// Always true in Hexen
+	cfg.jumpPower = 9;
+
 	cfg.netMap = 1;
 	cfg.netSkill = sk_medium;
 	cfg.netColor = 8;	// Use the default color by default.
@@ -238,8 +232,14 @@ void H2_PreInit(void)
  */
 void H2_IdentifyVersion(void)
 {
-	// Determine the game mode.
-	strcpy(gameModeString, "hexen");
+	// Determine the game mode. Assume demo mode.
+	strcpy(gameModeString, "hexen-demo");
+
+	if(W_CheckNumForName("MAP05") >= 0)
+	{
+		// Normal Hexen.
+		strcpy(gameModeString, "hexen");
+	}
 	
 	// This is not a very accurate test...
 	if(W_CheckNumForName("MAP59") >= 0 && W_CheckNumForName("MAP60") >= 0)
@@ -257,6 +257,14 @@ void H2_PostInit(void)
 		VERSIONTEXT"\n");
 	Con_FPrintf(CBLF_RULER, "");
 
+	// Did we end up in demo mode?
+	if(!stricmp(gameModeString, "hexen-demo"))
+	{
+		//Set(DD_SHAREWARE, true);
+		shareware = true;
+		Con_Message( "*** Hexen 4-level Beta Demo ***\n");
+	}
+
 	// Init savegame directory.
 	SV_HxInit();
 
@@ -265,7 +273,7 @@ void H2_PostInit(void)
 
 	// Check the -class argument.
 	pClass = PCLASS_FIGHTER;
-	if(p = ArgCheck("-class"))
+	if((p = ArgCheck("-class")) != 0)
 	{
 		pClass = atoi(Argv(p+1));
 		if(pClass > PCLASS_MAGE || pClass < PCLASS_FIGHTER)
@@ -379,13 +387,6 @@ static void HandleArgs()
 	netcheat = ArgExists("-netcheat");
 	dontrender = ArgExists("-noview");
 	
-/*	if(ArgExists("-betademo")) 
-	{
-		Set(DD_SHAREWARE, true);
-		shareware = true;
-		Con_Message( "*** Hexen 4-level Beta Demo ***\n");
-	}*/
-
 	// Process command line options
 	for(opt = ExecOptions; opt->name != NULL; opt++)
 	{
@@ -754,16 +755,16 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.PreInit = H2_PreInit;
 	gx.PostInit = H2_PostInit;
 	gx.Shutdown = H2_Shutdown;
-	gx.BuildTicCmd = G_BuildTiccmd;
-	gx.DiscardTicCmd = G_DiscardTiccmd;
+	gx.BuildTicCmd = (void (*)(void*)) G_BuildTiccmd;
+	gx.DiscardTicCmd = (void (*)(void*, void*)) G_DiscardTiccmd;
 	gx.Ticker = H2_Ticker;
 	gx.G_Drawer = G_Drawer;
 	gx.MN_Drawer = MN_Drawer;
-	gx.PrivilegedResponder = H2_PrivilegedResponder;
+	gx.PrivilegedResponder = (boolean (*)(event_t*)) H2_PrivilegedResponder;
 	gx.MN_Responder = MN_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
-	gx.MobjFriction = P_GetMobjFriction;
+	gx.MobjFriction = (fixed_t (*)(void*)) P_GetMobjFriction;
 	gx.EndFrame = H2_EndFrame;
 	gx.ConsoleBackground = H2_ConsoleBg;
 	gx.UpdateState = G_UpdateState;
@@ -791,3 +792,4 @@ game_export_t *GetGameAPI(game_import_t *imports)
 
 	return &gx;
 }
+

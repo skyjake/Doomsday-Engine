@@ -1,10 +1,10 @@
 
 // P_mobj.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "sounds.h"
-#include "soundst.h"
+#include "Sounds.h"
+#include "Soundst.h"
 #include "settings.h"
 #include <math.h>
 
@@ -16,6 +16,7 @@ void P_SpawnMapThing (mapthing_t *mthing);
 mobjtype_t PuffType;
 mobj_t *MissileMobj;
 
+#if 0
 static fixed_t FloatBobOffsets[64] =
 {
 	0, 51389, 102283, 152192,
@@ -35,6 +36,7 @@ static fixed_t FloatBobOffsets[64] =
 	-370728, -332605, -291279, -247148,
 	-200637, -152193, -102284, -51389
 };
+#endif
 
 //----------------------------------------------------------------------------
 //
@@ -900,7 +902,7 @@ void P_MobjThinker(mobj_t *mobj)
 //
 	if(mobj->tics != -1)
 	{
-		int oldsprite = mobj->sprite;
+		//int oldsprite = mobj->sprite;
 
 		P_SRVOAngleTicker(mobj);	// "angle-servo"; smooth actor turning
 
@@ -1866,3 +1868,4 @@ void C_DECL A_ContMobjSound(mobj_t *actor)
 			break;
 	}
 }
+

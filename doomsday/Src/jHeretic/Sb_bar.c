@@ -1,9 +1,9 @@
 
 // SB_bar.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 
 // Macros
@@ -32,7 +32,7 @@ typedef struct Cheat_s
 // Private Functions
 
 //static void DrawSoundInfo(void);
-static void ShadeLine(int x, int y, int height, int shade);
+//static void ShadeLine(int x, int y, int height, int shade);
 static void ShadeChain(void);
 static void DrINumber(signed int val, int x, int y);
 static void DrBNumber(signed int val, int x, int y);
@@ -398,7 +398,7 @@ void SB_Ticker(void)
 {
 	int delta;
 	int curHealth;
-	static tomePlay = 0;
+	static int tomePlay = 0;
 
 	if(leveltime&1)
 	{
@@ -1722,3 +1722,4 @@ int CCmdCheatReveal(int argc, char **argv)
 		cheating = 2;
 	return true;
 }
+

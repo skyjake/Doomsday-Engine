@@ -1,9 +1,9 @@
 
 // P_enemy.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 
 // Macros
@@ -2664,3 +2664,4 @@ void C_DECL A_UnHideThing(mobj_t *actor)
 	//P_SetThingPosition(actor);
 	actor->flags2 &= ~MF2_DONTDRAW;
 }
+

@@ -23,17 +23,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 
 // MACROS ------------------------------------------------------------------
 
+#define WAVE_FORMAT_PCM		1
+
 // TYPES -------------------------------------------------------------------
+
+typedef unsigned short WORD;
 
 typedef struct riff_hdr_s {
 	char	id[4];  			// identifier string = "RIFF"
@@ -53,10 +53,6 @@ typedef struct wav_format_s {
 	WORD	wBlockAlign;		// Data block size
 	WORD	wBitsPerSample;		// Sample size
 } wav_format_t;
-
-/*typedef struct wav_format_spec_s {
-	WORD	wBitsPerSample;		// Sample size
-} wav_format_spec_t;*/
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -98,7 +94,7 @@ void *WAV_MemoryLoad
 	wav_format_t *wave_format = NULL;
 
 	// Read the RIFF header.
-	WRead(&data, &riff_header, sizeof(*riff_header));
+	WRead((void**)&data, (void**)&riff_header, sizeof(*riff_header));
 	if(strncmp(riff_header->id, "RIFF", 4))
 	{
 		Con_Message("WAV_MemoryLoad: Not RIFF data.\n");
@@ -117,13 +113,13 @@ void *WAV_MemoryLoad
 	while(data < end)
 	{
 		// Read next chunk header.
-		WRead(&data, &riff_chunk, sizeof(*riff_chunk));
+		WRead((void**)&data, (void**)&riff_chunk, sizeof(*riff_chunk));
 				
 		// What have we got here?
 		if(!strncmp(riff_chunk->id, "fmt ", 4))
 		{
 			// Read format chunk.
-			WRead(&data, &wave_format, sizeof(*wave_format));
+			WRead((void**)&data, (void**)&wave_format, sizeof(*wave_format));
 			// Check that it's a format we know how to read.
 			if(wave_format->wFormatTag != WAVE_FORMAT_PCM)
 			{
@@ -219,3 +215,4 @@ int WAV_CheckFormat(char *data)
 	return !strncmp(data, "RIFF", 4)
 		&& !strncmp(data + 8, "WAVE", 4);
 }
+

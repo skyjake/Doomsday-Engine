@@ -295,3 +295,4 @@ void Cl_Sound(void)
 		S_LocalSoundAtVolume(sound, NULL, volume/127.0f);
 	}
 }
+

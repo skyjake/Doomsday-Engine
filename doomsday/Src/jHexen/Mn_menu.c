@@ -15,11 +15,11 @@
 #include "p_local.h"
 #include "r_local.h"
 #include "soundst.h"
-#include "g_demo.h"
+//#include "g_demo.h"
 #include "h2_actn.h"
 #include "mn_def.h"
-#include "Settings.h"
-#include "lzss.h"
+#include "settings.h"
+#include "LZSS.h"
 #include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
@@ -67,7 +67,6 @@ static void SCMouseXSensi(int option);
 static void SCMouseYSensi(int option);
 static void SCMouseLook(int option);
 static void SCMouseLookInverse(int option);
-static void SCInverseY(int option);
 static void SCJoyLook(int option);
 static void SCPOVLook(int option);
 static void SCInverseJoyLook(int option);
@@ -166,20 +165,6 @@ static int FontAYellowBaseLump;
 static int FontBBaseLump;
 static int MauloBaseLump;
 static int MenuPClass;
-static boolean soundchanged;
-
-/*static MenuRes_t resolutions[] =
-{
-	320, 240,
-	640, 480,
-	800, 600,
-	1024, 768,
-	1152, 864,
-	1280, 1024,
-	1600, 1200,
-	0, 0	// The terminator.
-};
-static int selRes = 0;	// Will be determined when needed.*/
 
 //
 // !!! Add new controls to the end, the existing indices must remain unchanged !!!
@@ -646,7 +631,6 @@ static Menu_t ControlsMenu =
 
 static MenuItem_t MouseOptsItems[] =
 {
-//	{ ITT_EFUNC, "INVERSE Y :", SCInverseY, 0, MENU_NONE },
 	{ ITT_EFUNC, "MOUSE LOOK :", SCMouseLook, 0, MENU_NONE },
 	{ ITT_EFUNC, "INVERSE MLOOK :", SCMouseLookInverse, 0, MENU_NONE },
 	{ ITT_LRFUNC, "X SENSITIVITY", SCMouseXSensi, 0, MENU_NONE },
@@ -1891,8 +1875,8 @@ static void DrawControlsMenu(void)
 		{
 			if(token[0] == '+')
 				spacecat(prbuff, token+1);
-			if(token[0] == '*' && !(ctrl->flags & CLF_REPEAT) || token[0] == '-')
-				spacecat(prbuff, token);
+			if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT)) ||
+			   token[0] == '-')	spacecat(prbuff, token);
 			token = strtok(NULL, " ");
 		}
 		strupr(prbuff);
@@ -2101,16 +2085,6 @@ static void SCMouseLookInverse(int option)
 		P_SetMessage(&players[consoleplayer], "INVERSE MOUSE LOOK", true);
 	else
 		P_SetMessage(&players[consoleplayer], "NORMAL MOUSE LOOK", true);
-	S_LocalSound(SFX_CHAT, NULL);
-}
-
-static void SCInverseY(int option)
-{
-	int val = Get(DD_MOUSE_INVERSE_Y);
-		
-	P_SetMessage(&players[consoleplayer], 
-		(val^=1)? "INVERSE MOUSE Y AXIS" : "NORMAL MOUSE Y AXIS", true);
-	Set(DD_MOUSE_INVERSE_Y, val);
 	S_LocalSound(SFX_CHAT, NULL);
 }
 
@@ -2645,7 +2619,6 @@ boolean MN_Responder(event_t *event)
 	int key;
 	int i;
 	MenuItem_t *item;
-	extern boolean automapactive;
 	char *textBuffer;
 
 	if(event->data1 == DDKEY_RSHIFT)
@@ -3307,3 +3280,4 @@ static void DrawSlider(Menu_t *menu, int item, int width, int slot)
 	GL_DrawPatch_CS(x + width*8, y, W_GetNumForName("M_SLDRT"));
 	GL_DrawPatch_CS(x+4+slot*8, y+7, W_GetNumForName("M_SLDKB"));
 }
+

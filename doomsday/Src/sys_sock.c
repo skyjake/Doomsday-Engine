@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2004/01/08 12:22:05  skyjake
+ * Merged from branch-nix
+ *
  * Revision 1.2  2003/09/03 20:53:49  skyjake
  * Added a proper GPL banner
  *
@@ -28,7 +31,20 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <winsock.h>
+#ifdef WIN32
+#	include <winsock.h>
+#endif
+
+#ifdef UNIX
+#	include "de_platform.h"
+#	include <unistd.h>
+#	include <sys/socket.h>
+#	include <sys/types.h>
+#	include <netinet/in.h>
+#	include <arpa/inet.h>
+#	include <netdb.h>
+#endif
+
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -58,9 +74,11 @@
  */
 void N_SockInit(void)
 {
+#ifdef WIN32
 	WSADATA wsaData;
 	WSAStartup( MAKEWORD(1,1), &wsaData );
 	// FIXME: Check the result... (who cares?)
+#endif
 }
 
 /*
@@ -69,7 +87,9 @@ void N_SockInit(void)
  */
 void N_SockShutdown(void)
 {
+#ifdef WIN32
 	WSACleanup();
+#endif
 }
 
 /*
@@ -166,5 +186,10 @@ boolean N_SockConnect(socket_t s, struct hostent *host, unsigned short port)
  */
 void N_SockClose(socket_t s)
 {
+#ifdef WIN32
 	closesocket(s);
+#elif defined UNIX
+	close(s);
+#endif
 }
+

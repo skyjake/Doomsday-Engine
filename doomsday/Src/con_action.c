@@ -38,7 +38,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-action_t *actions = NULL;		// Pointer to the actions list.
+action_t *ddactions = NULL;		// Pointer to the actions list.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -50,7 +50,7 @@ action_t *actions = NULL;		// Pointer to the actions list.
 void Con_DefineActions(action_t *acts)
 {
 	// Store a pointer to the list of actions.
-	actions = acts;
+	ddactions = acts;
 }
 
 //===========================================================================
@@ -59,7 +59,7 @@ void Con_DefineActions(action_t *acts)
 void Con_ClearActions(void)
 {
 	action_t *act;
-	for(act=actions; act->name[0]; act++) act->on = false;
+	for(act = ddactions; act->name[0]; act++) act->on = false;
 }
 
 //===========================================================================
@@ -75,14 +75,14 @@ int Con_ActionCommand(char *cmd, boolean has_prefix)
 	char		name8[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	action_t	*act;
 
-	if(actions == NULL) return false;
+	if(ddactions == NULL) return false;
 		
 	strncpy(name8, cmd + (has_prefix? 1 : 0), 8);
 	v1 = *(int*) name8;
 	v2 = *(int*) &name8[4];
 
 	// Try to find a matching action by searching through the list.
-	for(act = actions; act->name[0]; act++)
+	for(act = ddactions; act->name[0]; act++)
 	{
 		if(v1 == *(int*) act->name && v2 == *(int*) &act->name[4])
 		{
@@ -105,8 +105,9 @@ int CCmdListActs(int argc, char **argv)
 	action_t	*act;
 
 	Con_Message("Action commands registered by the game DLL:\n");
-	for(act = actions; act->name[0]; act++)
+	for(act = ddactions; act->name[0]; act++)
 		Con_Message("  %s\n", act->name);
 	return true;
 }
+
 

@@ -11,7 +11,7 @@
 #include "doomdef.h"
 #include "r_local.h"
 #elif __JHERETIC__
-#include "doomdef.h"
+#include "Doomdef.h"
 #else // __JHEXEN__
 #include "h2def.h"
 #include "r_local.h"
@@ -221,3 +221,4 @@ void SV_ReadTextureArchive(void)
 	SV_ReadTexArchive(&flat_archive);
 	SV_ReadTexArchive(&tex_archive);
 }
+

@@ -19,7 +19,7 @@
 //      CHANGE THE TEXTURE OF A WALL SWITCH TO ITS OPPOSITE
 //
 //==================================================================
-switchlist_t alphSwitchList[] =
+switchlist_t switchInfo[] =
 {
 	{ "SW_1_UP", "SW_1_DN", SFX_SWITCH1 },
 	{ "SW_2_UP", "SW_2_DN", SFX_SWITCH1 },
@@ -55,14 +55,14 @@ void P_InitSwitchList(void)
 
 	for (index = 0, i = 0; i < MAXSWITCHES; i++)
 	{
-		if(!alphSwitchList[i].soundID)
+		if(!switchInfo[i].soundID)
 		{
 			numswitches = index/2;
 			switchlist[index] = -1;
 			break;
 		}
-		switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name1);
-		switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name2);
+		switchlist[index++] = R_CheckTextureNumForName(switchInfo[i].name1);
+		switchlist[index++] = R_CheckTextureNumForName(switchInfo[i].name2);
 	}
 }
 
@@ -111,7 +111,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 	{
 		if (switchlist[i] == texTop)
 		{
-			S_StartSound(alphSwitchList[i/2].soundID, 
+			S_StartSound(switchInfo[i/2].soundID, 
 				(mobj_t*) &line->frontsector->soundorg);
 			sides[line->sidenum[0]].toptexture = switchlist[i^1];
 			if(useAgain)
@@ -122,7 +122,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 		}
 		else if (switchlist[i] == texMid)
 		{
-			S_StartSound(alphSwitchList[i/2].soundID, (mobj_t*) 
+			S_StartSound(switchInfo[i/2].soundID, (mobj_t*) 
 				&line->frontsector->soundorg);
 			sides[line->sidenum[0]].midtexture = switchlist[i^1];
 			if(useAgain)
@@ -133,7 +133,7 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 		}
 		else if (switchlist[i] == texBot)
 		{
-			S_StartSound(alphSwitchList[i/2].soundID, 
+			S_StartSound(switchInfo[i/2].soundID, 
 				(mobj_t*) &line->frontsector->soundorg);
 			sides[line->sidenum[0]].bottomtexture = switchlist[i^1];
 			if(useAgain)
@@ -144,3 +144,4 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 		}
 	}
 }
+

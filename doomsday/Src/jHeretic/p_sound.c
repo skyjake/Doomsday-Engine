@@ -7,7 +7,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "Doomdef.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -62,3 +62,4 @@ void S_SectorSound(sector_t *sec, int id)
 	S_StopSound(0, origin);
 	S_StartSound(id, origin);
 }
+

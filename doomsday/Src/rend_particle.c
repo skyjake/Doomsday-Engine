@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@
 
 /*
  * $Log$
+ * Revision 1.18  2004/01/08 12:22:04  skyjake
+ * Merged from branch-nix
+ *
  * Revision 1.17  2003/09/04 17:19:37  skyjake
  * Added a proper GPL banner
  *
@@ -339,7 +342,7 @@ void PG_SectorIsVisible(sector_t *sector)
 // PG_Sorter
 //	Sorts in descending order.
 //===========================================================================
-int __cdecl PG_Sorter(const void *pt1, const void *pt2)
+int C_DECL PG_Sorter(const void *pt1, const void *pt2)
 {
 	if(((porder_t*)pt1)->distance > ((porder_t*)pt2)->distance)
 		return -1;
@@ -523,8 +526,11 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		dst = &gen->def->stages[pt->stage];		
 
 		// Only render one type of particles.
-		if(rtype == PTC_MODEL && dst->model < 0
-			|| rtype != PTC_MODEL && st->type != rtype) continue;
+		if((rtype == PTC_MODEL && dst->model < 0) ||
+		   (rtype != PTC_MODEL && st->type != rtype))
+		{
+			continue;
+		}	
 		if(!(gen->flags & PGF_ADD_BLEND) == with_blend) continue;
 
 		if(rtype != PTC_MODEL && !with_blend)
@@ -605,51 +611,52 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 			// Render the particle as a model.
 			vis.type = VSPR_PARTICLE_MODEL;
 			vis.distance = dist;
-			vis.mo.subsector = R_PointInSubsector(pt->pos[VX], pt->pos[VY]);
-			vis.mo.gx = FRACUNIT * center[VX];
-			vis.mo.gy = FRACUNIT * center[VZ];
-			vis.mo.gz = vis.mo.gzt = FRACUNIT * center[VY];
-			vis.mo.v1[0] = center[VX];
-			vis.mo.v1[1] = center[VZ];
-			vis.mo.v2[0] = size; // Extra scaling factor.
-			vis.mo.mf = &models[dst->model];
+			vis.data.mo.subsector = R_PointInSubsector(pt->pos[VX],
+													   pt->pos[VY]);
+			vis.data.mo.gx = FRACUNIT * center[VX];
+			vis.data.mo.gy = FRACUNIT * center[VZ];
+			vis.data.mo.gz = vis.data.mo.gzt = FRACUNIT * center[VY];
+			vis.data.mo.v1[0] = center[VX];
+			vis.data.mo.v1[1] = center[VZ];
+			vis.data.mo.v2[0] = size; // Extra scaling factor.
+			vis.data.mo.mf = &models[dst->model];
 			if(dst->end_frame < 0)
 			{
 				frame = dst->frame;
-				vis.mo.inter = 0;
+				vis.data.mo.inter = 0;
 			}
 			else
 			{
 				frame = dst->frame + (dst->end_frame - dst->frame)
 					* mark;
-				vis.mo.inter = M_CycleIntoRange(mark * (dst->end_frame
+				vis.data.mo.inter = M_CycleIntoRange(mark * (dst->end_frame
 					- dst->frame), 1);
 			}
-			R_SetModelFrame(vis.mo.mf, frame);
+			R_SetModelFrame(vis.data.mo.mf, frame);
 			// Set the correct orientation for the particle.
-			if(vis.mo.mf->sub[0].flags & MFF_MOVEMENT_YAW)
+			if(vis.data.mo.mf->sub[0].flags & MFF_MOVEMENT_YAW)
 			{
-				vis.mo.yaw = R_MovementYaw(pt->mov[0], pt->mov[1]);
+				vis.data.mo.yaw = R_MovementYaw(pt->mov[0], pt->mov[1]);
 			}
 			else
 			{
-				vis.mo.yaw = pt->yaw / 32768.0f * 180;
+				vis.data.mo.yaw = pt->yaw / 32768.0f * 180;
 			}
-			if(vis.mo.mf->sub[0].flags & MFF_MOVEMENT_PITCH)
+			if(vis.data.mo.mf->sub[0].flags & MFF_MOVEMENT_PITCH)
 			{
-				vis.mo.pitch = R_MovementPitch(pt->mov[0], pt->mov[1],
+				vis.data.mo.pitch = R_MovementPitch(pt->mov[0], pt->mov[1],
 					pt->mov[2]);
 			}
 			else
 			{
-				vis.mo.pitch = pt->pitch / 32768.0f * 180;
+				vis.data.mo.pitch = pt->pitch / 32768.0f * 180;
 			}
 			if(st->flags & PTCF_BRIGHT || LevelFullBright) 
-				vis.mo.lightlevel = -1; // Fullbright.
+				vis.data.mo.lightlevel = -1; // Fullbright.
 			else 
-				vis.mo.lightlevel = pt->sector->lightlevel;
-			memcpy(vis.mo.rgb, pt->sector->rgb, 3);
-			vis.mo.alpha = color[3];
+				vis.data.mo.lightlevel = pt->sector->lightlevel;
+			memcpy(vis.data.mo.rgb, R_GetSectorLightColor(pt->sector), 3);
+			vis.data.mo.alpha = color[3];
 
 			Rend_RenderModel(&vis);
 			continue;

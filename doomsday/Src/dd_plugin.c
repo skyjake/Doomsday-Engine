@@ -146,3 +146,4 @@ int Plug_DoHook(int hook_type)
 	if(ret && allgood) ret |= 2;
 	return ret;
 }
+

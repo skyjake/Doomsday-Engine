@@ -3,12 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <direct.h>
+//#include <direct.h>
 #include <ctype.h>
-#include "DoomDef.h"
-#include "../common/d_Net.h"
+#include "Doomdef.h"
+#include "../Common/d_net.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
 #include "AcFnLink.h"
 #include "Mn_def.h"
@@ -45,7 +45,7 @@ FILE *debugfile;
 void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 void MN_DrCenterTextB_CS(char *text, int center_x, int y);
 
-void G_BuildTiccmd(ticcmd_t *cmd);
+void G_BuildTiccmd(void *cmd);
 void H_ConsoleRegistration();
 void R_DrawPlayerSprites(ddplayer_t *viewplr);
 void R_SetAllDoomsdayFlags();
@@ -163,12 +163,17 @@ void D_Display(void)
 		// Also update view borders?
 		if(Get(DD_VIEWWINDOW_HEIGHT) != 200) GL_Update(DDUF_BORDER);
 		break;
+		
 	case GS_INTERMISSION:
 		IN_Drawer ();
 		break;
+		
 	case GS_WAITING:
 		// Clear the screen while waiting, doesn't mess up the menu.
 		gl.Clear(DGL_COLOR_BUFFER_BIT);
+		break;
+		
+	default:
 		break;
 	}
 	GL_Update(DDUF_FULLSCREEN);
@@ -177,7 +182,8 @@ void D_Display(void)
 	{
 		if(!IS_NETGAME)
 		{
-			GL_DrawPatch(160, Get(DD_VIEWWINDOW_Y)+5, W_GetNumForName("PAUSED"));
+			GL_DrawPatch(160, Get(DD_VIEWWINDOW_Y)+5,
+						 W_GetNumForName("PAUSED"));
 		}
 		else
 		{
@@ -757,6 +763,7 @@ void H_PreInit(void)
 	cfg.counterCheatScale = .7f;
 	cfg.cameraNoClip = true;
 	cfg.bobView = cfg.bobWeapon = 1;
+	cfg.jumpPower = 9;
 
 //	M_FindResponseFile();
 //	setbuf(stdout, NULL);
@@ -772,12 +779,14 @@ void H_PreInit(void)
 
 	// Check for -CDROM
 	cdrom = false;
+#if 0
 	if(ArgCheck("-cdrom"))
 	{
 		cdrom = true;
 		_mkdir("c:\\heretic.cd");
 	}
-
+#endif
+	
 	// -DEVMAP <episode> <map>
 	// Adds a map wad from the development directory to the wad list,
 	// and sets the start episode and the start map.
@@ -1078,22 +1087,22 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.PostInit = H_PostInit;
 	gx.Shutdown = H_Shutdown;
 	gx.BuildTicCmd = G_BuildTiccmd;
-	gx.DiscardTicCmd = G_DiscardTiccmd;
+	gx.DiscardTicCmd = (void (*)(void*,void*)) G_DiscardTiccmd;
 	gx.G_Drawer = D_Display;
 	gx.Ticker = H_Ticker;
 	gx.MN_Drawer = MN_Drawer;
-	gx.PrivilegedResponder = H_PrivilegedResponder;
+	gx.PrivilegedResponder = (boolean (*)(event_t*)) H_PrivilegedResponder;
 	gx.MN_Responder = MN_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
-	gx.MobjFriction = P_GetMobjFriction;
+	gx.MobjFriction = (fixed_t (*)(void*)) P_GetMobjFriction;
 	gx.EndFrame = H_EndFrame;
 	gx.ConsoleBackground = H_ConsoleBg;
 	gx.UpdateState = G_UpdateState;
 #undef Get
 	gx.Get = G_Get;
 
-	gx.R_Init = R_Init;
+	gx.R_Init = R_InitTranslationTables;
 
 	gx.NetServerStart = D_NetServerStarted;
 	gx.NetServerStop = D_NetServerClose;
@@ -1115,3 +1124,4 @@ game_export_t *GetGameAPI(game_import_t *imports)
 
 	return &gx;
 }
+

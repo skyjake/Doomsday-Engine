@@ -15,6 +15,12 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2004/01/08 12:25:15  skyjake
+// Merged from branch-nix
+//
+// Revision 1.1.4.1  2003/11/19 17:07:13  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.1  2003/02/26 19:21:54  skyjake
 // Initial checkin
 //
@@ -361,4 +367,5 @@ void P_SpawnGlowingLight(sector_t*	sector)
 
     sector->special = 0;
 }
+
 

@@ -76,7 +76,8 @@ int Con_ParseCommands(char *fileName, int setdefault)
 		{
 			// Execute the commands silently.
 			if(!Con_Execute(buff, setdefault? true : false))
-				Con_Message( "%s(%d): error executing command\n  \"%s\"\n", fileName, line, buff);
+				Con_Message("%s(%d): error executing command\n"
+							"  \"%s\"\n", fileName, line, buff);
 		}
 		if(deof(file)) break;
 		line++;

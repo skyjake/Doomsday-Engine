@@ -486,3 +486,4 @@ void P_InitSky(int map)
 		Rend_SkyParams(1, DD_TEXTURE, Sky2Texture);
 	}
 }
+

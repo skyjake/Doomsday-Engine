@@ -8,11 +8,13 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
-#include <io.h>
+//#include <io.h>
 #include <ctype.h>
 
+/*
 // Oh, gross hack! But io.h clashes with vldoor_e::open/close...
-#define __P_SPEC__ 
+#define __P_SPEC__
+*/
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -21,8 +23,9 @@
 #include "s_sound.h"
 #include "p_local.h"
 #include "d_console.h"
-#include "d_action.h"
+#include "D_Action.h"
 #include "d_config.h"
+#include "r_sky.h"
 
 #include "v_video.h"
 
@@ -39,12 +42,11 @@
 #include "am_map.h"
 #include "p_setup.h"
 #include "p_saveg.h"
-#include "r_main.h"
 #include "d_main.h"
 #include "d_items.h"
 #include "m_bams.h"
-#include "d_netjd.h"
-#include "acfnlink.h"
+#include "d_netJD.h"
+#include "AcFnLink.h"
 #include "g_update.h"
 #include "f_infine.h"
 
@@ -57,8 +59,8 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void R_Init(void);
-void G_BuildTiccmd (ticcmd_t* cmd);
+void R_InitTranslation(void);
+void G_BuildTiccmd (void *cmd);
 void D_Display (void);
 int D_PrivilegedResponder(event_t *event);
 void D_DefaultBindings();
@@ -99,25 +101,6 @@ static char gameModeString[17];
 
 // CODE --------------------------------------------------------------------
 
-//
-// D_PageTicker
-// Handles timing for warped projection
-//
-/*void D_PageTicker (void)
-{
-    if (--pagetic < 0)
-	D_AdvanceDemo ();
-}
-*/
-//
-// D_AdvanceDemo
-// Called after each demo or intro demosequence finishes
-//
-/*void D_AdvanceDemo (void)
-{
-    advancedemo = true;
-}*/
-
 void D_GetDemoLump(int num, char *out)
 {
 	sprintf(out, "%cDEMO%i", gamemode == shareware? 'S'
@@ -128,87 +111,8 @@ void D_GetDemoLump(int num, char *out)
 		: '2', num);
 }
 
-/*
-//
-// This cycles through the demo sequences.
-// FIXME - version dependend demo numbers?
-//
-void D_DoAdvanceDemo (void)
-{
-	char buf[10];
-
-    players[consoleplayer].playerstate = PST_LIVE;  // not reborn
-    advancedemo = false;
-    usergame = false;               // no save / end game here
-    paused = false;
-    gameaction = ga_nothing;
-	GL_SetFilter(0);
-	
-    if ( gamemode == retail )
-		demosequence = (demosequence+1)%7;
-    else
-		demosequence = (demosequence+1)%6;
-    
-    switch (demosequence)
-    {
-	case 0:
-		if ( gamemode == commercial )
-			pagetic = 35 * 11;
-		else
-			pagetic = 170;
-		gamestate = GS_DEMOSCREEN;
-		pagename = "TITLEPIC";
-		if ( gamemode == commercial )
-			S_StartMusicNum(mus_dm2ttl, false);
-		else
-			S_StartMusic("intro", false);
-		break;
-	case 1:
-		D_GetDemoLump(1, buf);
-		G_DeferedPlayDemo(buf);
-		break;
-	case 2:
-		pagetic = 200;
-		gamestate = GS_DEMOSCREEN;
-		pagename = "CREDIT";
-		break;
-	case 3:
-		D_GetDemoLump(2, buf);
-		G_DeferedPlayDemo(buf);
-		break;
-	case 4:
-		gamestate = GS_DEMOSCREEN;
-		if ( gamemode == commercial)
-		{
-			pagetic = 35 * 11;
-			pagename = "TITLEPIC";
-			S_StartMusicNum(mus_dm2ttl, false);
-		}
-		else
-		{
-			pagetic = 200;
-			
-			if ( gamemode == retail )
-				pagename = "CREDIT";
-			else
-				pagename = "HELP2";
-		}
-		break;
-	case 5:
-		D_GetDemoLump(3, buf);
-		G_DeferedPlayDemo(buf);
-		break;
-        // THE DEFINITIVE DOOM Special Edition demo
-	case 6:
-		D_GetDemoLump(4, buf);
-		G_DeferedPlayDemo(buf);
-		break;
-    }
-}
-*/
-
-//      print title for every printed line
-char            title[128];
+// print title for every printed line
+char title[128];
 
 //===========================================================================
 // DetectIWADs
@@ -237,16 +141,15 @@ void DetectIWADs (void)
 	};
 	fspec_t iwads[] = 
 	{
-		"TNT.wad",		"-tnt",
-		"Plutonia.wad",	"-plutonia",
-		"Doom2.wad",	"-doom2",
-		"Doom1.wad",	"-sdoom",
-		"Doom.wad",		"-doom",
-		"Doom.wad",		"-ultimate",
-		0, 0
+		{ "TNT.wad",		"-tnt" 		},
+		{ "Plutonia.wad",	"-plutonia" },
+		{ "Doom2.wad",		"-doom2" 	},
+		{ "Doom1.wad",		"-sdoom" 	},
+		{ "Doom.wad",		"-doom" 	},
+		{ "Doom.wad",		"-ultimate" },
+		{ 0, 0 }
 	};
 	int	i, k;
-	fspec_t *found = NULL;
 	boolean overridden = false;
 	char fn[256];
 
@@ -329,10 +232,10 @@ void D_IdentifyFromData(void)
 	};
 	identify_t list[] =
 	{
-		commercial_lumps, commercial,	// Doom2 is easiest to detect.
-		retail_lumps, retail,			// Ultimate Doom is obvious.
-		registered_lumps, registered,
-		shareware_lumps, shareware
+		{ commercial_lumps,	commercial },	// Doom2 is easiest to detect.
+		{ retail_lumps, 	retail },		// Ultimate Doom is obvious.
+		{ registered_lumps,	registered },
+		{ shareware_lumps, 	shareware }
 	};
 	int i, num = sizeof(list)/sizeof(identify_t);
 
@@ -419,7 +322,7 @@ void D_SetPlayerPtrs(void)
 {
 	int i;
 	
-	for(i=0; i<MAXPLAYERS; i++)
+	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		players[i].plr = DD_GetPlayer(i);
 		players[i].plr->extradata = (void*) &players[i];
@@ -486,6 +389,8 @@ void D_PreInit(void)
 	cfg.menuColor[0] = 1;
 	cfg.automapAlpha = .6f;
 	cfg.automapLineAlpha = 1;
+	cfg.automapShowDoors = true;
+	cfg.automapDoorGlow = true;
 	cfg.msgCount = 4;
 	cfg.msgScale = .8f;
 	cfg.msgUptime = 5 * TICSPERSEC;
@@ -580,6 +485,13 @@ void D_PostInit(void)
 		: "Public DOOM\n");
 	Con_FPrintf(CBLF_RULER, "");
 
+	// Plutonia and TNT automatically turn on the full sky.
+	if(gamemode == commercial
+		&& (gamemission == pack_plut || gamemission == pack_tnt))
+	{
+		Con_SetInteger("rend-sky-full", 1);
+	}
+
 	if(gamemode == commercial) // Doom2 has a different background.
 		BorderLumps[0] = "GRNROCK";
 	R_SetBorderGfx(BorderLumps);
@@ -615,9 +527,12 @@ void D_PostInit(void)
 		Con_Message(".\n");
     }
 
+/*
     p = ArgCheck ("-avg");
     if(p && p < myargc-1 && deathmatch)
-		Con_Message("Austin Virtual Gaming: Levels will end after 20 minutes\n");
+		Con_Message("Austin Virtual Gaming: Levels will end after "
+		"20 minutes\n");
+*/
 
     p = ArgCheck ("-warp");
     if(p && p < myargc-1)
@@ -676,13 +591,11 @@ void D_PostInit(void)
 			for (i = 0;i < 23; i++)
 				if (W_CheckNumForName(name[i])<0)
 					I_Error("\nThis is not the registered version.");
-    }*/
+    }
+*/
 
     Con_Message("P_Init: Init Playloop state.\n");
     P_Init();
-
-    //printf ("S_Init: Setting up sound.\n");
-    //S_Init();//snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
 
     Con_Message("HU_Init: Setting up heads up display.\n");
     HU_Init();
@@ -693,29 +606,6 @@ void D_PostInit(void)
     Con_Message("M_Init: Init miscellaneous info.\n");
     M_Init();
 
-    // start the apropriate game based on parms
-/*    p = ArgCheck ("-record");
-    if (p && p < myargc-1)
-	{
-		G_RecordDemo (myargv(p+1));
-		autostart = true;
-    }*/
-	
-/*    p = ArgCheck ("-playdemo");
-    if (p && p < myargc-1)
-    {
-		singledemo = true;              // quit after one demo
-		G_DeferedPlayDemo(myargv(p+1));
-		return;
-    }*/
-	
-/*    p = ArgCheck ("-timedemo");
-    if (p && p < myargc-1)
-    {
-		G_TimeDemo (myargv(p+1));
-		return;
-    }*/
-	
     p = ArgCheck ("-loadgame");
     if (p && p < myargc-1)
     {
@@ -728,7 +618,6 @@ void D_PostInit(void)
 		if(autostart || IS_NETGAME)
 		{
 			G_InitNew(startskill, startepisode, startmap);
-			//if(demorecording) G_BeginRecording();
 		}
 		else
 		{
@@ -743,16 +632,13 @@ void D_Shutdown(void)
 
 void D_Ticker(void)
 {
-//	if(advancedemo) D_DoAdvanceDemo();
 	M_Ticker();
 	G_Ticker();
 }
 
 void D_EndFrame(void)
 {
-//	S_UpdateSounds(players[displayplayer].plr->mo);
 }
-
 
 char *G_Get(int id)
 {
@@ -834,17 +720,17 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.Ticker = D_Ticker;
 	gx.G_Drawer = D_Display;
 	gx.MN_Drawer = M_Drawer;
-	gx.PrivilegedResponder = D_PrivilegedResponder;
+	gx.PrivilegedResponder = (boolean (*)(event_t*)) D_PrivilegedResponder;
 	gx.MN_Responder = M_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
-	gx.MobjFriction = P_GetMobjFriction;
+	gx.MobjFriction = (fixed_t (*)(void*)) P_GetMobjFriction;
 	gx.EndFrame = D_EndFrame;
 	gx.ConsoleBackground = D_ConsoleBg;
 	gx.UpdateState = G_UpdateState;
 #undef Get
 	gx.Get = G_Get;
-	gx.R_Init = R_Init;
+	gx.R_Init = R_InitTranslation;
 
 	gx.NetServerStart = D_NetServerStarted;
 	gx.NetServerStop = D_NetServerClose;
@@ -866,3 +752,4 @@ game_export_t *GetGameAPI(game_import_t *imports)
 
 	return &gx;
 }
+

@@ -150,9 +150,9 @@ void Zip_RemoveDuplicateFiles(void);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static package_t *gZipRoot;
-static zipentry_t *gFiles;
-static int gNumFiles, gAllocatedFiles;
+static package_t *zipRoot;
+static zipentry_t *zipFiles;
+static int zipNumFiles, zipAllocatedFiles;
 
 // CODE --------------------------------------------------------------------
 
@@ -163,10 +163,10 @@ void Zip_Init(void)
 {
 	VERBOSE( Con_Message("Zip_Init: Initializing package system...\n") );
 
-	gZipRoot = NULL;
-	gFiles = 0;
-	gNumFiles = 0;
-	gAllocatedFiles = 0;
+	zipRoot = NULL;
+	zipFiles = 0;
+	zipNumFiles = 0;
+	zipAllocatedFiles = 0;
 }
 
 /*
@@ -178,7 +178,7 @@ void Zip_Shutdown(void)
 	int i;
 
 	// Close package files and free the nodes.
-	for(pack = gZipRoot; pack; pack = next)
+	for(pack = zipRoot; pack; pack = next)
 	{
 		next = pack->next;
 		if(pack->file) F_Close(pack->file);
@@ -186,13 +186,13 @@ void Zip_Shutdown(void)
 	}
 
 	// Free the file directory.
-	for(i = 0; i < gNumFiles; i++) free(gFiles[i].name);
-	free(gFiles);
+	for(i = 0; i < zipNumFiles; i++) free(zipFiles[i].name);
+	free(zipFiles);
 
-	gZipRoot = NULL;
-	gFiles = NULL;
-	gNumFiles = 0;
-	gAllocatedFiles = 0;
+	zipRoot = NULL;
+	zipFiles = NULL;
+	zipNumFiles = 0;
+	zipAllocatedFiles = 0;
 }
 
 /*
@@ -201,34 +201,34 @@ void Zip_Shutdown(void)
  */
 zipentry_t* Zip_NewFile(const char *name)
 {
-	int oldCount = gNumFiles;
+	int oldCount = zipNumFiles;
 	boolean changed = false;
 	
-	gNumFiles++;
-	while(gNumFiles > gAllocatedFiles)
+	zipNumFiles++;
+	while(zipNumFiles > zipAllocatedFiles)
 	{
 		// Double the size of the array.
-		gAllocatedFiles *= 2;
-		if(gAllocatedFiles <= 0) gAllocatedFiles = 1;
+		zipAllocatedFiles *= 2;
+		if(zipAllocatedFiles <= 0) zipAllocatedFiles = 1;
 		
 		// Realloc the zipentry array.
-		gFiles = realloc(gFiles, sizeof(zipentry_t) * gAllocatedFiles);
+		zipFiles = realloc(zipFiles, sizeof(zipentry_t) * zipAllocatedFiles);
 		changed = true;
 	}
 
 	// Clear the new memory.
 	if(changed)
 	{
-		memset(gFiles + oldCount, 0, sizeof(zipentry_t) 
-			* (gAllocatedFiles - oldCount));
+		memset(zipFiles + oldCount, 0, sizeof(zipentry_t) 
+			* (zipAllocatedFiles - oldCount));
 	}
 
 	// Take a copy of the name. This is freed in Zip_Shutdown().
-	gFiles[oldCount].name = malloc(strlen(name) + 1);
-	strcpy(gFiles[oldCount].name, name);
+	zipFiles[oldCount].name = malloc(strlen(name) + 1);
+	strcpy(zipFiles[oldCount].name, name);
 	
 	// Return a pointer to the first new zipentry.
-	return gFiles + oldCount;
+	return zipFiles + oldCount;
 }
 
 /*
@@ -248,7 +248,7 @@ void Zip_SortFiles(void)
 {
 	// Sort all the zipentries by name. (Note: When lots of files loaded,
 	// most of list is already sorted. Quicksort becomes slow...)
-	qsort(gFiles, gNumFiles, sizeof(zipentry_t), Zip_EntrySorter);
+	qsort(zipFiles, zipNumFiles, sizeof(zipentry_t), Zip_EntrySorter);
 }
 
 /*
@@ -260,9 +260,9 @@ package_t* Zip_NewPackage(void)
 	static int packageCounter = 0;
 
 	package_t *newPack = calloc(sizeof(package_t), 1);
-	newPack->next = gZipRoot;
+	newPack->next = zipRoot;
 	newPack->order = packageCounter++;
-	return gZipRoot = newPack;
+	return zipRoot = newPack;
 }
 
 /*
@@ -272,7 +272,7 @@ package_t* Zip_NewPackage(void)
  */
 boolean Zip_LocateCentralDirectory(DFILE *file)
 {
-	int length = F_Length(file);
+/*	int length = F_Length(file); */
 	int pos = CENTRAL_END_SIZE; // Offset from the end.
 	uint signature;
 	
@@ -436,7 +436,7 @@ void Zip_RemoveDuplicateFiles(void)
 	zipentry_t *entry, *loser;
 
 	// One scan through the directory is enough.
-	for(i = 0, entry = gFiles; i < gNumFiles - 1; i++, entry++)
+	for(i = 0, entry = zipFiles; i < zipNumFiles - 1; i++, entry++)
 	{
 		// Is this entry the same as the next one?
 		if(!stricmp(entry[0].name, entry[1].name))
@@ -449,11 +449,11 @@ void Zip_RemoveDuplicateFiles(void)
 
 			// Overwrite the loser with the last entry.
 			free(loser->name);
-			memcpy(loser, &gFiles[gNumFiles - 1], sizeof(zipentry_t));
-			memset(&gFiles[gNumFiles - 1], 0, sizeof(zipentry_t));
+			memcpy(loser, &zipFiles[zipNumFiles - 1], sizeof(zipentry_t));
+			memset(&zipFiles[zipNumFiles - 1], 0, sizeof(zipentry_t));
 
 			// One less entry.
-			gNumFiles--;
+			zipNumFiles--;
 			modified = true;
 		}
 	}
@@ -475,8 +475,8 @@ zipindex_t Zip_Iterate(int (*iterator)(const char*, void*), void *parm)
 {
 	int i;
 	
-	for(i = 0; i < gNumFiles; i++)
-		if(iterator(gFiles[i].name, parm))
+	for(i = 0; i < zipNumFiles; i++)
+		if(iterator(zipFiles[i].name, parm))
 			return i + 1;
 
 	// Nothing was accepted.
@@ -500,14 +500,14 @@ zipindex_t Zip_Find(const char *fileName)
 
 	// Init the search.
 	begin = 0;
-	end = gNumFiles - 1;
+	end = zipNumFiles - 1;
 
 	while(begin <= end)
 	{
 		mid = (begin + end) / 2;
 		
 		// How does this compare?
-		relation = stricmp(fullPath, gFiles[mid].name);
+		relation = stricmp(fullPath, zipFiles[mid].name);
 		if(!relation)
 		{
 			// Got it! We return a 1-based index.
@@ -535,8 +535,8 @@ zipindex_t Zip_Find(const char *fileName)
 uint Zip_GetSize(zipindex_t index)
 {
 	index--;
-	if(index < 0 || index >= gNumFiles) return 0; // Doesn't exist.
-	return gFiles[index].size;
+	if(index < 0 || index >= zipNumFiles) return 0; // Doesn't exist.
+	return zipFiles[index].size;
 }
 
 /*
@@ -549,9 +549,9 @@ uint Zip_Read(zipindex_t index, void *buffer)
 	zipentry_t *entry;
 
 	index--;
-	if(index < 0 || index >= gNumFiles) return 0; // Doesn't exist.
+	if(index < 0 || index >= zipNumFiles) return 0; // Doesn't exist.
 
-	entry = gFiles + index;
+	entry = zipFiles + index;
 	pack = entry->package;
 
 	VERBOSE2( Con_Printf("Zip_Read: %s: '%s' (%i bytes)\n",

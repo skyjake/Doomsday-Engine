@@ -1,7 +1,7 @@
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "d_net.h"
 
 //==================================================================
@@ -393,4 +393,5 @@ boolean P_UseSpecialLine ( mobj_t *thing, line_t *line)
 	
 	return true;
 }
+
 

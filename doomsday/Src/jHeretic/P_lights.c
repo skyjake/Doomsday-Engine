@@ -1,4 +1,4 @@
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
 
 //==================================================================
@@ -257,4 +257,5 @@ void P_SpawnGlowingLight(sector_t *sector)
 
 	sector->special = 0;
 }
+
 

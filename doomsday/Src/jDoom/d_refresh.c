@@ -9,7 +9,7 @@
 #include "r_local.h"
 #include "d_config.h"
 #include "x_hair.h"
-#include "mn_def.h"
+#include "Mn_def.h"
 #include "m_menu.h"
 #include "g_common.h"
 #include "d_net.h"
@@ -24,6 +24,12 @@
 extern char MobjLightOffsets[NUMMOBJTYPES];
 extern int actual_leveltime;
 
+// Private Data -------------------------------------------------------------
+
+static boolean	setsizeneeded;
+static int		setblocks;
+static int		setdetail;
+
 // Code ---------------------------------------------------------------------
 
 //
@@ -33,7 +39,7 @@ extern int actual_leveltime;
 // Assumes a given structure of the PLAYPAL.
 // Could be read from a lump instead.
 //
-void R_Init (void)
+void R_InitTranslation(void)
 {
 	byte	*translationtables = (byte*) Get(DD_TRANSLATIONTABLES_ADDRESS);
     int		i;
@@ -169,14 +175,26 @@ void R_DrawLevelTitle(void)
 }
 
 //
+// R_SetViewSize
+// Do not really change anything here,
+//  because it might be in the middle of a refresh.
+// The change will take effect next refresh.
+//
+void R_SetViewSize(int blocks, int detail)
+{
+    setsizeneeded = true;
+    setblocks = blocks;
+    setdetail = detail;
+}
+
+
+//
 // D_Display
 //  draw current display, possibly wiping it from the previous
 //
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t		wipegamestate = GS_DEMOSCREEN;
-extern boolean	setsizeneeded;
-extern int		setblocks;
 extern boolean	inhelpscreens;
 extern float	lookOffset;
 
@@ -189,7 +207,6 @@ void D_Display (void)
     static  boolean			inhelpscreensstate = false;
     static  boolean			fullscreen = false;
     static  gamestate_t		oldgamestate = -1;
-    static  int				borderdrawcount;
     int						y;
     boolean					redrawsbar;
 	player_t				*player = &players[displayplayer];
@@ -275,14 +292,13 @@ void D_Display (void)
 		WI_Drawer ();
 		break;
 
-/*	case GS_DEMOSCREEN:
-		D_PageDrawer ();
-		break;*/
-
 	case GS_WAITING:
 		gl.Clear(DGL_COLOR_BUFFER_BIT);
 		M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", 
 			hu_font_a, 1, 0, 0);
+
+	default:
+		break;
 	}
 
 	GL_Update(DDUF_FULLSCREEN);
@@ -370,5 +386,6 @@ void R_SetAllDoomsdayFlags()
 		for(iter = sec->thinglist; iter; iter = iter->snext)
 			P_SetDoomsdayFlags(iter);
 }
+
 
 

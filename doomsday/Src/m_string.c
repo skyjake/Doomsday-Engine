@@ -25,6 +25,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <stdarg.h>
 
 #include "de_base.h"
 #include "de_misc.h"
@@ -72,6 +73,25 @@ void Str_Free(ddstring_t *ds)
 		Z_Free(ds->str);
 	}
 	memset(ds, 0, sizeof(*ds));
+}
+
+//===========================================================================
+// Str_New
+//	Allocate a new uninitialized string.
+//===========================================================================
+ddstring_t *Str_New(void)
+{
+	return calloc(sizeof(ddstring_t), 1);
+}
+
+//===========================================================================
+// Str_Delete
+//	Destroy the string completely (free, too).
+//===========================================================================
+void Str_Delete(ddstring_t *ds)
+{
+	Str_Free(ds);
+	free(ds);
 }
 
 //===========================================================================
@@ -148,6 +168,22 @@ void Str_Append(ddstring_t *ds, const char *append_text)
 	Str_Alloc(ds, ds->length + incoming, true);
 	strcpy(ds->str + ds->length, append_text);
 	ds->length += incoming;
+}
+
+//===========================================================================
+// Str_Appendf
+//	Append formated text.
+//===========================================================================
+void Str_Appendf(ddstring_t *ds, const char *format, ...)
+{
+	char buf[1024];
+	va_list args;
+
+	// Print the message into the buffer.
+	va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+	Str_Append(ds, buf);	
 }
 
 //===========================================================================
@@ -264,4 +300,29 @@ void Str_Strip(ddstring_t *ds)
 {
 	Str_StripLeft(ds);
 	Str_StripRight(ds);
+}
+
+//===========================================================================
+// Str_GetLine
+//	Extract a line of text from the source.
+//===========================================================================
+const char *Str_GetLine(ddstring_t *ds, const char *src)
+{
+	char buf[2];
+
+	// We'll append the chars one by one.
+	memset(buf, 0, sizeof(buf));
+	
+	for(Str_Clear(ds); *src && *src != '\n'; src++) 
+	{
+		buf[0] = *src;
+		Str_Append(ds, buf);
+	}
+
+	// Strip whitespace around the line.
+	Str_Strip(ds);
+
+	// The newline is excluded.
+	if(*src == '\n') src++;
+	return src;
 }

@@ -452,3 +452,4 @@ int	DM_FModCDPlay(int track, int looped)
 		: FSOUND_CD_PLAYONCE);
 	return FSOUND_CD_Play(0, track);
 }
+

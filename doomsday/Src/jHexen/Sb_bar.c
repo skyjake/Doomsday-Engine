@@ -1666,8 +1666,6 @@ void Draw_LoadIcon(void)
 
 boolean SB_Responder(event_t *event)
 {
-	extern boolean willRenderSprites, freezeRLs;
-
 	if(event->type == ev_keydown)
 	{
 		if(HandleCheats(event->data1))
@@ -1675,19 +1673,6 @@ boolean SB_Responder(event_t *event)
 			return(true);
 		}
 	}
-	/*if(event->type == ev_keydown)
-	{
-		if(event->data1 == 'i')	// Turn sprites on/off.
-		{
-			willRenderSprites ^= 0x1;
-			return true;
-		}
-		if(event->data1 == 'o') // Un/freeze RLs.
-		{
-			freezeRLs ^= 0x1;
-			return true;
-		}
-	}*/
 	return(false);
 }
 
@@ -2429,3 +2414,4 @@ int CCmdCheatReveal(int argc, char **argv)
 		cheating = 2;
 	return true;
 }
+

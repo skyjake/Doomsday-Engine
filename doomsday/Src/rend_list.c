@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,10 @@
  */
 
 /*
- * rend_list.c: Doomsday Rendering Lists v3.0
+ * rend_list.c: Doomsday Rendering Lists v3.1
+ *
+ * 3.1 -- Support for multiple shadow textures
+ * 3.0 -- Multitexturing
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -236,8 +239,8 @@ static listhash_t litHash[RL_HASH_SIZE];
 // Additional light primitives.
 static listhash_t dynHash[RL_HASH_SIZE];
 
+static listhash_t shadowHash[RL_HASH_SIZE];
 static rendlist_t skyMaskList;
-static rendlist_t shadowList;
 
 // CODE --------------------------------------------------------------------
 
@@ -257,21 +260,23 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	
 	vis->type = VSPR_MASKED_WALL;
 	vis->distance = (poly->vertices[0].dist + poly->vertices[1].dist) / 2;
-	vis->wall.texture = poly->tex.id;
-	vis->wall.masked = texmask;	// Store texmask status in flip.
-	vis->wall.top = poly->top;
-	vis->wall.bottom = poly->bottom;
+	vis->data.wall.texture = poly->tex.id;
+	vis->data.wall.masked = texmask;	// Store texmask status in flip.
+	vis->data.wall.top = poly->top;
+	vis->data.wall.bottom = poly->bottom;
 	for(i = 0; i < 2; i++)
 	{
-		vis->wall.vertices[i].pos[VX] = poly->vertices[i].pos[VX];
-		vis->wall.vertices[i].pos[VY] = poly->vertices[i].pos[VY];
-		memcpy(&vis->wall.vertices[i].color, poly->vertices[i].color.rgba, 3);
-		vis->wall.vertices[i].color |= 0xff000000; // Alpha.
+		vis->data.wall.vertices[i].pos[VX] = poly->vertices[i].pos[VX];
+		vis->data.wall.vertices[i].pos[VY] = poly->vertices[i].pos[VY];
+		memcpy(&vis->data.wall.vertices[i].color,
+			   poly->vertices[i].color.rgba, 3);
+		vis->data.wall.vertices[i].color |= 0xff000000; // Alpha.
 	}
-	vis->wall.texc[0][VX] = poly->texoffx / (float) poly->tex.width;
-	vis->wall.texc[1][VX] = vis->wall.texc[0][VX] + poly->length/poly->tex.width;
-	vis->wall.texc[0][VY] = poly->texoffy / (float) poly->tex.height;
-	vis->wall.texc[1][VY] = vis->wall.texc[0][VY] 
+	vis->data.wall.texc[0][VX] = poly->texoffx / (float) poly->tex.width;
+	vis->data.wall.texc[1][VX] = vis->data.wall.texc[0][VX]
+		+ poly->length/poly->tex.width;
+	vis->data.wall.texc[0][VY] = poly->texoffy / (float) poly->tex.height;
+	vis->data.wall.texc[1][VY] = vis->data.wall.texc[0][VY] 
 		+ (poly->top - poly->bottom)/poly->tex.height;
 
 	// We can render ONE dynamic light, maybe.
@@ -279,20 +284,20 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	{
 		// Choose the brightest light.
 		memcpy(brightest, poly->lights->color, 3);
-		vis->wall.light = poly->lights;
+		vis->data.wall.light = poly->lights;
 		for(dyn = poly->lights->next; dyn; dyn = dyn->next)
 		{
 			if((brightest[0] + brightest[1] + brightest[2])/3
 				< (dyn->color[0] + dyn->color[1] + dyn->color[2])/3)
 			{
 				memcpy(brightest, dyn->color, 3);
-				vis->wall.light = dyn;
+				vis->data.wall.light = dyn;
 			}
 		}
 	}
 	else
 	{
-		vis->wall.light = NULL;
+		vis->data.wall.light = NULL;
 	}
 }
 
@@ -301,7 +306,7 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 //	Color distance attenuation, extralight, fixedcolormap.
 //	"Torchlight" is white, regardless of the original RGB.
 //===========================================================================
-void RL_VertexColors(rendpoly_t *poly, int lightlevel, byte *rgb)
+void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 {
 	int i;
 	float light, real, minimum;
@@ -383,7 +388,8 @@ void RL_PrepareFlat
 	}
 
 	// Calculate the color for each vertex.
-	RL_VertexColors(poly, Rend_SectorLight(poly->sector), poly->sector->rgb);
+	RL_VertexColors(poly, Rend_SectorLight(poly->sector),
+					R_GetSectorLightColor(poly->sector));
 }
 
 //===========================================================================
@@ -458,9 +464,9 @@ void RL_Init(void)
 	RL_ClearHash(plainHash);
 	RL_ClearHash(litHash);
 	RL_ClearHash(dynHash);
+	RL_ClearHash(shadowHash);
 
 	memset(&skyMaskList, 0, sizeof(skyMaskList));
-	memset(&shadowList, 0, sizeof(shadowList));
 }
 
 //===========================================================================
@@ -573,9 +579,9 @@ void RL_DeleteLists(void)
 	RL_DeleteHash(plainHash);
 	RL_DeleteHash(litHash);
 	RL_DeleteHash(dynHash);
+	RL_DeleteHash(shadowHash);
 	
 	RL_DestroyList(&skyMaskList);
-	RL_DestroyList(&shadowList);
 
 	RL_DestroyVertices();
 
@@ -638,9 +644,9 @@ void RL_ClearLists(void)
 	RL_RewindHash(plainHash);
 	RL_RewindHash(litHash);
 	RL_RewindHash(dynHash);
+	RL_RewindHash(shadowHash);
 
 	RL_RewindList(&skyMaskList);
-	RL_RewindList(&shadowList);
 
 	// FIXME: Does this belong here?
 	skyhemispheres = 0;
@@ -668,18 +674,20 @@ rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
 	rendlist_t *dest, *convertable = NULL;
 	
 	// Check for specialized rendering lists first.
-	if(poly->flags & RPF_SHADOW)
-	{
-		memcpy(&shadowList.tex, &poly->tex, sizeof(poly->tex));
-		return &shadowList;
-	}
 	if(poly->flags & RPF_SKY_MASK)
 	{
 		return &skyMaskList;
 	}
 
 	// Choose the correct hash table.
-	table = (useLights? litHash : plainHash);
+	if(poly->flags & RPF_SHADOW)
+	{
+		table = shadowHash;
+	}
+	else
+	{
+		table = (useLights? litHash : plainHash);
+	}
 
 	// Find/create a list in the hash.
 	hash = &table[ poly->tex.id % RL_HASH_SIZE ];
@@ -784,11 +792,8 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
 		int cursorOffset = -1;
 		int lastOffset   = -1;
 
-		if(list->cursor)
-			cursorOffset = list->cursor - oldData;
-
-		if(list->last)
-			lastOffset = (byte*) list->last - oldData;
+		if(list->cursor) cursorOffset = list->cursor - oldData;
+		if(list->last) lastOffset = (byte*) list->last - oldData;
 
 		// Allocate more memory for the data buffer.
 		if(list->size == 0) list->size = 1024;
@@ -797,10 +802,10 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
 		list->data = Z_Realloc(list->data, list->size, PU_STATIC);
 
 		// Restore main pointers.
-		list->cursor = 
-			(cursorOffset >= 0? list->data + cursorOffset : list->data);
-		list->last = 
-			(lastOffset >= 0? (primhdr_t*) (list->data + lastOffset) : NULL);
+		list->cursor = (cursorOffset >= 0? list->data + cursorOffset
+						: list->data);
+		list->last = (lastOffset >= 0? (primhdr_t*) (list->data + lastOffset)
+					  : NULL);
 
 		// Restore in-list pointers.
 		if(oldData)
@@ -808,8 +813,11 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
 			for(hdr = (primhdr_t*) list->data; ; 
 				hdr = (primhdr_t*) ((byte*) hdr + hdr->size))
 			{
-				hdr->indices = (uint*) (list->data 
-					+ ((byte*) hdr->indices - oldData));
+				if(hdr->indices != NULL)
+				{
+					hdr->indices = (uint*)
+						(list->data + ((byte*) hdr->indices - oldData));
+				}
 
 				// Check here in the end; primitive composition may be 
 				// in progress.
@@ -829,9 +837,14 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
 //===========================================================================
 void RL_AllocateIndices(rendlist_t *list, int numIndices)
 {
+	void *indices;
+	
 	list->last->numIndices = numIndices;
-	list->last->indices = RL_AllocateData(list, 
-		sizeof(*list->last->indices) * numIndices);
+	indices = RL_AllocateData
+		(list, sizeof(*list->last->indices) * numIndices);
+
+	// list->last may change during RL_AllocateData.
+	list->last->indices = indices;
 }
 
 //===========================================================================
@@ -839,16 +852,46 @@ void RL_AllocateIndices(rendlist_t *list, int numIndices)
 //===========================================================================
 void RL_QuadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 {
+	float width, height;
+	
 	if(!tex->id) return;
 
+	if(poly->flags & RPF_SHADOW)
+	{
+		// Shadows use the width and height from the polygon itself.
+		width = poly->tex.width;
+		height = poly->tex.height;
+
+		if(poly->flags & RPF_HORIZONTAL)
+		{
+			// Special horizontal coordinates for wall shadows.
+			tc[3].st[0] = tc[2].st[0] 
+				= poly->texoffy / height;
+			tc[3].st[1]	= tc[0].st[1]
+				= poly->texoffx / width;
+			tc[0].st[0] = tc[1].st[0]
+				= tc[3].st[0] + (poly->top - poly->bottom) / height;
+			tc[1].st[1] = tc[2].st[1]
+				= tc[3].st[1] + poly->length / width;
+			return;
+		}
+	}
+	else
+	{
+		// Normally the texture's width and height are considered
+		// constant inside a rendering list.
+		width = tex->width;
+		height = tex->height;
+	}
+
 	tc[0].st[0] = tc[3].st[0] 
-		= poly->texoffx / tex->width;
+		= poly->texoffx / width;
 	tc[0].st[1]	= tc[1].st[1]
-		= poly->texoffy / tex->height;
+		= poly->texoffy / height;
 	tc[1].st[0] = tc[2].st[0]
-		= tc[0].st[0] + poly->length / tex->width;
+		= tc[0].st[0] + poly->length / width;
 	tc[2].st[1] = tc[3].st[1]
-		= tc[0].st[1] + (poly->top - poly->bottom) / tex->height;
+		= tc[0].st[1] + (poly->top - poly->bottom) / height;
 }
 
 //===========================================================================
@@ -889,13 +932,21 @@ void RL_QuadColors(gl_color_t *color, rendpoly_t *poly)
 		memset(color, 255, 4 * 4);
 		return;
 	}
+	if(poly->flags & RPF_SHADOW)
+	{
+		memcpy(color[0].rgba, poly->vertices[0].color.rgba, 4);
+		memcpy(color[1].rgba, poly->vertices[1].color.rgba, 4);
+		memcpy(color[2].rgba, poly->vertices[1].color.rgba, 4);
+		memcpy(color[3].rgba, poly->vertices[0].color.rgba, 4);
+		return;
+	}
 
+	// Just copy RGB, set A to 255.
 	memcpy(color[0].rgba, poly->vertices[0].color.rgba, 3);
 	memcpy(color[1].rgba, poly->vertices[1].color.rgba, 3);
 	memcpy(color[2].rgba, poly->vertices[1].color.rgba, 3);
 	memcpy(color[3].rgba, poly->vertices[0].color.rgba, 3);
 
-	// No alpha.
 	color[0].rgba[3] = color[1].rgba[3] 
 		= color[2].rgba[3] = color[3].rgba[3] 
 		= 255;
@@ -935,6 +986,19 @@ void RL_FlatDetailTexCoords
 		* detailScale * tex->detail->scale;
 	tc->st[1] = (-xy[VY] - poly->texoffy) / tex->detail->height
 		* detailScale * tex->detail->scale;
+}
+
+//===========================================================================
+// RL_InterpolateTexCoordS
+//	Inter = 0 in the bottom. Only 's' is affected.
+//===========================================================================
+void RL_InterpolateTexCoordS
+	(gl_texcoord_t *tc, uint index, uint top, uint bottom, float inter)
+{
+	// Start working with the bottom.
+	memcpy(&tc[index], &tc[bottom], sizeof(gl_texcoord_t));
+
+	tc[index].st[0] += (tc[top].st[0] - tc[bottom].st[0]) * inter;
 }
 
 //===========================================================================
@@ -1108,9 +1172,18 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 
 			if(!(poly->flags & RPF_SKY_MASK))
 			{
-				// Primary texture coordinates.
-				RL_InterpolateTexCoordT(texCoords[TCA_MAIN], div, 
-					top, bottom, inter);
+				if(poly->flags & RPF_HORIZONTAL)
+				{
+					// Currently only shadows use this texcoord mode.
+					RL_InterpolateTexCoordS(texCoords[TCA_MAIN], div,
+											top, bottom, inter);
+				}
+				else
+				{
+					// Primary texture coordinates.
+					RL_InterpolateTexCoordT(texCoords[TCA_MAIN], div, 
+											top, bottom, inter);
+				}
 
 				// Detail texture coordinates.
 				if(poly->tex.detail)
@@ -1194,9 +1267,15 @@ void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 		}
 
 		// Primary texture coordinates.
-		tc = &texCoords[TCA_MAIN][base + i];
-		tc->st[0] = (vtx->pos[VX] + poly->texoffx) / list->tex.width;
-		tc->st[1] = (-vtx->pos[VY] - poly->texoffy) / list->tex.height;
+		if(list->tex.id)
+		{
+			tc = &texCoords[TCA_MAIN][base + i];
+			tc->st[0] = (vtx->pos[VX] + poly->texoffx) /
+				(poly->flags & RPF_SHADOW? poly->tex.width : list->tex.width);
+			tc->st[1] = (-vtx->pos[VY] - poly->texoffy) /
+				(poly->flags & RPF_SHADOW? poly->tex.height :
+				 list->tex.height);
+		}
 
 		// Detail texture coordinates.
 		if(list->tex.detail)
@@ -1270,15 +1349,17 @@ void RL_WriteDynLight
 	uint i, base;
 	gl_texcoord_t *tc;
 	gl_color_t *col;
+	void *ptr;
 
-	list->last = RL_AllocateData(list, sizeof(primhdr_t));
+	ptr = RL_AllocateData(list, sizeof(primhdr_t));
+	list->last = ptr;
 
 	list->last->size = 0;
 	list->last->type = prim->type;
 	list->last->flags = 0;
 	list->last->numIndices = prim->numIndices;
-	list->last->indices = RL_AllocateData(list, sizeof(uint) 
-		* list->last->numIndices);
+	ptr = RL_AllocateData(list, sizeof(uint) * list->last->numIndices);
+	list->last->indices = ptr; 
 	list->last->beginOther = prim->beginOther;
 
 	// Make copies of the original vertices.
@@ -1358,7 +1439,7 @@ void RL_AddPoly(rendpoly_t *poly)
 	rendlist_t	*li;
 	primhdr_t	*hdr;
 	dynlight_t	*dyn;
-	boolean		useLights = false, multitexFirstLight = true;
+	boolean		useLights = false;
 	
 	if(poly->flags & RPF_MASKED)
 	{
@@ -1378,7 +1459,7 @@ void RL_AddPoly(rendpoly_t *poly)
 		// In multiplicative mode, glowing surfaces are fullbright.
 		// Rendering lights on them would be pointless.
 		if(!IS_MUL || !( poly->flags & RPF_GLOW	
-			|| poly->sector && poly->sector->lightlevel >= 250 ))
+			|| (poly->sector && poly->sector->lightlevel >= 250) ))
 		{
 			// Surfaces lit by dynamic lights may need to be rendered 
 			// differently than non-lit surfaces.
@@ -1419,6 +1500,9 @@ void RL_AddPoly(rendpoly_t *poly)
 
 	case RP_FLAT:
 		RL_WriteFlat(li, poly);
+		break;
+
+	default:
 		break;
 	}
 	
@@ -1696,13 +1780,48 @@ int RL_SetupListState(listmode_t mode, rendlist_t *list)
 		return 0;
 
 	case LM_SHADOW:
-		// Render all primitives (on the shadowList).
+		// Render all primitives.
 		RL_Bind(list->tex.id);
+		if(!list->tex.id)
+		{
+			// Apply a modelview shift.
+			gl.MatrixMode(DGL_MODELVIEW);
+			gl.PushMatrix();
+
+			// Scale towards the viewpoint to avoid Z-fighting.
+			gl.Translatef(vx, vy, vz);
+			gl.Scalef(.99f, .99f, .99f);
+			gl.Translatef(-vx, -vy, -vz);
+		}
 		return 0;
+
+	default:
+		break;
 	}
 
 	// Unknown mode, let's not draw anything.
 	return DCF_SKIP;
+}
+
+//===========================================================================
+// RL_FinishListState
+//===========================================================================
+void RL_FinishListState(listmode_t mode, rendlist_t *list)
+{
+	switch(mode)
+	{
+	default:
+		break;
+
+	case LM_SHADOW:
+		if(!list->tex.id)
+		{
+			// Restore original modelview matrix.
+			gl.MatrixMode(DGL_MODELVIEW);
+			gl.PopMatrix();
+		}
+		break;
+	}	  
 }
 
 //===========================================================================
@@ -1922,6 +2041,9 @@ void RL_SetupPassState(listmode_t mode)
 		gl.Enable(DGL_BLENDING);
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 		break;
+
+	default:
+		break;
 	}
 }
 
@@ -1946,6 +2068,9 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 		// Setup GL state for this list, and
 		// draw the necessary subset of primitives on the list.
 		RL_DrawPrimitives( RL_SetupListState(mode, lists[i]), lists[i] );
+
+		// Some modes require cleanup.
+		RL_FinishListState(mode, lists[i]);
 	}
 }
 
@@ -2165,9 +2290,18 @@ void RL_RenderAllLists(void)
 		}
 	}
 
-	// Render object shadows.
-	lists[0] = &shadowList;
-	RL_RenderLists(LM_SHADOW, lists, 1);
+/*
+ * Shadow Pass: Objects and FakeRadio
+ */
+	{
+		int oldr = renderTextures;
+		renderTextures = true;
+		count = RL_CollectLists(shadowHash, lists);
+
+		RL_RenderLists(LM_SHADOW, lists, count);
+		
+		renderTextures = oldr;
+	}
 
 	END_PROF( PROF_RL_RENDER_NORMAL );
 
@@ -2206,4 +2340,3 @@ void RL_RenderAllLists(void)
 
 	END_PROF( PROF_RL_RENDER_ALL );
 }
-

@@ -13,10 +13,11 @@
 #include "p_local.h"
 #include "d_config.h"
 #include "g_game.h"
+#include "s_sound.h"
 
 #elif __JHERETIC__
-#include "doomdef.h"
-#include "p_local.h"
+#include "Doomdef.h"
+#include "P_local.h"
 #include "settings.h"
 
 #elif __JHEXEN__
@@ -28,6 +29,13 @@
 #include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
+
+// Maximum number of different player starts.
+#ifndef __JHEXEN__
+# define MAX_START_SPOTS 4
+#else
+# define MAX_START_SPOTS 8
+#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -53,7 +61,7 @@ mapthing_t	playerstarts[MAXSTARTS], *playerstart_p;
 void P_RegisterPlayerStart(mapthing_t *mthing)
 {
 	// Enough room?
-	if(playerstart_p-playerstarts >= MAXSTARTS) return;
+	if(playerstart_p - playerstarts >= MAXSTARTS) return;
 	*playerstart_p++ = *mthing;	
 }
 
@@ -67,63 +75,186 @@ void P_DealPlayerStarts(void)
 	int			i, k, num = playerstart_p - playerstarts;
 	player_t	*pl;
 	mapthing_t	*mt;
-	int			users[MAXPLAYERS];
-	int			fewest;
+	int			spotNumber;
 
 	if(!num) Con_Error("No playerstarts!\n");
-
-	if(!IS_NETGAME)
-	{
-		players[0].startspot = 0;
-		// In single-player, just find the start for player one.
-		for(i = 0, mt = playerstarts; i < num; i++, mt++)
-			if(mt->type == 1)
-				players[0].startspot = i;
-		return;
-	}
-
-	// Contains the number of users for each playerstart.
-	memset(users, 0, sizeof(users));
 
 	// First assign one start per player, only accepting perfect matches.
 	for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
 	{
 		if(!pl->plr->ingame) continue;
+		
+		// The number of the start spot this player will use.
+		spotNumber = i % MAX_START_SPOTS;
 		pl->startspot = -1;
+
 		for(k = 0, mt = playerstarts; k < num; k++, mt++)
 		{
-			if(mt->type-1 == cfg.PlayerColor[i] && !users[k])
+			if(spotNumber == mt->type - 1)
 			{
-				// This is a perfect match.
-				users[k]++;
+				// This is a match.
 				pl->startspot = k;
-				break;
+				// Keep looking.
 			}
 		}	
 	}
 
-	// For the left-over players, choose the starts that have the
-	// least users.
-	for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
+	if(IS_NETGAME)
 	{
-		if(!pl->plr->ingame || pl->startspot >= 0) continue;
-		for(fewest = MAXPLAYERS+1, k = 0; k < num; k++)
-			if(users[k] < fewest) 
-			{
-				fewest = users[k];
-				pl->startspot = k;
-			}
-		users[pl->startspot]++;		
+		Con_Printf("Player starting spots:\n");
+		for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
+		{
+			if(!pl->plr->ingame) continue;
+			Con_Printf( "- pl%i: color %i, spot %i\n", i, cfg.PlayerColor[i], 
+				pl->startspot);
+		}
 	}
-	if(!IS_NETGAME) return;
+}
 
-	Con_Printf( "Player starting spots:\n");
-	for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
+//===========================================================================
+// P_CheckSpot
+//	Returns false if the player cannot be respawned
+//	at the given mapthing_t spot because something is occupying it 
+//	FIXME: Quite a mess!
+//===========================================================================
+boolean P_CheckSpot(int playernum, mapthing_t* mthing, boolean doTeleSpark)
+{
+    fixed_t			x;
+    fixed_t			y; 
+    unsigned		an; 
+    mobj_t*			mo; 
+#if __JDOOM__ || __JHEXEN__
+    subsector_t*	ss; 
+#endif
+#if __JDOOM__
+    int				i;
+#endif
+#if __JHERETIC__ || __JHEXEN__
+	mapthing_t		faraway;
+	boolean			using_dummy = false;
+#endif
+	
+#if __JDOOM__
+    if(!players[playernum].plr->mo)
+    {
+		// first spawn of level, before corpses
+		for(i = 0 ; i < playernum ; i++)
+		{
+			if(players[i].plr->mo 
+				&& players[i].plr->mo->x == mthing->x << FRACBITS
+				&& players[i].plr->mo->y == mthing->y << FRACBITS)
+				return false;	
+		}
+		return true;
+    }
+#endif
+	
+    x = mthing->x << FRACBITS; 
+    y = mthing->y << FRACBITS; 
+
+#if __JHERETIC__ || __JHEXEN__
+	if(!players[playernum].plr->mo)
 	{
-		if(!pl->plr->ingame) continue;
-		Con_Printf( "- pl%i: color %i, spot %i\n", i, cfg.PlayerColor[i], 
-			pl->startspot);
+		// The player doesn't have a mobj. Let's create a dummy.
+		faraway.x = faraway.y = DDMAXSHORT;
+		P_SpawnPlayer(&faraway, playernum);
+		using_dummy = true;
 	}
+	players[playernum].plr->mo->flags2 &= ~MF2_PASSMOBJ;
+#endif
+
+    if(!P_CheckPosition(players[playernum].plr->mo, x, y) ) 
+	{
+#if __JHERETIC__ || __JHEXEN__
+		players[playernum].plr->mo->flags2 |= MF2_PASSMOBJ;
+		if(using_dummy)
+		{
+			P_RemoveMobj(players[playernum].plr->mo);
+			players[playernum].plr->mo = NULL;
+		}
+#endif
+		return false; 
+	}
+
+#if __JHERETIC__
+	players[playernum].plr->mo->flags2 |= MF2_PASSMOBJ;
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+	if(using_dummy)
+	{
+		P_RemoveMobj(players[playernum].plr->mo);
+		players[playernum].plr->mo = NULL;
+	}
+#endif
+	
+#if __JDOOM__
+	G_QueueBody(players[playernum].plr->mo);
+#endif
+	
+	if(doTeleSpark)
+	{
+		// spawn a teleport fog 
+		an = ( ANG45 * (mthing->angle/45) ) >> ANGLETOFINESHIFT; 
+		
+#if __JDOOM__ || __JHEXEN__
+		ss = R_PointInSubsector (x,y); 
+		mo = P_SpawnMobj (x+20*finecosine[an], y+20*finesine[an] 
+			, ss->sector->floorheight 
+			, MT_TFOG); 
+#else // __JHERETIC__
+		mo = P_SpawnTeleFog(x+20*finecosine[an], y+20*finesine[an]);
+#endif
+		
+		// don't start sound on first frame
+		if(players[consoleplayer].plr->viewz != 1)
+		{
+#ifdef __JHEXEN__
+			S_StartSound(SFX_TELEPORT, mo);
+#else
+			S_StartSound(sfx_telept, mo);	
+#endif
+		}
+	}
+
+    return true; 
+}
+
+//===========================================================================
+// P_FuzzySpawn
+//	Try to spawn close to the mapspot. Returns false if no clear spot 
+//	was found.
+//===========================================================================
+boolean P_FuzzySpawn(mapthing_t *spot, int playernum, boolean doTeleSpark)
+{
+	int i, k, x, y;
+	int offset = 33; // Player radius = 16
+	mapthing_t place;
+
+	// Try some spots in the vicinity.
+	for(i = 0; i < 9; i++)
+	{
+		memcpy(&place, spot, sizeof(*spot));
+		if(i != 0)
+		{
+			k = (i == 4? 0 : i);
+			// Move a bit.
+			x = k % 3 - 1;
+			y = k / 3 - 1;
+			place.x += x * offset;
+			place.y += y * offset;
+		}
+		if(P_CheckSpot(playernum, &place, doTeleSpark))
+		{
+			// This is good!
+			P_SpawnPlayer(&place, playernum);
+			return true;
+		}
+	}
+
+	// No success. Just spawn at the specified spot.
+	P_SpawnPlayer(spot, playernum);
+	return false;
 }
 
 //==========================================================================
@@ -138,20 +269,20 @@ void P_SpawnPlayers(void)
     // If deathmatch, randomly spawn the active players.
     if(deathmatch)
     {
-		for(i=0 ; i<MAXPLAYERS ; i++)
+		for(i = 0 ; i < MAXPLAYERS ; i++)
 			if(players[i].plr->ingame)
 			{
 				players[i].plr->mo = NULL;
-				G_DeathMatchSpawnPlayer (i);
+				G_DeathMatchSpawnPlayer(i);
 			}
     }
 	else 
 	{
-#if __JDOOM__
+#ifdef __JDOOM__
 		if(!IS_NETGAME)
 		{
 			mapthing_t *it;
-			// Spawn all unused player starts.
+			// Spawn all unused player starts. This will create 'zombies'.
 			// FIXME: Also in netgames?
 			for(it = playerstarts; it != playerstart_p; it++)
 				if(players[0].startspot != it - playerstarts
@@ -167,9 +298,12 @@ void P_SpawnPlayers(void)
 			if(players[i].plr->ingame)
 			{
 				ddplayer_t *ddpl = players[i].plr;
-				P_SpawnPlayer(&playerstarts[players[i].startspot], i);
-				// Gib anything at the spot.
-				if(IS_NETGAME) P_Telefrag(ddpl->mo);
+				if(!P_FuzzySpawn(&playerstarts[players[i].startspot], 
+					i, false))
+				{
+					// Gib anything at the spot.
+					P_Telefrag(ddpl->mo);
+				}
 			}
 	}
 }
@@ -184,7 +318,7 @@ mapthing_t *P_GetPlayerStart(int group, int pnum)
 {
 	mapthing_t *mt, *g0choice = playerstarts;
 	
-	for(mt=playerstarts; mt<playerstart_p; mt++)
+	for(mt = playerstarts; mt < playerstart_p; mt++)
 	{
 		if(mt->arg1 == group && mt->type-1 == pnum)
 			return mt;

@@ -10,7 +10,9 @@
 //**
 //**************************************************************************
 
+#ifdef WIN32
 #pragma optimize("g", off)
+#endif
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -722,7 +724,7 @@ void P_ZMovement(mobj_t *mo)
 {
 	int dist;
 	int delta;
-	extern boolean demorecording;
+//	extern boolean demorecording;
 
 	// $democam: cameramen get special z movement
 	if(P_CameraZMovement(mo)) return;		
@@ -1074,7 +1076,7 @@ void P_BlasterMobjThinker(mobj_t *mobj)
 
 static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
 {
-	extern boolean demorecording;
+//	extern boolean demorecording;
 
 	mo->player->plr->deltaviewheight = mo->momz>>3;
 	if(mo->momz < -23*FRACUNIT)
@@ -2759,5 +2761,3 @@ void R_SetAllDoomsdayFlags(void)
 		}
 }
 
-
-#pragma optimize("", on)

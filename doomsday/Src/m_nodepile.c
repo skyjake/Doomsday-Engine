@@ -161,3 +161,4 @@ void NP_Dismiss(nodepile_t *pile, nodeindex_t node)
 	pile->nodes[node].ptr = 0;
 }
 #endif
+

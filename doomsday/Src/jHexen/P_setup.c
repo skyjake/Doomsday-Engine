@@ -10,7 +10,9 @@
 //**
 //**************************************************************************
 
+#ifdef WIN32
 #pragma optimize("g", off)
+#endif
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -1658,5 +1660,3 @@ void InitMapMusicInfo(void)
 	MapCount = 98;
 }
 
-// Is this really necessary?
-#pragma optimize("", on)

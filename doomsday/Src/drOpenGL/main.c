@@ -1435,3 +1435,4 @@ int DG_ReadPixels(int *inData, int format, void *pixels)
 	}
 	return DGL_OK;
 }
+

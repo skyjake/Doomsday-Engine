@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
+#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -80,7 +78,9 @@ static int lastfpstic = 0, fpsnum = 0, lastfc = 0;
  */
 void DD_GameLoop(void)
 {
+#ifdef WIN32
 	MSG msg;
+#endif
 	
 	// Now we've surely finished startup.
 	Con_StartupDone();
@@ -92,6 +92,7 @@ void DD_GameLoop(void)
 
 	while(true)
 	{
+#ifdef WIN32
 		// Start by checking Windows messages. 
 		// This is the message pump.
 		// Could be in a separate thread?
@@ -100,8 +101,8 @@ void DD_GameLoop(void)
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-
-		// Begin a new frame in the refresh.
+#endif
+		// Frame syncronous I/O operations.
 		DD_StartFrame();
 
 		// Run at least one tic. If no tics are available (maxfps interval 
@@ -336,7 +337,7 @@ void DD_RunTics(void)
 // DD_TryRunTics
 //	Run at least one tic.
 //===========================================================================
-void DD_TryRunTics (void)
+void DD_TryRunTics(void)
 {
 	int counts;
 
@@ -347,7 +348,8 @@ void DD_TryRunTics (void)
 	Net_Update();
 
 	// Wait for at least one tic. (realtics >= availabletics)
-	while(!(counts = (netgame||ui_active? realtics : availabletics)))
+	while(!(counts = (isDedicated || netgame || ui_active?
+					  realtics : availabletics)))
 	{
 		if((!isDedicated && rend_camera_smooth)
 			|| net_dontsleep 

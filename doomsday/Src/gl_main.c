@@ -31,7 +31,7 @@
 
 #include "r_draw.h"
 
-#if WIN32_GAMMA
+#if defined(WIN32) && defined(WIN32_GAMMA)
 #	include <icm.h>
 #	include <math.h>
 #endif
@@ -54,7 +54,10 @@ void GL_SetGamma(void);
 
 extern int		maxnumnodes;
 extern boolean	filloutlines;
+
+#ifdef WIN32
 extern HWND		hWndMain;		// Handle to the main window.
+#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -84,7 +87,9 @@ float		nearClip, farClip;
 static boolean initOk = false;
 
 static gramp_t original_gamma_ramp;
+#ifdef WIN32	
 static boolean gamma_support = false;
+#endif
 static float oldgamma, oldcontrast, oldbright;
 
 // CODE --------------------------------------------------------------------
@@ -141,6 +146,7 @@ void GL_DoUpdate(void)
 //===========================================================================
 void GL_GetGammaRamp(void *ramp)
 {
+#ifdef WIN32
 #if WIN32_GAMMA
 	HDC hdc = GetDC(hWndMain);
 #endif
@@ -155,6 +161,7 @@ void GL_GetGammaRamp(void *ramp)
 	if(GetDeviceGammaRamp(hdc, ramp)) gamma_support = true;
 	ReleaseDC(hWndMain, hdc);
 #endif
+#endif
 }
 
 //===========================================================================
@@ -162,6 +169,7 @@ void GL_GetGammaRamp(void *ramp)
 //===========================================================================
 void GL_SetGammaRamp(void *ramp)
 {
+#ifdef WIN32
 #if WIN32_GAMMA
 	HDC hdc;
 
@@ -169,6 +177,7 @@ void GL_SetGammaRamp(void *ramp)
 	hdc = GetDC(hWndMain);
 	SetDeviceGammaRamp(hdc, ramp);
 	ReleaseDC(hWndMain, hdc);
+#endif
 #endif
 }
 
@@ -729,3 +738,4 @@ int CCmdUpdateGammaRamp(int argc, char **argv)
 	Con_Printf("Gamma ramp set.\n");
 	return true;
 }
+

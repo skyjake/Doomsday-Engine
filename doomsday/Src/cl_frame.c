@@ -347,3 +347,4 @@ void Cl_FrameReceived(void)
 	// Reset the predict counter.
 	predicted_tics = 0;
 }
+

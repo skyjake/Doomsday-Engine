@@ -191,3 +191,4 @@ void Con_Progress(int count, int flags)
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PopMatrix();
 }
+

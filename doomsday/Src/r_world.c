@@ -36,17 +36,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DOMINANT_SIZE 1000
+
 // TYPES -------------------------------------------------------------------
-
-typedef struct subsecnode_s {
-	struct subsecnode_s *next;
-	subsector_t *subsector;
-} subsecnode_t;
-
-typedef struct subsecmap_s {
-	subsecnode_t *nodes;
-	uint count;
-} subsecmap_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -60,6 +52,8 @@ void R_PrepareSubsector(subsector_t *sub);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+int rendSkyLight = 1; // cvar
+
 char currentLevelId[64];
 int leveltic;					// Restarts when a new map is set up.
 
@@ -70,6 +64,10 @@ vertexowner_t *vertexowners;
 nodeindex_t *linelinks;			// indices to roots
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static boolean noSkyColorGiven;
+static byte skyColorRGB[4], balancedRGB[4];
+static float skyColorBalance;
 
 // CODE --------------------------------------------------------------------
 
@@ -771,7 +769,8 @@ sector_t *R_GetContainingSectorOf(sector_t *sec)
 void R_InitSectorInfo(void)
 {
 	int i, k;
-	sector_t *sec;
+	sectorinfo_t *info;
+	sector_t *sec, *other;
 	line_t *lin;
 	boolean dohack;
 
@@ -781,7 +780,7 @@ void R_InitSectorInfo(void)
 	for(i = 0; i < numsectors; i++)
 		P_SectorBoundingBox(SECTOR_PTR(i), secinfo[i].bounds);
 
-	for(i = 0; i < numsectors; i++)
+	for(i = 0, info = secinfo; i < numsectors; i++, info++)
 	{
 		sec = SECTOR_PTR(i);
 		if(!sec->linecount) continue;
@@ -800,14 +799,33 @@ void R_InitSectorInfo(void)
 		if(dohack)
 		{
 			// Link permanently.
-			secinfo[i].permanentlink = true;
-			secinfo[i].linkedceil 
-				= secinfo[i].linkedfloor
+			info->permanentlink = true;
+			info->linkedceil 
+				= info->linkedfloor
 				= R_GetContainingSectorOf(sec);
-			if(secinfo[i].linkedceil)
+			if(info->linkedceil)
 			{
 				Con_Printf("Linking S%i planes permanently to S%i\n",
-					i, GET_SECTOR_IDX(secinfo[i].linkedceil));
+					i, GET_SECTOR_IDX(info->linkedceil));
+			}
+		}
+
+		// Is this sector large enough to be a dominant light source?
+		if(info->lightsource == NULL &&
+		   (sec->ceilingpic == skyflatnum || sec->floorpic == skyflatnum) &&
+		   info->bounds[BRIGHT] - info->bounds[BLEFT] > DOMINANT_SIZE &&
+		   info->bounds[BBOTTOM] - info->bounds[BTOP] > DOMINANT_SIZE)
+		{
+			// All sectors touching this one will be affected.
+			for(k = 0; k < sec->linecount; k++)
+			{
+				other = sec->lines[k]->frontsector;
+				if(!other || other == sec)
+				{
+					other = sec->lines[k]->backsector;
+					if(!other || other == sec) continue;
+				}
+				SECT_INFO(other)->lightsource = sec;
 			}
 		}
 	}
@@ -901,178 +919,6 @@ void R_InitSubsectorInfo(void)
 }
 
 //===========================================================================
-// R_InitSubsectorBlockMap
-//===========================================================================
-void R_InitSubsectorBlockMap(void)
-{
-	int i, xl, xh, yl, yh, x, y;
-	subsector_t *sub, **ptr;
-	uint startTime = Sys_GetRealTime();
-	subsecnode_t *iter, *next;
-	subsecmap_t *map, *block;
-
-	// The subsector blockmap is tagged as PU_LEVEL.
-	subsectorblockmap = Z_Calloc(bmapwidth * bmapheight 
-		* sizeof(subsector_t**), PU_LEVEL, 0);
-
-	// We'll construct the links using nodes.
-	map = calloc(bmapwidth * bmapheight, sizeof(subsecmap_t));
-
-	// Process all the subsectors in the map.
-	for(i = 0; i < numsubsectors; i++)
-	{
-		sub = SUBSECTOR_PTR(i);
-		if(!sub->sector) continue;
-		
-		// Blockcoords to link to.
-		xl = ( FLT2FIX(sub->bbox[0].x) - bmaporgx ) >> MAPBLOCKSHIFT;
-		xh = ( FLT2FIX(sub->bbox[1].x) - bmaporgx ) >> MAPBLOCKSHIFT;
-		yl = ( FLT2FIX(sub->bbox[0].y) - bmaporgy ) >> MAPBLOCKSHIFT;
-		yh = ( FLT2FIX(sub->bbox[1].y) - bmaporgy ) >> MAPBLOCKSHIFT;
-
-		for(x = xl; x <= xh; x++)
-			for(y = yl; y <= yh; y++)		
-			{
-				if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
-				{
-					Con_Printf("sub%i: out: x=%i, y=%i\n", i, x, y);
-					continue;
-				}
-
-				// Create a new node.
-				iter = malloc(sizeof(subsecnode_t));
-				iter->subsector = sub;
-
-				// Link to the temporary map.
-				block = &map[x + y * bmapwidth];
-				iter->next = block->nodes;
-				block->nodes = iter;
-				block->count++;
-			}
-	}
-
-	// Create the actual links by 'hardening' the lists into arrays.
-	for(i = 0, block = map; i < bmapwidth * bmapheight; i++, block++)
-		if(block->count > 0)
-		{
-			// An NULL-terminated array of pointers to subsectors.
-			ptr = subsectorblockmap[i] = Z_Malloc((block->count + 1) 
-				* sizeof(subsector_t*),	PU_LEVEL, NULL);
-			
-			// Copy pointers to the array, delete the nodes.
-			for(iter = block->nodes; iter; iter = next) 
-			{
-				*ptr++ = iter->subsector;
-				// Kill the node.
-				next = iter->next;
-				free(iter);
-			}
-
-			// Terminate.
-			*ptr = NULL;
-		}
-
-	// Free the temporary link map.
-	free(map);
-
-	// How much time did we spend?
-	VERBOSE( Con_Message("R_InitSubsectorBlockMap: Done in %.2f seconds.\n", 
-		(Sys_GetRealTime() - startTime) / 1000.0f) );
-}
-
-//==========================================================================
-// R_InitPolyBlockMap
-//	Allocates and clears the polyobj blockmap.
-//	Normal blockmap must already be initialized when this is called.
-//==========================================================================
-void R_InitPolyBlockMap(void)
-{
-	if(verbose)
-	{
-		Con_Message("R_InitPolyBlockMap: w=%i h=%i\n", bmapwidth, bmapheight);
-	}
-
-	polyblockmap = Z_Malloc(bmapwidth * bmapheight * sizeof(polyblock_t*),
-		PU_LEVEL, 0);
-	memset(polyblockmap, 0, bmapwidth * bmapheight * sizeof(polyblock_t*));
-}
-
-/*
-//===========================================================================
-// R_BuildSubsectorContacts
-//	For each subsector, build a list of contacted segs that belong in other 
-//	subsectors. This information is needed when creating occlusion planes.
-//===========================================================================
-void R_BuildSubsectorContacts(void)
-{
-	subsector_t	*sub;
-	fvertex_t	*v1, *v2, segv1, segv2;
-	float		edgebox[4], unitline[2], length;
-	int			i, k, t;
-	seg_t		*seg;
-	double		starttime = Sys_GetSeconds();
-
-	for(i = 0; i < numsubsectors; i++)
-	{
-		sub = SUBSECTOR_PTR(i);
-		sub->contactcount = 0;
-		sub->contacts = NULL;
-
-		// Let's build a list of contacted segs. Try contacting with each
-		// of the subsector's edges.
-		for(k = 0; k < sub->numverts; k++)
-		{
-			v1 = sub->verts + k;
-			v2 = sub->verts + ((k+1) % sub->numverts);
-			ORDER(v1->x, v2->x, edgebox[BLEFT], edgebox[BRIGHT]);
-			ORDER(v1->y, v2->y, edgebox[BTOP], edgebox[BBOTTOM]);
-			length = M_ApproxDistancef(v1->x - v2->x, v1->y - v2->y);
-			if(!length) continue;
-			unitline[VX] = v1->x + (v2->x - v1->x)/length;
-			unitline[VY] = v1->y + (v2->y - v1->y)/length;
-									
-			// Find all segs that overlap the line v1 -> v2. 
-			for(t = 0; t < numsegs; t++)
-			{
-				seg = SEG_PTR(t);
-				if(!seg->linedef) continue;
-				if(seg->frontsector == sub->sector) continue;
-				if(seg->backsector != sub->sector) continue;
-
-				// 1) Test the bounding box of the edge line.
-				segv1.x = FIX2FLT(seg->v1->x);
-				segv1.y = FIX2FLT(seg->v1->y);
-				segv2.x = FIX2FLT(seg->v2->x);
-				segv2.y = FIX2FLT(seg->v2->y);
-
-				if(segv1.x < edgebox[BLEFT]
-					|| segv1.y < edgebox[BTOP]
-					|| segv1.x > edgebox[BRIGHT]
-					|| segv1.y > edgebox[BBOTTOM]) continue;
-				if(segv2.x < edgebox[BLEFT]
-					|| segv2.y < edgebox[BTOP]
-					|| segv2.x > edgebox[BRIGHT]
-					|| segv2.y > edgebox[BBOTTOM]) continue;
-							
-				// 2) Test the distance to the line from each point.
-				if(M_PointUnitLineDistance(&v1->x, unitline, &segv1.x)
-					> 0.1) continue;
-				if(M_PointUnitLineDistance(&v1->x, unitline, &segv2.x)
-					> 0.1) continue;
-
-				// This is a contact.
-				sub->contacts = Z_Realloc(sub->contacts, 
-					sizeof(seg_t*) * ++sub->contactcount, PU_LEVEL);
-				sub->contacts[sub->contactcount - 1] = seg;
-			}
-		}
-	}
-	Con_Printf("R_BuildSubsectorContacts: %lf seconds (%i subs, %i segs)\n",
-		Sys_GetSeconds() - starttime, numsubsectors, numsegs);
-}
-*/
-
-//===========================================================================
 // R_SetupFog
 //	Mapinfo must be set.
 //===========================================================================
@@ -1125,6 +971,9 @@ void R_SetupSky(void)
 		Rend_SkyParams(0, DD_MASK, DD_NO);
 		Rend_SkyParams(0, DD_OFFSET, 0);
 		Rend_SkyParams(1, DD_DISABLE, 0);
+
+		// There is no sky color.
+		noSkyColorGiven = true;
 		return;
 	}
 
@@ -1136,10 +985,12 @@ void R_SetupSky(void)
 		if(k & SLF_ENABLED)
 		{
 			Rend_SkyParams(i, DD_ENABLE, 0);
-			Rend_SkyParams(i, DD_TEXTURE, R_TextureNumForName(mapinfo->sky_layers[i].texture));
+			Rend_SkyParams(i, DD_TEXTURE, R_TextureNumForName(
+							   mapinfo->sky_layers[i].texture));
 			Rend_SkyParams(i, DD_MASK, k & SLF_MASKED? DD_YES : DD_NO);
 			Rend_SkyParams(i, DD_OFFSET, mapinfo->sky_layers[i].offset);
-			Rend_SkyParams(i, DD_COLOR_LIMIT, mapinfo->sky_layers[i].color_limit);
+			Rend_SkyParams(i, DD_COLOR_LIMIT,
+						   mapinfo->sky_layers[i].color_limit);
 		}
 		else
 		{
@@ -1147,36 +998,244 @@ void R_SetupSky(void)
 		}
 	}
 
-	// Any sky models to setup? Models will override the normal sphere.
+	// Any sky models to setup? Models will override the normal
+	// sphere.
 	R_SetupSkyModels(mapinfo);
-}
 
-//===========================================================================
-// R_InitLines
-//	Calculate accurate lengths for all lines.
-//===========================================================================
-void R_InitLineInfo(void)
-{
-	line_t *line;
-	int	i;
-
-	// Allocate memory for the line info.
-	lineinfo = Z_Malloc(sizeof(lineinfo_t) * numlines, PU_LEVEL, NULL);
-
-	for(i = 0; i < numlines; i++)
+	// How about the sky color?
+	noSkyColorGiven = true;
+	for(i = 0; i < 3; i++)
 	{
-		line = LINE_PTR(i);
-		lineinfo[i].length = P_AccurateDistance(line->dx, line->dy);
+		skyColorRGB[i] = (byte) (255 * mapinfo->sky_color[i]);
+		if(mapinfo->sky_color[i] > 0) noSkyColorGiven = false;
+	}
+
+	// Calculate a balancing factor, so the light in the non-skylit
+	// sectors won't appear too bright.
+	if(false &&
+	   (mapinfo->sky_color[0] > 0 ||
+		mapinfo->sky_color[1] > 0 ||
+		mapinfo->sky_color[2] > 0))
+	{
+		skyColorBalance = (0 + (mapinfo->sky_color[0]*2 +
+								mapinfo->sky_color[1]*3 +
+								mapinfo->sky_color[2]*2) / 7) / 1;
+	}
+	else
+	{
+		skyColorBalance = 1;
 	}
 }
 
-//==========================================================================
-// R_SetupLevel
-//	This routine is called from the game dll to polygonize the current level.
-//	Creates floors and ceilings and fixes the adjacent sky sector heights.
-//	Creates a big enough dlBlockLinks.
-//	Reads mapinfo and does the necessary setup.
-//==========================================================================
+/*
+ * Returns pointers to the line's vertices in such a fashion that
+ * verts[0] is the leftmost vertex and verts[1] is the rightmost
+ * vertex, when the line lies at the edge of `sector.'
+ */
+void R_OrderVertices(line_t *line, sector_t *sector, vertex_t *verts[2])
+{
+	if(sector == line->frontsector)
+	{
+		verts[0] = line->v1;
+		verts[1] = line->v2;
+	}
+	else
+	{
+		verts[0] = line->v2;
+		verts[1] = line->v1;
+	}
+}
+
+/*
+ * A neighbour is a line that shares a vertex with 'line', and faces
+ * the specified sector.  Finds both the left and right neighbours.
+ */ 
+void R_FindLineNeighbors(sector_t *sector, line_t *line,
+						 struct line_s **neighbors, int alignment)
+{
+	struct line_s *other;
+	vertex_t *vtx[2];
+	int j;
+
+	// We want to know, which vertex is the leftmost/rightmost one.
+	R_OrderVertices(line, sector, vtx);
+	
+	// Find the real neighbours, which are in the same sector
+	// as this line.
+	for(j = 0; j < sector->linecount; j++)
+	{
+		other = sector->lines[j];
+		if(other == line) continue;
+
+		// Is this a valid neighbour?
+		if(other->frontsector == sector &&
+		   other->backsector == sector) continue;
+
+		// Do we need to test the line alignment?
+		if(alignment)
+		{
+#define SEP 10
+			binangle_t diff = LINE_INFO(line)->angle - LINE_INFO(other)->angle;
+			/*if(!(diff < SEP && diff > BANG_MAX - SEP) &&
+			   !(diff < BANG_180 + SEP && diff > BANG_180 - SEP))
+			   continue; // Misaligned.*/
+
+			if(alignment < 0) diff -= BANG_180;
+			if(other->frontsector != sector) diff -= BANG_180;
+			if(!(diff < SEP || diff > BANG_MAX - SEP)) continue; // Misaligned.
+		}
+
+		// It's our 'left' neighbour if it shares v1.
+		if(other->v1 == vtx[0] || other->v2 == vtx[0])
+			neighbors[0] = other;
+
+		// It's our 'right' neighbour if it shares v2.
+		if(other->v1 == vtx[1] || other->v2 == vtx[1])
+			neighbors[1] = other;
+
+		// Do we have everything we want?
+		if(neighbors[0] && neighbors[1]) break;
+	}
+}
+
+/*
+ * Browse through the lines in backSector.  The backNeighbor is the
+ * line that 1) isn't realNeighbor and 2) connects to commonVertex.
+ */
+void R_FindBackNeighbor(sector_t *backSector, line_t *realNeighbor,
+						vertex_t *commonVertex, line_t **backNeighbor)
+{
+	int i;
+	line_t *line;
+
+	for(i = 0; i < backSector->linecount; i++)
+	{
+		line = backSector->lines[i];
+		if(line == realNeighbor) continue;
+		if(line->v1 == commonVertex || line->v2 == commonVertex)
+		{
+			*backNeighbor = line;
+			return;
+		}
+	}
+}
+
+/*
+ * Calculate accurate lengths for all lines.  Find line neighbours,
+ * which will be used in the FakeRadio calculations.
+ */
+void R_InitLineInfo(void)
+{
+	line_t *line;
+	sector_t *sector;
+	int	i, k, j, m;
+	lineinfo_t *info;
+	lineinfo_side_t *side;
+	vertexowner_t *owner;
+	vertex_t *vertices[2];
+
+	// Allocate memory for the line info.
+	lineinfo = Z_Calloc(sizeof(lineinfo_t) * numlines, PU_LEVEL, NULL);
+
+	// Calculate the accurate length of each line.
+	for(i = 0, info = lineinfo; i < numlines; i++, info++)
+	{
+		line = LINE_PTR(i);
+		info->length = P_AccurateDistance(line->dx, line->dy);
+		info->angle = bamsAtan2(-(line->dx >> 13), line->dy >> 13);
+	}
+
+	// Find neighbours. We'll do this sector by sector.
+	for(k = 0; k < numsectors; k++)
+	{
+		sector = SECTOR_PTR(k);
+		for(i = 0; i < sector->linecount; i++)
+		{
+			line = sector->lines[i];
+			info = LINE_INFO(line);
+
+			// Which side is this?
+			side = (line->frontsector == sector? &info->side[0] :
+					&info->side[1]);
+
+			R_FindLineNeighbors(sector, line, side->neighbor, 0);
+
+			R_OrderVertices(line, sector, vertices);
+		
+			// Figure out the sectors in the proximity.
+			for(j = 0; j < 2; j++)
+			{
+				// Neighbour must be two-sided.
+				if(side->neighbor[j] &&
+				   side->neighbor[j]->frontsector &&
+				   side->neighbor[j]->backsector)
+				{
+					side->proxsector[j] =
+						(side->neighbor[j]->frontsector == sector?
+						 side->neighbor[j]->backsector :
+						 side->neighbor[j]->frontsector);
+
+					// Find the backneighbour.  They are the
+					// neighbouring lines in the backsectors of the
+					// neighbour lines.
+					R_FindBackNeighbor(side->proxsector[j], side->neighbor[j],
+									   vertices[j], &side->backneighbor[j]);
+				}
+				else
+				{
+					side->proxsector[j] = NULL;
+				}
+			}
+
+			// Look for aligned neighbours.  They are side-specific.
+			for(j = 0; j < 2; j++)
+			{
+				owner = vertexowners + GET_VERTEX_IDX(vertices[j]);
+				for(m = 0; m < owner->num; m++)
+				{
+					//if(owner->list[m] == k) continue;
+					R_FindLineNeighbors(SECTOR_PTR(owner->list[m]),
+										line, side->alignneighbor,
+										side == &info->side[0]? 1 : -1);
+				}
+			}
+
+/*			// How about the other sector?
+			if(!line->backsector || !line->frontsector)
+				continue; // Single-sided.
+
+			R_FindLineNeighbors(line->frontsector == sector?
+								line->backsector : line->frontsector,
+								line, info->backneighbor);*/
+		}
+	}
+
+#ifdef _DEBUG
+	if(verbose >= 1)
+	{
+		for(i = 0; i < numlines; i++)
+		{
+			for(k = 0; k < 2; k++)
+			{
+				line = LINE_PTR(i);
+				side = LINE_INFO(line)->side + k;
+				if(side->alignneighbor[0] || side->alignneighbor[1])
+					Con_Printf("Line %i/%i: l=%i r=%i\n",
+					   i, k,
+					   side->alignneighbor[0]? GET_LINE_IDX(side->alignneighbor[0]) : -1,
+					   side->alignneighbor[1]? GET_LINE_IDX(side->alignneighbor[1]) : -1);
+			}
+		}
+	}
+#endif
+}
+
+/*
+ * This routine is called from the Game to polygonize the current
+ * level.  Creates floors and ceilings and fixes the adjacent sky
+ * sector heights.  Creates a big enough dlBlockLinks.  Reads mapinfo
+ * and does the necessary setup.
+ */
 void R_SetupLevel(char *level_id, int flags)
 {
 	int i;
@@ -1185,7 +1244,7 @@ void R_SetupLevel(char *level_id, int flags)
 	if(flags & DDSLF_INIT_LINKS)
 	{
 		// Init polyobj blockmap.
-		R_InitPolyBlockMap();
+		P_InitPolyBlockMap();
 	
 		// Initialize node piles and line rings.
 		NP_Init(&thingnodes, 256); // Allocate a small pile.
@@ -1213,9 +1272,9 @@ void R_SetupLevel(char *level_id, int flags)
 	}
 	if(flags & DDSLF_FINALIZE)
 	{
-		// The level setup has been completed.
-		// Run the special level setup command, which the user may alias to 
-		// do something useful.
+		// The level setup has been completed.  Run the special level
+		// setup command, which the user may alias to do something
+		// useful.
 		if(level_id && level_id[0])
 		{
 			char cmd[80];
@@ -1288,7 +1347,8 @@ void R_SetupLevel(char *level_id, int flags)
 	R_InitLineInfo();
 
 	// Init blockmap for searching subsectors.
-	R_InitSubsectorBlockMap();
+	P_InitSubsectorBlockMap();
+	R_InitSectorShadows();
 
 	Con_Progress(10, 0);
 
@@ -1456,4 +1516,41 @@ void R_UpdatePlanes(void)
 const char *R_GetCurrentLevelID(void)
 {
 	return currentLevelId;
+}
+
+/* 
+ * Sector light color may be affected by the sky light color.
+ */
+const byte *R_GetSectorLightColor(sector_t *sector)
+{
+	sector_t *src;
+	int i;
+	
+	if(!rendSkyLight || noSkyColorGiven)
+		return sector->rgb; // The sector's real color.
+	
+	if(sector->ceilingpic != skyflatnum && sector->floorpic != skyflatnum)
+	{
+		// A dominant light source affects this sector?
+		src = SECT_INFO(sector)->lightsource;
+		if(src && src->lightlevel >= sector->lightlevel)
+		{
+			// The color shines here, too.
+			return R_GetSectorLightColor(src);
+		}
+		
+		// Return the sector's real color (balanced against sky's).
+		if(skyColorBalance >= 1)
+		{
+			return sector->rgb;
+		}
+		else
+		{
+			for(i = 0; i < 3; i++)
+				balancedRGB[i] = (byte) (sector->rgb[i] * skyColorBalance);
+			return balancedRGB;
+		}
+	}
+	// Return the sky color.
+	return skyColorRGB;
 }

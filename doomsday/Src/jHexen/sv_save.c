@@ -12,7 +12,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <lzss.h>
+#include "LZSS.h"
 #include "h2def.h"
 #include "p_local.h"
 #include "settings.h"
@@ -2461,4 +2461,5 @@ void SV_SaveClient(unsigned int gameid)
 
 	lzClose(savefile);*/
 }
+
 

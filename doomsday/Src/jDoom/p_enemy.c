@@ -15,6 +15,18 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2004/01/08 12:25:15  skyjake
+// Merged from branch-nix
+//
+// Revision 1.4.4.3  2004/01/07 13:17:28  skyjake
+// Refresh header cleanup
+//
+// Revision 1.4.4.2  2003/11/22 18:09:10  skyjake
+// Cleanup
+//
+// Revision 1.4.4.1  2003/11/19 17:07:12  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.4  2003/07/01 12:42:26  skyjake
 // Allow massacre only when GS_LEVEL
 //
@@ -38,14 +50,15 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifdef WIN32
 #pragma optimize("g", off)
+#endif
 
 static const char
 rcsid[] = "$Id$";
 
 #include <stdlib.h>
 
-#include "r_main.h"
 #include "m_random.h"
 
 #include "doomdef.h"
@@ -124,12 +137,12 @@ P_RecursiveSound
     sector_t*	other;
 	
     // wake up all monsters in this sector
-    if (sec->Validcount == validcount && sec->soundtraversed <= soundblocks+1)
+    if (sec->Validcount == validCount && sec->soundtraversed <= soundblocks+1)
     {
 		return;		// already flooded
     }
     
-    sec->Validcount = validcount;
+    sec->Validcount = validCount;
     sec->soundtraversed = soundblocks+1;
     sec->soundtarget = soundtarget;
 	
@@ -172,7 +185,7 @@ P_NoiseAlert
   mobj_t*	emmiter )
 {
     soundtarget = target;
-    validcount++;
+    validCount++;
     P_RecursiveSound (emmiter->subsector->sector, 0);
 }
 
@@ -655,7 +668,7 @@ static fixed_t P_AvoidDropoff(mobj_t *actor)
 
 	// check lines
 
-	validcount++;
+	validCount++;
 	/*for (bx=xl ; bx<=xh ; bx++)
 		for (by=yl ; by<=yh ; by++)
 			P_BlockLinesIterator(bx, by, PIT_AvoidDropoff, 0);  // all contacted lines*/
@@ -782,8 +795,8 @@ int P_Massacre(void)
 			continue;
 		}
 		mo = (mobj_t *)think;
-		if(mo->type == MT_SKULL || (mo->flags&MF_COUNTKILL) && 
-			(mo->health > 0))
+		if(mo->type == MT_SKULL ||
+		   (mo->flags & MF_COUNTKILL && mo->health > 0))
 		{
 			P_DamageMobj(mo, NULL, NULL, 10000);
 			count++;
@@ -2227,5 +2240,6 @@ void C_DECL A_PlayerScream (mobj_t* mo)
     
     S_StartSound(sound, mo);
 }
+
 
 

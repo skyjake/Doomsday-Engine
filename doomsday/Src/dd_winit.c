@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,9 +40,9 @@
 #include "de_network.h"
 #include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
+#include "dd_pinit.h"
 
-#define MAX_PLUGS	10
+// MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
@@ -50,7 +50,8 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
+							 LPARAM lParam);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -63,35 +64,9 @@ HINSTANCE hInstApp;		// Instance handle to the application.
 HINSTANCE hInstGame;	// Instance handle to the game DLL.
 HINSTANCE hInstPlug[MAX_PLUGS];	// Instances to plugin DLLs.
 
-// The game imports and exports.
-game_import_t	gi;		
-game_export_t	gx;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-int CheckArg(char *tag, char **value)
-{
-	int i = ArgCheck(tag);
-	char *next = ArgNext();
-
-	if(!i) return 0;
-	if(value && next) *value = next;
-	return 1;
-}
-
-void ErrorBox(boolean error, char *format, ...)
-{
-	char buff[200];
-	va_list args;
-
-	va_start(args, format);
-	vsprintf(buff, format, args);
-	va_end(args);
-	MessageBox(NULL, buff, "Doomsday "DOOMSDAY_VERSION_TEXT, 
-		MB_OK | (error? MB_ICONERROR : MB_ICONWARNING));
-}
 
 BOOL InitApplication(HINSTANCE hInst)
 {
@@ -116,14 +91,11 @@ BOOL InitInstance(HINSTANCE hInst, int cmdShow)
 	HDC hdc;
 	char buf[256];
 
-	// Include game ID in the title.
-	sprintf(buf, "Doomsday "DOOMSDAY_VERSION_TEXT" : %s", 
-		gx.Get(DD_GAME_ID));
+	DD_MainWindowTitle(buf);
 
 	// Create the main window. It's shown right before GL init.
 	hWndMain = CreateWindow("DoomsdayMainWClass", buf,
-		/*WS_VISIBLE | */ WS_CAPTION | WS_CLIPCHILDREN | WS_CLIPSIBLINGS 
-		| WS_MINIMIZEBOX,
+		WS_CAPTION | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_MINIMIZEBOX,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -144,66 +116,18 @@ BOOL InitInstance(HINSTANCE hInst, int cmdShow)
 	return TRUE;
 }
 
-void SetGameImports(game_import_t *imp)
+BOOL InitGameDLL(void)
 {
-	memset(imp, 0, sizeof(*imp));
-	imp->apiSize = sizeof(*imp);
-	imp->version = DOOMSDAY_VERSION;
-
-	// Data.
-	imp->mobjinfo = &mobjinfo;
-	imp->states = &states;
-	imp->sprnames = &sprnames;
-//	imp->sounds = &sounds;
-//	imp->music = &music;
-	imp->text = &texts;
-
-	imp->validcount = &validcount;
-	imp->topslope = &topslope;
-	imp->bottomslope = &bottomslope;
-	imp->thinkercap = &thinkercap;
-
-	imp->numvertexes = &numvertexes;
-	imp->numsegs = &numsegs;
-	imp->numsectors = &numsectors;
-	imp->numsubsectors = &numsubsectors;
-	imp->numnodes = &numnodes;
-	imp->numlines = &numlines;
-	imp->numsides = &numsides;
-
-	imp->vertexes = &vertexes;
-	imp->segs = &segs;
-	imp->sectors = &sectors;
-	imp->subsectors = &subsectors;
-	imp->nodes = &nodes;
-	imp->lines = &lines;
-	imp->sides = &sides;
-
-	imp->blockmaplump = &blockmaplump;
-	imp->blockmap = &blockmap;
-	imp->bmapwidth = &bmapwidth;
-	imp->bmapheight = &bmapheight;
-	imp->bmaporgx = &bmaporgx;
-	imp->bmaporgy = &bmaporgy;
-	imp->rejectmatrix = &rejectmatrix;
-	imp->polyblockmap = &polyblockmap;
-	imp->polyobjs = &polyobjs;
-	imp->numpolyobjs = &po_NumPolyobjs;
-}
-
-BOOL InitGameDLL()
-{
-	char	*dllName = NULL;	// Pointer to the filename of the game DLL.
+	char *dllName = NULL;	// Pointer to the filename of the game DLL.
 	GETGAMEAPI GetGameAPI = NULL;
-	game_export_t *gameExPtr;
 
 	// First we need to locate the dll name among the command line arguments.
-	CheckArg("-game", &dllName);
+	DD_CheckArg("-game", &dllName);
 
 	// Was a game dll specified?
 	if(!dllName) 
 	{
-		ErrorBox(true, "InitGameDLL: No game DLL was specified.\n");
+		DD_ErrorBox(true, "InitGameDLL: No game DLL was specified.\n");
 		return FALSE;
 	}
 
@@ -211,8 +135,8 @@ BOOL InitGameDLL()
 	hInstGame = LoadLibrary(dllName);
 	if(!hInstGame)
 	{
-		ErrorBox(true, "InitGameDLL: Loading of %s failed (error %d).\n", 
-			dllName, GetLastError());
+		DD_ErrorBox(true, "InitGameDLL: Loading of %s failed (error %d).\n", 
+					dllName, GetLastError());
 		return FALSE;
 	}
 
@@ -220,19 +144,14 @@ BOOL InitGameDLL()
 	GetGameAPI = (GETGAMEAPI) GetProcAddress(hInstGame, "GetGameAPI");
 	if(!GetGameAPI)
 	{
-		ErrorBox(true, "InitGameDLL: Failed to get proc address of GetGameAPI (error %d).\n",
-			GetLastError());
+		DD_ErrorBox(true, "InitGameDLL: Failed to get proc address of "
+					"GetGameAPI (error %d).\n",	GetLastError());
 		return FALSE;
 	}		
 
-	// Put the imported stuff into the imports.
-	SetGameImports(&gi);
-
 	// Do the API transfer.
-	memset(&gx, 0, sizeof(gx));
-	gameExPtr = GetGameAPI(&gi);
-	memcpy(&gx, gameExPtr, MIN_OF(sizeof(gx), gameExPtr->apiSize));
-
+	DD_InitAPI();
+	
 	// Everything seems to be working...
 	return TRUE;
 }
@@ -288,34 +207,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hInstApp = hInstance;
 
 	// Prepare the command line arguments.
-	ArgInit(GetCommandLine());
-
-	// Register some abbreviations for command line options.
-	ArgAbbreviate("-game", "-g");
-	ArgAbbreviate("-gl", "-r"); // As in (R)enderer...
-	ArgAbbreviate("-defs", "-d");
-	ArgAbbreviate("-width", "-w");
-	ArgAbbreviate("-height", "-h");
-	ArgAbbreviate("-winsize", "-wh");
-	ArgAbbreviate("-bpp", "-b");
-	ArgAbbreviate("-window", "-wnd");
-	ArgAbbreviate("-nocenter", "-noc");
-	ArgAbbreviate("-paltex", "-ptx");
-	ArgAbbreviate("-file", "-f");
-	ArgAbbreviate("-maxzone", "-mem");
-	ArgAbbreviate("-config", "-cfg");
-	ArgAbbreviate("-parse", "-p");
-	ArgAbbreviate("-cparse", "-cp");
-	ArgAbbreviate("-command", "-cmd");
-	ArgAbbreviate("-fontdir", "-fd");
-	ArgAbbreviate("-modeldir", "-md");
-	ArgAbbreviate("-basedir", "-bd");
-	ArgAbbreviate("-stdbasedir", "-sbd");
-	ArgAbbreviate("-userdir", "-ud");
-	ArgAbbreviate("-texdir", "-td");
-	ArgAbbreviate("-texdir2", "-td2");
-	ArgAbbreviate("-anifilter", "-ani");
-	ArgAbbreviate("-verbose", "-v");
+	DD_InitCommandLine(GetCommandLine());
 
 	// Load the rendering DLL.
 	if(!DD_InitDGL()) return FALSE;
@@ -337,6 +229,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return FALSE;
 	}
 
+	// Initialize the memory zone.
+	Z_Init();
+	
 	// Fire up the engine. The game loop will also act as the message pump.
 	DD_Main();
     return 0;
@@ -364,36 +259,14 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // DD_Shutdown
 //	Shuts down the engine.
 //===========================================================================
-void DD_Shutdown()
+void DD_Shutdown(void)
 {
-	extern memzone_t *mainzone;
 	int i;
 
-	// Stop the input thread. Blocks until the thread has been terminated.
-	DD_ShutdownInput();
-
-	DD_ShutdownHelp();
-	Zip_Shutdown();
-
-	// Kill the message window if it happens to be open.
-	SW_Shutdown();
-
-	// Enables Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
-	SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, FALSE, 0, 0);
-
-	// Stop all demo recording.
-	for(i = 0; i < MAXPLAYERS; i++) Demo_StopRecording(i);
-
-	Sv_Shutdown();
-	R_Shutdown();
-	Sys_ConShutdown();
-	Def_Destroy();
-	F_ShutdownDirec();
-	FH_Clear();
-	ArgShutdown();
-	free(mainzone);
+	// Shutdown all subsystems.
+	DD_ShutdownAll();
+	
 	FreeLibrary(hInstGame);
-	DD_ShutdownDGL();
 	for(i = 0; hInstPlug[i]; i++) FreeLibrary(hInstPlug[i]);
 	hInstGame = NULL;
 	memset(hInstPlug, 0, sizeof(hInstPlug));

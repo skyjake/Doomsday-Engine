@@ -197,97 +197,96 @@ void G_Drawer(void)
 	// Do buffered drawing
 	switch(gamestate)
 	{
-		case GS_LEVEL:
-			// Clients should be a little careful about the first frames.
-			if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) 
-				break;
+	case GS_LEVEL:
+		// Clients should be a little careful about the first frames.
+		if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) 
+			break;
 
-			// Good luck trying to render the view without a viewpoint...
-			if(!vplayer->plr->mo) break; 
+		// Good luck trying to render the view without a viewpoint...
+		if(!vplayer->plr->mo) break; 
 
-			if(leveltime < 2)
+		if(leveltime < 2)
+		{
+			// Don't render too early; the first couple of frames 
+			// might be a bit unstable -- this should be considered
+			// a bug, but since there's an easy fix...
+			break;
+		}
+		if(automapactive)
+		{
+			AM_Drawer();
+		}
+		else
+		{
+			boolean special200 = false;
+			R_HandleSectorSpecials();
+			// Set flags for the renderer.
+			if(IS_CLIENT) R_SetAllDoomsdayFlags();
+			GL_SetFilter(vplayer->plr->filter); // $democam
+			// Check for the sector special 200: use sky2.
+			// I wonder where this is used?
+			if(vplayer->plr->mo->subsector->sector->special == 200)
 			{
-				// Don't render too early; the first couple of frames 
-				// might be a bit unstable -- this should be considered
-				// a bug, but since there's an easy fix...
-				break;
+				special200 = true;
+				Rend_SkyParams(0, DD_DISABLE, 0);
+				Rend_SkyParams(1, DD_ENABLE, 0);
 			}
-			if(automapactive)
+			// How about a bit of quake?
+			if(localQuakeHappening[displayplayer] && !paused)
 			{
-				AM_Drawer();
+				int intensity = localQuakeHappening[displayplayer];
+				Set(DD_VIEWX_OFFSET, ((M_Random() % (intensity<<2))
+									  -(intensity<<1))<<FRACBITS);
+				Set(DD_VIEWY_OFFSET, ((M_Random() % (intensity<<2))
+									  -(intensity<<1))<<FRACBITS);
 			}
 			else
 			{
-				boolean special200 = false;
-				R_HandleSectorSpecials();
-				// Set flags for the renderer.
-				if(IS_CLIENT) R_SetAllDoomsdayFlags();
-				GL_SetFilter(vplayer->plr->filter); // $democam
-				// Check for the sector special 200: use sky2.
-				// I wonder where this is used?
-				if(vplayer->plr->mo->subsector->sector->special == 200)
-				{
-					special200 = true;
-					Rend_SkyParams(0, DD_DISABLE, 0);
-					Rend_SkyParams(1, DD_ENABLE, 0);
-				}
-				// How about a bit of quake?
-				if(localQuakeHappening[displayplayer] && !paused)
-				{
-					int intensity = localQuakeHappening[displayplayer];
-					Set(DD_VIEWX_OFFSET, ((M_Random() % (intensity<<2))
-							-(intensity<<1))<<FRACBITS);
-					Set(DD_VIEWY_OFFSET, ((M_Random() % (intensity<<2))
-							-(intensity<<1))<<FRACBITS);
-				}
-				else
-				{
-					Set(DD_VIEWX_OFFSET, 0);
-					Set(DD_VIEWY_OFFSET, 0);
-				}
-				// The view angle offset.
-				Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
-				// Render the view.
-				if(!dontrender)
-				{
-					R_RenderPlayerView(vplayer->plr);
-				}
-				if(special200)
-				{
-					Rend_SkyParams(0, DD_ENABLE, 0);
-					Rend_SkyParams(1, DD_DISABLE, 0);
-				}
-				if(!iscam) X_Drawer(); // Draw the crosshair.
-				R_DrawMapTitle();
+				Set(DD_VIEWX_OFFSET, 0);
+				Set(DD_VIEWY_OFFSET, 0);
 			}
-			GL_Update(DDUF_FULLSCREEN);
-			if(!iscam) SB_Drawer(); // $democam
-			// We'll draw the chat text *after* the status bar to
-			// be a bit clearer.
-			CT_Drawer();
+			// The view angle offset.
+			Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
+			// Render the view.
+			if(!dontrender)
+			{
+				R_RenderPlayerView(vplayer->plr);
+			}
+			if(special200)
+			{
+				Rend_SkyParams(0, DD_ENABLE, 0);
+				Rend_SkyParams(1, DD_DISABLE, 0);
+			}
+			if(!iscam) X_Drawer(); // Draw the crosshair.
+			R_DrawMapTitle();
+		}
+		GL_Update(DDUF_FULLSCREEN);
+		if(!iscam) SB_Drawer(); // $democam
+		// We'll draw the chat text *after* the status bar to
+		// be a bit clearer.
+		CT_Drawer();
 
-			// Also update view borders?
-			if(Get(DD_VIEWWINDOW_HEIGHT) != 200) GL_Update(DDUF_BORDER);
-			break;
+		// Also update view borders?
+		if(Get(DD_VIEWWINDOW_HEIGHT) != 200) GL_Update(DDUF_BORDER);
+		break;
 		
-		case GS_INTERMISSION:
-			IN_Drawer();
-			break;
+	case GS_INTERMISSION:
+		IN_Drawer();
+		break;
 		
-		case GS_INFINE:
-			GL_Update(DDUF_FULLSCREEN);
-			break;
+	case GS_INFINE:
+		GL_Update(DDUF_FULLSCREEN);
+		break;
 
-/*		case GS_DEMOSCREEN:
-			PageDrawer();
-			break;*/
+	case GS_WAITING:
+		GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
+		gl.Color3f(1, 1, 1);
+		MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
+		GL_Update(DDUF_FULLSCREEN);
+		break;
 
-		case GS_WAITING:
-			GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
-			gl.Color3f(1, 1, 1);
-			MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
-			GL_Update(DDUF_FULLSCREEN);
-			break;
+	default:
+		break;
 	}
 
 	if(paused && !MenuActive && !askforquit && !fi_active)
@@ -447,4 +446,5 @@ void H2_DoAdvanceDemo(void)
 //
 //
 //==========================================================================
+
 

@@ -484,3 +484,4 @@ static void CheckOpen(void)
 		Con_Error("SC_ call before SC_Open().");
 	}
 }
+

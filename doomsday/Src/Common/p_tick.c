@@ -10,18 +10,20 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __JHEXEN__
-#include "h2def.h"
-#else
-#include "doomdef.h"
+#ifdef __JDOOM__
+#include "p_local.h"
+#include "doomstat.h"
 #endif
 
-#include "p_local.h"
-
-#if __JDOOM__
-#include "doomstat.h"
-#elif __JHERETIC__
+#ifdef __JHERETIC__
+#include "Doomdef.h"
+#include "P_local.h"
 #include "G_game.h"
+#endif
+
+#ifdef __JHEXEN__
+#include "h2def.h"
+#include "p_local.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -96,11 +98,11 @@ void P_RunPlayers(void)
 }
 
 //===========================================================================
-// P_Ticker
+// P_DoTick
 //	Called 35 times per second. 
 //	The heart of play sim.
 //===========================================================================
-void P_Ticker (void)
+void P_DoTick(void)
 {
 #if __JDOOM__ || __JHEXEN__
 	// If the game is paused, nothing will happen.
@@ -148,4 +150,5 @@ void P_Ticker (void)
     // For par times, among other things.
     leveltime++;	
 }
+
 

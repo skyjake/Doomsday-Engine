@@ -21,16 +21,30 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#ifdef UNIX
+#include <dlfcn.h>
+typedef void* HINSTANCE;
+#endif
 
+#include "de_platform.h"
 #include "de_base.h"
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
+// Default values.
+#if defined WIN32
+#	define DEFAULT_LIB_NAME "drOpenGL.dll"
+#elif defined UNIX
+#	define DEFAULT_LIB_NAME "dropengl.so"
+#endif
+
 // Optional function. Doesn't need to be exported.
-#define Opt(fname)	gl.fname = (void*) GetProcAddress(hInstDGL, "DG_"#fname)
+#if defined WIN32
+#	define Opt(fname) gl.fname = (void*) GetProcAddress(dglHandle, "DG_"#fname)
+#elif defined UNIX
+#	define Opt(fname) gl.fname = dlsym(dglHandle, "DG_"#fname)
+#endif
 
 // Required function. If not exported, the rendering DLL can't be used.
 #define Req(fname)	if(( Opt(fname) ) == NULL) return false
@@ -47,11 +61,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-dgldriver_t		gl;				// Engine's internal function table.
+dgldriver_t		__gl;			// Engine's internal function table.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static HINSTANCE hInstDGL;		// Instance handle to the rendering DLL.
+static HINSTANCE dglHandle;		// Instance handle to the rendering DLL.
 
 // CODE --------------------------------------------------------------------
 
@@ -153,34 +167,45 @@ int DD_InitDGLDriver(void)
  */
 int DD_InitDGL(void)
 {
-	char *dllName = "drOpenGL.dll";	// The default renderer.
+	char *libName = DEFAULT_LIB_NAME;
 
 	// See if a specific renderer DLL is specified.
-	if(ArgCheckWith("-gl", 1)) dllName = ArgNext();
+	if(ArgCheckWith("-gl", 1)) libName = ArgNext();
 
 	// Load the DLL.
-	hInstDGL = LoadLibrary(dllName);
-	if(!hInstDGL)
+#ifdef WIN32
+	dglHandle = LoadLibrary(libName);
+#endif
+#ifdef UNIX
+	dglHandle = dlopen(libName, RTLD_NOW);
+#endif	
+	if(!dglHandle)
 	{
-		ErrorBox(true, "DD_InitDGL: Loading of %s failed (error %i).\n", 
-			dllName, GetLastError());
+#ifdef WIN32		
+		DD_ErrorBox(true, "DD_InitDGL: Loading of %s failed (error %i).\n",
+					libName, GetLastError());
+#endif
+#ifdef UNIX
+		DD_ErrorBox(true, "DD_InitDGL: Loading of %s failed.\n  %s.\n",
+					libName, dlerror());
+#endif
 		return false;
 	}
 
 	// Prepare the driver struct.
 	if(!DD_InitDGLDriver())
 	{
-		ErrorBox(true, "DD_InitDGL: Rendering DLL %s is incompatible.\n",
-			dllName);
+		DD_ErrorBox(true, "DD_InitDGL: Rendering DLL %s is incompatible.\n",
+					libName);
 		return false;
 	}
 
 	// Check the version of the DLL.
 	if(gl.GetInteger(DGL_VERSION) < DGL_VERSION_NUM)
 	{
-		ErrorBox(true, "DD_InitDGL: Version %i renderer found. "
-			"Version %i is required.\n", gl.GetInteger(DGL_VERSION), 
-			DGL_VERSION_NUM);
+		DD_ErrorBox(true, "DD_InitDGL: Version %i renderer found. "
+					"Version %i is required.\n", gl.GetInteger(DGL_VERSION),
+					DGL_VERSION_NUM);
 		return false;
 	}
 	return true;
@@ -192,8 +217,13 @@ int DD_InitDGL(void)
  */
 void DD_ShutdownDGL(void)
 {
-	FreeLibrary(hInstDGL);
-	hInstDGL = NULL;
+#ifdef WIN32
+	FreeLibrary(dglHandle);
+#endif
+#ifdef UNIX
+	dlclose(dglHandle);
+#endif
+	dglHandle = NULL;
 }
 
 /*
@@ -203,5 +233,11 @@ void DD_ShutdownDGL(void)
  */
 void *DD_GetDGLProcAddress(const char *name)
 {
-	return GetProcAddress(hInstDGL, name);
+#ifdef WIN32
+	return GetProcAddress(dglHandle, name);
+#endif
+#ifdef UNIX
+	return dlsym(dglHandle, name);
+#endif
 }
+

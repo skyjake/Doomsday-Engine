@@ -1,7 +1,7 @@
 
 // P_maputl.c
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
 
 
@@ -33,6 +33,7 @@ void P_SetThingPosition (mobj_t *thing)
 		(!(thing->flags & MF_NOSECTOR)? DDLINK_SECTOR : 0) | 
 		(!(thing->flags & MF_NOBLOCKMAP)? DDLINK_BLOCKMAP : 0));
 }
+
 
 
 

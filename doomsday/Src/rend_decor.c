@@ -62,7 +62,6 @@ float		decorFadeAngle = .1f;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int	numSources;
-static int	maxSources;
 static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
 
 // Lights near surfaces get dimmer if the angle is too small.
@@ -480,7 +479,7 @@ void Rend_DecorateLine(int index)
 	line_t *line = LINE_PTR(index);
 	side_t *side;
 	sector_t *highSector, *lowSector;
-	int frontSectorIndex = -1, backSectorIndex = -1;
+/*	int frontSectorIndex = -1, backSectorIndex = -1; */
 	float frontCeil, frontFloor, backCeil, backFloor;
 
 	// Only the lines within the decoration visibility bounding box
@@ -698,3 +697,4 @@ void Rend_InitDecorationsForFrame(void)
 	for(i = 0; i < numsectors; i++)
 		Rend_DecorateSector(i);
 }
+

@@ -15,6 +15,27 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/01/08 12:25:15  skyjake
+// Merged from branch-nix
+//
+// Revision 1.9.2.3.2.3  2004/01/07 13:17:28  skyjake
+// Refresh header cleanup
+//
+// Revision 1.9.2.3.2.2  2003/11/22 18:09:10  skyjake
+// Cleanup
+//
+// Revision 1.9.2.3.2.1  2003/11/19 17:07:12  skyjake
+// Modified to compile with gcc and -DUNIX
+//
+// Revision 1.9.2.3  2003/10/06 16:24:44  skyjake
+// Don't scale Read This screens, hide skull
+//
+// Revision 1.9.2.2  2003/09/07 22:22:53  skyjake
+// Cleanup
+//
+// Revision 1.9.2.1  2003/09/05 21:45:58  skyjake
+// Increased spacing in main/episode menus
+//
 // Revision 1.9  2003/08/30 15:07:07  skyjake
 // Doom 2: "Quit Doom" in main menu show not be all-caps
 //
@@ -43,9 +64,6 @@
 // Revision 1.1  2003/02/26 19:21:48  skyjake
 // Initial checkin
 //
-// Revision 1.1  2002/09/29 01:11:46  Jaakko
-// Added Doomsday sources
-//
 //
 // DESCRIPTION:
 //	DOOM selection menu, options, episode etc.
@@ -53,18 +71,19 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifdef WIN32
 #pragma warning(disable:4018)
+#endif
 
 static const char
 rcsid[] = "$Id$";
 
-//#include <unistd.h>
-#include <sys/types.h>
+/*#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <fcntl.h>*/
 #include <stdlib.h>
 #include <ctype.h>
-#include <io.h>
+//#include <io.h>
 
 #include <math.h>
 
@@ -76,7 +95,6 @@ rcsid[] = "$Id$";
 
 #include "v_video.h"
 
-#include "r_main.h"
 #include "p_saveg.h"
 
 #include "hu_stuff.h"
@@ -93,7 +111,7 @@ rcsid[] = "$Id$";
 #include "x_hair.h"
 
 #include "m_menu.h"
-#include "mn_def.h"
+#include "Mn_def.h"
 #include "wi_stuff.h"
 
 
@@ -200,20 +218,6 @@ short		whichSkull;			// which skull to draw
 // graphic name of skulls
 // warning: initializer-string for array of chars is too long
 char    skullName[2][9] = {"M_SKULL1","M_SKULL2"};
-
-/*static MenuRes_t resolutions[] =
-{
-	320, 240,
-	640, 480,
-	800, 600,
-	1024, 768,
-	1152, 864,
-	1280, 1024,
-	1600, 1200,
-	0, 0	// The terminator.
-};
-static int selRes = 0;	// Will be determined when needed.
-*/
 
 // current menudef
 Menu_t*	currentMenu;                          
@@ -344,7 +348,7 @@ enum
 MenuItem_t MainItems[] =
 {
 	{ ITT_EFUNC, "New Game", M_NewGame, 0 },// "M_NGAME" },
-	{ ITT_EFUNC, "Multiplayer", SCEnterMultiplayerMenu, 0 },
+	{ ITT_EFUNC, "Multiplayer", (void (*)(int)) SCEnterMultiplayerMenu, 0 },
 	{ ITT_EFUNC, "Options", M_Options, 0 },// "M_OPTION" },
 	{ ITT_EFUNC, "Load Game", M_LoadGame, 0 },// "M_LOADG" },
 	{ ITT_EFUNC, "Save Game", M_SaveGame, 0 },// "M_SAVEG" },
@@ -359,7 +363,7 @@ Menu_t MainDef =
 	7, MainItems,
 	0, MENU_NONE,
 	hu_font_b, //1, 0, 0,
-	LINEHEIGHT_B,
+	LINEHEIGHT_B + 1,
 	0, 7
 };
 
@@ -382,7 +386,7 @@ Menu_t EpiDef =
 	4, EpisodeItems,
 	0, MENU_MAIN,
 	hu_font_b, //1, 0, 0,
-	LINEHEIGHT,
+	LINEHEIGHT + 1,
 	0, 4
 };
 
@@ -2180,11 +2184,11 @@ boolean M_Responder (event_t* ev)
     int             ch;
     int             i;
     static  int     joywait = 0;
-    static  int     mousewait = 0;
-    static  int     mousey = 0;
-    static  int     lasty = 0;
-    static  int     mousex = 0;
-    static  int     lastx = 0;
+//    static  int     mousewait = 0;
+//    static  int     mousey = 0;
+//    static  int     lasty = 0;
+//    static  int     mousex = 0;
+//    static  int     lastx = 0;
 	int				firstVI, lastVI;	// first and last visible item
 	MenuItem_t		*item;
 	
@@ -2689,6 +2693,8 @@ void M_Drawer (void)
     int				start;
 	float			scale;
 	int				w, h, off_x, off_y;
+	boolean			allowScaling = (currentMenu != &ReadDef1 
+						&& currentMenu != &ReadDef2);
 	
     inhelpscreens = false;
 
@@ -2708,10 +2714,13 @@ void M_Drawer (void)
 	{
 		gl.MatrixMode(DGL_MODELVIEW);
 		gl.PushMatrix();
-		// Scale by the menuScale.
-		gl.Translatef(160, 100, 0);
-		gl.Scalef(cfg.menuScale, cfg.menuScale, 1);
-		gl.Translatef(-160, -100, 0);
+		if(allowScaling)
+		{
+			// Scale by the menuScale.
+			gl.Translatef(160, 100, 0);
+			gl.Scalef(cfg.menuScale, cfg.menuScale, 1);
+			gl.Translatef(-160, -100, 0);
+		}
 	}
 
     // Horiz. & Vertically center string and print it.
@@ -2804,22 +2813,24 @@ void M_Drawer (void)
     }
 	
     // DRAW SKULL
-	scale = currentMenu->itemHeight / (float) LINEHEIGHT;
-	w = 20*scale; // skull size
-	h = 19*scale;
-	off_x = x + SKULLXOFF*scale + w/2;
-	off_y = currentMenu->y + (itemOn-currentMenu->firstItem)*currentMenu->itemHeight + 
-		currentMenu->itemHeight/2 - 1;
-	GL_SetPatch(W_GetNumForName(skullName[whichSkull]));
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.PushMatrix();
-	gl.Translatef(off_x, off_y, 0);
-	gl.Scalef(1, 1.0f/1.2f, 1);
-	if(skull_angle) gl.Rotatef(skull_angle, 0, 0, 1);
-	gl.Scalef(1, 1.2f, 1);
-	GL_DrawRect(-w/2, -h/2, w, h, 1, 1, 1, menu_alpha);
-	gl.PopMatrix();
-
+	if(allowScaling)
+	{
+		scale = currentMenu->itemHeight / (float) LINEHEIGHT;
+		w = 20*scale; // skull size
+		h = 19*scale;
+		off_x = x + SKULLXOFF*scale + w/2;
+		off_y = currentMenu->y + (itemOn-currentMenu->firstItem)
+			*currentMenu->itemHeight +	currentMenu->itemHeight/2 - 1;
+		GL_SetPatch(W_GetNumForName(skullName[whichSkull]));
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PushMatrix();
+		gl.Translatef(off_x, off_y, 0);
+		gl.Scalef(1, 1.0f/1.2f, 1);
+		if(skull_angle) gl.Rotatef(skull_angle, 0, 0, 1);
+		gl.Scalef(1, 1.2f, 1);
+		GL_DrawRect(-w/2, -h/2, w, h, 1, 1, 1, menu_alpha);
+		gl.PopMatrix();
+	}
 end_draw_menu:
 	// Restore original matrix.	
 	gl.MatrixMode(DGL_MODELVIEW);

@@ -312,3 +312,4 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
 	door->topcountdown = 5*60*35;
 }
 */
+

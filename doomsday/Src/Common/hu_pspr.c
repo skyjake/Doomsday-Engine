@@ -16,7 +16,7 @@
 #include "d_config.h"
 #include "st_stuff.h"
 #elif __JHERETIC__
-#include "doomdef.h"
+#include "Doomdef.h"
 #include "settings.h"
 #elif __JHEXEN__
 #include "h2def.h"
@@ -253,5 +253,6 @@ void HU_UpdatePsprites(void)
 		if(players[i].plr->ingame) 
 			HU_UpdatePlayerSprite(i);
 }
+
 
 

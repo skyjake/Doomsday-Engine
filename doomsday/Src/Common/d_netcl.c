@@ -1,27 +1,27 @@
 #ifdef __JDOOM__
-#include "../JDoom/doomdef.h"
-#include "../JDoom/doomstat.h"
-#include "../JDoom/dstrings.h"
-#include "../JDoom/p_local.h"
-#include "../JDoom/s_sound.h"
-#include "../JDoom/d_config.h"
-#include "../JDoom/g_game.h"
-#include "../JDoom/st_stuff.h"
-#include "../JDoom/wi_stuff.h"
-#include "../JDoom/am_map.h"
+#include "../jDoom/doomdef.h"
+#include "../jDoom/doomstat.h"
+#include "../jDoom/dstrings.h"
+#include "../jDoom/p_local.h"
+#include "../jDoom/s_sound.h"
+#include "../jDoom/d_config.h"
+#include "../jDoom/g_game.h"
+#include "../jDoom/st_stuff.h"
+#include "../jDoom/wi_stuff.h"
+#include "../jDoom/am_map.h"
 #endif
 
 #ifdef __JHERETIC__
-#include "../JHeretic/DoomDef.h"
-#include "../JHeretic/P_local.h"
-#include "../JHeretic/soundst.h"
-#include "../JHeretic/settings.h"
+#include "../jHeretic/Doomdef.h"
+#include "../jHeretic/P_local.h"
+#include "../jHeretic/Soundst.h"
+#include "../jHeretic/settings.h"
 #endif
 
 #ifdef __JHEXEN__
-#include "../JHexen/H2def.h"
-#include "../JHexen/P_local.h"
-#include "../JHexen/Settings.h"
+#include "../jHexen/h2def.h"
+#include "../jHexen/p_local.h"
+#include "../jHexen/settings.h"
 #endif
 
 #include "p_saveg.h"
@@ -442,9 +442,12 @@ void NetCl_UpdatePSpriteState(byte *data)
 void NetCl_Intermission(byte *data)
 {
 	int	flags;
+#ifdef __JHERETIC__
 	extern int interstate;
 	extern int intertime;
-#if __JHEXEN__
+#endif
+#ifdef __JHEXEN__
+	extern int interstate;
 	extern int LeaveMap, LeavePosition;
 #endif
 
@@ -720,3 +723,15 @@ void NetCl_CheatRequest(const char *command)
 	else
 		NetSv_DoCheat(consoleplayer, msg);
 }
+
+/*
+ * Set the jump power used in client mode.
+ */
+void NetCl_UpdateJumpPower(void *data)
+{
+	netJumpPower = *(float*)data;
+#ifdef _DEBUG
+	Con_Printf("NetCl_UpdateJumpPower: %g\n", netJumpPower);
+#endif
+}
+

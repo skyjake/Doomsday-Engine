@@ -12,18 +12,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <direct.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <io.h>
-#include <conio.h>
-
-#include <ctype.h>
 #include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -91,44 +80,4 @@ void M_ClearRandom (void)
 {
 	prndindex = 0;
 }
-
-/*
-==============================================================================
-
-						SCREEN SHOTS
-
-==============================================================================
-*/
-
-/*
-==================
-=
-= M_ScreenShot
-=
-==================
-*/
-
-void G_DoScreenShot (void)
-{
-	int		i;
-	char	fname[12];
-
-	// Find a file name.
-	strcpy(fname,"HEXEN00.TGA");
-	for(i = 0; i <= 99; i++)
-	{
-		fname[5] = i/10 + '0';
-		fname[6] = i%10 + '0';
-		if(_access(fname, 0))
-			break;  // file doesn't exist
-	}
-	if(i==100) 
-	{
-		Con_Message("M_ScreenShot: Couldn't find a valid filename (too many shots already?)");
-		return;
-	}
-	M_ScreenShot(fname, 24);
-	Con_Message("Wrote %s.\n", fname);
-}
-
 

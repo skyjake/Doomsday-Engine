@@ -264,3 +264,4 @@ void P_RemoveActivePlat(plat_t *plat)
 		}
 	Con_Error ("P_RemoveActivePlat: can't find plat!");
 }
+

@@ -11,7 +11,7 @@
 #include "hu_stuff.h"
 #include "d_config.h"
 #include "m_menu.h"
-#include "mn_def.h"
+#include "Mn_def.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -148,3 +148,4 @@ void HUMsg_Ticker(void)
 		else if(messages[firstmsg].time < 0) HUMsg_DropLast();
 	}
 }
+

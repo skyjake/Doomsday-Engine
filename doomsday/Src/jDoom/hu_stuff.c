@@ -15,6 +15,15 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2004/01/08 12:25:15  skyjake
+// Merged from branch-nix
+//
+// Revision 1.1.4.2  2003/11/22 18:09:10  skyjake
+// Cleanup
+//
+// Revision 1.1.4.1  2003/11/19 17:07:12  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.1  2003/02/26 19:21:39  skyjake
 // Initial checkin
 //
@@ -38,7 +47,7 @@ rcsid[] = "$Id$";
 #include "hu_stuff.h"
 #include "hu_msg.h"
 #include "hu_lib.h"
-#include "mn_def.h"
+#include "Mn_def.h"
 #include "m_misc.h"
 
 #include "s_sound.h"
@@ -637,44 +646,8 @@ void HU_Ticker(void)
 #endif
 }
 
-#define QUEUESIZE		128
-
-static char	chatchars[QUEUESIZE];
-static int	head = 0;
-static int	tail = 0;
-
 boolean	shiftdown = false;
 int chat_to = 0;	// 0=all, 1=player 0, etc.
-
-void HU_queueChatChar(char c)
-{
-    /*if (((head + 1) & (QUEUESIZE-1)) == tail)
-    {
-		plr->message = HUSTR_MSGU;
-    }
-    else
-    {
-		chatchars[head] = c;
-		head = (head + 1) & (QUEUESIZE-1);
-    }*/
-}
-
-char HU_dequeueChatChar(void)
-{
-/*    char c;
-	
-    if (head != tail)
-    {
-		c = chatchars[tail];
-		tail = (tail + 1) & (QUEUESIZE-1);
-    }
-    else
-    {
-		c = 0;
-    }
-	*/
-    return 0;//c;
-}
 
 int CCmdBeginChat(int argc, char **argv)
 {
@@ -741,15 +714,15 @@ boolean HU_Responder(event_t *ev)
     int				i;
     int				numplayers;
     
-    static char		destination_keys[MAXPLAYERS] =
+/*    static char		destination_keys[MAXPLAYERS] =
     {
 		HUSTR_KEYGREEN,
 		HUSTR_KEYINDIGO,
 		HUSTR_KEYBROWN,
 		HUSTR_KEYRED
-    };
+		};*/
     
-    static int		num_nobrainers = 0;
+//    static int		num_nobrainers = 0;
 	
     numplayers = 0;
     for (i=0 ; i<MAXPLAYERS ; i++)
@@ -770,52 +743,6 @@ boolean HU_Responder(event_t *ev)
 	
     if (!chat_on)
     {
-/*		if (ev->data1 == HU_MSGREFRESH)
-		{
-			message_on = true;
-			message_counter = HU_MSGTIMEOUT;
-			eatkey = true;
-		}*/
-/*		else if (netgame && ev->data1 == HU_INPUTTOGGLE)
-		{
-			eatkey = chat_on = true;
-			HUlib_resetIText(&w_chat);
-			//HU_queueChatChar(HU_BROADCAST);
-			chat_to = HU_BROADCAST;
-		}
-		else if (netgame && numplayers > 2)
-		{
-			for (i=0; i<MAXPLAYERS ; i++)
-			{
-				if (ev->data1 == destination_keys[i])
-				{
-					if (players[i].plr->ingame && i!=consoleplayer)
-					{
-						eatkey = chat_on = true;
-						HUlib_resetIText(&w_chat);
-						//HU_queueChatChar((char)(i+1));
-						chat_to = i;
-						break;
-					}
-					else if (i == consoleplayer)
-					{
-						char *msg;
-						num_nobrainers++;
-						if (num_nobrainers < 3)
-							msg = HUSTR_TALKTOSELF1;
-						else if (num_nobrainers < 6)
-							msg = HUSTR_TALKTOSELF2;
-						else if (num_nobrainers < 9)
-							msg = HUSTR_TALKTOSELF3;
-						else if (num_nobrainers < 32)
-							msg = HUSTR_TALKTOSELF4;
-						else
-							msg = HUSTR_TALKTOSELF5;
-						P_SetMessage(plr, msg);
-					}
-				}
-			}
-		}*/
     }
     else
     {
@@ -828,14 +755,6 @@ boolean HU_Responder(event_t *ev)
 				return false;
 			// fprintf(stderr, "got here\n");
 			macromessage = chat_macros[c];
-			
-			// kill last message with a '\n'
-			HU_queueChatChar(DDKEY_ENTER); // DEBUG!!!
-			
-			// send the macro message
-	/*		while (*macromessage)
-				HU_queueChatChar(*macromessage++);
-			HU_queueChatChar(DDKEY_ENTER);*/
 			
 			// leave chat mode and notify that it was sent
 			chat_on = false;
@@ -853,7 +772,7 @@ boolean HU_Responder(event_t *ev)
 			if (eatkey)
 			{
 				// static unsigned char buf[20]; // DEBUG
-				HU_queueChatChar(c);
+				//HU_queueChatChar(c);
 				
 				// sprintf(buf, "KEY: %d => %d", ev->data1, c);
 				//      plr->message = buf;
@@ -874,3 +793,4 @@ boolean HU_Responder(event_t *ev)
     return eatkey;
 	
 }
+

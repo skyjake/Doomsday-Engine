@@ -53,6 +53,19 @@ interface_info_t;
 
 int mus_preference = MUSP_EXT;
 
+#ifdef UNIX
+// Some interfaces are not available on Unix. These are just empty stubs.
+musdriver_t 		musd_fmod;
+musinterface_ext_t 	musd_fmod_iext;
+musinterface_cd_t 	musd_fmod_icd;
+
+musdriver_t 		musd_win;
+musinterface_mus_t 	musd_win_imus;
+musinterface_cd_t 	musd_win_icd;
+
+sfxdriver_t			sfxd_dsound;
+#endif
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean mus_avail = false;
@@ -60,9 +73,9 @@ static boolean mus_avail = false;
 static int current_song = -1;
 
 // The interfaces.
-static musinterface_mus_t *imus = 0;
-static musinterface_ext_t *iext = 0;
-static musinterface_cd_t *icd = 0;
+static musinterface_mus_t *imus;
+static musinterface_ext_t *iext;
+static musinterface_cd_t  *icd;
 
 // The interface list. Used to access the common features of all the
 // interfaces conveniently.

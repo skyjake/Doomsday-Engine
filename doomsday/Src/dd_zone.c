@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -54,10 +55,84 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 memzone_t	*mainzone;
+size_t		zoneSize;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+/*
+==============================================================================
+
+						ZONE MEMORY ALLOCATION
+
+There is never any space between memblocks, and there will never be two
+contiguous free memblocks.
+
+The rover can be left pointing at a non-empty block
+
+It is of no value to free a cachable block, because it will get overwritten
+automatically if needed
+
+==============================================================================
+*/
+
+//===========================================================================
+// superatol
+//===========================================================================
+long superatol(char *s)
+{
+	char *endptr;
+	long val = strtol(s, &endptr, 0);
+
+	if(*endptr == 'k' || *endptr == 'K')
+		val *= 1024;
+	else if(*endptr == 'm' || *endptr == 'M')
+		val *= 1048576;
+	return val;
+}
+
+void *Z_Create(size_t *size)
+{
+#define RETRY_STEP	0x80000	// Half a meg.
+	byte *ptr;
+
+	// Check for the -maxzone option.
+	if(ArgCheckWith("-maxzone", 1)) maxzone = superatol(ArgNext());
+
+	zoneSize = maxzone;
+	if(zoneSize < MINIMUM_HEAP_SIZE) zoneSize = MINIMUM_HEAP_SIZE;
+	if(zoneSize > MAXIMUM_HEAP_SIZE) zoneSize = MAXIMUM_HEAP_SIZE;
+	zoneSize += RETRY_STEP;
+	
+	do { // Until we get the memory (usually succeeds on the first try).
+		zoneSize -= RETRY_STEP;		// leave some memory alone
+		ptr = malloc(zoneSize);
+	} while(!ptr);
+
+	*size = zoneSize;
+	return ptr;
+}
+
+//==========================================================================
+// Z_PrintStatus
+//==========================================================================
+void Z_PrintStatus(void)
+{
+	Con_Message("Memory zone: %.1f Mb.\n", zoneSize/1024.0/1024.0);
+	
+	if(zoneSize < (size_t) maxzone)
+	{
+		Con_Message("  The requested amount was %.1f Mb.\n",
+					maxzone/1024.0/1024.0);
+	}
+
+	if(zoneSize < 0x180000)
+	{
+		// FIXME: This is a strange place to check this...
+		Con_Error("  Insufficient memory!");
+	}
+}
 
 //===========================================================================
 // Z_Init
@@ -67,7 +142,7 @@ void Z_Init (void)
 	memblock_t	*block;
 	size_t		size;
 
-	mainzone = (memzone_t *) Sys_ZoneBase (&size);
+	mainzone = (memzone_t*) Z_Create(&size);
 	mainzone->size = size;
 
 // set the entire zone to one free block

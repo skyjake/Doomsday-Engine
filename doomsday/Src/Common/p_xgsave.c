@@ -9,13 +9,16 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef __JDOOM__
 #include "doomdef.h"
 #include "p_local.h"
-
-#ifdef __JDOOM__
 #include "r_local.h"
 #include "r_defs.h"
+#endif
 
+#ifdef __JHERETIC__
+#include "Doomdef.h"
+#include "P_local.h"
 #endif
 
 #include "p_saveg.h"
@@ -85,7 +88,10 @@ void SV_ReadXGLine(line_t *li)
 	xg->disabled = SV_ReadByte();
 	xg->timer = SV_ReadLong();
 	xg->ticker_timer = SV_ReadLong();
-	xg->activator = (void*) SV_ReadShort(); // Will be updated later.
+
+	// Will be updated later.
+	xg->activator = (void*)(unsigned int) SV_ReadShort(); 
+
 	xg->idata = SV_ReadLong();
 	xg->fdata = SV_ReadFloat();
 	xg->chidx = SV_ReadLong();

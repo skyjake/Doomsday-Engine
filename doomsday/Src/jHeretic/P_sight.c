@@ -2,7 +2,7 @@
 // We can't use the engine's sight checker if we want to be
 // backwards compatible (demos would go out of sync).
 
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
 
 #define MAXINTERCEPTS	128
@@ -325,22 +325,23 @@ boolean P_CheckSight (mobj_t *t1, mobj_t *t2)
 	
 	if(P_IsCamera(t1) || P_IsCamera(t2))
 		return false; // Cameramen don't exist!
-	
-	//
-	// check for trivial rejection
-	//
-	s1 = (t1->subsector->sector - sectors);
-	s2 = (t2->subsector->sector - sectors);
-	pnum = s1*numsectors + s2;
-	bytenum = pnum>>3;
-	bitnum = 1 << (pnum&7);
-	
-	if (rejectmatrix[bytenum]&bitnum)
+
+	if(rejectmatrix)
 	{
-		sightcounts[0]++;
-		return false;		// can't possibly be connected
+		// Check for trivial rejection.
+		s1 = (t1->subsector->sector - sectors);
+		s2 = (t2->subsector->sector - sectors);
+		pnum = s1*numsectors + s2;
+		bytenum = pnum>>3;
+		bitnum = 1 << (pnum&7);
+		
+		if(rejectmatrix[bytenum]&bitnum)
+		{
+			sightcounts[0]++;
+			return false;		// can't possibly be connected
+		}
 	}
-	
+
 	//
 	// check precisely
 	//		
@@ -350,6 +351,7 @@ boolean P_CheckSight (mobj_t *t1, mobj_t *t2)
 	
 	return P_SightPathTraverse ( t1->x, t1->y, t2->x, t2->y );
 }
+
 
 
 

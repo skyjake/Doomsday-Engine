@@ -97,6 +97,7 @@ void R_InitViewBorder()
 
 	// Detemine the view border width.
 	if(W_CheckNumForName(borderGfx[BG_TOP]) == -1) return;
+
 	patch = W_CacheLumpName(borderGfx[BG_TOP], PU_CACHE);
 	bwidth = patch->height;
 }
@@ -184,3 +185,4 @@ void R_DrawTopBorder (void)
 		GL_UsePatchOffset(true);
 	}
 }
+

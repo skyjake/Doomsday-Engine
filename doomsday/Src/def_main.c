@@ -23,7 +23,12 @@
 
 #include <string.h>
 #include <ctype.h>
-#include <io.h>
+
+/*
+#ifdef WIN32
+#	include <io.h>
+#endif
+*/
 
 #include "de_base.h"
 #include "de_defs.h"
@@ -35,12 +40,12 @@
 
 // XGClass.h is actually a part of the engine.
 // It just defines the various LTC_* constants.
-#include "common/xgclass.h"
+#include "Common/xgclass.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define LOOPi(n)	for(i=0; i<n; i++)
-#define LOOPk(n)	for(k=0; k<n; k++)
+#define LOOPi(n)	for(i = 0; i < (n); i++)
+#define LOOPk(n)	for(k = 0; k < (n); k++)
 
 // TYPES -------------------------------------------------------------------
 
@@ -162,13 +167,13 @@ void Def_Destroy(void)
 	DED_Init(&defs);
 
 	// Destroy the databases.
-	DED_DelArray(&sprnames, &count_sprnames);
-	DED_DelArray(&states, &count_states);
-	DED_DelArray(&mobjinfo, &count_mobjinfo);
-	DED_DelArray(&sounds, &count_sounds);
-	DED_DelArray(&texts, &count_texts);
-	DED_DelArray(&details, &count_details);
-	DED_DelArray( (void**) &stateowners, &count_stateowners);
+	DED_DelArray((void**)&sprnames, &count_sprnames);
+	DED_DelArray((void**)&states, &count_states);
+	DED_DelArray((void**)&mobjinfo, &count_mobjinfo);
+	DED_DelArray((void**)&sounds, &count_sounds);
+	DED_DelArray((void**)&texts, &count_texts);
+	DED_DelArray((void**)&details, &count_details);
+	DED_DelArray((void**)&stateowners, &count_stateowners);
 
 	defsInited = false;
 
@@ -562,14 +567,14 @@ void Def_Read(void)
 		Con_Error("DD_ReadDefs: No state or mobj definitions found!\n");
 	
 	// Sprite names.
-	DED_NewEntries(&sprnames, &count_sprnames, sizeof(*sprnames), 
+	DED_NewEntries((void**)&sprnames, &count_sprnames, sizeof(*sprnames), 
 		defs.count.sprites.num);
 	for(i = 0; i < count_sprnames.num; i++) 
 		strcpy(sprnames[i].name, defs.sprites[i].id);
 	Def_CountMsg(count_sprnames.num, "sprite names");
 
 	// States.
-	DED_NewEntries(&states, &count_states, sizeof(*states), 
+	DED_NewEntries((void**)&states, &count_states, sizeof(*states), 
 		defs.count.states.num);
 	for(i = 0; i < count_states.num; i++)
 	{
@@ -590,7 +595,8 @@ void Def_Read(void)
 		sizeof(mobjinfo_t*), defs.count.states.num);
 
 	// Mobj info.
-	DED_NewEntries(&mobjinfo, &count_mobjinfo, sizeof(*mobjinfo), defs.count.mobjs.num);
+	DED_NewEntries((void**)&mobjinfo, &count_mobjinfo, sizeof(*mobjinfo),
+				   defs.count.mobjs.num);
 	for(i = 0; i < count_mobjinfo.num; i++)
 	{
 		ded_mobj_t *dmo = defs.mobjs + i;
@@ -645,7 +651,7 @@ void Def_Read(void)
 	Def_CountMsg(defs.count.lights.num, "lights");
 
 	// Sound effects.
-	DED_NewEntries(&sounds, &count_sounds, sizeof(*sounds), 
+	DED_NewEntries((void**)&sounds, &count_sounds, sizeof(*sounds), 
 		defs.count.sounds.num);
 	for(i = 0; i < count_sounds.num; i++)
 	{
@@ -682,7 +688,8 @@ void Def_Read(void)
 	Def_CountMsg(defs.count.music.num, "songs");
 
 	// Text.
-	DED_NewEntries(&texts, &count_texts, sizeof(*texts), defs.count.text.num);
+	DED_NewEntries((void**)&texts, &count_texts, sizeof(*texts),
+				   defs.count.text.num);
 	for(i = 0; i < count_texts.num; i++) 
 		Def_InitTextDef(texts + i, defs.text[i].text);
 	// Handle duplicate strings.
@@ -795,8 +802,8 @@ void Def_PostInit(void)
 		}
 	}
 
-	DED_DelArray(&details, &count_details);
-	DED_NewEntries(&details, &count_details, sizeof(*details), 
+	DED_DelArray((void**)&details, &count_details);
+	DED_NewEntries((void**)&details, &count_details, sizeof(*details), 
 		defs.count.details.num);	
 	for(i = 0; i < defs.count.details.num; i++)
 	{

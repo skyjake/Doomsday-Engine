@@ -264,7 +264,10 @@ void R_AddToAnimGroup(int groupNum, int number, int tics, int randomTics)
 	animgroup_t *group = R_GetAnimGroup(groupNum);
 	animframe_t *frame;
 
-	if(!group || number < 0) return;
+	if(!group || number < 0) 
+	{
+		return;
+	}
 
 	// Allocate a new animframe.
 	group->frames = Z_Realloc(group->frames, sizeof(animframe_t) 
@@ -297,8 +300,8 @@ boolean R_IsInAnimGroup(int groupNum, int type, int number)
 
 	if(!group) return false;
 
-	if(type == DD_TEXTURE && !(group->flags & AGF_TEXTURE)
-		|| type == DD_FLAT && !(group->flags & AGF_FLAT))
+	if((type == DD_TEXTURE && !(group->flags & AGF_TEXTURE)) ||
+	   (type == DD_FLAT && !(group->flags & AGF_FLAT)))
 	{
 		// Not the right type.
 		return false;
@@ -320,14 +323,9 @@ void R_InitAnimGroup(ded_group_t *def)
 {
 	int i;
 	int groupNumber = 0;
-	animgroup_t *group = NULL;
 	int type, number;
 
 	type = (def->is_texture? DD_TEXTURE : DD_FLAT);
-
-	// Create a new animation group.
-	groupNumber = R_CreateAnimGroup(type, def->flags);
-	group = R_GetAnimGroup(groupNumber);
 
 	for(i = 0; i < def->count; i++)
 	{
@@ -338,6 +336,14 @@ void R_InitAnimGroup(ded_group_t *def)
 		else
 		{
 			number = W_CheckNumForName(def->members[i].name);
+		}
+		if(number < 0) continue;
+
+		// Only create a group when the first texture is found.
+		if(!groupNumber)
+		{
+			// Create a new animation group.
+			groupNumber = R_CreateAnimGroup(type, def->flags);
 		}
 
 		R_AddToAnimGroup(groupNumber, number, def->members[i].tics,
@@ -1068,3 +1074,4 @@ void R_GenerateDecorMap(ded_decor_t *def)
 	}
 #endif
 }
+

@@ -17,7 +17,7 @@
 #include <math.h>
 #include "doomdef.h" 
 #include "doomstat.h"
-#include "d_action.h"
+#include "D_Action.h"
 #include "d_config.h"
 #include "m_argv.h"
 #include "m_misc.h"
@@ -28,7 +28,7 @@
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "d_main.h"
-#include "d_netjd.h"
+#include "d_netJD.h"
 #include "wi_stuff.h"
 #include "hu_stuff.h"
 #include "st_stuff.h"
@@ -43,12 +43,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "DoomDef.h"
+#include "Doomdef.h"
 #include "P_local.h"
 #include "H_Action.h"
-#include "soundst.h"
+#include "Soundst.h"
 #include "settings.h"
-#include "P_Saveg.h"
+#include "p_saveg.h"
 #endif
 
 #if __JHEXEN__
@@ -58,8 +58,8 @@
 #include "h2def.h"
 #include "p_local.h"
 #include "soundst.h"
-#include "Settings.h"
-#include "g_demo.h"
+#include "settings.h"
+//#include "g_demo.h"
 #include "h2_actn.h"
 #include "d_net.h"
 #endif
@@ -101,19 +101,20 @@ struct
 {	
 	int	action;
 	int	artifact;
-} ArtifactHotkeys[] =
+}
+ArtifactHotkeys[] =
 {
-	A_INVULNERABILITY,	arti_invulnerability,
-	A_INVISIBILITY,		arti_invisibility,
-	A_HEALTH,			arti_health,
-	A_SUPERHEALTH,		arti_superhealth,
-	A_TORCH,			arti_torch,
-	A_FIREBOMB,			arti_firebomb,
-	A_EGG,				arti_egg,
-	A_FLY,				arti_fly,
-	A_TELEPORT,			arti_teleport,
-	A_PANIC,			NUMARTIFACTS,
-	0,					arti_none // Terminator.
+	{ A_INVULNERABILITY,	arti_invulnerability },
+	{ A_INVISIBILITY,		arti_invisibility },
+	{ A_HEALTH,				arti_health },
+	{ A_SUPERHEALTH,		arti_superhealth },
+	{ A_TORCH,				arti_torch },
+	{ A_FIREBOMB,			arti_firebomb },
+	{ A_EGG,				arti_egg },
+	{ A_FLY,				arti_fly },
+	{ A_TELEPORT,			arti_teleport },
+	{ A_PANIC,				NUMARTIFACTS },
+	{ 0,					arti_none }// Terminator.
 };
 
 struct
@@ -146,6 +147,7 @@ struct
 void	P_InitPlayerValues(player_t *p);
 void	P_RunPlayers(void);
 boolean	P_IsPaused(void);
+void	P_DoTick(void);
 
 #if __JHEXEN__
 void	P_InitSky(int map);
@@ -168,6 +170,7 @@ void	G_DoCompleted (void);
 void	G_DoVictory (void); 
 void	G_DoWorldDone (void); 
 void	G_DoSaveGame (void); 
+void	G_DoScreenShot (void);
 
 #if __JHEXEN__
 void	G_DoTeleportNewMap(void);
@@ -370,17 +373,17 @@ static int findWeapon(player_t *plr, boolean forward)
 {
 	int	i, c;
 
-	for(i=plr->readyweapon + (forward? 1 : -1), c=0; 
+	for(i = plr->readyweapon + (forward? 1 : -1), c = 0; 
 #if __JHERETIC__
-		c<NUMWEAPONS-1; c++, forward? i++ : i--) 
+		c < NUMWEAPONS - 1; c++, forward? i++ : i--) 
 	{
-		if(i >= NUMWEAPONS-1) i = 0;
-		if(i < 0) i = NUMWEAPONS-2;
-#else
-		c<NUMWEAPONS; c++, forward? i++ : i--)
+		if(i >= NUMWEAPONS - 1) i = 0;
+		if(i < 0) i = NUMWEAPONS - 2;
+#elif __JHEXEN__
+		c < NUMWEAPONS; c++, forward? i++ : i--)
 	{
-		if(i > NUMWEAPONS-1) i = 0;
-		if(i < 0) i = NUMWEAPONS-1;
+		if(i > NUMWEAPONS - 1) i = 0;
+		if(i < 0) i = NUMWEAPONS - 1;
 #endif
 		if(plr->weaponowned[i]) return i;
 	}
@@ -982,10 +985,19 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	else for(i = 0; i < NUMWEAPONS; i++)
 #endif
 	{
-		if(actions[A_WEAPON1+i].on)
+		if(actions[A_WEAPON1 + i].on)
 		{
+#ifdef __JHERETIC__
+			// Staff and Gautlets are on the same key.
+			if(i == wp_staff 
+				&& players[consoleplayer].readyweapon != wp_gauntlets
+				&& players[consoleplayer].weaponowned[wp_gauntlets])
+			{
+				i = wp_gauntlets;
+			}
+#endif
 			cmd->buttons |= BT_CHANGE;
-			cmd->buttons |= i<<BT_WEAPONSHIFT;
+			cmd->buttons |= i << BT_WEAPONSHIFT;
 			break;
 		}
 	}
@@ -1198,7 +1210,7 @@ void G_DoLoadLevel (void)
 	action_t	*act;
     int         i; 
 #if __JHEXEN__
-    static		firstFragReset = 1;
+    static int firstFragReset = 1;
 #endif
 
     levelstarttic = gametic;        // for time calculation
@@ -1283,7 +1295,7 @@ boolean G_Responder (event_t* ev)
 	int		i;
 #if __JHERETIC__ || __JHEXEN__
 	player_t *plr = &players[consoleplayer];
-	extern boolean MenuActive;
+	//extern boolean MenuActive;
 
 	if(!actions[A_USEARTIFACT].on)
 	{ // flag to denote that it's okay to use an artifact
@@ -1342,16 +1354,8 @@ boolean G_Responder (event_t* ev)
 			return true;	// automap ate it 
 		break;
 
-/*#if __JDOOM__
-	case GS_FINALE:
-		if(F_Responder(ev)) 
-			return true;	// finale ate the event 
+	default:
 		break;
-#endif*/
-
-/*	case GS_INFINE:
-		if(FI_Responder(ev)) return true; 
-		break;*/
 	}
 
     switch (ev->type) 
@@ -1621,7 +1625,7 @@ void G_Ticker (void)
 	switch (gamestate) 
 	{ 
 	case GS_LEVEL: 
-		P_Ticker (); 
+		P_DoTick(); 
 		HU_UpdatePsprites();
 
 		// Active briefings once again (they were disabled when loading
@@ -1647,31 +1651,10 @@ void G_Ticker (void)
 #else
 		IN_Ticker ();
 #endif
-		break; 
-
-/*#if __JDOOM__
-	case GS_FINALE: 
-		F_Ticker (); 
-		break; 
-#endif*/
-
-/*	case GS_INFINE:
-		FI_Ticker();
-		break;*/
-
-/*#if __JHEXEN__
-	case GS_DEMOSCREEN:
-		if(IS_DEDICATED) break;
-		H2_PageTicker ();
 		break;
-#else
-	case GS_DEMOSCREEN: 
-		if(IS_DEDICATED) break;
-#ifndef __JDOOM__
-		D_PageTicker (); 
-#endif
-		break; 
-#endif*/
+
+	default:
+		break;
 	} 
 	
 	// InFine ticks whenever it's active.
@@ -1978,114 +1961,6 @@ void G_PlayerReborn (int player)
 	p->plr->flags &= ~DDPF_DEAD;
 }
 
-//
-// G_CheckSpot  
-// Returns false if the player cannot be respawned
-// at the given mapthing_t spot  
-// because something is occupying it 
-//
-boolean G_CheckSpot(int playernum, mapthing_t* mthing) 
-{ 
-    fixed_t			x;
-    fixed_t			y; 
-    unsigned		an; 
-    mobj_t*			mo; 
-#if __JDOOM__ || __JHEXEN__
-    subsector_t*	ss; 
-#endif
-#if __JDOOM__
-    int				i;
-#endif
-#if __JHERETIC__ || __JHEXEN__
-	mapthing_t		faraway;
-	boolean			using_dummy = false;
-#endif
-	
-#if __JDOOM__
-    if(!players[playernum].plr->mo)
-    {
-		// first spawn of level, before corpses
-		for(i = 0 ; i < playernum ; i++)
-		{
-			if(players[i].plr->mo 
-				&& players[i].plr->mo->x == mthing->x << FRACBITS
-				&& players[i].plr->mo->y == mthing->y << FRACBITS)
-				return false;	
-		}
-		return true;
-    }
-#endif
-	
-    x = mthing->x << FRACBITS; 
-    y = mthing->y << FRACBITS; 
-
-#if __JHERETIC__ || __JHEXEN__
-	if(!players[playernum].plr->mo)
-	{
-		// The player doesn't have a mobj. Let's create a dummy.
-		faraway.x = faraway.y = DDMAXSHORT;
-		P_SpawnPlayer(&faraway, playernum);
-		using_dummy = true;
-	}
-	players[playernum].plr->mo->flags2 &= ~MF2_PASSMOBJ;
-#endif
-
-    if(!P_CheckPosition(players[playernum].plr->mo, x, y) ) 
-	{
-#if __JHERETIC__ || __JHEXEN__
-		players[playernum].plr->mo->flags2 |= MF2_PASSMOBJ;
-		if(using_dummy)
-		{
-			P_RemoveMobj(players[playernum].plr->mo);
-			players[playernum].plr->mo = NULL;
-		}
-#endif
-		return false; 
-	}
-
-#if __JHERETIC__
-	players[playernum].plr->mo->flags2 |= MF2_PASSMOBJ;
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-	if(using_dummy)
-	{
-		P_RemoveMobj(players[playernum].plr->mo);
-		players[playernum].plr->mo = NULL;
-	}
-#endif
-	
-#if __JDOOM__
-    // flush an old corpse if needed 
-    if (bodyqueslot >= BODYQUESIZE) 
-		P_RemoveMobj (bodyque[bodyqueslot%BODYQUESIZE]); 
-    bodyque[bodyqueslot%BODYQUESIZE] = players[playernum].plr->mo; 
-    bodyqueslot++; 
-#endif
-	
-    // spawn a teleport fog 
-	an = ( ANG45 * (mthing->angle/45) ) >> ANGLETOFINESHIFT; 
-
-#if __JDOOM__ || __JHEXEN__
-    ss = R_PointInSubsector (x,y); 
-    mo = P_SpawnMobj (x+20*finecosine[an], y+20*finesine[an] 
-		      , ss->sector->floorheight 
-			  , MT_TFOG); 
-#else // __JHERETIC__
-	mo = P_SpawnTeleFog(x+20*finecosine[an], y+20*finesine[an]);
-#endif
-	
-	// don't start sound on first frame
-	if(players[consoleplayer].plr->viewz != 1)
-#if __JHEXEN__
-		S_StartSound(SFX_TELEPORT, mo);
-#else
-		S_StartSound(sfx_telept, mo);	
-#endif
-
-    return true; 
-} 
-
 
 //
 // G_DeathMatchSpawnPlayer 
@@ -2117,7 +1992,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
     for (j=0 ; j<20 ; j++) 
     { 
 		i = P_Random() % selections; 
-		if(G_CheckSpot(playernum, &deathmatchstarts[i])) 
+		if(P_CheckSpot(playernum, &deathmatchstarts[i], true)) 
 		{
 #if __JHERETIC__ || __JHEXEN__
 			deathmatchstarts[i].type = playernum+1;
@@ -2152,6 +2027,20 @@ void G_DummySpawnPlayer(int playernum)
 	P_SpawnPlayer(&faraway, playernum);			
 }
 
+#ifdef __JDOOM__
+//===========================================================================
+// G_QueueBody
+//===========================================================================
+void G_QueueBody(mobj_t *body)
+{
+    // flush an old corpse if needed 
+    if(bodyqueslot >= BODYQUESIZE) 
+		P_RemoveMobj(bodyque[bodyqueslot % BODYQUESIZE]); 
+    bodyque[bodyqueslot % BODYQUESIZE] = body; 
+    bodyqueslot++;
+}
+#endif
+
 //
 // G_DoReborn 
 // 
@@ -2165,7 +2054,7 @@ void G_DoReborn (int playernum)
 	boolean foundSpot;
 	int bestWeapon;
 #else
-    mapthing_t *mt, *assigned;
+    mapthing_t *assigned;
 #endif
 
 	// Clear the currently playing script, if any.
@@ -2223,15 +2112,16 @@ void G_DoReborn (int playernum)
 #endif
 		 
 #if __JDOOM__
-		if (G_CheckSpot (playernum, assigned = &playerstarts[playernum]) ) 
+		assigned = &playerstarts[players[playernum].startspot];
+		if(P_CheckSpot(playernum, assigned, true)) 
 		{ 
-			P_SpawnPlayer(&playerstarts[playernum], playernum); 
+			P_SpawnPlayer(assigned, playernum); 
 			return; 
 		}
 #elif __JHERETIC__
 		// Try to spawn at the assigned spot.
 		assigned = &playerstarts[players[playernum].startspot];
-		if(G_CheckSpot(playernum, assigned))
+		if(P_CheckSpot(playernum, assigned, true))
 		{
 			Con_Printf( "- spawning at assigned spot %i.\n", players[playernum].startspot);
 			P_SpawnPlayer(assigned, playernum);
@@ -2239,8 +2129,8 @@ void G_DoReborn (int playernum)
 		}
 #elif __JHEXEN__
 		foundSpot = false;
-		if(G_CheckSpot(playernum,
-			P_GetPlayerStart(RebornPosition, playernum)))
+		if(P_CheckSpot(playernum,
+			P_GetPlayerStart(RebornPosition, playernum), true))
 			/* &playerstarts[RebornPosition][playernum] ))*/
 		{ 
 			// Appropriate player start spot is open
@@ -2253,8 +2143,8 @@ void G_DoReborn (int playernum)
 			// Try to spawn at one of the other player start spots
 			for(i = 0; i < MAXPLAYERS; i++)
 			{
-				if(G_CheckSpot(playernum, 
-					P_GetPlayerStart(RebornPosition, i)))
+				if(P_CheckSpot(playernum, 
+					P_GetPlayerStart(RebornPosition, i), true))
 					// &playerstarts[RebornPosition][i]))
 				{ // Found an open start spot
 
@@ -2288,40 +2178,45 @@ void G_DoReborn (int playernum)
 			players[playernum].pendingweapon = bestWeapon;
 		}
 #endif
-		// try to spawn at one of the other players spots 
-		/*for (i=0 ; i<MAXPLAYERS ; i++)
-		{
-			if (G_CheckSpot (playernum, &playerstarts[i]) ) 
-			{ 
-				P_SpawnPlayer(&playerstarts[i], playernum); 
-				return; 
-			}	    
-			// he's going to be inside something.  Too bad.
-		}*/
 #ifndef __JHEXEN__
-		for(mt=playerstarts; mt != playerstart_p; mt++)
-			if(mt->type-1 == cfg.PlayerColor[playernum] 
-				&& G_CheckSpot(playernum, mt))
-			{
-				Con_Printf( "- spawning at spot %i.\n", mt-playerstarts);
-				P_SpawnPlayer(mt, playernum);
-				return;
-			}
-
 		Con_Printf( "- force spawning at %i.\n", 
 			players[playernum].startspot);
-		// Spawn at the assigned spot, telefrag whoever's there.
-		P_SpawnPlayer(assigned, playernum);
-		P_Telefrag(players[playernum].plr->mo);
+
+		// Fuzzy returns false if it needs telefragging.
+		if(!P_FuzzySpawn(assigned, playernum, true))
+		{
+			// Spawn at the assigned spot, telefrag whoever's there.
+			P_Telefrag(players[playernum].plr->mo);
+		}
 #endif
     } 
 } 
 
-void G_ScreenShot (void) 
+void G_ScreenShot(void) 
 { 
     gameaction = ga_screenshot; 
 } 
  
+void G_DoScreenShot(void)
+{
+	int i;
+	filename_t name;
+	char *numPos;
+	
+	// Use game mode as the file name base.
+	sprintf(name, "%s-", G_Get(DD_GAME_MODE));
+	numPos = name + strlen(name);	
+
+	// Find an unused file name.
+	for(i = 0; i < 1e6; i++)	// Stop eventually...
+	{
+		sprintf(numPos, "%03i.tga", i);
+		if(!M_FileExists(name)) break;
+	}
+	M_ScreenShot(name, 24);
+	Con_Message("Wrote %s.\n", name);
+}
+
 #if __JDOOM__
 
 // DOOM Par Times
@@ -2459,6 +2354,14 @@ void G_SecretExitLevel (void)
 void G_Completed(int map, int position)
 {
 	if(cyclingMaps && mapCycleNoExit) return;
+
+	if(shareware && map > 4)
+	{
+		// Not possible in the 4-level demo.
+		P_SetMessage(&players[consoleplayer], "PORTAL INACTIVE -- DEMO", 
+			true);
+		return;
+	}
 
 	gameaction = ga_completed;
 	LeaveMap = map;

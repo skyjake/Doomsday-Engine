@@ -15,6 +15,18 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2004/01/08 12:25:16  skyjake
+// Merged from branch-nix
+//
+// Revision 1.3.2.1.2.2  2003/11/22 18:09:10  skyjake
+// Cleanup
+//
+// Revision 1.3.2.1.2.1  2003/11/19 17:07:14  skyjake
+// Modified to compile with gcc and -DUNIX
+//
+// Revision 1.3.2.1  2003/09/07 22:20:26  skyjake
+// Cleanup
+//
 // Revision 1.3  2003/08/19 16:33:44  skyjake
 // Use WI_DrawPatch instead of GL_DrawPatch
 //
@@ -61,12 +73,10 @@ extern boolean		automapactive;
 // Hack display negative frags.
 //  Loads and store the stminus lump.
 //
-//patch_t*		sttminus;
 int				sttminus_i;
 
 void STlib_init(void)
 {
-    //sttminus = (patch_t *) W_CacheLumpName("STTMINUS", PU_STATIC);
 	sttminus_i = W_GetNumForName("STTMINUS");
 }
 
@@ -106,7 +116,6 @@ STlib_drawNum
     int		num = *n->num;
     
     int		w = SHORT(n->p[0].width);
-    int		h = SHORT(n->p[0].height);
     int		x = n->x;
     
     int		neg;
@@ -127,14 +136,8 @@ STlib_drawNum
     // clear the area
     x = n->x - numdigits*w;
 
-/*    if (n->y - ST_Y < 0)
-	I_Error("drawNum: n->y - ST_Y < 0");*/
-
-//    V_CopyRect(x, n->y - ST_Y, BG, w*numdigits, h, x, n->y, FG);
-
     // if non-number, do not draw it
-    if (num == 1994)
-	return;
+    if (num == 1994) return;
 
     x = n->x;
 
@@ -270,28 +273,11 @@ STlib_updateBinIcon
 ( st_binicon_t*		bi,
   boolean		refresh )
 {
-    /*int			x;
-    int			y;
-    int			w;
-    int			h;*/
-
-    if (*bi->on && (bi->oldval != *bi->val || refresh))
+    if(*bi->on && (bi->oldval != *bi->val || refresh))
     {
-		/*x = bi->x - SHORT(bi->p->patch->leftoffset);
-		y = bi->y - SHORT(bi->p->patch->topoffset);
-		w = SHORT(bi->p->patch->width);
-		h = SHORT(bi->p->patch->height);
-
-		if (y - ST_Y < 0)
-			I_Error("updateBinIcon: y - ST_Y < 0");*/
-
-//	if (*bi->val)
-	    WI_DrawPatch(bi->x, bi->y, /*FG,*/ bi->p->lump);
-	/*else
-	    V_CopyRect(x, y-ST_Y, BG, w, h, x, y, FG);*/
-
+	    WI_DrawPatch(bi->x, bi->y, bi->p->lump);
 		bi->oldval = *bi->val;
     }
-
 }
+
 

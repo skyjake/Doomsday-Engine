@@ -26,7 +26,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <io.h>
+#include "de_platform.h"
+
 #include <ctype.h>
 
 #include "de_base.h"
@@ -648,15 +649,14 @@ int F_ForAllDescend
 {
 	char fn[256], spec[256];
 	char localPattern[256];
-	long hFile;
-	struct _finddata_t fd;
+	finddata_t fd;
 
 	sprintf(localPattern, "%s%s", path, pattern);
 
 	// We'll look through all files.
 	sprintf(spec, "%s*.*", path);
 
-	if((hFile = _findfirst(spec, &fd)) != -1L)
+	if(!myfindfirst(spec, &fd))
 	{
 		// The first file found!
 		do 
@@ -666,13 +666,16 @@ int F_ForAllDescend
 			strcat(fn, fd.name);
 
 			// Descend recursively into subdirectories.
-			if(fd.attrib & _A_SUBDIR)
+			if(fd.attrib & A_SUBDIR)
 			{
 				if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
 				{
 					strcat(fn, "\\");
 					if(!F_ForAllDescend(pattern, fn, parm, func))
+					{
+						myfindend(&fd);
 						return false;
+					}
 				}
 			}
 			else
@@ -681,12 +684,17 @@ int F_ForAllDescend
 				if(F_MatchName(fn, localPattern))
 				{
 					// If the callback returns false, stop immediately.
-					if(!func(fn, FT_NORMAL, parm)) return false;
+					if(!func(fn, FT_NORMAL, parm))
+					{
+						myfindend(&fd);
+						return false;
+					}
 				}
 			}
 		} 
-		while(!_findnext(hFile, &fd));
+		while(!myfindnext(&fd));
 	}
+	myfindend(&fd);
 
 	return true;
 }
@@ -731,4 +739,5 @@ int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
 
 	return true;
 }
+
 

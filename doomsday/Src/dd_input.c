@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,13 +42,6 @@
 
 #define KBDQUESIZE		32
 #define MAX_DOWNKEYS	32	
-
-#define SC_RSHIFT       0x36
-#define SC_LSHIFT       0x2a
-#define SC_UPARROW      0x48
-#define SC_DOWNARROW    0x50
-#define SC_LEFTARROW    0x4b
-#define SC_RIGHTARROW   0x4d
 
 #define CLAMP(x) DD_JoyAxisClamp(&x) //x = (x < -100? -100 : x > 100? 100 : x)
 
@@ -534,8 +527,13 @@ void DD_ReadKeyboard(void)
 		else if(ke->event == IKE_KEY_UP) // Key released?
 			ev.type = ev_keyup;
 		
-		// Use the table to translate the scancode to a ddkey.		
+		// Use the table to translate the scancode to a ddkey.
+#ifdef WIN32
 		ev.data1 = DD_ScanToKey(ke->code);
+#endif
+#ifdef UNIX
+		ev.data1 = ke->code;
+#endif
 
 		// Should we print a message in the console?
 		if(showScanCodes && ev.type == ev_keydown)
