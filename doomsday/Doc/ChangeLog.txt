@@ -4,7 +4,7 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.7.8 (work in progress)
+Version 1.7.8
 -------------
 + new master server mechanism (uses HTTP)
 + cvar net-master-path (default: "/master.php"): location of the master
