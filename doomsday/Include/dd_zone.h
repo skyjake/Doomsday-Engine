@@ -24,7 +24,7 @@
 #ifndef __DOOMSDAY_ZONE_H__
 #define __DOOMSDAY_ZONE_H__
 
-#define MINIMUM_HEAP_SIZE	0x1000000	// 16 Mb
+#define MINIMUM_HEAP_SIZE	0x4000000	// 64 Mb
 #define MAXIMUM_HEAP_SIZE	0x10000000	// 256 Mb
 
 // tags < 50 are not overwritten until freed
