@@ -69,3 +69,16 @@ fixed_t FixedDiv(fixed_t a, fixed_t b)
 	}
 	return (FixedDiv2(a, b));
 }
+
+#ifdef __BIG_ENDIAN__
+short ShortSwap(short n)
+{
+	return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
+}
+
+long LongSwap(long n)
+{
+	return (((n & 0xff) << 24) | ((n & 0xff00) << 8) | 
+			((n & 0xff0000) >> 8) | ((n & 0xff000000) >> 24));
+}
+#endif

@@ -57,9 +57,9 @@ int PCX_MemoryGetSize(void *imageData, int *w, int *h)
 	   hdr->bits_per_pixel != 8)
 		return false;
 	if(w)
-		*w = hdr->xmax + 1;
+		*w = SHORT(hdr->xmax) + 1;
 	if(h)
-		*h = hdr->ymax + 1;
+		*h = SHORT(hdr->ymax) + 1;
 	return true;
 }
 
@@ -101,6 +101,8 @@ byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
 	int     x, y;
 	int     dataByte, runLength;
 	byte   *pix;
+	short   xmax = SHORT(pcx->xmax);
+	short   ymax = SHORT(pcx->ymax);
 
 	// Check the format.
 	if(pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 ||
@@ -113,7 +115,7 @@ byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
 	if(outBuffer)
 	{
 		// Check that the PCX is not larger than the buffer.
-		if(pcx->xmax >= *buf_w || pcx->ymax >= *buf_h)
+		if(xmax >= *buf_w || ymax >= *buf_h)
 		{
 			Con_Message("PCX_Load: larger than expected.\n");
 			return NULL;
@@ -126,13 +128,13 @@ byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
 	}
 
 	palette = Z_Malloc(768, PU_STATIC, 0);
-	memcpy(palette, ((byte *) pcx) + len - 768, 768);	// Palette is in the end.
+	memcpy(palette, ((byte *) pcx) + len - 768, 768); // Palette is in the end.
 
 	pix = outBuffer;
 
-	for(y = 0; y <= pcx->ymax; y++, pix += (pcx->xmax + 1) * 3)
+	for(y = 0; y <= ymax; y++, pix += (xmax + 1) * 3)
 	{
-		for(x = 0; x <= pcx->xmax;)
+		for(x = 0; x <= xmax;)
 		{
 			dataByte = *raw++;
 

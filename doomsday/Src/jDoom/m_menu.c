@@ -2746,7 +2746,11 @@ void M_Drawer(void)
 				b = cfg.menuColor[2];
 			}
 
-			WI_DrawParamText(x, y + currentMenu->itemHeight - currentMenu->font[0].height - 1, currentMenu->items[i].text, currentMenu->font, r, g, b, currentMenu->font == hu_font_b,	// case scale for fontb
+			WI_DrawParamText(x, y + currentMenu->itemHeight - 
+							 SHORT(currentMenu->font[0].height) - 1, 
+							 currentMenu->items[i].text, currentMenu->font, 
+							 r, g, b, currentMenu->font == hu_font_b,	
+							 /* case scale for fontb */
 							 true);
 		}
 		y += currentMenu->itemHeight;

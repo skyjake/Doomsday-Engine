@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.11  2004/07/29 19:26:37  skyjake
+// Fixed endianness problems, other glitches that show up on Mac
+//
 // Revision 1.10  2004/06/16 18:28:47  skyjake
 // Updated style (typenames)
 //
@@ -605,7 +608,7 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
 // hang over dropoffs.
 
 static fixed_t dropoff_deltax, dropoff_deltay, floorz;
-fixed_t tmbbox[4];
+//fixed_t tmbbox[4];
 
 //===========================================================================
 // PIT_AvoidDropoff

@@ -104,8 +104,8 @@ char   *CT_FromPlrText[MAXPLAYERS] = {
 
 int     chatchar = 0;
 
-boolean altdown;
-boolean shiftdown;
+static boolean altdown;
+static boolean shiftdown;
 
 extern boolean usearti;
 

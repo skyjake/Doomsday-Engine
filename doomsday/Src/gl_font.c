@@ -165,7 +165,7 @@ static unsigned short InShort(DFILE * f)
 	unsigned short s;
 
 	F_Read(&s, sizeof(s), f);
-	return s;
+	return SHORT(s);
 }
 
 //===========================================================================

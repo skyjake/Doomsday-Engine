@@ -733,7 +733,7 @@ void PalIdxToRGB(byte *pal, int idx, byte *rgb)
 void GL_ConvertBuffer(int width, int height, int informat, int outformat,
 					  byte *in, byte *out, boolean gamma)
 {
-	byte   *palette = W_CacheLumpName("playpal", PU_CACHE);
+	byte   *palette = W_CacheLumpName("PLAYPAL", PU_CACHE);
 	int     inSize = (informat == 2 ? 1 : informat);
 	int     outSize = (outformat == 2 ? 1 : outformat);
 	int     i, numPixels = width * height, a;
@@ -1986,10 +1986,10 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 	{
 		patch = W_CacheLumpNum(tex->patches[i].patch, PU_CACHE);
 		// Check for big patches?
-		if(patch->height > tex->height && has_big_patch &&
-		   *has_big_patch < patch->height)
+		if(SHORT(patch->height) > tex->height && has_big_patch &&
+		   *has_big_patch < SHORT(patch->height))
 		{
-			*has_big_patch = patch->height;
+			*has_big_patch = SHORT(patch->height);
 		}
 		// Draw the patch in the buffer.
 		alphaChannel =
@@ -2291,7 +2291,8 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
 	{
 		patch_t *patch = W_CacheLumpNum(tex->patches[0].patch, PU_CACHE);
 		int     bufHeight =
-			patch->height > tex->height ? patch->height : tex->height;
+			SHORT(patch->height) > tex->height ? SHORT(patch->height) 
+			: tex->height;
 		if(bufHeight > *height)
 		{
 			// Heretic sky textures are reported to be 128 tall, even if the
@@ -2749,8 +2750,8 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 		else
 		{
 			// Must load from the normal lump.
-			image.width = patch->width;
-			image.height = patch->height;
+			image.width = SHORT(patch->width);
+			image.height = SHORT(patch->height);
 			image.pixelSize = 1;
 			image.pixels = M_Calloc(2 * image.width * image.height);
 
@@ -2815,8 +2816,8 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 		else
 		{
 			// There's no name for this patch, load it in.
-			image.width = patch->width;
-			image.height = patch->height;
+			image.width = SHORT(patch->width);
+			image.height = SHORT(patch->height);
 			image.pixels = M_Calloc(2 * image.width * image.height);
 			image.pixelSize = 1;
 
@@ -3076,7 +3077,7 @@ unsigned int GL_SetRawImage(int lump, int part)
 void GL_PrepareLumpPatch(int lump)
 {
 	patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
-	int     numpels = patch->width * patch->height, alphaChannel;
+	int     numpels = SHORT(patch->width) * SHORT(patch->height), alphaChannel;
 	byte   *buffer;
 
 	if(!numpels)
@@ -3086,30 +3087,32 @@ void GL_PrepareLumpPatch(int lump)
 	buffer = M_Calloc(2 * numpels);
 
 	alphaChannel =
-		DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), patch->width,
-					  patch->height, patch, 0, 0, false, 0, true);
+		DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), 
+					  SHORT(patch->width), SHORT(patch->height), patch, 
+					  0, 0, false, 0, true);
 	if(filloutlines)
-		ColorOutlines(buffer, patch->width, patch->height);
+		ColorOutlines(buffer, SHORT(patch->width), SHORT(patch->height));
 
 	// See if we have to split the patch into two parts.
 	// This is done to conserve the quality of wide textures
 	// (like the status bar) on video cards that have a pitifully
 	// small maximum texture size. ;-)
-	if(patch->width > maxTexSize)
+	if(SHORT(patch->width) > maxTexSize)
 	{
 		// The width of the first part is maxTexSize.
-		int     part2width = patch->width - maxTexSize;
+		int     part2width = SHORT(patch->width) - maxTexSize;
 		byte   *tempbuff =
-			M_Malloc(2 * MAX_OF(maxTexSize, part2width) * patch->height);
+			M_Malloc(2 * MAX_OF(maxTexSize, part2width) * 
+					 SHORT(patch->height));
 
 		// We'll use a temporary buffer for doing to splitting.
 		// First, part one.
-		pixBlt(buffer, patch->width, patch->height, tempbuff, maxTexSize,
-			   patch->height, alphaChannel, 0, 0, 0, 0, maxTexSize,
-			   patch->height);
+		pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff, 
+			   maxTexSize, SHORT(patch->height), alphaChannel, 
+			   0, 0, 0, 0, maxTexSize, SHORT(patch->height));
 		lumptexinfo[lump].tex[0] =
-			GL_UploadTexture(tempbuff, maxTexSize, patch->height, alphaChannel,
-							 false, false, false);
+			GL_UploadTexture(tempbuff, maxTexSize, SHORT(patch->height), 
+							 alphaChannel, false, false, false);
 
 		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
@@ -3117,12 +3120,12 @@ void GL_PrepareLumpPatch(int lump)
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
 		// Then part two.
-		pixBlt(buffer, patch->width, patch->height, tempbuff, part2width,
-			   patch->height, alphaChannel, maxTexSize, 0, 0, 0, part2width,
-			   patch->height);
+		pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff, 
+			   part2width, SHORT(patch->height), alphaChannel, maxTexSize, 
+			   0, 0, 0, part2width, SHORT(patch->height));
 		lumptexinfo[lump].tex[1] =
-			GL_UploadTexture(tempbuff, part2width, patch->height, alphaChannel,
-							 false, false, false);
+			GL_UploadTexture(tempbuff, part2width, SHORT(patch->height), 
+							 alphaChannel, false, false, false);
 
 		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
@@ -3132,7 +3135,7 @@ void GL_PrepareLumpPatch(int lump)
 		GL_BindTexture(lumptexinfo[lump].tex[0]);
 
 		lumptexinfo[lump].width[0] = maxTexSize;
-		lumptexinfo[lump].width[1] = patch->width - maxTexSize;
+		lumptexinfo[lump].width[1] = SHORT(patch->width) - maxTexSize;
 
 		M_Free(tempbuff);
 	}
@@ -3140,14 +3143,14 @@ void GL_PrepareLumpPatch(int lump)
 	{
 		// Generate a texture.
 		lumptexinfo[lump].tex[0] =
-			GL_UploadTexture(buffer, patch->width, patch->height, alphaChannel,
-							 false, false, false);
+			GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
+							 alphaChannel, false, false, false);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
-		lumptexinfo[lump].width[0] = patch->width;
+		lumptexinfo[lump].width[0] = SHORT(patch->width);
 		lumptexinfo[lump].width[1] = 0;
 	}
 	M_Free(buffer);
@@ -3189,7 +3192,7 @@ void GL_SetPatch(int lump)
 			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
-			lumptexinfo[lump].width[0] = patch->width;
+			lumptexinfo[lump].width[0] = SHORT(patch->width);
 			lumptexinfo[lump].width[1] = 0;
 			lumptexinfo[lump].tex[1] = 0;
 		}
@@ -3200,9 +3203,9 @@ void GL_SetPatch(int lump)
 		}
 
 		// The rest of the size information.
-		lumptexinfo[lump].height = patch->height;
-		lumptexinfo[lump].offx = -patch->leftoffset;
-		lumptexinfo[lump].offy = -patch->topoffset;
+		lumptexinfo[lump].height = SHORT(patch->height);
+		lumptexinfo[lump].offx = -SHORT(patch->leftoffset);
+		lumptexinfo[lump].offy = -SHORT(patch->topoffset);
 	}
 	else
 	{

@@ -94,14 +94,14 @@ void R_SetBorderGfx(char *gfx[9])
 //===========================================================================
 void R_InitViewBorder()
 {
-	patch_t *patch;
+	patch_t *patch = NULL;
 
 	// Detemine the view border width.
 	if(W_CheckNumForName(borderGfx[BG_TOP]) == -1)
 		return;
 
 	patch = W_CacheLumpName(borderGfx[BG_TOP], PU_CACHE);
-	bwidth = patch->height;
+	bwidth = SHORT(patch->height);
 }
 
 //===========================================================================

@@ -245,8 +245,8 @@ void P_LoadSubsectors(int lump)
 
 	for(i = 0; i < numsubsectors; i++, ss++, ms++)
 	{
-		ss->linecount = ms->numSegs;
-		ss->firstline = ms->firstseg;
+		ss->linecount = SHORT(ms->numSegs);
+		ss->firstline = SHORT(ms->firstseg);
 	}
 
 	Z_Free(data);
@@ -343,7 +343,7 @@ void P_LoadThings(int lump)
 		// Do not spawn cool, new monsters if !commercial
 		if(gamemode != commercial)
 		{
-			switch (mt->type)
+			switch (SHORT(mt->type))
 			{
 			case 68:			// Arachnotron
 			case 64:			// Archvile

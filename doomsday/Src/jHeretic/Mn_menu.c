@@ -108,7 +108,7 @@ boolean MenuActive;
 int     InfoType;
 
 //boolean messageson = true;
-boolean shiftdown;
+static boolean shiftdown;
 
 // Private Data
 

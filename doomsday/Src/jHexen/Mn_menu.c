@@ -150,12 +150,13 @@ boolean MenuActive;
 int     InfoType;
 boolean messageson = true;
 boolean mn_SuicideConsole;
-boolean shiftdown;
 Menu_t *CurrentMenu;
 int     CurrentItPos;
 int     MenuTime;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static boolean shiftdown;
 
 static char *YesNo[2] = { "NO", "YES" };
 

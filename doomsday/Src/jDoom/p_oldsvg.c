@@ -622,16 +622,6 @@ void P_v19_UnArchiveThinkers(void)
 //
 // P_ArchiveSpecials
 //
-enum {
-	tc_ceiling,
-	tc_door,
-	tc_floor,
-	tc_plat,
-	tc_flash,
-	tc_strobe,
-	tc_glow,
-	tc_endspecials
-} specials_e;
 
 //
 // Things to handle:
@@ -765,6 +755,17 @@ enum {
 //
 void P_v19_UnArchiveSpecials(void)
 {
+	enum {
+		tc_ceiling,
+		tc_door,
+		tc_floor,
+		tc_plat,
+		tc_flash,
+		tc_strobe,
+		tc_glow,
+		tc_endspecials
+	};
+	
 	byte    tclass;
 	ceiling_t *ceiling;
 	vldoor_t *door;

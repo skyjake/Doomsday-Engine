@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.11  2004/07/29 19:26:37  skyjake
+// Fixed endianness problems, other glitches that show up on Mac
+//
 // Revision 1.10  2004/06/16 18:28:47  skyjake
 // Updated style (typenames)
 //
@@ -232,15 +235,15 @@ boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y)
 
 static int untouched(line_t *ld)
 {
-	fixed_t x, y, tmbbox[4];
+	fixed_t x, y, box[4];
 
-	return (tmbbox[BOXRIGHT] =
-			(x = tmthing->x) + tmthing->radius) <= ld->bbox[BOXLEFT] ||
-		(tmbbox[BOXLEFT] = x - tmthing->radius) >= ld->bbox[BOXRIGHT] ||
-		(tmbbox[BOXTOP] =
-		 (y = tmthing->y) + tmthing->radius) <= ld->bbox[BOXBOTTOM] ||
-		(tmbbox[BOXBOTTOM] = y - tmthing->radius) >= ld->bbox[BOXTOP] ||
-		P_BoxOnLineSide(tmbbox, ld) != -1;
+	return (box[BOXRIGHT] =
+		(x = tmthing->x) + tmthing->radius) <= ld->bbox[BOXLEFT] ||
+	    (box[BOXLEFT] = x - tmthing->radius) >= ld->bbox[BOXRIGHT] ||
+	    (box[BOXTOP] =
+	     (y = tmthing->y) + tmthing->radius) <= ld->bbox[BOXBOTTOM] ||
+	    (box[BOXBOTTOM] = y - tmthing->radius) >= ld->bbox[BOXTOP] ||
+	    P_BoxOnLineSide(box, ld) != -1;
 }
 
 //

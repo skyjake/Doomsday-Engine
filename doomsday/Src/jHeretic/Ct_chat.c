@@ -79,8 +79,8 @@ char   *chat_macros[10];		/* =
 								   HUSTR_CHATMACRO9
 								   }; */
 
-boolean altdown;
-boolean shiftdown;
+static boolean altdown;
+static boolean shiftdown;
 
 int     chatchar = 0;
 

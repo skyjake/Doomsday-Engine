@@ -615,8 +615,8 @@ sfxsample_t *Sfx_Cache(int id)
 			// Must be an old-fashioned DOOM sample.
 			samp.data = sp + 4;	// Eight byte header.
 			samp.bytesper = 1;	// 8-bit.
-			samp.rate = sp[1];	// Sample rate.
-			samp.numsamples = *(int *) (sp + 2);
+			samp.rate = SHORT(sp[1]);	// Sample rate.
+			samp.numsamples = LONG(*(int *) (sp + 2));
 		}
 	}
 

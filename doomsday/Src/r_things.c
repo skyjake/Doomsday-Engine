@@ -386,10 +386,10 @@ void R_GetPatchInfo(int lump, spriteinfo_t *info)
 
 	memset(info, 0, sizeof(*info));
 	info->lump = info->realLump = lump;
-	info->width = patch->width;
-	info->height = patch->height;
-	info->topOffset = patch->topoffset;
-	info->offset = patch->leftoffset;
+	info->width = SHORT(patch->width);
+	info->height = SHORT(patch->height);
+	info->topOffset = SHORT(patch->topoffset);
+	info->offset = SHORT(patch->leftoffset);
 }
 
 //===========================================================================

@@ -19,6 +19,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#if 0
+
 #ifndef __M_SWAP__
 #define __M_SWAP__
 
@@ -40,9 +42,14 @@ long            SwapLONG(long);
 #endif
 
 #endif
+
+#endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/07/29 19:26:36  skyjake
+// Fixed endianness problems, other glitches that show up on Mac
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

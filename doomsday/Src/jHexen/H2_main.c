@@ -85,7 +85,7 @@ extern int demosequence;
 game_export_t gx;
 game_import_t gi;
 
-jhexen_config_t cfg;
+/*jhexen_config_t cfg;*/
 
 boolean DevMaps;				// true = Map development mode
 char   *DevMapsDir = "";		// development maps directory
