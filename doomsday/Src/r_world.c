@@ -40,6 +40,7 @@ char currentLevelId[64];
 int leveltic;					// Restarts when a new map is set up.
 
 sectorinfo_t *secinfo;
+subsectorinfo_t *subsecinfo;
 lineinfo_t *lineinfo;
 vertexowner_t *vertexowners;
 nodeindex_t *linelinks;			// indices to roots
@@ -75,8 +76,8 @@ boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
 		}
 		else 
 		{
-			if(!sin->linkedceiling) break;
-			link = sin->linkedceiling;
+			if(!sin->linkedceil) break;
+			link = sin->linkedceil;
 		}
 		// Is there an illegal linkage?
 		if(sec == link || startsec == link) return false;
@@ -167,7 +168,7 @@ void R_SetSectorLinks(sector_t *sec)
 	}
 	if(hackceil) 
 	{
-		secinfo[i].linkedceiling = ceillink_candidate;
+		secinfo[i].linkedceil = ceillink_candidate;
 		
 /*		if(ceillink_candidate)
 			Con_Printf("LC:%i->%i\n",
@@ -745,13 +746,12 @@ sector_t *R_GetContainingSectorOf(sector_t *sec)
 //===========================================================================
 void R_InitSectorInfo(void)
 {
-	int i, k, len = sizeof(sectorinfo_t) * numsectors;
+	int i, k;
 	sector_t *sec;
 	line_t *lin;
 	boolean dohack;
 
-	secinfo = Z_Malloc(len, PU_LEVEL, 0);
-	memset(secinfo, 0, len);
+	secinfo = Z_Calloc(sizeof(sectorinfo_t) * numsectors, PU_LEVEL, 0);
 
 	// Calculate bounding boxes for all sectors.
 	for(i = 0; i < numsectors; i++)
@@ -777,15 +777,96 @@ void R_InitSectorInfo(void)
 		{
 			// Link permanently.
 			secinfo[i].permanentlink = true;
-			secinfo[i].linkedceiling 
+			secinfo[i].linkedceil 
 				= secinfo[i].linkedfloor
 				= R_GetContainingSectorOf(sec);
-			if(secinfo[i].linkedceiling)
+			if(secinfo[i].linkedceil)
 			{
 				Con_Printf("Linking S%i planes permanently to S%i\n",
-					i, GET_SECTOR_IDX(secinfo[i].linkedceiling));
+					i, GET_SECTOR_IDX(secinfo[i].linkedceil));
 			}
 		}
+	}
+}
+
+//===========================================================================
+// R_InitPlanePoly
+//===========================================================================
+void R_InitPlanePoly
+	(rendpoly_t *poly, boolean reverse, subsector_t *subsector)
+{
+	int numvrts;
+	fvertex_t *vrts, *vtx;
+	rendpoly_vertex_t *rpv;
+
+	// Take the subsector's vertices.
+	numvrts = subsector->numverts;
+	vrts = subsector->verts;
+
+	// We're preparing a plane here.
+	poly->type = RP_FLAT;	
+
+	// Copy the vertices to the poly.
+	if(subsector && subsector->flags & DDSUBF_MIDPOINT)
+	{
+		// Triangle fan base is the midpoint of the subsector.
+		poly->numvertices = 2 + numvrts;
+		poly->vertices[0].pos[VX] = subsector->midpoint.x;
+		poly->vertices[0].pos[VY] = subsector->midpoint.y;
+		
+		vtx = vrts + (!reverse? 0 : numvrts-1);
+		rpv = poly->vertices + 1;
+	}
+	else
+	{
+		poly->numvertices = numvrts;
+		// The first vertex is always the same: vertex zero.
+		rpv = poly->vertices;
+		rpv->pos[VX] = vrts[0].x;
+		rpv->pos[VY] = vrts[0].y;
+
+		vtx = vrts + (!reverse? 1 : numvrts-1);
+		rpv++; 
+		numvrts--;
+	}
+	// Add the rest of the vertices.
+	for(; numvrts > 0; numvrts--, (!reverse? vtx++ : vtx--), rpv++)
+	{
+		rpv->pos[VX] = vtx->x;
+		rpv->pos[VY] = vtx->y;
+	}
+	if(poly->numvertices > numvrts)
+	{
+		// Re-add the first vertex so the triangle fan wraps around.
+		memcpy(rpv, poly->vertices + 1, sizeof(*rpv));
+	}
+}
+
+//===========================================================================
+// R_InitSubsectorInfo
+//===========================================================================
+void R_InitSubsectorInfo(void)
+{
+	int i;
+	subsector_t *sub;
+	subsectorinfo_t *info;
+	sector_t *sector;
+
+	subsecinfo = Z_Calloc(sizeof(subsectorinfo_t) * numsubsectors, 
+		PU_LEVEL, 0);
+	
+	for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
+	{
+		sub = SUBSECTOR_PTR(i);
+		sector = sub->sector;
+		
+		// Init floor plane.
+		info->floor.isfloor = true;
+		R_InitPlanePoly(&info->floor.poly, false, sub);
+
+		// Init ceiling plane.
+		info->ceil.isfloor = false;
+		R_InitPlanePoly(&info->ceil.poly, true, sub);	
 	}
 }
 
@@ -1085,6 +1166,7 @@ void R_SetupLevel(char *level_id, int flags)
 	// Make sure subsector floors and ceilings will be rendered correctly.
 	R_SubsectorPlanes();
 	R_InitSectorInfo();
+	R_InitSubsectorInfo();
 	R_InitLineInfo();
 	Con_Progress(10, 0);
 
@@ -1181,8 +1263,8 @@ sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor)
 		}
 		else 
 		{
-			if(!sin->linkedceiling) return sec;
-			link = sin->linkedceiling;
+			if(!sin->linkedceil) return sec;
+			link = sin->linkedceil;
 		}
 #if _DEBUG
 		if(sec == link || startsec == link) 
@@ -1210,7 +1292,7 @@ void R_UpdatePlanes(void)
 	for(i = 0, sin = secinfo; i < numsectors; i++, sin++)
 	{
 		if(sin->permanentlink) continue;
-		sin->linkedfloor = sin->linkedceiling = NULL;
+		sin->linkedfloor = sin->linkedceil = NULL;
 	}
 
 	// Assign new links.
@@ -1232,15 +1314,15 @@ void R_UpdatePlanes(void)
 		
 
 		// Ceiling height.
-		if(!sin->linkedceiling)
+		if(!sin->linkedceil)
 		{
-			sin->visceiling = FIX2FLT(sec->ceilingheight)
-				+ sin->visceilingoffset;
+			sin->visceil = FIX2FLT(sec->ceilingheight)
+				+ sin->visceiloffset;
 		}
 		else
 		{
-			sin->visceiling = FIX2FLT(R_GetLinkedSector
-				(sin->linkedceiling, false)->ceilingheight);
+			sin->visceil = FIX2FLT(R_GetLinkedSector
+				(sin->linkedceil, false)->ceilingheight);
 		}		
 	}
 }
