@@ -6,21 +6,51 @@
 
 Version 1.7.11 (work in progress)
 --------------
+! Bugfixes Only
+* revised server delta generation: fixed-size frames, prioritized 
+  contents, sounds are stored inside frames (not separate packets)
+* revised clientside handling of frames: collision detection for 
+  movement prediction, missiles hidden on impact
+* revised low-level networking: implement confirmed/ordered packets 
+  manually, detect duplicates
+* mobj translucency 0-255 (selector still overrides)
 - external music was not loaded correctly from virtual files
+- fixed: external sound resources reloaded every time the sound starts
+- fixed: tracking of currently playing sounds
 - fixed: floorclip values were restricted to 64 in mobj deltas
 - fixed: client stepup limit is now exactly 24 units
+- fixed: coord/offset problems if same sprite used in game and HUD
+- missing upper texture in a skyceiling sector replaced with the 
+  backsector's ceiling (was just blank white)
+- fixed: base path validation (could be missing a slash)
+- fixed: path of CPHelp.txt was sometimes not translated
+- fixed: mobj translucency didn't affect the shadow
+- music is not restarted if it's already playing
+  
+jDoom:
+* game-corpse-time: corpses fade smoothly 
 
+jHeretic:
+* game-corpse-time: corpses fade smoothly 
+  
 jHexen:
+- fixed: problem with excessive sound sequence repeat (e.g. map12)
+- fixed: torch light for remote players
 - fixed: no mobjs spawned when dedicated server starts
 - clientside powers were not correctly set to zero at death, map change
 - clientside Wings of Wrath icon didn't rotate when flying
+- fixed: dedicated server deadlock when monsters don't find any players
+- fixed: crash when minotaur vanishes and master is dead
+- fixed: 'use artifact' sounds not audible on clientside
 
 XG:
 - when loading a savegame, line activators were not correctly restored
 
+drD3D:
+- fixed a problem with mode selection (refresh rates)
+
 Installer:
-- fixed: pressing Enter after typing a path will not close the installer
-  dialog
+- fixed: pressing Enter after typing a path closed the installer dialog
 
 
 Version 1.7.10
