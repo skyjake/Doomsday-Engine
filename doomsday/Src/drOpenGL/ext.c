@@ -57,12 +57,10 @@ PFNGLCLIENTACTIVETEXTUREPROC	glClientActiveTextureARB;
 PFNGLACTIVETEXTUREARBPROC		glActiveTextureARB;
 PFNGLMULTITEXCOORD2FARBPROC		glMultiTexCoord2fARB;
 PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
-#endif
-
 PFNGLBLENDEQUATIONEXTPROC		glBlendEquationEXT;
-
 PFNGLLOCKARRAYSEXTPROC			glLockArraysEXT;
 PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -127,8 +125,10 @@ void initExtensions(void)
 
 	if(query("GL_EXT_compiled_vertex_array", &extLockArray))
 	{
+#ifdef WIN32
 		GETPROC( glLockArraysEXT );
 		GETPROC( glUnlockArraysEXT );
+#endif
 	}
 
 	query("GL_EXT_paletted_texture", &palExtAvailable);
@@ -138,9 +138,9 @@ void initExtensions(void)
 	// EXT_blend_subtract
 	if(query("GL_EXT_blend_subtract", &extBlendSub))
 	{
-//#ifdef WIN32
+#ifdef WIN32
 		GETPROC( glBlendEquationEXT );
-//#endif
+#endif
 	}
 
 	// ARB_texture_env_combine

@@ -550,7 +550,7 @@ int DG_Init(int width, int height, int bpp, int mode)
 #endif
 		// But sir, we are simple people; two units is enough.
 		if(maxTexUnits > 2) maxTexUnits = 2;
-		Con_Message("  Texture units: %i\n", maxTexUnits);
+		Con_Message("  Texture units used: %i\n", maxTexUnits);
 
 		Con_Message("  Maximum texture size: %i\n", maxTexSize);
 		if(extAniso)

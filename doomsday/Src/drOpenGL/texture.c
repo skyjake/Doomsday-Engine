@@ -45,8 +45,10 @@ int				dumpTextures;
 int				useCompr;
 float			grayMipmapFactor = 1;
 
+#ifdef WIN32
 // The color table extension.
 PFNGLCOLORTABLEEXTPROC glColorTableEXT = NULL;
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -117,18 +119,22 @@ int enablePalTexExt(int enable)
 		usePalTex = DGL_FALSE;
 		if(sharedPalExtAvailable)
 			glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
+#ifdef WIN32
 		glColorTableEXT = NULL;
+#endif
 		return DGL_TRUE;
 	}	
 
 	usePalTex = DGL_FALSE;
 
+#ifdef WIN32
 	if((glColorTableEXT = (PFNGLCOLORTABLEEXTPROC) wglGetProcAddress
 		("glColorTableEXT")) == NULL)
 	{
 		Con_Message("drOpenGL.enablePalTexExt: getProcAddress failed.\n");
 		return DGL_FALSE;
 	}
+#endif
 
 	usePalTex = DGL_TRUE;
 	if(sharedPalExtAvailable)
