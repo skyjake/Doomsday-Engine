@@ -4,7 +4,7 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.7.9 (work in progress)
+Version 1.7.9
 -------------
 + external resource locator (in Data\Game\: Textures\, Patches\, Music\
   and Sfx\) with game mode subdirs (see readme)
