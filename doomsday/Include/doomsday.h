@@ -179,7 +179,7 @@ void		GL_SetPatch(int lump);
 void		GL_SetSprite(int pnum);
 void		GL_SetFlat(int idx);
 void		GL_SetTexture(int idx);
-void		GL_SetRawImage(int lump, int part);
+unsigned int GL_SetRawImage(int lump, int part);
 
 // Graphics: 2D drawing.
 void		GL_DrawPatch(int x, int y, int lumpnum);
@@ -188,7 +188,8 @@ void		GL_DrawPatchLitAlpha(int x, int y, float light, float alpha, int lumpnum);
 void		GL_DrawFuzzPatch(int x, int y, int lumpnum);
 void		GL_DrawAltFuzzPatch(int x, int y, int lumpnum);
 void		GL_DrawShadowedPatch(int x, int y, int lumpnum);
-void		GL_DrawRawScreen(int lump);	
+void		GL_DrawRawScreen(int lump, float offx, float offy);
+void		GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex, float scaley);
 void		GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 void		GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a);
 void		GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th);

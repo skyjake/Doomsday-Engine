@@ -7,6 +7,19 @@
 #include "r_data.h"
 #include "con_decl.h"
 
+/*
+ * This structure is used with GL_LoadImage. When it is no longer needed
+ * it must be discarded with GL_DestroyImage.
+ */
+typedef struct image_s {
+	char fileName[256];
+	int width;
+	int height;
+	int pixelSize;
+	boolean isMasked;
+	byte *pixels;
+} image_t;
+
 extern int		mipmapping, linearRaw, texQuality, filterSprites;
 extern float	texw, texh;
 extern int		texmask;	
@@ -38,12 +51,10 @@ void			GL_DoColorKeying(byte *rgbaBuf, int width);
 void			GL_LowRes();
 void			PalIdxToRGB(byte *pal, int idx, byte *rgb);
 void			TranslatePatch(struct patch_s *patch, byte *transTable);
-byte *			GL_LoadImage(const char *imagefn, int *width, int *height,
-					int *pixsize, boolean *masked, boolean usemodelpath);
-byte *			GL_LoadImageCK(const char *imagefn, int *width, int *height,
-					int *pixsize, boolean *masked, boolean usemodelpath);
-byte *			GL_LoadTexture(char *name, int *width, int *height, int *pixsize, 
-					boolean *masked);
+byte *			GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath);
+byte *			GL_LoadImageCK(image_t *img, const char *imagefn, boolean useModelPath);
+byte *			GL_LoadTexture(image_t *img, char *name);
+void			GL_DestroyImage(image_t *img);
 DGLuint			GL_PrepareTexture(int idx); 
 DGLuint			GL_PrepareFlat(int idx);
 DGLuint			GL_PrepareLightTexture(void);	// The dynamic light map.
@@ -74,7 +85,7 @@ int				GL_GetSkinTexIndex(const char *skin);
 // No splittex is created in that case. Once a raw image is loaded
 // as part 0 it must be deleted before the other part is loaded at the
 // next loading.
-void			GL_SetRawImage(int lump, int part);
+unsigned int 	GL_SetRawImage(int lump, int part);
 
 // Returns the real DGL texture, if such exists
 unsigned int	GL_GetTextureName(int texidx); 

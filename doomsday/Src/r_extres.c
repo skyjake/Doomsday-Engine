@@ -121,7 +121,7 @@ void R_SetDataPath(const char *path)
 }
 
 /*
- * Callback function using in R_TryResourceFile.
+ * Callback function used in R_TryResourceFile.
  */
 int R_FileFinder(const char *fn, int parm)
 {
@@ -211,7 +211,7 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
 			strcpy(path, info->path);
 		}
 
-		// Should be game mode subdir be included?
+		// Should the game mode subdir be included?
 		if(i == 0 || i == 2)
 		{
 			// A string that identifies the game mode (e.g. doom2-plut).

@@ -57,7 +57,7 @@ typedef struct
 
 void	averageColorIdx(rgbcol_t *sprcol, byte *data, int w, int h, byte *palette, boolean has_alpha);
 void	averageColorRGB(rgbcol_t *col, byte *data, int w, int h);
-byte *	GL_LoadHighResFlat(char *name, int *width, int *height, int *pixsize);
+byte*	GL_LoadHighResFlat(image_t *img, char *name);
 void	GL_DeleteDetailTexture(detailtex_t *dtex);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -1133,6 +1133,7 @@ unsigned int GL_BindTexFlat(flat_t *fl)
 	int lump = fl->lump, width, height, pixSize = 3;
 	boolean RGBData = false, freeptr = false;
 	ded_detailtexture_t *def;
+	image_t image;
 
 	if(lump >= numlumps	|| lump == skyflatnum)
 	{
@@ -1142,11 +1143,13 @@ unsigned int GL_BindTexFlat(flat_t *fl)
 	}
 
 	// Is there a high resolution version?
-	if((flatptr = GL_LoadHighResFlat(lumpinfo[lump].name, &width, 
-		&height, &pixSize)) != NULL)
+	if((flatptr = GL_LoadHighResFlat(&image, lumpinfo[lump].name)) != NULL)
 	{
 		RGBData = true;
 		freeptr = true;
+		width   = image.width;
+		height  = image.height;
+		pixSize = image.pixelSize;
 	}
 	else
 	{
@@ -1367,65 +1370,70 @@ void TranslatePatch(patch_t *patch, byte *transTable)
 //	Loads PCX, TGA and PNG images. The returned buffer must be freed 
 //	with M_Free. Color keying is done if "-ck." is found in the filename.
 //===========================================================================
-byte *GL_LoadImage(const char *imagefn, int *width, int *height,
-				   int *pixsize, boolean *masked, boolean usemodelpath)
+byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 {
 	DFILE	*file;
-	char	filename[256];
-	byte	*buffer, *ckdest, ext[40], *in, *out;
+	byte	*ckdest, ext[40], *in, *out;
 	int		format, i, numpx; 
 
-	if(usemodelpath) 
+	// Clear any old values.
+	memset(img, 0, sizeof(*img));
+
+	if(useModelPath) 
 	{
-		if(!R_FindModelFile(imagefn, filename))
+		if(!R_FindModelFile(imagefn, img->fileName))
 			return NULL; // Not found.
 	}
 	else
-		strcpy(filename, imagefn);
+		strcpy(img->fileName, imagefn);
 
 	// We know how to load PCX, TGA and PNG.
-	M_GetFileExt(filename, ext);
+	M_GetFileExt(img->fileName, ext);
 	if(!strcmp(ext, "pcx"))
 	{
-		if(!PCX_GetSize(filename, width, height)) return NULL;
-		buffer = M_Malloc(4 * (*width) * (*height));
-		PCX_Load(filename, *width, *height, buffer);
-		*pixsize = 3; // PCXs can't be masked.
+		if(!PCX_GetSize(img->fileName, &img->width, &img->height)) 
+			return NULL;
+
+		img->pixels = M_Malloc(4 * img->width * img->height);
+		PCX_Load(img->fileName, img->width, img->height, img->pixels);
+		img->pixelSize = 3; // PCXs can't be masked.
 	}
 	else if(!strcmp(ext, "tga"))
 	{
-		if(!TGA_GetSize(filename, width, height)) return NULL; 
+		if(!TGA_GetSize(img->fileName, &img->width, &img->height)) 
+			return NULL; 
 
-		file = F_Open(filename, "rb");
+		file = F_Open(img->fileName, "rb");
 		if(!file) return NULL;	
 		
 		// Allocate a big enough buffer and read in the image.
-		buffer = M_Malloc(4 * (*width) * (*height));
-		format = TGA_Load32_rgba8888(file, *width, *height, buffer);
-		*pixsize = (format == TGA_TARGA24? 3 : 4);
+		img->pixels = M_Malloc(4 * img->width * img->height);
+		format = TGA_Load32_rgba8888(file, img->width, img->height, 
+			img->pixels);
+		img->pixelSize = (format == TGA_TARGA24? 3 : 4);
 		F_Close(file);
 	}
 	else if(!strcmp(ext, "png"))
 	{
-		buffer = PNG_Load(filename, width, height, pixsize);
-		if(!buffer) return NULL;
+		if((img->pixels = PNG_Load(img->fileName, &img->width, &img->height, 
+			&img->pixelSize)) == NULL) return NULL;
 	}
 
-	if(verbose) 
-		Con_Message("LoadImage: %s (%ix%i)\n", filename, *width, *height);
+	VERBOSE( Con_Message("LoadImage: %s (%ix%i)\n", img->fileName, 
+		img->width, img->height) );
 
-	numpx = (*width) * (*height);
+	numpx = img->width * img->height;
 
 	// How about some color-keying?
-	if(GL_IsColorKeyed(filename))
+	if(GL_IsColorKeyed(img->fileName))
 	{
 		// We must allocate a new buffer if the loaded image has three
 		// color componenets.
-		if(*pixsize < 4)
+		if(img->pixelSize < 4)
 		{
-			ckdest = M_Malloc(4 * (*width) * (*height));
-			for(in = buffer, out = ckdest, i = 0; i < numpx; 
-				i++, in += *pixsize, out += 4)
+			ckdest = M_Malloc(4 * img->width * img->height);
+			for(in = img->pixels, out = ckdest, i = 0; i < numpx; 
+				i++, in += img->pixelSize, out += 4)
 			{
 				if(GL_ColorKey(in))
 					memset(out, 0, 4);	// Totally black.
@@ -1435,29 +1443,30 @@ byte *GL_LoadImage(const char *imagefn, int *width, int *height,
 					out[CA] = 255;		// Opaque.
 				}
 			}
-			M_Free(buffer);
-			buffer = ckdest;
+			M_Free(img->pixels);
+			img->pixels = ckdest;
 		}
 		else // We can do the keying in-buffer.
 		{
 			// This preserves the alpha values of non-keyed pixels.
-			for(i = 0; i < *height; i++)
-				GL_DoColorKeying(buffer + 4*i*(*width), *width);
+			for(i = 0; i < img->height; i++)
+				GL_DoColorKeying(img->pixels + 4*i*img->width, img->width);
 		}
 		// Color keying is done; now we have 4 bytes per pixel.
-		*pixsize = 4;
+		img->pixelSize = 4;
 	}
 
 	// Any alpha pixels?
-	*masked = false;
-	if(*pixsize == 4)
-		for(i = 0, in = buffer; i < numpx; i++, in += 4)
+	img->isMasked = false;
+	if(img->pixelSize == 4)
+		for(i = 0, in = img->pixels; i < numpx; i++, in += 4)
 			if(in[3] < 255)
 			{
-				*masked = true;
+				img->isMasked = true;
 				break;
 			}
-	return buffer;
+	
+	return img->pixels;
 }
 
 //===========================================================================
@@ -1465,33 +1474,33 @@ byte *GL_LoadImage(const char *imagefn, int *width, int *height,
 //	First sees if there is a color-keyed version of the given image. If
 //	there is it is loaded. Otherwise the 'regular' version is loaded.
 //===========================================================================
-byte *GL_LoadImageCK(const char *name, int *width, int *height, int *pixsize, 
-					 boolean *masked, boolean usemodelpath)
+byte *GL_LoadImageCK(image_t *img, const char *name, boolean useModelPath)
 {
-	char fn[256], *ptr;
-	byte *img;
+	byte *pixels;
+	char *ptr;
 
-	strcpy(fn, name);
+	strcpy(img->fileName, name);
+
 	// Append the "-ck" and try to load.
-	ptr = strrchr(fn, '.');
+	ptr = strrchr(img->fileName, '.');
 	if(ptr)
 	{
 		memmove(ptr + 3, ptr, strlen(ptr) + 1);
 		ptr[0] = '-';
 		ptr[1] = 'c';
 		ptr[2] = 'k';
-		if((img = GL_LoadImage(fn, width, height, pixsize, masked, 
-			usemodelpath)) != NULL) return img;
+		if((pixels = GL_LoadImage(img, img->fileName, useModelPath)) != NULL) 
+			return pixels;
 	}
-	return GL_LoadImage(name, width, height, pixsize, masked, usemodelpath);
+	return GL_LoadImage(img, name, useModelPath);
 }
 
 //===========================================================================
 // GL_LoadHighRes
 //	Name must end in \0.
 //===========================================================================
-byte *GL_LoadHighRes(char *name, char *prefix, int *width, int *height, 
-					 int *pixSize, boolean *masked, boolean allowColorKey)
+byte *GL_LoadHighRes
+	(image_t *img, char *name, char *prefix, boolean allowColorKey)
 {
 	char resource[256];
 	char fileName[256];
@@ -1506,7 +1515,7 @@ byte *GL_LoadHighRes(char *name, char *prefix, int *width, int *height,
 		return NULL;	
 	}
 
-	return GL_LoadImage(fileName, width, height, pixSize, masked, false);
+	return GL_LoadImage(img, fileName, false);
 }
 
 //===========================================================================
@@ -1514,10 +1523,9 @@ byte *GL_LoadHighRes(char *name, char *prefix, int *width, int *height,
 //	Use this when loading custom textures from the Data\*\Textures dir.
 //	The returned buffer must be freed with M_Free.
 //===========================================================================
-byte *GL_LoadTexture(char *name, int *width, int *height, int *pixsize, 
-					 boolean *masked)
+byte *GL_LoadTexture(image_t *img, char *name)
 {
-	return GL_LoadHighRes(name, "", width, height, pixsize, masked, true);
+	return GL_LoadHighRes(img, name, "", true);
 }
 
 //===========================================================================
@@ -1525,24 +1533,30 @@ byte *GL_LoadTexture(char *name, int *width, int *height, int *pixsize,
 //	Use this when loading high-res wall textures.
 //	The returned buffer must be freed with M_Free.
 //===========================================================================
-byte *GL_LoadHighResTexture
-	(char *name, int *width, int *height, int *pixsize, boolean *masked)
+byte *GL_LoadHighResTexture(image_t *img, char *name)
 {
 	if(noHighResTex) return NULL;
-	return GL_LoadTexture(name, width, height, pixsize, masked);
+	return GL_LoadTexture(img, name);
 }
 
 //===========================================================================
 // GL_LoadHighResFlat
 //	The returned buffer must be freed with M_Free.
 //===========================================================================
-byte *GL_LoadHighResFlat(char *name, int *width, int *height, int *pixsize)
+byte *GL_LoadHighResFlat(image_t *img, char *name)
 {
-	boolean masked;
-	
 	if(noHighResTex) return NULL;
-	return GL_LoadHighRes(name, "Flat-", width, height, pixsize, &masked, 
-		false);
+	return GL_LoadHighRes(img, name, "Flat-", false);
+}
+
+//===========================================================================
+// GL_DestroyImage
+//	Frees all memory associated with the image.
+//===========================================================================
+void GL_DestroyImage(image_t *img)
+{
+	M_Free(img->pixels);
+	img->pixels = NULL;
 }
 
 //===========================================================================
@@ -1591,10 +1605,10 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 unsigned int GL_PrepareTexture(int idx)
 {
 	ded_detailtexture_t *def;
-	byte		*buffer = NULL;
 	texture_t	*tex;
-	boolean		alphaChannel = false, masked = false, RGBData = false;
-	int			i, width, height;
+	boolean		alphaChannel = false, RGBData = false;
+	int			i;
+	image_t		image;
 
 	if(idx == 0)
 	{
@@ -1610,34 +1624,35 @@ unsigned int GL_PrepareTexture(int idx)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if((buffer = GL_LoadHighResTexture(tex->name,
-			&width, &height, &i, &masked)) != NULL)
+		if(GL_LoadHighResTexture(&image, tex->name) != NULL)
 		{
 			// High resolution texture loaded.
 			RGBData = true;
-			alphaChannel = (i == 4);
+			alphaChannel = (image.pixelSize == 4);
 		}
 		else
 		{
-			width = tex->width;
-			height = tex->height;
-			buffer = M_Malloc(2 * width * height);
-			masked = GL_BufferTexture(tex, buffer, width, height, &i);
+			image.width = tex->width;
+			image.height = tex->height;
+			image.pixels = M_Malloc(2 * image.width * image.height);
+			image.isMasked = GL_BufferTexture(tex, image.pixels, image.width, 
+				image.height, &i);
 			
 			// The -bigmtex option allows the engine to resize masked 
 			// textures whose patches are too big to fit the texture.
-			if(allowMaskedTexEnlarge && masked && i)
+			if(allowMaskedTexEnlarge && image.isMasked && i)
 			{
 				// Adjust height to fit the largest patch.
-				tex->height = height = i; 
+				tex->height = image.height = i; 
 				// Get a new buffer.
-				M_Free(buffer);
-				buffer = M_Malloc(2 * width * height);
-				masked = GL_BufferTexture(tex, buffer, width, height, 0);
+				M_Free(image.pixels);
+				image.pixels = M_Malloc(2 * image.width * image.height);
+				image.isMasked = GL_BufferTexture(tex, image.pixels, 
+					image.width, image.height, 0);
 			}
 			// "alphaChannel" and "masked" are the same thing for indexed
 			// images.
-			alphaChannel = masked;
+			alphaChannel = image.isMasked;
 		}
 
 		// Load a detail texture (if one is defined).
@@ -1652,22 +1667,23 @@ unsigned int GL_PrepareTexture(int idx)
 			textures[idx]->detail.maxdist = def->maxdist;
 		}
 		
-		textures[idx]->tex = GL_UploadTexture(buffer, width, height, 
-			alphaChannel, true, RGBData, false);
+		textures[idx]->tex = GL_UploadTexture(image.pixels, image.width, 
+			image.height, alphaChannel, true, RGBData, false);
 
 		// Set texture parameters.
 		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 
-		textures[idx]->masked = (masked != 0);
+		textures[idx]->masked = (image.isMasked != 0);
 
-		if(alphaChannel)
+		/*if(alphaChannel)
 		{
 			// Don't tile masked textures vertically.
 			//---DEBUG---
 			//gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-		}
-		M_Free(buffer);
+		}*/
+
+		GL_DestroyImage(&image);
 	}
 	texw = textures[idx]->width;
 	texh = textures[idx]->height;
@@ -1840,11 +1856,10 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
 //===========================================================================
 unsigned int GL_PrepareSky(int idx, boolean zeroMask)
 {
-	int		i, width, height;
-	byte	*imgdata;
-	boolean	RGBData, masked, alphaChannel;
+	boolean	RGBData, alphaChannel;
+	image_t image;
 
-	if(idx > numtextures-1) return 0;
+	if(idx >= numtextures) return 0;
 /*
 #if _DEBUG
 	if(idx != texturetranslation[idx])
@@ -1856,31 +1871,31 @@ unsigned int GL_PrepareSky(int idx, boolean zeroMask)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if((imgdata = GL_LoadHighResTexture(textures[idx]->name,
-			&width, &height, &i, &masked)) != NULL)
+		if(GL_LoadHighResTexture(&image, textures[idx]->name) != NULL)
 		{
 			// High resolution texture loaded.
 			RGBData = true;
-			alphaChannel = (i == 4);
+			alphaChannel = (image.pixelSize == 4);
 		}
 		else
 		{
 			RGBData = false;
-			GL_BufferSkyTexture(idx, &imgdata, &width, &height, zeroMask);
-			alphaChannel = masked = zeroMask;
+			GL_BufferSkyTexture(idx, &image.pixels, &image.width, 
+				&image.height, zeroMask);
+			alphaChannel = image.isMasked = zeroMask;
 		}
 
 		// Upload it.
-		textures[idx]->tex = GL_UploadTexture(imgdata, width, height, alphaChannel, 
-			true, RGBData, false);
+		textures[idx]->tex = GL_UploadTexture(image.pixels, image.width, 
+			image.height, alphaChannel, true, RGBData, false);
 		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 
-		// Free the buffer.
-		M_Free(imgdata);
-
 		// Do we have a masked texture?
-		textures[idx]->masked = (masked != 0);
+		textures[idx]->masked = (image.isMasked != 0);
+
+		// Free the buffer.
+		GL_DestroyImage(&image);
 	}
 	texw = textures[idx]->width;
 	texh = textures[idx]->height;
@@ -2172,26 +2187,27 @@ void GL_SetTexCoords(float *tc, int wid, int hgt)
  * Uploads the sprite in the buffer and sets the appropriate texture 
  * parameters.
  */
-unsigned int GL_PrepareSpriteBuffer
-	(int pnum, byte *buffer, int width, int height, int pixelSize)
+unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image)
 {
 	unsigned int texture = 0;
 
 	// Calculate light source properties.
-	GL_CalcLuminance(pnum, buffer, width, height, pixelSize);
+	GL_CalcLuminance(pnum, image->pixels, image->width, image->height, 
+		image->pixelSize);
 		
-	if(pixelSize == 1 && filloutlines) 
-		ColorOutlines(buffer, width, height);
+	if(image->pixelSize == 1 && filloutlines) 
+		ColorOutlines(image->pixels, image->width, image->height);
 
-	texture = GL_UploadTexture(buffer, width, height, pixelSize != 3, true, 
-		pixelSize > 1, true);
+	texture = GL_UploadTexture(image->pixels, image->width, image->height, 
+		image->pixelSize != 3, true, image->pixelSize > 1, true);
+
 	gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
 	gl.TexParameter(DGL_MAG_FILTER, filterSprites? DGL_LINEAR : DGL_NEAREST);
 	gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 	gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
 	// Determine coordinates for the texture.
-	GL_SetTexCoords(spritelumps[pnum].tc, width, height);
+	GL_SetTexCoords(spritelumps[pnum].tc, image->width, image->height);
 
 	return texture;
 }
@@ -2203,14 +2219,12 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 {
 	byte *table = translationtables-256 + tclass*((8-1)*256) + tmap*256;
 	transspr_t *tspr = GL_GetTranslatedSprite(pnum, table);
+	image_t image;
 
 	if(!tspr)
 	{
-		int width, height, pixelSize;
-		boolean isMasked = false;
 		char resource[80], fileName[256];
 		patch_t *patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
-		byte *buffer = NULL;
 
 		// Compose a resource name.
 		if(tclass || tmap)
@@ -2226,28 +2240,27 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 
 		if(!noHighResTex
 			&& R_FindResource(RC_PATCH, resource, "-ck", fileName)
-			&& (buffer = GL_LoadImage(fileName, &width, &height, &pixelSize,
-				&isMasked, false)) != NULL)
+			&& GL_LoadImage(&image, fileName, false) != NULL)
 		{
-			// The buffer is filled with the data.
+			// The buffer is now filled with the data.
 		}
 		else
 		{
 			// Must load from the normal lump.
-			width     = patch->width;
-			height    = patch->height;
-			pixelSize = 1;
-			buffer    = M_Calloc(2 * width * height);
+			image.width     = patch->width;
+			image.height    = patch->height;
+			image.pixelSize = 1;
+			image.pixels    = M_Calloc(2 * image.width * image.height);
 		
-			DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), 
-				width, height, patch, 0, 0, false, table, false);
+			DrawRealPatch(image.pixels, 
+				W_CacheLumpNum(pallump, PU_CACHE), 
+				image.width, image.height, patch, 0, 0, false, table, false);
 		}
 
 		tspr = GL_NewTranslatedSprite(pnum, table);
-		tspr->tex = GL_PrepareSpriteBuffer(pnum, buffer, width, height, 
-			pixelSize);
+		tspr->tex = GL_PrepareSpriteBuffer(pnum, &image);
 
-		M_Free(buffer);
+		GL_DestroyImage(&image);
 	}
 	return tspr->tex;
 }
@@ -2261,46 +2274,34 @@ unsigned int GL_PrepareSprite(int pnum)
 
 	if(!spritelumps[pnum].tex)
 	{
-		int width = 0, height = 0, pixelSize = 0; 
-		boolean isMasked = false;
+		image_t image;
 		char resource[256];
-		byte *buffer = NULL;
 		patch_t *patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
 
 		// Is there an external resource for this image?
 		if(!noHighResTex
 			&& R_FindResource(RC_PATCH, lumpinfo[spritelumps[pnum].lump].name,
 				"-ck", resource) 
-			&& (buffer = GL_LoadImage(resource, &width, &height, &pixelSize, 
-				&isMasked, false)) != NULL)
+			&& GL_LoadImage(&image, resource, false) != NULL)
 		{
 			// A high-resolution version of this sprite has been found.
-			// The buffer is filled with the data we need.
+			// The buffer is now filled with the data we need.
 		}
 		else
 		{
 			// There's no name for this patch, load it in.
-			width = patch->width;
-			height = patch->height;
-			buffer = M_Calloc(2 * width * height);
-			pixelSize = 1;
+			image.width     = patch->width;
+			image.height    = patch->height;
+			image.pixels    = M_Calloc(2 * image.width * image.height);
+			image.pixelSize = 1;
 
-#if _DEBUG
-			if(patch->width > 512 || patch->height > 512) 
-			{
-				Con_Error("GL_PrepareSprite: Bad patch (too big?!)\n  "
-					"Assumed lump: %8s", lumpinfo[spritelumps[pnum].lump].name);
-			}
-#endif
-
-			DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), 
-				width, height, patch, 0, 0, false, 0, false);
+			DrawRealPatch(image.pixels, W_CacheLumpNum(pallump, PU_CACHE), 
+				image.width, image.height, patch, 0, 0, false, 0, false);
 		}
 
-		spritelumps[pnum].tex = GL_PrepareSpriteBuffer(pnum, buffer, width, 
-			height, pixelSize);
+		spritelumps[pnum].tex = GL_PrepareSpriteBuffer(pnum, &image);
 
-		M_Free(buffer);
+		GL_DestroyImage(&image);
 	}
 	return spritelumps[pnum].tex;
 }
@@ -2358,117 +2359,172 @@ DGLuint GL_GetOtherPart(int lump)
 	return lumptexinfo[lump].tex[1];
 }
 
-//===========================================================================
-// GL_SetRawImage
-//	Raw images are always 320x200.
-//	Part is either 1 or 2. Part 0 means only the left side is loaded.
-//	No splittex is created in that case. Once a raw image is loaded
-//	as part 0 it must be deleted before the other part is loaded at the
-//	next loading. Part can also contain the width and height of the 
-//	texture. 
-//===========================================================================
-void GL_SetRawImage(int lump, int part)
+/*
+ * Sets texture parameters for raw image textures (parts).
+ */
+void GL_SetRawImageParams(void)
+{
+	gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
+	gl.TexParameter(DGL_MAG_FILTER, linearRaw? DGL_LINEAR : DGL_NEAREST);
+	gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+	gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+}
+
+/*
+ * Prepares and uploads a raw image texture from the given lump.
+ * Called only by GL_SetRawImage(), so params are valid.
+ */
+void GL_SetRawImageLump(int lump, int part)
 {
 	int		i, k, c, idx;
-	byte	*dat1, *dat2, *palette, *image, *lumpdata;
+	byte	*dat1, *dat2, *palette, *lumpdata, *image;
 	int		height, assumedWidth = 320;
 	boolean need_free_image = true;
 	boolean rgbdata;
 	int		comps;
-	
-	// Check the part.
-	if(part < 0 || part > 2 || lump > numlumps-1) return; 
+	lumptexinfo_t *info = lumptexinfo + lump;
 
-	if(!lumptexinfo[lump].tex[0])
+	// Load the raw image data.
+	// It's most efficient to create two textures for it (256 + 64 = 320).
+	lumpdata = W_CacheLumpNum(lump, PU_STATIC);
+	height = 200;
+
+	// Try to load it as a PCX image first.
+	image = M_Malloc(3 * 320 * 200);
+	if(PCX_MemoryLoad(lumpdata, lumpinfo[lump].size, 320, 200, image))
 	{
-		// Load the raw image data.
-		// It's most efficient to create two textures for it (256 + 64 = 320).
-		lumpdata = W_CacheLumpNum(lump, PU_STATIC);
-		height = 200;
+		rgbdata = true;
+		comps = 3;
+	}
+	else
+	{
+		// PCX load failed. It must be an old-fashioned raw image.
+		need_free_image = false;
+		M_Free(image);
+		height = lumpinfo[lump].size / 320;				
+		rgbdata = false;
+		comps = 1;
+		image = lumpdata;
+	}
 
-		// Try to load it as a PCX image first.
-		image = M_Malloc(3 * 320 * 200);
-		if(PCX_MemoryLoad(lumpdata, lumpinfo[lump].size, 320, 200, image))
+	// Two pieces:
+	dat1 = M_Malloc(comps * 256 * 256);
+	dat2 = M_Malloc(comps * 64 * 256);
+
+	if(height < 200 && part == 2) goto dont_load; // What is this?!
+	if(height < 200) assumedWidth = 256;
+
+	memset(dat1, 0, comps * 256 * 256);
+	memset(dat2, 0, comps * 64 * 256);
+	palette = W_CacheLumpNum(pallump, PU_CACHE);
+
+	// Image data loaded, divide it into two parts.
+	for(k = 0; k < height; k++)
+		for(i = 0; i < 256; i++)
 		{
-			rgbdata = true;
-			comps = 3;
-		}
-		else
-		{
-			// PCX load failed. It must be an old-fashioned raw image.
-			need_free_image = false;
-			M_Free(image);
-			height = lumpinfo[lump].size / 320;				
-			rgbdata = false;
-			comps = 1;
-			image = lumpdata;
-		}
-
-		// Two pieces:
-		dat1 = M_Malloc(comps * 256 * 256);
-		dat2 = M_Malloc(comps * 64 * 256);
-
-		if(height < 200 && part == 2) goto dont_load; // What is this?!
-		if(height < 200) assumedWidth = 256;
-
-		memset(dat1, 0, comps * 256 * 256);
-		memset(dat2, 0, comps * 64 * 256);
-		palette = W_CacheLumpNum(pallump, PU_CACHE);
-
-		// Image data loaded, divide it into two parts.
-		for(k = 0; k < height; k++)
-			for(i = 0; i < 256; i++)
-			{
-				idx = k*assumedWidth + i;
-				// Part one.
+			idx = k*assumedWidth + i;
+			// Part one.
+			for(c = 0; c < comps; c++)
+				dat1[(k*256 + i)*comps + c] = image[idx*comps + c];
+			// We can setup part two at the same time.
+			if(i < 64 && part) 
 				for(c = 0; c < comps; c++)
-					dat1[(k*256 + i)*comps + c] = image[idx*comps + c];
-				// We can setup part two at the same time.
-				if(i < 64 && part) 
-					for(c = 0; c < comps; c++)
-					{
-						dat2[(k*64 + i)*comps + c] 
-							= image[(idx + 256)*comps + c];
-					}
-			}
-
-		// Upload part one.
-		lumptexinfo[lump].tex[0] = GL_UploadTexture(dat1, 256, 
-			assumedWidth < 320? height : 256, false, false, rgbdata, false);
-		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-		gl.TexParameter(DGL_MAG_FILTER, linearRaw? DGL_LINEAR : DGL_NEAREST);
-		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-		
-		if(part)
-		{
-			// And the other part.
-			lumptexinfo[lump].tex[1] = GL_UploadTexture(dat2, 64, 256, 
-				false, false, rgbdata, false);
-			gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-			gl.TexParameter(DGL_MAG_FILTER, linearRaw? DGL_LINEAR : DGL_NEAREST);
-			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-			// Add it to the list.
-			GL_NewRawLump(lump);
+				{
+					dat2[(k*64 + i)*comps + c] 
+						= image[(idx + 256)*comps + c];
+				}
 		}
 
-		lumptexinfo[lump].width[0] = 256;
-		lumptexinfo[lump].width[1] = 64;
-		lumptexinfo[lump].height = height;
+	// Upload part one.
+	info->tex[0] = GL_UploadTexture(dat1, 256, 
+		assumedWidth < 320? height : 256, false, false, rgbdata, false);
+	GL_SetRawImageParams();
+	
+	if(part)
+	{
+		// And the other part.
+		info->tex[1] = GL_UploadTexture(dat2, 64, 256, false, false, 
+			rgbdata, false);
+		GL_SetRawImageParams();
+
+		// Add it to the list.
+		GL_NewRawLump(lump);
+	}
+
+	info->width[0] = 256;
+	info->width[1] = 64;
+	info->height = height;
 
 dont_load:
-		if(need_free_image) M_Free(image);
-		M_Free(dat1);
-		M_Free(dat2);
-		W_ChangeCacheTag(lump, PU_CACHE);
+	if(need_free_image) M_Free(image);
+	M_Free(dat1);
+	M_Free(dat2);
+	W_ChangeCacheTag(lump, PU_CACHE);
+}
+
+/*
+ * Raw images are always 320x200.
+ * Part is either 1 or 2. Part 0 means only the left side is loaded.
+ * No splittex is created in that case. Once a raw image is loaded
+ * as part 0 it must be deleted before the other part is loaded at the
+ * next loading. Part can also contain the width and height of the 
+ * texture. 
+ *
+ * 2003-05-30 (skyjake): External resources can be larger than 320x200,
+ * but they're never split into two parts. 
+ */
+unsigned int GL_SetRawImage(int lump, int part)
+{
+	DGLuint texId = 0;
+	image_t	image;
+	lumptexinfo_t *info = lumptexinfo + lump;
+	
+	// Check the part.
+	if(part < 0 || part > 2 || lump >= numlumps) return texId; 
+
+	if(!info->tex[0])
+	{
+		// First try to find an external resource.
+		char fileName[256];
+		if(R_FindResource(RC_PATCH, lumpinfo[lump].name, NULL, fileName)
+			&& GL_LoadImage(&image, fileName, false) != NULL)
+		{
+			// We have the image in the buffer. We'll upload it as one
+			// big texture.
+			info->tex[0] = GL_UploadTexture(image.pixels, image.width, 
+				image.height, image.pixelSize == 4, false, true, false);
+			GL_SetRawImageParams();
+
+			info->width[0] = 320;
+			info->width[1] = 0;
+			info->tex[1] = 0;
+			info->height = 200;
+
+			GL_DestroyImage(&image);						
+		}				
+		else
+		{
+			// Must load the old-fashioned data lump.
+			GL_SetRawImageLump(lump, part);
+		}
 	}
+	
 	// Bind the part that was asked for.
-	if(part <= 1) gl.Bind(lumptexinfo[lump].tex[0]);
-	if(part == 2) gl.Bind(lumptexinfo[lump].tex[1]);
+	if(!info->tex[1])
+	{
+		// There's only one part, so we'll bind it.
+		texId = info->tex[0];
+	}
+	else
+	{
+		texId = info->tex[part <= 1? 0 : 1];
+	}
+	gl.Bind(texId);
+
 	// We don't track the current texture with raw images.
 	curtex = 0;
+
+	return texId;
 }
 
 /*
@@ -2557,24 +2613,22 @@ void GL_SetPatch(int lump)
 	if(!lumptexinfo[lump].tex[0])
 	{
 		patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
-		byte *buffer = NULL;
-		int width, height, pixsize;
-		boolean masked;
 		char fileName[256];
+		image_t image;
 
 		// Let's first try the resource locator and see if there is a
 		// 'high-resolution' version available.
 		if(!noHighResTex
 			&& R_FindResource(RC_PATCH, lumpinfo[lump].name, "-ck", fileName)
-			&& (buffer = GL_LoadImage(fileName, &width, &height, &pixsize,
-				&masked, false)))
+			&& GL_LoadImage(&image, fileName, false))
 		{
 			// This is our texture! No mipmaps are generated.
-			lumptexinfo[lump].tex[0] = GL_UploadTexture(buffer, width, height, 
-				pixsize == 4, false, true, false);				
+			lumptexinfo[lump].tex[0] = GL_UploadTexture(image.pixels, 
+				image.width, image.height, image.pixelSize == 4, false, 
+				true, false);
 
 			// The original image is no longer needed.
-			M_Free(buffer);
+			GL_DestroyImage(&image);
 
 			// Set the texture parameters.
 			gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
@@ -2956,21 +3010,18 @@ unsigned int GL_PrepareSkin(model_t *mdl, int skin)
 //===========================================================================
 unsigned int GL_PrepareShinySkin(modeldef_t *md, int sub)
 {
-	//const char *skinp = md->def->sub[sub].shinyskin;
-	int pxsize, width, height;
-	boolean masked;
-	byte *image;
 	model_t *mdl = modellist[md->sub[sub].model];
 	skintex_t *stp = GL_GetSkinTexByIndex(md->sub[sub].shinyskin);
+	image_t image;
 
 	if(!stp) return 0;	// Does not have a shiny skin.
 	if(!stp->tex)
 	{
 		// Load in the texture. 
-		image = GL_LoadImageCK(stp->path, &width, &height, &pxsize, &masked, true);
+		GL_LoadImageCK(&image, stp->path, true);
 
-		stp->tex = GL_UploadTexture(image, width, height, pxsize == 4, 
-			true, true, false);
+		stp->tex = GL_UploadTexture(image.pixels, image.width, image.height, 
+			image.pixelSize == 4, true, true, false);
 
 		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
@@ -2978,7 +3029,7 @@ unsigned int GL_PrepareShinySkin(modeldef_t *md, int sub)
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
 		// We don't need the image data any more.
-		M_Free(image);
+		GL_DestroyImage(&image);
 	}
 	return stp->tex;
 }

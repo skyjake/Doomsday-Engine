@@ -14,7 +14,8 @@ void			GL_DrawPatchLitAlpha(int x, int y, float light, float alpha,
 void			GL_DrawFuzzPatch(int x, int y, int lumpnum);
 void			GL_DrawAltFuzzPatch(int x, int y, int lumpnum);
 void			GL_DrawShadowedPatch(int x, int y, int lumpnum);
-void			GL_DrawRawScreen(int lump);	// Raw screens are 320 x 200.
+void			GL_DrawRawScreen(int lump, float offx, float offy);
+void			GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex, float scaley);
 void			GL_DrawLine(float x1, float y1, float x2, float y2, 
 					float r, float g, float b, float a);
 void			GL_DrawRect(float x, float y, float w, float h, float r, 

@@ -1222,13 +1222,14 @@ void R_ShutdownModels(void)
 //===========================================================================
 byte *R_LoadSkin(model_t *mdl, int skin, int *width, int *height, int *pxsize)
 {
-	boolean masked;
+	image_t image;
 
-	// The skin name in the model file doesn't matter much. We always try
-	// PNG, TGA and then PCX (in that order).
+	GL_LoadImage(&image, mdl->skins[skin].name, false);
 
-	return GL_LoadImage(mdl->skins[skin].name, width, height, pxsize, 
-		&masked, false);
+	*width = image.width;
+	*height = image.height;
+	*pxsize = image.pixelSize;
+	return image.pixels;
 }
 
 //===========================================================================

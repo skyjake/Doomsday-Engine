@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.8  2003/05/30 16:34:11  skyjake
+//** image_t added, extres for raw screens
+//**
 //** Revision 1.7  2003/05/25 19:28:38  skyjake
 //** Fixed bug 743201
 //**
@@ -142,13 +145,11 @@ void PG_InitTextures(void)
 	for(i = 0; i < MAX_PTC_TEXTURES; i++)
 	{
 		char filename[80];
-		int width, height, pixsize;
-		boolean masked;
+		image_t image;
 
 		// Try to load the texture.
 		sprintf(filename, "Particle%02i", i);
-		if(!(image = GL_LoadTexture(filename, &width, &height, 
-			&pixsize, &masked)))
+		if(GL_LoadTexture(&image, filename) == NULL)
 		{
 			// Just show the first 'not found'.
 			if(verbose && !reported) 
@@ -161,17 +162,17 @@ void PG_InitTextures(void)
 		ptctexname[i + 1] = gl.NewTexture();
 
 		VERBOSE( Con_Message("PG_InitTextures: Texture %02i: %i * %i * %i\n",
-			i, width, height, pixsize) );
+			i, image.width, image.height, image.pixelSize) );
 
-		gl.TexImage(pixsize == 4? DGL_RGBA : DGL_RGB, 
-			width, height, 0, image);
+		gl.TexImage(image.pixelSize == 4? DGL_RGBA : DGL_RGB, 
+			image.width, image.height, 0, image.pixels);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
 		// Free the buffer.
-		M_Free(image);
+		GL_DestroyImage(&image);
 	}
 }
 

@@ -2,7 +2,7 @@ NAME			"DOOMSDAY"
 DESCRIPTION		"The Doomsday Engine"
 
 ; Highest ordinal is currently 
-; --> 234 <--
+; --> 235 <--
 
 ; Other available ordinals: -
 
@@ -184,6 +184,7 @@ EXPORTS
 	GL_DrawAltFuzzPatch		@124 NONAME
 	GL_DrawShadowedPatch	@125 NONAME
 	GL_DrawRawScreen		@126 NONAME
+	GL_DrawRawScreen_CS		@235 NONAME
 	GL_DrawLine				@127 NONAME
 	GL_DrawRect				@128 NONAME
 	GL_DrawRectTiled		@129 NONAME

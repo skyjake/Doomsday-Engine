@@ -42,30 +42,44 @@ void GL_UsePatchOffset(boolean enable)
 	usePatchOffset = enable;
 }
 
-//===========================================================================
-// GL_DrawRawScreen
-//	Raw screens are 320 x 200.
-//===========================================================================
-void GL_DrawRawScreen(int lump)	
+void GL_DrawRawScreen_CS
+	(int lump, float offx, float offy, float scalex, float scaley)	
 {
-	int pixelBorder;
-	float tcb;
+	boolean isTwoPart;
+	int pixelBorder = 0;
+	float tcb = 0;
 
-	if(lump < 0) return;
+	if(lump < 0 || lump >= numlumps) return;
 
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PushMatrix();
 	gl.LoadIdentity();
+
+	// Setup offset and scale.
+	// Scale the offsets to match the resolution.
+	gl.Translatef(offx * screenWidth/320.0f, offy * screenHeight/200.0f, 0);
+	gl.Scalef(scalex, scaley, 1);
+
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PushMatrix();
 	gl.LoadIdentity();
 	gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
 
 	GL_SetRawImage(lump, 1);
-	pixelBorder = lumptexinfo[lump].width[0] * screenWidth / 320;
-	tcb = lumptexinfo[lump].height / 256.0f;
+	isTwoPart = (lumptexinfo[lump].tex[1] != 0);
 
-	gl.Color3f(1, 1, 1);
+	if(isTwoPart)
+	{
+		tcb = lumptexinfo[lump].height / 256.0f;
+	}
+	else
+	{
+		// Bottom texture coordinate.
+		tcb = 1;
+	}
+	pixelBorder = lumptexinfo[lump].width[0] * screenWidth / 320;
+
+	// The first part is rendered in any case.
 	gl.Begin(DGL_QUADS);
 	gl.TexCoord2f(0, 0);
 	gl.Vertex2f(0, 0);
@@ -77,24 +91,37 @@ void GL_DrawRawScreen(int lump)
 	gl.Vertex2f(0, screenHeight);
 	gl.End();
 
-	// And the other part.
-	GL_SetRawImage(lump,2);
-	gl.Begin(DGL_QUADS);
-	gl.TexCoord2f(0, 0);
-	gl.Vertex2f(pixelBorder-1, 0);
-	gl.TexCoord2f(1, 0);
-	gl.Vertex2f(screenWidth, 0);
-	gl.TexCoord2f(1, tcb);
-	gl.Vertex2f(screenWidth, screenHeight);
-	gl.TexCoord2f(0, tcb);
-	gl.Vertex2f(pixelBorder-1, screenHeight);
-	gl.End();
+	if(isTwoPart)
+	{
+		// And the other part.
+		GL_SetRawImage(lump, 2);
+		gl.Begin(DGL_QUADS);
+		gl.TexCoord2f(0, 0);
+		gl.Vertex2f(pixelBorder - 1, 0);
+		gl.TexCoord2f(1, 0);
+		gl.Vertex2f(screenWidth, 0);
+		gl.TexCoord2f(1, tcb);
+		gl.Vertex2f(screenWidth, screenHeight);
+		gl.TexCoord2f(0, tcb);
+		gl.Vertex2f(pixelBorder - 1, screenHeight);
+		gl.End();
+	}
 
 	// Restore the old projection matrix.
 	gl.PopMatrix();
 
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PopMatrix();
+}
+
+//===========================================================================
+// GL_DrawRawScreen
+//	Raw screens are 320 x 200.
+//===========================================================================
+void GL_DrawRawScreen(int lump, float offx, float offy)	
+{
+	gl.Color3f(1, 1, 1);
+	GL_DrawRawScreen_CS(lump, offx, offy, 1, 1);
 }
 
 //===========================================================================
