@@ -122,10 +122,6 @@ void Cl_SetThingState(mobj_t *mo, int stnum)
 	if(stnum < 0) return;
 	do 
 	{
-		/*mo->state = states + stnum;
-		mo->tics = mo->state->tics;
-		mo->sprite = mo->state->sprite;
-		mo->frame = mo->state->frame;*/
 		P_SetState(mo, stnum);
 		stnum = states[stnum].nextstate;
 	}
@@ -377,6 +373,9 @@ void Cl_CleanClientMobjs()
 	Cl_InitPlayers();
 }
 
+//===========================================================================
+// Cl_MoveThing
+//===========================================================================
 void Cl_MoveThing(mobj_t *mobj)
 {
 	boolean needlink = false;
@@ -414,15 +413,21 @@ void Cl_MoveThing(mobj_t *mobj)
 //===========================================================================
 void Cl_AnimateThing(mobj_t *mo)
 {
-	if(mo->tics < 0) return; // In statis.
+	if(!mo->state || mo->tics < 0) return; // In stasis.
 
 	mo->tics--;
-	if(mo->state && mo->tics <= 0)
+	if(mo->tics <= 0)
 	{
 		// Go to next state, if possible.
 		if(mo->state->nextstate >= 0)
 		{
 			Cl_SetThingState(mo, mo->state->nextstate);
+
+			// Players have both client mobjs and regular mobjs. This
+			// routine modifies the *client* mobj, so for players we need
+			// to update the real, visible mobj as well.
+			if(mo->dplayer) 
+				Cl_UpdateRealPlayerMobj(mo->dplayer->mo, mo, 0);
 		}
 		else
 		{
