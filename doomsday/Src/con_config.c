@@ -48,7 +48,12 @@ int Con_ParseCommands(char *fileName, int setdefault)
 	
 	// Open the file.
 	if((file = F_Open(fileName, "rt")) == NULL) return false;
-	
+
+#ifdef _DEBUG
+	Con_Printf("Con_ParseCommands: %s (def:%i)\n", fileName, setdefault);
+#endif
+
+
 	// This file is filled with console commands.
 	// Each line is a command.
 
@@ -80,6 +85,10 @@ boolean Con_WriteState(const char *fileName)
 	int				i;
 	cvar_t			*var;
 	FILE			*file;
+
+#ifdef _DEBUG
+	Con_Printf("Con_WriteState: %s\n", fileName);
+#endif
 
 	if((file = fopen(fileName, "wt")) == NULL)
 	{

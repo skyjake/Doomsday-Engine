@@ -15,6 +15,7 @@
 #include <ctype.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
 
@@ -38,16 +39,31 @@
 
 void Dir_GetDir(directory_t *dir)
 {
+	memset(dir, 0, sizeof(*dir));
+
 	dir->drive = _getdrive();
 	_getcwd(dir->path, 255);
 	if(dir->path[strlen(dir->path)-1] != '\\')
 		strcat(dir->path, "\\");
+
+#ifdef _DEBUG
+	printf("Dir_GetDir: %s\n", dir->path);
+#endif
 }
 
 int Dir_ChDir(directory_t *dir)
 {
+	int success;
+
 	_chdrive(dir->drive);
-	return !_chdir(dir->path); // Successful if == 0.
+	success = !_chdir(dir->path); // Successful if == 0.
+
+#ifdef _DEBUG
+	Con_Printf("Dir_ChDir: %s: %s\n", success? "Succeeded" : "Failed",
+		dir->path);
+#endif
+
+	return success;
 }
 
 void Dir_MakeDir(const char *path, directory_t *dir)

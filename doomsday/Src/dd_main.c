@@ -28,7 +28,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXWADFILES 30 
+#define MAXWADFILES 30
 
 // TYPES -------------------------------------------------------------------
 
@@ -117,13 +117,13 @@ static int demosequence;
 static int pagetic;
 static char *pagename;
 static char *wadfiles[MAXWADFILES];/* =
-{
-	"Data\\Doomsday.wad"
+								   {
+								   "Data\\Doomsday.wad"
 };*/
 
 /*static execOpt_t ExecOptions[] =
 {
-	{ "-file", ExecOptionFILE, 1, 0 },*/
+{ "-file", ExecOptionFILE, 1, 0 },*/
 //	{ "-maxzone", ExecOptionMAXZONE, 1, 0 },
 /*	{ NULL, NULL, 0, 0 } // Terminator
 };*/
@@ -138,7 +138,7 @@ void DD_AddIWAD(const char *path)
 {
 	int i = 0;
 	char buf[256];
-
+	
 	while(iwadlist[i]) i++;
 	M_TranslatePath(path, buf);
 	iwadlist[i] = calloc(strlen(buf) + 1, 1); // This mem is not freed?
@@ -154,7 +154,7 @@ static void AddToWadList(char *list)
 	int	i=0;
 	int len = strlen(list);
 	char *buffer = malloc(len+1), *token;
-
+	
 	strcpy(buffer, list);
 	token = strtok(buffer, ATWSEPS);
 	while(token)
@@ -192,9 +192,16 @@ void DD_Main(void)
 	FILE	*newout;
 	char	*outfilename = "Doomsday.out";
 	boolean	userdir_ok = true;
-
+	
 	verbose = ArgCheck("-verbose") != 0;
-
+	
+	// We'll redirect stdout to a log file.
+	CheckArg("-out", &outfilename);
+	newout = freopen(outfilename, "w", stdout);
+	if(!newout) ErrorBox(false, "Redirection of stdout failed. "
+		"You won't see anything that's printf()ed.");
+	setbuf(stdout, NULL);
+	
 	// The -userdir option sets the working directory.
 	if(ArgCheckWith("-userdir", 1))
 	{
@@ -203,63 +210,56 @@ void DD_Main(void)
 	}
 	// The current working directory is the runtime dir.
 	Dir_GetDir(&ddRuntimeDir);
-
-	// We'll redirect stdout to a log file.
-	CheckArg("-out", &outfilename);
-	newout = freopen(outfilename, "w", stdout);
-	if(!newout) ErrorBox(false, "Redirection of stdout failed. "
-		"You won't see anything that's printf()ed.");
-	setbuf(stdout, NULL);
-
+	
 	// The standard base directory is two levels upwards.
 	if(ArgCheck("-stdbasedir"))
 		strcpy(ddBasePath, "..\\..\\");
-
-	if(ArgCheckWith("-basedir", 1)) 
+	
+	if(ArgCheckWith("-basedir", 1))
 	{
 		strcpy(ddBasePath, ArgNext());
 		Dir_ValidDir(ddBasePath);
 	}
-
+	
 	// We need to get the console initialized. Otherwise Con_Message() will
 	// crash the system (yikes).
 	Con_Init();
 	Con_Message("Con_Init: Initializing the console.\n");
-
+	
 	// Create the startup messages window.
 	SW_Init();
-
+	
 	Con_Message("Executable: "DOOMSDAY_VERSIONTEXT".\n");
-
+	
 	// Print the used command line.
 	if(verbose)
 	{
 		Con_Message("Command line (%i strings):\n", Argc());
 		for(p = 0; p < Argc(); p++) Con_Message("  %i: %s\n", p, Argv(p));
 	}
-
+	
 	// Initialize the key mappings.
 	DD_InitInput();
-
+	
 	// Any startup hooks?
 	Plug_DoHook(HOOK_STARTUP);
-
+	
 	DD_AddStartupWAD(">Data\\Doomsday.wad");
 	DD_SetInteger(DD_HIGHRES_TEXTURE_PATH, (int) ">Data\\Textures\\");
-
+	
 	// These will invariably be overwritten by the Game.
 	strcpy(configFileName, "Doomsday.cfg");
 	sprintf(defsFileName, "%sDefs\\Doomsday.ded", ddBasePath);
-
+	
 	// Was the change to userdir OK?
 	if(!userdir_ok) Con_Message("--(!)-- User directory not found "
 		"(check -userdir).\n");
-
+	
 	Con_Message("Z_Init: Init zone memory allocation daemon.\n");
 	Z_Init();
 	bamsInit();		// Binary angle calculations.
-	Def_Init();	
-
+	Def_Init();
+	
 	if(ArgCheck("-dedicated"))
 	{
 		SW_Shutdown();
@@ -269,22 +269,22 @@ void DD_Main(void)
 	
 	// Load help resources.
 	if(!isDedicated) DD_InitHelp();
-
+	
 	autostart = false;
 	shareware = false; // Always false for Hexen
-
+	
 	HandleArgs(0); // Everything but WADs.
-
+	
 	novideo = ArgCheck("-novideo") || isDedicated;
-
+	
 	if(gx.PreInit) gx.PreInit();
 	
 	// Initialize subsystems
 	Net_Init(); // Network before anything else.
-
+	
 	// Now we can hide the mouse cursor for good.
 	Sys_HideMouse();
-
+	
 	// Load defaults before initing other systems
 	Con_Message("Parsing configuration files.\n");
 	// Check for a custom config file.
@@ -294,6 +294,7 @@ void DD_Main(void)
 		strcpy(configFileName, ArgNext());
 		Con_Message("Custom config file: %s\n", configFileName);
 	}
+	
 	// This'll be the default config file.
 	Con_ParseCommands(configFileName, true);
 	
@@ -305,23 +306,23 @@ void DD_Main(void)
 			char *arg = ArgNext();
 			if(!arg || arg[0] == '-') break;
 			Con_Message("Parsing: %s\n", arg);
-			Con_ParseCommands(arg, false);						
+			Con_ParseCommands(arg, false);
 		}
 	}
-
+	
 	if(defaultWads) AddToWadList(defaultWads); // These must take precedence.
 	HandleArgs(1); // Only the WADs.
-
+	
 	Con_Message("W_Init: Init WADfiles.\n");
 	W_InitMultipleFiles(wadfiles);
 	F_InitDirec();
-
+	
 	// Execute the startup script (Startup.cfg).
 	Con_ParseCommands("startup.cfg", false);
-
+	
 	// Now that we've read the WADs we can initialize definitions.
 	Def_Read();
-
+	
 	if(ArgCheck("-nowsk")) // No Windows system keys?
 	{
 		// Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
@@ -329,7 +330,7 @@ void DD_Main(void)
 		SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
 		Con_Message("Windows system keys disabled.\n");
 	}
-
+	
 	if(ArgCheckWith("-dumplump", 1))
 	{
 		char *arg = ArgNext();
@@ -339,16 +340,16 @@ void DD_Main(void)
 		byte *lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
 		sprintf(fname, "%s.dum", arg);
 		file = fopen(fname, "wb");
-		if(!file) 
+		if(!file)
 		{
-			Con_Error("Couldn't open %s for writing. %s\n", fname, 
+			Con_Error("Couldn't open %s for writing. %s\n", fname,
 				strerror(errno));
 		}
 		fwrite(lumpPtr, 1, lumpinfo[lump].size, file);
 		fclose(file);
 		Con_Error("%s dumped to %s.\n", arg, fname);
 	}
-
+	
 	if(ArgCheck("-dumpwaddir"))
 	{
 		printf("Lumps (%d total):\n", numlumps);
@@ -361,18 +362,18 @@ void DD_Main(void)
 		}
 		Con_Error("---End of lumps---\n");
 	}
-
+	
 	Con_Message("Sys_Init: Setting up machine state.\n");
 	Sys_Init();
-
+	
 	Con_Message("R_Init: Init the refresh daemon.\n");
 	R_Init();
-
+	
 	Con_Message("Net_InitGame: Initializing game data.\n");
 	Net_InitGame();
 	Demo_Init();
-
-	// Engine initialization is complete. Now start the GL driver and go 
+	
+	// Engine initialization is complete. Now start the GL driver and go
 	// briefly to the Console Startup mode, so the results of the game
 	// init, the config file parsing and possible netgame connection will
 	// be visible.
@@ -383,18 +384,18 @@ void DD_Main(void)
 		GL_Init();
 		GL_InitRefresh();
 	}
-
+	
 	// Start printing messages in the startup.
 	Con_StartupInit();
 	Con_Message("Con_StartupInit: Init startup screen.\n");
-
+	
 	if(gx.PostInit) gx.PostInit();
-
+	
 	// Try to load the autoexec file. This is done here to make sure
 	// everything is initialized: the user can do here anything that
 	// s/he'd be able to do in the game.
 	Con_ParseCommands("autoexec.cfg", false);
-
+	
 	// Parse additional files.
 	if(ArgCheckWith("-parse", 1))
 	{
@@ -403,10 +404,10 @@ void DD_Main(void)
 			char *arg = ArgNext();
 			if(!arg || arg[0] == '-') break;
 			Con_Message("Parsing: %s\n", arg);
-			Con_ParseCommands(arg, false);						
+			Con_ParseCommands(arg, false);
 		}
 	}
-
+	
 	// A console command on the command line?
 	for(p = 1; p < Argc() - 1; p++)
 	{
@@ -415,7 +416,7 @@ void DD_Main(void)
 		for(++p; p < Argc(); p++)
 		{
 			char *arg = Argv(p);
-			if(arg[0] == '-') 
+			if(arg[0] == '-')
 			{
 				p--;
 				break;
@@ -423,18 +424,18 @@ void DD_Main(void)
 			Con_Execute(arg, false);
 		}
 	}
-
+	
 	// In dedicated mode the console must be opened, so all input events
 	// will be handled by it.
 	if(isDedicated) Con_Open(true);
-
+	
 	Plug_DoHook(HOOK_INIT);	// Any initialization hooks?
 	Con_UpdateKnownWords();	// For word completion (with Tab).
-
+	
 	// Client connection command.
 	if(ArgCheckWith("-connect", 1))
 		Con_Executef(false, "connect %s", ArgNext());
-
+	
 	// Server start command.
 	// (shortcut for -command "net init tcpip; net server start").
 	if(ArgExists("-server"))
@@ -444,7 +445,7 @@ void DD_Main(void)
 		else
 			Con_Executef(false, "net server start");
 	}
-
+	
 	DD_GameLoop();			// Never returns...
 }
 
@@ -454,14 +455,14 @@ void DD_Main(void)
 static void HandleArgs(int state)
 {
 	int p;
-
+	
 	if(state == 0)
 	{
 		debugmode = ArgExists("-debug");
 		nofullscreen = ArgExists("-nofullscreen") | ArgExists("-window");
 		renderTextures = !ArgExists("-notex");
 	}
-
+	
 	// Process all -file options.
 	if(state)
 	{
@@ -498,15 +499,15 @@ void DD_CheckTimeDemo(void)
 
 //==========================================================================
 // DD_AddStartupWAD
-//	This is a 'public' WAD file addition routine. The caller can put a 
-//	greater-than character (>) in front of the name to prepend the base 
+//	This is a 'public' WAD file addition routine. The caller can put a
+//	greater-than character (>) in front of the name to prepend the base
 //	path to the file name (providing it's a relative path).
 //==========================================================================
 void DD_AddStartupWAD(char *file/*, boolean inc_base*/)
 {
 	int i;
 	char *new, temp[300];
-
+	
 	i = 0;
 	while(wadfiles[i]) i++;
 	M_TranslatePath(file, temp);
@@ -525,93 +526,93 @@ void DD_CheckQuery(int query, int parm)
 	jtnetserver_t		*buf;
 	serverdataquery_t	*sdq;
 	modemdataquery_t	*mdq;
-
+	
 	switch(query)
 	{
 	case DD_TEXTURE_HEIGHT_QUERY:
 		queryResult = textures[parm]->height << FRACBITS;
 		break;
-
+		
 	case DD_NET_QUERY:
 		switch(parm)
 		{
 		case DD_PROTOCOL:
 			queryResult = (int) N_GetProtocolName();
 			break;
-
+			
 		case DD_NUM_SERVERS:
 			queryResult = jtNetGetServerInfo(NULL, 0);
 			if(queryResult < 0) queryResult = 0;
 			break;
-
+			
 		case DD_MODEM:
 			queryResult = jtNetGetInteger(JTNET_MODEM);
 			break;
-
+			
 		case DD_PHONE_NUMBER:
 			queryResult = (int) jtNetGetString(JTNET_PHONE_NUMBER);
 			break;
-
+			
 		case DD_TCPIP_ADDRESS:
 			queryResult = (int) jtNetGetString(JTNET_TCPIP_ADDRESS);
 			break;
-
+			
 		case DD_TCPIP_PORT:
 			queryResult = jtNetGetInteger(JTNET_TCPIP_PORT);
 			break;
-
+			
 		case DD_COM_PORT:
 			queryResult = jtNetGetInteger(JTNET_COMPORT);
 			break;
-
+			
 		case DD_BAUD_RATE:
 			queryResult = jtNetGetInteger(JTNET_BAUDRATE);
 			break;
-
+			
 		case DD_STOP_BITS:
 			queryResult = jtNetGetInteger(JTNET_STOPBITS);
 			break;
-
+			
 		case DD_PARITY:
 			queryResult = jtNetGetInteger(JTNET_PARITY);
 			break;
-
+			
 		case DD_FLOW_CONTROL:
 			queryResult = jtNetGetInteger(JTNET_FLOWCONTROL);
 			break;
 		}
 		break;
-
-	case DD_SERVER_DATA_QUERY:
-		sdq = (serverdataquery_t*) parm;
-		i = jtNetGetServerInfo(NULL, 0);
-		if(i < 0) i = 0;
-		sdq->found = 0;
-		if(i)	// Something was found?
-		{
-			buf = malloc(sizeof(jtnetserver_t) * sdq->num);
-			sdq->found = jtNetGetServerInfo(buf, sdq->num);
-			// Copy the data to the array given by the caller.
-			for(i = 0; i < sdq->found; i++)
+		
+		case DD_SERVER_DATA_QUERY:
+			sdq = (serverdataquery_t*) parm;
+			i = jtNetGetServerInfo(NULL, 0);
+			if(i < 0) i = 0;
+			sdq->found = 0;
+			if(i)	// Something was found?
 			{
-				strcpy(sdq->data[i].name, buf[i].name);
-				strcpy(sdq->data[i].description, buf[i].description);
-				sdq->data[i].players = buf[i].players;
-				sdq->data[i].maxPlayers = buf[i].maxPlayers;
-				sdq->data[i].canJoin = buf[i].canJoin;
-				memcpy(sdq->data[i].data, buf[i].data, sizeof(sdq->data[i].data));
+				buf = malloc(sizeof(jtnetserver_t) * sdq->num);
+				sdq->found = jtNetGetServerInfo(buf, sdq->num);
+				// Copy the data to the array given by the caller.
+				for(i = 0; i < sdq->found; i++)
+				{
+					strcpy(sdq->data[i].name, buf[i].name);
+					strcpy(sdq->data[i].description, buf[i].description);
+					sdq->data[i].players = buf[i].players;
+					sdq->data[i].maxPlayers = buf[i].maxPlayers;
+					sdq->data[i].canJoin = buf[i].canJoin;
+					memcpy(sdq->data[i].data, buf[i].data, sizeof(sdq->data[i].data));
+				}
+				free(buf);
 			}
-			free(buf);
-		}
-		break;
-
-	case DD_MODEM_DATA_QUERY:
-		mdq = (modemdataquery_t*) parm;
-		mdq->list = jtNetGetStringList(JTNET_MODEM_LIST, &mdq->num);
-		break;
-
-	default:
-		break;
+			break;
+			
+		case DD_MODEM_DATA_QUERY:
+			mdq = (modemdataquery_t*) parm;
+			mdq->list = jtNetGetStringList(JTNET_MODEM_LIST, &mdq->num);
+			break;
+			
+		default:
+			break;
 	}
 }
 
@@ -619,13 +620,13 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 {
 	{ &screenWidth,		0 },
 	{ &screenHeight,	0 },
-	{ &netgame,			0 }, 
+	{ &netgame,			0 },
 	{ &isServer,		0 },		// An *open* server?
 	{ &isClient,		0 },
 	{ &allow_frames,	&allow_frames },
 	{ &skyflatnum,		0 },
-//	{ &numflats,		0 },
-//	{ &firstflat,		0 },
+	//	{ &numflats,		0 },
+	//	{ &firstflat,		0 },
 	{ &gametic,			0 },
 	{ &viewwindowx,		&viewwindowx },
 	{ &viewwindowy,		&viewwindowy },
@@ -682,29 +683,29 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 //===========================================================================
 int DD_GetInteger(int ddvalue)
 {
-	if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE) 
+	if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
 	{
 		// How about some specials?
 		switch(ddvalue)
 		{
 		case DD_TRACE_ADDRESS:
 			return (int) &trace;
-
+			
 		case DD_TRANSLATIONTABLES_ADDRESS:
 			return (int) translationtables;
-
+			
 		case DD_MAP_NAME:
 			if(mapinfo && mapinfo->name[0]) return (int) mapinfo->name;
 			break;
-
+			
 		case DD_MAP_AUTHOR:
 			if(mapinfo && mapinfo->author[0]) return (int) mapinfo->author;
 			break;
-
+			
 		case DD_MAP_MUSIC:
 			if(mapinfo) return Def_GetMusicNum(mapinfo->music);
 			return -1;
-
+			
 		case DD_WINDOW_HANDLE:
 			return (int) hWndMain;
 		}
@@ -719,7 +720,7 @@ int DD_GetInteger(int ddvalue)
 //===========================================================================
 void DD_SetInteger(int ddvalue, int parm)
 {
-	if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE) 
+	if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
 	{
 		DD_CheckQuery(ddvalue, parm);
 		// How about some special values?
@@ -733,7 +734,7 @@ void DD_SetInteger(int ddvalue, int parm)
 			// See DD_TSPR_PARM in dd_share.h.
 			int lump = parm & 0xffffff, cls = (parm>>24) & 0xf, table = (parm>>28) & 0xf;
 			if(table)
-				GL_SetTranslatedSprite(lump, 
+				GL_SetTranslatedSprite(lump,
 					translationtables-256 + cls*((/*MAXPLAYERS*/8-1)*256) + (table<<8));
 			else
 				GL_SetSprite(lump);
@@ -755,7 +756,7 @@ void DD_SetInteger(int ddvalue, int parm)
 				flat_t *fl = R_GetFlat(tnum);
 				if(glowstate)
 					fl->flags |= TXF_GLOW;
-				else 
+				else
 					fl->flags &= ~TXF_GLOW;
 			}
 		}
