@@ -328,7 +328,7 @@ void Sv_ExecuteCommand(void)
 void Sv_GetPackets(void)
 {
 	int             netconsole;
-	int				start, num, i, time;
+	int				start, num, i;
 	client_t		*sender;
 	ticcmd_t		*cmd;
 
@@ -369,8 +369,8 @@ void Sv_GetPackets(void)
 				Msg_Read(cmd, TICCMD_SIZE);
 
 				// Check the time stamp.
-				time = gametic - Sv_Latency(cmd->time);//, sender->enterTime);
-				if(time > sender->time) sender->time = time;
+				/*time = gametic - Sv_Latency(cmd->time);
+				if(time > sender->time) sender->time = time;*/
 			}
 			break;
 
@@ -605,7 +605,7 @@ void Sv_StartNetGame()
 		clients[i].firsttic = 0;
 		clients[i].enterTime = 0;
 		clients[i].runTime = -1;
-		clients[i].time = 0;
+		//clients[i].time = 0;
 		//clients[i].lagStress = 0;
 		clients[i].lastTransmit = -1;
 		clients[i].updateCount = UPDATECOUNT;
