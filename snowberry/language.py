@@ -211,7 +211,13 @@ def change(language):
     
 
 def expand(text, *args):
-    """Place the arguments into the text message."""
+    """Place the arguments into the text message.
+
+    @param text The text where replacements are done.  A placeholder
+    is marked by a percent character and a number (e.g. <tt>%2</tt>).
+
+    @return The expanded version of the string. 
+    """
     for i in range(len(args)):
         text = text.replace('%' + str(i + 1), args[i])
     return text.replace('%%', '%')

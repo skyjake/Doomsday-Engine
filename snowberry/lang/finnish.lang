@@ -44,6 +44,9 @@ new-profile-game: Pelikirjasto
 rename-profile-dialog: Uudelleennimeä profiili
 rename-profile-title: Profiilin uudelleennimeäminen
 rename-profile-name: Uusi nimi
+reset-profile-dialog: Resetoi profiili
+reset-profile-title: Oletko varma?
+reset-profile-query: Oletko varma, että haluat resetoida profiilin <b>%1</b> oletusarvoihin? Tämä palauttaa kaikki muutetut asetukset profiilissa alkuperäisiin arvoihinsa ja poistaa kaikkien lisäosien valinnat.
 delete-profile-dialog: Poista profiili
 delete-profile-title: Oletko varma?
 delete-profile-query: Haluatko varmasti poistaa profiilin <b>%1</b>?
@@ -53,6 +56,8 @@ duplicating-profile: Olet luomassa kopion profiilista <b>%1</b>.
 unhide-profile-dialog: Näytä profiilit
 unhide-profile-title: Näytä piilotetut profiilit
 unhiding-profiles: Valitse yksi tai useampi näytettävä profiili.
+unhide-select-all: Valitse kaikki
+unhide-clear-all: Poista kaikki valinnat
 view-command-line-dialog: Komentokehote
 view-command-line-title: Komentokehoteoptioiden näyttäminen
 install-addon-dialog: Lisäosa-asentaja
@@ -111,9 +116,6 @@ defaults-profile: Oletusprofiili
 game-jdoom: jDoom
 game-jheretic: jHeretic
 game-jhexen: jHexen
-game-jdoom-icon: doomorb
-game-jheretic-icon: hereticorb
-game-jhexen-icon: deng2
 
 #
 # Painikkeiden nimet
@@ -134,6 +136,7 @@ addon-settings: Asetukset
 #
 menu-new-profile: Uusi...
 menu-rename-profile: Uudelleennimeä
+menu-reset-profile: Palauta oletusarvot
 menu-duplicate-profile: Monista
 menu-delete-profile: Poista
 menu-hide-profile: Piilota
@@ -165,17 +168,6 @@ input-options: Kontrollit
 addons-options: Lisäosat
 developer-options: Kehittäjät
 
-#
-# Välilehtien kuvakkeet
-#
-general-options-icon: deng
-game-options-icon: deng2
-display-options-icon: deng3
-graphics-options-icon: deng4
-sound-options-icon: deng
-input-options-icon: deng2
-addons-options-icon: deng3
-developer-options-icon: deng4
 
 #
 # Summary-välilehden otsakkeet
@@ -225,13 +217,13 @@ file-type-anything: All files
 no: Ei
 yes: Kyllä
 default: Oletus
+browse-button: ...
 
 language: Kieli
 quit-on-launch: Poistu, kun peli käynnistetään
 game: Pelikomponentti
 iwad: Pelidatatiedosto
 iwad-selection-title: Valitse pelidatatiedosto
-browse-iwad: ...
 memory-zone: Muistinkulutus(Mt)
 
 renderer: Renderöintikirjasto
@@ -310,7 +302,7 @@ sound-channels: Äänikanavat
 disable-audio: Poista kaikki äänet
 disable-sound-effects: Poista ääniefektit
 disable-music: Poista musiikki
-disable-primary-buffer: Ei ensisijaista puskuriformaattia
+disable-primary-buffer: Ei aseta ensisijaista puskuriformaattia
 disable-fmod: Poista FMOD
 
 eax-options: EAX-valinnat

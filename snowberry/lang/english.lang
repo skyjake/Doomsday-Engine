@@ -431,3 +431,18 @@ help-addon-requires: Requires
 help-addon-provides: Provides
 help-addon-offers: Offers
 help-addon-part-of-box: This addon is a part of <a href="%1">%2</a>.
+
+#
+# Issues
+#
+issue-dialog: Problems Detected
+issue-dialog-title: Problems Detected
+
+error-read-config-file: Configuration Error
+error-read-config-file-text: An error was detected in the configuration file <tt>%1</tt>.
+
+error-read-info-file: Addon Info Error
+error-read-info-file-text: There was an error in the metadata file <tt>%1</tt> of addon <b>%2</b>.
+
+error-read-zip-info-file: PK3 Info Error
+error-read-zip-info-file-text: There was an error in the metadata entry of the addon <b>%2</b>, in the file <tt>%1</tt>.

@@ -26,7 +26,7 @@
 ## addons.
 
 import os, re, string, zipfile, shutil
-import events, paths, profiles as pr, language, parser
+import logger, events, paths, profiles as pr, language, parser
 import settings as st
 
 # This is a list of all the categories that include exclusions regarding
@@ -449,9 +449,7 @@ class Addon:
                     elem.add(parser.KeyElement('addon', ownerId))
                     st.processSettingBlock(elem)
 
-        except:
-            # Take note of errors.  They should be displayed once the
-            # rest of the UI is initialized.
+        except parser.OutOfElements:
             pass
 
 
@@ -537,13 +535,14 @@ class BoxAddon (Addon):
                     name = os.path.join(self.getContentPath(), info)
                     conf = file(name).read()
                     self.parseConfiguration(conf)
-                except:
-                    # Ignore the error.
-                    # TODO: Make sure the user will learn about the
-                    # important errors.
+                except OSError:
                     pass
+                except IOError:
+                    pass
+                except:
+                    logger.add(logger.HIGH, 'error-read-info-file',
+                               name, self.getId())
         except:
-            # Log a warning?
             pass
 
         # Load a readme from a separate file.
@@ -595,11 +594,13 @@ class BundleAddon (Addon):
                 try:
                     conf = file(self.__makePath(info)).read()
                     self.parseConfiguration(conf)
-                except:
-                    # Ignore the error.
-                    # TODO: Make sure the user will learn about the
-                    # important errors.
+                except OSError:
                     pass
+                except IOError:
+                    pass
+                except Exception, x:
+                    logger.add(logger.HIGH, 'error-read-info-file',
+                               self.__makePath(info), self.getId())
         except:
             # Log a warning?
             pass
@@ -668,8 +669,11 @@ class PK3Addon (Addon):
             for info in META_NAMES:
                 try:
                     self.parseConfiguration(z.read(info))
-                except:
+                except KeyError:
                     pass
+                except:
+                    logger.add(logger.HIGH, 'error-read-zip-info-file',
+                               self.source, self.getId())
 
         except:
             # Log a warning?

@@ -28,6 +28,7 @@
 ## installation directory, and also contains Doomsday.
 
 import os, re, sys
+import host
 
 # Directory Type constants to be used with getSystemPath() and
 # getUserPath().
@@ -42,7 +43,7 @@ RUNTIME = 'runtime'
 
 # This is the name of the directory under which Snowberry's files will
 # be stored in the user's home directory.
-if sys.platform == 'darwin':
+if host.isMac():
     SNOWBERRY_HOME_DIR = 'Snowberry'
 else:
     SNOWBERRY_HOME_DIR = '.snowberry'
@@ -70,7 +71,7 @@ def _checkSnowberryHome():
     # When this is run for the first time, we'll need to figure out
     # where the home directory should be.
     if not homeDir:
-        if sys.platform == 'darwin':
+        if host.isMac():
             # Home on the Mac.
             homeLocation = os.path.join(os.getenv('HOME'), 
                                         'Library/Application Support')
@@ -83,7 +84,7 @@ def _checkSnowberryHome():
             homeLocation = os.getcwd()
             # The environment variable was not defined.  Let's try
             # something else.
-            if sys.platform == 'win32':
+            if host.isWindows():
                 if os.getenv('HOMEPATH'):
                     homeLocation = os.getenv('HOMEDRIVE') + \
                                    os.getenv('HOMEPATH')

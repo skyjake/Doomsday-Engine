@@ -31,7 +31,7 @@ import wx.html
 import wx.lib.intctrl as intctrl
 import wx.lib.scrolledpanel as scrolled
 #import wx.lib.fancytext as fancy
-import events, ui, language, paths
+import host, events, ui, language, paths
 import addons as ao
 import profiles as pr
 import settings as st
@@ -527,8 +527,8 @@ class RadioButton (Widget):
 class MyStaticText (wx.StaticText):
     def __init__(self, parent, wxId, label):
         wx.StaticText.__init__(self, parent, wxId, label)
-        if sys.platform == 'win32':
-            #self.SetBackgroundColour(tabBgColour)
+        if host.isWindows():
+            # No background.
             self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
         wx.EVT_ERASE_BACKGROUND(self, self.clearBack)
 
@@ -807,7 +807,7 @@ class Slider (Widget):
         self.step = 1
 
         # Listen for changes.  Some platform-specific tweaks are needed:
-        if sys.platform == 'linux2':
+        if host.isUnix():
             wx.EVT_COMMAND_SCROLL_THUMBTRACK(parent, wxId, self.onThumbTrack)
         else:
             wx.EVT_COMMAND_SCROLL_THUMBRELEASE(parent, wxId, self.onThumbTrack)
@@ -1443,7 +1443,7 @@ class TabArea (Widget):
         #tab.SetupScrolling()
         tab = wx.Panel(book, -1)
 
-        if sys.platform == 'win32':
+        if host.isWindows():
             tab.SetBackgroundColour(tabBgColour)
             tab.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
 
@@ -1676,7 +1676,7 @@ class Tree (Widget):
         images.Add(wx.Bitmap(paths.findBitmap('unchecked')))
         images.Add(wx.Bitmap(paths.findBitmap('checked')))
         images.Add(wx.Bitmap(paths.findBitmap('defcheck')))
-        if sys.platform == 'win32':
+        if host.isWindows():
             images.Add(wx.Bitmap(paths.findBitmap('closedfolder')))
             images.Add(wx.Bitmap(paths.findBitmap('openfolder')))
         self.getWxWidget().AssignImageList(images)
@@ -1755,7 +1755,7 @@ class Tree (Widget):
                 # The labels will be updated separately.
                 item = tree.AppendItem(parentItem, '')
 
-                if sys.platform == 'win32':
+                if host.isWindows():
                     # Windows requires that all items have an image.
                     tree.SetItemImage(item, 3)
                                 
@@ -1923,7 +1923,7 @@ class Tree (Widget):
             rootLabel = language.translate(hier.rootId)
             totalCount = len(hier.items)
 
-            if sys.platform == 'win32':
+            if host.isWindows():
                 # The closed folder icon.
                 tree.SetItemImage(hier.root, 3)
 

@@ -36,9 +36,10 @@
 
 import sys, os, wx, string
 import wx.wizard as wiz
-import events, widgets, language
+import host, events, widgets, language
 import profiles as pr
 import settings as st
+import logger
 
 # An array of UI areas.
 uiAreas = {}
@@ -1078,7 +1079,7 @@ class MainFrame (wx.Frame):
         self.mainPanel.GetSizer().Fit(self)
 
         # The main panel's sizer does not account for the help panel.
-        if sys.platform != 'win32':
+        if not host.isWindows():
             windowSize = self.GetSizeTuple()
             self.SetSize((windowSize[0] + INITIAL_SASH_POS, windowSize[1]))
 
@@ -1209,7 +1210,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     buttonArea.setBorder(6)
     buttonArea.setWeight(0)
 
-    if sys.platform != 'darwin':
+    if not host.isMac():
         # Follow the general guidelines of the platform.
         if '' in buttons:
             # Only reverse the portion after the ''.
@@ -1252,6 +1253,9 @@ def startMainLoop():
     # Before we give wxPython all control, update the layout of UI
     # areas.
     app.showMainWindow()
+
+    # Display any issues that came up during init.
+    logger.show()
 
     # Notify everyone that the main loop is about to kick in.
     events.send(events.Notify('init-done'))

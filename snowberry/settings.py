@@ -31,6 +31,7 @@
 
 # The addons may contain extra settings.
 import os, re
+import logger
 import language
 import paths, parser
 import addons as ao
@@ -484,10 +485,14 @@ def readConfigFile(fileName):
                     elements.append(sub)
             else:
                 elements.append(e)
-    except:
-        # Parsing was completed, or failed.  It doesn't matter what
-        # really happened.
+
+    except parser.OutOfElements:
+        # Parsing was completed.
         pass
+
+    except:
+        # Log an error message.
+        logger.add(logger.HIGH, 'error-read-config-file', fileName)
 
     # Process all the elements we got from the configuration files.
     for e in elements:

@@ -318,24 +318,28 @@ class Parser:
         return e
 
     def parseElement(self):
-        "Returns the next element from the source file."
+        """Returns the next element from the source file.
+
+        @return An instance of one of the Element classes.
+        """
+        
         try:
             key = self.peekToken()
 
             # The next token decides what kind of element we have here.
             next = self.nextToken()
-
-            if next == ':' or next == '=':
-                return self.parseKeyElement(key)
-            elif next == '<':
-                return self.parseListElement(key)
-            else:
-                # It's a block element.
-                return self.parseBlockElement(key)
-
+            
         except EOFError:
             # The file ended.
             return None
+
+        if next == ':' or next == '=':
+            return self.parseKeyElement(key)
+        elif next == '<':
+            return self.parseListElement(key)
+        else:
+            # It's a block element.
+            return self.parseBlockElement(key)
 
     def parseString(self):
         """Parse a string literal.  Returns the string sans the
@@ -412,7 +416,11 @@ class Parser:
         return KeyElement(name, value)
                
     def parseBlockElement(self, blockType):
-        "Parse a block element, identified by the given name."
+        """Parse a block element, identified by the given name.
+
+        @param blockType Identifier of the block.
+        """
+        
         block = BlockElement(blockType, self.peekToken())
 
         # How about some attributes?
