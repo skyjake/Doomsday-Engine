@@ -34,13 +34,13 @@ AM_PATH_SDL($SDL_VERSION,:,
 	AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
 
 dnl Check for XFree86-VidModeExtension.
-AC_CHECK_HEADERS([X11/Xlib.h])
-AC_CHECK_HEADERS([X11/extensions/xf86vmode.h],
-	[LIBS="$LIBS -L/usr/X11R6/lib -lXxf86vm"], [],
-	[#if HAVE_X11_XLIB_H
-	#  include <X11/Xlib.h>
-	#endif
-	])
+dnl AC_CHECK_HEADERS([X11/Xlib.h])
+dnl AC_CHECK_HEADERS([X11/extensions/xf86vmode.h],
+dnl	[LIBS="$LIBS -L/usr/X11R6/lib -lXxf86vm"], [],
+dnl	[#if HAVE_X11_XLIB_H
+dnl	#  include <X11/Xlib.h>
+dnl	#endif
+dnl	])
 
 dnl Check that the required libraries are available.
 AC_CHECK_HEADER(curses.h,
