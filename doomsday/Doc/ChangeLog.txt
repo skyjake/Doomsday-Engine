@@ -4,6 +4,25 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.0-rc1
+-----------------
+! Release Candidate
+! features from alpha-2 and alpha-3 are *not included*
+* Linux now officially supported (no MIDI music, joysticks)
++ control panel settings for FakeRadio
++ rend-fakeradio-darkness
+* rend-camera-smooth now affects 3D model animation, monster movement
+* artifact bobbing (Heretic/Hexen) completely smooth
+* 3D model spinning completely smooth
+* key repeat uses milliseconds (input-key-delay)
+* network code uses TCP sockets and UDP packets, DirectPlay ditched
+- savegame directory creation bug fixed
+- PK3 reader supports files created with Info-ZIP that contain extra
+  field data
+- OpenGL display resolution change sometimes didn't update viewport
+- FakeRadio shadows are not rendered when light amplification is active
+
+
 Version 1.8.alpha-3
 -------------------
 ! Alpha Release
