@@ -1,0 +1,5 @@
+# Doomsday Engine 1.7
+# Definitions shared by all games.
+
+Include "Flags.ded";
+Include "XG.ded";
