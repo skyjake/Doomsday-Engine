@@ -155,6 +155,8 @@ void S_LocalSoundAtVolumeFrom
 	boolean needfree = false;
 	char buf[300];
 
+	if(isDedicated) return;
+
 	if(sound_id <= 0 
 		|| sound_id >= defs.count.sounds.num
 		|| sfx_volume <= 0
@@ -240,6 +242,8 @@ void S_LocalSoundAtVolumeFrom
 		{
 			Con_Message("S_LocalSound: Sound %s has a missing lump: '%s'.\n",
 				info->id, info->lumpname);
+			Con_Message("  Verifying... The lump number is %i.\n", 
+				W_CheckNumForName(info->lumpname));
 			return;
 		}
 		sp = W_CacheLumpNum(info->lumpnum, PU_STATIC);
@@ -294,7 +298,8 @@ void S_LocalSoundAtVolumeFrom
 	// Sample acquired, let's play it.
 	Sfx_StartSound(&samp, volume, freq, origin, fixedpos,
 		(info->flags & SF_NO_ATTENUATION || sound_id_and_flags & DDSF_NO_ATTENUATION? SF_NO_ATTENUATION : 0)
-		| (info->flags & SF_REPEAT || sound_id_and_flags & DDSF_REPEAT? SF_REPEAT : 0));
+		| (info->flags & SF_REPEAT || sound_id_and_flags & DDSF_REPEAT? SF_REPEAT : 0)
+		| (info->flags & SF_DONT_STOP? SF_DONT_STOP : 0));
 
 	// We don't need the original sample any more, clean up.
 	if(sp) W_ChangeCacheTag(info->lumpnum, PU_CACHE);

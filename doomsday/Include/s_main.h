@@ -9,6 +9,7 @@
 #define SF_GLOBAL_EXCLUDE	0x4		// Exclude all emitters.
 #define SF_NO_ATTENUATION	0x8		// Very, very loud...
 #define SF_REPEAT			0x10	// Repeats until stopped.
+#define SF_DONT_STOP		0x20	// Sound can't be stopped while playing.
 
 extern int sound_info;
 extern int sound_min_distance, sound_max_distance;

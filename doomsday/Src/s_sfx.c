@@ -189,6 +189,16 @@ void Sfx_StopSound(int id, mobj_t *emitter)
 			|| id && ch->buffer->sample->id != id
 			|| emitter && ch->emitter != emitter) 
 			continue; 
+
+		// Can it be stopped?
+		if(ch->buffer->flags & SFXBF_DONT_STOP) 
+		{
+			// The emitter might get destroyed...
+			ch->emitter = NULL;
+			ch->flags |= SFXCF_NO_UPDATE | SFXCF_NO_ORIGIN;
+			continue;
+		}
+
 		// This channel must be stopped!
 		driver->Stop(ch->buffer);
 	}
@@ -643,7 +653,8 @@ void Sfx_ChannelUpdate(sfxchannel_t *ch)
 	sfxbuffer_t *buf = ch->buffer;
 	float normdist, dist, pan, angle, vec[3];
 
-	if(!buf) return;
+	if(!buf || ch->flags & SFXCF_NO_UPDATE) 
+		return;
 
 	// Copy the emitter's position (if any), to the pos coord array.
 	if(ch->emitter)
@@ -1027,14 +1038,17 @@ void Sfx_StartSound
 			chsamp->sample.bytesper * 8, chsamp->sample.rate);
 	}
 
-	// Check for the repeat flag.
+	// Clear flags.
+	selch->buffer->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+
+	// Set buffer flags.
 	if(flags & SF_REPEAT)
 		selch->buffer->flags |= SFXBF_REPEAT;
-	else
-		selch->buffer->flags &= ~SFXBF_REPEAT;
+	if(flags & SF_DONT_STOP)
+		selch->buffer->flags |= SFXBF_DONT_STOP;
 
 	// Init the channel information.
-	selch->flags &= ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION);
+	selch->flags &= ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE);
 	selch->volume = volume;
 	selch->frequency = freq;
 	if(!emitter && !fixedpos)

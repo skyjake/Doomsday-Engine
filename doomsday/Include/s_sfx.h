@@ -28,6 +28,7 @@ sfxcache_t;
 // Channel flags.
 #define SFXCF_NO_ORIGIN			0x1	// Sound is coming from a mystical emitter.
 #define SFXCF_NO_ATTENUATION	0x2	// Sound is very, very loud.
+#define SFXCF_NO_UPDATE			0x4	// Channel update is skipped.
 
 typedef struct sfxchannel_s
 {

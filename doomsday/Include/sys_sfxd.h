@@ -9,6 +9,7 @@
 #define SFXBF_PLAYING	0x1		// The buffer is playing.
 #define SFXBF_3D		0x2		// Otherwise playing in 2D mode.
 #define SFXBF_REPEAT	0x4		// Buffer will repeat until stopped.
+#define SFXBF_DONT_STOP	0x8		// Never stop until normal finish.
 #define SFXBF_RELOAD	0x10000	// Sample must be reloaded before playing.
 
 // Events.
