@@ -61,7 +61,7 @@ typedef struct boundary_s {
 void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
 						 float dist2, pvec2_t point, pvec2_t lp, pvec2_t rp)
 {
-	float   len1, len2;
+	float   len1, len2, plen;
 	vec2_t  origin = { 0, 0 }, norm1, norm2;
 
 	// Length of both lines.
@@ -89,11 +89,27 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
 	// corner point.
 	V2_Intersection(norm1, line1, norm2, line2, point);
 
-	// Do we need to calculate the extended points, too?
+	// Do we need to calculate the extended points, too?  Check that
+	// the extensions don't bleed too badly outside the legal shadow
+	// area.
 	if(lp)
+	{
 		V2_Intersection(origin, line1, norm2, line2, lp);
+		plen = V2_Length(lp);
+		if(plen > 0 && plen > len1)
+		{
+			V2_Scale(lp, len1/plen);
+		}
+	}
 	if(rp)
+	{
 		V2_Intersection(norm1, line1, origin, line2, rp);
+		plen = V2_Length(rp);
+		if(plen > 0 && plen > len2)
+		{
+			V2_Scale(rp, len2/plen);
+		}
+	}
 }
 
 void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
@@ -128,8 +144,8 @@ line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
  */
 sector_t *R_GetShadowSector(shadowpoly_t *poly)
 {
-	return poly->flags & SHPF_FRONTSIDE ? poly->line->frontsector : poly->
-		line->backsector;
+	return poly->flags & SHPF_FRONTSIDE ? poly->line->frontsector :
+		poly->line->backsector;
 }
 
 /*
@@ -157,6 +173,7 @@ boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
 	// The (back)neighbour.
 	if(NULL == (neighbor = R_GetShadowNeighbor(poly, leftCorner, back)))
 		return false;
+	
 	R_ShadowDelta(leftCorner ? left : right, neighbor,
 				  !back ? sector : R_GetShadowProximity(poly, leftCorner));
 

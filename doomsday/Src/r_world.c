@@ -22,6 +22,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <assert.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -1078,7 +1079,7 @@ void R_SetupSky(void)
  * verts[0] is the leftmost vertex and verts[1] is the rightmost
  * vertex, when the line lies at the edge of `sector.'
  */
-void R_OrderVertices(line_t *line, sector_t *sector, vertex_t * verts[2])
+void R_OrderVertices(line_t *line, sector_t *sector, vertex_t *verts[2])
 {
 	if(sector == line->frontsector)
 	{
@@ -1103,7 +1104,7 @@ void R_FindLineNeighbors(sector_t *sector, line_t *line,
 	vertex_t *vtx[2];
 	int     j;
 
-	// We want to know, which vertex is the leftmost/rightmost one.
+	// We want to know which vertex is the leftmost/rightmost one.
 	R_OrderVertices(line, sector, vtx);
 
 	// Find the real neighbours, which are in the same sector
@@ -1150,12 +1151,19 @@ void R_FindLineNeighbors(sector_t *sector, line_t *line,
 	}
 }
 
+static boolean R_IsEquivalent(line_t *a, line_t *b)
+{
+	return ((a->v1 == b->v1 && a->v2 == b->v2) ||
+			(a->v1 == b->v2 && a->v2 == b->v1));
+}
+
 /*
  * Browse through the lines in backSector.  The backNeighbor is the
  * line that 1) isn't realNeighbor and 2) connects to commonVertex.
  */
-void R_FindBackNeighbor(sector_t *backSector, line_t *realNeighbor,
-						vertex_t * commonVertex, line_t **backNeighbor)
+static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
+							   line_t *realNeighbor, vertex_t *commonVertex,
+							   line_t **backNeighbor)
 {
 	int     i;
 	line_t *line;
@@ -1163,7 +1171,10 @@ void R_FindBackNeighbor(sector_t *backSector, line_t *realNeighbor,
 	for(i = 0; i < backSector->linecount; i++)
 	{
 		line = backSector->lines[i];
-		if(line == realNeighbor)
+		if(R_IsEquivalent(line, realNeighbor) ||
+		   R_IsEquivalent(line, self))
+			continue;
+		if(line->frontsector == line->backsector)
 			continue;
 		if(line->v1 == commonVertex || line->v2 == commonVertex)
 		{
@@ -1225,14 +1236,17 @@ void R_InitLineInfo(void)
 				{
 					side->proxsector[j] =
 						(side->neighbor[j]->frontsector ==
-						 sector ? side->neighbor[j]->backsector : side->
-						 neighbor[j]->frontsector);
+						 sector ? side->neighbor[j]->backsector :
+						 side->neighbor[j]->frontsector);
 
 					// Find the backneighbour.  They are the
 					// neighbouring lines in the backsectors of the
 					// neighbour lines.
-					R_FindBackNeighbor(side->proxsector[j], side->neighbor[j],
-									   vertices[j], &side->backneighbor[j]);
+					R_FindBackNeighbor(side->proxsector[j], line,
+									   side->neighbor[j], vertices[j],
+									   &side->backneighbor[j]);
+
+					/*assert(side->backneighbor[j] != line);*/
 				}
 				else
 				{
