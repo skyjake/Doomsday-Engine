@@ -1135,6 +1135,8 @@ void P_MobjThinker(mobj_t *mobj)
 		return;
 	}
 
+	P_UpdateMobjFlags(mobj);
+
 /*#ifdef _DEBUG
 	mobj->translucency = M_Random();
 #endif*/
@@ -2671,8 +2673,10 @@ void R_SetAllDoomsdayFlags(void)
 			if(mo->flags & MF_LOCAL) mo->ddflags |= DDMF_LOCAL;
 			if(mo->flags & MF_SOLID) mo->ddflags |= DDMF_SOLID;
 			if(mo->flags & MF_MISSILE) mo->ddflags |= DDMF_MISSILE;
-			if(mo->flags2 & MF2_FLY) mo->ddflags |= DDMF_FLY;
-			if(mo->flags2 & MF2_FLOATBOB) mo->ddflags |= DDMF_GOINGROUND;
+			if(mo->flags2 & MF2_FLY) 
+				mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
+			if(mo->flags2 & MF2_FLOATBOB) 
+				mo->ddflags |= DDMF_GOINGROUND | DDMF_NOGRAVITY;
 			if(mo->flags2 & MF2_LOGRAV) mo->ddflags |= DDMF_LOWGRAVITY;
 			if(mo->flags & MF_NOGRAVITY/* || mo->flags2 & MF2_FLY*/) 
 				mo->ddflags |= DDMF_NOGRAVITY;
