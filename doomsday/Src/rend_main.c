@@ -730,7 +730,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 		quad.lights = DL_GetSegLightLinks(segindex, SEG_MIDDLE);
 
 		Rend_PolyTextureBlend(sid->midtexture, &quad);
-        SB_RendPoly(&quad, false);
+        SB_RendPoly(&quad, false, seginfo[segindex].illum[1],
+                    &seginfo[segindex].tracker[1], segindex);
 		RL_AddPoly(&quad);
         if(!(flags & RWSF_NO_RADIO))
         {
@@ -856,7 +857,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 					C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
 
 				Rend_PolyTextureBlend(sid->midtexture, &quad);
-                SB_RendPoly(&quad, false);
+                SB_RendPoly(&quad, false, seginfo[segindex].illum[1],
+                            &seginfo[segindex].tracker[1], segindex);
 				RL_AddPoly(&quad);
 				if(!texmask)
                 {
@@ -921,7 +923,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.lights = DL_GetSegLightLinks(segindex, SEG_TOP);
 
 			Rend_PolyTextureBlend(sid->toptexture, &quad);
-            SB_RendPoly(&quad, false);
+            SB_RendPoly(&quad, false, seginfo[segindex].illum[0],
+                        &seginfo[segindex].tracker[0], segindex);
 			RL_AddPoly(&quad);
             Rend_AddShinyWallSeg(sid->toptexture, &quad);
             if(!(flags & RWSF_NO_RADIO))
@@ -982,7 +985,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.lights = DL_GetSegLightLinks(segindex, SEG_BOTTOM);
 
 			Rend_PolyTextureBlend(sid->bottomtexture, &quad);
-            SB_RendPoly(&quad, false);
+            SB_RendPoly(&quad, false, seginfo[segindex].illum[2],
+                        &seginfo[segindex].tracker[2], segindex);
 			RL_AddPoly(&quad);
             if(!(flags & RWSF_NO_RADIO))
             {
@@ -1178,7 +1182,8 @@ void Rend_RenderPlane(planeinfo_t *plane, dynlight_t *lights,
 
 		RL_PrepareFlat(plane, &poly, subsector);
 
-        SB_RendPoly(&poly, plane->isfloor);
+        SB_RendPoly(&poly, plane->isfloor, plane->illumination,
+                    &plane->tracker, GET_SUBSECTOR_IDX(subsector));
 
 		Rend_PolyFlatBlend(plane->pic, &poly);
 		RL_AddPoly(&poly);
@@ -1334,6 +1339,7 @@ void Rend_RenderMap(void)
 		C_ClearRanges();		// Clear the clipper.
 		R_ClearSectorFlags();
 		DL_ClearForFrame();		// Zeroes the links.
+        SB_BeginFrame();
 
 		// Generate surface decorations for the frame.
 		Rend_InitDecorationsForFrame();
@@ -1369,8 +1375,15 @@ void Rend_RenderMap(void)
 		Rend_ProjectDecorations();
 
 		Rend_RenderShadows();
+
+        // Wrap up with Shadow Bias.
+        SB_EndFrame();
 	}
 	RL_RenderAllLists();
+
+    // Draw the Shadow Bias Editor's draw that identifies the current
+    // light.
+    SBE_DrawCursor();
 }
 
 // Console commands.
