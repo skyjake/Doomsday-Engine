@@ -128,7 +128,7 @@ PNG_Load(const char *fileName, int *width, int *height, int *pixelSize)
 
 	// OK, let's copy it into Doomsday's buffer.
 	// FIXME: Why not load directly into it?
-	retbuf = M_Malloc(*pixelSize * png_info->width * png_info->height);
+	retbuf = M_Malloc(4 * png_info->width * png_info->height);
 	rows = png_get_rows(png_ptr, png_info);
 	for(i = 0; i < *height; i++)
 	{
