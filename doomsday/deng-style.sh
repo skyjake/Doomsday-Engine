@@ -7,7 +7,7 @@ indent	--k-and-r-style \
 	--blank-lines-after-procedures \
 	--blank-lines-before-block-comments \
 	--no-blank-lines-after-commas \
-	--break-before-boolean-operator \
+	--break-after-boolean-operator \
 	--braces-on-struct-decl-line \
 	--braces-after-if-line \
 	--brace-indent0 \
