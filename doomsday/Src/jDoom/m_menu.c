@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/05/25 23:25:51  skyjake
+// Added some spaces
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -1142,7 +1145,7 @@ void M_Sfx16bit(int choice)
 //
 void M_DrawMainMenu(void)
 {
-    GL_DrawPatch(94,2,W_GetNumForName("M_DOOM"));
+    GL_DrawPatch(94, 2, W_GetNumForName("M_DOOM"));
 }
 
 
