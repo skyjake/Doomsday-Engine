@@ -23,6 +23,7 @@ Version 1.7.12 (work in progress)
 + cmd 'startinf (scriptid)' (and 'stopinf')
 * 'InFine' is an alternative name for the 'Finale' definition
 - removed obsolete settings from Control Panel: Network
+- removed detail texture maximum distance cvar and Control Panel slider
 - removed cvars 'rend-light-clip', 'rend-light-shrink'
 - fixed: leaking lights (impossible route detection)
 - fixed: stray pixels along polygon edges in dynamically lit areas
@@ -38,6 +39,7 @@ drOpenGL:
 + support for multitexturing
 + NV_texture_env_combine4 or ATI_texture_env_combine3 required when 
   rendering dynamic lights with multitexturing
++ support for SGIS_generate_mipmap
 
 jDoom:
 + crosshair alpha slider added to the HUD menu
