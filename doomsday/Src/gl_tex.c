@@ -527,6 +527,9 @@ void GL_LoadSystemTextures(void)
 			GL_LoadLightMap(&decor->lights[k].down);
 			GL_LoadLightMap(&decor->lights[k].sides);
 		}
+
+		// Generate RGB lightmaps for decorations.
+		//R_GenerateDecorMap(decor);
 	}
 
 	// Load particle textures.
