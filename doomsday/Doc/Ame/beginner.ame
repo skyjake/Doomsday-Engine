@@ -29,8 +29,10 @@ CONTENTS: @contents{1}
 	@link{ftp://jfiles@@server1.thefourwinds.net/} or
   	from the mirror site @link{http://www.jbserver.com/~jdoom/}.
 
-@item 3D models are distributed in separate archives. Downloading one or
- 	more model pack is optional.
+@item 3D models are distributed in separate packages called model packs.
+	Each model pack contains a set of 3D models, which will be used to represent objects in the game world. Without a model pack, objects will be represented by the original 2D graphics ("sprites").
+	Downloading one or more model pack is optional.
+	The packages have the following file names:
 
     @file{jdoom_mpack.exe} @br @file{jheretic_mpack.exe} @br
     @file{jhexen_mpack.exe}
@@ -49,7 +51,7 @@ CONTENTS: @contents{1}
 
 @chapter{ Automatical installation }
 
-The distribution archives have included a special installation wizard since Doomsday 1.7.3.
+The distribution packages have included a special installation wizard since Doomsday 1.7.3.
 
 @section{ Installing into a new folder }
 
@@ -61,7 +63,7 @@ After the files have been extracted, a WAD Files dialog will appear. The dialog 
 
 The shortcut creation dialog will allow you to select a Start Menu program group and gives you the option to automatically create shortcuts for the KickStart launcher. The fast launch shortcuts will be created in the selected Start Menu program group. They allow you to immediately launch the game using a specific WAD and renderer.
 
-If you have downloaded any model packs, you may now install them in any order you like. They use the same installation wizard as the main distribution archive.
+If you have downloaded any model packs, you may now install them in any order you like. They use the same installation wizard as the main distribution package.
 
 @section{ Upgrading an old version }
 
@@ -154,6 +156,10 @@ If you didn't copy the IWADs to the Data folder, you must naturally give
 the full path to glBSP, for example:
 
 @samp{@cmd{glbsp d:\games\heretic\heretic.wad}}
+
+@notice{
+	If you have glBSP version 2.00, you need to use the @opt{-fresh} option when you run glBSP. Otherwise the generated data may contain errors.
+}
 
 For the latest version go to @link{http://glbsp.sourceforge.net/}.
 
