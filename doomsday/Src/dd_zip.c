@@ -326,12 +326,13 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 		file = prevOpened;
 	}
 	
-	VERBOSE( Con_Message("Zip_Open: %s\n", fileName) );
+	VERBOSE( Con_Message("Zip_Open: %s\n", M_Pretty(fileName)) );
 
 	// Scan the end of the file for the central directory end record.
 	if(!Zip_LocateCentralDirectory(file))
 	{
-		Con_Error("Zip_Open: %s: Central directory not found.\n", fileName);
+		Con_Error("Zip_Open: %s: Central directory not found.\n", 
+			M_Pretty(fileName));
 	}
 
 	// Read the central directory end record.
@@ -341,7 +342,7 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 	if(summary.diskEntryCount != summary.totalEntryCount)
 	{
 		Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n", 
-			fileName);
+			M_Pretty(fileName));
 	}
 
 	// Read the entire central directory into memory.
@@ -376,12 +377,12 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 			|| header->compressedSize != header->size)
 		{
 			Con_Error("Zip_Open: %s: '%s' is compressed.\n  Compression is "
-				"not supported.\n", fileName, buf);
+				"not supported.\n", M_Pretty(fileName), buf);
 		}
 		if(header->flags & ZFH_ENCRYPTED)
 		{
 			Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is "
-				"not supported.\n", fileName, buf);
+				"not supported.\n", M_Pretty(fileName), buf);
 		}
 
 		// Convert all slashes to backslashes, for compatibility with 
@@ -540,7 +541,7 @@ uint Zip_Read(zipindex_t index, void *buffer)
 	pack = entry->package;
 
 	VERBOSE2( Con_Printf("Zip_Read: %s: '%s' (%i bytes)\n",
-		pack->name, entry->name, entry->size) );
+		M_Pretty(pack->name), M_Pretty(entry->name), entry->size) );
 
 	F_Seek(pack->file, entry->offset, SEEK_SET);
 	F_Read(buffer, entry->size, pack->file);

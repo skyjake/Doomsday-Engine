@@ -57,7 +57,7 @@ int Dir_ChDir(directory_t *dir)
 	success = !_chdir(dir->path); // Successful if == 0.
 
 	VERBOSE2( Con_Printf("Dir_ChDir: %s: %s\n", 
-		success? "Succeeded" : "Failed", dir->path) );
+		success? "Succeeded" : "Failed", M_Pretty(dir->path)) );
 
 	return success;
 }

@@ -473,7 +473,7 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 		return false;
 	}
 
-	Con_Message("W_AddFile: %s\n", filename);
+	Con_Message("W_AddFile: %s\n", M_Pretty(filename));
 
 	// Determine the file name extension.
 	extension = strrchr(filename, '.');

@@ -324,7 +324,7 @@ int FR_PrepareFont(char *name)
 		return false;
 	}
 
-	if(verbose) Con_Message("FR_PrepareFont: %s\n", buf); 
+	if(verbose) Con_Message("FR_PrepareFont: %s\n", M_Pretty(buf)); 
 
 	version = InByte(file);
 	

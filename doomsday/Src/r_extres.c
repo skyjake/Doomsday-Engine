@@ -106,7 +106,7 @@ void R_SetDataPath(const char *path)
 
 	M_TranslatePath(path, dataPath);
 	Dir_ValidDir(dataPath);
-	VERBOSE( Con_Message("R_SetDataPath: %s\n", dataPath) );
+	VERBOSE( Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)) );
 
 	// Update the paths of each class.
 	memset(classInfo, 0, sizeof(classInfo));
@@ -134,7 +134,8 @@ void R_SetDataPath(const char *path)
 		}
 
 		VERBOSE2( Con_Message("  %i: %s (%s)\n", i, 
-			classInfo[i].path, classInfo[i].overridePath) );
+			M_Pretty(classInfo[i].path), 
+			M_Pretty(classInfo[i].overridePath)) );
 	}
 }
 
