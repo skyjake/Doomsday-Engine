@@ -194,20 +194,18 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 		gl.SetInteger(DGL_MODULATE_TEXTURE, IS_MUL? 4 : 5); 
 
 		// The dynamic light.
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 0 : 1);
-		gl.Bind(vis->wall.light->texture);
+		RL_BindTo(IS_MUL? 0 : 1, vis->wall.light->texture);
 		RL_FloatRGB(vis->wall.light->color, color);
 		gl.SetFloatv(DGL_ENV_COLOR, color);
 
 		// The actual texture.
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 1 : 0);
-		gl.Bind(vis->wall.texture);
+		RL_BindTo(IS_MUL? 1 : 0, vis->wall.texture);
 
 		withDyn = true;
 	}
 	else
 	{
-		gl.Bind(vis->wall.texture);
+		RL_Bind(vis->wall.texture);
 		normal = DGL_TEXTURE0;
 	}
 
