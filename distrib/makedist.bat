@@ -68,6 +68,9 @@ xcopy %SRC%Data\jHexen\jHexen.wad	%Dist%Data\jHexen\
 xcopy %SRC%Data\Fonts\*.dfn		%Dist%Data\Fonts\
 xcopy %SRC%Data\Fonts\Readme.txt	%Dist%Data\Fonts\
 xcopy %SRC%Data\KeyMaps\*.dkm		%Dist%Data\KeyMaps\
+xcopy %SRC%Data\jDoom\Auto\Readme.txt	%Dist%Data\jDoom\Auto\
+xcopy %SRC%Data\jHeretic\Auto\Readme.txt %Dist%Data\jHeretic\Auto\
+xcopy %SRC%Data\jHexen\Auto\Readme.txt	%Dist%Data\jHexen\Auto\
 
 REM +---------------------------------------------------------------+
 REM + Definitions						    +
