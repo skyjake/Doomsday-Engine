@@ -51,18 +51,18 @@
 #define ANGLETOFINESHIFT	19		
 
 // Effective size is 10240.
-extern  fixed_t		finesine[5*FINEANGLES/4];
+extern fixed_t		finesine[5*FINEANGLES/4];
 
 // Re-use data, is just PI/2 pahse shift.
-extern  fixed_t*	finecosine;
+extern fixed_t		*finecosine;
 
 
 // Effective size is 4096.
 extern fixed_t		finetangent[FINEANGLES/2];
 
 // Binary Angle Measument, BAM.
-#define ANG45			0x20000000
-#define ANG90			0x40000000
+#define ANG45		0x20000000
+#define ANG90		0x40000000
 #define ANG180		0x80000000
 #define ANG270		0xc0000000
 
@@ -90,6 +90,9 @@ SlopeDiv
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/01/25 21:41:00  skyjake
+// Fixed finecosine
+//
 // Revision 1.3  2004/01/07 20:44:40  skyjake
 // Merged from branch-nix
 //
