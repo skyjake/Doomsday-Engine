@@ -310,7 +310,7 @@ void Sv_FixLocalAngles()
 
 void Sv_HandlePacket(void)
 {
-	id_t id;
+	ident_t id;
 	int i, mask, from = netBuffer.player;
 	ddplayer_t *pl = &players[from];
 	client_t *sender = &clients[from];

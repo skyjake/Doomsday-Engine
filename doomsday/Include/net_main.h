@@ -139,7 +139,7 @@ pinger_t;
 typedef struct
 {
 	// ID number. Each client has a unique ID number.
-	id_t	id;
+	ident_t	id;
 
 	// The local command buffer is used for storing tic commands generated
 	// on the local computer. They will be sent to the server.
@@ -294,7 +294,7 @@ uint	Net_GetAckTime(int clientNumber);
 uint	Net_GetAckThreshold(int clientNumber);
 
 char*	Net_GetPlayerName(int player);
-id_t	Net_GetPlayerID(int player);
+ident_t	Net_GetPlayerID(int player);
 
 void 	Net_PrintServerInfo(int index, serverinfo_t *info);
 

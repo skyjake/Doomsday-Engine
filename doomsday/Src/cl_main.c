@@ -50,7 +50,7 @@ extern int gotframe;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-id_t		clientID;
+ident_t		clientID;
 boolean		handshakeReceived = false;
 int			gameReady = false;
 int			serverTime;

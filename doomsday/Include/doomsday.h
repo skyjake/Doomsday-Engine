@@ -124,7 +124,7 @@ void		Sys_Quit(void);
 void		Net_SendPacket(int to_player, int type, void *data, int length);
 int			Net_GetTicCmd(void *command, int player);
 char *		Net_GetPlayerName(int player);
-id_t		Net_GetPlayerID(int player);
+ident_t		Net_GetPlayerID(int player);
 
 // Play.
 float		P_AccurateDistance(fixed_t dx, fixed_t dy);

@@ -27,7 +27,7 @@
 #define	SHORTP(x)		(*(short*) (x))
 #define	USHORTP(x)		(*(unsigned short*) (x))
 
-extern id_t clientID;
+extern ident_t clientID;
 extern int serverTime;
 extern boolean handshakeReceived;
 extern int gameReady;
