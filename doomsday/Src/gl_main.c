@@ -44,6 +44,11 @@
 #  include <X11/extensions/xf86vmode.h>
 #endif
 
+#if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
+#  define SDL_GAMMA
+#  include <SDL/SDL.h>
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -169,6 +174,14 @@ void GL_GetGammaRamp(unsigned short *ramp)
 		return;
 	}
 
+#ifdef SDL_GAMMA
+	gamma_support = true;
+	if(SDL_GetGammaRamp(ramp, ramp + 256, ramp + 512) < 0)
+	{
+		gamma_support = false;
+	}
+#endif
+
 #if defined(WIN32) && defined(WIN32_GAMMA)
 	{
 		HDC     hdc = GetDC(hWndMain);
@@ -227,6 +240,10 @@ void GL_SetGammaRamp(unsigned short *ramp)
 	if(!gamma_support)
 		return;
 
+#ifdef SDL_GAMMA
+	SDL_SetGammaRamp(ramp, ramp + 256, ramp + 512);
+#endif
+	
 #if defined(WIN32) && defined(WIN32_GAMMA)
 	{
 		HDC hdc = GetDC(hWndMain);
