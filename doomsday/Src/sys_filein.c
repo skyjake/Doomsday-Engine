@@ -681,7 +681,7 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
 	sprintf(localPattern, "%s%s", path, pattern);
 
 	// We'll look through all files.
-	sprintf(spec, "%s*.*", path);
+	sprintf(spec, "%s*", path);
 
 	if(!myfindfirst(spec, &fd))
 	{

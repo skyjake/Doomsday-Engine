@@ -61,7 +61,7 @@ typedef struct fdata_s {
 static int nextfinddata(finddata_t * fd)
 {
 	fdata_t *data = fd->finddata;
-	char   *fn;
+	char   *fn, *last;
 	char    ext[256];
 	struct stat st;
 
@@ -85,16 +85,24 @@ static int nextfinddata(finddata_t * fd)
 	if(fd->name)
 		free(fd->name);
 	fd->name = malloc(strlen(fn) + 1);
-	_splitpath(fn, NULL, NULL, fd->name, ext);
-	strcat(fd->name, ext);
 
 	// Is it a directory?
-	if(fn[strlen(fn) - 1] == '/')
+	last = fn + strlen(fn) - 1;
+	if(*last == '/')
 	{
+		// Return the name of the last directory in the path.
+		char *slash = last - 1;
+		int len;
+		while(*slash != '/' && slash > fn) --slash;
+		len = last - slash - 1;
+		strncpy(fd->name, slash + 1, len);
+		fd->name[len] = 0;
 		fd->attrib = A_SUBDIR;
 	}
 	else
 	{
+		_splitpath(fn, NULL, NULL, fd->name, ext);
+		strcat(fd->name, ext);
 		fd->attrib = 0;
 	}
 
