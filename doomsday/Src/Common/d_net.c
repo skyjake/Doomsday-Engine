@@ -111,8 +111,6 @@ int CCmdSetClass(int argc, char **argv)
 		return true;
 	}
 	cfg.netClass = atoi(argv[1]);
-	if(cfg.netClass < 0)
-		cfg.netClass = 0;
 	if(cfg.netClass > 2)
 		cfg.netClass = 2;
 	if(IS_CLIENT)
