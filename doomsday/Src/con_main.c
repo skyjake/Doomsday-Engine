@@ -3061,7 +3061,8 @@ static void registerVariables(void)
 	// Render
 	C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1,
 			  "1=Render player view in wireframe mode.");
-	C_VAR_INT("rend-dev-framecount", &framecount, CVF_PROTECTED, 0, 0,
+	C_VAR_INT("rend-dev-framecount", &framecount,
+              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0,
 			  "Frame counter.");
 	// * Render-Info
 	C_VAR_BYTE("rend-info-lums", &rend_info_lums, 0, 0, 1,
