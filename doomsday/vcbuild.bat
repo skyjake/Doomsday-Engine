@@ -1,3 +1,5 @@
+@ECHO OFF
+
 REM -- Set up paths.
 SET BIN_DIR=Bin\Release
 SET OBJ_DIR=Obj\Release
@@ -36,11 +38,6 @@ SET A3D_INC=D:\sdk\Aureal\A3D 3.0 SDK\sdk\inc
 SET A3D_LIB=D:\sdk\Aureal\A3D 3.0 SDK\sdk\lib
 
 
-REM -- Create the output directories.
-md %BIN_DIR%
-md %OBJ_DIR%
-
-
 REM -- Compiler and linker options.
 SET DEFINES=/D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS"
 SET DLLDEFINES=/D "_USRDLL" /D "_WINDLL" %DEFINES%
@@ -51,8 +48,8 @@ SET LFLAGS=/INCREMENTAL:NO /SUBSYSTEM:WINDOWS /MACHINE:I386
 
 
 REM -- Make sure the output directories exist.
-md %BIN_DIR%
-md %OBJ_DIR%
+IF NOT EXIST %BIN_DIR% md %BIN_DIR%
+IF NOT EXIST %OBJ_DIR% md %OBJ_DIR%
 
 
 REM -- Iterate through all command line arguments.
@@ -152,4 +149,4 @@ GOTO Looper
 
 
 :TheEnd
-echo "All Done."
+echo All Done!
