@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.11  2003/08/15 22:18:44  skyjake
+//** Added subtractive blending, 8-bit noalpha textures converted to pure alpha
+//**
 //** Revision 1.10  2003/08/10 00:01:54  skyjake
 //** Follow the Begin/End semantics
 //**
@@ -167,10 +170,31 @@ void PG_InitTextures(void)
 		VERBOSE( Con_Message("PG_InitTextures: Texture %02i: %i * %i * %i\n",
 			i, image.width, image.height, image.pixelSize) );
 
+		// If there is no alpha data, generate it automatically.
+		if(image.pixelSize == 3)
+		{
+			int p, total = image.width * image.height;
+			byte *ptr = image.pixels;
+			for(p = 0; p < total; p++, ptr += 3)
+			{
+				image.pixels[p] = (ptr[0] + ptr[1] + ptr[2]) / 3;
+			}
+			for(p = 0; p < total; p++)
+			{
+				// Move the average color to the alpha channel, make the
+				// actual color white.
+				image.pixels[total + p] = image.pixels[p];
+				image.pixels[p] = 255;
+			}
+			image.pixelSize = 2;
+		}
+
 		// Create a new texture and upload the image.
 		ptctexname[i + 1] = gl.NewTexture();
 
-		gl.TexImage(image.pixelSize == 4? DGL_RGBA : DGL_RGB, 
+		gl.TexImage(image.pixelSize == 4? DGL_RGBA 
+			: image.pixelSize == 2? DGL_LUMINANCE_PLUS_A8
+			: DGL_RGB, 
 			image.width, image.height, 0, image.pixels);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
@@ -394,6 +418,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	ded_ptcstage_t	*dst, *next_dst;
 	int				i, c;
 	int				using_texture = -1;
+	int				prim_type;
+	blendmode_t		mode = BM_NORMAL, new_mode;
 
 	// viewsidevec points to the left.
 	for(i = 0; i < 3; i++)
@@ -414,12 +440,12 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		gl.Disable(DGL_CULL_FACE);
 		gl.Bind(ptctexname[using_texture]);
 		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-		gl.Begin(DGL_QUADS); // A waste of vertices and triangles, but...
+		gl.Begin(prim_type = DGL_QUADS); 
 	}
 	else
 	{
 		gl.Disable(DGL_TEXTURING);	// Lines don't use textures.
-		gl.Begin(DGL_LINES);
+		gl.Begin(prim_type = DGL_LINES);
 	}
 
 	// How many particles can we render?
@@ -437,6 +463,21 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		// Only render one type of particles.
 		if(gen->stages[pt->stage].type != rtype) continue;
 		if(!(gen->flags & PGF_ADD_BLEND) == with_blend) continue;
+
+		if(!with_blend)
+		{
+			// We may need to change the blending mode.
+			new_mode = 
+				 (gen->flags & PGF_SUB_BLEND? BM_SUBTRACT
+				: gen->flags & PGF_REVSUB_BLEND? BM_REVERSE_SUBTRACT
+				: BM_NORMAL);
+			if(new_mode != mode)
+			{
+				gl.End();
+				Rend_BlendMode(mode = new_mode);
+				gl.Begin(prim_type);
+			}
+		}
 
 		dst = &gen->def->stages[pt->stage];
 		st = &gen->stages[pt->stage];
@@ -598,6 +639,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	{
 		gl.Enable(DGL_TEXTURING);
 	}
+	Rend_BlendMode(BM_NORMAL);
 }
 
 //===========================================================================
@@ -645,7 +687,9 @@ void PG_Render(void)
 	}
 	if(hasblend)
 	{
-		// A second pass with additive blending.
+		// A second pass with additive blending. 
+		// This makes the additive particles 'glow' through all other 
+		// particles.
 		PG_RenderPass(true);
 	}
 
