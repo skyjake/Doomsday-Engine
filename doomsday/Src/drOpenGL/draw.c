@@ -17,9 +17,14 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_TEX_UNITS 4
+#define MAX_ARRAYS	(2 + MAX_TEX_UNITS)
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct array_s {
+	boolean enabled;
+	void *data;
+} array_t;
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
 
@@ -36,7 +41,28 @@ int	inPrim;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+array_t arrays[MAX_ARRAYS];
+
 // CODE --------------------------------------------------------------------
+
+//===========================================================================
+// InitArrays
+//===========================================================================
+void InitArrays(void)
+{
+	double version = strtod(glGetString(GL_VERSION), NULL);
+
+	// If the driver's OpenGL version is older than 1.3, disable arrays
+	// by default.
+	noArrays = (version < 1.3);
+
+	// Override the automatic selection?
+	if(ArgExists("-vtxar")) noArrays = false;
+	if(ArgExists("-novtxar")) noArrays = true;
+
+	if(!noArrays) return;
+	memset(arrays, 0, sizeof(arrays));
+}
 
 //===========================================================================
 // CheckError
@@ -276,17 +302,37 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 {
 	int i;
 
-	if(vertices) glEnableClientState(GL_VERTEX_ARRAY);
-	if(colors) glEnableClientState(GL_COLOR_ARRAY);
+	if(vertices) 
+	{
+		if(noArrays)
+			arrays[AR_VERTEX].enabled = true;
+		else
+			glEnableClientState(GL_VERTEX_ARRAY);
+	}
+
+	if(colors) 
+	{
+		if(noArrays)
+			arrays[AR_COLOR].enabled = true;
+		else
+			glEnableClientState(GL_COLOR_ARRAY);
+	}
 	
 	for(i = 0; i < maxTexUnits; i++)
 	{
 		if(coords & (1 << i))
 		{
-			if(glClientActiveTextureARB)
-				glClientActiveTextureARB(GL_TEXTURE0 + i);
+			if(noArrays)
+			{
+				arrays[AR_TEXCOORD0 + i].enabled = true;
+			}
+			else
+			{
+				if(glClientActiveTextureARB)
+					glClientActiveTextureARB(GL_TEXTURE0 + i);
 
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			}
 		}
 	}
 }
@@ -298,17 +344,37 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 {
 	int i;
 	
-	if(vertices) glDisableClientState(GL_VERTEX_ARRAY);
-	if(colors) glDisableClientState(GL_COLOR_ARRAY);
+	if(vertices) 
+	{
+		if(noArrays)
+			arrays[AR_VERTEX].enabled = false;
+		else
+			glDisableClientState(GL_VERTEX_ARRAY);
+	}
+
+	if(colors) 
+	{
+		if(noArrays)
+			arrays[AR_COLOR].enabled = false;
+		else
+			glDisableClientState(GL_COLOR_ARRAY);
+	}
 
 	for(i = 0; i < maxTexUnits; i++)
 	{
 		if(coords & (1 << i))
 		{
-			if(glClientActiveTextureARB)
-				glClientActiveTextureARB(GL_TEXTURE0 + i);
+			if(noArrays)
+			{
+				arrays[AR_TEXCOORD0 + i].enabled = false;
+			}
+			else
+			{
+				if(glClientActiveTextureARB)
+					glClientActiveTextureARB(GL_TEXTURE0 + i);
 
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			}
 		}
 	}
 }
@@ -324,29 +390,53 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
 
 	if(vertices)
 	{
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 16, vertices);
+		if(noArrays)
+		{
+			arrays[AR_VERTEX].enabled = true;
+			arrays[AR_VERTEX].data = vertices;
+		}
+		else
+		{
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glVertexPointer(3, GL_FLOAT, 16, vertices);
+		}
 	}
 
 	if(colors)
 	{
-		glEnableClientState(GL_COLOR_ARRAY);
-		glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+		if(noArrays)
+		{
+			arrays[AR_COLOR].enabled = true;
+			arrays[AR_COLOR].data = colors;
+		}
+		else
+		{
+			glEnableClientState(GL_COLOR_ARRAY);
+			glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+		}
 	}
 
 	for(i = 0; i < numCoords; i++)
 	{
 		if(coords[i])
 		{
-			if(glClientActiveTextureARB)
-				glClientActiveTextureARB(GL_TEXTURE0 + i);
+			if(noArrays)
+			{
+				arrays[AR_TEXCOORD0 + i].enabled = true;
+				arrays[AR_TEXCOORD0 + i].data = coords[i];
+			}
+			else
+			{
+				if(glClientActiveTextureARB)
+					glClientActiveTextureARB(GL_TEXTURE0 + i);
 
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
+			}
 		}
 	}
-	
-	if(lock > 0 && glLockArraysEXT)
+		
+	if(!noArrays && lock > 0 && glLockArraysEXT)
 	{
 		// 'lock' is the number of vertices to lock.
 		glLockArraysEXT(0, lock);
@@ -358,7 +448,7 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
 //===========================================================================
 void DG_UnlockArrays(void)
 {
-	if(glUnlockArraysEXT)
+	if(!noArrays && glUnlockArraysEXT)
 	{
 		glUnlockArraysEXT();
 	}
@@ -369,7 +459,29 @@ void DG_UnlockArrays(void)
 //===========================================================================
 void DG_ArrayElement(int index)
 {
-	glArrayElement(index);
+	if(!noArrays)
+	{
+		glArrayElement(index);
+	}
+	else
+	{
+		int i;
+
+		for(i = 0; i < maxTexUnits; i++)
+		{
+			if(arrays[AR_TEXCOORD0 + i].enabled)
+			{
+				glMultiTexCoord2fvARB(GL_TEXTURE0 + i, ((gl_texcoord_t*)
+					arrays[AR_TEXCOORD0 + i].data)[index].st);
+			}
+		}
+
+		if(arrays[AR_COLOR].enabled)
+			glColor4ubv(((gl_color_t*)arrays[AR_COLOR].data)[index].rgba);
+
+		if(arrays[AR_VERTEX].enabled)
+			glVertex3fv(((gl_vertex_t*)arrays[AR_VERTEX].data)[index].xyz);
+	}
 }
 
 //===========================================================================
@@ -377,9 +489,24 @@ void DG_ArrayElement(int index)
 //===========================================================================
 void DG_DrawElements(int type, int count, unsigned int *indices)
 {
-	glDrawElements( 
-		  type == DGL_TRIANGLE_FAN?		GL_TRIANGLE_FAN
+	GLenum primType = 
+		 (type == DGL_TRIANGLE_FAN?		GL_TRIANGLE_FAN
 		: type == DGL_TRIANGLE_STRIP?	GL_TRIANGLE_STRIP
-		: GL_TRIANGLES, 
-		count, GL_UNSIGNED_INT, indices);
+		: GL_TRIANGLES);
+
+	if(!noArrays)
+	{
+		glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
+	}
+	else
+	{
+		int i;
+
+		glBegin(primType);
+		for(i = 0; i < count; i++)
+		{
+			DG_ArrayElement(indices[i]);
+		}
+		glEnd();
+	}
 }
