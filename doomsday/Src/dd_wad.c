@@ -985,7 +985,7 @@ int W_CheckNumForName(char *name)
 	// If the name string is empty, don't bother to search.
 	if(!name[0])
 	{
-		VERBOSE(Con_Message("W_CheckNumForName: Empty name.\n"));
+		VERBOSE2(Con_Message("W_CheckNumForName: Empty name.\n"));
 		return -1;
 	}
 
@@ -1006,7 +1006,7 @@ int W_CheckNumForName(char *name)
 		}
 	}
 
-	VERBOSE(Con_Message("W_CheckNumForName: \"%s\" not found.\n", name8));
+	VERBOSE2(Con_Message("W_CheckNumForName: \"%s\" not found.\n", name8));
 	return -1;
 }
 
