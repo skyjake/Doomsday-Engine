@@ -20,6 +20,8 @@
 #include "de_system.h"
 #include "de_misc.h"
 
+#include "r_extres.h"
+
 // MACROS ------------------------------------------------------------------
 
 #ifdef NeXT
@@ -471,19 +473,28 @@ void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
 
 boolean W_AddFile(char *filename)
 {
+	char			alterFileName[256];
 	wadinfo_t		header;
 	int				handle, length;
 	filelump_t		*fileinfo, singleinfo;
 	filelump_t		*freeFileInfo;
 	filerecord_t	*rec;
+	const char		*extension;
 
 	// Filename given?
 	if(!filename || !filename[0]) return true;
 
 	if((handle = open(filename, O_RDONLY|O_BINARY)) == -1)
-	{ // Didn't find file
-		Con_Message("W_AddFile: ERROR: %s not found!\n", filename);
-		return false;
+	{ 
+		// Didn't find file. Try reading from the data path.
+		R_PrependDataPath(filename, alterFileName);
+		if((handle = open(alterFileName, O_RDONLY|O_BINARY)) == -1)
+		{
+			Con_Message("W_AddFile: ERROR: %s not found!\n", filename);
+			return false;
+		}
+		// We'll use this instead.
+		filename = alterFileName;
 	}
 
 	// Do not read files twice.
@@ -495,6 +506,21 @@ boolean W_AddFile(char *filename)
 
 	Con_Message("W_AddFile: %s\n", filename);
 
+	// Determine the file name extension.
+	extension = strrchr(filename, '.');
+	if(!extension) 
+		extension = "";
+	else
+		extension++; // Move to point after the dot.
+
+	// Is it a zip/pk3 package?
+	if(!stricmp(extension, "zip") || !stricmp(extension, "pk3"))
+	{
+		// The file will be re-opened.
+		close(handle);
+		return Zip_Open(filename);
+	}
+	
 	// Get a new file record.
 	rec = W_RecordNew();
 	strcpy(rec->filename, filename);
@@ -504,9 +530,9 @@ boolean W_AddFile(char *filename)
 	// If we're not loading for startup, flag the record to be a Runtime one.
 	if(!loadingForStartup) rec->flags = FRF_RUNTIME;
 
-	if(stricmp(filename+strlen(filename)-3, "wad") 
-		&& stricmp(filename+strlen(filename)-3, "gwa"))
-	{ // Single lump file
+	if(stricmp(extension, "wad") && stricmp(extension, "gwa"))
+	{ 
+		// Single lump file.
 		fileinfo = &singleinfo;
 		freeFileInfo = NULL;
 		singleinfo.filepos = 0;
@@ -515,7 +541,8 @@ boolean W_AddFile(char *filename)
 		rec->numlumps = 1;
 	}
 	else
-	{ // WAD file
+	{ 
+		// WAD file.
 		read(handle, &header, sizeof(header));
 		if(strncmp(header.identification, "IWAD", 4))
 		{
@@ -529,7 +556,7 @@ boolean W_AddFile(char *filename)
 		{
 			// Found an IWAD.
 			iwadLoaded = true;
-			if(!stricmp(filename+strlen(filename)-3, "wad"))
+			if(!stricmp(extension, "wad"))
 				rec->iwad = true;
 		}
 		header.numlumps = LONG(header.numlumps);
@@ -559,7 +586,7 @@ boolean W_AddFile(char *filename)
 		W_CRCNumberForRecord(rec - records));
 
 	// glBSP: Also load a possible GWA.
-	if(!stricmp(filename + strlen(filename)-3, "wad"))
+	if(!stricmp(extension, "wad"))
 	{
 		char buff[256];
 		strcpy(buff, filename);
@@ -1206,7 +1233,8 @@ const char *W_LumpSourceFile(int lump)
 
 //===========================================================================
 // W_CRCNumberForRecord
-//	An extremely simple formula.
+//	An extremely simple formula. Does not conform to any CRC standard.
+//	(So why's it called CRC, then?)
 //===========================================================================
 unsigned int W_CRCNumberForRecord(int idx)
 {
