@@ -1288,6 +1288,12 @@ boolean W_IsFromIWAD(int lump)
 {
 	int i;
 
+	if(lump < 0 || lump >= numlumps) 
+	{
+		// This lump doesn't exist.
+		return false;
+	}
+
 	for(i = 0; i < numrecords; i++)
 		if(records[i].handle == lumpinfo[lump].handle)
 			return records[i].iwad != 0;
