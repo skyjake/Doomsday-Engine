@@ -28,7 +28,7 @@
 #define OBSOLETE		CVF_NO_ARCHIVE|CVF_HIDE	// Old ccmds.
 
 // The threshold is the average ack time * mul.
-#define ACK_THRESHOLD_MUL		3
+#define ACK_THRESHOLD_MUL		4
 
 // Never wait a too short time for acks.
 #define ACK_MINIMUM_THRESHOLD	50
@@ -887,7 +887,7 @@ void Net_SetInitialAckTime(int clientNumber, uint period)
 
 /*
  * The ack threshold is the maximum period of time to wait before 
- * deciding an ack is not coming. The minimum threshold is 100 ms.
+ * deciding an ack is not coming. The minimum threshold is 50 ms.
  */
 uint Net_GetAckThreshold(int clientNumber)
 {
