@@ -749,18 +749,18 @@ void H_PreInit(void)
 	Set(DD_SKYFLAT_NAME, (int) "F_SKY1");
 	DD_SetDefsFile("jHeretic\\jHeretic.ded");
 	DD_SetConfigFile("jHeretic.cfg");
-	Set(DD_HIGHRES_TEXTURE_PATH, (int) ">Data\\jHeretic\\Textures\\");
+	R_SetDataPath("}Data\\jHeretic\\");
 	R_SetBorderGfx(borderLumps);
 	Con_DefineActions(actions);
 	// Add the JHexen cvars and ccmds to the console databases.
 	H_ConsoleRegistration();
 
 	// Add a couple of probably locations for Heretic.wad.	
-	DD_AddIWAD(">Data\\jHeretic\\Heretic.wad");
-	DD_AddIWAD(">Data\\Heretic.wad");
-	DD_AddIWAD(">Heretic.wad");
+	DD_AddIWAD("}Data\\jHeretic\\Heretic.wad");
+	DD_AddIWAD("}Data\\Heretic.wad");
+	DD_AddIWAD("}Heretic.wad");
 	DD_AddIWAD("Heretic.wad");
-	DD_AddStartupWAD(">Data\\jHeretic\\jHeretic.wad"); 
+	DD_AddStartupWAD("}Data\\jHeretic\\jHeretic.wad"); 
 
 	// Init savegames.
 	SV_Init();

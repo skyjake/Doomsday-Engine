@@ -2,7 +2,7 @@ NAME			"DOOMSDAY"
 DESCRIPTION		"The Doomsday Engine"
 
 ; Highest ordinal is currently 
-; --> 233 <--
+; --> 234 <--
 
 ; Other available ordinals: -
 
@@ -139,6 +139,7 @@ EXPORTS
 
 ; Refresh.
 	DD_GetFrameRate				@88 NONAME
+	R_SetDataPath				@234 NONAME
 	R_SetupLevel				@89 NONAME
 	R_PrecacheLevel				@90 NONAME
 	R_RenderPlayerView			@91 NONAME

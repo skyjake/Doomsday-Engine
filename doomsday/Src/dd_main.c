@@ -257,8 +257,8 @@ void DD_Main(void)
 	// Any startup hooks?
 	Plug_DoHook(HOOK_STARTUP);
 	
-	DD_AddStartupWAD(">Data\\Doomsday.wad");
-	DD_SetInteger(DD_HIGHRES_TEXTURE_PATH, (int) ">Data\\Textures\\");
+	DD_AddStartupWAD("}Data\\Doomsday.wad");
+	R_InitExternalResources();
 	
 	// These will invariably be overwritten by the Game.
 	strcpy(configFileName, "Doomsday.cfg");
@@ -773,16 +773,6 @@ void DD_SetInteger(int ddvalue, int parm)
 					fl->flags &= ~TXF_GLOW;
 			}
 		}
-		else if(ddvalue == DD_HIGHRES_TEXTURE_PATH)
-		{
-			M_TranslatePath( (char*) parm, hiTexPath);
-			Dir_ValidDir(hiTexPath);
-		}
-		/*else if(ddvalue == DD_SPRITE_REPLACEMENT)
-		{
-			spritereplacement_t *srep = (spritereplacement_t*) parm;
-			R_SetSpriteReplacement(srep->spritenum, srep->modelname);
-		}*/
 		return;
 	}
 	if(ddValues[ddvalue].writePtr)

@@ -741,13 +741,13 @@ void D_PreInit(void)
 	D_SetPlayerPtrs();
 	DD_SetConfigFile("jDoom.cfg");
 	DD_SetDefsFile("jDoom\\jDoom.ded");
-	Set(DD_HIGHRES_TEXTURE_PATH, (int) ">Data\\jDoom\\Textures\\");
+	R_SetDataPath("}Data\\jDoom\\");
 	Con_DefineActions(actions);
 	Set(DD_SKYFLAT_NAME, (int) SKYFLATNAME);
 	// Add the JDoom cvars and ccmds to the console databases.
 	D_ConsoleRegistration();
 
-	DD_AddStartupWAD(">Data\\jDoom\\jDoom.wad");	// FONTA and FONTB, M_THERM2
+	DD_AddStartupWAD("}Data\\jDoom\\jDoom.wad"); // FONTA and FONTB, M_THERM2
 
 	DetectIWADs();
 

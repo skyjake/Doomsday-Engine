@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2003/05/25 23:26:34  skyjake
+// External resource locator, setting the data path
+//
 // Revision 1.4  2003/05/23 22:43:36  skyjake
 // Fixed bug 734892: sides with bogus sectors
 //
@@ -26,9 +29,6 @@
 //
 // Revision 1.1  2003/02/26 19:21:57  skyjake
 // Initial checkin
-//
-// Revision 1.1  2002/09/29 01:11:47  Jaakko
-// Added Doomsday sources
 //
 //
 // DESCRIPTION:

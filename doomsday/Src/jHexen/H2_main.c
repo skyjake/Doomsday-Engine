@@ -183,7 +183,7 @@ void H2_PreInit(void)
 	}
 	DD_SetDefsFile("jHexen\\jHexen.ded");
 	DD_SetConfigFile("jHexen.cfg");
-	Set(DD_HIGHRES_TEXTURE_PATH, (int) ">Data\\jHexen\\Textures\\");
+	R_SetDataPath("}Data\\jHexen\\");
 	R_SetBorderGfx(borderLumps);
 	Con_DefineActions(actions);
 
@@ -191,10 +191,10 @@ void H2_PreInit(void)
 	H2_ConsoleRegistration();
 
 	// The startup WADs.
-	DD_AddStartupWAD(">Data\\jHexen\\jHexen.wad");
-	DD_AddIWAD(">Data\\jHexen\\Hexen.wad");
-	DD_AddIWAD(">Data\\Hexen.wad");
-	DD_AddIWAD(">Hexen.wad");
+	DD_AddStartupWAD("}Data\\jHexen\\jHexen.wad");
+	DD_AddIWAD("}Data\\jHexen\\Hexen.wad");
+	DD_AddIWAD("}Data\\Hexen.wad");
+	DD_AddIWAD("}Hexen.wad");
 	DD_AddIWAD("Hexen.wad");
 
 	startepisode = 1;
