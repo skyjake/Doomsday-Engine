@@ -86,6 +86,9 @@ enum
 	DGL_MAX_TEXTURE_SIZE,
 	DGL_SCISSOR_BOX,
 	DGL_POLY_COUNT,
+	DGL_TEXTURE_BINDING,
+	DGL_MAX_TEXTURE_UNITS,
+	DGL_ACTIVE_TEXTURE,
 
 	// Primitives
 	DGL_LINES						= 0x3000,
@@ -115,6 +118,18 @@ enum
 	DGL_PALETTED_TEXTURES,
 	DGL_DETAIL_TEXTURE_MODE,
 	DGL_PALETTED_GENMIPS,
+	DGL_MODULATE_ADD_COMBINE,
+	DGL_MODULATE_TEXTURE,
+	DGL_ADD_LIGHTS,
+
+	DGL_TEXTURE0					= 0x5F00,
+	DGL_TEXTURE1,
+	DGL_TEXTURE2,
+	DGL_TEXTURE3,
+	DGL_TEXTURE4,
+	DGL_TEXTURE5,
+	DGL_TEXTURE6,
+	DGL_TEXTURE7,
 
 	// Blending functions
 	DGL_ZERO						= 0x6000,
@@ -161,116 +176,11 @@ enum
 	DGL_EXP2,
 	DGL_WIDTH,
 	DGL_HEIGHT,
-//	DGL_DETAIL,
+	DGL_ENV_COLOR,
 
 	// Various bits
 	DGL_COLOR_BUFFER_BIT		= 0x1,
 	DGL_DEPTH_BUFFER_BIT		= 0x2,
 };
-
-
-/*typedef struct
-{
-	int		apiSize;			// Size of this structure.
-	
-	// Some general utilities the engine provides.
-	int		(*Argc)(void);
-	char*	(*Argv)(int i);
-	char*	(*NextArg)(void);
-	void	(*AddParm)(char *longname, char *shortname);
-	int		(*CheckParm)(char *check);
-	int		(*CheckParmArgs)(char *check, int num);
-	int		(*IsParm)(int i);
-
-	void	(*Message)(char *msg, ...);
-	void	(*Error)(char *error, ...);
-} gl_import_t;*/
-
-/*
-typedef struct
-{
-	int		apiSize;			// Size of the this structure.
-	int		version;			// GL API version (driver's).
-	void	*windowHandle;		// Window to use. Copy HWND to this location.
-	
-	// Base-level routines.
-	int		(*Init)(int width, int height, int bpp, int fullscreen);
-	void	(*Shutdown)(void);
-	int		(*ChangeMode)(int width, int height, int bpp, int fullscreen);
-
-	// Viewport.
-	void	(*Clear)(int bufferbits);
-	void	(*OnScreen)(void);
-	void	(*Viewport)(int x, int y, int width, int height);
-	void	(*Scissor)(int x, int y, int width, int height);
-
-	// State.
-	int		(*GetIntegerv)(int name, int *v);
-	int		(*SetInteger)(int name, int value);
-	char*	(*GetString)(int name);
-	void	(*Enable)(int cap);
-	void	(*Disable)(int cap);
-	void	(*Func)(int func, int param1, int param2);
-
-	// Textures.
-	DGLuint	(*NewTexture)(void);
-	void	(*DeleteTextures)(int num, DGLuint *names);
-	int		(*TexImage)(int format, int width, int height, int mipmap, void *data);
-	void	(*TexParameter)(int pname, int param);
-	void	(*GetTexParameterv)(int level, int pname, int *v);
-	void	(*Palette)(int format, void *data);	
-	int		(*Bind)(DGLuint texture);
-
-	// Matrix operations.
-	void	(*MatrixMode)(int mode);
-	void	(*PushMatrix)(void);
-	void	(*PopMatrix)(void);
-	void	(*LoadIdentity)(void);
-	void	(*Translatef)(float x, float y, float z);
-	void	(*Rotatef)(float angle, float x, float y, float z);
-	void	(*Scalef)(float x, float y, float z);
-	void	(*Ortho)(float left, float top, float right, float bottom, float znear, float zfar);
-	void	(*Perspective)(float fovy, float aspect, float zNear, float zFar);
-
-	// Colors.
-	void	(*Color3ub)(DGLubyte r, DGLubyte g, DGLubyte b);
-	void	(*Color3ubv)(void *data);
-	void	(*Color4ub)(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
-	void	(*Color4ubv)(void *data);
-	void	(*Color3f)(float r, float g, float b);
-	void	(*Color3fv)(float *data);
-	void	(*Color4f)(float r, float g, float b, float a);
-	void	(*Color4fv)(float *data);
-
-	// Drawing.
-	void	(*Begin)(int mode);
-	void	(*End)(void);
-	void	(*Vertex2f)(float x, float y);
-	void	(*Vertex2fv)(float *data);
-	void	(*Vertex3f)(float x, float y, float z);
-	void	(*Vertex3fv)(float *data);
-	void	(*TexCoord2f)(float s, float t);
-	void	(*TexCoord2fv)(float *data);
-	void	(*Vertices2ftv)(int num, gl_ft2vertex_t *data);
-	void	(*Vertices3ftv)(int num, gl_ft3vertex_t *data);
-	void	(*Vertices3fctv)(int num, gl_fct3vertex_t *data);
-	
-	// Rendering.
-	void	(*RenderList)(int format, int num, void *data);
-
-	// Miscellaneous.
-	int		(*Grab)(int x, int y, int width, int height, int format, void *buffer);
-	void	(*Fog)(int pname, float param);
-	void	(*Fogv)(int pname, void *data);
-	int		(*Project)(int num, gl_fc3vertex_t *inVertices, gl_fc3vertex_t *outVertices);
-	int		(*ReadPixels)(int *inData, int format, void *pixels); 
-	int		(*Gamma)(int set, DGLubyte *data);
-} gl_export_t;
-
-
-// This is called by the engine to retrieve the GL routines.
-gl_export_t* GetGLAPI(void);
-
-typedef gl_export_t* (*GETGLAPI)(void);*/
 
 #endif
