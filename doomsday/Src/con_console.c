@@ -273,6 +273,7 @@ cvar_t engineCVars[] =
 	"rend-light-shrink",	0,			CVT_FLOAT,	&dlContract,	0, 1,	"Shrink dynlight wall polygons horizontally.",
 	"rend-light-radius-scale",	0,		CVT_FLOAT,	&dlRadFactor,	0.1f, 10, "A multiplier for dynlight radii (default: 1).",
 	"rend-light-radius-max", 0,			CVT_INT,	&dlMaxRad,		64,	512, "Maximum radius of dynamic lights (default: 128).",
+	"rend-light-wall-angle", CVF_NO_MAX, CVT_FLOAT,	&rend_light_wall_angle, 0, 0, "Intensity of angle-based wall light.",
 	// * Render-Glow
 	"rend-glow",			0,			CVT_INT,	&r_texglow,		0, 1,	"1=Enable glowing textures.",
 	"rend-glow-wall",		0,			CVT_INT,	&useWallGlow,	0, 1,	"1=Render glow on walls.",
@@ -391,6 +392,7 @@ cvar_t engineCVars[] =
 	"input-mouse-x-disable",	0,			CVT_INT,	&mouseDisableX,	0, 1,	"1=Disable mouse X axis.",
 	"input-mouse-y-disable",	0,			CVT_INT,	&mouseDisableY,	0, 1,	"1=Disable mouse Y axis.",
 	"input-mouse-y-inverse",	0,			CVT_INT,	&mouseInverseY, 0, 1,	"1=Inversed mouse Y axis.",
+	"input-mouse-filter",		0,			CVT_BYTE,	&mouseFilter, 0, 1,		"1=Filter mouse X and Y axes.",
 
 	// File
 	"file-startup",				0,			CVT_CHARPTR, &defaultWads,	0, 0,	"The list of WADs to be loaded at startup.",
