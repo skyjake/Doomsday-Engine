@@ -1,5 +1,5 @@
 # jDoom: Values
-# (mind yur speling; jDoom only uses the identifiers it knows about)
+# (mind yur speling; jDoom uses only the identifiers it knows about)
 
 Header { Version = 5; }
 

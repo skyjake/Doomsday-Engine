@@ -2,10 +2,6 @@
 
 Header { Version = 5; }
 
-# Texture group flags.
-Flag { ID = "tgf_smooth"; Value = 0x1; }
-Flag { ID = "tgf_first_only"; Value = 0x2; }
-
 Group 
 {
   Flags = "tgf_smooth";

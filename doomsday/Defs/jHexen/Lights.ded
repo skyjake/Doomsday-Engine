@@ -15,19 +15,8 @@ Header { Version = 5; }
 # One decoration can specify up to 16 lights.
 #
 
-# Decoration will not be used with IWAD resources.
-Flag { ID = "dcf_noiwad"; Value = 0x1; }
-
-# Allow using decoration with PWAD resources.
-Flag { ID = "dcf_pwad"; Value = 0x2; }    
-
-# Allow using decoration with external resources.
-Flag { ID = "dcf_ext"; Value = 0x4; }
-
 
 #####====--- LIGHT SOURCE PROPERTIES ---====#####
-
-Flag { ID = "lgf_nohalo"; Value = 0x100; }
 
 # A halo would look bad for the chandelier because it wouldn't be
 # rendered around the candle flames.

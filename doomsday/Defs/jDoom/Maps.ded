@@ -2,10 +2,6 @@
 
 Header { Version = 5; }
 
-Flag { ID = "mif_fog"; Value = 0x1; }
-Flag { ID = "slf_enable"; Value = 0x1; }
-Flag { ID = "slf_mask"; Value = 0x2; }
-
 Map Info {
   ID = "E1M1";
   Name = "E1M1: Hangar";

@@ -59,14 +59,6 @@ Music { ID = "cptd"; Lump = "MUS_CPTD"; }
 
 #####====--- SOUND EFFECTS ---====#####
 
-Flag { ID = "sf_shift"; Value = 0x1; }
-Flag { ID = "sf_shift2"; Value = 0x2; }
-Flag { ID = "sf_exclude"; Value = 0x4; }
-Flag { ID = "sf_nodist"; Value = 0x8; }
-Flag { ID = "sf_repeat"; Value = 0x10; }
-Flag { ID = "sf_dontstop"; Value = 0x20; }
-
-
 Sound {
   ID = "None";
 }
