@@ -91,6 +91,7 @@ boolean	N_MADone(void);
 
 // The 'net' console command.
 D_CMD( Net );
+D_CMD( HuffmanStats );
 
 #ifdef __cplusplus
 }
