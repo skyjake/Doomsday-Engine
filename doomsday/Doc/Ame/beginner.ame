@@ -18,30 +18,26 @@ CONTENTS: @contents{1}
     @table{45 55}{
 		@header{File name} @tab @header{Contains}
 	@row{single}
-		@file{deng-inst-(version).exe} @tab Installer, jDoom, jHeretic, jHexen
+		@file{deng-inst-(version).exe} @tab Installer, jDoom, jHeretic, jHexen (for Windows)
 	@row
-		@file{deng-(version).zip} @tab jDoom, jHeretic, jHexen
+		@file{deng-(version).zip} @tab jDoom, jHeretic, jHexen (for Windows)
+	@row
+		@file{deng-(version).tar.gz} @tab Source code (for Linux)
 	}
 
   	The packages can be downloaded from
-  	@link{http://sourceforge.net/projects/deng/},
-  	@link{http://www.doomsdayhq.com/},
-	@link{ftp://jfiles@@server1.thefourwinds.net/} or
-  	from the mirror site @link{http://www.jbserver.com/~jdoom/}.
+  	@link{http://sourceforge.net/projects/deng/}.
 
-@item 3D models are distributed in separate packages called model packs.
-	Each model pack contains a set of 3D models, which will be used to represent objects in the game world. Without a model pack, objects will be represented by the original 2D graphics ("sprites").
-	Downloading one or more model pack is optional.
-	The packages have the following file names:
-
-    @file{jdoom_mpack.exe} @br @file{jheretic_mpack.exe} @br
-    @file{jhexen_mpack.exe}
-
-@item Windows 98 (or newer).
+@item 3D models are distributed in separate packages called resource packs.
+	Each resource pack contains a set of 3D models, which will be used to represent objects in the game world. Without a resource pack, objects will be represented with the original 2D graphics ("sprites").
+	Downloading one or more resource pack is optional.
+	The packages are called jDRP, jHRP, and jXRP. These stand for "jDoom/jHeretic/jHexen Resource Pack". You can download the packs from @link{http://www.doomsdayhq.com/}.
+    
+@item Windows 98 (or newer), or Linux.
 
 @item DirectX 8.0 (or newer).
 
-@item A display adapter with 3D hardware acceleration.
+@item A display adapter capable of 3D hardware acceleration.
 
 @item A copy of the original shareware/registered Doom, Doom II,
 	Final Doom, shareware/registered Heretic, Hexen or Hexen:
@@ -51,6 +47,8 @@ CONTENTS: @contents{1}
 
 @chapter{ Automatical installation }
 
+These installation instructions are for the Windows version of Doomsday.
+
 The distribution packages have included a special installation wizard since Doomsday 1.7.3.
 
 @section{ Installing into a new folder }
@@ -59,7 +57,7 @@ Execute the distribution package @file{deng-inst-(ver).exe}.
 
 Type the path of the folder into the edit box or choose an existing folder using the @button{Browse} button. Example: @file{C:\Games\Doomsday}. There is a button with a folder icon on the left side of the edit box. Click the button.
 
-After the files have been extracted, a WAD Files dialog will appear. The dialog lists a number of WAD files from supported games (Doom, Heretic, Hexen). Locate the WAD files you have on your hard drive. I recommend keeping the glBSP option checked because running it will fix many glitches in the maps. Note that the installation wizard can only create shortcuts for the WAD files you locate using this dialog.
+After the files have been extracted, a WAD Files dialog will appear. The dialog lists a number of WAD files from supported games (Doom, Heretic, Hexen). Locate the WAD files you have on your hard drive. It is not necessary to run glBSP on the WADs, so the glBSP option does not need to be checked. Note that the installation wizard can only create shortcuts for the WAD files you locate using this dialog.
 
 The shortcut creation dialog will allow you to select a Start Menu program group and gives you the option to automatically create shortcuts for the KickStart launcher. The fast launch shortcuts will be created in the selected Start Menu program group. They allow you to immediately launch the game using a specific WAD and renderer.
 
@@ -134,6 +132,10 @@ which is more accurate and more useful for 3D rendering than the data found
 in the original WAD files. Running glBSP will greatly reduce the number of
 graphics errors like stray pixels and missing floors, ceilings and walls.
 In most cases all graphics errors can be fixed by running glBSP.
+
+Starting with Doomsday 1.8.1, it is no longer necessary to run glBSP manually.
+Doomsday will calculate the accurate map data on the fly when it becomes 
+necessary.
 
 The Doomsday KickStart launcher can automatically check for the existance
 of data files produced by glBSP and build them if necessary, so you can
