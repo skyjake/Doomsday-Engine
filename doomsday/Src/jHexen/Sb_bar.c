@@ -1693,6 +1693,7 @@ boolean SB_Responder(event_t *event)
 
 static boolean canCheat()
 {
+	if(IS_NETGAME && !IS_CLIENT && netSvAllowCheats) return true;
 #ifdef _DEBUG
 	return true;
 #else
@@ -1798,9 +1799,20 @@ static boolean CheatAddKey(Cheat_t *cheat, byte key, boolean *eat)
 //
 //==========================================================================
 
+void cht_GodFunc(player_t *player)
+{
+	CheatGodFunc(player, NULL);
+}
+
+void cht_NoClipFunc(player_t *player)
+{
+	CheatNoClipFunc(player, NULL);
+}
+
 static void CheatGodFunc(player_t *player, Cheat_t *cheat)
 {
 	player->cheats ^= CF_GODMODE;
+	player->update |= PSF_STATE;
 	if(player->cheats&CF_GODMODE)
 	{
 		P_SetMessage(player, TXT_CHEATGODON, true);
@@ -1810,14 +1822,12 @@ static void CheatGodFunc(player_t *player, Cheat_t *cheat)
 		P_SetMessage(player, TXT_CHEATGODOFF, true);
 	}
 	SB_state = -1;
-
-	// This cheat can be used with -netcheat.
-	//SendCheatNotification(CHT_GOD, player);
 }
 
 static void CheatNoClipFunc(player_t *player, Cheat_t *cheat)
 {
 	player->cheats ^= CF_NOCLIP;
+	player->update |= PSF_STATE;
 	if(player->cheats&CF_NOCLIP)
 	{
 		P_SetMessage(player, TXT_CHEATNOCLIPON, true);
@@ -1826,15 +1836,13 @@ static void CheatNoClipFunc(player_t *player, Cheat_t *cheat)
 	{
 		P_SetMessage(player, TXT_CHEATNOCLIPOFF, true);
 	}
-
-	// This cheat can be used with -netcheat.
-	//SendCheatNotification(CHT_NOCLIP, player);
 }
 
 static void CheatWeaponsFunc(player_t *player, Cheat_t *cheat)
 {
 	int i;
-	//extern boolean *WeaponInShareware;
+
+	player->update |= PSF_ARMOR_POINTS | PSF_OWNED_WEAPONS | PSF_AMMO;
 
 	for(i = 0; i < NUMARMOR; i++)
 	{
@@ -1849,13 +1857,11 @@ static void CheatWeaponsFunc(player_t *player, Cheat_t *cheat)
 		player->mana[i] = MAX_MANA;
 	}
 	P_SetMessage(player, TXT_CHEATWEAPONS, true);
-
-	// This cheat can be used with -netcheat.
-	//SendCheatNotification(CHT_WEAPONS, player);
 }
 
 static void CheatHealthFunc(player_t *player, Cheat_t *cheat)
 {
+	player->update |= PSF_HEALTH;
 	if(player->morphTics)
 	{
 		player->health = player->plr->mo->health = MAXMORPHHEALTH;
@@ -1865,18 +1871,13 @@ static void CheatHealthFunc(player_t *player, Cheat_t *cheat)
 		player->health = player->plr->mo->health = MAXHEALTH;
 	}
 	P_SetMessage(player, TXT_CHEATHEALTH, true);
-
-	// This cheat can be used with -netcheat.
-	//SendCheatNotification(CHT_HEALTH, player);
 }
 
 static void CheatKeysFunc(player_t *player, Cheat_t *cheat)
 {
+	player->update |= PSF_KEYS;
 	player->keys = 2047;
 	P_SetMessage(player, TXT_CHEATKEYS, true);
-
-	// This cheat can be used with -netcheat.
-	//SendCheatNotification(CHT_KEYS, player);
 }
 
 static void CheatSoundFunc(player_t *player, Cheat_t *cheat)
@@ -1920,9 +1921,6 @@ static void CheatArtifactAllFunc(player_t *player, Cheat_t *cheat)
 		}
 	}
 	P_SetMessage(player, TXT_CHEATARTIFACTS3, true);
-
-	// This cheat can be used with -netcheat.
-	//SendCheatNotification(CHT_ARTIFACTS, player);
 }
 
 static void CheatPuzzleFunc(player_t *player, Cheat_t *cheat)
@@ -1934,9 +1932,6 @@ static void CheatPuzzleFunc(player_t *player, Cheat_t *cheat)
 		P_GiveArtifact(player, i, NULL);
 	}
 	P_SetMessage(player, TXT_CHEATARTIFACTS3, true);
-
-	// This cheat can be used with -netcheat.
-	//SendCheatNotification(CHT_PUZZLE, player);
 }
 
 static void CheatInitFunc(player_t *player, Cheat_t *cheat)
@@ -2264,6 +2259,11 @@ int CCmdCheat(int argc, char **argv)
 
 int CCmdCheatGod(int argc, char **argv)
 {
+	if(IS_NETGAME)
+	{
+		NetCl_CheatRequest("god");
+		return true;
+	}
 	if(!canCheat()) return false; // Can't cheat!
 	CheatGodFunc(players+consoleplayer, NULL);
 	return true;
@@ -2271,6 +2271,11 @@ int CCmdCheatGod(int argc, char **argv)
 
 int CCmdCheatClip(int argc, char **argv)
 {
+	if(IS_NETGAME)
+	{
+		NetCl_CheatRequest("noclip");
+		return true;
+	}
 	if(!canCheat()) return false; // Can't cheat!
 	CheatNoClipFunc(players+consoleplayer, NULL);
 	return true;
@@ -2279,21 +2284,40 @@ int CCmdCheatClip(int argc, char **argv)
 int CCmdCheatGive(int argc, char **argv)
 {
 	int tellUsage = false;
+	int target = consoleplayer;
+
+	if(IS_CLIENT)
+	{
+		char buf[100];
+		if(argc != 2) return false;
+		sprintf(buf, "give %s", argv[1]);
+		NetCl_CheatRequest(buf);
+		return true;
+	}
 
 	if(!canCheat()) return false; // Can't cheat!
+
 	// Check the arguments.
-	if(argc != 2)
+	if(argc == 3) 
+	{
+		target = atoi(argv[2]);
+		if(target < 0 || target >= MAXPLAYERS 
+			|| !players[target].plr->ingame) return false;
+	}
+
+	// Check the arguments.
+	if(argc != 2 && argc != 3)
 		tellUsage = true;
 	else if(!strnicmp(argv[1], "weapons", 1))
-		CheatWeaponsFunc(players+consoleplayer, NULL);
+		CheatWeaponsFunc(players+target, NULL);
 	else if(!strnicmp(argv[1], "health", 1))
-		CheatHealthFunc(players+consoleplayer, NULL);
+		CheatHealthFunc(players+target, NULL);
 	else if(!strnicmp(argv[1], "keys", 1))
-		CheatKeysFunc(players+consoleplayer, NULL);
+		CheatKeysFunc(players+target, NULL);
 	else if(!strnicmp(argv[1], "artifacts", 1))
-		CheatArtifactAllFunc(players+consoleplayer, NULL);
+		CheatArtifactAllFunc(players+target, NULL);
 	else if(!strnicmp(argv[1], "puzzle", 1))
-		CheatPuzzleFunc(players+consoleplayer, NULL);
+		CheatPuzzleFunc(players+target, NULL);
 	else 
 		tellUsage = true;
 

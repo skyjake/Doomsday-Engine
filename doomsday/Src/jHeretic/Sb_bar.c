@@ -1284,10 +1284,21 @@ static boolean CheatAddKey(Cheat_t *cheat, byte key, boolean *eat)
 //
 //--------------------------------------------------------------------------
 
+void cht_GodFunc(player_t *player)
+{
+	CheatGodFunc(player, NULL);
+}
+
+void cht_NoClipFunc(player_t *player)
+{
+	CheatNoClipFunc(player, NULL);
+}
+
 static void CheatGodFunc(player_t *player, Cheat_t *cheat)
 {
 	player->cheats ^= CF_GODMODE;
-	if(player->cheats&CF_GODMODE)
+	player->update |= PSF_STATE;
+	if(player->cheats & CF_GODMODE)
 	{
 		P_SetMessage(player, TXT_CHEATGODON, false);
 	}
@@ -1300,6 +1311,7 @@ static void CheatGodFunc(player_t *player, Cheat_t *cheat)
 static void CheatNoClipFunc(player_t *player, Cheat_t *cheat)
 {
 	player->cheats ^= CF_NOCLIP;
+	player->update |= PSF_STATE;
 	if(player->cheats&CF_NOCLIP)
 	{
 		P_SetMessage(player, TXT_CHEATNOCLIPON, false);
@@ -1313,7 +1325,9 @@ static void CheatNoClipFunc(player_t *player, Cheat_t *cheat)
 static void CheatWeaponsFunc(player_t *player, Cheat_t *cheat)
 {
 	int i;
-	//extern boolean *WeaponInShareware;
+
+	player->update |= PSF_ARMOR_POINTS | PSF_STATE | PSF_MAX_AMMO
+		| PSF_AMMO | PSF_OWNED_WEAPONS;
 
 	player->armorpoints = 200;
 	player->armortype = 2;
@@ -1344,6 +1358,7 @@ static void CheatWeaponsFunc(player_t *player, Cheat_t *cheat)
 
 static void CheatPowerFunc(player_t *player, Cheat_t *cheat)
 {
+	player->update |= PSF_POWERS;
 	if(player->powers[pw_weaponlevel2])
 	{
 		player->powers[pw_weaponlevel2] = 0;
@@ -1358,6 +1373,7 @@ static void CheatPowerFunc(player_t *player, Cheat_t *cheat)
 
 static void CheatHealthFunc(player_t *player, Cheat_t *cheat)
 {
+	player->update |= PSF_HEALTH;
 	if(player->chickenTics)
 	{
 		player->health = player->plr->mo->health = MAXCHICKENHEALTH;
@@ -1373,6 +1389,7 @@ static void CheatKeysFunc(player_t *player, Cheat_t *cheat)
 {
 	extern int playerkeys;
 
+	player->update |= PSF_KEYS;
 	player->keys[key_yellow] = true;
 	player->keys[key_green] = true;
 	player->keys[key_blue] = true;
@@ -1552,12 +1569,18 @@ int CCmdCheat(int argc, char **argv)
 
 static boolean canCheat()
 {
+	if(IS_NETGAME && !IS_CLIENT && netSvAllowCheats) return true;
 	return !(gameskill == sk_nightmare || (IS_NETGAME /*&& !netcheat*/) 
 		|| players[consoleplayer].health <= 0);
 }
 
 int CCmdCheatGod(int argc, char **argv)
 {
+	if(IS_NETGAME)
+	{
+		NetCl_CheatRequest("god");
+		return true;
+	}
 	if(!canCheat()) return false; // Can't cheat!
 	CheatGodFunc(players+consoleplayer, NULL);
 	return true;
@@ -1565,6 +1588,11 @@ int CCmdCheatGod(int argc, char **argv)
 
 int CCmdCheatClip(int argc, char **argv)
 {
+	if(IS_NETGAME)
+	{
+		NetCl_CheatRequest("noclip");
+		return true;
+	}
 	if(!canCheat()) return false; // Can't cheat!
 	CheatNoClipFunc(players+consoleplayer, NULL);
 	return true;
@@ -1573,31 +1601,48 @@ int CCmdCheatClip(int argc, char **argv)
 int CCmdCheatGive(int argc, char **argv)
 {
 	int tellUsage = false;
+	int target = consoleplayer;
+
+	if(IS_CLIENT)
+	{
+		char buf[100];
+		if(argc != 2) return false;
+		sprintf(buf, "give %s", argv[1]);
+		NetCl_CheatRequest(buf);
+		return true;
+	}
 
 	if(!canCheat()) return false; // Can't cheat!
+
 	// Check the arguments.
-	if(argc != 2)
+	if(argc == 3) 
+	{
+		target = atoi(argv[2]);
+		if(target < 0 || target >= MAXPLAYERS 
+			|| !players[target].plr->ingame) return false;
+	}
+	if(argc != 2 && argc != 3)
 		tellUsage = true;
 	else if(!strnicmp(argv[1], "weapons", 1))
-		CheatWeaponsFunc(players+consoleplayer, NULL);
+		CheatWeaponsFunc(players + target, NULL);
 	else if(!strnicmp(argv[1], "health", 1))
-		CheatHealthFunc(players+consoleplayer, NULL);
+		CheatHealthFunc(players + target, NULL);
 	else if(!strnicmp(argv[1], "keys", 1))
-		CheatKeysFunc(players+consoleplayer, NULL);
+		CheatKeysFunc(players + target, NULL);
 	else if(!strnicmp(argv[1], "artifacts", 1))
 	{
 		Cheat_t cheat;
 		cheat.args[0] = 'z';
 		cheat.args[1] = '0';
-		CheatArtifact3Func(players+consoleplayer, &cheat);
+		CheatArtifact3Func(players + target, &cheat);
 	}
 	else 
 		tellUsage = true;
 
 	if(tellUsage)
 	{
-		Con_Printf( "Usage: give weapons/health/keys/artifacts\n");
-		Con_Printf( "The first letter is enough, e.g. 'give h'.\n");
+		Con_Printf("Usage: give weapons/health/keys/artifacts\n");
+		Con_Printf("The first letter is enough, e.g. 'give h'.\n");
 	}
 	return true;
 }

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/08/24 00:15:03  skyjake
+// Netgame-aware cheats
+//
 // Revision 1.3  2003/07/12 22:25:50  skyjake
 // Use map validation routine in warp cheat
 //
@@ -45,6 +48,7 @@ rcsid[] = "$Id$";
 #include "p_local.h"
 #include "p_setup.h"
 #include "f_infine.h"
+#include "d_net.h"
 
 // Dimensions given in characters.
 #define ST_MSGWIDTH			52
@@ -124,10 +128,12 @@ cht_GetParam
 void cht_GodFunc(player_t *plyr)
 {
 	plyr->cheats ^= CF_GODMODE;
+	plyr->update |= PSF_STATE;
 	if (plyr->cheats & CF_GODMODE)
 	{
 		if (plyr->plr->mo) plyr->plr->mo->health = maxhealth;
 		plyr->health = maxhealth;
+		plyr->update |= PSF_HEALTH;
 	}
 	P_SetMessage(plyr, (plyr->cheats & CF_GODMODE)? 
 		STSTR_DQDON : STSTR_DQDOFF);
@@ -142,19 +148,23 @@ void cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
 	{
 		plyr->armorpoints = armorpoints[1]; //200;
 		plyr->armortype = 2;
+		plyr->update |= PSF_STATE | PSF_ARMOR_POINTS;
 	}
 	if(weapons)
 	{
+		plyr->update |= PSF_OWNED_WEAPONS;
 		for (i=0;i<NUMWEAPONS;i++)
 			plyr->weaponowned[i] = true;
 	}
 	if(ammo)
 	{
+		plyr->update |= PSF_AMMO;
 		for (i=0;i<NUMAMMO;i++)
 			plyr->ammo[i] = plyr->maxammo[i];
 	}
 	if(cards)
 	{
+		plyr->update |= PSF_KEYS;
 		for (i=0;i<NUMCARDS;i++)
 			plyr->cards[i] = true;
 	}
@@ -187,6 +197,7 @@ void cht_MusicFunc(player_t *plyr, char *buf)
 void cht_NoClipFunc(player_t *plyr)
 {
 	plyr->cheats ^= CF_NOCLIP;
+	plyr->update |= PSF_STATE;
 	P_SetMessage(plyr, (plyr->cheats & CF_NOCLIP)? STSTR_NCON : STSTR_NCOFF);
 }
 
@@ -217,6 +228,7 @@ boolean cht_WarpFunc(player_t *plyr, char *buf)
 
 void cht_PowerUpFunc(player_t *plyr, int i)
 {
+	plyr->update |= PSF_POWERS;
 	if (!plyr->powers[i])
 		P_GivePower( plyr, i);
 	else if (i!=pw_strength)
