@@ -524,14 +524,19 @@ void FI_PopState(void)
 //===========================================================================
 void FI_Reset(void)
 {
-	if(IS_CLIENT)
+/*	if(IS_CLIENT)
 	{
 #ifdef _DEBUG
 		Con_Printf("FI_Reset: Called in client mode! (not reseting)\n");
 #endif
 		return;
-	}
+	}*/
 
+	// The state is suspended when the PlayDemo command is used.
+	// Being suspended means that InFine is currently not active, but 
+	// will be restored at a later time.
+	if(fi && fi->suspended) return;
+	
 	// Pop all the states. 
 	while(fi) FI_PopState();	
 
