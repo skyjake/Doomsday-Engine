@@ -395,8 +395,6 @@ void GL_Shutdown(void)
 //===========================================================================
 void GL_Init2DState(void)	
 {
-	byte fogcol[4] = { 138, 138, 138, 1 };
-
 	// The variables.
 	nearClip = 5;
 	farClip = 16500;
@@ -412,11 +410,13 @@ void GL_Init2DState(void)
 	gl.Ortho(0, 0, 320, 200, -1, 1);
 
 	// Default state for the white fog is off.
-	whitefog = false;
+	useFog = false;
 	gl.Disable(DGL_FOG);
 	gl.Fog(DGL_FOG_MODE, DGL_LINEAR);
 	gl.Fog(DGL_FOG_END, 2100);	// This should be tweaked a bit.
-	gl.Fogv(DGL_FOG_COLOR, fogcol);
+	fogColor[0] = fogColor[1] = fogColor[2] = 138;
+	fogColor[3] = 255;
+	gl.Fogv(DGL_FOG_COLOR, fogColor);
 
 	/*glEnable(GL_POLYGON_SMOOTH);
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);*/
@@ -516,16 +516,16 @@ void GL_ProjectionMatrix(void)
 //===========================================================================
 void GL_UseFog(int yes)
 {
-	if(!whitefog && yes)
+	if(!useFog && yes)
 	{
 		// Fog is turned on.
-		whitefog = true;
+		useFog = true;
 		gl.Enable(DGL_FOG);
 	}
-	else if(whitefog && !yes)
+	else if(useFog && !yes)
 	{
 		// Fog must be turned off.
-		whitefog = false;
+		useFog = false;
 		gl.Disable(DGL_FOG);
 	}
 	// Otherwise we won't do a thing.
@@ -546,7 +546,7 @@ void GL_TotalReset(boolean doShutdown)
 
 	if(doShutdown)
 	{
-		hadFog = whitefog;
+		hadFog = useFog;
 		wasStartup = startupScreen;
 
 		// Remember the name of the font.
