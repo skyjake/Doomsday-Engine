@@ -314,6 +314,10 @@ SOURCE=.\Src\net_ping.c
 # PROP Default_Filter ""
 # Begin Source File
 
+SOURCE=.\Src\p_cmd.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\p_data.c
 # End Source File
 # Begin Source File
