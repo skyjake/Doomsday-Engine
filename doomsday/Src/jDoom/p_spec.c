@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/07/29 16:35:53  skyjake
+// Disabled old texture anim code
+//
 // Revision 1.3  2003/06/30 00:04:44  skyjake
 // Fixed button deact sound
 //
@@ -96,6 +99,7 @@ extern anim_t*	lastanim;
 // P_InitPicAnims
 //
 
+#if 0
 // Floor/ceiling animation sequences,
 //  defined by first and last frame,
 //  i.e. the flat (64x64 tile) name to
@@ -140,7 +144,7 @@ animdef_t		animdefs[] =
 
 anim_t		anims[MAXANIMS];
 anim_t*		lastanim;
-
+#endif
 
 //
 //      Animating line specials
@@ -156,6 +160,7 @@ extern  line_t*	linespeciallist[MAXLINEANIMS];
 //===========================================================================
 void P_InitPicAnims(void)
 {
+#if 0
     int i, k;
     
     //	Init animation
@@ -200,6 +205,7 @@ void P_InitPicAnims(void)
 		lastanim->speed = animdefs[i].speed;
 		lastanim++;
    }
+#endif
 }
 
 
@@ -1108,8 +1114,6 @@ int		levelTimeCount;
 
 void P_UpdateSpecials (void)
 {
-    anim_t*	anim;
-    int		pic;
     int		i;
     line_t*	line;
 
@@ -1124,6 +1128,7 @@ void P_UpdateSpecials (void)
 			G_ExitLevel();
     }
     
+#if 0
     //	ANIMATE FLATS AND TEXTURES GLOBALLY
     for (anim = anims ; anim < lastanim ; anim++)
     {
@@ -1131,14 +1136,12 @@ void P_UpdateSpecials (void)
 		{
 			pic = anim->basepic + ( (leveltime/anim->speed + i)%anim->numpics );
 			if (anim->istexture)
-				//texturetranslation[i] = pic;
 				R_SetTextureTranslation(i, pic);
 			else
-				//flattranslation[i] = pic;
 				R_SetFlatTranslation(i, pic);
 		}
     }
-	
+#endif
     
     //	ANIMATE LINE SPECIALS
     for (i = 0; i < numlinespecials; i++)
