@@ -418,6 +418,30 @@ vissprite_t *R_NewVisSprite (void)
 }
 
 //===========================================================================
+// R_ProjectDecoration
+//===========================================================================
+void R_ProjectDecoration(mobj_t *source)
+{
+	float v1[2];
+	vissprite_t *vis;
+
+	// Calculate edges of the shape.
+	v1[VX] = FIX2FLT(source->x);
+	v1[VY] = FIX2FLT(source->y);
+
+	vis = R_NewVisSprite ();
+	memset(vis, 0, sizeof(*vis));
+	vis->issprite = true;
+	vis->distance = Rend_PointDist2D(v1);
+	vis->mo.patch = -1; // Doesn't have one!
+	vis->mo.light = DL_GetLuminous(source->light);
+//	vis->mo.flags = thing->ddflags;
+	vis->mo.gx = source->x;
+	vis->mo.gy = source->y;
+	vis->mo.gz = vis->mo.gzt = source->z; 
+}
+
+//===========================================================================
 // R_ProjectPlayerSprites
 //	If 3D models are found for psprites, here we will create vissprites
 //	for them.
@@ -631,7 +655,7 @@ void R_ProjectSprite (mobj_t *thing)
 	vis = R_NewVisSprite ();
 	vis->issprite = true;
 	vis->distance = distance;
-	vis->mo.light = thing->light;
+	vis->mo.light = DL_GetLuminous(thing->light);
 	vis->mo.mf = mf;
 	vis->mo.nextmf = nextmf;
 	vis->mo.inter = interp;
