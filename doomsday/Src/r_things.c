@@ -712,8 +712,10 @@ void R_ProjectSprite (mobj_t *thing)
 	}
 	vis->mo.flip = flip;
 	vis->mo.patch = lump;
-	// Get light level.
-	if(LevelFullBright || thing->frame & FF_FULLBRIGHT)
+
+	// Set light level.
+	if((LevelFullBright || thing->frame & FF_FULLBRIGHT) 
+		&& (!mf || !(mf->sub[0].flags & MFF_DIM)))
 	{
 		vis->mo.lightlevel = -1;
 	}

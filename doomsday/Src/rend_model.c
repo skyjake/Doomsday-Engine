@@ -335,7 +335,8 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 	modelCenter[VZ] = Q_FIX2FLT((spr->mo.gz+spr->mo.gzt) >> 1) 
 		+ mf->offset[VY] + spr->mo.visoff[VZ];
 
-	if(spr->mo.lightlevel < 0 || mflags & MFF_FULLBRIGHT) 
+	if((spr->mo.lightlevel < 0 || mflags & MFF_FULLBRIGHT) 
+		&& !(mflags & MFF_DIM)) 
 	{
 		ambientColor[0] = ambientColor[1] = ambientColor[2] = 1;
 		gl.Color4f(1, 1, 1, alpha);
