@@ -182,7 +182,6 @@ def getUserPath(which):
     if which == PROFILES and path == getSystemPath(which):
         path = os.path.join(homeDir, 'user' + which)
     
-    print 'getUserPath:', path
     return path
 
 

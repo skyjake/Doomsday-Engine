@@ -1267,6 +1267,9 @@ class MainPanel (wx.Panel):
 
 INITIAL_SASH_POS = 210
 
+if st.isDefined('main-split-position'):
+    INITIAL_SASH_POS = st.getSystemInteger('main-split-position')
+
 
 class MainFrame (wx.Frame):
     """The main frame is the main window of Snowberry."""
@@ -1308,6 +1311,8 @@ class MainFrame (wx.Frame):
 
         self.mainPanel = MainPanel(parentWin)
 
+        self.splitPos = None
+
         # Create the help area.
         if self.splitter:
             self.helpPanel = wx.Panel(self.splitter, -1, style = wx.NO_BORDER)
@@ -1317,7 +1322,6 @@ class MainFrame (wx.Frame):
             # Init the splitter.
             self.splitter.SplitVertically(self.mainPanel, self.helpPanel,
                                           -INITIAL_SASH_POS)
-            self.splitPos = None
         else:
             self.helpPanel = None
 
@@ -1383,7 +1387,7 @@ class MainFrame (wx.Frame):
                 pos = INITIAL_SASH_POS
 
             self.splitter.SetSashPosition(ev.GetSize()[0] - pos)
-
+            
     def onSplitChange(self, ev):
         """Update the splitter anchor position."""
 
@@ -1410,6 +1414,8 @@ class MainFrame (wx.Frame):
             f.write('# This file is generated automatically.\n')
             f.write('appearance main (\n')
             f.write('  width = %i\n  height = %i\n' % winSize)
+            if self.splitPos != None:
+                f.write('  split-position = %i\n' % self.splitPos)
             f.write(')\n')
         except: 
             # Window size not saved.
