@@ -797,7 +797,7 @@ boolean SCCloseServer(int option)
 
 boolean SCEnterPlayerSetupMenu(int option)
 {
-	strncpy(plrNameEd.text, *(char **) Con_GetVariable("n_plrname")->ptr, 255);
+	strncpy(plrNameEd.text, *(char **) Con_GetVariable("net-name")->ptr, 255);
 	plrColor = cfg.netColor;
 #ifdef __JHEXEN__
 	plrClass = cfg.netClass;
@@ -845,7 +845,7 @@ boolean SCAcceptPlayer(int option)
 	cfg.netClass = plrClass;
 #endif
 
-	strcpy(buf, "n_plrname ");
+	strcpy(buf, "net-name ");
 	strcatQuoted(buf, plrNameEd.text);
 	Con_Execute(buf, false);
 

@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="wsock32.lib libpng.lib libz.lib fmodvc.lib lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="sdl_net.lib sdl.lib wsock32.lib libpng.lib libz.lib fmodvc.lib lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\./Bin/Release/Doomsday.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -572,9 +572,6 @@
 				RelativePath=".\Include\LZSS.h">
 			</File>
 			<File
-				RelativePath="Include\dd_version.h">
-			</File>
-			<File
 				RelativePath=".\Include\doomsday.h">
 			</File>
 			<File
@@ -612,6 +609,9 @@
 				</File>
 				<File
 					RelativePath=".\Include\dd_types.h">
+				</File>
+				<File
+					RelativePath="Include\dd_version.h">
 				</File>
 				<File
 					RelativePath=".\Include\dd_wad.h">
