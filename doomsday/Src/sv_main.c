@@ -11,11 +11,16 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
+#include "de_play.h"
 #include "de_misc.h"
 
 #include "r_world.h"
 
 // MACROS ------------------------------------------------------------------
+
+// This is absolute maximum bandwidth rating. Frame size is practically
+// unlimited with this score.
+#define MAX_BANDWIDTH_RATING	100
 
 // TYPES -------------------------------------------------------------------
 
@@ -24,6 +29,8 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+void Sv_ClientCoords(int playerNum);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -176,7 +183,7 @@ void Sv_HandlePacket(void)
 			// Note the time when the player entered.
 			sender->enterTime = gametic;
 			sender->runTime = gametic-1;
-			sender->lagStress = 0;
+			//sender->lagStress = 0;
 		}
 		else if(pl->ingame)
 		{
@@ -187,16 +194,23 @@ void Sv_HandlePacket(void)
 		break;
 
 	case pkt_ok:
+		// The client says it's ready to receive frames.
+		sender->ready = true;
+#ifdef _DEBUG
+		Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
+			"(%08X).\n", from, sender->id);
+#endif
 		if(sender->handshake)
 		{
-			// Not any more. The client has acknowledged the handshake
+			// The handshake is complete. The client has acknowledged it 
 			// and sends its regards.
 			sender->handshake = false;
-			sender->ready = true;
 			// Send a clock sync message.
 			Msg_Begin(psv_sync);
 			Msg_WriteLong(gametic + (sender->shakePing*35)/2000);
-			Net_SendBuffer(from, SPF_RELIABLE | 10001);	// High-prio.
+			// Send reliably, although if it has to be resent, the tics
+			// will already be way off...
+			Net_SendBuffer(from, SPF_CONFIRM);
 			// Send welcome string.
 			Sv_SendText(from, SV_CONSOLE_FLAGS, SV_WELCOME_STRING"\n");
 			// Send position and view angles.
@@ -225,7 +239,9 @@ void Sv_HandlePacket(void)
 		Msg_Write(msg, strlen(msg) + 1);
 		for(i = 1; i < MAXPLAYERS; i++)
 			if(players[i].ingame && mask & (1<<i) && i != from)
-				Net_SendBuffer(i, SPF_RELIABLE);
+			{
+				Net_SendBuffer(i, SPF_ORDERED);
+			}
 		Z_Free(msg);
 		break;
 
@@ -234,7 +250,7 @@ void Sv_HandlePacket(void)
 		Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS,
 			"%s renamed to %s.\n", sender->name, info.name);
 		strcpy(sender->name, info.name);
-		Net_SendPacket(DDSP_RELIABLE | DDSP_ALL_PLAYERS, pkt_player_info,
+		Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, pkt_player_info,
 			&info, sizeof(info));
 		break;
 	}
@@ -271,7 +287,7 @@ void Sv_Login(void)
 	// Send a confirmation packet to the client.
 	Msg_Begin(pkt_login);
 	Msg_WriteByte(true);	// Yes, you're logged in.
-	Net_SendBuffer(net_remoteuser, SPF_RELIABLE);
+	Net_SendBuffer(net_remoteuser, SPF_ORDERED);
 }
 
 //========================================================================
@@ -341,14 +357,17 @@ void Sv_GetPackets(void)
 			if(sender->numtics + num > BACKUPTICS) 
 				num = BACKUPTICS - sender->numtics;
 			start = sender->firsttic + sender->numtics;
+
 			// Increase the counter.
 			sender->numtics += num;
-			// Copy as many as fits.
-			for(i=start; num > 0; num--, i++)
+
+			// Copy as many as fits (circular buffer).
+			for(i = start; num > 0; num--, i++)
 			{
 				if(i >= BACKUPTICS) i -= BACKUPTICS;
 				cmd = (ticcmd_t*) &sender->ticcmds[TICCMD_IDX(i)];
 				Msg_Read(cmd, TICCMD_SIZE);
+
 				// Check the time stamp.
 				time = gametic - Sv_Latency(cmd->time);//, sender->enterTime);
 				if(time > sender->time) sender->time = time;
@@ -359,7 +378,9 @@ void Sv_GetPackets(void)
 			// The client is acknowledging that it has received a number of
 			// delta sets.
 			while(!Msg_End())
+			{
 				Sv_AckDeltaSet(netbuffer.player, Msg_ReadByte());
+			}
 			break;
 
 		case pkt_coords:
@@ -371,10 +392,15 @@ void Sv_GetPackets(void)
 			// Note the time (this isn't perfectly accurate, though).
 			netconsole = netbuffer.player;
 			if(netconsole < 0 || netconsole >= MAXPLAYERS) continue; 
-			clients[netconsole].shakePing = Sys_GetRealTime() - 
-				clients[netconsole].shakePing;
+
+			sender = &clients[netconsole];
+			sender->shakePing = Sys_GetRealTime() - sender->shakePing;
 			Con_Printf("Cl%i handshake ping: %i ms\n", netconsole, 
-				clients[netconsole].shakePing);
+				sender->shakePing);
+
+			// Update the initial ack time accordingly. Since the ping
+			// fluctuates, assume the a poor case.
+			Net_SetInitialAckTime(netconsole, 2 * sender->shakePing);
 			break;
 
 		case pkt_ping:
@@ -417,25 +443,6 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
 {
 	int		i;
 
-/*	char	**nameList, newname[PLAYERNAMELEN];
-	unsigned int nodeids[MAXPLAYERS];
-
-	if(!netgame)
-	{
-		Con_Message("Sv_NetPlayerArrives called when not in netgame!\n");
-		return;
-	}
-	if(isClient) return;
-
-	nameList = jtNetGetStringList(JTNET_PLAYER_NAME_LIST, NULL);
-	strncpy(newname, nameList[newnode], PLAYERNAMELEN-1);
-	newname[PLAYERNAMELEN-1] = 0;	
-	Con_Printf( "%s has arrived.\n", newname);
-
-	N_UpdateNodes();
-	
-	jtNetGetPlayerIDs(nodeids);
-*/
 	Con_Message("Sv_PlayerArrives: '%s' has arrived.\n", name);
 
 	// We need to find the new player a client entry.
@@ -452,8 +459,8 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
 			
 			Sv_InitPoolForClient(i);
 
-			Con_Printf("Sv_PlayerArrives: '%s' assigned to console %i "
-				"(node: %x)\n", clients[i].name, i, nodeID);
+			VERBOSE( Con_Printf("Sv_PlayerArrives: '%s' assigned to "
+				"console %i (node: %x)\n", clients[i].name, i, nodeID) );
 
 			// In order to get in the game, the client must first
 			// shake hands. It'll request this by sending a Hello packet.
@@ -497,6 +504,13 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 	clients[pNumber].updateCount = 0;
 	clients[pNumber].handshake = false;
 	clients[pNumber].nodeID = 0;
+	clients[pNumber].bandwidthRating = BWR_DEFAULT;
+	
+	// Set a modest ack time by default.
+	Net_SetInitialAckTime(pNumber, ACK_DEFAULT);
+
+	// Remove the player's data from the register.
+	Sv_PlayerRemoved(pNumber);
 
 	if(wasInGame)
 	{
@@ -506,7 +520,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 		// Inform other clients about this.
 		Msg_Begin(psv_player_exit);
 		Msg_WriteByte(pNumber);
-		Net_SendBuffer(NSP_BROADCAST, SPF_RELIABLE);
+		Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
 	}
 }
 
@@ -526,7 +540,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
 	for(i = 0; i < MAXPLAYERS; i++)
 		if(clients[i].connected)
 			shake.playerMask |= 1<<i;
-	Net_SendPacket(playernum | DDSP_RELIABLE, psv_handshake, &shake, 
+	Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake, 
 		sizeof(shake));
 
 #if _DEBUG
@@ -539,6 +553,9 @@ void Sv_Handshake(int playernum, boolean newplayer)
 		clients[playernum].shakePing = Sys_GetRealTime();
 	}
 	
+	// The game DLL wants to shake hands as well?
+ 	gx.NetWorldEvent(DDWE_HANDSHAKE, playernum, (void*) newplayer);
+
 	// Propagate client information.
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
@@ -546,7 +563,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
 		{
 			info.console = i;
 			strcpy(info.name, clients[i].name);
-			Net_SendPacket(playernum | DDSP_RELIABLE, pkt_player_info, 
+			Net_SendPacket(playernum | DDSP_ORDERED, pkt_player_info, 
 				&info, sizeof(info));
 		}
 		// Send the new player's info to other players.
@@ -554,13 +571,10 @@ void Sv_Handshake(int playernum, boolean newplayer)
 		{
 			info.console = playernum;
 			strcpy(info.name, clients[playernum].name);
-			Net_SendPacket(i | DDSP_RELIABLE, pkt_player_info, 
+			Net_SendPacket(i | DDSP_CONFIRM, pkt_player_info, 
 				&info, sizeof(info));
 		}
 	}
-
-	// The game DLL wants to shake hands as well?
- 	gx.NetWorldEvent(DDWE_HANDSHAKE, playernum, (void*) newplayer);
 
 	if(!newplayer)
 	{
@@ -592,13 +606,15 @@ void Sv_StartNetGame()
 		clients[i].enterTime = 0;
 		clients[i].runTime = -1;
 		clients[i].time = 0;
-		clients[i].lagStress = 0;
+		//clients[i].lagStress = 0;
 		clients[i].lastTransmit = -1;
 		clients[i].updateCount = UPDATECOUNT;
 		clients[i].fov = 90;
 		clients[i].viewConsole = i;
 		memset(clients[i].name, 0, sizeof(clients[i].name));
 		players[i].flags &= ~DDPF_CAMERA;
+		clients[i].bandwidthRating = BWR_DEFAULT;
+		memset(clients[i].ackTimes, 0, sizeof(clients[i].ackTimes));
 	}
 	gametic = 0;
 	firstNetUpdate = true;
@@ -624,7 +640,7 @@ void Sv_SendText(int to, int con_flags, char *text)
 	Msg_Begin(psv_console_text);
 	Msg_WriteLong(con_flags & ~CBLF_TRANSMIT);
 	Msg_Write(text, strlen(text)+1);
-	Net_SendBuffer(to, SPF_RELIABLE);
+	Net_SendBuffer(to, SPF_ORDERED);
 }
 
 //===========================================================================
@@ -637,7 +653,7 @@ void Sv_Kick(int who)
 	if(!clients[who].connected) return;
 	Sv_SendText(who, SV_CONSOLE_FLAGS, "You were kicked out!\n");
 	Msg_Begin(psv_server_close);
-	Net_SendBuffer(who, SPF_RELIABLE);
+	Net_SendBuffer(who, SPF_ORDERED);
 	//players[who].ingame = false;
 }
 
@@ -654,7 +670,7 @@ void Sv_Ticker(void)
 		if(!players[i].ingame || !players[i].mo) continue;
 		players[i].lastangle = players[i].mo->angle;
 	}
-	Sv_PoolTicker();
+	/* Sv_PoolTicker(); */
 }
 
 /*
@@ -691,9 +707,83 @@ int Sv_GetNumConnected(void)
 	return count;
 }
 
-//===========================================================================
-// CCmdLogout
-//===========================================================================
+/*
+ * The bandwidth rating is updated according to the status of the 
+ * player's send queue. Returns true if a new packet may be sent.
+ */
+boolean Sv_CheckBandwidth(int playerNumber)
+{
+	client_t *client = &clients[playerNumber];
+	uint qSize = N_GetSendQueueSize(playerNumber);
+	uint limit = 1000;
+
+	// If there are too many messages in the queue, the player's bandwidth
+	// is overrated.
+	if(qSize > limit)
+	{
+		// Drop faster to allow the send queue to clear out sooner.
+		client->bandwidthRating -= 2;
+	}
+
+/*	// If the send queue is practically empty, we can use more bandwidth.
+	if(qSize < limit/20)
+	{
+		client->bandwidthRating++;
+	}*/
+
+	// Do not go past the boundaries, though.
+	if(client->bandwidthRating < 0)
+	{
+		client->bandwidthRating = 0;
+	}
+	if(client->bandwidthRating > MAX_BANDWIDTH_RATING)
+	{
+		 client->bandwidthRating = MAX_BANDWIDTH_RATING;
+	}
+
+	// New messages will not be sent if there's too much already.
+	return qSize < 3*limit;
+}
+
+/*
+ * Reads a pkt_coords packet from the message buffer. We trust the 
+ * client's position and change ours to match it. The client better not 
+ * be cheating.
+ */
+void Sv_ClientCoords(int playerNum)
+{
+	client_t *cl = clients + playerNum;
+	mobj_t *mo = players[playerNum].mo;
+	int clx, cly, clz;
+
+	// If mobj or player is invalid, the message is discarded.
+	if(!mo || !players[playerNum].ingame
+		|| players[playerNum].flags & DDPF_DEAD) return;
+
+	clx = Msg_ReadShort() << 16;
+	cly = Msg_ReadShort() << 16;
+	clz = Msg_ReadShort() << 16;
+
+	// If we aren't about to forcibly change the client's position, update 
+	// with new pos if it's valid.
+	if(!(players[playerNum].flags & DDPF_FIXPOS)
+		&& P_CheckPosition2(mo, clx, cly, clz)) // But it must be a valid pos.
+	{
+		P_UnlinkThing(mo);
+		mo->x = clx;
+		mo->y = cly;
+		mo->z = clz;
+		P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+		mo->floorz = tmfloorz;
+		mo->ceilingz = tmceilingz;
+		if(mo->z < mo->subsector->sector->floorheight) 
+			mo->z = mo->subsector->sector->floorheight;
+	}
+}
+
+/*
+ * Console command for terminating a remote console connection.
+ */
 int CCmdLogout(int argc, char **argv)
 {
 	// Only servers can execute this command.
@@ -704,7 +794,7 @@ int CCmdLogout(int argc, char **argv)
 	// Send a logout packet.
 	Msg_Begin(pkt_login);
 	Msg_WriteByte(false);	// You're outta here.
-	Net_SendBuffer(net_remoteuser, SPF_RELIABLE);	
+	Net_SendBuffer(net_remoteuser, SPF_ORDERED);	
 	net_remoteuser = 0;
 	return true;
 }
