@@ -98,6 +98,15 @@ float Rend_SignedPointDist2D(float c[2])
 }
 
 //===========================================================================
+// Rend_PointDist3D
+//	Approximated! The Z axis aspect ratio is corrected.
+//===========================================================================
+float Rend_PointDist3D(float c[3])
+{
+	return M_ApproxDistance3f(vx - c[VX], vz - c[VY], 1.2f * (vy - c[VZ]));
+}	
+
+//===========================================================================
 // Rend_Init
 //===========================================================================
 void Rend_Init(void)
@@ -1031,14 +1040,19 @@ void Rend_RenderMap(void)
 		R_ClearSectorFlags();
 		DL_ClearForFrame();		// Zeroes the links.
 
+		// Generate surface decorations for the frame.
+		Rend_InitDecorationsForFrame();
+
 		// Maintain luminous objects.
-		if(useDynLights || haloMode || litSprites) DL_InitForNewFrame(); 
+		if(useDynLights || haloMode || litSprites || useDecorations) 
+		{
+			DL_InitForNewFrame(); 
+		}
 
 		// Add the backside clipping range (if vpitch allows).
 		if(vpitch <= 90-yfov/2 && vpitch >= -90+yfov/2)
 		{
 			float a = fabs(vpitch) / (90-yfov/2);
-			//binangle_t startAngle = (binangle_t) BANG_45*(1+a);
 			binangle_t startAngle = (binangle_t) (BANG_45*fieldOfView/90)*(1+a);
 			binangle_t angLen = BANG_180 - startAngle;																					
 			viewside = (viewangle>>(32-BAMS_BITS)) + startAngle;
@@ -1053,6 +1067,9 @@ void Rend_RenderMap(void)
 		firstsubsector = true;
 
 		Rend_RenderNode(numnodes-1);		
+
+		// Make vissprites of all the visible decorations.
+		Rend_ProjectDecorations();
 
 		Rend_RenderShadows();
 	}

@@ -692,6 +692,58 @@ char* R_TextureNameForNum(int num)
 }
 
 //===========================================================================
+// R_IsCustomTexture
+//	Returns true if the texture is probably not from the original game.
+//===========================================================================
+boolean R_IsCustomTexture(int texture)
+{
+	int i, lump;
+
+	// First check the texture definitions.
+	lump = W_CheckNumForName("TEXTURE1");
+	if(lump >= 0 && !W_IsFromIWAD(lump)) return true;
+
+	lump = W_CheckNumForName("TEXTURE2");
+	if(lump >= 0 && !W_IsFromIWAD(lump)) return true;
+
+	// Go through the patches.
+	for(i = 0; i < textures[texture]->patchcount; i++)
+	{
+		if(!W_IsFromIWAD(textures[texture]->patches[i].patch))
+			return true;
+	}
+
+	// This is most likely from the original game data.
+	return false;
+}
+
+//===========================================================================
+// R_IsAllowedDecoration
+//	Returns true if the given decorations works under the specified 
+//	circumstances.
+//===========================================================================
+boolean R_IsAllowedDecoration
+	(ded_decor_t *def, int index, boolean hasExternal)
+{
+	if(hasExternal)
+		return (def->flags & DCRF_EXTERNAL) != 0;
+
+	if(def->is_texture)
+	{
+		// Is it probably an original texture?
+		if(!R_IsCustomTexture(index))
+			return !(def->flags & DCRF_NO_IWAD);
+	}
+	else
+	{
+		if(W_IsFromIWAD(index))
+			return !(def->flags & DCRF_NO_IWAD);
+	}
+
+	return (def->flags & DCRF_PWAD) != 0;
+}
+
+//===========================================================================
 // R_PrecacheFlat
 //	Prepares the specified flat and all the other flats in the same
 //	animation group. Has the consequence that all lumps inside the 
