@@ -35,6 +35,8 @@ IF YOU HAVE A SOURCE TARBALL:
 
 2. Cd to the Build directory.  Compiling under the Build directory
    will keep the main source directories clean of any object files.
+   It also prevents conflicts in the Src/Common/ directory, which is
+   used in a slightly different way by each game.
 
 3. Run "../configure".  By default, everything will be installed under
    /usr/local.  You might want to use e.g. "--prefix=/home/user/deng".
