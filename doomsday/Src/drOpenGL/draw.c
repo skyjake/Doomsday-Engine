@@ -214,8 +214,14 @@ void DG_MultiTexCoord2f(int target, float s, float t)
 //===========================================================================
 void DG_MultiTexCoord2fv(int target, float *data)
 {
-	currentVertex.tex[0] = data[0];
-	currentVertex.tex[1] = data[1];
+	float *tex = 
+		 (target == DGL_TEXTURE0? currentVertex.tex
+		: target == DGL_TEXTURE1? currentVertex.tex2 
+		: target == DGL_TEXTURE2? currentVertex.tex3
+		: currentVertex.tex4);
+
+	tex[0] = data[0];
+	tex[1] = data[1];
 	useTexCoords[target - DGL_TEXTURE0] = DGL_TRUE;
 }
 
