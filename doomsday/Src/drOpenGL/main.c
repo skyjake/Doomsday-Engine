@@ -796,6 +796,26 @@ int	DG_SetInteger(int name, int value)
 			// Sector light * texture + dynamic light.
 			activeTexture(GL_TEXTURE1);
 			envAddColoredAlpha(true);
+			
+			// Alpha remains unchanged.
+			if(extNvTexEnvComb)
+			{
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PREVIOUS);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_ZERO);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA, GL_SRC_ALPHA);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_ALPHA_NV, GL_ZERO);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_ALPHA_NV, GL_SRC_ALPHA);
+			}
+			else
+			{
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+			}
 
 			activeTexture(GL_TEXTURE0);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -1275,7 +1295,7 @@ int DG_Project(int num, gl_fc3vertex_t *inVertices, gl_fc3vertex_t *outVertices)
 	glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
 	glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
 	glGetIntegerv(GL_VIEWPORT, viewport);
-	for(i=numOut=0; i<num; i++, in++)
+	for(i = numOut = 0; i < num; i++, in++)
 	{
 		if(gluProject(in->pos[VX], in->pos[VY], in->pos[VZ],
 			modelMatrix, projMatrix, viewport,
