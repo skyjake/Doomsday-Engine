@@ -295,8 +295,9 @@ void Sys_ConPrint(int clflags, char *text)
 
 void Sys_ConUpdateCmdLine(char *text)
 {
+	unsigned int i;
 	char    line[LINELEN], *ch;
-	unsigned int i, numCols;
+	int     maxX = Sys_ConGetScreenSize(VX);
 
 	if(text == NULL)
 	{
@@ -318,8 +319,9 @@ void Sys_ConUpdateCmdLine(char *text)
 				*ch = 0;
 		}
 		wmove(winCommand, 0, 0);
+
 		// Can't print longer than the window.
-		waddnstr(winCommand, line, numCols - 1);
+		waddnstr(winCommand, line, MIN_OF(maxX, strlen(text) + 1));
 		wclrtoeol(winCommand);
 	}
 	wrefresh(winCommand);
