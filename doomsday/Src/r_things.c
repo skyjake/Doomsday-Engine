@@ -39,6 +39,7 @@
 float			weaponOffsetScale = 0.3183f;	// 1/Pi
 int				weaponOffsetScaleY = 1000;
 float			weaponFOVShift = 45;
+float			modelSpinSpeed = 1;
 int				alwaysAlign = 0;
 int				r_nospritez = false;
 int				pspOffX = 0, pspOffY = 0;
@@ -743,7 +744,8 @@ void R_ProjectSprite (mobj_t *thing)
 		}
 		else if(mf->sub[0].flags & MFF_SPIN)
 		{
-			vis->mo.yaw = 70 * leveltic/35.0f + (int)thing % 360;
+			vis->mo.yaw = modelSpinSpeed * 70 * leveltic/35.0f 
+				+ (int)thing % 360;
 		}
 		else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
 		{
