@@ -199,7 +199,6 @@ typedef struct mobj_s
 
 	mapthing_t		spawnpoint;		// for nightmare respawn
 	int				turntime;		// $visangle-facetarget
-	int				alpha;			// $mobjalpha
 	int				corpsetics;		// $vanish: how long has this been dead?
 } mobj_t;
 
