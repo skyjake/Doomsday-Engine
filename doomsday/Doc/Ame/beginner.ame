@@ -1,0 +1,292 @@
+@include{jake.ah}
+@macro{TITLE}{ A Beginner's Guide To Doomsday }
+
+@require{amestd}
+@include{darktable}
+@macro{button}{@strong{@arg}}
+
+@begin
+
+CONTENTS: @contents{1}
+
+@chapter{ What do you need? }
+
+@list{
+@item One of the self-extracting distribution archives:
+
+    @table{45 55}{
+		@header{File name} @tab @header{Contains}
+	@row{single}
+		@file{doomsday(version).exe} @tab Doomsday, jDoom, jHeretic, jHexen
+	@row
+		@file{doom(version).exe} @tab Doomsday, jDoom
+	@row
+		@file{jheretic(version).exe} @tab Doomsday, jHeretic
+	@row
+		@file{jhexen(version).exe} @tab Doomsday, jHexen
+	}
+
+  	All can be downloaded from @link{http://www.doomsdayhq.com/}
+  	or directly from @link{ftp://jfiles@@server1.thefourwinds.net/}.
+
+@item 3D models are distributed in separate archives:
+
+    @file{jdoom_mpack.exe} @br @file{jheretic_mpack.exe} @br
+    @file{jhexen_mpack.exe}
+
+@item Windows 95 (or newer).
+
+@item DirectX 6.0 (or newer).
+
+@item A display adapter with 3D hardware acceleration.
+
+@item A copy of the original shareware/registered Doom, Doom II,
+	Final Doom, shareware/registered Heretic, Hexen or Hexen:
+	Deathkings of the Dark Citadel, depending on what you're
+	going to play.
+}
+
+@chapter{ Automatical installation }
+
+Since Doomsday 1.7.3 the distribution archives have included a special installation wizard.
+
+@section{ Installing into a new folder }
+
+Type the path of the folder into the edit box or choose an existing folder using the browsing button.
+
+After the files have been extracted, a WAD files dialog will appear. Locate all the main WAD files you have installed. I recommend keeping the glBSP option checked because running it will fix many glitches in the maps. Note that shortcuts can only be created for the WAD files you locate using the dialog.
+
+The shortcut creation dialog will allow you to select a Start menu program group and gives you the option to automatically create shortcuts to the KickStart launcher. The fast launch shortcuts will be created in the selected Start menu program group. They allow you to immediately launch the game using a specific WAD and renderer.
+
+@section{ Upgrading an old version }
+
+The @button{Upgrade} button is available if you have installed a version of Doomsday in the past using the wizard. Clicking the button will make the installer extract the new files into the folder where you have the older version installed.
+
+The WAD files dialog will then appear. If you already have all the WAD files you need copied into the appropriate folders, just click @button{Continue}.
+
+If there is no need to create new shortcuts, just bypass the shortcut creation dialog by clicking @button{Continue}.
+
+@chapter{ Manual installation }
+
+This is the procedure to follow when installing Doomsday 1.7.2 or an older version.
+
+@section{ Step 1: Uncompress the distribution }
+
+Run the distribution EXE file. A window appears asking you where the files
+should be extracted. The default folder is @file{C:\Doomsday}.
+You might want to change it something like @file{C:\Games\Doomsday} or
+@file{C:\Program@sp{}Files\Doomsday}.
+Click the @strong{Install} button to begin the installation.
+
+When the files have been extracted, you can run the EXE file of the model
+pack, for instance @file{jdoom_mpack.exe}. Be sure to extract
+the model files in the same directory as you extracted the distribution.
+The default is @file{C:\Doomsday} here, as well. The model pack is
+not required; you don't have to install it at all, or you might
+install it at some later point in time.
+
+Even if you're only going to play one of the games, for example jDoom, it's
+recommended that you install the files into a folder named @file{Doomsday}
+(or something similar), not @file{jDoom} because if you later decide to
+install jHeretic or jHexen they should be installed into the same folder with
+jDoom. It's possible to install them into separate folders but then you've
+got multiple copies of the same files on your hard drive. (Assuming you
+care about a few MBs or the names of your folders.)
+
+@section{ Step 2: Copy the WAD files }
+
+The only thing you need from the original Doom, Heretic, Hexen, etc. is an
+IWAD file. It is the large (over 10 MBs) WAD file you can find in the
+folder where you've got the original game installed. It contains all the
+game maps, sprites, sounds, graphics and other data. The names of the
+various IWADs are listed below:
+
+@table{18 28 54}{
+	@header{Game DLL} @tab @header{Original Game} @tab @header{IWAD Files}
+@row{single}
+	jDoom @tab Shareware Doom @tab @file{DOOM1.WAD}
+@row
+	jDoom @tab Registered Doom @tab @file{DOOM.WAD}
+@row
+	jDoom @tab Doom II @tab @file{DOOM2.WAD}
+@row
+	jDoom @tab Final Doom @tab @file{TNT.WAD} and @file{PLUTONIA.WAD}
+@row
+	jHeretic @tab Heretic @tab @file{HERETIC.WAD}
+@row
+	jHexen @tab Hexen @tab @file{HEXEN.WAD}
+@row
+	jHexen @tab Hexen: Deathkings @tab
+	@file{HEXDD.WAD} (@file{HEXEN.WAD} needed as well)
+}
+
+Let's assume that in Step 1 you extracted the files to @file{C:\Doomsday}.
+I recommend that you copy (or move if you don't play the original game any
+more) the IWAD files you need into the appropriate @file{Data} subfolder, in
+jDoom's case @file{C:\Doomsday\Data\jDoom}. If you don't do this you'll need to
+specify the IWAD to use when launching the game.
+
+@notice{Make sure you're using the latest version of the original game.
+Patches can be found by searching the internet for "doom patch" or
+something similar. Also check @link{http://www.idsoftware.com/}.}
+
+@section{ Step 3: Run glBSP on the WAD files }
+
+glBSP (by Andrew Apted) is a program that calculates map data in a way
+which is more accurate and more useful for 3D rendering than the data found
+in the original WAD files. Running glBSP will greatly reduce the number of
+graphics errors like stray pixels and missing floors, ceilings and walls.
+In most cases all graphics errors can be fixed by running glBSP.
+
+The Doomsday KickStart launcher can automatically check for the existance
+of data files produced by glBSP and build them if necessary, so you can
+skip this step if you make sure the option "Check if glBSP needs to be run"
+is checked on KickStart's "Other" tab.
+
+Open the DOS Prompt and change to the folder where you extracted the files
+in Step 1. All the distributions include a text mode version of glBSP, so
+all you need to do is give the following commands (for all IWAD files you
+copied in Step 2):
+
+@samp{
+	@cmd{glbsp data\jdoom\doom.wad @br
+    glbsp data\jdoom\doom2.wad} @br
+    (...etc...) @br
+    @cmd{glbsp data\jhexen\hexdd.wad}
+}
+
+If you didn't copy the IWADs to the Data folder, you must naturally give
+the full path to glBSP, for example:
+
+@samp{@cmd{glbsp d:\games\heretic\heretic.wad}}
+
+For the latest version go to @link{http://glbsp.sourceforge.net/}.
+
+@section{ Step 4: Create a shortcut for KickStart }
+
+The main launcher for games running on the Doomsday Engine is called
+Doomsday KickStart. It can be found in the folder where you extracted the
+files in Step 1 (@file{Kicks.exe}). To have a convenient way to start the game
+create a Windows shortcut for @file{Kicks.exe}.
+
+@notice{If KickStart fails to run, displaying an error message about
+missing OCX or DLL files, get the "KickStart Full Install" from
+@link{http://www.doomsdayhq.com/download_util.php}.}
+
+@chapter{ Starting a game }
+
+@section{ Starting with KickStart }
+
+Doomsday KickStart is the easiest way to start playing jDoom, jHeretic or
+jHexen. Select the profile you want from the list and click @button{Play}.
+
+You can create new profiles by right-clicking the profile list.
+
+Note that only the "Game" and "Definitions" tabs are profile-specific. The
+"Graphics" and "Other" tabs are common to all profiles.
+
+If you want to see the command line KickStart uses to start the game,
+right-click the Play button.
+
+@section{ Starting with the Simple Launchers }
+
+The Simple Launchers are small EXE files found in the folder where you
+installed the game (@file{jDoom.exe}, @file{jHeretic.exe}, @file{jHexen.exe}).
+They can only be run in the root Doomsday folder, which is @file{C:\Doomsday}
+by default. They just change to the correct runtime folder (e.g. @file{Run\jDoom})
+and execute @file{Doomsday.exe} with the appropriate command line options
+(@opt{-gl}, @opt{-game}, @opt{-userdir}, @opt{-basedir}; see
+@file{Doc\CmdLine.txt}).
+
+The simple launchers have one command line option of their own: @opt{-d3d}.
+It'll make the game use the Direct3D renderer instead of the OpenGL one,
+which is used otherwise.
+
+@section{ Starting with batch files or from the DOS Prompt }
+
+If everything else fails you can always start the game from the DOS Prompt.
+For an example batch file see @file{Doc\Example.bat}.
+
+For information about the handling of file names on the command line see
+@file{Doc\Readme.txt}. For a list of command line options see
+@file{Doc\CmdLine.txt}.
+
+@section{ jDoom: Options for overriding game detection }
+
+If you've got multiple IWADs in your @file{Data\jDoom} folder and you start the
+game from a batch file or from the DOS Prompt you can use the following
+command line options to make jDoom use the IWAD you want:
+
+@table{43 57}{
+	@header{Option} @tab @header{Game}
+@row{single}
+	@opt{-sdoom} @tab Shareware Doom (@file{DOOM1.WAD})
+@row
+	@opt{-doom} (same as @opt{-ultimate}) @tab
+	Registered or Ultimate Doom (@file{DOOM.WAD})
+@row
+	@opt{-doom2} @tab Doom II (@file{DOOM2.WAD})
+@row
+	@opt{-tnt} @tab Final Doom (@file{TNT.WAD})
+@row
+	@opt{-plutonia} @tab Final Doom (@file{PLUTONIA.WAD})
+}
+
+If you don't use one of these options and you don't specify an IWAD with
+the @opt{-iwad} command line option, jDoom will use the first IWAD it comes
+across. The folders searched are @file{Data\jDoom}, @file{Data},
+the root Doomsday folder and @file{Run\jDoom}.
+
+@chapter{ Loading WADs }
+
+There are two kinds of WAD files: IWADs and PWADs. IWADs are usually large
+and contain all kinds of data like maps, sprites, sounds and graphics.
+PWADs (Patch WADs) are smaller and in addition to new data they may contain
+data that will replace some parts of an IWAD, for instance a single map.
+Both IWADs and PWADs consist of one or more named blocks of data called
+lumps.
+
+KickStart won't start a game unless an IWAD file is listed and checked in
+the WAD Files list.
+
+@section{ Loading in KickStart }
+
+Click the @strong{Add} and @strong{Remove} buttons under the WAD Files
+list to add and remove WAD files. All the checked files will be
+loaded when you start the game.
+
+@section{ Loading in the console }
+
+It's possible to load WAD files at runtime in the console. When you've got
+the game running, open the console with the @kbd{Tilde} key. To load the WAD file
+@file{COOL.WAD} from the runtime folder (e.g. @file{Run\jDoom}),
+use the following command:
+
+@samp{@cmd{load cool.wad}}
+
+You can also give the full path of the file:
+
+@samp{@cmd{load d:\games\doom\super.wad}}
+
+The command @cmd{listfiles} will print a list of all the currently
+loaded data files. You can unload files that have been loaded at
+runtime with the @cmd{unload} command, for example:
+
+@samp{@cmd{unload cool.wad}}
+
+@section{ Loading with command line options }
+
+If you have the file @file{COOL.WAD} in the runtime folder
+(e.g. @file{Run\jDoom}), you can use the command line option
+
+@samp{@opt{-file cool.wad}}
+
+to load @file{COOL.WAD} at startup. Note that you can only
+use the @opt{-file} option once, so if you want to load
+multiple files you need to do the following:
+
+@samp{@opt{-file file1.wad file2.wad file3.wad}}
+
+For detailed information about the handling of file names on the command
+line see @file{Doc\Readme.txt}.
+

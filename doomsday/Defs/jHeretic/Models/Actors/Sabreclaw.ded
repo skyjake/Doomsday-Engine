@@ -1,0 +1,62 @@
+Header { Version = 5; }
+
+########========-------- SABRECLAW (CLINK) --------========########
+
+Model {
+  State = "CLINK_LOOK1";
+  Md2 { File = "Sabre.md2"; Frame = "idle01"; };
+}
+
+*Model { Inter = 0.25; Md2 { Frame = "idle02"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "idle03"; }; }
+*Model { Inter = 0.75; Md2 { Frame = "idle04"; }; }
+*Model { State = "CLINK_LOOK2"; Inter = 0; Md2 { Frame = "idle05"; }; }
+*Model { Inter = 0.333; Md2 { Frame = "idle06"; }; }
+*Model { Inter = 0.666; Md2 { Frame = "idle07"; }; }
+
+*Model { State = "CLINK_WALK1"; Inter = 0; Md2 { Frame = "walk01"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk02"; }; }
+*Model { State = "CLINK_WALK2"; Inter = 0; Md2 { Frame = "walk03"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk04"; }; }
+*Model { State = "CLINK_WALK3"; Inter = 0; Md2 { Frame = "walk05"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk06"; }; }
+*Model { State = "CLINK_WALK4"; Inter = 0; Md2 { Frame = "walk07"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk08"; }; }
+*Model { State = "CLINK_WALK5"; Inter = 0; Md2 { Frame = "walk09"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk10"; }; }
+*Model { State = "CLINK_WALK6"; Inter = 0; Md2 { Frame = "walk11"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk12"; }; }
+*Model { State = "CLINK_WALK7"; Inter = 0; Md2 { Frame = "walk13"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk14"; }; }
+*Model { State = "CLINK_WALK8"; Inter = 0; Md2 { Frame = "walk15"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "walk16"; }; }
+
+*Model { State = "CLINK_ATK1"; Inter = 0; Md2 { Frame = "attack01"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "attack02"; }; }
+*Model { State = "CLINK_ATK2"; Inter = 0; Md2 { Frame = "attack03"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "attack04"; }; }
+*Model { State = "CLINK_ATK3"; Inter = 0; Md2 { Frame = "attack05"; }; }
+*Model { Inter = 0.25; Md2 { Frame = "attack06"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "attack07"; }; }
+*Model { Inter = 0.75; Md2 { Frame = "attack08"; }; }
+
+*Model { State = "CLINK_PAIN1"; Inter = 0; Md2 { Frame = "pain01"; }; }
+*Model { State = "CLINK_PAIN2"; Md2 { Frame = "pain02"; }; }
+*Model { State = "CLINK_DIE1"; Inter = 0; Md2 { Frame = "death01"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "death02"; }; }
+*Model { State = "CLINK_DIE2"; Md2 { Frame = "death03"; }; }
+*Model { Inter = 0.999; Md2 { Frame = "death04"; }; }
+*Model {
+  State = "CLINK_DIE3";
+  Inter = 0;
+  Offset = -13;
+  Md2 { File = "Sabre-Death.md2"; Frame = "death01"; };
+}
+*Model { Inter = 0.5; Md2 { Frame = "death02"; }; }
+*Model { State = "CLINK_DIE4"; Inter = 0; Md2 { Frame = "death03"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "death04"; }; }
+*Model { State = "CLINK_DIE5"; Inter = 0; Md2 { Frame = "death05"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "death06"; }; }
+*Model { State = "CLINK_DIE6"; Inter = 0; Md2 { Frame = "death07"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "death08"; }; }
+*Model { State = "CLINK_DIE7"; Inter = 0; Md2 { Frame = "death10"; }; }

@@ -1,0 +1,904 @@
+# jDoom Maps
+# Need help with DED syntax? See DEDDoc.txt.
+
+Header { Version = 5; }
+
+Flag { ID = "mif_fog"; Value = 0x1; }
+Flag { ID = "slf_enable"; Value = 0x1; }
+Flag { ID = "slf_mask"; Value = 0x2; }
+
+Map Info {
+  ID = "E1M1";
+  Name = "E1M1: Hangar";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M2";
+  Name = "E1M2: Nuclear Plant";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M3";
+  Name = "E1M3: Toxin Refinery";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M4";
+  Name = "E1M4: Command Control";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M5";
+  Name = "E1M5: Phobos Lab";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M6";
+  Name = "E1M6: Central Processing";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M7";
+  Name = "E1M7: Computer Station";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M8";
+  Name = "E1M8: Phobos Anomaly";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E1M9";
+  Name = "E1M9: Military Base";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "E2M1";
+  Name = "E2M1: Deimos Anomaly";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M2";
+  Name = "E2M2: Containment Area";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M3";
+  Name = "E2M3: Refinery";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M4";
+  Name = "E2M4: Deimos Lab";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M5";
+  Name = "E2M5: Command Center";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M6";
+  Name = "E2M6: Halls of the Damned";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M7";
+  Name = "E2M7: Spawning Vats";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M8";
+  Name = "E2M8: Tower of Babel";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E2M9";
+  Name = "E2M9: Fortress of Mystery";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "E3M1";
+  Name = "E3M1: Hell Keep";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M2";
+  Name = "E3M2: Slough of Despair";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M3";
+  Name = "E3M3: Pandemonium";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M4";
+  Name = "E3M4: House of Pain";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M5";
+  Name = "E3M5: Unholy Cathedral";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M6";
+  Name = "E3M6: Mt. Erebus";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M7";
+  Name = "E3M7: Limbo";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M8";
+  Name = "E3M8: Dis";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E3M9";
+  Name = "E3M9: Warrens";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "E4M1";
+  Name = "E4M1: Hell Beneath";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M2";
+  Name = "E4M2: Perfect Hatred";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M3";
+  Name = "E4M3: Sever The Wicked";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M4";
+  Name = "E4M4: Unruly Evil";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M5";
+  Name = "E4M5: They Will Repent";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M6";
+  Name = "E4M6: Against Thee Wickedly";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M7";
+  Name = "E4M7: And Hell Followed";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M8";
+  Name = "E4M8: Unto The Cruel";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "E4M9";
+  Name = "E4M9: Fear";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY4";
+  };
+}
+
+Map Info {
+  ID = "MAP01";
+  Name = "Level 1: Entryway";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP02";
+  Name = "Level 2: Underhalls";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP03";
+  Name = "Level 3: The Gantlet";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP04";
+  Name = "Level 4: The Focus";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP05";
+  Name = "Level 5: The Waste Tunnels";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP06";
+  Name = "Level 6: The Crusher";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP07";
+  Name = "Level 7: Dead Simple";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP08";
+  Name = "Level 8: Tricks and Traps";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP09";
+  Name = "Level 9: The Pit";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP10";
+  Name = "Level 10: Refueling Base";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP11";
+  Name = "Level 11: 'O' of Destruction!";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
+Map Info {
+  ID = "MAP12";
+  Name = "Level 12: The Factory";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP13";
+  Name = "Level 13: Downtown";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP14";
+  Name = "Level 14: The Inmost Dens";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP15";
+  Name = "Level 15: Industrial Zone";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP16";
+  Name = "Level 16: Suburbs";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP17";
+  Name = "Level 17: Tenements";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP18";
+  Name = "Level 18: The Courtyard";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP19";
+  Name = "Level 19: The Citadel";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP20";
+  Name = "Level 20: Gotcha!";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Map Info {
+  ID = "MAP21";
+  Name = "Level 21: Nirvana";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP22";
+  Name = "Level 22: The Catacombs";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP23";
+  Name = "Level 23: Barrels o' Fun";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP24";
+  Name = "Level 24: The Chasm";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP25";
+  Name = "Level 25: Bloodfalls";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP26";
+  Name = "Level 26: The Abandoned Mines";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP27";
+  Name = "Level 27: Monster Condo";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP28";
+  Name = "Level 28: The Spirit World";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP29";
+  Name = "Level 29: The Living End";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP30";
+  Name = "Level 30: Icon of Sin";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP31";
+  Name = "Level 31: Wolfenstein";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "MAP32";
+  Name = "Level 32: Grosse";
+  Author = "id Software";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Map Info {
+  ID = "*";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+

@@ -1,0 +1,32 @@
+Header { Version = 5; }
+
+########========-------- LICHE --------========########
+# "The Floating Head"
+
+Model {
+  State = "HEAD_LOOK";
+  Md2 { File = "liche.md2"; Frame = "idle01"; };
+}
+
+*Model { State = "HEAD_FLOAT"; }
+
+*Model {
+  State = "HEAD_ATK1";
+  Md2 { Frame = "attack01"; };
+}
+
+*Model {
+  State = "HEAD_ATK2";
+  Md2 { Frame = "attack02"; };
+}
+
+*Model {
+  State = "HEAD_PAIN1";
+  Md2 { Frame = "pain01"; };
+}
+
+*Model {
+  State = "HEAD_PAIN2";
+  Md2 { Frame = "pain02"; };
+}
+

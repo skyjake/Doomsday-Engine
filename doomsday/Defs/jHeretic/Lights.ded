@@ -1,0 +1,28 @@
+# jHeretic: Lights
+# Need help with DED syntax? See DEDDoc.txt.
+
+Header { Version = 5; }
+
+Flag { ID = "lgf_nohalo"; Value = 0x100; }
+
+# A halo would look bad for the chandelier because it wouldn't be
+# rendered around the candle flames.
+Light { State = "CHANDELIER1"; Size = 0.8; Flags = "lgf_nohalo"; }
+* Light { State = "CHANDELIER2"; }
+* Light { State = "CHANDELIER3"; }
+
+# The Yellow Key shouldn't blink so much.
+Light {
+  State = "CKYY1";
+  Size = 0.5;
+  X Offset = 0.1; Y Offset = 15;
+  Color { 1 .7 0 };
+}
+* Light { State = "CKYY2"; }
+* Light { State = "CKYY3"; }
+* Light { State = "CKYY4"; }
+* Light { State = "CKYY5"; }
+* Light { State = "CKYY6"; }
+* Light { State = "CKYY7"; }
+* Light { State = "CKYY8"; }
+* Light { State = "CKYY9"; }

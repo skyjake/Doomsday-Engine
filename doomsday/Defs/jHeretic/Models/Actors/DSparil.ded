@@ -1,0 +1,116 @@
+Header { Version = 5; }
+
+ModelPath "MD2/jHeretic/Monst/DSparil";
+
+########========-------- D'SPARIL --------========########
+
+Model {
+  State = "SOR2_LOOK1";
+  Scale = .8;
+  Md2 { File = "dsparil.md2"; Frame = "idle01"; };
+  Md2 { File = "trident.md2"; Frame = "idle01"; };
+}
+*Model { Inter = 0.5; Md2 { Frame = "idle05"; }; Md2 { Frame = "idle05"; }; }
+*Model {
+  State = "SOR2_LOOK2"; 
+  Inter = 0; 
+  Md2 { Frame = "idle09"; };
+  Md2 { Frame = "idle09"; };
+}
+*Model { Inter = 0.5; Md2 { Frame = "idle13"; }; Md2 { Frame = "idle13"; }; }
+
+*Model { State = "SOR2_WALK1";    Inter = 0;    Md2 { Frame = "walk01"; };    Md2 { Frame = "walk01"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk02"; };    Md2 { Frame = "walk02"; }; }
+*Model { State = "SOR2_WALK2";    Inter = 0;    Md2 { Frame = "walk03"; };    Md2 { Frame = "walk03"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk04"; };    Md2 { Frame = "walk04"; }; }
+*Model { State = "SOR2_WALK3";    Inter = 0;    Md2 { Frame = "walk05"; };    Md2 { Frame = "walk05"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk06"; };    Md2 { Frame = "walk06"; }; }
+*Model { State = "SOR2_WALK4";    Inter = 0;    Md2 { Frame = "walk07"; };    Md2 { Frame = "walk07"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk08"; };    Md2 { Frame = "walk08"; }; }
+*Model { State = "SOR2_WALK5";    Inter = 0;    Md2 { Frame = "walk09"; };    Md2 { Frame = "walk09"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk10"; };    Md2 { Frame = "walk10"; }; }
+*Model { State = "SOR2_WALK6";    Inter = 0;    Md2 { Frame = "walk11"; };    Md2 { Frame = "walk11"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk12"; };    Md2 { Frame = "walk12"; }; }
+*Model { State = "SOR2_WALK7";    Inter = 0;    Md2 { Frame = "walk13"; };    Md2 { Frame = "walk13"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk14"; };    Md2 { Frame = "walk14"; }; }
+*Model { State = "SOR2_WALK8";    Inter = 0;    Md2 { Frame = "walk15"; };    Md2 { Frame = "walk15"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "walk16"; };    Md2 { Frame = "walk16"; }; }
+
+*Model { State = "SOR2_ATK1";     Inter = 0;    Md2 { Frame = "attack01"; };  Md2 { Frame = "attack01"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "attack04"; };  Md2 { Frame = "attack04"; }; }
+*Model { State = "SOR2_ATK2";     Inter = 0;    Md2 { Frame = "attack08"; };  Md2 { Frame = "attack08"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "attack10"; };  Md2 { Frame = "attack10"; }; }
+*Model { State = "SOR2_ATK3";     Inter = 0;    Md2 { Frame = "attack12"; };  Md2 { Frame = "attack12"; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "attack14"; };  Md2 { Frame = "attack14"; }; }
+*Model {                          Inter = 0.99; Md2 { Frame = "attack16"; };  Md2 { Frame = "attack16"; }; }
+
+*Model { State = "SOR2_PAIN1";    Inter = 0;    Md2 { Frame = "pain01"; };    Md2 { Frame = "pain01"; }; }
+*Model { State = "SOR2_PAIN2"; }
+
+*Model { State = "SOR2TELEFADE1"; Inter = 0;    Md2 { Frame = "gate01"; Transparent = 0.0; };     Md2 { Frame = "gate01"; Transparent = 0.0; };  }
+*Model {                          Inter = 0.33; Md2 { Frame = "gate02"; Transparent = 0.06; };    Md2 { Frame = "gate02"; Transparent = 0.06; }; }
+*Model {                          Inter = 0.66; Md2 { Frame = "gate03"; Transparent = 0.12; };    Md2 { Frame = "gate03"; Transparent = 0.12; }; }
+*Model { State = "SOR2TELEFADE2"; Inter = 0;    Md2 { Frame = "gate04"; Transparent = 0.18; };    Md2 { Frame = "gate04"; Transparent = 0.18; }; }
+*Model {                          Inter = 0.33; Md2 { Frame = "gate05"; Transparent = 0.24; };    Md2 { Frame = "gate05"; Transparent = 0.24; }; }
+*Model {                          Inter = 0.66; Md2 { Frame = "gate06"; Transparent = 0.30; };    Md2 { Frame = "gate06"; Transparent = 0.30; }; }
+*Model { State = "SOR2TELEFADE3"; Inter = 0;    Md2 { Frame = "gate07"; Transparent = 0.37; };    Md2 { Frame = "gate07"; Transparent = 0.37; }; }
+*Model {                          Inter = 0.33; Md2 { Frame = "gate08"; Transparent = 0.43; };    Md2 { Frame = "gate08"; Transparent = 0.43; }; }
+*Model {                          Inter = 0.66; Md2 { Frame = "gate09"; Transparent = 0.50; };    Md2 { Frame = "gate09"; Transparent = 0.50; }; }
+*Model { State = "SOR2TELEFADE4"; Inter = 0;    Md2 { Frame = "gate10"; Transparent = 0.56; };    Md2 { Frame = "gate10"; Transparent = 0.56; }; }
+*Model {                          Inter = 0.33; Md2 { Frame = "gate11"; Transparent = 0.62; };    Md2 { Frame = "gate11"; Transparent = 0.62; }; }
+*Model {                          Inter = 0.66; Md2 { Frame = "gate12"; Transparent = 0.68; };    Md2 { Frame = "gate12"; Transparent = 0.68; }; }
+*Model { State = "SOR2TELEFADE5"; Inter = 0;    Md2 { Frame = "gate13"; Transparent = 0.74; };    Md2 { Frame = "gate13"; Transparent = 0.74; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "gate14"; Transparent = 0.80; };    Md2 { Frame = "gate14"; Transparent = 0.80; }; }
+*Model { State = "SOR2TELEFADE6"; Inter = 0;    Md2 { Frame = "gate15"; Transparent = 0.87; };    Md2 { Frame = "gate15"; Transparent = 0.87; }; }
+*Model {                          Inter = 0.5;  Md2 { Frame = "gate16"; Transparent = 0.93; };    Md2 { Frame = "gate16"; Transparent = 0.93; }; }
+
+*Model { State = "SOR2_DIE1";     Inter = 0;    Md2 { Frame = "death01"; Transparent = 0; };    Md2 { Frame = "death01"; Transparent = 0; }; }
+*Model { State = "SOR2_DIE2";                   Md2 { Frame = "death05"; };                     Md2 { Frame = "death05"; }; }
+*Model { State = "SOR2_DIE3";                   Md2 { Frame = "death10"; };                     Md2 { Frame = "death10"; }; }
+*Model { 
+  State = "SOR2_DIE4";                   
+  Md2 { Frame = "death16"; };                     
+  Md2 { Frame = "death16"; }; 
+  #Md2 { File = "bolt1.md2"; Flags = "df_nointerpol df_fullbright df_brightshadow"; };
+  #Md2 { File = "dsphere.md2"; Flags = "df_fullbright df_brightshadow df_noz"; };
+}
+*Model {
+  Inter = 0.5;
+  Md2 { Frame = "death18"; };
+  Md2 { };
+  #Md2 { Frame = "death02"; };
+}
+*Model { 
+  State = "SOR2_DIE5";
+  Inter = 0;
+  Md2 { Frame = "death20"; };
+  Md2 { };
+  #Md2 { Frame = "death03"; };
+}
+*Model { 
+  Inter = 0.5;
+  Md2 { Frame = "death19"; };
+  Md2 { };
+  #Md2 { Frame = "death04"; };
+}
+*Model { 
+  State = "SOR2_DIE6"; 
+  Inter = 0;
+  Md2 { Frame = "death16"; }; 
+}
+*Model {
+  State = "SOR2_DIE7";
+  Md2 { File = "dskel2.md2"; Frame = "death01"; };
+  Md2 { };
+  Md2 { File = ""; };
+  Md2 { File = ""; };
+}
+*Model { State = "SOR2_DIE8";   Md2 { Frame = "death02"; }; }
+*Model { State = "SOR2_DIE9";   Md2 { Frame = "death03"; }; }
+*Model { State = "SOR2_DIE10";  Md2 { Frame = "death05"; }; }
+*Model { State = "SOR2_DIE11";  Md2 { Frame = "death07"; }; }
+*Model { State = "SOR2_DIE12";  Md2 { Frame = "death09"; }; }
+*Model { State = "SOR2_DIE13";  Md2 { Frame = "death11"; }; }
+*Model { State = "SOR2_DIE14";  Md2 { Frame = "death13"; }; }
+*Model { State = "SOR2_DIE15";  Md2 { Frame = "death16"; }; }
+  

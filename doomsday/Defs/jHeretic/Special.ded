@@ -1,0 +1,100 @@
+# jHeretic: Special effects
+# Need help with DED syntax? See DEDDoc.txt.
+
+Header { Version = 5; }
+
+# Particle generator flags and values.
+Flag { ID = "gnf_static"; Value = 1; }
+Flag { ID = "gnf_srcvel"; Value = 2; }
+Flag { ID = "gnf_spawn"; Value = 4; }
+Flag { ID = "gnf_blend"; Value = 0x10; }
+Flag { ID = "gnf_floor"; Value = 0x20; }
+Flag { ID = "gnf_ceiling"; Value = 0x40; }
+Flag { ID = "gnf_space"; Value = 0x80; }
+Flag { ID = "gnf_density"; Value = 0x100; }
+Flag { ID = "gnf_modelonly"; Value = 0x200; }
+
+Flag { ID = "pt_point"; Value = 1; }
+Flag { ID = "pt_line"; Value = 2; }
+
+Flag { ID = "ptf_stagetouch"; Value = 0x1; }
+Flag { ID = "ptf_stagevtouch"; Value = 0x20; }
+Flag { ID = "ptf_stagehtouch"; Value = 0x40; }
+Flag { ID = "ptf_dietouch"; Value = 0x2; }
+Flag { ID = "ptf_bright"; Value = 0x4; }
+Flag { ID = "ptf_shading"; Value = 0x8; }
+Flag { ID = "ptf_hflat"; Value = 0x10; }
+Flag { ID = "ptf_vflat"; Value = 0x80; }
+Flag { ID = "ptf_flat"; Value = 0x90; }
+Flag { ID = "ptf_force"; Value = 0x100; }
+
+
+# Sparks from Gold Wand hits.
+Generator {
+  State = "GWANDPUFF1_1";
+  Flags = "gnf_blend";
+  Particles = 10;
+  Speed = 5;
+  Speed rnd = .7;
+  Spawn age = 2;
+  Max age = 45;
+  Spawn rate = 5;
+  Vector rnd = 1;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 8;
+    Tics = 4;
+    Rnd = .1;
+    Color { 1 1 1 1 };
+    Gravity = 0.1;
+    Resistance = 0.02;
+    Bounce = 0.5;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 1.5;
+    Tics = 41;
+    Rnd = .4;
+    Color { 1 .7 0 .8 };
+    Gravity = 0.1;
+    Resistance = 0.02;
+    Bounce = 0.5;
+  };
+  Stage {
+    Type = "pt_point";
+    Color { 1 0 0 0 };
+  };
+}
+
+#> Generator {
+  Mobj = "BARREL";
+  Flags = "gnf_static gnf_blend";
+  # Room for 10 sources.
+  Particles = 200;
+  Center { 0 0 50 };
+  Speed = 5;
+  Speed rnd = 1;
+  Spawn radius = 10;
+  Spawn age = -1;
+  Max age = -1;
+  Spawn rate = 1;
+  Vector { 0 0 1 };
+  Vector rnd = 1;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 30;
+    Tics = 19;
+    Rnd = 0.3;
+    Color { 1 .9 .4 .5 };
+    Gravity = -0.3;
+    Resistance = 0.1;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 10;
+    Color { 1 .1 .1 .1 };
+  };
+} <#

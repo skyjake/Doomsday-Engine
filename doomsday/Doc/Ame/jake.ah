@@ -1,0 +1,5 @@
+$ My contact info.
+@macro{AUTHOR}{ Jaakko Keränen }
+@macro{EMAIL}{ skyjake@@doomsdayhq.com }
+@macro{LINK}{ http://www.doomsdayhq.com/ }
+@macro{HTMLHEADER}{ @tag{<!--BEGIN INSERT-->}@apply{@n}{.} }

@@ -1,0 +1,108 @@
+# jDoom 1.13.0: Values
+# Mind yur speling: jDoom only uses the identifiers it knows about.
+# Need help with DED syntax? See DEDDoc.txt.
+
+Header { Version = 5; }
+
+Values {
+  Player {
+    Health = "100";       # Initial health.
+    Max health = "100";   # Maximum health.
+    Health limit = "200"; # Absolute health limit.
+    Green armor = "100";
+    Blue armor = "200";
+    Max ammo {
+      Clip = "200";
+      Shell = "50";
+      Cell = "300";
+      Misl = "50";
+    };
+    Clip ammo {
+      Clip = "10";
+      Shell = "4";
+      Cell = "20";
+      Misl = "1";
+    };
+  };
+  Weapon Info {
+    0 {
+      Type = "noammo";
+      Up = "PUNCHUP";
+      Down = "PUNCHDOWN";
+      Ready = "PUNCH";
+      Atk = "PUNCH1";
+      Flash = "NULL";
+    };
+    1 {
+      Type = "clip";
+      Per shot = "1";
+      Up = "PISTOLUP";
+      Down = "PISTOLDOWN";
+      Ready = "PISTOL";
+      Atk = "PISTOL1";
+      Flash = "PISTOLFLASH";
+    };
+    2 {
+      Type = "shell";
+      Per shot = "1";
+      Up = "SGUNUP";
+      Down = "SGUNDOWN";
+      Ready = "SGUN";
+      Atk = "SGUN1";
+      Flash = "SGUNFLASH1";
+    };
+    3 {
+      Type = "clip";
+      Per shot = "1";
+      Up = "CHAINUP";
+      Down = "CHAINDOWN";
+      Ready = "CHAIN";
+      Atk = "CHAIN1";
+      Flash = "CHAINFLASH1";
+    };
+    4 {
+      Type = "misl";
+      Per shot = "1";
+      Up = "MISSILEUP";
+      Down = "MISSILEDOWN";
+      Ready = "MISSILE";
+      Atk = "MISSILE1";
+      Flash = "MISSILEFLASH1";
+    };
+    5 {
+      Type = "cell";
+      Per shot = "1";
+      Up = "PLASMAUP";
+      Down = "PLASMADOWN";
+      Ready = "PLASMA";
+      Atk = "PLASMA1";
+      Flash = "PLASMAFLASH1";
+    };
+    6 {
+      Type = "cell";
+      Per shot = "40";
+      Up = "BFGUP";
+      Down = "BFGDOWN";
+      Ready = "BFG";
+      Atk = "BFG1";
+      Flash = "BFGFLASH1";
+    };
+    7 {
+      Type = "noammo";
+      Up = "SAWUP";
+      Down = "SAWDOWN";
+      Ready = "SAW";
+      Atk = "SAW1";
+      Flash = "NULL";
+    };
+    8 {
+      Type = "shell";
+      Per shot = "2";
+      Up = "DSGUNUP";
+      Down = "DSGUNDOWN";
+      Ready = "DSGUN";
+      Atk = "DSGUN1";
+      Flash = "DSGUNFLASH1";
+    };
+  };
+}

@@ -1,0 +1,51 @@
+# jDoom: Models
+# Need help with DED syntax? See DEDDoc.txt.
+#
+# If you modify this file bear in mind that it will get overwritten
+# whenever you install a new version of jDoom.
+
+Header { Version = 5; }
+
+Include "Players.ded";
+Include "HUDWeapons.ded";
+Include "Weapons.ded";
+Include "Items.ded";
+Include "Monsters.ded";
+Include "Technology.ded";
+Include "Nature.ded";
+Include "Decorations.ded";
+Include "FX.ded";
+
+Flag { ID = "df_fullbright"; Value = 0x1; }
+Flag { ID = "df_shadow1"; Value = 0x2; }
+Flag { ID = "df_shadow2"; Value = 0x4; }
+Flag { ID = "df_brightshadow"; Value = 0x8; }
+Flag { ID = "df_movpitch"; Value = 0x10; }
+Flag { ID = "df_spin"; Value = 0x20; }
+Flag { ID = "df_skintrans"; Value = 0x40; }
+Flag { ID = "df_autoscale"; Value = 0x80; }
+Flag { ID = "df_movyaw"; Value = 0x100; }
+Flag { ID = "df_nointerpol"; Value = 0x200; }
+Flag { ID = "df_brightshadow2"; Value = 0x400; }
+Flag { ID = "df_alignyaw"; Value = 0x800; }
+Flag { ID = "df_alignpitch"; Value = 0x1000; }
+Flag { ID = "df_darkshadow"; Value = 0x2000; }
+Flag { ID = "df_idskin"; Value = 0x4000; }
+Flag { ID = "df_noz"; Value = 0x8000; }
+Flag { ID = "df_nomaxz"; Value = 0x10000; }
+Flag { ID = "df_selskin"; Value = 0x20000; }
+Flag { ID = "df_ptoffsub1"; Value = 0x40000; }
+Flag { ID = "df_noptc"; Value = 0x80000; }
+Flag { ID = "df_specular"; Value = 0x100000; }
+Flag { ID = "df_litshiny"; Value = 0x200000; }
+Flag { ID = "df_idframe"; Value = 0x400000; }
+
+Flag { ID = "mg_hud"; Value = 0x2; }
+Flag { ID = "mg_player"; Value = 0x4; }
+Flag { ID = "mg_monster"; Value = 0x8; }
+Flag { ID = "mg_weapon"; Value = 0x10; }
+Flag { ID = "mg_ammo"; Value = 0x20; }
+Flag { ID = "mg_bonus"; Value = 0x40; }
+Flag { ID = "mg_light"; Value = 0x80; }
+Flag { ID = "mg_decor"; Value = 0x100; }
+Flag { ID = "mg_misc"; Value = 0x200; }

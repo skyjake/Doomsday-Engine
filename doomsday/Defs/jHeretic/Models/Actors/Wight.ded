@@ -1,0 +1,296 @@
+Header { Version = 5; }
+
+########========-------- UNDEAD WARRIOR (WIGHT) --------========########
+
+Model {
+  State = "KNIGHT_STND1";
+  Scale = 0.92;
+  Flags = "df_ptoffsub1";
+  Md2 { File = "Wight.md2"; Frame = "idle01"; };
+  Md2 {
+    File = "Wight-Axe.md2";
+    Frame = "idle01";
+    Flags = "df_fullbright";
+  };
+}
+
+*Model {
+  Inter = 0.25;
+  Md2 { Frame = "idle02"; };
+  Md2 { Frame = "idle02"; };
+}
+
+*Model {
+  Inter = 0.5;
+  Md2 { Frame = "idle03"; };
+  Md2 { Frame = "idle03"; };
+}
+
+*Model {
+  Inter = 0.75;
+  Md2 { Frame = "idle04"; };
+  Md2 { Frame = "idle04"; };
+}
+
+*Model {
+  State = "KNIGHT_STND2";
+  Inter = 0;
+  Md2 { Frame = "idle05"; };
+  Md2 { Frame = "idle05"; };
+}
+
+*Model {
+  Inter = 0.25;
+  Md2 { Frame = "idle06"; };
+  Md2 { Frame = "idle06"; };
+}
+
+*Model {
+  Inter = 0.5;
+  Md2 { Frame = "idle07"; };
+  Md2 { Frame = "idle07"; };
+}
+
+*Model {
+  Inter = 0.75;
+  Md2 { Frame = "idle08"; };
+  Md2 { Frame = "idle08"; };
+}
+
+# Walk sequence
+
+*Model
+{
+  State = "KNIGHT_WALK1";
+  Inter = 0;
+  Md2 { Frame = "walk01"; };
+  Md2 { Frame = "walk01"; };
+}
+
+*Model
+{
+  Inter = 0.5;
+  Md2 { Frame = "walk02"; };
+  Md2 { Frame = "walk02"; };
+}
+
+*Model
+{
+  State = "KNIGHT_WALK2";
+  Inter = 0;
+  Md2 { Frame = "walk03"; };
+  Md2 { Frame = "walk03"; };
+}
+
+*Model
+{
+  Inter = 0.5;
+  Md2 { Frame = "walk04"; };
+  Md2 { Frame = "walk04"; };
+}
+
+*Model
+{
+  State = "KNIGHT_WALK3";
+  Inter = 0;
+  Md2 { Frame = "walk05"; };
+  Md2 { Frame = "walk05"; };
+}
+
+*Model
+{
+  Inter = 0.5;
+  Md2 { Frame = "walk06"; };
+  Md2 { Frame = "walk06"; };
+}
+
+*Model
+{
+  State = "KNIGHT_WALK4";
+  Inter = 0;
+  Md2 { Frame = "walk07"; };
+  Md2 { Frame = "walk07"; };
+}
+
+*Model
+{
+  Inter = 0.5;
+  Md2 { Frame = "walk08"; };
+  Md2 { Frame = "walk08"; };
+}
+
+# Attack sequence (double throw)
+
+*Model {
+  State = "KNIGHT_ATK1";
+  Inter = 0;
+  Md2 { Frame = "attack01"; };
+  Md2 { Frame = "attack01"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK2";
+  Inter = 0;
+  Md2 { Frame = "attack02"; };
+  Md2 { Frame = "attack02"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK2";
+  Inter = 0.333;
+  Md2 { Frame = "attack03"; };
+  Md2 { Frame = "attack03"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK2";
+  Inter = 0.666;
+  Md2 { Frame = "attack04"; };
+  Md2 { Frame = "attack04"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK3";
+  Inter = 0;
+  Md2 { Frame = "attack05"; };
+  Md2 { Frame = "attack05"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK4";
+  Md2 { Frame = "attack06"; };
+  Md2 { Frame = "attack06"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK5";
+  Md2 { Frame = "attack03"; };
+  Md2 { Frame = "attack03"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK5";
+  Inter = 0.5;
+  Md2 { Frame = "attack04"; };
+  Md2 { Frame = "attack04"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK6";
+  Inter = 0;
+  Md2 { Frame = "attack05"; };
+  Md2 { Frame = "attack05"; };
+}
+
+*Model {
+  State = "KNIGHT_ATK6";
+  Inter = 0.5;
+  Md2 { Frame = "attack07"; };
+  Md2 { Frame = "attack07"; };
+}
+
+# Pain sequence
+
+*Model {
+  State = "KNIGHT_PAIN1";
+  Inter = 0;
+  Md2 { Frame = "pain02"; };
+  Md2 { Frame = "pain02"; };
+}
+
+*Model { State = "KNIGHT_PAIN2"; }
+
+# Death sequence
+
+*Model {
+  State = "KNIGHT_DIE1";
+  Offset = 2;
+  Md2 { Frame = "death02"; };
+  Md2 { Frame = "death02"; };
+}
+
+*Model {
+  State = "KNIGHT_DIE2";
+  Md2 { Frame = "death04"; };
+  Md2 { Frame = "death04"; };
+}
+
+*Model {
+  State = "KNIGHT_DIE3";
+  Flags = "df_noptc df_ptoffsub1";        # Stop the axe flame.
+  Md2 { Frame = "death06"; };
+  Md2 { Frame = "death06"; Flags = ""; }; # No more fullbright.
+}
+
+*Model {
+  State = "KNIGHT_DIE4";
+  Md2 { Frame = "death08"; };
+  Md2 { Frame = "death08"; };
+}
+
+*Model {
+  State = "KNIGHT_DIE5";
+  Md2 { Frame = "death09"; };
+  Md2 { Frame = "death09"; };
+}
+
+*Model {
+  State = "KNIGHT_DIE6";
+  Md2 { Frame = "death10"; };
+  Md2 { Frame = "death10"; };
+}
+
+*Model {
+  State = "KNIGHT_DIE7";
+  Md2 { Frame = "death11"; };
+  Md2 { Frame = "death11"; };
+}
+
+# Green Flying Axe
+
+Model {
+  State = "SPINAXE1";
+  Scale XYZ { 1 1 2 };
+  Md2 { 
+    File = "Wight-FlyingAxe.md2"; 
+    Frame = "attack10"; 
+    Offset XYZ { -25 -40 0 };    
+  };
+}
+
+*Model { Inter = 0.25; Md2 { Frame = "attack11"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "attack12"; }; }
+*Model { Inter = 0.75; Md2 { Frame = "attack02"; }; }
+
+*Model { State = "SPINAXE2"; Inter = 0; Md2 { Frame = "attack03"; }; }
+*Model { Inter = 0.25; Md2 { Frame = "attack04"; }; }
+*Model { Inter = 0.5; Md2 { Frame = "attack05"; }; }
+*Model { Inter = 0.75; Md2 { Frame = "attack06"; }; }
+
+*Model { State = "SPINAXE3"; Inter = 0; Md2 { Frame = "attack07"; }; }
+*Model { Inter = 0.25; Md2 { Frame = "attack08"; }; }
+*Model { Inter = 0.9; Md2 { Frame = "attack09"; }; }
+
+# Red Flying Axe
+
+Model {
+  State = "REDAXE1";
+  Scale XYZ { 1 1 2 };
+  Md2 {
+    File = "Wight-FlyingAxe.md2";
+    Frame = "attack01";
+    Offset XYZ { -22 -40 0 };
+  };
+}
+
+*Model { Md2 { Frame = "attack02"; }; Inter = 0.2; }
+*Model { Md2 { Frame = "attack03"; }; Inter = 0.4; }
+*Model { Md2 { Frame = "attack04"; }; Inter = 0.6; }
+*Model { Md2 { Frame = "attack05"; }; Inter = 0.8; }
+
+*Model { State = "REDAXE2"; Md2 { Frame = "attack06"; }; Inter = 0; }
+*Model { Md2 { Frame = "attack07"; }; Inter = 0.17; }
+*Model { Md2 { Frame = "attack08"; }; Inter = 0.34; }
+*Model { Md2 { Frame = "attack09"; }; Inter = 0.5; }
+*Model { Md2 { Frame = "attack10"; }; Inter = 0.68; }
+*Model { Md2 { Frame = "attack11"; }; Inter = 0.85; }

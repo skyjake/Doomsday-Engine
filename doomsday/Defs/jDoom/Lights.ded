@@ -1,0 +1,26 @@
+# jDoom: Lights
+# Need help with DED syntax? See DEDDoc.txt.
+
+Header { Version = 5; }
+
+Flag { ID = "lgf_nohalo"; Value = 0x100; }
+
+# The blue health bottles should be lit a bit more brightly.
+Light { State = "BON1"; Size = 0.5; }
+* Light { State = "BON1A"; }
+* Light { State = "BON1B"; }
+* Light { State = "BON1C"; }
+* Light { State = "BON1D"; }
+* Light { State = "BON1E"; }
+
+# Nuke-barrel's (weak) green glow.
+Light {
+  State = "BAR1";
+  Flags = "lgf_nohalo";
+  Size = 0.31;
+  Y Offset = -6;
+}
+Copy Light {
+  State = "BAR2";
+  Size = 0.32;
+}

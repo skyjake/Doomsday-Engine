@@ -1,0 +1,171 @@
+
+                Doomsday Directory Structure Standard
+                =====================================
+                      Version 0.9 -- 04/02/2002
+
+        Contact <jk@jaakkok.pp.fi> if you have any questions.
+
+
+WHY A STANDARD STRUCTURE?
+----------------------------------------------------------------------
+* Different Games are allowed to co-exist.
+
+* Extendable: TCs and other projects can add their own (sibling)
+  subdirectories.
+
+* KickStart is the primary way to launch the games. TCs and other
+  projects can provide a Profile (.KSS) for easy use.
+
+
+RECOMMENDATIONS AND GUIDELINES
+----------------------------------------------------------------------
+* The runtime directory is under [Run]. For jDoom it's [Run\jDoom].
+
+* Not too exhaustive; no need to have a separate directory for each
+  type of file.
+
+* Only create new (sub)directories if you possibly can't avoid it! Use
+  the directory structure defined in this document.
+
+* File names do not include spaces or underscores (_). E.g.
+  "Trooper.ded" is an acceptable file name but "My Cool Trooper.ded"
+  is not. If you feel that you *must* use a separator, use a hyphen
+  (for instance "Cool-Trooper.ded").
+
+......................................................................
+Definition Files (DED)
+
+* Of Model definitions, the primary DED file (e.g. jDoom.ded) only
+  includes Models.ded. Models.ded will in turn include the rest of the
+  model definitions.
+
+* Use extreme discretion with 'Include "*.ded";'! Games and patches
+  should place DED files in the Auto directory only when there is no
+  chance of a conflict.
+
+......................................................................
+Model Files (MD2, PCX, TGA, PNG)
+
+* Use simple and intuitive names for model files. E.g. you should name
+  monster models based on the names that appear in the game. No
+  spaces!
+
+* When possible use the same name for an MD2 and its skins. E.g.
+  "Trooper.md2" and "Trooper.pcx".
+
+* For submodels, use a hyphen to separate the name of the submodel
+  from the base name (i.e. the name of the main model). For example,
+  if a Cacodemon model would be named "Caco.md2" and it had a submodel
+  for a glowing eye, the eye could be named "Caco-Eye.md2". Following
+  this logic, a player model's submodel for the weapon could be named
+  "Marine-Wpn.md2". If there is no suitable name for the submodel, use
+  "Sub1", "Sub2", etc. For example: "Caco-Sub1.md2".
+
+* Begin file names with a capital letter. (Looks nicer. :-))
+
+
+DIRECTORY STRUCTURE
+----------------------------------------------------------------------
+[Doomsday]
+  Kicks.exe             - The only EXE in the root directory
+  *.ks?                 - KickStart profiles, options
+
+  [Bin]                 - All binaries
+    Doomsday.exe
+    *.dll               - Includes games and plugins
+    *.exe               - Other executables
+
+  [Run]                 - Runtime files (mostly generated stuff)
+    [jDoom]             - ...for jDoom
+      [Demo]            - Demos (CDM)
+      [Savegame]        - Savegames (DSG)
+      jDoom.cfg         - Main jDoom config file (later: DCSL script)
+      Autoexec.cfg
+      Doomsday.out      - Console dump and startup messages
+      *.tga             - Screenshots
+      *.wad             - One place to put (custom) WADs
+    [jHeretic]
+    [jHexen]
+
+  [Data]                - Data files
+    *.wad               - Standard WADs like Doomsday.wad
+    [Fonts]             - DFN files (-fontdir option)
+    [jDoom]             - jDoom.wad, default place for IWADs
+      [Textures]        - TGA/PNG/PCX textures for Doom (-texdir)
+      [Music]           - Custom/external music files (e.g. MP3)
+    [jHeretic]          - jHeretic.wad, default place for Heretic.wad
+    [jHexen]            - jHexen.wad, default place for Hexen.wad
+
+  [Defs]                - DED files (later: Game-independent DCSL?)
+    [jDoom]
+      jDoom.ded         - Model path = "MD2\jDoom", Include
+                          "Auto\*.ded"
+      Objects.ded       - Things, States
+      Sprites.ded       - Sprites
+      Audio.ded         - Sounds, Music and Texture Environments
+      Special.ded       - Particle generators
+      Lights.ded        - Lights
+      Details.ded       - Detail textures
+      Maps.ded          - Map Info
+      Finales.ded       - InFine scripts
+      Text.ded          - Text
+      Values.ded        - Values
+      XG.ded            - Extended General Lines and Sectors
+
+                        (Model Pack definitions:)
+      Models.ded        - Includes other model DEDs, df_* flags
+      Monsters.ded      - Model definitions for monsters
+      Weapons.ded       - Model definitions for weapons and ammo
+      Items.ded         - Model definitions for other items
+      Players.ded       - Model definitions for players
+      HUDWeapons.ded    - Model definitions for HUD weapons
+      Technology.ded    - Model definitions for tech decorations
+      Nature.ded        - Model definitions for plants, rocks, etc.
+      Decorations.ded   - Model definitions for other decorations
+      FX.ded            - Model definitions for effects (fire, explo)
+
+      *.ded             - Some other/custom definition files
+      [Auto]            - DED files to include automatically
+    [jHeretic]
+    [jHexen]
+
+  [MD2]                 - MD2s and skins (PCX/PNG/TGA)
+    [jDoom]             - ...for jDoom
+      Readme.txt        - Important information like credits, etc.
+
+......................................................................
+NOTE: DED files must refer to MD2s in relation to MD2\jDoom, so keep
+      the subdirectory names short. Skins should be kept in the same
+      directory with their MD2; a relative path to the skin should be
+      given in the model file (i.e. just the skin's file name). In
+      most cases the paths can be omitted (the skin and the model are
+      in the same directory).
+......................................................................
+
+      [Play]            - Player models (Marine.md2)
+      [Monst]           - Monster models
+      [Weapon]          - Weapon and Ammo-related models
+      [Item]            - Bonus Items, Keys, etc.
+      [HUD]             - HUD Weapons
+      [Tech]            - Tech decorations: lamps, barrels, tech
+                          pillar, etc.
+      [Nature]          - Nature decorations: trees, rocks, etc.
+      [Decor]           - Other decorations: marble pillars, evil eye,
+                          etc.
+      [FX]              - Explosions, etc.
+
+......................................................................
+NOTE: The contents of one subdirectory of MD2\jDoom should correspond
+      one definition file in Defs\jDoom: "MD2\jDoom\Monst" corresponds
+      "Defs\jDoom\Monsters.ded" etc.
+......................................................................
+
+    [jHeretic]
+    [jHexen]
+
+  [Doc]                 - Documentation for Doomsday
+    [jDoom]             - jDoom specific documentation
+    [jHeretic]
+    [jHexen]
+
+  [Source]              - (Optional) Source code

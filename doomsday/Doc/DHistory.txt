@@ -1,0 +1,668 @@
+
+                   Doomsday Engine Version History
+                   ===============================
+             Legend: + added, - fixed, * improved/changed
+
+
+Version 1.7.7
+-------------
++ switch texture pairs (SW1/SW2) are precached at the same time
++ "Generator:Stage:Radius rnd": Randomness of particle radius
++ sound-info shows sound names as well as ID numbers
+- high-resolution flats with 4 channels (alpha) were loaded incorrectly
+- alternative texture path must be tried first when loading hires images
+  (-texdir2)
+
+
+Version 1.7.6
+-------------
++ cvar rend-hud-fov-shift: HUD weapon model moved down if FOV > 90, 
+  defaults to 45
++ dsCompat: DirectSound 6 sound driver, tries to be as compatible as
+  possible
++ -csd: use dsCompat.dll as the sound driver
++ "Generator:Min spawn radius": minimum distance from the generator
+  source for new particles, a nonzero value uses a more sophisticated
+  algorithm that chooses the particle's coordinates somewhere from the 
+  surface of a sphere
++ "Generator:Damage mobj" creates a damage-triggered generator
++ ptf_force (stage flag 0x100): particle is affected by a sphere force,
+  which attracts the particle toward the surface of a sphere while also 
+  rotating around an arbitrary axis
++ "Generator:Force axis": a 3D vector around which sphere force rotates
+  particles, also sets the strength of the rotation
++ "Generator:Force radius": radius for sphere force
++ "Generator:Force": strength of the radial force that pushes or pulls
+  particles towards the surface of the sphere
++ ptf_hflat (stage flag 0x10): render particle touching a plane as flat
++ ptf_vflat (stage flag 0x80): render particle touching a wall as flat
++ ptf_flat: horiz and vert flags combined
++ ptf_stagevtouch, ptf_stagehtouch (stage flags 0x20, 0x40): wall/flat-
+  specific stagetouch for particles
++ gnf_scalerate: use damage as a factor for damage ptcgen spawn rate
++ df_idangle: random fixed angle offset for a model
+* EAX errors ignored after first report (if property unsupported)
+* non-moving particles contacting a wall (assumed stuck) are destroyed 
+  if the wall becomes an opening
+* -noeax recognized by dsCompat
+* smaller button steps for panel controls 
+* sound buffer loaded before setting properties (needed by dsCompat)
+- absolute demo paths aren't prefixed with "demo\"
+- mixer is more careful about a failed init (div-by-zero was possible)
+- camera filter (pain/bonus) cleared at level exit
+- win32 CD player didn't stop track at shutdown
+- flat precacher used wrong indices; some raw screens (Heretic's FINAL*)
+  were displayed as garbage
+
+
+Version 1.7.5
+-------------
++ console command "init-(levelid)" executed after level setup; for 
+  example "init-e2m3" could be aliased to do something useful
++ ccmd write: saves console variables, bindings and aliases to a file
++ -nopsf: don't set the primary sound buffer format
++ "Model:Sub:Frame range" added, works with df_idframe
+* model loader will automatically load a DMD if it exists, even if def 
+  uses MD2
+* memory zone no longer used in texture processing (malloc only)
+* MIDI volume: channel volumes not set separately, more compatible
+* sounds stop playing based on time, not buffer position
+* -verbose (-v) prints all command line options to Doomsday.out
+* game window is not forced to be the topmost window
+- client didn't play sounds without an origin
+- -noeax option caused a crash at startup
+- FMOD: MIDI/etc music looping fixed, again
+- fixed a crash when lights, halos and lit sprites were all off
+- fixed: game window must not be shown in dedicated mode
+- crashing at startup was likely when lots of models/skins were missing
+- a minor correction to data\cphelp.txt
+
+
+Version 1.7.4
+-------------
++ minimizing possible in windowed mode
++ identification number always printed for loaded IWAD
+- Direct3D: depth buffer mode verified to work correctly
+- mouse wheel was confused with mouse buttons 5 and 6
+- Control Panel yes/no buttons didn't reflect changes to cvars
+- dpDehRead: bad memory allocation led to heap corruption at shutdown
+- FMOD: MIDI/etc music looping fixed
+- fixed a rare potential crashing bug in the clipper (C_AddRange)
+
+
+Version 1.7.3
+-------------
++ startup message window
++ support for up to six mouse buttons
++ support for rotational joystick axes and two sliders
++ each joystick axis can be inverted (input-joy-*-inverse)
++ all textures in an animation sequence are precached at the same time
++ popup help window for (some) Control Panel options
++ ui-panel-help, ui-panel-tips
+* GL not inited until engine init is complete (no more -fullstart)
+* game window hidden until GL init begins
+* FMOD v3.6
+* mixer used to set MIDI volume
+* Doomsday handles the deadzone of the joystick 
+* brighter background for options frame in Control Panel
+- halos weren't affected by object movement smoothing
+- music was played even if music volume was set to zero
+- EAX initialization was sloppy
+- FMOD/CD: original volume restored correctly at shutdown
+- dedicated mode text console problems on WinXP (presumably Win2k, too)
+- OpenGL: mipmapped paletted textures had palette problems
+
+
+Version 1.7.2
+-------------
++ A3D support with the -a3d option (dsA3D.dll; also needs A3DAPI.dll)
++ -oal option for OpenAL support
++ -vtxar option: make the OpenGL renderer use vertex buffers
++ -anifilter option: use anisotropic texture filtering
++ -diag option: print lots of debug info about Direct3D
+* OpenGL renderer defaults to not using vertex buffers
+* slightly larger Z bias for dynamic light polys
+* detail textures can be PCX images
+* model skin dimensions are allowed to differ from what models expect
+* sounds are uncached after one minute of not being played
+* sounds prefer channels already loaded with the same sample
+- texture height queries weren't returned in fixed point
+
+
+Version 1.7.1
+-------------
+* multiple -command/-cmd options are allowed
+* console command line cleared when console closed
+* DED loader reallocates memory fewer times, faster performance
+- music def loading: later defs didn't patch earlier ones
+- WAV loader: confused all chunk lengths, loading failed
+- WAV loader: header read incorrectly, loading failed
+- if music volume was set to zero, it wasn't updated at startup and music
+  played with full volume
+- -bpp was set after first GL init, caused WGL to choke on the second time
+  (error 2000)
+- Direct3D renderer tried initing with bit depth zero, caused
+  D3DERR_INVALIDCALL
+
+
+Version 1.7.0
+-------------
+* engine source code reorganized
+* games, renderers and plugins all use the same API to access engine
+  routines
++ keymaps (DKM files in the Data\KeyMaps\ directory); default.dkm and
+  fi.dkm included in the release
+* multiple -file options allowed
++ -iwad <=> -file
+* particle generators can be triggered by the map ID (Center = origin XYZ)
++ linelinks
+* safe P_(Un)LinkMobj
+* enhanced mobj/line/sector iterators
+- minor bugfixes
+
+Sound:
++ revised sound system; now completely handled by the engine
++ new sound flags (Audio.ded): sf_shift, sf_shift2, sf_repeat, sf_nodist,
+  sf_exclude
++ sound exclusion groups (Sound:Group)
++ sounds can have external resources (mono PCM WAV, 8/16 bits, 11/22/44
+  KHz), using the Sound:Ext key
++ revised music system; completely handled by the engine, each interface
+  (MUS/Ext/CD) can run a different driver, Win32 and FMOD implemented
+* no more A3D support
+
+Renderer:
+* interface between the rendering DLL and Doomsday revised (old rendering
+  DLLs are now incompatible)
+* Direct3D renderer rewritten to use DirectX 8
+* rendering DLL handles the creation of mipmaps
+* rendering lists moved into the engine, now independent of the rendering
+  DLL
+* halos/flares don't read from the Z-buffer any more (source point clipped
+  by geometry, resulting halo rendered sorted during DrawMasked)
+* halos can't be occluded by their source (yay!)
+* halos appear and disappear gradually (rend-halo-occlusion controls speed)
++ cvar rend-camera-smooth: filter camera movement between tics (removes
+  FPS limit for camera movement)
++ DMD2 model format (MD2 with detail levels)
++ LOD rendering for DMD models
++ cvar rend-model-lod: distance to LOD level zero
++ mobj shadows (extremely simple, unclipped)
++ cvars rend-shadow, rend-shadow-darkness, rend-shadow-far, rend-shadow-
+  radius-max
++ Model:Shadow radius (overrides automatic calculation)
+* changing the resolution shuts down and re-inits the renderer (will work
+  with Direct3D, now)
++ clipper maintains information about planes that occlude visibility
+  (occlusion ranges); -maxor command line option
+- clipper allows zero-length solid segments now, fixes a few clipping
+  problems
+- fog is disabled while psprites are rendered
+
+Console:
+* new UI color scheme (blue/gray)
++ ccmd uicolor: change UI colors
++ Startup.cfg: startup script for configuring UI colors, the console font
+  and keymap
++ Control Panel (quickly accessed with Shift-Esc) for easy configuration
++ Shift-Tilde (or Shift-[console activation key]) will toggle between
+  fullscreen and halfscreen console modes
++ aliases are automatically saved to the default config file
++ horizontal rulers in the console
++ console text can be centered on a line
+* message produced by ccmd help updated
+
+Networking:
++ -server option: equals to "net init tcpip; net server start" right
+  after startup
++ -connect option: after startup, connects to a server at the given IP
+  address (e.g. "-connect 127.0.0.1")
++ ccmd connect: connects to a server at the specified IP address
+  (synchronously; the connection is formed in startup mode)
++ the font console command can now change the console font (e.g.
+  "font name fixed12"), can be done from startup.cfg/user.cfg
+* server does not halt while UI is active
+- clients don't expect to receive cmd info of remote players any more
+- clients update visible mobj angles and remote player selector
+- clients update player mobj states
+- visangles (rend-mobj-smooth-turn) won't be used in netgames or demos
+
+Input:
+* input code updated to work with DirectInput 8
+
+
+Version 1.6.1
+-------------
+* model skins are precached by default (rend-model-precache)
+* precacher also binds all textures to make sure they'll be ready
+* one skin can be shared by many models (internal skin list)
+* when looking for a skin, the model's home directory is searched first
+  (where the model is in)
+* reports of missing model files are summed up and shown only once
+* console line length adjusted to fit the game window (used to be 70)
++ rend-light-shrink: dynlight polys are shrunk horizontally so the case
+  when they overlap and produce bright stray pixels is (mostly) gone
++ rend-particle-diffuse: if a particle is closer than the diffuse factor
+  times its radius, it will receive extra alpha and disappear when close
+  enough
++ rend-particle-visible-near: if a particle is closer than this, it won't
+  be rendered at all
++ ccmd stopfinale: stops the currently playing interlude
++ view-bob-height: camera height bobbing factor (1=normal)
++ view-bob-weapon: player weapon bobbing factor (1=normal)
+- progress bar doesn't make the screen flicker any more with page flipping
+* clients remove mobjs automatically when mobjs reach the null state
+- fixed particle generation in demos/netgames
+
+
+Version 1.6.0
+-------------
++ definitions re-inited when (un)loading WADs
++ definitions can be read from WADs (DD_DEFNS lump, contains a DED file)
++ virtual files in WADs (translated using a DD_DIREC lump; use wadtool)
++ virtual files support: 3D models, image loaders (PNG, TGA, PCX),
+  definitions, CFG files, DFN fonts
+* console variables renamed (old names work, too)
+* cvar con-completion: mode zero completes the unambiguous part
+* high-res textures and model skins can be PNG, TGA or PCX
++ color-keying for PNG, TGA, PCX ("filename-ck.png")
++ MD2 shiny skins (approximated cylindrical environment mapping)
++ "Shiny skin", "Shiny", "Shiny Color" added to Model\Md2 defn
++ "Color" added to Light defn ("Red", "Green", "Blue" combined)
++ "Finale" definitions
++ -texdir2: secondary hi-res texture directory (textures in the secondary
+  directory override any textures in the normal hi-res texture directory)
++ -nopitch: disable sound effect pitch alterations
++ -nodop: disable 3D sounds' doppler effect
+* raw images (fullscreen 320x200 textures) deleted at level changes
++ client setup screen shows a warning about different IWADs
++ cvar client-pos-interval: number of tics between coordinate reports
++ cvar con-progress: progress indicator enabled/disabled
++ cvar rend-info-tris: (OpenGL) display rendering list triangle count
+- fixed sector lightlevel overflow (>255), caused black planes in bright
+  sectors
+- sight blockmap traverser sometimes misses the target block, caused
+  crashes in netgames (server) in certain maps
+- server was mixing up player deltas, fixed
+- negative player turndeltas became positive, fixed
+- server was not predicting clientside mobj animation, which prevented the
+  server from correctly sending mobj state deltas
+- server destroyed a broadcasted chat message before it was relayed to
+  everybody
+- client updated the wrong mobj when a new client joined; the new client
+  was left invisible
+- absolute camera coordinates written in demos
+- very little plane movement speeds were truncated to zero
+- fixed a display gamma conflict with the D3D renderer
+- mobj-triggered particle generators restored after loading a saved game
++ KickStart: default profiles (KSS), option to run glBSP, quick
+  resolutions list, updated options
+
+
+Version 1.5.5
+-------------
++ cvars "vid_Gamma", "vid_Contrast", "vid_Bright"
++ cmd "setvidramp": update display's hardware gamma ramp
++ Flags key added to the Light definition
++ lgf_nohalo (0x100): dynamic light is rendered with no halo (lens flare)
++ PNG support (using libpng) for high-resolution textures
+- df_autoscale was broken
+- masked textures are no longer clamped vertically
+- KickStart: fixed a problem with WAD paths
+- progress bar caused a div-by-zero when map had less than 10 sectors
+- footclipping is now done for models, too (standing in water)
+
+
+Version 1.5.4
+-------------
++ custom music formats detected (MP3, MOD, IT, XM, etc. can now be put
+  in WAD files)
++ TGA images can be used to replace textures and flats (Data\*\Textures)
++ OpenGL: -texcomp option enables texture compression (OpenGL chooses the
+  compression method)
++ df_selskin: model skin selection based on selector special byte
++ custom translucency can be set with three highest bits of the selector
++ cvars "net_MinSecUpdate", "net_FullSecUpdate", "net_MaxSecUpdate"
+* sector deltas cover a larger area (cvars "net_*SecUpdate")
+* EXT_texture_env_combine is accepted as well
+* KickStart: standard profiles are listed in a fixed order
+* internal handling of missing walls
+* 32 MB of RAM allocated by default
+- fixed -maxzone (-mem)
+- fixed the case where invis-plane hack created looped plane links
+  (the "linked to self" error)
+- maximum number of rendering lists increased to 1024
+- rendering lists cleared properly at level changes (not clearing leads to
+  missing textures and messed up walls)
+- fixed sky fadeout color calculation (alpha was expected)
+- F_SKY1 was being bound repeatedly even if it's never used anywhere
+- reseting messed up detail textures (e.g. cmds "load", "unload")
+- dynamic lights weren't processed for subsectors that had no visible
+  planes, even if the subsector had visible walls
+- dynamic light intensity diminishes gradually for lights that are on the
+  "wrong" side of a floor/ceiling
+- dynamic lights on two-sided middle textures are now properly clipped
+- fixed a bug with animated textures
+- KickStart: -basedir is now quoted like other paths
+
+
+Version 1.5.3
+-------------
+! BETA RELEASE
++ a simple plugin system (dp*.dll)
++ Dehacked reader plugin (dpDehRead.dll), reads .DEH files and DEHACKED
+  lumps from loaded WADs
++ -bigmtex option: enlarge masked textures to fit patches that are too big
+  (e.g. Aliens TC)
++ server can send lump name mappings to clients
+* better IWAD loading (IWAD always loaded first)
+* small changes in engine initialization
+* df_darkshadow affected by alpha (Model\Md2\Transparent)
+- relative paths with command line options fixed
+- clients sometimes displayed invalid plane textures (flats)
+- server/client crashed when psprite->state == NULL
+- sky fadeout color was incorrect in the first map that was played
+
+
+Version 1.5.2
+-------------
+! BETA RELEASE
++ particle generators: "Generator" definition, vars: UseParticles,
+  MaxParticles, PtcSpawnRate
++ detail textures: "Detail" definition, "detail" console command
++ OpenGL support for detail texture rendering (ARB_texture_env_combine)
++ "Light" definitions: customize dynamic lighting for specific States
++ CD-support for Music definitions (e.g. Ext = "cd:9";) with FMod
++ "IncludeIf", "ModelPath" DED directives
++ mobj selectors
+* directory structure reorganized (Doc\DSS.txt)
+* Short-Range Visual Offsets: smooth actor movement and turning, vars:
+  r_UseSRVO and r_UseVisAngle
+* 3D models associated with States instead of Sprite/Frame pairs
+* "Model" definition restructured (no more Frames), see Doc\DEDDoc.txt
+* rewritten command line handling (see Doc\CmdLine.txt)
+* server sends mobj states instead of sprites and frames
+* "UseModels" can be used to disable specific model groups
+* server & client setup screens have better default buttons
+- sprite lumps must reside inside a S_START/S_END block or the sprite
+  loader will ignore them (used to be a bit too liberal!)
+- model interpolation in netgames
+- A3D support should be working again
+- minor bugs
+
+
+Version 1.05 (= 1.5.0)
+------------
+* netframes are deltas
+* client state is persistent between frames
+- when there are duplicate model definitions, the last one will be used
++ OpenGL: support for GL_EXT_paletted_texture (-paltex)
++ 'setres': change display mode resolution or window size
+
+
+Version 1.04
+------------
++ MIDI files embedded in WADs can be played (not looped)
++ ccmds 'login' and 'logout': remote access to the server
++ 'net_Password': password for remote access with 'login'
+* if DirectInput 5 init fails, DirectInput 3 is tried instead
++ DEDMan 1.13: DEH: initial player health, initial bullets, BFG cells/shot
+* new version of fmod.dll
+
+
+Version 1.03
+------------
++ display warning when no IWAD has been loaded
++ inter-frames (Inter in Model definition)
+* UI uses Small Fonts in low-res modes
+- translated sprites had invalid texture coordinates (all zero)
++ DEDMan 1.11: "Model/Inter", skin ranges, "Model/Skin tics", won't write
+  "Line Type/Ap9" twice
+- jtNet2: tried to access null pointer
+- DLaunch 1.04: no more directory mixups
+
+
+Version 1.02
+------------
++ 'settics': set the number of game tics per second
++ 'repeat': repeats a command at given intervals
++ 'r_NoSpriteZ': disable Z writes for sprites
++ 'net_DontSleep': don't sleep while waiting for tics (redraw screen
+  instead)
++ 'net_FrameInterval': minimum number of tics between sent frames
++ external music files (played with FMod: http://fmod.org/, which supports
+  MOD, S3M, XM, IT, MID, RMI, SGT (DirectMusic segment), RAW, WAV, MP2,
+  MP3, OGG, WMA and ASF)
++ 'playext': play a music file
++ DED Manager 1.1: (slightly limited) DeHackEd support
++ Line Type and Sector Type definitions in DED files (v3)
++ Music definitions can have a "File name" property
++ 'ConsoleKey': keycode of the console activation key (default is 96)
++ 'ConsoleShowKeys': show keycodes of all pressed keys in the console
++ -renorm option: recalculate all MD2 vertex normals when loading, takes
+  some time but fixes models with incorrect normals
++ colored sector lighting
++ new model flags: df_movyaw (0x100) aligns model yaw angle with movement,
+  df_nointerpol (0x200) disables interpolation for the frame,
+  df_brightshadow2 (0x400) renders with additive blending and alpha=1,
+  df_alignyaw (0x800) aligns model yaw angle with camera, df_alignpitch
+  (0x1000) aligns model pitch angle with camera
+* server version incremented to 4 (old demos incompatible)
+* client interpolates demo view angles
+* flats (floor/ceiling textures) handling revised, now it's possible to use
+  any loaded lump as a flat
+* size, color and Y offset of dynamic lights and flares are determined by
+  analyzing the source sprite (adjust with r_dlMaxRad and r_dlRadFactor)
+* psprite models drawn differently, now won't go inside walls
+* sprites won't be stretched to fit whole texture, makes them sharper
+* model spin gets an offset based on thing type
+- client moves mobjs within sector when sector height changes
+- midtexture placement for segs with a missing toptexture
+- joystick init stopped at failed axis range setup
+- OpenGL: didn't make sure projected points were on the screen
+- sky mask wasn't applied to walls with zero-height backsector
+- there was a floorclip related bug in client's mobj unpacker
+
+
+Version 1.01a
+-------------
+* large textures are allowed to have one alpha pixel (ZZZFACE3!)
+- midtexture placement in sectors that have an invisible floor
+- multi-pass skyfix
+
+
+Version 1.01
+------------
++ when a 2-sided line's upper texture is missing, the middle texture (if
+  present) is extended to full height
++ plane linking: for sectors whose all lines' both sidedefs point to self,
+  planes are linked to surrounding sector
++ 'FlareZOffset': lens flare Z offset multiplier, greater values move
+  flares nearer the camera (in Z buffer), also affects flare size
++ DED v2: a Values block for free-form string definitions
++ player sprites (HUD weapons) can be replaced with models
++ 'r_WeaponOffsetScale': multiplier for psprite (x,y) offsets with models
+* when a sector is missing lower textures for all its lines, the floor of
+  the sector is drawn at the height of the surrounding sector's floor
+* masked polygons (sprites, masked walls, models) always drawn with Z
+  writes enabled
+* Z bias of drOpenGL and drD3D slightly increased
+* WAD loading messages are a bit clearer
+- -paltex uploaded MD2 skins in the wrong format
+- newline no longer required after last line in .cfg files
+- if .GWA doesn't exist W_AddFile() isn't called for it
+- Y offset of middle textures of 2-sided lines was incorrect in some cases
+
+
+Version 1.0
+-----------
++ all new network code (complete client/server)
++ dedicated server (runs in a text mode console)
++ MD2 support (replace specific frames of sprites)
++ MD2s lit with dynamic lights
++ frame interpolation for MD2s
++ dynamic light blending mode zero (multiply)
++ configuration dialog for D3D renderer (driver, color/texture/Z depth)
++ new vertices are inserted in wall segments if needed, reduces stray
+  pixels
++ subsector planes rendered as a triangle fan around midpoint, if necessary
++ Doomsday Engine Definition (DED) files
++ DED files can Include with wildcards (checks for recursion)
++ definitions in DEDs are mostly patchable (same ID overwrites old def)
++ Map Info definitions (map name, author, fog, gravity, sky, etc.)
++ Map Info with ID '*' will be used for maps that do not have Map Info
++ command-line option -out redirects output to a given file (Doomsday.out
+  by default)
++ command-line option -defs specifies the main definition file
++ mouse-driven user interface routines
++ network service provider/protocol and server setup using graphical UI
++ client setup and connecting to servers using graphical UI
++ background for startup messages
++ startup messages rendered with shadows
++ console text rendered with shadows
++ 'ModelMaxZ': farther than this things are always rendered as sprites
++ copies of P_XYMovement and P_ZMovement used for client-side mov
+  prediction
++ Pause key can be used in bindings (as 'pause')
++ network settings stored in console variables (npt_Active, npt_IPAddress,
+  npt_IPPort, npt_Modem, npt_PhoneNum, npt_SerialPort, npt_SerialBaud,
+  npt_SerialStopBits, npt_SerialParity, npt_SerialFlowCtrl)
++ 'r_FullSky': if nonzero, whole sky sphere is rendered if sky is visible
++ MFF_SKINTRANS uses sprite color translation as a skin index for MD2s
++ demo recording and playback done in the engine (demos are recorded
+  server->client traffic)
++ demo recording can be started and stopped at any time
++ commands 'playdemo', 'recorddemo', 'stopdemo' and 'demolump'
++ subdirectories for DEDs and demos (defs\ and demo\)
++ each Doomsday client has a unique (random) ID number (in Client.ID)
++ LZSS compression used for demos (LZSS.DLL), demo file extension is .CDM
++ invisible floor/ceiling hack: if a sector has a missing lower/upper
+  texture in all its lines, the floor/ceiling of the sector will be drawn
+  at the same height with the surrounding sector's corresponding plane
++ planes with glowing textures cast dynamic lights on walls and things
++ 'WallGlow' and 'GlowHeight' control wall glow rendering
++ 'i_JoyDevice' chooses the joystick to use if there are many
++ 'ModelAspectMod' scales models vertically; the default value of .833334
+  negates the VGA aspect ratio used for the world
++ 'net_MSQ': keep monitoring the network send queue, print in console
++ 'net_Latencies': (for server) show client information (timing and ticcmd
+  buffering)
++ 'net_Dev': (for server) show the net_Latencies info on-screen
++ 'net_StressMargin': (for server) max value for client lag stress, if
+  stress becomes greater, move client's ticcmd run time forward or backward
++ 'net_StressDampen': (for server) tic interval at which client lag stress
+  reduces by one unit
++ 'net_SkewDampen': (for client) max number of frames to allow time
+  interpolation of frames, after this the frame continuum is reset
++ 'net_ShowSkew': (for client) print time skew details in console (delta of
+  last frame and the current skew, in tics to interpolate the frame forward
+  or backward in time)
++ 'kick' forces the given client to disconnect (for server)
++ 'ping': clients can ping the server, the server can ping any client
++ 'sv_MasterAware': (for server) if nonzero, TCP/IP servers inform DMaster
+  that they're running
++ 'MasterAddress': TCP/IP address of the master server
++ 'MasterPort': TCP/IP port of the master server
++ DED Manager 1.0, a Windows app for doing DED related stuff, and most
+  importantly, exporting Info.h, Sounds.h and action function link files
++ DMaster 0.1, a really simple master server (in fact a DirectPlay Lobby)
+* default memory zone increased to 24 megs (shown as Mb in startup)
+* command-line option -window is the same as -nofullscreen
+* Game DLL API changed
+* MIDI player uses MIDI streams, not single commands
+* wall orientation affects lighting (lighter walls facing east)
+* -maxzone accepts K and M as suffixes (kilobytes and megabytes)
+* fog on sky sphere ('r_SkyDist' sets sky sphere radius)
+* source code rearranged into a more logical directory structure
+* subsector visibility tests are more accurate, reduces stray pixels
+* masked walls sorted together with sprites and models
+* modeldef.txt no longer used, models defined with DEDs
+* textypes.txt no longer used, texture environments defined with DEDs
+* sprite lump handling much more relaxed, sprites can be patched
+* DDMF_SHADOW(2) flags result in more translucent sprites/models
+* only visible models rendered
+* dlBlend 1 is always used with fog (dlFactor multiplied by 0.6)
+* bamsAtan2 uses 64-bit integers to allow larger numbers as arguments
+* jtNet2 compiles the list of available modems during startup
+* buffering of local ticcmds no longer uses maketic (maketic has been
+  removed)
+* all new input code (keyboard, mouse, joystick)
+* flares and dynamic lights are much brighter
+* renderers modify viewport Z range instead of scaling projection matrix to
+  do Z bias, reduces stray pixels
+* some default values changed: dlFactor=0.6, dlBlend=0, FlareIntensity=50,
+  r_FlareMinSize=300, r_dlMaxRad=256, r_dlRadFactor=3
+* dynamic light texture made a bit more realistic
+* 'net connect' uses an index number to identify servers
+* 'net mconnect' connects to a server received from the master
+* .CFG file includes the Game DLL version string on the first line
+* 'load', 'unload' and 'reset' go to startup screen mode to show progress
+  information
+* secondary lens flares diminish as they approach view borders
+- pitch bend in MIDI songs
+- skywalls (invisible Z buffer masks) no longer have dynamic lights on them
+- no more "long debug message has overwritten memory" errors
+- subsector plane vertices are verified for correct rendering (zero area)
+- lens flares won't be occluded by their source
+- font renderer character coordinates (rendered wrong at least with my TNT)
+- renderers no longer use whichever Doomsday window they happen to find
+- texcoords of masked textures clamped vertically, reduces gfx errors
+- texcoords of masked textures clamped horizontally when necessary
+- D3D renderer sometimes set the wrong texture parameters
+- sounds have proper handles, prevents mixups with is-playing tests
+- a division by zero was made if a texture was fully transparent
+- minor jtNet2 bugs
+
+
+Version 0.99.6
+--------------
+* game DLL API changed: old DLLs are incompatible
+* DLaunch: disabled parent -> children skipped (example: JHeretic's -warp
+  option)
++ DLaunch: modifying an option's value checks the option
++ per mobj dl scaling: 1, .75, .5 or .25 to dl radius (won't affect flares)
++ spralign 3: align sprites to view plane, but not fully
+- console border
++ cvar consoleDump: all console text is dumped to Doomsday.out
+* numpad keys have their own key codes (apart from /,*,-,+ and enter)
++ scroll lock and num lock can be used in bindings (scrlock and numlock)
+- cvar i_mouseInvY: for some reason this wasn't a cvar earlier
++ mouse wheel support (cvar i_mWheelSensi controls sensitivity)
+* CalcSectorReverbs() and texture type handling moved into the engine
+
+
+Version 0.99.5
+--------------
++ console commands can set a return value (DD_CCMD_RETURN)
+* rendquad_t is 4 bytes smaller and doesn't use a nameless union/struct
+- jtNet displayed serial link config dialog (sheesh...)
+- netgame events that arrive during rendering are now handled correctly
+  (could cause a crash when starting a netgame)
++ option -nowsk: disable Alt-Tab, Alt-Esc and Ctrl-Alt-Del
++ cvar r_dlMaxRad: maximum radius of a dynamic light
++ cvar r_dlRadFactor: a multiplier for dynamic light radii
+- clipping bug that sometimes caused subsectors to disappear when the
+  camera was exactly atop one of their edges
+* view borders drawn using the actual width of the patches (Hexen and
+  Heretic have view borders that are 4 pixels thick, Doom uses 3 pixels)
+
+
+Version 0.99.4
+--------------
+- "bind (event)" clears all +(event), -(event) and *(event)
+- 2-sided middle textures are rendered correctly
+- flares from sprites aligned to the viewplane won't flicker at certain
+  angles
++ D3D: gamma correction using DirectDraw's gamma control (fast!)
++ option -nogamma: disable DirectDraw gamma, modify texture colors manually
++ cvar r_flareminsize: the minimum size for flares that can have secondary
+  flares (200 is pretty good)
++ light source vertical offsets
+* ccmd listbindings can take a search parameter: "listbindings a" will list
+  all bindings to events that begin with A
+* faster dynamic lights (better algorithm + clipping)
++ cvar dlclip: dynlights are clipped (subsector polygons *not* used when
+  rendering floors/ceilings)
+* spralign 2: attempts to hide sprite flatness (like spralign 0, but stops
+  slanting sprites if angle > r_maxSpriteAngle)
++ cvar r_maxSpriteAngle

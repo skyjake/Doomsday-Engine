@@ -1,0 +1,30 @@
+#
+# jDoom Definitions
+#
+# If you modify this file bear in mind that it will get overwritten
+# whenever you install a new version of jDoom.
+#
+# Need help with DED syntax? See DEDDoc.txt.
+#
+
+Header {
+  Version = 5;
+  Default model scale = 1.2;
+  Model path = "MD2\jDoom";
+}
+
+Include "Objects.ded";
+Include "Sprites.ded";
+Include "Audio.ded";
+Include "Special.ded";
+Include "Details.ded";
+Include "Lights.ded";
+Include "Maps.ded";
+Include "XG.ded";
+Include "Finales.ded";
+Include "Text.ded";
+Include "Values.ded";
+Include "Models.ded";
+Include "User.ded";
+
+IncludeIf Not -noauto "Auto\*.ded";
