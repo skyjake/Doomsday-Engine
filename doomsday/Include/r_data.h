@@ -120,6 +120,7 @@ typedef struct lumptexinfo_s
 {
 	DGLuint		tex[2];		// Names of the textures (two parts for big ones)
 	unsigned short width[2], height;
+	unsigned short height2;			// Used with HUD sprites. 
 	short		offx, offy;
 } lumptexinfo_t;
 

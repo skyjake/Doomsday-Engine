@@ -61,10 +61,10 @@ DGLuint			GL_PrepareLightTexture(void);	// The dynamic light map.
 DGLuint			GL_PrepareGlowTexture(void);	// Glow map.
 DGLuint			GL_PrepareFlareTexture(int flare);
 unsigned int	GL_PrepareSky(int idx, boolean zeroMask);
-unsigned int	GL_PrepareSprite(int pnum);
+unsigned int	GL_PrepareSprite(int pnum, int spriteMode);
 void			GL_SetTexture(int idx);
 void			GL_GetSkyTopColor(int texidx, byte *rgb);
-void			GL_SetSprite(int pnum);
+void			GL_SetSprite(int pnum, int spriteType);
 void			GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void			GL_GetSpriteColor(int pnum, unsigned char *rgb);
 void			GL_GetFlatColor(int fnum, unsigned char *rgb);
