@@ -372,6 +372,7 @@ void DD_Shutdown()
 	Sys_ConShutdown();
 	Def_Destroy();
 	F_ShutdownDirec();
+	FH_Clear();
 	ArgShutdown();
 	free(mainzone);
 	FreeLibrary(hInstGame);
