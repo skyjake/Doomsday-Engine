@@ -23,6 +23,9 @@
 #ifndef __D_TICCMD__
 #define __D_TICCMD__
 
+/* This is an obsolete header file! */
+
+/*
 #include "doomsday.h"
 
 #ifdef __GNUG__
@@ -54,13 +57,16 @@ typedef struct
     byte	buttons;
 } saveticcmd_t;
 #pragma pack()
-
+*/
 
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/01/19 19:24:21  skyjake
+// Obsolete; now uses common ticcmd
+//
 // Revision 1.4  2004/01/07 20:44:40  skyjake
 // Merged from branch-nix
 //
