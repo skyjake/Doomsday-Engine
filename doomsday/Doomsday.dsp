@@ -158,7 +158,7 @@ SOURCE=.\Src\con_config.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\Src\con_console.c
+SOURCE=.\Src\con_main.c
 # End Source File
 # Begin Source File
 
