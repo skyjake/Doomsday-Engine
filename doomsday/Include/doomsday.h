@@ -149,6 +149,7 @@ int			DD_GetFrameRate(void);
 void		R_SetDataPath(const char *path);
 void		R_SetupLevel(char *level_id, int flags);
 void		R_PrecacheLevel(void);
+void		R_PrecacheSkinsForState(int stateIndex);
 void		R_RenderPlayerView(ddplayer_t *player);
 void		R_ViewWindow(int x, int y, int w, int h);
 void		R_SetBorderGfx(char *lumps[9]);
