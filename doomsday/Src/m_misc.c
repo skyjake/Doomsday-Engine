@@ -139,15 +139,43 @@ char *M_SkipLine(char *str)
 	return str;
 }
 
-//==========================================================================
+//===========================================================================
+// M_LimitedStrCat
+//===========================================================================
+char *M_LimitedStrCat
+	(const char *str, unsigned int maxWidth, char separator, char *buf, 
+	 unsigned int bufLength)
+{
+	unsigned int isEmpty = !buf[0], length;
+	
+	// How long is this name?
+	length = MIN_OF(maxWidth, strlen(str));
+	
+	// A separator is included if this is not the first name.
+	if(separator && !isEmpty) ++length;
+
+	// Does it fit?
+	if(strlen(buf) + length < bufLength)
+	{
+		if(separator && !isEmpty) 
+		{
+			char sepBuf[2] = { separator, 0 };
+			strcat(buf, sepBuf);
+		}
+		strncat(buf, str, length);
+	}
+	return buf;
+}
+
+//===========================================================================
 // M_ExtractFileBase
-//==========================================================================
+//===========================================================================
 void M_ExtractFileBase(char *path, char *dest)
 {
 	char *src;
 	int length;
 
-	src = path+strlen(path)-1;
+	src = path + strlen(path) - 1;
 
 	// Back up until a \ or the start
 	while(src != path && *(src-1) != '\\' && *(src-1) != '/')
@@ -162,6 +190,7 @@ void M_ExtractFileBase(char *path, char *dest)
 	{
 		if(++length == 9)
 		{
+			// This is an error?!
 			Con_Error("Filename base of %s > 8 chars", path);
 		}
 		*dest++ = toupper((int)*src++);
