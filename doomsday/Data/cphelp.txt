@@ -249,3 +249,18 @@ desc = Normally when the value of a console variable is changed, its name and th
 cvar = con-completion
 def = List with values
 desc = The Tab key is used to complete words in the console. The console knows how to complete command, variable and alias names. The completion can work in two ways. In the "List with values" mode, pressing Tab will complete the unambiguous part of the word and print a list of possible completions. Variables will be printed with their values. In the "Cycle" mode, Tab is used to cycle through all the choices.
+
+#
+# NETWORK SETUP
+#
+[TCP/IP]
+desc = The TCP/IP protocol can be used for internet games as well as Local Area Network games.\bThe TCP/IP port setting specifies the port that this computer will be using for all Doomsday-related communications. If you're behind a firewall, you can use the port setting to make sure that only this one port is used. You will still need to open the port in the firewall. Otherwise, if port zero is used, the actual port will be selected automatically, and may be blocked by a firewall.\bIn order to connect, a client must know the address of the server. If the server is on the local network, the Search Address box on the Client Setup screen can be left empty. Otherwise, the client must type in a valid URL or IP address: e.g. "example.doom.com" or "127.0.0.1".
+
+[IPX]
+desc = The IPX (Internetwork Packet Exchange) protocol requires no configuration. It can only be used on Local Area Networks. If you want to play over the internet, you must use the TCP/IP protocol.
+
+[Modem]
+desc = If you have several modem devices, select the one to use here.\bWhen hosting a game, the modem protocol does not need any further configuration. In order to connect, a client must type in the phone number of the server on the Client Setup screen.\bThe modem protocol is limited to 2-player games.
+
+[Serial Link]
+desc = Make sure both computers are using the same settings.
