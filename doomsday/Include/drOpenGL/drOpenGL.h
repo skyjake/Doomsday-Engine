@@ -69,6 +69,8 @@ typedef struct rgba_s {
 	unsigned char   color[4];
 } rgba_t;
 
+void            initState(void);
+
 //-------------------------------------------------------------------------
 // main.c
 //

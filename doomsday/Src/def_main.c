@@ -986,6 +986,82 @@ static int Friendly(int num)
 	return num;
 }
 
+#define MAP_SND		0x01000000
+#define MAP_MUS		0x02000000
+#define MAP_TEX		0x04000000
+#define MAP_FLAT	0x08000000
+#define MAP_MASK	0x00ffffff
+
+static struct {
+	int     lclass;
+	int     map[20];
+} mappings[] =
+{
+	{
+		LTC_CHAIN_SEQUENCE,
+		{
+	0, 0, -1}},
+	{
+		LTC_PLANE_MOVE,
+		{
+	0, 2, 3, 4 | MAP_SND, 5 | MAP_SND, 6 | MAP_SND, 7,
+				8 | MAP_FLAT, 9, 10 | MAP_FLAT, 11, 13, -1}},
+	{
+		LTC_BUILD_STAIRS,
+		{
+	0, 4 | MAP_SND, 5 | MAP_SND, 6 | MAP_SND, 7 | MAP_SND, -1}},
+	{
+		LTC_SECTOR_TYPE,
+		{
+	0, -1}},
+	{
+		LTC_SECTOR_LIGHT,
+		{
+	0, 4, 6, -1}},
+	{
+		LTC_LINE_TYPE,
+		{
+	0, -1}},
+	{
+		LTC_ACTIVATE,
+		{
+	0, -1}},
+	{
+		LTC_MUSIC,
+		{
+	0 | MAP_MUS, -1}},
+	{
+		LTC_LINE_COUNT,
+		{
+	0, -1}},
+	{
+		LTC_DISABLE_IF_ACTIVE,
+		{
+	0, -1}},
+	{
+		LTC_ENABLE_IF_ACTIVE,
+		{
+	0, -1}},
+	{
+		LTC_PLANE_TEXTURE,
+		{
+	0, 2, 3 | MAP_FLAT, -1}},
+	{
+		LTC_WALL_TEXTURE,
+		{
+	0, 3 | MAP_TEX, 4 | MAP_TEX, 5 | MAP_TEX, -1}},
+	{
+		LTC_SOUND,
+		{
+	0, 2 | MAP_SND, -1}},
+	{
+		LTC_MIMIC_SECTOR,
+		{
+	0, 2, -1}},
+	{
+	-1}
+};
+
 //===========================================================================
 // Def_CopyLineType
 //  Converts a DED line type to the internal format.
@@ -993,80 +1069,6 @@ static int Friendly(int num)
 //===========================================================================
 void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
 {
-#define MAP_SND		0x01000000
-#define MAP_MUS		0x02000000
-#define MAP_TEX		0x04000000
-#define MAP_FLAT	0x08000000
-#define MAP_MASK	0x00ffffff
-	struct {
-		int     lclass;
-		int     map[20];
-	} mappings[] =
-	{
-		{
-			LTC_CHAIN_SEQUENCE,
-			{
-		0, 0, -1}},
-		{
-			LTC_PLANE_MOVE,
-			{
-		0, 2, 3, 4 | MAP_SND, 5 | MAP_SND, 6 | MAP_SND, 7,
-					8 | MAP_FLAT, 9, 10 | MAP_FLAT, 11, 13, -1}},
-		{
-			LTC_BUILD_STAIRS,
-			{
-		0, 4 | MAP_SND, 5 | MAP_SND, 6 | MAP_SND, 7 | MAP_SND, -1}},
-		{
-			LTC_SECTOR_TYPE,
-			{
-		0, -1}},
-		{
-			LTC_SECTOR_LIGHT,
-			{
-		0, 4, 6, -1}},
-		{
-			LTC_LINE_TYPE,
-			{
-		0, -1}},
-		{
-			LTC_ACTIVATE,
-			{
-		0, -1}},
-		{
-			LTC_MUSIC,
-			{
-		0 | MAP_MUS, -1}},
-		{
-			LTC_LINE_COUNT,
-			{
-		0, -1}},
-		{
-			LTC_DISABLE_IF_ACTIVE,
-			{
-		0, -1}},
-		{
-			LTC_ENABLE_IF_ACTIVE,
-			{
-		0, -1}},
-		{
-			LTC_PLANE_TEXTURE,
-			{
-		0, 2, 3 | MAP_FLAT, -1}},
-		{
-			LTC_WALL_TEXTURE,
-			{
-		0, 3 | MAP_TEX, 4 | MAP_TEX, 5 | MAP_TEX, -1}},
-		{
-			LTC_SOUND,
-			{
-		0, 2 | MAP_SND, -1}},
-		{
-			LTC_MIMIC_SECTOR,
-			{
-		0, 2, -1}},
-		{
-		-1}
-	};
 	int     i, k, a, n;
 
 	l->id = def->id;

@@ -31,6 +31,7 @@
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
+#include "de_defs.h"
 
 #include "r_extres.h"
 

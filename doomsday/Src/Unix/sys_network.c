@@ -263,6 +263,8 @@ static int N_UDPReceiver(void *parm)
 			Sys_Lock(mutexInSock);
 			if(SDLNet_UDP_Recv(inSock, packet) > 0)
 			{
+				netmessage_t *msg = NULL;
+
 				Sys_Unlock(mutexInSock);
 #ifdef PRINT_PACKETS
 				{
@@ -279,8 +281,7 @@ static int N_UDPReceiver(void *parm)
 					continue;
 
 				// Successfully received a packet.
-				netmessage_t *msg =
-					(netmessage_t *) calloc(sizeof(netmessage_t), 1);
+				msg = (netmessage_t *) calloc(sizeof(netmessage_t), 1);
 
 				msg->sender = packet->channel;
 				msg->data = packet->data;

@@ -80,7 +80,7 @@ static int read_ids[MAX_READ];
 //===========================================================================
 // M_Malloc
 //===========================================================================
-void   *M_Malloc(size_t size)
+void* M_Malloc(size_t size)
 {
 	return malloc(size);
 }
@@ -88,7 +88,7 @@ void   *M_Malloc(size_t size)
 //===========================================================================
 // M_Calloc
 //===========================================================================
-void   *M_Calloc(size_t size)
+void* M_Calloc(size_t size)
 {
 	return calloc(size, 1);
 }
@@ -96,7 +96,7 @@ void   *M_Calloc(size_t size)
 //===========================================================================
 // M_Realloc
 //===========================================================================
-void   *M_Realloc(void *ptr, size_t size)
+void* M_Realloc(void *ptr, size_t size)
 {
 	return realloc(ptr, size);
 }
@@ -902,7 +902,7 @@ boolean M_CheckPath(char *path)
 	memset(buf, 0, sizeof(buf));
 	for(;;)
 	{
-		endptr = strchr(ptr, '/');
+		endptr = strchr(ptr, DIR_SEP_CHAR);
 		if(!endptr)
 			strcat(buf, ptr);
 		else

@@ -350,7 +350,7 @@ void D_PreInit(void)
 	cfg.usePatchReplacement = true;
 	cfg.menuScale = .9f;
 	cfg.menuGlitter = .5f;
-	cfg.menuShadow = 0.33;
+	cfg.menuShadow = 0.33f;
 	cfg.menuQuitSound = true;
 	cfg.flashcolor[0] = .7f;
 	cfg.flashcolor[1] = .9f;

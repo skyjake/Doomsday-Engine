@@ -8,14 +8,12 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
-#  	include <windows.h>
-#  	include <process.h>
+#include <windows.h>
+#include <process.h>
 #endif
 
-#ifdef UNIX
-#  	include <SDL.h>
-#  	include <SDL_thread.h>
-#endif
+#include <SDL.h>
+#include <SDL_thread.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -294,35 +292,6 @@ void Sys_SuspendThread(int handle, boolean dopause)
 #endif
 }
 
-#ifdef WIN32
-int Sys_CreateMutex(const char *name)
-{
-	return (int) CreateMutex(NULL, FALSE, name);
-}
-
-void Sys_DestroyMutex(int handle)
-{
-	if(!handle)
-		return;
-	CloseHandle((HANDLE) handle);
-}
-
-void Sys_Lock(int handle)
-{
-	if(!handle)
-		return;
-	WaitForSingleObject((HANDLE) handle, 5000);
-}
-
-void Sys_Unlock(int handle)
-{
-	if(!handle)
-		return;
-	ReleaseMutex((HANDLE) handle);
-}
-#endif
-
-#ifdef UNIX
 /*
  * Returns the return value of the thread.
  */
@@ -360,9 +329,6 @@ void Sys_Unlock(int handle)
 	SDL_mutexV((SDL_mutex *) handle);
 }
 
-#endif
-
-#ifdef UNIX
 /*
  * Create a new semaphore. Returns a handle.
  */
@@ -400,4 +366,3 @@ void Sem_V(semaphore_t semaphore)
 		SDL_SemPost((SDL_sem *) semaphore);
 	}
 }
-#endif

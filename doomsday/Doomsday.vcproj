@@ -106,8 +106,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="wsock32.lib libz.lib libpngd.lib fmodvc.lib dsound.lib dinput.lib dxguid.lib lzss.lib winmm.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\./Bin/Debug/Doomsday.exe"
+				AdditionalDependencies="sdl_net.lib sdl.lib wsock32.lib libz.lib libpngd.lib fmodvc.lib dsound.lib dinput.lib dxguid.lib lzss.lib winmm.lib odbc32.lib odbccp32.lib"
+				OutputFile="./Bin/Debug/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -191,19 +191,6 @@
 				<File
 					RelativePath=".\Src\dd_zone.c">
 				</File>
-				<Filter
-					Name="Definitions"
-					Filter="">
-					<File
-						RelativePath=".\Src\dd_defns.c">
-					</File>
-					<File
-						RelativePath=".\Src\dedfile.c">
-					</File>
-					<File
-						RelativePath=".\Src\dedread.c">
-					</File>
-				</Filter>
 			</Filter>
 			<Filter
 				Name="Console"
@@ -221,7 +208,7 @@
 					RelativePath=".\Src\con_config.c">
 				</File>
 				<File
-					RelativePath=".\Src\con_console.c">
+					RelativePath="Src\con_main.c">
 				</File>
 				<File
 					RelativePath=".\Src\con_start.c">
@@ -240,6 +227,9 @@
 					RelativePath=".\Src\sys_filein.c">
 				</File>
 				<File
+					RelativePath="Src\sys_findfile.c">
+				</File>
+				<File
 					RelativePath=".\Src\sys_input.c">
 				</File>
 				<File
@@ -249,7 +239,7 @@
 					RelativePath=".\Src\sys_mixer.c">
 				</File>
 				<File
-					RelativePath=".\Src\sys_network.cpp">
+					RelativePath="Src\Unix\sys_network.c">
 				</File>
 				<File
 					RelativePath=".\Src\sys_sock.c">
@@ -464,6 +454,9 @@
 					RelativePath=".\Src\gl_font.c">
 				</File>
 				<File
+					RelativePath="Src\gl_hq2x.c">
+				</File>
+				<File
 					RelativePath=".\Src\gl_main.c">
 				</File>
 				<File
@@ -558,12 +551,28 @@
 					RelativePath=".\Src\ui_panel.c">
 				</File>
 			</Filter>
+			<Filter
+				Name="Definitions"
+				Filter="">
+				<File
+					RelativePath="Src\def_data.c">
+				</File>
+				<File
+					RelativePath="Src\def_main.c">
+				</File>
+				<File
+					RelativePath="Src\def_read.c">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
 				RelativePath=".\Include\LZSS.h">
+			</File>
+			<File
+				RelativePath="Include\dd_version.h">
 			</File>
 			<File
 				RelativePath=".\Include\doomsday.h">
@@ -619,19 +628,6 @@
 				<File
 					RelativePath=".\Include\de_base.h">
 				</File>
-				<Filter
-					Name="Definition Headers"
-					Filter="">
-					<File
-						RelativePath=".\Include\dd_defns.h">
-					</File>
-					<File
-						RelativePath=".\Include\dd_dfdat.h">
-					</File>
-					<File
-						RelativePath=".\Include\dedfile.h">
-					</File>
-				</Filter>
 			</Filter>
 			<Filter
 				Name="Console Headers"
@@ -1005,6 +1001,19 @@
 				</File>
 				<File
 					RelativePath=".\Include\ui_panel.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="Definition Headers"
+				Filter="">
+				<File
+					RelativePath="Include\def_data.h">
+				</File>
+				<File
+					RelativePath="Include\def_main.h">
+				</File>
+				<File
+					RelativePath="Include\def_share.h">
 				</File>
 			</Filter>
 		</Filter>

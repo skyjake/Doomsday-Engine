@@ -76,7 +76,7 @@ EXPORTS
 	Con_Error			@42 NONAME
 
 ; Console: Actions.
-;	Con_DefineActions	@43 NONAME
+	Con_DefineActions	@43 NONAME
 
 ; Console: Bindings.
 	B_EventBuilder			@44 NONAME

@@ -32,7 +32,7 @@
 #include "de_play.h"
 
 #include "s_main.h"
-#include "m_profiler.h"
+#include "sys_timer.h"
 
 // MACROS ------------------------------------------------------------------
 
