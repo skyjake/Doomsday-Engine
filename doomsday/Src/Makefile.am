@@ -1,4 +1,4 @@
-SUBDIRS = dpDehRead dpMapLoad jHeretic jHexen $(OPTIONAL_SUBDIRS)
+SUBDIRS = dpDehRead dpMapLoad $(OPTIONAL_SUBDIRS)
 
 bin_PROGRAMS = doomsday
 
