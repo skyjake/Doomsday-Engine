@@ -206,13 +206,14 @@ If you've got multiple IWADs in your @file{Data\jDoom} folder and you start the
 game from a batch file or from the DOS Prompt you can use the following
 command line options to make jDoom use the IWAD you want:
 
-@table{43 57}{
+@table{30 70}{
 	@header{Option} @tab @header{Game}
 @row{single}
 	@opt{-sdoom} @tab Shareware Doom (@file{DOOM1.WAD})
 @row
-	@opt{-doom} (same as @opt{-ultimate}) @tab
-	Registered or Ultimate Doom (@file{DOOM.WAD})
+	@opt{-doom} @tab Registered Doom (@file{DOOM.WAD})
+@row
+	@opt{-ultimate} @tab Ultimate Doom (@file{DOOM.WAD})
 @row
 	@opt{-doom2} @tab Doom II (@file{DOOM2.WAD})
 @row
