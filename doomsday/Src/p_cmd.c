@@ -71,6 +71,13 @@ void P_BuildCommand(int playerNumber)
 	cmd.forwardMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "walk"));
 
 	cmd.sideMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "sidestep"));
+
+	// The view angles are updated elsewhere as the axis positions
+	// change.
+	cmd.angle = player->clAngle >> 16;
+	cmd.pitch = player->clLookDir/110.0f * DDMAXSHORT;
+
+	//Con_Printf("%i: a=%04x p=%04x\n", playerNumber, cmd.angle, cmd.pitch);
 	
 	// The command is now complete.  Insert it into the client's
 	// command buffer, where it will be read from by the refresh
