@@ -327,8 +327,8 @@ int	DM_FModExtPlayFile(const char *path, int looped)
 	else
 	{
 		// Try as a stream.
-		stream = FSOUND_Stream_OpenFile(path, 
-			looped? FSOUND_LOOP_NORMAL : 0, 0);
+		stream = FSOUND_Stream_Open(path, 
+			looped? FSOUND_LOOP_NORMAL : 0, 0, 0);
 		if(!stream) return false; // Failed...!
 	}
 	DM_FModExtStartPlaying();
@@ -345,7 +345,7 @@ int	DM_FModExtPlayBuffer(int looped)
 	DM_FModExtReset();
 
 	// Try playing as a module first.
-	if((module = FMUSIC_LoadSongEx(song, song_size, 
+	if((module = FMUSIC_LoadSongEx(song, 0, song_size, 
 		FSOUND_LOADMEMORY, NULL, 0)))
 	{
 		FMUSIC_SetLooping(module, looped);
@@ -353,9 +353,9 @@ int	DM_FModExtPlayBuffer(int looped)
 	else
 	{
 		// Try as a stream.
-		stream = FSOUND_Stream_OpenFile(song,
+		stream = FSOUND_Stream_Open(song,
 			FSOUND_LOADMEMORY | (looped? FSOUND_LOOP_NORMAL : 0), 
-			song_size);
+			0, song_size);
 		if(!stream) return false;
 	}
 	DM_FModExtStartPlaying();	
