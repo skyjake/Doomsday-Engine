@@ -305,3 +305,22 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 	// The point is inside if the number of crossed nodes is odd.
 	return isOdd;
 }
+
+//===========================================================================
+// R_GetSectorNumForDegen
+//	Returns the index of the sector who owns the given degenmobj.
+//===========================================================================
+int R_GetSectorNumForDegen(void *degenmobj)
+{
+	int i;
+	
+	// Check all sectors; find where the sound is coming from.
+	for(i = 0; i < numsectors; i++)
+	{
+		if(degenmobj == &SECTOR_PTR(i)->soundorg)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
