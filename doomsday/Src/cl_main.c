@@ -132,6 +132,8 @@ void Cl_AnswerHandshake(handshake_packet_t * pShake)
 
 	// Copy the data to a buffer of our own.
 	memcpy(&shake, pShake, sizeof(shake));
+    shake.playerMask = SHORT(shake.playerMask);
+    shake.gameTime = LONG(shake.gameTime);
 
 	// Immediately send an acknowledgement.
 	Msg_Begin(pcl_ack_shake);

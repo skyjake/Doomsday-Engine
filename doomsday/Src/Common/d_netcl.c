@@ -53,13 +53,13 @@ byte NetCl_ReadByte()
 short NetCl_ReadShort()
 {
 	readbuffer += 2;
-	return *(short *) (readbuffer - 2);
+	return SHORT( *(short *) (readbuffer - 2) );
 }
 
 int NetCl_ReadLong()
 {
 	readbuffer += 4;
-	return *(int *) (readbuffer - 4);
+	return LONG( *(int *) (readbuffer - 4) );
 }
 
 void NetCl_Read(byte *buf, int len)
@@ -137,10 +137,10 @@ void NetCl_UpdateGameState(byte *data)
 	deathmatch = gsDeathmatch;
 	nomonsters = !gsMonsters;
 	respawnparm = gsRespawn;
-	grav = (gsGravity << 8);
+	grav = SHORT((gsGravity) << 8);
 
 	// Some statistics.
-#if __JHEXEN__
+#ifdef __JHEXEN__
 	Con_Message("Game state: Map=%i Skill=%i %s\n", gsMap, gsSkill,
 				deathmatch == 1 ? "Deathmatch" : deathmatch ==
 				2 ? "Deathmatch2" : "Co-op");
@@ -717,12 +717,12 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 		if(cmd->angle != prev.angle)
 		{
 			*flags |= CMDF_ANGLE;
-			*((unsigned short *) out)++ = cmd->angle;
+			*((unsigned short *) out)++ = SHORT(cmd->angle);
 		}
 		if(cmd->pitch != prev.pitch)
 		{
 			*flags |= CMDF_LOOKDIR;
-			*((short *) out)++ = cmd->pitch;
+			*((short *) out)++ = SHORT(cmd->pitch);
 		}
 
 		// Compile the button flags.
@@ -758,7 +758,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 		if(cmd->changeWeapon != prev.changeWeapon)
 		{
 			*flags |= CMDF_CHANGE_WEAPON;
-			*((short *) out)++ = cmd->changeWeapon;
+			*((short *) out)++ = SHORT(cmd->changeWeapon);
 		}
 
 		memcpy(&prev, cmd, sizeof(*cmd));
@@ -794,7 +794,7 @@ void NetCl_CheatRequest(const char *command)
  */
 void NetCl_UpdateJumpPower(void *data)
 {
-	netJumpPower = *(float *) data;
+	netJumpPower = FLOAT( *(float *) data );
 #ifdef _DEBUG
 	Con_Printf("NetCl_UpdateJumpPower: %g\n", netJumpPower);
 #endif

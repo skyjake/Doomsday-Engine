@@ -649,18 +649,13 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 //===========================================================================
 
 ccmd_t  netCCmds[] = {
-	{"setcolor", CCmdSetColor, "Set player color."}
-	,
-	{"setmap", CCmdSetMap, "Set map."}
-	,
+	{"setcolor", CCmdSetColor, "Set player color."},
+	{"setmap", CCmdSetMap, "Set map."},
 #if __JHEXEN__
-	{"setclass", CCmdSetClass, "Set player class."}
-	,
+	{"setclass", CCmdSetClass, "Set player class."},
 #endif
-	{"startcycle", CCmdMapCycle, "Begin map rotation."}
-	,
-	{"endcycle", CCmdMapCycle, "End map rotation."}
-	,
+	{"startcycle", CCmdMapCycle, "Begin map rotation."},
+	{"endcycle", CCmdMapCycle, "End map rotation."},
 	{NULL}
 };
 
@@ -670,10 +665,13 @@ cvar_t  netCVars[] = {
 
 	"server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle, 0, 0,
 	"Map rotation sequence.",
+    
 	"server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1,
 	"1=Disable exit buttons during map rotation.",
+    
 	"server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1,
 	"1=Allow cheating in multiplayer games (god, noclip, give).",
+    
 	NULL
 };
 
@@ -687,6 +685,7 @@ void D_NetConsoleRegistration(void)
 
 	for(i = 0; netCCmds[i].name; i++)
 		Con_AddCommand(netCCmds + i);
+        
 	for(i = 0; netCVars[i].name; i++)
 		Con_AddVariable(netCVars + i);
 }

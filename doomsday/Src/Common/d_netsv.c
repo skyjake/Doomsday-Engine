@@ -47,8 +47,8 @@
 #define MAX_SECTORUPD	20
 #define MAX_SIDEUPD		9
 
-#define WRITE_SHORT(byteptr, val)	{(*(short*)(byteptr) = (val)); byteptr += 2;}
-#define WRITE_LONG(byteptr, val)	{(*(int*)(byteptr) = (val)); byteptr += 4;}
+#define WRITE_SHORT(byteptr, val)	{(*(short*)(byteptr) = SHORT(val)); byteptr += 2;}
+#define WRITE_LONG(byteptr, val)	{(*(int*)(byteptr) = LONG(val)); byteptr += 4;}
 
 // TYPES ------------------------------------------------------------------
 
@@ -832,7 +832,7 @@ void NetSv_SendGameState(int flags, int to)
 #else
         int gameStateSize = 8;
 #endif
-        int k;
+        //int k;
 
         if(!players[i].plr->ingame || (to != DDSP_ALL_PLAYERS && to != i))
 			continue;
@@ -898,7 +898,7 @@ void NetSv_SendGameState(int flags, int to)
 #if !__JHEXEN__
 		gs->jumping = cfg.jumpEnabled;
 #endif
-		gs->gravity = (Get(DD_GRAVITY) >> 8) & 0xffff;
+		gs->gravity = SHORT((Get(DD_GRAVITY) >> 8) & 0xffff);
 		ptr += sizeof(packet_gamestate_t);
 #endif // #if 0
 
@@ -1158,6 +1158,7 @@ void NetSv_SendJumpPower(int target, float power)
 	if(!IS_SERVER)
 		return;
 
+    power = FLOAT(power);
 	memcpy((void *) msg, &power, 4);
 	Net_SendPacket(target | DDSP_CONFIRM, GPT_JUMP_POWER, msg, 4);
 }
@@ -1297,8 +1298,7 @@ void NetSv_Ticker(void)
 		if(plr->update & (PSF_OWNED_WEAPONS | PSF_STATE))
 		{
 			NetSv_SendPlayerState2(i, i,
-								   (plr->
-									update & PSF_OWNED_WEAPONS ?
+								   (plr->update & PSF_OWNED_WEAPONS ?
 									PSF2_OWNED_WEAPONS : 0) | (plr->
 															   update &
 															   PSF_STATE ?
@@ -1350,9 +1350,9 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 		if(flags & CMDF_SIDEMOVE)
 			cmd->sideMove = *msg++;
 		if(flags & CMDF_ANGLE)
-			cmd->angle = *((short *) msg)++;
+			cmd->angle = SHORT( *((short *) msg)++ );
 		if(flags & CMDF_LOOKDIR)
-			cmd->pitch = *((short *) msg)++;
+			cmd->pitch = SHORT( *((short *) msg)++ );
 		if(flags & CMDF_BUTTONS)
 		{
 			byte buttons = *msg++;
@@ -1372,7 +1372,7 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 		if(flags & CMDF_ARTI)
 			cmd->arti = *msg++;
 		if(flags & CMDF_CHANGE_WEAPON)
-			cmd->changeWeapon = *((short *) msg)++;
+			cmd->changeWeapon = SHORT( *((short *) msg)++ );
 
 		// Copy to next command (only differences have been written).
 		memcpy(cmd + 1, cmd, sizeof(ticcmd_t));

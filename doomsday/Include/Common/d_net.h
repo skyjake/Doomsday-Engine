@@ -64,8 +64,8 @@ typedef struct {
 	byte            skill:3;
 	short           gravity;	   // signed fixed-8.8
 #if __JHEXEN__
-	float           damagemod;	   // netMobDamageModifier
-	float           healthmod;	   // netMobHealthModifier
+	float           damagemod;	   // netMobDamageModifier (UNUSED)
+	float           healthmod;	   // netMobHealthModifier (UNUSED)
 #endif
 } packet_gamestate_t;
 #endif

@@ -20,6 +20,7 @@
  *
  * Buffer overflow checks *ARE NOT* made.
  * The caller must know what it's doing.
+ * The data is stored using little-endian ordering.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -62,7 +63,7 @@ void Msg_WriteByte(byte b)
 
 void Msg_WriteShort(short w)
 {
-	*(short *) netBuffer.cursor = w;
+	*(short *) netBuffer.cursor = SHORT(w);
 	netBuffer.cursor += 2;
 }
 
@@ -72,19 +73,19 @@ void Msg_WriteShort(short w)
 //  lower byte is used to determine whether the upper byte follows or not.
 //==========================================================================
 void Msg_WritePackedShort(short w)
-{
+{    
 	if(w < 0x80)				// Can the number be represented with 7 bits?
 		Msg_WriteByte(w);
 	else
 	{
-		Msg_WriteByte(0x80 | w);
+		Msg_WriteByte(0x80 | (w & 0x7f));
 		Msg_WriteByte(w >> 7);	// Highest bit is lost.
 	}
 }
 
 void Msg_WriteLong(int l)
 {
-	*(int *) netBuffer.cursor = l;
+	*(int *) netBuffer.cursor = LONG(l);
 	netBuffer.cursor += 4;
 }
 
@@ -110,7 +111,7 @@ short Msg_ReadShort(void)
 		Con_Error("Packet read overflow!\n");
 #endif
 	netBuffer.cursor += 2;
-	return *(short *) (netBuffer.cursor - 2);
+	return SHORT( *(short *) (netBuffer.cursor - 2) );
 }
 
 //==========================================================================
@@ -137,7 +138,7 @@ int Msg_ReadLong(void)
 		Con_Error("Packet read overflow!\n");
 #endif
 	netBuffer.cursor += 4;
-	return *(int *) (netBuffer.cursor - 4);
+	return LONG( *(int *) (netBuffer.cursor - 4) );
 }
 
 void Msg_Read(void *dest, int len)

@@ -213,12 +213,6 @@ void N_Update(void)
 	netevent_t event;
 	char    name[256];
 
-	// Remove all confirmed messages in the Send Message Store.
-	//N_SMSDestroyConfirmed();
-
-	// Resend unconfirmed, timed-out messages.
-	//N_SMSResendTimedOut();
-
 	// Are there any events to process?
 	while(N_NEGet(&event))
 	{

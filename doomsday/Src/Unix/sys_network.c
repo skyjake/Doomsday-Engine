@@ -414,6 +414,8 @@ boolean N_ReceiveReliably(nodeid_t from)
 
 	if(SDLNet_TCP_Recv(sock, &size, 2) != 2)
 		return false;
+        
+    size = SHORT(size);
 
 	// Read the entire packet's data.
 	packet = SDLNet_AllocPacket(size);
@@ -445,13 +447,13 @@ boolean N_ReceiveReliably(nodeid_t from)
 void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
 {
 	netnode_t *node = &netNodes[destination];
-	ushort  packetSize = size;
+	ushort  packetSize = SHORT(size);
 
 	if(size <= 0 || !node->sock || !node->hasJoined)
 		return;
 
 	SDLNet_TCP_Send(node->sock, &packetSize, 2);
-	SDLNet_TCP_Send(node->sock, data, packetSize);
+	SDLNet_TCP_Send(node->sock, data, SHORT(packetSize));
 }
 
 /*
