@@ -9,18 +9,32 @@ enum
 	NUM_FICONDS
 };
 
+typedef enum infinemode_e 
+{
+	FIMODE_LOCAL,
+	FIMODE_OVERLAY,
+	FIMODE_BEFORE,
+	FIMODE_AFTER
+}
+infinemode_t;
+
+extern boolean fi_active;
 extern boolean brief_disabled;
 
-void	FI_StartScript(char *finalescript, boolean after);
+void	FI_Reset(void);
+void	FI_Start(char *finalescript, infinemode_t mode);
 void	FI_End(void);
 void	FI_SetCondition(int index, boolean value);
 int		FI_Briefing(int episode, int map);
 int		FI_Debriefing(int episode, int map);
+void	FI_DemoEnds(void);
 int		FI_SkipRequest(void);
 void	FI_Ticker(void);
 int		FI_Responder(event_t *ev);
 void	FI_Drawer(void);
+boolean	FI_IsMenuTrigger(event_t *ev);
 
+int		CCmdStartInFine(int argc, char **argv);
 int		CCmdStopInFine(int argc, char **argv);
 
 #endif
