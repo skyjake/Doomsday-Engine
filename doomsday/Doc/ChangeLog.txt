@@ -15,9 +15,21 @@ Version 1.7.8
 * cvar net-master-port (default: 0): usually zero or 80
 * clientside player coords override serverside coords under normal
   circumstances (maxdif checks removed)
+- fixed: psprites were rendered with depth testing enabled; Doom plasma 
+  rifle fire anim was broken
+- fixed: line flags weren't updated on clientside (e.g. in Hexen map13)
+
+jDoom:
+* lineattack weapons now hit planes (pistol, shotguns, chaingun) 
+- fixed: lineattack check for hitting sky planes, skyhack walls
+- map31 and map32 no longer assumed to exist: Doom2.wad "00f6d407" 
+  should work 
 
 jHexen:
 - fixed: dedicated server tried to draw teleport gfx and crashed
+- fixed: scripted + yellow messages not shown on clientside
+- fixed: client crashes when changing level
+- fixed: status bar flicker
 
 jtNet2:
 - old master server stuff removed
