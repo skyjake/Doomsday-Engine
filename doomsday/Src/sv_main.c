@@ -652,6 +652,7 @@ void Sv_StartNetGame()
 		memset(clients[i].name, 0, sizeof(clients[i].name));
 		players[i].flags &= ~DDPF_CAMERA;
 		clients[i].bandwidthRating = BWR_DEFAULT;
+		clients[i].bwrAdjustTime = 0;
 		memset(clients[i].ackTimes, 0, sizeof(clients[i].ackTimes));
 	}
 	gametic = 0;
@@ -707,8 +708,13 @@ void Sv_Ticker(void)
 	{
 		if(!players[i].ingame || !players[i].mo) continue;
 		players[i].lastangle = players[i].mo->angle;
+
+		if(clients[i].bwrAdjustTime > 0)
+		{
+			// BWR adjust time tics away.
+			clients[i].bwrAdjustTime--;
+		}
 	}
-	/* Sv_PoolTicker(); */
 }
 
 /*
@@ -764,9 +770,13 @@ boolean Sv_CheckBandwidth(int playerNumber)
 	}
 
 	// If the send queue is practically empty, we can use more bandwidth.
-	if(qSize < limit/20)
+	// (Providing we have BWR adjust time.)
+	if(qSize < limit/20 && client->bwrAdjustTime > 0)
 	{
 		client->bandwidthRating++;
+
+		// Increase BWR only once during the adjust time.
+		client->bwrAdjustTime = 0;
 	}
 
 	// Do not go past the boundaries, though.
@@ -780,7 +790,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 	}
 
 	// New messages will not be sent if there's too much already.
-	return qSize <= 5*limit;
+	return qSize <= 10*limit;
 }
 
 /*
