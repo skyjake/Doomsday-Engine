@@ -181,9 +181,9 @@ ui_object_t ob_client[] =
 	{ UI_TEXT,		0,	0,		190, 870,	200, 70,	"",					MPIServerInfoDrawer, 0, 0, 0, str_sinfo.ping },
 
 	{ UI_BUTTON,	3,	0,		800, 0,		200, 80,	"Get From Master",	UIButton_Drawer, UIButton_Responder, 0, MPIRetrieve },
-	{ UI_BUTTON,	0,	0,		800, 790,	200, 80,	"Network Setup",	UIButton_Drawer, UIButton_Responder, 0, MPIGotoPage, &page_protocol },
-	{ UI_BUTTON,	0,	0,		800, 890,	200, 80,	"Exit (Esc)",		UIButton_Drawer, UIButton_Responder, 0, MPIGoBack },
-	{ UI_BUTTON,	4,	0,		560, 890,	200, 80,	"Connect",			UIButton_Drawer, UIButton_Responder, 0, MPIConnect },
+	{ UI_BUTTON,	0,	0,		800, 100,	200, 80,	"Network Setup",	UIButton_Drawer, UIButton_Responder, 0, MPIGotoPage, &page_protocol },
+	{ UI_BUTTON,	0,	0,		800, 200,	200, 80,	"Exit (Esc)",		UIButton_Drawer, UIButton_Responder, 0, MPIGoBack },
+	{ UI_BUTTON,	4,	0,		800, 900,	200, 80,	"Connect",			UIButton_Drawer, UIButton_Responder, 0, MPIConnect },
 	{ UI_TEXT,		5,	0,		800, 130,	200, 450,	"",					MPIServerInfoDrawer, 0, 0, 0, str_sinfo.warning },
 	{ UI_NONE }
 };

@@ -274,6 +274,8 @@ cvar_t engineCVars[] =
 	// User Interface
 	"ui-panel-help",		0,			CVT_BYTE,	&panel_show_help, 0, 1,	"1=Enable help window in Control Panel.",
 	"ui-panel-tips",		0,			CVT_BYTE,	&panel_show_tips, 0, 1, "1=Show help indicators in Control Panel.",
+	"ui-cursor-width",		CVF_NO_MAX,	CVT_INT,	&uiMouseWidth,	1, 0,	"Mouse cursor width.",
+	"ui-cursor-height",		CVF_NO_MAX,	CVT_INT,	&uiMouseHeight,	1, 0,	"Mouse cursor height.",
 
 	// Video
 	"vid-res-x",			CVF_NO_MAX,	CVT_INT,	&defResX,		320, 0,	"Default resolution (X).",
@@ -1973,10 +1975,13 @@ void Con_DrawRuler2(int y, int lineHeight, float alpha, int scrWidth)
 	int xoff = 5;
 	int rh = 6;
 
+	UI_GradientEx(xoff, y + (lineHeight - rh)/2 + 1,
+		scrWidth - 2*xoff, rh, rh/2, UI_COL(UIC_SHADOW),
+		UI_COL(UIC_BG_DARK), alpha/3, alpha);
 	UI_DrawRectEx(xoff, y + (lineHeight - rh)/2 + 1, 
-		scrWidth - 2*xoff, rh, rh/2, 
-		UI_COL(UIC_TEXT), UI_COL(UIC_BG_DARK), UI_COL(UIC_BG_LIGHT),
-		alpha);
+		scrWidth - 2*xoff, rh, rh/2, false,
+		UI_COL(UIC_TEXT), NULL,  /*UI_COL(UIC_BG_DARK), UI_COL(UIC_BG_LIGHT),*/
+		alpha, -1);
 }
 
 //===========================================================================
