@@ -69,9 +69,9 @@ boolean		first_ded;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean defs_inited = false;
-static char *dedfiles[MAX_READ];
-static mobjinfo_t *getting_for;
+static boolean defsInited = false;
+static char *dedFiles[MAX_READ];
+static mobjinfo_t *gettingFor;
 
 // CODE --------------------------------------------------------------------
 
@@ -82,14 +82,14 @@ static mobjinfo_t *getting_for;
 void Def_Init(void)
 {
 	extern char defsFileName[256];
-	int c = 0;
+	extern char topDefsFileName[256];
+	int c;
 
 	// Sprite name list.
 	sprnames = 0;
 	mobjinfo = 0;
 	states = 0;
 	sounds = 0;
-//	music = 0;
 	texts = 0;
 	details = 0;
 	stateowners = 0;
@@ -103,8 +103,11 @@ void Def_Init(void)
 
 	DED_Init(&defs);
 
-	// Add the default ded. It will be overwritten.
-	dedfiles[0] = defsFileName;
+	// The engine defs.
+	dedFiles[0] = defsFileName;
+
+	// Add the default ded. It will be overwritten by -defs.
+	dedFiles[c = 1] = topDefsFileName;
 
 	// See which .ded files are specified on the command line.
 	if(ArgCheck("-defs"))
@@ -114,7 +117,7 @@ void Def_Init(void)
 			char *arg = ArgNext();
 			if(!arg || arg[0] == '-') break;
 			// Add it to the list.
-			dedfiles[c++] = arg;
+			dedFiles[c++] = arg;
 		}
 	}
 
@@ -122,13 +125,13 @@ void Def_Init(void)
 	if(ArgCheckWith("-def", 1))
 	{
 		// Find the next empty place.
-		for(c = 0; dedfiles[c] && c < MAX_READ; c++);
+		for(c = 0; dedFiles[c] && c < MAX_READ; c++);
 		while(c < MAX_READ)
 		{
 			char *arg = ArgNext();
 			if(!arg || arg[0] == '-') break;
 			// Add it to the list.
-			dedfiles[c++] = arg;
+			dedFiles[c++] = arg;
 		}
 	}
 }
@@ -152,7 +155,7 @@ void Def_Destroy(void)
 	DED_DelArray(&details, &count_details);
 	DED_DelArray( (void**) &stateowners, &count_stateowners);
 
-	defs_inited = false;
+	defsInited = false;
 
 	// Clear global variables pointing to definitions.
 	mapinfo = NULL;
@@ -376,7 +379,7 @@ int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
 		}	
 		else if(verbose) 
 		{
-			Con_Message("DED done: %s\n", fn);
+			Con_Message("DED done: %s\n", M_Pretty(fn));
 		}
 	}
 	// Continue processing files.
@@ -463,7 +466,7 @@ void Def_ReadLumpDefs(void)
 
 //===========================================================================
 // Def_StateForMobj
-//	Uses getting_for. Initializes the state-owners information.
+//	Uses gettingFor. Initializes the state-owners information.
 //===========================================================================
 int Def_StateForMobj(char *state_id)
 {
@@ -475,14 +478,14 @@ int Def_StateForMobj(char *state_id)
 	// State zero is the NULL state.
 	if(num > 0)
 	{
-		stateowners[num] = getting_for;
+		stateowners[num] = gettingFor;
 		// Span forward at most 'count' states, or until we hit a
 		// state with an owner, or the NULL state.
 		for(st = states[num].nextstate; 
 			st > 0 && count-- && !stateowners[st]; 
 			st = states[st].nextstate)
 		{
-			stateowners[st] = getting_for;
+			stateowners[st] = gettingFor;
 		}
 	}
 	return num;
@@ -497,7 +500,7 @@ void Def_Read(void)
 {
 	int i, k;
 
-	if(defs_inited)
+	if(defsInited)
 	{
 		// We've already initialized the definitions once.
 		// Get rid of everything.
@@ -511,11 +514,11 @@ void Def_Read(void)
 	DED_Destroy(&defs);
 	DED_Init(&defs);
 
-	for(read_count = 0, i = 0; dedfiles[i]; i++)
+	for(read_count = 0, i = 0; dedFiles[i]; i++)
 	{
 		Dir_ChDir(&ddRuntimeDir);
-		Con_Message("Reading definition file: %s\n", dedfiles[i]);
-		Def_ReadProcessDED(dedfiles[i]);
+		Con_Message("Reading definition file: %s\n", M_Pretty(dedFiles[i]));
+		Def_ReadProcessDED(dedFiles[i]);
 	}
 
 	// Back to the directory we started from.
@@ -566,7 +569,7 @@ void Def_Read(void)
 		ded_mobj_t *dmo = defs.mobjs + i;
 		// Make sure duplicate defs overwrite the earliest.
 		mobjinfo_t *mo = mobjinfo + Def_GetMobjNum(dmo->id);
-		getting_for = mo;
+		gettingFor = mo;
 		mo->doomednum = dmo->doomednum;
 		mo->spawnstate = Def_StateForMobj(dmo->spawnstate);
 		mo->seestate = Def_StateForMobj(dmo->seestate);
@@ -719,7 +722,7 @@ void Def_Read(void)
 		R_AddModelPath(ArgNext(), false);
 	}
 
-	defs_inited = true;
+	defsInited = true;
 }
 
 //===========================================================================
