@@ -8,6 +8,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
+#include "de_network.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -163,8 +165,22 @@ void P_RemoveThinker(thinker_t *thinker)
 	// Has got an ID?
 	if(thinker->id)
 	{
+		// Then it must be a mobj.
+		mobj_t *mo = (mobj_t*) thinker;
+			
 		// Flag the ID as free.
 		P_SetMobjID(thinker->id, false);
+	
+		// If the state of the mobj is the NULL state, this is a 
+		// predictable mobj removal (result of animation reaching its
+		// end) and shouldn't be included in netgame deltas. 
+		if(!isClient)
+		{
+			if(!mo->state || mo->state == states)
+			{
+				Sv_MobjRemoved(thinker->id);
+			}
+		}
 	}
 	thinker->function = (think_t) -1;
 }
