@@ -14,7 +14,7 @@ REQUIREMENTS:
 You will need these tools and libraries for building everything:
 
 - gcc (obviously)
-- GNU automake
+- GNU automake 1.7 (or newer)
 - GNU Autoconf
 - libtool (I'm using 1.5.6, earlier versions probably work)
 - libltdl
