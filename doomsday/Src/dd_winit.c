@@ -368,6 +368,7 @@ void DD_Shutdown()
 	// Stop all demo recording.
 	for(i = 0; i < MAXPLAYERS; i++) Demo_StopRecording(i);
 
+	Sv_Shutdown();
 	R_Shutdown();
 	Sys_ConShutdown();
 	Def_Destroy();

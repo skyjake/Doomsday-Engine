@@ -5,6 +5,8 @@
 //**
 //**************************************************************************
 
+#define DD_PROFILE
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
@@ -12,8 +14,15 @@
 #include "de_network.h"
 #include "de_system.h"
 #include "de_refresh.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
+
+BEGIN_PROF_TIMERS()
+	PROF_GEN_DELTAS,
+	PROF_WRITE_DELTAS,
+	PROF_PACKET_SIZE
+END_PROF_TIMERS()
 
 #define FIXED8_8(x)				(((x) & 0xffff00) >> 8)
 #define MAX_MOBJ_LEN			23
@@ -112,8 +121,12 @@ void Sv_RefreshClient(int plrNum)
 		return;		
 	}
 
+	BEGIN_PROF( PROF_GEN_DELTAS );
+
 	// The first thing we must do is generate a Delta Set for the client. 
 	Sv_DoFrameDelta(plrNum);
+
+	END_PROF( PROF_GEN_DELTAS );
 
 	// There, now we know what has changed. Let's create the Frame packet.
 	Msg_Begin(psv_frame);
@@ -121,8 +134,15 @@ void Sv_RefreshClient(int plrNum)
 	// Frame time, lowest byte of gametic.
 	Msg_WriteByte(gametic);	
 
+	BEGIN_PROF( PROF_WRITE_DELTAS );
+
 	// Delta Sets.
 	Sv_WriteFrameDelta(plrNum);
+
+	END_PROF( PROF_WRITE_DELTAS );
+
+	profiler_[PROF_PACKET_SIZE].startCount++;
+	profiler_[PROF_PACKET_SIZE].totalTime += Msg_Offset();
 	
 	// Send the frame packet as high priority.
 	Net_SendBuffer(plrNum, /*SPF_FRAME | */0xe000);
@@ -137,4 +157,16 @@ void Sv_RefreshClient(int plrNum)
 			Sys_GetRealTime()-refresh_started_at,
 			netbuffer.length);
 	}
+}
+
+/*
+ * Shutdown routine for the server.
+ */
+void Sv_Shutdown(void)
+{
+	PRINT_PROF( PROF_GEN_DELTAS );
+	PRINT_PROF( PROF_WRITE_DELTAS );
+	PRINT_PROF( PROF_PACKET_SIZE );
+
+	Sv_ShutdownPools();
 }
