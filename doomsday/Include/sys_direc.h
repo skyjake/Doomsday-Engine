@@ -14,5 +14,6 @@ void	Dir_MakeDir(const char *path, directory_t *dir);
 int		Dir_FileID(const char *str);
 void	Dir_ValidDir(char *str);
 int		Dir_IsAbsolute(const char *str);
+void	Dir_MakeAbsolute(char *path);
 
 #endif

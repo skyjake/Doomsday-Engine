@@ -18,6 +18,7 @@ typedef enum resourceclass_e {
 
 void	R_InitExternalResources(void);
 void	R_SetDataPath(const char *path);
+const char *R_GetDataPath(void);
 void	R_PrependDataPath(const char *origPath, char *newPath);
 boolean	R_FindResource(resourceclass_t resClass, const char *name, 
 					   const char *optionalSuffix, char *fileName);

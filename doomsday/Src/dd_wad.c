@@ -11,9 +11,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <malloc.h>
-#include <io.h>
-#include <fcntl.h>
-#include <sys/stat.h>
+//#include <io.h>
+//#include <fcntl.h>
+//#include <sys/stat.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -77,7 +77,7 @@ filerecord_t *records = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean loadingForStartup = false;
+static boolean loadingForStartup = true;
 static boolean iwadLoaded = false;
 
 static grouping_t groups[] =
@@ -97,38 +97,6 @@ static int AuxiliaryHandle = 0;
 boolean AuxiliaryOpened = false;
 
 // CODE --------------------------------------------------------------------
-
-#ifdef NeXT
-//==========================================================================
-//
-// strupr
-//
-//==========================================================================
-
-void strupr(char *s)
-{
-    while(*s)
-	*s++ = toupper(*s);
-}
-
-//==========================================================================
-//
-// filelength
-//
-//==========================================================================
-
-int filelength(int handle)
-{
-    struct stat fileinfo;
-
-    if(fstat(handle, &fileinfo) == -1)
-	{
-		Con_Error("Error fstating");
-	}
-    return fileinfo.st_size;
-}
-#endif
-
 
 static void convertSlashes(char *modifiableBuffer)
 {
@@ -280,7 +248,7 @@ void W_InsertAndFillLumpRange(int toIndex, filelump_t *lumps, int num,
 	numlumps += num;
 }
 
-void W_RemoveLumpsWithHandle(int handle)
+void W_RemoveLumpsWithHandle(DFILE *handle)
 {
 	int		i, k, first, len;
 
@@ -471,11 +439,12 @@ void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
 //
 //==========================================================================
 
-boolean W_AddFile(char *filename)
+boolean W_AddFile(const char *filename, boolean allowDuplicate)
 {
 	char			alterFileName[256];
 	wadinfo_t		header;
-	int				handle, length;
+	DFILE			*handle;
+	unsigned int	length;
 	filelump_t		*fileinfo, singleinfo;
 	filelump_t		*freeFileInfo;
 	filerecord_t	*rec;
@@ -484,11 +453,11 @@ boolean W_AddFile(char *filename)
 	// Filename given?
 	if(!filename || !filename[0]) return true;
 
-	if((handle = open(filename, O_RDONLY|O_BINARY)) == -1)
+	if((handle = F_Open(filename, "rb")) == NULL)
 	{ 
 		// Didn't find file. Try reading from the data path.
 		R_PrependDataPath(filename, alterFileName);
-		if((handle = open(alterFileName, O_RDONLY|O_BINARY)) == -1)
+		if((handle = F_Open(alterFileName, "rb")) == NULL)
 		{
 			Con_Message("W_AddFile: ERROR: %s not found!\n", filename);
 			return false;
@@ -498,9 +467,9 @@ boolean W_AddFile(char *filename)
 	}
 
 	// Do not read files twice.
-	if(loadingForStartup && !M_CheckFileID(filename)) 
+	if(!allowDuplicate && !M_CheckFileID(filename)) 
 	{
-		close(handle); // The file is not used.
+		F_Close(handle); // The file is not used.
 		return false;
 	}
 
@@ -516,9 +485,7 @@ boolean W_AddFile(char *filename)
 	// Is it a zip/pk3 package?
 	if(!stricmp(extension, "zip") || !stricmp(extension, "pk3"))
 	{
-		// The file will be re-opened.
-		close(handle);
-		return Zip_Open(filename);
+		return Zip_Open(filename, handle);
 	}
 	
 	// Get a new file record.
@@ -536,14 +503,14 @@ boolean W_AddFile(char *filename)
 		fileinfo = &singleinfo;
 		freeFileInfo = NULL;
 		singleinfo.filepos = 0;
-		singleinfo.size = LONG(filelength(handle));
+		singleinfo.size = F_Length(handle);
 		M_ExtractFileBase(filename, singleinfo.name);
 		rec->numlumps = 1;
 	}
 	else
 	{ 
 		// WAD file.
-		read(handle, &header, sizeof(header));
+		F_Read(&header, sizeof(header), handle);
 		if(strncmp(header.identification, "IWAD", 4))
 		{
 			if(strncmp(header.identification, "PWAD", 4))
@@ -567,8 +534,8 @@ boolean W_AddFile(char *filename)
 			Con_Error("W_AddFile: fileinfo malloc failed\n");
 		}
 		freeFileInfo = fileinfo;
-		lseek(handle, header.infotableofs, SEEK_SET);
-		read(handle, fileinfo, length);
+		F_Seek(handle, header.infotableofs, SEEK_SET);
+		F_Read(fileinfo, length, handle);
 		rec->numlumps = header.numlumps;
 	}
 
@@ -591,8 +558,9 @@ boolean W_AddFile(char *filename)
 		char buff[256];
 		strcpy(buff, filename);
 		strcpy(buff + strlen(buff)-3, "gwa");
+
 		// If GL data exists, load it.
-		if(!access(buff, 0)) W_AddFile(buff);
+		if(F_Access(buff)) W_AddFile(buff, allowDuplicate);
 	}	
 
 	return true;
@@ -620,7 +588,7 @@ boolean W_RemoveFile(char *filename)
 	W_ResizeLumpStorage(numlumps);
 
 	// Close the file, we don't need it any more.
-	close(rec->handle);
+	F_Close(rec->handle);
 
 	// Destroy the file record.
 	W_RecordDestroy(idx);
@@ -694,7 +662,7 @@ void W_InitMultipleFiles(char **filenames)
 		if(W_IsIWAD(*ptr))
 		{
 			loaded[ptr - filenames] = true;
-			W_AddFile(*ptr);
+			W_AddFile(*ptr, false);
 		}
 	}
 	// Make sure an IWAD gets loaded; if not, display a warning.
@@ -702,15 +670,21 @@ void W_InitMultipleFiles(char **filenames)
 
 	// Load the rest of the WADs.
 	for(ptr = filenames; *ptr; ptr++)
-		if(!loaded[ptr - filenames]) W_AddFile(*ptr);
-
-	// Startup loading ends.
-	loadingForStartup = false;
+		if(!loaded[ptr - filenames]) W_AddFile(*ptr, false);
 
 	if(!numlumps)
 	{
 		Con_Error("W_InitMultipleFiles: no files found");
 	}
+}
+
+//===========================================================================
+// W_EndStartup
+//===========================================================================
+void W_EndStartup(void)
+{
+	// No more WADs will be loaded in startup mode.
+	loadingForStartup = false;
 }
 
 //==========================================================================
@@ -779,6 +753,7 @@ void W_InitFile(char *filename)
 	W_InitMultipleFiles(names);
 }
 
+#if 0
 //==========================================================================
 //
 // W_OpenAuxiliary
@@ -892,6 +867,7 @@ void W_CloseAuxiliaryFile(void)
 		AuxiliaryHandle = 0;
 	}
 }
+#endif
 
 //==========================================================================
 //
@@ -1036,8 +1012,8 @@ void W_ReadLump(int lump, void *dest)
 		Con_Error("W_ReadLump: %i >= numlumps", lump);
 	}
 	l = lumpinfo+lump;
-	lseek(l->handle, l->position, SEEK_SET);
-	c = read(l->handle, dest, l->size);
+	F_Seek(l->handle, l->position, SEEK_SET);
+	c = F_Read(dest, l->size, l->handle);
 	if(c < l->size)
 	{
 		Con_Error("W_ReadLump: only read %i of %i on lump %i",
@@ -1058,8 +1034,8 @@ void W_ReadLumpSection(int lump, void *dest, int startoffset, int length)
 		Con_Error("W_ReadLumpSection: %i >= numlumps", lump);
 	}
 	l = lumpinfo + lump;
-	lseek(l->handle, l->position + startoffset, SEEK_SET);
-	c = read(l->handle, dest, length);
+	F_Seek(l->handle, l->position + startoffset, SEEK_SET);
+	c = F_Read(dest, length, l->handle);
 	if(c < length)
 	{
 		Con_Error("W_ReadLumpSection: only read %i of %i on lump %i",
@@ -1200,7 +1176,7 @@ void W_CheckIWAD(void)
 	// Try one of the default IWADs.
 	for(i = 0; iwadlist[i]; i++)
 	{
-		if(M_FileExists(iwadlist[i])) W_AddFile(iwadlist[i]);
+		if(M_FileExists(iwadlist[i])) W_AddFile(iwadlist[i], false);
 		// We can leave as soon as an IWAD is found.
 		if(iwadLoaded) return;
 	}

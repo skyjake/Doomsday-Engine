@@ -97,6 +97,7 @@ D_CMD(AddSub);
 D_CMD(Ping);
 D_CMD(Login);
 D_CMD(Logout);
+D_CMD(Dir);
 
 #ifdef _DEBUG
 D_CMD(TranslateFont);
@@ -473,6 +474,8 @@ ccmd_t engineCCmds[] =
 	"dumpkeymap",	CCmdDumpKeyMap,		"Write the current keymap to a file.",
 	"connect",		CCmdConnect,		"Connect to a server using TCP/IP.",
 	"write",		CCmdWriteConsole,	"Write variables, bindings and aliases to a file.",
+	"dir",			CCmdDir,			"Print contents of directories.",
+	"ls",			CCmdDir,			"Print contents of directories.",
 
 #ifdef _DEBUG
 	"TranslateFont", CCmdTranslateFont,	"Ha ha.",
@@ -2315,7 +2318,7 @@ int CCmdLoadFile(int argc, char **argv)
 	for(i=1; i<argc; i++)
 	{
 		Con_Message( "Loading %s...\n", argv[i]);
-		if(W_AddFile(argv[i]))	
+		if(W_AddFile(argv[i], true))	
 		{
 			Con_Message( "OK\n");
 			succeeded = true; // At least one has been loaded.
@@ -2486,7 +2489,7 @@ D_CMD(Font)
 		Cfont.Width = FR_TextWidth;
 		Cfont.Filter = NULL;
 	}
-	else if(!stricmp(argv[1], "name"))
+	else if(!stricmp(argv[1], "name") && argc == 3)
 	{
 		FR_DestroyFont(FR_GetCurrent());
 		if(!FR_PrepareFont(argv[2])) FR_PrepareFont("Fixed");
@@ -2760,4 +2763,52 @@ void Con_Error (char *error, ...)
 
 	// Get outta here.
 	exit (1);
+}
+
+/*
+ * Prints a file name to the console.
+ * This is a f_forall_func_t.
+ */
+int Con_PrintFileName(const char *fn, int parm)
+{
+	const char *dir = (const char*) parm;
+
+	// Exclude the path.
+	Con_Printf("  %s\n", fn + strlen(dir));
+
+	// Continue the listing.
+	return true;
+}
+
+/*
+ * Print contents of directories as Doomsday sees them.
+ */
+int CCmdDir(int argc, char **argv)
+{
+	char dir[256], pattern[256];
+	int i;
+
+	if(argc == 1)
+	{
+		Con_Printf("Usage: %s (dirs)\n", argv[0]);
+		Con_Printf("Prints the contents of one or more directories.\n");
+		Con_Printf("Virtual files are listed, too.\n");
+		Con_Printf("Paths are relative to the base path:\n");
+		Con_Printf("  %s\n", ddBasePath);
+		return true;
+	}
+
+	for(i = 1; i < argc; i++)
+	{
+		M_PrependBasePath(argv[i], dir);
+		Dir_ValidDir(dir);
+		Dir_MakeAbsolute(dir);
+		Con_Printf("Directory: %s\n", dir);
+
+		// Make the pattern.
+		sprintf(pattern, "%s*.*", dir);
+		F_ForAll(pattern, (int) dir, Con_PrintFileName);
+	}
+
+	return true;
 }

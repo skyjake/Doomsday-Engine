@@ -140,3 +140,15 @@ void Dir_ValidDir(char *str)
 	// Make sure it's valid.
 	if(str[len - 1] != '\\') strcat(str, "\\");
 }
+
+//===========================================================================
+// Dir_MakeAbsolute
+//	Converts a possibly relative path to a full path.
+//===========================================================================
+void Dir_MakeAbsolute(char *path)
+{
+	char buf[300];
+
+	_fullpath(buf, path, 255);
+	strcpy(path, buf);
+}

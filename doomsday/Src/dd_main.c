@@ -28,7 +28,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXWADFILES 30
+#define MAXWADFILES 128
 
 // TYPES -------------------------------------------------------------------
 
@@ -116,17 +116,7 @@ static int WarpMap;
 static int demosequence;
 static int pagetic;
 static char *pagename;
-static char *wadfiles[MAXWADFILES];/* =
-								   {
-								   "Data\\Doomsday.wad"
-};*/
-
-/*static execOpt_t ExecOptions[] =
-{
-{ "-file", ExecOptionFILE, 1, 0 },*/
-//	{ "-maxzone", ExecOptionMAXZONE, 1, 0 },
-/*	{ NULL, NULL, 0, 0 } // Terminator
-};*/
+static char *wadfiles[MAXWADFILES];
 
 // CODE --------------------------------------------------------------------
 
@@ -166,6 +156,38 @@ static void AddToWadList(char *list)
 }
 
 //===========================================================================
+// autoDataAdder (f_forall_func_t)
+//===========================================================================
+static int autoDataAdder(const char *fileName, int loadFiles)
+{
+	if(loadFiles)
+		W_AddFile(fileName, false);
+	else
+		DD_AddStartupWAD(fileName);	
+
+	// Continue searching.
+	return true;
+}
+
+//===========================================================================
+// DD_AddAutoData
+//	Files with the extensions wad, lmp, pk3 and zip in the automatical data 
+//	directory are added to the wadfiles list.
+//===========================================================================
+void DD_AddAutoData(boolean loadFiles)
+{
+	const char *extensions[] = { "wad", "lmp", "pk3", "zip", NULL };
+	char pattern[256];
+	int i;
+
+	for(i = 0; extensions[i]; i++)
+	{
+		sprintf(pattern, "%sAuto\\*.%s", R_GetDataPath(), extensions[i]);
+		F_ForAll(pattern, loadFiles, autoDataAdder);
+	}
+}
+
+//===========================================================================
 // DD_SetConfigFile
 //===========================================================================
 void DD_SetConfigFile(char *filename)
@@ -197,6 +219,7 @@ void DD_Verbosity(void)
 //===========================================================================
 // DD_Main
 //	Engine and game initialization. When complete, starts the game loop.
+//	What a mess...
 //===========================================================================
 void DD_Main(void)
 {
@@ -234,6 +257,8 @@ void DD_Main(void)
 		strcpy(ddBasePath, ArgNext());
 		Dir_ValidDir(ddBasePath);
 	}
+
+	Dir_MakeAbsolute(ddBasePath);
 	
 	// We need to get the console initialized. Otherwise Con_Message() will
 	// crash the system (yikes).
@@ -332,9 +357,21 @@ void DD_Main(void)
 	HandleArgs(1); // Only the WADs.
 	
 	Con_Message("W_Init: Init WADfiles.\n");
+	
+	// Add real files from the Auto directory to the wadfiles list.
+	DD_AddAutoData(false);
+
 	W_InitMultipleFiles(wadfiles);
 	F_InitDirec();
-	
+
+	// Load files from the Auto directory. (If already loaded, won't be
+	// loaded again.) This is done again because virtual files may now
+	// exist in the Auto directory.
+	DD_AddAutoData(true);
+
+	// No more WADs will be loaded in startup mode after this point.
+	W_EndStartup();
+
 	// Execute the startup script (Startup.cfg).
 	Con_ParseCommands("startup.cfg", false);
 	
@@ -521,7 +558,7 @@ void DD_CheckTimeDemo(void)
 //	greater-than character (>) in front of the name to prepend the base
 //	path to the file name (providing it's a relative path).
 //==========================================================================
-void DD_AddStartupWAD(char *file/*, boolean inc_base*/)
+void DD_AddStartupWAD(const char *file)
 {
 	int i;
 	char *new, temp[300];
@@ -686,7 +723,7 @@ void DD_SetInteger(int ddvalue, int parm)
 			if(table)
 				GL_SetTranslatedSprite(lump, table, cls);
 			else
-				GL_SetSprite(lump);
+				GL_SetSprite(lump, 0);
 		}
 		else if(ddvalue == DD_TEXTURE_GLOW)
 		{

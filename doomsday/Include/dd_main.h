@@ -23,7 +23,7 @@ extern directory_t ddRuntimeDir, ddBinDir;
 
 void DD_Main();
 void DD_GameUpdate(int flags);
-void DD_AddStartupWAD(char *file);
+void DD_AddStartupWAD(const char *file);
 void DD_AddIWAD(const char *path);
 void DD_SetConfigFile(char *filename);
 void DD_SetDefsFile(char *filename);

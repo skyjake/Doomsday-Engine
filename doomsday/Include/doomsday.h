@@ -20,7 +20,7 @@ extern "C" {
 // Base.
 void *		DD_GetDGLProcAddress(const char *name);
 void		DD_AddIWAD(const char *path);
-void		DD_AddStartupWAD(char *file);
+void		DD_AddStartupWAD(const char *file);
 void		DD_SetConfigFile(char *filename);
 void		DD_SetDefsFile(char *filename);
 int			_DECALL	DD_GetInteger(int ddvalue);
@@ -176,7 +176,7 @@ void		GL_SetColor(int palidx);
 void		GL_SetColorAndAlpha(float r, float g, float b, float a);
 void		GL_SetNoTexture(void);
 void		GL_SetPatch(int lump);	
-void		GL_SetSprite(int pnum);
+void		GL_SetSprite(int pnum, int spriteType);
 void		GL_SetFlat(int idx);
 void		GL_SetTexture(int idx);
 unsigned int GL_SetRawImage(int lump, int part);
@@ -231,7 +231,7 @@ void		S_StopMusic(void);
 int			M_ReadFile(char const *name, byte **buffer);
 int			M_ReadFileCLib(char const *name, byte **buffer);
 boolean		M_WriteFile (char const *name, void *source, int length);
-void		M_ExtractFileBase(char *path, char *dest);
+void		M_ExtractFileBase(const char *path, char *dest);
 void		M_GetFileExt(const char *path, char *ext);
 boolean		M_CheckPath(char *path);
 int			M_FileExists(const char *file);

@@ -3,15 +3,12 @@
 //**
 //** DD_ZIP.C
 //**
-//** Loading .pk3/.zip files (no compression!). Finding files inside 
-//** packages. A stream interface (like fopen/fread) for files inside 
-//** packages, used by the F_ routines.
+//** Loading .pk3/.zip files (no compression!). 
+//** Finding files inside packages. 
 //**
 //**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
-
-#include <stdio.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -47,7 +44,7 @@ enum
 typedef struct package_s {
 	struct package_s *next;
 	char name[256];
-	FILE *file;
+	DFILE *file;
 } package_t;
 
 typedef struct zipentry_s {
@@ -121,7 +118,7 @@ void Zip_Shutdown(void)
 	for(pack = gZipRoot; pack; pack = next)
 	{
 		next = pack->next;
-		if(pack->file) fclose(pack->file);
+		if(pack->file) F_Close(pack->file);
 		free(pack);
 	}
 
@@ -179,22 +176,30 @@ package_t* Zip_NewPackage(void)
 
 /*
  * Opens the file zip, reads the directory and stores the info for later
- * access.
+ * access. If prevOpened is not NULL, all data will be read from there.
  */
-boolean Zip_Open(const char *fileName)
+boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 {
-	FILE *file;
+	DFILE *file;
 	package_t *pack;
 	uint signature, i;
 	localfileheader_t header;
 	zipentry_t *entry;
 	char *entryName;
 	
-	// Try to open the file.
-	if((file = fopen(fileName, "rb")) == NULL)
+	if(prevOpened == NULL)
 	{
-		Con_Message("Zip_Open: %s not found.\n", fileName);
-		return false;
+		// Try to open the file.
+		if((file = F_Open(fileName, "rb")) == NULL)
+		{
+			Con_Message("Zip_Open: %s not found.\n", fileName);
+			return false;
+		}
+	}
+	else
+	{
+		// Use the previously opened file.
+		file = prevOpened;
 	}
 	
 	VERBOSE( Con_Message("Zip_Open: %s\n", fileName) );
@@ -204,16 +209,16 @@ boolean Zip_Open(const char *fileName)
 
 	// Read the directory and add the files into the zipentry array.
 	// We'll keep reading until there are no more files.
-	while(!feof(file))
+	while(!deof(file))
 	{
 		// First comes the signature.
-		fread(&signature, 4, 1, file);
+		F_Read(&signature, 4, file);
 		
 		if(signature != SIG_LOCAL_FILE_HEADER
 			&& signature != SIG_CENTRAL_FILE_HEADER)
 		{
 			Con_Message("Zip_Open: %s is not a Zip file?\n", fileName);
-			fclose(file);
+			F_Close(file);
 			return false;
 		}
 
@@ -224,11 +229,11 @@ boolean Zip_Open(const char *fileName)
 		}
 
 		// This must be a local file data segment. Read the header.
-		fread(&header, sizeof(header), 1, file);
+		F_Read(&header, sizeof(header), file);
 
 		// Read the file name. This memory is freed in Zip_Shutdown().
 		entryName = calloc(header.fileNameSize + 1, 1);
-		fread(entryName, header.fileNameSize, 1, file);
+		F_Read(entryName, header.fileNameSize, file);
 		
 		// Do we support the format of this file?
 		if(header.compression != ZFC_NO_COMPRESSION
@@ -244,7 +249,7 @@ boolean Zip_Open(const char *fileName)
 		}
 
 		// Skip the extra data.
-		fseek(file, header.extraFieldSize, SEEK_CUR);
+		F_Seek(file, header.extraFieldSize, SEEK_CUR);
 
 		if(header.size)
 		{
@@ -255,10 +260,10 @@ boolean Zip_Open(const char *fileName)
 			entry->size = header.size;
 
 			// This is where the data begins.
-			entry->offset = ftell(file);
+			entry->offset = F_Tell(file);
 
 			// Skip the data.
-			fseek(file, header.size, SEEK_CUR);
+			F_Seek(file, header.size, SEEK_CUR);
 			
 			// Convert all slashes to backslashes, for compatibility with 
 			// the sys_filein routines.
@@ -320,7 +325,7 @@ uint Zip_Read(zipindex_t index, void *buffer)
 	VERBOSE2( Con_Printf("Zip_Read: %s: '%s' (%i bytes)\n",
 		pack->name, entry->name, entry->size) );
 
-	fseek(pack->file, entry->offset, SEEK_SET);
-	fread(buffer, entry->size, 1, pack->file);
+	F_Seek(pack->file, entry->offset, SEEK_SET);
+	F_Read(buffer, entry->size, pack->file);
 	return entry->size;
 }

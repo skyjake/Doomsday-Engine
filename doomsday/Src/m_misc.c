@@ -170,9 +170,9 @@ char *M_LimitedStrCat
 //===========================================================================
 // M_ExtractFileBase
 //===========================================================================
-void M_ExtractFileBase(char *path, char *dest)
+void M_ExtractFileBase(const char *path, char *dest)
 {
-	char *src;
+	const char *src;
 	int length;
 
 	src = path + strlen(path) - 1;

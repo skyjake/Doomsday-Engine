@@ -25,6 +25,7 @@ void	F_ShutdownDirec(void);
 int		F_Access(const char *path);
 DFILE *	F_Open(const char *path, const char *mode);
 void	F_Close(DFILE *file);
+int		F_Length(DFILE *file);
 int		F_Read(void *dest, int count, DFILE *file);
 int		F_GetC(DFILE *file);
 int		F_Tell(DFILE *file);

@@ -23,7 +23,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define MAX_LUMPDIRS	1024
-#define MAX_FILES		64
+#define MAX_FILES		128
 
 // TYPES -------------------------------------------------------------------
 
@@ -47,6 +47,8 @@ zipforall_t;
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+void F_ResetDirec(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -228,12 +230,16 @@ void F_ParseDirecData(char *buffer)
 //===========================================================================
 void F_InitDirec(void)
 {
+	static boolean alreadyInited = false;
 	int i, len;
 	byte *buf;
 
-	// Free old paths, if any.
-	F_ShutdownDirec();
-	memset(direc, 0, sizeof(direc));
+	if(alreadyInited)
+	{
+		// Free old paths, if any.
+		F_ResetDirec();
+		memset(direc, 0, sizeof(direc));
+	}
 	
 	// Add the contents of all DD_DIREC lumps.
 	for(i = 0; i < numlumps; i++)
@@ -247,6 +253,8 @@ void F_InitDirec(void)
 			F_ParseDirecData(buf);
 			Z_Free(buf);
 		}
+
+	alreadyInited = true;
 }
 
 //===========================================================================
@@ -261,14 +269,23 @@ void F_CloseAll(void)
 }
 
 //===========================================================================
-// F_ShutdownDirec
+// F_ResetDirec
 //===========================================================================
-void F_ShutdownDirec(void)
+void F_ResetDirec(void)
 {
 	int i;
 
 	for(i = 0; direc[i].path; i++) 
-		if(direc[i].path) free(direc[i].path); // Allocated by _fullpath.
+		if(direc[i].path) 
+			free(direc[i].path); // Allocated by _fullpath.
+}
+
+//===========================================================================
+// F_ShutdownDirec
+//===========================================================================
+void F_ShutdownDirec(void)
+{
+	F_ResetDirec();
 	F_CloseAll();
 }
 
@@ -320,7 +337,7 @@ DFILE *F_OpenLump(const char *name, boolean dontBuffer)
 	if(!dontBuffer)
 	{
 		file->size = lumpinfo[num].size;
-		file->pos = file->data = Z_Malloc(file->size, PU_STATIC, 0);
+		file->pos = file->data = M_Malloc(file->size);
 		memcpy(file->data, W_CacheLumpNum(num, PU_CACHE), file->size);
 	}
 	return file;
@@ -353,11 +370,8 @@ DFILE *F_OpenFile(const char *path, const char *mymode)
 //===========================================================================
 void F_TranslateZipFileName(const char *zipFileName, char *translated)
 {
-	char buf[256];
-
 	// Make a 'real' path out of the zip file name.
-	M_PrependBasePath(zipFileName, buf);
-	_fullpath(translated, buf, 255);
+	M_PrependBasePath(zipFileName, translated);
 }
 
 //===========================================================================
@@ -390,7 +404,7 @@ DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 	if(!dontBuffer)
 	{
 		file->size = Zip_GetSize(zipIndex);
-		file->pos = file->data = Z_Malloc(file->size, PU_STATIC, 0);
+		file->pos = file->data = M_Malloc(file->size);
 		Zip_Read(zipIndex, file->data);
 	}
 	return file;
@@ -449,7 +463,7 @@ void F_Close(DFILE *file)
 	else
 	{
 		// Free the stored data.
-		if(file->data) Z_Free(file->data);
+		if(file->data) M_Free(file->data);
 	}
 	memset(file, 0, sizeof(*file));
 }
@@ -537,6 +551,23 @@ int F_Seek(DFILE *file, int offset, int whence)
 void F_Rewind(DFILE *file)
 {
 	F_Seek(file, 0, SEEK_SET);
+}
+
+//===========================================================================
+// F_Length
+//	Returns the length of the file, in bytes. Stream position is not 
+//	affected.
+//===========================================================================
+int F_Length(DFILE *file)
+{
+	int length, currentPosition;
+	
+	if(!file) return 0;
+	
+	currentPosition = F_Seek(file, 0, SEEK_END);	
+	length = F_Tell(file);
+	F_Seek(file, currentPosition, SEEK_SET);
+	return length;
 }
 
 //===========================================================================

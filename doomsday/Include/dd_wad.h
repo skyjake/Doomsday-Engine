@@ -1,6 +1,8 @@
 #ifndef __JHEXEN_WAD_H__
 #define __JHEXEN_WAD_H__
 
+#include "sys_file.h"
+
 #define RECORD_FILENAMELEN	256
 
 // File record flags.
@@ -19,14 +21,15 @@ typedef struct
 	char	filename[RECORD_FILENAMELEN];	// Full filename (every '\' -> '/').
 	int		numlumps;		// Number of lumps.
 	int		flags;			
-	int		handle;			// File handle.
+	DFILE	*handle;		// File handle.
 	char	iwad;
 } filerecord_t;
 
 typedef struct
 {
 	char		name[9];	// End in \0.
-	int			handle, position, size;
+	DFILE		*handle;
+	int			position, size;
 	int			sent;
 	char		group;		// Lump grouping tag (LGT_*).
 } lumpinfo_t;
@@ -35,11 +38,7 @@ extern lumpinfo_t *lumpinfo;
 extern int numlumps;
 
 void W_InitMultipleFiles(char **filenames);
-void W_OpenAuxiliary(char *filename);
-void W_CloseAuxiliaryFile(void);
-void W_CloseAuxiliary(void);
-void W_UsePrimary(void);
-void W_UseAuxiliary(void);
+void W_EndStartup(void);
 int W_CheckNumForName(char *name);
 int W_GetNumForName(char *name);
 int W_LumpLength(int lump);
@@ -48,7 +47,7 @@ void W_ReadLump(int lump, void *dest);
 void W_ReadLumpSection(int lump, void *dest, int startoffset, int length);
 void *W_CacheLumpNum(int lump, int tag);
 void *W_CacheLumpName(char *name, int tag);
-boolean W_AddFile(char *filename);
+boolean W_AddFile(const char *filename, boolean allowDuplicate);
 boolean W_RemoveFile(char *filename);
 void W_Reset();
 void W_ChangeCacheTag(int lump, int tag);
