@@ -11,37 +11,41 @@
 # -ogl			Exclude Direct3D
 # -def			Include definition files
 # -all			Include ALL definitions files
+# -gfx			Include Data\Graphics\
 # -test			Don't upload
 
 import os, tempfile, sys, shutil, re
 
-baseDir = 'C:/Projects/deng/doomsday'
-outDir  = 'C:/Projects/deng/distrib/out'
+baseDir = 'D:/Projects/de1.8/doomsday'
+outDir  = 'D:/Projects/de1.8/distrib/Out'
+binDir  = 'Bin/Debug' # or 'Release'
 
-# Create the temporary directory.
+# Create the temporary directory hierarchy.
 archDir = tempfile.mktemp()
 print "Using temporary directory: " + archDir
 os.mkdir( archDir )
 neededDirs = ['Bin']
 if '-def' in sys.argv:
 	neededDirs += ['Defs', 'Defs\jDoom', 'Defs\jHeretic', 'Defs\jHexen']
+if '-gfx' in sys.argv:
+	neededDirs += ['Data', 'Data\Graphics']
 for sub in neededDirs:
 	os.mkdir( os.path.join( archDir, sub ) )
 
-files = [ ('Bin/Release/Doomsday.exe', 'Bin/Doomsday.exe'),
-          ('Bin/Release/jDoom.dll', 'Bin/jDoom.dll'),
-          ('Bin/Release/jHeretic.dll', 'Bin/jHeretic.dll'),
-          ('Bin/Release/jHexen.dll', 'Bin/jHexen.dll') ]
+files = [ (binDir + '/Doomsday.exe', 'Bin/Doomsday.exe'),
+          (binDir + '/jDoom.dll', 'Bin/jDoom.dll'),
+          (binDir + '/jHeretic.dll', 'Bin/jHeretic.dll'),
+          (binDir + '/jHexen.dll', 'Bin/jHexen.dll') ]
 
 # Select the appropriate files.
 if not '-nodll' in sys.argv:
-	files.append( ('Bin/Release/drOpenGL.dll', 'Bin/drOpenGL.dll') )
-	files.append( ('Bin/Release/dpDehRead.dll', 'Bin/dpDehRead.dll') )
+	files.append( (binDir + '/drOpenGL.dll', 'Bin/drOpenGL.dll') )
+	files.append( (binDir + '/dpDehRead.dll', 'Bin/dpDehRead.dll') )
 	if not '-nosnd' in sys.argv:
-		files += [ ('Bin/Release/dsA3D.dll', 'Bin/dsA3D.dll'),
-		           ('Bin/Release/dsCompat.dll', 'Bin/dsCompat.dll') ]
+		files += [ (binDir + '/dsA3D.dll', 'Bin/dsA3D.dll'),
+		           (binDir + '/dsCompat.dll', 'Bin/dsCompat.dll') ]
 	if not '-ogl' in sys.argv:
-		files.append( ('Bin/Release/drD3D.dll', 'Bin/drD3D.dll') )
+		files.append( (binDir + '/drD3D.dll', 'Bin/drD3D.dll') )
 
 # These defs will be included, if present.
 includeDefs = ['Anim.ded', 'Finales.ded', 'jDoom.ded', 'jHeretic.ded',
@@ -68,15 +72,30 @@ if '-def' in sys.argv:
 			and re.match( "(?i).*\.ded$", file )):
 				loc = os.path.join( gameDir, file )
 				files.append( (loc, loc) )
+				
+# Graphics?
+if '-gfx' in sys.argv:
+	files.append( ('Data\Doomsday.wad', 'Data\Doomsday.wad') )
+	for file in os.listdir( os.path.join( baseDir, 'Data/Graphics' ) ):
+		loc = os.path.join( 'Data/Graphics', file )
+		files.append( (loc, loc) )
 
 # Copy the files.
 for src, dest in files:
-	shutil.copyfile( os.path.join( baseDir, src ),
-	                 os.path.join( archDir, dest ) )
+	try:
+		print os.path.join( baseDir, src )
+		shutil.copyfile( os.path.join( baseDir, src ),
+		                 os.path.join( archDir, dest ) )
+	except IOError, (errno, strerror):
+		print "I/O error(%s): %s" % (errno, strerror)
+		print "  Skipping " + os.path.join( baseDir, src ) + "..."
 
 # Make the archive.
 outFile = os.path.join( outDir, 'ddsnapshot.rar' )
-os.remove( outFile )
+try:
+	os.remove( outFile )
+except:
+	pass
 os.system( "rar -r -ep1 -m5 a %s %s\\*" % (outFile, archDir) )
 
 print "Removing temporary directory: " + archDir
