@@ -24,6 +24,11 @@
 #define MAXRADIUS		(32*FRACUNIT)
 #define MAXMOVE			(30*FRACUNIT)	
 
+// Shortest possible movement step.
+#define MINMOVE			(FRACUNIT >> 7)
+
+#define MIN_STEP(d)		((d) <= MINMOVE && (d) >= -MINMOVE)
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct
@@ -425,7 +430,11 @@ boolean P_StepMove(mobj_t *thing, fixed_t dx, fixed_t dy, fixed_t dz)
 			stepZ /= 2;
 
 			// If we run out of step, we must give up.
-			if(!(stepX | stepY | stepZ)) return false;
+			//if(!(stepX | stepY | stepZ)) return false;
+			if(MIN_STEP(stepX) && MIN_STEP(stepY) && MIN_STEP(stepZ))
+			{
+				return false;
+			}
 		}
 
 		// Subtract from the 'to go' distance.
