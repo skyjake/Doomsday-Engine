@@ -10,6 +10,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
+#include "de_refresh.h"
 #include "de_play.h"
 #include "de_audio.h"
 
@@ -31,109 +32,70 @@
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// Sv_Sound
-//===========================================================================
+/*
+ * Tell clients to play a sound with full volume.
+ */
 void Sv_Sound(int sound_id, mobj_t *origin, int toPlr)
 {
-	Sv_SoundAtVolume(sound_id, origin, 127, toPlr);
+	Sv_SoundAtVolume(sound_id, origin, 1, toPlr);
 }
 
-//===========================================================================
-// Sv_SoundAtVolume
-//	FIXME: Make a new packet, psv_sound2. It should use pretty much the 
-//	same parameters as the S_Start/LocalSound routines.
-//===========================================================================
-void Sv_SoundAtVolume
-	(int sound_id_and_flags, mobj_t *origin, int volume, int toPlr)
+/*
+ * Finds the sector/polyobj to whom the origin mobj belong.
+ */
+void Sv_IdentifySoundOrigin(mobj_t **origin, int *sector, int *poly)
 {
-	int sound_id = sound_id_and_flags & ~DDSF_FLAG_MASK;
-	int i, flags;
-	byte buffer[20], *ptr;
-	boolean not;
-	int dest;
-	int source_sector;
+	*sector = *poly = -1;
+
+	if(*origin && !(*origin)->thinker.id)
+	{
+		// No mobj ID => it's not a real mobj.
+		if((*poly = PO_GetNumForDegen(*origin)) < 0)
+		{
+			// It wasn't a polyobj degenmobj, try the sectors instead.
+			*sector = R_GetSectorNumForDegen(*origin);
+		}
+#ifdef _DEBUG
+		if(*poly < 0 && *sector < 0)
+		{
+			Con_Error("Sv_IdentifySoundOrigin: Bad mobj.\n");
+		}
+#endif
+		*origin = NULL;
+	}
+}
+
+/*
+ * Tell clients to play a sound.
+ */
+void Sv_SoundAtVolume
+	(int sound_id_and_flags, mobj_t *origin, float volume, int toPlr)
+{
+	int sound_id = (sound_id_and_flags & ~DDSF_FLAG_MASK);
+	int sector, poly;
 
 	if(isClient || !sound_id) return;
 
-	// A valid sound ID?
-	if(sound_id < 1 || sound_id >= defs.count.sounds.num)
-	{
-		Con_Message("Sv_SoundAtVolume: Out of bounds ID %i.\n", sound_id);
-		return;
-	}
+	Sv_IdentifySoundOrigin(&origin, &sector, &poly);
 
-	// This is a hack.
-	if(sound_id_and_flags & DDSF_NO_ATTENUATION)
-		volume = 255;
+	Sv_NewSoundDelta(sound_id, origin, sector, poly, volume, 
+		(sound_id_and_flags & DDSF_REPEAT) != 0,
+		toPlr & SVSF_TO_ALL? -1 : (toPlr & 0xf));
+}
 
-	ptr = buffer;
-	not = (toPlr & SVSF_NOT) != 0;
-	dest = toPlr & SVSF_MASK;
+/*
+ * This is called when the server needs to tell clients to stop 
+ * a sound.
+ */
+void Sv_StopSound(int sound_id, mobj_t *origin)
+{
+	int sector, poly;	
 
-	flags = origin ? SNDF_ORIGIN : 0;
+	if(isClient) return;
 
-	if(origin)
-	{
-		// Degenmobjs do not have thinker functions.
-		if(!origin->thinker.function)
-		{
-			// Check all sectors; find where the sound is coming from.
-			for(i = 0; i < numsectors; i++)
-				if(origin == (mobj_t*) &SECTOR_PTR(i)->soundorg)
-				{
-					flags |= SNDF_SECTOR;
-					flags &= ~SNDF_ORIGIN;
-					source_sector = i;
-					break;
-				}
-		}
-		else
-		{
-			// Check for player sounds.
-			for(i = 0; i < MAXPLAYERS; i++)
-				if(players[i].ingame && origin == players[i].mo)
-				{
-					// Use the flags to specify the console number.
-					flags |= SNDF_PLAYER | (i<<4);
-					flags &= ~SNDF_ORIGIN;
-					break;
-				}
-		}
-	}
+	Sv_IdentifySoundOrigin(&origin, &sector, &poly);
 
-	// Should we send volume?
-	if(volume != 127)
-	{
-		if(volume < 0) volume = 0;
-		if(volume > 255) volume = 255;
-		flags |= SNDF_VOLUME;
-	}
-
-	Msg_Begin(psv_sound);
-	Msg_WriteByte(flags);
-	Msg_WriteByte(sound_id);
-	if(flags & SNDF_VOLUME) Msg_WriteByte(volume);
-	if(flags & SNDF_SECTOR) Msg_WritePackedShort(source_sector);
-	if(flags & SNDF_ORIGIN)
-	{
-		Msg_WriteShort(origin->x >> 16);
-		Msg_WriteShort(origin->y >> 16);
-		Msg_WriteShort(origin->z >> 16);
-	}
-	// Send to the appropriate consoles.
-	for(i = 0; i < MAXPLAYERS; i++)
-	{
-		if(!players[i].ingame || !players[i].mo) continue;
-		if(toPlr & SVSF_TO_ALL || (i == dest) != not)
-		{
-			mobj_t *plrMo = players[i].mo;
-			// Check the distance.
-			if(origin && P_ApproxDistance(origin->x - plrMo->x, 
-				origin->y - plrMo->y) > FRACUNIT * sound_max_distance) 
-				continue;
-			// We can send to this client.
-			Net_SendBuffer(i, 0);
-		} 
-	}
+	// Send the stop sound delta to everybody.
+	// Volume zero means silence.
+	Sv_NewSoundDelta(sound_id, origin, sector, poly, 0, false, -1);
 }
