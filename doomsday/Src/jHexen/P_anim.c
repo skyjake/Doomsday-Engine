@@ -78,9 +78,6 @@ boolean DoubleSky;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static animDef_t AnimDefs[MAX_ANIM_DEFS];
-static frameDef_t FrameDefs[MAX_FRAME_DEFS];
-static int AnimDefCount;
 static boolean LevelHasLightning;
 static int NextLightningFlash;
 static int LightningFlash;
@@ -97,42 +94,7 @@ static int *LightningLightLevels;
 void P_AnimateSurfaces(void)
 {
 	int i;
-	animDef_t *ad;
 	line_t *line;
-
-	// Animate flats and textures
-	for(i = 0; i < AnimDefCount; i++)
-	{
-		ad = &AnimDefs[i];
-		ad->tics--;
-		if(ad->tics == 0)
-		{
-			if(ad->currentFrameDef == ad->endFrameDef)
-			{
-				ad->currentFrameDef = ad->startFrameDef;
-			}
-			else
-			{
-				ad->currentFrameDef++;
-			}
-			ad->tics = FrameDefs[ad->currentFrameDef].tics;
-			if(ad->tics > 255)
-			{ // Random tics
-				ad->tics = (ad->tics>>16)
-					+P_Random()%((ad->tics&0xff00)>>8);
-			}
-			if(ad->type == ANIM_FLAT)
-			{
-				//flattranslation[ad->index] = FrameDefs[ad->currentFrameDef].index;
-				R_SetFlatTranslation(ad->index, FrameDefs[ad->currentFrameDef].index);
-			}
-			else
-			{ // Texture
-				//texturetranslation[ad->index] = FrameDefs[ad->currentFrameDef].index;
-				R_SetTextureTranslation(ad->index, FrameDefs[ad->currentFrameDef].index);
-			}
-		}
-	}
 
 	// Update scrolling textures
 	for(i = 0; i < numlinespecials; i++)
@@ -377,15 +339,12 @@ void P_InitLightning(void)
 void P_InitFTAnims(void)
 {
 	int base;
-	int mod;
-	int fd, k;
-	animDef_t *ad;
 	boolean ignore;
 	boolean done;
+	int AnimDefCount = 0;
+	int groupNumber, picBase;
+	int type, index;
 
-	fd = 0;
-	ad = AnimDefs;
-	AnimDefCount = 0;
 	SC_Open(ANIM_SCRIPT_NAME);
 	while(SC_GetString())
 	{
@@ -395,11 +354,11 @@ void P_InitFTAnims(void)
 		}
 		if(SC_Compare(SCI_FLAT))
 		{
-			ad->type = ANIM_FLAT;
+			type = ANIM_FLAT;
 		}
 		else if(SC_Compare(SCI_TEXTURE))
 		{
-			ad->type = ANIM_TEXTURE;
+			type = ANIM_TEXTURE;
 		}
 		else
 		{
@@ -407,7 +366,7 @@ void P_InitFTAnims(void)
 		}
 		SC_MustGetString(); // Name
 		ignore = false;
-		if(ad->type == ANIM_FLAT)
+		if(type == ANIM_FLAT)
 		{
 			if(W_CheckNumForName(sc_String) == -1)
 			{
@@ -415,7 +374,9 @@ void P_InitFTAnims(void)
 			}
 			else
 			{
-				ad->index = R_FlatNumForName(sc_String);
+				picBase = R_FlatNumForName(sc_String);
+				groupNumber = R_CreateAnimGroup(DD_FLAT, 
+					AGF_SMOOTH | AGF_FIRST_ONLY);
 			}
 		}
 		else
@@ -426,10 +387,12 @@ void P_InitFTAnims(void)
 			}
 			else
 			{
-				ad->index = R_TextureNumForName(sc_String);
+				picBase = R_TextureNumForName(sc_String);
+				groupNumber = R_CreateAnimGroup(DD_TEXTURE,
+					AGF_SMOOTH | AGF_FIRST_ONLY);
 			}
 		}
-		ad->startFrameDef = fd;
+
 		done = false;
 		while(done == false)
 		{
@@ -437,14 +400,10 @@ void P_InitFTAnims(void)
 			{
 				if(SC_Compare(SCI_PIC))
 				{
-					if(fd == MAX_FRAME_DEFS)
-					{
-						Con_Error("P_InitFTAnims: too many FrameDefs.");
-					}
 					SC_MustGetNumber();
 					if(ignore == false)
 					{
-						FrameDefs[fd].index = ad->index+sc_Number-1;
+						index = picBase + sc_Number - 1;
 					}
 					SC_MustGetString();
 					if(SC_Compare(SCI_TICS))
@@ -452,8 +411,8 @@ void P_InitFTAnims(void)
 						SC_MustGetNumber();
 						if(ignore == false)
 						{
-							FrameDefs[fd].tics = sc_Number;
-							fd++;
+							R_AddToAnimGroup(groupNumber, index, 
+								sc_Number, 0);
 						}
 					}
 					else if(SC_Compare(SCI_RAND))
@@ -463,9 +422,8 @@ void P_InitFTAnims(void)
 						SC_MustGetNumber();
 						if(ignore == false)
 						{
-							mod = sc_Number-base+1;
-							FrameDefs[fd].tics = (base<<16)+(mod<<8);
-							fd++;
+							R_AddToAnimGroup(groupNumber, index, base, 
+								sc_Number - base);
 						}
 					}
 					else
@@ -483,26 +441,6 @@ void P_InitFTAnims(void)
 			{
 				done = true;
 			}
-		}
-		if((ignore == false) && (fd-ad->startFrameDef < 2))
-		{
-			Con_Error("P_InitFTAnims: AnimDef has framecount < 2.");
-		}
-		if(ignore == false)
-		{
-			ad->endFrameDef = fd-1;
-			ad->currentFrameDef = ad->endFrameDef;
-			ad->tics = 1; // Force 1st game tic to animate
-
-			// Tell Doomsday about the animation sequence.
-			for(k = ad->startFrameDef; k <= ad->endFrameDef; k++)
-			{
-				R_SetAnimGroup(ad->type == ANIM_FLAT? DD_FLAT : DD_TEXTURE, 
-					FrameDefs[k].index, AnimDefCount + 1);
-			}
-
-			AnimDefCount++;
-			ad++;
 		}
 	}
 	SC_Close();
