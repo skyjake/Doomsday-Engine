@@ -21,8 +21,8 @@
 // MACROS ------------------------------------------------------------------
 
 // Max. distance to move in one call to P_XYMovement.
-#define MAXMOVE			(30*FRACUNIT)
 #define MAXRADIUS		(32*FRACUNIT)
+#define MAXMOVE			(30*FRACUNIT)	
 
 // TYPES -------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ int			tmflags;
 fixed_t		tmx, tmy, tmz, tmheight;*/
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
-boolean		floatok;
+//boolean		floatok;
 
 fixed_t		tmfloorz;
 fixed_t		tmceilingz;
@@ -301,12 +301,23 @@ boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
 
 //===========================================================================
 // P_TryMove
-//	Attempt to move to a new position.
+//	Attempt to move to a new (x,y,z) position.
+//	Returns true if the move was successful. Both lines and things are
+//	checked for collisions.
 //===========================================================================
-boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y)
+boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y, fixed_t z)
 {	
-    floatok = false;
-    if(!P_CheckPosition2(thing, x, y, thing->z))
+    //floatok = false;
+	int links = 0;
+
+	// Is this a real move?
+	if(thing->x == x && thing->y == y && thing->z == z)
+	{
+		// No move. Of course it's successful.
+		return true;
+	}
+
+    if(!P_CheckPosition2(thing, x, y, z))
 	{
 /*		if(thing->onmobj)
 		{
@@ -328,28 +339,101 @@ boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y)
 			return false;		// Solid wall or thing.
 	}
     
+	// Does it fit between contacted ceiling and floor?
 	if(tmceilingz - tmfloorz < thing->height)
-		return false;	// doesn't fit
+		return false;	
 		
-	floatok = true;
+	//floatok = true;
 		
-	if(tmceilingz - thing->z < thing->height)
+	if(tmceilingz - z < thing->height)
 		return false;	// mobj must lower itself to fit
 		
-	if(tmfloorz - thing->z > 24*FRACUNIT)
-		return false;	// too big a step up
+	if(thing->dplayer)
+	{
+		// Players are allowed a stepup.
+		if(tmfloorz - z > 24*FRACUNIT)
+			return false;	// too big a step up
+	}
+	else
+	{
+		// Normals mobjs are not...
+		if(tmfloorz > z) return false; // below the floor
+	}
     
     // The move is OK. First unlink.
-	// NOTE: This routine is used only for the players, so both sector and
-	// blocklinks will be processed.
+	if(IS_SECTOR_LINKED(thing)) links |= DDLINK_SECTOR;
+	if(IS_BLOCK_LINKED(thing)) links |= DDLINK_BLOCKMAP;
 	P_UnlinkThing(thing); 
+
     thing->floorz = tmfloorz;
     thing->ceilingz = tmceilingz;	
     thing->x = x;
     thing->y = y;
-	// Link to sector and possibly blockmap.
-	P_LinkThing(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+	thing->z = z;
+
+	// Put back to the same links.
+	P_LinkThing(thing, links);
     return true;
+}
+
+//===========================================================================
+// P_StepMove
+//	Try to do the given move. Returns true if nothing was hit.
+//===========================================================================
+boolean P_StepMove(mobj_t *thing, fixed_t dx, fixed_t dy, fixed_t dz)
+{
+	fixed_t x = thing->x, y = thing->y, z = thing->z;
+	fixed_t stepX, stepY, stepZ;
+	boolean notHit = true;
+
+	while(dx || dy || dz)
+	{
+		stepX = dx;
+		stepY = dy;
+		stepZ = dz;
+
+		// Is the step too long?
+		while(stepX > MAXMOVE || stepX < -MAXMOVE
+			|| stepY > MAXMOVE || stepY < -MAXMOVE
+			|| stepZ > MAXMOVE || stepZ < -MAXMOVE)
+		{
+			// Only half that, then.
+			stepX /= 2;
+			stepY /= 2;
+			stepZ /= 2;
+		}
+
+		// If there is no step, we're already there!
+		if(!(stepX | stepY | stepZ)) return notHit;
+
+		// Can we do this step?
+		while(!P_TryMove(thing, thing->x + stepX, thing->y + stepY, 
+			thing->z + stepZ))
+		{
+			// We hit something!
+			notHit = false;
+
+			// This means even the current step is unreachable.
+			// Let's make it our intended destination.
+			dx = stepX;
+			dy = stepY;
+			dz = stepZ;
+			
+			// Try a smaller step.
+			stepX /= 2;
+			stepY /= 2;
+			stepZ /= 2;
+
+			// If we run out of step, we must give up.
+			if(!(stepX | stepY | stepZ)) return false;
+		}
+
+		// Subtract from the 'to go' distance.
+		dx -= stepX;
+		dy -= stepY;
+		dz -= stepZ;
+	}
+	return notHit;
 }
 
 //===========================================================================
@@ -560,8 +644,8 @@ retry:
     {
 		// The move most have hit the middle, so stairstep.
 stairstep:
-		if (!P_TryMove (mo, mo->x, mo->y + mo->momy))
-			P_TryMove (mo, mo->x + mo->momx, mo->y);
+		if (!P_TryMove (mo, mo->x, mo->y + mo->momy, mo->z))
+			P_TryMove (mo, mo->x + mo->momx, mo->y, mo->z);
 		return;
     }
 
@@ -571,7 +655,8 @@ stairstep:
     {
 		newx = FixedMul (mo->momx, bestslidefrac);
 		newy = FixedMul (mo->momy, bestslidefrac);
-		if (!P_TryMove (mo, mo->x+newx, mo->y+newy)) goto stairstep;
+		if(!P_TryMove(mo, mo->x + newx, mo->y + newy, mo->z)) 
+			goto stairstep;
     }
     
     // Now continue along the wall.
@@ -591,7 +676,7 @@ stairstep:
     mo->momx = tmxmove;
     mo->momy = tmymove;
 	
-    if(!P_TryMove (mo, mo->x+tmxmove, mo->y+tmymove))
+    if(!P_TryMove(mo, mo->x + tmxmove, mo->y + tmymove, mo->z))
     {
 		goto retry;
     }
@@ -700,7 +785,7 @@ void P_XYMovement2(mobj_t* mo, struct playerstate_s *playstate)
 			xmove = ymove = 0;
 		}
 		
-		if(!P_TryMove(mo, ptryx, ptryy))
+		if(!P_TryMove(mo, ptryx, ptryy, mo->z))
 		{
 			// Blocked move.
 			if(player)
