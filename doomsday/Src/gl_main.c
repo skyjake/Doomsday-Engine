@@ -21,6 +21,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "config.h"
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -34,6 +36,12 @@
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>
 #  include <math.h>
+#endif
+
+#if defined(UNIX) && defined(HAVE_X11_EXTENSIONS_XF86VMODE_H)
+#  define XFREE_GAMMA
+#  include <X11/Xlib.h>
+#  include <X11/extensions/xf86vmode.h>
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -87,10 +95,7 @@ float   nearClip, farClip;
 static boolean initOk = false;
 
 static gramp_t original_gamma_ramp;
-
-#ifdef WIN32
 static boolean gamma_support = false;
-#endif
 static float oldgamma, oldcontrast, oldbright;
 
 // CODE --------------------------------------------------------------------
@@ -152,45 +157,98 @@ void GL_DoUpdate(void)
 	r_framecounter++;
 }
 
-//===========================================================================
-// GL_GetGammaRamp
-//===========================================================================
-void GL_GetGammaRamp(void *ramp)
+/*
+ * On Win32, use the gamma ramp functions in the Win32 API.  On Linux,
+ * use the XFree86-VidMode extension.
+ */
+void GL_GetGammaRamp(unsigned short *ramp)
 {
-#ifdef WIN32
-#  if WIN32_GAMMA
-	HDC     hdc = GetDC(hWndMain);
-#  endif
-
 	if(ArgCheck("-noramp"))
 	{
 		gamma_support = false;
 		return;
 	}
-#  if WIN32_GAMMA
-	gamma_support = false;
-	if(GetDeviceGammaRamp(hdc, ramp))
+
+#if defined(WIN32) && defined(WIN32_GAMMA)
+	{
+		HDC     hdc = GetDC(hWndMain);
+		
+		gamma_support = false;
+		if(GetDeviceGammaRamp(hdc, (void*) ramp))
+		{
+			gamma_support = true;
+		}
+		ReleaseDC(hWndMain, hdc);
+	}
+#endif
+
+#ifdef XFREE_GAMMA
+	{
+		Display *dpy = XOpenDisplay(NULL);
+		int screen = DefaultScreen(dpy);
+		int event = 0, error = 0;
+		int rampSize = 0;
+
+		Con_Message("GL_GetGammaRamp:\n");
+		if(!dpy || !XF86VidModeQueryExtension(dpy, &event, &error))
+		{
+			Con_Message("  XFree86-VidModeExtension not available.\n");
+			gamma_support = false;
+			return;
+		}
+		VERBOSE(Con_Message("  XFree86-VidModeExtension: event# %i "
+							"error# %i\n", event, error));
+		XF86VidModeGetGammaRampSize(dpy, screen, &rampSize);
+		Con_Message("  Gamma ramp size: %i\n", rampSize);
+		if(rampSize != 256)
+		{
+			Con_Message("  This implementation only understands ramp size "
+						"256.\n  Please complain to the developer.\n");
+			gamma_support = false;
+			XCloseDisplay(dpy);
+			return;
+		}
+		
+		// Get the current ramps.
+		XF86VidModeGetGammaRamp(dpy, screen, rampSize, ramp, ramp + 256,
+								ramp + 512);
+		XCloseDisplay(dpy);
+
 		gamma_support = true;
-	ReleaseDC(hWndMain, hdc);
-#  endif
+	}
 #endif
 }
 
 //===========================================================================
 // GL_SetGammaRamp
 //===========================================================================
-void GL_SetGammaRamp(void *ramp)
+void GL_SetGammaRamp(unsigned short *ramp)
 {
-#ifdef WIN32
-#  if WIN32_GAMMA
-	HDC     hdc;
-
 	if(!gamma_support)
 		return;
-	hdc = GetDC(hWndMain);
-	SetDeviceGammaRamp(hdc, ramp);
-	ReleaseDC(hWndMain, hdc);
-#  endif
+
+#if defined(WIN32) && defined(WIN32_GAMMA)
+	{
+		HDC hdc = GetDC(hWndMain);
+		SetDeviceGammaRamp(hdc, (void*) ramp);
+		ReleaseDC(hWndMain, hdc);
+	}
+#endif
+
+#ifdef XFREE_GAMMA
+	{
+		Display *dpy = XOpenDisplay(NULL);
+		int screen = DefaultScreen(dpy);
+
+		if(!dpy)
+			return;
+
+		// We assume that the gamme ramp size actually is 256.
+		XF86VidModeSetGammaRamp(dpy, screen, 256, ramp, ramp + 256,
+								ramp + 512);
+		
+		XCloseDisplay(dpy);
+	}
 #endif
 }
 
@@ -207,6 +265,14 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
 	double  ideal[256];			// After processing clamped to unsigned short.
 	double  norm;
 
+	// Don't allow stupid values.
+	if(contrast < 0.1f)
+		contrast = 0.1f;
+	if(bright > 0.8f)
+		bright = 0.8f;
+	if(bright < -0.8f)
+		bright = -0.8f;
+	
 	// Init the ramp as a line with the steepness defined by contrast.
 	for(i = 0; i < 256; i++)
 		ideal[i] = i * contrast - (contrast - 1) * 127;

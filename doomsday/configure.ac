@@ -1,5 +1,5 @@
-AC_INIT(deng, [1.8.1-rc1], [jaakko.keranen@iki.fi])
-AM_INIT_AUTOMAKE(deng, [1.8.1-rc1])
+AC_INIT(deng, [1.8.1], [jaakko.keranen@iki.fi])
+AM_INIT_AUTOMAKE(deng, [1.8.1])
 
 AM_CONFIG_HEADER(config.h)
 
@@ -32,6 +32,15 @@ dnl Check for SDL (using C).
 SDL_VERSION=1.2.0
 AM_PATH_SDL($SDL_VERSION,:,
 	AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
+
+dnl Check for XFree86-VidModeExtension.
+AC_CHECK_HEADERS([X11/Xlib.h])
+AC_CHECK_HEADERS([X11/extensions/xf86vmode.h],
+	[LIBS="$LIBS -L/usr/X11R6/lib -lXxf86vm"], [],
+	[#if HAVE_X11_XLIB_H
+	#  include <X11/Xlib.h>
+	#endif
+	])
 
 dnl Check that the required libraries are available.
 AC_CHECK_HEADER(curses.h,
@@ -75,7 +84,7 @@ AC_SUBST(OPTIONAL_SUBDIRS)
 
 AC_CONFIG_FILES([ Makefile Src/Makefile Src/drOpenGL/Makefile
 	Src/jDoom/Makefile Src/jHeretic/Makefile Src/jHexen/Makefile
-	Src/dpDehRead/Makefile Src/dsSDLMixer/Makefile
-	Src/dsOpenAL/Makefile ])
+	Src/dpDehRead/Makefile Src/dpMapLoad/Makefile
+	Src/dsSDLMixer/Makefile	Src/dsOpenAL/Makefile ])
 
 AC_OUTPUT
