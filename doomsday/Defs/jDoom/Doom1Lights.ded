@@ -77,6 +77,7 @@ Copy Decoration {
 
 #
 # Wall textures:
+# (many obvious light sources not included, e.g. LITE*)
 #
 Decoration {
   Texture = "COMP2";
