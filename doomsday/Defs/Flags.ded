@@ -38,6 +38,16 @@ Flag { # Draw the sky sphere even when models are in use.
 Flag { ID = "slf_enable"; Value = 0x1; }
 Flag { ID = "slf_mask"; Value = 0x2; }
 
+# Blending Modes
+Flag { ID = "bm_normal"; Value = 0; }
+Flag { ID = "bm_add"; Value = 1; }
+Flag { ID = "bm_dark"; Value = 2; }
+Flag { ID = "bm_sub"; Value = 3; }   # src_alpha multiplied with dest_color
+Flag { ID = "bm_sub2"; Value = 7; }  # src_alpha multiplied with src_color
+Flag { ID = "bm_revsub"; Value = 4; }
+Flag { ID = "bm_mul"; Value = 5; }
+Flag { ID = "bm_invmul"; Value = 6; }
+
 # Models
 Flag { ID = "df_fullbright"; Value = 0x1; }
 Flag { ID = "df_shadow1"; Value = 0x2; }
