@@ -93,7 +93,7 @@ unsigned short PackVector(float vec[3])
 	iyaw = (int) (yaw/PI*256); // Convert 2*PI => 512
 	while(iyaw > 511) iyaw -= 512;
 	while(iyaw < 0) iyaw += 512;
-	
+
 	ipitch = (int) ((pitch/(PI/2) + 1)*64);
 	if(ipitch > 127) ipitch = 127;
 	if(ipitch < 0) ipitch = 0;
@@ -117,7 +117,7 @@ void UnpackVector(unsigned short packed, float vec[3])
 	float cosp = (float) cos(pitch);
 	vec[VX] = (float) cos(yaw) * cosp;
 	vec[VY] = (float) sin(yaw) * cosp;
-	vec[VZ] = (float) sin(pitch);	
+	vec[VZ] = (float) sin(pitch);
 
 /*	//----DEBUG----
 	printf("UnpackVector: (%i,%i) => (%f,%f,%f)\n",
@@ -132,13 +132,13 @@ int GetNormalIndex(float vec[3])
 {
 	float dot, maxprod;
 	int j, n, idx;
-			
+
 	// Find closest match in the normals list.
 	for(j = 0; j < NUMVERTEXNORMALS; j++)
 	{
 		// Dot product.
-		for(dot = 0, n = 0; n < 3; n++) 
-			dot += avertexnormals[j][n] * vec[n];				
+		for(dot = 0, n = 0; n < 3; n++)
+			dot += avertexnormals[j][n] * vec[n];
 		if(!j || dot > maxprod)
 		{
 			maxprod = dot;
@@ -202,7 +202,7 @@ void PrintUsage(void)
 	printf("       [-delframes to|from|<num> <num>] [-delskin <num>]\n");
 	printf("       [-skinsize <width> <height>] [-gl] [-info] [-create <framelistfile>]\n");
 	printf("       [-md2] [-dmd] [-savelod <num>] [-lod] [-ef <num>] [-op <num>] [-tcmap]\n");
-	printf("       [-mg] [-fn <filename>] [-weldtc] model[.md2|.dmd] ...\n\n");
+	printf("       [-mg] [-fn <filename>] [-weld] [-weldtc] model[.md2|.dmd] ...\n\n");
 	printf("-create     Create an empty model based on a frame list (each line specifies\n");
 	printf("            a frame name, empty lines are skipped, comments begin with ; ).\n");
 	printf("-del        Delete one frame.\n");
@@ -348,23 +348,23 @@ int ModelOpen(model_t *mo, const char *filename)
 			case DMC_INFO:
 				fread(inf, sizeof(*inf), 1, file);
 				break;
-			
+
 			default:
 				// Just skip all unknown chunks.
 				fseek(file, chunk.length, SEEK_CUR);
-				printf("Skipping unknown chunk (type %i, length %i).\n", 
+				printf("Skipping unknown chunk (type %i, length %i).\n",
 					chunk.type, chunk.length);
 			}
 			// Read the next chunk.
 			fread(&chunk, sizeof(chunk), 1, file);
 		}
-		
+
 		// Allocate and load in the data.
-		mo->skins = Load(file, inf->offsetSkins, sizeof(dmd_skin_t) 
+		mo->skins = Load(file, inf->offsetSkins, sizeof(dmd_skin_t)
 			* inf->numSkins);
-		mo->texCoords = Load(file, inf->offsetTexCoords, 
+		mo->texCoords = Load(file, inf->offsetTexCoords,
 			sizeof(dmd_textureCoordinate_t) * inf->numTexCoords);
-		mo->frames = Load(file, inf->offsetFrames, inf->frameSize 
+		mo->frames = Load(file, inf->offsetFrames, inf->frameSize
 			* inf->numFrames);
 		ptr = Load(file, inf->offsetLODs, sizeof(dmd_levelOfDetail_t)
 			* inf->numLODs);
@@ -389,7 +389,7 @@ int ModelOpen(model_t *mo, const char *filename)
 		hd->flags = 0;
 		inf->skinWidth = oldhd.skinWidth;
 		inf->skinHeight = oldhd.skinHeight;
-		inf->frameSize = DMD_FRAMESIZE(oldhd.numVertices); 
+		inf->frameSize = DMD_FRAMESIZE(oldhd.numVertices);
 		inf->numLODs = 1;
 		inf->numSkins = oldhd.numSkins;
 		inf->numTexCoords = oldhd.numTexCoords;
@@ -406,16 +406,16 @@ int ModelOpen(model_t *mo, const char *filename)
 		inf->offsetEnd = oldhd.offsetEnd;
 
 		// Allocate and load in the data.
-		mo->skins = Load(file, inf->offsetSkins, sizeof(md2_skin_t) 
+		mo->skins = Load(file, inf->offsetSkins, sizeof(md2_skin_t)
 			* inf->numSkins);
-		mo->texCoords = Load(file, inf->offsetTexCoords, 
+		mo->texCoords = Load(file, inf->offsetTexCoords,
 			sizeof(md2_textureCoordinate_t) * inf->numTexCoords);
-		mo->lods[0].triangles = Load(file, mo->lodinfo[0].offsetTriangles,	
+		mo->lods[0].triangles = Load(file, mo->lodinfo[0].offsetTriangles,
 			sizeof(md2_triangle_t) * mo->lodinfo[0].numTriangles);
 		mo->lods[0].glCommands = Load(file,	mo->lodinfo[0].offsetGlCommands,
 			sizeof(int) * mo->lodinfo[0].numGlCommands);
 
-		oldframes = Load(file, inf->offsetFrames, oldhd.frameSize 
+		oldframes = Load(file, inf->offsetFrames, oldhd.frameSize
 			* inf->numFrames);
 		mo->frames = malloc(inf->frameSize * inf->numFrames);
 		// Convert to DMD frames.
@@ -428,13 +428,13 @@ int ModelOpen(model_t *mo, const char *filename)
 			memcpy(dmdf->translate, md2f->translate, sizeof(md2f->translate));
 			for(k = 0; k < inf->numVertices; k++)
 			{
-				memcpy(dmdf->vertices[k].vertex, 
+				memcpy(dmdf->vertices[k].vertex,
 					md2f->vertices[k].vertex, sizeof(byte)*3);
 				dmdf->vertices[k].normal = PackVector
 					(avertexnormals[md2f->vertices[k].lightNormalIndex]);
 			}
 		}
-		free(oldframes);		
+		free(oldframes);
 	}
 	else
 	{
@@ -467,14 +467,14 @@ void ModelSaveMD2(model_t *mo, FILE *file)
 	float vec[3];
 	int i, k;
 	byte n;
-	
+
 	// Check that the level-to-save is valid.
-	if(savelod < 0 || savelod >= inf->numLODs) 
+	if(savelod < 0 || savelod >= inf->numLODs)
 	{
 		printf("Invalid savelod (%i), saving level 0 instead.\n", savelod);
 		savelod = 0;
 	}
-		
+
 	hd.magic = MD2_MAGIC;
 	hd.version = 8;
 	hd.skinWidth = inf->skinWidth;
@@ -487,10 +487,10 @@ void ModelSaveMD2(model_t *mo, FILE *file)
 	hd.numGlCommands = mo->lodinfo[savelod].numGlCommands;
 	hd.numFrames = inf->numFrames;
 
-	// The header will be written again after we know the locations 
+	// The header will be written again after we know the locations
 	// of the other data.
 	fwrite(&hd, sizeof(hd), 1, file);
-		
+
 	// Skins.
 	hd.offsetSkins = ftell(file);
 	fwrite(mo->skins, sizeof(*mo->skins), hd.numSkins, file);
@@ -499,13 +499,13 @@ void ModelSaveMD2(model_t *mo, FILE *file)
 	fwrite(mo->texCoords, sizeof(*mo->texCoords), hd.numTexCoords, file);
 	// Triangles.
 	hd.offsetTriangles = ftell(file);
-	fwrite(mo->lods[savelod].triangles, sizeof(md2_triangle_t), 
+	fwrite(mo->lods[savelod].triangles, sizeof(md2_triangle_t),
 		hd.numTriangles, file);
 	// Frames must be written separately (because of the normals).
 	hd.offsetFrames = ftell(file);
 	for(i = 0; i < hd.numFrames; i++)
 	{
-		dmd_frame_t *dmdf = (dmd_frame_t*) ((byte*)mo->frames 
+		dmd_frame_t *dmdf = (dmd_frame_t*) ((byte*)mo->frames
 			+ i*inf->frameSize);
 		fwrite(dmdf->scale, sizeof(float) * 3, 1, file);
 		fwrite(dmdf->translate, sizeof(float) * 3, 1, file);
@@ -517,13 +517,13 @@ void ModelSaveMD2(model_t *mo, FILE *file)
 			n = GetNormalIndex(vec);
 			fwrite(&n, 1, 1, file);
 		}
-	}	
+	}
 	// GL commands.
 	hd.offsetGlCommands = ftell(file);
 	fwrite(mo->lods[savelod].glCommands, sizeof(int), hd.numGlCommands, file);
 	// The end.
 	hd.offsetEnd = ftell(file);
-	
+
 	// Rewrite the header.
 	rewind(file);
 	fwrite(&hd, sizeof(hd), 1, file);
@@ -553,12 +553,12 @@ void ModelSaveDMD(model_t *mo, FILE *file)
 	chunk.type = DMC_END;
 	chunk.length = 0;
 	fwrite(&chunk, sizeof(chunk), 1, file);
-	
+
 	// Write the data.
 	inf->offsetSkins = ftell(file);
 	fwrite(mo->skins, sizeof(dmd_skin_t), inf->numSkins, file);
 	inf->offsetTexCoords = ftell(file);
-	fwrite(mo->texCoords, sizeof(dmd_textureCoordinate_t), inf->numTexCoords, 
+	fwrite(mo->texCoords, sizeof(dmd_textureCoordinate_t), inf->numTexCoords,
 		file);
 	inf->offsetFrames = ftell(file);
 	fwrite(mo->frames, DMD_FRAMESIZE(inf->numVertices), inf->numFrames,
@@ -571,7 +571,7 @@ void ModelSaveDMD(model_t *mo, FILE *file)
 			mo->lodinfo[i].numTriangles, file);
 
 		mo->lodinfo[i].offsetGlCommands = ftell(file);
-		fwrite(mo->lods[i].glCommands, sizeof(int), 
+		fwrite(mo->lods[i].glCommands, sizeof(int),
 			mo->lodinfo[i].numGlCommands, file);
 	}
 	// And the LOD info.
@@ -579,7 +579,7 @@ void ModelSaveDMD(model_t *mo, FILE *file)
 	fwrite(mo->lodinfo, sizeof(dmd_levelOfDetail_t), inf->numLODs, file);
 
 	inf->offsetEnd = ftell(file);
-	
+
 	// Rewrite the info chunk (now that the offsets are known).
 	fseek(file, offsetInfo, SEEK_SET);
 	fwrite(inf, sizeof(*inf), 1, file);
@@ -593,7 +593,7 @@ void ModelClose(model_t *mo)
 {
 	FILE *file;
 	int i;
-	
+
 	printf("Closing model \"%s\"...\n", mo->fileName);
 
 	if(mo->modified)
@@ -650,7 +650,7 @@ void CrossProd(float *v1, float *v2, float *v3, float *out)
 //===========================================================================
 void Norm(float *vector)
 {
-	float length = (float) sqrt(vector[VX]*vector[VX] 
+	float length = (float) sqrt(vector[VX]*vector[VX]
 		+ vector[VY]*vector[VY]
 		+ vector[VZ]*vector[VZ]);
 
@@ -667,7 +667,7 @@ void Norm(float *vector)
 //===========================================================================
 dmd_frame_t *GetFrame(model_t *mo, int framenum)
 {
-	return (dmd_frame_t*) ((byte*) mo->frames + mo->info.frameSize 
+	return (dmd_frame_t*) ((byte*) mo->frames + mo->info.frameSize
 		* framenum);
 }
 
@@ -786,7 +786,7 @@ int	FanLength(model_t *model, int lod, int starttri, int startv)
 
 	// look for a matching triangle
 nexttri:
-	for (j=starttri+1, check=&triangles[starttri+1] 
+	for (j=starttri+1, check=&triangles[starttri+1]
 		; j < model->lodinfo[lod].numTriangles; j++, check++)
 	{
 		for (k=0 ; k<3 ; k++)
@@ -830,9 +830,9 @@ done:
 
 //===========================================================================
 // OptimizeTexCoords
-//	"Optimize" the texcoords. The tristrip builders only work correctly 
-//	if some triangles share texcoord indices, so we need to remove all 
-//	redundant references: the first (s,t) match for a texcoord is used 
+//	"Optimize" the texcoords. The tristrip builders only work correctly
+//	if some triangles share texcoord indices, so we need to remove all
+//	redundant references: the first (s,t) match for a texcoord is used
 //	for all similar (u,v)s. -jk
 //===========================================================================
 void OptimizeTexCoords(model_t *mo, dtriangle_t *tris, int count)
@@ -845,7 +845,7 @@ void OptimizeTexCoords(model_t *mo, dtriangle_t *tris, int count)
 		{
 			u = mo->texCoords[tris[i].index_st[k]].s;
 			v = mo->texCoords[tris[i].index_st[k]].t;
-			
+
 			for(j = 0; j < mo->info.numTexCoords; j++)
 			{
 				if(mo->texCoords[j].s == u
@@ -860,7 +860,7 @@ void OptimizeTexCoords(model_t *mo, dtriangle_t *tris, int count)
 
 //===========================================================================
 // BuildGlCmds
-//	Generate a list of trifans or strips for the model, which holds 
+//	Generate a list of trifans or strips for the model, which holds
 //	for all frames. All the LODs present are processed.
 //===========================================================================
 void BuildGlCmds(model_t *mo)
@@ -885,10 +885,10 @@ void BuildGlCmds(model_t *mo)
 		numtris = mo->lodinfo[lod].numTriangles;
 
 		// Init triangles.
-		memcpy(triangles, mo->lods[lod].triangles, 
+		memcpy(triangles, mo->lods[lod].triangles,
 			sizeof(dtriangle_t) * numtris);
 		OptimizeTexCoords(mo, triangles, numtris);
-		
+
 		//
 		// build tristrips
 		//
@@ -899,7 +899,7 @@ void BuildGlCmds(model_t *mo)
 		{
 			// pick an unused triangle and start the trifan
 			if(used[i]) continue;
-			
+
 			bestlen = 0;
 			for(type = 0; type < 2 ; type++)
 			{
@@ -923,11 +923,11 @@ void BuildGlCmds(model_t *mo)
 					}
 				}
 			}
-			
+
 			// mark the tris on the best strip/fan as used
 			for (j=0 ; j<bestlen ; j++)
 				used[best_tris[j]] = 1;
-			
+
 			if (besttype == 1)
 			{
 				numstrips++;
@@ -940,33 +940,33 @@ void BuildGlCmds(model_t *mo)
 				avgfan += bestlen + 2;
 				commands[numcommands++] = -(bestlen+2);
 			}
-			
+
 			numglverts += bestlen+2;
-			
+
 			for (j=0 ; j<bestlen+2 ; j++)
 			{
 				// emit a vertex into the reorder buffer
 				k = best_st[j];
-				
+
 				// emit s/t coords into the commands stream
 				s = mo->texCoords[k].s; //base_st[k].s;
 				t = mo->texCoords[k].t; //base_st[k].t;
-				
+
 				s = (s + 0.5f) / mo->info.skinWidth;
 				t = (t + 0.5f) / mo->info.skinHeight;
-				
+
 				*(float *)&commands[numcommands++] = s;
 				*(float *)&commands[numcommands++] = t;
 				*(int *)&commands[numcommands++] = best_xyz[j];
 			}
 		}
 		commands[numcommands++] = 0;		// end of list marker
-		
+
 		mo->lodinfo[lod].numGlCommands = numcommands;
-		mo->lods[lod].glCommands = realloc(mo->lods[lod].glCommands, 
+		mo->lods[lod].glCommands = realloc(mo->lods[lod].glCommands,
 			sizeof(int) * numcommands);
 		memcpy(mo->lods[lod].glCommands, commands, sizeof(int) * numcommands);
-		
+
 		// Some statistics.
 		printf("(Level %i)\n", lod);
 		printf("  Number of strips: %-3i (%.3f vertices on average)\n",
@@ -1043,7 +1043,7 @@ int IsTexCoordConnected(model_t *mo, dtriangle_t *src, dtriangle_t *dest,
 	}
 tcdone:
 	free(tcmap);
-	return result; 
+	return result;
 }
 
 #if 0
@@ -1079,7 +1079,7 @@ void FindGroupEdges(model_t *mo, dtriangle_t *tris, int numtris, int *ved)
 /*			for(spread = false, j = 0; j < numtris; j++)
 			{
 				// Does this triangle have an edge to spread along?
-				for(k = 0; k < 3; k++)					
+				for(k = 0; k < 3; k++)
 					if(ved[tris[j].index_st[k]] == 2
 						|| ved[tris[j].index_st[(k+1)%3]] == 2)
 					{
@@ -1135,7 +1135,7 @@ void TriangleNormal(model_t *mo, dtriangle_t *tri, float vec[3])
 	for(i = 0; i < 3; i++)
 		for(j = 0; j < 3; j++)
 		{
-			pos[i][j] = vtx[tri->index_xyz[i]].vertex[j] * fr->scale[j] + 
+			pos[i][j] = vtx[tri->index_xyz[i]].vertex[j] * fr->scale[j] +
 				fr->translate[j];
 		}
 	CrossProd(pos[0], pos[2], pos[1], vec);
@@ -1218,18 +1218,18 @@ int GroupTriangles(model_t *mo, optriangle_t *tris, int numtris)
 	int high = 0;
 	int start, i, j;
 	char spreadto[MAX_TRIANGLES], didspread;
-	
+
 	memset(spreadto, 0, sizeof(spreadto));
 
 	// 1. Find an ungrouped triangle (stop if not found).
 	// 2. Give it a new group number.
 	// 3. Spread as much as possible.
 	// 4. Continue from step 1.
-	
+
 	for(;;)
 	{
 		// Find an ungrouped triangle.
-		for(start = 0; start < numtris; start++) 
+		for(start = 0; start < numtris; start++)
 			if(!tris[start].group) break;
 		if(start == numtris) break; // Nothing further to do.
 		// Spread to this triangle.
@@ -1263,7 +1263,7 @@ int GroupTriangles(model_t *mo, optriangle_t *tris, int numtris)
 //	A debugging aid.
 //	Draw a nice picture of the texture coordinates.
 //===========================================================================
-void DrawTexCoordMap(model_t *mo, optriangle_t *tris, int numtris, 
+void DrawTexCoordMap(model_t *mo, optriangle_t *tris, int numtris,
 					 int *vertex_on_edge)
 {
 	int cols = 160;
@@ -1271,7 +1271,7 @@ void DrawTexCoordMap(model_t *mo, optriangle_t *tris, int numtris,
 	int i, k, t, m, c, found;
 	int hitgroup;
 	int withgroups = CheckOption("-mg");
-	
+
 	for(i = 0; i < rows; i++)
 	{
 		for(k = 0; k < cols; k++)
@@ -1312,7 +1312,7 @@ void DrawTexCoordMap(model_t *mo, optriangle_t *tris, int numtris,
 //	Returns the number of triangles left.
 //===========================================================================
 #define MAX_MERGED 64
-int OptimizeMesh(model_t *mo, dtriangle_t *origtris, int orignumtris, 
+int OptimizeMesh(model_t *mo, dtriangle_t *origtris, int orignumtris,
 				 int level)
 {
 	optriangle_t *tris;
@@ -1328,7 +1328,7 @@ int OptimizeMesh(model_t *mo, dtriangle_t *origtris, int orignumtris,
 	dtriangle_t merged[MAX_MERGED], best[MAX_MERGED];
 	float connected_normal[3], merged_normal[3], vec[3];
 	float bestdot, dot;
-	float min_correlation = (float) (1 - error_factor 
+	float min_correlation = (float) (1 - error_factor
 		* pow(0.1, MAX_LODS - level));
 	int bestfound;
 	int vertex_on_edge[4096];
@@ -1337,17 +1337,17 @@ int OptimizeMesh(model_t *mo, dtriangle_t *origtris, int orignumtris,
 	if(!orignumtris) return 0;
 
 	// Allocate the buffers we will be working with.
-	tris = malloc(sizeof(*tris) * orignumtris); 
+	tris = malloc(sizeof(*tris) * orignumtris);
 beginpass:
 	numtris = orignumtris;
-	for(i = 0; i < numtris; i++) 
+	for(i = 0; i < numtris; i++)
 	{
 		memcpy(&tris[i].tri, origtris + i, sizeof(*origtris));
 		tris[i].group = 0;
 	}
 
 	// First thing we need to do is divide the triangles up into groups
-	// based on their texcoord connections (we can't really optimize over 
+	// based on their texcoord connections (we can't really optimize over
 	// texcoord boundaries).
 	highgroup = GroupTriangles(mo, tris, numtris);
 	printf("  Number of groups: %i\n", highgroup);
@@ -1429,7 +1429,7 @@ beginpass:
 			// Check if this vertex has already been processed.
 			if(vused[thisvtx]) continue;
 			vused[thisvtx] = true; // Now it's used.
-			
+
 			// The Big Question: can this vertex be removed?
 			// It can if...
 			// - it has suitable neighbors (same group, real XYZ connection)
@@ -1452,7 +1452,7 @@ beginpass:
 			}
 			// If nothing is connected to this triangle, we can't process
 			// it during this stage.
-			if(!numconnected) continue; 
+			if(!numconnected) continue;
 
 			// Calculate the average normal vector for the connected
 			// triangles.
@@ -1479,7 +1479,7 @@ beginpass:
 						if(convtx[m] == testvtx)
 						{
 							// Already listed, move on.
-							found = true;							
+							found = true;
 							break;
 						}
 					if(found) continue;
@@ -1493,7 +1493,7 @@ beginpass:
 				// Make a copy of the triangles.
 				for(m = 0; m < numconnected; m++)
 				{
-					memcpy(merged + m, &tris[connected[m]].tri, 
+					memcpy(merged + m, &tris[connected[m]].tri,
 						sizeof(dtriangle_t));
 				}
 				// Try thisvtx => j.
@@ -1512,7 +1512,7 @@ beginpass:
 				{
 					for(found = false, t = 0; t < 3; t++)
 						for(c = 0; c < 3; c++)
-							if(c != t && merged[m].index_xyz[t] 
+							if(c != t && merged[m].index_xyz[t]
 								== merged[m].index_xyz[c])
 							{
 								found = true;
@@ -1520,16 +1520,16 @@ beginpass:
 					if(found)
 					{
 						// This triangle doesn't exist any longer.
-						memmove(merged + m, merged + m+1, 
+						memmove(merged + m, merged + m+1,
 							sizeof(dtriangle_t) * (nummerged - m - 1));
 						nummerged--;
 						m--;
 					}
 				}
 				if(!nummerged) continue; // Hmm?
-				
+
 				//if(nummerged < numconvtx-4) continue;
-				
+
 				// Now we must check the validity of the 'new' triangles.
 				// Calculate the average normal for the merged triangles.
 				memset(merged_normal, 0, sizeof(merged_normal));
@@ -1539,7 +1539,7 @@ beginpass:
 					merged_normal[VX] += vec[VX];
 					merged_normal[VY] += vec[VY];
 					merged_normal[VZ] += vec[VZ];
-				}				
+				}
 				Norm(merged_normal);
 
 				// Calculate the dot product of the average normals.
@@ -1548,12 +1548,12 @@ beginpass:
 				if(dot > bestdot && dot > min_correlation)
 				{
 					bestfound = true;
-					bestdot = dot;				
+					bestdot = dot;
 					numbest = nummerged;
 					memcpy(best, merged, sizeof(dtriangle_t) * nummerged);
 				}
 			}
-			if(!bestfound || numbest >= numconnected) 
+			if(!bestfound || numbest >= numconnected)
 				continue; // Not much point in continuing...
 
 			// Our best choice is now in the 'best' array.
@@ -1562,7 +1562,7 @@ beginpass:
 			{
 				if(j < numbest)
 				{
-					memcpy(&tris[connected[j]].tri, &best[j], 
+					memcpy(&tris[connected[j]].tri, &best[j],
 						sizeof(dtriangle_t));
 				}
 				else
@@ -1581,7 +1581,7 @@ beginpass:
 		if(!tris[i].group) continue;
 		memcpy(&origtris[m++], &tris[i].tri, sizeof(tris[i].tri));
 	}
-	
+
 	// Should we start another pass?
 	if(--numpasses > 0 && m > 0)
 	{
@@ -1608,20 +1608,20 @@ void BuildLODs(model_t *mo)
 	for(lod = 1; lod < MAX_LODS; lod++)
 	{
 		printf("(Level %i)\n", lod);
-		
+
 		// We'll start working with level zero data.
 		numtris = mo->lodinfo[0].numTriangles;
-		memcpy(triangles, mo->lods[0].triangles, 
+		memcpy(triangles, mo->lods[0].triangles,
 			sizeof(dtriangle_t) * numtris);
 		OptimizeTexCoords(mo, triangles, numtris); // Weld texcoords.
 
 		// Take away as many triangles as is suitable for this level.
 		numtris = OptimizeMesh(mo, triangles, numtris, lod);
-		
+
 		// Copy them over to the model's LOD data.
 		mo->lods[lod].triangles = realloc(mo->lods[lod].triangles,
 			sizeof(dmd_triangle_t) * numtris);
-		memcpy(mo->lods[lod].triangles, triangles, 
+		memcpy(mo->lods[lod].triangles, triangles,
 			sizeof(dmd_triangle_t) * numtris);
 		mo->lodinfo[lod].numTriangles = numtris;
 
@@ -1631,7 +1631,7 @@ void BuildLODs(model_t *mo)
 
 	}
 	// Target reduction levels (minimum): 10%, 30%, 50%
-	// See if we reached enough benefit. We can drop levels starting from 
+	// See if we reached enough benefit. We can drop levels starting from
 	// the last one.
 
 
@@ -1677,14 +1677,14 @@ void ModelRenormalize(model_t *mo)
 	{
 		fr = GetFrame(mo, i);
 
-		cprintf("%3i\b\b\b", mo->info.numFrames > 1? 100 * i 
+		cprintf("%3i\b\b\b", mo->info.numFrames > 1? 100 * i
 			/ (mo->info.numFrames - 1) : 100);
 
 		// Unpack vertices.
 		for(k = 0; k < verts; k++)
 			for(j = 0; j < 3; j++)
 			{
-				list[k].pos[j] = fr->vertices[k].vertex[j] * fr->scale[j] + 
+				list[k].pos[j] = fr->vertices[k].vertex[j] * fr->scale[j] +
 					fr->translate[j];
 			}
 
@@ -1699,7 +1699,7 @@ void ModelRenormalize(model_t *mo)
 		for(k = 0; k < verts; k++)
 		{
 			memset(&norm, 0, sizeof(norm));
-			for(j = 0, cnt = 0, tri = mo->lods[0].triangles; j < tris; 
+			for(j = 0, cnt = 0, tri = mo->lods[0].triangles; j < tris;
 				j++, tri++)
 			{
 				tri = mo->lods[0].triangles + j;
@@ -1712,13 +1712,13 @@ void ModelRenormalize(model_t *mo)
 						break;
 					}
 			}
-			if(!cnt) continue; 
+			if(!cnt) continue;
 			// Calculate the average.
 			for(n = 0; n < 3; n++) norm.pos[n] /= cnt;
 			Norm(norm.pos);
 			//fr->vertices[k].lightNormalIndex = GetNormalIndex(norm.pos);
 			fr->vertices[k].normal = PackVector(norm.pos);
-		}		
+		}
 	}
 	free(list);
 	free(normals);
@@ -1739,13 +1739,13 @@ void ModelFlipNormals(model_t *mo)
 	mo->modified = true;
 	for(lod = 0; lod < mo->info.numLODs; lod++)
 	{
-		for(i = 0, tri = mo->lods[lod].triangles; 
+		for(i = 0, tri = mo->lods[lod].triangles;
 			i < mo->lodinfo[lod].numTriangles; i++, tri++)
 		{
 			v = tri->vertexIndices[1];
 			tri->vertexIndices[1] = tri->vertexIndices[2];
 			tri->vertexIndices[2] = v;
-			
+
 			v = tri->textureIndices[1];
 			tri->textureIndices[1] = tri->textureIndices[2];
 			tri->textureIndices[2] = v;
@@ -1762,14 +1762,14 @@ void ModelFlipNormals(model_t *mo)
 void ReplaceVertex(model_t *mo, int to, int from)
 {
 	int lod, j, c;
-	
+
 	mo->modified = true;
 
 	// Change all references.
 	for(lod = 0; lod < mo->info.numLODs; lod++)
 		for(j = 0; j < mo->lodinfo[lod].numTriangles; j++)
 			for(c = 0; c < 3; c++)
-				if(mo->lods[lod].triangles[j].vertexIndices[c] == from) 
+				if(mo->lods[lod].triangles[j].vertexIndices[c] == from)
                     mo->lods[lod].triangles[j].vertexIndices[c] = to;
 }
 
@@ -1780,7 +1780,7 @@ void ModelWeldVertices(model_t *mo)
 {
     int k;
     int i, j;
-    
+
 	printf("Welding vertices...\n");
 
     if(mo->info.numFrames > 1)
@@ -1788,7 +1788,7 @@ void ModelWeldVertices(model_t *mo)
         // Welding is a bit more problematic in the case of multiple
         // frames, because a vertex can't be removed unless it's a
         // duplicate in all frames.
-        
+
         printf("Model has multiple frames: welding not supported.\n");
         return;
     }
@@ -1796,7 +1796,7 @@ void ModelWeldVertices(model_t *mo)
 	for(k = 0; k < mo->info.numFrames; ++k)
 	{
         dmd_frame_t *frame = &mo->frames[k];
-        
+
 		for(i = 0; i < mo->info.numVertices; ++i)
         {
             for(j = i + 1; j < mo->info.numVertices; ++j)
@@ -1836,16 +1836,16 @@ void ModelWeldVertices(model_t *mo)
 void MoveTexCoord(model_t *mo, int to, int from)
 {
 	int lod, j, c;
-	
+
 	mo->modified = true;
-	memcpy(mo->texCoords + to, mo->texCoords + from, 
+	memcpy(mo->texCoords + to, mo->texCoords + from,
 		sizeof(dmd_textureCoordinate_t));
 
 	// Change all references.
 	for(lod = 0; lod < mo->info.numLODs; lod++)
 		for(j = 0; j < mo->lodinfo[lod].numTriangles; j++)
 			for(c = 0; c < 3; c++)
-				if(mo->lods[lod].triangles[j].textureIndices[c] == from) 
+				if(mo->lods[lod].triangles[j].textureIndices[c] == from)
 					mo->lods[lod].triangles[j].textureIndices[c] = to;
 }
 
@@ -1870,7 +1870,7 @@ void ModelWeldTexCoords(model_t *mo)
 	for(i = 0; i < numtris; i++)
 		for(k = 0; k < 3; k++)
 			refd[tris[i].index_st[k]] = true;
-	
+
 	// Count how many unreferenced texcoords there are.
 	for(num_unrefd = 0, i = 0; i < numcoords; i++)
 		if(!refd[i]) num_unrefd++;
@@ -1913,7 +1913,7 @@ void ModelWeldTexCoords(model_t *mo)
 void ReadText(FILE *file, char *buf, int size)
 {
 	int i;
-	
+
 	memset(buf, 0, size);
 	fgets(buf, size - 1, file);
 	i = strlen(buf) - 1;
@@ -1929,10 +1929,10 @@ void ModelNewFrame(model_t *mo, const char *name)
 	dmd_frame_t *fr;
 
 	mo->modified = true;
-	mo->frames = realloc(mo->frames, mo->info.frameSize * 
+	mo->frames = realloc(mo->frames, mo->info.frameSize *
 	 	++mo->info.numFrames);
 	fr = GetFrame(mo, idx);
-	memset(fr, 0, mo->info.frameSize);	
+	memset(fr, 0, mo->info.frameSize);
 	strncpy(fr->name, name, 15);
 	fr->scale[VX] = fr->scale[VY] = fr->scale[VZ] = 1;
 }
@@ -1946,7 +1946,7 @@ void ModelCreateFrames(model_t *mo, const char *listfile)
 	FILE *file;
 	char line[100];
 	const char *ptr;
-	
+
 	printf("Creating new frames according to \"%s\"...\n", listfile);
 	mo->modified = true;
 	if((file = fopen(listfile, "rt")) == NULL)
@@ -1956,7 +1956,7 @@ void ModelCreateFrames(model_t *mo, const char *listfile)
 	}
 	for(;;)
 	{
-		ReadText(file, line, 100);	
+		ReadText(file, line, 100);
 		ptr = SkipWhite(line);
 		if(*ptr && *ptr != ';') // Not an empty line?
 		{
@@ -2027,7 +2027,7 @@ void ModelSetDefaultSkin(model_t *mo, int idx)
 	char buf[256], *ptr;
 
 	if(idx < 0) DoError(MTERR_INVALID_SKIN_NUMBER);
-	
+
 	strcpy(buf, mo->fileName);
 	ptr = strrchr(buf, '\\');
 	if(!ptr) ptr = strrchr(buf, '/');
@@ -2054,13 +2054,13 @@ void ModelSetSkinSize(model_t *mo, int width, int height)
 //===========================================================================
 void ModelDelSkin(model_t *mo, int idx)
 {
-	if(idx < 0 || idx >= mo->info.numSkins) 
+	if(idx < 0 || idx >= mo->info.numSkins)
 	{
 		DoError(MTERR_INVALID_SKIN_NUMBER);
 		return;
 	}
 	printf("Deleting skin %i (\"%s\").\n", idx, mo->skins[idx].name);
-	
+
 	if(idx < mo->info.numSkins - 1)
 	{
 		memmove(&mo->skins[idx], &mo->skins[idx + 1],
@@ -2121,15 +2121,15 @@ void ModelPrintInfo(model_t *mo)
 		: "DMD (Detailed/Doomsday Model)");
 	printf("Version: %i\n", mo->header.version);
 	printf("%i vertices, %i texcoords, %i frames, %i level%s.\n",
-		inf->numVertices, inf->numTexCoords, inf->numFrames, 
+		inf->numVertices, inf->numTexCoords, inf->numFrames,
 		inf->numLODs, inf->numLODs != 1? "s" : "");
 	for(i = 0; i < inf->numLODs; i++)
 	{
-		printf("Level %i: %i triangles, %i GL commands", i, 
+		printf("Level %i: %i triangles, %i GL commands", i,
 			mo->lodinfo[i].numTriangles, mo->lodinfo[i].numGlCommands);
 		if(i && mo->lodinfo[0].numTriangles)
 		{
-			printf(" (%.2f%% reduction).\n", 
+			printf(" (%.2f%% reduction).\n",
 				100 - mo->lodinfo[i].numTriangles
 				/ (float) mo->lodinfo[0].numTriangles*100);
 		}
@@ -2138,7 +2138,7 @@ void ModelPrintInfo(model_t *mo)
 			printf(".\n");
 		}
 	}
-	printf("Frames are %i bytes long.\n", dmd? DMD_FRAMESIZE(inf->numVertices) 
+	printf("Frames are %i bytes long.\n", dmd? DMD_FRAMESIZE(inf->numVertices)
 		: MD2_FRAMESIZE(inf->numVertices));
 	printf("Offsets in file: skin=%i txc=%i fr=%i",
 		inf->offsetSkins, inf->offsetTexCoords, inf->offsetFrames);
@@ -2149,7 +2149,7 @@ void ModelPrintInfo(model_t *mo)
 	printf(" end=%i\n", inf->offsetEnd);
 	for(i = 0; i < inf->numLODs; i++)
 	{
-		printf("Level %i offsets: tri=%i gl=%i\n", i, 
+		printf("Level %i offsets: tri=%i gl=%i\n", i,
 			mo->lodinfo[i].offsetTriangles,
 			mo->lodinfo[i].offsetGlCommands);
 	}
@@ -2163,12 +2163,12 @@ void ModelPrintInfo(model_t *mo)
 		{
 			frame_index = i + k*per_col;
 			if(frame_index >= inf->numFrames) break;
-			printf(" %3i: %-16s", frame_index, 
+			printf(" %3i: %-16s", frame_index,
 				GetFrame(mo, frame_index)->name);
 		}
 		printf("\n");
 	}
-	printf("%i skin%s of size %ix%i:\n", inf->numSkins, 
+	printf("%i skin%s of size %ix%i:\n", inf->numSkins,
 		inf->numSkins != 1? "s" : "", inf->skinWidth, inf->skinHeight);
 	for(i = 0; i < inf->numSkins; i++)
 		printf("  %i: %s\n", i, mo->skins[i].name);
@@ -2203,7 +2203,7 @@ int main(int argc, char **argv)
 	{
 		if(!stricmp(argv[i], "-skin")
 			|| !stricmp(argv[i], "-skinsize")
-			|| !stricmp(argv[i], "-delframes")) 
+			|| !stricmp(argv[i], "-delframes"))
 		{
 			i += 2;
 			continue;
@@ -2229,7 +2229,7 @@ int main(int argc, char **argv)
 				if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
 				ModelNew(&model, argv[i]);
 				ModelCreateFrames(&model, ptr);
-			}							
+			}
 			else if(!ModelOpen(&model, argv[i])) continue; // No success.
 			nofiles = false;
 			if(CheckOption("-del"))
@@ -2263,7 +2263,7 @@ int main(int argc, char **argv)
 			if(CheckOption("-weldtc")) ModelWeldTexCoords(&model);
 			if(CheckOption("-flip")) ModelFlipNormals(&model);
 			if(CheckOption("-renorm")) ModelRenormalize(&model);
-			if(CheckOption("-skin")) 
+			if(CheckOption("-skin"))
 			{
 				if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
 				skin_num = strtoul(ptr, 0, 0);
@@ -2283,7 +2283,7 @@ int main(int argc, char **argv)
 			{
 				if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
 				if(!(opt = NextOption())) DoError(MTERR_INVALID_OPTION);
-				ModelSetSkinSize(&model, strtoul(ptr, 0, 0), 
+				ModelSetSkinSize(&model, strtoul(ptr, 0, 0),
 					strtoul(opt, 0, 0));
 			}
 			if(CheckOption("-delskin"))
@@ -2302,7 +2302,7 @@ int main(int argc, char **argv)
 			{
 				if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
 				num_optimization_passes = strtoul(ptr, 0, 0);
-				printf("Using %i mesh optimization passes.\n", 
+				printf("Using %i mesh optimization passes.\n",
 					num_optimization_passes);
 			}
 			if(CheckOption("-fn"))
@@ -2313,7 +2313,7 @@ int main(int argc, char **argv)
 			if(CheckOption("-lod")) BuildLODs(&model);
 			if(CheckOption("-gl")) BuildGlCmds(&model);
 			if(CheckOption("-info")) ModelPrintInfo(&model);
-			if(CheckOption("-savelod")) 
+			if(CheckOption("-savelod"))
 			{
 				if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
 				savelod = strtoul(ptr, 0, 0);
