@@ -13,6 +13,7 @@ short Msg_ReadPackedShort();
 int Msg_ReadLong();
 void Msg_Read(void *dest, int len);
 int Msg_Offset();
+void Msg_SetOffset(int offset);
 int Msg_MemoryLeft();
 boolean Msg_End();
 

@@ -136,17 +136,22 @@ void Msg_Read(void *dest, int len)
 	netbuffer.cursor += len;
 }
 
-int Msg_Offset()
+int Msg_Offset(void)
 {
 	return netbuffer.cursor - netbuffer.msg.data;
 }
 
-int Msg_MemoryLeft()
+void Msg_SetOffset(int offset)
+{
+	netbuffer.cursor = netbuffer.msg.data + offset;
+}
+
+int Msg_MemoryLeft(void)
 {
 	return NETBUFFER_MAXDATA - (netbuffer.cursor - netbuffer.msg.data);
 }
 
-boolean Msg_End()
+boolean Msg_End(void)
 {
 	return (netbuffer.cursor-netbuffer.msg.data >= netbuffer.length);
 }
