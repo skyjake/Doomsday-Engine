@@ -52,12 +52,13 @@ void DXError(const char *funcName)
 //===========================================================================
 boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 {
-	D3DDISPLAYMODE mode;
+	D3DDISPLAYMODE mode, fallback;
 	int i, num = d3d->GetAdapterModeCount(adapter);
 	int targetBits = (!wantedColorDepth? window->bits : wantedColorDepth);
 	int found = false;
 
 	memset(match, 0, sizeof(*match));
+	memset(&fallback, 0, sizeof(fallback));
 
 	DP("GetMode:");
 	DP("Requesting: %i x %i x %i", window->width, window->height, targetBits);
@@ -82,16 +83,26 @@ boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 					&& (mode.Format == D3DFMT_X8R8G8B8 
 						|| mode.Format == D3DFMT_A8R8G8B8)))
 		{
-			// This might be the one!
-			found = true;
+			// This is at least a match.
+			memcpy(&fallback, &mode, sizeof(mode));
 
 			// If the refresh rate is closer, use it.
 			if(abs(wantedRefresh - mode.RefreshRate)
-				< abs(wantedRefresh - match->RefreshRate))
+				<= abs(wantedRefresh - match->RefreshRate))
 			{
+				// This might be the one!
+				found = true;
+
 				memcpy(match, &mode, sizeof(mode));
 			}
 		}
+	}
+
+	if(!found)
+	{
+		// Let's try the fallback.
+		memcpy(match, &fallback, sizeof(fallback));
+		found = true;
 	}
 
 	return found;

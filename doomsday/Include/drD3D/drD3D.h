@@ -18,8 +18,8 @@
 #include "../dglib.h"
 
 #define DRD3D_VERSION		203
-#define DRD3D_VERSION_TEXT	"2.0.3"
-#define DRD3D_VERSION_FULL	"DGL Direct3D 8 Driver Version "DRD3D_VERSION_TEXT" ("__DATE__")"
+#define DRD3D_VERSION_TEXT	"2.0.4"
+#define DRD3D_VERSION_FULL	"DGL Direct3D8 Driver Version "DRD3D_VERSION_TEXT" ("__DATE__")"
 
 #define	CLAMP01(f)			{ if(f < 0) f = 0; if(f > 1) f = 1; }
 #define SetRS(x, y)			dev->SetRenderState(x, y)
