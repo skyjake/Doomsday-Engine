@@ -39,6 +39,7 @@ void R_PrepareSubsector(subsector_t *sub);
 char currentLevelId[64];
 
 sectorinfo_t *secinfo;
+lineinfo_t *lineinfo;
 vertexowner_t *vertexowners;
 nodeindex_t *linelinks;			// indices to roots
 
@@ -959,15 +960,18 @@ void R_SetupSky(void)
 // R_InitLines
 //	Calculate accurate lengths for all lines.
 //===========================================================================
-void R_InitLines(void)
+void R_InitLineInfo(void)
 {
 	line_t *line;
 	int	i;
 
+	// Allocate memory for the line info.
+	lineinfo = Z_Malloc(sizeof(lineinfo_t) * numlines, PU_LEVEL, NULL);
+
 	for(i = 0; i < numlines; i++)
 	{
 		line = LINE_PTR(i);
-		line->length = P_AccurateDistance(line->dx, line->dy);
+		lineinfo[i].length = P_AccurateDistance(line->dx, line->dy);
 	}
 }
 
@@ -1044,7 +1048,7 @@ void R_SetupLevel(char *level_id, int flags)
 	// Make sure subsector floors and ceilings will be rendered correctly.
 	R_SubsectorPlanes();
 	R_InitSectorInfo();
-	R_InitLines();
+	R_InitLineInfo();
 	Con_Progress(10, 0);
 
 	if(flags & DDSLF_FIX_SKY) R_SkyFix();

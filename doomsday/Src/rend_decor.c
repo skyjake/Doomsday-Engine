@@ -330,6 +330,7 @@ void Rend_DecorateLineSection
 	(line_t *line, side_t *side, int texture, float top, float bottom,
 	 float texOffY)
 {
+	lineinfo_t *linfo = &lineinfo[GET_LINE_IDX(line)];
 	ded_decor_t *def;
 	ded_decorlight_t *lightDef;
 	vertex_t *v1, *v2;
@@ -338,7 +339,7 @@ void Rend_DecorateLineSection
 	int i, skip[2];
 
 	// Is this a valid section?
-	if(bottom > top || line->length == 0) return;
+	if(bottom > top || linfo->length == 0) return;
 
 	// Should this be decorated at all?
 	if(!(def = Rend_GetTextureDecoration(texture))) return;
@@ -356,8 +357,8 @@ void Rend_DecorateLineSection
 
 	delta[VX]  = FIX2FLT(v2->x - v1->x);
 	delta[VY]  = FIX2FLT(v2->y - v1->y);
-	normal[VX] = delta[VY] / line->length;
-	normal[VY] = -delta[VX] / line->length;
+	normal[VX] = delta[VY] / linfo->length;
+	normal[VY] = -delta[VX] / linfo->length;
 
 	// Height of the section.
 	lh = top - bottom;
@@ -388,7 +389,7 @@ void Rend_DecorateLineSection
 		h = lightDef->pos[VX] - FIX2FLT(side->textureoffset)
 			- texw * lightDef->pattern_offset[VX];
 		while(h > texw) h -= texw;
-		for(; h < line->length; h += texw * skip[VX])
+		for(; h < linfo->length; h += texw * skip[VX])
 		{
 			if(h < 0) continue;
 			v = lightDef->pos[VY] - FIX2FLT(side->rowoffset)
@@ -400,9 +401,9 @@ void Rend_DecorateLineSection
 				if(v < 0) continue;
 				// Let there be light.
 				pos[VX] = FIX2FLT(v1->x) + lightDef->elevation * normal[VX]
-					+ delta[VX] * h/line->length;
+					+ delta[VX] * h/linfo->length;
 				pos[VY] = FIX2FLT(v1->y) + lightDef->elevation * normal[VY]
-					+ delta[VY] * h/line->length;
+					+ delta[VY] * h/linfo->length;
 				pos[VZ] = top - v;
 				Rend_AddLightDecoration(pos, lightDef, brightMul, true);
 			}
