@@ -261,6 +261,7 @@ typedef unsigned angle_t;
 
 #define FIX2FLT(x)		( (x) / (float) FRACUNIT )
 #define Q_FIX2FLT(x)	( (float)((x)>>FRACBITS) )
+#define FLT2FIX(x)		( (fixed_t) ((x)*FRACUNIT) )
 
 #ifndef NO_FIXED_ASM
 
