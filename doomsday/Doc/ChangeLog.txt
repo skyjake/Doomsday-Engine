@@ -26,6 +26,9 @@ jHexen:
 + cvar 'hud-scale': scaling factor for HUD graphics and messages
 
 Win32:
++ option '-nostwin': don't show the startup message dialog (quicker 
+  startup)
+* crashes are handled more gracefully
 - fixed: vcbuild.bat didn't include resources in Doomsday.exe and 
   drD3D.dll, which meant that the startup window and the drD3D config 
   dialog were missing
