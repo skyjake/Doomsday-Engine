@@ -514,3 +514,22 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
 	}
 	return blocked;
 }
+
+//===========================================================================
+// PO_GetNumForDegen
+//	Returns the index of the polyobj that owns the degenmobj.
+//	Returns -1 if nothing is found.
+//===========================================================================
+int PO_GetNumForDegen(void *degenMobj)
+{
+	int i;
+
+	for(i = 0; i < po_NumPolyobjs; i++)
+	{
+		if(&PO_PTR(i)->startSpot == degenMobj)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
