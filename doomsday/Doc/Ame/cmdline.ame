@@ -315,7 +315,15 @@ $--------------------------------------------------------------------
 	patches. This is checked first, so it can be used for
 	overriding resources in the normal @file{Patches}
 	directory.
-
+@row
+	@opt{-lmdir P} @tab @tab
+	Sets the directory where light map resources are loaded.
+	Defaults to @file{Data\<Game>\LightMaps}.
+@row
+	@opt{-lmdir2 P} @tab @tab
+	Secondary directory for light maps resources. This is
+	checked first, so it can be used for overriding
+	resources in the normal @file{LightMaps} directory.
 }
 
 
