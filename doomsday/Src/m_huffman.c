@@ -317,7 +317,7 @@ void Huff_Init(void)
 	Huff_CheckBuffer(&huffEnc, 0x10000);
 	Huff_CheckBuffer(&huffDec, 0x10000);
 
-#ifdef PRINT_CODES
+	if(ArgExists("-huffcodes"))
 	{
 		double realBits = 0;
 		double huffBits = 0;
@@ -337,7 +337,6 @@ void Huff_Init(void)
 		Con_Printf("realbits=%f, huffbits=%f (%f%%)\n", realBits, huffBits,
 			huffBits/realBits*100);
 	}
-#endif
 }
 
 /*
