@@ -1118,7 +1118,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		if(strafe || (!cfg.usemlook && !actions[A_MLOOK].on) ||
 		   players[consoleplayer].playerstate == PST_DEAD)
 		{
-			forward += mousey * elapsedTics;
+			forward += 8 * mousey * elapsedTics;
 		}
 		else
 		{

@@ -309,7 +309,7 @@ void H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 		// In the realistic mode, halos are slightly dimmer.
 		if(haloRealistic)
 		{
-			color[CA] *= .8f;
+			color[CA] *= .6f;
 		}
 		
 		gl.Color4fv(color);
