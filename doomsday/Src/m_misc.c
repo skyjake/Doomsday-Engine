@@ -267,7 +267,7 @@ byte M_Random(void)
 		rndindex = 0;
 		rndindex2++;
 	}
-	return rndtable[(++rndindex) & 0xff] + rndtable[rndindex2 & 0xff];
+	return rndtable[(++rndindex) & 0xff] ^ rndtable[rndindex2 & 0xff];
 }
 
 float M_FRandom(void)
