@@ -46,6 +46,17 @@ static fixed_t	PolyStartY;
 
 // CODE --------------------------------------------------------------------
 
+//===========================================================================
+// PO_SetDestination
+//===========================================================================
+void PO_SetDestination
+	(polyobj_t *poly, fixed_t dist, angle_t angle, fixed_t speed)
+{
+	poly->dest.x = poly->startSpot.x + FixedMul(dist, finecosine[angle]);
+	poly->dest.y = poly->startSpot.y + FixedMul(dist, finesine[angle]);
+	poly->speed = speed;
+}
+
 // ===== Polyobj Event Code =====
 
 //==========================================================================
@@ -225,6 +236,8 @@ void T_MovePoly(polyevent_t *pe)
 	}
 }
 
+
+
 //==========================================================================
 //
 // EV_MovePoly
@@ -275,9 +288,10 @@ boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight, boolean
 	SN_StartSequence((mobj_t *)&poly->startSpot, SEQ_DOOR_STONE +
 		poly->seqType);
 
-	poly->dest.x = poly->startSpot.x + FixedMul(pe->dist, finecosine[pe->angle]);
+	/*poly->dest.x = poly->startSpot.x + FixedMul(pe->dist, finecosine[pe->angle]);
 	poly->dest.y = poly->startSpot.y + FixedMul(pe->dist, finesine[pe->angle]);
-	poly->speed = pe->speed;
+	poly->speed = pe->speed;*/
+	PO_SetDestination(poly, pe->dist, pe->angle, pe->speed);
 
 	while(mirror = GetPolyobjMirror(polyNum))
 	{
@@ -308,9 +322,11 @@ boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight, boolean
 		SN_StartSequence((mobj_t *)&poly->startSpot, SEQ_DOOR_STONE +
 			poly->seqType);
 
-		poly->dest.x = poly->startSpot.x + FixedMul(pe->dist, finecosine[pe->angle]);
+		/*poly->dest.x = poly->startSpot.x + FixedMul(pe->dist, finecosine[pe->angle]);
 		poly->dest.y = poly->startSpot.y + FixedMul(pe->dist, finesine[pe->angle]);
-		poly->speed = pe->speed;
+		poly->speed = pe->speed;*/
+
+		PO_SetDestination(poly, pe->dist, pe->angle, pe->speed);
 	}
 	return true;
 }
@@ -333,6 +349,10 @@ void T_PolyDoor(polydoor_t *pd)
 			poly = GetPolyobj(pd->polyobj);
 			SN_StartSequence((mobj_t *)&poly->startSpot, SEQ_DOOR_STONE+
 				poly->seqType);
+
+			// Movement is about to begin. Update the destination.
+			PO_SetDestination(GetPolyobj(pd->polyobj), pd->dist,
+				pd->direction, pd->speed);
 		}
 		return;
 	}
@@ -355,7 +375,7 @@ void T_PolyDoor(polydoor_t *pd)
 						pd->direction = (ANGLE_MAX>>ANGLETOFINESHIFT)-
 							pd->direction;
 						pd->xSpeed = -pd->xSpeed;
-						pd->ySpeed = -pd->ySpeed;					
+						pd->ySpeed = -pd->ySpeed;
 					}
 					else
 					{
@@ -377,11 +397,14 @@ void T_PolyDoor(polydoor_t *pd)
 				}
 				else
 				{ // open back up
-					pd->dist = pd->totalDist-pd->dist;
+					pd->dist = pd->totalDist - pd->dist;
 					pd->direction = (ANGLE_MAX>>ANGLETOFINESHIFT)-
 						pd->direction;
 					pd->xSpeed = -pd->xSpeed;
 					pd->ySpeed = -pd->ySpeed;
+					// Update destination.
+					PO_SetDestination(GetPolyobj(pd->polyobj), pd->dist, 
+						pd->direction, pd->speed);
 					pd->close = false;
 					SN_StartSequence((mobj_t *)&poly->startSpot,
 						SEQ_DOOR_STONE+poly->seqType);
@@ -498,6 +521,7 @@ boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
 	}
 
 	poly->specialdata = pd;
+	PO_SetDestination(poly, pd->dist, pd->direction, pd->speed);
 
 	while(mirror = GetPolyobjMirror(polyNum))
 	{
@@ -537,6 +561,7 @@ boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
 				poly->seqType);
 		}
 		polyNum = mirror;
+		PO_SetDestination(poly, pd->dist, pd->direction, pd->speed);
 	}
 	return true;
 }
