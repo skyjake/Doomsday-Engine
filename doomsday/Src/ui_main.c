@@ -1496,7 +1496,8 @@ int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
 				tx = x;
 				ty += ui_fonthgt;
 			}
-			if(ty + ui_fonthgt > y + h) return ty; // Can't print any more.
+			// Can't print any more? (always print the 1st line)
+			if(ty + ui_fonthgt > y + h && ty != y) return ty; 
 			FR_TextOut(word, tx, ty);
 			tx += len;
 			wp = word;
@@ -1704,6 +1705,25 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
 			UI_COL(UIC_TEXT), UI_COL(UIC_TEXT), UI_COL(UIC_TEXT),
 			alpha * (disabled? .2f : 1));
 		break;
+	}
+}
+
+//===========================================================================
+// UI_DrawHelpBox
+//===========================================================================
+void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
+{
+	int bor = UI_BUTTON_BORDER;
+
+	UI_DrawRectEx(x, y, w, h, bor, UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), 
+		UI_COL(UIC_BRD_LOW), alpha);
+	UI_Gradient(x + bor, y + bor, w - 2*bor, h - 2*bor, 
+		UI_COL(UIC_HELP), UI_COL(UIC_HELP),	alpha, alpha);
+
+	if(text)
+	{
+		UI_TextOutWrapEx(text, x + 2*bor, y + 2*bor, w - 4*bor, h - 4*bor, 
+			UI_COL(UIC_TEXT), alpha);
 	}
 }
 
