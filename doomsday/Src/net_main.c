@@ -16,7 +16,7 @@
  */
 
 /*
- * net_main.h: Network Subsystem
+ * net_main.c: Network Subsystem
  *
  * Client/server networking. 
  * Player number zero is always the server.

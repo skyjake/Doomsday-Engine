@@ -16,7 +16,7 @@
  */
 
 /*
- * m_huffman.h: Huffman Codes
+ * m_huffman.c: Huffman Codes
  *
  * Huffman encoding/decoding using predetermined, fixed frequencies.
  * NOT THREAD-SAFE (static buffers used for storing data)
