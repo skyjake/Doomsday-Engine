@@ -459,7 +459,10 @@ void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
         // Rotate the normal vector so that it approximates the
         // model's orientation compared to the viewer.
         M_RotateVector(rotatedNormal, (shinyPnt + normYaw) * 360,
-                       (shinyAng + normPitch) * 360);
+                       (shinyAng + normPitch - .5f) * 180);
+
+        // TODO: Check the pitch angle!!!
+        //printf("sp=%f\n", shinyAng + normPitch);
         
         u = (rotatedNormal[VX] + 1);
         v = rotatedNormal[VZ];
