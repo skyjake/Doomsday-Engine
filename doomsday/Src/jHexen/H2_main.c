@@ -60,10 +60,9 @@ int HU_PSpriteYOffset(player_t *pl);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void H2_ProcessEvents(void);
-void H2_DoAdvanceDemo(void);
+/*void H2_DoAdvanceDemo(void);
 void H2_AdvanceDemo(void);
-void H2_StartTitle(void);
-void H2_PageTicker(void);
+void H2_PageTicker(void);*/
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -114,9 +113,8 @@ int startmap;
 // Network games parameters.
 
 boolean autostart;
-boolean advancedemo;
+//boolean advancedemo;
 FILE *debugfile;
-//int screenblocks=10;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -206,7 +204,7 @@ void H2_PreInit(void)
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.sbarscale = 20;
 //	cfg.messageson = true;
-	cfg.dclickuse = true;
+	cfg.dclickuse = false;
 	cfg.mouseSensiX = 8;
 	cfg.mouseSensiY = 8;
 //	cfg.joydead = 10;
@@ -352,7 +350,7 @@ void H2_PostInit(void)
 		}
 		else
 		{
-			H2_StartTitle();
+			G_StartTitle();
 		}
 	}
 }
@@ -516,7 +514,7 @@ static void ExecOptionDEVMAPS(char **args, int tag)
 }
 
 
-long superatol(char *s)
+/*long superatol(char *s)
 {
 	long int n=0, r=10, x, mul=1;
 	char *c=s;
@@ -544,7 +542,7 @@ long superatol(char *s)
 	}
 	return(mul*n);
 }
-
+*/
 
 /*static void ExecOptionMAXZONE(char **args, int tag)
 {
@@ -564,7 +562,7 @@ long superatol(char *s)
 // Called after each demo or intro demosequence finishes.
 //
 //==========================================================================
-
+/*
 void H2_AdvanceDemo(void)
 {
 	advancedemo = true;
@@ -582,7 +580,7 @@ void H2_StartTitle(void)
 	demosequence = -1;
 	H2_AdvanceDemo();
 }
-
+*/
 //==========================================================================
 //
 // CheckRecordFrom
@@ -625,7 +623,7 @@ void H2_StartTitle(void)
 
 void H2_Ticker(void)
 {
-	if(advancedemo) H2_DoAdvanceDemo();
+	//if(advancedemo) H2_DoAdvanceDemo();
 	MN_Ticker();
 	G_Ticker();
 }
