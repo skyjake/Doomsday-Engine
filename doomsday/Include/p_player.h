@@ -36,7 +36,7 @@ typedef struct playerclass_s {
 	fixed_t sideMove[2];
 	fixed_t upMove[2];			// Vertical flying speed.
 	fixed_t startTurnSpeed[2];	// Initial (normal + speed).
-	fixed_t turnSpeed[2]		// Continued (normal + speed).
+	fixed_t turnSpeed[2];		// Continued (normal + speed).
 } playerclass_t;
 
 int P_LocalToConsole(int localPlayer);
