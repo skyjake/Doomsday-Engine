@@ -25,7 +25,6 @@
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
-#include "m_fixed.h"
 #include "tables.h"
 
 
@@ -78,6 +77,9 @@ typedef struct
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:31  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:18:36  skyjake
 // Initial checkin
 //

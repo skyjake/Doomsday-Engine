@@ -11,7 +11,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "doomdef.h"
-#include "i_system.h"
 #include "p_local.h"
 #include "doomstat.h"
 #include "r_state.h"

@@ -26,16 +26,8 @@
 
 #include "v_video.h"
 
-#include "f_finale.h"
-#include "f_wipe.h"
-
 #include "m_argv.h"
-#include "m_misc.h"
 #include "m_menu.h"
-
-#include "i_system.h"
-//#include "i_sound.h"
-#include "i_video.h"
 
 #include "g_game.h"
 #include "g_common.h"
@@ -47,8 +39,7 @@
 #include "am_map.h"
 #include "p_setup.h"
 #include "p_saveg.h"
-#include "r_local.h"
-#include "r_sky.h"
+#include "r_main.h"
 #include "d_main.h"
 #include "d_items.h"
 #include "m_bams.h"

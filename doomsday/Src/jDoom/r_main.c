@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:33  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:22:06  skyjake
 // Initial checkin
 //
@@ -37,16 +40,9 @@ static const char rcsid[] = "$Id$";
 #include <stdlib.h>
 #include <math.h>
 
-
 #include "doomdef.h"
-//#include "d_net.h"
-
-#include "m_bbox.h"
-
 #include "r_local.h"
 #include "r_sky.h"
-
-
 
 
 
@@ -119,15 +115,8 @@ angle_t			xtoviewangle[SCREENWIDTH+1];
 fixed_t*		finecosine = &finesine[FINEANGLES/4];
 
 
-lighttable_t*		scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
-lighttable_t*		scalelightfixed[MAXLIGHTSCALE];
-lighttable_t*		zlight[LIGHTLEVELS][MAXLIGHTZ];
-
 // bumped light from gun blasts
 int			extralight;			
-
-
-
 
 
 

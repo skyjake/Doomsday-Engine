@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:32  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:21:57  skyjake
 // Initial checkin
 //
@@ -36,8 +39,6 @@ rcsid[] = "$Id$";
 
 #include <stdlib.h>
 
-
-#include "m_bbox.h"
 
 #include "doomdef.h"
 #include "p_local.h"

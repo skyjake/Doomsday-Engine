@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:32  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:21:48  skyjake
 // Initial checkin
 //
@@ -49,11 +52,9 @@ rcsid[] = "$Id$";
 #include "d_main.h"
 #include "d_config.h"
 
-#include "i_system.h"
-#include "i_video.h"
 #include "v_video.h"
 
-#include "r_local.h"
+#include "r_main.h"
 #include "p_saveg.h"
 
 #include "hu_stuff.h"

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:33  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:22:09  skyjake
 // Initial checkin
 //
@@ -41,8 +44,6 @@ rcsid[] = "$Id$";
 #include "doomdef.h"
 #include "d_config.h"
 
-#include "i_system.h"
-#include "i_video.h"
 #include "m_random.h"
 
 #include "g_game.h"
@@ -1582,7 +1583,6 @@ void ST_Init (void)
 {
     veryfirsttime = 0;
     ST_loadData();
-    screens[4] = (byte *) Z_Malloc(ST_WIDTH*ST_HEIGHT, PU_STATIC, 0);
 }
 
 

@@ -36,16 +36,12 @@
 #ifndef __TABLES__
 #define __TABLES__
 
+#include "doomsday.h"
 
-
-#ifdef LINUX
-#include <math.h>
-#else
 #define PI				3.141592657
-#endif
 
 
-#include "m_fixed.h"
+//#include "m_fixed.h"
 	
 #define FINEANGLES		8192
 #define FINEMASK		(FINEANGLES-1)
@@ -96,11 +92,10 @@ SlopeDiv
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:31  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:18:49  skyjake
 // Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:14  Jaakko
-// Added all headers
-//
 //
 //-----------------------------------------------------------------------------

@@ -5,7 +5,6 @@
 #include "wi_stuff.h"
 #include "hu_stuff.h"
 #include "hu_pspr.h"
-#include "f_finale.h"
 #include "am_map.h"
 #include "r_local.h"
 #include "d_config.h"

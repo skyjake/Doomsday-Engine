@@ -16,7 +16,6 @@
 #include "f_infine.h"
 
 #ifdef __JDOOM__
-#include "i_system.h"
 #include "p_local.h"
 #include "g_game.h"
 #include "doomstat.h"

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:33  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:22:08  skyjake
 // Initial checkin
 //
@@ -34,9 +37,6 @@
 static const char
 rcsid[] = "$Id$";
 
-
-// Needed for FRACUNIT.
-#include "m_fixed.h"
 
 // Needed for Flat retrieval.
 #include "r_data.h"

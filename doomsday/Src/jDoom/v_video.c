@@ -1,57 +1,8 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log$
-// Revision 1.1  2003/02/26 19:22:09  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:11:48  Jaakko
-// Added Doomsday sources
-//
-//
-// DESCRIPTION:
-//	Gamma correction LUT stuff.
-//	Functions to draw patches (by post) directly to screen.
-//	Functions to blit a block to the screen.
-//
-//-----------------------------------------------------------------------------
-
-
-static const char
-rcsid[] = "$Id$";
-
-
-#include "i_system.h"
-#include "r_local.h"
+/* $Id$
+ * Old software gamma table.
+ */
 
 #include "doomdef.h"
-#include "doomdata.h"
-
-#include "m_bbox.h"
-#include "m_swap.h"
-
-#include "v_video.h"
-
-
-// Each screen is [SCREENWIDTH*SCREENHEIGHT]; 
-byte*				screens[5];	
- 
-int				dirtybox[4]; 
-
-
 
 // Now where did these came from?
 byte gammatable[5][256] =
@@ -137,8 +88,6 @@ byte gammatable[5][256] =
      243,243,244,244,245,245,246,246,247,247,248,248,249,249,250,250,251,
      251,252,252,253,254,254,255,255}
 };
-
-
 
 int	usegamma;
 			 

@@ -29,7 +29,7 @@
 
 // Some more or less basic data types
 // we depend on.
-#include "m_fixed.h"
+//#include "m_fixed.h"
 
 // We rely on the thinker data struct
 // to handle sound origins in sectors.
@@ -420,6 +420,9 @@ typedef struct
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:31  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:18:41  skyjake
 // Initial checkin
 //

@@ -508,10 +508,6 @@ SOURCE=.\Include\JDoom\d_player.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JDoom\d_textur.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\JDoom\d_think.h
 # End Source File
 # Begin Source File
@@ -540,14 +536,6 @@ SOURCE=.\Include\JDoom\dstrings.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JDoom\f_finale.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\f_wipe.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\JDoom\g_game.h
 # End Source File
 # Begin Source File
@@ -564,18 +552,6 @@ SOURCE=.\Include\JDoom\hu_stuff.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JDoom\i_net.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\i_system.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\i_video.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\JDoom\info.h
 # End Source File
 # Begin Source File
@@ -584,15 +560,7 @@ SOURCE=.\Include\JDoom\m_argv.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JDoom\m_bbox.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\JDoom\m_cheat.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\m_fixed.h
 # End Source File
 # Begin Source File
 
@@ -616,22 +584,6 @@ SOURCE=.\Include\JDoom\Mn_def.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JDoom\r_bsp.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\r_data.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\r_defs.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\r_draw.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\JDoom\r_local.h
 # End Source File
 # Begin Source File
@@ -640,23 +592,7 @@ SOURCE=.\Include\JDoom\r_main.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JDoom\r_plane.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\r_segs.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\JDoom\r_sky.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\r_state.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\r_things.h
 # End Source File
 # Begin Source File
 
@@ -684,19 +620,11 @@ SOURCE=.\Include\JDoom\v_video.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JDoom\w_wad.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\JDoom\wi_stuff.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\Include\Common\x_hair.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\JDoom\z_zone.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

@@ -286,21 +286,8 @@ enum {VX, VY, VZ};	// Vertex indices.
 void D_SetPlayerPtrs(void);
 char *D_Get(int id);
 
+enum {BOXTOP,BOXBOTTOM,BOXLEFT,BOXRIGHT};	// bbox coordinates
+
+#define validcount		(*gi.validcount)
+
 #endif          // __DOOMDEF__
-//-----------------------------------------------------------------------------
-//
-// $Log$
-// Revision 1.1  2003/02/26 19:18:26  skyjake
-// Initial checkin
-//
-// Revision 1.2.2.1  2002/12/02 19:17:09  Jaakko
-// Changed version.
-//
-// Revision 1.2  2002/10/14 07:53:33  Jaakko
-// Release 1.7.5
-//
-// Revision 1.1  2002/09/29 01:04:12  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------

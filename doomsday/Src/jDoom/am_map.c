@@ -17,7 +17,6 @@
 #include "p_local.h"
 
 #include "m_cheat.h"
-#include "i_system.h"
 
 // State.
 #include "doomstat.h"

@@ -6,7 +6,6 @@
 #include "../JDoom/s_sound.h"
 #include "../JDoom/d_config.h"
 #include "../JDoom/g_game.h"
-#include "../JDoom/f_finale.h"
 #include "../JDoom/st_stuff.h"
 #include "../JDoom/wi_stuff.h"
 #include "../JDoom/am_map.h"

@@ -25,7 +25,6 @@
 
 // Basics.
 #include "tables.h"
-#include "m_fixed.h"
 
 // We need the thinker_t stuff.
 #include "d_think.h"
@@ -272,6 +271,9 @@ typedef struct mobj_s
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:31  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:18:32  skyjake
 // Initial checkin
 //

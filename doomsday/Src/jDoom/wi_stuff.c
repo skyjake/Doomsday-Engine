@@ -13,7 +13,6 @@
 #include "doomdef.h"
 #include "m_random.h"
 #include "m_swap.h"
-#include "i_system.h"
 #include "g_game.h"
 #include "r_local.h"
 #include "s_sound.h"

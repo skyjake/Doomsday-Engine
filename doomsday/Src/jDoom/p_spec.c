@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/02/27 23:14:32  skyjake
+// Obsolete jDoom files removed
+//
 // Revision 1.1  2003/02/26 19:22:01  skyjake
 // Initial checkin
 //
@@ -40,7 +43,6 @@ rcsid[] = "$Id$";
 #include "doomstat.h"
 #include "d_config.h"
 
-#include "i_system.h"
 #include "m_argv.h"
 #include "m_random.h"
 
