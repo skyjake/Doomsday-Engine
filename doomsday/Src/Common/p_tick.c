@@ -49,14 +49,22 @@ int TimerGame;
 
 // CODE --------------------------------------------------------------------
 
+/*
+ * Returns true if the game is currently paused.
+ */
+boolean P_IsPaused(void)
+{
+#if __JDOOM__
+	return paused || (!IS_NETGAME && menuactive);
+#else
+	return paused;
+#endif
+}
+
 // This is called at all times, no matter gamestate.
 void P_RunPlayers(void)
 {
-#if __JDOOM__
-	boolean pausestate = paused || (!IS_NETGAME && menuactive);
-#else
-	boolean pausestate = paused;
-#endif
+	boolean pausestate = P_IsPaused();
 	int	i;
 
 	// This is not for clients.
@@ -82,7 +90,7 @@ void P_RunPlayers(void)
 				}
 
 				// Local players run one tic at a time.
-				/*if(players[i].plr->flags & DDPF_LOCAL) break;*/
+				if(players[i].plr->flags & DDPF_LOCAL) break;
 			}
 		}
 }
