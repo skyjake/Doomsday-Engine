@@ -3226,26 +3226,6 @@ static void registerVariables(void)
 	// Network
 	C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0,
 				  "Your name in multiplayer games.");
-	C_VAR_INT("net-protocol", &nptActive, 0, 0, 3,
-			  "Network protocol: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial link.");
-	C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0,
-				  "TCP/IP address for searching servers.");
-	C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0,
-			  "TCP/IP port to use for all data traffic on this computer.");
-	C_VAR_INT("net-modem", &nptModem, CVF_NO_MAX, 0, 0,
-			  "Index of the selected modem.");
-	C_VAR_CHARPTR("net-modem-phone", &nptPhoneNum, 0, 0, 0,
-				  "Phone number to dial to when connecting.");
-	C_VAR_INT("net-serial-port", &nptSerialPort, CVF_NO_MAX, 0, 0,
-			  "COM port to use for serial link connection.");
-	C_VAR_INT("net-serial-baud", &nptSerialBaud, CVF_NO_MAX, 0, 0,
-			  "Baud rate for serial link connections.");
-	C_VAR_INT("net-serial-stopbits", &nptSerialStopBits, 0, 0, 2,
-			  "0=1 bit, 1=1.5 bits, 2=2 bits.");
-	C_VAR_INT("net-serial-parity", &nptSerialParity, 0, 0, 3,
-			  "0=None, 1=odd, 2=even, 3=mark parity.");
-	C_VAR_INT("net-serial-flowctrl", &nptSerialFlowCtrl, 0, 0, 4,
-			  "0=None, 1=XON/XOFF, 2=RTS, 3=DTR, 4=RTS/DTR flow control.");
 	C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0,
 				  "Master server IP address / name.");
 	C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535,

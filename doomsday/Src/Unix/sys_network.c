@@ -144,6 +144,34 @@ static foundhost_t located;
 
 // CODE --------------------------------------------------------------------
 
+void N_Register(void)
+{
+	C_VAR_INT("net-protocol", &nptActive, 0, 0, 3,
+			  "Network protocol: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial link.");
+	C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0,
+				  "TCP/IP address for searching servers.");
+	C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0,
+			  "TCP port to use for control connections.");
+	C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0,
+			  "TCP port to use for control connections.");
+	C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0,
+			  "UDP port to use for client data traffic.");
+	C_VAR_INT("net-modem", &nptModem, CVF_NO_MAX, 0, 0,
+			  "Index of the selected modem.");
+	C_VAR_CHARPTR("net-modem-phone", &nptPhoneNum, 0, 0, 0,
+				  "Phone number to dial to when connecting.");
+	C_VAR_INT("net-serial-port", &nptSerialPort, CVF_NO_MAX, 0, 0,
+			  "COM port to use for serial link connection.");
+	C_VAR_INT("net-serial-baud", &nptSerialBaud, CVF_NO_MAX, 0, 0,
+			  "Baud rate for serial link connections.");
+	C_VAR_INT("net-serial-stopbits", &nptSerialStopBits, 0, 0, 2,
+			  "0=1 bit, 1=1.5 bits, 2=2 bits.");
+	C_VAR_INT("net-serial-parity", &nptSerialParity, 0, 0, 3,
+			  "0=None, 1=odd, 2=even, 3=mark parity.");
+	C_VAR_INT("net-serial-flowctrl", &nptSerialFlowCtrl, 0, 0, 4,
+			  "0=None, 1=XON/XOFF, 2=RTS, 3=DTR, 4=RTS/DTR flow control.");
+}
+
 /*
  * A UDP transmitter thread takes messages off a network node's send
  * queue and sends them one by one. On serverside, each client has its
@@ -608,13 +636,13 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 
 	if(inServerMode)
 	{
-		port = nptIPPort;
-		if(!port)
+		if(!nptIPPort)
 			port = defaultTCPPort;
+		else
+			port = nptIPPort;
 
 		VERBOSE(Con_Message
-				("N_InitService: Listening TCP socket on " "port %i.\n",
-				 port));
+				("N_InitService: Listening TCP socket on port %i.\n", port));
 
 		// Open a listening TCP socket. It will accept client
 		// connections.
@@ -661,7 +689,7 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 
 	// Open the socket that will be used for UDP communications.
 	recvUDPPort =
-		N_OpenUDPSocket((UDPsocket *) & inSock, nptUDPPort, defaultUDPPort);
+		N_OpenUDPSocket((UDPsocket *) &inSock, nptUDPPort, defaultUDPPort);
 	VERBOSE(Con_Message
 			("N_InitService: Incoming UDP port %i.\n", recvUDPPort));
 
@@ -673,6 +701,8 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 	// Did we fail in opening the UDP port?
 	if(!inSock)
 	{
+		Con_Message("N_InitService: Failed to open incoming UDP port.\n");
+		Con_Message("  %s\n", SDLNet_GetError());
 		N_ShutdownService();
 		return false;
 	}

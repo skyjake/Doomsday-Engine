@@ -72,6 +72,7 @@ extern          "C" {
 	extern int      masterPort;
 	extern char    *masterPath;
 
+	void		    N_Register(void);
 	void            N_SystemInit(void);
 	void            N_SystemShutdown(void);
 	boolean         N_InitService(serviceprovider_t provider,
