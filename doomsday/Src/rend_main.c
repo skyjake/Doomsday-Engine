@@ -6,7 +6,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#define DD_PROFILE
+//#define DD_PROFILE
 
 #include <stdio.h>
 #include <stdlib.h>

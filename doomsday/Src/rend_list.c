@@ -18,7 +18,7 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 
-#define DD_PROFILE
+//#define DD_PROFILE
 #include "m_profiler.h"
 
 // MACROS ------------------------------------------------------------------
