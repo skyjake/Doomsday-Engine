@@ -1845,12 +1845,12 @@ unsigned int GL_PrepareSky(int idx, boolean zeroMask)
 	boolean	RGBData, masked, alphaChannel;
 
 	if(idx > numtextures-1) return 0;
-
+/*
 #if _DEBUG
 	if(idx != texturetranslation[idx])
 		Con_Error("Skytex: %d, translated: %d\n", idx, texturetranslation[idx]);
 #endif
-	
+*/
 	idx = texturetranslation[idx];
 	
 	if(!textures[idx]->tex)
