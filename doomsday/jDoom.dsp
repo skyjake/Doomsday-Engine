@@ -542,6 +542,14 @@ SOURCE=.\Include\JDoom\dstrings.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Include\Common\f_infine.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\Common\g_common.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\JDoom\g_game.h
 # End Source File
 # Begin Source File
