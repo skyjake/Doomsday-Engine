@@ -1035,6 +1035,12 @@ void R_SetupLevel(char *level_id, int flags)
 		// appear that no time has passed during the setup.
 		Net_ResetTimer();
 
+		// Kill all local commands.
+		for(i = 0; i < MAXPLAYERS; i++)
+		{
+			clients[i].numtics = 0;
+		}
+
 		// Reset the level tick timer.
 		leveltic = 0;
 		return;
