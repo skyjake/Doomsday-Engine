@@ -274,7 +274,7 @@ void G_Drawer(void)
 				if(!iscam) X_Drawer(); // Draw the crosshair.
 				R_DrawMapTitle();
 			}
-			GL_Update(DDUF_FULLVIEW);
+			GL_Update(DDUF_FULLSCREEN);
 			if(!iscam) SB_Drawer(); // $democam
 			// We'll draw the chat text *after* the status bar to
 			// be a bit clearer.
