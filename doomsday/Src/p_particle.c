@@ -457,6 +457,24 @@ spawn_failed:
 }
 
 //===========================================================================
+// PIT_ClientMobjParticles
+//	Callback for the client mobj iterator, called from P_ManyNewParticles.
+//===========================================================================
+boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
+{
+	ptcgen_t *gen = parm;
+
+	if(cmo->mo.type != gen->type && cmo->mo.type != gen->type2) 
+	{
+		// Type mismatch.
+		return true;
+	}
+	gen->source = &cmo->mo;
+	P_NewParticle(gen);
+	return true;
+}
+
+//===========================================================================
 // P_ManyNewParticles
 //	Spawn multiple new particles using all applicable sources.
 //===========================================================================
@@ -464,19 +482,11 @@ void P_ManyNewParticles(ptcgen_t *gen)
 {
 	thinker_t	*it;
 	mobj_t		*mo;
-	clmobj_t	*clmo;
 
 	// Client's should also check the client mobjs.
 	if(isClient)
 	{
-		for(clmo = cmRoot.next; clmo != &cmRoot; clmo = clmo->next)
-		{
-			// Type match?
-			if(clmo->mo.type != gen->type 
-				&& clmo->mo.type != gen->type2) continue;
-			gen->source = &clmo->mo;
-			P_NewParticle(gen);
-		}
+		Cl_MobjIterator(PIT_ClientMobjParticles, gen);
 	}
 
 	// Scan all thinkers. 
