@@ -16,6 +16,11 @@ typedef struct
 	DGLubyte rgb[3];
 } gl_rgb_t;
 
+typedef struct
+{
+	DGLubyte rgba[4];
+} gl_rgba_t;
+
 // A 2-vertex with texture coordinates, using floats
 typedef struct
 {
@@ -177,6 +182,8 @@ enum
 	DGL_WIDTH,
 	DGL_HEIGHT,
 	DGL_ENV_COLOR,
+	DGL_ENV_ALPHA,
+	DGL_GRAY_MIPMAP,
 
 	// Various bits
 	DGL_COLOR_BUFFER_BIT		= 0x1,
