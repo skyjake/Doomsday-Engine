@@ -2,7 +2,7 @@ NAME			"DOOMSDAY"
 DESCRIPTION		"The Doomsday Engine"
 
 ; Highest ordinal is currently 
-; --> 237 <--
+; --> 238 <--
 
 ; Other available ordinals: 158, 175
 
@@ -170,6 +170,7 @@ EXPORTS
 	GL_GrabScreen			@109 NONAME
 	GL_TextureFilterMode	@112 NONAME
 	GL_SetColor				@113 NONAME
+	GL_SetColor2			@238 NONAME
 	GL_SetColorAndAlpha		@114 NONAME
 	GL_SetNoTexture			@115 NONAME
 	GL_SetPatch				@196 NONAME
