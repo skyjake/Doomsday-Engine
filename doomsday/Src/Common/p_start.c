@@ -342,3 +342,52 @@ mapthing_t *P_GetPlayerStart(int group, int pnum)
 	return g0choice;
 }
 #endif
+
+/*
+ * Compose the name of the map lump identifier.
+ */
+void P_GetMapLumpName(int episode, int map, char *lumpName)
+{
+#ifdef __JDOOM__
+	if(gamemode == commercial)
+	{
+		sprintf(lumpName, "map%02i", map);
+	}
+	else
+	{
+		sprintf(lumpName, "E%iM%i", episode, map);
+	}
+#endif
+
+#ifdef __JHERETIC__
+	sprintf(lumpName, "E%iM%i", episode, map);
+#endif
+
+#ifdef __JHEXEN__
+	sprintf(lumpName, "MAP%02i", map);
+#endif
+}
+
+/*
+ * Locate the lump indices where the data of the specified map
+ * resides.
+ */
+void P_LocateMapLumps(int episode, int map, int *lumpIndices)
+{
+	char lumpName[40];
+	char glLumpName[40];
+	
+	// Find map name.
+	P_GetMapLumpName(episode, map, lumpName);
+	sprintf(glLumpName, "GL_%s", lumpName);
+	Con_Message("SetupLevel: %s\n", lumpName);
+
+	// Let's see if a plugin is available for loading the data.
+	if(!Plug_DoHook(HOOK_LOAD_MAP_LUMPS, W_GetNumForName(lumpName),
+					(void*) lumpIndices))
+	{
+		// The plugin failed.
+		lumpIndices[0] = W_GetNumForName(lumpName);
+		lumpIndices[1] = W_CheckNumForName(glLumpName);
+	}
+}
