@@ -9,5 +9,6 @@
 #include "s_sfx.h"
 #include "s_mus.h"
 #include "s_wav.h"
+#include "s_cache.h"
 
 #endif 
