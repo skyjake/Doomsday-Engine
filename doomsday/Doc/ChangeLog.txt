@@ -67,6 +67,7 @@ Renderer:
 + sky models
 + particle models
 + blending modes: subtract, reverse subtract, multiply, inverse multiply
++ cvar 'rend-glow-fog-bright': wall glow brightness in fog
 + cvar 'rend-model-shiny-multitex': render shiny skins using 
   multitexturing
 + cvar 'rend-model-mirror-hud': mirror HUD weapon models
