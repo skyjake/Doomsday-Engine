@@ -142,7 +142,7 @@ typedef struct
 	int		enterTime;
 
 	// Client time. Updated as cmds are received from the client. 
-	int		time;
+	/* int		time; */
 
 	// Client-reported time of the last processed ticcmd.
 	// Older or as old tics than this are discarded.
