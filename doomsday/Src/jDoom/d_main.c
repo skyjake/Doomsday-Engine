@@ -331,7 +331,7 @@ void IdentifyVersion (void)
 	{
 		// List of lumps to detect Doom II with.
 		"map01", "map02", "map03", "map04", "map10", "map20",
-		"map25", "map30", /*"map31", "map32",*/
+		"map25", "map30",
 		"vilen1", "vileo1", "vileq1", "grnrock", NULL
 	};
 	char *plutonia_lumps[] =
