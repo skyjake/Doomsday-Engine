@@ -14,6 +14,8 @@
 #include "de_network.h"
 #include "de_play.h"
 
+#include "r_util.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MAX_MOVERS			128		// Definitely enough!
@@ -590,7 +592,7 @@ int Cl_ReadSideDelta(void)
 	// Side number first (0 terminates).
 	if(!num) return false;
 
-	sid = SIDE_PTR(num - 1);
+	sid = SIDE_PTR(--num);
 
 	// Flags.
 	df = Msg_ReadByte();
@@ -601,6 +603,22 @@ int Cl_ReadSideDelta(void)
 		sid->midtexture = Msg_ReadPackedShort();
 	if(df & SIDF_BOTTOMTEX) 
 		sid->bottomtexture = Msg_ReadPackedShort();
+	if(df & SIDF_LINE_FLAGS)
+	{
+		byte updatedFlags = Msg_ReadByte();
+		line_t *line = R_GetLineForSide(num);
+
+		if(line)
+		{
+			// The delta includes the lowest byte.
+			line->flags &= ~0xff;
+			line->flags |= updatedFlags;
+#if _DEBUG
+			Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line), 
+				updatedFlags);
+#endif
+		}
+	}
 
 	// Continue reading.
 	return true;
