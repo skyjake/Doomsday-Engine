@@ -25,12 +25,6 @@
 #include "sys_sfxd.h"
 #include "de_play.h"
 
-// Begin and end macros for Critical OPerations. They are operations 
-// that can't be done while a refresh is being made. No refreshing 
-// will be done between BEGIN_COP and END_COP.
-#define BEGIN_COP		Sfx_AllowRefresh(false)
-#define END_COP			Sfx_AllowRefresh(true)
-
 typedef enum 
 {
 	SFXD_DSOUND,
@@ -67,7 +61,6 @@ extern int		sound_3dmode, sound_16bit, sound_rate;
 boolean		Sfx_Init(void);
 void		Sfx_Shutdown(void);
 void		Sfx_Reset(void);
-void		Sfx_AllowRefresh(boolean allow);
 void		Sfx_LevelChange(void);
 void		Sfx_StartFrame(void);
 void		Sfx_EndFrame(void);
@@ -78,7 +71,6 @@ int			Sfx_StopSound(int id, mobj_t *emitter);
 void		Sfx_StopSoundGroup(int group, mobj_t *emitter);
 int			Sfx_CountPlaying(int id);
 void		Sfx_UnloadSoundID(int id);
-//int		Sfx_IsPlaying(int id, mobj_t *emitter);
 void		Sfx_DebugInfo(void);
 
 #endif 
