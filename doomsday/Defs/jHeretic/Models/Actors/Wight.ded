@@ -10,7 +10,9 @@ Model {
   Md2 {
     File = "Wight-Axe.md2";
     Frame = "idle01";
-    Flags = "df_fullbright";
+    Flags = "df_fullbright df_specular";
+    Shiny skin = "Shiny.pcx";
+    Shiny = .4;
   };
 }
 
@@ -255,6 +257,9 @@ Model {
     File = "Wight-FlyingAxe.md2"; 
     Frame = "attack10"; 
     Offset XYZ { -25 -40 0 };    
+    Flags = "df_specular";
+    Shiny skin = "Shiny.pcx";
+    Shiny = .4;
   };
 }
 
@@ -280,7 +285,10 @@ Model {
     File = "Wight-FlyingAxe.md2";
     Frame = "attack01";
     Offset XYZ { -22 -40 0 };
-  };
+    Flags = "df_specular";
+    Shiny skin = "Shiny.pcx";
+    Shiny = .4;
+ };
 }
 
 *Model { Md2 { Frame = "attack02"; }; Inter = 0.2; }
