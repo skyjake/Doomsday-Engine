@@ -16,6 +16,7 @@
 #define BIT(x)				(1 << (x))
 #define MAX_ACKS			40
 #define SET_HISTORY_SIZE	100
+#define RESEND_HISTORY_SIZE	200
 
 // TYPES -------------------------------------------------------------------
 
@@ -48,6 +49,11 @@ byte acks[MAX_ACKS];
 short setHistory[SET_HISTORY_SIZE];
 int historyIdx;
 
+// The resend ID history keeps track of received resend deltas. Used
+// to detect duplicate resends.
+byte resendHistory[RESEND_HISTORY_SIZE];
+int resendHistoryIdx;
+
 // CODE --------------------------------------------------------------------
 
 /*
@@ -60,6 +66,10 @@ void Cl_InitFrame(void)
 	// -1 denotes an invalid entry.
 	memset(setHistory, -1, sizeof(setHistory));
 	historyIdx = 0;
+
+	// Clear the resend ID history.
+	memset(resendHistory, 0, sizeof(resendHistory));
+	resendHistoryIdx = 0;
 }
 
 /*
@@ -100,11 +110,39 @@ boolean Cl_HistoryCheck(byte set)
 }
 
 /*
+ * Add a resend ID number to the resend history.
+ */
+void Cl_ResendHistoryAdd(byte id)
+{
+	resendHistory[ resendHistoryIdx++ ] = id;
+
+	if(resendHistoryIdx >= RESEND_HISTORY_SIZE)
+		resendHistoryIdx -= RESEND_HISTORY_SIZE;
+}
+
+/*
+ * Returns true if the resend ID is found in the history.
+ */
+boolean Cl_ResendHistoryCheck(byte id)
+{
+	int i;
+
+	for(i = 0; i < RESEND_HISTORY_SIZE; i++)
+	{
+		if(resendHistory[i] == id) return true;
+	}
+	return false;
+}
+
+/*
  * Read a psv_frame2/psv_first_frame2 packet.
  */
 void Cl_Frame2Received(int packetType)
 {
-	byte set = Msg_ReadByte(), deltaType;
+	byte set = Msg_ReadByte(), oldSet, resend, deltaType;
+	byte resendAcks[300];
+	int i, numResendAcks = 0;
+	boolean skip;
 
 	// All frames that arrive before the first frame are ignored.
 	// They are most likely from the wrong map.
@@ -135,44 +173,82 @@ void Cl_Frame2Received(int packetType)
 		// Read and process the message.
 		while(!Msg_End())
 		{
-			switch(deltaType = Msg_ReadByte())
+			deltaType = Msg_ReadByte();
+			skip = false;
+
+			// Is this a resent delta?
+			if(deltaType & DT_RESENT)
+			{
+				deltaType &= ~DT_RESENT;
+
+				// Read the set number this was originally in.
+				oldSet = Msg_ReadByte();
+				
+				// Read the resend ID.
+				resend = Msg_ReadByte();
+
+				// Did we already receive this delta?
+				if(Cl_HistoryCheck(oldSet)
+					|| Cl_ResendHistoryCheck(resend))
+				{
+					// Yes, we've already got this. Must skip.
+					skip = true;
+
+/*#ifdef _DEBUG
+					Con_Printf("Got resend *DUPE* (id %i, set %i)\n", 
+						resend, oldSet);
+#endif*/
+				}
+/*#ifdef _DEBUG
+				else
+				{
+					Con_Printf("Got resend: id %i, set %i\n", resend, oldSet);
+				}
+#endif*/
+
+				// We must acknowledge that we've received this.
+				resendAcks[ numResendAcks++ ] = resend;
+				Cl_ResendHistoryAdd(resend);
+			}
+
+			switch(deltaType)
 			{
 			case DT_CREATE_MOBJ:
 				// The mobj will be created/shown.
-				Cl_ReadMobjDelta2(true);
+				Cl_ReadMobjDelta2(true, skip);
 				break;
 
 			case DT_MOBJ:
 				// The mobj will be hidden if it's not yet Created.
-				Cl_ReadMobjDelta2(false);
+				Cl_ReadMobjDelta2(false, skip);
 				break;
 
 			case DT_NULL_MOBJ:
 				// The mobj will be removed.
-				Cl_ReadNullMobjDelta2();
+				Cl_ReadNullMobjDelta2(skip);
 				break;
 
 			case DT_PLAYER:
-				Cl_ReadPlayerDelta2();
+				Cl_ReadPlayerDelta2(skip);
 				break;
 
 			case DT_SECTOR:
-				Cl_ReadSectorDelta2();
+				Cl_ReadSectorDelta2(skip);
 				break;
 
 			case DT_SIDE:
-				Cl_ReadSideDelta2();
+				Cl_ReadSideDelta2(skip);
 				break;
 
 			case DT_POLY:
-				Cl_ReadPolyDelta2();
+				Cl_ReadPolyDelta2(skip);
 				break;
 
 			case DT_SOUND:
 			case DT_MOBJ_SOUND:
 			case DT_SECTOR_SOUND:
 			case DT_POLY_SOUND:
-				Cl_ReadSoundDelta2(deltaType);
+				Cl_ReadSoundDelta2(deltaType, skip);
 				break;
 
 			default:
@@ -188,9 +264,22 @@ void Cl_Frame2Received(int packetType)
 		predicted_tics = 0;
 	}
 
-	// Acknowledge the set. (Is a separate packet really necessary?)
-	Msg_Begin(pcl_ack_sets);
-	Msg_WriteByte(set);
+	if(numResendAcks == 0)
+	{
+		// Acknowledge the set.
+		Msg_Begin(pcl_ack_sets);
+		Msg_WriteByte(set);
+	}
+	else
+	{
+		// Acknowledge the set and the resent deltas.
+		Msg_Begin(pcl_acks);
+		Msg_WriteByte(set);
+		for(i = 0; i < numResendAcks; i++)
+		{
+			Msg_WriteByte(resendAcks[i]);
+		}
+	}
 	Net_SendBuffer(0, 0);
 }
 
