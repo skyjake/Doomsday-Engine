@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/04/26 14:44:02  skyjake
+// Comment cleanup
+//
 // Revision 1.3  2003/04/16 09:50:06  skyjake
 // Cvar for sliding corpses
 //
@@ -23,12 +26,6 @@
 //
 // Revision 1.1  2003/02/26 19:21:57  skyjake
 // Initial checkin
-//
-// Revision 1.2  2002/10/14 07:48:04  Jaakko
-// Added coop respawn items
-//
-// Revision 1.1  2002/09/29 01:11:46  Jaakko
-// Added Doomsday sources
 //
 //
 // DESCRIPTION:
