@@ -566,11 +566,11 @@ void GL_UpdateGamma(void)
 //===========================================================================
 void GL_BindTexture(DGLuint texname)
 {
-	if(curtex != texname) 
-	{
-		gl.Bind(texname);
-		curtex = texname;
-	}
+	/*if(curtex != texname) 
+	{*/
+	gl.Bind(texname);
+	curtex = texname;
+	//}
 }
 
 //===========================================================================
