@@ -45,8 +45,8 @@
 #define USE_MULTITEXTURE	1
 #define MAX_TEX_UNITS		2	   // More won't be used.
 
-#define DROGL_VERSION		220
-#define DROGL_VERSION_TEXT	"2.2."DOOMSDAY_RELEASE_NAME
+#define DROGL_VERSION		230
+#define DROGL_VERSION_TEXT	"2.3."DOOMSDAY_RELEASE_NAME
 #define DROGL_VERSION_FULL	"DGL OpenGL Driver Version "DROGL_VERSION_TEXT" ("__DATE__")"
 
 enum { VX, VY, VZ };
