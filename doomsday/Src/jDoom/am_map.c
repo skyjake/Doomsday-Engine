@@ -1085,20 +1085,9 @@ AM_drawMline
 ( mline_t*	ml,
   int		color )
 {
-    static fline_t fl;
-	int glcolor[4];
-
-    /*if (AM_clipMline(ml, &fl))
-	AM_drawFline(&fl, color); // draws it on frame buffer using fb coords*/
-	
-	GL_SetColor(color);
-	gl.GetIntegerv(DGL_RGBA, glcolor);
-	gl.Color4ub(glcolor[0], glcolor[1], glcolor[2],
-		(int) (cfg.automapLineAlpha * 255));
-
-	// 1.2 is the aspect correction.
-	gl.Vertex2f(FIX2FLT(CXMTOFX(ml->a.x)), FIX2FLT(CYMTOFX(ml->a.y))/* /1.2f*/);
-	gl.Vertex2f(FIX2FLT(CXMTOFX(ml->b.x)), FIX2FLT(CYMTOFX(ml->b.y))/* /1.2f*/);
+	GL_SetColor2(color, cfg.automapLineAlpha);
+	gl.Vertex2f(FIX2FLT(CXMTOFX(ml->a.x)), FIX2FLT(CYMTOFX(ml->a.y)));
+	gl.Vertex2f(FIX2FLT(CXMTOFX(ml->b.x)), FIX2FLT(CYMTOFX(ml->b.y)));
 }
 
 
