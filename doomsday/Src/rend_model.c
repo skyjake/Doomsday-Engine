@@ -502,7 +502,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 	float   normYaw, normPitch, shinyAng, shinyPnt;
 	mlight_t *light;
 	byte    byteAlpha;
-	blendmode_t blending = BM_NORMAL;
+	blendmode_t blending = mf->def->sub[number].blendmode;
 	DGLuint skinTexture, shinyTexture;
 	int     zSign = (spr->type == VSPR_HUD_MODEL &&
 					 mirrorHudModels != 0 ? -1 : 1);
