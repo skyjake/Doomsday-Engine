@@ -500,11 +500,11 @@ class BoxAddon (Addon):
         """Load all the addons inside the box."""
         
         self.loadAll(self.getContentPath(), self.optional)
-        self.loadAll(self.__makePath('required'), self.required)
-        self.loadAll(self.__makePath('extra'), self.extra)
+        self.loadAll(self.__makePath('Required'), self.required)
+        self.loadAll(self.__makePath('Extra'), self.extra)
         if paths.isCaseSensitive():
-            self.loadAll(self.__makePath('Required'), self.required)
-            self.loadAll(self.__makePath('Extra'), self.extra)
+            self.loadAll(self.__makePath('required'), self.required)
+            self.loadAll(self.__makePath('extra'), self.extra)
 
     def loadAll(self, path, role):
         """Load all addons on the given path."""
