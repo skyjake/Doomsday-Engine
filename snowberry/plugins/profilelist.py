@@ -85,13 +85,6 @@ def init():
     global profileList
     profileList = area.createFormattedList("profile-list")
 
-    #profileList.setPopupMenu(['new-profile',
-    #                          'duplicate-profile',
-    #                          'delete-profile',
-    #                          '-',
-    #                          'hide-profile',
-    #                          'unhide-profiles'])
-
     # This should be a small button.
     area.setWeight(0)
     controls = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)

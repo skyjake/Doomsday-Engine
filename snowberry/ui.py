@@ -402,6 +402,11 @@ class Area (widgets.Widget):
         self.__addWidget(subArea)
         return subArea
 
+    def createMultiArea(self):
+        multi = MultiArea('', self)
+        self.__addWidget(multi)
+        return multi
+
     def createButton(self, name, style=widgets.Button.STYLE_NORMAL):
         """Create a button widget inside the area.
 
@@ -530,8 +535,25 @@ class Area (widgets.Widget):
 
         @return A widgets.TabArea widget.
         """
-        widget = widgets.TabArea(self.panel, self.__getNewId(), name, style)
-        self.__addWidget(widget)
+        if style == widgets.TabArea.STYLE_FORMATTED:
+            # Create a subarea and a separate MultiArea in there.
+            sub = self.createArea(alignment=Area.ALIGN_HORIZONTAL,
+                                  border=0)
+
+            # Create the formatted list (with extended functionality).
+            widget = widgets.FormattedTabArea(self.panel, self.__getNewId(),
+                                              name)
+            sub.setWeight(1)
+            sub.__addWidget(widget)
+
+            # Create the multiarea and pair it up.
+            sub.setWeight(4)
+            multi = sub.createMultiArea()
+            widget.setMultiArea(multi)
+        else:
+            widget = widgets.TabArea(self.panel, self.__getNewId(),
+                                     name, style)
+            self.__addWidget(widget)
         return widget
 
     def createCheckBox(self, name, isChecked):
@@ -740,6 +762,128 @@ class BoxedArea (Area):
         """Update the title of the box."""
         pass
 
+
+class MultiArea (Area):
+    """A MultiArea contains multiple subareas.  Only one of them will
+    be visible at a time.  All the subareas are visible in the same
+    space."""
+
+    def __init__(self, id, parentArea):
+        Area.__init__(self, id, parentArea.panel, parentArea=parentArea)
+
+        self.currentPage = None
+        self.pages = {}
+
+        events.addNotifyListener(self.onNotify)
+
+    def destroy(self):
+        """Destroy all the pages."""
+
+        events.removeNotifyListener(self.onNotify)
+
+        # Hide (detach) all the pages.
+        self.showPage(None)
+
+        for area in self.pages.values():
+            area.destroy()
+
+        Area.destroy()
+
+    def getPages(self):
+        """Return a list of all the pages of the area.
+
+        @return An array of identifier strings.
+        """
+        return self.pages.keys()
+
+    def createPage(self, identifier, align=Area.ALIGN_VERTICAL, border=3):
+        """Create a subpage in the multiarea.  This does not make the
+        page visible, however.
+
+        @param identifier Identifier of the new page.
+        """
+        # Create a new panel for the page.
+        panel = wx.Panel(self.panel, -1)
+        panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
+        panel.Hide()
+
+        # Create a new Area for the page.
+        area = Area('', panel, alignment=align, border=border)
+        area.setExpanding(True)
+        area.setWeight(1)
+
+        self.pages[identifier] = area
+
+        return area
+
+    def removePage(self, identifier):
+        """Remove a page from the multiarea.
+
+        @param identifier Page to remove.
+        """
+        try:
+            area = self.pages[identifier]
+
+            # Detach (if shown) and destroy the page area.
+            sizer = area.panel.GetContainingSizer()
+            if sizer:
+                sizer.Detach(area.panel)
+            area.destroy()
+            
+            # Remove the page from the dictionary.
+            del self.pages[identifier]
+        except KeyError:
+            # Ignore unknown identifiers.
+            pass
+
+    def showPage(self, identifier):
+        """Show a specific page.  The shown page is added to this
+        area's containing sizer.
+
+        @param identifier Identifier of the page to show.  If None,
+        all pages are hidden.
+        """
+        changed = False
+        
+        for pageId in self.pages.keys():
+            area = self.pages[pageId]
+            sizer = area.panel.GetContainingSizer()
+
+            if pageId == identifier:
+                # Show this page.
+                if not sizer:
+                    self.containerSizer.Add(area.panel, 1, wx.EXPAND)
+                    area.panel.Show()
+                    changed = True
+            else:
+                # Hide this page, if not already hidden.
+                if sizer:
+                    sizer.Detach(area.panel)
+                    area.panel.Hide()
+                    changed = True
+
+        if changed:
+            self.updateLayout()
+
+    def onNotify(self, event):
+        if event.hasId('preparing-windows'):
+            self.__updateMinSize()
+            Area.updateLayout(self)
+
+    def __updateMinSize(self):
+        """Calculate min size based on all pages."""
+
+        minWidth = 0
+        minHeight = 0
+
+        for area in self.pages.values():
+            minSize = area.panel.GetBestSize()
+            minWidth = max(minWidth, minSize[0])
+            minHeight = max(minHeight, minSize[1])
+
+        self.sizer.SetMinSize((minWidth, minHeight))
+        self.sizer.Layout()
+                
 
 class AreaDialog (wx.Dialog):
     """AreaDialog implements a wxDialog that has an Area inside it."""
@@ -1242,6 +1386,8 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
 
 def prepareWindows():
     """Layout windows and make everything ready for action."""
+
+    events.send(events.Notify('preparing-windows'))
 
     app.mainFrame.updateLayout()
     app.mainFrame.Show()

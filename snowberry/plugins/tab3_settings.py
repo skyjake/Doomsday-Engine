@@ -41,7 +41,8 @@ def init():
     area = ui.createTab(SETTINGS)
 
     # Create the area where all the setting categories are placed.
-    categoryArea = area.createTabArea(CATEGORY_AREA, wg.TabArea.STYLE_ICON)
+    categoryArea = area.createTabArea(CATEGORY_AREA,
+                                      wg.TabArea.STYLE_FORMATTED)
 
     createWidgets()
 
@@ -144,11 +145,22 @@ def handleNotify(event):
 
         # Only the defaults profile has the General category.
         if pr.getActive() is pr.getDefaults():
+            wasIt = (categoryArea.getSelectedTab() == 'game-options')
+            
             categoryArea.showTab('general-options')
             categoryArea.showTab('game-options', False)
+
+            if wasIt:
+                categoryArea.selectTab('general-options')
         else:
+            wasIt = (categoryArea.getSelectedTab() == 'general-options')
+            
             categoryArea.showTab('game-options')
             categoryArea.showTab('general-options', False)
+
+            if wasIt:
+                categoryArea.selectTab('game-options')
+
 
     elif event.hasId('addon-installed') or event.hasId('addon-uninstalled'):
         # Since the new addon will most likely introduce new settings,

@@ -84,7 +84,7 @@ def init():
     settingsButton.disable()
     
     buttonArea.createButton('load-order')
-            
+
     # Registering a notification listener.
     events.addNotifyListener(handleNotification)
 

@@ -24,6 +24,8 @@
 ## widget classes of wxWidgets.  This is done for purposes of
 ## convenience and event translation.  Events are converted into
 ## notifications that can be broadcasted using events.py.
+##
+## FormattedTabArea and TabArea could use a common base class.
 
 import sys
 import wx
@@ -1185,7 +1187,7 @@ class HtmlListBox (wx.HtmlListBox):
 
         # Force a resize event at this point so that GTK doesn't
         # select the wrong first visible item.
-        self.SetSize((100, 100))
+        #self.SetSize((100, 100))
 
     def OnGetItem(self, n):
         """Retrieve the representation of an item.  This method must
@@ -1218,9 +1220,15 @@ class FormattedList (Widget):
 
         self.widgetId = id
 
+        # By default, items are added in alphabetical order.
+        self.addSorted = True
+
         # Listen for selection changes.
         wx.EVT_LISTBOX(parent, wxId, self.onItemSelected)
         wx.EVT_LISTBOX_DCLICK(parent, wxId, self.onItemDoubleClick)
+
+    def setSorted(self, doSort):
+        self.addSorted = doSort
 
     def clear(self):
         """Delete all the items."""
@@ -1253,12 +1261,15 @@ class FormattedList (Widget):
 
         newItem = (itemId, itemText)
         if toIndex == None:
-            toIndex = 0
-            # Sort alphabetically based on identifier.
-            for i in range(len(self.items)):
-                if cmp(itemId, self.items[i][0]) < 0:
-                    break
-                toIndex = i + 1
+            if self.addSorted:
+                toIndex = 0
+                # Sort alphabetically based on identifier.
+                for i in range(len(self.items)):
+                    if cmp(itemId, self.items[i][0]) < 0:
+                        break
+                    toIndex = i + 1
+            else:
+                toIndex = len(self.items)
 
         self.items = self.items[:toIndex] + [newItem] + \
                      self.items[toIndex:]
@@ -1279,6 +1290,17 @@ class FormattedList (Widget):
         w.SetItemCount(len(self.items))
         w.Refresh()
         w.SetSelection(self.getSelectedIndex())
+
+        #w.Freeze()
+        #w.SetItemCount(len(self.items))
+        #w.SetSelection(self.getSelectedIndex())
+        #w.Thaw()
+        #w.Refresh()
+
+    def getItemCount(self):
+        """Returns the number of items in the list."""
+        
+        return len(self.items)
 
     def selectItem(self, itemId):
         """Select an item in the list."""
@@ -1331,6 +1353,151 @@ class FormattedList (Widget):
                                         True))
 
 
+class FormattedTabArea (FormattedList):
+    """FormattedTabArea extends FormattedList by pairing it up with a
+    previously created MultiArea.  This class implements the same
+    interface as TabArea."""
+
+    def __init__(self, parent, wxId, id):
+        """Constuct a new formatted tab area.
+
+        @param parent The parent wxPanel.
+
+        @param wxId The ID number of the formatted list.
+
+        @param id The identifier of the formatted list.
+
+        """
+        FormattedList.__init__(self, parent, wxId, id)
+
+        self.setSorted(False)
+        
+        self.multi = None
+
+        # List of all currently hidden tabs.
+        self.hiddenTabs = []
+
+    def setMultiArea(self, multiArea):
+        """Set the MultiArea that will react to the changes in the list.
+        
+        @param multiArea The ui.MultiArea object to pair up with the
+        list.
+        """
+        self.multi = multiArea
+
+    def __getPresentation(self, tabId):
+        """Compose the HTML presentation for a tab identifier.
+
+        @return HTML content as a string.
+        """
+        imageName = language.translate(tabId + '-icon')
+        return ('<table width="100%" border=0 cellspacing=3 cellpadding=1>' + 
+                '<tr><td width=35><img width=32 height=32 ' + 
+                'src="%s"><td align="left" valign="center">%s</td>' %
+                (paths.findBitmap(imageName), language.translate(tabId)) +
+                '</table>')
+
+    def getTabs(self):
+        """Compose a list of all the areas of the tab area.  Hidden
+        areas are included, too.
+
+        @return An array that contains identifiers.
+        """
+        return self.multi.getPages()
+
+    def getSelectedTab(self):
+        """Returns the identifier of the currently selected tab.
+        Returns None if no tab is selected."""
+
+        return self.getSelectedItem()
+
+    def addTab(self, id):
+        """Add a new tab into the TabArea widget.  The tab is appended
+        after previously added tabs.
+
+        @param id Identifier for the tab.  The name and the icon of
+        the tab will be determined using this identifier.
+
+        @return The Area object for the contents of the tab.
+        """
+        area = self.multi.createPage(id)
+
+        # Add it to the end.
+        self.addItem(id, self.__getPresentation(id))
+
+        # Automatically show the first page.
+        if self.getItemCount() == 1:
+            self.selectTab(id)
+
+        return area
+
+    def removeAllTabs(self):
+        """Remove all tabs from the tab area."""
+
+        for id in self.getTabs():
+            self.removeTab(id)
+
+    def removeTab(self, id):
+        """Remove an existing tab from the TabArea widget.
+
+        @param id Identifier of the tab to remove.
+        """
+        if id in self.hiddenTabs:
+            self.hiddenTabs.remove(id)
+        
+        self.multi.removePage(id)
+        self.removeItem(id)
+
+    def selectTab(self, selectedId):
+        """Select a specific tab.
+
+        @param selectedId Identifier of the tab to select.
+        """
+        self.selectItem(selectedId)
+        self.multi.showPage(selectedId)
+
+    def hideTab(self, identifier):
+        """Hide a tab in the tab area.
+
+        @param identifier Identifier of the tab to hide.
+        """
+        self.showTab(identifier, False)
+
+    def showTab(self, identifier, doShow=True):
+        """Show a hidden tab in the tab area, or hide a tab.  Hiding
+        and showing does not alter the order of the tabs.
+
+        @param identifier Identifier of the tab to show or hide.
+
+        @param doShow True, if the tab should be shown; False, if hidden.
+        """
+        if doShow and identifier in self.hiddenTabs:
+            self.hiddenTabs.remove(identifier)
+            self.addItem(identifier, self.__getPresentation(identifier), 0)
+
+        elif not doShow and identifier not in self.hiddenTabs:
+            # Move the selection to the previous item.
+            #if self.getSelectedTab() == identifier:
+            #    index = min(self.getItemCount() - 1, self.getSelectedIndex() + 1)
+            #    self.selectTab(self.items[index][0])
+                
+            self.hiddenTabs.append(identifier)
+            self.removeItem(identifier)
+        
+    def onItemSelected(self, ev):
+        FormattedList.onItemSelected(self, ev)
+
+        self.multi.showPage(self.getSelectedItem())
+
+#    def updateIcons(self):
+#        """Update the items in the formatted list."""
+#
+#        #tabs = self.getTabs()
+#        #self.addItem(
+
+    
+
+
 class TabArea (Widget):
     """TabArea is a widget that implements a tab area.  It supports a
     number of different styles: TabArea.STYLE_ICON and
@@ -1344,8 +1511,13 @@ class TabArea (Widget):
     STYLE_HORIZ_ICON = 'horiz-icon'
     STYLE_DROP_LIST = 'drop'
     STYLE_BASIC = 'basic'
+    STYLE_FORMATTED = 'formatted'
 
     def __init__(self, parent, wxId, id, style):
+        # The formatted tab area style uses another widget entirely.
+        if style == TabArea.STYLE_FORMATTED:
+            raise Exception('not supported here')
+        
         # Create the appropriate widget.
         if style == TabArea.STYLE_ICON:
             w = wx.Listbook(parent, wxId, style=wx.LB_LEFT)
@@ -1393,7 +1565,8 @@ class TabArea (Widget):
         Widget.clear(self)
 
     def getTabs(self):
-        """Compose a list of all the areas of the tab area.
+        """Compose a list of all the areas of the tab area.  Hidden
+        areas are included, too.
 
         @return An array that contains identifiers.
         """
@@ -1411,7 +1584,7 @@ class TabArea (Widget):
                 return id
         return None
 
-    def getTabIndex(self, id):
+    def __getTabIndex(self, id):
         """Determine the index of a specific tab in the tab area."""
 
         book = self.getWxWidget()
@@ -1420,7 +1593,7 @@ class TabArea (Widget):
                 return i
         return None
 
-    def getPanelIndex(self, panel):
+    def __getPanelIndex(self, panel):
         """Determine the index of a specific panel in the tab area."""
 
         book = self.getWxWidget()
@@ -1509,7 +1682,7 @@ class TabArea (Widget):
 
         @param id Tab identifier.
         """
-        index = self.getTabIndex(selectedId)
+        index = self.__getTabIndex(selectedId)
         if index != None:
             self.getWxWidget().SetSelection(index)
 
@@ -1532,7 +1705,7 @@ class TabArea (Widget):
 
         if not doShow:
             # Hide the page by removing it from the widget.
-            index = self.getTabIndex(identifier)
+            index = self.__getTabIndex(identifier)
             if index != None:
                 # Is this currently selected?
                 if index == book.GetSelection():
@@ -1552,7 +1725,7 @@ class TabArea (Widget):
                     # Determine the location of the shown tab.
                     where = 0
                     for id, mapped in self.panelMap:
-                        index = self.getPanelIndex(mapped)
+                        index = self.__getPanelIndex(mapped)
                         if id == identifier:
                             if index != None:
                                 # The panel appears to be visible already.
@@ -1574,7 +1747,7 @@ class TabArea (Widget):
         if self.style == TabArea.STYLE_ICON:
             # Update all the tabs.
             for identifier, panel in self.panelMap:
-                pageIndex = self.getPanelIndex(panel)
+                pageIndex = self.__getPanelIndex(panel)
                 if pageIndex != None:
                     iconName = identifier + '-icon'
                     self.getWxWidget().SetPageImage(pageIndex,
@@ -1582,7 +1755,7 @@ class TabArea (Widget):
 
     def retranslate(self):
         for identifier, panel in self.panelMap:
-            pageIndex = self.getPanelIndex(panel)
+            pageIndex = self.__getPanelIndex(panel)
             if pageIndex != None:
                 self.getWxWidget().SetPageText(
                     pageIndex, language.translate(identifier))
