@@ -150,10 +150,8 @@ void DD_DrawAndBlit(void)
 	}
 	else
 	{
-		// Draw the game graphics.
-		gx.G_Drawer();
-		// The colored filter. 
-		if(GL_DrawFilter()) BorderNeedRefresh = true;
+		R_RenderViewPorts();
+		
 		// Draw Menu
 		gx.MN_Drawer();
 		// Debug information.
@@ -184,15 +182,12 @@ void DD_StartFrame(void)
 //===========================================================================
 void DD_EndFrame (void)
 {
-	// Increment the frame counter.
-	framecount++;
-
 	// Count the frames.
 	if(Sys_GetTime() - 35 >= lastfpstic)
 	{
 		lastfpstic = Sys_GetTime();
-		fpsnum = framecount - lastfc;
-		lastfc = framecount;
+		fpsnum = r_framecounter - lastfc;
+		lastfc = r_framecounter;
 	}
 
 	if(gx.EndFrame) gx.EndFrame();

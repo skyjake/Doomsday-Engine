@@ -536,6 +536,7 @@ ccmd_t engineCCmds[] =
 	"uicolor",		CCmdUIColor,		"Change Doomsday user interface colors.",
 	"unload",		CCmdUnloadFile,		"Unload a data file from memory.",
 	"version",		CCmdVersion,		"Show detailed version information.",
+	"viewgrid",		CCmdViewGrid,		"Setup splitscreen configuration.",
 	"write",		CCmdWriteConsole,	"Write variables, bindings and aliases to a file.",
 
 #ifdef _DEBUG

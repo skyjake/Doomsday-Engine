@@ -22,6 +22,11 @@
 #ifndef __DOOMSDAY_REFRESH_MAIN_H__
 #define __DOOMSDAY_REFRESH_MAIN_H__
 
+typedef struct viewport_s {
+	int console;
+	int x, y, width, height;
+} viewport_t;
+
 extern  fixed_t     viewx, viewy, viewz;
 extern	float		viewfrontvec[3], viewupvec[3], viewsidevec[3];
 extern  fixed_t		viewxOffset, viewyOffset, viewzOffset;
@@ -41,11 +46,15 @@ extern	fixed_t		viewcos, viewsin;
 extern	int			skyflatnum;
 extern	int			rend_info_tris;
 
-void		R_Init (void);
-void		R_Update (void);
-void		R_Shutdown(void);
-void		R_RenderPlayerView (ddplayer_t *player);
-void		R_ResetViewer(void);
-void		R_ViewWindow(int x, int y, int w, int h);
+void	R_Init(void);
+void	R_Update(void);
+void	R_Shutdown(void);
+void	R_RenderPlayerView(ddplayer_t *player);
+void	R_RenderViewPorts(void);
+void	R_ResetViewer(void);
+void 	R_SetViewGrid(int numCols, int numRows);
+void	R_ViewWindow(int x, int y, int w, int h);
+
+int 	CCmdViewGrid(int argc, char **argv);
 
 #endif 

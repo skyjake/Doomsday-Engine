@@ -1080,6 +1080,9 @@ int CCmdMakeCamera(int argc, char **argv)
 	players[cp].flags |= DDPF_LOCAL;
 	Sv_InitPoolForClient(cp);
 
+	// Update the viewports.
+	R_SetViewGrid(0, 0);
+
 	return true;
 }
 
@@ -1094,6 +1097,8 @@ int CCmdSetConsole(int argc, char **argv)
 	cp = atoi(argv[1]);
 	if(players[cp].ingame)
 		consoleplayer = displayplayer = cp;
+	// Recalculate console viewports.
+	R_SetViewGrid(0, 0);
 	return true;
 }
 

@@ -47,6 +47,7 @@ extern int bufferLines;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean		startupScreen = false;
+boolean		logoLoaded = false;
 int			startupLogo;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -86,9 +87,17 @@ void Con_StartupInit(void)
 	{
 		titletext = "Doomsday "DOOMSDAY_VERSION_TEXT;
 	}
+}
 
-	// Load graphics.
-	startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
+void Con_BindLogo(void)
+{
+	// Load the logo, if necessary.
+	if(!logoLoaded)
+	{
+		logoLoaded = true;
+		startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
+	}
+	gl.Bind(startupLogo);
 }
 
 void Con_SetBgFlat(int lump)
@@ -100,8 +109,12 @@ void Con_StartupDone(void)
 {
 	if(isDedicated) return;
 	startupScreen = false;
-	gl.DeleteTextures(1, &startupLogo);
-	startupLogo = 0;
+	// Delete the startup logo texture.
+	/*if(logoLoaded)
+	{
+		logoLoaded = false;
+		gl.DeleteTextures(1, &startupLogo);
+		}*/
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PopMatrix();
 	GL_ShutdownVarFont();
@@ -111,53 +124,37 @@ void Con_StartupDone(void)
 // Con_DrawStartupBackground
 //	Background with the "The Doomsday Engine" text superimposed.
 //===========================================================================
-void Con_DrawStartupBackground(void)
+void Con_DrawStartupBackground(int width, int height)
 {
-	float mul = (startupLogo? 1.5f : 1.0f);
+	float mul;
 	ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
 
-	// Background gradient picture.
-	gl.Bind(startupLogo);
+	// Get the logo texture.
+	Con_BindLogo();
+
+	mul = (logoLoaded? 1.5f : 1.0f);
+	
 	gl.Disable(DGL_BLENDING);
 	gl.Begin(DGL_QUADS);
-	// Top color.
-	gl.Color3f(dark->red*mul, dark->green*mul, dark->blue*mul);
-	gl.TexCoord2f(0, 0);
-	gl.Vertex2f(0, 0);
-	gl.TexCoord2f(1, 0);
-	gl.Vertex2f(screenWidth, 0); 
-	// Bottom color.
-	gl.Color3f(light->red*mul, light->green*mul, light->blue*mul); 
-	gl.TexCoord2f(1, 1);
-	gl.Vertex2f(screenWidth, screenHeight);
-	gl.TexCoord2f(0, 1);
-	gl.Vertex2f(0, screenHeight);
+	{
+		// Top color.
+		gl.Color3f(dark->red*mul, dark->green*mul, dark->blue*mul);
+	
+		gl.TexCoord2f(0, 0);
+		gl.Vertex2f(0, 0);
+		gl.TexCoord2f(1, 0);
+		gl.Vertex2f(width, 0); 
+
+		// Bottom color.
+		gl.Color3f(light->red*mul, light->green*mul, light->blue*mul); 
+
+		gl.TexCoord2f(1, 1);
+		gl.Vertex2f(width, height);
+		gl.TexCoord2f(0, 1);
+		gl.Vertex2f(0, height);
+	}
 	gl.End();
 	gl.Enable(DGL_BLENDING);
-
-	// Draw logo.
-/*	gl.Enable(DGL_TEXTURING);
-	gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-	if(startupLogo)
-	{
-		// Calculate logo placement.
-		w = screenWidth/1.25f;
-		h = LOGO_HEIGHT * w/LOGO_WIDTH;
-		x = (screenWidth - w)/2;
-		y = (screenHeight - h)/2;
-
-		// Draw it in two passes: additive and subtractive. 
-		gl.Bind(startupLogo);
-		GL_DrawRect(x, y, w, h, .05f, .05f, .05f, 1);
-		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
-		GL_DrawRect(x - w/170, y - w/170, w, h, .1f, .1f, .1f, 1);
-		gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-		gl.Color3f(.05f, .05f, .05f);
-		FR_TextOut(DOOMSDAY_VERSIONTEXT, 
-			x + w - FR_TextWidth(DOOMSDAY_VERSIONTEXT),	
-			y + h);
-	}
-	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);	*/
 }
 
 //===========================================================================
@@ -172,7 +169,7 @@ void Con_DrawStartupScreen(int show)
 	// Print the messages in the console.
 	if(!startupScreen || ui_active) return;
 
-	Con_DrawStartupBackground();
+	Con_DrawStartupBackground(screenWidth, screenHeight);
 
 	// Draw the title.
 	FR_SetFont(glFontVariable);
