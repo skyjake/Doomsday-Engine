@@ -52,7 +52,7 @@ int			startupLogo;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static char *titletext;
-static int fonthgt = 8;	// Height of the font.
+static int fontHgt = 8;	// Height of the font.
 static DGLuint bgflat;
 char *bitmap = NULL;
 
@@ -68,7 +68,7 @@ void Con_StartupInit(void)
 	if(novideo) return;
 
 	GL_InitVarFont();
-	fonthgt = FR_TextHeight("Doomsday!");
+	fontHgt = FR_TextHeight("Doomsday!");
 
 	startupScreen = true;
 	gl.MatrixMode(DGL_PROJECTION);
@@ -180,7 +180,7 @@ void Con_DrawStartupScreen(int show)
 	FR_SetFont(glFontFixed);
 
 	topy += UI_BORDER;
-	vislines = (screenHeight - topy + fonthgt/2)/fonthgt;
+	vislines = (screenHeight - topy + fontHgt/2)/fontHgt;
 	y = topy;
 
 	st = bufferLines - vislines;
@@ -193,7 +193,7 @@ void Con_DrawStartupScreen(int show)
 		if(!line) break;
 		if(line->flags & CBLF_RULER)
 		{
-			Con_DrawRuler(y, fonthgt, 1);
+			Con_DrawRuler(y, fontHgt, 1);
 		}
 		else
 		{
@@ -204,7 +204,7 @@ void Con_DrawStartupScreen(int show)
 			gl.Color3f(1, 1, 1);
 			FR_TextOut(line->text, x, y);			
 		}
-		y += fonthgt;
+		y += fontHgt;
 	}
 	if(show) 
 	{
