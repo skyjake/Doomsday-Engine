@@ -461,9 +461,6 @@ void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
         M_RotateVector(rotatedNormal, (shinyPnt + normYaw) * 360,
                        (shinyAng + normPitch - .5f) * 180);
 
-        // TODO: Check the pitch angle!!!
-        //printf("sp=%f\n", shinyAng + normPitch);
-        
         u = (rotatedNormal[VX] + 1);
         v = rotatedNormal[VZ];
 
