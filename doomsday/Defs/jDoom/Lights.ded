@@ -3,10 +3,22 @@
 
 Header { Version = 5; }
 
+# Flags for Light definitions.
 Flag { ID = "lgf_nohalo"; Value = 0x100; }
 
+# Flags for Decoration definitions:
+# Decoration will not be used with IWAD resources.
+Flag { ID = "dcf_noiwad"; Value = 0x1; }
+
+# Allow using decoration with PWAD resources.
+Flag { ID = "dcf_pwad"; Value = 0x2; }    
+
+# Allow using decoration with external resources.
+Flag { ID = "dcf_ext"; Value = 0x4; }
+
+
 # The blue health bottles should be lit a bit more brightly.
-Light { State = "BON1"; Size = 0.5; }
+Light { State = "BON1"; Size = 0.5; Color { .05 .05 .85 }; }
 * Light { State = "BON1A"; }
 * Light { State = "BON1B"; }
 * Light { State = "BON1C"; }
@@ -24,3 +36,9 @@ Copy Light {
   State = "BAR2";
   Size = 0.32;
 }
+
+
+#####====--- LIGHT DECORATIONS ---====#####
+
+Include "Doom1Lights.ded";
+Include "Doom2Lights.ded";
