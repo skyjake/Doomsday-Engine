@@ -143,9 +143,4 @@ game_export_t;
 
 typedef game_export_t* (*GETGAMEAPI)(game_import_t*);
 
-#ifdef WIN32
-// This is called by the main engine.
-game_export_t *GetGameAPI(game_import_t *imports);
-#endif
-
 #endif
