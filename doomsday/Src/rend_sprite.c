@@ -79,13 +79,16 @@ void Rend_DrawPlayerSprites(void)
 {
 	int i;
 	ddpsprite_t *psp;
-	spriteinfo_t info;
+	spriteinfo_t info[DDMAXPSPRITES];
 	sector_t *sec = viewplayer->mo->subsector->sector;
 	float offx = pspOffX / 16.0f, offy = pspOffY / 16.0f;
 	boolean isFullBright = LevelFullBright;
 
 	// Cameramen have no psprites.
 	if(viewplayer->flags & DDPF_CAMERA) return; 
+
+	// Clear sprite info.
+	memset(info, 0, sizeof(info));
 
 	// Check for fullbright.
 	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
@@ -94,18 +97,22 @@ void Rend_DrawPlayerSprites(void)
 			continue; // Not used.
 
 		// If one of the psprites is fullbright, both are.
-		if(psp->stateptr->frame & FF_FULLBRIGHT) isFullBright = true;
+		if(psp->stateptr->frame & FF_FULLBRIGHT) 
+			isFullBright = true;
+
+		R_GetSpriteInfo(psp->stateptr->sprite, 
+			psp->stateptr->frame & FF_FRAMEMASK, &info[i]);
 	}
+
+	// FIXME: Use the sprite info to prepare a single GL texture for
+	// both the psprites.
 
 	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
 	{
-		if(psp->flags & DDPSPF_RENDERED 
-			|| !psp->stateptr) continue; // Not used.
+		if(!info[i].realLump) continue; // Not used.
 
 		// Draw it.
 		psp->flags |= DDPSPF_RENDERED;
-		R_GetSpriteInfo(psp->stateptr->sprite, 
-			psp->stateptr->frame & FF_FRAMEMASK, &info);
 
 		if(isFullBright)
 		{
@@ -117,9 +124,9 @@ void Rend_DrawPlayerSprites(void)
 				psp->light * (sec->rgb[CG]/255.0f), 
 				psp->light * (sec->rgb[CB]/255.0f), psp->alpha);
 		}
-		GL_DrawPSprite(psp->x - info.offset + offx, 
-			psp->y - info.topOffset + offy,
-			1, info.flip, info.lump);
+		GL_DrawPSprite(psp->x - info[i].offset + offx, 
+			psp->y - info[i].topOffset + offy,
+			1, info[i].flip, info[i].lump);
 	}
 }
 
