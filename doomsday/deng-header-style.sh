@@ -18,7 +18,7 @@ indent	--k-and-r-style \
 	--struct-brace-indentation0 \
 	-ppi 0 \
 	--indent-level4 \
-	--use-tabs \
+	--no-tabs \
 	--line-length79 \
 	--continue-at-parentheses \
 	--cuddle-do-while \
