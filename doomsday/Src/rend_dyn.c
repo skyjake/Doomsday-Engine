@@ -83,7 +83,7 @@ extern int			whitefog;
 
 boolean		dlInited = false;
 int			useDynLights = true, dlBlend = 0;
-float		dlFactor = 0.75f;	// was 0.6f
+float		dlFactor = 0.7f;	// was 0.6f
 int			useWallGlow = true;
 int			glowHeight = 100;
 lumobj_t	*luminousList = 0;
