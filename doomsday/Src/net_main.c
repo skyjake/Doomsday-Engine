@@ -1213,7 +1213,7 @@ int CCmdConnect(int argc, char **argv)
 	Con_Message("");
 
 	// Make sure TCP/IP is active.
-	if(!N_InitService(NSP_TCPIP, false))
+	if(!N_InitService(false))
 	{
 		Con_Message("TCP/IP not available.\n");
 		goto endConnect;
@@ -1258,7 +1258,7 @@ int CCmdNet(int argc, char **argv)
 	{
 		Con_Printf("Usage: %s (cmd/args)\n", argv[0]);
 		Con_Printf("Commands:\n");
-		Con_Printf("  init tcpip/ipx/modem/serial\n");
+		Con_Printf("  init\n");
 		Con_Printf("  shutdown\n");
 		Con_Printf("  setup client\n");
 		Con_Printf("  setup server\n");
@@ -1273,6 +1273,21 @@ int CCmdNet(int argc, char **argv)
 		Con_Printf("  server go/start\n");
 		Con_Printf("  server close/stop\n");
 		return true;
+	}
+
+	if(argc == 2 || argc == 3)
+	{
+		if(!stricmp(argv[1], "init"))
+		{
+			// Init the service (assume client mode).
+			if((success = N_InitService(false)))
+				Con_Message("Network initialization OK.\n");
+			else
+				Con_Message("Network initialization failed!\n");
+
+			// Let everybody know of this.
+			CmdReturnValue = success;
+		}
 	}
 	if(argc == 2)				// One argument?
 	{
@@ -1295,21 +1310,6 @@ int CCmdNet(int argc, char **argv)
 		else if(!stricmp(argv[1], "request"))
 		{
 			N_MasterRequestList();
-		}
-		else if(!stricmp(argv[1], "modems"))
-		{
-			/* -- DISABLED --
-			   int num;
-			   char **modemList = jtNetGetStringList(JTNET_MODEM_LIST, &num);
-			   if(modemList == NULL)
-			   {
-			   Con_Printf( "No modem list available.\n");
-			   }
-			   else for(i=0; i<num; i++)
-			   {
-			   Con_Printf( "%d: %s\n", i, modemList[i]);
-			   }
-			 */
 		}
 		else if(!stricmp(argv[1], "search"))
 		{
@@ -1340,19 +1340,8 @@ int CCmdNet(int argc, char **argv)
 			Con_Printf("Server: %s\n", isServer ? "yes" : "no");
 			Con_Printf("Client: %s\n", isClient ? "yes" : "no");
 			Con_Printf("Console number: %i\n", consoleplayer);
-			Con_Printf("TCP/IP address: %s\n", nptIPAddress);
-			Con_Printf("TCP/IP port: %d (0x%x)\n", nptIPPort, nptIPPort);
-			Con_Printf("Modem: %d (%s)\n", 0, "?"	/*jtNetGetInteger(JTNET_MODEM),
-													   jtNetGetString(JTNET_MODEM) */ );
-			/*Con_Printf("Phone number: %s\n", jtNetGetString(JTNET_PHONE_NUMBER)); */
-			Con_Printf("Serial: COM %d, baud %d, stop %d, parity %d, "
-					   "flow %d\n", nptSerialPort, nptSerialBaud,
-					   nptSerialStopBits, nptSerialParity, nptSerialFlowCtrl);
-			/*if((i = jtNetGetInteger(JTNET_BANDWIDTH)) != 0)
-			   Con_Printf("Bandwidth: %i bps\n", i);
-			   Con_Printf("Est. latency: %i ms\n", jtNetGetInteger(JTNET_EST_LATENCY));
-			   Con_Printf("Packet header: %i bytes\n", jtNetGetInteger(JTNET_PACKET_HEADER_SIZE));
-			 */
+
+			N_PrintInfo();
 		}
 		else if(!stricmp(argv[1], "disconnect"))
 		{
@@ -1380,32 +1369,7 @@ int CCmdNet(int argc, char **argv)
 	}
 	if(argc == 3)				// Two arguments?
 	{
-		if(!stricmp(argv[1], "init"))
-		{
-			serviceprovider_t sp = (!stricmp(argv[2], "tcp/ip") ||
-									!stricmp(argv[2],
-											 "tcpip")) ? NSP_TCPIP :
-				!stricmp(argv[2], "ipx") ? NSP_IPX : !stricmp(argv[2],
-															  "serial") ?
-				NSP_SERIAL : !stricmp(argv[2], "modem") ? NSP_MODEM : NSP_NONE;
-
-			if(sp == NSP_NONE)
-			{
-				Con_Message("%s is not a supported service provider.\n",
-							argv[2]);
-				return false;
-			}
-
-			// Init the service (assume client mode).
-			if((success = N_InitService(sp, false)))
-				Con_Message("Network initialization OK.\n");
-			else
-				Con_Message("Network initialization failed!\n");
-
-			// Let everybody know of this.
-			CmdReturnValue = success;
-		}
-		else if(!stricmp(argv[1], "server"))
+		if(!stricmp(argv[1], "server"))
 		{
 			if(!stricmp(argv[2], "go") || !stricmp(argv[2], "start"))
 			{
