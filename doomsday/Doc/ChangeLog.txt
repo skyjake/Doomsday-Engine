@@ -12,7 +12,8 @@ Version 1.7.11 (work in progress)
 * revised clientside handling of frames: collision detection for 
   movement prediction, missiles hidden on impact
 * revised low-level networking: implement confirmed/ordered packets 
-  manually, detect duplicates
+  manually, detect duplicates, Huffman encoding (60%-70% compression)
++ ccmd 'huffman': print Huffman efficiency and number of bytes sent
 * mobj translucency 0-255 (selector still overrides)
 * mobj floatbobbing is done by engine (clientside), DDMF_BOB added
 * client is allowed some movement while airborne (easier jumping)
@@ -36,9 +37,11 @@ jDoom:
 + cvar 'view-bob-weapon-switch-lower': if zero, HUD weapon is not 
   lowered during a weapon switch
 * game-corpse-time: corpses fade smoothly 
+- fixed: button deactivation sound
 
 jHeretic:
 * game-corpse-time: corpses fade smoothly 
+- fixed: button deactivation sound
   
 jHexen:
 - fixed: polyobj destination/speed for sliding doors (e.g. map05)
@@ -53,7 +56,7 @@ jHexen:
 - fixed: 'use artifact' sounds not audible on clientside
 
 InFine:
-* default background color is now black
+* server sends condition truth values to clients (secret, leavehub)
 
 XG:
 - when loading a savegame, line activators were not correctly restored
