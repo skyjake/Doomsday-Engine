@@ -1,54 +1,41 @@
-Header { Version = 5; }
-
-# TODO:
-# firegolem's flaming skull (animated skin)
+Header { Version = 6; }
 
 ########========-------- GOLEM / MUMMY --------========########
 
 Model {
   State = "MUMMY_LOOK1";
+  Flags = worldtime;
+  Interpolate { 1.7 -1 }; # -1 = random
   Md2 { File = "Actors/Golem/Golem.md2"; Frame = "idle01"; };
 }
 
-*Model {
-  Inter = 0.25;
-  Md2 { Frame = "idle02"; };
-}
-
-*Model {
-  Inter = 0.5;
-  Md2 { Frame = "idle03"; };
-}
-
-*Model {
-  Inter = 0.75;
-  Md2 { Frame = "idle04"; };
-}
+*Model { Inter = 0.125; Md2 { Frame = "idle02"; }; }
+*Model { Inter = 0.25;  Md2 { Frame = "idle03"; }; }
+*Model { Inter = 0.375; Md2 { Frame = "idle04"; }; }
+*Model { Inter = 0.5;   Md2 { Frame = "idle05"; }; }
+*Model { Inter = 0.625; Md2 { Frame = "idle06"; }; }
+*Model { Inter = 0.75;  Md2 { Frame = "idle07"; }; }
+*Model { Inter = 0.875; Md2 { Frame = "idle08"; }; }
 
 *Model {
   State = "MUMMY_LOOK2";
   Inter = 0;
-  Md2 { Frame = "idle05"; };
+  Md2 { Frame = "idle01"; };
 }
 
-*Model {
-  Inter = 0.25;
-  Md2 { Frame = "idle06"; };
-}
-
-*Model {
-  Inter = 0.5;
-  Md2 { Frame = "idle07"; };
-}
-
-*Model {
-  Inter = 0.75;
-  Md2 { Frame = "idle08"; };
-}
+*Model { Inter = 0.125; Md2 { Frame = "idle02"; }; }
+*Model { Inter = 0.25;  Md2 { Frame = "idle03"; }; }
+*Model { Inter = 0.375; Md2 { Frame = "idle04"; }; }
+*Model { Inter = 0.5;   Md2 { Frame = "idle05"; }; }
+*Model { Inter = 0.625; Md2 { Frame = "idle06"; }; }
+*Model { Inter = 0.75;  Md2 { Frame = "idle07"; }; }
+*Model { Inter = 0.875; Md2 { Frame = "idle08"; }; }
 
 *Model {
   State = "MUMMY_WALK1";
+  Flags = "";
   Inter = 0;
+  Interpolate { 0 1 };
   Md2 { Frame = "walk01"; };
 }
 
@@ -227,7 +214,7 @@ Model {
 # Mummy leader attack fire.
 Generator {
   State = "MUMMYL_ATK2";
-  Flags = "gnf_blend gnf_modelonly";
+  Flags = "gnf_blend gnf_modelonly";  
   Particles = 100;
   Speed = 4;
   Speed rnd = .5;
@@ -260,8 +247,8 @@ Generator {
     Color { 1 .7 .5 .4 };
     Resistance = 0.1; Gravity = -0.3;
   };
-  Stage {
-    Type = "pt_point";
+  Stage { 
+    Type = "pt_point"; 
     Radius = 6;
   };
 }

@@ -1,8 +1,5 @@
 Header { Version = 6; }
 
-# TODO:
-# small/large rocks
-
 ########========-------- VOLCANO --------========########
 # Model and skin by Slyrr
 # Defs by skyjake
@@ -25,12 +22,12 @@ Copy Model {
 
 Copy Model {
   State = "VOLCANO4";
-  Offset XYZ { 0 -1 -2 };
+  Offset XYZ { 0 -.5 -1.5 };
 }
 
 Copy Model {
   State = "VOLCANO5";
-  Offset XYZ { -2 0 0.5 };
+  Offset XYZ { -1.5 0 .3 };
 }
 
 Copy Model {
@@ -40,12 +37,12 @@ Copy Model {
 
 Copy Model {
   State = "VOLCANO7";
-  Offset XYZ { 1 -.5 1.5 };
+  Offset XYZ { .5 -.1 1 };
 }
 
 Copy Model {
   State = "VOLCANO8";
-  Offset XYZ { 1 -1 -0.5 };
+  Offset XYZ { 1 -.5 -0.2 };
 }
 
 Copy Model {
