@@ -6,11 +6,15 @@
 
 Version 1.8.1
 -------------
+* it is no longer possible to turn off camera smoothing
+- cvar 'rend-camera-smooth' was hidden
+- fixed: game event smoothing now operates seamlessly regardless of the
+  framerate
+- fixed: camera position smoothing wasn't synced correctly to frames
 + dpMapLoad: glBSP 1.96 as a plugin, run on the fly when necessary
 + rend-halo-realistic: use only more realistic halos (slightly smaller,
   dimmer), no secondary lens flares; enabled by default
 - fixed: Map Info -> Execute
-- fixed: camera position smoothing wasn't synced correctly to frames
 - fixed: FakeRadio bug where vertical shadows were rendered above and
   under the left and right edge of an opening in a straight wall
 - GL must not be loaded at all in dedicated mode
@@ -24,11 +28,13 @@ Version 1.8.1
 * tuned up handling of ticcmds during transfer from client to server
 * particle movement is smoothed (except flat particles that contact 
   a surface)
-* now mouse look is always as smooth as it can be, also when
-  'rend-camera-smooth' is disabled
+* mouse look is always as smooth as it can be
 * all games use the same keyboard look scheme (jDoom's was different)
 * framerate is measured more accurately
 + ccmd 'message': display a local game message
+
+Common:
+* more unified handling of ticcmds
 
 jDoom:
 - fixed: '-warp' made fonts disappear
@@ -38,6 +44,7 @@ jHeretic/jHexen:
 
 Win32:
 - too many console messages caused a crash during startup (extra verbosity)
+- crash when starting in dedicated mode
 
 Linux:
 + '--without-(game)' configuration option skips (game)
@@ -45,6 +52,10 @@ Linux:
   from the build (for dedicated servers)
 - color adjustments are now working (vid-gamma et al.)
 - demo file names were formed incorrectly
+
+Mac OS X:
+- pretty much everything can be compiled and run on Mac OS X with the
+  help of fink and Apple's X11 server (except netgames, don't go there)
 
 
 Version 1.8.0
