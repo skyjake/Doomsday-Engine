@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.9  2003/06/28 15:59:24  skyjake
+//** Delta score bonus for large objects, MDFC_CREATE gets smaller bonus
+//**
 //** Revision 1.8  2003/06/27 20:13:36  skyjake
 //** Added maxed mobj Z coords, fixed initial side deltas, sector height deltas
 //**
@@ -57,11 +60,6 @@ END_PROF_TIMERS()
 // Maximum difference in plane height where the absolute height doesn't
 // need to be sent.
 #define PLANE_SKIP_LIMIT	(40*FRACUNIT)
-
-// Heap relations.
-#define HEAP_PARENT(i)		(((i) + 1)/2 - 1)
-#define HEAP_LEFT(i)		(2*(i) + 1)
-#define HEAP_RIGHT(i)		(2*(i) + 2)
 
 // TYPES -------------------------------------------------------------------
 
@@ -2357,7 +2355,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 		const mobj_t *mo = &((mobjdelta_t*)delta)->mo;
 
 		// Seeing new mobjs is interesting.
-		if(df & MDFC_CREATE) score *= 1.5f;
+		if(df & MDFC_CREATE) score *= 1.1f;
 
 		// Position changes are important.
 		if(df & (MDF_POS_X | MDF_POS_Y)) score *= 1.2f;
@@ -2370,6 +2368,11 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 			if(size < 2) size = 2;
 
 			score *= size/16;			
+		}
+		else if(size > 50)
+		{
+			// Large objects are important.
+			score *= size/50;
 		}
 	}
 	else if(delta->type == DT_PLAYER)
