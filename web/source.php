@@ -24,6 +24,11 @@ begin_section( "modules", $pagedir );
 <table class="tab">
 
 <tr>
+<td><tt>de2</tt>
+<td>Doomsday 2.0 development: goals, milestones and other
+documentation. No executable code yet.
+
+<tr>
 <td><tt>distrib</tt>
 <td>Scripts (DOS batch files) for creating distribution packages.
 Uses <a href="http://www.rarsoft.com/">WinRAR</a> and
