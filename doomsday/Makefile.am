@@ -131,7 +131,7 @@ Defs/jHexen/Sprites.ded Defs/jHexen/Text.ded Defs/jHexen/jHexen.ded  \
 Runtime/jHexen/Startup.cfg
 
 nobase_dist_pkgdata_DATA = Data/Doomsday.wad Data/cphelp.txt	   \
-Data/KeyMaps/default.dkm Data/KeyMaps/fi.dkm			   \
+Data/KeyMaps/default.dkm Data/KeyMaps/de.dkm Data/KeyMaps/fi.dkm   \
 Data/Graphics/Background.pcx Data/Graphics/BoxFill.png		   \
 Data/Graphics/Hint.png Data/Graphics/Mouse.png			   \
 Data/Graphics/RadioCO.pcx Data/Graphics/BoxCorner.png		   \
