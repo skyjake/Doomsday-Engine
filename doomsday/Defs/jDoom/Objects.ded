@@ -8681,7 +8681,7 @@ State {
 State {
   ID = "SPID_ATK1";
   Sprite = "SPID";
-  Frame = 32768;
+  Frame = 0;
   Tics = 20;
   Action = "A_FaceTarget";
   Next state = "SPID_ATK2";
