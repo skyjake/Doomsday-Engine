@@ -17,5 +17,6 @@
 #include "dd_input.h"
 #include "dd_loop.h"
 #include "dd_help.h"
+#include "dd_zip.h"
 
 #endif 
