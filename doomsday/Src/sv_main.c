@@ -755,6 +755,7 @@ void Sv_ClientCoords(int playerNum)
 	client_t *cl = clients + playerNum;
 	mobj_t *mo = players[playerNum].mo;
 	int clx, cly, clz;
+	boolean onFloor = false;
 
 	// If mobj or player is invalid, the message is discarded.
 	if(!mo || !players[playerNum].ingame
@@ -763,6 +764,12 @@ void Sv_ClientCoords(int playerNum)
 	clx = Msg_ReadShort() << 16;
 	cly = Msg_ReadShort() << 16;
 	clz = Msg_ReadShort() << 16;
+
+	if(clz == (DDMININT & 0xffff0000))
+	{
+		clz = mo->floorz;
+		onFloor = true;
+	}
 
 	// If we aren't about to forcibly change the client's position, update 
 	// with new pos if it's valid.
@@ -776,8 +783,12 @@ void Sv_ClientCoords(int playerNum)
 		P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
 		mo->floorz = tmfloorz;
 		mo->ceilingz = tmceilingz;
-		if(mo->z < mo->subsector->sector->floorheight) 
-			mo->z = mo->subsector->sector->floorheight;
+		if(onFloor)
+		{
+			mo->z = mo->floorz;
+		}
+		/*if(mo->z < mo->subsector->sector->floorheight) 
+			mo->z = mo->subsector->sector->floorheight;*/
 	}
 }
 
