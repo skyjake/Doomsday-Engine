@@ -39,6 +39,7 @@ extern int      useMultiTexDetails;
 extern float    rend_light_wall_angle;
 extern float    detailFactor, detailScale;
 
+void            RL_Register(void);
 void            RL_Init();
 void            RL_ClearLists();
 void            RL_DeleteLists();
