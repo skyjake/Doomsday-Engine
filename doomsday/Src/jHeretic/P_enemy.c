@@ -333,7 +333,8 @@ void P_NewChaseDir(mobj_t *actor)
 {
 	fixed_t deltax, deltay;
 	dirtype_t d[3];
-	dirtype_t tdir, olddir, turnaround;
+	dirtype_t olddir, turnaround;
+    int tdir;
 
 	if(!actor->target)
 		Con_Error("P_NewChaseDir: called with no target");
