@@ -52,7 +52,7 @@ typedef struct sfxchannel_s
 }
 sfxchannel_t;
 
-extern boolean	sfx_avail;
+extern volatile boolean sfx_avail;
 extern float	sfx_reverb_strength;
 extern int		sfx_max_cache_kb, sfx_max_cache_tics; 
 extern int		sfx_bits, sfx_rate;
