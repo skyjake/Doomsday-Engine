@@ -40,7 +40,7 @@ typedef struct dynlight_s
 	float	s[2], t[2];
 	byte	color[3];
 	DGLuint texture;
-	uint	index;
+	//uint	index;
 }
 dynlight_t;
 
@@ -53,7 +53,7 @@ extern lumobj_t	*luminousList;
 extern lumobj_t	**dlSubLinks;
 extern int		numLuminous;
 extern int		useDynLights;
-extern int		maxDynLights, dlBlend, clipLights, dlMaxRad;
+extern int		maxDynLights, dlBlend, /*clipLights, */dlMaxRad;
 extern float	dlRadFactor, dlFactor;//, dlContract;
 extern int		useWallGlow, glowHeight;
 extern int		rend_info_lums;
@@ -75,7 +75,7 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsector);
 dynlight_t *DL_GetSegLightLinks(int seg, int whichpart);
 
 // Helpers.
-boolean DL_RadiusIterator(fixed_t x, fixed_t y, fixed_t radius, boolean (*func)(lumobj_t*,fixed_t));
+boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y, fixed_t radius, boolean (*func)(lumobj_t*,fixed_t));
 boolean DL_BoxIterator(fixed_t box[4], void *ptr, boolean (*func)(lumobj_t*,void*));
 
 int Rend_SubsectorClipper(fvertex_t *out, subsector_t *sub, float x, float y, float radius);
