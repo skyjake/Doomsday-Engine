@@ -31,6 +31,7 @@
 #include "de_render.h"
 #include "de_misc.h"
 
+#include "r_main.h"
 #include "gl_main.h"			// For r_framecounter.
 
 // MACROS ------------------------------------------------------------------
