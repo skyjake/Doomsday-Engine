@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.9  2003/08/30 22:47:20  skyjake
+// Removed obsolete, ancient light decorations
+//
 // Revision 1.8  2003/08/24 00:13:59  skyjake
 // Precache player weapon model skins
 //
@@ -635,96 +638,6 @@ void P_GroupLines (void)
 }
 
 //===========================================================================
-// P_SpawnStaticLights
-//===========================================================================
-void P_SpawnStaticLights(void)
-{
-	int i, h, v;
-	vertex_t *v1, *v2;
-	float off[2];
-	side_t *sid;
-	mobj_t *mo;
-
-	if(ArgCheck("-nostatic")) return;
-	if(gamemode != commercial) return;
-
-	// Check for BSTONE3 or BRICKLIT and spawn some lights.
-	// - double-sided walls are skipped
-	// - lights spawned only on middle textures
-	// - horizontal scrolling not taken into account
-	// - mobj->movedir is additional offset (many lights at the same (x,y))
-	// - each tic, the Z positions are recalculated (texoff + fixed height)
-	if(gamemode == commercial)
-	{
-		int tx1 = R_TextureNumForName("BSTONE3"),
-			tx2 = R_TextureNumForName("BRICKLIT");
-		fixed_t len;
-		int ilen, lh;
-		for(i=0; i<numlines; i++)
-		{
-			// We won't process fake walls.
-			if(lines[i].frontsector && lines[i].backsector) continue;
-
-			v1 = lines[i].v1;
-			v2 = lines[i].v2;
-			len = P_ApproxDistance(v2->x - v1->x, v2->y - v1->y);
-			ilen = len >> FRACBITS;
-			if(!len) continue;
-			off[0] = FixedDiv(v2->y - v1->y, len);
-			off[1] = -FixedDiv(v2->x - v1->x, len);
-
-			// Let's see which sidedef is present.
-			if(lines[i].sidenum[0] >= 0)
-				sid = sides + lines[i].sidenum[0];
-			else 
-			{
-				// There MUST be one sdef...
-				sid = sides + lines[i].sidenum[1];
-				// Flip vertices, this is the backside.
-				v1 = lines[i].v2;
-				v2 = lines[i].v1;
-			}
-
-			// Either will do; the lights are at the same height in both.			
-			if(sid->midtexture == tx1 || sid->midtexture == tx2)
-			{
-				lh = (sid->sector->ceilingheight - sid->sector->floorheight)
-					>> FRACBITS;
-				if(!lh) continue;
-				// Let's see where the bottom left light is.
-				h = 33-(sid->textureoffset>>FRACBITS);
-				while(h < 0) h += 64;
-				while(h > 64) h -= 64;
-				for(; h < ilen; h += 64)
-				{
-					v = 40-(sid->rowoffset>>FRACBITS);
-					if(lines[i].flags & ML_DONTPEGBOTTOM) v -= 128 - lh;
-					while(v < 0) v += 128;
-					while(v > 128) v -= 128;
-					for(; v <= lh; v += 128)
-					{
-						// Let there be light.
-						mo = P_SpawnMobj(v1->x + off[0] +
-							FixedMul(v2->x - v1->x, FixedDiv(h*FRACUNIT, len)),
-							v1->y + off[1] +
-							FixedMul(v2->y - v1->y, FixedDiv(h*FRACUNIT, len)),
-							0,
-							MT_LIGHTSOURCE);
-						mo->z = sid->sector->ceilingheight - v*FRACUNIT;
-						// The light must know where it's attached to.
-						// Positive when based on the floor.
-						if(lines[i].flags & ML_DONTPEGBOTTOM)
-							mo->movedir = mo->z - sid->sector->floorheight;
-						else
-							mo->movedir = -v*FRACUNIT;
-					}				
-				}
-			}
-		}
-	}
-}
-
-//===========================================================================
 // P_GetMapLumpName
 //===========================================================================
 void P_GetMapLumpName(int episode, int map, char *lumpName)
@@ -884,9 +797,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	// How about some music? 
 	S_LevelMusic();
 
-	// Spawn some static (dynamic) lights (based on textures).
-	P_SpawnStaticLights();
-	
 	// Adjust slime lower wall textures (a hack!).
 	// This will hide the ugly green bright line that would otherwise be
 	// visible due to texture repeating and interpolation.
