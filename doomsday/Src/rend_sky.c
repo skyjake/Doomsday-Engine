@@ -251,8 +251,6 @@ void Rend_RenderSkyHemisphere(int whichHemi)
 
 void Rend_RenderSky(int hemis)
 {
-	extern int whitefog;
-
 	// IS there a sky to be rendered?
 	if(!hemis || firstLayer == -1) return;
 
