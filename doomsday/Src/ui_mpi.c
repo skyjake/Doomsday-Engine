@@ -476,8 +476,15 @@ void MPIUpdateServerList(void)
 
 			// Is this suitable?
 			if(info.version != DOOMSDAY_VERSION ||
-			   stricmp(info.game, gx.Get(DD_GAME_ID)) || !info.canJoin)
-				continue;
+			   stricmp(info.gameMode, gx.Get(DD_GAME_MODE)) || !info.canJoin)
+            {
+                Con_Message("Server %s filtered out:\n", info.name);
+                Con_Message("  remote = %i, local = %i\n", info.version,
+                    DOOMSDAY_VERSION);
+                Con_Message("  remote = %s, local = %s\n",
+                            info.gameMode, gx.Get(DD_GAME_MODE));
+                Con_Message("  can join = %i\n", info.canJoin);                    			continue;
+            }
 
 			MPIFormatServerInfo(lstit_found[k].text, &info);
 			lstit_found[k].data = info.wadNumber;
