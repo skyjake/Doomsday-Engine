@@ -4,6 +4,8 @@ Header { Version = 5; }
 
 Model {
   State = "KNIGHT_STND1";
+  Flags = worldtime;
+  Interpolate { 1.8 -1 }; # -1 = random
   Scale = 0.92;
   Md2 { File = "Actors/Wight/Wight.md2"; Frame = "idle01"; };
   Md2 {
@@ -17,54 +19,105 @@ Model {
 }
 
 *Model {
+  Inter = 0.125;
+  Md2 { Frame = "idle02"; };
+  Md2 { Frame = "idle02"; };
+}
+
+*Model {
   Inter = 0.25;
-  Md2 { Frame = "idle02"; };
-  Md2 { Frame = "idle02"; };
+  Md2 { Frame = "idle03"; };
+  Md2 { Frame = "idle03"; };
+}
+
+*Model {
+  Inter = 0.375;
+  Md2 { Frame = "idle04"; };
+  Md2 { Frame = "idle04"; };
 }
 
 *Model {
   Inter = 0.5;
-  Md2 { Frame = "idle03"; };
-  Md2 { Frame = "idle03"; };
+  Md2 { Frame = "idle05"; };
+  Md2 { Frame = "idle05"; };
+}
+
+*Model {
+  Inter = 0.625;
+  Md2 { Frame = "idle06"; };
+  Md2 { Frame = "idle06"; };
 }
 
 *Model {
   Inter = 0.75;
-  Md2 { Frame = "idle04"; };
-  Md2 { Frame = "idle04"; };
+  Md2 { Frame = "idle07"; };
+  Md2 { Frame = "idle07"; };
+}
+
+*Model {
+  Inter = 0.875;
+  Md2 { Frame = "idle08"; };
+  Md2 { Frame = "idle08"; };
 }
 
 *Model {
   State = "KNIGHT_STND2";
   Inter = 0;
-  Md2 { Frame = "idle05"; };
-  Md2 { Frame = "idle05"; };
+  Md2 { Frame = "idle01"; };
+  Md2 { Frame = "idle01"; };
+}
+
+*Model {
+  Inter = 0.125;
+  Md2 { Frame = "idle02"; };
+  Md2 { Frame = "idle02"; };
 }
 
 *Model {
   Inter = 0.25;
-  Md2 { Frame = "idle06"; };
-  Md2 { Frame = "idle06"; };
+  Md2 { Frame = "idle03"; };
+  Md2 { Frame = "idle03"; };
+}
+
+*Model {
+  Inter = 0.375;
+  Md2 { Frame = "idle04"; };
+  Md2 { Frame = "idle04"; };
 }
 
 *Model {
   Inter = 0.5;
+  Md2 { Frame = "idle05"; };
+  Md2 { Frame = "idle05"; };
+}
+
+*Model {
+  Inter = 0.625;
+  Md2 { Frame = "idle06"; };
+  Md2 { Frame = "idle06"; };
+}
+
+*Model {
+  Inter = 0.75;
   Md2 { Frame = "idle07"; };
   Md2 { Frame = "idle07"; };
 }
 
 *Model {
-  Inter = 0.75;
+  Inter = 0.875;
   Md2 { Frame = "idle08"; };
   Md2 { Frame = "idle08"; };
 }
+
 
 # Walk sequence
 
 *Model
 {
   State = "KNIGHT_WALK1";
+  Flags = "";
   Inter = 0;
+  Interpolate { 0 1 };
   Md2 { Frame = "walk01"; };
   Md2 { Frame = "walk01"; };
 }
