@@ -53,7 +53,7 @@ extern game_export_t	gx;
 #endif
 
 // My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT "1.14.9"
+#define VERSION_TEXT "1.14.10"
 #define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JDOOM_VER_ID")"
 
 // All the versions of Doom have different savegame IDs, but

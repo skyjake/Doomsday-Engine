@@ -22,7 +22,7 @@
 #endif
 
 #define VERSION 210
-#define VERSION_TEXT "1.3.6"
+#define VERSION_TEXT "1.3.7"
 #define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JHERETIC_VER_ID")"
 
 #include "../doomsday.h"
