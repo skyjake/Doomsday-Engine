@@ -636,7 +636,7 @@ typedef struct linknode_s
 #define DDMF_RESERVED		0x00030000	// don't touch these!! (translation class)
 #define DDMF_GOINGROUND		0x00040000	// Allow to go in the ground.
 #define DDMF_LOWGRAVITY		0x00080000	// 1/8th gravity (predict)
-#define DDMF_MISSILE		0x00100000	// for the missile scanner
+#define DDMF_MISSILE		0x00100000	// client removes mobj upon impact
 #define DDMF_FLY			0x00200000	// flying object (doesn't matter if airborne)
 #define DDMF_NOGRAVITY		0x00400000	// isn't affected by gravity (predict)
 #define DDMF_ALWAYSLIT		0x00800000	// Always process DL even if hidden
@@ -692,6 +692,7 @@ typedef struct ddmobj_base_s
 	int				validcount;			/* used in iterating */
 	int				light;				/* index+1 of the lumobj, or 0 */
 	byte			halofactor;			/* strength of halo */
+	byte			translucency;		/* default = 0 = opaque */
 } ddmobj_base_t;
 
 //------------------------------------------------------------------------
@@ -1011,13 +1012,14 @@ typedef struct
 #define DDPT_OK					1
 #define DDPT_CANCEL				2
 #define DDPT_FIRST_WORLD_EVENT	32
-#define DDPT_PLANE_SOUND		32
+//#define DDPT_PLANE_SOUND		32
 #define DDPT_FIRST_GAME_EVENT	64
 #define DDPT_MESSAGE			67
-#define DDPT_SOUND				71
+//#define DDPT_SOUND			71
 
-// SendPacket flags (in to_player).
-#define DDSP_RELIABLE		0x40000000	// Guarantee delivery.
+// SendPacket flags (OR with to_player).
+#define DDSP_ORDERED		0x20000000	// Confirm delivery in correct order.
+#define DDSP_CONFIRM		0x40000000	// Confirm delivery.
 #define DDSP_ALL_PLAYERS	0x80000000	// Broadcast (for server).
 
 // World handshake: update headers. A varying number of
