@@ -4,6 +4,12 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.3
+-------------
+jDoom:
+- fixed: crushed barrels now explode correctly and don't become gibs
+
+
 Version 1.8.2
 -------------
 - fixed: segfault when starting a new game during demo playback
