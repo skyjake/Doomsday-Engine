@@ -58,7 +58,9 @@ static void setdata(finddata_t * dta)
 	dta->time = fd->data.time_write;
 	dta->size = fd->data.size;
 	dta->name = fd->data.name;
-	dta->attrib = fd->data.attrib;
+	dta->attrib = 0;
+	if(fd->data.attrib & _A_SUBDIR)
+		dta->attrib |= A_SUBDIR;
 }
 
 int myfindfirst(const char *filename, finddata_t * dta)
