@@ -4,6 +4,11 @@
 #include "p_xgline.h"
 #include "p_xgsec.h"
 
+extern int xgDev;
+
+// Debug message printer.
+void XG_Dev(const char *format, ...);
+
 // Called once, at post init.
 void XG_ReadTypes(void);
 
