@@ -17,8 +17,11 @@ Version 1.7.10 (work in progress)
 + WAD/PK3 files can be loaded from virtual files (inside PK3s)
 + sprite frames can be replaced with external resources (Patches)
 + raw screens can be replaced with external resources (Patches)
++ -maxtex option: set maximum texture size ("-maxtex 128")
 + sound flag 'sf_dontstop' (0x20): sound does not stop even if emitter 
   is destroyed (sound cannot be stopped until it finishes normally)
+* faster 3D model loading during startup
+* rend-camera-smooth: Z-movement of planes is also smoothed
 - fixed: sprites were sometimes clipped by a sky ceiling
 
 jDoom:
