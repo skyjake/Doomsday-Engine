@@ -58,18 +58,6 @@ void R_Init (void)
 }
 
 
-//
-// D_PageDrawer
-//
-/*void D_PageDrawer (void)
-{
-	extern char *pagename;
-	if(!pagename) return;
-	GL_SetNoTexture();
-	GL_DrawPatch(0, 0, W_GetNumForName(pagename));
-}
-*/
-
 void R_DrawSpecialFilter(void)
 {
 	player_t *player = &players[displayplayer];
@@ -312,7 +300,7 @@ void D_Display (void)
 		else
 			y = viewwindowy+4;
 	
-		GL_DrawPatch(126, y, W_GetNumForName("M_PAUSE"));
+		WI_DrawPatch(126, y, W_GetNumForName("M_PAUSE"));
     }
 
 	// InFine is drawn whenever active.
