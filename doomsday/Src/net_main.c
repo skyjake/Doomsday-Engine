@@ -500,7 +500,15 @@ void Net_Update(void)
 		Msg_Begin(pkt_coords);
 		Msg_WriteShort(mo->x >> 16);
 		Msg_WriteShort(mo->y >> 16);
-		Msg_WriteShort(mo->z >> 16);
+		if(mo->z == mo->floorz)
+		{
+			// This'll keep us on the floor even in fast moving sectors.
+			Msg_WriteShort(DDMININT >> 16);
+		}
+		else
+		{
+			Msg_WriteShort(mo->z >> 16);
+		}
 		Net_SendBuffer(0, 0);
 	}
 
@@ -967,6 +975,8 @@ void Net_Ticker(void)
 						clients[i].bandwidthRating, 
 						Sv_GetMaxFrameSize(i));
 				}
+				if(players[i].ingame)
+					Con_Message("%i: cmds=%i\n", i, clients[i].numtics);
 			}
 		}
 	}
