@@ -806,21 +806,10 @@ void NetSv_PSpriteChange(int plrNum, int state)
 	   Net_SendPacket(plrNum, GPT_PSPRITE_STATE, buffer, ptr-buffer); */
 }
 
-/*void NetSv_SectorSound(sector_t *sector, int sound_id)
-   {
-   byte buffer[20], *ptr = buffer;
-
-   if(IS_CLIENT) return;
-
-   *ptr++ = sound_id;
-   WRITE_SHORT(ptr, sector-sectors);
-   Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SECTOR_SOUND, buffer, ptr-buffer);
-   } */
-
 void NetSv_SendGameState(int flags, int to)
 {
 	byte    buffer[256], *ptr;
-	packet_gamestate_t *gs = (packet_gamestate_t *) buffer;
+	//packet_gamestate_t *gs = (packet_gamestate_t *) buffer;
 	int     i;
 
 	if(IS_CLIENT)
@@ -834,18 +823,68 @@ void NetSv_SendGameState(int flags, int to)
 		Con_Printf("Game setup: ep%i map%i %s\n", gameepisode, gamemap,
 				   gameConfigString);
 	}
-	/*
-	   // We can't init the camera if we don't know which 
-	   // player this packet is going to.
-	   if(to < 0 || to >= MAXPLAYERS) flags &= ~GSF_CAMERA_INIT; */
 
+    // Send an update to all the players in the game.
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
-		if(!players[i].plr->ingame || (to != DDSP_ALL_PLAYERS && to != i))
+#ifdef __JHEXEN__
+        int gameStateSize = 16;
+#else
+        int gameStateSize = 8;
+#endif
+        int k;
+
+        if(!players[i].plr->ingame || (to != DDSP_ALL_PLAYERS && to != i))
 			continue;
 
 		ptr = buffer;
 
+        // The contents of the game state package are a bit messy
+        // due to compatibility with older versions.
+        
+        /*byte setup[16];
+        Con_Message("Sizeof(gs)=%i\n", sizeof(packet_gamestate_t));
+        Con_Message("Sent game state packet (len=%i):\n", ptr - buffer);
+        for(k = 0; k < ptr - buffer; ++k)
+            Con_Message("%02x ", buffer[k]);
+        Con_Message("\n");*/
+
+#ifdef __JDOOM__
+        ptr[0] = gamemode;
+#else
+        ptr[0] = 0;
+#endif
+        ptr[1] = flags;
+        ptr[2] = gameepisode;
+        ptr[3] = gamemap;
+        ptr[4] = (deathmatch & 0x3)
+            | (!nomonsters? 0x4 : 0)
+            | (respawnparm? 0x8 : 0)
+#ifndef __JHEXEN__                
+            | (cfg.jumpEnabled? 0x10 : 0)
+            | (gameskill << 5);
+#else
+        ;
+#endif
+#ifndef __JHEXEN__            
+        ptr[5] = 0;
+
+#else
+        ptr[5] = gameskill & 0x7;
+#endif
+        ptr[6] = (Get(DD_GRAVITY) >> 8) & 0xff; // low byte
+        ptr[7] = (Get(DD_GRAVITY) >> 16) & 0xff; // high byte
+        memset(ptr + 8, 0, 8);
+        /*
+        Con_Message("Alternative state packet:\n");
+        for(k = 0; k < gameStateSize; ++k)
+            Con_Message("%02x ", setup[k]);
+        Con_Message("\n");
+        */
+
+        ptr += gameStateSize;
+        
+#if 0
 #ifdef __JDOOM__
 		gs->gamemode = gamemode;
 #endif
@@ -861,6 +900,7 @@ void NetSv_SendGameState(int flags, int to)
 #endif
 		gs->gravity = (Get(DD_GRAVITY) >> 8) & 0xffff;
 		ptr += sizeof(packet_gamestate_t);
+#endif // #if 0
 
 		if(flags & GSF_CAMERA_INIT)
 		{

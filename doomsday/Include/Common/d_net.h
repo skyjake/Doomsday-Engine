@@ -45,6 +45,9 @@ enum {
 	GPT_JUMP_POWER,				   // Jump power (0 = no jumping)
 };
 
+#if 0
+// This struct is *obsolete* (portability issues)
+//
 // This packet is sent by servers to clients when the game state
 // changes.
 typedef struct {
@@ -65,6 +68,7 @@ typedef struct {
 	float           healthmod;	   // netMobHealthModifier
 #endif
 } packet_gamestate_t;
+#endif
 
 // Game state flags.
 #define GSF_CHANGE_MAP		0x01   // Level has changed.

@@ -93,14 +93,38 @@ int NetCl_IsCompatible(int other, int us)
 void NetCl_UpdateGameState(byte *data)
 {
 	fixed_t grav;
-	packet_gamestate_t *gs = (packet_gamestate_t *) data;
+    byte gsGameMode = 0;
+    byte gsFlags = 0;
+    byte gsEpisode = 0;
+    byte gsMap = 0;
+    byte gsDeathmatch = 0;
+    byte gsMonsters = 0;
+    byte gsRespawn = 0;
+    byte gsJumping = 0;
+    byte gsSkill = 0;
+    short gsGravity = 0;
+
+    gsGameMode = data[0];
+    gsFlags = data[1];
+    gsEpisode = data[2];
+    gsMap = data[3];
+    gsDeathmatch = data[4] & 0x3;
+    gsMonsters = (data[4] & 0x4? true : false);
+    gsRespawn = (data[4] & 0x8? true : false);
+#ifndef __JHEXEN__
+    gsJumping = (data[4] & 0x10? true : false);
+    gsSkill = (data[4] >> 5);
+#else
+    gsSkill = data[5] & 0x7;
+#endif
+    gsGravity = data[6] | (data[7] << 8);
 
 	// Demo game state changes are only effective during demo playback.
-	if(gs->flags & GSF_DEMO && !Get(DD_PLAYBACK))
+	if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
 		return;
 
 #ifdef __JDOOM__
-	if(!NetCl_IsCompatible(gs->gamemode, gamemode))
+	if(!NetCl_IsCompatible(gsGameMode, gamemode))
 	{
 		// Wrong game mode! This is highly irregular!
 		Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
@@ -110,28 +134,27 @@ void NetCl_UpdateGameState(byte *data)
 	}
 #endif
 
-	deathmatch = gs->deathmatch;
-	nomonsters = !gs->monsters;
-	respawnparm = gs->respawn;
-	//cfg.jumpEnabled = gs->jumping;
-	grav = gs->gravity << 8;
+	deathmatch = gsDeathmatch;
+	nomonsters = !gsMonsters;
+	respawnparm = gsRespawn;
+	grav = (gsGravity << 8);
 
 	// Some statistics.
 #if __JHEXEN__
-	Con_Message("Game state: Map=%i Skill=%i %s\n", gs->map, gs->skill,
+	Con_Message("Game state: Map=%i Skill=%i %s\n", gsMap, gsSkill,
 				deathmatch == 1 ? "Deathmatch" : deathmatch ==
 				2 ? "Deathmatch2" : "Co-op");
 	Con_Message("  Respawn=%s Monsters=%s Gravity=%.1f\n",
 				respawnparm ? "yes" : "no", !nomonsters ? "yes" : "no",
 				FIX2FLT(grav));
 #else
-	Con_Message("Game state: Map=%i Episode=%i Skill=%i %s\n", gs->map,
-				gs->episode, gs->skill,
+	Con_Message("Game state: Map=%i Episode=%i Skill=%i %s\n", gsMap,
+				gsEpisode, gsSkill,
 				deathmatch == 1 ? "Deathmatch" : deathmatch ==
 				2 ? "Deathmatch2" : "Co-op");
 	Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
 				respawnparm ? "yes" : "no", !nomonsters ? "yes" : "no",
-				gs->jumping ? "yes" : "no", FIX2FLT(grav));
+				gsJumping ? "yes" : "no", FIX2FLT(grav));
 #endif
 
 #ifdef __JHERETIC__
@@ -139,33 +162,34 @@ void NetCl_UpdateGameState(byte *data)
 #endif
 
 	// Start reading after the GS packet.
-	NetCl_SetReadBuffer(data + sizeof(*gs));
-
+#ifdef __JHEXEN__
+	NetCl_SetReadBuffer(data + 16);
+#else
+    NetCl_SetReadBuffer(data + 8);
+#endif
+        
 	// Do we need to change the map?
-	if(gs->flags & GSF_CHANGE_MAP)
+	if(gsFlags & GSF_CHANGE_MAP)
 	{
-		G_InitNew(gs->skill, gs->episode, gs->map);
+		G_InitNew(gsSkill, gsEpisode, gsMap);
 	}
 	else
 	{
-		gameskill = gs->skill;
-		gameepisode = gs->episode;
-		gamemap = gs->map;
+		gameskill = gsSkill;
+		gameepisode = gsEpisode;
+		gamemap = gsMap;
 	}
 
 	// Set gravity.
 	Set(DD_GRAVITY, grav);
 
 	// Camera init included?
-	if(gs->flags & GSF_CAMERA_INIT)
+	if(gsFlags & GSF_CAMERA_INIT)
 	{
 		player_t *pl = players + consoleplayer;
 		mobj_t *mo;
 
-		//G_DoReborn(consoleplayer);
-		//if(!pl->plr->mo) G_DummySpawnPlayer(consoleplayer);
 		mo = pl->plr->mo;
-		//NetCl_SetReadBuffer(data + sizeof(*gs));
 		P_UnsetThingPosition(mo);
 		mo->x = NetCl_ReadShort() << 16;
 		mo->y = NetCl_ReadShort() << 16;
