@@ -21,11 +21,16 @@ typedef struct dgldriver_s
 
 	// State.
 	int		(*GetInteger)(int name);
-	int		(*GetIntegerv)(int name, int *v);
+	int		(*GetIntegerv)(int name, int *values);
 	int		(*SetInteger)(int name, int value);
+	int		(*SetFloatv)(int name, float *values);
 	char*	(*GetString)(int name);
 	int		(*Enable)(int cap);
 	void	(*Disable)(int cap);
+	void	(*EnableArrays)(int, int, int);
+	void	(*DisableArrays)(int, int, int);
+	void	(*Arrays)(void*, void*, int, void**, int);
+	void	(*UnlockArrays)(void);
 	void	(*Func)(int func, int param1, int param2);
 	void	(*ZBias)(int level);
 
@@ -68,9 +73,12 @@ typedef struct dgldriver_s
 	void	(*Vertex3fv)(float *data);
 	void	(*TexCoord2f)(float s, float t);
 	void	(*TexCoord2fv)(float *data);
+	void	(*MultiTexCoord2f)(int target, float s, float t);
+	void	(*MultiTexCoord2fv)(int target, float *data);
 	void	(*Vertices2ftv)(int num, gl_ft2vertex_t *data);
 	void	(*Vertices3ftv)(int num, gl_ft3vertex_t *data);
 	void	(*Vertices3fctv)(int num, gl_fct3vertex_t *data);
+	void	(*DrawElements)(int type, int count, unsigned int *indices);
 
 	// Miscellaneous.
 	int		(*Grab)(int x, int y, int width, int height, int format, void *buffer);
