@@ -97,7 +97,7 @@ void Cl_LocalCommand(void)
 	if(levelTime < 0.333)
 	{
 		// In the very beginning of a level, moving is not allowed.
-		memset(cl->lastCmd, 0, sizeof(*cl->lastCmd));
+		memset(cl->lastCmd, 0, TICCMD_SIZE);
 		if(s->cmo)
 		{
 			s->cmo->mo.momx = 0;
