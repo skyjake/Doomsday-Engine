@@ -20,6 +20,7 @@ extern "C" {
 #define DED_FUNC_LEN		255
 
 #define DED_PTC_STAGES		16
+#define DED_MAX_SUB_MODELS	8
 
 typedef char			ded_stringid_t[DED_STRINGID_LEN+1];
 typedef ded_stringid_t	ded_string_t;
@@ -145,7 +146,7 @@ typedef struct
 	float			resize;
 	float			offset[3];		// Offset XYZ
 	float			shadowradius;	// Radius for shadow (0=auto).
-	ded_submodel_t	sub[4];
+	ded_submodel_t	sub[DED_MAX_SUB_MODELS];
 } ded_model_t;
 
 typedef struct
