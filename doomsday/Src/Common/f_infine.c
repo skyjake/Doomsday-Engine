@@ -36,34 +36,34 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define STACK_SIZE		16		// Size of the InFine state stack.
 #define MAX_TOKEN_LEN	8192
 #define MAX_SEQUENCE	64
 #define MAX_PICS		64
-#define MAX_TEXT		8
+#define MAX_TEXT		32
+#define MAX_HANDLERS	64
 
 #define FI_REPEAT		-2
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
+typedef char handle_t[32];
+
+typedef struct {
 	char *token;
 	int operands;
 	void (*func)(void);
 	boolean when_skipping;
+	boolean when_cond_skipping;	// Skipping because condition failed.
 } ficmd_t;
 
-typedef struct
-{
+typedef struct {
 	float value;
 	float target;
 	int steps;
 } fivalue_t;
 
-typedef char handle_t[32];
-
-typedef struct
-{
+typedef struct {
 	boolean used;
 	handle_t handle;
 	fivalue_t color[4];
@@ -80,8 +80,7 @@ typedef struct
 	short sound[MAX_SEQUENCE];
 } fipic_t;
 
-typedef struct
-{
+typedef struct {
 	boolean used;
 	handle_t handle;
 	fivalue_t color[4];
@@ -99,6 +98,38 @@ typedef struct
 	char *text;
 } fitext_t;
 
+typedef struct {
+	int code;
+	handle_t marker;
+} fihandler_t;
+
+typedef struct {
+	char *script;		// A copy of the script.
+	char *cp;			// The command cursor.
+	infinemode_t mode;
+	int overlay_gamestate;	// Overlay scripts run only in one gamemode.
+	int timer;
+	boolean conditions[NUM_FICONDS];
+	int intime;
+	boolean canskip, skipping;
+	int dolevel;		// Level of DO-skipping.
+	int wait;
+	boolean suspended, paused, eatevents, showmenu;
+	boolean gotoskip, skipnext, lastskipped;
+	handle_t gototarget;
+	fitext_t *waitingtext;
+	fipic_t *waitingpic;
+	fihandler_t keyhandlers[MAX_HANDLERS];
+	int bgflat;
+	fivalue_t bgcolor[4];
+	fivalue_t imgcolor[4];
+	fivalue_t imgoffset[2];
+	fivalue_t filter[4];
+	fivalue_t textcolor[9][3];
+	fipic_t pics[MAX_PICS];
+	fitext_t text[MAX_TEXT];
+} fistate_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -107,6 +138,7 @@ void FI_InitValue(fivalue_t *val, float num);
 int FI_TextObjectLength(fitext_t *tex);
 
 // Command functions.
+void FIC_Do(void);
 void FIC_End(void);
 void FIC_BGFlat(void);
 void FIC_NoBGFlat(void);
@@ -116,13 +148,19 @@ void FIC_WaitAnim(void);
 void FIC_Tic(void);
 void FIC_InTime(void);
 void FIC_Color(void);
+void FIC_ColorAlpha(void);
 void FIC_Pause(void);
 void FIC_CanSkip(void);
 void FIC_NoSkip(void);
 void FIC_SkipHere(void);
+void FIC_Events(void);
+void FIC_NoEvents(void);
+void FIC_OnKey(void);
+void FIC_UnsetKey(void);
 void FIC_If(void);
 void FIC_IfNot(void);
-void FIC_SkipTo(void);
+void FIC_Else(void);
+void FIC_GoTo(void);
 void FIC_Marker(void);
 void FIC_Image(void);
 void FIC_ImageAt(void);
@@ -174,6 +212,10 @@ void FIC_PicScale(void);
 void FIC_TextScaleX(void);
 void FIC_TextScaleY(void);
 void FIC_TextScale(void);
+void FIC_PlayDemo(void);
+void FIC_Command(void);
+void FIC_ShowMenu(void);
+void FIC_NoShowMenu(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -200,11 +242,13 @@ boolean fi_cmd_executed = false;	// Set to true after first command.
 static ficmd_t fi_commands[] =
 {
 	// Run Control
-	{ "end", 0,			FIC_End },		
-	{ "if", 1,			FIC_If },		// if (value-id)
-	{ "ifnot", 1,		FIC_IfNot },	// ifnot (value-id)
-	{ "goto", 1,		FIC_SkipTo },	// goto (marker)
-	{ "marker", 1,		FIC_Marker, true },
+	{ "DO", 0,			FIC_Do, true, true },
+	{ "END", 0,			FIC_End },		
+	{ "IF", 1,			FIC_If },		// if (value-id)
+	{ "IFNOT", 1,		FIC_IfNot },	// ifnot (value-id)
+	{ "ELSE", 0,		FIC_Else },
+	{ "GOTO", 1,		FIC_GoTo },	// goto (marker)
+	{ "MARKER", 1,		FIC_Marker, true },
 	{ "in", 1,			FIC_InTime },	// in (time)
 	{ "pause", 0,		FIC_Pause },	
 	{ "tic", 0,			FIC_Tic },		
@@ -213,10 +257,15 @@ static ficmd_t fi_commands[] =
 	{ "waitanim", 1,	FIC_WaitAnim }, // waitanim (handle)
 	{ "canskip", 0,		FIC_CanSkip },
 	{ "noskip", 0,		FIC_NoSkip },
-	{ "skiphere", 0,	FIC_SkipHere, true },	
+	{ "skiphere", 0,	FIC_SkipHere, true },
+	{ "events", 0,		FIC_Events },
+	{ "noevents", 0,	FIC_NoEvents },
+	{ "onkey", 2,		FIC_OnKey },	// onkey (keyname) (marker)
+	{ "unsetkey", 1,	FIC_UnsetKey },	// unsetkey (keyname)
 	
 	// Screen Control
 	{ "color", 3,		FIC_Color },	// color (red) (green) (blue)
+	{ "coloralpha", 4,	FIC_ColorAlpha }, // coloralpha (r) (g) (b) (a)
 	{ "flat", 1,		FIC_BGFlat },	// flat (flat-lump)
 	{ "noflat", 0,		FIC_NoBGFlat },
 	{ "offx", 1,		FIC_OffsetX },	// offx (x)
@@ -275,32 +324,29 @@ static ficmd_t fi_commands[] =
 	{ "fonta", 1,		FIC_FontA },	// fonta (handle)
 	{ "fontb", 1,		FIC_FontB },	// fontb (handle)
 	{ "linehgt", 2,		FIC_TextLineHeight }, // linehgt (hndl) (hgt)
+
+	// Advanced Control
+	{ "playdemo", 1,	FIC_PlayDemo },	// playdemo (filename)
+	{ "cmd", 1,			FIC_Command },	// cmd (console command)
+	{ "trigger", 0,		FIC_ShowMenu },
+	{ "notrigger", 0,	FIC_NoShowMenu },
+
 	{ NULL, 0, NULL }
 };
 
-static char *script, *cp;
-static boolean is_after;
-static int fi_timer;
+static fistate_t fi_statestack[STACK_SIZE];
+static fistate_t *fi;	// Pointer to the current state in the stack.
 
-static boolean fi_canskip, fi_skipping;
-static int fi_wait;
-static boolean fi_paused, fi_gotoskip, fi_skipnext;
+static boolean condition_presets[NUM_FICONDS];
+
+//static char *script, *cp;
+//static infinemode_t fi_mode;
+//static int fi_timer;
+
 static char fi_token[MAX_TOKEN_LEN];
-static handle_t fi_goto;
-static fitext_t *fi_waitingtext;
-static fipic_t *fi_waitingpic;
-static boolean fi_conditions[NUM_FICONDS];
 
-// The InFine state:
-static int fi_intime;
-static int fi_bgflat;		// Background flat.
-static fivalue_t fi_bgcolor[3];
-static fivalue_t fi_imgcolor[4];
-static fivalue_t fi_imgoffset[2];
-static fivalue_t fi_filter[4];
-static fivalue_t fi_textcolor[9][3];
-static fipic_t fi_pics[MAX_PICS], fi_dummypic;
-static fitext_t fi_text[MAX_TEXT], fi_dummytext;
+static fipic_t fi_dummypic;
+static fitext_t fi_dummytext;
 
 #if !__JDOOM__
 static int FontABase, FontBBase;
@@ -309,37 +355,14 @@ static int FontABase, FontBBase;
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
-// FI_StartScript
-//	Start playing the given script.
+// FI_ClearState
+//	Clear the InFine state to the default, blank state.
+//	The 'fi' pointer must be set before calling this function.
 //===========================================================================
-void FI_StartScript(char *finalescript, boolean after)
+void FI_ClearState(void)
 {
 	int i, c;
 
-#ifdef _DEBUG
-	Con_Printf("FI_StartScript: aft=%i '%.30s'\n", after, finalescript);
-#endif
-
-	if(!IS_CLIENT)
-	{
-		// We are able to figure out the truth values of all the 
-		// conditions.
-		fi_conditions[FICOND_SECRET] = (secretexit != 0);
-
-#ifdef __JHEXEN__
-		// Current hub has been completed?
-		fi_conditions[FICOND_LEAVEHUB] 
-			= (P_GetMapCluster(gamemap) != P_GetMapCluster(LeaveMap));
-#else
-		fi_conditions[FICOND_LEAVEHUB] = false;
-#endif
-	}
-
-	// Tell clients to start this script.
-	NetSv_Finale(FINF_BEGIN | (after? FINF_AFTER : 0), finalescript,
-		fi_conditions, NUM_FICONDS);
-
-	// Init InFine state.
 #if !__JDOOM__
 	players[consoleplayer].messageTics = 1;
 #endif
@@ -348,40 +371,223 @@ void FI_StartScript(char *finalescript, boolean after)
 #else
 	players[consoleplayer].message = NULL;
 #endif
-    gameaction = ga_nothing;
-    gamestate = GS_INFINE;
-    automapactive = false;
+
+    // General game state.
+	gameaction = ga_nothing;
+    if(fi->mode != FIMODE_OVERLAY) 
+	{
+		gamestate = GS_INFINE;
+		automapactive = false;
+	}
+
 	fi_active = true;
-	// Nothing is drawn until a cmd has been executed.
-	fi_cmd_executed = false;	
-	is_after = after;
-	cp = script = finalescript;	
-	fi_timer = 0;
-	fi_canskip = true;		// By default skipping is enabled.
-	fi_skipping = false;
-	fi_wait = 0;			// Not waiting for anything.
-	fi_intime = 0;			// Interpolation is off.
-	fi_bgflat = -1;			// No background flat.
-	fi_paused = false;
-	fi_gotoskip = false;
-	fi_skipnext = false;
-	fi_waitingtext = NULL;
-	fi_waitingpic = NULL;
-	memset(fi_goto, 0, sizeof(fi_goto));
+	fi_cmd_executed = false;// Nothing is drawn until a cmd has been executed.
+
+	fi->suspended = false;
+	fi->timer = 0;
+	fi->canskip = true;		// By default skipping is enabled.
+	fi->skipping = false;
+	fi->wait = 0;			// Not waiting for anything.
+	fi->intime = 0;			// Interpolation is off.
+	fi->bgflat = -1;			// No background flat.
+	fi->paused = false;
+	fi->gotoskip = false;
+	fi->skipnext = false;
+
+	fi->waitingtext = NULL;
+	fi->waitingpic = NULL;
+	memset(fi->gototarget, 0, sizeof(fi->gototarget));
 	GL_SetFilter(0);		// Clear the current filter.
-	for(c = 0; c < 3; c++) FI_InitValue(fi_bgcolor + c, 1);
-	memset(fi_pics, 0, sizeof(fi_pics));
-	memset(fi_imgoffset, 0, sizeof(fi_imgoffset));
-	memset(fi_text, 0, sizeof(fi_text));
-	memset(&fi_dummytext, 0, sizeof(fi_dummytext));
-	memset(fi_filter, 0, sizeof(fi_filter));
+	for(i = 0; i < 4; i++) 
+	{
+		FI_InitValue(fi->bgcolor + i, 1);
+	}
+	memset(fi->pics, 0, sizeof(fi->pics));
+	memset(fi->imgoffset, 0, sizeof(fi->imgoffset));
+	memset(fi->text, 0, sizeof(fi->text));
+	memset(fi->filter, 0, sizeof(fi->filter));
 	for(i = 0; i < 9; i++)
-		for(c = 0; c < 3; c++)
-			FI_InitValue(&fi_textcolor[i][c], 1);
+	{
+		for(c = 0; c < 3; c++) FI_InitValue(&fi->textcolor[i][c], 1);
+	}
+}
+
+//===========================================================================
+// FI_NewState
+//===========================================================================
+void FI_NewState(const char *script)
+{
+	int size;
+
+	if(!fi)
+	{
+		// Start from the bottom of the stack.
+		fi = fi_statestack;
+	}
+	else
+	{
+		// Get the next state from the stack.
+		fi++;
+
+		if(fi == fi_statestack + STACK_SIZE)
+		{
+			Con_Error("FI_NewState: InFine state stack overflow.\n");
+		}
+	}
+
+#ifdef _DEBUG
+	// Is the stack leaking?
+	Con_Printf("FI_NewState: Assigned index %i.\n", fi - fi_statestack);
+#endif
+
+	memset(fi, 0, sizeof(*fi));
+
+	// Take a copy of the script.
+	size = strlen(script) + 1;
+	fi->script = Z_Malloc(size, PU_STATIC, 0);
+	memcpy(fi->script, script, size);
+
+	// Init the cursor, too.
+	fi->cp = fi->script;
+}
+
+//===========================================================================
+// FI_PopState
+//===========================================================================
+void FI_PopState(void)
+{
+	int i;
+
+#ifdef _DEBUG
+	Con_Printf("FI_PopState: fi=%p (%i)\n", fi, fi - fi_statestack);
+#endif
+	if(!fi)
+	{
+#ifdef _DEBUG
+		Con_Printf("FI_PopState: Pop in NULL state!\n");
+#endif
+		return;
+	}
+
+	// Free the current state.
+	Z_Free(fi->script);
+
+	// Free all text strings.
+	for(i = 0; i < MAX_TEXT; i++)
+	{
+		if(fi->text[i].text)
+		{
+			Z_Free(fi->text[i].text);
+		}
+	}
+
+	memset(fi, 0, sizeof(*fi));
+
+	// Should we go back to NULL?
+	if(fi == fi_statestack)
+	{
+		fi = NULL;
+		fi_active = false;
+	}
+	else
+	{
+		// Return to previous state.
+		fi--;
+	}
+}
+
+//===========================================================================
+// FI_Reset
+//	Reset the entire InFine state stack. This is called when a new game
+//	is started.
+//===========================================================================
+void FI_Reset(void)
+{
+	if(IS_CLIENT)
+	{
+#ifdef _DEBUG
+		Con_Printf("FI_Reset: Called in client mode! (not reseting)\n");
+#endif
+		return;
+	}
+
+	// Pop all the states. 
+	while(fi) FI_PopState();	
+
+	fi_active = false;
+}
+
+//===========================================================================
+// FI_Start
+//	Start playing the given script.
+//===========================================================================
+void FI_Start(char *finalescript, infinemode_t mode)
+{
+	int i;
+
+	if(mode == FIMODE_LOCAL && IS_DEDICATED)
+	{
+		// Dedicated servers don't play local scripts.
+#ifdef _DEBUG
+		Con_Printf("FI_Start: No local scripts in dedicated mode.\n");
+#endif
+		return;
+	}
+
+#ifdef _DEBUG
+	Con_Printf("FI_Start: mode=%i '%.30s'\n", mode, finalescript);
+#endif
+
+	// Init InFine state.
+	FI_NewState(finalescript);
+	fi->mode = mode;
+	FI_ClearState();
+
+	if(!IS_CLIENT)
+	{
+		// We are able to figure out the truth values of all the 
+		// conditions.
+		fi->conditions[FICOND_SECRET] = (secretexit != 0);
+
+#ifdef __JHEXEN__
+		// Current hub has been completed?
+		fi->conditions[FICOND_LEAVEHUB] 
+			= (P_GetMapCluster(gamemap) != P_GetMapCluster(LeaveMap));
+#else
+		// Only Hexen has hubs.
+		fi->conditions[FICOND_LEAVEHUB] = false;
+#endif
+	}
+	else
+	{
+		// Clients use the server-provided presets. We may not have 
+		// enough info to figure out the real values otherwise.
+		for(i = 0; i < NUM_FICONDS; i++)
+		{
+			fi->conditions[i] = condition_presets[i];
+		}
+	}
+
+	if(mode == FIMODE_OVERLAY)
+	{
+		// Overlay scripts stop when the gamemode changes.
+		fi->overlay_gamestate = gamestate;
+	}
+	
+	if(mode != FIMODE_LOCAL)
+	{
+		// Tell clients to start this script.
+		NetSv_Finale(FINF_BEGIN | 
+			 (mode == FIMODE_AFTER? FINF_AFTER 
+			: mode == FIMODE_OVERLAY? FINF_OVERLAY 
+			: 0), finalescript, fi->conditions, NUM_FICONDS);
+	}
+
 #ifndef __JDOOM__
 	FontABase = W_GetNumForName("FONTA_S") + 1;
 	FontBBase = W_GetNumForName("FONTB_S") + 1;
 #endif
+	memset(&fi_dummytext, 0, sizeof(fi_dummytext));
 }
 
 //===========================================================================
@@ -390,34 +596,52 @@ void FI_StartScript(char *finalescript, boolean after)
 //===========================================================================
 void FI_End(void)
 {
-	if(!fi_canskip || !fi_active) return;
+	int oldMode;
 
-	fi_active = false;
+	if(!fi_active || !fi->canskip) return;
+
+	oldMode = fi->mode;
+
+	// This'll set fi to NULL.
+	FI_PopState();
 
 #ifdef _DEBUG
 	Con_Printf("FI_End\n");
 #endif
 
-	// Tell clients to stop the finale.
-	NetSv_Finale(FINF_END, 0, NULL, 0);
-	if(is_after) // A level has been completed.
+	if(oldMode != FIMODE_LOCAL)
 	{
-		if(IS_CLIENT) 
-		{
-#ifdef __JHEXEN__
-			Draw_TeleportIcon();
-#endif
-			return;
-		}
-		gameaction = ga_completed;
+		// Tell clients to stop the finale.
+		NetSv_Finale(FINF_END, 0, NULL, 0);
 	}
-	else // Enter the level, this was a briefing.
+
+	// If no more scripts are left, go to the next game mode.
+	if(!fi_active)
 	{
-		gamestate = GS_LEVEL;
-		levelstarttic = gametic;
-		leveltime = actual_leveltime = 0;
-		// Restart the current map's song.
-		S_LevelMusic();
+		if(oldMode == FIMODE_AFTER) // A level has been completed.
+		{
+			if(IS_CLIENT) 
+			{
+#ifdef __JHEXEN__
+				Draw_TeleportIcon();
+#endif
+				return;
+			}
+			gameaction = ga_completed;
+		}
+		else if(oldMode == FIMODE_BEFORE) 
+		{
+			// Enter the level, this was a briefing.
+			gamestate = GS_LEVEL;
+			levelstarttic = gametic;
+			leveltime = actual_leveltime = 0;
+			// Restart the current map's song.
+			S_LevelMusic();
+		}
+		else if(oldMode == FIMODE_LOCAL)
+		{
+			gamestate = GS_WAITING;
+		}
 	}
 }
 
@@ -429,10 +653,33 @@ void FI_End(void)
 void FI_SetCondition(int index, boolean value)
 {
 	if(index < 0 || index >= NUM_FICONDS) return;
-	fi_conditions[index] = value;
+	condition_presets[index] = value;
 #ifdef _DEBUG
 	Con_Printf("FI_SetCondition: %i = %s\n", index, value? "true" : "false");
 #endif
+}
+
+//===========================================================================
+// CCmdStartInFine
+//===========================================================================
+int CCmdStartInFine(int argc, char **argv)
+{
+	char *script;
+
+	if(fi_active) return false;
+	if(argc != 2)
+	{
+		Con_Printf("Usage: %s (script-id)\n", argv[0]);
+		return true;
+	}
+	if(!Def_Get(DD_DEF_FINALE, argv[1], &script))
+	{
+		Con_Printf("Script \"%s\" is not defined.\n", argv[1]);
+		return false;
+	}
+	// The overlay mode doesn't affect the current game mode.
+	FI_Start(script, gamestate == GS_LEVEL? FIMODE_OVERLAY : FIMODE_LOCAL);
+	return true;
 }
 
 //===========================================================================
@@ -440,7 +687,8 @@ void FI_SetCondition(int index, boolean value)
 //===========================================================================
 int CCmdStopInFine(int argc, char **argv)
 {
-	if(gamestate != GS_INFINE) return false;
+	if(!fi_active) return false;
+	fi->canskip = true;
 	FI_End();
 	return true;
 }
@@ -463,23 +711,6 @@ void FI_GetMapID(char *dest, int ep, int map)
 }
 
 //===========================================================================
-// FI_GetFinaleGame
-//	Usually the Game number is zero, but Plutonia and TNT are a bit of a
-//	problem since they must be able to coexist alongside regular Doom II.
-//===========================================================================
-int FI_GetFinaleGame(void)
-{
-/*#if __JDOOM__
-	if(gamemode == commercial)
-	{
-		if(gamemission == pack_plut) return 1;
-		if(gamemission == pack_tnt) return 2;
-	}
-#endif*/
-	return 0;
-}
-
-//===========================================================================
 // FI_Briefing
 //	Check if there is a finale before the map and play it.
 //	Returns true if a finale was begun.
@@ -498,10 +729,9 @@ int FI_Briefing(int episode, int map)
 	// Is there such a finale definition?
 	FI_GetMapID(mid, episode, map);
 
-	fin.game = FI_GetFinaleGame();
 	if(!Def_Get(DD_DEF_FINALE_BEFORE, mid, &fin)) return false;
 
-	FI_StartScript(fin.script, false);
+	FI_Start(fin.script, FIMODE_BEFORE);
 	return true;
 }
 
@@ -523,11 +753,26 @@ int FI_Debriefing(int episode, int map)
 
 	// Is there such a finale definition?
 	FI_GetMapID(mid, episode, map);
-	fin.game = FI_GetFinaleGame();
 	if(!Def_Get(DD_DEF_FINALE_AFTER, mid, &fin)) return false;
 
-	FI_StartScript(fin.script, true);
+	FI_Start(fin.script, FIMODE_AFTER);
 	return true;
+}
+
+//===========================================================================
+// FI_DemoEnds
+//===========================================================================
+void FI_DemoEnds(void)
+{
+	if(fi && fi->suspended)
+	{
+		// Restore the InFine state.
+		fi->suspended = false;
+		fi_active = true;
+		gamestate = GS_INFINE;
+		gameaction = ga_nothing;
+		automapactive = false;
+	}
 }
 
 //===========================================================================
@@ -537,26 +782,28 @@ char *FI_GetToken(void)
 {
 	char *out;
 
+	if(!fi) return NULL;
+
 	// Skip whitespace.
-	while(*cp && isspace(*cp)) cp++;
-	if(!*cp) return NULL;	// The end has been reached.
+	while(*fi->cp && isspace(*fi->cp)) fi->cp++;
+	if(!*fi->cp) return NULL;	// The end has been reached.
 	out = fi_token;
-	if(*cp == '"') // A string?
+	if(*fi->cp == '"') // A string?
 	{
-		for(cp++; *cp; cp++)
+		for(fi->cp++; *fi->cp; fi->cp++)
 		{
-			if(*cp == '"')
+			if(*fi->cp == '"')
 			{
-				cp++;
+				fi->cp++;
 				// Convert double quotes to single ones.
-				if(*cp != '"') break;
+				if(*fi->cp != '"') break;
 			}
-			*out++ = *cp;
+			*out++ = *fi->cp;
 		}
 	}
 	else
 	{
-		while(!isspace(*cp) && *cp) *out++ = *cp++;
+		while(!isspace(*fi->cp) && *fi->cp) *out++ = *fi->cp++;
 	}
 	*out++ = 0;
 	return fi_token;
@@ -590,13 +837,27 @@ int FI_GetTics(void)
 
 //===========================================================================
 // FI_Execute
+//	Execute one (the next) command, advance script cursor.
 //===========================================================================
 void FI_Execute(char *cmd)
 {
 	int	i, k;
 	char *oldcp;
 
-	if(!strcmp(cmd, ";")) return; // Allowed garbage.
+	// Semicolon terminates DO-blocks.
+	if(!strcmp(cmd, ";")) 
+	{
+		if(fi->dolevel > 0) 
+		{
+			if(--fi->dolevel == 0)
+			{
+				// The DO-skip has been completed.
+				fi->skipnext = false;
+				fi->lastskipped = true;
+			}
+		}
+		return; 
+	}
 
 	// We're now going to execute a command.
 	fi_cmd_executed = true;
@@ -606,30 +867,42 @@ void FI_Execute(char *cmd)
 		if(!stricmp(cmd, fi_commands[i].token))
 		{
 			// Check that there are enough operands.
-			oldcp = cp;
+			// k stays at zero if the number of operands is correct.
+			oldcp = fi->cp;
 			for(k = fi_commands[i].operands; k > 0; k--)
 				if(!FI_GetToken()) 
 				{
-					cp = oldcp;
-					Con_Message("FI_Execute: cmd \"%s\" has too few operands.\n", 
+					fi->cp = oldcp;
+					Con_Message("FI_Execute: \"%s\" has too few operands.\n", 
 						fi_commands[i].token);
 					break;
 				}
 			// Should we skip this command?
-			if(fi_skipnext 
-				|| (fi_skipping || fi_gotoskip) 
+			if(fi->skipnext && !fi_commands[i].when_cond_skipping 
+				|| (fi->skipping || fi->gotoskip) 
 					&& !fi_commands[i].when_skipping) 
 			{
-				fi_skipnext = false;
+				// While not DO-skipping, the condskip has now been done.
+				if(!fi->dolevel) 
+				{
+					if(fi->skipnext) fi->lastskipped = true;
+					fi->skipnext = false;
+				}
 				return;
 			}
 			// If there were enough operands, execute the command.
-			cp = oldcp;
+			fi->cp = oldcp;
 			if(!k) fi_commands[i].func();
+
+			// The END command may clear the current state.
+			if(!fi) return;
+
+			// Now we've executed the latest command.
+			fi->lastskipped = false;
 			return;
 		}
 	// The command was not found!
-	Con_Message("FI_Execute: unknown cmd \"%s\".\n", cmd);
+	Con_Message("FI_Execute: Unknown command \"%s\".\n", cmd);
 }
 
 //===========================================================================
@@ -661,7 +934,7 @@ void FI_InitValue(fivalue_t *val, float num)
 void FI_SetValue(fivalue_t *val, float num)
 {
 	val->target = num;
-	val->steps = fi_intime;
+	val->steps = fi->intime;
 	if(!val->steps) val->value = val->target;
 }
 
@@ -687,6 +960,30 @@ void FI_ValueArrayThink(fivalue_t *val, int num)
 {
 	int i;
 	for(i = 0; i < num; i++) FI_ValueThink(val + i);
+}
+
+//===========================================================================
+// FI_GetHandler
+//===========================================================================
+fihandler_t *FI_GetHandler(int code)
+{
+	int i;
+	fihandler_t *vacant = NULL;
+	
+	for(i = 0; i < MAX_HANDLERS; i++)
+	{
+		// Use this if a suitable handler is not already set?
+		if(!vacant && !fi->keyhandlers[i].code) 
+			vacant = fi->keyhandlers + i;
+
+		if(fi->keyhandlers[i].code == code)
+		{
+			return fi->keyhandlers + i;
+		}
+	}
+
+	// May be NULL, if no more handlers available.
+	return vacant;
 }
 
 //===========================================================================
@@ -723,13 +1020,13 @@ fipic_t *FI_GetPic(char *handle)
 
 	for(i = 0; i < MAX_PICS; i++)
 	{
-		if(!fi_pics[i].used)
+		if(!fi->pics[i].used)
 		{
-			if(!unused) unused = fi_pics + i;
+			if(!unused) unused = fi->pics + i;
 			continue;
 		}
-		if(!stricmp(fi_pics[i].handle, handle))
-			return fi_pics + i;
+		if(!stricmp(fi->pics[i].handle, handle))
+			return fi->pics + i;
 	}
 	
 	// Allocate an empty one.
@@ -757,13 +1054,13 @@ fitext_t *FI_GetText(char *handle)
 
 	for(i = 0; i < MAX_TEXT; i++)
 	{
-		if(!fi_text[i].used)
+		if(!fi->text[i].used)
 		{
-			if(!unused) unused = fi_text + i;
+			if(!unused) unused = fi->text + i;
 			continue;
 		}
-		if(!stricmp(fi_text[i].handle, handle))
-			return fi_text + i;
+		if(!stricmp(fi->text[i].handle, handle))
+			return fi->text + i;
 	}
 	
 	// Allocate an empty one.
@@ -798,7 +1095,7 @@ void FI_SetText(fitext_t *tex, char *str)
 	int len = strlen(str) + 1;
 
 	if(tex->text) Z_Free(tex->text); // Free any previous text.
-	tex->text = Z_Malloc(len, PU_LEVEL, 0);
+	tex->text = Z_Malloc(len, PU_STATIC, 0);
 	memcpy(tex->text, str, len);
 }
 
@@ -813,14 +1110,25 @@ void FI_Ticker(void)
 
 	if(!fi_active) return;
 
-	fi_timer++;
+	if(fi->mode == FIMODE_OVERLAY)
+	{
+		// Has the game mode changed?
+		if(fi->overlay_gamestate != gamestate)
+		{
+			// Overlay scripts don't survive this...
+			FI_End();
+			return;
+		}
+	}
+
+	fi->timer++;
 	
 	// Interpolateable values.
-	FI_ValueArrayThink(fi_bgcolor, 3);
-	FI_ValueArrayThink(fi_imgoffset, 2);
-	FI_ValueArrayThink(fi_filter, 4);
-	for(i = 0; i < 9; i++) FI_ValueArrayThink(fi_textcolor[i], 3);
-	for(i = 0, pic = fi_pics; i < MAX_PICS; i++, pic++)
+	FI_ValueArrayThink(fi->bgcolor, 4);
+	FI_ValueArrayThink(fi->imgoffset, 2);
+	FI_ValueArrayThink(fi->filter, 4);
+	for(i = 0; i < 9; i++) FI_ValueArrayThink(fi->textcolor[i], 3);
+	for(i = 0, pic = fi->pics; i < MAX_PICS; i++, pic++)
 	{
 		if(!pic->used) continue;
 		FI_ValueThink(&pic->x);
@@ -856,7 +1164,7 @@ void FI_Ticker(void)
 		}
 	}
 	// Text objects.
-	for(i = 0, tex = fi_text; i < MAX_TEXT; i++, tex++)
+	for(i = 0, tex = fi->text; i < MAX_TEXT; i++, tex++)
 	{
 		if(!tex->used) continue;
 		FI_ValueThink(&tex->x);
@@ -886,34 +1194,53 @@ void FI_Ticker(void)
 	}
 
 	// If we're waiting, don't execute any commands.
-	if(fi_wait && --fi_wait) return;
+	if(fi->wait && --fi->wait) return;
 
 	// If we're paused we can't really do anything.
-	if(fi_paused) return;
+	if(fi->paused) return;
 
 	// If we're waiting for a text to finish typing, do nothing.
-	if(fi_waitingtext)
+	if(fi->waitingtext)
 	{
-		if(!fi_waitingtext->flags.all_visible) return;
-		fi_waitingtext = NULL;
+		if(!fi->waitingtext->flags.all_visible) return;
+		fi->waitingtext = NULL;
 	}
 
 	// Waiting for an animation to reach its end?
-	if(fi_waitingpic)
+	if(fi->waitingpic)
 	{
-		if(!fi_waitingpic->flags.done) return;
-		fi_waitingpic = NULL;
+		if(!fi->waitingpic->flags.done) return;
+		fi->waitingpic = NULL;
 	}
 
 	// Execute commands until a wait time is set or we reach the end of
 	// the script. If the end is reached, the finale really ends (FI_End).
-	while(!fi_wait 
-		&& !fi_waitingtext
-		&& !fi_waitingpic
+	while(fi_active 
+		&& !fi->wait 
+		&& !fi->waitingtext
+		&& !fi->waitingpic
 		&& !(last = !FI_ExecuteNextCommand()));
 	
 	// The script has ended!
 	if(last) FI_End();
+}
+
+//===========================================================================
+// FI_SkipTo
+//===========================================================================
+void FI_SkipTo(const char *marker)
+{
+	memset(fi->gototarget, 0, sizeof(fi->gototarget));
+	strncpy(fi->gototarget, marker, sizeof(fi->gototarget) - 1);
+
+	// Start skipping until the marker is found.
+	fi->gotoskip = true;
+
+	// Stop any waiting.
+	fi->wait = 0;
+
+	// Rewind the script so we can jump anywhere.
+	fi->cp = fi->script;
 }
 
 //===========================================================================
@@ -922,23 +1249,46 @@ void FI_Ticker(void)
 //===========================================================================
 int FI_SkipRequest(void)
 {
-	fi_waitingtext = NULL; // Stop waiting for things.
-	fi_waitingpic = NULL;
-	if(fi_paused)
+	fi->waitingtext = NULL; // Stop waiting for things.
+	fi->waitingpic = NULL;
+	if(fi->paused)
 	{
 		// Un-pause.
-		fi_paused = false;
-		fi_wait = 0;
+		fi->paused = false;
+		fi->wait = 0;
 		return true;
 	}		
-	if(fi_canskip)
+	if(fi->canskip)
 	{
 		// Start skipping ahead.
-		fi_skipping = true;	
-		fi_wait = 0;
+		fi->skipping = true;	
+		fi->wait = 0;
 		return true;
 	}
-	return false;
+	return fi->eatevents;
+}
+
+//===========================================================================
+// FI_IsMenuTrigger
+//	Returns true if the event should open the menu.
+//===========================================================================
+boolean FI_IsMenuTrigger(event_t *ev)
+{
+	if(!fi_active) return false;
+	return fi->showmenu;
+}
+
+//===========================================================================
+// FI_AteEvent
+//===========================================================================
+int FI_AteEvent(event_t *ev)
+{
+	// We'll never eat key/mb/jb up events.
+	if(ev->type == ev_keyup 
+		|| ev->type == ev_mousebup
+		|| ev->type == ev_joybup) return false;
+
+	return fi->eatevents;
 }
 
 //===========================================================================
@@ -946,20 +1296,38 @@ int FI_SkipRequest(void)
 //===========================================================================
 int FI_Responder(event_t *ev)
 {
-	// If we can't skip, there's no interaction of any kind.
-	// Also, during the first second disallow skipping.
-	if(!fi_canskip && !fi_paused
-		|| IS_CLIENT	
-		|| fi_timer < 35) return false;
+	int i;
 
+	if(!fi_active || IS_CLIENT) return false;
+
+	// During the first ~second disallow all events/skipping.
+	if(fi->timer < 20) return FI_AteEvent(ev);
+
+	if(ev->type == ev_keydown && ev->data1)
+	{
+		// Any handlers for this key event?
+		for(i = 0; i < MAX_HANDLERS; i++)
+		{
+			if(fi->keyhandlers[i].code == ev->data1)
+			{
+				FI_SkipTo(fi->keyhandlers[i].marker);
+				return FI_AteEvent(ev);
+			}
+		}
+	}
+
+	// If we can't skip, there's no interaction of any kind.
+	if(!fi->canskip && !fi->paused) return FI_AteEvent(ev);
+
+	// We are only interested in key/button presses.
 	if(ev->type != ev_keydown
 		&& ev->type != ev_mousebdown
-		&& ev->type != ev_joybdown) return false;
+		&& ev->type != ev_joybdown) return FI_AteEvent(ev);
 
 	// We're not interested in the Escape key.
 	if(ev->type == ev_keydown && ev->data1 == DDKEY_ESCAPE) 
-		return false;
-	
+		return FI_AteEvent(ev);
+
 	// Servers tell clients to skip.
 	NetSv_Finale(FINF_SKIP, 0, NULL, 0);
 	return FI_SkipRequest();
@@ -1051,9 +1419,9 @@ void FI_UseTextColor(fitext_t *tex, int idx)
 	}
 	else
 	{
-		gl.Color4f(fi_textcolor[idx - 1][0].value,
-			fi_textcolor[idx - 1][1].value,
-			fi_textcolor[idx - 1][2].value,
+		gl.Color4f(fi->textcolor[idx - 1][0].value,
+			fi->textcolor[idx - 1][1].value,
+			fi->textcolor[idx - 1][2].value,
 			tex->color[3].value);
 	}
 }
@@ -1167,24 +1535,25 @@ void FI_Drawer(void)
 	if(!fi_active || !fi_cmd_executed) return;
 
 	// Draw the background.
-	if(fi_bgflat >= 0)
+	if(fi->bgflat >= 0)
 	{
-		gl.Color3f(fi_bgcolor[0].value, fi_bgcolor[1].value, 
-			fi_bgcolor[2].value);
-		GL_SetFlat(fi_bgflat);
+		gl.Color4f(fi->bgcolor[0].value, fi->bgcolor[1].value, 
+			fi->bgcolor[2].value, fi->bgcolor[3].value);
+		GL_SetFlat(fi->bgflat);
 		GL_DrawRectTiled(0, 0, 320, 200, 64, 64);
 	}
 	else
 	{
 		// Just clear the screen, then.
 		gl.Disable(DGL_TEXTURING);
-		GL_DrawRect(0, 0, 320, 200, fi_bgcolor[0].value, 
-			fi_bgcolor[1].value, fi_bgcolor[2].value, 1);
+		GL_DrawRect(0, 0, 320, 200, fi->bgcolor[0].value, 
+			fi->bgcolor[1].value, fi->bgcolor[2].value, 
+			fi->bgcolor[3].value);
 		gl.Enable(DGL_TEXTURING);
 	}
 
 	// Draw images.
-	for(i = 0, pic = fi_pics; i < MAX_PICS; i++, pic++)
+	for(i = 0, pic = fi->pics; i < MAX_PICS; i++, pic++)
 	{
 		if(!pic->used) continue;
 		sq = pic->seq;
@@ -1199,8 +1568,8 @@ void FI_Drawer(void)
 			// Setup the transformation matrix we need.
 			gl.MatrixMode(DGL_MODELVIEW);
 			gl.PushMatrix();
-			gl.Translatef(pic->x.value - fi_imgoffset[0].value, 
-				pic->y.value - fi_imgoffset[1].value, 0);
+			gl.Translatef(pic->x.value - fi->imgoffset[0].value, 
+				pic->y.value - fi->imgoffset[1].value, 0);
 			gl.Scalef((pic->flip[sq]? -1 : 1) * pic->scale[0].value, 
 				pic->scale[1].value, 1);
 
@@ -1213,28 +1582,29 @@ void FI_Drawer(void)
 		else
 		{
 			GL_DrawRawScreen_CS(pic->lump[sq], 
-				pic->x.value - fi_imgoffset[0].value, 
-				pic->y.value - fi_imgoffset[1].value,
+				pic->x.value - fi->imgoffset[0].value, 
+				pic->y.value - fi->imgoffset[1].value,
 				(pic->flip[sq]? -1 : 1) * pic->scale[0].value,
 				pic->scale[1].value);
 		}
 	}
 
 	// Draw text.
-	for(i = 0, tex = fi_text; i < MAX_TEXT; i++, tex++)
+	for(i = 0, tex = fi->text; i < MAX_TEXT; i++, tex++)
 	{
 		if(!tex->used || !tex->text) continue;
 		FI_DrawText(tex);
 	}
 
 	// Filter on top of everything.
-	if(fi_filter[0].value > 0 || fi_filter[1].value > 0 
-		|| fi_filter[2].value > 0 || fi_filter[3].value > 0)
+	if(/*fi->filter[0].value > 0 || fi->filter[1].value > 0 
+		|| fi->filter[2].value > 0 || */
+		fi->filter[3].value > 0)
 	{
 		// Only draw if necessary.
 		gl.Disable(DGL_TEXTURING);
-		gl.Color4f(fi_filter[0].value, fi_filter[1].value,
-			fi_filter[2].value, fi_filter[3].value);
+		gl.Color4f(fi->filter[0].value, fi->filter[1].value,
+			fi->filter[2].value, fi->filter[3].value);
 		gl.Begin(DGL_QUADS);
 		gl.Vertex2f(0, 0);
 		gl.Vertex2f(320, 0);
@@ -1250,72 +1620,132 @@ void FI_Drawer(void)
 // Otherwise the script cursor ends up in the wrong place.
 //===========================================================================
 
+void FIC_Do(void)
+{
+	// This command is called even when (cond)skipping.
+	if(fi->skipnext)
+	{
+		// A conditional skip has been issued. 
+		// We'll go into DO-skipping mode. skipnext won't be cleared
+		// until the matching semicolon is found.
+		fi->dolevel++;
+	}
+}
+
 void FIC_End(void)
 {
-	fi_wait = 1;
+	fi->wait = 1;
 	FI_End();
 }
 
 void FIC_BGFlat(void)
 {
-	fi_bgflat = W_CheckNumForName(FI_GetToken());
+	fi->bgflat = W_CheckNumForName(FI_GetToken());
 }
 
 void FIC_NoBGFlat(void)
 {
-	fi_bgflat = -1;
+	fi->bgflat = -1;
 }
 
 void FIC_InTime(void)
 {
-	fi_intime = FI_GetTics();
+	fi->intime = FI_GetTics();
 }
 
 void FIC_Tic(void)
 {
-	fi_wait = 1;
+	fi->wait = 1;
 }
 
 void FIC_Wait(void)
 {
-	fi_wait = FI_GetTics();
+	fi->wait = FI_GetTics();
 }
 
 void FIC_WaitText(void)
 {
-	fi_waitingtext = FI_GetText(FI_GetToken());
+	fi->waitingtext = FI_GetText(FI_GetToken());
 }
 
 void FIC_WaitAnim(void)
 {
-	fi_waitingpic = FI_GetPic(FI_GetToken());
+	fi->waitingpic = FI_GetPic(FI_GetToken());
 }
 
 void FIC_Color(void)
 {
 	int i;
-	for(i = 0; i < 3; i++) FI_SetValue(fi_bgcolor + i, FI_GetFloat());
+	for(i = 0; i < 3; i++) FI_SetValue(fi->bgcolor + i, FI_GetFloat());
+}
+
+void FIC_ColorAlpha(void)
+{
+	int i;
+	for(i = 0; i < 4; i++) FI_SetValue(fi->bgcolor + i, FI_GetFloat());
 }
 
 void FIC_Pause(void)
 {
-	fi_paused = true;
-	fi_wait = 1;
+	fi->paused = true;
+	fi->wait = 1;
 }
 
 void FIC_CanSkip(void)
 {
-	fi_canskip = true;
+	fi->canskip = true;
 }
 
 void FIC_NoSkip(void)
 {
-	fi_canskip = false;
+	fi->canskip = false;
 }
 
 void FIC_SkipHere(void)
 {
-	fi_skipping = false;
+	fi->skipping = false;
+}
+
+void FIC_Events(void)
+{
+	// Script will eat all input events.
+	fi->eatevents = true;
+}
+
+void FIC_NoEvents(void)
+{
+	// Script will pass unprocessed events to other responders.
+	fi->eatevents = false;
+}
+
+void FIC_OnKey(void)
+{
+	int code;
+	fihandler_t *handler;
+
+	// First argument is the key identifier.
+	code = DD_GetKeyCode(FI_GetToken());
+	
+	// Read the marker name into fi_token.
+	FI_GetToken();
+
+	// Find an empty handler.
+	if((handler = FI_GetHandler(code)) != NULL)
+	{
+		handler->code = code;
+		strncpy(handler->marker, fi_token, sizeof(handler->marker) - 1); 
+	}
+}
+
+void FIC_UnsetKey(void)
+{
+	fihandler_t *handler = FI_GetHandler( DD_GetKeyCode(FI_GetToken()) );
+
+	if(handler)
+	{
+		handler->code = 0;
+		memset(handler->marker, 0, sizeof(handler->marker));
+	}
 }
 
 void FIC_If(void)
@@ -1327,7 +1757,7 @@ void FIC_If(void)
 	if(!stricmp(fi_token, "secret"))
 	{
 		// Secret exit was used?
-		val = fi_conditions[FICOND_SECRET];
+		val = fi->conditions[FICOND_SECRET];
 	}
 	else if(!stricmp(fi_token, "netgame"))
 	{
@@ -1347,6 +1777,11 @@ void FIC_If(void)
 		val = false; // Hexen has no shareware.
 #endif
 	}
+	// Generic game mode string checking.
+	else if(!strnicmp(fi_token, "mode:", 5))
+	{
+		val = !stricmp(fi_token + 5, G_Get(DD_GAME_MODE));
+	}
 #if __JDOOM__
 	// Game modes.
 	else if(!stricmp(fi_token, "ultimate"))
@@ -1361,7 +1796,7 @@ void FIC_If(void)
 	else if(!stricmp(fi_token, "leavehub"))
 	{
 		// Current hub has been completed?
-		val = fi_conditions[FICOND_LEAVEHUB];
+		val = fi->conditions[FICOND_LEAVEHUB];
 	}
 #if __JHEXEN__
 	// Player classes.
@@ -1372,32 +1807,38 @@ void FIC_If(void)
 	else if(!stricmp(fi_token, "mage"))
 		val = (cfg.PlayerClass[consoleplayer] == PCLASS_MAGE);
 #endif
+	else
+	{
+		Con_Message("FIC_If: Unknown condition \"%s\".\n", fi_token);
+	}
 	// Skip the next command if the value is false.
-	fi_skipnext = !val;
+	fi->skipnext = !val;
 }
 
 void FIC_IfNot(void)
 {
 	// This is the same as "if" but the skip condition is the opposite.
 	FIC_If();
-	fi_skipnext = !fi_skipnext;
+	fi->skipnext = !fi->skipnext;
 }
 
-void FIC_SkipTo(void)
+void FIC_Else(void)
 {
-	memset(fi_goto, 0, sizeof(fi_goto));
-	strncpy(fi_goto, FI_GetToken(), sizeof(fi_goto) - 1);
-	// Start skipping until the marker is found.
-	fi_gotoskip = true;
-	// Rewind the script so we can jump backwards.
-	cp = script;
+	// The only time the ELSE condition doesn't skip is immediately 
+	// after a skip.
+	fi->skipnext = !fi->lastskipped;
+}
+
+void FIC_GoTo(void)
+{
+	FI_SkipTo(FI_GetToken());
 }
 
 void FIC_Marker(void)
 {
 	FI_GetToken(); 
 	// Does it match the goto string?
-	if(!stricmp(fi_goto, fi_token)) fi_gotoskip = false;
+	if(!stricmp(fi->gototarget, fi_token)) fi->gotoskip = false;
 }
 
 void FIC_DeletePic(void)
@@ -1553,12 +1994,12 @@ void FIC_PicAlpha(void)
 
 void FIC_OffsetX(void)
 {
-	FI_SetValue(fi_imgoffset, FI_GetFloat());
+	FI_SetValue(fi->imgoffset, FI_GetFloat());
 }
 
 void FIC_OffsetY(void)
 {
-	FI_SetValue(fi_imgoffset + 1, FI_GetFloat());
+	FI_SetValue(fi->imgoffset + 1, FI_GetFloat());
 }
 
 void FIC_Sound(void)
@@ -1603,7 +2044,7 @@ void FIC_MusicOnce(void)
 void FIC_Filter(void)
 {
 	int i;
-	for(i = 0; i < 4; i++) FI_SetValue(fi_filter + i, FI_GetFloat());
+	for(i = 0; i < 4; i++) FI_SetValue(fi->filter + i, FI_GetFloat());
 }
 
 void FIC_Text(void)
@@ -1686,6 +2127,12 @@ void FIC_DeleteText(void)
 {
 	fitext_t *tex = FI_GetText(FI_GetToken());
 	tex->used = false;
+	if(tex->text)
+	{
+		// Free the memory allocated for the text string.
+		Z_Free(tex->text);
+		tex->text = NULL;
+	}
 }
 
 void FIC_TextColor(void)
@@ -1695,7 +2142,7 @@ void FIC_TextColor(void)
 	if(idx < 1) idx = 1;
 	if(idx > 9) idx = 9;
 	for(c = 0; c < 3; c++) 
-		FI_SetValue(&fi_textcolor[idx - 1][c], FI_GetFloat());
+		FI_SetValue(&fi->textcolor[idx - 1][c], FI_GetFloat());
 }
 
 void FIC_TextRGB(void)
@@ -1825,4 +2272,35 @@ void FIC_TextScale(void)
 	fitext_t *tex = FI_GetText(FI_GetToken());
 	FI_SetValue(&tex->scale[0], FI_GetFloat());
 	FI_SetValue(&tex->scale[1], FI_GetFloat());
+}
+
+void FIC_PlayDemo(void)
+{
+	// Mark the current state as suspended, so we know to resume it when
+	// the demo ends.
+	fi->suspended = true;
+	fi_active = false;
+
+	// The only argument is the demo file name.
+	// Start playing the demo.
+	if(!Con_Executef(true, "playdemo \"%s\"", FI_GetToken()))
+	{
+		// Demo playback failed. Here we go again...
+		FI_DemoEnds();
+	}
+}
+
+void FIC_Command(void)
+{
+	Con_Executef(false, FI_GetToken());
+}
+
+void FIC_ShowMenu(void)
+{
+	fi->showmenu = true;
+}
+
+void FIC_NoShowMenu(void)
+{
+	fi->showmenu = false;
 }
