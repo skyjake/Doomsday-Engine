@@ -80,7 +80,7 @@ REM +---------------------------------------------------------------+
 if %_PackJH%==No goto skip_cjh
 set FILE=%_DestDir%\_mic_jheretic
 del %FILE%.exe
-rar a %FILE% -r %SRC%\Defs\jHeretic -x@..\mdefex.lst %SRC%\Heretic.ksp
+rar a %FILE% %SRC%\Defs\jHeretic\*.* %SRC%\Defs\jHeretic\Auto -x@..\mdefex.lst %SRC%\Heretic.ksp
 rar a %FILE% %SRC%\jHeretic.exe %SRC%\Doc\jHeretic\*.* %SRC%\Run\jHeretic %SRC%\Bin\jHeretic.dll %SRC%\Data\jHeretic -xjdoom*.* -x*hexen*.*
 rar c -z%COMMENT% %FILE%.exe
 :skip_cjh
