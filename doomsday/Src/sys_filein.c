@@ -37,7 +37,8 @@ lumpdirec_t;
 typedef struct
 {
 	f_forall_func_t func;
-	int parm;
+	void *parm;
+	const char *searchPath;
 	const char *pattern;
 } 
 zipforall_t;
@@ -557,6 +558,56 @@ int F_Length(DFILE *file)
 }
 
 //===========================================================================
+// F_CountPathChars
+//	Returns the number of times the char appears in the path.
+//===========================================================================
+int F_CountPathChars(const char *path, char ch)
+{
+	int count;
+
+	for(count = 0; *path; path++) if(*path == ch) count++;
+	return count;
+}
+
+/*
+//===========================================================================
+// F_ForAllCaller
+//	Calls the backup function after determining if the given file name
+//	is a directory or a normal file. Both searchPath and foundFile must
+//	be absolute paths.
+//===========================================================================
+int F_ForAllCaller(const char *searchPath, const char *foundFile, 
+				   f_forall_func_t func, void *parm)
+{
+	const char *ch;
+	char visiblePath[256], *out;
+	boolean isDirectory = false;
+
+	// If the found file name is not on the same directory level,
+	// we have found a directory.
+	if(F_CountPathChars(foundFile, '\\') > F_CountPathChars(searchPath, '\\'))
+	{
+		isDirectory = true;
+
+		// The search path is always a valid part of the visible path.
+		strcpy(visiblePath, searchPath);
+
+		// Only copy the next level.
+		ch = foundFile + strlen(searchPath);
+		out = visiblePath + strlen(visiblePath);
+		while(*ch != '\\' && *ch) *out++ = *ch++;
+		*out = 0;
+	}
+	else
+	{
+		strcpy(visiblePath, foundFile);
+	}
+
+	return func(visiblePath, isDirectory? FT_DIRECTORY : FT_NORMAL, parm);
+}
+*/
+
+//===========================================================================
 // F_ZipFinderForAll
 //	Returns true to stop searching when forall_func returns false.
 //===========================================================================
@@ -565,7 +616,9 @@ int F_ZipFinderForAll(const char *zipFileName, void *parm)
 	zipforall_t *info = parm;
 
 	if(F_MatchName(zipFileName, info->pattern))
-		if(!info->func(zipFileName, info->parm))
+		if(!info->func(zipFileName, FT_NORMAL, info->parm))
+//		if(!F_ForAllCaller(info->searchPath, zipFileName, info->func, 
+//			info->parm)) 
 			return true; // Stop searching.
 
 	// Continue searching.
@@ -573,15 +626,65 @@ int F_ZipFinderForAll(const char *zipFileName, void *parm)
 }
 
 //===========================================================================
-// F_ForAll
-//	Parm is passed on to the callback, which is called for each file
-//	matching the filespec. Zip directory, DD_DIREC and the real files are 
-//	scanned.
+// F_ForAllDescend
+//	Descends into 'physical' subdirectories.
 //===========================================================================
-int F_ForAll(const char *filespec, int parm, f_forall_func_t func)
+int F_ForAllDescend
+	(const char *pattern, const char *path, void *parm, f_forall_func_t func)
 {
+	char fn[256], spec[256];
+	char localPattern[256];
 	long hFile;
 	struct _finddata_t fd;
+
+	sprintf(localPattern, "%s%s", path, pattern);
+
+	// We'll look through all files.
+	sprintf(spec, "%s*.*", path);
+
+	if((hFile = _findfirst(spec, &fd)) != -1L)
+	{
+		// The first file found!
+		do 
+		{
+			// Compile the full pathname of the found file.
+			strcpy(fn, path);
+			strcat(fn, fd.name);
+
+			// Descend recursively into subdirectories.
+			if(fd.attrib & _A_SUBDIR)
+			{
+				if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
+				{
+					strcat(fn, "\\");
+					if(!F_ForAllDescend(pattern, fn, parm, func))
+						return false;
+				}
+			}
+			else
+			{
+				// Does this match the pattern?
+				if(F_MatchName(fn, localPattern))
+				{
+					// If the callback returns false, stop immediately.
+					if(!func(fn, FT_NORMAL, parm)) return false;
+				}
+			}
+		} 
+		while(!_findnext(hFile, &fd));
+	}
+
+	return true;
+}
+
+//===========================================================================
+// F_ForAll
+//	Parm is passed on to the callback, which is called for each file
+//	matching the filespec. Absolute path names are given to the callback.
+//	Zip directory, DD_DIREC and the real files are scanned. 
+//===========================================================================
+int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
+{
 	directory_t specdir;
 	char fn[256];
 	int i;
@@ -594,6 +697,7 @@ int F_ForAll(const char *filespec, int parm, f_forall_func_t func)
 	zipFindInfo.func = func;
 	zipFindInfo.parm = parm;
 	zipFindInfo.pattern = fn;
+	zipFindInfo.searchPath = specdir.path;
 	if(Zip_Iterate(F_ZipFinderForAll, &zipFindInfo))
 	{
 		// Find didn't finish.
@@ -603,22 +707,14 @@ int F_ForAll(const char *filespec, int parm, f_forall_func_t func)
 	// Check through the dir/WAD direcs.
 	for(i = 0; direc[i].path; i++)
 		if(F_MatchName(direc[i].path, fn))
-			if(!func(direc[i].path, parm)) return false;
+			if(!func(direc[i].path, FT_NORMAL, parm)) 
+			//if(!F_ForAllCaller(specdir.path, direc[i].path, func, parm))
+				return false;
 
-	// Try searching for the real file.	
-	if((hFile = _findfirst(filespec, &fd)) != -1L)
-	{
-		// The first file found!
-		do 
-		{
-			// Compile the full pathname of the found file.
-			strcpy(fn, specdir.path);
-			strcat(fn, fd.name);
-			// If the callback returns false, stop immediately.
-			if(!func(fn, parm)) return false;
-		} 
-		while(!_findnext(hFile, &fd));
-	}
+	Dir_FileName(filespec, fn);
+	if(!F_ForAllDescend(fn, specdir.path, parm, func))
+		return false;
+
 	return true;
 }
 
