@@ -6,7 +6,6 @@
 
 extern id_t clientID;
 extern int server_time;
-extern int predict_tics;
 
 // Flags for clmobjs.
 #define CLMF_HIDDEN			0x01	// Not officially created yet
