@@ -692,6 +692,7 @@ void R_ProjectSprite (mobj_t *thing)
 	vis = R_NewVisSprite ();
 	vis->issprite = true;
 	vis->distance = distance;
+	vis->mo.subsector = thing->subsector;
 	vis->mo.light = DL_GetLuminous(thing->light);
 	vis->mo.mf = mf;
 	vis->mo.nextmf = nextmf;
@@ -865,11 +866,14 @@ void R_AddSprites (sector_t *sec)
 	mobj_t *thing;
 	spriteinfo_t spriteInfo;
 	fixed_t visibleTop;
+	sectorinfo_t *info = SECT_INFO(sec);
 
-	if (sec->validcount == validcount)
+	// Don't use validcount, because other parts of the renderer may 
+	// change it.
+	if(info->addspritecount == framecount)
 		return;		// already added
 
-	sec->validcount = validcount;
+	info->addspritecount = framecount;
 
 	for (thing = sec->thinglist ; thing ; thing = thing->snext)
 	{
