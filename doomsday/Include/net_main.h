@@ -72,9 +72,11 @@ enum
 	psv_sound2,
 	psv_stop_sound,
 	pcl_acks,
+
+	pcl_commands		= DDPT_COMMANDS, // 32; ticcmds (handled by game)
 	
 	// Game specific events.
-	pkt_game_marker		= DDPT_FIRST_GAME_EVENT		// 64
+	pkt_game_marker		= DDPT_FIRST_GAME_EVENT // 64
 };
 
 // Use the number defined in dd_share.h for sound packets. 
