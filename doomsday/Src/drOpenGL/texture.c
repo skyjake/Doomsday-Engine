@@ -39,6 +39,33 @@ PFNGLCOLORTABLEEXTPROC glColorTableEXT = NULL;
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
+// chooseFormat
+//	Return the internal texture format. 
+//	The compression method is chosen here.
+//===========================================================================
+GLenum ChooseFormat(int comps)
+{
+	switch(comps)
+	{
+	case 1:	// Luminance
+		return useCompr? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE;
+
+	case 3: // RGB
+		return !useCompr? 3
+			: extS3TC? GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+			: GL_COMPRESSED_RGB;
+
+	case 4: // RGBA
+		return !useCompr? 4 
+			: extS3TC? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT // >1-bit alpha
+			: GL_COMPRESSED_RGBA;
+	}
+	
+	// The fallback.
+	return comps;
+}
+
+//===========================================================================
 // loadPalette
 //===========================================================================
 void loadPalette(int sharedPalette)
@@ -228,9 +255,8 @@ int grayMipmap(int format, int width, int height, void *data)
 		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
 
 	// Upload the first level right away.
-	glTexImage2D(GL_TEXTURE_2D, 0, 
-		useCompr? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE, 
-		width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
+	glTexImage2D(GL_TEXTURE_2D, 0, ChooseFormat(1), width, height, 0, 
+		GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
 
 	// Generate all mipmaps levels.
 	for(i = 0, w = width, h = height; i < numLevels; i++)
@@ -242,9 +268,8 @@ int grayMipmap(int format, int width, int height, void *data)
 		if(h > 1) h >>= 1;
 
 		// The texture has no mipmapping, just one level.
-		glTexImage2D(GL_TEXTURE_2D, i + 1, 
-			useCompr? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE, 
-			w, h, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, faded);
+		glTexImage2D(GL_TEXTURE_2D, i + 1, ChooseFormat(1), w, h, 0, 
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, faded);
 	} 
 
 	// Do we need to free the temp buffer?
@@ -391,19 +416,14 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 		if(genMips && !extGenMip)
 		{
 			// Build all mipmap levels.
-			gluBuild2DMipmaps(GL_TEXTURE_2D, 
-				useCompr? (colorComps == 3? GL_COMPRESSED_RGB
-				: GL_COMPRESSED_RGBA) : colorComps,
+			gluBuild2DMipmaps(GL_TEXTURE_2D, ChooseFormat(colorComps), 
 				width, height, loadFormat, GL_UNSIGNED_BYTE, buffer);
 		}
 		else		
 		{
 			// The texture has no mipmapping, just one level.
-			glTexImage2D(GL_TEXTURE_2D, mipLevel, 
-				useCompr? (colorComps == 3? GL_COMPRESSED_RGB 
-				: GL_COMPRESSED_RGBA) : colorComps, 
-				width, height, 0, 
-				loadFormat, GL_UNSIGNED_BYTE, buffer);
+			glTexImage2D(GL_TEXTURE_2D, mipLevel, ChooseFormat(colorComps), 
+				width, height, 0, loadFormat, GL_UNSIGNED_BYTE, buffer);
 		}
 
 		/*if(dumpTextures && mipmap && loadFormat == GL_RGB)
@@ -494,11 +514,9 @@ void DG_Palette(int format, void *data)
 //===========================================================================
 int	DG_Bind(DGLuint texture)
 {
-//	DGLuint	oldtex = currentTex;
-
-	// Do we need to change it?
-	//if(texture != currentTex)
-	glBindTexture(GL_TEXTURE_2D, /*currentTex = */texture);
-	
-	return 0;//oldtex;
+	glBindTexture(GL_TEXTURE_2D, texture);
+#ifdef _DEBUG
+	CheckError();
+#endif
+	return 0;
 }
