@@ -141,3 +141,4 @@ void C_DECL A_WizAtk2();
 void C_DECL A_WizAtk3();
 
 #endif
+

@@ -3,8 +3,6 @@
 
 extern boolean automapactive;
 
-#pragma once
-
 // For use if I do walls with outsides/insides
 #define REDS		12*8
 #define REDRANGE	1//16
@@ -124,3 +122,4 @@ typedef struct
 // extern int f_x, f_y, f_w, f_h;
 
 #endif
+

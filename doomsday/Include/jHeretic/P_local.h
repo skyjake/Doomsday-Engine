@@ -10,7 +10,7 @@
 
 #include "p_start.h"
 #include "p_actor.h"
-#include "P_Saveg.h"
+#include "p_saveg.h"
 
 #define DELTAMUL 6.324555320	// Used when calculating ticcmd_t.lookdirdelta
 
@@ -176,11 +176,7 @@ void P_DSparilTeleport(mobj_t *actor);
 
 /*#define	MAXINTERCEPTS	128
 extern	intercept_t		intercepts[MAXINTERCEPTS], *intercept_p;*/
-typedef boolean (*traverser_t) (intercept_t *in);
-
-/*#define P_AproxDistance		gi.ApproxDistance
-#define P_PointOnLineSide	gi.PointOnLineSide
-#define P_BoxOnLineSide		gi.BoxOnLineSide*/
+//typedef boolean (*traverser_t) (intercept_t *in);
 
 #define openrange			Get(DD_OPENRANGE)
 #define opentop				Get(DD_OPENTOP)
@@ -292,3 +288,4 @@ void H_SetFilter(int filter);
 int H_GetFilterColor(int filter);
 
 #endif // __P_LOCAL__
+

@@ -136,7 +136,7 @@ typedef enum
 	SPR_AMB1,	// 126
 	SPR_AMB2,	// 127
 	NUMSPRITES	// 128
-} spritenum_t;
+} spritetype_e;
 
 // States.
 typedef enum
@@ -1664,3 +1664,4 @@ typedef enum
 } textenum_t;
 
 #endif
+

@@ -199,3 +199,4 @@ void R_AddPointToBox (int x, int y, fixed_t *box);
 
 #endif		// __R_LOCAL__
 
+
