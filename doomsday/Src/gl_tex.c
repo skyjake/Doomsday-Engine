@@ -338,6 +338,7 @@ void GL_InitTextureManager(void)
 	int	i;
 
 	if(novideo) return;
+	if(texInited) return; // Don't init again.
 
 	// The -bigmtex option allows the engine to enlarge masked textures
 	// that have taller patches than they are themselves.
@@ -438,7 +439,7 @@ void GL_DestroySkinNames(void)
 void GL_LoadLightMap(ded_lightmap_t *map)
 {
 	image_t image;
-	char resource[256];
+	filename_t resource;
 
 	if(map->tex) return; // Already loaded.
 
@@ -460,7 +461,7 @@ void GL_LoadLightMap(ded_lightmap_t *map)
 			{
 				// An alpha channel is required. If one is not in the
 				// image data, we'll generate it. 
-				GL_ConvertToAlpha(&image);
+				GL_ConvertToAlpha(&image, true);
 			}
 
 			map->tex = gl.NewTexture();
@@ -499,7 +500,7 @@ void GL_DeleteLightMap(ded_lightmap_t *map)
 // GL_LoadSystemTextures
 //	Prepares all the system textures (dlight, ptcgens).
 //===========================================================================
-void GL_LoadSystemTextures(void)
+void GL_LoadSystemTextures(boolean loadLightMaps)
 {
 	int i, k;
 	ded_decor_t *decor;
@@ -511,27 +512,30 @@ void GL_LoadSystemTextures(void)
 	dltexname = GL_PrepareLightTexture();
 	glowtexname = GL_PrepareGlowTexture();
 
-	// Load lightmaps.
-	for(i = 0; i < defs.count.lights.num; i++)
+	if(loadLightMaps)
 	{
-		GL_LoadLightMap(&defs.lights[i].up);
-		GL_LoadLightMap(&defs.lights[i].down);
-		GL_LoadLightMap(&defs.lights[i].sides);
-	}
-	for(i = 0, decor = defs.decorations; i < defs.count.decorations.num; 
-		i++, decor++)
-	{
-		for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+		// Load lightmaps.
+		for(i = 0; i < defs.count.lights.num; i++)
 		{
-			if(!R_IsValidLightDecoration(&decor->lights[k]))
-				break;
-			GL_LoadLightMap(&decor->lights[k].up);
-			GL_LoadLightMap(&decor->lights[k].down);
-			GL_LoadLightMap(&decor->lights[k].sides);
+			GL_LoadLightMap(&defs.lights[i].up);
+			GL_LoadLightMap(&defs.lights[i].down);
+			GL_LoadLightMap(&defs.lights[i].sides);
 		}
+		for(i = 0, decor = defs.decorations; i < defs.count.decorations.num; 
+			i++, decor++)
+		{
+			for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+			{
+				if(!R_IsValidLightDecoration(&decor->lights[k]))
+					break;
+				GL_LoadLightMap(&decor->lights[k].up);
+				GL_LoadLightMap(&decor->lights[k].down);
+				GL_LoadLightMap(&decor->lights[k].sides);
+			}
 
-		// Generate RGB lightmaps for decorations.
-		//R_GenerateDecorMap(decor);
+			// Generate RGB lightmaps for decorations.
+			//R_GenerateDecorMap(decor);
+		}
 	}
 
 	// Load particle textures.
@@ -1591,7 +1595,7 @@ void GL_ConvertToLuminance(image_t *image)
 //===========================================================================
 // GL_ConvertToAlpha
 //===========================================================================
-void GL_ConvertToAlpha(image_t *image)
+void GL_ConvertToAlpha(image_t *image, boolean makeWhite)
 {
 	int p, total = image->width * image->height;
 
@@ -1601,7 +1605,7 @@ void GL_ConvertToAlpha(image_t *image)
 		// Move the average color to the alpha channel, make the
 		// actual color white.
 		image->pixels[total + p] = image->pixels[p];
-		image->pixels[p] = 255;
+		if(makeWhite) image->pixels[p] = 255;
 	}
 	image->pixelSize = 2;
 }
@@ -1757,6 +1761,16 @@ byte *GL_LoadImageCK(image_t *img, const char *name, boolean useModelPath)
 }
 
 //===========================================================================
+// GL_DestroyImage
+//	Frees all memory associated with the image.
+//===========================================================================
+void GL_DestroyImage(image_t *img)
+{
+	M_Free(img->pixels);
+	img->pixels = NULL;
+}
+
+//===========================================================================
 // GL_LoadHighRes
 //	Name must end in \0.
 //===========================================================================
@@ -1810,13 +1824,64 @@ byte *GL_LoadHighResFlat(image_t *img, char *name)
 }
 
 //===========================================================================
-// GL_DestroyImage
-//	Frees all memory associated with the image.
+// GL_LoadGraphics
+//	Set grayscale to 2 to include an alpha channel. Set to 3 to make the
+//	actual pixel colors all white.
 //===========================================================================
-void GL_DestroyImage(image_t *img)
+DGLuint GL_LoadGraphics(const char *name, boolean grayscale)
 {
-	M_Free(img->pixels);
-	img->pixels = NULL;
+	image_t image;
+	filename_t fileName;
+	DGLuint texture = 0;
+
+	if(R_FindResource(RC_GRAPHICS, name, NULL, fileName)
+		&& GL_LoadImage(&image, fileName, false))
+	{
+		// Too big for us?
+		if(image.width > maxTexSize || image.height > maxTexSize)
+		{
+			int newWidth  = MIN_OF(image.width, maxTexSize);
+			int newHeight = MIN_OF(image.height, maxTexSize);
+			byte *temp = M_Malloc(newWidth * newHeight * image.pixelSize);
+			GL_ScaleBuffer32(image.pixels, image.width, image.height,
+				temp, newWidth, newHeight, image.pixelSize);
+			M_Free(image.pixels);
+			image.pixels = temp;
+			image.width = newWidth;
+			image.height = newHeight;
+		}
+
+		// Force it to grayscale.
+		if(grayscale == 2 || grayscale == 3)
+		{
+			GL_ConvertToAlpha(&image, grayscale == 3);
+		}
+		else if(grayscale)
+		{
+			GL_ConvertToLuminance(&image);
+		}
+
+		texture = gl.NewTexture();
+		if(image.width < 128 && image.height < 128)
+		{
+			// Small textures will never be compressed.
+			gl.Disable(DGL_TEXTURE_COMPRESSION);
+		}
+		gl.TexImage(
+			  image.pixelSize == 2? DGL_LUMINANCE_PLUS_A8
+			: image.pixelSize == 3? DGL_RGB
+			: image.pixelSize == 4? DGL_RGBA
+			: DGL_LUMINANCE,
+			image.width, image.height, 0, image.pixels);
+		gl.Enable(DGL_TEXTURE_COMPRESSION);
+		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+		GL_DestroyImage(&image);
+	}
+	return texture;
 }
 
 //===========================================================================
@@ -3101,46 +3166,16 @@ DGLuint GL_PrepareLightTexture(void)
 //===========================================================================
 DGLuint GL_PrepareGlowTexture(void)
 {
-	int i, lump;
-	byte *data, *image, *alpha;
-
 	if(!glowtexname)
 	{
-		// Generate the texture.
-		lump = W_GetNumForName("WDLIGHT");
-		data = W_CacheLumpNum(lump, PU_STATIC);
-		if(!data)
-		{
-			Con_Error("GL_PrepareGlowTexture: no wdlight texture.\n");
-		}
+		glowtexname = GL_LoadGraphics("WallGlow", 3);
 
-		// Prepare the alpha channel.
-		image = Z_Malloc(4 * 32 * 2, PU_STATIC, 0);
-		memset(image, 255, 4 * 32); 
-		alpha = image + 4 * 32;
-		memcpy(alpha, data, 4 * 32);
-
-		for(i = 0; i < 4; i++)
-		{
-			// The bottom row must be blank.
-			alpha[i + 4 * 31] = 0;
-		}
-
-		// Upload it.
-		glowtexname = gl.NewTexture();
-		gl.TexImage(DGL_LUMINANCE_PLUS_A8, 4, 32, 0, image);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-		Z_Free(image);
-		W_ChangeCacheTag(lump, PU_CACHE);
 	}
-	// Set the info.
-	texw = 4;
-	texh = 32;
-	texmask = 0;
+	// Global tex variables not set!
 	return glowtexname;
 }
 
@@ -3569,7 +3604,7 @@ int CCmdTranslateFont(int argc, char **argv)
 int CCmdResetTextures(int argc, char **argv)
 {
 	GL_ClearTextureMemory();
-	GL_LoadSystemTextures();
+	GL_LoadSystemTextures(true);
 	Con_Printf("All DGL textures deleted.\n");
 	return true;
 }
