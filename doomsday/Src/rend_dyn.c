@@ -104,6 +104,7 @@ int			useDynLights = true, dlBlend = 0;
 float		dlFactor = 0.7f;	// was 0.6f
 int			useWallGlow = true;
 int			glowHeight = 100;
+float		glowFogBright = .15f;
 lumobj_t	*luminousList = 0;
 int			numLuminous = 0, maxLuminous = 0;
 int			dlMaxRad = 256; // Dynamic lights maximum radius.
@@ -763,7 +764,10 @@ void DL_CreateGlowLights
 		for(i = 0; i < 3; i++)
 		{
 			dyn->color[i] *= dlFactor;
-			if(useFog) dyn->color[i] *= .3f;
+
+			// In fog, additive blending is used. The normal fog color
+			// is way too bright.
+			if(useFog) dyn->color[i] *= glowFogBright;
 		}
 		//glow.top = FIX2FLT(top) - dlContract;
 		//glow.bottom = FIX2FLT(bottom) + dlContract;
