@@ -968,8 +968,7 @@ modeldef_t *R_GetModelDef(int state, float intermark, int select)
 void R_SetupModel(ded_model_t *def)
 {
 	modeldef_t *modef;
-	int common_flags = Def_EvalFlags(defs.model_flags);
-	int model_scope_flags = Def_EvalFlags(def->flags) | common_flags;
+	int model_scope_flags = def->flags | defs.model_flags;
 	ded_submodel_t *subdef;
 	submodeldef_t *sub;
 	int i, k, statenum = Def_GetStateNum(def->state);
@@ -1002,7 +1001,7 @@ void R_SetupModel(ded_model_t *def)
 
 	// Init modef info (state & intermark already set).
 	modef->def = def;
-	modef->group = Def_EvalFlags(def->group);
+	modef->group = def->group;
 	modef->flags = model_scope_flags;
 	for(i = 0; i < 3; i++)
 	{
@@ -1039,7 +1038,7 @@ void R_SetupModel(ded_model_t *def)
 		// Frame range must always be greater than zero.
 		if(sub->framerange < 1) sub->framerange = 1;
 		// Submodel-specific flags cancel out model-scope flags!
-		sub->flags = model_scope_flags ^ Def_EvalFlags(subdef->flags);
+		sub->flags = model_scope_flags ^ subdef->flags;
 		sub->skin = subdef->skin;
 		sub->skinrange = subdef->skinrange;
 		// Skin range must always be greater than zero.
@@ -1282,15 +1281,64 @@ byte *R_LoadSkin(model_t *mdl, int skin, int *width, int *height, int *pxsize)
 }
 
 //===========================================================================
+// R_SetModelFrame
+//===========================================================================
+void R_SetModelFrame(modeldef_t *modef, int frame)
+{
+	int k;
+	model_t *mdl;
+
+	for(k = 0; k < DED_MAX_SUB_MODELS; k++)
+	{
+		if(!modef->sub[k].model) continue;
+		mdl = modellist[modef->sub[k].model];
+		// Modify the modeldef itself: set the current frame.
+		modef->sub[k].frame = frame % mdl->info.numFrames;
+	}
+}
+
+//===========================================================================
+// R_PrecacheModelSkins
+//===========================================================================
+void R_PrecacheModelSkins(modeldef_t *modef)
+{
+	int k, sub;
+	model_t *mdl;
+
+	// Precache this.
+	for(sub = 0; sub < MAX_FRAME_MODELS; sub++)
+	{
+		if(!modef->sub[sub].model) continue;
+		mdl = modellist[modef->sub[sub].model];
+		// Load all skins.
+		for(k = 0; k < mdl->info.numSkins; k++) 
+			GL_BindTexture( GL_PrepareSkin(mdl, k) );
+		GL_BindTexture( GL_PrepareShinySkin(modef, sub) );
+	}
+}
+
+//===========================================================================
+// R_PrecacheSkinsForState
+//===========================================================================
+void R_PrecacheSkinsForState(int stateIndex)
+{
+	state_t *st = states + stateIndex;
+
+	if(stateIndex <= 0 || stateIndex >= defs.count.states.num
+		|| !st->model) return;
+	
+	R_PrecacheModelSkins(st->model);
+}
+
+//===========================================================================
 // R_PrecacheSkinsForMobj
 //	The skins are also bound here once so they should be ready for use the 
 //	next time they're needed.
 //===========================================================================
 void R_PrecacheSkinsForMobj(mobj_t *mo)
 {
-	int i, sub, k;
+	int i;
 	modeldef_t *modef;
-	model_t *mdl;
 
 	// Check through all the model definitions.
 	for(i = 0, modef = models; i < nummodels; i++, modef++)
@@ -1300,16 +1348,7 @@ void R_PrecacheSkinsForMobj(mobj_t *mo)
 		if(stateowners[modef->state - states] != mobjinfo + mo->type)
 			continue;
 
-		// Precache this.
-		for(sub = 0; sub < MAX_FRAME_MODELS; sub++)
-		{
-			if(!modef->sub[sub].model) continue;
-			mdl = modellist[modef->sub[sub].model];
-			// Load all skins.
-			for(k = 0; k < mdl->info.numSkins; k++) 
-				GL_BindTexture(GL_PrepareSkin(mdl, k));
-			GL_BindTexture(GL_PrepareShinySkin(modef, sub));
-		}
+		R_PrecacheModelSkins(modef);
 	}
 }
 
