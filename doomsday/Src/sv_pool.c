@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.4  2003/03/07 18:04:36  skyjake
+//** Sv_ClientCoords simply accepts coords, check removed
+//**
 //** Revision 1.3  2003/03/03 16:38:53  skyjake
 //** Release 1.7.7
 //**
@@ -2028,75 +2031,38 @@ void Sv_InitPoolForClient(int clnum)
 
 //==========================================================================
 // Sv_ClientCoords
-//	Reads a pkt_coords packet from the message buffer and checks if the
-//	coordinates are OK. If they're not, the fixpos flag is set. If the
-//	difference is small enough, we assume the client is right and correct
-//	our coordinates accordingly (otherwise the clients would have a hell
-//	of a time with all the warping around... :-)).
+//	Reads a pkt_coords packet from the message buffer. We trust the 
+//	client's position and change ours to match it. The client better not 
+//	be cheating.
 //==========================================================================
 void Sv_ClientCoords(int playerNum)
 {
 	client_t *cl = clients + playerNum;
 	mobj_t *mo = players[playerNum].mo;
-	int maxdiff = net_maxdif << FRACBITS;
-	int mindiff = net_mindif << FRACBITS;
 	int clx, cly, clz;
-	int i, dz, dx, dy;
-	int avgx, avgy;
-	float unit = FRACUNIT;
 
-	// Under certain circumstances the message is discarded.
+	// If mobj or player is invalid, the message is discarded.
 	if(!mo || !players[playerNum].ingame
 		|| players[playerNum].flags & DDPF_DEAD) return;
 
-	dx = mo->x - (clx = Msg_ReadShort() << 16);
-	dy = mo->y - (cly = Msg_ReadShort() << 16);
-	dz = mo->z - (clz = Msg_ReadShort() << 16);
+	clx = Msg_ReadShort() << 16;
+	cly = Msg_ReadShort() << 16;
+	clz = Msg_ReadShort() << 16;
 
-	// Register a new difference.
-	cl->error[cl->errorPos].x = dx;
-	cl->error[cl->errorPos].y = dy;
-
-	// Advance the error marker.
-	cl->errorPos = (cl->errorPos + 1) % NUM_CERR;
-
-	// Calculate the average.
-	for(i = 0, avgx = avgy = 0; i < NUM_CERR; i++)
-	{
-		avgx += cl->error[i].x;
-		avgy += cl->error[i].y;
-	}
-	avgx /= NUM_CERR;
-	avgy /= NUM_CERR;
-	
-	// Check the difference. If it's greater than the maximum,
-	// send a hard fixpos.
-	if(abs(dz) > maxdiff || P_ApproxDistance(dx, dy) > maxdiff)
-	{
-		// The client is in the wrong place, fix it.
-		players[playerNum].flags |= DDPF_FIXPOS;
-		// Clear the coords list.
-		memset(cl->error, 0, sizeof(cl->error));
-	}
-
-	// Keep fixing the client's position. If the error is small enough
-	// we like to think the client is right.
-	else if(!(players[playerNum].flags & DDPF_FIXPOS)
+	// If we aren't about to forcibly change the client's position, update 
+	// with new pos if it's valid.
+	if(!(players[playerNum].flags & DDPF_FIXPOS)
 		&& P_CheckPosition2(mo, clx, cly, clz)) // But it must be a valid pos.
 	{
-		// We mustn't accept too big changes in the Z coord.
-		if(tmfloorz - clz < 24*FRACUNIT)
-		{
-			P_UnlinkThing(mo);//, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-			mo->x = clx;
-			mo->y = cly;
-			mo->z = clz;
-			P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-			mo->floorz = tmfloorz;
-			mo->ceilingz = tmceilingz;
-			if(mo->z < mo->subsector->sector->floorheight) 
-				mo->z = mo->subsector->sector->floorheight;
-		}
+		P_UnlinkThing(mo);
+		mo->x = clx;
+		mo->y = cly;
+		mo->z = clz;
+		P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+		mo->floorz = tmfloorz;
+		mo->ceilingz = tmceilingz;
+		if(mo->z < mo->subsector->sector->floorheight) 
+			mo->z = mo->subsector->sector->floorheight;
 	}
 }
 
