@@ -128,6 +128,8 @@ void	R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 void	R_GetPatchInfo(int lump, spriteinfo_t *info);
 int		R_VisualRadius(mobj_t *mo);
 fixed_t	R_GetBobOffset(mobj_t *mo);
+float	R_MovementYaw(fixed_t momx, fixed_t momy);
+float	R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz);
 void	R_ProjectSprite(mobj_t *thing);
 void	R_ProjectPlayerSprites(void);
 void	R_ProjectDecoration(mobj_t *source);

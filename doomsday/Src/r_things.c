@@ -559,6 +559,25 @@ void R_ProjectPlayerSprites(void)
 }
 
 //===========================================================================
+// R_MovementYaw
+//===========================================================================
+float R_MovementYaw(fixed_t momx, fixed_t momy)
+{
+	// Multiply by 100 to get some artificial accuracy in bamsAtan2.
+	return BANG2DEG( bamsAtan2(-100 * FIX2FLT(momy), 
+		100 * FIX2FLT(momx)) );
+}
+
+//===========================================================================
+// R_MovementPitch
+//===========================================================================
+float R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz)
+{
+	return BANG2DEG( bamsAtan2(100 * FIX2FLT(momz), 
+		100 * P_AccurateDistance(momx, momy)) );
+}
+
+//===========================================================================
 // R_ProjectSprite
 //	Generates a vissprite for a thing if it might be visible.
 //===========================================================================
@@ -749,8 +768,7 @@ void R_ProjectSprite (mobj_t *thing)
 		}
 		else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
 		{
-			vis->mo.yaw = BANG2DEG(bamsAtan2(-100*FIX2FLT(thing->momy), 
-				100*FIX2FLT(thing->momx)));
+			vis->mo.yaw = R_MovementYaw(thing->momx, thing->momy);
 		}
 		else
 		{
@@ -775,8 +793,8 @@ void R_ProjectSprite (mobj_t *thing)
 		}
 		else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
 		{
-			vis->mo.pitch = BANG2DEG(bamsAtan2(100*FIX2FLT(thing->momz), 
-				100*P_AccurateDistance(thing->momx, thing->momy)));
+			vis->mo.pitch = R_MovementPitch(thing->momx, thing->momy,
+				thing->momz);
 		}
 		else
 			vis->mo.pitch = 0;
