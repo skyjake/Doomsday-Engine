@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.10  2003/08/10 00:01:54  skyjake
+//** Follow the Begin/End semantics
+//**
 //** Revision 1.9  2003/06/03 15:21:30  skyjake
 //** Fixed font problem
 //**
@@ -410,8 +413,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		gl.Disable(DGL_DEPTH_WRITE);
 		gl.Disable(DGL_CULL_FACE);
 		gl.Bind(ptctexname[using_texture]);
-		gl.Begin(DGL_QUADS); // A waste of vertices and triangles, but...
 		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+		gl.Begin(DGL_QUADS); // A waste of vertices and triangles, but...
 	}
 	else
 	{
