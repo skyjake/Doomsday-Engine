@@ -1488,7 +1488,7 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
  * Editor HUD
  */
 
-static void SBE_DrawLevelBar(void)
+static void SBE_DrawLevelGauge(void)
 {
     static sector_t *lastSector = NULL;
     static int minLevel = 0, maxLevel = 0;
@@ -1496,17 +1496,18 @@ static void SBE_DrawLevelBar(void)
     int height = 255;
     int x = 20, y = screenHeight/2 - height/2;
     int off = FR_TextWidth("000");
-    int secY, maxY, minY;
+    int secY, maxY, minY, p;
     char buf[80];
     float *pos;
+    source_t *src;
 
     if(SBE_GetGrabbed())
-        pos = SBE_GetGrabbed()->pos;
+        src = SBE_GetGrabbed();
     else
-        pos = SBE_GetNearest()->pos;
+        src = SBE_GetNearest();
     
-    sector = R_PointInSubsector(FRACUNIT * pos[VX],
-                                FRACUNIT * pos[VY])->sector;
+    sector = R_PointInSubsector(FRACUNIT * src->pos[VX],
+                                FRACUNIT * src->pos[VY])->sector;
 
     if(lastSector != sector)
     {
@@ -1539,6 +1540,19 @@ static void SBE_DrawLevelBar(void)
         minY = y + height * (1 - minLevel / 255.0f);
         gl.Vertex2f(x + off + 4, minY);
         gl.Vertex2f(x + off, minY);
+    }
+    // Current min/max bias sector level.
+    if(src->sectorLevel[0] > 0 || src->sectorLevel[1] > 0)
+    {
+        gl.Color3f(1, 0, 0);
+        p = y + height * (1 - src->sectorLevel[0] / 255.0f);
+        gl.Vertex2f(x + off + 2, p);
+        gl.Vertex2f(x + off - 2, p);
+
+        gl.Color3f(0, 1, 0);
+        p = y + height * (1 - src->sectorLevel[1] / 255.0f);
+        gl.Vertex2f(x + off + 2, p);
+        gl.Vertex2f(x + off - 2, p);
     }
     gl.End();
 
@@ -1600,7 +1614,7 @@ void SBE_DrawHUD(void)
 
     if(SBE_GetGrabbed() || SBE_GetNearest())
     {
-        SBE_DrawLevelBar();
+        SBE_DrawLevelGauge();
     }
     
 	gl.MatrixMode(DGL_PROJECTION);
