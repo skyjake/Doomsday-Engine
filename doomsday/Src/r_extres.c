@@ -87,7 +87,7 @@ static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
 
 	// Extension doesn't matter with music, FMOD will either recognize 
 	// it or not.
-	{".mp3", ".ogg", ".wav", ".mod", ".it", ".mid", NULL},
+	{".mp3", ".ogg", ".wav", ".xm", ".s3m", ".mod", ".it", ".mid", NULL},
 
 	// Only WAV files for sound effects.
 	{".wav", NULL},
