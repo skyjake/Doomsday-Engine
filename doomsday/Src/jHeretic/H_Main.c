@@ -36,8 +36,6 @@ boolean autostart;
 extern boolean automapactive;
 extern float lookOffset;
 
-boolean advancedemo;
-
 static boolean devMap;
 static char gameModeString[17];
 
@@ -48,15 +46,10 @@ void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 void MN_DrCenterTextB_CS(char *text, int center_x, int y);
 
 void G_BuildTiccmd(ticcmd_t *cmd);
-void D_DoAdvanceDemo(void);
-void D_PageDrawer (void);
-void D_AdvanceDemo (void);
-//void F_Drawer(void);
 void H_ConsoleRegistration();
 void R_DrawPlayerSprites(ddplayer_t *viewplr);
 void R_SetAllDoomsdayFlags();
 void R_DrawRingFilter();
-//void MN_Drawer2(void);
 void X_Drawer();
 int H_PrivilegedResponder(event_t *event);
 void H_DefaultBindings();
@@ -121,10 +114,6 @@ void D_Display(void)
 	player_t *vplayer = &players[displayplayer];
 	boolean	iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
 
-	// Change the view size if needed
-/*	if(cfg.setsizeneeded)
-	{
-		cfg.setsizeneeded = false;*/
 	if(cfg.setblocks > 10 || iscam)
 	{
 		// Full screen.
@@ -177,12 +166,6 @@ void D_Display(void)
 	case GS_INTERMISSION:
 		IN_Drawer ();
 		break;
-	case GS_INFINE:
-		FI_Drawer();
-		break;
-	case GS_DEMOSCREEN:
-		D_PageDrawer ();
-		break;
 	case GS_WAITING:
 		// Clear the screen while waiting, doesn't mess up the menu.
 		gl.Clear(DGL_COLOR_BUFFER_BIT);
@@ -190,7 +173,7 @@ void D_Display(void)
 	}
 	GL_Update(DDUF_FULLSCREEN);
 
-	if(paused && !MenuActive && !askforquit)
+	if(paused && !MenuActive && !askforquit && !fi_active)
 	{
 		if(!IS_NETGAME)
 		{
@@ -201,6 +184,8 @@ void D_Display(void)
 			GL_DrawPatch(160, 70, W_GetNumForName("PAUSED"));
 		}
 	}
+
+	FI_Drawer();
 }
 
 /*
@@ -211,10 +196,11 @@ void D_Display(void)
 ===============================================================================
 */
 
+/*
 int             demosequence;
 int             pagetic;
 char            *pagename = "TITLE";
-
+*/
 
 /*
 ================
@@ -225,7 +211,7 @@ char            *pagename = "TITLE";
 =
 ================
 */
-
+/*
 void D_PageTicker (void)
 {
 	// Dedicated servers do not go through the demos.
@@ -234,7 +220,7 @@ void D_PageTicker (void)
 	if (--pagetic < 0)
 		D_AdvanceDemo ();
 }
-
+*/
 
 /*
 ================
@@ -244,7 +230,7 @@ void D_PageTicker (void)
 ================
 */
 
-extern boolean MenuActive;
+/*extern boolean MenuActive;
 
 void D_PageDrawer(void)
 {
@@ -255,7 +241,7 @@ void D_PageDrawer(void)
 		GL_DrawPatch(4, 160, W_GetNumForName("ADVISOR"));
 	}
 	GL_Update(DDUF_FULLSCREEN);
-}
+}*/
 
 /*
 =================
@@ -265,7 +251,7 @@ void D_PageDrawer(void)
 = Called after each demo or intro demosequence finishes
 =================
 */
-
+/*
 void D_AdvanceDemo (void)
 {
 	advancedemo = true;
@@ -293,8 +279,6 @@ void D_DoAdvanceDemo (void)
 			pagename = "TITLE";
 			break;
 		case 2:
-			/*BorderNeedRefresh = true;
-			UpdateState |= I_FULLSCRN;*/
 			GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
 			G_DeferedPlayDemo ("demo1");
 			break;
@@ -304,8 +288,6 @@ void D_DoAdvanceDemo (void)
 			pagename = "CREDIT";
 			break;
 		case 4:
-			/*BorderNeedRefresh = true;
-			UpdateState |= I_FULLSCRN;*/
 			GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
 			G_DeferedPlayDemo ("demo2");
 			break;
@@ -322,30 +304,12 @@ void D_DoAdvanceDemo (void)
 			}
 			break;
 		case 6:
-			/*BorderNeedRefresh = true;
-			UpdateState |= I_FULLSCRN;*/
 			GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
 			G_DeferedPlayDemo ("demo3");
 			break;
 	}
 }
-
-
-/*
-=================
-=
-= D_StartTitle
-=
-=================
 */
-
-void D_StartTitle (void)
-{
-	G_StopDemo();
-	gameaction = ga_nothing;
-	demosequence = -1;
-	D_AdvanceDemo ();
-}
 
 
 /*
@@ -763,7 +727,7 @@ void H_PreInit(void)
 	// Default settings (used if no config file found).
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.messageson = true;
-	cfg.dclickuse = true;
+	cfg.dclickuse = false;
 	cfg.mouseSensiX = 8;
 	cfg.mouseSensiY = 8;
 //	cfg.joySensi = 5;
@@ -1002,14 +966,14 @@ void H_PostInit(void)
 		}
 		else
 		{
-			D_StartTitle();
+			G_StartTitle();
 		}
 	}
 }
 
 void H_Ticker(void)
 {
-	if(advancedemo) D_DoAdvanceDemo();
+//	if(advancedemo) D_DoAdvanceDemo();
 	MN_Ticker();
 	G_Ticker();
 }
