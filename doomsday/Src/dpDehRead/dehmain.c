@@ -1,13 +1,31 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ *
+ * Based on ZDoom by Randy Heit. <rheit@iastate.edu>
+ */
 
-//**************************************************************************
-//**
-//** DEHMAIN.C
-//**
-//** Dehacked reader plugin for Doomsday.
-//** Much of this has been taken from or is based on ZDoom's DEH reader.
-//** Put the Doomsday Include directory in your path.
-//**
-//**************************************************************************
+/*
+ * dehmain.c: Dehacked Reader Plugin for Doomsday
+ *
+ * Much of this has been taken from or is based on ZDoom's DEH reader.
+ * Unsupported Dehacked features have been commented out.
+ *
+ * Put the Doomsday Include directory in your path.
+ * This DLL also serves as an example of a Doomsday plugin.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -651,25 +669,6 @@ int HandleMode(const char *mode, int num)
 
 	return i;
 }
-
-/*
-char *GenerateDEHFlags(unsigned int flags)
-{
-	int i, k, max = -1;
-	char buf[40];
-
-	// Find a good name for the new flags.
-	for(i=0; i<ded->count.flags.num; i++)
-		if(!strncmp(ded->flags[i].id, "dehf_spec", 9))
-		{
-			sscanf(ded->flags[i].id, "dehf_spec%i", &k);
-			if(k > max) max = k;
-		}
-	sprintf(buf, "dehf_spec%i", max+1);
-	i = DED_AddFlag(ded, buf, flags);
-	return ded->flags[i].id;
-}
-*/
 
 int PatchThing (int thingy)
 {
@@ -1723,23 +1722,11 @@ endinclude:
 //===========================================================================
 void ApplyDEH(char *patch, int length)
 {
-	//CString str;
 	int cont;
-//	boolean log_closed = false;
-
-/*	if(logwnd) delete logwnd;
-	logwnd = new CLog;
-	::ded = &ded;
-	deddoc = this;*/
-
-	//logwnd->Printf("Applying DeHackEd patch (length=%i)...\n", length);
 
 	BackupData ();
 	PatchFile = patch;
 	dversion = pversion = -1;
-
-	/*try 
-	{*/
 
 	cont = 0;
 	if (!strncmp (PatchFile, "Patch File for DeHackEd v", 25)) 
