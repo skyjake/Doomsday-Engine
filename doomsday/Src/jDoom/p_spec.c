@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/06/30 00:04:44  skyjake
+// Fixed button deact sound
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -1175,7 +1178,7 @@ void P_UpdateSpecials (void)
 						buttonlist[i].btexture;
 					break;
 				}
-				S_StartSound(sfx_swtchn, (mobj_t *)&buttonlist[i].soundorg);
+				S_StartSound(sfx_swtchn, buttonlist[i].soundorg);
 				memset(&buttonlist[i],0,sizeof(button_t));
 			}
 		}
