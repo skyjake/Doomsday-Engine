@@ -23,6 +23,7 @@ typedef struct lumobj_s					// For dynamic lighting.
 	byte	rgb[3];						// The color.
 	float	xoff;
 	float	xyscale;					// 1.0 if there's no modeldef.
+	char	flaretex;					// Zero = automatical.
 } 
 lumobj_t;
 
@@ -34,6 +35,7 @@ extern int		useDynLights;
 extern int		maxDynLights, dlBlend, clipLights, dlMaxRad;
 extern float	dlRadFactor, dlFactor, dlContract;
 extern int		useWallGlow, glowHeight;
+extern int		rend_info_lums;
 
 // Setup.
 void DL_InitBlockMap();
@@ -42,6 +44,8 @@ void DL_Clear();	// 'Physically' destroy the tables.
 // Action.
 void DL_ClearForFrame();
 void DL_InitForNewFrame();
+int DL_NewLuminous(void);
+lumobj_t *DL_GetLuminous(int index);
 void DL_ProcessSubsector(rendpoly_t *poly, subsector_t *ssec);
 void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsector);
 
