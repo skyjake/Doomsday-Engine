@@ -332,6 +332,7 @@ cvar_t engineCVars[] =
 	"rend-tex-detail-strength", 0,		CVT_FLOAT,	&detailFactor, 0, 10,	"Global detail texture strength factor.",
 	//"rend-tex-detail-far",	CVF_NO_MAX, CVT_FLOAT,	&detailMaxDist,	1, 0,	"Maximum distance where detail textures are visible.",
 	"rend-tex-detail-multitex", 0,		CVT_INT,	&useMultiTexDetails, 0, 1,	"1=Use multitexturing when rendering detail textures.",
+	"rend-tex-anim-smooth",	0,			CVT_BYTE,	&smoothTexAnim,	0, 1,	"1=Enable interpolated texture animation.",
 	// * Render-Sky
 	"rend-sky-detail",		CVF_PROTECTED, CVT_INT,	&skyDetail,		3, 7,	"Number of sky sphere quadrant subdivisions.",
 	"rend-sky-rows",		CVF_PROTECTED, CVT_INT,	&skyRows,		1, 8,	"Number of sky sphere rows.",
