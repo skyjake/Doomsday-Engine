@@ -781,6 +781,19 @@ void P_PlayerThink(player_t *player)
 		plrmo->flags &= ~MF_NOCLIP;
 	}
 
+	// Selector 0 = Generic (used by default)
+	// Selector 1 = Staff
+	// Selector 2 = Goldwand
+	// Selector 3 = Crossbow
+	// Selector 4 = Blaster
+	// Selector 5 = Skullrod
+	// Selector 6 = Phoenixrod
+	// Selector 7 = Mace
+	// Selector 8 = Gauntlets
+	// Selector 9 = Beak
+	plrmo->selector = plrmo->selector & ~DDMOBJ_SELECTOR_MASK 
+		| (player->readyweapon + 1);
+
 	P_CameraThink(player); // $democam
 
 	cmd = &player->cmd;

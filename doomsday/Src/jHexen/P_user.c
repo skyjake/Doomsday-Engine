@@ -678,6 +678,11 @@ void P_PlayerThink(player_t *player)
 		pmo->flags &= ~MF_NOCLIP;
 	}
 
+	// Selector 0 = Generic (used by default)
+	// Selector 1..4 = Weapon 1..4
+	pmo->selector = pmo->selector & ~DDMOBJ_SELECTOR_MASK 
+		| (player->readyweapon + 1);
+
 	P_CameraThink(player); // $democam
 
 	cmd = &player->cmd;
