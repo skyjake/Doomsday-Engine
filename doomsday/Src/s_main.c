@@ -360,11 +360,13 @@ void S_StopSound(int sound_id, mobj_t *emitter)
 	Sfx_StopSound(sound_id, emitter);
 
 	// Notify the LSM.
-	Sfx_StopLogical(sound_id, emitter);
-
-	// In netgames, clients may hear sounds that the server locally 
-	// doesn't. We have to tell them about all stopped sounds.
-	Sv_StopSound(sound_id, emitter);
+	if(Sfx_StopLogical(sound_id, emitter))
+	{
+		// In netgames, the server is responsible for telling clients
+		// when to stop sounds. The LSM will tell us if a sound was
+		// stopped somewhere in the world.
+		Sv_StopSound(sound_id, emitter);
+	}
 }
 
 //===========================================================================
