@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.13  2003/08/30 15:24:50  skyjake
+//** Removed #define DD_PROFILE
+//**
 //** Revision 1.12  2003/07/12 22:18:00  skyjake
 //** Don't profile
 //**
@@ -29,8 +32,6 @@
  * is deallocated when the level changes. Sv_InitPools() is called in 
  * R_SetupLevel() to clear out all the old data.
  */
-
-//#define DD_PROFILE
 
 // HEADER FILES ------------------------------------------------------------
 

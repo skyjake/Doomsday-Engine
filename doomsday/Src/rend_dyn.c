@@ -9,8 +9,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-//#define DD_PROFILE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>

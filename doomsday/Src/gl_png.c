@@ -10,8 +10,6 @@
 
 // HEADER FILES ------------------------------------------------------------
  
-//#define DD_PROFILE
-
 #include <png.h>
 #include <setjmp.h>
 
