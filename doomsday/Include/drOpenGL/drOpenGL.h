@@ -138,12 +138,10 @@ int	DG_Bind(DGLuint texture);
 //-------------------------------------------------------------------------
 // ext.c
 //
-#ifdef WIN32
 extern PFNGLCLIENTACTIVETEXTUREARBPROC	glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
 extern PFNGLMULTITEXCOORD2FARBPROC	glMultiTexCoord2fARB;
 extern PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
-#endif
 
 extern PFNGLBLENDEQUATIONEXTPROC	glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC		glLockArraysEXT;
