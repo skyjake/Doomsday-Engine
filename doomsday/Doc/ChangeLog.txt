@@ -46,6 +46,18 @@ Network:
 * portable low-level implementation (TCP/UDP sockets), needs testing!
 
 
+Version 1.7.14-4
+----------------
++ cmd 'playsound': play a sound effect locally
++ Map Info -> Execute: execute a console command after map setup (i.e.
+  also after loading a savegame)
++ Map Info -> Sky Model -> Execute: execute a console command every time
+  the sky model's frame number changes
++ State -> Execute: execute a console command when a mobj enters this 
+  state (NOTE: player HUD weapons are not real mobjs, so this has no 
+  effect with psprite states)
+
+
 Version 1.7.14-3
 ----------------
 + cmd 'listmaps': print all loaded maps and the WAD files where they 
