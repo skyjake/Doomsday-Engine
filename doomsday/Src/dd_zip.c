@@ -26,10 +26,12 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_defs.h"
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
 #include "sys_direc.h"
+#include "r_extres.h"
 
 #include <zlib.h>
 
@@ -369,6 +371,10 @@ void Zip_MapPath(char *path)
                 // Definitions are mapped to the Defs directory.
                 Def_GetAutoPath(mapped);
             }
+			else
+			{
+				strcpy(mapped, "");
+			}
 
             strcat(mapped, path);
             strcpy(path, mapped);
