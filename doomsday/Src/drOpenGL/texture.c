@@ -223,6 +223,10 @@ int grayMipmap(int format, int width, int height, void *data)
 	for(numLevels = 0, w = width, h = height; w > 1 || h > 1; 
 		w >>= 1, h >>= 1, numLevels++);
 
+	// We do not want automatical mipmaps.
+	if(extGenMip)
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
+
 	// Upload the first level right away.
 	glTexImage2D(GL_TEXTURE_2D, 0, 
 		useCompr? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE, 
@@ -285,10 +289,14 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 		return grayMipmap(format, width, height, data);
 	}
 
+	// Automatic mipmap generation?
+	if(extGenMip && genMips)
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+
 	// Paletted texture?
 	if(usePalTex && format == DGL_COLOR_INDEX_8) 
 	{
-		if(genMips)
+		if(genMips && !extGenMip)
 		{
 			// Build mipmap textures.
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_COLOR_INDEX8_EXT,
@@ -327,7 +335,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 			buffer = data;
 			loadFormat = GL_RGB;
 		}
-		else // Needs converting.
+		else // Needs converting. FIXME: This adds some overhead.
 		{
 			needFree = DGL_TRUE;
 			buffer = malloc(numPixels * 4);
@@ -380,7 +388,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 				break;
 			}
 		}
-		if(genMips)
+		if(genMips && !extGenMip)
 		{
 			// Build all mipmap levels.
 			gluBuild2DMipmaps(GL_TEXTURE_2D, 
