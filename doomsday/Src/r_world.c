@@ -1025,7 +1025,7 @@ void R_SetupLevel(char *level_id, int flags)
 		{
 			char cmd[80];
 			sprintf(cmd, "init-%s", level_id);
-			if(Con_GetCommand(cmd))
+			if(Con_IsValidCommand(cmd))
 			{
 				Con_Executef(false, cmd);
 			}
