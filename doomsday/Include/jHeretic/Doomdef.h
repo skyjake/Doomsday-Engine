@@ -811,6 +811,8 @@ void SB_Init(void);
 boolean SB_Responder(event_t *event);
 void SB_Ticker(void);
 void SB_Drawer(void);
+void cht_GodFunc(player_t *player);
+void cht_NoClipFunc(player_t *player);
 
 //-----------------
 // MENU (MN_menu.c)
