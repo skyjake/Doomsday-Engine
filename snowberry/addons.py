@@ -157,6 +157,11 @@ class Addon:
     def getId(self):
         return self.id
 
+    def getType(self):
+        """Returns the type identifier of the addon class."""
+
+        return 'addon-type-generic'
+
     def getName(self):
         return self.name
 
@@ -465,6 +470,9 @@ class BoxAddon (Addon):
         self.optional = []
         self.extra = []
 
+    def getType(self):
+        return 'addon-type-box'
+
     def isBox(self):
         return True
 
@@ -558,6 +566,9 @@ class BundleAddon (Addon):
         # Register the source directory into the paths.
         paths.addBundlePath(self.getContentPath())
 
+    def getType(self):
+        return 'addon-type-bundle'
+
     def determineLastModified(self):
         """Read the source file(s) to see when they've been modified
         last.  This implementation assumes the source is a single
@@ -645,6 +656,9 @@ class PK3Addon (Addon):
     def __init__(self, identifier, source):
         Addon.__init__(self, identifier, source)
 
+    def getType(self):
+        return 'addon-type-pk3'
+
     def readMetaData(self):
         """Read the metadata file(s)."""
 
@@ -666,15 +680,24 @@ class WADAddon (Addon):
     def __init__(self, identifier, source):
         Addon.__init__(self, identifier, source)
 
+    def getType(self):
+        return 'addon-type-wad'
+
 
 class DehackedAddon (Addon):
     def __init__(self, identifier, source):
         Addon.__init__(self, identifier, source)
 
+    def getType(self):
+        return 'addon-type-dehacked'
+        
 
 class DEDAddon (Addon):
     def __init__(self, identifier, source):
         Addon.__init__(self, identifier, source)
+
+    def getType(self):
+        return 'addon-type-ded'
 
 
 def _getLatestModTime(startPath):

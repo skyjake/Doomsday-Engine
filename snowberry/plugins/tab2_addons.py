@@ -222,8 +222,8 @@ def showInspector(addon):
         msg += "<p>" + language.translate(ident + '-readme')
 
     def makeField(header, content):
-        return '<tr><td width="20%"><b>' + header + ':</b><td width="80%">' \
-               + content
+        return '<tr><td width="20%" bgcolor="#E8E8E8"><b>' + header + \
+               '</b><td width="80%">' + content
 
     beginTable = '<p><table width="100%" border=1 cellpadding=4 cellspacing=0>'
     endTable = '</table>'
@@ -232,6 +232,8 @@ def showInspector(addon):
     # General Information
     #
     msg += beginTable
+    msg += makeField('Identifier', addon.getId())
+    msg += makeField('Format', language.translate(addon.getType()))
     msg += makeField('Category', addon.getCategory().getPath())
     msg += makeField('Summary', language.translate(ident + '-summary', '-'))
     msg += makeField('Version', language.translate(ident + '-version', '-'))
@@ -257,14 +259,31 @@ def showInspector(addon):
         dep.append(category.getPath())
     allDeps.append(('Excluded Categories', dep))
 
+    # Keywords.
+    for type, label in [(ao.Addon.EXCLUDES, 'Excludes'),
+                        (ao.Addon.REQUIRES, 'Requires'),
+                        (ao.Addon.PROVIDES, 'Provides'),
+                        (ao.Addon.OFFERS, 'Offers')]:
+        # Make a copy of the list so we can modify it.
+        dep = []
+        for kw in addon.getKeywords(type):
+            dep.append(kw)
+        allDeps.append((label, dep))
+
     # Create a table out of each dependency type.
     for heading, listing in allDeps:
         msg += makeField(heading, string.join(listing, '<br>'))
 
     msg += endTable
 
+    #
+    # Content Analysis
+    # 
+    msg += '<h3>Contents</h3>' + beginTable
+    msg += makeField('Content Path', addon.getContentPath())
+    msg += endTable
 
-    msg += '<h3>Contents</h3>'
+    
     msg += "<br>format-specific data"
     msg += "<br>content analysis, size"
     msg += "<br>list of files, if a bundle"
