@@ -297,6 +297,10 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 	edges[0].done = edges[1].done = false;
 	edges[0].length = edges[1].length = 0;
 
+    // Use validcount to detect looped neighbours, which may occur
+    // with strange map geometry (probably due to bugs in r_shadow.c).
+    ++validcount;
+    
 	for(iter = line, scanSide = side; !(edges[0].done && edges[1].done);)
 	{
 		scanSector = (scanSide == 0 ? iter->frontsector : iter->backsector);
@@ -310,6 +314,12 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 				edges[1].done = true;
 			if(edges[0].done && edges[1].done)
 				break;
+
+            // Look out for loops.
+            if(iter->validcount == validcount)
+                break;
+
+            iter->validcount = validcount;
 		}
 
 		nInfo = LINE_INFO(iter);
