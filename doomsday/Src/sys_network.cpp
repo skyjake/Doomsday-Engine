@@ -9,6 +9,9 @@
 //** This file is way too long.
 //**
 //** $Log$
+//** Revision 1.5  2003/06/30 00:02:52  skyjake
+//** RANDOM_PACKET_LOSS, proper N_SMSReset, Huffman stats, -huffavg
+//**
 //** Revision 1.4  2003/06/28 16:00:14  skyjake
 //** Use Huffman encoding when sending data
 //**
@@ -62,6 +65,9 @@ extern "C"
 
 // Uncomment to enable the byte frequency counter.
 //#define COUNT_BYTE_FREQS
+
+// Uncomment to test random packet loss.
+//#define RANDOM_PACKET_LOSS
 
 #define MASTER_HEARTBEAT	120 // seconds
 
@@ -187,7 +193,7 @@ int 		nptIPPort = 0;	// This is the port *we* use to communicate.
 int			nptModem = 0;	// Selected modem device index.
 char		*nptPhoneNum = "";
 // Serial:
-int			nptSerialPort = 1;
+int			nptSerialPort = 0;
 int			nptSerialBaud = 57600;
 int			nptSerialStopBits = 0;
 int			nptSerialParity = 0;
@@ -637,6 +643,21 @@ void N_SMSResendTimedOut(void)
 }
 
 /*
+ * Reset the Sent Message Store back to defaults.
+ */
+void N_SMSReset(store_t *store)
+{
+	// Destroy all the messages in the store.
+	while(store->first)
+	{
+		N_SMSDestroy(store->first);
+	}
+
+	// Reset everything back to zero.
+	memset(store, 0, sizeof(*store));
+}
+
+/*
  * Adds the given netmessage_s to the queue of received messages.
  * Before calling this, allocate the message using malloc().
  * We use a mutex to synchronize access to the message queue.
@@ -1083,9 +1104,7 @@ void N_Shutdown(void)
 
 	if(ArgExists("-huffavg"))
 	{
-		Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
-			"bytes)\n", 100 - (100.0f * gNumSentBytes) / gNumOutBytes,
-			gNumOutBytes, gNumSentBytes);
+		Con_Execute("huffman", false);
 	}
 }
 
@@ -1347,13 +1366,20 @@ void N_SendDataBuffer(void *data, uint size, DPNID destination)
 	DPNHANDLE asyncHandle = 0;
 	DPN_BUFFER_DESC buffer;
 
-/*#ifdef COUNT_BYTE_FREQS
+#ifdef RANDOM_PACKET_LOSS
+	if(M_Random() < 64) return; // 25%
+#endif
+
+/*
+#ifdef COUNT_BYTE_FREQS
+	// This is in the wrong place; the data is already encoded.
 	for(uint i = 0; i < size; i++)
 	{
 		gByteCounts[ ((byte*)data)[i] ]++;
 	}
 	gTotalByteCount += size;
-#endif*/
+#endif
+*/
 	
 	buffer.dwBufferSize = size;
 	buffer.pBufferData = (byte*) data;
@@ -1568,7 +1594,6 @@ netmessage_t *N_GetNextMessage(void)
 				// The arrival of this message must be confirmed. Send a reply
 				// immediately. Writes to the Huffman encoding buffer.
 				N_SendConfirmation(id, msg->sender);
-				//N_SendDataBuffer(&id, 2, msg->sender);
 
 /*#ifdef _DEBUG
 				Con_Printf("N_GetNextMessage: Acknowledged arrival of "
@@ -1737,6 +1762,11 @@ void N_Update(void)
 			break;
 
 		case NE_CLIENT_EXIT:
+			if(N_IdentifyPlayer(event.id) >= 0)
+			{
+				// Clear this client's Sent Message Store.
+				N_SMSReset(&stores[ N_IdentifyPlayer(event.id) ]);
+			}
 			Sv_PlayerLeaves(event.id);
 			break;
 
@@ -1997,6 +2027,9 @@ void N_TerminateClient(int console)
 
 	Con_Message("N_TerminateClient: '%s' from console %i.\n", 
 		clients[console].name, console);
+
+	// Clear this client's Sent Message Store.
+	N_SMSReset(&stores[console]);
 
 	gServer->DestroyClient(clients[console].nodeID, NULL, 0, 0);
 }
@@ -2522,4 +2555,22 @@ int CCmdNet(int argc, char **argv)
 		}
 	}*/
 	return success;
+}
+
+/*
+ * Console command for printing the Huffman efficiency.
+ */
+int CCmdHuffmanStats(int argc, char **argv)
+{
+	if(!gNumOutBytes)
+	{
+		Con_Printf("Nothing has been sent yet.\n");
+	}
+	else
+	{
+		Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
+			"bytes)\n", 100 - (100.0f * gNumSentBytes) / gNumOutBytes,
+			gNumOutBytes, gNumSentBytes);
+	}
+	return true;
 }
