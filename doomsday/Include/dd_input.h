@@ -37,6 +37,13 @@ enum
 	NUM_INPUT_DEVICES		// Theoretical maximum.
 };	
 
+// Input device axis types.
+enum
+{
+	IDAT_STICK = 0,			// joysticks, gamepads
+	IDAT_POINTER = 1		// mouse
+};
+
 // Input device axis flags.
 #define IDA_DISABLED 0x1	// Axis is always zero.
 #define IDA_INVERT 0x2		// Real input data should be inverted.
@@ -44,6 +51,7 @@ enum
 
 typedef struct inputdevaxis_s {
 	char name[20];			// Symbolic name of the axis.
+	int type;				// Type of the axis (pointer or stick).
 	int flags;
 	float position;			// Current translated position of the axis (-1..1).
 	float scale;			// Scaling factor for real input values.
