@@ -168,7 +168,9 @@ def runWizard():
 
     # We'll do this dynamically.
     checkedProfiles = ['doom1', 'doom2', 'heretic', 'hexen']
-    profiles = pr.getProfiles()
+    # Only display the system profiles in the wizard (not any user
+    # profiles).
+    profiles = pr.getProfiles(lambda p: p.isSystemProfile())
     for p in profiles:
         if p is not pr.getDefaults():
             games.addItem(p.getId(), p.getId() in checkedProfiles)
