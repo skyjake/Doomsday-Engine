@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -428,7 +428,7 @@ void DD_PostEvent(event_t *ev)
 	Sys_Lock(eventQueueLock);
 
 	events[eventHead] = *ev;
-	eventHead = (++eventHead) & (MAXEVENTS - 1);
+	eventHead = (eventHead + 1) & (MAXEVENTS - 1);
 	eventCount++;
 
 	Sys_Unlock(eventQueueLock);
@@ -810,11 +810,8 @@ void DD_StopInput(void)
 	// Tell the input thread to immediately break the loop and exit.
 	stopInputThread = true;
 
-	while(!Sys_GetThreadExitCode(inputThreadHandle, NULL))
-	{
-		// Let's wait for a short while.
-		Sys_Sleep(1);
-	}
+	// Wait for the input thread to stop.
+	Sys_WaitThread(inputThreadHandle);
 }
 
 /*
