@@ -353,6 +353,7 @@ extern          "C" {
 		float           gravity;
 		float           vector_force[3];
 		float           spin[2];   // Yaw and pitch.
+		float			spin_resistance[2]; // Yaw and pitch.
 		int             model;
 		ded_string_t    frame_name;	// For model particles.
 		ded_string_t    end_frame_name;

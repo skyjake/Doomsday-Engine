@@ -6,6 +6,9 @@
 
 Version 1.8.3
 -------------
++ Generator -> Stage -> Spin resistance { 0 0 }: factors for slowing down
+  particle spinning (0..1)
+
 jDoom:
 - fixed: crushed barrels now explode correctly and don't become gibs
 

@@ -743,7 +743,7 @@ float P_GetParticleRadius(ded_ptcstage_t * stage_def, int ptc_index)
 // P_GetParticleZ
 //  A particle may be attached to the floor or ceiling of the sector.
 //===========================================================================
-fixed_t P_GetParticleZ(particle_t * pt)
+fixed_t P_GetParticleZ(particle_t *pt)
 {
 	if(pt->pos[VZ] == DDMAXINT)
 		return pt->sector->ceilingheight - 2 * FRACUNIT;
@@ -757,7 +757,7 @@ fixed_t P_GetParticleZ(particle_t * pt)
 //===========================================================================
 // P_SpinParticle
 //===========================================================================
-void P_SpinParticle(ptcgen_t * gen, particle_t * pt)
+void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
 {
 	ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
 	uint    index = pt - gen->ptcs + (int) gen / 8;
@@ -776,6 +776,9 @@ void P_SpinParticle(ptcgen_t * gen, particle_t * pt)
 	{
 		pt->pitch += 65536 * pitchSign * stDef->spin[1] / (360 * TICSPERSEC);
 	}
+
+	pt->yaw *= 1 - stDef->spin_resistance[0];
+	pt->pitch *= 1 - stDef->spin_resistance[1];
 }
 
 //===========================================================================
