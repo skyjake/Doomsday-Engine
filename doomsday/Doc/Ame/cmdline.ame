@@ -244,6 +244,10 @@ $--------------------------------------------------------------------
 	@opt{ -paltex } @tab @opt{ -ptx } @tab
 	Use paletted textures (if supported by the hardware).
 @row
+	@opt{ -maxtex N } @tab @tab
+	Set maximum texture size to N x N. E.g. @opt{-maxtex 128} sets
+	the maximum size to 128 x 128 pixels.
+@row
 	@opt{ -modeldir P } @tab @opt{ -md  } @tab
 	Uses the given search path instead of the one
 	specified in the primary DED file.
