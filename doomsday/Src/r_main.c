@@ -310,11 +310,24 @@ void R_SetupFrame(ddplayer_t *player)
 	}
 
 	// Camera smoothing is only enabled if the frame rate is above 35.
-	if(!rend_camera_smooth || resetNextViewer) // || DD_GetFrameRate() < 35)
+	if(!rend_camera_smooth || resetNextViewer)
 	{
+		static angle_t frozenAngle = 0;
+		static float frozenPitch = 0;
+
+		// Synchronize view angles to game updates.
+		if(resetNextViewer || sharpWorldUpdated)
+		{
+			frozenAngle = sharpView.angle;
+			frozenPitch = sharpView.pitch;
+		}
+
+		sharpWorldUpdated = false;
 		resetNextViewer = false;
 
 		// Just view from the sharp position.
+		sharpView.angle = frozenAngle;
+		sharpView.pitch = frozenPitch;
 		R_SetViewPos(&sharpView);
 		frameTimePos = 0;
 		lastSharpFrameTime = Sys_GetTimef();
