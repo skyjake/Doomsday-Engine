@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -88,25 +89,17 @@ int     r_maxmodelz = 1500;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static mobj_t *projectedThing;	// Used during RIT_VisMobjZ
+
 // CODE --------------------------------------------------------------------
 
 /*
-
-   Sprite rotation 0 is facing the viewer, rotation 1 is one angle turn
-   CLOCKWISE around the axis. This is not the same as the angle, which
-   increases counter clockwise (protractor).
-
+ * Sprite rotation 0 is facing the viewer, rotation 1 is one angle
+ * turn CLOCKWISE around the axis. This is not the same as the angle,
+ * which increases counter clockwise (protractor).
  */
 
 int     LevelFullBright = false;
-
-/*
-   ===============================================================================
-
-   INITIALIZATION FUNCTIONS
-
-   ===============================================================================
- */
 
 //===========================================================================
 // R_InitSpriteLumps
@@ -590,6 +583,26 @@ float R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz)
 				 (100 * FIX2FLT(momz), 100 * P_AccurateDistance(momx, momy)));
 }
 
+boolean RIT_VisMobjZ(sector_t *sector, void *data)
+{
+	vissprite_t *vis = data;
+
+	assert(sector != NULL);
+	assert(data != NULL);
+
+	if(projectedThing->z == sector->floorheight)
+	{
+		vis->data.mo.gz = FRACUNIT * SECT_FLOOR(sector);
+	}
+
+	if(projectedThing->z + projectedThing->height == sector->ceilingheight)
+	{
+		vis->data.mo.gz =
+			FRACUNIT * SECT_CEIL(sector) - projectedThing->height;
+	}
+	return true;
+}
+
 //===========================================================================
 // R_ProjectSprite
 //  Generates a vissprite for a thing if it might be visible.
@@ -758,15 +771,23 @@ void R_ProjectSprite(mobj_t *thing)
 	vis->data.mo.gx = thing->x;
 	vis->data.mo.gy = thing->y;
 	vis->data.mo.gz = thing->z;
+
+	// The thing's Z coordinate must match the actual visible
+	// floor/ceiling height.  When using smoothing, this requires
+	// iterating through the sectors (planes) in the vicinity.
+	validcount++;
+	projectedThing = thing;
+	P_ThingSectorsIterator(thing, RIT_VisMobjZ, vis);
+
 	vis->data.mo.gzt =
-		thing->z + ((fixed_t) spritelumps[lump].topoffset << FRACBITS);
+		vis->data.mo.gz + ((fixed_t) spritelumps[lump].topoffset << FRACBITS);
 
 	memcpy(vis->data.mo.rgb, R_GetSectorLightColor(sect), 3);
 
 	vis->data.mo.viewaligned = align;
 
-	vis->data.mo.secfloor = FIX2FLT(thing->subsector->sector->floorheight);
-	vis->data.mo.secceil = FIX2FLT(thing->subsector->sector->ceilingheight);
+	vis->data.mo.secfloor = SECT_FLOOR(thing->subsector->sector);
+	vis->data.mo.secceil = SECT_CEIL(thing->subsector->sector);
 
 	if(thing->ddflags & DDMF_TRANSLATION)
 		vis->data.mo.class = (thing->ddflags >> DDMF_CLASSTRSHIFT) & 0x3;
