@@ -4,6 +4,12 @@
              Legend: + added, - fixed, * improved/changed
 
 
+Version 1.14.6
+--------------
+* cvar player-air-movement: player movement speed while airborne (0-32); 
+  use only small values in netgames
+
+
 Version 1.14.5
 --------------
 * new default particle effects, in Particles.ded (included from 
