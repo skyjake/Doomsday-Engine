@@ -18,7 +18,7 @@
 /*
  * net_ping.c: Pinging Clients and the Server
  *
- * Warning: this is not a very accurate ping.
+ * Warning: This is not a very accurate ping.
  */
 
 // HEADER FILES ------------------------------------------------------------

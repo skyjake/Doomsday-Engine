@@ -18,8 +18,7 @@
 /*
  * net_main.c: Network Subsystem
  *
- * Client/server networking. 
- * Player number zero is always the server.
+ * Client/server networking. Player number zero is always the server.
  * In single-player games there is only the server present.
  *
  * Once upon a time based on Hexen's peer-to-peer network code.

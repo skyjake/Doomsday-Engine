@@ -1,36 +1,54 @@
-
-//**************************************************************************
-//**
-//** SV_POOL.C
-//**
-//** $Log$
-//** Revision 1.13  2003/08/30 15:24:50  skyjake
-//** Removed #define DD_PROFILE
-//**
-//** Revision 1.12  2003/07/12 22:18:00  skyjake
-//** Don't profile
-//**
-//** Revision 1.11  2003/07/01 12:38:58  skyjake
-//** Pool missile record, adde Sv_ExcludeDelta
-//**
-//** Revision 1.10  2003/06/30 00:22:01  skyjake
-//** Fixmom, resend ack, reset player mobj when player changes mobj
-//**
-//** Revision 1.9  2003/06/28 15:59:24  skyjake
-//** Delta score bonus for large objects, MDFC_CREATE gets smaller bonus
-//**
-//** Revision 1.8  2003/06/27 20:13:36  skyjake
-//** Added maxed mobj Z coords, fixed initial side deltas, sector height deltas
-//**
-//** Revision 1.7  2003/06/24 21:16:02  skyjake
-//** Complete rewrite of delta pools
-//**
-//**************************************************************************
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
 /*
+ * sv_pool.c: Delta Pools
+ *
  * Delta Pools use PU_LEVEL, which means all the memory allocated for them
  * is deallocated when the level changes. Sv_InitPools() is called in 
  * R_SetupLevel() to clear out all the old data.
+ */
+
+/*
+ * $Log$
+ * Revision 1.14  2003/09/04 16:56:49  skyjake
+ * Added a proper GPL banner
+ *
+ * Revision 1.13  2003/08/30 15:24:50  skyjake
+ * Removed #define DD_PROFILE
+ *
+ * Revision 1.12  2003/07/12 22:18:00  skyjake
+ * Don't profile
+ *
+ * Revision 1.11  2003/07/01 12:38:58  skyjake
+ * Pool missile record, adde Sv_ExcludeDelta
+ *
+ * Revision 1.10  2003/06/30 00:22:01  skyjake
+ * Fixmom, resend ack, reset player mobj when player changes mobj
+ *
+ * Revision 1.9  2003/06/28 15:59:24  skyjake
+ * Delta score bonus for large objects, MDFC_CREATE gets smaller bonus
+ *
+ * Revision 1.8  2003/06/27 20:13:36  skyjake
+ * Added maxed mobj Z coords, fixed initial side deltas, sector height deltas
+ *
+ * Revision 1.7  2003/06/24 21:16:02  skyjake
+ * Complete rewrite of delta pools
+ *
  */
 
 // HEADER FILES ------------------------------------------------------------
