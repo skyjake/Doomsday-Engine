@@ -195,6 +195,7 @@
 		};
 		29B97315FDCFA39411CA2CEA = {
 			children = (
+				B0E3D3DF07903950007811F6,
 				B013500C06EDD499007861F2,
 				B0134F9A06ECEB9F007861F2,
 				B0134F9806ECEB71007861F2,
@@ -557,6 +558,7 @@
 				B02AC5A506B3FA92005824AD,
 				B02AC5A606B3FA92005824AD,
 				B013500F06EDD51E007861F2,
+				B0E3D3E207903967007811F6,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -691,6 +693,7 @@
 				B0134F9B06ECEB9F007861F2,
 				B0134FE106ECEFAD007861F2,
 				B013500D06EDD499007861F2,
+				B0E3D3E007903950007811F6,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4744,6 +4747,7 @@
 		};
 		B02AC73506B3FBD4005824AD = {
 			children = (
+				B0E3D3E107903967007811F6,
 				B013500E06EDD51E007861F2,
 				B02AC3A706B3FA91005824AD,
 				B02AC3A806B3FA91005824AD,
@@ -9292,6 +9296,36 @@
 			path = "/Users/jaakko/Projects/deng/doomsday/drOpenGL-Info.plist";
 			refType = 0;
 			sourceTree = "<absolute>";
+		};
+		B0E3D3DF07903950007811F6 = {
+			fileEncoding = 5;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			name = rend_bias.c;
+			path = Src/rend_bias.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		B0E3D3E007903950007811F6 = {
+			fileRef = B0E3D3DF07903950007811F6;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		B0E3D3E107903967007811F6 = {
+			fileEncoding = 5;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = rend_bias.h;
+			path = Include/rend_bias.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		B0E3D3E207903967007811F6 = {
+			fileRef = B0E3D3E107903967007811F6;
+			isa = PBXBuildFile;
+			settings = {
+			};
 		};
 //B00
 //B01

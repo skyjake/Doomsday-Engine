@@ -26,6 +26,7 @@
 #include "de_base.h"
 #include "de_render.h"
 #include "de_misc.h"
+#include "p_sight.h"
 
 // MACROS ------------------------------------------------------------------
 
