@@ -178,13 +178,26 @@ void B_UpdateAxisControls(void)
 	for(i = 0, ab = axisBinds; i < numAxisBinds; i++, ab++)
 	{
 		axis = &ab->device->axes[ab->axis];
+		
 		// Invert the axis position, if requested.
 		if(ab->invert)
 			pos = -axis->position;
 		else
 			pos = axis->position;
+
 		// Update the control state.
-		P_ControlSetAxis(P_LocalToConsole(ab->localPlayer), ab->control, pos);
+		switch(ab->device->axes[ab->axis].type)
+		{
+		case IDAT_STICK: // joysticks, gamepads
+			P_ControlSetAxis(P_LocalToConsole(ab->localPlayer),
+							 ab->control, pos);
+			break;
+
+		case IDAT_POINTER: // mouse
+			P_ControlAxisDelta(P_LocalToConsole(ab->localPlayer),
+							   ab->control, pos);
+			break;
+		}
 	}
 }
 

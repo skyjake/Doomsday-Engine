@@ -198,6 +198,8 @@ inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name)
 	memset(axis, 0, sizeof(*axis));
 	strcpy(axis->name, name);
 
+	axis->type = IDAT_STICK;
+	
 	// Set reasonable defaults. The user's settings will be restored
 	// later.
 	axis->scale = 1/10.0f;
@@ -229,8 +231,8 @@ void I_InitInputDevices(void)
 
 	// The wheel is translated to keys, so there is no need to
 	// create an axis for it.
-	I_DeviceNewAxis(dev, "x");
-	I_DeviceNewAxis(dev, "y");
+	I_DeviceNewAxis(dev, "x")->type = IDAT_POINTER;
+	I_DeviceNewAxis(dev, "y")->type = IDAT_POINTER;
 	
 	if(I_MousePresent())
 		dev->flags = ID_ACTIVE;
@@ -350,15 +352,18 @@ void I_UpdateAxis(inputdev_t *dev, int axis, float pos)
 
 	// Apply scaling, deadzone and clamping.
 	pos *= a->scale;
-	if(fabs(pos) <= a->deadZone)
+	if(a->type == IDAT_STICK) // Pointer axes are exempt.
 	{
-		a->position = 0;
-		return;
+		if(fabs(pos) <= a->deadZone)
+		{
+			a->position = 0;
+			return;
+		}
+		pos += a->deadZone * (pos > 0? -1 : 1);	// Remove the dead zone.
+		pos *= 1.0f/(1.0f - a->deadZone);		// Normalize.
+		if(pos < -1.0f) pos = -1.0f;
+		if(pos > 1.0f) pos = 1.0f;
 	}
-	pos += a->deadZone * (pos > 0? -1 : 1);	// Remove the dead zone.
-	pos *= 1.0f/(1.0f - a->deadZone);		// Normalize.
-	if(pos < -1.0f) pos = -1.0f;
-	if(pos > 1.0f) pos = 1.0f;
 	
 	if(a->flags & IDA_INVERT)
 	{
