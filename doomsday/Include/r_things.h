@@ -21,6 +21,7 @@ typedef struct vissprite_s
 	union vissprite_data_u {
 		struct vissprite_mobj_s {
 			int		patch;
+			subsector_t *subsector;
 			fixed_t	gx, gy;             // for line side calculation
 			fixed_t	gz, gzt;            // global bottom / top for silhouette clipping
 			boolean	flip;				// Flip texture?
