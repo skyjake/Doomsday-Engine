@@ -1,32 +1,29 @@
-
-//**************************************************************************
-//**
-//** SYS_NETWORK.CPP
-//**
-//** Low-level network routines, using DirectPlay 8.
-//** A replacement for jtNet2, which is no longer needed.
-//** Written in C++ to reduce the PITA factor of using COM.
-//** This file is way too long.
-//**
-//** $Log$
-//** Revision 1.5  2003/06/30 00:02:52  skyjake
-//** RANDOM_PACKET_LOSS, proper N_SMSReset, Huffman stats, -huffavg
-//**
-//** Revision 1.4  2003/06/28 16:00:14  skyjake
-//** Use Huffman encoding when sending data
-//**
-//** Revision 1.3  2003/06/27 20:20:28  skyjake
-//** Protect incoming message queue using a mutex
-//**
-//** Revision 1.2  2003/06/23 08:19:24  skyjake
-//** Confirmed and Ordered packets done manually
-//**
-//** Revision 1.1  2003/05/23 22:00:34  skyjake
-//** sys_network.c rewritten to C++, .cpp
-//**
-//**************************************************************************
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
 /*
+ * sys_network.cpp: Low-Level Network Services
+ *
+ * This file is way too long.
+ *
+ * Low-level network routines, using DirectPlay 8. A replacement for 
+ * jtNet2, which is no longer needed. Written in C++ to reduce the PITA 
+ * factor of using COM. 
+ *
  * Confirmed/Ordered messages are stored in the Sent Message Store (SMS)
  * when sending. Confirmations are received and sent when packets are 
  * requested in N_GetNextMessage(). Each player has his own SMS. Message 
@@ -37,6 +34,28 @@
  * the resending of timed out messages. When an Ordered message is 
  * confirmed, the next queued Ordered message is sent. Messages in the 
  * SMS are in FIFO order.
+ */
+
+/*
+ * $Log$
+ * Revision 1.6  2003/09/03 20:53:49  skyjake
+ * Added a proper GPL banner
+ *
+ * Revision 1.5  2003/06/30 00:02:52  skyjake
+ * RANDOM_PACKET_LOSS, proper N_SMSReset, Huffman stats, -huffavg
+ *
+ * Revision 1.4  2003/06/28 16:00:14  skyjake
+ * Use Huffman encoding when sending data
+ *
+ * Revision 1.3  2003/06/27 20:20:28  skyjake
+ * Protect incoming message queue using a mutex
+ *
+ * Revision 1.2  2003/06/23 08:19:24  skyjake
+ * Confirmed and Ordered packets done manually
+ *
+ * Revision 1.1  2003/05/23 22:00:34  skyjake
+ * sys_network.c rewritten to C++, .cpp
+ *
  */
 
 // HEADER FILES ------------------------------------------------------------

@@ -22,6 +22,8 @@
 #ifndef __DOOMSDAY_PARTICLES_H__
 #define __DOOMSDAY_PARTICLES_H__
 
+#include "def_data.h"
+
 #define MAX_ACTIVE_PTCGENS	96
 #define MAX_PTC_STAGES		DED_PTC_STAGES
 #define MAX_PTC_TEXTURES	32			// Maximum # of textures in particle system

@@ -1,20 +1,40 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** $Id$
-//**
-//** Communication with the master server, using TCP and HTTP.
-//** The HTTP requests run in their own threads.
-//** Sockets were initialized by sys_network.
-//**
-//** $Log$
-//** Revision 1.2  2003/05/23 22:16:15  skyjake
-//** DP8, various net-related improvements
-//**
-//** Revision 1.1  2003/03/09 16:03:51  skyjake
-//** New master server mechanism
-//**
-//**************************************************************************
+/*
+ * sys_master.c: Communication with the Master Server
+ *
+ * Communication with the master server, using TCP and HTTP.
+ * The HTTP requests run in their own threads.
+ * Sockets were initialized by sys_network.
+ */
+
+/*
+ * $Log$
+ * Revision 1.3  2003/09/03 20:53:49  skyjake
+ * Added a proper GPL banner
+ *
+ * Revision 1.2  2003/05/23 22:16:15  skyjake
+ * DP8, various net-related improvements
+ *
+ * Revision 1.1  2003/03/09 16:03:51  skyjake
+ * New master server mechanism
+ *
+ */
 
 // HEADER FILES ------------------------------------------------------------
 

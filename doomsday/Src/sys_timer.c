@@ -16,7 +16,7 @@
  */
 
 /*
- * sys_timer.h: Timing Subsystem
+ * sys_timer.c: Timing Subsystem
  *
  * Uses Win32 multimedia timing routines.
  */

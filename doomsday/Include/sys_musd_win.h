@@ -16,7 +16,7 @@
  */
 
 /*
- * sys_audio.h: Music Driver for Win32 Multimedia
+ * sys_musd_win.h: Music Driver for Win32 Multimedia
  */
 
 #ifndef __DOOMSDAY_SYSTEM_MUS_WIN_H__

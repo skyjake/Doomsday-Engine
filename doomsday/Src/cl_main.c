@@ -36,12 +36,10 @@ extern int gotframe;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 id_t		clientID;
-boolean		handshake_received = false;
-int			game_ready = false;
-int			server_time;
-//int		latest_frame_size;
-//netdata_t	latest_frame_packet;
-boolean		net_loggedin = false;	// Logged in to the server.
+boolean		handshakeReceived = false;
+int			gameReady = false;
+int			serverTime;
+boolean		netLoggedIn = false;	// Logged in to the server.
 boolean		clientPaused = false;	// Set by the server.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -73,7 +71,7 @@ void Cl_InitID(void)
 
 int Cl_GameReady()
 {
-	return (handshake_received && game_ready);
+	return (handshakeReceived && gameReady);
 }
 
 void Cl_CleanUp()
@@ -81,7 +79,7 @@ void Cl_CleanUp()
 	Con_Printf("Cl_CleanUp.\n");
 
 	clientPaused = false;
-	handshake_received = false;
+	handshakeReceived = false;
 
 	Cl_DestroyClientMobjs();
 	Cl_InitPlayers();
@@ -141,16 +139,16 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 
 	isClient = true;
 	isServer = false;
-	net_loggedin = false;
+	netLoggedIn = false;
 	clientPaused = false;
 
-	if(handshake_received) return;
+	if(handshakeReceived) return;
 
 	// This prevents redundant re-initialization.
-	handshake_received = true;
+	handshakeReceived = true;
 
 	// Soon after this packet will follow the game's handshake.
-	game_ready = false;
+	gameReady = false;
 	Cl_InitFrame();
 	
 	Con_Printf("Cl_AnswerHandshake: myConsole:%i, gameTime:%i.\n",
@@ -280,7 +278,7 @@ void Cl_GetPackets(void)
 			break;
 			
 		case psv_server_close:	// We should quit?
-			net_loggedin = false;
+			netLoggedIn = false;
 			Con_Execute("net disconnect", true);		
 			break;
 
@@ -292,7 +290,7 @@ void Cl_GetPackets(void)
 		case pkt_login:
 			// Server responds to our login request. Let's see if we 
 			// were successful.
-			net_loggedin = Msg_ReadByte();
+			netLoggedIn = Msg_ReadByte();
 			break;
 
 		default:

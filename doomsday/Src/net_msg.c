@@ -1,20 +1,33 @@
-//**************************************************************************
-//**
-//** NET_MSG.C
-//**
-//** Buffer overflow checks *ARE NOT* made.
-//** The caller must know what it's doing.
-//** These don't provide the casual flexibility of the Quake messages
-//** but at least they work. :-)
-//**
-//**************************************************************************
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
+
+/*
+ * net_msg.c: Network Messaging
+ *
+ * Buffer overflow checks *ARE NOT* made.
+ * The caller must know what it's doing.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
 #include "de_network.h"
-#if _DEBUG
-#include "de_console.h"
+#ifdef _DEBUG
+# include "de_console.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -81,7 +94,7 @@ void Msg_Write(const void *src, int len)
 	netbuffer.cursor += len;
 }
 
-byte Msg_ReadByte()
+byte Msg_ReadByte(void)
 {
 #ifdef _DEBUG
 	if(Msg_Offset() >= netbuffer.length) 
@@ -90,7 +103,7 @@ byte Msg_ReadByte()
 	return *netbuffer.cursor++;
 }
 
-short Msg_ReadShort()
+short Msg_ReadShort(void)
 {
 #ifdef _DEBUG
 	if(Msg_Offset() >= netbuffer.length) 
@@ -105,7 +118,7 @@ short Msg_ReadShort()
 //	Only 15 bits can be used for the number because the high bit of the 
 //	lower byte is used to determine whether the upper byte follows or not.
 //==========================================================================
-short Msg_ReadPackedShort()
+short Msg_ReadPackedShort(void)
 {
 	short pack = *netbuffer.cursor++;
 	if(pack & 0x80) 
@@ -116,7 +129,7 @@ short Msg_ReadPackedShort()
 	return pack;
 }
 
-int Msg_ReadLong()
+int Msg_ReadLong(void)
 {
 #ifdef _DEBUG
 	if(Msg_Offset() >= netbuffer.length) 

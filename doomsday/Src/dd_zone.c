@@ -219,7 +219,6 @@ void * Z_Malloc (size_t size, int tag, void *user)
 
 //===========================================================================
 // Z_Realloc
-//	(from GMJ)
 //	Only resizes blocks with no user. If a block with a user is 
 //	reallocated, the user will lose its current block and be set to
 //	NULL. Does not change the tag of existing blocks.
@@ -232,8 +231,7 @@ void *Z_Realloc(void *ptr, size_t n, int malloctag)
 	{
 		size_t bsize;
 		// Has old data; copy it.
-		memblock_t *block = (memblock_t*) ((char*)ptr 
-			- sizeof(memblock_t));
+		memblock_t *block = (memblock_t*) ((char*)ptr - sizeof(memblock_t));
 		bsize = block->size - sizeof(memblock_t);
 		memcpy(p, ptr, MIN_OF(n, bsize));
 		Z_Free(ptr);

@@ -1,14 +1,29 @@
-//**************************************************************************
-//**
-//** NET_MAIN.C
-//** 
-//** Client/server networking. 
-//** Player number zero is always the server.
-//** In single-player games there is only the server present.
-//**
-//** Once upon a time based on Hexen's peer-to-peer network code.
-//**
-//**************************************************************************
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
+
+/*
+ * net_main.h: Network Subsystem
+ *
+ * Client/server networking. 
+ * Player number zero is always the server.
+ * In single-player games there is only the server present.
+ *
+ * Once upon a time based on Hexen's peer-to-peer network code.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -596,7 +611,7 @@ void Net_StopGame(void)
 	
 	// No more remote users.
 	net_remoteuser = 0;
-	net_loggedin = false;
+	netLoggedIn = false;
 
 	// All remote players are forgotten.
 	for(i = 0; i < MAXPLAYERS; i++) 
@@ -897,50 +912,6 @@ void Net_Ticker(void)
 
 	N_Ticker();
 
-#if 0
-	//----DEBUG----
-	{
-		int a, b;
-		for(a = 0, i = 1; i < thingnodes.count; i++)
-			if(thingnodes.nodes[i].ptr) a++;
-		for(b = 0, i = 1; i < linenodes.count; i++)
-			if(linenodes.nodes[i].ptr) b++;
-		ST_Message("thingnodes:%-5i<%-5i>(%-5i) linenodes:%-5i<%-5i>(%-5i)\n", 
-			thingnodes.count, a, thingnodes.pos,
-			linenodes.count, b, linenodes.pos);
-	}
-	//----DEBUG----
-#endif
-
-#if 0
-	if(net_dev)
-	{
-		static int whereCount = 0;
-		int k;
-		mobjdelta_t mod;
-		if(whereCount++ > 35)
-		{
-			whereCount = 0;
-			for(i = 0; i < MAXPLAYERS; i++)
-			{
-				if(!players[i].ingame) continue;
-				for(k = 0; k < MAXPLAYERS; k++)
-				{
-					if(!players[k].ingame || i == k
-						 || !players[k].mo) continue;
-					// Get this player in the register.
-					if(Sv_GetRegisteredMobj(pools + i, 
-						players[k].mo->thinker.id, &mod))
-					{
-						ST_Message("Pool of %i: pl%i at (%i,%i)\n",
-							i, k, mod.data.x >> 16, mod.data.y >> 16);
-					}
-				}
-			}
-		}
-	}
-#endif
-
 	if(net_dev)
 	{
 		static int printTimer = 0;
@@ -965,41 +936,8 @@ void Net_Ticker(void)
 		}
 	}
 
-/*	if(dampenCount-- <= 0)
-	{
-		dampenCount = net_dampentime;
-		// Dampen lag stress.
-		for(i = 0; i < MAXPLAYERS; i++)
-		{
-			if(!players[i].ingame) continue;
-			if(clients[i].lagStress > 0)
-				clients[i].lagStress--;
-			else if(clients[i].lagStress < 0)
-				clients[i].lagStress++;
-		}
-	}*/
-
-	/*if(net_showlatencies)
-	{
-		Con_Printf("G%i ", gametic);
-		for(i=0, cl=clients; i<MAXPLAYERS; i++, cl++)
-			if(players[i].ingame)
-				Con_Printf("%02i:%+04i[%+03i](%02d/%03i) ", i, gametic - cl->time,
-					cl->lagStress, cl->numtics, cl->runTime);
-		Con_Printf("\n");
-	}*/
-
 	// The following stuff is only for netgames.
 	if(!netgame) return;
-
-	/*if(monitorSendQueue && monitorCount-- <= 0)
-	{
-		int num, bytes;
-		monitorCount = MONITORTICS;
-		num = jtNetCheckQueue(clients[!consoleplayer].jtNetNode, &bytes);
-		Con_Printf("Queue to %i: %i packets, %i bytes.\n",
-			!consoleplayer, num, bytes);
-	}*/
 
 	// Check the pingers.
 	for(i = 0, cl = clients; i < MAXPLAYERS; i++, cl++)
@@ -1109,27 +1047,6 @@ int CCmdSetTicks(int argc, char **argv)
 //===========================================================================
 int CCmdMakeCamera(int argc, char **argv)
 {
-/*	int cp;
-	mobj_t *mo;
-	ddplayer_t *conp = players + consoleplayer;
-
-	if(argc < 2) return true;
-	cp = atoi(argv[1]);
-	clients[cp].connected = true;
-	clients[cp].ready = true;
-	clients[cp].updateCount = UPDATECOUNT;
-	players[cp].flags |= DDPF_CAMERA;
-	players[cp].ingame = true; // !!!
-	Sv_InitPoolForClient(cp);
-	mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, 0);
-	memset(mo, 0, sizeof(*mo));
-	mo->x = conp->mo->x;
-	mo->y = conp->mo->y;
-	mo->z = conp->mo->z;
-	mo->subsector = conp->mo->subsector;
-	players[cp].mo = mo;
-	displayplayer = cp;*/
-
 	// Create a new local player.
 	int cp;
 

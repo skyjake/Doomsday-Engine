@@ -22,6 +22,8 @@
 #ifndef __DOOMSDAY_CLIENT_PLAYER_H__
 #define __DOOMSDAY_CLIENT_PLAYER_H__
 
+#include "cl_mobj.h"
+
 typedef struct playerstate_s {
 	clmobj_t	*cmo;
 	thid_t		mobjid;
