@@ -333,7 +333,8 @@ int	DM_FModExtPlayBuffer(int looped)
 	DM_FModExtReset();
 
 	// Try playing as a module first.
-	if((module = FMUSIC_LoadSongMemory(song, song_size)))
+	if((module = FMUSIC_LoadSongEx(song, song_size, 
+		FSOUND_LOADMEMORY, NULL, 0)))
 	{
 		FMUSIC_SetLooping(module, looped);
 	}
