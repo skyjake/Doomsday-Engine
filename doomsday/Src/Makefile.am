@@ -9,7 +9,6 @@ doomsday_CFLAGS = @SDL_CFLAGS@ $(LTDLINCL)
 doomsday_LDFLAGS = -export-dynamic "-dlopen" self @SDL_LIBS@ -lSDL_net \
 -lpng -lncurses
 doomsday_LDADD = $(LIBLTDL) 
-#doomsday_DEPENDENCIES = $(LIBLTDL)
 
 doomsday_SOURCES = cl_frame.c cl_main.c cl_mobj.c cl_player.c	       \
 cl_sound.c cl_world.c con_action.c con_bar.c con_bind.c con_config.c   \

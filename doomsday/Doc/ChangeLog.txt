@@ -8,6 +8,8 @@ Version 1.8.1
 -------------
 + rend-halo-realistic: use only more realistic halos (slightly smaller,
   dimmer), no secondary lens flares; enabled by default
+- fixed: FakeRadio bug where vertical shadows were rendered above and
+  under the left and right edge of an opening in a straight wall
 - GL must not be loaded at all in dedicated mode
 - file finder had problems descending into subdirectories
 - input events are processed immediately: mouse lag is gone both in the

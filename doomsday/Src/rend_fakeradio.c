@@ -190,7 +190,7 @@ float Rend_RadioLineCorner(line_t *self, line_t *other, sector_t *mySector)
 		// We want the difference: (leftmost wall) - (rightmost wall)
 		diff = -diff;
 	}
-	if(diff > BANG_180)
+	if(diff >= BANG_180)
 	{
 		// The corner between the walls faces outwards.
 		return 0;
