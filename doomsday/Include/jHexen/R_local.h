@@ -100,30 +100,6 @@ typedef struct side_s
 
 } side_t;
 
-/*typedef enum
-{
-	ST_HORIZONTAL,
-	ST_VERTICAL,
-	ST_POSITIVE,
-	ST_NEGATIVE
-} slopetype_t;*/
-
-/*
-typedef struct line_s
-{
-	vertex_t        *v1, *v2;
-	fixed_t         dx,dy;                          // v2 - v1 for side checking
-	short           flags;
-	short           special, tag;
-	short           sidenum[2];                     // sidenum[1] will be -1 if one sided
-	fixed_t         bbox[4];
-	slopetype_t     slopetype;                      // to aid move clipping
-	sector_t        *frontsector, *backsector;
-	int                     validcount;                     // if == validcount, already checked
-	void            *specialdata;           // thinker_t for reversable actions
-} line_t;
-*/
-
 typedef struct line_s
 {
 	vertex_t *v1;
@@ -137,6 +113,7 @@ typedef struct line_s
 	int validcount;
 	short sidenum[2];
 	fixed_t bbox[4];
+	float length;				// Accurate length of the line.
 
 	// --- You can freely make changes after this.	
 

@@ -107,6 +107,7 @@ typedef struct line_s
 	int			validcount;		
 	short		sidenum[2];
 	fixed_t		bbox[4];
+	float		length;				// Accurate length of the line.
 } line_t;
 
 typedef struct polyobj_s
