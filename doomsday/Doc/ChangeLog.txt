@@ -4,7 +4,7 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.7.12 (work in progress)
+Version 1.7.12
 --------------
 + option -leaveramp: don't reset color settings back to previous values
   at shutdown
