@@ -1,9 +1,33 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ *
+ * Based on Hexen by Raven Software, and Doom by id Software.
+ */
 
-//**************************************************************************
-//**
-//** DD_ZONE.C
-//**
-//**************************************************************************
+/*
+ * dd_zone.c: Memory Zone
+ *
+ * There is never any space between memblocks, and there will never be 
+ * two contiguous free memblocks.
+ * 
+ * The rover can be left pointing at a non-empty block.
+ * 
+ * It is of no value to free a cachable block, because it will get 
+ * overwritten automatically if needed.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -34,44 +58,6 @@ memzone_t	*mainzone;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-/*
-==============================================================================
-
-						ZONE MEMORY ALLOCATION
-
-There is never any space between memblocks, and there will never be two
-contiguous free memblocks.
-
-The rover can be left pointing at a non-empty block
-
-It is of no value to free a cachable block, because it will get overwritten
-automatically if needed
-
-==============================================================================
-*/
-
-/*
-//===========================================================================
-// Z_ClearZone
-//===========================================================================
-void Z_ClearZone (memzone_t *zone)
-{
-	memblock_t	*block;
-	
-// set the entire zone to one free block
-
-	zone->blocklist.next = zone->blocklist.prev = block =
-		(memblock_t *)( (byte *)zone + sizeof(memzone_t) );
-	zone->blocklist.user = (void *)zone;
-	zone->blocklist.tag = PU_STATIC;
-	zone->rover = block;
-	
-	block->prev = block->next = &zone->blocklist;
-	block->user = NULL;	// free block
-	block->size = zone->size - sizeof(memzone_t);
-}
-*/
 
 //===========================================================================
 // Z_Init
@@ -397,76 +383,21 @@ void *Z_Recalloc(void *ptr, size_t n, int calloctag)
 	return p;
 }
 
-/*
 //===========================================================================
 // Z_FreeMemory
 //===========================================================================
-int Z_FreeMemory (void)
+int Z_FreeMemory(void)
 {
-	memblock_t	*block;
-	int			free;
+	memblock_t *block;
+	int	free = 0;
 	
-	free = 0;
-	for (block = mainzone->blocklist.next ; block != &mainzone->blocklist 
-	; block = block->next)
-		if (!block->user || block->tag >= PU_PURGELEVEL)
+	for(block = mainzone->blocklist.next; block != &mainzone->blocklist;
+		block = block->next)
+	{
+		if(!block->user || block->tag >= PU_PURGELEVEL)
+		{
 			free += block->size;
+		}
+	}
 	return free;
 }
-*/
-
-/*
-//===========================================================================
-// Z_DumpHeap
-//===========================================================================
-void Z_DumpHeap (int lowtag, int hightag)
-{
-	memblock_t	*block;
-	
-	printf ("zone size: %i  location: %p\n",mainzone->size,mainzone);
-	printf ("tag range: %i to %i\n",lowtag, hightag);
-	
-	for (block = mainzone->blocklist.next ; ; block = block->next)
-	{
-		if (block->tag >= lowtag && block->tag <= hightag)
-			printf ("block:%p    size:%7i    user:%p    tag:%3i\n",
-			block, block->size, block->user, block->tag);
-		
-		if (block->next == &mainzone->blocklist)
-			break;			// all blocks have been hit	
-		if ( (byte *)block + block->size != (byte *)block->next)
-			printf ("ERROR: block size does not touch the next block\n");
-		if ( block->next->prev != block)
-			printf ("ERROR: next block doesn't have proper back link\n");
-		if (!block->user && !block->next->user)
-			printf ("ERROR: two consecutive free blocks\n");
-	}
-}
-*/
-
-/*
-//===========================================================================
-// Z_FileDumpHeap
-//===========================================================================
-void Z_FileDumpHeap (FILE *f)
-{
-	memblock_t	*block;
-	
-	fprintf (f,"zone size: %i  location: %p\n",mainzone->size,mainzone);
-	
-	for (block = mainzone->blocklist.next ; ; block = block->next)
-	{
-		fprintf (f,"block:%p    size:%7i    user:%p    tag:%3i\n",
-		block, block->size, block->user, block->tag);
-		
-		if (block->next == &mainzone->blocklist)
-			break;			// all blocks have been hit	
-		if ( (byte *)block + block->size != (byte *)block->next)
-			fprintf (f,"ERROR: block size does not touch the next block\n");
-		if ( block->next->prev != block)
-			fprintf (f,"ERROR: next block doesn't have proper back link\n");
-		if (!block->user && !block->next->user)
-			fprintf (f,"ERROR: two consecutive free blocks\n");
-	}
-}
-*/

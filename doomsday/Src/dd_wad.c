@@ -1,19 +1,32 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ *
+ * Portions based on Hexen by Raven Software.
+ */
 
-//**************************************************************************
-//**
-//** W_WAD.C 
-//**
-//** This version supports runtime (un)loading, replacement of
-//** flats and sprites, GWA files and IWAD checking.
-//**
-//**************************************************************************
+/*
+ * dd_wad.c: WAD Files and Data Lump Cache
+ *
+ * This version supports runtime (un)loading, replacement of flats and 
+ * sprites, GWA files and IWAD checking.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <malloc.h>
-//#include <io.h>
-//#include <fcntl.h>
-//#include <sys/stat.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -23,13 +36,6 @@
 #include "r_extres.h"
 
 // MACROS ------------------------------------------------------------------
-
-#ifdef NeXT
-// NeXT doesn't need a binary flag in open call
-#define O_BINARY 0
-#define strcmpi strcasecmp
-#endif
-
 
 // TYPES -------------------------------------------------------------------
 
@@ -1096,67 +1102,6 @@ void *W_CacheLumpName(char *name, int tag)
 	return W_CacheLumpNum(W_GetNumForName(name), tag);
 }
 
-//==========================================================================
-//
-// W_Profile
-//
-//==========================================================================
-
-// Ripped out for Heretic
-/*
-int	info[2500][10];
-int	profilecount;
-
-void W_Profile (void)
-{
-	int		i;
-	memblock_t	*block;
-	void	*ptr;
-	char	ch;
-	FILE	*f;
-	int		j;
-	char	name[9];
-	
-	
-	for (i=0 ; i<numlumps ; i++)
-	{	
-		ptr = lumpcache[i];
-		if (!ptr)
-		{
-			ch = ' ';
-			continue;
-		}
-		else
-		{
-			block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
-			if (block->tag < PU_PURGELEVEL)
-				ch = 'S';
-			else
-				ch = 'P';
-		}
-		info[i][profilecount] = ch;
-	}
-	profilecount++;
-	
-	f = fopen ("waddump.txt","w");
-	name[8] = 0;
-	for (i=0 ; i<numlumps ; i++)
-	{
-		memcpy (name,lumpinfo[i].name,8);
-		for (j=0 ; j<8 ; j++)
-			if (!name[j])
-				break;
-		for ( ; j<8 ; j++)
-			name[j] = ' ';
-		fprintf (f,"%s ",name);
-		for (j=0 ; j<profilecount ; j++)
-			fprintf (f,"    %c",info[i][j]);
-		fprintf (f,"\n");
-	}
-	fclose (f);
-}
-*/
-
 void W_ChangeCacheTag(int lump, int tag)
 {
 	if(lumpcache[lump])
@@ -1222,10 +1167,9 @@ unsigned int W_CRCNumberForRecord(int idx)
 {
 	int i, k;
 	unsigned int crc = 0;
-	//int firstfile = lumpinfo[0].handle;
 
 	if(idx < 0 || idx >= numrecords) return 0;
-	for(i = 0; i < numlumps; /*lumpinfo[i].handle == firstfile;*/ i++)
+	for(i = 0; i < numlumps; i++)
 	{
 		if(lumpinfo[i].handle != records[idx].handle) continue;
 		crc += lumpinfo[i].size;
