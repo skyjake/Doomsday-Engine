@@ -682,10 +682,8 @@ int P_TouchParticle(particle_t * pt, ptcstage_t * stage,
 		return false;
 	}
 	if(stage->flags & PTCF_STAGE_TOUCH ||
-	   (touchWall && stage->flags & PTCF_STAGE_WALL_TOUCH) || (!touchWall &&
-															   stage->
-															   flags &
-															   PTCF_STAGE_FLAT_TOUCH))
+	   (touchWall && stage->flags & PTCF_STAGE_WALL_TOUCH) || 
+	   (!touchWall && stage->flags & PTCF_STAGE_FLAT_TOUCH))
 	{
 		// Particle advances to the next stage.
 		pt->tics = 0;
