@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libdpmapload.la
 
-DEFS = -DUNIX -DNO_FIXED_ASM
+DEFS = -DUNIX -DNO_FIXED_ASM -DGLBSP_PLUGIN
 INCLUDES = -I$(top_srcdir)/Include
 libdpmapload_la_SOURCES = maploader.c glBSP/blockmap.c glBSP/glbsp.c \
 	glBSP/level.c glBSP/node.c glBSP/reject.c glBSP/seg.c	     \
