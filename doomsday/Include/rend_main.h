@@ -4,7 +4,13 @@
 #include "rend_list.h"
 #include "r_things.h"
 
+// Parts of a wall segment.
+#define SEG_MIDDLE	0x1
+#define SEG_TOP		0x2
+#define SEG_BOTTOM	0x4
+
 extern float	vx, vy, vz, vang, vpitch, fieldOfView, yfov;
+extern boolean	smoothTexAnim;
 extern float	viewsidex, viewsidey;	
 extern int		missileBlend, litSprites;
 extern boolean	whitefog;
@@ -20,6 +26,7 @@ float	Rend_PointDist2D(float c[2]);
 float	Rend_PointDist3D(float c[3]);
 float	Rend_SignedPointDist2D(float c[2]);
 int		Rend_SegFacingDir(float v1[2], float v2[2]);
-int		Rend_MidTexturePos(rendpoly_t *quad, float tcyoff, boolean lower_unpeg);
+int		Rend_MidTexturePos(float *top, float *bottom, float *texoffy, 
+						   float tcyoff, boolean lower_unpeg);
 
 #endif
