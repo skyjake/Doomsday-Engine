@@ -29,5 +29,6 @@ void            P_Thrust3D(player_t *player, angle_t angle, float lookdir,
 int             CCmdMakeLocal(int argc, char **argv);
 int             CCmdSetCamera(int argc, char **argv);
 int             CCmdSetViewLock(int argc, char **argv);
+int				CCmdLocalMessage(int argc, char **argv);
 
 #endif

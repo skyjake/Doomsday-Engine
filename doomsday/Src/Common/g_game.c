@@ -3480,7 +3480,7 @@ int CCmdSpawnMobj(int argc, char **argv)
 }
 
 /*
- * CCmdPrintPlayerCoords
+ * Print the console player's coordinates.
  */
 int CCmdPrintPlayerCoords(int argc, char **argv)
 {
@@ -3490,5 +3490,19 @@ int CCmdPrintPlayerCoords(int argc, char **argv)
 		return false;
 	Con_Printf("Console %i: X=%g Y=%g\n", consoleplayer, FIX2FLT(mo->x),
 			   FIX2FLT(mo->y));
+	return true;
+}
+
+/*
+ * Display a local game message.
+ */
+int CCmdLocalMessage(int argc, char **argv)
+{
+	if(argc != 2)
+	{
+		Con_Printf("%s (msg)\n", argv[0]);
+		return true;
+	}
+	D_NetMessageNoSound(argv[1]);
 	return true;
 }

@@ -13,6 +13,7 @@
 #include "settings.h"
 #include "d_net.h"
 #include "f_infine.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -349,6 +350,7 @@ ccmd_t  gameCCmds[] = {
 	"spawnmobj", CCmdSpawnMobj, "Spawn a new mobj.",
 	"coord", CCmdPrintPlayerCoords,
 	"Print the coordinates of the consoleplayer.",
+	"message", CCmdLocalMessage, "Show a local game message.",
 
 	// $democam: console commands
 	"makelocp", CCmdMakeLocal, "Make local player.",

@@ -8,6 +8,7 @@
 #include "d_config.h"
 #include "d_netJD.h"
 #include "g_game.h"
+#include "g_common.h"
 #include "s_sound.h"
 #include "hu_stuff.h"
 #include "m_menu.h"
@@ -504,6 +505,7 @@ ccmd_t  gameCCmds[] = {
 	"spawnmobj", CCmdSpawnMobj, "Spawn a new mobj.",
 	"coord", CCmdPrintPlayerCoords,
 	"Print the coordinates of the consoleplayer.",
+	"message", CCmdLocalMessage, "Show a local game message.",
 
 	// $democam: console commands
 	"makelocp", CCmdMakeLocal, "Make local player.",
