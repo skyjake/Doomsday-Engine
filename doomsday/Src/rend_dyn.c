@@ -1707,6 +1707,8 @@ boolean DL_RadiusIterator
 	lumcontact_t *con;
 	fixed_t	dist;
 
+	if(!subsector) return true;
+
 	for(con = subContacts[ GET_SUBSECTOR_IDX(subsector) ]; con; 
 		con = con->next)
 	{
