@@ -1130,9 +1130,7 @@ void Rend_RenderNode(int bspnum)
 	int             side;
 
 	// If the clipper is full we're pretty much done.
-	if(cliphead)
-		if(cliphead->start == 0 && cliphead->end == BANG_MAX)
-			return;
+	if(C_IsFull()) return;
 
 	if(bspnum & NF_SUBSECTOR)
 	{
