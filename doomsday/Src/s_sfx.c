@@ -21,17 +21,7 @@
 
 #define SFX_MAX_CHANNELS		64
 #define SFX_LOWEST_PRIORITY		-1000
-#define PURGE_TIME				10					// Seconds.
 #define UPDATE_TIME				(2.0/TICSPERSEC)	// Seconds.
-
-// Begin and end macros for Critical OPerations. They are operations 
-// that can't be done while a refresh is being made. No refreshing 
-// will be done between BEGIN_COP and END_COP.
-#define BEGIN_COP		Sfx_AllowRefresh(false)
-#define END_COP			Sfx_AllowRefresh(true)
-
-// Convert an unsigned byte to signed short (for resampling).
-#define U8_S16(b)		(((byte)(b) - 0x80) << 8)
 
 // TYPES -------------------------------------------------------------------
 
@@ -58,12 +48,6 @@ float			sfx_reverb_strength = 1;
 int				sfx_bits = 8;
 int				sfx_rate = 11025;
 
-// 1 Mb = about 12 sec of 44KHz 16bit sound in the cache.
-int				sfx_max_cache_kb = 1024; 
-
-// Even one minute of silence is quite a long time during gameplay.
-int				sfx_max_cache_tics = TICSPERSEC * 60 * 1; // 1 minute.
-
 // Console variables:
 int				sound_3dmode = false;
 int				sound_16bit = false;
@@ -73,7 +57,6 @@ int				sound_rate = 11025;
 
 static int num_channels = 0;
 static sfxchannel_t	*channels;
-static sfxcache_t scroot;
 static mobj_t *listener;
 static sector_t *listener_sector = 0;
 
@@ -174,14 +157,14 @@ void Sfx_StopSoundGroup(int group, mobj_t *emitter)
 // Sfx_StopSound
 //	Stops all channels that are playing the specified sound. If ID is
 //	zero, all sounds are stopped. If emitter is not NULL, then the channel's 
-//	emitter mobj must match it.
+//	emitter mobj must match it. Returns the number of samples stopped.
 //===========================================================================
-void Sfx_StopSound(int id, mobj_t *emitter)
+int Sfx_StopSound(int id, mobj_t *emitter)
 {
 	sfxchannel_t *ch;
-	int i;
+	int i, stopCount = 0;
 
-	if(!sfx_avail) return;
+	if(!sfx_avail) return false;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
 		if(!ch->buffer 
@@ -201,9 +184,13 @@ void Sfx_StopSound(int id, mobj_t *emitter)
 
 		// This channel must be stopped!
 		driver->Stop(ch->buffer);
+		++stopCount;
 	}
+
+	return stopCount;
 }
 
+/*
 //===========================================================================
 // Sfx_IsPlaying
 //===========================================================================
@@ -230,6 +217,7 @@ int Sfx_IsPlaying(int id, mobj_t *emitter)
 	}
 	return false;
 }
+*/
 
 //===========================================================================
 // Sfx_UnloadSoundID
@@ -256,254 +244,6 @@ void Sfx_UnloadSoundID(int id)
 }
 
 //===========================================================================
-// Sfx_GetCached
-//	If the sound is cached, return a pointer to it.
-//===========================================================================
-sfxcache_t *Sfx_GetCached(int id)
-{
-	sfxcache_t *it;
-
-	for(it = scroot.next; it != &scroot; it = it->next)
-		if(it->sample.id == id)
-			return it;
-	return NULL;
-}
-
-//===========================================================================
-// Sfx_Resample
-//	Simple linear resampling with possible conversion to 16 bits.
-//	The destination sample must be initialized and it must have a large
-//	enough buffer. We won't reduce rate or bits here. 
-//===========================================================================
-void Sfx_Resample(sfxsample_t *src, sfxsample_t *dest)
-{
-	int num = src->numsamples; // == dest->numsamples
-	int i;
-
-	// Let's first check for the easy cases.
-	if(dest->rate == src->rate)
-	{
-		if(src->bytesper == dest->bytesper)
-		{
-			// A simple copy will suffice.
-			memcpy(dest->data, src->data, src->size);
-		}
-		else if(src->bytesper == 1
-			&& dest->bytesper == 2)
-		{
-			// Just changing the bytes won't do much good...
-			unsigned char *sp;
-			short *dp;
-			for(i = 0, sp = src->data, dp = dest->data; i < num; i++)
-				*dp++ = (*sp++ - 0x80) << 8;
-		}
-		return;
-	}
-	// 2x resampling.
-	if(dest->rate == 2 * src->rate)
-	{
-		if(dest->bytesper == 1)
-		{
-			// The source has a byte per sample as well.
-			unsigned char *sp, *dp;
-			for(i = 0, sp = src->data, dp = dest->data; i < num - 1; i++, sp++)
-			{
-				*dp++ = *sp;
-				*dp++ = (*sp + sp[1]) >> 1;
-			}
-			// Fill in the last two as well.
-			dp[0] = dp[1] = *sp;
-		}
-		else if(src->bytesper == 1) // Destination is signed 16bit.
-		{
-			// Source is 8bit.
-			unsigned char *sp;
-			short *dp, first;
-			for(i = 0, sp = src->data, dp = dest->data; i < num - 1; i++, sp++)
-			{
-				*dp++ = first = U8_S16(*sp);
-				*dp++ = (first + U8_S16(sp[1])) >> 1;
-			}
-			// Fill in the last two as well.
-			dp[0] = dp[1] = U8_S16(*sp);
-		}
-		else if(src->bytesper == 2) // Destination is signed 16bit.
-		{
-			// Source is 16bit.
-			short *sp, *dp;
-			for(i = 0, sp = src->data, dp = dest->data; i < num - 1; i++, sp++)
-			{
-				*dp++ = *sp;
-				*dp++ = (*sp + sp[1]) >> 1;
-			}
-			dp[0] = dp[1] = *sp;
-		}
-		return;
-	}
-	// 4x resampling (11Khz => 44KHz only).
-	if(dest->rate == 4 * src->rate)
-	{
-		if(dest->bytesper == 1)
-		{
-			// The source has a byte per sample as well.
-			unsigned char *sp, *dp, mid;
-			for(i = 0, sp = src->data, dp = dest->data; i < num - 1; i++, sp++)
-			{
-				mid = (*sp + sp[1]) >> 1;
-				*dp++ = *sp;
-				*dp++ = (*sp + mid) >> 1;
-				*dp++ = mid;
-				*dp++ = (mid + sp[1]) >> 1;
-			}
-			// Fill in the last four as well.
-			dp[0] = dp[1] = dp[2] = dp[3] = *sp;
-		}
-		else if(src->bytesper == 1) // Destination is signed 16bit.
-		{
-			// Source is 8bit.
-			unsigned char *sp;
-			short *dp, first, mid, last;
-			for(i = 0, sp = src->data, dp = dest->data; i < num - 1; i++, sp++)
-			{
-				first = U8_S16(*sp);
-				last = U8_S16(sp[1]);
-				mid = (first + last) >> 1;
-				*dp++ = first;
-				*dp++ = (first + mid) >> 1;
-				*dp++ = mid;
-				*dp++ = (mid + last) >> 1;
-			}
-			// Fill in the last four as well.
-			dp[0] = dp[1] = dp[2] = dp[3] = U8_S16(*sp);
-		}
-		else if(src->bytesper == 2) // Destination is signed 16bit.
-		{
-			// Source is 16bit.
-			short *sp, *dp, mid;
-			for(i = 0, sp = src->data, dp = dest->data; i < num - 1; i++, sp++)
-			{
-				mid = (*sp + sp[1]) >> 1;
-				*dp++ = *sp;
-				*dp++ = (*sp + mid) >> 1;
-				*dp++ = mid;
-				*dp++ = (mid + sp[1]) >> 1;
-			}
-			// Fill in the last four as well.
-			dp[0] = dp[1] = dp[2] = dp[3] = *sp;
-		}
-	}
-}
-
-//===========================================================================
-// Sfx_Cache
-//	Caches the given sample. If it's already in the cache and has the same
-//	format, nothing is done. Returns a pointers to the cached sample.
-//	Always returns a valid cached sample.
-//===========================================================================
-sfxcache_t *Sfx_Cache(sfxsample_t *sample)
-{
-	sfxcache_t *node;
-	sfxsample_t cached;
-	int rsfactor;
-
-	// First convert the sample to the minimum resolution and bits, set
-	// by sfx_rate and sfx_bits.
-
-	// The resampling factor.
-	rsfactor = sfx_rate / sample->rate;
-	if(!rsfactor) rsfactor = 1;
-
-	// If the sample is already in the right format, just make a copy of it. 
-	// If necessary, resample the sound upwards, but not downwards. 
-	// (You can play higher resolution sounds than the current setting, but 
-	// not lower resolution ones.)
-
-	cached.size = sample->numsamples * sample->bytesper * rsfactor;
-	if(sfx_bits == 16 && sample->bytesper == 1)
-	{
-		cached.bytesper = 2;
-		cached.size *= 2; // Will be resampled to 16bit.
-	}
-	else
-	{
-		cached.bytesper = sample->bytesper;
-	}
-	cached.rate = rsfactor * sample->rate;
-	cached.numsamples = sample->numsamples * rsfactor;
-	cached.id = sample->id;
-	cached.group = sample->group;
-
-	// Now check if this kind of a sample already exists.
-	node = Sfx_GetCached(sample->id);
-	if(node)
-	{
-		// The sound is already in the cache. Let's see if it's in 
-		// the right format.
-		if(cached.bytesper*8 == sfx_bits && cached.rate == sfx_rate)
-			return node; // This'll do.
-
-		// All sounds using this sample stop playing, because we're
-		// going to destroy the existing sample data.
-		Sfx_UnloadSoundID(node->sample.id);
-
-		// It's in the wrong format! We'll reuse this node.
-		Z_Free(node->sample.data);
-	}
-	else
-	{
-		// Get a new node.
-		node = Z_Malloc(sizeof(sfxcache_t), PU_STATIC, 0);
-		// Link it in. Make it the first in the cache.
-		node->prev = &scroot;
-		node->next = scroot.next;
-		scroot.next = node->next->prev = node;
-	}
-
-	// Do the resampling, if necessary.
-	cached.data = Z_Malloc(cached.size, PU_STATIC, 0);
-	Sfx_Resample(sample, &cached);
-
-	// Hits keep count of how many times the cached sound has been played.
-	// The purger will remove samples with the lowest hitcount first.
-	node->hits = 0;
-	memcpy(&node->sample, &cached, sizeof(cached));
-	return node;
-}
-
-//===========================================================================
-// Sfx_Uncache
-//===========================================================================
-void Sfx_Uncache(sfxcache_t *node)
-{
-	BEGIN_COP;
-
-	// Reset all channels loaded with this sample.
-	Sfx_UnloadSoundID(node->sample.id);
-
-	// Unlink the node.
-	node->next->prev = node->prev;
-	node->prev->next = node->next;
-
-	// Free all memory allocated for the node.
-	Z_Free(node->sample.data);
-	Z_Free(node);
-
-	END_COP;
-}
-
-//===========================================================================
-// Sfx_UncacheID
-//	Removes the sound with the matching ID from the sound cache.
-//===========================================================================
-void Sfx_UncacheID(int id)
-{
-	sfxcache_t *node = Sfx_GetCached(id);
-
-	if(!node) return; // No such sound is cached.
-	Sfx_Uncache(node);	
-}
-
-//===========================================================================
 // Sfx_CountPlaying
 //	Returns the number of channels the sound is playing on.
 //===========================================================================
@@ -522,60 +262,6 @@ int Sfx_CountPlaying(int id)
 		count++;
 	}
 	return count;
-}
-
-//===========================================================================
-// Sfx_PurgeCache
-//	Called periodically by S_Ticker(). If the cache is too large, stopped 
-//	samples with the lowest hitcount will be uncached.
-//===========================================================================
-void Sfx_PurgeCache(void)
-{
-	int	totalsize = 0, maxsize = sfx_max_cache_kb * 1024;
-	sfxcache_t *it, *next;
-	sfxcache_t *lowest;
-	int lowhits, nowtime = Sys_GetTime();
-
-	if(!sfx_avail) return;
-
-	// Count the total size of the cache.
-	// Also get rid of all sounds that have timed out.
-	for(it = scroot.next; it != &scroot; it = next)
-	{
-		next = it->next;
-		if(nowtime - it->lastused > sfx_max_cache_tics)
-		{
-			// This sound hasn't been used in a looong time.
-			Sfx_Uncache(it);
-			continue;
-		}
-		totalsize += it->sample.size + sizeof(*it);
-	}
-
-	while(totalsize > maxsize) 
-	{
-		// The cache is too large! Find the stopped sample with the
-		// lowest hitcount and get rid of it. Repeat until cache is
-		// legally sized or there are no more stopped sounds.
-		lowest = NULL;
-		for(it = scroot.next; it != &scroot; it = it->next)
-		{
-			// If the sample is playing we won't remove it now.
-			if(Sfx_CountPlaying(it->sample.id)) continue;
-			
-			// This sample could be removed, let's check the hits.
-			if(!lowest || it->hits < lowhits)
-			{
-				lowest = it;
-				lowhits = it->hits;
-			}
-		}
-		if(!lowest) break; // No more samples to remove.
-
-		// Stop and uncache this cached sample.
-		totalsize -= lowest->sample.size + sizeof(*lowest);
-		Sfx_Uncache(lowest);
-	}	
 }
 
 //===========================================================================
@@ -893,29 +579,26 @@ sfxchannel_t *Sfx_ChannelFindVacant
 //	Used by the high-level sound interface to play sounds on this system.
 //	If emitter is NULL, fixedpos is checked for a position. If both emitter
 //	and fixedpos are NULL, then the sound is played as centered 2D. Freq is
-//	relative and modifies the sample's rate. 
+//	relative and modifies the sample's rate. Returns true if a sound is 
+//	started.
+//
+//	The 'sample' pointer must be persistent. No copying is done here.
 //===========================================================================
-void Sfx_StartSound
+int Sfx_StartSound
 	(sfxsample_t *sample, float volume, float freq, mobj_t *emitter, 
 	 float *fixedpos, int flags)
 {
 	sfxchannel_t	*ch, *selch, *prioch;
-	sfxcache_t		*chsamp;
 	sfxinfo_t		*info;
 	int				i, count, nowtime;
-	float			myprio, lowprio;
+	float			myprio, lowprio, channel_prios[SFX_MAX_CHANNELS];
 	boolean			have_channel_prios = false;
-	float			channel_prios[SFX_MAX_CHANNELS];
 	boolean			play3d = sfx_3d && (emitter || fixedpos);
 	
 	if(!sfx_avail
 		|| sample->id < 1 
 		|| sample->id >= defs.count.sounds.num
-		|| volume <= 0) return;
-
-	// Cache the given sample into memory. If necessary, the sound is
-	// resampled when caching.
-	chsamp = Sfx_Cache(sample);
+		|| volume <= 0) return false;
 
 	// Calculate the new sound's priority.
 	nowtime = Sys_GetTime();
@@ -951,7 +634,7 @@ void Sfx_StartSound
 			{
 				// The new sound can't be played because we were unable
 				// to stop enough channels to accommodate the limitation.
-				return;
+				return false;
 			}
 			// Stop this one.
 			count--;
@@ -960,8 +643,7 @@ void Sfx_StartSound
 	}
 
 	// Hitcount tells how many times the cached sound has been used.
-	chsamp->hits++;
-	chsamp->lastused = nowtime;
+	Sfx_CacheHit(sample->id);
 
 	// Pick a channel for the sound. We will do our best to play the sound,
 	// cancelling existing ones if need be. The best choice would be a 
@@ -972,18 +654,24 @@ void Sfx_StartSound
 
 	// First look through the stopped channels. At this stage we're very
 	// picky: only the perfect choice will be good enough.
-	selch = Sfx_ChannelFindVacant(play3d, chsamp->sample.bytesper,
-		chsamp->sample.rate, chsamp->sample.id);
+	selch = Sfx_ChannelFindVacant(play3d, sample->bytesper, sample->rate, 
+		sample->id);
 
 	// The second step is to look for a vacant channel with any sample,
 	// but preferably one with no sample already loaded.
-	if(!selch) selch = Sfx_ChannelFindVacant(play3d, chsamp->sample.bytesper,
-		chsamp->sample.rate, 0);
+	if(!selch) 
+	{
+		selch = Sfx_ChannelFindVacant(play3d, sample->bytesper, 
+			sample->rate, 0);
+	}
 
 	// Then try any non-playing channel in the correct format.
-	if(!selch) selch = Sfx_ChannelFindVacant(play3d, chsamp->sample.bytesper,
-		chsamp->sample.rate, -1);
-
+	if(!selch) 
+	{
+		selch = Sfx_ChannelFindVacant(play3d, sample->bytesper,
+			sample->rate, -1);
+	}
+	
 	if(!selch)
 	{
 		// OK, there wasn't a perfect channel. Now we must use a channel
@@ -1025,17 +713,17 @@ void Sfx_StartSound
 	if(!selch) 
 	{
 		END_COP;
-		return; // We couldn't find a suitable channel. Shame.
+		return false; // We couldn't find a suitable channel. For shame.
 	}
 	
 	// Does our channel need to be reformatted?
-	if(selch->buffer->rate != chsamp->sample.rate
-		|| selch->buffer->bytes != chsamp->sample.bytesper)
+	if(selch->buffer->rate != sample->rate
+		|| selch->buffer->bytes != sample->bytesper)
 	{
 		driver->Destroy(selch->buffer);
 		// Create a new buffer with the correct format.
 		selch->buffer = driver->Create(play3d? SFXBF_3D : 0,
-			chsamp->sample.bytesper * 8, chsamp->sample.rate);
+			sample->bytesper * 8, sample->rate);
 	}
 
 	// Clear flags.
@@ -1048,7 +736,8 @@ void Sfx_StartSound
 		selch->buffer->flags |= SFXBF_DONT_STOP;
 
 	// Init the channel information.
-	selch->flags &= ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE);
+	selch->flags &= ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION 
+		| SFXCF_NO_UPDATE);
 	selch->volume = volume;
 	selch->frequency = freq;
 	if(!emitter && !fixedpos)
@@ -1069,7 +758,7 @@ void Sfx_StartSound
 
 	// Load in the sample. Must load prior to setting properties, because
 	// the driver might actually create the real buffer only upon loading.
-	driver->Load(selch->buffer, &chsamp->sample);	
+	driver->Load(selch->buffer, sample);	
 	
 	// Update channel properties.
 	Sfx_ChannelUpdate(selch);
@@ -1096,6 +785,9 @@ void Sfx_StartSound
 
 	// Take note of the start time.
 	selch->starttime = nowtime;
+
+	// Sound successfully started.
+	return true;
 }
 
 //===========================================================================
@@ -1165,11 +857,7 @@ void Sfx_StartFrame(void)
 	}
 
 	// Should we purge the cache (to conserve memory)?
-	if(nowtime - lastpurge >= PURGE_TIME)
-	{
-		lastpurge = nowtime;
-		Sfx_PurgeCache();		
-	}
+	Sfx_PurgeCache();
 
 	// Is it time to do a channel update?
 	if(nowtime - lastupdate >= UPDATE_TIME)
@@ -1199,6 +887,10 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
 {
 	switch(drvid)
 	{
+	case SFXD_DUMMY:
+		driver = &sfxd_dummy;
+		break;
+
 	case SFXD_DSOUND:
 		driver = &sfxd_dsound;
 		break;
@@ -1312,24 +1004,6 @@ void Sfx_ShutdownChannels(void)
 }
 
 //===========================================================================
-// Sfx_InitCache
-//===========================================================================
-void Sfx_InitCache(void)
-{
-	// The cache is empty in the beginning.
-	scroot.next = scroot.prev = &scroot;
-}
-
-//===========================================================================
-// Sfx_ShutdownCache
-//===========================================================================
-void Sfx_ShutdownCache(void)
-{
-	// Uncache all the samples in the cache.
-	while(scroot.next != &scroot) Sfx_Uncache(scroot.next);
-}
-
-//===========================================================================
 // Sfx_StartRefresh
 //	Start the channel refresh thread. It will stop on its own when it 
 //	notices that the rest of the sound system is going down.
@@ -1367,7 +1041,12 @@ boolean Sfx_Init(void)
 
 	// First let's set up the drivers. First we much choose which one we
 	// want to use. A3D is only used if the -a3d option is found.
-	if(ArgExists("-a3d"))
+	if(isDedicated || ArgExists("-dummy"))
+	{
+		Con_Message("Dummy...\n");
+		ok = Sfx_InitDriver(SFXD_DUMMY);
+	}
+	else if(ArgExists("-a3d"))
 	{
 		Con_Message("A3D...\n");
 		ok = Sfx_InitDriver(SFXD_A3D);
@@ -1515,8 +1194,14 @@ void Sfx_LevelChange(void)
 
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
-		// Mobjs are about to be destroyed.
-		ch->emitter = NULL;
+		if(ch->emitter)
+		{
+			// Mobjs are about to be destroyed.
+			ch->emitter = NULL;
+
+			// Stop all channels with an origin.
+			Sfx_ChannelStop(ch);
+		}
 	}
 
 	// Sectors, too, for that matter.
@@ -1531,8 +1216,7 @@ void Sfx_DebugInfo(void)
 	int i, lh = FR_TextHeight("W") - 3;
 	sfxchannel_t *ch;
 	char buf[200];
-	int cachesize = 0, ccnt = 0;
-	sfxcache_t *it;
+	uint cachesize, ccnt;
 
 	gl.Color3f(1, 1, 0);
 	if(!sfx_avail)
@@ -1544,8 +1228,7 @@ void Sfx_DebugInfo(void)
 	if(refmonitor) FR_TextOut("!", 0, 0);
 
 	// Sample cache information.
-	for(it = scroot.next; it != &scroot; it = it->next, ccnt++)
-		cachesize += it->sample.size;
+	Sfx_GetCacheInfo(&cachesize, &ccnt);
 	sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
 	gl.Color3f(1, 1, 1);
 	FR_TextOut(buf, 10, 0);
