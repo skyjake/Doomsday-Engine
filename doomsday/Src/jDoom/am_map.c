@@ -29,6 +29,7 @@
 #include "mn_def.h"
 #include "m_menu.h"
 #include "hu_stuff.h"
+#include "wi_stuff.h"
 
 // TYPES -------------------------------------------------------------------
 
@@ -1360,7 +1361,7 @@ void AM_drawMarks(void)
 			fy = CYMTOF(markpoints[i].y)/1.2f;
 			if (fx >= f_x && fx <= f_w - w && fy >= f_y && fy <= f_h - h)
 			//V_DrawPatch(fx, fy, FB, marknums[i]);
-				GL_DrawPatch(fx, fy, markpnums[i]);
+				WI_DrawPatch(fx, fy, markpnums[i]);
 		}
     }
 }

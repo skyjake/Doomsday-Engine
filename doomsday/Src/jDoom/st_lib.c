@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/08/19 16:33:44  skyjake
+// Use WI_DrawPatch instead of GL_DrawPatch
+//
 // Revision 1.2  2003/02/27 23:14:33  skyjake
 // Obsolete jDoom files removed
 //
@@ -44,6 +47,7 @@ rcsid[] = "$Id$";
 
 #include "st_stuff.h"
 #include "st_lib.h"
+#include "wi_stuff.h"
 #include "r_local.h"
 
 
@@ -135,20 +139,19 @@ STlib_drawNum
     x = n->x;
 
     // in the special case of 0, you draw 0
-    if (!num)
-	GL_DrawPatch(x - w, n->y, /*FG,*/ n->p[ 0 ].lump);
+    if (!num) WI_DrawPatch(x - w, n->y, n->p[ 0 ].lump);
 
     // draw the new number
     while (num && numdigits--)
     {
 		x -= w;
-		GL_DrawPatch(x, n->y, /*FG,*/ n->p[ num % 10 ].lump);
+		WI_DrawPatch(x, n->y, n->p[ num % 10 ].lump);
 		num /= 10;
     }
 
     // draw a minus sign if necessary
     if (neg)
-		GL_DrawPatch(x - 8, n->y,/*FG, */sttminus_i);
+		WI_DrawPatch(x - 8, n->y, sttminus_i);
 }
 
 
@@ -186,7 +189,7 @@ STlib_updatePercent
   int			refresh )
 {
     if (refresh && *per->n.on)
-		GL_DrawPatch(per->n.x, per->n.y, /*FG, */per->p->lump);
+		WI_DrawPatch(per->n.x, per->n.y, per->p->lump);
     
     STlib_updateNum(&per->n, refresh);
 }
@@ -236,7 +239,7 @@ STlib_updateMultIcon
 
 //			V_CopyRect(x, y-ST_Y, BG, w, h, x, y, FG);
 		}*/
-		GL_DrawPatch(mi->x, mi->y, /*FG, */mi->p[*mi->inum].lump);
+		WI_DrawPatch(mi->x, mi->y, mi->p[*mi->inum].lump);
 		mi->oldinum = *mi->inum;
     }
 }
@@ -283,7 +286,7 @@ STlib_updateBinIcon
 			I_Error("updateBinIcon: y - ST_Y < 0");*/
 
 //	if (*bi->val)
-	    GL_DrawPatch(bi->x, bi->y, /*FG,*/ bi->p->lump);
+	    WI_DrawPatch(bi->x, bi->y, /*FG,*/ bi->p->lump);
 	/*else
 	    V_CopyRect(x, y-ST_Y, BG, w, h, x, y, FG);*/
 
