@@ -61,11 +61,12 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 	sector_t	*sec = mo->subsector->sector;
 	int			radius, i;
 	rendpoly_t	poly;
+	float		distance;
 
 	// Is this too far?
 	pos[VX] = FIX2FLT( mo->x );
 	pos[VY] = FIX2FLT( mo->y );
-	if(Rend_PointDist2D(pos) > shadowMaxDist) return;
+	if((distance = Rend_PointDist2D(pos)) > shadowMaxDist) return;
 
 	// Apply a Short Range Visual Offset?
 	if(r_use_srvo && mo->state && mo->tics >= 0)
@@ -94,6 +95,11 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 	halfmoh = moh/2;
 	if(height > halfmoh) color *= 1 - (height - halfmoh)/(moh - halfmoh);
 	if(useFog) color /= 2;
+	if(distance > 3*shadowMaxDist/4)
+	{
+		// Fade when nearing the maximum distance.
+		color *= (shadowMaxDist - distance) / (shadowMaxDist/4);
+	}
 	if(color <= 0) return;		// Can't be seen.
 	if(color > 1) color = 1;
 
