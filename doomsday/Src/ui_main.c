@@ -1701,7 +1701,8 @@ void UI_TextOut(char *text, int x, int y)
 }
 
 // Draw shadowed text.
-void UI_TextOutEx(char *text, int x, int y, int horiz_center, int vert_center,
+void UI_TextOutEx(char *text, int x, int y,
+                  int horiz_center, int vert_center,
 				  ui_color_t * color, float alpha)
 {
 	// Center, if requested.
@@ -1711,7 +1712,7 @@ void UI_TextOutEx(char *text, int x, int y, int horiz_center, int vert_center,
 		y -= FR_TextHeight(text) / 2;
 	// Shadow.
 	UI_ColorA(UI_COL(UIC_SHADOW), .6f * alpha);
-	FR_TextOut(text, x + UI_SHADOW_OFFSET, y + UI_SHADOW_OFFSET);
+	FR_TextOut((char*)text, x + UI_SHADOW_OFFSET, y + UI_SHADOW_OFFSET);
 	// Actual text.
 	UI_ColorA(color, alpha);
 	FR_TextOut(text, x, y);
