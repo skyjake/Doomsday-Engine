@@ -17,7 +17,7 @@
 
 /*
  * sys_sfxd_dummy.c: Dummy Sfx Driver
- 
+
  * Used in dedicated server mode, when it's necessary to simulate 
  * sound playing but not actually play anything.
  */

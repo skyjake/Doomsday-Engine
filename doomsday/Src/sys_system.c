@@ -223,7 +223,7 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 			   MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
 #endif
 #ifdef UNIX
-	fprintf(stderr, "%s %s\n", iserror? "**ERROR**" : "---", msg);
+	fprintf(stderr, "%s %s\n", iserror ? "**ERROR**" : "---", msg);
 #endif
 }
 
@@ -302,7 +302,7 @@ void Sys_SuspendThread(int handle, boolean dopause)
 int Sys_WaitThread(int handle)
 {
 #ifdef WIN32
-	DWORD exitCode = 0;
+	DWORD   exitCode = 0;
 
 	do
 	{

@@ -184,8 +184,7 @@ extern          "C" {
 	boolean         PO_RotatePolyobj(int num, angle_t angle);
 	void            PO_UnLinkPolyobj(void *po);
 	void            PO_LinkPolyobj(void *po);
-	void            PO_SetCallback(void (*func) (struct mobj_s *, void *,
-												 void *));
+	void         	PO_SetCallback(void (*func) (struct mobj_s *, void *, void *));
 
 	// Play: Thinkers.
 	void            P_RunThinkers(void);

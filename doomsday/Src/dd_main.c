@@ -185,7 +185,7 @@ void DD_AddAutoData(boolean loadFiles)
 	const char *extensions[] = {
 		"wad", "lmp", "pk3", "zip",
 #ifdef UNIX
-		"WAD", "LMP", "PK3", "ZIP", // upper case alternatives
+		"WAD", "LMP", "PK3", "ZIP",	// upper case alternatives
 #endif
 		NULL
 	};
@@ -761,7 +761,7 @@ int DD_GetInteger(int ddvalue)
 
 	if(ddValues[ddvalue].readPtr == NULL)
 		return 0;
-	
+
 	return *ddValues[ddvalue].readPtr;
 }
 

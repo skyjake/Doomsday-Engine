@@ -894,7 +894,7 @@ void R_ProjectSprite(mobj_t *thing)
 
 	// Short-range visual offsets.
 	if((vis->data.mo.mf && r_use_srvo > 0) ||
-		(!vis->data.mo.mf && r_use_srvo > 1))
+	   (!vis->data.mo.mf && r_use_srvo > 1))
 	{
 		if(thing->state && thing->tics >= 0)
 		{
@@ -902,7 +902,7 @@ void R_ProjectSprite(mobj_t *thing)
 				(thing->tics - frameTimePos) / (float) thing->state->tics;
 			for(i = 0; i < 3; i++)
 				vis->data.mo.visoff[i] = FIX2FLT(thing->srvo[i] << 8) * mul;
-		}	
+		}
 		if(thing->momx || thing->momy || thing->momz)
 		{
 			// Use the object's speed to calculate a short-range

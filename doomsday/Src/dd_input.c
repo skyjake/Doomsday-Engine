@@ -356,7 +356,7 @@ void DD_PostEvent(event_t *ev)
 static event_t *DD_GetEvent(void)
 {
 	event_t *ev;
-	
+
 	if(eventhead == eventtail)
 		return NULL;
 

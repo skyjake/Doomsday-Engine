@@ -33,7 +33,7 @@
 
 typedef struct winfinddata_s {
 	struct _finddata_t data;
-	long handle;
+	long    handle;
 } winfinddata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

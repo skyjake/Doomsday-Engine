@@ -562,6 +562,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 	switch (type)
 	{
 	case GPT_GAME_STATE:
+		Con_Printf("Received GTP_GAME_STATE\n");
 		NetCl_UpdateGameState(data);
 
 		// Tell the engine we're ready to proceed. It'll start handling
