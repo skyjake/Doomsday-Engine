@@ -73,12 +73,12 @@ def _checkSnowberryHome():
     if not homeDir:
         if host.isMac():
             # Home on the Mac.
-            homeLocation = os.path.join(os.getenv('HOME'), 
+            homeLocation = os.path.join(os.getenv('HOME'),
                                         'Library/Application Support')
         else:
             # First see if a HOME environment variable has been defined.
             homeLocation = os.getenv('HOME')
-            
+
         if not homeLocation:
             # The failsafe.
             homeLocation = os.getcwd()
@@ -183,7 +183,7 @@ def findBitmap(name):
     """
     # First see if its in the user's graphics directory.
     for path in listPaths(GRAPHICS):
-        for ext in ['bmp', 'png']:
+        for ext in ['jpg', 'bmp', 'png']:
             fileName = os.path.join(path, name + '.' + ext)
             if os.path.exists(fileName):
                 return fileName
@@ -212,7 +212,7 @@ def hasExtension(extension, fileName):
 
     @return True, if the extension is found.
     """
-    return re.search("^[^.#][^.]*\." + extension + "$", 
+    return re.search("^[^.#][^.]*\." + extension + "$",
                      os.path.basename(fileName).lower()) != None
 
 
