@@ -1989,12 +1989,10 @@ void Con_Drawer(void)
 	float	gtosMulX = screenWidth/320.0f, 
 			gtosMulY = screenHeight/200.0f;
 	char	buff[256], temp[256];
-	float	fontScaledY = Cfont.height * Cfont.sizeY;
+	float	fontScaledY;
 	int		bgX = 64, bgY = 64;
 
 	if(ConsoleY == 0) return;	// We have nothing to do here.
-
-	fontSy = fontScaledY/gtosMulY;
 
 	// Do we have a font?
 	if(Cfont.TextOut == NULL)
@@ -2007,6 +2005,9 @@ void Con_Drawer(void)
 		Cfont.Width = FR_TextWidth;
 		Cfont.Filter = NULL;
 	}
+
+	fontScaledY = Cfont.height * Cfont.sizeY;
+	fontSy = fontScaledY/gtosMulY;
 
 	// Go into screen projection mode.
 	gl.MatrixMode(DGL_PROJECTION);
