@@ -1,6 +1,6 @@
 jHeretic Model Pack
 ===================
-Release 9 -- September 2003
+$Id$
 http://www.doomsdayhq.com/
 
 
