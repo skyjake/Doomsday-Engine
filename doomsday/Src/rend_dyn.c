@@ -9,6 +9,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+//#define DD_PROFILE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -23,6 +25,12 @@
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
+
+BEGIN_PROF_TIMERS()
+	PROF_DYN_INIT_DEL,
+	PROF_DYN_INIT_ADD,
+	PROF_DYN_INIT_LINK
+END_PROF_TIMERS()
 
 //enum { CLIP_TOP, CLIP_BOTTOM, CLIP_LEFT, CLIP_RIGHT };
 
@@ -73,7 +81,6 @@ typedef struct seglight_s {
 
 extern int			useDynLights;
 extern subsector_t	*currentssec;
-extern int			whitefog;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -232,12 +239,11 @@ void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
 void DL_ThingColor(lumobj_t *lum, DGLubyte *outRGB, float light)
 {
 	int		i;
-	extern	int whitefog;
 
 	if(light < 0) light = 0;
 	if(light > 1) light = 1;
 	light *= dlFactor;
-	if(whitefog) light *= .5f; // Would be too much.
+	if(useFog) light *= .5f; // Would be too much.
 	// Multiply with the light color.
 	for(i=0; i<3; i++)
 	{
@@ -669,7 +675,7 @@ void DL_CreateGlowLights
 		for(i = 0; i < 3; i++)
 		{
 			dyn->color[i] *= dlFactor;
-			if(whitefog) dyn->color[i] *= .3f;
+			if(useFog) dyn->color[i] *= .3f;
 		}
 		//glow.top = FIX2FLT(top) - dlContract;
 		//glow.bottom = FIX2FLT(bottom) + dlContract;
@@ -794,6 +800,18 @@ void DL_Clear()
 //===========================================================================
 void DL_ClearForFrame(void)
 {
+#ifdef DD_PROFILE
+	static int i;
+
+	if(++i > 40)
+	{
+		i = 0;
+		PRINT_PROF( PROF_DYN_INIT_DEL );
+		PRINT_PROF( PROF_DYN_INIT_ADD );
+		PRINT_PROF( PROF_DYN_INIT_LINK );
+	}
+#endif
+
 	// Clear all the roots.
 	memset(dlSubLinks, 0, sizeof(lumobj_t*) * numsubsectors);
 	memset(dlBlockLinks, 0, sizeof(lumobj_t*) * dlBlockWidth * dlBlockHeight);
@@ -1366,13 +1384,19 @@ void DL_InitForNewFrame()
 	sector_t	*seciter;
 	int			i, done = false;
 
+	BEGIN_PROF( PROF_DYN_INIT_DEL );
+
 	// Clear the dynlight lists, which are used to track the lights on
 	// each surface of the map.
 	DL_DeleteUsed();
 
+	END_PROF( PROF_DYN_INIT_DEL );
+
 	// The luminousList already contains lumobjs if there are any light
 	// decorations in use.
 	dlInited = true;
+
+	BEGIN_PROF( PROF_DYN_INIT_ADD );
 
 	for(i = 0; i < numsectors; i++)
 	{
@@ -1385,8 +1409,14 @@ void DL_InitForNewFrame()
 		}
 	}
 
+	END_PROF( PROF_DYN_INIT_ADD );
+
+	BEGIN_PROF( PROF_DYN_INIT_LINK );
+
 	// Link the luminous objects into the blockmap.
 	DL_LinkLuminous();
+
+	END_PROF( PROF_DYN_INIT_LINK );
 }
 
 /*
