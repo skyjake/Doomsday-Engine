@@ -439,19 +439,24 @@ void Mod_FixedVertexColors(int count, gl_color_t * colors, float *color)
 /*
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-void Mod_ShinyCoords(int count, gl_texcoord_t * coords, gl_vertex_t * normals,
+void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
 					 float normYaw, float normPitch, float shinyAng,
 					 float shinyPnt)
 {
 	int     i;
 	float   u, v;
+    float   rotatedNormal[3];
 
+    // Rotate the view vector to approximate the vector from the eye
+    // to the center of the model.
+    //...
+    
 	for(i = 0; i < count; i++, coords++, normals++)
 	{
 		if(vertexUsage && !(vertexUsage[i] & (1 << activeLod)))
 			continue;
 
-		// Calculate cylindrically mapped texcoords.
+/*		// Calculate cylindrically mapped texcoords.
 		// Quite far from perfect but very nice anyway.
 		u = QATAN2(normals->xyz[VY], normals->xyz[VX]) / (2 * PI) - normYaw;
 
@@ -461,7 +466,19 @@ void Mod_ShinyCoords(int count, gl_texcoord_t * coords, gl_vertex_t * normals,
 		u += u - shinyPnt;
 
 		v = QASIN(-normals->xyz[VZ]) / PI + 0.5f - normPitch;
-		v += v - shinyAng;
+		v += v - shinyAng;*/
+
+        rotatedNormal[VX] = normals->xyz[VX];
+        rotatedNormal[VY] = normals->xyz[VY];
+        rotatedNormal[VZ] = normals->xyz[VZ];
+
+        // Rotate the normal vector so that it approximates the
+        // model's orientation compared to the viewer.
+        M_RotateVector(rotatedNormal, (shinyPnt + normYaw) * 360,
+                       (shinyAng + normPitch) * 360);
+        
+        u = (rotatedNormal[VX] + 1);
+        v = rotatedNormal[VZ];
 
 		coords->st[0] = u;
 		coords->st[1] = v;
@@ -550,7 +567,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 	// Selskin overrides the skin range.
 	if(subFlags & MFF_SELSKIN)
 	{
-		i = (spr->data.mo.selector >> DDMOBJ_SELECTOR_SHIFT) & mf->def->sub[number].selskinbits[0];	// Selskin mask
+		i = (spr->data.mo.selector >> DDMOBJ_SELECTOR_SHIFT) &
+            mf->def->sub[number].selskinbits[0];	// Selskin mask
 		c = mf->def->sub[number].selskinbits[1];	// Selskin shift
 		if(c > 0)
 			i >>= c;
@@ -650,10 +668,10 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 	}
 
 	// Model rotation.
-	gl.Rotatef(spr->data.mo.viewaligned ? spr->data.mo.v2[VX] : yawAngle, 0, 1,
-			   0);
-	gl.Rotatef(spr->data.mo.viewaligned ? spr->data.mo.v2[VY] : pitchAngle, 0,
-			   0, 1);
+	gl.Rotatef(spr->data.mo.viewaligned ? spr->data.mo.v2[VX] : yawAngle,
+               0, 1, 0);
+	gl.Rotatef(spr->data.mo.viewaligned ? spr->data.mo.v2[VY] : pitchAngle,
+               0, 0, 1);
 
 	// Scaling and model space offset.
 	gl.Scalef(Mod_Lerp(mf->scale[VX], mfNext->scale[VX], inter),
@@ -759,8 +777,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 				// The center of the light source.
 				lightCenter[VX] = FIX2FLT(light->lum->thing->x);
 				lightCenter[VY] = FIX2FLT(light->lum->thing->y);
-				lightCenter[VZ] =
-					FIX2FLT(light->lum->thing->z) + light->lum->center;
+				lightCenter[VZ] = FIX2FLT(light->lum->thing->z) +
+                    light->lum->center;
 
 				// Calculate the normalized direction vector, 
 				// pointing out of the model.
@@ -796,7 +814,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 		shininess = 0;
 	if(shininess > 1)
 		shininess = 1;
-	if(shininess > 0)
+
+    if(shininess > 0)
 	{
 		shinyColor = mf->def->sub[number].shinycolor;
 
@@ -817,8 +836,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 		if(spr->type == VSPR_HUD_MODEL)
 		{
 			// This is a hack to accommodate the psprite coordinate space.
-			shinyAng = vpitch / 360;
-			shinyPnt = vang / 360;
+			shinyAng = 0;
+			shinyPnt = 0.5;
 		}
 		else
 		{
@@ -833,7 +852,10 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 				delta[VZ] += vy;
 			}
 
-			shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY])) / PI + 0.5f;	// shinyAng is [0,1]
+			shinyAng = QATAN2(delta[VZ],
+                              M_ApproxDistancef(delta[VX], delta[VY])) / PI
+                + 0.5f; // shinyAng is [0,1]
+            
 			shinyPnt = QATAN2(delta[VY], delta[VX]) / (2 * PI);
 		}
 
