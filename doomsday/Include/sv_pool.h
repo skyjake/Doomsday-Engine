@@ -53,6 +53,8 @@ typedef enum
 // Extra flags for the Extra Flags byte.
 #define MDFE_FAST_MOM			0x01	// Momentum has 10.6 bits (+/- 512)	
 #define MDFE_TRANSLUCENCY		0x02
+#define MDFE_Z_FLOOR			0x04	// Mobj z is on the floor.
+#define MDFE_Z_CEILING			0x08	// Mobj z+hgt is in the ceiling.
 
 // The flags that are not included when a mobj is the viewpoint.
 #define MDF_CAMERA_EXCLUDE		0x0e00
