@@ -529,6 +529,7 @@ void N_SendPacket(int flags)
 	sentmessage_t *sentMsg;
 	void *data;
 	uint size;
+	boolean isQueued = false;
 
 	// Is the network available?
 	if(!allowSending || !N_IsAvailable()) return;
@@ -561,8 +562,6 @@ void N_SendPacket(int flags)
 			return;
 		}
 	}
-
-	boolean isQueued = false;
 
 	if(flags & SPF_ORDERED)
 	{
@@ -655,6 +654,7 @@ int N_IdentifyPlayer(nodeid_t id)
 netmessage_t *N_GetNextMessage(void)
 {
 	netmessage_t *msg;
+	msgid_t id;
 
 	while((msg = N_GetMessage()) != NULL)
 	{
@@ -678,7 +678,7 @@ netmessage_t *N_GetNextMessage(void)
 		msg->handle = NULL;
 
 		// First check the message ID (in the first two bytes).
-		msgid_t id = *(msgid_t*) msg->data;
+		id = *(msgid_t*) msg->data;
 		if(id)
 		{
 			// Confirmations of delivery are not time-critical, so

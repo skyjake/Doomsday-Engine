@@ -230,6 +230,7 @@ static int N_UDPReceiver(void *parm)
 {
 	SDLNet_SocketSet set;
 	UDPpacket *packet = NULL;
+	netmessage_t *msg;
 
 	// Put the UDP socket in our socket set so we can wait for it.
 	set = SDLNet_AllocSocketSet(1);
@@ -271,8 +272,7 @@ static int N_UDPReceiver(void *parm)
 				if(packet->channel < 0) continue;
 			
 				// Successfully received a packet.
-				netmessage_t *msg = (netmessage_t*)
-					calloc(sizeof(netmessage_t), 1);
+				msg = calloc(sizeof(netmessage_t), 1);
 			
 				msg->sender = packet->channel;
 				msg->data   = packet->data;
