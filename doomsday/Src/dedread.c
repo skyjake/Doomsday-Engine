@@ -51,7 +51,7 @@
 #define MISSING_SC_ERROR	SetError("Missing semicolon."); \
 							retval = false; goto ded_end_read; 
 
-#define CHECKSC		ReadToken(); if(!ISTOKEN(";")) { MISSING_SC_ERROR; }
+#define CHECKSC		if(source->version <= 5) { ReadToken(); if(!ISTOKEN(";")) { MISSING_SC_ERROR; } }
 
 #define FINDBEGIN	while(!ISTOKEN("{") && !source->atEnd) ReadToken(); 
 #define FINDEND		while(!ISTOKEN("}") && !source->atEnd) ReadToken(); 
@@ -91,6 +91,7 @@ typedef struct dedsource_s {
 	boolean atEnd;
 	int lineNumber;
 	const char *fileName;
+	int version;	// v6 does not require semicolons.
 } dedsource_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -382,8 +383,12 @@ int ReadLabel(char *label)
 		}
 		if(ISTOKEN(";"))
 		{
-			SetError("Label without value.");
-			return false;
+			if(source->version <= 5)
+			{
+				SetError("Label without value.");
+				return false;
+			}
+			continue; // Semicolons are optional in v6.
 		}
 		if(ISTOKEN("=") || ISTOKEN("{")) break;
 		if(label[0]) strcat(label, " ");
@@ -437,6 +442,7 @@ void DED_InitReader(char *buffer, const char *fileName)
 	source->atEnd = false;
 	source->lineNumber = 1;
 	source->fileName = fileName;
+	source->version = DED_VERSION;
 }
 
 //===========================================================================
@@ -529,6 +535,11 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			bCopyNext = true;
 			continue; // Read the next token.
 		}
+		if(ISTOKEN(";"))
+		{
+			// Unnecessary semicolon? Just skip it.
+			continue;
+		}
 		if(ISTOKEN("SkipIf"))
 		{
 			sub = 1;
@@ -588,17 +599,15 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 		if(ISTOKEN("Header"))
 		{
 			FINDBEGIN;
-			// If we're appending an existing definition, skip the header.
-			/*if(!bDestroyOld)
-			{
-				while(!ISTOKEN("}") && !dedend) ReadToken();
-			}
-			else */
 			for(;;)
 			{
 				READLABEL;
-				RV_INT("Version", ded->version)
-				RV_STR("Thing prefix", dummy)
+				if(ISLABEL("Version"))
+				{
+					READINT(ded->version);
+					source->version = ded->version;
+				}
+				else RV_STR("Thing prefix", dummy)
 				RV_STR("State prefix", dummy)
 				RV_STR("Sprite prefix", dummy)
 				RV_STR("Sfx prefix", dummy)
@@ -880,6 +889,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				memcpy(mi, ded->mapinfo + prev_mapinfo_idx, sizeof(*mi));
 			}
 			prev_mapinfo_idx = idx;
+			sub = 0;
 			FINDBEGIN;
 			for(;;)
 			{
@@ -915,12 +925,17 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						CHECKSC;
 					}
 				}
-				else if(ISLABEL("Sky Model 1") || ISLABEL("Sky Model 2")
-					|| ISLABEL("Sky Model 3") || ISLABEL("Sky Model 4")
-					|| ISLABEL("Sky Model 5") || ISLABEL("Sky Model 6")
-					|| ISLABEL("Sky Model 7") || ISLABEL("Sky Model 8"))
+				else if(ISLABEL("Sky Model"))
 				{
-					ded_skymodel_t *sm = mi->sky_models + atoi(label+10) - 1;
+					ded_skymodel_t *sm = mi->sky_models + sub;
+					if(sub == NUM_SKY_MODELS)
+					{
+						// Too many!
+						SetError("Too many sky models.");
+						retval = false;
+						goto ded_end_read;
+					}
+					sub++;
 					FINDBEGIN;
 					for(;;)
 					{
@@ -929,6 +944,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						RV_FLT("Frame interval", sm->frame_interval)
 						RV_FLT("Yaw", sm->yaw)
 						RV_FLT("Yaw speed", sm->yaw_speed)
+						RV_VEC("Rotate", sm->rotate, 2)
 						RV_VEC("Offset factor", sm->coord_factor, 3)
 						RV_VEC("Color", sm->color, 4)
 						RV_END
