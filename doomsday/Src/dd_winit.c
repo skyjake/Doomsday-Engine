@@ -68,9 +68,6 @@ int CheckArg(char *tag, char **value)
 	return 1;
 }
 
-//===========================================================================
-// ErrorBox
-//===========================================================================
 void ErrorBox(boolean error, char *format, ...)
 {
 	char	buff[200];
@@ -124,9 +121,6 @@ BOOL InitInstance(HINSTANCE hInst, int cmdShow)
 		NULL);
 	if(!hWndMain) return FALSE;
 
-	/*ShowWindow(hWndMain, cmdShow);
-	UpdateWindow(hWndMain);*/
-
 	// Set the font.
 	hdc = GetDC(hWndMain);
 	SetMapMode(hdc, MM_TEXT);
@@ -142,198 +136,6 @@ void SetGameImports(game_import_t *imp)
 	memset(imp, 0, sizeof(*imp));
 	imp->apiSize = sizeof(*imp);
 	imp->version = DOOMSDAY_VERSION;
-
-/*	imp->SetupLevel = DD_SetupLevel;
-	imp->PrecacheLevel = R_PrecacheLevel;
-
-	imp->Quit = I_Quit;
-	imp->AddStartupWAD = DD_AddWADFile;
-	imp->AddIWAD = DD_AddIWAD;
-	imp->SetConfigFile = DD_SetConfigFile;
-	imp->SetDefsFile = DD_SetDefsFile;
-	imp->DefineActions = DD_DefineActions;
-	imp->Get = DD_GetInteger;
-	imp->Set = DD_SetInteger;
-	imp->GetDef = DD_GetDef;
-
-	imp->Message = ST_Message;
-	imp->Error = I_Error;
-
-	imp->conprintf = CON_Printf;
-	imp->flconprintf = CON_FPrintf;
-	imp->SetConsoleFont = CON_SetFont;
-	imp->AddCommand = CON_AddCommand;
-	imp->AddVariable = CON_AddVariable;
-	imp->OpenConsole = CON_Open;
-	imp->GetCVar = CvarGet;
-	imp->Execute = CON_Execute;
-
-	imp->Z_Malloc = Z_Malloc;
-	imp->Z_Free = Z_Free;
-	imp->Z_FreeTags = Z_FreeTags;
-	imp->Z_ChangeTag = Z_ChangeTag2;
-	imp->Z_CheckHeap = Z_CheckHeap;
-
-	// Networking.
-	imp->GetPlayer = DD_GetPlayer;
-	imp->GetPlayerName = I_NetGetPlayerName;
-	imp->GetPlayerID = I_NetGetPlayerID;
-	imp->GetTicCmd = Net_GetTicCmd;
-	imp->SendPacket = DD_SendPacket;
-	//imp->Sv_TextureChanges = Sv_TextureChanges;
-	imp->Sv_PlaneSound = Sv_PlaneSound;
-	//imp->Sv_SectorReport = Sv_SectorReport;
-	//imp->Sv_LightReport = Sv_LightReport;
-
-	imp->SetState = P_SetState;
-
-	// Map.
-	imp->LoadBlockMap = P_LoadBlockMap;
-	imp->LoadReject = P_LoadReject;
-	imp->ApproxDistance = P_AproxDistance;
-	imp->PointOnLineSide = P_PointOnLineSide;
-	imp->BoxOnLineSide = P_BoxOnLineSide;
-	imp->MakeDivline = P_MakeDivline;
-	imp->PointOnDivlineSide = P_PointOnDivlineSide;
-	imp->InterceptVector = P_InterceptVector;
-	imp->LineOpening = P_LineOpening;
-	imp->LinkThing = P_LinkThing;
-	imp->UnlinkThing = P_UnlinkThing;
-	imp->BlockLinesIterator = P_BlockLinesIterator;
-	imp->BlockThingsIterator = P_BlockThingsIterator;
-	imp->ThingLinesIterator = P_ThingLinesIterator;
-	imp->ThingSectorsIterator = P_ThingSectorsIterator;
-	imp->LineThingsIterator = P_LineThingsIterator;
-	imp->SectorTouchingThingsIterator = P_SectorTouchingThingsIterator;
-	imp->GetBlockRootIdx = P_GetBlockRootIdx;
-	imp->PathTraverse = P_PathTraverse;
-	imp->CheckSight = P_CheckSight;
-	imp->MovePolyobj = PO_MovePolyobj;
-	imp->RotatePolyobj = PO_RotatePolyobj;
-	imp->LinkPolyobj = PO_LinkPolyobj;
-	imp->UnLinkPolyobj = PO_UnLinkPolyobj;
-	imp->SetPolyobjFunc = PO_SetCallback;
-
-	imp->GetSpriteInfo = R_GetSpriteInfo;
-	imp->SetBorderGfx = R_SetBorderGfx;
-	imp->RenderPlayerView = R_RenderPlayerView;
-	imp->ViewWindow = R_SetViewSize;
-	imp->R_FlatNumForName = R_FlatNumForName;
-	imp->R_CheckTextureNumForName = R_CheckTextureNumForName;
-	imp->R_TextureNumForName = R_TextureNumForName;
-	imp->R_TextureNameForNum = R_TextureNameForNum;
-	imp->R_PointToAngle2 = R_PointToAngle2;
-	imp->R_PointInSubsector = R_PointInSubsector;
-
-	imp->W_CheckNumForName = W_CheckNumForName;
-	imp->W_GetNumForName = W_GetNumForName;
-	imp->W_CacheLumpName = W_CacheLumpName;
-	imp->W_CacheLumpNum = W_CacheLumpNum;
-	imp->W_LumpLength = W_LumpLength;
-	imp->W_ReadLump = W_ReadLump;
-	imp->W_ChangeCacheTag = W_ChangeCacheTag;
-
-	// Graphics.
-	imp->GetDGL = DD_GetDGL;
-	imp->Update = DD_GameUpdate;
-	imp->ChangeResolution = I_ChangeResolution;
-	imp->SetFlatTranslation = R_SetFlatTranslation;
-	imp->SetTextureTranslation = R_SetTextureTranslation;
-	imp->GL_UseFog = GL_UseWhiteFog;
-	imp->ScreenShot = M_ScreenShot;
-	imp->GL_ResetData = GL_ResetData;
-	imp->GL_ResetTextures = GL_TexReset;
-	imp->GL_ClearTextureMem = GL_ClearTextureMemory;
-	imp->GL_TexFilterMode = GL_TextureFilterMode;
-	imp->GL_SetColorAndAlpha = GL_SetColorAndAlpha;
-	imp->GL_SetColor = GL_SetColor;
-	imp->GL_SetNoTexture = GL_SetNoTexture;
-	imp->GL_SetFlat = GL_SetFlat;
-	imp->GL_SetPatch = GL_SetPatch;
-	imp->GL_SetRawImage = GL_SetRawImage;
-	imp->GL_DrawPatch = GL_DrawPatch;
-	imp->GL_DrawFuzzPatch = GL_DrawFuzzPatch;
-	imp->GL_DrawAltFuzzPatch = GL_DrawAltFuzzPatch;
-	imp->GL_DrawShadowedPatch = GL_DrawShadowedPatch;
-	imp->GL_DrawPatchLitAlpha = GL_DrawPatchLitAlpha;
-	imp->GL_DrawRawScreen = GL_DrawRawScreen;
-	imp->GL_DrawPatch = GL_DrawPatch;
-	imp->GL_DrawRect = GL_DrawRect;
-	imp->GL_DrawRectTiled = GL_DrawRectTiled;
-	imp->GL_DrawCutRectTiled = GL_DrawCutRectTiled;
-	imp->GL_DrawPSprite = GL_DrawPSprite;
-	imp->GL_SetFilter = GL_SetFilter;
-	imp->GL_DrawPatchCS = GL_DrawPatch_CS;
-	imp->SkyParams = R_SkyParams;
-
-	imp->GetTime = I_GetTime;
-	imp->GetRealTime = I_GetRealTime;
-	imp->FrameRate = I_GetFrameRate;
-	imp->ClearKeyRepeaters = I_ClearKeyRepeaters;
-	imp->EventBuilder = B_EventConverter;
-	imp->BindingsForCommand = B_BindingsForCommand;
-
-	imp->InitThinkers = P_InitThinkers;
-	imp->AddThinker = P_AddThinker;
-	imp->RemoveThinker = P_RemoveThinker;
-	imp->RunThinkers = RunThinkers;
-
-	// Sound and music.
-#ifdef A3D_SUPPORT
-	if(use_jtSound)
-	{
-#endif
-		// DirectSound(3D) + EAX, if available.
-		imp->PlaySound = I_Play2DSound;
-		imp->UpdateSound = I_Update2DSound;
-		imp->StopSound = I_StopSound;
-		imp->SoundIsPlaying = I_SoundIsPlaying;
-		imp->Play3DSound = I_Play3DSound;
-		imp->Update3DSound = I_Update3DSound;
-		imp->UpdateListener = I_UpdateListener;
-#ifdef A3D_SUPPORT
-	}
-	else
-	{
-		// Use A3D 3.0 sound routines.
-		imp->PlaySound = I3_PlaySound2D;
-		imp->UpdateSound = I3_UpdateSound2D;
-		imp->Play3DSound = I3_PlaySound3D;
-		imp->Update3DSound = I3_UpdateSound3D;
-		imp->UpdateListener = I3_UpdateListener;
-		imp->StopSound = I3_StopSound;
-		imp->SoundIsPlaying = I3_IsSoundPlaying;
-	}
-#endif
-	imp->SetSfxVolume = I_SetSfxVolume;
-	
-	imp->PlaySong = I_PlaySong;
-	imp->SongIsPlaying = I_QrySongPlaying;
-	imp->StopSong = I_StopSong;
-	imp->PauseSong = I_PauseSong;
-	imp->ResumeSong = I_ResumeSong;
-	imp->SetMIDIVolume = I_SetMusicVolume;
-	imp->SetMusicDevice = I_SetMusicDevice;
-	imp->CD = I_CDControl;
-
-	// Misc.
-	imp->Argc = Argc;
-	imp->Argv = Argv;
-	imp->NextArg = NextArg;
-	imp->ArgvPtr = ArgvPtr;
-	imp->AddParm = AddParm;
-	imp->ParmExists = ParmExists;
-	imp->CheckParm = CheckParm;
-	imp->CheckParmArgs = CheckParmArgs;
-	imp->IsParm = IsParm;
-	imp->ReadFile = M_ReadFile;
-	imp->ReadFileClib = M_ReadFileCLib;
-	imp->WriteFile = M_WriteFile;
-	imp->ExtractFileBase = M_ExtractFileBase;
-	imp->ClearBox = M_ClearBox;
-	imp->AddToBox = M_AddToBox;
-	imp->CheckPath = M_CheckPath;
-	imp->FileExists = M_FileExists;*/
 
 	// Data.
 	imp->mobjinfo = &mobjinfo;
@@ -375,24 +177,6 @@ void SetGameImports(game_import_t *imp)
 	imp->polyobjs = &polyobjs;
 	imp->numpolyobjs = &po_NumPolyobjs;
 }
-
-#if 0
-void SetDGLImports(gl_import_t *imp)
-{
-	/*memset(imp, 0, sizeof(*imp));
-
-	imp->apiSize = sizeof(*imp);
-	imp->Message = Con_Message;
-	imp->Error = Con_Error;
-	imp->AddParm = AddParm;
-	imp->CheckParm = CheckParm;
-	imp->CheckParmArgs = CheckParmArgs;
-	imp->IsParm = IsParm;
-	imp->Argc = Argc;
-	imp->Argv = Argv;
-	imp->NextArg = NextArg;*/
-}
-#endif
 
 BOOL InitGameDLL()
 {
