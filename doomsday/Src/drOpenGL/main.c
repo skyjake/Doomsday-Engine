@@ -6,6 +6,9 @@
 //** Target:		DGL Driver for OpenGL
 //** Description:	Init and shutdown, state management
 //**
+//** Get OpenGL header files from:
+//** http://oss.sgi.com/projects/ogl-sample/ 
+//**
 //**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
@@ -43,8 +46,8 @@
 boolean			firstTimeInit = true;
 
 // The State.
-HWND			hwnd;
-HGLRC			hglrc;
+HWND			windowHandle;
+HGLRC			glContext;
 int				screenWidth, screenHeight, screenBits, windowed;
 int				palExtAvailable, sharedPalExtAvailable;
 boolean			texCoordPtrEnabled;
@@ -128,9 +131,9 @@ int fullscreenMode(int width, int height, int bpp)
 	}
 
 	// Set the correct window style and size.
-	SetWindowLong(hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE 
+	SetWindowLong(windowHandle, GWL_STYLE, WS_POPUP | WS_VISIBLE 
 		| WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-	SetWindowPos(hwnd, 0, 0, 0, width, height, SWP_NOZORDER);
+	SetWindowPos(windowHandle, 0, 0, 0, width, height, SWP_NOZORDER);
 
 	// Update the screen size variables.
 	screenWidth = width;
@@ -163,12 +166,12 @@ void windowedMode(int width, int height)
 	rect.bottom = yoff + height;
 
 	// Set window style.
-	style = GetWindowLong(hwnd, GWL_STYLE) 
+	style = GetWindowLong(windowHandle, GWL_STYLE) 
 		| WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CAPTION 
 		| WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-	SetWindowLong(hwnd, GWL_STYLE, style);
+	SetWindowLong(windowHandle, GWL_STYLE, style);
 	AdjustWindowRect(&rect, style, FALSE);
-	SetWindowPos(hwnd, 0, xoff, yoff, /*rect.left, rect.top,*/ 
+	SetWindowPos(windowHandle, 0, xoff, yoff, /*rect.left, rect.top,*/ 
 		rect.right-rect.left, rect.bottom-rect.top, SWP_NOZORDER);
 
 	screenWidth = width;
@@ -259,24 +262,26 @@ void initState()
 //===========================================================================
 int initOpenGL()
 {
-	HDC hdc = GetDC(hwnd);
+	HDC hdc = GetDC(windowHandle);
 
 	// Create the OpenGL rendering context.
-	if(!(hglrc = wglCreateContext(hdc)))
+	if(!(glContext = wglCreateContext(hdc)))
 	{
 		int res = GetLastError();
-		Con_Message("drOpenGL.initOpenGL: Creation of rendering context failed. Error %d.\n",res);
+		Con_Message("drOpenGL.initOpenGL: Creation of rendering context "
+			"failed. Error %d.\n",res);
 		return 0;
 	}
 
 	// Make the context current.
-	if(!wglMakeCurrent(hdc, hglrc))
+	if(!wglMakeCurrent(hdc, glContext))
 	{
-		Con_Message("drOpenGL.initOpenGL: Couldn't make the rendering context current.\n");
+		Con_Message("drOpenGL.initOpenGL: Couldn't make the rendering "
+			"context current.\n");
 		return 0;
 	}
 
-	ReleaseDC(hwnd, hdc);
+	ReleaseDC(windowHandle, hdc);
 
 	initState();
 	return 1;
@@ -451,7 +456,7 @@ int DG_Init(int width, int height, int bpp, int mode)
 	}	
 
 	// Get the device context handle.
-	hdc = GetDC(hwnd);
+	hdc = GetDC(windowHandle);
 
 	// Set the pixel format for the device context. This can only be done once.
 	// (Windows...).
@@ -475,7 +480,7 @@ int DG_Init(int width, int height, int bpp, int mode)
 		res = GetLastError();
 		Con_Printf("Warning: Setting of pixel format failed. Error %d.\n",res);
 	}*/
-	ReleaseDC(hwnd, hdc);
+	ReleaseDC(windowHandle, hdc);
 
 	if(!initOpenGL()) Con_Error("drOpenGL.Init: OpenGL init failed.\n");
 
@@ -489,7 +494,6 @@ int DG_Init(int width, int height, int bpp, int mode)
 	// Check the maximum texture size.
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
 
-	InitVertexStack();
 	initExtensions();
 	
 	if(firstTimeInit)
@@ -556,11 +560,9 @@ int DG_Init(int width, int height, int bpp, int mode)
 //===========================================================================
 void DG_Shutdown(void)
 {
-	KillVertexStack();
-
 	// Delete the rendering context.
 	wglMakeCurrent(NULL, NULL);
-	wglDeleteContext(hglrc);
+	wglDeleteContext(glContext);
 
 	// Go back to normal display settings.
 	ChangeDisplaySettings(0, 0);
@@ -583,7 +585,7 @@ void DG_Clear(int bufferbits)
 //===========================================================================
 void DG_Show(void)
 {
-	HDC hdc = GetDC(hwnd);
+	HDC hdc = GetDC(windowHandle);
 
 #ifdef DEBUGMODE
 /*	glBegin(GL_LINES);
@@ -597,7 +599,7 @@ void DG_Show(void)
 
 	// Swap buffers.
 	SwapBuffers(hdc);
-	ReleaseDC(hwnd, hdc);
+	ReleaseDC(windowHandle, hdc);
 
 #ifdef RENDER_WIREFRAME
 	DG_Clear(DGL_COLOR_BUFFER_BIT);
@@ -728,7 +730,7 @@ int	DG_SetInteger(int name, int value)
 	switch(name)
 	{
 	case DGL_WINDOW_HANDLE:
-		hwnd = (HWND) value;
+		windowHandle = (HWND) value;
 		break;
 
 	case DGL_ACTIVE_TEXTURE:
@@ -911,6 +913,10 @@ int	DG_SetInteger(int name, int value)
 	case DGL_GRAY_MIPMAP:
 		grayMipmapFactor = value/255.0f;
 		break;
+
+	case DGL_CULL_FACE:
+		glFrontFace(value == DGL_CCW? GL_CW : GL_CCW);
+		break;			
 
 	default:
 		return DGL_ERROR;
