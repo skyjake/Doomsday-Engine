@@ -1,6 +1,6 @@
 THE DOOMSDAY ENGINE
 ===================
-by Jaakko Keränen <jaakko.keranen@iki.fi>
+by Jaakko Keranen <jaakko.keranen@iki.fi>
 
 $Date$
 
@@ -34,6 +34,29 @@ original games (Doom, Heretic or Hexen), you can always use the
 shareware/demo versions.
 
 You won't be able to play without an IWAD file!
+
+
+MIDI MUSIC
+----------
+
+Doomsday can play MIDI music using a program of your choosing.  The
+environment variable DENG_MIDI_CMD determines the command that will be
+used when starting playback of a MIDI music file.
+
+I recommend using MIDI only with sound cards that have hardware
+support for playing MIDI music (e.g. SB Live).  Otherwise, it is
+advisable to just disable music playback with the "-nomusic" option.
+
+For example, the DENG_MIDI_CMD environment variable could be set like
+this:
+
+  export DENG_MIDI_CMD="aplaymidi -p 65:0"
+
+The default program for MIDI playback is "timidity".  Note, however,
+that music playback may become choppy since timidity does it entirely
+in software.  It is best to experiment with different timidity
+settings (e.g. buffering and process niceness) if you would like to
+reduce the artifacts in software music playback.
 
 
 GLBSP
