@@ -22,6 +22,10 @@
 #ifndef __R_DEFS__
 #define __R_DEFS__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // Screenwidth.
 #include "doomdef.h"
 
