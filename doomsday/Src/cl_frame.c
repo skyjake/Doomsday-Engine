@@ -226,7 +226,7 @@ void Cl_Frame2Received(int packetType)
 				Cl_ResendHistoryAdd(resend);
 			}
 
-			switch (deltaType)
+			switch(deltaType)
 			{
 			case DT_CREATE_MOBJ:
 				// The mobj will be created/shown.
@@ -306,7 +306,7 @@ void Cl_ReadDeltaSet(void)
 	byte    present = Msg_ReadByte();
 	byte    set = Msg_ReadByte();
 
-	// Add the set number to list of acks.
+	// Add the set number to the list of acks.
 	if(num_acks < MAX_ACKS)
 		acks[num_acks++] = set;
 
