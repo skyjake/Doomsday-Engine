@@ -1,13 +1,6 @@
 # jHeretic: Models
 
-Header { Version = 5; }
+Include "Models\*.ded";
 
-Include "Players.ded";
-Include "HUDWeapons.ded";
-Include "Weapons.ded";
-Include "Items.ded";
-Include "Monsters.ded";
-Include "Technology.ded";
-Include "Nature.ded";
-Include "Decorations.ded";
-Include "FX.ded";
+# This can be removed if jHeretic.ded sets the default path.
+ModelPath "Data\jHeretic\Models";

@@ -10,7 +10,7 @@
 Header {
   Version = 5;
   Default model scale = 1.2;
-  Model path = "MD2\jHeretic";
+  Model path = "Data\jHeretic\Models";
 }
 
 Include "Objects.ded";
