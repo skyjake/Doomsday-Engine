@@ -269,7 +269,9 @@ void R_SetupFrame(ddplayer_t *player)
 	if(sharpView.z < player->mo->floorz + 4*FRACUNIT)
 		sharpView.z = player->mo->floorz + 4*FRACUNIT;
 
-	if(!rend_camera_smooth || resetNextViewer)
+	// Camera smoothing is only enabled if the frame rate is above 35.
+	if(!rend_camera_smooth || resetNextViewer
+		|| DD_GetFrameRate() < 35)
 	{
 		resetNextViewer = false;
 
