@@ -325,8 +325,9 @@ $--------------------------------------------------------------------
 @table/thick{25 12 63}{
 	@header{Option} @tab @header{Abbr.} @tab @header{Description}
 @row{single}
-	@opt{-texcomp} @tab @tab
-	Use texture compression (if supported by the OpenGL driver).
+	@opt{-notexcomp} @tab @tab
+	Disable texture compression (if supported by the OpenGL driver).
+	Compression is enabled by default.
 @row
 	@opt{-allowsoftware} @tab @tab
 	Allow using the software renderer if no 3D hardware
