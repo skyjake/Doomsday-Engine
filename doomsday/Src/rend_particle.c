@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.12  2003/08/16 21:39:49  skyjake
+//** Texture alpha conversion, mul/imul blending, fixed bug in blending changes
+//**
 //** Revision 1.11  2003/08/15 22:18:44  skyjake
 //** Added subtractive blending, 8-bit noalpha textures converted to pure alpha
 //**
@@ -93,6 +96,7 @@ float			rend_particle_diffuse = 4;
 static pglink_t **pglinks;	// Array of pointers to pglinks in pgstore.
 static pglink_t *pgstore;
 static int		pgcursor, pgmax;
+static uint		ordersize;
 static porder_t	*order;
 static int		numparts;
 static boolean	haspoints[NUM_TEX_NAMES], haslines, hasnoblend, hasblend;
@@ -170,23 +174,10 @@ void PG_InitTextures(void)
 		VERBOSE( Con_Message("PG_InitTextures: Texture %02i: %i * %i * %i\n",
 			i, image.width, image.height, image.pixelSize) );
 
-		// If there is no alpha data, generate it automatically.
-		if(image.pixelSize == 3)
+		// If the source is 8-bit with no alpha, generate alpha automatically.
+		if(image.originalBits == 8)
 		{
-			int p, total = image.width * image.height;
-			byte *ptr = image.pixels;
-			for(p = 0; p < total; p++, ptr += 3)
-			{
-				image.pixels[p] = (ptr[0] + ptr[1] + ptr[2]) / 3;
-			}
-			for(p = 0; p < total; p++)
-			{
-				// Move the average color to the alpha channel, make the
-				// actual color white.
-				image.pixels[total + p] = image.pixels[p];
-				image.pixels[p] = 255;
-			}
-			image.pixelSize = 2;
+			GL_ConvertToAlpha(&image);
 		}
 
 		// Create a new texture and upload the image.
@@ -230,6 +221,10 @@ void PG_InitForLevel(void)
 	pgcursor = 0;
 
 	memset(active_ptcgens, 0, sizeof(active_ptcgens));
+
+	// Allocate a small ordering buffer.
+	ordersize = 256;
+	order = Z_Malloc(sizeof(porder_t) * ordersize, PU_LEVEL, 0);
 }
 
 //===========================================================================
@@ -317,6 +312,16 @@ int __cdecl PG_Sorter(const void *pt1, const void *pt2)
 }
 
 //===========================================================================
+// PG_CheckOrderBuffer
+//	Allocate more memory for the particle ordering buffer, if necessary.
+//===========================================================================
+void PG_CheckOrderBuffer(uint max)
+{
+	while(max > ordersize) ordersize *= 2;
+	order = Z_Realloc(order, sizeof(*order) * ordersize, PU_LEVEL);
+}
+
+//===========================================================================
 // PG_ListVisibleParticles
 //	Returns true iff there are particles to render.
 //===========================================================================
@@ -342,7 +347,7 @@ int PG_ListVisibleParticles(void)
 	if(!numparts) return false;
 	
 	// Allocate the rendering order list.
-	order = Z_Malloc(sizeof(*order) * numparts, PU_STATIC, 0);
+	PG_CheckOrderBuffer(numparts);
 
 	// Fill in the order list and see what kind of particles we'll
 	// need to render.
@@ -390,8 +395,8 @@ int PG_ListVisibleParticles(void)
 	}
 	if(!m) 
 	{
-		Z_Free(order);
-		return false; // No particles left (all too far?).
+		// No particles left (all too far?).
+		return false; 
 	}
 
 	// This is the real number of possibly visible particles.
@@ -470,6 +475,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 			new_mode = 
 				 (gen->flags & PGF_SUB_BLEND? BM_SUBTRACT
 				: gen->flags & PGF_REVSUB_BLEND? BM_REVERSE_SUBTRACT
+				: gen->flags & PGF_MUL_BLEND? BM_MUL
+				: gen->flags & PGF_INVMUL_BLEND? BM_INVERSE_MUL
 				: BM_NORMAL);
 			if(new_mode != mode)
 			{
@@ -639,7 +646,12 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	{
 		gl.Enable(DGL_TEXTURING);
 	}
-	Rend_BlendMode(BM_NORMAL);
+
+	if(!with_blend) 
+	{
+		// We may have rendered subtractive stuff.
+		Rend_BlendMode(BM_NORMAL);
+	}
 }
 
 //===========================================================================
@@ -650,8 +662,7 @@ void PG_RenderPass(boolean use_blending)
 	int i;
 
 	// Set blending mode.
-	if(use_blending) 
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+	if(use_blending) Rend_BlendMode(BM_ADD);
 
 	if(haslines) 
 		PG_RenderParticles(PTC_LINE, use_blending);
@@ -664,8 +675,7 @@ void PG_RenderPass(boolean use_blending)
 		}
 
 	// Restore blending mode.
-	if(use_blending)
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+	if(use_blending) Rend_BlendMode(BM_NORMAL);
 }
 
 //===========================================================================
@@ -692,8 +702,4 @@ void PG_Render(void)
 		// particles.
 		PG_RenderPass(true);
 	}
-
-	// Free the list allocated in PG_ListVisibleParticles.
-	// FIXME: Is this necessary?
-	Z_Free(order);
 }
