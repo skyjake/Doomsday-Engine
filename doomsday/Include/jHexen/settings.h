@@ -34,6 +34,8 @@ typedef struct
 	int cameraNoClip;
 	float bobView, bobWeapon;
 	
+	boolean jumpEnabled;	// Always true
+	float jumpPower;
 	int usemouse, noAutoAim, alwaysRun;
 	boolean povLookAround;
 	int joySensitivity, jlookInverseY;
@@ -60,3 +62,4 @@ jhexen_config_t;
 extern jhexen_config_t cfg;
 
 #endif //__JHEXEN_SETTINGS_H__
+

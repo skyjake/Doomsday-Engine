@@ -90,3 +90,4 @@ void S_SetMusicVolume(void);
 boolean S_GetSoundPlayingInfo(mobj_t *mobj, int sound_id);*/
 
 #endif
+
