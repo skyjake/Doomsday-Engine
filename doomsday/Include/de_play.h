@@ -26,6 +26,7 @@
 
 #include "p_data.h"
 #include "p_think.h"
+#include "p_player.h"
 #include "p_mobj.h"
 #include "p_intercept.h"
 #include "p_maputil.h"
