@@ -1458,6 +1458,7 @@ void PO_Init(int lump)
 	mapthing_t *mt;
 	int     numthings;
 	int     polyIndex;
+	short   x, y, angle, type;
 
 	// ThrustMobj will handle polyobj <-> mobj interaction.
 	PO_SetCallback(ThrustMobj);
@@ -1475,18 +1476,19 @@ void PO_Init(int lump)
 	// Find the startSpot points, and spawn each polyobj
 	for(i = 0; i < numthings; i++, mt++)
 	{
-		mt->x = SHORT(mt->x);
-		mt->y = SHORT(mt->y);
-		mt->angle = SHORT(mt->angle);
-		mt->type = SHORT(mt->type);
+		x = SHORT(mt->x);
+		y = SHORT(mt->y);
+		angle = SHORT(mt->angle);
+		type = SHORT(mt->type);
 
 		// 3001 = no crush, 3002 = crushing
-		if(mt->type == PO_SPAWN_TYPE || mt->type == PO_SPAWNCRUSH_TYPE)
+		if(type == PO_SPAWN_TYPE || 
+		   type == PO_SPAWNCRUSH_TYPE)
 		{						// Polyobj StartSpot Pt.
-			polyobjs[polyIndex].startSpot.x = mt->x << FRACBITS;
-			polyobjs[polyIndex].startSpot.y = mt->y << FRACBITS;
-			SpawnPolyobj(polyIndex, mt->angle,
-						 (mt->type == PO_SPAWNCRUSH_TYPE));
+			polyobjs[polyIndex].startSpot.x = x << FRACBITS;
+			polyobjs[polyIndex].startSpot.y = y << FRACBITS;
+			SpawnPolyobj(polyIndex, angle,
+						 (type == PO_SPAWNCRUSH_TYPE));
 			polyIndex++;
 		}
 	}
@@ -1494,14 +1496,14 @@ void PO_Init(int lump)
 	mt = (mapthing_t *) data;
 	for(i = 0; i < numthings; i++, mt++)
 	{
-		mt->x = SHORT(mt->x);
-		mt->y = SHORT(mt->y);
-		mt->angle = SHORT(mt->angle);
-		mt->type = SHORT(mt->type);
-		if(mt->type == PO_ANCHOR_TYPE)
+		x = SHORT(mt->x);
+		y = SHORT(mt->y);
+		angle = SHORT(mt->angle);
+		type = SHORT(mt->type);
+
+		if(type == PO_ANCHOR_TYPE)
 		{						// Polyobj Anchor Pt.
-			TranslateToStartSpot(mt->angle, mt->x << FRACBITS,
-								 mt->y << FRACBITS);
+			TranslateToStartSpot(angle, x << FRACBITS, y << FRACBITS);
 		}
 	}
 	Z_Free(data);

@@ -789,7 +789,7 @@ void MN_DrTextA_CS(char *text, int x, int y)
 		{
 			p = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
 			GL_DrawPatch_CS(x, y, FontABaseLump + c - 33);
-			x += p->width - 1;
+			x += SHORT(p->width) - 1;
 		}
 	}
 }
@@ -822,7 +822,7 @@ void MN_DrTextAYellow_CS(char *text, int x, int y)
 		{
 			p = W_CacheLumpNum(FontAYellowBaseLump + c - 33, PU_CACHE);
 			GL_DrawPatch_CS(x, y, FontAYellowBaseLump + c - 33);
-			x += p->width - 1;
+			x += SHORT(p->width) - 1;
 		}
 	}
 }
@@ -858,7 +858,7 @@ int MN_TextAWidth(char *text)
 		else
 		{
 			p = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
-			width += p->width - 1;
+			width += SHORT(p->width) - 1;
 		}
 	}
 	return (width);
@@ -888,7 +888,7 @@ void MN_DrTextB_CS(char *text, int x, int y)
 		{
 			p = W_CacheLumpNum(FontBBaseLump + c - 33, PU_CACHE);
 			GL_DrawPatch_CS(x, y, FontBBaseLump + c - 33);
-			x += p->width - 1;
+			x += SHORT(p->width) - 1;
 		}
 	}
 }
@@ -924,7 +924,7 @@ int MN_TextBWidth(char *text)
 		else
 		{
 			p = W_CacheLumpNum(FontBBaseLump + c - 33, PU_CACHE);
-			width += p->width - 1;
+			width += SHORT(p->width) - 1;
 		}
 	}
 	return (width);

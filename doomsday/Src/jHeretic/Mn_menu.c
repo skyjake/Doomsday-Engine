@@ -690,7 +690,7 @@ void MN_DrTextA(char *text, int x, int y)
 		{
 			p = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
 			GL_DrawPatch(x, y, FontABaseLump + c - 33);
-			x += p->width - 1;
+			x += SHORT(p->width) - 1;
 		}
 	}
 }
@@ -719,7 +719,7 @@ void MN_DrTextA_CS(char *text, int x, int y)
 		{
 			p = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
 			GL_DrawPatch_CS(x, y, FontABaseLump + c - 33);
-			x += p->width - 1;
+			x += SHORT(p->width) - 1;
 		}
 	}
 }
@@ -766,7 +766,7 @@ int MN_TextAWidth(char *text)
 		else
 		{
 			p = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
-			width += p->width - 1;
+			width += SHORT(p->width) - 1;
 		}
 	}
 	return (width);
@@ -779,7 +779,6 @@ int MN_TextAWidth(char *text)
 // Draw text using font B.
 //
 //---------------------------------------------------------------------------
-
 void MN_DrTextB(char *text, int x, int y)
 {
 	char    c;
@@ -796,7 +795,7 @@ void MN_DrTextB(char *text, int x, int y)
 		{
 			p = W_CacheLumpNum(FontBBaseLump + c - 33, PU_CACHE);
 			GL_DrawPatch(x, y, FontBBaseLump + c - 33);
-			x += p->width - 1;
+			x += SHORT(p->width) - 1;
 		}
 	}
 }
@@ -825,7 +824,7 @@ void MN_DrTextB_CS(char *text, int x, int y)
 		{
 			p = W_CacheLumpNum(FontBBaseLump + c - 33, PU_CACHE);
 			GL_DrawPatch_CS(x, y, FontBBaseLump + c - 33);
-			x += p->width - 1;
+			x += SHORT(p->width) - 1;
 		}
 	}
 }
@@ -857,7 +856,7 @@ int MN_TextBWidth(char *text)
 		else
 		{
 			p = W_CacheLumpNum(FontBBaseLump + c - 33, PU_CACHE);
-			width += p->width - 1;
+			width += SHORT(p->width) - 1;
 		}
 	}
 	return (width);

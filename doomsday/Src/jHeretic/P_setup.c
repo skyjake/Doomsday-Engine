@@ -83,11 +83,8 @@ void P_LoadVertexes(int lump, int gllump)
 		}
 		// There are additional vertices in gllump.
 		numvertexes +=
-			(W_LumpLength(gllump) - (ver == 2 ? 4 : 0)) / (ver ==
-														   1 ?
-														   sizeof(mapvertex_t)
-														   :
-														   sizeof(glvert2_t));
+			(W_LumpLength(gllump) - (ver == 2 ? 4 : 0)) / 
+			(ver == 1 ? sizeof(mapvertex_t) : sizeof(glvert2_t));
 	}
 	vertexes = Z_Malloc(numvertexes * sizeof(vertex_t), PU_LEVEL, 0);
 	data = W_CacheLumpNum(lump, PU_STATIC);
@@ -115,8 +112,8 @@ void P_LoadVertexes(int lump, int gllump)
 			}
 			else
 			{
-				li->x = glv->x;
-				li->y = glv->y;
+				li->x = LONG(glv->x);
+				li->y = LONG(glv->y);
 			}
 		}
 		Z_Free(glverts);
@@ -192,22 +189,23 @@ void P_LoadSegsGL(int lump)
 	for(i = 0; i < numsegs; i++, li++, gls++)
 	{
 		li->v1 =
-			&vertexes[gls->v1 & 0x8000 ? firstGLvertex +
-					  (gls->v1 & 0x7fff) : gls->v1];
+			&vertexes[USHORT(gls->v1) & 0x8000 ? firstGLvertex +
+					  (USHORT(gls->v1) & 0x7fff) : USHORT(gls->v1)];
 
 		li->v2 =
-			&vertexes[gls->v2 & 0x8000 ? firstGLvertex +
-					  (gls->v2 & 0x7fff) : gls->v2];
+			&vertexes[USHORT(gls->v2) & 0x8000 ? firstGLvertex +
+					  (USHORT(gls->v2) & 0x7fff) : USHORT(gls->v2)];
 
-		if(gls->linedef != -1)
+		if(USHORT(gls->linedef) != USHORT(-1))
 		{
-			ldef = &lines[gls->linedef];
+			ldef = &lines[USHORT(gls->linedef)];
 			li->linedef = ldef;
-			li->sidedef = &sides[ldef->sidenum[gls->side]];
-			li->frontsector = sides[ldef->sidenum[gls->side]].sector;
+			li->sidedef = &sides[ldef->sidenum[USHORT(gls->side)]];
+			li->frontsector = sides[ldef->sidenum[USHORT(gls->side)]].sector;
 			if(ldef->flags & ML_TWOSIDED)
 			{
-				li->backsector = sides[ldef->sidenum[gls->side ^ 1]].sector;
+				li->backsector = sides[ldef->sidenum
+									   [USHORT(gls->side) ^ 1]].sector;
 			}
 			else
 			{
@@ -270,8 +268,8 @@ void P_LoadSubsectors(int lump)
 	ss = subsectors;
 	for(i = 0; i < numsubsectors; i++, ss++, ms++)
 	{
-		ss->linecount = ms->numSegs;
-		ss->firstline = ms->firstseg;
+		ss->linecount = USHORT(ms->numSegs);
+		ss->firstline = USHORT(ms->firstseg);
 	}
 
 	Z_Free(data);

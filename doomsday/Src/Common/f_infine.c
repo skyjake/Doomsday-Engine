@@ -1536,15 +1536,14 @@ int FI_CharWidth(int ch, boolean fontb)
 #if __JDOOM__
 	if(ch < 33)
 		return 4;
-	return fontb ? hu_font_b[ch - HU_FONTSTART].width : hu_font_a[ch -
-																  HU_FONTSTART].
-		width;
+	return fontb ? SHORT(hu_font_b[ch - HU_FONTSTART].width) : 
+		SHORT(hu_font_a[ch - HU_FONTSTART].width);
 #else
 	if(ch < 33)
 		return 5;
-	return ((patch_t *)
-			W_CacheLumpNum((fontb ? FontBBase : FontABase) + ch - 33,
-						   PU_CACHE))->width;
+	return SHORT( ((patch_t *) 
+				   W_CacheLumpNum((fontb ? FontBBase : FontABase) + ch - 33,
+								  PU_CACHE))->width );
 #endif
 }
 
