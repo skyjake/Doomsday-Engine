@@ -24,18 +24,10 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void D_StartTitle(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-//DEFCC(CCmdCD);
-//DEFCC(CCmdMidi);
 DEFCC(CCmdPause);
 DEFCC(CCmdCheat);
-//DEFCC(CCmdPlayDemo);
-//DEFCC(CCmdRecordDemo);
-//DEFCC(CCmdStopDemo);
-//DEFCC(CCmdTimeDemo);
 DEFCC(CCmdViewSize);
 DEFCC(CCmdInventory);
 DEFCC(CCmdScreenShot);
@@ -284,6 +276,8 @@ ccmd_t gameCCmds[] =
 	"setlock",		CCmdSetViewLock,		"Set camera viewlock.",
 	"lockmode",		CCmdSetViewLock,		"Set camera viewlock mode.",
 
+	"startinf",		CCmdStartInFine,		"Start an InFine script.",
+	"stopinf",		CCmdStopInFine,			"Stop the currently playing interlude/finale.",
 	"stopfinale",	CCmdStopInFine,			"Stop the currently playing interlude/finale.",
 
 	// $moveplane: console commands
@@ -307,76 +301,6 @@ void H_ConsoleRegistration()
 	for(i=0; gameCCmds[i].name; i++) Con_AddCommand(gameCCmds+i);
 	D_NetConsoleRegistration();
 }
-
-//char playDemoName[9];
-
-/*int CCmdPlayDemo(int argc, char **argv)
-{	
-	if(argc != 2)
-	{
-		Con_Printf( "Usage: playdemo (name)\n");
-		return true;
-	}
-	if(W_CheckNumForName(argv[1]) == -1)
-	{
-		Con_Printf( "There is a no lump named '%s'.\n", argv[1]);
-		return false;
-	}
-	// Use the name in lumpinfo because it has to last.
-	strcpy(playDemoName, argv[1]);
-	G_DeferedPlayDemo(playDemoName);
-	return true;
-}
-
-int CCmdRecordDemo(int argc, char **argv)
-{
-	int	map = gamemap;
-
-	if(demorecording)
-	{
-		Con_Printf( "A demo is already being recorded!\n");
-		return false;
-	}
-	if(argc == 1 || argc > 3)
-	{
-		Con_Printf( "Usage: recorddemo (name) (map)\n");
-		Con_Printf( "The demo will be saved in a file named (name).lmp.\n");
-		Con_Printf( "If you don't specify a map the current one is used.\n");
-		return true;
-	}
-	if(argc == 3) map = atoi(argv[2]);
-	G_RecordDemo(gameskill, 1, gameepisode, map, argv[1]);
-	return true;
-}
-
-int CCmdStopDemo(int argc, char **argv)
-{
-	if(!demoplayback && !demorecording)
-	{
-		Con_Printf( "No demo being played or recorded.\n");
-		return false;
-	}
-	G_CheckDemoStatus();
-	D_StartTitle();
-	return true;
-}
-
-int CCmdTimeDemo(int argc, char **argv)
-{
-	if(argc != 2)
-	{
-		Con_Printf( "Usage: timedemo (name)\n");
-		return true;
-	}
-	if(W_CheckNumForName(argv[1]) == -1)
-	{
-		Con_Printf( "There is a no lump named '%s'.\n", argv[1]);
-		return false;
-	}
-	G_TimeDemo(argv[1]);
-	return true;
-}
-*/
 
 int CCmdViewSize(int argc, char **argv)
 {

@@ -323,6 +323,8 @@ ccmd_t gameCCmds[] =
 	"quit",			CCmdMenuAction,		"Quit the game and return to the OS.",
 	"togglegamma",	CCmdMenuAction,		"Cycle gamma correction levels.",
 
+	"startinf",		CCmdStartInFine,	"Start an InFine script.",
+	"stopinf",		CCmdStopInFine,		"Stop the currently playing interlude/finale.",
 	"stopfinale",	CCmdStopInFine,		"Stop the currently playing interlude/finale.",
 
 	"spawnmobj",	CCmdSpawnMobj,		"Spawn a new mobj.",
@@ -408,63 +410,6 @@ int CCmdViewSize(int argc, char **argv)
 	R_SetViewSize(screenblocks, 0);
 	return true;
 }
-
-/*int CCmdPlayDemo(int argc, char **argv)
-{	
-	extern int demosequence;
-
-	if(argc != 2)
-	{
-		Con_Printf( "Usage: playdemo (name)\n");
-		return true;
-	}
-	if(W_CheckNumForName(argv[1]) == -1)
-	{
-		Con_Printf( "There is a no lump named '%s'.\n", argv[1]);
-		return false;
-	}
-	demosequence = -1;
-	strcpy(playDemoName, argv[1]);
-	G_DeferedPlayDemo(playDemoName);
-	return true;
-}
-
-int CCmdRecordDemo(int argc, char **argv)
-{
-	int episode = gameepisode;
-	int	map = gamemap;
-
-	if(demorecording)
-	{
-		Con_Printf( "A demo is already being recorded!\n");
-		return false;
-	}
-	if(argc == 1 || argc > 4)
-	{
-		Con_Printf( "Usage: recorddemo (name) (episode) (map)\n");
-		Con_Printf( "The demo will be saved in a file named (name).lmp.\n");
-		Con_Printf( "If you don't specify a map the current one is used.\n");
-		return true;
-	}
-	if(argc >= 3) episode = atoi(argv[2]);
-	if(argc == 4) map = atoi(argv[3]);
-	G_InitNew(gameskill, episode, map);	
-	G_RecordDemo(argv[1]);
-	G_BeginRecording();
-	return true;
-}
-
-int CCmdStopDemo(int argc, char **argv)
-{
-	if(!demoplayback && !demorecording)
-	{
-		Con_Printf( "No demo being played or recorded.\n");
-		return false;
-	}
-	G_CheckDemoStatus();
-	D_StartTitle();	
-	return true;
-}*/
 
 int CCmdPause(int argc, char **argv)
 {

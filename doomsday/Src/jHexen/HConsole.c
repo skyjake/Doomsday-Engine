@@ -23,7 +23,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void H2_StartTitle(void);
 void S_InitScript();
 void SN_InitSequenceScript(void);
 
@@ -199,19 +198,12 @@ cvar_t gameCVars[] =
 	"server-game-nomonsters",	0,			CVT_BYTE,	&cfg.netNomonsters,	0, 1,	"1=No monsters.",
 	"server-game-randclass",	0,			CVT_BYTE,	&cfg.netRandomclass,0, 1,	"1=Respawn in a random class (deathmatch).",
 	"server-game-skill",		0,			CVT_BYTE,	&cfg.netSkill,		0, 4,	"Skill level in multiplayer games.",
-/*	
-	"sound-3d",					0,			CVT_INT,	&cfg.snd_3D,		0, 1,	"1=Play sounds in 3D.",
-	"sound-debug",			CVF_NO_ARCHIVE,	CVT_INT,	&DebugSound,	0, 1,	"1=Display sound debug information.",
-	"sound-reverb-debug",	CVF_NO_ARCHIVE,	CVT_BYTE,	&cfg.reverbDebug,	0, 1,	"1=Reverberation debug information in the console.",
-	"sound-reverb-volume",		0,			CVT_FLOAT,	&cfg.snd_ReverbFactor, 0, 1, "General reverb strength (0-1).",
-*/
 	"view-size",			CVF_PROTECTED,	CVT_INT,	&cfg.screenblocks,	3, 11,	"View window size (3-11).",
 	NULL
 };
 
 ccmd_t gameCCmds[] =
 {
-//	"cd",			CCmdCD,					"CD player control.",
 	"cheat",		CCmdCheat,				"Issue a cheat code using the original Hexen cheats.",
 	"class",		CCmdCheatShadowcaster,	"Change player class.",
 	"noclip",		CCmdCheatClip,			"Movement clipping on/off.",
@@ -236,11 +228,6 @@ ccmd_t gameCCmds[] =
 	"screenshot",	CCmdScreenShot,			"Take a screenshot.",
 	"warp",			CCmdCheatWarp,			"Warp to a map.",
 	"where",		CCmdCheatWhere,			"Prints your map number and exact location.",
-//	"sndchannels",	CCmdSndChannels,		"Set or query the number of sound channels.",
-//	"playdemo",		CCmdPlayDemo,			"Play a demo.",
-//	"recorddemo",	CCmdRecordDemo,			"Record a demo.",
-//	"stopdemo",		CCmdStopDemo,			"Stop the currently played/recorded demo.",
-//	"timedemo",		CCmdTimeDemo, 
 	"spy",			CCmdCycleSpy,			"Change the viewplayer when not in deathmatch.",
 
 	// Menu actions.
@@ -265,7 +252,9 @@ ccmd_t gameCCmds[] =
 	"setlock",		CCmdSetViewLock,		"Set camera viewlock.",
 	"lockmode",		CCmdSetViewLock,		"Set camera viewlock mode.",
 
-	"stopfinale",	CCmdStopInFine,			"Stop the currently playing interlude/finale.",
+	"startinf",		CCmdStartInFine,	"Start an InFine script.",
+	"stopinf",		CCmdStopInFine,		"Stop the currently playing interlude/finale.",
+	"stopfinale",	CCmdStopInFine,		"Stop the currently playing interlude/finale.",
 
 	// $moveplane: console commands
 /*	"movefloor",	CCmdMovePlane,			"Move a sector's floor plane.",
@@ -289,76 +278,6 @@ void H2_ConsoleRegistration()
 	for(i=0; gameCCmds[i].name; i++) Con_AddCommand(gameCCmds+i);
 	D_NetConsoleRegistration();
 }
-
-/*char playDemoName[9];
-
-int CCmdPlayDemo(int argc, char **argv)
-{	
-	if(argc != 2)
-	{
-		Con_Printf( "Usage: playdemo (name)\n");
-		return true;
-	}
-	if(W_CheckNumForName(argv[1]) == -1)
-	{
-		Con_Printf( "There is a no lump named '%s'.\n", argv[1]);
-		return false;
-	}
-	// Use the name in lumpinfo because it has to last.
-	strcpy(playDemoName, argv[1]);
-	G_DeferedPlayDemo(playDemoName);
-	return true;
-}
-
-int CCmdRecordDemo(int argc, char **argv)
-{
-	int	map = gamemap;
-
-	if(demorecording)
-	{
-		Con_Printf( "A demo is already being recorded!\n");
-		return false;
-	}
-	if(argc == 1 || argc > 3)
-	{
-		Con_Printf( "Usage: recorddemo (name) (map)\n");
-		Con_Printf( "The demo will be saved in a file named (name).lmp.\n");
-		Con_Printf( "If you don't specify a map the current one is used.\n");
-		return true;
-	}
-	if(argc == 3) map = atoi(argv[2]);
-	G_RecordDemo(gameskill, 1, gameepisode, map, argv[1]);
-	return true;
-}
-
-int CCmdStopDemo(int argc, char **argv)
-{
-	if(!demoplayback && !demorecording)
-	{
-		Con_Printf( "No demo being played or recorded.\n");
-		return false;
-	}
-	G_CheckDemoStatus();
-	H2_StartTitle();
-	return true;
-}
-
-int CCmdTimeDemo(int argc, char **argv)
-{
-	if(argc != 2)
-	{
-		Con_Printf( "Usage: timedemo (name)\n");
-		return true;
-	}
-	if(gi.W_CheckNumForName(argv[1]) == -1)
-	{
-		Con_Printf( "There is a no lump named '%s'.\n", argv[1]);
-		return false;
-	}
-	G_TimeDemo(argv[1]);
-	return true;
-}
-*/
 
 int CCmdViewSize(int argc, char **argv)
 {
