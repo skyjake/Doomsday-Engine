@@ -3,15 +3,13 @@
 
 #include "dd_share.h"
 
-/* 
-
-The routines/data exported out of the Doomsday engine: 
-
-This structure contains pointers to routines that can have alternative
-handlers in the engine. Also, some select global variables are exported 
-using this structure (most importantly the map data).
-
-*/
+/*
+ * The routines/data exported out of the Doomsday engine: 
+ * 
+ * This structure contains pointers to routines that can have alternative
+ * handlers in the engine. Also, some select global variables are exported 
+ * using this structure (most importantly the map data).
+ */
 typedef struct
 {
 	int			apiSize;		// sizeof(game_import_t)
@@ -63,10 +61,8 @@ typedef struct
 game_import_t; // game import == engine export
 
 /*
-
-The routines/data exported from the game DLL:
-
-*/
+ * The routines/data exported from the game DLL.
+ */
 typedef struct
 {
 	int			apiSize;		// sizeof(game_export_t)
