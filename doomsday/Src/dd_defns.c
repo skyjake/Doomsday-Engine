@@ -369,7 +369,11 @@ void Def_ReadProcessDED(char *filename)
 	Dir_FileDir(filename, &dir);
 	if(Dir_ChDir(&dir)) // Make sure the directory exists.
 	{
-		F_ForAll(fn, 0, Def_ReadDEDFile);
+		if(strchr(fn, '*') || strchr(fn, '?'))
+			F_ForAll(fn, 0, Def_ReadDEDFile);
+		else
+			Def_ReadDEDFile(fn, 0);
+
 		Def_ReadIncludedDEDs(&dir);
 	}
 }
