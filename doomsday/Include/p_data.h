@@ -34,6 +34,7 @@
 #define GET_SECTOR_IDX(sec)		( ((byte*)(sec) - sectors) / SECTSIZE )
 #define GET_SUBSECTOR_IDX(sub)	( ((byte*)(sub) - subsectors) / SUBSIZE )
 #define GET_POLYOBJ_IDX(po)		( ((byte*)(po) - polyobjs) / POSIZE )
+#define GET_SEG_IDX(seg)		( ((byte*)(seg) - segs) / SEGSIZE )
 
 #define VERTEX_PTR(i)		( (vertex_t*) (vertexes+VTXIDX(i)) )
 #define SEG_PTR(i)			( (seg_t*) (segs+SEGIDX(i)) )
