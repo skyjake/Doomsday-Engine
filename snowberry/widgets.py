@@ -407,8 +407,11 @@ class Image (Widget):
         located in one of the graphics directories.
         """
         bmp = wx.Image(paths.findBitmap(imageName)).ConvertToBitmap()
+        self.bitmap.Freeze()
         self.bitmap.SetBitmap(bmp)
         self.panel.SetMinSize(bmp.GetSize())
+        self.bitmap.Thaw()
+        self.panel.Refresh()
 
 
 class Button (Widget):
@@ -1178,8 +1181,8 @@ class DropList (Widget):
 class HtmlListBox (wx.HtmlListBox):
     """An implementation of the abstract wxWidgets HTML list box."""
 
-    def __init__(self, parent, wxId, itemsListOwner):
-        wx.HtmlListBox.__init__(self, parent, wxId)
+    def __init__(self, parent, wxId, itemsListOwner, style=0):
+        wx.HtmlListBox.__init__(self, parent, wxId, style=style)
 
         # A reference to the owner of the array where the items are
         # stored.  Items is a list of tuples: (id, presentation)
@@ -1205,7 +1208,7 @@ class HtmlListBox (wx.HtmlListBox):
 class FormattedList (Widget):
     """A list widget with HTML-formatted items."""
 
-    def __init__(self, parent, wxId, id):
+    def __init__(self, parent, wxId, id, style=0):
         """Construct a FormattedList object.
 
         @param parent Parent wxWidget.
@@ -1216,7 +1219,7 @@ class FormattedList (Widget):
         # This is a list of tuples: (id, presentation)
         self.items = []
 
-        Widget.__init__(self, HtmlListBox(parent, wxId, self))
+        Widget.__init__(self, HtmlListBox(parent, wxId, self, style=style))
 
         self.widgetId = id
 
@@ -1368,7 +1371,8 @@ class FormattedTabArea (FormattedList):
         @param id The identifier of the formatted list.
 
         """
-        FormattedList.__init__(self, parent, wxId, id)
+        FormattedList.__init__(self, parent, wxId, id,
+                               style=wx.SUNKEN_BORDER)
 
         self.setSorted(False)
         

@@ -543,11 +543,11 @@ class Area (widgets.Widget):
             # Create the formatted list (with extended functionality).
             widget = widgets.FormattedTabArea(self.panel, self.__getNewId(),
                                               name)
-            sub.setWeight(1)
+            sub.setWeight(2)
             sub.__addWidget(widget)
 
             # Create the multiarea and pair it up.
-            sub.setWeight(4)
+            sub.setWeight(7)
             multi = sub.createMultiArea()
             widget.setMultiArea(multi)
         else:
@@ -855,7 +855,8 @@ class MultiArea (Area):
             if pageId == identifier:
                 # Show this page.
                 if not sizer:
-                    self.containerSizer.Add(area.panel, 1, wx.EXPAND)
+                    self.containerSizer.Add(area.panel, 1,
+                                            wx.EXPAND | wx.ALL, 3)
                     area.panel.Show()
                     changed = True
             else:
@@ -995,6 +996,8 @@ class WizardDialog (wiz.Wizard):
         bmp = wx.Bitmap(imageFileName)
         self.wxId = wx.NewId()
         wiz.Wizard.__init__(self, mainPanel, self.wxId, title, bmp)
+
+        self.SetBorder(0)
 
         # List of all the WizardPage objects associated with this
         # wizard.  This list does NOT define the order of the pages,
