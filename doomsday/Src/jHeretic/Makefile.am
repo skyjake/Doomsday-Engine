@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libjheretic.la
 commondir = ../Common
 incdir = $(top_srcdir)/Include
 INCLUDES = -I$(incdir)/jHeretic -I$(incdir)/Common -I$(incdir)
-DEFS = -DUNIX -DNO_FIXED_ASM -D__JHERETIC__
+DEFS = -DUNIX -D@FIXED_IMPL@ -D__JHERETIC__
 
 libjheretic_la_LDFLAGS = -module
 

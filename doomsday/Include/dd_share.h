@@ -287,7 +287,7 @@ extern          "C" {
 #define Q_FIX2FLT(x)	( (float)((x)>>FRACBITS) )
 #define FLT2FIX(x)		( (fixed_t) ((x)*FRACUNIT) )
 
-#ifndef NO_FIXED_ASM
+#if !defined( NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
 
 	/* *INDENT-OFF* */
 	__inline fixed_t FixedMul(fixed_t a, fixed_t b) {

@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libjdoom.la
 commondir = ../Common
 incdir = $(top_srcdir)/Include
 INCLUDES = -I$(incdir)/jDoom -I$(incdir)/Common -I$(incdir) 
-DEFS = -DUNIX -DNO_FIXED_ASM -D__JDOOM__
+DEFS = -DUNIX -D@FIXED_IMPL@ -D__JDOOM__
 
 libjdoom_la_LDFLAGS = -module
 

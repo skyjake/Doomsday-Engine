@@ -1,7 +1,21 @@
-AC_INIT(deng, [1.8.2], [jaakko.keranen@iki.fi])
-AM_INIT_AUTOMAKE(deng, [1.8.2])
+AC_INIT(deng, [1.8.3], [jaakko.keranen@iki.fi])
+AM_INIT_AUTOMAKE(deng, [1.8.3])
+
+AC_CANONICAL_BUILD
 
 AM_CONFIG_HEADER(config.h)
+
+dnl Check architecture and choose a fixed-point math implementation.
+case $build_cpu in
+  i*86)
+    FIXED_IMPL="GNU_X86_FIXED_ASM"
+    break ;;
+  *)
+    FIXED_IMPL="NO_FIXED_ASM"
+    break ;;
+esac
+AC_SUBST(FIXED_IMPL)
+
 
 dnl Enable building of the convenience library
 dnl and set LIBLTDL accordingly

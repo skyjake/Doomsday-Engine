@@ -61,6 +61,37 @@ fixed_t FixedDiv2(fixed_t a, fixed_t b)
 
 #endif
 
+#ifdef GNU_X86_FIXED_ASM
+// Courtesy of Lukasz Stelmach.
+
+fixed_t FixedMul(fixed_t a, fixed_t b)
+{
+	asm volatile (
+		"imull %2\n\t"
+		"shrdl $16, %%edx, %%eax"
+		: "=a" (a)
+		: "a" (a), "r" (b)
+		: "edx"
+	);
+	return a;
+}
+
+fixed_t FixedDiv2(fixed_t a, fixed_t b)
+{
+	asm volatile (
+		"cdq\n\t"
+		"shldl $16, %%eax, %%edx\n\t"
+		"sall $16 ,%%eax\n\t"
+		"idivl %2"
+		: "=a" (a)
+		: "a" (a), "r" (b)
+		: "edx"
+	);
+	return a;
+}
+
+#endif
+
 fixed_t FixedDiv(fixed_t a, fixed_t b)
 {
 	if((abs(a) >> 14) >= abs(b))

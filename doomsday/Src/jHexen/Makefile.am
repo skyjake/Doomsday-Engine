@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libjhexen.la
 commondir = ../Common
 incdir = $(top_srcdir)/Include
 INCLUDES = -I$(incdir)/jHexen -I$(incdir)/Common -I$(incdir)
-DEFS = -DUNIX -DNO_FIXED_ASM -D__JHEXEN__
+DEFS = -DUNIX -D@FIXED_IMPL@ -D__JHEXEN__
 
 libjhexen_la_LDFLAGS = -module
 

@@ -3,7 +3,7 @@ SUBDIRS = dpDehRead dpMapLoad $(OPTIONAL_SUBDIRS)
 bin_PROGRAMS = doomsday
 
 INCLUDES = -I$(top_srcdir)/Include
-DEFS = -DUNIX -DNO_FIXED_ASM -D__DOOMSDAY__ -DNORANGECHECKING	   \
+DEFS = -DUNIX -D@FIXED_IMPL@ -D__DOOMSDAY__ -DNORANGECHECKING	   \
 -DDENG_LIBRARY_DIR=\"$(libdir)\" -DDENG_BASE_DIR=\"$(pkgdatadir)\"
 doomsday_CFLAGS = @SDL_CFLAGS@ $(LTDLINCL)
 doomsday_LDFLAGS = -export-dynamic "-dlopen" self @SDL_LIBS@ -lSDL_net \
