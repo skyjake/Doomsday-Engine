@@ -9,6 +9,8 @@ Version 1.7.7
 + switch texture pairs (SW1/SW2) are precached at the same time
 + "Generator:Stage:Radius rnd": Randomness of particle radius
 + sound-info shows sound names as well as ID numbers
++ textured particles
+* flat particles stick to planes
 - high-resolution flats with 4 channels (alpha) were loaded incorrectly
 - alternative texture path must be tried first when loading hires images
   (-texdir2)
