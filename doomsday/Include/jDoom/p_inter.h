@@ -35,11 +35,15 @@ boolean
 P_GiveBody
 ( player_t*	player,
  int		num );
+void P_GiveBackpack(player_t *player);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/08/24 00:25:40  skyjake
+// Separate function for giving backpack
+//
 // Revision 1.1  2003/02/26 19:18:32  skyjake
 // Initial checkin
 //
