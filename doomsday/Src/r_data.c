@@ -730,7 +730,15 @@ boolean R_IsAllowedDecoration
 	(ded_decor_t *def, int index, boolean hasExternal)
 {
 	if(hasExternal)
+	{
 		return (def->flags & DCRF_EXTERNAL) != 0;
+	}
+/*	else if(def->flags & DCRF_EXTERNAL)
+	{
+		// If the decoration is marked for external resources, and there
+		// are none present, disallow using this decoration.
+		return false;
+	}*/
 
 	if(def->is_texture)
 	{
