@@ -85,7 +85,8 @@ void Sv_TransmitFrame(void)
 				Sv_RefreshClient(i);
 				if(players[i].flags & DDPF_LOCAL)
 				{
-					// All the necessary data was sent.
+					// All the necessary data is always sent to local 
+					// players.
 					players[i].flags &= ~DDPF_FIXPOS;
 				}
 			}
