@@ -1,4 +1,31 @@
 @ECHO OFF
+REM $Id$
+REM
+REM This build script compiles the Doomsday Engine and the associated 
+REM libraries.
+REM 
+REM Microsoft Visual C++ Toolkit is the minimum requirement.  If you
+REM want to compile the engine itself, you will also need the Platform
+REM SDK, which can be downloaded from Microsoft's website.  The DirectX
+REM SDK is also required for compiling the engine.  This means you can
+REM compile everything using tools that can be downloaded for free, but
+REM all the SDKs will add up to several hundred megabytes. 
+REM
+REM On the bright side, you only need the Visual C++ Toolkit for 
+REM compiling a game DLL.  The game DLLs' only dependency is 
+REM Doomsday.lib, which is included in the Doomsday source code 
+REM package.
+REM
+REM Throughout this batch file there are targets that can be given as
+REM arguments on the command line.  For example, to compile jDoom you
+REM would use the "jdoom" target:
+REM
+REM   vcbuild jdoom
+REM
+REM The "all" target compiles everything in the appropriate order:
+REM
+REM   vcbuild all
+REM
 
 REM -- Set up paths.
 SET BIN_DIR=Bin\Release
@@ -60,7 +87,7 @@ GOTO %1
 
 REM *** Cleanup and build all targets.
 :All
-CALL vcbuild cleanup doomsday dpdehread dpmapload dropengl drd3d dsa3d dscompat jdoom jheretic jhexen
+CALL vcbuild cleanup res doomsday dpdehread dpmapload dropengl drd3d dsa3d dscompat jdoom jheretic jhexen
 GOTO Done
 
 
@@ -73,9 +100,21 @@ md %OBJ_DIR%
 GOTO Done
 
 
+REM *** Resources (dialogs for Doomsday and drD3D)
+REM Requires rc.exe and cvtres.exe from the Platform SDK.
+:Res
+rc Src\Doomsday.rc
+cvtres /OUT:doomsday_res.obj /MACHINE:X86 Src\Doomsday.res
+rc Src\drD3D\drD3D.rc
+IF NOT EXIST %OBJ_DIR%\drD3D md %OBJ_DIR%\drD3D
+cvtres /OUT:drD3D_res.obj /MACHINE:X86 Src\drD3D\drD3D.res
+GOTO Done
+
+
 REM *** Doomsday.exe
 :Doomsday
-cl %FLAGS% %INCS% %DEFINES% /D "__DOOMSDAY__"  Src\def_read.c Src\def_main.c Src\def_data.c Src\ui_panel.c Src\ui_mpi.c Src\ui_main.c Src\tab_video.c Src\tab_tables.c Src\m_vector.c Src\m_string.c Src\m_nodepile.c Src\m_misc.c Src\m_huffman.c Src\Common\m_fixed.c Src\m_filehash.c Src\m_bams.c Src\m_args.c Src\s_wav.c Src\s_sfx.c Src\s_mus.c Src\s_main.c Src\s_logic.c Src\s_environ.c Src\s_cache.c Src\gl_tga.c Src\gl_tex.c Src\gl_png.c Src\gl_pcx.c Src\gl_main.c Src\gl_hq2x.c Src\gl_font.c Src\gl_draw.c Src\rend_sprite.c Src\rend_sky.c Src\rend_shadow.c Src\rend_particle.c Src\rend_model.c Src\rend_main.c Src\rend_list.c Src\rend_halo.c Src\rend_fakeradio.c Src\rend_dyn.c Src\rend_decor.c Src\rend_clip.c Src\r_world.c Src\r_util.c Src\r_things.c Src\r_sky.c Src\r_shadow.c Src\r_model.c Src\r_main.c Src\r_extres.c Src\r_draw.c Src\r_data.c Src\p_tick.c Src\p_think.c Src\p_sight.c Src\p_polyob.c Src\p_particle.c Src\p_mobj.c Src\p_maputil.c Src\p_intercept.c Src\p_data.c Src\p_bmap.c Src\sv_sound.c Src\sv_pool.c Src\sv_missile.c Src\sv_main.c Src\sv_frame.c Src\cl_world.c Src\cl_sound.c Src\cl_player.c Src\cl_mobj.c Src\cl_main.c Src\cl_frame.c Src\net_ping.c Src\net_msg.c Src\net_main.c Src\net_event.c Src\net_demo.c Src\net_buf.c Src\sys_sfxd_loader.c Src\sys_sfxd_dummy.c Src\sys_sfxd_ds.c Src\sys_musd_win.c Src\sys_musd_fmod.c Src\sys_timer.c Src\sys_system.c Src\sys_stwin.c Src\sys_sock.c Src\Unix\sys_network.c Src\sys_mixer.c Src\sys_master.c Src\sys_input.c Src\sys_findfile.c Src\sys_filein.c Src\sys_direc.c Src\sys_console.c Src\con_start.c Src\con_main.c Src\con_config.c Src\con_bind.c Src\con_bar.c Src\con_action.c Src\dd_zone.c Src\dd_zip.c Src\dd_winit.c Src\dd_wad.c Src\dd_plugin.c Src\dd_pinit.c Src\dd_main.c Src\dd_loop.c Src\dd_input.c Src\dd_help.c Src\dd_dgl.c    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./Src/Doomsday.def" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib libpng.lib libz.lib fmodvc.lib lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib libpng.lib libz.lib LZSS.lib gdi32.lib ole32.lib user32.lib
+REM Compile the executable.
+cl %FLAGS% %INCS% %DEFINES% /D "__DOOMSDAY__"  doomsday_res.obj Src\def_read.c Src\def_main.c Src\def_data.c Src\ui_panel.c Src\ui_mpi.c Src\ui_main.c Src\tab_video.c Src\tab_tables.c Src\m_vector.c Src\m_string.c Src\m_nodepile.c Src\m_misc.c Src\m_huffman.c Src\Common\m_fixed.c Src\m_filehash.c Src\m_bams.c Src\m_args.c Src\s_wav.c Src\s_sfx.c Src\s_mus.c Src\s_main.c Src\s_logic.c Src\s_environ.c Src\s_cache.c Src\gl_tga.c Src\gl_tex.c Src\gl_png.c Src\gl_pcx.c Src\gl_main.c Src\gl_hq2x.c Src\gl_font.c Src\gl_draw.c Src\rend_sprite.c Src\rend_sky.c Src\rend_shadow.c Src\rend_particle.c Src\rend_model.c Src\rend_main.c Src\rend_list.c Src\rend_halo.c Src\rend_fakeradio.c Src\rend_dyn.c Src\rend_decor.c Src\rend_clip.c Src\r_world.c Src\r_util.c Src\r_things.c Src\r_sky.c Src\r_shadow.c Src\r_model.c Src\r_main.c Src\r_extres.c Src\r_draw.c Src\r_data.c Src\p_tick.c Src\p_think.c Src\p_sight.c Src\p_polyob.c Src\p_particle.c Src\p_mobj.c Src\p_maputil.c Src\p_intercept.c Src\p_data.c Src\p_bmap.c Src\sv_sound.c Src\sv_pool.c Src\sv_missile.c Src\sv_main.c Src\sv_frame.c Src\cl_world.c Src\cl_sound.c Src\cl_player.c Src\cl_mobj.c Src\cl_main.c Src\cl_frame.c Src\net_ping.c Src\net_msg.c Src\net_main.c Src\net_event.c Src\net_demo.c Src\net_buf.c Src\sys_sfxd_loader.c Src\sys_sfxd_dummy.c Src\sys_sfxd_ds.c Src\sys_musd_win.c Src\sys_musd_fmod.c Src\sys_timer.c Src\sys_system.c Src\sys_stwin.c Src\sys_sock.c Src\Unix\sys_network.c Src\sys_mixer.c Src\sys_master.c Src\sys_input.c Src\sys_findfile.c Src\sys_filein.c Src\sys_direc.c Src\sys_console.c Src\con_start.c Src\con_main.c Src\con_config.c Src\con_bind.c Src\con_bar.c Src\con_action.c Src\dd_zone.c Src\dd_zip.c Src\dd_winit.c Src\dd_wad.c Src\dd_plugin.c Src\dd_pinit.c Src\dd_main.c Src\dd_loop.c Src\dd_input.c Src\dd_help.c Src\dd_dgl.c    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./Src/Doomsday.def" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib libpng.lib libz.lib fmodvc.lib lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib libpng.lib libz.lib LZSS.lib gdi32.lib ole32.lib user32.lib
 GOTO Done
 
 
@@ -96,7 +135,7 @@ GOTO Done
 REM *** drD3D.dll
 :drD3D
 md %OBJ_DIR%\drD3D
-cl /O2 /Ob1 /I "./Include/drD3D" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 /Gz Src\drD3D\window.cpp Src\drD3D\viewport.cpp Src\drD3D\texture.cpp Src\drD3D\state.cpp Src\drD3D\matrix.cpp Src\drD3D\main.cpp Src\drD3D\draw.cpp Src\drD3D\d3dinit.cpp Src\drD3D\config.cpp Src\drD3D\box.cpp   /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:".\Src\drD3D\drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" /LIBPATH:"%LIBCI_LIB%" %LIBS% ./%BIN_DIR%/doomsday.lib d3d8.lib d3dx8.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
+cl /O2 /Ob1 /I "./Include/drD3D" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 /Gz drD3D_res.obj Src\drD3D\window.cpp Src\drD3D\viewport.cpp Src\drD3D\texture.cpp Src\drD3D\state.cpp Src\drD3D\matrix.cpp Src\drD3D\main.cpp Src\drD3D\draw.cpp Src\drD3D\d3dinit.cpp Src\drD3D\config.cpp Src\drD3D\box.cpp   /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:".\Src\drD3D\drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" /LIBPATH:"%LIBCI_LIB%" %LIBS% ./%BIN_DIR%/doomsday.lib d3d8.lib d3dx8.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
 GOTO Done
 
 
