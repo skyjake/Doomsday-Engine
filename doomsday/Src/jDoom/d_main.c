@@ -96,6 +96,9 @@ char            *pagename;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
+static char gameModeString[17];
+
 // CODE --------------------------------------------------------------------
 
 //
@@ -291,15 +294,13 @@ boolean LumpsFound(char **list)
 }
 
 /*
- * IdentifyVersion
- *	Checks availability of IWAD files by name,
- *	to determine whether registered/commercial features
- *	should be executed (notably loading PWAD's).
+ * Checks availability of IWAD files by name, to determine whether 
+ * registered/commercial features  should be executed (notably loading 
+ * PWAD's).
  */
-void IdentifyVersion (void)
+void D_IdentifyFromData(void)
 {
-	typedef struct
-	{
+	typedef struct {
 		char		**lumps;
 		GameMode_t	mode;	
 	} identify_t;
@@ -381,7 +382,7 @@ void IdentifyVersion (void)
 	}
 	
 	// Now we must look at the lumps.
-	for(i=0; i<num; i++)
+	for(i = 0; i < num; i++)
 	{
 		// If all the listed lumps are found, selection is made.
 		// All found?
@@ -402,9 +403,32 @@ void IdentifyVersion (void)
 	}	
 
 	// A detection couldn't be made.
-	gamemode = indetermined;
+	gamemode = shareware; // Assume the minimum.
 	Con_Message("\nIdentifyVersion: DOOM version unknown.\n"
 		"** Important data might be missing! **\n\n");
+}
+
+/*
+ * gamemode, gamemission and the gameModeString are set.
+ */
+void D_IdentifyVersion(void)
+{
+	D_IdentifyFromData();
+
+	// The game mode string is returned in DD_Get(DD_GAME_MODE).
+	// It is sent out in netgames, and the pcl_hello2 packet contains it.
+	// A client can't connect unless the same game mode is used.
+	memset(gameModeString, 0, sizeof(gameModeString));
+
+	strcpy(gameModeString, 
+		  gamemode == shareware?  "doom1-share"
+		: gamemode == registered? "doom1"
+		: gamemode == retail?     "doom1-ultimate"
+		: gamemode == commercial? 
+			( gamemission == pack_plut? "doom2-plut"
+			: gamemission == pack_tnt?  "doom2-tnt"
+			: "doom2" )
+		: "-");
 }
 		
 /*
@@ -765,7 +789,7 @@ void D_PostInit(void)
 
 	XG_ReadTypes();
 
-	IdentifyVersion();
+	D_IdentifyVersion();
 	D_DefaultBindings();
 	R_SetViewSize(screenblocks, 0);
 	G_SetGlowing();
@@ -973,6 +997,12 @@ char *D_Get(int id)
 	{
 	case DD_GAME_ID:
 		return "jDoom "VERSION_TEXT;
+
+	case DD_GAME_MODE:
+		return gameModeString;
+
+	case DD_GAME_CONFIG:
+		return gameConfigString;
 
 	case DD_VERSION_SHORT:
 		return VERSION_TEXT;

@@ -138,9 +138,7 @@ boolean Demo_BeginRecording(char *filename, int playernum)
 	{
 		// Clients need a Handshake packet.
 		// Request a new one from the server.
-		Msg_Begin(pcl_hello);
-		Msg_WriteLong(clientID);
-		Net_SendBuffer(0, SPF_RELIABLE);
+		Cl_SendHello();
 	}
 
 	// The operation is a success.

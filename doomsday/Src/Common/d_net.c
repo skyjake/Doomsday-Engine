@@ -358,7 +358,8 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		if(showmsg)
 		{
 			// Print a notification.
-			sprintf(msgbuff, "%s joined the game", N_GetPlayerName(plrNumber));
+			sprintf(msgbuff, "%s joined the game", 
+				Net_GetPlayerName(plrNumber));
 			D_NetMessage(msgbuff);
 		}
 	}
@@ -376,7 +377,7 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		players[plrNumber].playerstate = PST_GONE;
 
 		// Print a notification.
-		sprintf(msgbuff, "%s left the game", N_GetPlayerName(plrNumber));
+		sprintf(msgbuff, "%s left the game", Net_GetPlayerName(plrNumber));
 		D_NetMessage(msgbuff);
 
 		if(IS_SERVER) P_DealPlayerStarts();
@@ -393,7 +394,7 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		// If there are more than two players, include the name of
 		// the player who sent this.
 		if(num > 2)
-			sprintf(msgbuff, "%s: %s", N_GetPlayerName(plrNumber), data);
+			sprintf(msgbuff, "%s: %s", Net_GetPlayerName(plrNumber), data);
 		else
 			strcpy(msgbuff, data);
 

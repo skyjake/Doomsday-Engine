@@ -15,6 +15,7 @@
 
 extern boolean	cycling_maps, map_cycle_noexit;
 extern char		*map_cycle;
+extern char		gameConfigString[128];
 
 void P_Telefrag(mobj_t *thing);
 
@@ -38,6 +39,7 @@ void NetSv_LoadGame(unsigned int game_id);
 void NetSv_LoadReply(int plnum, int console);
 void NetSv_FragsForAll(player_t *player);
 void NetSv_KillMessage(player_t *killer, player_t *fragged);
+void NetSv_UpdateGameConfig(void);
 
 int CCmdMapCycle(int argc, char **argv);
 

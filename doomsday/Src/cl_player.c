@@ -122,11 +122,11 @@ int Cl_ReadPlayerDelta(void)
 			
 			// Find the new mobj.
 			s->cmo = Cl_FindMobj(s->mobjid);
-/*#if _DEBUG
-			ST_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjid, old); 
-			ST_Message("  x=%x y=%x z=%x\n", s->cmo->mo.x,
+#if _DEBUG
+			Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjid, old); 
+			Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.x,
 				s->cmo->mo.y, s->cmo->mo.z);
-#endif*/
+#endif
 			s->cmo->mo.dplayer = pl;
 
 #if _DEBUG

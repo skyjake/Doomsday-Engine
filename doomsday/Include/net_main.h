@@ -60,10 +60,9 @@ enum
 	pkt_coords,
 	pkt_democam,
 	pkt_democam_resume,
+	pcl_hello2,			// Includes game id
 
 	// World events.
-	//psv_sector_update	= DDPT_SECTOR_UPDATE,		// 32
-	//psv_wall_update		= DDPT_WALL_UPDATE,			// 33
 	psv_plane_sound		= DDPT_PLANE_SOUND,			// 32
 	
 	// Game specific events.
@@ -170,9 +169,8 @@ typedef struct
 	// Field of view. Used in determining visible mobjs (default: 90).
 	float	fov;
 
-	// jtNet node for this player.
-	unsigned int nodeID;	// jtNet node ID.
-	int		jtNetNode;		// The corresponding jtNet node number (-1=none).
+	// The DirectPlay player that represents this client.
+	unsigned int nodeID;	// DP player ID.
 
 	// Ping tracker for this client.
 	pinger_t ping;
@@ -268,6 +266,9 @@ int Net_GetTicCmd(void *cmd, int player);
 void Net_Update(void);
 void Net_Ticker(void);
 void Net_Drawer(void);
+
+char* Net_GetPlayerName(int player);
+id_t Net_GetPlayerID(int player);
 
 // Console commands.
 D_CMD( Kick );

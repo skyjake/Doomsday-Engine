@@ -4,6 +4,10 @@
 #ifndef __DOOMSDAY_MAIN_H__
 #define __DOOMSDAY_MAIN_H__
 
+// Verbose messages.
+#define VERBOSE(code)	{ if(verbose >= 1) { code; } }
+#define VERBOSE2(code)	{ if(verbose >= 2) { code; } }
+
 extern int verbose;
 extern int maxzone;	
 extern int shareware;		// true if only episode 1 present

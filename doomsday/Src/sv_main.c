@@ -11,10 +11,11 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
+#include "de_misc.h"
+
+#include "r_world.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define MASTER_HEARTBEAT	120 // seconds
 
 // TYPES -------------------------------------------------------------------
 
@@ -31,11 +32,70 @@
 int net_remoteuser = 0;		// The client who is currently logged in.
 char *net_password = "";	// Remote login password.
 
+// This is the limit when accepting new clients.
+int sv_maxPlayers = MAXPLAYERS;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-// Returns gametic - cmdtime.
+/*
+ * Fills the provided struct with information about the local server.
+ */
+void Sv_GetInfo(serverinfo_t *info)
+{
+	int i;
+
+	memset(info, 0, sizeof(*info));
+
+	// Let's figure out what we want to tell about ourselves.
+	info->version = DOOMSDAY_VERSION;
+	strncpy(info->game, gx.Get(DD_GAME_ID), sizeof(info->game) - 1);
+	strncpy(info->gameMode, gx.Get(DD_GAME_MODE), 
+		sizeof(info->gameMode) - 1);
+	strncpy(info->gameConfig, gx.Get(DD_GAME_CONFIG), 
+		sizeof(info->gameConfig) - 1);
+	strncpy(info->name, serverName, sizeof(info->name) - 1);
+	strncpy(info->description, serverInfo, sizeof(info->description) - 1);
+	info->players = Sv_GetNumPlayers();
+
+	// The server player is there, it's just hidden.
+	info->maxPlayers = MAXPLAYERS - (isDedicated? 1 : 0);
+
+	// Don't go over the limit.
+	if(info->maxPlayers > sv_maxPlayers) info->maxPlayers = sv_maxPlayers;
+
+	info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < sv_maxPlayers);
+
+	// Identifier of the current map.
+	strncpy(info->map, R_GetCurrentLevelID(), sizeof(info->map) - 1);
+	
+	// These are largely unused at the moment... Mainly intended for 
+	// the game's custom values.
+	memcpy(info->data, serverData, sizeof(info->data));
+
+	// Also include the port we're using.
+	info->port = nptIPPort;
+
+	// Let's compile a list of client names.
+	for(i = 0; i < MAXPLAYERS; ++i)
+		if(clients[i].connected)
+		{
+			M_LimitedStrCat(clients[i].name, 15, ';', info->clientNames, 
+				sizeof(info->clientNames));
+		}
+
+	// Some WAD names.
+	W_GetIWADFileName(info->iwad, sizeof(info->iwad) - 1);
+	W_GetPWADFileNames(info->pwads, sizeof(info->pwads), ';');
+
+	// This should be a CRC number that describes all the loaded data.
+	info->wadNumber = W_CRCNumber();
+}
+
+/*
+ * Returns gametic - cmdtime.
+ */
 int Sv_Latency(byte cmdtime)
 {
 	return Net_TimeDelta(gametic, cmdtime);
@@ -75,14 +135,29 @@ void Sv_HandlePacket(void)
 	playerinfo_packet_t info;
 	int msgfrom;
 	char *msg;
+	char buf[17];
 
 	switch(netbuffer.msg.type)
 	{
 	case pcl_hello:
+	case pcl_hello2:
 		// Get the ID of the client.
 		sender->id = Msg_ReadLong();
 		Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", from,
 			sender->id);
+		
+		if(netbuffer.msg.type == pcl_hello2)
+		{
+			// Check the game mode (max 16 chars).
+			Msg_Read(buf, 16);
+			if(strnicmp(buf, gx.Get(DD_GAME_MODE), 16))
+			{
+				Con_Printf("  Bad Game ID: %-.16s\n", buf);
+				N_TerminateClient(from);
+				break;
+			}
+		}
+		
 		// The client requests a handshake.
 		if(!pl->ingame && !sender->handshake)
 		{
@@ -231,15 +306,10 @@ void Sv_ExecuteCommand(void)
 	Con_Execute(netbuffer.cursor, silent);		
 }
 
-//========================================================================
-//
-// Sv_GetPackets
-//
-// Server's packet handler.
-//
-//========================================================================
-
-void Sv_GetPackets (void)
+/*
+ * Server's packet handler.
+ */
+void Sv_GetPackets(void)
 {
 	int             netconsole;
 	int				start, num, i, time;
@@ -312,6 +382,7 @@ void Sv_GetPackets (void)
 			break;
 
 		case pcl_hello:
+		case pcl_hello2:
 		case pkt_ok:
 		case pkt_chat:
 		case pkt_player_info:
@@ -338,11 +409,15 @@ void Sv_GetPackets (void)
 	}
 }
 
-// Called by jtNet.
-void Sv_PlayerArrives(int newnode)
+/*
+ * Assign a new console to the player. Returns true if successful.
+ * Called by N_Update().
+ */
+boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
 {
 	int		i;
-	char	**nameList, newname[PLAYERNAMELEN];
+
+/*	char	**nameList, newname[PLAYERNAMELEN];
 	unsigned int nodeids[MAXPLAYERS];
 
 	if(!netgame)
@@ -360,6 +435,8 @@ void Sv_PlayerArrives(int newnode)
 	N_UpdateNodes();
 	
 	jtNetGetPlayerIDs(nodeids);
+*/
+	Con_Message("Sv_PlayerArrives: '%s' has arrived.\n", name);
 
 	// We need to find the new player a client entry.
 	for(i = 1; i < MAXPLAYERS; i++)
@@ -368,34 +445,38 @@ void Sv_PlayerArrives(int newnode)
 			// This'll do.
 			clients[i].connected = true;
 			clients[i].ready = false;
-			clients[i].jtNetNode = newnode;
-			clients[i].nodeID = nodeids[newnode];
+			clients[i].nodeID = nodeID;
 			clients[i].viewConsole = i;
 			clients[i].lastTransmit = -1;
-			strcpy(clients[i].name, newname);
+			strncpy(clients[i].name, name, PLAYERNAMELEN);
+			
 			Sv_InitPoolForClient(i);
 
-			Con_Printf("Sv_PlayerArrives: %s designated player %i, node %i (%x)\n",
-				clients[i].name, i, newnode, nodeids[newnode]);
+			Con_Printf("Sv_PlayerArrives: '%s' assigned to console %i "
+				"(node: %x)\n", clients[i].name, i, nodeID);
 
 			// In order to get in the game, the client must first
 			// shake hands. It'll request this by sending a Hello packet.
+			// We'll be waiting...
 			clients[i].handshake = false;
 			clients[i].updateCount = UPDATECOUNT;
-			break;
+			return true;
 		}
+
+	return false;
 }
 
-// Called by jtNet.
-void Sv_PlayerLeaves(jtnetplayer_t *plrdata)
+/*
+ * Remove the specified player from the game. Called by N_Update().
+ */
+void Sv_PlayerLeaves(unsigned int nodeID)
 {
 	int i, pNumber = -1;
+	boolean wasInGame;
 
-	if(isClient) return;
-
-	// First let's find out the player number.
-	for(i=0; i<MAXPLAYERS; i++)
-		if(clients[i].nodeID == plrdata->id)
+	// First let's find out who this node actually is.
+	for(i = 0; i < MAXPLAYERS; i++)
+		if(clients[i].nodeID == nodeID)
 		{
 			pNumber = i;
 			break;
@@ -405,22 +486,28 @@ void Sv_PlayerLeaves(jtnetplayer_t *plrdata)
 	// Log off automatically.
 	if(net_remoteuser == pNumber) net_remoteuser = 0;
 
-	// Print something in the console.
-	Con_Printf("Sv_PlayerLeaves: %s (player %i) has left.\n", plrdata->name, pNumber);
+	// Print a little something in the console.
+	Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left.\n", 
+		clients[pNumber].name, pNumber);
+
+	wasInGame = players[pNumber].ingame;
 	players[pNumber].ingame = false;
 	clients[pNumber].connected = false;
 	clients[pNumber].ready = false;
 	clients[pNumber].updateCount = 0;
 	clients[pNumber].handshake = false;
-	N_UpdateNodes();
-	
-	// Inform the DLL about this.
-	gx.NetPlayerEvent(pNumber, DDPE_EXIT, NULL);
+	clients[pNumber].nodeID = 0;
 
-	// Inform other clients about this.
-	Msg_Begin(psv_player_exit);
-	Msg_WriteByte(pNumber);
-	Net_SendBuffer(NSP_BROADCAST, SPF_RELIABLE);
+	if(wasInGame)
+	{
+		// Inform the DLL about this.
+		gx.NetPlayerEvent(pNumber, DDPE_EXIT, NULL);
+
+		// Inform other clients about this.
+		Msg_Begin(psv_player_exit);
+		Msg_WriteByte(pNumber);
+		Net_SendBuffer(NSP_BROADCAST, SPF_RELIABLE);
+	}
 }
 
 // The player will be sent the introductory handshake packets.
@@ -430,7 +517,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
 	handshake_packet_t		shake;
 	playerinfo_packet_t		info;
 
-	Con_Printf("Sv_Handshake: shaking hands with player %i.\n", playernum);
+	Con_Printf("Sv_Handshake: Shaking hands with player %i.\n", playernum);
 
 	shake.version = SV_VERSION;
 	shake.yourConsole = playernum;
@@ -499,6 +586,7 @@ void Sv_StartNetGame()
 		players[i].ingame = false;
 		clients[i].connected = false;
 		clients[i].ready = false;
+		clients[i].nodeID = 0;
 		clients[i].numtics = 0;
 		clients[i].firsttic = 0;
 		clients[i].enterTime = 0;
@@ -509,7 +597,7 @@ void Sv_StartNetGame()
 		clients[i].updateCount = UPDATECOUNT;
 		clients[i].fov = 90;
 		clients[i].viewConsole = i;
-		strcpy(clients[i].name, "");
+		memset(clients[i].name, 0, sizeof(clients[i].name));
 		players[i].flags &= ~DDPF_CAMERA;
 	}
 	gametic = 0;
@@ -560,15 +648,6 @@ void Sv_Ticker(void)
 {
 	int i;
 
-	if(netgame)
-	{
-		// Update master every 2 minutes.
-		if(masterAware && jtNetGetInteger(JTNET_SERVICE) == 
-			JTNET_SERVICE_TCPIP && !(systics % (MASTER_HEARTBEAT*TICRATE)))
-		{
-			N_MasterAnnounceServer(true);
-		}
-	}
 	// Note last angles for all players.
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
@@ -578,10 +657,9 @@ void Sv_Ticker(void)
 	Sv_PoolTicker();
 }
 
-//===========================================================================
-// Sv_GetNumPlayers
-//	Returns the number of players in the game.
-//===========================================================================
+/*
+ * Returns the number of players in the game.
+ */
 int Sv_GetNumPlayers(void)
 {
 	int i, count;
@@ -593,6 +671,23 @@ int Sv_GetNumPlayers(void)
 	{
 		if(players[i].ingame && players[i].mo) count++;
 	}
+	return count;
+}
+
+/*
+ * Returns the number of connected clients.
+ */
+int Sv_GetNumConnected(void)
+{
+	int i, count = 0;
+
+	// Clients can't count.
+	if(isClient) return 1;
+
+	for(i = isDedicated? 1 : 0; i < MAXPLAYERS; ++i)
+		if(clients[i].connected)
+			count++;
+
 	return count;
 }
 

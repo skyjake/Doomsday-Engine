@@ -84,6 +84,25 @@ void Cl_CleanUp()
 	GL_SetFilter(0);
 }
 
+/*
+ * Sends a hello packet. 
+ * pcl_hello2 includes the Game ID (5 chars).
+ */
+void Cl_SendHello(void)
+{
+	char buf[16];
+
+	Msg_Begin(pcl_hello2);
+	Msg_WriteLong(clientID);
+	
+	// The game mode is included in the hello packet.
+	memset(buf, 0, sizeof(buf));
+	strncpy(buf, gx.Get(DD_GAME_MODE), sizeof(buf));
+	Msg_Write(buf, 16);
+
+	Net_SendBuffer(0, SPF_RELIABLE);
+}
+
 void Cl_AnswerHandshake(handshake_packet_t *pShake)
 {
 	handshake_packet_t shake;
@@ -99,7 +118,7 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	// Check the version number.
 	if(shake.version != SV_VERSION)
 	{
-		Con_Message("Cl_AnswerHandshake: version conflict! (you:%i server:%i)\n",
+		Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
 			SV_VERSION, shake.version);
 		Con_Execute("net disconnect", false);
 		Demo_StopPlayback();

@@ -2964,7 +2964,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 	if(!IS_CLIENT)
 	{
 	    // force players to be initialized upon first level load         
-		for (i=0 ; i<MAXPLAYERS ; i++) 
+		for(i = 0; i < MAXPLAYERS; i++) 
 		{
 			players[i].playerstate = PST_REBORN; 
 #if __JHEXEN__
@@ -2985,6 +2985,8 @@ void G_InitNew(skill_t skill, int episode, int map)
     gamemap = map; 
     gameskill = skill; 
 	GL_Update(DDUF_BORDER);
+
+	NetSv_UpdateGameConfig();
 
 	// Tell the engine if we want that all players know 
 	// where everybody else is.

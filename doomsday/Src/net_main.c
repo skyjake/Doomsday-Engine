@@ -124,6 +124,7 @@ cvar_t netCVars[] =
 	"server-sector-min",	CVF_NO_MAX,	CVT_INT,	&net_minsecupd,		0, 0,	"Block range for forced sector deltas.",
 	"server-sector-full",	CVF_NO_MAX,	CVT_INT,	&net_fullsecupd,	0, 0,	"Block range for full (w/reject) sector deltas.",
 	"server-sector-max",	CVF_NO_MAX,	CVT_INT,	&net_maxsecupd,		0, 0,	"Maximum block range for sector deltas.",
+	"server-player-limit",	0,			CVT_INT,	&sv_maxPlayers,		0, MAXPLAYERS, "Maximum number of players on the server.",
 	NULL
 };
 
@@ -153,6 +154,24 @@ void Net_Shutdown(void)
 	netgame = false;
 	N_Shutdown();
 	Net_DestroyArrays();
+}
+
+//===========================================================================
+// Net_GetPlayerName
+//	Returns the name of the specified player.
+//===========================================================================
+char *Net_GetPlayerName(int player)
+{
+	return clients[player].name;
+}
+
+//===========================================================================
+// Net_GetPlayerID
+//===========================================================================
+id_t Net_GetPlayerID(int player)
+{
+	if(!clients[player].connected) return 0;
+	return clients[player].id;
 }
 
 //===========================================================================
@@ -326,11 +345,16 @@ int CCmdChat(int argc, char **argv)
 
 	if(!isClient)
 	{
-		if(mask == ~0) 
+		if(mask == (unsigned short) ~0) 
+		{
 			Net_SendBuffer(NSP_BROADCAST, SPF_RELIABLE);
+		}
 		else 
-			for(i = 1; i < MAXPLAYERS; i++) if(mask & (1 << i)) 
-				Net_SendBuffer(i, SPF_RELIABLE);
+		{
+			for(i = 1; i < MAXPLAYERS; i++) 
+				if(players[i].ingame && mask & (1 << i)) 
+					Net_SendBuffer(i, SPF_RELIABLE);
+		}
 	}
 	else
 	{
@@ -856,14 +880,14 @@ void Net_Ticker(void)
 	// The following stuff is only for netgames.
 	if(!netgame) return;
 
-	if(monitorSendQueue && monitorCount-- <= 0)
+	/*if(monitorSendQueue && monitorCount-- <= 0)
 	{
 		int num, bytes;
 		monitorCount = MONITORTICS;
 		num = jtNetCheckQueue(clients[!consoleplayer].jtNetNode, &bytes);
 		Con_Printf("Queue to %i: %i packets, %i bytes.\n",
 			!consoleplayer, num, bytes);
-	}
+	}*/
 
 	// Check the pingers.
 	for(i=0, cl=clients; i<MAXPLAYERS; i++, cl++)
@@ -1030,11 +1054,11 @@ int CCmdSetConsole(int argc, char **argv)
 //===========================================================================
 int CCmdConnect(int argc, char **argv)
 {
-	int port = 0, num, returnValue = false;
-	jtnetserver_t *list;
+	int port = 0, returnValue = false;
 	double startTime;
 	char buf[100], *ptr;
 	boolean needCloseStartup = false;
+	serverinfo_t info;
 
 	if(argc < 2 || argc > 3)
 	{
@@ -1063,7 +1087,7 @@ int CCmdConnect(int argc, char **argv)
 	}
 	if(argc == 3) port = strtol(argv[2], 0, 0);
 	Con_SetString("net-ip-address", buf);
-	Con_SetInteger("net-ip-port", port);
+	/*Con_SetInteger("net-ip-port", port);*/
 
 	// If not already there, go to startup screen mode.
 	if(!startupScreen)
@@ -1075,33 +1099,32 @@ int CCmdConnect(int argc, char **argv)
 	Con_Message("");
 
 	// Make sure TCP/IP is active.
-	N_ShutdownService();
-	if(!N_InitService(JTNET_SERVICE_TCPIP))
+	if(!N_InitService(NSP_TCPIP, false))
 	{
 		Con_Message("TCP/IP not available.\n");
 		goto endConnect;
 	}
 
-	Con_Message("Connecting to %s (port %i)...\n", buf, port);
+	Con_Message("Connecting to %s...\n", buf);
+
+	// Start searching at the specified location.
+	N_LookForHosts();
 	
 	for(startTime = Sys_GetSeconds(); 
 		Sys_GetSeconds() - startTime < net_connecttimeout; 
 		Sys_Sleep(250))
 	{
-		num = jtNetGetServerInfo(NULL, 0);
-		if(num <= 0) continue;
-		// Found something! Connect to the first in the list.
-		list = malloc(sizeof(jtnetserver_t) * num);
-		jtNetGetServerInfo(list, num);
-		Con_Printf("Server: %s\n", list->name);
-		Con_Printf("Description: %s\n", list->description);
-		Con_Printf("Players: %i/%i\n", list->players, list->maxPlayers);
+		if(!N_GetHostInfo(0, &info)) continue;
+
+		// Found something! 
+		N_PrintServerInfo(0, NULL);
+		N_PrintServerInfo(0, &info);
 		Con_Execute("net connect 0", false);
-		free(list);
+
 		returnValue = true;
 		goto endConnect;
 	}
-	Con_Printf("No server found at %s.\n", buf);
+	Con_Printf("No response from %s.\n", buf);
 
 endConnect:
 	if(needCloseStartup) Con_StartupDone();

@@ -8,6 +8,9 @@
 //** Sockets were initialized by sys_network.
 //**
 //** $Log$
+//** Revision 1.2  2003/05/23 22:16:15  skyjake
+//** DP8, various net-related improvements
+//**
 //** Revision 1.1  2003/03/09 16:03:51  skyjake
 //** New master server mechanism
 //**
@@ -139,6 +142,16 @@ int N_MasterSendAnnouncement(void *parm)
 	Str_Append(&msg, buf);
 	sprintf(buf, "game:%s\n", info->game);
 	Str_Append(&msg, buf);
+	sprintf(buf, "mode:%s\n", info->gameMode);
+	Str_Append(&msg, buf);
+	sprintf(buf, "setup:%s\n", info->gameConfig);
+	Str_Append(&msg, buf);
+	sprintf(buf, "iwad:%s\n", info->iwad);
+	Str_Append(&msg, buf);
+	sprintf(buf, "wcrc:%i\n", info->wadNumber);
+	Str_Append(&msg, buf);
+	sprintf(buf, "pwads:%s\n", info->pwads);
+	Str_Append(&msg, buf);
 	sprintf(buf, "map:%s\n", info->map);
 	Str_Append(&msg, buf);
 	sprintf(buf, "nump:%i\n", info->players);
@@ -146,6 +159,8 @@ int N_MasterSendAnnouncement(void *parm)
 	sprintf(buf, "maxp:%i\n", info->maxPlayers);
 	Str_Append(&msg, buf);
 	sprintf(buf, "open:%i\n", info->canJoin);
+	Str_Append(&msg, buf);
+	sprintf(buf, "plrn:%s\n", info->clientNames);
 	Str_Append(&msg, buf);
 	for(i = 0; i < sizeof(info->data)/sizeof(info->data[0]); i++)
 	{
@@ -161,7 +176,7 @@ int N_MasterSendAnnouncement(void *parm)
 	N_SockPrintf(s, "POST %s HTTP/1.1\n", masterPath);
 	N_SockPrintf(s, "Host: %s\n", masterAddress);
 	N_SockPrintf(s, "Connection: close\n");
-	N_SockPrintf(s, "Content-Type: text/deng-announcement\n");
+	N_SockPrintf(s, "Content-Type: application/x-deng-announce\n");
 	N_SockPrintf(s, "Content-Length: %i\n\n", length);
 	send(s, Str_Text(&msg), length, 0);
 	Str_Free(&msg);
@@ -381,6 +396,30 @@ void N_MasterParseResponse(ddstring_t *response)
 		{
 			info->canJoin = strtol(value, 0, 0);
 		}
+		else if(!strcmp(label, "mode"))
+		{
+			strncpy(info->gameMode, value, sizeof(info->gameMode) - 1);
+		}
+		else if(!strcmp(label, "setup"))
+		{
+			strncpy(info->gameConfig, value, sizeof(info->gameConfig) - 1);
+		}
+		else if(!strcmp(label, "iwad"))
+		{
+			strncpy(info->iwad, value, sizeof(info->iwad) - 1);
+		}
+		else if(!strcmp(label, "wcrc"))
+		{
+			info->wadNumber = strtol(value, 0, 0);
+		}
+		else if(!strcmp(label, "pwads"))
+		{
+			strncpy(info->pwads, value, sizeof(info->pwads) - 1);
+		}
+		else if(!strcmp(label, "plrn"))
+		{
+			strncpy(info->clientNames, value, sizeof(info->clientNames) - 1);
+		}
 		else if(!strcmp(label, "data0"))
 		{
 			info->data[0] = strtol(value, 0, 16);
@@ -393,6 +432,7 @@ void N_MasterParseResponse(ddstring_t *response)
 		{
 			info->data[2] = strtol(value, 0, 16);
 		}
+		// Unknown labels are ignored.
 	}
 	
 	Str_Free(&line);
@@ -496,25 +536,14 @@ void N_MasterAnnounceServer(boolean isOpen)
 	// The communication begins.
 	communicating = true;
 
-	// The info is not freed in this function.
+	// The info is not freed in this function, but in 
+	// N_MasterSendAnnouncement().
 	info = calloc(sizeof(serverinfo_t), 1);
 
 	// Let's figure out what we want to tell about ourselves.
-	info->version = DOOMSDAY_VERSION;
-	strncpy(info->game, gx.Get(DD_GAME_ID), sizeof(info->game) - 1);
-	strncpy(info->name, serverName, sizeof(info->name) - 1);
-	strncpy(info->description, serverInfo, sizeof(info->description) - 1);
-	info->players = Sv_GetNumPlayers();
-	info->canJoin = isOpen;
-	// Identifier of the current map.
-	strncpy(info->map, R_GetCurrentLevelID(), sizeof(info->map) - 1);
-		
-	// The server player is there, it's just hidden.
-	info->maxPlayers = MAXPLAYERS - (isDedicated? 1 : 0);
-	memcpy(info->data, serverData, sizeof(info->data));
+	Sv_GetInfo(info);
 
-	// Also include the port we're using.
-	info->port = nptIPPort;
+	if(!isOpen) info->canJoin = false;
 
 	// The announcement thread runs at 'below normal' priority.
 	Sys_StartThread(N_MasterSendAnnouncement, info, MST_PRIORITY);

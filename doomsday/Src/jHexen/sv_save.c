@@ -1153,7 +1153,7 @@ static void ArchivePlayers(void)
 	{
 		if(!players[i].plr->ingame)	continue;
 
-		StreamOutLong(N_GetPlayerID(i));
+		StreamOutLong(Net_GetPlayerID(i));
 		ArchivePlayer(players + i);
 		
 		/*StreamOutByte(cfg.PlayerClass[i]);
@@ -1247,7 +1247,7 @@ static void UnarchivePlayers(void)
 		// The ID number will determine which player this actually is.
 		pid = GET_LONG;
 		for(player = 0, j = 0; j < MAXPLAYERS; j++)
-			if(N_GetPlayerID(j) == pid)
+			if(Net_GetPlayerID(j) == pid)
 			{
 				// This is our guy.
 				player = players + j;

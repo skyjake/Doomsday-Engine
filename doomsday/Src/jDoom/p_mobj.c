@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2003/05/23 22:16:16  skyjake
+// DP8, various net-related improvements
+//
 // Revision 1.5  2003/04/29 13:11:53  skyjake
 // Missile puff ptcgen issue fixed
 //
@@ -681,9 +684,8 @@ void P_MobjThinker (mobj_t* mobj)
 mobj_t* P_SpawnMobj( fixed_t x, fixed_t y, fixed_t z, mobjtype_t type )
 {
     mobj_t*	mobj;
-    //state_t*	st;
     mobjinfo_t*	info;
-	
+
     mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
     memset (mobj, 0, sizeof (*mobj));
     info = &mobjinfo[type];

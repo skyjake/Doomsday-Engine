@@ -1465,7 +1465,7 @@ void AM_DrawDeathmatchStats(void)
 		{
 			GL_SetColor(their_colors[cfg.PlayerColor[order[i]]]);
 			memset(textBuffer, 0, 80);
-			strncpy(textBuffer, N_GetPlayerName(order[i]), 78);
+			strncpy(textBuffer, Net_GetPlayerName(order[i]), 78);
 			strcat(textBuffer, ":");
 			MN_TextFilter(textBuffer);
 			MN_DrTextA_CS(textBuffer, 4, yPosition);

@@ -197,6 +197,8 @@ enum
 	DD_LUMP,
 	DD_CD_TRACK,
 	DD_FLAT,
+	DD_GAME_MODE,	// 16 chars max (swdoom, doom1, udoom, tnt, heretic...) 
+	DD_GAME_CONFIG,	// String: dm/co-op, jumping, etc.
 
 	// Queries
 	DD_TEXTURE_HEIGHT_QUERY			= 0x2000,
@@ -955,18 +957,28 @@ enum
 	DDWE_DEMO_END				// Demo playback ends.
 };
 
-typedef struct
-{
+/*
+ * Do not modify this structure: Servers send it as-is to clients.
+ * Only add elements to the end.
+ */
+typedef struct serverinfo_s {
 	int		version;
 	char	name[64];
-	char	description[128];
+	char	description[80];
 	int		players, maxPlayers;
-	int		canJoin;
-	int		data[3];
+	char	canJoin;
 	char	address[64];
 	int		port;
-	char	game[64];
-	char	map[64];
+	unsigned short ping; // milliseconds
+	char	game[32];	// DLL and version
+	char	gameMode[17];
+	char	gameConfig[40];
+	char	map[20];
+	char	clientNames[128];
+	unsigned int wadNumber;
+	char	iwad[32];
+	char	pwads[128];
+	int		data[3];
 } serverinfo_t;
 
 typedef struct

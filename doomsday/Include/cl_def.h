@@ -38,6 +38,7 @@ void Cl_CleanUp();
 void Cl_GetPackets(void);
 void Cl_Ticker(void);
 int Cl_GameReady();
+void Cl_SendHello(void);
 
 // 
 // cl_frame.c

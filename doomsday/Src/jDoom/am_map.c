@@ -1522,7 +1522,7 @@ void AM_drawFragsTable(void)
 			}
 		}
 		// Draw the choice.
-		name =N_GetPlayerName(choose);
+		name = Net_GetPlayerName(choose);
 		switch(cfg.PlayerColor[choose])
 		{
 		case 0: // green 

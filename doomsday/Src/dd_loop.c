@@ -196,7 +196,12 @@ void DD_TryRunTics (void)
 {
 	int counts;
 
+	// Low-level network update.
+	N_Update();
+
+	// High-level network update.
 	Net_Update();
+
 	// Wait for at least one tic. (realtics >= availabletics)
 	while(!(counts = (netgame||ui_active? realtics : availabletics)))
 	{

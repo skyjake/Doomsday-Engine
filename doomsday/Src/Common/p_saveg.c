@@ -714,7 +714,7 @@ void P_ArchivePlayers(void)
     for(i=0; i<MAXPLAYERS; i++)
     {
 		if(!players[i].plr->ingame) continue;
-		SV_WriteLong(N_GetPlayerID(i));
+		SV_WriteLong(Net_GetPlayerID(i));
 		SV_WritePlayer(i);
     }
 }
@@ -744,7 +744,7 @@ void P_UnArchivePlayers(boolean *infile, boolean *loaded)
 		// The ID number will determine which player this actually is.
 		pid = SV_ReadLong();
 		for(player=0, j=0; j<MAXPLAYERS; j++)
-			if(N_GetPlayerID(j) == pid)
+			if(Net_GetPlayerID(j) == pid)
 			{
 				// This is our guy.
 				player = players + j;

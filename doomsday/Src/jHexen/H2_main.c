@@ -134,6 +134,8 @@ static execOpt_t ExecOptions[] =
 	{ NULL, NULL, 0, 0 } // Terminator
 };
 
+static char gameModeString[17];
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -174,7 +176,7 @@ void H2_PreInit(void)
 	G_InitDGL();
 
 	// Setup the players.
-	for(i=0; i<MAXPLAYERS; i++)
+	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		players[i].plr = DD_GetPlayer(i);
 		players[i].plr->extradata = (void*) &players[i];
@@ -239,7 +241,18 @@ void H2_PostInit(void)
 {
 	int	pClass, p;
 
-	Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "jHexen "VERSIONTEXT"\n");
+	// Determine the game mode.
+	strcpy(gameModeString, "hexen");
+	
+	// This is not a very accurate test...
+	if(W_CheckNumForName("MAP59") >= 0 && W_CheckNumForName("MAP60") >= 0)
+	{
+		// It must be Death Kings!
+		strcpy(gameModeString, "hexen-dk");
+	}
+
+	Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "jHexen "
+		VERSIONTEXT"\n");
 	Con_FPrintf(CBLF_RULER, "");
 
 	H2_DefaultBindings();
@@ -669,6 +682,12 @@ char *H2_GetString(int id)
 	{
 	case DD_GAME_ID:
 		return "jHexen "VERSION_TEXT;
+
+	case DD_GAME_MODE:
+		return gameModeString;
+
+	case DD_GAME_CONFIG:
+		return gameConfigString;
 
 	case DD_VERSION_SHORT:
 		return VERSION_TEXT;

@@ -93,8 +93,8 @@ EXPORTS
 ; Network.
 	Net_SendPacket		@53 NONAME
 	Net_GetTicCmd		@54 NONAME
-	N_GetPlayerName		@55 NONAME
-	N_GetPlayerID		@56 NONAME
+	Net_GetPlayerName	@55 NONAME
+	Net_GetPlayerID		@56 NONAME
 
 ; Play.
 	P_AccurateDistance		@57 NONAME

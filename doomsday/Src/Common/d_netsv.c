@@ -80,6 +80,10 @@ char		*map_cycle = "";
 boolean		map_cycle_noexit = true;
 int			netsv_allow_sendmsg = true;
 
+// This is returned in *_Get(DD_GAME_CONFIG). It contains a combination
+// of space-separated keywords.
+char		gameConfigString[128];
+
 // PRIVATE DATA -----------------------------------------------------------
 
 static int	cycle_index;
@@ -88,6 +92,34 @@ static int	oldpals[MAXPLAYERS];
 static int	oldclasses[MAXPLAYERS];
 
 // CODE -------------------------------------------------------------------
+
+//===========================================================================
+// NetSv_UpdateGameConfig
+//	Update the game config string with keywords that describe the game.
+//	The string is sent out in netgames (also to the master).
+//  Keywords: dm, coop, jump, nomonst, respawn, skillN
+//===========================================================================
+void NetSv_UpdateGameConfig(void)
+{
+	if(IS_CLIENT) return;
+
+	memset(gameConfigString, 0, sizeof(gameConfigString));
+
+	sprintf(gameConfigString, "skill%i", gameskill + 1);
+
+	if(deathmatch > 1) 
+		sprintf(gameConfigString, " dm%i", deathmatch);
+	else if(deathmatch)
+		strcat(gameConfigString, " dm");
+	else
+		strcat(gameConfigString, " coop");
+
+	if(nomonsters) strcat(gameConfigString, " nomonst");
+	if(respawnparm) strcat(gameConfigString, " respawn");
+#if !__JHEXEN__
+	if(cfg.jumpEnabled) strcat(gameConfigString, " jump");
+#endif
+}
 
 //===========================================================================
 // NetSv_ScanCycle
@@ -297,7 +329,7 @@ void NetSv_CheckCycling(void)
 					if((f = NetSv_GetFrags(i)) >= rules.frags)
 					{
 						sprintf(msg, "--- %s REACHES %i FRAGS ---", 
-							N_GetPlayerName(i), f);
+							Net_GetPlayerName(i), f);
 						NetSv_SendMessage(DDSP_ALL_PLAYERS, msg);
 						S_StartSound(SOUND_VICTORY, NULL);
 						cycle_mode = CYCLE_COUNTDOWN;
@@ -724,19 +756,8 @@ void NetSv_SendGameState(int flags, int to)
 	// Print a short message that describes the game state.
 	if(ArgExists("-verbose") || IS_DEDICATED)
 	{
-		Con_Printf("Game setup: ep%i, map%i, skill%i, ",
-			gameepisode, gamemap, gameskill);
-		if(deathmatch) 
-			Con_Printf("dm%i, ", deathmatch);
-		else
-			Con_Printf("co-op, ");
-		Con_Printf("%smonst, %srespawn",
-			nomonsters? "!" : "", 
-			respawnparm? "" : "!");
-#if !__JHEXEN__
-		if(cfg.jumpEnabled) Con_Printf(", jump");
-#endif
-		Con_Printf("\n");
+		Con_Printf("Game setup: ep%i map%i %s\n",
+			gameepisode, gamemap, gameConfigString);
 	}
 /*
 	// We can't init the camera if we don't know which 
@@ -953,13 +974,13 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged)
 		{
 			if(in[1] == '1')
 			{
-				strcat(buf, N_GetPlayerName(killer - players));
+				strcat(buf, Net_GetPlayerName(killer - players));
 				in++;
 				continue;
 			}
 			if(in[1] == '2')
 			{
-				strcat(buf, N_GetPlayerName(fragged - players));
+				strcat(buf, Net_GetPlayerName(fragged - players));
 				in++;
 				continue;
 			}

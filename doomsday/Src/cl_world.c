@@ -103,7 +103,7 @@ void Cl_SetLumpTranslation(short lumpnum, char *name)
 	xlat_lump[lumpnum] = W_CheckNumForName(name);
 	if(xlat_lump[lumpnum] < 0)
 	{
-		if(verbose) Con_Message("Cl_SetLumpTranslation: %s not found.\n", name);
+		VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));
 		xlat_lump[lumpnum] = 0;
 	}
 }
@@ -503,7 +503,7 @@ int Cl_ReadLumpDelta(void)
 	memset(name, 0, sizeof(name));
 	Msg_Read(name, 8);
 
-	if(verbose) Con_Printf("LumpTranslate: %i => %s\n", num, name);
+	VERBOSE( Con_Printf("LumpTranslate: %i => %s\n", num, name) );
 
 	// Set up translation.
 	Cl_SetLumpTranslation(num, name);
