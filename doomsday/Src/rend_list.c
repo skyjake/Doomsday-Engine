@@ -18,7 +18,21 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 
+#define DD_PROFILE
+#include "m_profiler.h"
+
 // MACROS ------------------------------------------------------------------
+
+BEGIN_PROF_TIMERS()
+	PROF_RL_ADD_POLY,
+	PROF_RL_GET_LIST,
+	PROF_RL_RENDER_ALL,
+	PROF_RL_RENDER_NORMAL,
+	PROF_RL_RENDER_LIGHT,
+	PROF_RL_RENDER_MASKED
+END_PROF_TIMERS()
+
+#define RL_HASH_SIZE		128
 
 // FIXME: Rlist allocation could be dynamic.
 #define MAX_RLISTS			1024 
@@ -158,6 +172,7 @@ primflat_t;
 // The rendering list.
 typedef struct rendlist_s
 {
+	struct rendlist_s *next;
 	rendlisttype_t type;		// Quads or flats?
 	DGLuint	tex;				// The name of the texture for this list.
 	int		texw, texh;			// Width and height of the texture.
@@ -187,7 +202,7 @@ extern float		maxLightDist;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int					numrlists = 0;			// Number of rendering lists.
+//int					numrlists = 0;			// Number of rendering lists.
 boolean				renderTextures = true;
 
 // Intensity of angle-based wall lighting.
@@ -198,12 +213,22 @@ float				detailFactor = .5f;
 float				detailMaxDist = 256;
 float				detailScale = 4;
 
+typedef struct listhash_s {
+	rendlist_t *first, *last;
+} listhash_t;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static rendlist_t rlists[MAX_RLISTS]; // The list of rendering lists.
+//static rendlist_t rlists[MAX_RLISTS]; // The list of rendering lists.
+static listhash_t list_hash[RL_HASH_SIZE];
+
 static rendlist_t mask_rlists[NUM_RLSKY];
 static rendlist_t dl_rlists[NUM_RLDYN];
 static rendlist_t shadow_rlist;
+
+static rendlist_t *ptr_mask_rlists[NUM_RLSKY];
+static rendlist_t *ptr_dl_rlists[NUM_RLDYN];
+static rendlist_t *ptr_shadow_rlist[1] = { &shadow_rlist };
 
 // The rendering state for RL_Draw(Div)Quad and RL_DrawFlat.
 static int with_tex, with_col, with_det;
@@ -401,11 +426,24 @@ void RL_PrepareFlat(rendpoly_t *poly, int numvrts, fvertex_t *vrts,
 
 //===========================================================================
 // RL_Init
+//	Called only once, from R_Init -> Rend_Init.
 //===========================================================================
 void RL_Init(void)
 {
-	numrlists = 0;
-	memset(rlists, 0, sizeof(rlists));
+	int i;
+
+	for(i = 0; i < NUM_RLSKY; i++)
+	{
+		ptr_mask_rlists[i] = &mask_rlists[i];
+	}
+	for(i = 0; i < NUM_RLDYN; i++)
+	{
+		ptr_dl_rlists[i] = &dl_rlists[i];
+	}
+
+	//numrlists = 0;
+	//memset(rlists, 0, sizeof(rlists));
+	memset(list_hash, 0, sizeof(list_hash));
 	memset(mask_rlists, 0, sizeof(mask_rlists));
 	memset(dl_rlists, 0, sizeof(dl_rlists));
 	memset(&shadow_rlist, 0, sizeof(shadow_rlist));
@@ -418,10 +456,17 @@ void RL_DestroyList(rendlist_t *rl)
 {
 	// All the list data will be destroyed.
 	if(rl->data) Z_Free(rl->data);
+	rl->data = NULL;
+
 #if _DEBUG
 	Z_CheckHeap();
 #endif
-	memset(rl, 0, sizeof(rendlist_t));
+
+	rl->cursor = NULL;
+	rl->detail = NULL;
+	rl->last = NULL;
+	rl->size = 0;
+	rl->has = false;
 }
 
 //===========================================================================
@@ -430,14 +475,32 @@ void RL_DestroyList(rendlist_t *rl)
 //===========================================================================
 void RL_DeleteLists(void)
 {
-	int		i;
+	int	i;
+	rendlist_t *list, *next;
 
 	// Delete all lists.
-	for(i = 0; i < numrlists; i++) RL_DestroyList(&rlists[i]);
+	//for(i = 0; i < numrlists; i++) RL_DestroyList(&rlists[i]);
+	for(i = 0; i < RL_HASH_SIZE; i++)
+	{
+		for(list = list_hash[i].first; list; list = next)
+		{
+			next = list->next;
+			RL_DestroyList(list);
+			Z_Free(list);
+		}
+	}
+	memset(list_hash, 0, sizeof(list_hash));
 	for(i = 0; i < NUM_RLSKY; i++) RL_DestroyList(&mask_rlists[i]);
 	for(i = 0; i < NUM_RLDYN; i++) RL_DestroyList(&dl_rlists[i]);
 	RL_DestroyList(&shadow_rlist);
-	numrlists = 0;
+	//numrlists = 0;
+
+	PRINT_PROF( PROF_RL_ADD_POLY );
+	PRINT_PROF( PROF_RL_GET_LIST );
+	PRINT_PROF( PROF_RL_RENDER_ALL );
+	PRINT_PROF( PROF_RL_RENDER_NORMAL );
+	PRINT_PROF( PROF_RL_RENDER_LIGHT );
+	PRINT_PROF( PROF_RL_RENDER_MASKED );
 }
 
 //===========================================================================
@@ -458,8 +521,14 @@ void RL_RewindList(rendlist_t *rl)
 void RL_ClearLists(void)
 {
 	int	i;
+	rendlist_t *list;
 
-	for(i = 0; i < numrlists; i++) RL_RewindList(&rlists[i]);
+	//for(i = 0; i < numrlists; i++) RL_RewindList(&rlists[i]);
+	for(i = 0; i < RL_HASH_SIZE; i++)
+	{
+		for(list = list_hash[i].first; list; list = list->next)
+			RL_RewindList(list);
+	}
 	for(i = 0; i < NUM_RLSKY; i++) RL_RewindList(&mask_rlists[i]);
 	for(i = 0; i < NUM_RLDYN; i++) RL_RewindList(&dl_rlists[i]);
 	RL_RewindList(&shadow_rlist);
@@ -481,38 +550,14 @@ void RL_ClearLists(void)
 }
 
 //===========================================================================
-// RL_FindList
-//===========================================================================
-rendlist_t *RL_FindList(rendpoly_t *poly)
-{
-	int i, type = (poly->type == rp_flat? rl_flats : rl_quads);
-	rendlist_t *dest;
-
-	for(i = 0; i < numrlists; i++)
-		if(rlists[i].tex == poly->tex && rlists[i].type == type)
-			return rlists + i;
-
-	// If all the lists are taken, use the last one.
-	// It won't be pretty, though...
-	if(numrlists == MAX_RLISTS) 
-		return &rlists[MAX_RLISTS-1];
-
-	// Take the next available list.
-	dest = rlists + numrlists++;
-	memset(dest, 0, sizeof(rendlist_t));
-	dest->type = type;
-	dest->tex = poly->tex;
-	dest->texw = poly->texw;
-	dest->texh = poly->texh;
-	dest->detail = poly->detail;
-	return dest;
-}
-
-//===========================================================================
 // RL_GetListFor
 //===========================================================================
 rendlist_t *RL_GetListFor(rendpoly_t *poly)
 {
+	int type;
+	listhash_t *hash;
+	rendlist_t *dest;
+	
 	// Check for specialized rendering lists first.
 	if(poly->flags & RPF_SHADOW)
 	{
@@ -530,8 +575,38 @@ rendlist_t *RL_GetListFor(rendpoly_t *poly)
 	{
 		return &dl_rlists[poly->type==rp_quad? RLDYN_WALLS : RLDYN_FLATS];
 	}
+
 	// Find a suitable normal list. 
-	return RL_FindList(poly);
+	type = (poly->type == rp_flat? rl_flats : rl_quads);
+
+	hash = &list_hash[ (unsigned) (2*poly->tex + type) % RL_HASH_SIZE ];
+	for(dest = hash->first; dest; dest = dest->next)
+	{
+		if(dest->tex == poly->tex && dest->type == type)
+		{
+			// This is it.
+			return dest;
+		}
+	}
+
+/*#ifdef _DEBUG
+	Con_Printf("New list for %i (%i)\n", poly->tex, type);
+#endif*/
+
+	// Create a new list.
+	dest = Z_Calloc(sizeof(rendlist_t), PU_STATIC, 0);
+	if(hash->last) hash->last->next = dest;
+	hash->last = dest;
+	if(!hash->first) hash->first = dest;
+
+	// Init the info.
+	dest->type = type;
+	dest->tex = poly->tex;
+	dest->texw = poly->texw;
+	dest->texh = poly->texh;
+	dest->detail = poly->detail;
+
+	return dest;
 }
 
 //===========================================================================
@@ -557,8 +632,13 @@ void RL_AddPoly(rendpoly_t *poly)
 		return;
 	}
 
+	BEGIN_PROF( PROF_RL_ADD_POLY );
+	BEGIN_PROF( PROF_RL_GET_LIST );
+
 	// Find/create a rendering list for the polygon.
 	li = RL_GetListFor(poly);
+
+	END_PROF( PROF_RL_GET_LIST );
 
 	// Calculate the distance to each vertex.
 	if(!(poly->flags & (RPF_WALL_GLOW | RPF_SKY_MASK | RPF_LIGHT | RPF_SHADOW)))
@@ -684,51 +764,7 @@ void RL_AddPoly(rendpoly_t *poly)
 
 	if(poly->flags & RPF_DLIT) li->has |= RLHAS_DLIT;
 
-/*	RL_WriteByte(li, poly->type);
-	RL_WriteByte(li, poly->flags);
-	RL_WriteShort(li, poly->texw);
-	RL_WriteShort(li, poly->texh);
-	RL_WriteFloat(li, poly->texoffx);
-	RL_WriteFloat(li, poly->texoffy);
-	if(poly->flags & RPF_MASKED) RL_WriteLong(li, poly->tex);
-	RL_WriteFloat(li, poly->top);
-	if(poly->type == rp_quad || poly->type == rp_divquad) 
-	{
-		RL_WriteFloat(li, poly->bottom);
-		RL_WriteFloat(li, poly->length);
-		num = 2;
-	}
-	else
-	{
-		RL_WriteByte(li, poly->numvertices);
-		num = poly->numvertices;
-	}
-	for(i=0, vtx=poly->vertices; i<num; i++, vtx++)
-	{
-		RL_WriteFloat(li, vtx->pos[VX]);
-		RL_WriteFloat(li, vtx->pos[VY]);
-		RL_WriteByte(li, vtx->color.rgb[CR]);
-		RL_WriteByte(li, vtx->color.rgb[CG]);
-		RL_WriteByte(li, vtx->color.rgb[CB]);
-
-		if(poly->flags & RPF_DETAIL) RL_WriteFloat(li, vtx->dist); 
-	}
-	// Divquads need the division information as well.
-	if(poly->type == rp_divquad)
-		for(i=0; i<2; i++)
-		{
-			RL_WriteByte(li, poly->divs[i].num);
-			for(k=0; k<poly->divs[i].num; k++)
-				RL_WriteFloat(li, poly->divs[i].pos[k]);
-		}
-
-	// Add the end marker.
-	RL_WriteByte(li, 0);
-
-	// Next poly will naturally overwrite the end marker.
-	li->cursor--;	
-*/
-
+	END_PROF( PROF_RL_ADD_POLY );
 }
 
 //===========================================================================
@@ -1150,7 +1186,7 @@ void RL_DoList(int lid, rendlist_t *li)
 //	Renders the given lists. RL_DoList does the actual work, we just set
 //	up and restore the DGL state here.
 //===========================================================================
-void RL_RenderLists(int lid, rendlist_t *lists, int num)
+void RL_RenderLists(int lid, rendlist_t **lists, int num)
 {
 	int i;
 
@@ -1158,7 +1194,7 @@ void RL_RenderLists(int lid, rendlist_t *lists, int num)
 	// restoring the state.
 	if(num <= 3) // Covers dynlights and skymask.
 	{
-		for(i = 0; i < num; i++) if(lists[i].last) break;
+		for(i = 0; i < num; i++) if(lists[i]->last) break;
 		if(i == num) return; // Nothing to do!
 	}
 	
@@ -1218,7 +1254,7 @@ void RL_RenderLists(int lid, rendlist_t *lists, int num)
 
 	// Render each of the provided lists.
 	for(i = 0; i < num; i++)
-		if(lists[i].last) RL_DoList(lid, &lists[i]);
+		if(lists[i]->last) RL_DoList(lid, lists[i]);
 
 	// Restore state.
 	switch(lid)
@@ -1272,38 +1308,70 @@ void RL_RenderAllLists()
 	// Multiplicative lights?
 	boolean muldyn = !dlBlend && !whitefog; 
 
+	// Pointers to all the rendering lists.
+	rendlist_t *it, *rlists[MAX_RLISTS];
+	int i, numrlists = 0;
+	
+	BEGIN_PROF( PROF_RL_RENDER_ALL );
+
+	// Collect a list of rendering lists.
+	for(i = 0; i < RL_HASH_SIZE; i++)
+	{
+		for(it = list_hash[i].first; it; it = it->next)
+		{
+			if(it->last != NULL)
+			{
+				rlists[ numrlists++ ] = it;
+			}
+		}
+	}
+
 /*	if(!renderTextures) gl.Disable(DGL_TEXTURING);*/
 
 	// The sky might be visible. Render the needed hemispheres.
 	Rend_RenderSky(skyhemispheres);				
 
 	// Mask the sky in the Z-buffer.
-	RL_RenderLists(LID_SKYMASK, mask_rlists, NUM_RLSKY);
+	RL_RenderLists(LID_SKYMASK, ptr_mask_rlists, NUM_RLSKY);
 
 /*	if(!renderTextures) gl.Disable(DGL_TEXTURING);*/
+
+	BEGIN_PROF( PROF_RL_RENDER_NORMAL );
 
 	// Render the real surfaces of the visible world.
 	RL_RenderLists(muldyn? LID_NORMAL_DLIT : LID_NORMAL,
 		rlists, numrlists);
 
+	END_PROF( PROF_RL_RENDER_NORMAL );
+
 	// Render object shadows.
-	RL_RenderLists(LID_SHADOWS, &shadow_rlist, 1);
+	RL_RenderLists(LID_SHADOWS, ptr_shadow_rlist, 1);
+
+	BEGIN_PROF( PROF_RL_RENDER_LIGHT );
 
 	// Render dynamic lights.
 	if(dlBlend != 3)
-		RL_RenderLists(LID_DYNAMIC_LIGHTS, dl_rlists, NUM_RLDYN);
+		RL_RenderLists(LID_DYNAMIC_LIGHTS, ptr_dl_rlists, NUM_RLDYN);
 
 	// Apply the dlit pass?
 	if(muldyn) RL_RenderLists(LID_DLIT_TEXTURED, rlists, numrlists);
 
+	END_PROF( PROF_RL_RENDER_LIGHT );
+
 	// Render the detail texture pass?
 	if(r_detail) RL_RenderLists(LID_DETAILS, rlists, numrlists);
+
+	BEGIN_PROF( PROF_RL_RENDER_MASKED );
 
 	// Draw masked walls, sprites and models.
 	Rend_DrawMasked();
 
 	// Draw particles.
 	PG_Render();
+
+	END_PROF( PROF_RL_RENDER_MASKED );
+
+	END_PROF( PROF_RL_RENDER_ALL );
 
 /*	if(!renderTextures) gl.Enable(DGL_TEXTURING);*/
 }
