@@ -1208,7 +1208,9 @@ unsigned int GL_BindTexFlat(flat_t *fl)
 	}
 
 	// Is there a high resolution version?
-	if((flatptr = GL_LoadHighResFlat(&image, lumpinfo[lump].name)) != NULL)
+	if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump))
+		&& (flatptr = GL_LoadHighResFlat(&image, lumpinfo[lump].name)) 
+			!= NULL)
 	{
 		RGBData = true;
 		freeptr = true;
@@ -1449,6 +1451,8 @@ void TranslatePatch(patch_t *patch, byte *transTable)
 // GL_LoadImage
 //	Loads PCX, TGA and PNG images. The returned buffer must be freed 
 //	with M_Free. Color keying is done if "-ck." is found in the filename.
+//	The allocated memory buffer always has enough space for 4-component
+//	colors.
 //===========================================================================
 byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 {
@@ -1502,7 +1506,7 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 		if(img->pixels == NULL) return NULL;
 	}
 
-	VERBOSE( Con_Message("LoadImage: %s (%ix%i)\n", img->fileName, 
+	VERBOSE( Con_Message("LoadImage: %s (%ix%i)\n", M_Pretty(img->fileName), 
 		img->width, img->height) );
 
 	numpx = img->width * img->height;
@@ -3187,7 +3191,7 @@ skintex_t *GL_GetSkinTex(const char *skin)
 
 	if(verbose)
 	{
-		Con_Message("SkinTex: %s => %i\n", skin, st - skinnames);
+		Con_Message("SkinTex: %s => %i\n", M_Pretty(skin), st - skinnames);
 	}
 	return st;	
 }
