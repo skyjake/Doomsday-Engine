@@ -433,7 +433,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	int     prim_type;
 	blendmode_t mode = BM_NORMAL, new_mode;
 	vissprite_t vis;
-	boolean flatonplane, flatonwall;
+	boolean flatonplane, flatonwall, nearplane, nearwall;
 
 	if(rtype == PTC_MODEL)
 	{
@@ -566,12 +566,13 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 
 		gl.Color4fv(color);
 
-		flatonplane = (st->flags & PTCF_PLANE_FLAT && pt->sector &&
-			(pt->sector->floorheight + 2 * FRACUNIT >= pt->pos[VZ] ||
-			 pt->sector->ceilingheight - 2 * FRACUNIT <= pt->pos[VZ]));
+		nearplane = (pt->sector &&
+					 (pt->sector->floorheight + 2 * FRACUNIT >= pt->pos[VZ] ||
+					  pt->sector->ceilingheight - 2 * FRACUNIT <= pt->pos[VZ]));
+		flatonplane = (st->flags & PTCF_PLANE_FLAT && nearplane);
 
-		flatonwall = (st->flags & PTCF_WALL_FLAT && pt->contact && 
-			!pt->mov[VX] && !pt->mov[VY]);
+		nearwall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
+		flatonwall = (st->flags & PTCF_WALL_FLAT && nearwall);
 
 		center[VX] = FIX2FLT(pt->pos[VX]);
 		center[VZ] = FIX2FLT(pt->pos[VY]);
@@ -581,7 +582,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		{
 			center[VX] += frameTimePos * FIX2FLT(pt->mov[VX]);
 			center[VZ] += frameTimePos * FIX2FLT(pt->mov[VY]);
-			center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
+			if(!nearplane) center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
 		}
 
 		// Model particles are rendered using the normal model rendering 
