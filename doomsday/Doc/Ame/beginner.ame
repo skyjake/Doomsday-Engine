@@ -23,8 +23,10 @@ CONTENTS: @contents{1}
 		@file{deng-(version).zip} @tab jDoom, jHeretic, jHexen
 	}
 
-  	All can be downloaded from @link{http://www.doomsdayhq.com/},
-	from @link{ftp://jfiles@@server1.thefourwinds.net/} or
+  	The packages can be downloaded from
+  	@link{http://sourceforge.net/projects/deng/},
+  	@link{http://www.doomsdayhq.com/},
+	@link{ftp://jfiles@@server1.thefourwinds.net/} or
   	from the mirror site @link{http://www.jbserver.com/~jdoom/}.
 
 @item 3D models are distributed in separate archives. Downloading one or
