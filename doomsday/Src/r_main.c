@@ -439,7 +439,10 @@ void R_RenderPlayerView(ddplayer_t *player)
 	// Hide the viewplayer's mobj.
 	oldFlags = player->mo->ddflags;
 	player->mo->ddflags |= DDMF_DONTDRAW;
-	
+
+	// Go to wireframe mode?
+	if(renderWireframe) gl.Enable(DGL_WIREFRAME_MODE);
+
 	// GL is in 3D transformation state only during the frame.
 	GL_SwitchTo3DState(true);
 	Rend_RenderMap();
@@ -457,6 +460,9 @@ void R_RenderPlayerView(ddplayer_t *player)
 	}
 	// Original matrices and state: back to normal 2D.
 	GL_Restore2DState(3); 
+
+	// Back from wireframe mode?
+	if(renderWireframe) gl.Disable(DGL_WIREFRAME_MODE);
 
 	// Now we can show the viewplayer's mobj again.
 	player->mo->ddflags = oldFlags;

@@ -180,6 +180,7 @@ extern float		maxLightDist;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int					renderTextures = true;
+int					renderWireframe = false;
 int					useMultiTexLights = true;
 int					useMultiTexDetails = true;
 

@@ -113,7 +113,9 @@ void GL_DoUpdate(void)
 	if(UpdateState == I_NOUPDATE) return;
 
 	// Blit screen to video.
+	if(renderWireframe) gl.Enable(DGL_WIREFRAME_MODE);
 	gl.Show();
+	if(renderWireframe) gl.Disable(DGL_WIREFRAME_MODE);
 	UpdateState = I_NOUPDATE; // clear out all draw types
 
 	// Increment frame counter.

@@ -14,6 +14,7 @@
 #define RLPF_REVERSE	1
 
 extern int		renderTextures;
+extern int		renderWireframe;
 extern int		useMultiTexLights;
 extern int		useMultiTexDetails;
 
