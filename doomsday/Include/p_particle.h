@@ -53,7 +53,7 @@
 #define PGF_UNTRIGGERED			0x2000000
 
 // Particle types
-enum {
+typedef enum {
 	PTC_NONE,
 	PTC_POINT,
 	PTC_LINE,
@@ -119,7 +119,7 @@ typedef struct ptcgen_s {
 	ptcstage_t      stages[MAX_PTC_STAGES];
 } ptcgen_t;
 
-ptcgen_t       *active_ptcgens[MAX_ACTIVE_PTCGENS];
+extern ptcgen_t *active_ptcgens[MAX_ACTIVE_PTCGENS];
 
 void            P_SpawnParticleGen(ded_ptcgen_t * def, mobj_t *source);
 void            P_SpawnTypeParticleGens(void);
