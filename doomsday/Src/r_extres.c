@@ -267,7 +267,8 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
 	// 1. override
 	// 2. game
 	// 3. default
-	for(i = 0; i < 4; i++)
+    // 4. base path
+	for(i = 0; i <= 4; i++)
 	{
 		// First try the overriding path, if it's set.
 		if(i < 2)
@@ -279,7 +280,15 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
 		}
 		else
 		{
-			strcpy(path, info->path);
+            if(i == 4)
+            {
+                // Begin with the base path.
+                strcpy(path, ddBasePath);
+            }
+            else
+            {
+                strcpy(path, info->path);
+            }
 		}
 
 		// Should the game mode subdir be included?
