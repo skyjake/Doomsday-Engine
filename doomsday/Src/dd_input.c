@@ -44,10 +44,6 @@ typedef struct repeater_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-event_t events[MAXEVENTS];
-int     eventhead;
-int     eventtail;
-
 int     mouseFilter = 0;		// No filtering by default.
 int     mouseInverseY = false;
 int     mouseWheelSensi = 10;	// I'm shooting in the dark here.
@@ -67,6 +63,10 @@ byte    keyMappings[256];
 byte    shiftKeyMappings[256], altKeyMappings[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static event_t events[MAXEVENTS];
+static int eventhead;
+static int eventtail;
 
 /* *INDENT-OFF* */
 static byte scantokey[256] =	
@@ -332,10 +332,44 @@ int CCmdKeyMap(int argc, char **argv)
 	return true;
 }
 
-//==========================================================================
-// DD_ProcessEvents
-//      Send all the events of the given timestamp down the responder chain.
-//==========================================================================
+/*
+ * Clear the input event queue.
+ */
+void DD_ClearEvents(void)
+{
+	eventhead = eventtail;
+}
+
+/*
+ * Called by the I/O functions when input is detected.
+ */
+void DD_PostEvent(event_t *ev)
+{
+	events[eventhead++] = *ev;
+	eventhead &= MAXEVENTS - 1;
+}
+
+/*
+ * Get the next event from the input event queue.  Returns NULL if no
+ * more events are available.
+ */
+static event_t *DD_GetEvent(void)
+{
+	event_t *ev;
+	
+	if(eventhead == eventtail)
+		return NULL;
+
+	ev = &events[eventtail];
+	eventtail = (eventtail + 1) & (MAXEVENTS - 1);
+
+	return ev;
+}
+
+/*
+ * Send all the events of the given timestamp down the responder
+ * chain.
+ */
 void DD_ProcessEvents(void)
 {
 	event_t *ev;
@@ -344,10 +378,8 @@ void DD_ProcessEvents(void)
 	DD_ReadJoystick();
 	DD_ReadKeyboard();
 
-	for(; eventtail != eventhead; eventtail = (++eventtail) & (MAXEVENTS - 1))
+	while((ev = DD_GetEvent()) != NULL)
 	{
-		ev = &events[eventtail];
-
 		// Track the state of Shift and Alt.
 		if(ev->data1 == DDKEY_RSHIFT)
 		{
@@ -387,16 +419,6 @@ void DD_ProcessEvents(void)
 	}
 }
 
-//==========================================================================
-// DD_PostEvent
-//      Called by the I/O functions when input is detected.
-//==========================================================================
-void DD_PostEvent(event_t *ev)
-{
-	events[eventhead++] = *ev;
-	eventhead &= MAXEVENTS - 1;
-}
-
 //===========================================================================
 // DD_ScanToKey
 //===========================================================================
@@ -429,14 +451,6 @@ byte DD_KeyToScan(byte key)
 		if(keyMappings[i] == key)
 			return i;
 	return 0;
-}
-
-/*
- * Clear the input event queue.
- */
-void DD_ClearEvents(void)
-{
-	eventhead = eventtail;
 }
 
 //===========================================================================
