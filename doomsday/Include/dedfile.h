@@ -221,9 +221,9 @@ typedef struct
 
 typedef struct
 {
+	ded_stringid_t	id;
 	ded_stringid_t	before;
 	ded_stringid_t	after;
-	int				game;
 	char			*script;
 } ded_finale_t;
 
