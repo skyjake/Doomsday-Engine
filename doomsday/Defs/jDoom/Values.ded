@@ -17,11 +17,12 @@ Header { Version = 5; }
 # Replacement" block that matches the lump name of the patch to be 
 # replaced. The text string may optionally contain parameters that 
 # control how the string is displayed. The parameters must be placed
-# inside braces that begin from the first character of the string. If
-# the parameter block is present, the actual text string begins from
-# the first character following the closing brace. 
+# inside braces. If a parameter block is present, the actual text 
+# string begins from the first character following the closing brace. 
 #
-# Whitespace inside the parameter block is ignored. Use a comma or a 
+#   "{fonta, scale=2}C{scale=1}APITAL"
+#
+# Whitespace inside a parameter block is ignored. Use a comma or a 
 # semicolon to separate parameters. The parameters and their default 
 # values are:
 #
@@ -35,12 +36,14 @@ Header { Version = 5; }
 #   scale=1.0   Uniform scaling factor (both X and Y).
 #   scalex=1.0  X scaling factor.
 #   scaley=1.0  Y scaling factor.
+#   angle=0.0   Rotation angle (around initial origin).
 #
 # An example: 
 # 
 # Values {
 #   Patch Replacement {
-#     M_DOOM = "{R=.5; G=1; B=.5; scaley=2}GONE FISHING";
+#     M_DOOM = "{angle=35; R=.5; G=1; B=.5; scale=3}G{scale=2;y=10}ONE {
+#       scale=3;y=0;angle=60}F{ scale = 2; y = 10 }ISHING";
 #   };
 # }
 
