@@ -283,6 +283,8 @@ cvar_t gameCVars[] =
 	"msg-uptime",		CVF_NO_MAX,	CVT_INT,	&cfg.msgUptime,		35, 0,	"Number of tics to keep HUD messages on screen.",
 	"msg-blink",		0,			CVT_BYTE,	&cfg.msgBlink,		0, 1,	"1=HUD messages blink when they're printed.",
 
+	"xg-dev",			0,			CVT_INT,	&xgDev,				0, 1,	"1=Print XG debug messages.",
+
 	NULL
 };
 

@@ -223,6 +223,8 @@ cvar_t gameCVars[] =
 	"map-cheat-counter-scale", 0,		CVT_FLOAT,	&cfg.counterCheatScale, .1f, 1, "Size factor for the counters in the automap.",
 	"game-corpsetime",	CVF_NO_MAX,		CVT_INT,	&cfg.corpseTime,	0, 0,	"Number of seconds after which dead monsters disappear.",
 
+	"xg-dev",			0,				CVT_INT,	&xgDev,				0, 1,	"1=Print XG debug messages.",
+
 	NULL
 };
 
