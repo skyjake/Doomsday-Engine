@@ -1,0 +1,61 @@
+COMPILING DOOMSDAY AND THE LIBRARIES
+====================================
+
+This document describes the recommended way for building Doomsday and
+the libraries on a *nix system (i.e. only Linux at the moment).
+
+
+REQUIREMENTS:
+-------------
+
+You will need these tools and libraries for building everything:
+
+- gcc (obviously)
+- GNU automake
+- GNU Autoconf
+- libtool (I'm using 1.5.6, earlier versions probably work)
+- libltdl
+- GNU Make
+- OpenGL
+- GLU
+- Simple Directmedia Layer (http://www.libsdl.org/)
+- SDL_net
+- SDL_mixer (used for sound by default)
+- OpenAL (alternative sound library, provides 3D sound)
+
+
+IF YOU HAVE A SOURCE TARBALL:
+-----------------------------
+
+1. Unpack the source tarball, if you haven't already done so.
+
+2. Cd to the Build directory.  Compiling under the Build directory
+   will keep the main source directories clean of any object files.
+
+3. Run "../configure".  By default, everything will be installed under
+   /usr/local.  You might want to use e.g. "--prefix=/home/user/deng".
+
+4. If configure failed due to missing libraries, install the required
+   ones.  Make sure you have the development files for each.
+
+5. Run "make" and then "su -c 'make install'".  (If you are installing
+   into your home directory, just run "make install".)  This will
+   compile everything and install the executable (doomsday), the
+   libraries (games, renderer, sound), data files and definitions
+   files under the directory specified by the configured prefix.
+
+6. See the main README for tips on running the game.
+
+
+IF YOU USE CVS:
+---------------
+
+1. Check out a copy of the project files from the SourceForge CVS.
+   You will only need the "doomsday" module.  You can find
+   instructions on how to accomplish this here:
+
+      http://sourceforge.net/cvs/?group_id=74815
+
+2. Run "./autogen.sh".
+
+3. Proceed to compiling as with a source tarball (from step 3).
