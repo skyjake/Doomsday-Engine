@@ -1,7 +1,7 @@
 # jHexen: Lights
 # Need help with DED syntax? See DEDDoc.txt.
 
-Header { Version = 5; }
+Header { Version = 6; }
 
 #####====--- LIGHT DECORATIONS ---====#####
 #
@@ -14,7 +14,204 @@ Header { Version = 5; }
 #
 # One decoration can specify up to 16 lights.
 #
+# (based on Isegrim's definitions)
 
+Decoration {
+  Texture = "MONK22";
+  Light {
+    Color { 1 0 0 }
+    Offset { 74 48 }
+    Halo radius = .025;
+    Radius = .05;
+  }
+}
+
+Decoration {
+  Texture = "PLANET2";
+  Light {
+    Color { 1 0 0 };
+    Offset { 28 88 }
+    Halo radius = .1;
+    Radius = .08;
+  }
+}
+
+Decoration {
+  Texture = "PLANET1";
+  Light {
+    Color { 1 0 0 }
+    Offset { 28 88 }
+    Halo radius = .1;
+    Radius = .08;
+  }
+  Light {
+    Color { 0 0 1 }
+    Offset { 32 48 }
+    Halo radius = .1;
+    Radius = .08;    
+  }
+  Light {
+    Color { 0 1 0 }
+    Offset { 48 28 }
+    Halo radius = .1;
+    Radius = .08;    
+  }
+  Light {
+    Color { 0 1 0 }
+    Offset { 64 102 }
+    Halo radius = .1;
+    Radius = .08;    
+  }
+  Light {
+    Color { 1 0 0 }
+    Offset { 96 48 }
+    Halo radius = .1;
+    Radius = .08;    
+  }
+  Light {
+    Color { 0 0 1 }
+    Offset { 108 68 }
+    Halo radius = .1;
+    Radius = .08;    
+  }
+}
+
+Decoration {
+  Texture = "SW_1_DN";
+  Light {
+    Color { 0 0 1 }
+    Offset { 11 13 }
+    Halo radius = 0;
+    Radius = .025;
+  }
+  Light {
+    Color { 0 0 1 }
+    Offset { 21 13 }
+    Halo radius = 0;
+    Radius = .025;
+  }
+}
+
+Copy Decoration {
+  Texture = "SW_2_MD";
+}
+
+Copy Decoration {
+  Texture = "SW_1_MD";
+  Light { Color { 0 1 0 } }
+  Light { Color { 0 1 0 } }
+}
+
+Copy Decoration {
+  Texture = "SW_2_DN";
+  Light { Color { 1 0 0 } }
+  Light { Color { 1 0 0 } }
+}
+
+Decoration {
+  Texture = "SW52_ON";
+  Light {
+    Color { .8 .7 0 }
+    Offset { 9 15 }
+    Halo radius = 0;
+    Radius = .08;
+  }
+}
+
+Decoration {
+  Texture = "SW51_ON";
+  Light {
+    Color { 1 .8 0 }
+    Offset { 9 11 }
+    Halo radius = 0;
+    Radius = .025;
+  }
+  Light {
+    Color { 1 .8 0 }
+    Offset { 23 11 }
+    Halo radius = 0;
+    Radius = .025;
+  }
+  Light {
+    Color { 1 .8 0 }
+    Offset { 16 14 }
+    Halo radius = 0;
+    Radius = .025;
+  }
+  Light {
+    Color { .8 .7 0 }
+    Offset { 16 23 }
+    Halo radius = 0;
+    Radius = .05;
+  }
+}
+
+Decoration {
+  Texture = "SPAWN03";
+  Light {
+    Color { 1 .5 0 }
+    Offset { 32 42 }
+    Halo radius = .05;
+    Radius = .08;
+  }
+}
+
+Decoration {
+  Texture = "SPAWN12";
+  Light {
+    Color { 1 .7 0 }
+    Offset { 16.5 13 }
+    Halo radius = .02;
+    Radius = .08;
+  }
+}
+
+Decoration {
+  Texture = "SPAWN09";
+  Light {
+    Color { .5 0 0 }
+    Offset { 54 57 }
+    Halo radius = 0;
+    Radius = .05;
+  }
+  Light {
+    Color { .5 0 0 }
+    Offset { 64 47 }
+    Halo radius = 0;
+    Radius = .05;
+  }
+  Light {
+    Color { .5 0 0 }
+    Offset { 75 57 }
+    Halo radius = 0;
+    Radius = .05;
+  }
+}
+
+Decoration {
+  Texture = "SPAWN10";
+  Light {
+    Color { 1 .3 0 }
+    Offset { 54 57 }
+    Halo radius = .1;
+    Radius = .05;
+    Flare texture = 1;
+  }
+  Light {
+    Color { 1 .3 0 }
+    Offset { 65 47 }
+    Halo radius = .1;
+    Radius = .05;
+    Flare texture = 1;
+  }
+  Light {
+    Color { 1 .3 0 }
+    Offset { 75 57 }
+    Halo radius = .1;
+    Radius = .05;
+    Flare texture = 1;
+  }
+}
 
 #####====--- LIGHT SOURCE PROPERTIES ---====#####
 
@@ -95,7 +292,7 @@ Light {
   State = "ARTI_BOOTS1";
   Size = 0.3;
   X Offset = 0.1; Y Offset = 12;
-  Color { 1 0.6 0.4 };
+  Color { 1 0.6 0.4 }
 }
 
 * Light { State = "ARTI_BOOTS2"; }
