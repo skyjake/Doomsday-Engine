@@ -1225,9 +1225,8 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 //#else
 #ifndef __JDOOM__
 	if(flyheight < 0)
-	{
-		flyheight += 16 * elapsedTime * 35;
-	}
+		flyheight += 16;
+
 	cmd->lookfly |= flyheight << 4;
 #endif
 
