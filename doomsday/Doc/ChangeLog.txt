@@ -18,12 +18,17 @@ Version 1.7.11 (work in progress)
 * mobj translucency 0-255 (selector still overrides)
 * mobj floatbobbing is done by engine (clientside), DDMF_BOB added
 * client is allowed some movement while airborne (easier jumping)
+* by default, external resources are no longer loaded for textures from
+  PWADs; use the -pwadtex option to change this
 * console command line cursor can be moved left and right
 * default key repeat interval is now 3 tics (was 4)
+* braces { and } are equivalent to quotes, e.g.:
+  "alias init-map03 {after 1 {warp 5}}"
 * cmd 'listcmds' prints a description for each command
 + cmd 'toggle': toggle a cvar's value between zero and nonzero
 + cmd 'if': execute a command if the condition is true (tests cvar 
   values)
+- fixed: client was sending too much data (now it's about 0.3 KB/s)
 - included DED files are read immediately after the Include directive
   has been encountered
 - fixed: pausing the game also stops spinning models, floatbob
@@ -55,6 +60,7 @@ jDoom:
 jHeretic:
 * game-corpse-time: corpses fade smoothly 
 - fixed: button deactivation sound
+- fixed: Speed + Use Artifact made the player jump
   
 jHexen:
 - fixed: polyobj destination/speed for sliding doors (e.g. map05)
