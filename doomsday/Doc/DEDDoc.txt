@@ -2,7 +2,7 @@
                    Doomsday Engine Definitions Reference
                         (or "Knee-Deep In The DED")
                    =====================================
-                        Version 0.8.7 -- 12/15/2002
+                       Revision 0.9.0 -- 06/10/2003
 
         Contact <skyjake@doomsdayhq.com> if you have any questions.
 
@@ -146,21 +146,24 @@ Include "Other.ded";
 
 IncludeIf <Not> -option "Other.ded";
     # The given DED file is included if the option "-option" is (not)
-    # found in the command line.
+    # found in the command line. Alternatively "-option" can be a game 
+    # mode string: 
+    
+IncludeIf doom1-ultimate "Other.ded";
 
 SkipIf <Not> -option;
     # The rest of the file is skipped if the option "-option" is (not)
-    # found in the command line.
+    # found in the command line. Alternatively "-option" can be a game 
+    # mode string.
 
 ModelPath "MD2\Game\Item";
     # The ModelPath directive appends a new path to the list of model
-    # search paths. NOTE: It should be noticed that this directive has
-    # no scope: it affects all the definitions that come before and
-    # after it. Also, be careful with backslashes. Since they are used
-    # as escape characters in strings you can't for example do this:
-    # "MD2\Game\Path\". That would mean the last character of the path
-    # is " but the string itself doesn't end. You can use forward
-    # slashes instead of backslashes.
+    # search paths. NOTE: This directive has no scope: it affects all the 
+    # definitions that come before and after it. Also, be careful with 
+    # backslashes. Since they are used as escape characters in strings you 
+    # can't for example do this: "MD2\Game\Path\". That would mean the last 
+    # character of the path is " but the string itself doesn't end. You can 
+    # use forward slashes instead of backslashes.
 
 ...........................................................................
 
@@ -301,6 +304,95 @@ all keys).
 
     Color { 0.0 0.0 0.0 };
         # Sets all three color components at the same time.
+}
+
+...........................................................................
+
+
+---------------------------------------------------------------------------
+DECORATION DEFINITIONS
+---------------------------------------------------------------------------
+You can define multiple Decorations for the same texture/flat, but only the
+latest one that passes the conditions will be used. By default (if you 
+specify no usage flags), a Decoration is only used with resources loaded
+from an IWAD.
+...........................................................................
+
+<Copy> Decoration
+{
+    # If "Copy" is found all the data of the previous definition is
+    # copied to this one as defaults. For the first definition in a
+    # file "Copy" has no effect.
+    
+    Texture = "";
+        # Name of the texture with which this decoration is used.
+        
+    Flat = "";
+        # Name of the flat with which this decoration is used. You can 
+        # only specify either a Texture or a Flat, not both.
+        
+    Flags = "";
+        # dcf_noiwad: Don't use this decoration if the resource is loaded
+        #       from an IWAD.
+        #
+        # dcf_pwad: This decoration can be used with PWAD resources (for
+        #       example custom textures).
+        #
+        # dcf_ext: This decoration can be used with external resources.
+
+    Light 
+    {
+        # Each decoration can specify up to 8 lights.
+        
+        Offset { 0.0 0.0 };
+            # Origin of the light in texture coordinates. 
+            
+        Distance = 1.0;
+            # Distance between the origin of the light and the surface.
+            
+        Color { 0.0 0.0 0.0 };
+            # RGB color (values 0-1) of the light. Color (0,0,0) marks
+            # the end of the light definitions. Any lights that follow are
+            # not rendered.
+            
+        Radius = 1.0;
+            # Radius of the dynamic light.
+            
+        Halo radius = 0.0;
+            # Radius of the halo. Zero means no halo is rendered. Note 
+            # that halo radius 1.0 produces quite a large flare.
+            
+        Flare texture = 0;
+            # Texture to use for the primary flare (i.e. the halo itself):
+            # 0 = Texture chosen automatically.
+            # 1 = Default dynamic light texture.
+            # 2 = FLARE.
+            # 3 = BRFLARE.
+            # 4 = BIGFLARE.
+            
+        Levels { 0 0 };
+            # Two integers (0-255) that mark the sector light levels where
+            # the light is at zero and maximum brightness, respectively. 
+            # For example, the levels { 100 200 } mean that the light is 
+            # not visible under light level 100, fades gradually to full 
+            # brightness when nearing light level 200, and stays full 
+            # bright over 200. The first level can be higher than the 
+            # second. The behaviour is then reversed: the light is at full 
+            # brightness only below the lower light level.
+            
+        Pattern skip { 0 0 };
+            # Normally the light is repeated on a surface as many times as
+            # the texture or flat repeats. The pattern skip values allow
+            # sparser repeats for horizontal and vertical patterns, 
+            # respectively. For example, the skips { 1 2 } will make the
+            # light only appear on every second horizontal repeat and 
+            # every third vertical repeat.
+            
+        Pattern offset { 0 0 };
+            # Used with pattern skip to offset the origin of the pattern.
+            # For example, the offset { 1 0 } will shift the origin of the
+            # pattern one full horizontal repeat.
+    };
 }
 
 ...........................................................................
@@ -722,6 +814,8 @@ Music
 ---------------------------------------------------------------------------
 TEXTURE ENVIRONMENT DEFINITIONS
 ---------------------------------------------------------------------------
+The Texture Environment definitions are used to calculate the 3D sound 
+characteristics of the sectors in a map.
 ...........................................................................
 
 Texture Environment
@@ -802,7 +896,7 @@ Map Info
 
     Sky height = 0.666667;
         # Height of the sky sphere (0-1). The real height is an angle
-        # calculated with Pi/2 * (sky height), which means if the sky
+        # determined using Pi/2 * (sky height), which means if the sky
         # height is 1, the sphere covers the whole sky.
 
     Horizon offset = 0.0;
@@ -867,6 +961,8 @@ Finale
     Game = 0;
         # Game selector. Currently only used by jDoom to separate
         # Plutonia (Game=1) and TNT (Game=2) from Doom II (Game=0).
+        # IncludeIf/SkipIf and game mode strings could also be used for
+        # this purpose.
 
     Script { };
         # An InFine script that defines what the finale does. The same
