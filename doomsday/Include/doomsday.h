@@ -214,13 +214,13 @@ int			TGA_GetSize(char *filename, int *w, int *h);
 
 // Audio.
 void		S_LevelChange(void);
-void		S_LocalSoundAtVolumeFrom(int sound_id, mobj_t *origin, float *fixedpos, float volume);
-void		S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume);
-void		S_LocalSound(int sound_id, mobj_t *origin);
-void		S_LocalSoundFrom(int sound_id, float *fixedpos);
-void		S_StartSound(int sound_id, mobj_t *origin);
-void		S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume);
-void		S_ConsoleSound(int sound_id, mobj_t *origin, int target_console);
+int			S_LocalSoundAtVolumeFrom(int sound_id, mobj_t *origin, float *fixedpos, float volume);
+int			S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume);
+int			S_LocalSound(int sound_id, mobj_t *origin);
+int			S_LocalSoundFrom(int sound_id, float *fixedpos);
+int			S_StartSound(int sound_id, mobj_t *origin);
+int			S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume);
+int			S_ConsoleSound(int sound_id, mobj_t *origin, int target_console);
 void		S_StopSound(int sound_id, mobj_t *origin);
 int			S_IsPlaying(int sound_id, mobj_t *origin);
 int			S_StartMusic(char *musicid, boolean looped);
