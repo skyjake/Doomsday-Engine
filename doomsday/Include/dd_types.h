@@ -8,6 +8,7 @@ struct directory_s;
 
 typedef int					spritenum_t;
 typedef unsigned int		uint;
+typedef unsigned short		ushort;
 typedef unsigned int		size_t;
 typedef unsigned int		id_t;
 typedef unsigned short		nodeindex_t;
