@@ -768,6 +768,24 @@ void M_PrependBasePath(const char *path, char *newpath)
 }
 
 //===========================================================================
+// M_RemoveBasePath
+//	If the base path is found in the beginning of the path, it is removed.
+//===========================================================================
+void M_RemoveBasePath(const char *absPath, char *newPath)
+{
+	if(!strnicmp(absPath, ddBasePath, strlen(ddBasePath)))
+	{
+		// This makes the new path relative to the base path.
+		strcpy(newPath, absPath + strlen(ddBasePath));
+	}
+	else
+	{
+		// This doesn't appear to be the base path.
+		strcpy(newPath, absPath);
+	}
+}
+
+//===========================================================================
 // M_TranslatePath
 //	Expands >.
 //===========================================================================
