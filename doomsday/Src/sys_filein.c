@@ -28,10 +28,7 @@
 
 #include <ctype.h>
 #include <time.h>
-
-#ifdef UNIX
-#  include <sys/stat.h>
-#endif
+#include <sys/stat.h>
 
 #include "de_platform.h"
 #include "de_base.h"
@@ -383,8 +380,13 @@ static unsigned int F_GetLastModified(const char *path)
 {
 #ifdef UNIX
 	struct stat s;
-
 	stat(path, &s);
+	return s.st_mtime;
+#endif
+
+#ifdef WIN32
+	struct _stat s;
+	_stat(path, &s);
 	return s.st_mtime;
 #endif
 }
