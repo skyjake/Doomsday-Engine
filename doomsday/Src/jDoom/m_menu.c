@@ -57,7 +57,7 @@
 #include "Mn_def.h"
 #include "wi_stuff.h"
 
-void    P_SetMessage(player_t * player, char *msg);
+void    P_SetMessage(player_t *player, char *msg);
 
 typedef struct {
 	int     width, height;

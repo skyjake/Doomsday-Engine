@@ -562,7 +562,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_11 PIXEL01_10}
 					else {
-					PIXEL00_60 PIXEL01_90} PIXEL10_20 PIXEL11_21 break;
+					PIXEL00_60 PIXEL01_90}
+					PIXEL10_20 PIXEL11_21 break;
 				}
 			case 146:
 			case 178:
@@ -571,7 +572,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL01_10 PIXEL11_12}
 					else {
-					PIXEL01_90 PIXEL11_61} PIXEL10_20 break;
+					PIXEL01_90 PIXEL11_61}
+					PIXEL10_20 break;
 				}
 			case 84:
 			case 85:
@@ -580,7 +582,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL01_11 PIXEL11_10}
 					else {
-					PIXEL01_60 PIXEL11_90} PIXEL10_21 break;
+					PIXEL01_60 PIXEL11_90}
+					PIXEL10_21 break;
 				}
 			case 112:
 			case 113:
@@ -589,7 +592,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL10_12 PIXEL11_10}
 					else {
-					PIXEL10_61 PIXEL11_90} break;
+					PIXEL10_61 PIXEL11_90}
+					break;
 				}
 			case 200:
 			case 204:
@@ -598,7 +602,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL10_10 PIXEL11_11}
 					else {
-					PIXEL10_90 PIXEL11_60} break;
+					PIXEL10_90 PIXEL11_60}
+					break;
 				}
 			case 73:
 			case 77:
@@ -607,7 +612,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_12 PIXEL10_10}
 					else {
-					PIXEL00_61 PIXEL10_90} PIXEL01_20 PIXEL11_22 break;
+					PIXEL00_61 PIXEL10_90}
+					PIXEL01_20 PIXEL11_22 break;
 				}
 			case 42:
 			case 170:
@@ -616,7 +622,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_10 PIXEL10_11}
 					else {
-					PIXEL00_90 PIXEL10_60} PIXEL01_21 PIXEL11_20 break;
+					PIXEL00_90 PIXEL10_60}
+					PIXEL01_21 PIXEL11_20 break;
 				}
 			case 14:
 			case 142:
@@ -625,7 +632,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_10 PIXEL01_12}
 					else {
-					PIXEL00_90 PIXEL01_61} PIXEL10_22 PIXEL11_20 break;
+					PIXEL00_90 PIXEL01_61}
+					PIXEL10_22 PIXEL11_20 break;
 				}
 			case 67:
 				{
@@ -1018,7 +1026,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_11 PIXEL01_0}
 					else {
-					PIXEL00_60 PIXEL01_90} PIXEL10_20 PIXEL11_21 break;
+					PIXEL00_60 PIXEL01_90}
+					PIXEL10_20 PIXEL11_21 break;
 				}
 			case 182:
 			case 150:
@@ -1027,7 +1036,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL01_0 PIXEL11_12}
 					else {
-					PIXEL01_90 PIXEL11_61} PIXEL10_20 break;
+					PIXEL01_90 PIXEL11_61}
+					PIXEL10_20 break;
 				}
 			case 213:
 			case 212:
@@ -1036,7 +1046,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL01_11 PIXEL11_0}
 					else {
-					PIXEL01_60 PIXEL11_90} PIXEL10_21 break;
+					PIXEL01_60 PIXEL11_90}
+					PIXEL10_21 break;
 				}
 			case 241:
 			case 240:
@@ -1045,7 +1056,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL10_12 PIXEL11_0}
 					else {
-					PIXEL10_61 PIXEL11_90} break;
+					PIXEL10_61 PIXEL11_90}
+					break;
 				}
 			case 236:
 			case 232:
@@ -1054,7 +1066,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL10_0 PIXEL11_11}
 					else {
-					PIXEL10_90 PIXEL11_60} break;
+					PIXEL10_90 PIXEL11_60}
+					break;
 				}
 			case 109:
 			case 105:
@@ -1063,7 +1076,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_12 PIXEL10_0}
 					else {
-					PIXEL00_61 PIXEL10_90} PIXEL01_20 PIXEL11_22 break;
+					PIXEL00_61 PIXEL10_90}
+					PIXEL01_20 PIXEL11_22 break;
 				}
 			case 171:
 			case 43:
@@ -1072,7 +1086,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_0 PIXEL10_11}
 					else {
-					PIXEL00_90 PIXEL10_60} PIXEL01_21 PIXEL11_20 break;
+					PIXEL00_90 PIXEL10_60}
+					PIXEL01_21 PIXEL11_20 break;
 				}
 			case 143:
 			case 15:
@@ -1081,7 +1096,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_0 PIXEL01_12}
 					else {
-					PIXEL00_90 PIXEL01_61} PIXEL10_22 PIXEL11_20 break;
+					PIXEL00_90 PIXEL01_61}
+					PIXEL10_22 PIXEL11_20 break;
 				}
 			case 124:
 				{
@@ -1605,7 +1621,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_12 PIXEL10_0}
 					else {
-					PIXEL00_61 PIXEL10_90} PIXEL01_11 PIXEL11_10 break;
+					PIXEL00_61 PIXEL10_90}
+					PIXEL01_11 PIXEL11_10 break;
 				}
 			case 221:
 				{
@@ -1613,7 +1630,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL01_11 PIXEL11_0}
 					else {
-					PIXEL01_60 PIXEL11_90} PIXEL10_10 break;
+					PIXEL01_60 PIXEL11_90}
+					PIXEL10_10 break;
 				}
 			case 207:
 				{
@@ -1621,7 +1639,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_0 PIXEL01_12}
 					else {
-					PIXEL00_90 PIXEL01_61} PIXEL10_10 PIXEL11_11 break;
+					PIXEL00_90 PIXEL01_61}
+					PIXEL10_10 PIXEL11_11 break;
 				}
 			case 238:
 				{
@@ -1629,7 +1648,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL10_0 PIXEL11_11}
 					else {
-					PIXEL10_90 PIXEL11_60} break;
+					PIXEL10_90 PIXEL11_60}
+					break;
 				}
 			case 190:
 				{
@@ -1637,7 +1657,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL01_0 PIXEL11_12}
 					else {
-					PIXEL01_90 PIXEL11_61} PIXEL10_11 break;
+					PIXEL01_90 PIXEL11_61}
+					PIXEL10_11 break;
 				}
 			case 187:
 				{
@@ -1645,7 +1666,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_0 PIXEL10_11}
 					else {
-					PIXEL00_90 PIXEL10_60} PIXEL01_10 PIXEL11_12 break;
+					PIXEL00_90 PIXEL10_60}
+					PIXEL01_10 PIXEL11_12 break;
 				}
 			case 243:
 				{
@@ -1653,7 +1675,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL10_12 PIXEL11_0}
 					else {
-					PIXEL10_61 PIXEL11_90} break;
+					PIXEL10_61 PIXEL11_90}
+					break;
 				}
 			case 119:
 				{
@@ -1661,7 +1684,8 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 					{
 					PIXEL00_11 PIXEL01_0}
 					else {
-					PIXEL00_60 PIXEL01_90} PIXEL10_12 PIXEL11_10 break;
+					PIXEL00_60 PIXEL01_90}
+					PIXEL10_12 PIXEL11_10 break;
 				}
 			case 237:
 			case 233:

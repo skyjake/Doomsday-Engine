@@ -869,7 +869,7 @@ boolean P_ActivateLine(line_t *line, mobj_t *mo, int side, int activationType)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerInSpecialSector(player_t * player)
+void P_PlayerInSpecialSector(player_t *player)
 {
 	sector_t *sector;
 	static int pushTab[3] = {
@@ -970,7 +970,7 @@ void P_PlayerInSpecialSector(player_t * player)
 //
 //============================================================================
 
-void P_PlayerOnSpecialFlat(player_t * player, int floorType)
+void P_PlayerOnSpecialFlat(player_t *player, int floorType)
 {
 	if(player->plr->mo->z		/*!= player->plr->mo->floorz */
 	   > player->plr->mo->subsector->sector->floorheight)

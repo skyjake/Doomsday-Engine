@@ -70,8 +70,8 @@ boolean         P_UseSpecialLine(mobj_t *thing, line_t *line);
 void            P_ShootSpecialLine(mobj_t *thing, line_t *line);
 void            P_CrossSpecialLine(int linenum, int side, mobj_t *thing);
 
-void            P_PlayerInSpecialSector(player_t * player);
-void            P_PlayerInWindSector(player_t * player);
+void            P_PlayerInSpecialSector(player_t *player);
+void            P_PlayerInWindSector(player_t *player);
 
 int             twoSided(int sector, int line);
 sector_t       *getSector(int currentSector, int line, int side);

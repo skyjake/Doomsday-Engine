@@ -32,9 +32,9 @@
 #define MSG_MUTEX_NAME	"MsgQueueMutex"
 
 // Flags for the sent message store (for to-be-confirmed messages):
-//#define SMSF_ORDERED	0x1		// Block other ordered messages until confirmed
-//#define SMSF_QUEUED		0x2		// Ordered message waiting to be sent
-//#define SMSF_CONFIRMED	0x4		// Delivery has been confirmed! (OK to remove)
+//#define SMSF_ORDERED  0x1     // Block other ordered messages until confirmed
+//#define SMSF_QUEUED       0x2     // Ordered message waiting to be sent
+//#define SMSF_CONFIRMED    0x4     // Delivery has been confirmed! (OK to remove)
 
 // Length of the received message ID history.
 //#define STORE_HISTORY_SIZE 100
@@ -42,23 +42,23 @@
 // TYPES -------------------------------------------------------------------
 
 /*typedef struct sentmessage_s {
-	struct sentmessage_s *next, *prev;
-	struct store_s *store;
-	msgid_t id;
-	uint    timeStamp;
-	int     flags;
-	nodeid_t destination;
-	unsigned int size;
-	void   *data;
-} sentmessage_t;
+   struct sentmessage_s *next, *prev;
+   struct store_s *store;
+   msgid_t id;
+   uint    timeStamp;
+   int     flags;
+   nodeid_t destination;
+   unsigned int size;
+   void   *data;
+   } sentmessage_t;
 
-typedef struct store_s {
-	sentmessage_t *first, *last;
-	msgid_t idCounter;
-	msgid_t history[STORE_HISTORY_SIZE];
-	int     historyIdx;
-} store_t;
-*/
+   typedef struct store_s {
+   sentmessage_t *first, *last;
+   msgid_t idCounter;
+   msgid_t history[STORE_HISTORY_SIZE];
+   int     historyIdx;
+   } store_t;
+ */
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -528,10 +528,11 @@ void N_SendConfirmation(msgid_t id, nodeid_t where)
  */
 void N_SendPacket(int flags)
 {
-//	sentmessage_t *sentMsg;
+	//  sentmessage_t *sentMsg;
 	int     i, dest = 0;
 	void   *data;
 	uint    size;
+
 	//boolean isQueued = false;
 
 	// Is the network available?
@@ -567,29 +568,29 @@ void N_SendPacket(int flags)
 		}
 	}
 
-/*	if(flags & SPF_ORDERED)
-	{
-		// If the Store already contains an ordered message for this player, 
-		// this new one will be queued. The queue-status is lifted (and the 
-		// message sent) when the previous ordered message is acknowledged.
-		if(N_SMSContainsOrdered(netBuffer.player))
-		{
-			// Queued messages will not be sent yet.
-			isQueued = true;
-		}
-	}
-*/
-/*	
-	// Do we need to generate an ID for the message?
-	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
-	{
-		netBuffer.msg.id = N_GetNewMsgID(netBuffer.player);
-	}
-	else
-	{*/
-		// Normal, unconfirmed messages do not use IDs.
-		netBuffer.msg.id = 0;
-//	}
+	/*  if(flags & SPF_ORDERED)
+	   {
+	   // If the Store already contains an ordered message for this player, 
+	   // this new one will be queued. The queue-status is lifted (and the 
+	   // message sent) when the previous ordered message is acknowledged.
+	   if(N_SMSContainsOrdered(netBuffer.player))
+	   {
+	   // Queued messages will not be sent yet.
+	   isQueued = true;
+	   }
+	   }
+	 */
+	/*  
+	   // Do we need to generate an ID for the message?
+	   if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
+	   {
+	   netBuffer.msg.id = N_GetNewMsgID(netBuffer.player);
+	   }
+	   else
+	   { */
+	// Normal, unconfirmed messages do not use IDs.
+	netBuffer.msg.id = 0;
+	//  }
 
 	// This is what will be sent.
 	numOutBytes += netBuffer.headerLength + netBuffer.length;
@@ -606,22 +607,22 @@ void N_SendPacket(int flags)
 	// have been acknowledged.
 	if(flags & (SPF_CONFIRM | SPF_ORDERED))
 	{
-/*		sentMsg =
-			N_SMSCreate(netBuffer.player, netBuffer.msg.id, dest, data, size);
+		/*      sentMsg =
+		   N_SMSCreate(netBuffer.player, netBuffer.msg.id, dest, data, size);
 
-		if(flags & SPF_ORDERED)
-		{
-			// This message will block other ordered messages to 
-			// this player.
-			sentMsg->flags |= SMSF_ORDERED;
-		}
+		   if(flags & SPF_ORDERED)
+		   {
+		   // This message will block other ordered messages to 
+		   // this player.
+		   sentMsg->flags |= SMSF_ORDERED;
+		   }
 
-		if(isQueued)
-		{
-			// The message will not be sent at this time.
-			sentMsg->flags |= SMSF_QUEUED;
-			return;
-			}*/
+		   if(isQueued)
+		   {
+		   // The message will not be sent at this time.
+		   sentMsg->flags |= SMSF_QUEUED;
+		   return;
+		   } */
 
 		N_SendDataBufferReliably(data, size, dest);
 	}

@@ -54,7 +54,7 @@ void            P_ShootSpecialLine(mobj_t *thing, line_t *line);
 
 void            P_CrossSpecialLine(int linenum, int side, mobj_t *thing);
 
-void            P_PlayerInSpecialSector(player_t * player);
+void            P_PlayerInSpecialSector(player_t *player);
 
 int             twoSided(int sector, int line);
 
@@ -467,6 +467,9 @@ int             EV_Teleport(line_t *line, int side, mobj_t *thing);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.7  2004/06/16 18:28:46  skyjake
+// Updated style (typenames)
+//
 // Revision 1.6  2004/05/30 08:42:35  skyjake
 // Tweaked indentation style
 //

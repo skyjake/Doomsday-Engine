@@ -212,7 +212,7 @@ static int WeaponManaUse[NUMCLASSES][NUMWEAPONS] = {
 // P_SetPSpriteOffset
 //  Offset in state->misc1/2.
 //-------------------------------------------------------------------------
-void P_SetPSpriteOffset(pspdef_t * psp, player_t * player, state_t * state)
+void P_SetPSpriteOffset(pspdef_t * psp, player_t *player, state_t * state)
 {
 	ddpsprite_t *ddpsp = player->plr->psprites;
 
@@ -240,7 +240,7 @@ void P_SetPSpriteOffset(pspdef_t * psp, player_t * player, state_t * state)
 //
 //---------------------------------------------------------------------------
 
-void P_SetPsprite(player_t * player, int position, statenum_t stnum)
+void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 {
 	pspdef_t *psp;
 	state_t *state;
@@ -286,7 +286,7 @@ void P_SetPsprite(player_t * player, int position, statenum_t stnum)
 // Identical to P_SetPsprite, without calling the action function
 //---------------------------------------------------------------------------
 
-void P_SetPspriteNF(player_t * player, int position, statenum_t stnum)
+void P_SetPspriteNF(player_t *player, int position, statenum_t stnum)
 {
 	pspdef_t *psp;
 	state_t *state;
@@ -350,7 +350,7 @@ void P_SetPspriteNF(player_t * player, int position, statenum_t stnum)
 //
 //---------------------------------------------------------------------------
 
-void P_ActivateMorphWeapon(player_t * player)
+void P_ActivateMorphWeapon(player_t *player)
 {
 	player->pendingweapon = WP_NOCHANGE;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
@@ -365,7 +365,7 @@ void P_ActivateMorphWeapon(player_t * player)
 //
 //---------------------------------------------------------------------------
 
-void P_PostMorphWeapon(player_t * player, weapontype_t weapon)
+void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
 {
 	player->pendingweapon = WP_NOCHANGE;
 	player->readyweapon = weapon;
@@ -382,7 +382,7 @@ void P_PostMorphWeapon(player_t * player, weapontype_t weapon)
 //
 //---------------------------------------------------------------------------
 
-void P_BringUpWeapon(player_t * player)
+void P_BringUpWeapon(player_t *player)
 {
 	statenum_t new;
 
@@ -413,7 +413,7 @@ void P_BringUpWeapon(player_t * player)
 //
 //---------------------------------------------------------------------------
 
-boolean P_CheckMana(player_t * player)
+boolean P_CheckMana(player_t *player)
 {
 	manatype_t mana;
 	int     count;
@@ -468,7 +468,7 @@ boolean P_CheckMana(player_t * player)
 //
 //---------------------------------------------------------------------------
 
-void P_FireWeapon(player_t * player)
+void P_FireWeapon(player_t *player)
 {
 	statenum_t attackState;
 
@@ -506,7 +506,7 @@ void P_FireWeapon(player_t * player)
 //
 //---------------------------------------------------------------------------
 
-void P_DropWeapon(player_t * player)
+void P_DropWeapon(player_t *player)
 {
 	P_SetPsprite(player, ps_weapon,
 				 WeaponInfo[player->readyweapon][player->class].downstate);
@@ -520,7 +520,7 @@ void P_DropWeapon(player_t * player)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_WeaponReady(player_t * player, pspdef_t * psp)
+void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
 {
 	//  int angle;
 	ddpsprite_t *ddpsp;
@@ -575,7 +575,7 @@ void C_DECL A_WeaponReady(player_t * player, pspdef_t * psp)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_ReFire(player_t * player, pspdef_t * psp)
+void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
 {
 	if((player->cmd.actions & BT_ATTACK) &&
 	   player->pendingweapon == WP_NOCHANGE && player->health)
@@ -596,7 +596,7 @@ void C_DECL A_ReFire(player_t * player, pspdef_t * psp)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_Lower(player_t * player, pspdef_t * psp)
+void C_DECL A_Lower(player_t *player, pspdef_t * psp)
 {
 	// Psprite state.
 	player->plr->psprites[0].state = DDPSP_DOWN;
@@ -634,7 +634,7 @@ void C_DECL A_Lower(player_t * player, pspdef_t * psp)
 //
 //---------------------------------------------------------------------------
 
-void C_DECL A_Raise(player_t * player, pspdef_t * psp)
+void C_DECL A_Raise(player_t *player, pspdef_t * psp)
 {
 	// Psprite state.
 	player->plr->psprites[0].state = DDPSP_UP;
@@ -735,7 +735,7 @@ void AdjustPlayerAngle(mobj_t *pmo)
 //
 //============================================================================
 
-void C_DECL A_SnoutAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_SnoutAttack(player_t *player, pspdef_t * psp)
 {
 	angle_t angle;
 	int     damage;
@@ -768,7 +768,7 @@ void C_DECL A_SnoutAttack(player_t * player, pspdef_t * psp)
 
 #define HAMMER_RANGE	(MELEERANGE+MELEERANGE/2)
 
-void C_DECL A_FHammerAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_FHammerAttack(player_t *player, pspdef_t * psp)
 {
 	angle_t angle;
 	mobj_t *pmo = player->plr->mo;
@@ -837,7 +837,7 @@ void C_DECL A_FHammerAttack(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_FHammerThrow(player_t * player, pspdef_t * psp)
+void C_DECL A_FHammerThrow(player_t *player, pspdef_t * psp)
 {
 	mobj_t *mo;
 
@@ -859,7 +859,7 @@ void C_DECL A_FHammerThrow(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_FSwordAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_FSwordAttack(player_t *player, pspdef_t * psp)
 {
 	mobj_t *pmo;
 
@@ -920,7 +920,7 @@ void C_DECL A_FSwordFlames(mobj_t *actor)
 //
 //============================================================================
 
-void C_DECL A_MWandAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_MWandAttack(player_t *player, pspdef_t * psp)
 {
 	mobj_t *mo;
 
@@ -940,7 +940,7 @@ void C_DECL A_MWandAttack(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_LightningReady(player_t * player, pspdef_t * psp)
+void C_DECL A_LightningReady(player_t *player, pspdef_t * psp)
 {
 	A_WeaponReady(player, psp);
 	if(P_Random() < 160)
@@ -1117,7 +1117,7 @@ void C_DECL A_MLightningAttack2(mobj_t *actor)
 //
 //============================================================================
 
-void C_DECL A_MLightningAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_MLightningAttack(player_t *player, pspdef_t * psp)
 {
 	A_MLightningAttack2(player->plr->mo);
 	player->mana[MANA_2] -= WeaponManaUse[player->class][player->readyweapon];
@@ -1208,7 +1208,7 @@ void MStaffSpawn(mobj_t *pmo, angle_t angle)
 //
 //============================================================================
 
-void C_DECL A_MStaffAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_MStaffAttack(player_t *player, pspdef_t * psp)
 {
 	angle_t angle;
 	mobj_t *pmo;
@@ -1239,7 +1239,7 @@ void C_DECL A_MStaffAttack(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_MStaffPalette(player_t * player, pspdef_t * psp)
+void C_DECL A_MStaffPalette(player_t *player, pspdef_t * psp)
 {
 	int     pal;
 
@@ -1344,7 +1344,7 @@ void C_DECL A_MStaffAttack2(mobj_t *actor)
 //
 //============================================================================
 
-void C_DECL A_FPunchAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_FPunchAttack(player_t *player, pspdef_t * psp)
 {
 	angle_t angle;
 	int     damage;
@@ -1422,7 +1422,7 @@ void C_DECL A_FPunchAttack(player_t * player, pspdef_t * psp)
 
 #define AXERANGE	2.25*MELEERANGE
 
-void C_DECL A_FAxeAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_FAxeAttack(player_t *player, pspdef_t * psp)
 {
 	angle_t angle;
 	mobj_t *pmo = player->plr->mo;
@@ -1502,7 +1502,7 @@ void C_DECL A_FAxeAttack(player_t * player, pspdef_t * psp)
 //
 //===========================================================================
 
-void C_DECL A_CMaceAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_CMaceAttack(player_t *player, pspdef_t * psp)
 {
 	angle_t angle;
 	int     damage;
@@ -1552,7 +1552,7 @@ void C_DECL A_CMaceAttack(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_CStaffCheck(player_t * player, pspdef_t * psp)
+void C_DECL A_CStaffCheck(player_t *player, pspdef_t * psp)
 {
 	mobj_t *pmo;
 	int     damage;
@@ -1612,7 +1612,7 @@ void C_DECL A_CStaffCheck(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_CStaffAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_CStaffAttack(player_t *player, pspdef_t * psp)
 {
 	mobj_t *mo;
 	mobj_t *pmo;
@@ -1661,7 +1661,7 @@ void C_DECL A_CStaffMissileSlither(mobj_t *actor)
 //
 //============================================================================
 
-void C_DECL A_CStaffInitBlink(player_t * player, pspdef_t * psp)
+void C_DECL A_CStaffInitBlink(player_t *player, pspdef_t * psp)
 {
 	player->plr->mo->special1 = (P_Random() >> 1) + 20;
 }
@@ -1672,7 +1672,7 @@ void C_DECL A_CStaffInitBlink(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_CStaffCheckBlink(player_t * player, pspdef_t * psp)
+void C_DECL A_CStaffCheckBlink(player_t *player, pspdef_t * psp)
 {
 	if(!--player->plr->mo->special1)
 	{
@@ -1690,7 +1690,7 @@ void C_DECL A_CStaffCheckBlink(player_t * player, pspdef_t * psp)
 #define FLAMESPEED	(0.45*FRACUNIT)
 #define CFLAMERANGE	(12*64*FRACUNIT)
 
-void C_DECL A_CFlameAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_CFlameAttack(player_t *player, pspdef_t * psp)
 {
 	mobj_t *mo;
 
@@ -1956,7 +1956,7 @@ void C_DECL A_CHolyAttack2(mobj_t *actor)
 //
 //============================================================================
 
-void C_DECL A_CHolyAttack(player_t * player, pspdef_t * psp)
+void C_DECL A_CHolyAttack(player_t *player, pspdef_t * psp)
 {
 	mobj_t *mo;
 
@@ -1980,7 +1980,7 @@ void C_DECL A_CHolyAttack(player_t * player, pspdef_t * psp)
 //
 //============================================================================
 
-void C_DECL A_CHolyPalette(player_t * player, pspdef_t * psp)
+void C_DECL A_CHolyPalette(player_t *player, pspdef_t * psp)
 {
 	int     pal;
 
@@ -2292,7 +2292,7 @@ void C_DECL A_CHolySpawnPuff(mobj_t *actor)
 #define SHARDSPAWN_UP		4
 #define SHARDSPAWN_DOWN		8
 
-void C_DECL A_FireConePL1(player_t * player, pspdef_t * psp)
+void C_DECL A_FireConePL1(player_t *player, pspdef_t * psp)
 {
 	angle_t angle;
 	int     damage;
@@ -2440,7 +2440,7 @@ void C_DECL A_ShedShard(mobj_t *actor)
    }
  */
 
-void C_DECL A_Light0(player_t * player, pspdef_t * psp)
+void C_DECL A_Light0(player_t *player, pspdef_t * psp)
 {
 	player->plr->extralight = 0;
 }
@@ -2467,7 +2467,7 @@ void C_DECL A_Light0(player_t * player, pspdef_t * psp)
 //
 //------------------------------------------------------------------------
 
-void P_SetupPsprites(player_t * player)
+void P_SetupPsprites(player_t *player)
 {
 	int     i;
 
@@ -2489,7 +2489,7 @@ void P_SetupPsprites(player_t * player)
 //
 //------------------------------------------------------------------------
 
-void P_MovePsprites(player_t * player)
+void P_MovePsprites(player_t *player)
 {
 	int     i;
 	pspdef_t *psp;

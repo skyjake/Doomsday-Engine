@@ -815,7 +815,7 @@ void SV_HxInitBaseSlot(void)
 // ArchivePlayer
 //  Writes the given player's data (not including the ID number).
 //==========================================================================
-void ArchivePlayer(player_t * player)
+void ArchivePlayer(player_t *player)
 {
 	player_t temp, *p;
 	ddplayer_t ddtemp, *dp;
@@ -889,7 +889,7 @@ void ArchivePlayer(player_t * player)
 // UnarchivePlayer
 //  Reads a player's data (not including the ID number).
 //==========================================================================
-void UnarchivePlayer(player_t * p)
+void UnarchivePlayer(player_t *p)
 {
 	ddplayer_t *dp = p->plr;
 	int     i, version = GET_BYTE;	// 1 for now...

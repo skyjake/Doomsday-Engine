@@ -1615,7 +1615,7 @@ static int DrawRealPatch(byte *buffer, byte *palette, int texwidth,
 // TranslatePatch
 //  Translate colors in the specified patch.
 //===========================================================================
-void TranslatePatch(patch_t * patch, byte *transTable)
+void TranslatePatch(patch_t *patch, byte *transTable)
 {
 	int     count;
 	int     col = 0;

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.11  2004/06/16 18:28:47  skyjake
+// Updated style (typenames)
+//
 // Revision 1.10  2004/06/16 18:21:34  skyjake
 // Added a separate killmsg for telestomp
 //
@@ -107,7 +110,7 @@ int     clipammo[NUMAMMO] = { 10, 4, 20, 1 };
 // Returns false if the ammo can't be picked up at all
 //
 
-boolean P_GiveAmmo(player_t * player, ammotype_t ammo, int num)
+boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 {
 	int     oldammo;
 
@@ -203,7 +206,7 @@ boolean P_GiveAmmo(player_t * player, ammotype_t ammo, int num)
 // P_GiveWeapon
 // The weapon name may have a MF_DROPPED flag ored in.
 //
-boolean P_GiveWeapon(player_t * player, weapontype_t weapon, boolean dropped)
+boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 {
 	boolean gaveammo;
 	boolean gaveweapon;
@@ -265,7 +268,7 @@ boolean P_GiveWeapon(player_t * player, weapontype_t weapon, boolean dropped)
 // P_GiveBody
 // Returns false if the body isn't needed at all
 //
-boolean P_GiveBody(player_t * player, int num)
+boolean P_GiveBody(player_t *player, int num)
 {
 	if(player->health >= MAXHEALTH)
 		return false;
@@ -284,7 +287,7 @@ boolean P_GiveBody(player_t * player, int num)
 // Returns false if the armor is worse
 // than the current armor.
 //
-boolean P_GiveArmor(player_t * player, int armortype)
+boolean P_GiveArmor(player_t *player, int armortype)
 {
 	int     hits, i;
 
@@ -308,7 +311,7 @@ boolean P_GiveArmor(player_t * player, int armortype)
 //
 // P_GiveCard
 //
-void P_GiveCard(player_t * player, card_t card)
+void P_GiveCard(player_t *player, card_t card)
 {
 	if(player->cards[card])
 		return;
@@ -321,7 +324,7 @@ void P_GiveCard(player_t * player, card_t card)
 //===========================================================================
 // P_GiveBackpack
 //===========================================================================
-void P_GiveBackpack(player_t * player)
+void P_GiveBackpack(player_t *player)
 {
 	int     i;
 
@@ -340,7 +343,7 @@ void P_GiveBackpack(player_t * player)
 //===========================================================================
 // P_GivePower
 //===========================================================================
-boolean P_GivePower(player_t * player, int power)
+boolean P_GivePower(player_t *player, int power)
 {
 	player->update |= PSF_POWERS;
 
@@ -811,7 +814,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 }
 
 void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-				   int damage)
+				  int damage)
 {
 	P_DamageMobj2(target, inflictor, source, damage, false);
 }

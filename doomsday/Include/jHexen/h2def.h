@@ -1035,8 +1035,8 @@ void            SB_Drawer(void);
 void            Draw_TeleportIcon(void);
 void            Draw_SaveIcon(void);
 void            Draw_LoadIcon(void);
-void            cht_GodFunc(player_t * player);
-void            cht_NoClipFunc(player_t * player);
+void            cht_GodFunc(player_t *player);
+void            cht_NoClipFunc(player_t *player);
 
 //-----------------
 // MENU (MN_menu.c)

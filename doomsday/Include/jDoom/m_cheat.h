@@ -42,20 +42,23 @@ int             cht_CheckCheat(cheatseq_t * cht, char key);
 
 void            cht_GetParam(cheatseq_t * cht, char *buffer);
 
-void            cht_GodFunc(player_t * plyr);
-void            cht_GiveFunc(player_t * plyr, boolean weapons, boolean ammo,
+void            cht_GodFunc(player_t *plyr);
+void            cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
 							 boolean armor, boolean cards);
-void            cht_MusicFunc(player_t * plyr, char *buf);
-void            cht_NoClipFunc(player_t * plyr);
-boolean         cht_WarpFunc(player_t * plyr, char *buf);
-void            cht_PowerUpFunc(player_t * plyr, int i);
-void            cht_ChoppersFunc(player_t * plyr);
-void            cht_PosFunc(player_t * plyr);
+void            cht_MusicFunc(player_t *plyr, char *buf);
+void            cht_NoClipFunc(player_t *plyr);
+boolean         cht_WarpFunc(player_t *plyr, char *buf);
+void            cht_PowerUpFunc(player_t *plyr, int i);
+void            cht_ChoppersFunc(player_t *plyr);
+void            cht_PosFunc(player_t *plyr);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/06/16 18:28:46  skyjake
+// Updated style (typenames)
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

@@ -27,14 +27,17 @@
 #endif
 
 boolean         P_GivePower(player_t *, int);
-void            P_GiveCard(player_t * player, card_t card);
-boolean         P_GiveBody(player_t * player, int num);
-void            P_GiveBackpack(player_t * player);
+void            P_GiveCard(player_t *player, card_t card);
+boolean         P_GiveBody(player_t *player, int num);
+void            P_GiveBackpack(player_t *player);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2004/06/16 18:28:46  skyjake
+// Updated style (typenames)
+//
 // Revision 1.5  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

@@ -15,10 +15,10 @@ void            G_StartTitle(void);
 void            G_DummySpawnPlayer(int playernum);
 
 boolean         P_IsCamera(mobj_t *mo);
-void            P_CameraThink(player_t * player);
+void            P_CameraThink(player_t *player);
 int             P_CameraXYMovement(mobj_t *mo);
 int             P_CameraZMovement(mobj_t *mo);
-void            P_Thrust3D(player_t * player, angle_t angle, float lookdir,
+void            P_Thrust3D(player_t *player, angle_t angle, float lookdir,
 						   int forwardmove, int sidemove);
 
 int             CCmdMakeLocal(int argc, char **argv);

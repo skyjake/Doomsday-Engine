@@ -289,7 +289,7 @@ void SV_WritePlayer(int playernum)
 #endif
 }
 
-void SV_ReadPlayer(player_t * pl)
+void SV_ReadPlayer(player_t *pl)
 {
 	ddplayer_t *dpl = pl->plr;
 	int     j;

@@ -282,7 +282,7 @@ void I_PollEvents(void)
 
 	while(SDL_PollEvent(&event))
 	{
-		switch(event.type)
+		switch (event.type)
 		{
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
@@ -379,7 +379,7 @@ boolean I_JoystickPresent(void)
 //===========================================================================
 // I_GetKeyEvents
 //===========================================================================
-int I_GetKeyEvents(keyevent_t * evbuf, int bufsize)
+int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 {
 	keyevent_t *e;
 	int     i = 0;
@@ -404,7 +404,7 @@ int I_GetKeyEvents(keyevent_t * evbuf, int bufsize)
 //===========================================================================
 // I_GetMouseState
 //===========================================================================
-void I_GetMouseState(mousestate_t * state)
+void I_GetMouseState(mousestate_t *state)
 {
 	Uint8   buttons;
 	int     i;
@@ -431,7 +431,7 @@ void I_GetMouseState(mousestate_t * state)
 			state->buttons |= 1 << (i - 1);
 	}
 
- 	state->z = wheelCount * 20;
+	state->z = wheelCount * 20;
 	wheelCount = 0;
 }
 

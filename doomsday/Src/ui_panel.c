@@ -1057,8 +1057,9 @@ int CCmdOpenPanel(int argc, char **argv)
 	uidata_list_t *list;
 	cvarbutton_t *cvb;
 
-	if(isDedicated) return false;
-	
+	if(isDedicated)
+		return false;
+
 	// The help window is hidden.
 	panel_help_active = false;
 	panel_help_offset = 0;

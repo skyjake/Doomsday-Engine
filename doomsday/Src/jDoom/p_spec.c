@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/06/16 18:28:47  skyjake
+// Updated style (typenames)
+//
 // Revision 1.9  2004/05/30 08:42:41  skyjake
 // Tweaked indentation style
 //
@@ -978,7 +981,7 @@ void P_ShootSpecialLine(mobj_t *thing, line_t *line)
 // Called every tic frame
 //  that the player origin is in a special sector
 //
-void P_PlayerInSpecialSector(player_t * player)
+void P_PlayerInSpecialSector(player_t *player)
 {
 	sector_t *sector;
 

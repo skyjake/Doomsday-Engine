@@ -42,8 +42,8 @@ void            NetSv_Ticker(void);
 void            NetSv_SaveGame(unsigned int game_id);
 void            NetSv_LoadGame(unsigned int game_id);
 void            NetSv_LoadReply(int plnum, int console);
-void            NetSv_FragsForAll(player_t * player);
-void            NetSv_KillMessage(player_t * killer, player_t * fragged,
+void            NetSv_FragsForAll(player_t *player);
+void            NetSv_KillMessage(player_t *killer, player_t *fragged,
 								  boolean stomping);
 void            NetSv_UpdateGameConfig(void);
 void            NetSv_Paused(boolean isPaused);

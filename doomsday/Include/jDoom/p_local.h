@@ -103,17 +103,16 @@
 //
 // P_PSPR
 //
-void            P_SetupPsprites(player_t * curplayer);
-void            P_MovePsprites(player_t * curplayer);
-void            P_DropWeapon(player_t * player);
-void            P_SetPsprite(player_t * player, int position,
-							 statenum_t stnum);
+void            P_SetupPsprites(player_t *curplayer);
+void            P_MovePsprites(player_t *curplayer);
+void            P_DropWeapon(player_t *player);
+void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
 
 //
 // P_USER
 //
-void            P_PlayerThink(player_t * player);
-void            P_SetMessage(player_t * pl, char *msg);
+void            P_PlayerThink(player_t *player);
+void            P_SetMessage(player_t *pl, char *msg);
 
 extern int      maxhealth, healthlimit;
 extern int      armorpoints[2];	   // Green and blue points.
@@ -263,7 +262,7 @@ boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y);
 void            P_SlideMove(mobj_t *mo);
 
 //boolean P_CheckSight (mobj_t* t1, mobj_t* t2);
-void            P_UseLines(player_t * player);
+void            P_UseLines(player_t *player);
 
 //#define P_CheckSight  gi.CheckSight
 
@@ -300,8 +299,8 @@ void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 							 int damage);
-void			P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-							  int damage, boolean stomping);
+void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
+							  mobj_t *source, int damage, boolean stomping);
 
 void            P_ExplodeMissile(mobj_t *mo);
 
@@ -314,6 +313,9 @@ void            P_ExplodeMissile(mobj_t *mo);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.8  2004/06/16 18:28:46  skyjake
+// Updated style (typenames)
+//
 // Revision 1.7  2004/06/16 18:21:34  skyjake
 // Added a separate killmsg for telestomp
 //

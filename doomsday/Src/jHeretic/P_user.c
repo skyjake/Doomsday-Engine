@@ -7,7 +7,7 @@
 #include "Soundst.h"
 #include "settings.h"
 
-void    P_PlayerNextArtifact(player_t * player);
+void    P_PlayerNextArtifact(player_t *player);
 
 // Macros
 
@@ -42,7 +42,7 @@ boolean WeaponInShareware[] = {
    ==================
  */
 
-void P_Thrust(player_t * player, angle_t angle, fixed_t move)
+void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 {
 	mobj_t *plrmo = player->plr->mo;
 
@@ -79,7 +79,7 @@ void P_Thrust(player_t * player, angle_t angle, fixed_t move)
  */
 
 #if 0
-void P_CalcHeight(player_t * player)
+void P_CalcHeight(player_t *player)
 {
 	int     angle;
 	fixed_t bob;
@@ -190,7 +190,7 @@ void P_CalcHeight(player_t * player)
    =================
  */
 
-void P_MovePlayer(player_t * player)
+void P_MovePlayer(player_t *player)
 {
 	int     fly;
 	ticcmd_t *cmd;
@@ -359,7 +359,7 @@ void P_MovePlayer(player_t * player)
 
 #define         ANG5    (ANG90/18)
 
-void P_DeathThink(player_t * player)
+void P_DeathThink(player_t *player)
 {
 	angle_t angle, delta;
 	extern int inv_ptr;
@@ -464,7 +464,7 @@ void P_DeathThink(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_ChickenPlayerThink(player_t * player)
+void P_ChickenPlayerThink(player_t *player)
 {
 	mobj_t *pmo;
 
@@ -499,7 +499,7 @@ void P_ChickenPlayerThink(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-int P_GetPlayerNum(player_t * player)
+int P_GetPlayerNum(player_t *player)
 {
 	int     i;
 
@@ -519,7 +519,7 @@ int P_GetPlayerNum(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-boolean P_UndoPlayerChicken(player_t * player)
+boolean P_UndoPlayerChicken(player_t *player)
 {
 	mobj_t *fog;
 	mobj_t *mo;
@@ -594,7 +594,7 @@ boolean P_UndoPlayerChicken(player_t * player)
 //  Returns true if the player is currently standing on ground or on top
 //  of another mobj.
 //===========================================================================
-boolean P_IsPlayerOnGround(player_t * player)
+boolean P_IsPlayerOnGround(player_t *player)
 {
 	boolean onground = (player->plr->mo->z <= player->plr->mo->floorz);
 
@@ -612,7 +612,7 @@ boolean P_IsPlayerOnGround(player_t * player)
 //  Will make the player jump if the latest command so instructs,
 //  providing that jumping is possible.
 //===========================================================================
-void P_CheckPlayerJump(player_t * player)
+void P_CheckPlayerJump(player_t *player)
 {
 	ticcmd_t *cmd = &player->cmd;
 
@@ -771,7 +771,7 @@ void P_ClientSideThink()
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerThink(player_t * player)
+void P_PlayerThink(player_t *player)
 {
 	ticcmd_t *cmd;
 	weapontype_t newweapon;
@@ -1051,7 +1051,7 @@ void P_PlayerThink(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_ArtiTele(player_t * player)
+void P_ArtiTele(player_t *player)
 {
 	int     i;
 	int     selections;
@@ -1124,7 +1124,7 @@ void P_CheckReadyArtifact()
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerNextArtifact(player_t * player)
+void P_PlayerNextArtifact(player_t *player)
 {
 	extern int inv_ptr;
 	extern int curpos;
@@ -1162,7 +1162,7 @@ void P_PlayerNextArtifact(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerRemoveArtifact(player_t * player, int slot)
+void P_PlayerRemoveArtifact(player_t *player, int slot)
 {
 	int     i;
 	extern int inv_ptr;
@@ -1209,7 +1209,7 @@ void P_PlayerRemoveArtifact(player_t * player, int slot)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerUseArtifact(player_t * player, artitype_t arti)
+void P_PlayerUseArtifact(player_t *player, artitype_t arti)
 {
 	int     i;
 	boolean play_sound = false;
@@ -1256,7 +1256,7 @@ void P_PlayerUseArtifact(player_t * player, artitype_t arti)
 //
 //----------------------------------------------------------------------------
 
-boolean P_UseArtifact(player_t * player, artitype_t arti)
+boolean P_UseArtifact(player_t *player, artitype_t arti)
 {
 	mobj_t *mo;
 	angle_t angle;

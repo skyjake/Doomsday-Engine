@@ -44,8 +44,8 @@ boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
 //void    P_ShootSpecialLine ( mobj_t *thing, line_t *line);
 //void    P_CrossSpecialLine (int linenum, int side, mobj_t *thing);
 
-void            P_PlayerInSpecialSector(player_t * player);
-void            P_PlayerOnSpecialFlat(player_t * player, int floorType);
+void            P_PlayerInSpecialSector(player_t *player);
+void            P_PlayerOnSpecialFlat(player_t *player, int floorType);
 
 //int twoSided(int sector,int line);
 //sector_t *getSector(int currentSector,int line,int side);

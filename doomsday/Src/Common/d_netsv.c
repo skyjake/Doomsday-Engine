@@ -68,7 +68,7 @@ enum {
 void    R_SetAllDoomsdayFlags();
 
 #if __JHEXEN__
-void    SB_ChangePlayerClass(player_t * player, int newclass);
+void    SB_ChangePlayerClass(player_t *player, int newclass);
 #endif
 
 // PUBLIC DATA ------------------------------------------------------------
@@ -1025,7 +1025,7 @@ void NetSv_LoadGame(unsigned int game_id)
 // NetSv_FragsForAll
 //  Sends the frags of player 'whose' to all other players.
 //===========================================================================
-void NetSv_FragsForAll(player_t * player)
+void NetSv_FragsForAll(player_t *player)
 {
 	NetSv_SendPlayerState(player - players, DDSP_ALL_PLAYERS, PSF_FRAGS, true);
 }
@@ -1042,7 +1042,7 @@ void NetSv_SendPlayerClass(int pnum, char cls)
 // NetSv_KillMessage
 //  Send one of the kill messages, depending on the weapon of the killer.
 //===========================================================================
-void NetSv_KillMessage(player_t * killer, player_t * fragged, boolean stomping)
+void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 {
 #if __JDOOM__
 	char    buf[160], *in, tmp[2];
@@ -1054,8 +1054,8 @@ void NetSv_KillMessage(player_t * killer, player_t * fragged, boolean stomping)
 	tmp[1] = 0;
 
 	// Choose the right kill message template.
-	in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer == fragged ?
-				 TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
+	in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer ==
+				 fragged ? TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
 				 killer->readyweapon);
 	for(; *in; in++)
 	{

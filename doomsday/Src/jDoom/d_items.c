@@ -223,7 +223,7 @@ void P_InitWeaponInfo()
 	}
 }
 
-void P_InitPlayerValues(player_t * p)
+void P_InitPlayerValues(player_t *p)
 {
 #define PLINA "Player|Init ammo|"
 	int     i;

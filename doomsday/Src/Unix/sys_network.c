@@ -324,7 +324,7 @@ void N_ReturnBuffer(void *handle)
  */
 boolean N_ReceiveReliably(nodeid_t from)
 {
-	ushort size = 0;
+	ushort  size = 0;
 	TCPsocket sock = netNodes[from].sock;
 	UDPpacket *packet = NULL;
 
@@ -361,11 +361,11 @@ boolean N_ReceiveReliably(nodeid_t from)
 void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
 {
 	netnode_t *node = &netNodes[destination];
-	ushort packetSize = size;
+	ushort  packetSize = size;
 
 	if(size <= 0 || !node->sock || !node->hasJoined)
 		return;
-	
+
 	SDLNet_TCP_Send(node->sock, &packetSize, 2);
 	SDLNet_TCP_Send(node->sock, data, packetSize);
 }
@@ -1091,7 +1091,7 @@ boolean N_Connect(int index)
 	// Put the server's socket in a socket set so we may listen to it.
 	sockSet = SDLNet_AllocSocketSet(1);
 	SDLNet_TCP_AddSocket(sockSet, svNode->sock);
-	
+
 	// Clients are allowed to send packets to the server.
 	svNode->hasJoined = true;
 
@@ -1328,7 +1328,7 @@ void N_Listen(void)
 			for(i = 0; i < MAX_NODES; i++)
 			{
 				node = netNodes + i;
-				
+
 				// Does this socket have got any activity?
 				if(!SDLNet_SocketReady(node->sock))
 					continue;
@@ -1339,15 +1339,16 @@ void N_Listen(void)
 					if(result <= 0)
 					{
 						// Close this socket & node.
-						VERBOSE2(Con_Message("N_Listen: Connection closed on "
-											 "node %i.\n", i));
+						VERBOSE2(Con_Message
+								 ("N_Listen: Connection closed on "
+								  "node %i.\n", i));
 						N_TerminateNode(i);
 					}
 					else
 					{
 						// FIXME: Read into a buffer, execute when newline
 						// received.
-						
+
 						// Process the command; we will need to answer, or
 						// do something else.
 						N_DoNodeCommand(i, buf, result);
@@ -1359,7 +1360,7 @@ void N_Listen(void)
 					{
 						Con_Message("N_Listen: Connection closed on "
 									"node %i.\n", i);
-						N_TerminateNode(i);						
+						N_TerminateNode(i);
 					}
 				}
 			}
@@ -1374,6 +1375,7 @@ void N_Listen(void)
 			if(!N_ReceiveReliably(0))
 			{
 				netevent_t nev;
+
 				nev.id = 0;
 				nev.type = NE_END_CONNECTION;
 				N_NEPost(&nev);

@@ -54,7 +54,7 @@ void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    H2_ConsoleRegistration();
 void    H2_DefaultBindings();
 void    SB_HandleCheatNotification(int fromplayer, void *data, int length);
-int     HU_PSpriteYOffset(player_t * pl);
+int     HU_PSpriteYOffset(player_t *pl);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

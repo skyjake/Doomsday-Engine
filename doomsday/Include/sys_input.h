@@ -68,8 +68,8 @@ int             I_Init(void);
 void            I_Shutdown(void);
 boolean         I_MousePresent(void);
 boolean         I_JoystickPresent(void);
-int             I_GetKeyEvents(keyevent_t * evbuf, int bufsize);
-void            I_GetMouseState(mousestate_t * state);
+int             I_GetKeyEvents(keyevent_t *evbuf, int bufsize);
+void            I_GetMouseState(mousestate_t *state);
 void            I_GetJoystickState(joystate_t * state);
 
 #endif

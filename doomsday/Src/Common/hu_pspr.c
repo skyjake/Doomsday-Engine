@@ -71,7 +71,7 @@ int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
 //  Calculates the Y offset for the player's psprite. The offset depends
 //  on the size of the game window.
 //==========================================================================
-int HU_PSpriteYOffset(player_t * pl)
+int HU_PSpriteYOffset(player_t *pl)
 {
 #if __JDOOM__
 	int     offy = FRACUNIT * (cfg.plrViewHeight - 41) * 2;

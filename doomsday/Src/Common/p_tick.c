@@ -33,7 +33,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void    P_ClientSideThink(void);
-void    G_SpecialButton(player_t * pl);
+void    G_SpecialButton(player_t *pl);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

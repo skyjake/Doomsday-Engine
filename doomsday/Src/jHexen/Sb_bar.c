@@ -48,7 +48,7 @@ typedef enum {
 // TYPES -------------------------------------------------------------------
 
 typedef struct Cheat_s {
-	void    (*func) (player_t * player, struct Cheat_s * cheat);
+	void    (*func) (player_t *player, struct Cheat_s * cheat);
 	byte   *sequence;
 	byte   *pos;
 	int     args[2];
@@ -76,34 +76,34 @@ static void DrawFullScreenStuff(void);
 static void DrawAnimatedIcons(void);
 static boolean HandleCheats(byte key);
 static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean *eat);
-static void CheatGodFunc(player_t * player, Cheat_t * cheat);
-static void CheatNoClipFunc(player_t * player, Cheat_t * cheat);
-static void CheatWeaponsFunc(player_t * player, Cheat_t * cheat);
-static void CheatHealthFunc(player_t * player, Cheat_t * cheat);
-static void CheatKeysFunc(player_t * player, Cheat_t * cheat);
-static void CheatSoundFunc(player_t * player, Cheat_t * cheat);
-static void CheatTickerFunc(player_t * player, Cheat_t * cheat);
-static void CheatArtifactAllFunc(player_t * player, Cheat_t * cheat);
-static void CheatPuzzleFunc(player_t * player, Cheat_t * cheat);
-static void CheatWarpFunc(player_t * player, Cheat_t * cheat);
-static void CheatPigFunc(player_t * player, Cheat_t * cheat);
-static void CheatMassacreFunc(player_t * player, Cheat_t * cheat);
-static void CheatIDKFAFunc(player_t * player, Cheat_t * cheat);
-static void CheatQuickenFunc1(player_t * player, Cheat_t * cheat);
-static void CheatQuickenFunc2(player_t * player, Cheat_t * cheat);
-static void CheatQuickenFunc3(player_t * player, Cheat_t * cheat);
-static void CheatClassFunc1(player_t * player, Cheat_t * cheat);
-static void CheatClassFunc2(player_t * player, Cheat_t * cheat);
-static void CheatInitFunc(player_t * player, Cheat_t * cheat);
-static void CheatInitFunc(player_t * player, Cheat_t * cheat);
-static void CheatVersionFunc(player_t * player, Cheat_t * cheat);
-static void CheatDebugFunc(player_t * player, Cheat_t * cheat);
-static void CheatScriptFunc1(player_t * player, Cheat_t * cheat);
-static void CheatScriptFunc2(player_t * player, Cheat_t * cheat);
-static void CheatScriptFunc3(player_t * player, Cheat_t * cheat);
-static void CheatRevealFunc(player_t * player, Cheat_t * cheat);
-static void CheatTrackFunc1(player_t * player, Cheat_t * cheat);
-static void CheatTrackFunc2(player_t * player, Cheat_t * cheat);
+static void CheatGodFunc(player_t *player, Cheat_t * cheat);
+static void CheatNoClipFunc(player_t *player, Cheat_t * cheat);
+static void CheatWeaponsFunc(player_t *player, Cheat_t * cheat);
+static void CheatHealthFunc(player_t *player, Cheat_t * cheat);
+static void CheatKeysFunc(player_t *player, Cheat_t * cheat);
+static void CheatSoundFunc(player_t *player, Cheat_t * cheat);
+static void CheatTickerFunc(player_t *player, Cheat_t * cheat);
+static void CheatArtifactAllFunc(player_t *player, Cheat_t * cheat);
+static void CheatPuzzleFunc(player_t *player, Cheat_t * cheat);
+static void CheatWarpFunc(player_t *player, Cheat_t * cheat);
+static void CheatPigFunc(player_t *player, Cheat_t * cheat);
+static void CheatMassacreFunc(player_t *player, Cheat_t * cheat);
+static void CheatIDKFAFunc(player_t *player, Cheat_t * cheat);
+static void CheatQuickenFunc1(player_t *player, Cheat_t * cheat);
+static void CheatQuickenFunc2(player_t *player, Cheat_t * cheat);
+static void CheatQuickenFunc3(player_t *player, Cheat_t * cheat);
+static void CheatClassFunc1(player_t *player, Cheat_t * cheat);
+static void CheatClassFunc2(player_t *player, Cheat_t * cheat);
+static void CheatInitFunc(player_t *player, Cheat_t * cheat);
+static void CheatInitFunc(player_t *player, Cheat_t * cheat);
+static void CheatVersionFunc(player_t *player, Cheat_t * cheat);
+static void CheatDebugFunc(player_t *player, Cheat_t * cheat);
+static void CheatScriptFunc1(player_t *player, Cheat_t * cheat);
+static void CheatScriptFunc2(player_t *player, Cheat_t * cheat);
+static void CheatScriptFunc3(player_t *player, Cheat_t * cheat);
+static void CheatRevealFunc(player_t *player, Cheat_t * cheat);
+static void CheatTrackFunc1(player_t *player, Cheat_t * cheat);
+static void CheatTrackFunc2(player_t *player, Cheat_t * cheat);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1784,17 +1784,17 @@ static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean *eat)
 //
 //==========================================================================
 
-void cht_GodFunc(player_t * player)
+void cht_GodFunc(player_t *player)
 {
 	CheatGodFunc(player, NULL);
 }
 
-void cht_NoClipFunc(player_t * player)
+void cht_NoClipFunc(player_t *player)
 {
 	CheatNoClipFunc(player, NULL);
 }
 
-static void CheatGodFunc(player_t * player, Cheat_t * cheat)
+static void CheatGodFunc(player_t *player, Cheat_t * cheat)
 {
 	player->cheats ^= CF_GODMODE;
 	player->update |= PSF_STATE;
@@ -1809,7 +1809,7 @@ static void CheatGodFunc(player_t * player, Cheat_t * cheat)
 	SB_state = -1;
 }
 
-static void CheatNoClipFunc(player_t * player, Cheat_t * cheat)
+static void CheatNoClipFunc(player_t *player, Cheat_t * cheat)
 {
 	player->cheats ^= CF_NOCLIP;
 	player->update |= PSF_STATE;
@@ -1823,7 +1823,7 @@ static void CheatNoClipFunc(player_t * player, Cheat_t * cheat)
 	}
 }
 
-static void CheatWeaponsFunc(player_t * player, Cheat_t * cheat)
+static void CheatWeaponsFunc(player_t *player, Cheat_t * cheat)
 {
 	int     i;
 
@@ -1844,7 +1844,7 @@ static void CheatWeaponsFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, TXT_CHEATWEAPONS, true);
 }
 
-static void CheatHealthFunc(player_t * player, Cheat_t * cheat)
+static void CheatHealthFunc(player_t *player, Cheat_t * cheat)
 {
 	player->update |= PSF_HEALTH;
 	if(player->morphTics)
@@ -1858,14 +1858,14 @@ static void CheatHealthFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, TXT_CHEATHEALTH, true);
 }
 
-static void CheatKeysFunc(player_t * player, Cheat_t * cheat)
+static void CheatKeysFunc(player_t *player, Cheat_t * cheat)
 {
 	player->update |= PSF_KEYS;
 	player->keys = 2047;
 	P_SetMessage(player, TXT_CHEATKEYS, true);
 }
 
-static void CheatSoundFunc(player_t * player, Cheat_t * cheat)
+static void CheatSoundFunc(player_t *player, Cheat_t * cheat)
 {
 	DebugSound = !DebugSound;
 	if(DebugSound)
@@ -1878,7 +1878,7 @@ static void CheatSoundFunc(player_t * player, Cheat_t * cheat)
 	}
 }
 
-static void CheatTickerFunc(player_t * player, Cheat_t * cheat)
+static void CheatTickerFunc(player_t *player, Cheat_t * cheat)
 {
 	/*  extern int DisplayTicker;
 
@@ -1893,7 +1893,7 @@ static void CheatTickerFunc(player_t * player, Cheat_t * cheat)
 	   } */
 }
 
-static void CheatArtifactAllFunc(player_t * player, Cheat_t * cheat)
+static void CheatArtifactAllFunc(player_t *player, Cheat_t * cheat)
 {
 	int     i;
 	int     j;
@@ -1908,7 +1908,7 @@ static void CheatArtifactAllFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, TXT_CHEATARTIFACTS3, true);
 }
 
-static void CheatPuzzleFunc(player_t * player, Cheat_t * cheat)
+static void CheatPuzzleFunc(player_t *player, Cheat_t * cheat)
 {
 	int     i;
 
@@ -1919,13 +1919,13 @@ static void CheatPuzzleFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, TXT_CHEATARTIFACTS3, true);
 }
 
-static void CheatInitFunc(player_t * player, Cheat_t * cheat)
+static void CheatInitFunc(player_t *player, Cheat_t * cheat)
 {
 	G_DeferedInitNew(gameskill, gameepisode, gamemap);
 	P_SetMessage(player, TXT_CHEATWARP, true);
 }
 
-static void CheatWarpFunc(player_t * player, Cheat_t * cheat)
+static void CheatWarpFunc(player_t *player, Cheat_t * cheat)
 {
 	int     tens;
 	int     ones;
@@ -1981,9 +1981,9 @@ static void CheatWarpFunc(player_t * player, Cheat_t * cheat)
 	//G_Completed(-1, -1);//map, 0);
 }
 
-static void CheatPigFunc(player_t * player, Cheat_t * cheat)
+static void CheatPigFunc(player_t *player, Cheat_t * cheat)
 {
-	extern boolean P_UndoPlayerMorph(player_t * player);
+	extern boolean P_UndoPlayerMorph(player_t *player);
 
 	if(player->morphTics)
 	{
@@ -1996,7 +1996,7 @@ static void CheatPigFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, "SQUEAL!!", true);
 }
 
-static void CheatMassacreFunc(player_t * player, Cheat_t * cheat)
+static void CheatMassacreFunc(player_t *player, Cheat_t * cheat)
 {
 	int     count;
 	char    buffer[80];
@@ -2006,7 +2006,7 @@ static void CheatMassacreFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, buffer, true);
 }
 
-static void CheatIDKFAFunc(player_t * player, Cheat_t * cheat)
+static void CheatIDKFAFunc(player_t *player, Cheat_t * cheat)
 {
 	int     i;
 
@@ -2022,23 +2022,23 @@ static void CheatIDKFAFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, TXT_CHEATIDKFA, true);
 }
 
-static void CheatQuickenFunc1(player_t * player, Cheat_t * cheat)
+static void CheatQuickenFunc1(player_t *player, Cheat_t * cheat)
 {
 	P_SetMessage(player, "TRYING TO CHEAT?  THAT'S ONE....", true);
 }
 
-static void CheatQuickenFunc2(player_t * player, Cheat_t * cheat)
+static void CheatQuickenFunc2(player_t *player, Cheat_t * cheat)
 {
 	P_SetMessage(player, "THAT'S TWO....", true);
 }
 
-static void CheatQuickenFunc3(player_t * player, Cheat_t * cheat)
+static void CheatQuickenFunc3(player_t *player, Cheat_t * cheat)
 {
 	P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000);
 	P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.", true);
 }
 
-static void CheatClassFunc1(player_t * player, Cheat_t * cheat)
+static void CheatClassFunc1(player_t *player, Cheat_t * cheat)
 {
 	P_SetMessage(player, "ENTER NEW PLAYER CLASS (0 - 2)", true);
 }
@@ -2048,7 +2048,7 @@ static void CheatClassFunc1(player_t * player, Cheat_t * cheat)
 //  Changes the class of the given player. Will not work if the player
 //  is currently morphed.
 //==========================================================================
-void SB_ChangePlayerClass(player_t * player, int newclass)
+void SB_ChangePlayerClass(player_t *player, int newclass)
 {
 	int     i;
 	mobj_t *oldmobj;
@@ -2084,7 +2084,7 @@ void SB_ChangePlayerClass(player_t * player, int newclass)
 	}
 }
 
-static void CheatClassFunc2(player_t * player, Cheat_t * cheat)
+static void CheatClassFunc2(player_t *player, Cheat_t * cheat)
 {
 	int     class;
 
@@ -2101,12 +2101,12 @@ static void CheatClassFunc2(player_t * player, Cheat_t * cheat)
 	SB_ChangePlayerClass(player, class);
 }
 
-static void CheatVersionFunc(player_t * player, Cheat_t * cheat)
+static void CheatVersionFunc(player_t *player, Cheat_t * cheat)
 {
 	P_SetMessage(player, VERSIONTEXT, true);
 }
 
-static void CheatDebugFunc(player_t * player, Cheat_t * cheat)
+static void CheatDebugFunc(player_t *player, Cheat_t * cheat)
 {
 	char    textBuffer[50];
 
@@ -2117,17 +2117,17 @@ static void CheatDebugFunc(player_t * player, Cheat_t * cheat)
 	P_SetMessage(player, textBuffer, true);
 }
 
-static void CheatScriptFunc1(player_t * player, Cheat_t * cheat)
+static void CheatScriptFunc1(player_t *player, Cheat_t * cheat)
 {
 	P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?", true);
 }
 
-static void CheatScriptFunc2(player_t * player, Cheat_t * cheat)
+static void CheatScriptFunc2(player_t *player, Cheat_t * cheat)
 {
 	P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?", true);
 }
 
-static void CheatScriptFunc3(player_t * player, Cheat_t * cheat)
+static void CheatScriptFunc3(player_t *player, Cheat_t * cheat)
 {
 	int     script;
 	byte    args[3];
@@ -2152,7 +2152,7 @@ static void CheatScriptFunc3(player_t * player, Cheat_t * cheat)
 
 extern int cheating;
 
-static void CheatRevealFunc(player_t * player, Cheat_t * cheat)
+static void CheatRevealFunc(player_t *player, Cheat_t * cheat)
 {
 	cheating = (cheating + 1) % 3;
 }
@@ -2163,7 +2163,7 @@ static void CheatRevealFunc(player_t * player, Cheat_t * cheat)
 //
 //===========================================================================
 
-static void CheatTrackFunc1(player_t * player, Cheat_t * cheat)
+static void CheatTrackFunc1(player_t *player, Cheat_t * cheat)
 {
 	/*  char buffer[80];
 
@@ -2186,7 +2186,7 @@ static void CheatTrackFunc1(player_t * player, Cheat_t * cheat)
 //
 //===========================================================================
 
-static void CheatTrackFunc2(player_t * player, Cheat_t * cheat)
+static void CheatTrackFunc2(player_t *player, Cheat_t * cheat)
 {
 	/*  char buffer[80];
 	   int track;

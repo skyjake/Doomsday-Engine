@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/06/16 18:28:47  skyjake
+// Updated style (typenames)
+//
 // Revision 1.9  2004/06/16 18:25:09  skyjake
 // Added a separate killmsg for telestomp
 //
@@ -1391,7 +1394,7 @@ boolean PTR_UseTraverse(intercept_t * in)
 // P_UseLines
 // Looks for special lines in front of the player to activate.
 //
-void P_UseLines(player_t * player)
+void P_UseLines(player_t *player)
 {
 	int     angle;
 	fixed_t x1;

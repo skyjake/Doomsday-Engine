@@ -86,15 +86,14 @@ extern int      TimerGame;		   // tic countdown for deathmatch
 #define USE_MANA1	1
 #define USE_MANA2	1
 
-void            P_SetPsprite(player_t * player, int position,
-							 statenum_t stnum);
-void            P_SetPspriteNF(player_t * player, int position,
+void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
+void            P_SetPspriteNF(player_t *player, int position,
 							   statenum_t stnum);
-void            P_SetupPsprites(player_t * curplayer);
-void            P_MovePsprites(player_t * curplayer);
-void            P_DropWeapon(player_t * player);
-void            P_ActivateMorphWeapon(player_t * player);
-void            P_PostMorphWeapon(player_t * player, weapontype_t weapon);
+void            P_SetupPsprites(player_t *curplayer);
+void            P_MovePsprites(player_t *curplayer);
+void            P_DropWeapon(player_t *player);
+void            P_ActivateMorphWeapon(player_t *player);
+void            P_PostMorphWeapon(player_t *player, weapontype_t weapon);
 
 // ***** P_USER *****
 
@@ -103,12 +102,12 @@ extern int      PStateRun[NUMCLASSES];
 extern int      PStateAttack[NUMCLASSES];
 extern int      PStateAttackEnd[NUMCLASSES];
 
-void            P_PlayerThink(player_t * player);
-void            P_Thrust(player_t * player, angle_t angle, fixed_t move);
-void            P_PlayerRemoveArtifact(player_t * player, int slot);
-void            P_PlayerUseArtifact(player_t * player, artitype_t arti);
-boolean         P_UseArtifact(player_t * player, artitype_t arti);
-int             P_GetPlayerNum(player_t * player);
+void            P_PlayerThink(player_t *player);
+void            P_Thrust(player_t *player, angle_t angle, fixed_t move);
+void            P_PlayerRemoveArtifact(player_t *player, int slot);
+void            P_PlayerUseArtifact(player_t *player, artitype_t arti);
+boolean         P_UseArtifact(player_t *player, artitype_t arti);
+int             P_GetPlayerNum(player_t *player);
 void            P_TeleportOther(mobj_t *victim);
 void            ResetBlasted(mobj_t *mo);
 
@@ -219,8 +218,8 @@ void            P_SlideMove(mobj_t *mo);
 void            P_BounceWall(mobj_t *mo);
 
 //boolean P_CheckSight(mobj_t *t1, mobj_t *t2);
-void            P_UseLines(player_t * player);
-boolean         P_UsePuzzleItem(player_t * player, int itemType);
+void            P_UseLines(player_t *player);
+boolean         P_UsePuzzleItem(player_t *player, int itemType);
 void            PIT_ThrustSpike(mobj_t *actor);
 
 boolean         P_ChangeSector(sector_t *sector, int crunch);
@@ -257,25 +256,24 @@ void            P_Validate();
 
 extern int      clipmana[NUMMANA];
 
-void            P_SetMessage(player_t * player, char *message, boolean ultmsg);
-void            P_SetYellowMessage(player_t * player, char *message,
+void            P_SetMessage(player_t *player, char *message, boolean ultmsg);
+void            P_SetYellowMessage(player_t *player, char *message,
 								   boolean ultmsg);
-void            P_ClearMessage(player_t * player);
+void            P_ClearMessage(player_t *player);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 							 int damage);
-void            P_FallingDamage(player_t * player);
-void            P_PoisonPlayer(player_t * player, mobj_t *poisoner,
-							   int poison);
-void            P_PoisonDamage(player_t * player, mobj_t *source, int damage,
+void            P_FallingDamage(player_t *player);
+void            P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison);
+void            P_PoisonDamage(player_t *player, mobj_t *source, int damage,
 							   boolean playPainSound);
-boolean         P_GiveMana(player_t * player, manatype_t mana, int count);
-boolean         P_GiveArtifact(player_t * player, artitype_t arti, mobj_t *mo);
-boolean         P_GiveArmor(player_t * player, armortype_t armortype,
+boolean         P_GiveMana(player_t *player, manatype_t mana, int count);
+boolean         P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo);
+boolean         P_GiveArmor(player_t *player, armortype_t armortype,
 							int amount);
-boolean         P_GiveBody(player_t * player, int num);
-boolean         P_GivePower(player_t * player, powertype_t power);
-boolean         P_MorphPlayer(player_t * player);
+boolean         P_GiveBody(player_t *player, int num);
+boolean         P_GivePower(player_t *player, powertype_t power);
+boolean         P_MorphPlayer(player_t *player);
 
 // ***** AM_MAP *****
 

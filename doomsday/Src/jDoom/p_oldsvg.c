@@ -119,7 +119,7 @@ static int SV_ReadLong()
    SV_WriteLong(pl->didsecret);
    } */
 
-static void SV_ReadPlayer(player_t * pl)
+static void SV_ReadPlayer(player_t *pl)
 {
 	int     temp[3];
 

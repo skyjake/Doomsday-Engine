@@ -101,26 +101,25 @@ void            P_OpenWeapons(void);
 void            P_CloseWeapons(void);
 void            P_AddMaceSpot(mapthing_t * mthing);
 void            P_RepositionMace(mobj_t *mo);
-void            P_SetPsprite(player_t * player, int position,
-							 statenum_t stnum);
-void            P_SetupPsprites(player_t * curplayer);
-void            P_MovePsprites(player_t * curplayer);
-void            P_DropWeapon(player_t * player);
-void            P_ActivateBeak(player_t * player);
-void            P_PostChickenWeapon(player_t * player, weapontype_t weapon);
-void            P_UpdateBeak(player_t * player, pspdef_t * psp);
-void            P_FireWeapon(player_t * player);
+void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
+void            P_SetupPsprites(player_t *curplayer);
+void            P_MovePsprites(player_t *curplayer);
+void            P_DropWeapon(player_t *player);
+void            P_ActivateBeak(player_t *player);
+void            P_PostChickenWeapon(player_t *player, weapontype_t weapon);
+void            P_UpdateBeak(player_t *player, pspdef_t * psp);
+void            P_FireWeapon(player_t *player);
 
 // ***** P_USER *****
 
 void            P_ClientSideThink();
 void            P_CheckReadyArtifact();
-void            P_PlayerThink(player_t * player);
-void            P_Thrust(player_t * player, angle_t angle, fixed_t move);
-void            P_PlayerRemoveArtifact(player_t * player, int slot);
-void            P_PlayerUseArtifact(player_t * player, artitype_t arti);
-boolean         P_UseArtifact(player_t * player, artitype_t arti);
-int             P_GetPlayerNum(player_t * player);
+void            P_PlayerThink(player_t *player);
+void            P_Thrust(player_t *player, angle_t angle, fixed_t move);
+void            P_PlayerRemoveArtifact(player_t *player, int slot);
+void            P_PlayerUseArtifact(player_t *player, artitype_t arti);
+boolean         P_UseArtifact(player_t *player, artitype_t arti);
+int             P_GetPlayerNum(player_t *player);
 
 // ***** P_MOBJ *****
 
@@ -226,7 +225,7 @@ boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y);
 boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y);
 void            P_SlideMove(mobj_t *mo);
 boolean         P_CheckSight(mobj_t *t1, mobj_t *t2);
-void            P_UseLines(player_t * player);
+void            P_UseLines(player_t *player);
 
 boolean         P_ChangeSector(sector_t *sector, boolean crunch);
 
@@ -260,16 +259,16 @@ char           *P_GetShortLevelName(int episode, int map);
 extern int      maxammo[NUMAMMO];
 extern int      clipammo[NUMAMMO];
 
-void            P_GiveKey(player_t * player, keytype_t key);
-void            P_SetMessage(player_t * player, char *message, boolean ultmsg);
+void            P_GiveKey(player_t *player, keytype_t key);
+void            P_SetMessage(player_t *player, char *message, boolean ultmsg);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 							 int damage);
-boolean         P_GiveAmmo(player_t * player, ammotype_t ammo, int count);
-boolean         P_GiveArtifact(player_t * player, artitype_t arti, mobj_t *mo);
-boolean         P_GiveBody(player_t * player, int num);
-boolean         P_GivePower(player_t * player, powertype_t power);
-boolean         P_ChickenMorphPlayer(player_t * player);
+boolean         P_GiveAmmo(player_t *player, ammotype_t ammo, int count);
+boolean         P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo);
+boolean         P_GiveBody(player_t *player, int num);
+boolean         P_GivePower(player_t *player, powertype_t power);
+boolean         P_ChickenMorphPlayer(player_t *player);
 
 // ***** AM_MAP *****
 

@@ -813,7 +813,7 @@ void P_ShootSpecialLine(mobj_t *thing, line_t *line)
 // P_PlayerInWindSector
 //  Handles sector specials 25 - 39.
 //============================================================================
-void P_PlayerInWindSector(player_t * player)
+void P_PlayerInWindSector(player_t *player)
 {
 	sector_t *sector;
 	static int pushTab[5] = {
@@ -870,7 +870,7 @@ void P_PlayerInWindSector(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerInSpecialSector(player_t * player)
+void P_PlayerInSpecialSector(player_t *player)
 {
 	sector_t *sector;
 

@@ -489,7 +489,7 @@ boolean I_JoystickPresent(void)
 //===========================================================================
 // I_GetKeyEvents
 //===========================================================================
-int I_GetKeyEvents(keyevent_t * evbuf, int bufsize)
+int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 {
 	DIDEVICEOBJECTDATA keyData[KEYBUFSIZE];
 	int     tries, i, num;
@@ -528,7 +528,7 @@ int I_GetKeyEvents(keyevent_t * evbuf, int bufsize)
 //===========================================================================
 // I_GetMouseState
 //===========================================================================
-void I_GetMouseState(mousestate_t * state)
+void I_GetMouseState(mousestate_t *state)
 {
 	DIMOUSESTATE2 mstate;
 	int     i, tries;

@@ -18,7 +18,7 @@
 #include "soundst.h"
 #include "settings.h"
 
-void    P_PlayerNextArtifact(player_t * player);
+void    P_PlayerNextArtifact(player_t *player);
 
 // Macros
 
@@ -72,7 +72,7 @@ int     ArmorMax[NUMCLASSES] = { 20, 18, 16, 1 };
    ==================
  */
 
-void P_Thrust(player_t * player, angle_t angle, fixed_t move)
+void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 {
 	mobj_t *mo = player->plr->mo;
 
@@ -116,7 +116,7 @@ void P_Thrust(player_t * player, angle_t angle, fixed_t move)
  */
 
 #if 0
-void P_CalcHeight(player_t * player)
+void P_CalcHeight(player_t *player)
 {
 	int     angle;
 	fixed_t bob;
@@ -235,7 +235,7 @@ void P_CalcHeight(player_t * player)
    =================
  */
 
-void P_MovePlayer(player_t * player)
+void P_MovePlayer(player_t *player)
 {
 	//  int look;
 	int     fly;
@@ -359,7 +359,7 @@ void P_MovePlayer(player_t * player)
 //
 //==========================================================================
 
-void P_DeathThink(player_t * player)
+void P_DeathThink(player_t *player)
 {
 	int     dir;
 	angle_t delta;
@@ -490,7 +490,7 @@ void P_DeathThink(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_MorphPlayerThink(player_t * player)
+void P_MorphPlayerThink(player_t *player)
 {
 	mobj_t *pmo;
 
@@ -524,7 +524,7 @@ void P_MorphPlayerThink(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-int P_GetPlayerNum(player_t * player)
+int P_GetPlayerNum(player_t *player)
 {
 	int     i;
 
@@ -544,7 +544,7 @@ int P_GetPlayerNum(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-boolean P_UndoPlayerMorph(player_t * player)
+boolean P_UndoPlayerMorph(player_t *player)
 {
 	mobj_t *fog;
 	mobj_t *mo;
@@ -644,7 +644,7 @@ boolean P_UndoPlayerMorph(player_t * player)
 //----------------------------------------------------------------------------
 // P_PlayerJump
 //----------------------------------------------------------------------------
-void P_PlayerJump(player_t * player)
+void P_PlayerJump(player_t *player)
 {
 	mobj_t *mo = player->plr->mo;
 	float   power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
@@ -672,7 +672,7 @@ void P_PlayerJump(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerThink(player_t * player)
+void P_PlayerThink(player_t *player)
 {
 	ticcmd_t *cmd;
 	weapontype_t newweapon;
@@ -1059,7 +1059,7 @@ void P_PlayerThink(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_ArtiTele(player_t * player)
+void P_ArtiTele(player_t *player)
 {
 	int     i;
 	int     selections;
@@ -1095,7 +1095,7 @@ void P_ArtiTele(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_ArtiTeleportOther(player_t * player)
+void P_ArtiTeleportOther(player_t *player)
 {
 	mobj_t *mo;
 
@@ -1280,7 +1280,7 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, fixed_t strength)
 }
 
 // Blast all mobj things away
-void P_BlastRadius(player_t * player)
+void P_BlastRadius(player_t *player)
 {
 	mobj_t *mo;
 	mobj_t *pmo = player->plr->mo;
@@ -1345,7 +1345,7 @@ void P_BlastRadius(player_t * player)
 #define HEAL_RADIUS_DIST	255*FRACUNIT
 
 // Do class specific effect for everyone in radius
-boolean P_HealRadius(player_t * player)
+boolean P_HealRadius(player_t *player)
 {
 	mobj_t *mo;
 	mobj_t *pmo = player->plr->mo;
@@ -1416,7 +1416,7 @@ boolean P_HealRadius(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerNextArtifact(player_t * player)
+void P_PlayerNextArtifact(player_t *player)
 {
 	extern int inv_ptr;
 	extern int curpos;
@@ -1454,7 +1454,7 @@ void P_PlayerNextArtifact(player_t * player)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerRemoveArtifact(player_t * player, int slot)
+void P_PlayerRemoveArtifact(player_t *player, int slot)
 {
 	int     i;
 	extern int inv_ptr;
@@ -1501,7 +1501,7 @@ void P_PlayerRemoveArtifact(player_t * player, int slot)
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerUseArtifact(player_t * player, artitype_t arti)
+void P_PlayerUseArtifact(player_t *player, artitype_t arti)
 {
 	int     i;
 
@@ -1542,7 +1542,7 @@ void P_PlayerUseArtifact(player_t * player, artitype_t arti)
 //
 //==========================================================================
 
-boolean P_UseArtifact(player_t * player, artitype_t arti)
+boolean P_UseArtifact(player_t *player, artitype_t arti)
 {
 	mobj_t *mo;
 	angle_t angle;

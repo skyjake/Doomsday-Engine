@@ -98,7 +98,7 @@ void cht_GetParam(cheatseq_t * cht, char *buffer)
 
 }
 
-void cht_GodFunc(player_t * plyr)
+void cht_GodFunc(player_t *plyr)
 {
 	plyr->cheats ^= CF_GODMODE;
 	plyr->update |= PSF_STATE;
@@ -113,8 +113,8 @@ void cht_GodFunc(player_t * plyr)
 				 (plyr->cheats & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF);
 }
 
-void cht_GiveFunc(player_t * plyr, boolean weapons, boolean ammo,
-				  boolean armor, boolean cards)
+void cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
+				  boolean cards)
 {
 	int     i;
 
@@ -144,7 +144,7 @@ void cht_GiveFunc(player_t * plyr, boolean weapons, boolean ammo,
 	}
 }
 
-void cht_MusicFunc(player_t * plyr, char *buf)
+void cht_MusicFunc(player_t *plyr, char *buf)
 {
 	int     off, musnum;
 
@@ -168,14 +168,14 @@ void cht_MusicFunc(player_t * plyr, char *buf)
 	}
 }
 
-void cht_NoClipFunc(player_t * plyr)
+void cht_NoClipFunc(player_t *plyr)
 {
 	plyr->cheats ^= CF_NOCLIP;
 	plyr->update |= PSF_STATE;
 	P_SetMessage(plyr, (plyr->cheats & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF);
 }
 
-boolean cht_WarpFunc(player_t * plyr, char *buf)
+boolean cht_WarpFunc(player_t *plyr, char *buf)
 {
 	int     epsd, map;
 
@@ -201,7 +201,7 @@ boolean cht_WarpFunc(player_t * plyr, char *buf)
 	return true;
 }
 
-void cht_PowerUpFunc(player_t * plyr, int i)
+void cht_PowerUpFunc(player_t *plyr, int i)
 {
 	plyr->update |= PSF_POWERS;
 	if(!plyr->powers[i])
@@ -212,13 +212,13 @@ void cht_PowerUpFunc(player_t * plyr, int i)
 		plyr->powers[i] = 0;
 }
 
-void cht_ChoppersFunc(player_t * plyr)
+void cht_ChoppersFunc(player_t *plyr)
 {
 	plyr->weaponowned[wp_chainsaw] = true;
 	plyr->powers[pw_invulnerability] = true;
 }
 
-void cht_PosFunc(player_t * plyr)
+void cht_PosFunc(player_t *plyr)
 {
 	static char buf[ST_MSGWIDTH];
 

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.11  2004/06/16 18:28:47  skyjake
+// Updated style (typenames)
+//
 // Revision 1.10  2004/05/30 08:42:42  skyjake
 // Tweaked indentation style
 //
@@ -93,7 +96,7 @@ boolean onground;
 // P_Thrust
 // Moves the given origin along a given angle.
 //
-void P_Thrust(player_t * player, angle_t angle, fixed_t move)
+void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 {
 	mobj_t *mo = player->plr->mo;
 	int     mul = XS_ThrustMul(mo->subsector->sector);
@@ -113,7 +116,7 @@ void P_Thrust(player_t * player, angle_t angle, fixed_t move)
 //  Returns true if the player is currently standing on ground or on top
 //  of another mobj.
 //===========================================================================
-boolean P_IsPlayerOnGround(player_t * player)
+boolean P_IsPlayerOnGround(player_t *player)
 {
 	boolean onground = (player->plr->mo->z <= player->plr->mo->floorz);
 
@@ -131,7 +134,7 @@ boolean P_IsPlayerOnGround(player_t * player)
 //  Will make the player jump if the latest command so instructs, 
 //  providing that jumping is possible.
 //===========================================================================
-void P_CheckPlayerJump(player_t * player)
+void P_CheckPlayerJump(player_t *player)
 {
 	ticcmd_t *cmd = &player->cmd;
 
@@ -150,7 +153,7 @@ void P_CheckPlayerJump(player_t * player)
 //
 // P_MovePlayer
 //
-void P_MovePlayer(player_t * player)
+void P_MovePlayer(player_t *player)
 {
 	mobj_t *plrmo = player->plr->mo;
 	ticcmd_t *cmd;
@@ -212,7 +215,7 @@ void P_MovePlayer(player_t * player)
 //
 #define ANG5   	(ANG90/18)
 
-void P_DeathThink(player_t * player)
+void P_DeathThink(player_t *player)
 {
 	angle_t angle;
 	angle_t delta;
@@ -263,7 +266,7 @@ void P_DeathThink(player_t * player)
 #define LIST_BEGIN		-1
 #define LIST_END		-2
 
-weapontype_t P_PlayerFindWeapon(player_t * player, boolean next)
+weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 {
 	/*      if (newweapon == wp_fist
 	   && player->weaponowned[wp_chainsaw]
@@ -417,7 +420,7 @@ void P_ClientSideThink()
 //===========================================================================
 // P_PlayerThink
 //===========================================================================
-void P_PlayerThink(player_t * player)
+void P_PlayerThink(player_t *player)
 {
 	mobj_t *plrmo = player->plr->mo;
 	ticcmd_t *cmd;
@@ -585,7 +588,7 @@ void P_PlayerThink(player_t * player)
 //===========================================================================
 // P_SetMessage
 //===========================================================================
-void P_SetMessage(player_t * pl, char *msg)
+void P_SetMessage(player_t *pl, char *msg)
 {
 	pl->message = msg;
 

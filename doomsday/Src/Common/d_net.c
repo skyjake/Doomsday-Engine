@@ -33,7 +33,7 @@
 // EXTERNAL FUNCTIONS -------------------------------------------------------
 
 #if __JHEXEN__
-void    SB_ChangePlayerClass(player_t * player, int newclass);
+void    SB_ChangePlayerClass(player_t *player, int newclass);
 #endif
 
 extern int netSvAllowSendMsg;

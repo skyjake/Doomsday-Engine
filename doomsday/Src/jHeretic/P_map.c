@@ -1506,7 +1506,7 @@ boolean PTR_UseTraverse(intercept_t * in)
    ================ 
  */
 
-void P_UseLines(player_t * player)
+void P_UseLines(player_t *player)
 {
 	int     angle;
 	fixed_t x1, y1, x2, y2;

@@ -33,7 +33,7 @@ static void SV_v13_Read(void *data, int len)
 	save_p += len;
 }
 
-static void SV_v13_ReadPlayer(player_t * pl)
+static void SV_v13_ReadPlayer(player_t *pl)
 {
 	byte    temp[12];
 	ddplayer_t *ddpl = pl->plr;

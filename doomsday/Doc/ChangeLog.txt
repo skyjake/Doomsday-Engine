@@ -4,6 +4,13 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.0-rc3
+-----------------
+* use TCP connection for sending reliable data (game setup, etc.)
+- fixed: mouse wheel events in Linux
+- fixed: opening control panel in dedicated mode
+
+
 Version 1.8.0-rc2
 -----------------
 + control panel text has its own color (not just white)

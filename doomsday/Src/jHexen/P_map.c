@@ -2019,7 +2019,7 @@ boolean PTR_UseTraverse(intercept_t * in)
    ================
  */
 
-void P_UseLines(player_t * player)
+void P_UseLines(player_t *player)
 {
 	int     angle;
 	fixed_t x1, y1, x2, y2;
@@ -2122,7 +2122,7 @@ boolean PTR_PuzzleItemTraverse(intercept_t * in)
 //
 //==========================================================================
 
-boolean P_UsePuzzleItem(player_t * player, int itemType)
+boolean P_UsePuzzleItem(player_t *player, int itemType)
 {
 	int     angle;
 	fixed_t x1, y1, x2, y2;

@@ -166,14 +166,14 @@ struct {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    P_InitPlayerValues(player_t * p);
+void    P_InitPlayerValues(player_t *p);
 void    P_RunPlayers(void);
 boolean P_IsPaused(void);
 void    P_DoTick(void);
 
 #if __JHEXEN__
 void    P_InitSky(int map);
-void    P_PlayerNextArtifact(player_t * player);
+void    P_PlayerNextArtifact(player_t *player);
 #endif
 
 void    HU_UpdatePsprites(void);
@@ -390,7 +390,7 @@ void G_StartTitle(void)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-static int findWeapon(player_t * plr, boolean forward)
+static int findWeapon(player_t *plr, boolean forward)
 {
 	int     i, c;
 
@@ -403,7 +403,8 @@ static int findWeapon(player_t * plr, boolean forward)
 		if(i < 0)
 			i = NUMWEAPONS - 2;
 #  elif __JHEXEN__
-		c < NUMWEAPONS; c++, forward ? i++ : i--)
+		c < NUMWEAPONS;
+		c++, forward ? i++ : i--)
 	{
 		if(i > NUMWEAPONS - 1)
 			i = 0;
@@ -416,7 +417,7 @@ static int findWeapon(player_t * plr, boolean forward)
 	return plr->readyweapon;
 }
 
-static boolean inventoryMove(player_t * plr, int dir)
+static boolean inventoryMove(player_t *plr, int dir)
 {
 	inventoryTics = 5 * 35;
 	if(!inventory)
@@ -486,7 +487,7 @@ char G_MakeLookDelta(float offset)
 	return (signed char) offset;
 }
 
-void G_AdjustAngle(player_t * player, int turn)
+void G_AdjustAngle(player_t *player, int turn)
 {
 	if(!player->plr->mo)
 		return;					// Sorry, can't help you, pal.
@@ -496,7 +497,7 @@ void G_AdjustAngle(player_t * player, int turn)
 		player->plr->clAngle += (turn << FRACBITS);
 }
 
-void G_AdjustLookDir(player_t * player, int look)
+void G_AdjustLookDir(player_t *player, int look)
 {
 	ddplayer_t *ddplr = player->plr;
 
@@ -531,7 +532,7 @@ void G_AdjustLookDir(player_t * player, int look)
 	}
 }
 
-void G_SetCmdViewAngles(ticcmd_t * cmd, player_t * pl)
+void G_SetCmdViewAngles(ticcmd_t * cmd, player_t *pl)
 {
 	// These will be sent to the server (or P_MovePlayer).
 	cmd->angle = pl->plr->clAngle >> 16;
@@ -1521,7 +1522,7 @@ void G_InventoryTicker(void)
 }
 #endif
 
-void G_SpecialButton(player_t * pl)
+void G_SpecialButton(player_t *pl)
 {
 	if(pl->plr->ingame)
 	{
@@ -1901,7 +1902,7 @@ void G_PlayerFinishLevel(int player)
 //
 //==========================================================================
 
-void ClearPlayer(player_t * p)
+void ClearPlayer(player_t *p)
 {
 	ddplayer_t *ddplayer = p->plr;
 	int     playeringame = ddplayer->ingame;
@@ -3174,7 +3175,7 @@ int CCmdPause(int argc, char **argv)
 //===========================================================================
 // P_Thrust3D
 //===========================================================================
-void P_Thrust3D(player_t * player, angle_t angle, float lookdir,
+void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
 				int forwardmove, int sidemove)
 {
 	angle_t pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
@@ -3262,7 +3263,7 @@ int P_CameraZMovement(mobj_t *mo)
 // P_CameraThink
 //  Set appropriate parameters for a camera.
 //===========================================================================
-void P_CameraThink(player_t * player)
+void P_CameraThink(player_t *player)
 {
 	angle_t angle;
 	int     tp, full, dist;

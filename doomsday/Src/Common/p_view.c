@@ -52,7 +52,7 @@
 // P_CalcHeight
 //  Calculate the walking / running height adjustment.
 //===========================================================================
-void P_CalcHeight(player_t * player)
+void P_CalcHeight(player_t *player)
 {
 	boolean setz = (player == &players[consoleplayer]);
 	boolean airborne;
