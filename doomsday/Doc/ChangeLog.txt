@@ -20,12 +20,15 @@ Version 1.7.8 (work in progress)
   rifle fire anim was broken
 - fixed: clientside player animation didn't finish anim sequence
 - fixed: line flags weren't updated on clientside (e.g. in Hexen map13)
+- fixed: minor edge artifact with multipart psprites (e.g. in jDoom)
 
 jDoom:
 * lineattack weapons hit planes (pistol, shotguns, chaingun) 
 - fixed: lineattack check for hitting sky planes, skyhack walls
 - map31 and map32 no longer assumed to exist: Doom2.wad "00f6d407" 
   should work 
+- weapon psprite timings (in Objects.ded) adjusted for super shotgun,
+  rocket launcher: muzzle flash was out-of-sync by 1-2 tics
 
 jHexen:
 - fixed: dedicated server tried to draw teleport gfx and crashed
