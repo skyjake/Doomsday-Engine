@@ -10,7 +10,6 @@ SET SRC=..\doomsday\
 SET FMODLIB=D:\sdk\fmod\api\
 SET SidgarDir=D:\Projects\SiDGaR\Release\
 SET KickDir=..\kickstart\
-SET BSPDir=D:\Utils\glbsp\
 
 IF "%1" == "rel" GOTO releasedirs
 IF "%1" == "beta" GOTO betadirs
@@ -47,6 +46,7 @@ xcopy %SupDir%drD3D.dll 	%DistBin%
 xcopy %SupDir%dsA3D.dll		%DistBin%
 xcopy %SupDir%dsCompat.dll	%DistBin%
 xcopy %SupDir%dpDehRead.dll     %DistBin%
+xcopy %SupDir%dpMapLoad.dll     %DistBin%
 xcopy %SRC%DLLs\LZSS.dll 	%DistBin%
 xcopy %SRC%DLLs\EAX.dll 	%DistBin%
 xcopy %SRC%DLLs\zlib.dll	%DistBin%
@@ -143,6 +143,3 @@ echo Copying Other Files...
 xcopy %KickDir%Kicks.exe 	%Dist%
 xcopy %KickDir%*.ks?   		%Dist%
 xcopy %KickDir%*.cfg   		%Dist%
-xcopy %BSPDir%glbsp.exe   	%Dist%
-xcopy %BSPDir%glbsp.txt   	%Dist%
-
