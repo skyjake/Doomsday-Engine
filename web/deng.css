@@ -145,6 +145,26 @@ td.content a:hover
   color: white;
 }
 
+table.tab
+{
+  width: 100%;
+}
+
+table.tab td
+{
+  vertical-align: top;
+  text-align: left;
+  background-color: #ddd;
+  padding: 0.5ex;
+}
+
+table.tab th
+{
+  background-color: #ddd;
+  pading: 0.5ex;
+  font-weight: bold;
+}
+
 table.dir
 {
   background-color: #ddd;
