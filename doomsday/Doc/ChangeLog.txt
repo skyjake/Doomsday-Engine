@@ -15,6 +15,10 @@ Version 1.7.10 (work in progress)
 + WAD, LMP, PK3 and ZIP files from the Data\Game\Auto directory are 
   always loaded automatically
 + WAD/PK3 files can be loaded from virtual files (inside PK3s)
++ IncludeIf and SkipIf directives can also test for game modes, e.g.
+  "SkipIf Not doom1-ultimate"
++ light decorations (dynlights on textures/flats), "Decoration" defs
++ cvar group 'rend-light-decor'
 + sprite frames can be replaced with external resources (Patches)
 + raw screens can be replaced with external resources (Patches)
 + -maxtex option: set maximum texture size ("-maxtex 128")
@@ -22,9 +26,16 @@ Version 1.7.10 (work in progress)
   is destroyed (sound cannot be stopped until it finishes normally)
 * faster 3D model loading during startup
 * rend-camera-smooth: Z-movement of planes is also smoothed
+* default dynlight brightness increased to 0.75 (rend-light-bright)
+* default halo brightness decreased to 35 (rend-halo-bright)
+- halo distance measured in 3D: no excess brightness when viewed from 
+  above/below
 - fixed: sprites were sometimes clipped by a sky ceiling
+- fixed: problems with rend-light-num 
 
 jDoom:
++ light decorations for all switches, many textures and some flats of 
+  Doom 1
 * barrel/rocket explosions continue even after barrel/rocket is gone 
   (barexp uses sf_dontstop)
 * Pause key is now the default binding for pause (was P)
