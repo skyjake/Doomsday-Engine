@@ -403,7 +403,7 @@ void P_NewParticle(ptcgen_t *gen)
 		pt->pos[VY] = gen->source->y;
 		pt->pos[VZ] = gen->source->z - gen->source->floorclip;
 		P_Uncertain(pt->pos, FRACUNIT * def->min_spawn_radius, 
-			FRACUNIT * def->spawn_radius);
+					FRACUNIT * def->spawn_radius);
 		
 		// Offset to the real center.
 		pt->pos[VZ] += gen->center[VZ];
@@ -1141,7 +1141,7 @@ void P_CheckPtcPlanes(void)
 	ded_ptcgen_t *def;
 
 	// There is no need to do this on every tic.
-	if(isDedicated || gametic % 4) return; 
+	if(isDedicated || SECONDS_TO_TICKS(gameTime) % 4) return; 
 
 	for(i = 0; i < numsectors; i++)
 	{

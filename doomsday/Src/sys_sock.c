@@ -19,16 +19,6 @@
  * sys_sock.c: TCP/IP Sockets
  */
 
-/*
- * $Log$
- * Revision 1.3  2004/01/08 12:22:05  skyjake
- * Merged from branch-nix
- *
- * Revision 1.2  2003/09/03 20:53:49  skyjake
- * Added a proper GPL banner
- *
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32

@@ -92,11 +92,11 @@ typedef enum
 
 /*typedef struct
 {
-	char		forwardmove;		// *2048 for move
-	char		sidemove;			// *2048 for move
+	char		forwardMove;		// *2048 for move
+	char		sideMove;			// *2048 for move
 	unsigned short angle;			// <<16 for angle
-	short		lookdir;			// view pitch
-	byte		buttons;
+	short		pitch;				// view pitch
+	byte		actions;
 	byte		lookfly;			// look/fly up/down/centering
 	byte		arti;				// artitype_t to use
 } ticcmd_t;*/

@@ -23,43 +23,6 @@
  * R_SetupLevel() to clear out all the old data.
  */
 
-/*
- * $Log$
- * Revision 1.17  2004/01/08 12:22:05  skyjake
- * Merged from branch-nix
- *
- * Revision 1.16  2003/09/09 21:41:39  skyjake
- * Name style update
- *
- * Revision 1.15  2003/09/08 22:19:40  skyjake
- * Float timing loop, use timespan_t in tickers, style cleanup
- *
- * Revision 1.14  2003/09/04 16:56:49  skyjake
- * Added a proper GPL banner
- *
- * Revision 1.13  2003/08/30 15:24:50  skyjake
- * Removed #define DD_PROFILE
- *
- * Revision 1.12  2003/07/12 22:18:00  skyjake
- * Don't profile
- *
- * Revision 1.11  2003/07/01 12:38:58  skyjake
- * Pool missile record, adde Sv_ExcludeDelta
- *
- * Revision 1.10  2003/06/30 00:22:01  skyjake
- * Fixmom, resend ack, reset player mobj when player changes mobj
- *
- * Revision 1.9  2003/06/28 15:59:24  skyjake
- * Delta score bonus for large objects, MDFC_CREATE gets smaller bonus
- *
- * Revision 1.8  2003/06/27 20:13:36  skyjake
- * Added maxed mobj Z coords, fixed initial side deltas, sector height deltas
- *
- * Revision 1.7  2003/06/24 21:16:02  skyjake
- * Complete rewrite of delta pools
- *
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
@@ -853,7 +816,7 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
 	int i;
 
 	memset(reg, 0, sizeof(*reg));
-	reg->gametic = gametic;
+	reg->gametic = SECONDS_TO_TICKS(gameTime);
 
 	// Is this the initial state?
 	reg->isInitial = isInitial;
@@ -2212,7 +2175,7 @@ void Sv_GenerateNewDeltas(cregister_t *reg, int clientNumber, boolean doUpdate)
 	if(doUpdate)
 	{
 		// The register has now been updated to the current time.
-		reg->gametic = gametic;
+		reg->gametic = SECONDS_TO_TICKS(gameTime);
 	}
 }
 

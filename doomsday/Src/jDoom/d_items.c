@@ -14,29 +14,7 @@
 // FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
 // for more details.
 //
-// $Log$
-// Revision 1.3  2004/01/08 12:25:15  skyjake
-// Merged from branch-nix
-//
-// Revision 1.2.4.1  2003/11/19 17:07:12  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.2  2003/07/01 23:58:56  skyjake
-// Static weapon switching (value, weaponinfo)
-//
-// Revision 1.1  2003/02/26 19:21:32  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:11:44  Jaakko
-// Added Doomsday sources
-//
-//
-// DESCRIPTION:
-//
 //-----------------------------------------------------------------------------
-
-static const char
-rcsid[] = "$Id$";
 
 // We are referring to sprite numbers.
 #include "info.h"

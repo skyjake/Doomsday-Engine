@@ -18,12 +18,20 @@
 /*
  * sys_timer.c: Timing Subsystem
  *
- * Uses the SDL timing routines.
+ * Uses Win32 multimedia timing routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <SDL.h>
+#include "de_platform.h"
+
+#ifdef WIN32
+#	include <mmsystem.h>
+#endif
+
+#ifdef UNIX
+#	include <SDL.h>
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -46,25 +54,45 @@ float ticsPerSecond = TICSPERSEC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static double timeOffset = 0;
+
 // CODE --------------------------------------------------------------------
 
+//==========================================================================
+// Sys_ShutdownTimer
+//==========================================================================
 void Sys_ShutdownTimer(void)
 {
+#ifdef WIN32
+	timeEndPeriod(1);
+#endif
 }
 
+//==========================================================================
+// Sys_InitTimer
+//==========================================================================
 void Sys_InitTimer(void)
 {
-	/*Con_Message("Sys_InitTimer.\n");*/
+	Con_Message("Sys_InitTimer.\n");
+#ifdef WIN32	
+	timeBeginPeriod(1);
+#endif
 }
 
-/*
- * Returns the time in milliseconds.
- */
+//===========================================================================
+// Sys_GetRealTime
+//	Returns the time in milliseconds.
+//===========================================================================
 unsigned int Sys_GetRealTime (void)
 {
 	static boolean first = true;
-	static Uint32 start = 0;
+	static DWORD start;
+#ifdef WIN32
+	DWORD now = timeGetTime();
+#endif
+#ifdef UNIX
 	Uint32 now = SDL_GetTicks();
+#endif
 
 	if(first)
 	{
@@ -79,37 +107,48 @@ unsigned int Sys_GetRealTime (void)
 	return now - start;
 }
 
-/*
- * Returns the timer value in seconds.
- */
+//===========================================================================
+// Sys_GetSeconds
+//	Returns the timer value in seconds.
+//===========================================================================
 double Sys_GetSeconds (void)
 {
-	return (double) Sys_GetRealTime() / 1000.0;
+	return (double) ((Sys_GetRealTime() / 1000.0) *
+					 (ticsPerSecond/35)) + timeOffset;
 }
 
-/*
- * Returns time in 35 Hz floating point tics.
- */
+//===========================================================================
+// Sys_GetTimef
+//	Returns time in 35 Hz floating point tics.
+//===========================================================================
 double Sys_GetTimef(void)
 {
-	return (Sys_GetRealTime() / 1000.0 * ticsPerSecond);
+	//return ((Sys_GetRealTime() / 1000.0 + timeOffset) * ticsPerSecond);
+	return Sys_GetSeconds() * 35;
 }
 
-/*
- * Returns time in 35 Hz tics.
- */
+//==========================================================================
+// Sys_GetTime
+//	Returns time in 35 Hz tics.
+//==========================================================================
 int Sys_GetTime (void)
 {
 	return (int) Sys_GetTimef();
 }
 
-#if 0
-/*
- * Set the number of game tics per second.
- */
-void Sys_TicksPerSecond(float num)
+//==========================================================================
+// Sys_TicksPerSecond
+//	Set the number of game tics per second.
+//==========================================================================
+void Sys_TicksPerSecond(float newTics)
 {
-	if(num <= 0) num = TICSPERSEC;
-	ticsPerSecond = num;
+	double nowTime = Sys_GetRealTime()/1000.0;
+	
+	if(newTics <= 0) newTics = TICSPERSEC;
+
+	// Update the time offset so that after the change time will
+	// continue from the same value.
+	timeOffset += nowTime * (ticsPerSecond - newTics)/35;
+	
+	ticsPerSecond = newTics;
 }
-#endif

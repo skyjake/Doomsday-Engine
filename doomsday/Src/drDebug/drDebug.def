@@ -1,5 +1,4 @@
 LIBRARY			DRDEBUG
-DESCRIPTION		"Doomsday Graphics Library - Debug"
 
 ; All exports should be prefixed DG_.
 

@@ -13,7 +13,7 @@
 #endif
 
 // My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT "2.0."DOOMSDAY_RELEASE_NAME
+#define VERSION_TEXT "1.15."DOOMSDAY_RELEASE_NAME
 #define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JDOOM_VER_ID")"
 
 // All the versions of Doom have different savegame IDs, but

@@ -100,6 +100,10 @@ cvarbutton_t cvarbuttons[] =
 	{ 0, "con-text-shadow" },
 	{ 0, "ui-panel-help" },
 	{ 0, "ui-panel-tips" },
+	{ 0, "input-mouse-y-inverse" }, 
+	{ 0, "input-mouse-x-disable" },
+	{ 0, "input-mouse-y-disable" },
+	{ 0, "input-mouse-filter" },
 	{ 0, "input-joy" },
 	{ 0, "input-key-show-scancodes" },
 	{ 0, "net-nosleep" },
@@ -109,6 +113,7 @@ cvarbutton_t cvarbuttons[] =
 	{ 0, "sound-3d" },
 	{ 0, "sound-info" },
 	{ 0, "rend-particle" },
+	{ 0, "rend-camera-smooth" },
 	{ 0, "rend-mobj-smooth-turn" },
 	{ 0, "rend-sprite-precache" },
 	{ 0, "rend-sprite-noz" },
@@ -220,10 +225,10 @@ uidata_list_t lst_resolution = {
 
 uidata_slider_t sld_con_alpha = { 0, 100, 0, 1, false, "con-alpha" };
 uidata_slider_t sld_con_light = { 0, 100, 0, 1, false, "con-light" };
-/*uidata_slider_t sld_joy_sensi = { 0, 9, 0, 1, false, "input-joy-sensi" };*/
-/*uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" };*/
-uidata_slider_t sld_keywait1 = { 5, 35, 0, 1, false, "input-key-wait1" };
-uidata_slider_t sld_keywait2 = { 2, 35, 0, 1, false, "input-key-wait2" };
+uidata_slider_t sld_joy_sensi = { 0, 9, 0, 1, false, "input-joy-sensi" };
+uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" }; 
+uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, "input-key-delay1" };
+uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, "input-key-delay2" };
 uidata_slider_t sld_client_pos_interval = { 0, 70, 0, 1, false, "client-pos-interval" };
 uidata_slider_t sld_server_frame_interval = { 0, 35, 0, 1, false, "server-frame-interval" };
 uidata_slider_t sld_sound_volume = { 0, 255, 0, 1, false, "sound-volume" };
@@ -328,32 +333,32 @@ ui_object_t ob_panel[] =
 
 	{ UI_META,		4 },
 	{ UI_TEXT,		0,	0,				280, 0, 0, 50,		"Input Options", UIText_Drawer },
-/*	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Invert mouse Y axis", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"input-mouse-y-inverse", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },*/
+	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Invert mouse Y axis", UIText_Drawer },
+	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"input-mouse-y-inverse", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_META,		4,	0,				0, 60 },
-/*	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Filter mouse movement", UIText_Drawer },
+	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Filter mouse movement", UIText_Drawer },
 	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"input-mouse-filter", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 130, 0, 55,	"Disable mouse X axis", UIText_Drawer },
 	{ UI_BUTTON2,	0,	0,				680, 130, 70, 55,	"input-mouse-x-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 190, 0, 55,	"Disable mouse Y axis", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 190, 70, 55,	"input-mouse-y-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },*/
+	{ UI_BUTTON2,	0,	0,				680, 190, 70, 55,	"input-mouse-y-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 250, 0, 55,	"Enable joystick", UIText_Drawer },
 	{ UI_BUTTON2,	0,	0,				680, 250, 70, 55,	"input-joy", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-/*	{ UI_TEXT,		0,	0,				300, 310, 0, 55,	"Joystick sensitivity", UIText_Drawer },
+	{ UI_TEXT,		0,	0,				300, 310, 0, 55,	"Joystick sensitivity", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 310, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_sensi },
 	{ UI_TEXT,		0,	0,				300, 370, 0, 55,	"Joystick dead zone (%)", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 370, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_dead },*/
-	{ UI_TEXT,		0,	0,				300, 430, 0, 55,	"Key repeat delay", UIText_Drawer },
+	{ UI_SLIDER,	0,	0,				680, 370, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_dead },
+	{ UI_TEXT,		0,	0,				300, 430, 0, 55,	"Key repeat delay (ms)", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 430, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait1 },
-	{ UI_TEXT,		0,	0,				300, 490, 0, 55,	"Key repeat rate", UIText_Drawer },
+	{ UI_TEXT,		0,	0,				300, 490, 0, 55,	"Key repeat rate (ms)", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 490, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait2 },
 	{ UI_TEXT,		0,	0,				300, 550, 0, 55,	"Print scancodes of pressed keys", UIText_Drawer },
 	{ UI_BUTTON2,	0,	0,				680, 550, 70, 55,	"input-key-show-scancodes", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
 	{ UI_META,		5 },
 	{ UI_TEXT,		0,	0,				280, 0, 0, 50,		"Graphics Options", UIText_Drawer },
-/*	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Smooth camera movement", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"rend-camera-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },*/
+	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Smooth camera movement", UIText_Drawer },
+	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"rend-camera-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 130, 0, 55,	"Field Of View angle", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 130, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
 	{ UI_BUTTON,	0,	0,				680, 190, 70, 60,	"90",		UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },

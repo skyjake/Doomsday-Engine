@@ -279,15 +279,14 @@ boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
  */
 int Sv_Latency(byte cmdtime)
 {
-	return Net_TimeDelta(gametic, cmdtime);
+	return Net_TimeDelta(SECONDS_TO_TICKS(gameTime), cmdtime);
 }
 
-/*
- * Check the FIXANGLES flag of local players.  Angle fixing means that
- * the 'clientside' angles will be synced to match the angles of the
- * player's mobj.  Usually the sync goes the other way.
- */
-void Sv_FixLocalAngles(void)
+//===========================================================================
+// Sv_FixLocalAngles
+//	For local players.
+//===========================================================================
+void Sv_FixLocalAngles()
 {
 	ddplayer_t *pl;
 	int i;
@@ -378,8 +377,8 @@ void Sv_HandlePacket(void)
 			Sv_Handshake(from, true);
 
 			// Note the time when the player entered.
-			sender->enterTime = gametic;
-			sender->runTime = gametic-1;
+			sender->enterTime = SECONDS_TO_TICKS(gameTime);
+			sender->runTime = SECONDS_TO_TICKS(gameTime) - 1;
 			//sender->lagStress = 0;
 		}
 		else if(pl->ingame)
@@ -404,7 +403,8 @@ void Sv_HandlePacket(void)
 			sender->handshake = false;
 			// Send a clock sync message.
 			Msg_Begin(psv_sync);
-			Msg_WriteLong(gametic + (sender->shakePing*35)/2000);
+			Msg_WriteLong(SECONDS_TO_TICKS(gameTime) +
+						  (sender->shakePing*35)/2000);
 			// Send reliably, although if it has to be resent, the tics
 			// will already be way off...
 			Net_SendBuffer(from, SPF_CONFIRM);
@@ -752,7 +752,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
 	shake.version = SV_VERSION;
 	shake.yourConsole = playernum;
 	shake.playerMask = 0;
-	shake.gameTime = gametic;
+	shake.gameTime = gameTime*100;
 	for(i = 0; i < MAXPLAYERS; i++)
 		if(clients[i].connected)
 			shake.playerMask |= 1<<i;
@@ -828,7 +828,7 @@ void Sv_StartNetGame()
 		clients[i].bwrAdjustTime = 0;
 		memset(clients[i].ackTimes, 0, sizeof(clients[i].ackTimes));
 	}
-	gametic = 0;
+	gameTime = 0;
 	firstNetUpdate = true;
 	net_remoteuser = 0;
 

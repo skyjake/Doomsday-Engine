@@ -25,6 +25,7 @@
 #define __DOOMSDAY_WAD_H__
 
 #include "sys_file.h"
+#include "con_decl.h"
 
 #define RECORD_FILENAMELEN	256
 
@@ -81,5 +82,8 @@ unsigned int W_CRCNumberForRecord(int idx);
 unsigned int W_CRCNumber(void);
 void W_GetIWADFileName(char *buf, int bufSize);
 void W_GetPWADFileNames(char *buf, int bufSize, char separator);
+void W_PrintMapList(void);
+
+D_CMD( ListMaps );
 
 #endif

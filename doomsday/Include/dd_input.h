@@ -25,52 +25,8 @@
 #include "dd_share.h"	// For event_t.
 #include "con_decl.h"
 
-// Input devices.
-enum
-{
-	IDEV_KEYBOARD = 0,
-	IDEV_MOUSE,
-	IDEV_JOY1,
-	IDEV_JOY2,
-	IDEV_JOY3,
-	IDEV_JOY4,
-	NUM_INPUT_DEVICES		// Theoretical maximum.
-};	
-
-// Input device axis types.
-enum
-{
-	IDAT_STICK = 0,			// joysticks, gamepads
-	IDAT_POINTER = 1		// mouse
-};
-
-// Input device axis flags.
-#define IDA_DISABLED 0x1	// Axis is always zero.
-#define IDA_INVERT 0x2		// Real input data should be inverted.
-#define IDA_FILTER 0x4		// Average with prev. position.
-
-typedef struct inputdevaxis_s {
-	char name[20];			// Symbolic name of the axis.
-	int type;				// Type of the axis (pointer or stick).
-	int flags;
-	float position;			// Current translated position of the axis (-1..1).
-	float scale;			// Scaling factor for real input values.
-	float deadZone;			
-} inputdevaxis_t;
-
-// Input device flags.
-#define ID_ACTIVE 0x1		// The input device is active.
-
-typedef struct inputdev_s {
-	int flags;
-	char name[20];			// Symbolic name of the device.
-	int numAxes;			// Number of axes in this input device.
-	inputdevaxis_t *axes;
-	int numKeys;			// Number of keys for this input device.
-	char *keys;				// True/False for each key.
-} inputdev_t;
-
 extern int		repWait1, repWait2;
+extern int      keyRepeatDelay1, keyRepeatDelay2; // milliseconds
 extern int		mouseFilter;
 extern int		mouseDisableX, mouseDisableY;
 extern int		mouseInverseY;

@@ -15,6 +15,21 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2004/05/28 17:16:41  skyjake
+// Resolved conflicts (branch-1-7 overrides)
+//
+// Revision 1.1.2.3  2004/05/27 20:50:14  skyjake
+// Fixed various problems after merge with trunk
+//
+// Revision 1.1.2.2  2004/05/23 14:11:09  skyjake
+// Resolved conflict
+//
+// Revision 1.1.2.1  2004/05/16 10:01:37  skyjake
+// Merged good stuff from branch-nix for the final 1.7.15
+//
+// Revision 1.1.4.1  2003/11/19 17:07:14  skyjake
+// Modified to compile with gcc and -DUNIX
+//
 // Revision 1.3  2004/01/25 21:49:47  skyjake
 // Fixed finecosine
 //
@@ -2138,5 +2153,3 @@ angle_t tantoangle[2049] =
     535533216,535700704,535868128,536035456,536202720,536369888,536536992,536704000,
     536870912
 };
-
-

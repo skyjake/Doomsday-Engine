@@ -27,6 +27,8 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+#include "def_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define TOP_PSPY		32
@@ -92,7 +94,7 @@ void Cl_LocalCommand(void)
 	client_t *cl = clients + consoleplayer;
 	playerstate_t *s = playerstate + consoleplayer;
 
-	if(leveltic < 10)
+	if(levelTime < 0.333)
 	{
 		// In the very beginning of a level, moving is not allowed.
 		memset(cl->lastCmd, 0, sizeof(*cl->lastCmd));
@@ -372,8 +374,8 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
 	if(!mo) return;
 
 	// Place the new momentum in the appropriate place.
-	cp_momx[gametic % LOCALCAM_WRITE_TICS] = dx;
-	cp_momy[gametic % LOCALCAM_WRITE_TICS] = dy;
+	cp_momx[SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dx;
+	cp_momy[SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
 
 	// Calculate an average.
 	for(mo->momx = mo->momy = i = 0; i < LOCALCAM_WRITE_TICS; i++)

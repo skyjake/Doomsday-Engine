@@ -1162,7 +1162,7 @@ int XSTrav_SectorLight(sector_t *sector, boolean ceiling, int data,
 {
 	line_t *line = (line_t*) data;
 	linetype_t *info = context;
-	int num, levels[MAX_VALS], i;
+	int num, levels[MAX_VALS], i = 0;
 	int uselevel = sector->lightlevel;
 	byte usergb[3];
 
@@ -1964,7 +1964,7 @@ int CCmdMovePlane(int argc, char **argv)
 	boolean isOffset = false, isCrusher = false;
 	sector_t *sector = NULL;
 	fixed_t units = 0, speed = FRACUNIT;
-	int i, p;
+	int i, p = 0;
 	xgplanemover_t *mover;
 	
 	if(argc < 2)

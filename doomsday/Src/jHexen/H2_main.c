@@ -708,26 +708,6 @@ void H2_Shutdown(void)
 {
 }
 
-//--------------------------------------------------------------------------
-// G_DiscardTiccmd
-//	Server uses this if it's necessary to discard ticcmds (client has too
-//	many waiting in the buffer, server tries to get rid of the extra lag
-//	that causes).
-//--------------------------------------------------------------------------
-void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
-{
-	// We're only interested in buttons.
-	// Old Attack and Use buttons apply, if they're set.
-	current->buttons |= discarded->buttons & (BT_ATTACK | BT_USE);
-	if(discarded->buttons & BT_SPECIAL || current->buttons & BT_SPECIAL) 
-		return;
-	if(discarded->buttons & BT_CHANGE && !(current->buttons & BT_CHANGE))
-	{
-		// Use the old weapon change.
-		current->buttons |= discarded->buttons & (BT_CHANGE | BT_WEAPONMASK);
-	}
-}
-
 //===========================================================================
 // GetGameAPI
 //	Takes a copy of the engine's entry points and exported data. Returns
@@ -756,7 +736,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.PostInit = H2_PostInit;
 	gx.Shutdown = H2_Shutdown;
 	gx.BuildTicCmd = (void (*)(void*)) G_BuildTiccmd;
-	gx.DiscardTicCmd = (void (*)(void*, void*)) G_DiscardTiccmd;
+	//gx.DiscardTicCmd = (void (*)(void*, void*)) G_DiscardTiccmd;
 	gx.Ticker = H2_Ticker;
 	gx.G_Drawer = G_Drawer;
 	gx.MN_Drawer = MN_Drawer;

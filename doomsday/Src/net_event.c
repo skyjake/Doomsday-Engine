@@ -149,8 +149,8 @@ void N_NETicker(void)
 	if(netgame)
 	{
 		// Update master every 2 minutes.
-		if(masterAware && N_UsingInternet()
-			&& !(systics % (MASTER_HEARTBEAT*TICRATE)))
+		if(masterAware && N_UsingInternet() &&
+		   !(SECONDS_TO_TICKS(sysTime) % (MASTER_HEARTBEAT*TICRATE)))
 		{
 			N_MasterAnnounceServer(true);
 		}

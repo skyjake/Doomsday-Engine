@@ -31,6 +31,7 @@ typedef enum
 	SFXD_A3D,
 	SFXD_OPENAL,
 	SFXD_COMPATIBLE,
+	SFXD_SDL_MIXER,
 	SFXD_DUMMY
 } 
 sfxdriver_e;

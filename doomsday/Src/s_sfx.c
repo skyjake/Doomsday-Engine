@@ -37,12 +37,6 @@
 #define SFX_LOWEST_PRIORITY		-1000
 #define UPDATE_TIME				(2.0/TICSPERSEC)	// Seconds.
 
-// Begin and end macros for Critical OPerations. They are operations 
-// that can't be done while a refresh is being made. No refreshing 
-// will be done between BEGIN_COP and END_COP.
-#define BEGIN_COP		Sys_Lock(channelMutex)
-#define END_COP			Sys_Unlock(channelMutex)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -58,8 +52,7 @@ void		Sfx_SampleFormat(int new_bits, int new_rate);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-volatile boolean sfx_avail = false;
-
+boolean			sfx_avail = false;
 sfxdriver_t		*driver = NULL;
 
 int				sfx_max_channels = 16;
@@ -81,20 +74,23 @@ static sfxchannel_t	*channels;
 static mobj_t *listener;
 static sector_t *listener_sector = 0;
 
-static int hRefresh;
-static int channelMutex; // Exclusion between refresh thread and main thread.
+static int refresh_handle;
+static volatile boolean allowrefresh, refreshing;
 
-static volatile byte refMonitor = 0;
+static byte refmonitor = 0;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * This is a high-priority thread that periodically checks if the
- * channels need to be updated with more data. The thread terminates
- * when it notices that the channels have been destroyed.  The Sfx
- * driver maintains a 250ms buffer for each channel, which means the
- * refresh must be done often enough to keep them filled.
- */
+//===========================================================================
+// Sfx_ChannelRefreshThread
+//	This is a high-priority thread that periodically checks if the 
+//	channels need to be updated with more data. The thread terminates
+//	when it notices that the channels have been destroyed.
+//	The Sfx driver maintains a 250ms buffer for each channel, which 
+//	means the refresh must be done often enough to keep them filled.
+//
+//	FIXME: Use a real mutex, will you?
+//===========================================================================
 int Sfx_ChannelRefreshThread(void *parm)
 {
 	sfxchannel_t *ch;
@@ -104,74 +100,94 @@ int Sfx_ChannelRefreshThread(void *parm)
 	while(sfx_avail && channels)
 	{
 		// The bit is swapped on each refresh (debug info).
-		refMonitor ^= 1;
+		refmonitor ^= 1;
 
-		// Acquire the mutex to prevent others from accessing the
-		// channels at the same time.
-		BEGIN_COP;
-		
-		for(i = 0, ch = channels; sfx_avail && i < num_channels; i++, ch++)
+		if(allowrefresh)
 		{
-			if(!ch->buffer
-			   || !(ch->buffer->flags & SFXBF_PLAYING)) continue;
-			driver->Refresh(ch->buffer);
+			// Do the refresh.
+			refreshing = true;
+			for(i = 0, ch = channels; i < num_channels; i++, ch++)
+			{
+				if(!ch->buffer
+					|| !(ch->buffer->flags & SFXBF_PLAYING)) continue;
+				driver->Refresh(ch->buffer);
+			}
+			refreshing = false;
+			// Let's take a nap.
+			Sys_Sleep(200);
 		}
-
-		END_COP;
-		
-		// Let's take a nap.
-		Sys_Sleep(200);
+		else
+		{
+			// Refreshing is not allowed, so take a shorter nap while
+			// waiting for allowrefresh.
+			Sys_Sleep(150);
+		}
 	}
-	
 	// Time to end this thread.
 	return 0;
 }
 
-/*
- * Stop all sounds of the group. If an emitter is specified, only its
- * sounds are checked.
- */
+//===========================================================================
+// Sfx_AllowRefresh
+//	Enabling refresh is simple: the refresh thread is resumed.
+//	When disabling refresh, first make sure a new refresh doesn't
+//	begin (using allowrefresh). We still have to see if a refresh
+//	is being made and wait for it to stop. Then we can suspend the 
+//	refresh thread.
+//===========================================================================
+void Sfx_AllowRefresh(boolean allow)
+{
+	if(!sfx_avail) return;
+	if(allowrefresh == allow) return; // No change.
+	allowrefresh = allow;
+	// If we're denying refresh, let's make sure that if it's currently
+	// running, we don't continue until it has stopped.
+	if(!allow) while(refreshing) Sys_Sleep(0);
+	/*Sys_SuspendThread(refresh_handle, !allow);*/
+}
+
+//===========================================================================
+// Sfx_StopSoundGroup
+//	Stop all sounds of the group. If an emitter is specified, only its
+//	sounds are checked.
+//===========================================================================
 void Sfx_StopSoundGroup(int group, mobj_t *emitter)
 {
 	sfxchannel_t *ch;
 	int i;
 
 	if(!sfx_avail) return;
-
-	BEGIN_COP;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
 		if(!ch->buffer
 			|| !(ch->buffer->flags & SFXBF_PLAYING)
 			|| ch->buffer->sample->group != group
-			|| (emitter && ch->emitter != emitter))	continue;
-		
+			|| (emitter && ch->emitter != emitter))
+			continue;
 		// This channel must stop.
 		driver->Stop(ch->buffer);
 	}
-	END_COP;
 }
 
-/*
- * Stops all channels that are playing the specified sound. If ID is
- * zero, all sounds are stopped. If emitter is not NULL, then the
- * channel's emitter mobj must match it. Returns the number of samples
- * stopped.
- */
+//===========================================================================
+// Sfx_StopSound
+//	Stops all channels that are playing the specified sound. If ID is
+//	zero, all sounds are stopped. If emitter is not NULL, then the channel's 
+//	emitter mobj must match it. Returns the number of samples stopped.
+//===========================================================================
 int Sfx_StopSound(int id, mobj_t *emitter)
 {
 	sfxchannel_t *ch;
 	int i, stopCount = 0;
 
 	if(!sfx_avail) return false;
-
-	BEGIN_COP;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
 		if(!ch->buffer 
 		   || !(ch->buffer->flags & SFXBF_PLAYING)
 		   || (id && ch->buffer->sample->id != id)
-		   || (emitter && ch->emitter != emitter)) continue; 
+		   || (emitter && ch->emitter != emitter)) 
+			continue; 
 
 		// Can it be stopped?
 		if(ch->buffer->flags & SFXBF_DONT_STOP) 
@@ -186,46 +202,73 @@ int Sfx_StopSound(int id, mobj_t *emitter)
 		driver->Stop(ch->buffer);
 		++stopCount;
 	}
-	END_COP;
 
 	return stopCount;
 }
 
 /*
- * The specified sample will soon no longer exist. All channel buffers
- * loaded with the sample will be reset.
- */
+//===========================================================================
+// Sfx_IsPlaying
+//===========================================================================
+int Sfx_IsPlaying(int id, mobj_t *emitter)
+{
+	sfxchannel_t *ch;
+	int i;
+
+	if(!sfx_avail) return false;
+	for(i = 0, ch = channels; i < num_channels; i++, ch++)
+	{
+		if(!ch->buffer 
+			|| !(ch->buffer->flags & SFXBF_PLAYING)
+			|| ch->emitter != emitter
+			|| id && ch->buffer->sample->id != id) continue;
+
+		// Once playing, repeating sounds don't stop.
+		if(ch->buffer->flags & SFXBF_REPEAT) return true;
+
+		// Check time. The flag is updated after a slight delay
+		// (only at refresh).
+		if(Sys_GetTime() - ch->starttime < ch->buffer->sample->numsamples
+			/(float)ch->buffer->freq*TICSPERSEC) return true;
+	}
+	return false;
+}
+*/
+
+//===========================================================================
+// Sfx_UnloadSoundID
+//	The specified sample will soon no longer exist. All channel buffers
+//	loaded with the sample will be reset.
+//===========================================================================
 void Sfx_UnloadSoundID(int id)
 {
 	sfxchannel_t *ch;
 	int i;
 	
 	if(!sfx_avail) return;
-	
 	BEGIN_COP;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
 		if(!ch->buffer 
 			|| !ch->buffer->sample
-			|| ch->buffer->sample->id != id) continue;
-		
+			|| ch->buffer->sample->id != id) 
+			continue; 
 		// Stop and unload.
 		driver->Reset(ch->buffer);
 	}
 	END_COP;
 }
 
-/*
- * Returns the number of channels the sound is playing on.
- */
+//===========================================================================
+// Sfx_CountPlaying
+//	Returns the number of channels the sound is playing on.
+//===========================================================================
 int Sfx_CountPlaying(int id)
 {
 	sfxchannel_t *ch = channels;
 	int i = 0, count = 0;
 	
 	if(!sfx_avail) return 0;
-
-	BEGIN_COP;
 	for(; i < num_channels; i++, ch++)
 	{
 		if(!ch->buffer						// No buffer.
@@ -234,18 +277,17 @@ int Sfx_CountPlaying(int id)
 			|| !(ch->buffer->flags & SFXBF_PLAYING)) continue;
 		count++;
 	}
-	END_COP;
-	
 	return count;
 }
 
-/*
- * The priority of a sound is affected by distance, volume and age.
- */
+//===========================================================================
+// Sfx_Priority
+//	The priority of a sound is affected by distance, volume and age.
+//===========================================================================
 float Sfx_Priority(mobj_t *emitter, float *fixpos, float volume, int starttic)
 {
-	// In four seconds all priority of a sound is gone.
-	float timeoff = 1000 * (Sys_GetTime() - starttic) / (4.0f*TICSPERSEC);
+	// In five seconds all priority of a sound is gone.
+	float timeoff = 1000 * (Sys_GetTime() - starttic) / (5.0f*TICSPERSEC);
 	float orig[3];
 
 	if(!listener || (!emitter && !fixpos))
@@ -265,16 +307,17 @@ float Sfx_Priority(mobj_t *emitter, float *fixpos, float volume, int starttic)
 		// No emitter mobj, use the fixed source position.
 		memcpy(orig, fixpos, sizeof(orig));
 	}
-	return 1000*volume
+	return 1000*volume 
 		- P_MobjPointDistancef(listener, 0, orig)/2
 		- timeoff;
 }
 
-/*
- * Calculate priority points for a sound playing on a channel.  They
- * are used to determine which sounds can be cancelled by new sounds.
- * Zero is the lowest priority.
- */
+//===========================================================================
+// Sfx_ChannelPriority
+//	Calculate priority points for a sound playing on a channel.
+//	They are used to determine which sounds can be cancelled by new sounds.
+//	Zero is the lowest priority.
+//===========================================================================
 float Sfx_ChannelPriority(sfxchannel_t *ch)
 {
 	if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING)) 
@@ -287,9 +330,10 @@ float Sfx_ChannelPriority(sfxchannel_t *ch)
 	return Sfx_Priority(0, ch->pos, ch->volume, ch->starttime);
 }
 
-/*
- * Returns the actual 3D coordinates of the listener.
- */
+//===========================================================================
+// Sfx_GetListenerXYZ
+//	Returns the actual 3D coordinates of the listener.
+//===========================================================================
 void Sfx_GetListenerXYZ(float *pos)
 {
 	if(!listener) return;
@@ -300,14 +344,13 @@ void Sfx_GetListenerXYZ(float *pos)
 	pos[VZ] = FIX2FLT( listener->z + listener->height - (5<<FRACBITS) );
 }
 
-/*
- * Updates the channel buffer's properties based on 2D/3D position
- * calculations.  Listener might be NULL.  Sounds emitted from the
- * listener object are considered to be inside the listener's head.
- *
- * Called from inside COP!
- */
-void Sfx_COP_ChannelUpdate(sfxchannel_t *ch)
+//===========================================================================
+// Sfx_ChannelUpdate
+//	Updates the channel buffer's properties based on 2D/3D position 
+//	calculations. Listener might be NULL. Sounds emitted from the listener
+//	object are considered to be inside the listener's head.
+//===========================================================================
+void Sfx_ChannelUpdate(sfxchannel_t *ch)
 {
 	sfxbuffer_t *buf = ch->buffer;
 	float normdist, dist, pan, angle, vec[3];
@@ -429,9 +472,9 @@ void Sfx_COP_ChannelUpdate(sfxchannel_t *ch)
 	}
 }
 
-/*
- * Called periodically to update the properties of the 3D listener.
- */
+//===========================================================================
+// Sfx_ListenerUpdate
+//===========================================================================
 void Sfx_ListenerUpdate(void)
 {
 	float vec[4];
@@ -478,51 +521,45 @@ void Sfx_ListenerUpdate(void)
 	driver->Listener(SFXLP_UPDATE, 0);
 }
 
-/*
- * Reset the 3D listener's reverb settings.
- */
+//===========================================================================
+// Sfx_ListenerNoReverb
+//===========================================================================
 void Sfx_ListenerNoReverb(void)
 {
 	float rev[4] = { 0, 0, 0, 0 };
 
 	if(!sfx_avail) return;
-	
 	listener_sector = NULL;
 	driver->Listenerv(SFXLP_REVERB, rev);
 	driver->Listener(SFXLP_UPDATE, 0);
 }
 
-/*
- * Stops the sound playing on the channel.  Just stopping a buffer
- * doesn't affect refresh.
- *
- * Called from inside COP.
- */
-void Sfx_COP_ChannelStop(sfxchannel_t *ch)
+//===========================================================================
+// Sfx_ChannelStop
+//	Stops the sound playing on the channel.
+//	Just stopping a buffer doesn't affect refresh.
+//===========================================================================
+void Sfx_ChannelStop(sfxchannel_t *ch)
 {
 	if(!ch->buffer) return;
 	driver->Stop(ch->buffer);
 }
 
-/*
- * Calculate the priority of all channels.
- */
+//===========================================================================
+// Sfx_GetChannelPriorities
+//===========================================================================
 void Sfx_GetChannelPriorities(float *prios)
 {
 	int i;
 
 	for(i = 0; i < num_channels; i++)
-	{
 		prios[i] = Sfx_ChannelPriority(channels + i);
-	}
 }
 
-/*
- * Locate a suitable vacant channel for starting a new sound.
- *
- * Called from inside COP.
- */
-sfxchannel_t *Sfx_COP_ChannelFindVacant
+//===========================================================================
+// Sfx_ChannelFindVacant
+//===========================================================================
+sfxchannel_t *Sfx_ChannelFindVacant
 	(boolean use3d, int bytes, int rate, int sampleid)
 {
 	sfxchannel_t *ch;
@@ -535,7 +572,6 @@ sfxchannel_t *Sfx_COP_ChannelFindVacant
 			|| use3d != ((ch->buffer->flags & SFXBF_3D) != 0)
 			|| ch->buffer->bytes != bytes
 			|| ch->buffer->rate != rate) continue;
-		
 		// What about the sample?
 		if(sampleid > 0)
 		{
@@ -551,21 +587,22 @@ sfxchannel_t *Sfx_COP_ChannelFindVacant
 		// This is perfect, take this!
 		return ch;
 	}
-	
 	return NULL;
 }
 
-/*
- * Used by the high-level sound interface to play sounds on this
- * system.  If emitter is NULL, fixedpos is checked for a position.
- * If both emitter and fixedpos are NULL, then the sound is played as
- * centered 2D.  Freq is relative and modifies the sample's rate.
- * Returns true if a sound is started.
- *
- * The 'sample' pointer must be persistent. No copying is done here.
- */
-int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
-				   mobj_t *emitter, float *fixedpos, int flags)
+//===========================================================================
+// Sfx_StartSound
+//	Used by the high-level sound interface to play sounds on this system.
+//	If emitter is NULL, fixedpos is checked for a position. If both emitter
+//	and fixedpos are NULL, then the sound is played as centered 2D. Freq is
+//	relative and modifies the sample's rate. Returns true if a sound is 
+//	started.
+//
+//	The 'sample' pointer must be persistent. No copying is done here.
+//===========================================================================
+int Sfx_StartSound
+	(sfxsample_t *sample, float volume, float freq, mobj_t *emitter, 
+	 float *fixedpos, int flags)
 {
 	sfxchannel_t	*ch, *selch, *prioch;
 	sfxinfo_t		*info;
@@ -594,8 +631,6 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
 		count = Sfx_CountPlaying(sample->id);
 		while(count >= info->channels)
 		{
-			BEGIN_COP;
-			
 			// Stop the lowest priority sound of the playing instances,
 			// again noting sounds that are more important than us.
 			for(selch = NULL, i = 0, ch = channels; 
@@ -611,20 +646,15 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
 					lowprio = channel_prios[i];
 				}
 			}
-			
 			if(!selch) 
 			{
 				// The new sound can't be played because we were unable
 				// to stop enough channels to accommodate the limitation.
-				END_COP;
 				return false;
 			}
-			
 			// Stop this one.
 			count--;
-			Sfx_COP_ChannelStop(selch);
-
-			END_COP;
+			Sfx_ChannelStop(selch);
 		}
 	}
 
@@ -640,22 +670,22 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
 
 	// First look through the stopped channels. At this stage we're very
 	// picky: only the perfect choice will be good enough.
-	selch = Sfx_COP_ChannelFindVacant(play3d, sample->bytesper, sample->rate,
-									  sample->id);
+	selch = Sfx_ChannelFindVacant(play3d, sample->bytesper, sample->rate, 
+		sample->id);
 
 	// The second step is to look for a vacant channel with any sample,
 	// but preferably one with no sample already loaded.
 	if(!selch) 
 	{
-		selch = Sfx_COP_ChannelFindVacant(play3d, sample->bytesper,
-										  sample->rate, 0);
+		selch = Sfx_ChannelFindVacant(play3d, sample->bytesper, 
+			sample->rate, 0);
 	}
 
 	// Then try any non-playing channel in the correct format.
 	if(!selch) 
 	{
-		selch = Sfx_COP_ChannelFindVacant(play3d, sample->bytesper,
-										  sample->rate, -1);
+		selch = Sfx_ChannelFindVacant(play3d, sample->bytesper,
+			sample->rate, -1);
 	}
 	
 	if(!selch)
@@ -674,14 +704,12 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
 			if(!ch->buffer
 				|| play3d != ((ch->buffer->flags & SFXBF_3D) != 0)) 
 				continue; // No buffer or in the wrong mode.
-			
 			if(!(ch->buffer->flags & SFXBF_PLAYING))
 			{
 				// This channel is not playing, just take it!
 				selch = ch;
 				break;
 			}
-			
 			// Are we more important than this sound?
 			// We want to choose the lowest priority sound.
 			if(myprio >= channel_prios[i]
@@ -695,18 +723,18 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
 		if(prioch) 
 		{
 			selch = prioch;
-			Sfx_COP_ChannelStop(selch);
+			Sfx_ChannelStop(selch);
 		}
 	}
 	if(!selch) 
 	{
 		END_COP;
-		return false; // We couldn't find a suitable channel.  For shame.
+		return false; // We couldn't find a suitable channel. For shame.
 	}
 	
 	// Does our channel need to be reformatted?
-	if(selch->buffer->rate != sample->rate ||
-	   selch->buffer->bytes != sample->bytesper)
+	if(selch->buffer->rate != sample->rate
+		|| selch->buffer->bytes != sample->bytesper)
 	{
 		driver->Destroy(selch->buffer);
 		// Create a new buffer with the correct format.
@@ -744,13 +772,12 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
 		selch->flags |= SFXCF_NO_ATTENUATION;
 	}
 
-	// Load in the sample.  Must load prior to setting properties,
-	// because the driver might actually create the real buffer only
-	// upon loading.
+	// Load in the sample. Must load prior to setting properties, because
+	// the driver might actually create the real buffer only upon loading.
 	driver->Load(selch->buffer, sample);	
 	
 	// Update channel properties.
-	Sfx_COP_ChannelUpdate(selch);
+	Sfx_ChannelUpdate(selch);
 	
 	// 3D sounds need a few extra properties set up.
 	if(play3d)
@@ -779,9 +806,10 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
 	return true;
 }
 
-/*
- * Update channel and listener properties.
- */
+//===========================================================================
+// Sfx_Update
+//	Update channel and listener properties.
+//===========================================================================
 void Sfx_Update(void)
 {
 	int i;
@@ -792,23 +820,22 @@ void Sfx_Update(void)
 	listener = S_GetListenerMobj();
 
 	// Update channels.
-	BEGIN_COP;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
 		if(!ch->buffer
 			|| !(ch->buffer->flags & SFXBF_PLAYING)) 
 			continue; // Not playing sounds on this...
-		Sfx_COP_ChannelUpdate(ch);
+		Sfx_ChannelUpdate(ch);
 	}
-	END_COP;
 
 	// Update listener.
 	Sfx_ListenerUpdate();
 }
 
-/*
- * Periodical routines: channel updates, cache purge, cvar checks.
- */
+//===========================================================================
+// Sfx_StartFrame
+//	Periodical routines: channel updates, cache purge, cvar checks.
+//===========================================================================
 void Sfx_StartFrame(void)
 {
 	static int old_3dmode = false;
@@ -837,8 +864,8 @@ void Sfx_StartFrame(void)
 	}
 
 	// Do we need to change the sample format?
-	if(old_16bit != sound_16bit ||
-	   old_rate != sound_rate) 
+	if(old_16bit != sound_16bit 
+		|| old_rate != sound_rate) 
 	{
 		Sfx_SampleFormat(sound_16bit? 16 : 8, sound_rate);
 		old_16bit = sound_16bit;
@@ -856,9 +883,9 @@ void Sfx_StartFrame(void)
 	}
 }
 
-/*
- * Stuff to be done at the end of a sound frame.
- */
+//===========================================================================
+// Sfx_EndFrame
+//===========================================================================
 void Sfx_EndFrame(void)
 {
 	if(!sfx_avail) return;
@@ -867,9 +894,11 @@ void Sfx_EndFrame(void)
 	driver->Event(SFXEV_END);
 }
 
-/*
- * Initializes the sfx driver interface.  Returns true if successful.
- */
+//===========================================================================
+// Sfx_InitDriver
+//	Initializes the sfx driver interface.
+//	Returns true if successful.
+//===========================================================================
 boolean Sfx_InitDriver(sfxdriver_e drvid)
 {
 	switch(drvid)
@@ -878,21 +907,27 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
 		driver = &sfxd_dummy;
 		break;
 
-	case SFXD_DSOUND:
-		driver = &sfxd_dsound;
-		break;
-
 	case SFXD_A3D:
 		if(!(driver = DS_Load("A3D"))) return false;
 		break;
 
 	case SFXD_OPENAL:
-		if(!(driver = DS_Load("OpenAL"))) return false;
+		if(!(driver = DS_Load("openal"))) return false;
 		break;
 
 	case SFXD_COMPATIBLE:
 		if(!(driver = DS_Load("Compat"))) return false;
 		break;
+
+	case SFXD_SDL_MIXER:
+		if(!(driver = DS_Load("sdlmixer"))) return false;
+		break;
+		
+#ifdef WIN32
+	case SFXD_DSOUND:
+		driver = &sfxd_dsound;
+		break;
+#endif
 
 	default:
 		Con_Error("Sfx_Driver: Unknown driver type %i.\n", drvid);
@@ -902,11 +937,12 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
 	return driver->Init();
 }
 
-/*
- * Creates the buffers for the channels.  'num3d' channels out of
- * num_channels be in 3D, the rest will be 2D.  'bits' and 'rate'
- * specify the default configuration.
- */
+//===========================================================================
+// Sfx_CreateChannels
+//	Creates the buffers for the channels. 'num3d' channels out of 
+//	num_channels be in 3D, the rest will be 2D. 'bits' and 'rate' specify
+//	the default configuration.
+//===========================================================================
 void Sfx_CreateChannels(int num2d, int bits, int rate)
 {
 	int	i;
@@ -932,9 +968,10 @@ void Sfx_CreateChannels(int num2d, int bits, int rate)
 	}
 }
 
-/*
- * Stop all channels and destroy their buffers.
- */
+//===========================================================================
+// Sfx_DestroyChannels
+//	Stop all channels and destroy their buffers.
+//===========================================================================
 void Sfx_DestroyChannels(void)
 {
 	int	i;
@@ -942,16 +979,16 @@ void Sfx_DestroyChannels(void)
 	BEGIN_COP;
 	for(i = 0; i < num_channels; i++)
 	{
-		Sfx_COP_ChannelStop(channels + i);
+		Sfx_ChannelStop(channels + i);
 		if(channels[i].buffer) driver->Destroy(channels[i].buffer);
 		channels[i].buffer = NULL;
 	}
 	END_COP;
 }
 
-/*
- * Initialize all sound channels.
- */
+//===========================================================================
+// Sfx_InitChannels
+//===========================================================================
 void Sfx_InitChannels(void)
 {
 	num_channels = sfx_max_channels;
@@ -975,9 +1012,10 @@ void Sfx_InitChannels(void)
 		sfx_bits, sfx_rate);
 }
 
-/*
- * Frees all memory allocated for the channels.
- */
+//===========================================================================
+// Sfx_ShutdownChannels
+//	Frees all memory allocated for the channels. 
+//===========================================================================
 void Sfx_ShutdownChannels(void)
 {
 	Sfx_DestroyChannels();
@@ -987,38 +1025,27 @@ void Sfx_ShutdownChannels(void)
 	num_channels = 0;
 }
 
-/*
- * Start the channel refresh thread.
- */
+//===========================================================================
+// Sfx_StartRefresh
+//	Start the channel refresh thread. It will stop on its own when it 
+//	notices that the rest of the sound system is going down.
+//===========================================================================
 void Sfx_StartRefresh(void)
 {
-	channelMutex = Sys_CreateMutex("Sfx_ChannelRefreshThread");
-	
+	refreshing = false;
+	allowrefresh = true;
 	// Create a high-priority thread for the channel refresh.
-	if(!(hRefresh = Sys_StartThread(Sfx_ChannelRefreshThread, NULL, 3)))
-	{
+	refresh_handle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL, 3);
+	if(!refresh_handle)
 		Con_Error("Sfx_StartRefresh: Failed to start refresh.\n");
-	}
 }
 
-/*
- * Stop the channel refresh thread. 
- */
-void Sfx_StopRefresh(void)
-{
-	// Wait for the refresh thread to stop.  It shouldn't take too
-	// long.
-	Sys_WaitThread(hRefresh);
-	
-	Sys_DestroyMutex(channelMutex);
-	channelMutex = 0;
-}
-
-/*
- * Initialize the Sfx module.  This includes setting up the available
- * Sfx drivers and the channels, and initializing the sound cache.
- * Returns true if the module is operational after the init.
- */
+//===========================================================================
+// Sfx_Init
+//	Initialize the Sfx module. This includes setting up the available Sfx
+//	drivers and the channels, and initializing the sound cache. Returns
+//	true if the module is operational after the init.
+//===========================================================================
 boolean Sfx_Init(void)
 {
 	boolean ok;
@@ -1056,10 +1083,16 @@ boolean Sfx_Init(void)
 		Con_Message("Compatible...\n");
 		ok = Sfx_InitDriver(SFXD_COMPATIBLE);
 	}
-	else
+	else // The default driver.
 	{
+#ifdef WIN32
 		Con_Message("DirectSound...\n");
 		ok = Sfx_InitDriver(SFXD_DSOUND);
+#endif
+#ifdef UNIX
+		Con_Message("SDL_mixer...\n");
+		ok = Sfx_InitDriver(SFXD_SDL_MIXER);
+#endif
 	}
 	// Did we succeed?
 	if(!ok)
@@ -1089,19 +1122,17 @@ boolean Sfx_Init(void)
 	return true;
 }
 
-/*
- * Shut down the whole Sfx module: drivers, channel buffers and the
- * cache.
- */
+//===========================================================================
+// Sfx_Shutdown
+//	Shut down the whole Sfx module: drivers, channel buffers and the cache.
+//===========================================================================
 void Sfx_Shutdown(void)
 {
 	if(!sfx_avail) return; // Not initialized.
 
-	// This will stop further refreshing.
+	// These will stop further refreshing.
 	sfx_avail = false;
-
-	// Wait for the refresh thread to exit.
-	Sfx_StopRefresh();
+	allowrefresh = false;
 
 	// Destroy the sample cache.
 	Sfx_ShutdownCache();
@@ -1114,9 +1145,10 @@ void Sfx_Shutdown(void)
 	driver = NULL;
 }
 
-/*
- * Stop all channels, clear the cache.
- */
+//===========================================================================
+// Sfx_Reset
+//	Stop all channels, clear the cache.
+//===========================================================================
 void Sfx_Reset(void)
 {
 	int i;
@@ -1126,52 +1158,44 @@ void Sfx_Reset(void)
 	listener_sector = NULL;
 
 	// Stop all channels.
-	BEGIN_COP;
-	for(i = 0; i < num_channels; i++)
-	{
-		Sfx_COP_ChannelStop(channels + i);
-	}
-	END_COP;
+	for(i = 0; i < num_channels; i++) Sfx_ChannelStop(channels + i);
 
 	// Free all samples.
 	Sfx_ShutdownCache();
 }
 
-/*
- * Destroys all channels and creates them again.
- */
+//===========================================================================
+// Sfx_RecreateChannels
+//	Destroys all channels and creates them again.
+//===========================================================================
 void Sfx_RecreateChannels(void)
 {
-	BEGIN_COP;
-	
 	Sfx_DestroyChannels();
 	Sfx_CreateChannels(sfx_3d? sfx_dedicated_2d : num_channels,
 		sfx_bits, sfx_rate);
-
-	END_COP;
 }
 
-/*
- * Swaps between 2D and 3D sound modes.  Called automatically by
- * Sfx_StartFrame when cvar changes.
- */
+//===========================================================================
+// Sfx_3DMode
+//	Swaps between 2D and 3D sound modes. Called automatically by 
+//	Sfx_StartFrame when cvar changes.
+//===========================================================================
 void Sfx_3DMode(boolean activate)
 {
 	if(sfx_3d == activate) return; // No change; do nothing.
 
 	sfx_3d = activate;
-	
 	// To make the change effective, re-create all channels.
 	Sfx_RecreateChannels();
-	
 	// If going to 2D, make sure the reverb is off.
 	Sfx_ListenerNoReverb();
 }
 
-/*
- * Reconfigures the sample bits and rate.  Called automatically by
- * Sfx_StartFrame when changes occur.
- */
+//===========================================================================
+// Sfx_SampleFormat
+//	Reconfigures the sample bits and rate. Called automatically by
+//	Sfx_StartFrame when changes occur.
+//===========================================================================
 void Sfx_SampleFormat(int new_bits, int new_rate)
 {
 	if(sfx_bits == new_bits && sfx_rate == new_rate) 
@@ -1186,16 +1210,16 @@ void Sfx_SampleFormat(int new_bits, int new_rate)
 	Sfx_ShutdownCache();
 }
 
-/*
- * Must be done before the level is changed (from P_SetupLevel, via
- * S_LevelChange).
- */
+//===========================================================================
+// Sfx_LevelChange
+//	Must be done before the level is changed (from P_SetupLevel, via
+//	S_LevelChange).
+//===========================================================================
 void Sfx_LevelChange(void)
 {
 	int	i;
 	sfxchannel_t *ch;
 
-	BEGIN_COP;
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
 		if(ch->emitter)
@@ -1204,18 +1228,17 @@ void Sfx_LevelChange(void)
 			ch->emitter = NULL;
 
 			// Stop all channels with an origin.
-			Sfx_COP_ChannelStop(ch);
+			Sfx_ChannelStop(ch);
 		}
 	}
-	END_COP;
 
 	// Sectors, too, for that matter.
 	listener_sector = NULL;
 }
 
-/*
- * Draw some debugging information on the screen.
- */
+//===========================================================================
+// Sfx_DebugInfo
+//===========================================================================
 void Sfx_DebugInfo(void)
 {
 	int i, lh = FR_TextHeight("W") - 3;
@@ -1230,7 +1253,7 @@ void Sfx_DebugInfo(void)
 		return;
 	}
 
-	if(refMonitor) FR_TextOut("!", 0, 0);
+	if(refmonitor) FR_TextOut("!", 0, 0);
 
 	// Sample cache information.
 	Sfx_GetCacheInfo(&cachesize, &ccnt);
@@ -1238,8 +1261,6 @@ void Sfx_DebugInfo(void)
 	gl.Color3f(1, 1, 1);
 	FR_TextOut(buf, 10, 0);
 
-	BEGIN_COP;
-	
 	// Print a line of info about each channel.
 	for(i = 0, ch = channels; i < num_channels; i++, ch++)
 	{
@@ -1276,6 +1297,5 @@ void Sfx_DebugInfo(void)
 			ch->buffer->written);
 		FR_TextOut(buf, 5, lh*(2 + i*2));
 	}
-
-	END_COP;
 }
+

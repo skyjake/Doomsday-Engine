@@ -55,7 +55,7 @@ void R_PrepareSubsector(subsector_t *sub);
 int rendSkyLight = 1; // cvar
 
 char currentLevelId[64];
-int leveltic;					// Restarts when a new map is set up.
+//int leveltic;					// Restarts when a new map is set up.
 
 sectorinfo_t *secinfo;
 subsectorinfo_t *subsecinfo;
@@ -1300,7 +1300,7 @@ void R_SetupLevel(char *level_id, int flags)
 		}
 
 		// Reset the level tick timer.
-		leveltic = 0;
+		levelTime = 0;
 		return;
 	}
 
@@ -1383,7 +1383,8 @@ void R_SetupLevel(char *level_id, int flags)
 	if(isServer)
 	{
 		for(i = 0; i < MAXPLAYERS; i++)
-			if(players[i].ingame) clients[i].runTime = gametic;
+			if(players[i].ingame)
+				clients[i].runTime = SECONDS_TO_TICKS(gameTime);
 	}
 
 	// Set target heights of all planes.
@@ -1398,6 +1399,9 @@ void R_SetupLevel(char *level_id, int flags)
 	// Let's hope there aren't too many...
 	P_SpawnTypeParticleGens();
 	P_SpawnMapParticleGens(level_id);
+
+	// Make sure that the next frame doesn't use a filtered viewer.
+	R_ResetViewer();
 
 	// Texture animations should begin from their first step.
 	R_ResetAnimGroups();
@@ -1482,22 +1486,22 @@ void R_UpdatePlanes(void)
 	{
 		sec = SECTOR_PTR(i);
 		R_SetSectorLinks(sec);
+
 		// Floor height.
 		if(!sin->linkedfloor) 
 		{
-			sin->visfloor = FIX2FLT(sec->floorheight);
+			sin->visfloor = FIX2FLT(sec->floorheight) + sin->visflooroffset;
 		}
 		else
 		{
 			sin->visfloor = FIX2FLT(R_GetLinkedSector
 				(sin->linkedfloor, true)->floorheight);
 		}
-		
 
 		// Ceiling height.
 		if(!sin->linkedceil)
 		{
-			sin->visceil = FIX2FLT(sec->ceilingheight);
+			sin->visceil = FIX2FLT(sec->ceilingheight) + sin->visceiloffset;
 		}
 		else
 		{

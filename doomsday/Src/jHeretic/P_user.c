@@ -46,7 +46,7 @@ boolean WeaponInShareware[] =
 void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 {
 	mobj_t	*plrmo = player->plr->mo;
-	
+
 	angle >>= ANGLETOFINESHIFT;
 	if(player->powers[pw_flight] && !(plrmo->z <= plrmo->floorz))
 	{
@@ -96,7 +96,7 @@ void P_CalcHeight (player_t *player)
 	{
 		dp->viewz = plrmo->z + dp->viewheight;
 		return;
-	}	
+	}
 
 	player->bob = FixedMul (plrmo->momx, plrmo->momx) +
 		FixedMul (plrmo->momy, plrmo->momy);
@@ -108,11 +108,11 @@ void P_CalcHeight (player_t *player)
 		player->bob = FRACUNIT/2;
 	}
 	// Clients do view bobbing by themselves.
-	/*if(IS_CLIENT) 
+	/*if(IS_CLIENT)
 	{
 		angle = (FINEANGLES/20*leveltime)&FINEMASK;
 		bob = FixedMul (player->bob/2, finesine[angle]);
-		player->plr->viewz = plrmo->z + player->plr->viewheight + 
+		player->plr->viewz = plrmo->z + player->plr->viewheight +
 			(player->chickenTics? -20*FRACUNIT : bob);
 		return;
 	}*/
@@ -161,7 +161,7 @@ void P_CalcHeight (player_t *player)
 	else
 	{
 		player->plr->viewz = plrmo->z+player->plr->viewheight;
-		if(plrmo->z <= plrmo->floorz) 
+		if(plrmo->z <= plrmo->floorz)
 			player->plr->viewz += bob;
 	}
 	if(plrmo->flags2 & MF2_FEETARECLIPPED
@@ -179,7 +179,7 @@ void P_CalcHeight (player_t *player)
 		player->plr->viewz = plrmo->floorz+4*FRACUNIT;
 	}
 }
-#endif 
+#endif
 
 /*
 =================
@@ -201,15 +201,15 @@ void P_MovePlayer(player_t *player)
 	if(!(player->plr->flags & DDPF_FIXANGLES))
 	{
 		plrmo->angle = cmd->angle << 16;
-		player->plr->lookdir = cmd->lookdir/(float)DDMAXSHORT * 110;
+		player->plr->lookdir = cmd->pitch/(float)DDMAXSHORT * 110;
 	}
 
 	if(player->plr->flags & DDPF_CAMERA) // $democam
 	{
 		// Cameramen have a 3D thrusters!
 		P_Thrust3D(player, player->plr->mo->angle,
-			player->plr->lookdir, cmd->forwardmove*2048,
-			cmd->sidemove*2048);
+			player->plr->lookdir, cmd->forwardMove*2048,
+			cmd->sideMove*2048);
 		return;
 	}
 
@@ -218,20 +218,20 @@ void P_MovePlayer(player_t *player)
 
 	if(player->chickenTics)
 	{ // Chicken speed
-		if(cmd->forwardmove && (onground||plrmo->flags2&MF2_FLY))
-			P_Thrust(player, plrmo->angle, cmd->forwardmove*2500);
-		if(cmd->sidemove && (onground||plrmo->flags2&MF2_FLY))
-			P_Thrust(player, plrmo->angle-ANG90, cmd->sidemove*2500);
+		if(cmd->forwardMove && (onground||plrmo->flags2&MF2_FLY))
+			P_Thrust(player, plrmo->angle, cmd->forwardMove*2500);
+		if(cmd->sideMove && (onground||plrmo->flags2&MF2_FLY))
+			P_Thrust(player, plrmo->angle-ANG90, cmd->sideMove*2500);
 	}
 	else
 	{ // Normal speed
-		if(cmd->forwardmove && (onground||plrmo->flags2&MF2_FLY))
-			P_Thrust(player, plrmo->angle, cmd->forwardmove*2048);
-		if(cmd->sidemove && (onground||plrmo->flags2&MF2_FLY))
-			P_Thrust(player, plrmo->angle-ANG90, cmd->sidemove*2048);
+		if(cmd->forwardMove && (onground||plrmo->flags2&MF2_FLY))
+			P_Thrust(player, plrmo->angle, cmd->forwardMove*2048);
+		if(cmd->sideMove && (onground||plrmo->flags2&MF2_FLY))
+			P_Thrust(player, plrmo->angle-ANG90, cmd->sideMove*2048);
 	}
 
-	if(cmd->forwardmove || cmd->sidemove)
+	if(cmd->forwardMove || cmd->sideMove)
 	{
 		if(player->chickenTics)
 		{
@@ -273,7 +273,7 @@ void P_MovePlayer(player_t *player)
 			// We can't use a custom look speed in all situations.
 			if(netgame)
 				spd = 4;
-			else if(demoplayback || demorecording) 
+			else if(demoplayback || demorecording)
 				// Must be backwards compatible.
 				spd = 5;
 			player->plr->lookdir += spd*look;
@@ -343,7 +343,7 @@ void P_MovePlayer(player_t *player)
 		if(cmd->lookdirdelta < 0) delta = -delta;
 		player->plr->lookdir += delta;
 	}
-	
+
 	// 110 corresponds 85 degrees.
 	if(player->plr->lookdir > 110) player->plr->lookdir = 110;
 	if(player->plr->lookdir < -110) player->plr->lookdir = -110;*/
@@ -439,7 +439,7 @@ void P_DeathThink(player_t *player)
 		player->damagecount--;
 	}
 
-	if(player->cmd.buttons&BT_USE)
+	if(player->cmd.actions & BT_USE)
 	{
 		if(player == &players[consoleplayer])
 		{
@@ -605,7 +605,7 @@ boolean P_IsPlayerOnGround(player_t *player)
 
 //===========================================================================
 // P_CheckPlayerJump
-//	Will make the player jump if the latest command so instructs, 
+//	Will make the player jump if the latest command so instructs,
 //	providing that jumping is possible.
 //===========================================================================
 void P_CheckPlayerJump(player_t *player)
@@ -629,7 +629,7 @@ void P_CheckPlayerJump(player_t *player)
 
 //===========================================================================
 // P_ClientSideThink
-//	This routine does all the thinking for the console player during 
+//	This routine does all the thinking for the console player during
 //	netgames.
 //===========================================================================
 void P_ClientSideThink()
@@ -672,14 +672,14 @@ void P_ClientSideThink()
 		case pw_invisibility:
 		case pw_flight:
 		case pw_infrared:
-			if(pl->powers[i] > 0) 
+			if(pl->powers[i] > 0)
 				pl->powers[i]--;
 			else
 				pl->powers[i] = 0;
 			break;
 		}
 	}
-	if(pl->chickenTics > 0) 
+	if(pl->chickenTics > 0)
 	{
 		pl->chickenTics--;
 		if(!pl->chickenTics) // Chic mode ends?
@@ -739,12 +739,12 @@ void P_ClientSideThink()
 	// Set consoleplayer thrust multiplier (used by client move code).
 	if(mo->z > mo->floorz) // Airborne?
 	{
-		Set(DD_CPLAYER_THRUST_MUL, 
+		Set(DD_CPLAYER_THRUST_MUL,
 			(mo->ddflags & DDMF_FLY)? FRACUNIT : 0);
 	}
 	else
 	{
-		Set(DD_CPLAYER_THRUST_MUL, 
+		Set(DD_CPLAYER_THRUST_MUL,
 			// FIXME: Client can't know for sure about sector specials.
 			(mo->subsector->sector->special == 15)? FRACUNIT >> 1 // Friction_Low
 			: XS_ThrustMul(mo->subsector->sector));
@@ -805,8 +805,8 @@ void P_PlayerThink(player_t *player)
 		cmd->angle = plrmo->angle >> 16;	// Don't turn.
 		// The client must know of this.
 		player->plr->flags |= DDPF_FIXANGLES;
-		cmd->forwardmove = 0xc800/512;
-		cmd->sidemove = 0;
+		cmd->forwardMove = 0xc800/512;
+		cmd->sideMove = 0;
 		plrmo->flags &= ~MF_JUSTATTACKED;
 	}
 // messageTics is above the rest of the counters so that messages will
@@ -856,17 +856,17 @@ void P_PlayerThink(player_t *player)
 		}
 	}
 	// Check for weapon change
-	if(cmd->buttons&BT_SPECIAL)
+	if(cmd->actions & BT_SPECIAL)
 	{ // A special event has no other buttons
-		cmd->buttons = 0;
+		cmd->actions = 0;
 	}
-	if(cmd->buttons&BT_CHANGE)
+	if(cmd->actions & BT_CHANGE)
 	{
 		int oldweapon = player->pendingweapon;
 		// The actual changing of the weapon is done when the weapon
 		// psprite can do it (A_WeaponReady), so it doesn't happen in
 		// the middle of an attack.
-		newweapon = (cmd->buttons & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
+		newweapon = (cmd->actions & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
 		/*if(newweapon == wp_staff && player->weaponowned[wp_gauntlets]
 			&& !(player->readyweapon == wp_gauntlets))
 		{
@@ -880,11 +880,11 @@ void P_PlayerThink(player_t *player)
 				player->pendingweapon = newweapon;
 			}
 		}
-		if(oldweapon != player->pendingweapon) 
+		if(oldweapon != player->pendingweapon)
 			player->update |= PSF_PENDING_WEAPON;
 	}
 	// Check for use
-	if(cmd->buttons&BT_USE)
+	if(cmd->actions & BT_USE)
 	{
 		if(!player->usedown)
 		{
@@ -1083,7 +1083,7 @@ void P_CheckReadyArtifact()
 	extern int curpos;
 
 	if(!player->inventory[inv_ptr].count)
-	{ 
+	{
 		// Set position markers and get next readyArtifact
 		inv_ptr--;
 		if(inv_ptr < 6)
@@ -1104,7 +1104,7 @@ void P_CheckReadyArtifact()
 		}
 		player->readyArtifact =
 			player->inventory[inv_ptr].type;
-		
+
 		if(!player->inventorySlotNum)
 			player->readyArtifact = arti_none;
 	}
@@ -1207,7 +1207,7 @@ void P_PlayerUseArtifact(player_t *player, artitype_t arti)
 {
 	int i;
 	boolean play_sound = false;
-	
+
 	for(i = 0; i < player->inventorySlotNum; i++)
 	{
 		if(arti == NUMARTIFACTS) // Use everything in panic?
@@ -1229,14 +1229,14 @@ void P_PlayerUseArtifact(player_t *player, artitype_t arti)
 				if(player == &players[consoleplayer])
 					ArtifactFlash = 4;
 			}
-			else 
+			else
 			{ // Unable to use artifact, advance pointer
 				P_PlayerNextArtifact(player);
 			}
 			break;
 		}
 	}
-	if(play_sound) 
+	if(play_sound)
 	{
 		S_ConsoleSound(sfx_artiuse, NULL, player-players);
 	}

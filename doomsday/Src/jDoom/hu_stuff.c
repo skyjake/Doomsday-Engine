@@ -14,29 +14,10 @@
 // FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
 // for more details.
 //
-// $Log$
-// Revision 1.2  2004/01/08 12:25:15  skyjake
-// Merged from branch-nix
-//
-// Revision 1.1.4.2  2003/11/22 18:09:10  skyjake
-// Cleanup
-//
-// Revision 1.1.4.1  2003/11/19 17:07:12  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.1  2003/02/26 19:21:39  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:11:45  Jaakko
-// Added Doomsday sources
-//
 //
 // DESCRIPTION:  Heads-up displays
 //
 //-----------------------------------------------------------------------------
-
-static const char
-rcsid[] = "$Id$";
 
 #include <ctype.h>
 

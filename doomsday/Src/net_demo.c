@@ -35,6 +35,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DEMOTIC	SECONDS_TO_TICKS(demoTime)
+
 // Local Camera flags.
 #define LCAMF_ONGROUND	0x1			
 #define LCAMF_FOV		0x2		// FOV has changed (short).
@@ -78,7 +80,7 @@ extern float net_connecttime;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char demoPath[128] = "demo\\";
-int demotic = 0;
+//int demotic = 0;
 LZFILE *playdemo = 0;	
 int playback = false;		
 int viewangle_delta = 0;
@@ -169,7 +171,7 @@ void Demo_PauseRecording(int playerNum)
 	// A demo is not being recorded?
 	if(!cl->recording || cl->recordPaused) return;
 	// All packets will be written for the same tic.
-	writeInfo[playerNum].pausetime = demotic;	
+	writeInfo[playerNum].pausetime = SECONDS_TO_TICKS(demoTime);
 	cl->recordPaused = true;
 }
 
@@ -189,7 +191,7 @@ void Demo_ResumeRecording(int playerNum)
 	// have to make it appear the pause never happened; begintime is 
 	// moved forwards.
 	writeInfo[playerNum].begintime += 
-		demotic - writeInfo[playerNum].pausetime;
+		DEMOTIC - writeInfo[playerNum].pausetime;
 }
 
 //===========================================================================
@@ -251,18 +253,18 @@ void Demo_WritePacket(int playerNum)
 	if(!inf->first)
 	{
 		ptime = (clients[playerNum].recordPaused? 
-			inf->pausetime : demotic) - inf->begintime;
+			inf->pausetime : DEMOTIC) - inf->begintime;
 	}
 	else
 	{
 		ptime = 0;
 		inf->first = false;
-		inf->begintime = demotic;
+		inf->begintime = DEMOTIC;
 	}
 	lzWrite(&ptime, 1, file);
 
 	// The header.
-	hdr.length = 1/*netBuffer.headerLength*/ + netBuffer.length;
+	hdr.length = 1 + netBuffer.length;
 	lzWrite(&hdr, sizeof(hdr), file);
 
 	// Write the packet itself.
@@ -302,7 +304,7 @@ boolean Demo_BeginPlayback(char *fileName)
 	demo_framez = 1;
 	demo_z = 0;
 	start_fov = fieldOfView;
-	demostarttic = demotic;
+	demostarttic = DEMOTIC;
 	memset(pos_delta, 0, sizeof(pos_delta));
 	// Start counting frames from here.
 	if(ArgCheck("-timedemo")) r_framecounter = 0;
@@ -316,8 +318,8 @@ void Demo_StopPlayback(void)
 	if(!playback) return;
 
 	Con_Message("Demo was %.2f seconds (%i tics) long.\n",
-		(demotic - demostarttic)/(float)TICSPERSEC,
-		demotic - demostarttic);
+		(DEMOTIC - demostarttic)/(float)TICSPERSEC,
+		DEMOTIC - demostarttic);
 
 	playback = false;
 	lzClose(playdemo);
@@ -343,7 +345,7 @@ void Demo_StopPlayback(void)
 boolean Demo_ReadPacket(void)
 {
 	static byte	ptime;
-	int nowtime = demotic; 
+	int nowtime = DEMOTIC; 
 	demopacket_header_t hdr;
 
 	if(!playback) return false;

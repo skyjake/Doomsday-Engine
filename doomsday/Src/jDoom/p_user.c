@@ -15,14 +15,14 @@
 // for more details.
 //
 // $Log$
-// Revision 1.6  2004/02/11 10:36:02  skyjake
-// Cleanup
+// Revision 1.7  2004/05/28 17:16:41  skyjake
+// Resolved conflicts (branch-1-7 overrides)
 //
-// Revision 1.5  2004/01/19 19:20:31  skyjake
-// Renamed ticcmd_t members (now uses common ticcmd)
+// Revision 1.3.2.3  2004/05/23 14:11:09  skyjake
+// Resolved conflict
 //
-// Revision 1.4  2004/01/08 12:25:16  skyjake
-// Merged from branch-nix
+// Revision 1.3.2.2  2004/05/16 10:01:37  skyjake
+// Merged good stuff from branch-nix for the final 1.7.15
 //
 // Revision 1.3.2.1.2.2  2003/11/22 18:09:10  skyjake
 // Cleanup
@@ -150,7 +150,7 @@ void P_CheckPlayerJump(player_t *player)
 //
 // P_MovePlayer
 //
-void P_MovePlayer(player_t* player)
+void P_MovePlayer (player_t* player)
 {
 	mobj_t*			plrmo = player->plr->mo;
     ticcmd_t*		cmd;
@@ -441,9 +441,6 @@ void P_PlayerThink (player_t* player)
    
     // chain saw run forward
     cmd = &player->cmd;
-
-	//Con_Printf("cmd.angle=%04x\n", cmd->angle);
-	
     if (player->plr->mo->flags & MF_JUSTATTACKED)
     {
 		cmd->angle = plrmo->angle >> 16;	// Don't turn.
@@ -463,7 +460,7 @@ void P_PlayerThink (player_t* player)
     // Move around.
     // Reactiontime is used to prevent movement
     //  for a bit after a teleport.
-    if (player->plr->mo->reactiontime > 0)
+    if (player->plr->mo->reactiontime)
 		player->plr->mo->reactiontime--;
     else
 		P_MovePlayer (player);

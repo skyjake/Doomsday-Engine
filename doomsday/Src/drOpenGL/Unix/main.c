@@ -178,7 +178,9 @@ void windowedMode(int width, int height)
 //===========================================================================
 int initOpenGL(void)
 {
-	int flags = SDL_OPENGL /*| SDL_FULLSCREEN*/;
+	int flags = SDL_OPENGL;
+
+	if(!windowed) flags |= SDL_FULLSCREEN;
 
 	// Attempt to set the video mode.
     if(!SDL_SetVideoMode(screenWidth, screenHeight, screenBits, flags))
@@ -317,7 +319,7 @@ int DG_Init(int width, int height, int bpp, int mode)
 #endif
 		// But sir, we are simple people; two units is enough.
 		if(maxTexUnits > 2) maxTexUnits = 2;
-		Con_Message("  Texture units used: %i\n", maxTexUnits);
+		Con_Message("  Texture units: %i\n", maxTexUnits);
 
 		Con_Message("  Maximum texture size: %i\n", maxTexSize);
 		if(extAniso)

@@ -24,7 +24,6 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-#if 0
 action_t actions[NUM_ACTIONS + 1] =
 {
 	{ "left", 0 },
@@ -59,7 +58,6 @@ action_t actions[NUM_ACTIONS + 1] =
 	{ "weapon3", 0 },	// Weapon cycle 2: shotgun/super shotgun
 	{ "", 0 }			// A terminator.
 };
-#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

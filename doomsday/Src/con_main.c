@@ -113,6 +113,8 @@ D_CMD(BackgroundTurn);
 D_CMD(Dump);
 D_CMD(SkyDetail);
 D_CMD(Fog);
+D_CMD(Bind);
+D_CMD(ListBindings);
 D_CMD(Font);
 D_CMD(Alias);
 D_CMD(ListAliases);
@@ -125,6 +127,7 @@ D_CMD(Wait);
 D_CMD(Repeat);
 D_CMD(Echo);
 D_CMD(FlareConfig);
+D_CMD(ListActs);
 D_CMD(ClearBindings);
 D_CMD(AddSub);
 D_CMD(Ping);
@@ -199,13 +202,13 @@ cvar_t engineCVars[] =
 	"DynLights",		OBSOLETE,			CVT_INT,	&useDynLights,	0, 1,	"1=Render dynamic lights.",
 	"WallGlow",			OBSOLETE,			CVT_INT,	&useWallGlow,	0, 1,	"1=Render glow on walls.",
 	"GlowHeight",		OBSOLETE,			CVT_INT,	&glowHeight,	0, 1024,"Height of wall glow.",
-	//"i_JoySensi",		OBSOLETE,			CVT_INT,	&joySensitivity,0, 9,	"Joystick sensitivity.",
-	//"i_MouseInvY",		OBSOLETE,			CVT_INT,	&mouseInverseY, 0, 1,	"1=Inversed mouse Y axis.",
-	//"i_mWheelSensi",OBSOLETE|CVF_NO_MAX,		CVT_INT,	&mouseWheelSensi, 0, 0, "Mouse wheel sensitivity.",
+	"i_JoySensi",		OBSOLETE,			CVT_INT,	&joySensitivity,0, 9,	"Joystick sensitivity.",
+	"i_MouseInvY",		OBSOLETE,			CVT_INT,	&mouseInverseY, 0, 1,	"1=Inversed mouse Y axis.",
+	"i_mWheelSensi",OBSOLETE|CVF_NO_MAX,		CVT_INT,	&mouseWheelSensi, 0, 0, "Mouse wheel sensitivity.",
 	"i_KeyWait1",	OBSOLETE|CVF_NO_MAX,		CVT_INT,	&repWait1,		6, 0,	"The number of 35 Hz ticks to wait before first key repeat.",
 	"i_KeyWait2",	OBSOLETE|CVF_NO_MAX,		CVT_INT,	&repWait2,		1, 0,	"The number of 35 Hz ticks to wait between key repeats.",
-	//"i_MouseDisX",		OBSOLETE,			CVT_INT,	&mouseDisableX,	0, 1,	"1=Disable mouse X axis.",
-	//"i_MouseDisY",		OBSOLETE,			CVT_INT,	&mouseDisableY,	0, 1,	"1=Disable mouse Y axis.",
+	"i_MouseDisX",		OBSOLETE,			CVT_INT,	&mouseDisableX,	0, 1,	"1=Disable mouse X axis.",
+	"i_MouseDisY",		OBSOLETE,			CVT_INT,	&mouseDisableY,	0, 1,	"1=Disable mouse Y axis.",
 	"MaxDl",		OBSOLETE|CVF_NO_MAX,		CVT_INT,	&maxDynLights,	0, 0,	"The maximum number of dynamic lights. 0=no limit.",
 	"n_ServerName",		OBSOLETE,			CVT_CHARPTR, &serverName,	0, 0,	"The name of this computer if it's a server.",
 	"n_ServerInfo",		OBSOLETE,			CVT_CHARPTR, &serverInfo,	0, 0,	"The description given of this computer if it's a server.",
@@ -341,6 +344,7 @@ cvar_t engineCVars[] =
 	"rend-fakeradio", 		0,			CVT_INT,	&rendFakeRadio, 0, 1,	"1=Enable simulated radiosity lighting.",
 	// * Render-Camera
 	"rend-camera-fov",		0,			CVT_FLOAT,	&fieldOfView,	1, 179, "Field of view.",
+	"rend-camera-smooth",   0,          CVT_INT,    &rend_camera_smooth, 0, 1, "1=Filter camera movement between game tics.",
 	// * Render-Texture
 	"rend-tex",				CVF_NO_ARCHIVE,	CVT_INT, &renderTextures,0, 1,	"1=Render with textures.",
 	"rend-tex-gamma",		CVF_PROTECTED, CVT_INT,	&usegamma,		0, 4,	"The gamma correction level (0-4).",
@@ -438,18 +442,18 @@ cvar_t engineCVars[] =
 
 	// Input
 	// * Input-Key
-	"input-key-wait1",		CVF_NO_MAX,		CVT_INT,	&repWait1,		6, 0,	"The number of 35 Hz ticks to wait before first key repeat.",
-	"input-key-wait2",		CVF_NO_MAX,		CVT_INT,	&repWait2,		1, 0,	"The number of 35 Hz ticks to wait between key repeats.",
+	"input-key-delay1",		CVF_NO_MAX,		CVT_INT,	&keyRepeatDelay1, 50, 0,	"The number of milliseconds to wait before first key repeat.",
+	"input-key-delay2",		CVF_NO_MAX,		CVT_INT,	&keyRepeatDelay2, 20, 0,	"The number of milliseconds to wait between key repeats.",
 	"input-key-show-scancodes", 0,			CVT_BYTE,	&showScanCodes,	0, 1,	"1=Show scancodes of all pressed keys in the console.",
 	// * Input-Joy
-	//"input-joy-sensi",			0,			CVT_INT,	&joySensitivity,0, 9,	"Joystick sensitivity.",
-	//"input-joy-deadzone",		0,			CVT_INT,	&joyDeadZone,	0, 90,	"Joystick dead zone, in percents.", 
+	"input-joy-sensi",			0,			CVT_INT,	&joySensitivity,0, 9,	"Joystick sensitivity.",
+	"input-joy-deadzone",		0,			CVT_INT,	&joyDeadZone,	0, 90,	"Joystick dead zone, in percents.", 
 	// * Input-Mouse
-	//"input-mouse-wheel-sensi",	CVF_NO_MAX,	CVT_INT,	&mouseWheelSensi, 0, 0, "Mouse wheel sensitivity.",
-	//"input-mouse-x-disable",	0,			CVT_INT,	&mouseDisableX,	0, 1,	"1=Disable mouse X axis.",
-	//"input-mouse-y-disable",	0,			CVT_INT,	&mouseDisableY,	0, 1,	"1=Disable mouse Y axis.",
-	//"input-mouse-y-inverse",	0,			CVT_INT,	&mouseInverseY, 0, 1,	"1=Inversed mouse Y axis.",
-	//"input-mouse-filter",		0,			CVT_BYTE,	&mouseFilter, 0, 1,		"1=Filter mouse X and Y axes.",
+	"input-mouse-wheel-sensi",	CVF_NO_MAX,	CVT_INT,	&mouseWheelSensi, 0, 0, "Mouse wheel sensitivity.",
+	"input-mouse-x-disable",	0,			CVT_INT,	&mouseDisableX,	0, 1,	"1=Disable mouse X axis.",
+	"input-mouse-y-disable",	0,			CVT_INT,	&mouseDisableY,	0, 1,	"1=Disable mouse Y axis.",
+	"input-mouse-y-inverse",	0,			CVT_INT,	&mouseInverseY, 0, 1,	"1=Inversed mouse Y axis.",
+	"input-mouse-filter",		0,			CVT_BYTE,	&mouseFilter, 0, 1,		"1=Filter mouse X and Y axes.",
 
 	// File
 	"file-startup",				0,			CVT_CHARPTR, &defaultWads,	0, 0,	"The list of WADs to be loaded at startup.",
@@ -460,13 +464,12 @@ cvar_t engineCVars[] =
 // Console commands. Names in LOWER CASE (yeah, that's cOnsISteNt).
 ccmd_t engineCCmds[] =
 {
-//	"actions",		CCmdListActs,		"List all action commands.",
+	"actions",		CCmdListActs,		"List all action commands.",
 	"add",			CCmdAddSub,			"Add something to a cvar.",
 	"after",		CCmdWait,			"Execute the specified command after a delay.",
 	"alias",		CCmdAlias,			"Create aliases for a (set of) console commands.",
 	"bgturn",		CCmdBackgroundTurn, "Set console background rotation speed.",
 	"bind",			CCmdBind,			"Bind a console command to an event.",
-	"bindaxis",		CCmdBindAxis,		"Bind a control to an input device axis.",
 	"bindr",		CCmdBind,			"Bind a console command to an event (keys with repeat).",
 	"chat",			CCmdChat,			"Broadcast a chat message.",
 	"chatnum",		CCmdChat,			"Send a chat message to the specified player.",
@@ -536,7 +539,6 @@ ccmd_t engineCCmds[] =
 	"uicolor",		CCmdUIColor,		"Change Doomsday user interface colors.",
 	"unload",		CCmdUnloadFile,		"Unload a data file from memory.",
 	"version",		CCmdVersion,		"Show detailed version information.",
-	"viewgrid",		CCmdViewGrid,		"Setup splitscreen configuration.",
 	"write",		CCmdWriteConsole,	"Write variables, bindings and aliases to a file.",
 
 #ifdef _DEBUG
@@ -1405,20 +1407,21 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
 }
 
 /*
- * The command is executed forthwith!!
+ * executeSubCmd
+ *	The command is executed forthwith!!
  */
 static int executeSubCmd(const char *subCmd)
 {
 	int			i;
-//	char		prefix;
+	char		prefix;
 	cmdargs_t	args;
 
 	PrepareCmdArgs(&args, subCmd);
 	if(!args.argc) return true;
 
-	if(args.argc == 1)	// Possibly a control command?
+	if(args.argc == 1)	// An action?
 	{
-/*		prefix = args.argv[0][0];
+		prefix = args.argv[0][0];
 		if(prefix == '+' || prefix == '-')
 		{
 			return Con_ActionCommand(args.argv[0], true);
@@ -1426,14 +1429,7 @@ static int executeSubCmd(const char *subCmd)
 		// What about a prefix-less action?
 		if(strlen(args.argv[0]) <= 8 
 			&& Con_ActionCommand(args.argv[0], false)) 
-			return true; // There was one!*/
-		
-		if(P_ControlExecute(args.argv[0]))
-		{
-			// It was a control command.  No further processing is
-			// necessary.
-			return true;
-		}
+			return true; // There was one!
 	}
 
 	// If logged in, send command to server at this point.
@@ -2046,7 +2042,7 @@ void Con_DrawSideText(const char *text, int line, float alpha)
 	if(y > -fontScaledY)
 	{
 		// The side text is a bit transparent.
-		alpha *= .6f;
+		alpha *= .75f;
 
 		// scaled screen width		
 		ssw = (int) (screenWidth/Cfont.sizeX);	 
@@ -2477,8 +2473,7 @@ void Con_Open(int yes)
 
 	// Clear all action keys, keyup events won't go 
 	// to bindings processing when the console is open.
-	P_ControlReset();
-	
+	Con_ClearActions();
 	openingOrClosing = true;
 	if(yes)
 	{

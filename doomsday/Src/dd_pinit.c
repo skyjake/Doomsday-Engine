@@ -23,11 +23,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdarg.h>
-
 #ifdef WIN32
-#  include "de_platform.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif
+
+#include <stdarg.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -37,16 +38,13 @@
 #include "de_network.h"
 #include "de_misc.h"
 
+#include "def_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-#ifdef WIN32
-// This is called by the main engine.
-extern GETGAMEAPI GetGameAPI;
-#endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -149,6 +147,10 @@ void SetGameImports(game_import_t *imp)
 
 void DD_InitAPI(void)
 {
+#ifdef WIN32
+	extern GETGAMEAPI GetGameAPI;
+#endif
+
 	game_export_t *gameExPtr;
 	
 	// Put the imported stuff into the imports.
@@ -210,13 +212,9 @@ void DD_ShutdownAll(void)
 	SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, FALSE, 0, 0);
 #endif
 
-	for(i = 0; i < MAXPLAYERS; i++)
-	{
-		// Stop all demo recording.
-		Demo_StopRecording(i);
-	}
+	// Stop all demo recording.
+	for(i = 0; i < MAXPLAYERS; i++) Demo_StopRecording(i);
 
-	P_ControlShutdown();
 	Sv_Shutdown();
 	R_Shutdown();
 	Sys_ConShutdown();

@@ -97,7 +97,7 @@ typedef struct
 
 	// Ticcmds.
 	void		(*BuildTicCmd)(void *cmd);
-	void		(*DiscardTicCmd)(void *discarded, void *current);
+	//void		(*DiscardTicCmd)(void *discarded, void *current);
 
 	// Networking.
 	int			(*NetServerStart)(int before);

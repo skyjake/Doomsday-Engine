@@ -1,31 +1,18 @@
-/* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
- */
 
-/*
- * r_main.c: Refresh Subsystem
- *
- * The refresh daemon has the highest-level rendering code.
- * The view window is handled by refresh. The more specialized
- * rendering code in rend_*.c does things inside the view window.
- */
+//**************************************************************************
+//**
+//** R_MAIN.C
+//**
+//** The refresh daemon has the highest-level rendering code.
+//** The view window is handled by refresh. The more specialized
+//** rendering code in rend_*.c does things inside the view window.
+//**
+//**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <assert.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -66,6 +53,7 @@ int			viewangleoffset = 0;
 int			validcount = 1;	// increment every time a check is made
 int			framecount;		// just for profiling purposes
 int			rend_info_tris = 0;
+int			rend_camera_smooth = false;
 fixed_t		viewx, viewy, viewz;
 float		viewfrontvec[3], viewupvec[3], viewsidevec[3];
 fixed_t		viewxOffset = 0, viewyOffset = 0, viewzOffset = 0;
@@ -83,66 +71,45 @@ int			extralight;			// bumped light from gun blasts
 int			skyflatnum;
 char		skyflatname[9] = "F_SKY";
 
+double		lastSharpFrameTime;
+
+int sharpWorldUpdated; // Set to true after game ticker has been called.
+
+float frameTimePos; // 0...1: fractional part for sharp game tics
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int gridCols, gridRows;
-static viewport_t viewports[DDMAXPLAYERS], *currentPort;
+static viewer_t lastSharpView[2];
+static boolean	resetNextViewer = true;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Calculate the placement and dimensions of a specific viewport.
- * Assumes that the grid has already been configured.
- */
-void R_ViewPortPlacement(viewport_t *port, int x, int y)
+//==========================================================================
+// R_InitSkyMap
+//==========================================================================
+void R_InitSkyMap(void)
 {
-	float w = screenWidth / (float) gridCols;
-	float h = screenHeight / (float) gridRows;
-
-	port->x = x * w;
-	port->y = y * h;
-	
-	port->width = (x + 1) * w - port->x;
-	port->height = (y + 1) * h - port->y;
+	skyflatnum = R_FlatNumForName(skyflatname);
 }
 
-/*
- * Set up a view grid and calculate the viewports.  Set 'numCols' and
- * 'numRows' to zero to just update the viewport coordinates.
- */
-void R_SetViewGrid(int numCols, int numRows)
+//===========================================================================
+// R_ViewWindow
+//	Don't really change anything here, because i might be in the middle of
+//	a refresh.  The change will take effect next refresh.
+//===========================================================================
+void R_ViewWindow(int x, int y, int w, int h)
 {
-	int x, y, p;
-
-	if(numCols > 0 && numRows > 0)
-	{
-		if(numCols > 16) numCols = 16;
-		if(numRows > 16) numRows = 16;
-	
-		gridCols = numCols;
-		gridRows = numRows;
-	}
-
-	// Reset all viewports to zero.
-	memset(viewports, 0, sizeof(viewports));
-
-	for(p = 0, y = 0; y < gridRows; y++)
-	{
-		for(x = 0; x < gridCols; x++, p++)
-		{
-			R_ViewPortPlacement(&viewports[p], x, y);
-
-			// The console number is -1 if the viewport belongs to no
-			// one.
-			viewports[p].console = P_LocalToConsole(p);
-		}
-	}
+	viewwindowx = x;
+	viewwindowy = y;
+	viewwidth = w;
+	viewheight = h;
 }
 
-/*
- * One-time initialization of the refresh daemon. Called by DD_Main.
- * GL has not yet been inited.
- */
+//===========================================================================
+// R_Init
+//	One-time initialization of the refresh daemon. Called by DD_Main.
+//	GL has not yet been inited.
+//===========================================================================
 void R_Init(void)
 {
 	R_InitData();
@@ -160,9 +127,10 @@ void R_Init(void)
 	Def_PostInit();
 }
 
-/*
- * Re-initialize almost everything.
- */
+//===========================================================================
+// R_Update
+//	Re-initialize almost everything.
+//===========================================================================
 void R_Update(void)
 {
 	int i;
@@ -202,9 +170,10 @@ void R_Update(void)
 #endif
 }
 
-/*
- * Shutdown the refresh daemon.
- */
+//===========================================================================
+// R_Shutdown
+//	Shutdown the refresh daemon.
+//===========================================================================
 void R_Shutdown(void)
 {
 	R_ShutdownModels();
@@ -212,26 +181,32 @@ void R_Shutdown(void)
 	// Most allocated memory goes down with the zone.
 }
 
-/*
- * Index of the flat that is used as ceilingpic/floorpic for skies.
- */
-void R_InitSkyMap(void)
+//===========================================================================
+// R_ResetViewer
+//===========================================================================
+void R_ResetViewer(void)
 {
-	skyflatnum = R_FlatNumForName(skyflatname);
+	resetNextViewer = true;
 }
 
-/*
- * Don't really change anything here, because i might be in the middle
- * of a refresh.  The change will take effect next refresh.
- */
-void R_ViewWindow(int x, int y, int w, int h)
+//===========================================================================
+// R_InterpolateViewer
+//===========================================================================
+void R_InterpolateViewer
+	(viewer_t *start, viewer_t *end, float pos, viewer_t *out)
 {
-	viewwindowx = x;
-	viewwindowy = y;
-	viewwidth = w;
-	viewheight = h;
+	float inv = 1 - pos;
+
+	out->x = inv*start->x + pos*end->x;
+	out->y = inv*start->y + pos*end->y;
+	out->z = inv*start->z + pos*end->z;
+	out->angle = start->angle + pos*((int)end->angle - (int)start->angle);
+	out->pitch = inv*start->pitch + pos*end->pitch;
 }
 
+//===========================================================================
+// R_SetViewPos
+//===========================================================================
 void R_SetViewPos(viewer_t *v)
 {
 	viewx = v->x;
@@ -241,44 +216,171 @@ void R_SetViewPos(viewer_t *v)
 	viewpitch = v->pitch;
 }
 
-/*
- * Prepare rendering the view of the given player.  Also handles
- * smoothing of camera and plane movement.
- */
+//===========================================================================
+// R_CheckViewerLimits
+//	The components whose difference is too large for interpolation will be 
+//	snapped to the sharp values.
+//===========================================================================
+void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
+{
+#define MAXMOVE	(FRACUNIT*32)
+	if(abs(dst->x - src->x) > MAXMOVE
+		|| abs(dst->y - src->y) > MAXMOVE) 
+	{
+		src->x = dst->x;
+		src->y = dst->y;
+		src->z = dst->z;
+	}
+	if(abs((int)dst->angle - (int)src->angle) >= ANGLE_45) 
+		src->angle = dst->angle;
+}
+
+//===========================================================================
+// R_SetupFrame
+//	Prepare rendering the view of the given player.
+//	Also handles smoothing of camera and plane movement.
+//===========================================================================
 void R_SetupFrame(ddplayer_t *player)
 {
 	int tableAngle;
 	float yawRad, pitchRad;
-	viewer_t viewer;
+	viewer_t sharpView, smoothView;
+	double nowTime;
+	sector_t *sector;
+	int i;
 
 	// Reset the DGL triangle counter.
 	gl.GetInteger(DGL_POLY_COUNT);
 
 	viewplayer = player;
 
-	// Local players use the angles with the lowest latency.
-	viewer.angle = (player->flags & DDPF_LOCAL? player->clAngle :
-					player->mo->angle) + viewangleoffset;
-	viewer.pitch = (player->flags & DDPF_LOCAL? player->clLookDir :
-					player->lookdir);
-	viewer.x = player->mo->x + viewxOffset;
-	viewer.y = player->mo->y + viewyOffset;
-	viewer.z = player->viewz + viewzOffset;
-
+	sharpView.angle = (isClient? player->clAngle : player->mo->angle)
+		+ viewangleoffset;
+	sharpView.pitch = isClient? player->clLookDir : player->lookdir;
+	sharpView.x = player->mo->x + viewxOffset;
+	sharpView.y = player->mo->y + viewyOffset;
+	sharpView.z = player->viewz + viewzOffset;
 	// Check that the viewz doesn't go too high or low.
-	if(viewer.z > player->mo->ceilingz - 4*FRACUNIT)
-	{
-		viewer.z = player->mo->ceilingz - 4*FRACUNIT;
-	}
-	if(viewer.z < player->mo->floorz + 4*FRACUNIT)
-	{
-		viewer.z = player->mo->floorz + 4*FRACUNIT;
-	}
+	if(sharpView.z > player->mo->ceilingz - 4*FRACUNIT)
+		sharpView.z = player->mo->ceilingz - 4*FRACUNIT;
+	if(sharpView.z < player->mo->floorz + 4*FRACUNIT)
+		sharpView.z = player->mo->floorz + 4*FRACUNIT;
 
-	R_SetViewPos(&viewer);
+	// Camera smoothing is only enabled if the frame rate is above 35.
+	if(!rend_camera_smooth || resetNextViewer
+	   || DD_GetFrameRate() < 35)
+	{
+		resetNextViewer = false;
+		
+		// Just view from the sharp position.
+		R_SetViewPos(&sharpView);
+		lastSharpFrameTime = Sys_GetTimef();
+		memcpy(&lastSharpView[0], &sharpView, sizeof(sharpView));
+		memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
+
+		// $smoothplane: Reset the plane height trackers.
+		for(i = 0; i < numsectors; i++)
+		{
+			secinfo[i].visceiloffset = secinfo[i].visflooroffset = 0;
+
+			// Reset the old Z values.
+			sector = SECTOR_PTR(i);
+			secinfo[i].oldfloor[0] 
+				= secinfo[i].oldfloor[1] 
+				= sector->floorheight;
+			secinfo[i].oldceil[0] 
+				= secinfo[i].oldceil[1] 
+				= sector->ceilingheight;
+		}
+	}
+	// While the game is paused there is no need to calculate any
+	// time offsets or interpolated camera positions.
+	else if(!clientPaused)
+	{
+		nowTime = Sys_GetTimef();
+		if(sharpWorldUpdated)
+		{
+			sharpWorldUpdated = false;
+			
+			// The game tic has changed, which means we have an
+			// updated sharp camera position. However, the position is
+			// at the beginning of the tic and we are most likely not
+			// at a sharp tic boundary, in time. We will update
+			// lastSharpFrameTime so it tells the time of the new
+			// sharp position, and then move the viewer positions one
+			// step back in the buffer.  The effect of this is that
+			// [0] is the previous sharp position and [1] is the
+			// current one.
+
+			memcpy(&lastSharpView[0], &lastSharpView[1], sizeof(viewer_t));
+			memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
+			R_CheckViewerLimits(lastSharpView, &sharpView);
+
+			// $smoothplane: Roll the height tracker buffers.
+			for(i = 0; i < numsectors; i++)
+			{
+				sector = SECTOR_PTR(i);
+				secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
+				secinfo[i].oldfloor[1] = sector->floorheight;
+
+				if(abs(secinfo[i].oldfloor[0] - secinfo[i].oldfloor[1])
+					>= MAX_SMOOTH_PLANE_MOVE)
+				{
+					// Too fast: make an instantaneous jump.
+					secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
+				}
+		
+				secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
+				secinfo[i].oldceil[1] = sector->ceilingheight;
+
+				if(abs(secinfo[i].oldceil[0] - secinfo[i].oldceil[1])
+					>= MAX_SMOOTH_PLANE_MOVE)
+				{
+					// Too fast: make an instantaneous jump.
+					secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
+				}
+			}
+		}
+
+		if(nowTime - lastSharpFrameTime > 1)
+		{
+			// This'll synchronize our frame timing with the game tics.
+			lastSharpFrameTime = nowTime - 1;
+		}
+
+		// Calculate the smoothed camera position, which is somewhere between
+		// the previous and current sharp positions. This introduces a slight
+		// delay (max. 1/35 sec) to the movement of the smoothed camera.
+		frameTimePos = nowTime - lastSharpFrameTime;
+		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
+							&smoothView);
+		R_SetViewPos(&smoothView);
+
+		// $smoothplane: Set the visible offsets.
+		for(i = 0; i < numsectors; i++)
+		{
+			sector = SECTOR_PTR(i);
+
+			secinfo[i].visflooroffset 
+				= FIX2FLT(secinfo[i].oldfloor[0]*(1 - frameTimePos)
+				+ sector->floorheight*frameTimePos - 
+				sector->floorheight);
+
+			secinfo[i].visceiloffset 
+				= FIX2FLT(secinfo[i].oldceil[0]*(1 - frameTimePos)
+				+ sector->ceilingheight*frameTimePos	
+				- sector->ceilingheight);
+		}
+
+/*		Con_Printf("%.3f: s%.4f e%.4f = %.4f\n", 
+			nowTime - lastSharpFrameTime, 
+			lastSharpView[0].angle/(float)ANGLE_MAX,
+			sharpView.angle/(float)ANGLE_MAX,
+			smoothView.angle/(float)ANGLE_MAX);*/
+	}
 
 	extralight = player->extralight;
-	tableAngle = viewangle >> ANGLETOFINESHIFT;
+	tableAngle = viewangle>>ANGLETOFINESHIFT;
 	viewsin = finesine[tableAngle];
 	viewcos = finecosine[tableAngle];
 	validcount++;
@@ -299,11 +401,11 @@ void R_SetupFrame(ddplayer_t *player)
 		UpdateState |= I_MESSAGES;
 	}
 
-	// Calculate the front, up and side unit vectors.  The vectors are
-	// in the DGL coordinate system, which is a left-handed one (same
-	// as in the game, but Y and Z have been swapped).  Anyone who
-	// uses these must note that it might be necessary to fix the
-	// aspect ratio of the Y axis by dividing the Y coordinate by 1.2.
+	// Calculate the front, up and side unit vectors.
+	// The vectors are in the DGL coordinate system, which is a left-handed
+	// one (same as in the game, but Y and Z have been swapped). Anyone
+	// who uses these must note that it might be necessary to fix the aspect
+	// ratio of the Y axis by dividing the Y coordinate by 1.2.
 	yawRad = viewangle/(float)ANGLE_MAX * 2*PI;
 	pitchRad = viewpitch * 85/110.f/180 * PI;
 
@@ -321,42 +423,15 @@ void R_SetupFrame(ddplayer_t *player)
 	M_CrossProduct(viewfrontvec, viewupvec, viewsidevec);
 }
 
-/*
- * Set the GL viewport.
- */
-void R_UseViewPort(viewport_t *port)
-{
-	if(!port) 
-	{
-		gl.Viewport(0, 0, screenWidth, screenHeight);		
-	}
-	else
-	{
-		currentPort = port;
-		gl.Viewport(port->x, port->y, port->width, port->height);
-	}
-}
-
-/*
- * Render a blank view for the specified player.
- */
-void R_RenderBlankView(void)
-{
-	// Just use the empty console background.
-	Con_DrawStartupBackground(320, 200);
-}
-
-/*
- * Draw the view of the player inside the view window.
- */
+//===========================================================================
+// R_RenderPlayerView
+//	Draw the view of the player inside the view window.
+//===========================================================================
 void R_RenderPlayerView(ddplayer_t *player)
 {
 	extern int psp3d, model_tri_count;
 	int i, oldFlags;
 
-	// The mobj must be set or otherwise no view can be rendered.
-	if(!player->ingame || !player->mo) return;
-	
 	// Setup for rendering the frame.
 	R_SetupFrame(player);
 	R_ClearSprites ();
@@ -371,20 +446,17 @@ void R_RenderPlayerView(ddplayer_t *player)
 	if(renderWireframe) gl.Enable(DGL_WIREFRAME_MODE);
 
 	// GL is in 3D transformation state only during the frame.
-	GL_SwitchTo3DState(true, currentPort);
+	GL_SwitchTo3DState(true);
 	Rend_RenderMap();
-	
 	// Orthogonal projection to the view window.
 	GL_Restore2DState(1); 
 	Rend_DrawPlayerSprites();		// If the 2D versions are needed.
-	
 	// Fullscreen viewport.
-	GL_Restore2DState(2);
-	
+	GL_Restore2DState(2); 
 	// Do we need to render any 3D psprites?
 	if(psp3d)
 	{
-		GL_SwitchTo3DState(false, currentPort);
+		GL_SwitchTo3DState(false);
 		Rend_Draw3DPlayerSprites();
 		GL_Restore2DState(2);		// Restore viewport.
 	}
@@ -409,53 +481,4 @@ void R_RenderPlayerView(ddplayer_t *player)
 	{
 		Con_Printf("LumObjs: %-4i\n", numLuminous);
 	}
-}
-
-/*
- * Render all view ports in the viewport grid.
- */
-void R_RenderViewPorts(void)
-{
-	int oldDisplay = displayplayer;
-	int x, y, p;
-
-	// Draw a view for all players with a visible viewport.
-	for(p = 0, y = 0; y < gridRows; y++)
-		for(x = 0; x < gridCols; x++, p++)
-		{
-			displayplayer = viewports[p].console; 
-			R_UseViewPort(viewports + p);
-			if(displayplayer < 0)
-			{
-				R_RenderBlankView();
-				continue;
-			}
-
-			// Draw the game graphics.
-			gx.G_Drawer();
-			
-			// The colored filter. 
-			if(GL_DrawFilter()) BorderNeedRefresh = true;
-
-			// Increment the internal frame count. This does not
-			// affect the FPS counter.
-			framecount++;
-		}
-
-	// Restore things back to normal.
-	displayplayer = oldDisplay;
-	R_UseViewPort(NULL);
-}
-
-int CCmdViewGrid(int argc, char **argv)
-{
-	if(argc != 3)
-	{
-		Con_Printf("Usage: %s (cols) (rows)\n", argv[0]);
-		return true;
-	}
-
-	// Recalculate viewports.
-	R_SetViewGrid(strtol(argv[1], NULL, 0), strtol(argv[2], NULL, 0));
-	return true;
 }

@@ -36,6 +36,8 @@ extern  ddplayer_t  *viewplayer;
 extern  angle_t     clipangle;
 extern  fixed_t		finetangent[FINEANGLES/2];
 
+extern  int         rend_camera_smooth;
+extern  float	    frameTimePos; // 0...1: fractional part for sharp game tics
 extern	int			validcount;
 extern	int			viewwidth, viewheight, viewwindowx, viewwindowy;
 extern	boolean		setsizeneeded;

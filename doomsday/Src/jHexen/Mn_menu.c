@@ -1355,6 +1355,7 @@ void MN_LoadSlotText(void)
 	{
 		found = false;
 		sprintf(name, "%shex%d.hxs", SavePath, slot);
+		M_TranslatePath(name, name);
 		fp = lzOpen(name, "rp");
 		if(fp)
 		{

@@ -39,6 +39,7 @@
 #include "de_render.h"
 #include "de_misc.h"
 
+#include "def_main.h"
 #include "ui_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -494,9 +495,11 @@ void GL_LoadLightMap(ded_lightmap_t *map)
 
 			// Upload the texture.
 			// No mipmapping or resizing is needed, upload directly.
+			gl.Disable(DGL_TEXTURE_COMPRESSION);
 			gl.TexImage(image.pixelSize == 2? DGL_LUMINANCE_PLUS_A8
 				: image.pixelSize == 3? DGL_RGB : DGL_RGBA, 
 				image.width, image.height, 0, image.pixels);
+			gl.Enable(DGL_TEXTURE_COMPRESSION);
 			GL_DestroyImage(&image);
 
 			gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);

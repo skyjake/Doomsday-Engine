@@ -199,6 +199,7 @@ cvar_t gameCVars[] =
 	"menu-flash-b",		0,			CVT_FLOAT,	&cfg.flashcolor[2],			0, 1,	"Menu selection flash color, blue component.",
 	"menu-flash-speed",	0,			CVT_INT,	&cfg.flashspeed,			0, 50,	"Menu selection flash speed.",
 	"menu-turningskull",0,			CVT_BYTE,	&cfg.turningSkull,			0, 1,	"1=Menu skull turns at slider items.",
+	"menu-quitsound",	0,			CVT_INT,	&cfg.menuQuitSound,			0, 1,	"1=Play a sound when quitting the game.",
 	
 	"hud-health",		0,			CVT_BYTE,	&cfg.hudShown[HUD_HEALTH],	0, 1,	"1=Show health in HUD.",
 	"hud-armor",		0,			CVT_BYTE,	&cfg.hudShown[HUD_ARMOR],	0, 1,	"1=Show armor in HUD.",
@@ -276,9 +277,9 @@ cvar_t gameCVars[] =
 	"menu-color-g",		0,			CVT_FLOAT,	&cfg.menuColor[1],	0, 1,	"Menu color green component.",
 	"menu-color-b",		0,			CVT_FLOAT,	&cfg.menuColor[2],	0, 1,	"Menu color blue component.",
 	"menu-glitter",		0,			CVT_FLOAT,	&cfg.menuGlitter,	0, 1,	"Strength of type-in glitter.",
-	"menu-fog",			0,			CVT_INT,	&cfg.menuFog,		0, 1,	"Menu fog mode: 0=blue vertical, 1=black smoke.",
+	"menu-fog",			0,			CVT_INT,	&cfg.menuFog,		0, 2,	"Menu fog mode: 0=shimmer, 1=black smoke, 2=blue vertical.",
 	"menu-patch-replacement", 0,	CVT_BYTE,	&cfg.usePatchReplacement, 0, 1, "1=Enable the Patch Replacement strings.",
-
+	"menu-shadow",		0,			CVT_FLOAT,	&cfg.menuShadow,	0, 1,	"Menu text shadow darkness.",
 	"msg-count",		0,			CVT_INT,	&cfg.msgCount,		0, 8,	"Number of HUD messages displayed at the same time.",
 	"msg-scale",		CVF_NO_MAX,	CVT_FLOAT,	&cfg.msgScale,		0, 0,	"Scaling factor for HUD messages.",
 	"msg-uptime",		CVF_NO_MAX,	CVT_INT,	&cfg.msgUptime,		35, 0,	"Number of tics to keep HUD messages on screen.",

@@ -332,6 +332,9 @@ int DG_GetInteger(int name)
 //===========================================================================
 int	DG_SetInteger(int name, int value)
 {
+#ifdef WIN32
+	extern HWND windowHandle;
+#endif
 	float color[4];
 
 	switch(name)

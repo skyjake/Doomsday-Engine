@@ -2,6 +2,8 @@
 
 Header { Version = 5; }
 
+SkipIf -nodefaultfx; 
+
 #####====--- LIGHT DECORATIONS ---====#####
 
 Include "Doom1Lights.ded";

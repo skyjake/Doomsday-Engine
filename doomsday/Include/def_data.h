@@ -50,9 +50,9 @@ typedef ded_stringid_t	ded_soundid_t;
 typedef ded_stringid_t	ded_musicid_t;
 typedef ded_stringid_t	ded_funcid_t;
 typedef char			ded_func_t[DED_FUNC_LEN+1];
-//typedef char			ded_flags_t[DED_FLAGS_LEN+1];
 typedef unsigned int	ded_flags_t;
-
+typedef char*           ded_anystring_t;
+	
 typedef struct ded_count_s { int num, max; } ded_count_t;
 
 typedef struct
@@ -120,6 +120,7 @@ typedef struct
 	ded_funcid_t	action;
 	ded_stateid_t	nextstate;
 	int				misc[NUM_STATE_MISC];
+	ded_anystring_t execute;		// Console command.
 } ded_state_t;
 
 typedef struct ded_lightmap_s {
@@ -217,7 +218,8 @@ typedef struct ded_skymodel_s {
 	float			yaw_speed;		// Angles per second.
 	float			coord_factor[3];
 	float			rotate[2];
-	float			color[4];	// RGBA
+	ded_anystring_t execute;        // Executed on every frame change.
+	float			color[4];       // RGBA
 } ded_skymodel_t;
 
 #define NUM_SKY_LAYERS		2
@@ -242,6 +244,7 @@ typedef struct
 	float			sky_color[3]; // Color of sky-lit sectors.
 	ded_skylayer_t	sky_layers[NUM_SKY_LAYERS];
 	ded_skymodel_t	sky_models[NUM_SKY_MODELS];
+	ded_anystring_t execute; // Executed during map setup (savegames, too).
 } ded_mapinfo_t;
 
 typedef struct

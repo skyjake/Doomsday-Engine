@@ -21,22 +21,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <string.h>
-#include <ctype.h>
-
-/*
-#ifdef WIN32
-#	include <io.h>
-#endif
-*/
-
 #include "de_base.h"
-#include "de_defs.h"
 #include "de_system.h"
 #include "de_refresh.h"
 #include "de_console.h"
 #include "de_audio.h"
 #include "de_misc.h"
+
+#include <string.h>
+#include <ctype.h>
 
 // XGClass.h is actually a part of the engine.
 // It just defines the various LTC_* constants.
@@ -49,7 +42,8 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct
+{
 	char *name;					// Name of the routine.
 	void (C_DECL *func)();		// Pointer to the function.
 } actionlink_t;
@@ -100,8 +94,8 @@ static mobjinfo_t *gettingFor;
 //===========================================================================
 void Def_Init(void)
 {
-	extern filename_t defsFileName;
-	extern filename_t topDefsFileName;
+	extern char defsFileName[256];
+	extern char topDefsFileName[256];
 	int c;
 
 	// Sprite name list.
@@ -271,6 +265,12 @@ int Def_GetMusicNum(char *id)
 	return -1;
 }
 
+/*// A simple action function that will be executed.
+void A_ExecuteCommand(mobj_t *mobj)
+{
+
+}*/
+
 acfnptr_t Def_GetActionPtr(char *name)
 {
 	// Action links are provided by the Game, who owns the actual 
@@ -278,10 +278,20 @@ acfnptr_t Def_GetActionPtr(char *name)
 	actionlink_t *link = (void*) gx.Get(DD_ACTION_LINK);
 	
 	if(!link) 
-		Con_Error("GetActionPtr: Game DLL doesn't have an action function link table.\n");
+	{
+		Con_Error("GetActionPtr: Game DLL doesn't have an action "
+			"function link table.\n");
+	}
 	for(; link->name; link++)
 		if(!strcmp(name, link->name)) 
 			return link->func;
+
+	// The engine provides a couple of simple action functions.
+	/*if(!strcmp(name, "A_ExecuteCommand"))
+		return A_ExecuteCommand;
+	if(!strcmp(name, "A_ExecuteCommandPSpr"))
+		return A_ExecuteCommandPSpr;*/
+
 	return 0;
 }
 
@@ -541,8 +551,12 @@ void Def_Read(void)
 	for(i = 0; i < count_states.num; i++)
 	{
 		ded_state_t *dst = defs.states + i;
+
 		// Make sure duplicate IDs overwrite the earliest.
-		state_t *st = states + Def_GetStateNum(dst->id);
+		int stateNum = Def_GetStateNum(dst->id);
+		ded_state_t *dstNew = defs.states + stateNum;
+		state_t *st = states + stateNum;
+
 		st->sprite = Def_GetSpriteNum(dst->sprite.id);
 		st->flags = dst->flags;
 		st->frame = dst->frame;
@@ -550,6 +564,14 @@ void Def_Read(void)
 		st->action = Def_GetActionPtr(dst->action);
 		st->nextstate = Def_GetStateNum(dst->nextstate);
 		for(k = 0; k < NUM_STATE_MISC; k++) st->misc[k] = dst->misc[k];
+
+		// Replace the older execute string.
+		if(dst != dstNew)
+		{
+			if(dstNew->execute) free(dstNew->execute);
+			dstNew->execute = dst->execute;
+			dst->execute = NULL;
+		}
 	}
 	Def_CountMsg(count_states.num, "states");
 
@@ -745,6 +767,7 @@ void Def_Read(void)
 	Def_CountMsg(defs.count.sectors.num, "sector types");
 
 	// Init the base model search path (prepend).
+	Dir_FixSlashes(defs.model_path);
 	R_AddModelPath(defs.model_path, false);
 	// Model search path specified on the command line?
 	if(ArgCheckWith("-modeldir", 1))
@@ -1226,7 +1249,7 @@ int Def_Get(int type, char *id, void *out)
 //===========================================================================
 int Def_Set(int type, int index, int value, void *ptr)
 {
-	ded_music_t *musdef;
+	ded_music_t *musdef = 0;
 	int i;
 
 	switch(type)

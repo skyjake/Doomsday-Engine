@@ -32,5 +32,7 @@
 #include "r_sky.h"
 #include "r_util.h"
 #include "r_extres.h"
+#include "r_shadow.h"
 
-#endif 
+#endif
+

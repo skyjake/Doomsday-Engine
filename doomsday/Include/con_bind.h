@@ -36,9 +36,4 @@ void B_Shutdown();
 
 int DD_GetKeyCode(const char *key);
 
-// Console commands.
-D_CMD( BindAxis );
-D_CMD( Bind );
-D_CMD( ListBindings );
-
 #endif 

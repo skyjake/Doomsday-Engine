@@ -175,13 +175,19 @@ void R_DrawTopBorder (void)
 			16, lumptexinfo[lump].height);
 
 		GL_UsePatchOffset(false);
-		GL_DrawPatch(viewwindowx-bwidth, viewwindowy, W_GetNumForName(borderGfx[BG_LEFT]));
-		GL_DrawPatch(viewwindowx+viewwidth, viewwindowy, W_GetNumForName(borderGfx[BG_RIGHT]));
-		GL_DrawPatch(viewwindowx-bwidth, viewwindowy+16, W_GetNumForName(borderGfx[BG_LEFT]));
-		GL_DrawPatch(viewwindowx+viewwidth, viewwindowy+16, W_GetNumForName(borderGfx[BG_RIGHT]));
+		GL_DrawPatch(viewwindowx-bwidth, viewwindowy,
+					 W_GetNumForName(borderGfx[BG_LEFT]));
+		GL_DrawPatch(viewwindowx+viewwidth, viewwindowy,
+					 W_GetNumForName(borderGfx[BG_RIGHT]));
+		GL_DrawPatch(viewwindowx-bwidth, viewwindowy+16,
+					 W_GetNumForName(borderGfx[BG_LEFT]));
+		GL_DrawPatch(viewwindowx+viewwidth, viewwindowy+16,
+					 W_GetNumForName(borderGfx[BG_RIGHT]));
 
-		GL_DrawPatch(viewwindowx-bwidth, viewwindowy-bwidth, W_GetNumForName(borderGfx[BG_TOPLEFT]));
-		GL_DrawPatch(viewwindowx+viewwidth, viewwindowy-bwidth, W_GetNumForName(borderGfx[BG_TOPRIGHT]));
+		GL_DrawPatch(viewwindowx-bwidth, viewwindowy-bwidth,
+					 W_GetNumForName(borderGfx[BG_TOPLEFT]));
+		GL_DrawPatch(viewwindowx+viewwidth, viewwindowy-bwidth,
+					 W_GetNumForName(borderGfx[BG_TOPRIGHT]));
 		GL_UsePatchOffset(true);
 	}
 }

@@ -13,7 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
+#include <ltdl.h>
+#include <limits.h>
 #include <SDL.h>
 
 #include "de_base.h"
@@ -42,69 +43,12 @@
 
 GETGAMEAPI GetGameAPI;
 
-/*
-HWND hWndMain;			// The window handle to the main window.
-HINSTANCE hInstApp;		// Instance handle to the application.
-HINSTANCE hInstGame;	// Instance handle to the game DLL.
-HINSTANCE hInstPlug[MAX_PLUGS];	// Instances to plugin DLLs.
-*/
-
-void *hGame;
-void *hPlugin[MAX_PLUGS];
+lt_dlhandle hGame;
+lt_dlhandle hPlugin[MAX_PLUGS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-/*
-BOOL InitApplication(HINSTANCE hInst)
-{
-	WNDCLASS wc;
-
-	// We need to register a window class for our window.
-	wc.style = CS_OWNDC;
-	wc.lpfnWndProc = MainWndProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = hInst;
-	wc.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_DOOMSDAY));
-	wc.hCursor = NULL; 
-	wc.hbrBackground = (HBRUSH) (COLOR_ACTIVEBORDER+1);
-	wc.lpszMenuName = NULL;
-	wc.lpszClassName = "DoomsdayMainWClass";
-	return RegisterClass(&wc);
-}
-
-BOOL InitInstance(HINSTANCE hInst, int cmdShow)
-{
-	HDC hdc;
-	char buf[256];
-
-	DD_MainWindowTitle(buf);
-
-	// Create the main window. It's shown right before GL init.
-	hWndMain = CreateWindow("DoomsdayMainWClass", buf,
-		WS_CAPTION | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_MINIMIZEBOX,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		NULL,
-		NULL,
-		hInst,
-		NULL);
-	if(!hWndMain) return FALSE;
-
-	// Set the font.
-	hdc = GetDC(hWndMain);
-	SetMapMode(hdc, MM_TEXT);
-	SelectObject(hdc, GetStockObject(SYSTEM_FIXED_FONT));
-
-	// Tell DGL of our main window.
-	gl.SetInteger(DGL_WINDOW_HANDLE, (int) hWndMain);
-	return TRUE;
-}
-*/
 
 void InitMainWindow(void)
 {
@@ -116,32 +60,32 @@ void InitMainWindow(void)
 
 boolean InitGame(void)
 {
-	char *libName = NULL;
+	char *gameName = NULL;
+	char libName[PATH_MAX];
 
 	// First we need to locate the game library name among the command
 	// line arguments.
-	DD_CheckArg("-game", &libName);
+	DD_CheckArg("-game", &gameName);
 
 	// Was a game dll specified?
-	if(!libName) 
+	if(!gameName) 
 	{
 		DD_ErrorBox(true, "InitGame: No game library was specified.\n");
 		return false;
 	}
 
 	// Now, load the library and get the API/exports.
-	if(!(hGame = dlopen(libName, RTLD_NOW)))
+	sprintf(libName, "lib%s", gameName);
+	if(!(hGame = lt_dlopenext(libName)))
 	{
 		DD_ErrorBox(true, "InitGame: Loading of %s failed (%s).\n", 
-					libName, dlerror());
+					libName, lt_dlerror());
 		return false;
 	}
-
-	// Get the function.
-	if(!(GetGameAPI = (GETGAMEAPI) dlsym(hGame, "GetGameAPI")))
+	if(!(GetGameAPI = (GETGAMEAPI) lt_dlsym(hGame, "GetGameAPI")))
 	{
 		DD_ErrorBox(true, "InitGame: Failed to get address of "
-					"GetGameAPI (%s).\n", dlerror());
+					"GetGameAPI (%s).\n", lt_dlerror());
 		return false;
 	}		
 
@@ -198,7 +142,16 @@ int main(int argc, char **argv)
 	// Where are we?
 //	GetModuleFileName(hInstance, path, 255);
 //	Dir_FileDir(path, &ddBinDir);
+
+	// Initialize libtool's dynamic library routines.
+	lt_dlinit();
 	
+#ifdef DENG_LIBRARY_DIR
+	// The default directory is defined in the Makefile.  For
+	// instance, "/usr/local/lib".
+	lt_dladdsearchdir(DENG_LIBRARY_DIR);
+#endif	
+
 	// Assemble a command line string.
 	for(i = 0, length = 0; i < argc; i++)
 		length += strlen(argv[i]) + 1;
@@ -270,11 +223,13 @@ void DD_Shutdown(void)
 	SDL_Quit();
 
 	// Close the dynamic libraries.
-	dlclose(hGame);
+	lt_dlclose(hGame);
 	for(i = 0; hPlugin[i]; i++)
 	{
-		dlclose(hPlugin[i]);
+		lt_dlclose(hPlugin[i]);
 	}
 	hGame = NULL;
 	memset(hPlugin, 0, sizeof(hPlugin));
+
+	lt_dlexit();
 }

@@ -24,7 +24,7 @@
 
 #include "con_decl.h"
 
-extern int demotic, playback;
+extern int playback;
 
 void Demo_Init(void);
 void Demo_Ticker(timespan_t time);

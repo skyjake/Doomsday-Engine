@@ -23,9 +23,6 @@
 #ifndef __D_TICCMD__
 #define __D_TICCMD__
 
-/* This is an obsolete header file! */
-
-/*
 #include "doomsday.h"
 
 #ifdef __GNUG__
@@ -39,11 +36,11 @@
 #pragma pack(1)
 typedef struct
 {
-    char	forwardmove;	// *2048 for move
-    char	sidemove;		// *2048 for move
+    char	forwardMove;	// *2048 for move
+    char	sideMove;		// *2048 for move
     short	angle;			// <<16 for angle delta
-    short	lookdir;		// view pitch
-    byte	buttons;
+    short	pitch;	        // view pitch
+    byte	actions;
 } ticcmd_t;
 
 // This'll be used for saveplayer_t, but acts only as padding.
@@ -57,34 +54,6 @@ typedef struct
     byte	buttons;
 } saveticcmd_t;
 #pragma pack()
-*/
 
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log$
-// Revision 1.5  2004/01/19 19:24:21  skyjake
-// Obsolete; now uses common ticcmd
-//
-// Revision 1.4  2004/01/07 20:44:40  skyjake
-// Merged from branch-nix
-//
-// Revision 1.3.4.1  2003/11/19 17:08:47  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.3  2003/07/02 22:30:58  skyjake
-// Cleanup
-//
-// Revision 1.2  2003/06/28 15:46:21  skyjake
-// Removed time from ticcmd
-//
-// Revision 1.1  2003/02/26 19:18:26  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:12  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------
-

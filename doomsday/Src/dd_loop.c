@@ -66,9 +66,7 @@ timespan_t sysTime, gameTime, demoTime, levelTime;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean firstTic = true;
 static double lastFrameTime;
-static float timeScale = 1.0f;
 
 static int lastfpstic = 0, fpsnum = 0, lastfc = 0;
 
@@ -87,10 +85,6 @@ void DD_GameLoop(void)
 	// Now we've surely finished startup.
 	Con_StartupDone();
 	Sys_ShowWindow(true);
-
-	// Start polling for input. The input thread will be stopped when 
-	// the engine is shut down.
-	DD_StartInput();
 
 	while(true)
 	{
@@ -150,8 +144,10 @@ void DD_DrawAndBlit(void)
 	}
 	else
 	{
-		R_RenderViewPorts();
-		
+		// Draw the game graphics.
+		gx.G_Drawer();
+		// The colored filter. 
+		if(GL_DrawFilter()) BorderNeedRefresh = true;
 		// Draw Menu
 		gx.MN_Drawer();
 		// Debug information.
@@ -182,12 +178,15 @@ void DD_StartFrame(void)
 //===========================================================================
 void DD_EndFrame (void)
 {
+	// Increment the frame counter.
+	framecount++;
+
 	// Count the frames.
 	if(Sys_GetTime() - 35 >= lastfpstic)
 	{
 		lastfpstic = Sys_GetTime();
-		fpsnum = r_framecounter - lastfc;
-		lastfc = r_framecounter;
+		fpsnum = framecount - lastfc;
+		lastfc = framecount;
 	}
 
 	if(gx.EndFrame) gx.EndFrame();
@@ -195,27 +194,9 @@ void DD_EndFrame (void)
 	S_EndFrame();
 }
 
-/*
- * Change the time scaling factor.
- *
- * FIXME: Time scaling should not occur at this high a level.
- */
-void DD_ChangeTimeScale(float newScale)
-{
-/*	timeScale = newScale;
-
-	// Tell the timing core to start over.
-	firstTic = true;*/
-}
-
-float DD_GetTimeScale(void)
-{
-	return timeScale;
-}
-
-/*
- * Return the current frame rate.
- */
+//===========================================================================
+// DD_GetFrameRate
+//===========================================================================
 int DD_GetFrameRate(void)
 {
 	return fpsnum;
@@ -236,13 +217,24 @@ void DD_Ticker(timespan_t time)
 		Sv_Ticker(time);
 
 	// Demo ticker. Does stuff like smoothing of view angles.
-	Demo_Ticker(time);
+	Demo_Ticker(time);				
 	P_Ticker(time);
 
 	if(!ui_active || netgame)
 	{
 		if(M_CheckTrigger(&fixed, time))
+		{
+			extern int sharpWorldUpdated; // in r_main.c
+			extern double lastSharpFrameTime;
+			
 			gx.Ticker(/*time*/); // Game DLL.
+
+			// This is needed by rend_camera_smooth.  It needs to know
+			// when the world tic has occured so the next sharp
+			// position can be processed.
+			sharpWorldUpdated = true;
+			lastSharpFrameTime = Sys_GetTimef();
+		}
 
 		Con_Ticker(time);		// Console.
 
@@ -290,7 +282,9 @@ void DD_AdvanceTime(timespan_t time)
  */
 void DD_RunTics(void)
 {
-	double nowTime, frameTime, ticLength;
+	static boolean firstTic = true;
+	double frameTime, ticLength;
+	double nowTime = Sys_GetSeconds();
 
 	// Do a network update first.
 	N_Update();
@@ -301,7 +295,7 @@ void DD_RunTics(void)
 	{
 		// On the first tic, no time actually passes.
 		firstTic = false;
-		lastFrameTime = Sys_GetSeconds();
+		lastFrameTime = nowTime;
 		return;
 	}
 
@@ -316,18 +310,10 @@ void DD_RunTics(void)
 			Sys_Sleep(2);
 		}
 	}
-	else
-	{
-		// Unlimited FPS.
-		nowTime = Sys_GetSeconds();
-	}
 
 	// How much time do we have for this frame?
 	frameTime     = nowTime - lastFrameTime;
 	lastFrameTime = nowTime;
-
-	// Apply a scaling factor.
-	frameTime *= timeScale;
 
 	// Tic length is determined by the minfps rate.
 	while(frameTime > 0)

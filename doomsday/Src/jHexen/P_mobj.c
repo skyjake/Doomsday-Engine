@@ -668,8 +668,8 @@ explode:
 	}
 	if(mo->momx > -STOPSPEED && mo->momx < STOPSPEED
 		&& mo->momy > -STOPSPEED && mo->momy < STOPSPEED
-		&& (!player || (player->cmd.forwardmove == 0
-		&& player->cmd.sidemove == 0)))
+		&& (!player || (player->cmd.forwardMove == 0
+		&& player->cmd.sideMove == 0)))
 	{ // If in a walking frame, stop moving
 		if(player)
 		{

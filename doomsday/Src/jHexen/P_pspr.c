@@ -543,7 +543,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
 	}
 
 	// Check for fire. 
-	if(player->cmd.buttons&BT_ATTACK)
+	if(player->cmd.actions & BT_ATTACK)
 	{
 		player->attackdown = true;
 		P_FireWeapon(player);
@@ -579,7 +579,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
 
 void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 {
-	if((player->cmd.buttons&BT_ATTACK)
+	if((player->cmd.actions & BT_ATTACK)
 		&& player->pendingweapon == WP_NOCHANGE && player->health)
 	{
 		player->refire++;

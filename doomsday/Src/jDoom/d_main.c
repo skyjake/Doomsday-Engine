@@ -356,6 +356,8 @@ void D_PreInit(void)
 	cfg.usePatchReplacement = true;
 	cfg.menuScale = .9f;
 	cfg.menuGlitter = .5f;
+	cfg.menuShadow = 0.33;
+	cfg.menuQuitSound = true;
 	cfg.flashcolor[0] = .7f;
 	cfg.flashcolor[1] = .9f;
 	cfg.flashcolor[2] = 1;
@@ -406,7 +408,7 @@ void D_PreInit(void)
 	DD_SetConfigFile("jDoom.cfg");
 	DD_SetDefsFile("jDoom\\jDoom.ded");
 	R_SetDataPath("}Data\\jDoom\\");
-	//Con_DefineActions(actions);
+	Con_DefineActions(actions);
 	Set(DD_SKYFLAT_NAME, (int) SKYFLATNAME);
 	// Add the JDoom cvars and ccmds to the console databases.
 	D_ConsoleRegistration();
@@ -715,8 +717,8 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.PreInit = D_PreInit;
 	gx.PostInit = D_PostInit;
 	gx.Shutdown = D_Shutdown;
-	//gx.BuildTicCmd = G_BuildTiccmd;
-	//gx.DiscardTicCmd = G_DiscardTiccmd;
+	gx.BuildTicCmd = G_BuildTiccmd;
+	//gx.DiscardTicCmd = (void (*)(void*,void*)) G_DiscardTiccmd;
 	gx.Ticker = D_Ticker;
 	gx.G_Drawer = D_Display;
 	gx.MN_Drawer = M_Drawer;

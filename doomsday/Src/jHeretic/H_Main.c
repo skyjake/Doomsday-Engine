@@ -989,7 +989,7 @@ void H_Ticker(void)
 
 void G_ModifyDupTiccmd(ticcmd_t *cmd)
 {
-	if(cmd->buttons & BT_SPECIAL) cmd->buttons = 0;
+	if(cmd->actions & BT_SPECIAL) cmd->actions = 0;
 }
 
 char *G_Get(int id)
@@ -1052,6 +1052,7 @@ void H_Shutdown(void)
 {
 }
 
+/*
 void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
 {
 	// We're only interested in buttons.
@@ -1065,6 +1066,7 @@ void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
 		current->buttons |= discarded->buttons & (BT_CHANGE | BT_WEAPONMASK);
 	}
 }
+*/
 
 //===========================================================================
 // GetGameAPI
@@ -1087,7 +1089,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.PostInit = H_PostInit;
 	gx.Shutdown = H_Shutdown;
 	gx.BuildTicCmd = G_BuildTiccmd;
-	gx.DiscardTicCmd = (void (*)(void*,void*)) G_DiscardTiccmd;
+	//gx.DiscardTicCmd = (void (*)(void*,void*)) G_DiscardTiccmd;
 	gx.G_Drawer = D_Display;
 	gx.Ticker = H_Ticker;
 	gx.MN_Drawer = MN_Drawer;

@@ -82,7 +82,7 @@ cmhash_t cmHash[HASH_SIZE];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static byte previous_time = 0;
+//static byte previous_time = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -504,7 +504,7 @@ int Cl_ReadMobjDelta(void)
  */
 void Cl_InitClientMobjs()
 {
-	previous_time = gametic;
+	//previousTime = gameTime;
 	
 	// List of client mobjs.
 	memset(cmHash, 0, sizeof(cmHash));

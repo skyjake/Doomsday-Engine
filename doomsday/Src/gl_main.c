@@ -29,7 +29,6 @@
 #include "de_render.h"
 #include "de_misc.h"
 
-#include "net_main.h"
 #include "r_draw.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
@@ -93,8 +92,6 @@ static boolean gamma_support = false;
 #endif
 static float oldgamma, oldcontrast, oldbright;
 
-static viewport_t currentView;
-
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
@@ -132,7 +129,7 @@ void GL_DoUpdate(void)
 		|| oldcontrast != vid_contrast
 		|| oldbright != vid_bright)	GL_SetGamma();
 
-//	if(UpdateState == I_NOUPDATE) return;
+	if(UpdateState == I_NOUPDATE) return;
 
 	// Blit screen to video.
 	if(renderWireframe) gl.Enable(DGL_WIREFRAME_MODE);
@@ -372,9 +369,6 @@ void GL_Init(void)
 	// vid-contrast.
 	GL_SetGamma();
 
-	// Initialize one viewport.
-	R_SetViewGrid(1, 1);
-
 	initOk = true;
 }
 
@@ -460,9 +454,9 @@ void GL_Init2DState(void)
 //===========================================================================
 // GL_SwitchTo3DState
 //===========================================================================
-void GL_SwitchTo3DState(boolean pushState, viewport_t *port)
+void GL_SwitchTo3DState(boolean push_state)
 {
-	if(pushState)
+	if(push_state)
 	{
 		// Push the 2D matrices on the stack.
 		gl.MatrixMode(DGL_PROJECTION);
@@ -474,10 +468,8 @@ void GL_SwitchTo3DState(boolean pushState, viewport_t *port)
 	gl.Enable(DGL_CULL_FACE);
 	gl.Enable(DGL_DEPTH_TEST);
 
-#if 0
 	viewpx = viewwindowx * screenWidth/320,
 	viewpy = viewwindowy * screenHeight/200;
-	
 	// Set the viewport.
 	if(viewheight != SCREENHEIGHT)
 	{
@@ -490,16 +482,7 @@ void GL_SwitchTo3DState(boolean pushState, viewport_t *port)
 		viewpw = screenWidth;
 		viewph = screenHeight;
 	}
-#endif
 
-	memcpy(&currentView, port, sizeof(currentView));
-
-	viewpx = port->x + viewwindowx/320.0f * port->width;
-	viewpy = port->y + viewwindowy/200.0f * port->height;
-	viewpw = port->width * viewwidth/320.0f;
-	viewph = port->height * viewheight/200.0f;
-	gl.Viewport(viewpx, viewpy, viewpw, viewph);
-	
 	// The 3D projection matrix.
 	GL_ProjectionMatrix();
 }
@@ -515,7 +498,6 @@ void GL_Restore2DState(int step)
 		// After Restore Step 1 normal player sprites are rendered.
 		gl.MatrixMode(DGL_PROJECTION);
 		gl.LoadIdentity();
-		// FIXME: Aspect ratio when not 4:3.
 		gl.Ortho(0, 0, 320, (320*viewheight)/viewwidth, -1, 1);
 		gl.MatrixMode(DGL_MODELVIEW);
 		gl.LoadIdentity();
@@ -527,8 +509,7 @@ void GL_Restore2DState(int step)
 
 	case 2:
 		// After Restore Step 2 nothing special happens.
-		gl.Viewport(currentView.x, currentView.y,
-					currentView.width, currentView.height);
+		gl.Viewport(0, 0, screenWidth, screenHeight);
 		break;
 
 	case 3:
@@ -666,10 +647,6 @@ int GL_ChangeResolution(int w, int h, int bits)
 	Con_Message("Display mode: %i x %i", screenWidth, screenHeight);
 	if(screenBits) Con_Message( " x %i", screenBits);
 	Con_Message(".\n");
-
-	// Update viewport coordinates.
-	R_SetViewGrid(0, 0);
-	
 	return true;	
 }
 

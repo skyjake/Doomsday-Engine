@@ -28,6 +28,8 @@
 #include "de_refresh.h"
 #include "de_misc.h"
 
+#include "def_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 BEGIN_PROF_TIMERS()
@@ -111,12 +113,12 @@ void Sv_TransmitFrame(void)
 		}
 	}
 
-	if(gametic == lastTransmitTic) 
+	if(SECONDS_TO_TICKS(gameTime) == lastTransmitTic) 
 	{
 		// We were just here!
 		return;
 	}
-	lastTransmitTic = gametic;
+	lastTransmitTic = SECONDS_TO_TICKS(gameTime);
 
 	BEGIN_PROF( PROF_GEN_DELTAS );
 
@@ -139,7 +141,7 @@ void Sv_TransmitFrame(void)
 		// When the interval is greater than zero, this causes the frames
 		// to be sent at different times for each player.
 		pCount++;
-		cTime = gametic;
+		cTime = SECONDS_TO_TICKS(gameTime);
 		if(frameInterval > 0 && numInGame > 1)
 		{
 			cTime += (pCount * frameInterval) / numInGame;

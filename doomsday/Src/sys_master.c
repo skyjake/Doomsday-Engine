@@ -23,22 +23,6 @@
  * Sockets were initialized by sys_network.
  */
 
-/*
- * $Log$
- * Revision 1.4  2004/01/08 12:22:05  skyjake
- * Merged from branch-nix
- *
- * Revision 1.3  2003/09/03 20:53:49  skyjake
- * Added a proper GPL banner
- *
- * Revision 1.2  2003/05/23 22:16:15  skyjake
- * DP8, various net-related improvements
- *
- * Revision 1.1  2003/03/09 16:03:51  skyjake
- * New master server mechanism
- *
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_platform.h"

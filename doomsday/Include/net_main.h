@@ -141,12 +141,6 @@ typedef struct
 	// ID number. Each client has a unique ID number.
 	ident_t	id;
 
-	// The local command buffer is used for storing tic commands generated
-	// on the local computer. They will be sent to the server.
-	int		numLocal;
-	byte	*localCmds;
-	int		localCmdLock;
-
 	// Ticcmd buffer. The server uses this when clients send it ticcmds.
 	byte	*ticCmds;		
 
@@ -254,7 +248,7 @@ extern boolean masterAware;
 extern int netgame;
 extern int consoleplayer;
 extern int displayplayer;
-extern int gametic, realtics, availabletics;
+extern int realtics, availabletics;
 extern int isServer, isClient;
 extern boolean allow_net_traffic;	// Should net traffic be allowed?
 extern int net_dontsleep, net_ticsync;

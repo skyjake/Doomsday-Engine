@@ -26,7 +26,11 @@
  * shadowed.
  *
  * In other words, walls use shadow polygons (over entire segs), while
- * planes use vertex lighting.
+ * planes use vertex lighting.  Since planes are usually tesselated
+ * into a great deal of subsectors (and triangles), they are better
+ * suited for vertex lighting.  In some cases we will be forced to
+ * split a subsector into smaller pieces than strictly necessary in
+ * order to achieve better accuracy in the shadow effect.
  */
 
 // HEADER FILES ------------------------------------------------------------

@@ -30,6 +30,13 @@
 #define TICCMD_SIZE		gx.ticcmd_size
 #define TICCMD_IDX(i)	((i)*TICCMD_SIZE)
 
+// Tick Command template. Of course it contains much more info,
+// but these first bytes are always the same.
+typedef struct {
+	char		forwardMove;		//*2048 for real move
+	char		sideMove;			//*2048 for real move
+} ticcmd_t;
+
 // Map data
 #define VTXSIZE		gx.vertex_size
 #define SEGSIZE		gx.seg_size

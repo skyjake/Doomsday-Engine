@@ -37,8 +37,8 @@
 
 // Version constants. The Game module can use DOOMSDAY_VERSION to verify 
 // that the engine is new enough. 
-#define DOOMSDAY_VERSION		10800	// Used to determine compatibility.
-#define DOOMSDAY_RELEASE_NAME	"alpha-3"
+#define DOOMSDAY_VERSION		10800
+#define DOOMSDAY_RELEASE_NAME	"0-rc1"
 #define DOOMSDAY_VERSION_TEXT	"1.8."DOOMSDAY_RELEASE_NAME
 
 #endif 

@@ -38,7 +38,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define MAX_LUMPDIRS	1024
-#define MAX_FILES		128
+#define MAX_FILES		1024
 
 // TYPES -------------------------------------------------------------------
 
@@ -165,9 +165,8 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
 	ld = direc + i;
 
 	// Convert the symbolic path into a real path.
-	for(i = 0; symbolic_path[i]; i++) // Slashes to backslashes.
-		if(symbolic_path[i] == '/') symbolic_path[i] = '\\';
-	if(symbolic_path[0] == '\\')
+	Dir_FixSlashes(symbolic_path);
+	if(symbolic_path[0] == DIR_SEP_CHAR)
 		sprintf(path, "%s%s", ddBasePath, symbolic_path + 1);
 	else
 		sprintf(path, "%s%s", ddRuntimeDir.path, symbolic_path);
@@ -632,8 +631,6 @@ int F_ZipFinderForAll(const char *zipFileName, void *parm)
 
 	if(F_MatchName(zipFileName, info->pattern))
 		if(!info->func(zipFileName, FT_NORMAL, info->parm))
-//		if(!F_ForAllCaller(info->searchPath, zipFileName, info->func, 
-//			info->parm)) 
 			return true; // Stop searching.
 
 	// Continue searching.
@@ -670,7 +667,7 @@ int F_ForAllDescend
 			{
 				if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
 				{
-					strcat(fn, "\\");
+					strcat(fn, DIR_SEP_STR);
 					if(!F_ForAllDescend(pattern, fn, parm, func))
 					{
 						myfindend(&fd);

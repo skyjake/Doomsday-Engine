@@ -686,7 +686,7 @@ typedef struct linknode_s {
 	int				valid;				/* if == valid, already checked */ \
 	int				type;				/* mobj type */ \
 	struct state_s	*state;	\
-	int				tics;				/* state tic counter */ \
+	int 			tics;				/* state tic counter */ \
     fixed_t			floorz;				/* highest contacted floor */ \
     fixed_t			ceilingz;			/* lowest contacted ceiling */ \
 	struct mobj_s*	onmobj;				/* the mobj this one is on top of. */ \

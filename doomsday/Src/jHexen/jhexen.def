@@ -1,5 +1,4 @@
 LIBRARY			JHEXEN
-DESCRIPTION		"JHexen Game DLL For Doomsday"
 
 EXPORTS
 	GetGameAPI		@1

@@ -26,7 +26,7 @@
 #include <glob.h>
 #include <sys/stat.h>
 
-#include "sys_findfile.h"
+#include "Unix/sys_findfile.h"
 #include "Unix/sys_path.h"
 
 // MACROS ------------------------------------------------------------------

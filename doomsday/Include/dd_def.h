@@ -63,9 +63,13 @@
 
 #define SAFEDIV(x,y)	(!(y) || !((x)/(y))? 1 : (x)/(y))
 #define ORDER(x,y,a,b)	( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
+#define LAST_CHAR(str)	(str[strlen(str) - 1])
 
-#define PI				3.141592657
+#define MAXEVENTS		64
 #define	SBARHEIGHT		39			// status bar height at bottom of screen
+#define PI				3.141592657
+
+#define SECONDS_TO_TICKS(sec) ((int)(sec*35))
 
 // Heap relations.
 #define HEAP_PARENT(i)	(((i) + 1)/2 - 1)

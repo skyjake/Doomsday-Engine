@@ -106,7 +106,7 @@ int maxzone = 0x2000000;	// Default zone heap. (32meg)
 boolean autostart;
 FILE *outFile;				// Output file for console messages.
 
-char *iwadlist[MAXWADFILES];
+char *iwadlist[64];
 char *defaultWads = ""; // A list of wad names, whitespace in between (in .cfg).
 filename_t configFileName;
 filename_t defsFileName, topDefsFileName;
@@ -254,17 +254,21 @@ void DD_Main(void)
 	
 	// The current working directory is the runtime dir.
 	Dir_GetDir(&ddRuntimeDir);
-	
+
+#ifdef UNIX
+	// The base path is always the same and depends on the build
+	// configuration.  Usually this is something like
+	// "/usr/share/deng/".
+	strcpy(ddBasePath, DENG_BASE_DIR);
+#endif
+
+#ifdef WIN32
 	// The standard base directory is two levels upwards.
 	if(ArgCheck("-stdbasedir"))
 	{
-#ifdef WIN32	
 		strcpy(ddBasePath, "..\\..\\");
-#endif
-#ifdef UNIX
-		strcpy(ddBasePath, "../../");
-#endif
 	}
+#endif
 	
 	if(ArgCheckWith("-basedir", 1))
 	{
@@ -388,6 +392,8 @@ void DD_Main(void)
 	// No more WADs will be loaded in startup mode after this point.
 	W_EndStartup();
 
+	VERBOSE( W_PrintMapList() );
+
 	// Execute the startup script (Startup.cfg).
 	Con_ParseCommands("startup.cfg", false);
 
@@ -449,7 +455,6 @@ void DD_Main(void)
 	Con_Message("Net_InitGame: Initializing game data.\n");
 	Net_InitGame();
 	Demo_Init();
-	P_ControlInit();
 	
 	// Engine initialization is complete. Now start the GL driver and go
 	// briefly to the Console Startup mode, so the results of the game
@@ -502,9 +507,6 @@ void DD_Main(void)
 			Con_Execute(arg, false);
 		}
 	}
-
-	// Initialize the control table.
-	for(p = 0; p < DDMAXPLAYERS; p++) P_ControlTableInit(p);
 	
 	// In dedicated mode the console must be opened, so all input events
 	// will be handled by it.
@@ -632,7 +634,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &isClient,		0 },
 	{ &allowFrames,		&allowFrames },
 	{ &skyflatnum,		0 },
-	{ &gametic,			0 },
+	{ 0,				0 },
 	{ &viewwindowx,		&viewwindowx },
 	{ &viewwindowy,		&viewwindowy },
 	{ &viewwidth,		&viewwidth },
@@ -657,7 +659,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &skyDetail,		0 },
 	{ &sfx_volume,		&sfx_volume },
 	{ &mus_volume,		&mus_volume },
-	{ 0, 0 }, // mouseInverseY
+	{ &mouseInverseY,	&mouseInverseY },
 	{ &usegamma,		0 },
 	{ &queryResult,		0 },
 	{ &LevelFullBright,	&LevelFullBright },

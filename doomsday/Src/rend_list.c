@@ -33,6 +33,7 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 
+#include "def_main.h"
 #include "m_profiler.h"
 
 // MACROS ------------------------------------------------------------------

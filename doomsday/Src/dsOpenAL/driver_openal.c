@@ -23,14 +23,16 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <al/al.h>
-#include <al/alc.h>
+#pragma warning (disable: 4244)
+#endif
+
+#include <AL/al.h>
+#include <AL/alc.h>
 #include <string.h>
 #include <math.h>
-
-#pragma warning (disable: 4244)
 
 #include "doomsday.h"
 #include "sys_sfxd.h"
@@ -48,8 +50,10 @@ enum { VX, VY, VZ };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+#ifdef WIN32
 ALenum (*EAXGet)(const struct _GUID *propertySetID, ALuint property, ALuint source, ALvoid *value, ALuint size);
 ALenum (*EAXSet)(const struct _GUID *propertySetID, ALuint property, ALuint source, ALvoid *value, ALuint size);
+#endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -74,9 +78,11 @@ void			DS_Listenerv(int property, float *values);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+#ifdef WIN32
 // EAX 2.0 GUIDs
 struct _GUID DSPROPSETID_EAX20_ListenerProperties = { 0x306a6a8, 0xb224, 0x11d2, { 0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7, 0x22 } };
 struct _GUID DSPROPSETID_EAX20_BufferProperties = { 0x306a6a7, 0xb224, 0x11d2, {0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7, 0x22 } };
+#endif
 
 boolean				initOk = false, hasEAX = false;
 int					verbose;
@@ -84,12 +90,6 @@ float				unitsPerMeter = 1;
 float				headYaw, headPitch; // In radians.
 ALCdevice			*device = 0;
 ALCcontext			*context = 0;
-
-/*IA3d5				*a3d = 0;
-IA3dReverb			*a3dReverb = 0;
-IA3dListener		*a3dListener = 0;
-A3DCAPS_HARDWARE	hwCaps;
-HRESULT				hr;*/
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -129,6 +129,7 @@ int DS_Init(void)
 	// Clear error message.
 	alGetError();
 
+#ifdef WIN32
 	// Check for EAX 2.0.
 	if((hasEAX = alIsExtensionPresent((ALubyte*)"EAX2.0")))
 	{
@@ -137,48 +138,9 @@ int DS_Init(void)
 	}
 	if(hasEAX && verbose)
 		Con_Message("DS_Init(OpenAL): EAX 2.0 available.\n");
-	
-
-/*	// Init A3D.
-	if(FAILED(A3dRegister())) return false;
-	if(FAILED(A3dInitialize())) return false;
-	if(FAILED(hr = A3dCreate(NULL, (void**) &a3d, NULL, A3D_REVERB)))
-	{
-		Error("DS_Init", "Couldn't create A3D.");
-		return false;
-	}
-
-	// Get Doomsday's window handle.
-	hWnd = (HWND) DD_GetInteger(DD_WINDOW_HANDLE);
-
-	// Set the cooperative level.
-	if(FAILED(hr = a3d->SetCooperativeLevel(hWnd, A3D_CL_NORMAL)))
-	{
-		Error("DS_Init", "Couldn't set cooperative level to normal.");
-		return false;
-	}
-
-	// Give me the listener!
-	if(FAILED(hr = a3d->QueryInterface(IID_IA3dListener, 
-		(void**) &a3dListener)))
-	{
-		Error("DS_Init", "Couldn't get a listener.");
-		return false;
-	}
-
-	// Set some default settings.
-	a3d->SetCoordinateSystem(A3D_LEFT_HANDED_CS);
-	a3d->SetUnitsPerMeter(36); // Based on the player sprite.
-	a3d->SetDopplerScale(1.5);
-	
-	memset(&hwCaps, 0, sizeof(hwCaps));
-	hwCaps.dwSize = sizeof(hwCaps);
-	a3d->GetHardwareCaps(&hwCaps);
-	Con_Message("DS_Init(A3D): Number of 3D buffers: %i\n", 
-		hwCaps.dwMax3DBuffers);
-
-	a3dReverb = NULL;
-*/
+#else
+	hasEAX = false;
+#endif
 
 	alListenerf(AL_GAIN, 1);
 	alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
@@ -273,8 +235,12 @@ sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
 //===========================================================================
 void DS_DestroyBuffer(sfxbuffer_t *buf)
 {
-	alDeleteSources(1, &Src(buf));
-	alDeleteBuffers(1, &Buf(buf));
+	ALuint srcName = Src(buf);
+	ALuint bufName = Buf(buf);
+
+	alDeleteSources(1, &srcName);
+	alDeleteBuffers(1, &bufName);
+
 	Z_Free(buf);
 }
 
@@ -283,40 +249,12 @@ void DS_DestroyBuffer(sfxbuffer_t *buf)
 //===========================================================================
 void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 {
-	ALint d;
-/*	IA3dSource2 *s = Src(buf);*/
-
 	// Does the buffer already have a sample loaded?
 	if(buf->sample)
 	{	
 		// Is the same one?
 		if(buf->sample->id == sample->id) return; // No need to reload.
-		
-		// Free the existing data.
-		//s->FreeAudioData();
-		//buf->sample = NULL;
 	}
-
-	// Allocate memory for the sample.
-/*	if(FAILED(hr = s->AllocateAudioData(sample->size)))
-	{
-		if(verbose)	Error("DS_Load", "Failed to allocate audio data.");
-		return; 
-	}
-
-	// Copy the sample data into the buffer.
-	void *ptr[2];
-	DWORD bytes[2];
-	if(FAILED(hr = s->Lock(0, 0, &ptr[0], &bytes[0], &ptr[1], &bytes[1],
-		A3D_ENTIREBUFFER))) 
-	{
-		if(verbose) Error("DS_Load", "Failed to lock source.");
-		return;
-	}
-	memcpy(ptr[0], sample->data, bytes[0]);
-
-	// Unlock and we're done.
-	s->Unlock(ptr[0], bytes[0], ptr[1], bytes[1]);*/
 
 	alBufferData(Buf(buf), 
 		sample->bytesper == 1? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
@@ -407,8 +345,13 @@ void DS_Refresh(sfxbuffer_t *buf)
 {
 	ALint state;
 
+	if(!buf->sample) return;
+	
 	alGetSourcei(Src(buf), AL_SOURCE_STATE, &state);
-	if(state == AL_STOPPED) buf->flags &= ~SFXBF_PLAYING;
+	if(state == AL_STOPPED)
+	{
+		buf->flags &= ~SFXBF_PLAYING;
+	}
 }
 
 //===========================================================================

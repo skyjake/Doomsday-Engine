@@ -28,7 +28,7 @@ typedef int (*systhreadfunc_t)(void *parm);
 typedef int semaphore_t;
 
 extern boolean novideo;
-extern int systics;
+//extern int systics;
 
 void	Sys_Init(void);
 void	Sys_Shutdown(void);

@@ -32,6 +32,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define NUM_INTERFACES (sizeof(interfaces)/sizeof(interfaces[0]))
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct interface_info_s
@@ -54,16 +56,11 @@ interface_info_t;
 int mus_preference = MUSP_EXT;
 
 #ifdef UNIX
-// Some interfaces are not available on Unix. These are just empty stubs.
-musdriver_t 		musd_fmod;
-musinterface_ext_t 	musd_fmod_iext;
-musinterface_cd_t 	musd_fmod_icd;
-
-musdriver_t 		musd_win;
-musinterface_mus_t 	musd_win_imus;
-musinterface_cd_t 	musd_win_icd;
-
-sfxdriver_t			sfxd_dsound;
+// On Unix, all sound and music interfaces are loaded dynamically.
+musdriver_t         musd_loaded;
+musinterface_mus_t  musd_loaded_imus;
+musinterface_ext_t  musd_loaded_iext;
+musinterface_cd_t   musd_loaded_icd;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -83,8 +80,7 @@ static interface_info_t interfaces[] =
 {
 	{ (musinterface_generic_t**) &imus,	"Mus" },
 	{ (musinterface_generic_t**) &iext,	"Ext" },
-	{ (musinterface_generic_t**) &icd,	"CD" },
-	{ 0, 0 }
+	{ (musinterface_generic_t**) &icd,	"CD" }
 };
 
 // CODE --------------------------------------------------------------------
@@ -101,6 +97,7 @@ boolean Mus_Init(void)
 	if(isDedicated || mus_avail || ArgExists("-nomusic")) 
 		return true;
 
+#ifdef WIN32
 	// The Win driver is always initialized.
 	if(musd_win.Init())
 	{
@@ -126,26 +123,38 @@ boolean Mus_Init(void)
 		// Must rely on Windows, then, without an Ext interface.
 		icd = &musd_win_icd;
 	}
+#endif
+#ifdef UNIX
+	// The available interfaces have already been loaded.
+	if(musd_loaded.Init())
+	{
+		imus = (musd_loaded_imus.gen.Init? &musd_loaded_imus : 0);
+		iext = (musd_loaded_iext.gen.Init? &musd_loaded_iext : 0);
+		icd = (musd_loaded_icd.gen.Init? &musd_loaded_icd : 0);
+	}
+#endif
 
 	// Initialize the chosen interfaces.
-	for(i = 0; interfaces[i].ip; i++)
+	for(i = 0; i < NUM_INTERFACES; i++)
 		if(*interfaces[i].ip && !(*interfaces[i].ip)->Init())
 		{
 			Con_Message("Mus_Init: Failed to initialize %s interface.\n",
 				interfaces[i].name);
+
+			*interfaces[i].ip = NULL;
 		}
 
 	// Print a list of the chosen interfaces.
 	if(verbose)
 	{
 		char buf[40];
-		Con_Printf("Mus_Init: Interfaces: ");
-		for(i = 0; interfaces[i].ip; i++)
+		Con_Printf("Mus_Init: Interfaces:");
+		for(i = 0; i < NUM_INTERFACES; i++)
 			if(*interfaces[i].ip)
 			{
 				if(!(*interfaces[i].ip)->Get(MUSIP_ID, buf)) 
 					strcpy(buf, "?");
-				Con_Printf("%s%s", i? ", " : "", buf);
+				Con_Printf(" %s", buf);
 			}
 
 		Con_Printf("\n");
@@ -164,9 +173,11 @@ void Mus_Shutdown(void)
 	if(!mus_avail) return;
 	mus_avail = false;
 
+#ifdef WIN32
 	// Shut down the drivers. They shut down their interfaces automatically.
 	musd_fmod.Shutdown();
 	musd_win.Shutdown();
+#endif
 
 	// No more interfaces.
 	imus = 0;
@@ -185,7 +196,7 @@ void Mus_StartFrame(void)
 	if(!mus_avail) return;
 
 	// Update all interfaces.
-	for(i = 0; interfaces[i].ip; i++)
+	for(i = 0; i < NUM_INTERFACES; i++)
 		if(*interfaces[i].ip) (*interfaces[i].ip)->Update();
 }
 
@@ -201,7 +212,7 @@ void Mus_SetVolume(float vol)
 	if(!mus_avail) return;
 
 	// Set volume of all available interfaces.
-	for(i = 0; interfaces[i].ip; i++)
+	for(i = 0; i < NUM_INTERFACES; i++)
 		if(*interfaces[i].ip) (*interfaces[i].ip)->Set(MUSIP_VOLUME, vol);
 }
 
@@ -216,7 +227,7 @@ void Mus_Pause(boolean do_pause)
 	if(!mus_avail) return;
 
 	// Pause all interfaces.
-	for(i = 0; interfaces[i].ip; i++)
+	for(i = 0; i < NUM_INTERFACES; i++)
 		if(*interfaces[i].ip) (*interfaces[i].ip)->Pause(do_pause);
 }
 
@@ -232,7 +243,7 @@ void Mus_Stop(void)
 	current_song = -1;
 
 	// Stop all interfaces.
-	for(i = 0; interfaces[i].ip; i++)
+	for(i = 0; i < NUM_INTERFACES; i++)
 		if(*interfaces[i].ip) (*interfaces[i].ip)->Stop();
 }
 
@@ -291,7 +302,19 @@ int Mus_GetExt(ded_music_t *def, char *path)
 		if(F_Access(buf))
 		{
 			// Return the real file name if not just checking.
-			if(path) strcpy(path, buf);
+			if(path) 
+			{
+				// Because the song can be in a virtual file, we must buffer
+				// it ourselves. Otherwise FMOD might not be able to load 
+				// the song.
+				DFILE *file = F_Open(buf, "rb");
+				ptr = iext->SongBuffer(len = F_Length(file));
+				F_Read(ptr, len, file);
+				F_Close(file);
+
+				// Clear the path so the caller knows it's in the buffer.
+				strcpy(path, "");
+			}
 			return true;		
 		}
 		Con_Message("Mus_GetExt: Song %s: %s not found.\n",

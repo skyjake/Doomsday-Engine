@@ -538,7 +538,7 @@ void P_FireWeapon(player_t *player)
 
 	NetSv_PSpriteChange(player - players, attackState);
 	P_SetPsprite(player, ps_weapon, attackState);
-	
+
 	P_NoiseAlert(player->plr->mo, player->plr->mo);
 	if(player->readyweapon == wp_gauntlets && !player->refire)
 	{ // Play the sound for the initial gauntlet attack
@@ -620,7 +620,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
 	}
 
 	// Check for fire.  The phoenix rod does not auto fire.
-	if(player->cmd.buttons&BT_ATTACK)
+	if(player->cmd.actions & BT_ATTACK)
 	{
 		if(!player->attackdown || (player->readyweapon != wp_phoenixrod))
 		{
@@ -662,7 +662,7 @@ void P_UpdateBeak(player_t *player, pspdef_t *psp)
 
 void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
 {
-	if(player->cmd.buttons&BT_ATTACK)
+	if(player->cmd.actions & BT_ATTACK)
 	{ // Chicken beak attack
 		player->attackdown = true;
 		P_SetMobjState(player->plr->mo, S_CHICPLAY_ATK1);
@@ -698,7 +698,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
 
 void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 {
-	if((player->cmd.buttons&BT_ATTACK)
+	if((player->cmd.actions & BT_ATTACK)
 		&& player->pendingweapon == wp_nochange && player->health)
 	{
 		player->refire++;
@@ -804,7 +804,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
 void P_BulletSlope (mobj_t *mo)
 {
 	angle_t		an;
-	boolean		dontAim = cfg.noAutoAim 
+	boolean		dontAim = cfg.noAutoAim
 		/*&& !demorecording && !demoplayback && !netgame*/;
 
 //
@@ -1078,7 +1078,7 @@ void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
 	player->ammo[am_mace] -= USE_MACE_AMMO_1;
 	if(IS_CLIENT) return;
 	pmo = player->plr->mo;
-	ball = P_SpawnMobj(pmo->x, pmo->y, pmo->z+28*FRACUNIT 
+	ball = P_SpawnMobj(pmo->x, pmo->y, pmo->z+28*FRACUNIT
 		- FOOTCLIPSIZE*((pmo->flags2 & MF2_FEETARECLIPPED) != 0), MT_MACEFX2);
 	ball->momz = 2*FRACUNIT+(((int)player->plr->lookdir)<<(FRACBITS-5));
 	angle = pmo->angle;
@@ -1432,7 +1432,7 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
 	}
 	player->ammo[am_skullrod] -= USE_SKRD_AMMO_1;
 	if(IS_CLIENT) return;
-	
+
 	mo = P_SpawnPlayerMissile(player->plr->mo, MT_HORNRODFX1);
 	// Randomize the first frame
 	if(mo && P_Random() > 128)
@@ -1731,7 +1731,7 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
 	if(!player->refire || !(leveltime%38))
 	{
 		S_StartSound(sfx_phopow, player->plr->mo);
-	}	
+	}
 	P_CheckMissileSpawn(mo);
 }
 

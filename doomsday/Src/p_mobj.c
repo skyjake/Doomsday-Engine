@@ -34,6 +34,8 @@
 #include "de_play.h"
 #include "de_refresh.h"
 
+#include "def_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 // Max. distance to move in one call to P_XYMovement.
@@ -122,6 +124,9 @@ void P_SetState(mobj_t *mobj, int statenum)
 			P_SpawnParticleGen(pg, mobj);
 		}
 	}
+
+	if(defs.states[statenum].execute)
+		Con_Execute(defs.states[statenum].execute, true);
 }
 
 //

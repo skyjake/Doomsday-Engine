@@ -24,7 +24,7 @@
 
 #include "r_data.h"
 
-extern int leveltic;				// Restarts when a new map is set up.
+//extern int leveltic;				// Restarts when a new map is set up.
 extern int rendSkyLight; 			// cvar
 
 // Map Info flags.

@@ -30,6 +30,7 @@
 #include "m_nodepile.h"
 #include "m_filehash.h"
 #include "m_huffman.h"
+#include "m_vector.h"
 #include "m_profiler.h"
 
 #endif 

@@ -38,8 +38,11 @@ void R_InitSkyMap (void);
 //-----------------------------------------------------------------------------
 //
 // $Log$
-// Revision 1.3  2004/01/07 20:44:40  skyjake
-// Merged from branch-nix
+// Revision 1.4  2004/05/28 17:16:35  skyjake
+// Resolved conflicts (branch-1-7 overrides)
+//
+// Revision 1.2.2.1  2004/05/16 10:01:30  skyjake
+// Merged good stuff from branch-nix for the final 1.7.15
 //
 // Revision 1.2.4.2  2004/01/07 13:12:14  skyjake
 // Cleanup

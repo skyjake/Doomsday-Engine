@@ -25,30 +25,19 @@
 #include "de_console.h"
 #include "de_misc.h"
 
-#include "p_control.h"
-#include "p_player.h"
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-	event_t event;
-	int	flags;
-	char *command;
+	event_t	event;
+	int		flags;
+	char	*command;
 } binding_t;
 
 typedef struct {
-	inputdev_t *device;
-	int axis;
-	int localPlayer;
-	int control;
-	boolean invert;
-} axisbinding_t;
-
-typedef struct {
-	int	key; // DDKEY
-	char *name;
+	int		key;	// DDKEY
+	char	*name;
 } keyname_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -61,13 +50,10 @@ typedef struct {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+binding_t	*binds = NULL;
+int			numBinds = 0;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static binding_t *binds = NULL;
-static int numBinds = 0;
-
-static axisbinding_t *axisBinds = NULL;
-static int numAxisBinds = 0;
 
 static keyname_t keyNames[] =
 {
@@ -164,52 +150,14 @@ static boolean B_EventMatch(event_t *ev, event_t *bev)
 }
 
 /*
- * Update all the axis controls that have been bound to input device
- * axes.
- */
-void B_UpdateAxisControls(void)
-{
-	int i;
-	float pos;
-	inputdevaxis_t *axis;
-	axisbinding_t *ab;
-
-	// Check all the axis bindings.
-	for(i = 0, ab = axisBinds; i < numAxisBinds; i++, ab++)
-	{
-		axis = &ab->device->axes[ab->axis];
-		
-		// Invert the axis position, if requested.
-		if(ab->invert)
-			pos = -axis->position;
-		else
-			pos = axis->position;
-
-		// Update the control state.
-		switch(ab->device->axes[ab->axis].type)
-		{
-		case IDAT_STICK: // joysticks, gamepads
-			P_ControlSetAxis(P_LocalToConsole(ab->localPlayer),
-							 ab->control, pos);
-			break;
-
-		case IDAT_POINTER: // mouse
-			P_ControlAxisDelta(P_LocalToConsole(ab->localPlayer),
-							   ab->control, pos);
-			break;
-		}
-	}
-}
-
-/*
- * Binding responder.
+ * B_Responder
  */
 boolean B_Responder(event_t *ev)
 {
-	binding_t *bnd;
-	int	i;
+	binding_t	*bnd;
+	int			i;
 
-	// Axis data is checked against the axis bindings.
+	// We won't even bother with axis data.
 	if(ev->type == ev_mouse || ev->type == ev_joystick) return false;
 	
 	// Check all the bindings and execute the necessary commands.
@@ -232,7 +180,8 @@ boolean B_Responder(event_t *ev)
 }
 
 /*
- * Returns a binding_t for the given event.
+ * B_GetBinding
+ *	Returns a binding_t for the given event.
  */
 binding_t *B_GetBinding(event_t *event, boolean create_new)
 {
@@ -241,7 +190,7 @@ binding_t *B_GetBinding(event_t *event, boolean create_new)
 	
 	// We'll first have to search through the existing bindings
 	// to see if there already is one for this event.
-	for(i = 0; i < numBinds; i++)
+	for(i=0; i<numBinds; i++)
 		if(B_EventMatch(event, &binds[i].event))
 			return binds + i;
 	if(!create_new) return NULL;
@@ -272,9 +221,10 @@ void B_DeleteBindingIdx(int index)
 }
 
 /*
- * Binds the given event to the command.
- * Rebinds old bindings.
- * Binding to NULL will delete the binding.
+ * B_Bind
+ *	Binds the given event to the command.
+ *	Rebinds old bindings.
+ *	Binding to NULL will delete the binding.
  */
 void B_Bind(event_t *event, char *command)
 {
@@ -306,7 +256,8 @@ void B_ClearBinding(char *command)
 }
 
 /*
- * Deallocates the memory for the commands and bindings.
+ * B_Shutdown
+ *	Deallocates the memory for the commands and bindings.
  */
 void B_Shutdown()
 {
@@ -319,7 +270,8 @@ void B_Shutdown()
 }
 
 /*
- * If buff is "" upon returning, the key is not valid for controls.
+ * shortNameForKey
+ *	If buff is "" upon returning, the key is not valid for controls.
  */
 static char *shortNameForKey(int ddkey)
 {
@@ -355,8 +307,9 @@ static int buttonNumber(int flags)
 }
 
 /*
- * Converts between events and their textual representations.
- * Buff and event must be valid sources and destinations.
+ * B_EventBuilder
+ *	Converts between events and their textual representations.
+ *	Buff and event must be valid sources and destinations.
  */
 void B_EventBuilder(char *buff, event_t *ev, boolean to_event)
 {
@@ -462,8 +415,7 @@ void B_EventBuilder(char *buff, event_t *ev, boolean to_event)
 }
 
 /*
- * Create a event -> command binding.  Implements console commands
- * "bind", "bindr" and "safebindr".
+ * CCmdBind
  */
 int CCmdBind(int argc, char **argv)
 {
@@ -476,7 +428,7 @@ int CCmdBind(int argc, char **argv)
 
 	if(argc < 2 || argc > 3)
 	{
-		Con_Printf("Usage: %s (event) (cmd)\n", argv[0]);
+		Con_Printf( "Usage: %s (event) (cmd)\n", argv[0]);
 		return true;
 	}
 	begin = argv[1];
@@ -506,7 +458,6 @@ int CCmdBind(int argc, char **argv)
 		}
 		return true;
 	}
-#if 0
 	if(argc == 3)
 	{
 		char cprefix = argv[2][0];
@@ -528,8 +479,6 @@ int CCmdBind(int argc, char **argv)
 			}
 		}
 	}
-#endif
-
 	sprintf(validEventName, "%c%s", prefix, begin);	
 	
 	//Con_Printf( "Binding %s : %s.\n", validEventName, argc==2? "(nothing)" : argv[2]);
@@ -537,7 +486,6 @@ int CCmdBind(int argc, char **argv)
 	// Convert the name to an event.
 	B_EventBuilder(validEventName, &event, true);
 	if(safe && B_GetBinding(&event, false)) return false;
-	
 	// Now we can create a binding for it.
 	B_Bind(&event, argc==2? NULL : argv[2]);
 
@@ -553,20 +501,16 @@ int CCmdBind(int argc, char **argv)
 int CCmdClearBindings(int argc, char **argv)
 {
 	B_Shutdown();
-	Con_Printf("All bindings cleared.\n");
+	Con_Printf( "All bindings cleared.\n");
 	return true;
 }
 
-/*
- * Print a list of all the bindings to the console, in plain text.
- */ 
 int CCmdListBindings(int argc, char **argv)
 {
-	int i;
-	char buffer[40];
+	int		i;
+	char	buffer[20];
 
-	// Event bindings.
-	for(i = 0; i < numBinds; i++)
+	for(i=0; i<numBinds; i++)
 	{
 		B_EventBuilder(buffer, &binds[i].event, false);
 		if(argc >= 2)
@@ -574,33 +518,17 @@ int CCmdListBindings(int argc, char **argv)
 			if(strnicmp(buffer+1, argv[1], strlen(argv[1])))
 				continue; // Doesn't match the search pattern.
 		}
-		Con_Printf("%-8s : %s\n", buffer, binds[i].command);
+		Con_Printf( "%-8s : %s\n", buffer, binds[i].command);
 	}
-
-	// Axis bindings.
-	for(i = 0; i < numAxisBinds; i++)
-	{
-		sprintf(buffer, "%s-%s", axisBinds[i].device->name,
-				axisBinds[i].device->axes[axisBinds[i].axis].name);
-		Con_Printf("%-8s : %s%s\n", buffer,
-				   axisBinds[i].invert? "-" : "+",
-				   P_ControlGetAxisName(axisBinds[i].control));
-	}
-	
-	Con_Printf("There are %i bindings.\n", numBinds + numAxisBinds);
+	Con_Printf( "There are %d bindings.\n", numBinds);
 	return true;
 }
 
-/*
- * Dump all the bindings to a text (cfg) file.  Outputs console commands.
- */
 void B_WriteToFile(FILE *file)
 {
 	int i;
 	char buffer[20];
-	axisbinding_t *x;
 
-	// Event bindings.
 	for(i = 0; i < numBinds; i++)
 	{
 		B_EventBuilder(buffer, &binds[i].event, false);
@@ -610,21 +538,12 @@ void B_WriteToFile(FILE *file)
 		M_WriteTextEsc(file, binds[i].command);
 		fprintf(file, "\"\n");
 	}
-
-	// Axis bindings.
-	for(i = 0, x = axisBinds; i < numAxisBinds; i++, x++)
-	{
-		// FIXME: Using "after" is a hack...
-		fprintf(file, "after 1 { bindaxis %s-%s ", x->device->name,
-				x->device->axes[x->axis].name);
-		fprintf(file, "%s%s }\n", x->invert? "-" : "+",
-				P_ControlGetAxisName(x->control));
-	}
 }
 
 /*
- * Returns the number of bindings. The buffer will be filled with the
- * names of the events.
+ * B_BindingsForCommand
+ *	Returns the number of bindings. The buffer will be filled with the
+ *	names of the events.
  */
 int B_BindingsForCommand(char *command, char *buffer)
 {
@@ -632,7 +551,7 @@ int B_BindingsForCommand(char *command, char *buffer)
 	char	bindname[20];
 	
 	strcpy(buffer, "");
-	for(i = 0; i < numBinds; i++)
+	for(i=0; i<numBinds; i++)
 	{
 		if(!stricmp(command, binds[i].command))
 		{
@@ -656,144 +575,3 @@ int DD_GetKeyCode(const char *key)
 	return code? code : key[0];
 }
 
-/*
- * If 'create' is true and (device,axis) doesn't yet exist, a new
- * axisbinding_t will be allocated.
- */
-axisbinding_t *B_GetAxisBinding(inputdev_t *device, int axis, boolean create)
-{
-	axisbinding_t *b;
-	int i;
-
-	for(i = 0, b = axisBinds; i < numAxisBinds; i++, b++)
-	{
-		if(b->device == device && b->axis == axis)
-			return b;
-	}
-
-	if(create)
-	{
-		axisBinds = realloc(axisBinds, sizeof(axisbinding_t) * ++numAxisBinds);
-		b = axisBinds + numAxisBinds - 1;
-		b->device = device;
-		b->axis = axis;
-		return b;
-	}
-
-	// The binding doesn't exist.
-	return NULL;
-}
-
-/*
- * Remove an axis binding from the list of bindings.
- */
-void B_DeleteAxisBinding(inputdev_t *device, int axis)
-{
-	int i;
-
-	for(i = 0; i < numAxisBinds; i++)
-	{
-		if(axisBinds[i].device != device || axisBinds[i].axis != axis)
-			continue;
-		  
-		//free(binds[index].command);
-		
-		if(i < numAxisBinds - 1) // If not the last one, do some rollback.
-		{
-			memmove(axisBinds + i, axisBinds + i + 1,
-					sizeof(axisbinding_t) * (numAxisBinds - i - 1));
-		}
-		axisBinds = realloc(axisBinds, sizeof(axisbinding_t) * --numAxisBinds);
-		return;
-	}
-}
-
-/*
- * Create or remove an axis binding.  'control' is the index number of
- * an axis control.  If 'control' is negative, the binding (dev,axis)
- * is deleted.
- */
-axisbinding_t *B_BindAxis(inputdev_t *device, int axis, int localPlayer,
-						  int control)
-{
-	axisbinding_t *b;
-
-	// If no control is specified, the existing binding is removed.
-	if(control < 0)
-	{
-		B_DeleteAxisBinding(device, axis);
-		return NULL;
-	}		
-	
-	// Create a new binding.
-	b = B_GetAxisBinding(device, axis, true);
-	b->localPlayer = localPlayer;
-	b->control = control;
-	b->invert = false;
-	return b;
-}
-
-/*
- * The "bindaxis" console command created and deletes axis bindings.
- *
- * Example:  bindaxis mouse-y -look/2
- */
-int CCmdBindAxis(int argc, char **argv)
-{
-	inputdev_t *device;
-	int axis;
-	boolean invert = false;
-	char *name, *ptr;
-	char ctlName[20];
-	int local = 0;
-	axisbinding_t *bind;
-
-	if(argc != 2 && argc != 3)
-	{
-		Con_Printf("Usage: %s (device-axis) (control)\n", argv[0]);
-		return true;
-	}
-
-	// Get the device and the axis.
-	if(!I_ParseDeviceAxis(argv[1], &device, &axis))
-	{
-		Con_Printf("'%s' is not a valid device axis.\n", argv[1]);
-		return false;
-	}
-
-	// If no control is given, delete the binding.
-	if(argc == 2)
-	{
-		B_DeleteAxisBinding(device, axis);
-		Con_Printf("%s cleared.\n", argv[1]);
-		return true;
-	}
-
-	// A minus in front of the control name means inversion.
-	if(argv[2][0] == '-' || argv[2][0] == '+')
-	{
-		invert = (argv[2][0] == '-');
-		name = argv[2] + 1;
-	}
-	else
-	{
-		name = argv[2];
-	}
-
-	memset(ctlName, 0, sizeof(ctlName));
-	strncpy(ctlName, name, sizeof(ctlName) - 1);
-	
-	ptr = strchr(ctlName, '/');
-	if(ptr)
-	{
-		local = strtol(ptr + 1, NULL, 10);
-		if(local < 0 || local >= DDMAXPLAYERS) local = 0;
-		*ptr = 0;
-	}
-
-	// Create the binding.
-	bind = B_BindAxis(device, axis, local, P_ControlFindAxis(ctlName));
-	bind->invert = invert;
-	
-	return true;
-}

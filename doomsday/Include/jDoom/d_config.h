@@ -5,7 +5,7 @@
 #ifndef __JDOOM_SETTINGS_H__
 #define __JDOOM_SETTINGS_H__
 
-enum 
+enum
 {
 	HUD_HEALTH,
 	HUD_ARMOR,
@@ -42,6 +42,8 @@ typedef struct jdoom_config_s
 	int		menuEffects;
 	int		menuFog;
 	float	menuGlitter;
+	float   menuShadow;
+	int		menuQuitSound;
 	float	flashcolor[3];
 	int		flashspeed;
 	boolean	turningSkull;

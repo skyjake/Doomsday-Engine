@@ -2,6 +2,8 @@
 
 Header { Version = 6; }
 
+SkipIf -nodefaultfx; 
+
 ######=====---- PLAYER WEAPONS ----=====######
 # Rocket smoke trail.
 Generator {

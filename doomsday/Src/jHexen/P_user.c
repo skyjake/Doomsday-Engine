@@ -131,15 +131,15 @@ void P_MovePlayer(player_t *player)
 	if(!(player->plr->flags & DDPF_FIXANGLES))
 	{
 		plrmo->angle = cmd->angle << 16;
-		player->plr->lookdir = cmd->lookdir/(float)DDMAXSHORT * 110;
+		player->plr->lookdir = cmd->pitch/(float)DDMAXSHORT * 110;
 	}
 
 	if(player->plr->flags & DDPF_CAMERA)
 	{
 		// $democam: cameramen have a 3D thrusters!
 		P_Thrust3D(player, player->plr->mo->angle,
-			player->plr->lookdir, cmd->forwardmove*2048,
-			cmd->sidemove*2048);
+			player->plr->lookdir, cmd->forwardMove*2048,
+			cmd->sideMove*2048);
 	}
 	else
 	{
@@ -147,29 +147,29 @@ void P_MovePlayer(player_t *player)
 		onground = (player->plr->mo->z <= player->plr->mo->floorz
 			|| (player->plr->mo->flags2&MF2_ONMOBJ));
 		
-		if(cmd->forwardmove)
+		if(cmd->forwardMove)
 		{
 			if(onground || player->plr->mo->flags2&MF2_FLY)
 			{
-				P_Thrust(player, player->plr->mo->angle, cmd->forwardmove*2048);
+				P_Thrust(player, player->plr->mo->angle, cmd->forwardMove*2048);
 			}
 			else
 			{
 				P_Thrust(player, player->plr->mo->angle, FRACUNIT>>8);
 			}
 		}	
-		if(cmd->sidemove)
+		if(cmd->sideMove)
 		{
 			if(onground || player->plr->mo->flags2&MF2_FLY)
 			{
-				P_Thrust(player, player->plr->mo->angle-ANG90, cmd->sidemove*2048);
+				P_Thrust(player, player->plr->mo->angle-ANG90, cmd->sideMove*2048);
 			}
 			else
 			{
 				P_Thrust(player, player->plr->mo->angle, FRACUNIT>>8);
 			}
 		}
-		if(cmd->forwardmove || cmd->sidemove)
+		if(cmd->forwardMove || cmd->sideMove)
 		{
 			if(player->plr->mo->state == &states[PStateNormal[player->class]])
 			{
@@ -338,7 +338,7 @@ void P_DeathThink(player_t *player)
 		}
 	}
 
-	if(player->cmd.buttons & BT_USE)
+	if(player->cmd.actions & BT_USE)
 	{
 		if(player == &players[consoleplayer])
 		{
@@ -574,8 +574,8 @@ void P_PlayerThink(player_t *player)
 	if(pmo->flags & MF_JUSTATTACKED)
 	{ // Gauntlets attack auto forward motion
 		cmd->angle = pmo->angle >> 16;	// Don't turn.
-		cmd->forwardmove = 0xc800/512;
-		cmd->sidemove = 0;
+		cmd->forwardMove = 0xc800/512;
+		cmd->sideMove = 0;
 		pmo->flags &= ~MF_JUSTATTACKED;
 		// The client must know of this.
 		player->plr->flags |= DDPF_FIXANGLES;
@@ -738,16 +738,16 @@ void P_PlayerThink(player_t *player)
 		}
 	}
 	// Check for weapon change
-	if(cmd->buttons&BT_SPECIAL)
+	if(cmd->actions&BT_SPECIAL)
 	{ // A special event has no other buttons
-		cmd->buttons = 0;
+		cmd->actions = 0;
 	}
-	if(cmd->buttons&BT_CHANGE && !player->morphTics)
+	if(cmd->actions&BT_CHANGE && !player->morphTics)
 	{
 		// The actual changing of the weapon is done when the weapon
 		// psprite can do it (A_WeaponReady), so it doesn't happen in
 		// the middle of an attack.
-		newweapon = (cmd->buttons&BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+		newweapon = (cmd->actions&BT_WEAPONMASK)>>BT_WEAPONSHIFT;
 		if(player->weaponowned[newweapon]
 			&& newweapon != player->readyweapon)
 		{
@@ -756,7 +756,7 @@ void P_PlayerThink(player_t *player)
 		}
 	}
 	// Check for use
-	if(cmd->buttons&BT_USE)
+	if(cmd->actions&BT_USE)
 	{
 		if(!player->usedown)
 		{

@@ -36,6 +36,8 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
+#include "def_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MAX_FRAMES 128
@@ -60,7 +62,7 @@ float			modelSpinSpeed = 1;
 int				alwaysAlign = 0;
 int				r_nospritez = false;
 int				pspOffX = 0, pspOffY = 0;
-int				r_use_srvo = 2, r_use_srvo_angle = true; 
+int				r_use_srvo = 2, r_use_srvo_angle = true;
 				// srvo1 = models only, srvo2 = sprites + models
 
 int				psp3d;
@@ -110,8 +112,8 @@ static fixed_t bobOffsets[64] =
 
 /*
 
-Sprite rotation 0 is facing the viewer, rotation 1 is one angle turn 
-CLOCKWISE around the axis. This is not the same as the angle, which 
+Sprite rotation 0 is facing the viewer, rotation 1 is one angle turn
+CLOCKWISE around the axis. This is not the same as the angle, which
 increases counter clockwise (protractor).
 
 */
@@ -141,7 +143,7 @@ void R_InitSpriteLumps(void)
 
 	for(i = 0, sl = spritelumps; i < numspritelumps; i++, sl++)
 	{
-		if(!(i%50)) Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);		
+		if(!(i%50)) Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);
 
 		patch = W_CacheLumpNum(sl->lump, PU_CACHE);
 		sl->width = SHORT(patch->width);
@@ -249,7 +251,7 @@ void R_InitSpriteDefs(void)
 
 	numspritelumps = 0;
 	numsprites = count_sprnames.num;
-	
+
 	// Check that some sprites are defined.
 	if(!numsprites) return;
 
@@ -259,7 +261,7 @@ void R_InitSpriteDefs(void)
 	// frame letter. Just compare 4 characters as ints.
 	for (i=0 ; i<numsprites ; i++)
 	{
-		spritename = sprnames[i].name; 
+		spritename = sprnames[i].name;
 		memset(sprtemp, -1, sizeof(sprtemp));
 
 		maxframe = -1;
@@ -289,7 +291,7 @@ void R_InitSpriteDefs(void)
 			if( *(int*) name == intname)
 			{
 				// Check that the name is valid.
-				if(!name[4] || !name[5] || (name[6] && !name[7])) 
+				if(!name[4] || !name[5] || (name[6] && !name[7]))
 					continue; // This is not a sprite frame.
 				// Indices 5 and 7 must be numbers (0-8).
 				if(name[5] < '0' || name[5] > '8') continue;
@@ -335,10 +337,10 @@ void R_InitSpriteDefs(void)
 			}
 		}
 
-		// The model definitions might have a larger max frame for this 
+		// The model definitions might have a larger max frame for this
 		// sprite.
 		/*highframe = R_GetMaxMDefSpriteFrame(spritename) + 1;
-		if(highframe > maxframe) 
+		if(highframe > maxframe)
 		{
 			maxframe = highframe;
 			for(l=0; l<maxframe; l++)
@@ -346,12 +348,12 @@ void R_InitSpriteDefs(void)
 					if(sprtemp[l].lump[frame] == -1)
 						sprtemp[l].lump[frame] = 0;
 		}*/
-			
+
 		// Allocate space for the frames present and copy sprtemp to it.
 		sprites[i].numframes = maxframe;
 		sprites[i].spriteframes =
 			Z_Malloc (maxframe * sizeof(spriteframe_t), PU_SPRITE, NULL);
-		memcpy (sprites[i].spriteframes, sprtemp, 
+		memcpy (sprites[i].spriteframes, sprtemp,
 			maxframe * sizeof(spriteframe_t));
 		// The possible model frames are initialized elsewhere.
 		//sprites[i].modeldef = -1;
@@ -451,7 +453,7 @@ void R_InitSprites(void)
 	Z_FreeTags(PU_SPRITE, PU_SPRITE);
 	R_InitSpriteDefs();
 	R_InitSpriteLumps();
-}	
+}
 
 //===========================================================================
 // R_ClearSprites
@@ -513,7 +515,7 @@ void R_ProjectPlayerSprites(void)
 	psp3d = false;
 
 	// Cameramen have no psprites.
-	if(viewplayer->flags & DDPF_CAMERA) return; 
+	if(viewplayer->flags & DDPF_CAMERA) return;
 
 	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
 	{
@@ -535,7 +537,7 @@ void R_ProjectPlayerSprites(void)
 		}
 		// Mark this sprite rendered.
 		psp->flags |= DDPSPF_RENDERED;
-	
+
 		// There are 3D psprites.
 		psp3d = true;
 
@@ -585,7 +587,7 @@ void R_ProjectPlayerSprites(void)
 float R_MovementYaw(fixed_t momx, fixed_t momy)
 {
 	// Multiply by 100 to get some artificial accuracy in bamsAtan2.
-	return BANG2DEG( bamsAtan2(-100 * FIX2FLT(momy), 
+	return BANG2DEG( bamsAtan2(-100 * FIX2FLT(momy),
 		100 * FIX2FLT(momx)) );
 }
 
@@ -594,7 +596,7 @@ float R_MovementYaw(fixed_t momx, fixed_t momy)
 //===========================================================================
 float R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz)
 {
-	return BANG2DEG( bamsAtan2(100 * FIX2FLT(momz), 
+	return BANG2DEG( bamsAtan2(100 * FIX2FLT(momz),
 		100 * P_AccurateDistance(momx, momy)) );
 }
 
@@ -617,10 +619,10 @@ void R_ProjectSprite (mobj_t *thing)
 	float		sinrv, cosrv, thangle;	// rv = real value
 	boolean		align;
 	modeldef_t	*mf = NULL, *nextmf = NULL;
-	float		interp, distance;
-	
+	float		interp = 0, distance;
+
 	if(thing->ddflags & DDMF_DONTDRAW || thing->translucency == 0xff)
-	{ 
+	{
 		// Never make a vissprite when DDMF_DONTDRAW is set or when
 		// the thing is fully transparent.
 		return;
@@ -658,7 +660,7 @@ void R_ProjectSprite (mobj_t *thing)
 	{
 		interp = R_CheckModelFor(thing, &mf, &nextmf);
 		if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK)
-			&& r_maxmodelz 
+			&& r_maxmodelz
 			&& distance > r_maxmodelz)
 		{
 			// Don't use a 3D model.
@@ -668,7 +670,7 @@ void R_ProjectSprite (mobj_t *thing)
 	}
 
 	if(sprframe->rotate && !mf)
-	{	
+	{
 		// Choose a different rotation based on player view.
 		ang = R_PointToAngle (thing->x, thing->y);
 		rot = (ang - thing->angle + (unsigned)(ANG45/2)*9)>>29;
@@ -689,7 +691,7 @@ void R_ProjectSprite (mobj_t *thing)
 		align = false;
 
 	if(alwaysAlign == 1) align = true;
-	
+
 	if(!mf)
 	{
 		if(align || alwaysAlign == 3)
@@ -704,15 +706,15 @@ void R_ProjectSprite (mobj_t *thing)
 										 FIX2FLT(trx)*10)) - PI/2;
 			sinrv = sin(thangle);
 			cosrv = cos(thangle);
-		}	
-		
+		}
+
 		//if(alwaysAlign == 2) align = true;
-		
-		v1[VX] -= cosrv * spritelumps[lump].offset; 
-		v1[VY] -= sinrv * spritelumps[lump].offset; 
+
+		v1[VX] -= cosrv * spritelumps[lump].offset;
+		v1[VY] -= sinrv * spritelumps[lump].offset;
 		v2[VX] = v1[VX] + cosrv * spritelumps[lump].width;
 		v2[VY] = v1[VY] + sinrv * spritelumps[lump].width;
-		
+
 		if(!align && alwaysAlign != 2 && alwaysAlign != 3)
 			// Check for visibility.
 			if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
@@ -783,7 +785,7 @@ void R_ProjectSprite (mobj_t *thing)
 		// Bobbing is applied to the floorclip.
 		vis->data.mo.floorclip += R_GetBobOffset(thing);
 	}
-	
+
 	// The start and end vertices.
 	vis->data.mo.v1[VX] = v1[VX];
 	vis->data.mo.v1[VY] = v1[VY];
@@ -801,7 +803,7 @@ void R_ProjectSprite (mobj_t *thing)
 		}
 		else if(mf->sub[0].flags & MFF_SPIN)
 		{
-			vis->data.mo.yaw = modelSpinSpeed * 70 * leveltic/35.0f 
+			vis->data.mo.yaw = modelSpinSpeed * 70 * levelTime 
 				+ (int)thing % 360;
 		}
 		else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
@@ -819,8 +821,7 @@ void R_ProjectSprite (mobj_t *thing)
 		if(mf->sub[0].flags & MFF_IDANGLE)
 		{
 			// Multiply with an arbitrary factor.
-			vis->data.mo.yaw += (thing->thinker.id * 26
-				+ ((unsigned)thing>>8)) % 360; 
+			vis->data.mo.yaw += THING_TO_ID(thing) % 360;
 		}
 
 		if(mf->sub[0].flags & MFF_ALIGN_PITCH)
@@ -841,7 +842,7 @@ void R_ProjectSprite (mobj_t *thing)
 	vis->data.mo.patch = lump;
 
 	// Set light level.
-	if((LevelFullBright || thing->frame & FF_FULLBRIGHT) 
+	if((LevelFullBright || thing->frame & FF_FULLBRIGHT)
 		&& (!mf || !(mf->sub[0].flags & MFF_DIM)))
 	{
 		vis->data.mo.lightlevel = -1;
@@ -851,7 +852,7 @@ void R_ProjectSprite (mobj_t *thing)
 		// Diminished light.
 		vis->data.mo.lightlevel = sect->lightlevel;
 	}
-	
+
 	// The three highest bits of the selector are used for an alpha level.
 	// 0 = opaque (alpha -1)
 	// 1 = 1/8 transparent
@@ -876,7 +877,7 @@ void R_ProjectSprite (mobj_t *thing)
 	   && thing->state 
 	   && thing->tics >= 0)
 	{
-		float mul = thing->tics / (float) thing->state->tics;				
+		float mul = (thing->tics - frameTimePos) / (float) thing->state->tics;
 		for(i = 0; i < 3; i++)
 			vis->data.mo.visoff[i] = FIX2FLT(thing->srvo[i]<<8) * mul;
 	}
@@ -928,7 +929,7 @@ void R_AddSprites (sector_t *sec)
 	fixed_t visibleTop;
 	sectorinfo_t *info = SECT_INFO(sec);
 
-	// Don't use validcount, because other parts of the renderer may 
+	// Don't use validcount, because other parts of the renderer may
 	// change it.
 	if(info->addspritecount == framecount)
 		return;		// already added
@@ -940,16 +941,16 @@ void R_AddSprites (sector_t *sec)
 		R_ProjectSprite (thing);
 
 		// Hack: Sprites have a tendency to extend into the ceiling in
-		// sky sectors. Here we will raise the skyfix dynamically, at 
+		// sky sectors. Here we will raise the skyfix dynamically, at
 		// runtime, to make sure that no sprites get clipped by the sky.
 		R_GetSpriteInfo(thing->sprite, thing->frame, &spriteInfo);
 		visibleTop = thing->z + (spriteInfo.height << FRACBITS);
 
-		if(sec->ceilingpic == skyflatnum 
+		if(sec->ceilingpic == skyflatnum
 			&& visibleTop > sec->ceilingheight + (sec->skyfix << FRACBITS))
 		{
 			// Raise sector skyfix.
-			sec->skyfix = ((visibleTop - sec->ceilingheight) 
+			sec->skyfix = ((visibleTop - sec->ceilingheight)
 				>> FRACBITS) + 16; // Add some leeway.
 
 			// This'll adjust all adjacent sectors.
@@ -1022,8 +1023,7 @@ fixed_t R_GetBobOffset(mobj_t *mo)
 {
 	if(mo->ddflags & DDMF_BOB)
 	{
-		return bobOffsets[(mo->thinker.id * 26 + ((unsigned)mo >> 8)
-			+ leveltic) & 63];
+		return FRACUNIT * (sin(THING_TO_ID(mo) + levelTime/1.8286 * 2*PI) * 8);
 	}
 	return 0;
 }

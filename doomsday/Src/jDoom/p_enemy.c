@@ -15,8 +15,11 @@
 // for more details.
 //
 // $Log$
-// Revision 1.5  2004/01/08 12:25:15  skyjake
-// Merged from branch-nix
+// Revision 1.6  2004/05/28 17:16:40  skyjake
+// Resolved conflicts (branch-1-7 overrides)
+//
+// Revision 1.4.2.1  2004/05/16 10:01:36  skyjake
+// Merged good stuff from branch-nix for the final 1.7.15
 //
 // Revision 1.4.4.3  2004/01/07 13:17:28  skyjake
 // Refresh header cleanup

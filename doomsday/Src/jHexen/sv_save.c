@@ -296,11 +296,12 @@ void SV_HxInit(void)
 
 void SV_HxSaveGame(int slot, char *description)
 {
-	char fileName[100];
+	char fileName[256];
 	char versionText[HXS_VERSION_TEXT_LENGTH];
 
 	// Open the output file
 	sprintf(fileName, "%shex6.hxs", SavePath);
+	M_TranslatePath(fileName, fileName);
 	OpenStreamOut(fileName);
 
 	// Write game save description
@@ -357,6 +358,7 @@ void SV_HxSaveMap(boolean savePlayers)
 
 	// Open the output file
 	sprintf(fileName, "%shex6%02d.hxs", SavePath, gamemap);
+	M_TranslatePath(fileName, fileName);
 	OpenStreamOut(fileName);
 
 	// Place a header marker
@@ -406,6 +408,7 @@ void SV_HxLoadGame(int slot)
 
 	// Create the name
 	sprintf(fileName, "%shex6.hxs", SavePath);
+	M_TranslatePath(fileName, fileName);
 
 	// Load the file
 	M_ReadFile(fileName, &SaveBuffer);
@@ -582,6 +585,7 @@ void SV_HxMapTeleport(int map, int position)
 
 	gamemap = map;
 	sprintf(fileName, "%shex6%02d.hxs", SavePath, gamemap);
+	M_TranslatePath(fileName, fileName);
 	if(!deathmatch && ExistingFile(fileName))
 	{ // Unarchive map
 		SV_HxLoadMap();
@@ -735,6 +739,7 @@ boolean SV_HxRebornSlotAvailable(void)
 	char fileName[100];
 
 	sprintf(fileName, "%shex%d.hxs", SavePath, REBORN_SLOT);
+	M_TranslatePath(fileName, fileName);
 	return ExistingFile(fileName);
 }
 
@@ -763,6 +768,7 @@ void SV_HxLoadMap(void)
 
 	// Create the name
 	sprintf(fileName, "%shex6%02d.hxs", SavePath, gamemap);
+	M_TranslatePath(fileName, fileName);
 
 #ifdef _DEBUG
 	Con_Printf("SV_HxLoadMap: Reading %s\n", fileName);
@@ -2144,9 +2150,11 @@ static void ClearSaveSlot(int slot)
 	for(i = 0; i < MAX_MAPS; i++)
 	{
 		sprintf(fileName, "%shex%d%02d.hxs", SavePath, slot, i);
+		M_TranslatePath(fileName, fileName);
 		remove(fileName);
 	}
 	sprintf(fileName, "%shex%d.hxs", SavePath, slot);
+	M_TranslatePath(fileName, fileName);
 	remove(fileName);
 }
 
@@ -2167,16 +2175,22 @@ static void CopySaveSlot(int sourceSlot, int destSlot)
 	for(i = 0; i < MAX_MAPS; i++)
 	{
 		sprintf(sourceName, "%shex%d%02d.hxs", SavePath, sourceSlot, i);
+		M_TranslatePath(sourceName, sourceName);
+		
 		if(ExistingFile(sourceName))
 		{
 			sprintf(destName, "%shex%d%02d.hxs", SavePath, destSlot, i);
+			M_TranslatePath(destName, destName);
 			CopyFile(sourceName, destName);
 		}
 	}
 	sprintf(sourceName, "%shex%d.hxs", SavePath, sourceSlot);
+	M_TranslatePath(sourceName, sourceName);
+
 	if(ExistingFile(sourceName))
 	{
 		sprintf(destName, "%shex%d.hxs", SavePath, destSlot);
+		M_TranslatePath(destName, destName);
 		CopyFile(sourceName, destName);
 	}
 }

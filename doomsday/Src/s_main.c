@@ -80,7 +80,7 @@ boolean S_Init(void)
 	sfx_ok = Sfx_Init();
 	mus_ok = Mus_Init();
 
-	Con_Message("S_Init: %s.\n", sfx_ok && mus_ok? "OK" 
+	Con_Message("S_Init: %s.\n", sfx_ok && mus_ok? "OK"
 		: "Errors during initialization.");
 	return (sfx_ok && mus_ok);
 }
@@ -103,7 +103,7 @@ void S_LevelChange(void)
 {
 	// Stop everything in the LSM.
 	Sfx_InitLogical();
-	
+
 	Sfx_LevelChange();
 }
 
@@ -174,9 +174,9 @@ sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
 	// (But only up to 10, which is certainly enough and prevents endless
 	// recursion.) Update the sound id at the same time.
 	// The links were checked in Def_Read() so there can't be any bogus ones.
-	for(info = sounds + sound_id, i = 0; 
-		info->link && i < 10; 
-		info = info->link, 
+	for(info = sounds + sound_id, i = 0;
+		info->link && i < 10;
+		info = info->link,
 			*freq = (info->link_pitch > 0? info->link_pitch/128.0f : *freq),
 			*volume += (info->link_volume != -1? info->link_volume/127.0f : 0),
 			sound_id = info - sounds, i++);
@@ -216,11 +216,11 @@ int S_LocalSoundAtVolumeFrom
 	int result;
 	boolean isRepeating = false;
 
-	// A dedicated server never starts any local sounds 
+	// A dedicated server never starts any local sounds
 	// (only logical sounds in the LSM).
 	if(isDedicated) return false;
 
-	if(soundId <= 0 
+	if(soundId <= 0
 		|| soundId >= defs.count.sounds.num
 		|| sfx_volume <= 0
 		|| volume <= 0) return false; // This won't play...
@@ -234,7 +234,7 @@ int S_LocalSoundAtVolumeFrom
 #endif
 
 	// This is the sound we're going to play.
-	if((info = S_GetSoundInfo(soundId, &freq, &volume)) == NULL) 
+	if((info = S_GetSoundInfo(soundId, &freq, &volume)) == NULL)
 	{
 		return false; // Hmm? This ID is not defined.
 	}
@@ -259,7 +259,7 @@ int S_LocalSoundAtVolumeFrom
 				"caching failed.\n", soundId) );
 		}
 		return false;
-	}	
+	}
 
 	// Random frequency alteration? (Multipliers chosen to match
 	// original sound code.)
@@ -312,7 +312,7 @@ int S_LocalSound(int sound_id, mobj_t *origin)
 
 //===========================================================================
 // S_LocalSoundFrom
-//	This is a public sound interface. 
+//	This is a public sound interface.
 //	Returns nonzero if a sound was started.
 //===========================================================================
 int S_LocalSoundFrom(int sound_id, float *fixedpos)
@@ -330,7 +330,7 @@ int S_StartSound(int sound_id, mobj_t *origin)
 	// The sound is audible to everybody.
 	Sv_Sound(sound_id, origin, SVSF_TO_ALL);
 	Sfx_StartLogical(sound_id, origin, S_IsRepeating(sound_id));
-	
+
 	return S_LocalSound(sound_id, origin);
 }
 
@@ -358,7 +358,7 @@ int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 	Sv_Sound(sound_id, origin, target_console);
 
 	// If it's for us, we can hear it.
-	if(target_console == consoleplayer) 
+	if(target_console == consoleplayer)
 	{
 		S_LocalSound(sound_id, origin);
 	}
@@ -415,12 +415,12 @@ int S_StartMusicNum(int id, boolean looped)
 
 //===========================================================================
 // S_StartMusic
-//	Returns true if the song is found. 
+//	Returns true if the song is found.
 //===========================================================================
 int S_StartMusic(char *musicid, boolean looped)
 {
 	int idx = Def_GetMusicNum(musicid);
-	
+
 	if(idx < 0)
 	{
 		Con_Message("S_StartMusic: song %s not defined.\n", musicid);
@@ -459,3 +459,56 @@ void S_Drawer(void)
 	gl.PopMatrix();
 }
 
+//===========================================================================
+// CCmdPlaySound
+//	Console command for playing a sound effect.
+//===========================================================================
+int CCmdPlaySound(int argc, char **argv)
+{
+	int id = 0;
+	float volume = 1;
+	float fixedPos[3];
+	int p;
+	boolean useFixedPos = false;
+
+	if(argc < 2)
+	{
+		Con_Printf("Usage: %s (id) (volume) at (x) (y) (z)\n", argv[0]);
+		Con_Printf("(volume) must be in 0..1, but may be omitted.\n");
+		Con_Printf("'at (x) (y) (z)' may also be omitted.\n");
+		Con_Printf("The sound is always played locally.\n");
+		return true;
+	}
+
+	// The sound ID is always first.
+	id = Def_GetSoundNum(argv[1]);
+
+	// The second argument may be a volume.
+	if(argc >= 3 && stricmp(argv[2], "at"))
+	{
+		volume = strtod(argv[2], NULL);
+		p = 3;
+	}
+	else
+	{
+		p = 2;
+	}
+	if(argc >= p + 4 && !stricmp(argv[p], "at"))
+	{
+        useFixedPos = true;
+		fixedPos[VX] = strtod(argv[p + 1], NULL);
+		fixedPos[VY] = strtod(argv[p + 2], NULL);
+		fixedPos[VZ] = strtod(argv[p + 3], NULL);
+	}
+
+	// Check that the volume is valid.
+	if(volume <= 0) return true;
+	if(volume > 1) volume = 1;
+
+	if(useFixedPos)
+		S_LocalSoundAtVolumeFrom(id, NULL, fixedPos, volume);
+	else
+		S_LocalSoundAtVolume(id, NULL, volume);
+
+	return true;
+}

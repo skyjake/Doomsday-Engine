@@ -22,8 +22,9 @@
 #ifndef __DOOMSDAY_SOUND_MAIN_H__
 #define __DOOMSDAY_SOUND_MAIN_H__
 
-#include "de_defs.h"
+#include "con_decl.h"
 #include "p_mobj.h"
+#include "def_main.h"
 
 #define SF_RANDOM_SHIFT		0x1		// Random frequency shift.
 #define SF_RANDOM_SHIFT2	0x2		// 2x bigger random frequency shift.
@@ -57,4 +58,6 @@ int			S_StartMusic(char *musicid, boolean looped);
 void		S_StopMusic(void);
 void		S_Drawer(void);
 
-#endif 
+D_CMD( PlaySound );
+
+#endif

@@ -542,16 +542,17 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	if(smf->skinrange > 1)
 	{
 		// What rule to use for determining the skin?
-		useSkin += (subFlags & MFF_IDSKIN? spr->data.mo.id
-			: gametic/mf->skintics) % smf->skinrange;
+		useSkin += (subFlags & MFF_IDSKIN? spr->data.mo.id :
+					SECONDS_TO_TICKS(gameTime)/mf->skintics) % smf->skinrange;
 	}
 
 	inter = spr->data.mo.inter;
 
 	// Scale interpos. Intermark becomes zero and endmark becomes one.
-	// (Full sub-interpolation!) But only do it for the standard interrange.
-	// If a custom one is defined, don't touch interpos.
-	if(mf->interrange[0] == 0 && mf->interrange[1] == 1)
+	// (Full sub-interpolation!) But only do it for the standard 
+	// interrange. If a custom one is defined, don't touch interpos.
+	if(mf->interrange[0] == 0 && mf->interrange[1] == 1
+		|| subFlags & MFF_WORLD_TIME_ANIM)
 	{
 		endPos = (mf->internext? mf->internext->intermark : 1);
 		inter = (inter - mf->intermark) / (endPos - mf->intermark);		
@@ -586,15 +587,6 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 
 	yawAngle = spr->data.mo.yaw;
 	pitchAngle = spr->data.mo.pitch;
-
-	// World time animation?
-	if(subFlags & MFF_WORLD_TIME_ANIM)
-	{
-		float duration = mf->interrange[0];
-		if(duration == 0) duration = 1;
-		inter = M_CycleIntoRange(leveltic / (duration * TICSPERSEC)
-			+ mf->interrange[1], 1);
-	}
 
 	// Clamp interpolation.
 	if(inter < 0) inter = 0;

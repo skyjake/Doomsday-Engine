@@ -628,7 +628,7 @@ void UIPage_Drawer(ui_page_t *page)
 	ui_color_t focuscol;
 
 	// Draw background.
-	Con_DrawStartupBackground(screenWidth, screenHeight);
+	Con_DrawStartupBackground();
 	// Draw title.
 	UI_DrawTitle(page);
 	// Draw each object, unless they're hidden.

@@ -32,6 +32,18 @@
 #	include <unistd.h>
 #endif
 
+#include "de_platform.h"
+
+#if defined(WIN32)
+#  include <direct.h>
+#endif
+#if defined(UNIX)
+#  include <unistd.h>
+#  include <limits.h>
+#  include <sys/types.h>
+#  include <pwd.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -66,10 +78,8 @@ void Dir_GetDir(directory_t *dir)
 	dir->drive = _getdrive();
 	_getcwd(dir->path, 255);
 
-#ifdef WIN32
-	if(dir->path[strlen(dir->path)-1] != '\\')
-		strcat(dir->path, "\\");
-#endif
+	if(LAST_CHAR(dir->path) != DIR_SEP_CHAR)
+		strcat(dir->path, DIR_SEP_STR);
 
 	/* VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) ); */
 }
@@ -155,6 +165,9 @@ int Dir_IsAbsolute(const char *str)
 {
 	if(!str) return 0;
 	if(str[0] == '\\' || str[0] == '/' || str[1] == ':') return true;
+#ifdef UNIX
+	if(str[0] == '~') return true;
+#endif
 	return false;
 }
 
@@ -170,6 +183,52 @@ void Dir_FixSlashes(char *path)
 		if(path[i] == DIR_WRONG_SEP_CHAR) path[i] = DIR_SEP_CHAR;
 	}
 }
+
+#ifdef UNIX
+/*
+ * If the path begins with a tilde, replace it with either the value
+ * of the HOME environment variable or a user's home directory (from
+ * passwd).
+ */
+void Dir_ExpandHome(char *str)
+{
+	char buf[PATH_MAX];
+
+	if(str[0] != '~') return;
+
+	memset(buf, 0, sizeof(buf));
+	
+	if(str[1] == '/')
+	{
+		// Replace it with the HOME environment variable.
+		strcpy(buf, getenv("HOME"));
+		if(LAST_CHAR(buf) != '/') strcat(buf, "/");
+
+		// Append the rest of the original path.
+		strcat(buf, str + 2);
+	}
+	else
+	{
+		char userName[PATH_MAX], *end = NULL;
+		struct passwd* pw;
+
+		end = strchr(str + 1, '/');
+		strncpy(userName, str, end - str - 1);
+		userName[end - str - 1] = 0;
+
+		if((pw = getpwnam(userName)) != NULL)
+		{
+			strcpy(buf, pw->pw_dir);
+			if(LAST_CHAR(buf) != '/') strcat(buf, "/");
+		}
+
+		strcat(buf, str + 1);
+	}
+	
+	// Replace the original.
+	strcpy(str, buf);
+}
+#endif
 
 //===========================================================================
 // Dir_ValidDir
@@ -190,6 +249,10 @@ void Dir_ValidDir(char *str)
 
 	// Make sure it ends in a directory separator character.
 	if(str[len - 1] != DIR_SEP_CHAR) strcat(str, DIR_SEP_STR);
+
+#ifdef UNIX
+	Dir_ExpandHome(str);
+#endif
 }
 
 //===========================================================================

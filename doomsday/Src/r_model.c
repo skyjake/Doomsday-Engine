@@ -37,6 +37,8 @@
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "def_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 BEGIN_PROF_TIMERS()
@@ -750,14 +752,30 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
 	float interp = -1;
 	state_t *st = mo->state;
 	modeldef_t *mdit;
+	boolean worldTime = false;
 
 	// By default there are no models.
 	*nextmodef = NULL;
 	*modef = GetStateModel(st, mo->selector);
 	if(!*modef) return -1; // No model available.
 
-	// Calculate the currently applicable intermark.
-	interp = 1.0f - mo->tics / (float) st->tics;
+	// World time animation?
+	if((*modef)->flags & MFF_WORLD_TIME_ANIM)
+	{
+		float duration = (*modef)->interrange[0];
+		float offset = (*modef)->interrange[1];
+		// Validate/modify the values.
+		if(duration == 0) duration = 1;
+		if(offset == -1) offset = M_CycleIntoRange(THING_TO_ID(mo), duration);
+		interp = M_CycleIntoRange(levelTime/duration + offset, 1);
+		worldTime = true;
+	}
+	else
+	{
+		// Calculate the currently applicable intermark.
+		interp = 1.0f - (mo->tics - frameTimePos) / (float) st->tics;
+	}
+
 /*#if _DEBUG
 	if(mo->dplayer) Con_Printf("itp:%f mot:%i stt:%i\n", interp,
 		mo->tics, st->tics);
@@ -770,13 +788,22 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
 	while((*modef)->internext && (*modef)->internext->intermark <= interp)
 		*modef = (*modef)->internext;
 
-	// Scale to the modeldef's interpolation range.
-	interp = (*modef)->interrange[0] + interp *
-		((*modef)->interrange[1] - (*modef)->interrange[0]);
+	if(!worldTime)
+	{
+		// Scale to the modeldef's interpolation range.
+		interp = (*modef)->interrange[0] + interp *
+			((*modef)->interrange[1] - (*modef)->interrange[0]);
+	}
 
 	// What would be the next model? Check interlinks first.
-	if((*modef)->internext) 
+	if((*modef)->internext)
+	{
 		*nextmodef = (*modef)->internext;
+	}
+	else if(worldTime)
+	{
+		*nextmodef = GetStateModel(st, mo->selector);
+	}
 	else if(st->nextstate > 0) // Check next state.
 	{
 		int max = 20; // Let's not be here forever...
@@ -1417,5 +1444,3 @@ void R_PrecacheSkinsForMobj(mobj_t *mo)
 		R_PrecacheModelSkins(modef);
 	}
 }
-
-

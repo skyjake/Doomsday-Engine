@@ -127,7 +127,7 @@ void R_DrawLevelTitle(void)
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PushMatrix();
 	gl.Translatef(160, y, 0);
-	gl.Scalef(.75f, .75f, 1);
+	gl.Scalef(.7f, .7f, 1);
 	gl.Translatef(-160, -y, 0);
 
 	if(actual_leveltime < 35) 

@@ -145,9 +145,11 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	}
 
 	// Update time and player ingame status.
-	gametic = shake.gameTime; 
+	gameTime = shake.gameTime/100.0; 
 	for(i = 0; i < MAXPLAYERS; i++)
-		players[i].ingame = (shake.playerMask & (1<<i)) != 0;	
+	{
+		players[i].ingame = (shake.playerMask & (1<<i)) != 0;
+	}
 	consoleplayer = displayplayer = shake.yourConsole;
 	clients[consoleplayer].numTics = 0;
 	clients[consoleplayer].firstTic = 0;
@@ -269,8 +271,8 @@ void Cl_GetPackets(void)
 		case psv_sync:
 			// The server updates our time. Latency has been taken into
 			// account, so...
-			gametic = Msg_ReadLong();
-			Con_Printf("psv_sync: gametic=%i\n", gametic);
+			gameTime = Msg_ReadLong()/100.0;
+			Con_Printf("psv_sync: gameTime=%.3f\n", gameTime);
 			Net_ResetTimer();
 			break;
 

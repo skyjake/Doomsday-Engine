@@ -1,29 +1,15 @@
-/* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
- */
 
-/*
- * dd_dgl.c: Accessing the Doomsday Graphics Library API
- */
+//**************************************************************************
+//**
+//** DD_DGL.C
+//**
+//**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
-#include <dlfcn.h>
-typedef void* HINSTANCE;
+#include <ltdl.h>
+typedef lt_dlhandle HINSTANCE;
 #endif
 
 #include "de_platform.h"
@@ -36,14 +22,14 @@ typedef void* HINSTANCE;
 #if defined WIN32
 #	define DEFAULT_LIB_NAME "drOpenGL.dll"
 #elif defined UNIX
-#	define DEFAULT_LIB_NAME "dropengl.so"
+#	define DEFAULT_LIB_NAME "libdropengl"
 #endif
 
 // Optional function. Doesn't need to be exported.
 #if defined WIN32
 #	define Opt(fname) gl.fname = (void*) GetProcAddress(dglHandle, "DG_"#fname)
 #elif defined UNIX
-#	define Opt(fname) gl.fname = dlsym(dglHandle, "DG_"#fname)
+#	define Opt(fname) gl.fname = lt_dlsym(dglHandle, "DG_"#fname)
 #endif
 
 // Required function. If not exported, the rendering DLL can't be used.
@@ -177,7 +163,7 @@ int DD_InitDGL(void)
 	dglHandle = LoadLibrary(libName);
 #endif
 #ifdef UNIX
-	dglHandle = dlopen(libName, RTLD_NOW);
+	dglHandle = lt_dlopenext(libName);
 #endif	
 	if(!dglHandle)
 	{
@@ -187,7 +173,7 @@ int DD_InitDGL(void)
 #endif
 #ifdef UNIX
 		DD_ErrorBox(true, "DD_InitDGL: Loading of %s failed.\n  %s.\n",
-					libName, dlerror());
+					libName, lt_dlerror());
 #endif
 		return false;
 	}
@@ -221,7 +207,7 @@ void DD_ShutdownDGL(void)
 	FreeLibrary(dglHandle);
 #endif
 #ifdef UNIX
-	dlclose(dglHandle);
+	lt_dlclose(dglHandle);
 #endif
 	dglHandle = NULL;
 }
@@ -237,7 +223,7 @@ void *DD_GetDGLProcAddress(const char *name)
 	return GetProcAddress(dglHandle, name);
 #endif
 #ifdef UNIX
-	return dlsym(dglHandle, name);
+	return (void*) lt_dlsym(dglHandle, name);
 #endif
 }
 

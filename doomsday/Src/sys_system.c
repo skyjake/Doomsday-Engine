@@ -1,23 +1,9 @@
-/* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
- */
 
-/*
- * sys_system.c: OS Specific Services Subsystem
- */
+//**************************************************************************
+//**
+//** SYS_SYSTEM.C 
+//**
+//**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -26,8 +12,10 @@
 #	include <process.h>
 #endif
 
-#include <SDL.h>
-#include <SDL_thread.h>
+#ifdef UNIX
+#	include <SDL.h>
+#	include <SDL_thread.h>
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -57,7 +45,7 @@ extern HINSTANCE	hInstApp;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int			systics = 0;	// System tics (every game tic).
+//int		systics = 0;	// System tics (every game tic).
 boolean		novideo;		// if true, stay in text mode for debugging
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -79,10 +67,7 @@ void Sys_Init(void)
 	if(!isDedicated)
 	{
 		if(!I_Init())
-		{
 			Con_Error("Sys_Init: failed to initialize DirectInput.\n");
-		}
-		I_InitInputDevices();
 	}
 	Sys_InitTimer();
 	Sys_InitMixer();
@@ -108,7 +93,6 @@ void Sys_Shutdown(void)
 	S_Shutdown();
 	Sys_ShutdownMixer();
 	GL_Shutdown();
-	I_ShutdownInputDevices();
 	I_Shutdown();
 
 #ifdef WIN32
@@ -170,12 +154,15 @@ void Sys_ShowCursor(boolean show)
 //===========================================================================
 void Sys_HideMouse(void)
 {
-	if(novideo || nofullscreen) return;
+//	if(!I_MousePresent()) return;
+	
 #ifdef WIN32
+	if(novideo || nofullscreen) return;
 	ShowCursor(FALSE);
 	ShowCursor(FALSE);
 #endif
 #ifdef UNIX
+	//if(novideo) return;
 	Sys_ShowCursor(false);
 #endif
 }
@@ -245,18 +232,19 @@ void Sys_OpenTextEditor(const char *filename)
 #endif
 }
 
-/*
- * Priority can be -3...3, with zero being the normal priority.
- * Returns a handle to the started thread.
- */
-int Sys_StartThread(systhreadfunc_t startPos, void *parm, int priority)
+//===========================================================================
+// Sys_StartThread
+//	Priority can be -3...3, with zero being the normal priority.
+//	Returns a handle to the started thread.
+//===========================================================================
+int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
 {
-#if 0 // WIN32
+#ifdef WIN32
 	HANDLE handle;
 	DWORD id;
 
 	// Use 512 Kb for the stack (too much/little?).
-	handle = CreateThread(0, 0x80000, startPos, parm, 0, &id);
+	handle = CreateThread(0, 0x80000, startpos, parm, 0, &id);
 	if(!handle)
 	{
 		Con_Message("Sys_StartThread: Failed to start new thread (%x).\n",
@@ -279,14 +267,14 @@ int Sys_StartThread(systhreadfunc_t startPos, void *parm, int priority)
 	}
 	return (int) handle;
 #else
-	return (int) SDL_CreateThread(startPos, parm);
+	return (int) SDL_CreateThread(startpos, parm);
 #endif
 }
 
-#if 0
-/*
- * Suspend or resume the execution of a thread.
- */
+//===========================================================================
+// Sys_SuspendThread
+//	Suspends or resumes the execution of a thread.
+//===========================================================================
 void Sys_SuspendThread(int handle, boolean dopause)
 {
 #ifdef WIN32	
@@ -300,8 +288,33 @@ void Sys_SuspendThread(int handle, boolean dopause)
 	}
 #endif	
 }
+
+#ifdef WIN32
+int Sys_CreateMutex(const char *name)
+{
+	return (int)CreateMutex(NULL, FALSE, name);
+}
+
+void Sys_DestroyMutex(int handle)
+{
+	if(!handle) return;	
+	CloseHandle((HANDLE)handle);
+}
+
+void Sys_Lock(int handle)
+{
+	if(!handle) return;
+	WaitForSingleObject((HANDLE)handle, 5000);
+}
+
+void Sys_Unlock(int handle)
+{
+	if(!handle) return;
+	ReleaseMutex((HANDLE)handle);
+}
 #endif
 
+#ifdef UNIX
 /*
  * Returns the return value of the thread.
  */
@@ -336,6 +349,9 @@ void Sys_Unlock(int handle)
 	SDL_mutexV((SDL_mutex*)handle);
 }
 
+#endif
+
+#ifdef UNIX
 /*
  * Create a new semaphore. Returns a handle.
  */
@@ -372,46 +388,5 @@ void Sem_V(semaphore_t semaphore)
 	{
 		SDL_SemPost((SDL_sem*)semaphore);
 	}
-}
-
-#if 0 //WIN32
-/*
- * Create a new mutex. Returns a handle with which the mutex can be acquired
- * and released.
- */
-int Sys_CreateMutex(const char *name)
-{
-	return (int) CreateMutex(NULL, FALSE, name);
-}
-
-/*
- * Destroy the mutex object. 
- */
-void Sys_DestroyMutex(int handle)
-{
-	CloseHandle((HANDLE)handle);
-}
-
-/*
- * Acquire a mutex. Blocks until ownership has been acquired.
- */
-void Sys_Lock(int mutexHandle)
-{
-	// Five seconds is plenty.
-	if(WaitForSingleObject((HANDLE)mutexHandle, 5000) == WAIT_TIMEOUT) 
-	{
-		// Couldn't lock it.
-#ifdef _DEBUG
-		Con_Error("Sys_AcquireMutex: Failed to acquire mutex.\n");
-#endif
-	}
-}
-
-/*
- * Release a mutex.
- */
-void Sys_Unlock(int mutexHandle)
-{
-	ReleaseMutex((HANDLE)mutexHandle);
 }
 #endif

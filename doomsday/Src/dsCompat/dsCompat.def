@@ -1,5 +1,4 @@
 LIBRARY			DSCOMPAT
-;DESCRIPTION		"Doomsday Sound Driver - Compatible"
 
 ; All exports should be prefixed DS_.
 
