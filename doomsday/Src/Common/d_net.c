@@ -137,6 +137,7 @@ int CCmdSetMap(int argc, char **argv)
 	// Only the server can change the map.
 	if(!IS_SERVER)
 		return false;
+    
 #if !__JHEXEN__
 	if(argc != 3)
 	{
@@ -155,7 +156,7 @@ int CCmdSetMap(int argc, char **argv)
 	deathmatch = cfg.netDeathmatch;
 	nomonsters = cfg.netNomonsters;
 
-#if !__JHEXEN__
+#ifndef __JHEXEN__
 	respawnparm = cfg.netRespawn;
 	cfg.jumpEnabled = cfg.netJumping;
 	ep = atoi(argv[1]);
@@ -166,7 +167,8 @@ int CCmdSetMap(int argc, char **argv)
 	map = P_TranslateMap(atoi(argv[1]));
 #endif
 
-	G_DeferedInitNew(gameskill, ep, map);
+    // Use the configured network skill level for the new map.
+	G_DeferedInitNew(cfg.netSkill, ep, map);
 	return true;
 }
 
