@@ -115,8 +115,9 @@ extern boolean	s3tcAvailable;
 
 boolean			filloutlines = true;
 boolean			loadExtAlways = false;	// Always check for extres (cvar)
-boolean			paletted = false;	// Use GL_EXT_paletted_texture (cvar)
-boolean			load8bit = false;	// Load textures as 8 bit? (with paltex)
+boolean			paletted = false;		// Use GL_EXT_paletted_texture (cvar)
+boolean			load8bit = false;		// Load textures as 8 bit? (w/paltex)
+int				useSmartFilter = 0; 	// Smart filter mode (cvar: 1=hq2x)
 
 // Convert a 18-bit RGB (666) value to a playpal index. 
 // FIXME: 256kb - Too big?
@@ -410,6 +411,9 @@ void GL_InitTextureManager(void)
 
 	// Initialization done.
 	texInited = true;
+
+	// Initialize the smart texture filtering routines.
+	GL_InitSmartFilter();
 }
 
 //===========================================================================
@@ -737,11 +741,11 @@ void PalIdxToRGB(byte *pal, int idx, byte *rgb)
 //	4 = RGBA
 //===========================================================================
 void GL_ConvertBuffer(int width, int height, int informat, int outformat, 
-						  byte *in, byte *out, boolean gamma)
+					  byte *in, byte *out, boolean gamma)
 {
 	byte	*palette = W_CacheLumpName("playpal", PU_CACHE);
-	int		inSize = informat==2? 1 : informat;
-	int		outSize = outformat==2? 1 : outformat;
+	int		inSize = (informat == 2? 1 : informat);
+	int		outSize = (outformat == 2? 1 : outformat);
 	int		i, numPixels = width * height, a;
 	
 	if(informat == outformat) 
@@ -789,7 +793,11 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
 		for(i = 0; i < numPixels; i++, in += inSize, out += outSize)
 		{
 			memcpy(out, in, 3);
-			out[3] = 0;
+			out[3] = 0xff; // Opaque.
+
+/*			out[0] = 0xff;
+			out[1] = 0;
+			out[2] = 0;*/
 		}
 	}
 }
@@ -968,7 +976,80 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
 				for(c = 0; c < comps; c++, out++) 
 					*out = (in[c] + in[comps + c] + in[comps*width + c] + in[comps*(width+1) + c]) >> 2;
 	}
-}	
+}
+
+/*
+ * Determine the optimal size for a texture. Usually the dimensions are
+ * scaled upwards to the next power of two. Returns true if noStretch is
+ * true and the stretching can be skipped.
+ */
+boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
+					   boolean noStretch)
+{
+	if(noStretch)
+	{
+		*optWidth = CeilPow2(width);
+		*optHeight = CeilPow2(height);
+		
+		// MaxTexSize may prevent using noStretch.
+		if(*optWidth > maxTexSize)
+		{
+			*optWidth = maxTexSize;
+			noStretch = false;
+		}
+		if(*optHeight > maxTexSize)
+		{
+			*optHeight = maxTexSize;
+			noStretch = false;
+		}
+	}
+	else
+	{
+		// Determine the most favorable size for the texture.
+		if(texQuality == TEXQ_BEST)	// The best quality.
+		{
+			// At the best texture quality *opt, all textures are
+			// sized *upwards*, so no details are lost. This takes
+			// more memory, but naturally looks better.
+			*optWidth = CeilPow2(width);
+			*optHeight = CeilPow2(height);
+		}
+		else if(texQuality == 0)
+		{
+			// At the lowest quality, all textures are sized down
+			// to the nearest power of 2.
+			*optWidth = FloorPow2(width);
+			*optHeight = FloorPow2(height);
+		}
+		else 
+		{
+			// At the other quality *opts, a weighted rounding
+			// is used.
+			*optWidth = WeightPow2(width, 1 - texQuality/(float)TEXQ_BEST);
+			*optHeight = WeightPow2(height, 1 - texQuality/(float)TEXQ_BEST);
+		}
+	}
+
+	// Hardware limitations may force us to modify the preferred
+	// texture size.
+	if(*optWidth > maxTexSize) *optWidth = maxTexSize;
+	if(*optHeight > maxTexSize) *optHeight = maxTexSize;
+	if(ratioLimit)
+	{
+		if(*optWidth > *optHeight) // Wide texture.
+		{
+			if(*optHeight < *optWidth / ratioLimit)
+				*optHeight = *optWidth / ratioLimit;
+		}
+		else // Tall texture.
+		{
+			if(*optWidth < *optHeight / ratioLimit)
+				*optWidth = *optHeight / ratioLimit;
+		}
+	}
+
+	return noStretch;
+}
 
 //===========================================================================
 // GL_UploadTexture
@@ -989,72 +1070,16 @@ DGLuint GL_UploadTexture
 	boolean freeOriginal;
 	boolean freeBuffer;
 
+	// Number of color components in the destination image.
+	comps = (alphaChannel? 4 : 3);
+
 	BEGIN_PROF( PROF_UPLOAD_START );
 
-	if(noStretch)
-	{
-		levelWidth = CeilPow2(width);
-		levelHeight = CeilPow2(height);
-		// MaxTexSize may prevent using noStretch.
-		if(levelWidth > maxTexSize)
-		{
-			levelWidth = maxTexSize;
-			noStretch = false;
-		}
-		if(levelHeight > maxTexSize)
-		{
-			levelHeight = maxTexSize;
-			noStretch = false;
-		}
-	}
-	else
-	{
-		// Determine the most favorable size for the texture.
-		if(texQuality == TEXQ_BEST)	// The best quality.
-		{
-			// At the best texture quality level, all textures are
-			// sized *upwards*, so no details are lost. This takes
-			// more memory, but naturally looks better.
-			levelWidth = CeilPow2(width);
-			levelHeight = CeilPow2(height);
-		}
-		else if(texQuality == 0)
-		{
-			// At the lowest quality, all textures are sized down
-			// to the nearest power of 2.
-			levelWidth = FloorPow2(width);
-			levelHeight = FloorPow2(height);
-		}
-		else 
-		{
-			// At the other quality levels, a weighted rounding
-			// is used.
-			levelWidth = WeightPow2(width, 1 - texQuality/(float)TEXQ_BEST);
-			levelHeight = WeightPow2(height, 1 - texQuality/(float)TEXQ_BEST);
-		}
-	}
-
-	// Hardware limitations may force us to modify the preferred
-	// texture size.
-	if(levelWidth > maxTexSize) levelWidth = maxTexSize;
-	if(levelHeight > maxTexSize) levelHeight = maxTexSize;
-	if(ratioLimit)
-	{
-		if(levelWidth > levelHeight) // Wide texture.
-		{
-			if(levelHeight < levelWidth / ratioLimit)
-				levelHeight = levelWidth / ratioLimit;
-		}
-		else // Tall texture.
-		{
-			if(levelWidth < levelHeight / ratioLimit)
-				levelWidth = levelHeight / ratioLimit;
-		}
-	}
+	// Calculate the real dimensions for the texture, as required by
+	// the graphics hardware.
+	noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight,
+							   noStretch);
 	
-	// Number of color components in the destination image.
-	comps = alphaChannel? 4 : 3;
-
 	// Get the RGB(A) version of the original texture.
 	if(RGBData)
 	{
@@ -1069,6 +1094,38 @@ DGLuint GL_UploadTexture
 		rgbaOriginal = M_Malloc(width * height * comps);
 		GL_ConvertBuffer(width, height, alphaChannel? 2 : 1, comps, 
 			data, rgbaOriginal,	!load8bit);
+	}
+
+	// If smart filtering is enabled, all textures are magnified 2x.
+	if(useSmartFilter/* && comps == 3*/)
+	{
+		byte *filtered = M_Malloc(4 * width * height * 4);
+
+		if(comps == 3)
+		{
+			// Must convert to RGBA.
+			byte *temp = M_Malloc(4 * width * height);
+			GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp,
+							 !load8bit);
+			if(freeOriginal) M_Free(rgbaOriginal);
+			rgbaOriginal = temp;
+			freeOriginal = true;			
+			comps = 4;
+			alphaChannel = true;
+		}
+
+		GL_SmartFilter2x(rgbaOriginal, filtered, width, height, width * 8);
+		width *= 2;
+		height *= 2;
+		noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight,
+								   noStretch);
+
+		/*memcpy(filtered, rgbaOriginal, comps * width * height);*/
+
+		// The filtered copy is now the 'original' image data.
+		if(freeOriginal) M_Free(rgbaOriginal);
+		rgbaOriginal = filtered;
+		freeOriginal = true;
 	}
 	
 	END_PROF( PROF_UPLOAD_START );	
