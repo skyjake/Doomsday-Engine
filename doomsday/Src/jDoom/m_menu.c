@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.7  2003/08/19 16:32:39  skyjake
+// Added menu glitter (using the dynlight texture)
+//
 // Revision 1.6  2003/08/17 23:32:36  skyjake
 // Implemented Patch Replacement
 // (GL_DrawPatch => WI_DrawPatch)
@@ -937,13 +940,13 @@ void M_DrawReadThis1(void)
     {
 	case commercial:
 		//V_DrawPatchDirect (0,0,0,W_CacheLumpName("HELP",PU_CACHE));
-		GL_DrawPatch(0, 0, W_GetNumForName("HELP"));
+		WI_DrawPatch(0, 0, W_GetNumForName("HELP"));
 		break;
 	case shareware:
 	case registered:
 	case retail:
 		//V_DrawPatchDirect (0,0,0,W_CacheLumpName("HELP1",PU_CACHE));
-		GL_DrawPatch(0, 0, W_GetNumForName("HELP1"));
+		WI_DrawPatch(0, 0, W_GetNumForName("HELP1"));
 		break;
 	default:
 		break;
@@ -965,12 +968,12 @@ void M_DrawReadThis2(void)
 	case commercial:
 		// This hack keeps us from having to change menus.
 		//V_DrawPatchDirect (0,0,0,W_CacheLumpName("CREDIT",PU_CACHE));
-		GL_DrawPatch(0, 0, W_GetNumForName("CREDIT"));
+		WI_DrawPatch(0, 0, W_GetNumForName("CREDIT"));
 		break;
 	case shareware:
 	case registered:
 		//V_DrawPatchDirect (0,0,0,W_CacheLumpName("HELP2",PU_CACHE));
-		GL_DrawPatch(0, 0, W_GetNumForName("HELP2"));
+		WI_DrawPatch(0, 0, W_GetNumForName("HELP2"));
 		break;
 	default:
 		break;
@@ -1933,19 +1936,6 @@ M_DrawThermo
   int	thermWidth,
   int	thermDot )
 {
-/*  
-	int		xx;
-
-    xx = x;
-    GL_DrawPatch(xx,y,W_GetNumForName("M_THERML"));
-    xx += 8;
-	GL_SetPatch(W_GetNumForName("M_THERM2")); // in jdoom.wad
-	GL_DrawRectTiled(xx, y, 8*thermWidth, 13, 8, 13);
-	xx += 8*thermWidth;
-    GL_DrawPatch(xx,y,W_GetNumForName("M_THERMR"));
-
-    GL_DrawPatch((x+8) + thermDot*8, y, W_GetNumForName("M_THERMO"));*/
-
 	M_DrawThermo2(x, y, thermWidth, thermDot, 13);
 }
 
@@ -2041,9 +2031,10 @@ void M_WriteText2
 	M_WriteText3(x, y, string, font, red, green, blue, true);
 }
 
-//
-//      Write a string using a colored, custom font
-//
+/*
+ * Write a string using a colored, custom font.
+ * Also do a type-in effect.
+ */
 void
 M_WriteText3
 ( int		x,
@@ -2056,12 +2047,13 @@ M_WriteText3
  boolean	dotypein
  )
 {
-    int		w;
+    int		w, h;
     char*	ch;
     int		c;
     int		cx;
     int		cy;
 	int		count = 0, maxcount = typein_time*2, yoff;
+	float	flash;
 
 	// Disable type-in?
 	if(!dotypein || cfg.menuEffects > 0) maxcount = 0xffff;
@@ -2077,14 +2069,27 @@ M_WriteText3
 		c = *ch++;
 		count++;
 		yoff = 0;
+		flash = 0;
 		if(count == maxcount) 
 		{
+			flash = 1;
 			if(red >= 0) gl.Color4f(1, 1, 1, 1);
 		}
-		else if(count+1 == maxcount)
+		else if(count + 1 == maxcount)
 		{
+			flash = 0.5f;
 			if(red >= 0) gl.Color4f((1+red)/2,
 				(1+green)/2, (1+blue)/2, menu_alpha);
+		}
+		else if(count + 2 == maxcount)
+		{
+			flash = 0.25f;
+			if(red >= 0) gl.Color4f(red, green, blue, menu_alpha);
+		}
+		else if(count + 3 == maxcount)
+		{
+			flash = 0.12f;
+			if(red >= 0) gl.Color4f(red, green, blue, menu_alpha);
 		}
 		else if(count > maxcount) 
 		{
@@ -2106,10 +2111,24 @@ M_WriteText3
 		}
 	
 		w = SHORT (font[c].width);
+		h = SHORT (font[c].height);
 		/*if (cx+w > SCREENWIDTH)
 			break;*/
 		GL_DrawPatch_CS(cx, cy + yoff, font[c].lump);
-		cx+=w;
+
+		if(flash > 0)
+		{
+			float fw = 5*w/2.0f, fh = 5*h/2.0f;
+			// Do something flashy!
+			gl.Bind( Get(DD_DYNLIGHT_TEXTURE) );
+			gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+			GL_DrawRect(cx + w/2.0f - fw/2, cy + yoff + h/2.0f - fh/2, 
+				fw, fh, (1 + 2*red)/3, (1 + 2*green)/3, (1 + 2*blue)/3, 
+				flash * cfg.menuGlitter * menu_alpha);
+			gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+		}
+		
+		cx += w;
     }
 }
 
