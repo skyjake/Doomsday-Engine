@@ -54,7 +54,7 @@ int				maxTexUnits;
 int				useAnisotropic;
 float			nearClip, farClip;
 int				useFog;
-int				verbose, noArrays = true;
+int				verbose;//, noArrays = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -227,13 +227,13 @@ void initState()
 	glFogi(GL_FOG_END, 2100);	// This should be tweaked a bit.
 	glFogfv(GL_FOG_COLOR, fogcol);
 
-	if(!noArrays)
+/*	if(!noArrays)
 	{
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_COLOR_ARRAY);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		texCoordPtrEnabled = false;
-	}
+	}*/
 
 #if DRMESA
 	glDisable(GL_DITHER);
@@ -435,7 +435,7 @@ int DG_Init(int width, int height, int bpp, int mode)
 	windowed = !fullscreen;
 	
 	verbose = ArgExists("-verbose");
-	noArrays = !ArgExists("-vtxar");
+	//noArrays = !ArgExists("-vtxar");
 	
 	if(fullscreen)
 	{
@@ -534,7 +534,7 @@ int DG_Init(int width, int height, int bpp, int mode)
 			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
 			Con_Message("  Maximum anisotropy: %g\n", maxAniso);
 		}
-		if(!noArrays) Con_Message("  Using vertex arrays.\n");
+		//if(!noArrays) Con_Message("  Using vertex arrays.\n");
 	}
 	free(extbuf);
 
@@ -626,6 +626,7 @@ void DG_Scissor(int x, int y, int width, int height)
 int	DG_GetIntegerv(int name, int *v)
 {
 	int i;
+	float color[4];
 
 	switch(name)
 	{
@@ -668,23 +669,28 @@ int	DG_GetIntegerv(int name, int *v)
 		break;
 
 	case DGL_R:
-		*v = (int) (currentVertex.color[0] * 255);
+		glGetFloatv(GL_CURRENT_COLOR, color);
+		*v = (int) (color[0] * 255);
 		break;
 
 	case DGL_G:
-		*v = (int) (currentVertex.color[1] * 255);
+		glGetFloatv(GL_CURRENT_COLOR, color);
+		*v = (int) (color[1] * 255);
 		break;
 
 	case DGL_B:
-		*v = (int) (currentVertex.color[2] * 255);
+		glGetFloatv(GL_CURRENT_COLOR, color);
+		*v = (int) (color[2] * 255);
 		break;
 
 	case DGL_A:
-		*v = (int) (currentVertex.color[3] * 255);
+		glGetFloatv(GL_CURRENT_COLOR, color);
+		*v = (int) (color[3] * 255);
 		break;
 
 	case DGL_RGBA:
-		for(i = 0; i < 4; i++) v[i] = (int) (currentVertex.color[i] * 255);
+		glGetFloatv(GL_CURRENT_COLOR, color);
+		for(i = 0; i < 4; i++) v[i] = (int) (color[i] * 255);
 		break;
 
 	case DGL_POLY_COUNT:

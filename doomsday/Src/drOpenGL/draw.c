@@ -27,39 +27,32 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int			polyCounter;	// Triangle counter, really.
-char		useTexCoords[MAX_TEX_UNITS];
+int	polyCounter;	// Triangle counter, really.
+int primLevel;
+
+#ifdef _DEBUG
+int	inPrim;
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-int			primType;		// Set in Begin() if the stack is needed.
-int			primMode;		// Begin() sets this always.
-int			inSequence;
-glvertex_t	currentVertex;		
-
-glvertex_t	*vertexStack;
-int			stackSize, stackPos;
-
 // CODE --------------------------------------------------------------------
+
+void CheckError(void)
+{
+#ifdef _DEBUG
+	GLenum error;
+
+	if((error = glGetError()) != GL_NO_ERROR)
+		Con_Error("OpenGL error: %i\n", error);
+#endif
+}
 
 //===========================================================================
 // InitVertexStack
 //===========================================================================
 void InitVertexStack(void)
 {
-	int i;
-
-	memset(&currentVertex, 0, sizeof(currentVertex));
-	for(i = 0; i < 4; i++) currentVertex.color[i] = 1;
-
-	polyCounter = 0;
-	primType = DGL_FALSE;
-	primMode = DGL_FALSE;
-	inSequence = DGL_FALSE;
-	stackPos = 0;
-	stackSize = 4096;
-	vertexStack = malloc(sizeof(glvertex_t) * stackSize);
-	memset(vertexStack, 0, sizeof(glvertex_t) * stackSize);
 }
 
 //===========================================================================
@@ -67,22 +60,6 @@ void InitVertexStack(void)
 //===========================================================================
 void KillVertexStack(void)
 {
-	stackSize = 0;
-	free(vertexStack);
-}
-
-//===========================================================================
-// VtxToStack
-//===========================================================================
-void VtxToStack(void)
-{
-	memcpy(vertexStack + stackPos++, &currentVertex, sizeof(currentVertex));
-	if(stackPos == stackSize)
-	{
-		// We need to allocate more memory.
-		stackSize += 2048;
-		vertexStack = realloc(vertexStack, sizeof(glvertex_t) * stackSize);
-	}
 }
 
 //===========================================================================
@@ -90,10 +67,7 @@ void VtxToStack(void)
 //===========================================================================
 void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
-	currentVertex.color[0] = r / 255.0f;
-	currentVertex.color[1] = g / 255.0f;
-	currentVertex.color[2] = b / 255.0f;
-	currentVertex.color[3] = 1;
+	glColor3ub(r, g, b);
 }
 
 //===========================================================================
@@ -101,10 +75,7 @@ void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 //===========================================================================
 void DG_Color3ubv(DGLubyte *data)
 {
-	currentVertex.color[0] = data[0] / 255.0f;
-	currentVertex.color[1] = data[1] / 255.0f;
-	currentVertex.color[2] = data[2] / 255.0f;
-	currentVertex.color[3] = 1;	
+	glColor3ubv(data);
 }
 
 //===========================================================================
@@ -112,10 +83,7 @@ void DG_Color3ubv(DGLubyte *data)
 //===========================================================================
 void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
-	currentVertex.color[0] = r / 255.0f;
-	currentVertex.color[1] = g / 255.0f;
-	currentVertex.color[2] = b / 255.0f;
-	currentVertex.color[3] = a / 255.0f;
+	glColor4ub(r, g, b, a);
 }
 
 //===========================================================================
@@ -123,10 +91,7 @@ void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 //===========================================================================
 void DG_Color4ubv(DGLubyte *data)
 {
-	currentVertex.color[0] = data[0] / 255.0f;
-	currentVertex.color[1] = data[1] / 255.0f;
-	currentVertex.color[2] = data[2] / 255.0f;
-	currentVertex.color[3] = data[3] / 255.0f;	
+	glColor4ubv(data);
 }
 
 //===========================================================================
@@ -134,10 +99,7 @@ void DG_Color4ubv(DGLubyte *data)
 //===========================================================================
 void DG_Color3f(float r, float g, float b)
 {
-	currentVertex.color[0] = r;
-	currentVertex.color[1] = g;
-	currentVertex.color[2] = b;
-	currentVertex.color[3] = 1;	
+	glColor3f(r, g, b);
 }
 
 //===========================================================================
@@ -145,10 +107,7 @@ void DG_Color3f(float r, float g, float b)
 //===========================================================================
 void DG_Color3fv(float *data)
 {
-	currentVertex.color[0] = data[0];
-	currentVertex.color[1] = data[1];
-	currentVertex.color[2] = data[2];
-	currentVertex.color[3] = 1;	
+	glColor3fv(data);
 }
 
 //===========================================================================
@@ -156,10 +115,7 @@ void DG_Color3fv(float *data)
 //===========================================================================
 void DG_Color4f(float r, float g, float b, float a)
 {
-	currentVertex.color[0] = r;
-	currentVertex.color[1] = g;
-	currentVertex.color[2] = b;
-	currentVertex.color[3] = a;	
+	glColor4f(r, g, b, a);
 }
 
 //===========================================================================
@@ -167,10 +123,7 @@ void DG_Color4f(float r, float g, float b, float a)
 //===========================================================================
 void DG_Color4fv(float *data)
 {
-	currentVertex.color[0] = data[0];
-	currentVertex.color[1] = data[1];
-	currentVertex.color[2] = data[2];
-	currentVertex.color[3] = data[3];	
+	glColor4fv(data);
 }
 
 //===========================================================================
@@ -178,9 +131,7 @@ void DG_Color4fv(float *data)
 //===========================================================================
 void DG_TexCoord2f(float s, float t)
 {
-	currentVertex.tex[0] = s;
-	currentVertex.tex[1] = t;
-	useTexCoords[0] = DGL_TRUE;
+	glTexCoord2f(s, t);
 }
 
 //===========================================================================
@@ -188,9 +139,7 @@ void DG_TexCoord2f(float s, float t)
 //===========================================================================
 void DG_TexCoord2fv(float *data)
 {
-	currentVertex.tex[0] = data[0];
-	currentVertex.tex[1] = data[1];
-	useTexCoords[0] = DGL_TRUE;
+	glTexCoord2fv(data);
 }
 
 //===========================================================================
@@ -198,15 +147,10 @@ void DG_TexCoord2fv(float *data)
 //===========================================================================
 void DG_MultiTexCoord2f(int target, float s, float t)
 {
-	float *tex = 
-		 (target == DGL_TEXTURE0? currentVertex.tex
-		: target == DGL_TEXTURE1? currentVertex.tex2 
-		: target == DGL_TEXTURE2? currentVertex.tex3
-		: currentVertex.tex4);
-
-	tex[0] = s;
-	tex[1] = t;
-	useTexCoords[target - DGL_TEXTURE0] = DGL_TRUE;
+	if(target == GL_TEXTURE0)
+		glTexCoord2f(s, t);
+	else
+		glMultiTexCoord2fARB(GL_TEXTURE0 + (target - DGL_TEXTURE0), s, t);
 }
 
 //===========================================================================
@@ -214,15 +158,10 @@ void DG_MultiTexCoord2f(int target, float s, float t)
 //===========================================================================
 void DG_MultiTexCoord2fv(int target, float *data)
 {
-	float *tex = 
-		 (target == DGL_TEXTURE0? currentVertex.tex
-		: target == DGL_TEXTURE1? currentVertex.tex2 
-		: target == DGL_TEXTURE2? currentVertex.tex3
-		: currentVertex.tex4);
-
-	tex[0] = data[0];
-	tex[1] = data[1];
-	useTexCoords[target - DGL_TEXTURE0] = DGL_TRUE;
+	if(target == GL_TEXTURE0)
+		glTexCoord2fv(data);
+	else
+		glMultiTexCoord2fvARB(GL_TEXTURE0 + (target - DGL_TEXTURE0), data);
 }
 
 //===========================================================================
@@ -230,10 +169,7 @@ void DG_MultiTexCoord2fv(int target, float *data)
 //===========================================================================
 void DG_Vertex2f(float x, float y)
 {
-	currentVertex.pos[0] = x;
-	currentVertex.pos[1] = y;
-	currentVertex.pos[2] = 0;
-	VtxToStack();
+	glVertex2f(x, y);
 }
 
 //===========================================================================
@@ -241,10 +177,7 @@ void DG_Vertex2f(float x, float y)
 //===========================================================================
 void DG_Vertex2fv(float *data)
 {
-	currentVertex.pos[0] = data[0];
-	currentVertex.pos[1] = data[1];
-	currentVertex.pos[2] = 0;
-	VtxToStack();
+	glVertex2fv(data);
 }
 
 //===========================================================================
@@ -252,10 +185,7 @@ void DG_Vertex2fv(float *data)
 //===========================================================================
 void DG_Vertex3f(float x, float y, float z)
 {
-	currentVertex.pos[0] = x;
-	currentVertex.pos[1] = y;
-	currentVertex.pos[2] = z;
-	VtxToStack();
+	glVertex3f(x, y, z);
 }
 
 //===========================================================================
@@ -263,10 +193,7 @@ void DG_Vertex3f(float x, float y, float z)
 //===========================================================================
 void DG_Vertex3fv(float *data)
 {
-	currentVertex.pos[0] = data[0];
-	currentVertex.pos[1] = data[1];
-	currentVertex.pos[2] = data[2];
-	VtxToStack();
+	glVertex3fv(data);
 }
 
 //===========================================================================
@@ -276,8 +203,8 @@ void DG_Vertices2ftv(int num, gl_ft2vertex_t *data)
 {
 	for(; num > 0; num--, data++)
 	{
-		DG_TexCoord2fv(data->tex);
-		DG_Vertex2fv(data->pos);
+		glTexCoord2fv(data->tex);
+		glVertex2fv(data->pos);
 	}
 }
 
@@ -286,10 +213,10 @@ void DG_Vertices2ftv(int num, gl_ft2vertex_t *data)
 //===========================================================================
 void DG_Vertices3ftv(int num, gl_ft3vertex_t *data)
 {
-	for(; num>0; num--, data++)
+	for(; num > 0; num--, data++)
 	{
-		DG_TexCoord2fv(data->tex);
-		DG_Vertex3fv(data->pos);
+		glTexCoord2fv(data->tex);
+		glVertex3fv(data->pos);
 	}
 }
 
@@ -298,11 +225,11 @@ void DG_Vertices3ftv(int num, gl_ft3vertex_t *data)
 //===========================================================================
 void DG_Vertices3fctv(int num, gl_fct3vertex_t *data)
 {
-	for(; num>0; num--, data++)
+	for(; num > 0; num--, data++)
 	{
-		DG_Color4fv(data->color);
-		DG_TexCoord2fv(data->tex);
-		DG_Vertex3fv(data->pos);
+		glColor4fv(data->color);
+		glTexCoord2fv(data->tex);
+		glVertex3fv(data->pos);
 	}
 }
 
@@ -311,16 +238,29 @@ void DG_Vertices3fctv(int num, gl_fct3vertex_t *data)
 //===========================================================================
 void DG_Begin(int mode)
 {
-	if(mode == DGL_SEQUENCE)
+	if(mode == DGL_SEQUENCE) 
 	{
-		inSequence = DGL_TRUE;
+		// We don't need to worry about this.
 		return;
 	}
 
-	primType = mode;
-	stackPos = 0;
+	// We enter a Begin/End section.
+	primLevel++;
 
-	memset(useTexCoords, 0, sizeof(useTexCoords));
+#ifdef _DEBUG
+	if(inPrim) Con_Error("OpenGL: already inPrim");
+	inPrim = true;
+	CheckError();
+#endif
+
+	glBegin( 
+		  mode == DGL_POINTS?			GL_POINTS
+		: mode == DGL_LINES?			GL_LINES 
+		: mode == DGL_TRIANGLES?		GL_TRIANGLES
+		: mode == DGL_TRIANGLE_FAN?		GL_TRIANGLE_FAN
+		: mode == DGL_TRIANGLE_STRIP?	GL_TRIANGLE_STRIP
+		: mode == DGL_QUAD_STRIP?		GL_QUAD_STRIP
+		: GL_QUADS );
 }
 
 //===========================================================================
@@ -328,80 +268,16 @@ void DG_Begin(int mode)
 //===========================================================================
 void DG_End(void)
 {
-	int i, k, glPrimitive = 
-		  primType == DGL_POINTS? GL_POINTS
-		: primType == DGL_LINES? GL_LINES 
-		: primType == DGL_TRIANGLES? GL_TRIANGLES
-		: primType == DGL_TRIANGLE_FAN? GL_TRIANGLE_FAN
-		: primType == DGL_TRIANGLE_STRIP? GL_TRIANGLE_STRIP
-		: primType == DGL_QUAD_STRIP? GL_QUAD_STRIP
-		: GL_QUADS;
-
-	if(!primType && inSequence)
+	if(primLevel > 0)
 	{
-		inSequence = DGL_FALSE;
-		return;
-	}
-
-	if(noArrays)
-	{
-		glvertex_t *v;
-		// Make individual vertex calls.
-		glBegin(glPrimitive);
-		for(i = 0, v = vertexStack; i < stackPos; i++, v++)
-		{
-			glColor4fv(v->color);
-			if(useTexCoords[0]) glTexCoord2fv(v->tex);
-			for(k = 1; k < MAX_TEX_UNITS; k++)
-			{
-				if(useTexCoords[k]) 
-				{
-					glMultiTexCoord2fvARB(GL_TEXTURE0 + k, 
-						  k == 1? v->tex2
-						: k == 2? v->tex3 
-						: v->tex4);
-				}
-			}
-			glVertex3fv(v->pos);
-		}
+		primLevel--;
 		glEnd();
 	}
-	else
-	{
-		// Load in as arrays.
-		glVertexPointer(3, GL_FLOAT, sizeof(glvertex_t), vertexStack->pos);
-		glColorPointer(4, GL_FLOAT, sizeof(glvertex_t), vertexStack->color);
-		if(useTexCoords) 
-		{
-			if(!texCoordPtrEnabled)
-			{
-				// We need TexCoords, but the array is disabled.
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				texCoordPtrEnabled = true;
-			}
-			glTexCoordPointer(2, GL_FLOAT, sizeof(glvertex_t), vertexStack->tex);
-		}
-		else if(texCoordPtrEnabled)
-		{
-			// TexCoords are not needed, but the array is enabled.
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-			texCoordPtrEnabled = false;
-		}
-		glDrawArrays(glPrimitive, 0, stackPos);
-	}
-	
-	// Increase the triangle counter.
-	polyCounter += 
-		  primType == DGL_TRIANGLES? stackPos/3
-		: primType == DGL_TRIANGLE_FAN? stackPos - 2
-		: primType == DGL_TRIANGLE_STRIP? stackPos - 2
-		: primType == DGL_QUAD_STRIP? stackPos - 2
-		: primType == DGL_QUADS? stackPos/2
-		: 0;
 
-	// Clear the stack.
-	stackPos = 0;
-	primType = DGL_FALSE;
+#ifdef _DEBUG
+	inPrim = false;
+	CheckError();
+#endif
 }
 
 //===========================================================================
@@ -419,9 +295,8 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 		if(coords & (1 << i))
 		{
 			if(glClientActiveTextureARB)
-			{
 				glClientActiveTextureARB(GL_TEXTURE0 + i);
-			}
+
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 	}
@@ -442,9 +317,8 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 		if(coords & (1 << i))
 		{
 			if(glClientActiveTextureARB)
-			{
 				glClientActiveTextureARB(GL_TEXTURE0 + i);
-			}
+
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 	}
@@ -476,9 +350,8 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
 		if(coords[i])
 		{
 			if(glClientActiveTextureARB)
-			{
 				glClientActiveTextureARB(GL_TEXTURE0 + i);
-			}
+
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
 		}
@@ -503,16 +376,21 @@ void DG_UnlockArrays(void)
 }
 
 //===========================================================================
+// DG_ArrayElement
+//===========================================================================
+void DG_ArrayElement(int index)
+{
+	glArrayElement(index);
+}
+
+//===========================================================================
 // DG_DrawElements
 //===========================================================================
 void DG_DrawElements(int type, int count, unsigned int *indices)
 {
-	if(type == DGL_TRIANGLE_FAN)
-	{
-		glDrawElements(GL_TRIANGLE_FAN, count, GL_UNSIGNED_INT, indices);
-	}
-	else if(type == DGL_TRIANGLES) 
-	{
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, indices);
-	}
+	glDrawElements( 
+		  type == DGL_TRIANGLE_FAN?		GL_TRIANGLE_FAN
+		: type == DGL_TRIANGLE_STRIP?	GL_TRIANGLE_STRIP
+		: GL_TRIANGLES, 
+		count, GL_UNSIGNED_INT, indices);
 }

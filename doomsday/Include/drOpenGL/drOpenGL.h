@@ -45,7 +45,7 @@ typedef struct glvertex_s {
 extern int			useFog, maxTexSize;
 extern int			palExtAvailable, sharedPalExtAvailable;
 extern boolean		texCoordPtrEnabled;
-extern int			verbose, noArrays;
+extern int			verbose;
 extern int			useAnisotropic;
 extern float		maxAniso;
 extern int			maxTexUnits;
@@ -57,7 +57,6 @@ void DG_Clear(int bufferbits);
 // draw.c
 //
 extern int			polyCounter;
-extern glvertex_t 	currentVertex;
 
 void InitVertexStack();
 void KillVertexStack();
