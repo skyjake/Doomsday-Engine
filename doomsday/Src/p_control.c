@@ -21,6 +21,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <ctype.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -186,6 +188,42 @@ const char *P_ControlGetAxisName(int index)
 }
 
 /*
+ * Returns a bitmap that specifies which toggle controls are currently
+ * active.  Only the UPPER CASE toggles are included.  The other
+ * toggle controls are intended for local use only.
+ */
+int P_ControlGetToggles(int player)
+{
+	int bits = 0, pos = 0, i;
+	controlclass_t *cc = &ctlClass[CC_TOGGLE];
+	controlstate_t *state = &ctlState[player];
+
+	for(i = 0; i < cc->count; i++)
+	{
+		// Only the upper case toggles are included.
+		if(isupper(cc->desc[i].name[0]))
+		{
+			if(state->toggles[i].state != TG_OFF)
+			{
+				bits |= 1 << pos;
+			}
+			pos++;
+		}
+	}
+
+#ifdef _DEBUG
+	// We assume that we can only use up to seven bits for the
+	// controls.
+	if(pos >= 7)
+	{
+		Con_Error("P_ControlGetToggles: Out of bits (%i).\n", pos);
+	}
+#endif
+		
+	return bits;
+}
+
+/*
  * Initialize the control descriptors.  These could be read from a
  * file.  The game is able to define new controls in addition to the
  * ones listed here.
@@ -240,6 +278,7 @@ void P_ControlInit(void)
 		NULL
 	};
 	int i;
+	char buf[80];
 
 	// The toggle controls.
 	for(i = 0; toggleCts[i]; i++)
@@ -250,8 +289,11 @@ void P_ControlInit(void)
 	{
 		P_ControlAdd(CC_AXIS, axisCts[i]);
 
-		// Also create a toggle for each axis.
-		P_ControlAdd(CC_TOGGLE, axisCts[i]);
+		// Also create a toggle for each axis, but use a lower case
+		// name so it won't be included in ticcmds.
+		strcpy(buf, axisCts[i]);
+		strlwr(buf);
+		P_ControlAdd(CC_TOGGLE, buf);
 	}
 
 	// The impulse controls.

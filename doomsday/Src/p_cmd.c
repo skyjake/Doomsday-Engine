@@ -77,6 +77,8 @@ void P_BuildCommand(int playerNumber)
 	cmd.angle = player->clAngle >> 16;
 	cmd.pitch = player->clLookDir/110.0f * DDMAXSHORT;
 
+	cmd.actions = P_ControlGetToggles(playerNumber);
+
 	//Con_Printf("%i: a=%04x p=%04x\n", playerNumber, cmd.angle, cmd.pitch);
 	
 	// The command is now complete.  Insert it into the client's
