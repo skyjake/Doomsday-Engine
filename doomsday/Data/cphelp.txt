@@ -188,16 +188,6 @@ desc = Particles that are closer to the camera than this are not drawn at all.
 #
 # NETWORK
 #
-[Print packet queue]
-cvar = net-queue-show
-def = No
-desc = Intended for debugging. Periodically, the number and size of packets waiting to be sent is printed in the console.
-
-[Maximum queued]
-cvar = net-queue-packets
-def = 0
-desc = The maximum number of packets that can be waiting to be sent. Small numbers are best because a large number of packets waiting leads to increased latency. The setting should be kept at the default value of zero.
-
 [Cl-to-sv pos transmit]
 cvar = client-pos-interval
 def = 10
@@ -211,31 +201,6 @@ desc = If a client wishes to make a remote console connection to the server it m
 cvar = server-frame-interval
 def = 1
 desc = Number of 35 Hz ticks between frames sent to clients. Only for the server. Small intervals require more bandwidth but result in smoother animation and other world events. Use larger intervals (2..5) with low-bandwidth connections.
-
-[Unack'd frame]
-cvar = server-frame-resend
-def = 70
-desc = Number of 35 Hz ticks to wait before resending an unacknowledged frame to a client. Only for the server. Connections with a lot of packet loss may benefit from a smaller value. Too small values may cause frames to be sent redundantly, wasting bandwidth.
-
-[Maximum client pos in]
-cvar = server-dif-max
-def = 96
-desc = Maximum number of units a player's position may differ when comparing the clientside and serverside positions. Various conditions (packet loss, prediction errors) may cause the player to move differently on the server than on clientside. The clientside player positions are usually considered correct.
-
-[Block range for]
-cvar = server-sector-min
-def = 2
-desc = All changes in sectors closer than this are always sent to clients. Only for the server. The range is in 128 unit blocks.
-
-[Block limit for full]
-cvar = server-sector-full
-def = 4
-desc = If sector reject data allows, all changes in a sector are sent to clients closer than this. Only for the server. The range is in 128 unit blocks.
-
-[Max block range for]
-cvar = server-sector-max
-def = 8
-desc = No changes in sectors farther than this are sent to clients. The range is in 128 unit blocks. Only for the server. Clients will perceive too small values as stopped blinking lights and planes in distant sectors.
 
 #
 # CONSOLE
