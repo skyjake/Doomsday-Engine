@@ -581,7 +581,8 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		break;
 
 	case GPT_FINALE:
-		NetCl_Finale(data);
+	case GPT_FINALE2:
+		NetCl_Finale(type, data);
 		break;
 
 	case GPT_PLAYER_INFO:

@@ -530,16 +530,26 @@ void NetCl_Intermission(byte *data)
 // NetCl_Finale
 //	This is where clients start their InFine interludes.
 //===========================================================================
-void NetCl_Finale(byte *data)
+void NetCl_Finale(int packetType, byte *data)
 {
 	int flags;
-	int len;
+	int len, numConds, i;
 	byte *script = NULL;
 
 	NetCl_SetReadBuffer(data);
 	flags = NetCl_ReadByte();
 	if(flags & FINF_SCRIPT)
 	{
+		// First read the values of the conditions.
+		if(packetType == GPT_FINALE2)
+		{
+			numConds = NetCl_ReadByte();
+			for(i = 0; i < numConds; i++)
+			{
+				FI_SetCondition(i, NetCl_ReadByte());
+			}
+		}
+
 		// Read the script into level-scope memory. It will be freed 
 		// when the next level is loaded.
 		len = strlen(readbuffer);

@@ -840,11 +840,12 @@ void NetSv_Intermission(int flags, int state, int time)
 //===========================================================================
 // NetSv_Finale
 //	The actual script is sent to the clients. 'script' can be NULL.
+//	
 //===========================================================================
-void NetSv_Finale(int flags, char *script)
+void NetSv_Finale(int flags, char *script, boolean *conds, int numConds)
 {
 	byte *buffer, *ptr;
-	int len;
+	int i, len;
 
 	if(IS_CLIENT) return;
 
@@ -853,17 +854,32 @@ void NetSv_Finale(int flags, char *script)
 	{
 		flags |= FINF_SCRIPT;
 		len = strlen(script) + 2;	// The end null and flags byte.
+
+		// The number of conditions and their values.
+		len += 1 + numConds;
 	}
 	else
 	{
 		// Just enough memory for the flags byte.
 		len = 1;
 	}
+
 	ptr = buffer = Z_Malloc(len, PU_STATIC, 0);
-	// First the flags, then the script.
+	
+	// First the flags.
 	*ptr++ = flags;
-	if(script) strcpy(ptr, script);
-	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE,
+
+	if(script) 
+	{
+		// The conditions.
+		*ptr++ = numConds;
+		for(i = 0; i < numConds; i++) *ptr++ = conds[i];
+
+		// Then the script itself.
+		strcpy(ptr, script);
+	}
+
+	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2,
 		buffer, len);
 	Z_Free(buffer);
 }
