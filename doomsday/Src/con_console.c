@@ -262,18 +262,25 @@ cvar_t engineCVars[] =
 
 	// Render
 	// * Render-Info
-	"rend-info-tris",		0,			CVT_BYTE,	&rend_info_tris, 0, 1, "1=Print triangle count after rendering a frame.",
+	"rend-info-tris",		0,			CVT_BYTE,	&rend_info_tris, 0, 1,	"1=Print triangle count after rendering a frame.",
+	"rend-info-lums",		0,			CVT_BYTE,	&rend_info_lums, 0, 1,	"1=Print lumobj count after rendering a frame.",
 	// * Render-Light
 	"rend-light-ambient",	0,			CVT_INT,	&r_ambient,		0, 255, "Ambient light level.",
 	"rend-light",			0,			CVT_INT,	&useDynLights,	0, 1,	"1=Render dynamic lights.",
 	"rend-light-blend",		0,			CVT_INT,	&dlBlend,		0, 3,	"Dynamic lights color blending mode:\n0=normal, 1=additive, 2=no blending.",
 	"rend-light-clip",		0,			CVT_INT,	&clipLights,	0, 1,	"1=Clip dynamic lights (try using with dlblend 2).",
 	"rend-light-bright",	0,			CVT_FLOAT,	&dlFactor,		0, 1,	"Intensity factor for dynamic lights.",
-	"rend-light-num",		CVF_NO_MAX,	CVT_INT,	&maxDynLights,	0, 0,	"The maximum number of dynamic lights. 0=no limit.",
+	"rend-light-num",		0,			CVT_INT,	&maxDynLights,	0, 8000, "The maximum number of dynamic lights. 0=no limit.",
 	"rend-light-shrink",	0,			CVT_FLOAT,	&dlContract,	0, 1,	"Shrink dynlight wall polygons horizontally.",
 	"rend-light-radius-scale",	0,		CVT_FLOAT,	&dlRadFactor,	0.1f, 10, "A multiplier for dynlight radii (default: 1).",
 	"rend-light-radius-max", 0,			CVT_INT,	&dlMaxRad,		64,	512, "Maximum radius of dynamic lights (default: 128).",
 	"rend-light-wall-angle", CVF_NO_MAX, CVT_FLOAT,	&rend_light_wall_angle, 0, 0, "Intensity of angle-based wall light.",
+	// * Render-Light-Decor
+	"rend-light-decor",		0,			CVT_BYTE,	&useDecorations, 0, 1,	"1=Enable surface light decorations.",
+	"rend-light-decor-plane-far", CVF_NO_MAX, CVT_FLOAT, &decorPlaneMaxDist, 0, 0, "Maximum distance at which plane light decorations are visible.",
+	"rend-light-decor-wall-far", CVF_NO_MAX, CVT_FLOAT, &decorWallMaxDist, 0, 0, "Maximum distance at which wall light decorations are visible.",
+	"rend-light-decor-plane-bright", 0,	CVT_FLOAT,	&decorPlaneFactor, 0, 10, "Brightness of plane light decorations.",
+	"rend-light-decor-wall-bright", 0,	CVT_FLOAT,	&decorWallFactor, 0, 10, "Brightness of wall light decorations.",
 	// * Render-Glow
 	"rend-glow",			0,			CVT_INT,	&r_texglow,		0, 1,	"1=Enable glowing textures.",
 	"rend-glow-wall",		0,			CVT_INT,	&useWallGlow,	0, 1,	"1=Render glow on walls.",
