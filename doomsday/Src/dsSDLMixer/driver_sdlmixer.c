@@ -39,7 +39,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define BUFFERED_MUSIC_FILE "/tmp/deng-sdlmixer-buffered-song"
-#define DEFAULT_MIDI_COMMAND "timidity"
+#define DEFAULT_MIDI_COMMAND "" //"timidity"
 
 // TYPES -------------------------------------------------------------------
 
@@ -618,6 +618,10 @@ int	DM_Mus_Play(int looped)
 
 	if(command == NULL)
 		command = DEFAULT_MIDI_COMMAND;
+
+	// If the midi command is empty, use NULL instead.
+	if(command[0] == 0)
+		command = NULL;
 	
 	convertMusToMidi(song, songSize, BUFFERED_MUSIC_FILE);
 	Mix_SetMusicCMD(command);
