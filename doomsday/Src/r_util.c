@@ -268,3 +268,40 @@ line_t *R_GetLineForSide(int sideNumber)
 	
 	return NULL;
 }
+
+//===========================================================================
+// R_IsPointInSector
+//	Returns true if the point is inside the sector, according to the lines
+//	that completely surround the sector. Uses the well-known algorithm 
+//	described here: http://www.alienryderflex.com/polygon/
+//===========================================================================
+boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
+{
+	int	i; 
+	boolean isOdd = false;
+	vertex_t *vi, *vj;
+
+	for(i = 0; i < sector->linecount; i++) 
+	{
+		// Skip lines that aren't sector boundaries.
+		if(sector->lines[i]->frontsector == sector
+			&& sector->lines[i]->backsector == sector) continue;
+
+		// It shouldn't matter whether the line faces inward or outward.
+		vi = sector->lines[i]->v1;
+		vj = sector->lines[i]->v2;
+				
+		if(vi->y < y && vj->y >= y || vj->y < y && vi->y >= y) 
+		{
+			if(vi->x + FixedMul(FixedDiv(y - vi->y, vj->y - vi->y),
+				vj->x - vi->x) < x) 
+			{
+				// Toggle oddness.
+				isOdd = !isOdd;
+			}
+		}
+	}
+	
+	// The point is inside if the number of crossed nodes is odd.
+	return isOdd;
+}
