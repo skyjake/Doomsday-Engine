@@ -2,7 +2,7 @@
                    Doomsday Engine Definitions Reference
                         (or "Knee-Deep In The DED")
                    =====================================
-                       Revision 0.9.0 -- 06/10/2003
+                       Revision 0.9.1 -- 08/17/2003
 
         Contact <skyjake@doomsdayhq.com> if you have any questions.
 
@@ -304,6 +304,15 @@ all keys).
 
     Color { 0.0 0.0 0.0 };
         # Sets all three color components at the same time.
+        
+    Top map = "";
+    Bottom map = "";
+    Side map = "";
+        # Name of the light map to use. The top map is used for ceiling
+        # planes, the bottom map for floors and the side map for walls.
+        # If left blank (the default), the standard round dynlight texture
+        # is used. Use "-" to disable a map entirely. No light will then be
+        # cast in the direction.
 }
 
 ...........................................................................
@@ -369,6 +378,15 @@ from an IWAD.
             # 2 = FLARE.
             # 3 = BRFLARE.
             # 4 = BIGFLARE.
+            
+        Top map = "";
+        Bottom map = "";
+        Side map = "";
+            # Name of the light map to use. The top map is used for ceiling
+            # planes, the bottom map for floors and the side map for walls.
+            # If left blank (the default), the standard round dynlight texture
+            # is used. Use "-" to disable a map entirely. No light will then be
+            # cast in the direction.
             
         Levels { 0 0 };
             # Two integers (0-255) that mark the sector light levels where
@@ -553,8 +571,20 @@ generators will be destroyed to make room for any new generators.
         # gnf_spawn: Generator is only spawned if the source mobj is
         #       being spawned.
         #
-        # gnf_blend: Particles of the generator are rendered using
-        #       additive blending.
+        # gnf_blendadd: Particles of the generator are rendered using
+        #       additive blending ('gnf_blend' is an alias for this).
+        #
+        # gnf_blendrsub: Particles of the generator are rendered using
+        #       reverse subtractive blending (framebuffer - particle).
+        #
+        # gnf_blendsub: Particles of the generator are rendered using
+        #       subtractive blending (particle - framebuffer).
+        #
+        # gnf_blendmul: Particles of the generator are rendered using
+        #       multiplicative blending (particle * framebuffer).
+        #
+        # gnf_blendimul: Particles of the generator are rendered using
+        #       inverse multiplicative blending ((1-ptc) * framebuffer).
         #
         # gnf_modelonly: The particle generator will only be active
         #       if the source is represented by a 3D model.
@@ -1332,3 +1362,5 @@ Shortcuts:
 
 ---------------------------------------------------------------------------
                    Doomsday Engine Definitions Reference
+
+$Id$
