@@ -27,7 +27,7 @@
 #include "de_base.h"
 #include "de_network.h"
 #ifdef _DEBUG
-# include "de_console.h"
+#  include "de_console.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -62,29 +62,29 @@ void Msg_WriteByte(byte b)
 
 void Msg_WriteShort(short w)
 {
-	*(short*) netBuffer.cursor = w;
+	*(short *) netBuffer.cursor = w;
 	netBuffer.cursor += 2;
 }
 
 //==========================================================================
 // Msg_WritePackedShort
-//	Only 15 bits can be used for the number because the high bit of the 
-//	lower byte is used to determine whether the upper byte follows or not.
+//  Only 15 bits can be used for the number because the high bit of the 
+//  lower byte is used to determine whether the upper byte follows or not.
 //==========================================================================
 void Msg_WritePackedShort(short w)
 {
-	if(w < 0x80) // Can the number be represented with 7 bits?
+	if(w < 0x80)				// Can the number be represented with 7 bits?
 		Msg_WriteByte(w);
 	else
 	{
 		Msg_WriteByte(0x80 | w);
-		Msg_WriteByte(w >> 7); // Highest bit is lost.
+		Msg_WriteByte(w >> 7);	// Highest bit is lost.
 	}
 }
 
 void Msg_WriteLong(int l)
 {
-	*(int*) netBuffer.cursor = l;
+	*(int *) netBuffer.cursor = l;
 	netBuffer.cursor += 4;
 }
 
@@ -97,7 +97,7 @@ void Msg_Write(const void *src, int len)
 byte Msg_ReadByte(void)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length) 
+	if(Msg_Offset() >= netBuffer.length)
 		Con_Error("Packet read overflow!\n");
 #endif
 	return *netBuffer.cursor++;
@@ -106,22 +106,23 @@ byte Msg_ReadByte(void)
 short Msg_ReadShort(void)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length) 
+	if(Msg_Offset() >= netBuffer.length)
 		Con_Error("Packet read overflow!\n");
 #endif
 	netBuffer.cursor += 2;
-	return *(short*) (netBuffer.cursor-2);
+	return *(short *) (netBuffer.cursor - 2);
 }
 
 //==========================================================================
 // Msg_ReadPackedShort
-//	Only 15 bits can be used for the number because the high bit of the 
-//	lower byte is used to determine whether the upper byte follows or not.
+//  Only 15 bits can be used for the number because the high bit of the 
+//  lower byte is used to determine whether the upper byte follows or not.
 //==========================================================================
 short Msg_ReadPackedShort(void)
 {
-	short pack = *netBuffer.cursor++;
-	if(pack & 0x80) 
+	short   pack = *netBuffer.cursor++;
+
+	if(pack & 0x80)
 	{
 		pack &= ~0x80;
 		pack |= (*netBuffer.cursor++) << 7;
@@ -132,17 +133,17 @@ short Msg_ReadPackedShort(void)
 int Msg_ReadLong(void)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length) 
+	if(Msg_Offset() >= netBuffer.length)
 		Con_Error("Packet read overflow!\n");
 #endif
 	netBuffer.cursor += 4;
-	return *(int*) (netBuffer.cursor-4);
+	return *(int *) (netBuffer.cursor - 4);
 }
 
 void Msg_Read(void *dest, int len)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length) 
+	if(Msg_Offset() >= netBuffer.length)
 		Con_Error("Packet read overflow!\n");
 #endif
 	memcpy(dest, netBuffer.cursor, len);
@@ -166,5 +167,5 @@ int Msg_MemoryLeft(void)
 
 boolean Msg_End(void)
 {
-	return (netBuffer.cursor-netBuffer.msg.data >= netBuffer.length);
+	return (netBuffer.cursor - netBuffer.msg.data >= netBuffer.length);
 }

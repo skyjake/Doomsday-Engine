@@ -32,7 +32,7 @@
 
 #define MASTER_QUEUE_LEN	16
 #define NETEVENT_QUEUE_LEN	32
-#define MASTER_HEARTBEAT	120 // seconds
+#define MASTER_HEARTBEAT	120	// seconds
 
 // TYPES -------------------------------------------------------------------
 
@@ -71,10 +71,11 @@ void N_MAPost(masteraction_t act)
 /*
  * Get a master action command from the queue.
  */
-boolean N_MAGet(masteraction_t *act)
+boolean N_MAGet(masteraction_t * act)
 {
 	// Empty queue?
-	if(mqHead == mqTail) return false;	
+	if(mqHead == mqTail)
+		return false;
 	*act = masterQueue[mqTail];
 	return true;
 }
@@ -109,7 +110,7 @@ boolean N_MADone(void)
 /*
  * Add a net event to the queue, to wait for processing.
  */
-void N_NEPost(netevent_t *nev)
+void N_NEPost(netevent_t * nev)
 {
 	netEventQueue[neqHead] = *nev;
 	neqHead = (neqHead + 1) % NETEVENT_QUEUE_LEN;
@@ -129,10 +130,11 @@ boolean N_NEPending(void)
  * Get a net event from the queue. Returns true if an event was 
  * returned.
  */
-boolean N_NEGet(netevent_t *nev)
+boolean N_NEGet(netevent_t * nev)
 {
 	// Empty queue?
-	if(!N_NEPending()) return false;	
+	if(!N_NEPending())
+		return false;
 	*nev = netEventQueue[neqTail];
 	neqTail = (neqTail + 1) % NETEVENT_QUEUE_LEN;
 	return true;
@@ -144,13 +146,13 @@ boolean N_NEGet(netevent_t *nev)
 void N_NETicker(void)
 {
 	masteraction_t act;
-	int	i, num;
+	int     i, num;
 
 	if(netgame)
 	{
 		// Update master every 2 minutes.
-		if(masterAware && N_UsingInternet() &&
-		   !(SECONDS_TO_TICKS(sysTime) % (MASTER_HEARTBEAT*TICRATE)))
+		if(masterAware && N_UsingInternet()
+		   && !(SECONDS_TO_TICKS(sysTime) % (MASTER_HEARTBEAT * TICRATE)))
 		{
 			N_MasterAnnounceServer(true);
 		}
@@ -159,12 +161,12 @@ void N_NETicker(void)
 	// Is there a master action to worry about?
 	if(N_MAGet(&act))
 	{
-		switch(act)
+		switch (act)
 		{
 		case MAC_REQUEST:
 			// Send the request for servers.
 			N_MasterRequestList();
-			N_MARemove();					
+			N_MARemove();
 			break;
 
 		case MAC_WAIT:
@@ -183,18 +185,20 @@ void N_NETicker(void)
 			while(--i >= 0)
 			{
 				serverinfo_t info;
+
 				N_MasterGet(i, &info);
 				/*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", 
-					i, info.name,
-					info.players, info.maxPlayers,
-					info.canJoin? ' ':'*', info.version, info.game,
-					info.address, info.port);
-				Con_Printf("    %s (%x) %s\n", info.map, info.data[0], 
-					info.description);*/
+				 * i, info.name,
+				 * info.players, info.maxPlayers,
+				 * info.canJoin? ' ':'*', info.version, info.game,
+				 * info.address, info.port);
+				 * Con_Printf("    %s (%x) %s\n", info.map, info.data[0], 
+				 * info.description); */
 				Net_PrintServerInfo(i, &info);
 			}
-			Con_Printf("%i server%s found.\n", num, num!=1? "s were" : " was");
-			N_MARemove();			
+			Con_Printf("%i server%s found.\n", num,
+					   num != 1 ? "s were" : " was");
+			N_MARemove();
 			break;
 		}
 	}
@@ -207,7 +211,7 @@ void N_NETicker(void)
 void N_Update(void)
 {
 	netevent_t event;
-	char name[256];
+	char    name[256];
 
 	// Remove all confirmed messages in the Send Message Store.
 	N_SMSDestroyConfirmed();
@@ -218,13 +222,13 @@ void N_Update(void)
 	// Are there any events to process?
 	while(N_NEGet(&event))
 	{
-		switch(event.type)
+		switch (event.type)
 		{
 		case NE_CLIENT_ENTRY:
 			// Find out the name of the new player.
 			memset(name, 0, sizeof(name));
 			N_GetNodeName(event.id, name);
-			
+
 			// Assign a console to the new player.
 			Sv_PlayerArrives(event.id, name);
 			break;
@@ -260,12 +264,11 @@ void N_Update(void)
  */
 void N_TerminateClient(int console)
 {
-	if(!N_IsAvailable() 
-		|| !clients[console].connected 
-		|| !netServerMode) return;
+	if(!N_IsAvailable() || !clients[console].connected || !netServerMode)
+		return;
 
-	Con_Message("N_TerminateClient: '%s' from console %i.\n", 
-		clients[console].name, console);
+	Con_Message("N_TerminateClient: '%s' from console %i.\n",
+				clients[console].name, console);
 
 	// Clear this client's Sent Message Store.
 	N_SMSReset(console);

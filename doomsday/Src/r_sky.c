@@ -41,9 +41,9 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-skymodel_t	skyModels[NUM_SKY_MODELS];
-boolean		skyModelsInited = false;
-boolean		alwaysDrawSphere = false;
+skymodel_t skyModels[NUM_SKY_MODELS];
+boolean skyModelsInited = false;
+boolean alwaysDrawSphere = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -52,9 +52,9 @@ boolean		alwaysDrawSphere = false;
 /*
  * The sky models are set up using the data in the definition.
  */
-void R_SetupSkyModels(ded_mapinfo_t *info)
+void R_SetupSkyModels(ded_mapinfo_t * info)
 {
-	int i;
+	int     i;
 	ded_skymodel_t *def;
 	skymodel_t *sky;
 
@@ -67,11 +67,11 @@ void R_SetupSkyModels(ded_mapinfo_t *info)
 	// The normal sphere is used if no models will be set up.
 	skyModelsInited = false;
 
-	for(i = 0, def = info->sky_models, sky = skyModels; 
-		i < NUM_SKY_MODELS; i++, def++, sky++)
+	for(i = 0, def = info->sky_models, sky = skyModels; i < NUM_SKY_MODELS;
+		i++, def++, sky++)
 	{
 		// Is the model ID set?
-		if((sky->model = R_CheckIDModelFor(def->id)) == NULL) 
+		if((sky->model = R_CheckIDModelFor(def->id)) == NULL)
 			continue;
 
 		// There is a model here.
@@ -89,14 +89,16 @@ void R_SetupSkyModels(ded_mapinfo_t *info)
  */
 void R_PrecacheSky(void)
 {
-	int i;
+	int     i;
 	skymodel_t *sky;
 
-	if(!skyModelsInited) return;
+	if(!skyModelsInited)
+		return;
 
 	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
 	{
-		if(!sky->def) continue;
+		if(!sky->def)
+			continue;
 		R_PrecacheModelSkins(sky->model);
 	}
 }
@@ -106,14 +108,16 @@ void R_PrecacheSky(void)
  */
 void R_SkyTicker(void)
 {
-	int i;
+	int     i;
 	skymodel_t *sky;
 
-	if(!skyModelsInited || clientPaused) return;
+	if(!skyModelsInited || clientPaused)
+		return;
 
 	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
 	{
-		if(!sky->def) continue;
+		if(!sky->def)
+			continue;
 
 		// Turn the model.
 		sky->yaw += sky->def->yaw_speed / TICSPERSEC;
@@ -125,7 +129,8 @@ void R_SkyTicker(void)
 			sky->frame++;
 
 			// Execute a console command?
-			if(sky->def->execute) Con_Execute(sky->def->execute, true);
+			if(sky->def->execute)
+				Con_Execute(sky->def->execute, true);
 		}
 	}
 }

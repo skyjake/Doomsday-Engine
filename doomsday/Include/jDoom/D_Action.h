@@ -5,8 +5,7 @@
 
 // These must correspond the action_t's in the actions array!
 // Info needed in building ticcmds should be here.
-typedef enum 
-{
+typedef enum {
 	// Game controls.
 	A_TURNLEFT,
 	A_TURNRIGHT,
@@ -37,7 +36,7 @@ typedef enum
 	A_JUMP,
 
 	// Game system actions.
-	A_STOPDEMO,		
+	A_STOPDEMO,
 
 	A_WEAPONCYCLE1,
 	A_WEAPONCYCLE2,
@@ -46,6 +45,6 @@ typedef enum
 } haction_t;
 
 // This is the actions array.
-extern action_t actions[NUM_ACTIONS+1];
+extern action_t actions[NUM_ACTIONS + 1];
 
 #endif

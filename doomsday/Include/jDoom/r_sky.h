@@ -15,14 +15,12 @@
 // for more details.
 //
 // DESCRIPTION:
-//	Sky rendering.
+//  Sky rendering.
 //
 //-----------------------------------------------------------------------------
 
-
 #ifndef __R_SKY__
 #define __R_SKY__
-
 
 #ifdef __GNUG__
 #pragma interface
@@ -32,12 +30,15 @@
 #define SKYFLATNAME  "F_SKY1"
 
 // Called whenever the view size changes.
-void R_InitSkyMap (void);
+void            R_InitSkyMap(void);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.4  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -58,4 +59,3 @@ void R_InitSkyMap (void);
 //
 //
 //-----------------------------------------------------------------------------
-

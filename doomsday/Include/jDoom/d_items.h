@@ -15,10 +15,9 @@
 // for more details.
 //
 // DESCRIPTION:
-//	Items: key cards, artifacts, weapon, ammunition.
+//  Items: key cards, artifacts, weapon, ammunition.
 //
 //-----------------------------------------------------------------------------
-
 
 #ifndef __D_ITEMS__
 #define __D_ITEMS__
@@ -29,29 +28,30 @@
 #pragma interface
 #endif
 
-
 // Weapon info: sprite frames, ammunition use.
-typedef struct
-{
-    ammotype_t ammo;
-	int		pershot;	// Ammo used per shot.
-    int		upstate;
-    int		downstate;
-    int		readystate;
-    int		atkstate;
-    int		flashstate;
-	int		static_switch;	// Weapon is not lowered during switch.
+typedef struct {
+	ammotype_t      ammo;
+	int             pershot;	   // Ammo used per shot.
+	int             upstate;
+	int             downstate;
+	int             readystate;
+	int             atkstate;
+	int             flashstate;
+	int             static_switch; // Weapon is not lowered during switch.
 
 } weaponinfo_t;
 
-extern  weaponinfo_t    weaponinfo[NUMWEAPONS];
+extern weaponinfo_t weaponinfo[NUMWEAPONS];
 
-void P_InitWeaponInfo(void);
+void            P_InitWeaponInfo(void);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.4  2004/05/28 17:16:34  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -72,4 +72,3 @@ void P_InitWeaponInfo(void);
 //
 //
 //-----------------------------------------------------------------------------
-

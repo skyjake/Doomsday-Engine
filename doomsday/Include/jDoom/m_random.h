@@ -19,30 +19,28 @@
 //    
 //-----------------------------------------------------------------------------
 
-
 #ifndef __M_RANDOM__
 #define __M_RANDOM__
 
-
 #include "doomtype.h"
-
-
 
 // Returns a number from 0 to 255,
 // from a lookup table.
 //int M_Random (void);
 
 // As M_Random, but used only by the play simulation.
-int P_Random (void);
+int             P_Random(void);
 
 // Fix randoms for demos.
-void M_ClearRandom (void);
-
+void            M_ClearRandom(void);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -60,4 +58,3 @@ void M_ClearRandom (void);
 //
 //
 //-----------------------------------------------------------------------------
-

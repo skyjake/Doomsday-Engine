@@ -25,24 +25,22 @@
 #include "dd_share.h"
 #include "p_mobj.h"
 
-typedef enum
-{
+typedef enum {
 	DT_MOBJ,
 	DT_PLAYER,
 	DT_SECTOR,
 	DT_SIDE,
 	DT_POLY,
 	DT_LUMP,
-	DT_SOUND,			// No emitter
-	DT_MOBJ_SOUND,		
+	DT_SOUND,					   // No emitter
+	DT_MOBJ_SOUND,
 	DT_SECTOR_SOUND,
 	DT_POLY_SOUND,
 	NUM_DELTA_TYPES,
 
 	// Special types: (only in the psv_frame2 packet)
-	DT_NULL_MOBJ,		// Mobj was removed (just type and ID).
-	DT_CREATE_MOBJ		// Regular DT_MOBJ, but the mobj was just created.
-
+	DT_NULL_MOBJ,				   // Mobj was removed (just type and ID).
+	DT_CREATE_MOBJ				   // Regular DT_MOBJ, but the mobj was just created.
 } deltatype_t;
 
 // OR'd with the type number when resending Unacked deltas.
@@ -75,7 +73,7 @@ typedef enum
 #define MDFC_TRANSLUCENCY		0x40000	// Mobj has translucency.
 
 // Extra flags for the Extra Flags byte.
-#define MDFE_FAST_MOM			0x01	// Momentum has 10.6 bits (+/- 512)	
+#define MDFE_FAST_MOM			0x01	// Momentum has 10.6 bits (+/- 512)
 #define MDFE_TRANSLUCENCY		0x02
 #define MDFE_Z_FLOOR			0x04	// Mobj z is on the floor.
 #define MDFE_Z_CEILING			0x08	// Mobj z+hgt is in the ceiling.
@@ -154,136 +152,112 @@ typedef enum deltastate_e {
  * All delta structures begin the same way (with a delta_t).
  * That way they can all be linked into the same hash table.
  */
-typedef struct delta_s 
-{
+typedef struct delta_s {
 	// Links to the next and previous delta in the hash.
 	struct delta_s *next, *prev;
 
 	// The ID number and type determine the entity this delta applies to.
-	deltatype_t type;
-	uint id;
+	deltatype_t     type;
+	uint            id;
 
 	// The priority score tells how badly the delta needs to be sent to
 	// the client.
-	float score;
+	float           score;
 
 	// Deltas can be either New or Unacked. New deltas haven't yet been sent.
-	deltastate_t state;
+	deltastate_t    state;
 
 	// ID of the delta set. Assigned when the delta is sent to a client.
 	// All deltas in the same frame update have the same set ID.
 	// Clients acknowledge complete sets (and then the whole set is removed).
-	byte set;		
+	byte            set;
 
 	// Resend ID of this delta. Assigned when the delta is first resent.
 	// Zero means there is no resend ID.
-	byte resend;
-					
+	byte            resend;
+
 	// System time when the delta was sent.
-	uint timeStamp;
+	uint            timeStamp;
 
-	int flags;		
-} 
-delta_t;
+	int             flags;
+} delta_t;
 
-typedef mobj_t dt_mobj_t;
+typedef mobj_t  dt_mobj_t;
 
-typedef struct 
-{
-	delta_t	delta;				// The header.
-	dt_mobj_t mo;				// The data of the delta.
-} 
-mobjdelta_t;
+typedef struct {
+	delta_t         delta;		   // The header.
+	dt_mobj_t       mo;			   // The data of the delta.
+} mobjdelta_t;
 
-typedef struct
-{
-	thid_t		mobj;
-	char		forwardMove;
-	char		sideMove;
-	int			angle;
-	int			turnDelta;
-	int			friction;
-	int			extraLight;
-	int			fixedColorMap;
-	int			filter;
-	int			clYaw;
-	float		clPitch;
-	ddpsprite_t	psp[2];			// Player sprites.
-}
-dt_player_t;
+typedef struct {
+	thid_t          mobj;
+	char            forwardMove;
+	char            sideMove;
+	int             angle;
+	int             turnDelta;
+	int             friction;
+	int             extraLight;
+	int             fixedColorMap;
+	int             filter;
+	int             clYaw;
+	float           clPitch;
+	ddpsprite_t     psp[2];		   // Player sprites.
+} dt_player_t;
 
-typedef struct
-{
-	delta_t	delta;				// The header.
-	dt_player_t player;
-} 
-playerdelta_t;
+typedef struct {
+	delta_t         delta;		   // The header.
+	dt_player_t     player;
+} playerdelta_t;
 
-typedef struct
-{
-	short		floorPic;
-	short		ceilingPic;
-	short		lightlevel;
-	byte		rgb[3];
-	plane_t		planes[2];
-	int			floorHeight;
-	int			ceilingHeight;
-}
-dt_sector_t;
+typedef struct {
+	short           floorPic;
+	short           ceilingPic;
+	short           lightlevel;
+	byte            rgb[3];
+	plane_t         planes[2];
+	int             floorHeight;
+	int             ceilingHeight;
+} dt_sector_t;
 
-typedef struct
-{
-	delta_t		delta;
-	dt_sector_t	sector;
-} 
-sectordelta_t;
+typedef struct {
+	delta_t         delta;
+	dt_sector_t     sector;
+} sectordelta_t;
 
-typedef struct
-{
-	delta_t		delta;
-} 
-lumpdelta_t;
+typedef struct {
+	delta_t         delta;
+} lumpdelta_t;
 
-typedef struct
-{
-	short		topTexture;
-	short		midTexture;
-	short		bottomTexture;
-	byte		lineFlags;	// note: only a byte!
-}
-dt_side_t;
+typedef struct {
+	short           topTexture;
+	short           midTexture;
+	short           bottomTexture;
+	byte            lineFlags;	   // note: only a byte!
+} dt_side_t;
 
-typedef struct
-{
-	delta_t		delta;
-	dt_side_t	side;
-} 
-sidedelta_t;
+typedef struct {
+	delta_t         delta;
+	dt_side_t       side;
+} sidedelta_t;
 
-typedef struct
-{
-	vertex_t	dest;
-	int			speed;				
-	angle_t		destAngle;
-	angle_t		angleSpeed;	
-}
-dt_poly_t;
+typedef struct {
+	vertex_t        dest;
+	int             speed;
+	angle_t         destAngle;
+	angle_t         angleSpeed;
+} dt_poly_t;
 
-typedef struct
-{
-	delta_t		delta;
-	dt_poly_t	po;
-} 
-polydelta_t;
+typedef struct {
+	delta_t         delta;
+	dt_poly_t       po;
+} polydelta_t;
 
-typedef struct
-{
-	delta_t		delta;		// id = Emitter identifier (mobjid/sectoridx)
-	int			sound;		// Sound ID
-	mobj_t		*mobj;
-	float		volume;
-}
-sounddelta_t;
+typedef struct {
+	delta_t         delta;		   // id = Emitter identifier (mobjid/sectoridx)
+	int             sound;		   // Sound ID
+	mobj_t         *mobj;
+	float           volume;
+} sounddelta_t;
 
 /*
  * One hash table holds all the deltas in a pool.
@@ -300,93 +274,84 @@ sounddelta_t;
  */
 #define POOL_MISSILE_HASH_SIZE		256
 
-typedef struct misrecord_s
-{
+typedef struct misrecord_s {
 	struct misrecord_s *next, *prev;
-	thid_t id;
+	thid_t          id;
 	//fixed_t momx, momy, momz;
-}
-misrecord_t;
+} misrecord_t;
 
-typedef struct mislink_s 
-{
-	misrecord_t *first, *last;
-}
-mislink_t;
+typedef struct mislink_s {
+	misrecord_t    *first, *last;
+} mislink_t;
 
-typedef struct deltalink_s
-{
+typedef struct deltalink_s {
 	// Links to the first and last delta in the hash key.
 	struct delta_s *first, *last;
-}
-deltalink_t;
+} deltalink_t;
 
 /*
  * When calculating priority scores, this struct is used to store
  * information about the owner of the pool.
  */
-typedef struct ownerinfo_s
-{
-	struct pool_s *pool;
-	fixed_t	x, y, z;		// Distance is the most important factor
-	angle_t angle;			// Angle can change rapidly => not very important
-	fixed_t speed;
-	uint ackThreshold;		// Expected ack time in milliseconds
-}
-ownerinfo_t;
+typedef struct ownerinfo_s {
+	struct pool_s  *pool;
+	fixed_t         x, y, z;	   // Distance is the most important factor
+	angle_t         angle;		   // Angle can change rapidly => not very important
+	fixed_t         speed;
+	uint            ackThreshold;  // Expected ack time in milliseconds
+} ownerinfo_t;
 
 /*
  * Each client has a delta pool. 
  */
-typedef struct pool_s
-{
+typedef struct pool_s {
 	// True if the first frame has not yet been sent.
-	boolean isFirst;
+	boolean         isFirst;
 
 	// The number of the console this pool belongs to. (i.e. player number)
-	uint owner;
-	ownerinfo_t ownerInfo;
+	uint            owner;
+	ownerinfo_t     ownerInfo;
 
 	// The set ID numbers are generated using this value. It's 
 	// incremented after each transmitted set.
-	byte setDealer;
+	byte            setDealer;
 
 	// The resend ID numbers are generated using this value. It's incremented
 	// for each resent delta. Zero is not used.
-	byte resendDealer;
+	byte            resendDealer;
 
 	// The delta hash table holds all kinds of deltas.
-	deltalink_t hash[POOL_HASH_SIZE];
-	
+	deltalink_t     hash[POOL_HASH_SIZE];
+
 	// The missile record is used to detect when the mobj coordinates need
 	// not be sent.
-	mislink_t misHash[POOL_MISSILE_HASH_SIZE];
+	mislink_t       misHash[POOL_MISSILE_HASH_SIZE];
 
 	// The priority queue (a heap). Built when the pool contents are rated.
 	// Contains pointers to deltas in the hash. Becomes invalid when deltas
 	// are removed from the hash!
-	int queueSize;
-	int allocatedSize;
-	delta_t **queue;
-} 
-pool_t;
+	int             queueSize;
+	int             allocatedSize;
+	delta_t       **queue;
+} pool_t;
 
-void		Sv_InitPools(void);
-void		Sv_ShutdownPools(void);
-void		Sv_DrainPool(int clientNumber);
-void		Sv_InitPoolForClient(int clientNumber);
-void		Sv_MobjRemoved(thid_t id);
-void		Sv_PlayerRemoved(int playerNumber);
-void		Sv_GenerateFrameDeltas(void);
-boolean		Sv_IsFrameTarget(int number);
-uint		Sv_GetTimeStamp(void);
-pool_t*		Sv_GetPool(int consoleNumber);
-void		Sv_RatePool(pool_t *pool);
-delta_t*	Sv_PoolQueueExtract(pool_t *pool);
-void		Sv_AckDeltaSet(int consoleNumber, int set, byte resent);
+void            Sv_InitPools(void);
+void            Sv_ShutdownPools(void);
+void            Sv_DrainPool(int clientNumber);
+void            Sv_InitPoolForClient(int clientNumber);
+void            Sv_MobjRemoved(thid_t id);
+void            Sv_PlayerRemoved(int playerNumber);
+void            Sv_GenerateFrameDeltas(void);
+boolean         Sv_IsFrameTarget(int number);
+uint            Sv_GetTimeStamp(void);
+pool_t         *Sv_GetPool(int consoleNumber);
+void            Sv_RatePool(pool_t * pool);
+delta_t        *Sv_PoolQueueExtract(pool_t * pool);
+void            Sv_AckDeltaSet(int consoleNumber, int set, byte resent);
 
-void		Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector, 
-				int sourcePoly, float volume, boolean isRepeating, 
-				int justForClient);
+void            Sv_NewSoundDelta(int soundId, mobj_t * emitter,
+								 int sourceSector, int sourcePoly,
+								 float volume, boolean isRepeating,
+								 int justForClient);
 
 #endif

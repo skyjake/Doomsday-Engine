@@ -32,7 +32,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LINELEN 256		// Lazy: This is the max acceptable window width.
+#define LINELEN 256				// Lazy: This is the max acceptable window width.
 
 // TYPES -------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ static int needNewLine = false;
 
 void Sys_ConUpdateTitle(void)
 {
-	char title[256];
+	char    title[256];
 
 	DD_MainWindowTitle(title);
 
@@ -69,15 +69,15 @@ void Sys_ConUpdateTitle(void)
 	wclrtoeol(winTitle);
 
 	// Center the title.
-	wmove(winTitle, 0, getmaxx(winTitle)/2 - strlen(title)/2);
+	wmove(winTitle, 0, getmaxx(winTitle) / 2 - strlen(title) / 2);
 	waddstr(winTitle, title);
 	wrefresh(winTitle);
 }
 
 void Sys_ConInit(void)
 {
-	int maxPos[2];
-	
+	int     maxPos[2];
+
 	// Initialize curses.
 	initscr();
 	cbreak();
@@ -86,7 +86,7 @@ void Sys_ConInit(void)
 
 	// The current size of the screen.
 	getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
-	
+
 	// Create the three windows we will be using.
 	winTitle = newwin(1, maxPos[VX], 0, 0);
 	winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
@@ -105,7 +105,7 @@ void Sys_ConInit(void)
 
 	keypad(winCommand, TRUE);
 	nodelay(winCommand, TRUE);
-	Sys_ConUpdateCmdLine("");	
+	Sys_ConUpdateCmdLine("");
 }
 
 void Sys_ConShutdown(void)
@@ -121,11 +121,12 @@ void Sys_ConShutdown(void)
 
 int Sys_ConTranslateKey(int key)
 {
-	if(key >= 32 && key <= 127) return key;
+	if(key >= 32 && key <= 127)
+		return key;
 
 	//fprintf(outFile, "key=%i\n", key);
-	
-	switch(key)
+
+	switch (key)
 	{
 	case '\r':
 	case '\n':
@@ -154,32 +155,32 @@ int Sys_ConTranslateKey(int key)
 void Sys_ConPostEvents(void)
 {
 	event_t ev;
-	int key;
+	int     key;
 
 	// Get all keys that are waiting.
 	for(key = wgetch(winCommand); key != ERR; key = wgetch(winCommand))
 	{
-/*		if(key == KEY_RESIZE)
-		{
-			int maxPos[2];
+		/*      if(key == KEY_RESIZE)
+		   {
+		   int maxPos[2];
 
-			// The current size of the screen.
-			getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
+		   // The current size of the screen.
+		   getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
 
-			// Resize the windows.
-			wresize(winTitle, 1, maxPos[VX]);
-			wresize(winText, maxPos[VY] - 2, maxPos[VX]);
-			wresize(winCommand, 1, maxPos[VX]);
+		   // Resize the windows.
+		   wresize(winTitle, 1, maxPos[VX]);
+		   wresize(winText, maxPos[VY] - 2, maxPos[VX]);
+		   wresize(winCommand, 1, maxPos[VX]);
 
-			mvwin(winCommand, maxPos[VY] - 1, 0);
-			
-			// Let's redraw everything.
-			Sys_ConUpdateTitle();
-			wrefresh(winText);
-			Sys_ConUpdateCmdLine(NULL);
-			continue;
-			}*/
-		
+		   mvwin(winCommand, maxPos[VY] - 1, 0);
+
+		   // Let's redraw everything.
+		   Sys_ConUpdateTitle();
+		   wrefresh(winText);
+		   Sys_ConUpdateCmdLine(NULL);
+		   continue;
+		   } */
+
 		ev.type = ev_keydown;
 		ev.data1 = Sys_ConTranslateKey(key);
 		DD_PostEvent(&ev);
@@ -213,18 +214,18 @@ void Sys_ConWriteText(const char *line, int len)
 
 int Sys_ConGetScreenSize(int axis)
 {
-	int x, y;
+	int     x, y;
 
 	getmaxyx(winText, y, x);
-	return axis == VX? x : y;
+	return axis == VX ? x : y;
 }
 
 void Sys_ConPrint(int clflags, char *text)
 {
-	char line[LINELEN];
-	int count = strlen(text), lineStart, bPos;
-	char *ptr = text, ch;
-	int maxPos[2];
+	char    line[LINELEN];
+	int     count = strlen(text), lineStart, bPos;
+	char   *ptr = text, ch;
+	int     maxPos[2];
 
 	// Determine the size of the text window.
 	getmaxyx(winText, maxPos[VY], maxPos[VX]);
@@ -249,7 +250,8 @@ void Sys_ConPrint(int clflags, char *text)
 	{
 		ch = *ptr;
 		// Ignore carriage returns.
-		if(ch == '\r') continue;
+		if(ch == '\r')
+			continue;
 		if(ch != '\n' && bPos < maxPos[VX])
 		{
 			line[bPos] = ch;
@@ -262,7 +264,7 @@ void Sys_ConPrint(int clflags, char *text)
 			cx += bPos - lineStart;
 			bPos = 0;
 			lineStart = 0;
-			if(count > 1)	// Not the last character?
+			if(count > 1)		// Not the last character?
 			{
 				needNewLine = false;
 				cx = 0;
@@ -273,10 +275,11 @@ void Sys_ConPrint(int clflags, char *text)
 					cy--;
 				}
 			}
-			else needNewLine = true;
+			else
+				needNewLine = true;
 		}
 	}
-	
+
 	// Something in the buffer?
 	if(bPos - lineStart)
 	{
@@ -292,12 +295,13 @@ void Sys_ConPrint(int clflags, char *text)
 
 void Sys_ConUpdateCmdLine(char *text)
 {
-	char line[LINELEN], *ch;
+	char    line[LINELEN], *ch;
 	unsigned int i, numCols;
 
 	if(text == NULL)
 	{
-		int y, x;
+		int     y, x;
+
 		// Just move the cursor into the command line window.
 		getyx(winCommand, y, x);
 		wmove(winCommand, y, x);
@@ -319,4 +323,4 @@ void Sys_ConUpdateCmdLine(char *text)
 		wclrtoeol(winCommand);
 	}
 	wrefresh(winCommand);
-}	
+}

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.4  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -35,10 +38,9 @@
 //
 //
 // DESCRIPTION:
-//	System specific interface stuff.
+//  System specific interface stuff.
 //
 //-----------------------------------------------------------------------------
-
 
 #ifndef __D_MAIN__
 #define __D_MAIN__
@@ -49,14 +51,10 @@
 #pragma interface
 #endif
 
-
-
 #define MAXWADFILES             20
-extern char*		wadfiles[MAXWADFILES];
+extern char    *wadfiles[MAXWADFILES];
 
-void D_AddFile (char *file);
-
-
+void            D_AddFile(char *file);
 
 //
 // D_DoomMain()
@@ -64,10 +62,9 @@ void D_AddFile (char *file);
 // calls all startup code, parses command line options.
 // If not overrided by user input, calls N_AdvanceDemo.
 //
-void D_DoomMain (void);
+void            D_DoomMain(void);
 
 // Called by IO functions when input is detected.
-void D_PostEvent (event_t* ev);
+void            D_PostEvent(event_t * ev);
 
 #endif
-

@@ -15,8 +15,8 @@
 // for more details.
 //
 // DESCRIPTION:
-//	Refresh (R_*) module, global header.
-//	All the rendering/drawing stuff is here.
+//  Refresh (R_*) module, global header.
+//  All the rendering/drawing stuff is here.
 //
 //-----------------------------------------------------------------------------
 
@@ -32,7 +32,6 @@
 // Include the refresh/render data structs.
 #include "r_data.h"
 
-void R_CachePatch(dpatch_t *dp, char *name);
+void            R_CachePatch(dpatch_t * dp, char *name);
 
-
-#endif		// __R_LOCAL__
+#endif							// __R_LOCAL__

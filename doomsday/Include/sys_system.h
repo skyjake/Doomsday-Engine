@@ -24,36 +24,38 @@
 
 #include "dd_types.h"
 
-typedef int (*systhreadfunc_t)(void *parm);
-typedef int semaphore_t;
+typedef int     (*systhreadfunc_t) (void *parm);
+typedef int     semaphore_t;
 
-extern boolean novideo;
+extern boolean  novideo;
+
 //extern int systics;
 
-void	Sys_Init(void);
-void	Sys_Shutdown(void);
-void	Sys_Quit(void);
-int		Sys_CriticalMessage(char *msg);
-void	Sys_Sleep(int millisecs);
-void	Sys_ShowCursor(boolean show);
-void	Sys_HideMouse(void);
-void	Sys_MessageBox(const char *msg, boolean iserror);
-void	Sys_OpenTextEditor(const char *filename);
-void	Sys_ShowWindow(boolean hide);
+void            Sys_Init(void);
+void            Sys_Shutdown(void);
+void            Sys_Quit(void);
+int             Sys_CriticalMessage(char *msg);
+void            Sys_Sleep(int millisecs);
+void            Sys_ShowCursor(boolean show);
+void            Sys_HideMouse(void);
+void            Sys_MessageBox(const char *msg, boolean iserror);
+void            Sys_OpenTextEditor(const char *filename);
+void            Sys_ShowWindow(boolean hide);
 
 // Threads:
-int		Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority);
-void	Sys_SuspendThread(int handle, boolean dopause);
-int		Sys_WaitThread(int handle);
+int             Sys_StartThread(systhreadfunc_t startpos, void *parm,
+								int priority);
+void            Sys_SuspendThread(int handle, boolean dopause);
+int             Sys_WaitThread(int handle);
 
-int 	Sys_CreateMutex(const char *name); // returns the mutex handle
-void 	Sys_DestroyMutex(int mutexHandle);
-void 	Sys_Lock(int mutexHandle); 
-void 	Sys_Unlock(int mutexHandle);
+int             Sys_CreateMutex(const char *name);	// returns the mutex handle
+void            Sys_DestroyMutex(int mutexHandle);
+void            Sys_Lock(int mutexHandle);
+void            Sys_Unlock(int mutexHandle);
 
-semaphore_t Sem_Create(unsigned int initialValue); // returns handle
-void	Sem_Destroy(semaphore_t semaphore);
-void	Sem_P(semaphore_t semaphore);
-void	Sem_V(semaphore_t semaphore);
+semaphore_t     Sem_Create(unsigned int initialValue);	// returns handle
+void            Sem_Destroy(semaphore_t semaphore);
+void            Sem_P(semaphore_t semaphore);
+void            Sem_V(semaphore_t semaphore);
 
 #endif

@@ -26,19 +26,19 @@
 
 typedef struct skymodel_s {
 	ded_skymodel_t *def;
-	modeldef_t *model;	
-	int frame;
-	int timer;
-	int maxTimer;
-	float yaw;
+	modeldef_t     *model;
+	int             frame;
+	int             timer;
+	int             maxTimer;
+	float           yaw;
 } skymodel_t;
 
-extern skymodel_t	skyModels[NUM_SKY_MODELS];
-extern boolean		skyModelsInited;
-extern boolean		alwaysDrawSphere;
+extern skymodel_t skyModels[NUM_SKY_MODELS];
+extern boolean  skyModelsInited;
+extern boolean  alwaysDrawSphere;
 
-void R_SetupSkyModels(ded_mapinfo_t *info);
-void R_PrecacheSky(void);
-void R_SkyTicker(void);
+void            R_SetupSkyModels(ded_mapinfo_t * info);
+void            R_PrecacheSky(void);
+void            R_SkyTicker(void);
 
-#endif 
+#endif

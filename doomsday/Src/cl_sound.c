@@ -51,14 +51,14 @@
  */
 void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
-	int sound = 0, soundFlags = 0;
-	byte flags = 0;
+	int     sound = 0, soundFlags = 0;
+	byte    flags = 0;
 	clmobj_t *cmo = NULL;
-	thid_t mobjId = 0;
+	thid_t  mobjId = 0;
 	sector_t *sector = NULL;
 	polyobj_t *poly = NULL;
 	mobj_t *emitter = NULL;
-	float volume = 1;
+	float   volume = 1;
 
 	if(type == DT_SOUND)
 	{
@@ -67,7 +67,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 	}
 	else if(type == DT_MOBJ_SOUND)
 	{
-		if((cmo = Cl_FindMobj( mobjId = Msg_ReadShort() )) != NULL)
+		if((cmo = Cl_FindMobj(mobjId = Msg_ReadShort())) != NULL)
 		{
 			if(cmo->flags & CLMF_HIDDEN)
 			{
@@ -79,24 +79,26 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 			{
 				emitter = &cmo->mo;
 			}
-		}		
+		}
 	}
 	else if(type == DT_SECTOR_SOUND)
 	{
-		int index = (ushort) Msg_ReadShort();
+		int     index = (ushort) Msg_ReadShort();
+
 		if(index < numsectors)
 		{
 			sector = SECTOR_PTR(index);
-			emitter = (mobj_t*) &sector->soundorg;
+			emitter = (mobj_t *) & sector->soundorg;
 		}
 	}
-	else /* DT_POLY_SOUND */
+	else						/* DT_POLY_SOUND */
 	{
-		int index = (ushort) Msg_ReadShort();
+		int     index = (ushort) Msg_ReadShort();
+
 		if(index < po_NumPolyobjs)
 		{
 			poly = PO_PTR(index);
-			emitter = (mobj_t*) &poly->startSpot;
+			emitter = (mobj_t *) & poly->startSpot;
 		}
 	}
 
@@ -110,13 +112,14 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
 	if(flags & SNDDF_VOLUME)
 	{
-		byte b = Msg_ReadByte();
+		byte    b = Msg_ReadByte();
+
 		if(b == 255)
 		{
 			// Full volume, no attenuation.
 			soundFlags |= DDSF_NO_ATTENUATION;
 		}
-		else 
+		else
 		{
 			volume = b / 127.0f;
 		}
@@ -128,7 +131,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 	}
 
 	// The delta has been read. Are we skipping?
-	if(skip) return;
+	if(skip)
+		return;
 
 	// Now the entire delta has been read.
 	// Should we start or stop a sound?
@@ -142,21 +146,21 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 			cmo->flags |= CLMF_HIDDEN | CLMF_SOUND;
 			cmo->sound = sound;
 			cmo->volume = volume;
-/*#ifdef _DEBUG
-			Con_Printf("Cl_ReadSoundDelta2(%i): Queueing: id=%i snd=%i vol=%.2f\n",
-				type, mobjId, sound, volume);
-#endif*/
+			/*#ifdef _DEBUG
+			   Con_Printf("Cl_ReadSoundDelta2(%i): Queueing: id=%i snd=%i vol=%.2f\n",
+			   type, mobjId, sound, volume);
+			   #endif */
 			// The sound will be started when the clmobj is unhidden.
-			return; 
+			return;
 		}
 
 		// We will start a sound.
-		if(type != DT_SOUND && !emitter) 
+		if(type != DT_SOUND && !emitter)
 		{
 			// Not enough information.
 #ifdef _DEBUG
 			Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
-				type, sound);
+					   type, sound);
 #endif
 			return;
 		}
@@ -165,9 +169,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 		// from the real player mobj.
 		if(cmo && cmo == playerstate[consoleplayer].cmo)
 		{
-/*#ifdef _DEBUG
-			Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
-#endif*/
+			/*#ifdef _DEBUG
+			   Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
+			   #endif */
 			emitter = players[consoleplayer].mo;
 		}
 
@@ -180,14 +184,14 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
 		S_LocalSoundAtVolume(sound | soundFlags, emitter, volume);
 
-/*#ifdef _DEBUG
-		Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f", 
-			type, sound, flags, volume);
-		if(cmo)	Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-		else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
-		else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-		else Con_Printf("\n");
-#endif*/
+		/*#ifdef _DEBUG
+		   Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f", 
+		   type, sound, flags, volume);
+		   if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
+		   else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+		   else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
+		   else Con_Printf("\n");
+		   #endif */
 	}
 	else if(sound >= 0)
 	{
@@ -197,15 +201,15 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 		{
 			S_StopSound(sound, emitter);
 
-/*#ifdef _DEBUG
-			Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i", 
-				type, sound);
-			if(cmo)	Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-			else if(sector) Con_Printf(", sector=%i\n", 
-				GET_SECTOR_IDX(sector));
-			else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-			else Con_Printf("\n");
-#endif*/
+			/*#ifdef _DEBUG
+			   Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i", 
+			   type, sound);
+			   if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
+			   else if(sector) Con_Printf(", sector=%i\n", 
+			   GET_SECTOR_IDX(sector));
+			   else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
+			   else Con_Printf("\n");
+			   #endif */
 		}
 	}
 }
@@ -215,10 +219,10 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
  */
 void Cl_Sound(void)
 {
-	int sound, volume = 127;
-	float pos[3];
-	byte flags;
-	int num;
+	int     sound, volume = 127;
+	float   pos[3];
+	byte    flags;
+	int     num;
 	mobj_t *mo = NULL;
 
 	flags = Msg_ReadByte();
@@ -237,13 +241,13 @@ void Cl_Sound(void)
 	if(sound < 1 || sound >= defs.count.sounds.num)
 	{
 		Con_Message("Cl_Sound: Out of bounds ID %i.\n", sound);
-		return; // Bad sound ID!
+		return;					// Bad sound ID!
 	}
 #ifdef _DEBUG
 	Con_Printf("Cl_Sound: %i\n", sound);
 #endif
 
-	if(flags & SNDF_VOLUME) 
+	if(flags & SNDF_VOLUME)
 	{
 		volume = Msg_ReadByte();
 		if(volume > 127)
@@ -254,14 +258,15 @@ void Cl_Sound(void)
 	}
 	if(flags & SNDF_ID)
 	{
-		thid_t sourceId = Msg_ReadShort();
+		thid_t  sourceId = Msg_ReadShort();
 		clmobj_t *cmo = Cl_FindMobj(sourceId);
+
 		if(cmo)
 		{
-			S_LocalSoundAtVolume(sound, &cmo->mo, volume/127.0f);
+			S_LocalSoundAtVolume(sound, &cmo->mo, volume / 127.0f);
 		}
 	}
-	else if(flags & SNDF_SECTOR) 
+	else if(flags & SNDF_SECTOR)
 	{
 		num = Msg_ReadPackedShort();
 		if(num < 0 || num >= numsectors)
@@ -269,30 +274,28 @@ void Cl_Sound(void)
 			Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
 			return;
 		}
-		mo = (mobj_t*) &SECTOR_PTR(num)->soundorg;
+		mo = (mobj_t *) & SECTOR_PTR(num)->soundorg;
 		//S_StopSound(0, mo);
-		S_LocalSoundAtVolume(sound, mo, volume/127.0f);
+		S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
 	}
 	else if(flags & SNDF_ORIGIN)
 	{
 		pos[VX] = Msg_ReadShort();
 		pos[VY] = Msg_ReadShort();
 		pos[VZ] = Msg_ReadShort();
-		S_LocalSoundAtVolumeFrom(sound, NULL, pos, volume/127.0f);
+		S_LocalSoundAtVolumeFrom(sound, NULL, pos, volume / 127.0f);
 	}
 	else if(flags & SNDF_PLAYER)
 	{
-		S_LocalSoundAtVolume(sound, 
-			players[(flags & 0xf0) >> 4].mo, 
-			volume/127.0f);
+		S_LocalSoundAtVolume(sound, players[(flags & 0xf0) >> 4].mo,
+							 volume / 127.0f);
 	}
-	else 
+	else
 	{
 		// Play it from "somewhere".
 #ifdef _DEBUG
 		Con_Printf("Cl_Sound: NULL orig sound %i\n", sound);
 #endif
-		S_LocalSoundAtVolume(sound, NULL, volume/127.0f);
+		S_LocalSoundAtVolume(sound, NULL, volume / 127.0f);
 	}
 }
-

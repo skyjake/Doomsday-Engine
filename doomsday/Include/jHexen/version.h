@@ -3,7 +3,7 @@
 
 // Past distributions
 //#define VERSIONTEXT "ID V1.2"
-//#define VERSIONTEXT "RETAIL STORE BETA"		// 9/26/95
+//#define VERSIONTEXT "RETAIL STORE BETA"       // 9/26/95
 //#define VERSIONTEXT "DVL BETA 10 05 95" // Used for GT for testing
 //#define VERSIONTEXT "DVL BETA 10 07 95" // Just an update for Romero
 //#define VERSIONTEXT "FINAL 1.0 (10 13 95)" // Just an update for Romero

@@ -8,16 +8,16 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-#include "doomdef.h"
-#include "d_items.h"
+#  include "doomdef.h"
+#  include "d_items.h"
 #endif
 
 #ifdef __JHERETIC__
-#include "Doomdef.h"
+#  include "Doomdef.h"
 #endif
 
 #ifdef __JHEXEN__
-#include "h2def.h"
+#  include "h2def.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -43,9 +43,10 @@
 //===========================================================================
 void R_PrecachePSprites(void)
 {
-	int i;
+	int     i;
+
 #ifdef __JHEXEN__
-	int k;
+	int     k;
 #endif
 
 	for(i = 0; i < NUMWEAPONS; i++)
@@ -82,7 +83,6 @@ void R_PrecachePSprites(void)
 		R_PrecacheSkinsForState(WeaponInfo[i][k].atkstate);
 		R_PrecacheSkinsForState(WeaponInfo[i][k].holdatkstate);
 		R_PrecacheSkinsForState(WeaponInfo[i][k].flashstate);
-#endif		
+#endif
 	}
 }
-

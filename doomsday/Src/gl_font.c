@@ -25,8 +25,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
-#	define WIN32_LEAN_AND_MEAN
-#	include <windows.h>
+#  	define WIN32_LEAN_AND_MEAN
+#  	include <windows.h>
 #endif
 
 #include <stdio.h>
@@ -41,8 +41,8 @@
 // MACROS ------------------------------------------------------------------
 
 #ifndef WIN32
-#define SYSTEM_FONT			1
-#define SYSTEM_FIXED_FONT 	2
+#  define SYSTEM_FONT			1
+#  define SYSTEM_FIXED_FONT 	2
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -63,24 +63,25 @@ extern HWND hWndMain;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int		initOk = 0;
-static int		numFonts;
-static jfrfont_t *fonts;			// The list of fonts.
-static int		current;			// Index of the current font.
-static char		fontpath[256] = ""; 
+static int initOk = 0;
+static int numFonts;
+static jfrfont_t *fonts;		// The list of fonts.
+static int current;				// Index of the current font.
+static char fontpath[256] = "";
 
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
 // FR_Init
-//	Returns zero if there are no errors.
+//  Returns zero if there are no errors.
 //===========================================================================
 int FR_Init()
 {
-	if(initOk) return -1; // No reinitializations...
+	if(initOk)
+		return -1;				// No reinitializations...
 
 	numFonts = 0;
-	fonts = 0;			// No fonts!
+	fonts = 0;					// No fonts!
 	current = -1;
 	initOk = 1;
 
@@ -101,17 +102,19 @@ int FR_Init()
 
 //===========================================================================
 // FR_DestroyFontIdx
-//	Destroys the font with the index.
+//  Destroys the font with the index.
 //===========================================================================
 static void FR_DestroyFontIdx(int idx)
 {
 	jfrfont_t *font = fonts + idx;
-	
+
 	gl.DeleteTextures(1, &font->texture);
-	memmove(fonts+idx, fonts+idx+1, sizeof(jfrfont_t)*(numFonts-idx-1));
+	memmove(fonts + idx, fonts + idx + 1,
+			sizeof(jfrfont_t) * (numFonts - idx - 1));
 	numFonts--;
-	fonts = realloc(fonts, sizeof(jfrfont_t)*numFonts);
-	if(current == idx) current = -1;
+	fonts = realloc(fonts, sizeof(jfrfont_t) * numFonts);
+	if(current == idx)
+		current = -1;
 }
 
 //===========================================================================
@@ -120,7 +123,8 @@ static void FR_DestroyFontIdx(int idx)
 void FR_Shutdown()
 {
 	// Destroy all fonts.
-	while(numFonts) FR_DestroyFontIdx(0);
+	while(numFonts)
+		FR_DestroyFontIdx(0);
 	fonts = 0;
 	current = -1;
 	initOk = 0;
@@ -129,7 +133,7 @@ void FR_Shutdown()
 //===========================================================================
 // OutByte
 //===========================================================================
-static void OutByte(FILE *f, byte b)
+static void OutByte(FILE * f, byte b)
 {
 	fwrite(&b, sizeof(b), 1, f);
 }
@@ -137,7 +141,7 @@ static void OutByte(FILE *f, byte b)
 //===========================================================================
 // OutShort
 //===========================================================================
-static void OutShort(FILE *f, short s)
+static void OutShort(FILE * f, short s)
 {
 	fwrite(&s, sizeof(s), 1, f);
 }
@@ -145,9 +149,10 @@ static void OutShort(FILE *f, short s)
 //===========================================================================
 // InByte
 //===========================================================================
-static byte InByte(DFILE *f)
+static byte InByte(DFILE * f)
 {
-	byte b;
+	byte    b;
+
 	F_Read(&b, sizeof(b), f);
 	return b;
 }
@@ -155,7 +160,7 @@ static byte InByte(DFILE *f)
 //===========================================================================
 // InShort
 //===========================================================================
-static unsigned short InShort(DFILE *f)
+static unsigned short InShort(DFILE * f)
 {
 	unsigned short s;
 
@@ -168,9 +173,11 @@ static unsigned short InShort(DFILE *f)
 //===========================================================================
 int FR_GetFontIdx(int id)
 {
-	int i;
-	for(i=0; i<numFonts; i++)
-		if(fonts[i].id == id) return i;
+	int     i;
+
+	for(i = 0; i < numFonts; i++)
+		if(fonts[i].id == id)
+			return i;
 	return -1;
 }
 
@@ -179,10 +186,11 @@ int FR_GetFontIdx(int id)
 //===========================================================================
 void FR_DestroyFont(int id)
 {
-	int idx = FR_GetFontIdx(id);
+	int     idx = FR_GetFontIdx(id);
 
 	FR_DestroyFontIdx(idx);
-	if(current == idx) current = -1;
+	if(current == idx)
+		current = -1;
 }
 
 //===========================================================================
@@ -190,8 +198,10 @@ void FR_DestroyFont(int id)
 //===========================================================================
 jfrfont_t *FR_GetFont(int id)
 {
-	int idx = FR_GetFontIdx(id);
-	if(idx == -1) return 0;
+	int     idx = FR_GetFontIdx(id);
+
+	if(idx == -1)
+		return 0;
 	return fonts + idx;
 }
 
@@ -200,9 +210,11 @@ jfrfont_t *FR_GetFont(int id)
 //===========================================================================
 static int FR_GetMaxId()
 {
-	int	i, grid=0;
-	for(i=0; i<numFonts; i++)
-		if(fonts[i].id > grid) grid = fonts[i].id;
+	int     i, grid = 0;
+
+	for(i = 0; i < numFonts; i++)
+		if(fonts[i].id > grid)
+			grid = fonts[i].id;
 	return grid;
 }
 
@@ -212,8 +224,8 @@ static int FR_GetMaxId()
 //===========================================================================
 static int findPow2(int num)
 {
-	int cumul = 1;
-	
+	int     cumul = 1;
+
 	for(; num > cumul; cumul *= 2);
 	return cumul;
 }
@@ -222,24 +234,25 @@ static int findPow2(int num)
 //===========================================================================
 // FR_SaveFont
 //===========================================================================
-int FR_SaveFont(char *filename, jfrfont_t *font, unsigned int *image)
+int FR_SaveFont(char *filename, jfrfont_t * font, unsigned int *image)
 {
-	FILE *file = fopen(filename, "wb");
-	int i, c, bit, numPels;
-	byte mask;
+	FILE   *file = fopen(filename, "wb");
+	int     i, c, bit, numPels;
+	byte    mask;
 
-	if(!file) return false;
+	if(!file)
+		return false;
 
 	// Write header.
-	OutByte(file, 0);				// Version.
+	OutByte(file, 0);			// Version.
 	OutShort(file, font->texWidth);
 	OutShort(file, font->texHeight);
-	OutShort(file, MAX_CHARS);		// Number of characters.
+	OutShort(file, MAX_CHARS);	// Number of characters.
 
 	// Characters.
 	for(i = 0; i < MAX_CHARS; i++)
 	{
-		OutShort(file, font->chars[i].x);		
+		OutShort(file, font->chars[i].x);
 		OutShort(file, font->chars[i].y);
 		OutByte(file, font->chars[i].w);
 		OutByte(file, font->chars[i].h);
@@ -248,13 +261,13 @@ int FR_SaveFont(char *filename, jfrfont_t *font, unsigned int *image)
 	// Write a zero to indicate the data is in bitmap format (0,1).
 	OutByte(file, 0);
 	numPels = font->texWidth * font->texHeight;
-	for(c = i = 0; i < (numPels+7)/8; i++)
+	for(c = i = 0; i < (numPels + 7) / 8; i++)
 	{
 		for(mask = 0, bit = 7; bit >= 0; bit--, c++)
-			mask |= (c < numPels? image[c] != 0 : false) << bit;
+			mask |= (c < numPels ? image[c] != 0 : false) << bit;
 		OutByte(file, mask);
 	}
-	
+
 	fclose(file);
 	return true;
 }
@@ -267,76 +280,84 @@ int FR_NewFont(void)
 	jfrfont_t *font;
 
 	fonts = realloc(fonts, sizeof(jfrfont_t) * ++numFonts);
-	font = fonts + numFonts-1;
+	font = fonts + numFonts - 1;
 	memset(font, 0, sizeof(jfrfont_t));
 	font->id = FR_GetMaxId() + 1;
-	return (current = numFonts - 1);	
+	return (current = numFonts - 1);
 }
 
 //===========================================================================
 // FR_PrepareFont
-//	Prepares a font from a file. If the given file is not found,
-//	prepares the corresponding GDI font.
+//  Prepares a font from a file. If the given file is not found,
+//  prepares the corresponding GDI font.
 //===========================================================================
 int FR_PrepareFont(char *name)
 {
 #ifdef WIN32
-	struct 
-	{ 
-		char *name;
-		int gdires;
-		char *winfontname;
-		int pointsize;
-	}	
-	fontmapper[] =
+	struct {
+		char   *name;
+		int     gdires;
+		char   *winfontname;
+		int     pointsize;
+	} fontmapper[] =
 	{
-		{ "Fixed",		SYSTEM_FIXED_FONT },
-		{ "Fixed12",	0, "Fixedsys", 12 },
-		{ "System",		SYSTEM_FONT },
-		{ "System12",	0, "System", 12 },
-		{ "Large",		0, "MS Sans Serif", 18 },
-		{ "Small7",		0, "Small Fonts", 7 },
-		{ "Small8",		0, "Small Fonts", 8 },
-		{ "Small10",	0, "Small Fonts", 10 },
-		{ NULL, 0 }
+		{
+		"Fixed", SYSTEM_FIXED_FONT},
+		{
+		"Fixed12", 0, "Fixedsys", 12},
+		{
+		"System", SYSTEM_FONT},
+		{
+		"System12", 0, "System", 12},
+		{
+		"Large", 0, "MS Sans Serif", 18},
+		{
+		"Small7", 0, "Small Fonts", 7},
+		{
+		"Small8", 0, "Small Fonts", 8},
+		{
+		"Small10", 0, "Small Fonts", 10},
+		{
+		NULL, 0}
 	};
-#endif		
-	char buf[64];
-	DFILE *file;
-	int i, c, bit, mask, version, format, numPels;
+#endif
+	char    buf[64];
+	DFILE  *file;
+	int     i, c, bit, mask, version, format, numPels;
 	jfrfont_t *font;
 	jfrchar_t *ch;
-	int numChars;
-	int *image;
+	int     numChars;
+	int    *image;
 
 	strcpy(buf, fontpath);
 	strcat(buf, name);
 	strcat(buf, ".dfn");
 	if(ArgCheck("-gdifonts") || (file = F_Open(buf, "rb")) == NULL)
 	{
-#ifdef WIN32		
+#ifdef WIN32
 		// No luck...
 		for(i = 0; fontmapper[i].name; i++)
 			if(!stricmp(fontmapper[i].name, name))
 			{
 				if(verbose)
 				{
-					Con_Message("FR_PrepareFont: GDI font for \"%s\".\n", 
-						fontmapper[i].name);
+					Con_Message("FR_PrepareFont: GDI font for \"%s\".\n",
+								fontmapper[i].name);
 				}
 				if(fontmapper[i].winfontname)
 				{
-					HDC hDC = GetDC(hWndMain);
-					HFONT uifont = CreateFont(
-						-MulDiv(fontmapper[i].pointsize,
-								GetDeviceCaps(hDC, LOGPIXELSY), 72), 
-						0, 0, 0, 0, FALSE,
-						FALSE, FALSE, DEFAULT_CHARSET,
-						OUT_DEFAULT_PRECIS,
-						CLIP_DEFAULT_PRECIS,
-						DEFAULT_QUALITY,
-						VARIABLE_PITCH | FF_SWISS,
-						fontmapper[i].winfontname);
+					HDC     hDC = GetDC(hWndMain);
+					HFONT   uifont =
+						CreateFont(-MulDiv(fontmapper[i].pointsize,
+										   GetDeviceCaps(hDC, LOGPIXELSY), 72),
+								   0, 0, 0, 0, FALSE,
+								   FALSE, FALSE, DEFAULT_CHARSET,
+								   OUT_DEFAULT_PRECIS,
+								   CLIP_DEFAULT_PRECIS,
+								   DEFAULT_QUALITY,
+								   VARIABLE_PITCH | FF_SWISS,
+								   fontmapper[i].winfontname);
+
 					FR_PrepareGDIFont(uifont);
 					DeleteObject(uifont);
 					ReleaseDC(hWndMain, hDC);
@@ -348,51 +369,54 @@ int FR_PrepareFont(char *name)
 				strcpy(fonts[current].name, name);
 				return true;
 			}
-#endif		
+#endif
 		// The font was not found.
 		return false;
 	}
 
-	if(verbose) Con_Message("FR_PrepareFont: %s\n", M_Pretty(buf)); 
+	if(verbose)
+		Con_Message("FR_PrepareFont: %s\n", M_Pretty(buf));
 
 	version = InByte(file);
-	
+
 	// Load the font from the file.
 	FR_NewFont();
 	font = fonts + current;
 	strcpy(font->name, name);
-	
+
 	// Load in the data.
 	font->texWidth = InShort(file);
 	font->texHeight = InShort(file);
 	numChars = InShort(file);
 	for(i = 0; i < numChars; i++)
 	{
-		ch = &font->chars[i < MAX_CHARS? i : MAX_CHARS-1];
+		ch = &font->chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
 		ch->x = InShort(file);
 		ch->y = InShort(file);
 		ch->w = InByte(file);
 		ch->h = InByte(file);
 	}
-	
+
 	// The bitmap.
 	format = InByte(file);
-	if(format > 0) 
+	if(format > 0)
 	{
-		Con_Message("FR_PrepareFont: Font %s is in unknown format %i.\n",
-			buf, format);
+		Con_Message("FR_PrepareFont: Font %s is in unknown format %i.\n", buf,
+					format);
 		goto unknown_format;
 	}
 
 	numPels = font->texWidth * font->texHeight;
 	image = calloc(numPels, sizeof(int));
-	for(c = i = 0; i < (numPels+7)/8; i++)
+	for(c = i = 0; i < (numPels + 7) / 8; i++)
 	{
 		mask = InByte(file);
 		for(bit = 7; bit >= 0; bit--, c++)
 		{
-			if(c >= numPels) break;
-			if(mask & (1 << bit)) image[c] = ~0;
+			if(c >= numPels)
+				break;
+			if(mask & (1 << bit))
+				image[c] = ~0;
 		}
 	}
 
@@ -403,29 +427,29 @@ int FR_PrepareFont(char *name)
 	gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
 	free(image);
 
-unknown_format:
+  unknown_format:
 	F_Close(file);
 	return true;
 }
 
 //===========================================================================
 // FR_PrepareGDIFont
-//	Prepare a GDI font. Select it as the current font.
+//  Prepare a GDI font. Select it as the current font.
 //===========================================================================
 #ifdef WIN32
 int FR_PrepareGDIFont(HFONT hfont)
 {
-	RECT		rect;
-	jfrfont_t	*font;
-	int			i, x, y, maxh, bmpWidth=256, bmpHeight=0, imgWidth, imgHeight;
-	HDC			hdc;
-	HBITMAP		hbmp;
+	RECT    rect;
+	jfrfont_t *font;
+	int     i, x, y, maxh, bmpWidth = 256, bmpHeight = 0, imgWidth, imgHeight;
+	HDC     hdc;
+	HBITMAP hbmp;
 	unsigned int *image;
 
 	// Create a new font.
 	FR_NewFont();
 	font = fonts + current;
-		
+
 	// Now we'll create the actual data.
 	hdc = CreateCompatibleDC(NULL);
 	SetMapMode(hdc, MM_TEXT);
@@ -435,14 +459,14 @@ int FR_PrepareGDIFont(HFONT hfont)
 	for(i = 0, x = 0, y = 0, maxh = 0; i < 256; i++)
 	{
 		jfrchar_t *fc = font->chars + i;
-		SIZE size;
-		byte ch[2] = { i, 0 };
+		SIZE    size;
+		byte    ch[2] = { i, 0 };
 		GetTextExtentPoint32(hdc, ch, 1, &size);
 		fc->w = size.cx;
 		fc->h = size.cy;
 		maxh = max(maxh, fc->h);
 		x += fc->w + 1;
-		if(x >= bmpWidth)	
+		if(x >= bmpWidth)
 		{
 			x = 0;
 			y += maxh + 1;
@@ -461,39 +485,40 @@ int FR_PrepareGDIFont(HFONT hfont)
 	rect.bottom = bmpHeight;
 	FillRect(hdc, &rect, GetStockObject(BLACK_BRUSH));
 	// Print all the characters.
-	for(i=0, x=0, y=0, maxh=0; i<256; i++)
+	for(i = 0, x = 0, y = 0, maxh = 0; i < 256; i++)
 	{
 		jfrchar_t *fc = font->chars + i;
-		byte ch[2] = { i, 0 };
-		if(x+fc->w+1 >= bmpWidth)
+		byte    ch[2] = { i, 0 };
+		if(x + fc->w + 1 >= bmpWidth)
 		{
 			x = 0;
 			y += maxh + 1;
 			maxh = 0;
 		}
-		if(i) TextOut(hdc, x+1, y+1, ch, 1);
-		fc->x = x+1;
-		fc->y = y+1;
+		if(i)
+			TextOut(hdc, x + 1, y + 1, ch, 1);
+		fc->x = x + 1;
+		fc->y = y + 1;
 		maxh = max(maxh, fc->h);
 		x += fc->w + 1;
 	}
-	// Now we can make a version that DGL can read.	
+	// Now we can make a version that DGL can read. 
 	imgWidth = findPow2(bmpWidth);
 	imgHeight = findPow2(bmpHeight);
-//	printf( "font: %d x %d\n", imgWidth, imgHeight);
-	image = malloc(4*imgWidth*imgHeight);
-	memset(image, 0, 4*imgWidth*imgHeight);
+	//  printf( "font: %d x %d\n", imgWidth, imgHeight);
+	image = malloc(4 * imgWidth * imgHeight);
+	memset(image, 0, 4 * imgWidth * imgHeight);
 	for(y = 0; y < bmpHeight; y++)
-		for(x = 0; x < bmpWidth; x++)			
+		for(x = 0; x < bmpWidth; x++)
 			if(GetPixel(hdc, x, y))
 			{
-				image[x + y*imgWidth] = 0xffffffff;
+				image[x + y * imgWidth] = 0xffffffff;
 				/*if(x+1 < imgWidth && y+1 < imgHeight)
-					image[x+1 + (y+1)*imgWidth] = 0xff000000;*/
+				   image[x+1 + (y+1)*imgWidth] = 0xff000000; */
 			}
 
 	/*saveTGA24_rgba8888("ddfont.tga", bmpWidth, bmpHeight, 
-		(unsigned char*)image);*/
+	   (unsigned char*)image); */
 
 	font->texWidth = imgWidth;
 	font->texHeight = imgHeight;
@@ -501,7 +526,8 @@ int FR_PrepareGDIFont(HFONT hfont)
 	// If necessary, write the font data to a file.
 	if(ArgCheck("-dumpfont"))
 	{
-		char buf[20];
+		char    buf[20];
+
 		sprintf(buf, "font%i.dfn", font->id);
 		FR_SaveFont(buf, font, image);
 	}
@@ -518,16 +544,18 @@ int FR_PrepareGDIFont(HFONT hfont)
 	DeleteDC(hdc);
 	return 0;
 }
-#endif // WIN32
+#endif							// WIN32
 
 //===========================================================================
 // FR_SetFont
-//	Change the current font.
+//  Change the current font.
 //===========================================================================
 void FR_SetFont(int id)
 {
-	int idx = FR_GetFontIdx(id);	
-	if(idx == -1) return;	// No such font.
+	int     idx = FR_GetFontIdx(id);
+
+	if(idx == -1)
+		return;					// No such font.
 	current = idx;
 }
 
@@ -536,7 +564,8 @@ void FR_SetFont(int id)
 //===========================================================================
 int FR_CharWidth(int ch)
 {
-	if(current == -1) return 0;
+	if(current == -1)
+		return 0;
 	return fonts[current].chars[ch].w;
 }
 
@@ -545,15 +574,16 @@ int FR_CharWidth(int ch)
 //===========================================================================
 int FR_TextWidth(char *text)
 {
-	int i, width = 0, len = strlen(text);
+	int     i, width = 0, len = strlen(text);
 	jfrfont_t *cf;
 
-	if(current == -1) return 0;
-	
+	if(current == -1)
+		return 0;
+
 	// Just add them together.
 	for(cf = fonts + current, i = 0; i < len; i++)
-		width += cf->chars[(byte)text[i]].w;
-	
+		width += cf->chars[(byte) text[i]].w;
+
 	return width;
 }
 
@@ -562,33 +592,36 @@ int FR_TextWidth(char *text)
 //===========================================================================
 int FR_TextHeight(char *text)
 {
-	int i, height = 0, len;
+	int     i, height = 0, len;
 	jfrfont_t *cf;
 
-	if(current == -1 || !text) return 0;
+	if(current == -1 || !text)
+		return 0;
 
 	// Find the greatest height.
 	for(len = strlen(text), cf = fonts + current, i = 0; i < len; i++)
-		height = MAX_OF(height, cf->chars[(byte)text[i]].h);
+		height = MAX_OF(height, cf->chars[(byte) text[i]].h);
 
 	return height;
 }
 
 //===========================================================================
 // FR_TextOut
-//	(x,y) is the upper left corner. Returns the length.
+//  (x,y) is the upper left corner. Returns the length.
 //===========================================================================
 int FR_TextOut(char *text, int x, int y)
 {
-	float dx, dy;
-	int i, width = 0, len;
+	float   dx, dy;
+	int     i, width = 0, len;
 	jfrfont_t *cf;
 
-	if(!text) return 0;
+	if(!text)
+		return 0;
 	len = strlen(text);
 
 	// Check the font.
-	if(current == -1) return 0;	// No selected font.
+	if(current == -1)
+		return 0;				// No selected font.
 	cf = fonts + current;
 
 	// Set the texture.
@@ -598,26 +631,26 @@ int FR_TextOut(char *text, int x, int y)
 	gl.Begin(DGL_QUADS);
 	for(i = 0; i < len; i++)
 	{
-		jfrchar_t *ch = cf->chars + (byte)text[i];
-		float coff = 0; //.5f;
-		float cx = (float)ch->x + coff, cy = (float)ch->y + coff;
-		float texw = (float)cf->texWidth, texh = (float)cf->texHeight;
+		jfrchar_t *ch = cf->chars + (byte) text[i];
+		float   coff = 0;		//.5f;
+		float   cx = (float) ch->x + coff, cy = (float) ch->y + coff;
+		float   texw = (float) cf->texWidth, texh = (float) cf->texHeight;
 
 		dx = x + coff;
 		dy = y + coff;
 
 		// Upper left.
-		gl.TexCoord2f(cx/texw, cy/texh);
+		gl.TexCoord2f(cx / texw, cy / texh);
 		gl.Vertex2f(dx, dy);
 		// Upper right.
-		gl.TexCoord2f((cx+ch->w)/texw, cy/texh);
-		gl.Vertex2f(dx+ch->w+coff, dy);
+		gl.TexCoord2f((cx + ch->w) / texw, cy / texh);
+		gl.Vertex2f(dx + ch->w + coff, dy);
 		// Lower right.
-		gl.TexCoord2f((cx+ch->w)/texw, (cy+ch->h)/texh);
-		gl.Vertex2f(dx+ch->w+coff, dy+ch->h+coff);
+		gl.TexCoord2f((cx + ch->w) / texw, (cy + ch->h) / texh);
+		gl.Vertex2f(dx + ch->w + coff, dy + ch->h + coff);
 		// Lower left.
-		gl.TexCoord2f(cx/texw, (cy+ch->h)/texh);
-		gl.Vertex2f(dx, dy+ch->h+coff);
+		gl.TexCoord2f(cx / texw, (cy + ch->h) / texh);
+		gl.Vertex2f(dx, dy + ch->h + coff);
 		// Move on.
 		width += ch->w;
 		x += ch->w;
@@ -631,6 +664,7 @@ int FR_TextOut(char *text, int x, int y)
 //===========================================================================
 int FR_GetCurrent()
 {
-	if(current == -1) return 0;
+	if(current == -1)
+		return 0;
 	return fonts[current].id;
 }

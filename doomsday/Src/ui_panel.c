@@ -47,7 +47,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct cvarbutton_s {
-	char active;
+	char    active;
 	const char *cvarname;
 	const char *yes;
 	const char *no;
@@ -59,165 +59,164 @@ typedef struct cvarbutton_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void	CP_ClosePanel(ui_object_t *ob);
-void	CP_ChooseGroup(ui_object_t *ob);
-void	CP_DrawLogo(ui_object_t *ob);
-void	CP_DrawBorder(ui_object_t *ob);
-void	CP_CvarButton(ui_object_t *ob);
-void	CP_CvarList(ui_object_t *ob);
-void	CP_CvarEdit(ui_object_t *ob);
-void	CP_CvarSlider(ui_object_t *ob);
-int		CP_KeyGrabResponder(ui_object_t *ob, event_t *ev);
-void	CP_KeyGrabDrawer(ui_object_t *ob);
-void	CP_TexReset(ui_object_t *ob);
-void	CP_QuickFOV(ui_object_t *ob);
-void	CP_ResolutionInfo(ui_object_t *ob);
-void	CP_ResolutionList(ui_object_t *ob);
-void	CP_SetDefaultRes(ui_object_t *ob);
-void	CP_SetRes(ui_object_t *ob);
-void	CP_ResChanged(ui_object_t *ob);
+void    CP_ClosePanel(ui_object_t * ob);
+void    CP_ChooseGroup(ui_object_t * ob);
+void    CP_DrawLogo(ui_object_t * ob);
+void    CP_DrawBorder(ui_object_t * ob);
+void    CP_CvarButton(ui_object_t * ob);
+void    CP_CvarList(ui_object_t * ob);
+void    CP_CvarEdit(ui_object_t * ob);
+void    CP_CvarSlider(ui_object_t * ob);
+int     CP_KeyGrabResponder(ui_object_t * ob, event_t * ev);
+void    CP_KeyGrabDrawer(ui_object_t * ob);
+void    CP_TexReset(ui_object_t * ob);
+void    CP_QuickFOV(ui_object_t * ob);
+void    CP_ResolutionInfo(ui_object_t * ob);
+void    CP_ResolutionList(ui_object_t * ob);
+void    CP_SetDefaultRes(ui_object_t * ob);
+void    CP_SetRes(ui_object_t * ob);
+void    CP_ResChanged(ui_object_t * ob);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char	panel_buttons[NUM_CP_BUTTONS] = { true }; // The first is active.
-char	panel_sv_password[100], panel_res_x[40], panel_res_y[40];
-int		panel_help_active = false;
-int		panel_help_offset = 0;	// Zero means the help is completely hidden.
-int		panel_show_help = true;	// cvar
-int		panel_show_tips = true;	// cvar
+char    panel_buttons[NUM_CP_BUTTONS] = { true };	// The first is active.
+char    panel_sv_password[100], panel_res_x[40], panel_res_y[40];
+int     panel_help_active = false;
+int     panel_help_offset = 0;	// Zero means the help is completely hidden.
+int     panel_show_help = true;	// cvar
+int     panel_show_tips = true;	// cvar
 ui_object_t *panel_help_source;
-void	*panel_help;
+void   *panel_help;
 
-cvarbutton_t cvarbuttons[] =
-{
-	{ 0, "con-progress" },
-	{ 0, "con-var-silent" },
-	{ 0, "con-dump" },
-	{ 0, "con-key-show" },
-	{ 0, "con-fps" },
-	{ 0, "con-text-shadow" },
-	{ 0, "ui-panel-help" },
-	{ 0, "ui-panel-tips" },
-	{ 0, "input-mouse-y-inverse" }, 
-	{ 0, "input-mouse-x-disable" },
-	{ 0, "input-mouse-y-disable" },
-	{ 0, "input-mouse-filter" },
-	{ 0, "input-joy" },
-	{ 0, "input-key-show-scancodes" },
-	{ 0, "net-nosleep" },
-	{ 0, "net-dev" },
-	{ 0, "net-queue-show" },
-	{ 0, "sound-16bit" },
-	{ 0, "sound-3d" },
-	{ 0, "sound-info" },
-	{ 0, "rend-particle" },
-	{ 0, "rend-camera-smooth" },
-	{ 0, "rend-mobj-smooth-turn" },
-	{ 0, "rend-sprite-precache" },
-	{ 0, "rend-sprite-noz" },
-	{ 0, "rend-sprite-blend" },
-	{ 0, "rend-sprite-lit" },
-	{ 0, "rend-model" },
-	{ 0, "rend-model-inter" },
-	{ 0, "rend-model-precache" },
-	{ 0, "rend-model-mirror-hud" },
-	{ 0, "rend-model-shiny-multitex", "Shiny", "Shiny" },
-	{ 0, "rend-tex" },
-	{ 0, "rend-tex-filter-sprite" },
-	{ 0, "rend-tex-filter-raw" },
-	{ 0, "rend-tex-detail" },
-	{ 0, "rend-tex-detail-multitex", "Detail", "Detail" },
-	{ 0, "rend-tex-anim-smooth" },
-	{ 0, "rend-light" },
-	{ 0, "rend-light-decor" },
-	{ 0, "rend-light-multitex", "Lights", "Lights" },
-	{ 0, "rend-glow" },
-	{ 0, "rend-glow-wall" },
-	{ 0, "rend-info-tris" },
-	{ 0, "rend-sky-full" },
-	{ 0, "rend-shadow" },
-	{ 0, 0 }
+cvarbutton_t cvarbuttons[] = {
+	{0, "con-progress"},
+	{0, "con-var-silent"},
+	{0, "con-dump"},
+	{0, "con-key-show"},
+	{0, "con-fps"},
+	{0, "con-text-shadow"},
+	{0, "ui-panel-help"},
+	{0, "ui-panel-tips"},
+	{0, "input-mouse-y-inverse"},
+	{0, "input-mouse-x-disable"},
+	{0, "input-mouse-y-disable"},
+	{0, "input-mouse-filter"},
+	{0, "input-joy"},
+	{0, "input-key-show-scancodes"},
+	{0, "net-nosleep"},
+	{0, "net-dev"},
+	{0, "net-queue-show"},
+	{0, "sound-16bit"},
+	{0, "sound-3d"},
+	{0, "sound-info"},
+	{0, "rend-particle"},
+	{0, "rend-camera-smooth"},
+	{0, "rend-mobj-smooth-turn"},
+	{0, "rend-sprite-precache"},
+	{0, "rend-sprite-noz"},
+	{0, "rend-sprite-blend"},
+	{0, "rend-sprite-lit"},
+	{0, "rend-model"},
+	{0, "rend-model-inter"},
+	{0, "rend-model-precache"},
+	{0, "rend-model-mirror-hud"},
+	{0, "rend-model-shiny-multitex", "Shiny", "Shiny"},
+	{0, "rend-tex"},
+	{0, "rend-tex-filter-sprite"},
+	{0, "rend-tex-filter-raw"},
+	{0, "rend-tex-detail"},
+	{0, "rend-tex-detail-multitex", "Detail", "Detail"},
+	{0, "rend-tex-anim-smooth"},
+	{0, "rend-light"},
+	{0, "rend-light-decor"},
+	{0, "rend-light-multitex", "Lights", "Lights"},
+	{0, "rend-glow"},
+	{0, "rend-glow-wall"},
+	{0, "rend-info-tris"},
+	{0, "rend-sky-full"},
+	{0, "rend-shadow"},
+	{0, 0}
 };
 
 uidata_listitem_t lstit_con_completion[] = {
-	{ "List with values", 0 },
-	{ "Cycle through", 1 }
+	{"List with values", 0},
+	{"Cycle through", 1}
 };
-uidata_list_t lst_con_completion = { 
+uidata_list_t lst_con_completion = {
 	lstit_con_completion, NUMITEMS(lstit_con_completion), "con-completion"
 };
 
 uidata_listitem_t lstit_music_source[] = {
-	{ "MUS lumps", 0 },
-	{ "External files", 1 },
-	{ "CD", 2 }
+	{"MUS lumps", 0},
+	{"External files", 1},
+	{"CD", 2}
 };
 uidata_list_t lst_music_source = {
 	lstit_music_source, NUMITEMS(lstit_music_source), "music-source"
 };
 
 uidata_listitem_t lstit_sound_rate[] = {
-	{ "11025 Hz (1x)", 11025 },
-	{ "22050 Hz (2x)", 22050 },
-	{ "44100 Hz (4x)", 44100 }
+	{"11025 Hz (1x)", 11025},
+	{"22050 Hz (2x)", 22050},
+	{"44100 Hz (4x)", 44100}
 };
 uidata_list_t lst_sound_rate = {
 	lstit_sound_rate, NUMITEMS(lstit_sound_rate), "sound-rate"
 };
 
 uidata_listitem_t lstit_smooth_move[] = {
-	{ "Disabled", 0 },
-	{ "Models only", 1 },
-	{ "Models and sprites", 2 }
+	{"Disabled", 0},
+	{"Models only", 1},
+	{"Models and sprites", 2}
 };
 uidata_list_t lst_smooth_move = {
 	lstit_smooth_move, NUMITEMS(lstit_smooth_move), "rend-mobj-smooth-move"
 };
 
 uidata_listitem_t lstit_sprite_align[] = {
-	{ "Camera", 0 },
-	{ "View plane", 1 },
-	{ "Camera (limited)", 2 },
-	{ "View plane (limited)", 3 }
+	{"Camera", 0},
+	{"View plane", 1},
+	{"Camera (limited)", 2},
+	{"View plane (limited)", 3}
 };
 uidata_list_t lst_sprite_align = {
 	lstit_sprite_align, NUMITEMS(lstit_sprite_align), "rend-sprite-align"
 };
 
 uidata_listitem_t lstit_mipmap[] = {
-	{ "No filter, no mip", 0 },
-	{ "Linear filter, no mip", 1 },
-	{ "No filter, near mip", 2 },
-	{ "Linear filter, near mip", 3 },
-	{ "No filter, linear mip", 4 },
-	{ "Linear filter, linear mip", 5 }
+	{"No filter, no mip", 0},
+	{"Linear filter, no mip", 1},
+	{"No filter, near mip", 2},
+	{"Linear filter, near mip", 3},
+	{"No filter, linear mip", 4},
+	{"Linear filter, linear mip", 5}
 };
 uidata_list_t lst_mipmap = {
 	lstit_mipmap, NUMITEMS(lstit_mipmap), "rend-tex-mipmap"
 };
 
 uidata_listitem_t lstit_blend[] = {
-	{ "Multiply", 0 },
-	{ "Add", 1 },
-	{ "Process wo/rendering", 3 }
+	{"Multiply", 0},
+	{"Add", 1},
+	{"Process wo/rendering", 3}
 };
 uidata_list_t lst_blend = {
 	lstit_blend, NUMITEMS(lstit_blend), "rend-light-blend"
 };
 
 uidata_listitem_t lstit_resolution[] = {
-	{ "320 x 240", RES(320, 240) },
-	{ "400 x 300", RES(400, 300) },
-	{ "512 x 384", RES(512, 384) },
-	{ "640 x 480", RES(640, 480) },
-	{ "800 x 600", RES(800, 600) },
-	{ "1024 x 768", RES(1024, 768) },
-	{ "1152 x 864", RES(1152, 864) },
-	{ "1280 x 960", RES(1280, 960) },
-	{ "1280 x 1024", RES(1280, 1024) },
-	{ "1600 x 1200", RES(1600, 1200) }
+	{"320 x 240", RES(320, 240)},
+	{"400 x 300", RES(400, 300)},
+	{"512 x 384", RES(512, 384)},
+	{"640 x 480", RES(640, 480)},
+	{"800 x 600", RES(800, 600)},
+	{"1024 x 768", RES(1024, 768)},
+	{"1152 x 864", RES(1152, 864)},
+	{"1280 x 960", RES(1280, 960)},
+	{"1280 x 1024", RES(1280, 1024)},
+	{"1600 x 1200", RES(1600, 1200)}
 };
 uidata_list_t lst_resolution = {
 	lstit_resolution, NUMITEMS(lstit_resolution)
@@ -226,56 +225,85 @@ uidata_list_t lst_resolution = {
 uidata_slider_t sld_con_alpha = { 0, 100, 0, 1, false, "con-alpha" };
 uidata_slider_t sld_con_light = { 0, 100, 0, 1, false, "con-light" };
 uidata_slider_t sld_joy_sensi = { 0, 9, 0, 1, false, "input-joy-sensi" };
-uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" }; 
+uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" };
 uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, "input-key-delay1" };
 uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, "input-key-delay2" };
-uidata_slider_t sld_client_pos_interval = { 0, 70, 0, 1, false, "client-pos-interval" };
-uidata_slider_t sld_server_frame_interval = { 0, 35, 0, 1, false, "server-frame-interval" };
+uidata_slider_t sld_client_pos_interval =
+	{ 0, 70, 0, 1, false, "client-pos-interval" };
+uidata_slider_t sld_server_frame_interval =
+	{ 0, 35, 0, 1, false, "server-frame-interval" };
 uidata_slider_t sld_sound_volume = { 0, 255, 0, 1, false, "sound-volume" };
 uidata_slider_t sld_music_volume = { 0, 255, 0, 1, false, "music-volume" };
-uidata_slider_t sld_reverb_volume = { 0, 1, 0, .01f, true, "sound-reverb-volume" };
-uidata_slider_t sld_particle_max = { 0, 10000, 0, 10, false, "rend-particle-max", "Unlimited" };
-uidata_slider_t sld_particle_rate = { .1f, 10, 0, .01f, true, "rend-particle-rate" };
-uidata_slider_t sld_particle_diffuse = { 0, 20, 0, .01f, true, "rend-particle-diffuse" };
-uidata_slider_t sld_particle_visnear = { 0, 1000, 0, 1, false, "rend-particle-visible-near", "Disabled" };
-uidata_slider_t sld_model_far = { 0, 3000, 0, 1, false, "rend-model-distance", "Unlimited" };
+uidata_slider_t sld_reverb_volume =
+	{ 0, 1, 0, .01f, true, "sound-reverb-volume" };
+uidata_slider_t sld_particle_max =
+	{ 0, 10000, 0, 10, false, "rend-particle-max", "Unlimited" };
+uidata_slider_t sld_particle_rate =
+	{ .1f, 10, 0, .01f, true, "rend-particle-rate" };
+uidata_slider_t sld_particle_diffuse =
+	{ 0, 20, 0, .01f, true, "rend-particle-diffuse" };
+uidata_slider_t sld_particle_visnear =
+	{ 0, 1000, 0, 1, false, "rend-particle-visible-near", "Disabled" };
+uidata_slider_t sld_model_far =
+	{ 0, 3000, 0, 1, false, "rend-model-distance", "Unlimited" };
 uidata_slider_t sld_model_lights = { 0, 10, 0, 1, false, "rend-model-lights" };
-uidata_slider_t sld_model_lod = { 0, 1000, 0, 1, true, "rend-model-lod", "No LOD" };
-uidata_slider_t sld_detail_scale = { .1f, 32, 0, .01f, true, "rend-tex-detail-scale" };
-uidata_slider_t sld_detail_strength = { 0, 2, 0, .01f, true, "rend-tex-detail-strength" };
-uidata_slider_t sld_detail_far = { 1, 1000, 0, 1, true, "rend-tex-detail-far" };
+uidata_slider_t sld_model_lod =
+	{ 0, 1000, 0, 1, true, "rend-model-lod", "No LOD" };
+uidata_slider_t sld_detail_scale =
+	{ .1f, 32, 0, .01f, true, "rend-tex-detail-scale" };
+uidata_slider_t sld_detail_strength =
+	{ 0, 2, 0, .01f, true, "rend-tex-detail-strength" };
+uidata_slider_t sld_detail_far =
+	{ 1, 1000, 0, 1, true, "rend-tex-detail-far" };
 uidata_slider_t sld_tex_quality = { 0, 8, 0, 1, false, "rend-tex-quality" };
-uidata_slider_t sld_light_bright = { 0, 1, 0, .01f, true, "rend-light-bright" };
-uidata_slider_t sld_light_scale = { .1f, 10, 0, .01f, true, "rend-light-radius-scale" };
-uidata_slider_t sld_light_radmax = { 64, 512, 0, 1, false, "rend-light-radius-max" };
-uidata_slider_t sld_light_max = { 0, 2000, 0, 1, false, "rend-light-num", "Unlimited" };
-uidata_slider_t sld_light_fog_bright = { 0, 1, 0, .01f, true, "rend-glow-fog-bright" };
-uidata_slider_t sld_light_ambient = { 0, 255, 0, 1, false, "rend-light-ambient" };
+uidata_slider_t sld_light_bright =
+	{ 0, 1, 0, .01f, true, "rend-light-bright" };
+uidata_slider_t sld_light_scale =
+	{ .1f, 10, 0, .01f, true, "rend-light-radius-scale" };
+uidata_slider_t sld_light_radmax =
+	{ 64, 512, 0, 1, false, "rend-light-radius-max" };
+uidata_slider_t sld_light_max =
+	{ 0, 2000, 0, 1, false, "rend-light-num", "Unlimited" };
+uidata_slider_t sld_light_fog_bright =
+	{ 0, 1, 0, .01f, true, "rend-glow-fog-bright" };
+uidata_slider_t sld_light_ambient =
+	{ 0, 255, 0, 1, false, "rend-light-ambient" };
 uidata_slider_t sld_glow_height = { 0, 1024, 0, 1, false, "rend-glow-height" };
 uidata_slider_t sld_fov = { 1, 179, 0, .01f, true, "rend-camera-fov" };
-uidata_slider_t sld_sky_distance = { 1, 10000, 0, 10, true, "rend-sky-distance" };
-uidata_slider_t sld_shadow_dark = { 0, 1, 0, .01f, true, "rend-shadow-darkness" };
+uidata_slider_t sld_sky_distance =
+	{ 1, 10000, 0, 10, true, "rend-sky-distance" };
+uidata_slider_t sld_shadow_dark =
+	{ 0, 1, 0, .01f, true, "rend-shadow-darkness" };
 uidata_slider_t sld_shadow_far = { 0, 3000, 0, 1, false, "rend-shadow-far" };
-uidata_slider_t sld_shadow_radmax = { 0, 128, 0, 1, false, "rend-shadow-radius-max" };
+uidata_slider_t sld_shadow_radmax =
+	{ 0, 128, 0, 1, false, "rend-shadow-radius-max" };
 uidata_slider_t sld_vid_gamma = { .1f, 3, 0, .01f, true, "vid-gamma" };
 uidata_slider_t sld_vid_contrast = { 0, 5, 0, .01f, true, "vid-contrast" };
 uidata_slider_t sld_vid_bright = { -2, 2, 0, .01f, true, "vid-bright" };
 uidata_slider_t sld_halo = { 0, 5, 0, 1, false, "rend-halo", "None" };
 uidata_slider_t sld_halo_bright = { 0, 100, 0, 1, false, "rend-halo-bright" };
-uidata_slider_t sld_halo_occlusion = { 1, 256, 0, 1, false, "rend-halo-occlusion" };
+uidata_slider_t sld_halo_occlusion =
+	{ 1, 256, 0, 1, false, "rend-halo-occlusion" };
 uidata_slider_t sld_halo_size = { 0, 100, 0, 1, false, "rend-halo-size" };
-uidata_slider_t sld_halo_seclimit = { 0, 10, 0, .01f, true, "rend-halo-secondary-limit" };
-uidata_slider_t sld_halo_dimfar = { 0, 200, 0, .01f, true, "rend-halo-dim-far" };
-uidata_slider_t sld_halo_dimnear = { 0, 200, 0, .01f, true, "rend-halo-dim-near" };
-uidata_slider_t sld_halo_zmagdiv = { 1, 200, 0, .01f, true, "rend-halo-zmag-div" };
-uidata_slider_t sld_halo_radmin = { 1, 80, 0, .01f, true, "rend-halo-radius-min" };
-	
-uidata_edit_t ed_server_password = { panel_sv_password, 100, "server-password" };
+uidata_slider_t sld_halo_seclimit =
+	{ 0, 10, 0, .01f, true, "rend-halo-secondary-limit" };
+uidata_slider_t sld_halo_dimfar =
+	{ 0, 200, 0, .01f, true, "rend-halo-dim-far" };
+uidata_slider_t sld_halo_dimnear =
+	{ 0, 200, 0, .01f, true, "rend-halo-dim-near" };
+uidata_slider_t sld_halo_zmagdiv =
+	{ 1, 200, 0, .01f, true, "rend-halo-zmag-div" };
+uidata_slider_t sld_halo_radmin =
+	{ 1, 80, 0, .01f, true, "rend-halo-radius-min" };
+
+uidata_edit_t ed_server_password =
+	{ panel_sv_password, 100, "server-password" };
 uidata_edit_t ed_res_x = { panel_res_x, 40 };
 uidata_edit_t ed_res_y = { panel_res_y, 40 };
 
-ui_page_t	page_panel;
+ui_page_t page_panel;
 
+/* *INDENT-OFF* */
 ui_object_t ob_panel[] =
 {
 	{ UI_BUTTON2,	1,	UIF_LEFT_ALIGN,	10, 210, 240, 60,	"Video",	UIButton_Drawer, UIButton_Responder, 0,				CP_ChooseGroup, &panel_buttons[0] },
@@ -549,6 +577,7 @@ ui_object_t ob_panel[] =
 
 	{ UI_NONE }
 };
+/* *INDENT-ON* */
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -557,7 +586,7 @@ ui_object_t ob_panel[] =
 //===========================================================================
 // CP_ClosePanel
 //===========================================================================
-void CP_ClosePanel(ui_object_t *ob)
+void CP_ClosePanel(ui_object_t * ob)
 {
 	UI_End();
 }
@@ -565,13 +594,13 @@ void CP_ClosePanel(ui_object_t *ob)
 //===========================================================================
 // CP_ChooseGroup
 //===========================================================================
-void CP_ChooseGroup(ui_object_t *ob)
+void CP_ChooseGroup(ui_object_t * ob)
 {
-	int i;
+	int     i;
 
 	memset(panel_buttons, 0, sizeof(panel_buttons));
 	UI_FlagGroup(ob_panel, 1, UIF_ACTIVE, UIFG_CLEAR);
-	*(char*) ob->data = true;
+	*(char *) ob->data = true;
 	ob->flags |= UIF_ACTIVE;
 	// Hide/show the option controls.
 	for(i = 0; i < NUM_CP_BUTTONS; i++)
@@ -581,7 +610,7 @@ void CP_ChooseGroup(ui_object_t *ob)
 //===========================================================================
 // CP_DrawLogo
 //===========================================================================
-void CP_DrawLogo(ui_object_t *ob)
+void CP_DrawLogo(ui_object_t * ob)
 {
 	UI_DrawLogo(ob->x, ob->y, ob->w, ob->h);
 }
@@ -589,11 +618,11 @@ void CP_DrawLogo(ui_object_t *ob)
 //===========================================================================
 // CP_DrawBorder
 //===========================================================================
-void CP_DrawBorder(ui_object_t *ob)
+void CP_DrawBorder(ui_object_t * ob)
 {
-	int b = UI_BORDER;
+	int     b = UI_BORDER;
 	ui_object_t *it;
-	void *help_ptr;
+	void   *help_ptr;
 	boolean shown;
 
 	UIFrame_Drawer(ob);
@@ -604,16 +633,15 @@ void CP_DrawBorder(ui_object_t *ob)
 		GL_BlendMode(BM_ADD);
 		for(it = ob_panel; it->type; it++)
 		{
-			if(it->flags & UIF_HIDDEN
-				|| it->group < 2
-				|| it->type != UI_TEXT) continue;
+			if(it->flags & UIF_HIDDEN || it->group < 2 || it->type != UI_TEXT)
+				continue;
 			// Try to find help for this.
 			if((help_ptr = DH_Find(it->text)))
 			{
 				shown = (panel_help == help_ptr && panel_help_active);
-				UI_HorizGradient(ob->x + b, it->y + it->h/2 - ui_fonthgt/2, 
-					2*ui_fonthgt, ui_fonthgt, 
-					UI_COL(UIC_BRD_HI), 0, shown? .8f : .2f, 0);
+				UI_HorizGradient(ob->x + b, it->y + it->h / 2 - ui_fonthgt / 2,
+								 2 * ui_fonthgt, ui_fonthgt,
+								 UI_COL(UIC_BRD_HI), 0, shown ? .8f : .2f, 0);
 			}
 		}
 		GL_BlendMode(BM_NORMAL);
@@ -623,80 +651,86 @@ void CP_DrawBorder(ui_object_t *ob)
 //===========================================================================
 // CP_CvarButton
 //===========================================================================
-void CP_CvarButton(ui_object_t *ob)
+void CP_CvarButton(ui_object_t * ob)
 {
 	cvarbutton_t *cb = ob->data;
 	cvar_t *var = Con_GetVariable(cb->cvarname);
 
-	strcpy(ob->text, cb->active? cb->yes : cb->no);
+	strcpy(ob->text, cb->active ? cb->yes : cb->no);
 	if(!strcmp(cb->cvarname, "rend-tex-filter-raw"))
 	{
 		GL_TextureFilterMode(DD_RAWSCREENS, cb->active);
 		return;
 	}
-	if(!var) return;
+	if(!var)
+		return;
 	// Change state.
-	*(char*)var->ptr = cb->active;
+	*(char *) var->ptr = cb->active;
 }
 
 //===========================================================================
 // CP_CvarList
 //===========================================================================
-void CP_CvarList(ui_object_t *ob)
+void CP_CvarList(ui_object_t * ob)
 {
 	uidata_list_t *list = ob->data;
 	cvar_t *var = Con_GetVariable(list->data);
-	int value = ((uidata_listitem_t*)list->items)[list->selection].data;
+	int     value = ((uidata_listitem_t *) list->items)[list->selection].data;
 
-	if(list->selection < 0) return; // Hmm?
+	if(list->selection < 0)
+		return;					// Hmm?
 	if(!strcmp(list->data, "rend-tex-mipmap"))
 	{
 		Con_Executef(false, "mipmap %i", value);
 		return;
 	}
-	if(!var) return; 
-	*(int*) var->ptr = value;
+	if(!var)
+		return;
+	*(int *) var->ptr = value;
 }
 
 //===========================================================================
 // CP_CvarEdit
 //===========================================================================
-void CP_CvarEdit(ui_object_t *ob)
+void CP_CvarEdit(ui_object_t * ob)
 {
 	uidata_edit_t *ed = ob->data;
+
 	Con_SetString(ed->data, ed->ptr);
 }
 
 //===========================================================================
 // CP_CvarSlider
 //===========================================================================
-void CP_CvarSlider(ui_object_t *ob)
+void CP_CvarSlider(ui_object_t * ob)
 {
 	uidata_slider_t *slid = ob->data;
 	cvar_t *var = Con_GetVariable(slid->data);
 
-	if(!var) return;
+	if(!var)
+		return;
 	if(var->type == CVT_FLOAT)
-		*(float*) var->ptr = (int)(100*slid->value + .5f) / 100.0f;
+		*(float *) var->ptr = (int) (100 * slid->value + .5f) / 100.0f;
 	else if(var->type == CVT_INT)
-		*(int*) var->ptr = (int) (slid->value + 0.5f);
+		*(int *) var->ptr = (int) (slid->value + 0.5f);
 	else if(var->type == CVT_BYTE)
-		*(byte*) var->ptr = (byte) (slid->value + 0.5f);
+		*(byte *) var->ptr = (byte) (slid->value + 0.5f);
 }
 
 //===========================================================================
 // CP_KeyGrabResponder
 //===========================================================================
-int CP_KeyGrabResponder(ui_object_t *ob, event_t *ev)
+int CP_KeyGrabResponder(ui_object_t * ob, event_t * ev)
 {
-	if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
-	   (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
+	if((ev->type == ev_mousebdown && UI_MouseInside(ob))
+	   || (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
 	{
 		// We want the focus.
-		return true; 
+		return true;
 	}
 	// Only does something when has the focus.
-	if(!(ob->flags & UIF_FOCUS)) return false;
+	if(!(ob->flags & UIF_FOCUS))
+		return false;
 	if(ev->type == ev_keydown)
 	{
 		Con_SetInteger(ob->text, ev->data1);
@@ -710,31 +744,28 @@ int CP_KeyGrabResponder(ui_object_t *ob, event_t *ev)
 //===========================================================================
 // CP_KeyGrabDrawer
 //===========================================================================
-void CP_KeyGrabDrawer(ui_object_t *ob)
+void CP_KeyGrabDrawer(ui_object_t * ob)
 {
 	boolean sel = (ob->flags & UIF_FOCUS) != 0;
-	float alpha = (ob->flags & UIF_DISABLED? .2f : 1);
-	char buf[80];
-	byte key = Con_GetByte(ob->text);
+	float   alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
+	char    buf[80];
+	byte    key = Con_GetByte(ob->text);
 
-	UI_GradientEx(ob->x, ob->y,	ob->w, ob->h, UI_BORDER,
-		UI_COL(UIC_SHADOW), 0, 1, 0);
-	UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, 
-		UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_LOW), alpha/3, -1);
-	UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (sel? -1 : 1), 
-		false, UI_COL(UIC_BRD_HI), NULL, /*
-		UI_COL(UIC_BRD_MED), 
-		UI_COL(sel? UIC_BRD_HI : UIC_BRD_LOW),*/
-		alpha, -1);
+	UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_COL(UIC_SHADOW), 0,
+				  1, 0);
+	UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_COL(UIC_BRD_HI),
+			 UI_COL(UIC_BRD_LOW), alpha / 3, -1);
+	UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (sel ? -1 : 1),
+				  false, UI_COL(UIC_BRD_HI), NULL, alpha, -1);
 	sprintf(buf, "%i", key);
-	UI_TextOutEx(buf, ob->x + ob->w/2, ob->y + ob->h/2, true, true,
-		UI_COL(UIC_TEXT), alpha);
+	UI_TextOutEx(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, true, true,
+				 UI_COL(UIC_TEXT), alpha);
 }
 
 //===========================================================================
 // CP_TexReset
 //===========================================================================
-void CP_TexReset(ui_object_t *ob)
+void CP_TexReset(ui_object_t * ob)
 {
 	Con_Execute("texreset", false);
 }
@@ -742,7 +773,7 @@ void CP_TexReset(ui_object_t *ob)
 //===========================================================================
 // CP_QuickFOV
 //===========================================================================
-void CP_QuickFOV(ui_object_t *ob)
+void CP_QuickFOV(ui_object_t * ob)
 {
 	Con_SetFloat("rend-camera-fov", sld_fov.value = atoi(ob->text));
 }
@@ -750,16 +781,16 @@ void CP_QuickFOV(ui_object_t *ob)
 //===========================================================================
 // CP_ResolutionInfo
 //===========================================================================
-void CP_ResolutionInfo(ui_object_t *ob)
+void CP_ResolutionInfo(ui_object_t * ob)
 {
-	char buf[80];
+	char    buf[80];
 
 	if(!strcmp(ob->text, "default"))
 		sprintf(buf, "%i x %i", defResX, defResY);
 	else
 		sprintf(buf, "Current resolution: %i x %i", screenWidth, screenHeight);
-	UI_TextOutEx(buf, ob->x, ob->y + ob->h/2, false, true, 
-		UI_COL(UIC_TEXT), 1);
+	UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_COL(UIC_TEXT),
+				 1);
 }
 
 //===========================================================================
@@ -779,10 +810,11 @@ void CP_UpdateSetResButton(int w, int h)
 //===========================================================================
 // CP_ResolutionList
 //===========================================================================
-void CP_ResolutionList(ui_object_t *ob)
+void CP_ResolutionList(ui_object_t * ob)
 {
 	uidata_list_t *list = ob->data;
-	int seldata = ((uidata_listitem_t*)list->items)[list->selection].data;
+	int     seldata =
+		((uidata_listitem_t *) list->items)[list->selection].data;
 
 	sprintf(panel_res_x, "%i", seldata & 0xffff);
 	sprintf(panel_res_y, "%i", seldata >> 16);
@@ -796,11 +828,12 @@ void CP_ResolutionList(ui_object_t *ob)
 //===========================================================================
 // CP_SetDefaultRes
 //===========================================================================
-void CP_SetDefaultRes(ui_object_t *ob)
+void CP_SetDefaultRes(ui_object_t * ob)
 {
-	int x = atoi(panel_res_x), y = atoi(panel_res_y);
+	int     x = atoi(panel_res_x), y = atoi(panel_res_y);
 
-	if(!x || !y) return;
+	if(!x || !y)
+		return;
 	defResX = x;
 	defResY = y;
 }
@@ -808,12 +841,14 @@ void CP_SetDefaultRes(ui_object_t *ob)
 //===========================================================================
 // CP_SetRes
 //===========================================================================
-void CP_SetRes(ui_object_t *ob)
+void CP_SetRes(ui_object_t * ob)
 {
-	int x = atoi(panel_res_x), y = atoi(panel_res_y);
+	int     x = atoi(panel_res_x), y = atoi(panel_res_y);
 
-	if(!x || !y) return;
-	if(x < 320 || y < 240) return;
+	if(!x || !y)
+		return;
+	if(x < 320 || y < 240)
+		return;
 	ob->flags |= UIF_DISABLED;
 	// Can't change the resolution while the UI is active (controls need to
 	// be repositioned).
@@ -826,26 +861,25 @@ void CP_SetRes(ui_object_t *ob)
 //===========================================================================
 // CP_ResChanged
 //===========================================================================
-void CP_ResChanged(ui_object_t *ob)
+void CP_ResChanged(ui_object_t * ob)
 {
 	CP_UpdateSetResButton(atoi(panel_res_x), atoi(panel_res_y));
 }
 
 //===========================================================================
 // CP_FindHover
-//	Returns the option, if any, the mouse is currently hovering on. The
-//	check is based on the coordinates of the Text object.
+//  Returns the option, if any, the mouse is currently hovering on. The
+//  check is based on the coordinates of the Text object.
 //===========================================================================
 ui_object_t *CP_FindHover(void)
 {
 	ui_object_t *ob;
-	
+
 	for(ob = ob_panel; ob->type; ob++)
 	{
-		if(ob->flags & UIF_HIDDEN
-			|| ob->type != UI_TEXT
-			|| ob->group < 2
-			|| ob->relx < 280) continue;
+		if(ob->flags & UIF_HIDDEN || ob->type != UI_TEXT || ob->group < 2
+		   || ob->relx < 280)
+			continue;
 		// Extend the detection area to the right edge of the screen.
 		if(UI_MouseInsideBox(ob->x, ob->y, screenWidth, ob->h))
 			return ob;
@@ -855,14 +889,14 @@ ui_object_t *CP_FindHover(void)
 
 //===========================================================================
 // CP_Ticker
-//	Track the mouse and move the documentation window as needed.
+//  Track the mouse and move the documentation window as needed.
 //===========================================================================
-void CP_Ticker(ui_page_t *page)
+void CP_Ticker(ui_page_t * page)
 {
-	int off;
+	int     off;
 	ui_object_t *ob;
-	void *help;
-		
+	void   *help;
+
 	// Normal ticker actions first.
 	UIPage_Ticker(page);
 
@@ -880,11 +914,11 @@ void CP_Ticker(ui_page_t *page)
 		if((ob = CP_FindHover()))
 		{
 			// Change the text.
-			if((help = DH_Find(ob->text))) 
+			if((help = DH_Find(ob->text)))
 			{
 				panel_help = help;
 				panel_help_source = ob;
-			}			
+			}
 
 			if(UI_MouseResting(page))
 			{
@@ -892,8 +926,9 @@ void CP_Ticker(ui_page_t *page)
 				panel_help_active = true;
 			}
 
-			if(!help) panel_help_active = false;
-		}	
+			if(!help)
+				panel_help_active = false;
+		}
 	}
 
 	// Should we move the help box?
@@ -901,70 +936,75 @@ void CP_Ticker(ui_page_t *page)
 	if(panel_help_active)
 	{
 		if(panel_help_offset < HELP_OFFSET)
-			off = (HELP_OFFSET - panel_help_offset)/2;
-		if(off < 4) off = 4;
+			off = (HELP_OFFSET - panel_help_offset) / 2;
+		if(off < 4)
+			off = 4;
 	}
-	else // Help should be hidden.
+	else						// Help should be hidden.
 	{
-		if(panel_help_offset > 0) off = -panel_help_offset/2;
-		if(off > -4) off = -4;
+		if(panel_help_offset > 0)
+			off = -panel_help_offset / 2;
+		if(off > -4)
+			off = -4;
 	}
 	panel_help_offset += off;
-	if(panel_help_offset > HELP_OFFSET)	panel_help_offset = HELP_OFFSET;
-	if(panel_help_offset < 0) panel_help_offset = 0;
+	if(panel_help_offset > HELP_OFFSET)
+		panel_help_offset = HELP_OFFSET;
+	if(panel_help_offset < 0)
+		panel_help_offset = 0;
 }
 
 //===========================================================================
 // CP_LabelText
 //===========================================================================
-int CP_LabelText
-	(char *label, char *text, int x, int y, int w, int h, float alpha)
+int CP_LabelText(char *label, char *text, int x, int y, int w, int h,
+				 float alpha)
 {
-	int ind;
+	int     ind;
 
-	UI_ColorA(UI_COL(UIC_TEXT), .5f*alpha);
+	UI_ColorA(UI_COL(UIC_TEXT), .5f * alpha);
 	FR_TextOut(label, x, y);
 	ind = FR_TextWidth(label);
-	return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, 
-		UI_COL(UIC_TEXT), alpha);
+	return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, UI_COL(UIC_TEXT),
+							alpha);
 }
 
 //===========================================================================
 // CP_Drawer
 //===========================================================================
-void CP_Drawer(ui_page_t *page)
+void CP_Drawer(ui_page_t * page)
 {
-	float alpha = panel_help_offset / (float) HELP_OFFSET;
-	int x, y, w, h, bor;
-	char *str;
+	float   alpha = panel_help_offset / (float) HELP_OFFSET;
+	int     x, y, w, h, bor;
+	char   *str;
 
 	// First call the regular drawer.
 	UIPage_Drawer(page);
 
 	// Is the help box visible?
-	if(panel_help_offset <= 0 || !panel_help_source) return;
+	if(panel_help_offset <= 0 || !panel_help_source)
+		return;
 
 	// Help box placement.
 	bor = 2 * UI_BORDER / 3;
-	x = - bor;
+	x = -bor;
 	y = UI_ScreenY(0);
 	w = HELP_OFFSET;
 	h = UI_ScreenH(920);
-	UI_GradientEx(x, y, w, h, bor, UI_COL(UIC_HELP), UI_COL(UIC_HELP),
-		alpha, alpha);
-	UI_DrawRectEx(x, y, w, h, bor, false, UI_COL(UIC_BRD_HI), NULL, 
-		alpha, -1);
-	x += 2*bor;
-	y += 2*bor;
-	w -= 4*bor;
-	h -= 4*bor;
+	UI_GradientEx(x, y, w, h, bor, UI_COL(UIC_HELP), UI_COL(UIC_HELP), alpha,
+				  alpha);
+	UI_DrawRectEx(x, y, w, h, bor, false, UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+	x += 2 * bor;
+	y += 2 * bor;
+	w -= 4 * bor;
+	h -= 4 * bor;
 
 	// The title (with shadow).
-	UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET, 
-		y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);
-	y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, 
-		UI_COL(UIC_TEXT), alpha) + ui_fonthgt + 3;
-	UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, alpha*.5f, 0);
+	UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET,
+					 y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);
+	y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, UI_COL(UIC_TEXT),
+						 alpha) + ui_fonthgt + 3;
+	UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, alpha * .5f, 0);
 	y += 2;
 
 	// Cvar?
@@ -978,7 +1018,7 @@ void CP_Drawer(ui_page_t *page)
 	// Information.
 	if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
 	{
-		y += ui_fonthgt/2;
+		y += ui_fonthgt / 2;
 		UI_TextOutWrapEx(str, x, y, w, h, UI_COL(UIC_TEXT), alpha);
 	}
 }
@@ -986,14 +1026,17 @@ void CP_Drawer(ui_page_t *page)
 /*
  * Initializes all slider objects.
  */
-void CP_InitCvarSliders(ui_object_t *ob)
+void CP_InitCvarSliders(ui_object_t * ob)
 {
 	for(; ob->type; ob++)
 		if(ob->action == CP_CvarSlider)
 		{
 			uidata_slider_t *slid = ob->data;
-			slid->value = slid->floatmode? Con_GetFloat(slid->data)
-				: Con_GetInteger(slid->data);
+
+			slid->value =
+				slid->floatmode ? Con_GetFloat(slid->
+											   data) : Con_GetInteger(slid->
+																	  data);
 		}
 }
 
@@ -1002,7 +1045,7 @@ void CP_InitCvarSliders(ui_object_t *ob)
  */
 int CCmdOpenPanel(int argc, char **argv)
 {
-	int i;
+	int     i;
 	ui_object_t *ob, *foc;
 	uidata_list_t *list;
 	cvarbutton_t *cvb;
@@ -1013,7 +1056,8 @@ int CCmdOpenPanel(int argc, char **argv)
 	panel_help_source = NULL;
 
 	UI_InitPage(&page_panel, ob_panel);
-	strcpy(page_panel.title, "Doomsday "DOOMSDAY_VERSION_TEXT" Control Panel");
+	strcpy(page_panel.title,
+		   "Doomsday " DOOMSDAY_VERSION_TEXT " Control Panel");
 	page_panel.ticker = CP_Ticker;
 	page_panel.drawer = CP_Drawer;
 	if(argc != 2)
@@ -1033,14 +1077,17 @@ int CCmdOpenPanel(int argc, char **argv)
 				CP_ChooseGroup(foc = ob_panel + i);
 				break;
 			}
-		if(!foc) CP_ChooseGroup(foc = ob_panel);
+		if(!foc)
+			CP_ChooseGroup(foc = ob_panel);
 	}
 
 	// Set default Yes/No strings.
 	for(cvb = cvarbuttons; cvb->cvarname; cvb++)
 	{
-		if(!cvb->yes) cvb->yes = "Yes";
-		if(!cvb->no) cvb->no = "No";
+		if(!cvb->yes)
+			cvb->yes = "Yes";
+		if(!cvb->no)
+			cvb->no = "No";
 	}
 
 	// Set cvarbutton data pointers.
@@ -1048,13 +1095,13 @@ int CCmdOpenPanel(int argc, char **argv)
 	for(i = 0, ob = ob_panel; ob_panel[i].type; i++, ob++)
 	{
 		if(ob->action == CP_CvarButton)
-		{			
+		{
 			if(ob->data)
 			{
 				// This button has already been initialized.
 				cvb = ob->data;
 				cvb->active = Con_GetByte(cvb->cvarname) != 0;
-				strcpy(ob->text, cvb->active? cvb->yes : cvb->no);
+				strcpy(ob->text, cvb->active ? cvb->yes : cvb->no);
 				continue;
 			}
 			// Find the cvarbutton representing this one.
@@ -1063,7 +1110,7 @@ int CCmdOpenPanel(int argc, char **argv)
 				{
 					cvb->active = Con_GetByte(cvb->cvarname) != 0;
 					ob->data = cvb;
-					strcpy(ob->text, cvb->active? cvb->yes : cvb->no);
+					strcpy(ob->text, cvb->active ? cvb->yes : cvb->no);
 					break;
 				}
 		}
@@ -1076,6 +1123,7 @@ int CCmdOpenPanel(int argc, char **argv)
 		if(ob->action == CP_CvarEdit)
 		{
 			uidata_edit_t *ed = ob->data;
+
 			strncpy(ed->ptr, Con_GetString(ed->data), ed->maxlen);
 		}
 	}
@@ -1085,7 +1133,7 @@ int CCmdOpenPanel(int argc, char **argv)
 	ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
 	list = ob->data;
 	list->selection = UI_ListFindItem(ob, RES(screenWidth, screenHeight));
-	if(list->selection == -1) 
+	if(list->selection == -1)
 		// Then use a reasonable default.
 		list->selection = UI_ListFindItem(ob, RES(640, 480));
 	CP_ResolutionList(ob);

@@ -52,9 +52,9 @@
  */
 void DD_ResolvePath(char *path)
 {
-	char *ch   = path;
-	char *end  = path + strlen(path);
-	char *prev = path; // Assume an absolute path.
+	char   *ch = path;
+	char   *end = path + strlen(path);
+	char   *prev = path;		// Assume an absolute path.
 
 	for(; *ch; ch++)
 	{
@@ -74,25 +74,26 @@ void DD_ResolvePath(char *path)
 				continue;
 			}
 		}
-		if(*ch == '/') prev = ch;
+		if(*ch == '/')
+			prev = ch;
 	}
 }
 
 /*
  * Convert the given path to an absolute path.
  */
-char *_fullpath(char *full, const char *original, int maxLen)
+char   *_fullpath(char *full, const char *original, int maxLen)
 {
 	ddstring_t dir;
-	char workDir[512];		// Fixed-size array...
+	char    workDir[512];		// Fixed-size array...
 
 	Str_Init(&dir);
 
 	// FIXME: Check for '~'.
-	
-	if(original[0] != '/')	// A relative path?
+
+	if(original[0] != '/')		// A relative path?
 	{
-		getcwd(workDir, sizeof(workDir)); // FIXME: Check for ERANGE.
+		getcwd(workDir, sizeof(workDir));	// FIXME: Check for ERANGE.
 		Str_Set(&dir, workDir);
 		Str_Append(&dir, "/");
 		Str_Append(&dir, original);
@@ -114,13 +115,14 @@ char *_fullpath(char *full, const char *original, int maxLen)
 
 void strzncpy(char *dest, const char *src, int count)
 {
-	char *out = dest;
+	char   *out = dest;
 	const char *in = src;
 
 	while(count-- > 0)
 	{
 		*out++ = *in++;
-		if(!*in) break;
+		if(!*in)
+			break;
 	}
 	*out = 0;
 }
@@ -128,13 +130,15 @@ void strzncpy(char *dest, const char *src, int count)
 void _splitpath(const char *path, char *drive, char *dir, char *name,
 				char *ext)
 {
-	char *lastPeriod, *lastSlash;
-	
-	if(drive) strcpy(drive, ""); // There is never a drive letter.
+	char   *lastPeriod, *lastSlash;
+
+	if(drive)
+		strcpy(drive, "");		// There is never a drive letter.
 
 	lastPeriod = strrchr(path, '.');
-	lastSlash  = strrchr(path, '/');
-	if(lastPeriod < lastSlash) lastPeriod = NULL;
+	lastSlash = strrchr(path, '/');
+	if(lastPeriod < lastSlash)
+		lastPeriod = NULL;
 
 	if(dir)
 	{
@@ -143,7 +147,7 @@ void _splitpath(const char *path, char *drive, char *dir, char *name,
 		else
 			strcpy(dir, "");
 	}
-	
+
 	// The name should not include the extension.
 	if(name)
 	{
@@ -154,7 +158,7 @@ void _splitpath(const char *path, char *drive, char *dir, char *name,
 		else
 			strzncpy(name, path, lastPeriod - path);
 	}
-	
+
 	// Last period gives us the extension.
 	if(ext)
 	{

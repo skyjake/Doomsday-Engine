@@ -12,9 +12,9 @@
 #include <ctype.h>
 
 /*
-// Oh, gross hack! But io.h clashes with vldoor_e::open/close...
-#define __P_SPEC__
-*/
+   // Oh, gross hack! But io.h clashes with vldoor_e::open/close...
+   #define __P_SPEC__
+ */
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -59,12 +59,12 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void R_InitTranslation(void);
-void G_BuildTiccmd (void *cmd);
-void D_Display (void);
-int D_PrivilegedResponder(event_t *event);
-void D_DefaultBindings();
-fixed_t P_GetMobjFriction(mobj_t* mo);
+void    R_InitTranslation(void);
+void    G_BuildTiccmd(void *cmd);
+void    D_Display(void);
+int     D_PrivilegedResponder(event_t * event);
+void    D_DefaultBindings();
+fixed_t P_GetMobjFriction(mobj_t * mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -75,24 +75,24 @@ fixed_t P_GetMobjFriction(mobj_t* mo);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The interface to the Doomsday engine.
-game_import_t	gi;
-game_export_t	gx;
+game_import_t gi;
+game_export_t gx;
 
-boolean			devparm;		// started game with -devparm
-boolean         nomonsters;		// checkparm of -nomonsters
-boolean         respawnparm;	// checkparm of -respawn
-boolean         fastparm;		// checkparm of -fast
+boolean devparm;				// started game with -devparm
+boolean nomonsters;				// checkparm of -nomonsters
+boolean respawnparm;			// checkparm of -respawn
+boolean fastparm;				// checkparm of -fast
 
-skill_t			startskill;
-int				startepisode;
-int				startmap;
-boolean			autostart;
-FILE*			debugfile;
+skill_t startskill;
+int     startepisode;
+int     startmap;
+boolean autostart;
+FILE   *debugfile;
 
 // Demo loop.
-int             demosequence;
-int             pagetic;
-char            *pagename;
+int     demosequence;
+int     pagetic;
+char   *pagename;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -103,55 +103,50 @@ static char gameModeString[17];
 
 void D_GetDemoLump(int num, char *out)
 {
-	sprintf(out, "%cDEMO%i", gamemode == shareware? 'S'
-		: gamemode == registered? 'R'
-		: gamemode == retail? 'U'
-		: gamemission == pack_plut? 'P'
-		: gamemission == pack_tnt? 'T'
-		: '2', num);
+	sprintf(out, "%cDEMO%i",
+			gamemode == shareware ? 'S' : gamemode ==
+			registered ? 'R' : gamemode == retail ? 'U' : gamemission ==
+			pack_plut ? 'P' : gamemission == pack_tnt ? 'T' : '2', num);
 }
 
 // print title for every printed line
-char title[128];
+char    title[128];
 
 //===========================================================================
 // DetectIWADs
-//	Check which known IWADs are found. The purpose of this routine is to
-//	find out which IWADs the user lets us to know about, but we don't 
-//	decide which one gets loaded or even see if the WADs are actually 
-//	there. The default location for IWADs is Data\jDoom\.
+//  Check which known IWADs are found. The purpose of this routine is to
+//  find out which IWADs the user lets us to know about, but we don't 
+//  decide which one gets loaded or even see if the WADs are actually 
+//  there. The default location for IWADs is Data\jDoom\.
 //===========================================================================
-void DetectIWADs (void)
+void DetectIWADs(void)
 {
-	typedef struct 
-	{
-		char		*file;
-		char		*override;
+	typedef struct {
+		char   *file;
+		char   *override;
 	} fspec_t;
-	
+
 	// The '>' means the paths are affected by the base path.
-	char *paths[] = 
-	{
+	char   *paths[] = {
 		"}Data\\jDoom\\",
 		"}Data\\",
 		"}",
 		"}Iwads\\",
 		"",
-		0 
+		0
 	};
-	fspec_t iwads[] = 
-	{
-		{ "TNT.wad",		"-tnt" 		},
-		{ "Plutonia.wad",	"-plutonia" },
-		{ "Doom2.wad",		"-doom2" 	},
-		{ "Doom1.wad",		"-sdoom" 	},
-		{ "Doom.wad",		"-doom" 	},
-		{ "Doom.wad",		"-ultimate" },
-		{ 0, 0 }
+	fspec_t iwads[] = {
+		{"TNT.wad", "-tnt"},
+		{"Plutonia.wad", "-plutonia"},
+		{"Doom2.wad", "-doom2"},
+		{"Doom1.wad", "-sdoom"},
+		{"Doom.wad", "-doom"},
+		{"Doom.wad", "-ultimate"},
+		{0, 0}
 	};
-	int	i, k;
+	int     i, k;
 	boolean overridden = false;
-	char fn[256];
+	char    fn[256];
 
 	// First check if an overriding command line option is being used.
 	for(i = 0; iwads[i].file; i++)
@@ -161,12 +156,13 @@ void DetectIWADs (void)
 			break;
 		}
 
-	// Tell the engine about all the possible IWADs.	
+	// Tell the engine about all the possible IWADs.    
 	for(k = 0; paths[k]; k++)
 		for(i = 0; iwads[i].file; i++)
 		{
 			// Are we allowed to use this?
-			if(overridden && !ArgExists(iwads[i].override)) continue;
+			if(overridden && !ArgExists(iwads[i].override))
+				continue;
 			sprintf(fn, "%s%s", paths[k], iwads[i].file);
 			DD_AddIWAD(fn);
 		}
@@ -188,56 +184,49 @@ boolean LumpsFound(char **list)
 void D_IdentifyFromData(void)
 {
 	typedef struct {
-		char		**lumps;
-		GameMode_t	mode;	
+		char  **lumps;
+		GameMode_t mode;
 	} identify_t;
 
-	char *shareware_lumps[] = 
-	{
+	char   *shareware_lumps[] = {
 		// List of lumps to detect shareware with.
-		"e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6", 
+		"e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6",
 		"e1m7", "e1m8", "e1m9",
 		"d_e1m1", "floor4_8", "floor7_2", NULL
 	};
-	char *registered_lumps[] = 
-	{
+	char   *registered_lumps[] = {
 		// List of lumps to detect registered with.
-		"e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6", 
+		"e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6",
 		"e2m7", "e2m8", "e2m9",
-		"e3m1", "e3m2", "e3m3", "e3m4", "e3m5", "e3m6", 
+		"e3m1", "e3m2", "e3m3", "e3m4", "e3m5", "e3m6",
 		"e3m7", "e3m8", "e3m9",
 		"cybre1", "cybrd8", "floor7_2", NULL
 	};
-	char *retail_lumps[] =
-	{
+	char   *retail_lumps[] = {
 		// List of lumps to detect Ultimate Doom with.
-		"e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6", 
-		"e4m7", "e4m8", "e4m9", 
+		"e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6",
+		"e4m7", "e4m8", "e4m9",
 		"m_epi4", NULL
 	};
-	char *commercial_lumps[] =
-	{
+	char   *commercial_lumps[] = {
 		// List of lumps to detect Doom II with.
 		"map01", "map02", "map03", "map04", "map10", "map20",
 		"map25", "map30",
 		"vilen1", "vileo1", "vileq1", "grnrock", NULL
 	};
-	char *plutonia_lumps[] =
-	{
+	char   *plutonia_lumps[] = {
 		"_deutex_", "mc5", "mc11", "mc16", "mc20", NULL
 	};
-	char *tnt_lumps[] =
-	{
+	char   *tnt_lumps[] = {
 		"cavern5", "cavern7", "stonew1", NULL
 	};
-	identify_t list[] =
-	{
-		{ commercial_lumps,	commercial },	// Doom2 is easiest to detect.
-		{ retail_lumps, 	retail },		// Ultimate Doom is obvious.
-		{ registered_lumps,	registered },
-		{ shareware_lumps, 	shareware }
+	identify_t list[] = {
+		{commercial_lumps, commercial},	// Doom2 is easiest to detect.
+		{retail_lumps, retail},	// Ultimate Doom is obvious.
+		{registered_lumps, registered},
+		{shareware_lumps, shareware}
 	};
-	int i, num = sizeof(list)/sizeof(identify_t);
+	int     i, num = sizeof(list) / sizeof(identify_t);
 
 	// First check the command line.
 	if(ArgCheck("-sdoom"))
@@ -257,8 +246,10 @@ void D_IdentifyFromData(void)
 		// DOOM 2.
 		gamemode = commercial;
 		gamemission = doom2;
-		if(ArgCheck("-plutonia")) gamemission = pack_plut;
-		if(ArgCheck("-tnt")) gamemission = pack_tnt;
+		if(ArgCheck("-plutonia"))
+			gamemission = pack_plut;
+		if(ArgCheck("-tnt"))
+			gamemission = pack_tnt;
 		return;
 	}
 	if(ArgCheck("-ultimate"))
@@ -267,7 +258,7 @@ void D_IdentifyFromData(void)
 		gamemode = retail;
 		return;
 	}
-	
+
 	// Now we must look at the lumps.
 	for(i = 0; i < num; i++)
 	{
@@ -277,22 +268,22 @@ void D_IdentifyFromData(void)
 		{
 			gamemode = list[i].mode;
 			// Check the mission packs.
-			if(LumpsFound(plutonia_lumps)) 
+			if(LumpsFound(plutonia_lumps))
 				gamemission = pack_plut;
-			else if(LumpsFound(tnt_lumps)) 
+			else if(LumpsFound(tnt_lumps))
 				gamemission = pack_tnt;
 			else if(gamemode == commercial)
 				gamemission = doom2;
-			else 
+			else
 				gamemission = doom;
 			return;
 		}
-	}	
+	}
 
 	// A detection couldn't be made.
-	gamemode = shareware; // Assume the minimum.
+	gamemode = shareware;		// Assume the minimum.
 	Con_Message("\nIdentifyVersion: DOOM version unknown.\n"
-		"** Important data might be missing! **\n\n");
+				"** Important data might be missing! **\n\n");
 }
 
 /*
@@ -307,25 +298,27 @@ void D_IdentifyVersion(void)
 	// A client can't connect unless the same game mode is used.
 	memset(gameModeString, 0, sizeof(gameModeString));
 
-	strcpy(gameModeString, 
-		  gamemode == shareware?  "doom1-share"
-		: gamemode == registered? "doom1"
-		: gamemode == retail?     "doom1-ultimate"
-		: gamemode == commercial? 
-			( gamemission == pack_plut? "doom2-plut"
-			: gamemission == pack_tnt?  "doom2-tnt"
-			: "doom2" )
-		: "-");
+	strcpy(gameModeString,
+		   gamemode == shareware ? "doom1-share" : gamemode ==
+		   registered ? "doom1" : gamemode ==
+		   retail ? "doom1-ultimate" : gamemode == commercial ? (gamemission ==
+																 pack_plut ?
+																 "doom2-plut" :
+																 gamemission ==
+																 pack_tnt ?
+																 "doom2-tnt" :
+																 "doom2") :
+		   "-");
 }
 
 void D_SetPlayerPtrs(void)
 {
-	int i;
-	
+	int     i;
+
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		players[i].plr = DD_GetPlayer(i);
-		players[i].plr->extradata = (void*) &players[i];
+		players[i].plr->extradata = (void *) &players[i];
 	}
 }
 
@@ -334,10 +327,11 @@ void D_SetPlayerPtrs(void)
 //===========================================================================
 void D_PreInit(void)
 {
-	int		i;
+	int     i;
 
-	if(gi.version < DOOMSDAY_VERSION) Con_Error("jDoom requires at least "
-		"Doomsday "DOOMSDAY_VERSION_TEXT"!\n");
+	if(gi.version < DOOMSDAY_VERSION)
+		Con_Error("jDoom requires at least " "Doomsday " DOOMSDAY_VERSION_TEXT
+				  "!\n");
 
 	// Setup the DGL interface.
 	G_InitDGL();
@@ -350,7 +344,7 @@ void D_PreInit(void)
 	cfg.povLookAround = true;
 	cfg.joyaxis[0] = JOYAXIS_TURN;
 	cfg.joyaxis[1] = JOYAXIS_MOVE;
-	cfg.sbarscale = 20;	// Full size.
+	cfg.sbarscale = 20;			// Full size.
 	cfg.echoMsg = true;
 	cfg.lookSpeed = 3;
 	cfg.usePatchReplacement = true;
@@ -372,7 +366,8 @@ void D_PreInit(void)
 	cfg.hudColor[0] = 1;
 	cfg.hudColor[1] = cfg.hudColor[2] = 0;
 	cfg.xhairSize = 1;
-	for(i = 0; i < 4; i++) cfg.xhairColor[i] = 255;
+	for(i = 0; i < 4; i++)
+		cfg.xhairColor[i] = 255;
 	cfg.snd_3D = false;
 	cfg.snd_ReverbFactor = 100;
 	cfg.moveCheckZ = true;
@@ -413,23 +408,22 @@ void D_PreInit(void)
 	// Add the JDoom cvars and ccmds to the console databases.
 	D_ConsoleRegistration();
 
-	DD_AddStartupWAD("}Data\\jDoom\\jDoom.wad"); // FONTA and FONTB, M_THERM2
+	DD_AddStartupWAD("}Data\\jDoom\\jDoom.wad");	// FONTA and FONTB, M_THERM2
 	DetectIWADs();
 
-    /*p = ArgCheck ("-playdemo");
-    if(!p) p = ArgCheck ("-timedemo");
-    if(p && p < myargc-1)
-    {
-		sprintf(file, "%s.lmp", gi.Argv(p+1));
-		gi.AddStartupWAD(file);
-		Con_Message("Playing demo %s.lmp.\n", gi.Argv(p+1));
-    }*/
+	/*p = ArgCheck ("-playdemo");
+	   if(!p) p = ArgCheck ("-timedemo");
+	   if(p && p < myargc-1)
+	   {
+	   sprintf(file, "%s.lmp", gi.Argv(p+1));
+	   gi.AddStartupWAD(file);
+	   Con_Message("Playing demo %s.lmp.\n", gi.Argv(p+1));
+	   } */
 
-    modifiedgame = false;
+	modifiedgame = false;
 }
 
-char *BorderLumps[] = 
-{
+char   *BorderLumps[] = {
 	"FLOOR7_2",
 	"brdr_t",
 	"brdr_r",
@@ -443,14 +437,14 @@ char *BorderLumps[] =
 
 //===========================================================================
 // D_PostInit
-//	Called after engine init has been completed.
+//  Called after engine init has been completed.
 //===========================================================================
 void D_PostInit(void)
 {
-	int		p;
-	char	file[256];
+	int     p;
+	char    file[256];
 
-	Con_Message("jDoom "VERSIONTEXT"\n");
+	Con_Message("jDoom " VERSIONTEXT "\n");
 
 	SV_Init();
 	XG_ReadTypes();
@@ -464,168 +458,172 @@ void D_PostInit(void)
 
 	// Game parameters.
 	monsterinfight = GetDefInt("AI|Infight", 0);
-    nomonsters = ArgCheck ("-nomonsters");
-    respawnparm = ArgCheck ("-respawn");
-    fastparm = ArgCheck ("-fast");
-    devparm = ArgCheck ("-devparm");
-    if(ArgCheck("-altdeath")) cfg.netDeathmatch = 2;
-    else if(ArgCheck("-deathmatch")) cfg.netDeathmatch = 1;
+	nomonsters = ArgCheck("-nomonsters");
+	respawnparm = ArgCheck("-respawn");
+	fastparm = ArgCheck("-fast");
+	devparm = ArgCheck("-devparm");
+	if(ArgCheck("-altdeath"))
+		cfg.netDeathmatch = 2;
+	else if(ArgCheck("-deathmatch"))
+		cfg.netDeathmatch = 1;
 
 	// Print a game mode banner with rulers.
-	Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, 
-		gamemode == retail? 
-		"The Ultimate DOOM Startup\n"
-		: gamemode == shareware?
-		"DOOM Shareware Startup\n"
-		: gamemode == registered?
-		"DOOM Registered Startup\n"
-		: gamemode == commercial?
-		(gamemission == pack_plut?
-			"Final DOOM: The Plutonia Experiment\n"
-			: gamemission == pack_tnt? "Final DOOM: TNT: Evilution\n"
-			: "DOOM 2: Hell on Earth\n")
-		: "Public DOOM\n");
+	Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
+				gamemode ==
+				retail ? "The Ultimate DOOM Startup\n" : gamemode ==
+				shareware ? "DOOM Shareware Startup\n" : gamemode ==
+				registered ? "DOOM Registered Startup\n" : gamemode ==
+				commercial ? (gamemission ==
+							  pack_plut ?
+							  "Final DOOM: The Plutonia Experiment\n" :
+							  gamemission ==
+							  pack_tnt ? "Final DOOM: TNT: Evilution\n" :
+							  "DOOM 2: Hell on Earth\n") : "Public DOOM\n");
 	Con_FPrintf(CBLF_RULER, "");
 
 	// Plutonia and TNT automatically turn on the full sky.
 	if(gamemode == commercial
-		&& (gamemission == pack_plut || gamemission == pack_tnt))
+	   && (gamemission == pack_plut || gamemission == pack_tnt))
 	{
 		Con_SetInteger("rend-sky-full", 1);
 	}
 
-	if(gamemode == commercial) // Doom2 has a different background.
+	if(gamemode == commercial)	// Doom2 has a different background.
 		BorderLumps[0] = "GRNROCK";
 	R_SetBorderGfx(BorderLumps);
 
-    // get skill / episode / map from parms
-    gameskill = startskill = sk_medium;
-    startepisode = 1;
-    startmap = 1;
+	// get skill / episode / map from parms
+	gameskill = startskill = sk_medium;
+	startepisode = 1;
+	startmap = 1;
 	autostart = false;
-		
-    p = ArgCheck ("-skill");
-    if(p && p < myargc-1)
-    {
-		startskill = Argv(p+1)[0] - '1';
-		autostart = true;
-    }
 
-    p = ArgCheck ("-episode");
-    if(p && p < myargc-1)
-    {
-		startepisode = Argv(p+1)[0] - '0';
+	p = ArgCheck("-skill");
+	if(p && p < myargc - 1)
+	{
+		startskill = Argv(p + 1)[0] - '1';
+		autostart = true;
+	}
+
+	p = ArgCheck("-episode");
+	if(p && p < myargc - 1)
+	{
+		startepisode = Argv(p + 1)[0] - '0';
 		startmap = 1;
 		autostart = true;
-    }
-	
-    p = ArgCheck ("-timer");
-    if(p && p < myargc-1 && deathmatch)
-    {
-		int time;
-		time = atoi(Argv(p+1));
+	}
+
+	p = ArgCheck("-timer");
+	if(p && p < myargc - 1 && deathmatch)
+	{
+		int     time;
+
+		time = atoi(Argv(p + 1));
 		Con_Message("Levels will end after %d minute", time);
-		if(time>1) Con_Message("s");
+		if(time > 1)
+			Con_Message("s");
 		Con_Message(".\n");
-    }
+	}
 
-/*
-    p = ArgCheck ("-avg");
-    if(p && p < myargc-1 && deathmatch)
-		Con_Message("Austin Virtual Gaming: Levels will end after "
-		"20 minutes\n");
-*/
+	/*
+	   p = ArgCheck ("-avg");
+	   if(p && p < myargc-1 && deathmatch)
+	   Con_Message("Austin Virtual Gaming: Levels will end after "
+	   "20 minutes\n");
+	 */
 
-    p = ArgCheck ("-warp");
-    if(p && p < myargc-1)
-    {
+	p = ArgCheck("-warp");
+	if(p && p < myargc - 1)
+	{
 		if(gamemode == commercial)
 		{
-			startmap = atoi(Argv(p+1));
+			startmap = atoi(Argv(p + 1));
 			autostart = true;
 		}
-		else if(p < myargc-2)
+		else if(p < myargc - 2)
 		{
-			startepisode = Argv(p+1)[0]-'0';
-			startmap = Argv(p+2)[0]-'0';
+			startepisode = Argv(p + 1)[0] - '0';
+			startmap = Argv(p + 2)[0] - '0';
 			autostart = true;
 		}
-    }
+	}
 
-    // turbo option
-    if((p = ArgCheck("-turbo")))
-    {
-		int			scale = 200;
-		extern int	forwardmove[2];
-		extern int	sidemove[2];
-	
-		if(p < myargc-1)
-			scale = atoi(Argv(p+1));
-		if (scale < 10) scale = 10;
-		if (scale > 400) scale = 400;
+	// turbo option
+	if((p = ArgCheck("-turbo")))
+	{
+		int     scale = 200;
+		extern int forwardmove[2];
+		extern int sidemove[2];
+
+		if(p < myargc - 1)
+			scale = atoi(Argv(p + 1));
+		if(scale < 10)
+			scale = 10;
+		if(scale > 400)
+			scale = 400;
 		Con_Message("turbo scale: %i%%\n", scale);
-		forwardmove[0] = forwardmove[0]*scale/100;
-		forwardmove[1] = forwardmove[1]*scale/100;
-		sidemove[0] = sidemove[0]*scale/100;
-		sidemove[1] = sidemove[1]*scale/100;
-    }
+		forwardmove[0] = forwardmove[0] * scale / 100;
+		forwardmove[1] = forwardmove[1] * scale / 100;
+		sidemove[0] = sidemove[0] * scale / 100;
+		sidemove[1] = sidemove[1] * scale / 100;
+	}
 
-/*
-    // Check for -file in shareware
-    if(modifiedgame)
-    {
-		// These are the lumps that will be checked in IWAD,
-		// if any one is not present, execution will be aborted.
-		char name[23][8]=
-		{
-			"e2m1","e2m2","e2m3","e2m4","e2m5","e2m6","e2m7","e2m8","e2m9",
-			"e3m1","e3m3","e3m3","e3m4","e3m5","e3m6","e3m7","e3m8","e3m9",
-			"dphoof","bfgga0","heada1","cybra1","spida1d1"
-		};
-		int i;
-	
-		if(gamemode == shareware)
-			I_Error("\nYou cannot -file with the shareware version. Register!");
+	/*
+	   // Check for -file in shareware
+	   if(modifiedgame)
+	   {
+	   // These are the lumps that will be checked in IWAD,
+	   // if any one is not present, execution will be aborted.
+	   char name[23][8]=
+	   {
+	   "e2m1","e2m2","e2m3","e2m4","e2m5","e2m6","e2m7","e2m8","e2m9",
+	   "e3m1","e3m3","e3m3","e3m4","e3m5","e3m6","e3m7","e3m8","e3m9",
+	   "dphoof","bfgga0","heada1","cybra1","spida1d1"
+	   };
+	   int i;
 
-		// Check for fake IWAD with right name,
-		// but w/o all the lumps of the registered version. 
-		if (gamemode == registered)
-			for (i = 0;i < 23; i++)
-				if (W_CheckNumForName(name[i])<0)
-					I_Error("\nThis is not the registered version.");
-    }
-*/
+	   if(gamemode == shareware)
+	   I_Error("\nYou cannot -file with the shareware version. Register!");
 
-    Con_Message("P_Init: Init Playloop state.\n");
-    P_Init();
+	   // Check for fake IWAD with right name,
+	   // but w/o all the lumps of the registered version. 
+	   if (gamemode == registered)
+	   for (i = 0;i < 23; i++)
+	   if (W_CheckNumForName(name[i])<0)
+	   I_Error("\nThis is not the registered version.");
+	   }
+	 */
 
-    Con_Message("HU_Init: Setting up heads up display.\n");
-    HU_Init();
+	Con_Message("P_Init: Init Playloop state.\n");
+	P_Init();
 
-    Con_Message("ST_Init: Init status bar.\n");
-    ST_Init();
+	Con_Message("HU_Init: Setting up heads up display.\n");
+	HU_Init();
 
-    Con_Message("M_Init: Init miscellaneous info.\n");
-    M_Init();
+	Con_Message("ST_Init: Init status bar.\n");
+	ST_Init();
 
-    p = ArgCheck ("-loadgame");
-    if (p && p < myargc-1)
-    {
-		SV_SaveGameFile(Argv(p+1)[0] - '0', file);
+	Con_Message("M_Init: Init miscellaneous info.\n");
+	M_Init();
+
+	p = ArgCheck("-loadgame");
+	if(p && p < myargc - 1)
+	{
+		SV_SaveGameFile(Argv(p + 1)[0] - '0', file);
 		G_LoadGame(file);
-    }
+	}
 
-    if(gameaction != ga_loadgame)
-    {
+	if(gameaction != ga_loadgame)
+	{
 		if(autostart || IS_NETGAME)
 		{
 			G_InitNew(startskill, startepisode, startmap);
 		}
 		else
 		{
-			G_StartTitle();                // start up intro loop
+			G_StartTitle();		// start up intro loop
 		}
-    }
+	}
 }
 
 void D_Shutdown(void)
@@ -642,12 +640,12 @@ void D_EndFrame(void)
 {
 }
 
-char *G_Get(int id)
+char   *G_Get(int id)
 {
-	switch(id)
+	switch (id)
 	{
 	case DD_GAME_ID:
-		return "jDoom "VERSION_TEXT;
+		return "jDoom " VERSION_TEXT;
 
 	case DD_GAME_MODE:
 		return gameModeString;
@@ -659,20 +657,27 @@ char *G_Get(int id)
 		return VERSION_TEXT;
 
 	case DD_VERSION_LONG:
-		return VERSIONTEXT"\njDoom is based on linuxdoom-1.10.";
+		return VERSIONTEXT "\njDoom is based on linuxdoom-1.10.";
 
 	case DD_ACTION_LINK:
-		return (char*) actionlinks;
+		return (char *) actionlinks;
 
 	case DD_PSPRITE_BOB_X:
-		return (char*) (FRACUNIT + FixedMul(
-			FixedMul(FRACUNIT*cfg.bobWeapon, players[consoleplayer].bob), 
-			finecosine[(128 * leveltime) & FINEMASK]));
+		return (char *) (FRACUNIT +
+						 FixedMul(FixedMul
+								  (FRACUNIT * cfg.bobWeapon,
+								   players[consoleplayer].bob),
+								  finecosine[(128 * leveltime) & FINEMASK]));
 
 	case DD_PSPRITE_BOB_Y:
-		return (char*) (32*FRACUNIT + FixedMul(
-			FixedMul(FRACUNIT*cfg.bobWeapon, players[consoleplayer].bob),
-			finesine[(128 * leveltime) & FINEMASK & (FINEANGLES/2-1)]));
+		return (char *) (32 * FRACUNIT +
+						 FixedMul(FixedMul
+								  (FRACUNIT * cfg.bobWeapon,
+								   players[consoleplayer].bob),
+								  finesine[(128 *
+											leveltime) & FINEMASK & (FINEANGLES
+																	 / 2 -
+																	 1)]));
 
 	default:
 		break;
@@ -682,27 +687,27 @@ char *G_Get(int id)
 }
 
 /*
-void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
-{
-	// We're only interested in buttons.
-	// Old Attack and Use buttons apply, if they're set.
-	current->buttons |= discarded->buttons & (BT_ATTACK | BT_USE);
-	if(discarded->buttons & BT_SPECIAL || current->buttons & BT_SPECIAL) 
-		return;
-	if(discarded->buttons & BT_CHANGE && !(current->buttons & BT_CHANGE))
-	{
-		// Use the old weapon change.
-		current->buttons |= discarded->buttons & (BT_CHANGE | BT_WEAPONMASK);
-	}
-}
-*/
+   void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
+   {
+   // We're only interested in buttons.
+   // Old Attack and Use buttons apply, if they're set.
+   current->buttons |= discarded->buttons & (BT_ATTACK | BT_USE);
+   if(discarded->buttons & BT_SPECIAL || current->buttons & BT_SPECIAL) 
+   return;
+   if(discarded->buttons & BT_CHANGE && !(current->buttons & BT_CHANGE))
+   {
+   // Use the old weapon change.
+   current->buttons |= discarded->buttons & (BT_CHANGE | BT_WEAPONMASK);
+   }
+   }
+ */
 
 //===========================================================================
 // GetGameAPI
-//	Takes a copy of the engine's entry points and exported data. Returns
-//	a pointer to the structure that contains our entry points and exports.
+//  Takes a copy of the engine's entry points and exported data. Returns
+//  a pointer to the structure that contains our entry points and exports.
 //===========================================================================
-game_export_t *GetGameAPI(game_import_t *imports)
+game_export_t *GetGameAPI(game_import_t * imports)
 {
 	// Take a copy of the imports, but only copy as much data as is 
 	// allowed and legal.
@@ -722,11 +727,11 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.Ticker = D_Ticker;
 	gx.G_Drawer = D_Display;
 	gx.MN_Drawer = M_Drawer;
-	gx.PrivilegedResponder = (boolean (*)(event_t*)) D_PrivilegedResponder;
+	gx.PrivilegedResponder = (boolean(*)(event_t *)) D_PrivilegedResponder;
 	gx.MN_Responder = M_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
-	gx.MobjFriction = (fixed_t (*)(void*)) P_GetMobjFriction;
+	gx.MobjFriction = (fixed_t(*)(void *)) P_GetMobjFriction;
 	gx.EndFrame = D_EndFrame;
 	gx.ConsoleBackground = D_ConsoleBg;
 	gx.UpdateState = G_UpdateState;
@@ -754,4 +759,3 @@ game_export_t *GetGameAPI(game_import_t *imports)
 
 	return &gx;
 }
-

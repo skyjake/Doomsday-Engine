@@ -51,22 +51,22 @@ extern int gotframe;
 // from the wrong map).
 boolean gotFirstFrame;
 
-int predicted_tics;
+int     predicted_tics;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int num_acks;
-byte acks[MAX_ACKS];
+byte    acks[MAX_ACKS];
 
 // The set history keeps track of received sets and is used to detect
 // duplicate frames.
-short setHistory[SET_HISTORY_SIZE];
-int historyIdx;
+short   setHistory[SET_HISTORY_SIZE];
+int     historyIdx;
 
 // The resend ID history keeps track of received resend deltas. Used
 // to detect duplicate resends.
-byte resendHistory[RESEND_HISTORY_SIZE];
-int resendHistoryIdx;
+byte    resendHistory[RESEND_HISTORY_SIZE];
+int     resendHistoryIdx;
 
 // CODE --------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ int resendHistoryIdx;
  */
 void Cl_InitFrame(void)
 {
-	gotframe = false;	// Nothing yet...
+	gotframe = false;			// Nothing yet...
 
 	// -1 denotes an invalid entry.
 	memset(setHistory, -1, sizeof(setHistory));
@@ -103,8 +103,8 @@ void Cl_ResetFrame(void)
  */
 void Cl_HistoryAdd(byte set)
 {
-	setHistory[ historyIdx++ ] = set;
-	
+	setHistory[historyIdx++] = set;
+
 	if(historyIdx >= SET_HISTORY_SIZE)
 		historyIdx -= SET_HISTORY_SIZE;
 }
@@ -114,11 +114,12 @@ void Cl_HistoryAdd(byte set)
  */
 boolean Cl_HistoryCheck(byte set)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < SET_HISTORY_SIZE; i++)
 	{
-		if(setHistory[i] == set) return true;
+		if(setHistory[i] == set)
+			return true;
 	}
 	return false;
 }
@@ -128,7 +129,7 @@ boolean Cl_HistoryCheck(byte set)
  */
 void Cl_ResendHistoryAdd(byte id)
 {
-	resendHistory[ resendHistoryIdx++ ] = id;
+	resendHistory[resendHistoryIdx++] = id;
 
 	if(resendHistoryIdx >= RESEND_HISTORY_SIZE)
 		resendHistoryIdx -= RESEND_HISTORY_SIZE;
@@ -139,11 +140,12 @@ void Cl_ResendHistoryAdd(byte id)
  */
 boolean Cl_ResendHistoryCheck(byte id)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < RESEND_HISTORY_SIZE; i++)
 	{
-		if(resendHistory[i] == id) return true;
+		if(resendHistory[i] == id)
+			return true;
 	}
 	return false;
 }
@@ -153,9 +155,9 @@ boolean Cl_ResendHistoryCheck(byte id)
  */
 void Cl_Frame2Received(int packetType)
 {
-	byte set = Msg_ReadByte(), oldSet, resend, deltaType;
-	byte resendAcks[300];
-	int i, numResendAcks = 0;
+	byte    set = Msg_ReadByte(), oldSet, resend, deltaType;
+	byte    resendAcks[300];
+	int     i, numResendAcks = 0;
 	boolean skip;
 
 	// All frames that arrive before the first frame are ignored.
@@ -163,17 +165,17 @@ void Cl_Frame2Received(int packetType)
 	if(packetType == psv_first_frame2)
 	{
 		gotFirstFrame = true;
-/*#ifdef _DEBUG
-		Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set);
-#endif*/
+		/*#ifdef _DEBUG
+		   Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set);
+		   #endif */
 	}
 	else if(!gotFirstFrame)
 	{
 		// Just ignore. If this was a legitimate frame, the server will
 		// send it again when it notices no ack is coming.
-/*#ifdef _DEBUG
-		Con_Printf("==> Ignored set%i\n", set);
-#endif*/
+		/*#ifdef _DEBUG
+		   Con_Printf("==> Ignored set%i\n", set);
+		   #endif */
 		return;
 	}
 
@@ -197,35 +199,34 @@ void Cl_Frame2Received(int packetType)
 
 				// Read the set number this was originally in.
 				oldSet = Msg_ReadByte();
-				
+
 				// Read the resend ID.
 				resend = Msg_ReadByte();
 
 				// Did we already receive this delta?
-				if(Cl_HistoryCheck(oldSet)
-					|| Cl_ResendHistoryCheck(resend))
+				if(Cl_HistoryCheck(oldSet) || Cl_ResendHistoryCheck(resend))
 				{
 					// Yes, we've already got this. Must skip.
 					skip = true;
 
-/*#ifdef _DEBUG
-					Con_Printf("Got resend *DUPE* (id %i, set %i)\n", 
-						resend, oldSet);
-#endif*/
+					/*#ifdef _DEBUG
+					   Con_Printf("Got resend *DUPE* (id %i, set %i)\n", 
+					   resend, oldSet);
+					   #endif */
 				}
-/*#ifdef _DEBUG
-				else
-				{
-					Con_Printf("Got resend: id %i, set %i\n", resend, oldSet);
-				}
-#endif*/
+				/*#ifdef _DEBUG
+				   else
+				   {
+				   Con_Printf("Got resend: id %i, set %i\n", resend, oldSet);
+				   }
+				   #endif */
 
 				// We must acknowledge that we've received this.
-				resendAcks[ numResendAcks++ ] = resend;
+				resendAcks[numResendAcks++] = resend;
 				Cl_ResendHistoryAdd(resend);
 			}
 
-			switch(deltaType)
+			switch (deltaType)
 			{
 			case DT_CREATE_MOBJ:
 				// The mobj will be created/shown.
@@ -266,13 +267,13 @@ void Cl_Frame2Received(int packetType)
 				break;
 
 			default:
-				Con_Error("Cl_Frame2Received: Unknown delta type %i.\n", 
-					deltaType);
+				Con_Error("Cl_Frame2Received: Unknown delta type %i.\n",
+						  deltaType);
 			}
 		}
 
 		// We have now received a frame.
-		gotframe = true;	
+		gotframe = true;
 
 		// Reset the predict counter.
 		predicted_tics = 0;
@@ -302,18 +303,25 @@ void Cl_Frame2Received(int packetType)
  */
 void Cl_ReadDeltaSet(void)
 {
-	byte present = Msg_ReadByte();
-	byte set = Msg_ReadByte();
-		
-	// Add the set number to list of acks.
-	if(num_acks < MAX_ACKS) acks[num_acks++] = set;
+	byte    present = Msg_ReadByte();
+	byte    set = Msg_ReadByte();
 
-	if(present & BIT( DT_MOBJ )) while(Cl_ReadMobjDelta());
-	if(present & BIT( DT_PLAYER )) while(Cl_ReadPlayerDelta());
-	if(present & BIT( DT_LUMP )) while(Cl_ReadLumpDelta());
-	if(present & BIT( DT_SECTOR )) while(Cl_ReadSectorDelta());
-	if(present & BIT( DT_SIDE )) while(Cl_ReadSideDelta());
-	if(present & BIT( DT_POLY )) while(Cl_ReadPolyDelta());
+	// Add the set number to list of acks.
+	if(num_acks < MAX_ACKS)
+		acks[num_acks++] = set;
+
+	if(present & BIT(DT_MOBJ))
+		while(Cl_ReadMobjDelta());
+	if(present & BIT(DT_PLAYER))
+		while(Cl_ReadPlayerDelta());
+	if(present & BIT(DT_LUMP))
+		while(Cl_ReadLumpDelta());
+	if(present & BIT(DT_SECTOR))
+		while(Cl_ReadSectorDelta());
+	if(present & BIT(DT_SIDE))
+		while(Cl_ReadSideDelta());
+	if(present & BIT(DT_POLY))
+		while(Cl_ReadPolyDelta());
 }
 
 /*
@@ -324,27 +332,29 @@ void Cl_ReadDeltaSet(void)
  */
 void Cl_FrameReceived(void)
 {
-	int i, frametime;
+	int     i, frametime;
 
 	gotframe = true;
 	gotFirstFrame = true;
 
 #if _DEBUG
-	if(!gameReady) Con_Message("Got frame but GAME NOT READY!\n");
+	if(!gameReady)
+		Con_Message("Got frame but GAME NOT READY!\n");
 #endif
 
 	// Frame time, lowest byte of gametic.
-	frametime = Msg_ReadByte();	
+	frametime = Msg_ReadByte();
 
 	num_acks = 0;
-	while(!Msg_End()) Cl_ReadDeltaSet();
+	while(!Msg_End())
+		Cl_ReadDeltaSet();
 
 	// Acknowledge all sets.
 	Msg_Begin(pcl_ack_sets);
-	for(i = 0; i < num_acks; i++) Msg_WriteByte(acks[i]);
+	for(i = 0; i < num_acks; i++)
+		Msg_WriteByte(acks[i]);
 	Net_SendBuffer(0, 0);
 
 	// Reset the predict counter.
 	predicted_tics = 0;
 }
-

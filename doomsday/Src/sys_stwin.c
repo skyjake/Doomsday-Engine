@@ -49,44 +49,45 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern HINSTANCE	hInstApp;
-extern HWND			hWndMain;
+extern HINSTANCE hInstApp;
+extern HWND hWndMain;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static HWND			msgWnd = NULL;
-static HBRUSH		progressBrush, bgBrush;
-static int			barPos, barMax;
+static HWND msgWnd = NULL;
+static HBRUSH progressBrush, bgBrush;
+static int barPos, barMax;
 
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
 // SW_DialogProc
 //===========================================================================
-BOOL CALLBACK SW_DialogProc
-	(HWND dlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK SW_DialogProc(HWND dlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	char buf[300];
+	char    buf[300];
 	static int cleared = false;
-	HWND ed;
+	HWND    ed;
 
-	switch(uMsg)
+	switch (uMsg)
 	{
 	case WM_CTLCOLORSTATIC:
 		// Set the background and text color of the messages edit box.
 		ed = GetDlgItem(dlg, IDC_MESSAGES);
-		if( (HWND) lParam != ed) return FALSE;
-		SetBkColor( (HDC) wParam, CREF_BACKGROUND);
-		SetTextColor( (HDC) wParam, CREF_TEXT);
+		if((HWND) lParam != ed)
+			return FALSE;
+		SetBkColor((HDC) wParam, CREF_BACKGROUND);
+		SetTextColor((HDC) wParam, CREF_TEXT);
 		// The first time text appears, clear the whole box.
 		if(!cleared && GetWindowTextLength(ed))
 		{
-			RECT rect;
+			RECT    rect;
+
 			cleared = true;
 			GetClientRect(ed, &rect);
-			FillRect( (HDC) wParam, &rect, bgBrush);
+			FillRect((HDC) wParam, &rect, bgBrush);
 		}
 		return TRUE;
 
@@ -102,13 +103,13 @@ BOOL CALLBACK SW_DialogProc
 
 //===========================================================================
 // SW_ReplaceNewlines
-//	Replaces all \n with \r\n.
+//  Replaces all \n with \r\n.
 //===========================================================================
 void SW_ReplaceNewlines(const char *in, char *out)
 {
 	for(; *in; in++)
 	{
-		if(*in == '\n') 
+		if(*in == '\n')
 		{
 			*out++ = '\r';
 			*out++ = '\n';
@@ -126,10 +127,11 @@ void SW_ReplaceNewlines(const char *in, char *out)
 //===========================================================================
 void SW_Printf(const char *format, ...)
 {
-	char buf[2048], rep[2048];
+	char    buf[2048], rep[2048];
 	va_list args;
 
-	if(!msgWnd) return;
+	if(!msgWnd)
+		return;
 
 	va_start(args, format);
 	vsprintf(buf, format, args);
@@ -152,10 +154,12 @@ int SW_IsActive(void)
 //===========================================================================
 void SW_Init(void)
 {
-	if(msgWnd) return; // Already initialized.
+	if(msgWnd)
+		return;					// Already initialized.
 
-	msgWnd = CreateDialog(hInstApp, MAKEINTRESOURCE(IDD_STARTUP_WINDOW),
-		hWndMain, SW_DialogProc);
+	msgWnd =
+		CreateDialog(hInstApp, MAKEINTRESOURCE(IDD_STARTUP_WINDOW), hWndMain,
+					 SW_DialogProc);
 	progressBrush = CreateSolidBrush(CREF_PROGRESS);
 	bgBrush = CreateSolidBrush(CREF_BACKGROUND);
 	Con_Message("SW_Init: Startup message window opened.\n");
@@ -166,7 +170,8 @@ void SW_Init(void)
 //===========================================================================
 void SW_Shutdown(void)
 {
-	if(!msgWnd) return;	// Not initialized.
+	if(!msgWnd)
+		return;					// Not initialized.
 	DestroyWindow(msgWnd);
 	DeleteObject(progressBrush);
 	DeleteObject(bgBrush);
@@ -180,16 +185,17 @@ void SW_Shutdown(void)
 //===========================================================================
 void SW_DrawBar(void)
 {
-	HWND prog;
-	HDC dc;
-	RECT rect;
+	HWND    prog;
+	HDC     dc;
+	RECT    rect;
 
-	if(!msgWnd || !barMax) return;
+	if(!msgWnd || !barMax)
+		return;
 
 	prog = GetDlgItem(msgWnd, IDC_PROGRESS);
 	dc = GetDC(prog);
 	GetClientRect(prog, &rect);
-	rect.right = (rect.right - rect.left)*barPos/barMax;
+	rect.right = (rect.right - rect.left) * barPos / barMax;
 	FillRect(dc, &rect, progressBrush);
 	ReleaseDC(prog, dc);
 }
@@ -208,12 +214,12 @@ void SW_SetBarPos(int pos)
 //===========================================================================
 void SW_SetBarMax(int max)
 {
-	HWND prog;
+	HWND    prog;
 
-	if(!msgWnd) return;
+	if(!msgWnd)
+		return;
 	prog = GetDlgItem(msgWnd, IDC_PROGRESS);
 	InvalidateRect(prog, NULL, TRUE);
 	UpdateWindow(prog);
 	barMax = max;
 }
-

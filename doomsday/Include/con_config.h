@@ -24,10 +24,10 @@
 
 #include "con_decl.h"
 
-int Con_ParseCommands(char *fileName, int setdefault);
-void Con_SaveDefaults(void);
-boolean Con_WriteState(const char *fileName);
+int             Con_ParseCommands(char *fileName, int setdefault);
+void            Con_SaveDefaults(void);
+boolean         Con_WriteState(const char *fileName);
 
-D_CMD( WriteConsole );
+D_CMD(WriteConsole);
 
-#endif 
+#endif

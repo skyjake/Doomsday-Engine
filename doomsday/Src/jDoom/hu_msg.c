@@ -21,12 +21,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
-	char text[MAX_LINELEN];
-	int time;
-} 
-message_t;
+typedef struct {
+	char    text[MAX_LINELEN];
+	int     time;
+} message_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -42,13 +40,13 @@ message_t;
 
 static message_t messages[MAX_MESSAGES];
 static int firstmsg, lastmsg, msgcount = 0;
-static float yoffset = 0; // Scroll-up offset.
+static float yoffset = 0;		// Scroll-up offset.
 
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
 // HUMsg_Clear
-//	Clears the message buffer.
+//  Clears the message buffer.
 //===========================================================================
 void HUMsg_Clear(void)
 {
@@ -59,11 +57,11 @@ void HUMsg_Clear(void)
 
 //===========================================================================
 // HUMsg_Message
-//	Add a new message.
+//  Add a new message.
 //===========================================================================
 void HUMsg_Message(char *msg)
 {
-	messages[lastmsg].time = cfg.msgUptime; 
+	messages[lastmsg].time = cfg.msgUptime;
 	strcpy(messages[lastmsg].text, msg);
 	lastmsg = IN_RANGE(lastmsg + 1);
 	if(msgcount == MAX_MESSAGES)
@@ -76,13 +74,15 @@ void HUMsg_Message(char *msg)
 
 //===========================================================================
 // HUMsg_DropLast
-//	Removes the oldest message.
+//  Removes the oldest message.
 //===========================================================================
 void HUMsg_DropLast(void)
 {
-	if(!msgcount) return;
+	if(!msgcount)
+		return;
 	firstmsg = IN_RANGE(firstmsg + 1);
-	if(messages[firstmsg].time < 10) messages[firstmsg].time = 10;
+	if(messages[firstmsg].time < 10)
+		messages[firstmsg].time = 10;
 	msgcount--;
 }
 
@@ -91,8 +91,8 @@ void HUMsg_DropLast(void)
 //===========================================================================
 void HUMsg_Drawer(void)
 {
-	int m, num, y, lh = LINEHEIGHT_A, td;
-	float col[4];
+	int     m, num, y, lh = LINEHEIGHT_A, td;
+	float   col[4];
 
 	// Apply a scaling.
 	gl.MatrixMode(DGL_MODELVIEW);
@@ -104,8 +104,8 @@ void HUMsg_Drawer(void)
 	num = msgcount;
 
 	// First 'num' messages starting from the last one.
-	for(y = (num-1)*lh, m = IN_RANGE(lastmsg - 1); num; y -= lh, num--,
-		m = IN_RANGE(m-1))
+	for(y = (num - 1) * lh, m = IN_RANGE(lastmsg - 1); num;
+		y -= lh, num--, m = IN_RANGE(m - 1))
 	{
 		td = cfg.msgUptime - messages[m].time;
 		col[3] = 1;
@@ -114,10 +114,11 @@ void HUMsg_Drawer(void)
 			// Flash?
 			col[0] = col[1] = col[2] = 1;
 		}
-		else 
+		else
 		{
-			if(m == firstmsg && messages[m].time <= LINEHEIGHT_A) 
-				col[3] = messages[m].time/(float)LINEHEIGHT_A * 0.9f;
+			if(m == firstmsg && messages[m].time <= LINEHEIGHT_A)
+				col[3] = messages[m].time / (float) LINEHEIGHT_A *0.9f;
+
 			// Use normal HUD color.
 			memcpy(col, cfg.hudColor, sizeof(cfg.hudColor));
 		}
@@ -133,19 +134,20 @@ void HUMsg_Drawer(void)
 //===========================================================================
 void HUMsg_Ticker(void)
 {
-	int i;
+	int     i;
 
 	// Countdown to scroll-up.
-	for(i = 0; i < MAX_MESSAGES; i++) messages[i].time--;
+	for(i = 0; i < MAX_MESSAGES; i++)
+		messages[i].time--;
 	if(msgcount)
 	{
 		yoffset = 0;
-		if(messages[firstmsg].time >= 0 
-			&& messages[firstmsg].time <= LINEHEIGHT_A)
+		if(messages[firstmsg].time >= 0
+		   && messages[firstmsg].time <= LINEHEIGHT_A)
 		{
-			yoffset = LINEHEIGHT_A - messages[firstmsg].time;												
+			yoffset = LINEHEIGHT_A - messages[firstmsg].time;
 		}
-		else if(messages[firstmsg].time < 0) HUMsg_DropLast();
+		else if(messages[firstmsg].time < 0)
+			HUMsg_DropLast();
 	}
 }
-

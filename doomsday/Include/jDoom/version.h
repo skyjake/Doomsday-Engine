@@ -21,4 +21,4 @@
 #define SAVE_VERSION_BASE	500
 #define SAVE_VERSION		(SAVE_VERSION_BASE + gamemode)
 
-#endif // __JDOOM_VERSION_H__
+#endif							// __JDOOM_VERSION_H__

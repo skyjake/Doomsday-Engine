@@ -106,12 +106,12 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dedsource_s {
-	char *buffer;
-	char *pos;
+	char   *buffer;
+	char   *pos;
 	boolean atEnd;
-	int lineNumber;
+	int     lineNumber;
 	const char *fileName;
-	int version;	// v6 does not require semicolons.
+	int     version;			// v6 does not require semicolons.
 } dedsource_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -124,22 +124,23 @@ typedef struct dedsource_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char token[128];
-char dedReadError[512];
-char unreadToken[128];
+char    token[128];
+char    dedReadError[512];
+char    unreadToken[128];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static dedsource_t sourceStack[MAX_RECUR_DEPTH];
-static dedsource_t *source;	// Points to the current source.
+static dedsource_t *source;		// Points to the current source.
 
 // CODE --------------------------------------------------------------------
 
-char *sdup(const char *str)
+char   *sdup(const char *str)
 {
-	char *newstr;
+	char   *newstr;
 
-	if(!str) return NULL;
+	if(!str)
+		return NULL;
 	newstr = malloc(strlen(str) + 1);
 	strcpy(newstr, str);
 	return newstr;
@@ -151,8 +152,8 @@ char *sdup(const char *str)
 void SetError(char *str)
 {
 	sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
-		source? source->fileName : "?",
-		source? source->lineNumber : 0, str);
+			source ? source->fileName : "?", source ? source->lineNumber : 0,
+			str);
 }
 
 //==========================================================================
@@ -161,62 +162,73 @@ void SetError(char *str)
 void SetError2(char *str, char *more)
 {
 	sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
-		source? source->fileName : "?",
-		source? source->lineNumber : 0, str, more);
+			source ? source->fileName : "?", source ? source->lineNumber : 0,
+			str, more);
 }
 
 //==========================================================================
 // FGetC
-//	Reads a single character from the input file. Increments the line
-//	number counter if necessary.
+//      Reads a single character from the input file. Increments the line
+//      number counter if necessary.
 //==========================================================================
 int FGetC()
 {
-	int ch = (unsigned char) *source->pos;
+	int     ch = (unsigned char) *source->pos;
 
-	if(ch) source->pos++; else source->atEnd = true;
-	if(ch == '\n') source->lineNumber++;
-	if(ch == '\r') return FGetC();
+	if(ch)
+		source->pos++;
+	else
+		source->atEnd = true;
+	if(ch == '\n')
+		source->lineNumber++;
+	if(ch == '\r')
+		return FGetC();
 	return ch;
 }
 
 //==========================================================================
 // FUngetC
-//	Undoes an FGetC.
+//      Undoes an FGetC.
 //==========================================================================
 int FUngetC(int ch)
 {
-	if(source->atEnd) return 0;
-	if(ch == '\n') source->lineNumber--;
-	if(source->pos > source->buffer) source->pos--;
+	if(source->atEnd)
+		return 0;
+	if(ch == '\n')
+		source->lineNumber--;
+	if(source->pos > source->buffer)
+		source->pos--;
 	return ch;
 }
 
 //==========================================================================
 // SkipComment
-//	Reads stuff until a newline is found.
+//      Reads stuff until a newline is found.
 //==========================================================================
 void SkipComment()
 {
-	int ch = FGetC();
+	int     ch = FGetC();
 	boolean seq = false;
 
-	if(ch == '\n') return; // Comment ends right away.
-	if(ch != '>') // Single-line comment?
+	if(ch == '\n')
+		return;					// Comment ends right away.
+	if(ch != '>')				// Single-line comment?
 	{
 		while(FGetC() != '\n' && !source->atEnd);
 	}
-	else // Multiline comment?
+	else						// Multiline comment?
 	{
 		while(!source->atEnd)
 		{
 			ch = FGetC();
 			if(seq)
 			{
-				if(ch == '#') break;
+				if(ch == '#')
+					break;
 				seq = false;
 			}
-			if(ch == '<') seq = true;
+			if(ch == '<')
+				seq = true;
 		}
 	}
 }
@@ -226,8 +238,8 @@ void SkipComment()
 //==========================================================================
 int ReadToken()
 {
-	int ch;
-	char *out = token;
+	int     ch;
+	char   *out = token;
 
 	// Has a token been unread?
 	if(unreadToken[0])
@@ -238,14 +250,17 @@ int ReadToken()
 	}
 
 	ch = FGetC();
-	if(source->atEnd) return false;
+	if(source->atEnd)
+		return false;
 
 	// Skip whitespace and comments in the beginning.
 	while((ch == '#' || isspace(ch)))
 	{
-		if(ch == '#') SkipComment();
+		if(ch == '#')
+			SkipComment();
 		ch = FGetC();
-		if(source->atEnd) return false;
+		if(source->atEnd)
+			return false;
 	}
 	// Always store the first character.
 	*out++ = ch;
@@ -261,7 +276,7 @@ int ReadToken()
 		ch = FGetC();
 		*out++ = ch;
 	}
-	*(out-1) = 0;	// End token.
+	*(out - 1) = 0;				// End token.
 	// Put the last read character back in the stream.
 	FUngetC(ch);
 	return true;
@@ -278,25 +293,27 @@ void UnreadToken(const char *token)
 
 //==========================================================================
 // ReadStringEx
-//	Current pos in the file is at the first ".
-//	Does not expand escape sequences, only checks for \".
-//	Returns true if successful.
+//      Current pos in the file is at the first ".
+//      Does not expand escape sequences, only checks for \".
+//      Returns true if successful.
 //==========================================================================
 int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
 {
-	char *ptr = dest;
-	int ch, esc = false, newl = false;
+	char   *ptr = dest;
+	int     ch, esc = false, newl = false;
 
 	if(!inside)
 	{
 		ReadToken();
-		if(!ISTOKEN("\"")) return false;
+		if(!ISTOKEN("\""))
+			return false;
 	}
 	// Start reading the characters.
 	ch = FGetC();
-	while(esc || ch != '"')	// The string-end-character.
+	while(esc || ch != '"')		// The string-end-character.
 	{
-		if(source->atEnd) return false;
+		if(source->atEnd)
+			return false;
 		// If a newline is found, skip all whitespace that follows.
 		if(newl)
 		{
@@ -318,15 +335,18 @@ int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
 		{
 			// In case it's something other than \" or \\, just insert
 			// the whole sequence as-is.
-			if(esc && ch != '"' && ch != '\\') *ptr++ = '\\';
+			if(esc && ch != '"' && ch != '\\')
+				*ptr++ = '\\';
 			esc = false;
 		}
-		if(ch == '\n') newl = true;
+		if(ch == '\n')
+			newl = true;
 		// Store the character in the buffer.
 		if(ptr - dest < maxlen && !esc && !newl)
 		{
 			*ptr++ = ch;
-			if(doubleq && ch == '"') *ptr++ = '"';
+			if(doubleq && ch == '"')
+				*ptr++ = '"';
 		}
 		// Read the next character, please.
 		ch = FGetC();
@@ -346,17 +366,18 @@ int ReadString(char *dest, int maxlen)
 
 //===========================================================================
 // ReadAnyString
-//	Read a string of (pretty much) any length.
+//      Read a string of (pretty much) any length.
 //===========================================================================
 int ReadAnyString(char **dest)
 {
-	char buffer[0x20000];
+	char    buffer[0x20000];
 
 	if(!ReadString(buffer, sizeof(buffer)))
 		return false;
 
 	// Get rid of the old string.
-	if(*dest) free(*dest);
+	if(*dest)
+		free(*dest);
 
 	// Make sure it doesn't overflow.
 	buffer[sizeof(buffer) - 1] = 0;
@@ -372,13 +393,14 @@ int ReadAnyString(char **dest)
 //===========================================================================
 int ReadNByteVector(unsigned char *dest, int max)
 {
-	int i;
+	int     i;
 
 	FINDBEGIN;
 	for(i = 0; i < max; i++)
 	{
 		ReadToken();
-		if(ISTOKEN("}")) return true;
+		if(ISTOKEN("}"))
+			return true;
 		dest[i] = strtoul(token, 0, 0);
 	}
 	FINDEND;
@@ -387,7 +409,7 @@ int ReadNByteVector(unsigned char *dest, int max)
 
 //==========================================================================
 // ReadByte
-//	Returns true if successful.
+//      Returns true if successful.
 //==========================================================================
 int ReadByte(unsigned char *dest)
 {
@@ -403,7 +425,7 @@ int ReadByte(unsigned char *dest)
 
 //==========================================================================
 // ReadInt
-//	Returns true if successful.
+//      Returns true if successful.
 //==========================================================================
 int ReadInt(int *dest, int unsign)
 {
@@ -413,13 +435,13 @@ int ReadInt(int *dest, int unsign)
 		SetError("Missing integer value.");
 		return false;
 	}
-	*dest = unsign? strtoul(token, 0, 0) : strtol(token, 0, 0);
+	*dest = unsign ? strtoul(token, 0, 0) : strtol(token, 0, 0);
 	return true;
 }
 
 //==========================================================================
 // ReadFloat
-//	Returns true if successful.
+//      Returns true if successful.
 //==========================================================================
 int ReadFloat(float *dest)
 {
@@ -438,7 +460,7 @@ int ReadFloat(float *dest)
 //===========================================================================
 int ReadFlags(unsigned int *dest, const char *prefix)
 {
-	char flag[1024];
+	char    flag[1024];
 
 	// By default, no flags are set.
 	*dest = 0;
@@ -448,7 +470,8 @@ int ReadFlags(unsigned int *dest, const char *prefix)
 	if(ISTOKEN("\""))
 	{
 		// The old format.
-		if(!ReadString(flag, sizeof(flag))) return false;
+		if(!ReadString(flag, sizeof(flag)))
+			return false;
 		*dest = Def_EvalFlags(flag);
 		return true;
 	}
@@ -468,8 +491,9 @@ int ReadFlags(unsigned int *dest, const char *prefix)
 		}
 		*dest |= Def_EvalFlags(flag);
 
-		if(!ReadToken()) break;
-		if(!ISTOKEN("|")) // | is required for multiple flags.
+		if(!ReadToken())
+			break;
+		if(!ISTOKEN("|"))		// | is required for multiple flags.
 		{
 			UnreadToken(token);
 			break;
@@ -480,7 +504,7 @@ int ReadFlags(unsigned int *dest, const char *prefix)
 
 //==========================================================================
 // ReadLabel
-//	Returns true if successful.
+//      Returns true if successful.
 //==========================================================================
 int ReadLabel(char *label)
 {
@@ -493,7 +517,7 @@ int ReadLabel(char *label)
 			SetError("Unexpected end of file.");
 			return false;
 		}
-		if(ISTOKEN("}"))	// End block.
+		if(ISTOKEN("}"))		// End block.
 		{
 			strcpy(label, token);
 			return true;
@@ -505,10 +529,12 @@ int ReadLabel(char *label)
 				SetError("Label without value.");
 				return false;
 			}
-			continue; // Semicolons are optional in v6.
+			continue;			// Semicolons are optional in v6.
 		}
-		if(ISTOKEN("=") || ISTOKEN("{")) break;
-		if(label[0]) strcat(label, " ");
+		if(ISTOKEN("=") || ISTOKEN("{"))
+			break;
+		if(label[0])
+			strcat(label, " ");
 		strcat(label, token);
 	}
 	return true;
@@ -517,9 +543,9 @@ int ReadLabel(char *label)
 //===========================================================================
 // DED_Include
 //===========================================================================
-void DED_Include(ded_t *ded, char *fileName, directory_t *dir)
+void DED_Include(ded_t * ded, char *fileName, directory_t * dir)
 {
-	char tmp[256], path[256];
+	char    tmp[256], path[256];
 
 	M_TranslatePath(fileName, tmp);
 	if(!Dir_IsAbsolute(tmp))
@@ -580,8 +606,8 @@ void DED_CloseReader(void)
 
 //===========================================================================
 // DED_CheckCondition
-//	Return true if the condition passes. The condition token can be a
-//	command line option or a game mode.
+//      Return true if the condition passes. The condition token can be a
+//      command line option or a game mode.
 //===========================================================================
 boolean DED_CheckCondition(const char *cond, boolean expected)
 {
@@ -603,11 +629,12 @@ boolean DED_CheckCondition(const char *cond, boolean expected)
 
 //==========================================================================
 // DED_ReadData
-//	Reads definitions from the given buffer.
-//	The definition is being loaded from 'sourcefile' (DED or WAD).
-//	The buffer must be null-terminated.
-//	'sourceFile' is just FYI.
+//      Reads definitions from the given buffer.
+//      The definition is being loaded from 'sourcefile' (DED or WAD).
+//      The buffer must be null-terminated.
+//      'sourceFile' is just FYI.
 //==========================================================================
+/* *INDENT-OFF* */
 int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 {
 	char dummy[128];
@@ -1667,18 +1694,19 @@ ded_end_read:
 
 	return retval;
 }
+/* *INDENT-ON* */
 
 //===========================================================================
 // DED_Read
-//	Returns true if the file was successfully loaded.
+//      Returns true if the file was successfully loaded.
 //===========================================================================
-int DED_Read(ded_t *ded, const char *sPathName)
+int DED_Read(ded_t * ded, const char *sPathName)
 {
-	DFILE *file;
-	char *defData;
-	int len;
-	int result;
-	char translated[256];
+	DFILE  *file;
+	char   *defData;
+	int     len;
+	int     result;
+	char    translated[256];
 
 	M_TranslatePath(sPathName, translated);
 	if((file = F_Open(translated, "rb")) == NULL)
@@ -1702,20 +1730,20 @@ int DED_Read(ded_t *ded, const char *sPathName)
 
 //===========================================================================
 // DED_ReadLump
-//	Reads definitions from the given lump.
+//      Reads definitions from the given lump.
 //===========================================================================
-int DED_ReadLump(ded_t *ded, int lump)
+int DED_ReadLump(ded_t * ded, int lump)
 {
-	int result;
+	int     result;
 
 	if(lump < 0 || lump >= numlumps)
 	{
 		SetError("Bad lump number.");
 		return false;
 	}
-	result = DED_ReadData(ded, W_CacheLumpNum(lump, PU_STATIC),
-		W_LumpSourceFile(lump));
+	result =
+		DED_ReadData(ded, W_CacheLumpNum(lump, PU_STATIC),
+					 W_LumpSourceFile(lump));
 	W_ChangeCacheTag(lump, PU_CACHE);
 	return result;
 }
-

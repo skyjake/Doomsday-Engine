@@ -3,7 +3,7 @@
 
 //#define VERSION 130 // Original Heretic version.
 
-#define SAVE_VERSION	130	// Don't change this.
+#define SAVE_VERSION	130		   // Don't change this.
 
 #ifndef JHERETIC_VER_ID
 #  ifdef _DEBUG

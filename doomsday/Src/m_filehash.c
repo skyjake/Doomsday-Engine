@@ -38,8 +38,8 @@
 typedef struct direcnode_s {
 	struct direcnode_s *next;
 	struct direcnode_s *parent;
-	char *path;
-	uint count;
+	char   *path;
+	uint    count;
 	boolean processed;
 	boolean isOnPath;
 } direcnode_t;
@@ -47,7 +47,7 @@ typedef struct direcnode_s {
 typedef struct hashnode_s {
 	struct hashnode_s *next;
 	direcnode_t *directory;
-	char *fileName;
+	char   *fileName;
 } hashnode_t;
 
 typedef struct hashentry_s {
@@ -61,7 +61,7 @@ typedef struct hashentry_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void FH_AddDirectory(const char *path);
+void    FH_AddDirectory(const char *path);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -82,7 +82,7 @@ void FH_Clear(void)
 	direcnode_t *next;
 	hashentry_t *entry;
 	hashnode_t *nextNode;
-	int i;
+	int     i;
 
 	// Free the directory nodes.
 	while(direcFirst)
@@ -113,9 +113,9 @@ void FH_Clear(void)
 /*
  * Somewhat similar to strtok().
  */
-char* M_StrTok(char **cursor, char *delimiters)
+char   *M_StrTok(char **cursor, char *delimiters)
 {
-	char *begin = *cursor;
+	char   *begin = *cursor;
 
 	while(**cursor && !strchr(delimiters, **cursor))
 		(*cursor)++;
@@ -137,7 +137,7 @@ char* M_StrTok(char **cursor, char *delimiters)
  * Returns [ a new | the ] directory node that matches the name and has
  * the specified parent node.
  */
-direcnode_t *FH_DirecNode(const char *name, direcnode_t *parent)
+direcnode_t *FH_DirecNode(const char *name, direcnode_t * parent)
 {
 	direcnode_t *node;
 
@@ -150,10 +150,12 @@ direcnode_t *FH_DirecNode(const char *name, direcnode_t *parent)
 	node = malloc(sizeof(*node));
 	node->next = NULL;
 	node->parent = parent;
-	if(direcLast) direcLast->next = node;
+	if(direcLast)
+		direcLast->next = node;
 	direcLast = node;
-	if(!direcFirst) direcFirst = node;
-	
+	if(!direcFirst)
+		direcFirst = node;
+
 	// Make a copy of the path. Freed in FH_Clear().
 	node->path = malloc(strlen(name) + 1);
 	strcpy(node->path, name);
@@ -173,10 +175,10 @@ direcnode_t *FH_DirecNode(const char *name, direcnode_t *parent)
  */
 direcnode_t *FH_BuildDirecNodes(const char *path)
 {
-	char *tokPath, *cursor;
-	char *part;
+	char   *tokPath, *cursor;
+	char   *part;
 	direcnode_t *node, *parent;
-	char relPath[256];
+	char    relPath[256];
 
 	// Let's try to make it a relative path.
 	M_RemoveBasePath(path, relPath);
@@ -204,12 +206,12 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
 uint FH_HashFunction(const char *name)
 {
 	unsigned short key = 0;
-	int i;
-	
+	int     i;
+
 	// We stop when the name ends or the extension begins.
 	for(i = 0; *name && *name != '.'; i++, name++)
 	{
-		if(i == 0) 
+		if(i == 0)
 			key ^= *name;
 		else if(i == 1)
 			key *= *name;
@@ -219,16 +221,16 @@ uint FH_HashFunction(const char *name)
 			i = -1;
 		}
 	}
-	
+
 	return key % HASH_SIZE;
 }
 
 /*
  * Creates a file node into a directory. 
  */
-void FH_AddFile(const char *filePath, direcnode_t *dir)
+void FH_AddFile(const char *filePath, direcnode_t * dir)
 {
-	char name[256];
+	char    name[256];
 	hashnode_t *node;
 	hashentry_t *slot;
 
@@ -244,10 +246,12 @@ void FH_AddFile(const char *filePath, direcnode_t *dir)
 	node->next = NULL;
 
 	// Calculate the key.
-	slot = &hashTable[ FH_HashFunction(name) ];
-	if(slot->last) slot->last->next = node;
+	slot = &hashTable[FH_HashFunction(name)];
+	if(slot->last)
+		slot->last->next = node;
 	slot->last = node;
-	if(!slot->first) slot->first = node;
+	if(!slot->first)
+		slot->first = node;
 
 	// There's now one more file in the directory.
 	dir->count++;
@@ -259,14 +263,16 @@ void FH_AddFile(const char *filePath, direcnode_t *dir)
  */
 int FH_ProcessFile(const char *fn, filetype_t type, void *parm)
 {
-	char path[256], *pos;
+	char    path[256], *pos;
 
-	if(type != FT_NORMAL) return true;
+	if(type != FT_NORMAL)
+		return true;
 
 	// Extract the path from the full file name.
 	strcpy(path, fn);
 	pos = strrchr(path, DIR_SEP_CHAR);
-	if(pos) *pos = 0;
+	if(pos)
+		*pos = 0;
 
 	// Add a node for this file.
 	FH_AddFile(fn, FH_BuildDirecNodes(path));
@@ -281,7 +287,7 @@ int FH_ProcessFile(const char *fn, filetype_t type, void *parm)
 void FH_AddDirectory(const char *path)
 {
 	direcnode_t *direc = FH_BuildDirecNodes(path);
-	char searchPattern[256];
+	char    searchPattern[256];
 
 	// This directory is now on the search path.
 	direc->isOnPath = true;
@@ -295,7 +301,7 @@ void FH_AddDirectory(const char *path)
 
 	// Compose the search pattern.
 	M_PrependBasePath(path, searchPattern);
-	strcat(searchPattern, DIR_SEP_STR"*"); // We're interested in *everything*.
+	strcat(searchPattern, DIR_SEP_STR "*");	// We're interested in *everything*.
 	F_ForAll(searchPattern, NULL, FH_ProcessFile);
 
 	// Mark all existing directories processed.
@@ -310,8 +316,8 @@ void FH_AddDirectory(const char *path)
  */
 void FH_Init(const char *pathList)
 {
-	char *tokenPaths = malloc(strlen(pathList) + 1);
-	char *path;
+	char   *tokenPaths = malloc(strlen(pathList) + 1);
+	char   *path;
 
 	strcpy(tokenPaths, pathList);
 	path = strtok(tokenPaths, ";");
@@ -337,10 +343,10 @@ void FH_Init(const char *pathList)
  * Returns true if the path specified in the name begins from a directory
  * in the search path. The given name is a relative path.
  */
-boolean FH_MatchDirectory(hashnode_t *node, const char *name)
+boolean FH_MatchDirectory(hashnode_t * node, const char *name)
 {
-	char *pos;
-	char dir[256];
+	char   *pos;
+	char    dir[256];
 	direcnode_t *direc = node->directory;
 
 	// We'll do this in reverse order.
@@ -352,13 +358,14 @@ boolean FH_MatchDirectory(hashnode_t *node, const char *name)
 
 		// Where does the directory name begin?
 		pos = strrchr(dir, DIR_SEP_CHAR);
-		if(!pos) 
+		if(!pos)
 			pos = dir;
 		else
 			pos++;
 
 		// Is there no more parent directories?
-		if(!direc) return false;
+		if(!direc)
+			return false;
 
 		// Does this match the node's directory?
 		if(strcmp(direc->path, pos))
@@ -369,7 +376,7 @@ boolean FH_MatchDirectory(hashnode_t *node, const char *name)
 
 		// So far so good. Move one directory level upwards.
 		direc = direc->parent;
-	}	
+	}
 
 	// We must have now arrived at a directory on the search path.
 	return direc && direc->isOnPath;
@@ -378,15 +385,15 @@ boolean FH_MatchDirectory(hashnode_t *node, const char *name)
 /*
  * Composes an absolute path name for the node.
  */
-void FH_ComposePath(hashnode_t *node, char *foundPath)
+void FH_ComposePath(hashnode_t * node, char *foundPath)
 {
 	direcnode_t *direc = node->directory;
-	char buf[256];
+	char    buf[256];
 
 	strcpy(foundPath, node->fileName);
 	while(direc)
 	{
-		sprintf(buf, "%s"DIR_SEP_STR"%s", direc->path, foundPath);
+		sprintf(buf, "%s" DIR_SEP_STR "%s", direc->path, foundPath);
 		strcpy(foundPath, buf);
 		direc = direc->parent;
 	}
@@ -401,20 +408,20 @@ void FH_ComposePath(hashnode_t *node, char *foundPath)
  */
 boolean FH_Find(const char *name, char *foundPath)
 {
-	char validName[256];
-	char baseName[256];
+	char    validName[256];
+	char    baseName[256];
 	hashentry_t *slot;
 	hashnode_t *node;
 
 	// Absolute paths are not in the hash (no need to put them there).
-	if(Dir_IsAbsolute(name)) 
+	if(Dir_IsAbsolute(name))
 	{
 		if(F_Access(name))
 		{
 			strcpy(foundPath, name);
 			return true;
 		}
-		return false;		
+		return false;
 	}
 
 	// Convert the given file name into a file name we can process.
@@ -424,9 +431,9 @@ boolean FH_Find(const char *name, char *foundPath)
 
 	// Extract the base name.
 	Dir_FileName(validName, baseName);
-	
+
 	// Which slot in the hash table?
-	slot = &hashTable[ FH_HashFunction(baseName) ];
+	slot = &hashTable[FH_HashFunction(baseName)];
 
 	// Paths in the hash are relative to their directory node.
 	// There is one direcnode per search path directory.
@@ -435,7 +442,8 @@ boolean FH_Find(const char *name, char *foundPath)
 	for(node = slot->first; node; node = node->next)
 	{
 		// The file name in the node has no path.
-		if(strcmp(node->fileName, baseName)) continue; 
+		if(strcmp(node->fileName, baseName))
+			continue;
 
 		// If the directory compare passes, this is the match.
 		// The directory must be on the search path for the test to pass.

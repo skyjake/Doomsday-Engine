@@ -1,28 +1,28 @@
 #if __JDOOM__
-#include "../jDoom/doomdef.h"
-#include "../jDoom/doomstat.h"
-#include "../jDoom/d_main.h"
-#include "../jDoom/d_config.h"
-#include "../jDoom/p_local.h"
-#include "../jDoom/s_sound.h"
-#include "../jDoom/g_game.h"
-#include "../jDoom/m_menu.h"
-#include "../jDoom/hu_stuff.h"
-#include "../jDoom/st_stuff.h"
+#  include "../jDoom/doomdef.h"
+#  include "../jDoom/doomstat.h"
+#  include "../jDoom/d_main.h"
+#  include "../jDoom/d_config.h"
+#  include "../jDoom/p_local.h"
+#  include "../jDoom/s_sound.h"
+#  include "../jDoom/g_game.h"
+#  include "../jDoom/m_menu.h"
+#  include "../jDoom/hu_stuff.h"
+#  include "../jDoom/st_stuff.h"
 #endif
 
 #if __JHERETIC__
-#include "../jHeretic/Doomdef.h"
-#include "../jHeretic/P_local.h"
-#include "../jHeretic/Soundst.h"
-#include "../jHeretic/settings.h"
+#  include "../jHeretic/Doomdef.h"
+#  include "../jHeretic/P_local.h"
+#  include "../jHeretic/Soundst.h"
+#  include "../jHeretic/settings.h"
 #endif
 
 #if __JHEXEN__
-#include "../jHexen/h2def.h"
-#include "../jHexen/p_local.h"
-#include "../jHexen/soundst.h"
-#include "../jHexen/settings.h"
+#  include "../jHexen/h2def.h"
+#  include "../jHexen/p_local.h"
+#  include "../jHexen/soundst.h"
+#  include "../jHexen/settings.h"
 #endif
 
 #include "g_common.h"
@@ -33,15 +33,15 @@
 // EXTERNAL FUNCTIONS -------------------------------------------------------
 
 #if __JHEXEN__
-void SB_ChangePlayerClass(player_t *player, int newclass);
+void    SB_ChangePlayerClass(player_t * player, int newclass);
 #endif
 
 extern int netSvAllowSendMsg;
 
 // PUBLIC DATA --------------------------------------------------------------
 
-char	msgBuff[256];
-float	netJumpPower = 9;
+char    msgBuff[256];
+float   netJumpPower = 9;
 
 // PRIVATE DATA -------------------------------------------------------------
 
@@ -50,22 +50,22 @@ float	netJumpPower = 9;
 int CCmdSetColor(int argc, char **argv)
 {
 #if __JHEXEN__
-	int numColors = 8;
+	int     numColors = 8;
 #else
-	int numColors = 4;
+	int     numColors = 4;
 #endif
 
 	if(argc != 2)
 	{
 		Con_Printf("Usage: %s (color)\n", argv[0]);
-		Con_Printf("Color #%i uses the player number as color.\n",
-			numColors);
+		Con_Printf("Color #%i uses the player number as color.\n", numColors);
 		return true;
 	}
 	cfg.netColor = atoi(argv[1]);
-	if(IS_SERVER) // Player zero?
+	if(IS_SERVER)				// Player zero?
 	{
-		if(IS_DEDICATED) return false;
+		if(IS_DEDICATED)
+			return false;
 
 		// The server player, plr#0, must be treated as a special case
 		// because this is a local mobj we're dealing with. We'll change 
@@ -73,16 +73,19 @@ int CCmdSetColor(int argc, char **argv)
 
 		cfg.PlayerColor[0] = PLR_COLOR(0, cfg.netColor);
 #ifdef __JDOOM__
-		ST_updateGraphics();	
+		ST_updateGraphics();
 #endif
 		// Change the color of the mobj (translation flags).
 		players[0].plr->mo->flags &= ~MF_TRANSLATION;
 #if __JHEXEN__
 		// Additional difficulty is caused by the fact that the Fighter's
 		// colors 0 (blue) and 2 (yellow) must be swapped.
-		players[0].plr->mo->flags |= (cfg.PlayerClass[0] == PCLASS_FIGHTER?
-			(cfg.PlayerColor[0]==0? 2 : cfg.PlayerColor[0]==2? 0 
-			: cfg.PlayerColor[0]) : cfg.PlayerColor[0]) << MF_TRANSSHIFT;
+		players[0].plr->mo->flags |=
+			(cfg.PlayerClass[0] ==
+			 PCLASS_FIGHTER ? (cfg.PlayerColor[0] ==
+							   0 ? 2 : cfg.PlayerColor[0] ==
+							   2 ? 0 : cfg.PlayerColor[0]) : cfg.
+			 PlayerColor[0]) << MF_TRANSSHIFT;
 		players[0].colormap = cfg.PlayerColor[0];
 #else
 		players[0].plr->mo->flags |= cfg.PlayerColor[0] << MF_TRANSSHIFT;
@@ -104,18 +107,20 @@ int CCmdSetClass(int argc, char **argv)
 {
 	if(argc != 2)
 	{
-		Con_Printf( "Usage: %s (0-2)\n", argv[0]);
+		Con_Printf("Usage: %s (0-2)\n", argv[0]);
 		return true;
 	}
 	cfg.netClass = atoi(argv[1]);
-	if(cfg.netClass < 0) cfg.netClass = 0;
-	if(cfg.netClass > 2) cfg.netClass = 2;
+	if(cfg.netClass < 0)
+		cfg.netClass = 0;
+	if(cfg.netClass > 2)
+		cfg.netClass = 2;
 	if(IS_CLIENT)
 	{
 		// Tell the server that we've changed our class.
 		NetCl_SendPlayerInfo();
 	}
-	else if(IS_DEDICATED) 
+	else if(IS_DEDICATED)
 	{
 		return false;
 	}
@@ -129,10 +134,11 @@ int CCmdSetClass(int argc, char **argv)
 
 int CCmdSetMap(int argc, char **argv)
 {
-	int ep, map;
+	int     ep, map;
 
 	// Only the server can change the map.
-	if(!IS_SERVER) return false;
+	if(!IS_SERVER)
+		return false;
 #if !__JHEXEN__
 	if(argc != 3)
 	{
@@ -147,7 +153,7 @@ int CCmdSetMap(int argc, char **argv)
 	}
 #endif
 
-	// Update game mode.	
+	// Update game mode.    
 	deathmatch = cfg.netDeathmatch;
 	nomonsters = cfg.netNomonsters;
 
@@ -162,7 +168,7 @@ int CCmdSetMap(int argc, char **argv)
 	map = P_TranslateMap(atoi(argv[1]));
 #endif
 
-	G_DeferedInitNew(gameskill, ep, map);	
+	G_DeferedInitNew(gameskill, ep, map);
 	return true;
 }
 
@@ -180,7 +186,7 @@ void D_ChatSound(void)
 
 //===========================================================================
 // D_NetMessageEx
-//	Show a message on screen, accompanied with a Chat sound effect.
+//  Show a message on screen, accompanied with a Chat sound effect.
 //===========================================================================
 void D_NetMessageEx(char *msg, boolean play_sound)
 {
@@ -194,13 +200,14 @@ void D_NetMessageEx(char *msg, boolean play_sound)
 	MN_TextFilter(msgBuff);
 	P_SetMessage(players + consoleplayer, msgBuff, true);
 #endif
-	if(play_sound) D_ChatSound();
+	if(play_sound)
+		D_ChatSound();
 	netSvAllowSendMsg = true;
 }
 
 //===========================================================================
 // D_NetMessage
-//	Show message on screen, play chat sound.
+//  Show message on screen, play chat sound.
 //===========================================================================
 void D_NetMessage(char *msg)
 {
@@ -209,7 +216,7 @@ void D_NetMessage(char *msg)
 
 //===========================================================================
 // D_NetMessageNoSound
-//	Show message on screen, play chat sound.
+//  Show message on screen, play chat sound.
 //===========================================================================
 void D_NetMessageNoSound(char *msg)
 {
@@ -246,9 +253,10 @@ int D_NetServerClose(int before)
 
 int D_NetServerStarted(int before)
 {
-	int netMap;
+	int     netMap;
 
-	if(before) return true;
+	if(before)
+		return true;
 
 	G_StopDemo();
 
@@ -257,7 +265,7 @@ int D_NetServerStarted(int before)
 #if __JHEXEN__
 	cfg.PlayerClass[0] = cfg.netClass;
 #endif
-	
+
 	// Set the game parameters.
 	deathmatch = cfg.netDeathmatch;
 	nomonsters = cfg.netNomonsters;
@@ -292,13 +300,14 @@ int D_NetServerStarted(int before)
 int D_NetConnect(int before)
 {
 	// We do nothing before the actual connection is made.
-	if(before) return true;
-	
+	if(before)
+		return true;
+
 	// After connecting we tell the server a bit about ourselves.
 	NetCl_SendPlayerInfo();
 
 	// Close the menu, the game begins!!
-//	advancedemo = false;
+	//  advancedemo = false;
 #ifdef __JDOOM__
 	M_ClearMenus();
 #else
@@ -309,7 +318,8 @@ int D_NetConnect(int before)
 
 int D_NetDisconnect(int before)
 {
-	if(before) return true;
+	if(before)
+		return true;
 
 	// Restore normal game state.
 	deathmatch = false;
@@ -339,13 +349,15 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		// 'plrNumber' is the length of the packet.
 		return (int) NetSv_ReadCommands(data, plrNumber);
 	}
-	
+
 	// If this isn't a netgame, we won't react.
-	if(!IS_NETGAME) return true;
-	
+	if(!IS_NETGAME)
+		return true;
+
 	if(peType == DDPE_ARRIVAL)
 	{
 		boolean showmsg = true;
+
 		if(IS_SERVER)
 		{
 			NetSv_NewPlayerEnters(plrNumber);
@@ -357,9 +369,9 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 			gamestate = GS_WAITING;
 			showmsg = false;
 		}
-		else 
+		else
 		{
-			// Client responds to new player?			
+			// Client responds to new player?           
 			Con_Message("PE: (client) player %i has arrived.\n", plrNumber);
 			G_DoReborn(plrNumber);
 			//players[plrNumber].playerstate = PST_REBORN;
@@ -367,8 +379,8 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		if(showmsg)
 		{
 			// Print a notification.
-			sprintf(msgBuff, "%s joined the game", 
-				Net_GetPlayerName(plrNumber));
+			sprintf(msgBuff, "%s joined the game",
+					Net_GetPlayerName(plrNumber));
 			D_NetMessage(msgBuff);
 		}
 	}
@@ -377,11 +389,11 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		Con_Message("PE: player %i has left.\n", plrNumber);
 		// Spawn a teleport fog.
 		/*P_SpawnTeleFog(players[plrNumber].plr->mo->x,
-			players[plrNumber].plr->mo->y);
-		// Let's get rid of the mobj.
-		P_RemoveMobj(players[plrNumber].plr->mo);
-		players[plrNumber].plr->mo = NULL;
-		players[plrNumber].playerstate = PST_REBORN;*/
+		   players[plrNumber].plr->mo->y);
+		   // Let's get rid of the mobj.
+		   P_RemoveMobj(players[plrNumber].plr->mo);
+		   players[plrNumber].plr->mo = NULL;
+		   players[plrNumber].playerstate = PST_REBORN; */
 
 		players[plrNumber].playerstate = PST_GONE;
 
@@ -389,22 +401,24 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 		sprintf(msgBuff, "%s left the game", Net_GetPlayerName(plrNumber));
 		D_NetMessage(msgBuff);
 
-		if(IS_SERVER) P_DealPlayerStarts();
+		if(IS_SERVER)
+			P_DealPlayerStarts();
 	}
 	// DDPE_CHAT_MESSAGE occurs when a pkt_chat is received. 
 	// Here we will only display the message (if not a local message).
-	else if(peType == DDPE_CHAT_MESSAGE 
-		&& plrNumber != consoleplayer)
+	else if(peType == DDPE_CHAT_MESSAGE && plrNumber != consoleplayer)
 	{
-		int i, num, oldecho = cfg.echoMsg;
+		int     i, num, oldecho = cfg.echoMsg;
+
 		// Count the number of players.
 		for(i = num = 0; i < MAXPLAYERS; i++)
-			if(players[i].plr->ingame) num++;
+			if(players[i].plr->ingame)
+				num++;
 		// If there are more than two players, include the name of
 		// the player who sent this.
 		if(num > 2)
 			sprintf(msgBuff, "%s: %s", Net_GetPlayerName(plrNumber),
-					(const char*)data);
+					(const char *) data);
 		else
 			strcpy(msgBuff, data);
 
@@ -419,53 +433,54 @@ int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 int D_NetWorldEvent(int type, int parm, void *data)
 {
 	//short *ptr;
-	int i;
+	int     i;
+
 	//int mtype, flags;
 	//fixed_t x, y, z, momx, momy, momz;
 
-	switch(type)
+	switch (type)
 	{
-	//
-	// Server events:
-	//
-	case DDWE_HANDSHAKE: 
+		//
+		// Server events:
+		//
+	case DDWE_HANDSHAKE:
 		// A new player is entering the game. We as a server should send him
 		// the handshake packet(s) to update his world.
 		// If 'data' is zero, this is a re-handshake that's used to 
 		// begin demos.
-		Con_Message("D_NetWorldEvent: Sending a %shandshake to player %i.\n", 
-			data? "" : "(re)", parm);
-				
+		Con_Message("D_NetWorldEvent: Sending a %shandshake to player %i.\n",
+					data ? "" : "(re)", parm);
+
 		// Mark new player for update.
 		players[parm].update |= PSF_REBORN;
 
 		// First, the game state.
-		NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT
-			| (data? 0 : GSF_DEMO), parm);
-	
+		NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT |
+							(data ? 0 : GSF_DEMO), parm);
+
 		// Send info about all players to the new one.
 		for(i = 0; i < MAXPLAYERS; i++)
 			if(players[i].plr->ingame && i != parm)
 				NetSv_SendPlayerInfo(i, parm);
 
 		// Send info about our jump power.
-		NetSv_SendJumpPower(parm, cfg.jumpEnabled? cfg.jumpPower : 0);
+		NetSv_SendJumpPower(parm, cfg.jumpEnabled ? cfg.jumpPower : 0);
 		break;
 
-	//
-	// Client events:
-	//
+		//
+		// Client events:
+		//
 #if 0
 	case DDWE_PROJECTILE:
-#ifdef _DEBUG
-		if(parm > 32) // Too many?
+#  ifdef _DEBUG
+		if(parm > 32)			// Too many?
 			gi.Error("D_NetWorldEvent: Too many missiles (%i).\n", parm);
-#endif
+#  endif
 		// Projectile data consists of shorts.
-		for(ptr=*(short**)data, i=0; i<parm; i++)
+		for(ptr = *(short **) data, i = 0; i < parm; i++)
 		{
-			flags = *(unsigned short*) ptr & DDMS_FLAG_MASK;
-			mtype = *(unsigned short*) ptr & ~DDMS_FLAG_MASK;
+			flags = *(unsigned short *) ptr & DDMS_FLAG_MASK;
+			mtype = *(unsigned short *) ptr & ~DDMS_FLAG_MASK;
 			ptr++;
 			x = *ptr++ << 16;
 			y = *ptr++ << 16;
@@ -483,23 +498,24 @@ int D_NetWorldEvent(int type, int parm, void *data)
 			NetCl_SpawnMissile(mtype, x, y, z, momx, momy, momz);
 		}
 		// Update pointer.
-		*(short**)data = ptr;
+		*(short **) data = ptr;
 		break;
 #endif
 
 	case DDWE_SECTOR_SOUND:
 		// High word: sector number, low word: sound id.
 		if(parm & 0xffff)
-			S_StartSound(parm & 0xffff, (mobj_t*) &sectors[parm >> 16].soundorg);
+			S_StartSound(parm & 0xffff,
+						 (mobj_t *) & sectors[parm >> 16].soundorg);
 		else
-			S_StopSound(0, (mobj_t*) &sectors[parm >> 16].soundorg);
+			S_StopSound(0, (mobj_t *) & sectors[parm >> 16].soundorg);
 		break;
 
 	case DDWE_DEMO_END:
 		// Demo playback has ended. Advance demo sequence.
-		if(parm) // Playback was aborted.
+		if(parm)				// Playback was aborted.
 			G_DemoAborted();
-		else // Playback ended normally.
+		else					// Playback ended normally.
 			G_DemoEnds();
 
 		// Restore normal game state.
@@ -515,19 +531,19 @@ int D_NetWorldEvent(int type, int parm, void *data)
 	default:
 		return false;
 	}
-	return true;		
+	return true;
 }
 
 void D_HandlePacket(int fromplayer, int type, void *data, int length)
 {
-	byte *bData = data;
+	byte   *bData = data;
 
 	//
 	// Server events.
 	//
 	if(IS_SERVER)
 	{
-		switch(type)
+		switch (type)
 		{
 		case GPT_PLAYER_INFO:
 			// A player has changed color or other settings.
@@ -543,7 +559,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 	//
 	// Client events.
 	//
-	switch(type) 
+	switch (type)
 	{
 	case GPT_GAME_STATE:
 		NetCl_UpdateGameState(data);
@@ -577,11 +593,11 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		break;
 
 	case GPT_PLAYER_STATE:
-		NetCl_UpdatePlayerState(bData+1, bData[0]);
+		NetCl_UpdatePlayerState(bData + 1, bData[0]);
 		break;
 
 	case GPT_PLAYER_STATE2:
-		NetCl_UpdatePlayerState2(bData+1, bData[0]);
+		NetCl_UpdatePlayerState2(bData + 1, bData[0]);
 		break;
 
 	case GPT_PSPRITE_STATE:
@@ -624,44 +640,52 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		break;
 
 	default:
-		Con_Message("H_HandlePacket: Received unknown packet, "
-			"type=%i.\n", type);
+		Con_Message("H_HandlePacket: Received unknown packet, " "type=%i.\n",
+					type);
 	}
 }
 
 //===========================================================================
 
-ccmd_t netCCmds[] =
-{
-	{ "setcolor",	CCmdSetColor,	"Set player color." },
-	{ "setmap",		CCmdSetMap,		"Set map." },
+ccmd_t  netCCmds[] = {
+	{"setcolor", CCmdSetColor, "Set player color."}
+	,
+	{"setmap", CCmdSetMap, "Set map."}
+	,
 #if __JHEXEN__
-	{ "setclass",	CCmdSetClass,	"Set player class." },
+	{"setclass", CCmdSetClass, "Set player class."}
+	,
 #endif
-	{ "startcycle",	CCmdMapCycle,	"Begin map rotation." },
-	{ "endcycle",	CCmdMapCycle,	"End map rotation." },
-	{ NULL }
+	{"startcycle", CCmdMapCycle, "Begin map rotation."}
+	,
+	{"endcycle", CCmdMapCycle, "End map rotation."}
+	,
+	{NULL}
 };
 
-cvar_t netCVars[] =
-{
-	"MapCycle",	CVF_HIDE|CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle, 0, 0, "Map rotation sequence.",
-	
-	"server-game-mapcycle",	0, CVT_CHARPTR, &mapCycle, 0, 0, "Map rotation sequence.",
-	"server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1, "1=Disable exit buttons during map rotation.",
-	"server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1, "1=Allow cheating in multiplayer games (god, noclip, give).",
+cvar_t  netCVars[] = {
+	"MapCycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle, 0, 0,
+	"Map rotation sequence.",
+
+	"server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle, 0, 0,
+	"Map rotation sequence.",
+	"server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1,
+	"1=Disable exit buttons during map rotation.",
+	"server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1,
+	"1=Allow cheating in multiplayer games (god, noclip, give).",
 	NULL
 };
 
 //===========================================================================
 // D_NetConsoleRegistration
-//	Register the console commands and variables of the common netcode.
+//  Register the console commands and variables of the common netcode.
 //===========================================================================
 void D_NetConsoleRegistration(void)
 {
-	int i;
+	int     i;
 
-	for(i = 0; netCCmds[i].name; i++) Con_AddCommand(netCCmds + i);
-	for(i = 0; netCVars[i].name; i++) Con_AddVariable(netCVars + i);
+	for(i = 0; netCCmds[i].name; i++)
+		Con_AddCommand(netCCmds + i);
+	for(i = 0; netCVars[i].name; i++)
+		Con_AddVariable(netCVars + i);
 }
-

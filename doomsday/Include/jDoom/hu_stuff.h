@@ -27,19 +27,19 @@
 //
 // Globally visible constants.
 //
-#define HU_FONTSTART	'!'	// the first font characters
-#define HU_FONTEND	'_'	// the last font characters
+#define HU_FONTSTART	'!'		   // the first font characters
+#define HU_FONTEND	'_'			   // the last font characters
 
 // Calculate # of glyphs in font.
-#define HU_FONTSIZE	(HU_FONTEND - HU_FONTSTART + 1)	
+#define HU_FONTSIZE	(HU_FONTEND - HU_FONTSTART + 1)
 
 #define HU_BROADCAST	5
 
 #define HU_MSGREFRESH	DDKEY_ENTER
 #define HU_MSGX		0
 #define HU_MSGY		0
-#define HU_MSGWIDTH	64	// in characters
-#define HU_MSGHEIGHT	1	// in lines
+#define HU_MSGWIDTH	64			   // in characters
+#define HU_MSGHEIGHT	1		   // in lines
 
 #define HU_MSGTIMEOUT	(4*TICRATE)
 
@@ -49,17 +49,17 @@
 //
 // HEADS UP TEXT
 //
-extern boolean message_noecho;
+extern boolean  message_noecho;
 
-void HU_Init(void);
-void HU_Start(void);
+void            HU_Init(void);
+void            HU_Start(void);
 
-boolean HU_Responder(event_t* ev);
+boolean         HU_Responder(event_t * ev);
 
-void HU_Ticker(void);
-void HU_Drawer(void);
-char HU_dequeueChatChar(void);
-void HU_Erase(void);
+void            HU_Ticker(void);
+void            HU_Drawer(void);
+char            HU_dequeueChatChar(void);
+void            HU_Erase(void);
 
 // The fonts.
 extern dpatch_t hu_font[HU_FONTSIZE];
@@ -67,7 +67,7 @@ extern dpatch_t hu_font_a[HU_FONTSIZE];
 extern dpatch_t hu_font_b[HU_FONTSIZE];
 
 // Plutonia and TNT map names.
-extern char *mapnamesp[32], *mapnamest[32];
+extern char    *mapnamesp[32], *mapnamest[32];
 
 #define PLUT_AUTHOR	"Dario Casali and Milo Casali"
 #define TNT_AUTHOR	"Team TNT"
@@ -76,6 +76,9 @@ extern char *mapnamesp[32], *mapnamest[32];
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -93,4 +96,3 @@ extern char *mapnamesp[32], *mapnamest[32];
 //
 //
 //-----------------------------------------------------------------------------
-

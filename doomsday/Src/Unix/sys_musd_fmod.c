@@ -14,13 +14,13 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <fmod.h>
-#include <fmod_errors.h>
+#  include <fmod.h>
+#  include <fmod_errors.h>
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_audio.h"
+#  include "de_base.h"
+#  include "de_console.h"
+#  include "de_system.h"
+#  include "de_audio.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -32,44 +32,42 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-int		DM_FModInit(void);
-void	DM_FModShutdown(void);
+int     DM_FModInit(void);
+void    DM_FModShutdown(void);
 
 		// Ext Interface.
-int		DM_FModExtInit(void);
-void	DM_FModExtShutdown(void);
-void	DM_FModExtReset();
-void	DM_FModExtUpdate(void);
-void	DM_FModExtSet(int property, float value);
-int		DM_FModExtGet(int property, void *ptr);
-void	DM_FModExtPause(int pause);
-void	DM_FModExtStop(void);
-void *	DM_FModExtSongBuffer(int length);
-int		DM_FModExtPlayFile(const char *path, int looped);
-int		DM_FModExtPlayBuffer(int looped);
+int     DM_FModExtInit(void);
+void    DM_FModExtShutdown(void);
+void    DM_FModExtReset();
+void    DM_FModExtUpdate(void);
+void    DM_FModExtSet(int property, float value);
+int     DM_FModExtGet(int property, void *ptr);
+void    DM_FModExtPause(int pause);
+void    DM_FModExtStop(void);
+void   *DM_FModExtSongBuffer(int length);
+int     DM_FModExtPlayFile(const char *path, int looped);
+int     DM_FModExtPlayBuffer(int looped);
 
 		// CD Interface.
-int		DM_FModCDInit(void);
-void	DM_FModCDShutdown(void);
-void	DM_FModCDUpdate(void);
-void	DM_FModCDSet(int property, float value);
-int		DM_FModCDGet(int property, void *ptr);
-void	DM_FModCDPause(int pause);
-void	DM_FModCDStop(void);
-int		DM_FModCDPlay(int track, int looped);
+int     DM_FModCDInit(void);
+void    DM_FModCDShutdown(void);
+void    DM_FModCDUpdate(void);
+void    DM_FModCDSet(int property, float value);
+int     DM_FModCDGet(int property, void *ptr);
+void    DM_FModCDPause(int pause);
+void    DM_FModCDStop(void);
+int     DM_FModCDPlay(int track, int looped);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-musdriver_t musd_fmod = 
-{
+musdriver_t musd_fmod = {
 	DM_FModInit,
 	DM_FModShutdown
 };
 
-musinterface_ext_t musd_fmod_iext =
-{
+musinterface_ext_t musd_fmod_iext = {
 	DM_FModExtInit,
 	DM_FModExtUpdate,
 	DM_FModExtSet,
@@ -81,8 +79,7 @@ musinterface_ext_t musd_fmod_iext =
 	DM_FModExtPlayBuffer
 };
 
-musinterface_cd_t musd_fmod_icd =
-{
+musinterface_cd_t musd_fmod_icd = {
 	DM_FModCDInit,
 	DM_FModCDUpdate,
 	DM_FModCDSet,
@@ -94,13 +91,14 @@ musinterface_cd_t musd_fmod_icd =
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean	inited = false, ext_inited = false;
-static int		ext_volume = 200;
-//static boolean	ext_looped_play, ext_playing;
-//static int		ext_start_time;
-static int		original_cd_volume;
-static void		*song;
-static int		song_size, stream_channel;
+static boolean inited = false, ext_inited = false;
+static int ext_volume = 200;
+
+//static boolean    ext_looped_play, ext_playing;
+//static int        ext_start_time;
+static int original_cd_volume;
+static void *song;
+static int song_size, stream_channel;
 static FMUSIC_MODULE *module;
 static FSOUND_STREAM *stream;
 
@@ -111,12 +109,14 @@ static FSOUND_STREAM *stream;
 //===========================================================================
 int DM_FModInit(void)
 {
-	if(inited) return true;
+	if(inited)
+		return true;
 
 	if(FSOUND_GetVersion() < FMOD_VERSION)
 	{
-		Con_Message("DM_FModInit: You are using the wrong version of FMOD.DLL!\n"
-			"  You should be using version %.02f.\n", FMOD_VERSION);
+		Con_Message
+			("DM_FModInit: You are using the wrong version of FMOD.DLL!\n"
+			 "  You should be using version %.02f.\n", FMOD_VERSION);
 		return false;
 	}
 	if(!FSOUND_SetOutput(FSOUND_OUTPUT_DSOUND))
@@ -130,8 +130,8 @@ int DM_FModInit(void)
 	}
 	if(!FSOUND_Init(44100, 16, 0))
 	{
-		Con_Message("DM_FModInit: Init failed. (%s)\n", 
-			FMOD_ErrorString(FSOUND_GetError()));
+		Con_Message("DM_FModInit: Init failed. (%s)\n",
+					FMOD_ErrorString(FSOUND_GetError()));
 		return false;
 	}
 
@@ -144,7 +144,8 @@ int DM_FModInit(void)
 //===========================================================================
 void DM_FModShutdown(void)
 {
-	if(!inited) return;
+	if(!inited)
+		return;
 	inited = false;
 
 	// Shut down the interfaces.
@@ -157,9 +158,10 @@ void DM_FModShutdown(void)
 //===========================================================================
 // DM_FModExtInit
 //===========================================================================
-int	DM_FModExtInit(void)
+int DM_FModExtInit(void)
 {
-	if(ext_inited) return true;
+	if(ext_inited)
+		return true;
 
 	// Clear the song buffer.
 	song = NULL;
@@ -175,13 +177,15 @@ int	DM_FModExtInit(void)
 //===========================================================================
 void DM_FModExtShutdown(void)
 {
-	if(!ext_inited) return;
+	if(!ext_inited)
+		return;
 	ext_inited = false;
 
 	DM_FModExtReset();
 
 	// Free the song buffer.
-	if(song) free(song);
+	if(song)
+		free(song);
 	song = NULL;
 	song_size = 0;
 }
@@ -192,8 +196,10 @@ void DM_FModExtShutdown(void)
 void DM_FModExtReset(void)
 {
 	// Get rid of old module/stream.
-	if(module) FMUSIC_FreeSong(module);
-	if(stream) FSOUND_Stream_Close(stream);
+	if(module)
+		FMUSIC_FreeSong(module);
+	if(stream)
+		FSOUND_Stream_Close(stream);
 	module = 0;
 	stream = 0;
 	stream_channel = -1;
@@ -204,15 +210,16 @@ void DM_FModExtReset(void)
 //===========================================================================
 void DM_FModExtUpdate(void)
 {
-	if(!ext_inited) return;
+	if(!ext_inited)
+		return;
 	/*if(module
-		&& ext_playing 
-		&& ext_looped_play 
-		&& Sys_GetTime() - ext_start_time > TICSPERSEC*3
-		&& !FMUSIC_IsPlaying(module))
-	{
-		FMUSIC_PlaySong(module);
-	}*/
+	   && ext_playing 
+	   && ext_looped_play 
+	   && Sys_GetTime() - ext_start_time > TICSPERSEC*3
+	   && !FMUSIC_IsPlaying(module))
+	   {
+	   FMUSIC_PlaySong(module);
+	   } */
 }
 
 //===========================================================================
@@ -220,13 +227,15 @@ void DM_FModExtUpdate(void)
 //===========================================================================
 void DM_FModExtSet(int property, float value)
 {
-	if(!ext_inited) return;
-	switch(property)
+	if(!ext_inited)
+		return;
+	switch (property)
 	{
 	case MUSIP_VOLUME:
 		// This affects streams.
-		FSOUND_SetSFXMasterVolume(ext_volume = value*255 + 0.5);
-		if(module) FMUSIC_SetMasterVolume(module, ext_volume);
+		FSOUND_SetSFXMasterVolume(ext_volume = value * 255 + 0.5);
+		if(module)
+			FMUSIC_SetMasterVolume(module, ext_volume);
 		break;
 	}
 }
@@ -236,13 +245,14 @@ void DM_FModExtSet(int property, float value)
 //===========================================================================
 int DM_FModExtGet(int property, void *ptr)
 {
-	if(!ext_inited) return false;
-	switch(property)
+	if(!ext_inited)
+		return false;
+	switch (property)
 	{
 	case MUSIP_ID:
 		strcpy(ptr, "FMod/Ext");
 		break;
-	
+
 	default:
 		return false;
 	}
@@ -254,10 +264,13 @@ int DM_FModExtGet(int property, void *ptr)
 //===========================================================================
 void DM_FModExtPause(int pause)
 {
-	if(!ext_inited) return;
+	if(!ext_inited)
+		return;
 	//ext_playing = !pause;
-	if(module) FMUSIC_SetPaused(module, pause != 0);
-	if(stream) FSOUND_SetPaused(stream_channel, pause != 0);
+	if(module)
+		FMUSIC_SetPaused(module, pause != 0);
+	if(stream)
+		FSOUND_SetPaused(stream_channel, pause != 0);
 }
 
 //===========================================================================
@@ -265,20 +278,25 @@ void DM_FModExtPause(int pause)
 //===========================================================================
 void DM_FModExtStop(void)
 {
-	if(!ext_inited) return;
+	if(!ext_inited)
+		return;
 	//ext_playing = false;
-	if(module) FMUSIC_StopSong(module);
-	if(stream) FSOUND_Stream_Stop(stream);
+	if(module)
+		FMUSIC_StopSong(module);
+	if(stream)
+		FSOUND_Stream_Stop(stream);
 }
 
 //===========================================================================
 // DM_FModExtSongBuffer
 //===========================================================================
-void* DM_FModExtSongBuffer(int length)
+void   *DM_FModExtSongBuffer(int length)
 {
-	if(!ext_inited) return NULL;
+	if(!ext_inited)
+		return NULL;
 	// Free the previous data.
-	if(song) free(song);
+	if(song)
+		free(song);
 	song_size = length;
 	return song = malloc(song_size);
 }
@@ -288,38 +306,40 @@ void* DM_FModExtSongBuffer(int length)
 //===========================================================================
 void DM_FModExtStartPlaying(void)
 {
-	if(module) 
+	if(module)
 	{
 		FMUSIC_SetMasterVolume(module, ext_volume);
 		FMUSIC_PlaySong(module);
 	}
-	if(stream) 
+	if(stream)
 	{
 		stream_channel = FSOUND_Stream_Play(FSOUND_FREE, stream);
 	}
-//	ext_playing = true;
-//	ext_start_time = Sys_GetTime();
+	//  ext_playing = true;
+	//  ext_start_time = Sys_GetTime();
 }
 
 //===========================================================================
 // DM_FModExtPlayFile
 //===========================================================================
-int	DM_FModExtPlayFile(const char *path, int looped)
+int DM_FModExtPlayFile(const char *path, int looped)
 {
-	if(!ext_inited) return false;
+	if(!ext_inited)
+		return false;
 	DM_FModExtReset();
 
 	// Try playing as a module first.
 	if((module = FMUSIC_LoadSong(path)))
 	{
-		FMUSIC_SetLooping(module, looped);		
+		FMUSIC_SetLooping(module, looped);
 	}
 	else
 	{
 		// Try as a stream.
-		stream = FSOUND_Stream_Open(path, 
-			looped? FSOUND_LOOP_NORMAL : 0, 0, 0);
-		if(!stream) return false; // Failed...!
+		stream =
+			FSOUND_Stream_Open(path, looped ? FSOUND_LOOP_NORMAL : 0, 0, 0);
+		if(!stream)
+			return false;		// Failed...!
 	}
 	DM_FModExtStartPlaying();
 	//ext_looped_play = looped;
@@ -329,26 +349,29 @@ int	DM_FModExtPlayFile(const char *path, int looped)
 //===========================================================================
 // DM_FModExtPlayBuffer
 //===========================================================================
-int	DM_FModExtPlayBuffer(int looped)
+int DM_FModExtPlayBuffer(int looped)
 {
-	if(!ext_inited) return false;
+	if(!ext_inited)
+		return false;
 	DM_FModExtReset();
 
 	// Try playing as a module first.
-	if((module = FMUSIC_LoadSongEx(song, 0, song_size, 
-		FSOUND_LOADMEMORY, NULL, 0)))
+	if((module =
+		FMUSIC_LoadSongEx(song, 0, song_size, FSOUND_LOADMEMORY, NULL, 0)))
 	{
 		FMUSIC_SetLooping(module, looped);
 	}
 	else
 	{
 		// Try as a stream.
-		stream = FSOUND_Stream_Open(song,
-			FSOUND_LOADMEMORY | (looped? FSOUND_LOOP_NORMAL : 0), 
-			0, song_size);
-		if(!stream) return false;
+		stream =
+			FSOUND_Stream_Open(song,
+							   FSOUND_LOADMEMORY | (looped ? FSOUND_LOOP_NORMAL
+													: 0), 0, song_size);
+		if(!stream)
+			return false;
 	}
-	DM_FModExtStartPlaying();	
+	DM_FModExtStartPlaying();
 	//ext_looped_play = looped;
 	return true;
 }
@@ -356,11 +379,11 @@ int	DM_FModExtPlayBuffer(int looped)
 //===========================================================================
 // DM_FModCDInit
 //===========================================================================
-int	DM_FModCDInit(void)
+int DM_FModCDInit(void)
 {
 	original_cd_volume = FSOUND_CD_GetVolume(0);
 	// If FMOD is OK, then is this.
-	return inited; 
+	return inited;
 }
 
 //===========================================================================
@@ -386,12 +409,13 @@ void DM_FModCDUpdate(void)
 //===========================================================================
 void DM_FModCDSet(int property, float value)
 {
-	if(!inited) return;
+	if(!inited)
+		return;
 
-	switch(property)
+	switch (property)
 	{
 	case MUSIP_VOLUME:
-		FSOUND_CD_SetVolume(0, value*255 + 0.5);
+		FSOUND_CD_SetVolume(0, value * 255 + 0.5);
 		break;
 	}
 }
@@ -401,13 +425,14 @@ void DM_FModCDSet(int property, float value)
 //===========================================================================
 int DM_FModCDGet(int property, void *ptr)
 {
-	if(!ext_inited) return false;
-	switch(property)
+	if(!ext_inited)
+		return false;
+	switch (property)
 	{
 	case MUSIP_ID:
 		strcpy(ptr, "FMod/CD");
 		break;
-	
+
 	default:
 		return false;
 	}
@@ -419,7 +444,8 @@ int DM_FModCDGet(int property, void *ptr)
 //===========================================================================
 void DM_FModCDPause(int pause)
 {
-	if(!inited) return;
+	if(!inited)
+		return;
 	FSOUND_CD_SetPaused(0, pause != 0);
 }
 
@@ -428,18 +454,20 @@ void DM_FModCDPause(int pause)
 //===========================================================================
 void DM_FModCDStop(void)
 {
-	if(!inited) return;
+	if(!inited)
+		return;
 	FSOUND_CD_Stop(0);
 }
 
 //===========================================================================
 // DM_FModCDPlay
 //===========================================================================
-int	DM_FModCDPlay(int track, int looped)
+int DM_FModCDPlay(int track, int looped)
 {
-	if(!inited) return false;
-	FSOUND_CD_SetPlayMode(0, looped? FSOUND_CD_PLAYLOOPED 
-		: FSOUND_CD_PLAYONCE);
+	if(!inited)
+		return false;
+	FSOUND_CD_SetPlayMode(0,
+						  looped ? FSOUND_CD_PLAYLOOPED : FSOUND_CD_PLAYONCE);
 	return FSOUND_CD_Play(0, track);
 }
 

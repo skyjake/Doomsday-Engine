@@ -46,15 +46,15 @@ extern int bufferLines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean		startupScreen = false;
-int			startupLogo;
+boolean startupScreen = false;
+int     startupLogo;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static char *titletext;
-static int fontHgt = 8;	// Height of the font.
+static int fontHgt = 8;			// Height of the font.
 static DGLuint bgflat;
-char *bitmap = NULL;
+char   *bitmap = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -65,7 +65,8 @@ void Con_StartupInit(void)
 {
 	static boolean firstTime = true;
 
-	if(novideo) return;
+	if(novideo)
+		return;
 
 	GL_InitVarFont();
 	fontHgt = FR_TextHeight("Doomsday!");
@@ -78,13 +79,13 @@ void Con_StartupInit(void)
 
 	if(firstTime)
 	{
-		titletext = "Doomsday "DOOMSDAY_VERSION_TEXT" Startup";
+		titletext = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
 		firstTime = false;
 		bgflat = 0;
 	}
 	else
 	{
-		titletext = "Doomsday "DOOMSDAY_VERSION_TEXT;
+		titletext = "Doomsday " DOOMSDAY_VERSION_TEXT;
 	}
 
 	// Load graphics.
@@ -98,7 +99,8 @@ void Con_SetBgFlat(int lump)
 
 void Con_StartupDone(void)
 {
-	if(isDedicated) return;
+	if(isDedicated)
+		return;
 	startupScreen = false;
 	gl.DeleteTextures(1, &startupLogo);
 	startupLogo = 0;
@@ -109,11 +111,11 @@ void Con_StartupDone(void)
 
 //===========================================================================
 // Con_DrawStartupBackground
-//	Background with the "The Doomsday Engine" text superimposed.
+//  Background with the "The Doomsday Engine" text superimposed.
 //===========================================================================
 void Con_DrawStartupBackground(void)
 {
-	float mul = (startupLogo? 1.5f : 1.0f);
+	float   mul = (startupLogo ? 1.5f : 1.0f);
 	ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
 
 	// Background gradient picture.
@@ -121,13 +123,13 @@ void Con_DrawStartupBackground(void)
 	gl.Disable(DGL_BLENDING);
 	gl.Begin(DGL_QUADS);
 	// Top color.
-	gl.Color3f(dark->red*mul, dark->green*mul, dark->blue*mul);
+	gl.Color3f(dark->red * mul, dark->green * mul, dark->blue * mul);
 	gl.TexCoord2f(0, 0);
 	gl.Vertex2f(0, 0);
 	gl.TexCoord2f(1, 0);
-	gl.Vertex2f(screenWidth, 0); 
+	gl.Vertex2f(screenWidth, 0);
 	// Bottom color.
-	gl.Color3f(light->red*mul, light->green*mul, light->blue*mul); 
+	gl.Color3f(light->red * mul, light->green * mul, light->blue * mul);
 	gl.TexCoord2f(1, 1);
 	gl.Vertex2f(screenWidth, screenHeight);
 	gl.TexCoord2f(0, 1);
@@ -136,82 +138,85 @@ void Con_DrawStartupBackground(void)
 	gl.Enable(DGL_BLENDING);
 
 	// Draw logo.
-/*	gl.Enable(DGL_TEXTURING);
-	gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-	if(startupLogo)
-	{
-		// Calculate logo placement.
-		w = screenWidth/1.25f;
-		h = LOGO_HEIGHT * w/LOGO_WIDTH;
-		x = (screenWidth - w)/2;
-		y = (screenHeight - h)/2;
+	/*  gl.Enable(DGL_TEXTURING);
+	   gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
+	   if(startupLogo)
+	   {
+	   // Calculate logo placement.
+	   w = screenWidth/1.25f;
+	   h = LOGO_HEIGHT * w/LOGO_WIDTH;
+	   x = (screenWidth - w)/2;
+	   y = (screenHeight - h)/2;
 
-		// Draw it in two passes: additive and subtractive. 
-		gl.Bind(startupLogo);
-		GL_DrawRect(x, y, w, h, .05f, .05f, .05f, 1);
-		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
-		GL_DrawRect(x - w/170, y - w/170, w, h, .1f, .1f, .1f, 1);
-		gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-		gl.Color3f(.05f, .05f, .05f);
-		FR_TextOut(DOOMSDAY_VERSIONTEXT, 
-			x + w - FR_TextWidth(DOOMSDAY_VERSIONTEXT),	
-			y + h);
-	}
-	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);	*/
+	   // Draw it in two passes: additive and subtractive. 
+	   gl.Bind(startupLogo);
+	   GL_DrawRect(x, y, w, h, .05f, .05f, .05f, 1);
+	   gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+	   GL_DrawRect(x - w/170, y - w/170, w, h, .1f, .1f, .1f, 1);
+	   gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
+	   gl.Color3f(.05f, .05f, .05f);
+	   FR_TextOut(DOOMSDAY_VERSIONTEXT, 
+	   x + w - FR_TextWidth(DOOMSDAY_VERSIONTEXT),  
+	   y + h);
+	   }
+	   gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);   */
 }
 
 //===========================================================================
 // Con_DrawStartupScreen
-//	Does not show anything on screen.
+//  Does not show anything on screen.
 //===========================================================================
 void Con_DrawStartupScreen(int show)
 {
-	int i, vislines, y, x, st;
-	int topy;
-	
+	int     i, vislines, y, x, st;
+	int     topy;
+
 	// Print the messages in the console.
-	if(!startupScreen || ui_active) return;
+	if(!startupScreen || ui_active)
+		return;
 
 	Con_DrawStartupBackground();
 
 	// Draw the title.
 	FR_SetFont(glFontVariable);
-	UI_DrawTitleEx(titletext, topy = FR_TextHeight("W") + UI_BORDER*2);
+	UI_DrawTitleEx(titletext, topy = FR_TextHeight("W") + UI_BORDER * 2);
 	FR_SetFont(glFontFixed);
 
 	topy += UI_BORDER;
-	vislines = (screenHeight - topy + fontHgt/2)/fontHgt;
+	vislines = (screenHeight - topy + fontHgt / 2) / fontHgt;
 	y = topy;
 
 	st = bufferLines - vislines;
 	// Show the last line, too, if there's something.
-	if(Con_GetBufferLine(bufferLines-1)->len) st++;
-	if(st < 0) st = 0;
-	for(i = 0; i < vislines && st+i < bufferLines; i++)
+	if(Con_GetBufferLine(bufferLines - 1)->len)
+		st++;
+	if(st < 0)
+		st = 0;
+	for(i = 0; i < vislines && st + i < bufferLines; i++)
 	{
-		cbline_t *line = Con_GetBufferLine(st+i);
-		if(!line) break;
+		cbline_t *line = Con_GetBufferLine(st + i);
+
+		if(!line)
+			break;
 		if(line->flags & CBLF_RULER)
 		{
 			Con_DrawRuler(y, fontHgt, 1);
 		}
 		else
 		{
-			x = line->flags & CBLF_CENTER? 
-				(screenWidth - FR_TextWidth(line->text))/2 : 3;
+			x = line->flags & CBLF_CENTER ? (screenWidth -
+											 FR_TextWidth(line->text)) / 2 : 3;
 			gl.Color3f(0, 0, 0);
-			FR_TextOut(line->text, x+1, y+1);
+			FR_TextOut(line->text, x + 1, y + 1);
 			gl.Color3f(1, 1, 1);
-			FR_TextOut(line->text, x, y);			
+			FR_TextOut(line->text, x, y);
 		}
 		y += fontHgt;
 	}
-	if(show) 
+	if(show)
 	{
 		// Update the progress bar, if one is active.
 		Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
 		gl.Show();
 	}
 }
-
-

@@ -36,22 +36,22 @@
 typedef unsigned short WORD;
 
 typedef struct riff_hdr_s {
-	char	id[4];  			// identifier string = "RIFF"
-	uint	len;    			// remaining length after this header
+	char    id[4];				// identifier string = "RIFF"
+	uint    len;				// remaining length after this header
 } riff_hdr_t;
 
 typedef struct chunk_hdr_s {	// CHUNK 8-byte header
-	char	id[4];				// identifier, e.g. "fmt " or "data"
-	uint	len;				// remaining chunk length after header
+	char    id[4];				// identifier, e.g. "fmt " or "data"
+	uint    len;				// remaining chunk length after header
 } chunk_hdr_t;					// data bytes follow chunk header
 
 typedef struct wav_format_s {
-	WORD	wFormatTag;			// Format category
-	WORD	wChannels;			// Number of channels
-	uint	dwSamplesPerSec;    // Sampling rate
-	uint	dwAvgBytesPerSec;   // For buffer estimation
-	WORD	wBlockAlign;		// Data block size
-	WORD	wBitsPerSample;		// Sample size
+	WORD    wFormatTag;			// Format category
+	WORD    wChannels;			// Number of channels
+	uint    dwSamplesPerSec;	// Sampling rate
+	uint    dwAvgBytesPerSec;	// For buffer estimation
+	WORD    wBlockAlign;		// Data block size
+	WORD    wBitsPerSample;		// Sample size
 } wav_format_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -74,33 +74,33 @@ typedef struct wav_format_s {
 static void WRead(void **ptr, void **dest, int length)
 {
 	*dest = *ptr;
-	(char*) *ptr += length;
+	(char *) *ptr += length;
 }
 
 //===========================================================================
 // WAV_MemoryLoad
-//	The returned buffer contains the wave data. If NULL is returned, the
-//	loading obviously failed. The caller must free the sample data using
-//	Z_Free when it's no longer needed. The WAV file must have only one
-//	channel! All parameters must be passed, no NULLs are allowed.
+//  The returned buffer contains the wave data. If NULL is returned, the
+//  loading obviously failed. The caller must free the sample data using
+//  Z_Free when it's no longer needed. The WAV file must have only one
+//  channel! All parameters must be passed, no NULLs are allowed.
 //===========================================================================
-void *WAV_MemoryLoad
-	(byte *data, int datalength, int *bits, int *rate, int *samples)
+void   *WAV_MemoryLoad(byte * data, int datalength, int *bits, int *rate,
+					   int *samples)
 {
-	byte *end = data + datalength;
-	byte *sampledata = NULL;
+	byte   *end = data + datalength;
+	byte   *sampledata = NULL;
 	riff_hdr_t *riff_header;
 	chunk_hdr_t *riff_chunk;
 	wav_format_t *wave_format = NULL;
 
 	// Read the RIFF header.
-	WRead((void**)&data, (void**)&riff_header, sizeof(*riff_header));
+	WRead((void **) &data, (void **) &riff_header, sizeof(*riff_header));
 	if(strncmp(riff_header->id, "RIFF", 4))
 	{
 		Con_Message("WAV_MemoryLoad: Not RIFF data.\n");
 		return NULL;
 	}
-	
+
 	// Check that it's really a WAVE file.
 	if(strncmp(data, "WAVE", 4))
 	{
@@ -113,13 +113,14 @@ void *WAV_MemoryLoad
 	while(data < end)
 	{
 		// Read next chunk header.
-		WRead((void**)&data, (void**)&riff_chunk, sizeof(*riff_chunk));
-				
+		WRead((void **) &data, (void **) &riff_chunk, sizeof(*riff_chunk));
+
 		// What have we got here?
 		if(!strncmp(riff_chunk->id, "fmt ", 4))
 		{
 			// Read format chunk.
-			WRead((void**)&data, (void**)&wave_format, sizeof(*wave_format));
+			WRead((void **) &data, (void **) &wave_format,
+				  sizeof(*wave_format));
 			// Check that it's a format we know how to read.
 			if(wave_format->wFormatTag != WAVE_FORMAT_PCM)
 			{
@@ -128,21 +129,22 @@ void *WAV_MemoryLoad
 			}
 			if(wave_format->wChannels != 1)
 			{
-				Con_Message("WAV_MemoryLoad: Too many channels (only mono supported).\n");
+				Con_Message
+					("WAV_MemoryLoad: Too many channels (only mono supported).\n");
 				return NULL;
 			}
 			// Read the extra format information.
 			//WRead(&data, &wave_format2, sizeof(*wave_format2));
 			/*if(wave_format->wBitsPerSample == 0)
-			{
-				// We'll have to guess...
-				*bits = 8*wave_format->dwAvgBytesPerSec/
-					wave_format->dwSamplesPerSec;
-			}
-			else 
-			{*/
+			   {
+			   // We'll have to guess...
+			   *bits = 8*wave_format->dwAvgBytesPerSec/
+			   wave_format->dwSamplesPerSec;
+			   }
+			   else 
+			   { */
 			if(wave_format->wBitsPerSample != 8
-				&& wave_format->wBitsPerSample != 16)
+			   && wave_format->wBitsPerSample != 16)
 			{
 				Con_Message("WAV_MemoryLoad: Not a 8/16 bit WAVE.\n");
 				return NULL;
@@ -178,16 +180,17 @@ void *WAV_MemoryLoad
 //===========================================================================
 // WAV_Load
 //===========================================================================
-void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
+void   *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
 {
-	DFILE *file;
-	byte *data;
-	int size;
-	void *sampledata;
+	DFILE  *file;
+	byte   *data;
+	int     size;
+	void   *sampledata;
 
 	// Try to open the file.
-	if((file = F_Open(filename, "b")) == NULL) return NULL;
-	
+	if((file = F_Open(filename, "b")) == NULL)
+		return NULL;
+
 	// Read in the whole thing.
 	F_Seek(file, 0, SEEK_END);
 	size = F_Tell(file);
@@ -198,7 +201,7 @@ void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
 
 	// Parse the RIFF data.
 	sampledata = WAV_MemoryLoad(data, size, bits, rate, samples);
-	if(!sampledata) 
+	if(!sampledata)
 	{
 		Con_Message("WAV_Load: Failed to load %s.\n", filename);
 	}
@@ -208,11 +211,9 @@ void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
 
 //===========================================================================
 // WAV_CheckFormat
-//	Returns true if the "RIFF" and "WAVE" strings are found.
+//  Returns true if the "RIFF" and "WAVE" strings are found.
 //===========================================================================
 int WAV_CheckFormat(char *data)
 {
-	return !strncmp(data, "RIFF", 4)
-		&& !strncmp(data + 8, "WAVE", 4);
+	return !strncmp(data, "RIFF", 4) && !strncmp(data + 8, "WAVE", 4);
 }
-

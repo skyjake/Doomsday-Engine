@@ -35,4 +35,3 @@
 #include "r_shadow.h"
 
 #endif
-

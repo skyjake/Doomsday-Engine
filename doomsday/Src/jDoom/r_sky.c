@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/05/29 09:53:29  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.5  2004/05/28 19:52:58  skyjake
 // Finished switch from branch-1-7 to trunk, hopefully everything is fine
 //
@@ -44,35 +47,29 @@
 //-----------------------------------------------------------------------------
 
 static const char
-rcsid[] = "$Id$";
-
+        rcsid[] = "$Id$";
 
 // Needed for Flat retrieval.
 #include "r_data.h"
 
-
 #ifdef __GNUG__
-#pragma implementation "r_sky.h"
+#  pragma implementation "r_sky.h"
 #endif
 #include "r_sky.h"
 
 //
 // sky mapping
 //
-int			skyflatnum;
-int			skytexture;
-int			skytexturemid;
-
-
+int     skyflatnum;
+int     skytexture;
+int     skytexturemid;
 
 //
 // R_InitSkyMap
 // Called whenever the view size changes.
 //
-void R_InitSkyMap (void)
+void R_InitSkyMap(void)
 {
-  // skyflatnum = R_FlatNumForName ( SKYFLATNAME );
-    skytexturemid = 100*FRACUNIT;
+	// skyflatnum = R_FlatNumForName ( SKYFLATNAME );
+	skytexturemid = 100 * FRACUNIT;
 }
-
-

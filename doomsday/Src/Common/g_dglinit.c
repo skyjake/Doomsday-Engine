@@ -36,9 +36,9 @@ gamedgl_t gl;
 
 //===========================================================================
 // G_InitDGL
-//	Init the game's interface to the DGL driver.
-//	Since the engine has already loaded the DGL DLL successfully, we can 
-//	assume no required functions are missing.
+//  Init the game's interface to the DGL driver.
+//  Since the engine has already loaded the DGL DLL successfully, we can 
+//  assume no required functions are missing.
 //===========================================================================
 void G_InitDGL(void)
 {
@@ -63,7 +63,7 @@ void G_InitDGL(void)
 	Imp(TexImage);
 	Imp(TexParameter);
 	Imp(GetTexParameterv);
-	Imp(Palette);	
+	Imp(Palette);
 	Imp(Bind);
 
 	// Matrix operations.
@@ -105,5 +105,5 @@ void G_InitDGL(void)
 	Imp(Fog);
 	Imp(Fogv);
 	Imp(Project);
-	Imp(ReadPixels); 
+	Imp(ReadPixels);
 }

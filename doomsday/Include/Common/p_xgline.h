@@ -5,7 +5,7 @@
 #include "xgclass.h"
 //#include "p_mobj.h"
 
-enum // Line events.
+enum							   // Line events.
 {
 	XLE_CHAIN,
 	XLE_CROSS,
@@ -97,9 +97,9 @@ enum // Line events.
 
 // Continued in flags2.
 #define LTF2_HEALTH_ABOVE	0x00004000	// a0 (activator health)
-#define LTF2_HEALTH_BELOW	0x00008000	// a1 
+#define LTF2_HEALTH_BELOW	0x00008000	// a1
 #define LTF2_POWER_ABOVE	0x00010000	// a2 (activator power)
-#define LTF2_POWER_BELOW	0x00020000	// a3 
+#define LTF2_POWER_BELOW	0x00020000	// a3
 #define LTF2_SINGLEPLAYER	0x00040000
 #define LTF2_COOPERATIVE	0x00080000
 #define LTF2_DEATHMATCH		0x00100000
@@ -108,7 +108,7 @@ enum // Line events.
 #define LTF2_MED			0x00400000
 #define LTF2_HARD			0x00800000
 #define LTF2_ANY_SKILL		0x00e00000	// Easy/med/hard combined.
-#define LTF2_SKILL_SHIFT	21			// 1<<this == easy
+#define LTF2_SKILL_SHIFT	21	   // 1<<this == easy
 
 // Extra features.
 #define LTF2_MULTIPLE		0x01000000	// Copy act state to tagged lines
@@ -119,19 +119,19 @@ enum // Line events.
 #define LTF2_GROUP_ACT		0x10000000	// Act all tag-matching lines
 #define LTF2_GROUP_DEACT	0x20000000	// Deact all tag-matching lines
 
-#define LTACT_CNT_INFINITE	-1			// Activate infinite number of times.
+#define LTACT_CNT_INFINITE	-1	   // Activate infinite number of times.
 
-enum // Activation types.
+enum							   // Activation types.
 {
 	// When on, count to off. Can be activated when off.
-	LTACT_COUNTED_OFF,			
+	LTACT_COUNTED_OFF,
 
 	// When off, count to on. Can be activated when on.
-	LTACT_COUNTED_ON,			
-	
+	LTACT_COUNTED_ON,
+
 	// Flip between on/off. Can be activated at any time.
 	LTACT_FLIP,
-	
+
 	// When on, count to off. Can be (de)activated at any time.
 	LTACT_FLIP_COUNTED_OFF,
 
@@ -139,7 +139,7 @@ enum // Activation types.
 	LTACT_FLIP_COUNTED_ON,
 };
 
-enum // Wall sections.
+enum							   // Wall sections.
 {
 	LWS_NONE,
 	LWS_MID,
@@ -147,7 +147,7 @@ enum // Wall sections.
 	LWS_LOWER
 };
 
-enum // Line reference type.
+enum							   // Line reference type.
 {
 	LREF_SELF,
 	LREF_TAGGED,
@@ -157,7 +157,7 @@ enum // Line reference type.
 	LREF_ALL
 };
 
-enum // Line -> Plane reference type.
+enum							   // Line -> Plane reference type.
 {
 	LPREF_NONE,
 
@@ -175,7 +175,7 @@ enum // Line -> Plane reference type.
 	LPREF_INDEX_CEILING,
 	LPREF_ALL_CEILINGS,
 
-	LPREF_SPECIAL,		// 2nd param of reference treated in a special way.
+	LPREF_SPECIAL,				   // 2nd param of reference treated in a special way.
 
 	// Line -> Sector references (same as ->Plane, really).
 	LSREF_MY = LPREF_MY_FLOOR,
@@ -186,7 +186,7 @@ enum // Line -> Plane reference type.
 	LSREF_ALL
 };
 
-enum // Sector -> Plane reference type.
+enum							   // Sector -> Plane reference type.
 {
 	SPREF_NONE,
 	SPREF_MY_FLOOR,
@@ -221,16 +221,16 @@ enum // Sector -> Plane reference type.
 	SPREF_INDEX_CEILING
 };
 
-enum // Special lightlevel sources.
+enum							   // Special lightlevel sources.
 {
 	LIGHTREF_NONE,
-	LIGHTREF_MY,			// Actline's front sector.
-	LIGHTREF_ORIGINAL,		// Original light level of the sector.
-	LIGHTREF_CURRENT,		// Current light level of the sector.
-	LIGHTREF_HIGHEST,		// Highest surrounding.
-	LIGHTREF_LOWEST,		// Lowest surrounding.
-	LIGHTREF_NEXT_HIGHEST,	// Next highest surrounding.
-	LIGHTREF_NEXT_LOWEST	// Next lowest surrounding.
+	LIGHTREF_MY,				   // Actline's front sector.
+	LIGHTREF_ORIGINAL,			   // Original light level of the sector.
+	LIGHTREF_CURRENT,			   // Current light level of the sector.
+	LIGHTREF_HIGHEST,			   // Highest surrounding.
+	LIGHTREF_LOWEST,			   // Lowest surrounding.
+	LIGHTREF_NEXT_HIGHEST,		   // Next highest surrounding.
+	LIGHTREF_NEXT_LOWEST		   // Next lowest surrounding.
 };
 
 // Chain sequence flags.
@@ -238,58 +238,63 @@ enum // Special lightlevel sources.
 #define CHSF_LOOP					0x2
 
 // State data for each line.
-typedef struct
-{
-	linetype_t info;			// Type definition.	
-	boolean active;
-	boolean disabled;			// If true, skip all processing.
-	int timer;
-	int ticker_timer;
-	void *activator;
-	int idata;
-	float fdata;
-	int chidx;					// Chain sequence index.
-	float chtimer;				// Chain sequence timer.
+typedef struct {
+	linetype_t      info;		   // Type definition. 
+	boolean         active;
+	boolean         disabled;	   // If true, skip all processing.
+	int             timer;
+	int             ticker_timer;
+	void           *activator;
+	int             idata;
+	float           fdata;
+	int             chidx;		   // Chain sequence index.
+	float           chtimer;	   // Chain sequence timer.
 } xgline_t;
-		
+
 // Used as the activator if there is no real activator.
 extern struct mobj_s dummything;
 
 // Initialize extended lines for the map.
-void XL_Init(void);
+void            XL_Init(void);
 
 // Think for each extended line.
-void XL_Ticker(void);
+void            XL_Ticker(void);
 
 // Called when reseting engine state.
-void XL_Update(void);
+void            XL_Update(void);
 
-void XL_SetLineType(struct line_s *line, int id);
+void            XL_SetLineType(struct line_s *line, int id);
 
-linetype_t *XL_GetType(int id);
-int XL_LineEvent(int evtype, int linetype, struct line_s *line, int sidenum, 
-				 void *data);
-void XL_ActivateLine(boolean activating, linetype_t *info, struct line_s *line,
-					 int sidenum, struct mobj_s *data);
-int XL_TraverseLines(struct line_s *line, int reftype, int ref, int data, 
-					 void *context, int (*func)(struct line_s *line, int data,
-					 void *context));
-int XL_TraversePlanes(struct line_s *line, int reftype, int ref, int data,
-					  void *context, int (*func)(struct sector_s *sector, 
-					  boolean ceiling, int data, void *context));
+linetype_t     *XL_GetType(int id);
+int             XL_LineEvent(int evtype, int linetype, struct line_s *line,
+							 int sidenum, void *data);
+void            XL_ActivateLine(boolean activating, linetype_t * info,
+								struct line_s *line, int sidenum,
+								struct mobj_s *data);
+int             XL_TraverseLines(struct line_s *line, int reftype, int ref,
+								 int data, void *context,
+								 int (*func) (struct line_s * line, int data,
+											  void *context));
+int             XL_TraversePlanes(struct line_s *line, int reftype, int ref,
+								  int data, void *context,
+								  int (*func) (struct sector_s * sector,
+											   boolean ceiling, int data,
+											   void *context));
 
 // Return false if the event was processed.
-int XL_CrossLine(struct line_s *line, int sidenum, struct mobj_s *thing);
-int XL_UseLine(struct line_s *line, int sidenum, struct mobj_s *thing);
-int XL_ShootLine(struct line_s *line, int sidenum, struct mobj_s *thing);
-int XL_HitLine(struct line_s *line, int sidenum, struct mobj_s *thing);
+int             XL_CrossLine(struct line_s *line, int sidenum,
+							 struct mobj_s *thing);
+int             XL_UseLine(struct line_s *line, int sidenum,
+						   struct mobj_s *thing);
+int             XL_ShootLine(struct line_s *line, int sidenum,
+							 struct mobj_s *thing);
+int             XL_HitLine(struct line_s *line, int sidenum,
+						   struct mobj_s *thing);
 
-int XG_RandomInt(int min, int max);
+int             XG_RandomInt(int min, int max);
 
-void SV_WriteXGLine(struct line_s *li);
-void SV_ReadXGLine(struct line_s *li);
-void XL_UnArchiveLines(void);
+void            SV_WriteXGLine(struct line_s *li);
+void            SV_ReadXGLine(struct line_s *li);
+void            XL_UnArchiveLines(void);
 
 #endif
-
-

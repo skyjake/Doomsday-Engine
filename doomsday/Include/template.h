@@ -24,4 +24,4 @@
 #ifndef __DOOMSDAY_ _H__
 #define __DOOMSDAY_ _H__
 
-#endif 
+#endif

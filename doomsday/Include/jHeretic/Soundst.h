@@ -9,7 +9,6 @@
 
 #include "R_local.h"
 
-void S_SectorSound(sector_t *sec, int id);
+void            S_SectorSound(sector_t * sec, int id);
 
 #endif
-

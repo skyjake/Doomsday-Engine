@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2004/05/29 09:53:29  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.4  2004/05/28 19:52:58  skyjake
 // Finished switch from branch-1-7 to trunk, hopefully everything is fine
 //
@@ -32,19 +35,17 @@
 //
 //
 // DESCRIPTION:
-//	Endianess handling, swapping 16bit and 32bit.
+//  Endianess handling, swapping 16bit and 32bit.
 //
 //-----------------------------------------------------------------------------
 
 static const char
-rcsid[] = "$Id$";
-
+        rcsid[] = "$Id$";
 
 #ifdef __GNUG__
-#pragma implementation "m_swap.h"
+#  pragma implementation "m_swap.h"
 #endif
 #include "m_swap.h"
-
 
 // Not needed with big endian.
 #ifndef __BIG_ENDIAN__
@@ -52,22 +53,14 @@ rcsid[] = "$Id$";
 // Swap 16bit, that is, MSB and LSB byte.
 unsigned short SwapSHORT(unsigned short x)
 {
-    // No masking with 0xFF should be necessary. 
-    return (x>>8) | (x<<8);
+	// No masking with 0xFF should be necessary. 
+	return (x >> 8) | (x << 8);
 }
 
 // Swapping 32bit.
-unsigned long SwapLONG( unsigned long x)
+unsigned long SwapLONG(unsigned long x)
 {
-    return
-	(x>>24)
-	| ((x>>8) & 0xff00)
-	| ((x<<8) & 0xff0000)
-	| (x<<24);
+	return (x >> 24) | ((x >> 8) & 0xff00) | ((x << 8) & 0xff0000) | (x << 24);
 }
 
-
 #endif
-
-
-

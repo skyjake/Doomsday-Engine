@@ -21,8 +21,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum
-{
+typedef enum {
 	SINGLE,
 	COOPERATIVE,
 	DEATHMATCH
@@ -32,13 +31,14 @@ typedef enum
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void IN_Start(void);
-void IN_Ticker(void);
-void IN_Drawer(void);
+void    IN_Start(void);
+void    IN_Ticker(void);
+void    IN_Drawer(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void WaitStop(void);
+
 //static void Stop(void);
 static void LoadPics(void);
 static void UnloadPics(void);
@@ -47,17 +47,18 @@ static void InitStats(void);
 static void DrDeathTally(void);
 static void DrNumber(int val, int x, int y, int wrapThresh);
 static void DrNumberBold(int val, int x, int y, int wrapThresh);
+
 //static void DrawHubText(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-int overrideHubMsg = 0; // override the hub transition message when 1
+int     overrideHubMsg = 0;		// override the hub transition message when 1
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
 boolean intermission;
-char ClusterMessage[MAX_INTRMSN_MESSAGE_SIZE];
-int interstate = 0;
+char    ClusterMessage[MAX_INTRMSN_MESSAGE_SIZE];
+int     interstate = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -65,7 +66,7 @@ static boolean skipintermission;
 static int intertime = -1;
 static gametype_t gametype;
 static int cnt;
-static int slaughterboy; // in DM, the player with the most kills
+static int slaughterboy;		// in DM, the player with the most kills
 static int patchINTERPICLumpRS;	// A raw screen.
 static int FontBNumbersLump[10];
 static int FontBNegativeLump;
@@ -79,6 +80,7 @@ static int FontBLumpBase;
 static signed int totalFrags[MAXPLAYERS];
 
 static int HubCount;
+
 //static char *HubText;
 
 // CODE --------------------------------------------------------------------
@@ -89,17 +91,17 @@ static int HubCount;
 //
 //========================================================================
 
-extern void AM_Stop (void);
+extern void AM_Stop(void);
 
 void IN_Start(void)
 {
-	int i;
+	int     i;
 
 	AM_Stop();
-	SN_StopAllSequences();	
+	SN_StopAllSequences();
 
 	// InFine handles the text.
-	if(!deathmatch) 
+	if(!deathmatch)
 	{
 		gameaction = ga_leavemap;
 		return;
@@ -130,10 +132,10 @@ void WaitStop(void)
 	if(!--cnt)
 	{
 		IN_Stop();
-//		gamestate = GS_LEVEL;
-//		G_DoLoadLevel();
+		//      gamestate = GS_LEVEL;
+		//      G_DoLoadLevel();
 		gameaction = ga_leavemap;
-//		G_WorldDone();
+		//      G_WorldDone();
 	}
 }
 
@@ -156,12 +158,11 @@ void IN_Stop(void)
 //
 // InitStats
 //
-// 	Initializes the stats for single player mode
+//  Initializes the stats for single player mode
 //========================================================================
 
 #if 0
-static char *ClusMsgLumpNames[] =
-{
+static char *ClusMsgLumpNames[] = {
 	"clus1msg",
 	"clus2msg",
 	"clus3msg",
@@ -172,17 +173,18 @@ static char *ClusMsgLumpNames[] =
 
 static void InitStats(void)
 {
-	int i;
-	int j;
+	int     i;
+	int     j;
 	signed int slaughterfrags;
-	int posnum;
-	int slaughtercount;
-	int playercount;
+	int     posnum;
+	int     slaughtercount;
+	int     playercount;
+
 #if 0
-	int oldCluster;
-	char *msgLumpName;
-	int msgSize;
-	int msgLump;
+	int     oldCluster;
+	char   *msgLumpName;
+	int     msgSize;
+	int     msgLump;
 	extern int LeaveMap;
 #endif
 
@@ -196,9 +198,10 @@ static void InitStats(void)
 		{
 			if(oldCluster >= 1 && oldCluster <= 5)
 			{
-                if(!overrideHubMsg) {
-    				msgLumpName = ClusMsgLumpNames[oldCluster-1];
-    				msgLump = W_CheckNumForName(msgLumpName);
+				if(!overrideHubMsg)
+				{
+					msgLumpName = ClusMsgLumpNames[oldCluster - 1];
+					msgLump = W_CheckNumForName(msgLumpName);
 					if(msgLump < 0)
 					{
 						HubText = "correct hub message not found";
@@ -208,19 +211,20 @@ static void InitStats(void)
 						msgSize = W_LumpLength(msgLump);
 						if(msgSize >= MAX_INTRMSN_MESSAGE_SIZE)
 						{
-							Con_Error("Cluster message too long (%s)", msgLumpName);
+							Con_Error("Cluster message too long (%s)",
+									  msgLumpName);
 						}
 						gi.W_ReadLump(msgLump, ClusterMessage);
-						ClusterMessage[msgSize] = 0; // Append terminator
+						ClusterMessage[msgSize] = 0;	// Append terminator
 						HubText = ClusterMessage;
 					}
-                }
-                else 
+				}
+				else
 				{
-				    HubText = "null hub message";
-                }
-   				HubCount = strlen(HubText)*TEXTSPEED + TEXTWAIT;
-   				S_StartSongName("hub", true);
+					HubText = "null hub message";
+				}
+				HubCount = strlen(HubText) * TEXTSPEED + TEXTWAIT;
+				S_StartSongName("hub", true);
 			}
 		}
 #endif
@@ -233,13 +237,13 @@ static void InitStats(void)
 		posnum = 0;
 		playercount = 0;
 		slaughtercount = 0;
-		for(i=0; i<MAXPLAYERS; i++)
+		for(i = 0; i < MAXPLAYERS; i++)
 		{
 			totalFrags[i] = 0;
 			if(players[i].plr->ingame)
 			{
 				playercount++;
-				for(j=0; j<MAXPLAYERS; j++)
+				for(j = 0; j < MAXPLAYERS; j++)
 				{
 					if(players[i].plr->ingame)
 					{
@@ -250,18 +254,18 @@ static void InitStats(void)
 			}
 			if(totalFrags[i] > slaughterfrags)
 			{
-				slaughterboy = 1<<i;
+				slaughterboy = 1 << i;
 				slaughterfrags = totalFrags[i];
 				slaughtercount = 1;
 			}
 			else if(totalFrags[i] == slaughterfrags)
 			{
-				slaughterboy |= 1<<i;
+				slaughterboy |= 1 << i;
 				slaughtercount++;
 			}
 		}
 		if(playercount == slaughtercount)
-		{ // don't do the slaughter stuff if everyone is equal
+		{						// don't do the slaughter stuff if everyone is equal
 			slaughterboy = 0;
 		}
 		S_StartMusic("hub", true);
@@ -276,20 +280,20 @@ static void InitStats(void)
 
 static void LoadPics(void)
 {
-	int i;
+	int     i;
 
 	if(HubCount || gametype == DEATHMATCH)
 	{
 		patchINTERPICLumpRS = W_GetNumForName("INTERPIC");
 		FontBLumpBase = W_GetNumForName("FONTB16");
-		for(i=0; i<10; i++)
+		for(i = 0; i < 10; i++)
 		{
-			FontBNumbersLump[i] = FontBLumpBase+i;
+			FontBNumbersLump[i] = FontBLumpBase + i;
 		}
-		FontBLump = W_GetNumForName("FONTB_S")+1;
+		FontBLump = W_GetNumForName("FONTB_S") + 1;
 		FontBNegativeLump = W_GetNumForName("FONTB13");
-		FontABaseLump = W_GetNumForName("FONTA_S")+1;
-	
+		FontABaseLump = W_GetNumForName("FONTA_S") + 1;
+
 		FontBSlashLump = W_GetNumForName("FONTB15");
 		FontBPercentLump = W_GetNumForName("FONTB05");
 	}
@@ -303,18 +307,18 @@ static void LoadPics(void)
 
 static void UnloadPics(void)
 {
-//	int i;
+	//  int i;
 
 	if(HubCount || gametype == DEATHMATCH)
 	{
-/*		Z_ChangeTag(patchINTERPIC, PU_CACHE);
-		for(i=0; i<10; i++)
-		{
-			Z_ChangeTag(FontBNumbers[i], PU_CACHE);
-		}
-		Z_ChangeTag(FontBNegative, PU_CACHE);
-		Z_ChangeTag(FontBSlash, PU_CACHE);
-		Z_ChangeTag(FontBPercent, PU_CACHE);*/
+		/*      Z_ChangeTag(patchINTERPIC, PU_CACHE);
+		   for(i=0; i<10; i++)
+		   {
+		   Z_ChangeTag(FontBNumbers[i], PU_CACHE);
+		   }
+		   Z_ChangeTag(FontBNegative, PU_CACHE);
+		   Z_ChangeTag(FontBSlash, PU_CACHE);
+		   Z_ChangeTag(FontBPercent, PU_CACHE); */
 	}
 }
 
@@ -352,19 +356,19 @@ void IN_Ticker(void)
 //
 // CheckForSkip
 //
-// 	Check to see if any player hit a key
+//  Check to see if any player hit a key
 //========================================================================
 
 static void CheckForSkip(void)
 {
-  	int i;
+	int     i;
 	player_t *player;
 	static boolean triedToSkip;
 
-  	for(i = 0, player = players; i < MAXPLAYERS; i++, player++)
+	for(i = 0, player = players; i < MAXPLAYERS; i++, player++)
 	{
-    	if(players[i].plr->ingame)
-    	{
+		if(players[i].plr->ingame)
+		{
 			if(player->cmd.actions & BT_ATTACK)
 			{
 				if(!player->attackdown)
@@ -392,7 +396,7 @@ static void CheckForSkip(void)
 		}
 	}
 	if(deathmatch && intertime < 140)
-	{ // wait for 4 seconds before allowing a skip
+	{							// wait for 4 seconds before allowing a skip
 		if(skipintermission == 1)
 		{
 			triedToSkip = true;
@@ -464,28 +468,30 @@ void IN_Drawer(void)
 
 static void DrDeathTally(void)
 {
-	int i, j;
+	int     i, j;
 	fixed_t xPos, yPos;
 	fixed_t xDelta, yDelta;
 	fixed_t xStart, scale;
-	int x, y;
+	int     x, y;
 	boolean bold;
 	static boolean showTotals;
-	int temp;
+	int     temp;
 
-	GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y,	W_GetNumForName("tallytop"));
+	GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, W_GetNumForName("tallytop"));
 	GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, W_GetNumForName("tallylft"));
 
 	if(intertime < TALLY_EFFECT_TICKS)
 	{
 		showTotals = false;
-		scale = (intertime*FRACUNIT)/TALLY_EFFECT_TICKS;
+		scale = (intertime * FRACUNIT) / TALLY_EFFECT_TICKS;
 		xDelta = FixedMul(scale, TALLY_FINAL_X_DELTA);
 		yDelta = FixedMul(scale, TALLY_FINAL_Y_DELTA);
-		xStart = TALLY_START_XPOS-FixedMul(scale,
-			TALLY_START_XPOS-TALLY_STOP_XPOS);
-		yPos = TALLY_START_YPOS-FixedMul(scale,
-			TALLY_START_YPOS-TALLY_STOP_YPOS);
+		xStart =
+			TALLY_START_XPOS - FixedMul(scale,
+										TALLY_START_XPOS - TALLY_STOP_XPOS);
+		yPos =
+			TALLY_START_YPOS - FixedMul(scale,
+										TALLY_START_YPOS - TALLY_STOP_YPOS);
 	}
 	else
 	{
@@ -499,13 +505,13 @@ static void DrDeathTally(void)
 		showTotals = true;
 		S_StartSound(SFX_PLATFORM_STOP, NULL);
 	}
-	y = yPos>>FRACBITS;
+	y = yPos >> FRACBITS;
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		xPos = xStart;
 		for(j = 0; j < MAXPLAYERS; j++, xPos += xDelta)
 		{
-			x = xPos>>FRACBITS;
+			x = xPos >> FRACBITS;
 			bold = (i == consoleplayer || j == consoleplayer);
 			if(players[i].plr->ingame && players[j].plr->ingame)
 			{
@@ -520,24 +526,24 @@ static void DrDeathTally(void)
 			}
 			else
 			{
-				temp = MN_TextAWidth("--")/2;
+				temp = MN_TextAWidth("--") / 2;
 				if(bold)
 				{
-					MN_DrTextAYellow("--", x-temp, y);
+					MN_DrTextAYellow("--", x - temp, y);
 				}
 				else
 				{
-					MN_DrTextA("--", x-temp, y);
+					MN_DrTextA("--", x - temp, y);
 				}
 			}
 		}
 		if(showTotals && players[i].plr->ingame
-			&& !((slaughterboy&(1<<i)) && !(intertime&16)))
+		   && !((slaughterboy & (1 << i)) && !(intertime & 16)))
 		{
 			DrNumber(totalFrags[i], TALLY_TOTALS_X, y, 1000);
 		}
 		yPos += yDelta;
-		y = yPos>>FRACBITS;
+		y = yPos >> FRACBITS;
 	}
 }
 
@@ -549,13 +555,13 @@ static void DrDeathTally(void)
 
 static void DrNumber(int val, int x, int y, int wrapThresh)
 {
-	char buff[8] = "XX";
+	char    buff[8] = "XX";
 
 	if(!(val < -9 && wrapThresh < 1000))
 	{
-		sprintf(buff, "%d", val >= wrapThresh ? val%wrapThresh : val);
+		sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
 	}
-	MN_DrTextA(buff, x-MN_TextAWidth(buff)/2, y);
+	MN_DrTextA(buff, x - MN_TextAWidth(buff) / 2, y);
 }
 
 //==========================================================================
@@ -566,13 +572,13 @@ static void DrNumber(int val, int x, int y, int wrapThresh)
 
 static void DrNumberBold(int val, int x, int y, int wrapThresh)
 {
-	char buff[8] = "XX";
+	char    buff[8] = "XX";
 
 	if(!(val < -9 && wrapThresh < 1000))
 	{
-		sprintf(buff, "%d", val >= wrapThresh ? val%wrapThresh : val);
+		sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
 	}
-	MN_DrTextAYellow(buff, x-MN_TextAWidth(buff)/2, y);
+	MN_DrTextAYellow(buff, x - MN_TextAWidth(buff) / 2, y);
 }
 
 //===========================================================================
@@ -583,17 +589,17 @@ static void DrNumberBold(int val, int x, int y, int wrapThresh)
 #if 0
 static void DrawHubText(void)
 {
-	int		count;
-	char	*ch;
-	int		c;
-	int		cx, cy;
+	int     count;
+	char   *ch;
+	int     c;
+	int     cx, cy;
 	patch_t *w;
 
 	cy = 5;
 	cx = 10;
 	ch = HubText;
-	count = (intertime-10)/TEXTSPEED;
-	if (count < 0)
+	count = (intertime - 10) / TEXTSPEED;
+	if(count < 0)
 	{
 		count = 0;
 	}
@@ -620,12 +626,12 @@ static void DrawHubText(void)
 			cx += 5;
 			continue;
 		}
-		w = W_CacheLumpNum(FontABaseLump+c-33, PU_CACHE);
-		if(cx+w->width > SCREENWIDTH)
+		w = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
+		if(cx + w->width > SCREENWIDTH)
 		{
 			break;
 		}
-		GL_DrawPatch(cx, cy, FontABaseLump+c-33);
+		GL_DrawPatch(cx, cy, FontABaseLump + c - 33);
 		cx += w->width;
 	}
 }

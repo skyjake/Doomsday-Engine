@@ -23,18 +23,17 @@
 // TYPES -------------------------------------------------------------------
 
 // This could hold much more detailed information...
-typedef struct
-{
-	char	name[9];	// Name of the texture.
-	int		type;		// Which type?
+typedef struct {
+	char    name[9];			// Name of the texture.
+	int     type;				// Which type?
 } textype_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void X_Drawer(void);
-void R_SetAllDoomsdayFlags(void);
-void H2_AdvanceDemo(void);
-void MN_DrCenterTextA_CS(char *text, int center_x, int y);
+void    X_Drawer(void);
+void    R_SetAllDoomsdayFlags(void);
+void    H2_AdvanceDemo(void);
+void    MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -57,24 +56,24 @@ extern boolean dontrender;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 /*static int pagetic;
-static char *pagename;*/
+   static char *pagename; */
 
 // CODE --------------------------------------------------------------------
 
 /*
-==============
-=
-= R_SetViewSize
-=
-= Don't really change anything here, because i might be in the middle of
-= a refresh.  The change will take effect next refresh.
-=
-==============
-*/
+   ==============
+   =
+   = R_SetViewSize
+   =
+   = Don't really change anything here, because i might be in the middle of
+   = a refresh.  The change will take effect next refresh.
+   =
+   ==============
+ */
 
-boolean	setsizeneeded;
+boolean setsizeneeded;
 
-void R_SetViewSize (int blocks, int detail)
+void R_SetViewSize(int blocks, int detail)
 {
 	setsizeneeded = true;
 	cfg.setblocks = blocks;
@@ -83,40 +82,56 @@ void R_SetViewSize (int blocks, int detail)
 
 void R_HandleSectorSpecials()
 {
-	sector_t	*sect = sectors;
-	int			i, scrollOffset = leveltime>>1 & 63;
+	sector_t *sect = sectors;
+	int     i, scrollOffset = leveltime >> 1 & 63;
 
-	for(i=0; i<numsectors; i++, sect++)
+	for(i = 0; i < numsectors; i++, sect++)
 	{
-		switch(sect->special)
-		{ // Handle scrolling flats
-		case 201: case 202: case 203: // Scroll_North_xxx
-			sect->flatoffy = (63-scrollOffset) << (sect->special-201);
+		switch (sect->special)
+		{						// Handle scrolling flats
+		case 201:
+		case 202:
+		case 203:				// Scroll_North_xxx
+			sect->flatoffy = (63 - scrollOffset) << (sect->special - 201);
 			break;
-		case 204: case 205: case 206: // Scroll_East_xxx
-			sect->flatoffx = (63-scrollOffset) << (sect->special-204);
+		case 204:
+		case 205:
+		case 206:				// Scroll_East_xxx
+			sect->flatoffx = (63 - scrollOffset) << (sect->special - 204);
 			break;
-		case 207: case 208: case 209: // Scroll_South_xxx
-			sect->flatoffy = scrollOffset << (sect->special-207);
+		case 207:
+		case 208:
+		case 209:				// Scroll_South_xxx
+			sect->flatoffy = scrollOffset << (sect->special - 207);
 			break;
-		case 210: case 211: case 212: // Scroll_West_xxx
-			sect->flatoffx = scrollOffset << (sect->special-210);
+		case 210:
+		case 211:
+		case 212:				// Scroll_West_xxx
+			sect->flatoffx = scrollOffset << (sect->special - 210);
 			break;
-		case 213: case 214: case 215: // Scroll_NorthWest_xxx
-			sect->flatoffx = scrollOffset << (sect->special-213);
-			sect->flatoffy = (63-scrollOffset) << (sect->special-213);
+		case 213:
+		case 214:
+		case 215:				// Scroll_NorthWest_xxx
+			sect->flatoffx = scrollOffset << (sect->special - 213);
+			sect->flatoffy = (63 - scrollOffset) << (sect->special - 213);
 			break;
-		case 216: case 217: case 218: // Scroll_NorthEast_xxx
-			sect->flatoffx = (63-scrollOffset) << (sect->special-216);
-			sect->flatoffy = (63-scrollOffset) << (sect->special-216);
+		case 216:
+		case 217:
+		case 218:				// Scroll_NorthEast_xxx
+			sect->flatoffx = (63 - scrollOffset) << (sect->special - 216);
+			sect->flatoffy = (63 - scrollOffset) << (sect->special - 216);
 			break;
-		case 219: case 220: case 221: // Scroll_SouthEast_xxx
-			sect->flatoffx = (63-scrollOffset) << (sect->special-219);
-			sect->flatoffy = scrollOffset << (sect->special-219);
+		case 219:
+		case 220:
+		case 221:				// Scroll_SouthEast_xxx
+			sect->flatoffx = (63 - scrollOffset) << (sect->special - 219);
+			sect->flatoffy = scrollOffset << (sect->special - 219);
 			break;
-		case 222: case 223: case 224: // Scroll_SouthWest_xxx
-			sect->flatoffx = scrollOffset << (sect->special-222);
-			sect->flatoffy = scrollOffset << (sect->special-222);
+		case 222:
+		case 223:
+		case 224:				// Scroll_SouthWest_xxx
+			sect->flatoffx = scrollOffset << (sect->special - 222);
+			sect->flatoffy = scrollOffset << (sect->special - 222);
 			break;
 		default:
 			sect->flatoffx = sect->flatoffy = 0;
@@ -130,12 +145,13 @@ void R_HandleSectorSpecials()
 //==========================================================================
 void R_DrawMapTitle(void)
 {
-	float alpha = 1;
-	int y = 12;
-	char *lname, *lauthor;
+	float   alpha = 1;
+	int     y = 12;
+	char   *lname, *lauthor;
 
-	if(!cfg.mapTitle || actual_leveltime > 6*35) return;
-	
+	if(!cfg.mapTitle || actual_leveltime > 6 * 35)
+		return;
+
 	// Make the text a bit smaller.
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PushMatrix();
@@ -143,27 +159,28 @@ void R_DrawMapTitle(void)
 	gl.Scalef(.75f, .75f, 1);	// Scale to 3/4
 	gl.Translatef(-160, -y, 0);
 
-	if(actual_leveltime < 35) 
-		alpha = actual_leveltime/35.0f;
-	if(actual_leveltime > 5*35) 
-		alpha = 1 - (actual_leveltime-5*35)/35.0f;
+	if(actual_leveltime < 35)
+		alpha = actual_leveltime / 35.0f;
+	if(actual_leveltime > 5 * 35)
+		alpha = 1 - (actual_leveltime - 5 * 35) / 35.0f;
 
-	lname = (char*) Get(DD_MAP_NAME);
-	lauthor = (char*) Get(DD_MAP_AUTHOR);
+	lname = (char *) Get(DD_MAP_NAME);
+	lauthor = (char *) Get(DD_MAP_AUTHOR);
 
 	// Use stardard map name if DED didn't define it.
-	if(!lname) lname = P_GetMapName(gamemap);
+	if(!lname)
+		lname = P_GetMapName(gamemap);
 
 	gl.Color4f(1, 1, 1, alpha);
-	if(lname) 
+	if(lname)
 	{
-		MN_DrTextB_CS(lname, 160 - MN_TextBWidth(lname)/2, y);
+		MN_DrTextB_CS(lname, 160 - MN_TextBWidth(lname) / 2, y);
 		y += 20;
 	}
 	gl.Color4f(.5f, .5f, .5f, alpha);
 	if(lauthor)
 	{
-		MN_DrTextA_CS(lauthor, 160-MN_TextAWidth(lauthor)/2, y);
+		MN_DrTextA_CS(lauthor, 160 - MN_TextAWidth(lauthor) / 2, y);
 	}
 
 	gl.MatrixMode(DGL_MODELVIEW);
@@ -178,8 +195,8 @@ void R_DrawMapTitle(void)
 
 void G_Drawer(void)
 {
-	player_t	*vplayer = &players[displayplayer];
-	boolean		iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
+	player_t *vplayer = &players[displayplayer];
+	boolean iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0;	// $democam
 
 	// $democam: can be set on every frame
 	if(cfg.setblocks > 10 || iscam)
@@ -189,21 +206,24 @@ void G_Drawer(void)
 	}
 	else
 	{
-		int w = cfg.setblocks*32;
-		int h = cfg.setblocks*(200-SBARHEIGHT*cfg.sbarscale/20)/10;
-		R_ViewWindow(160-(w>>1), (200-SBARHEIGHT*cfg.sbarscale/20-h)>>1, w, h);
+		int     w = cfg.setblocks * 32;
+		int     h =
+			cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
+		R_ViewWindow(160 - (w >> 1),
+					 (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) >> 1, w, h);
 	}
-	
+
 	// Do buffered drawing
-	switch(gamestate)
+	switch (gamestate)
 	{
 	case GS_LEVEL:
 		// Clients should be a little careful about the first frames.
-		if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) 
+		if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
 			break;
 
 		// Good luck trying to render the view without a viewpoint...
-		if(!vplayer->plr->mo) break; 
+		if(!vplayer->plr->mo)
+			break;
 
 		if(leveltime < 2)
 		{
@@ -219,10 +239,12 @@ void G_Drawer(void)
 		else
 		{
 			boolean special200 = false;
+
 			R_HandleSectorSpecials();
 			// Set flags for the renderer.
-			if(IS_CLIENT) R_SetAllDoomsdayFlags();
-			GL_SetFilter(vplayer->plr->filter); // $democam
+			if(IS_CLIENT)
+				R_SetAllDoomsdayFlags();
+			GL_SetFilter(vplayer->plr->filter);	// $democam
 			// Check for the sector special 200: use sky2.
 			// I wonder where this is used?
 			if(vplayer->plr->mo->subsector->sector->special == 200)
@@ -234,11 +256,14 @@ void G_Drawer(void)
 			// How about a bit of quake?
 			if(localQuakeHappening[displayplayer] && !paused)
 			{
-				int intensity = localQuakeHappening[displayplayer];
-				Set(DD_VIEWX_OFFSET, ((M_Random() % (intensity<<2))
-									  -(intensity<<1))<<FRACBITS);
-				Set(DD_VIEWY_OFFSET, ((M_Random() % (intensity<<2))
-									  -(intensity<<1))<<FRACBITS);
+				int     intensity = localQuakeHappening[displayplayer];
+
+				Set(DD_VIEWX_OFFSET,
+					((M_Random() % (intensity << 2)) -
+					 (intensity << 1)) << FRACBITS);
+				Set(DD_VIEWY_OFFSET,
+					((M_Random() % (intensity << 2)) -
+					 (intensity << 1)) << FRACBITS);
 			}
 			else
 			{
@@ -257,23 +282,26 @@ void G_Drawer(void)
 				Rend_SkyParams(0, DD_ENABLE, 0);
 				Rend_SkyParams(1, DD_DISABLE, 0);
 			}
-			if(!iscam) X_Drawer(); // Draw the crosshair.
+			if(!iscam)
+				X_Drawer();		// Draw the crosshair.
 			R_DrawMapTitle();
 		}
 		GL_Update(DDUF_FULLSCREEN);
-		if(!iscam) SB_Drawer(); // $democam
+		if(!iscam)
+			SB_Drawer();		// $democam
 		// We'll draw the chat text *after* the status bar to
 		// be a bit clearer.
 		CT_Drawer();
 
 		// Also update view borders?
-		if(Get(DD_VIEWWINDOW_HEIGHT) != 200) GL_Update(DDUF_BORDER);
+		if(Get(DD_VIEWWINDOW_HEIGHT) != 200)
+			GL_Update(DDUF_BORDER);
 		break;
-		
+
 	case GS_INTERMISSION:
 		IN_Drawer();
 		break;
-		
+
 	case GS_INFINE:
 		GL_Update(DDUF_FULLSCREEN);
 		break;
@@ -293,8 +321,8 @@ void G_Drawer(void)
 	{
 		if(!netgame)
 		{
-			GL_DrawPatch(160, Get(DD_VIEWWINDOW_Y)+5, 
-				W_GetNumForName("PAUSED"));
+			GL_DrawPatch(160, Get(DD_VIEWWINDOW_Y) + 5,
+						 W_GetNumForName("PAUSED"));
 		}
 		else
 		{
@@ -312,15 +340,15 @@ void G_Drawer(void)
 //==========================================================================
 
 /*static void PageDrawer(void)
-{
-	if(!pagename) return;
-	GL_DrawRawScreen(W_GetNumForName(pagename), 0, 0);
-	if(demosequence == 1)
-	{
-		GL_DrawPatch(4, 160, W_GetNumForName("ADVISOR"));
-	}
-	GL_Update(DDUF_FULLSCREEN);
-}*/
+   {
+   if(!pagename) return;
+   GL_DrawRawScreen(W_GetNumForName(pagename), 0, 0);
+   if(demosequence == 1)
+   {
+   GL_DrawPatch(4, 160, W_GetNumForName("ADVISOR"));
+   }
+   GL_Update(DDUF_FULLSCREEN);
+   } */
 
 #define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
 
@@ -329,21 +357,22 @@ int H2_GetFilterColor(int filter)
 	//int rgba = 0;
 
 	// We have to choose the right color and alpha.
-	if(filter >= STARTREDPALS && filter < STARTREDPALS+NUMREDPALS) 
+	if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
 		// Red?
-		return FMAKERGBA(1, 0, 0, filter/8.0);	// Full red with filter 8.
-	else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS+NUMBONUSPALS) 
+		return FMAKERGBA(1, 0, 0, filter / 8.0);	// Full red with filter 8.
+	else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
 		// Light Yellow?
-		return FMAKERGBA(1, 1, .5, (filter-STARTBONUSPALS+1)/16.0); 
-	else if(filter >= STARTPOISONPALS && filter < STARTPOISONPALS+NUMPOISONPALS)
+		return FMAKERGBA(1, 1, .5, (filter - STARTBONUSPALS + 1) / 16.0);
+	else if(filter >= STARTPOISONPALS
+			&& filter < STARTPOISONPALS + NUMPOISONPALS)
 		// Green?
-		return FMAKERGBA(0, 1, 0, (filter-STARTPOISONPALS+1)/16.0);
+		return FMAKERGBA(0, 1, 0, (filter - STARTPOISONPALS + 1) / 16.0);
 	else if(filter >= STARTSCOURGEPAL)
 		// Orange?
-		return FMAKERGBA(1, .5, 0, (STARTSCOURGEPAL+3-filter)/6.0);
+		return FMAKERGBA(1, .5, 0, (STARTSCOURGEPAL + 3 - filter) / 6.0);
 	else if(filter >= STARTHOLYPAL)
 		// White?
-		return FMAKERGBA(1, 1, 1, (STARTHOLYPAL+3-filter)/6.0);
+		return FMAKERGBA(1, 1, 1, (STARTHOLYPAL + 3 - filter) / 6.0);
 	else if(filter == STARTICEPAL)
 		// Light blue?
 		return FMAKERGBA(.5f, .5f, 1, .4f);
@@ -354,13 +383,13 @@ int H2_GetFilterColor(int filter)
 
 void H2_SetFilter(int filter)
 {
-	GL_SetFilter(H2_GetFilterColor(filter));		
+	GL_SetFilter(H2_GetFilterColor(filter));
 }
 
 void H2_EndFrame(void)
 {
 	SN_UpdateActiveSequences();
-/*	S_UpdateSounds(players[displayplayer].plr->mo); */
+	/*  S_UpdateSounds(players[displayplayer].plr->mo); */
 }
 
 void H2_ConsoleBg(int *width, int *height)
@@ -368,83 +397,81 @@ void H2_ConsoleBg(int *width, int *height)
 	extern int consoleFlat;
 	extern float consoleZoom;
 
-	GL_SetFlat(consoleFlat + W_CheckNumForName("F_START")+1);
-	*width = 64*consoleZoom;
-	*height = 64*consoleZoom;
+	GL_SetFlat(consoleFlat + W_CheckNumForName("F_START") + 1);
+	*width = 64 * consoleZoom;
+	*height = 64 * consoleZoom;
 }
 
 /*
+   //==========================================================================
+   //
+   // H2_PageTicker
+   //
+   //==========================================================================
+
+   void H2_PageTicker(void)
+   {
+   if(--pagetic < 0)
+   {
+   H2_AdvanceDemo();
+   }
+   }
+
+   //==========================================================================
+   //
+   // H2_DoAdvanceDemo
+   //
+   //==========================================================================
+
+   void H2_DoAdvanceDemo(void)
+   {
+   players[consoleplayer].playerstate = PST_LIVE; // don't reborn
+   advancedemo = false;
+   usergame = false; // can't save/end game here
+   paused = false;
+   gameaction = ga_nothing;
+   demosequence = (demosequence+1)%7;
+   switch(demosequence)
+   {
+   case 0:
+   pagetic = 280;
+   gamestate = GS_DEMOSCREEN;
+   pagename = "TITLE";
+   S_StartMusic("hexen", true);
+   break;
+   case 1:
+   pagetic = 210;
+   gamestate = GS_DEMOSCREEN;
+   pagename = "TITLE";
+   break;
+   case 2:
+   GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
+   G_DeferedPlayDemo("demo1");
+   break;
+   case 3:
+   pagetic = 200;
+   gamestate = GS_DEMOSCREEN;
+   pagename = "CREDIT";
+   break;
+   case 4:
+   GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
+   G_DeferedPlayDemo("demo2");
+   break;
+   case 5:
+   pagetic = 200;
+   gamestate = GS_DEMOSCREEN;
+   pagename = "CREDIT";
+   break;
+   case 6:
+   GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);            
+   G_DeferedPlayDemo("demo3");
+   break;
+   }
+   }
+ */
+
 //==========================================================================
 //
-// H2_PageTicker
-//
-//==========================================================================
-
-void H2_PageTicker(void)
-{
-	if(--pagetic < 0)
-	{
-		H2_AdvanceDemo();
-	}
-}
-
-//==========================================================================
-//
-// H2_DoAdvanceDemo
-//
-//==========================================================================
-
-void H2_DoAdvanceDemo(void)
-{
-	players[consoleplayer].playerstate = PST_LIVE; // don't reborn
-	advancedemo = false;
-	usergame = false; // can't save/end game here
-	paused = false;
-	gameaction = ga_nothing;
-	demosequence = (demosequence+1)%7;
-	switch(demosequence)
-	{
-		case 0:
-			pagetic = 280;
-			gamestate = GS_DEMOSCREEN;
-			pagename = "TITLE";
-			S_StartMusic("hexen", true);
-			break;
-		case 1:
-			pagetic = 210;
-			gamestate = GS_DEMOSCREEN;
-			pagename = "TITLE";
-			break;
-		case 2:
-			GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
-			G_DeferedPlayDemo("demo1");
-			break;
-		case 3:
-			pagetic = 200;
-			gamestate = GS_DEMOSCREEN;
-			pagename = "CREDIT";
-			break;
-		case 4:
-			GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
-			G_DeferedPlayDemo("demo2");
-			break;
-		case 5:
-			pagetic = 200;
-			gamestate = GS_DEMOSCREEN;
-			pagename = "CREDIT";
-			break;
-		case 6:
-			GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);			
-			G_DeferedPlayDemo("demo3");
-			break;
-	}
-}
-*/
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
-
-

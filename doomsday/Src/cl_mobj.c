@@ -62,7 +62,7 @@ typedef struct cmhash_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int /*latest_frame_size,*/ gotframe;
+extern int /*latest_frame_size, */ gotframe;
 extern int predicted_tics;
 
 extern playerstate_t playerstate[MAXPLAYERS];
@@ -71,14 +71,14 @@ extern playerstate_t playerstate[MAXPLAYERS];
 
 cmhash_t cmHash[HASH_SIZE];
 
-//int	predict_tics = 70;
+//int   predict_tics = 70;
 
 // Time skew tells whether client time is running before or after frame time.
-//int net_timeskew = 0;			
-//int net_skewdampen = 5;		// In frames.
+//int net_timeskew = 0;         
+//int net_skewdampen = 5;       // In frames.
 //boolean net_showskew = false;
 
-//boolean pred_forward = true;	// Predicting forward in time.
+//boolean pred_forward = true;  // Predicting forward in time.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -91,13 +91,13 @@ cmhash_t cmHash[HASH_SIZE];
  */
 cmhash_t *Cl_MobjHash(thid_t id)
 {
-	return &cmHash[ (uint) id % HASH_SIZE ];
+	return &cmHash[(uint) id % HASH_SIZE];
 }
 
 /*
  * Links the clmobj into the client mobj hash table.
  */
-void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
+void Cl_LinkMobj(clmobj_t * cmo, thid_t id)
 {
 	cmhash_t *hash = Cl_MobjHash(id);
 
@@ -121,22 +121,26 @@ void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
 /*
  * Unlinks the clmobj from the client mobj hash table.
  */
-void Cl_UnlinkMobj(clmobj_t *cmo)
+void Cl_UnlinkMobj(clmobj_t * cmo)
 {
 	cmhash_t *hash = Cl_MobjHash(cmo->mo.thinker.id);
 
-/*#ifdef _DEBUG
-	if(cmo->flags & CLMF_HIDDEN)
-	{
-		Con_Printf("Cl_UnlinkMobj: Hidden mobj %i unlinked.\n", 
-			cmo->mo.thinker.id);
-	}
-#endif*/
+	/*#ifdef _DEBUG
+	   if(cmo->flags & CLMF_HIDDEN)
+	   {
+	   Con_Printf("Cl_UnlinkMobj: Hidden mobj %i unlinked.\n", 
+	   cmo->mo.thinker.id);
+	   }
+	   #endif */
 
-	if(hash->first == cmo) hash->first = cmo->next;
-	if(hash->last == cmo) hash->last = cmo->prev;
-	if(cmo->next) cmo->next->prev = cmo->prev;
-	if(cmo->prev) cmo->prev->next = cmo->next;
+	if(hash->first == cmo)
+		hash->first = cmo->next;
+	if(hash->last == cmo)
+		hash->last = cmo->prev;
+	if(cmo->next)
+		cmo->next->prev = cmo->prev;
+	if(cmo->prev)
+		cmo->prev->next = cmo->next;
 }
 
 /*
@@ -151,7 +155,8 @@ clmobj_t *Cl_FindMobj(thid_t id)
 	// Scan the existing client mobjs.
 	for(cmo = hash->first; cmo; cmo = cmo->next)
 	{
-		if(cmo->mo.thinker.id == id) return cmo;
+		if(cmo->mo.thinker.id == id)
+			return cmo;
 	}
 
 	// Not found!
@@ -162,16 +167,17 @@ clmobj_t *Cl_FindMobj(thid_t id)
  * Aborts and returns false if the callback returns false.
  * Otherwise returns true.
  */
-boolean Cl_MobjIterator(boolean (*callback)(clmobj_t*, void*), void *parm)
+boolean Cl_MobjIterator(boolean(*callback) (clmobj_t *, void *), void *parm)
 {
 	clmobj_t *cmo;
-	int i;
+	int     i;
 
 	for(i = 0; i < HASH_SIZE; i++)
 	{
 		for(cmo = cmHash[i].first; cmo; cmo = cmo->next)
 		{
-			if(!callback(cmo, parm)) return false;
+			if(!callback(cmo, parm))
+				return false;
 		}
 	}
 	return true;
@@ -181,7 +187,7 @@ boolean Cl_MobjIterator(boolean (*callback)(clmobj_t*, void*), void *parm)
  * Unlinks the thing from sectorlinks and if the object is solid, 
  * the blockmap.
  */
-void Cl_UnsetThingPosition(clmobj_t *cmo)
+void Cl_UnsetThingPosition(clmobj_t * cmo)
 {
 	P_UnlinkThing(&cmo->mo);
 }
@@ -192,12 +198,11 @@ void Cl_UnsetThingPosition(clmobj_t *cmo)
  * to the blockmap makes it possible to interact with it (collide).
  * If the client mobj is Hidden, it will not be linked anywhere.
  */
-void Cl_SetThingPosition(clmobj_t *cmo)
+void Cl_SetThingPosition(clmobj_t * cmo)
 {
 	mobj_t *thing = &cmo->mo;
 
-	if(cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE) 
-		|| thing->dplayer) 
+	if(cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE) || thing->dplayer)
 	{
 		// We do not yet have all the details about Hidden mobjs.
 		// The server hasn't sent us a Create Mobj delta for them.
@@ -205,18 +210,24 @@ void Cl_SetThingPosition(clmobj_t *cmo)
 		return;
 	}
 
-	P_LinkThing(thing, 
-		(thing->ddflags & DDMF_DONTDRAW? 0 : DDLINK_SECTOR) 
-		| (thing->ddflags & DDMF_SOLID? DDLINK_BLOCKMAP : 0));
+	P_LinkThing(thing,
+				(thing->ddflags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) | (thing->
+																		ddflags
+																		&
+																		DDMF_SOLID
+																		?
+																		DDLINK_BLOCKMAP
+																		: 0));
 }
 
 /*
  * Change the state of a mobj.
  */
-void Cl_SetThingState(mobj_t *mo, int stnum)
+void Cl_SetThingState(mobj_t * mo, int stnum)
 {
-	if(stnum < 0) return;
-	do 
+	if(stnum < 0)
+		return;
+	do
 	{
 		P_SetState(mo, stnum);
 		stnum = states[stnum].nextstate;
@@ -234,12 +245,12 @@ void Cl_SetThingState(mobj_t *mo, int stnum)
 /*
  * Updates floorz and ceilingz of the mobj.
  */
-void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
+void Cl_CheckMobj(clmobj_t * cmo, boolean justCreated)
 {
 	mobj_t *mo = &cmo->mo;
 	boolean onFloor = false, inCeiling = false;
 
-	if(mo->z == DDMININT) 
+	if(mo->z == DDMININT)
 	{
 		// Make the mobj stick to the floor.
 		cmo->flags |= CLMF_STICK_FLOOR;
@@ -259,7 +270,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 	}
 
 	// Find out floor and ceiling z.
-	P_CheckPosXYZ(mo, mo->x, mo->y, mo->z);	
+	P_CheckPosXYZ(mo, mo->x, mo->y, mo->z);
 	mo->floorz = tmfloorz;
 	mo->ceilingz = tmceilingz;
 
@@ -274,29 +285,26 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
 #if 0
 	// P_CheckPosition sets blockingMobj.
-#ifdef _DEBUG
+#  ifdef _DEBUG
 	/*if(blockingMobj)
-		Con_Printf("Collision %i\n", mo->thinker.id);*/
-	if(justCreated 
-		&& mo->ddflags & DDMF_MISSILE)
+	   Con_Printf("Collision %i\n", mo->thinker.id); */
+	if(justCreated && mo->ddflags & DDMF_MISSILE)
 	{
 		Con_Printf("Misl creat %i, (%x %x %x) mom (%x %x %x)\n",
-			mo->thinker.id, mo->x, mo->y, mo->z,
-			mo->momx, mo->momy, mo->momz);
+				   mo->thinker.id, mo->x, mo->y, mo->z, mo->momx, mo->momy,
+				   mo->momz);
 	}
-#endif
-	if(justCreated 
-		&& mo->ddflags & DDMF_MISSILE 
-		&& blockingMobj != NULL)
+#  endif
+	if(justCreated && mo->ddflags & DDMF_MISSILE && blockingMobj != NULL)
 	{
 		// This happens when a missile is created inside an object 
 		// (the shooter, typically). We allow the missile to noclip
 		// through mobjs until it's free.
 		cmo->flags |= CLMF_OVERLAPPING;
 
-#ifdef _DEBUG
+#  ifdef _DEBUG
 		Con_Printf("Overlap %i\n", mo->thinker.id);
-#endif
+#  endif
 	}
 #endif
 }
@@ -306,7 +314,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
  * The client mobj is always unlinked. Only the *real* mobj is visible.
  * (The real mobj was created by the Game.)
  */
-void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
+void Cl_UpdateRealPlayerMobj(mobj_t * mo, mobj_t * clmo, int flags)
 {
 #if _DEBUG
 	if(!mo || !clmo)
@@ -344,30 +352,31 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
 	mo->selector &= ~DDMOBJ_SELECTOR_MASK;
 	mo->selector |= clmo->selector & DDMOBJ_SELECTOR_MASK;
 	mo->visangle = clmo->angle >> 16;
-	
+
 	//if(flags & MDF_FLAGS) CON_Printf("Cl_RMD: ddf=%x\n", mo->ddflags);
 }
 
 //==========================================================================
 // Cl_ReadMobjDelta
-//	Reads a single mobj delta from the message buffer and applies
-//	it to the client mobj in question.
-//	For client mobjs that belong to players, updates the real player mobj.
-//	Returns false only if the list of deltas ends.
+//  Reads a single mobj delta from the message buffer and applies
+//  it to the client mobj in question.
+//  For client mobjs that belong to players, updates the real player mobj.
+//  Returns false only if the list of deltas ends.
 //
-//	THIS FUNCTION IS NOW OBSOLETE (only used with old psv_frame packets)
+//  THIS FUNCTION IS NOW OBSOLETE (only used with old psv_frame packets)
 //==========================================================================
 int Cl_ReadMobjDelta(void)
 {
-	thid_t id = Msg_ReadShort();	// Read the ID.
+	thid_t  id = Msg_ReadShort();	// Read the ID.
 	clmobj_t *cmo;
 	boolean linked = true;
-	int df = 0;
+	int     df = 0;
 	mobj_t *d;
 	boolean justCreated = false;
 
 	// Stop if end marker found.
-	if(!id) return false;
+	if(!id)
+		return false;
 
 	// Get a mobj for this.
 	cmo = Cl_FindMobj(id);
@@ -380,7 +389,7 @@ int Cl_ReadMobjDelta(void)
 		memset(cmo, 0, sizeof(*cmo));
 		cmo->mo.ddflags |= DDMF_REMOTE;
 		Cl_LinkMobj(cmo, id);
-		P_SetMobjID(id, true); // Mark this ID as used.
+		P_SetMobjID(id, true);	// Mark this ID as used.
 		linked = false;
 	}
 
@@ -392,17 +401,17 @@ int Cl_ReadMobjDelta(void)
 	if(!df)
 	{
 #ifdef _DEBUG
-		if(justCreated) //Con_Error("justCreated!\n");
+		if(justCreated)			//Con_Error("justCreated!\n");
 			Con_Printf("CL_RMD: deleted justCreated id=%i\n", id);
 #endif
 
 		// A Null Delta. We should delete this mobj.
-		if(cmo->mo.dplayer) 
+		if(cmo->mo.dplayer)
 		{
 			playerstate[cmo->mo.dplayer - players].cmo = NULL;
 		}
 		Cl_DestroyMobj(cmo);
-		return true; // Continue.
+		return true;			// Continue.
 	}
 
 #ifdef _DEBUG
@@ -415,18 +424,17 @@ int Cl_ReadMobjDelta(void)
 	d = &cmo->mo;
 
 	// Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-	if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) 
-		&& linked
-		&& !d->dplayer)
+	if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked
+	   && !d->dplayer)
 	{
 		linked = false;
 		Cl_UnsetThingPosition(cmo);
 	}
 
 	// Coordinates with three bytes.
-	if(df & MDF_POS_X) 
+	if(df & MDF_POS_X)
 		d->x = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
-	if(df & MDF_POS_Y) 
+	if(df & MDF_POS_Y)
 		d->y = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
 	if(df & MDF_POS_Z)
 		d->z = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
@@ -434,33 +442,39 @@ int Cl_ReadMobjDelta(void)
 #ifdef _DEBUG
 	if(!d->x && !d->y)
 	{
-/*		if(d->type == 83)
-		{
-			d->type = d->type;
-		}*/
+		/*      if(d->type == 83)
+		   {
+		   d->type = d->type;
+		   } */
 		Con_Printf("CL_RMD: x,y zeroed t%i(%s)\n", d->type,
-			defs.mobjs[d->type].id);
+				   defs.mobjs[d->type].id);
 	}
 #endif
 
 	// Momentum using 8.8 fixed point.
-	if(df & MDF_MOM_X) d->momx = (Msg_ReadShort() << 16)/256; //>> 8; 
-	if(df & MDF_MOM_Y) d->momy = (Msg_ReadShort() << 16)/256; //>> 8; 
-	if(df & MDF_MOM_Z) d->momz = (Msg_ReadShort() << 16)/256; //>> 8; 
+	if(df & MDF_MOM_X)
+		d->momx = (Msg_ReadShort() << 16) / 256;	//>> 8; 
+	if(df & MDF_MOM_Y)
+		d->momy = (Msg_ReadShort() << 16) / 256;	//>> 8; 
+	if(df & MDF_MOM_Z)
+		d->momz = (Msg_ReadShort() << 16) / 256;	//>> 8; 
 
 	// Angles with 16-bit accuracy.
-	if(df & MDF_ANGLE) d->angle = Msg_ReadShort() << 16;
+	if(df & MDF_ANGLE)
+		d->angle = Msg_ReadShort() << 16;
 
 	// MDF_SELSPEC is never used without MDF_SELECTOR.
-	if(df & MDF_SELECTOR) d->selector = Msg_ReadPackedShort();
-	if(df & MDF_SELSPEC) d->selector |= Msg_ReadByte() << 24;
+	if(df & MDF_SELECTOR)
+		d->selector = Msg_ReadPackedShort();
+	if(df & MDF_SELSPEC)
+		d->selector |= Msg_ReadByte() << 24;
 
-	if(df & MDF_STATE) 
+	if(df & MDF_STATE)
 		Cl_SetThingState(d, (unsigned short) Msg_ReadPackedShort());
 
 	// Pack flags into a word (3 bytes?).
 	// FIXME: Do the packing!
-	if(df & MDF_FLAGS) 
+	if(df & MDF_FLAGS)
 	{
 		// Only the flags in the pack mask are affected.
 		d->ddflags &= ~DDMF_PACK_MASK;
@@ -468,9 +482,11 @@ int Cl_ReadMobjDelta(void)
 	}
 
 	// Radius, height and floorclip are all bytes.
-	if(df & MDF_RADIUS) d->radius = Msg_ReadByte() << FRACBITS;
-	if(df & MDF_HEIGHT) d->height = Msg_ReadByte() << FRACBITS;
-	if(df & MDF_FLOORCLIP) 
+	if(df & MDF_RADIUS)
+		d->radius = Msg_ReadByte() << FRACBITS;
+	if(df & MDF_HEIGHT)
+		d->height = Msg_ReadByte() << FRACBITS;
+	if(df & MDF_FLOORCLIP)
 	{
 		if(df & MDF_LONG_FLOORCLIP)
 			d->floorclip = Msg_ReadPackedShort() << 14;
@@ -479,17 +495,17 @@ int Cl_ReadMobjDelta(void)
 	}
 
 	// Link again.
-	if(!linked && !d->dplayer)	
+	if(!linked && !d->dplayer)
 		Cl_SetThingPosition(cmo);
-	
+
 	if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z))
 	{
 		// This'll update floorz and ceilingz.
 		Cl_CheckMobj(cmo, justCreated);
 	}
-	
+
 	// Update players.
-	if(d->dplayer) 
+	if(d->dplayer)
 	{
 		// Players have real mobjs. The client mobj is hidden (unlinked).
 		Cl_UpdateRealPlayerMobj(d->dplayer->mo, d, df);
@@ -505,7 +521,7 @@ int Cl_ReadMobjDelta(void)
 void Cl_InitClientMobjs()
 {
 	//previousTime = gameTime;
-	
+
 	// List of client mobjs.
 	memset(cmHash, 0, sizeof(cmHash));
 
@@ -519,12 +535,12 @@ void Cl_InitClientMobjs()
 void Cl_DestroyClientMobjs()
 {
 	clmobj_t *cmo;
-	int i;
+	int     i;
 
 	for(i = 0; i < HASH_SIZE; i++)
 	{
 		for(cmo = cmHash[i].first; cmo; cmo = cmo->next)
-		{ 
+		{
 			// Players' clmobjs are not linked anywhere.
 			if(!cmo->mo.dplayer)
 				Cl_UnsetThingPosition(cmo);
@@ -551,7 +567,7 @@ void Cl_Reset(void)
 /*
  * The client mobj is moved linearly, with collision checking.
  */
-void Cl_MoveThing(clmobj_t *cmo)
+void Cl_MoveThing(clmobj_t * cmo)
 {
 	mobj_t *mo = &cmo->mo;
 	boolean collided = false;
@@ -562,7 +578,7 @@ void Cl_MoveThing(clmobj_t *cmo)
 		// Missiles don't hit mobjs only after a short delay. This'll
 		// allow the missile to move free of the shooter. (Quite a hack!)
 		if(mo->ddflags & DDMF_MISSILE
-			&& Sys_GetRealTime() - cmo->time < MISSILE_FREE_MOVE_TIME)
+		   && Sys_GetRealTime() - cmo->time < MISSILE_FREE_MOVE_TIME)
 		{
 			// The mobj should be allowed to move freely though mobjs.
 			// Use the quick and dirty global variable.
@@ -597,21 +613,21 @@ void Cl_MoveThing(clmobj_t *cmo)
 			collided = true;
 		}
 	}
-		
+
 	if(mo->z > mo->floorz)
 	{
 		// Gravity will affect the prediction.
 		if(mo->ddflags & DDMF_LOWGRAVITY)
 		{
 			if(mo->momz == 0)
-				mo->momz = -(mapgravity >> 3)*2;
+				mo->momz = -(mapgravity >> 3) * 2;
 			else
 				mo->momz -= mapgravity >> 3;
 		}
 		else if(!(mo->ddflags & DDMF_NOGRAVITY))
 		{
 			if(mo->momz == 0)
-				mo->momz = -mapgravity*2;
+				mo->momz = -mapgravity * 2;
 			else
 				mo->momz -= mapgravity;
 		}
@@ -646,9 +662,10 @@ void Cl_MoveThing(clmobj_t *cmo)
 /*
  * Decrement tics counter and changes the state of the thing if necessary.
  */
-void Cl_AnimateThing(mobj_t *mo)
+void Cl_AnimateThing(mobj_t * mo)
 {
-	if(!mo->state || mo->tics < 0) return; // In stasis.
+	if(!mo->state || mo->tics < 0)
+		return;					// In stasis.
 
 	mo->tics--;
 	if(mo->tics <= 0)
@@ -661,7 +678,7 @@ void Cl_AnimateThing(mobj_t *mo)
 			// Players have both client mobjs and regular mobjs. This
 			// routine modifies the *client* mobj, so for players we need
 			// to update the real, visible mobj as well.
-			if(mo->dplayer) 
+			if(mo->dplayer)
 				Cl_UpdateRealPlayerMobj(mo->dplayer->mo, mo, 0);
 		}
 		else
@@ -679,15 +696,15 @@ void Cl_AnimateThing(mobj_t *mo)
 void Cl_PredictMovement(void)
 {
 	clmobj_t *cmo, *next = NULL;
-	int i;
-	int moCount = 0;
-	uint nowTime = Sys_GetRealTime();
+	int     i;
+	int     moCount = 0;
+	uint    nowTime = Sys_GetRealTime();
 
 	// Only predict up to a certain number of tics.
-/*	if(predicted_tics && predicted_tics >= predict_tics) 
-	{
-		return;
-	}*/
+	/*  if(predicted_tics && predicted_tics >= predict_tics) 
+	   {
+	   return;
+	   } */
 
 	predicted_tics++;
 
@@ -712,15 +729,15 @@ void Cl_PredictMovement(void)
 				// We can't predict what Hidden and Unpredictable things do.
 				// Must wait for the next delta to arrive. This mobj won't be 
 				// visible until then.
-				continue;		
+				continue;
 			}
 
 			// The local player gets a bit more complex prediction.
-			if(cmo->mo.dplayer) 
+			if(cmo->mo.dplayer)
 			{
-				Cl_MovePlayer(cmo->mo.dplayer);			
+				Cl_MovePlayer(cmo->mo.dplayer);
 			}
-			else 
+			else
 			{
 				// Linear movement prediction with collisions, then.
 				Cl_MoveThing(cmo);
@@ -734,7 +751,8 @@ void Cl_PredictMovement(void)
 			if(cmo->mo.state == states)
 			{
 #ifdef _DEBUG
-				if(!cmo->mo.thinker.id) Con_Error("No clmobj id!!!!\n");
+				if(!cmo->mo.thinker.id)
+					Con_Error("No clmobj id!!!!\n");
 #endif
 				Cl_DestroyMobj(cmo);
 				continue;
@@ -746,8 +764,9 @@ void Cl_PredictMovement(void)
 	}
 #ifdef _DEBUG
 	{
-		static timer = 0;
-		if(++timer > 5*35)
+		static  timer = 0;
+
+		if(++timer > 5 * 35)
 		{
 			timer = 0;
 			Con_Printf("moCount=%i\n", moCount);
@@ -766,7 +785,7 @@ clmobj_t *Cl_CreateMobj(thid_t id)
 	cmo->mo.ddflags |= DDMF_REMOTE;
 	cmo->time = Sys_GetRealTime();
 	Cl_LinkMobj(cmo, id);
-	P_SetMobjID(id, true); // Mark this ID as used.
+	P_SetMobjID(id, true);		// Mark this ID as used.
 
 	return cmo;
 }
@@ -774,7 +793,7 @@ clmobj_t *Cl_CreateMobj(thid_t id)
 /*
  * Destroys the client mobj.
  */
-void Cl_DestroyMobj(clmobj_t *cmo)
+void Cl_DestroyMobj(clmobj_t * cmo)
 {
 	// Stop any sounds originating from this mobj.
 	S_StopSound(0, &cmo->mo);
@@ -790,11 +809,11 @@ void Cl_DestroyMobj(clmobj_t *cmo)
  * Call for Hidden client mobjs to make then visible.
  * If a sound is waiting, it's now played.
  */
-void Cl_RevealMobj(clmobj_t *cmo)
+void Cl_RevealMobj(clmobj_t * cmo)
 {
-/*#ifdef _DEBUG
-	Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
-#endif*/
+	/*#ifdef _DEBUG
+	   Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
+	   #endif */
 
 	cmo->flags &= ~CLMF_HIDDEN;
 
@@ -820,10 +839,10 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 	clmobj_t *cmo = NULL;
 	mobj_t *d;
 	static mobj_t dummy;
-	int df = 0;
-	byte moreFlags = 0, fastMom = false;
-	short mom;
-	thid_t id = Msg_ReadShort();	// Read the ID.
+	int     df = 0;
+	byte    moreFlags = 0, fastMom = false;
+	short   mom;
+	thid_t  id = Msg_ReadShort();	// Read the ID.
 
 	// Flags.
 	df = Msg_ReadShort();
@@ -834,7 +853,8 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 		moreFlags = Msg_ReadByte();
 
 		// Fast momentum uses 10.6 fixed point instead of the normal 8.8.
-		if(moreFlags & MDFE_FAST_MOM) fastMom = true;
+		if(moreFlags & MDFE_FAST_MOM)
+			fastMom = true;
 	}
 
 	if(!skip)
@@ -852,11 +872,11 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 			{
 				// This clmobj should be hidden until the Create mobj
 				// delta arrives. (created, but not linked to the world)
-				cmo->flags |= CLMF_HIDDEN;		
+				cmo->flags |= CLMF_HIDDEN;
 
-/*#ifdef _DEBUG
-				Con_Printf("Cl_RMD2: Mobj %i created as Hidden.\n", id);
-#endif*/
+				/*#ifdef _DEBUG
+				   Con_Printf("Cl_RMD2: Mobj %i created as Hidden.\n", id);
+				   #endif */
 			}
 		}
 
@@ -872,9 +892,8 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 		d = &cmo->mo;
 
 		// Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) 
-			&& linked
-			&& !d->dplayer)
+		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked
+		   && !d->dplayer)
 		{
 			linked = false;
 			Cl_UnsetThingPosition(cmo);
@@ -887,11 +906,11 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 	}
 
 	// Coordinates with three bytes.
-	if(df & MDF_POS_X) 
+	if(df & MDF_POS_X)
 	{
 		d->x = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
 	}
-	if(df & MDF_POS_Y) 
+	if(df & MDF_POS_Y)
 	{
 		d->y = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
 	}
@@ -900,7 +919,8 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 		d->z = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
 
 		// The mobj won't stick if an explicit coordinate is supplied.
-		if(cmo) cmo->flags &= ~(CLMF_STICK_FLOOR | CLMF_STICK_CEILING);
+		if(cmo)
+			cmo->flags &= ~(CLMF_STICK_FLOOR | CLMF_STICK_CEILING);
 	}
 
 	// When these flags are set, the normal Z coord is not included.
@@ -914,38 +934,43 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 	}
 
 	// Momentum using 8.8 fixed point.
-	if(df & MDF_MOM_X) 
+	if(df & MDF_MOM_X)
 	{
 		mom = Msg_ReadShort();
-		d->momx = (fastMom? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+		d->momx = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
 	}
-	if(df & MDF_MOM_Y) 
+	if(df & MDF_MOM_Y)
 	{
 		mom = Msg_ReadShort();
-		d->momy = (fastMom? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+		d->momy = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
 	}
-	if(df & MDF_MOM_Z) 
+	if(df & MDF_MOM_Z)
 	{
 		mom = Msg_ReadShort();
-		d->momz = (fastMom? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+		d->momz = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
 	}
 
 	// Angles with 16-bit accuracy.
-	if(df & MDF_ANGLE) d->angle = Msg_ReadShort() << 16;
+	if(df & MDF_ANGLE)
+		d->angle = Msg_ReadShort() << 16;
 
 	// MDF_SELSPEC is never used without MDF_SELECTOR.
-	if(df & MDF_SELECTOR) d->selector = Msg_ReadPackedShort();
-	if(df & MDF_SELSPEC) d->selector |= Msg_ReadByte() << 24;
+	if(df & MDF_SELECTOR)
+		d->selector = Msg_ReadPackedShort();
+	if(df & MDF_SELSPEC)
+		d->selector |= Msg_ReadByte() << 24;
 
-	if(df & MDF_STATE) 
+	if(df & MDF_STATE)
 	{
-		ushort stateIdx = Msg_ReadPackedShort();
-		if(!skip) Cl_SetThingState(d, stateIdx);
+		ushort  stateIdx = Msg_ReadPackedShort();
+
+		if(!skip)
+			Cl_SetThingState(d, stateIdx);
 	}
 
 	// Pack flags into a word (3 bytes?).
 	// FIXME: Do the packing!
-	if(df & MDF_FLAGS) 
+	if(df & MDF_FLAGS)
 	{
 		// Only the flags in the pack mask are affected.
 		d->ddflags &= ~DDMF_PACK_MASK;
@@ -953,9 +978,11 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 	}
 
 	// Radius, height and floorclip are all bytes.
-	if(df & MDF_RADIUS) d->radius = Msg_ReadByte() << FRACBITS;
-	if(df & MDF_HEIGHT) d->height = Msg_ReadByte() << FRACBITS;
-	if(df & MDF_FLOORCLIP) 
+	if(df & MDF_RADIUS)
+		d->radius = Msg_ReadByte() << FRACBITS;
+	if(df & MDF_HEIGHT)
+		d->height = Msg_ReadByte() << FRACBITS;
+	if(df & MDF_FLOORCLIP)
 	{
 		if(df & MDF_LONG_FLOORCLIP)
 			d->floorclip = Msg_ReadPackedShort() << 14;
@@ -963,10 +990,12 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 			d->floorclip = Msg_ReadByte() << 14;
 	}
 
-	if(moreFlags & MDFE_TRANSLUCENCY) d->translucency = Msg_ReadByte();
+	if(moreFlags & MDFE_TRANSLUCENCY)
+		d->translucency = Msg_ReadByte();
 
 	// The delta has now been read. We can now skip if necessary.
-	if(skip) return;
+	if(skip)
+		return;
 
 	// Is it time to remove the Hidden status?
 	if(allowCreate && cmo->flags & CLMF_HIDDEN)
@@ -981,20 +1010,20 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 	if(!(cmo->flags & CLMF_HIDDEN))
 	{
 		// Link again.
-		if(!linked && !d->dplayer)	
+		if(!linked && !d->dplayer)
 		{
 			Cl_SetThingPosition(cmo);
 		}
-		
+
 		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z)
-			|| moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
+		   || moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
 		{
 			// This'll update floorz and ceilingz.
 			Cl_CheckMobj(cmo, justCreated);
 		}
-		
+
 		// Update players.
-		if(d->dplayer) 
+		if(d->dplayer)
 		{
 			// Players have real mobjs. The client mobj is hidden (unlinked).
 			Cl_UpdateRealPlayerMobj(d->dplayer->mo, d, df);
@@ -1009,25 +1038,26 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 void Cl_ReadNullMobjDelta2(boolean skip)
 {
 	clmobj_t *cmo;
-	thid_t id;
+	thid_t  id;
 
 	// The delta only contains an ID.
 	id = Msg_ReadShort();
 
-	if(skip) return;
+	if(skip)
+		return;
 
 #ifdef _DEBUG
 	Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
 #endif
 
-	if((cmo = Cl_FindMobj(id)) == NULL) 
+	if((cmo = Cl_FindMobj(id)) == NULL)
 	{
 		// Wasted bandwidth...
 		return;
 	}
 
 	// Get rid of this mobj.
-	if(!cmo->mo.dplayer) 
+	if(!cmo->mo.dplayer)
 	{
 		Cl_UnsetThingPosition(cmo);
 	}
@@ -1036,10 +1066,9 @@ void Cl_ReadNullMobjDelta2(boolean skip)
 		// The clmobjs of players aren't linked.
 		playerstate[cmo->mo.dplayer - players].cmo = NULL;
 	}
-	
+
 	// This'll allow playing sounds from the mobj for a little while.
 	// The mobj will soon time out and be permanently removed.
 	cmo->time = Sys_GetRealTime();
 	cmo->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
 }
-

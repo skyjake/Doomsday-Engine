@@ -32,7 +32,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-enum // Texture types
+enum							// Texture types
 {
 	TEXTYPE_UNKNOWN,
 	TEXTYPE_METAL,
@@ -43,16 +43,14 @@ enum // Texture types
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
+typedef struct {
 	unsigned int data[NUM_REVERB_DATA];
 } subreverb_t;
 
 // This could hold much more detailed information...
-typedef struct
-{
-	char	name[9];	// Name of the texture.
-	int		type;		// Which type?
+typedef struct {
+	char    name[9];			// Name of the texture.
+	int     type;				// Which type?
 } textype_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -74,7 +72,7 @@ typedef struct
 //===========================================================================
 int S_TextureTypeForName(char *name)
 {
-	int	i, k;
+	int     i, k;
 	ded_tenviron_t *env;
 
 	for(i = 0, env = defs.tenviron; i < defs.count.tenviron.num; i++, env++)
@@ -83,10 +81,14 @@ int S_TextureTypeForName(char *name)
 			if(!stricmp(env->textures[k].str, name))
 			{
 				// A match!
-				if(!stricmp(env->id, "Metal")) return TEXTYPE_METAL;
-				if(!stricmp(env->id, "Rock")) return TEXTYPE_ROCK;
-				if(!stricmp(env->id, "Wood")) return TEXTYPE_WOOD;
-				if(!stricmp(env->id, "Cloth")) return TEXTYPE_CLOTH;
+				if(!stricmp(env->id, "Metal"))
+					return TEXTYPE_METAL;
+				if(!stricmp(env->id, "Rock"))
+					return TEXTYPE_ROCK;
+				if(!stricmp(env->id, "Wood"))
+					return TEXTYPE_WOOD;
+				if(!stricmp(env->id, "Cloth"))
+					return TEXTYPE_CLOTH;
 				return TEXTYPE_UNKNOWN;
 			}
 	}
@@ -95,40 +97,44 @@ int S_TextureTypeForName(char *name)
 
 //===========================================================================
 // S_CalcSectorReverbs
-//	Calculate the reverb settings for each sector.
+//  Calculate the reverb settings for each sector.
 //===========================================================================
 void S_CalcSectorReverbs(void)
 {
-	int			i, c, type, k;
-	subsector_t	*sub;
-	sector_t	*sec;
-	seg_t		*seg;
-	float		total, metal, rock, wood, cloth;
+	int     i, c, type, k;
+	subsector_t *sub;
+	sector_t *sec;
+	seg_t  *seg;
+	float   total, metal, rock, wood, cloth;
 	subreverb_t *sub_reverb, *rev;
 
 	// Allocate memory for the subsector temporary reverb data.
-	sub_reverb = (subreverb_t*) Z_Malloc(sizeof(subreverb_t) * numsubsectors,
-		PU_STATIC, 0);
+	sub_reverb =
+		(subreverb_t *) Z_Malloc(sizeof(subreverb_t) * numsubsectors,
+								 PU_STATIC, 0);
 	memset(sub_reverb, 0, sizeof(subreverb_t) * numsubsectors);
 
 	// First determine each subsectors' individual characteristics.
 	//ST_Message("%d bytes; sub_reverb: %p\n", sizeof(subreverb_t) * numsubsectors, sub_reverb);
-	for(c=0; c<numsubsectors; c++)
+	for(c = 0; c < numsubsectors; c++)
 	{
 		sub = SUBSECTOR_PTR(c);
 		rev = &sub_reverb[c];
 		// Space is the rough volume of the subsector (bounding box).
-		rev->data[SRD_SPACE] = ((sub->sector->ceilingheight - sub->sector->floorheight) >> FRACBITS)
-			* (sub->bbox[1].x - sub->bbox[0].x) * (sub->bbox[1].y - sub->bbox[0].y);
+		rev->data[SRD_SPACE] =
+			((sub->sector->ceilingheight -
+			  sub->sector->floorheight) >> FRACBITS) * (sub->bbox[1].x -
+														sub->bbox[0].x) *
+			(sub->bbox[1].y - sub->bbox[0].y);
 
 		//gi.Message( "sub %i: volume %f Mu\n", c, volume/1e6);
-		/*	
-		i = (int) (volume/1e4);
-		if(i < 5) i = 5;
-		if(i > 255) i = 255;
-		sub->reverb[SSRD_SPACE] = i;
-		*/
-		
+		/*  
+		   i = (int) (volume/1e4);
+		   if(i < 5) i = 5;
+		   if(i > 255) i = 255;
+		   sub->reverb[SSRD_SPACE] = i;
+		 */
+
 		// The other reverb properties can be found out by taking a look at the
 		// walls surrounding the subsector (floors and ceilings are currently
 		// ignored).
@@ -136,12 +142,14 @@ void S_CalcSectorReverbs(void)
 		for(i = 0; i < sub->linecount; i++)
 		{
 			seg = SEG_PTR(sub->firstline + i);
-			if(!seg->linedef || !seg->sidedef || !seg->sidedef->midtexture) 
+			if(!seg->linedef || !seg->sidedef || !seg->sidedef->midtexture)
 				continue;
 			total += seg->length;
 			// The texture of the seg determines its type.
-			type = S_TextureTypeForName(R_TextureNameForNum(seg->sidedef->midtexture));
-			switch(type)
+			type =
+				S_TextureTypeForName(R_TextureNameForNum
+									 (seg->sidedef->midtexture));
+			switch (type)
 			{
 			case TEXTYPE_METAL:
 				metal += seg->length;
@@ -164,53 +172,64 @@ void S_CalcSectorReverbs(void)
 				wood += seg->length;
 			}
 		}
-		if(!total) continue; // Huh?
+		if(!total)
+			continue;			// Huh?
 		metal /= total;
 		rock /= total;
 		wood /= total;
 		cloth /= total;
 
 		// Volume.
-		i = (int) ( metal*255 + rock*200 + wood*80 + cloth*5 );
-		if(i < 0) i = 0;
-		if(i > 255) i = 255;
+		i = (int) (metal * 255 + rock * 200 + wood * 80 + cloth * 5);
+		if(i < 0)
+			i = 0;
+		if(i > 255)
+			i = 255;
 		rev->data[SRD_VOLUME] = i;
 
 		// Decay time.
-		i = (int) ( metal*255 + rock*160 + wood*50 + cloth*5 );
-		if(i < 0) i = 0;
-		if(i > 255) i = 255;
+		i = (int) (metal * 255 + rock * 160 + wood * 50 + cloth * 5);
+		if(i < 0)
+			i = 0;
+		if(i > 255)
+			i = 255;
 		rev->data[SRD_DECAY] = i;
 
 		// High frequency damping.
-		i = (int) ( metal*25 + rock*100 + wood*200 + cloth*255 );
-		if(i < 0) i = 0;
-		if(i > 255) i = 255;
+		i = (int) (metal * 25 + rock * 100 + wood * 200 + cloth * 255);
+		if(i < 0)
+			i = 0;
+		if(i > 255)
+			i = 255;
 		rev->data[SRD_DAMPING] = i;
 
 		/*ST_Message( "sub %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n", c, rev->data[SRD_VOLUME],
-			rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]);*/
+		   rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]); */
 	}
-/*	ST_Message("sub_reverb: %p\n", sub_reverb);
-	for(c=0; c<numsubsectors; c++)
-	{
-		rev = &sub_reverb[c];
-		ST_Message( "sub %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n", c, rev->data[SRD_VOLUME],
-			rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]);
-	}*/
-	
+	/*  ST_Message("sub_reverb: %p\n", sub_reverb);
+	   for(c=0; c<numsubsectors; c++)
+	   {
+	   rev = &sub_reverb[c];
+	   ST_Message( "sub %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n", c, rev->data[SRD_VOLUME],
+	   rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]);
+	   } */
+
 	for(c = 0; c < numsectors; c++)
 	{
-		float bbox[4], spaceScatter;
+		float   bbox[4], spaceScatter;
 		unsigned int sectorSpace;
+
 		sec = SECTOR_PTR(c);
 		//DD_SectorBoundingBox(sec, bbox);
 		memcpy(bbox, secinfo[c].bounds, sizeof(bbox));
 		/*ST_Message( "sector %i: (%f,%f) - (%f,%f)\n", c, 
-			bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]);*/
+		   bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]); */
 
-		sectorSpace = ((sec->ceilingheight - sec->floorheight) >> FRACBITS)
-			* (bbox[BRIGHT] - bbox[BLEFT]) * (bbox[BBOTTOM] - bbox[BTOP]);
+		sectorSpace =
+			((sec->ceilingheight -
+			  sec->floorheight) >> FRACBITS) * (bbox[BRIGHT] -
+												bbox[BLEFT]) * (bbox[BBOTTOM] -
+																bbox[BTOP]);
 
 		//ST_Message("sector %i: secsp:%i\n", c, sectorSpace);
 
@@ -219,20 +238,24 @@ void S_CalcSectorReverbs(void)
 		bbox[BTOP] -= 128;
 		bbox[BBOTTOM] += 128;
 
-		for(k=0, i=0; i<numsubsectors; i++)
+		for(k = 0, i = 0; i < numsubsectors; i++)
 		{
 			sub = SUBSECTOR_PTR(i);
 			rev = sub_reverb + i;
 			// Is this subsector close enough?
-			if(sub->midpoint.x > bbox[BLEFT] && sub->midpoint.x < bbox[BRIGHT] 
-				&& sub->midpoint.y > bbox[BTOP] && sub->midpoint.y < bbox[BBOTTOM])
+			if(sub->midpoint.x > bbox[BLEFT] && sub->midpoint.x < bbox[BRIGHT]
+			   && sub->midpoint.y > bbox[BTOP]
+			   && sub->midpoint.y < bbox[BBOTTOM])
 			{
 				//ST_Message( "- sub %i within, own:%i\n", i, sub->sector == sec);
-				k++; 
+				k++;
 				sec->reverb[SRD_SPACE] += rev->data[SRD_SPACE];
-				sec->reverb[SRD_VOLUME] += rev->data[SRD_VOLUME] / 255.0f * rev->data[SRD_SPACE];
-				sec->reverb[SRD_DECAY] += rev->data[SRD_DECAY] / 255.0f * rev->data[SRD_SPACE];
-				sec->reverb[SRD_DAMPING] += rev->data[SRD_DAMPING] / 255.0f * rev->data[SRD_SPACE];
+				sec->reverb[SRD_VOLUME] +=
+					rev->data[SRD_VOLUME] / 255.0f * rev->data[SRD_SPACE];
+				sec->reverb[SRD_DECAY] +=
+					rev->data[SRD_DECAY] / 255.0f * rev->data[SRD_SPACE];
+				sec->reverb[SRD_DAMPING] +=
+					rev->data[SRD_DAMPING] / 255.0f * rev->data[SRD_SPACE];
 			}
 		}
 		if(sec->reverb[SRD_SPACE])
@@ -242,12 +265,12 @@ void S_CalcSectorReverbs(void)
 			sec->reverb[SRD_VOLUME] /= sec->reverb[SRD_SPACE];
 			sec->reverb[SRD_DECAY] /= sec->reverb[SRD_SPACE];
 			sec->reverb[SRD_DAMPING] /= sec->reverb[SRD_SPACE];
-/*			ST_Message("sector %i: sp:%f vol:%f dec:%f dam:%f\n",
-				c,
-				sec->reverb[SRD_SPACE], 
-				sec->reverb[SRD_VOLUME], 
-				sec->reverb[SRD_DECAY], 
-				sec->reverb[SRD_DAMPING]); */
+			/*          ST_Message("sector %i: sp:%f vol:%f dec:%f dam:%f\n",
+			   c,
+			   sec->reverb[SRD_SPACE], 
+			   sec->reverb[SRD_VOLUME], 
+			   sec->reverb[SRD_DECAY], 
+			   sec->reverb[SRD_DAMPING]); */
 		}
 		else
 		{
@@ -257,39 +280,40 @@ void S_CalcSectorReverbs(void)
 			sec->reverb[SRD_DAMPING] = 1;
 		}
 		/*ST_Message( "sector %i: secSp:%fM revSp:%fM scatter: %f\n", 
-			c, sectorSpace/1e6f, sec->reverb[SRD_SPACE]/1e6f, spaceScatter);*/
+		   c, sectorSpace/1e6f, sec->reverb[SRD_SPACE]/1e6f, spaceScatter); */
 
 		// If the space is scattered, the reverb effect lessens.
-		sec->reverb[SRD_SPACE] /= spaceScatter > .8? 10 : spaceScatter > .6? 4 : 1;
+		sec->reverb[SRD_SPACE] /= spaceScatter > .8 ? 10 : spaceScatter >
+			.6 ? 4 : 1;
 
 		// Scale the reverb space to a reasonable range, so that 0 is very small and
 		// .99 is very large. 1.0 is only for open areas.
 		sec->reverb[SRD_SPACE] /= 120e6;
-		if(sec->reverb[SRD_SPACE] > .99) sec->reverb[SRD_SPACE] = .99f;
-		
-		if(sec->ceilingpic == skyflatnum) // An open sector?
+		if(sec->reverb[SRD_SPACE] > .99)
+			sec->reverb[SRD_SPACE] = .99f;
+
+		if(sec->ceilingpic == skyflatnum)	// An open sector?
 		{
 			// An open sector can still be small. In that case the reverb
 			// is diminished a bit.
-			if(sec->reverb[SRD_SPACE] > .5) 
-				sec->reverb[SRD_VOLUME] = 1; // Full volume.
-			else 
-				sec->reverb[SRD_VOLUME] = .5f; // Small sector, but still open.
+			if(sec->reverb[SRD_SPACE] > .5)
+				sec->reverb[SRD_VOLUME] = 1;	// Full volume.
+			else
+				sec->reverb[SRD_VOLUME] = .5f;	// Small sector, but still open.
 			sec->reverb[SRD_SPACE] = 1;
 		}
-		else // A closed sector.
+		else					// A closed sector.
 		{
 			// Large spaces have automatically a bit more audible reverb.
 			sec->reverb[SRD_VOLUME] += sec->reverb[SRD_SPACE] / 4;
 		}
-		if(sec->reverb[SRD_VOLUME] > 1) sec->reverb[SRD_VOLUME] = 1;
-/*		sec->reverbDecay /= k/2.0f;
-		sec->reverbDamping /= k;*/
+		if(sec->reverb[SRD_VOLUME] > 1)
+			sec->reverb[SRD_VOLUME] = 1;
+		/*      sec->reverbDecay /= k/2.0f;
+		   sec->reverbDamping /= k; */
 	}
 
 	Z_Free(sub_reverb);
-		
+
 	//gi.Message( "P_CalcSectorReverbs: end at %i\n", gi.GetTime());
 }
-
-

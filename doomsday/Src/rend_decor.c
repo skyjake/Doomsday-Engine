@@ -38,7 +38,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct decorsource_s {
-	mobj_t thing;
+	mobj_t  thing;
 	struct decorsource_s *next;
 } decorsource_t;
 
@@ -52,16 +52,16 @@ typedef struct decorsource_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean		useDecorations = true;
-float		decorWallMaxDist = 1500; // No decorations are visible beyond this.
-float		decorPlaneMaxDist = 1500;
-float		decorWallFactor = 1;
-float		decorPlaneFactor = 1;
-float		decorFadeAngle = .1f;
+boolean useDecorations = true;
+float   decorWallMaxDist = 1500;	// No decorations are visible beyond this.
+float   decorPlaneMaxDist = 1500;
+float   decorWallFactor = 1;
+float   decorPlaneFactor = 1;
+float   decorFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int	numSources;
+static int numSources;
 static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
 
 // Lights near surfaces get dimmer if the angle is too small.
@@ -74,8 +74,9 @@ static float surfaceNormal[3];
  */
 ded_decor_t *Rend_GetTextureDecoration(int texture)
 {
-	if(!texture) return NULL;
-	return textures[ texturetranslation[texture].current ]->decoration;
+	if(!texture)
+		return NULL;
+	return textures[texturetranslation[texture].current]->decoration;
 }
 
 /*
@@ -86,7 +87,7 @@ ded_decor_t *Rend_GetFlatDecoration(int index)
 	flat_t *flat = R_GetFlat(index);
 
 	// Get the translated one?
-	if(flat->translation.current != index) 
+	if(flat->translation.current != index)
 	{
 		flat = R_GetFlat(flat->translation.current);
 	}
@@ -111,7 +112,8 @@ void Rend_ProjectDecorations(void)
 	decorsource_t *src;
 
 	// No need for this if no halos are rendered.
-	if(!haloMode) return;
+	if(!haloMode)
+		return;
 
 	//for(i = 0; i < numSources; i++)
 	for(src = sourceFirst; src != sourceCursor; src = src->next)
@@ -133,7 +135,8 @@ decorsource_t *Rend_NewLightDecorationSource(void)
 {
 	decorsource_t *src;
 
-	if(numSources > MAX_SOURCES) return NULL;
+	if(numSources > MAX_SOURCES)
+		return NULL;
 
 	numSources++;
 
@@ -143,10 +146,12 @@ decorsource_t *Rend_NewLightDecorationSource(void)
 		// Allocate a new entry.
 		src = Z_Calloc(sizeof(decorsource_t), PU_STATIC, NULL);
 
-		if(sourceLast) sourceLast->next = src;
+		if(sourceLast)
+			sourceLast->next = src;
 		sourceLast = src;
 
-		if(!sourceFirst) sourceFirst = src;
+		if(!sourceFirst)
+			sourceFirst = src;
 	}
 	else
 	{
@@ -158,26 +163,27 @@ decorsource_t *Rend_NewLightDecorationSource(void)
 		sourceCursor = sourceCursor->next;
 	}
 
-	return src;		
+	return src;
 }
 
 /*
  * A light decoration is created in the specified coordinates.
  * Does largely the same thing as DL_AddLuminous().
  */
-void Rend_AddLightDecoration
-	(float pos[3], ded_decorlight_t *def, float brightness, boolean isWall,
-	 DGLuint decorMap)
+void Rend_AddLightDecoration(float pos[3], ded_decorlight_t * def,
+							 float brightness, boolean isWall,
+							 DGLuint decorMap)
 {
 	decorsource_t *source;
 	lumobj_t *lum;
-	float distance = Rend_PointDist3D(pos);
-	float fadeMul = 1, flareMul = 1;
-	float maxDist = (isWall? decorWallMaxDist : decorPlaneMaxDist);
-	int i;
+	float   distance = Rend_PointDist3D(pos);
+	float   fadeMul = 1, flareMul = 1;
+	float   maxDist = (isWall ? decorWallMaxDist : decorPlaneMaxDist);
+	int     i;
 
 	// Is the point in range?
-	if(distance > maxDist) return;
+	if(distance > maxDist)
+		return;
 
 	// Close enough to the maximum distance, the lights fade out.
 	if(distance > .67f * maxDist)
@@ -186,41 +192,42 @@ void Rend_AddLightDecoration
 	}
 
 	// Apply the brightness factor (was calculated using sector lightlevel).
-	fadeMul *= brightness * (isWall? decorWallFactor : decorPlaneFactor);
+	fadeMul *= brightness * (isWall ? decorWallFactor : decorPlaneFactor);
 
 	// Brightness drops as the angle gets too big.
-	if(def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
+	if(def->elevation < 2 && decorFadeAngle > 0)	// Close the surface?
 	{
-		float vector[3] = { pos[VX] - vx, pos[VZ] - vy, pos[VY] - vz };
-		float dot;
+		float   vector[3] = { pos[VX] - vx, pos[VZ] - vy, pos[VY] - vz };
+		float   dot;
+
 		M_Normalize(vector);
-		dot = 
-			-(surfaceNormal[VX] * vector[VX]
-			+ surfaceNormal[VY] * vector[VY]
-			+ surfaceNormal[VZ] * vector[VZ]);
-		if(dot < decorFadeAngle/2)
+		dot =
+			-(surfaceNormal[VX] * vector[VX] + surfaceNormal[VY] * vector[VY] +
+			  surfaceNormal[VZ] * vector[VZ]);
+		if(dot < decorFadeAngle / 2)
 		{
 			flareMul = 0;
 		}
 		else if(dot < 3 * decorFadeAngle)
 		{
-			flareMul *= (dot - decorFadeAngle/2) / (2.5f * decorFadeAngle);
+			flareMul *= (dot - decorFadeAngle / 2) / (2.5f * decorFadeAngle);
 		}
 	}
 
-	if(fadeMul <= 0) return;
+	if(fadeMul <= 0)
+		return;
 
-	if(!(source = Rend_NewLightDecorationSource())) 
-		return; // Out of sources!
+	if(!(source = Rend_NewLightDecorationSource()))
+		return;					// Out of sources!
 
 	// Initialize the essentials in the dummy mobj.
 	source->thing.x = pos[VX] * FRACUNIT;
 	source->thing.y = pos[VY] * FRACUNIT;
 	source->thing.z = pos[VZ] * FRACUNIT;
 	source->thing.frame = FF_FULLBRIGHT;
-	source->thing.halofactor = 0xff; // Assumed visible.
-	source->thing.subsector 
-		= R_PointInSubsector(source->thing.x, source->thing.y);		
+	source->thing.halofactor = 0xff;	// Assumed visible.
+	source->thing.subsector =
+		R_PointInSubsector(source->thing.x, source->thing.y);
 
 	// Fill in the data for a new luminous object.
 	source->thing.light = DL_NewLuminous();
@@ -234,14 +241,16 @@ void Rend_AddLightDecoration
 
 	// These are the same rules as in DL_ThingRadius().
 	lum->radius = def->radius * 40 * dlRadFactor;
-	
+
 	// Don't make a too small or too large light.
-	if(lum->radius > dlMaxRad) lum->radius = dlMaxRad;
+	if(lum->radius > dlMaxRad)
+		lum->radius = dlMaxRad;
 
 	if(def->halo_radius > 0)
 	{
-		lum->flareSize = def->halo_radius * 60 * (50 + haloSize)/100.0f;
-		if(lum->flareSize < 1) lum->flareSize = 1;
+		lum->flareSize = def->halo_radius * 60 * (50 + haloSize) / 100.0f;
+		if(lum->flareSize < 1)
+			lum->flareSize = 1;
 	}
 	else
 	{
@@ -256,12 +265,13 @@ void Rend_AddLightDecoration
 	lum->flareTex = def->flare_texture;
 	lum->flareMul = flareMul;
 
-	for(i = 0; i < 3; i++) 
+	for(i = 0; i < 3; i++)
 		lum->rgb[i] = (byte) (255 * def->color[i] * fadeMul);
 
 	// Approximate the distance.
-	lum->distance = P_ApproxDistance3(source->thing.x - viewx, 
-		source->thing.y - viewy, source->thing.z - viewz);
+	lum->distance =
+		P_ApproxDistance3(source->thing.x - viewx, source->thing.y - viewy,
+						  source->thing.z - viewz);
 }
 
 /*
@@ -272,71 +282,76 @@ boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
 {
 	fixed_t maxDist = FRACUNIT * fMaxDist;
 
-	return viewx > bounds[BLEFT]    - maxDist
-		&& viewx < bounds[BRIGHT]   + maxDist
-		&& viewy > bounds[BBOTTOM]  - maxDist
-		&& viewy < bounds[BTOP]     + maxDist
-		&& viewz > bounds[BFLOOR]   - maxDist
+	return viewx > bounds[BLEFT] - maxDist && viewx < bounds[BRIGHT] + maxDist
+		&& viewy > bounds[BBOTTOM] - maxDist && viewy < bounds[BTOP] + maxDist
+		&& viewz > bounds[BFLOOR] - maxDist
 		&& viewz < bounds[BCEILING] + maxDist;
 }
 
 /*
  * Returns > 0 if the sector lightlevel passes the limit condition.
  */
-float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t *lightDef)
+float Rend_CheckSectorLight(sector_t * sector, ded_decorlight_t * lightDef)
 {
-	int lightlevel = sector->lightlevel;
-	float factor;
+	int     lightlevel = sector->lightlevel;
+	float   factor;
 
 	// Has a limit been set?
-	if(lightDef->light_levels[0] == lightDef->light_levels[1]) 
+	if(lightDef->light_levels[0] == lightDef->light_levels[1])
 		return 1;
 
-	if(lightlevel < r_ambient) lightlevel = r_ambient;
+	if(lightlevel < r_ambient)
+		lightlevel = r_ambient;
 
-	factor = (lightlevel - lightDef->light_levels[0]) 
-		/ (float) (lightDef->light_levels[1] - lightDef->light_levels[0]);
-	if(factor < 0) return 0;
-	if(factor > 1) return 1;
+	factor =
+		(lightlevel -
+		 lightDef->light_levels[0]) / (float) (lightDef->light_levels[1] -
+											   lightDef->light_levels[0]);
+	if(factor < 0)
+		return 0;
+	if(factor > 1)
+		return 1;
 	return factor;
 }
 
 /*
  * Determine proper skip values.
  */
-void Rend_DecorationPatternSkip(ded_decorlight_t *lightDef, int *skip)
+void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
 {
-	int k;
+	int     k;
 
 	for(k = 0; k < 2; k++)
 	{
 		// Skip must be at least one.
 		skip[k] = lightDef->pattern_skip[k] + 1;
-		if(skip[k] < 1) skip[k] = 1;
+		if(skip[k] < 1)
+			skip[k] = 1;
 	}
 }
 
 /*
  * Generate decorations for the specified section of a line.
  */
-void Rend_DecorateLineSection
-	(line_t *line, side_t *side, int texture, float top, float bottom,
-	 float texOffY)
+void Rend_DecorateLineSection(line_t * line, side_t * side, int texture,
+							  float top, float bottom, float texOffY)
 {
 	lineinfo_t *linfo = &lineinfo[GET_LINE_IDX(line)];
 	ded_decor_t *def;
 	ded_decorlight_t *lightDef;
 	vertex_t *v1, *v2;
-	float lh, s, t; // Horizontal and vertical offset.
-	float posBase[2], delta[2], pos[3], brightMul;
-	float surfTexW, surfTexH, patternW, patternH;
-	int i, skip[2];
+	float   lh, s, t;			// Horizontal and vertical offset.
+	float   posBase[2], delta[2], pos[3], brightMul;
+	float   surfTexW, surfTexH, patternW, patternH;
+	int     i, skip[2];
 
 	// Is this a valid section?
-	if(bottom > top || linfo->length == 0) return;
+	if(bottom > top || linfo->length == 0)
+		return;
 
 	// Should this be decorated at all?
-	if(!(def = Rend_GetTextureDecoration(texture))) return;
+	if(!(def = Rend_GetTextureDecoration(texture)))
+		return;
 
 	v1 = line->v1;
 	v2 = line->v2;
@@ -369,7 +384,8 @@ void Rend_DecorateLineSection
 		lightDef = def->lights + i;
 
 		// No more?
-		if(!R_IsValidLightDecoration(lightDef)) break;
+		if(!R_IsValidLightDecoration(lightDef))
+			break;
 
 		// Does it pass the sectorlight limitation?
 		if((brightMul = Rend_CheckSectorLight(side->sector, lightDef)) <= 0)
@@ -380,20 +396,21 @@ void Rend_DecorateLineSection
 
 		posBase[VX] = FIX2FLT(v1->x) + lightDef->elevation * surfaceNormal[VX];
 		posBase[VY] = FIX2FLT(v1->y) + lightDef->elevation * surfaceNormal[VZ];
-		
+
 		patternW = surfTexW * skip[VX];
 		patternH = surfTexH * skip[VY];
 
 		// Let's see where the top left light is.
-		s = M_CycleIntoRange(lightDef->pos[VX] - FIX2FLT(side->textureoffset)
-			- surfTexW * lightDef->pattern_offset[VX], patternW);
+		s = M_CycleIntoRange(lightDef->pos[VX] - FIX2FLT(side->textureoffset) -
+							 surfTexW * lightDef->pattern_offset[VX],
+							 patternW);
 
 		for(; s < linfo->length; s += patternW)
 		{
-			t = M_CycleIntoRange(lightDef->pos[VY] - FIX2FLT(side->rowoffset)
-				- surfTexH * lightDef->pattern_offset[VY] + texOffY, 
-				patternH);
-			
+			t = M_CycleIntoRange(lightDef->pos[VY] - FIX2FLT(side->rowoffset) -
+								 surfTexH * lightDef->pattern_offset[VY] +
+								 texOffY, patternH);
+
 			for(; t < lh; t += patternH)
 			{
 				// Let there be light.
@@ -401,7 +418,7 @@ void Rend_DecorateLineSection
 				pos[VY] = posBase[VY] + delta[VY] * s / linfo->length;
 				pos[VZ] = top - t;
 				Rend_AddLightDecoration(pos, lightDef, brightMul, true,
-					def->pregen_lightmap);
+										def->pregen_lightmap);
 			}
 		}
 	}
@@ -410,7 +427,7 @@ void Rend_DecorateLineSection
 /*
  * Returns the side that faces the sector (if any).
  */
-side_t *R_GetSectorSide(line_t *line, sector_t *sector)
+side_t *R_GetSectorSide(line_t * line, sector_t * sector)
 {
 	side_t *side = SIDE_PTR(line->sidenum[0]);
 
@@ -424,19 +441,19 @@ side_t *R_GetSectorSide(line_t *line, sector_t *sector)
 /*
  * Return true if the line is within the visible decoration 'box'.
  */
-boolean Rend_LineDecorationBounds(line_t *line)
+boolean Rend_LineDecorationBounds(line_t * line)
 {
 	fixed_t bounds[6];
 	sector_t *sector;
 
-	bounds[BLEFT]   = line->bbox[BOXLEFT];
-	bounds[BRIGHT]  = line->bbox[BOXRIGHT];
-	bounds[BTOP]    = line->bbox[BOXTOP];
+	bounds[BLEFT] = line->bbox[BOXLEFT];
+	bounds[BRIGHT] = line->bbox[BOXRIGHT];
+	bounds[BTOP] = line->bbox[BOXTOP];
 	bounds[BBOTTOM] = line->bbox[BOXBOTTOM];
-	
+
 	// Figure out the highest and lowest Z height.
-	sector           = line->frontsector;
-	bounds[BFLOOR]   = sector->floorheight;
+	sector = line->frontsector;
+	bounds[BFLOOR] = sector->floorheight;
 	bounds[BCEILING] = sector->ceilingheight;
 
 	// Is the other sector higher/lower?
@@ -455,16 +472,16 @@ boolean Rend_LineDecorationBounds(line_t *line)
 /*
  * Return true if the sector is within the visible decoration 'box'.
  */
-boolean Rend_SectorDecorationBounds(sector_t *sector, sectorinfo_t *sin)
+boolean Rend_SectorDecorationBounds(sector_t * sector, sectorinfo_t * sin)
 {
 	fixed_t bounds[6];
 
-	bounds[BLEFT]    = FRACUNIT * sin->bounds[BLEFT];
-	bounds[BRIGHT]   = FRACUNIT * sin->bounds[BRIGHT];
+	bounds[BLEFT] = FRACUNIT * sin->bounds[BLEFT];
+	bounds[BRIGHT] = FRACUNIT * sin->bounds[BRIGHT];
 	// Sectorinfo has top and bottom the other way around.
-	bounds[BBOTTOM]  = FRACUNIT * sin->bounds[BTOP];
-	bounds[BTOP]     = FRACUNIT * sin->bounds[BBOTTOM];
-	bounds[BFLOOR]   = FRACUNIT * sin->visfloor;
+	bounds[BBOTTOM] = FRACUNIT * sin->bounds[BTOP];
+	bounds[BTOP] = FRACUNIT * sin->bounds[BBOTTOM];
+	bounds[BFLOOR] = FRACUNIT * sin->visfloor;
 	bounds[BCEILING] = FRACUNIT * sin->visceil;
 
 	return Rend_CheckDecorationBounds(bounds, decorPlaneMaxDist);
@@ -479,26 +496,28 @@ void Rend_DecorateLine(int index)
 	line_t *line = LINE_PTR(index);
 	side_t *side;
 	sector_t *highSector, *lowSector;
-/*	int frontSectorIndex = -1, backSectorIndex = -1; */
-	float frontCeil, frontFloor, backCeil, backFloor;
+
+	/*  int frontSectorIndex = -1, backSectorIndex = -1; */
+	float   frontCeil, frontFloor, backCeil, backFloor;
 
 	// Only the lines within the decoration visibility bounding box
 	// are processed.
-	if(!Rend_LineDecorationBounds(line)) return;
+	if(!Rend_LineDecorationBounds(line))
+		return;
 
-	frontCeil  = SECT_CEIL(line->frontsector);
+	frontCeil = SECT_CEIL(line->frontsector);
 	frontFloor = SECT_FLOOR(line->frontsector);
 
 	// Do we have a double-sided line?
 	if(line->backsector)
 	{
-		backCeil  = SECT_CEIL(line->backsector);
+		backCeil = SECT_CEIL(line->backsector);
 		backFloor = SECT_FLOOR(line->backsector);
 
 		// Is there a top section visible on either side?
 		if(backCeil != frontCeil
-			&& (line->backsector->ceilingpic != skyflatnum
-				|| line->frontsector->ceilingpic != skyflatnum))
+		   && (line->backsector->ceilingpic != skyflatnum
+			   || line->frontsector->ceilingpic != skyflatnum))
 		{
 			if(frontCeil > backCeil)
 			{
@@ -516,15 +535,17 @@ void Rend_DecorateLine(int index)
 
 			GL_GetTextureInfo(side->toptexture);
 			Rend_DecorateLineSection(line, side, side->toptexture,
-				SECT_CEIL(highSector), SECT_CEIL(lowSector), 
-				line->flags & ML_DONTPEGTOP? 0 : -texh + 
-				(SECT_CEIL(highSector) - SECT_CEIL(lowSector)));
+									 SECT_CEIL(highSector),
+									 SECT_CEIL(lowSector),
+									 line->flags & ML_DONTPEGTOP ? 0 : -texh +
+									 (SECT_CEIL(highSector) -
+									  SECT_CEIL(lowSector)));
 		}
 
 		// Is there a bottom section visible?
 		if(backFloor != frontFloor
-			&& (line->backsector->floorpic != skyflatnum
-				|| line->frontsector->floorpic != skyflatnum))
+		   && (line->backsector->floorpic != skyflatnum
+			   || line->frontsector->floorpic != skyflatnum))
 		{
 			if(frontFloor > backFloor)
 			{
@@ -541,57 +562,61 @@ void Rend_DecorateLine(int index)
 			side = R_GetSectorSide(line, lowSector);
 
 			Rend_DecorateLineSection(line, side, side->bottomtexture,
-				SECT_FLOOR(highSector), SECT_FLOOR(lowSector), 
-				line->flags & ML_DONTPEGBOTTOM? SECT_FLOOR(highSector) 
-				- SECT_CEIL(lowSector): 0);
+									 SECT_FLOOR(highSector),
+									 SECT_FLOOR(lowSector),
+									 line->
+									 flags & ML_DONTPEGBOTTOM ?
+									 SECT_FLOOR(highSector) -
+									 SECT_CEIL(lowSector) : 0);
 		}
 
 		// 2-sided middle texture?
 		// FIXME: Since halos aren't usually clipped by 2-sided middle 
 		// textures, this looks a bit silly.
-/*		if(line->sidenum[0] >= 0
-			&& (side = SIDE_PTR(line->sidenum[0]))->midtexture)
-		{
-			rendpoly_t quad;
-			
-			// If there is an opening, process it.
-			GL_GetTextureInfo(side->midtexture);
-			quad.top = MIN_OF(frontCeil, backCeil);
-			quad.bottom = MAX_OF(frontFloor, backFloor);
-			if(Rend_MidTexturePos(&quad, FIX2FLT(side->rowoffset),
-				(line->flags & ML_DONTPEGBOTTOM) != 0))
-			{
-				Rend_DecorateLineSection(line, side, side->midtexture,
-					quad.top, quad.bottom, quad.texoffy);
-			}
-		}*/
+		/*      if(line->sidenum[0] >= 0
+		   && (side = SIDE_PTR(line->sidenum[0]))->midtexture)
+		   {
+		   rendpoly_t quad;
+
+		   // If there is an opening, process it.
+		   GL_GetTextureInfo(side->midtexture);
+		   quad.top = MIN_OF(frontCeil, backCeil);
+		   quad.bottom = MAX_OF(frontFloor, backFloor);
+		   if(Rend_MidTexturePos(&quad, FIX2FLT(side->rowoffset),
+		   (line->flags & ML_DONTPEGBOTTOM) != 0))
+		   {
+		   Rend_DecorateLineSection(line, side, side->midtexture,
+		   quad.top, quad.bottom, quad.texoffy);
+		   }
+		   } */
 	}
 	else
 	{
 		// This is a single-sided line. We only need to worry about the
 		// middle texture.
-		side = SIDE_PTR(line->sidenum[0] >= 0? line->sidenum[0] 
-			: line->sidenum[1]);
+		side =
+			SIDE_PTR(line->sidenum[0] >=
+					 0 ? line->sidenum[0] : line->sidenum[1]);
 
 		GL_GetTextureInfo(side->midtexture);
 		Rend_DecorateLineSection(line, side, side->midtexture, frontCeil,
-			frontFloor, line->flags & ML_DONTPEGBOTTOM? -texh + (frontCeil 
-			- frontFloor) : 0);
+								 frontFloor,
+								 line->flags & ML_DONTPEGBOTTOM ? -texh +
+								 (frontCeil - frontFloor) : 0);
 	}
 }
 
 /*
  * Generate decorations for a plane.
  */
-void Rend_DecoratePlane
-	(int sectorIndex, float z, float elevateDir, float offX, float offY,
-	 ded_decor_t *def)
+void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
+						float offY, ded_decor_t * def)
 {
 	sector_t *sector = SECTOR_PTR(sectorIndex);
 	sectorinfo_t *sin = secinfo + sectorIndex;
 	ded_decorlight_t *lightDef;
-	float pos[3], tileSize = 64, brightMul;
-	int i, skip[2];
+	float   pos[3], tileSize = 64, brightMul;
+	int     i, skip[2];
 
 	surfaceNormal[VX] = 0;
 	surfaceNormal[VY] = elevateDir;
@@ -603,7 +628,8 @@ void Rend_DecoratePlane
 		lightDef = def->lights + i;
 
 		// No more?
-		if(!R_IsValidLightDecoration(lightDef)) break;
+		if(!R_IsValidLightDecoration(lightDef))
+			break;
 
 		// Does it pass the sectorlight limitation?
 		if((brightMul = Rend_CheckSectorLight(sector, lightDef)) <= 0)
@@ -612,33 +638,36 @@ void Rend_DecoratePlane
 		// Skip must be at least one.
 		Rend_DecorationPatternSkip(lightDef, skip);
 
-		pos[VY] = (int)(sin->bounds[BTOP] / tileSize) * tileSize - offY
-			- lightDef->pos[VY]
-			- lightDef->pattern_offset[VY] * tileSize;
-		while(pos[VY] > sin->bounds[BTOP]) 
+		pos[VY] =
+			(int) (sin->bounds[BTOP] / tileSize) * tileSize - offY -
+			lightDef->pos[VY] - lightDef->pattern_offset[VY] * tileSize;
+		while(pos[VY] > sin->bounds[BTOP])
 			pos[VY] -= tileSize * skip[VY];
 
 		for(; pos[VY] < sin->bounds[BBOTTOM]; pos[VY] += tileSize * skip[VY])
 		{
-			if(pos[VY] < sin->bounds[BTOP]) continue;
-			pos[VX] = (int)(sin->bounds[BLEFT] / tileSize) * tileSize - offX
-				+ lightDef->pos[VX]
-				- lightDef->pattern_offset[VX] * tileSize;
-			while(pos[VX] > sin->bounds[BLEFT]) 
+			if(pos[VY] < sin->bounds[BTOP])
+				continue;
+			pos[VX] =
+				(int) (sin->bounds[BLEFT] / tileSize) * tileSize - offX +
+				lightDef->pos[VX] - lightDef->pattern_offset[VX] * tileSize;
+			while(pos[VX] > sin->bounds[BLEFT])
 				pos[VX] -= tileSize * skip[VX];
 
-			for(; pos[VX] < sin->bounds[BRIGHT]; 
+			for(; pos[VX] < sin->bounds[BRIGHT];
 				pos[VX] += tileSize * skip[VX])
 			{
-				if(pos[VX] < sin->bounds[BLEFT]) continue;
+				if(pos[VX] < sin->bounds[BLEFT])
+					continue;
 
 				// The point must be inside the correct sector.
-				if(!R_IsPointInSector(pos[VX] * FRACUNIT, pos[VY] * FRACUNIT, 
-					sector)) continue;
+				if(!R_IsPointInSector
+				   (pos[VX] * FRACUNIT, pos[VY] * FRACUNIT, sector))
+					continue;
 
 				pos[VZ] = z + lightDef->elevation * elevateDir;
 				Rend_AddLightDecoration(pos, lightDef, brightMul, false,
-					def->pregen_lightmap);
+										def->pregen_lightmap);
 			}
 		}
 	}
@@ -653,7 +682,7 @@ void Rend_DecorateSector(int index)
 	ded_decor_t *def;
 
 	// The sector must have height if it wants decorations.
-	if(sector->ceilingheight <= sector->floorheight) 
+	if(sector->ceilingheight <= sector->floorheight)
 		return;
 
 	// Is this sector close enough for the decorations to be visible?
@@ -663,15 +692,15 @@ void Rend_DecorateSector(int index)
 	if((def = Rend_GetFlatDecoration(sector->floorpic)) != NULL)
 	{
 		// The floor is decorated.
-		Rend_DecoratePlane(index, SECT_FLOOR(sector), 1,
-			sector->flooroffx, sector->flooroffy, def);
+		Rend_DecoratePlane(index, SECT_FLOOR(sector), 1, sector->flooroffx,
+						   sector->flooroffy, def);
 	}
 
 	if((def = Rend_GetFlatDecoration(sector->ceilingpic)) != NULL)
 	{
 		// The ceiling is decorated.
-		Rend_DecoratePlane(index, SECT_CEIL(sector), -1,
-			sector->ceiloffx, sector->ceiloffy, def);
+		Rend_DecoratePlane(index, SECT_CEIL(sector), -1, sector->ceiloffx,
+						   sector->ceiloffy, def);
 	}
 }
 
@@ -680,12 +709,13 @@ void Rend_DecorateSector(int index)
  */
 void Rend_InitDecorationsForFrame(void)
 {
-	int i;
+	int     i;
 
 	Rend_ClearDecorations();
 
 	// This only needs to be done if decorations have been enabled.
-	if(!useDecorations) return;
+	if(!useDecorations)
+		return;
 
 	// Process all lines. This could also be done during sectors,
 	// but validcount would need to be used to prevent duplicate 
@@ -697,4 +727,3 @@ void Rend_InitDecorationsForFrame(void)
 	for(i = 0; i < numsectors; i++)
 		Rend_DecorateSector(i);
 }
-

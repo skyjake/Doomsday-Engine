@@ -40,13 +40,13 @@ static void OpenScript(char *name, int type);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char *sc_String;
-int sc_Number;
-int sc_Line;
+char   *sc_String;
+int     sc_Number;
+int     sc_Line;
 boolean sc_End;
 boolean sc_Crossed;
 boolean sc_FileScripts = false;
-char *sc_ScriptsDir = "";
+char   *sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -56,7 +56,7 @@ static char *ScriptPtr;
 static char *ScriptEndPtr;
 static char StringBuffer[MAX_STRING_SIZE];
 static boolean ScriptOpen = false;
-static boolean ScriptFreeCLib; // true = de-allocate using free()
+static boolean ScriptFreeCLib;	// true = de-allocate using free()
 static int ScriptSize;
 static boolean AlreadyGot = false;
 
@@ -70,7 +70,7 @@ static boolean AlreadyGot = false;
 
 void SC_Open(char *name)
 {
-	char fileName[128];
+	char    fileName[128];
 
 	if(sc_FileScripts == true)
 	{
@@ -134,26 +134,26 @@ static void OpenScript(char *name, int type)
 {
 	SC_Close();
 	if(type == LUMP_SCRIPT)
-	{ // Lump script
+	{							// Lump script
 		ScriptBuffer = (char *) W_CacheLumpName(name, PU_STATIC);
 		ScriptSize = W_LumpLength(W_GetNumForName(name));
 		strcpy(ScriptName, name);
-		ScriptFreeCLib = false; // De-allocate using gi.Z_Free()
+		ScriptFreeCLib = false;	// De-allocate using gi.Z_Free()
 	}
 	else if(type == FILE_ZONE_SCRIPT)
-	{ // File script - zone
-		ScriptSize = M_ReadFile(name, (byte **)&ScriptBuffer);
+	{							// File script - zone
+		ScriptSize = M_ReadFile(name, (byte **) & ScriptBuffer);
 		M_ExtractFileBase(name, ScriptName);
-		ScriptFreeCLib = false; // De-allocate using gi.Z_Free()
+		ScriptFreeCLib = false;	// De-allocate using gi.Z_Free()
 	}
 	else
-	{ // File script - clib
-		ScriptSize = M_ReadFileCLib(name, (byte **)&ScriptBuffer);
+	{							// File script - clib
+		ScriptSize = M_ReadFileCLib(name, (byte **) & ScriptBuffer);
 		M_ExtractFileBase(name, ScriptName);
-		ScriptFreeCLib = true; // De-allocate using free()
+		ScriptFreeCLib = true;	// De-allocate using free()
 	}
 	ScriptPtr = ScriptBuffer;
-	ScriptEndPtr = ScriptPtr+ScriptSize;
+	ScriptEndPtr = ScriptPtr + ScriptSize;
 	sc_Line = 1;
 	sc_End = false;
 	ScriptOpen = true;
@@ -191,7 +191,7 @@ void SC_Close(void)
 
 boolean SC_GetString(void)
 {
-	char *text;
+	char   *text;
 	boolean foundToken;
 
 	CheckOpen();
@@ -228,19 +228,19 @@ boolean SC_GetString(void)
 			return false;
 		}
 		if(*ScriptPtr != ASCII_COMMENT)
-		{ // Found a token
+		{						// Found a token
 			foundToken = true;
 		}
 		else
-		{ // Skip comment
+		{						// Skip comment
 			while(*ScriptPtr++ != '\n')
 			{
 				if(ScriptPtr >= ScriptEndPtr)
 				{
 					sc_End = true;
 					return false;
-	
-			}
+
+				}
 			}
 			sc_Line++;
 			sc_Crossed = true;
@@ -248,13 +248,13 @@ boolean SC_GetString(void)
 	}
 	text = sc_String;
 	if(*ScriptPtr == ASCII_QUOTE)
-	{ // Quoted string
+	{							// Quoted string
 		ScriptPtr++;
 		while(*ScriptPtr != ASCII_QUOTE)
 		{
 			*text++ = *ScriptPtr++;
 			if(ScriptPtr == ScriptEndPtr
-				|| text == &sc_String[MAX_STRING_SIZE-1])
+			   || text == &sc_String[MAX_STRING_SIZE - 1])
 			{
 				break;
 			}
@@ -262,12 +262,12 @@ boolean SC_GetString(void)
 		ScriptPtr++;
 	}
 	else
-	{ // Normal string
+	{							// Normal string
 		while((*ScriptPtr > 32) && (*ScriptPtr != ASCII_COMMENT))
 		{
 			*text++ = *ScriptPtr++;
 			if(ScriptPtr == ScriptEndPtr
-				|| text == &sc_String[MAX_STRING_SIZE-1])
+			   || text == &sc_String[MAX_STRING_SIZE - 1])
 			{
 				break;
 			}
@@ -314,7 +314,7 @@ void SC_MustGetStringName(char *name)
 
 boolean SC_GetNumber(void)
 {
-	char *stopper;
+	char   *stopper;
 
 	CheckOpen();
 	if(SC_GetString())
@@ -323,7 +323,7 @@ boolean SC_GetNumber(void)
 		if(*stopper != 0)
 		{
 			Con_Error("SC_GetNumber: Bad numeric constant \"%s\".\n"
-				"Script %s, Line %d", sc_String, ScriptName, sc_Line);
+					  "Script %s, Line %d", sc_String, ScriptName, sc_Line);
 		}
 		return true;
 	}
@@ -369,35 +369,35 @@ void SC_UnGet(void)
 //==========================================================================
 
 /*
-boolean SC_Check(void)
-{
-	char *text;
+   boolean SC_Check(void)
+   {
+   char *text;
 
-	CheckOpen();
-	text = ScriptPtr;
-	if(text >= ScriptEndPtr)
-	{
-		return false;
-	}
-	while(*text <= 32)
-	{
-		if(*text == '\n')
-		{
-			return false;
-		}
-		text++;
-		if(text == ScriptEndPtr)
-		{
-			return false;
-		}
-	}
-	if(*text == ASCII_COMMENT)
-	{
-		return false;
-	}
-	return true;
-}
-*/
+   CheckOpen();
+   text = ScriptPtr;
+   if(text >= ScriptEndPtr)
+   {
+   return false;
+   }
+   while(*text <= 32)
+   {
+   if(*text == '\n')
+   {
+   return false;
+   }
+   text++;
+   if(text == ScriptEndPtr)
+   {
+   return false;
+   }
+   }
+   if(*text == ASCII_COMMENT)
+   {
+   return false;
+   }
+   return true;
+   }
+ */
 
 //==========================================================================
 //
@@ -410,7 +410,7 @@ boolean SC_Check(void)
 
 int SC_MatchString(char **strings)
 {
-	int i;
+	int     i;
 
 	for(i = 0; *strings != NULL; i++)
 	{
@@ -430,7 +430,7 @@ int SC_MatchString(char **strings)
 
 int SC_MustMatchString(char **strings)
 {
-	int i;
+	int     i;
 
 	i = SC_MatchString(strings);
 	if(i == -1)
@@ -467,8 +467,8 @@ void SC_ScriptError(char *message)
 	{
 		message = "Bad syntax.";
 	}
-	Con_Error("Script error, \"%s\" line %d: %s", ScriptName,
-		sc_Line, message);
+	Con_Error("Script error, \"%s\" line %d: %s", ScriptName, sc_Line,
+			  message);
 }
 
 //==========================================================================
@@ -484,4 +484,3 @@ static void CheckOpen(void)
 		Con_Error("SC_ call before SC_Open().");
 	}
 }
-

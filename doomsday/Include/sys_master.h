@@ -26,10 +26,10 @@
 
 #include "dd_share.h"
 
-void	N_MasterInit(void);
-void	N_MasterShutdown(void);
-void	N_MasterAnnounceServer(boolean isOpen);
-void	N_MasterRequestList(void);
-int		N_MasterGet(int index, serverinfo_t *info);
+void            N_MasterInit(void);
+void            N_MasterShutdown(void);
+void            N_MasterAnnounceServer(boolean isOpen);
+void            N_MasterRequestList(void);
+int             N_MasterGet(int index, serverinfo_t * info);
 
-#endif 
+#endif

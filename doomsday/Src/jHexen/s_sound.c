@@ -3,9 +3,9 @@
 //**
 //** S_SOUND.C
 //**
-//** Version:		1.0
-//** Last Build:	-?-
-//** Author:		jk
+//** Version:       1.0
+//** Last Build:    -?-
+//** Author:        jk
 //**
 //**************************************************************************
 
@@ -16,7 +16,7 @@
 #include <math.h>
 #include "h2def.h"
 #include "r_local.h"
-#include "p_local.h"    // for P_ApproxDistance
+#include "p_local.h"			// for P_ApproxDistance
 #include "sounds.h"
 #include "settings.h"
 //#include "s_common.h"
@@ -33,7 +33,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void S_StopSoundID(int sound_id);//, int priority);
+void    S_StopSoundID(int sound_id);	//, int priority);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -42,40 +42,38 @@ void S_StopSoundID(int sound_id);//, int priority);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #if 0
-int			s_CDTrack = 0;
-boolean		MusicPaused;
-int			snd_MaxChannels = 20;
+int     s_CDTrack = 0;
+boolean MusicPaused;
+int     snd_MaxChannels = 20;
 #endif
 
-char		ArchivePath[128];
+char    ArchivePath[128];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-
 #if 0
 /*
-===============================================================================
+   ===============================================================================
 
-		MUSIC & SFX API
+   MUSIC & SFX API
 
-===============================================================================
-*/
+   ===============================================================================
+ */
 
-channel_t			*Channel = 0;
-int					numChannels = 0;
+channel_t *Channel = 0;
+int     numChannels = 0;
 
-int					RegisteredSong = 0; //the current registered song.
+int     RegisteredSong = 0;		//the current registered song.
 
-int					Mus_Song = -1;
-int					Mus_LumpNum;
-void				*Mus_SndPtr;
-byte				*SoundCurve;
+int     Mus_Song = -1;
+int     Mus_LumpNum;
+void   *Mus_SndPtr;
+byte   *SoundCurve;
 
-extern	int			startepisode;
-extern	int			startmap;
-
+extern int startepisode;
+extern int startmap;
 
 //==========================================================================
 //
@@ -97,44 +95,45 @@ void S_Start(void)
 
 void S_StartSong(int song, boolean loop)
 {
-	char *songLump;
-	int track;
+	char   *songLump;
+	int     track;
 
 	if(i_CDMusic)
-	{ // Play a CD track, instead
+	{							// Play a CD track, instead
 		if(s_CDTrack)
-		{ // Default to the player-chosen track
+		{						// Default to the player-chosen track
 			track = s_CDTrack;
 		}
 		else
 		{
 			track = P_GetMapCDTrack(gamemap);
 		}
-		if(track == gi.CD(DD_GET_CURRENT_TRACK,0) && gi.CD(DD_GET_TIME_LEFT,0) > 0
-			&& gi.CD(DD_STATUS,0) == DD_PLAYING)
+		if(track == gi.CD(DD_GET_CURRENT_TRACK, 0)
+		   && gi.CD(DD_GET_TIME_LEFT, 0) > 0
+		   && gi.CD(DD_STATUS, 0) == DD_PLAYING)
 		{
 			// The chosen track is already playing.
 			return;
 		}
-		if(gi.CD(loop? DD_PLAY_LOOP : DD_PLAY, track))
-			Con_Printf( "Error starting CD play (track %d).\n", track);
+		if(gi.CD(loop ? DD_PLAY_LOOP : DD_PLAY, track))
+			Con_Printf("Error starting CD play (track %d).\n", track);
 	}
 	else
 	{
 		if(song == Mus_Song)
-		{ // don't replay an old song
+		{						// don't replay an old song
 			return;
 		}
 		if(RegisteredSong)
 		{
 			gi.StopSong();
 			/*if(UseSndScript)
-			{
-				Z_Free(Mus_SndPtr);
-			}
-			else
-			{*/
-				gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);
+			   {
+			   Z_Free(Mus_SndPtr);
+			   }
+			   else
+			   { */
+			gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);
 			//}
 			RegisteredSong = 0;
 		}
@@ -144,17 +143,18 @@ void S_StartSong(int song, boolean loop)
 			return;
 		}
 		/*if(UseSndScript)
-		{
-			char name[128];
-			sprintf(name, "%s%s.lmp", ArchivePath, songLump);
-			M_ReadFile(name, (byte **)&Mus_SndPtr);
-		}
-		else
-		{*/
-			Mus_LumpNum = W_GetNumForName(songLump);
-			Mus_SndPtr = W_CacheLumpNum(Mus_LumpNum, PU_MUSIC);
+		   {
+		   char name[128];
+		   sprintf(name, "%s%s.lmp", ArchivePath, songLump);
+		   M_ReadFile(name, (byte **)&Mus_SndPtr);
+		   }
+		   else
+		   { */
+		Mus_LumpNum = W_GetNumForName(songLump);
+		Mus_SndPtr = W_CacheLumpNum(Mus_LumpNum, PU_MUSIC);
 		//}
-		RegisteredSong = gi.PlaySong(Mus_SndPtr, W_LumpLength(Mus_LumpNum), loop);
+		RegisteredSong =
+			gi.PlaySong(Mus_SndPtr, W_LumpLength(Mus_LumpNum), loop);
 		Mus_Song = song;
 	}
 }
@@ -165,7 +165,8 @@ void S_StartSong(int song, boolean loop)
 void S_StopSong(void)
 {
 	gi.StopSong();
-	if(Mus_LumpNum >= 0) gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);	
+	if(Mus_LumpNum >= 0)
+		gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);
 	Mus_LumpNum = -1;
 	Mus_Song = 0;
 	RegisteredSong = 0;
@@ -179,7 +180,7 @@ void S_StopSong(void)
 
 void S_StartSongName(char *songLump, boolean loop)
 {
-	int cdTrack;
+	int     cdTrack;
 
 	if(!songLump)
 	{
@@ -209,17 +210,19 @@ void S_StartSongName(char *songLump, boolean loop)
 		{
 			cdTrack = P_GetCDEnd3Track();
 		}
-/*	Uncomment this, if Kevin writes a specific song for startup
-		else if(!strcmp(songLump, "start"))
-		{
-			cdTrack = P_GetCDStartTrack();
-		}
-*/
-		if(!cdTrack || (cdTrack == gi.CD(DD_GET_CURRENT_TRACK,0) && gi.CD(DD_GET_TIME_LEFT,0) > 0))
+		/*  Uncomment this, if Kevin writes a specific song for startup
+		   else if(!strcmp(songLump, "start"))
+		   {
+		   cdTrack = P_GetCDStartTrack();
+		   }
+		 */
+		if(!cdTrack
+		   || (cdTrack == gi.CD(DD_GET_CURRENT_TRACK, 0)
+			   && gi.CD(DD_GET_TIME_LEFT, 0) > 0))
 		{
 			return;
 		}
-		if(!gi.CD(loop? DD_PLAY_LOOP : DD_PLAY, cdTrack))
+		if(!gi.CD(loop ? DD_PLAY_LOOP : DD_PLAY, cdTrack))
 		{
 			// Clear the user selection?
 			s_CDTrack = false;
@@ -231,28 +234,28 @@ void S_StartSongName(char *songLump, boolean loop)
 		{
 			gi.StopSong();
 			/*if(UseSndScript)
-			{
-				Z_Free(Mus_SndPtr);
-			}
-			else
-			{*/
-				gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);
+			   {
+			   Z_Free(Mus_SndPtr);
+			   }
+			   else
+			   { */
+			gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);
 			//}
 			RegisteredSong = 0;
 		}
 		/*if(UseSndScript)
-		{
-			char name[128];
-			sprintf(name, "%s%s.lmp", ArchivePath, songLump);
-			gi.ReadFile(name, (byte **)&Mus_SndPtr);
-		}
-		else
-		{*/
-			Mus_LumpNum = W_GetNumForName(songLump);
-			Mus_SndPtr = W_CacheLumpNum(Mus_LumpNum, PU_MUSIC);
+		   {
+		   char name[128];
+		   sprintf(name, "%s%s.lmp", ArchivePath, songLump);
+		   gi.ReadFile(name, (byte **)&Mus_SndPtr);
+		   }
+		   else
+		   { */
+		Mus_LumpNum = W_GetNumForName(songLump);
+		Mus_SndPtr = W_CacheLumpNum(Mus_LumpNum, PU_MUSIC);
 		//}
-		RegisteredSong = gi.PlaySong(Mus_SndPtr, 
-			W_LumpLength(Mus_LumpNum), loop);
+		RegisteredSong =
+			gi.PlaySong(Mus_SndPtr, W_LumpLength(Mus_LumpNum), loop);
 		Mus_Song = -1;
 	}
 }
@@ -266,9 +269,8 @@ int S_GetSoundID(char *name)
 	return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 }
 
-
 #if 0
-void S_StopChannel(channel_t *chan)
+void S_StopChannel(channel_t * chan)
 {
 	if(chan->handle)
 	{
@@ -287,9 +289,9 @@ void S_StopChannel(channel_t *chan)
 
 void S_StopSoundID(int sound_id)
 {
-	int		i;
+	int     i;
 
-	for(i=0; i<numChannels; i++)
+	for(i = 0; i < numChannels; i++)
 		if(Channel[i].sound_id == sound_id && Channel[i].mo)
 		{
 			S_StopChannel(Channel + i);
@@ -303,11 +305,11 @@ void S_StopSoundID(int sound_id)
 //
 //==========================================================================
 
-void S_StopSound(mobj_t *origin)
+void S_StopSound(mobj_t * origin)
 {
-	int i;
+	int     i;
 
-	for(i=0; i<numChannels; i++)
+	for(i = 0; i < numChannels; i++)
 	{
 		if(Channel[i].mo == origin)
 		{
@@ -324,10 +326,10 @@ void S_StopSound(mobj_t *origin)
 
 void S_StopAllSound(void)
 {
-	int i;
+	int     i;
 
 	// Stop all sounds.
-	for(i=0; i<numChannels; i++) 
+	for(i = 0; i < numChannels; i++)
 		S_StopChannel(Channel + i);
 	memset(Channel, 0, numChannels * sizeof(channel_t));
 	listenerSector = NULL;
@@ -339,11 +341,11 @@ void S_StopAllSound(void)
 //
 //==========================================================================
 
-void S_SoundLink(mobj_t *oldactor, mobj_t *newactor)
+void S_SoundLink(mobj_t * oldactor, mobj_t * newactor)
 {
-	int i;
+	int     i;
 
-	for(i=0; i<numChannels; i++)
+	for(i = 0; i < numChannels; i++)
 		if(Channel[i].mo == oldactor)
 			Channel[i].mo = newactor;
 }
@@ -359,7 +361,7 @@ void S_PauseSound(void)
 	S_StopAllSound();
 	if(i_CDMusic)
 	{
-		gi.CD(DD_STOP,0);
+		gi.CD(DD_STOP, 0);
 	}
 	else
 	{
@@ -385,7 +387,6 @@ void S_ResumeSound(void)
 	}
 }
 
-
 //==========================================================================
 //
 // S_Init
@@ -405,12 +406,12 @@ void S_Init(void)
 //
 //==========================================================================
 
-void S_GetChannelInfo(SoundInfo_t *s)
+void S_GetChannelInfo(SoundInfo_t * s)
 {
-	int i;
+	int     i;
 	ChanInfo_t *c;
 
-	s->channelCount = numChannels<16? numChannels : 16;
+	s->channelCount = numChannels < 16 ? numChannels : 16;
 	s->musicVolume = 0;
 	s->soundVolume = 0;
 
@@ -422,8 +423,9 @@ void S_GetChannelInfo(SoundInfo_t *s)
 		c->name = S_sfx[c->id].lumpname;
 		c->mo = Channel[i].mo;
 		if(c->mo)
-			c->distance = P_ApproxDistance(c->mo->x-Get(DD_VIEWX), 
-			c->mo->y-Get(DD_VIEWY))>>FRACBITS;
+			c->distance =
+				P_ApproxDistance(c->mo->x - Get(DD_VIEWX),
+								 c->mo->y - Get(DD_VIEWY)) >> FRACBITS;
 		else
 			c->distance = -1;
 	}
@@ -435,11 +437,11 @@ void S_GetChannelInfo(SoundInfo_t *s)
 //
 //==========================================================================
 
-boolean S_GetSoundPlayingInfo(mobj_t *mobj, int sound_id)
+boolean S_GetSoundPlayingInfo(mobj_t * mobj, int sound_id)
 {
-	int i;
+	int     i;
 
-	for(i=0; i<numChannels; i++)
+	for(i = 0; i < numChannels; i++)
 		if(Channel[i].sound_id == sound_id && Channel[i].mo == mobj)
 			if(gi.SoundIsPlaying(Channel[i].handle))
 				return true;
@@ -461,23 +463,23 @@ void S_ShutDown(void)
 
 void S_Reset(void)
 {
-	int		i;
+	int     i;
 
 	S_StopAllSound();
 	Z_FreeTags(PU_SOUND, PU_SOUND);
-	for(i=0; i<NUMSFX; i++)
+	for(i = 0; i < NUMSFX; i++)
 	{
 		S_sfx[i].lumpnum = 0;
-		S_sfx[i].data = NULL;				
+		S_sfx[i].data = NULL;
 	}
 	// Music, too.
 	if(RegisteredSong)
 	{
 		gi.StopSong();
 		/*if(UseSndScript)
-			Z_Free(Mus_SndPtr);
-		else*/
-			gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);
+		   Z_Free(Mus_SndPtr);
+		   else */
+		gi.W_ChangeCacheTag(Mus_LumpNum, PU_CACHE);
 		RegisteredSong = 0;
 	}
 	Mus_Song = -1;
@@ -486,15 +488,15 @@ void S_Reset(void)
 
 //===========================================================================
 // S_LevelMusic
-//	Starts the song of the current level.
+//  Starts the song of the current level.
 //===========================================================================
 void S_LevelMusic(void)
 {
-	int idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-	
+	int     idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
+
 	// Update the 'currentmap' music definition.
 	Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gamemap));
-	Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, (void*) P_GetMapCDTrack(gamemap));
+	Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, (void *) P_GetMapCDTrack(gamemap));
 	S_StartMusic("currentmap", true);
 }
 
@@ -503,8 +505,8 @@ void S_LevelMusic(void)
 //==========================================================================
 void S_InitScript(void)
 {
-	int i;
-	char buf[80];
+	int     i;
+	char    buf[80];
 
 	strcpy(ArchivePath, DEFAULT_ARCHIVEPATH);
 	SC_OpenLump("SNDINFO");
@@ -533,8 +535,8 @@ void S_InitScript(void)
 			if((i = Def_Get(DD_DEF_SOUND_BY_NAME, sc_String, 0)))
 			{
 				SC_MustGetString();
-				Def_Set(DD_DEF_SOUND, i, DD_LUMP, 
-					*sc_String != '?'? sc_String : "default");
+				Def_Set(DD_DEF_SOUND, i, DD_LUMP,
+						*sc_String != '?' ? sc_String : "default");
 			}
 			else
 			{
@@ -548,11 +550,8 @@ void S_InitScript(void)
 	// All sounds left without a lumpname will use "DEFAULT".
 	for(i = 0; i < Get(DD_NUMSOUNDS); i++)
 	{
-		Def_Get(DD_DEF_SOUND_LUMPNAME, (char*) i, buf);
+		Def_Get(DD_DEF_SOUND_LUMPNAME, (char *) i, buf);
 		if(!strcmp(buf, ""))
 			Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");
 	}
 }
-
-
-

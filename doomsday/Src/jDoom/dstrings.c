@@ -16,19 +16,19 @@
 //
 //
 // DESCRIPTION:
-//	Globally defined strings.
+//  Globally defined strings.
 // 
 //-----------------------------------------------------------------------------
 
-
 #ifdef __GNUG__
-#pragma implementation "dstrings.h"
+#  pragma implementation "dstrings.h"
 #endif
 #include "dstrings.h"
 
+char   *endmsg[NUM_QUITMESSAGES + 1];
 
+									/*=
 
-char* endmsg[NUM_QUITMESSAGES + 1]; /*=
 { 
   // DOOM1
   //QUITMSG,
@@ -62,8 +62,3 @@ char* endmsg[NUM_QUITMESSAGES + 1]; /*=
   "THIS IS NO MESSAGE!\nPage intentionally left blank."
 };
 */
-
-  
-
-
-

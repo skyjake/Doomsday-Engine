@@ -24,12 +24,12 @@
 
 #include "r_things.h"
 
-extern int		modelLight;
-extern int		frameInter;
-extern int		mirrorHudModels;
-extern int		modelShinyMultitex;
-extern float	rend_model_lod;
+extern int      modelLight;
+extern int      frameInter;
+extern int      mirrorHudModels;
+extern int      modelShinyMultitex;
+extern float    rend_model_lod;
 
-void Rend_RenderModel(vissprite_t *spr);
+void            Rend_RenderModel(vissprite_t * spr);
 
-#endif 
+#endif

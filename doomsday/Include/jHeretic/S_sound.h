@@ -3,7 +3,6 @@
 
 #include "Sounds.h"
 
-void S_LevelMusic(void);
+void            S_LevelMusic(void);
 
 #endif
-

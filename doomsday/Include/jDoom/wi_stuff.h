@@ -27,38 +27,40 @@
 
 // States for the intermission
 
-typedef enum
-{
-    NoState = -1,
-    StatCount,
-    ShowNextLoc
-
+typedef enum {
+	NoState = -1,
+	StatCount,
+	ShowNextLoc
 } stateenum_t;
 
 // Called by main loop, animate the intermission.
-void WI_Ticker (void);
+void            WI_Ticker(void);
 
 // Called by main loop,
 // draws the intermission directly into the screen buffer.
-void WI_Drawer (void);
+void            WI_Drawer(void);
 
 // Setup for an intermission screen.
-void WI_Start(wbstartstruct_t *wbstartstruct);
+void            WI_Start(wbstartstruct_t * wbstartstruct);
 
-void WI_SetState(stateenum_t st);
-void WI_End(void);
+void            WI_SetState(stateenum_t st);
+void            WI_End(void);
 
 // Implements patch replacement.
-void WI_DrawPatch(int x, int y, int lump);
+void            WI_DrawPatch(int x, int y, int lump);
 
-void WI_DrawParamText
-	(int x, int y, char *string, dpatch_t *defFont, float defRed,
-	 float defGreen, float defBlue, boolean defCase, boolean defTypeIn);
+void            WI_DrawParamText(int x, int y, char *string,
+								 dpatch_t * defFont, float defRed,
+								 float defGreen, float defBlue,
+								 boolean defCase, boolean defTypeIn);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.5  2004/05/28 17:16:36  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -82,4 +84,3 @@ void WI_DrawParamText
 //
 //
 //-----------------------------------------------------------------------------
-

@@ -16,7 +16,7 @@
 //
 //
 // DESCRIPTION:
-//	Cheat sequence checking.
+//  Cheat sequence checking.
 //
 //-----------------------------------------------------------------------------
 
@@ -37,167 +37,162 @@
 // CHEAT SEQUENCE PACKAGE
 //
 
-static int		firsttime = 1;
-static unsigned char	cheat_xlate_table[256];
-
+static int firsttime = 1;
+static unsigned char cheat_xlate_table[256];
 
 //
 // Called in st_stuff module, which handles the input.
 // Returns a 1 if the cheat was successful, 0 if failed.
 //
-int
-cht_CheckCheat
-( cheatseq_t*	cht,
- char		key )
+int cht_CheckCheat(cheatseq_t * cht, char key)
 {
-    int i;
-    int rc = 0;
-	
-    if (firsttime)
-    {
+	int     i;
+	int     rc = 0;
+
+	if(firsttime)
+	{
 		firsttime = 0;
-		for (i=0;i<256;i++) cheat_xlate_table[i] = SCRAMBLE(i);
-    }
-	
-    if (!cht->p)
-		cht->p = cht->sequence; // initialize if first time
-	
-    if (*cht->p == 0)
+		for(i = 0; i < 256; i++)
+			cheat_xlate_table[i] = SCRAMBLE(i);
+	}
+
+	if(!cht->p)
+		cht->p = cht->sequence;	// initialize if first time
+
+	if(*cht->p == 0)
 		*(cht->p++) = key;
-    else if
-		(cheat_xlate_table[(unsigned char)key] == *cht->p) cht->p++;
-    else
-		cht->p = cht->sequence;
-	
-    if (*cht->p == 1)
+	else if(cheat_xlate_table[(unsigned char) key] == *cht->p)
 		cht->p++;
-    else if (*cht->p == 0xff) // end of sequence character
-    {
+	else
+		cht->p = cht->sequence;
+
+	if(*cht->p == 1)
+		cht->p++;
+	else if(*cht->p == 0xff)	// end of sequence character
+	{
 		cht->p = cht->sequence;
 		rc = 1;
-    }
-	
-    return rc;
+	}
+
+	return rc;
 }
 
-void
-cht_GetParam
-( cheatseq_t*	cht,
- char*		buffer )
+void cht_GetParam(cheatseq_t * cht, char *buffer)
 {
-	
-    unsigned char *p, c;
-	
-    p = cht->sequence;
-    while (*(p++) != 1);
-    
-    do
-    {
+
+	unsigned char *p, c;
+
+	p = cht->sequence;
+	while(*(p++) != 1);
+
+	do
+	{
 		c = *p;
 		*(buffer++) = c;
 		*(p++) = 0;
-    }
-    while (c && *p!=0xff );
-	
-    if (*p==0xff)
+	}
+	while(c && *p != 0xff);
+
+	if(*p == 0xff)
 		*buffer = 0;
-	
+
 }
 
-
-void cht_GodFunc(player_t *plyr)
+void cht_GodFunc(player_t * plyr)
 {
 	plyr->cheats ^= CF_GODMODE;
 	plyr->update |= PSF_STATE;
-	if (plyr->cheats & CF_GODMODE)
+	if(plyr->cheats & CF_GODMODE)
 	{
-		if (plyr->plr->mo) plyr->plr->mo->health = maxhealth;
+		if(plyr->plr->mo)
+			plyr->plr->mo->health = maxhealth;
 		plyr->health = maxhealth;
 		plyr->update |= PSF_HEALTH;
 	}
-	P_SetMessage(plyr, (plyr->cheats & CF_GODMODE)? 
-		STSTR_DQDON : STSTR_DQDOFF);
+	P_SetMessage(plyr,
+				 (plyr->cheats & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF);
 }
 
-void cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
+void cht_GiveFunc(player_t * plyr, boolean weapons, boolean ammo,
 				  boolean armor, boolean cards)
 {
-	int		i;
+	int     i;
 
 	if(armor)
 	{
-		plyr->armorpoints = armorpoints[1]; //200;
+		plyr->armorpoints = armorpoints[1];	//200;
 		plyr->armortype = 2;
 		plyr->update |= PSF_STATE | PSF_ARMOR_POINTS;
 	}
 	if(weapons)
 	{
 		plyr->update |= PSF_OWNED_WEAPONS;
-		for (i=0;i<NUMWEAPONS;i++)
+		for(i = 0; i < NUMWEAPONS; i++)
 			plyr->weaponowned[i] = true;
 	}
 	if(ammo)
 	{
 		plyr->update |= PSF_AMMO;
-		for (i=0;i<NUMAMMO;i++)
+		for(i = 0; i < NUMAMMO; i++)
 			plyr->ammo[i] = plyr->maxammo[i];
 	}
 	if(cards)
 	{
 		plyr->update |= PSF_KEYS;
-		for (i=0;i<NUMCARDS;i++)
+		for(i = 0; i < NUMCARDS; i++)
 			plyr->cards[i] = true;
 	}
 }
 
-void cht_MusicFunc(player_t *plyr, char *buf)
+void cht_MusicFunc(player_t * plyr, char *buf)
 {
-	int	off, musnum;
+	int     off, musnum;
 
-	if (gamemode == commercial)
+	if(gamemode == commercial)
 	{
-		off = (buf[0]-'0')*10 + buf[1]-'0';
+		off = (buf[0] - '0') * 10 + buf[1] - '0';
 		musnum = mus_runnin + off - 1;
-		if (off < 1 || off > 35)
+		if(off < 1 || off > 35)
 			P_SetMessage(plyr, STSTR_NOMUS);
 		else
 			S_StartMusicNum(musnum, true);
 	}
 	else
 	{
-		off = (buf[0]-'1')*9 + (buf[1]-'1');
+		off = (buf[0] - '1') * 9 + (buf[1] - '1');
 		musnum = mus_e1m1 + off;
-		if (off > 31)
+		if(off > 31)
 			P_SetMessage(plyr, STSTR_NOMUS);
 		else
 			S_StartMusicNum(musnum, true);
 	}
 }
 
-void cht_NoClipFunc(player_t *plyr)
+void cht_NoClipFunc(player_t * plyr)
 {
 	plyr->cheats ^= CF_NOCLIP;
 	plyr->update |= PSF_STATE;
-	P_SetMessage(plyr, (plyr->cheats & CF_NOCLIP)? STSTR_NCON : STSTR_NCOFF);
+	P_SetMessage(plyr, (plyr->cheats & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF);
 }
 
-boolean cht_WarpFunc(player_t *plyr, char *buf)
+boolean cht_WarpFunc(player_t * plyr, char *buf)
 {
-	int		epsd, map;
+	int     epsd, map;
 
-	if (gamemode == commercial)
+	if(gamemode == commercial)
 	{
 		epsd = 1;
-		map = (buf[0] - '0')*10 + buf[1] - '0';
+		map = (buf[0] - '0') * 10 + buf[1] - '0';
 	}
 	else
 	{
 		epsd = buf[0] - '0';
 		map = buf[1] - '0';
 	}
-	
+
 	// Catch invalid maps.
-	if(!G_ValidateMap(&epsd, &map)) return false;
+	if(!G_ValidateMap(&epsd, &map))
+		return false;
 
 	// So be it.
 	P_SetMessage(plyr, STSTR_CLEV);
@@ -206,33 +201,30 @@ boolean cht_WarpFunc(player_t *plyr, char *buf)
 	return true;
 }
 
-void cht_PowerUpFunc(player_t *plyr, int i)
+void cht_PowerUpFunc(player_t * plyr, int i)
 {
 	plyr->update |= PSF_POWERS;
-	if (!plyr->powers[i])
-		P_GivePower( plyr, i);
-	else if (i!=pw_strength)
+	if(!plyr->powers[i])
+		P_GivePower(plyr, i);
+	else if(i != pw_strength)
 		plyr->powers[i] = 1;
 	else
 		plyr->powers[i] = 0;
 }
 
-void cht_ChoppersFunc(player_t *plyr)
+void cht_ChoppersFunc(player_t * plyr)
 {
 	plyr->weaponowned[wp_chainsaw] = true;
 	plyr->powers[pw_invulnerability] = true;
 }
 
-void cht_PosFunc(player_t *plyr)
+void cht_PosFunc(player_t * plyr)
 {
-	static char	buf[ST_MSGWIDTH];
+	static char buf[ST_MSGWIDTH];
 
 	sprintf(buf, "ang=0x%x;x,y=(0x%x,0x%x)",
-		players[consoleplayer].plr->mo->angle,
-		players[consoleplayer].plr->mo->x,
-		players[consoleplayer].plr->mo->y);
+			players[consoleplayer].plr->mo->angle,
+			players[consoleplayer].plr->mo->x,
+			players[consoleplayer].plr->mo->y);
 	P_SetMessage(plyr, buf);
 }
-
-
-

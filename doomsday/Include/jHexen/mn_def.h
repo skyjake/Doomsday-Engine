@@ -15,8 +15,7 @@
 
 // Types
 
-typedef enum
-{
+typedef enum {
 	ITT_EMPTY,
 	ITT_EFUNC,
 	ITT_LRFUNC,
@@ -24,8 +23,7 @@ typedef enum
 	ITT_INERT
 } ItemType_t;
 
-typedef enum
-{
+typedef enum {
 	MENU_MAIN,
 	MENU_CLASS,
 	MENU_SKILL,
@@ -54,58 +52,57 @@ typedef enum
 	MENU_NONE
 } MenuType_t;
 
-typedef struct
-{
-	ItemType_t type;
-	char *text;
-	void (*func)(int option);
-	int option;
-	MenuType_t menu;
+typedef struct {
+	ItemType_t      type;
+	char           *text;
+	void            (*func) (int option);
+	int             option;
+	MenuType_t      menu;
 } MenuItem_t;
 
-typedef struct
-{
-	int x;
-	int y;
-	void (*drawFunc)(void);
-	int itemCount;
-	MenuItem_t *items;
-	int oldItPos;
-	MenuType_t prevMenu;
+typedef struct {
+	int             x;
+	int             y;
+	void            (*drawFunc) (void);
+	int             itemCount;
+	MenuItem_t     *items;
+	int             oldItPos;
+	MenuType_t      prevMenu;
 	// Enhancements. -jk
-	void (*textDrawer)(char*,int,int);
-	int	itemHeight;
+	void            (*textDrawer) (char *, int, int);
+	int             itemHeight;
 	// For scrolling menus.
-	int firstItem, numVisItems;
-	float offset; // To y.
+	int             firstItem, numVisItems;
+	float           offset;		   // To y.
 } Menu_t;
 
+extern int      MenuTime;
+extern boolean  shiftdown;
+extern Menu_t  *CurrentMenu;
+extern int      CurrentItPos;
 
-extern int MenuTime;
-extern boolean shiftdown;
-extern Menu_t *CurrentMenu;
-extern int CurrentItPos;
-
-void SetMenu(MenuType_t menu);
+void            SetMenu(MenuType_t menu);
 
 // Multiplayer menus.
-extern Menu_t MultiplayerMenu;
+extern Menu_t   MultiplayerMenu;
+
 //extern Menu_t ProtocolMenu;
 //extern Menu_t HostMenu;
 //extern Menu_t JoinMenu;
-extern Menu_t GameSetupMenu;
-extern Menu_t PlayerSetupMenu;
+extern Menu_t   GameSetupMenu;
+extern Menu_t   PlayerSetupMenu;
+
 //extern Menu_t NetGameMenu;
 //extern Menu_t TCPIPMenu;
 //extern Menu_t SerialMenu;
 //extern Menu_t ModemMenu;
 
-void MN_DrawMenuText(Menu_t *menu, int index, char *text);
+void            MN_DrawMenuText(Menu_t * menu, int index, char *text);
 
-boolean SCEnterMultiplayerMenu(int option);
-void MN_TickerEx(void);	// The extended ticker.
+boolean         SCEnterMultiplayerMenu(int option);
+void            MN_TickerEx(void); // The extended ticker.
 
 // Edit field routines.
-boolean Ed_Responder(event_t *event);
+boolean         Ed_Responder(event_t * event);
 
-#endif // __MENU_DEFS_H_
+#endif							// __MENU_DEFS_H_

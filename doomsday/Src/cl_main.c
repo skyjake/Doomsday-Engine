@@ -38,7 +38,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void Net_ResetTimer(void);
+void    Net_ResetTimer(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -50,12 +50,12 @@ extern int gotframe;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-ident_t		clientID;
-boolean		handshakeReceived = false;
-int			gameReady = false;
-int			serverTime;
-boolean		netLoggedIn = false;	// Logged in to the server.
-boolean		clientPaused = false;	// Set by the server.
+ident_t clientID;
+boolean handshakeReceived = false;
+int     gameReady = false;
+int     serverTime;
+boolean netLoggedIn = false;	// Logged in to the server.
+boolean clientPaused = false;	// Set by the server.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -63,7 +63,7 @@ boolean		clientPaused = false;	// Set by the server.
 
 void Cl_InitID(void)
 {
-	FILE *file;
+	FILE   *file;
 
 	// Read the client ID number file.
 	srand(time(NULL));
@@ -74,8 +74,9 @@ void Cl_InitID(void)
 		return;
 	}
 	// Ah-ha, we need to generate a new ID.
-	clientID = Sys_GetRealTime()*rand() + (rand()&0xfff) + 
-		((rand()&0xfff)<<12) + ((rand()&0xff)<<24);
+	clientID =
+		Sys_GetRealTime() * rand() + (rand() & 0xfff) +
+		((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24);
 	// Write it to the file.
 	if((file = fopen("Client.ID", "wb")) != NULL)
 	{
@@ -108,11 +109,11 @@ void Cl_CleanUp()
  */
 void Cl_SendHello(void)
 {
-	char buf[16];
+	char    buf[16];
 
 	Msg_Begin(pcl_hello2);
 	Msg_WriteLong(clientID);
-	
+
 	// The game mode is included in the hello packet.
 	memset(buf, 0, sizeof(buf));
 	strncpy(buf, gx.Get(DD_GAME_MODE), sizeof(buf));
@@ -121,23 +122,24 @@ void Cl_SendHello(void)
 	Net_SendBuffer(0, SPF_ORDERED);
 }
 
-void Cl_AnswerHandshake(handshake_packet_t *pShake)
+void Cl_AnswerHandshake(handshake_packet_t * pShake)
 {
 	handshake_packet_t shake;
-	int	i;
+	int     i;
 
 	// Copy the data to a buffer of our own.
 	memcpy(&shake, pShake, sizeof(shake));
 
 	// Immediately send an acknowledgement.
 	Msg_Begin(pcl_ack_shake);
-	Net_SendBuffer(0, SPF_ORDERED);	
+	Net_SendBuffer(0, SPF_ORDERED);
 
 	// Check the version number.
 	if(shake.version != SV_VERSION)
 	{
-		Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
-			SV_VERSION, shake.version);
+		Con_Message
+			("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
+			 SV_VERSION, shake.version);
 		Con_Execute("net disconnect", false);
 		Demo_StopPlayback();
 		Con_Open(true);
@@ -145,10 +147,10 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	}
 
 	// Update time and player ingame status.
-	gameTime = shake.gameTime/100.0; 
+	gameTime = shake.gameTime / 100.0;
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
-		players[i].ingame = (shake.playerMask & (1<<i)) != 0;
+		players[i].ingame = (shake.playerMask & (1 << i)) != 0;
 	}
 	consoleplayer = displayplayer = shake.yourConsole;
 	clients[consoleplayer].numTics = 0;
@@ -159,7 +161,8 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	netLoggedIn = false;
 	clientPaused = false;
 
-	if(handshakeReceived) return;
+	if(handshakeReceived)
+		return;
 
 	// This prevents redundant re-initialization.
 	handshakeReceived = true;
@@ -167,9 +170,9 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	// Soon after this packet will follow the game's handshake.
 	gameReady = false;
 	Cl_InitFrame();
-	
+
 	Con_Printf("Cl_AnswerHandshake: myConsole:%i, gameTime:%i.\n",
-		shake.yourConsole, shake.gameTime);
+			   shake.yourConsole, shake.gameTime);
 
 	// Tell the game that we have arrived. The level will
 	// be changed when the game's handshake arrives (handled
@@ -184,15 +187,16 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	Net_ResetTimer();
 }
 
-void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
+void Cl_HandlePlayerInfo(playerinfo_packet_t * info)
 {
 	boolean present;
 
-	Con_Printf( "Cl_HandlePlayerInfo: console:%i name:%s\n",
-		info->console, info->name);
+	Con_Printf("Cl_HandlePlayerInfo: console:%i name:%s\n", info->console,
+			   info->name);
 
 	// Is the console number valid?
-	if(info->console >= MAXPLAYERS) return;
+	if(info->console >= MAXPLAYERS)
+		return;
 
 	present = players[info->console].ingame;
 	players[info->console].ingame = true;
@@ -218,7 +222,7 @@ void Cl_PlayerLeaves(int number)
  */
 void Cl_GetPackets(void)
 {
-	int		i;
+	int     i;
 
 	// All messages come from the server.
 	while(Net_GetPacket())
@@ -228,7 +232,8 @@ void Cl_GetPackets(void)
 		if(Cl_GameReady())
 		{
 			boolean handled = true;
-			switch(netBuffer.msg.type)
+
+			switch (netBuffer.msg.type)
 			{
 			case psv_frame:
 				Cl_FrameReceived();
@@ -242,7 +247,7 @@ void Cl_GetPackets(void)
 			case pkt_coords:
 				Cl_CoordsReceived();
 				break;
-				
+
 			case psv_sound:
 				Cl_Sound();
 				break;
@@ -254,10 +259,11 @@ void Cl_GetPackets(void)
 			default:
 				handled = false;
 			}
-			if(handled) continue; // Get the next packet.
+			if(handled)
+				continue;		// Get the next packet.
 		}
 		// How about the rest?
-		switch(netBuffer.msg.type)
+		switch (netBuffer.msg.type)
 		{
 		case pkt_democam:
 		case pkt_democam_resume:
@@ -271,32 +277,32 @@ void Cl_GetPackets(void)
 		case psv_sync:
 			// The server updates our time. Latency has been taken into
 			// account, so...
-			gameTime = Msg_ReadLong()/100.0;
+			gameTime = Msg_ReadLong() / 100.0;
 			Con_Printf("psv_sync: gameTime=%.3f\n", gameTime);
 			Net_ResetTimer();
 			break;
 
 		case psv_handshake:
-			Cl_AnswerHandshake( (handshake_packet_t*) netBuffer.msg.data);
+			Cl_AnswerHandshake((handshake_packet_t *) netBuffer.msg.data);
 			break;
-			
+
 		case pkt_player_info:
-			Cl_HandlePlayerInfo( (playerinfo_packet_t*) netBuffer.msg.data);		
+			Cl_HandlePlayerInfo((playerinfo_packet_t *) netBuffer.msg.data);
 			break;
-			
+
 		case psv_player_exit:
 			Cl_PlayerLeaves(Msg_ReadByte());
 			break;
-			
+
 		case pkt_chat:
 			Net_ShowChatMessage();
 			gx.NetPlayerEvent(netBuffer.msg.data[0], DDPE_CHAT_MESSAGE,
-				netBuffer.msg.data + 3);
+							  netBuffer.msg.data + 3);
 			break;
-			
+
 		case psv_server_close:	// We should quit?
 			netLoggedIn = false;
-			Con_Execute("net disconnect", true);		
+			Con_Execute("net disconnect", true);
 			break;
 
 		case psv_console_text:
@@ -313,9 +319,8 @@ void Cl_GetPackets(void)
 		default:
 			if(netBuffer.msg.type >= pkt_game_marker)
 			{
-				gx.HandlePacket(netBuffer.player,
-					netBuffer.msg.type, netBuffer.msg.data,
-					netBuffer.length);
+				gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
+								netBuffer.msg.data, netBuffer.length);
 			}
 		}
 	}
@@ -326,29 +331,32 @@ void Cl_GetPackets(void)
 //===========================================================================
 void Cl_Ticker(timespan_t time)
 {
-	static trigger_t fixed = { 1.0/35 };
+	static trigger_t fixed = { 1.0 / 35 };
 
-	if(!Cl_GameReady() || clientPaused) return;
+	if(!Cl_GameReady() || clientPaused)
+		return;
 
-	if(!M_CheckTrigger(&fixed, time)) return;
+	if(!M_CheckTrigger(&fixed, time))
+		return;
 
 	Cl_LocalCommand();
-	Cl_PredictMovement();	
+	Cl_PredictMovement();
 	Cl_MovePsprites();
 }
 
 //========================================================================
 // CCmdLogin
-//	Clients use this to establish a remote connection to the server.
+//  Clients use this to establish a remote connection to the server.
 //========================================================================
 int CCmdLogin(int argc, char **argv)
 {
 	// Only clients can log in.
-	if(!isClient) return false;
+	if(!isClient)
+		return false;
 	Msg_Begin(pkt_login);
 	// Write the password.
 	if(argc == 1)
-		Msg_WriteByte(0);	// No password given!
+		Msg_WriteByte(0);		// No password given!
 	else
 		Msg_Write(argv[1], strlen(argv[1]) + 1);
 	Net_SendBuffer(0, SPF_ORDERED);

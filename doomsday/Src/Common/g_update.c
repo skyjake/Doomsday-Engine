@@ -11,24 +11,24 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-#include "doomdef.h"
-#include "doomstat.h"
-#include "p_setup.h"
-#include "p_local.h"
-#include "m_menu.h"
-#include "dstrings.h"
-#include "s_sound.h"
+#  include "doomdef.h"
+#  include "doomstat.h"
+#  include "p_setup.h"
+#  include "p_local.h"
+#  include "m_menu.h"
+#  include "dstrings.h"
+#  include "s_sound.h"
 #endif
 
 #if __JHERETIC__
-#include "Doomdef.h"
-#include "S_sound.h"
-#include "Soundst.h"
+#  include "Doomdef.h"
+#  include "S_sound.h"
+#  include "Soundst.h"
 #endif
 
 #if __JHEXEN__
-#include "h2def.h"
-#include "p_local.h"
+#  include "h2def.h"
+#  include "p_local.h"
 #endif
 
 #include <ctype.h>
@@ -37,7 +37,7 @@
 // MACROS ------------------------------------------------------------------
 
 #if __JHEXEN__
-#define thinkercap					(*gi.thinkercap)
+#  define thinkercap					(*gi.thinkercap)
 #endif
 
 #define MANGLE_STATE(x)		((state_t*) ((x)? (x)-states : -1))
@@ -48,7 +48,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 #if __JHEXEN__
-void S_InitScript(void);
+void    S_InitScript(void);
 #endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -71,8 +71,10 @@ static char *ScanWord(char *ptr, char *buf)
 	if(ptr)
 	{
 		// Skip whitespace at beginning.
-		while(*ptr && isspace(*ptr)) ptr++;
-		while(*ptr && !isspace(*ptr)) *buf++ = *ptr++;
+		while(*ptr && isspace(*ptr))
+			ptr++;
+		while(*ptr && !isspace(*ptr))
+			*buf++ = *ptr++;
 	}
 	*buf = 0;
 	return ptr;
@@ -83,9 +85,9 @@ static char *ScanWord(char *ptr, char *buf)
 //===========================================================================
 void G_SetGlowing(void)
 {
-	char	*ptr;
-	char	buf[50];
-	
+	char   *ptr;
+	char    buf[50];
+
 	if(!ArgCheck("-noglow"))
 	{
 		ptr = GET_TXT(TXT_RENDER_GLOWFLATS);
@@ -93,44 +95,46 @@ void G_SetGlowing(void)
 		for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
 		{
 			// Is there such a flat?
-			if(W_CheckNumForName(buf) == -1) continue;
-			Set(DD_TEXTURE_GLOW, 
+			if(W_CheckNumForName(buf) == -1)
+				continue;
+			Set(DD_TEXTURE_GLOW,
 				DD_TGLOW_PARM(R_FlatNumForName(buf), false, true));
 		}
 		ptr = GET_TXT(TXT_RENDER_GLOWTEXTURES);
 		for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
 		{
 			// Is there such a flat?
-			if(R_CheckTextureNumForName(buf) == -1) continue;
-			Set(DD_TEXTURE_GLOW, 
-				DD_TGLOW_PARM(R_TextureNumForName(buf), 
-				true, true));
+			if(R_CheckTextureNumForName(buf) == -1)
+				continue;
+			Set(DD_TEXTURE_GLOW,
+				DD_TGLOW_PARM(R_TextureNumForName(buf), true, true));
 		}
 	}
 }
 
 //===========================================================================
 // G_MangleState
-//	Called before the engine re-inits the definitions. After that all the
-//	state, info, etc. pointers will be obsolete.
+//  Called before the engine re-inits the definitions. After that all the
+//  state, info, etc. pointers will be obsolete.
 //===========================================================================
 void G_MangleState(void)
 {
 	thinker_t *it;
 	mobj_t *mo;
-	int i, k;
+	int     i, k;
 
 	for(it = thinkercap.next; it != &thinkercap && it; it = it->next)
 	{
-		if(it->function != P_MobjThinker) continue;
-		mo = (mobj_t*) it;
+		if(it->function != P_MobjThinker)
+			continue;
+		mo = (mobj_t *) it;
 		mo->state = MANGLE_STATE(mo->state);
-		mo->info = (mobjinfo_t*) (mo->info - mobjinfo);
+		mo->info = (mobjinfo_t *) (mo->info - mobjinfo);
 	}
 	for(i = 0; i < MAXPLAYERS; i++)
 		for(k = 0; k < NUMPSPRITES; k++)
-			players[i].psprites[k].state = MANGLE_STATE
-				(players[i].psprites[k].state);
+			players[i].psprites[k].state =
+				MANGLE_STATE(players[i].psprites[k].state);
 }
 
 //===========================================================================
@@ -140,29 +144,30 @@ void G_RestoreState(void)
 {
 	thinker_t *it;
 	mobj_t *mo;
-	int i, k;
+	int     i, k;
 
 	for(it = thinkercap.next; it != &thinkercap && it; it = it->next)
 	{
-		if(it->function != P_MobjThinker) continue;
-		mo = (mobj_t*) it;
+		if(it->function != P_MobjThinker)
+			continue;
+		mo = (mobj_t *) it;
 		mo->state = RESTORE_STATE(mo->state);
-		mo->info = &mobjinfo[ (int) mo->info];
+		mo->info = &mobjinfo[(int) mo->info];
 	}
 	for(i = 0; i < MAXPLAYERS; i++)
 		for(k = 0; k < NUMPSPRITES; k++)
-			players[i].psprites[k].state = RESTORE_STATE
-				(players[i].psprites[k].state);
+			players[i].psprites[k].state =
+				RESTORE_STATE(players[i].psprites[k].state);
 	HU_UpdatePsprites();
 }
 
 //===========================================================================
 // G_UpdateState
-//	Handles engine updates and renderer restarts.
+//  Handles engine updates and renderer restarts.
 //===========================================================================
 void G_UpdateState(int step)
 {
-	switch(step)
+	switch (step)
 	{
 	case DD_GAME_MODE:
 		// Set the game mode string.
@@ -170,7 +175,7 @@ void G_UpdateState(int step)
 		D_IdentifyVersion();
 #elif __JHERETIC__
 		H_IdentifyVersion();
-#else // __JHEXEN__
+#else							// __JHEXEN__
 		H2_IdentifyVersion();
 #endif
 		break;
@@ -178,7 +183,7 @@ void G_UpdateState(int step)
 	case DD_PRE:
 		G_MangleState();
 		break;
-	
+
 	case DD_POST:
 		G_RestoreState();
 		P_Init();
@@ -189,11 +194,11 @@ void G_UpdateState(int step)
 		S_LevelMusic();
 #elif __JHERETIC__
 		XG_Update();
-		SB_Init(); // Updates the status bar patches.
+		SB_Init();				// Updates the status bar patches.
 		MN_Init();
 		S_LevelMusic();
 #elif __JHEXEN__
-		SB_Init(); // Updates the status bar patches.
+		SB_Init();				// Updates the status bar patches.
 		MN_Init();
 		S_InitScript();
 		SN_InitSequenceScript();
@@ -216,4 +221,3 @@ void G_UpdateState(int step)
 		break;
 	}
 }
-

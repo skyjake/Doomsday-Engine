@@ -3,8 +3,8 @@
 //**
 //** COMMON.C
 //**
-//** Target:		DGL Driver for OpenGL
-//** Description:	Portable Init/State Routines
+//** Target:        DGL Driver for OpenGL
+//** Description:   Portable Init/State Routines
 //**
 //** Get OpenGL header files from:
 //** http://oss.sgi.com/projects/ogl-sample/ 
@@ -31,8 +31,8 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float 	nearClip, farClip;
-int		useFog;
+float   nearClip, farClip;
+int     useFog;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -46,7 +46,7 @@ void initState(void)
 	GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
 	nearClip = 5;
-	farClip = 8000;	
+	farClip = 8000;
 	polyCounter = 0;
 
 	usePalTex = DGL_FALSE;
@@ -90,13 +90,13 @@ void initState(void)
 	glFogi(GL_FOG_END, 2100);	// This should be tweaked a bit.
 	glFogfv(GL_FOG_COLOR, fogcol);
 
-/*	if(!noArrays)
-	{
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		texCoordPtrEnabled = false;
-	}*/
+	/*  if(!noArrays)
+	   {
+	   glEnableClientState(GL_VERTEX_ARRAY);
+	   glEnableClientState(GL_COLOR_ARRAY);
+	   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	   texCoordPtrEnabled = false;
+	   } */
 
 #if DRMESA
 	glDisable(GL_DITHER);
@@ -112,28 +112,28 @@ void initState(void)
 
 	// Prefer good quality in texture compression.
 	glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
-	
-/*#ifdef RENDER_WIREFRAME
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-#else
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif*/
+
+	/*#ifdef RENDER_WIREFRAME
+	   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	   #else
+	   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	   #endif */
 }
 
 //===========================================================================
 // envAddColoredAlpha
-//	Requires a texture environment mode that can add and multiply.
-//	Nvidia's and ATI's appropriate extensions are supported, other 
-//	cards will not be able to utilize multitextured lights.
+//  Requires a texture environment mode that can add and multiply.
+//  Nvidia's and ATI's appropriate extensions are supported, other 
+//  cards will not be able to utilize multitextured lights.
 //===========================================================================
 void envAddColoredAlpha(int activate, GLenum addFactor)
 {
 	if(activate)
 	{
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-			extNvTexEnvComb? GL_COMBINE4_NV : GL_COMBINE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
+				  extNvTexEnvComb ? GL_COMBINE4_NV : GL_COMBINE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-		
+
 		// Combine: texAlpha * constRGB + 1 * prevRGB
 		if(extNvTexEnvComb)
 		{
@@ -157,7 +157,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
 			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_COLOR);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
 			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-		}		
+		}
 		else
 		{
 			// This doesn't look right.
@@ -176,9 +176,9 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
 
 //===========================================================================
 // envModMultiTex
-//	Setup the texture environment for single-pass multiplicative lighting.
-//	The last texture unit is always used for the texture modulation.
-//	TUs 1...n-1 are used for dynamic lights.
+//  Setup the texture environment for single-pass multiplicative lighting.
+//  The last texture unit is always used for the texture modulation.
+//  TUs 1...n-1 are used for dynamic lights.
 //===========================================================================
 void envModMultiTex(int activate)
 {
@@ -208,8 +208,10 @@ void DG_Clear(int bufferbits)
 {
 	GLbitfield mask = 0;
 
-	if(bufferbits & DGL_COLOR_BUFFER_BIT) mask |= GL_COLOR_BUFFER_BIT;
-	if(bufferbits & DGL_DEPTH_BUFFER_BIT) mask |= GL_DEPTH_BUFFER_BIT;
+	if(bufferbits & DGL_COLOR_BUFFER_BIT)
+		mask |= GL_COLOR_BUFFER_BIT;
+	if(bufferbits & DGL_DEPTH_BUFFER_BIT)
+		mask |= GL_DEPTH_BUFFER_BIT;
 	glClear(mask);
 }
 
@@ -218,7 +220,7 @@ void DG_Clear(int bufferbits)
 //===========================================================================
 void DG_Viewport(int x, int y, int width, int height)
 {
-	glViewport(x, FLIP(y+height-1), width, height);
+	glViewport(x, FLIP(y + height - 1), width, height);
 }
 
 //===========================================================================
@@ -226,18 +228,18 @@ void DG_Viewport(int x, int y, int width, int height)
 //===========================================================================
 void DG_Scissor(int x, int y, int width, int height)
 {
-	glScissor(x, FLIP(y+height-1), width, height);
+	glScissor(x, FLIP(y + height - 1), width, height);
 }
 
 //===========================================================================
 // DG_GetIntegerv
 //===========================================================================
-int	DG_GetIntegerv(int name, int *v)
+int DG_GetIntegerv(int name, int *v)
 {
-	int i;
-	float color[4];
+	int     i;
+	float   color[4];
 
-	switch(name)
+	switch (name)
 	{
 	case DGL_VERSION:
 		*v = DGL_VERSION_NUM;
@@ -270,7 +272,7 @@ int	DG_GetIntegerv(int name, int *v)
 
 	case DGL_SCISSOR_BOX:
 		glGetIntegerv(GL_SCISSOR_BOX, v);
-		v[1] = FLIP(v[1]+v[3]-1);
+		v[1] = FLIP(v[1] + v[3] - 1);
 		break;
 
 	case DGL_FOG:
@@ -299,7 +301,8 @@ int	DG_GetIntegerv(int name, int *v)
 
 	case DGL_RGBA:
 		glGetFloatv(GL_CURRENT_COLOR, color);
-		for(i = 0; i < 4; i++) v[i] = (int) (color[i] * 255);
+		for(i = 0; i < 4; i++)
+			v[i] = (int) (color[i] * 255);
 		break;
 
 	case DGL_POLY_COUNT:
@@ -322,7 +325,8 @@ int	DG_GetIntegerv(int name, int *v)
 //===========================================================================
 int DG_GetInteger(int name)
 {
-	int values[10];
+	int     values[10];
+
 	DG_GetIntegerv(name, values);
 	return values[0];
 }
@@ -330,14 +334,14 @@ int DG_GetInteger(int name)
 //===========================================================================
 // DG_SetInteger
 //===========================================================================
-int	DG_SetInteger(int name, int value)
+int DG_SetInteger(int name, int value)
 {
 #ifdef WIN32
 	extern HWND windowHandle;
 #endif
-	float color[4];
+	float   color[4];
 
-	switch(name)
+	switch (name)
 	{
 #ifdef WIN32
 	case DGL_WINDOW_HANDLE:
@@ -363,12 +367,12 @@ int	DG_SetInteger(int name, int value)
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		}
 		else if(value == 2 || value == 3)
-		{	
+		{
 			// Texture modulation and interpolation.
 			activeTexture(GL_TEXTURE1);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-			if(value == 2) // Used with surfaces that have a color.
+			if(value == 2)		// Used with surfaces that have a color.
 			{
 				// TU 2: Modulate previous with primary color.
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
@@ -378,7 +382,7 @@ int	DG_SetInteger(int name, int value)
 				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 
 			}
-			else // Mode 3: Used with surfaces with no primary color.
+			else				// Mode 3: Used with surfaces with no primary color.
 			{
 				// TU 2: Pass through.
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
@@ -387,8 +391,8 @@ int	DG_SetInteger(int name, int value)
 			}
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);	
-			
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+
 			// TU 1: Interpolate between texture 1 and 2, using the constant 
 			// alpha as the factor.
 			activeTexture(GL_TEXTURE0);
@@ -401,7 +405,7 @@ int	DG_SetInteger(int name, int value)
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
 			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
 			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-			
+
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
 			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
@@ -415,15 +419,15 @@ int	DG_SetInteger(int name, int value)
 		{
 			// Sector light * texture + dynamic light.
 			activeTexture(GL_TEXTURE1);
-			envAddColoredAlpha(true, 
-				value == 5? GL_SRC_ALPHA : GL_SRC_COLOR);
-			
+			envAddColoredAlpha(true, value == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
+
 			// Alpha remains unchanged.
 			if(extNvTexEnvComb)
 			{
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
-				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA,
+						  GL_ONE_MINUS_SRC_ALPHA);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PREVIOUS);
 				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_ZERO);
@@ -456,7 +460,7 @@ int	DG_SetInteger(int name, int value)
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
-			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);	
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
 		}
 		else if(value == 8 || value == 9)
@@ -474,13 +478,13 @@ int	DG_SetInteger(int name, int value)
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
 			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-			
+
 			activeTexture(GL_TEXTURE0);
 			if(value == 8)
 			{
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			}
-			else // Mode 9: Ignore primary color.
+			else				// Mode 9: Ignore primary color.
 			{
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			}
@@ -518,17 +522,17 @@ int	DG_SetInteger(int name, int value)
 
 	case DGL_ENV_ALPHA:
 		color[0] = color[1] = color[2] = 0;
-		color[3] = value/256.0f;
+		color[3] = value / 256.0f;
 		glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 		break;
 
 	case DGL_GRAY_MIPMAP:
-		grayMipmapFactor = value/255.0f;
+		grayMipmapFactor = value / 255.0f;
 		break;
 
 	case DGL_CULL_FACE:
-		glFrontFace(value == DGL_CCW? GL_CW : GL_CCW);
-		break;			
+		glFrontFace(value == DGL_CCW ? GL_CW : GL_CCW);
+		break;
 
 	default:
 		return DGL_ERROR;
@@ -539,9 +543,9 @@ int	DG_SetInteger(int name, int value)
 //===========================================================================
 // DG_GetString
 //===========================================================================
-char* DG_GetString(int name)
+char   *DG_GetString(int name)
 {
-	switch(name)
+	switch (name)
 	{
 	case DGL_VERSION:
 		return DROGL_VERSION_FULL;
@@ -554,7 +558,7 @@ char* DG_GetString(int name)
 //===========================================================================
 int DG_SetFloatv(int name, float *values)
 {
-	switch(name)
+	switch (name)
 	{
 	case DGL_ENV_COLOR:
 		glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, values);
@@ -565,13 +569,13 @@ int DG_SetFloatv(int name, float *values)
 	}
 	return DGL_OK;
 }
-	
+
 //===========================================================================
 // DG_Enable
 //===========================================================================
 int DG_Enable(int cap)
 {
-	switch(cap)
+	switch (cap)
 	{
 	case DGL_TEXTURING:
 #ifndef DRMESA
@@ -648,7 +652,7 @@ int DG_Enable(int cap)
 //===========================================================================
 void DG_Disable(int cap)
 {
-	switch(cap)
+	switch (cap)
 	{
 	case DGL_TEXTURING:
 		glDisable(GL_TEXTURE_2D);
@@ -725,59 +729,57 @@ void DG_Disable(int cap)
 //===========================================================================
 void DG_Func(int func, int param1, int param2)
 {
-	switch(func)
+	switch (func)
 	{
 	case DGL_BLENDING:
-		glBlendFunc(param1==DGL_ZERO?			GL_ZERO
-			: param1==DGL_ONE?					GL_ONE
-			: param1==DGL_DST_COLOR?			GL_DST_COLOR
-			: param1==DGL_ONE_MINUS_DST_COLOR?	GL_ONE_MINUS_DST_COLOR
-			: param1==DGL_SRC_ALPHA?			GL_SRC_ALPHA
-			: param1==DGL_ONE_MINUS_SRC_ALPHA?	GL_ONE_MINUS_SRC_ALPHA
-			: param1==DGL_DST_ALPHA?			GL_DST_ALPHA
-			: param1==DGL_ONE_MINUS_DST_ALPHA?	GL_ONE_MINUS_DST_ALPHA
-			: param1==DGL_SRC_ALPHA_SATURATE?	GL_SRC_ALPHA_SATURATE
-			: GL_ZERO,
-
-			param2==DGL_ZERO?					GL_ZERO
-			: param2==DGL_ONE?					GL_ONE
-			: param2==DGL_SRC_COLOR?			GL_SRC_COLOR
-			: param2==DGL_ONE_MINUS_SRC_COLOR?	GL_ONE_MINUS_SRC_COLOR
-			: param2==DGL_SRC_ALPHA?			GL_SRC_ALPHA
-			: param2==DGL_ONE_MINUS_SRC_ALPHA?	GL_ONE_MINUS_SRC_ALPHA
-			: param2==DGL_DST_ALPHA?			GL_DST_ALPHA
-			: param2==DGL_ONE_MINUS_DST_ALPHA?	GL_ONE_MINUS_DST_ALPHA
-			: GL_ZERO);
+		glBlendFunc(param1 == DGL_ZERO ? GL_ZERO : param1 ==
+					DGL_ONE ? GL_ONE : param1 ==
+					DGL_DST_COLOR ? GL_DST_COLOR : param1 ==
+					DGL_ONE_MINUS_DST_COLOR ? GL_ONE_MINUS_DST_COLOR : param1
+					== DGL_SRC_ALPHA ? GL_SRC_ALPHA : param1 ==
+					DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA : param1
+					== DGL_DST_ALPHA ? GL_DST_ALPHA : param1 ==
+					DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA : param1
+					==
+					DGL_SRC_ALPHA_SATURATE ? GL_SRC_ALPHA_SATURATE : GL_ZERO,
+					param2 == DGL_ZERO ? GL_ZERO : param2 ==
+					DGL_ONE ? GL_ONE : param2 ==
+					DGL_SRC_COLOR ? GL_SRC_COLOR : param2 ==
+					DGL_ONE_MINUS_SRC_COLOR ? GL_ONE_MINUS_SRC_COLOR : param2
+					== DGL_SRC_ALPHA ? GL_SRC_ALPHA : param2 ==
+					DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA : param2
+					== DGL_DST_ALPHA ? GL_DST_ALPHA : param2 ==
+					DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA :
+					GL_ZERO);
 		break;
 
 	case DGL_BLENDING_OP:
-		if(!glBlendEquationEXT) break;
-		glBlendEquationEXT(param1==DGL_SUBTRACT?	GL_FUNC_SUBTRACT
-			: param1==DGL_REVERSE_SUBTRACT?			GL_FUNC_REVERSE_SUBTRACT
-			: GL_FUNC_ADD);
+		if(!glBlendEquationEXT)
+			break;
+		glBlendEquationEXT(param1 ==
+						   DGL_SUBTRACT ? GL_FUNC_SUBTRACT : param1 ==
+						   DGL_REVERSE_SUBTRACT ? GL_FUNC_REVERSE_SUBTRACT :
+						   GL_FUNC_ADD);
 		break;
 
 	case DGL_DEPTH_TEST:
-		glDepthFunc(param1==DGL_NEVER?	GL_NEVER
-			: param1==DGL_LESS?			GL_LESS
-			: param1==DGL_EQUAL?		GL_EQUAL
-			: param1==DGL_LEQUAL?		GL_LEQUAL
-			: param1==DGL_GREATER?		GL_GREATER
-			: param1==DGL_NOTEQUAL?		GL_NOTEQUAL
-			: param1==DGL_GEQUAL?		GL_GEQUAL
-			: GL_ALWAYS);
+		glDepthFunc(param1 == DGL_NEVER ? GL_NEVER : param1 ==
+					DGL_LESS ? GL_LESS : param1 ==
+					DGL_EQUAL ? GL_EQUAL : param1 ==
+					DGL_LEQUAL ? GL_LEQUAL : param1 ==
+					DGL_GREATER ? GL_GREATER : param1 ==
+					DGL_NOTEQUAL ? GL_NOTEQUAL : param1 ==
+					DGL_GEQUAL ? GL_GEQUAL : GL_ALWAYS);
 		break;
 
 	case DGL_ALPHA_TEST:
-		glAlphaFunc(param1==DGL_NEVER?	GL_NEVER
-			: param1==DGL_LESS?			GL_LESS
-			: param1==DGL_EQUAL?		GL_EQUAL
-			: param1==DGL_LEQUAL?		GL_LEQUAL
-			: param1==DGL_GREATER?		GL_GREATER
-			: param1==DGL_NOTEQUAL?		GL_NOTEQUAL
-			: param1==DGL_GEQUAL?		GL_GEQUAL
-			: GL_ALWAYS,
-			param2 / 255.0f);
+		glAlphaFunc(param1 == DGL_NEVER ? GL_NEVER : param1 ==
+					DGL_LESS ? GL_LESS : param1 ==
+					DGL_EQUAL ? GL_EQUAL : param1 ==
+					DGL_LEQUAL ? GL_LEQUAL : param1 ==
+					DGL_GREATER ? GL_GREATER : param1 ==
+					DGL_NOTEQUAL ? GL_NOTEQUAL : param1 ==
+					DGL_GEQUAL ? GL_GEQUAL : GL_ALWAYS, param2 / 255.0f);
 		break;
 	}
 }
@@ -787,9 +789,8 @@ void DG_Func(int func, int param1, int param2)
 //===========================================================================
 void DG_MatrixMode(int mode)
 {
-	glMatrixMode(mode==DGL_PROJECTION? GL_PROJECTION
-		: mode==DGL_TEXTURE? GL_TEXTURE
-		: GL_MODELVIEW);
+	glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION : mode ==
+				 DGL_TEXTURE ? GL_TEXTURE : GL_MODELVIEW);
 }
 
 //===========================================================================
@@ -843,7 +844,8 @@ void DG_Scalef(float x, float y, float z)
 //===========================================================================
 // DG_Ortho
 //===========================================================================
-void DG_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
+void DG_Ortho(float left, float top, float right, float bottom, float znear,
+			  float zfar)
 {
 	glOrtho(left, right, bottom, top, znear, zfar);
 }
@@ -861,11 +863,12 @@ void DG_Perspective(float fovy, float aspect, float zNear, float zFar)
 //===========================================================================
 int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
 {
-	if(format != DGL_RGB) return DGL_UNSUPPORTED;
+	if(format != DGL_RGB)
+		return DGL_UNSUPPORTED;
 	// y+height-1 is the bottom edge of the rectangle. It's
 	// flipped to change the origin.
-	glReadPixels(x, FLIP(y+height-1), width, height, GL_RGB,
-		GL_UNSIGNED_BYTE, buffer);
+	glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB,
+				 GL_UNSIGNED_BYTE, buffer);
 	return DGL_OK;
 }
 
@@ -874,14 +877,14 @@ int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
 //===========================================================================
 void DG_Fog(int pname, float param)
 {
-	int		iparam = (int) param;
+	int     iparam = (int) param;
 
-	switch(pname)
+	switch (pname)
 	{
 	case DGL_FOG_MODE:
-		glFogi(GL_FOG_MODE, param==DGL_LINEAR? GL_LINEAR
-			: param==DGL_EXP? GL_EXP
-			: GL_EXP2);
+		glFogi(GL_FOG_MODE,
+			   param == DGL_LINEAR ? GL_LINEAR : param ==
+			   DGL_EXP ? GL_EXP : GL_EXP2);
 		break;
 
 	case DGL_FOG_DENSITY:
@@ -899,9 +902,10 @@ void DG_Fog(int pname, float param)
 	case DGL_FOG_COLOR:
 		if(iparam >= 0 && iparam < 256)
 		{
-			float col[4];
-			int i;
-			for(i=0; i<4; i++)
+			float   col[4];
+			int     i;
+
+			for(i = 0; i < 4; i++)
 				col[i] = palette[iparam].color[i] / 255.0f;
 			glFogfv(GL_FOG_COLOR, col);
 		}
@@ -914,15 +918,15 @@ void DG_Fog(int pname, float param)
 //===========================================================================
 void DG_Fogv(int pname, void *data)
 {
-	float	param = *(float*) data;
-	byte	*ubvparam = (byte*) data;
-	float	col[4];
-	int		i;
+	float   param = *(float *) data;
+	byte   *ubvparam = (byte *) data;
+	float   col[4];
+	int     i;
 
-	switch(pname)
+	switch (pname)
 	{
 	case DGL_FOG_COLOR:
-		for(i=0; i<4; i++)
+		for(i = 0; i < 4; i++)
 			col[i] = ubvparam[i] / 255.0f;
 		glFogfv(GL_FOG_COLOR, col);
 		break;
@@ -935,17 +939,19 @@ void DG_Fogv(int pname, void *data)
 
 //===========================================================================
 // DG_Project
-//	Clipping is performed. 
+//  Clipping is performed. 
 //===========================================================================
-int DG_Project(int num, gl_fc3vertex_t *inVertices, gl_fc3vertex_t *outVertices)
+int DG_Project(int num, gl_fc3vertex_t * inVertices,
+			   gl_fc3vertex_t * outVertices)
 {
-	GLdouble	modelMatrix[16], projMatrix[16];
-	GLint		viewport[4];
-	GLdouble	x, y, z;
-	int			i, numOut;
+	GLdouble modelMatrix[16], projMatrix[16];
+	GLint   viewport[4];
+	GLdouble x, y, z;
+	int     i, numOut;
 	gl_fc3vertex_t *in = inVertices, *out = outVertices;
 
-	if(num == 0) return 0;
+	if(num == 0)
+		return 0;
 
 	// Get the data we'll need in the operation.
 	glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
@@ -953,18 +959,17 @@ int DG_Project(int num, gl_fc3vertex_t *inVertices, gl_fc3vertex_t *outVertices)
 	glGetIntegerv(GL_VIEWPORT, viewport);
 	for(i = numOut = 0; i < num; i++, in++)
 	{
-		if(gluProject(in->pos[VX], in->pos[VY], in->pos[VZ],
-			modelMatrix, projMatrix, viewport,
-			&x, &y, &z) == GL_TRUE)
+		if(gluProject
+		   (in->pos[VX], in->pos[VY], in->pos[VZ], modelMatrix, projMatrix,
+			viewport, &x, &y, &z) == GL_TRUE)
 		{
 			// A success: add to the out vertices.
 			out->pos[VX] = (float) x;
 			out->pos[VY] = (float) FLIP(y);
 			out->pos[VZ] = (float) z;
 			// Check that it's truly visible.
-			if(out->pos[VX] < 0 || out->pos[VY] < 0 
-				|| out->pos[VX] >= screenWidth 
-				|| out->pos[VY] >= screenHeight) 
+			if(out->pos[VX] < 0 || out->pos[VY] < 0
+			   || out->pos[VX] >= screenWidth || out->pos[VY] >= screenHeight)
 				continue;
 			memcpy(out->color, in->color, sizeof(in->color));
 			numOut++;
@@ -976,33 +981,34 @@ int DG_Project(int num, gl_fc3vertex_t *inVertices, gl_fc3vertex_t *outVertices)
 
 //===========================================================================
 // DG_ReadPixels
-//	NOTE: This function will not be needed any more when the halos are
-//	rendered using the new method.
+//  NOTE: This function will not be needed any more when the halos are
+//  rendered using the new method.
 //===========================================================================
 int DG_ReadPixels(int *inData, int format, void *pixels)
 {
-	int		type = inData[0], num, *coords, i;
-	float	*fv = pixels;
-	
-	if(format != DGL_DEPTH_COMPONENT) return DGL_UNSUPPORTED;
+	int     type = inData[0], num, *coords, i;
+	float  *fv = pixels;
+
+	if(format != DGL_DEPTH_COMPONENT)
+		return DGL_UNSUPPORTED;
 
 	// Check the type.
-	switch(type)
+	switch (type)
 	{
 	case DGL_SINGLE_PIXELS:
 		num = inData[1];
 		coords = inData + 2;
-		for(i=0; i<num; i++, coords+=2)
+		for(i = 0; i < num; i++, coords += 2)
 		{
-			glReadPixels(coords[0], FLIP(coords[1]), 1, 1,
-				GL_DEPTH_COMPONENT, GL_FLOAT, fv+i);
+			glReadPixels(coords[0], FLIP(coords[1]), 1, 1, GL_DEPTH_COMPONENT,
+						 GL_FLOAT, fv + i);
 		}
 		break;
-	
+
 	case DGL_BLOCK:
 		coords = inData + 1;
-		glReadPixels(coords[0], FLIP(coords[1]+coords[3]-1), coords[2], coords[3],
-			GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
+		glReadPixels(coords[0], FLIP(coords[1] + coords[3] - 1), coords[2],
+					 coords[3], GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
 		break;
 
 	default:
@@ -1010,4 +1016,3 @@ int DG_ReadPixels(int *inData, int format, void *pixels)
 	}
 	return DGL_OK;
 }
-

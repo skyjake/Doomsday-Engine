@@ -34,30 +34,30 @@
 // Anything farther than this will never be taken into consideration.
 #define FAR_MOBJ_DIST		1500
 
-extern int sv_maxPlayers;
-extern int allowFrames;	// Allow sending of frames.
-extern int send_all_players;
-extern int frameInterval;	// In tics.
-extern int net_remoteuser;	// The client who is currently logged in.
-extern char *net_password;	// Remote login password.
+extern int      sv_maxPlayers;
+extern int      allowFrames;	   // Allow sending of frames.
+extern int      send_all_players;
+extern int      frameInterval;	   // In tics.
+extern int      net_remoteuser;	   // The client who is currently logged in.
+extern char    *net_password;	   // Remote login password.
 
-void Sv_Shutdown(void);
-void Sv_StartNetGame();
-boolean Sv_PlayerArrives(unsigned int nodeID, char *name);
-void Sv_PlayerLeaves(unsigned int nodeID);
-void Sv_Handshake(int playernum, boolean newplayer);
-void Sv_GetPackets(void);
-void Sv_SendText(int to, int con_flags, char *text);
-void Sv_FixLocalAngles();
-void Sv_Ticker(timespan_t time);
-int Sv_Latency(byte cmdtime);
-void Sv_Kick(int who);
-void Sv_GetInfo(serverinfo_t *info);
-int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg);
-boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info);
-int Sv_GetNumPlayers(void);
-int Sv_GetNumConnected(void);
+void            Sv_Shutdown(void);
+void            Sv_StartNetGame();
+boolean         Sv_PlayerArrives(unsigned int nodeID, char *name);
+void            Sv_PlayerLeaves(unsigned int nodeID);
+void            Sv_Handshake(int playernum, boolean newplayer);
+void            Sv_GetPackets(void);
+void            Sv_SendText(int to, int con_flags, char *text);
+void            Sv_FixLocalAngles();
+void            Sv_Ticker(timespan_t time);
+int             Sv_Latency(byte cmdtime);
+void            Sv_Kick(int who);
+void            Sv_GetInfo(serverinfo_t * info);
+int             Sv_InfoToString(serverinfo_t * info, ddstring_t * msg);
+boolean         Sv_StringToInfo(const char *valuePair, serverinfo_t * info);
+int             Sv_GetNumPlayers(void);
+int             Sv_GetNumConnected(void);
 
-boolean	Sv_CheckBandwidth(int playerNumber);
+boolean         Sv_CheckBandwidth(int playerNumber);
 
 #endif

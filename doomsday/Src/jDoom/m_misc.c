@@ -16,6 +16,9 @@
 //
 //
 // $Log$
+// Revision 1.6  2004/05/29 09:53:29  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.5  2004/05/28 19:52:58  skyjake
 // Finished switch from branch-1-7 to trunk, hopefully everything is fine
 //
@@ -41,18 +44,18 @@
 //-----------------------------------------------------------------------------
 
 static const char
-rcsid[] = "$Id$";
+        rcsid[] = "$Id$";
 
 #include "doomdef.h"
 
 void strcatQuoted(char *dest, char *src)
 {
-	int	k = strlen(dest)+1, i;
+	int     k = strlen(dest) + 1, i;
 
 	strcat(dest, "\"");
 	for(i = 0; src[i]; i++)
 	{
-		if(src[i] == '"') 
+		if(src[i] == '"')
 		{
 			strcat(dest, "\\\"");
 			k += 2;
@@ -65,4 +68,3 @@ void strcatQuoted(char *dest, char *src)
 	}
 	strcat(dest, "\"");
 }
-

@@ -42,10 +42,10 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int idtable[2048]; // 65536 bits telling which IDs are in use
+int     idtable[2048];			// 65536 bits telling which IDs are in use
 unsigned short iddealer = 0;
 
-thinker_t thinkercap; // The head and tail of the thinker list
+thinker_t thinkercap;			// The head and tail of the thinker list
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -60,8 +60,7 @@ boolean P_IsMobjThinker(think_t thinker)
 {
 	think_t altfunc = (think_t) gx.Get(DD_ALT_MOBJ_THINKER);
 
-	return (thinker == gx.MobjThinker 
-		|| (altfunc && thinker == altfunc));
+	return (thinker == gx.MobjThinker || (altfunc && thinker == altfunc));
 }
 
 //==========================================================================
@@ -72,7 +71,7 @@ boolean P_IsMobjThinker(think_t thinker)
 void P_ClearMobjIDs(void)
 {
 	memset(idtable, 0, sizeof(idtable));
-	idtable[0] |= 1;	// ID zero is always "used" (it's not a valid ID).
+	idtable[0] |= 1;			// ID zero is always "used" (it's not a valid ID).
 }
 
 //==========================================================================
@@ -82,7 +81,7 @@ void P_ClearMobjIDs(void)
 //==========================================================================
 boolean P_IsUsedMobjID(thid_t id)
 {
-	return idtable[id >> 5] & (1 << (id & 31)/*(id % 32)*/);	
+	return idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
 }
 
 //==========================================================================
@@ -92,7 +91,8 @@ boolean P_IsUsedMobjID(thid_t id)
 //==========================================================================
 void P_SetMobjID(thid_t id, boolean state)
 {
-	int c = id >> 5, bit = 1 << (id & 31); //(id % 32);
+	int     c = id >> 5, bit = 1 << (id & 31);	//(id % 32);
+
 	if(state)
 		idtable[c] |= bit;
 	else
@@ -124,8 +124,8 @@ void P_RunThinkers(void)
 	currentthinker = thinkercap.next;
 	while(currentthinker != &thinkercap)
 	{
-		if(currentthinker->function == (think_t)-1)
-		{ // Time to remove it
+		if(currentthinker->function == (think_t) - 1)
+		{						// Time to remove it
 			currentthinker->next->prev = currentthinker->prev;
 			currentthinker->prev->next = currentthinker->next;
 			Z_Free(currentthinker);
@@ -149,9 +149,9 @@ void P_InitThinkers(void)
 
 //==========================================================================
 // P_AddThinker
-//	Adds a new thinker at the end of the list.
+//  Adds a new thinker at the end of the list.
 //==========================================================================
-void P_AddThinker(thinker_t *thinker)
+void P_AddThinker(thinker_t * thinker)
 {
 	// Link the thinker to the thinker list.
 	thinkercap.prev->next = thinker;
@@ -174,20 +174,20 @@ void P_AddThinker(thinker_t *thinker)
 
 //==========================================================================
 // P_RemoveThinker
-//	Deallocation is lazy -- it will not actually be freed until its
-//	thinking turn comes up.
+//  Deallocation is lazy -- it will not actually be freed until its
+//  thinking turn comes up.
 //==========================================================================
-void P_RemoveThinker(thinker_t *thinker)
+void P_RemoveThinker(thinker_t * thinker)
 {
 	// Has got an ID?
 	if(thinker->id)
 	{
 		// Then it must be a mobj.
-		mobj_t *mo = (mobj_t*) thinker;
-			
+		mobj_t *mo = (mobj_t *) thinker;
+
 		// Flag the ID as free.
 		P_SetMobjID(thinker->id, false);
-	
+
 		// If the state of the mobj is the NULL state, this is a 
 		// predictable mobj removal (result of animation reaching its
 		// end) and shouldn't be included in netgame deltas. 
@@ -199,6 +199,5 @@ void P_RemoveThinker(thinker_t *thinker)
 			}
 		}
 	}
-	thinker->function = (think_t) -1;
+	thinker->function = (think_t) - 1;
 }
-

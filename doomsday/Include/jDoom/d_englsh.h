@@ -15,8 +15,8 @@
 // for more details.
 //
 // DESCRIPTION:
-//	Printed strings for translation.
-//	English language support (default).
+//  Printed strings for translation.
+//  English language support (default).
 //
 //-----------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@
 #define GET_TXT(x)		((*gi.text)[x].text)
 
 //
-//	Printed strings for translation
+//  Printed strings for translation
 //
 
 //
@@ -36,7 +36,7 @@
 #define D_CDROM GET_TXT(TXT_D_CDROM)
 
 //
-//	M_Menu.C
+//  M_Menu.C
 //
 #define PRESSKEY GET_TXT(TXT_PRESSKEY)
 #define PRESSYN GET_TXT(TXT_PRESSYN)
@@ -68,7 +68,7 @@
 #define EMPTYSTRING GET_TXT(TXT_EMPTYSTRING)
 
 //
-//	P_inter.C
+//  P_inter.C
 //
 #define GOTARMOR GET_TXT(TXT_GOTARMOR)
 #define GOTMEGA GET_TXT(TXT_GOTMEGA)
@@ -123,12 +123,12 @@
 #define PD_YELLOWK GET_TXT(TXT_PD_YELLOWK)
 
 //
-//	G_game.C
+//  G_game.C
 //
 #define GGSAVED GET_TXT(TXT_GGSAVED)
 
 //
-//	HU_stuff.C
+//  HU_stuff.C
 //
 #define HUSTR_MSGU GET_TXT(TXT_HUSTR_MSGU)
 
@@ -307,13 +307,13 @@
 #define HUSTR_PLRBROWN GET_TXT(TXT_HUSTR_PLRBROWN)
 #define HUSTR_PLRRED GET_TXT(TXT_HUSTR_PLRRED)
 
-#define HUSTR_KEYGREEN 'g' 
-#define HUSTR_KEYINDIGO 'i' 
+#define HUSTR_KEYGREEN 'g'
+#define HUSTR_KEYINDIGO 'i'
 #define HUSTR_KEYBROWN 'b'
 #define HUSTR_KEYRED 'r'
 
 //
-//	AM_map.C
+//  AM_map.C
 //
 
 #define AMSTR_FOLLOWON GET_TXT(TXT_AMSTR_FOLLOWON)
@@ -326,7 +326,7 @@
 #define AMSTR_MARKSCLEARED GET_TXT(TXT_AMSTR_MARKSCLEARED)
 
 //
-//	ST_stuff.C
+//  ST_stuff.C
 //
 
 #define STSTR_MUS GET_TXT(TXT_STSTR_MUS)
@@ -347,7 +347,7 @@
 #define STSTR_CLEV GET_TXT(TXT_STSTR_CLEV)
 
 //
-//	F_Finale.C
+//  F_Finale.C
 //
 #define E1TEXT GET_TXT(TXT_E1TEXT)
 #define E2TEXT GET_TXT(TXT_E2TEXT)
@@ -378,7 +378,7 @@
 
 #define C6TEXT GET_TXT(TXT_C6TEXT)
 
-// after map 06	
+// after map 06 
 
 #define P1TEXT GET_TXT(TXT_P1TEXT)
 
@@ -429,11 +429,13 @@
 #define CC_CYBER GET_TXT(TXT_CC_CYBER)
 #define CC_HERO GET_TXT(TXT_CC_HERO)
 
-
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:34  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -451,4 +453,3 @@
 //
 //
 //-----------------------------------------------------------------------------
-

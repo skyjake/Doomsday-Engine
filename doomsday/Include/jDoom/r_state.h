@@ -15,10 +15,9 @@
 // for more details.
 //
 // DESCRIPTION:
-//	Refresh/render internal state variables (global).
+//  Refresh/render internal state variables (global).
 //
 //-----------------------------------------------------------------------------
-
 
 #ifndef __R_STATE__
 #define __R_STATE__
@@ -27,13 +26,9 @@
 #include "d_player.h"
 #include "r_data.h"
 
-
-
 #ifdef __GNUG__
 #pragma interface
 #endif
-
-
 
 //
 // Refresh internal data structures,
@@ -41,14 +36,13 @@
 //
 
 // needed for texture pegging
-//extern fixed_t*		textureheight;
+//extern fixed_t*       textureheight;
 
 // needed for pre rendering (fracs)
-extern fixed_t*		spritewidth;
+extern fixed_t *spritewidth;
 
-extern fixed_t*		spriteoffset;
-extern fixed_t*		spritetopoffset;
-
+extern fixed_t *spriteoffset;
+extern fixed_t *spritetopoffset;
 
 #define numvertexes		(*gi.numvertexes)
 #define numsegs			(*gi.numsegs)
@@ -68,49 +62,50 @@ extern fixed_t*		spritetopoffset;
 
 /*
 
+   //
+   // POV data.
+   //
+   extern fixed_t       viewx;
+   extern fixed_t       viewy;
+   extern fixed_t       viewz;
 
-//
-// POV data.
-//
-extern fixed_t		viewx;
-extern fixed_t		viewy;
-extern fixed_t		viewz;
-
-extern angle_t		viewangle;*/
-extern player_t*	viewplayer;
+   extern angle_t       viewangle; */
+extern player_t *viewplayer;
 
 #define viewx		gi.Get(DD_VIEWX)
 #define viewy		gi.Get(DD_VIEWY)
-//#define viewz		gi.Get(DD_VIEWZ)
+//#define viewz     gi.Get(DD_VIEWZ)
 
 #define viewangle	gi.Get(DD_VIEWANGLE)
 
 // ?
-extern angle_t		clipangle;
+extern angle_t  clipangle;
 
-extern int		viewangletox[FINEANGLES/2];
-extern angle_t		xtoviewangle[SCREENWIDTH+1];
-//extern fixed_t		finetangent[FINEANGLES/2];
+extern int      viewangletox[FINEANGLES / 2];
+extern angle_t  xtoviewangle[SCREENWIDTH + 1];
 
-//extern fixed_t		rw_distance;
-//extern angle_t		rw_normalangle;
+//extern fixed_t        finetangent[FINEANGLES/2];
 
-
+//extern fixed_t        rw_distance;
+//extern angle_t        rw_normalangle;
 
 // angle to line origin
-extern int		rw_angle1;
+extern int      rw_angle1;
 
 // Segs count?
-extern int		sscount;
+extern int      sscount;
 
-/*extern visplane_t*	floorplane;
-extern visplane_t*	ceilingplane;
-*/
+/*extern visplane_t*    floorplane;
+   extern visplane_t*   ceilingplane;
+ */
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -128,4 +123,3 @@ extern visplane_t*	ceilingplane;
 //
 //
 //-----------------------------------------------------------------------------
-

@@ -24,10 +24,10 @@
 
 extern timespan_t sysTime, gameTime, demoTime, levelTime;
 
-void DD_GameLoop(void);
-void DD_DrawAndBlit(void);
-void DD_StartFrame(void);
-void DD_EndFrame(void);
-int DD_GetFrameRate(void);
+void            DD_GameLoop(void);
+void            DD_DrawAndBlit(void);
+void            DD_StartFrame(void);
+void            DD_EndFrame(void);
+int             DD_GetFrameRate(void);
 
-#endif 
+#endif

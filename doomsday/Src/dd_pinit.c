@@ -24,8 +24,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
 #endif
 
 #include <stdarg.h>
@@ -57,7 +57,7 @@
 /*
  * The game imports and exports.
  */
-game_import_t __gi;		
+game_import_t __gi;
 game_export_t __gx;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -66,25 +66,27 @@ game_export_t __gx;
 
 int DD_CheckArg(char *tag, char **value)
 {
-	int i = ArgCheck(tag);
-	char *next = ArgNext();
+	int     i = ArgCheck(tag);
+	char   *next = ArgNext();
 
-	if(!i) return 0;
-	if(value && next) *value = next;
+	if(!i)
+		return 0;
+	if(value && next)
+		*value = next;
 	return 1;
 }
 
 void DD_ErrorBox(boolean error, char *format, ...)
 {
-	char buff[200];
+	char    buff[200];
 	va_list args;
 
 	va_start(args, format);
 	vsprintf(buff, format, args);
 	va_end(args);
 #ifdef WIN32
-	MessageBox(NULL, buff, "Doomsday "DOOMSDAY_VERSION_TEXT, 
-		MB_OK | (error? MB_ICONERROR : MB_ICONWARNING));
+	MessageBox(NULL, buff, "Doomsday " DOOMSDAY_VERSION_TEXT,
+			   MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING));
 #endif
 #ifdef UNIX
 	fputs(buff, stderr);
@@ -96,11 +98,11 @@ void DD_ErrorBox(boolean error, char *format, ...)
  */
 void DD_MainWindowTitle(char *title)
 {
-	sprintf(title, "Doomsday "DOOMSDAY_VERSION_TEXT" : %s", 
-		__gx.Get(DD_GAME_ID));
+	sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " : %s",
+			__gx.Get(DD_GAME_ID));
 }
 
-void SetGameImports(game_import_t *imp)
+void SetGameImports(game_import_t * imp)
 {
 	memset(imp, 0, sizeof(*imp));
 	imp->apiSize = sizeof(*imp);
@@ -125,13 +127,13 @@ void SetGameImports(game_import_t *imp)
 	imp->numlines = &numlines;
 	imp->numsides = &numsides;
 
-	imp->vertexes = (void**) &vertexes;
-	imp->segs = (void**) &segs;
-	imp->sectors = (void**) &sectors;
-	imp->subsectors = (void**) &subsectors;
-	imp->nodes = (void**) &nodes;
-	imp->lines = (void**) &lines;
-	imp->sides = (void**) &sides;
+	imp->vertexes = (void **) &vertexes;
+	imp->segs = (void **) &segs;
+	imp->sectors = (void **) &sectors;
+	imp->subsectors = (void **) &subsectors;
+	imp->nodes = (void **) &nodes;
+	imp->lines = (void **) &lines;
+	imp->sides = (void **) &sides;
 
 	imp->blockmaplump = &blockmaplump;
 	imp->blockmap = &blockmap;
@@ -140,8 +142,8 @@ void SetGameImports(game_import_t *imp)
 	imp->bmaporgx = &bmaporgx;
 	imp->bmaporgy = &bmaporgy;
 	imp->rejectmatrix = &rejectmatrix;
-	imp->polyblockmap = (void***) &polyblockmap;
-	imp->polyobjs = (void**) &polyobjs;
+	imp->polyblockmap = (void ***) &polyblockmap;
+	imp->polyobjs = (void **) &polyobjs;
 	imp->numpolyobjs = &po_NumPolyobjs;
 }
 
@@ -152,13 +154,14 @@ void DD_InitAPI(void)
 #endif
 
 	game_export_t *gameExPtr;
-	
+
 	// Put the imported stuff into the imports.
 	SetGameImports(&__gi);
 
 	memset(&__gx, 0, sizeof(__gx));
 	gameExPtr = GetGameAPI(&__gi);
-	memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+	memcpy(&__gx, gameExPtr,
+		   MIN_OF(sizeof(__gx), (unsigned) gameExPtr->apiSize));
 }
 
 void DD_InitCommandLine(const char *cmdLine)
@@ -167,7 +170,7 @@ void DD_InitCommandLine(const char *cmdLine)
 
 	// Register some abbreviations for command line options.
 	ArgAbbreviate("-game", "-g");
-	ArgAbbreviate("-gl", "-r"); // As in (R)enderer...
+	ArgAbbreviate("-gl", "-r");	// As in (R)enderer...
 	ArgAbbreviate("-defs", "-d");
 	ArgAbbreviate("-width", "-w");
 	ArgAbbreviate("-height", "-h");
@@ -199,7 +202,7 @@ void DD_InitCommandLine(const char *cmdLine)
 void DD_ShutdownAll(void)
 {
 	extern memzone_t *mainzone;
-	int i;
+	int     i;
 
 	DD_ShutdownHelp();
 	Zip_Shutdown();
@@ -213,7 +216,8 @@ void DD_ShutdownAll(void)
 #endif
 
 	// Stop all demo recording.
-	for(i = 0; i < MAXPLAYERS; i++) Demo_StopRecording(i);
+	for(i = 0; i < MAXPLAYERS; i++)
+		Demo_StopRecording(i);
 
 	Sv_Shutdown();
 	R_Shutdown();

@@ -52,7 +52,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void DD_RunTics(void);
+void    DD_RunTics(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -60,7 +60,7 @@ void DD_RunTics(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int maxFrameRate = 0;	// Zero means 'unlimited'.
+int     maxFrameRate = 0;		// Zero means 'unlimited'.
 
 timespan_t sysTime, gameTime, demoTime, levelTime;
 
@@ -79,9 +79,9 @@ static int lastfpstic = 0, fpsnum = 0, lastfc = 0;
 void DD_GameLoop(void)
 {
 #ifdef WIN32
-	MSG msg;
+	MSG     msg;
 #endif
-	
+
 	// Now we've surely finished startup.
 	Con_StartupDone();
 	Sys_ShowWindow(true);
@@ -106,10 +106,10 @@ void DD_GameLoop(void)
 		DD_RunTics();
 
 		// Update clients.
-		Sv_TransmitFrame();	
+		Sv_TransmitFrame();
 
 		// Finish the refresh frame.
-		DD_EndFrame();		
+		DD_EndFrame();
 
 		// Send out new accumulation. Drawing will take the longest.
 		Net_Update();
@@ -127,7 +127,8 @@ void DD_GameLoop(void)
  */
 void DD_DrawAndBlit(void)
 {
-	if(novideo) return;
+	if(novideo)
+		return;
 
 	// This'll let DGL know that some serious rendering is about to begin.
 	// OpenGL doesn't need it, but Direct3D will do the BeginScene call.
@@ -147,7 +148,8 @@ void DD_DrawAndBlit(void)
 		// Draw the game graphics.
 		gx.G_Drawer();
 		// The colored filter. 
-		if(GL_DrawFilter()) BorderNeedRefresh = true;
+		if(GL_DrawFilter())
+			BorderNeedRefresh = true;
 		// Draw Menu
 		gx.MN_Drawer();
 		// Debug information.
@@ -170,13 +172,14 @@ void DD_DrawAndBlit(void)
 void DD_StartFrame(void)
 {
 	S_StartFrame();
-	if(gx.BeginFrame) gx.BeginFrame();
+	if(gx.BeginFrame)
+		gx.BeginFrame();
 }
 
 //===========================================================================
 // DD_EndFrame
 //===========================================================================
-void DD_EndFrame (void)
+void DD_EndFrame(void)
 {
 	// Increment the frame counter.
 	framecount++;
@@ -189,7 +192,8 @@ void DD_EndFrame (void)
 		lastfc = framecount;
 	}
 
-	if(gx.EndFrame) gx.EndFrame();
+	if(gx.EndFrame)
+		gx.EndFrame();
 
 	S_EndFrame();
 }
@@ -208,26 +212,26 @@ int DD_GetFrameRate(void)
  */
 void DD_Ticker(timespan_t time)
 {
-	static trigger_t fixed = { 1/35.0 };
+	static trigger_t fixed = { 1 / 35.0 };
 
 	// Client/server ticks.
-	if(isClient) 
-		Cl_Ticker(time); 
-	else 
+	if(isClient)
+		Cl_Ticker(time);
+	else
 		Sv_Ticker(time);
 
 	// Demo ticker. Does stuff like smoothing of view angles.
-	Demo_Ticker(time);				
+	Demo_Ticker(time);
 	P_Ticker(time);
 
 	if(!ui_active || netgame)
 	{
 		if(M_CheckTrigger(&fixed, time))
 		{
-			extern int sharpWorldUpdated; // in r_main.c
+			extern int sharpWorldUpdated;	// in r_main.c
 			extern double lastSharpFrameTime;
-			
-			gx.Ticker(/*time*/); // Game DLL.
+
+			gx.Ticker( /*time */ );	// Game DLL.
 
 			// This is needed by rend_camera_smooth.  It needs to know
 			// when the world tic has occured so the next sharp
@@ -257,20 +261,20 @@ void DD_AdvanceTime(timespan_t time)
 	//systics++;
 	sysTime += time;
 
-	if(!ui_active || netgame) 
+	if(!ui_active || netgame)
 	{
 		//if(availabletics > 0) availabletics--;
 
 		// The difference between gametic and demotic is that demotic
 		// is not altered at any point. Gametic changes at handshakes.
 		/*gametic++;
-		demotic++;*/
+		   demotic++; */
 		gameTime += time;
 		demoTime += time;
 
 		// Leveltic is reset to zero at every map change.
 		// The level time only advances when the game is not paused.
-		if(!clientPaused) /*leveltic++;*/
+		if(!clientPaused)		/*leveltic++; */
 		{
 			levelTime += time;
 		}
@@ -283,8 +287,8 @@ void DD_AdvanceTime(timespan_t time)
 void DD_RunTics(void)
 {
 	static boolean firstTic = true;
-	double frameTime, ticLength;
-	double nowTime = Sys_GetSeconds();
+	double  frameTime, ticLength;
+	double  nowTime = Sys_GetSeconds();
 
 	// Do a network update first.
 	N_Update();
@@ -303,8 +307,8 @@ void DD_RunTics(void)
 	// allowed interval between tics).
 	if(maxFrameRate > 0)
 	{
-		while((nowTime = Sys_GetSeconds()) - lastFrameTime
-			< 1.0/maxFrameRate)
+		while((nowTime =
+			   Sys_GetSeconds()) - lastFrameTime < 1.0 / maxFrameRate)
 		{
 			// Wait for a short while.
 			Sys_Sleep(2);
@@ -312,13 +316,13 @@ void DD_RunTics(void)
 	}
 
 	// How much time do we have for this frame?
-	frameTime     = nowTime - lastFrameTime;
+	frameTime = nowTime - lastFrameTime;
 	lastFrameTime = nowTime;
 
 	// Tic length is determined by the minfps rate.
 	while(frameTime > 0)
 	{
-		ticLength = MIN_OF( MAX_FRAME_TIME, frameTime );
+		ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
 		frameTime -= ticLength;
 
 		// Call all the tickers.
@@ -338,11 +342,11 @@ void DD_RunTics(void)
 #if 0
 //===========================================================================
 // DD_TryRunTics
-//	Run at least one tic.
+//      Run at least one tic.
 //===========================================================================
 void DD_TryRunTics(void)
 {
-	int counts;
+	int     counts;
 
 	// Low-level network update.
 	N_Update();
@@ -351,19 +355,21 @@ void DD_TryRunTics(void)
 	Net_Update();
 
 	// Wait for at least one tic. (realtics >= availabletics)
-	while(!(counts = (isDedicated || netgame || ui_active?
-					  realtics : availabletics)))
+	while(!
+		  (counts =
+		   (isDedicated || netgame || ui_active ? realtics : availabletics)))
 	{
-		if((!isDedicated && rend_camera_smooth)
-			|| net_dontsleep 
-			|| !net_ticsync) break;
+		if((!isDedicated && rend_camera_smooth) || net_dontsleep
+		   || !net_ticsync)
+			break;
 		Sys_Sleep(3);
 		Net_Update();
 	}
 
 	// If we are running in timedemo mode, always run only one tic.
-	if(!net_ticsync) counts = 1;
-				
+	if(!net_ticsync)
+		counts = 1;
+
 	// We'll tick away all the tics we can.
 	// Zero the real tics counter.
 	realtics = 0;
@@ -372,16 +378,19 @@ void DD_TryRunTics(void)
 	while(counts--)
 	{
 		// Client/server ticks.
-		if(isClient) Cl_Ticker(); else Sv_Ticker();
+		if(isClient)
+			Cl_Ticker();
+		else
+			Sv_Ticker();
 
 		// Demo ticker. Does stuff like smoothing of view angles.
-		Demo_Ticker();				
+		Demo_Ticker();
 		P_Ticker();
 
 		if(!ui_active || netgame)
 		{
-			gx.Ticker();			// Game DLL.
-			Con_Ticker();			// Console.
+			gx.Ticker();		// Game DLL.
+			Con_Ticker();		// Console.
 			// We can't sent FixAngles messages to ourselves, so it's
 			// done here.
 			Sv_FixLocalAngles();
@@ -397,9 +406,10 @@ void DD_TryRunTics(void)
 
 		// This tick is done, advance time.
 		systics++;
-		if(!ui_active || netgame) 
+		if(!ui_active || netgame)
 		{
-			if(availabletics > 0) availabletics--;
+			if(availabletics > 0)
+				availabletics--;
 
 			// The difference between gametic and demotic is that demotic
 			// is not altered at any point. Gametic changes at handshakes.
@@ -408,7 +418,8 @@ void DD_TryRunTics(void)
 
 			// Leveltic is reset to zero at every map change.
 			// The level time only advances when the game is not paused.
-			if(!clientPaused) leveltic++;
+			if(!clientPaused)
+				leveltic++;
 		}
 	}
 }

@@ -26,4 +26,4 @@
 #include "ui_mpi.h"
 #include "ui_panel.h"
 
-#endif 
+#endif

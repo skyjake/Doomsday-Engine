@@ -20,9 +20,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
 #ifdef __GNUG__
-#pragma implementation "doomdef.h"
+#  pragma implementation "doomdef.h"
 #endif
 #include "doomdef.h"
 

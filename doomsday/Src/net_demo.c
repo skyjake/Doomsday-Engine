@@ -38,7 +38,7 @@
 #define DEMOTIC	SECONDS_TO_TICKS(demoTime)
 
 // Local Camera flags.
-#define LCAMF_ONGROUND	0x1			
+#define LCAMF_ONGROUND	0x1
 #define LCAMF_FOV		0x2		// FOV has changed (short).
 #define LCAMF_CAMERA	0x4		// Camera mode.
 
@@ -46,30 +46,28 @@
 
 #pragma pack(1)
 
-typedef struct
-{
-	//unsigned short	angle;
-	//short			lookdir;
-	unsigned short	length;
+typedef struct {
+	//unsigned short    angle;
+	//short         lookdir;
+	unsigned short length;
 } demopacket_header_t;
 
 #pragma pack()
 
-typedef struct
-{
+typedef struct {
 	boolean first;
-	int begintime;
-	boolean canwrite;	// False until Handshake packet.
-	int cameratimer;
-	int pausetime;
-	float fov;
+	int     begintime;
+	boolean canwrite;			// False until Handshake packet.
+	int     cameratimer;
+	int     pausetime;
+	float   fov;
 } demotimer_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void Demo_WriteLocalCamera(int plnum);
+void    Demo_WriteLocalCamera(int plnum);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -79,14 +77,15 @@ extern float net_connecttime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char demoPath[128] = "demo\\";
+char    demoPath[128] = "demo\\";
+
 //int demotic = 0;
-LZFILE *playdemo = 0;	
-int playback = false;		
-int viewangle_delta = 0;
-float lookdir_delta = 0;
-int pos_delta[3];
-int demo_framez, demo_z;
+LZFILE *playdemo = 0;
+int     playback = false;
+int     viewangle_delta = 0;
+float   lookdir_delta = 0;
+int     pos_delta[3];
+int     demo_framez, demo_z;
 boolean demo_onground;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -109,19 +108,17 @@ void Demo_Init(void)
 
 //==========================================================================
 // Demo_BeginRecording
-//	Open a demo file and begin recording.
-//	Returns false if the recording can't be begun.
+//  Open a demo file and begin recording.
+//  Returns false if the recording can't be begun.
 //==========================================================================
 boolean Demo_BeginRecording(char *fileName, int playerNum)
 {
-	char buf[200];
+	char    buf[200];
 	client_t *cl = clients + playerNum;
-	
+
 	// Is a demo already being recorded for this client?
-	if(cl->recording 
-		|| playback
-		|| (isDedicated && !playerNum)
-		|| !players[playerNum].ingame) 
+	if(cl->recording || playback || (isDedicated && !playerNum)
+	   || !players[playerNum].ingame)
 		return false;
 
 	// Compose the real file name.
@@ -130,7 +127,8 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
 
 	// Open the demo file.
 	cl->demo = lzOpen(buf, "wp");
-	if(!cl->demo) return false;	// Couldn't open it!
+	if(!cl->demo)
+		return false;			// Couldn't open it!
 	cl->recording = true;
 	cl->recordPaused = false;
 	writeInfo[playerNum].first = true;
@@ -169,7 +167,8 @@ void Demo_PauseRecording(int playerNum)
 	client_t *cl = clients + playerNum;
 
 	// A demo is not being recorded?
-	if(!cl->recording || cl->recordPaused) return;
+	if(!cl->recording || cl->recordPaused)
+		return;
 	// All packets will be written for the same tic.
 	writeInfo[playerNum].pausetime = SECONDS_TO_TICKS(demoTime);
 	cl->recordPaused = true;
@@ -177,33 +176,34 @@ void Demo_PauseRecording(int playerNum)
 
 //===========================================================================
 // Demo_ResumeRecording
-//	Resumes a paused recording.
+//  Resumes a paused recording.
 //===========================================================================
 void Demo_ResumeRecording(int playerNum)
 {
 	client_t *cl = clients + playerNum;
 
 	// Not recording or not paused?
-	if(!cl->recording || !cl->recordPaused) return;
+	if(!cl->recording || !cl->recordPaused)
+		return;
 	Demo_WriteLocalCamera(playerNum);
 	cl->recordPaused = false;
 	// When the demo is read there can't be a jump in the timings, so we
 	// have to make it appear the pause never happened; begintime is 
 	// moved forwards.
-	writeInfo[playerNum].begintime += 
-		DEMOTIC - writeInfo[playerNum].pausetime;
+	writeInfo[playerNum].begintime += DEMOTIC - writeInfo[playerNum].pausetime;
 }
 
 //===========================================================================
 // Demo_StopRecording
-//	Stop recording a demo.
+//  Stop recording a demo.
 //===========================================================================
 void Demo_StopRecording(int playerNum)
 {
 	client_t *cl = clients + playerNum;
 
 	// A demo is not being recorded?
-	if(!cl->recording) return;
+	if(!cl->recording)
+		return;
 	// Close demo file.
 	lzClose(cl->demo);
 	cl->demo = 0;
@@ -218,19 +218,21 @@ void Demo_WritePacket(int playerNum)
 	LZFILE *file;
 	demopacket_header_t hdr;
 	demotimer_t *inf = writeInfo + playerNum;
-	byte ptime;
+	byte    ptime;
 
-	if(playerNum == NSP_BROADCAST) 
+	if(playerNum == NSP_BROADCAST)
 	{
-		Demo_BroadcastPacket();	
+		Demo_BroadcastPacket();
 		return;
 	}
 
 	// Is this client recording?
-	if(!clients[playerNum].recording) return;
+	if(!clients[playerNum].recording)
+		return;
 	if(!inf->canwrite)
 	{
-		if(netBuffer.msg.type != psv_handshake) return;
+		if(netBuffer.msg.type != psv_handshake)
+			return;
 		// The handshake has arrived. Now we can begin writing.
 		inf->canwrite = true;
 	}
@@ -238,7 +240,8 @@ void Demo_WritePacket(int playerNum)
 	{
 		// Some types of packet are not written in record-paused mode.
 		if(netBuffer.msg.type == psv_sound
-			|| netBuffer.msg.type == DDPT_MESSAGE) return;
+		   || netBuffer.msg.type == DDPT_MESSAGE)
+			return;
 	}
 
 	// This counts as an update. (We know the client is alive.)
@@ -247,13 +250,15 @@ void Demo_WritePacket(int playerNum)
 	file = clients[playerNum].demo;
 
 #ifdef _DEBUG
-	if(!file) Con_Error("Demo_WritePacket: No demo file!\n");
+	if(!file)
+		Con_Error("Demo_WritePacket: No demo file!\n");
 #endif
 
 	if(!inf->first)
 	{
-		ptime = (clients[playerNum].recordPaused? 
-			inf->pausetime : DEMOTIC) - inf->begintime;
+		ptime =
+			(clients[playerNum].recordPaused ? inf->pausetime : DEMOTIC) -
+			inf->begintime;
 	}
 	else
 	{
@@ -274,26 +279,31 @@ void Demo_WritePacket(int playerNum)
 
 void Demo_BroadcastPacket(void)
 {
-	int i;
+	int     i;
 
 	// Write packet to all recording demo files.
-	for(i = 0; i < MAXPLAYERS; i++) Demo_WritePacket(i);
+	for(i = 0; i < MAXPLAYERS; i++)
+		Demo_WritePacket(i);
 }
 
 boolean Demo_BeginPlayback(char *fileName)
 {
-	char buf[256];
-	int i;
-		
-	if(playback) return false; // Already in playback.
-	if(netgame || isClient) return false;	// Can't do it.
+	char    buf[256];
+	int     i;
+
+	if(playback)
+		return false;			// Already in playback.
+	if(netgame || isClient)
+		return false;			// Can't do it.
 	// Check that we aren't recording anything.
 	for(i = 0; i < MAXPLAYERS; i++)
-		if(clients[i].recording) return false;
+		if(clients[i].recording)
+			return false;
 	// Open the demo file.
-	sprintf(buf, "%s%s", Dir_IsAbsolute(fileName)? "" : demoPath, fileName);
+	sprintf(buf, "%s%s", Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
 	playdemo = lzOpen(buf, "rp");
-	if(!playdemo) return false;	// Failed to open the file.
+	if(!playdemo)
+		return false;			// Failed to open the file.
 	// OK, let's begin the demo.
 	playback = true;
 	isServer = false;
@@ -307,19 +317,21 @@ boolean Demo_BeginPlayback(char *fileName)
 	demostarttic = DEMOTIC;
 	memset(pos_delta, 0, sizeof(pos_delta));
 	// Start counting frames from here.
-	if(ArgCheck("-timedemo")) r_framecounter = 0;
+	if(ArgCheck("-timedemo"))
+		r_framecounter = 0;
 	return true;
 }
 
 void Demo_StopPlayback(void)
 {
-	float diff;
-	
-	if(!playback) return;
+	float   diff;
+
+	if(!playback)
+		return;
 
 	Con_Message("Demo was %.2f seconds (%i tics) long.\n",
-		(DEMOTIC - demostarttic)/(float)TICSPERSEC,
-		DEMOTIC - demostarttic);
+				(DEMOTIC - demostarttic) / (float) TICSPERSEC,
+				DEMOTIC - demostarttic);
 
 	playback = false;
 	lzClose(playdemo);
@@ -330,30 +342,34 @@ void Demo_StopPlayback(void)
 	if(ArgCheck("-timedemo"))
 	{
 		diff = Sys_GetSeconds() - net_connecttime;
-		if(!diff) diff = 1;
+		if(!diff)
+			diff = 1;
 		// Print summary and exit.
 		Con_Message("Timedemo results: ");
 		Con_Message("%i game tics in %.1f seconds\n", r_framecounter, diff);
-		Con_Message("%f FPS\n", r_framecounter/diff);
+		Con_Message("%f FPS\n", r_framecounter / diff);
 		Sys_Quit();
 	}
 
 	// "Play demo once" mode?
-	if(ArgCheck("-playdemo")) Sys_Quit();
+	if(ArgCheck("-playdemo"))
+		Sys_Quit();
 }
 
 boolean Demo_ReadPacket(void)
 {
-	static byte	ptime;
-	int nowtime = DEMOTIC; 
+	static byte ptime;
+	int     nowtime = DEMOTIC;
 	demopacket_header_t hdr;
 
-	if(!playback) return false;
-	if(lzEOF(playdemo)) 
+	if(!playback)
+		return false;
+	if(lzEOF(playdemo))
 	{
 		Demo_StopPlayback();
 		// Tell the Game the demo has ended.
-		if(gx.NetWorldEvent) gx.NetWorldEvent(DDWE_DEMO_END, 0, 0);
+		if(gx.NetWorldEvent)
+			gx.NetWorldEvent(DDWE_DEMO_END, 0, 0);
 		return false;
 	}
 
@@ -366,59 +382,59 @@ boolean Demo_ReadPacket(void)
 
 	// Check if the packet can be read.
 	if(Net_TimeDelta(nowtime - readinfo.begintime, ptime) < 0)
-		return false;	// Can't read yet.
+		return false;			// Can't read yet.
 
 	// Read the packet.
 	lzRead(&hdr, sizeof(hdr), playdemo);
 
 	// Get the packet.
-	netBuffer.length = hdr.length - 1/*netBuffer.headerLength*/;
-	netBuffer.player = 0;	// From the server.
+	netBuffer.length = hdr.length - 1 /*netBuffer.headerLength */ ;
+	netBuffer.player = 0;		// From the server.
 	netBuffer.msg.id = 0;
 	netBuffer.msg.type = lzGetC(playdemo);
 	lzRead(netBuffer.msg.data, netBuffer.length, playdemo);
 	netBuffer.cursor = netBuffer.msg.data;
 
-/*	Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime, 
-		hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type);*/
+	/*  Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime, 
+	   hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type); */
 
 	// Read the next packet time.
 	ptime = lzGetC(playdemo);
 
 	// Calculate view angle deltas. 
-/*	viewangle_delta = (hdr.angle << 16) - players[consoleplayer].clAngle;
-	lookdir_delta = (hdr.lookdir * 110.0f / DDMAXSHORT) 
-		- players[consoleplayer].clLookDir;*/
+	/*  viewangle_delta = (hdr.angle << 16) - players[consoleplayer].clAngle;
+	   lookdir_delta = (hdr.lookdir * 110.0f / DDMAXSHORT) 
+	   - players[consoleplayer].clLookDir; */
 
 	// How many tics to next frame?
-/*	tics = Net_TimeDelta(ptime, nowtime - readinfo.begintime);
-	if(tics)
-	{
-		viewangle_delta /= tics;
-		lookdir_delta /= tics;
-	}*/
+	/*  tics = Net_TimeDelta(ptime, nowtime - readinfo.begintime);
+	   if(tics)
+	   {
+	   viewangle_delta /= tics;
+	   lookdir_delta /= tics;
+	   } */
 
 	return true;
 }
 
 //==========================================================================
 // Demo_WriteLocalCamera
-//	Writes a view angle and coords packet. Doesn't send the packet outside.
+//  Writes a view angle and coords packet. Doesn't send the packet outside.
 //==========================================================================
 void Demo_WriteLocalCamera(int plnum)
 {
 	mobj_t *mo = players[plnum].mo;
-	int z;
-	byte flags;
+	int     z;
+	byte    flags;
 	boolean incfov = (writeInfo[plnum].fov != fieldOfView);
 
-	if(!mo) return;
+	if(!mo)
+		return;
 
-	Msg_Begin(clients[plnum].recordPaused? pkt_democam_resume 
-		: pkt_democam);
+	Msg_Begin(clients[plnum].recordPaused ? pkt_democam_resume : pkt_democam);
 	// Flags.
-	flags = (mo->z <= mo->floorz? LCAMF_ONGROUND : 0) // On ground?
-		| (incfov? LCAMF_FOV : 0);
+	flags = (mo->z <= mo->floorz ? LCAMF_ONGROUND : 0)	// On ground?
+		| (incfov ? LCAMF_FOV : 0);
 	if(players[plnum].flags & DDPF_CAMERA)
 	{
 		flags &= ~LCAMF_ONGROUND;
@@ -435,11 +451,11 @@ void Demo_WriteLocalCamera(int plnum)
 	Msg_WriteShort(z >> 16);
 	Msg_WriteByte(z >> 8);
 	Msg_WriteShort(players[plnum].clAngle >> 16);
-	Msg_WriteShort(players[plnum].clLookDir/110 * DDMAXSHORT);
+	Msg_WriteShort(players[plnum].clLookDir / 110 * DDMAXSHORT);
 	// Field of view is optional.
-	if(incfov) 
+	if(incfov)
 	{
-		Msg_WriteShort(fieldOfView/180 * DDMAXSHORT);
+		Msg_WriteShort(fieldOfView / 180 * DDMAXSHORT);
 		writeInfo[plnum].fov = fieldOfView;
 	}
 	Net_SendBuffer(plnum, SPF_DONT_SEND);
@@ -447,22 +463,23 @@ void Demo_WriteLocalCamera(int plnum)
 
 //==========================================================================
 // Demo_ReadLocalCamera
-//	Read a view angle and coords packet. NOTE: The Z coordinate of the 
-//	camera is the real eye Z coordinate, not the player mobj's Z coord.
+//  Read a view angle and coords packet. NOTE: The Z coordinate of the 
+//  camera is the real eye Z coordinate, not the player mobj's Z coord.
 //==========================================================================
 void Demo_ReadLocalCamera(void)
 {
 	ddplayer_t *pl = players + consoleplayer;
 	mobj_t *mo = players[consoleplayer].mo;
-	int flags;
-	int z;
-	int intertics = LOCALCAM_WRITE_TICS;
-	int dang;
-	float dlook;
-	
-	if(!mo) return;
+	int     flags;
+	int     z;
+	int     intertics = LOCALCAM_WRITE_TICS;
+	int     dang;
+	float   dlook;
 
-	if(netBuffer.msg.type == pkt_democam_resume) 
+	if(!mo)
+		return;
+
+	if(netBuffer.msg.type == pkt_democam_resume)
 	{
 		intertics = 1;
 	}
@@ -478,10 +495,10 @@ void Demo_ReadLocalCamera(void)
 		pl->flags &= ~DDPF_CAMERA;
 
 	// X and Y coordinates are easy. Calculate deltas to the new coords.
-	pos_delta[VX] = ((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8) - mo->x) 
-		/ intertics;
-	pos_delta[VY] = ((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8) - mo->y) 
-		/ intertics;
+	pos_delta[VX] =
+		((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8) - mo->x) / intertics;
+	pos_delta[VY] =
+		((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8) - mo->y) / intertics;
 
 	// The Z coordinate is a bit trickier. We are tracking the *camera's*
 	// Z coordinate (z+viewheight), not the player mobj's Z.
@@ -512,7 +529,7 @@ void Demo_ReadLocalCamera(void)
 
 	// The first one gets no delta.
 	if(demo_framez == 1)
-	{	
+	{
 		// This must be the first democam packet. 
 		// Initialize framez to the height we just read.
 		demo_framez = z;
@@ -525,24 +542,25 @@ void Demo_ReadLocalCamera(void)
 	if(intertics == 1)
 	{
 		// Instantaneous move.
-		Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], 
-			demo_framez = z, demo_onground);
-		pl->viewz = z; // Might get an unsynced frame is not set right now.
+		Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], demo_framez =
+						   z, demo_onground);
+		pl->viewz = z;			// Might get an unsynced frame is not set right now.
 		pos_delta[VX] = pos_delta[VY] = pos_delta[VZ] = 0;
 	}
 }
 
 //==========================================================================
 // Demo_Ticker
-//	Called once per tic.
+//  Called once per tic.
 //==========================================================================
 void Demo_Ticker(timespan_t time)
 {
-	static trigger_t fixed = { 1/35.0 };
+	static trigger_t fixed = { 1 / 35.0 };
 	ddplayer_t *pl = players + consoleplayer;
-	int i;
+	int     i;
 
-	if(!M_CheckTrigger(&fixed, time)) return;
+	if(!M_CheckTrigger(&fixed, time))
+		return;
 
 	// Only playback is handled.
 	if(playback)
@@ -550,18 +568,17 @@ void Demo_Ticker(timespan_t time)
 		pl->clAngle += viewangle_delta;
 		pl->clLookDir += lookdir_delta;
 		// Move player (i.e. camera). 
-		Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], 
-			demo_framez + demo_z, demo_onground);
+		Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], demo_framez + demo_z,
+						   demo_onground);
 		// Interpolate camera Z offset (to framez). 
 		demo_z += pos_delta[VZ];
 	}
 	else
 	{
 		for(i = 0; i < MAXPLAYERS; i++)
-			if(players[i].ingame 
-				&& clients[i].recording
-				&& !clients[i].recordPaused
-				&& ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
+			if(players[i].ingame && clients[i].recording
+			   && !clients[i].recordPaused
+			   && ++writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
 			{
 				// It's time to write local view angles and coords.
 				writeInfo[i].cameratimer = 0;
@@ -593,7 +610,7 @@ int CCmdPlayDemo(int argc, char **argv)
 //===========================================================================
 int CCmdRecordDemo(int argc, char **argv)
 {
-	int plnum = consoleplayer;
+	int     plnum = consoleplayer;
 
 	if(argc == 3 && isClient)
 	{
@@ -611,7 +628,8 @@ int CCmdRecordDemo(int argc, char **argv)
 		Con_Printf("(plnum) is the player which will be recorded.\n");
 		return true;
 	}
-	if(argc == 3) plnum = atoi(argv[2]);
+	if(argc == 3)
+		plnum = atoi(argv[2]);
 	Con_Printf("Recording demo of player %i to \"%s\".\n", plnum, argv[1]);
 	return Demo_BeginRecording(argv[1], plnum);
 }
@@ -621,10 +639,11 @@ int CCmdRecordDemo(int argc, char **argv)
 //===========================================================================
 int CCmdPauseDemo(int argc, char **argv)
 {
-	int plnum = consoleplayer;
+	int     plnum = consoleplayer;
 
-	if(argc >= 2) plnum = atoi(argv[1]);
-	if(!clients[plnum].recording) 
+	if(argc >= 2)
+		plnum = atoi(argv[1]);
+	if(!clients[plnum].recording)
 	{
 		Con_Printf("Not recording for player %i.\n", plnum);
 		return false;
@@ -647,18 +666,20 @@ int CCmdPauseDemo(int argc, char **argv)
 //===========================================================================
 int CCmdStopDemo(int argc, char **argv)
 {
-	int plnum = consoleplayer;
+	int     plnum = consoleplayer;
 
 	if(argc > 2)
 	{
 		Con_Printf("Usage: stopdemo (plrnum)\n");
 		return true;
 	}
-	if(argc == 2) plnum = atoi(argv[1]);
-	if(!playback && !clients[plnum].recording) return true;
-	Con_Printf("Demo %s of player %i stopped.\n", clients[plnum].recording?
-		"recording" : "playback", plnum);
-	if(playback) 
+	if(argc == 2)
+		plnum = atoi(argv[1]);
+	if(!playback && !clients[plnum].recording)
+		return true;
+	Con_Printf("Demo %s of player %i stopped.\n",
+			   clients[plnum].recording ? "recording" : "playback", plnum);
+	if(playback)
 	{
 		Demo_StopPlayback();
 		// Tell the Game DLL that the playback was aborted.
@@ -671,20 +692,20 @@ int CCmdStopDemo(int argc, char **argv)
 
 //===========================================================================
 // CCmdDemoLump
-//	Make a demo lump.
+//  Make a demo lump.
 //===========================================================================
 int CCmdDemoLump(int argc, char **argv)
 {
-	char buf[64];
-		
+	char    buf[64];
+
 	if(argc != 3)
 	{
 		Con_Printf("Usage: %s (demofile) (lumpfile)\n", argv[0]);
-		Con_Printf("Writes a 64-byte reference lump for the given demo file.\n");
+		Con_Printf
+			("Writes a 64-byte reference lump for the given demo file.\n");
 		return true;
 	}
 	memset(buf, 0, sizeof(buf));
 	strncpy(buf, argv[1], 64);
 	return M_WriteFile(argv[2], buf, 64);
 }
-

@@ -30,19 +30,19 @@ typedef enum neteventtype_e {
 } neteventtype_t;
 
 typedef struct netevent_s {
-	neteventtype_t type;
-	nodeid_t id;
+	neteventtype_t  type;
+	nodeid_t        id;
 } netevent_t;
 
-void	N_MAPost(masteraction_t act);
-boolean	N_MADone(void);
-void	N_MAClear(void);
+void            N_MAPost(masteraction_t act);
+boolean         N_MADone(void);
+void            N_MAClear(void);
 
-void 	N_NEPost(netevent_t *nev);
-boolean N_NEPending(void);
-void	N_NETicker(void);
+void            N_NEPost(netevent_t * nev);
+boolean         N_NEPending(void);
+void            N_NETicker(void);
 
-void 	N_TerminateClient(int console);
-void 	N_Update(void);
+void            N_TerminateClient(int console);
+void            N_Update(void);
 
-#endif 
+#endif

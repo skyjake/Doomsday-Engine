@@ -25,28 +25,28 @@
 #include "cl_mobj.h"
 
 typedef struct playerstate_s {
-	clmobj_t	*cmo;
-	thid_t		mobjId;
-	int			forwardMove;
-	int			sideMove;
-	int			angle;
-	angle_t		turnDelta;
-	int			friction;
+	clmobj_t       *cmo;
+	thid_t          mobjId;
+	int             forwardMove;
+	int             sideMove;
+	int             angle;
+	angle_t         turnDelta;
+	int             friction;
 } playerstate_t;
 
-extern int psp_move_speed;
-extern int cplr_thrust_mul;
+extern int      psp_move_speed;
+extern int      cplr_thrust_mul;
 extern playerstate_t playerstate[MAXPLAYERS];
 
-void Cl_InitPlayers(void);
-void Cl_LocalCommand(void);
-void Cl_MovePlayer(ddplayer_t *pl);
-void Cl_MoveLocalPlayer(int dx, int dy, int dz, boolean onground);
-void Cl_UpdatePlayerPos(ddplayer_t *pl);
-void Cl_MovePsprites(void);
-void Cl_CoordsReceived(void);
-int Cl_ReadPlayerDelta(void);
-void Cl_ReadPlayerDelta2(boolean skip);
-boolean Cl_IsFreeToMove(int player);
+void            Cl_InitPlayers(void);
+void            Cl_LocalCommand(void);
+void            Cl_MovePlayer(ddplayer_t * pl);
+void            Cl_MoveLocalPlayer(int dx, int dy, int dz, boolean onground);
+void            Cl_UpdatePlayerPos(ddplayer_t * pl);
+void            Cl_MovePsprites(void);
+void            Cl_CoordsReceived(void);
+int             Cl_ReadPlayerDelta(void);
+void            Cl_ReadPlayerDelta2(boolean skip);
+boolean         Cl_IsFreeToMove(int player);
 
-#endif 
+#endif

@@ -7,4 +7,4 @@
 // A handy helper for declaring console commands.
 #define D_CMD(x) int CCmd##x(int argc, char **argv)
 
-#endif 
+#endif

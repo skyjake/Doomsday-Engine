@@ -36,9 +36,9 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct fdata_s {
-	char *pattern;
-	glob_t buf;
-	int pos;
+	char   *pattern;
+	glob_t  buf;
+	int     pos;
 } fdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -58,11 +58,11 @@ typedef struct fdata_s {
 /*
  * Get the info for the next file.
  */
-static int nextfinddata(finddata_t *fd)
+static int nextfinddata(finddata_t * fd)
 {
 	fdata_t *data = fd->finddata;
-	char *fn;
-	char ext[256];
+	char   *fn;
+	char    ext[256];
 	struct stat st;
 
 	if(data->buf.gl_pathc <= data->pos)
@@ -74,15 +74,16 @@ static int nextfinddata(finddata_t *fd)
 	// Nobody needs these...
 	fd->date = 0;
 	fd->time = 0;
-	
+
 	// Get the size of the file.
 	fn = data->buf.gl_pathv[data->pos];
 	if(!stat(fn, &st))
 		fd->size = st.st_size;
 	else
 		fd->size = 0;
-	
-	if(fd->name) free(fd->name);
+
+	if(fd->name)
+		free(fd->name);
 	fd->name = malloc(strlen(fn) + 1);
 	_splitpath(fn, NULL, NULL, fd->name, ext);
 	strcat(fd->name, ext);
@@ -96,7 +97,7 @@ static int nextfinddata(finddata_t *fd)
 	{
 		fd->attrib = 0;
 	}
-	
+
 	// Advance the position.
 	data->pos++;
 	return 0;
@@ -105,10 +106,10 @@ static int nextfinddata(finddata_t *fd)
 /*
  * Returns zero if successful.
  */
-int myfindfirst(const char *filename, finddata_t *fd)
+int myfindfirst(const char *filename, finddata_t * fd)
 {
 	fdata_t *data;
-	
+
 	// Allocate a new glob struct.
 	fd->finddata = data = calloc(1, sizeof(fdata_t));
 	fd->name = NULL;
@@ -121,31 +122,32 @@ int myfindfirst(const char *filename, finddata_t *fd)
 	glob(filename, GLOB_MARK, NULL, &data->buf);
 
 	return nextfinddata(fd);
-	
-/*	dta->hFile = _findfirst(filename, &dta->data);
-	
-	dta->date = dta->data.time_write;
-	dta->time = dta->data.time_write;
-	dta->size = dta->data.size;
-	dta->name = dta->data.name;
-	dta->attrib = dta->data.attrib;
 
-	return dta->hFile<0;*/
+	/*  dta->hFile = _findfirst(filename, &dta->data);
+
+	   dta->date = dta->data.time_write;
+	   dta->time = dta->data.time_write;
+	   dta->size = dta->data.size;
+	   dta->name = dta->data.name;
+	   dta->attrib = dta->data.attrib;
+
+	   return dta->hFile<0; */
 }
 
 /*
  * Returns zero if successful.
  */
-int myfindnext(finddata_t *fd)
+int myfindnext(finddata_t * fd)
 {
-	if(!fd->finddata) return FIND_ERROR;
+	if(!fd->finddata)
+		return FIND_ERROR;
 	return nextfinddata(fd);
 }
 
-void myfindend(finddata_t *fd)
+void myfindend(finddata_t * fd)
 {
-	globfree(&((fdata_t*)fd->finddata)->buf);
-	free(((fdata_t*)fd->finddata)->pattern);
+	globfree(&((fdata_t *) fd->finddata)->buf);
+	free(((fdata_t *) fd->finddata)->pattern);
 	free(fd->name);
 	free(fd->finddata);
 	fd->finddata = NULL;

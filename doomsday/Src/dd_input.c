@@ -24,15 +24,14 @@
 #define KBDQUESIZE		32
 #define MAX_DOWNKEYS	16		// Most keyboards support 6 or 7.
 
-#define CLAMP(x) DD_JoyAxisClamp(&x) //x = (x < -100? -100 : x > 100? 100 : x)
+#define CLAMP(x) DD_JoyAxisClamp(&x)	//x = (x < -100? -100 : x > 100? 100 : x)
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct repeater_s
-{
-	int key;			// The H2 key code (0 if not in use).
-	timespan_t timer;	// How's the time?
-	int count;			// How many times has been repeated?
+typedef struct repeater_s {
+	int     key;				// The H2 key code (0 if not in use).
+	timespan_t timer;			// How's the time?
+	int     count;				// How many times has been repeated?
 } repeater_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -45,30 +44,31 @@ typedef struct repeater_s
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-event_t		events[MAXEVENTS];
-int			eventhead;
-int			eventtail;
+event_t events[MAXEVENTS];
+int     eventhead;
+int     eventtail;
 
-int			mouseFilter = 0;		// No filtering by default.
-int			mouseInverseY = false;
-int			mouseWheelSensi = 10;	// I'm shooting in the dark here.
-int			joySensitivity = 5;
-int			joyDeadZone = 10;
+int     mouseFilter = 0;		// No filtering by default.
+int     mouseInverseY = false;
+int     mouseWheelSensi = 10;	// I'm shooting in the dark here.
+int     joySensitivity = 5;
+int     joyDeadZone = 10;
 
 // The initial and secondary repeater delays (tics).
-int			repWait1 = 15, repWait2 = 3;
-int         keyRepeatDelay1 = 430, keyRepeatDelay2 = 85; // milliseconds
-int			mouseDisableX = false, mouseDisableY = false;
-boolean		shiftDown = false, altDown = false;
-boolean		showScanCodes = false;
+int     repWait1 = 15, repWait2 = 3;
+int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;	// milliseconds
+int     mouseDisableX = false, mouseDisableY = false;
+boolean shiftDown = false, altDown = false;
+boolean showScanCodes = false;
 
 // A customizable mapping of the scantokey array.
-char		keyMapPath[256] = "}Data\\KeyMaps\\";
-byte		keyMappings[256];
-byte		shiftKeyMappings[256], altKeyMappings[256];
+char    keyMapPath[256] = "}Data\\KeyMaps\\";
+byte    keyMappings[256];
+byte    shiftKeyMappings[256], altKeyMappings[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+/* *INDENT-OFF* */
 static byte scantokey[256] =	
 {
 //	0				1			2				3				4			5					6				7
@@ -138,12 +138,13 @@ static char defaultShiftTable[96] =	// Contains characters 32 to 127.
 /* 110 */	'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
 /* 120 */	'X', 'Y', 'Z', 0, 0, 0, 0, 0
 };
+/* *INDENT-ON* */
 
 static repeater_t keyReps[MAX_DOWNKEYS];
-static int		oldMouseX, oldMouseY;
-static int		oldMouseButtons = 0;
-static int		oldJoyBState = 0;
-static float	oldPOV = IJOY_POV_CENTER;
+static int oldMouseX, oldMouseY;
+static int oldMouseButtons = 0;
+static int oldJoyBState = 0;
+static float oldPOV = IJOY_POV_CENTER;
 
 // CODE --------------------------------------------------------------------
 
@@ -152,36 +153,38 @@ static float	oldPOV = IJOY_POV_CENTER;
 //===========================================================================
 void DD_DumpKeyMappings(char *fileName)
 {
-	FILE *file;
-	int i;
+	FILE   *file;
+	int     i;
 
 	file = fopen(fileName, "wt");
 	for(i = 0; i < 256; i++)
 	{
 		fprintf(file, "%03i\t", i);
 		fprintf(file, !isspace(keyMappings[i])
-			&& isprint(keyMappings[i])? "%c\n" : "%03i\n", 
-			keyMappings[i]);
+				&& isprint(keyMappings[i]) ? "%c\n" : "%03i\n",
+				keyMappings[i]);
 	}
 
 	fprintf(file, "\n+Shift\n");
 	for(i = 0; i < 256; i++)
 	{
-		if(shiftKeyMappings[i] == i) continue;
-		fprintf(file, !isspace(i) && isprint(i)? "%c\t" : "%03i\t", i);
+		if(shiftKeyMappings[i] == i)
+			continue;
+		fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
 		fprintf(file, !isspace(shiftKeyMappings[i])
-			&& isprint(shiftKeyMappings[i])? "%c\n" : "%03i\n",
-			shiftKeyMappings[i]);
+				&& isprint(shiftKeyMappings[i]) ? "%c\n" : "%03i\n",
+				shiftKeyMappings[i]);
 	}
 
 	fprintf(file, "-Shift\n\n+Alt\n");
 	for(i = 0; i < 256; i++)
 	{
-		if(altKeyMappings[i] == i) continue;
-		fprintf(file, !isspace(i) && isprint(i)? "%c\t" : "%03i\t", i);
+		if(altKeyMappings[i] == i)
+			continue;
+		fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
 		fprintf(file, !isspace(altKeyMappings[i])
-			&& isprint(altKeyMappings[i])? "%c\n" : "%03i\n",
-			altKeyMappings[i]);
+				&& isprint(altKeyMappings[i]) ? "%c\n" : "%03i\n",
+				altKeyMappings[i]);
 	}
 	fclose(file);
 }
@@ -191,20 +194,20 @@ void DD_DumpKeyMappings(char *fileName)
 //===========================================================================
 void DD_DefaultKeyMapping(void)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < 256; i++)
 	{
 		keyMappings[i] = scantokey[i];
-		shiftKeyMappings[i] = i >= 32 && i <= 127 
-			&& defaultShiftTable[i - 32]? defaultShiftTable[i - 32] : i;
+		shiftKeyMappings[i] = i >= 32 && i <= 127
+			&& defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
 		altKeyMappings[i] = i;
 	}
 }
 
 //===========================================================================
 // DD_InitInput
-//	Initializes the key mappings to the default values.
+//      Initializes the key mappings to the default values.
 //===========================================================================
 void DD_InitInput(void)
 {
@@ -216,12 +219,12 @@ void DD_InitInput(void)
 //===========================================================================
 int DD_KeyOrCode(char *token)
 {
-	char *end = M_FindWhite(token);
+	char   *end = M_FindWhite(token);
 
 	if(end - token > 1)
 	{
 		// Longer than one character, it must be a number.
-		return strtol(token, 0, !strnicmp(token, "0x", 2)? 16 : 10);
+		return strtol(token, 0, !strnicmp(token, "0x", 2) ? 16 : 10);
 	}
 	// Direct mapping.
 	return (unsigned char) *token;
@@ -244,16 +247,16 @@ int CCmdDumpKeyMap(int argc, char **argv)
 
 //===========================================================================
 // CCmdKeyMap
-//	Load a keymap file.
+//      Load a keymap file.
 //===========================================================================
 int CCmdKeyMap(int argc, char **argv)
 {
-	DFILE	*file;
-	char	line[512], *ptr;
-	boolean	shiftMode = false, altMode = false;
-	int		key, mapTo, lineNumber = 0;
+	DFILE  *file;
+	char    line[512], *ptr;
+	boolean shiftMode = false, altMode = false;
+	int     key, mapTo, lineNumber = 0;
 
-	if(argc != 2) 
+	if(argc != 2)
 	{
 		Con_Printf("Usage: %s (dkm-file)\n", argv[0]);
 		return true;
@@ -289,7 +292,8 @@ int CCmdKeyMap(int argc, char **argv)
 		lineNumber++;
 		M_ReadLine(line, sizeof(line), file);
 		ptr = M_SkipWhite(line);
-		if(!*ptr || M_IsComment(ptr)) continue;
+		if(!*ptr || M_IsComment(ptr))
+			continue;
 		// Modifiers? Only shift is supported at the moment.
 		if(!strnicmp(ptr + 1, "shift", 5))
 		{
@@ -304,8 +308,7 @@ int CCmdKeyMap(int argc, char **argv)
 		key = DD_KeyOrCode(ptr);
 		if(key < 0 || key > 255)
 		{
-			Con_Printf("%s(%i): Invalid key %i.\n", argv[1], 
-				lineNumber, key);
+			Con_Printf("%s(%i): Invalid key %i.\n", argv[1], lineNumber, key);
 			continue;
 		}
 		ptr = M_SkipWhite(M_FindWhite(ptr));
@@ -313,8 +316,8 @@ int CCmdKeyMap(int argc, char **argv)
 		// Check the mapping.
 		if(mapTo < 0 || mapTo > 255)
 		{
-			Con_Printf("%s(%i): Invalid mapping %i.\n", argv[1],
-				lineNumber, mapTo);
+			Con_Printf("%s(%i): Invalid mapping %i.\n", argv[1], lineNumber,
+					   mapTo);
 			continue;
 		}
 		if(shiftMode)
@@ -332,7 +335,7 @@ int CCmdKeyMap(int argc, char **argv)
 
 //==========================================================================
 // DD_ProcessEvents
-//	Send all the events of the given timestamp down the responder chain.
+//      Send all the events of the given timestamp down the responder chain.
 //==========================================================================
 void DD_ProcessEvents(void)
 {
@@ -342,34 +345,43 @@ void DD_ProcessEvents(void)
 	DD_ReadJoystick();
 	DD_ReadKeyboard();
 
-	for(; eventtail != eventhead; eventtail = (++eventtail)&(MAXEVENTS-1))
+	for(; eventtail != eventhead; eventtail = (++eventtail) & (MAXEVENTS - 1))
 	{
 		ev = &events[eventtail];
 
 		// Track the state of Shift and Alt.
 		if(ev->data1 == DDKEY_RSHIFT)
 		{
-			if(ev->type == ev_keydown) shiftDown = true;
-			else if(ev->type == ev_keyup) shiftDown = false;
+			if(ev->type == ev_keydown)
+				shiftDown = true;
+			else if(ev->type == ev_keyup)
+				shiftDown = false;
 		}
 		if(ev->data1 == DDKEY_RALT)
 		{
-			if(ev->type == ev_keydown) altDown = true;
-			else if(ev->type == ev_keyup) altDown = false;
+			if(ev->type == ev_keydown)
+				altDown = true;
+			else if(ev->type == ev_keyup)
+				altDown = false;
 		}
-	
+
 		// Does the special responder use this event?
 		if(gx.PrivilegedResponder)
-			if(gx.PrivilegedResponder(ev)) continue;
+			if(gx.PrivilegedResponder(ev))
+				continue;
 
-		if(UI_Responder(ev)) continue;
+		if(UI_Responder(ev))
+			continue;
 		// The console.
-		if(Con_Responder(ev)) continue;
+		if(Con_Responder(ev))
+			continue;
 		// The menu.
-		if(gx.MN_Responder(ev)) continue;
+		if(gx.MN_Responder(ev))
+			continue;
 		// The game responder only returns true if the bindings 
 		// can't be used (like when chatting).
-		if(gx.G_Responder(ev)) continue;
+		if(gx.G_Responder(ev))
+			continue;
 
 		// The bindings responder.
 		B_Responder(ev);
@@ -378,9 +390,9 @@ void DD_ProcessEvents(void)
 
 //==========================================================================
 // DD_PostEvent
-//	Called by the I/O functions when input is detected.
+//      Called by the I/O functions when input is detected.
 //==========================================================================
-void DD_PostEvent(event_t *ev)
+void DD_PostEvent(event_t * ev)
 {
 	events[eventhead++] = *ev;
 	eventhead &= MAXEVENTS - 1;
@@ -396,12 +408,14 @@ byte DD_ScanToKey(byte scan)
 
 //===========================================================================
 // DD_ModKey
-//	Apply all active modifiers to the key.
+//      Apply all active modifiers to the key.
 //===========================================================================
 byte DD_ModKey(byte key)
 {
-	if(shiftDown) key = shiftKeyMappings[key];
-	if(altDown) key = altKeyMappings[key];
+	if(shiftDown)
+		key = shiftKeyMappings[key];
+	if(altDown)
+		key = altKeyMappings[key];
 	return key;
 }
 
@@ -410,8 +424,11 @@ byte DD_ModKey(byte key)
 //===========================================================================
 byte DD_KeyToScan(byte key)
 {
-	int	i;
-	for(i = 0; i < 256; i++) if(keyMappings[i] == key) return i;
+	int     i;
+
+	for(i = 0; i < 256; i++)
+		if(keyMappings[i] == key)
+			return i;
 	return 0;
 }
 
@@ -436,9 +453,9 @@ void DD_ClearKeyRepeaters(void)
 //===========================================================================
 void DD_ReadKeyboard(void)
 {
-	event_t			ev;
-	keyevent_t		keyevs[KBDQUESIZE];
-	int				i, k, numkeyevs;
+	event_t ev;
+	keyevent_t keyevs[KBDQUESIZE];
+	int     i, k, numkeyevs;
 
 	if(isDedicated)
 	{
@@ -452,22 +469,24 @@ void DD_ReadKeyboard(void)
 	for(i = 0; i < MAX_DOWNKEYS; i++)
 	{
 		repeater_t *rep = keyReps + i;
-		if(!rep->key) continue;
+
+		if(!rep->key)
+			continue;
 		ev.data1 = rep->key;
-		if(!rep->count && sysTime - rep->timer >= keyRepeatDelay1/1000.0)
+		if(!rep->count && sysTime - rep->timer >= keyRepeatDelay1 / 1000.0)
 		{
 			// The first time.
 			rep->count++;
-			rep->timer += keyRepeatDelay1/1000.0;
+			rep->timer += keyRepeatDelay1 / 1000.0;
 			DD_PostEvent(&ev);
 		}
 		if(rep->count)
 		{
-			while(sysTime - rep->timer >= keyRepeatDelay2/1000.0)
+			while(sysTime - rep->timer >= keyRepeatDelay2 / 1000.0)
 			{
 				rep->count++;
-				rep->timer += keyRepeatDelay2/1000.0;
-				DD_PostEvent(&ev);				
+				rep->timer += keyRepeatDelay2 / 1000.0;
+				DD_PostEvent(&ev);
 			}
 		}
 	}
@@ -479,13 +498,13 @@ void DD_ReadKeyboard(void)
 	for(i = 0; i < numkeyevs; i++)
 	{
 		keyevent_t *ke = keyevs + i;
-		
+
 		// Check the type of the event.
-		if(ke->event == IKE_KEY_DOWN) // Key pressed?
+		if(ke->event == IKE_KEY_DOWN)	// Key pressed?
 			ev.type = ev_keydown;
-		else if(ke->event == IKE_KEY_UP) // Key released?
+		else if(ke->event == IKE_KEY_UP)	// Key released?
 			ev.type = ev_keyup;
-		
+
 		// Use the table to translate the scancode to a ddkey.
 #ifdef WIN32
 		ev.data1 = DD_ScanToKey(ke->code);
@@ -526,15 +545,16 @@ void DD_ReadKeyboard(void)
 
 //===========================================================================
 // DD_ReadMouse
-//	Mouse events.
+//      Mouse events.
 //===========================================================================
 void DD_ReadMouse(void)
 {
 	event_t ev;
 	mousestate_t mouse;
-	int change;
+	int     change;
 
-	if(!I_MousePresent()) return;
+	if(!I_MousePresent())
+		return;
 
 	// Get the mouse state.
 	I_GetMouseState(&mouse);
@@ -543,41 +563,45 @@ void DD_ReadMouse(void)
 	ev.data1 = mouse.x;
 	ev.data2 = mouse.y;
 	ev.data3 = mouse.z;
-	
+
 	// Mouse axis data may be modified if not in UI mode.
 	if(!ui_active)
 	{
-		if(mouseDisableX) ev.data1 = 0;
-		if(mouseDisableY) ev.data2 = 0;
-		if(!mouseInverseY) ev.data2 = -ev.data2;
+		if(mouseDisableX)
+			ev.data1 = 0;
+		if(mouseDisableY)
+			ev.data2 = 0;
+		if(!mouseInverseY)
+			ev.data2 = -ev.data2;
 
 		// Filtering calculates the average with previous (x,y) value.
 		if(mouseFilter)
 		{
-			int oldX = ev.data1, oldY = ev.data2;
+			int     oldX = ev.data1, oldY = ev.data2;
+
 			ev.data1 = (ev.data1 + oldMouseX) / 2;
 			ev.data2 = (ev.data2 + oldMouseY) / 2;
 			oldMouseX = oldX;
 			oldMouseY = oldY;
 		}
 	}
-	else // In UI mode.
+	else						// In UI mode.
 	{
 		// Scale the movement depending on screen resolution.
-		ev.data1 *= MAX_OF(1, screenWidth/800.0f);
-		ev.data2 *= MAX_OF(1, screenHeight/600.0f);
+		ev.data1 *= MAX_OF(1, screenWidth / 800.0f);
+		ev.data2 *= MAX_OF(1, screenHeight / 600.0f);
 	}
 
-	DD_PostEvent (&ev);
+	DD_PostEvent(&ev);
 
 	// Insert the possible mouse Z axis into the button flags.
 	if(abs(ev.data3) >= mouseWheelSensi)
 	{
-		mouse.buttons |= ev.data3 > 0? DDMB_MWHEELUP : DDMB_MWHEELDOWN;
+		mouse.buttons |= ev.data3 > 0 ? DDMB_MWHEELUP : DDMB_MWHEELDOWN;
 	}
 
 	// Check the buttons and send the appropriate events.
-	change = oldMouseButtons ^ mouse.buttons; // The change mask.
+	change = oldMouseButtons ^ mouse.buttons;	// The change mask.
 	// Send the relevant events.
 	if((ev.data1 = mouse.buttons & change))
 	{
@@ -594,7 +618,7 @@ void DD_ReadMouse(void)
 
 //===========================================================================
 // DD_JoyAxisClamp
-//	Applies the dead zone and clamps the value to -100...100.
+//      Applies the dead zone and clamps the value to -100...100.
 //===========================================================================
 void DD_JoyAxisClamp(int *val)
 {
@@ -605,12 +629,14 @@ void DD_JoyAxisClamp(int *val)
 		return;
 	}
 	// Remove the dead zone.
-	*val += *val > 0? -joyDeadZone : joyDeadZone;
+	*val += *val > 0 ? -joyDeadZone : joyDeadZone;
 	// Normalize.
-	*val *= 100.0f/(100 - joyDeadZone);	
+	*val *= 100.0f / (100 - joyDeadZone);
 	// Clamp.
-	if(*val > 100) *val = 100;
-	if(*val < -100) *val = -100;
+	if(*val > 100)
+		*val = 100;
+	if(*val < -100)
+		*val = -100;
 }
 
 //===========================================================================
@@ -618,10 +644,10 @@ void DD_JoyAxisClamp(int *val)
 //===========================================================================
 void DD_ReadJoystick(void)
 {
-	event_t		ev;
-	joystate_t	state;
-	int			i, bstate;
-	int			div = 100 - joySensitivity*10;
+	event_t ev;
+	joystate_t state;
+	int     i, bstate;
+	int     div = 100 - joySensitivity * 10;
 
 	if(!I_JoystickPresent())
 		return;
@@ -630,11 +656,12 @@ void DD_ReadJoystick(void)
 
 	bstate = 0;
 	// Check the buttons.
-	for(i = 0; i < IJOY_MAXBUTTONS; i++) 
-		if(state.buttons[i]) bstate |= 1<<i; // Set the bits.
+	for(i = 0; i < IJOY_MAXBUTTONS; i++)
+		if(state.buttons[i])
+			bstate |= 1 << i;	// Set the bits.
 
 	// Check for button state changes. 
-	i = oldJoyBState ^ bstate; // The change mask.
+	i = oldJoyBState ^ bstate;	// The change mask.
 	// Send the relevant events.
 	if((ev.data1 = bstate & i))
 	{
@@ -656,14 +683,14 @@ void DD_ReadJoystick(void)
 			// Send a notification that the existing POV angle is no
 			// longer active.
 			ev.type = ev_povup;
-			ev.data1 = (int) (oldPOV/45 + .5);	// Round off correctly w/.5.
+			ev.data1 = (int) (oldPOV / 45 + .5);	// Round off correctly w/.5.
 			DD_PostEvent(&ev);
 		}
 		if(state.povAngle != IJOY_POV_CENTER)
 		{
 			// The new angle becomes active.
 			ev.type = ev_povdown;
-			ev.data1 = (int) (state.povAngle/45 + .5);
+			ev.data1 = (int) (state.povAngle / 45 + .5);
 			DD_PostEvent(&ev);
 		}
 		oldPOV = state.povAngle;
@@ -676,8 +703,10 @@ void DD_ReadJoystick(void)
 	// The output axis data must be in range -100..100.
 	// Increased sensitivity causes the axes to max out earlier.
 	// Check that the divisor is valid.
-	if(div < 10) div = 10;
-	if(div > 100) div = 100;
+	if(div < 10)
+		div = 10;
+	if(div > 100)
+		div = 100;
 
 	ev.data1 = state.axis[0] / div;
 	ev.data2 = state.axis[1] / div;

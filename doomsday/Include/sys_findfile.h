@@ -29,20 +29,20 @@
 #define A_ARCH		0x8
 
 typedef struct finddata_s {
-	void *finddata;
-	long date;
-	long time;
-	long size;
-	char *name;
-	long attrib;
+	void           *finddata;
+	long            date;
+	long            time;
+	long            size;
+	char           *name;
+	long            attrib;
 } finddata_t;
 
 /*
  * The functions return zero if successful.
  */
 
-int 	myfindfirst(const char *filename, finddata_t *dta);
-int 	myfindnext(finddata_t *dta);
-void 	myfindend(finddata_t *dta);
+int             myfindfirst(const char *filename, finddata_t * dta);
+int             myfindnext(finddata_t * dta);
+void            myfindend(finddata_t * dta);
 
-#endif 
+#endif

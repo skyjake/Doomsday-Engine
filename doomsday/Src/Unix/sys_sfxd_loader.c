@@ -31,10 +31,10 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern musdriver_t         musd_loaded;
-extern musinterface_mus_t  musd_loaded_imus;
-extern musinterface_ext_t  musd_loaded_iext;
-extern musinterface_cd_t   musd_loaded_icd;
+extern musdriver_t musd_loaded;
+extern musinterface_mus_t musd_loaded_imus;
+extern musinterface_ext_t musd_loaded_iext;
+extern musinterface_cd_t musd_loaded_icd;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -43,7 +43,7 @@ sfxdriver_t sfxd_external;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static lt_dlhandle handle;
-static void	(*driverShutdown)(void);
+static void (*driverShutdown) (void);
 
 // CODE --------------------------------------------------------------------
 
@@ -100,7 +100,7 @@ sfxdriver_t *DS_ImportExternal(void)
 	{
 		musdriver_t *m = &musd_loaded;
 		musinterface_ext_t *i = &musd_loaded_iext;
-		
+
 		m->Init = Imp("DS_Init");
 		m->Shutdown = dummyVoid;
 
@@ -115,7 +115,7 @@ sfxdriver_t *DS_ImportExternal(void)
 		i->PlayFile = Imp("DM_Ext_PlayFile");
 		i->PlayBuffer = Imp("DM_Ext_PlayBuffer");
 	}
-	
+
 	// We should free the DLL at shutdown.
 	d->Shutdown = DS_UnloadExternal;
 	return d;
@@ -123,7 +123,7 @@ sfxdriver_t *DS_ImportExternal(void)
 
 //===========================================================================
 // DS_Load
-//	"A3D", "OpenAL" and "Compat" are supported.
+//  "A3D", "OpenAL" and "Compat" are supported.
 //===========================================================================
 sfxdriver_t *DS_Load(const char *name)
 {
@@ -137,7 +137,6 @@ sfxdriver_t *DS_Load(const char *name)
 		Con_Message("DS_Load: Loading of %s failed.\n", fn);
 		return NULL;
 	}
-	
+
 	return DS_ImportExternal();
 }
-

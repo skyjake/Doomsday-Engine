@@ -28,4 +28,4 @@
 
 extern sfxdriver_t sfxd_dummy;
 
-#endif 
+#endif

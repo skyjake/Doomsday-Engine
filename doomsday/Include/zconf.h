@@ -81,7 +81,7 @@
 #endif
 
 #ifndef STDC
-#  ifndef const /* cannot use !defined(STDC) && !defined(const) on Mac */
+#  ifndef const					   /* cannot use !defined(STDC) && !defined(const) on Mac */
 #    define const
 #  endif
 #endif
@@ -95,7 +95,6 @@
 #if defined(__BORLANDC__) && (__BORLANDC__ < 0x500)
 #  define NEED_DUMMY_RETURN
 #endif
-
 
 /* Maximum value for memLevel in deflateInit2 */
 #ifndef MAX_MEM_LEVEL
@@ -112,25 +111,25 @@
  * gzip.)
  */
 #ifndef MAX_WBITS
-#  define MAX_WBITS   15 /* 32K LZ77 window */
+#  define MAX_WBITS   15		   /* 32K LZ77 window */
 #endif
 
 /* The memory requirements for deflate are (in bytes):
-            (1 << (windowBits+2)) +  (1 << (memLevel+9))
- that is: 128K for windowBits=15  +  128K for memLevel = 8  (default values)
- plus a few kilobytes for small objects. For example, if you want to reduce
- the default memory requirements from 256K to 128K, compile with
-     make CFLAGS="-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7"
- Of course this will generally degrade compression (there's no free lunch).
+   (1 << (windowBits+2)) +  (1 << (memLevel+9))
+   that is: 128K for windowBits=15  +  128K for memLevel = 8  (default values)
+   plus a few kilobytes for small objects. For example, if you want to reduce
+   the default memory requirements from 256K to 128K, compile with
+   make CFLAGS="-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7"
+   Of course this will generally degrade compression (there's no free lunch).
 
    The memory requirements for inflate are (in bytes) 1 << windowBits
- that is, 32K for windowBits=15 (default value) plus a few kilobytes
- for small objects.
-*/
+   that is, 32K for windowBits=15 (default value) plus a few kilobytes
+   for small objects.
+ */
 
-                        /* Type declarations */
+						/* Type declarations */
 
-#ifndef OF /* function prototypes */
+#ifndef OF						   /* function prototypes */
 #  ifdef STDC
 #    define OF(args)  args
 #  else
@@ -211,39 +210,39 @@
 #endif
 
 #if !defined(MACOS) && !defined(TARGET_OS_MAC)
-typedef unsigned char  Byte;  /* 8 bits */
+typedef unsigned char Byte;		   /* 8 bits */
 #endif
-typedef unsigned int   uInt;  /* 16 bits or more */
-typedef unsigned long  uLong; /* 32 bits or more */
+typedef unsigned int uInt;		   /* 16 bits or more */
+typedef unsigned long uLong;	   /* 32 bits or more */
 
 #ifdef SMALL_MEDIUM
    /* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
 #  define Bytef Byte FAR
 #else
-   typedef Byte  FAR Bytef;
+typedef Byte FAR Bytef;
 #endif
-typedef char  FAR charf;
-typedef int   FAR intf;
-typedef uInt  FAR uIntf;
+typedef char FAR charf;
+typedef int FAR intf;
+typedef uInt FAR uIntf;
 typedef uLong FAR uLongf;
 
 #ifdef STDC
-   typedef void FAR *voidpf;
-   typedef void     *voidp;
+typedef void FAR *voidpf;
+typedef void   *voidp;
 #else
-   typedef Byte FAR *voidpf;
-   typedef Byte     *voidp;
+typedef Byte FAR *voidpf;
+typedef Byte   *voidp;
 #endif
 
 #ifdef HAVE_UNISTD_H
-#  include <sys/types.h> /* for off_t */
-#  include <unistd.h>    /* for SEEK_* and off_t */
+#  include <sys/types.h>		   /* for off_t */
+#  include <unistd.h>			   /* for SEEK_* and off_t */
 #  define z_off_t  off_t
 #endif
 #ifndef SEEK_SET
-#  define SEEK_SET        0       /* Seek from beginning of file.  */
-#  define SEEK_CUR        1       /* Seek from current position.  */
-#  define SEEK_END        2       /* Set file pointer to EOF plus "offset" */
+#  define SEEK_SET        0		   /* Seek from beginning of file.  */
+#  define SEEK_CUR        1		   /* Seek from current position.  */
+#  define SEEK_END        2		   /* Set file pointer to EOF plus "offset" */
 #endif
 #ifndef z_off_t
 #  define  z_off_t long
@@ -276,5 +275,4 @@ typedef uLong FAR uLongf;
 #   pragma map(inflate_trees_free,"INTRFR")
 #endif
 
-#endif /* _ZCONF_H */
-
+#endif							/* _ZCONF_H */

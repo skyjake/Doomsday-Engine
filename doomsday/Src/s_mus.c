@@ -36,12 +36,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct interface_info_s
-{
+typedef struct interface_info_s {
 	musinterface_generic_t **ip;
 	const char *name;
-}
-interface_info_t;
+} interface_info_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -53,14 +51,14 @@ interface_info_t;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int mus_preference = MUSP_EXT;
+int     mus_preference = MUSP_EXT;
 
 #ifdef UNIX
 // On Unix, all sound and music interfaces are loaded dynamically.
-musdriver_t         musd_loaded;
-musinterface_mus_t  musd_loaded_imus;
-musinterface_ext_t  musd_loaded_iext;
-musinterface_cd_t   musd_loaded_icd;
+musdriver_t musd_loaded;
+musinterface_mus_t musd_loaded_imus;
+musinterface_ext_t musd_loaded_iext;
+musinterface_cd_t musd_loaded_icd;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -72,29 +70,28 @@ static int current_song = -1;
 // The interfaces.
 static musinterface_mus_t *imus;
 static musinterface_ext_t *iext;
-static musinterface_cd_t  *icd;
+static musinterface_cd_t *icd;
 
 // The interface list. Used to access the common features of all the
 // interfaces conveniently.
-static interface_info_t interfaces[] =
-{
-	{ (musinterface_generic_t**) &imus,	"Mus" },
-	{ (musinterface_generic_t**) &iext,	"Ext" },
-	{ (musinterface_generic_t**) &icd,	"CD" }
+static interface_info_t interfaces[] = {
+	{(musinterface_generic_t **) & imus, "Mus"},
+	{(musinterface_generic_t **) & iext, "Ext"},
+	{(musinterface_generic_t **) & icd, "CD"}
 };
 
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
 // Mus_Init
-//	Initialize the Mus module and choose the interfaces to use. Returns
-//	true if no errors occur.
+//  Initialize the Mus module and choose the interfaces to use. Returns
+//  true if no errors occur.
 //===========================================================================
 boolean Mus_Init(void)
 {
-	int i;
-	
-	if(isDedicated || mus_avail || ArgExists("-nomusic")) 
+	int     i;
+
+	if(isDedicated || mus_avail || ArgExists("-nomusic"))
 		return true;
 
 #ifdef WIN32
@@ -128,9 +125,9 @@ boolean Mus_Init(void)
 	// The available interfaces have already been loaded.
 	if(musd_loaded.Init())
 	{
-		imus = (musd_loaded_imus.gen.Init? &musd_loaded_imus : 0);
-		iext = (musd_loaded_iext.gen.Init? &musd_loaded_iext : 0);
-		icd = (musd_loaded_icd.gen.Init? &musd_loaded_icd : 0);
+		imus = (musd_loaded_imus.gen.Init ? &musd_loaded_imus : 0);
+		iext = (musd_loaded_iext.gen.Init ? &musd_loaded_iext : 0);
+		icd = (musd_loaded_icd.gen.Init ? &musd_loaded_icd : 0);
 	}
 #endif
 
@@ -139,7 +136,7 @@ boolean Mus_Init(void)
 		if(*interfaces[i].ip && !(*interfaces[i].ip)->Init())
 		{
 			Con_Message("Mus_Init: Failed to initialize %s interface.\n",
-				interfaces[i].name);
+						interfaces[i].name);
 
 			*interfaces[i].ip = NULL;
 		}
@@ -147,12 +144,13 @@ boolean Mus_Init(void)
 	// Print a list of the chosen interfaces.
 	if(verbose)
 	{
-		char buf[40];
+		char    buf[40];
+
 		Con_Printf("Mus_Init: Interfaces:");
 		for(i = 0; i < NUM_INTERFACES; i++)
 			if(*interfaces[i].ip)
 			{
-				if(!(*interfaces[i].ip)->Get(MUSIP_ID, buf)) 
+				if(!(*interfaces[i].ip)->Get(MUSIP_ID, buf))
 					strcpy(buf, "?");
 				Con_Printf(" %s", buf);
 			}
@@ -170,7 +168,8 @@ boolean Mus_Init(void)
 //===========================================================================
 void Mus_Shutdown(void)
 {
-	if(!mus_avail) return;
+	if(!mus_avail)
+		return;
 	mus_avail = false;
 
 #ifdef WIN32
@@ -187,48 +186,54 @@ void Mus_Shutdown(void)
 
 //===========================================================================
 // Mus_StartFrame
-//	Called on each frame by S_StartFrame.
+//  Called on each frame by S_StartFrame.
 //===========================================================================
 void Mus_StartFrame(void)
 {
-	int i;
+	int     i;
 
-	if(!mus_avail) return;
+	if(!mus_avail)
+		return;
 
 	// Update all interfaces.
 	for(i = 0; i < NUM_INTERFACES; i++)
-		if(*interfaces[i].ip) (*interfaces[i].ip)->Update();
+		if(*interfaces[i].ip)
+			(*interfaces[i].ip)->Update();
 }
 
 //===========================================================================
 // Mus_SetVolume
-//	Set the general music volume. Affects all music played by all 
-//	interfaces.
+//  Set the general music volume. Affects all music played by all 
+//  interfaces.
 //===========================================================================
 void Mus_SetVolume(float vol)
 {
-	int i;
+	int     i;
 
-	if(!mus_avail) return;
+	if(!mus_avail)
+		return;
 
 	// Set volume of all available interfaces.
 	for(i = 0; i < NUM_INTERFACES; i++)
-		if(*interfaces[i].ip) (*interfaces[i].ip)->Set(MUSIP_VOLUME, vol);
+		if(*interfaces[i].ip)
+			(*interfaces[i].ip)->Set(MUSIP_VOLUME, vol);
 }
 
 //===========================================================================
 // Mus_Pause
-//	Pauses or resumes the music.
+//  Pauses or resumes the music.
 //===========================================================================
 void Mus_Pause(boolean do_pause)
 {
-	int i;
-	
-	if(!mus_avail) return;
+	int     i;
+
+	if(!mus_avail)
+		return;
 
 	// Pause all interfaces.
 	for(i = 0; i < NUM_INTERFACES; i++)
-		if(*interfaces[i].ip) (*interfaces[i].ip)->Pause(do_pause);
+		if(*interfaces[i].ip)
+			(*interfaces[i].ip)->Pause(do_pause);
 }
 
 //===========================================================================
@@ -236,24 +241,26 @@ void Mus_Pause(boolean do_pause)
 //===========================================================================
 void Mus_Stop(void)
 {
-	int i;
+	int     i;
 
-	if(!mus_avail) return;
+	if(!mus_avail)
+		return;
 
 	current_song = -1;
 
 	// Stop all interfaces.
 	for(i = 0; i < NUM_INTERFACES; i++)
-		if(*interfaces[i].ip) (*interfaces[i].ip)->Stop();
+		if(*interfaces[i].ip)
+			(*interfaces[i].ip)->Stop();
 }
 
 //===========================================================================
 // Mus_IsMUSLump
-//	Returns true if the specified lump contains a MUS song.
+//  Returns true if the specified lump contains a MUS song.
 //===========================================================================
 boolean Mus_IsMUSLump(int lump)
 {
-	char buf[8];
+	char    buf[8];
 
 	W_ReadLumpSection(lump, buf, 0, 4);
 	// ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
@@ -262,20 +269,23 @@ boolean Mus_IsMUSLump(int lump)
 
 //===========================================================================
 // Mus_GetMUS
-//	The lump may contain non-MUS data. Returns true if successful.
+//  The lump may contain non-MUS data. Returns true if successful.
 //===========================================================================
-int Mus_GetMUS(ded_music_t *def)
+int Mus_GetMUS(ded_music_t * def)
 {
-	int len, lumpnum;
-	void *ptr;
+	int     len, lumpnum;
+	void   *ptr;
 
-	if(!mus_avail || !imus) return false;
+	if(!mus_avail || !imus)
+		return false;
 
 	lumpnum = W_CheckNumForName(def->lumpname);
-	if(lumpnum < 0) return false; // No such lump.
+	if(lumpnum < 0)
+		return false;			// No such lump.
 
 	// Is this MUS data or what?
-	if(!Mus_IsMUSLump(lumpnum)) return false;
+	if(!Mus_IsMUSLump(lumpnum))
+		return false;
 
 	ptr = imus->SongBuffer(len = W_LumpLength(lumpnum));
 	W_ReadLump(lumpnum, ptr);
@@ -286,14 +296,16 @@ int Mus_GetMUS(ded_music_t *def)
  * Returns true if there is an external file name (that exists!).
  * Ext songs can be either in external files or non-MUS lumps.
  */
-int Mus_GetExt(ded_music_t *def, char *path)
+int Mus_GetExt(ded_music_t * def, char *path)
 {
-	char buf[300];
-	int lumpnum, len;
-	void *ptr;
+	char    buf[300];
+	int     lumpnum, len;
+	void   *ptr;
 
-	if(!mus_avail || !iext) return false;
-	if(path) strcpy(path, "");
+	if(!mus_avail || !iext)
+		return false;
+	if(path)
+		strcpy(path, "");
 
 	// All external music files are specified relative to the base path.
 	if(def->path.path[0])
@@ -302,12 +314,13 @@ int Mus_GetExt(ded_music_t *def, char *path)
 		if(F_Access(buf))
 		{
 			// Return the real file name if not just checking.
-			if(path) 
+			if(path)
 			{
 				// Because the song can be in a virtual file, we must buffer
 				// it ourselves. Otherwise FMOD might not be able to load 
 				// the song.
-				DFILE *file = F_Open(buf, "rb");
+				DFILE  *file = F_Open(buf, "rb");
+
 				ptr = iext->SongBuffer(len = F_Length(file));
 				F_Read(ptr, len, file);
 				F_Close(file);
@@ -315,31 +328,34 @@ int Mus_GetExt(ded_music_t *def, char *path)
 				// Clear the path so the caller knows it's in the buffer.
 				strcpy(path, "");
 			}
-			return true;		
+			return true;
 		}
-		Con_Message("Mus_GetExt: Song %s: %s not found.\n",
-			def->id, def->path.path);
+		Con_Message("Mus_GetExt: Song %s: %s not found.\n", def->id,
+					def->path.path);
 	}
 
 	// Try the resource locator.
-	if(R_FindResource(RC_MUSIC, def->lumpname, NULL, path)) 
+	if(R_FindResource(RC_MUSIC, def->lumpname, NULL, path))
 	{
 		// We must read the song into a buffer, because the path may
 		// be a virtual file and FMOD doesn't know anything about those.
-		DFILE *file = F_Open(path, "rb");
+		DFILE  *file = F_Open(path, "rb");
+
 		ptr = iext->SongBuffer(len = F_Length(file));
 		F_Read(ptr, len, file);
 		F_Close(file);
 		// Clear the path so the caller knows it's in the buffer.
 		strcpy(path, "");
-		return true; // Got it!
+		return true;			// Got it!
 	}
 
 	lumpnum = W_CheckNumForName(def->lumpname);
-	if(lumpnum < 0) return false; // No such lump.
+	if(lumpnum < 0)
+		return false;			// No such lump.
 
-	if(Mus_IsMUSLump(lumpnum)) return false; // It's MUS!
-	
+	if(Mus_IsMUSLump(lumpnum))
+		return false;			// It's MUS!
+
 	// Take a copy. Might be a big one (since it could be an MP3), so 
 	// use the standard memory allocation routines.
 	ptr = iext->SongBuffer(len = W_LumpLength(lumpnum));
@@ -349,12 +365,14 @@ int Mus_GetExt(ded_music_t *def, char *path)
 
 /*
  * Mus_GetCD
- *	Returns the track number if successful. Otherwise returns zero.
+ *  Returns the track number if successful. Otherwise returns zero.
  */
-int Mus_GetCD(ded_music_t *def)
+int Mus_GetCD(ded_music_t * def)
 {
-	if(!mus_avail || !icd) return 0;
-	if(def->cdtrack) return def->cdtrack;
+	if(!mus_avail || !icd)
+		return 0;
+	if(def->cdtrack)
+		return def->cdtrack;
 	if(!strnicmp(def->path.path, "cd:", 3))
 		return atoi(def->path.path + 3);
 	return 0;
@@ -366,13 +384,14 @@ int Mus_GetCD(ded_music_t *def)
  * true if the song is successfully played. Any previously playing song
  * is stopped.
  */
-int Mus_Start(ded_music_t *def, boolean looped)
+int Mus_Start(ded_music_t * def, boolean looped)
 {
-	char path[300];
-	int order[3], i, song_id = def - defs.music;
+	char    path[300];
+	int     order[3], i, song_id = def - defs.music;
 
 	// We will not restart the currently playing song.
-	if(!mus_avail || song_id == current_song) return false;
+	if(!mus_avail || song_id == current_song)
+		return false;
 
 	// Stop the currently playing song.
 	Mus_Stop();
@@ -382,7 +401,7 @@ int Mus_Start(ded_music_t *def, boolean looped)
 
 	// Choose the order in which to try to start the song.
 	order[0] = mus_preference;
-	switch(mus_preference)
+	switch (mus_preference)
 	{
 	case MUSP_CD:
 		order[1] = MUSP_EXT;
@@ -394,7 +413,7 @@ int Mus_Start(ded_music_t *def, boolean looped)
 		order[2] = MUSP_CD;
 		break;
 
-	default: // MUSP_MUS
+	default:					// MUSP_MUS
 		order[1] = MUSP_EXT;
 		order[2] = MUSP_CD;
 		break;
@@ -403,27 +422,30 @@ int Mus_Start(ded_music_t *def, boolean looped)
 	// Try to start the song.
 	for(i = 0; i < 3; i++)
 	{
-		switch(order[i])
+		switch (order[i])
 		{
 		case MUSP_CD:
-			if(Mus_GetCD(def)) return icd->Play(Mus_GetCD(def), looped);
+			if(Mus_GetCD(def))
+				return icd->Play(Mus_GetCD(def), looped);
 			break;
-			
+
 		case MUSP_EXT:
 			if(Mus_GetExt(def, path))
 			{
 				if(path[0])
 				{
-					if(verbose) Con_Printf("Mus_Start: %s\n", path);
+					if(verbose)
+						Con_Printf("Mus_Start: %s\n", path);
 					return iext->PlayFile(path, looped);
 				}
 				else
 					return iext->PlayBuffer(looped);
 			}
 			break;
-			
+
 		case MUSP_MUS:
-			if(Mus_GetMUS(def))	return imus->Play(looped);
+			if(Mus_GetMUS(def))
+				return imus->Play(looped);
 			break;
 		}
 	}
@@ -437,9 +459,9 @@ int Mus_Start(ded_music_t *def, boolean looped)
 //===========================================================================
 int CCmdPlayMusic(int argc, char **argv)
 {
-	int i, len;
-	void *ptr;
-	char buf[300];
+	int     i, len;
+	void   *ptr;
+	char    buf[300];
 
 	if(!mus_avail)
 	{
@@ -447,7 +469,7 @@ int CCmdPlayMusic(int argc, char **argv)
 		return false;
 	}
 
-	switch(argc)
+	switch (argc)
 	{
 	default:
 		Con_Printf("Usage:\n  %s (music-def)\n", argv[0]);
@@ -470,7 +492,8 @@ int CCmdPlayMusic(int argc, char **argv)
 		if(!stricmp(argv[1], "lump"))
 		{
 			i = W_CheckNumForName(argv[2]);
-			if(i < 0) return false; // No such lump.
+			if(i < 0)
+				return false;	// No such lump.
 			Mus_Stop();
 			if(Mus_IsMUSLump(i) && imus)
 			{
@@ -489,12 +512,14 @@ int CCmdPlayMusic(int argc, char **argv)
 		{
 			Mus_Stop();
 			M_TranslatePath(argv[2], buf);
-			if(iext) return iext->PlayFile(buf, true);
+			if(iext)
+				return iext->PlayFile(buf, true);
 		}
 		else if(!stricmp(argv[1], "cd"))
 		{
 			Mus_Stop();
-			if(icd) return icd->Play(atoi(argv[2]), true);
+			if(icd)
+				return icd->Play(atoi(argv[2]), true);
 		}
 		break;
 	}
@@ -506,7 +531,7 @@ int CCmdPlayMusic(int argc, char **argv)
 //===========================================================================
 int CCmdPlayExt(int argc, char **argv)
 {
-	char buf[300];
+	char    buf[300];
 
 	if(argc != 2)
 	{
@@ -515,7 +540,8 @@ int CCmdPlayExt(int argc, char **argv)
 	}
 	Mus_Stop();
 	M_TranslatePath(argv[1], buf);
-	if(iext) return iext->PlayFile(buf, true);
+	if(iext)
+		return iext->PlayFile(buf, true);
 	return true;
 }
 

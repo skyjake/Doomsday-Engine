@@ -52,22 +52,22 @@
 
 //===========================================================================
 // Str_Init
-//	Call this for uninitialized strings. Global variables are 
-//	automatically cleared, so they don't need initialization.
+//  Call this for uninitialized strings. Global variables are 
+//  automatically cleared, so they don't need initialization.
 //===========================================================================
-void Str_Init(ddstring_t *ds)
+void Str_Init(ddstring_t * ds)
 {
-	memset(ds, 0, sizeof(*ds));	
+	memset(ds, 0, sizeof(*ds));
 }
 
 //===========================================================================
 // Str_Free
-//	Empty an existing string. Totally destroys it. The string is 
-//	considered re-initialized.
+//  Empty an existing string. Totally destroys it. The string is 
+//  considered re-initialized.
 //===========================================================================
-void Str_Free(ddstring_t *ds)
+void Str_Free(ddstring_t * ds)
 {
-	if(ds->size) 
+	if(ds->size)
 	{
 		// The string has memory allocated, free it.
 		Z_Free(ds->str);
@@ -77,7 +77,7 @@ void Str_Free(ddstring_t *ds)
 
 //===========================================================================
 // Str_New
-//	Allocate a new uninitialized string.
+//  Allocate a new uninitialized string.
 //===========================================================================
 ddstring_t *Str_New(void)
 {
@@ -86,9 +86,9 @@ ddstring_t *Str_New(void)
 
 //===========================================================================
 // Str_Delete
-//	Destroy the string completely (free, too).
+//  Destroy the string completely (free, too).
 //===========================================================================
-void Str_Delete(ddstring_t *ds)
+void Str_Delete(ddstring_t * ds)
 {
 	Str_Free(ds);
 	free(ds);
@@ -96,49 +96,52 @@ void Str_Delete(ddstring_t *ds)
 
 //===========================================================================
 // Str_Clear
-//	Empties a string, but does not free its memory.
+//  Empties a string, but does not free its memory.
 //===========================================================================
-void Str_Clear(ddstring_t *ds)
+void Str_Clear(ddstring_t * ds)
 {
-	Str_Set(ds, "");	
+	Str_Set(ds, "");
 }
 
 //===========================================================================
 // Str_Alloc
-//	Allocates so much memory that for_length characters will fit.
+//  Allocates so much memory that for_length characters will fit.
 //===========================================================================
-void Str_Alloc(ddstring_t *ds, int for_length, int preserve)
+void Str_Alloc(ddstring_t * ds, int for_length, int preserve)
 {
 	boolean old_data = false;
-	char *buf;
+	char   *buf;
 
 	// Include the terminating null character.
 	for_length++;
 
-	if(ds->size >= for_length) return; // We're OK.
+	if(ds->size >= for_length)
+		return;					// We're OK.
 
 	// Already some memory allocated?
-	if(ds->size) 
+	if(ds->size)
 		old_data = true;
 	else
 		ds->size = 1;
 
-	while(ds->size < for_length) ds->size *= 2;
+	while(ds->size < for_length)
+		ds->size *= 2;
 	buf = Z_Malloc(ds->size, PU_STATIC, 0);
-	memset(buf, 0, ds->size); 
+	memset(buf, 0, ds->size);
 
-	if(preserve && ds->str) 
+	if(preserve && ds->str)
 		strncpy(buf, ds->str, ds->size - 1);
 
 	// Replace the old string with the new buffer.
-	if(old_data) Z_Free(ds->str);
+	if(old_data)
+		Z_Free(ds->str);
 	ds->str = buf;
 }
 
 //===========================================================================
 // Str_Reserve
 //===========================================================================
-void Str_Reserve(ddstring_t *ds, int length)
+void Str_Reserve(ddstring_t * ds, int length)
 {
 	Str_Alloc(ds, length, true);
 }
@@ -146,9 +149,9 @@ void Str_Reserve(ddstring_t *ds, int length)
 //===========================================================================
 // Str_Set
 //===========================================================================
-void Str_Set(ddstring_t *ds, const char *text)
+void Str_Set(ddstring_t * ds, const char *text)
 {
-	int incoming = strlen(text);
+	int     incoming = strlen(text);
 
 	Str_Alloc(ds, incoming, false);
 	strcpy(ds->str, text);
@@ -158,12 +161,13 @@ void Str_Set(ddstring_t *ds, const char *text)
 //===========================================================================
 // Str_Append
 //===========================================================================
-void Str_Append(ddstring_t *ds, const char *append_text)
+void Str_Append(ddstring_t * ds, const char *append_text)
 {
-	int incoming = strlen(append_text);
+	int     incoming = strlen(append_text);
 
 	// Don't allow extremely long strings.
-	if(ds->length > MAX_LENGTH) return;
+	if(ds->length > MAX_LENGTH)
+		return;
 
 	Str_Alloc(ds, ds->length + incoming, true);
 	strcpy(ds->str + ds->length, append_text);
@@ -172,25 +176,25 @@ void Str_Append(ddstring_t *ds, const char *append_text)
 
 //===========================================================================
 // Str_Appendf
-//	Append formated text.
+//  Append formated text.
 //===========================================================================
-void Str_Appendf(ddstring_t *ds, const char *format, ...)
+void Str_Appendf(ddstring_t * ds, const char *format, ...)
 {
-	char buf[1024];
+	char    buf[1024];
 	va_list args;
 
 	// Print the message into the buffer.
 	va_start(args, format);
 	vsprintf(buf, format, args);
 	va_end(args);
-	Str_Append(ds, buf);	
+	Str_Append(ds, buf);
 }
 
 //===========================================================================
 // Str_PartAppend
-//	Appends a portion of a string.
+//  Appends a portion of a string.
 //===========================================================================
-void Str_PartAppend(ddstring_t *dest, const char *src, int start, int count)
+void Str_PartAppend(ddstring_t * dest, const char *src, int start, int count)
 {
 	Str_Alloc(dest, dest->length + count, true);
 	memcpy(dest->str + dest->length, src + start, count);
@@ -202,14 +206,15 @@ void Str_PartAppend(ddstring_t *dest, const char *src, int start, int count)
 
 //===========================================================================
 // Str_Prepend
-//	Prepend is not even a word, is it? It should be 'prefix'?
+//  Prepend is not even a word, is it? It should be 'prefix'?
 //===========================================================================
-void Str_Prepend(ddstring_t *ds, const char *prepend_text)
+void Str_Prepend(ddstring_t * ds, const char *prepend_text)
 {
-	int incoming = strlen(prepend_text);
+	int     incoming = strlen(prepend_text);
 
 	// Don't allow extremely long strings.
-	if(ds->length > MAX_LENGTH) return;
+	if(ds->length > MAX_LENGTH)
+		return;
 
 	Str_Alloc(ds, ds->length + incoming, true);
 	memmove(ds->str + incoming, ds->str, ds->length + 1);
@@ -219,28 +224,29 @@ void Str_Prepend(ddstring_t *ds, const char *prepend_text)
 
 //===========================================================================
 // Str_Text
-//	This is safe for all strings.
+//  This is safe for all strings.
 //===========================================================================
-char *Str_Text(ddstring_t *ds)
+char   *Str_Text(ddstring_t * ds)
 {
-	return ds->str? ds->str : "";
+	return ds->str ? ds->str : "";
 }
 
 //===========================================================================
 // Str_Length
-//	This is safe for all strings.
+//  This is safe for all strings.
 //===========================================================================
-int Str_Length(ddstring_t *ds)
+int Str_Length(ddstring_t * ds)
 {
-	if(ds->length) return ds->length;
+	if(ds->length)
+		return ds->length;
 	return strlen(Str_Text(ds));
 }
 
 //===========================================================================
 // Str_Copy
-//	Makes a true copy.
+//  Makes a true copy.
 //===========================================================================
-void Str_Copy(ddstring_t *dest, ddstring_t *src)
+void Str_Copy(ddstring_t * dest, ddstring_t * src)
 {
 	Str_Free(dest);
 	dest->size = src->size;
@@ -251,18 +257,22 @@ void Str_Copy(ddstring_t *dest, ddstring_t *src)
 
 //===========================================================================
 // Str_StripLeft
-//	Strip whitespace from beginning.
+//  Strip whitespace from beginning.
 //===========================================================================
-void Str_StripLeft(ddstring_t *ds)
+void Str_StripLeft(ddstring_t * ds)
 {
-	int i, num;
+	int     i, num;
 
-	if(!ds->length) return;
-	
+	if(!ds->length)
+		return;
+
 	// Find out how many whitespace chars are at the beginning.
 	for(i = 0, num = 0; i < ds->length; i++)
-		if(isspace(ds->str[i])) num++; else break;
-	
+		if(isspace(ds->str[i]))
+			num++;
+		else
+			break;
+
 	if(num)
 	{
 		// Remove 'num' chars.
@@ -274,13 +284,14 @@ void Str_StripLeft(ddstring_t *ds)
 
 //===========================================================================
 // Str_StripRight
-//	Strip whitespace from end.
+//  Strip whitespace from end.
 //===========================================================================
-void Str_StripRight(ddstring_t *ds)
+void Str_StripRight(ddstring_t * ds)
 {
-	int i;
+	int     i;
 
-	if(!ds->length) return;
+	if(!ds->length)
+		return;
 
 	for(i = ds->length - 1; i >= 0; i--)
 		if(isspace(ds->str[i]))
@@ -289,14 +300,15 @@ void Str_StripRight(ddstring_t *ds)
 			ds->str[i] = 0;
 			ds->length--;
 		}
-		else break;
+		else
+			break;
 }
 
 //===========================================================================
 // Str_Strip
-//	Strip whitespace from beginning and end.
+//  Strip whitespace from beginning and end.
 //===========================================================================
-void Str_Strip(ddstring_t *ds)
+void Str_Strip(ddstring_t * ds)
 {
 	Str_StripLeft(ds);
 	Str_StripRight(ds);
@@ -304,16 +316,16 @@ void Str_Strip(ddstring_t *ds)
 
 //===========================================================================
 // Str_GetLine
-//	Extract a line of text from the source.
+//  Extract a line of text from the source.
 //===========================================================================
-const char *Str_GetLine(ddstring_t *ds, const char *src)
+const char *Str_GetLine(ddstring_t * ds, const char *src)
 {
-	char buf[2];
+	char    buf[2];
 
 	// We'll append the chars one by one.
 	memset(buf, 0, sizeof(buf));
-	
-	for(Str_Clear(ds); *src && *src != '\n'; src++) 
+
+	for(Str_Clear(ds); *src && *src != '\n'; src++)
 	{
 		buf[0] = *src;
 		Str_Append(ds, buf);
@@ -323,6 +335,7 @@ const char *Str_GetLine(ddstring_t *ds, const char *src)
 	Str_Strip(ds);
 
 	// The newline is excluded.
-	if(*src == '\n') src++;
+	if(*src == '\n')
+		src++;
 	return src;
 }

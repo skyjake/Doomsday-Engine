@@ -44,8 +44,7 @@
 #define DIR_SEP_STR		"\\"
 #define DIR_WRONG_SEP_CHAR 	'/'
 
-#endif // WIN32
-
+#endif							// WIN32
 
 /*
  * The Unix Platform
@@ -55,7 +54,7 @@
 #include <errno.h>
 
 typedef long long int INTEGER64;
-typedef unsigned int DWORD; 
+typedef unsigned int DWORD;
 
 /*
  * Networking.
@@ -87,7 +86,7 @@ typedef unsigned int DWORD;
 #define _findfirst 	myfindfirst
 #define _findnext	myfindnext
 #define _findend	myfindend
-	
-#endif // UNIX
 
-#endif // __DOOMSDAY_PLATFORM__
+#endif							// UNIX
+
+#endif							// __DOOMSDAY_PLATFORM__

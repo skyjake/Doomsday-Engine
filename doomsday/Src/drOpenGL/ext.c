@@ -29,9 +29,9 @@
 // MACROS ------------------------------------------------------------------
 
 #ifdef WIN32
-#	define GETPROC(x)	x = (void*)wglGetProcAddress(#x)
+#  	define GETPROC(x)	x = (void*)wglGetProcAddress(#x)
 #elif defined(UNIX)
-#	define GETPROC(x)	x = SDL_GL_GetProcAddress(#x)
+#  	define GETPROC(x)	x = SDL_GL_GetProcAddress(#x)
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -42,24 +42,24 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int extMultiTex;
-int extBlendSub;
-int	extTexEnvComb;
-int	extNvTexEnvComb;
-int	extAtiTexEnvComb;
-int	extAniso;
-int	extLockArray;
-int extGenMip;
-int extS3TC;
+int     extMultiTex;
+int     extBlendSub;
+int     extTexEnvComb;
+int     extNvTexEnvComb;
+int     extAtiTexEnvComb;
+int     extAniso;
+int     extLockArray;
+int     extGenMip;
+int     extS3TC;
 
 #ifdef WIN32
-PFNGLCLIENTACTIVETEXTUREPROC	glClientActiveTextureARB;
-PFNGLACTIVETEXTUREARBPROC		glActiveTextureARB;
-PFNGLMULTITEXCOORD2FARBPROC		glMultiTexCoord2fARB;
-PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
-PFNGLBLENDEQUATIONEXTPROC		glBlendEquationEXT;
-PFNGLLOCKARRAYSEXTPROC			glLockArraysEXT;
-PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;
+PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTextureARB;
+PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
+PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
+PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
+PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
+PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
+PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -68,9 +68,9 @@ PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;
 
 //===========================================================================
 // queryExtension
-//	Returns non-zero iff the extension string is found.
+//  Returns non-zero iff the extension string is found.
 //  This function is based on Mark J. Kilgard's tutorials about OpenGL 
-//	extensions.
+//  extensions.
 //===========================================================================
 int queryExtension(const char *name)
 {
@@ -78,20 +78,23 @@ int queryExtension(const char *name)
 	const GLubyte *start;
 	GLubyte *where, *terminator;
 
-	if(!extensions) return false;
+	if(!extensions)
+		return false;
 
 	// Extension names should not have spaces. 
-	where = (GLubyte*) strchr(name, ' ');
-	if(where || *name == '\0') return false;
+	where = (GLubyte *) strchr(name, ' ');
+	if(where || *name == '\0')
+		return false;
 
 	// It takes a bit of care to be fool-proof about parsing the
 	// OpenGL extensions string. Don't be fooled by sub-strings, etc.
 	start = extensions;
 
-	for(;;) 
+	for(;;)
 	{
-		where = (GLubyte*) strstr((const char*) start, name);
-		if(!where) break;
+		where = (GLubyte *) strstr((const char *) start, name);
+		if(!where)
+			break;
 		terminator = where + strlen(name);
 		if(where == start || *(where - 1) == ' ')
 			if(*terminator == ' ' || *terminator == '\0')
@@ -108,9 +111,10 @@ int queryExtension(const char *name)
 //===========================================================================
 int query(const char *ext, int *var)
 {
-	if((*var = queryExtension(ext)) != DGL_FALSE) 
+	if((*var = queryExtension(ext)) != DGL_FALSE)
 	{
-		if(verbose) Con_Message("OpenGL extension: %s\n", ext);
+		if(verbose)
+			Con_Message("OpenGL extension: %s\n", ext);
 		return true;
 	}
 	return false;
@@ -121,13 +125,13 @@ int query(const char *ext, int *var)
 //===========================================================================
 void initExtensions(void)
 {
-	int i;
+	int     i;
 
 	if(query("GL_EXT_compiled_vertex_array", &extLockArray))
 	{
 #ifdef WIN32
-		GETPROC( glLockArraysEXT );
-		GETPROC( glUnlockArraysEXT );
+		GETPROC(glLockArraysEXT);
+		GETPROC(glUnlockArraysEXT);
 #endif
 	}
 
@@ -139,7 +143,7 @@ void initExtensions(void)
 	if(query("GL_EXT_blend_subtract", &extBlendSub))
 	{
 #ifdef WIN32
-		GETPROC( glBlendEquationEXT );
+		GETPROC(glBlendEquationEXT);
 #endif
 	}
 
@@ -162,7 +166,7 @@ void initExtensions(void)
 	{
 		glGetError();
 		glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &i);
-		if(i && glGetError() == GL_NO_ERROR) 
+		if(i && glGetError() == GL_NO_ERROR)
 		{
 			useCompr = DGL_TRUE;
 			Con_Message("OpenGL: Texture compression (%i formats).\n", i);
@@ -175,13 +179,13 @@ void initExtensions(void)
 	// ARB_multitexture 
 	if(query("GL_ARB_multitexture", &extMultiTex))
 	{
-#ifdef WIN32
+#  ifdef WIN32
 		// Get the function pointers.
-		GETPROC( glClientActiveTextureARB );
-		GETPROC( glActiveTextureARB );
-		GETPROC( glMultiTexCoord2fARB );
-		GETPROC( glMultiTexCoord2fvARB );
-#endif
+		GETPROC(glClientActiveTextureARB);
+		GETPROC(glActiveTextureARB);
+		GETPROC(glMultiTexCoord2fARB);
+		GETPROC(glMultiTexCoord2fvARB);
+#  endif
 	}
 #endif
 
@@ -192,4 +196,3 @@ void initExtensions(void)
 		glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 	}
 }
-

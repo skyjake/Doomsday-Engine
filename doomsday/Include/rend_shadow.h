@@ -22,9 +22,9 @@
 #ifndef __DOOMSDAY_RENDER_SHADOW_H__
 #define __DOOMSDAY_RENDER_SHADOW_H__
 
-extern int		useShadows, shadowMaxRad, shadowMaxDist;
-extern float	shadowFactor;
+extern int      useShadows, shadowMaxRad, shadowMaxDist;
+extern float    shadowFactor;
 
-void	Rend_RenderShadows(void);
+void            Rend_RenderShadows(void);
 
-#endif 
+#endif

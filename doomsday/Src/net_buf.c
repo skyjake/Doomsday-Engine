@@ -45,9 +45,9 @@
 #define MSG_MUTEX_NAME	"MsgQueueMutex"
 
 // Flags for the sent message store (for to-be-confirmed messages):
-#define SMSF_ORDERED	0x1	// Block other ordered messages until confirmed
-#define SMSF_QUEUED		0x2	// Ordered message waiting to be sent
-#define SMSF_CONFIRMED	0x4	// Delivery has been confirmed! (OK to remove)
+#define SMSF_ORDERED	0x1		// Block other ordered messages until confirmed
+#define SMSF_QUEUED		0x2		// Ordered message waiting to be sent
+#define SMSF_CONFIRMED	0x4		// Delivery has been confirmed! (OK to remove)
 
 // Length of the received message ID history.
 #define STORE_HISTORY_SIZE 100
@@ -58,18 +58,18 @@ typedef struct sentmessage_s {
 	struct sentmessage_s *next, *prev;
 	struct store_s *store;
 	msgid_t id;
-	uint timeStamp;
-	int flags;
+	uint    timeStamp;
+	int     flags;
 	nodeid_t destination;
 	unsigned int size;
-	void *data;
+	void   *data;
 } sentmessage_t;
 
 typedef struct store_s {
 	sentmessage_t *first, *last;
 	msgid_t idCounter;
 	msgid_t history[STORE_HISTORY_SIZE];
-	int historyIdx;
+	int     historyIdx;
 } store_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -82,9 +82,9 @@ typedef struct store_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean		allowSending = true;
+boolean allowSending = true;
 
-netbuffer_t	netBuffer;
+netbuffer_t netBuffer;
 
 // The Sent Message Store: list of sent or queued messages waiting to be 
 // confirmed.
@@ -115,10 +115,10 @@ void N_Init(void)
 {
 	// Create a mutex for the message queue.
 	msgMutex = Sys_CreateMutex(MSG_MUTEX_NAME);
-	
+
 	N_SockInit();
 	N_MasterInit();
-	N_SystemInit(); // Platform dependent stuff.
+	N_SystemInit();				// Platform dependent stuff.
 }
 
 /*
@@ -134,7 +134,7 @@ void N_Shutdown(void)
 	// Close the handle of the message queue mutex.
 	Sys_DestroyMutex(msgMutex);
 	msgMutex = 0;
-	
+
 	if(ArgExists("-huffavg"))
 	{
 		Con_Execute("huffman", false);
@@ -160,7 +160,7 @@ boolean N_LockQueue(boolean doAcquire)
  * mutex to synchronize access to the message queue.  This is called
  * in the network receiver thread.
  */
-void N_PostMessage(netmessage_t *msg)
+void N_PostMessage(netmessage_t * msg)
 {
 	N_LockQueue(true);
 
@@ -177,7 +177,8 @@ void N_PostMessage(netmessage_t *msg)
 	msgTail = msg;
 
 	// If there is no head, this'll be the first message.
-	if(msgHead == NULL) msgHead = msg;
+	if(msgHead == NULL)
+		msgHead = msg;
 
 	N_LockQueue(false);
 }
@@ -189,11 +190,11 @@ void N_PostMessage(netmessage_t *msg)
  * use a mutex to synchronize access to the message queue.  This is
  * called in the Doomsday thread.
  */
-netmessage_t* N_GetMessage(void)
+netmessage_t *N_GetMessage(void)
 {
 	// This is the message we'll return.
 	netmessage_t *msg = NULL;
-	
+
 	N_LockQueue(true);
 	if(msgHead != NULL)
 	{
@@ -201,7 +202,8 @@ netmessage_t* N_GetMessage(void)
 
 		// If there are no more messages, the tail pointer must be
 		// cleared, too.
-		if(!msgHead->next) msgTail = NULL;
+		if(!msgHead->next)
+			msgTail = NULL;
 
 		// Advance the head pointer.
 		msgHead = msgHead->next;
@@ -233,7 +235,8 @@ ushort N_GetNewMsgID(int player)
 void N_HistoryAdd(int player, msgid_t id)
 {
 	store_t *store = &stores[player];
-	store->history[ store->historyIdx++ ] = id;
+
+	store->history[store->historyIdx++] = id;
 	store->historyIdx %= STORE_HISTORY_SIZE;
 }
 
@@ -243,11 +246,12 @@ void N_HistoryAdd(int player, msgid_t id)
 boolean N_HistoryCheck(int player, msgid_t id)
 {
 	store_t *store = &stores[player];
-	int i;
+	int     i;
 
 	for(i = 0; i < STORE_HISTORY_SIZE; i++)
 	{
-		if(store->history[i] == id) return true;
+		if(store->history[i] == id)
+			return true;
 	}
 	return false;
 }
@@ -255,11 +259,11 @@ boolean N_HistoryCheck(int player, msgid_t id)
 /*
  * Add a new message to the Sent Message Store.
  */
-sentmessage_t *N_SMSCreate(int player, msgid_t id, nodeid_t destID,
-						   void *data, uint length)
+sentmessage_t *N_SMSCreate(int player, msgid_t id, nodeid_t destID, void *data,
+						   uint length)
 {
 	store_t *store = &stores[player];
-	sentmessage_t *msg = (sentmessage_t*) calloc(sizeof(sentmessage_t), 1);
+	sentmessage_t *msg = (sentmessage_t *) calloc(sizeof(sentmessage_t), 1);
 
 	msg->store = store;
 	msg->id = id;
@@ -289,7 +293,7 @@ sentmessage_t *N_SMSCreate(int player, msgid_t id, nodeid_t destID,
  * This is done during N_Update(), so it never conflicts with the creation
  * of SMS nodes.
  */
-void N_SMSDestroy(sentmessage_t *msg)
+void N_SMSDestroy(sentmessage_t * msg)
 {
 	store_t *store = msg->store;
 
@@ -327,11 +331,12 @@ boolean N_SMSContainsOrdered(int player)
 
 	for(msg = store->first; msg; msg = msg->next)
 	{
-		if(msg->flags & SMSF_CONFIRMED) 
+		if(msg->flags & SMSF_CONFIRMED)
 		{
 			continue;
 		}
-		if(msg->flags & SMSF_ORDERED) return true;
+		if(msg->flags & SMSF_ORDERED)
+			return true;
 	}
 	return false;
 }
@@ -339,7 +344,7 @@ boolean N_SMSContainsOrdered(int player)
 /*
  * Resends a message from the Sent Message Store.
  */
-void N_SMSResend(sentmessage_t *msg)
+void N_SMSResend(sentmessage_t * msg)
 {
 	// It's now no longer queued.
 	msg->flags &= ~SMSF_QUEUED;
@@ -353,11 +358,12 @@ void N_SMSResend(sentmessage_t *msg)
 /*
  * Finds the next queued message and sends it.
  */
-void N_SMSUnqueueNext(sentmessage_t *msg)
+void N_SMSUnqueueNext(sentmessage_t * msg)
 {
 	for(; msg; msg = msg->next)
 	{
-		if(msg->flags & SMSF_CONFIRMED) continue;
+		if(msg->flags & SMSF_CONFIRMED)
+			continue;
 		if(msg->flags & SMSF_QUEUED)
 		{
 			N_SMSResend(msg);
@@ -376,11 +382,12 @@ void N_SMSConfirm(int player, msgid_t id)
 
 	for(msg = store->first; msg; msg = msg->next)
 	{
-		if(msg->flags & SMSF_CONFIRMED) continue;
+		if(msg->flags & SMSF_CONFIRMED)
+			continue;
 		if(msg->id == id)
 		{
 			msg->flags |= SMSF_CONFIRMED;
-			
+
 			// Note how long it took to confirm the message.
 			Net_SetAckTime(player, Sys_GetRealTime() - msg->timeStamp);
 
@@ -402,7 +409,7 @@ void N_SMSConfirm(int player, msgid_t id)
 void N_SMSDestroyConfirmed(void)
 {
 	sentmessage_t *msg, *next = NULL;
-	int i;
+	int     i;
 
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
@@ -424,8 +431,8 @@ void N_SMSDestroyConfirmed(void)
 void N_SMSResendTimedOut(void)
 {
 	sentmessage_t *msg;
-	uint nowTime = Sys_GetRealTime(), threshold;
-	int i;
+	uint    nowTime = Sys_GetRealTime(), threshold;
+	int     i;
 
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
@@ -440,7 +447,7 @@ void N_SMSResendTimedOut(void)
 				continue;
 			}
 
-			if(nowTime - msg->timeStamp > threshold)			
+			if(nowTime - msg->timeStamp > threshold)
 			{
 				// This will now be resent.
 				N_SMSResend(msg);
@@ -455,7 +462,7 @@ void N_SMSResendTimedOut(void)
 void N_SMSReset(int player)
 {
 	store_t *store = &stores[player];
-	
+
 	// Destroy all the messages in the store.
 	while(store->first)
 	{
@@ -469,9 +476,9 @@ void N_SMSReset(int player)
 /*
  * Frees the message.
  */
-void N_ReleaseMessage(netmessage_t *msg)
+void N_ReleaseMessage(netmessage_t * msg)
 {
-	if(msg->handle) 
+	if(msg->handle)
 	{
 		N_ReturnBuffer(msg->handle);
 	}
@@ -484,7 +491,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 void N_ClearMessages(void)
 {
 	netmessage_t *msg;
-	int i;
+	int     i;
 
 	while((msg = N_GetMessage()) != NULL)
 		N_ReleaseMessage(msg);
@@ -505,10 +512,11 @@ void N_ClearMessages(void)
  */
 void N_SendConfirmation(msgid_t id, nodeid_t where)
 {
-	uint size;
+	uint    size;
 
 	// All data is sent using Huffman codes.
-	void *data = Huff_Encode((byte*)&id, 2, &size);
+	void   *data = Huff_Encode((byte *) & id, 2, &size);
+
 	N_SendDataBuffer(data, size, where);
 
 	// Increase the counters.
@@ -525,28 +533,29 @@ void N_SendConfirmation(msgid_t id, nodeid_t where)
  */
 void N_SendPacket(int flags)
 {
-	int i, dest = 0;
+	int     i, dest = 0;
 	sentmessage_t *sentMsg;
-	void *data;
-	uint size;
+	void   *data;
+	uint    size;
 	boolean isQueued = false;
 
 	// Is the network available?
-	if(!allowSending || !N_IsAvailable()) return;
+	if(!allowSending || !N_IsAvailable())
+		return;
 
 	// Figure out the destination DPNID.
 	if(netServerMode)
 	{
 		if(netBuffer.player >= 0 && netBuffer.player < MAXPLAYERS)
 		{
-			if(players[ netBuffer.player ].flags & DDPF_LOCAL
-				|| !clients[ netBuffer.player ].connected) 
+			if(players[netBuffer.player].flags & DDPF_LOCAL
+			   || !clients[netBuffer.player].connected)
 			{
 				// Do not send anything to local or disconnected players.
 				return;
 			}
 
-			dest = clients[ netBuffer.player ].nodeID;
+			dest = clients[netBuffer.player].nodeID;
 		}
 		else
 		{
@@ -590,8 +599,9 @@ void N_SendPacket(int flags)
 	numOutBytes += netBuffer.headerLength + netBuffer.length;
 
 	// Compress using Huffman codes.
-	data = Huff_Encode( (byte*) &netBuffer.msg, 
-		netBuffer.headerLength + netBuffer.length, &size);
+	data =
+		Huff_Encode((byte *) & netBuffer.msg,
+					netBuffer.headerLength + netBuffer.length, &size);
 
 	// This many bytes are actually sent.
 	numSentBytes += size;
@@ -600,16 +610,16 @@ void N_SendPacket(int flags)
 	// have been acknowledged.
 	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
 	{
-		sentMsg = N_SMSCreate(netBuffer.player, netBuffer.msg.id, 
-			dest, data, size);
-		
+		sentMsg =
+			N_SMSCreate(netBuffer.player, netBuffer.msg.id, dest, data, size);
+
 		if(flags & SPF_ORDERED)
 		{
 			// This message will block other ordered messages to 
 			// this player.
 			sentMsg->flags |= SMSF_ORDERED;
 		}
-			
+
 		if(isQueued)
 		{
 			// The message will not be sent at this time.
@@ -626,8 +636,8 @@ void N_SendPacket(int flags)
  */
 int N_IdentifyPlayer(nodeid_t id)
 {
-	int i;
-	
+	int     i;
+
 	if(netServerMode)
 	{
 		// What is the corresponding player number? Only the server keeps
@@ -643,7 +653,6 @@ int N_IdentifyPlayer(nodeid_t id)
 	// Clients receive messages only from the server.
 	return 0;
 }
-
 
 /*
  * Returns the next message waiting in the incoming message queue.
@@ -663,9 +672,9 @@ netmessage_t *N_GetNextMessage(void)
 			// From an unknown ID?
 			N_ReleaseMessage(msg);
 
-/*#ifdef _DEBUG
-			Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
-#endif*/
+			/*#ifdef _DEBUG
+			   Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
+			   #endif */
 			continue;
 		}
 
@@ -678,7 +687,7 @@ netmessage_t *N_GetNextMessage(void)
 		msg->handle = NULL;
 
 		// First check the message ID (in the first two bytes).
-		id = *(msgid_t*) msg->data;
+		id = *(msgid_t *) msg->data;
 		if(id)
 		{
 			// Confirmations of delivery are not time-critical, so
@@ -699,10 +708,10 @@ netmessage_t *N_GetNextMessage(void)
 				// buffer.
 				N_SendConfirmation(id, msg->sender);
 
-/*#ifdef _DEBUG
-				Con_Printf("N_GetNextMessage: Acknowledged arrival of "
-					"F%i:%i.\n", msg->player, id);
-#endif*/
+				/*#ifdef _DEBUG
+				   Con_Printf("N_GetNextMessage: Acknowledged arrival of "
+				   "F%i:%i.\n", msg->player, id);
+				   #endif */
 			}
 
 			// It's possible that a message times out just before the
@@ -713,10 +722,10 @@ netmessage_t *N_GetNextMessage(void)
 			// to detect this.
 			if(N_HistoryCheck(msg->player, id))
 			{
-/*#ifdef _DEBUG
-				Con_Printf("N_GetNextMessage: DUPE of F%i:%i.\n", 
-					msg->player, id);
-#endif*/
+				/*#ifdef _DEBUG
+				   Con_Printf("N_GetNextMessage: DUPE of F%i:%i.\n", 
+				   msg->player, id);
+				   #endif */
 				// This is a duplicate!
 				N_ReleaseMessage(msg);
 				continue;
@@ -736,14 +745,15 @@ netmessage_t *N_GetNextMessage(void)
  * A message is extracted from the message queue. Returns true if a message
  * is successfully extracted.
  */
-boolean	N_GetPacket(void)
+boolean N_GetPacket(void)
 {
 	netmessage_t *msg;
 
 	// If there are net events pending, let's not return any packets
 	// yet. The net events may need to be processed before the
 	// packets.
-	if(!N_IsAvailable() || N_NEPending()) return false;
+	if(!N_IsAvailable() || N_NEPending())
+		return false;
 
 	netBuffer.player = -1;
 	netBuffer.length = 0;
@@ -755,20 +765,21 @@ boolean	N_GetPacket(void)
 	}
 
 	/*
-	Con_Message("N_GetPacket: from=%x, len=%i\n", msg->sender, msg->size);
-	*/
+	   Con_Message("N_GetPacket: from=%x, len=%i\n", msg->sender, msg->size);
+	 */
 
 	// There was a packet!
 	netBuffer.player = msg->player;
-	netBuffer.length = msg->size - netBuffer.headerLength;	
-	memcpy(&netBuffer.msg, msg->data, 
-		MIN_OF(sizeof(netBuffer.msg), msg->size));
+	netBuffer.length = msg->size - netBuffer.headerLength;
+	memcpy(&netBuffer.msg, msg->data,
+		   MIN_OF(sizeof(netBuffer.msg), msg->size));
 
 	// The message can now be freed.
 	N_ReleaseMessage(msg);
 
 	// We have no idea who sent this (on serverside).
-	if(netBuffer.player == -1) return false;
+	if(netBuffer.player == -1)
+		return false;
 
 	return true;
 }
@@ -785,8 +796,8 @@ int CCmdHuffmanStats(int argc, char **argv)
 	else
 	{
 		Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
-			"bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
-			numOutBytes, numSentBytes);
+				   "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
+				   numOutBytes, numSentBytes);
 	}
 	return true;
 }

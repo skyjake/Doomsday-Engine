@@ -24,8 +24,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-action_t actions[NUM_ACTIONS+1] =
-{
+action_t actions[NUM_ACTIONS + 1] = {
 	"left", 0,
 	"right", 0,
 	"forward", 0,
@@ -72,5 +71,3 @@ action_t actions[NUM_ACTIONS+1] =
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-

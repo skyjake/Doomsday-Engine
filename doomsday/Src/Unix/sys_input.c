@@ -38,26 +38,36 @@ extern boolean novideo;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int joydevice = 0;				// Joystick index to use.
+int     joydevice = 0;			// Joystick index to use.
 boolean usejoystick = false;	// Joystick input enabled?
-int joyInverseAxis[8];			// Axis inversion (default: all false).
+int     joyInverseAxis[8];		// Axis inversion (default: all false).
 
-cvar_t inputCVars[] =
-{
-	{ "i_JoyDevice",		CVF_HIDE|CVF_NO_ARCHIVE|CVF_NO_MAX|CVF_PROTECTED, CVT_INT,	&joydevice,		0,	0,	"ID of joystick to use (if more than one)." },
-	{ "i_UseJoystick",	CVF_HIDE|CVF_NO_ARCHIVE,	CVT_BYTE,	&usejoystick,	0,	1,	"1=Enable joystick input." },
-//--------------------------------------------------------------------------
-	{ "input-joy-device",	CVF_NO_MAX|CVF_PROTECTED,	CVT_INT,	&joydevice,		0,	0,	"ID of joystick to use (if more than one)." },
-	{ "input-joy",		0,							CVT_BYTE,	&usejoystick,	0,	1,	"1=Enable joystick input." },
-	{ "input-joy-x-inverse",			0,	CVT_INT,	&joyInverseAxis[0],	0, 1,	"1=Inverse joystick X axis." },
-	{ "input-joy-y-inverse",			0,	CVT_INT,	&joyInverseAxis[1],	0, 1,	"1=Inverse joystick Y axis." },
-	{ "input-joy-z-inverse",			0,	CVT_INT,	&joyInverseAxis[2],	0, 1,	"1=Inverse joystick Z axis." },
-	{ "input-joy-rx-inverse",			0,	CVT_INT,	&joyInverseAxis[3],	0, 1,	"1=Inverse joystick RX axis." },
-	{ "input-joy-ry-inverse",			0,	CVT_INT,	&joyInverseAxis[4],	0, 1,	"1=Inverse joystick RY axis." },
-	{ "input-joy-rz-inverse",			0,	CVT_INT,	&joyInverseAxis[5],	0, 1,	"1=Inverse joystick RZ axis." },
-	{ "input-joy-slider1-inverse",	0,	CVT_INT,	&joyInverseAxis[6], 0, 1,	"1=Inverse joystick slider 1." },
-	{ "input-joy-slider2-inverse",	0,	CVT_INT,	&joyInverseAxis[7], 0, 1,	"1=Inverse joystick slider 2." },
-	{ NULL }
+cvar_t  inputCVars[] = {
+	{"i_JoyDevice", CVF_HIDE | CVF_NO_ARCHIVE | CVF_NO_MAX | CVF_PROTECTED,
+	 CVT_INT, &joydevice, 0, 0, "ID of joystick to use (if more than one)."},
+	{"i_UseJoystick", CVF_HIDE | CVF_NO_ARCHIVE, CVT_BYTE, &usejoystick, 0, 1,
+	 "1=Enable joystick input."},
+	//--------------------------------------------------------------------------
+	{"input-joy-device", CVF_NO_MAX | CVF_PROTECTED, CVT_INT, &joydevice, 0, 0,
+	 "ID of joystick to use (if more than one)."},
+	{"input-joy", 0, CVT_BYTE, &usejoystick, 0, 1, "1=Enable joystick input."},
+	{"input-joy-x-inverse", 0, CVT_INT, &joyInverseAxis[0], 0, 1,
+	 "1=Inverse joystick X axis."},
+	{"input-joy-y-inverse", 0, CVT_INT, &joyInverseAxis[1], 0, 1,
+	 "1=Inverse joystick Y axis."},
+	{"input-joy-z-inverse", 0, CVT_INT, &joyInverseAxis[2], 0, 1,
+	 "1=Inverse joystick Z axis."},
+	{"input-joy-rx-inverse", 0, CVT_INT, &joyInverseAxis[3], 0, 1,
+	 "1=Inverse joystick RX axis."},
+	{"input-joy-ry-inverse", 0, CVT_INT, &joyInverseAxis[4], 0, 1,
+	 "1=Inverse joystick RY axis."},
+	{"input-joy-rz-inverse", 0, CVT_INT, &joyInverseAxis[5], 0, 1,
+	 "1=Inverse joystick RZ axis."},
+	{"input-joy-slider1-inverse", 0, CVT_INT, &joyInverseAxis[6], 0, 1,
+	 "1=Inverse joystick slider 1."},
+	{"input-joy-slider2-inverse", 0, CVT_INT, &joyInverseAxis[7], 0, 1,
+	 "1=Inverse joystick slider 2."},
+	{NULL}
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -88,8 +98,9 @@ keyevent_t *I_NewKeyEvent(void)
 keyevent_t *I_GetKeyEvent(void)
 {
 	keyevent_t *ev;
-	
-	if(evHead == evTail) return NULL; // No more...
+
+	if(evHead == evTail)
+		return NULL;			// No more...
 	ev = keyEvents + evTail;
 	evTail = (evTail + 1) % EVBUFSIZE;
 	return ev;
@@ -101,12 +112,12 @@ keyevent_t *I_GetKeyEvent(void)
  */
 int I_TranslateKeyCode(SDLKey sym)
 {
-	switch(sym)
+	switch (sym)
 	{
-	case 167: 		// Tilde
-		return 96; 	// ASCII: '`'
+	case 167:					// Tilde
+		return 96;				// ASCII: '`'
 
-	case '\b': 		// Backspace
+	case '\b':					// Backspace
 		return DDKEY_BACKSPACE;
 
 	case SDLK_PAUSE:
@@ -141,7 +152,7 @@ int I_TranslateKeyCode(SDLKey sym)
 
 	case SDLK_F2:
 		return DDKEY_F2;
-			
+
 	case SDLK_F3:
 		return DDKEY_F3;
 
@@ -150,7 +161,7 @@ int I_TranslateKeyCode(SDLKey sym)
 
 	case SDLK_F5:
 		return DDKEY_F5;
-		
+
 	case SDLK_F6:
 		return DDKEY_F6;
 
@@ -186,7 +197,7 @@ int I_TranslateKeyCode(SDLKey sym)
 
 	case SDLK_KP2:
 		return DDKEY_NUMPAD2;
-		
+
 	case SDLK_KP3:
 		return DDKEY_NUMPAD3;
 
@@ -243,7 +254,7 @@ int I_TranslateKeyCode(SDLKey sym)
 
 	case SDLK_PAGEDOWN:
 		return DDKEY_PGDN;
-		
+
 	default:
 		break;
 	}
@@ -262,12 +273,12 @@ void I_PollEvents(void)
 
 	while(SDL_PollEvent(&event))
 	{
-		switch(event.type)
+		switch (event.type)
 		{
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
 			e = I_NewKeyEvent();
-			e->event = (event.type == SDL_KEYDOWN? IKE_KEY_DOWN : IKE_KEY_UP);
+			e->event = (event.type == SDL_KEYDOWN ? IKE_KEY_DOWN : IKE_KEY_UP);
 			e->code = I_TranslateKeyCode(event.key.keysym.sym);
 			//printf("sdl:%i code:%i\n", event.key.keysym.sym, e->code);
 			break;
@@ -289,7 +300,8 @@ void I_PollEvents(void)
 //===========================================================================
 void I_InitMouse(void)
 {
-	if(ArgCheck("-nomouse") || novideo) return;
+	if(ArgCheck("-nomouse") || novideo)
+		return;
 
 	// Init was successful.
 	useMouse = true;
@@ -303,17 +315,19 @@ void I_InitMouse(void)
 //===========================================================================
 void I_InitJoystick(void)
 {
-	if(ArgCheck("-nojoy")) return;
-//	useJoystick = true;
+	if(ArgCheck("-nojoy"))
+		return;
+	//  useJoystick = true;
 }
 
 //===========================================================================
 // I_Init
-//	Initialize input. Returns true if successful.
+//  Initialize input. Returns true if successful.
 //===========================================================================
 int I_Init(void)
 {
-	if(initOk) return true;	// Already initialized.
+	if(initOk)
+		return true;			// Already initialized.
 	I_InitMouse();
 	I_InitJoystick();
 	initOk = true;
@@ -325,7 +339,8 @@ int I_Init(void)
 //===========================================================================
 void I_Shutdown(void)
 {
-	if(!initOk) return;	// Not initialized.
+	if(!initOk)
+		return;					// Not initialized.
 	initOk = false;
 }
 
@@ -348,21 +363,23 @@ boolean I_JoystickPresent(void)
 //===========================================================================
 // I_GetKeyEvents
 //===========================================================================
-int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
+int I_GetKeyEvents(keyevent_t * evbuf, int bufsize)
 {
 	keyevent_t *e;
-	int i = 0;
-	
-	if(!initOk) return 0;
+	int     i = 0;
+
+	if(!initOk)
+		return 0;
 
 	// Get new events from SDL.
 	I_PollEvents();
-	
+
 	// Get the events.
 	for(i = 0; i < bufsize; i++)
 	{
 		e = I_GetKeyEvent();
-		if(!e) break; // No more events.
+		if(!e)
+			break;				// No more events.
 		memcpy(&evbuf[i], e, sizeof(*e));
 	}
 	return i;
@@ -371,55 +388,61 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 //===========================================================================
 // I_GetMouseState
 //===========================================================================
-void I_GetMouseState(mousestate_t *state)
+void I_GetMouseState(mousestate_t * state)
 {
-	Uint8 buttons;
-	int i;
-	
+	Uint8   buttons;
+	int     i;
+
 	memset(state, 0, sizeof(*state));
 
 	// Has the mouse been initialized?
-	if(!I_MousePresent() || !initOk) return;
+	if(!I_MousePresent() || !initOk)
+		return;
 
 	buttons = SDL_GetRelativeMouseState(&state->x, &state->y);
 
-	if(buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) state->buttons |= IMB_LEFT;
-	if(buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) state->buttons |= IMB_RIGHT;
-	if(buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE)) state->buttons |= IMB_MIDDLE;
-	
+	if(buttons & SDL_BUTTON(SDL_BUTTON_LEFT))
+		state->buttons |= IMB_LEFT;
+	if(buttons & SDL_BUTTON(SDL_BUTTON_RIGHT))
+		state->buttons |= IMB_RIGHT;
+	if(buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
+		state->buttons |= IMB_MIDDLE;
+
 	// The buttons bitfield is ordered according to the numbering.
 	for(i = 4; i < 8; i++)
 	{
-	    if(buttons & SDL_BUTTON(i + 1)) state->buttons |= 1 << i;
+		if(buttons & SDL_BUTTON(i + 1))
+			state->buttons |= 1 << i;
 	}
 }
 
 //===========================================================================
 // I_GetJoystickState
 //===========================================================================
-void I_GetJoystickState(joystate_t *state)
+void I_GetJoystickState(joystate_t * state)
 {
 	memset(state, 0, sizeof(*state));
 
 	// Initialization has not been done.
-	if(!I_JoystickPresent() || !usejoystick || !initOk) return;
+	if(!I_JoystickPresent() || !usejoystick || !initOk)
+		return;
 
-/*	state->axis[0] = INV(dijoy.lX, 0);
-	state->axis[1] = INV(dijoy.lY, 1);
-	state->axis[2] = INV(dijoy.lZ, 2);
+	/*  state->axis[0] = INV(dijoy.lX, 0);
+	   state->axis[1] = INV(dijoy.lY, 1);
+	   state->axis[2] = INV(dijoy.lZ, 2);
 
-	state->rotAxis[0] = INV(dijoy.lRx, 3);
-	state->rotAxis[1] = INV(dijoy.lRy, 4);
-	state->rotAxis[2] = INV(dijoy.lRz, 5);
+	   state->rotAxis[0] = INV(dijoy.lRx, 3);
+	   state->rotAxis[1] = INV(dijoy.lRy, 4);
+	   state->rotAxis[2] = INV(dijoy.lRz, 5);
 
-	state->slider[0] = INV(dijoy.rglSlider[0], 6);
-	state->slider[1] = INV(dijoy.rglSlider[1], 7);
+	   state->slider[0] = INV(dijoy.rglSlider[0], 6);
+	   state->slider[1] = INV(dijoy.rglSlider[1], 7);
 
-	for(i = 0; i < IJOY_MAXBUTTONS; i++)
-		state->buttons[i] = (dijoy.rgbButtons[i] & 0x80) != 0;
-	pov = dijoy.rgdwPOV[0];
-	if((pov & 0xffff) == 0xffff)
-		state->povAngle = IJOY_POV_CENTER;
-	else
-	    state->povAngle = pov / 100.0f;*/
+	   for(i = 0; i < IJOY_MAXBUTTONS; i++)
+	   state->buttons[i] = (dijoy.rgbButtons[i] & 0x80) != 0;
+	   pov = dijoy.rgdwPOV[0];
+	   if((pov & 0xffff) == 0xffff)
+	   state->povAngle = IJOY_POV_CENTER;
+	   else
+	   state->povAngle = pov / 100.0f; */
 }

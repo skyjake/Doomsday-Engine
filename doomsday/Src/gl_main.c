@@ -32,8 +32,8 @@
 #include "r_draw.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
-#	include <icm.h>
-#	include <math.h>
+#  	include <icm.h>
+#  	include <math.h>
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -46,48 +46,49 @@ typedef unsigned short gramp_t[3 * 256];
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void GL_SetGamma(void);
+void    GL_SetGamma(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int		maxnumnodes;
-extern boolean	filloutlines;
+extern int maxnumnodes;
+extern boolean filloutlines;
 
 #ifdef WIN32
-extern HWND		hWndMain;		// Handle to the main window.
+extern HWND hWndMain;			// Handle to the main window.
 #endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int			UpdateState;
+int     UpdateState;
 
 // The display mode and the default values.
 // ScreenBits is ignored.
-int			screenWidth = 640, screenHeight = 480, screenBits = 32;
+int     screenWidth = 640, screenHeight = 480, screenBits = 32;
 
 // The default resolution (config file).
-int			defResX = 640, defResY = 480, defBPP = 0;	
-int			maxTexSize;
-int			numTexUnits;
-boolean		envModAdd;			// TexEnv: modulate and add is available.
-int			ratioLimit = 0;		// Zero if none.
-int			test3dfx = 0;
-int			r_framecounter;		// Used only for statistics.
-int			r_detail = true;	// Render detail textures (if available).
+int     defResX = 640, defResY = 480, defBPP = 0;
+int     maxTexSize;
+int     numTexUnits;
+boolean envModAdd;				// TexEnv: modulate and add is available.
+int     ratioLimit = 0;			// Zero if none.
+int     test3dfx = 0;
+int     r_framecounter;			// Used only for statistics.
+int     r_detail = true;		// Render detail textures (if available).
 
-float		vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
-int			glFontFixed, glFontVariable;
+float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
+int     glFontFixed, glFontVariable;
 
-float		nearClip, farClip;
+float   nearClip, farClip;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initOk = false;
 
 static gramp_t original_gamma_ramp;
-#ifdef WIN32	
+
+#ifdef WIN32
 static boolean gamma_support = false;
 #endif
 static float oldgamma, oldcontrast, oldbright;
@@ -104,38 +105,48 @@ boolean GL_IsInited(void)
 
 //===========================================================================
 // GL_Update
-//	This update stuff is really old-fashioned...
+//  This update stuff is really old-fashioned...
 //===========================================================================
 void GL_Update(int flags)
 {
-	if(flags & DDUF_BORDER) BorderNeedRefresh = true;
-	if(flags & DDUF_TOP) BorderTopRefresh = true;
-	if(flags & DDUF_FULLVIEW) UpdateState |= I_FULLVIEW;
-	if(flags & DDUF_STATBAR) UpdateState |= I_STATBAR;
-	if(flags & DDUF_MESSAGES) UpdateState |= I_MESSAGES;
-	if(flags & DDUF_FULLSCREEN) UpdateState |= I_FULLSCRN;
+	if(flags & DDUF_BORDER)
+		BorderNeedRefresh = true;
+	if(flags & DDUF_TOP)
+		BorderTopRefresh = true;
+	if(flags & DDUF_FULLVIEW)
+		UpdateState |= I_FULLVIEW;
+	if(flags & DDUF_STATBAR)
+		UpdateState |= I_STATBAR;
+	if(flags & DDUF_MESSAGES)
+		UpdateState |= I_MESSAGES;
+	if(flags & DDUF_FULLSCREEN)
+		UpdateState |= I_FULLSCRN;
 
-	if(flags & DDUF_UPDATE) GL_DoUpdate();
+	if(flags & DDUF_UPDATE)
+		GL_DoUpdate();
 }
 
 //==========================================================================
 // GL_DoUpdate
-//	Swaps buffers / blits the back buffer to the front.
+//  Swaps buffers / blits the back buffer to the front.
 //==========================================================================
 void GL_DoUpdate(void)
 {
 	// Check for color adjustment changes.
-	if(oldgamma != vid_gamma 
-		|| oldcontrast != vid_contrast
-		|| oldbright != vid_bright)	GL_SetGamma();
+	if(oldgamma != vid_gamma || oldcontrast != vid_contrast
+	   || oldbright != vid_bright)
+		GL_SetGamma();
 
-	if(UpdateState == I_NOUPDATE) return;
+	if(UpdateState == I_NOUPDATE)
+		return;
 
 	// Blit screen to video.
-	if(renderWireframe) gl.Enable(DGL_WIREFRAME_MODE);
+	if(renderWireframe)
+		gl.Enable(DGL_WIREFRAME_MODE);
 	gl.Show();
-	if(renderWireframe) gl.Disable(DGL_WIREFRAME_MODE);
-	UpdateState = I_NOUPDATE; // clear out all draw types
+	if(renderWireframe)
+		gl.Disable(DGL_WIREFRAME_MODE);
+	UpdateState = I_NOUPDATE;	// clear out all draw types
 
 	// Increment frame counter.
 	r_framecounter++;
@@ -147,20 +158,21 @@ void GL_DoUpdate(void)
 void GL_GetGammaRamp(void *ramp)
 {
 #ifdef WIN32
-#if WIN32_GAMMA
-	HDC hdc = GetDC(hWndMain);
-#endif
+#  if WIN32_GAMMA
+	HDC     hdc = GetDC(hWndMain);
+#  endif
 
 	if(ArgCheck("-noramp"))
 	{
 		gamma_support = false;
 		return;
 	}
-#if WIN32_GAMMA
+#  if WIN32_GAMMA
 	gamma_support = false;
-	if(GetDeviceGammaRamp(hdc, ramp)) gamma_support = true;
+	if(GetDeviceGammaRamp(hdc, ramp))
+		gamma_support = true;
 	ReleaseDC(hWndMain, hdc);
-#endif
+#  endif
 #endif
 }
 
@@ -170,59 +182,64 @@ void GL_GetGammaRamp(void *ramp)
 void GL_SetGammaRamp(void *ramp)
 {
 #ifdef WIN32
-#if WIN32_GAMMA
-	HDC hdc;
+#  if WIN32_GAMMA
+	HDC     hdc;
 
-	if(!gamma_support) return;
+	if(!gamma_support)
+		return;
 	hdc = GetDC(hWndMain);
 	SetDeviceGammaRamp(hdc, ramp);
 	ReleaseDC(hWndMain, hdc);
-#endif
+#  endif
 #endif
 }
 
 //===========================================================================
 // GL_MakeGammaRamp
-//	Gamma      - non-linear factor (curvature; >1.0 multiplies)
-//	Contrast   - steepness
-//	Brightness - uniform offset 
+//  Gamma      - non-linear factor (curvature; >1.0 multiplies)
+//  Contrast   - steepness
+//  Brightness - uniform offset 
 //===========================================================================
-void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast, 
-					 float bright)
+void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
+					  float bright)
 {
-	int i;
-	double ideal[256]; // After processing clamped to unsigned short.
-	double norm;
+	int     i;
+	double  ideal[256];			// After processing clamped to unsigned short.
+	double  norm;
 
 	// Init the ramp as a line with the steepness defined by contrast.
 	for(i = 0; i < 256; i++)
-		ideal[i] = i*contrast - (contrast-1)*127;
+		ideal[i] = i * contrast - (contrast - 1) * 127;
 
 	// Apply the gamma curve.
 	if(gamma != 1)
 	{
-		if(gamma <= 0.1f) gamma = 0.1f;
-		norm = pow(255, 1/gamma - 1); // Normalizing factor.
+		if(gamma <= 0.1f)
+			gamma = 0.1f;
+		norm = pow(255, 1 / gamma - 1);	// Normalizing factor.
 		for(i = 0; i < 256; i++)
-			ideal[i] = pow(ideal[i], 1/gamma) / norm;
+			ideal[i] = pow(ideal[i], 1 / gamma) / norm;
 	}
 
 	// The last step is to add the brightness offset.
-	for(i = 0; i < 256; i++) ideal[i] += bright * 128;
+	for(i = 0; i < 256; i++)
+		ideal[i] += bright * 128;
 
 	// Clamp it and write the ramp table.
 	for(i = 0; i < 256; i++)
 	{
-		ideal[i] *= 0x100; // Byte => word
-		if(ideal[i] < 0) ideal[i] = 0;
-		if(ideal[i] > 0xffff) ideal[i] = 0xffff;
+		ideal[i] *= 0x100;		// Byte => word
+		if(ideal[i] < 0)
+			ideal[i] = 0;
+		if(ideal[i] > 0xffff)
+			ideal[i] = 0xffff;
 		ramp[i] = ramp[i + 256] = ramp[i + 512] = (unsigned short) ideal[i];
 	}
 }
 
 //===========================================================================
 // GL_SetGamma
-//	Updates the gamma ramp based on vid_gamma, vid_contrast and vid_bright.
+//  Updates the gamma ramp based on vid_gamma, vid_contrast and vid_bright.
 //===========================================================================
 void GL_SetGamma(void)
 {
@@ -245,7 +262,7 @@ void GL_InitFont(void)
 	FR_PrepareFont("Fixed");
 	glFontFixed = glFontVariable = FR_GetCurrent();
 	Con_MaxLineLength();
-	//Con_Execute("font default", true);	// Set the console font.
+	//Con_Execute("font default", true);    // Set the console font.
 }
 
 //===========================================================================
@@ -262,16 +279,15 @@ void GL_ShutdownFont(void)
 //===========================================================================
 void GL_InitVarFont(void)
 {
-	int old_font;
+	int     old_font;
 
-	if(novideo) return;
+	if(novideo)
+		return;
 	old_font = FR_GetCurrent();
-	FR_PrepareFont(screenHeight < 300? "Small7"
-		: screenHeight < 400? "Small8" 
-		: screenHeight < 480? "Small10" 
-		: screenHeight < 600? "System"
-		: screenHeight < 800? "System12"
-		: "Large");
+	FR_PrepareFont(screenHeight < 300 ? "Small7" : screenHeight <
+				   400 ? "Small8" : screenHeight <
+				   480 ? "Small10" : screenHeight <
+				   600 ? "System" : screenHeight < 800 ? "System12" : "Large");
 	glFontVariable = FR_GetCurrent();
 	FR_SetFont(old_font);
 }
@@ -281,7 +297,8 @@ void GL_InitVarFont(void)
 //===========================================================================
 void GL_ShutdownVarFont(void)
 {
-	if(novideo) return;
+	if(novideo)
+		return;
 	FR_DestroyFont(glFontVariable);
 	FR_SetFont(glFontFixed);
 	glFontVariable = glFontFixed;
@@ -289,12 +306,14 @@ void GL_ShutdownVarFont(void)
 
 //===========================================================================
 // GL_Init
-//	One-time initialization of DGL and the renderer.
+//  One-time initialization of DGL and the renderer.
 //===========================================================================
 void GL_Init(void)
 {
-	if(initOk) return;	// Already initialized.
-	if(novideo) return;
+	if(initOk)
+		return;					// Already initialized.
+	if(novideo)
+		return;
 
 	Con_Message("GL_Init: Initializing Doomsday Graphics Library.\n");
 
@@ -307,42 +326,47 @@ void GL_Init(void)
 	screenBits = defBPP;
 
 	// Check for command line options modifying the defaults.
-	if(ArgCheckWith("-width", 1)) screenWidth = atoi(ArgNext());
-	if(ArgCheckWith("-height", 1)) screenHeight = atoi(ArgNext());
+	if(ArgCheckWith("-width", 1))
+		screenWidth = atoi(ArgNext());
+	if(ArgCheckWith("-height", 1))
+		screenHeight = atoi(ArgNext());
 	if(ArgCheckWith("-winsize", 2))
 	{
 		screenWidth = atoi(ArgNext());
 		screenHeight = atoi(ArgNext());
 	}
-	if(ArgCheckWith("-bpp", 1)) screenBits = atoi(ArgNext());
+	if(ArgCheckWith("-bpp", 1))
+		screenBits = atoi(ArgNext());
 
 	gl.Init(screenWidth, screenHeight, screenBits, !ArgExists("-window"));
 
 	// Check the maximum texture size.
 	gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &maxTexSize);
-	if(maxTexSize == 256) 
+	if(maxTexSize == 256)
 	{
 		Con_Message("  Using restricted texture w/h ratio (1:8).\n");
 		ratioLimit = 8;
 		if(screenBits == 32)
 		{
 			Con_Message("  Warning: Are you sure your video card accelerates"
-				" a 32 bit mode?\n");
+						" a 32 bit mode?\n");
 		}
 	}
 	// Set a custom maximum size?
 	if(ArgCheckWith("-maxtex", 1))
 	{
-		int customSize = CeilPow2(strtol(ArgNext(), 0, 0));
-		if(maxTexSize < customSize) customSize = maxTexSize;
+		int     customSize = CeilPow2(strtol(ArgNext(), 0, 0));
+
+		if(maxTexSize < customSize)
+			customSize = maxTexSize;
 		maxTexSize = customSize;
-		Con_Message("  Using maximum texture size of %i x %i.\n", 
-			maxTexSize, maxTexSize);
+		Con_Message("  Using maximum texture size of %i x %i.\n", maxTexSize,
+					maxTexSize);
 	}
 	if(ArgCheck("-outlines"))
 	{
 		filloutlines = false;
-		Con_Message( "  Textures have outlines.\n");
+		Con_Message("  Textures have outlines.\n");
 	}
 
 	// Does the graphics library support multitexturing?
@@ -350,8 +374,8 @@ void GL_Init(void)
 	envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
 	if(numTexUnits > 1)
 	{
-		Con_Message("  Multitexturing enabled (%s).\n", 
-			envModAdd? "full" : "partial");
+		Con_Message("  Multitexturing enabled (%s).\n",
+					envModAdd ? "full" : "partial");
 	}
 	else
 	{
@@ -361,7 +385,7 @@ void GL_Init(void)
 
 	// Initialize the renderer into a 2D state.
 	GL_Init2DState();
-	
+
 	// Initialize font renderer.
 	GL_InitFont();
 
@@ -374,8 +398,8 @@ void GL_Init(void)
 
 //===========================================================================
 // GL_InitRefresh
-//	Initializes the graphics library for refresh. Also called at update.
-//	Loadmaps can be loaded after all definitions have been read.
+//  Initializes the graphics library for refresh. Also called at update.
+//  Loadmaps can be loaded after all definitions have been read.
 //===========================================================================
 void GL_InitRefresh(boolean loadLightMaps)
 {
@@ -385,7 +409,7 @@ void GL_InitRefresh(boolean loadLightMaps)
 
 //===========================================================================
 // GL_ShutdownRefresh
-//	Called once at final shutdown.
+//  Called once at final shutdown.
 //===========================================================================
 void GL_ShutdownRefresh(void)
 {
@@ -395,11 +419,12 @@ void GL_ShutdownRefresh(void)
 
 //===========================================================================
 // GL_Shutdown
-//	Kills the graphics library for good.
+//  Kills the graphics library for good.
 //===========================================================================
 void GL_Shutdown(void)
 {
-	if(!initOk) return;	// Not yet initialized fully.
+	if(!initOk)
+		return;					// Not yet initialized fully.
 
 	GL_ShutdownFont();
 	Rend_ShutdownSky();
@@ -420,9 +445,9 @@ void GL_Shutdown(void)
 
 //===========================================================================
 // GL_Init2DState
-//	Initializes the renderer to 2D state. 
+//  Initializes the renderer to 2D state. 
 //===========================================================================
-void GL_Init2DState(void)	
+void GL_Init2DState(void)
 {
 	// The variables.
 	nearClip = 5;
@@ -448,7 +473,7 @@ void GL_Init2DState(void)
 	gl.Fogv(DGL_FOG_COLOR, fogColor);
 
 	/*glEnable(GL_POLYGON_SMOOTH);
-	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);*/
+	   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); */
 }
 
 //===========================================================================
@@ -468,13 +493,13 @@ void GL_SwitchTo3DState(boolean push_state)
 	gl.Enable(DGL_CULL_FACE);
 	gl.Enable(DGL_DEPTH_TEST);
 
-	viewpx = viewwindowx * screenWidth/320,
-	viewpy = viewwindowy * screenHeight/200;
+	viewpx = viewwindowx * screenWidth / 320, viewpy =
+		viewwindowy * screenHeight / 200;
 	// Set the viewport.
 	if(viewheight != SCREENHEIGHT)
 	{
-		viewpw = viewwidth * screenWidth/320;
-		viewph = viewheight * screenHeight/200 + 1;
+		viewpw = viewwidth * screenWidth / 320;
+		viewph = viewheight * screenHeight / 200 + 1;
 		gl.Viewport(viewpx, viewpy, viewpw, viewph);
 	}
 	else
@@ -492,13 +517,13 @@ void GL_SwitchTo3DState(boolean push_state)
 //===========================================================================
 void GL_Restore2DState(int step)
 {
-	switch(step)
+	switch (step)
 	{
 	case 1:
 		// After Restore Step 1 normal player sprites are rendered.
 		gl.MatrixMode(DGL_PROJECTION);
 		gl.LoadIdentity();
-		gl.Ortho(0, 0, 320, (320*viewheight)/viewwidth, -1, 1);
+		gl.Ortho(0, 0, 320, (320 * viewheight) / viewwidth, -1, 1);
 		gl.MatrixMode(DGL_MODELVIEW);
 		gl.LoadIdentity();
 
@@ -530,12 +555,12 @@ void GL_Restore2DState(int step)
 void GL_ProjectionMatrix(void)
 {
 	// We're assuming pixels are squares.
-	float aspect = viewpw/(float)viewph;
+	float   aspect = viewpw / (float) viewph;
 
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.LoadIdentity();
-	gl.Perspective(yfov = fieldOfView/aspect, aspect, nearClip, farClip);
-	
+	gl.Perspective(yfov = fieldOfView / aspect, aspect, nearClip, farClip);
+
 	// We'd like to have a left-handed coordinate system.
 	gl.Scalef(1, 1, -1);
 }
@@ -562,9 +587,9 @@ void GL_UseFog(int yes)
 
 //===========================================================================
 // GL_TotalReset
-//	This needs to be called twice: first shutdown, then restore.
-//	GL is reset back to the state it was right after initialization.
-//	Lightmaps can be loaded after defs have been loaded (during restore).
+//  This needs to be called twice: first shutdown, then restore.
+//  GL is reset back to the state it was right after initialization.
+//  Lightmaps can be loaded after defs have been loaded (during restore).
 //===========================================================================
 void GL_TotalReset(boolean doShutdown, boolean loadLightMaps)
 {
@@ -572,7 +597,8 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps)
 	static boolean hadFog;
 	static boolean wasStartup;
 
-	if(isDedicated) return;
+	if(isDedicated)
+		return;
 
 	if(doShutdown)
 	{
@@ -580,7 +606,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps)
 		wasStartup = startupScreen;
 
 		// Remember the name of the font.
-		if(wasStartup) 
+		if(wasStartup)
 			Con_StartupDone();
 		else
 			strcpy(oldFontName, FR_GetFont(FR_GetCurrent())->name);
@@ -589,13 +615,13 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps)
 		GL_ShutdownTextureManager();
 		GL_ShutdownFont();
 	}
-	else 
+	else
 	{
 		// Getting back up and running.
 		GL_InitFont();
 
 		// Go back to startup mode, if that's where we were.
-		if(wasStartup) 
+		if(wasStartup)
 		{
 			Con_StartupInit();
 		}
@@ -608,25 +634,27 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps)
 		GL_InitRefresh(loadLightMaps);
 
 		// Restore map's fog settings.
-		R_SetupFog();						
+		R_SetupFog();
 
 		// Make sure the fog is enabled, if necessary.
-		if(hadFog) GL_UseFog(true);
+		if(hadFog)
+			GL_UseFog(true);
 	}
 }
 
 //===========================================================================
 // GL_ChangeResolution
-//	Changes the resolution to the specified one. 
-//	The change is carried out by SHUTTING DOWN the rendering DLL and then
-//	restarting it. All textures will be lost in the process.
-//	Restarting the renderer is the compatible way to do the change.
+//  Changes the resolution to the specified one. 
+//  The change is carried out by SHUTTING DOWN the rendering DLL and then
+//  restarting it. All textures will be lost in the process.
+//  Restarting the renderer is the compatible way to do the change.
 //===========================================================================
 int GL_ChangeResolution(int w, int h, int bits)
 {
-	if(novideo) return false;
-	if(screenWidth == w && screenHeight == h 
-		&& (!bits || screenBits == bits)) return true;		
+	if(novideo)
+		return false;
+	if(screenWidth == w && screenHeight == h && (!bits || screenBits == bits))
+		return true;
 
 	// Shut everything down, but remember our settings.
 	GL_TotalReset(true, 0);
@@ -645,20 +673,21 @@ int GL_ChangeResolution(int w, int h, int bits)
 	gx.UpdateState(DD_RENDER_RESTART_POST);
 
 	Con_Message("Display mode: %i x %i", screenWidth, screenHeight);
-	if(screenBits) Con_Message( " x %i", screenBits);
+	if(screenBits)
+		Con_Message(" x %i", screenBits);
 	Con_Message(".\n");
-	return true;	
+	return true;
 }
 
 //===========================================================================
 // GL_GrabScreen
-//	Copies the current contents of the frame buffer and returns a pointer
-//	to data containing 24-bit RGB triplets. The caller must free the 
-//	returned buffer using free()!
+//  Copies the current contents of the frame buffer and returns a pointer
+//  to data containing 24-bit RGB triplets. The caller must free the 
+//  returned buffer using free()!
 //===========================================================================
 unsigned char *GL_GrabScreen(void)
 {
-	unsigned char *buffer = malloc(screenWidth*screenHeight*3);
+	unsigned char *buffer = malloc(screenWidth * screenHeight * 3);
 
 	gl.Grab(0, 0, screenWidth, screenHeight, DGL_RGB, buffer);
 	return buffer;
@@ -666,11 +695,11 @@ unsigned char *GL_GrabScreen(void)
 
 //===========================================================================
 // GL_BlendMode
-//	Set the GL blending mode.
+//  Set the GL blending mode.
 //===========================================================================
 void GL_BlendMode(blendmode_t mode)
 {
-	switch(mode)
+	switch (mode)
 	{
 	case BM_ADD:
 		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
@@ -711,7 +740,7 @@ void GL_BlendMode(blendmode_t mode)
 
 //==========================================================================
 // CCmdSetRes
-//	Change graphics mode resolution.
+//  Change graphics mode resolution.
 //==========================================================================
 int CCmdSetRes(int argc, char **argv)
 {
@@ -738,4 +767,3 @@ int CCmdUpdateGammaRamp(int argc, char **argv)
 	Con_Printf("Gamma ramp set.\n");
 	return true;
 }
-

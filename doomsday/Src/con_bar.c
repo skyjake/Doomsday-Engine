@@ -43,8 +43,8 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int progress_active = false;
-int progress_enabled = true;
+int     progress_active = false;
+int     progress_enabled = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -59,18 +59,20 @@ static int progress, progress_shown;
 //==========================================================================
 void Con_InitProgress(const char *title, int full)
 {
-	if(isDedicated || !progress_enabled) return;
-	
+	if(isDedicated || !progress_enabled)
+		return;
+
 	// Init startup window progress bar.
 	SW_SetBarMax(full);
 
 	strcpy(progress_title, title);
-	
+
 	if(full >= 0)
 	{
 		progress_active = true;
 		progress = progress_shown = 0;
-		if(!full) full = 1;
+		if(!full)
+			full = 1;
 		progress_max = full;
 		Con_Progress(0, PBARF_INIT);
 	}
@@ -88,18 +90,17 @@ void Con_HideProgress(void)
 
 //==========================================================================
 // DD_Progress
-//	Draws a progress bar. Flags consists of one or more PBARF_* flags.
+//  Draws a progress bar. Flags consists of one or more PBARF_* flags.
 //==========================================================================
 void Con_Progress(int count, int flags)
 {
-	int x, y, w, h, bor = 2, bar = 10;
-	int maxWidth = 500;
-	int mainBor = 5;
-	int fonthgt;
+	int     x, y, w, h, bor = 2, bar = 10;
+	int     maxWidth = 500;
+	int     mainBor = 5;
+	int     fonthgt;
 
-	if(!progress_active 
-		|| isDedicated 
-		|| !progress_enabled) return;
+	if(!progress_active || isDedicated || !progress_enabled)
+		return;
 
 	if(flags & PBARF_SET)
 		progress = count;
@@ -107,18 +108,21 @@ void Con_Progress(int count, int flags)
 		progress += count;
 
 	// Make sure it's in range.
-	if(progress < 0) progress = 0;
-	if(progress > progress_max) progress = progress_max;
+	if(progress < 0)
+		progress = 0;
+	if(progress > progress_max)
+		progress = progress_max;
 
 	// Update the startup window progress bar.
 	SW_SetBarPos(progress);
-	
-	// If GL is not available, we cannot proceed any further.
-	if(!GL_IsInited()) return;
 
-	if(flags & PBARF_DONTSHOW
-		&& progress < progress_max
-		&& progress_shown+5 >= progress) return; // Don't show yet.
+	// If GL is not available, we cannot proceed any further.
+	if(!GL_IsInited())
+		return;
+
+	if(flags & PBARF_DONTSHOW && progress < progress_max
+	   && progress_shown + 5 >= progress)
+		return;					// Don't show yet.
 
 	progress_shown = progress;
 
@@ -143,23 +147,25 @@ void Con_Progress(int count, int flags)
 
 	// Calculate the size and dimensions of the progress window.
 	w = screenWidth - 30;
-	if(w < 50) w = 50;			// An unusual occurance...
-	if(w > maxWidth) w = maxWidth;// Restrict width to the case of 640x480.
+	if(w < 50)
+		w = 50;					// An unusual occurance...
+	if(w > maxWidth)
+		w = maxWidth;			// Restrict width to the case of 640x480.
 	x = (screenWidth - w) / 2;	// Center on screen.
-	h = 2*bor + fonthgt + 15 + bar;
+	h = 2 * bor + fonthgt + 15 + bar;
 	y = screenHeight - 15 - h;
-	
+
 	/*x = 15;
-	w = screenWidth - 2*x;
-	h = 2*bor + fonthgt + 15 + bar;
-	y = screenHeight - 15 - h;*/
+	   w = screenWidth - 2*x;
+	   h = 2*bor + fonthgt + 15 + bar;
+	   y = screenHeight - 15 - h; */
 
 	// Draw the (opaque black) shadow.
 	UI_GradientEx(x, y, w, h, mainBor, UI_COL(UIC_SHADOW), 0, 1, 1);
 
 	// Background.
-	UI_GradientEx(x, y, w, h, mainBor,
-		UI_COL(UIC_BG_MEDIUM), UI_COL(UIC_BG_LIGHT), 1, 1);
+	UI_GradientEx(x, y, w, h, mainBor, UI_COL(UIC_BG_MEDIUM),
+				  UI_COL(UIC_BG_LIGHT), 1, 1);
 	UI_DrawRect(x, y, w, h, mainBor, UI_COL(UIC_BRD_HI), 1);
 	x += bor;
 	y += bor;
@@ -178,17 +184,17 @@ void Con_Progress(int count, int flags)
 
 	// Bar.
 	UI_GradientEx(x, y, w, bar, 4, UI_COL(UIC_SHADOW), 0, .7f, .3f);
-	UI_GradientEx(x + 1, y + 1, 8 + (w - 8)*progress/progress_max - 2, 
-		bar - 2, 4, UI_COL(UIC_BG_LIGHT), UI_COL(UIC_BRD_LOW), 
-		progress/(float)progress_max, -1);
-	UI_DrawRect(x + 1, y + 1, 8 + (w - 8)*progress/progress_max - 2, 
-		bar - 2, 4, UI_COL(UIC_TEXT), 1);
+	UI_GradientEx(x + 1, y + 1, 8 + (w - 8) * progress / progress_max - 2,
+				  bar - 2, 4, UI_COL(UIC_BG_LIGHT), UI_COL(UIC_BRD_LOW),
+				  progress / (float) progress_max, -1);
+	UI_DrawRect(x + 1, y + 1, 8 + (w - 8) * progress / progress_max - 2,
+				bar - 2, 4, UI_COL(UIC_TEXT), 1);
 
 	// Show what was drawn.
-	if(!(flags & PBARF_NOBLIT)) gl.Show();
+	if(!(flags & PBARF_NOBLIT))
+		gl.Show();
 
 	// Restore old projection matrix.
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PopMatrix();
 }
-

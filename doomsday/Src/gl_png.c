@@ -23,7 +23,7 @@
  */
 
 // HEADER FILES ------------------------------------------------------------
- 
+
 #include <png.h>
 #include <setjmp.h>
 
@@ -33,11 +33,6 @@
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
-
-BEGIN_PROF_TIMERS()
-	PROF_PNG_READ,
-	PROF_PNG_REBUFFER
-END_PROF_TIMERS()
 
 // TYPES -------------------------------------------------------------------
 
@@ -62,14 +57,14 @@ void PNGAPI user_error_fn(png_structp png_ptr, png_const_charp error_msg)
 
 void PNGAPI user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
 {
-	VERBOSE( Con_Message("PNG-Warning: %s\n", warning_msg) );
+	VERBOSE(Con_Message("PNG-Warning: %s\n", warning_msg));
 }
 
 //===========================================================================
 // my_read_data
-//	libpng calls this to read from files.
+//  libpng calls this to read from files.
 //===========================================================================
-void PNGAPI my_read_data(png_structp read_ptr, png_bytep data, 
+void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
 						 png_size_t length)
 {
 	F_Read(data, length, png_get_io_ptr(read_ptr));
@@ -77,44 +72,46 @@ void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
 
 //===========================================================================
 // PNG_Load
-//	Reads the given PNG image and returns a pointer to a planar RGB or
-//	RGBA buffer. Width and height are set, and pixelSize is either 3 (RGB)
-//	or 4 (RGBA). The caller must free the allocated buffer with Z_Free.
-//	width, height and pixelSize can't be NULL. Handles 1-4 channels.
+//  Reads the given PNG image and returns a pointer to a planar RGB or
+//  RGBA buffer. Width and height are set, and pixelSize is either 3 (RGB)
+//  or 4 (RGBA). The caller must free the allocated buffer with Z_Free.
+//  width, height and pixelSize can't be NULL. Handles 1-4 channels.
 //===========================================================================
-unsigned char *
-PNG_Load(const char *fileName, int *width, int *height, int *pixelSize)
+unsigned char *PNG_Load(const char *fileName, int *width, int *height,
+						int *pixelSize)
 {
-	DFILE *file;
+	DFILE  *file;
 	png_structp png_ptr = 0;
 	png_infop png_info = 0, end_info = 0;
 	png_bytep *rows, pixel;
-	unsigned char *retbuf = 0; // The return buffer.
-	int i, k, off;
+	unsigned char *retbuf = 0;	// The return buffer.
+	int     i, k, off;
 
-	if((file = F_Open(fileName, "rb")) == NULL) return NULL;
+	if((file = F_Open(fileName, "rb")) == NULL)
+		return NULL;
 
 	// Init libpng.
-	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 
-		0, user_error_fn, user_warning_fn);
-	if(!png_ptr) goto pngstop;
-	
+	png_ptr =
+		png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, user_error_fn,
+							   user_warning_fn);
+	if(!png_ptr)
+		goto pngstop;
+
 	png_info = png_create_info_struct(png_ptr);
-	if(!png_info) goto pngstop;
+	if(!png_info)
+		goto pngstop;
 
 	end_info = png_create_info_struct(png_ptr);
-	if(!end_info) goto pngstop;
+	if(!end_info)
+		goto pngstop;
 
-	if(setjmp(png_jmpbuf(png_ptr))) goto pngstop;
+	if(setjmp(png_jmpbuf(png_ptr)))
+		goto pngstop;
 	//png_init_io(png_ptr, file);
 	png_set_read_fn(png_ptr, file, my_read_data);
 
-	BEGIN_PROF( PROF_PNG_READ );
-
 	png_read_png(png_ptr, png_info, PNG_TRANSFORM_IDENTITY, NULL);
 
-	END_PROF( PROF_PNG_READ );
-	
 	// Check if it can be used.
 	if(png_info->bit_depth != 8)
 	{
@@ -133,10 +130,10 @@ PNG_Load(const char *fileName, int *width, int *height, int *pixelSize)
 	*pixelSize = png_info->channels;
 
 	// Paletted images have three color components per pixel.
-	if(*pixelSize == 1) *pixelSize = 3;
-	if(*pixelSize == 2) *pixelSize = 4; // With alpha channel.
-
-	BEGIN_PROF( PROF_PNG_REBUFFER );
+	if(*pixelSize == 1)
+		*pixelSize = 3;
+	if(*pixelSize == 2)
+		*pixelSize = 4;			// With alpha channel.
 
 	// OK, let's copy it into Doomsday's buffer.
 	// FIXME: Why not load directly into it?
@@ -146,32 +143,27 @@ PNG_Load(const char *fileName, int *width, int *height, int *pixelSize)
 	{
 		if(png_info->channels >= 3)
 		{
-			memcpy(retbuf + i * (*pixelSize) * png_info->width,
-				rows[i], (*pixelSize) * png_info->width);
+			memcpy(retbuf + i * (*pixelSize) * png_info->width, rows[i],
+				   (*pixelSize) * png_info->width);
 		}
-		else // Paletted image.
+		else					// Paletted image.
 		{
 			for(k = 0; k < *width; k++)
 			{
-				pixel = retbuf + ((*pixelSize) * (i*png_info->width + k));
+				pixel = retbuf + ((*pixelSize) * (i * png_info->width + k));
 				off = k * png_info->channels;
 				pixel[0] = png_info->palette[rows[i][off]].red;
 				pixel[1] = png_info->palette[rows[i][off]].green;
 				pixel[2] = png_info->palette[rows[i][off]].blue;
-				if(png_info->channels == 2) // Alpha data.
+				if(png_info->channels == 2)	// Alpha data.
 					pixel[3] = rows[i][off + 1];
 			}
 		}
 	}
-	
-	END_PROF( PROF_PNG_REBUFFER );
-
-	PRINT_PROF( PROF_PNG_READ );
-	PRINT_PROF( PROF_PNG_REBUFFER );
 
 	// Shutdown.
-pngstop:
+  pngstop:
 	png_destroy_read_struct(&png_ptr, &png_info, &end_info);
 	F_Close(file);
-	return retbuf;	
+	return retbuf;
 }

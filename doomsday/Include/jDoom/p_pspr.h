@@ -19,14 +19,12 @@
 //
 //-----------------------------------------------------------------------------
 
-
 #ifndef __P_PSPR__
 #define __P_PSPR__
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
 #include "tables.h"
-
 
 //
 // Needs to include the precompiled
@@ -41,35 +39,29 @@
 #pragma interface
 #endif
 
-
 //
 // Frame flags:
 // handles maximum brightness (torches, muzzle flare, light sources)
 //
-#define FF_FULLBRIGHT	0x8000	// flag in thing->frame
+#define FF_FULLBRIGHT	0x8000	   // flag in thing->frame
 #define FF_FRAMEMASK	0x7fff
-
-
 
 //
 // Overlay psprites are scaled shapes
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
 //
-typedef enum
-{
-    ps_weapon,
-    ps_flash,
-    NUMPSPRITES
-
+typedef enum {
+	ps_weapon,
+	ps_flash,
+	NUMPSPRITES
 } psprnum_t;
 
-typedef struct
-{
-    state_t*	state;	// a NULL state means not active
-    int		tics;
-    fixed_t	sx;
-    fixed_t	sy;
+typedef struct {
+	state_t        *state;		   // a NULL state means not active
+	int             tics;
+	fixed_t         sx;
+	fixed_t         sy;
 
 } pspdef_t;
 
@@ -77,6 +69,9 @@ typedef struct
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.4  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -97,4 +92,3 @@ typedef struct
 //
 //
 //-----------------------------------------------------------------------------
-

@@ -42,21 +42,17 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
-	char lump[9];	
-	char *path;		// Full path name.
-} 
-lumpdirec_t;
+typedef struct {
+	char    lump[9];
+	char   *path;				// Full path name.
+} lumpdirec_t;
 
-typedef struct
-{
+typedef struct {
 	f_forall_func_t func;
-	void *parm;
+	void   *parm;
 	const char *searchPath;
 	const char *pattern;
-} 
-zipforall_t;
+} zipforall_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -64,7 +60,7 @@ zipforall_t;
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void F_ResetDirec(void);
+void    F_ResetDirec(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -79,9 +75,9 @@ static DFILE files[MAX_FILES];
 
 //===========================================================================
 // F_MatchName
-//	Returns true if the string matches the pattern. 
-//	This is a case-insensitive test.
-//	I do hope this algorithm works like it should...
+//  Returns true if the string matches the pattern. 
+//  This is a case-insensitive test.
+//  I do hope this algorithm works like it should...
 //===========================================================================
 int F_MatchName(const char *string, const char *pattern)
 {
@@ -89,45 +85,49 @@ int F_MatchName(const char *string, const char *pattern)
 
 	while(*in)
 	{
-		if(*st == '*') 
+		if(*st == '*')
 		{
-			st++; 
+			st++;
 			continue;
 		}
-		if(*st != '?' 
-			&& (tolower( (unsigned char) *st) 
-				!= tolower( (unsigned char) *in)))
+		if(*st != '?'
+		   && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
 		{
 			// A mismatch. Hmm. Go back to a previous *.
-			while(st >= pattern && *st != '*') st--;
-			if(st < pattern) return false; // No match!
+			while(st >= pattern && *st != '*')
+				st--;
+			if(st < pattern)
+				return false;	// No match!
 			// The asterisk lets us continue.
 		}
 		// This character of the pattern is OK.
-		st++; 
+		st++;
 		in++;
 	}
 	// Match is good if the end of the pattern was reached.
-	while(*st == '*') st++; // Skip remaining asterisks.
+	while(*st == '*')
+		st++;					// Skip remaining asterisks.
 	return *st == 0;
 }
 
 //===========================================================================
 // F_SkipSpace
-//	Skips all whitespace except newlines.
+//  Skips all whitespace except newlines.
 //===========================================================================
-char *F_SkipSpace(char *ptr)
+char   *F_SkipSpace(char *ptr)
 {
-	while(*ptr && *ptr != '\n' && isspace(*ptr)) ptr++;
+	while(*ptr && *ptr != '\n' && isspace(*ptr))
+		ptr++;
 	return ptr;
 }
 
 //===========================================================================
 // F_FindNewline
 //===========================================================================
-char *F_FindNewline(char *ptr)
+char   *F_FindNewline(char *ptr)
 {
-	while(*ptr && *ptr != '\n') ptr++;
+	while(*ptr && *ptr != '\n')
+		ptr++;
 	return ptr;
 }
 
@@ -136,7 +136,7 @@ char *F_FindNewline(char *ptr)
 //===========================================================================
 int F_GetDirecIdx(char *exact_path)
 {
-	int i;
+	int     i;
 
 	for(i = 0; direc[i].path; i++)
 		if(!stricmp(direc[i].path, exact_path))
@@ -146,18 +146,19 @@ int F_GetDirecIdx(char *exact_path)
 
 //===========================================================================
 // F_AddDirec
-//	The path names are converted to full paths before adding to the table.
+//  The path names are converted to full paths before adding to the table.
 //===========================================================================
 void F_AddDirec(char *lumpname, char *symbolic_path)
 {
-	char path[256], *full;
+	char    path[256], *full;
 	lumpdirec_t *ld;
-	int i;
+	int     i;
 
-	if(!lumpname[0] || !symbolic_path[0]) return;
+	if(!lumpname[0] || !symbolic_path[0])
+		return;
 
 	for(i = 0; direc[i].path && i < MAX_LUMPDIRS; i++);
-	if(i == MAX_LUMPDIRS) 
+	if(i == MAX_LUMPDIRS)
 	{
 		// FIXME: Why no dynamic allocation?
 		Con_Error("F_AddDirec: Not enough direcs (%s).\n", symbolic_path);
@@ -189,7 +190,7 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
 	strcpy(ld->lump, lumpname);
 	strupr(ld->lump);
 
-	if(verbose) 
+	if(verbose)
 	{
 		Con_Message("F_AddDirec: %s -> %s\n", ld->lump, ld->path);
 	}
@@ -197,41 +198,47 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
 
 //===========================================================================
 // F_ParseDirecData
-//	LUMPNAM0 \Path\In\The\Base.ext
-//	LUMPNAM1 Path\In\The\RuntimeDir.ext
-//	 :
+//  LUMPNAM0 \Path\In\The\Base.ext
+//  LUMPNAM1 Path\In\The\RuntimeDir.ext
+//   :
 //===========================================================================
 void F_ParseDirecData(char *buffer)
 {
-	char *ptr = buffer, *end;
-	char name[9], path[256];
-	int len;
-	
-	for(; *ptr; )
+	char   *ptr = buffer, *end;
+	char    name[9], path[256];
+	int     len;
+
+	for(; *ptr;)
 	{
 		ptr = F_SkipSpace(ptr);
-		if(!*ptr) break;
-		if(*ptr == '\n') 
+		if(!*ptr)
+			break;
+		if(*ptr == '\n')
 		{
-			ptr++; // Advance to the next line.
+			ptr++;				// Advance to the next line.
 			continue;
 		}
 		// We're at the lump name.
 		end = M_FindWhite(ptr);
-		if(!*end) break;
+		if(!*end)
+			break;
 		len = end - ptr;
-		if(len > 8) len = 8;
+		if(len > 8)
+			len = 8;
 		memset(name, 0, sizeof(name));
 		strncpy(name, ptr, len);
 		ptr = F_SkipSpace(end);
-		if(!*ptr || *ptr == '\n') continue; // Missing filename?
+		if(!*ptr || *ptr == '\n')
+			continue;			// Missing filename?
 		// We're at the path name.
 		end = F_FindNewline(ptr);
 		// Get rid of extra whitespace.
-		while(end > ptr && isspace(*end)) end--;
+		while(end > ptr && isspace(*end))
+			end--;
 		end = M_FindWhite(end);
 		len = end - ptr;
-		if(len > 255) len = 255;
+		if(len > 255)
+			len = 255;
 		memset(path, 0, sizeof(path));
 		strncpy(path, ptr, len);
 		F_AddDirec(name, path);
@@ -241,13 +248,13 @@ void F_ParseDirecData(char *buffer)
 
 //===========================================================================
 // F_InitDirec
-//	Initialize the WAD/dir translations. Called after WADs have been read.
+//  Initialize the WAD/dir translations. Called after WADs have been read.
 //===========================================================================
 void F_InitDirec(void)
 {
 	static boolean alreadyInited = false;
-	int i, len;
-	byte *buf;
+	int     i, len;
+	byte   *buf;
 
 	if(alreadyInited)
 	{
@@ -255,7 +262,7 @@ void F_InitDirec(void)
 		F_ResetDirec();
 		memset(direc, 0, sizeof(direc));
 	}
-	
+
 	// Add the contents of all DD_DIREC lumps.
 	for(i = 0; i < numlumps; i++)
 		if(!strnicmp(lumpinfo[i].name, "DD_DIREC", 8))
@@ -277,10 +284,11 @@ void F_InitDirec(void)
 //===========================================================================
 void F_CloseAll(void)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < MAX_FILES; i++)
-		if(files[i].flags.open) F_Close(files + i);
+		if(files[i].flags.open)
+			F_Close(files + i);
 }
 
 //===========================================================================
@@ -288,11 +296,11 @@ void F_CloseAll(void)
 //===========================================================================
 void F_ResetDirec(void)
 {
-	int i;
+	int     i;
 
-	for(i = 0; direc[i].path; i++) 
-		if(direc[i].path) 
-			free(direc[i].path); // Allocated by _fullpath.
+	for(i = 0; direc[i].path; i++)
+		if(direc[i].path)
+			free(direc[i].path);	// Allocated by _fullpath.
 }
 
 //===========================================================================
@@ -306,14 +314,15 @@ void F_ShutdownDirec(void)
 
 //===========================================================================
 // F_Access
-//	Returns true if the file can be opened for reading.
+//  Returns true if the file can be opened for reading.
 //===========================================================================
 int F_Access(const char *path)
 {
 	// Open for reading, but don't buffer anything.
-	DFILE *file = F_Open(path, "rx");
-	
-	if(!file) return false;
+	DFILE  *file = F_Open(path, "rx");
+
+	if(!file)
+		return false;
 	F_Close(file);
 	return true;
 }
@@ -321,12 +330,12 @@ int F_Access(const char *path)
 //===========================================================================
 // F_GetFreeFile
 //===========================================================================
-DFILE *F_GetFreeFile(void)
+DFILE  *F_GetFreeFile(void)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < MAX_FILES; i++)
-		if(!files[i].flags.open) 
+		if(!files[i].flags.open)
 		{
 			memset(files + i, 0, sizeof(DFILE));
 			return files + i;
@@ -337,15 +346,17 @@ DFILE *F_GetFreeFile(void)
 //===========================================================================
 // F_OpenLump
 //===========================================================================
-DFILE *F_OpenLump(const char *name, boolean dontBuffer)
+DFILE  *F_OpenLump(const char *name, boolean dontBuffer)
 {
-	int num = W_CheckNumForName( (char*) name);
-	DFILE *file;
+	int     num = W_CheckNumForName((char *) name);
+	DFILE  *file;
 
-	if(num < 0) return NULL;
+	if(num < 0)
+		return NULL;
 	file = F_GetFreeFile();
-	if(!file) return NULL;
-	
+	if(!file)
+		return NULL;
+
 	// Init and load in the lump data.
 	file->flags.open = true;
 	file->flags.file = false;
@@ -361,20 +372,24 @@ DFILE *F_OpenLump(const char *name, boolean dontBuffer)
 //===========================================================================
 // F_OpenFile
 //===========================================================================
-DFILE *F_OpenFile(const char *path, const char *mymode)
+DFILE  *F_OpenFile(const char *path, const char *mymode)
 {
-	DFILE *file = F_GetFreeFile();
-	char mode[8];
-	
-	if(!file) return NULL;
-	
-	strcpy(mode, "r"); // Open for reading.
-	if(strchr(mymode, 't')) strcat(mode, "t");
-	if(strchr(mymode, 'b')) strcat(mode, "b");
+	DFILE  *file = F_GetFreeFile();
+	char    mode[8];
+
+	if(!file)
+		return NULL;
+
+	strcpy(mode, "r");			// Open for reading.
+	if(strchr(mymode, 't'))
+		strcat(mode, "t");
+	if(strchr(mymode, 'b'))
+		strcat(mode, "b");
 
 	// Try opening as a real file.
 	file->data = fopen(path, mode);
-	if(!file->data) return NULL; // Can't find the file.
+	if(!file->data)
+		return NULL;			// Can't find the file.
 	file->flags.open = true;
 	file->flags.file = true;
 	return file;
@@ -391,14 +406,15 @@ void F_TranslateZipFileName(const char *zipFileName, char *translated)
 
 //===========================================================================
 // F_OpenZip
-//	Zip data is buffered like lump data.
+//  Zip data is buffered like lump data.
 //===========================================================================
-DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
+DFILE  *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 {
-	DFILE *file = F_GetFreeFile();
+	DFILE  *file = F_GetFreeFile();
 
-	if(!file) return NULL;
-	
+	if(!file)
+		return NULL;
+
 	// Init and load in the lump data.
 	file->flags.open = true;
 	file->flags.file = false;
@@ -413,20 +429,21 @@ DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 
 //===========================================================================
 // F_Open
-//	Opens the given file (will be translated) or lump for reading.
-//	"t" = text mode (with real files, lumps are always binary)
-//	"b" = binary
-//	"f" = must be a real file
-//	"w" = file must be in a WAD
-//	"x" = just test for access (don't buffer anything)
+//  Opens the given file (will be translated) or lump for reading.
+//  "t" = text mode (with real files, lumps are always binary)
+//  "b" = binary
+//  "f" = must be a real file
+//  "w" = file must be in a WAD
+//  "x" = just test for access (don't buffer anything)
 //===========================================================================
-DFILE *F_Open(const char *path, const char *mode)
+DFILE  *F_Open(const char *path, const char *mode)
 {
-	char trans[256], full[256];
+	char    trans[256], full[256];
 	boolean dontBuffer;
-	int i;
+	int     i;
 
-	if(!mode) mode = "";
+	if(!mode)
+		mode = "";
 	dontBuffer = (strchr(mode, 'x') != NULL);
 
 	// Make it a full path.
@@ -434,10 +451,11 @@ DFILE *F_Open(const char *path, const char *mode)
 	_fullpath(full, trans, 255);
 
 	// Lumpdirecs take precedence.
-	if(!strchr(mode, 'f')) // Doesn't need to be a real file?
+	if(!strchr(mode, 'f'))		// Doesn't need to be a real file?
 	{
 		// First check the Zip directory.
 		zipindex_t foundZip = Zip_Find(full);
+
 		if(foundZip)
 			return F_OpenZip(foundZip, dontBuffer);
 
@@ -445,8 +463,9 @@ DFILE *F_Open(const char *path, const char *mode)
 			if(!stricmp(full, direc[i].path))
 				return F_OpenLump(direc[i].lump, dontBuffer);
 	}
-	if(strchr(mode, 'w')) return NULL; // Must be in a WAD...
-	
+	if(strchr(mode, 'w'))
+		return NULL;			// Must be in a WAD...
+
 	// Try to open as a real file, then.
 	return F_OpenFile(full, mode);
 }
@@ -454,9 +473,10 @@ DFILE *F_Open(const char *path, const char *mode)
 //===========================================================================
 // F_Close
 //===========================================================================
-void F_Close(DFILE *file)
+void F_Close(DFILE * file)
 {
-	if(!file->flags.open) return;
+	if(!file->flags.open)
+		return;
 	if(file->flags.file)
 	{
 		fclose(file->data);
@@ -464,29 +484,32 @@ void F_Close(DFILE *file)
 	else
 	{
 		// Free the stored data.
-		if(file->data) M_Free(file->data);
+		if(file->data)
+			M_Free(file->data);
 	}
 	memset(file, 0, sizeof(*file));
 }
 
 //===========================================================================
 // F_Read
-//	Returns the number of bytes read (up to 'count').
+//  Returns the number of bytes read (up to 'count').
 //===========================================================================
-int F_Read(void *dest, int count, DFILE *file)
+int F_Read(void *dest, int count, DFILE * file)
 {
-	int bytesleft;
+	int     bytesleft;
 
-	if(!file->flags.open) return 0;
-	if(file->flags.file) // Normal file?
+	if(!file->flags.open)
+		return 0;
+	if(file->flags.file)		// Normal file?
 	{
 		count = fread(dest, 1, count, file->data);
-		if(feof((FILE*)file->data)) file->flags.eof = true;
+		if(feof((FILE *) file->data))
+			file->flags.eof = true;
 		return count;
 	}
 	// Is there enough room in the file?
-	bytesleft = file->size - (file->pos - (char*) file->data);
-	if(count > bytesleft) 
+	bytesleft = file->size - (file->pos - (char *) file->data);
+	if(count > bytesleft)
 	{
 		count = bytesleft;
 		file->flags.eof = true;
@@ -502,11 +525,12 @@ int F_Read(void *dest, int count, DFILE *file)
 //===========================================================================
 // F_GetC
 //===========================================================================
-int F_GetC(DFILE *file)
+int F_GetC(DFILE * file)
 {
 	unsigned char ch = 0;
 
-	if(!file->flags.open) return 0;
+	if(!file->flags.open)
+		return 0;
 	F_Read(&ch, 1, file);
 	return ch;
 }
@@ -514,32 +538,35 @@ int F_GetC(DFILE *file)
 //===========================================================================
 // F_Tell
 //===========================================================================
-int F_Tell(DFILE *file)
+int F_Tell(DFILE * file)
 {
-	if(!file->flags.open) return 0;
-	if(file->flags.file) return ftell(file->data);
-	return file->pos - (char*) file->data;
+	if(!file->flags.open)
+		return 0;
+	if(file->flags.file)
+		return ftell(file->data);
+	return file->pos - (char *) file->data;
 }
 
 //===========================================================================
 // F_Seek
-//	Returns the current position in the file, before the move, as an offset
-//	from the beginning of the file.
+//  Returns the current position in the file, before the move, as an offset
+//  from the beginning of the file.
 //===========================================================================
-int F_Seek(DFILE *file, int offset, int whence)
+int F_Seek(DFILE * file, int offset, int whence)
 {
-	int oldpos = F_Tell(file);
+	int     oldpos = F_Tell(file);
 
-	if(!file->flags.open) return 0;
+	if(!file->flags.open)
+		return 0;
 	file->flags.eof = false;
 	if(file->flags.file)
 		fseek(file->data, offset, whence);
 	else
 	{
 		if(whence == SEEK_SET)
-			file->pos = (char*) file->data + offset;
+			file->pos = (char *) file->data + offset;
 		else if(whence == SEEK_END)
-			file->pos = (char*) file->data + (file->size + offset);
+			file->pos = (char *) file->data + (file->size + offset);
 		else if(whence == SEEK_CUR)
 			file->pos += offset;
 	}
@@ -549,23 +576,24 @@ int F_Seek(DFILE *file, int offset, int whence)
 //===========================================================================
 // F_Rewind
 //===========================================================================
-void F_Rewind(DFILE *file)
+void F_Rewind(DFILE * file)
 {
 	F_Seek(file, 0, SEEK_SET);
 }
 
 //===========================================================================
 // F_Length
-//	Returns the length of the file, in bytes. Stream position is not 
-//	affected.
+//  Returns the length of the file, in bytes. Stream position is not 
+//  affected.
 //===========================================================================
-int F_Length(DFILE *file)
+int F_Length(DFILE * file)
 {
-	int length, currentPosition;
-	
-	if(!file) return 0;
-	
-	currentPosition = F_Seek(file, 0, SEEK_END);	
+	int     length, currentPosition;
+
+	if(!file)
+		return 0;
+
+	currentPosition = F_Seek(file, 0, SEEK_END);
 	length = F_Tell(file);
 	F_Seek(file, currentPosition, SEEK_SET);
 	return length;
@@ -573,57 +601,59 @@ int F_Length(DFILE *file)
 
 //===========================================================================
 // F_CountPathChars
-//	Returns the number of times the char appears in the path.
+//  Returns the number of times the char appears in the path.
 //===========================================================================
 int F_CountPathChars(const char *path, char ch)
 {
-	int count;
+	int     count;
 
-	for(count = 0; *path; path++) if(*path == ch) count++;
+	for(count = 0; *path; path++)
+		if(*path == ch)
+			count++;
 	return count;
 }
 
 /*
-//===========================================================================
-// F_ForAllCaller
-//	Calls the backup function after determining if the given file name
-//	is a directory or a normal file. Both searchPath and foundFile must
-//	be absolute paths.
-//===========================================================================
-int F_ForAllCaller(const char *searchPath, const char *foundFile, 
-				   f_forall_func_t func, void *parm)
-{
-	const char *ch;
-	char visiblePath[256], *out;
-	boolean isDirectory = false;
+   //===========================================================================
+   // F_ForAllCaller
+   //   Calls the backup function after determining if the given file name
+   //   is a directory or a normal file. Both searchPath and foundFile must
+   //   be absolute paths.
+   //===========================================================================
+   int F_ForAllCaller(const char *searchPath, const char *foundFile, 
+   f_forall_func_t func, void *parm)
+   {
+   const char *ch;
+   char visiblePath[256], *out;
+   boolean isDirectory = false;
 
-	// If the found file name is not on the same directory level,
-	// we have found a directory.
-	if(F_CountPathChars(foundFile, '\\') > F_CountPathChars(searchPath, '\\'))
-	{
-		isDirectory = true;
+   // If the found file name is not on the same directory level,
+   // we have found a directory.
+   if(F_CountPathChars(foundFile, '\\') > F_CountPathChars(searchPath, '\\'))
+   {
+   isDirectory = true;
 
-		// The search path is always a valid part of the visible path.
-		strcpy(visiblePath, searchPath);
+   // The search path is always a valid part of the visible path.
+   strcpy(visiblePath, searchPath);
 
-		// Only copy the next level.
-		ch = foundFile + strlen(searchPath);
-		out = visiblePath + strlen(visiblePath);
-		while(*ch != '\\' && *ch) *out++ = *ch++;
-		*out = 0;
-	}
-	else
-	{
-		strcpy(visiblePath, foundFile);
-	}
+   // Only copy the next level.
+   ch = foundFile + strlen(searchPath);
+   out = visiblePath + strlen(visiblePath);
+   while(*ch != '\\' && *ch) *out++ = *ch++;
+   *out = 0;
+   }
+   else
+   {
+   strcpy(visiblePath, foundFile);
+   }
 
-	return func(visiblePath, isDirectory? FT_DIRECTORY : FT_NORMAL, parm);
-}
-*/
+   return func(visiblePath, isDirectory? FT_DIRECTORY : FT_NORMAL, parm);
+   }
+ */
 
 //===========================================================================
 // F_ZipFinderForAll
-//	Returns true to stop searching when forall_func returns false.
+//  Returns true to stop searching when forall_func returns false.
 //===========================================================================
 int F_ZipFinderForAll(const char *zipFileName, void *parm)
 {
@@ -631,7 +661,7 @@ int F_ZipFinderForAll(const char *zipFileName, void *parm)
 
 	if(F_MatchName(zipFileName, info->pattern))
 		if(!info->func(zipFileName, FT_NORMAL, info->parm))
-			return true; // Stop searching.
+			return true;		// Stop searching.
 
 	// Continue searching.
 	return false;
@@ -639,13 +669,13 @@ int F_ZipFinderForAll(const char *zipFileName, void *parm)
 
 //===========================================================================
 // F_ForAllDescend
-//	Descends into 'physical' subdirectories.
+//  Descends into 'physical' subdirectories.
 //===========================================================================
-int F_ForAllDescend
-	(const char *pattern, const char *path, void *parm, f_forall_func_t func)
+int F_ForAllDescend(const char *pattern, const char *path, void *parm,
+					f_forall_func_t func)
 {
-	char fn[256], spec[256];
-	char localPattern[256];
+	char    fn[256], spec[256];
+	char    localPattern[256];
 	finddata_t fd;
 
 	sprintf(localPattern, "%s%s", path, pattern);
@@ -656,7 +686,7 @@ int F_ForAllDescend
 	if(!myfindfirst(spec, &fd))
 	{
 		// The first file found!
-		do 
+		do
 		{
 			// Compile the full pathname of the found file.
 			strcpy(fn, path);
@@ -688,7 +718,7 @@ int F_ForAllDescend
 					}
 				}
 			}
-		} 
+		}
 		while(!myfindnext(&fd));
 	}
 	myfindend(&fd);
@@ -698,15 +728,15 @@ int F_ForAllDescend
 
 //===========================================================================
 // F_ForAll
-//	Parm is passed on to the callback, which is called for each file
-//	matching the filespec. Absolute path names are given to the callback.
-//	Zip directory, DD_DIREC and the real files are scanned. 
+//  Parm is passed on to the callback, which is called for each file
+//  matching the filespec. Absolute path names are given to the callback.
+//  Zip directory, DD_DIREC and the real files are scanned. 
 //===========================================================================
 int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
 {
 	directory_t specdir;
-	char fn[256];
-	int i;
+	char    fn[256];
+	int     i;
 	zipforall_t zipFindInfo;
 
 	Dir_FileDir(filespec, &specdir);
@@ -726,8 +756,8 @@ int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
 	// Check through the dir/WAD direcs.
 	for(i = 0; direc[i].path; i++)
 		if(F_MatchName(direc[i].path, fn))
-			if(!func(direc[i].path, FT_NORMAL, parm)) 
-			//if(!F_ForAllCaller(specdir.path, direc[i].path, func, parm))
+			if(!func(direc[i].path, FT_NORMAL, parm))
+				//if(!F_ForAllCaller(specdir.path, direc[i].path, func, parm))
 				return false;
 
 	Dir_FileName(filespec, fn);
@@ -736,5 +766,3 @@ int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
 
 	return true;
 }
-
-

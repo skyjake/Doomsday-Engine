@@ -15,10 +15,9 @@
 // for more details.
 //
 // DESCRIPTION:
-//	Cheat code checking.
+//  Cheat code checking.
 //
 //-----------------------------------------------------------------------------
-
 
 #ifndef __M_CHEAT__
 #define __M_CHEAT__
@@ -33,39 +32,33 @@
 ((((a)&1)<<7) + (((a)&2)<<5) + ((a)&4) + (((a)&8)<<1) \
  + (((a)&16)>>1) + ((a)&32) + (((a)&64)>>5) + (((a)&128)>>7))
 
-typedef struct
-{
-    unsigned char*	sequence;
-    unsigned char*	p;
-    
+typedef struct {
+	unsigned char  *sequence;
+	unsigned char  *p;
+
 } cheatseq_t;
 
-int
-cht_CheckCheat
-( cheatseq_t*		cht,
-  char			key );
+int             cht_CheckCheat(cheatseq_t * cht, char key);
 
+void            cht_GetParam(cheatseq_t * cht, char *buffer);
 
-void
-cht_GetParam
-( cheatseq_t*		cht,
-  char*			buffer );
-
-
-void cht_GodFunc(player_t *plyr);
-void cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
-				  boolean armor, boolean cards);
-void cht_MusicFunc(player_t *plyr, char *buf);
-void cht_NoClipFunc(player_t *plyr);
-boolean cht_WarpFunc(player_t *plyr, char *buf);
-void cht_PowerUpFunc(player_t *plyr, int i);
-void cht_ChoppersFunc(player_t *plyr);
-void cht_PosFunc(player_t *plyr);
+void            cht_GodFunc(player_t * plyr);
+void            cht_GiveFunc(player_t * plyr, boolean weapons, boolean ammo,
+							 boolean armor, boolean cards);
+void            cht_MusicFunc(player_t * plyr, char *buf);
+void            cht_NoClipFunc(player_t * plyr);
+boolean         cht_WarpFunc(player_t * plyr, char *buf);
+void            cht_PowerUpFunc(player_t * plyr, int i);
+void            cht_ChoppersFunc(player_t * plyr);
+void            cht_PosFunc(player_t * plyr);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -83,4 +76,3 @@ void cht_PosFunc(player_t *plyr);
 //
 //
 //-----------------------------------------------------------------------------
-

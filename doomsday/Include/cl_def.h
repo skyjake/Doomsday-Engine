@@ -27,18 +27,18 @@
 #define	SHORTP(x)		(*(short*) (x))
 #define	USHORTP(x)		(*(unsigned short*) (x))
 
-extern ident_t clientID;
-extern int serverTime;
-extern boolean handshakeReceived;
-extern int gameReady;
-extern boolean netLoggedIn;
-extern boolean clientPaused;
+extern ident_t  clientID;
+extern int      serverTime;
+extern boolean  handshakeReceived;
+extern int      gameReady;
+extern boolean  netLoggedIn;
+extern boolean  clientPaused;
 
-void Cl_InitID(void);
-void Cl_CleanUp();
-void Cl_GetPackets(void);
-void Cl_Ticker(timespan_t time);
-int Cl_GameReady();
-void Cl_SendHello(void);
+void            Cl_InitID(void);
+void            Cl_CleanUp();
+void            Cl_GetPackets(void);
+void            Cl_Ticker(timespan_t time);
+int             Cl_GameReady();
+void            Cl_SendHello(void);
 
 #endif

@@ -28,14 +28,14 @@
 #include <fcntl.h>
 
 #if defined(WIN32)
-#include <direct.h>
-#include <io.h>
-#include <conio.h>
+#  include <direct.h>
+#  include <io.h>
+#  include <conio.h>
 #endif
 
 #if defined(UNIX)
-#include <unistd.h>
-#include <string.h>
+#  include <unistd.h>
+#  include <string.h>
 #endif
 
 #include <stdlib.h>
@@ -63,24 +63,24 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int FileReader(char const *name, byte **buffer, int mallocType);
+static int FileReader(char const *name, byte ** buffer, int mallocType);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int			read_count;
+int     read_count;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int	read_ids[MAX_READ];
+static int read_ids[MAX_READ];
 
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
 // M_Malloc
 //===========================================================================
-void *M_Malloc(size_t size)
+void   *M_Malloc(size_t size)
 {
 	return malloc(size);
 }
@@ -88,7 +88,7 @@ void *M_Malloc(size_t size)
 //===========================================================================
 // M_Calloc
 //===========================================================================
-void *M_Calloc(size_t size)
+void   *M_Calloc(size_t size)
 {
 	return calloc(size, 1);
 }
@@ -96,7 +96,7 @@ void *M_Calloc(size_t size)
 //===========================================================================
 // M_Realloc
 //===========================================================================
-void *M_Realloc(void *ptr, size_t size)
+void   *M_Realloc(void *ptr, size_t size)
 {
 	return realloc(ptr, size);
 }
@@ -111,26 +111,28 @@ void M_Free(void *ptr)
 
 //==========================================================================
 // M_CheckFileID
-//	Returns true if the given file can be read, or false if it has already
-//	been read.
+//  Returns true if the given file can be read, or false if it has already
+//  been read.
 //==========================================================================
 boolean M_CheckFileID(const char *path)
 {
-	int id = Dir_FileID(path);
-	int i;
+	int     id = Dir_FileID(path);
+	int     i;
 
-	if(read_count == MAX_READ) 
+	if(read_count == MAX_READ)
 	{
 		Con_Message("CheckFile: Too many files.\n");
 		return false;
 	}
 	if(!F_Access(path))
 	{
-		if(verbose) Con_Message("CheckFile: %s not found.\n", path);
+		if(verbose)
+			Con_Message("CheckFile: %s not found.\n", path);
 		return false;
 	}
 	for(i = 0; i < read_count; i++)
-		if(read_ids[i] == id) return false;
+		if(read_ids[i] == id)
+			return false;
 	read_ids[read_count++] = id;
 	return true;
 }
@@ -138,53 +140,57 @@ boolean M_CheckFileID(const char *path)
 //===========================================================================
 // M_SkipWhite
 //===========================================================================
-char *M_SkipWhite(char *str)
+char   *M_SkipWhite(char *str)
 {
-	while(*str && ISSPACE(*str)) str++;
+	while(*str && ISSPACE(*str))
+		str++;
 	return str;
 }
 
 //===========================================================================
 // M_FindWhite
 //===========================================================================
-char *M_FindWhite(char *str)
+char   *M_FindWhite(char *str)
 {
-	while(*str && !ISSPACE(*str)) str++;
+	while(*str && !ISSPACE(*str))
+		str++;
 	return str;
 }
 
 //===========================================================================
 // M_SkipLine
 //===========================================================================
-char *M_SkipLine(char *str)
+char   *M_SkipLine(char *str)
 {
-	while(*str && *str != '\n') str++;
+	while(*str && *str != '\n')
+		str++;
 	// If the newline was found, skip it, too.
-	if(*str == '\n') str++;
+	if(*str == '\n')
+		str++;
 	return str;
 }
 
 //===========================================================================
 // M_LimitedStrCat
 //===========================================================================
-char *M_LimitedStrCat
-	(const char *str, unsigned int maxWidth, char separator, char *buf, 
-	 unsigned int bufLength)
+char   *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
+						char *buf, unsigned int bufLength)
 {
 	unsigned int isEmpty = !buf[0], length;
-	
+
 	// How long is this name?
 	length = MIN_OF(maxWidth, strlen(str));
-	
+
 	// A separator is included if this is not the first name.
-	if(separator && !isEmpty) ++length;
+	if(separator && !isEmpty)
+		++length;
 
 	// Does it fit?
 	if(strlen(buf) + length < bufLength)
 	{
-		if(separator && !isEmpty) 
+		if(separator && !isEmpty)
 		{
-			char sepBuf[2] = { separator, 0 };
+			char    sepBuf[2] = { separator, 0 };
 			strcat(buf, sepBuf);
 		}
 		strncat(buf, str, length);
@@ -198,12 +204,12 @@ char *M_LimitedStrCat
 void M_ExtractFileBase(const char *path, char *dest)
 {
 	const char *src;
-	int length;
+	int     length;
 
 	src = path + strlen(path) - 1;
 
 	// Back up until a \ or the start
-	while(src != path && *(src-1) != '\\' && *(src-1) != '/')
+	while(src != path && *(src - 1) != '\\' && *(src - 1) != '/')
 	{
 		src--;
 	}
@@ -218,24 +224,26 @@ void M_ExtractFileBase(const char *path, char *dest)
 			// This is an error?!
 			Con_Error("Filename base of %s > 8 chars", path);
 		}
-		*dest++ = toupper((int)*src++);
+		*dest++ = toupper((int) *src++);
 	}
 }
 
 //===========================================================================
 // M_ReadLine
 //===========================================================================
-void M_ReadLine(char *buffer, int len, DFILE *file)
+void M_ReadLine(char *buffer, int len, DFILE * file)
 {
-	int		p;
-	char	ch;
+	int     p;
+	char    ch;
 
 	memset(buffer, 0, len);
-	for(p = 0; p < len-1;)	// Make the last null stay there.
+	for(p = 0; p < len - 1;)	// Make the last null stay there.
 	{
 		ch = F_GetC(file);
-		if(ch == '\r') continue;
-		if(deof(file) || ch == '\n') break;
+		if(ch == '\r')
+			continue;
+		if(deof(file) || ch == '\n')
+			break;
 		buffer[p++] = ch;
 	}
 }
@@ -245,49 +253,50 @@ void M_ReadLine(char *buffer, int len, DFILE *file)
 //===========================================================================
 boolean M_IsComment(char *buffer)
 {
-	int		i = 0;
+	int     i = 0;
 
-	while(isspace(buffer[i]) && buffer[i]) i++;
-	if(buffer[i] == '#') return true;
+	while(isspace(buffer[i]) && buffer[i])
+		i++;
+	if(buffer[i] == '#')
+		return true;
 	return false;
 }
 
 /*
-===============
-=
-= M_Random
-=
-= Returns a 0-255 number
-=
-===============
-*/
-
+   ===============
+   =
+   = M_Random
+   =
+   = Returns a 0-255 number
+   =
+   ===============
+ */
 
 // This is the new flat distribution table
 unsigned char rndtable[256] = {
-	201,  1,243, 19, 18, 42,183,203,101,123,154,137, 34,118, 10,216,
-	135,246,  0,107,133,229, 35,113,177,211,110, 17,139, 84,251,235,
-	182,166,161,230,143, 91, 24, 81, 22, 94,  7, 51,232,104,122,248,
-	175,138,127,171,222,213, 44, 16,  9, 33, 88,102,170,150,136,114,
-	 62,  3,142,237,  6,252,249, 56, 74, 30, 13, 21,180,199, 32,132,
-	187,234, 78,210, 46,131,197,  8,206,244, 73,  4,236,178,195, 70,
-	121, 97,167,217,103, 40,247,186,105, 39, 95,163, 99,149,253, 29,
-	119, 83,254, 26,202, 65,130,155, 60, 64,184,106,221, 93,164,196,
-	112,108,179,141, 54,109, 11,126, 75,165,191,227, 87,225,156, 15,
-	 98,162,116, 79,169,140,190,205,168,194, 41,250, 27, 20, 14,241,
-	 50,214, 72,192,220,233, 67,148, 96,185,176,181,215,207,172, 85,
-	 89, 90,209,128,124,  2, 55,173, 66,152, 47,129, 59, 43,159,240,
-	239, 12,189,212,144, 28,200, 77,219,198,134,228, 45, 92,125,151,
-	  5, 53,255, 52, 68,245,160,158, 61, 86, 58, 82,117, 37,242,145,
-	 69,188,115, 76, 63,100, 49,111,153, 80, 38, 57,174,224, 71,231,
-	 23, 25, 48,218,120,147,208, 36,226,223,193,238,157,204,146, 31
+	201, 1, 243, 19, 18, 42, 183, 203, 101, 123, 154, 137, 34, 118, 10, 216,
+	135, 246, 0, 107, 133, 229, 35, 113, 177, 211, 110, 17, 139, 84, 251, 235,
+	182, 166, 161, 230, 143, 91, 24, 81, 22, 94, 7, 51, 232, 104, 122, 248,
+	175, 138, 127, 171, 222, 213, 44, 16, 9, 33, 88, 102, 170, 150, 136, 114,
+	62, 3, 142, 237, 6, 252, 249, 56, 74, 30, 13, 21, 180, 199, 32, 132,
+	187, 234, 78, 210, 46, 131, 197, 8, 206, 244, 73, 4, 236, 178, 195, 70,
+	121, 97, 167, 217, 103, 40, 247, 186, 105, 39, 95, 163, 99, 149, 253, 29,
+	119, 83, 254, 26, 202, 65, 130, 155, 60, 64, 184, 106, 221, 93, 164, 196,
+	112, 108, 179, 141, 54, 109, 11, 126, 75, 165, 191, 227, 87, 225, 156, 15,
+	98, 162, 116, 79, 169, 140, 190, 205, 168, 194, 41, 250, 27, 20, 14, 241,
+	50, 214, 72, 192, 220, 233, 67, 148, 96, 185, 176, 181, 215, 207, 172, 85,
+	89, 90, 209, 128, 124, 2, 55, 173, 66, 152, 47, 129, 59, 43, 159, 240,
+	239, 12, 189, 212, 144, 28, 200, 77, 219, 198, 134, 228, 45, 92, 125, 151,
+	5, 53, 255, 52, 68, 245, 160, 158, 61, 86, 58, 82, 117, 37, 242, 145,
+	69, 188, 115, 76, 63, 100, 49, 111, 153, 80, 38, 57, 174, 224, 71, 231,
+	23, 25, 48, 218, 120, 147, 208, 36, 226, 223, 193, 238, 157, 204, 146, 31
 };
 
-int rndindex = 0, rndindex2 = 0;
+int     rndindex = 0, rndindex2 = 0;
 
 byte M_Random(void)
 {
-	if(rndindex > 255) 
+	if(rndindex > 255)
 	{
 		rndindex = 0;
 		rndindex2++;
@@ -297,72 +306,72 @@ byte M_Random(void)
 
 float M_FRandom(void)
 {
-	return (M_Random() | (M_Random()<<8)) / 65535.0f;
+	return (M_Random() | (M_Random() << 8)) / 65535.0f;
 }
 
 /*unsigned char *usedRndtable = NULL;
 
-int backup_rndindex, backup_prndindex;
+   int backup_rndindex, backup_prndindex;
 
-int prndindex = 0;
+   int prndindex = 0;
 
-void SetRandomTable(unsigned char *table)
-{
-	usedRndtable = table;
-}
+   void SetRandomTable(unsigned char *table)
+   {
+   usedRndtable = table;
+   }
 
-unsigned char P_Random (void)
-{
-	return usedRndtable[(++prndindex)&0xff];
-}
+   unsigned char P_Random (void)
+   {
+   return usedRndtable[(++prndindex)&0xff];
+   }
 
-int M_Random (void)
-{
-	rndindex = (rndindex+1)&0xff;
-	return usedRndtable[rndindex];
-}
+   int M_Random (void)
+   {
+   rndindex = (rndindex+1)&0xff;
+   return usedRndtable[rndindex];
+   }
 
-void M_ClearRandom (void)
-{
-	rndindex = prndindex = 0;
-}
+   void M_ClearRandom (void)
+   {
+   rndindex = prndindex = 0;
+   }
 
-void M_SaveRandom (void)
-{
-	backup_rndindex = rndindex;
-	backup_prndindex = prndindex;
-}
+   void M_SaveRandom (void)
+   {
+   backup_rndindex = rndindex;
+   backup_prndindex = prndindex;
+   }
 
-void M_RestoreRandom (void)
-{
-	rndindex = backup_rndindex;
-	prndindex = backup_prndindex;
-}*/
+   void M_RestoreRandom (void)
+   {
+   rndindex = backup_rndindex;
+   prndindex = backup_prndindex;
+   } */
 
 //===========================================================================
 // M_CycleIntoRange
-//	Returns the value mod length (length > 0).
+//  Returns the value mod length (length > 0).
 //===========================================================================
 float M_CycleIntoRange(float value, float length)
 {
 	if(value < 0)
 	{
-		return value - ((int)(value / length) - 1) * length;
+		return value - ((int) (value / length) - 1) * length;
 	}
 	if(value > length)
 	{
-		return value - ((int)(value / length)) * length;
+		return value - ((int) (value / length)) * length;
 	}
 	return value;
 }
 
 //===========================================================================
 // M_Normalize
-//	Normalize a vector. Returns the former length.
+//  Normalize a vector. Returns the former length.
 //===========================================================================
 float M_Normalize(float *a)
 {
-	float len = sqrt(a[VX]*a[VX] + a[VY]*a[VY] + a[VZ]*a[VZ]);
+	float   len = sqrt(a[VX] * a[VX] + a[VY] * a[VY] + a[VZ] * a[VZ]);
 
 	if(len)
 	{
@@ -378,28 +387,28 @@ float M_Normalize(float *a)
 //===========================================================================
 float M_DotProduct(float *a, float *b)
 {
-	return a[VX]*b[VX] + a[VY]*b[VY] + a[VZ]*b[VZ];
+	return a[VX] * b[VX] + a[VY] * b[VY] + a[VZ] * b[VZ];
 }
 
 //===========================================================================
 // M_CrossProduct
-//	Cross product of two vectors.
+//  Cross product of two vectors.
 //===========================================================================
 void M_CrossProduct(float *a, float *b, float *out)
 {
-	out[VX] = a[VY]*b[VZ] - a[VZ]*b[VY];
-	out[VY] = a[VZ]*b[VX] - a[VX]*b[VZ];
-	out[VZ] = a[VX]*b[VY] - a[VY]*b[VX];
+	out[VX] = a[VY] * b[VZ] - a[VZ] * b[VY];
+	out[VY] = a[VZ] * b[VX] - a[VX] * b[VZ];
+	out[VZ] = a[VX] * b[VY] - a[VY] * b[VX];
 }
 
 //===========================================================================
 // M_PointCrossProduct
-//	Cross product of two vectors composed of three points.
+//  Cross product of two vectors composed of three points.
 //===========================================================================
 void M_PointCrossProduct(float *v1, float *v2, float *v3, float *out)
 {
-	float a[3], b[3];
-	int i;
+	float   a[3], b[3];
+	int     i;
 
 	for(i = 0; i < 3; i++)
 	{
@@ -411,18 +420,18 @@ void M_PointCrossProduct(float *v1, float *v2, float *v3, float *out)
 
 //===========================================================================
 // M_RotateVector
-//	First yaw, then pitch. Two consecutive 2D rotations.
-//	Probably could be done a bit more efficiently.
+//  First yaw, then pitch. Two consecutive 2D rotations.
+//  Probably could be done a bit more efficiently.
 //===========================================================================
 void M_RotateVector(float vec[3], float degYaw, float degPitch)
 {
-	float radYaw = degYaw/180 * PI, radPitch = degPitch/180 * PI;
-	float Cos, Sin, res[3];
+	float   radYaw = degYaw / 180 * PI, radPitch = degPitch / 180 * PI;
+	float   Cos, Sin, res[3];
 
 	// Yaw.
 	if(radYaw != 0)
 	{
-		Cos = cos(radYaw); 
+		Cos = cos(radYaw);
 		Sin = sin(radYaw);
 		res[VX] = vec[VX] * Cos + vec[VY] * Sin;
 		res[VY] = vec[VX] * -Sin + vec[VY] * Cos;
@@ -443,50 +452,53 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
 
 //===========================================================================
 // M_PointUnitLineDistance
-//	Line a -> b, point c. The line must be exactly one unit long!
+//  Line a -> b, point c. The line must be exactly one unit long!
 //===========================================================================
 float M_PointUnitLineDistance(float *a, float *b, float *c)
 {
-	return fabs(((a[VY]-c[VY])*(b[VX]-a[VX]) 
-		- (a[VX]-c[VX])*(b[VY]-a[VY])));
+	return
+		fabs(((a[VY] - c[VY]) * (b[VX] - a[VX]) -
+			  (a[VX] - c[VX]) * (b[VY] - a[VY])));
 }
 
 //===========================================================================
 // M_PointLineDistance
-//	Line a -> b, point c.
+//  Line a -> b, point c.
 //===========================================================================
 float M_PointLineDistance(float *a, float *b, float *c)
 {
-	float d[2], len;
+	float   d[2], len;
 
 	d[VX] = b[VX] - a[VX];
 	d[VY] = b[VY] - a[VY];
-	len = sqrt(d[VX]*d[VX] + d[VY]*d[VY]); // Accurate.
-	if(!len) return 0;
-	return fabs(((a[VY]-c[VY])*(b[VX]-a[VX]) 
-		- (a[VX]-c[VX])*(b[VY]-a[VY]))/len);
+	len = sqrt(d[VX] * d[VX] + d[VY] * d[VY]);	// Accurate.
+	if(!len)
+		return 0;
+	return
+		fabs(((a[VY] - c[VY]) * (b[VX] - a[VX]) -
+			  (a[VX] - c[VX]) * (b[VY] - a[VY])) / len);
 }
 
 //===========================================================================
 // M_ProjectPointOnLinef
-//	Input is fixed, output is floating point. Gap is the distance left 
-//	between the line and the projected point.
+//  Input is fixed, output is floating point. Gap is the distance left 
+//  between the line and the projected point.
 //===========================================================================
-void M_ProjectPointOnLinef
-	(fixed_t *point, fixed_t *linepoint, fixed_t *delta, float gap, 
-	 float *result)
+void M_ProjectPointOnLinef(fixed_t * point, fixed_t * linepoint,
+						   fixed_t * delta, float gap, float *result)
 {
 #define DOTPROD(a,b)	(a[VX]*b[VX] + a[VY]*b[VY])
-	float pointvec[2] = { 
-		FIX2FLT( point[VX] - linepoint[VX] ), 
-		FIX2FLT( point[VY] - linepoint[VY] )
+	float   pointvec[2] = {
+		FIX2FLT(point[VX] - linepoint[VX]),
+		FIX2FLT(point[VY] - linepoint[VY])
 	};
-	float line[2] = { FIX2FLT(delta[VX]), FIX2FLT(delta[VY]) };
-	float div = DOTPROD(line, line);
-	float diff[2], dist;
+	float   line[2] = { FIX2FLT(delta[VX]), FIX2FLT(delta[VY]) };
+	float   div = DOTPROD(line, line);
+	float   diff[2], dist;
 
-	if(!div) return;
-	div = DOTPROD(pointvec, line)/div;
+	if(!div)
+		return;
+	div = DOTPROD(pointvec, line) / div;
 	result[VX] = FIX2FLT(linepoint[VX]) + line[VX] * div;
 	result[VY] = FIX2FLT(linepoint[VY]) + line[VY] * div;
 
@@ -497,9 +509,10 @@ void M_ProjectPointOnLinef
 		diff[VY] = result[VY] - FIX2FLT(point[VY]);
 		if((dist = M_ApproxDistancef(diff[VX], diff[VY])) != 0)
 		{
-			int i;
+			int     i;
+
 			for(i = 0; i < 2; i++)
-				result[i] -= diff[i]/dist * gap;
+				result[i] -= diff[i] / dist * gap;
 		}
 	}
 }
@@ -509,16 +522,14 @@ void M_ProjectPointOnLinef
 //===========================================================================
 float M_BoundingBoxDiff(float in[4], float out[4])
 {
-	return in[BLEFT] - out[BLEFT] 
-		+ in[BTOP] - out[BTOP]
-		+ out[BRIGHT] - in[BRIGHT]
-		+ out[BBOTTOM] - in[BBOTTOM];
+	return in[BLEFT] - out[BLEFT] + in[BTOP] - out[BTOP] + out[BRIGHT] -
+		in[BRIGHT] + out[BBOTTOM] - in[BBOTTOM];
 }
 
 //===========================================================================
 // M_ClearBox
 //===========================================================================
-void M_ClearBox (fixed_t *box)
+void M_ClearBox(fixed_t * box)
 {
 	box[BOXTOP] = box[BOXRIGHT] = DDMININT;
 	box[BOXBOTTOM] = box[BOXLEFT] = DDMAXINT;
@@ -527,41 +538,41 @@ void M_ClearBox (fixed_t *box)
 //===========================================================================
 // M_AddToBox
 //===========================================================================
-void M_AddToBox (fixed_t *box, fixed_t x, fixed_t y)
+void M_AddToBox(fixed_t * box, fixed_t x, fixed_t y)
 {
-	if (x<box[BOXLEFT])
+	if(x < box[BOXLEFT])
 		box[BOXLEFT] = x;
-	else if (x>box[BOXRIGHT])
+	else if(x > box[BOXRIGHT])
 		box[BOXRIGHT] = x;
-	if (y<box[BOXBOTTOM])
+	if(y < box[BOXBOTTOM])
 		box[BOXBOTTOM] = y;
-	else if (y>box[BOXTOP])
+	else if(y > box[BOXTOP])
 		box[BOXTOP] = y;
 }
 
 /*
-==================
-=
-= M_WriteFile
-=
-==================
-*/
+   ==================
+   =
+   = M_WriteFile
+   =
+   ==================
+ */
 
 #ifndef O_BINARY
-#define O_BINARY 0
+#  define O_BINARY 0
 #endif
 
-boolean M_WriteFile (char const *name, void *source, int length)
+boolean M_WriteFile(char const *name, void *source, int length)
 {
-	int handle, count;
+	int     handle, count;
 
-	handle = open (name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
-	if (handle == -1)
+	handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+	if(handle == -1)
 		return false;
-	count = write (handle, source, length);
-	close (handle);
+	count = write(handle, source, length);
+	close(handle);
 
-	if (count < length)
+	if(count < length)
 		return false;
 
 	return true;
@@ -575,7 +586,7 @@ boolean M_WriteFile (char const *name, void *source, int length)
 //
 //==========================================================================
 
-int M_ReadFile(char const *name, byte **buffer)
+int M_ReadFile(char const *name, byte ** buffer)
 {
 	return FileReader(name, buffer, MALLOC_ZONE);
 }
@@ -588,7 +599,7 @@ int M_ReadFile(char const *name, byte **buffer)
 //
 //==========================================================================
 
-int M_ReadFileCLib(char const *name, byte **buffer)
+int M_ReadFileCLib(char const *name, byte ** buffer)
 {
 	return FileReader(name, buffer, MALLOC_CLIB);
 }
@@ -599,18 +610,19 @@ int M_ReadFileCLib(char const *name, byte **buffer)
 //
 //==========================================================================
 
-static int FileReader(char const *name, byte **buffer, int mallocType)
+static int FileReader(char const *name, byte ** buffer, int mallocType)
 {
-	int handle, count, length;
+	int     handle, count, length;
 	struct stat fileinfo;
-	byte *buf;
+	byte   *buf;
 	LZFILE *file;
 
 	// First try with LZSS.
-	if((file = lzOpen((char*)name, "rp")) != NULL)
+	if((file = lzOpen((char *) name, "rp")) != NULL)
 	{
 #define BSIZE 1024
-		byte rbuf[BSIZE];
+		byte    rbuf[BSIZE];
+
 		// Read 1kb pieces until file ends.
 		length = 0;
 		buf = 0;
@@ -620,13 +632,14 @@ static int FileReader(char const *name, byte **buffer, int mallocType)
 			// Allocate more memory.
 			if(mallocType == MALLOC_ZONE)
 			{
-				byte *newbuf = Z_Malloc(length + count, PU_STATIC, 0);
+				byte   *newbuf = Z_Malloc(length + count, PU_STATIC, 0);
+
 				if(buf)
 				{
 					memcpy(newbuf, buf, length);
 					Z_Free(buf);
 				}
-				buf = newbuf;				
+				buf = newbuf;
 			}
 			else
 			{
@@ -635,13 +648,13 @@ static int FileReader(char const *name, byte **buffer, int mallocType)
 			// Copy new data to buffer.
 			memcpy(buf + length, rbuf, count);
 			length += count;
-		}		
+		}
 		lzClose(file);
 		*buffer = buf;
 		return length;
 	}
 
-	handle = open(name, O_RDONLY|O_BINARY, 0666);
+	handle = open(name, O_RDONLY | O_BINARY, 0666);
 	if(handle == -1)
 	{
 		Con_Error("Couldn't read file %s\n", name);
@@ -652,16 +665,16 @@ static int FileReader(char const *name, byte **buffer, int mallocType)
 	}
 	length = fileinfo.st_size;
 	if(mallocType == MALLOC_ZONE)
-	{ // Use zone memory allocation
+	{							// Use zone memory allocation
 		buf = Z_Malloc(length, PU_STATIC, NULL);
 	}
 	else
-	{ // Use c library memory allocation
+	{							// Use c library memory allocation
 		buf = malloc(length);
 		if(buf == NULL)
 		{
-			Con_Error("Couldn't malloc buffer %d for file %s.\n",
-				length, name);
+			Con_Error("Couldn't malloc buffer %d for file %s.\n", length,
+					  name);
 		}
 	}
 	count = read(handle, buf, length);
@@ -684,13 +697,13 @@ static int FileReader(char const *name, byte **buffer, int mallocType)
 
 void M_ForceUppercase(char *text)
 {
-	char c;
+	char    c;
 
 	while((c = *text) != 0)
 	{
 		if(c >= 'a' && c <= 'z')
 		{
-			*text++ = c-('a'-'A');
+			*text++ = c - ('a' - 'A');
 		}
 		else
 		{
@@ -699,9 +712,9 @@ void M_ForceUppercase(char *text)
 	}
 }
 
-void M_WriteCommented(FILE *file, char *text)
+void M_WriteCommented(FILE * file, char *text)
 {
-	char *buff = malloc(strlen(text)+1), *line;
+	char   *buff = malloc(strlen(text) + 1), *line;
 
 	strcpy(buff, text);
 	line = strtok(buff, "\n");
@@ -715,48 +728,50 @@ void M_WriteCommented(FILE *file, char *text)
 
 //===========================================================================
 // M_WriteTextEsc
-//	The caller must provide the opening and closing quotes.
+//  The caller must provide the opening and closing quotes.
 //===========================================================================
-void M_WriteTextEsc(FILE *file, char *text)
+void M_WriteTextEsc(FILE * file, char *text)
 {
-	int		i;
+	int     i;
 
 	for(i = 0; text[i]; i++)
 	{
-		if(text[i] == '"' || text[i] == '\\') fprintf(file, "\\");
+		if(text[i] == '"' || text[i] == '\\')
+			fprintf(file, "\\");
 		fprintf(file, "%c", text[i]);
 	}
 }
 
-
 /*
-===================
-=
-= M_AproxDistance
-=
-= Gives an estimation of distance (not exact)
-=
-===================
-*/
+   ===================
+   =
+   = M_AproxDistance
+   =
+   = Gives an estimation of distance (not exact)
+   =
+   ===================
+ */
 #if 0
-fixed_t M_AproxDistance (fixed_t dx, fixed_t dy)
+fixed_t M_AproxDistance(fixed_t dx, fixed_t dy)
 {
-	dx = abs(dx); 
+	dx = abs(dx);
 	dy = abs(dy);
-	if(dx < dy) return dx + dy - (dx>>1);
-	return dx + dy - (dy>>1);
+	if(dx < dy)
+		return dx + dy - (dx >> 1);
+	return dx + dy - (dy >> 1);
 }
-#endif 
+#endif
 
 //===========================================================================
 // M_ApproxDistancef
 //===========================================================================
 float M_ApproxDistancef(float dx, float dy)
 {
-	dx = fabs(dx); 
+	dx = fabs(dx);
 	dy = fabs(dy);
-	if(dx < dy) return dx + dy - dx/2;
-	return dx + dy - dy/2;
+	if(dx < dy)
+		return dx + dy - dx / 2;
+	return dx + dy - dy / 2;
 }
 
 //===========================================================================
@@ -769,23 +784,24 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
 
 //===========================================================================
 // M_ScreenShot
-//	Writes a Targa file of the specified depth.
+//  Writes a Targa file of the specified depth.
 //===========================================================================
 int M_ScreenShot(char *filename, int bits)
 {
-	byte *screen;
+	byte   *screen;
 
-	if(bits != 16 && bits != 24) return false;
+	if(bits != 16 && bits != 24)
+		return false;
 
 	// Grab that screen!
 	screen = GL_GrabScreen();
 
 	if(bits == 16)
 		TGA_Save16_rgb888(filename, screenWidth, screenHeight, screen);
-	else 
-		TGA_Save24_rgb888(filename, screenWidth, screenHeight, screen);	
+	else
+		TGA_Save24_rgb888(filename, screenWidth, screenHeight, screen);
 
-	free(screen);	
+	free(screen);
 	return true;
 }
 
@@ -794,9 +810,9 @@ int M_ScreenShot(char *filename, int bits)
 //===========================================================================
 void M_PrependBasePath(const char *path, char *newpath)
 {
-	char buf[300];
+	char    buf[300];
 
-	if(Dir_IsAbsolute(path)) 
+	if(Dir_IsAbsolute(path))
 	{
 		// Can't prepend to absolute paths.
 		strcpy(newpath, path);
@@ -810,7 +826,7 @@ void M_PrependBasePath(const char *path, char *newpath)
 
 //===========================================================================
 // M_RemoveBasePath
-//	If the base path is found in the beginning of the path, it is removed.
+//  If the base path is found in the beginning of the path, it is removed.
 //===========================================================================
 void M_RemoveBasePath(const char *absPath, char *newPath)
 {
@@ -828,12 +844,12 @@ void M_RemoveBasePath(const char *absPath, char *newPath)
 
 //===========================================================================
 // M_TranslatePath
-//	Expands >.
+//  Expands >.
 //===========================================================================
 void M_TranslatePath(const char *path, char *translated)
 {
-	char buf[300];
-	
+	char    buf[300];
+
 	if(path[0] == '>' || path[0] == '}')
 	{
 		path++;
@@ -852,33 +868,34 @@ void M_TranslatePath(const char *path, char *translated)
 
 //===========================================================================
 // M_FileExists
-//	Also checks for '>'.
-//	The file must be a *real* file!
+//  Also checks for '>'.
+//  The file must be a *real* file!
 //===========================================================================
 int M_FileExists(const char *file)
 {
-	char buf[256];
+	char    buf[256];
 
 	M_TranslatePath(file, buf);
-	return !access(buf, 4); // Read permission?
+	return !access(buf, 4);		// Read permission?
 }
 
 //===========================================================================
 // M_CheckPath
-//	Check that the given directory exists. If it doesn't, create it.
-//	The path must be relative!
-//	Return true if the directory already exists.
+//  Check that the given directory exists. If it doesn't, create it.
+//  The path must be relative!
+//  Return true if the directory already exists.
 //===========================================================================
 boolean M_CheckPath(char *path)
 {
-	char full[256];
-	char buf[256], *ptr, *endptr;
+	char    full[256];
+	char    buf[256], *ptr, *endptr;
 
 	// Convert all backslashes to normal slashes.
 	strcpy(full, path);
 	Dir_FixSlashes(full);
-	
-	if(!access(full, 0)) return true; // Quick test.
+
+	if(!access(full, 0))
+		return true;			// Quick test.
 
 	// Check and create the path in segments.
 	ptr = full;
@@ -886,7 +903,10 @@ boolean M_CheckPath(char *path)
 	for(;;)
 	{
 		endptr = strchr(ptr, '/');
-		if(!endptr) strcat(buf, ptr); else strncat(buf, ptr, endptr-ptr);
+		if(!endptr)
+			strcat(buf, ptr);
+		else
+			strncat(buf, ptr, endptr - ptr);
 		if(access(buf, 0))
 		{
 			// Path doesn't exist, create it.
@@ -898,35 +918,37 @@ boolean M_CheckPath(char *path)
 		}
 		strcat(buf, DIR_SEP_STR);
 		ptr = endptr + 1;
-		if(!endptr) break;
+		if(!endptr)
+			break;
 	}
 	return false;
 }
 
 //===========================================================================
 // M_GetFileExt
-//	The dot is not included in the returned extension.
-//	The extension can be at most 10 characters long.
+//  The dot is not included in the returned extension.
+//  The extension can be at most 10 characters long.
 //===========================================================================
 void M_GetFileExt(const char *path, char *ext)
 {
-	char *ptr = strrchr(path, '.');
+	char   *ptr = strrchr(path, '.');
 
 	*ext = 0;
-	if(!ptr) return;
+	if(!ptr)
+		return;
 	strncpy(ext, ptr + 1, 10);
 	strlwr(ext);
 }
 
 //===========================================================================
 // M_ReplaceFileExt
-//	The new extension must not include a dot.
+//  The new extension must not include a dot.
 //===========================================================================
 void M_ReplaceFileExt(char *path, char *newext)
 {
-	char *ptr = strrchr(path, '.');
+	char   *ptr = strrchr(path, '.');
 
-	if(!ptr) 
+	if(!ptr)
 	{
 		strcat(path, ".");
 		strcat(path, newext);
@@ -945,7 +967,7 @@ const char *M_Pretty(const char *path)
 #define MAX_BUFS 8
 	static char buffers[MAX_BUFS][256];
 	static uint index = 0;
-	char *str;
+	char   *str;
 
 	if(!strnicmp(path, ddBasePath, strlen(ddBasePath)))
 	{
@@ -962,7 +984,7 @@ const char *M_Pretty(const char *path)
 /*
  * Advances time and return true if the trigger is triggered.
  */
-boolean M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime)
+boolean M_CheckTrigger(trigger_t * trigger, timespan_t advanceTime)
 {
 	trigger->accum += advanceTime;
 

@@ -22,23 +22,24 @@
 #ifndef __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 #define __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
 
-void P_InitSubsectorBlockMap (void);
+void            P_InitSubsectorBlockMap(void);
 
-void P_InitPolyBlockMap (void);
+void            P_InitPolyBlockMap(void);
 
-boolean P_BlockLinesIterator (int x, int y,
-							  boolean(*func)(line_t*,void*), void *data);
+boolean         P_BlockLinesIterator(int x, int y,
+									 boolean(*func) (line_t *, void *),
+									 void *data);
 
-boolean P_BlockPolyobjsIterator (int x, int y,
-								 boolean(*func)(polyobj_t*,void*),
-								 void *data);
+boolean         P_BlockPolyobjsIterator(int x, int y,
+										boolean(*func) (polyobj_t *, void *),
+										void *data);
 
-boolean P_SubsectorBoxIteratorv (arvec2_t box, sector_t *sector,
-								 boolean (*func)(subsector_t*, void*),
-								 void *parm);
+boolean         P_SubsectorBoxIteratorv(arvec2_t box, sector_t * sector,
+										boolean(*func) (subsector_t *, void *),
+										void *parm);
 
-boolean P_SubsectorBoxIterator (fixed_t *box, sector_t *sector,
-								boolean (*func)(subsector_t*, void*),
-								void *parm);
+boolean         P_SubsectorBoxIterator(fixed_t * box, sector_t * sector,
+									   boolean(*func) (subsector_t *, void *),
+									   void *parm);
 
-#endif 
+#endif

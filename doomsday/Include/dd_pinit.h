@@ -25,14 +25,14 @@
 // Maximum allowed number of plugins.
 #define MAX_PLUGS	32
 
-void	DD_ShutdownAll (void);
-int 	DD_CheckArg (char *tag, char **value);
-void 	DD_ErrorBox (boolean error, char *format, ...);
-void 	DD_MainWindowTitle (char *title);
-void 	DD_InitAPI (void);
-void 	DD_InitCommandLine (const char *cmdLine);
+void            DD_ShutdownAll(void);
+int             DD_CheckArg(char *tag, char **value);
+void            DD_ErrorBox(boolean error, char *format, ...);
+void            DD_MainWindowTitle(char *title);
+void            DD_InitAPI(void);
+void            DD_InitCommandLine(const char *cmdLine);
 
-extern game_import_t gi;		
+extern game_import_t gi;
 extern game_export_t gx;
 
-#endif // __DOOMSDAY_PORTABLE_INIT_H__
+#endif							// __DOOMSDAY_PORTABLE_INIT_H__

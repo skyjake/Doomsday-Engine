@@ -36,8 +36,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct resclass_s {
-	char path[256];			
-	char overridePath[256];
+	char    path[256];
+	char    overridePath[256];
 } resclass_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -51,24 +51,22 @@ typedef struct resclass_s {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The base directory for all resource directories.
-char dataPath[256];
+char    dataPath[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Command line options for setting the path explicitly.
-static char *explicitOption[NUM_RESOURCE_CLASSES][2] =
-{
-	{ "-texdir",	"-texdir2" },
-	{ "-patdir",	"-patdir2" },
-	{ "-lmdir",		"-lmdir2" },
-	{ "-musdir",	"-musdir2" },
-	{ "-sfxdir",	"-sfxdir2" },
-	{ "-gfxdir",	"-gfxdir2" }
+static char *explicitOption[NUM_RESOURCE_CLASSES][2] = {
+	{"-texdir", "-texdir2"},
+	{"-patdir", "-patdir2"},
+	{"-lmdir", "-lmdir2"},
+	{"-musdir", "-musdir2"},
+	{"-sfxdir", "-sfxdir2"},
+	{"-gfxdir", "-gfxdir2"}
 };
 
 // Class paths.
-static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] = 
-{
+static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] = {
 	"Textures\\",
 	"Patches\\",
 	"LightMaps\\",
@@ -78,21 +76,20 @@ static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] =
 };
 
 // Recognized extensions (in order of importance). "*" means 'anything'.
-static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] =
-{
+static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
 	// Graphics favor quality.
-	{ ".png", ".tga", ".pcx", NULL },
-	{ ".png", ".tga", ".pcx", NULL },
-	{ ".png", ".tga", ".pcx", NULL },
+	{".png", ".tga", ".pcx", NULL},
+	{".png", ".tga", ".pcx", NULL},
+	{".png", ".tga", ".pcx", NULL},
 
 	// Extension doesn't matter with music, FMOD will either recognize 
 	// it or not.
-	{ ".mp3", ".ogg", ".wav", ".mod", ".it", ".mid", "*", NULL },
+	{".mp3", ".ogg", ".wav", ".mod", ".it", ".mid", "*", NULL},
 
 	// Only WAV files for sound effects.
-	{ ".wav", NULL },
+	{".wav", NULL},
 
-	{ ".png", ".tga", ".pcx", NULL }
+	{".png", ".tga", ".pcx", NULL}
 };
 
 static resclass_t classInfo[NUM_RESOURCE_CLASSES];
@@ -128,17 +125,18 @@ void R_SetDataPath(const char *path)
  */
 void R_InitDataPaths(const char *path, boolean justGamePaths)
 {
-	int i;
+	int     i;
 
 	M_TranslatePath(path, dataPath);
 	Dir_ValidDir(dataPath);
-	VERBOSE( Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)) );
+	VERBOSE(Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)));
 
 	// Update the paths of each class.
 	for(i = 0; i < NUM_RESOURCE_CLASSES; i++)
 	{
 		// The Graphics class resources are under Doomsday's control.
-		if(justGamePaths && i == RC_GRAPHICS) continue;
+		if(justGamePaths && i == RC_GRAPHICS)
+			continue;
 
 		memset(&classInfo[i], 0, sizeof(classInfo[i]));
 
@@ -155,17 +153,17 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
 			strcat(classInfo[i].path, defaultResourcePath[i]);
 		}
 		Dir_ValidDir(classInfo[i].path);
-			
+
 		// The overriding path.
 		if(ArgCheckWith(explicitOption[i][1], 1))
 		{
 			M_TranslatePath(ArgNext(), classInfo[i].overridePath);
 		}
 		Dir_ValidDir(classInfo[i].overridePath);
-		
-		VERBOSE2( Con_Message("  %i: %s (%s)\n", i, 
-			M_Pretty(classInfo[i].path), 
-			M_Pretty(classInfo[i].overridePath)) );
+
+		VERBOSE2(Con_Message
+				 ("  %i: %s (%s)\n", i, M_Pretty(classInfo[i].path),
+				  M_Pretty(classInfo[i].overridePath)));
 	}
 }
 
@@ -175,9 +173,9 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
  */
 void R_PrependDataPath(const char *origPath, char *newPath)
 {
-	char buf[300];
+	char    buf[300];
 
-	if(Dir_IsAbsolute(origPath)) 
+	if(Dir_IsAbsolute(origPath))
 	{
 		// Can't prepend to absolute paths.
 		strcpy(newPath, origPath);
@@ -195,10 +193,12 @@ void R_PrependDataPath(const char *origPath, char *newPath)
 int R_FileFinder(const char *fn, filetype_t type, void *buf)
 {
 	// Skip directories.
-	if(type == FT_DIRECTORY) return true;
+	if(type == FT_DIRECTORY)
+		return true;
 
 	// This'll do fine!
-	if(buf) strcpy(buf, fn);
+	if(buf)
+		strcpy(buf, fn);
 
 	// Return false to stop searching.
 	return false;
@@ -208,19 +208,19 @@ int R_FileFinder(const char *fn, filetype_t type, void *buf)
  * Check all possible extensions to see if the resource exists.
  * 'path' is complete, sans extension. Returns true if it's found.
  */
-boolean R_TryResourceFile
-	(resourceclass_t resClass, const char *path, char *foundFileName)
+boolean R_TryResourceFile(resourceclass_t resClass, const char *path,
+						  char *foundFileName)
 {
 	const char **ext;
-	char buf[256], *extPlace;
-	int i;
+	char    buf[256], *extPlace;
+	int     i;
 
 	strcpy(buf, path);
 	extPlace = buf + strlen(buf);
-	
+
 	for(i = 0, ext = classExtension[resClass]; *ext; ext++)
 	{
-		if(**ext == '*') // Anything goes?
+		if(**ext == '*')		// Anything goes?
 		{
 			strcpy(extPlace, ".*");
 			if(!F_ForAll(buf, foundFileName, R_FileFinder))
@@ -235,7 +235,8 @@ boolean R_TryResourceFile
 			if(F_Access(buf))
 			{
 				// Found it.
-				if(foundFileName) strcpy(foundFileName, buf);
+				if(foundFileName)
+					strcpy(foundFileName, buf);
 				return true;
 			}
 		}
@@ -252,15 +253,15 @@ boolean R_TryResourceFile
  * the existence of the file. Set optionalSuffix to NULL if it's not
  * needed.
  */
-boolean R_FindResource(resourceclass_t resClass, const char *name, 
+boolean R_FindResource(resourceclass_t resClass, const char *name,
 					   const char *optionalSuffix, char *fileName)
 {
 	resclass_t *info = &classInfo[resClass];
 	const char *gameMode;
-	char path[256];
-	char fn[256];
-	int i;
-	
+	char    path[256];
+	char    fn[256];
+	int     i;
+
 	// The tries:
 	// 0. override + game
 	// 1. override
@@ -286,7 +287,8 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
 		{
 			// A string that identifies the game mode (e.g. doom2-plut).
 			gameMode = gx.Get(DD_GAME_MODE);
-			if(!gameMode || !gameMode[0]) continue; // Not set?!
+			if(!gameMode || !gameMode[0])
+				continue;		// Not set?!
 			strcat(path, gameMode);
 			strcat(path, "\\");
 		}

@@ -24,6 +24,6 @@
 
 #include "dd_pinit.h"
 
-void DD_Shutdown(void);
+void            DD_Shutdown(void);
 
-#endif 
+#endif

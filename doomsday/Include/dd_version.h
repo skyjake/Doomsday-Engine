@@ -22,7 +22,7 @@
 #ifndef __DOOMSDAY_VERSION_INFO_H__
 #define __DOOMSDAY_VERSION_INFO_H__
 
-/*	
+/*  
  * Version number rules: (major).(minor).(revision)-(release)
  *
  * Major version will be 1 for now (few things short of a complete 
@@ -41,4 +41,4 @@
 #define DOOMSDAY_RELEASE_NAME	"0-rc1"
 #define DOOMSDAY_VERSION_TEXT	"1.8."DOOMSDAY_RELEASE_NAME
 
-#endif 
+#endif

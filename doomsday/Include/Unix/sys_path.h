@@ -22,8 +22,8 @@
 #ifndef __DOOMSDAY_PATHS_H__
 #define __DOOMSDAY_PATHS_H__
 
-char *_fullpath(char *full, const char *original, int len);
-void _splitpath(const char *path, char *drive, char *dir, char *name,
-				char *ext);
+char           *_fullpath(char *full, const char *original, int len);
+void            _splitpath(const char *path, char *drive, char *dir,
+						   char *name, char *ext);
 
-#endif // __DOOMSDAY_PATHS_H__
+#endif							// __DOOMSDAY_PATHS_H__

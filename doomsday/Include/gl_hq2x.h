@@ -22,8 +22,8 @@
 #ifndef __DOOMSDAY_HQ2X_H__
 #define __DOOMSDAY_HQ2X_H__
 
-void GL_InitSmartFilter(void);
-void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut,
-					  int Xres, int Yres, int BpL);
+void            GL_InitSmartFilter(void);
+void            GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut,
+								 int Xres, int Yres, int BpL);
 
-#endif 
+#endif

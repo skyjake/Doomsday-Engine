@@ -43,35 +43,32 @@
 #define IJOY_MAXBUTTONS	32
 #define IJOY_POV_CENTER	-1
 
-typedef struct
-{
-	char event;			// Type of the event.		
-	unsigned char code;	// The scancode (extended, corresponds DI keys).
+typedef struct {
+	char            event;		   // Type of the event.       
+	unsigned char   code;		   // The scancode (extended, corresponds DI keys).
 } keyevent_t;
 
-typedef struct
-{
-	int x, y, z;		// Relative X and Y mickeys since last call.
-	int buttons;		// The buttons bitfield.
+typedef struct {
+	int             x, y, z;	   // Relative X and Y mickeys since last call.
+	int             buttons;	   // The buttons bitfield.
 } mousestate_t;
 
-typedef struct
-{
-	int		axis[3]; 
-	int		rotAxis[3];
-	int		slider[2];
-	char	buttons[IJOY_MAXBUTTONS];
-	float	povAngle;	// 0 - 359 degrees.
+typedef struct {
+	int             axis[3];
+	int             rotAxis[3];
+	int             slider[2];
+	char            buttons[IJOY_MAXBUTTONS];
+	float           povAngle;	   // 0 - 359 degrees.
 } joystate_t;
 
-extern boolean usejoystick;
+extern boolean  usejoystick;
 
-int I_Init(void);
-void I_Shutdown(void);
-boolean I_MousePresent(void);
-boolean I_JoystickPresent(void);
-int I_GetKeyEvents(keyevent_t *evbuf, int bufsize);
-void I_GetMouseState(mousestate_t *state);
-void I_GetJoystickState(joystate_t *state);
+int             I_Init(void);
+void            I_Shutdown(void);
+boolean         I_MousePresent(void);
+boolean         I_JoystickPresent(void);
+int             I_GetKeyEvents(keyevent_t * evbuf, int bufsize);
+void            I_GetMouseState(mousestate_t * state);
+void            I_GetJoystickState(joystate_t * state);
 
 #endif

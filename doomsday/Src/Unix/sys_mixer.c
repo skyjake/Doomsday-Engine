@@ -38,10 +38,8 @@ static int initOk = 0;
 //===========================================================================
 int Sys_InitMixer(void)
 {
-	if(initOk 
-		|| ArgCheck("-nomixer") 
-		|| ArgCheck("-nomusic") 
-		|| isDedicated) return true;
+	if(initOk || ArgCheck("-nomixer") || ArgCheck("-nomusic") || isDedicated)
+		return true;
 
 	// We're successful.
 	initOk = true;
@@ -53,7 +51,8 @@ int Sys_InitMixer(void)
 //===========================================================================
 void Sys_ShutdownMixer(void)
 {
-	if(!initOk) return; // Can't uninitialize if not inited.
+	if(!initOk)
+		return;					// Can't uninitialize if not inited.
 	initOk = false;
 }
 
@@ -62,7 +61,8 @@ void Sys_ShutdownMixer(void)
 //===========================================================================
 int Sys_Mixer4i(int device, int action, int control, int parm)
 {
-	if(!initOk) return MIX_ERROR;
+	if(!initOk)
+		return MIX_ERROR;
 
 	// There is currently no implementation for anything.
 	return MIX_ERROR;
@@ -73,6 +73,5 @@ int Sys_Mixer4i(int device, int action, int control, int parm)
 //===========================================================================
 int Sys_Mixer3i(int device, int action, int control)
 {
-	return Sys_Mixer4i(device, action, control, 0);	
+	return Sys_Mixer4i(device, action, control, 0);
 }
-

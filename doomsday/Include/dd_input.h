@@ -22,38 +22,38 @@
 #ifndef __DOOMSDAY_BASEINPUT_H__
 #define __DOOMSDAY_BASEINPUT_H__
 
-#include "dd_share.h"	// For event_t.
+#include "dd_share.h"			   // For event_t.
 #include "con_decl.h"
 
-extern int		repWait1, repWait2;
-extern int      keyRepeatDelay1, keyRepeatDelay2; // milliseconds
-extern int		mouseFilter;
-extern int		mouseDisableX, mouseDisableY;
-extern int		mouseInverseY;
-extern int		mouseWheelSensi;
-extern int		joySensitivity;
-extern int		joyDeadZone;
-extern boolean	showScanCodes;
-extern boolean	shiftDown, altDown;
+extern int      repWait1, repWait2;
+extern int      keyRepeatDelay1, keyRepeatDelay2;	// milliseconds
+extern int      mouseFilter;
+extern int      mouseDisableX, mouseDisableY;
+extern int      mouseInverseY;
+extern int      mouseWheelSensi;
+extern int      joySensitivity;
+extern int      joyDeadZone;
+extern boolean  showScanCodes;
+extern boolean  shiftDown, altDown;
 
-void DD_InitInput(void);
-void DD_ShutdownInput(void);
-void DD_StartInput(void);
-void DD_StopInput(void);
+void            DD_InitInput(void);
+void            DD_ShutdownInput(void);
+void            DD_StartInput(void);
+void            DD_StopInput(void);
 
-void DD_ReadKeyboard(void);
-void DD_ReadMouse(void);
-void DD_ReadJoystick(void);
+void            DD_ReadKeyboard(void);
+void            DD_ReadMouse(void);
+void            DD_ReadJoystick(void);
 
-void DD_PostEvent(event_t *ev);
-void DD_ProcessEvents(void);
-void DD_ClearEvents(void);
-void DD_ClearKeyRepeaters(void);
-byte DD_ScanToKey(byte scan);
-byte DD_KeyToScan(byte key);
-byte DD_ModKey(byte key);
+void            DD_PostEvent(event_t * ev);
+void            DD_ProcessEvents(void);
+void            DD_ClearEvents(void);
+void            DD_ClearKeyRepeaters(void);
+byte            DD_ScanToKey(byte scan);
+byte            DD_KeyToScan(byte key);
+byte            DD_ModKey(byte key);
 
-D_CMD( KeyMap );
-D_CMD( DumpKeyMap );
+D_CMD(KeyMap);
+D_CMD(DumpKeyMap);
 
-#endif 
+#endif

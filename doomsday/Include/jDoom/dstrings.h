@@ -16,6 +16,9 @@
 //
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -33,14 +36,12 @@
 //
 //
 // DESCRIPTION:
-//	DOOM strings, by language.
+//  DOOM strings, by language.
 //
 //-----------------------------------------------------------------------------
 
-
 #ifndef __DSTRINGS__
 #define __DSTRINGS__
-
 
 // All important printed strings.
 // Language selection (message strings).
@@ -52,7 +53,6 @@
 #include "d_englsh.h"
 //#endif
 
-
 //
 // File locations,
 //  relative to current position.
@@ -61,19 +61,20 @@
 #define DEVMAPS "devmaps"
 #define DEVDATA "devdata"
 
-
 // Not done in french?
 
 // QuitDOOM messages
 #define NUM_QUITMESSAGES   22
 
-extern char* endmsg[];
-
+extern char    *endmsg[];
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -91,4 +92,3 @@ extern char* endmsg[];
 //
 //
 //-----------------------------------------------------------------------------
-

@@ -1,3 +1,4 @@
+
 /* DE1: $Id$
  * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -50,8 +51,7 @@
 #define ZFH_COMPRESS_PATCHED	0x20	// Not supported.
 
 // Compression methods.
-enum 
-{
+enum {
 	ZFC_NO_COMPRESSION = 0,		// The only supported method.
 	ZFC_SHRUNK,
 	ZFC_REDUCED_1,
@@ -68,73 +68,75 @@ enum
 
 typedef struct package_s {
 	struct package_s *next;
-	char name[256];
-	DFILE *file;
-	int order;
+	char    name[256];
+	DFILE  *file;
+	int     order;
 } package_t;
 
 typedef struct zipentry_s {
-	char *name;				// Relative path (from the base path).
+	char   *name;				// Relative path (from the base path).
 	package_t *package;
-	unsigned int offset;	// Offset from the beginning of the package.
+	unsigned int offset;		// Offset from the beginning of the package.
 	unsigned int size;
 } zipentry_t;
 
 #pragma pack(1)
 typedef struct localfileheader_s {
 	uint    signature;
-	ushort	requiredVersion;
-	ushort	flags;
-	ushort	compression;
-	ushort	lastModTime;
-	ushort	lastModDate;
-	uint	crc32;
-	uint	compressedSize;
-	uint	size;
-	ushort	fileNameSize;
-	ushort	extraFieldSize;
+	ushort  requiredVersion;
+	ushort  flags;
+	ushort  compression;
+	ushort  lastModTime;
+	ushort  lastModDate;
+	uint    crc32;
+	uint    compressedSize;
+	uint    size;
+	ushort  fileNameSize;
+	ushort  extraFieldSize;
 } localfileheader_t;
 
 typedef struct descriptor_s {
-	uint	crc32;
-	uint	compressedSize;
-	uint	size;
+	uint    crc32;
+	uint    compressedSize;
+	uint    size;
 } descriptor_t;
 
 typedef struct centralfileheader_s {
-	uint	signature;
-	ushort	version;
-	ushort	requiredVersion;
-	ushort	flags;
-	ushort	compression;
-	ushort	lastModTime;
-	ushort	lastModDate;
-	uint	crc32;
-	uint	compressedSize;
-	uint	size;
-	ushort	fileNameSize;
-	ushort	extraFieldSize;
-	ushort	commentSize;
-	ushort	diskStart;
-	ushort	internalAttrib;
-	uint	externalAttrib;
-	uint	relOffset;	
-/*  
-	file name (variable size)
-	extra field (variable size)
-	file comment (variable size)
-*/	
+	uint    signature;
+	ushort  version;
+	ushort  requiredVersion;
+	ushort  flags;
+	ushort  compression;
+	ushort  lastModTime;
+	ushort  lastModDate;
+	uint    crc32;
+	uint    compressedSize;
+	uint    size;
+	ushort  fileNameSize;
+	ushort  extraFieldSize;
+	ushort  commentSize;
+	ushort  diskStart;
+	ushort  internalAttrib;
+	uint    externalAttrib;
+	uint    relOffset;
+
+	/*  
+	 * file name (variable size)
+	 * extra field (variable size)
+	 * file comment (variable size)
+	 */
 } centralfileheader_t;
 
 typedef struct centralend_s {
-	ushort	disk;
-	ushort	centralStartDisk;
-	ushort	diskEntryCount;
-	ushort	totalEntryCount;
-	uint	size;
-	uint	offset;
-	ushort	commentSize;
+	ushort  disk;
+	ushort  centralStartDisk;
+	ushort  diskEntryCount;
+	ushort  totalEntryCount;
+	uint    size;
+	uint    offset;
+	ushort  commentSize;
 } centralend_t;
+
 #pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -143,7 +145,7 @@ typedef struct centralend_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void Zip_RemoveDuplicateFiles(void);
+void    Zip_RemoveDuplicateFiles(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -162,7 +164,7 @@ static int zipNumFiles, zipAllocatedFiles;
  */
 void Zip_Init(void)
 {
-	VERBOSE( Con_Message("Zip_Init: Initializing package system...\n") );
+	VERBOSE(Con_Message("Zip_Init: Initializing package system...\n"));
 
 	zipRoot = NULL;
 	zipFiles = 0;
@@ -176,18 +178,20 @@ void Zip_Init(void)
 void Zip_Shutdown(void)
 {
 	package_t *pack, *next;
-	int i;
+	int     i;
 
 	// Close package files and free the nodes.
 	for(pack = zipRoot; pack; pack = next)
 	{
 		next = pack->next;
-		if(pack->file) F_Close(pack->file);
+		if(pack->file)
+			F_Close(pack->file);
 		free(pack);
 	}
 
 	// Free the file directory.
-	for(i = 0; i < zipNumFiles; i++) free(zipFiles[i].name);
+	for(i = 0; i < zipNumFiles; i++)
+		free(zipFiles[i].name);
 	free(zipFiles);
 
 	zipRoot = NULL;
@@ -200,18 +204,19 @@ void Zip_Shutdown(void)
  * Allocate a zipentry array element and return a pointer to it.
  * Duplicate entries are removed later.
  */
-zipentry_t* Zip_NewFile(const char *name)
+zipentry_t *Zip_NewFile(const char *name)
 {
-	int oldCount = zipNumFiles;
+	int     oldCount = zipNumFiles;
 	boolean changed = false;
-	
+
 	zipNumFiles++;
 	while(zipNumFiles > zipAllocatedFiles)
 	{
 		// Double the size of the array.
 		zipAllocatedFiles *= 2;
-		if(zipAllocatedFiles <= 0) zipAllocatedFiles = 1;
-		
+		if(zipAllocatedFiles <= 0)
+			zipAllocatedFiles = 1;
+
 		// Realloc the zipentry array.
 		zipFiles = realloc(zipFiles, sizeof(zipentry_t) * zipAllocatedFiles);
 		changed = true;
@@ -220,14 +225,14 @@ zipentry_t* Zip_NewFile(const char *name)
 	// Clear the new memory.
 	if(changed)
 	{
-		memset(zipFiles + oldCount, 0, sizeof(zipentry_t) 
-			* (zipAllocatedFiles - oldCount));
+		memset(zipFiles + oldCount, 0,
+			   sizeof(zipentry_t) * (zipAllocatedFiles - oldCount));
 	}
 
 	// Take a copy of the name. This is freed in Zip_Shutdown().
 	zipFiles[oldCount].name = malloc(strlen(name) + 1);
 	strcpy(zipFiles[oldCount].name, name);
-	
+
 	// Return a pointer to the first new zipentry.
 	return zipFiles + oldCount;
 }
@@ -238,8 +243,8 @@ zipentry_t* Zip_NewFile(const char *name)
 int C_DECL Zip_EntrySorter(const void *a, const void *b)
 {
 	// Compare the names.
-	return stricmp( ((const zipentry_t*)a)->name, 
-		((const zipentry_t*)b)->name );
+	return stricmp(((const zipentry_t *) a)->name,
+				   ((const zipentry_t *) b)->name);
 }
 
 /*
@@ -255,12 +260,13 @@ void Zip_SortFiles(void)
 /*
  * Adds a new package to the list of packages.
  */
-package_t* Zip_NewPackage(void)
+package_t *Zip_NewPackage(void)
 {
 	// When duplicates are removed, newer packages are favored.
 	static int packageCounter = 0;
 
 	package_t *newPack = calloc(sizeof(package_t), 1);
+
 	newPack->next = zipRoot;
 	newPack->order = packageCounter++;
 	return zipRoot = newPack;
@@ -271,12 +277,12 @@ package_t* Zip_NewPackage(void)
  * Returns true if it successfully located. This gets awfully slow if
  * the comment is long.
  */
-boolean Zip_LocateCentralDirectory(DFILE *file)
+boolean Zip_LocateCentralDirectory(DFILE * file)
 {
-/*	int length = F_Length(file); */
-	int pos = CENTRAL_END_SIZE; // Offset from the end.
-	uint signature;
-	
+	/*      int length = F_Length(file); */
+	int     pos = CENTRAL_END_SIZE;	// Offset from the end.
+	uint    signature;
+
 	// Start from the earliest location where the signature might be.
 	while(pos < MAXIMUM_COMMENT_SIZE)
 	{
@@ -304,7 +310,8 @@ boolean Zip_LocateCentralDirectory(DFILE *file)
 void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
 {
 	// Only copy as much as we can.
-	if(num >= destSize) num = destSize - 1;
+	if(num >= destSize)
+		num = destSize - 1;
 
 	memcpy(dest, src, num);
 	dest[num] = 0;
@@ -314,17 +321,17 @@ void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
  * Opens the file zip, reads the directory and stores the info for later
  * access. If prevOpened is not NULL, all data will be read from there.
  */
-boolean Zip_Open(const char *fileName, DFILE *prevOpened)
+boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 {
-	DFILE *file;
+	DFILE  *file;
 	package_t *pack;
 	centralend_t summary;
-	void *directory;
-	char *pos;
-	char buf[512];
+	void   *directory;
+	char   *pos;
+	char    buf[512];
 	zipentry_t *entry;
-	int index;
-	
+	int     index;
+
 	if(prevOpened == NULL)
 	{
 		// Try to open the file.
@@ -339,24 +346,24 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 		// Use the previously opened file.
 		file = prevOpened;
 	}
-	
-	VERBOSE( Con_Message("Zip_Open: %s\n", M_Pretty(fileName)) );
+
+	VERBOSE(Con_Message("Zip_Open: %s\n", M_Pretty(fileName)));
 
 	// Scan the end of the file for the central directory end record.
 	if(!Zip_LocateCentralDirectory(file))
 	{
-		Con_Error("Zip_Open: %s: Central directory not found.\n", 
-			M_Pretty(fileName));
+		Con_Error("Zip_Open: %s: Central directory not found.\n",
+				  M_Pretty(fileName));
 	}
 
 	// Read the central directory end record.
 	F_Read(&summary, sizeof(summary), file);
-	
+
 	// Does the summary say something we don't like?
 	if(summary.diskEntryCount != summary.totalEntryCount)
 	{
-		Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n", 
-			M_Pretty(fileName));
+		Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n",
+				  M_Pretty(fileName));
 	}
 
 	// Read the entire central directory into memory.
@@ -370,15 +377,16 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 
 	// Read all the entries.
 	pos = directory;
-	for(index = 0; index < summary.totalEntryCount; index++, 
-		pos += sizeof(centralfileheader_t))
+	for(index = 0; index < summary.totalEntryCount;
+		index++, pos += sizeof(centralfileheader_t))
 	{
 		localfileheader_t localHeader;
-		centralfileheader_t *header = (void*) pos;
-		char *nameStart = pos + sizeof(centralfileheader_t);
+		centralfileheader_t *header = (void *) pos;
+		char   *nameStart = pos + sizeof(centralfileheader_t);
 
 		// Advance the cursor past the variable sized fields.
-		pos += header->fileNameSize + header->extraFieldSize +
+		pos +=
+			header->fileNameSize + header->extraFieldSize +
 			header->commentSize;
 
 		Zip_CopyStr(buf, nameStart, header->fileNameSize, sizeof(buf));
@@ -389,15 +397,15 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 
 		// Do we support the format of this file?
 		if(header->compression != ZFC_NO_COMPRESSION
-			|| header->compressedSize != header->size)
+		   || header->compressedSize != header->size)
 		{
 			Con_Error("Zip_Open: %s: '%s' is compressed.\n  Compression is "
-				"not supported.\n", M_Pretty(fileName), buf);
+					  "not supported.\n", M_Pretty(fileName), buf);
 		}
 		if(header->flags & ZFH_ENCRYPTED)
 		{
 			Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is "
-				"not supported.\n", M_Pretty(fileName), buf);
+					  "not supported.\n", M_Pretty(fileName), buf);
 		}
 
 		// Convert all slashes to backslashes, for compatibility with 
@@ -416,11 +424,10 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 		// extra field size (Info-ZIP!).
 		F_Seek(file, header->relOffset, SEEK_SET);
 		F_Read(&localHeader, sizeof(localHeader), file);
-		
-		entry->offset = header->relOffset
-			+ sizeof(localfileheader_t)
-			+ header->fileNameSize
-			+ localHeader.extraFieldSize;
+
+		entry->offset =
+			header->relOffset + sizeof(localfileheader_t) +
+			header->fileNameSize + localHeader.extraFieldSize;
 	}
 
 	// The central directory is no longer needed.
@@ -440,7 +447,7 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
  */
 void Zip_RemoveDuplicateFiles(void)
 {
-	int i;
+	int     i;
 	boolean modified = false;
 	zipentry_t *entry, *loser;
 
@@ -480,10 +487,10 @@ void Zip_RemoveDuplicateFiles(void)
  * returned. Parm is passed to the finder func. Returns zero if nothing
  * is found.
  */
-zipindex_t Zip_Iterate(int (*iterator)(const char*, void*), void *parm)
+zipindex_t Zip_Iterate(int (*iterator) (const char *, void *), void *parm)
 {
-	int i;
-	
+	int     i;
+
 	for(i = 0; i < zipNumFiles; i++)
 		if(iterator(zipFiles[i].name, parm))
 			return i + 1;
@@ -500,8 +507,8 @@ zipindex_t Zip_Iterate(int (*iterator)(const char*, void*), void *parm)
 zipindex_t Zip_Find(const char *fileName)
 {
 	zipindex_t begin, end, mid;
-	int relation;
-	char fullPath[256];
+	int     relation;
+	char    fullPath[256];
 
 	// Convert to an absolute path.
 	strcpy(fullPath, fileName);
@@ -514,7 +521,7 @@ zipindex_t Zip_Find(const char *fileName)
 	while(begin <= end)
 	{
 		mid = (begin + end) / 2;
-		
+
 		// How does this compare?
 		relation = stricmp(fullPath, zipFiles[mid].name);
 		if(!relation)
@@ -544,7 +551,8 @@ zipindex_t Zip_Find(const char *fileName)
 uint Zip_GetSize(zipindex_t index)
 {
 	index--;
-	if(index < 0 || index >= zipNumFiles) return 0; // Doesn't exist.
+	if(index < 0 || index >= zipNumFiles)
+		return 0;				// Doesn't exist.
 	return zipFiles[index].size;
 }
 
@@ -553,24 +561,26 @@ uint Zip_GetSize(zipindex_t index)
  * Zip_GetSize() returns the size. Returns the number of bytes read.
  */
 uint Zip_Read(zipindex_t index, void *buffer)
-{	
+{
 	package_t *pack;
 	zipentry_t *entry;
 
 	index--;
-	if(index < 0 || index >= zipNumFiles) return 0; // Doesn't exist.
+	if(index < 0 || index >= zipNumFiles)
+		return 0;				// Doesn't exist.
 
 	entry = zipFiles + index;
 	pack = entry->package;
 
-	VERBOSE2( Con_Printf("Zip_Read: %s: '%s' (%i bytes)\n",
-		M_Pretty(pack->name), M_Pretty(entry->name), entry->size) );
+	VERBOSE2(Con_Printf
+			 ("Zip_Read: %s: '%s' (%i bytes)\n", M_Pretty(pack->name),
+			  M_Pretty(entry->name), entry->size));
 	//Con_Printf("Zip_Read: offset=%i\n", entry->offset);
-	
+
 	F_Seek(pack->file, entry->offset, SEEK_SET);
 	F_Read(buffer, entry->size, pack->file);
 
 	// TODO: Use zlib to inflate deflated entries.
-	
+
 	return entry->size;
 }

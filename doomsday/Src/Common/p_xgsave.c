@@ -10,15 +10,15 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-#include "doomdef.h"
-#include "p_local.h"
-#include "r_local.h"
-#include "r_defs.h"
+#  include "doomdef.h"
+#  include "p_local.h"
+#  include "r_local.h"
+#  include "r_defs.h"
 #endif
 
 #ifdef __JHERETIC__
-#include "Doomdef.h"
-#include "P_local.h"
+#  include "Doomdef.h"
+#  include "P_local.h"
 #endif
 
 #include "p_saveg.h"
@@ -42,7 +42,7 @@
 
 // CODE --------------------------------------------------------------------
 
-void SV_WriteXGLine(line_t *li)
+void SV_WriteXGLine(line_t * li)
 {
 	xgline_t *xg = li->xg;
 	linetype_t *info = &xg->info;
@@ -69,7 +69,7 @@ void SV_WriteXGLine(line_t *li)
 	SV_WriteFloat(xg->chtimer);
 }
 
-void SV_ReadXGLine(line_t *li)
+void SV_ReadXGLine(line_t * li)
 {
 	xgline_t *xg;
 
@@ -78,8 +78,9 @@ void SV_ReadXGLine(line_t *li)
 
 	// This'll set all the correct string pointers and other data.
 	XL_SetLineType(li, SV_ReadLong());
-	
-	if(!li->xg) Con_Error("SV_ReadXGLine: Bad XG line!\n");
+
+	if(!li->xg)
+		Con_Error("SV_ReadXGLine: Bad XG line!\n");
 
 	xg = li->xg;
 
@@ -90,7 +91,7 @@ void SV_ReadXGLine(line_t *li)
 	xg->ticker_timer = SV_ReadLong();
 
 	// Will be updated later.
-	xg->activator = (void*)(unsigned int) SV_ReadShort(); 
+	xg->activator = (void *) (unsigned int) SV_ReadShort();
 
 	xg->idata = SV_ReadLong();
 	xg->fdata = SV_ReadFloat();
@@ -99,7 +100,7 @@ void SV_ReadXGLine(line_t *li)
 }
 
 // The function must belong to the specified xgsector.
-void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
+void SV_WriteXGFunction(xgsector_t * xg, function_t * fn)
 {
 	// Version byte.
 	SV_WriteByte(1);
@@ -113,11 +114,11 @@ void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
 	SV_WriteFloat(fn->oldvalue);
 }
 
-void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
+void SV_ReadXGFunction(xgsector_t * xg, function_t * fn)
 {
 	// Version byte.
 	SV_ReadByte();
-	
+
 	fn->flags = SV_ReadLong();
 	fn->pos = SV_ReadShort();
 	fn->repeat = SV_ReadShort();
@@ -131,8 +132,8 @@ void SV_WriteXGSector(struct sector_s *sec)
 {
 	xgsector_t *xg = sec->xg;
 	sectortype_t *info = &xg->info;
-	int i;
-	
+	int     i;
+
 	// Version byte.
 	SV_WriteByte(1);
 
@@ -141,15 +142,17 @@ void SV_WriteXGSector(struct sector_s *sec)
 	SV_Write(xg->chain_timer, sizeof(xg->chain_timer));
 	SV_WriteLong(xg->timer);
 	SV_WriteByte(xg->disabled);
-	for(i=0; i<3; i++) SV_WriteXGFunction(xg, &xg->rgb[i]);
-	for(i=0; i<2; i++) SV_WriteXGFunction(xg, &xg->plane[i]);
+	for(i = 0; i < 3; i++)
+		SV_WriteXGFunction(xg, &xg->rgb[i]);
+	for(i = 0; i < 2; i++)
+		SV_WriteXGFunction(xg, &xg->plane[i]);
 	SV_WriteXGFunction(xg, &xg->light);
 }
 
 void SV_ReadXGSector(struct sector_s *sec)
 {
 	xgsector_t *xg;
-	int i;
+	int     i;
 
 	// Version byte.
 	SV_ReadByte();
@@ -161,29 +164,31 @@ void SV_ReadXGSector(struct sector_s *sec)
 	SV_Read(xg->chain_timer, sizeof(xg->chain_timer));
 	xg->timer = SV_ReadLong();
 	xg->disabled = SV_ReadByte();
-	for(i=0; i<3; i++) SV_ReadXGFunction(xg, &xg->rgb[i]);
-	for(i=0; i<2; i++) SV_ReadXGFunction(xg, &xg->plane[i]);
+	for(i = 0; i < 3; i++)
+		SV_ReadXGFunction(xg, &xg->rgb[i]);
+	for(i = 0; i < 2; i++)
+		SV_ReadXGFunction(xg, &xg->plane[i]);
 	SV_ReadXGFunction(xg, &xg->light);
 }
 
-void SV_WriteXGPlaneMover(thinker_t *th)
+void SV_WriteXGPlaneMover(thinker_t * th)
 {
-	int i;
+	int     i;
 
-	xgplanemover_t *mov = (xgplanemover_t*) th;
+	xgplanemover_t *mov = (xgplanemover_t *) th;
 
-	SV_WriteByte(1);	// Version.
+	SV_WriteByte(1);			// Version.
 
 	SV_WriteLong(mov->sector - sectors);
 	SV_WriteByte(mov->ceiling);
 	SV_WriteLong(mov->flags);
-	
+
 	i = mov->origin - lines;
 	if(i < 0 || i >= numlines)	// Is it a real line?
-		i = 0; // No...
+		i = 0;					// No...
 	else
 		i++;
-	SV_WriteLong(i);	// Zero means there is no origin.
+	SV_WriteLong(i);			// Zero means there is no origin.
 
 	SV_WriteLong(mov->destination);
 	SV_WriteLong(mov->speed);
@@ -202,18 +207,19 @@ void SV_WriteXGPlaneMover(thinker_t *th)
 void SV_ReadXGPlaneMover(void)
 {
 	xgplanemover_t *mov = Z_Malloc(sizeof(*mov), PU_LEVEL, 0);
-	int i;
+	int     i;
 
 	memset(mov, 0, sizeof(*mov));
 
-	SV_ReadByte();	// Version.
+	SV_ReadByte();				// Version.
 
 	mov->sector = sectors + SV_ReadLong();
 	mov->ceiling = SV_ReadByte();
 	mov->flags = SV_ReadLong();
-	
+
 	i = SV_ReadLong();
-	if(i) mov->origin = lines + i-1;
+	if(i)
+		mov->origin = lines + i - 1;
 
 	mov->destination = SV_ReadLong();
 	mov->speed = SV_ReadLong();
@@ -240,12 +246,12 @@ void XL_UnArchiveLines(void)
 {
 	line_t *line;
 	mobj_t *activator;
-	int i;
+	int     i;
 
 	for(i = 0, line = lines; i < numlines; i++, line++)
 		if(line->xg)
 		{
-			activator = SV_GetArchiveThing((int)line->xg->activator);
-			line->xg->activator = (activator? activator : &dummything);
+			activator = SV_GetArchiveThing((int) line->xg->activator);
+			line->xg->activator = (activator ? activator : &dummything);
 		}
 }

@@ -48,23 +48,24 @@
 fixed_t FixedMul(fixed_t a, fixed_t b)
 {
 	// Let's do this in an ultra-slow way.
-	return (fixed_t) (((double)a * (double)b) / FRACUNIT);
+	return (fixed_t) (((double) a * (double) b) / FRACUNIT);
 }
 
 fixed_t FixedDiv2(fixed_t a, fixed_t b)
 {
-	if(!b) return 0;
+	if(!b)
+		return 0;
 	// We've got cycles to spare!
-	return (fixed_t) (((double)a / (double)b) * FRACUNIT);
+	return (fixed_t) (((double) a / (double) b) * FRACUNIT);
 }
 
 #endif
 
 fixed_t FixedDiv(fixed_t a, fixed_t b)
 {
-	if((abs(a)>>14) >= abs(b))
+	if((abs(a) >> 14) >= abs(b))
 	{
-		return((a^b)<0 ? DDMININT : DDMAXINT);
+		return ((a ^ b) < 0 ? DDMININT : DDMAXINT);
 	}
-	return(FixedDiv2(a, b));
+	return (FixedDiv2(a, b));
 }

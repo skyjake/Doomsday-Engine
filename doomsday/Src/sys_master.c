@@ -28,12 +28,12 @@
 #include "de_platform.h"
 
 #ifdef WIN32
-#	include <winsock.h>
+#  	include <winsock.h>
 #endif
 
 #ifdef UNIX
-#	include <sys/types.h>
-#	include <sys/socket.h>
+#  	include <sys/types.h>
+#  	include <sys/socket.h>
 #endif
 
 #include "de_base.h"
@@ -67,10 +67,10 @@ typedef struct serverlist_s {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Master server info. Hardcoded defaults.
-char	    *masterAddress = "www.doomsdayhq.com"; 
-int			masterPort     = 0; // Uses 80 by default.
-char	    *masterPath    = "/master.php";
-boolean		masterAware    = false;		
+char   *masterAddress = "www.doomsdayhq.com";
+int     masterPort = 0;			// Uses 80 by default.
+char   *masterPath = "/master.php";
+boolean masterAware = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -94,6 +94,7 @@ void N_MasterClearList(void)
 	while(servers)
 	{
 		serverlist_t *next = servers->next;
+
 		free(servers);
 		servers = next;
 	}
@@ -115,16 +116,16 @@ serverlist_t *N_MasterNewServer(void)
 
 /*
  * N_MasterSendAnnouncement
- *	A thread. Announcement info received as the parameter. The info must be
- *	allocated from the heap. We will free it when it's no longer needed.
+ *  A thread. Announcement info received as the parameter. The info must be
+ *  allocated from the heap. We will free it when it's no longer needed.
  */
 int N_MasterSendAnnouncement(void *parm)
 {
 	serverinfo_t *info = parm;
-    socket_t s;
-    struct hostent *host;
+	socket_t s;
+	struct hostent *host;
 	ddstring_t msg;
-	char buf[256];
+	char    buf[256];
 	unsigned int length;
 
 	// Get host information.
@@ -142,7 +143,7 @@ int N_MasterSendAnnouncement(void *parm)
 	}
 
 	// Connect.
-	if(!N_SockConnect(s, host, masterPort? masterPort : 80))
+	if(!N_SockConnect(s, host, masterPort ? masterPort : 80))
 	{
 		// Connection failed.
 		return false;
@@ -166,35 +167,35 @@ int N_MasterSendAnnouncement(void *parm)
 
 	// Wait for a response.
 	length = recv(s, buf, sizeof(buf), 0);
-/*	
-	memset(buf, 0, sizeof(buf));
-	while(recv(s, buf, sizeof(buf) - 1, 0) > 0)
-	{
-		Con_Printf(buf);
-		memset(buf, 0, sizeof(buf));
-	}
-*/
+	/*  
+	   memset(buf, 0, sizeof(buf));
+	   while(recv(s, buf, sizeof(buf) - 1, 0) > 0)
+	   {
+	   Con_Printf(buf);
+	   memset(buf, 0, sizeof(buf));
+	   }
+	 */
 	N_SockClose(s);
 
 	// The communication ends.
 	communicating = false;
 
 	// If the master responds "OK" return true, otherwise false.
-	return length >= strlen(responseOK) 
+	return length >= strlen(responseOK)
 		&& !strncmp(buf, responseOK, strlen(responseOK));
 }
 
 /*
  * N_MasterDecodeChunked
- *	Response is an HTTP response with the chunked transfer encoding.
- *	Output is the plain body of the response.
+ *  Response is an HTTP response with the chunked transfer encoding.
+ *  Output is the plain body of the response.
  */
-void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
+void N_MasterDecodeChunked(ddstring_t * response, ddstring_t * out)
 {
 	ddstring_t line;
 	const char *pos = Str_Text(response);
 	boolean foundChunked = false;
-	int length;
+	int     length;
 
 	// Skip to the body.
 	Str_Init(&line);
@@ -209,7 +210,8 @@ void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
 			foundChunked = true;
 
 		// The first break indicates the end of the headers.
-		if(!Str_Length(&line)) break;
+		if(!Str_Length(&line))
+			break;
 	}
 	if(foundChunked)
 	{
@@ -219,14 +221,15 @@ void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
 			// The first line of the chunk is the length.
 			pos = Str_GetLine(&line, pos);
 			length = strtol(Str_Text(&line), 0, 16);
-			if(!length) break; // No more chunks.
+			if(!length)
+				break;			// No more chunks.
 
 			// Append the chunk data to the output.
 			Str_PartAppend(out, pos, 0, length);
 			pos += length;
 
 			// A newline ends the chunk.
-			pos = (const char*) M_SkipLine((char*)pos);
+			pos = (const char *) M_SkipLine((char *) pos);
 		}
 	}
 	Str_Free(&line);
@@ -234,16 +237,16 @@ void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
 
 /*
  * N_MasterParseResponse
- *	Parses a list of servers from the response.
+ *  Parses a list of servers from the response.
  */
-void N_MasterParseResponse(ddstring_t *response)
+void N_MasterParseResponse(ddstring_t * response)
 {
 	ddstring_t msg, line;
 	const char *pos;
 	serverinfo_t *info = NULL;
 
 	Str_Init(&msg);
-	Str_Init(&line);	
+	Str_Init(&line);
 
 	// Clear the list of servers.
 	N_MasterClearList();
@@ -279,25 +282,26 @@ void N_MasterParseResponse(ddstring_t *response)
 		}
 
 		// If there is no current server, skip everything.
-		if(!info) continue;
+		if(!info)
+			continue;
 
 		Sv_StringToInfo(Str_Text(&line), info);
 	}
-	
+
 	Str_Free(&line);
 	Str_Free(&msg);
 }
 
 /*
  * N_MasterSendRequest
- *	A thread.
+ *  A thread.
  */
 int N_MasterSendRequest(void *parm)
 {
-    struct hostent *host;
-    socket_t s;
+	struct hostent *host;
+	socket_t s;
 	ddstring_t response;
-	char buf[128];
+	char    buf[128];
 
 	// Get host information.
 	if((host = N_SockGetHost(masterAddress)) == NULL)
@@ -314,7 +318,7 @@ int N_MasterSendRequest(void *parm)
 	}
 
 	// Connect.
-	if(!N_SockConnect(s, host, masterPort? masterPort : 80))
+	if(!N_SockConnect(s, host, masterPort ? masterPort : 80))
 	{
 		// Connection failed.
 		return false;
@@ -365,20 +369,22 @@ void N_MasterShutdown(void)
 
 /*
  * N_MasterAnnounceServer
- *	Sends a server announcement to the master. The announcement includes
- *	our IP address and other information.
+ *  Sends a server announcement to the master. The announcement includes
+ *  our IP address and other information.
  */
 void N_MasterAnnounceServer(boolean isOpen)
 {
 	serverinfo_t *info;
 
-	if(isClient) return; // Must be a server.
+	if(isClient)
+		return;					// Must be a server.
 
 	// Are we already communicating with the master at the moment?
 	if(communicating)
 	{
-		if(verbose) Con_Printf("N_MasterAnnounceServer: Request already in "
-			"progress.\n");
+		if(verbose)
+			Con_Printf("N_MasterAnnounceServer: Request already in "
+					   "progress.\n");
 		return;
 	}
 
@@ -392,7 +398,8 @@ void N_MasterAnnounceServer(boolean isOpen)
 	// Let's figure out what we want to tell about ourselves.
 	Sv_GetInfo(info);
 
-	if(!isOpen) info->canJoin = false;
+	if(!isOpen)
+		info->canJoin = false;
 
 	// The announcement thread runs at 'below normal' priority.
 	Sys_StartThread(N_MasterSendAnnouncement, info, MST_PRIORITY);
@@ -400,15 +407,16 @@ void N_MasterAnnounceServer(boolean isOpen)
 
 /*
  * N_MasterRequestList
- *	Requests the list of open servers from the master.
+ *  Requests the list of open servers from the master.
  */
 void N_MasterRequestList(void)
 {
 	// Are we already communicating with the master at the moment?
 	if(communicating)
 	{
-		if(verbose) Con_Printf("N_MasterRequestList: Request already "
-			"in progress.\n");
+		if(verbose)
+			Con_Printf("N_MasterRequestList: Request already "
+					   "in progress.\n");
 		return;
 	}
 
@@ -422,27 +430,29 @@ void N_MasterRequestList(void)
 
 /*
  * N_MasterGet
- *	Returns information about the server #N. If 'info' is NULL, returns
- *	the number of known servers. Otherwise returns true if the server
- *	index was valid and data was returned. 
+ *  Returns information about the server #N. If 'info' is NULL, returns
+ *  the number of known servers. Otherwise returns true if the server
+ *  index was valid and data was returned. 
  *
- *	Returns negative if a communication is in progress.
+ *  Returns negative if a communication is in progress.
  */
-int N_MasterGet(int index, serverinfo_t *info)
+int N_MasterGet(int index, serverinfo_t * info)
 {
 	serverlist_t *it;
 
-	if(communicating) return -1;
-	if(!info) return numServers;
+	if(communicating)
+		return -1;
+	if(!info)
+		return numServers;
 
 	// Find the index'th entry.
 	for(it = servers; index > 0 && it; index--, it = it->next);
-	
+
 	// Was the index valid?
-	if(!it) 
+	if(!it)
 	{
 		memset(info, 0, sizeof(*info));
-		return false; 
+		return false;
 	}
 
 	// Make a copy of the info.

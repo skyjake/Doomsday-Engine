@@ -24,6 +24,6 @@
 
 #include "sys_sfxd.h"
 
-sfxdriver_t* DS_Load(const char *name);
+sfxdriver_t    *DS_Load(const char *name);
 
-#endif 
+#endif

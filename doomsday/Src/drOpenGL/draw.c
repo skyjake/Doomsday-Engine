@@ -37,7 +37,7 @@
 
 typedef struct array_s {
 	boolean enabled;
-	void *data;
+	void   *data;
 } array_t;
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
@@ -46,11 +46,11 @@ typedef struct array_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int	polyCounter;	// Triangle counter, really.
-int primLevel;
+int     polyCounter;			// Triangle counter, really.
+int     primLevel;
 
 #ifdef _DEBUG
-int	inPrim;
+int     inPrim;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -64,17 +64,20 @@ array_t arrays[MAX_ARRAYS];
 //===========================================================================
 void InitArrays(void)
 {
-	double version = strtod(glGetString(GL_VERSION), NULL);
+	double  version = strtod(glGetString(GL_VERSION), NULL);
 
 	// If the driver's OpenGL version is older than 1.3, disable arrays
 	// by default.
 	noArrays = (version < 1.3);
 
 	// Override the automatic selection?
-	if(ArgExists("-vtxar")) noArrays = false;
-	if(ArgExists("-novtxar")) noArrays = true;
+	if(ArgExists("-vtxar"))
+		noArrays = false;
+	if(ArgExists("-novtxar"))
+		noArrays = true;
 
-	if(!noArrays) return;
+	if(!noArrays)
+		return;
 	memset(arrays, 0, sizeof(arrays));
 }
 
@@ -84,7 +87,7 @@ void InitArrays(void)
 void CheckError(void)
 {
 #ifdef _DEBUG
-	GLenum error;
+	GLenum  error;
 
 	if((error = glGetError()) != GL_NO_ERROR)
 		Con_Error("OpenGL error: %i\n", error);
@@ -102,7 +105,7 @@ void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 //===========================================================================
 // DG_Color3ubv
 //===========================================================================
-void DG_Color3ubv(DGLubyte *data)
+void DG_Color3ubv(DGLubyte * data)
 {
 	glColor3ubv(data);
 }
@@ -118,7 +121,7 @@ void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 //===========================================================================
 // DG_Color4ubv
 //===========================================================================
-void DG_Color4ubv(DGLubyte *data)
+void DG_Color4ubv(DGLubyte * data)
 {
 	glColor4ubv(data);
 }
@@ -228,7 +231,7 @@ void DG_Vertex3fv(float *data)
 //===========================================================================
 // DG_Vertices2ftv
 //===========================================================================
-void DG_Vertices2ftv(int num, gl_ft2vertex_t *data)
+void DG_Vertices2ftv(int num, gl_ft2vertex_t * data)
 {
 	for(; num > 0; num--, data++)
 	{
@@ -240,7 +243,7 @@ void DG_Vertices2ftv(int num, gl_ft2vertex_t *data)
 //===========================================================================
 // DG_Vertices3ftv
 //===========================================================================
-void DG_Vertices3ftv(int num, gl_ft3vertex_t *data)
+void DG_Vertices3ftv(int num, gl_ft3vertex_t * data)
 {
 	for(; num > 0; num--, data++)
 	{
@@ -252,7 +255,7 @@ void DG_Vertices3ftv(int num, gl_ft3vertex_t *data)
 //===========================================================================
 // DG_Vertices3fctv
 //===========================================================================
-void DG_Vertices3fctv(int num, gl_fct3vertex_t *data)
+void DG_Vertices3fctv(int num, gl_fct3vertex_t * data)
 {
 	for(; num > 0; num--, data++)
 	{
@@ -267,7 +270,7 @@ void DG_Vertices3fctv(int num, gl_fct3vertex_t *data)
 //===========================================================================
 void DG_Begin(int mode)
 {
-	if(mode == DGL_SEQUENCE) 
+	if(mode == DGL_SEQUENCE)
 	{
 		// We don't need to worry about this.
 		return;
@@ -277,19 +280,18 @@ void DG_Begin(int mode)
 	primLevel++;
 
 #ifdef _DEBUG
-	if(inPrim) Con_Error("OpenGL: already inPrim");
+	if(inPrim)
+		Con_Error("OpenGL: already inPrim");
 	inPrim = true;
 	CheckError();
 #endif
 
-	glBegin( 
-		  mode == DGL_POINTS?			GL_POINTS
-		: mode == DGL_LINES?			GL_LINES 
-		: mode == DGL_TRIANGLES?		GL_TRIANGLES
-		: mode == DGL_TRIANGLE_FAN?		GL_TRIANGLE_FAN
-		: mode == DGL_TRIANGLE_STRIP?	GL_TRIANGLE_STRIP
-		: mode == DGL_QUAD_STRIP?		GL_QUAD_STRIP
-		: GL_QUADS );
+	glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
+			DGL_LINES ? GL_LINES : mode ==
+			DGL_TRIANGLES ? GL_TRIANGLES : mode ==
+			DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : mode ==
+			DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : mode ==
+			DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
 }
 
 //===========================================================================
@@ -314,9 +316,9 @@ void DG_End(void)
 //===========================================================================
 void DG_EnableArrays(int vertices, int colors, int coords)
 {
-	int i;
+	int     i;
 
-	if(vertices) 
+	if(vertices)
 	{
 		if(noArrays)
 			arrays[AR_VERTEX].enabled = true;
@@ -324,14 +326,14 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 			glEnableClientState(GL_VERTEX_ARRAY);
 	}
 
-	if(colors) 
+	if(colors)
 	{
 		if(noArrays)
 			arrays[AR_COLOR].enabled = true;
 		else
 			glEnableClientState(GL_COLOR_ARRAY);
 	}
-	
+
 	for(i = 0; i < maxTexUnits && i < MAX_TEX_UNITS; i++)
 	{
 		if(coords & (1 << i))
@@ -360,9 +362,9 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 //===========================================================================
 void DG_DisableArrays(int vertices, int colors, int coords)
 {
-	int i;
-	
-	if(vertices) 
+	int     i;
+
+	if(vertices)
 	{
 		if(noArrays)
 			arrays[AR_VERTEX].enabled = false;
@@ -370,7 +372,7 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 			glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
-	if(colors) 
+	if(colors)
 	{
 		if(noArrays)
 			arrays[AR_COLOR].enabled = false;
@@ -403,12 +405,12 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 
 //===========================================================================
 // DG_Arrays
-//	Enable, set and optionally lock all enabled arrays.
+//  Enable, set and optionally lock all enabled arrays.
 //===========================================================================
-void DG_Arrays(void *vertices, void *colors, int numCoords, 
-			   void **coords, int lock)
+void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
+			   int lock)
 {
-	int i;
+	int     i;
 
 	if(vertices)
 	{
@@ -457,7 +459,7 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
 			}
 		}
 	}
-		
+
 	if(!noArrays && lock > 0 && glLockArraysEXT)
 	{
 		// 'lock' is the number of vertices to lock.
@@ -495,22 +497,24 @@ void DG_ArrayElement(int index)
 	}
 	else
 	{
-		int i;
+		int     i;
 
 		for(i = 0; i < maxTexUnits && i < MAX_TEX_UNITS; i++)
 		{
 			if(arrays[AR_TEXCOORD0 + i].enabled)
 			{
-				glMultiTexCoord2fvARB(GL_TEXTURE0 + i, ((gl_texcoord_t*)
-					arrays[AR_TEXCOORD0 + i].data)[index].st);
+				glMultiTexCoord2fvARB(GL_TEXTURE0 + i,
+									  ((gl_texcoord_t *)
+									   arrays[AR_TEXCOORD0 +
+											  i].data)[index].st);
 			}
 		}
 
 		if(arrays[AR_COLOR].enabled)
-			glColor4ubv(((gl_color_t*)arrays[AR_COLOR].data)[index].rgba);
+			glColor4ubv(((gl_color_t *) arrays[AR_COLOR].data)[index].rgba);
 
 		if(arrays[AR_VERTEX].enabled)
-			glVertex3fv(((gl_vertex_t*)arrays[AR_VERTEX].data)[index].xyz);
+			glVertex3fv(((gl_vertex_t *) arrays[AR_VERTEX].data)[index].xyz);
 	}
 }
 
@@ -519,10 +523,9 @@ void DG_ArrayElement(int index)
 //===========================================================================
 void DG_DrawElements(int type, int count, unsigned int *indices)
 {
-	GLenum primType = 
-		 (type == DGL_TRIANGLE_FAN?		GL_TRIANGLE_FAN
-		: type == DGL_TRIANGLE_STRIP?	GL_TRIANGLE_STRIP
-		: GL_TRIANGLES);
+	GLenum  primType =
+		(type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : type ==
+		 DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
 
 	if(!noArrays)
 	{
@@ -530,7 +533,7 @@ void DG_DrawElements(int type, int count, unsigned int *indices)
 	}
 	else
 	{
-		int i;
+		int     i;
 
 		glBegin(primType);
 		for(i = 0; i < count; i++)

@@ -19,30 +19,25 @@
 //    
 //-----------------------------------------------------------------------------
 
-
 #ifndef __M_MISC__
 #define __M_MISC__
-
 
 #include "doomtype.h"
 //
 // MISC
 //
 
-int
-M_DrawText
-( int		x,
-  int		y,
-  boolean	direct,
-  char*		string );
+int             M_DrawText(int x, int y, boolean direct, char *string);
 
-
-void strcatQuoted(char *dest, char *src);
+void            strcatQuoted(char *dest, char *src);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.4  2004/05/29 09:53:11  skyjake
+// Consistent style (using GNU Indent)
+//
 // Revision 1.3  2004/05/28 17:16:35  skyjake
 // Resolved conflicts (branch-1-7 overrides)
 //
@@ -64,4 +59,3 @@ void strcatQuoted(char *dest, char *src);
 //
 //
 //-----------------------------------------------------------------------------
-

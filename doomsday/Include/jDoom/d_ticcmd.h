@@ -15,10 +15,9 @@
 // for more details.
 //
 // DESCRIPTION:
-//	System specific interface stuff.
+//  System specific interface stuff.
 //
 //-----------------------------------------------------------------------------
-
 
 #ifndef __D_TICCMD__
 #define __D_TICCMD__
@@ -34,26 +33,24 @@
 // Mainly movements/button commands per game tick,
 // plus a checksum for internal state consistency.
 #pragma pack(1)
-typedef struct
-{
-    char	forwardMove;	// *2048 for move
-    char	sideMove;		// *2048 for move
-    short	angle;			// <<16 for angle delta
-    short	pitch;	        // view pitch
-    byte	actions;
+typedef struct {
+	char            forwardMove;   // *2048 for move
+	char            sideMove;	   // *2048 for move
+	short           angle;		   // <<16 for angle delta
+	short           pitch;		   // view pitch
+	byte            actions;
 } ticcmd_t;
 
 // This'll be used for saveplayer_t, but acts only as padding.
-typedef struct
-{
-    char	forwardmove;	// *2048 for move
-    char	sidemove;	// *2048 for move
-    short	angleturn;	// <<16 for angle delta
-    short	consistancy;	// checks for net game
-    byte	chatchar;
-    byte	buttons;
+typedef struct {
+	char            forwardmove;   // *2048 for move
+	char            sidemove;	   // *2048 for move
+	short           angleturn;	   // <<16 for angle delta
+	short           consistancy;   // checks for net game
+	byte            chatchar;
+	byte            buttons;
 } saveticcmd_t;
-#pragma pack()
 
+#pragma pack()
 
 #endif

@@ -50,10 +50,10 @@
 //===========================================================================
 // P_MobjTicker
 //===========================================================================
-void P_MobjTicker(mobj_t *mo)
+void P_MobjTicker(mobj_t * mo)
 {
 	lumobj_t *lum = DL_GetLuminous(mo->light);
-	int i; 
+	int     i;
 
 	// Set the high bit of halofactor if the light is clipped. This will 
 	// make P_Ticker diminish the factor to zero. Take the first step here
@@ -62,8 +62,9 @@ void P_MobjTicker(mobj_t *mo)
 	{
 		if(mo->halofactor & 0x80)
 		{
-			i = (mo->halofactor & 0x7f);// - haloOccludeSpeed;
-			if(i < 0) i = 0;
+			i = (mo->halofactor & 0x7f);	// - haloOccludeSpeed;
+			if(i < 0)
+				i = 0;
 			mo->halofactor = i;
 		}
 	}
@@ -71,8 +72,9 @@ void P_MobjTicker(mobj_t *mo)
 	{
 		if(!(mo->halofactor & 0x80))
 		{
-			i = (mo->halofactor & 0x7f);// + haloOccludeSpeed;
-			if(i > 127) i = 127;
+			i = (mo->halofactor & 0x7f);	// + haloOccludeSpeed;
+			if(i > 127)
+				i = 127;
 			mo->halofactor = 0x80 | i;
 		}
 	}
@@ -83,13 +85,15 @@ void P_MobjTicker(mobj_t *mo)
 	{
 		// Going up.
 		i += haloOccludeSpeed;
-		if(i > 127) i = 127;
+		if(i > 127)
+			i = 127;
 	}
 	else
 	{
 		// Going down.
 		i -= haloOccludeSpeed;
-		if(i < 0) i = 0;
+		if(i < 0)
+			i = 0;
 	}
 	mo->halofactor &= ~0x7f;
 	mo->halofactor |= i;
@@ -98,7 +102,7 @@ void P_MobjTicker(mobj_t *mo)
 //===========================================================================
 // PIT_ClientMobjTicker
 //===========================================================================
-boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
+boolean PIT_ClientMobjTicker(clmobj_t * cmo, void *parm)
 {
 	P_MobjTicker(&cmo->mo);
 	// Continue iteration.
@@ -107,26 +111,29 @@ boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
 
 //===========================================================================
 // P_Ticker
-//	Doomsday's own play-ticker.
+//  Doomsday's own play-ticker.
 //===========================================================================
 void P_Ticker(timespan_t time)
 {
 	thinker_t *th;
-	static trigger_t fixed = { 1.0/35 };
+	static trigger_t fixed = { 1.0 / 35 };
 
-	if(!thinkercap.next) return; // Not initialized yet.
-	if(!M_CheckTrigger(&fixed, time)) return;
+	if(!thinkercap.next)
+		return;					// Not initialized yet.
+	if(!M_CheckTrigger(&fixed, time))
+		return;
 
 	// New ptcgens for planes?
-	P_CheckPtcPlanes();	
+	P_CheckPtcPlanes();
 	R_AnimateAnimGroups();
 	R_SkyTicker();
 
 	// Check all mobjs.
 	for(th = thinkercap.next; th != &thinkercap; th = th->next)
 	{
-		if(!P_IsMobjThinker(th->function)) continue;
-		P_MobjTicker( (mobj_t*) th);
+		if(!P_IsMobjThinker(th->function))
+			continue;
+		P_MobjTicker((mobj_t *) th);
 	}
 
 	Cl_MobjIterator(PIT_ClientMobjTicker, NULL);

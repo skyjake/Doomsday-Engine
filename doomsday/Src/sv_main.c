@@ -49,17 +49,17 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void Sv_ClientCoords(int playerNum);
+void    Sv_ClientCoords(int playerNum);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int net_remoteuser = 0;		// The client who is currently logged in.
-char *net_password = "";	// Remote login password.
+int     net_remoteuser = 0;		// The client who is currently logged in.
+char   *net_password = "";		// Remote login password.
 
 // This is the limit when accepting new clients.
-int sv_maxPlayers = MAXPLAYERS;
+int     sv_maxPlayers = MAXPLAYERS;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -68,34 +68,34 @@ int sv_maxPlayers = MAXPLAYERS;
 /*
  * Fills the provided struct with information about the local server.
  */
-void Sv_GetInfo(serverinfo_t *info)
+void Sv_GetInfo(serverinfo_t * info)
 {
-	int i;
+	int     i;
 
 	memset(info, 0, sizeof(*info));
 
 	// Let's figure out what we want to tell about ourselves.
 	info->version = DOOMSDAY_VERSION;
 	strncpy(info->game, gx.Get(DD_GAME_ID), sizeof(info->game) - 1);
-	strncpy(info->gameMode, gx.Get(DD_GAME_MODE), 
-		sizeof(info->gameMode) - 1);
-	strncpy(info->gameConfig, gx.Get(DD_GAME_CONFIG), 
-		sizeof(info->gameConfig) - 1);
+	strncpy(info->gameMode, gx.Get(DD_GAME_MODE), sizeof(info->gameMode) - 1);
+	strncpy(info->gameConfig, gx.Get(DD_GAME_CONFIG),
+			sizeof(info->gameConfig) - 1);
 	strncpy(info->name, serverName, sizeof(info->name) - 1);
 	strncpy(info->description, serverInfo, sizeof(info->description) - 1);
 	info->numPlayers = Sv_GetNumPlayers();
 
 	// The server player is there, it's just hidden.
-	info->maxPlayers = MAXPLAYERS - (isDedicated? 1 : 0);
+	info->maxPlayers = MAXPLAYERS - (isDedicated ? 1 : 0);
 
 	// Don't go over the limit.
-	if(info->maxPlayers > sv_maxPlayers) info->maxPlayers = sv_maxPlayers;
+	if(info->maxPlayers > sv_maxPlayers)
+		info->maxPlayers = sv_maxPlayers;
 
 	info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < sv_maxPlayers);
 
 	// Identifier of the current map.
 	strncpy(info->map, R_GetCurrentLevelID(), sizeof(info->map) - 1);
-	
+
 	// These are largely unused at the moment... Mainly intended for 
 	// the game's custom values.
 	memcpy(info->data, serverData, sizeof(info->data));
@@ -107,8 +107,8 @@ void Sv_GetInfo(serverinfo_t *info)
 	for(i = 0; i < MAXPLAYERS; ++i)
 		if(clients[i].connected)
 		{
-			M_LimitedStrCat(clients[i].name, 15, ';', info->clientNames, 
-				sizeof(info->clientNames));
+			M_LimitedStrCat(clients[i].name, 15, ';', info->clientNames,
+							sizeof(info->clientNames));
 		}
 
 	// Some WAD names.
@@ -122,10 +122,10 @@ void Sv_GetInfo(serverinfo_t *info)
 /*
  * Returns the length of the string.
  */
-int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
+int Sv_InfoToString(serverinfo_t * info, ddstring_t * msg)
 {
-	int i;
-	
+	int     i;
+
 	Str_Appendf(msg, "port:%i\n", info->port);
 	Str_Appendf(msg, "name:%s\n", info->name);
 	Str_Appendf(msg, "info:%s\n", info->description);
@@ -141,7 +141,7 @@ int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
 	Str_Appendf(msg, "maxp:%i\n", info->maxPlayers);
 	Str_Appendf(msg, "open:%i\n", info->canJoin);
 	Str_Appendf(msg, "plrn:%s\n", info->clientNames);
-	for(i = 0; i < sizeof(info->data)/sizeof(info->data[0]); i++)
+	for(i = 0; i < sizeof(info->data) / sizeof(info->data[0]); i++)
 	{
 		Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
 	}
@@ -152,14 +152,14 @@ int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
  * Extracts the label and value from a string.  'max' is the maximum
  * allowed length of a token, including terminating \0.
  */
-static boolean Sv_Tokenize(const char *line, char *label, char *value,
-						   int max)
+static boolean Sv_Tokenize(const char *line, char *label, char *value, int max)
 {
 	const char *src = line;
 	const char *colon = strchr(src, ':');
 
 	// The colon must exist near the beginning.
-	if(!colon || colon - src >= VALID_LABEL_LEN) return false;
+	if(!colon || colon - src >= VALID_LABEL_LEN)
+		return false;
 
 	// Copy the label.
 	memset(label, 0, max);
@@ -167,8 +167,8 @@ static boolean Sv_Tokenize(const char *line, char *label, char *value,
 
 	// Copy the value.
 	memset(value, 0, max);
-	strncpy(value, colon + 1, 
-		MIN_OF(strlen(line) - (colon - src + 1), max - 1));
+	strncpy(value, colon + 1,
+			MIN_OF(strlen(line) - (colon - src + 1), max - 1));
 
 	// Everything is OK.
 	return true;
@@ -178,10 +178,10 @@ static boolean Sv_Tokenize(const char *line, char *label, char *value,
  * Converts textual data to a serverinfo struct. Returns true if the
  * label/value pair is recognized.
  */
-boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
+boolean Sv_StringToInfo(const char *valuePair, serverinfo_t * info)
 {
-	char label[TOKEN_LEN], value[TOKEN_LEN];
-	
+	char    label[TOKEN_LEN], value[TOKEN_LEN];
+
 	// Extract the label and value. The maximum length of a value is
 	// TOKEN_LEN. Labels are returned in lower case.
 	if(!Sv_Tokenize(valuePair, label, value, sizeof(value)))
@@ -284,21 +284,23 @@ int Sv_Latency(byte cmdtime)
 
 //===========================================================================
 // Sv_FixLocalAngles
-//	For local players.
+//  For local players.
 //===========================================================================
 void Sv_FixLocalAngles()
 {
 	ddplayer_t *pl;
-	int i;
+	int     i;
 
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		pl = players + i;
-		if(!pl->ingame || !(pl->flags & DDPF_LOCAL)) continue;
-	
+		if(!pl->ingame || !(pl->flags & DDPF_LOCAL))
+			continue;
+
 		// This is not for clients.
-		if(isDedicated && i == 0) continue;
-	
+		if(isDedicated && i == 0)
+			continue;
+
 		if(pl->flags & DDPF_FIXANGLES)
 		{
 			pl->flags &= ~DDPF_FIXANGLES;
@@ -311,22 +313,22 @@ void Sv_FixLocalAngles()
 void Sv_HandlePacket(void)
 {
 	ident_t id;
-	int i, mask, from = netBuffer.player;
+	int     i, mask, from = netBuffer.player;
 	ddplayer_t *pl = &players[from];
 	client_t *sender = &clients[from];
 	playerinfo_packet_t info;
-	int msgfrom;
-	char *msg;
-	char buf[17];
+	int     msgfrom;
+	char   *msg;
+	char    buf[17];
 
-	switch(netBuffer.msg.type)
+	switch (netBuffer.msg.type)
 	{
 	case pcl_hello:
 	case pcl_hello2:
 		// Get the ID of the client.
 		id = Msg_ReadLong();
-		Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", 
-			from, id);
+		Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", from,
+				   id);
 
 		// Check for duplicate IDs.
 		if(!pl->ingame && !sender->handshake)
@@ -336,19 +338,20 @@ void Sv_HandlePacket(void)
 				if(clients[i].connected && clients[i].id == id)
 				{
 					// Send a message to everybody.
-					Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, 
-						"New client connection refused: Duplicate ID "
-						"(%08x).\n", id);
+					Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS,
+								"New client connection refused: Duplicate ID "
+								"(%08x).\n", id);
 					N_TerminateClient(from);
 					break;
 				}
 			}
-			if(i < MAXPLAYERS) break; // Can't continue, refused!
+			if(i < MAXPLAYERS)
+				break;			// Can't continue, refused!
 		}
 
 		// This is OK.
 		sender->id = id;
-		
+
 		if(netBuffer.msg.type == pcl_hello2)
 		{
 			// Check the game mode (max 16 chars).
@@ -360,7 +363,7 @@ void Sv_HandlePacket(void)
 				break;
 			}
 		}
-		
+
 		// The client requests a handshake.
 		if(!pl->ingame && !sender->handshake)
 		{
@@ -394,7 +397,7 @@ void Sv_HandlePacket(void)
 		sender->ready = true;
 #ifdef _DEBUG
 		Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
-			"(%08X).\n", from, sender->id);
+				   "(%08X).\n", from, sender->id);
 #endif
 		if(sender->handshake)
 		{
@@ -404,25 +407,25 @@ void Sv_HandlePacket(void)
 			// Send a clock sync message.
 			Msg_Begin(psv_sync);
 			Msg_WriteLong(SECONDS_TO_TICKS(gameTime) +
-						  (sender->shakePing*35)/2000);
+						  (sender->shakePing * 35) / 2000);
 			// Send reliably, although if it has to be resent, the tics
 			// will already be way off...
 			Net_SendBuffer(from, SPF_CONFIRM);
 			// Send welcome string.
-			Sv_SendText(from, SV_CONSOLE_FLAGS, SV_WELCOME_STRING"\n");
+			Sv_SendText(from, SV_CONSOLE_FLAGS, SV_WELCOME_STRING "\n");
 		}
 		break;
 
 	case pkt_chat:
 		// The first byte contains the sender.
-		msgfrom = Msg_ReadByte();	
+		msgfrom = Msg_ReadByte();
 		// Is the message for us?
-		mask = Msg_ReadShort();	
+		mask = Msg_ReadShort();
 		// Copy the message into a buffer.
 		msg = Z_Malloc(netBuffer.length - 3, PU_STATIC, 0);
 		strcpy(msg, netBuffer.cursor);
 		// Message for us? Show it locally.
-		if(mask & 1) 
+		if(mask & 1)
 		{
 			Net_ShowChatMessage();
 			gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
@@ -433,7 +436,7 @@ void Sv_HandlePacket(void)
 		Msg_WriteShort(mask);
 		Msg_Write(msg, strlen(msg) + 1);
 		for(i = 1; i < MAXPLAYERS; i++)
-			if(players[i].ingame && mask & (1<<i) && i != from)
+			if(players[i].ingame && mask & (1 << i) && i != from)
 			{
 				Net_SendBuffer(i, SPF_ORDERED);
 			}
@@ -442,11 +445,11 @@ void Sv_HandlePacket(void)
 
 	case pkt_player_info:
 		Msg_Read(&info, sizeof(info));
-		Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS,
-			"%s renamed to %s.\n", sender->name, info.name);
+		Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, "%s renamed to %s.\n",
+					sender->name, info.name);
 		strcpy(sender->name, info.name);
-		Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, pkt_player_info,
-			&info, sizeof(info));
+		Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, pkt_player_info, &info,
+					   sizeof(info));
 		break;
 	}
 }
@@ -462,26 +465,26 @@ void Sv_HandlePacket(void)
 
 void Sv_Login(void)
 {
-	if(net_remoteuser) 
+	if(net_remoteuser)
 	{
 		Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
-			"Sv_Login: A client is already logged in.\n");
+					"Sv_Login: A client is already logged in.\n");
 		return;
 	}
 	// Check the password.
 	if(strcmp(netBuffer.cursor, net_password))
 	{
 		Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
-			"Sv_Login: Invalid password.\n");
+					"Sv_Login: Invalid password.\n");
 		return;
 	}
 	// OK!
 	net_remoteuser = netBuffer.player;
 	Con_Printf("Sv_Login: %s (client %i) logged in.\n",
-		clients[net_remoteuser].name, net_remoteuser);
+			   clients[net_remoteuser].name, net_remoteuser);
 	// Send a confirmation packet to the client.
 	Msg_Begin(pkt_login);
-	Msg_WriteByte(true);	// Yes, you're logged in.
+	Msg_WriteByte(true);		// Yes, you're logged in.
 	Net_SendBuffer(net_remoteuser, SPF_ORDERED);
 }
 
@@ -498,23 +501,24 @@ void Sv_ExecuteCommand(void)
 {
 	unsigned short len;
 	boolean silent;
-	
-	if(!net_remoteuser) 
+
+	if(!net_remoteuser)
 	{
-		Con_Printf("Sv_ExecuteCommand: Cmd received but no one's logged in!\n");
-		return; 
+		Con_Printf
+			("Sv_ExecuteCommand: Cmd received but no one's logged in!\n");
+		return;
 	}
 	// The command packet is very simple.
 	len = Msg_ReadShort();
 	silent = (len & 0x8000) != 0;
 	len &= 0x7fff;
 	// Verify using string length.
-	if(strlen(netBuffer.cursor) != (unsigned) len-1)
+	if(strlen(netBuffer.cursor) != (unsigned) len - 1)
 	{
 		Con_Printf("Sv_ExecuteCommand: Damaged packet?\n");
 		return;
 	}
-	Con_Execute(netBuffer.cursor, silent);		
+	Con_Execute(netBuffer.cursor, silent);
 }
 
 /*
@@ -522,55 +526,60 @@ void Sv_ExecuteCommand(void)
  */
 void Sv_GetPackets(void)
 {
-	int             netconsole;
-	int				start, num, i;
-	client_t		*sender;
-	byte			*unpacked;
+	int     netconsole;
+	int     start, num, i;
+	client_t *sender;
+	byte   *unpacked;
 
 	while(Net_GetPacket())
 	{
-		switch(netBuffer.msg.type)
+		switch (netBuffer.msg.type)
 		{
 		case pcl_commands:
 			// Determine who sent this packet.
 			netconsole = netBuffer.player;
-			if(netconsole < 0 || netconsole >= MAXPLAYERS) continue; 
-			
+			if(netconsole < 0 || netconsole >= MAXPLAYERS)
+				continue;
+
 			sender = &clients[netconsole];
 
 			// If the client isn't ready, don't accept any cmds.
-			if(!clients[netconsole].ready) continue;
+			if(!clients[netconsole].ready)
+				continue;
 
 			// Now we know this client is alive, update the frame send count.
 			// Clients will only be refreshed if their updateCount is greater
 			// than zero.
 			sender->updateCount = UPDATECOUNT;
-			
+
 			// Unpack the commands in the packet. Since the game defines the
 			// ticcmd_t structure, it is the only one who can do this.
-			unpacked = (byte*) gx.NetPlayerEvent(netBuffer.length, 
-				DDPE_READ_COMMANDS, netBuffer.msg.data);
+			unpacked =
+				(byte *) gx.NetPlayerEvent(netBuffer.length,
+										   DDPE_READ_COMMANDS,
+										   netBuffer.msg.data);
 
 			// The first two bytes contain the number of commands.
-			num = *(ushort*) unpacked;
+			num = *(ushort *) unpacked;
 			unpacked += 2;
 
 			// Add the tics into the client's ticcmd buffer, if there is room.
 			// If the buffer overflows, the rest of the cmds will be forgotten.
-			if(sender->numTics + num > BACKUPTICS) 
+			if(sender->numTics + num > BACKUPTICS)
 			{
 				num = BACKUPTICS - sender->numTics;
 			}
 			start = sender->firstTic + sender->numTics;
-			
+
 			// Increase the counter.
 			sender->numTics += num;
 
 			// Copy as many as fits (circular buffer).
 			for(i = start; num > 0; num--, i++)
 			{
-				if(i >= BACKUPTICS) i -= BACKUPTICS;
-				memcpy(sender->ticCmds+TICCMD_IDX(i), unpacked, TICCMD_SIZE);
+				if(i >= BACKUPTICS)
+					i -= BACKUPTICS;
+				memcpy(sender->ticCmds + TICCMD_IDX(i), unpacked, TICCMD_SIZE);
 				unpacked += TICCMD_SIZE;
 			}
 			break;
@@ -604,12 +613,13 @@ void Sv_GetPackets(void)
 			// The client has acknowledged our handshake.
 			// Note the time (this isn't perfectly accurate, though).
 			netconsole = netBuffer.player;
-			if(netconsole < 0 || netconsole >= MAXPLAYERS) continue; 
+			if(netconsole < 0 || netconsole >= MAXPLAYERS)
+				continue;
 
 			sender = &clients[netconsole];
 			sender->shakePing = Sys_GetRealTime() - sender->shakePing;
-			Con_Printf("Cl%i handshake ping: %i ms\n", netconsole, 
-				sender->shakePing);
+			Con_Printf("Cl%i handshake ping: %i ms\n", netconsole,
+					   sender->shakePing);
 
 			// Update the initial ack time accordingly. Since the ping
 			// fluctuates, assume the a poor case.
@@ -640,9 +650,8 @@ void Sv_GetPackets(void)
 			if(netBuffer.msg.type >= pkt_game_marker)
 			{
 				// A client has sent a game specific packet.
-				gx.HandlePacket(netBuffer.player,
-					netBuffer.msg.type, netBuffer.msg.data,
-					netBuffer.length);
+				gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
+								netBuffer.msg.data, netBuffer.length);
 			}
 		}
 	}
@@ -654,7 +663,7 @@ void Sv_GetPackets(void)
  */
 boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
 {
-	int		i;
+	int     i;
 
 	Con_Message("Sv_PlayerArrives: '%s' has arrived.\n", name);
 
@@ -669,11 +678,12 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
 			clients[i].viewConsole = i;
 			clients[i].lastTransmit = -1;
 			strncpy(clients[i].name, name, PLAYERNAMELEN);
-			
+
 			Sv_InitPoolForClient(i);
 
-			VERBOSE( Con_Printf("Sv_PlayerArrives: '%s' assigned to "
-				"console %i (node: %x)\n", clients[i].name, i, nodeID) );
+			VERBOSE(Con_Printf
+					("Sv_PlayerArrives: '%s' assigned to "
+					 "console %i (node: %x)\n", clients[i].name, i, nodeID));
 
 			// In order to get in the game, the client must first
 			// shake hands. It'll request this by sending a Hello packet.
@@ -691,7 +701,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
-	int i, pNumber = -1;
+	int     i, pNumber = -1;
 	boolean wasInGame;
 
 	// First let's find out who this node actually is.
@@ -701,14 +711,16 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 			pNumber = i;
 			break;
 		}
-	if(pNumber == -1) return; // Bogus?
+	if(pNumber == -1)
+		return;					// Bogus?
 
 	// Log off automatically.
-	if(net_remoteuser == pNumber) net_remoteuser = 0;
+	if(net_remoteuser == pNumber)
+		net_remoteuser = 0;
 
 	// Print a little something in the console.
-	Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left.\n", 
-		clients[pNumber].name, pNumber);
+	Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left.\n",
+				clients[pNumber].name, pNumber);
 
 	wasInGame = players[pNumber].ingame;
 	players[pNumber].ingame = false;
@@ -718,7 +730,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 	clients[pNumber].handshake = false;
 	clients[pNumber].nodeID = 0;
 	clients[pNumber].bandwidthRating = BWR_DEFAULT;
-	
+
 	// Set a modest ack time by default.
 	Net_SetInitialAckTime(pNumber, ACK_DEFAULT);
 
@@ -743,21 +755,21 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 // The player will be sent the introductory handshake packets.
 void Sv_Handshake(int playernum, boolean newplayer)
 {
-	int						i;
-	handshake_packet_t		shake;
-	playerinfo_packet_t		info;
+	int     i;
+	handshake_packet_t shake;
+	playerinfo_packet_t info;
 
 	Con_Printf("Sv_Handshake: Shaking hands with player %i.\n", playernum);
 
 	shake.version = SV_VERSION;
 	shake.yourConsole = playernum;
 	shake.playerMask = 0;
-	shake.gameTime = gameTime*100;
+	shake.gameTime = gameTime * 100;
 	for(i = 0; i < MAXPLAYERS; i++)
 		if(clients[i].connected)
-			shake.playerMask |= 1<<i;
-	Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake, 
-		sizeof(shake));
+			shake.playerMask |= 1 << i;
+	Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake,
+				   sizeof(shake));
 
 #if _DEBUG
 	Con_Message("Sv_Handshake: plmask=%x\n", shake.playerMask);
@@ -768,9 +780,9 @@ void Sv_Handshake(int playernum, boolean newplayer)
 		// Note the time when the handshake was sent.
 		clients[playernum].shakePing = Sys_GetRealTime();
 	}
-	
+
 	// The game DLL wants to shake hands as well?
- 	gx.NetWorldEvent(DDWE_HANDSHAKE, playernum, (void*) newplayer);
+	gx.NetWorldEvent(DDWE_HANDSHAKE, playernum, (void *) newplayer);
 
 	// Propagate client information.
 	for(i = 0; i < MAXPLAYERS; i++)
@@ -779,16 +791,16 @@ void Sv_Handshake(int playernum, boolean newplayer)
 		{
 			info.console = i;
 			strcpy(info.name, clients[i].name);
-			Net_SendPacket(playernum | DDSP_ORDERED, pkt_player_info, 
-				&info, sizeof(info));
+			Net_SendPacket(playernum | DDSP_ORDERED, pkt_player_info, &info,
+						   sizeof(info));
 		}
 		// Send the new player's info to other players.
 		if(newplayer && i != 0 && i != playernum && clients[i].connected)
 		{
 			info.console = playernum;
 			strcpy(info.name, clients[playernum].name);
-			Net_SendPacket(i | DDSP_CONFIRM, pkt_player_info, 
-				&info, sizeof(info));
+			Net_SendPacket(i | DDSP_CONFIRM, pkt_player_info, &info,
+						   sizeof(info));
 		}
 	}
 
@@ -805,7 +817,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
 
 void Sv_StartNetGame()
 {
-	int		i;
+	int     i;
 
 	// Reset all the counters and other data.
 	for(i = 0; i < MAXPLAYERS; i++)
@@ -833,17 +845,17 @@ void Sv_StartNetGame()
 	net_remoteuser = 0;
 
 	// The server is always player number zero.
-	consoleplayer = displayplayer = 0; 
+	consoleplayer = displayplayer = 0;
 
 	netgame = true;
 	isServer = true;
-	
+
 	if(!isDedicated)
 	{
 		players[consoleplayer].ingame = true;
 		clients[consoleplayer].connected = true;
 		clients[consoleplayer].ready = true;
-		strcpy(clients[consoleplayer].name, playerName);	
+		strcpy(clients[consoleplayer].name, playerName);
 	}
 }
 
@@ -851,18 +863,19 @@ void Sv_SendText(int to, int con_flags, char *text)
 {
 	Msg_Begin(psv_console_text);
 	Msg_WriteLong(con_flags & ~CBLF_TRANSMIT);
-	Msg_Write(text, strlen(text)+1);
+	Msg_Write(text, strlen(text) + 1);
 	Net_SendBuffer(to, SPF_ORDERED);
 }
 
 //===========================================================================
 // Sv_Kick
-//	Asks a client to disconnect. Clients will immediately disconnect
-//	after receiving the psv_server_close message.
+//  Asks a client to disconnect. Clients will immediately disconnect
+//  after receiving the psv_server_close message.
 //===========================================================================
 void Sv_Kick(int who)
 {
-	if(!clients[who].connected) return;
+	if(!clients[who].connected)
+		return;
 	Sv_SendText(who, SV_CONSOLE_FLAGS, "You were kicked out!\n");
 	Msg_Begin(psv_server_close);
 	Net_SendBuffer(who, SPF_ORDERED);
@@ -874,15 +887,17 @@ void Sv_Kick(int who)
 //===========================================================================
 void Sv_Ticker(timespan_t time)
 {
-	static trigger_t fixed = { 1.0/35 };
-	int i;
+	static trigger_t fixed = { 1.0 / 35 };
+	int     i;
 
-	if(!M_CheckTrigger(&fixed, time)) return;
+	if(!M_CheckTrigger(&fixed, time))
+		return;
 
 	// Note last angles for all players.
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
-		if(!players[i].ingame || !players[i].mo) continue;
+		if(!players[i].ingame || !players[i].mo)
+			continue;
 		players[i].lastangle = players[i].mo->angle;
 
 		if(clients[i].bwrAdjustTime > 0)
@@ -898,14 +913,16 @@ void Sv_Ticker(timespan_t time)
  */
 int Sv_GetNumPlayers(void)
 {
-	int i, count;
+	int     i, count;
 
 	// Clients can't count.
-	if(isClient) return 1;
+	if(isClient)
+		return 1;
 
 	for(i = count = 0; i < MAXPLAYERS; i++)
 	{
-		if(players[i].ingame && players[i].mo) count++;
+		if(players[i].ingame && players[i].mo)
+			count++;
 	}
 	return count;
 }
@@ -915,12 +932,13 @@ int Sv_GetNumPlayers(void)
  */
 int Sv_GetNumConnected(void)
 {
-	int i, count = 0;
+	int     i, count = 0;
 
 	// Clients can't count.
-	if(isClient) return 1;
+	if(isClient)
+		return 1;
 
-	for(i = isDedicated? 1 : 0; i < MAXPLAYERS; ++i)
+	for(i = isDedicated ? 1 : 0; i < MAXPLAYERS; ++i)
 		if(clients[i].connected)
 			count++;
 
@@ -934,8 +952,8 @@ int Sv_GetNumConnected(void)
 boolean Sv_CheckBandwidth(int playerNumber)
 {
 	client_t *client = &clients[playerNumber];
-	uint qSize = N_GetSendQueueSize(playerNumber);
-	uint limit = 400; /*Sv_GetMaxFrameSize(playerNumber);*/
+	uint    qSize = N_GetSendQueueSize(playerNumber);
+	uint    limit = 400;		/*Sv_GetMaxFrameSize(playerNumber); */
 
 	// If there are too many messages in the queue, the player's bandwidth
 	// is overrated.
@@ -947,7 +965,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 
 	// If the send queue is practically empty, we can use more bandwidth.
 	// (Providing we have BWR adjust time.)
-	if(qSize < limit/20 && client->bwrAdjustTime > 0)
+	if(qSize < limit / 20 && client->bwrAdjustTime > 0)
 	{
 		client->bandwidthRating++;
 
@@ -962,11 +980,11 @@ boolean Sv_CheckBandwidth(int playerNumber)
 	}
 	if(client->bandwidthRating > MAX_BANDWIDTH_RATING)
 	{
-		 client->bandwidthRating = MAX_BANDWIDTH_RATING;
+		client->bandwidthRating = MAX_BANDWIDTH_RATING;
 	}
 
 	// New messages will not be sent if there's too much already.
-	return qSize <= 10*limit;
+	return qSize <= 10 * limit;
 }
 
 /*
@@ -976,14 +994,15 @@ boolean Sv_CheckBandwidth(int playerNumber)
  */
 void Sv_ClientCoords(int playerNum)
 {
-/*	client_t *cl = clients + playerNum; */
+	/*  client_t *cl = clients + playerNum; */
 	mobj_t *mo = players[playerNum].mo;
-	int clx, cly, clz;
+	int     clx, cly, clz;
 	boolean onFloor = false;
 
 	// If mobj or player is invalid, the message is discarded.
 	if(!mo || !players[playerNum].ingame
-		|| players[playerNum].flags & DDPF_DEAD) return;
+	   || players[playerNum].flags & DDPF_DEAD)
+		return;
 
 	clx = Msg_ReadShort() << 16;
 	cly = Msg_ReadShort() << 16;
@@ -997,8 +1016,7 @@ void Sv_ClientCoords(int playerNum)
 
 	// If we aren't about to forcibly change the client's position, update 
 	// with new pos if it's valid.
-	if(!(players[playerNum].flags & DDPF_FIXPOS)
-		&& P_CheckPosXYZ(mo, clx, cly, clz)) // But it must be a valid pos.
+	if(!(players[playerNum].flags & DDPF_FIXPOS) && P_CheckPosXYZ(mo, clx, cly, clz))	// But it must be a valid pos.
 	{
 		P_UnlinkThing(mo);
 		mo->x = clx;
@@ -1020,16 +1038,15 @@ void Sv_ClientCoords(int playerNum)
 int CCmdLogout(int argc, char **argv)
 {
 	// Only servers can execute this command.
-	if(!net_remoteuser || !isServer) return false;
+	if(!net_remoteuser || !isServer)
+		return false;
 	// Notice that the server WILL execute this command when a client
 	// is logged in and types "logout".
 	Sv_SendText(net_remoteuser, SV_CONSOLE_FLAGS, "Goodbye...\n");
 	// Send a logout packet.
 	Msg_Begin(pkt_login);
-	Msg_WriteByte(false);	// You're outta here.
-	Net_SendBuffer(net_remoteuser, SPF_ORDERED);	
+	Msg_WriteByte(false);		// You're outta here.
+	Net_SendBuffer(net_remoteuser, SPF_ORDERED);
 	net_remoteuser = 0;
 	return true;
 }
-
-

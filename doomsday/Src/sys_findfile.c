@@ -50,7 +50,7 @@ typedef struct winfinddata_s {
 
 // CODE --------------------------------------------------------------------
 
-static void setdata(finddata_t *dta)
+static void setdata(finddata_t * dta)
 {
 	winfinddata_t *fd = dta->finddata;
 
@@ -61,7 +61,7 @@ static void setdata(finddata_t *dta)
 	dta->attrib = fd->data.attrib;
 }
 
-int myfindfirst(const char *filename, finddata_t *dta)
+int myfindfirst(const char *filename, finddata_t * dta)
 {
 	winfinddata_t *fd;
 
@@ -70,24 +70,25 @@ int myfindfirst(const char *filename, finddata_t *dta)
 
 	// Begin the search.
 	fd->handle = _findfirst(filename, &fd->data);
-	
+
 	setdata(dta);
-	return (fd->handle == (intptr_t) -1);
+	return (fd->handle == (intptr_t) - 1);
 }
 
-int myfindnext(finddata_t *dta)
+int myfindnext(finddata_t * dta)
 {
-	int result;
+	int     result;
 	winfinddata_t *fd = dta->finddata;
 
 	result = _findnext(fd->handle, &fd->data);
-	if(!result) setdata(dta);
+	if(!result)
+		setdata(dta);
 	return result != 0;
 }
 
-void myfindend(finddata_t *dta)
+void myfindend(finddata_t * dta)
 {
-	_findclose(((winfinddata_t*)dta->finddata)->handle);
+	_findclose(((winfinddata_t *) dta->finddata)->handle);
 	free(dta->finddata);
 	memset(dta, 0, sizeof(*dta));
 }

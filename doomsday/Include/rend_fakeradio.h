@@ -22,10 +22,10 @@
 #ifndef __DOOMSDAY_RENDER_FAKERADIO_H__
 #define __DOOMSDAY_RENDER_FAKERADIO_H__
 
-extern int rendFakeRadio; // cvar
+extern int      rendFakeRadio;	   // cvar
 
-void Rend_RadioInitForSector(sector_t *sector);
-void Rend_RadioWallSection(seg_t *seg, rendpoly_t *origQuad);
-void Rend_RadioSubsectorEdges(subsector_t *subsector);
+void            Rend_RadioInitForSector(sector_t * sector);
+void            Rend_RadioWallSection(seg_t * seg, rendpoly_t * origQuad);
+void            Rend_RadioSubsectorEdges(subsector_t * subsector);
 
-#endif 
+#endif

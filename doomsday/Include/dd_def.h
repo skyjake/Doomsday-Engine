@@ -66,7 +66,7 @@
 #define LAST_CHAR(str)	(str[strlen(str) - 1])
 
 #define MAXEVENTS		64
-#define	SBARHEIGHT		39			// status bar height at bottom of screen
+#define	SBARHEIGHT		39		   // status bar height at bottom of screen
 #define PI				3.141592657
 
 #define SECONDS_TO_TICKS(sec) ((int)(sec*35))
@@ -77,21 +77,22 @@
 #define HEAP_RIGHT(i)	(2*(i) + 2)
 
 enum { BLEFT, BTOP, BRIGHT, BBOTTOM, BFLOOR, BCEILING };
-enum { VX, VY, VZ };				// Vertex indices.
-enum { CR, CG, CB, CA };			// Color indices.
+enum { VX, VY, VZ };			   // Vertex indices.
+enum { CR, CG, CB, CA };		   // Color indices.
 
 // dd_pinit.c
 extern game_export_t __gx;
 extern game_import_t __gi;
+
 #define gx __gx
 #define gi __gi
 
 // tab_video.c
-extern byte gammatable[5][256];
-extern int usegamma;
+extern byte     gammatable[5][256];
+extern int      usegamma;
 
 // tab_tables.c
-extern fixed_t finesine[5*FINEANGLES/4];
+extern fixed_t  finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
 
 #endif

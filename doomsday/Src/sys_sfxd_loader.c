@@ -47,8 +47,8 @@ sfxdriver_t sfxd_external;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static HINSTANCE	hInstExt;
-static void			(*driverShutdown)(void);
+static HINSTANCE hInstExt;
+static void (*driverShutdown) (void);
 
 // CODE --------------------------------------------------------------------
 
@@ -102,22 +102,21 @@ sfxdriver_t *DS_ImportExternal(void)
 
 //===========================================================================
 // DS_Load
-//	"A3D", "OpenAL" and "Compat" are supported.
+//  "A3D", "OpenAL" and "Compat" are supported.
 //===========================================================================
 sfxdriver_t *DS_Load(const char *name)
 {
-	char fn[256];
+	char    fn[256];
 
 	// Compose the name, use the prefix "ds".
 	sprintf(fn, "ds%s.dll", name);
 
 	// Load the DLL.
 	hInstExt = LoadLibrary(fn);
-	if(!hInstExt)  // Load failed?
+	if(!hInstExt)				// Load failed?
 	{
 		Con_Message("DS_Load: Loading of %s failed.\n", fn);
 		return NULL;
 	}
 	return DS_ImportExternal();
 }
-

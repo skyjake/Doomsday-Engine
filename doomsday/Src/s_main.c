@@ -48,14 +48,14 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int			sound_info = false;
-int			sound_min_distance = 256; // No distance attenuation this close.
-int			sound_max_distance = 2025;
+int     sound_info = false;
+int     sound_min_distance = 256;	// No distance attenuation this close.
+int     sound_max_distance = 2025;
 
 // Setting these variables is enough to adjust the volumes.
 // S_StartFrame() will call the actual routines to change the volume
 // when there are changes.
-int			sfx_volume = 255, mus_volume = 255;
+int     sfx_volume = 255, mus_volume = 255;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -65,14 +65,15 @@ static boolean nopitch;
 
 //===========================================================================
 // S_Init
-//	Main sound system initialization. Inits both the Sfx and Mus modules.
-//	Returns true if there were no errors.
+//  Main sound system initialization. Inits both the Sfx and Mus modules.
+//  Returns true if there were no errors.
 //===========================================================================
 boolean S_Init(void)
 {
 	boolean sfx_ok, mus_ok;
 
-	if(ArgExists("-nosound")) return true;
+	if(ArgExists("-nosound"))
+		return true;
 
 	// Disable random pitch changes?
 	nopitch = ArgExists("-nopitch");
@@ -80,14 +81,14 @@ boolean S_Init(void)
 	sfx_ok = Sfx_Init();
 	mus_ok = Mus_Init();
 
-	Con_Message("S_Init: %s.\n", sfx_ok && mus_ok? "OK"
-		: "Errors during initialization.");
+	Con_Message("S_Init: %s.\n", sfx_ok
+				&& mus_ok ? "OK" : "Errors during initialization.");
 	return (sfx_ok && mus_ok);
 }
 
 //===========================================================================
 // S_Shutdown
-//	Shutdown the whole sound system (Sfx + Mus).
+//  Shutdown the whole sound system (Sfx + Mus).
 //===========================================================================
 void S_Shutdown(void)
 {
@@ -97,7 +98,7 @@ void S_Shutdown(void)
 
 //===========================================================================
 // S_LevelChange
-//	Must be called before the level is changed.
+//  Must be called before the level is changed.
 //===========================================================================
 void S_LevelChange(void)
 {
@@ -109,7 +110,7 @@ void S_LevelChange(void)
 
 //===========================================================================
 // S_Reset
-//	Stop all channels and music, delete the entire sample cache.
+//  Stop all channels and music, delete the entire sample cache.
 //===========================================================================
 void S_Reset(void)
 {
@@ -148,7 +149,7 @@ void S_EndFrame(void)
 
 //===========================================================================
 // S_GetListenerMobj
-//	Usually the display player.
+//  Usually the display player.
 //===========================================================================
 mobj_t *S_GetListenerMobj(void)
 {
@@ -157,42 +158,45 @@ mobj_t *S_GetListenerMobj(void)
 
 //===========================================================================
 // S_GetSoundInfo
-//	freq and volume may be NULL. They will be modified by sound links.
+//  freq and volume may be NULL. They will be modified by sound links.
 //===========================================================================
 sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
 {
-	float dummy = 0;
+	float   dummy = 0;
 	sfxinfo_t *info;
-	int i;
+	int     i;
 
-	if(sound_id <= 0) return NULL;
+	if(sound_id <= 0)
+		return NULL;
 
-	if(!freq) freq = &dummy;
-	if(!volume) volume = &dummy;
+	if(!freq)
+		freq = &dummy;
+	if(!volume)
+		volume = &dummy;
 
 	// Traverse all links when getting the definition.
 	// (But only up to 10, which is certainly enough and prevents endless
 	// recursion.) Update the sound id at the same time.
 	// The links were checked in Def_Read() so there can't be any bogus ones.
-	for(info = sounds + sound_id, i = 0;
-		info->link && i < 10;
-		info = info->link,
-			*freq = (info->link_pitch > 0? info->link_pitch/128.0f : *freq),
-			*volume += (info->link_volume != -1? info->link_volume/127.0f : 0),
-			sound_id = info - sounds, i++);
+	for(info = sounds + sound_id, i = 0; info->link && i < 10;
+		info = info->link, *freq =
+		(info->link_pitch > 0 ? info->link_pitch / 128.0f : *freq), *volume +=
+		(info->link_volume != -1 ? info->link_volume / 127.0f : 0), sound_id =
+		info - sounds, i++);
 
 	return info;
 }
 
 //===========================================================================
 // S_IsRepeating
-//	Returns true if the specified ID is a repeating sound.
+//  Returns true if the specified ID is a repeating sound.
 //===========================================================================
 boolean S_IsRepeating(int idFlags)
 {
 	sfxinfo_t *info;
 
-	if(idFlags & DDSF_REPEAT) return true;
+	if(idFlags & DDSF_REPEAT)
+		return true;
 
 	info = S_GetSoundInfo(idFlags & ~DDSF_FLAG_MASK, NULL, NULL);
 	return (info->flags & SF_REPEAT) != 0;
@@ -200,54 +204,55 @@ boolean S_IsRepeating(int idFlags)
 
 //===========================================================================
 // S_LocalSoundAtVolumeFrom
-//	Plays a sound on the local system. A public interface.
-//	Origin and fixedpos can be both NULL, in which case the sound is
-//	played in 2D and centered.
-//	Flags can be included in the sound ID number (DDSF_*).
-//	Returns nonzero if a sound was started.
+//  Plays a sound on the local system. A public interface.
+//  Origin and fixedpos can be both NULL, in which case the sound is
+//  played in 2D and centered.
+//  Flags can be included in the sound ID number (DDSF_*).
+//  Returns nonzero if a sound was started.
 //===========================================================================
-int S_LocalSoundAtVolumeFrom
-	(int soundIdAndFlags, mobj_t *origin, float *fixedPos, float volume)
+int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t * origin,
+							 float *fixedPos, float volume)
 {
-	int soundId = soundIdAndFlags & ~DDSF_FLAG_MASK;
+	int     soundId = soundIdAndFlags & ~DDSF_FLAG_MASK;
 	sfxsample_t *sample;
 	sfxinfo_t *info;
-	float freq = 1;
-	int result;
+	float   freq = 1;
+	int     result;
 	boolean isRepeating = false;
 
 	// A dedicated server never starts any local sounds
 	// (only logical sounds in the LSM).
-	if(isDedicated) return false;
+	if(isDedicated)
+		return false;
 
-	if(soundId <= 0
-		|| soundId >= defs.count.sounds.num
-		|| sfx_volume <= 0
-		|| volume <= 0) return false; // This won't play...
+	if(soundId <= 0 || soundId >= defs.count.sounds.num || sfx_volume <= 0
+	   || volume <= 0)
+		return false;			// This won't play...
 
 #if _DEBUG
 	if(volume > 1)
 	{
 		Con_Message("S_LocalSoundAtVolumeFrom: Warning! "
-			"Too high volume (%f).\n", volume);
+					"Too high volume (%f).\n", volume);
 	}
 #endif
 
 	// This is the sound we're going to play.
 	if((info = S_GetSoundInfo(soundId, &freq, &volume)) == NULL)
 	{
-		return false; // Hmm? This ID is not defined.
+		return false;			// Hmm? This ID is not defined.
 	}
 
 	isRepeating = S_IsRepeating(soundIdAndFlags);
 
 	// Check the distance (if applicable).
 	if(!(info->flags & SF_NO_ATTENUATION)
-		&& !(soundIdAndFlags & DDSF_NO_ATTENUATION))
+	   && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
 	{
 		// If origin is too far, don't even think about playing the sound.
-		if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedPos)
-			> sound_max_distance) return false;
+		if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedPos) >
+		   sound_max_distance)
+			return false;
 	}
 
 	// Load the sample.
@@ -255,8 +260,9 @@ int S_LocalSoundAtVolumeFrom
 	{
 		if(sfx_avail)
 		{
-			VERBOSE( Con_Message("S_LocalSoundAtVolumeFrom: Sound %i "
-				"caching failed.\n", soundId) );
+			VERBOSE(Con_Message
+					("S_LocalSoundAtVolumeFrom: Sound %i " "caching failed.\n",
+					 soundId));
 		}
 		return false;
 	}
@@ -276,35 +282,37 @@ int S_LocalSoundAtVolumeFrom
 	if(info->group)
 	{
 		Sfx_StopSoundGroup(info->group,
-			info->flags & SF_GLOBAL_EXCLUDE? NULL : origin);
+						   info->flags & SF_GLOBAL_EXCLUDE ? NULL : origin);
 	}
 
 	// Let's play it.
-	result = Sfx_StartSound(sample, volume, freq, origin, fixedPos,
-		  (info->flags & SF_NO_ATTENUATION || soundIdAndFlags & DDSF_NO_ATTENUATION? SF_NO_ATTENUATION : 0)
-		| (isRepeating? SF_REPEAT : 0)
-		| (info->flags & SF_DONT_STOP? SF_DONT_STOP : 0));
+	result =
+		Sfx_StartSound(sample, volume, freq, origin, fixedPos,
+					   (info->flags & SF_NO_ATTENUATION
+						|| soundIdAndFlags & DDSF_NO_ATTENUATION ?
+						SF_NO_ATTENUATION : 0) | (isRepeating ? SF_REPEAT : 0)
+					   | (info->flags & SF_DONT_STOP ? SF_DONT_STOP : 0));
 
 	return result;
 }
 
 //===========================================================================
 // S_LocalSoundAtVolume
-//	Plays a sound on the local system.
-//	This is a public sound interface.
-//	Returns nonzero if a sound was started.
+//  Plays a sound on the local system.
+//  This is a public sound interface.
+//  Returns nonzero if a sound was started.
 //===========================================================================
-int S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
+int S_LocalSoundAtVolume(int sound_id, mobj_t * origin, float volume)
 {
 	return S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, volume);
 }
 
 //===========================================================================
 // S_LocalSound
-//	This is a public sound interface.
-//	Returns nonzero if a sound was started.
+//  This is a public sound interface.
+//  Returns nonzero if a sound was started.
 //===========================================================================
-int S_LocalSound(int sound_id, mobj_t *origin)
+int S_LocalSound(int sound_id, mobj_t * origin)
 {
 	// Play local sound at max volume.
 	return S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, 1);
@@ -312,8 +320,8 @@ int S_LocalSound(int sound_id, mobj_t *origin)
 
 //===========================================================================
 // S_LocalSoundFrom
-//	This is a public sound interface.
-//	Returns nonzero if a sound was started.
+//  This is a public sound interface.
+//  Returns nonzero if a sound was started.
 //===========================================================================
 int S_LocalSoundFrom(int sound_id, float *fixedpos)
 {
@@ -322,10 +330,10 @@ int S_LocalSoundFrom(int sound_id, float *fixedpos)
 
 //=========================================================================
 // S_StartSound
-//	Play a world sound. All players in the game will hear it.
-//	Returns nonzero if a sound was started.
+//  Play a world sound. All players in the game will hear it.
+//  Returns nonzero if a sound was started.
 //=========================================================================
-int S_StartSound(int sound_id, mobj_t *origin)
+int S_StartSound(int sound_id, mobj_t * origin)
 {
 	// The sound is audible to everybody.
 	Sv_Sound(sound_id, origin, SVSF_TO_ALL);
@@ -336,10 +344,10 @@ int S_StartSound(int sound_id, mobj_t *origin)
 
 //=========================================================================
 // S_StartSoundAtVolume
-//	Play a world sound. All players in the game will hear it.
-//	Returns nonzero if a sound was started.
+//  Play a world sound. All players in the game will hear it.
+//  Returns nonzero if a sound was started.
 //=========================================================================
-int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
+int S_StartSoundAtVolume(int sound_id, mobj_t * origin, float volume)
 {
 	Sv_SoundAtVolume(sound_id, origin, volume, SVSF_TO_ALL);
 	Sfx_StartLogical(sound_id, origin, S_IsRepeating(sound_id));
@@ -350,10 +358,10 @@ int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 
 //=========================================================================
 // S_ConsoleSound
-//	Play a player sound. Only the specified player will hear it.
-//	Returns nonzero if a sound was started (always).
+//  Play a player sound. Only the specified player will hear it.
+//  Returns nonzero if a sound was started (always).
 //=========================================================================
-int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
+int S_ConsoleSound(int sound_id, mobj_t * origin, int target_console)
 {
 	Sv_Sound(sound_id, origin, target_console);
 
@@ -367,11 +375,11 @@ int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 
 //===========================================================================
 // S_StopSound
-//	If sound_id == 0, then stops all sounds of the origin.
-//	If origin == NULL, stops all sounds with the ID.
-//	Otherwise both ID and origin must match.
+//  If sound_id == 0, then stops all sounds of the origin.
+//  If origin == NULL, stops all sounds with the ID.
+//  Otherwise both ID and origin must match.
 //===========================================================================
-void S_StopSound(int sound_id, mobj_t *emitter)
+void S_StopSound(int sound_id, mobj_t * emitter)
 {
 	// Sfx provides a routine for this.
 	Sfx_StopSound(sound_id, emitter);
@@ -388,11 +396,11 @@ void S_StopSound(int sound_id, mobj_t *emitter)
 
 //===========================================================================
 // S_IsPlaying
-//	Returns true if an instance of the sound is playing with the given
-//	emitter. If sound_id is zero, returns true if the source is emitting
-//	any sounds. An exported function.
+//  Returns true if an instance of the sound is playing with the given
+//  emitter. If sound_id is zero, returns true if the source is emitting
+//  any sounds. An exported function.
 //===========================================================================
-int S_IsPlaying(int sound_id, mobj_t *emitter)
+int S_IsPlaying(int sound_id, mobj_t * emitter)
 {
 	// The Logical Sound Manager (under Sfx) provides a routine for this.
 	return Sfx_IsPlaying(sound_id, emitter);
@@ -400,26 +408,29 @@ int S_IsPlaying(int sound_id, mobj_t *emitter)
 
 //===========================================================================
 // S_StartMusicNum
-//	Start a song based on its number. Returns true if the ID exists.
+//  Start a song based on its number. Returns true if the ID exists.
 //===========================================================================
 int S_StartMusicNum(int id, boolean looped)
 {
 	ded_music_t *def = defs.music + id;
 
-	if(id < 0 || id >= defs.count.music.num) return false;
+	if(id < 0 || id >= defs.count.music.num)
+		return false;
 	// Don't play music if the volume is at zero.
-	if(isDedicated) return true;
-	if(verbose) Con_Message("S_StartMusic: %s.\n", def->id);
+	if(isDedicated)
+		return true;
+	if(verbose)
+		Con_Message("S_StartMusic: %s.\n", def->id);
 	return Mus_Start(def, looped);
 }
 
 //===========================================================================
 // S_StartMusic
-//	Returns true if the song is found.
+//  Returns true if the song is found.
 //===========================================================================
 int S_StartMusic(char *musicid, boolean looped)
 {
-	int idx = Def_GetMusicNum(musicid);
+	int     idx = Def_GetMusicNum(musicid);
 
 	if(idx < 0)
 	{
@@ -431,7 +442,7 @@ int S_StartMusic(char *musicid, boolean looped)
 
 //===========================================================================
 // S_StopMusic
-//	Stops playing a song.
+//  Stops playing a song.
 //===========================================================================
 void S_StopMusic(void)
 {
@@ -440,11 +451,12 @@ void S_StopMusic(void)
 
 //===========================================================================
 // S_Drawer
-//	Draws debug information on-screen.
+//  Draws debug information on-screen.
 //===========================================================================
 void S_Drawer(void)
 {
-	if(!sound_info) return;
+	if(!sound_info)
+		return;
 
 	// Go into screen projection mode.
 	gl.MatrixMode(DGL_PROJECTION);
@@ -461,14 +473,14 @@ void S_Drawer(void)
 
 //===========================================================================
 // CCmdPlaySound
-//	Console command for playing a sound effect.
+//  Console command for playing a sound effect.
 //===========================================================================
 int CCmdPlaySound(int argc, char **argv)
 {
-	int id = 0;
-	float volume = 1;
-	float fixedPos[3];
-	int p;
+	int     id = 0;
+	float   volume = 1;
+	float   fixedPos[3];
+	int     p;
 	boolean useFixedPos = false;
 
 	if(argc < 2)
@@ -495,15 +507,17 @@ int CCmdPlaySound(int argc, char **argv)
 	}
 	if(argc >= p + 4 && !stricmp(argv[p], "at"))
 	{
-        useFixedPos = true;
+		useFixedPos = true;
 		fixedPos[VX] = strtod(argv[p + 1], NULL);
 		fixedPos[VY] = strtod(argv[p + 2], NULL);
 		fixedPos[VZ] = strtod(argv[p + 3], NULL);
 	}
 
 	// Check that the volume is valid.
-	if(volume <= 0) return true;
-	if(volume > 1) volume = 1;
+	if(volume <= 0)
+		return true;
+	if(volume > 1)
+		volume = 1;
 
 	if(useFixedPos)
 		S_LocalSoundAtVolumeFrom(id, NULL, fixedPos, volume);

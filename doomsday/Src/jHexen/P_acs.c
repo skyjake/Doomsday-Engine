@@ -35,11 +35,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
-	int marker;
-	int infoOffset;
-	int code;
+typedef struct {
+	int     marker;
+	int     infoOffset;
+	int     code;
 } acsHeader_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -51,7 +50,7 @@ typedef struct
 static void StartOpenACS(int number, int infoIndex, int *address);
 static void ScriptFinished(int number);
 static boolean TagBusy(int tag);
-static boolean AddToACSStore(int map, int number, byte *args);
+static boolean AddToACSStore(int map, int number, byte * args);
 static int GetACSIndex(int number);
 static void Push(int value);
 static int Pop(void);
@@ -167,12 +166,12 @@ static void ThingCount(int type, int tid);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int ACScriptCount;
-byte *ActionCodeBase;
+int     ACScriptCount;
+byte   *ActionCodeBase;
 acsInfo_t *ACSInfo;
-int MapVars[MAX_ACS_MAP_VARS];
-int WorldVars[MAX_ACS_WORLD_VARS];
-acsstore_t ACSStore[MAX_ACS_STORE+1]; // +1 for termination marker
+int     MapVars[MAX_ACS_MAP_VARS];
+int     WorldVars[MAX_ACS_WORLD_VARS];
+acsstore_t ACSStore[MAX_ACS_STORE + 1];	// +1 for termination marker
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -184,111 +183,33 @@ static char **ACStrings;
 static char PrintBuffer[PRINT_BUFFER_SIZE];
 static acs_t *NewScript;
 
-static int (*PCodeCmds[])(void) =
+static int (*PCodeCmds[]) (void) =
 {
-	CmdNOP,
-	CmdTerminate,
-	CmdSuspend,
-	CmdPushNumber,
-	CmdLSpec1,
-	CmdLSpec2,
-	CmdLSpec3,
-	CmdLSpec4,
-	CmdLSpec5,
-	CmdLSpec1Direct,
-	CmdLSpec2Direct,
-	CmdLSpec3Direct,
-	CmdLSpec4Direct,
-	CmdLSpec5Direct,
-	CmdAdd,
-	CmdSubtract,
-	CmdMultiply,
-	CmdDivide,
-	CmdModulus,
-	CmdEQ,
-	CmdNE,
-	CmdLT,
-	CmdGT,
-	CmdLE,
-	CmdGE,
-	CmdAssignScriptVar,
-	CmdAssignMapVar,
-	CmdAssignWorldVar,
-	CmdPushScriptVar,
-	CmdPushMapVar,
-	CmdPushWorldVar,
-	CmdAddScriptVar,
-	CmdAddMapVar,
-	CmdAddWorldVar,
-	CmdSubScriptVar,
-	CmdSubMapVar,
-	CmdSubWorldVar,
-	CmdMulScriptVar,
-	CmdMulMapVar,
-	CmdMulWorldVar,
-	CmdDivScriptVar,
-	CmdDivMapVar,
-	CmdDivWorldVar,
-	CmdModScriptVar,
-	CmdModMapVar,
-	CmdModWorldVar,
-	CmdIncScriptVar,
-	CmdIncMapVar,
-	CmdIncWorldVar,
-	CmdDecScriptVar,
-	CmdDecMapVar,
-	CmdDecWorldVar,
-	CmdGoto,
-	CmdIfGoto,
-	CmdDrop,
-	CmdDelay,
-	CmdDelayDirect,
-	CmdRandom,
-	CmdRandomDirect,
-	CmdThingCount,
-	CmdThingCountDirect,
-	CmdTagWait,
-	CmdTagWaitDirect,
-	CmdPolyWait,
-	CmdPolyWaitDirect,
-	CmdChangeFloor,
-	CmdChangeFloorDirect,
-	CmdChangeCeiling,
-	CmdChangeCeilingDirect,
-	CmdRestart,
-	CmdAndLogical,
-	CmdOrLogical,
-	CmdAndBitwise,
-	CmdOrBitwise,
-	CmdEorBitwise,
-	CmdNegateLogical,
-	CmdLShift,
-	CmdRShift,
-	CmdUnaryMinus,
-	CmdIfNotGoto,
-	CmdLineSide,
-	CmdScriptWait,
-	CmdScriptWaitDirect,
-	CmdClearLineSpecial,
-	CmdCaseGoto,
-	CmdBeginPrint,
-	CmdEndPrint,
-	CmdPrintString,
-	CmdPrintNumber,
-	CmdPrintCharacter,
-	CmdPlayerCount,
-	CmdGameType,
-	CmdGameSkill,
-	CmdTimer,
-	CmdSectorSound,
-	CmdAmbientSound,
-	CmdSoundSequence,
-	CmdSetLineTexture,
-	CmdSetLineBlocking,
-	CmdSetLineSpecial,
-	CmdThingSound,
-	CmdEndPrintBold
-};
+CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
+		CmdLSpec3, CmdLSpec4, CmdLSpec5, CmdLSpec1Direct, CmdLSpec2Direct,
+		CmdLSpec3Direct, CmdLSpec4Direct, CmdLSpec5Direct, CmdAdd,
+		CmdSubtract, CmdMultiply, CmdDivide, CmdModulus, CmdEQ, CmdNE,
+		CmdLT, CmdGT, CmdLE, CmdGE, CmdAssignScriptVar, CmdAssignMapVar,
+		CmdAssignWorldVar, CmdPushScriptVar, CmdPushMapVar,
+		CmdPushWorldVar, CmdAddScriptVar, CmdAddMapVar, CmdAddWorldVar,
+		CmdSubScriptVar, CmdSubMapVar, CmdSubWorldVar, CmdMulScriptVar,
+		CmdMulMapVar, CmdMulWorldVar, CmdDivScriptVar, CmdDivMapVar,
+		CmdDivWorldVar, CmdModScriptVar, CmdModMapVar, CmdModWorldVar,
+		CmdIncScriptVar, CmdIncMapVar, CmdIncWorldVar, CmdDecScriptVar,
+		CmdDecMapVar, CmdDecWorldVar, CmdGoto, CmdIfGoto, CmdDrop,
+		CmdDelay, CmdDelayDirect, CmdRandom, CmdRandomDirect,
+		CmdThingCount, CmdThingCountDirect, CmdTagWait, CmdTagWaitDirect,
+		CmdPolyWait, CmdPolyWaitDirect, CmdChangeFloor,
+		CmdChangeFloorDirect, CmdChangeCeiling, CmdChangeCeilingDirect,
+		CmdRestart, CmdAndLogical, CmdOrLogical, CmdAndBitwise,
+		CmdOrBitwise, CmdEorBitwise, CmdNegateLogical, CmdLShift,
+		CmdRShift, CmdUnaryMinus, CmdIfNotGoto, CmdLineSide, CmdScriptWait,
+		CmdScriptWaitDirect, CmdClearLineSpecial, CmdCaseGoto,
+		CmdBeginPrint, CmdEndPrint, CmdPrintString, CmdPrintNumber,
+		CmdPrintCharacter, CmdPlayerCount, CmdGameType, CmdGameSkill,
+		CmdTimer, CmdSectorSound, CmdAmbientSound, CmdSoundSequence,
+		CmdSetLineTexture, CmdSetLineBlocking, CmdSetLineSpecial,
+		CmdThingSound, CmdEndPrintBold};
 
 // CODE --------------------------------------------------------------------
 
@@ -302,29 +223,29 @@ static int (*PCodeCmds[])(void) =
 
 void P_LoadACScripts(int lump)
 {
-	int i;
-	int *buffer;
+	int     i;
+	int    *buffer;
 	acsHeader_t *header;
 	acsInfo_t *info;
 
 	header = W_CacheLumpNum(lump, PU_LEVEL);
-	ActionCodeBase = (byte *)header;
-	buffer = (int *)((byte *)header+header->infoOffset);
+	ActionCodeBase = (byte *) header;
+	buffer = (int *) ((byte *) header + header->infoOffset);
 	ACScriptCount = *buffer++;
 	if(ACScriptCount == 0 || IS_CLIENT)
-	{ // Empty behavior lump
+	{							// Empty behavior lump
 		ACScriptCount = 0;
 		return;
 	}
-	ACSInfo = Z_Malloc(ACScriptCount*sizeof(acsInfo_t), PU_LEVEL, 0);
-	memset(ACSInfo, 0, ACScriptCount*sizeof(acsInfo_t));
+	ACSInfo = Z_Malloc(ACScriptCount * sizeof(acsInfo_t), PU_LEVEL, 0);
+	memset(ACSInfo, 0, ACScriptCount * sizeof(acsInfo_t));
 	for(i = 0, info = ACSInfo; i < ACScriptCount; i++, info++)
 	{
 		info->number = *buffer++;
-		info->address = (int *)((byte *)ActionCodeBase+*buffer++);
+		info->address = (int *) ((byte *) ActionCodeBase + *buffer++);
 		info->argCount = *buffer++;
 		if(info->number >= OPEN_SCRIPTS_BASE)
-		{ // Auto-activate
+		{						// Auto-activate
 			info->number -= OPEN_SCRIPTS_BASE;
 			StartOpenACS(info->number, i, info->address);
 			info->state = ASTE_RUNNING;
@@ -335,10 +256,10 @@ void P_LoadACScripts(int lump)
 		}
 	}
 	ACStringCount = *buffer++;
-	ACStrings = (char **)buffer;
+	ACStrings = (char **) buffer;
 	for(i = 0; i < ACStringCount; i++)
 	{
-		ACStrings[i] += (int)ActionCodeBase;
+		ACStrings[i] += (int) ActionCodeBase;
 	}
 	memset(MapVars, 0, sizeof(MapVars));
 }
@@ -351,7 +272,7 @@ void P_LoadACScripts(int lump)
 
 static void StartOpenACS(int number, int infoIndex, int *address)
 {
-	acs_t *script;
+	acs_t  *script;
 
 	script = Z_Malloc(sizeof(acs_t), PU_LEVSPEC, 0);
 	memset(script, 0, sizeof(acs_t));
@@ -401,34 +322,34 @@ void P_CheckACSStore(void)
 
 static char ErrorMsg[128];
 
-boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
-	line_t *line, int side)
+boolean P_StartACS(int number, int map, byte * args, mobj_t * activator,
+				   line_t * line, int side)
 {
-	int i;
-	acs_t *script;
-	int infoIndex;
+	int     i;
+	acs_t  *script;
+	int     infoIndex;
 	aste_t *statePtr;
 
 	NewScript = NULL;
 	if(map && map != gamemap)
-	{ // Add to the script store
+	{							// Add to the script store
 		return AddToACSStore(map, number, args);
 	}
 	infoIndex = GetACSIndex(number);
 	if(infoIndex == -1)
-	{ // Script not found
+	{							// Script not found
 		//Con_Error("P_StartACS: Unknown script number %d", number);
 		sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
 		P_SetMessage(&players[consoleplayer], ErrorMsg, true);
 	}
 	statePtr = &ACSInfo[infoIndex].state;
 	if(*statePtr == ASTE_SUSPENDED)
-	{ // Resume a suspended script
+	{							// Resume a suspended script
 		*statePtr = ASTE_RUNNING;
 		return true;
 	}
 	if(*statePtr != ASTE_INACTIVE)
-	{ // Script is already executing
+	{							// Script is already executing
 		return false;
 	}
 	script = Z_Malloc(sizeof(acs_t), PU_LEVSPEC, 0);
@@ -456,37 +377,36 @@ boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
 //
 //==========================================================================
 
-static boolean AddToACSStore(int map, int number, byte *args)
+static boolean AddToACSStore(int map, int number, byte * args)
 {
-	int i;
-	int index;
+	int     i;
+	int     index;
 
 	index = -1;
 	for(i = 0; ACSStore[i].map != 0; i++)
 	{
-		if(ACSStore[i].script == number
-		&& ACSStore[i].map == map)
-		{ // Don't allow duplicates
+		if(ACSStore[i].script == number && ACSStore[i].map == map)
+		{						// Don't allow duplicates
 			return false;
 		}
 		if(index == -1 && ACSStore[i].map == -1)
-		{ // Remember first empty slot
+		{						// Remember first empty slot
 			index = i;
 		}
 	}
 	if(index == -1)
-	{ // Append required
+	{							// Append required
 		if(i == MAX_ACS_STORE)
 		{
 			Con_Error("AddToACSStore: MAX_ACS_STORE (%d) exceeded.",
-				MAX_ACS_STORE);
+					  MAX_ACS_STORE);
 		}
 		index = i;
-		ACSStore[index+1].map = 0;
+		ACSStore[index + 1].map = 0;
 	}
 	ACSStore[index].map = map;
 	ACSStore[index].script = number;
-	*((int *)ACSStore[index].args) = *((int *)args);
+	*((int *) ACSStore[index].args) = *((int *) args);
 	return true;
 }
 
@@ -496,13 +416,12 @@ static boolean AddToACSStore(int map, int number, byte *args)
 //
 //==========================================================================
 
-
-boolean P_StartLockedACS(line_t *line, byte *args, mobj_t *mo, int side)
+boolean P_StartLockedACS(line_t * line, byte * args, mobj_t * mo, int side)
 {
-	int i;
-	int lock;
-	byte newArgs[5];
-	char LockedBuffer[80];
+	int     i;
+	int     lock;
+	byte    newArgs[5];
+	char    LockedBuffer[80];
 
 	extern int TextKeyMessages[11];
 
@@ -513,10 +432,10 @@ boolean P_StartLockedACS(line_t *line, byte *args, mobj_t *mo, int side)
 	}
 	if(lock)
 	{
-		if(!(mo->player->keys&(1<<(lock-1))))
+		if(!(mo->player->keys & (1 << (lock - 1))))
 		{
-			sprintf(LockedBuffer, "YOU NEED THE %s\n", 
-				GET_TXT(TextKeyMessages[lock-1]));
+			sprintf(LockedBuffer, "YOU NEED THE %s\n",
+					GET_TXT(TextKeyMessages[lock - 1]));
 			P_SetMessage(mo->player, LockedBuffer, true);
 			S_StartSound(SFX_DOOR_LOCKED, mo);
 			return false;
@@ -527,8 +446,7 @@ boolean P_StartLockedACS(line_t *line, byte *args, mobj_t *mo, int side)
 		newArgs[i] = args[i];
 	}
 	newArgs[4] = 0;
-	return P_StartACS(newArgs[0], newArgs[1], &newArgs[2], mo,
-		line, side);
+	return P_StartACS(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
 }
 
 //==========================================================================
@@ -539,16 +457,16 @@ boolean P_StartLockedACS(line_t *line, byte *args, mobj_t *mo, int side)
 
 boolean P_TerminateACS(int number, int map)
 {
-	int infoIndex;
+	int     infoIndex;
 
 	infoIndex = GetACSIndex(number);
 	if(infoIndex == -1)
-	{ // Script not found
+	{							// Script not found
 		return false;
 	}
 	if(ACSInfo[infoIndex].state == ASTE_INACTIVE
-		|| ACSInfo[infoIndex].state == ASTE_TERMINATING)
-	{ // States that disallow termination
+	   || ACSInfo[infoIndex].state == ASTE_TERMINATING)
+	{							// States that disallow termination
 		return false;
 	}
 	ACSInfo[infoIndex].state = ASTE_TERMINATING;
@@ -563,17 +481,17 @@ boolean P_TerminateACS(int number, int map)
 
 boolean P_SuspendACS(int number, int map)
 {
-	int infoIndex;
+	int     infoIndex;
 
 	infoIndex = GetACSIndex(number);
 	if(infoIndex == -1)
-	{ // Script not found
+	{							// Script not found
 		return false;
 	}
 	if(ACSInfo[infoIndex].state == ASTE_INACTIVE
-		|| ACSInfo[infoIndex].state == ASTE_SUSPENDED
-		|| ACSInfo[infoIndex].state == ASTE_TERMINATING)
-	{ // States that disallow suspension
+	   || ACSInfo[infoIndex].state == ASTE_SUSPENDED
+	   || ACSInfo[infoIndex].state == ASTE_TERMINATING)
+	{							// States that disallow suspension
 		return false;
 	}
 	ACSInfo[infoIndex].state = ASTE_SUSPENDED;
@@ -598,10 +516,10 @@ void P_ACSInitNewGame(void)
 //
 //==========================================================================
 
-void T_InterpretACS(acs_t *script)
+void T_InterpretACS(acs_t * script)
 {
-	int cmd;
-	int action;
+	int     cmd;
+	int     action;
 
 	if(ACSInfo[script->infoIndex].state == ASTE_TERMINATING)
 	{
@@ -624,7 +542,7 @@ void T_InterpretACS(acs_t *script)
 	do
 	{
 		cmd = *PCodePtr++;
-		action = PCodeCmds[cmd]();
+		action = PCodeCmds[cmd] ();
 	} while(action == SCRIPT_CONTINUE);
 	ACScript->ip = PCodePtr;
 	if(action == SCRIPT_TERMINATE)
@@ -643,7 +561,7 @@ void T_InterpretACS(acs_t *script)
 
 void P_TagFinished(int tag)
 {
-	int i;
+	int     i;
 
 	if(TagBusy(tag) == true)
 	{
@@ -652,7 +570,7 @@ void P_TagFinished(int tag)
 	for(i = 0; i < ACScriptCount; i++)
 	{
 		if(ACSInfo[i].state == ASTE_WAITINGFORTAG
-			&& ACSInfo[i].waitValue == tag)
+		   && ACSInfo[i].waitValue == tag)
 		{
 			ACSInfo[i].state = ASTE_RUNNING;
 		}
@@ -667,7 +585,7 @@ void P_TagFinished(int tag)
 
 void P_PolyobjFinished(int po)
 {
-	int i;
+	int     i;
 
 	if(PO_Busy(po) == true)
 	{
@@ -676,7 +594,7 @@ void P_PolyobjFinished(int po)
 	for(i = 0; i < ACScriptCount; i++)
 	{
 		if(ACSInfo[i].state == ASTE_WAITINGFORPOLY
-			&& ACSInfo[i].waitValue == po)
+		   && ACSInfo[i].waitValue == po)
 		{
 			ACSInfo[i].state = ASTE_RUNNING;
 		}
@@ -691,12 +609,12 @@ void P_PolyobjFinished(int po)
 
 static void ScriptFinished(int number)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < ACScriptCount; i++)
 	{
 		if(ACSInfo[i].state == ASTE_WAITINGFORSCRIPT
-			&& ACSInfo[i].waitValue == number)
+		   && ACSInfo[i].waitValue == number)
 		{
 			ACSInfo[i].state = ASTE_RUNNING;
 		}
@@ -711,7 +629,7 @@ static void ScriptFinished(int number)
 
 static boolean TagBusy(int tag)
 {
-	int sectorIndex;
+	int     sectorIndex;
 
 	sectorIndex = -1;
 	while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
@@ -735,7 +653,7 @@ static boolean TagBusy(int tag)
 
 static int GetACSIndex(int number)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < ACScriptCount; i++)
 	{
@@ -777,7 +695,7 @@ static int Pop(void)
 
 static int Top(void)
 {
-	return ACScript->stack[ACScript->stackPtr-1];
+	return ACScript->stack[ACScript->stackPtr - 1];
 }
 
 //==========================================================================
@@ -821,57 +739,57 @@ static int CmdPushNumber(void)
 
 static int CmdLSpec1(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[0] = Pop();
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec2(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[1] = Pop();
 	SpecArgs[0] = Pop();
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec3(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[2] = Pop();
 	SpecArgs[1] = Pop();
 	SpecArgs[0] = Pop();
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec4(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[3] = Pop();
 	SpecArgs[2] = Pop();
 	SpecArgs[1] = Pop();
 	SpecArgs[0] = Pop();
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec5(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[4] = Pop();
@@ -879,64 +797,64 @@ static int CmdLSpec5(void)
 	SpecArgs[2] = Pop();
 	SpecArgs[1] = Pop();
 	SpecArgs[0] = Pop();
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec1Direct(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[0] = *PCodePtr++;
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec2Direct(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[0] = *PCodePtr++;
 	SpecArgs[1] = *PCodePtr++;
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec3Direct(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[0] = *PCodePtr++;
 	SpecArgs[1] = *PCodePtr++;
 	SpecArgs[2] = *PCodePtr++;
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec4Direct(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[0] = *PCodePtr++;
 	SpecArgs[1] = *PCodePtr++;
 	SpecArgs[2] = *PCodePtr++;
 	SpecArgs[3] = *PCodePtr++;
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdLSpec5Direct(void)
 {
-	int special;
+	int     special;
 
 	special = *PCodePtr++;
 	SpecArgs[0] = *PCodePtr++;
@@ -944,47 +862,47 @@ static int CmdLSpec5Direct(void)
 	SpecArgs[2] = *PCodePtr++;
 	SpecArgs[3] = *PCodePtr++;
 	SpecArgs[4] = *PCodePtr++;
-	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line,
-		ACScript->side, ACScript->activator);
+	P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
+						 ACScript->activator);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdAdd(void)
 {
-	Push(Pop()+Pop());
+	Push(Pop() + Pop());
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdSubtract(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
-	Push(Pop()-operand2);
+	Push(Pop() - operand2);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdMultiply(void)
 {
-	Push(Pop()*Pop());
+	Push(Pop() * Pop());
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdDivide(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
-	Push(Pop()/operand2);
+	Push(Pop() / operand2);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdModulus(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
-	Push(Pop()%operand2);
+	Push(Pop() % operand2);
 	return SCRIPT_CONTINUE;
 }
 
@@ -1002,7 +920,7 @@ static int CmdNE(void)
 
 static int CmdLT(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
 	Push(Pop() < operand2);
@@ -1011,7 +929,7 @@ static int CmdLT(void)
 
 static int CmdGT(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
 	Push(Pop() > operand2);
@@ -1020,7 +938,7 @@ static int CmdGT(void)
 
 static int CmdLE(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
 	Push(Pop() <= operand2);
@@ -1029,7 +947,7 @@ static int CmdLE(void)
 
 static int CmdGE(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
 	Push(Pop() >= operand2);
@@ -1200,7 +1118,7 @@ static int CmdDecWorldVar(void)
 
 static int CmdGoto(void)
 {
-	PCodePtr = (int *)(ActionCodeBase+*PCodePtr);
+	PCodePtr = (int *) (ActionCodeBase + *PCodePtr);
 	return SCRIPT_CONTINUE;
 }
 
@@ -1208,7 +1126,7 @@ static int CmdIfGoto(void)
 {
 	if(Pop())
 	{
-		PCodePtr = (int *)(ActionCodeBase+*PCodePtr);
+		PCodePtr = (int *) (ActionCodeBase + *PCodePtr);
 	}
 	else
 	{
@@ -1237,29 +1155,29 @@ static int CmdDelayDirect(void)
 
 static int CmdRandom(void)
 {
-	int low;
-	int high;
+	int     low;
+	int     high;
 
 	high = Pop();
 	low = Pop();
-	Push(low+(P_Random()%(high-low+1)));
+	Push(low + (P_Random() % (high - low + 1)));
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdRandomDirect(void)
 {
-	int low;
-	int high;
+	int     low;
+	int     high;
 
 	low = *PCodePtr++;
 	high = *PCodePtr++;
-	Push(low+(P_Random()%(high-low+1)));
+	Push(low + (P_Random() % (high - low + 1)));
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdThingCount(void)
 {
-	int tid;
+	int     tid;
 
 	tid = Pop();
 	ThingCount(Pop(), tid);
@@ -1268,7 +1186,7 @@ static int CmdThingCount(void)
 
 static int CmdThingCountDirect(void)
 {
-	int type;
+	int     type;
 
 	type = *PCodePtr++;
 	ThingCount(type, *PCodePtr++);
@@ -1277,31 +1195,31 @@ static int CmdThingCountDirect(void)
 
 static void ThingCount(int type, int tid)
 {
-	int count;
-	int searcher;
+	int     count;
+	int     searcher;
 	mobj_t *mobj;
 	mobjtype_t moType;
 	thinker_t *think;
 
-	if(!(type+tid))
-	{ // Nothing to count
+	if(!(type + tid))
+	{							// Nothing to count
 		return;
 	}
 	moType = TranslateThingType[type];
 	count = 0;
 	searcher = -1;
 	if(tid)
-	{ // Count TID things
+	{							// Count TID things
 		while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
 		{
 			if(type == 0)
-			{ // Just count TIDs
+			{					// Just count TIDs
 				count++;
 			}
 			else if(moType == mobj->type)
 			{
-				if(mobj->flags&MF_COUNTKILL && mobj->health <= 0)
-				{ // Don't count dead monsters
+				if(mobj->flags & MF_COUNTKILL && mobj->health <= 0)
+				{				// Don't count dead monsters
 					continue;
 				}
 				count++;
@@ -1309,21 +1227,21 @@ static void ThingCount(int type, int tid)
 		}
 	}
 	else
-	{ // Count only types
+	{							// Count only types
 		for(think = gi.thinkercap->next; think != gi.thinkercap;
 			think = think->next)
 		{
 			if(think->function != P_MobjThinker)
-			{ // Not a mobj thinker
+			{					// Not a mobj thinker
 				continue;
 			}
-			mobj = (mobj_t *)think;
+			mobj = (mobj_t *) think;
 			if(mobj->type != moType)
-			{ // Doesn't match
+			{					// Doesn't match
 				continue;
 			}
-			if(mobj->flags&MF_COUNTKILL && mobj->health <= 0)
-			{ // Don't count dead monsters
+			if(mobj->flags & MF_COUNTKILL && mobj->health <= 0)
+			{					// Don't count dead monsters
 				continue;
 			}
 			count++;
@@ -1362,9 +1280,9 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-	int tag;
-	int flat;
-	int sectorIndex;
+	int     tag;
+	int     flat;
+	int     sectorIndex;
 
 	flat = R_FlatNumForName(ACStrings[Pop()]);
 	tag = Pop();
@@ -1378,9 +1296,9 @@ static int CmdChangeFloor(void)
 
 static int CmdChangeFloorDirect(void)
 {
-	int tag;
-	int flat;
-	int sectorIndex;
+	int     tag;
+	int     flat;
+	int     sectorIndex;
 
 	tag = *PCodePtr++;
 	flat = R_FlatNumForName(ACStrings[*PCodePtr++]);
@@ -1394,9 +1312,9 @@ static int CmdChangeFloorDirect(void)
 
 static int CmdChangeCeiling(void)
 {
-	int tag;
-	int flat;
-	int sectorIndex;
+	int     tag;
+	int     flat;
+	int     sectorIndex;
 
 	flat = R_FlatNumForName(ACStrings[Pop()]);
 	tag = Pop();
@@ -1410,9 +1328,9 @@ static int CmdChangeCeiling(void)
 
 static int CmdChangeCeilingDirect(void)
 {
-	int tag;
-	int flat;
-	int sectorIndex;
+	int     tag;
+	int     flat;
+	int     sectorIndex;
 
 	tag = *PCodePtr++;
 	flat = R_FlatNumForName(ACStrings[*PCodePtr++]);
@@ -1444,19 +1362,19 @@ static int CmdOrLogical(void)
 
 static int CmdAndBitwise(void)
 {
-	Push(Pop()&Pop());
+	Push(Pop() & Pop());
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdOrBitwise(void)
 {
-	Push(Pop()|Pop());
+	Push(Pop() | Pop());
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdEorBitwise(void)
 {
-	Push(Pop()^Pop());
+	Push(Pop() ^ Pop());
 	return SCRIPT_CONTINUE;
 }
 
@@ -1468,19 +1386,19 @@ static int CmdNegateLogical(void)
 
 static int CmdLShift(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
-	Push(Pop()<<operand2);
+	Push(Pop() << operand2);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdRShift(void)
 {
-	int operand2;
+	int     operand2;
 
 	operand2 = Pop();
-	Push(Pop()>>operand2);
+	Push(Pop() >> operand2);
 	return SCRIPT_CONTINUE;
 }
 
@@ -1498,7 +1416,7 @@ static int CmdIfNotGoto(void)
 	}
 	else
 	{
-		PCodePtr = (int *)(ActionCodeBase+*PCodePtr);
+		PCodePtr = (int *) (ActionCodeBase + *PCodePtr);
 	}
 	return SCRIPT_CONTINUE;
 }
@@ -1536,7 +1454,7 @@ static int CmdCaseGoto(void)
 {
 	if(Top() == *PCodePtr++)
 	{
-		PCodePtr = (int *)(ActionCodeBase+*PCodePtr);
+		PCodePtr = (int *) (ActionCodeBase + *PCodePtr);
 		Drop();
 	}
 	else
@@ -1560,7 +1478,8 @@ static int CmdEndPrint(void)
 	}
 	else
 	{
-		int i;
+		int     i;
+
 		// Send to everybody.
 		for(i = 0; i < MAXPLAYERS; i++)
 			if(players[i].plr->ingame)
@@ -1572,7 +1491,7 @@ static int CmdEndPrint(void)
 
 static int CmdEndPrintBold(void)
 {
-	int i;
+	int     i;
 
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1592,7 +1511,7 @@ static int CmdPrintString(void)
 
 static int CmdPrintNumber(void)
 {
-	char tempStr[16];
+	char    tempStr[16];
 
 	sprintf(tempStr, "%d", Pop());
 	strcat(PrintBuffer, tempStr);
@@ -1601,9 +1520,9 @@ static int CmdPrintNumber(void)
 
 static int CmdPrintCharacter(void)
 {
-	char *bufferEnd;
+	char   *bufferEnd;
 
-	bufferEnd = PrintBuffer+strlen(PrintBuffer);
+	bufferEnd = PrintBuffer + strlen(PrintBuffer);
 	*bufferEnd++ = Pop();
 	*bufferEnd = 0;
 	return SCRIPT_CONTINUE;
@@ -1611,8 +1530,8 @@ static int CmdPrintCharacter(void)
 
 static int CmdPlayerCount(void)
 {
-	int i;
-	int count;
+	int     i;
+	int     count;
 
 	count = 0;
 	for(i = 0; i < MAXPLAYERS; i++)
@@ -1625,7 +1544,7 @@ static int CmdPlayerCount(void)
 
 static int CmdGameType(void)
 {
-	int gametype;
+	int     gametype;
 
 	if(netgame == false)
 	{
@@ -1657,29 +1576,30 @@ static int CmdTimer(void)
 
 static int CmdSectorSound(void)
 {
-	int volume;
+	int     volume;
 	mobj_t *mobj;
 
 	mobj = NULL;
 	if(ACScript->line)
 	{
-		mobj = (mobj_t *)&ACScript->line->frontsector->soundorg;
+		mobj = (mobj_t *) & ACScript->line->frontsector->soundorg;
 	}
 	volume = Pop();
 #if _DEBUG
 	Con_Printf("CmdSectorSound: volume=%i\n", volume);
 #endif
-	S_StartSoundAtVolume(S_GetSoundID(ACStrings[Pop()]), mobj, volume/127.0f);
+	S_StartSoundAtVolume(S_GetSoundID(ACStrings[Pop()]), mobj,
+						 volume / 127.0f);
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdThingSound(void)
 {
-	int tid;
-	int sound;
-	int volume;
+	int     tid;
+	int     sound;
+	int     volume;
 	mobj_t *mobj;
-	int searcher;
+	int     searcher;
 
 	volume = Pop();
 	sound = S_GetSoundID(ACStrings[Pop()]);
@@ -1687,15 +1607,15 @@ static int CmdThingSound(void)
 	searcher = -1;
 	while(sound && (mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
 	{
-		S_StartSoundAtVolume(sound, mobj, volume/127.0f);
+		S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
 	}
 	return SCRIPT_CONTINUE;
 }
 
 static int CmdAmbientSound(void)
 {
-	int volume;
-	mobj_t *mobj = NULL;	// For 3D positioning.
+	int     volume;
+	mobj_t *mobj = NULL;		// For 3D positioning.
 	mobj_t *plrmo = players[displayplayer].plr->mo;
 
 	volume = Pop();
@@ -1705,13 +1625,11 @@ static int CmdAmbientSound(void)
 	{
 		// SpawnMobj calls P_Random. We don't want that
 		// the random generator gets out of sync.
-		mobj = P_SpawnMobj(plrmo->x + (((M_Random()-127) * 2) << FRACBITS),
-			plrmo->y + (((M_Random()-127) * 2) << FRACBITS),
-			plrmo->z + (((M_Random()-127) * 2) << FRACBITS),
-			MT_CAMERA);	// A camera's a good temporary source.
+		mobj = P_SpawnMobj(plrmo->x + (((M_Random() - 127) * 2) << FRACBITS), plrmo->y + (((M_Random() - 127) * 2) << FRACBITS), plrmo->z + (((M_Random() - 127) * 2) << FRACBITS), MT_CAMERA);	// A camera's a good temporary source.
 		mobj->tics = 5 * 35;	// Five seconds should be enough.
 	}
-	S_StartSoundAtVolume(S_GetSoundID(ACStrings[Pop()]), mobj, volume/127.0f);
+	S_StartSoundAtVolume(S_GetSoundID(ACStrings[Pop()]), mobj,
+						 volume / 127.0f);
 	return SCRIPT_CONTINUE;
 }
 
@@ -1722,7 +1640,7 @@ static int CmdSoundSequence(void)
 	mobj = NULL;
 	if(ACScript->line)
 	{
-		mobj = (mobj_t *)&ACScript->line->frontsector->soundorg;
+		mobj = (mobj_t *) & ACScript->line->frontsector->soundorg;
 	}
 	SN_StartSequenceName(mobj, ACStrings[Pop()]);
 	return SCRIPT_CONTINUE;
@@ -1731,11 +1649,11 @@ static int CmdSoundSequence(void)
 static int CmdSetLineTexture(void)
 {
 	line_t *line;
-	int lineTag;
-	int side;
-	int position;
-	int texture;
-	int searcher;
+	int     lineTag;
+	int     side;
+	int     position;
+	int     texture;
+	int     searcher;
 
 	texture = R_TextureNumForName(ACStrings[Pop()]);
 	position = Pop();
@@ -1753,7 +1671,7 @@ static int CmdSetLineTexture(void)
 			sides[line->sidenum[side]].bottomtexture = texture;
 		}
 		else
-		{ // TEXTURE_TOP
+		{						// TEXTURE_TOP
 			sides[line->sidenum[side]].toptexture = texture;
 		}
 	}
@@ -1763,16 +1681,16 @@ static int CmdSetLineTexture(void)
 static int CmdSetLineBlocking(void)
 {
 	line_t *line;
-	int lineTag;
+	int     lineTag;
 	boolean blocking;
-	int searcher;
+	int     searcher;
 
-	blocking = Pop() ? ML_BLOCKING : 0;
+	blocking = Pop()? ML_BLOCKING : 0;
 	lineTag = Pop();
 	searcher = -1;
 	while((line = P_FindLine(lineTag, &searcher)) != NULL)
 	{
-		line->flags = (line->flags&~ML_BLOCKING)|blocking;
+		line->flags = (line->flags & ~ML_BLOCKING) | blocking;
 	}
 	return SCRIPT_CONTINUE;
 }
@@ -1780,9 +1698,9 @@ static int CmdSetLineBlocking(void)
 static int CmdSetLineSpecial(void)
 {
 	line_t *line;
-	int lineTag;
-	int special, arg1, arg2, arg3, arg4, arg5;
-	int searcher;
+	int     lineTag;
+	int     special, arg1, arg2, arg3, arg4, arg5;
+	int     searcher;
 
 	arg5 = Pop();
 	arg4 = Pop();
@@ -1804,23 +1722,25 @@ static int CmdSetLineSpecial(void)
 	return SCRIPT_CONTINUE;
 }
 
-
 // Console commands.
 int CCmdScriptInfo(int argc, char **argv)
 {
-	int		i, whichOne = -1;
-	char	*scriptStates[] =
-				{ "Inactive", "Running", "Suspended", "Waiting for tag", 
-				"Waiting for poly", "Waiting for script", "Terminating" };
+	int     i, whichOne = -1;
+	char   *scriptStates[] =
+		{ "Inactive", "Running", "Suspended", "Waiting for tag",
+		"Waiting for poly", "Waiting for script", "Terminating"
+	};
 
-	if(argc == 2) whichOne = atoi(argv[1]);
-	for(i=0; i<ACScriptCount; i++)
+	if(argc == 2)
+		whichOne = atoi(argv[1]);
+	for(i = 0; i < ACScriptCount; i++)
 	{
 		acsInfo_t *aptr = ACSInfo + i;
-		if(whichOne != -1 && whichOne != aptr->number) continue;
-		Con_Printf("%d %s (a: %d, w: %d)\n", aptr->number, scriptStates[aptr->state],
-			aptr->argCount, aptr->waitValue);
-	}	
+
+		if(whichOne != -1 && whichOne != aptr->number)
+			continue;
+		Con_Printf("%d %s (a: %d, w: %d)\n", aptr->number,
+				   scriptStates[aptr->state], aptr->argCount, aptr->waitValue);
+	}
 	return true;
 }
-

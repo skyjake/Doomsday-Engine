@@ -8,7 +8,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
-#include <ltdl.h>
+#  include <ltdl.h>
 typedef lt_dlhandle HINSTANCE;
 #endif
 
@@ -20,16 +20,16 @@ typedef lt_dlhandle HINSTANCE;
 
 // Default values.
 #if defined WIN32
-#	define DEFAULT_LIB_NAME "drOpenGL.dll"
+#  	define DEFAULT_LIB_NAME "drOpenGL.dll"
 #elif defined UNIX
-#	define DEFAULT_LIB_NAME "libdropengl"
+#  	define DEFAULT_LIB_NAME "libdropengl"
 #endif
 
 // Optional function. Doesn't need to be exported.
 #if defined WIN32
-#	define Opt(fname) gl.fname = (void*) GetProcAddress(dglHandle, "DG_"#fname)
+#  	define Opt(fname) gl.fname = (void*) GetProcAddress(dglHandle, "DG_"#fname)
 #elif defined UNIX
-#	define Opt(fname) gl.fname = lt_dlsym(dglHandle, "DG_"#fname)
+#  	define Opt(fname) gl.fname = lt_dlsym(dglHandle, "DG_"#fname)
 #endif
 
 // Required function. If not exported, the rendering DLL can't be used.
@@ -47,7 +47,7 @@ typedef lt_dlhandle HINSTANCE;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-dgldriver_t		__gl;			// Engine's internal function table.
+dgldriver_t __gl;				// Engine's internal function table.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -57,8 +57,8 @@ static HINSTANCE dglHandle;		// Instance handle to the rendering DLL.
 
 /*
  * DD_InitDGLDriver
- *	Returns true if no required functions are missing.
- *	All exported DGL functions should have the DG_ prefix (Driver/Graphics).
+ *  Returns true if no required functions are missing.
+ *  All exported DGL functions should have the DG_ prefix (Driver/Graphics).
  */
 int DD_InitDGLDriver(void)
 {
@@ -91,7 +91,7 @@ int DD_InitDGLDriver(void)
 	Req(TexImage);
 	Req(TexParameter);
 	Req(GetTexParameterv);
-	Req(Palette);	
+	Req(Palette);
 	Req(Bind);
 
 	// Matrix operations.
@@ -139,7 +139,7 @@ int DD_InitDGLDriver(void)
 	Req(Fog);
 	Req(Fogv);
 	Req(Project);
-	Req(ReadPixels); 
+	Req(ReadPixels);
 
 	// All was OK.
 	return true;
@@ -147,16 +147,17 @@ int DD_InitDGLDriver(void)
 
 /*
  * DD_InitDGL
- *	Load the rendering DLL and setup the driver struct. The rendering DLL
- *	could be changed at runtime (but such an operation is currently never 
- *	done). Returns true if successful.
+ *  Load the rendering DLL and setup the driver struct. The rendering DLL
+ *  could be changed at runtime (but such an operation is currently never 
+ *  done). Returns true if successful.
  */
 int DD_InitDGL(void)
 {
-	char *libName = DEFAULT_LIB_NAME;
+	char   *libName = DEFAULT_LIB_NAME;
 
 	// See if a specific renderer DLL is specified.
-	if(ArgCheckWith("-gl", 1)) libName = ArgNext();
+	if(ArgCheckWith("-gl", 1))
+		libName = ArgNext();
 
 	// Load the DLL.
 #ifdef WIN32
@@ -164,10 +165,10 @@ int DD_InitDGL(void)
 #endif
 #ifdef UNIX
 	dglHandle = lt_dlopenext(libName);
-#endif	
+#endif
 	if(!dglHandle)
 	{
-#ifdef WIN32		
+#ifdef WIN32
 		DD_ErrorBox(true, "DD_InitDGL: Loading of %s failed (error %i).\n",
 					libName, GetLastError());
 #endif
@@ -189,7 +190,8 @@ int DD_InitDGL(void)
 	// Check the version of the DLL.
 	if(gl.GetInteger(DGL_VERSION) < DGL_VERSION_NUM)
 	{
-		DD_ErrorBox(true, "DD_InitDGL: Version %i renderer found. "
+		DD_ErrorBox(true,
+					"DD_InitDGL: Version %i renderer found. "
 					"Version %i is required.\n", gl.GetInteger(DGL_VERSION),
 					DGL_VERSION_NUM);
 		return false;
@@ -199,7 +201,7 @@ int DD_InitDGL(void)
 
 /*
  * DD_ShutdownDGL
- *	Free the rendering DLL. You should shut it down first.
+ *  Free the rendering DLL. You should shut it down first.
  */
 void DD_ShutdownDGL(void)
 {
@@ -214,16 +216,15 @@ void DD_ShutdownDGL(void)
 
 /*
  * DD_GetDGLProcAddress
- *	Used by other modules (the Game) to get the addresses of the
- *	DGL routines.
+ *  Used by other modules (the Game) to get the addresses of the
+ *  DGL routines.
  */
-void *DD_GetDGLProcAddress(const char *name)
+void   *DD_GetDGLProcAddress(const char *name)
 {
 #ifdef WIN32
 	return GetProcAddress(dglHandle, name);
 #endif
 #ifdef UNIX
-	return (void*) lt_dlsym(dglHandle, name);
+	return (void *) lt_dlsym(dglHandle, name);
 #endif
 }
-

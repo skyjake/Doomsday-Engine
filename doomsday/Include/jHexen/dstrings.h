@@ -5,8 +5,6 @@
 //**
 //**************************************************************************
 
-
-
 // MN_menu.c ---------------------------------------------------------------
 
 #define PRESSKEY	"press a key."
@@ -205,4 +203,3 @@
 					"just have been a scream.\n\n"\
 					"then again, what about the other\n"\
 					"serpent riders?"
-

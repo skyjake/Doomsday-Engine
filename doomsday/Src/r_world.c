@@ -44,7 +44,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void R_PrepareSubsector(subsector_t *sub);
+void    R_PrepareSubsector(subsector_t * sub);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -52,10 +52,11 @@ void R_PrepareSubsector(subsector_t *sub);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int rendSkyLight = 1; // cvar
+int     rendSkyLight = 1;		// cvar
 
-char currentLevelId[64];
-//int leveltic;					// Restarts when a new map is set up.
+char    currentLevelId[64];
+
+//int leveltic;                 // Restarts when a new map is set up.
 
 sectorinfo_t *secinfo;
 subsectorinfo_t *subsecinfo;
@@ -72,16 +73,16 @@ static float skyColorBalance;
 // CODE --------------------------------------------------------------------
 
 #ifdef _MSC_VER
-#pragma optimize("g", off)
+#  pragma optimize("g", off)
 #endif
 
 //===========================================================================
 // R_IsValidLink
-//	We mustn't create links which form loops. This will start looking
-//	from destlink, and if it finds startsec we're in trouble.
+//  We mustn't create links which form loops. This will start looking
+//  from destlink, and if it finds startsec we're in trouble.
 //===========================================================================
-boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
-					   boolean is_floor)
+boolean R_IsValidLink(sector_t * startsec, sector_t * destlink,
+					  boolean is_floor)
 {
 	sector_t *sec = destlink;
 	sector_t *link;
@@ -93,16 +94,19 @@ boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
 		// Advance to the linked sector.
 		if(is_floor)
 		{
-			if(!sin->linkedfloor) break;
+			if(!sin->linkedfloor)
+				break;
 			link = sin->linkedfloor;
 		}
-		else 
+		else
 		{
-			if(!sin->linkedceil) break;
+			if(!sin->linkedceil)
+				break;
 			link = sin->linkedceil;
 		}
 		// Is there an illegal linkage?
-		if(sec == link || startsec == link) return false;
+		if(sec == link || startsec == link)
+			return false;
 		sec = link;
 	}
 	// No problems encountered.
@@ -111,12 +115,12 @@ boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
 
 //===========================================================================
 // R_SetSectorLinks
-//	Called every frame. Sector heights may change at any time 
-//	without notice.
+//  Called every frame. Sector heights may change at any time 
+//  without notice.
 //===========================================================================
-void R_SetSectorLinks(sector_t *sec)
+void R_SetSectorLinks(sector_t * sec)
 {
-	int i = GET_SECTOR_IDX(sec), k;
+	int     i = GET_SECTOR_IDX(sec), k;
 	sector_t *back;
 	boolean hackfloor, hackceil;
 	side_t *sid, *frontsid, *backsid;
@@ -125,18 +129,19 @@ void R_SetSectorLinks(sector_t *sec)
 	//return; //---DEBUG---
 
 	// Must have a valid sector!
-	if(!sec	|| !sec->linecount
-		|| secinfo[i].permanentlink) return; // Can't touch permanent links.
+	if(!sec || !sec->linecount || secinfo[i].permanentlink)
+		return;					// Can't touch permanent links.
 
 	hackfloor = (sec->floorpic != skyflatnum);
 	hackceil = (sec->ceilingpic != skyflatnum);
 	for(k = 0; k < sec->linecount; k++)
 	{
-		if(!hackfloor && !hackceil) break;
+		if(!hackfloor && !hackceil)
+			break;
 		// Most sectors will fail the test below.
-		if(!sec->lines[k]->frontsector
-			|| !sec->lines[k]->backsector) return;
-		// Check which way the line is facing.		
+		if(!sec->lines[k]->frontsector || !sec->lines[k]->backsector)
+			return;
+		// Check which way the line is facing.      
 		sid = SIDE_PTR(sec->lines[k]->sidenum[0]);
 		if(sid->sector == sec)
 		{
@@ -149,9 +154,11 @@ void R_SetSectorLinks(sector_t *sec)
 			backsid = sid;
 		}
 		back = backsid->sector;
-		if(back == sec) return; 
+		if(back == sec)
+			return;
 		// Check that there is something on the other side.
-		if(back->ceilingheight == back->floorheight) return;
+		if(back->ceilingheight == back->floorheight)
+			return;
 		// Check the conditions that prevent the invis plane.
 		if(back->floorheight == sec->floorheight)
 			hackfloor = false;
@@ -161,123 +168,131 @@ void R_SetSectorLinks(sector_t *sec)
 				sid = frontsid;
 			else
 				sid = backsid;
-			if(sid->bottomtexture || sid->midtexture) 
+			if(sid->bottomtexture || sid->midtexture)
 				hackfloor = false;
 			else if(R_IsValidLink(sec, back, true))
 				floorlink_candidate = back;
 		}
 		if(back->ceilingheight == sec->ceilingheight)
 			hackceil = false;
-		else 
+		else
 		{
 			if(back->ceilingheight < sec->ceilingheight)
 				sid = frontsid;
 			else
 				sid = backsid;
-			if(sid->toptexture || sid->midtexture) 
+			if(sid->toptexture || sid->midtexture)
 				hackceil = false;
 			else if(R_IsValidLink(sec, back, false))
 				ceillink_candidate = back;
 		}
 	}
-	if(hackfloor) 
+	if(hackfloor)
 	{
 		secinfo[i].linkedfloor = floorlink_candidate;
-		
-/*		if(floorlink_candidate)
-			Con_Printf("LF:%i->%i\n",
-				i, GET_SECTOR_IDX(floorlink_candidate));*/
+
+		/*      if(floorlink_candidate)
+		   Con_Printf("LF:%i->%i\n",
+		   i, GET_SECTOR_IDX(floorlink_candidate)); */
 	}
-	if(hackceil) 
+	if(hackceil)
 	{
 		secinfo[i].linkedceil = ceillink_candidate;
-		
-/*		if(ceillink_candidate)
-			Con_Printf("LC:%i->%i\n",
-				i, GET_SECTOR_IDX(ceillink_candidate));*/
+
+		/*      if(ceillink_candidate)
+		   Con_Printf("LC:%i->%i\n",
+		   i, GET_SECTOR_IDX(ceillink_candidate)); */
 	}
 }
 
 #ifdef _MSC_VER
-#pragma optimize("", on)
+#  pragma optimize("", on)
 #endif
 
 //==========================================================================
 // edgeClipper
-//	Returns a pointer to the list of points. It must be used.
+//  Returns a pointer to the list of points. It must be used.
 //==========================================================================
-fvertex_t *edgeClipper
-	(int *numpoints, fvertex_t *points, int numclippers, fdivline_t *clippers)
+fvertex_t *edgeClipper(int *numpoints, fvertex_t * points, int numclippers,
+					   fdivline_t * clippers)
 {
-	unsigned char	sidelist[MAX_POLY_SIDES];
-	int				i, k, num = *numpoints;
+	unsigned char sidelist[MAX_POLY_SIDES];
+	int     i, k, num = *numpoints;
 
 	// We'll clip the polygon with each of the divlines. The left side of
 	// each divline is discarded.
-	for(i=0; i<numclippers; i++)
+	for(i = 0; i < numclippers; i++)
 	{
-		fdivline_t *curclip = clippers+i;
+		fdivline_t *curclip = clippers + i;
 
 		// First we'll determine the side of each vertex. Points are allowed
 		// to be on the line.
-		for(k=0; k<num; k++)
+		for(k = 0; k < num; k++)
 		{
-			sidelist[k] = P_FloatPointOnLineSide(points+k, curclip);
+			sidelist[k] = P_FloatPointOnLineSide(points + k, curclip);
 		}
-		
-		for(k=0; k<num; k++)
+
+		for(k = 0; k < num; k++)
 		{
-			int startIdx = k, endIdx = k+1;
+			int     startIdx = k, endIdx = k + 1;
 
 			// Check the end index.
-			if(endIdx == num) endIdx = 0;	// Wrap-around.
+			if(endIdx == num)
+				endIdx = 0;		// Wrap-around.
 
 			// Clipping will happen when the ends are on different sides.
 			if(sidelist[startIdx] != sidelist[endIdx])
 			{
 				fvertex_t newvert;
+
 				// Find the intersection point of intersecting lines.
-				P_FloatInterceptVertex(points+startIdx, points+endIdx,
-					curclip, &newvert);
+				P_FloatInterceptVertex(points + startIdx, points + endIdx,
+									   curclip, &newvert);
 
 				// Add the new vertex. Also modify the sidelist.
-				points = (fvertex_t*)realloc(points,(++num)*sizeof(fvertex_t));
-				if(num >= MAX_POLY_SIDES) 
+				points =
+					(fvertex_t *) realloc(points, (++num) * sizeof(fvertex_t));
+				if(num >= MAX_POLY_SIDES)
 					Con_Error("Too many points in clipper.\n");
 
 				// Make room for the new vertex.
-				memmove(points+endIdx+1, points+endIdx, 
-					(num - endIdx-1)*sizeof(fvertex_t));
-				memcpy(points+endIdx, &newvert, sizeof(newvert));
+				memmove(points + endIdx + 1, points + endIdx,
+						(num - endIdx - 1) * sizeof(fvertex_t));
+				memcpy(points + endIdx, &newvert, sizeof(newvert));
 
-				memmove(sidelist+endIdx+1, sidelist+endIdx, num-endIdx-1);
+				memmove(sidelist + endIdx + 1, sidelist + endIdx,
+						num - endIdx - 1);
 				sidelist[endIdx] = 1;
-				
+
 				// Skip over the new vertex.
 				k++;
 			}
 		}
-		
+
 		// Now we must discard the points that are on the wrong side.
-		for(k=0; k<num; k++)
+		for(k = 0; k < num; k++)
 			if(!sidelist[k])
 			{
-				memmove(points+k, points+k+1, (num - k-1)*sizeof(fvertex_t));
-				memmove(sidelist+k, sidelist+k+1, num - k-1);
+				memmove(points + k, points + k + 1,
+						(num - k - 1) * sizeof(fvertex_t));
+				memmove(sidelist + k, sidelist + k + 1, num - k - 1);
 				num--;
 				k--;
 			}
 	}
 	// Screen out consecutive identical points.
-	for(i=0; i<num; i++)
+	for(i = 0; i < num; i++)
 	{
-		int previdx = i-1;
-		if(previdx < 0) previdx = num - 1;
-		if(points[i].x == points[previdx].x 
-			&& points[i].y == points[previdx].y)
+		int     previdx = i - 1;
+
+		if(previdx < 0)
+			previdx = num - 1;
+		if(points[i].x == points[previdx].x
+		   && points[i].y == points[previdx].y)
 		{
 			// This point (i) must be removed.
-			memmove(points+i, points+i+1, sizeof(fvertex_t)*(num-i-1));
+			memmove(points + i, points + i + 1,
+					sizeof(fvertex_t) * (num - i - 1));
 			num--;
 			i--;
 		}
@@ -292,26 +307,29 @@ fvertex_t *edgeClipper
 //
 //==========================================================================
 
-void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
+void R_ConvexClipper(subsector_t * ssec, int num, divline_t * list)
 {
-	int			numclippers = num+ssec->linecount;
-	fdivline_t	*clippers = (fdivline_t*) Z_Malloc(numclippers*sizeof(fdivline_t), PU_STATIC, 0);
-	int			i, numedgepoints;
-	fvertex_t	*edgepoints;
-	
+	int     numclippers = num + ssec->linecount;
+	fdivline_t *clippers =
+		(fdivline_t *) Z_Malloc(numclippers * sizeof(fdivline_t), PU_STATIC,
+								0);
+	int     i, numedgepoints;
+	fvertex_t *edgepoints;
+
 	// Convert the divlines to float, in reverse order.
-	for(i=0; i<numclippers; i++)
+	for(i = 0; i < numclippers; i++)
 	{
-		if(i<num)
+		if(i < num)
 		{
-			clippers[i].x = FIX2FLT(list[num-i-1].x);
-			clippers[i].y = FIX2FLT(list[num-i-1].y);
-			clippers[i].dx = FIX2FLT(list[num-i-1].dx);
-			clippers[i].dy = FIX2FLT(list[num-i-1].dy);
+			clippers[i].x = FIX2FLT(list[num - i - 1].x);
+			clippers[i].y = FIX2FLT(list[num - i - 1].y);
+			clippers[i].dx = FIX2FLT(list[num - i - 1].dx);
+			clippers[i].dy = FIX2FLT(list[num - i - 1].dy);
 		}
 		else
 		{
-			seg_t *seg = SEG_PTR(ssec->firstline+i-num);
+			seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
+
 			clippers[i].x = FIX2FLT(seg->v1->x);
 			clippers[i].y = FIX2FLT(seg->v1->y);
 			clippers[i].dx = FIX2FLT(seg->v2->x - seg->v1->x);
@@ -321,26 +339,28 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
 
 	// Setup the 'worldwide' polygon.
 	numedgepoints = 4;
-	edgepoints = (fvertex_t*) malloc(numedgepoints*sizeof(fvertex_t));
-	
+	edgepoints = (fvertex_t *) malloc(numedgepoints * sizeof(fvertex_t));
+
 	edgepoints[0].x = -32768;
 	edgepoints[0].y = 32768;
-	
+
 	edgepoints[1].x = 32768;
 	edgepoints[1].y = 32768;
-	
+
 	edgepoints[2].x = 32768;
 	edgepoints[2].y = -32768;
-	
+
 	edgepoints[3].x = -32768;
 	edgepoints[3].y = -32768;
 
 	// Do some clipping, <snip> <snip>
-	edgepoints = edgeClipper(&numedgepoints, edgepoints, numclippers, clippers);
+	edgepoints =
+		edgeClipper(&numedgepoints, edgepoints, numclippers, clippers);
 
 	if(!numedgepoints)
 	{
-		printf( "All clipped away: subsector %d\n", ((byte*)ssec-subsectors)/SUBSIZE);
+		printf("All clipped away: subsector %d\n",
+			   ((byte *) ssec - subsectors) / SUBSIZE);
 		ssec->numverts = 0;
 		ssec->verts = 0;
 		//ssec->origverts = 0;
@@ -349,8 +369,8 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
 	else
 	{
 		// We need these with dynamic lights.
-		ssec->verts = Z_Malloc(sizeof(fvertex_t)*numedgepoints, PU_LEVEL, 0);
-		memcpy(ssec->verts, edgepoints, sizeof(fvertex_t)*numedgepoints);
+		ssec->verts = Z_Malloc(sizeof(fvertex_t) * numedgepoints, PU_LEVEL, 0);
+		memcpy(ssec->verts, edgepoints, sizeof(fvertex_t) * numedgepoints);
 		ssec->numverts = numedgepoints;
 
 		R_PrepareSubsector(ssec);
@@ -361,21 +381,25 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
 	Z_Free(clippers);
 }
 
-void R_PrepareSubsector(subsector_t *sub)
+void R_PrepareSubsector(subsector_t * sub)
 {
-	int j, num = sub->numverts;
+	int     j, num = sub->numverts;
 
 	// Find the center point. First calculate the bounding box.
 	sub->bbox[0].x = sub->bbox[1].x = sub->verts[0].x;
 	sub->bbox[0].y = sub->bbox[1].y = sub->verts[0].y;
 	sub->midpoint.x = sub->verts[0].x;
 	sub->midpoint.y = sub->verts[0].y;
-	for(j=1; j<num; j++)
+	for(j = 1; j < num; j++)
 	{
-		if(sub->verts[j].x < sub->bbox[0].x) sub->bbox[0].x = sub->verts[j].x;
-		if(sub->verts[j].y < sub->bbox[0].y) sub->bbox[0].y = sub->verts[j].y;
-		if(sub->verts[j].x > sub->bbox[1].x) sub->bbox[1].x = sub->verts[j].x;
-		if(sub->verts[j].y > sub->bbox[1].y) sub->bbox[1].y = sub->verts[j].y;
+		if(sub->verts[j].x < sub->bbox[0].x)
+			sub->bbox[0].x = sub->verts[j].x;
+		if(sub->verts[j].y < sub->bbox[0].y)
+			sub->bbox[0].y = sub->verts[j].y;
+		if(sub->verts[j].x > sub->bbox[1].x)
+			sub->bbox[1].x = sub->verts[j].x;
+		if(sub->verts[j].y > sub->bbox[1].y)
+			sub->bbox[1].y = sub->verts[j].y;
 		sub->midpoint.x += sub->verts[j].x;
 		sub->midpoint.y += sub->verts[j].y;
 	}
@@ -391,15 +415,17 @@ void R_PrepareSubsector(subsector_t *sub)
 
 void R_PolygonizeWithoutCarving()
 {
-	int			i, j;
+	int     i, j;
 	subsector_t *sub;
-		
-	for(i=0; i<numsubsectors; i++)
+
+	for(i = 0; i < numsubsectors; i++)
 	{
 		sub = SUBSECTOR_PTR(i);
 		sub->numverts = sub->linecount;
-		sub->verts = (fvertex_t*) Z_Malloc(sizeof(fvertex_t) * sub->linecount, PU_LEVEL, 0);
-		for(j=0; j<sub->linecount; j++)
+		sub->verts =
+			(fvertex_t *) Z_Malloc(sizeof(fvertex_t) * sub->linecount,
+								   PU_LEVEL, 0);
+		for(j = 0; j < sub->linecount; j++)
 		{
 			sub->verts[j].x = FIX2FLT(SEG_PTR(sub->firstline + j)->v1->x);
 			sub->verts[j].y = FIX2FLT(SEG_PTR(sub->firstline + j)->v1->y);
@@ -410,21 +436,23 @@ void R_PolygonizeWithoutCarving()
 
 //==========================================================================
 // R_CreateFloorsAndCeilings
-//	Recursively polygonizes all ceilings and floors.
+//  Recursively polygonizes all ceilings and floors.
 //==========================================================================
-void R_CreateFloorsAndCeilings(int bspnode, int numdivlines, divline_t *divlines)
+void R_CreateFloorsAndCeilings(int bspnode, int numdivlines,
+							   divline_t * divlines)
 {
-	node_t		*nod;
-	divline_t	*childlist, *dl;
-	int			childlistsize = numdivlines+1;
-	
+	node_t *nod;
+	divline_t *childlist, *dl;
+	int     childlistsize = numdivlines + 1;
+
 	// If this is a subsector we are dealing with, begin carving with the
 	// given list.
 	if(bspnode & NF_SUBSECTOR)
 	{
 		// We have arrived at a subsector. The divline list contains all
 		// the partition lines that carve out the subsector.
-		int ssidx = bspnode & (~NF_SUBSECTOR);
+		int     ssidx = bspnode & (~NF_SUBSECTOR);
+
 		R_ConvexClipper(SUBSECTOR_PTR(ssidx), numdivlines, divlines);
 		// This leaf is done.
 		return;
@@ -434,10 +462,11 @@ void R_CreateFloorsAndCeilings(int bspnode, int numdivlines, divline_t *divlines
 	nod = NODE_PTR(bspnode);
 
 	// Allocate a new list for each child.
-	childlist = (divline_t*)malloc(childlistsize*sizeof(divline_t));
+	childlist = (divline_t *) malloc(childlistsize * sizeof(divline_t));
 
 	// Copy the previous lines, from the parent nodes.
-	if(divlines) memcpy(childlist,divlines,numdivlines*sizeof(divline_t));
+	if(divlines)
+		memcpy(childlist, divlines, numdivlines * sizeof(divline_t));
 
 	dl = childlist + numdivlines;
 	dl->x = nod->x;
@@ -445,13 +474,13 @@ void R_CreateFloorsAndCeilings(int bspnode, int numdivlines, divline_t *divlines
 	// The right child gets the original line (LEFT side clipped).
 	dl->dx = nod->dx;
 	dl->dy = nod->dy;
-	R_CreateFloorsAndCeilings(nod->children[0],childlistsize,childlist);
+	R_CreateFloorsAndCeilings(nod->children[0], childlistsize, childlist);
 
 	// The left side. We must reverse the line, otherwise the wrong
 	// side would get clipped.
 	dl->dx = -nod->dx;
 	dl->dy = -nod->dy;
-	R_CreateFloorsAndCeilings(nod->children[1],childlistsize,childlist);
+	R_CreateFloorsAndCeilings(nod->children[1], childlistsize, childlist);
 
 	// We are finishing with this node, free the allocated list.
 	free(childlist);
@@ -459,28 +488,30 @@ void R_CreateFloorsAndCeilings(int bspnode, int numdivlines, divline_t *divlines
 
 //==========================================================================
 // R_SkyFix
-//	Fixing the sky means that for adjacent sky sectors the lower sky 
-//	ceiling is lifted to match the upper sky. The raising only affects 
-//	rendering, it has no bearing on gameplay.
+//  Fixing the sky means that for adjacent sky sectors the lower sky 
+//  ceiling is lifted to match the upper sky. The raising only affects 
+//  rendering, it has no bearing on gameplay.
 //==========================================================================
 void R_SkyFix(void)
 {
-	boolean		adjusted;
-	int			i, f, b;
+	boolean adjusted;
+	int     i, f, b;
 
 	// Check all things first.
 	for(i = 0; i < numsectors; i++)
 	{
 		sector_t *sec = SECTOR_PTR(i);
 		mobj_t *it;
+
 		// Must have a sky ceiling.
-		if(sec->ceilingpic != skyflatnum) continue;
+		if(sec->ceilingpic != skyflatnum)
+			continue;
 		// Check that all the things in the sector fit in.
 		for(it = sec->thinglist; it; it = it->snext)
 		{
 			b = it->height >> FRACBITS;
-			f = (sec->ceilingheight >> FRACBITS) + sec->skyfix
-				- (sec->floorheight >> FRACBITS);
+			f = (sec->ceilingheight >> FRACBITS) + sec->skyfix -
+				(sec->floorheight >> FRACBITS);
 			if(b > f)
 			{
 				// Must increase skyfix.
@@ -488,15 +519,15 @@ void R_SkyFix(void)
 				if(verbose)
 				{
 					Con_Printf("S%i: (mo)skyfix to %i (ceil=%i)\n",
-						GET_SECTOR_IDX(sec), sec->skyfix,
-						(sec->ceilingheight>>FRACBITS)+sec->skyfix);
+							   GET_SECTOR_IDX(sec), sec->skyfix,
+							   (sec->ceilingheight >> FRACBITS) + sec->skyfix);
 				}
 			}
 		}
 	}
 
 	// We'll do this as long as we must to be sure all the sectors are fixed.
-	do 
+	do
 	{
 		adjusted = false;
 
@@ -505,43 +536,47 @@ void R_SkyFix(void)
 		{
 			line_t *line = LINE_PTR(i);
 			sector_t *front = line->frontsector, *back = line->backsector;
-			int fix = 0;
+			int     fix = 0;
 
 			// The conditions: must have two sides.
-			if(!front || !back) continue;
+			if(!front || !back)
+				continue;
 
 			// Both the front and back sectors must have the sky ceiling.
-			if(front->ceilingpic != skyflatnum 
-				|| back->ceilingpic != skyflatnum) continue;
+			if(front->ceilingpic != skyflatnum
+			   || back->ceilingpic != skyflatnum)
+				continue;
 
 			f = (front->ceilingheight >> FRACBITS) + front->skyfix;
 			b = (back->ceilingheight >> FRACBITS) + back->skyfix;
 			if(f < b)
 			{
-				fix = b - (front->ceilingheight>>FRACBITS);
+				fix = b - (front->ceilingheight >> FRACBITS);
 				if(fix > front->skyfix)
 				{
 					front->skyfix = fix;
 					if(verbose)
 					{
 						Con_Printf("S%i: skyfix to %i (ceil=%i)\n",
-							GET_SECTOR_IDX(front), front->skyfix,
-							(front->ceilingheight>>FRACBITS)+front->skyfix);
+								   GET_SECTOR_IDX(front), front->skyfix,
+								   (front->ceilingheight >> FRACBITS) +
+								   front->skyfix);
 					}
 					adjusted = true;
 				}
 			}
 			else if(f > b)
 			{
-				fix = f - (back->ceilingheight>>FRACBITS);
+				fix = f - (back->ceilingheight >> FRACBITS);
 				if(fix > back->skyfix)
 				{
 					back->skyfix = fix;
 					if(verbose)
 					{
 						Con_Printf("S%i: skyfix to %i (ceil=%i)\n",
-							GET_SECTOR_IDX(back), back->skyfix,
-							(back->ceilingheight>>FRACBITS)+back->skyfix);
+								   GET_SECTOR_IDX(back), back->skyfix,
+								   (back->ceilingheight >> FRACBITS) +
+								   back->skyfix);
 					}
 					adjusted = true;
 				}
@@ -551,34 +586,41 @@ void R_SkyFix(void)
 	while(adjusted);
 }
 
-static float TriangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
+static float TriangleArea(fvertex_t * o, fvertex_t * s, fvertex_t * t)
 {
-	fvertex_t a = { s->x - o->x, s->y - o->y }, 
-		b = { t->x - o->x, t->y - o->y };
-	float area = (a.x*b.y - b.x*a.y) / 2;
-	if(area < 0) area = -area;
+	fvertex_t a = { s->x - o->x, s->y - o->y }, b =
+	{
+	t->x - o->x, t->y - o->y};
+	float   area = (a.x * b.y - b.x * a.y) / 2;
+
+	if(area < 0)
+		area = -area;
 	return area;
 }
 
 //===========================================================================
 // R_TestTriFan
-//	Returns true if 'base' is a good tri-fan base.
+//  Returns true if 'base' is a good tri-fan base.
 //===========================================================================
-int R_TestTriFan(subsector_t *sub, int base)
+int R_TestTriFan(subsector_t * sub, int base)
 {
 #define TRIFAN_LIMIT	0.1
-	int i, a, b;
+	int     i, a, b;
 
-	if(sub->numverts == 3) return true;	// They're all valid.
+	if(sub->numverts == 3)
+		return true;			// They're all valid.
 	// Higher vertex counts need checking.
-	for(i=0; i<sub->numverts-2; i++)
+	for(i = 0; i < sub->numverts - 2; i++)
 	{
 		a = base + 1 + i;
 		b = a + 1;
-		if(a >= sub->numverts) a -= sub->numverts;
-		if(b >= sub->numverts) b -= sub->numverts;
-		if(TriangleArea(sub->verts + base, sub->verts + a, 
-			sub->verts + b) <= TRIFAN_LIMIT) return false;
+		if(a >= sub->numverts)
+			a -= sub->numverts;
+		if(b >= sub->numverts)
+			b -= sub->numverts;
+		if(TriangleArea(sub->verts + base, sub->verts + a, sub->verts + b) <=
+		   TRIFAN_LIMIT)
+			return false;
 	}
 	// Whole triangle fan checked out OK, must be good.
 	return true;
@@ -589,10 +631,10 @@ int R_TestTriFan(subsector_t *sub, int base)
 //===========================================================================
 void R_SubsectorPlanes(void)
 {
-	int	i, k, num;
+	int     i, k, num;
 	subsector_t *sub;
 	fvertex_t buf[RL_MAX_POLY_SIDES];
-	
+
 	for(i = 0; i < numsubsectors; i++)
 	{
 		sub = SUBSECTOR_PTR(i);
@@ -606,11 +648,11 @@ void R_SubsectorPlanes(void)
 			{
 				// Yes! This'll do nicely. Change the order of the
 				// vertices so that k comes first.
-				if(k)	// Need to change?
+				if(k)			// Need to change?
 				{
 					memcpy(buf, sub->verts, sizeof(fvertex_t) * num);
-					memcpy(sub->verts, buf + k, sizeof(fvertex_t) * (num-k));
-					memcpy(sub->verts + (num-k), buf, sizeof(fvertex_t) * k);
+					memcpy(sub->verts, buf + k, sizeof(fvertex_t) * (num - k));
+					memcpy(sub->verts + (num - k), buf, sizeof(fvertex_t) * k);
 				}
 				goto ddSP_NextSubSctr;
 			}
@@ -620,64 +662,68 @@ void R_SubsectorPlanes(void)
 		sub->flags |= DDSUBF_MIDPOINT;
 		//Con_Message("Using midpoint for subsctr %i.\n", i);
 
-ddSP_NextSubSctr:;
+	  ddSP_NextSubSctr:;
 	}
 }
 
-void R_SetVertexOwner(int idx, sector_t *secptr)
+void R_SetVertexOwner(int idx, sector_t * secptr)
 {
-	int i;
+	int     i;
 	vertexowner_t *own;
 	unsigned short *list;
-	int sector;
+	int     sector;
 
-	if(!secptr) return;
+	if(!secptr)
+		return;
 	sector = GET_SECTOR_IDX(secptr);
 	own = vertexowners + idx;
 	// Has this sector been already registered?
-	for(i=0; i<own->num; i++)
-		if(own->list[i] == sector) return;	// Yes, we can exit.
+	for(i = 0; i < own->num; i++)
+		if(own->list[i] == sector)
+			return;				// Yes, we can exit.
 	// Add a new owner.
 	own->num++;
 	// Allocate a new list.
-	list = (unsigned short*) Z_Malloc(sizeof(unsigned short) * own->num, 
-		PU_LEVEL, 0);
+	list =
+		(unsigned short *) Z_Malloc(sizeof(unsigned short) * own->num,
+									PU_LEVEL, 0);
 	// If there are previous references, copy them.
 	if(own->num > 1)
 	{
-		memcpy(list, own->list, sizeof(unsigned short) * (own->num-1));
+		memcpy(list, own->list, sizeof(unsigned short) * (own->num - 1));
 		// Free the old list.
 		Z_Free(own->list);
 	}
-	own->list = list;	
+	own->list = list;
 	own->list[own->num - 1] = sector;
 }
 
 //==========================================================================
 // R_InitVertexOwners
-//	Generates an array of sector references for each vertex. The list 
-//	includes all the sectors the vertex belongs to.
+//  Generates an array of sector references for each vertex. The list 
+//  includes all the sectors the vertex belongs to.
 //==========================================================================
 void R_InitVertexOwners(void)
 {
-	int i, k, p, v[2];
-	byte *ptr;
+	int     i, k, p, v[2];
+	byte   *ptr;
 	sector_t *sec;
-		
+
 	// Allocate enough memory.
-	vertexowners = (vertexowner_t*) Z_Malloc(sizeof(vertexowner_t) *
-		numvertexes, PU_LEVEL, 0);
+	vertexowners =
+		(vertexowner_t *) Z_Malloc(sizeof(vertexowner_t) * numvertexes,
+								   PU_LEVEL, 0);
 	memset(vertexowners, 0, sizeof(vertexowner_t) * numvertexes);
 
-	for(i=0, ptr=sectors; i<numsectors; i++, ptr += SECTSIZE)
+	for(i = 0, ptr = sectors; i < numsectors; i++, ptr += SECTSIZE)
 	{
-		sec = (sector_t*) ptr;
+		sec = (sector_t *) ptr;
 		// Traversing the line list will do fine.
-		for(k=0; k<sec->linecount; k++)
+		for(k = 0; k < sec->linecount; k++)
 		{
-			v[0] = ( (byte*) sec->lines[k]->v1 - vertexes) / VTXSIZE;
-			v[1] = ( (byte*) sec->lines[k]->v2 - vertexes) / VTXSIZE;
-			for(p=0; p<2; p++)
+			v[0] = ((byte *) sec->lines[k]->v1 - vertexes) / VTXSIZE;
+			v[1] = ((byte *) sec->lines[k]->v2 - vertexes) / VTXSIZE;
+			for(p = 0; p < 2; p++)
 			{
 				R_SetVertexOwner(v[p], sec->lines[k]->frontsector);
 				R_SetVertexOwner(v[p], sec->lines[k]->backsector);
@@ -687,76 +733,76 @@ void R_InitVertexOwners(void)
 }
 
 /*boolean DD_SubContainTest(sector_t *innersec, sector_t *outersec)
-{
-	int i, k;
-	boolean contained;
-	float in[4], out[4];
-	subsector_t *isub, *osub;
+   {
+   int i, k;
+   boolean contained;
+   float in[4], out[4];
+   subsector_t *isub, *osub;
 
-	// Test each subsector of innersec against all subsectors of outersec.
-	for(i=0; i<numsubsectors; i++)
-	{
-		isub = SUBSECTOR_PTR(i);
-		contained = false;
-		// Only accept innersec's subsectors.
-		if(isub->sector != innersec) continue;
-		for(k=0; k<numsubsectors && !contained; k++)
-		{
-			osub = SUBSECTOR_PTR(i);
-			// Only accept outersec's subsectors.
-			if(osub->sector != outersec) continue;
-			// Test if isub is inside osub.
-			if(isub->bbox[BLEFT] >= osub->bbox[BLEFT]
-				&& isub->bbox[BRIGHT] <= osub->bbox[BRIGHT]
-				&& isub->bbox[BTOP] >= osub->bbox[BTOP]
-				&& isub->bbox[BBOTTOM] <= osub->bbox[BBOTTOM])
-			{
-				// This is contained.
-				contained = true;
-			}
-		}
-		if(!contained) return false;
-	}
-	// All tested subsectors were contained!
-	return true;
-}*/
+   // Test each subsector of innersec against all subsectors of outersec.
+   for(i=0; i<numsubsectors; i++)
+   {
+   isub = SUBSECTOR_PTR(i);
+   contained = false;
+   // Only accept innersec's subsectors.
+   if(isub->sector != innersec) continue;
+   for(k=0; k<numsubsectors && !contained; k++)
+   {
+   osub = SUBSECTOR_PTR(i);
+   // Only accept outersec's subsectors.
+   if(osub->sector != outersec) continue;
+   // Test if isub is inside osub.
+   if(isub->bbox[BLEFT] >= osub->bbox[BLEFT]
+   && isub->bbox[BRIGHT] <= osub->bbox[BRIGHT]
+   && isub->bbox[BTOP] >= osub->bbox[BTOP]
+   && isub->bbox[BBOTTOM] <= osub->bbox[BBOTTOM])
+   {
+   // This is contained.
+   contained = true;
+   }
+   }
+   if(!contained) return false;
+   }
+   // All tested subsectors were contained!
+   return true;
+   } */
 
 //===========================================================================
 // R_GetContainingSectorOf
-//	The test is done on subsectors.
+//  The test is done on subsectors.
 //===========================================================================
-sector_t *R_GetContainingSectorOf(sector_t *sec)
+sector_t *R_GetContainingSectorOf(sector_t * sec)
 {
-	int i;
-	float cdiff = -1, diff;
-	float inner[4], outer[4];
+	int     i;
+	float   cdiff = -1, diff;
+	float   inner[4], outer[4];
 	sector_t *other, *closest = NULL;
-	
+
 	memcpy(inner, secinfo[GET_SECTOR_IDX(sec)].bounds, sizeof(inner));
 
 	// Try all sectors that fit in the bounding box.
 	for(i = 0; i < numsectors; i++)
 	{
 		other = SECTOR_PTR(i);
-		if(!other->linecount) continue;
-		if(other == sec) continue;	// Don't try on self!
+		if(!other->linecount)
+			continue;
+		if(other == sec)
+			continue;			// Don't try on self!
 		memcpy(outer, secinfo[i].bounds, sizeof(outer));
-		if(inner[BLEFT] >= outer[BLEFT]
-			&& inner[BRIGHT] <= outer[BRIGHT]
-			&& inner[BTOP] >= outer[BTOP]
-			&& inner[BBOTTOM] <= outer[BBOTTOM])
+		if(inner[BLEFT] >= outer[BLEFT] && inner[BRIGHT] <= outer[BRIGHT]
+		   && inner[BTOP] >= outer[BTOP] && inner[BBOTTOM] <= outer[BBOTTOM])
 		{
 			// Inside! Now we must test each of the subsectors. Otherwise
 			// we can't be sure...
 			/*if(DD_SubContainTest(sec, other))
-			{*/
-				// Sec is totally and completely inside other!
-				diff = M_BoundingBoxDiff(inner, outer);
-				if(cdiff < 0 || diff <= cdiff)
-				{
-					closest = other;
-					cdiff = diff;
-				}
+			   { */
+			// Sec is totally and completely inside other!
+			diff = M_BoundingBoxDiff(inner, outer);
+			if(cdiff < 0 || diff <= cdiff)
+			{
+				closest = other;
+				cdiff = diff;
+			}
 			//}
 		}
 	}
@@ -768,7 +814,7 @@ sector_t *R_GetContainingSectorOf(sector_t *sec)
 //===========================================================================
 void R_InitSectorInfo(void)
 {
-	int i, k;
+	int     i, k;
 	sectorinfo_t *info;
 	sector_t *sec, *other;
 	line_t *lin;
@@ -783,38 +829,37 @@ void R_InitSectorInfo(void)
 	for(i = 0, info = secinfo; i < numsectors; i++, info++)
 	{
 		sec = SECTOR_PTR(i);
-		if(!sec->linecount) continue;
+		if(!sec->linecount)
+			continue;
 		dohack = true;
 		for(k = 0; k < sec->linecount; k++)
 		{
 			lin = sec->lines[k];
-			if(!lin->frontsector 
-				|| !lin->backsector
-				|| lin->frontsector != lin->backsector)
+			if(!lin->frontsector || !lin->backsector
+			   || lin->frontsector != lin->backsector)
 			{
 				dohack = false;
 				break;
-			}			
+			}
 		}
 		if(dohack)
 		{
 			// Link permanently.
 			info->permanentlink = true;
-			info->linkedceil 
-				= info->linkedfloor
-				= R_GetContainingSectorOf(sec);
+			info->linkedceil = info->linkedfloor =
+				R_GetContainingSectorOf(sec);
 			if(info->linkedceil)
 			{
-				Con_Printf("Linking S%i planes permanently to S%i\n",
-					i, GET_SECTOR_IDX(info->linkedceil));
+				Con_Printf("Linking S%i planes permanently to S%i\n", i,
+						   GET_SECTOR_IDX(info->linkedceil));
 			}
 		}
 
 		// Is this sector large enough to be a dominant light source?
-		if(info->lightsource == NULL &&
-		   (sec->ceilingpic == skyflatnum || sec->floorpic == skyflatnum) &&
-		   info->bounds[BRIGHT] - info->bounds[BLEFT] > DOMINANT_SIZE &&
-		   info->bounds[BBOTTOM] - info->bounds[BTOP] > DOMINANT_SIZE)
+		if(info->lightsource == NULL
+		   && (sec->ceilingpic == skyflatnum || sec->floorpic == skyflatnum)
+		   && info->bounds[BRIGHT] - info->bounds[BLEFT] > DOMINANT_SIZE
+		   && info->bounds[BBOTTOM] - info->bounds[BTOP] > DOMINANT_SIZE)
 		{
 			// All sectors touching this one will be affected.
 			for(k = 0; k < sec->linecount; k++)
@@ -823,7 +868,8 @@ void R_InitSectorInfo(void)
 				if(!other || other == sec)
 				{
 					other = sec->lines[k]->backsector;
-					if(!other || other == sec) continue;
+					if(!other || other == sec)
+						continue;
 				}
 				SECT_INFO(other)->lightsource = sec;
 			}
@@ -834,10 +880,10 @@ void R_InitSectorInfo(void)
 //===========================================================================
 // R_InitPlanePoly
 //===========================================================================
-void R_InitPlanePoly
-	(planeinfo_t *plane, boolean reverse, subsector_t *subsector)
+void R_InitPlanePoly(planeinfo_t * plane, boolean reverse,
+					 subsector_t * subsector)
 {
-	int numvrts;
+	int     numvrts;
 	fvertex_t *vrts, *vtx, *pv;
 
 	// Take the subsector's vertices.
@@ -849,31 +895,31 @@ void R_InitPlanePoly
 	{
 		// Triangle fan base is the midpoint of the subsector.
 		plane->numvertices = 2 + numvrts;
-		plane->vertices = Z_Malloc(sizeof(fvertex_t) * plane->numvertices,
-			PU_LEVEL, 0);
+		plane->vertices =
+			Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVEL, 0);
 
 		memcpy(plane->vertices, &subsector->midpoint, sizeof(fvertex_t));
-		
-		vtx = vrts + (!reverse? 0 : numvrts-1);
+
+		vtx = vrts + (!reverse ? 0 : numvrts - 1);
 		pv = plane->vertices + 1;
 	}
 	else
 	{
 		plane->numvertices = numvrts;
-		plane->vertices = Z_Malloc(sizeof(fvertex_t) * plane->numvertices, 
-			PU_LEVEL, 0);
+		plane->vertices =
+			Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVEL, 0);
 
 		// The first vertex is always the same: vertex zero.
 		pv = plane->vertices;
 		memcpy(pv, &vrts[0], sizeof(*pv));
 
-		vtx = vrts + (!reverse? 1 : numvrts-1);
-		pv++; 
+		vtx = vrts + (!reverse ? 1 : numvrts - 1);
+		pv++;
 		numvrts--;
 	}
 
 	// Add the rest of the vertices.
-	for(; numvrts > 0; numvrts--, (!reverse? vtx++ : vtx--), pv++)
+	for(; numvrts > 0; numvrts--, (!reverse ? vtx++ : vtx--), pv++)
 		memcpy(pv, vtx, sizeof(*vtx));
 
 	if(subsector->flags & DDSUBF_MIDPOINT)
@@ -888,7 +934,7 @@ void R_InitPlanePoly
 //===========================================================================
 void R_InitSubsectorInfo(void)
 {
-	int i;
+	int     i;
 	subsector_t *sub;
 	subsectorinfo_t *info;
 	sector_t *sector;
@@ -898,21 +944,21 @@ void R_InitSubsectorInfo(void)
 	Con_Printf("R_InitSubsectorInfo: %i bytes.\n", i);
 #endif
 	subsecinfo = Z_Calloc(i, PU_LEVEL, NULL);
-	
+
 	Z_CheckHeap();
 
 	for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
 	{
 		sub = SUBSECTOR_PTR(i);
 		sector = sub->sector;
-		
+
 		// Init floor plane.
 		info->floor.isfloor = true;
 		R_InitPlanePoly(&info->floor, false, sub);
 
 		// Init ceiling plane.
 		info->ceil.isfloor = false;
-		R_InitPlanePoly(&info->ceil, true, sub);	
+		R_InitPlanePoly(&info->ceil, true, sub);
 	}
 
 	Z_CheckHeap();
@@ -920,13 +966,13 @@ void R_InitSubsectorInfo(void)
 
 //===========================================================================
 // R_SetupFog
-//	Mapinfo must be set.
+//  Mapinfo must be set.
 //===========================================================================
 void R_SetupFog(void)
 {
-	int flags;
+	int     flags;
 
-	if(!mapinfo) 
+	if(!mapinfo)
 	{
 		// Go with the defaults.
 		Con_Execute("fog off", true);
@@ -942,10 +988,9 @@ void R_SetupFog(void)
 		Con_Executef(true, "fog start %f", mapinfo->fog_start);
 		Con_Executef(true, "fog end %f", mapinfo->fog_end);
 		Con_Executef(true, "fog density %f", mapinfo->fog_density);
-		Con_Executef(true, "fog color %.0f %.0f %.0f", 
-			mapinfo->fog_color[0]*255,
-			mapinfo->fog_color[1]*255, 
-			mapinfo->fog_color[2]*255);
+		Con_Executef(true, "fog color %.0f %.0f %.0f",
+					 mapinfo->fog_color[0] * 255, mapinfo->fog_color[1] * 255,
+					 mapinfo->fog_color[2] * 255);
 	}
 	else
 	{
@@ -955,11 +1000,11 @@ void R_SetupFog(void)
 
 //===========================================================================
 // R_SetupSky
-//	Mapinfo must be set.
+//  Mapinfo must be set.
 //===========================================================================
 void R_SetupSky(void)
 {
-	int i, k;
+	int     i, k;
 
 	if(!mapinfo)
 	{
@@ -985,9 +1030,10 @@ void R_SetupSky(void)
 		if(k & SLF_ENABLED)
 		{
 			Rend_SkyParams(i, DD_ENABLE, 0);
-			Rend_SkyParams(i, DD_TEXTURE, R_TextureNumForName(
-							   mapinfo->sky_layers[i].texture));
-			Rend_SkyParams(i, DD_MASK, k & SLF_MASKED? DD_YES : DD_NO);
+			Rend_SkyParams(i, DD_TEXTURE,
+						   R_TextureNumForName(mapinfo->sky_layers[i].
+											   texture));
+			Rend_SkyParams(i, DD_MASK, k & SLF_MASKED ? DD_YES : DD_NO);
 			Rend_SkyParams(i, DD_OFFSET, mapinfo->sky_layers[i].offset);
 			Rend_SkyParams(i, DD_COLOR_LIMIT,
 						   mapinfo->sky_layers[i].color_limit);
@@ -1007,19 +1053,20 @@ void R_SetupSky(void)
 	for(i = 0; i < 3; i++)
 	{
 		skyColorRGB[i] = (byte) (255 * mapinfo->sky_color[i]);
-		if(mapinfo->sky_color[i] > 0) noSkyColorGiven = false;
+		if(mapinfo->sky_color[i] > 0)
+			noSkyColorGiven = false;
 	}
 
 	// Calculate a balancing factor, so the light in the non-skylit
 	// sectors won't appear too bright.
-	if(false &&
-	   (mapinfo->sky_color[0] > 0 ||
-		mapinfo->sky_color[1] > 0 ||
-		mapinfo->sky_color[2] > 0))
+	if(false
+	   && (mapinfo->sky_color[0] > 0 || mapinfo->sky_color[1] > 0
+		   || mapinfo->sky_color[2] > 0))
 	{
-		skyColorBalance = (0 + (mapinfo->sky_color[0]*2 +
-								mapinfo->sky_color[1]*3 +
-								mapinfo->sky_color[2]*2) / 7) / 1;
+		skyColorBalance =
+			(0 +
+			 (mapinfo->sky_color[0] * 2 + mapinfo->sky_color[1] * 3 +
+			  mapinfo->sky_color[2] * 2) / 7) / 1;
 	}
 	else
 	{
@@ -1032,7 +1079,7 @@ void R_SetupSky(void)
  * verts[0] is the leftmost vertex and verts[1] is the rightmost
  * vertex, when the line lies at the edge of `sector.'
  */
-void R_OrderVertices(line_t *line, sector_t *sector, vertex_t *verts[2])
+void R_OrderVertices(line_t * line, sector_t * sector, vertex_t * verts[2])
 {
 	if(sector == line->frontsector)
 	{
@@ -1049,40 +1096,45 @@ void R_OrderVertices(line_t *line, sector_t *sector, vertex_t *verts[2])
 /*
  * A neighbour is a line that shares a vertex with 'line', and faces
  * the specified sector.  Finds both the left and right neighbours.
- */ 
-void R_FindLineNeighbors(sector_t *sector, line_t *line,
+ */
+void R_FindLineNeighbors(sector_t * sector, line_t * line,
 						 struct line_s **neighbors, int alignment)
 {
 	struct line_s *other;
 	vertex_t *vtx[2];
-	int j;
+	int     j;
 
 	// We want to know, which vertex is the leftmost/rightmost one.
 	R_OrderVertices(line, sector, vtx);
-	
+
 	// Find the real neighbours, which are in the same sector
 	// as this line.
 	for(j = 0; j < sector->linecount; j++)
 	{
 		other = sector->lines[j];
-		if(other == line) continue;
+		if(other == line)
+			continue;
 
 		// Is this a valid neighbour?
-		if(other->frontsector == sector &&
-		   other->backsector == sector) continue;
+		if(other->frontsector == sector && other->backsector == sector)
+			continue;
 
 		// Do we need to test the line alignment?
 		if(alignment)
 		{
 #define SEP 10
 			binangle_t diff = LINE_INFO(line)->angle - LINE_INFO(other)->angle;
+
 			/*if(!(diff < SEP && diff > BANG_MAX - SEP) &&
 			   !(diff < BANG_180 + SEP && diff > BANG_180 - SEP))
-			   continue; // Misaligned.*/
+			   continue; // Misaligned. */
 
-			if(alignment < 0) diff -= BANG_180;
-			if(other->frontsector != sector) diff -= BANG_180;
-			if(!(diff < SEP || diff > BANG_MAX - SEP)) continue; // Misaligned.
+			if(alignment < 0)
+				diff -= BANG_180;
+			if(other->frontsector != sector)
+				diff -= BANG_180;
+			if(!(diff < SEP || diff > BANG_MAX - SEP))
+				continue;		// Misaligned.
 		}
 
 		// It's our 'left' neighbour if it shares v1.
@@ -1094,7 +1146,8 @@ void R_FindLineNeighbors(sector_t *sector, line_t *line,
 			neighbors[1] = other;
 
 		// Do we have everything we want?
-		if(neighbors[0] && neighbors[1]) break;
+		if(neighbors[0] && neighbors[1])
+			break;
 	}
 }
 
@@ -1102,16 +1155,17 @@ void R_FindLineNeighbors(sector_t *sector, line_t *line,
  * Browse through the lines in backSector.  The backNeighbor is the
  * line that 1) isn't realNeighbor and 2) connects to commonVertex.
  */
-void R_FindBackNeighbor(sector_t *backSector, line_t *realNeighbor,
-						vertex_t *commonVertex, line_t **backNeighbor)
+void R_FindBackNeighbor(sector_t * backSector, line_t * realNeighbor,
+						vertex_t * commonVertex, line_t ** backNeighbor)
 {
-	int i;
+	int     i;
 	line_t *line;
 
 	for(i = 0; i < backSector->linecount; i++)
 	{
 		line = backSector->lines[i];
-		if(line == realNeighbor) continue;
+		if(line == realNeighbor)
+			continue;
 		if(line->v1 == commonVertex || line->v2 == commonVertex)
 		{
 			*backNeighbor = line;
@@ -1128,7 +1182,7 @@ void R_InitLineInfo(void)
 {
 	line_t *line;
 	sector_t *sector;
-	int	i, k, j, m;
+	int     i, k, j, m;
 	lineinfo_t *info;
 	lineinfo_side_t *side;
 	vertexowner_t *owner;
@@ -1155,25 +1209,25 @@ void R_InitLineInfo(void)
 			info = LINE_INFO(line);
 
 			// Which side is this?
-			side = (line->frontsector == sector? &info->side[0] :
-					&info->side[1]);
+			side =
+				(line->frontsector ==
+				 sector ? &info->side[0] : &info->side[1]);
 
 			R_FindLineNeighbors(sector, line, side->neighbor, 0);
 
 			R_OrderVertices(line, sector, vertices);
-		
+
 			// Figure out the sectors in the proximity.
 			for(j = 0; j < 2; j++)
 			{
 				// Neighbour must be two-sided.
-				if(side->neighbor[j] &&
-				   side->neighbor[j]->frontsector &&
-				   side->neighbor[j]->backsector)
+				if(side->neighbor[j] && side->neighbor[j]->frontsector
+				   && side->neighbor[j]->backsector)
 				{
 					side->proxsector[j] =
-						(side->neighbor[j]->frontsector == sector?
-						 side->neighbor[j]->backsector :
-						 side->neighbor[j]->frontsector);
+						(side->neighbor[j]->frontsector ==
+						 sector ? side->neighbor[j]->backsector : side->
+						 neighbor[j]->frontsector);
 
 					// Find the backneighbour.  They are the
 					// neighbouring lines in the backsectors of the
@@ -1194,19 +1248,19 @@ void R_InitLineInfo(void)
 				for(m = 0; m < owner->num; m++)
 				{
 					//if(owner->list[m] == k) continue;
-					R_FindLineNeighbors(SECTOR_PTR(owner->list[m]),
-										line, side->alignneighbor,
-										side == &info->side[0]? 1 : -1);
+					R_FindLineNeighbors(SECTOR_PTR(owner->list[m]), line,
+										side->alignneighbor,
+										side == &info->side[0] ? 1 : -1);
 				}
 			}
 
-/*			// How about the other sector?
-			if(!line->backsector || !line->frontsector)
-				continue; // Single-sided.
+			/*          // How about the other sector?
+			   if(!line->backsector || !line->frontsector)
+			   continue; // Single-sided.
 
-			R_FindLineNeighbors(line->frontsector == sector?
-								line->backsector : line->frontsector,
-								line, info->backneighbor);*/
+			   R_FindLineNeighbors(line->frontsector == sector?
+			   line->backsector : line->frontsector,
+			   line, info->backneighbor); */
 		}
 	}
 
@@ -1220,10 +1274,14 @@ void R_InitLineInfo(void)
 				line = LINE_PTR(i);
 				side = LINE_INFO(line)->side + k;
 				if(side->alignneighbor[0] || side->alignneighbor[1])
-					Con_Printf("Line %i/%i: l=%i r=%i\n",
-					   i, k,
-					   side->alignneighbor[0]? GET_LINE_IDX(side->alignneighbor[0]) : -1,
-					   side->alignneighbor[1]? GET_LINE_IDX(side->alignneighbor[1]) : -1);
+					Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
+							   side->alignneighbor[0] ? GET_LINE_IDX(side->
+																	 alignneighbor
+																	 [0]) : -1,
+							   side->alignneighbor[1] ? GET_LINE_IDX(side->
+																	 alignneighbor
+																	 [1]) :
+							   -1);
 			}
 		}
 	}
@@ -1238,23 +1296,23 @@ void R_InitLineInfo(void)
  */
 void R_SetupLevel(char *level_id, int flags)
 {
-	int i;
+	int     i;
 
 	// First check for some special tasks.
 	if(flags & DDSLF_INIT_LINKS)
 	{
 		// Init polyobj blockmap.
 		P_InitPolyBlockMap();
-	
+
 		// Initialize node piles and line rings.
-		NP_Init(&thingnodes, 256); // Allocate a small pile.
+		NP_Init(&thingnodes, 256);	// Allocate a small pile.
 		NP_Init(&linenodes, numlines + 1000);
 
 		// Allocate the rings.
 		linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVEL, 0);
 		for(i = 0; i < numlines; i++)
 			linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
-		return;	// Do nothing else.
+		return;					// Do nothing else.
 	}
 	if(flags & DDSLF_SERVER_ONLY)
 	{
@@ -1277,7 +1335,8 @@ void R_SetupLevel(char *level_id, int flags)
 		// useful.
 		if(level_id && level_id[0])
 		{
-			char cmd[80];
+			char    cmd[80];
+
 			sprintf(cmd, "init-%s", level_id);
 			if(Con_IsValidCommand(cmd))
 			{
@@ -1288,7 +1347,7 @@ void R_SetupLevel(char *level_id, int flags)
 		// Clear any input events that might have accumulated during the
 		// setup period.
 		DD_ClearEvents();
-		
+
 		// Now that the setup is done, let's reset the tictimer so it'll
 		// appear that no time has passed during the setup.
 		Net_ResetTimer();
@@ -1333,7 +1392,7 @@ void R_SetupLevel(char *level_id, int flags)
 		if(flags & DDSLF_DONT_CLIP)
 			R_PolygonizeWithoutCarving();
 		else
-			R_CreateFloorsAndCeilings(numnodes-1, 0, NULL);
+			R_CreateFloorsAndCeilings(numnodes - 1, 0, NULL);
 	}
 	Con_Progress(10, 0);
 
@@ -1352,10 +1411,12 @@ void R_SetupLevel(char *level_id, int flags)
 
 	Con_Progress(10, 0);
 
-	if(flags & DDSLF_FIX_SKY) R_SkyFix();
-	if(flags & DDSLF_REVERB) S_CalcSectorReverbs();
-	
-	DL_InitLinks();	
+	if(flags & DDSLF_FIX_SKY)
+		R_SkyFix();
+	if(flags & DDSLF_REVERB)
+		S_CalcSectorReverbs();
+
+	DL_InitLinks();
 	Cl_Reset();
 	RL_DeleteLists();
 	GL_DeleteRawImages();
@@ -1363,7 +1424,8 @@ void R_SetupLevel(char *level_id, int flags)
 
 	// See what mapinfo says about this level.
 	mapinfo = Def_GetMapInfo(level_id);
-	if(!mapinfo) mapinfo = Def_GetMapInfo("*");
+	if(!mapinfo)
+		mapinfo = Def_GetMapInfo("*");
 	// Setup accordingly.
 	R_SetupFog();
 	R_SetupSky();
@@ -1391,6 +1453,7 @@ void R_SetupLevel(char *level_id, int flags)
 	for(i = 0; i < numsectors; i++)
 	{
 		sector_t *sec = SECTOR_PTR(i);
+
 		sec->planes[PLN_FLOOR].target = sec->floorheight;
 		sec->planes[PLN_CEILING].target = sec->ceilingheight;
 	}
@@ -1407,12 +1470,12 @@ void R_SetupLevel(char *level_id, int flags)
 	R_ResetAnimGroups();
 
 	// Do network init: Initialize Delta Pools.
-	if(!(flags & DDSLF_NO_SERVER)) 
+	if(!(flags & DDSLF_NO_SERVER))
 	{
 		Sv_InitPools();
 	}
 
-	Con_Progress(10, 0); // 50%.
+	Con_Progress(10, 0);		// 50%.
 }
 
 //===========================================================================
@@ -1420,7 +1483,7 @@ void R_SetupLevel(char *level_id, int flags)
 //===========================================================================
 void R_ClearSectorFlags(void)
 {
-	int	i;
+	int     i;
 	sectorinfo_t *sinf;
 
 	for(i = 0, sinf = secinfo; i < numsectors; i++, sinf++)
@@ -1433,7 +1496,7 @@ void R_ClearSectorFlags(void)
 //===========================================================================
 // R_GetLinkedSector
 //===========================================================================
-sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor)
+sector_t *R_GetLinkedSector(sector_t * startsec, boolean getfloor)
 {
 	sector_t *sec = startsec;
 	sector_t *link;
@@ -1444,18 +1507,21 @@ sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor)
 		sin = SECT_INFO(sec);
 		if(getfloor)
 		{
-			if(!sin->linkedfloor) return sec;
+			if(!sin->linkedfloor)
+				return sec;
 			link = sin->linkedfloor;
 		}
-		else 
+		else
 		{
-			if(!sin->linkedceil) return sec;
+			if(!sin->linkedceil)
+				return sec;
 			link = sin->linkedceil;
 		}
 #if _DEBUG
-		if(sec == link || startsec == link) 
+		if(sec == link || startsec == link)
 		{
-			Con_Error("R_GetLinkedSector: linked to self! (%s)\n", getfloor? "flr" : "ceil");
+			Con_Error("R_GetLinkedSector: linked to self! (%s)\n",
+					  getfloor ? "flr" : "ceil");
 			return startsec;
 		}
 #endif
@@ -1465,19 +1531,20 @@ sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor)
 
 //===========================================================================
 // R_UpdatePlanes
-//	All links will be updated every frame (sectorheights may change
-//	at any time without notice).
+//  All links will be updated every frame (sectorheights may change
+//  at any time without notice).
 //===========================================================================
 void R_UpdatePlanes(void)
 {
-	int i;
+	int     i;
 	sector_t *sec;
 	sectorinfo_t *sin;
 
 	// Clear all non-permanent sector links.
 	for(i = 0, sin = secinfo; i < numsectors; i++, sin++)
 	{
-		if(sin->permanentlink) continue;
+		if(sin->permanentlink)
+			continue;
 		sin->linkedfloor = sin->linkedceil = NULL;
 	}
 
@@ -1488,14 +1555,15 @@ void R_UpdatePlanes(void)
 		R_SetSectorLinks(sec);
 
 		// Floor height.
-		if(!sin->linkedfloor) 
+		if(!sin->linkedfloor)
 		{
 			sin->visfloor = FIX2FLT(sec->floorheight) + sin->visflooroffset;
 		}
 		else
 		{
-			sin->visfloor = FIX2FLT(R_GetLinkedSector
-				(sin->linkedfloor, true)->floorheight);
+			sin->visfloor =
+				FIX2FLT(R_GetLinkedSector(sin->linkedfloor, true)->
+						floorheight);
 		}
 
 		// Ceiling height.
@@ -1505,9 +1573,10 @@ void R_UpdatePlanes(void)
 		}
 		else
 		{
-			sin->visceil = FIX2FLT(R_GetLinkedSector
-				(sin->linkedceil, false)->ceilingheight);
-		}		
+			sin->visceil =
+				FIX2FLT(R_GetLinkedSector(sin->linkedceil, false)->
+						ceilingheight);
+		}
 	}
 }
 
@@ -1522,14 +1591,14 @@ const char *R_GetCurrentLevelID(void)
 /* 
  * Sector light color may be affected by the sky light color.
  */
-const byte *R_GetSectorLightColor(sector_t *sector)
+const byte *R_GetSectorLightColor(sector_t * sector)
 {
 	sector_t *src;
-	int i;
-	
+	int     i;
+
 	if(!rendSkyLight || noSkyColorGiven)
-		return sector->rgb; // The sector's real color.
-	
+		return sector->rgb;		// The sector's real color.
+
 	if(sector->ceilingpic != skyflatnum && sector->floorpic != skyflatnum)
 	{
 		// A dominant light source affects this sector?
@@ -1539,7 +1608,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
 			// The color shines here, too.
 			return R_GetSectorLightColor(src);
 		}
-		
+
 		// Return the sector's real color (balanced against sky's).
 		if(skyColorBalance >= 1)
 		{

@@ -56,14 +56,14 @@ int SW_IsActive(void)
 void SW_Printf(const char *format, ...)
 {
 	/*
-	va_list args;
+	   va_list args;
 
-	if(!SW_IsActive()) return;
+	   if(!SW_IsActive()) return;
 
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-	*/
+	   va_start(args, format);
+	   vprintf(format, args);
+	   va_end(args);
+	 */
 }
 
 //===========================================================================
@@ -71,7 +71,8 @@ void SW_Printf(const char *format, ...)
 //===========================================================================
 void SW_Init(void)
 {
-	if(swActive) return; // Already initialized.
+	if(swActive)
+		return;					// Already initialized.
 	Con_Message("SW_Init: Startup message window opened.\n");
 	swActive = true;
 }
@@ -81,7 +82,8 @@ void SW_Init(void)
 //===========================================================================
 void SW_Shutdown(void)
 {
-	if(!swActive) return;	// Not initialized.
+	if(!swActive)
+		return;					// Not initialized.
 	swActive = false;
 }
 
@@ -106,7 +108,7 @@ void SW_SetBarPos(int pos)
 //===========================================================================
 void SW_SetBarMax(int max)
 {
-	if(!SW_IsActive()) return;
+	if(!SW_IsActive())
+		return;
 	barMax = max;
 }
-

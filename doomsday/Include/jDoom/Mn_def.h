@@ -22,8 +22,7 @@
 
 // Types
 
-typedef enum
-{
+typedef enum {
 	ITT_EMPTY,
 	ITT_EFUNC,
 	ITT_LRFUNC,
@@ -31,8 +30,7 @@ typedef enum
 	ITT_INERT
 } ItemType_t;
 
-typedef enum
-{
+typedef enum {
 	MENU_MAIN,
 	MENU_EPISODE,
 	MENU_SKILL,
@@ -51,63 +49,62 @@ typedef enum
 	MENU_NONE
 } MenuType_t;
 
-typedef struct
-{
-	ItemType_t type;
-	char *text;
-	void (*func)(int option);
-	int option;
-	char *lumpname;
+typedef struct {
+	ItemType_t      type;
+	char           *text;
+	void            (*func) (int option);
+	int             option;
+	char           *lumpname;
 } MenuItem_t;
 
-typedef struct
-{
-	int x;
-	int y;
-	void (*drawFunc)(void);
-	int itemCount;
-	MenuItem_t *items;
-	int lastOn;
-	MenuType_t prevMenu;
-	dpatch_t *font;				// Font for menu items.
-	//float red, green, blue;		// And their color.
-	int	itemHeight;
+typedef struct {
+	int             x;
+	int             y;
+	void            (*drawFunc) (void);
+	int             itemCount;
+	MenuItem_t     *items;
+	int             lastOn;
+	MenuType_t      prevMenu;
+	dpatch_t       *font;		   // Font for menu items.
+	//float red, green, blue;       // And their color.
+	int             itemHeight;
 	// For multipage menus.
-	int firstItem, numVisItems;
+	int             firstItem, numVisItems;
 } Menu_t;
 
+extern int      MenuTime;
+extern boolean  shiftdown;
+extern Menu_t  *currentMenu;
+extern short    itemOn;
 
-extern int MenuTime;
-extern boolean shiftdown;
-extern Menu_t *currentMenu;
-extern short itemOn;
+void            SetMenu(MenuType_t menu);
+void            M_DrawSaveLoadBorder(int x, int y);
+void            M_DrawTitle(char *text, int y);
+void            M_WriteText(int x, int y, char *string);
+void            M_WriteText2(int x, int y, char *string, dpatch_t * font,
+							 float red, float green, float blue);
+void            M_WriteMenuText(Menu_t * menu, int index, char *text);
 
-void SetMenu(MenuType_t menu);
-void M_DrawSaveLoadBorder(int x,int y);
-void M_DrawTitle(char *text, int y);
-void M_WriteText(int x, int y, char *string);
-void M_WriteText2(int x, int y, char *string, dpatch_t *font, 
-				  float	red, float green, float	blue);
-void M_WriteMenuText(Menu_t *menu, int index, char *text);
-
-extern Menu_t ControlsDef;
+extern Menu_t   ControlsDef;
 
 // Multiplayer menus.
-extern Menu_t MultiplayerMenu;
+extern Menu_t   MultiplayerMenu;
+
 //extern Menu_t ProtocolMenu;
 //extern Menu_t HostMenu;
 //extern Menu_t JoinMenu;
-extern Menu_t GameSetupMenu;
-extern Menu_t PlayerSetupMenu;
+extern Menu_t   GameSetupMenu;
+extern Menu_t   PlayerSetupMenu;
+
 //extern Menu_t NetGameMenu;
 //extern Menu_t TCPIPMenu;
 //extern Menu_t SerialMenu;
 //extern Menu_t ModemMenu;
 
-boolean SCEnterMultiplayerMenu(int option);
-void MN_TickerEx(void);	// The extended ticker.
+boolean         SCEnterMultiplayerMenu(int option);
+void            MN_TickerEx(void); // The extended ticker.
 
 // Edit field routines.
-boolean Ed_Responder(event_t *event);
+boolean         Ed_Responder(event_t * event);
 
-#endif // __MENU_DEFS_H_
+#endif							// __MENU_DEFS_H_

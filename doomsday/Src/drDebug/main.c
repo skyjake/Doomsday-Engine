@@ -37,7 +37,7 @@
 
 HINSTANCE dglInstance;
 dgldriver_t gl;
-int level;	// Debug message level.
+int     level;					// Debug message level.
 
 /*
  * Entry point of the DLL.
@@ -46,13 +46,14 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	const char *dglFileName = "drOpenGL.dll";
 
-	switch(fdwReason)
+	switch (fdwReason)
 	{
 	case DLL_PROCESS_ATTACH:
 		freopen("drDebug.log", "w", stdout);
 
 		// Some other renderer?
-		if(ArgExists("-dgl")) dglFileName = ArgNext();	
+		if(ArgExists("-dgl"))
+			dglFileName = ArgNext();
 
 		// Load the real rendering DLL.
 		if((dglInstance = LoadLibrary(dglFileName)) == NULL)
@@ -66,7 +67,7 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		else if(ArgExists("-d3"))
 			level = 3;
 		else
-			level = 2; // This is the default level.
+			level = 2;			// This is the default level.
 
 		Imp(Init);
 		Imp(Shutdown);
@@ -90,7 +91,7 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		Imp(Arrays);
 		Imp(UnlockArrays);
 		Imp(Func);
-		//Imp(ZBias);	
+		//Imp(ZBias);   
 
 		// Textures.
 		Imp(NewTexture);
@@ -98,7 +99,7 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		Imp(TexImage);
 		Imp(TexParameter);
 		Imp(GetTexParameterv);
-		Imp(Palette);	
+		Imp(Palette);
 		Imp(Bind);
 
 		// Matrix operations.
@@ -146,7 +147,7 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		Imp(Fog);
 		Imp(Fogv);
 		Imp(Project);
-		Imp(ReadPixels); 
+		Imp(ReadPixels);
 
 		break;
 
@@ -162,9 +163,10 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  */
 void printer(boolean in, int messageLevel, const char *format, va_list args)
 {
-	if(messageLevel > level) return;
+	if(messageLevel > level)
+		return;
 
-	printf(in? "-> " : "<- ");
+	printf(in ? "-> " : "<- ");
 	vprintf(format, args);
 	printf("\n");
 	fflush(stdout);
@@ -197,7 +199,7 @@ void out(int messageLevel, const char *format, ...)
 #define INT1_VOID(name, a) \
 	in(1, #name" (%i)", a); \
 	gl.name(a); \
-	out(1, #name); 
+	out(1, #name);
 #define INT1_INT(name, a) \
 	int result;	\
 	in(1, #name" (%i)", a); \
@@ -207,7 +209,7 @@ void out(int messageLevel, const char *format, ...)
 #define INT4_VOID(name, a, b, c, d) \
 	in(1, #name" (%i, %i, %i, %i)", a, b, c, d); \
 	gl.name(a, b, c, d); \
-	out(1, #name); 
+	out(1, #name);
 #define INT4_INT(name, a, b, c, d) \
 	int result;	\
 	in(1, #name" (%i, %i, %i, %i)", a, b, c, d); \
@@ -217,12 +219,12 @@ void out(int messageLevel, const char *format, ...)
 
 int DG_Init(int width, int height, int bpp, int mode)
 {
-	INT4_INT( Init, width, height, bpp, mode );
+	INT4_INT(Init, width, height, bpp, mode);
 }
 
 void DG_Shutdown(void)
 {
-	SIMPLE( Shutdown );
+	SIMPLE(Shutdown);
 }
 
 void DG_Clear(int bufferbits)
@@ -234,22 +236,22 @@ void DG_Clear(int bufferbits)
 
 void DG_Show(void)
 {
-	SIMPLE( Show );
+	SIMPLE(Show);
 }
 
 void DG_Viewport(int x, int y, int width, int height)
 {
-	INT4_VOID( Viewport, x, y, width, height );
+	INT4_VOID(Viewport, x, y, width, height);
 }
 
 void DG_Scissor(int x, int y, int width, int height)
 {
-	INT4_VOID( Scissor, x, y, width, height );
+	INT4_VOID(Scissor, x, y, width, height);
 }
 
-int	DG_GetIntegerv(int name, int *v)
+int DG_GetIntegerv(int name, int *v)
 {
-	int result;
+	int     result;
 
 	in(1, "GetIntegerv (0x%x, 0x%p)", name, v);
 	result = gl.GetIntegerv(name, v);
@@ -259,7 +261,7 @@ int	DG_GetIntegerv(int name, int *v)
 
 int DG_GetInteger(int name)
 {
-	int result;
+	int     result;
 
 	in(1, "GetInteger (0x%x)", name);
 	result = gl.GetInteger(name);
@@ -267,9 +269,9 @@ int DG_GetInteger(int name)
 	return result;
 }
 
-int	DG_SetInteger(int name, int value)
+int DG_SetInteger(int name, int value)
 {
-	int result;
+	int     result;
 
 	in(1, "SetInteger (0x%x, %i)", name, value);
 	result = gl.SetInteger(name, value);
@@ -277,34 +279,34 @@ int	DG_SetInteger(int name, int value)
 	return result;
 }
 
-char* DG_GetString(int name)
+char   *DG_GetString(int name)
 {
-	char *result;
+	char   *result;
 
 	in(1, "GetString (0x%x)", name);
 	result = gl.GetString(name);
-	out(1, "GetString: %p (%s)", result, result? result : "(null)");
+	out(1, "GetString: %p (%s)", result, result ? result : "(null)");
 	return result;
 }
 
 int DG_SetFloatv(int name, float *values)
 {
-	int result;
+	int     result;
 
 	in(1, "SetFloatv (0x%x, 0x%p)", name, values);
 	result = gl.SetFloatv(name, values);
 	out(1, "SetFloatv: %i", result);
 	return result;
 }
-	
+
 int DG_Enable(int cap)
 {
-	INT1_INT( Enable, cap );
+	INT1_INT(Enable, cap);
 }
 
 void DG_Disable(int cap)
 {
-	INT1_VOID( Disable, cap );
+	INT1_VOID(Disable, cap);
 }
 
 void DG_Func(int func, int param1, int param2)
@@ -316,27 +318,27 @@ void DG_Func(int func, int param1, int param2)
 
 void DG_ZBias(int level)
 {
-	INT1_VOID( ZBias, level );
+	INT1_VOID(ZBias, level);
 }
 
 void DG_MatrixMode(int mode)
 {
-	INT1_VOID( MatrixMode, mode);
+	INT1_VOID(MatrixMode, mode);
 }
 
 void DG_PushMatrix(void)
 {
-	SIMPLE( PushMatrix );
+	SIMPLE(PushMatrix);
 }
 
 void DG_PopMatrix(void)
 {
-	SIMPLE( PopMatrix );
+	SIMPLE(PopMatrix);
 }
 
 void DG_LoadIdentity(void)
 {
-	SIMPLE( LoadIdentity );
+	SIMPLE(LoadIdentity);
 }
 
 void DG_Translatef(float x, float y, float z)
@@ -360,9 +362,11 @@ void DG_Scalef(float x, float y, float z)
 	out(2, "Scalef");
 }
 
-void DG_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
+void DG_Ortho(float left, float top, float right, float bottom, float znear,
+			  float zfar)
 {
-	in(2, "Ortho (%f, %f, %f, %f, %f, %f)", left, top, right, bottom, znear, zfar);
+	in(2, "Ortho (%f, %f, %f, %f, %f, %f)", left, top, right, bottom, znear,
+	   zfar);
 	gl.Ortho(left, top, right, bottom, znear, zfar);
 	out(2, "Ortho");
 }
@@ -376,10 +380,10 @@ void DG_Perspective(float fovy, float aspect, float zNear, float zFar)
 
 int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
 {
-	int result;
+	int     result;
 
-	in(1, "Grab (%x, %x, %x, %x, 0x%x, 0x%p)",
-		x, y, width, height, format, buffer);
+	in(1, "Grab (%x, %x, %x, %x, 0x%x, 0x%p)", x, y, width, height, format,
+	   buffer);
 	result = gl.Grab(x, y, width, height, format, buffer);
 	out(1, "Grab: %i", result);
 	return result;
@@ -399,7 +403,8 @@ void DG_Fogv(int pname, void *data)
 	out(2, "Fogv");
 }
 
-int DG_Project(int num, gl_fc3vertex_t *inVertices, gl_fc3vertex_t *outVertices)
+int DG_Project(int num, gl_fc3vertex_t * inVertices,
+			   gl_fc3vertex_t * outVertices)
 {
 	return gl.Project(num, inVertices, outVertices);
 }
@@ -416,7 +421,7 @@ void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 	out(3, "Color3ub");
 }
 
-void DG_Color3ubv(DGLubyte *data)
+void DG_Color3ubv(DGLubyte * data)
 {
 	in(3, "Color3ubv (0x%p)", data);
 	gl.Color3ubv(data);
@@ -430,7 +435,7 @@ void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 	out(3, "Color4ub");
 }
 
-void DG_Color4ubv(DGLubyte *data)
+void DG_Color4ubv(DGLubyte * data)
 {
 	in(3, "Color4ubv (0x%p)", data);
 	gl.Color4ubv(data);
@@ -521,29 +526,29 @@ void DG_Vertex3fv(float *data)
 	out(3, "Vertex3fv");
 }
 
-void DG_Vertices2ftv(int num, gl_ft2vertex_t *data)
+void DG_Vertices2ftv(int num, gl_ft2vertex_t * data)
 {
 	gl.Vertices2ftv(num, data);
 }
 
-void DG_Vertices3ftv(int num, gl_ft3vertex_t *data)
+void DG_Vertices3ftv(int num, gl_ft3vertex_t * data)
 {
 	gl.Vertices3ftv(num, data);
 }
 
-void DG_Vertices3fctv(int num, gl_fct3vertex_t *data)
+void DG_Vertices3fctv(int num, gl_fct3vertex_t * data)
 {
 	gl.Vertices3fctv(num, data);
 }
 
 void DG_Begin(int mode)
 {
-	INT1_VOID( Begin, mode );
+	INT1_VOID(Begin, mode);
 }
 
 void DG_End(void)
 {
-	SIMPLE( End );
+	SIMPLE(End);
 }
 
 void DG_EnableArrays(int vertices, int colors, int coords)
@@ -560,23 +565,23 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 	out(1, "DisableArrays");
 }
 
-void DG_Arrays(void *vertices, void *colors, int numCoords, 
-			   void **coords, int lock)
+void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
+			   int lock)
 {
 	in(1, "Arrays (0x%p, 0x%p, %i, 0x%p, %i)", vertices, colors, numCoords,
-		coords, lock);
+	   coords, lock);
 	gl.Arrays(vertices, colors, numCoords, coords, lock);
 	out(1, "Arrays");
 }
 
 void DG_UnlockArrays(void)
 {
-	SIMPLE( UnlockArrays );
+	SIMPLE(UnlockArrays);
 }
 
 void DG_ArrayElement(int index)
 {
-	INT1_VOID( ArrayElement, index );
+	INT1_VOID(ArrayElement, index);
 }
 
 void DG_DrawElements(int type, int count, unsigned int *indices)
@@ -588,7 +593,7 @@ void DG_DrawElements(int type, int count, unsigned int *indices)
 
 int DG_NewTexture(void)
 {
-	int result;
+	int     result;
 
 	in(1, "NewTexture");
 	result = gl.NewTexture();
@@ -598,16 +603,16 @@ int DG_NewTexture(void)
 
 int DG_TexImage(int format, int width, int height, int genMips, void *data)
 {
-	int result;
+	int     result;
 
 	in(1, "TexImage (0x%x, %i, %i, 0x%x, 0x%p)", format, width, height,
-		genMips, data);
+	   genMips, data);
 	result = gl.TexImage(format, width, height, genMips, data);
 	out(1, "TexImage: %i", result);
 	return result;
 }
 
-void DG_DeleteTextures(int num, DGLuint *names)
+void DG_DeleteTextures(int num, DGLuint * names)
 {
 	in(1, "DeleteTextures (%i, 0x%p)", num, names);
 	gl.DeleteTextures(num, names);
@@ -635,7 +640,7 @@ void DG_Palette(int format, void *data)
 	out(1, "Palette");
 }
 
-int	DG_Bind(DGLuint texture)
+int DG_Bind(DGLuint texture)
 {
-	INT1_INT( Bind, texture );
+	INT1_INT(Bind, texture);
 }

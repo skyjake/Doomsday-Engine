@@ -45,10 +45,10 @@
 
 typedef struct logicsound_s {
 	struct logicsound_s *next, *prev;
-	int id;
+	int     id;
 	mobj_t *origin;
-	uint endTime;	
-	byte isRepeating;
+	uint    endTime;
+	byte    isRepeating;
 } logicsound_t;
 
 typedef struct logichash_s {
@@ -85,7 +85,7 @@ void Sfx_InitLogical(void)
  */
 logichash_t *Sfx_LogicHash(int id)
 {
-	return &logicHash[ (uint) id % LOGIC_HASH_SIZE ];
+	return &logicHash[(uint) id % LOGIC_HASH_SIZE];
 }
 
 /*
@@ -102,7 +102,8 @@ logicsound_t *Sfx_CreateLogical(int id)
 		node->prev = hash->last;
 	}
 	hash->last = node;
-	if(!hash->first) hash->first = node;
+	if(!hash->first)
+		hash->first = node;
 
 	node->id = id;
 	return node;
@@ -111,14 +112,18 @@ logicsound_t *Sfx_CreateLogical(int id)
 /*
  * Unlink and destroy a logical sound hash table node.
  */
-void Sfx_DestroyLogical(logicsound_t *node)
+void Sfx_DestroyLogical(logicsound_t * node)
 {
 	logichash_t *hash = Sfx_LogicHash(node->id);
-	
-	if(hash->first == node) hash->first = node->next;
-	if(hash->last == node) hash->last = node->prev;
-	if(node->next) node->next->prev = node->prev;
-	if(node->prev) node->prev->next = node->next;
+
+	if(hash->first == node)
+		hash->first = node->next;
+	if(hash->last == node)
+		hash->last = node->prev;
+	if(node->next)
+		node->next->prev = node->prev;
+	if(node->prev)
+		node->prev->next = node->next;
 
 #ifdef _DEBUG
 	memset(node, 0xDD, sizeof(*node));
@@ -131,12 +136,12 @@ void Sfx_DestroyLogical(logicsound_t *node)
  * 'world class' sound is started, regardless of whether it's actually
  * started on the local system.
  */
-void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
+void Sfx_StartLogical(int id, mobj_t * origin, boolean isRepeating)
 {
 	logicsound_t *node;
-	uint length = (isRepeating? 1 : Sfx_GetSoundLength(id));
-	
-	if(!length) 
+	uint    length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
+
+	if(!length)
 	{
 		// This is not a valid sound.
 		return;
@@ -156,11 +161,11 @@ void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
  *
  * id=0, origin=0: stop everything
  */
-int Sfx_StopLogical(int id, mobj_t *origin)
+int Sfx_StopLogical(int id, mobj_t * origin)
 {
 	logicsound_t *it, *next;
-	int stopCount = 0;
-	int i;
+	int     stopCount = 0;
+	int     i;
 
 	if(id)
 	{
@@ -200,10 +205,10 @@ int Sfx_StopLogical(int id, mobj_t *origin)
 void Sfx_PurgeLogical(void)
 {
 	static uint lastTime = 0;
-	uint i, nowTime = Sys_GetRealTime();
+	uint    i, nowTime = Sys_GetRealTime();
 	logicsound_t *it, *next;
 
-	if(nowTime - lastTime < PURGE_INTERVAL) 
+	if(nowTime - lastTime < PURGE_INTERVAL)
 	{
 		// It's too early.
 		return;
@@ -216,11 +221,11 @@ void Sfx_PurgeLogical(void)
 		for(it = logicHash[i].first; it; it = next)
 		{
 			next = it->next;
-/*#ifdef _DEBUG
-			Con_Printf("LS:%i orig=%i(%p) %s\n",
-				it->id, it->origin? it->origin->thinker.id : 0, 
-				it->origin, it->isRepeating? "[repeat]" : "");
-#endif*/
+			/*#ifdef _DEBUG
+			   Con_Printf("LS:%i orig=%i(%p) %s\n",
+			   it->id, it->origin? it->origin->thinker.id : 0, 
+			   it->origin, it->isRepeating? "[repeat]" : "");
+			   #endif */
 			if(!it->isRepeating && it->endTime < nowTime)
 			{
 				// This has stopped.
@@ -236,18 +241,18 @@ void Sfx_PurgeLogical(void)
  *
  * id=0: true if any sounds are playing using the specified origin
  */
-boolean Sfx_IsPlaying(int id, mobj_t *origin)
+boolean Sfx_IsPlaying(int id, mobj_t * origin)
 {
-	uint nowTime = Sys_GetRealTime();
+	uint    nowTime = Sys_GetRealTime();
 	logicsound_t *it;
-	int i;
+	int     i;
 
 	if(id)
 	{
 		for(it = Sfx_LogicHash(id)->first; it; it = it->next)
 		{
 			if(it->id == id && it->origin == origin
-				&& (it->endTime > nowTime || it->isRepeating))
+			   && (it->endTime > nowTime || it->isRepeating))
 			{
 				// This one is still playing.
 				return true;
@@ -262,7 +267,7 @@ boolean Sfx_IsPlaying(int id, mobj_t *origin)
 			for(it = logicHash[i].first; it; it = it->next)
 			{
 				if(it->origin == origin
-					&& (it->endTime > nowTime || it->isRepeating))
+				   && (it->endTime > nowTime || it->isRepeating))
 				{
 					// This one is playing.
 					return true;
@@ -274,4 +279,3 @@ boolean Sfx_IsPlaying(int id, mobj_t *origin)
 	// The sound was not found.
 	return false;
 }
-

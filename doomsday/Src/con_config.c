@@ -42,7 +42,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char	cfgFile[256];
+char    cfgFile[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -53,18 +53,20 @@ char	cfgFile[256];
  */
 int Con_ParseCommands(char *fileName, int setdefault)
 {
-	DFILE	*file;
-	char	buff[512];
-	int		line = 1;
+	DFILE  *file;
+	char    buff[512];
+	int     line = 1;
 
 	// Is this supposed to be the default?
-	if(setdefault) strcpy(cfgFile, fileName);
-	
-	// Open the file.
-	if((file = F_Open(fileName, "rt")) == NULL) return false;
+	if(setdefault)
+		strcpy(cfgFile, fileName);
 
-	VERBOSE( Con_Printf("Con_ParseCommands: %s (def:%i)\n", fileName, 
-		setdefault) );
+	// Open the file.
+	if((file = F_Open(fileName, "rt")) == NULL)
+		return false;
+
+	VERBOSE(Con_Printf
+			("Con_ParseCommands: %s (def:%i)\n", fileName, setdefault));
 
 	// This file is filled with console commands.
 	// Each line is a command.
@@ -75,31 +77,32 @@ int Con_ParseCommands(char *fileName, int setdefault)
 		if(!M_IsComment(buff))
 		{
 			// Execute the commands silently.
-			if(!Con_Execute(buff, setdefault? true : false))
-				Con_Message("%s(%d): error executing command\n"
-							"  \"%s\"\n", fileName, line, buff);
+			if(!Con_Execute(buff, setdefault ? true : false))
+				Con_Message("%s(%d): error executing command\n" "  \"%s\"\n",
+							fileName, line, buff);
 		}
-		if(deof(file)) break;
+		if(deof(file))
+			break;
 		line++;
 	}
-	F_Close(file);	
+	F_Close(file);
 	return true;
 }
 
 /*
  * Con_WriteState
- *	Writes the state of the console (variables, bindings, aliases) into the
- *	given file, overwriting the previous contents.
+ *  Writes the state of the console (variables, bindings, aliases) into the
+ *  given file, overwriting the previous contents.
  */
 boolean Con_WriteState(const char *fileName)
 {
-	extern cvar_t	*cvars;
-	extern int		numCVars;
-	int				i;
-	cvar_t			*var;
-	FILE			*file;
+	extern cvar_t *cvars;
+	extern int numCVars;
+	int     i;
+	cvar_t *var;
+	FILE   *file;
 
-	VERBOSE( Con_Printf("Con_WriteState: %s\n", fileName) );
+	VERBOSE(Con_Printf("Con_WriteState: %s\n", fileName));
 
 	if((file = fopen(fileName, "wt")) == NULL)
 	{
@@ -107,38 +110,45 @@ boolean Con_WriteState(const char *fileName)
 		return false;
 	}
 
-	fprintf(file, "# %s / Doomsday Engine "DOOMSDAY_VERSION_TEXT"\n", 
-		gx.Get(DD_GAME_ID));
-	fprintf(file, "# This configuration file is generated automatically. Each line is a\n");
-	fprintf(file, "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
+	fprintf(file, "# %s / Doomsday Engine " DOOMSDAY_VERSION_TEXT "\n",
+			gx.Get(DD_GAME_ID));
+	fprintf(file,
+			"# This configuration file is generated automatically. Each line is a\n");
+	fprintf(file,
+			"# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
 	fprintf(file, "# for your own startup commands.\n\n");
 
 	fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
 
-	// We'll write all the console variables that are flagged for archiving.		
+	// We'll write all the console variables that are flagged for archiving.        
 	for(i = 0; i < numCVars; i++)
 	{
 		var = cvars + i;
-		if(var->type == CVT_NULL || var->flags & CVF_NO_ARCHIVE) continue;
-		
+		if(var->type == CVT_NULL || var->flags & CVF_NO_ARCHIVE)
+			continue;
+
 		// First print the comment (help text).
 		M_WriteCommented(file, var->help);
 		fprintf(file, "%s ", var->name);
-		if(var->flags & CVF_PROTECTED) fprintf(file, "force ");
-		if(var->type == CVT_BYTE) fprintf(file, "%d", *(byte*)var->ptr);
-		if(var->type == CVT_INT) fprintf(file, "%d", *(int*)var->ptr);
-		if(var->type == CVT_FLOAT) fprintf(file, "%s", TrimmedFloat(*(float*)var->ptr));
-		if(var->type == CVT_CHARPTR) 
+		if(var->flags & CVF_PROTECTED)
+			fprintf(file, "force ");
+		if(var->type == CVT_BYTE)
+			fprintf(file, "%d", *(byte *) var->ptr);
+		if(var->type == CVT_INT)
+			fprintf(file, "%d", *(int *) var->ptr);
+		if(var->type == CVT_FLOAT)
+			fprintf(file, "%s", TrimmedFloat(*(float *) var->ptr));
+		if(var->type == CVT_CHARPTR)
 		{
 			fprintf(file, "\"");
-			M_WriteTextEsc(file, *(char**) var->ptr);
+			M_WriteTextEsc(file, *(char **) var->ptr);
 			fprintf(file, "\"");
 		}
 		fprintf(file, "\n\n");
 	}
-	
+
 	fprintf(file, "#\n# BINDINGS\n#\n\n");
-	B_WriteToFile(file);	
+	B_WriteToFile(file);
 
 	fprintf(file, "\n#\n# ALIASES\n#\n\n");
 	Con_WriteAliasesToFile(file);
@@ -149,8 +159,8 @@ boolean Con_WriteState(const char *fileName)
 
 /*
  * Con_SaveDefaults
- *	Saves all bindings, aliases and archiveable console variables.
- *	The output file is a collection of console commands.
+ *  Saves all bindings, aliases and archiveable console variables.
+ *  The output file is a collection of console commands.
  */
 void Con_SaveDefaults(void)
 {

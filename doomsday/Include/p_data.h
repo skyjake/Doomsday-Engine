@@ -33,8 +33,8 @@
 // Tick Command template. Of course it contains much more info,
 // but these first bytes are always the same.
 typedef struct {
-	char		forwardMove;		//*2048 for real move
-	char		sideMove;			//*2048 for real move
+	char            forwardMove;   //*2048 for real move
+	char            sideMove;	   //*2048 for real move
 } ticcmd_t;
 
 // Map data
@@ -77,113 +77,107 @@ typedef struct {
 #define ML_TWOSIDED			0x0004
 #define	ML_DONTPEGTOP		0x0008
 #define	ML_DONTPEGBOTTOM	0x0010
-#define	ML_MAPPED			0x0100	// set if already drawn in automap
+#define	ML_MAPPED			0x0100 // set if already drawn in automap
 
-#define MAX_POLY_SIDES		64		// A subsector has at most this many edges.
+#define MAX_POLY_SIDES		64	   // A subsector has at most this many edges.
 
 // Node flags.
 #define	NF_SUBSECTOR	0x8000
 
 struct line_s;
 
-typedef struct sector_s
-{
-	fixed_t		floorheight, ceilingheight;
-	short		floorpic, ceilingpic;
-	short		lightlevel;
-	byte		rgb[3];
-	int 		validcount; 			// if == validcount, already checked
-	struct mobj_s *thinglist; 			// list of mobjs in sector
-	int 		linecount;
-	struct line_s **lines;				// [linecount] size
-	float 		flooroffx, flooroffy; 	// floor texture offset
-	float		ceiloffx, ceiloffy;		// ceiling texture offset
-	int 		skyfix; 				// Offset to ceiling height
-										// rendering w/sky.
-	float		reverb[NUM_REVERB_DATA];
-	int 		blockbox[4];			// mapblock bounding box for
-										// height changes
-	plane_t		planes[2];				// PLN_*
-    degenmobj_t	soundorg;				// origin for any sounds
-										// played by the sector
+typedef struct sector_s {
+	fixed_t         floorheight, ceilingheight;
+	short           floorpic, ceilingpic;
+	short           lightlevel;
+	byte            rgb[3];
+	int             validcount;	   // if == validcount, already checked
+	struct mobj_s  *thinglist;	   // list of mobjs in sector
+	int             linecount;
+	struct line_s **lines;		   // [linecount] size
+	float           flooroffx, flooroffy;	// floor texture offset
+	float           ceiloffx, ceiloffy;	// ceiling texture offset
+	int             skyfix;		   // Offset to ceiling height
+	// rendering w/sky.
+	float           reverb[NUM_REVERB_DATA];
+	int             blockbox[4];   // mapblock bounding box for
+	// height changes
+	plane_t         planes[2];	   // PLN_*
+	degenmobj_t     soundorg;	   // origin for any sounds
+	// played by the sector
 } sector_t;
 
-typedef struct side_s
-{
-	fixed_t		textureoffset;		// add this to the calculated texture col
-	fixed_t     rowoffset;			// add this to the calculated texture top
-	short       toptexture, bottomtexture, midtexture;
-	sector_t    *sector;
+typedef struct side_s {
+	fixed_t         textureoffset; // add this to the calculated texture col
+	fixed_t         rowoffset;	   // add this to the calculated texture top
+	short           toptexture, bottomtexture, midtexture;
+	sector_t       *sector;
 } side_t;
 
-typedef struct line_s
-{
-	vertex_t	*v1;
-	vertex_t	*v2;
-	short		flags;
-	sector_t	*frontsector;
-	sector_t	*backsector;
-	fixed_t		dx;
-	fixed_t		dy;
-	slopetype_t slopetype;
-	int			validcount;		
-	short		sidenum[2];
-	fixed_t		bbox[4];
+typedef struct line_s {
+	vertex_t       *v1;
+	vertex_t       *v2;
+	short           flags;
+	sector_t       *frontsector;
+	sector_t       *backsector;
+	fixed_t         dx;
+	fixed_t         dy;
+	slopetype_t     slopetype;
+	int             validcount;
+	short           sidenum[2];
+	fixed_t         bbox[4];
 } line_t;
 
-typedef struct polyobj_s
-{
-	int			numsegs;
-	seg_t		**segs;
-	int			validcount;
-	degenmobj_t startSpot;
-	angle_t		angle;
-	vertex_t	*originalPts; 	// used as the base for the rotations
-	vertex_t	*prevPts; 		// use to restore the old point values
-	int			tag;			// reference tag assigned in HereticEd
-	int			bbox[4];
-	vertex_t	dest;
-	int			speed;			// Destination XY and speed.
-	angle_t		destAngle, angleSpeed;	// Destination angle and rotation speed.
-} 
-polyobj_t;
+typedef struct polyobj_s {
+	int             numsegs;
+	seg_t         **segs;
+	int             validcount;
+	degenmobj_t     startSpot;
+	angle_t         angle;
+	vertex_t       *originalPts;   // used as the base for the rotations
+	vertex_t       *prevPts;	   // use to restore the old point values
+	int             tag;		   // reference tag assigned in HereticEd
+	int             bbox[4];
+	vertex_t        dest;
+	int             speed;		   // Destination XY and speed.
+	angle_t         destAngle, angleSpeed;	// Destination angle and rotation speed.
+} polyobj_t;
 
 /*typedef struct subsector_s {
-	struct subsector_base_s;
-} subsector_t;*/
+   struct subsector_base_s;
+   } subsector_t; */
 
-typedef struct
-{
-	fixed_t		x,y,dx,dy;		// partition line
-	fixed_t     bbox[2][4];     // bounding box for each child
-	unsigned short children[2]; // if NF_SUBSECTOR its a subsector
+typedef struct {
+	fixed_t         x, y, dx, dy;  // partition line
+	fixed_t         bbox[2][4];	   // bounding box for each child
+	unsigned short  children[2];   // if NF_SUBSECTOR its a subsector
 } node_t;
 
-extern int		numvertexes;
-extern byte		*vertexes;
+extern int      numvertexes;
+extern byte    *vertexes;
 
-extern int		numsegs;
-extern byte		*segs;
+extern int      numsegs;
+extern byte    *segs;
 
-extern int		numsectors;
-extern byte		*sectors;
+extern int      numsectors;
+extern byte    *sectors;
 
-extern int		numsubsectors;
-extern byte		*subsectors;
+extern int      numsubsectors;
+extern byte    *subsectors;
 
-extern int		numnodes;
-extern byte		*nodes;
+extern int      numnodes;
+extern byte    *nodes;
 
-extern int		numlines;
-extern byte		*lines;
+extern int      numlines;
+extern byte    *lines;
 
-extern int		numsides;
-extern byte		*sides;
+extern int      numsides;
+extern byte    *sides;
 
-extern fixed_t	mapgravity;				// Gravity for the current map.
+extern fixed_t  mapgravity;		   // Gravity for the current map.
 
-void P_ValidateLevel(void);
-void P_LoadBlockMap(int lump);
-void P_LoadReject(int lump);
+void            P_ValidateLevel(void);
+void            P_LoadBlockMap(int lump);
+void            P_LoadReject(int lump);
 
-#endif 
+#endif

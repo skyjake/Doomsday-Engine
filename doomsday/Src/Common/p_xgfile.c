@@ -8,11 +8,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-#include "doomdef.h"
+#  include "doomdef.h"
 #endif
 
 #ifdef __JHERETIC__
-#include "Doomdef.h"
+#  include "Doomdef.h"
 #endif
 
 #include "p_xg.h"
@@ -21,13 +21,11 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum 
-{
+typedef enum {
 	XGSEG_END,
 	XGSEG_LINE,
 	XGSEG_SECTOR
-} 
-xgsegenum_e;
+} xgsegenum_e;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -54,7 +52,7 @@ static int num_sectypes;
 
 void WriteByte(byte b)
 {
-	fputc(b, file);	
+	fputc(b, file);
 }
 
 void WriteShort(short s)
@@ -79,7 +77,7 @@ void Write(void *data, int len)
 
 void WriteString(char *str)
 {
-	int len;
+	int     len;
 
 	if(!str)
 	{
@@ -98,7 +96,8 @@ byte ReadByte()
 
 short ReadShort()
 {
-	short s = *(short*) readptr;
+	short   s = *(short *) readptr;
+
 	readptr += 2;
 	// Swap the bytes.
 	//s = (s<<8) + (s>>8);
@@ -107,7 +106,8 @@ short ReadShort()
 
 long ReadLong()
 {
-	long l = *(long*) readptr;
+	long    l = *(long *) readptr;
+
 	readptr += 4;
 	// Swap the bytes.
 	//l = (l<<24) + (l>>24) + ((l & 0xff0000) >> 8) + ((l & 0xff00) << 8);
@@ -116,8 +116,9 @@ long ReadLong()
 
 float ReadFloat()
 {
-	long f = ReadLong();
-	return *(float*) &f;
+	long    f = ReadLong();
+
+	return *(float *) &f;
 }
 
 void Read(void *data, int len)
@@ -130,14 +131,14 @@ void Read(void *data, int len)
 // it somewhere. Now we can be absolutely sure it can't be lost.
 void ReadString(char **str)
 {
-	int len = ReadShort();
+	int     len = ReadShort();
 
-	if(!len) // Null string?
+	if(!len)					// Null string?
 	{
 		*str = 0;
 		return;
 	}
-	if(len < 0) 
+	if(len < 0)
 		Con_Error("ReadString: Bogus len!\n");
 	// Allocate memory for the string.
 	*str = Z_Malloc(len + 1, PU_STATIC, 0);
@@ -145,10 +146,10 @@ void ReadString(char **str)
 	Read(*str, len);
 }
 
-void XG_WriteTypes(FILE *f)
+void XG_WriteTypes(FILE * f)
 {
-	int i, k;
-	int linecount = 0, sectorcount = 0;
+	int     i, k;
+	int     linecount = 0, sectorcount = 0;
 	linetype_t line;
 	sectortype_t sec;
 
@@ -157,13 +158,14 @@ void XG_WriteTypes(FILE *f)
 	// The first four four bytes are a header.
 	// They will be updated with the real counts afterwards.
 	i = 0;
-	fwrite(&i, 4, 1, file);	// Number of lines & sectors (two shorts).
+	fwrite(&i, 4, 1, file);		// Number of lines & sectors (two shorts).
 
 	// This is a very simple way to get the definitions.
-	for(i=1; i<65536; i++)
+	for(i = 1; i < 65536; i++)
 	{
-		if(!Def_Get(DD_DEF_LINE_TYPE, (char*) i, &line)) continue;	
-	
+		if(!Def_Get(DD_DEF_LINE_TYPE, (char *) i, &line))
+			continue;
+
 		linecount++;
 
 		// Write marker.
@@ -196,14 +198,15 @@ void XG_WriteTypes(FILE *f)
 		WriteFloat(line.texmove_speed);
 		Write(line.iparm, sizeof(line.iparm));
 		Write(line.fparm, sizeof(line.fparm));
-		for(k=0; k<DDLT_MAX_SPARAMS; k++)
+		for(k = 0; k < DDLT_MAX_SPARAMS; k++)
 			WriteString(line.sparm[k]);
 	}
-	
+
 	// Then the sectors.
-	for(i=1; i<65536; i++)
+	for(i = 1; i < 65536; i++)
 	{
-		if(!Def_Get(DD_DEF_SECTOR_TYPE, (char*) i, &sec)) continue;
+		if(!Def_Get(DD_DEF_SECTOR_TYPE, (char *) i, &sec))
+			continue;
 
 		sectorcount++;
 
@@ -234,7 +237,7 @@ void XG_WriteTypes(FILE *f)
 		WriteString(sec.colfunc[0]);
 		WriteString(sec.colfunc[1]);
 		WriteString(sec.colfunc[2]);
-		for(k=0; k<3; k++)
+		for(k = 0; k < 3; k++)
 		{
 			WriteShort(sec.col_interval[k][0]);
 			WriteShort(sec.col_interval[k][1]);
@@ -262,14 +265,15 @@ void XG_WriteTypes(FILE *f)
 
 void XG_ReadXGLump(char *name)
 {
-	int lump = W_CheckNumForName(name);
-	void *buffer;
-	int lc = 0, sc = 0, len, i;
+	int     lump = W_CheckNumForName(name);
+	void   *buffer;
+	int     lc = 0, sc = 0, len, i;
 	linetype_t *li;
 	sectortype_t *sec;
 	boolean done = false;
 
-	if(lump < 0) return; // No such lump.
+	if(lump < 0)
+		return;					// No such lump.
 
 	Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.\n");
 
@@ -279,18 +283,17 @@ void XG_ReadXGLump(char *name)
 	num_sectypes = ReadShort();
 
 	// Allocate the arrays.
-	linetypes = Z_Malloc(len = sizeof(*linetypes) * num_linetypes, 
-		PU_STATIC, 0);
+	linetypes = Z_Malloc(len =
+						 sizeof(*linetypes) * num_linetypes, PU_STATIC, 0);
 	memset(linetypes, 0, len);
-	
-	sectypes = Z_Malloc(len = sizeof(*sectypes) * num_sectypes,
-		PU_STATIC, 0);
+
+	sectypes = Z_Malloc(len = sizeof(*sectypes) * num_sectypes, PU_STATIC, 0);
 	memset(sectypes, 0, len);
-	
+
 	while(!done)
 	{
 		// Get next segment.
-		switch(ReadByte())
+		switch (ReadByte())
 		{
 		case XGSEG_END:
 			done = true;
@@ -326,7 +329,7 @@ void XG_ReadXGLump(char *name)
 			li->texmove_speed = ReadFloat();
 			Read(li->iparm, sizeof(li->iparm));
 			Read(li->fparm, sizeof(li->fparm));
-			for(i=0; i<DDLT_MAX_SPARAMS; i++)
+			for(i = 0; i < DDLT_MAX_SPARAMS; i++)
 				ReadString(&li->sparm[i]);
 			break;
 
@@ -357,7 +360,7 @@ void XG_ReadXGLump(char *name)
 			ReadString(&sec->colfunc[0]);
 			ReadString(&sec->colfunc[1]);
 			ReadString(&sec->colfunc[2]);
-			for(i=0; i<3; i++)
+			for(i = 0; i < 3; i++)
 			{
 				sec->col_interval[i][0] = ReadShort();
 				sec->col_interval[i][1] = ReadShort();
@@ -387,8 +390,10 @@ void XG_ReadTypes(void)
 {
 	num_linetypes = 0;
 	num_sectypes = 0;
-	if(linetypes) Z_Free(linetypes);
-	if(sectypes) Z_Free(sectypes);
+	if(linetypes)
+		Z_Free(linetypes);
+	if(sectypes)
+		Z_Free(sectypes);
 	linetypes = 0;
 	sectypes = 0;
 
@@ -397,20 +402,20 @@ void XG_ReadTypes(void)
 
 linetype_t *XG_GetLumpLine(int id)
 {
-	int i;
+	int     i;
 
-	for(i=0; i<num_linetypes; i++)
+	for(i = 0; i < num_linetypes; i++)
 		if(linetypes[i].id == id)
 			return linetypes + i;
-	return NULL;	// Not found.
+	return NULL;				// Not found.
 }
 
 sectortype_t *XG_GetLumpSector(int id)
 {
-	int i;
+	int     i;
 
-	for(i=0; i<num_sectypes; i++)
+	for(i = 0; i < num_sectypes; i++)
 		if(sectypes[i].id == id)
 			return sectypes + i;
-	return NULL;	// Not found.
+	return NULL;				// Not found.
 }

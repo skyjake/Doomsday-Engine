@@ -62,26 +62,26 @@ typedef struct sqpack_s {
  */
 typedef struct netnode_s {
 	TCPsocket sock;
-	char name[128];
+	char    name[128];
 
 	// The node is owned by a client in the game.  This becomes true
 	// when the client issues the JOIN request.
 	boolean hasJoined;
 
 	// This is the UDP address that the client listens to.
-	IPaddress addr; 
+	IPaddress addr;
 
 	// Send queue statistics.
-	int mutex;
-	uint numWaiting;
-	uint bytesWaiting;
+	int     mutex;
+	uint    numWaiting;
+	uint    bytesWaiting;
 } netnode_t;
 
 typedef struct sendqueue_s {
 	semaphore_t waiting;
-	int mutex;
+	int     mutex;
 	sqpack_t *first, *last;
-	boolean online; // Set to false to make transmitter stop.
+	boolean online;				// Set to false to make transmitter stop.
 } sendqueue_t;
 
 typedef struct foundhost_s {
@@ -94,7 +94,7 @@ typedef struct foundhost_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void N_IPToString(char *buf, IPaddress *ip);
+void    N_IPToString(char *buf, IPaddress * ip);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -102,36 +102,39 @@ void N_IPToString(char *buf, IPaddress *ip);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint		maxDatagramSize = MAX_DATAGRAM_SIZE;
+uint    maxDatagramSize = MAX_DATAGRAM_SIZE;
 
 // Settings for the various network protocols.
 // Most recently used provider: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial.
-int			nptActive;
+int     nptActive;
+
 // TCP/IP:
-char		*nptIPAddress = "";
-int 		nptIPPort = 0;	// This is the port *we* use to communicate.
-int			nptUDPPort = 0;
-int			defaultTCPPort = DEFAULT_TCP_PORT;
-int 		defaultUDPPort = DEFAULT_UDP_PORT;
+char   *nptIPAddress = "";
+int     nptIPPort = 0;			// This is the port *we* use to communicate.
+int     nptUDPPort = 0;
+int     defaultTCPPort = DEFAULT_TCP_PORT;
+int     defaultUDPPort = DEFAULT_UDP_PORT;
+
 // Modem:
-int			nptModem = 0;	// Selected modem device index.
-char		*nptPhoneNum = "";
+int     nptModem = 0;			// Selected modem device index.
+char   *nptPhoneNum = "";
+
 // Serial:
-int			nptSerialPort = 0;
-int			nptSerialBaud = 57600;
-int			nptSerialStopBits = 0;
-int			nptSerialParity = 0;
-int			nptSerialFlowCtrl = 4;
+int     nptSerialPort = 0;
+int     nptSerialBaud = 57600;
+int     nptSerialStopBits = 0;
+int     nptSerialParity = 0;
+int     nptSerialFlowCtrl = 4;
 
 // Operating mode of the currently active service provider.
 serviceprovider_t netCurrentProvider = NSP_NONE;
-boolean		netServerMode = false;
+boolean netServerMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static TCPsocket serverSock;
 static volatile UDPsocket inSock;
-static Uint16 recvUDPPort; 
+static Uint16 recvUDPPort;
 static int mutexInSock;
 static netnode_t netNodes[MAX_NODES];
 static SDLNet_SocketSet sockSet;
@@ -174,23 +177,25 @@ static int N_UDPTransmitter(void *parm)
 		// Extract the next message from the FIFO queue.
 		pack = q->first;
 		q->first = q->first->next;
-		if(!q->first) q->last = NULL;
+		if(!q->first)
+			q->last = NULL;
 
 		// Release the send queue.
 		Sem_V(q->mutex);
 
 		// If the packet is associated with no node, we'll cancel the
 		// sending.
-		if(pack->node) 
+		if(pack->node)
 		{
 #ifdef PRINT_PACKETS
 			{
-				char buf[80];
+				char    buf[80];
+
 				N_IPToString(buf, &pack->packet->address);
 				printf("Send: len=%i to %s\n", pack->packet->len, buf);
 			}
 #endif
-			
+
 			if(pack->node->hasJoined)
 			{
 				// Commence sending.
@@ -216,7 +221,7 @@ static int N_UDPTransmitter(void *parm)
 		SDLNet_FreePacket(pack->packet);
 		free(pack);
 	}
-	
+
 	return 0;
 }
 
@@ -239,7 +244,8 @@ static int N_UDPReceiver(void *parm)
 	{
 		// Most of the time we will be sleeping here, waiting for
 		// incoming packets.
-		if(SDLNet_CheckSockets(set, 750) <= 0) continue;
+		if(SDLNet_CheckSockets(set, 750) <= 0)
+			continue;
 
 		for(;;)
 		{
@@ -251,7 +257,7 @@ static int N_UDPReceiver(void *parm)
 				// Allocate a new packet.
 				packet = SDLNet_AllocPacket(maxDatagramSize);
 			}
-		
+
 			// The mutex will prevent problems when new channels are
 			// bound to the socket.
 			Sys_Lock(mutexInSock);
@@ -260,28 +266,30 @@ static int N_UDPReceiver(void *parm)
 				Sys_Unlock(mutexInSock);
 #ifdef PRINT_PACKETS
 				{
-					char buf[80];
+					char    buf[80];
+
 					N_IPToString(buf, &packet->address);
-					printf("Recv: ch=%i len=%i %s\n", packet->channel, packet->len,
-						   buf);
+					printf("Recv: ch=%i len=%i %s\n", packet->channel,
+						   packet->len, buf);
 				}
 #endif
-				
+
 				// If we don't know the sender, discard the packet.
-				if(packet->channel < 0) continue;
-			
+				if(packet->channel < 0)
+					continue;
+
 				// Successfully received a packet.
-				netmessage_t *msg = (netmessage_t*)
-					calloc(sizeof(netmessage_t), 1);
-			
+				netmessage_t *msg =
+					(netmessage_t *) calloc(sizeof(netmessage_t), 1);
+
 				msg->sender = packet->channel;
-				msg->data   = packet->data;
-				msg->size   = packet->len;
+				msg->data = packet->data;
+				msg->size = packet->len;
 				msg->handle = packet;
-			
+
 				// The message queue will handle the message from now on.
 				N_PostMessage(msg);
-			
+
 				// This packet has now been used.
 				packet = NULL;
 			}
@@ -293,7 +301,8 @@ static int N_UDPReceiver(void *parm)
 		}
 	}
 
-	if(packet) SDLNet_FreePacket(packet);
+	if(packet)
+		SDLNet_FreePacket(packet);
 	SDLNet_FreeSocketSet(set);
 	return 0;
 }
@@ -303,7 +312,8 @@ static int N_UDPReceiver(void *parm)
  */
 void N_ReturnBuffer(void *handle)
 {
-	if(!handle) return;
+	if(!handle)
+		return;
 	SDLNet_FreePacket(handle);
 }
 
@@ -319,15 +329,16 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 	netnode_t *node;
 
 	// If the send queue is not active, we can't send anything.
-	if(!sendQ.online) return;
+	if(!sendQ.online)
+		return;
 
-//#ifdef _DEBUG
+	//#ifdef _DEBUG
 	if(size > maxDatagramSize)
 	{
 		Con_Error("N_SendDataBuffer: Too large packet (%i), risk of "
 				  "fragmentation (MTU=%i).\n", size, maxDatagramSize);
 	}
-//#endif
+	//#endif
 
 	// This memory is freed after the packet is sent.
 	pack = malloc(sizeof(sqpack_t));
@@ -372,7 +383,7 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 uint N_GetSendQueueCount(int player)
 {
 	netnode_t *node = netNodes + player;
-	uint count;
+	uint    count;
 
 	Sem_P(node->mutex);
 	count = node->numWaiting;
@@ -386,7 +397,7 @@ uint N_GetSendQueueCount(int player)
 uint N_GetSendQueueSize(int player)
 {
 	netnode_t *node = netNodes + player;
-	uint bytes;
+	uint    bytes;
 
 	Sem_P(node->mutex);
 	bytes = node->bytesWaiting;
@@ -397,24 +408,25 @@ uint N_GetSendQueueSize(int player)
 /*
  * Initialize the transmitter thread and the send queue.
  */
-static void N_StartTransmitter(sendqueue_t *q)
+static void N_StartTransmitter(sendqueue_t * q)
 {
-	q->online  = true;
+	q->online = true;
 	q->waiting = Sem_Create(0);
-	q->mutex   = Sem_Create(1);
-	q->first   = NULL;
-	q->last    = NULL;
-	
+	q->mutex = Sem_Create(1);
+	q->first = NULL;
+	q->last = NULL;
+
 	hTransmitter = Sys_StartThread(N_UDPTransmitter, q, 0);
 }
 
 /* 
  * Blocks until the transmitter thread has been exited.
  */
-static void N_StopTransmitter(sendqueue_t *q)
+static void N_StopTransmitter(sendqueue_t * q)
 {
-	if(!hTransmitter) return;
-	
+	if(!hTransmitter)
+		return;
+
 	// Tell the transmitter to stop sending.
 	q->online = false;
 
@@ -463,7 +475,7 @@ static void N_StopReceiver(void)
  * Bind or unbind the address to/from the incoming UDP socket.  When
  * the address is bound, packets from it will be accepted.
  */
-void N_BindIncoming(IPaddress *addr, nodeid_t id)
+void N_BindIncoming(IPaddress * addr, nodeid_t id)
 {
 	Sys_Lock(mutexInSock);
 	if(addr)
@@ -477,7 +489,7 @@ void N_BindIncoming(IPaddress *addr, nodeid_t id)
 	Sys_Unlock(mutexInSock);
 }
 
-/*	
+/*  
  * Initialize the low-level network subsystem. This is called always 
  * during startup (via Sys_Init()).
  */
@@ -489,10 +501,10 @@ void N_SystemInit(void)
 		maxDatagramSize = strtol(ArgNext(), NULL, 0);
 		Con_Message("N_SystemInit: Custom MTU: %i bytes.\n", maxDatagramSize);
 	}
-	
+
 	if(!SDLNet_Init())
 	{
-		VERBOSE( Con_Message("N_SystemInit: OK\n") );
+		VERBOSE(Con_Message("N_SystemInit: OK\n"));
 	}
 	else
 	{
@@ -512,25 +524,26 @@ void N_SystemShutdown(void)
 unsigned int N_GetServiceProviderCount(serviceprovider_t type)
 {
 	// Only TCP/IP.
-	return type == NSP_TCPIP? 1 : 0;
+	return type == NSP_TCPIP ? 1 : 0;
 }
 
-boolean	N_GetServiceProviderName(serviceprovider_t type,
-								 unsigned int index, char *name,
-								 int maxLength)
+boolean N_GetServiceProviderName(serviceprovider_t type, unsigned int index,
+								 char *name, int maxLength)
 {
-	if(type != NSP_TCPIP || index != 0) return false;
-	if(name) strncpy(name, "TCP/IP", maxLength);
+	if(type != NSP_TCPIP || index != 0)
+		return false;
+	if(name)
+		strncpy(name, "TCP/IP", maxLength);
 	return true;
 }
 
 /*
  * Convert an IPaddress to a string.
  */
-void N_IPToString(char *buf, IPaddress *ip)
+void N_IPToString(char *buf, IPaddress * ip)
 {
-	uint host = SDLNet_Read32(&ip->host);
-		
+	uint    host = SDLNet_Read32(&ip->host);
+
 	sprintf(buf, "%i.%i.%i.%i:%i", host >> 24, (host >> 16) & 0xff,
 			(host >> 8) & 0xff, host & 0xff, SDLNet_Read16(&ip->port));
 }
@@ -540,12 +553,13 @@ void N_IPToString(char *buf, IPaddress *ip)
  * socket cannot be opened, 'sock' is set to NULL.  'defaultPort'
  * should never be zero.
  */
-Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
+Uint16 N_OpenUDPSocket(UDPsocket * sock, Uint16 preferPort, Uint16 defaultPort)
 {
-	Uint16 port = preferPort;
-	int tries = 1000;
-	
-	if(!preferPort) port = defaultPort;
+	Uint16  port = preferPort;
+	int     tries = 1000;
+
+	if(!preferPort)
+		port = defaultPort;
 	*sock = NULL;
 
 	// Try opening the port, advance to next one if the opening fails.
@@ -568,8 +582,8 @@ Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 {
 	IPaddress ip;
-	Uint16 port;
-	
+	Uint16  port;
+
 	if(netCurrentProvider == provider && netServerMode == inServerMode)
 	{
 		// Nothing to change.
@@ -594,11 +608,13 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 	if(inServerMode)
 	{
 		port = nptIPPort;
-		if(!port) port = defaultTCPPort;
-		
-		VERBOSE( Con_Message("N_InitService: Listening TCP socket on "
-							 "port %i.\n", port) );
-		
+		if(!port)
+			port = defaultTCPPort;
+
+		VERBOSE(Con_Message
+				("N_InitService: Listening TCP socket on " "port %i.\n",
+				 port));
+
 		// Open a listening TCP socket. It will accept client
 		// connections.
 		if(SDLNet_ResolveHost(&ip, NULL, port))
@@ -630,26 +646,26 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 	// FIXME: When entering server mode, why must be close and re-open
 	// the incoming UDP port? It's the same either way...
 
-/*	port = nptUDPPort;
-	if(!port) port = defaultUDPPort;
-	inSock = SDLNet_UDP_Open(port);
-	for(i = 0; !inSock && i < MAX_NODES; i++)
-	{
-		port = defaultUDPPort + i;
-		VERBOSE( Con_Message("N_InitService: Trying alternative incoming "
-							 "UDP port (%i).\n", port) );
-		inSock = SDLNet_UDP_Open(port);
-	}
-	recvUDPPort = port;*/
+	/*  port = nptUDPPort;
+	   if(!port) port = defaultUDPPort;
+	   inSock = SDLNet_UDP_Open(port);
+	   for(i = 0; !inSock && i < MAX_NODES; i++)
+	   {
+	   port = defaultUDPPort + i;
+	   VERBOSE( Con_Message("N_InitService: Trying alternative incoming "
+	   "UDP port (%i).\n", port) );
+	   inSock = SDLNet_UDP_Open(port);
+	   }
+	   recvUDPPort = port; */
 
 	// Open the socket that will be used for UDP communications.
-	recvUDPPort = N_OpenUDPSocket((UDPsocket*)&inSock, nptUDPPort,
-								  defaultUDPPort);
-	VERBOSE( Con_Message("N_InitService: Incoming UDP port %i.\n",
-						 recvUDPPort) );
+	recvUDPPort =
+		N_OpenUDPSocket((UDPsocket *) & inSock, nptUDPPort, defaultUDPPort);
+	VERBOSE(Con_Message
+			("N_InitService: Incoming UDP port %i.\n", recvUDPPort));
 
 	// Success.
-	nptActive = provider - 1; // -1 to match old values: 0=TCP/IP...
+	nptActive = provider - 1;	// -1 to match old values: 0=TCP/IP...
 	netServerMode = inServerMode;
 	netCurrentProvider = provider;
 
@@ -661,19 +677,19 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 	}
 
 	// Open the port for outgoing UDP communications.
-/*	port = nptUDPOutPort;
-	if(!port && inServerMode) port = defaultUDPPort + 1;
-	if(port)
-	{
-		VERBOSE( Con_Message("N_InitService: Outgoing UDP port %i.\n", port) );
-	}
-	if(!(outSock = SDLNet_UDP_Open(port)))
-	{
-		Con_Message("N_InitService: Couldn't open outgoing UDP socket.\n");
-		N_ShutdownService();
-		return false;
-	}
-*/
+	/*  port = nptUDPOutPort;
+	   if(!port && inServerMode) port = defaultUDPPort + 1;
+	   if(port)
+	   {
+	   VERBOSE( Con_Message("N_InitService: Outgoing UDP port %i.\n", port) );
+	   }
+	   if(!(outSock = SDLNet_UDP_Open(port)))
+	   {
+	   Con_Message("N_InitService: Couldn't open outgoing UDP socket.\n");
+	   N_ShutdownService();
+	   return false;
+	   }
+	 */
 
 	// Start the UDP receiver right away.
 	N_StartReceiver();
@@ -689,14 +705,15 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
  */
 void N_ShutdownService(void)
 {
-	int i;
-	
-	if(!N_IsAvailable()) return; // Nothing to do.
+	int     i;
+
+	if(!N_IsAvailable())
+		return;					// Nothing to do.
 
 	if(netgame)
 	{
 		// We seem to be shutting down while a netgame is running.
-		Con_Execute(isServer? "net server close" : "net disconnect", true);
+		Con_Execute(isServer ? "net server close" : "net disconnect", true);
 	}
 
 	// Any queued messages will be destroyed.
@@ -705,15 +722,15 @@ void N_ShutdownService(void)
 	// Kill the UDP transmitter thread.
 	N_StopTransmitter(&sendQ);
 
-/*	
-	// Close the outgoing UDP socket.
-	sock = outSock;
-	outSock = NULL;
-	SDLNet_UDP_Close(sock);
-*/
+	/*  
+	   // Close the outgoing UDP socket.
+	   sock = outSock;
+	   outSock = NULL;
+	   SDLNet_UDP_Close(sock);
+	 */
 
 	N_StopReceiver();
-	
+
 	if(netServerMode)
 	{
 		// Close the listening socket.
@@ -721,7 +738,8 @@ void N_ShutdownService(void)
 		serverSock = NULL;
 
 		// Clear the client nodes.
-		for(i = 0; i < MAX_NODES; i++) N_TerminateNode(i);
+		for(i = 0; i < MAX_NODES; i++)
+			N_TerminateNode(i);
 
 		// Free the socket set.
 		SDLNet_FreeSocketSet(sockSet);
@@ -730,19 +748,19 @@ void N_ShutdownService(void)
 	else
 	{
 		// Let's forget about servers found earlier.
-		located.valid  = false;
+		located.valid = false;
 	}
-	
+
 	// Reset the current provider's info.
 	netCurrentProvider = NSP_NONE;
-	netServerMode      = false;
+	netServerMode = false;
 }
 
 /*
  * Returns true if the low-level network routines have been initialized
  * and are expected to be working.
  */
-boolean	N_IsAvailable(void)
+boolean N_IsAvailable(void)
 {
 	return netCurrentProvider != NSP_NONE;
 }
@@ -755,16 +773,17 @@ boolean N_UsingInternet(void)
 	return netCurrentProvider == NSP_TCPIP;
 }
 
-boolean	N_GetHostInfo(int index, struct serverinfo_s *info)
+boolean N_GetHostInfo(int index, struct serverinfo_s * info)
 {
-	if(!located.valid || index != 0) return false;
+	if(!located.valid || index != 0)
+		return false;
 	memcpy(info, &located.info, sizeof(*info));
 	return true;
 }
 
 int N_GetHostCount(void)
 {
-	return located.valid? 1 : 0;
+	return located.valid ? 1 : 0;
 }
 
 const char *N_GetProtocolName(void)
@@ -796,7 +815,8 @@ void N_TerminateNode(nodeid_t id)
 	netevent_t netEvent;
 	sqpack_t *i;
 
-	if(!node->sock) return; // There is nothing here...
+	if(!node->sock)
+		return;					// There is nothing here...
 
 	if(netServerMode && node->hasJoined)
 	{
@@ -805,7 +825,7 @@ void N_TerminateNode(nodeid_t id)
 		netEvent.id = id;
 		N_NEPost(&netEvent);
 	}
-	
+
 	// Remove the node from the set of active sockets.
 	SDLNet_TCP_DelSocket(sockSet, node->sock);
 
@@ -815,12 +835,13 @@ void N_TerminateNode(nodeid_t id)
 	// Remove the address binding from the incoming UDP socket.  This
 	// means we'll reject all packets from the address.
 	N_BindIncoming(NULL, id);
-	
+
 	// Cancel this node's packets in the send queue by setting their
 	// node pointers to NULL.
 	Sem_P(sendQ.mutex);
 	for(i = sendQ.first; i; i = i->next)
-		if(i->node == node) i->node = NULL;
+		if(i->node == node)
+			i->node = NULL;
 	Sem_V(sendQ.mutex);
 
 	// Clear the node's data.
@@ -834,7 +855,7 @@ void N_TerminateNode(nodeid_t id)
  */
 static boolean N_RegisterNewSocket(TCPsocket sock)
 {
-	int i;
+	int     i;
 	netnode_t *node;
 
 	// Find a free node.
@@ -865,12 +886,13 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
 	netnode_t *node;
 	netevent_t netEvent;
 	IPaddress *ip;
-	
+
 	// If the server is full, attempts to connect are canceled.
-	if(Sv_GetNumConnected() >= sv_maxPlayers) return false;
+	if(Sv_GetNumConnected() >= sv_maxPlayers)
+		return false;
 
 	node = &netNodes[id];
-	
+
 	// The UDP address where we should be sending data.
 	if(!(ip = SDLNet_TCP_GetPeerAddress(node->sock)))
 	{
@@ -882,11 +904,12 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
 
 	if(verbose)
 	{
-		char buf[80];
+		char    buf[80];
+
 		N_IPToString(buf, &node->addr);
 		Con_Message("N_JoinNode: Node %i listens at %s (UDP).\n", id, buf);
 	}
-	
+
 	// Convert the network node into a real client node.
 	node->hasJoined = true;
 
@@ -895,19 +918,19 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
 	strncpy(node->name, name, sizeof(node->name) - 1);
 
 	// Prepare the transmission stats for the node.
-	node->numWaiting   = 0;
+	node->numWaiting = 0;
 	node->bytesWaiting = 0;
-	node->mutex        = Sem_Create(1);
+	node->mutex = Sem_Create(1);
 
 	// Bind the address to the incoming UDP socket, so we'll recognize
 	// the sender.
 	N_BindIncoming(&node->addr, id);
-	
+
 	// Inform the higher levels of this occurence.
 	netEvent.type = NE_CLIENT_ENTRY;
-	netEvent.id   = id;
+	netEvent.id = id;
 	N_NEPost(&netEvent);
-	
+
 	return true;
 }
 
@@ -917,11 +940,12 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
 boolean N_LookForHosts(void)
 {
 	TCPsocket sock;
-	char buf[256];
+	char    buf[256];
 	ddstring_t *response;
-	
+
 	// We must be a client.
-	if(!N_IsAvailable() || netServerMode) return false;
+	if(!N_IsAvailable() || netServerMode)
+		return false;
 
 	// Get rid of previous findings.
 	memset(&located, 0, sizeof(located));
@@ -946,14 +970,16 @@ boolean N_LookForHosts(void)
 	response = Str_New();
 	while(!strstr(Str_Text(response), "END\n"))
 	{
-		int result = SDLNet_TCP_Recv(sock, buf, sizeof(buf) - 1);
-		if(result <= 0) break; // Terminated?
+		int     result = SDLNet_TCP_Recv(sock, buf, sizeof(buf) - 1);
+
+		if(result <= 0)
+			break;				// Terminated?
 		Str_Appendf(response, buf);
 	}
 
 	// Close the connection; that was all the information we need.
 	SDLNet_TCP_Close(sock);
-	
+
 	// Did we receive what we expected to receive?
 	if(strstr(Str_Text(response), "BEGIN\n"))
 	{
@@ -976,7 +1002,7 @@ boolean N_LookForHosts(void)
 
 		// Show the information in the console.
 		Con_Printf("%i server%s been found.\n", N_GetHostCount(),
-				   N_GetHostCount() != 1? "s have" : " has");
+				   N_GetHostCount() != 1 ? "s have" : " has");
 		Net_PrintServerInfo(0, NULL);
 		Net_PrintServerInfo(0, &located.info);
 		return true;
@@ -998,9 +1024,10 @@ boolean N_Connect(int index)
 {
 	netnode_t *svNode;
 	foundhost_t *host;
-	char buf[128], *pName;
-	
-	if(!N_IsAvailable() || netServerMode || index != 0) return false;
+	char    buf[128], *pName;
+
+	if(!N_IsAvailable() || netServerMode || index != 0)
+		return false;
 
 	Demo_StopPlayback();
 
@@ -1008,7 +1035,7 @@ boolean N_Connect(int index)
 	gx.NetConnect(true);
 
 	host = &located;
-	
+
 	// We'll use node number zero for all communications.
 	svNode = &netNodes[0];
 	if(!(svNode->sock = SDLNet_TCP_Open(&host->addr)))
@@ -1018,28 +1045,30 @@ boolean N_Connect(int index)
 		return false;
 	}
 	memcpy(&svNode->addr, &located.addr, sizeof(IPaddress));
-	
+
 	// Connect by issuing: "JOIN (my-udp) (myname)"
 	pName = playerName;
-	if(!pName || !pName[0]) pName = "Anonymous";
+	if(!pName || !pName[0])
+		pName = "Anonymous";
 	sprintf(buf, "JOIN %04x %s\n", recvUDPPort, pName);
 	SDLNet_TCP_Send(svNode->sock, buf, strlen(buf));
 
-	VERBOSE( Con_Printf("N_Connect: %s", buf) );
+	VERBOSE(Con_Printf("N_Connect: %s", buf));
 
 	// What is the reply?
 	memset(buf, 0, sizeof(buf));
-	if(SDLNet_TCP_Recv(svNode->sock, buf, 64) <= 0 ||
-	   strncmp(buf, "ENTER ", 6))
+	if(SDLNet_TCP_Recv(svNode->sock, buf, 64) <= 0
+	   || strncmp(buf, "ENTER ", 6))
 	{
 		SDLNet_TCP_Close(svNode->sock);
 		memset(svNode, 0, sizeof(svNode));
 		Con_Message("N_Connect: Server refused connection.\n");
-		if(buf[0]) Con_Message("  Reply: %s", buf);
+		if(buf[0])
+			Con_Message("  Reply: %s", buf);
 		return false;
 	}
 
-	VERBOSE( Con_Message("  Server responds: %s", buf) );
+	VERBOSE(Con_Message("  Server responds: %s", buf));
 
 	// The server tells us which UDP port we should send packets to.
 	SDLNet_Write16(strtol(buf + 6, NULL, 16), &svNode->addr.port);
@@ -1047,18 +1076,18 @@ boolean N_Connect(int index)
 	// Bind the server's address to our incoming UDP port, so we'll
 	// recognize the packets from the server.
 	N_BindIncoming(&svNode->addr, 0);
-	
+
 	// Clients are allowed to send packets to the server.
 	svNode->hasJoined = true;
-	
+
 	handshakeReceived = false;
-	netgame = true; // Allow sending/receiving of packets.
+	netgame = true;				// Allow sending/receiving of packets.
 	isServer = false;
 	isClient = true;
-	
+
 	// Call game's NetConnect.
 	gx.NetConnect(false);
-	
+
 	// G'day mate!  The client is responsible for beginning the
 	// handshake.
 	Cl_SendHello();
@@ -1071,23 +1100,26 @@ boolean N_Connect(int index)
 boolean N_Disconnect(void)
 {
 	netnode_t *svNode;
-	
-	if(!N_IsAvailable()) return false;
-	
+
+	if(!N_IsAvailable())
+		return false;
+
 	// Tell the Game that a disconnecting is about to happen.
-	if(gx.NetDisconnect) gx.NetDisconnect(true);
-	
+	if(gx.NetDisconnect)
+		gx.NetDisconnect(true);
+
 	Net_StopGame();
 	N_ClearMessages();
 
-/*	
-	// Exit the session, but reinit the client interface.
-	gClient->Close(0);
-	N_InitDPObject(false);
-*/
+	/*  
+	   // Exit the session, but reinit the client interface.
+	   gClient->Close(0);
+	   N_InitDPObject(false);
+	 */
 
 	// Tell the Game that disconnecting is now complete.
-	if(gx.NetDisconnect) gx.NetDisconnect(false);
+	if(gx.NetDisconnect)
+		gx.NetDisconnect(false);
 
 	// This'll prevent the sending of further packets.
 	svNode = &netNodes[0];
@@ -1097,16 +1129,17 @@ boolean N_Disconnect(void)
 	// Close the control connection.  This will let the server know
 	// that we are no more.
 	SDLNet_TCP_Close(svNode->sock);
-	
+
 	return true;
 }
 
 boolean N_ServerOpen(void)
 {
-	if(!N_IsAvailable()) return false;
+	if(!N_IsAvailable())
+		return false;
 
 	Demo_StopPlayback();
-	
+
 	// Let's make sure the correct service provider is initialized
 	// in server mode.
 	if(!N_InitService(netCurrentProvider, true))
@@ -1117,13 +1150,15 @@ boolean N_ServerOpen(void)
 
 	// The game module may have something that needs doing before we
 	// actually begin.
-	if(gx.NetServerStart) gx.NetServerStart(true);
+	if(gx.NetServerStart)
+		gx.NetServerStart(true);
 
 	Sv_StartNetGame();
 
 	// The game DLL might want to do something now that the
 	// server is started.
-	if(gx.NetServerStart) gx.NetServerStart(false);
+	if(gx.NetServerStart)
+		gx.NetServerStart(false);
 
 	if(masterAware && N_UsingInternet())
 	{
@@ -1135,7 +1170,8 @@ boolean N_ServerOpen(void)
 
 boolean N_ServerClose(void)
 {
-	if(!N_IsAvailable()) return false;
+	if(!N_IsAvailable())
+		return false;
 
 	if(masterAware && N_UsingInternet())
 	{
@@ -1143,13 +1179,15 @@ boolean N_ServerClose(void)
 		N_MAClear();
 		N_MasterAnnounceServer(false);
 	}
-	if(gx.NetServerStop) gx.NetServerStop(true);
+	if(gx.NetServerStop)
+		gx.NetServerStop(true);
 	Net_StopGame();
 
 	// Exit server mode.
 	N_InitService(netCurrentProvider, false);
 
-	if(gx.NetServerStop) gx.NetServerStop(false);
+	if(gx.NetServerStop)
+		gx.NetServerStop(false);
 	return true;
 }
 
@@ -1163,13 +1201,13 @@ boolean N_ServerClose(void)
  */
 static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
 {
-	char command[80], *ch, buf[256];
+	char    command[80], *ch, buf[256];
 	const char *in;
 	TCPsocket sock = netNodes[node].sock;
 	serverinfo_t info;
 	ddstring_t msg;
-	Uint16 port;
-	
+	Uint16  port;
+
 	// If the command is too long, it'll be considered invalid.
 	if(length >= 80)
 	{
@@ -1184,7 +1222,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
 		*ch++ = *in++;
 
 	//Con_Message("N_DoNodeCommand: %s\n", command);
-	
+
 	// Status query?
 	if(!strcmp(command, "INFO"))
 	{
@@ -1207,7 +1245,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
 			N_TerminateNode(node);
 			return false;
 		}
-		
+
 		// Read the client's name and convert the network node into a
 		// real client network node (which has a transmitter).
 		if(N_JoinNode(node, port, command + 10))
@@ -1251,8 +1289,8 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
 void N_Listen(void)
 {
 	TCPsocket sock;
-	int i, result;
-	char buf[256];
+	int     i, result;
+	char    buf[256];
 
 	if(netServerMode)
 	{
@@ -1275,29 +1313,31 @@ void N_Listen(void)
 			for(i = 0; i < MAX_NODES; i++)
 			{
 				// Does this socket have got any activity?
-				if(!SDLNet_SocketReady(netNodes[i].sock)) continue;
+				if(!SDLNet_SocketReady(netNodes[i].sock))
+					continue;
 
 				result = SDLNet_TCP_Recv(netNodes[i].sock, buf, sizeof(buf));
 				if(result <= 0)
 				{
 					// Close this socket & node.
-					VERBOSE2( Con_Message("N_Listen: Connection closed on "
-										  "node %i.\n", i) );
+					VERBOSE2(Con_Message
+							 ("N_Listen: Connection closed on " "node %i.\n",
+							  i));
 					N_TerminateNode(i);
 				}
 				else
 				{
 					// FIXME: Read into a buffer, execute when newline
 					// received.
-					
+
 					// Process the command; we will need to answer, or
 					// do something else.
 					N_DoNodeCommand(i, buf, result);
 				}
 			}
-		}				
+		}
 	}
-   	else
+	else
 	{
 		// Clientside listening.
 	}

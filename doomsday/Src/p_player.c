@@ -48,19 +48,20 @@
  */
 int P_LocalToConsole(int localPlayer)
 {
-	int i, count, n;
+	int     i, count, n;
 
 	for(i = 0, count = 0; i < DDMAXPLAYERS; i++)
 	{
 		// The numbering begins from the consoleplayer.
 		n = (i + consoleplayer) % DDMAXPLAYERS;
-		
+
 		if(players[n].flags & DDPF_LOCAL)
 		{
-			if(count++ == localPlayer) return n;
-		}			
+			if(count++ == localPlayer)
+				return n;
+		}
 	}
-	
+
 	// No match!
 	return -1;
 }
