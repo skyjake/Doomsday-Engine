@@ -1324,6 +1324,9 @@ void R_SetupLevel(char *level_id, int flags)
 	// Make sure that the next frame doesn't use a filtered viewer.
 	R_ResetViewer();
 
+	// Texture animations should begin from their first step.
+	R_ResetAnimGroups();
+
 	// Do network init: Initialize Delta Pools.
 	if(!(flags & DDSLF_NO_SERVER)) 
 	{

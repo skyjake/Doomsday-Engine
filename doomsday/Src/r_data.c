@@ -7,8 +7,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-//#define DD_PROFILE
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -208,6 +206,7 @@ void R_SetAnimGroup(int type, int number, int group)
 //===========================================================================
 // R_CreateAnimGroup
 //	Create a new animation group. Returns the group number.
+//	This function is exported and accessible from DLLs.
 //===========================================================================
 int R_CreateAnimGroup(int type, int flags)
 {
@@ -242,6 +241,7 @@ animgroup_t *R_GetAnimGroup(int number)
 
 //===========================================================================
 // R_AddToAnimGroup
+//	This function is exported and accessible from DLLs.
 //===========================================================================
 void R_AddToAnimGroup(int groupNum, int number, int tics, int randomTics)
 {
@@ -327,6 +327,33 @@ void R_InitAnimGroup(ded_group_t *def)
 		R_AddToAnimGroup(groupNumber, number, def->members[i].tics,
 			def->members[i].random_tics);
 	}
+}
+
+//===========================================================================
+// R_ResetAnimGroups
+//	All animation groups are reseted back to their original state.
+//	Called when setting up a map.
+//===========================================================================
+void R_ResetAnimGroups(void)
+{
+	int i;
+	animgroup_t *group;
+		
+	for(i = 0, group = groups; i < numgroups; i++, group++)
+	{
+		// The Precache groups are not intended for animation.
+		if(group->flags & AGF_PRECACHE || !group->count) continue;
+
+		group->timer = 0;
+		group->maxtimer = 1;
+		
+		// The anim group should start from the first step using the 
+		// correct timings.
+		group->index = group->count - 1;
+	}
+
+	// This'll get every group started on the first step.
+	R_AnimateAnimGroups();
 }
 
 //===========================================================================
