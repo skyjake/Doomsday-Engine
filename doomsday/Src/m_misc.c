@@ -907,3 +907,25 @@ void M_ReplaceFileExt(char *path, char *newext)
 		strcpy(ptr + 1, newext);
 	}
 }
+
+//===========================================================================
+// M_Pretty
+//	Return a prettier copy of the original path.
+//===========================================================================
+const char *M_Pretty(const char *path)
+{
+#define MAX_BUFS 8
+	static char buffers[MAX_BUFS][256];
+	static uint index = 0;
+	char *str;
+
+	if(!strnicmp(path, ddBasePath, strlen(ddBasePath)))
+	{
+		str = buffers[index++ % MAX_BUFS];
+		M_RemoveBasePath(path, str);
+		return str;
+	}
+
+	// We don't know how to make this prettier.
+	return path;
+}
