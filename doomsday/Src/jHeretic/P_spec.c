@@ -850,6 +850,9 @@ void P_PlayerInWindSector(player_t *player)
 			P_Thrust(player, ANG180, pushTab[sector->special-35]);
 			break;
 	}
+
+	// The other wind types (40..51).
+	P_WindThrust(player->plr->mo);
 }
 
 //----------------------------------------------------------------------------

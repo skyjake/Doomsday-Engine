@@ -273,6 +273,31 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
 	return(true);
 }
 
+/*
+ * Wind pushes the mobj, if its sector special is a wind type.
+ */
+void P_WindThrust(mobj_t *mo)
+{
+	static int windTab[3] = {2048*5, 2048*10, 2048*25};
+	int special = mo->subsector->sector->special;
+
+	switch(special)
+	{
+		case 40: case 41: case 42: // Wind_East
+			P_ThrustMobj(mo, 0, windTab[special-40]);
+			break;
+		case 43: case 44: case 45: // Wind_North
+			P_ThrustMobj(mo, ANG90, windTab[special-43]);
+			break;
+		case 46: case 47: case 48: // Wind_South
+			P_ThrustMobj(mo, ANG270, windTab[special-46]);
+			break;
+		case 49: case 50: case 51: // Wind_West
+			P_ThrustMobj(mo, ANG180, windTab[special-49]);
+			break;
+	}
+}
+
 #define STOPSPEED               0x1000
 #define FRICTION_NORMAL         0xe800
 #define FRICTION_LOW            0xf900
@@ -304,7 +329,6 @@ void P_XYMovement(mobj_t *mo)
 	player_t *player;
 	fixed_t xmove, ymove;
 	int special;
-	static int windTab[3] = {2048*5, 2048*10, 2048*25};
 
 	// $democam: cameramen have their own movement code
 	if(P_CameraXYMovement(mo)) return;
@@ -322,21 +346,7 @@ void P_XYMovement(mobj_t *mo)
 	special = mo->subsector->sector->special;
 	if(mo->flags2&MF2_WINDTHRUST)
 	{
-		switch(special)
-		{
-			case 40: case 41: case 42: // Wind_East
-				P_ThrustMobj(mo, 0, windTab[special-40]);
-				break;
-			case 43: case 44: case 45: // Wind_North
-				P_ThrustMobj(mo, ANG90, windTab[special-43]);
-				break;
-			case 46: case 47: case 48: // Wind_South
-				P_ThrustMobj(mo, ANG270, windTab[special-46]);
-				break;
-			case 49: case 50: case 51: // Wind_West
-				P_ThrustMobj(mo, ANG180, windTab[special-49]);
-				break;
-		}
+		P_WindThrust(mo);
 	}
 	player = mo->player;
 	if(mo->momx > MAXMOVE)
@@ -1256,22 +1266,8 @@ void P_SpawnMapThing(mapthing_t *mthing)
 // check for players specially
 	if(mthing->type <= 4)
 	{
-		//gi.conprintf( "P_SpawnMapThing: found player start for %i.\n", mthing->type-1);
-
 		// Register this player start.
 		P_RegisterPlayerStart(mthing);
-
-		/*if(IS_SERVER && !IS_NETGAME)
-		{
-			P_SpawnPlayer(mthing, mthing->type-1);
-		}*/
-
-		// save spots for respawning in network games
-		/*playerstarts[mthing->type-1] = *mthing;
-		if(!deathmatch)
-		{
-			P_SpawnPlayer(mthing, mthing->type-1);
-		}*/
 		return;
 	}
 

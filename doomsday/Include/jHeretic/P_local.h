@@ -141,6 +141,7 @@ void P_RemoveMobj(mobj_t *th);
 boolean	P_SetMobjState(mobj_t *mobj, statenum_t state);
 boolean	P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
 void P_ThrustMobj(mobj_t *mo, angle_t angle, fixed_t move);
+void P_WindThrust(mobj_t *mo);
 int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
 boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax);
 void P_MobjThinker(mobj_t *mobj);
