@@ -10,6 +10,7 @@
 #ifdef WIN32
 #  include <windows.h>
 #  include <process.h>
+#  include <signal.h>
 #endif
 
 #include <SDL.h>
@@ -50,6 +51,20 @@ boolean novideo;				// if true, stay in text mode for debugging
 
 // CODE --------------------------------------------------------------------
 
+#ifdef WIN32
+// Borrowed from Lee Killough.
+static void C_DECL handler(int s)
+{
+	signal(s, SIG_IGN);  // Ignore future instances of this signal.
+
+	Con_Error(s==SIGSEGV ? "Segmentation Violation\n" :
+		s==SIGINT  ? "Interrupted by User\n" :
+		s==SIGILL  ? "Illegal Instruction\n" :
+		s==SIGFPE  ? "Floating Point Exception\n" :
+		s==SIGTERM ? "Killed\n" : "Terminated by signal\n");
+}
+#endif
+
 //==========================================================================
 // Sys_Init
 //  Initialize machine state.
@@ -72,6 +87,16 @@ void Sys_Init(void)
 	S_Init();
 	Huff_Init();
 	N_Init();
+
+#if defined(WIN32) && !defined(_DEBUG)
+	// Register handler for abnormal situations (in release build).
+	signal(SIGSEGV, handler);
+	signal(SIGTERM, handler);
+	signal(SIGILL, handler);
+	signal(SIGFPE, handler);
+	signal(SIGILL, handler);
+	signal(SIGABRT, handler);
+#endif
 }
 
 //==========================================================================
