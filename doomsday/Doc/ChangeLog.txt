@@ -6,8 +6,21 @@
 
 Version 1.8.5
 -------------
++ surface reflections (shiny effects)
++ 'Reflection' definition
++ cvar 'rend-tex-shiny': enable surface reflections
 + Model -> Sub -> Shiny reaction: how much shiny textures react to angle
   changes
++ cvar 'rend-model-shiny-strength': shininess factor for all models (0..1)
++ Model -> Sub -> Blending mode: select a blending mode (bm_* flag)
++ bm_* flags in Flags.ded (blending modes)
+* external resources can be located in relation to Doomsday base path
+  (e.g. Shiny map = "Data/LightMaps/Shine")
+- fixed: dynamic light clipping in the case where lights are in the same
+  subsector with a polyobj
+
+jHexen:
++ cvar 'hud-scale': scaling factor for HUD graphics and messages
 
 
 Version 1.8.4
