@@ -1124,9 +1124,18 @@ class DropList (Widget):
         self.getWxWidget().Clear()
 
     def retranslate(self):
+        """Update the text of the items in the drop list. Preserve
+        current selection."""
+        
         drop = self.getWxWidget()
+        sel = drop.GetSelection()
+
+        # We will replace all the items in the list.
+        drop.Clear()        
         for i in range(len(self.items)):
-            drop.SetString(i, language.translate(self.items[i]))
+            drop.Append(language.translate(self.items[i]))
+
+        drop.SetSelection(sel)
 
     def addItem(self, item):
         """Append a list of items into the drop-down list.
@@ -1419,6 +1428,14 @@ class FormattedTabArea (FormattedList):
                 'src="%s"><td align="left" valign="center">%s</td>' %
                 (paths.findBitmap(imageName), language.translate(tabId)) +
                 '</table>')
+
+    def retranslate(self):
+        """Update the icons and names of the categories."""
+
+        for tab in self.getTabs():
+            self.updateIcon(tab)
+
+        self.multi.refresh()
 
     def getTabs(self):
         """Compose a list of all the areas of the tab area.  Hidden
