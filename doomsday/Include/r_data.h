@@ -104,6 +104,7 @@ typedef struct {
 	float interpos;				// Blending strength (0..1).
 	struct dynlight_s *lights;	// List of lights that affect this poly.
 	uint numlights;
+	DGLuint decorlightmap;		// Pregen RGB lightmap for decor lights.
 	sector_t *sector;			// The sector this poly belongs to (if any).
 
 	// The geometry:
@@ -283,5 +284,6 @@ void	R_SetAnimGroup(int type, int number, int group);
 boolean	R_IsCustomTexture(int texture);
 boolean	R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal);
 boolean	R_IsValidLightDecoration(ded_decorlight_t *lightDef);
+void	R_GenerateDecorMap(ded_decor_t *def);
 
 #endif
