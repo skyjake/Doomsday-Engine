@@ -226,7 +226,7 @@ void Cl_Frame2Received(int packetType)
 				Cl_ResendHistoryAdd(resend);
 			}
 
-			switch(deltaType)
+			switch (deltaType)
 			{
 			case DT_CREATE_MOBJ:
 				// The mobj will be created/shown.

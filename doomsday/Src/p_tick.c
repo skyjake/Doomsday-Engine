@@ -102,7 +102,7 @@ void P_MobjTicker(mobj_t *mo)
 //===========================================================================
 // PIT_ClientMobjTicker
 //===========================================================================
-boolean PIT_ClientMobjTicker(clmobj_t * cmo, void *parm)
+boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
 {
 	P_MobjTicker(&cmo->mo);
 	// Continue iteration.

@@ -567,7 +567,7 @@ void P_NewParticle(ptcgen_t * gen)
 // PIT_ClientMobjParticles
 //  Callback for the client mobj iterator, called from P_ManyNewParticles.
 //===========================================================================
-boolean PIT_ClientMobjParticles(clmobj_t * cmo, void *parm)
+boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
 {
 	ptcgen_t *gen = parm;
 

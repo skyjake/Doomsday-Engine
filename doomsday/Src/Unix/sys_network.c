@@ -59,7 +59,7 @@ typedef struct sqpack_s {
 	UDPpacket *packet;
 #ifdef TRANSMIT_RANDOMIZER
 	// The packet won't be sent until this time.
-	uint dueTime; 
+	uint    dueTime;
 #endif
 } sqpack_t;
 
@@ -168,14 +168,16 @@ static void N_ClearQueue(sendqueue_t *q)
  * Send the packet using UDP.  If the packet is associated with no
  * node, nothing will be sent because we don't know the destination
  * address.
- */ 
-static void N_UDPSend(sqpack_t *pack)
+ */
+static void N_UDPSend(sqpack_t * pack)
 {
-	if(!pack->node) return;
-	
+	if(!pack->node)
+		return;
+
 #ifdef PRINT_PACKETS
 	{
 		char    buf[80];
+
 		N_IPToString(buf, &pack->packet->address);
 		printf("Send: len=%i to %s\n", pack->packet->len, buf);
 	}
@@ -186,7 +188,7 @@ static void N_UDPSend(sqpack_t *pack)
 		// Commence sending.
 		SDLNet_UDP_Send(inSock, -1, pack->packet);
 	}
-	
+
 	// Update the node's counters.
 	Sem_P(pack->node->mutex);
 	pack->node->numWaiting--;
@@ -199,23 +201,23 @@ static void N_UDPSend(sqpack_t *pack)
  * The randomized version of the UDP transmitter.  This can be used to
  * simulate a real-life connection where UDP packets are received
  * sometimes in the wrong order or get lost entirely.
- */   
+ */
 static int N_UDPTransmitter(void *parm)
 {
 	sendqueue_t *q = parm;
 	sqpack_t *pack;
-	uint nowTime = 0;
+	uint    nowTime = 0;
 
 	// When using the randomized transmitter, the send queue is always
 	// sorted by the due times.
-	
+
 	while(q->online)
 	{
 		// If there are packets waiting, see if they should be sent now.
 		Sem_P(q->mutex);
 
 		nowTime = Sys_GetRealTime();
-	
+
 		while((pack = q->first) != NULL)
 		{
 			if(pack->dueTime > nowTime)
@@ -223,7 +225,7 @@ static int N_UDPTransmitter(void *parm)
 				// Too early.
 				break;
 			}
-			
+
 			// Remove the packet from the queue.
 			q->first = pack->next;
 
@@ -233,9 +235,9 @@ static int N_UDPTransmitter(void *parm)
 			SDLNet_FreePacket(pack->packet);
 			free(pack);
 		}
-		
+
 		Sem_V(q->mutex);
-		
+
 		// Sleep for a short while before starting another loop.
 		Sys_Sleep(2);
 	}
@@ -244,7 +246,7 @@ static int N_UDPTransmitter(void *parm)
 	return 0;
 }
 
-#else /* !TRANSMIT_RANDOMIZER */
+#else							/* !TRANSMIT_RANDOMIZER */
 
 /*
  * A UDP transmitter thread takes messages off a network node's send
@@ -286,7 +288,7 @@ static int N_UDPTransmitter(void *parm)
 		Sem_V(q->mutex);
 
 		N_UDPSend(pack);
-		
+
 		// Now that the packet has been sent, we can discard the data.
 		SDLNet_FreePacket(pack->packet);
 		free(pack);
@@ -465,14 +467,14 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 
 #ifdef TRANSMIT_RANDOMIZER
 	// There is a chance that the packet is dropped.
-	if(M_FRandom() < RANDOMIZER_DROP_PERCENT/100.0)
+	if(M_FRandom() < RANDOMIZER_DROP_PERCENT / 100.0)
 	{
 		Con_Message("N_SendDataBuffer: Randomizer dropped packet to %i "
 					"(%i bytes).\n", destination, size);
 		return;
 	}
 #endif
-	
+
 	//#ifdef _DEBUG
 	if(size > maxDatagramSize)
 	{
@@ -497,7 +499,7 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 #ifdef TRANSMIT_RANDOMIZER
 	pack->dueTime = Sys_GetRealTime() + M_FRandom() * RANDOMIZER_MAX_DELAY;
 #endif
-	
+
 	// Add the packet to the send queue.
 	Sem_P(sendQ.mutex);
 #ifndef TRANSMIT_RANDOMIZER
@@ -521,10 +523,11 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 			pack->next = sendQ.first;
 			sendQ.first = pack;
 		}
- 		else
+		else
 		{
 			// Find the packet after which the new packet belongs.
 			sqpack_t *i = sendQ.first;
+
 			for(; i; i = i->next)
 			{
 				if(!i->next || i->next->dueTime >= pack->dueTime)
@@ -542,7 +545,7 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
 		sendQ.first = pack;
 		pack->next = NULL;
 	}
-#endif	
+#endif
 	Sem_V(sendQ.mutex);
 
 	// Increment the statistics.

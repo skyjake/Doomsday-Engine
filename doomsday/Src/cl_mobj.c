@@ -97,7 +97,7 @@ cmhash_t *Cl_MobjHash(thid_t id)
 /*
  * Links the clmobj into the client mobj hash table.
  */
-void Cl_LinkMobj(clmobj_t * cmo, thid_t id)
+void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
 {
 	cmhash_t *hash = Cl_MobjHash(id);
 
@@ -121,7 +121,7 @@ void Cl_LinkMobj(clmobj_t * cmo, thid_t id)
 /*
  * Unlinks the clmobj from the client mobj hash table.
  */
-void Cl_UnlinkMobj(clmobj_t * cmo)
+void Cl_UnlinkMobj(clmobj_t *cmo)
 {
 	cmhash_t *hash = Cl_MobjHash(cmo->mo.thinker.id);
 
@@ -187,7 +187,7 @@ boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
  * Unlinks the thing from sectorlinks and if the object is solid, 
  * the blockmap.
  */
-void Cl_UnsetThingPosition(clmobj_t * cmo)
+void Cl_UnsetThingPosition(clmobj_t *cmo)
 {
 	P_UnlinkThing(&cmo->mo);
 }
@@ -198,7 +198,7 @@ void Cl_UnsetThingPosition(clmobj_t * cmo)
  * to the blockmap makes it possible to interact with it (collide).
  * If the client mobj is Hidden, it will not be linked anywhere.
  */
-void Cl_SetThingPosition(clmobj_t * cmo)
+void Cl_SetThingPosition(clmobj_t *cmo)
 {
 	mobj_t *thing = &cmo->mo;
 
@@ -245,7 +245,7 @@ void Cl_SetThingState(mobj_t *mo, int stnum)
 /*
  * Updates floorz and ceilingz of the mobj.
  */
-void Cl_CheckMobj(clmobj_t * cmo, boolean justCreated)
+void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 {
 	mobj_t *mo = &cmo->mo;
 	boolean onFloor = false, inCeiling = false;
@@ -567,7 +567,7 @@ void Cl_Reset(void)
 /*
  * The client mobj is moved linearly, with collision checking.
  */
-void Cl_MoveThing(clmobj_t * cmo)
+void Cl_MoveThing(clmobj_t *cmo)
 {
 	mobj_t *mo = &cmo->mo;
 	boolean collided = false;
@@ -793,7 +793,7 @@ clmobj_t *Cl_CreateMobj(thid_t id)
 /*
  * Destroys the client mobj.
  */
-void Cl_DestroyMobj(clmobj_t * cmo)
+void Cl_DestroyMobj(clmobj_t *cmo)
 {
 	// Stop any sounds originating from this mobj.
 	S_StopSound(0, &cmo->mo);
@@ -809,7 +809,7 @@ void Cl_DestroyMobj(clmobj_t * cmo)
  * Call for Hidden client mobjs to make then visible.
  * If a sound is waiting, it's now played.
  */
-void Cl_RevealMobj(clmobj_t * cmo)
+void Cl_RevealMobj(clmobj_t *cmo)
 {
 	/*#ifdef _DEBUG
 	   Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
