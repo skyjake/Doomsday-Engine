@@ -138,13 +138,14 @@ void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
 /*
  * The sound is removed from the list of playing sounds. Called whenever
  * a sound is stopped, regardless of whether it was actually playing on 
- * the local system.
+ * the local system. Returns the number of sounds stopped.
  *
  * id=0, origin=0: stop everything
  */
-void Sfx_StopLogical(int id, mobj_t *origin)
+int Sfx_StopLogical(int id, mobj_t *origin)
 {
 	logicsound_t *it, *next;
+	int stopCount = 0;
 	int i;
 
 	if(id)
@@ -155,6 +156,7 @@ void Sfx_StopLogical(int id, mobj_t *origin)
 			if(it->id == id && it->origin == origin)
 			{
 				Sfx_DestroyLogical(it);
+				stopCount++;
 			}
 		}
 	}
@@ -169,10 +171,13 @@ void Sfx_StopLogical(int id, mobj_t *origin)
 				if(!origin || it->origin == origin)
 				{
 					Sfx_DestroyLogical(it);
+					stopCount++;
 				}
 			}
 		}
 	}
+
+	return stopCount;
 }
 
 /*
@@ -197,6 +202,11 @@ void Sfx_PurgeLogical(void)
 		for(it = logicHash[i].first; it; it = next)
 		{
 			next = it->next;
+/*#ifdef _DEBUG
+			Con_Printf("LS:%i orig=%i(%p) %s\n",
+				it->id, it->origin? it->origin->thinker.id : 0, 
+				it->origin, it->isRepeating? "[repeat]" : "");
+#endif*/
 			if(!it->isRepeating && it->endTime < nowTime)
 			{
 				// This has stopped.
