@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "def_data.h"
+#include "gl_main.h"
 
 // Helper Routines -------------------------------------------------------
 
@@ -419,6 +420,26 @@ void DED_RemoveDecoration(ded_t * ded, int index)
 {
 	DED_DelEntry(index, (void **) &ded->decorations, &ded->count.decorations,
 				 sizeof(ded_decor_t));
+}
+
+int DED_AddReflection(ded_t * ded)
+{
+    ded_reflection_t *ref = DED_NewEntry((void **) &ded->reflections,
+                                         &ded->count.reflections,
+                                         sizeof(ded_reflection_t));
+    // Init to defaults.
+    ref->shininess = 1.0f;
+    ref->mask_width = 1.0f;
+    ref->mask_height = 1.0f;
+    ref->blend_mode = BM_ADD;
+
+    return ref - ded->reflections;
+}
+
+void DED_RemoveReflection(ded_t * ded, int index)
+{
+	DED_DelEntry(index, (void **) &ded->reflections, &ded->count.reflections,
+				 sizeof(ded_reflection_t));
 }
 
 int DED_AddGroup(ded_t * ded)
