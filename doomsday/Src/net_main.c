@@ -34,7 +34,7 @@
 #define ACK_MINIMUM_THRESHOLD	50
 
 // Clients don't send commands on every tic.
-#define CLIENT_TICCMD_INTERVAL	3
+#define CLIENT_TICCMD_INTERVAL	2
 
 // TYPES -------------------------------------------------------------------
 
@@ -468,22 +468,26 @@ void Net_Update(void)
 	// This is as far as dedicated servers go.
 	if(isDedicated) goto listen;
 
-	if(!isClient || ++ticSendTimer > CLIENT_TICCMD_INTERVAL)
+	// Clients don't send commands on every tic.
+	ticSendTimer += newtics;
+	if(!isClient || ticSendTimer > CLIENT_TICCMD_INTERVAL)
 	{
-		// Clients don't send commands on every tic.
+		byte *msg;
+
 		ticSendTimer = 0;
 
-		// Send the proper number of tics to the server.
-		// If we are the server, the tics will rebound back to us.
-		Msg_Begin(pkt_ticcmd);
-		Msg_WriteByte(numlocal);
-		// Copy the tics to the outgoing packet.
-		for(i = 0; i < numlocal; i++)
-		{
-			Msg_Write(localticcmds + TICCMD_IDX(i), TICCMD_SIZE);
-		}
+		// The game will pack the commands into a buffer. The returned
+		// pointer points to a buffer that contains its size and the
+		// packed commands.
+		msg = (byte*) gx.NetPlayerEvent(numlocal, DDPE_WRITE_COMMANDS, 
+			localticcmds);
+
+		Msg_Begin(pcl_commands);
+		Msg_Write(msg + 2, *(ushort*) msg);
+
 		// Send the packet to the server, i.e. player zero.
 		Net_SendBuffer(0, isClient? 0 : SPF_REBOUND);
+
 		// The buffer is cleared.
 		numlocal = 0;
 	}
@@ -491,8 +495,8 @@ void Net_Update(void)
 	// Clients will periodically send their coordinates to the server so
 	// any prediction errors can be fixed. Client movement is almost 
 	// entirely local.
-	if(isClient && allow_frames 
-		&& coordTimer-- < 0
+	coordTimer -= newtics;
+	if(isClient && allow_frames && coordTimer < 0
 		&& players[consoleplayer].mo)
 	{
 		mobj_t *mo = players[consoleplayer].mo;
