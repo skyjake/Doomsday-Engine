@@ -827,7 +827,8 @@ int UIEdit_Responder(ui_object_t *ob, event_t *ev)
 
 		default:
 			if((int) strlen(ob->text) < dat->maxlen && ev->data1 >= 32 &&
-			   (ev->data1 <= 127 || ev->data1 >= DD_HIGHEST_KEYCODE))
+			   (DD_ModKey(ev->data1) <= 127 ||
+				DD_ModKey(ev->data1) >= DD_HIGHEST_KEYCODE))
 			{
 				memmove(ob->text + dat->cp + 1, ob->text + dat->cp,
 						strlen(ob->text) - dat->cp);

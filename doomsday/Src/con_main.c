@@ -1600,9 +1600,9 @@ boolean Con_Responder(event_t *event)
 
 	default:					// Check for a character.
 		ch = event->data1;
+		ch = DD_ModKey(ch);
 		if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
 			return true;
-		ch = DD_ModKey(ch);
 
 		if(cmdCursor < maxLineLen)
 		{
