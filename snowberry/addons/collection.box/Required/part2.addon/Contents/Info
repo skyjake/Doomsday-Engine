@@ -1,0 +1,8 @@
+name: Required Part
+
+choice phony-sound-driver (
+  default: ds8
+  alts < ds8, ds6, a3d, dummy >
+  opts < "", "-csd", "-a3d", "-dummy" >
+)
+
