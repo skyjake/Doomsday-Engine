@@ -15,6 +15,8 @@
 #include "../doomsday.h"
 #include "../dglib.h"
 
+#define USE_MULTITEXTURE	1
+
 #define DROGL_VERSION		210
 #define DROGL_VERSION_TEXT	"2.1.0"
 #define DROGL_VERSION_FULL	"DGL OpenGL Driver Version "DROGL_VERSION_TEXT" ("__DATE__")"
@@ -126,6 +128,7 @@ extern int extTexEnvComb;
 extern int extNvTexEnvComb;
 extern int extAtiTexEnvComb;
 extern int extAniso;
+extern int extGenMip;
 
 void initExtensions(void);
 
