@@ -39,7 +39,8 @@ enum
 	GPT_CLASS,				// jHexen: player class notification.
 	GPT_CONSOLEPLAYER_STATE2,
 	GPT_PLAYER_STATE2,
-	GPT_YELLOW_MESSAGE		// jHexen: yellow message.
+	GPT_YELLOW_MESSAGE,		// jHexen: yellow message.
+	GPT_PAUSE
 };
 
 // This packet is sent by servers to clients when the game state

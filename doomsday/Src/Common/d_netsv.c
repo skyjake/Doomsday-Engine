@@ -995,6 +995,20 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged)
 #endif
 }
 
+/*
+ * Inform all clients about a change in the 'pausedness' of a game.
+ */
+void NetSv_Paused(boolean isPaused)
+{
+	char setPause = (isPaused != false);
+
+	if(!IS_SERVER || !IS_NETGAME) return;
+
+	// This will make the clients save their games.
+	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_RELIABLE, GPT_PAUSE,
+		&setPause, 1);
+}
+
 //===========================================================================
 // NetSv_Ticker
 //===========================================================================

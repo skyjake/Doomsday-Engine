@@ -28,7 +28,6 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean re
 void NetSv_PSpriteChange(int plrNum, int state);
 void NetSv_Sound(mobj_t *origin, int sound_id, int toPlr); // toPlr=0: broadcast.
 void NetSv_SoundAtVolume(mobj_t *origin, int sound_id, int volume, int toPlr);
-//void NetSv_SectorSound(sector_t *sector, int sound_id);
 void NetSv_Intermission(int flags, int state, int time);
 void NetSv_Finale(int flags, char *script);
 void NetSv_SendPlayerInfo(int whose, int to_whom);
@@ -40,6 +39,7 @@ void NetSv_LoadReply(int plnum, int console);
 void NetSv_FragsForAll(player_t *player);
 void NetSv_KillMessage(player_t *killer, player_t *fragged);
 void NetSv_UpdateGameConfig(void);
+void NetSv_Paused(boolean isPaused);
 
 int CCmdMapCycle(int argc, char **argv);
 

@@ -491,12 +491,9 @@ void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
 	cmd->lookdir = pl->plr->clLookDir/110 * DDMAXSHORT;
 }
 
-//
-// G_BuildTiccmd
-// Builds a ticcmd from all of the available inputs
-// or reads it from the demo buffer. 
-// If recording a demo, write it out 
-// 
+/*
+ * Builds a ticcmd from all of the available inputs. 
+ */
 void G_BuildTiccmd (ticcmd_t* cmd) 
 { 
 	static boolean mlook_pressed = false;
@@ -1164,7 +1161,9 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     if(sendpause) 
     { 
 		sendpause = false; 
-		cmd->buttons = BT_SPECIAL | BTS_PAUSE; 
+		// Clients can't pause anything.
+		if(!IS_CLIENT)
+			cmd->buttons = BT_SPECIAL | BTS_PAUSE; 
     } 
 
 	if(IS_CLIENT)
@@ -1439,14 +1438,15 @@ void G_SpecialButton(player_t *pl)
 			{ 
 			case BTS_PAUSE: 
 				paused ^= 1; 
-				if (paused) 
+				if(paused) 
 				{
 					// This will stop all sounds from all origins.
 					S_StopSound(0, 0);
 				}
-/*					S_PauseSound (); 
-				else 
-					S_ResumeSound (); */
+
+				// Servers are responsible for informing clients about
+				// pauses in the game.
+				NetSv_Paused(paused);
 
 				pl->cmd.buttons = 0;
 				break; 

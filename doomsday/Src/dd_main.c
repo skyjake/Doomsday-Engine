@@ -552,80 +552,11 @@ void DD_CheckQuery(int query, int parm)
 		case DD_PROTOCOL:
 			queryResult = (int) N_GetProtocolName();
 			break;
-			
-/*		case DD_NUM_SERVERS:
-			queryResult = jtNetGetServerInfo(NULL, 0);
-			if(queryResult < 0) queryResult = 0;
-			break;
-			
-		case DD_MODEM:
-			queryResult = jtNetGetInteger(JTNET_MODEM);
-			break;
-			
-		case DD_PHONE_NUMBER:
-			queryResult = (int) jtNetGetString(JTNET_PHONE_NUMBER);
-			break;
-			
-		case DD_TCPIP_ADDRESS:
-			queryResult = (int) jtNetGetString(JTNET_TCPIP_ADDRESS);
-			break;
-			
-		case DD_TCPIP_PORT:
-			queryResult = jtNetGetInteger(JTNET_TCPIP_PORT);
-			break;
-			
-		case DD_COM_PORT:
-			queryResult = jtNetGetInteger(JTNET_COMPORT);
-			break;
-			
-		case DD_BAUD_RATE:
-			queryResult = jtNetGetInteger(JTNET_BAUDRATE);
-			break;
-			
-		case DD_STOP_BITS:
-			queryResult = jtNetGetInteger(JTNET_STOPBITS);
-			break;
-			
-		case DD_PARITY:
-			queryResult = jtNetGetInteger(JTNET_PARITY);
-			break;
-			
-		case DD_FLOW_CONTROL:
-			queryResult = jtNetGetInteger(JTNET_FLOWCONTROL);
-			break;*/
 		}
 		break;
-		
-/*		case DD_SERVER_DATA_QUERY:
-			sdq = (serverdataquery_t*) parm;
-			i = jtNetGetServerInfo(NULL, 0);
-			if(i < 0) i = 0;
-			sdq->found = 0;
-			if(i)	// Something was found?
-			{
-				buf = malloc(sizeof(jtnetserver_t) * sdq->num);
-				sdq->found = jtNetGetServerInfo(buf, sdq->num);
-				// Copy the data to the array given by the caller.
-				for(i = 0; i < sdq->found; i++)
-				{
-					strcpy(sdq->data[i].name, buf[i].name);
-					strcpy(sdq->data[i].description, buf[i].description);
-					sdq->data[i].players = buf[i].players;
-					sdq->data[i].maxPlayers = buf[i].maxPlayers;
-					sdq->data[i].canJoin = buf[i].canJoin;
-					memcpy(sdq->data[i].data, buf[i].data, sizeof(sdq->data[i].data));
-				}
-				free(buf);
-			}
-			break;*/
 			
-/*		case DD_MODEM_DATA_QUERY:
-			mdq = (modemdataquery_t*) parm;
-			mdq->list = jtNetGetStringList(JTNET_MODEM_LIST, &mdq->num);
-			break;*/
-			
-		default:
-			break;
+	default:
+		break;
 	}
 }
 
@@ -689,6 +620,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &pspOffY,			&pspOffY },
 	{ &psp_move_speed,	&psp_move_speed },
 	{ &cplr_thrust_mul,	&cplr_thrust_mul },
+	{ &clientPaused,	&clientPaused },
 };
 
 //===========================================================================

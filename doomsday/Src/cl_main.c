@@ -42,6 +42,7 @@ int			server_time;
 int			latest_frame_size;
 netdata_t	latest_frame_packet;
 boolean		net_loggedin = false;	// Logged in to the server.
+boolean		clientPaused = false;	// Set by the server.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -78,6 +79,9 @@ int Cl_GameReady()
 void Cl_CleanUp()
 {
 	Con_Printf("Cl_CleanUp.\n");
+
+	clientPaused = false;
+
 	Cl_DestroyClientMobjs();
 	Cl_InitPlayers();
 	Cl_RemoveMovers();
@@ -137,6 +141,7 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 	isClient = true;
 	isServer = false;
 	net_loggedin = false;
+	clientPaused = false;
 
 	if(handshake_received) return;
 
@@ -222,18 +227,6 @@ void Cl_GetPackets(void)
 				Cl_CoordsReceived();
 				break;
 				
-/*			case psv_sector_update:
-				Cl_HandleSectorUpdate();
-				break;
-				
-			case psv_wall_update:
-				Cl_HandleWallUpdate();
-				break;
-*/
-/*			case psv_plane_sound:
-				Cl_HandlePlaneSound();
-				break;*/
-
 			case psv_sound:
 				Cl_Sound();
 				break;
@@ -317,7 +310,7 @@ void Cl_GetPackets(void)
 //===========================================================================
 void Cl_Ticker(void)
 {
-	if(!Cl_GameReady()) return;
+	if(!Cl_GameReady() || clientPaused) return;
 	Cl_LocalCommand();
 	Cl_PredictMovement(true, true);	
 	Cl_MovePsprites();

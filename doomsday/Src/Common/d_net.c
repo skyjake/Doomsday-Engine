@@ -576,14 +576,6 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		NetCl_UpdatePSpriteState(data);
 		break;
 
-/*	case GPT_SOUND:
-		NetCl_PlaySound(data);
-		break;
-
-	case GPT_SECTOR_SOUND:
-		NetCl_PlaySectorSound(data);
-		break;*/
-
 	case GPT_INTERMISSION:
 		NetCl_Intermission(data);
 		break;
@@ -608,6 +600,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 
 	case GPT_LOAD:
 		NetCl_LoadGame(data);
+		break;
+
+	case GPT_PAUSE:
+		NetCl_Paused(bData[0]);
 		break;
 
 	default:

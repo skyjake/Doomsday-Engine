@@ -620,3 +620,12 @@ void NetCl_LoadGame(void *data)
 	P_SetMessage(&players[consoleplayer], GET_TXT(TXT_CLNETLOAD));
 #endif
 }
+
+/*
+ * Pause or unpause the game. 
+ */
+void NetCl_Paused(boolean setPause)
+{
+	paused = (setPause != 0);
+	DD_SetInteger(DD_CLIENT_PAUSED, paused);
+}

@@ -21,5 +21,6 @@ void NetCl_UpdatePlayerInfo(byte *data);
 void NetCl_SendPlayerInfo();
 void NetCl_SaveGame(void *data);
 void NetCl_LoadGame(void *data);
+void NetCl_Paused(boolean setPause);
 
 #endif

@@ -32,6 +32,7 @@ extern boolean handshake_received;
 extern int game_ready;
 extern boolean net_loggedin;
 extern clmobj_t cmRoot;
+extern boolean clientPaused;
 
 void Cl_InitID(void);
 void Cl_CleanUp();

@@ -141,6 +141,7 @@ enum
 	DD_PSPRITE_OFFSET_Y,	// 10x
 	DD_PSPRITE_SPEED,
 	DD_CPLAYER_THRUST_MUL,
+	DD_CLIENT_PAUSED,
 	DD_LAST_VALUE,
 
 	// General constants (not to be used with Get/Set).
