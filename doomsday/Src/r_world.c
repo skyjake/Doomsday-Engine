@@ -432,9 +432,9 @@ void R_CreateFloorsAndCeilings(int bspnode, int numdivlines, divline_t *divlines
 
 //==========================================================================
 // R_SkyFix
-//	Fixing the sky means that for adjacent sky sectors the lower sky is
-//	lifted to match the upper sky. The raising only affects rendering,
-//	it has no bearing on gameplay.
+//	Fixing the sky means that for adjacent sky sectors the lower sky 
+//	ceiling is lifted to match the upper sky. The raising only affects 
+//	rendering, it has no bearing on gameplay.
 //==========================================================================
 void R_SkyFix()
 {
@@ -442,7 +442,7 @@ void R_SkyFix()
 	int			i, f, b;
 
 	// Check all things first.
-	for(i=0; i<numsectors; i++)
+	for(i = 0; i < numsectors; i++)
 	{
 		sector_t *sec = SECTOR_PTR(i);
 		mobj_t *it;
@@ -474,13 +474,13 @@ void R_SkyFix()
 		adjusted = false;
 
 		// We need to check all the linedefs.
-		for(i=0; i<numlines; i++)
+		for(i = 0; i < numlines; i++)
 		{
 			line_t *line = LINE_PTR(i);
 			sector_t *front = line->frontsector, *back = line->backsector;
 			int fix = 0;
 
-			// The conditions!
+			// The conditions: must have two sides.
 			if(!front || !back) continue;
 
 			// Both the front and back sectors must have the sky ceiling.
