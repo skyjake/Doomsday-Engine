@@ -40,7 +40,6 @@ typedef struct dynlight_s
 	float	s[2], t[2];
 	byte	color[3];
 	DGLuint texture;
-	//uint	index;
 }
 dynlight_t;
 
