@@ -125,10 +125,6 @@ SOURCE=.\Src\drD3D\texture.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Src\drD3D\vertex.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\Src\drD3D\viewport.cpp
 # End Source File
 # Begin Source File
