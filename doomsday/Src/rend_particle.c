@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.14  2003/08/28 01:53:04  skyjake
+//** Movement yaw and pitch affect particle models
+//**
 //** Revision 1.13  2003/08/24 00:40:23  skyjake
 //** Added model particles
 //**
@@ -566,6 +569,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		center[VZ] = FIX2FLT(pt->pos[VY]);
 		center[VY] = FIX2FLT(P_GetParticleZ(pt));
 
+		// Model particles are rendered using the normal model rendering 
+		// routine.
 		if(rtype == PTC_MODEL && dst->model >= 0)
 		{
 			int frame;
@@ -593,8 +598,24 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 					- dst->frame), 1);
 			}
 			R_SetModelFrame(vis.mo.mf, frame);
-			vis.mo.yaw = pt->yaw / 32768.0f * 180;
-			vis.mo.pitch = pt->pitch / 32768.0f * 180;
+			// Set the correct orientation for the particle.
+			if(vis.mo.mf->sub[0].flags & MFF_MOVEMENT_YAW)
+			{
+				vis.mo.yaw = R_MovementYaw(pt->mov[0], pt->mov[1]);
+			}
+			else
+			{
+				vis.mo.yaw = pt->yaw / 32768.0f * 180;
+			}
+			if(vis.mo.mf->sub[0].flags & MFF_MOVEMENT_PITCH)
+			{
+				vis.mo.pitch = R_MovementPitch(pt->mov[0], pt->mov[1],
+					pt->mov[2]);
+			}
+			else
+			{
+				vis.mo.pitch = pt->pitch / 32768.0f * 180;
+			}
 			if(st->flags & PTCF_BRIGHT || LevelFullBright) 
 				vis.mo.lightlevel = -1; // Fullbright.
 			else 
