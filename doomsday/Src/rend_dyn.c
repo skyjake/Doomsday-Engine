@@ -69,6 +69,19 @@ typedef struct seglight_s {
 	dynlight_t	*bottom;
 } seglight_t;
 
+typedef struct lumcontact_s {
+	struct lumcontact_s *next;		// Next in the subsector.
+	struct lumcontact_s *nextUsed;	// Next used contact.
+	lumobj_t *lum;
+} lumcontact_t;
+
+typedef struct contactfinder_data_s {
+	fixed_t box[4];
+	boolean didSpread;
+	lumobj_t *lum;
+	int firstValid;
+} contactfinder_data_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 //fvertex_t *edgeClipper(int *numpoints, fvertex_t *points, int numclippers, fdivline_t *clippers);
@@ -94,17 +107,13 @@ int			numLuminous = 0, maxLuminous = 0;
 int			dlMaxRad = 256; // Dynamic lights maximum radius.
 float		dlRadFactor = 3;
 int			maxDynLights = 0;
-int			clipLights = 1;
-//float		dlContract = 0.02f; // Almost unnoticeable... a hack, though.
+//int		clipLights = 1;
 int			rend_info_lums = false;
 
-// List of unused dynlight_t nodes.
-dynlight_t	*freeLights;
-
-// List of used dynlight_t nodes.
-dynlight_t	*usedLights;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// Dynlight nodes.
+dynlight_t	*dynFirst, *dynCursor;
 
 lumobj_t	**dlBlockLinks = 0;
 vertex_t	dlBlockOrig;
@@ -118,7 +127,36 @@ seglight_t	*segLightLinks;
 dynlight_t	**floorLightLinks;
 dynlight_t	**ceilingLightLinks;
 
+// List of unused and used lumobj-subsector contacts.
+lumcontact_t *contFirst, *contCursor;
+
+// List of lumobj contacts for each subsector.
+lumcontact_t **subContacts;
+
+// A framecount for each block. Used to prevent multiple processing of
+// a block during one frame.
+int			*spreadBlocks;
+
 // CODE --------------------------------------------------------------------
+
+/*
+ * Moves all used dynlight nodes to the list of unused nodes, so they
+ * can be reused.
+ */
+void DL_DeleteUsed(void)
+{
+	// Start reusing nodes from the first one in the list.
+	dynCursor = dynFirst;
+	contCursor = contFirst;
+
+	// Clear the surface light links.
+	memset(segLightLinks, 0, numsegs * sizeof(seglight_t));
+	memset(floorLightLinks, 0, numsubsectors * sizeof(dynlight_t*));
+	memset(ceilingLightLinks, 0, numsubsectors * sizeof(dynlight_t*));
+
+	// Clear lumobj contacts.
+	memset(subContacts, 0, numsubsectors * sizeof(lumcontact_t*));
+}
 
 /*
  * Returns a new dynlight node. If the list of unused nodes is empty, 
@@ -128,18 +166,23 @@ dynlight_t *DL_New(float *s, float *t)
 {
 	dynlight_t *dyn;
 
-	if(freeLights == NULL)
+	// Have we run out of nodes?
+	if(dynCursor == NULL)
 	{
 		dyn = Z_Malloc(sizeof(dynlight_t), PU_STATIC, NULL);
+
+		// Link the new node to the list.
+		dyn->nextused = dynFirst;
+		dynFirst = dyn;
 	}
 	else
 	{
-		// Take the first unused node.
-		dyn = freeLights;
-		freeLights = freeLights->next;
+		dyn = dynCursor;
+		dynCursor = dynCursor->nextused;
 	}
 
-	memset(dyn, 0, sizeof(*dyn));
+	dyn->next = NULL;
+	dyn->flags = 0;
 
 	if(s) 
 	{
@@ -152,30 +195,7 @@ dynlight_t *DL_New(float *s, float *t)
 		dyn->t[1] = t[1];
 	}
 
-	// Link this node in the list of used nodes.
-	dyn->nextused = usedLights;
-	return usedLights = dyn;
-}
-
-/*
- * Moves all used dynlight nodes to the list of unused nodes, so they
- * can be reused.
- */
-void DL_DeleteUsed(void)
-{
-	while(usedLights)
-	{
-		dynlight_t *dyn = usedLights;
-		usedLights = usedLights->nextused;
-
-		dyn->next = freeLights;
-		freeLights = dyn;
-	}
-
-	// Clear the surface light links.
-	memset(segLightLinks, 0, numsegs * sizeof(seglight_t));
-	memset(floorLightLinks, 0, numsubsectors * sizeof(dynlight_t*));
-	memset(ceilingLightLinks, 0, numsubsectors * sizeof(dynlight_t*));
+	return dyn;
 }
 
 /*
@@ -224,6 +244,48 @@ dynlight_t *DL_GetSegLightLinks(int seg, int whichpart)
 	return NULL;
 }
 
+/*
+ * Returns a new lumobj contact. If there are nodes in the list of unused 
+ * nodes, the new contact is taken from there.
+ */
+lumcontact_t *DL_NewContact(lumobj_t *lum)
+{
+	lumcontact_t *con;
+
+	if(contCursor == NULL)
+	{
+		con = Z_Malloc(sizeof(lumcontact_t), PU_STATIC, NULL);
+
+		// Link to the list of lumcontact nodes.
+		con->nextUsed = contFirst;
+		contFirst = con;
+	}
+	else
+	{
+		con = contCursor;
+		contCursor = contCursor->nextUsed;
+	}
+
+	con->lum = lum;
+	return con;
+}
+
+/*
+ * Link the contact to the subsector's list of contacts. 
+ * The lumobj is contacting the subsector. 
+ * This called if a light passes the sector spread test.
+ * Returns true because this function is also used as an iterator.
+ */
+boolean DL_AddContact(subsector_t *subsector, void *lum)
+{
+	lumcontact_t *con = DL_NewContact(lum);
+	lumcontact_t **list = subContacts + GET_SUBSECTOR_IDX(subsector); 
+
+	con->next = *list;
+	*list = con;
+	return true;
+}
+
 void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
 {
 	lum->radius = cf->size * 40 * dlRadFactor;
@@ -245,7 +307,7 @@ void DL_ThingColor(lumobj_t *lum, DGLubyte *outRGB, float light)
 	light *= dlFactor;
 	if(useFog) light *= .5f; // Would be too much.
 	// Multiply with the light color.
-	for(i=0; i<3; i++)
+	for(i = 0; i < 3; i++)
 	{
 		outRGB[i] = (DGLubyte) (light * lum->rgb[i]);
 		//outRGB[i] += (255 - outRGB[i])/4; // more brightness, less color...
@@ -276,12 +338,14 @@ void DL_InitLinks(void)
 		if(y < min.y) min.y = y;
 		if(y > max.y) max.y = y;
 	}
+	
 	// Origin has fixed-point coordinates.
 	memcpy(&dlBlockOrig, &min, sizeof(min));
 	max.x -= min.x;
 	max.y -= min.y;
 	dlBlockWidth = (max.x >> (FRACBITS+7)) + 1;
 	dlBlockHeight = (max.y >> (FRACBITS+7)) + 1;
+	
 	// Blocklinks is a table of lumobj_t pointers.
 	dlBlockLinks = realloc(dlBlockLinks, sizeof(lumobj_t*) 
 		* dlBlockWidth * dlBlockHeight);
@@ -291,6 +355,14 @@ void DL_InitLinks(void)
 	floorLightLinks = Z_Calloc(numsubsectors * sizeof(dynlight_t*), 
 		PU_LEVEL, 0);
 	ceilingLightLinks = Z_Calloc(numsubsectors * sizeof(dynlight_t*),
+		PU_LEVEL, 0);
+
+	// Initialize lumobj -> subsector contacts.
+	subContacts = Z_Calloc(numsubsectors * sizeof(lumcontact_t*), 
+		PU_LEVEL, 0);
+
+	// A framecount was each block.
+	spreadBlocks = Z_Malloc(sizeof(int) * dlBlockWidth * dlBlockHeight, 
 		PU_LEVEL, 0);
 }
 
@@ -334,13 +406,13 @@ boolean DL_SegTexCoords(float *t, float top, float bottom, lumobj_t *lum)
 //===========================================================================
 void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 {
-	int			c, present = 0;
+	int			present = 0;
 	sector_t	*backsec = seg->backsector;
 	side_t		*sdef = seg->sidedef;
 	float		pos[2][2], s[2], t[2];
-	float		dist, pntLight[2], uvecWall[2];
+	float		dist, pntLight[2];
 	float		fceil, ffloor, bceil, bfloor;
-	float		top, bottom, lightZ;
+	float		top, bottom;
 	dynlight_t	*dyn;
 	int			segindex = GET_SEG_IDX(seg);
 
@@ -364,12 +436,12 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 		{
 			// Check the middle texture's mask status.
 			GL_GetTextureInfo(sdef->midtexture); 
-			if(texmask)
+			/*if(texmask)
 			{
 				// We can't light masked textures.
 				// FIXME: Use vertex lighting.
 				present &= ~SEG_MIDDLE;
-			}
+			}*/
 		}
 	}
 	// Is there a top wall segment?
@@ -590,7 +662,7 @@ void DL_CreateGlowLights
 {
 	dynlight_t *dyn;
 	int i, g, segindex = GET_SEG_IDX(seg);
-	float ceil, floor, top, bottom, limit, s[2], t[2];
+	float ceil, floor, top, bottom, s[2], t[2];
 	sector_t *sect = seg->sidedef->sector;
 	
 	// Check the heights.
@@ -965,7 +1037,7 @@ void DL_AddLuminous(mobj_t *thing)
 		{
 			// If any of the color components are != 0, use the 
 			// definition's color.
-			for(i=0; i<3; i++) 
+			for(i = 0; i < 3; i++) 
 				lum->rgb[i] = (byte) (255 * def->color[i]);
 		}
 		else
@@ -991,6 +1063,218 @@ void DL_AddLuminous(mobj_t *thing)
 	}
 }
 
+//===========================================================================
+// DL_ContactSector
+//===========================================================================
+void DL_ContactSector(lumobj_t *lum, fixed_t *box, sector_t *sector)
+{
+	P_SubsectorBoxIterator(box, sector, DL_AddContact, lum);
+}
+
+//===========================================================================
+// DLIT_ContactFinder
+//===========================================================================
+boolean DLIT_ContactFinder(line_t *line, void *data)
+{
+	contactfinder_data_t *light = data;
+	sector_t *source, *dest;
+	lineinfo_t *info;
+	float distance;
+	
+	if(!line->backsector 
+		|| !line->frontsector
+		|| line->frontsector == line->backsector)
+	{
+		// Line must be between two different sectors.
+		return true;
+	}
+
+	// Which way does the spread go?
+	if(line->frontsector->validcount == validcount)
+	{
+		source = line->frontsector;
+		dest = line->backsector;
+	}
+	else if(line->backsector->validcount == validcount)
+	{
+		source = line->backsector;
+		dest = line->frontsector;
+	}
+	else 
+	{
+		// Not eligible for spreading.
+		return true;
+	}
+
+	if(dest->validcount >= light->firstValid
+		&& dest->validcount <= validcount + 1) 
+	{
+		// This was already spreaded to.
+		return true;
+	}
+
+	// Is this line inside the light's bounds?
+	if(line->bbox[BOXRIGHT] <= light->box[BOXLEFT]
+		|| line->bbox[BOXLEFT] >= light->box[BOXRIGHT]
+		|| line->bbox[BOXTOP] <= light->box[BOXBOTTOM]
+		|| line->bbox[BOXBOTTOM] >= light->box[BOXTOP])
+	{
+		// The line is not inside the light's bounds.
+		return true;
+	}
+
+	// Can the spread happen?
+	if(dest->ceilingheight <= dest->floorheight
+		|| dest->ceilingheight <= source->floorheight
+		|| dest->floorheight >= source->ceilingheight)
+	{
+		// No; destination sector is closed with no height.
+		return true;
+	}
+
+	info = lineinfo + GET_LINE_IDX(line);
+	if(info->length <= 0) 
+	{
+		// This can't be a good line.
+		return true;
+	}
+
+	// Calculate distance to line.
+	distance = ( FIX2FLT(line->v1->y - light->lum->thing->y) 
+		* FIX2FLT(line->dx)	- FIX2FLT(line->v1->x - light->lum->thing->x) 
+		* FIX2FLT(line->dy) ) / info->length;
+
+	if(source == line->frontsector && distance < 0
+		|| source == line->backsector && distance > 0)
+	{
+		// Can't spread in this direction.
+		return true;
+	}
+
+	// Check distance against the light radius.
+	if(distance < 0) distance = -distance;
+	if(distance >= light->lum->radius) 
+	{
+		// The light doesn't reach that far.
+		return true;
+	}
+
+	// Light spreads to the destination sector.
+	light->didSpread = true;
+
+	// During next step, light will continue spreading from there.
+	dest->validcount = validcount + 1;
+
+	// Add this lumobj to the destination's subsectors.
+	DL_ContactSector(light->lum, light->box, dest);
+
+	return true;
+}
+
+//===========================================================================
+// DL_FindContacts
+//	Create a contact for this lumobj in all the subsectors this light
+//	source is contacting (tests done on bounding boxes and the sector
+//	spread test).
+//===========================================================================
+void DL_FindContacts(lumobj_t *lum)
+{
+	int firstValid = ++validcount;
+	int xl, yl, xh, yh, bx, by;
+	contactfinder_data_t light;
+	// Use a slightly smaller radius than what the light really is.
+	fixed_t radius = lum->radius * FRACUNIT - 2*FRACUNIT;
+	static uint numSpreads = 0, numFinds = 0;
+
+	/*DL_AddContact(lum, lum->thing->subsector);*/
+
+	// Do the sector spread. Begin from the light's own sector.
+	lum->thing->subsector->sector->validcount = validcount;
+
+	light.lum = lum;
+	light.firstValid = firstValid;
+    light.box[BOXTOP] = lum->thing->y + radius;
+    light.box[BOXBOTTOM] = lum->thing->y - radius;
+    light.box[BOXRIGHT] = lum->thing->x + radius;
+    light.box[BOXLEFT] = lum->thing->x - radius;
+
+	DL_ContactSector(lum, light.box, lum->thing->subsector->sector);
+
+	xl = (light.box[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
+	xh = (light.box[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
+	yl = (light.box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
+	yh = (light.box[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
+
+	numFinds++;
+
+	// We'll keep doing this until the light has spreaded everywhere 
+	// inside the bounding box.
+	do
+	{
+		light.didSpread = false;
+
+		numSpreads++;
+
+		for(bx = xl; bx <= xh; bx++)
+			for(by = yl; by <= yh; by++)
+				P_BlockLinesIterator(bx, by, DLIT_ContactFinder, &light);
+
+		// Increment validcount for the next round of spreading.
+		validcount++;
+	}
+	while(light.didSpread);
+
+/*#ifdef _DEBUG
+	if(!((numFinds + 1) % 1000))
+	{
+		Con_Printf("finds=%i avg=%.3f\n", numFinds, 
+			numSpreads / (float)numFinds);
+	}
+#endif*/
+}
+
+//===========================================================================
+// DL_SpreadBlocks
+//===========================================================================
+void DL_SpreadBlocks(subsector_t *subsector)
+{
+	int xl, xh, yl, yh, x, y, *count;
+	lumobj_t *iter;
+
+	xl = X_TO_DLBX(	FLT2FIX(subsector->bbox[0].x - dlMaxRad) );
+	xh = X_TO_DLBX( FLT2FIX(subsector->bbox[1].x + dlMaxRad) );
+	yl = Y_TO_DLBY( FLT2FIX(subsector->bbox[0].y - dlMaxRad) );
+	yh = Y_TO_DLBY( FLT2FIX(subsector->bbox[1].y + dlMaxRad) );
+
+	// Are we completely outside the blockmap?
+	if(xh < 0 || xl >= dlBlockWidth || yh < 0 || yl >= dlBlockHeight) 
+		return;
+
+	// Clip to blockmap bounds.
+	if(xl < 0) xl = 0;
+	if(xh >= dlBlockWidth) xh = dlBlockWidth - 1;
+	if(yl < 0) yl = 0;
+	if(yh >= dlBlockHeight) yh = dlBlockHeight - 1;
+
+	for(x = xl; x <= xh; x++)
+		for(y = yl; y <= yh; y++)
+		{
+			count = &spreadBlocks[x + y * dlBlockWidth];
+			if(*count != framecount)
+			{
+				*count = framecount;
+
+				// Spread the lumobjs in this block.
+				for(iter = *DLB_ROOT_DLBXY(x, y); iter; iter = iter->next)
+					DL_FindContacts(iter);				
+			}
+		}
+}
+
+//===========================================================================
+// lumobjSorter
+//	Used to sort lumobjs by distance from viewpoint.
+//===========================================================================
 int C_DECL lumobjSorter(const void *e1, const void *e2)
 {
 	lumobj_t *lum1 = DL_GetLuminous( *(const ushort*) e1 );
@@ -1044,6 +1328,9 @@ void DL_LinkLuminous()
 		root = dlSubLinks + GET_SUBSECTOR_IDX(lum->thing->subsector);
 		lum->ssnext = *root;
 		*root = lum;
+
+		// Make lumobj contacts using a sector spread test.
+		//DL_FindContacts(lum);
 	}
 }
 
@@ -1171,19 +1458,16 @@ int Rend_SubsectorClipper
 //===========================================================================
 // DL_LightIteratorFunc
 //===========================================================================
-boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr) 
+boolean DL_LightIteratorFunc(lumobj_t *lum, flatitervars_t *fi) 
 {
-	int				i;
-	byte			*seg;
-	flatitervars_t	*fi = ptr;
-	float			x = FIX2FLT(lum->thing->x), y = FIX2FLT(lum->thing->y);
-	float			z = FIX2FLT(lum->thing->z), cdiff, fdiff;	
-	float			applyCeiling, applyFloor;	// Is the light on the right side?
-/*	int				num_vertices;
-	fvertex_t		vertices[MAX_POLY_SIDES];*/
-	float			srcRadius;
-	dynlight_t		*dyn;
-	float			s[2], t[2];
+	int			i;
+	byte		*seg;
+	float		x = FIX2FLT(lum->thing->x);
+	float		y = FIX2FLT(lum->thing->y);
+	float		z = FIX2FLT(lum->thing->z);
+	float		cdiff, fdiff, applyCeiling, applyFloor, srcRadius;
+	float		s[2], t[2];
+	dynlight_t	*dyn;
 
 	if(haloMode)
 	{
@@ -1241,24 +1525,11 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
 			dyn = DL_New(s, t);
 
 			DL_ThingColor(lum, dyn->color, LUM_FACTOR(cdiff) * applyCeiling);
-			
 			dyn->texture = lum->ceiltex;
 			dyn->flags = 0;
 
 			// Link to this ceiling's list.
 			DL_Link(dyn, ceilingLightLinks, GET_SUBSECTOR_IDX(fi->subsector));
-
-/*			fi->poly->top = fi->fceil - ZMOD_FLAT;
-			DL_ThingColor(lum, fi->poly->vertices[0].color.rgb, 
-				LUM_FACTOR(cdiff) * applyCeiling);
-			// We can add the light poly.
-			if(clipLights)
-				RL_PrepareFlat(fi->poly, num_vertices, vertices, RLPF_REVERSE, 0);
-			else
-				RL_PrepareFlat(fi->poly, 0, 0, RLPF_REVERSE, fi->subsector);
-			RL_AddPoly(fi->poly);
-			// Mark the ceiling for dlighting.
-			fi->subsector->flags |= DDSUBF_DLIGHT_CEILING;*/
 		}
 	}
 
@@ -1277,27 +1548,12 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
 			// A dynamic light will be generated.
 			dyn = DL_New(s, t);
 
-			//fi->poly->top = fi->ffloor + ZMOD_FLAT;
-
 			DL_ThingColor(lum, dyn->color, LUM_FACTOR(fdiff) * applyFloor);
-
 			dyn->texture = lum->floortex;
 			dyn->flags = 0;
 
 			// Link to this floor's list.
 			DL_Link(dyn, floorLightLinks, GET_SUBSECTOR_IDX(fi->subsector));
-
-
-			// Add the light quads.
-/*			if(clipLights)
-				RL_PrepareFlat(fi->poly, num_vertices, vertices, RLPF_NORMAL, 0);
-			else
-				RL_PrepareFlat(fi->poly, 0, 0, RLPF_NORMAL, fi->subsector);*/
-
-			//RL_AddPoly(fi->poly);
-			
-			// Mark the ceiling for dlighting.
-			//fi->subsector->flags |= DDSUBF_DLIGHT_FLOOR;
 		}
 	}
 
@@ -1325,11 +1581,15 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
  */
 void DL_ProcessSubsector(subsector_t *ssec)
 {
-	sector_t		*sect = ssec->sector;
-	flatitervars_t	fi;
-	fixed_t			box[4];
-	int				i;
-	byte			*seg;
+	sector_t *sect = ssec->sector;
+	//fixed_t			box[4];
+	int i;
+	byte *seg;
+	flatitervars_t fi;
+	lumcontact_t *con;
+
+	// First make sure we know which lumobjs are contacting us.
+	DL_SpreadBlocks(ssec);
 
 	fi.subsector = ssec;
 	fi.fceil = SECT_CEIL(sect);
@@ -1340,11 +1600,10 @@ void DL_ProcessSubsector(subsector_t *ssec)
 	fi.lightCeiling = (sect->ceilingpic != skyflatnum);
 
 	// View height might prevent us from seeing the lights.
-	if(viewz < sect->floorheight) fi.lightFloor = false;
-	if(viewz > sect->ceilingheight) fi.lightCeiling = false;
+	if(vy < fi.ffloor) fi.lightFloor = false;
+	if(vy > fi.fceil) fi.lightCeiling = false;
 
-//	poly->flags = RPF_LIGHT;
-	
+/*	
 	// Prepare the bounding box.
 	box[BLEFT] = (int) (ssec->bbox[0].x - dlMaxRad) << FRACBITS;
 	box[BTOP] = (int) (ssec->bbox[0].y - dlMaxRad) << FRACBITS;
@@ -1352,14 +1611,19 @@ void DL_ProcessSubsector(subsector_t *ssec)
 	box[BBOTTOM] = (int) (ssec->bbox[1].y + dlMaxRad) << FRACBITS;
 
 	DL_BoxIterator(box, &fi, DL_LightIteratorFunc);
+*/
+
+	// Process each lumobj contacting the subsector.
+	for(con = subContacts[ GET_SUBSECTOR_IDX(ssec) ]; con; con = con->next)
+		DL_LightIteratorFunc(con->lum, &fi);
 
 	// Check glowing planes.
 	if(useWallGlow && (R_FlatFlags(sect->floorpic) & TXF_GLOW 
 		|| R_FlatFlags(sect->ceilingpic) & TXF_GLOW))
 	{
 		// The wall segments.
-		for(i=0, seg=segs+SEGIDX(ssec->firstline); 
-			i<ssec->linecount; i++, seg+=SEGSIZE)
+		for(i = 0, seg = segs + SEGIDX(ssec->firstline); 
+			i < ssec->linecount; i++, seg += SEGSIZE)
 		{
 			if(((seg_t*)seg)->linedef)	// "minisegs" have no linedefs.
 				DL_ProcessWallGlow((seg_t*)seg, sect);
@@ -1368,7 +1632,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
 		// Is there a polyobj on board? Light it, too.
 		if(ssec->poly)
 		{
-			for(i=0; i<ssec->poly->numsegs; i++)
+			for(i = 0; i < ssec->poly->numsegs; i++)
 				DL_ProcessWallGlow(ssec->poly->segs[i], sect);
 		}
 	}
@@ -1421,40 +1685,28 @@ void DL_InitForNewFrame()
 
 /*
  * Calls func for all luminous objects within the specified range from (x,y).
+ * 'subsector' is the subsector in which (x,y) resides.
  */
 boolean DL_RadiusIterator
-	(fixed_t x, fixed_t y, fixed_t radius, boolean (*func)(lumobj_t*,fixed_t))
+	(subsector_t *subsector, fixed_t x, fixed_t y, fixed_t radius, 
+	 boolean (*func)(lumobj_t*,fixed_t))
 {
-	int	s, t, bx1, by1, bx2, by2;
+	lumcontact_t *con;
 	fixed_t	dist;
-	lumobj_t *iter;
-	
-	bx1 = X_TO_DLBX(x-radius);
-	bx2 = X_TO_DLBX(x+radius);
-	by1 = Y_TO_DLBY(y-radius);
-	by2 = Y_TO_DLBY(y+radius);
 
-	// Walk through the blocks.
-	for(t = by1; t <= by2; t++)
-		for(s = bx1; s <= bx2; s++)
-		{
-			// We can't go outside the blockmap.
-			if(s < 0 || t < 0 || s >= dlBlockWidth || t >= dlBlockHeight) 
-			{
-				continue;
-			}
-			for(iter = *DLB_ROOT_DLBXY(s, t); iter; iter = iter->next)
-			{
-				dist = P_ApproxDistance(iter->thing->x - x, iter->thing->y - y);
-				if(dist <= radius)
-				{
-					if(!func(iter, dist)) return false;						
-				}
-			}
-		}
+	for(con = subContacts[ GET_SUBSECTOR_IDX(subsector) ]; con; 
+		con = con->next)
+	{
+		dist = P_ApproxDistance(con->lum->thing->x - x, 
+			con->lum->thing->y - y);
+		
+		if(dist <= radius && !func(con->lum, dist)) 
+			return false;						
+	}
 	return true;
 }
 
+#if 0
 /*
  * 'box' contains the coordinates of the top left and bottom right corners.
  */
@@ -1513,3 +1765,4 @@ boolean DL_BoxIterator
 		}
 	return true;
 }
+#endif
