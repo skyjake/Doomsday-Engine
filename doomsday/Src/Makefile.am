@@ -1,4 +1,4 @@
-SUBDIRS = drOpenGL dsSDLMixer dsOpenAL dpDehRead jDoom jHeretic jHexen
+SUBDIRS = drOpenGL dpDehRead jDoom jHeretic jHexen $(OPTIONAL_SUBDIRS)
 
 bin_PROGRAMS = doomsday
 
