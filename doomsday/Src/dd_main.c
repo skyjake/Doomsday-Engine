@@ -579,6 +579,7 @@ static void HandleArgs(int state)
 				continue;
 			while(++p != Argc() && !ArgIsOption(p))
 				DD_AddStartupWAD(Argv(p));
+            p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
 		}
 	}
 }
