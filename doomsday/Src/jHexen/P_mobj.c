@@ -1272,7 +1272,7 @@ void P_MobjThinker(mobj_t *mobj)
 	// Cycle through states, calling action functions at transitions
 	if(mobj->tics != -1)
 	{
-		int     oldsprite = mobj->state->sprite;
+		//int     oldsprite = mobj->state->sprite;
 
 		mobj->tics--;
 		P_SRVOAngleTicker(mobj);

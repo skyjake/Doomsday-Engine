@@ -234,11 +234,6 @@ void N_Update(void)
 			break;
 
 		case NE_CLIENT_EXIT:
-			if(N_IdentifyPlayer(event.id) >= 0)
-			{
-				// Clear this client's Sent Message Store.
-				//N_SMSReset(N_IdentifyPlayer(event.id));
-			}
 			Sv_PlayerLeaves(event.id);
 			break;
 
@@ -269,9 +264,6 @@ void N_TerminateClient(int console)
 
 	Con_Message("N_TerminateClient: '%s' from console %i.\n",
 				clients[console].name, console);
-
-	// Clear this client's Sent Message Store.
-	//N_SMSReset(console);
 
 	N_TerminateNode(clients[console].nodeID);
 }
