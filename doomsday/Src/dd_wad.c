@@ -1237,3 +1237,41 @@ unsigned int W_CRCNumber(void)
 		if(records[i].iwad) return W_CRCNumberForRecord(i);
 	return 0;
 }
+
+/*
+ * Copies the file name of the IWAD to the given buffer. 
+ */
+void W_GetIWADFileName(char *buf, int bufSize)
+{
+	int i;
+
+	// Find the IWAD's record.
+	for(i = 0; i < numrecords; i++)
+		if(records[i].iwad) 
+		{
+			char temp[256];
+			Dir_FileName(records[i].filename, temp);
+			strupr(temp);
+			strncpy(buf, temp, bufSize);
+			break;
+		}
+}
+
+/*
+ * Compiles a list of PWAD file names, separated by the specified character.
+ * All .GWA files and Doomsday.wad are excluded from the list.
+ */
+void W_GetPWADFileNames(char *buf, int bufSize, char separator)
+{	
+	int i;
+
+	for(i = 0; i < numrecords; i++)
+		if(!records[i].iwad)
+		{
+			char temp[256];
+			Dir_FileName(records[i].filename, temp);
+			if(!stricmp(temp + strlen(temp) - 3, "gwa")
+				|| !stricmp(temp, "doomsday.wad")) continue;
+			M_LimitedStrCat(temp, 64, separator, buf, bufSize);
+		}
+}
