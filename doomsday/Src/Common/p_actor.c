@@ -124,6 +124,7 @@ void P_ClearThingSRVO(mobj_t *mo)
 	memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
+/*
 //===========================================================================
 // P_UpdateAlpha
 //	Sets the mobj's selector's alpha bits according to the alpha level.
@@ -134,6 +135,7 @@ void P_UpdateAlpha(mobj_t *mo)
 	mo->selector &= 0x1fffffff;
 	mo->selector |= (mo->alpha >> 5) << 29;
 }
+*/
 
 //===========================================================================
 // P_UpdateHealthBits

@@ -1134,10 +1134,14 @@ void P_MobjThinker(mobj_t *mobj)
 		// Remote mobjs are handled separately.
 		return;
 	}
+
+/*#ifdef _DEBUG
+	mobj->translucency = M_Random();
+#endif*/
+
 	// The first three bits of the selector special byte contain a
 	// relative health level.
 	P_UpdateHealthBits(mobj);
-	P_UpdateAlpha(mobj); // $mobjalpha
 
 	// Handle X and Y momentums
 	BlockingMobj = NULL;
