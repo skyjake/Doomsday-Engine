@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsCompat", "dsCompat.vcproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsOpenAL", "dsOpenAL.vcproj", "{0324DC98-86C1-40F5-B3B0-35A057F6173C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpMapLoad", "dpMapLoad.vcproj", "{DA1B6F57-7827-462C-A2BA-44E2F515D413}"
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		ConfigName.0 = Debug
@@ -100,6 +102,12 @@ Global
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Mesa Release.ActiveCfg = Release|Win32
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Mesa Release.Build.0 = Release|Win32
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Release.ActiveCfg = Release|Win32
+		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Debug.ActiveCfg = Debug|Win32
+		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Debug.Build.0 = Debug|Win32
+		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Mesa Release.ActiveCfg = Release|Win32
+		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Mesa Release.Build.0 = Release|Win32
+		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Release.ActiveCfg = Release|Win32
+		{DA1B6F57-7827-462C-A2BA-44E2F515D413}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

@@ -12,8 +12,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\./Bin/Release"
-			IntermediateDirectory=".\./Obj/Release/dpDehRead"
+			OutputDirectory="./Bin/Release"
+			IntermediateDirectory="./Obj/Release/dpDehRead"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
