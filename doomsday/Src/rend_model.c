@@ -45,14 +45,6 @@ typedef enum rendcmd_e {
 	RC_BOTH_COORDS
 } rendcmd_t;
 
-typedef enum blendmode_e {
-	BM_NORMAL,
-	BM_ADD,
-	BM_DARK,
-	BM_SUBTRACT,
-	BM_REVERSE_SUBTRACT
-} blendmode_t;
-
 typedef struct {
 	boolean		used;
 	fixed_t		dist;			// Only an approximation.
@@ -76,6 +68,7 @@ typedef struct {
 
 int modelLight = 4;
 int frameInter = true;
+int mirrorHudModels = false;
 int model_tri_count;
 float rend_model_lod = 256;
 
@@ -303,6 +296,14 @@ void Mod_LerpVertices
 }
 
 /*
+ * Negate all Z coordinates.
+ */
+void Mod_MirrorVertices(int count, glvertex_t *v, int axis)
+{
+	for(; count-- > 0; v++) v->xyz[axis] = -v->xyz[axis];
+}
+
+/*
  * Calculate vertex lighting.
  */
 void Mod_VertexColors
@@ -432,40 +433,6 @@ void Mod_ShinyCoords
 }
 
 /*
- * Set the GL blending mode.
- */
-void Mod_BlendMode(blendmode_t mode)
-{
-	switch(mode)
-	{
-	case BM_ADD:
-		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-		break;
-
-	case BM_DARK:
-		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ONE_MINUS_SRC_ALPHA);
-		break;
-
-	case BM_SUBTRACT:
-		gl.Func(DGL_BLENDING_OP, DGL_SUBTRACT, 0);
-		gl.Func(DGL_BLENDING, DGL_ONE, DGL_SRC_ALPHA);
-		break;
-
-	case BM_REVERSE_SUBTRACT:
-		gl.Func(DGL_BLENDING_OP, DGL_REVERSE_SUBTRACT, 0);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-		break;
-
-	default:
-		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-		break;
-	}
-}
-
-/*
  * Render a submodel from the vissprite.
  */
 void Mod_RenderSubModel(vissprite_t *spr, int number)
@@ -480,7 +447,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	int numVerts;
 	int	useSkin;
 	int	i, c;
-	float inter, endPos;
+	float inter, endPos, offset;
 	float yawAngle, pitchAngle;
 	float alpha, customAlpha;
 	float dist, intensity, lightCenter[3], delta[3], color[4];
@@ -491,6 +458,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	byte byteAlpha;
 	blendmode_t blending = BM_NORMAL;
 	DGLuint skinTexture, shinyTexture;
+	int zSign = (spr->issprite == 2 && mirrorHudModels != 0? -1 : 1);
 	
 	if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0) 
 	{
@@ -594,7 +562,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	// Model space => World space
 	gl.Translatef(spr->mo.v1[VX] + mf->offset[VX] + spr->mo.visoff[VX], 
 		FIX2FLT(spr->mo.gz) + mf->offset[VY] + spr->mo.visoff[VZ] 
-		- FIX2FLT(spr->mo.floorclip), spr->mo.v1[VY] + mf->offset[VZ] 
+		- FIX2FLT(spr->mo.floorclip), spr->mo.v1[VY] + zSign * mf->offset[VZ]
 		+ spr->mo.visoff[VY]);
 
 	// Model rotation.
@@ -640,8 +608,13 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		modelVertices);
 	Mod_LerpVertices(inter, numVerts, frame->normals, nextFrame->normals,
 		modelNormals);
+	if(zSign < 0)
+	{
+		Mod_MirrorVertices(numVerts, modelVertices, VZ);
+		Mod_MirrorVertices(numVerts, modelNormals, VY);
+	}
 
-	// Coordinates to the center of the model.
+	// Coordinates to the center of the model (game coords).
 	modelCenter[VX] = FIX2FLT(spr->mo.gx) + mf->offset[VX] 
 		+ spr->mo.visoff[VX];
 	modelCenter[VY] = FIX2FLT(spr->mo.gy) + mf->offset[VZ] 
@@ -717,19 +690,36 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	{
 		shinyColor = mf->def->sub[number].shinycolor;
 		
+		// With psprites, add the view angle/pitch.
+		offset = (spr->issprite == 2? -vang : 0);
+
 		// Calculate normalized (0,1) model yaw and pitch.
 		normYaw = M_CycleIntoRange(
-			(spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle) / 360, 1);
-		normPitch = M_CycleIntoRange(
-			(spr->mo.viewaligned? spr->mo.v2[VY] : pitchAngle) / 360, 1);
-		
-		delta[VX] = modelCenter[VX] - vx;
-		delta[VY] = modelCenter[VY] - vz;
-		delta[VZ] = modelCenter[VZ] - vy;
+			((spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle) 
+			+ offset) / 360, 1);
 
-		shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY]))
-			/ PI + 0.5f; // shinyAng is [0,1]
-		shinyPnt = QATAN2(delta[VY], delta[VX]) / (2*PI);
+		offset = (spr->issprite == 2? vpitch + 90: 0);
+
+		normPitch = M_CycleIntoRange(
+			((spr->mo.viewaligned? spr->mo.v2[VY] : pitchAngle) 
+			+ offset) / 360, 1);
+		
+		if(spr->issprite == 2)
+		{
+			// This is a hack to accommodate the psprite coordinate space.
+			shinyAng = vpitch/360;
+			shinyPnt = vang/360;
+		}
+		else
+		{
+			delta[VX] = modelCenter[VX] - vx;
+			delta[VY] = modelCenter[VY] - vz;
+			delta[VZ] = modelCenter[VZ] - vy;
+
+			shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], 
+				delta[VY])) / PI + 0.5f; // shinyAng is [0,1]
+			shinyPnt = QATAN2(delta[VY], delta[VX]) / (2*PI);
+		}
 
 		Mod_ShinyCoords(numVerts, modelTexCoords, modelNormals, 
 			normYaw, normPitch, shinyAng, shinyPnt);
@@ -752,6 +742,12 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 
 	skinTexture = GL_PrepareSkin(mdl, useSkin);
 
+	// If we mirror the model, triangles have a different orientation.
+	if(zSign < 0)
+	{
+		gl.SetInteger(DGL_CULL_FACE, DGL_CW);
+	}
+
 	// Render using multiple passes? 
 	if(shininess <= 0 || byteAlpha < 255 
 		|| blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR)
@@ -760,8 +756,8 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		// The first pass can be skipped if it won't be visible.
 		if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
 		{
-			Mod_BlendMode(blending);
-			gl.Bind(skinTexture);
+			Rend_BlendMode(blending);
+			RL_Bind(skinTexture);
 
 			Mod_RenderCommands(RC_COMMAND_COORDS, 
 				mdl->lods[activeLod].glCommands,
@@ -774,9 +770,9 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 
 			// Set blending mode, two choices: reflected and specular.
 			if(subFlags & MFF_SHINY_SPECULAR)
-				Mod_BlendMode(BM_ADD);
+				Rend_BlendMode(BM_ADD);
 			else 
-				Mod_BlendMode(BM_NORMAL);
+				Rend_BlendMode(BM_NORMAL);
 
 			// Shiny color.
 			Mod_FixedVertexColors(numVerts, modelColors, color);
@@ -787,10 +783,8 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 				// the primary texture.
 				RL_SelectTexUnits(2);
 				gl.SetInteger(DGL_MODULATE_TEXTURE, 11);
-				gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
-				gl.Bind(shinyTexture);
-				gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
-				gl.Bind(skinTexture);
+				RL_BindTo(1, shinyTexture);
+				RL_BindTo(0, skinTexture);
 
 				Mod_RenderCommands(RC_BOTH_COORDS,
 					mdl->lods[activeLod].glCommands,
@@ -802,7 +796,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 			else
 			{
 				// Empty spots will get shine, too.
-				gl.Bind(shinyTexture);
+				RL_Bind(shinyTexture);
 				Mod_RenderCommands(RC_OTHER_COORDS, 
 					mdl->lods[activeLod].glCommands,
 					numVerts, modelVertices, modelColors, modelTexCoords);
@@ -813,18 +807,15 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	{
 		// A special case: specular shininess on an opaque object.
 		// Multitextured shininess with the normal blending.
-		Mod_BlendMode(blending);
+		Rend_BlendMode(blending);
 		RL_SelectTexUnits(2);
 		// Tex1*Color + Tex2RGB*ConstRGB
 		gl.SetInteger(DGL_MODULATE_TEXTURE, 10);
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+		RL_BindTo(1, shinyTexture);
 		// Multiply by shininess.
 		for(c = 0; c < 3; c++) color[c] *= color[3];
 		gl.SetFloatv(DGL_ENV_COLOR, color);
-		gl.Bind(shinyTexture);
-
-		gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
-		gl.Bind(skinTexture);
+		RL_BindTo(0, skinTexture);
 		
 		Mod_RenderCommands(RC_BOTH_COORDS, 
 			mdl->lods[activeLod].glCommands,
@@ -837,9 +828,23 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	// We're done!
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PopMatrix();
-	
+
+	if(zSign < 0)
+	{
+		gl.SetInteger(DGL_CULL_FACE, DGL_CCW);
+	}
 	gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-	Mod_BlendMode(BM_NORMAL);
+	Rend_BlendMode(BM_NORMAL);
+}
+
+/*
+ * Setup the light/dark factors and dot product offset for glow lights.
+ */
+void Mod_GlowLightSetup(mlight_t *light)
+{
+	light->lightSide = 1;
+	light->darkSide = 0;
+	light->offset = .3f;
 }
 
 /*
@@ -909,6 +914,7 @@ void Rend_RenderModel(vissprite_t *spr)
 			{
 				light = lights + numLights++;
 				light->used = true;
+				Mod_GlowLightSetup(light);
 				memcpy(light->worldVector, &ceilingLight, sizeof(ceilingLight));
 				dist = 1 - (spr->mo.secceil - FIX2FLT(spr->mo.gzt)) 
 					/ glowHeight;
@@ -921,6 +927,7 @@ void Rend_RenderModel(vissprite_t *spr)
 			{
 				light = lights + numLights++;
 				light->used = true;
+				Mod_GlowLightSetup(light);
 				memcpy(light->worldVector, &floorLight, sizeof(floorLight));
 				dist = 1 - (FIX2FLT(spr->mo.gz) - spr->mo.secfloor) 
 					/ glowHeight;
