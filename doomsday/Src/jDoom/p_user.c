@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/02/28 19:24:44  skyjake
+// Added player-air-movement (not netgame-friendly)
+//
 // Revision 1.1  2003/02/26 19:22:05  skyjake
 // Initial checkin
 //
@@ -138,8 +141,7 @@ void P_MovePlayer (player_t* player)
 		player->plr->lookdir = cmd->lookdir/(float)DDMAXSHORT * 110;
 	}
 
-    // Do not let the player control movement
-    //  if not onground.
+    // Do not let the player control movement if not onground.
     onground = (player->plr->mo->z <= player->plr->mo->floorz);
 	if(player->plr->mo->onmobj && !onground)
 	{
@@ -156,11 +158,22 @@ void P_MovePlayer (player_t* player)
 	}
 	else
 	{
-		if (cmd->forwardmove && onground)
-			P_Thrust (player, player->plr->mo->angle, cmd->forwardmove*2048);
+		// 'Move while in air' hack (server doesn't know about this!!).
+		int movemul = onground? 2048 
+			: cfg.airborneMovement? cfg.airborneMovement*64 
+			: 0; // Movement while in air traditionally disabled.
+
+		if (cmd->forwardmove && movemul)
+		{
+			P_Thrust(player, player->plr->mo->angle, 
+				cmd->forwardmove * movemul);
+		}
 		
-		if (cmd->sidemove && onground)
-			P_Thrust (player, player->plr->mo->angle-ANG90, cmd->sidemove*2048);
+		if (cmd->sidemove && movemul)
+		{
+			P_Thrust(player, player->plr->mo->angle-ANG90, 
+				cmd->sidemove * movemul);
+		}
 		
 		if ( (cmd->forwardmove || cmd->sidemove) 
 			&& player->plr->mo->state == &states[S_PLAY] )

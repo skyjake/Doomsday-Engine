@@ -249,6 +249,7 @@ cvar_t gameCVars[] =
 	"player-color",		0,			CVT_BYTE,	&cfg.netColor,		0, 3,	"Player color: 0=green, 1=gray, 2=brown, 3=red.",
 	"player-jump",		0,			CVT_INT,	&cfg.jumpEnabled,	0, 1,	"1=Allow jumping.",
 	"player-jump-power",	0,		CVT_FLOAT,	&cfg.jumpPower,		0, 100,	"Jump power.",
+	"player-air-movement",	0,		CVT_BYTE,	&cfg.airborneMovement, 0, 32, "Player movement speed while airborne.",
 	"player-autoswitch",	0,		CVT_BYTE,	&cfg.weaponAutoSwitch, 0, 1, "1=Change weapon automatically when picking one up.",
 	"player-eyeheight",	0,			CVT_INT,	&cfg.plrViewHeight,	41, 54,	"Player eye height. The original is 41.",
 	"player-camera-noclip", 0,		CVT_INT,	&cfg.cameraNoClip,	0, 1,	"1=Camera players have no movement clipping.",

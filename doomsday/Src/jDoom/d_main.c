@@ -690,6 +690,7 @@ void D_PreInit(void)
 	cfg.snd_ReverbFactor = 100;
 	cfg.moveCheckZ = true;
 	cfg.jumpPower = 9;
+	cfg.airborneMovement = 1;
 	cfg.weaponAutoSwitch = true;
 	cfg.secretMsg = true;
 	cfg.netJumping = true;

@@ -1,3 +1,7 @@
+/* $Id$
+ * Global settings. Most of these are console variables.
+ * Could use a thorough clean-up.
+ */
 #ifndef __JDOOM_SETTINGS_H__
 #define __JDOOM_SETTINGS_H__
 
@@ -28,6 +32,8 @@ typedef struct jdoom_config_s
 	int		showFPS, lookSpring;
 	boolean povLookAround/* = false*/;
 	int		jumpEnabled/* = false*/;
+	float	jumpPower;
+	int		airborneMovement;
 	int		sbarscale;
 	boolean	echoMsg;
 	int		lookSpeed;
@@ -44,7 +50,6 @@ typedef struct jdoom_config_s
 	byte	snd_ReverbFactor;	// 0..100.
 	boolean reverbDebug;
 	boolean moveCheckZ;		// if true, mobjs can move over/under each other.
-	float	jumpPower;
 	boolean	weaponAutoSwitch;
 	boolean	secretMsg;
 	int		plrViewHeight;
