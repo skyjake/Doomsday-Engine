@@ -244,10 +244,10 @@ void DetectIWADs (void)
 	// The '>' means the paths are affected by the base path.
 	char *paths[] = 
 	{
-		">Data\\jDoom\\",
-		">Data\\",
-		">",
-		">Iwads\\",
+		"}Data\\jDoom\\",
+		"}Data\\",
+		"}",
+		"}Iwads\\",
 		"",
 		0 
 	};
