@@ -267,6 +267,7 @@ void	R_UpdateData(void);
 void	R_ShutdownData(void);
 void	R_PrecacheLevel(void);
 void	R_InitAnimGroup(ded_group_t *def);
+void	R_ResetAnimGroups(void);
 boolean	R_IsInAnimGroup(int groupNum, int type, int number);
 void	R_AnimateAnimGroups(void);
 int		R_TextureFlags(int texture);
