@@ -37,6 +37,7 @@ typedef enum blendmode_e {
 
 boolean         GL_IsInited(void);
 
+void            GL_Register(void);
 void            GL_Init(void);
 void            GL_Shutdown(void);
 void            GL_TotalReset(boolean doShutdown, boolean loadLightMaps);

@@ -110,8 +110,15 @@ static boolean varFontInited = false;
 static gramp_t original_gamma_ramp;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
+static int fogModeDefault = 0;
 
 // CODE --------------------------------------------------------------------
+
+void GL_Register(void)
+{
+	C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2,
+			  "Default fog mode: 0=linear, 1=exp, 2=exp2.");
+}
 
 //===========================================================================
 // GL_IsInited
@@ -559,7 +566,9 @@ void GL_Init2DState(void)
 	// Default state for the white fog is off.
 	useFog = false;
 	gl.Disable(DGL_FOG);
-	gl.Fog(DGL_FOG_MODE, DGL_LINEAR);
+	gl.Fog(DGL_FOG_MODE, (fogModeDefault == 0 ? DGL_LINEAR :
+                          fogModeDefault == 1 ? DGL_EXP :
+                          DGL_EXP2));
 	gl.Fog(DGL_FOG_END, 2100);	// This should be tweaked a bit.
 	fogColor[0] = fogColor[1] = fogColor[2] = 138;
 	fogColor[3] = 255;

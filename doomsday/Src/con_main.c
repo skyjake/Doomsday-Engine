@@ -503,6 +503,7 @@ void Con_Init()
 	DD_RegisterInput();
 	R_Register();
 	Rend_Register();
+    GL_Register();
 	Net_Register();
 	I_Register();
 	H_Register();
