@@ -20,7 +20,7 @@
 
 ## @file tab_addons.py This plugin handles the Addons tab.
 
-import os
+import os, time, string
 import paths, events, ui, language
 import widgets as wg
 import profiles as pr
@@ -212,22 +212,68 @@ def showInspector(addon):
     ident = addon.getId()
     
     dialog, area = ui.createButtonDialog('addon-inspector-dialog',
-                                         ident,
+                                         language.translate(ident),
                                          ['ok'], 'ok')
 
     msg = ""
 
-    msg += "What is printed here?<ul>"
-    msg += "<li>version, summary, date, etc."
-    msg += "<li>format-specific data"
-    msg += "<li>content analysis, size"
-    msg += "<li>all internal identifiers used by the addon"
-    msg += "<li>list of files, if a bundle"
-    msg += "<li>metadata analysis, source"
-    msg += "</ul><p>"
-
+    msg += '<h3>General Information</h3>'
     if language.isDefined(ident + '-readme'):
         msg += "<p>" + language.translate(ident + '-readme')
+
+    def makeField(header, content):
+        return '<tr><td width="20%"><b>' + header + ':</b><td width="80%">' \
+               + content
+
+    beginTable = '<p><table width="100%" border=1 cellpadding=4 cellspacing=0>'
+    endTable = '</table>'
+
+    #
+    # General Information
+    #
+    msg += beginTable
+    msg += makeField('Category', addon.getCategory().getPath())
+    msg += makeField('Summary', language.translate(ident + '-summary', '-'))
+    msg += makeField('Version', language.translate(ident + '-version', '-'))
+    msg += makeField('Author(s)', language.translate(ident + '-author', '-'))
+    msg += makeField('Contact', language.translate(ident + '-contact', '-'))
+    msg += makeField('Copyright',
+                     language.translate(ident + '-copyright', '-'))
+    msg += makeField('License', language.translate(ident + '-license', '-'))
+    msg += makeField('Last Modified',
+                     time.strftime("%a, %d %b %Y %H:%M:%S",
+                                   time.localtime(addon.getLastModified())))
+    msg += endTable
+
+    #
+    # Raw Dependencies
+    #
+    msg += '<h3>Dependencies</h3>' + beginTable
+    allDeps = []
+    
+    # Excluded categories.
+    dep = []
+    for category in addon.getExcludedCategories():
+        dep.append(category.getPath())
+    allDeps.append(('Excluded Categories', dep))
+
+    # Create a table out of each dependency type.
+    for heading, listing in allDeps:
+        msg += makeField(heading, string.join(listing, '<br>'))
+
+    msg += endTable
+
+
+    msg += '<h3>Contents</h3>'
+    msg += "<br>format-specific data"
+    msg += "<br>content analysis, size"
+    msg += "<br>list of files, if a bundle"
+
+    msg += '<h3>Identifiers</h3>'
+    msg += "<br>all internal identifiers used by the addon"
+
+    msg += '<h3>Metadata</h3>'
+    msg += "<br>metadata analysis, source"
 
     text = area.createFormattedText()
     text.setMinSize(600, 400)

@@ -27,7 +27,7 @@ category: graphics
 
 excludes <example2-bundle, something-really-cool>
 
-#excludes-category: /
+excludes-category: /effects/
 
 # Require a certain component.
 #component: game-jdoom

@@ -124,12 +124,17 @@ def loadPath(path):
             load(os.path.join(path, name))
 
 
-def translate(id):
+def translate(id, notDefined=None):
     """Look up a translated string from the language database.
 
     @param id String id.  If this is None or an empty string, an empty
-    string is returned."""
+    string is returned.
 
+    @param notDefined The string that is returned if the identifier is
+    not defined in the current language or in the default language.
+    If None, undefined identifiers are returned untranslated, in
+    parentheses.
+    """
     # Unspecified IDs are translated to an empty string.
     if not id:
         return ''
@@ -146,7 +151,10 @@ def translate(id):
                 return english[id]
 
         # Return a placeholder.
-        return '(' + id + ')'
+        if notDefined != None:
+            return notDefined
+        else:
+            return '(' + id + ')'
 
 
 def define(language, id, text):

@@ -104,7 +104,7 @@ class Category:
         """
         path = ''
         iter = self
-        while iter:
+        while iter.getParent():
             path = '/' + iter.getId() + path
             iter = iter.getParent()
         return path
