@@ -7,8 +7,6 @@
 #include "r_things.h"
 
 extern int		modelLight, frameInter;
-extern int		rend_model_shiny_near;
-extern int		rend_model_shiny_far;
 extern float	rend_model_lod;
 
 void Rend_RenderModel(vissprite_t *spr);
