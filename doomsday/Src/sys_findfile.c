@@ -33,7 +33,7 @@
 
 typedef struct winfinddata_s {
 	struct _finddata_t data;
-	intptr_t handle;
+	long handle;
 } winfinddata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -72,7 +72,7 @@ int myfindfirst(const char *filename, finddata_t * dta)
 	fd->handle = _findfirst(filename, &fd->data);
 
 	setdata(dta);
-	return (fd->handle == (intptr_t) - 1);
+	return (fd->handle == (long) (-1));
 }
 
 int myfindnext(finddata_t * dta)
