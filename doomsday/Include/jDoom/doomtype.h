@@ -23,21 +23,23 @@
 #ifndef __DOOMTYPE__
 #define __DOOMTYPE__
 
-/*#ifndef __BYTEBOOL__
-   #define __BYTEBOOL__
-   // Fixed to use builtin bool type with C++.
-   #ifdef __cplusplus
-   typedef bool boolean;
-   #else
-   typedef enum {false, true} boolean;
-   #endif
-   typedef unsigned char byte;
-   #endif */
-
 // Predefined with some OS.
 #ifdef UNIX
-#include <values.h>
-#else
+
+#include <limits.h>
+
+#define MAXCHAR     SCHAR_MAX
+#define MAXSHORT    SHRT_MAX
+#define MAXINT      INT_MAX
+#define MAXLONG     LONG_MAX
+
+#define MINCHAR     SCHAR_MIN
+#define MINSHORT    SHRT_MIN
+#define MININT      INT_MIN
+#define MINLONG     LONG_MIN
+
+#else /* not UNIX */
+
 #define MAXCHAR		((char)0x7f)
 #define MAXSHORT	((short)0x7fff)
 
@@ -53,26 +55,3 @@
 #endif
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log$
-// Revision 1.4  2004/05/29 09:53:11  skyjake
-// Consistent style (using GNU Indent)
-//
-// Revision 1.3  2004/05/28 17:16:35  skyjake
-// Resolved conflicts (branch-1-7 overrides)
-//
-// Revision 1.1.2.1  2004/05/16 10:01:30  skyjake
-// Merged good stuff from branch-nix for the final 1.7.15
-//
-// Revision 1.1.4.1  2003/11/19 17:08:47  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.1  2003/02/26 19:18:26  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:12  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------
