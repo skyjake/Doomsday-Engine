@@ -20,7 +20,7 @@ REM --- The files
 rar -ep -r a %FILE% %SRC%Bin\Release\Doomsday.exe %SRC%Bin\Release\jDoom.dll %SRC%Bin\Release\jHeretic.dll %SRC%Bin\Release\jHexen.dll
 
 if "%1"=="nodll" goto skipdll
-rar -ep -r a %FILE% %SRC%Bin\Release\jtNet2.dll %SRC%Bin\Release\drOpenGL.dll %SRC%Bin\Release\drD3D.dll %SRC%Bin\Release\dsA3D.dll %SRC%Bin\Release\dsCompat.dll
+rar -ep -r a %FILE% %SRC%Bin\Release\drOpenGL.dll %SRC%Bin\Release\drD3D.dll %SRC%Bin\Release\dsA3D.dll %SRC%Bin\Release\dsCompat.dll
 :skipdll
 
 echo Uploading to The Mirror...

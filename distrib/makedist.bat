@@ -46,7 +46,6 @@ xcopy %SupDir%drD3D.dll 	%DistBin%
 xcopy %SupDir%dsA3D.dll		%DistBin%
 xcopy %SupDir%dsCompat.dll	%DistBin%
 xcopy %SupDir%dpDehRead.dll     %DistBin%
-xcopy %SupDir%jtNet2.dll 	%DistBin%
 xcopy %SRC%DLLs\LZSS.dll 	%DistBin%
 xcopy %SRC%DLLs\EAX.dll 	%DistBin%
 xcopy %SRC%DLLs\zlib.dll	%DistBin%
