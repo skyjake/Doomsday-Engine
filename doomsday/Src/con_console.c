@@ -134,6 +134,7 @@ calias_t *Con_GetAlias(const char *name);
 
 extern HWND hWndMain;
 extern boolean paletted, r_s3tc;	// Use GL_EXT_paletted_texture
+extern int freezeRLs;
 
 extern cvar_t netCVars[], inputCVars[];
 
@@ -282,6 +283,7 @@ cvar_t engineCVars[] =
 	"vid-bright",			0,			CVT_FLOAT,	&vid_bright,	-2, 2,	"Display brightness: -1=dark, 0=normal, 1=light.",
 
 	// Render
+	"rend-dev-freeze",		0,			CVT_INT,	&freezeRLs,		0, 1,	"1=Stop updating rendering lists.",
 	// * Render-Info
 	"rend-info-tris",		0,			CVT_BYTE,	&rend_info_tris, 0, 1,	"1=Print triangle count after rendering a frame.",
 	"rend-info-lums",		0,			CVT_BYTE,	&rend_info_lums, 0, 1,	"1=Print lumobj count after rendering a frame.",
@@ -353,8 +355,6 @@ cvar_t engineCVars[] =
 	"rend-model-aspect", CVF_NO_MAX|CVF_NO_MIN, CVT_FLOAT, &rModelAspectMod, 0, 0, "Scale for MD2 z-axis when model is loaded.",
 	"rend-model-distance",	CVF_NO_MAX,	CVT_INT,	&r_maxmodelz,	0, 0,	"Farther than this models revert back to sprites.",
 	"rend-model-precache",	0,			CVT_BYTE,	&r_precache_skins, 0, 1, "1=Precache 3D models at level setup (slow).",
-	"rend-model-shiny-near", CVF_NO_MAX, CVT_INT,	&rend_model_shiny_near, 0, 0, "Shininess reduction start distance (full shininess).",
-	"rend-model-shiny-far",	CVF_NO_MAX,	CVT_INT,	&rend_model_shiny_far, 0, 0, "Shininess reduction end distance (no shininess).",
 	"rend-model-lod",		CVF_NO_MAX,	CVT_FLOAT,	&rend_model_lod, 0, 0,	"Custom level of detail factor. 0=LOD disabled, 1=normal.",
 	// * Render-HUD
 	"rend-hud-offset-scale", CVF_NO_MAX, CVT_FLOAT, &weaponOffsetScale, 0, 0, "Scaling of player weapon (x,y) offset.",	
