@@ -214,10 +214,10 @@ void N_Update(void)
 	char    name[256];
 
 	// Remove all confirmed messages in the Send Message Store.
-	N_SMSDestroyConfirmed();
+	//N_SMSDestroyConfirmed();
 
 	// Resend unconfirmed, timed-out messages.
-	N_SMSResendTimedOut();
+	//N_SMSResendTimedOut();
 
 	// Are there any events to process?
 	while(N_NEGet(&event))
@@ -237,7 +237,7 @@ void N_Update(void)
 			if(N_IdentifyPlayer(event.id) >= 0)
 			{
 				// Clear this client's Sent Message Store.
-				N_SMSReset(N_IdentifyPlayer(event.id));
+				//N_SMSReset(N_IdentifyPlayer(event.id));
 			}
 			Sv_PlayerLeaves(event.id);
 			break;
@@ -271,7 +271,7 @@ void N_TerminateClient(int console)
 				clients[console].name, console);
 
 	// Clear this client's Sent Message Store.
-	N_SMSReset(console);
+	//N_SMSReset(console);
 
 	N_TerminateNode(clients[console].nodeID);
 }

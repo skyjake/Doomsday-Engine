@@ -85,10 +85,6 @@ int             N_IdentifyPlayer(nodeid_t id);
 
 void            N_PostMessage(netmessage_t * msg);
 
-void            N_SMSReset(int player);
-void            N_SMSDestroyConfirmed(void);
-void            N_SMSResendTimedOut(void);
-
 D_CMD(HuffmanStats);
 
 #endif

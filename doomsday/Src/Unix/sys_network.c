@@ -315,6 +315,62 @@ void N_ReturnBuffer(void *handle)
 }
 
 /*
+ * Read a packet from the TCP connection and put it in the incoming
+ * packet queue.  This function blocks until the entire packet has
+ * been read, so large packets should be avoided during normal
+ * gameplay.
+ *
+ * Returns true if a packet was successfully received.
+ */
+boolean N_ReceiveReliably(nodeid_t from)
+{
+	ushort size = 0;
+	TCPsocket sock = netNodes[from].sock;
+	UDPpacket *packet = NULL;
+
+	if(SDLNet_TCP_Recv(sock, &size, 2) != 2)
+		return false;
+
+	// Read the entire packet's data.
+	packet = SDLNet_AllocPacket(size);
+	if(SDLNet_TCP_Recv(sock, packet->data, size) == size)
+	{
+		netmessage_t *msg = calloc(sizeof(netmessage_t), 1);
+
+		msg->sender = from;
+		msg->data = packet->data;
+		msg->size = size;
+		msg->handle = packet;
+
+		// The message queue will handle the message from now on.
+		N_PostMessage(msg);
+	}
+	else
+	{
+		SDLNet_FreePacket(packet);
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * Send the data buffer over the control link, which is a TCP
+ * connection.
+ */
+void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
+{
+	netnode_t *node = &netNodes[destination];
+	ushort packetSize = size;
+
+	if(size <= 0 || !node->sock || !node->hasJoined)
+		return;
+	
+	SDLNet_TCP_Send(node->sock, &packetSize, 2);
+	SDLNet_TCP_Send(node->sock, data, packetSize);
+}
+
+/*
  * Send the buffer to the destination. For clients, the server is the
  * only possible destination (doesn't depend on the value of
  * 'destination').
@@ -1032,6 +1088,10 @@ boolean N_Connect(int index)
 	// recognize the packets from the server.
 	N_BindIncoming(&svNode->addr, 0);
 
+	// Put the server's socket in a socket set so we may listen to it.
+	sockSet = SDLNet_AllocSocketSet(1);
+	SDLNet_TCP_AddSocket(sockSet, svNode->sock);
+	
 	// Clients are allowed to send packets to the server.
 	svNode->hasJoined = true;
 
@@ -1079,6 +1139,9 @@ boolean N_Disconnect(void)
 	// Close the control connection.  This will let the server know
 	// that we are no more.
 	SDLNet_TCP_Close(svNode->sock);
+
+	SDLNet_FreeSocketSet(sockSet);
+	sockSet = NULL;
 
 	return true;
 }
@@ -1235,12 +1298,14 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
 
 /*
  * Poll all TCP sockets for activity.  Client commands are processed.
+ * The logic ain't very pretty, but hopefully functional.
  */
 void N_Listen(void)
 {
 	TCPsocket sock;
 	int     i, result;
 	char    buf[256];
+	netnode_t *node;
 
 	if(netServerMode)
 	{
@@ -1262,33 +1327,58 @@ void N_Listen(void)
 		{
 			for(i = 0; i < MAX_NODES; i++)
 			{
+				node = netNodes + i;
+				
 				// Does this socket have got any activity?
-				if(!SDLNet_SocketReady(netNodes[i].sock))
+				if(!SDLNet_SocketReady(node->sock))
 					continue;
 
-				result = SDLNet_TCP_Recv(netNodes[i].sock, buf, sizeof(buf));
-				if(result <= 0)
+				if(!node->hasJoined)
 				{
-					// Close this socket & node.
-					VERBOSE2(Con_Message
-							 ("N_Listen: Connection closed on node %i.\n", i));
-					N_TerminateNode(i);
+					result = SDLNet_TCP_Recv(node->sock, buf, sizeof(buf));
+					if(result <= 0)
+					{
+						// Close this socket & node.
+						VERBOSE2(Con_Message("N_Listen: Connection closed on "
+											 "node %i.\n", i));
+						N_TerminateNode(i);
+					}
+					else
+					{
+						// FIXME: Read into a buffer, execute when newline
+						// received.
+						
+						// Process the command; we will need to answer, or
+						// do something else.
+						N_DoNodeCommand(i, buf, result);
+					}
 				}
 				else
 				{
-					// FIXME: Read into a buffer, execute when newline
-					// received.
-
-					// Process the command; we will need to answer, or
-					// do something else.
-					N_DoNodeCommand(i, buf, result);
+					if(!N_ReceiveReliably(i))
+					{
+						Con_Message("N_Listen: Connection closed on "
+									"node %i.\n", i);
+						N_TerminateNode(i);						
+					}
 				}
 			}
 		}
 	}
 	else
 	{
-		// Clientside listening.
+		// Clientside listening.  On clientside, the socket set only
+		// includes the server's socket.
+		if(sockSet && SDLNet_CheckSockets(sockSet, 0) > 0)
+		{
+			if(!N_ReceiveReliably(0))
+			{
+				netevent_t nev;
+				nev.id = 0;
+				nev.type = NE_END_CONNECTION;
+				N_NEPost(&nev);
+			}
+		}
 	}
 }
 

@@ -19,22 +19,6 @@
  * net_buf.c: Network Message Handling and Buffering
  */
 
-/*
- * Confirmed/Ordered messages are stored in the Sent Message Store (SMS)
- * when sending. Confirmations are received and sent when packets are 
- * requested in N_GetNextMessage(). Each player has his own SMS. Message 
- * ID history is maintained and checked to detect spurious duplicates 
- * (result of delayed/lost confirmation). Duplicates are confirmed, but 
- * ignored. Confirmation messages only contain the message ID (2 bytes 
- * long). N_Update() handles the removing of old confirmed messages and 
- * the resending of timed out messages. When an Ordered message is 
- * confirmed, the next queued Ordered message is sent. Messages in the 
- * SMS are in FIFO order.
- *
- * TODO: At least Ordered messages should be sent through the TCP
- * connection.
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
@@ -48,16 +32,16 @@
 #define MSG_MUTEX_NAME	"MsgQueueMutex"
 
 // Flags for the sent message store (for to-be-confirmed messages):
-#define SMSF_ORDERED	0x1		// Block other ordered messages until confirmed
-#define SMSF_QUEUED		0x2		// Ordered message waiting to be sent
-#define SMSF_CONFIRMED	0x4		// Delivery has been confirmed! (OK to remove)
+//#define SMSF_ORDERED	0x1		// Block other ordered messages until confirmed
+//#define SMSF_QUEUED		0x2		// Ordered message waiting to be sent
+//#define SMSF_CONFIRMED	0x4		// Delivery has been confirmed! (OK to remove)
 
 // Length of the received message ID history.
-#define STORE_HISTORY_SIZE 100
+//#define STORE_HISTORY_SIZE 100
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct sentmessage_s {
+/*typedef struct sentmessage_s {
 	struct sentmessage_s *next, *prev;
 	struct store_s *store;
 	msgid_t id;
@@ -74,6 +58,7 @@ typedef struct store_s {
 	msgid_t history[STORE_HISTORY_SIZE];
 	int     historyIdx;
 } store_t;
+*/
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -90,7 +75,7 @@ netbuffer_t netBuffer;
 
 // The Sent Message Store: list of sent or queued messages waiting to be 
 // confirmed.
-static store_t stores[MAXPLAYERS];
+//static store_t stores[MAXPLAYERS];
 
 // The message queue: list of incoming messages waiting for processing.
 static netmessage_t *msgHead, *msgTail;
@@ -224,6 +209,7 @@ netmessage_t *N_GetMessage(void)
 	return msg;
 }
 
+#if 0
 /*
  * Generate a new, non-zero message ID.
  */
@@ -478,6 +464,7 @@ void N_SMSReset(int player)
 	// Reset everything back to zero.
 	memset(store, 0, sizeof(*store));
 }
+#endif
 
 /*
  * Frees the message.
@@ -497,7 +484,6 @@ void N_ReleaseMessage(netmessage_t * msg)
 void N_ClearMessages(void)
 {
 	netmessage_t *msg;
-	int     i;
 
 	while((msg = N_GetMessage()) != NULL)
 		N_ReleaseMessage(msg);
@@ -505,13 +491,16 @@ void N_ClearMessages(void)
 	// The queue is now empty.
 	msgHead = msgTail = NULL;
 
+#if 0
 	// Also clear the sent message store.
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		N_SMSReset(i);
 	}
+#endif
 }
 
+#if 0
 /*
  * Send a Confirmation of Delivery message. 
  */
@@ -528,6 +517,7 @@ void N_SendConfirmation(msgid_t id, nodeid_t where)
 	numOutBytes += 2;
 	numSentBytes += size;
 }
+#endif
 
 /*
  * Send the data in the netbuffer. The message is sent using an
@@ -538,11 +528,11 @@ void N_SendConfirmation(msgid_t id, nodeid_t where)
  */
 void N_SendPacket(int flags)
 {
-	sentmessage_t *sentMsg;
+//	sentmessage_t *sentMsg;
 	int     i, dest = 0;
 	void   *data;
 	uint    size;
-	boolean isQueued = false;
+	//boolean isQueued = false;
 
 	// Is the network available?
 	if(!allowSending || !N_IsAvailable())
@@ -577,7 +567,7 @@ void N_SendPacket(int flags)
 		}
 	}
 
-	if(flags & SPF_ORDERED)
+/*	if(flags & SPF_ORDERED)
 	{
 		// If the Store already contains an ordered message for this player, 
 		// this new one will be queued. The queue-status is lifted (and the 
@@ -588,17 +578,18 @@ void N_SendPacket(int flags)
 			isQueued = true;
 		}
 	}
-
+*/
+/*	
 	// Do we need to generate an ID for the message?
 	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
 	{
 		netBuffer.msg.id = N_GetNewMsgID(netBuffer.player);
 	}
 	else
-	{
+	{*/
 		// Normal, unconfirmed messages do not use IDs.
 		netBuffer.msg.id = 0;
-	}
+//	}
 
 	// This is what will be sent.
 	numOutBytes += netBuffer.headerLength + netBuffer.length;
@@ -613,9 +604,9 @@ void N_SendPacket(int flags)
 
 	// Ordered and confirmed messages are placed in the Store until they
 	// have been acknowledged.
-	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
+	if(flags & (SPF_CONFIRM | SPF_ORDERED))
 	{
-		sentMsg =
+/*		sentMsg =
 			N_SMSCreate(netBuffer.player, netBuffer.msg.id, dest, data, size);
 
 		if(flags & SPF_ORDERED)
@@ -630,10 +621,12 @@ void N_SendPacket(int flags)
 			// The message will not be sent at this time.
 			sentMsg->flags |= SMSF_QUEUED;
 			return;
-		}
-	}
+			}*/
 
-	N_SendDataBuffer(data, size, dest);
+		N_SendDataBufferReliably(data, size, dest);
+	}
+	else
+		N_SendDataBuffer(data, size, dest);
 }
 
 /*
@@ -668,7 +661,6 @@ int N_IdentifyPlayer(nodeid_t id)
 netmessage_t *N_GetNextMessage(void)
 {
 	netmessage_t *msg;
-	msgid_t id;
 
 	while((msg = N_GetMessage()) != NULL)
 	{
@@ -687,10 +679,11 @@ netmessage_t *N_GetNextMessage(void)
 		// it doesn't need to be freed (not thread-safe, though).
 		msg->data = Huff_Decode(msg->data, msg->size, &msg->size);
 
-		// The DP buffer can be freed.
+		// The original packet buffer can be freed.
 		N_ReturnBuffer(msg->handle);
 		msg->handle = NULL;
 
+#if 0
 		// First check the message ID (in the first two bytes).
 		id = *(msgid_t *) msg->data;
 		if(id)
@@ -739,6 +732,7 @@ netmessage_t *N_GetNextMessage(void)
 			// Record this ID in the history of received messages.
 			N_HistoryAdd(msg->player, id);
 		}
+#endif
 		return msg;
 	}
 
