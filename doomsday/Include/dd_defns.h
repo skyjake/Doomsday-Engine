@@ -45,6 +45,7 @@ extern ded_count_t	count_states;
 extern ded_mapinfo_t *mapinfo;	// Current mapinfo, can be NULL.
 
 void Def_Init(void);
+void Def_PostInit(void);
 
 // Destroy databases.
 void Def_Destroy(void);
@@ -53,7 +54,7 @@ void Def_Destroy(void);
 // state, mobjinfo, sound, music and text databases accordingly.
 void Def_Read(void);
 
-void Def_PostInit(void);
+void Def_ReadProcessDED(const char *fileName);
 
 int Def_GetStateNum(char *id);
 int Def_GetSpriteNum(char *name);
