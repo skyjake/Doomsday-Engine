@@ -33,6 +33,7 @@
 #include "rend_model.h"
 #include "rend_shadow.h"
 #include "rend_fakeradio.h"
+#include "rend_bias.h"
 #include "rend_decor.h"
 
 #endif

@@ -41,22 +41,23 @@ Include/p_sight.h Include/p_think.h Include/p_tick.h Include/png.h     \
 Include/pngconf.h Include/r_data.h Include/r_draw.h Include/r_extres.h \
 Include/r_model.h Include/r_shadow.h Include/r_sky.h		       \
 Include/r_things.h Include/r_util.h Include/r_world.h		       \
-Include/rend_clip.h Include/rend_decor.h Include/rend_dyn.h	       \
-Include/rend_fakeradio.h Include/rend_halo.h Include/rend_list.h       \
-Include/rend_main.h Include/rend_model.h Include/rend_particle.h       \
-Include/rend_shadow.h Include/rend_sky.h Include/rend_sprite.h	       \
-Include/s_cache.h Include/s_environ.h Include/s_logic.h		       \
-Include/s_main.h Include/s_mus.h Include/s_sfx.h Include/s_wav.h       \
-Include/sv_frame.h Include/sv_missile.h Include/sv_pool.h	       \
-Include/sv_sound.h Include/sys_audio.h Include/sys_console.h	       \
-Include/sys_direc.h Include/sys_file.h Include/sys_findfile.h	       \
-Include/sys_input.h Include/sys_master.h Include/sys_mixer.h	       \
-Include/sys_musd.h Include/sys_musd_fmod.h Include/sys_musd_win.h      \
-Include/sys_network.h Include/sys_sfxd.h Include/sys_sfxd_ds.h	       \
-Include/sys_sfxd_dummy.h Include/sys_sfxd_loader.h Include/sys_sock.h  \
-Include/sys_stwin.h Include/sys_system.h Include/sys_timer.h	       \
-Include/tab_anorms.h Include/template.h Include/ui_main.h	       \
-Include/ui_mpi.h Include/ui_panel.h Include/zconf.h Include/zlib.h     \
+Include/rend_bias.h Include/rend_clip.h Include/rend_decor.h	       \
+Include/rend_dyn.h Include/rend_fakeradio.h Include/rend_halo.h	       \
+Include/rend_list.h Include/rend_main.h Include/rend_model.h	       \
+Include/rend_particle.h Include/rend_shadow.h Include/rend_sky.h       \
+Include/rend_sprite.h Include/s_cache.h Include/s_environ.h	       \
+Include/s_logic.h Include/s_main.h Include/s_mus.h Include/s_sfx.h     \
+Include/s_wav.h Include/sv_frame.h Include/sv_missile.h		       \
+Include/sv_pool.h Include/sv_sound.h Include/sys_audio.h	       \
+Include/sys_console.h Include/sys_direc.h Include/sys_file.h	       \
+Include/sys_findfile.h Include/sys_input.h Include/sys_master.h	       \
+Include/sys_mixer.h Include/sys_musd.h Include/sys_musd_fmod.h	       \
+Include/sys_musd_win.h Include/sys_network.h Include/sys_sfxd.h	       \
+Include/sys_sfxd_ds.h Include/sys_sfxd_dummy.h			       \
+Include/sys_sfxd_loader.h Include/sys_sock.h Include/sys_stwin.h       \
+Include/sys_system.h Include/sys_timer.h Include/tab_anorms.h	       \
+Include/template.h Include/ui_main.h Include/ui_mpi.h		       \
+Include/ui_panel.h Include/zconf.h Include/zlib.h		       \
 Include/Unix/sys_findfile.h Include/Unix/sys_path.h		       \
 Include/drD3D/window.h Include/drD3D/box.h Include/drD3D/drD3D.h       \
 Include/drOpenGL/atiext.h Include/drOpenGL/drOpenGL.h		       \
