@@ -4,6 +4,15 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.2
+-------------
+- fixed fatal error when building GL nodes for a map in the end of the 
+  data lump directory
+
+Mac OS X:
+- fixed endianness problem with MUS-to-MIDI conversion
+
+
 Version 1.8.1
 -------------
 * it is no longer possible to turn off camera smoothing
