@@ -375,20 +375,6 @@ void F_TranslateZipFileName(const char *zipFileName, char *translated)
 }
 
 //===========================================================================
-// F_ZipFinder
-//	Returns true if the names match.
-//===========================================================================
-int F_ZipFinder(const char *zipFileName, void *path)
-{
-	char fullZipFn[256];
-
-	F_TranslateZipFileName(zipFileName, fullZipFn);
-
-	// Are they the same?
-	return !stricmp(path, fullZipFn);
-}
-
-//===========================================================================
 // F_OpenZip
 //	Zip data is buffered like lump data.
 //===========================================================================
@@ -436,7 +422,7 @@ DFILE *F_Open(const char *path, const char *mode)
 	if(!strchr(mode, 'f')) // Doesn't need to be a real file?
 	{
 		// First check the Zip directory.
-		zipindex_t foundZip = Zip_Find(F_ZipFinder, full);
+		zipindex_t foundZip = Zip_Find(full);
 		if(foundZip)
 			return F_OpenZip(foundZip, dontBuffer);
 
@@ -577,13 +563,9 @@ int F_Length(DFILE *file)
 int F_ZipFinderForAll(const char *zipFileName, void *parm)
 {
 	zipforall_t *info = parm;
-	char fullZipFn[256];
 
-	// Convert the zip file name into a real path.
-	F_TranslateZipFileName(zipFileName, fullZipFn);
-
-	if(F_MatchName(fullZipFn, info->pattern))
-		if(!info->func(fullZipFn, info->parm))
+	if(F_MatchName(zipFileName, info->pattern))
+		if(!info->func(zipFileName, info->parm))
 			return true; // Stop searching.
 
 	// Continue searching.
@@ -612,7 +594,7 @@ int F_ForAll(const char *filespec, int parm, f_forall_func_t func)
 	zipFindInfo.func = func;
 	zipFindInfo.parm = parm;
 	zipFindInfo.pattern = fn;
-	if(Zip_Find(F_ZipFinderForAll, &zipFindInfo))
+	if(Zip_Iterate(F_ZipFinderForAll, &zipFindInfo))
 	{
 		// Find didn't finish.
 		return false;

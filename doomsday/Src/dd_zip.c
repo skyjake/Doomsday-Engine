@@ -12,6 +12,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_misc.h"
+
+#include "sys_direc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -165,6 +168,16 @@ zipentry_t* Zip_NewFiles(unsigned int count)
 }
 
 /*
+ * Sorts all the zip entries alphabetically. All the paths are absolute.
+ */
+int C_DECL Zip_EntrySorter(const void *a, const void *b)
+{
+	// Compare the names.
+	return stricmp( ((const zipentry_t*)a)->name, 
+		((const zipentry_t*)b)->name );
+}
+
+/*
  * Adds a new package to the list of packages.
  */
 package_t* Zip_NewPackage(void)
@@ -186,6 +199,7 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 	localfileheader_t header;
 	zipentry_t *entry;
 	char *entryName;
+	char fullPath[256];
 	
 	if(prevOpened == NULL)
 	{
@@ -231,7 +245,7 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 		// This must be a local file data segment. Read the header.
 		F_Read(&header, sizeof(header), file);
 
-		// Read the file name. This memory is freed in Zip_Shutdown().
+		// Read the file name. This memory is freed below.
 		entryName = calloc(header.fileNameSize + 1, 1);
 		F_Read(entryName, header.fileNameSize, file);
 		
@@ -253,9 +267,21 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 
 		if(header.size)
 		{
+			// Convert all slashes to backslashes, for compatibility with 
+			// the sys_filein routines.
+			for(i = 0; entryName[i]; i++)
+				if(entryName[i] == '/') entryName[i] = '\\';
+
+			// Make it absolute.
+			M_PrependBasePath(entryName, fullPath);
+
 			// We can add this file to the zipentry list.
 			entry = Zip_NewFiles(1);
-			entry->name = entryName;
+			
+			// This memory is freed in Zip_Shutdown().
+			entry->name = malloc(strlen(fullPath) + 1);
+			strcpy(entry->name, fullPath);
+
 			entry->package = pack;
 			entry->size = header.size;
 
@@ -264,16 +290,16 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 
 			// Skip the data.
 			F_Seek(file, header.size, SEEK_CUR);
-			
-			// Convert all slashes to backslashes, for compatibility with 
-			// the sys_filein routines.
-			for(i = 0; entry->name[i]; i++)
-				if(entry->name[i] == '/')
-					entry->name[i] = '\\';
 		}
+
+		free(entryName);
 	}
 
 	pack->file = file;
+
+	// Sort all the zipentries by name. (Note: When lots of files loaded,
+	// most of list is already sorted. Quicksort becomes slow...)
+	qsort(gFiles, gNumFiles, sizeof(zipentry_t), Zip_EntrySorter);
 
 	// File successfully opened!
 	return true;
@@ -285,15 +311,61 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
  * returned. Parm is passed to the finder func. Returns zero if nothing
  * is found.
  */
-zipindex_t Zip_Find(int (*finder)(const char*, void*), void *parm)
+zipindex_t Zip_Iterate(int (*iterator)(const char*, void*), void *parm)
 {
 	int i;
 	
 	for(i = 0; i < gNumFiles; i++)
-		if(finder(gFiles[i].name, parm))
+		if(iterator(gFiles[i].name, parm))
 			return i + 1;
 
 	// Nothing was accepted.
+	return 0;
+}
+
+/*
+ * Find a specific path in the zipentry list. Relative paths are converted
+ * to absolute ones. A binary search is used (the entries have been sorted).
+ * Good performance: O(log n). Returns zero if nothing is found.
+ */
+zipindex_t Zip_Find(const char *fileName)
+{
+	zipindex_t begin, end, mid;
+	int relation;
+	char fullPath[256];
+
+	// Convert to an absolute path.
+	strcpy(fullPath, fileName);
+	Dir_MakeAbsolute(fullPath);
+
+	// Init the search.
+	begin = 0;
+	end = gNumFiles - 1;
+
+	while(begin <= end)
+	{
+		mid = (begin + end) / 2;
+		
+		// How does this compare?
+		relation = strcmp(fullPath, gFiles[mid].name);
+		if(!relation)
+		{
+			// Got it! We return a 1-based index.
+			return mid + 1;
+		}
+		if(relation < 0)
+		{
+			// What we are searching must be in the first half.
+			end = mid - 1;
+		}
+		else
+		{
+			// Then it must be in the second half.
+			begin = mid + 1;
+		}
+	}
+
+	// It wasn't found.
 	return 0;
 }
 
