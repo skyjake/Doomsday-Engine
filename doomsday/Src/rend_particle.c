@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.16  2003/08/30 22:50:04  skyjake
+//** Don't load particle textures if they're already loaded
+//**
 //** Revision 1.15  2003/08/30 15:22:40  skyjake
 //** BlendMode moved under GL
 //**
@@ -140,6 +143,8 @@ void PG_InitTextures(void)
 	int i;
 	boolean reported = false;
 
+	if(ptctexname[0]) return; // Already been here.
+
 	// Clear the texture names array.
 	memset(ptctexname, 0, sizeof(ptctexname));
 
@@ -176,7 +181,9 @@ void PG_InitTextures(void)
 		{
 			// Just show the first 'not found'.
 			if(verbose && !reported) 
+			{
 				Con_Message("PG_InitTextures: %s not found.\n", filename);
+			}
 			reported = true;
 			continue;
 		}
@@ -187,7 +194,7 @@ void PG_InitTextures(void)
 		// If the source is 8-bit with no alpha, generate alpha automatically.
 		if(image.originalBits == 8)
 		{
-			GL_ConvertToAlpha(&image);
+			GL_ConvertToAlpha(&image, true);
 		}
 
 		// Create a new texture and upload the image.
