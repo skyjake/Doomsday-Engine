@@ -266,7 +266,7 @@ int	InitDirect3D(void)
 	maxStages = caps.MaxTextureBlendStages;
 	maxTexSize = MIN_OF(caps.MaxTextureWidth, caps.MaxTextureHeight);
 	maxAniso = caps.MaxAnisotropy;
-	availMulAdd = (caps.TextureOpCaps & D3DTEXOPCAPS_MULTIPLYADD != 0);
+	availMulAdd = (caps.TextureOpCaps & D3DTEXOPCAPS_MULTIPLYADD) != 0;
 	/*
 	if(verbose)
 	{*/
