@@ -11,6 +11,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -68,6 +69,17 @@ int PCX_GetSize(const char *fn, int *w, int *h)
 int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h, 
 				   byte *outBuffer)
 {
+	return PCX_MemoryAllocLoad(imgdata, len, &buf_w, &buf_h, outBuffer) != 0;
+}
+
+//===========================================================================
+// PCX_MemoryAllocLoad
+//	Returns true if the data is a PCX image (probably).
+//	If outBuffer is NULL, a new buffer is allocated with M_Malloc.
+//===========================================================================
+byte *PCX_MemoryAllocLoad
+	(byte *imgdata, int len, int *buf_w, int *buf_h, byte *outBuffer)
+{
 	pcx_t	*pcx = (pcx_t*) imgdata;
 	byte	*raw = &pcx->data, *palette;
 	int		x, y;
@@ -81,14 +93,22 @@ int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
 		|| pcx->bits_per_pixel != 8)
 	{
 		//Con_Message("PCX_Load: unsupported format.\n");
-		return false;
+		return NULL;
 	}
 
-	// Check that the PCX is not larger than the buffer.
-	if(pcx->xmax >= buf_w || pcx->ymax >= buf_h)
+	if(outBuffer)
 	{
-		Con_Message("PCX_Load: larger than expected.\n");
-		return false;
+		// Check that the PCX is not larger than the buffer.
+		if(pcx->xmax >= *buf_w || pcx->ymax >= *buf_h)
+		{
+			Con_Message("PCX_Load: larger than expected.\n");
+			return NULL;
+		}
+	}
+	else
+	{
+		PCX_MemoryGetSize(imgdata, buf_w, buf_h);
+		outBuffer = M_Malloc(4 * *buf_w * *buf_h);
 	}
 
 	palette = Z_Malloc(768, PU_STATIC, 0);
@@ -96,9 +116,9 @@ int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
 
 	pix = outBuffer;
 
-	for(y=0; y<=pcx->ymax; y++, pix += (pcx->xmax+1)*3)
+	for(y = 0; y <= pcx->ymax; y++, pix += (pcx->xmax + 1)*3)
 	{
-		for(x=0; x<=pcx->xmax; )
+		for(x = 0; x <= pcx->xmax; )
 		{
 			dataByte = *raw++;
 			
@@ -121,14 +141,22 @@ int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
 		Con_Error("PCX_Load: corrupt image!\n");
 
 	Z_Free(palette);
-	return true;
+	return outBuffer;
 }
 
 //===========================================================================
 // PCX_Load
-//	PCX loader, partly borrowed from the Q2 utils source (lbmlib.c). 
 //===========================================================================
 void PCX_Load(const char *fn, int buf_w, int buf_h, byte *outBuffer)
+{
+	PCX_AllocLoad(fn, &buf_w, &buf_h, outBuffer);
+}
+
+//===========================================================================
+// PCX_AllocLoad
+//	PCX loader, partly borrowed from the Q2 utils source (lbmlib.c). 
+//===========================================================================
+byte *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)
 {
 	DFILE	*file = F_Open(fn, "rb");
 	byte	*raw;
@@ -137,7 +165,7 @@ void PCX_Load(const char *fn, int buf_w, int buf_h, byte *outBuffer)
 	if(!file) 
 	{
 		Con_Message("PCX_Load: can't find %s.\n", fn);
-		return;
+		return NULL;
 	}
 
 	// Load the file.
@@ -149,8 +177,9 @@ void PCX_Load(const char *fn, int buf_w, int buf_h, byte *outBuffer)
 	F_Close(file);
 
 	// Parse the PCX file.
-	if(!PCX_MemoryLoad(raw, len, buf_w, buf_h, outBuffer))
+	if(!(outBuffer = PCX_MemoryAllocLoad(raw, len, buf_w, buf_h, outBuffer)))
 		Con_Message("PCX_Load: error loading %s.\n", fn);
 
 	Z_Free(raw);
+	return outBuffer;
 }
