@@ -18,11 +18,11 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SS_MAX_SCRIPTS	64
-#define SS_TEMPBUFFER_SIZE	1024
+#define SS_MAX_SCRIPTS			64
+#define SS_TEMPBUFFER_SIZE		1024
 #define SS_SEQUENCE_NAME_LENGTH 32
 
-#define SS_SCRIPT_NAME "SNDSEQ"
+#define SS_SCRIPT_NAME			"SNDSEQ"
 #define SS_STRING_PLAY			"play"
 #define SS_STRING_PLAYUNTILDONE "playuntildone"
 #define SS_STRING_PLAYTIME		"playtime"
