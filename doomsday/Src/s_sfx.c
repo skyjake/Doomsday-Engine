@@ -115,13 +115,13 @@ int Sfx_ChannelRefreshThread(void *parm)
 			}
 			refreshing = false;
 			// Let's take a nap.
-			Sys_Sleep(100);
+			Sys_Sleep(200);
 		}
 		else
 		{
 			// Refreshing is not allowed, so take a shorter nap while
 			// waiting for allowrefresh.
-			Sys_Sleep(50);
+			Sys_Sleep(150);
 		}
 	}
 	// Time to end this thread.

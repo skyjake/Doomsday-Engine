@@ -385,12 +385,13 @@ sfxbuffer_t* DS_DSoundCreateBuffer(int flags, int bits, int rate)
 	desc.dwSize = sizeof(desc);
 	desc.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME 		
 		| (flags & SFXBF_3D? DSBCAPS_CTRL3D : DSBCAPS_CTRLPAN)
-		| DSBCAPS_STATIC
-		| DSBCAPS_GETCURRENTPOSITION2;
+		| DSBCAPS_STATIC;
+
 	// Calculate buffer size. Increase it to hit an 8 byte boundary.
-	desc.dwBufferBytes = bits/8 * rate/4; // 250ms buffer.
+	desc.dwBufferBytes = bits/8 * rate/2; // 500ms buffer.
 	i = desc.dwBufferBytes % 8;
 	if(i) desc.dwBufferBytes += 8 - i;
+
 	desc.lpwfxFormat = &format;
 	if(flags & SFXBF_3D)
 	{
@@ -507,6 +508,15 @@ void DS_DSoundReset(sfxbuffer_t *buf)
 }
 
 //===========================================================================
+// DS_DSoundBufferLength
+//	Returns the length of the buffer in milliseconds.
+//===========================================================================
+unsigned int DS_DSoundBufferLength(sfxbuffer_t *buf)
+{
+	return 1000 * buf->sample->numsamples / buf->freq;
+}
+
+//===========================================================================
 // DS_DSoundPlay
 //===========================================================================
 void DS_DSoundPlay(sfxbuffer_t *buf)
@@ -521,8 +531,7 @@ void DS_DSoundPlay(sfxbuffer_t *buf)
 	if(!(buf->flags & SFXBF_PLAYING))
 	{
 		// Calculate the end time (milliseconds).
-		buf->endtime = Sys_GetRealTime() 
-			+ 1000 * buf->sample->numsamples / buf->freq;
+		buf->endtime = Sys_GetRealTime() + DS_DSoundBufferLength(buf);
 	}
 
 	if(FAILED(hr = IDirectSoundBuffer_Play(DSBuf(buf), 0, 0, 
@@ -573,39 +582,54 @@ static boolean InRange(uint pos, uint start, uint end)
 //===========================================================================
 void DS_DSoundRefresh(sfxbuffer_t *buf)
 {
-	DWORD play, write, bytes[2], dose, fill;
+	DWORD play, /*write,*/ bytes[2], dose, fill;
 	void *data[2];
 	int write_bytes, i;
+	float usedsec;
+	unsigned int usedtime, nowtime = Sys_GetRealTime();
 
 	// Can only be done if there is a sample and the buffer is playing.
 	if(!buf->sample || !(buf->flags & SFXBF_PLAYING)) return;
 
-	// Get the "write range" in the buffer.
+/*	// Get the "write range" in the buffer.
 	if(FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(DSBuf(buf),
 		&play, &write)))
 	{
 		// This is not going to sound good.
 		return;
-	}
+	}*/
 
 	// Have we passed the predicted end of sample?
 	// Note: this test fails if the game has been running for about
 	// 50 days, since the millisecond counter overflows. It only affects
 	// sounds that are playing while the overflow happens, though.
-	if(!(buf->flags & SFXBF_REPEAT)
-		&& Sys_GetRealTime() >= buf->endtime)
+	if(!(buf->flags & SFXBF_REPEAT) && nowtime >= buf->endtime)
 	{
 		// Time for the sound to stop.
 		DS_DSoundStop(buf);
 		return;
 	}
 
+	// Slightly redundant... (used = now - start)
+	usedtime = nowtime - (buf->endtime - DS_DSoundBufferLength(buf));
+
+	// Approximate the current playing position (-0.05 sec for safety; we don't
+	// want to overwrite stuff before it gets played).
+	usedsec = usedtime / 1000.0f - 0.05f;
+	if(usedsec <= 0) 
+	{
+		// This means the update is a bit early; let's wait for the 
+		// next one.
+		return;
+	}
+	play = (int) (usedsec * buf->freq * buf->bytes) % buf->length;
+
 	// We are allowed to write after the write cursor until the play
 	// cursor is reached. Calculate how much this is, starting from
 	// our buffer cursor position. If our cursor is not in the allowed
 	// write range, we can't do anything.
 
-	if(InRange(buf->cursor, play, write))
+	/*if(InRange(buf->cursor, play, write))
 	{
 		// Tricky; for some reason the play/write zone has gotten
 		// too far ahead and now it's overlapping our buffer cursor.
@@ -613,12 +637,10 @@ void DS_DSoundRefresh(sfxbuffer_t *buf)
 		// hogging once again... Must amend the situation so that we don't
 		// get an instant replay of the buffer contents. Move buffer cursor
 		// to the write cursor, and write from there.
-		/*buf->cursor = write;
-		Con_Printf("Hmm?\n");*/
 
 		// Doesn't work with all sound cards, so let's just wait it out. 
 		return;
-	}
+	}*/
 
 	// Calculate how many bytes we must write (from buffer cursor up to 
 	// play cursor).
@@ -648,7 +670,7 @@ void DS_DSoundRefresh(sfxbuffer_t *buf)
 		return; // Bugrit.
 	}
 
-	//dprintf("C%i, B%i, W%i (p%i - w%i)", buf->cursor, write_bytes, buf->written, play, write);
+	//dprintf("C%i, B%i, W%i (p%i)", buf->cursor, write_bytes, buf->written, play);
 	//dprintf("  (d1=%p b=%i d2=%p b=%i)", data[0], bytes[0], data[1], bytes[1]);
 
 	// Copy in two parts: as much sample data as we've got, and then zeros.
@@ -682,8 +704,7 @@ void DS_DSoundRefresh(sfxbuffer_t *buf)
 		// Wrap the cursor back to the beginning if needed. The wrap
 		// can only happen after the first write, really (where the
 		// buffer "breaks").
-		if(buf->cursor >= buf->length) 
-			buf->cursor -= buf->length;
+		if(buf->cursor >= buf->length) buf->cursor -= buf->length;
 	}
 
 	// And we're done! Unlock and get out of here.
