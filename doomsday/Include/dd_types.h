@@ -22,30 +22,34 @@
 #ifndef __DOOMSDAY_TYPES_H__
 #define __DOOMSDAY_TYPES_H__
 
+#ifdef UNIX
+#  include <sys/types.h>
+#endif
+
 // The C_DECL macro, used with functions.
 #ifndef C_DECL
-#	if defined(WIN32)
-#		define C_DECL __cdecl
-#	elif defined(UNIX)
-#		define C_DECL
-#	endif
+#  if defined(WIN32)
+#    define C_DECL __cdecl
+#  elif defined(UNIX)
+#    define C_DECL
+#  endif
 #endif
 
 #ifndef UNIX
-typedef unsigned int uint;
-typedef unsigned short ushort;
-typedef unsigned int size_t;
+typedef unsigned int	uint;
+typedef unsigned short	ushort;
+typedef unsigned int	size_t;
 #endif
 
-typedef int fixed_t;
-typedef unsigned int angle_t;
-typedef int     spritenum_t;
-typedef unsigned int ident_t;
-typedef unsigned short nodeindex_t;
-typedef unsigned short thid_t;
-typedef unsigned char byte;
-typedef double  timespan_t;
-typedef char    filename_t[256];
+typedef int				fixed_t;
+typedef unsigned int	angle_t;
+typedef int				spritenum_t;
+typedef unsigned int	ident_t;
+typedef unsigned short	nodeindex_t;
+typedef unsigned short	thid_t;
+typedef unsigned char	byte;
+typedef double			timespan_t;
+typedef char			filename_t[256];
 
 typedef struct directory_s {
 	int             drive;
@@ -53,14 +57,13 @@ typedef struct directory_s {
 } directory_t;
 
 #ifdef __cplusplus
-#	define boolean			int
+#  define boolean			int
 #else							// Plain C.
-#	ifndef __BYTEBOOL__
-#		define __BYTEBOOL__
-#	endif
+#  ifndef __BYTEBOOL__
+#    define __BYTEBOOL__
+#  endif
 typedef enum ddboolean_e { false, true } ddboolean_t;
-
-#	define boolean			ddboolean_t
+#  define boolean			ddboolean_t
 #endif
 
 #define BAMS_BITS	16
