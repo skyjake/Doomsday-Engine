@@ -179,7 +179,8 @@ void R_Update(void)
 void R_Shutdown(void)
 {
 	R_ShutdownModels();
-	// Most allocated memory naturally goes down with the zone.
+	R_ShutdownData();
+	// Most allocated memory goes down with the zone.
 }
 
 //===========================================================================
@@ -284,15 +285,15 @@ void R_SetupFrame(ddplayer_t *player)
 		// $smoothplane: Reset the plane height trackers.
 		for(i = 0; i < numsectors; i++)
 		{
-			secinfo[i].visceilingoffset = secinfo[i].visflooroffset = 0;
+			secinfo[i].visceiloffset = secinfo[i].visflooroffset = 0;
 
 			// Reset the old Z values.
 			sector = SECTOR_PTR(i);
 			secinfo[i].oldfloor[0] 
 				= secinfo[i].oldfloor[1] 
 				= sector->floorheight;
-			secinfo[i].oldceiling[0] 
-				= secinfo[i].oldceiling[1] 
+			secinfo[i].oldceil[0] 
+				= secinfo[i].oldceil[1] 
 				= sector->ceilingheight;
 		}
 	}
@@ -330,14 +331,14 @@ void R_SetupFrame(ddplayer_t *player)
 					secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
 				}
 		
-				secinfo[i].oldceiling[0] = secinfo[i].oldceiling[1];
-				secinfo[i].oldceiling[1] = sector->ceilingheight;
+				secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
+				secinfo[i].oldceil[1] = sector->ceilingheight;
 
-				if(abs(secinfo[i].oldceiling[0] - secinfo[i].oldceiling[1])
+				if(abs(secinfo[i].oldceil[0] - secinfo[i].oldceil[1])
 					>= MAX_SMOOTH_PLANE_MOVE)
 				{
 					// Too fast: make an instantaneous jump.
-					secinfo[i].oldceiling[0] = secinfo[i].oldceiling[1];
+					secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
 				}
 			}
 		}
@@ -363,8 +364,8 @@ void R_SetupFrame(ddplayer_t *player)
 				+ sector->floorheight*timePos - 
 				sector->floorheight);
 
-			secinfo[i].visceilingoffset 
-				= FIX2FLT(secinfo[i].oldceiling[0]*(1 - timePos)
+			secinfo[i].visceiloffset 
+				= FIX2FLT(secinfo[i].oldceil[0]*(1 - timePos)
 				+ sector->ceilingheight*timePos	
 				- sector->ceilingheight);
 		}
