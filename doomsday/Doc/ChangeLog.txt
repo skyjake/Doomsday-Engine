@@ -10,6 +10,7 @@ Version 1.7.11 (work in progress)
 * revised server delta generation: fixed-size frames, prioritized 
   contents, sounds are stored inside frames (not separate packets),
   redundant missile coordinates not sent
+* server refuses connection if new client's ID already in use
 * revised clientside handling of frames: collision detection for 
   movement prediction, missiles hidden on impact
 * revised low-level networking: implement confirmed/ordered packets 
@@ -28,6 +29,8 @@ Version 1.7.11 (work in progress)
 + cmd 'toggle': toggle a cvar's value between zero and nonzero
 + cmd 'if': execute a command if the condition is true (tests cvar 
   values)
+* max number of light decorations increased to 16 per texture
+- fixed: occlusion for planes exactly at eye-Z
 - fixed: client was sending too much data (now it's about 0.3 KB/s)
 - included DED files are read immediately after the Include directive
   has been encountered
@@ -49,6 +52,7 @@ Version 1.7.11 (work in progress)
 - fixed: finding model files/skins with base-relative paths
   
 jDoom:
+* savegames stored in game mode specific subdirs (mixups now avoided)
 + cvar 'view-bob-weapon-switch-lower': if zero, HUD weapon is not 
   lowered during a weapon switch
 + value 'Weapon Info|*|Static': if nonzero, HUD weapon is not lowered
@@ -58,11 +62,15 @@ jDoom:
 - fixed: crash when "kill" used when not in a map
 
 jHeretic:
+* savegames stored in game mode specific subdirs (mixups now avoided)
 * game-corpse-time: corpses fade smoothly 
 - fixed: button deactivation sound
 - fixed: Speed + Use Artifact made the player jump
+- fixed: on clientside, wind didn't affect player (e.g. E1M1)
   
 jHexen:
+* savegames stored in game mode specific subdirs (mixups now avoided)
++ option -savedir: set savegame directory
 - fixed: polyobj destination/speed for sliding doors (e.g. map05)
 - fixed: restoring polyobjs and hidden mobjs from saved map
 - fixed: problem with excessive sound sequence repeat (e.g. map12)
@@ -86,6 +94,7 @@ drD3D:
 
 Installer:
 - fixed: pressing Enter after typing a path closed the installer dialog
+- glBSP run with the -fresh option to avoid bad BSP data
 
 
 Version 1.7.10
