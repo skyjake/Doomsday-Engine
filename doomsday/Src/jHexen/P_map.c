@@ -485,7 +485,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 		{
 			thing->momx += tmthing->momx;
 			thing->momy += tmthing->momy;
-			if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXPOS;
+			if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXMOM;
 			if ((thing->momx + thing->momy) > 3*FRACUNIT)
 			{
 				damage = (tmthing->info->mass/100)+1;
@@ -533,7 +533,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 				{
 					thing->momx += tmthing->momx>>4;
 					thing->momy += tmthing->momy>>4;
-					if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXPOS;
+					if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXMOM;
 				}
 				if((!thing->player && !(thing->flags2&MF2_BOSS))
 					|| !(leveltime&1))
@@ -659,7 +659,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 			{ // Push thing
 				thing->momx += tmthing->momx>>2;
 				thing->momy += tmthing->momy>>2;
-				if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXPOS;
+				if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXMOM;
 			}
 			numspechit = 0;
 			return(true);
@@ -688,7 +688,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 	{ // Push thing
 		thing->momx += tmthing->momx>>2;
 		thing->momy += tmthing->momy>>2;
-		if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXPOS;
+		if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXMOM;
 	}
 	// Check for special thing
 	if(thing->flags&MF_SPECIAL)

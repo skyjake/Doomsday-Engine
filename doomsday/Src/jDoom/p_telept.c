@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/06/30 00:05:04  skyjake
+// Use fixmom
+//
 // Revision 1.1  2003/02/26 19:22:04  skyjake
 // Initial checkin
 //
@@ -130,7 +133,8 @@ EV_Teleport
 					thing->dplayer->clAngle = thing->angle;
 					thing->dplayer->clLookDir = 0;
 					thing->dplayer->lookdir = 0;
-					thing->dplayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+					thing->dplayer->flags |= DDPF_FIXANGLES 
+						| DDPF_FIXPOS | DDPF_FIXMOM;
 				}
 				return 1;
 			}	

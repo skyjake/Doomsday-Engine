@@ -922,7 +922,7 @@ void UnarchivePlayer(player_t *p)
 		if(p->psprites[i].state)
 			p->psprites[i].state = &states[(int)p->psprites[i].state];
 
-	dp->flags |= DDPF_FIXPOS | DDPF_FIXANGLES;
+	dp->flags |= DDPF_FIXPOS | DDPF_FIXANGLES | DDPF_FIXMOM;
 	p->update |= PSF_REBORN;
 }
 

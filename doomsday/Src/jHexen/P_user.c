@@ -414,7 +414,7 @@ void P_DeathThink(player_t *player)
 	
 	P_CalcHeight(player);
 	player->update |= PSF_VIEW_HEIGHT;
-	player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+	player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 
 	if(player->attacker && player->attacker != player->plr->mo)
 	{ // Watch killer
@@ -630,7 +630,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 	S_StartSound(SFX_TELEPORT, fog);
 	P_PostMorphWeapon(player, weapon);
 	player->update |= PSF_MORPH_TIME | PSF_HEALTH;
-	player->plr->flags |= DDPF_FIXPOS;
+	player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
 	return(true);
 }
 

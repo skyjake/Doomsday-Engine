@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/06/30 00:05:23  skyjake
+// Use fixmom
+//
 // Revision 1.2  2003/02/28 19:24:44  skyjake
 // Added player-air-movement (not netgame-friendly)
 //
@@ -208,7 +211,7 @@ void P_DeathThink (player_t* player)
 		player->plr->viewheight = 6*FRACUNIT;
 
     player->plr->deltaviewheight = 0;
-	player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+	player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     onground = (player->plr->mo->z <= player->plr->mo->floorz);
     P_CalcHeight (player);
 

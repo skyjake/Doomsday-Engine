@@ -58,7 +58,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
 			player->plr->lookdir = 0;
 		}
 		player->plr->clAngle = angle;
-		player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+		player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 	}
 	else if(thing->flags&MF_MISSILE)
 	{

@@ -350,7 +350,7 @@ void SV_ReadPlayer(player_t *pl)
 		}
 
 	// Mark the player for fixpos and fixangles.
-	dpl->flags |= DDPF_FIXPOS | DDPF_FIXANGLES;
+	dpl->flags |= DDPF_FIXPOS | DDPF_FIXANGLES | DDPF_FIXMOM;
 	pl->update = PSF_REBORN;
 }
 

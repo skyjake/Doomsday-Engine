@@ -77,7 +77,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
 	if(thing->player)
 	{
 		player = thing->player;
-		player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+		player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 		if(player->powers[pw_flight] && aboveFloor)
 		{
 			thing->z = thing->floorz+aboveFloor;

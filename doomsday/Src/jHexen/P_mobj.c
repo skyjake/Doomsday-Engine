@@ -1490,7 +1490,7 @@ void P_SpawnPlayer(mapthing_t *mthing, int playernum)
 	}
     p->plr->clAngle = mobj->angle = ANG45 * (mthing->angle/45);
 	p->plr->clLookDir = 0;
-	p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+	p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 	mobj->player = p;
 	mobj->dplayer = p->plr;
 	mobj->health = p->health;

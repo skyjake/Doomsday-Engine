@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.9  2003/06/30 00:04:16  skyjake
+// Use fixmom
+//
 // Revision 1.8  2003/06/27 20:24:13  skyjake
 // Added P_UpdateMobjFlags()
 //
@@ -909,7 +912,7 @@ void P_SpawnPlayer (mapthing_t* mthing, int pnum)
 	
     p->plr->clAngle = mobj->angle = ANG45 * (mthing->angle/45);
 	p->plr->clLookDir = 0;
-	p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+	p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     mobj->player = p;
 	mobj->dplayer = p->plr;
     mobj->health = p->health;

@@ -395,7 +395,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
 		if(plrmo->z <= plrmo->floorz)
 		{
 			player->flyheight = 10; // thrust the player in the air a bit
-			player->plr->flags |= DDPF_FIXPOS;
+			player->plr->flags |= DDPF_FIXMOM;
 		}
 		return(true);
 	}
@@ -1099,7 +1099,7 @@ boolean P_ChickenMorphPlayer(player_t *player)
 		chicken->flags2 |= MF2_FLY;
 	}
 	player->chickenTics = CHICKENTICS;
-	player->plr->flags |= DDPF_FIXPOS;
+	player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
 	player->update |= PSF_CHICKEN_TIME | PSF_HEALTH | PSF_POWERS
 		| PSF_ARMOR_POINTS;
 	P_ActivateBeak(player);
@@ -1418,7 +1418,12 @@ void P_DamageMobj
 			target->momx += FixedMul(thrust, finecosine[ang]);
 			target->momy += FixedMul(thrust, finesine[ang]);
 		}
-		if(target->dplayer) target->dplayer->flags |= DDPF_FIXPOS;
+		if(target->dplayer) 
+		{
+			// Only fix momentum. Otherwise clients will find it difficult
+			// to escape from the damage inflictor.
+			target->dplayer->flags |= DDPF_FIXMOM;
+		}
 	}
 
 	//

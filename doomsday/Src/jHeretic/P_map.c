@@ -390,7 +390,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 			{ // Push thing
 				thing->momx += tmthing->momx>>2;
 				thing->momy += tmthing->momy>>2;
-				if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXPOS;
+				if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXMOM;
 			}
 			numspechit = 0;
 			return(true);
@@ -411,7 +411,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 	{ // Push thing
 		thing->momx += tmthing->momx >> 2;
 		thing->momy += tmthing->momy >> 2;
-		if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXPOS;
+		if(thing->dplayer) thing->dplayer->flags |= DDPF_FIXMOM;
 	}
 	// Check for special thing
 	if(thing->flags&MF_SPECIAL)
