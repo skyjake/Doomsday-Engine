@@ -298,10 +298,10 @@ int Def_GetFlagValue(char *flag)
 {
 	int i;
 
-	for(i = defs.count.flags.num-1; i >= 0; i--)
+	for(i = defs.count.flags.num - 1; i >= 0; i--)
 		if(!strcmp(defs.flags[i].id, flag))
 			return defs.flags[i].value;
-	Con_Message("GetFlagValue: Undefined flag '%s'.\n", flag);
+	Con_Message("Def_GetFlagValue: Undefined flag '%s'.\n", flag);
 	return 0;
 }
 
@@ -562,7 +562,7 @@ void Def_Read(void)
 		// Make sure duplicate IDs overwrite the earliest.
 		state_t *st = states + Def_GetStateNum(dst->id);
 		st->sprite = Def_GetSpriteNum(dst->sprite.id);
-		st->flags = Def_EvalFlags(dst->flags);
+		st->flags = dst->flags;
 		st->frame = dst->frame;
 		st->tics = dst->tics;
 		st->action = Def_GetActionPtr(dst->action);
@@ -605,9 +605,9 @@ void Def_Read(void)
 		mo->mass = dmo->mass;
 		mo->damage = dmo->damage;
 		mo->activesound = Def_GetSoundNum(dmo->activesound);
-		mo->flags = Def_EvalFlags(dmo->flags[0]);
-		mo->flags2 = Def_EvalFlags(dmo->flags[1]);
-		mo->flags3 = Def_EvalFlags(dmo->flags[2]);
+		mo->flags = dmo->flags[0];
+		mo->flags2 = dmo->flags[1];
+		mo->flags3 = dmo->flags[2];
 		for(k=0; k<NUM_MOBJ_MISC; k++)
 			mo->misc[k] = dmo->misc[k];
 	}
@@ -625,7 +625,7 @@ void Def_Read(void)
 			continue;
 		}
 		states[k].light = defs.lights + i;
-		defs.lights[i].flags = Def_EvalFlags(defs.lights[i].flags_string);
+		//defs.lights[i].flags = Def_EvalFlags(defs.lights[i].flags_string);
 	}
 	Def_CountMsg(defs.count.lights.num, "lights");
 
@@ -647,7 +647,7 @@ void Def_Read(void)
 		si->link_volume = snd->link_volume;
 		si->priority = snd->priority;
 		si->channels = snd->channels;
-		si->flags = Def_EvalFlags(snd->flags);
+		si->flags = snd->flags;
 		si->group = snd->group;
 		strcpy(si->external, snd->ext.path);
 	}
@@ -695,7 +695,7 @@ void Def_Read(void)
 			defs.ptcgens[i].flat_num = W_CheckNumForName(defs.ptcgens[i].flat);
 		else
 			defs.ptcgens[i].flat_num = -1;
-		defs.ptcgens[i].flags = Def_EvalFlags(defs.ptcgens[i].flags_string);
+		//defs.ptcgens[i].flags = Def_EvalFlags(defs.ptcgens[i].flags_string);
 		defs.ptcgens[i].type_num = Def_GetMobjNum(defs.ptcgens[i].type);
 		defs.ptcgens[i].type2_num = Def_GetMobjNum(defs.ptcgens[i].type2);
 		defs.ptcgens[i].damage_num = Def_GetMobjNum(defs.ptcgens[i].damage);
@@ -712,11 +712,11 @@ void Def_Read(void)
 	Def_CountMsg(defs.count.groups.num, "animation groups");
 
 	// Surface decorations.
-	for(i = 0; i < defs.count.decorations.num; i++)
+	/*for(i = 0; i < defs.count.decorations.num; i++)
 	{
 		ded_decor_t *decor = defs.decorations + i;
 		decor->flags = Def_EvalFlags(decor->flags_str);
-	}
+	}*/
 	Def_CountMsg(defs.count.decorations.num, "surface decorations");
 
 	// Other data:
@@ -744,7 +744,41 @@ void Def_Read(void)
 //===========================================================================
 void Def_PostInit(void)
 {
-	int i;
+	int i, k;
+	ded_ptcgen_t *gen;
+	char name[40];
+	modeldef_t *modef;
+	ded_ptcstage_t *st;
+
+	// Particle generators: model setup.
+	for(i = 0, gen = defs.ptcgens; i < defs.count.ptcgens.num; i++, gen++)
+	{
+		for(k = 0, st = gen->stages; k < DED_PTC_STAGES; k++, st++)
+		{
+			if(st->type < PTC_MODEL
+				|| st->type >= PTC_MODEL + MAX_PTC_MODELS) 
+				continue;
+			sprintf(name, "Particle%02i", st->type - PTC_MODEL);
+			if(!(modef = R_CheckIDModelFor(name))
+				|| modef->sub[0].model <= 0)
+			{
+				st->model = -1;
+				continue;
+			}			
+			st->model = modef - models;
+			st->frame = R_ModelFrameNumForName(modef->sub[0].model, 
+				st->frame_name);
+			if(st->end_frame_name[0])
+			{
+				st->end_frame = R_ModelFrameNumForName(modef->sub[0].model, 
+					st->end_frame_name);
+			}
+			else
+			{
+				st->end_frame = -1;
+			}
+		}
+	}
 
 	DED_DelArray(&details, &count_details);
 	DED_NewEntries(&details, &count_details, sizeof(*details), 
@@ -769,6 +803,8 @@ void Def_PostInit(void)
 			decor->surface_index = R_CheckTextureNumForName(decor->surface);
 		else
 			decor->surface_index = W_CheckNumForName(decor->surface);
+
+		decor->pregen_lightmap = 0;
 	}
 
 	// Animation groups.
@@ -914,24 +950,24 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 	int i, k, a, n;
 
 	l->id = def->id;
-	l->flags = Def_EvalFlags(def->flags[0]);
-	l->flags2 = Def_EvalFlags(def->flags[1]);
-	l->flags3 = Def_EvalFlags(def->flags[2]);
-	l->line_class = Def_EvalFlags(def->line_class);
-	l->act_type = Def_EvalFlags(def->act_type);
+	l->flags = def->flags[0];
+	l->flags2 = def->flags[1];
+	l->flags3 = def->flags[2];
+	l->line_class = def->line_class;
+	l->act_type = def->act_type;
 	l->act_count = def->act_count;
 	l->act_time = def->act_time;
 	l->act_tag = def->act_tag;
-	for(i=k=0; i<10; i++)
+	for(i = k = 0; i < 10; i++)
 	{
-		if(i == 4)
+		/*if(i == 4)
 			l->aparm[i] = Def_EvalFlags(def->aparm_str[0]);
 		else if(i == 6)
 			l->aparm[i] = Def_EvalFlags(def->aparm_str[1]);
-		else if(i == 9)
-			l->aparm[i] = Def_GetMobjNum(def->aparm_str[2]);
+		else*/ if(i == 9)
+			l->aparm[i] = Def_GetMobjNum(def->aparm9);
 		else
-			l->aparm[i] = def->aparm[k++];
+			l->aparm[i] = def->aparm[i /* k++ */];
 	}
 	l->ticker_start = def->ticker_start;
 	l->ticker_end = def->ticker_end;
@@ -941,7 +977,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 	l->ev_chain = def->ev_chain;
 	l->act_chain = def->act_chain;
 	l->deact_chain = def->deact_chain;
-	l->wallsection = Def_EvalFlags(def->wallsection);
+	l->wallsection = def->wallsection;
 	l->act_tex = Friendly(R_CheckTextureNumForName(def->act_tex));
 	l->deact_tex = Friendly(R_CheckTextureNumForName(def->deact_tex));
 	l->act_msg = def->act_msg;
@@ -998,12 +1034,12 @@ void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
 	int i, k;
 
 	s->id = def->id;
-	s->flags = Def_EvalFlags(def->flags);
+	s->flags = def->flags;
 	s->act_tag = def->act_tag;
 	LOOPi(5)
 	{
 		s->chain[i] = def->chain[i];
-		s->chain_flags[i] = Def_EvalFlags(def->chain_flags[i]);
+		s->chain_flags[i] = def->chain_flags[i];
 		s->start[i] = def->start[i];
 		s->end[i] = def->end[i];
 		LOOPk(2) s->interval[i][k] = def->interval[i][k];
@@ -1082,7 +1118,7 @@ int Def_Get(int type, char *id, void *out)
 		mout->name = map->name;
 		mout->author = map->author;
 		mout->music = Def_GetMusicNum(map->music);
-		mout->flags = Def_EvalFlags(map->flags);
+		mout->flags = map->flags;
 		mout->ambient = map->ambient;
 		mout->gravity = map->gravity;
 		mout->partime = map->partime;
