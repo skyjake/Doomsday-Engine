@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.12  2003/07/12 22:18:00  skyjake
+//** Don't profile
+//**
 //** Revision 1.11  2003/07/01 12:38:58  skyjake
 //** Pool missile record, adde Sv_ExcludeDelta
 //**
@@ -27,7 +30,7 @@
  * R_SetupLevel() to clear out all the old data.
  */
 
-#define DD_PROFILE
+//#define DD_PROFILE
 
 // HEADER FILES ------------------------------------------------------------
 
