@@ -20,6 +20,7 @@
 #include "mn_def.h"
 #include "Settings.h"
 #include "lzss.h"
+#include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2645,7 +2646,6 @@ boolean MN_Responder(event_t *event)
 	int i;
 	MenuItem_t *item;
 	extern boolean automapactive;
-	extern void H2_StartTitle(void);
 	char *textBuffer;
 
 	if(event->data1 == DDKEY_RSHIFT)
@@ -2712,7 +2712,7 @@ boolean MN_Responder(event_t *event)
 							//I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
 							//OGL_SetFilter(0);
 							GL_SetFilter(0);
-							H2_StartTitle(); // go to intro/demo mode.
+							G_StartTitle(); // go to intro/demo mode.
 							break;
 						case 3:
 							P_SetMessage(&players[consoleplayer], 
@@ -2800,7 +2800,8 @@ boolean MN_Responder(event_t *event)
 
 	if(MenuActive == false)
 	{
-		if(key == DDKEY_ESCAPE || gamestate == GS_DEMOSCREEN 
+		if(key == DDKEY_ESCAPE /*|| gamestate == GS_DEMOSCREEN */
+			|| FI_IsMenuTrigger(event)
 			|| Get(DD_PLAYBACK))// && !democam.mode))
 		{
 			MN_ActivateMenu();
@@ -2810,7 +2811,8 @@ boolean MN_Responder(event_t *event)
 	}
 	if(!FileMenuKeySteal)
 	{
-		int firstVI = CurrentMenu->firstItem, lastVI = firstVI + CurrentMenu->numVisItems-1;
+		int firstVI = CurrentMenu->firstItem;
+		int lastVI = firstVI + CurrentMenu->numVisItems-1;
 		item = &CurrentMenu->items[CurrentItPos];
 		switch(key)
 		{
