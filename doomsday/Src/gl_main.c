@@ -352,11 +352,12 @@ void GL_Init(void)
 //===========================================================================
 // GL_InitRefresh
 //	Initializes the graphics library for refresh. Also called at update.
+//	Loadmaps can be loaded after all definitions have been read.
 //===========================================================================
-void GL_InitRefresh(void)
+void GL_InitRefresh(boolean loadLightMaps)
 {
 	GL_InitTextureManager();
-	GL_LoadSystemTextures();
+	GL_LoadSystemTextures(loadLightMaps);
 }
 
 //===========================================================================
@@ -540,8 +541,9 @@ void GL_UseFog(int yes)
 // GL_TotalReset
 //	This needs to be called twice: first shutdown, then restore.
 //	GL is reset back to the state it was right after initialization.
+//	Lightmaps can be loaded after defs have been loaded (during restore).
 //===========================================================================
-void GL_TotalReset(boolean doShutdown)
+void GL_TotalReset(boolean doShutdown, boolean loadLightMaps)
 {
 	static char oldFontName[256];
 	static boolean hadFog;
@@ -571,14 +573,16 @@ void GL_TotalReset(boolean doShutdown)
 
 		// Go back to startup mode, if that's where we were.
 		if(wasStartup) 
+		{
 			Con_StartupInit();
+		}
 		else
 		{
 			// Restore the old font.
 			Con_Executef(true, "font name %s", oldFontName);
 			GL_Init2DState();
 		}
-		GL_InitRefresh();
+		GL_InitRefresh(loadLightMaps);
 
 		// Restore map's fog settings.
 		R_SetupFog();						
@@ -602,7 +606,7 @@ int GL_ChangeResolution(int w, int h, int bits)
 		&& (!bits || screenBits == bits)) return true;		
 
 	// Shut everything down, but remember our settings.
-	GL_TotalReset(true);
+	GL_TotalReset(true, 0);
 	gx.UpdateState(DD_RENDER_RESTART_PRE);
 
 	screenWidth = w;
@@ -614,7 +618,7 @@ int GL_ChangeResolution(int w, int h, int bits)
 	gl.Init(w, h, bits, !nofullscreen);
 
 	// Re-initialize.
-	GL_TotalReset(false);
+	GL_TotalReset(false, true);
 	gx.UpdateState(DD_RENDER_RESTART_POST);
 
 	Con_Message("Display mode: %i x %i", screenWidth, screenHeight);

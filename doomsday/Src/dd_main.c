@@ -444,7 +444,7 @@ void DD_Main(void)
 	{
 		Sys_ShowWindow(true);	// Show the main window (was created hidden).
 		GL_Init();
-		GL_InitRefresh();
+		GL_InitRefresh(true);
 	}
 	
 	// Start printing messages in the startup.

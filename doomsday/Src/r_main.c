@@ -127,7 +127,6 @@ void R_Init(void)
 	R_InitTranslationTables();
 	// Call the game DLL's refresh initialization, if necessary.
 	if(gx.R_Init) gx.R_Init();
-	//GL_InitRefresh(); // This shouldn't be here.
 	Rend_Init();
 	framecount = 0;
 	R_InitViewBorder();
@@ -148,22 +147,27 @@ void R_Update(void)
 
 	// Go back to startup-screen mode.
 	Con_StartupInit();
-	GL_TotalReset(true);
-	GL_TotalReset(false);
+	GL_TotalReset(true, false);
+	GL_TotalReset(false, false); // Bring GL back online (no lightmaps yet).
 	R_UpdateData();
-	R_InitSprites();	// Fully reinitialize sprites.
+	R_InitSprites();		// Fully reinitialize sprites.
 	R_InitSkyMap();
 	R_UpdateTranslationTables();
 	// Re-read definitions.
 	Def_Read();
+	// Now that we've read the defs, we can load lightmaps.
+	GL_LoadSystemTextures(true);
 	Def_PostInit();
-	R_InitModels();		// Defs might've changed.
+	R_InitModels();			// Defs might've changed.
 	for(i = 0; i < DDMAXPLAYERS; i++)
 	{
 		// States have changed, the states are unknown.
 		players[i].psprites[0].stateptr 
 			= players[i].psprites[1].stateptr = NULL;
 	}
+	// The rendeling lists have persistent data that has changed during
+	// the re-initialization.
+	RL_DeleteLists();
 	// Back to the game.
 	Con_StartupDone();
 

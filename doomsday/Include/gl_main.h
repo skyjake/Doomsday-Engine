@@ -20,7 +20,7 @@ boolean			GL_IsInited(void);
 
 void			GL_Init(void);
 void			GL_Shutdown(void);
-void			GL_TotalReset(boolean doShutdown);
+void			GL_TotalReset(boolean doShutdown, boolean loadLightMaps);
 void			GL_Init2DState(void);
 void			GL_SwitchTo3DState(boolean push_state);
 void			GL_Restore2DState(int step);
@@ -31,7 +31,7 @@ void			GL_Update(int flags);
 void			GL_DoUpdate(void);
 void			GL_BlendMode(blendmode_t mode);
 
-void			GL_InitRefresh(void);
+void			GL_InitRefresh(boolean loadLightMaps);
 void			GL_ShutdownRefresh(void);
 void			GL_UseFog(int yes);
 void			GL_InitVarFont(void);
