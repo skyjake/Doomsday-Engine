@@ -142,33 +142,6 @@ decorsource_t *Rend_NewLightDecorationSource(void)
 	}
 
 	return src;		
-
-/*	if(++numSources > maxSources)
-	{
-		maxSources *= 2;
-		if(!maxSources) maxSources = 8;
-
-		// Allocate more memory.
-		newList = Z_Malloc(sizeof(decorsource_t) * maxSources, 
-			PU_STATIC, NULL);
-
-		// If there are old sources, copy them to the new list.
-		if(numSources > 1)
-		{
-			memcpy(newList, sources, sizeof(decorsource_t) 
-				* (numSources - 1));
-			
-			// Delete the old list.
-			Z_Free(sources);
-		}
-
-		sources = newList;
-	}*/
-
-	// Clear the new entry.
-	//memset(sources + numSources - 1, 0, sizeof(decorsource_t));
-
-	//return sources + numSources - 1;
 }
 
 /*
@@ -196,26 +169,6 @@ void Rend_AddLightDecoration
 
 	// Apply the brightness factor (was calculated using sector lightlevel).
 	fadeMul *= brightness * (isWall? decorWallFactor : decorPlaneFactor);
-
-/*	// Is this a plane light?
-	if(zDir != 0)
-	{
-		// Also fade if the angle is too steep.
-		float zDist  = fabs(vy - z);
-		float xyDist = FIX2FLT( P_ApproxDistance(vx - x, vz - y) );
-		float maxBrightness;
-		if(xyDist > 0)
-		{
-			if(zDir > 0 && vy > z)
-			{
-				maxBrightness = 10*zDist / xyDist;
-			}
-			if(fadeMul > maxBrightness) 
-			{
-				fadeMul = maxBrightness;
-			}
-		}
-	}*/
 
 	if(fadeMul <= 0) return;
 
