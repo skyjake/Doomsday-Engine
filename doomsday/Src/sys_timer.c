@@ -110,5 +110,6 @@ int Sys_GetTime (void)
 //==========================================================================
 void Sys_TicksPerSecond(float num)
 {
+	if(num <= 0) num = TICSPERSEC;
 	ticsPerSecond = num;
 }
