@@ -79,11 +79,10 @@ int			isClient;			// true if this computer is a client
 int			consoleplayer;
 int			displayplayer;
 
-int			gametic;
-
 // Gotframe is true if a frame packet has been received.
 int			gotframe = false;
 
+int			gametic;
 boolean		firstNetUpdate = true;
 
 boolean		monitorSendQueue = false;
@@ -1033,22 +1032,29 @@ int CCmdSetName(int argc, char **argv)
 	return true;
 }
 
-//===========================================================================
-// CCmdSetTicks
-//===========================================================================
+/*
+ * Console command for adjusting clock speed.  This is the backwards
+ * compatible way to set the speed (35 Hz ticks).
+ */
 int CCmdSetTicks(int argc, char **argv)
 {
-	extern double lastSharpFrameTime;
-
+	float scale;
+	
 	if(argc != 2)
 	{
 		Con_Printf("Usage: %s (tics)\n", argv[0]);
 		Con_Printf("Sets the number of game tics per second.\n");
 		return true;
 	}
-	firstNetUpdate = true;
-	Sys_TicksPerSecond(strtod(argv[1], 0));
-	lastSharpFrameTime = Sys_GetTimef();
+
+	scale = strtod(argv[1], 0) / 35;
+
+	// Make sure the scale value is reasonable.
+	if(scale <= .01f) scale = 1;
+
+	// Tell the timing core to start over.
+	DD_ChangeTimeScale(scale);
+	
 	return true;
 }
 

@@ -29,5 +29,7 @@ void DD_DrawAndBlit(void);
 void DD_StartFrame(void);
 void DD_EndFrame(void);
 int DD_GetFrameRate(void);
+void DD_ChangeTimeScale(float newScale);
+float DD_GetTimeScale(void);
 
 #endif 

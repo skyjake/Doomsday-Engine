@@ -66,7 +66,9 @@ timespan_t sysTime, gameTime, demoTime, levelTime;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean firstTic = true;
 static double lastFrameTime;
+static float timeScale = 1.0f;
 
 static int lastfpstic = 0, fpsnum = 0, lastfc = 0;
 
@@ -198,9 +200,25 @@ void DD_EndFrame (void)
 	S_EndFrame();
 }
 
-//===========================================================================
-// DD_GetFrameRate
-//===========================================================================
+/*
+ * Change the time scaling factor.
+ */
+void DD_ChangeTimeScale(float newScale)
+{
+	timeScale = newScale;
+
+	// Tell the timing core to start over.
+	firstTic = true;
+}
+
+float DD_GetTimeScale(void)
+{
+	return timeScale;
+}
+
+/*
+ * Return the current frame rate.
+ */
 int DD_GetFrameRate(void)
 {
 	return fpsnum;
@@ -275,7 +293,6 @@ void DD_AdvanceTime(timespan_t time)
  */
 void DD_RunTics(void)
 {
-	static boolean firstTic = true;
 	double nowTime, frameTime, ticLength;
 
 	// Do a network update first.
@@ -311,6 +328,9 @@ void DD_RunTics(void)
 	// How much time do we have for this frame?
 	frameTime     = nowTime - lastFrameTime;
 	lastFrameTime = nowTime;
+
+	// Apply a scaling factor.
+	frameTime *= timeScale;
 
 	// Tic length is determined by the minfps rate.
 	while(frameTime > 0)
