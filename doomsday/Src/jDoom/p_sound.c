@@ -40,6 +40,8 @@ int S_GetMusicNum(int episode, int map)
 		mnum = mus_runnin + map - 1;
 	else
 	{
+		// FIXME: Move these into Audio.ded.
+		
 		int spmus[]=
 		{
 			// Song - Who? - Where?
