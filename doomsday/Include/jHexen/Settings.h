@@ -3,8 +3,7 @@
 #ifndef __JHEXEN_SETTINGS_H__
 #define __JHEXEN_SETTINGS_H__
 
-//extern int screenblocks;
-extern char *SavePath;
+extern char SavePath[];
 
 typedef struct
 {
