@@ -110,8 +110,9 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 
 	// Calculate the strength of the shadow.
 	color =
-		shadowFactor * sec->lightlevel / 255.0f * (1 -
-												   mo->translucency / 255.0f);
+		shadowFactor * sec->lightlevel / 255.0f *
+        (1 - mo->translucency / 255.0f);
+   
 	halfmoh = moh / 2;
 	if(height > halfmoh)
 		color *= 1 - (height - halfmoh) / (moh - halfmoh);
