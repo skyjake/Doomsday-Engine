@@ -427,9 +427,11 @@ void SN_UpdateActiveSequences(void)
 				}
 				break;
 			case SS_CMD_PLAYREPEAT:
-				/*Con_Message( "rept: %s: %p\n", 
+/*#ifdef _DEBUG
+				Con_Message( "rept: %s: %p\n", 
 					SequenceTranslate[node->sequence].name,
-					node->mobj);*/
+					node->mobj);
+#endif*/
 				
 				if(!sndPlaying)
 				{
