@@ -12,13 +12,23 @@
 ...........................................................................
 RELEASE NOTES:
 
-The Doomsday Engine source code is distributed under the GNU General Public License (see LICENSE in the root directory).
+The Doomsday Engine source code is distributed under the GNU General Public
+License (see LICENSE in the root directory).
 
 The code in this package was used to build the 1.7.8 release.
 
-The placement of some files was changed in 1.7.6; you shouldn't install this package on top of a previous Doomsday Sources tree unless it's newer than 1.7.6.
+The placement of some files was changed in 1.7.6; you shouldn't install
+this package on top of a previous Doomsday Sources tree unless it's newer
+than 1.7.6.
 
-The source code is more or less in a state of disarray. This tends to happen when you take three separate code bases and try to fit them together. The files of the engine, many of which I've written myself from scratch, are more organized but lack a coherent style. Things like function header comments, variable naming convention and the use of whitespace have varied over time and been influenced by the various styles used in the original Doom, Heretic and Hexen sources. You'll find that much of the code is not very pretty.
+The source code is more or less in a state of disarray. This tends to
+happen when you take three separate code bases and try to fit them
+together. The files of the engine, many of which I've written myself from
+scratch, are more organized but lack a coherent style. Things like function
+header comments, variable naming convention and the use of whitespace have
+varied over time and been influenced by the various styles used in the
+original Doom, Heretic and Hexen sources. You'll find that much of the code
+is not very pretty.
 
 ...........................................................................
 CONTENTS:
@@ -320,4 +330,5 @@ under California law as such law is applied to agreements between
 California residents entered into and to be performed within California,
 except as governed by federal law and you consent to the exclusive
 jurisdiction of the state and federal courts in Los Angeles, California.
+
 
