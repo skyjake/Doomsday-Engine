@@ -25,6 +25,7 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int extMultiTex;
+int extBlendSub;
 int	extTexEnvComb;
 int	extNvTexEnvComb;
 int	extAtiTexEnvComb;
@@ -32,13 +33,15 @@ int	extAniso;
 int	extLockArray;
 int extGenMip;
 
-PFNGLCLIENTACTIVETEXTUREPROC	glClientActiveTextureARB = 0;
-PFNGLACTIVETEXTUREARBPROC		glActiveTextureARB = 0;
-PFNGLMULTITEXCOORD2FARBPROC		glMultiTexCoord2fARB = 0;
-PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB = 0;
+PFNGLCLIENTACTIVETEXTUREPROC	glClientActiveTextureARB;
+PFNGLACTIVETEXTUREARBPROC		glActiveTextureARB;
+PFNGLMULTITEXCOORD2FARBPROC		glMultiTexCoord2fARB;
+PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
 
-PFNGLLOCKARRAYSEXTPROC			glLockArraysEXT = 0;
-PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT = 0;
+PFNGLBLENDEQUATIONEXTPROC		glBlendEquationEXT;
+
+PFNGLLOCKARRAYSEXTPROC			glLockArraysEXT;
+PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -110,6 +113,12 @@ void initExtensions(void)
 	query("GL_EXT_paletted_texture", &palExtAvailable);
 	query("GL_EXT_shared_texture_palette", &sharedPalExtAvailable);
 	query("GL_EXT_texture_filter_anisotropic", &extAniso);
+
+	// EXT_blend_subtract
+	if(query("GL_EXT_blend_subtract", &extBlendSub))
+	{
+		GETPROC( glBlendEquationEXT );
+	}
 
 	// ARB_texture_env_combine
 	if(!query("GL_ARB_texture_env_combine", &extTexEnvComb))

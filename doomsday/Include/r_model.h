@@ -25,15 +25,17 @@
 #define MFF_DARKSHADOW			0x2000
 #define MFF_IDSKIN				0x4000	// Mobj id -> skin in skin range
 #define MFF_DISABLE_Z_WRITE		0x8000
-#define MFF_NO_DISTANCE_CHECK	0x10000
-#define MFF_SELSKIN				0x20000
-#define MFF_PARTICLE_SUB1		0x40000	// Sub1 center is particle origin.
-#define MFF_NO_PARTICLES		0x80000	// No particles for this object.
-#define MFF_SHINY_SPECULAR		0x100000 // Shiny skin rendered as additive.
-#define MFF_SHINY_LIT			0x200000 // Shiny skin is not fullbright.
-#define MFF_IDFRAME				0x400000 // Mobj id -> frame in frame range
-#define MFF_IDANGLE				0x800000 // Mobj id -> static angle offset
-#define MFF_DIM					0x1000000 // Never fullbright.
+#define MFF_NO_DISTANCE_CHECK	0x00010000
+#define MFF_SELSKIN				0x00020000
+#define MFF_PARTICLE_SUB1		0x00040000 // Sub1 center is particle origin.
+#define MFF_NO_PARTICLES		0x00080000 // No particles for this object.
+#define MFF_SHINY_SPECULAR		0x00100000 // Shiny skin rendered as additive.
+#define MFF_SHINY_LIT			0x00200000 // Shiny skin is not fullbright.
+#define MFF_IDFRAME				0x00400000 // Mobj id -> frame in frame range
+#define MFF_IDANGLE				0x00800000 // Mobj id -> static angle offset
+#define MFF_DIM					0x01000000 // Never fullbright.
+#define MFF_SUBTRACT			0x02000000 // Subtract blending.
+#define MFF_REVERSE_SUBTRACT	0x04000000 // Reverse subtract blending.
 
 typedef struct
 {
