@@ -54,6 +54,7 @@ int			screenWidth = 640, screenHeight = 480, screenBits = 32;
 int			defResX = 640, defResY = 480, defBPP = 0;	
 int			maxTexSize;
 int			numTexUnits;
+boolean		envModAdd;			// TexEnv: modulate and add is available.
 int			ratioLimit = 0;		// Zero if none.
 int			test3dfx = 0;
 int			r_framecounter;		// Used only for statistics.
@@ -321,14 +322,16 @@ void GL_Init(void)
 
 	// Does the graphics library support multitexturing?
 	numTexUnits = gl.GetInteger(DGL_MAX_TEXTURE_UNITS);
-	if(numTexUnits > 1 && gl.GetInteger(DGL_MODULATE_ADD_COMBINE))
+	envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
+	if(numTexUnits > 1)
 	{
-		VERBOSE( Con_Message("  Multitexturing enabled.\n") );
+		Con_Message("  Multitexturing enabled (%s).\n", 
+			envModAdd? "full" : "partial");
 	}
 	else
 	{
 		// Can't use multitexturing...
-		numTexUnits = 1;
+		Con_Message("  Multitexturing not available.\n");
 	}
 
 	// Initialize the renderer into a 2D state.
