@@ -206,7 +206,6 @@ char   *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
 void M_ExtractFileBase(const char *path, char *dest)
 {
 	const char *src;
-	int     length;
 
 	src = path + strlen(path) - 1;
 
