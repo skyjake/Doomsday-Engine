@@ -1043,11 +1043,21 @@ int Def_Get(int type, char *id, void *out)
 			}
 		return false;
 
+	case DD_DEF_FINALE:
+		// Find InFine script by ID.
+		for(i = defs.count.finales.num - 1; i >= 0; i--)
+			if(!stricmp(defs.finales[i].id, id))
+			{
+				// This has a matching ID. Return a pointer to the script.
+				*(void**) out = defs.finales[i].script;
+				return true;
+			}		
+		return false;
+
 	case DD_DEF_FINALE_BEFORE:
 		fin = (finalescript_t*) out;
 		for(i = defs.count.finales.num - 1; i >= 0; i--)
-			if(!stricmp(defs.finales[i].before, id)
-				&& defs.finales[i].game == fin->game)
+			if(!stricmp(defs.finales[i].before, id))
 			{
 				fin->before = defs.finales[i].before;
 				fin->after = defs.finales[i].after;
@@ -1059,8 +1069,7 @@ int Def_Get(int type, char *id, void *out)
 	case DD_DEF_FINALE_AFTER:
 		fin = (finalescript_t*) out;
 		for(i = defs.count.finales.num - 1; i >= 0; i--)
-			if(!stricmp(defs.finales[i].after, id)
-				&& defs.finales[i].game == fin->game)
+			if(!stricmp(defs.finales[i].after, id))
 			{
 				
 				fin->before = defs.finales[i].before;
