@@ -27,10 +27,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if DRMESA
-#define RENDER_WIREFRAME
-#endif
-
 // A helpful macro that changes the origin of the screen
 // coordinate system.
 #define FLIP(y)	(screenHeight - (y+1))
@@ -58,6 +54,7 @@ int				useAnisotropic;
 float			nearClip, farClip;
 int				useFog;
 int				verbose;//, noArrays = true;
+boolean			wireframeMode;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -250,11 +247,11 @@ void initState()
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 #endif
 
-#ifdef RENDER_WIREFRAME
+/*#ifdef RENDER_WIREFRAME
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #else
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif
+#endif*/
 }
 
 //===========================================================================
@@ -601,9 +598,10 @@ void DG_Show(void)
 	SwapBuffers(hdc);
 	ReleaseDC(windowHandle, hdc);
 
-#ifdef RENDER_WIREFRAME
-	DG_Clear(DGL_COLOR_BUFFER_BIT);
-#endif
+	if(wireframeMode)
+	{
+		DG_Clear(DGL_COLOR_BUFFER_BIT);
+	}	
 }
 
 //===========================================================================
@@ -1032,6 +1030,11 @@ int DG_Enable(int cap)
 		glEnable(GL_TEXTURE_2D);
 		break;
 
+	case DGL_WIREFRAME_MODE:
+		wireframeMode = true;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		break;
+
 	default:
 		return DGL_FALSE;
 	}
@@ -1101,6 +1104,11 @@ void DG_Disable(int cap)
 	case DGL_TEXTURE7:
 		activeTexture(GL_TEXTURE0 + cap - DGL_TEXTURE0);
 		glDisable(GL_TEXTURE_2D);
+		break;
+
+	case DGL_WIREFRAME_MODE:
+		wireframeMode = false;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		break;
 	}
 }
