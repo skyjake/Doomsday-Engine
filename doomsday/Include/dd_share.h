@@ -43,8 +43,8 @@ Version number rules: (major).(minor).(revision)
 
 // Version constant. Use this to verify in the DLL that the engine
 // is new enough. 
-#define DOOMSDAY_VERSION		10710
-#define DOOMSDAY_VERSION_TEXT	"1.7.10"
+#define DOOMSDAY_VERSION		10711
+#define DOOMSDAY_VERSION_TEXT	"1.7.11"
 
 #define DDMAXPLAYERS			16
 
