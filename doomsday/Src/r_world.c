@@ -955,6 +955,22 @@ void R_SetupSky(void)
 	}
 }
 
+//===========================================================================
+// R_InitLines
+//	Calculate accurate lengths for all lines.
+//===========================================================================
+void R_InitLines(void)
+{
+	line_t *line;
+	int	i;
+
+	for(i = 0; i < numlines; i++)
+	{
+		line = LINE_PTR(i);
+		line->length = P_AccurateDistance(line->dx, line->dy);
+	}
+}
+
 //==========================================================================
 // R_SetupLevel
 //	This routine is called from the game dll to polygonize the current level.
@@ -1028,6 +1044,7 @@ void R_SetupLevel(char *level_id, int flags)
 	// Make sure subsector floors and ceilings will be rendered correctly.
 	R_SubsectorPlanes();
 	R_InitSectorInfo();
+	R_InitLines();
 	Con_Progress(10, 0);
 
 	if(flags & DDSLF_FIX_SKY) R_SkyFix();
