@@ -58,8 +58,7 @@ boolean S_Init(void)
 {
 	boolean sfx_ok, mus_ok;
 
-	// There is no sound or music in dedicated mode.
-	if(isDedicated || ArgExists("-nosound")) return true;
+	if(ArgExists("-nosound")) return true;
 
 	// Disable random pitch changes?
 	nopitch = ArgExists("-nopitch");
@@ -88,6 +87,9 @@ void S_Shutdown(void)
 //===========================================================================
 void S_LevelChange(void)
 {
+	// Stop everything in the LSM.
+	Sfx_InitLogical();
+	
 	Sfx_LevelChange();
 }
 
@@ -117,6 +119,9 @@ void S_StartFrame(void)
 	// Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
 	Sfx_StartFrame();
 	Mus_StartFrame();
+
+	// Remove stopped sounds from the LSM.
+	Sfx_PurgeLogical();
 }
 
 //===========================================================================
@@ -137,30 +142,74 @@ mobj_t *S_GetListenerMobj(void)
 }
 
 //===========================================================================
+// S_GetSoundInfo
+//	freq and volume may be NULL. They will be modified by sound links.
+//===========================================================================
+sfxinfo_t *S_GetSoundInfo(int sound_id, float *freq, float *volume)
+{
+	float dummy = 0;
+	sfxinfo_t *info;
+	int i;
+
+	if(sound_id <= 0) return NULL;
+
+	if(!freq) freq = &dummy;
+	if(!volume) volume = &dummy;
+
+	// Traverse all links when getting the definition.
+	// (But only up to 10, which is certainly enough and prevents endless
+	// recursion.) Update the sound id at the same time.
+	// The links were checked in Def_Read() so there can't be any bogus ones.
+	for(info = sounds + sound_id, i = 0; 
+		info->link && i < 10; 
+		info = info->link, 
+			*freq = (info->link_pitch > 0? info->link_pitch/128.0f : *freq),
+			*volume += (info->link_volume != -1? info->link_volume/127.0f : 0),
+			sound_id = info - sounds, i++);
+
+	return info;
+}
+
+//===========================================================================
+// S_IsRepeating
+//	Returns true if the specified ID is a repeating sound.
+//===========================================================================
+boolean S_IsRepeating(int idFlags)
+{
+	sfxinfo_t *info;
+
+	if(idFlags & DDSF_REPEAT) return true;
+
+	info = S_GetSoundInfo(idFlags & ~DDSF_FLAG_MASK, NULL, NULL);
+	return (info->flags & SF_REPEAT) != 0;
+}
+
+//===========================================================================
 // S_LocalSoundAtVolumeFrom
 //	Plays a sound on the local system. A public interface.
 //	Origin and fixedpos can be both NULL, in which case the sound is
 //	played in 2D and centered.
 //	Flags can be included in the sound ID number (DDSF_*).
+//	Returns nonzero if a sound was started.
 //===========================================================================
-void S_LocalSoundAtVolumeFrom
-	(int sound_id_and_flags, mobj_t *origin, float *fixedpos, float volume)
+int S_LocalSoundAtVolumeFrom
+	(int soundIdAndFlags, mobj_t *origin, float *fixedPos, float volume)
 {
-	int sound_id = sound_id_and_flags & ~DDSF_FLAG_MASK;
-	sfxsample_t samp;
+	int soundId = soundIdAndFlags & ~DDSF_FLAG_MASK;
+	sfxsample_t *sample;
 	sfxinfo_t *info;
 	float freq = 1;
-	int i;
-	unsigned short *sp = NULL;
-	boolean needfree = false;
-	char buf[300];
+	int result;
+	boolean isRepeating = false;
 
-	if(isDedicated) return;
+	// A dedicated server never starts any local sounds 
+	// (only logical sounds in the LSM).
+	if(isDedicated) return false;
 
-	if(sound_id <= 0 
-		|| sound_id >= defs.count.sounds.num
+	if(soundId <= 0 
+		|| soundId >= defs.count.sounds.num
 		|| sfx_volume <= 0
-		|| volume <= 0) return; // This won't play...
+		|| volume <= 0) return false; // This won't play...
 
 #if _DEBUG
 	if(volume > 1)
@@ -170,112 +219,30 @@ void S_LocalSoundAtVolumeFrom
 	}
 #endif
 
-	// Figure out where to get the sample data for this sound.
-	// It might be from a data file such as a WAD or external sound 
-	// resources. The definition and the configuration settings will
-	// help us in making the decision.
-	
-	// Traverse all links when getting the definition.
-	// (But only up to 10, which is certainly enough and prevents endless
-	// recursion.) Update the sound id at the same time.
-	// The links were checked in Def_Read() so there can't be any bogus ones.
-	for(info = sounds + sound_id, i = 0; 
-		info->link && i < 10; 
-		info = info->link, 
-			freq = (info->link_pitch > 0? info->link_pitch/128.0f : freq),
-			volume += (info->link_volume != -1? info->link_volume/127.0f : 0),
-			sound_id = info - sounds, i++);
-
 	// This is the sound we're going to play.
-	if(sound_id <= 0) return; // Hmm?
+	if((info = S_GetSoundInfo(soundId, &freq, &volume)) == NULL) 
+	{
+		return false; // Hmm? This ID is not defined.
+	}
+
+	isRepeating = S_IsRepeating(soundIdAndFlags);
 
 	// Check the distance (if applicable).
 	if(!(info->flags & SF_NO_ATTENUATION)
-		&& !(sound_id_and_flags & DDSF_NO_ATTENUATION))
+		&& !(soundIdAndFlags & DDSF_NO_ATTENUATION))
 	{
 		// If origin is too far, don't even think about playing the sound.
-		if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedpos)
-			> sound_max_distance) return;
+		if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedPos)
+			> sound_max_distance) return false;
 	}
 
-	samp.id = sound_id;	
-	samp.group = info->group;
-	samp.data = NULL;
-
-	// FIXME: The external resources are reloaded *EVERY* time the 
-	// sound is played?! Get it from the cache, man!
-
-	// Has an external sound file been defined?
-	if(info->external[0])
+	// Load the sample.
+	if((sample = Sfx_Cache(soundId)) == NULL)
 	{
-		// Yes, try loading. Like music, the file name is relative to the
-		// base path.
-		M_PrependBasePath(info->external, buf);
-		if((samp.data = WAV_Load(buf, &samp.bytesper, &samp.rate, 
-			&samp.numsamples)))
-		{
-			// Loading was successful!
-			needfree = true;
-			samp.bytesper /= 8; // Was returned as bits.
-		}
-	}
-	
-	// If external didn't succeed, let's try the default resource dir.
-	if(!samp.data)
-	{
-		char resFn[256];
-		if(R_FindResource(RC_SFX, info->lumpname, NULL, resFn)
-			&& (samp.data = WAV_Load(resFn, &samp.bytesper, &samp.rate,
-				&samp.numsamples)))
-		{
-			// Loading was successful!
-			needfree = true;
-			samp.bytesper /= 8; // Was returned as bits.
-		}
-	}
-
-	// No sample loaded yet?
-	if(!samp.data)
-	{
-		// Try loading from the lump.
-		if(info->lumpnum < 0)
-		{
-			Con_Message("S_LocalSound: Sound %s has a missing lump: '%s'.\n",
-				info->id, info->lumpname);
-			Con_Message("  Verifying... The lump number is %i.\n", 
-				W_CheckNumForName(info->lumpname));
-			return;
-		}
-		sp = W_CacheLumpNum(info->lumpnum, PU_STATIC);
-		
-		// Is this perhaps a WAV sound?
-		if(WAV_CheckFormat((char*)sp))
-		{
-			// Load as WAV, then.
-			if(!(samp.data = WAV_MemoryLoad((char*)sp, 
-				W_LumpLength(info->lumpnum),
-				&samp.bytesper, &samp.rate, &samp.numsamples)))
-			{
-				// Abort...
-				Con_Message("S_LocalSound: WAV data in lump %s is bad.\n",
-					info->lumpname);
-				W_CacheLumpNum(info->lumpnum, PU_CACHE);
-				return;
-			}			
-			needfree = true;
-			samp.bytesper /= 8;
-		}
-		else
-		{
-			// Must be an old-fashioned DOOM sample.
-			samp.data = sp + 4;		// Eight byte header.
-			samp.bytesper = 1;		// 8-bit.
-			samp.rate = sp[1];		// Sample rate.
-			samp.numsamples = *(int*)(sp + 2);
-		}
-	}
-
-	samp.size = samp.bytesper * samp.numsamples;
+		VERBOSE( Con_Message("S_LocalSoundAtVolumeFrom: Sound %i "
+			"caching failed.\n", soundId) );
+		return false;
+	}	
 
 	// Random frequency alteration? (Multipliers chosen to match
 	// original sound code.)
@@ -295,79 +262,90 @@ void S_LocalSoundAtVolumeFrom
 			info->flags & SF_GLOBAL_EXCLUDE? NULL : origin);
 	}
 
-	// Sample acquired, let's play it.
-	Sfx_StartSound(&samp, volume, freq, origin, fixedpos,
-		(info->flags & SF_NO_ATTENUATION || sound_id_and_flags & DDSF_NO_ATTENUATION? SF_NO_ATTENUATION : 0)
-		| (info->flags & SF_REPEAT || sound_id_and_flags & DDSF_REPEAT? SF_REPEAT : 0)
+	// Let's play it.
+	result = Sfx_StartSound(sample, volume, freq, origin, fixedPos,
+		  (info->flags & SF_NO_ATTENUATION || soundIdAndFlags & DDSF_NO_ATTENUATION? SF_NO_ATTENUATION : 0)
+		| (isRepeating? SF_REPEAT : 0)
 		| (info->flags & SF_DONT_STOP? SF_DONT_STOP : 0));
 
-	// We don't need the original sample any more, clean up.
-	if(sp) W_ChangeCacheTag(info->lumpnum, PU_CACHE);
-	if(needfree) Z_Free(samp.data);
+	return result;
 }
 
 //===========================================================================
 // S_LocalSoundAtVolume
 //	Plays a sound on the local system.
 //	This is a public sound interface.
+//	Returns nonzero if a sound was started.
 //===========================================================================
-void S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
+int S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
-	S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, volume);
+	return S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, volume);
 }
 
 //===========================================================================
 // S_LocalSound
 //	This is a public sound interface.
+//	Returns nonzero if a sound was started.
 //===========================================================================
-void S_LocalSound(int sound_id, mobj_t *origin)
+int S_LocalSound(int sound_id, mobj_t *origin)
 {
 	// Play local sound at max volume.
-	S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, 1);
+	return S_LocalSoundAtVolumeFrom(sound_id, origin, NULL, 1);
 }
 
 //===========================================================================
 // S_LocalSoundFrom
-//	This is a public sound interface.
+//	This is a public sound interface. 
+//	Returns nonzero if a sound was started.
 //===========================================================================
-void S_LocalSoundFrom(int sound_id, float *fixedpos)
+int S_LocalSoundFrom(int sound_id, float *fixedpos)
 {
-	S_LocalSoundAtVolumeFrom(sound_id, NULL, fixedpos, 1);
+	return S_LocalSoundAtVolumeFrom(sound_id, NULL, fixedpos, 1);
 }
 
 //=========================================================================
 // S_StartSound
 //	Play a world sound. All players in the game will hear it.
+//	Returns nonzero if a sound was started.
 //=========================================================================
-void S_StartSound(int sound_id, mobj_t *origin)
+int S_StartSound(int sound_id, mobj_t *origin)
 {
 	// The sound is audible to everybody.
 	Sv_Sound(sound_id, origin, SVSF_TO_ALL);
-	S_LocalSound(sound_id, origin);
+	Sfx_StartLogical(sound_id, origin, S_IsRepeating(sound_id));
+	
+	return S_LocalSound(sound_id, origin);
 }
 
 //=========================================================================
 // S_StartSoundAtVolume
 //	Play a world sound. All players in the game will hear it.
+//	Returns nonzero if a sound was started.
 //=========================================================================
-void S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
+int S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume)
 {
+	Sv_SoundAtVolume(sound_id, origin, volume, SVSF_TO_ALL);
+	Sfx_StartLogical(sound_id, origin, S_IsRepeating(sound_id));
+
 	// The sound is audible to everybody.
-	Sv_SoundAtVolume(sound_id, origin, volume*127 + 0.5f, SVSF_TO_ALL);
-	S_LocalSoundAtVolume(sound_id, origin, volume);
+	return S_LocalSoundAtVolume(sound_id, origin, volume);
 }
 
 //=========================================================================
 // S_ConsoleSound
 //	Play a player sound. Only the specified player will hear it.
+//	Returns nonzero if a sound was started (always).
 //=========================================================================
-void S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
+int S_ConsoleSound(int sound_id, mobj_t *origin, int target_console)
 {
 	Sv_Sound(sound_id, origin, target_console);
 
 	// If it's for us, we can hear it.
 	if(target_console == consoleplayer) 
+	{
 		S_LocalSound(sound_id, origin);
+	}
+	return true;
 }
 
 //===========================================================================
@@ -380,17 +358,24 @@ void S_StopSound(int sound_id, mobj_t *emitter)
 {
 	// Sfx provides a routine for this.
 	Sfx_StopSound(sound_id, emitter);
+
+	// Notify the LSM.
+	Sfx_StopLogical(sound_id, emitter);
+
+	// In netgames, clients may hear sounds that the server locally 
+	// doesn't. We have to tell them about all stopped sounds.
+	Sv_StopSound(sound_id, emitter);
 }
 
 //===========================================================================
 // S_IsPlaying
 //	Returns true if an instance of the sound is playing with the given
 //	emitter. If sound_id is zero, returns true if the source is emitting
-//	any sounds.
+//	any sounds. An exported function.
 //===========================================================================
 int S_IsPlaying(int sound_id, mobj_t *emitter)
 {
-	// Sfx provides a routine for this.
+	// The Logical Sound Manager (under Sfx) provides a routine for this.
 	return Sfx_IsPlaying(sound_id, emitter);
 }
 
