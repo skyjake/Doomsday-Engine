@@ -31,7 +31,8 @@ typedef enum blendmode_e {
 	BM_SUBTRACT,
 	BM_REVERSE_SUBTRACT,
 	BM_MUL,
-	BM_INVERSE_MUL
+	BM_INVERSE_MUL,
+    BM_ALPHA_SUBTRACT
 } blendmode_t;
 
 boolean         GL_IsInited(void);
