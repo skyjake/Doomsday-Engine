@@ -117,7 +117,7 @@ int DS_Init(void)
 {
 	cvar_t cvarMidiCommand = {
 		"music-midi-command",
-		0,
+		CVF_NO_ARCHIVE, // The sound system is initialized too late...
 		CVT_CHARPTR,
 		&midiCommand,
 		0, 0, 
