@@ -118,6 +118,7 @@ int Sys_CriticalMessage(char *msg)
 	ShowCursor(FALSE);
 	return ret;
 #else
+	fprintf(stderr, "--- %s\n", msg);
 	return 0;
 #endif
 }
@@ -220,6 +221,9 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 	GetWindowText(hWndMain, title, 300);
 	MessageBox(hWndMain, msg, title,
 			   MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
+#endif
+#ifdef UNIX
+	fprintf(stderr, "%s %s\n", iserror? "**ERROR**" : "---", msg);
 #endif
 }
 
