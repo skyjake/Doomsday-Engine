@@ -156,12 +156,12 @@ void Rend_SkyRenderer(int hemi)
 
 	// The total number of triangles per hemisphere can be calculated
 	// as follows: rows * columns * 2 + 2 (for the top cap).
-	for(r=0; r<skyRows; r++)
+	for(r = 0; r < skyRows; r++)
 	{
 		if(simpleSky)
 		{
 			gl.Begin(DGL_QUADS);
-			for(c=0; c<skyColumns; c++)
+			for(c = 0; c < skyColumns; c++)
 			{	
 				SkyVertex(r, c);
 				SkyVertex(r+1, c);
@@ -172,10 +172,10 @@ void Rend_SkyRenderer(int hemi)
 		}
 		else
 		{
-			gl.Begin(DGL_QUAD_STRIP);
+			gl.Begin(DGL_TRIANGLE_STRIP);
 			SkyVertex(r, 0);
 			SkyVertex(r+1, 0);
-			for(c=1; c<=skyColumns; c++)
+			for(c = 1; c <= skyColumns; c++)
 			{
 				SkyVertex(r, c);
 				SkyVertex(r+1, c);
@@ -222,7 +222,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
 	Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP 
 		| (currentFO->use? SKYHEMI_FADEOUT_BG : 0));
 
-	for(i=firstLayer, slayer=skyLayers+firstLayer; i<MAXSKYLAYERS; 
+	for(i = firstLayer, slayer = skyLayers + firstLayer; i < MAXSKYLAYERS;
 		i++, slayer++)
 	{
 		if(slayer->flags & SLF_ENABLED)
@@ -230,7 +230,8 @@ void Rend_RenderSkyHemisphere(int whichHemi)
 			resetup = false;
 
 			if(slayer->texture == -1) 
-				Con_Error("Rend_RenderSkyHemisphere: Sky layer without a texture!\n");
+				Con_Error("Rend_RenderSkyHemisphere: Sky layer "
+				"without a texture!\n");
 
 			// See if we have to re-setup the fadeout.
 			// This happens if the texture is for some reason deleted
@@ -262,6 +263,7 @@ void Rend_RenderSky(int hemis)
 	gl.Disable(DGL_DEPTH_WRITE);
 	// Disable culling, all triangles face the viewer.
 	gl.Disable(DGL_CULL_FACE);
+	gl.DisableArrays(true, true, 0xf);
 
 	// Setup a proper matrix.
 	gl.MatrixMode(DGL_MODELVIEW);
