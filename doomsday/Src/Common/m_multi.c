@@ -118,22 +118,22 @@ static int plrColor, plrClass;
 
 MenuItem_t MultiplayerItems[] =
 {
-	{ ITT_EFUNC, "PLAYER SETUP", SCEnterPlayerSetupMenu, 0 EXTRADEF },
-	{ ITT_EFUNC, "JOIN GAME", SCEnterJoinMenu, 0 EXTRADEF },
-	{ ITT_EFUNC, "HOST GAME", SCEnterHostMenu, 0 EXTRADEF },
+	{ ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 EXTRADEF },
+	{ ITT_EFUNC, "join game", SCEnterJoinMenu, 0 EXTRADEF },
+	{ ITT_EFUNC, "host game", SCEnterHostMenu, 0 EXTRADEF },
 };
 
 MenuItem_t MultiplayerServerItems[] =
 {
-	{ ITT_EFUNC, "PLAYER SETUP", SCEnterPlayerSetupMenu, 0 EXTRADEF },
-	{ ITT_EFUNC, "GAME SETUP",	SCEnterHostMenu, 0 EXTRADEF },
-	{ ITT_EFUNC, "CLOSE SERVER", SCCloseServer, 0 EXTRADEF }
+	{ ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 EXTRADEF },
+	{ ITT_EFUNC, "game setup",	SCEnterHostMenu, 0 EXTRADEF },
+	{ ITT_EFUNC, "close server", SCCloseServer, 0 EXTRADEF }
 };
 
 MenuItem_t MultiplayerClientItems[] =
 {
-	{ ITT_EFUNC, "PLAYER SETUP", SCEnterPlayerSetupMenu, 0 EXTRADEF },
-	{ ITT_EFUNC, "DISCONNECT",	SCEnterJoinMenu, 0 EXTRADEF }
+	{ ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 EXTRADEF },
+	{ ITT_EFUNC, "disconnect",	SCEnterJoinMenu, 0 EXTRADEF }
 };
 
 Menu_t MultiplayerMenu =
@@ -268,13 +268,13 @@ MenuItem_t PlayerSetupItems[] =
 	{ ITT_EFUNC, "", SCEditField, (int) &plrNameEd EXTRADEF },
 	{ ITT_EMPTY, NULL, NULL, 0 },
 #if __JHEXEN__
-	{ ITT_LRFUNC, "CLASS:", SCPlayerClass, 0, MENU_NONE },
+	{ ITT_LRFUNC, "Class:", SCPlayerClass, 0, MENU_NONE },
 #else
 	{ ITT_EMPTY, NULL, NULL, 0 },
 #endif
-	{ ITT_LRFUNC, "COLOR:", SCPlayerColor, 0 },
+	{ ITT_LRFUNC, "Color:", SCPlayerColor, 0 },
 	{ ITT_EMPTY, NULL, NULL, 0 },
-	{ ITT_EFUNC, "ACCEPT CHANGES", SCAcceptPlayer, 0 EXTRADEF }
+	{ ITT_EFUNC, "Accept Changes", SCAcceptPlayer, 0 EXTRADEF }
 };
 
 Menu_t PlayerSetupMenu =
