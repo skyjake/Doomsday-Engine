@@ -58,9 +58,10 @@ char   *bitmap = NULL;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// Con_StartupInit
-//===========================================================================
+/*
+ * The startup screen mode is used during engine startup.  In startup
+ * mode, the whole screen is used for console output.
+ */
 void Con_StartupInit(void)
 {
 	static boolean firstTime = true;
@@ -109,10 +110,9 @@ void Con_StartupDone(void)
 	GL_ShutdownVarFont();
 }
 
-//===========================================================================
-// Con_DrawStartupBackground
-//  Background with the "The Doomsday Engine" text superimposed.
-//===========================================================================
+/*
+ * Background with the "The Doomsday Engine" text superimposed.
+ */
 void Con_DrawStartupBackground(void)
 {
 	float   mul = (startupLogo ? 1.5f : 1.0f);
@@ -136,36 +136,11 @@ void Con_DrawStartupBackground(void)
 	gl.Vertex2f(0, screenHeight);
 	gl.End();
 	gl.Enable(DGL_BLENDING);
-
-	// Draw logo.
-	/*  gl.Enable(DGL_TEXTURING);
-	   gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-	   if(startupLogo)
-	   {
-	   // Calculate logo placement.
-	   w = screenWidth/1.25f;
-	   h = LOGO_HEIGHT * w/LOGO_WIDTH;
-	   x = (screenWidth - w)/2;
-	   y = (screenHeight - h)/2;
-
-	   // Draw it in two passes: additive and subtractive. 
-	   gl.Bind(startupLogo);
-	   GL_DrawRect(x, y, w, h, .05f, .05f, .05f, 1);
-	   gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
-	   GL_DrawRect(x - w/170, y - w/170, w, h, .1f, .1f, .1f, 1);
-	   gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-	   gl.Color3f(.05f, .05f, .05f);
-	   FR_TextOut(DOOMSDAY_VERSIONTEXT, 
-	   x + w - FR_TextWidth(DOOMSDAY_VERSIONTEXT),  
-	   y + h);
-	   }
-	   gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);   */
 }
 
-//===========================================================================
-// Con_DrawStartupScreen
-//  Does not show anything on screen.
-//===========================================================================
+/*
+ * Draw the background and the current console output.
+ */
 void Con_DrawStartupScreen(int show)
 {
 	int     i, vislines, y, x, st;
