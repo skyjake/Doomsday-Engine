@@ -518,7 +518,7 @@ void R_ProjectPlayerSprites(void)
 		// There are 3D psprites.
 		psp3d = true;
 
-		vis->issprite = true;
+		vis->issprite = 2; // it's a psprite
 		vis->distance = 4;
 		vis->mo.subsector = viewplayer->mo->subsector;
 		vis->mo.mf = mf;
