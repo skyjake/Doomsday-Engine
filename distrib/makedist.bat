@@ -60,7 +60,6 @@ echo Copying Data...
 
 xcopy %SRC%Data\Doomsday.wad		%Dist%Data\
 xcopy %SRC%Data\CPHelp.txt		%Dist%Data\
-xcopy %SRC%Data\Detail\Detail.wad	%Dist%Data\
 xcopy %SRC%Data\jDoom\jDoom.wad		%Dist%Data\jDoom\
 xcopy %SRC%Data\jDoom\udemo2.cdm	%Dist%Run\jDoom\Demo\
 xcopy %SRC%Data\jHeretic\jHeretic.wad	%Dist%Data\jHeretic\
