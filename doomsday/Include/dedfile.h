@@ -11,7 +11,8 @@ extern "C" {
 
 #include "dd_dfdat.h"
 
-#define DED_VERSION			5
+// Version 6 does not require semicolons.
+#define DED_VERSION			6
 
 #define DED_SPRITEID_LEN	4
 #define DED_STRINGID_LEN	31
@@ -193,11 +194,12 @@ typedef struct ded_skymodel_s {
 	float			yaw;
 	float			yaw_speed;		// Angles per second.
 	float			coord_factor[3];
+	float			rotate[2];
 	float			color[4];	// RGBA
 } ded_skymodel_t;
 
 #define NUM_SKY_LAYERS		2
-#define NUM_SKY_MODELS		8
+#define NUM_SKY_MODELS		32
 
 typedef struct
 {
