@@ -187,6 +187,8 @@ enum
 	DGL_ENV_COLOR,
 	DGL_ENV_ALPHA,
 	DGL_GRAY_MIPMAP,
+	DGL_CCW,
+	DGL_CW,
 
 	// Various bits
 	DGL_COLOR_BUFFER_BIT		= 0x1,
