@@ -13,6 +13,9 @@ void XG_Init(void);
 // Thinks for XG lines and sectors.
 void XG_Ticker(void);
 
+// Updates XG state during engine reset.
+void XG_Update(void);
+
 void XG_WriteTypes(FILE *file);
 void XG_ReadTypes(void);
 

@@ -1565,6 +1565,15 @@ int XS_TraverseMobjs(sector_t *sec, int data, int (*func)(sector_t *sec,
 }
 
 /*
+ * Makes sure the offset is in the range 0..64.
+ */
+void XS_ConstrainPlaneOffset(float *offset)
+{
+	if(*offset > 64) *offset -= 64;
+	if(*offset < 0) *offset += 64;
+}
+
+/*
  * XS_Think
  *	Called for Extended Generalized sectors.
  */
@@ -1652,6 +1661,14 @@ void XS_Think(sector_t *sector)
 	sector->ceiloffx -= cos(ang) * xg->info.texmove_speed[1];
 	sector->ceiloffy -= sin(ang) * xg->info.texmove_speed[1];
 
+	// Keep the offsets inside the flat pattern.
+	/*
+	XS_ConstrainPlaneOffset(&sector->flooroffx);
+	XS_ConstrainPlaneOffset(&sector->flooroffy);
+	XS_ConstrainPlaneOffset(&sector->ceiloffx);
+	XS_ConstrainPlaneOffset(&sector->ceiloffy);
+	*/
+
 	// Wind for all sectorlinked mobjs.
 	if(xg->info.wind_speed || xg->info.vertical_wind)
 	{
@@ -1699,6 +1716,24 @@ int XS_ThrustMul(struct sector_s *sector)
 	x = FIX2FLT(fric);
 	// {c = -93.31092643, b = 208.0448223, a = -114.7338958}
 	return FRACUNIT * (-114.7338958*x*x + 208.0448223*x - 93.31092643);
+}
+
+/*
+ * During update, definitions are re-read, so the pointers need to be
+ * updated. However, this is a bit messy operation, prone to errors.
+ * Instead, we just disable XG.
+ */
+void XS_Update(void)
+{
+	int i;
+
+	// It's all PU_LEVEL memory, so we can just lose it.
+	for(i = 0; i < numsectors; i++)
+		if(sectors[i].xg)
+		{
+			sectors[i].xg = NULL;
+			sectors[i].special = 0;
+		}
 }
 
 /*

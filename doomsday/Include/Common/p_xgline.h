@@ -247,6 +247,9 @@ void XL_Init(void);
 // Think for each extended line.
 void XL_Ticker(void);
 
+// Called when reseting engine state.
+void XL_Update(void);
+
 void XL_SetLineType(line_t *line, int id);
 
 linetype_t *XL_GetType(int id);

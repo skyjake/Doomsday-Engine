@@ -124,6 +124,7 @@ typedef struct
 
 void XS_Init(void);
 void XS_Ticker(void);
+void XS_Update(void);
 
 int XS_Gravity(struct sector_s *sector);
 int XS_Friction(struct sector_s *sector);

@@ -74,6 +74,16 @@ void XG_Ticker(void)
 	XS_Ticker();	// Think for sectors.
 }
 
+/*
+ * This is called during an engine reset. Disables all XG functionality!
+ */
+void XG_Update(void)
+{
+	XG_ReadTypes();
+	XS_Update();
+	XL_Update();
+}
+
 // Returns true if the type is defined.
 linetype_t *XL_GetType(int id)
 {
@@ -1163,4 +1173,22 @@ void XL_Ticker(void)
 		if(!lines[i].xg) continue;	// Not an extended line.
 		XL_Think(lines + i);
 	}
+}
+
+/*
+ * During update, definitions are re-read, so the pointers need to be
+ * updated. However, this is a bit messy operation, prone to errors.
+ * Instead, we just disable XG.
+ */
+void XL_Update(void)
+{
+	int i;
+
+	// It's all PU_LEVEL memory, so we can just lose it.
+	for(i = 0; i < numlines; i++)
+		if(lines[i].xg)
+		{
+			lines[i].xg = NULL;
+			lines[i].special = 0;
+		}
 }
