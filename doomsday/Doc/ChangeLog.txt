@@ -7,9 +7,18 @@
 Version 1.7.10 (work in progress)
 --------------
 + sprite frames can be replaced with external resources (Patches)
++ raw screens can be replaced with external resources (Patches)
+- fixed: sprites were sometimes clipped by a sky ceiling
+
+jDoom:
+* Pause key is now the default binding for pause (was P)
 
 jHeretic:
 - fixed: interlude screen wouldn't show seconds if they're zero
+
+jHexen:
+* Pause key is now the default binding for pause (was P)
+- fixed: weapon pieces bob only partially
 
 
 Version 1.7.9
