@@ -33,6 +33,7 @@ Linux:
 + '--without-(game)' configuration option skips (game)
 + '--without-opengl' configuration option removes all OpenGL support
   from the build (for dedicated servers)
+- color adjustments are now working (vid-gamma et al.)
 - demo file names were formed incorrectly
 
 
