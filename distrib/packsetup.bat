@@ -7,7 +7,7 @@ REM -- The Setup directory must already contain the components
 REM -- created using packcom.bat.
 
 REM -- Get the Marine Installer.
-copy ..\doomsday\Setup\Setup.exe Setup
+REM copy ..\doomsday\Setup\Setup.exe Setup
 
 md Out
 set _DestDir=Out
