@@ -324,6 +324,10 @@ SOURCE=.\Src\jHexen\Po_man.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\Common\r_common.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\jHexen\s_sound.c
 # End Source File
 # Begin Source File
@@ -493,6 +497,10 @@ SOURCE=.\Include\JHexen\m_bams.h
 # Begin Source File
 
 SOURCE=.\Include\JHexen\Mn_def.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\Common\r_common.h
 # End Source File
 # Begin Source File
 

@@ -305,6 +305,10 @@ SOURCE=.\Src\jHeretic\M_misc.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\Common\r_common.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\jHeretic\Sb_bar.c
 # End Source File
 # Begin Source File
@@ -486,6 +490,10 @@ SOURCE=.\Include\m_bams.h
 # Begin Source File
 
 SOURCE=.\Include\JHeretic\Mn_def.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\Common\r_common.h
 # End Source File
 # Begin Source File
 

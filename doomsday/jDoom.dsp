@@ -362,6 +362,10 @@ SOURCE=.\Src\jDoom\m_swap.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\Common\r_common.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\jDoom\r_main.c
 # End Source File
 # Begin Source File
