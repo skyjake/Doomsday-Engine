@@ -206,9 +206,9 @@ int maxArrayLights = 1;
 /*
  * The vertex arrays.
  */
-static glvertex_t *vertices;
-static gltexcoord_t *texCoords[NUM_TEXCOORD_ARRAYS];
-static glcolor_t *colors;
+static gl_vertex_t *vertices;
+static gl_texcoord_t *texCoords[NUM_TEXCOORD_ARRAYS];
+static gl_color_t *colors;
 
 static uint numVertices, maxVertices;
 
@@ -499,12 +499,12 @@ uint RL_AllocateVertices(uint count)
 			maxVertices *= 2;
 		}
 
-		vertices = realloc(vertices, sizeof(glvertex_t) * maxVertices);
-		colors = realloc(colors, sizeof(glcolor_t) * maxVertices);
+		vertices = realloc(vertices, sizeof(gl_vertex_t) * maxVertices);
+		colors = realloc(colors, sizeof(gl_color_t) * maxVertices);
 		for(i = 0; i < NUM_TEXCOORD_ARRAYS; i++)
 		{
 			texCoords[i] = realloc(texCoords[i],
-				sizeof(gltexcoord_t) * maxVertices);
+				sizeof(gl_texcoord_t) * maxVertices);
 		}
 	}
 	return base;	
@@ -825,7 +825,7 @@ void RL_AllocateIndices(rendlist_t *list, int numIndices)
 //===========================================================================
 // RL_QuadTexCoords
 //===========================================================================
-void RL_QuadTexCoords(gltexcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
+void RL_QuadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 {
 	if(!tex->id) return;
 
@@ -843,7 +843,7 @@ void RL_QuadTexCoords(gltexcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 // RL_QuadDetailTexCoords
 //===========================================================================
 void RL_QuadDetailTexCoords
-	(gltexcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
+	(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 {
 	float mul = tex->detail->scale * detailScale;
 
@@ -865,7 +865,7 @@ void RL_QuadDetailTexCoords
 //===========================================================================
 // RL_QuadColors
 //===========================================================================
-void RL_QuadColors(glcolor_t *color, rendpoly_t *poly)
+void RL_QuadColors(gl_color_t *color, rendpoly_t *poly)
 {
 	if(poly->flags & RPF_SKY_MASK)
 	{
@@ -892,7 +892,7 @@ void RL_QuadColors(glcolor_t *color, rendpoly_t *poly)
 //===========================================================================
 // RL_QuadVertices
 //===========================================================================
-void RL_QuadVertices(glvertex_t *v, rendpoly_t *poly)
+void RL_QuadVertices(gl_vertex_t *v, rendpoly_t *poly)
 {
 	v[0].xyz[0] = v[3].xyz[0] = poly->vertices[0].pos[VX];
 	v[0].xyz[1] = v[1].xyz[1] = poly->top;
@@ -905,7 +905,7 @@ void RL_QuadVertices(glvertex_t *v, rendpoly_t *poly)
 //===========================================================================
 // RL_QuadLightCoords
 //===========================================================================
-void RL_QuadLightCoords(gltexcoord_t *tc, dynlight_t *dyn)
+void RL_QuadLightCoords(gl_texcoord_t *tc, dynlight_t *dyn)
 {
 	tc[0].st[0] = tc[3].st[0] = dyn->s[0];
 	tc[0].st[1] = tc[1].st[1] = dyn->t[0];
@@ -917,7 +917,7 @@ void RL_QuadLightCoords(gltexcoord_t *tc, dynlight_t *dyn)
 // RL_FlatDetailTexCoords
 //===========================================================================
 void RL_FlatDetailTexCoords
-	(gltexcoord_t *tc, float xy[2], rendpoly_t *poly, gltexture_t *tex)
+	(gl_texcoord_t *tc, float xy[2], rendpoly_t *poly, gltexture_t *tex)
 {
 	tc->st[0] = (xy[VX] + poly->texoffx) / tex->detail->width
 		* detailScale * tex->detail->scale;
@@ -930,10 +930,10 @@ void RL_FlatDetailTexCoords
 //	Inter = 0 in the bottom. Only 't' is affected.
 //===========================================================================
 void RL_InterpolateTexCoordT
-	(gltexcoord_t *tc, uint index, uint top, uint bottom, float inter)
+	(gl_texcoord_t *tc, uint index, uint top, uint bottom, float inter)
 {
 	// Start working with the bottom.
-	memcpy(&tc[index], &tc[bottom], sizeof(gltexcoord_t));
+	memcpy(&tc[index], &tc[bottom], sizeof(gl_texcoord_t));
 
 	tc[index].st[1] += (tc[top].st[1] - tc[bottom].st[1]) * inter;
 }
@@ -998,7 +998,7 @@ void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 //===========================================================================
 void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 {
-	glvertex_t *v;
+	gl_vertex_t *v;
 	uint base;
 	uint sideBase[2];
 	int i, side, other, index, top, bottom, div;
@@ -1127,7 +1127,7 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 				}
 
 				// Color.
-				memcpy(&colors[div], &colors[top], sizeof(glcolor_t));
+				memcpy(&colors[div], &colors[top], sizeof(gl_color_t));
 			}
 
 			// Vertex.
@@ -1148,9 +1148,9 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 {
 	rendpoly_vertex_t *vtx;
-	glcolor_t *col;
-	gltexcoord_t *tc;
-	glvertex_t *v;
+	gl_color_t *col;
+	gl_texcoord_t *tc;
+	gl_vertex_t *v;
 	uint base;
 	int i;
 
@@ -1256,8 +1256,8 @@ void RL_WriteDynLight
 	(rendlist_t *list, dynlight_t *dyn, primhdr_t *prim, rendpoly_t *poly)
 {
 	uint i, base;
-	gltexcoord_t *tc;
-	glcolor_t *col;
+	gl_texcoord_t *tc;
+	gl_color_t *col;
 
 	list->last = RL_AllocateData(list, sizeof(primhdr_t));
 
@@ -1273,7 +1273,7 @@ void RL_WriteDynLight
 	list->last->primSize = prim->primSize;
 	base = RL_AllocateVertices(prim->primSize);
 	memcpy(&vertices[base], &vertices[prim->indices[0]], prim->primSize 
-		* sizeof(glvertex_t));
+		* sizeof(gl_vertex_t));
 
 	// Copy the vertex order from the original.
 	for(i = 0; i < prim->numIndices; i++)

@@ -90,10 +90,10 @@ static int numLights;
 static vissprite_t *mlSpr;
 
 // Fixed-size vertex arrays for the model.
-static glvertex_t modelVertices[MAX_VERTS];
-static glvertex_t modelNormals[MAX_VERTS];
-static glcolor_t modelColors[MAX_VERTS];
-static gltexcoord_t modelTexCoords[MAX_VERTS];
+static gl_vertex_t modelVertices[MAX_VERTS];
+static gl_vertex_t modelNormals[MAX_VERTS];
+static gl_color_t modelColors[MAX_VERTS];
+static gl_texcoord_t modelTexCoords[MAX_VERTS];
 
 // Global variables for ease of use. (Egads!)
 static float modelCenter[3];
@@ -191,8 +191,8 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
  * Render a set of GL commands using the given data.
  */
 void Mod_RenderCommands
-	(rendcmd_t mode, void *glCommands, uint numVertices, glvertex_t *vertices, 
-	 glcolor_t *colors, gltexcoord_t *texCoords)
+	(rendcmd_t mode, void *glCommands, uint numVertices, 
+	 gl_vertex_t *vertices, gl_color_t *colors, gl_texcoord_t *texCoords)
 {
 	byte *pos;
 	glcommand_vertex_t *v;
@@ -256,7 +256,7 @@ void Mod_RenderCommands
  */
 void Mod_LerpVertices
 	(float pos, int count, model_vertex_t *start, model_vertex_t *end,
-	 glvertex_t *out)
+	 gl_vertex_t *out)
 {
 	int i;
 	float inv;
@@ -298,7 +298,7 @@ void Mod_LerpVertices
 /*
  * Negate all Z coordinates.
  */
-void Mod_MirrorVertices(int count, glvertex_t *v, int axis)
+void Mod_MirrorVertices(int count, gl_vertex_t *v, int axis)
 {
 	for(; count-- > 0; v++) v->xyz[axis] = -v->xyz[axis];
 }
@@ -307,7 +307,7 @@ void Mod_MirrorVertices(int count, glvertex_t *v, int axis)
  * Calculate vertex lighting.
  */
 void Mod_VertexColors
-	(int count, glcolor_t *out, glvertex_t *normal, byte alpha,
+	(int count, gl_color_t *out, gl_vertex_t *normal, byte alpha,
 	 float ambient[3])
 {
 	int i, k;
@@ -379,7 +379,7 @@ void Mod_VertexColors
 /*
  * Set all the colors in the array to bright white.
  */
-void Mod_FullBrightVertexColors(int count, glcolor_t *colors, byte alpha)
+void Mod_FullBrightVertexColors(int count, gl_color_t *colors, byte alpha)
 {
 	for(; count-- > 0; colors++)
 	{
@@ -391,7 +391,7 @@ void Mod_FullBrightVertexColors(int count, glcolor_t *colors, byte alpha)
 /*
  * Set all the colors into the array to the same values.
  */
-void Mod_FixedVertexColors(int count, glcolor_t *colors, float *color)
+void Mod_FixedVertexColors(int count, gl_color_t *colors, float *color)
 {
 	byte rgba[4] = { color[0] * 255, color[1] * 255, color[2] * 255,
 		color[3] * 255 };
@@ -404,7 +404,7 @@ void Mod_FixedVertexColors(int count, glcolor_t *colors, float *color)
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
 void Mod_ShinyCoords
-	(int count, gltexcoord_t *coords, glvertex_t *normals, 
+	(int count, gl_texcoord_t *coords, gl_vertex_t *normals, 
 	 float normYaw, float normPitch, float shinyAng, float shinyPnt)
 {
 	int i;
