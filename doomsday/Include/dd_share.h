@@ -285,27 +285,35 @@ extern          "C" {
 
 #ifndef NO_FIXED_ASM
 
+	/* *INDENT-OFF* */
 	__inline fixed_t FixedMul(fixed_t a, fixed_t b) {
-		__asm
-		{
+		__asm {
 			// The parameters in eax and ebx.
-			mov             eax, a mov ebx, b
-				// The multiplying.
-			                imul ebx shrd eax, edx, 16
-				// eax should hold the return value.
+			mov	eax, a 
+			mov ebx, b
+			// The multiplying.
+			imul ebx 
+			shrd eax, edx, 16
+			// eax should hold the return value.
 		}
-		// A value is returned regardless of the compiler warning. } __inline
-			fixed_t FixedDiv2(fixed_t a, fixed_t b)
-		{
-			__asm
-			{
-				// The parameters.
-				mov             eax, a mov ebx, b
-					// The operation.
-				                cdq shld edx, eax, 16 sal eax, 16 idiv ebx
-					// And the value returns in eax.
-			}
-			// A value is returned regardless of the compiler warning. }
+		// A value is returned regardless of the compiler warning. 
+	} 
+	__inline fixed_t FixedDiv2(fixed_t a, fixed_t b) {
+		__asm {
+			// The parameters.
+			mov eax, a 
+			mov ebx, b
+			// The operation.
+			cdq 
+			shld edx, eax, 16 
+			sal eax, 16 
+			idiv ebx
+			// And the value returns in eax.
+		}
+		// A value is returned regardless of the compiler warning. 
+	}
+	/* *INDENT-ON* */
+
 #else
 
 	// Don't use inline assembler in fixed-point calculations.
