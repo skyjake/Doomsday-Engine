@@ -28,8 +28,9 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
-
 #include "sys_direc.h"
+
+#include <zlib.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -52,14 +53,14 @@
 
 // Compression methods.
 enum {
-	ZFC_NO_COMPRESSION = 0,		// The only supported method.
+	ZFC_NO_COMPRESSION = 0,		// Supported format.
 	ZFC_SHRUNK,
 	ZFC_REDUCED_1,
 	ZFC_REDUCED_2,
 	ZFC_REDUCED_3,
 	ZFC_REDUCED_4,
 	ZFC_IMPLODED,
-	ZFC_DEFLATED = 8,
+	ZFC_DEFLATED = 8,           // The only supported compression (via zlib).
 	ZFC_DEFLATED_64,
 	ZFC_PKWARE_DCL_IMPLODED
 };
@@ -78,6 +79,9 @@ typedef struct zipentry_s {
 	package_t *package;
 	unsigned int offset;		// Offset from the beginning of the package.
 	unsigned int size;
+    unsigned int deflatedSize;  /* Size of the original deflated entry.
+                                   If the entry is not compressed, this
+                                   is set to zero. */
 	unsigned int lastModified;  // Unix timestamp.
 } zipentry_t;
 
@@ -397,11 +401,11 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
             ULONG(header->size) == 0) continue;
 
 		// Do we support the format of this file?
-		if(USHORT(header->compression) != ZFC_NO_COMPRESSION ||
-		   ULONG(header->compressedSize) != ULONG(header->size))
+		if(USHORT(header->compression) != ZFC_NO_COMPRESSION &&
+           USHORT(header->compression) != ZFC_DEFLATED)
 		{
-			Con_Error("Zip_Open: %s: '%s' is compressed.\n  Compression is "
-					  "not supported.\n", M_Pretty(fileName), buf);
+			Con_Error("Zip_Open: %s: '%s' uses an unsupported compression "
+					  "algorithm.\n", M_Pretty(fileName), buf);
 		}
 		if(USHORT(header->flags) & ZFH_ENCRYPTED)
 		{
@@ -409,8 +413,8 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 					  "not supported.\n", M_Pretty(fileName), buf);
 		}
 
-		// Convert all slashes to backslashes, for compatibility with 
-		// the sys_filein routines.
+		// Convert all slashes to the host OS's directory separator,
+		// for compatibility with the sys_filein routines.
 		Dir_FixSlashes(buf);
 
 		// Make it absolute.
@@ -420,7 +424,17 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 		entry = Zip_NewFile(buf);
 		entry->package = pack;
 		entry->size = ULONG(header->size);
-
+        if(USHORT(header->compression) == ZFC_DEFLATED)
+        {
+            // Compressed using the deflate algorithm.
+            entry->deflatedSize = ULONG(header->compressedSize);
+        }
+        else
+        {
+            // No compression.
+            entry->deflatedSize = 0;
+        }
+        
 		// The modification date is inherited from the real file (note
 		// recursion).
 		entry->lastModified = file->lastModified;
@@ -447,8 +461,8 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 
 /*
  * If two or more packages have the same file, the file from the last
- * loaded package is the one to use. Others will be removed from the
- * directory. The entries must be sorted before this can be done.
+ * loaded package is the one to use.  Others will be removed from the
+ * directory.  The entries must be sorted before this can be done.
  */
 void Zip_RemoveDuplicateFiles(void)
 {
@@ -468,7 +482,8 @@ void Zip_RemoveDuplicateFiles(void)
 			else
 				loser = entry;
 
-			// Overwrite the loser with the last entry.
+			// Overwrite the loser with the last entry in the entire
+			// entry directory.
 			free(loser->name);
 			memcpy(loser, &zipFiles[zipNumFiles - 1], sizeof(zipentry_t));
 			memset(&zipFiles[zipNumFiles - 1], 0, sizeof(zipentry_t));
@@ -551,6 +566,42 @@ zipindex_t Zip_Find(const char *fileName)
 }
 
 /*
+ * Uses zlib to inflate a compressed entry.  Returns true if
+ * successful.
+ */
+boolean Zip_Inflate(void *in, uint inSize, void *out, uint outSize)
+{
+    z_stream stream;
+    int result;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = in;
+    stream.avail_in = inSize;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.next_out = out;
+    stream.avail_out = outSize;
+
+    if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
+        return false;
+
+    // Do the inflation in one call.
+    result = inflate(&stream, Z_FINISH);
+
+    if(stream.total_out != outSize)
+    {
+        Con_Message("Zip_Inflate: Failure due to %s.\n",
+                    result == Z_DATA_ERROR ? "corrupt data" :
+                    "zlib error");
+        return false;
+    }
+
+    // We're done.
+    inflateEnd(&stream);
+    return true;
+}
+
+/*
  * Returns the size of a zipentry.
  */
 uint Zip_GetSize(zipindex_t index)
@@ -562,13 +613,16 @@ uint Zip_GetSize(zipindex_t index)
 }
 
 /*
- * Reads a zipentry into the buffer. The buffer must be large enough.
- * Zip_GetSize() returns the size. Returns the number of bytes read.
+ * Reads a zipentry into the buffer.  The caller must make sure that
+ * the buffer is large enough.  Zip_GetSize() returns the size.
+ * Returns the number of bytes read.
  */
 uint Zip_Read(zipindex_t index, void *buffer)
 {
 	package_t *pack;
 	zipentry_t *entry;
+    void *compressedData;
+    boolean result;
 
 	index--;
 	if(index < 0 || index >= zipNumFiles)
@@ -577,15 +631,34 @@ uint Zip_Read(zipindex_t index, void *buffer)
 	entry = zipFiles + index;
 	pack = entry->package;
 
-	VERBOSE2(Con_Printf
-			 ("Zip_Read: %s: '%s' (%i bytes)\n", M_Pretty(pack->name),
-			  M_Pretty(entry->name), entry->size));
-	//Con_Printf("Zip_Read: offset=%i\n", entry->offset);
+	VERBOSE2(Con_Message
+			 ("Zip_Read: %s: '%s' (%i bytes%s)\n", M_Pretty(pack->name),
+			  M_Pretty(entry->name), entry->size,
+              entry->deflatedSize ? ", deflated" : ""));
 
 	F_Seek(pack->file, entry->offset, SEEK_SET);
-	F_Read(buffer, entry->size, pack->file);
 
-	// TODO: Use zlib to inflate deflated entries.
+    if(entry->deflatedSize > 0)
+    {
+        // Read the compressed data into a buffer.
+        compressedData = malloc(entry->deflatedSize);
+        F_Read(compressedData, entry->deflatedSize, pack->file);
+
+        // Run zlib's inflate to decompress.
+        result = Zip_Inflate(compressedData, entry->deflatedSize,
+                             buffer, entry->size);
+
+        free(compressedData);
+
+        if(!result)
+            return 0; // Inflate failed.
+    }
+    else
+    {
+        // Read the uncompressed data directly to the buffer provided
+        // by the caller.
+        F_Read(buffer, entry->size, pack->file);
+    }
 
 	return entry->size;
 }

@@ -6,6 +6,7 @@
 
 Version 1.8.6
 -------------
+* PK3s can now be compressed (deflate)
 + Reflection -> Min color: minimum RGB color for the reflection (to
   make the reflection visible even without regular sector light)
 - fixed: model file hash reset properly when running 'reset'
