@@ -25,6 +25,7 @@
 #include "../JHexen/settings.h"
 #endif
 
+#include "g_common.h"
 #include "d_Net.h"
 
 // TYPES --------------------------------------------------------------------
@@ -250,7 +251,6 @@ int D_NetServerStarted(int before)
 	if(before) return true;
 
 	G_StopDemo();
-	advancedemo = false;
 
 	// We're the server, so...
 	cfg.PlayerColor[0] = PLR_COLOR(0, cfg.netColor);
@@ -291,8 +291,6 @@ int D_NetServerStarted(int before)
 
 int D_NetConnect(int before)
 {
-	extern boolean advancedemo;
-
 	// We do nothing before the actual connection is made.
 	if(before) return true;
 	
@@ -300,7 +298,7 @@ int D_NetConnect(int before)
 	NetCl_SendPlayerInfo();
 
 	// Close the menu, the game begins!!
-	advancedemo = false;
+//	advancedemo = false;
 #ifdef __JDOOM__
 	M_ClearMenus();
 #else
@@ -321,11 +319,7 @@ int D_NetDisconnect(int before)
 #endif
 
 	// Start demo.
-#if !__JHEXEN__
-	D_StartTitle();
-#else
-	H2_StartTitle();
-#endif
+	G_StartTitle();
 	return true;
 }
 
