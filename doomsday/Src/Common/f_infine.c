@@ -351,7 +351,7 @@ void FI_StartScript(char *finalescript, boolean after)
 	for(i = 0; i < 9; i++)
 		for(c = 0; c < 3; c++)
 			FI_InitValue(&fi_textcolor[i][c], 1);
-#if !__JDOOM__
+#ifndef __JDOOM__
 	FontABase = W_GetNumForName("FONTA_S") + 1;
 	FontBBase = W_GetNumForName("FONTB_S") + 1;
 #endif
