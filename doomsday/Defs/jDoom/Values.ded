@@ -1,7 +1,48 @@
 # jDoom: Values
 # (mind yur speling; jDoom uses only the identifiers it knows about)
+# 
+# The strings from all Values definition blocks are merged together.
+# This means you don't have to add all your values here; they can be
+# in a Values block in another file.
 
 Header { Version = 5; }
+
+# The "Patch Replacement" values are used to replace patches with 
+# strings of text. The replacement overrides any checks for external
+# resources. Only patches in an IWAD can be replaced; this is required
+# because existing PWADs may replace the original text patches with
+# their own graphics.
+#
+# The replacement is done by searching a value in the "Patch 
+# Replacement" block that matches the lump name of the patch to be 
+# replaced. The text string may optionally contain parameters that 
+# control how the string is displayed. The parameters must be placed
+# inside braces that begin from the first character of the string. If
+# the parameter block is present, the actual text string begins from
+# the first character following the closing brace. 
+#
+# Whitespace inside the parameter block is ignored. Use a comma or a 
+# semicolon to separate parameters. The parameters and their default 
+# values are:
+#
+#   fonta       Use the small font.
+#   fontb       Use the large font (the default).
+#   r=1.0       Red color component (0..1).
+#   g=0.0       Green color component (0..1).
+#   b=0.0       Blue color component (0..1).
+#   x=0         Offset to the X coordinate.
+#   y=0         Offset to the Y coordinate.
+#   scale=1.0   Uniform scaling factor (both X and Y).
+#   scalex=1.0  X scaling factor.
+#   scaley=1.0  Y scaling factor.
+#
+# An example: 
+# 
+# Values {
+#   Patch Replacement {
+#     M_DOOM = "{R=.5; G=1; B=.5; scaley=2}GONE FISHING";
+#   };
+# }
 
 Values {
   Player {
