@@ -114,6 +114,7 @@ cvarbutton_t cvarbuttons[] =
 	{ 0, "rend-tex-detail" },
 	{ 0, "rend-light" },
 	{ 0, "rend-light-clip" },
+	{ 0, "rend-light-decor" },
 	{ 0, "rend-glow" },
 	{ 0, "rend-glow-wall" },
 	{ 0, "rend-info-tris" },
@@ -393,6 +394,8 @@ ui_object_t ob_panel[] =
 	{ UI_BUTTON2,	0,	0,				680, 730, 70, 55,	"rend-glow-wall", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 790, 0, 55,	"Floor/ceiling glow height", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 790, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_glow_height },
+	{ UI_TEXT,		0,	0,				300, 850, 0, 55,	"Enable decorations", UIText_Drawer },
+	{ UI_BUTTON2,	0,	0,				680, 850, 70, 55,	"rend-light-decor", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
 	{ UI_META,		7 },
 	{ UI_TEXT,		0,	0,				280, 0, 0, 50,		"Graphics Options: Halos", UIText_Drawer },
