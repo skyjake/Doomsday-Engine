@@ -48,6 +48,11 @@
 #define PI				3.141592657
 #define	SBARHEIGHT		39			// status bar height at bottom of screen
 
+// Heap relations.
+#define HEAP_PARENT(i)		(((i) + 1)/2 - 1)
+#define HEAP_LEFT(i)		(2*(i) + 1)
+#define HEAP_RIGHT(i)		(2*(i) + 2)
+
 enum { BLEFT, BTOP, BRIGHT, BBOTTOM, BFLOOR, BCEILING };
 enum { VX, VY, VZ };				// Vertex indices.
 enum { CR, CG, CB, CA };			// Color indices.
