@@ -54,6 +54,7 @@ event_t		events[MAXEVENTS];
 int			eventhead;
 int			eventtail;
 
+int			mouseFilter = 0;		// No filtering by default.
 int			mouseInverseY = false;
 int			mouseWheelSensi = 10;	// I'm shooting in the dark here.
 int			joySensitivity = 5;
@@ -143,6 +144,7 @@ static char defaultShiftTable[96] =	// Contains characters 32 to 127.
 };
 
 static repeater_t keyReps[MAX_DOWNKEYS];
+static int		oldMouseX, oldMouseY;
 static int		oldMouseButtons = 0;
 static int		oldJoyBState = 0;
 static float	oldPOV = IJOY_POV_CENTER;
@@ -533,12 +535,25 @@ void DD_ReadMouse(void)
 	ev.data1 = mouse.x;
 	ev.data2 = mouse.y;
 	ev.data3 = mouse.z;
+	
+	// Mouse axis data may be modified if not in UI mode.
 	if(!ui_active)
 	{
 		if(mouseDisableX) ev.data1 = 0;
 		if(mouseDisableY) ev.data2 = 0;
 		if(!mouseInverseY) ev.data2 = -ev.data2;
+
+		// Filtering calculates the average with previous (x,y) value.
+		if(mouseFilter)
+		{
+			int oldX = ev.data1, oldY = ev.data2;
+			ev.data1 = (ev.data1 + oldMouseX) / 2;
+			ev.data2 = (ev.data2 + oldMouseY) / 2;
+			oldMouseX = oldX;
+			oldMouseY = oldY;
+		}
 	}
+
 	DD_PostEvent (&ev);
 
 	// Insert the possible mouse Z axis into the button flags.
