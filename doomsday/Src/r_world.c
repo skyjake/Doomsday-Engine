@@ -59,11 +59,12 @@ char    currentLevelId[64];
 
 boolean firstFrameAfterLoad;
 
-sectorinfo_t *secinfo;
+sectorinfo_t    *secinfo;
+seginfo_t       *seginfo;
 subsectorinfo_t *subsecinfo;
-lineinfo_t *lineinfo;
-vertexowner_t *vertexowners;
-nodeindex_t *linelinks;			// indices to roots
+lineinfo_t      *lineinfo;
+vertexowner_t   *vertexowners;
+nodeindex_t     *linelinks;			// indices to roots
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -878,12 +879,37 @@ void R_InitSectorInfo(void)
 }
 
 //===========================================================================
+// R_InitSegInfo
+//===========================================================================
+void R_InitSegInfo(void)
+{
+    int i, k;
+    seginfo_t *inf;
+    
+    seginfo = Z_Calloc(numsegs * sizeof(seginfo_t), PU_LEVEL, NULL);
+
+    for(i = 0, inf = seginfo; i < numsegs; ++i, ++inf)
+    {
+        for(k = 0; k < 4; ++k)
+        {
+            inf->illum[0][k].front =
+                inf->illum[1][k].front =
+                inf->illum[2][k].front = SEG_PTR(i)->frontsector;
+
+            inf->illum[0][k].flags =
+                inf->illum[1][k].flags =
+                inf->illum[2][k].flags = VIF_STILL_UNSEEN;
+        }
+    }
+}
+
+//===========================================================================
 // R_InitPlanePoly
 //===========================================================================
 void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
 					 subsector_t *subsector)
 {
-	int     numvrts;
+	int     numvrts, i;
 	fvertex_t *vrts, *vtx, *pv;
 
 	// Take the subsector's vertices.
@@ -927,6 +953,15 @@ void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
 		// Re-add the first vertex so the triangle fan wraps around.
 		memcpy(pv, &plane->vertices[1], sizeof(*pv));
 	}
+
+    // Initialize the illumination for the subsector.
+    plane->illumination = Z_Calloc(plane->numvertices * sizeof(vertexillum_t),
+                                   PU_LEVEL, NULL);
+    for(i = 0; i < plane->numvertices; ++i)
+    {
+        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
+        plane->illumination[i].front = subsector->sector;
+    }
 }
 
 //===========================================================================
@@ -1432,6 +1467,7 @@ void R_SetupLevel(char *level_id, int flags)
 	// Make sure subsector floors and ceilings will be rendered correctly.
 	R_SubsectorPlanes();
 	R_InitSectorInfo();
+    R_InitSegInfo();
 	R_InitSubsectorInfo();
 	R_InitLineInfo();
 
@@ -1505,6 +1541,9 @@ void R_SetupLevel(char *level_id, int flags)
 		Sv_InitPools();
 	}
 
+    // Tell shadow bias to initialize the bias light sources.
+    SB_InitForLevel(R_GetUniqueLevelID());
+    
 	Con_Progress(10, 0);		// 50%.
 }
 
@@ -1559,11 +1598,10 @@ sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor)
 	}
 }
 
-//===========================================================================
-// R_UpdatePlanes
-//  All links will be updated every frame (sectorheights may change
-//  at any time without notice).
-//===========================================================================
+/*
+ * All links will be updated every frame (sectorheights may change at
+ * any time without notice).
+ */
 void R_UpdatePlanes(void)
 {
 	int     i;
@@ -1610,12 +1648,37 @@ void R_UpdatePlanes(void)
 	}
 }
 
-//===========================================================================
-// R_GetCurrentLevelID
-//===========================================================================
+/*
+ * This ID is the name of the lump tag that marks the beginning of map
+ * data, e.g. "MAP03" or "E2M8".
+ */
 const char *R_GetCurrentLevelID(void)
 {
 	return currentLevelId;
+}
+
+/*
+ * Return the 'unique' identifier of the map.  This identifier
+ * contains information about the map tag (E3M3), the WAD that
+ * contains the map (DOOM.IWAD), and the game mode (doom-ultimate).
+ *
+ * The entire ID string will be in lowercase letters.
+ */
+const char *R_GetUniqueLevelID(void)
+{
+    static char uid[256];
+    filename_t base;
+    int lump = W_GetNumForName((char*)R_GetCurrentLevelID());
+
+    M_ExtractFileBase(W_LumpSourceFile(lump), base);
+    
+    sprintf(uid, "%s|%s|%s|%s",
+            R_GetCurrentLevelID(),
+            base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
+            gx.Get(DD_GAME_MODE));
+
+    strlwr(uid);
+    return uid;
 }
 
 /* 
