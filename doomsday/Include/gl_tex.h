@@ -42,8 +42,8 @@ byte *			GL_LoadImage(const char *imagefn, int *width, int *height,
 					int *pixsize, boolean *masked, boolean usemodelpath);
 byte *			GL_LoadImageCK(const char *imagefn, int *width, int *height,
 					int *pixsize, boolean *masked, boolean usemodelpath);
-byte *			GL_LoadHighResTexture(char *name, int *width, int *height, 
-					int *pixsize, boolean *masked);
+byte *			GL_LoadTexture(char *name, int *width, int *height, int *pixsize, 
+					boolean *masked);
 DGLuint			GL_PrepareTexture(int idx); 
 DGLuint			GL_PrepareFlat(int idx);
 DGLuint			GL_PrepareLightTexture(void);	// The dynamic light map.
