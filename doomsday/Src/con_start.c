@@ -18,12 +18,6 @@
 #include "de_ui.h"
 
 // MACROS ------------------------------------------------------------------
-#define LOGO_WIDTH			256
-#define LOGO_HEIGHT			48 //51
-#define LOGO_SCR_WIDTH		(512)
-#define LOGO_SCR_HEIGHT		(102)
-
-#define BUFFER_LEN			8000
 
 // TYPES -------------------------------------------------------------------
 
@@ -81,17 +75,8 @@ void Con_StartupInit(void)
 		titletext = "Doomsday "DOOMSDAY_VERSION_TEXT;
 	}
 
-	startupLogo = 0;
-	if(W_CheckNumForName("ddlogo") != -1)
-	{
-		byte *image = W_CacheLumpName("ddlogo", PU_CACHE);
-		startupLogo = gl.NewTexture();
-		gl.TexImage(DGL_LUMINANCE, 256, 64, 0, image);
-		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-	}
+	// Load graphics.
+	startupLogo = UI_LoadGraphics("Background", true);
 }
 
 void Con_SetBgFlat(int lump)
@@ -104,6 +89,7 @@ void Con_StartupDone(void)
 	if(isDedicated) return;
 	startupScreen = false;
 	gl.DeleteTextures(1, &startupLogo);
+	startupLogo = 0;
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PopMatrix();
 	GL_ShutdownVarFont();
@@ -115,23 +101,30 @@ void Con_StartupDone(void)
 //===========================================================================
 void Con_DrawStartupBackground(void)
 {
-	float x, y, w, h;
+	float mul = (startupLogo? 1.5f : 1.0f);
+	ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
 
-	// Background gradient.
-	gl.Disable(DGL_TEXTURING);
+	// Background gradient picture.
+	gl.Bind(startupLogo);
 	gl.Disable(DGL_BLENDING);
 	gl.Begin(DGL_QUADS);
-	UI_Color(UI_COL(UIC_BG_DARK)); // Top color.
+	// Top color.
+	gl.Color3f(dark->red*mul, dark->green*mul, dark->blue*mul);
+	gl.TexCoord2f(0, 0);
 	gl.Vertex2f(0, 0);
+	gl.TexCoord2f(1, 0);
 	gl.Vertex2f(screenWidth, 0); 
-	UI_Color(UI_COL(UIC_BG_LIGHT)); // Bottom color.
+	// Bottom color.
+	gl.Color3f(light->red*mul, light->green*mul, light->blue*mul); 
+	gl.TexCoord2f(1, 1);
 	gl.Vertex2f(screenWidth, screenHeight);
+	gl.TexCoord2f(0, 1);
 	gl.Vertex2f(0, screenHeight);
 	gl.End();
 	gl.Enable(DGL_BLENDING);
 
 	// Draw logo.
-	gl.Enable(DGL_TEXTURING);
+/*	gl.Enable(DGL_TEXTURING);
 	gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
 	if(startupLogo)
 	{
@@ -152,7 +145,7 @@ void Con_DrawStartupBackground(void)
 			x + w - FR_TextWidth(DOOMSDAY_VERSIONTEXT),	
 			y + h);
 	}
-	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);	
+	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);	*/
 }
 
 //===========================================================================
