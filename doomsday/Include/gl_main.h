@@ -6,6 +6,16 @@
 
 #include "con_decl.h"
 
+typedef enum blendmode_e {
+	BM_NORMAL,
+	BM_ADD,
+	BM_DARK,
+	BM_SUBTRACT,
+	BM_REVERSE_SUBTRACT,
+	BM_MUL,
+	BM_INVERSE_MUL
+} blendmode_t;
+
 boolean			GL_IsInited(void);
 
 void			GL_Init(void);
@@ -19,6 +29,7 @@ void			GL_RuntimeMode(void);
 int				GL_ChangeResolution(int w, int h, int bits);
 void			GL_Update(int flags);
 void			GL_DoUpdate(void);
+void			GL_BlendMode(blendmode_t mode);
 
 void			GL_InitRefresh(void);
 void			GL_ShutdownRefresh(void);
