@@ -57,7 +57,7 @@
 GETGAMEAPI GetGameAPI;
 
 lt_dlhandle hGame;
-lt_dlhandle hPlugin[MAX_PLUGS];
+lt_dlhandle hPlugins[MAX_PLUGS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -110,52 +110,64 @@ boolean InitGame(void)
 	return true;
 }
 
-//===========================================================================
-// LoadPlugin
-//  Loads the given plugin. Returns TRUE iff the plugin was loaded 
-//  succesfully.
-//===========================================================================
-boolean LoadPlugin(const char *filename)
+static lt_dlhandle *NextPluginHandle(void)
 {
-	/*  int i;
+	int i;
 
-	   // Find the first empty plugin instance.
-	   for(i = 0; hInstPlug[i]; i++);
-
-	   // Try to load it.
-	   if(!(hInstPlug[i] = LoadLibrary(filename))) return FALSE; // Failed!
-	 */
-	// That was all; the plugin registered itself when it was loaded.   
-	return true;
+	for(i = 0; i < MAX_PLUGS; ++i)
+	{
+		if(!hPlugins[i]) return &hPlugins[i];
+	}
+	return NULL;
 }
 
-//===========================================================================
-// InitPlugins
-//  Loads all the plugins from the startup directory. 
-//===========================================================================
+int LoadPlugin(const char *pluginPath, lt_ptr data)
+{
+	filename_t name;
+	lt_dlhandle plugin, *handle;
+	void (*initializer)(void);
+
+	// What is the actual file name?
+	_splitpath(pluginPath, NULL, NULL, name, NULL);
+	
+	if(!strncmp(name, "libdp", 5))
+	{
+		// Try loading this one as a Doomsday plugin.
+		if(NULL == (plugin = lt_dlopenext(pluginPath)))
+			return 0;
+
+		if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
+		   NULL == (handle = NextPluginHandle()))
+		{
+			printf("LoadPlugin: Failed to load %s!\n", pluginPath);
+			lt_dlclose(plugin);
+			return 0;
+		}
+
+		// This seems to be a Doomsday plugin.
+		*handle = plugin;
+
+		printf("LoadPlugin: %s\n", pluginPath);
+		initializer();
+	}
+	
+	return 0;
+}
+
+/*
+ * Loads all the plugins from the library directory.
+ */
 boolean InitPlugins(void)
 {
-	/*  long hFile;
-	   struct _finddata_t fd;
-	   char plugfn[256];
-
-	   sprintf(plugfn, "%sdp*.dll", ddBinDir.path);
-	   if((hFile = _findfirst(plugfn, &fd)) == -1L) return TRUE;
-	   do LoadPlugin(fd.name); while(!_findnext(hFile, &fd)); */
+	// Try to load all libraries that begin with libdp.
+	lt_dlforeachfile(NULL, LoadPlugin, NULL);
 	return true;
 }
 
-//===========================================================================
-// main
-//===========================================================================
 int main(int argc, char **argv)
 {
 	char   *cmdLine;
 	int     i, length = 0;
-
-	// Where are we?
-	//  GetModuleFileName(hInstance, path, 255);
-	//  Dir_FileDir(path, &ddBinDir);
 
 	// Initialize libtool's dynamic library routines.
 	lt_dlinit();
@@ -242,12 +254,10 @@ void DD_Shutdown(void)
 
 	// Close the dynamic libraries.
 	lt_dlclose(hGame);
-	for(i = 0; hPlugin[i]; i++)
-	{
-		lt_dlclose(hPlugin[i]);
-	}
 	hGame = NULL;
-	memset(hPlugin, 0, sizeof(hPlugin));
+	for(i = 0; hPlugins[i]; i++)
+		lt_dlclose(hPlugins[i]);
+	memset(hPlugins, 0, sizeof(hPlugins));
 
 	lt_dlexit();
 }
