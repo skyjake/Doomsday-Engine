@@ -10,8 +10,10 @@
 # -nosnd		Exclude sound DLLs
 # -ogl			Exclude Direct3D
 # -def			Include definition files
+# -all			Include ALL definitions files
+# -test			Don't upload
 
-import os, tempfile, sys, shutil
+import os, tempfile, sys, shutil, re
 
 baseDir = 'C:/Projects/deng/doomsday'
 outDir  = 'C:/Projects/deng/distrib/out'
@@ -45,13 +47,25 @@ if not '-nodll' in sys.argv:
 includeDefs = ['Anim.ded', 'Finales.ded', 'jDoom.ded', 'jHeretic.ded',
                'jHexen.ded', 'TNTFinales.ded', 'PlutFinales.ded']
 
+excludeDefs = ['Objects.ded', 'Players.ded', 'HUDWeapons.ded', 'Weapons.ded',
+               'Items.ded', 'Monsters.ded', 'Technology.ded', 'Nature.ded',
+               'Decorations.ded', 'FX.ded', 'Models.ded',
+               'TextureParticles.ded', 'Details.ded', 'Doom1Lights.ded',
+               'Doom2Lights.ded']
+
+if '-all' in sys.argv:
+	allDefs = True
+else:
+	allDefs = False
+
 if '-def' in sys.argv:
-	for game in ['jDoom', 'jHeretic', 'jHexen']:
+	for game in ['.', 'jDoom', 'jHeretic', 'jHexen']:
 		gameDir = os.path.join( 'Defs', game )
 		defDir = os.path.join( baseDir, gameDir )
 		for file in os.listdir( defDir ):
 			# Should this be included?
-			if file in includeDefs: # and re.match( "(?i).*\.ded$", file ):
+			if file in includeDefs or (allDefs and not file in excludeDefs \
+			and re.match( "(?i).*\.ded$", file )):
 				loc = os.path.join( gameDir, file )
 				files.append( (loc, loc) )
 
@@ -68,11 +82,13 @@ os.system( "rar -r -ep1 -m5 a %s %s\\*" % (outFile, archDir) )
 print "Removing temporary directory: " + archDir
 shutil.rmtree( archDir )
 
-# Upload.
-print "Uploading to the Mirror..."
-os.system( "ftpscrpt -f z:\scripts\mirror-snapshot.scp" )
-
-print "Uploading to Fourwinds..."
-os.system( "ftpscrpt -f z:\scripts\snapshot.scp" )
+if not '-test' in sys.argv:
+	# Upload.
+	print "Uploading to the Mirror..."
+	os.system( "ftpscrpt -f z:\scripts\mirror-snapshot.scp" )
+	print "Uploading to Fourwinds..."
+	os.system( "ftpscrpt -f z:\scripts\snapshot.scp" )
+else:
+	print "--- THIS WAS JUST A TEST ---"
 
 print "Done!"
