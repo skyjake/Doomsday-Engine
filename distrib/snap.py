@@ -34,6 +34,7 @@ files = [ ('Bin/Release/Doomsday.exe', 'Bin/Doomsday.exe'),
 # Select the appropriate files.
 if not '-nodll' in sys.argv:
 	files.append( ('Bin/Release/drOpenGL.dll', 'Bin/drOpenGL.dll') )
+	files.append( ('Bin/Release/dpDehRead.dll', 'Bin/dpDehRead.dll') )
 	if not '-nosnd' in sys.argv:
 		files += [ ('Bin/Release/dsA3D.dll', 'Bin/dsA3D.dll'),
 		           ('Bin/Release/dsCompat.dll', 'Bin/dsCompat.dll') ]
