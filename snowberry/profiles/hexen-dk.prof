@@ -1,5 +1,6 @@
 name: Hexen: Death Kings of the Dark Citadel
 game: game-jhexen
+banner: banner-hexen-dk
 hidden: yes
 
 story = "<i>Deathkings of the Dark Citadel</i> is the only official expansion
