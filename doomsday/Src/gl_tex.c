@@ -1502,6 +1502,7 @@ byte *GL_LoadImageCK(const char *name, int *width, int *height, int *pixsize,
 
 //===========================================================================
 // GL_LoadHighRes
+//	Name must end in \0.
 //===========================================================================
 byte *GL_LoadHighRes(char *name, char *path, char *altPath, char *prefix,
 					 int *width, int *height, int *pixSize, boolean *masked,
@@ -1516,7 +1517,7 @@ byte *GL_LoadHighRes(char *name, char *path, char *altPath, char *prefix,
 		for(p = 0; p < 2; p++)
 		{
 			// Form the file name.
-			sprintf(filename, "%s%s%.8s.%s", !p? altPath : path, prefix, 
+			sprintf(filename, "%s%s%s.%s", !p? altPath : path, prefix, 
 				name, formats[f]);
 			if(allowColorKey)
 			{
