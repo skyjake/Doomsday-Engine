@@ -88,23 +88,39 @@ static boolean firstsubsector;		// No range checking for the first one.
 
 // CODE --------------------------------------------------------------------
 
-#if 0
-//===========================================================================
-// Rend_PointDist2D
-//	How far the point is from the viewside plane?
-//===========================================================================
-float Rend_PointDist2D(float c[2])
+/*
+ * Set the GL blending mode.
+ */
+void Rend_BlendMode(blendmode_t mode)
 {
-/*          (YA-YC)(XB-XA)-(XA-XC)(YB-YA)
-        s = -----------------------------
-                        L**2
-	Luckily, L**2 is one. dist = s*L. Even more luckily, L is also one.
-*/
-	float dist = (vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey;
-	if(dist < 0) return -dist;	// Always return positive.
-	return dist;
+	switch(mode)
+	{
+	case BM_ADD:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+		break;
+
+	case BM_DARK:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ONE_MINUS_SRC_ALPHA);
+		break;
+
+	case BM_SUBTRACT:
+		gl.Func(DGL_BLENDING_OP, DGL_SUBTRACT, 0);
+		gl.Func(DGL_BLENDING, DGL_ONE, DGL_SRC_ALPHA);
+		break;
+
+	case BM_REVERSE_SUBTRACT:
+		gl.Func(DGL_BLENDING_OP, DGL_REVERSE_SUBTRACT, 0);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+		break;
+
+	default:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+		break;
+	}
 }
-#endif
 
 //===========================================================================
 // Rend_SignedPointDist2D
@@ -504,6 +520,7 @@ int Rend_MidTexturePos(float *top, float *bottom, float *texoffy,
 //===========================================================================
 // Rend_RenderWallSeg
 //	The sector height should've been checked by now.
+//	This seriously needs to be rewritten!
 //===========================================================================
 void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 {
@@ -643,7 +660,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 		// Missing top or bottom textures don't occlude visibility.
 		if((bsh <= 0 || bceil <= ffloor || bfloor >= fceil) 
 			&& !(topvis && !sid->toptexture && sid->midtexture)
-			&& !(botvis && !sid->bottomtexture && sid->midtexture))
+			&& !(botvis && !sid->bottomtexture && sid->midtexture)
+			/*&& (sid->toptexture || sid->midtexture || sid->bottomtexture)*/)
 		{
 			// The backsector has no space. This is a solid segment.
 			C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
@@ -775,8 +793,12 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.type = RP_QUAD;
 		}
 		// Lower wall.
-		if(bfloor > ffloor && !(frontsec->floorpic == skyflatnum 
-			&& backsec->floorpic == skyflatnum)
+		// If no textures have been assigned to the segment, we won't
+		// draw anything.
+		if(/*(sid->bottomtexture || sid->midtexture || sid->toptexture) &&*/
+			bfloor > ffloor 
+			&& !(frontsec->floorpic == skyflatnum 
+				&& backsec->floorpic == skyflatnum)
 			//&& (!sid->midtexture || sid->bottomtexture)
 			)
 		{
@@ -788,7 +810,6 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			{
 				// No texture? Again!
 				quad.tex.id = curtex = GL_PrepareFlat(frontsec->floorpic);
-				//quad.flags = RPF_MISSING_WALL;
 			}
 			quad.tex.detail = texdetail;
 			// Calculate texture coordinates.
