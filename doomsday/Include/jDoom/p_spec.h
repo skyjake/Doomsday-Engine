@@ -305,7 +305,7 @@ typedef struct
 
 #define PLATWAIT		3
 #define PLATSPEED		FRACUNIT
-#define MAXPLATS		30
+#define MAXPLATS		128
 
 
 extern plat_t*	activeplats[MAXPLATS];
@@ -644,6 +644,9 @@ EV_Teleport
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/06/11 15:45:10  skyjake
+// Increased MAXPLATS to 128
+//
 // Revision 1.1  2003/02/26 19:18:37  skyjake
 // Initial checkin
 //
