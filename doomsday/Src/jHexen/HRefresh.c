@@ -272,6 +272,9 @@ void G_Drawer(void)
 			// We'll draw the chat text *after* the status bar to
 			// be a bit clearer.
 			CT_Drawer();
+
+			// Also update view borders?
+			if(Get(DD_VIEWWINDOW_HEIGHT) != 200) GL_Update(DDUF_BORDER);
 			break;
 		
 		case GS_INTERMISSION:
