@@ -183,6 +183,7 @@ long superatol(char *s)
 //==========================================================================
 byte *Sys_ZoneBase (size_t *size)
 {
+#define RETRY_STEP	0x80000	// Half a meg.
 	size_t heap;
 	byte *ptr;
 
@@ -192,15 +193,19 @@ byte *Sys_ZoneBase (size_t *size)
 	heap = maxzone;
 	if(heap < MINIMUM_HEAP_SIZE) heap = MINIMUM_HEAP_SIZE;
 	if(heap > MAXIMUM_HEAP_SIZE) heap = MAXIMUM_HEAP_SIZE;
-	heap += 0x10000;
+	heap += RETRY_STEP;
 	
 	do { // Until we get the memory (usually succeeds on the first try).
-		heap -= 0x10000;                // leave 64k alone
+		heap -= RETRY_STEP;		// leave some memory alone
 		ptr = malloc (heap);
 	} while(!ptr);
 
 	Con_Message("  %.1f Mb allocated for zone.\n", heap/1024.0/1024.0);
-	Con_Message("  ZoneBase: 0x%X.\n", (int)ptr);
+	if(heap < (uint) maxzone)
+	{
+		Con_Message("  The requested amount was %.1f Mb.\n",
+			maxzone/1024.0/1024.0);
+	}
 
 	if (heap < 0x180000)
 		Con_Error("  Insufficient memory!");
