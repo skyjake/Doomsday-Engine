@@ -39,8 +39,8 @@ id_t		clientID;
 boolean		handshake_received = false;
 int			game_ready = false;
 int			server_time;
-int			latest_frame_size;
-netdata_t	latest_frame_packet;
+//int		latest_frame_size;
+//netdata_t	latest_frame_packet;
 boolean		net_loggedin = false;	// Logged in to the server.
 boolean		clientPaused = false;	// Set by the server.
 
@@ -90,7 +90,7 @@ void Cl_CleanUp()
 
 /*
  * Sends a hello packet. 
- * pcl_hello2 includes the Game ID (5 chars).
+ * pcl_hello2 includes the Game ID (16 chars).
  */
 void Cl_SendHello(void)
 {
@@ -104,7 +104,7 @@ void Cl_SendHello(void)
 	strncpy(buf, gx.Get(DD_GAME_MODE), sizeof(buf));
 	Msg_Write(buf, 16);
 
-	Net_SendBuffer(0, SPF_RELIABLE);
+	Net_SendBuffer(0, SPF_ORDERED);
 }
 
 void Cl_AnswerHandshake(handshake_packet_t *pShake)
@@ -117,7 +117,7 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 
 	// Immediately send an acknowledgement.
 	Msg_Begin(pcl_ack_shake);
-	Net_SendBuffer(0, SPF_RELIABLE | 10001);	// High-priority.
+	Net_SendBuffer(0, SPF_ORDERED);	
 
 	// Check the version number.
 	if(shake.version != SV_VERSION)
@@ -150,8 +150,8 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
 
 	// Soon after this packet will follow the game's handshake.
 	game_ready = false;
-	gotframe = false;	// Nothing yet...
-
+	Cl_InitFrame();
+	
 	Con_Printf("Cl_AnswerHandshake: myConsole:%i, gameTime:%i.\n",
 		shake.yourConsole, shake.gameTime);
 
@@ -196,15 +196,10 @@ void Cl_PlayerLeaves(int number)
 	gx.NetPlayerEvent(number, DDPE_EXIT, 0);
 }
 
-//========================================================================
-//
-// Cl_GetPackets
-//
-// Client's packet handler.
-// Handles all the events the server sends.
-//
-//========================================================================
-
+/*
+ * Client's packet handler.
+ * Handles all the events the server sends.
+ */
 void Cl_GetPackets(void)
 {
 	int		i;
@@ -221,6 +216,11 @@ void Cl_GetPackets(void)
 			{
 			case psv_frame:
 				Cl_FrameReceived();
+				break;
+
+			case psv_first_frame2:
+			case psv_frame2:
+				Cl_Frame2Received(netbuffer.msg.type);
 				break;
 
 			case pkt_coords:
@@ -312,7 +312,7 @@ void Cl_Ticker(void)
 {
 	if(!Cl_GameReady() || clientPaused) return;
 	Cl_LocalCommand();
-	Cl_PredictMovement(true, true);	
+	Cl_PredictMovement();	
 	Cl_MovePsprites();
 }
 
@@ -330,6 +330,6 @@ int CCmdLogin(int argc, char **argv)
 		Msg_WriteByte(0);	// No password given!
 	else
 		Msg_Write(argv[1], strlen(argv[1]) + 1);
-	Net_SendBuffer(0, SPF_RELIABLE);
+	Net_SendBuffer(0, SPF_ORDERED);
 	return true;
 }
