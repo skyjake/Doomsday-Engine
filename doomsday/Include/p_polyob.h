@@ -10,10 +10,11 @@ extern int po_NumPolyobjs;
 //==========================================================================
 // Functions
 //==========================================================================
-void PO_SetCallback(void (*func)(mobj_t*, void*, void*));
-boolean PO_MovePolyobj(int num, int x, int y);
-boolean PO_RotatePolyobj(int num, angle_t angle);
-void PO_UnLinkPolyobj(polyobj_t *po);
-void PO_LinkPolyobj(polyobj_t *po);
+void	PO_SetCallback(void (*func)(mobj_t*, void*, void*));
+boolean	PO_MovePolyobj(int num, int x, int y);
+boolean	PO_RotatePolyobj(int num, angle_t angle);
+void	PO_UnLinkPolyobj(polyobj_t *po);
+void	PO_LinkPolyobj(polyobj_t *po);
+int		PO_GetNumForDegen(void *degenMobj);
 
 #endif
