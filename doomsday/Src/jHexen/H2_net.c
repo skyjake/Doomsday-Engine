@@ -42,8 +42,6 @@ void G_CheckDemoStatus();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean advancedemo;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
