@@ -643,6 +643,8 @@ void SB_Ticker(void)
 	int delta;
 	int curHealth;
 
+	if(!players[consoleplayer].plr->mo) return;
+
 	curHealth = players[consoleplayer].plr->mo->health;
 	if(curHealth < 0)
 	{
