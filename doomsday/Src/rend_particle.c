@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.13  2003/08/24 00:40:23  skyjake
+//** Added model particles
+//**
 //** Revision 1.12  2003/08/16 21:39:49  skyjake
 //** Texture alpha conversion, mul/imul blending, fixed bug in blending changes
 //**
@@ -93,13 +96,14 @@ float			rend_particle_diffuse = 4;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static pglink_t **pglinks;	// Array of pointers to pglinks in pgstore.
-static pglink_t *pgstore;
-static int		pgcursor, pgmax;
-static uint		ordersize;
+static pglink_t **pgLinks;	// Array of pointers to pgLinks in pgStore.
+static pglink_t *pgStore;
+static int		pgCursor, pgMax;
+static uint		orderSize;
 static porder_t	*order;
-static int		numparts;
-static boolean	haspoints[NUM_TEX_NAMES], haslines, hasnoblend, hasblend;
+static int		numParts;
+static boolean	hasPoints[NUM_TEX_NAMES], hasLines, hasNoBlend, hasBlend;
+static boolean	hasModels;
 
 // CODE --------------------------------------------------------------------
 
@@ -183,10 +187,13 @@ void PG_InitTextures(void)
 		// Create a new texture and upload the image.
 		ptctexname[i + 1] = gl.NewTexture();
 
+		gl.Disable(DGL_TEXTURE_COMPRESSION);
 		gl.TexImage(image.pixelSize == 4? DGL_RGBA 
 			: image.pixelSize == 2? DGL_LUMINANCE_PLUS_A8
 			: DGL_RGB, 
 			image.width, image.height, 0, image.pixels);
+		gl.Enable(DGL_TEXTURE_COMPRESSION);
+
 		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
@@ -211,34 +218,34 @@ void PG_ShutdownTextures(void)
 //===========================================================================
 void PG_InitForLevel(void)
 {
-	pglinks = Z_Malloc(sizeof(pglink_t*) * numsectors, PU_LEVEL, 0);
-	memset(pglinks, 0, sizeof(pglink_t*) * numsectors);
+	pgLinks = Z_Malloc(sizeof(pglink_t*) * numsectors, PU_LEVEL, 0);
+	memset(pgLinks, 0, sizeof(pglink_t*) * numsectors);
 
 	// We can link 64 generators each into four sectors before
-	// running out of pglinks. 
-	pgmax = 4 * MAX_ACTIVE_PTCGENS;
-	pgstore = Z_Malloc(sizeof(pglink_t) * pgmax, PU_LEVEL, 0);
-	pgcursor = 0;
+	// running out of pgLinks. 
+	pgMax = 4 * MAX_ACTIVE_PTCGENS;
+	pgStore = Z_Malloc(sizeof(pglink_t) * pgMax, PU_LEVEL, 0);
+	pgCursor = 0;
 
 	memset(active_ptcgens, 0, sizeof(active_ptcgens));
 
 	// Allocate a small ordering buffer.
-	ordersize = 256;
-	order = Z_Malloc(sizeof(porder_t) * ordersize, PU_LEVEL, 0);
+	orderSize = 256;
+	order = Z_Malloc(sizeof(porder_t) * orderSize, PU_LEVEL, 0);
 }
 
 //===========================================================================
 // PG_GetLink
-//	Returns an unused link from the pgstore.
+//	Returns an unused link from the pgStore.
 //===========================================================================
 static pglink_t *PG_GetLink(void)
 {
-	if(pgcursor == pgmax) 
+	if(pgCursor == pgMax) 
 	{
 		if(verbose) Con_Message("PG_GetLink: Out of PGen store.\n");
 		return NULL;
 	}
-	return &pgstore[ pgcursor++ ];
+	return &pgStore[ pgCursor++ ];
 }
 
 //===========================================================================
@@ -251,14 +258,14 @@ void PG_LinkPtcGen(ptcgen_t *gen, sector_t *sector)
 	pglink_t *it;
 
 	// Must check that it isn't already there...
-	for(it = pglinks[si]; it; it = it->next)
+	for(it = pgLinks[si]; it; it = it->next)
 		if(it->gen == gen) return; // No, no...
 	// We need a new PG link.
 	link = PG_GetLink();
 	if(!link) return;  // Out of links!
 	link->gen = gen;
-	link->next = pglinks[si];
-	pglinks[si] = link;
+	link->next = pgLinks[si];
+	pgLinks[si] = link;
 }
 
 //===========================================================================
@@ -271,8 +278,8 @@ void PG_InitForNewFrame(void)
 	ptcgen_t *gen;
 	
 	// Clear the PG links.
-	memset(pglinks, 0, sizeof(pglink_t*) * numsectors);
-	pgcursor = 0;
+	memset(pgLinks, 0, sizeof(pglink_t*) * numsectors);
+	pgCursor = 0;
 
 	// Clear all visibility flags.
 	for(i = 0; i < MAX_ACTIVE_PTCGENS; i++)
@@ -293,7 +300,7 @@ void PG_InitForNewFrame(void)
 //===========================================================================
 void PG_SectorIsVisible(sector_t *sector)
 {
-	pglink_t *it = pglinks[GET_SECTOR_IDX(sector)];
+	pglink_t *it = pgLinks[GET_SECTOR_IDX(sector)];
 	for(; it; it = it->next) it->gen->flags |= PGF_VISIBLE;
 }
 
@@ -317,8 +324,8 @@ int __cdecl PG_Sorter(const void *pt1, const void *pt2)
 //===========================================================================
 void PG_CheckOrderBuffer(uint max)
 {
-	while(max > ordersize) ordersize *= 2;
-	order = Z_Realloc(order, sizeof(*order) * ordersize, PU_LEVEL);
+	while(max > orderSize) orderSize *= 2;
+	order = Z_Realloc(order, sizeof(*order) * orderSize, PU_LEVEL);
 }
 
 //===========================================================================
@@ -333,21 +340,21 @@ int PG_ListVisibleParticles(void)
 	ded_ptcgen_t *def;
 	particle_t *pt;
 
-	haslines = hasblend = hasnoblend = false;
-	memset(haspoints, 0, sizeof(haspoints));
+	hasModels = hasLines = hasBlend = hasNoBlend = false;
+	memset(hasPoints, 0, sizeof(hasPoints));
 
 	// First count how many particles are in the visible generators.
-	for(i = 0, numparts = 0; i < MAX_ACTIVE_PTCGENS; i++)
+	for(i = 0, numParts = 0; i < MAX_ACTIVE_PTCGENS; i++)
 	{
 		gen = active_ptcgens[i];
 		if(!gen || !(gen->flags & PGF_VISIBLE)) continue;
 		for(p = 0; p < gen->count; p++)
-			if(gen->ptcs[p].stage >= 0) numparts++;
+			if(gen->ptcs[p].stage >= 0) numParts++;
 	}
-	if(!numparts) return false;
+	if(!numParts) return false;
 	
 	// Allocate the rendering order list.
-	PG_CheckOrderBuffer(numparts);
+	PG_CheckOrderBuffer(numParts);
 
 	// Fill in the order list and see what kind of particles we'll
 	// need to render.
@@ -374,22 +381,27 @@ int PG_ListVisibleParticles(void)
 			stagetype = gen->stages[pt->stage].type;
 			if(stagetype == PTC_POINT)
 			{
-				haspoints[0] = true;
+				hasPoints[0] = true;
 			}
 			else if(stagetype == PTC_LINE)
 			{
-				haslines = true;
+				hasLines = true;
 			}
 			else if(stagetype >= PTC_TEXTURE
 				&& stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
 			{
-				haspoints[stagetype - PTC_TEXTURE + 1] = true;
+				hasPoints[stagetype - PTC_TEXTURE + 1] = true;
+			}
+			else if(stagetype >= PTC_MODEL
+				&& stagetype < PTC_MODEL + MAX_PTC_MODELS)
+			{
+				hasModels = true;
 			}
 
 			if(gen->flags & PGF_ADD_BLEND)
-				hasblend = true;
+				hasBlend = true;
 			else
-				hasnoblend = true;
+				hasNoBlend = true;
 			m++;
 		}
 	}
@@ -400,10 +412,10 @@ int PG_ListVisibleParticles(void)
 	}
 
 	// This is the real number of possibly visible particles.
-	numparts = m;
+	numParts = m;
 
 	// Sort the order list back->front. A quicksort is fast enough.
-	qsort(order, numparts, sizeof(*order), PG_Sorter);
+	qsort(order, numParts, sizeof(*order), PG_Sorter);
 	return true;
 }
 
@@ -425,6 +437,13 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	int				using_texture = -1;
 	int				prim_type;
 	blendmode_t		mode = BM_NORMAL, new_mode;
+	vissprite_t		vis;
+
+	if(rtype == PTC_MODEL)
+	{
+		// Prepare a dummy vissprite.
+		memset(&vis, 0, sizeof(vis));
+	}
 
 	// viewsidevec points to the left.
 	for(i = 0; i < 3; i++)
@@ -439,7 +458,12 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	else if(rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES)
 		using_texture = rtype - PTC_TEXTURE + 1;
 
-	if(using_texture >= 0)
+	if(rtype == PTC_MODEL)
+	{
+		gl.Enable(DGL_DEPTH_WRITE);
+		gl.Enable(DGL_DEPTH_TEST);
+	}
+	else if(using_texture >= 0)
 	{
 		gl.Disable(DGL_DEPTH_WRITE);
 		gl.Disable(DGL_CULL_FACE);
@@ -456,20 +480,23 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	// How many particles can we render?
 	if(r_max_particles)
 	{
-		i = numparts - r_max_particles;
+		i = numParts - r_max_particles;
 		if(i < 0) i = 0;
 	}
 	else i = 0;
-	for(; i < numparts; i++)
+	for(; i < numParts; i++)
 	{
 		gen = active_ptcgens[order[i].gen];
 		pt = gen->ptcs + order[i].index;
+		st = &gen->stages[pt->stage];
+		dst = &gen->def->stages[pt->stage];		
 
 		// Only render one type of particles.
-		if(gen->stages[pt->stage].type != rtype) continue;
+		if(rtype == PTC_MODEL && dst->model < 0
+			|| rtype != PTC_MODEL && st->type != rtype) continue;
 		if(!(gen->flags & PGF_ADD_BLEND) == with_blend) continue;
 
-		if(!with_blend)
+		if(rtype != PTC_MODEL && !with_blend)
 		{
 			// We may need to change the blending mode.
 			new_mode = 
@@ -485,9 +512,6 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 				gl.Begin(prim_type);
 			}
 		}
-
-		dst = &gen->def->stages[pt->stage];
-		st = &gen->stages[pt->stage];
 
 		// Is there a next stage for this particle?
 		if(pt->stage >= MAX_PTC_STAGES-1
@@ -541,6 +565,46 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		center[VX] = FIX2FLT(pt->pos[VX]);
 		center[VZ] = FIX2FLT(pt->pos[VY]);
 		center[VY] = FIX2FLT(P_GetParticleZ(pt));
+
+		if(rtype == PTC_MODEL && dst->model >= 0)
+		{
+			int frame;
+			// Render the particle as a model.
+			vis.type = VSPR_PARTICLE_MODEL;
+			vis.distance = dist;
+			vis.mo.subsector = R_PointInSubsector(pt->pos[VX], pt->pos[VY]);
+			vis.mo.gx = FRACUNIT * center[VX];
+			vis.mo.gy = FRACUNIT * center[VZ];
+			vis.mo.gz = vis.mo.gzt = FRACUNIT * center[VY];
+			vis.mo.v1[0] = center[VX];
+			vis.mo.v1[1] = center[VZ];
+			vis.mo.v2[0] = size; // Extra scaling factor.
+			vis.mo.mf = &models[dst->model];
+			if(dst->end_frame < 0)
+			{
+				frame = dst->frame;
+				vis.mo.inter = 0;
+			}
+			else
+			{
+				frame = dst->frame + (dst->end_frame - dst->frame)
+					* mark;
+				vis.mo.inter = M_CycleIntoRange(mark * (dst->end_frame
+					- dst->frame), 1);
+			}
+			R_SetModelFrame(vis.mo.mf, frame);
+			vis.mo.yaw = pt->yaw / 32768.0f * 180;
+			vis.mo.pitch = pt->pitch / 32768.0f * 180;
+			if(st->flags & PTCF_BRIGHT || LevelFullBright) 
+				vis.mo.lightlevel = -1; // Fullbright.
+			else 
+				vis.mo.lightlevel = pt->sector->lightlevel;
+			memcpy(vis.mo.rgb, pt->sector->rgb, 3);
+			vis.mo.alpha = color[3];
+
+			Rend_RenderModel(&vis);
+			continue;
+		}
 
 		// The vertices, please.
 		if(using_texture >= 0)
@@ -634,17 +698,20 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		}
 	}
 	
-	gl.End();
+	if(rtype != PTC_MODEL) 
+	{
+		gl.End();
 
-	if(using_texture >= 0) 
-	{
-		gl.Enable(DGL_DEPTH_WRITE);
-		gl.Enable(DGL_CULL_FACE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-	}
-	else
-	{
-		gl.Enable(DGL_TEXTURING);
+		if(using_texture >= 0) 
+		{
+			gl.Enable(DGL_DEPTH_WRITE);
+			gl.Enable(DGL_CULL_FACE);
+			gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+		}
+		else
+		{
+			gl.Enable(DGL_TEXTURING);
+		}
 	}
 
 	if(!with_blend) 
@@ -664,11 +731,14 @@ void PG_RenderPass(boolean use_blending)
 	// Set blending mode.
 	if(use_blending) Rend_BlendMode(BM_ADD);
 
-	if(haslines) 
+	if(hasModels)
+		PG_RenderParticles(PTC_MODEL, use_blending);
+
+	if(hasLines) 
 		PG_RenderParticles(PTC_LINE, use_blending);
 	
 	for(i = 0; i < NUM_TEX_NAMES; i++)
-		if(haspoints[i]) 
+		if(hasPoints[i]) 
 		{
 			PG_RenderParticles(!i? PTC_POINT : PTC_TEXTURE + i - 1, 
 				use_blending);
@@ -691,11 +761,11 @@ void PG_Render(void)
 	if(!PG_ListVisibleParticles()) return; // No visible particles at all?
 	
 	// Render all the visible particles.
-	if(hasnoblend)
+	if(hasNoBlend)
 	{
 		PG_RenderPass(false);
 	}
-	if(hasblend)
+	if(hasBlend)
 	{
 		// A second pass with additive blending. 
 		// This makes the additive particles 'glow' through all other 

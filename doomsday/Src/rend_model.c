@@ -536,8 +536,9 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		inter = (inter - mf->intermark) / (endPos - mf->intermark);		
 	}
 
-	// Do we have a sky model here?
-	if(spr->type == VSPR_SKY_MODEL)
+	// Do we have a sky/particle model here?
+	if(spr->type == VSPR_SKY_MODEL
+		|| spr->type == VSPR_PARTICLE_MODEL)
 	{
 		// Sky models are animated differently.
 		// Always interpolate, if there's animation.
@@ -589,6 +590,11 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 
 	// Scaling and model space offset.
 	gl.Scalef(mf->scale[VX], mf->scale[VY], mf->scale[VZ]);
+	if(spr->type == VSPR_PARTICLE_MODEL)
+	{
+		// Particle models have an extra scale.
+		gl.Scalef(spr->mo.v2[0], spr->mo.v2[0], spr->mo.v2[0]);
+	}
 	gl.Translatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
 	
 	// Now we can draw.
@@ -783,6 +789,9 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		gl.SetInteger(DGL_CULL_FACE, DGL_CW);
 	}
 
+	// Twosided models won't use backface culling.
+	if(subFlags & MFF_TWO_SIDED) gl.Disable(DGL_CULL_FACE);
+
 	// Render using multiple passes? 
 	if(shininess <= 0 || byteAlpha < 255 
 		|| blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR)
@@ -864,6 +873,9 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PopMatrix();
 
+	// Normally culling is always enabled.
+	if(subFlags & MFF_TWO_SIDED) gl.Enable(DGL_CULL_FACE);
+
 	if(zSign < 0)
 	{
 		gl.SetInteger(DGL_CULL_FACE, DGL_CCW);
@@ -921,23 +933,23 @@ void Rend_RenderModel(vissprite_t *spr)
 		{
 			lights->worldVector[i] = worldLight[i];
 			lights->color[i] = ambientColor[i];
+		}
 
-			if(spr->type == VSPR_HUD_MODEL)
-			{
-				// Psprites can a bit starker world light.
-				lights->lightSide = .35f;
-				lights->darkSide = .5f;
-				lights->offset = 0;
-			}
-			else
-			{
-				// World light can both light and shade. Normal objects
-				// get more shade than light (to prevent them from 
-				// becoming too bright when compared to ambient light).
-				lights->lightSide = .2f;
-				lights->darkSide = .8f;
-				lights->offset = .3f;
-			}
+		if(spr->type == VSPR_HUD_MODEL)
+		{
+			// Psprites can a bit starker world light.
+			lights->lightSide = .35f;
+			lights->darkSide = .5f;
+			lights->offset = 0;
+		}
+		else
+		{
+			// World light can both light and shade. Normal objects
+			// get more shade than light (to prevent them from 
+			// becoming too bright when compared to ambient light).
+			lights->lightSide = .2f;
+			lights->darkSide = .8f;
+			lights->offset = .3f;
 		}
 
 		// Plane glow?
