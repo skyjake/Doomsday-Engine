@@ -92,6 +92,7 @@ Renderer:
 * dynamic light polygons are no longer clipped
 * calculations to determine surfaces affected by a dynamic light are
   more accurate (light has a better chance to be visible)
+* light decoration brightness decreases as surface/view angle grows
 - removed option -maxor: clipper has now unlimited nodes
 - fixed: leaking lights (impossible route detection)
 - fixed: stray pixels along polygon edges in dynamically lit areas
@@ -130,15 +131,18 @@ jDoom:
 + cvar 'menu-glitter': letters glow as they are typed in
 + fonts precached during startup
 + crosshair alpha slider added to the HUD menu
++ some light decorations (Doom1Lights.ded + BSTONE3, BRICKLIT)
 * titlescreen sequence defined as an InFine script (ID = "title")
 * menu text has properly sized capital letters
 - fixed: intermissions/finales in Plut/TNT
 
 jHeretic:
++ some light decorations (based on Isegrim's defs)
 * player mobj selector is set to match currently used weapon
 * titlescreen sequence defined as an InFine script (ID = "title")
 
 jHexen:
++ some light decorations (based on Isegrim's defs)
 * player mobj selector is set to match currently used weapon
 * titlescreen sequence defined as an InFine script (ID = "title")
 
