@@ -427,13 +427,17 @@ void R_SetupFrame(ddplayer_t *player)
 void R_RenderPlayerView(ddplayer_t *player)
 {
 	extern int psp3d, model_tri_count;
-	int i;
+	int i, oldFlags;
 
 	// Setup for rendering the frame.
 	R_SetupFrame(player);
 	R_ClearSprites ();
 	R_ProjectPlayerSprites();	// Only if 3D models exists for them.
 	PG_InitForNewFrame();
+
+	// Hide the viewplayer's mobj.
+	oldFlags = player->mo->ddflags;
+	player->mo->ddflags |= DDMF_DONTDRAW;
 	
 	// GL is in 3D transformation state only during the frame.
 	GL_SwitchTo3DState(true);
@@ -452,6 +456,9 @@ void R_RenderPlayerView(ddplayer_t *player)
 	}
 	// Original matrices and state: back to normal 2D.
 	GL_Restore2DState(3); 
+
+	// Now we can show the viewplayer's mobj again.
+	player->mo->ddflags = oldFlags;
 
 	// Should we be counting triangles?
 	if(rend_info_tris)

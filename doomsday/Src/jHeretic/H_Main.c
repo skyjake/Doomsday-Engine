@@ -159,8 +159,6 @@ void D_Display(void)
 			// Set flags for the renderer.
 			if(IS_CLIENT) R_SetAllDoomsdayFlags();
 			GL_SetFilter(vplayer->plr->filter);
-			// The display player cannot be seen.
-			vplayer->plr->mo->ddflags |= DDMF_DONTDRAW;
 			// The view angle offset.
 			Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
 			// With invulnerability, we want fullbright lighting.

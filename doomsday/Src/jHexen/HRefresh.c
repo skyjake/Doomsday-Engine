@@ -193,10 +193,6 @@ void G_Drawer(void)
 	player_t	*vplayer = &players[displayplayer];
 	boolean		iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
 
-	// Change the view size if needed.
-/*	if(setsizeneeded)
-	{
-		setsizeneeded = false;*/
 	// $democam: can be set on every frame
 	if(cfg.setblocks > 10 || iscam)
 	{
@@ -239,8 +235,6 @@ void G_Drawer(void)
 				// Set flags for the renderer.
 				if(IS_CLIENT) R_SetAllDoomsdayFlags();
 				GL_SetFilter(vplayer->plr->filter); // $democam
-				// The display player cannot be seen.
-				vplayer->plr->mo->ddflags |= DDMF_DONTDRAW;
 				// Check for the sector special 200: use sky2.
 				// I wonder where this is used?
 				if(vplayer->plr->mo->subsector->sector->special == 200)
@@ -257,7 +251,6 @@ void G_Drawer(void)
 							-(intensity<<1))<<FRACBITS);
 					Set(DD_VIEWY_OFFSET, ((M_Random() % (intensity<<2))
 							-(intensity<<1))<<FRACBITS);
-					vplayer->plr->mo->ddflags |= DDMF_DONTDRAW;
 				}
 				else
 				{
@@ -268,7 +261,9 @@ void G_Drawer(void)
 				Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
 				// Render the view.
 				if(!dontrender)
+				{
 					R_RenderPlayerView(vplayer->plr);
+				}
 				if(special200)
 				{
 					Rend_SkyParams(0, DD_ENABLE, 0);

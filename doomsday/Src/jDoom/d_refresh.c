@@ -253,7 +253,6 @@ void D_Display (void)
 				R_SetAllDoomsdayFlags();
 			}
 			// Don't draw self.
-			players[displayplayer].plr->mo->ddflags |= DDMF_DONTDRAW;
 			Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
 			GL_SetFilter(players[displayplayer].plr->filter); // $democam
 			// How about fullbright?
