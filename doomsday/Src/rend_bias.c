@@ -1583,6 +1583,13 @@ static void SBE_DrawHue(void)
     gl.Disable(DGL_TEXTURING);
     gl.Disable(DGL_CULL_FACE);
 
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PushMatrix();
+
+    gl.Translatef(vx, vy, vz);
+    gl.Scalef(1, 1.0f/1.2f, 1);
+    gl.Translatef(-vx, -vy, -vz);
+
     // The origin of the circle.
     for(i = 0; i < 3; ++i)
         center[i] = eye[i] + hueOrigin[i] * hueDistance;
@@ -1651,6 +1658,9 @@ static void SBE_DrawHue(void)
                     center[2] + s * off2[2]);
     }
     gl.End();
+
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
     
     gl.Enable(DGL_DEPTH_TEST);
     gl.Enable(DGL_TEXTURING);
