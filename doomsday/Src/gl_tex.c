@@ -2506,6 +2506,8 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
 							 alphaChannel, true, RGBData, false);
 		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
 
 		// Do we have a masked texture?
 		textures[idx]->masked = (image.isMasked != 0);
