@@ -144,7 +144,8 @@ struct
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void	P_InitPlayerValues(player_t *p);
-void	P_RunPlayers();
+void	P_RunPlayers(void);
+boolean	P_IsPaused(void);
 
 #if __JHERETIC__
 void	D_PageTicker(void);
@@ -1589,6 +1590,12 @@ void G_Ticker (void)
 
 	// Enable/disable sending of frames (delta sets) to clients.
 	Set(DD_ALLOW_FRAMES, gamestate == GS_LEVEL);
+	if(!IS_CLIENT)
+	{
+		// Tell Doomsday when the game is paused (clients can't pause 
+		// the game.)
+		Set(DD_CLIENT_PAUSED, P_IsPaused());
+	}
 
 	// Must be called on every tick.
 	P_RunPlayers();
