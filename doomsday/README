@@ -39,10 +39,11 @@ You won't be able to play without an IWAD file!
 GLBSP
 -----
 
-Get it from glbsp.sourceforge.net.
+Beginning with version 1.8.1, Doomsday can generate glBSP data
+automatically.  It is no longer necessary to run glBSP separately on
+your WADs.
 
-Run it on all of your WAD files.  This will provide Doomsday with more
-accurate map data and get rid of a host of graphical glitches.
+However, if you need it, you can get glBSP from glbsp.sourceforge.net.
 
 
 ADDITIONAL RESOURCE PACKS
