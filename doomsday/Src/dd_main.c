@@ -263,6 +263,7 @@ void DD_Main(void)
 	}
 
 	Dir_MakeAbsolute(ddBasePath);
+	Dir_ValidDir(ddBasePath);
 	
 	// We need to get the console initialized. Otherwise Con_Message() will
 	// crash the system (yikes).
