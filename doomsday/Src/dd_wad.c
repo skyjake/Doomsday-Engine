@@ -836,7 +836,7 @@ int W_OpenAuxiliary(const char *filename)
 	if((handle = F_Open(filename, "rb")) == NULL)
 	{
 		Con_Error("W_OpenAuxiliary: %s not found.", filename);
-		return;
+		return -1;
 	}
 	AuxiliaryHandle = handle;
 	F_Read(&header, sizeof(header), handle);
