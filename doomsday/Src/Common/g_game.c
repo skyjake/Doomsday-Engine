@@ -3236,6 +3236,11 @@ int CCmdMakeLocal(int argc, char **argv)
 		Con_Printf("Invalid console number %i.\n", p);
 		return false;
 	}
+	if(players[p].plr->ingame)
+	{
+		Con_Printf("Player %i is already in the game.\n", p);
+		return false;
+	}
 	players[p].playerstate = PST_REBORN;
 	players[p].plr->ingame = true;
 	sprintf(buf, "conlocp %i", p);
