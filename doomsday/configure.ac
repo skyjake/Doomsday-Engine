@@ -1,5 +1,5 @@
-AC_INIT(deng, [1.8.1-rc2], [jaakko.keranen@iki.fi])
-AM_INIT_AUTOMAKE(deng, [1.8.1-rc2])
+AC_INIT(deng, [1.8.1-rc3], [jaakko.keranen@iki.fi])
+AM_INIT_AUTOMAKE(deng, [1.8.1-rc3])
 
 AM_CONFIG_HEADER(config.h)
 

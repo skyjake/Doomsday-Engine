@@ -32,6 +32,9 @@ Version 1.8.1
 jDoom:
 - fixed: '-warp' made fonts disappear
 
+jHeretic/jHexen:
+- fixed: when a demo stops continue with a running InFine sequence
+
 Win32:
 - too many console messages caused a crash during startup (extra verbosity)
 
