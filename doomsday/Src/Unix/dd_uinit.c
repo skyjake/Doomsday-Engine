@@ -26,9 +26,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ltdl.h>
 #include <limits.h>
 #include <SDL.h>
+
+#ifdef MACOSX
+#  include "sys_dylib.h"
+#else
+#  include <ltdl.h>
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -88,7 +93,11 @@ boolean InitGame(void)
 	}
 
 	// Now, load the library and get the API/exports.
+#ifdef MACOSX
+	strcpy(libName, gameName);
+#else
 	sprintf(libName, "lib%s", gameName);
+#endif
 	if(!(hGame = lt_dlopenext(libName)))
 	{
 		DD_ErrorBox(true, "InitGame: Loading of %s failed (%s).\n", libName,
@@ -121,6 +130,8 @@ static lt_dlhandle *NextPluginHandle(void)
 	return NULL;
 }
 
+
+#if 0
 int LoadPlugin(const char *pluginPath, lt_ptr data)
 {
 	filename_t name;
@@ -130,11 +141,32 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 	// What is the actual file name?
 	_splitpath(pluginPath, NULL, NULL, name, NULL);
 	
+	printf("LP: %s => %s\n", pluginPath, name);
+
 	if(!strncmp(name, "libdp", 5))
 	{
+#if 0
+		filename_t fullPath;
+		
+#ifdef DENG_LIBRARY_DIR
+		sprintf(fullPath, DENG_LIBRARY_DIR "/%s", name);
+#else
+		strcpy(fullPath, pluginPath);
+#endif
+		//if(strchr(name, '.'))
+			strcpy(name, pluginPath);
+/*		else
+		{
+			strcpy(name, pluginPath);
+			strcat(name, ".dylib");
+			}*/
+#endif
 		// Try loading this one as a Doomsday plugin.
 		if(NULL == (plugin = lt_dlopenext(pluginPath)))
+		{
+			printf("LoadPlugin: Failed to open %s!\n", pluginPath);
 			return 0;
+		}
 
 		if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
 		   NULL == (handle = NextPluginHandle()))
@@ -147,6 +179,43 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 		// This seems to be a Doomsday plugin.
 		*handle = plugin;
 
+		printf("LoadPlugin: %s\n", pluginPath);
+		initializer();
+	}
+	
+	return 0;
+}
+#endif
+
+int LoadPlugin(const char *pluginPath, lt_ptr data)
+{
+#ifndef MACOSX
+	filename_t name;
+#endif
+	lt_dlhandle plugin, *handle;
+	void (*initializer)(void);
+	
+#ifndef MACOSX
+	// What is the actual file name?
+	_splitpath(pluginPath, NULL, NULL, name, NULL);
+	if(!strncmp(name, "libdp", 5))
+#endif
+	{
+		// Try loading this one as a Doomsday plugin.
+		if(NULL == (plugin = lt_dlopenext(pluginPath)))
+			return 0;
+		
+		if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
+		   NULL == (handle = NextPluginHandle()))
+		{
+			printf("LoadPlugin: Failed to load %s!\n", pluginPath);
+			lt_dlclose(plugin);
+			return 0;
+		}
+		
+		// This seems to be a Doomsday plugin.
+		*handle = plugin;
+		
 		printf("LoadPlugin: %s\n", pluginPath);
 		initializer();
 	}

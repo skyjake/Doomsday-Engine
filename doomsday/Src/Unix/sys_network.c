@@ -24,7 +24,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <SDL_net.h>
+#ifdef MACOSX
+#  include <SDL_net/SDL_net.h>
+#else
+#  include <SDL_net.h>
+#endif
 
 #include "de_base.h"
 #include "de_network.h"

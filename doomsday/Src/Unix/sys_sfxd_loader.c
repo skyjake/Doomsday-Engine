@@ -25,7 +25,12 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
-#include <ltdl.h>
+
+#ifdef MACOSX
+#  include "sys_dylib.h"
+#else
+#  include <ltdl.h>
+#endif
 
 #include "de_console.h"
 #include "sys_sfxd.h"
@@ -161,8 +166,12 @@ sfxdriver_t *DS_Load(const char *name)
 {
 	filename_t fn;
 
+#ifdef MACOSX
+	sprintf(fn, "ds%s.bundle", name);
+#else
 	// Compose the name, use the prefix "ds".
 	sprintf(fn, "libds%s", name);
+#endif
 
 	if((handle = lt_dlopenext(fn)) == NULL)
 	{
