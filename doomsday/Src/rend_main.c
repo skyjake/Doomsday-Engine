@@ -6,7 +6,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-//#define DD_PROFILE
+#define DD_PROFILE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,13 +36,6 @@ BEGIN_PROF_TIMERS()
 	PROF_REND_SUB_PLANES
 END_PROF_TIMERS()
 
-enum // For Wall Height Division.
-{
-	WHD_TOP,
-	WHD_MIDDLE,
-	WHD_BOTTOM
-};
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -64,6 +57,7 @@ extern int	dlMaxRad;
 boolean		whitefog = false;		// Is the fog in use?
 float		fieldOfView = 90.0f;
 float		maxLightDist = 1024;
+boolean		smoothTexAnim = true;
 
 float		vx, vy, vz, vang, vpitch;
 float		viewsidex, viewsidey;	
@@ -235,6 +229,19 @@ int Rend_SegFacingDir(float v1[2], float v2[2])
 	return 0;	// Facing away.
 }
 
+//===========================================================================
+// Rend_SegFacingPoint
+//===========================================================================
+int Rend_SegFacingPoint(float v1[2], float v2[2], float pnt[2])
+{
+	float nx = v1[VY] - v2[VY], ny = v2[VX] - v1[VX];
+	float vvx = v1[VX] - pnt[VX], vvy = v1[VY] - pnt[VY];
+
+	// The dot product.
+	if(nx * vvx + ny * vvy > 0) return 1;	// Facing front.
+	return 0;	// Facing away.
+}
+
 static int __cdecl DivSortAscend(const void *e1, const void *e2)
 {
 	float f1 = *(float*) e1, f2 = *(float*) e2;
@@ -267,12 +274,69 @@ int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 }
 
 //===========================================================================
+// Rend_PolyTextureBlend
+//===========================================================================
+void Rend_PolyTextureBlend(int texture, rendpoly_t *poly)
+{
+	translation_t *xlat = &texturetranslation[texture];
+
+	if(!smoothTexAnim || !texture || xlat->current == xlat->next 
+		|| xlat->inter <= 0) 
+	{
+		// No blending for you, my friend.
+		poly->blendtex  = 0;
+		poly->blendtexw = 0;
+		poly->blendtexh = 0;
+		poly->blendpos  = 0;
+		return;
+	}
+
+	// Get info of the blend target. The globals texw and texh are modified.
+	poly->blendtex  = GL_PrepareTexture2(xlat->next, false);
+	poly->blendtexw = texw;
+	poly->blendtexh = texh;
+	poly->blendpos  = xlat->inter;
+
+#ifdef _DEBUG
+	if(poly->blendtex == poly->tex)
+	{
+		poly->tex = poly->tex;
+	}
+#endif
+}
+
+//===========================================================================
+// Rend_PolyFlatBlend
+//===========================================================================
+void Rend_PolyFlatBlend(int flat, rendpoly_t *poly)
+{
+	flat_t *ptr = R_GetFlat(flat);
+	
+	if(!smoothTexAnim 
+		|| ptr->translation.current == ptr->translation.next
+		|| ptr->translation.inter <= 0)
+	{
+		poly->blendtex  = 0;
+		poly->blendtexw = 0;
+		poly->blendtexh = 0;
+		poly->blendpos  = 0;
+		return;
+	}
+
+	// Get info of the blend target. The globals texw and texh are modified.
+	poly->blendtex  = GL_PrepareFlat2(ptr->translation.next, false);
+	poly->blendtexw = texw;
+	poly->blendtexh = texh;
+	poly->blendpos  = ptr->translation.inter;
+}
+
+//===========================================================================
 // Rend_WallHeightDivision
 //	Division will only happen if it must be done.
 //	Converts quads to divquads.
 //===========================================================================
-void Rend_WallHeightDivision(rendpoly_t *quad, seg_t *seg, sector_t *frontsec,
-						  int mode)
+void Rend_WallHeightDivision
+	(rendpoly_t *quad, seg_t *seg, sector_t *frontsec, int mode)
 {
 	int				i, k, vtx[2];		// Vertex indices.
 	vertexowner_t	*own;
@@ -282,18 +346,18 @@ void Rend_WallHeightDivision(rendpoly_t *quad, seg_t *seg, sector_t *frontsec,
 
 	switch(mode)
 	{
-	case WHD_MIDDLE:
+	case SEG_MIDDLE:
 		hi = SECT_CEIL(frontsec);
 		low = SECT_FLOOR(frontsec);
 		break;
 
-	case WHD_TOP:
+	case SEG_TOP:
 		hi = SECT_CEIL(frontsec);
 		low = SECT_CEIL(seg->backsector);
 		if(SECT_FLOOR(frontsec) > low) low = SECT_FLOOR(frontsec);
 		break;
 
-	case WHD_BOTTOM:
+	case SEG_BOTTOM:
 		hi = SECT_FLOOR(seg->backsector);
 		low = SECT_FLOOR(frontsec);
 		if(SECT_CEIL(frontsec) < hi) hi = SECT_CEIL(frontsec);
@@ -327,7 +391,7 @@ void Rend_WallHeightDivision(rendpoly_t *quad, seg_t *seg, sector_t *frontsec,
 				// Divide at the sector's ceiling height?
 				if(sceil > low && sceil < hi)
 				{
-					quad->type = rp_divquad;
+					quad->type = RP_DIVQUAD;
 					if(!Rend_CheckDiv(quad, i, sceil))
 						quad->divs[i].pos[quad->divs[i].num++] = sceil;
 				}
@@ -337,7 +401,7 @@ void Rend_WallHeightDivision(rendpoly_t *quad, seg_t *seg, sector_t *frontsec,
 				// Divide at the sector's floor height?
 				if(sfloor > low && sfloor < hi)
 				{
-					quad->type = rp_divquad;
+					quad->type = RP_DIVQUAD;
 					if(!Rend_CheckDiv(quad, i, sfloor))
 						quad->divs[i].pos[quad->divs[i].num++] = sfloor;
 				}					
@@ -370,41 +434,40 @@ void Rend_WallHeightDivision(rendpoly_t *quad, seg_t *seg, sector_t *frontsec,
 // Rend_MidTexturePos
 //	Calculates the placement for a middle texture (top, bottom, offset).
 //	Texture must be prepared so texh is known.
+//	texoffy may be NULL.
 //	Returns false if the middle texture isn't visible (in the opening).
-//	In:	quad.top = openingTop
-//		quad.bottom = openingBottom
-//	Out: quad
 //===========================================================================
-int Rend_MidTexturePos(rendpoly_t *quad, float tcyoff, boolean lower_unpeg)
+int Rend_MidTexturePos(float *top, float *bottom, float *texoffy, 
+					   float tcyoff, boolean lower_unpeg)
 {
-	float openingTop = quad->top, openingBottom = quad->bottom;
+	float openingTop = *top, openingBottom = *bottom;
 	float offset = 0;	
 
 	if(openingTop <= openingBottom) return false;
 
-	quad->texoffy = 0;
+	if(texoffy)	*texoffy = 0;
 	
 	// We don't allow vertical tiling.
 	if(lower_unpeg)
 	{
-		quad->bottom += tcyoff;
-		quad->top = quad->bottom + texh;
+		*bottom += tcyoff;
+		*top = *bottom + texh;
 	}
 	else
 	{
-		quad->top += tcyoff;
-		quad->bottom = quad->top - texh;
+		*top += tcyoff;
+		*bottom = *top - texh;
 	}
 
 	// Clip it.
-	if(quad->bottom < openingBottom) 
+	if(*bottom < openingBottom) 
 	{
-		quad->bottom = openingBottom;
+		*bottom = openingBottom;
 	}
-	if(quad->top > openingTop) 
+	if(*top > openingTop) 
 	{
-		quad->texoffy += quad->top - openingTop;
-		quad->top = openingTop;
+		if(texoffy) *texoffy += *top - openingTop;
+		*top = openingTop;
 	}
 	return true;
 }
@@ -415,6 +478,7 @@ int Rend_MidTexturePos(rendpoly_t *quad, float tcyoff, boolean lower_unpeg)
 //===========================================================================
 void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 {
+	int				segindex = GET_SEG_IDX(seg);
 	sector_t		*backsec = seg->backsector;
 	side_t			*sid = seg->sidedef;
 	line_t			*ldef = seg->linedef;
@@ -429,7 +493,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 
 	// Init the quad.
 	memset(&quad, 0, sizeof(quad));		
-	quad.type = rp_quad;
+	quad.type = RP_QUAD;
 	quad.numvertices = 2;
 
 	v1 = quad.vertices[0].pos;
@@ -472,7 +536,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.texoffy += texh-fsh;
 
 		// Fill in the remaining quad data.
-		quad.flags = seg->flags & DDSEGF_DLIGHT? RPF_DLIT : 0;
+		quad.flags = /*seg->flags & DDSEGF_DLIGHT? RPF_DLIT : */ 0;
 		// What about glow?
 		if(R_TextureFlags(sid->midtexture) & TXF_GLOW)
 			quad.flags |= RPF_GLOW;
@@ -482,8 +546,12 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 		quad.texh = texh;
 
 		// Check for neighborhood division.
-		Rend_WallHeightDivision(&quad, seg, frontsec, WHD_MIDDLE);
+		Rend_WallHeightDivision(&quad, seg, frontsec, SEG_MIDDLE);
 		
+		// Dynamic lights.
+		quad.lights = DL_GetSegLightLinks(segindex, SEG_MIDDLE);
+
+		Rend_PolyTextureBlend(sid->midtexture, &quad);
 		RL_AddPoly(&quad);
 
 		// This is guaranteed to be a solid segment.
@@ -491,7 +559,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 	}
 
 	// Restore original type, height division may change this.
-	quad.type = rp_quad;
+	quad.type = RP_QUAD;
 
 	if(backsec)
 	{
@@ -509,6 +577,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.top = fceil + frontsec->skyfix;
 			quad.bottom = fceil;
 			quad.tex = 0;
+			quad.lights = NULL;
+			quad.blendtex = 0;
 			RL_AddPoly(&quad);
 		}
 	}
@@ -542,6 +612,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.top = fceil + frontsec->skyfix;
 			quad.bottom = bceil;
 			quad.tex = 0;
+			quad.lights = NULL;
+			quad.blendtex = 0;
 			RL_AddPoly(&quad);
 		}
 
@@ -575,8 +647,8 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				}
 			}
 			
-			if(Rend_MidTexturePos(&quad, tcyoff, 
-				0 != (ldef->flags & ML_DONTPEGBOTTOM)) )
+			if( Rend_MidTexturePos(&quad.top, &quad.bottom, &quad.texoffy, 
+				tcyoff, 0 != (ldef->flags & ML_DONTPEGBOTTOM)) )
 			{
 				quad.flags = texmask? RPF_MASKED : 0;
 
@@ -584,13 +656,16 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				if(R_TextureFlags(sid->midtexture) & TXF_GLOW)
 					quad.flags |= RPF_GLOW;
 				
-				if(seg->flags & DDSEGF_DLIGHT) quad.flags |= RPF_DLIT;
-
-				RL_AddPoly(&quad);
+				//if(seg->flags & DDSEGF_DLIGHT) quad.flags |= RPF_DLIT;
+				// Dynamic lights.
+				quad.lights = DL_GetSegLightLinks(segindex, SEG_MIDDLE);
 
 				// Should a solid segment be added here?
 				if(!texmask && quad.top >= gaptop && quad.bottom <= gapbottom)
 					C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
+
+				Rend_PolyTextureBlend(sid->midtexture, &quad);
+				RL_AddPoly(&quad);
 			}
 		}
 		// Upper wall.
@@ -625,7 +700,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				quad.texoffy += texh-topwh;
 			}								
 			quad.flags = 0;
-			if(seg->flags & DDSEGF_DLIGHT) quad.flags |= RPF_DLIT;
+			//if(seg->flags & DDSEGF_DLIGHT) quad.flags |= RPF_DLIT;
 			// What about glow?
 			if(R_TextureFlags(sid->toptexture) & TXF_GLOW)
 				quad.flags |= RPF_GLOW;
@@ -636,12 +711,16 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.texh = texh;
 
 			// Might be necessary.
-			Rend_WallHeightDivision(&quad, seg, frontsec, WHD_TOP);
+			Rend_WallHeightDivision(&quad, seg, frontsec, SEG_TOP);
 
+			// Dynamic lights.
+			quad.lights = DL_GetSegLightLinks(segindex, SEG_TOP);
+
+			Rend_PolyTextureBlend(sid->toptexture, &quad);
 			RL_AddPoly(&quad);
 
 			// Restore original type, height division may change this.
-			quad.type = rp_quad;
+			quad.type = RP_QUAD;
 		}
 		// Lower wall.
 		if(bfloor > ffloor && !(frontsec->floorpic == skyflatnum 
@@ -668,7 +747,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				quad.texoffy += fceil - bfloor;
 			}
 			quad.flags = 0;
-			if(seg->flags & DDSEGF_DLIGHT) quad.flags |= RPF_DLIT;
+//			if(seg->flags & DDSEGF_DLIGHT) quad.flags |= RPF_DLIT;
 			// What about glow?
 			if(R_TextureFlags(sid->bottomtexture) & TXF_GLOW)
 				quad.flags |= RPF_GLOW;
@@ -684,8 +763,12 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.texh = texh;
 
 			// Might be necessary.
-			Rend_WallHeightDivision(&quad, seg, frontsec, WHD_BOTTOM);
+			Rend_WallHeightDivision(&quad, seg, frontsec, SEG_BOTTOM);
+
+			// Dynamic lights.
+			quad.lights = DL_GetSegLightLinks(segindex, SEG_BOTTOM);
 			
+			Rend_PolyTextureBlend(sid->bottomtexture, &quad);
 			RL_AddPoly(&quad);
 		}
 	}
@@ -792,7 +875,7 @@ void Rend_RenderSubsector(int ssecidx)
 	float			sceil = sin->visceiling, sfloor = sin->visfloor;
 	lumobj_t		*lumi;	// Lum Iterator, or 'snow' in Finnish.
 	
-	if(sceil - sfloor <= 0) 
+	if(sceil - sfloor <= 0 || ssec->numverts < 3) 
 	{
 		// Skip this, it has no volume.
 		// Neighbors handle adding the solid clipper segments.
@@ -815,17 +898,13 @@ void Rend_RenderSubsector(int ssecidx)
 
 	// Dynamic lights. Processes both the ceiling and the floor, and all
 	// visible wall segments. First clear the necessary flags.
-	ssec->flags &= ~DDSUBF_CLEAR_MASK;
+/*	ssec->flags &= ~DDSUBF_CLEAR_MASK;
 	for(i = 0, seg = segs+SEGIDX(ssec->firstline); i < ssec->linecount; 
-		i++, seg += SEGSIZE) ((seg_t*)seg)->flags &= ~DDSUBF_CLEAR_MASK;
+		i++, seg += SEGSIZE) ((seg_t*)seg)->flags &= ~DDSUBF_CLEAR_MASK;*/
 
-	if(useDynLights) 
-		DL_ProcessSubsector(&poly, ssec);
+	if(useDynLights) DL_ProcessSubsector(ssec);
 
 	END_PROF( PROF_REND_SUB_LIGHTS );
-
-/*	if(useShadows)
-		Rend_SubsectorShadows(ssec); */
 
 	BEGIN_PROF( PROF_REND_SUB_OCCLUDE );
 
@@ -880,8 +959,9 @@ void Rend_RenderSubsector(int ssecidx)
 
 	// The floor.
 	memset(&poly, 0, sizeof(poly));
-	poly.type = rp_flat;
-	if(ssec->flags & DDSUBF_DLIGHT_FLOOR) poly.flags = RPF_DLIT;
+	poly.type = RP_FLAT;
+	//if(ssec->flags & DDSUBF_DLIGHT_FLOOR) poly.flags = RPF_DLIT;
+	poly.lights = floorLightLinks[ssecidx];
 	// Determine the height of the floor.
 	if(sin->linkedfloor)
 	{
@@ -904,6 +984,7 @@ void Rend_RenderSubsector(int ssecidx)
 		if(planepic == skyflatnum) 
 		{
 			poly.flags |= RPF_SKY_MASK;
+			poly.lights = NULL;
 			skyhemispheres |= SKYHEMI_LOWER;
 		}
 		else
@@ -917,11 +998,30 @@ void Rend_RenderSubsector(int ssecidx)
 		}
 		poly.top = height;
 		RL_PrepareFlat(&poly, 0, 0, RLPF_NORMAL, ssec);
+		Rend_PolyFlatBlend(planepic, &poly);
 		RL_AddPoly(&poly);
+
+/*		if(smoothTexAnim && !(poly.flags & RPF_SKY_MASK))
+		{
+			// FIXME: Calling R_GetFlat is not a good idea...
+			flat_t *flat = R_GetFlat(planepic);
+
+			if(flat->ingroup
+				&& flat->translation.next != flat->translation.current)
+			{
+				poly.flags |= RPF_ALPHA;
+				poly.alpha = flat->translation.inter;
+				poly.tex = GL_PrepareFlat2(flat->translation.next, false);
+				poly.detail = texdetail;
+				poly.top += 1;
+				RL_AddPoly(&poly);
+			}
+		}*/
 	}
 	// And the roof.
 	poly.flags = 0;
-	if(ssec->flags & DDSUBF_DLIGHT_CEILING) poly.flags = RPF_DLIT;
+	//if(ssec->flags & DDSUBF_DLIGHT_CEILING) poly.flags = RPF_DLIT;
+	poly.lights = ceilingLightLinks[ssecidx];
 	// Determine the height of the ceiling.
 	if(sin->linkedceiling)
 	{
@@ -944,6 +1044,7 @@ void Rend_RenderSubsector(int ssecidx)
 		if(planepic == skyflatnum) 
 		{
 			poly.flags |= RPF_SKY_MASK;
+			poly.lights = NULL;
 			skyhemispheres |= SKYHEMI_UPPER;
 		}
 		else
@@ -958,6 +1059,7 @@ void Rend_RenderSubsector(int ssecidx)
 		poly.top = height + sect->skyfix;
 		// The first vertex is always the last in the whole list.
 		RL_PrepareFlat(&poly, 0, 0, RLPF_REVERSE, ssec);
+		Rend_PolyFlatBlend(planepic, &poly);
 		RL_AddPoly(&poly);
 	}
 
