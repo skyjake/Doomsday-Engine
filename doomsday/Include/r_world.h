@@ -15,5 +15,6 @@ void R_SetSectorLinks(sector_t *sec);
 sector_t *R_GetLinkedSector(sector_t *startsec, boolean getfloor);
 void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
+void R_SkyFix(void);
 
 #endif 
