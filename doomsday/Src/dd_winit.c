@@ -109,7 +109,8 @@ BOOL InitInstance(HINSTANCE hInst, int cmdShow)
 	SelectObject(hdc, GetStockObject(SYSTEM_FIXED_FONT));
 
 	// Tell DGL of our main window.
-	gl.SetInteger(DGL_WINDOW_HANDLE, (int) hWndMain);
+	if(gl.SetInteger)
+		gl.SetInteger(DGL_WINDOW_HANDLE, (int) hWndMain);
 	return TRUE;
 }
 
