@@ -46,6 +46,7 @@
 #include "d_netjd.h"
 #include "acfnlink.h"
 #include "g_update.h"
+#include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -64,8 +65,6 @@ void D_DefaultBindings();
 fixed_t P_GetMobjFriction(mobj_t* mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void D_DoAdvanceDemo (void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -87,7 +86,6 @@ int				startepisode;
 int				startmap;
 boolean			autostart;
 FILE*			debugfile;
-boolean			advancedemo;
 
 // Demo loop.
 int             demosequence;
@@ -105,20 +103,20 @@ static char gameModeString[17];
 // D_PageTicker
 // Handles timing for warped projection
 //
-void D_PageTicker (void)
+/*void D_PageTicker (void)
 {
     if (--pagetic < 0)
 	D_AdvanceDemo ();
 }
-
+*/
 //
 // D_AdvanceDemo
 // Called after each demo or intro demosequence finishes
 //
-void D_AdvanceDemo (void)
+/*void D_AdvanceDemo (void)
 {
     advancedemo = true;
-}
+}*/
 
 void D_GetDemoLump(int num, char *out)
 {
@@ -130,6 +128,7 @@ void D_GetDemoLump(int num, char *out)
 		: '2', num);
 }
 
+/*
 //
 // This cycles through the demo sequences.
 // FIXME - version dependend demo numbers?
@@ -206,22 +205,7 @@ void D_DoAdvanceDemo (void)
 		break;
     }
 }
-
-
-
-//
-// D_StartTitle
-//
-void D_StartTitle (void)
-{
-	G_StopDemo();
-    gameaction = ga_nothing;
-    demosequence = -1;
-    D_AdvanceDemo ();
-}
-
-
-
+*/
 
 //      print title for every printed line
 char            title[128];
@@ -458,7 +442,7 @@ void D_PreInit(void)
 	// Config defaults. The real settings are read from the .cfg files
 	// but these will be used no such files are found.
 	memset(&cfg, 0, sizeof(cfg));
-	cfg.dclickuse = true;
+	cfg.dclickuse = false;
 	cfg.mouseSensiX = cfg.mouseSensiY = 8;
 	cfg.povLookAround = true;
 	cfg.joyaxis[0] = JOYAXIS_TURN;
@@ -746,7 +730,9 @@ void D_PostInit(void)
 			//if(demorecording) G_BeginRecording();
 		}
 		else
-			D_StartTitle();                // start up intro loop
+		{
+			G_StartTitle();                // start up intro loop
+		}
     }
 }
 
@@ -756,7 +742,7 @@ void D_Shutdown(void)
 
 void D_Ticker(void)
 {
-	if(advancedemo) D_DoAdvanceDemo();
+//	if(advancedemo) D_DoAdvanceDemo();
 	M_Ticker();
 	G_Ticker();
 }
