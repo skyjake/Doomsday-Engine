@@ -9,7 +9,6 @@
 #include "dd_api.h"
 #include "dd_dgl.h"
 #include "dd_plugin.h"
-#include "dd_defns.h"
 #include "dd_wad.h"
 #include "dd_zone.h"
 #include "dd_main.h"

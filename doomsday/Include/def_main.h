@@ -1,5 +1,5 @@
-#ifndef __DOOMSDAY_DEFINITIONS_H__
-#define __DOOMSDAY_DEFINITIONS_H__
+#ifndef __DOOMSDAY_DEFINITIONS_MAIN_H__
+#define __DOOMSDAY_DEFINITIONS_MAIN_H__
 
 #include "dedfile.h"
 #include "dd_dfdat.h"
