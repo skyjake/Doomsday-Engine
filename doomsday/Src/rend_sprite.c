@@ -77,12 +77,14 @@ void Rend_Draw3DPlayerSprites(void)
 //===========================================================================
 void Rend_DrawPlayerSprites(void)
 {
-	int i;
-	ddpsprite_t *psp;
 	spriteinfo_t info[DDMAXPSPRITES];
-	sector_t *sec = viewplayer->mo->subsector->sector;
-	float offx = pspOffX / 16.0f, offy = pspOffY / 16.0f;
-	boolean isFullBright = LevelFullBright;
+	ddpsprite_t *psp;
+	int i;
+	sector_t *sec         = viewplayer->mo->subsector->sector;
+	float offx            = pspOffX / 16.0f;
+	float offy            = pspOffY / 16.0f;
+	byte somethingVisible = false;
+	byte isFullBright     = (LevelFullBright != 0);
 
 	// Cameramen have no psprites.
 	if(viewplayer->flags & DDPF_CAMERA) return; 
@@ -93,40 +95,69 @@ void Rend_DrawPlayerSprites(void)
 	// Check for fullbright.
 	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
 	{
+		// Should this psprite be drawn?
 		if(psp->flags & DDPSPF_RENDERED || !psp->stateptr) 
-			continue; // Not used.
+			continue; // No...
 
 		// If one of the psprites is fullbright, both are.
 		if(psp->stateptr->frame & FF_FULLBRIGHT) 
 			isFullBright = true;
 
+		// Something will be drawn.
+		somethingVisible = true;
+		psp->flags |= DDPSPF_RENDERED;
+
 		R_GetSpriteInfo(psp->stateptr->sprite, 
 			psp->stateptr->frame & FF_FRAMEMASK, &info[i]);
 	}
 
-	// FIXME: Use the sprite info to prepare a single GL texture for
-	// both the psprites.
-
-	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
+	if(!somethingVisible)
 	{
-		if(!info[i].realLump) continue; // Not used.
+		// No psprite was found, we can get out of here.
+		return;
+	}
 
-		// Draw it.
-		psp->flags |= DDPSPF_RENDERED;
+	psp = viewplayer->psprites;
 
-		if(isFullBright)
+	// If both psprites have identical attributes, they can be combined
+	// into one sprite (cvar allowing).
+/*	if(rend_hud_combined_sprite 
+		&& info[0].realLump > 0 && info[1].realLump > 0
+		&& psp[0].alpha == psp[1].alpha
+		&& psp[0].light == psp[1].light)
+	{
+		// Use the sprite info to prepare a single GL texture for
+		// both the psprites.
+		
+		Con_Printf("0:x(%x,%x) off(%x,%x)\n", 
+			psp[0].x, psp[0].y, info[0].offset, info[0].topOffset);
+		Con_Printf("1:x(%x,%x) off(%x,%x)\n", 
+			psp[1].x, psp[1].y, info[1].offset, info[1].topOffset);
+		Con_Printf("--\n");
+	}
+	else*/
+	{
+		// Draw as separate sprites.
+		for(i = 0; i < DDMAXPSPRITES; i++)
 		{
-			GL_SetColorAndAlpha(1, 1, 1, psp->alpha);
+			if(!info[i].realLump) continue; // This doesn't exist.
+
+			if(isFullBright)
+			{
+				GL_SetColorAndAlpha(1, 1, 1, psp[i].alpha);
+			}
+			else
+			{
+				GL_SetColorAndAlpha(psp[i].light * (sec->rgb[CR]/255.0f), 
+					psp[i].light * (sec->rgb[CG]/255.0f), 
+					psp[i].light * (sec->rgb[CB]/255.0f), 
+					psp[i].alpha);
+			}
+
+			GL_DrawPSprite(psp[i].x - info[i].offset + offx, 
+				psp[i].y - info[i].topOffset + offy,
+				1, info[i].flip, info[i].lump);
 		}
-		else
-		{
-			GL_SetColorAndAlpha(psp->light * (sec->rgb[CR]/255.0f), 
-				psp->light * (sec->rgb[CG]/255.0f), 
-				psp->light * (sec->rgb[CB]/255.0f), psp->alpha);
-		}
-		GL_DrawPSprite(psp->x - info[i].offset + offx, 
-			psp->y - info[i].topOffset + offy,
-			1, info[i].flip, info[i].lump);
 	}
 }
 
@@ -252,7 +283,7 @@ void Rend_DrawMasked (void)
 			else 
 			{
 				// This is a mobj.
-				// There might be a model for this sprite, let's see.				/
+				// There might be a model for this sprite, let's see.
 				if(!spr->mo.mf)
 				{
 					// Render an old fashioned sprite.
