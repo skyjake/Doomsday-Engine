@@ -318,14 +318,24 @@ void GL_DrawLine(float x1, float y1, float x2, float y2,
 
 void GL_SetColor(int palidx)
 {
-	byte rgb[3];
+	GL_SetColor2(palidx, 1);
+}
+
+void GL_SetColor2(int palidx, float alpha)
+{
+	byte rgb[4];
 	
 	if(palidx == -1)	// Invisible?
+	{
 		gl.Color4f(0, 0, 0, 0);
+	}
 	else
 	{
 		PalIdxToRGB(W_CacheLumpNum(pallump, PU_CACHE), palidx, rgb);
-		gl.Color3ubv(rgb);
+		if(alpha < 0) alpha = 0;
+		if(alpha > 1) alpha = 1;
+		rgb[3] = alpha * 255;
+		gl.Color4ubv(rgb);
 	}
 }
 

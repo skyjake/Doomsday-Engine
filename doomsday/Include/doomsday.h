@@ -175,6 +175,7 @@ int			GL_ChangeResolution(int w, int h, int bits);
 byte *		GL_GrabScreen(void);
 void		GL_TextureFilterMode(int target, int parm);
 void		GL_SetColor(int palidx);
+void		GL_SetColor2(int palidx, float alpha);
 void		GL_SetColorAndAlpha(float r, float g, float b, float a);
 void		GL_SetNoTexture(void);
 void		GL_SetPatch(int lump);	

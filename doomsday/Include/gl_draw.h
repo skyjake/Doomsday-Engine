@@ -24,6 +24,7 @@ void			GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th);
 void			GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, 
 					int cx, int cy, int cw, int ch);
 void			GL_SetColor(int palidx);
+void			GL_SetColor2(int palidx, float alpha);
 void			GL_SetColorAndAlpha(float r, float g, float b, float a);
 void			GL_DrawPSprite(float x, float y, float scale, int flip, int lump);
 
