@@ -155,6 +155,9 @@ int DD_InitDGL(void)
 {
 	char   *libName = DEFAULT_LIB_NAME;
 
+	if(ArgCheck("-dedicated"))
+		return true;
+	
 	// See if a specific renderer DLL is specified.
 	if(ArgCheckWith("-gl", 1))
 		libName = ArgNext();
