@@ -11,6 +11,18 @@
 typedef unsigned char	DGLubyte;
 typedef unsigned int	DGLuint;
 
+typedef struct gl_vertex_s {
+	float xyz[4];		// The fourth is padding.
+} gl_vertex_t;
+
+typedef struct gl_texcoord_s {
+	float st[2];
+} gl_texcoord_t;
+
+typedef struct gl_color_s {
+	byte rgba[4];
+} gl_color_t;
+
 typedef struct
 {
 	DGLubyte rgb[3];
@@ -127,6 +139,7 @@ enum
 	DGL_MODULATE_TEXTURE,
 	DGL_BLENDING_OP,
 	DGL_WIREFRAME_MODE,
+	DGL_TEXTURE_COMPRESSION,
 
 	DGL_TEXTURE0					= 0x5F00,
 	DGL_TEXTURE1,
