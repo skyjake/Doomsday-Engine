@@ -147,11 +147,6 @@ void	P_InitPlayerValues(player_t *p);
 void	P_RunPlayers(void);
 boolean	P_IsPaused(void);
 
-#if __JHERETIC__
-void	D_PageTicker(void);
-void	D_AdvanceDemo(void);
-#endif
-
 #if __JHEXEN__
 void	P_InitSky(int map);
 void	P_PlayerNextArtifact(player_t *player);
@@ -349,6 +344,26 @@ static int		GameLoadSlot;
 #endif
 
 // CODE --------------------------------------------------------------------
+
+/*
+ * Begin the titlescreen animation sequence.
+ */
+void G_StartTitle (void)
+{
+	char *name = "title";
+	void *script;
+
+	G_StopDemo();
+	usergame = false;
+
+	// The title script must always be defined.
+	if(!Def_Get(DD_DEF_FINALE, name, &script))
+	{
+		Con_Error("G_StartTitle: Script \"%s\" not defined.\n", name);
+	}
+
+	FI_Start(script, FIMODE_LOCAL);
+}
 
 #if __JHERETIC__ || __JHEXEN__
 static int findWeapon(player_t *plr, boolean forward)
@@ -1282,7 +1297,7 @@ boolean G_Responder (event_t* ev)
 #else
     // any other key pops up menu if in demos
     if(gameaction == ga_nothing && !singledemo && 
-		(Get(DD_PLAYBACK) || gamestate == GS_DEMOSCREEN)) 
+		(Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev))) 
     { 
 		if(ev->type == ev_keydown 
 			|| ev->type == ev_mousebdown 
@@ -1294,7 +1309,9 @@ boolean G_Responder (event_t* ev)
 		return false; 
     } 
 #endif
- 
+
+	if(FI_Responder(ev)) return true; 
+
 #if __JHEXEN__
 	if(CT_Responder(ev))
 	{ // Chat ate the event
@@ -1332,11 +1349,11 @@ boolean G_Responder (event_t* ev)
 		break;
 #endif*/
 
-	case GS_INFINE:
+/*	case GS_INFINE:
 		if(FI_Responder(ev)) return true; 
-		break;
+		break;*/
 	}
-	
+
     switch (ev->type) 
     { 
     case ev_keydown:
@@ -1638,11 +1655,11 @@ void G_Ticker (void)
 		break; 
 #endif*/
 
-	case GS_INFINE:
+/*	case GS_INFINE:
 		FI_Ticker();
-		break;
+		break;*/
 
-#if __JHEXEN__
+/*#if __JHEXEN__
 	case GS_DEMOSCREEN:
 		if(IS_DEDICATED) break;
 		H2_PageTicker ();
@@ -1650,10 +1667,15 @@ void G_Ticker (void)
 #else
 	case GS_DEMOSCREEN: 
 		if(IS_DEDICATED) break;
+#ifndef __JDOOM__
 		D_PageTicker (); 
-		break; 
 #endif
-	}        
+		break; 
+#endif*/
+	} 
+	
+	// InFine ticks whenever it's active.
+	FI_Ticker();
 
 	// Servers will have to update player information and do such stuff.
 	if(!IS_CLIENT) NetSv_Ticker();
@@ -2146,6 +2168,9 @@ void G_DoReborn (int playernum)
     mapthing_t *mt, *assigned;
 #endif
 
+	// Clear the currently playing script, if any.
+	FI_Reset();
+
     if (!IS_NETGAME)
     {
 		// We've just died, don't do a briefing now.
@@ -2448,6 +2473,9 @@ void G_DoCompleted (void)
 	static int afterSecret[5] = { 7, 5, 5, 5, 4 };
 #endif
 
+	// Clear the currently playing script, if any.
+	FI_Reset();
+
 	// Is there a debriefing for this map?
 	if(FI_Debriefing(gameepisode, gamemap)) return;
 
@@ -2740,6 +2768,7 @@ void G_LoadGame (char *name)
 void G_DoLoadGame (void) 
 { 
 	G_StopDemo();
+	FI_Reset();
     gameaction = ga_nothing; 
 
 #if __JHEXEN__
@@ -2870,6 +2899,85 @@ void G_DoNewGame (void)
     gameaction = ga_nothing; 
 } 
 
+/*
+ * Returns true if the specified (episode, map) pair can be used.
+ * Otherwise the values are adjusted so they are valid.
+ */
+boolean G_ValidateMap(int *episode, int *map)
+{
+	boolean ok = true;
+
+    if(*episode < 1) 
+	{
+		*episode = 1; 
+		ok = false;
+	}
+	if(*map < 1) 
+	{
+		*map = 1;
+		ok = false;
+	}
+	
+#ifdef __JDOOM__
+	if(gamemode == shareware)
+    {
+		// only start episode 1 on shareware
+		if(*episode > 1) 
+		{
+			*episode = 1;
+			ok = false;
+		}
+    }  
+    else
+    {
+		// Allow episodes 1-9.
+		if(*episode > 9) 
+		{
+			*episode = 9;
+			ok = false;
+		}
+    }
+    if((*map > 9) && (gamemode != commercial)) 
+	{
+		*map = 9; 
+		ok = false;
+	}
+	// Check that the map truly exists.
+	if(!P_MapExists(*episode, *map))
+	{
+		// (1,1) should exist always?
+		*episode = 1;
+		*map = 1;
+		ok = false;
+	}
+
+#elif __JHERETIC__
+	// Up to 9 episodes for testing
+	if(*episode > 9) 
+	{
+		*episode = 9;
+		ok = false;
+	}
+	if(*map > 9) 
+	{
+		*map = 9;
+		ok = false;
+	}
+
+#elif __JHEXEN__
+	if(*map > 99) 
+	{
+		*map = 99;
+		ok = false;
+	}
+#endif
+
+	return ok;
+}
+
+/*
+ * Start a new game.
+ */
 void G_InitNew(skill_t skill, int episode, int map) 
 { 
     int	i;
@@ -2877,8 +2985,8 @@ void G_InitNew(skill_t skill, int episode, int map)
 	int speed; 
 #endif
 	
-/*	if(gamemap == map && gameepisode == episode)
-		brief_disabled = true;*/
+	// If there are any InFine scripts running, they must be stopped.
+	FI_Reset();
 
     if (paused) 
     { 
@@ -2888,38 +2996,9 @@ void G_InitNew(skill_t skill, int episode, int map)
 
 	if(skill < sk_baby) skill = sk_baby;
     if(skill > sk_nightmare) skill = sk_nightmare;
-		
-    if(episode < 1) episode = 1; 
-	
-#if __JDOOM__
-    if ( gamemode == retail )
-    {
-		if (episode > 4)
-			episode = 4;
-    }
-    else if ( gamemode == shareware )
-    {
-		if (episode > 1) 
-			episode = 1;	// only start episode 1 on shareware
-    }  
-    else
-    {
-		if (episode > 3)
-			episode = 3;
-    }
-    if ( (map > 9) && ( gamemode != commercial) ) map = 9; 
 
-#elif __JHERETIC__
-	// Up to 9 episodes for testing
-	if(episode > 9) episode = 9;
-	if(map > 9) map = 9;
-
-#else
-	if(map > 99) map = 99;
-#endif
-  	
-    if (map < 1) 
-		map = 1;
+	// Make sure that the episode and map numbers are good.
+	G_ValidateMap(&episode, &map);
     	
     M_ClearRandom (); 
 	
@@ -3027,11 +3106,11 @@ void G_DoPlayDemo (void)
 	if(lnum < 0 || W_LumpLength(lnum) != 64) 
 	{
 		Con_Message("G_DoPlayDemo: invalid demo lump \"%s\".\n", defdemoname);
-#if __JHEXEN__
+/*#if __JHEXEN__
 		H2_AdvanceDemo();
-#else
+#elif defined(__JHERETIC__)
 		D_AdvanceDemo();
-#endif
+#endif*/
 		return;
 	}
 	lump = W_CacheLumpNum(lnum, PU_CACHE);
@@ -3047,27 +3126,35 @@ void G_DoPlayDemo (void)
 	}
 	else
 	{
-#if __JHEXEN__
+/*#if __JHEXEN__
 		H2_AdvanceDemo();
-#else
+#elif defined(__JHERETIC__)
 		D_AdvanceDemo();
-#endif
+#endif*/
 	}
 } 
 
+/*
+ * Stops both playback and a recording. Called at critical points like 
+ * starting a new game, or ending the game in the menu.
+ */
 void G_StopDemo(void)
 {
-	if(Get(DD_PLAYBACK)) Con_Execute("stopdemo", false);
+	Con_Execute("stopdemo", true);
 }
 
 void G_DemoEnds(void)
 {
 	gamestate = GS_WAITING;
 	if(singledemo) Sys_Quit();
-#if __JHEXEN__
+/*#if __JHEXEN__
 	H2_AdvanceDemo();
-#else
+#elif defined(__JHERETIC__)
 	D_AdvanceDemo();
+#endif*/
+
+#ifdef __JDOOM__
+	FI_DemoEnds();
 #endif
 }
 
@@ -3075,6 +3162,10 @@ void G_DemoAborted(void)
 {
 	gamestate = GS_WAITING;
 	// We'll take no further action.
+
+#ifdef __JDOOM__
+	FI_DemoEnds();
+#endif
 }
 
 #if __JHERETIC__ || __JHEXEN__

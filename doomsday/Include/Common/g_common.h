@@ -1,4 +1,5 @@
 #ifndef __COMMON_GAME_H__
+#define __COMMON_GAME_H__
 
 enum
 { 
@@ -8,6 +9,8 @@ enum
 	JOYAXIS_STRAFE,
 	JOYAXIS_LOOK
 };
+
+void G_StartTitle(void);
 
 // Spawn player at a dummy place.
 void G_DummySpawnPlayer(int playernum);
