@@ -192,6 +192,8 @@ boolean brief_disabled = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+boolean fi_active = false;
+
 // Time is measured in seconds.
 // Colors are floating point and [0,1].
 static ficmd_t fi_commands[] =
@@ -286,6 +288,7 @@ static char fi_token[MAX_TOKEN_LEN];
 static handle_t fi_goto;
 static fitext_t *fi_waitingtext;
 static fipic_t *fi_waitingpic;
+static boolean fi_conditions[NUM_FICONDS];
 
 // The InFine state:
 static int fi_intime;
@@ -312,8 +315,28 @@ void FI_StartScript(char *finalescript, boolean after)
 {
 	int i, c;
 
+#ifdef _DEBUG
+	Con_Printf("FI_StartScript: aft=%i '%.30s'\n", after, finalescript);
+#endif
+
+	if(!IS_CLIENT)
+	{
+		// We are able to figure out the truth values of all the 
+		// conditions.
+		fi_conditions[FICOND_SECRET] = (secretexit != 0);
+
+#ifdef __JHEXEN__
+		// Current hub has been completed?
+		fi_conditions[FICOND_LEAVEHUB] 
+			= (P_GetMapCluster(gamemap) != P_GetMapCluster(LeaveMap));
+#else
+		fi_conditions[FICOND_LEAVEHUB] = false;
+#endif
+	}
+
 	// Tell clients to start this script.
-	NetSv_Finale(FINF_BEGIN | (after? FINF_AFTER : 0), finalescript);
+	NetSv_Finale(FINF_BEGIN | (after? FINF_AFTER : 0), finalescript,
+		fi_conditions, NUM_FICONDS);
 
 	// Init InFine state.
 #if !__JDOOM__
@@ -327,6 +350,7 @@ void FI_StartScript(char *finalescript, boolean after)
     gameaction = ga_nothing;
     gamestate = GS_INFINE;
     automapactive = false;
+	fi_active = true;
 	is_after = after;
 	cp = script = finalescript;	
 	fi_timer = 0;
@@ -342,7 +366,7 @@ void FI_StartScript(char *finalescript, boolean after)
 	fi_waitingpic = NULL;
 	memset(fi_goto, 0, sizeof(fi_goto));
 	GL_SetFilter(0);		// Clear the current filter.
-	for(c = 0; c < 3; c++) FI_InitValue(fi_bgcolor + c, 1);
+	for(c = 0; c < 3; c++) FI_InitValue(fi_bgcolor + c, 0);
 	memset(fi_pics, 0, sizeof(fi_pics));
 	memset(fi_imgoffset, 0, sizeof(fi_imgoffset));
 	memset(fi_text, 0, sizeof(fi_text));
@@ -363,12 +387,25 @@ void FI_StartScript(char *finalescript, boolean after)
 //===========================================================================
 void FI_End(void)
 {
-	if(!fi_canskip) return;
+	if(!fi_canskip || !fi_active) return;
+
+	fi_active = false;
+
+#ifdef _DEBUG
+	Con_Printf("FI_End\n");
+#endif
+
 	// Tell clients to stop the finale.
-	NetSv_Finale(FINF_END, 0);
+	NetSv_Finale(FINF_END, 0, NULL, 0);
 	if(is_after) // A level has been completed.
 	{
-		if(IS_CLIENT) return;
+		if(IS_CLIENT) 
+		{
+#ifdef __JHEXEN__
+			Draw_TeleportIcon();
+#endif
+			return;
+		}
 		gameaction = ga_completed;
 	}
 	else // Enter the level, this was a briefing.
@@ -379,6 +416,20 @@ void FI_End(void)
 		// Restart the current map's song.
 		S_LevelMusic();
 	}
+}
+
+//===========================================================================
+// FI_SetCondition
+//	Set the truth value of a condition. Used by clients after they've
+//	received a GPT_FINALE2 packet.
+//===========================================================================
+void FI_SetCondition(int index, boolean value)
+{
+	if(index < 0 || index >= NUM_FICONDS) return;
+	fi_conditions[index] = value;
+#ifdef _DEBUG
+	Con_Printf("FI_SetCondition: %i = %s\n", index, value? "true" : "false");
+#endif
 }
 
 //===========================================================================
@@ -754,8 +805,10 @@ void FI_Ticker(void)
 	fipic_t *pic;
 	fitext_t *tex;
 
-	fi_timer++;
+	if(!fi_active) return;
 
+	fi_timer++;
+	
 	// Interpolateable values.
 	FI_ValueArrayThink(fi_bgcolor, 3);
 	FI_ValueArrayThink(fi_imgoffset, 2);
@@ -902,7 +955,7 @@ int FI_Responder(event_t *ev)
 		return false;
 	
 	// Servers tell clients to skip.
-	NetSv_Finale(FINF_SKIP, 0);
+	NetSv_Finale(FINF_SKIP, 0, NULL, 0);
 	return FI_SkipRequest();
 }
 
@@ -1104,6 +1157,8 @@ void FI_Drawer(void)
 	fipic_t *pic;
 	fitext_t *tex;
 
+	if(!fi_active) return;
+
 	// Draw the background.
 	if(fi_bgflat >= 0)
 	{
@@ -1115,8 +1170,10 @@ void FI_Drawer(void)
 	else
 	{
 		// Just clear the screen, then.
+		gl.Disable(DGL_TEXTURING);
 		GL_DrawRect(0, 0, 320, 200, fi_bgcolor[0].value, 
 			fi_bgcolor[1].value, fi_bgcolor[2].value, 1);
+		gl.Enable(DGL_TEXTURING);
 	}
 
 	// Draw images.
@@ -1263,7 +1320,7 @@ void FIC_If(void)
 	if(!stricmp(fi_token, "secret"))
 	{
 		// Secret exit was used?
-		val = secretexit;
+		val = fi_conditions[FICOND_SECRET];
 	}
 	else if(!stricmp(fi_token, "netgame"))
 	{
@@ -1294,12 +1351,12 @@ void FIC_If(void)
 		val = (gamemode == commercial);
 	}
 #endif
-#if __JHEXEN__
 	else if(!stricmp(fi_token, "leavehub"))
 	{
 		// Current hub has been completed?
-		val = (P_GetMapCluster(gamemap) != P_GetMapCluster(LeaveMap));
+		val = fi_conditions[FICOND_LEAVEHUB];
 	}
+#if __JHEXEN__
 	// Player classes.
 	else if(!stricmp(fi_token, "fighter"))
 		val = (cfg.PlayerClass[consoleplayer] == PCLASS_FIGHTER);
