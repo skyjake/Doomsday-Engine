@@ -808,7 +808,17 @@ void P_MobjThinker(mobj_t *mobj)
 	}
 	if(mobj->flags2&MF2_FLOATBOB)
 	{ // Floating item bobbing motion
-		mobj->z = mobj->floorz+FloatBobOffsets[(mobj->health++)&63];
+		//mobj->z = mobj->floorz+FloatBobOffsets[(mobj->health++)&63];
+
+		// Keep it on the floor.
+		mobj->z = mobj->floorz;
+
+		// Negative floorclip raises the mobj off the floor.
+		//mobj->floorclip = -mobj->special1;
+
+		// Old floatbob used health as index, let's still increase it
+		// as before (in case somebody wants to use it).
+		mobj->health++;
 	}
 	else if((mobj->z != mobj->floorz) || mobj->momz)
 	{ 
@@ -1105,7 +1115,7 @@ void P_SpawnPlayer(mapthing_t *mthing, int plrnum)
 	p->plr->clAngle = mobj->angle = ANG45 * (mthing->angle/45);
 	p->plr->clLookDir = 0;
 	p->plr->lookdir = 0;
-	p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+	p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 	mobj->player = p;
 	mobj->dplayer = p->plr;
 	mobj->health = p->health;
