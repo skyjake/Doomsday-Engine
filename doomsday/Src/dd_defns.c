@@ -367,10 +367,11 @@ void Def_ReadProcessDED(char *filename)
 	// Change to the directory of the file we're about to read.
 	Dir_FileName(filename, fn);
 	Dir_FileDir(filename, &dir);
-	Dir_ChDir(&dir);
-
-	F_ForAll(fn, 0, Def_ReadDEDFile);
-	Def_ReadIncludedDEDs(&dir);
+	if(Dir_ChDir(&dir)) // Make sure the directory exists.
+	{
+		F_ForAll(fn, 0, Def_ReadDEDFile);
+		Def_ReadIncludedDEDs(&dir);
+	}
 }
 
 //===========================================================================
