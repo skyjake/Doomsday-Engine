@@ -31,7 +31,16 @@ typedef struct
 {
 	char lump[9];	
 	char *path;		// Full path name.
-} lumpdirec_t;
+} 
+lumpdirec_t;
+
+typedef struct
+{
+	f_forall_func_t func;
+	int parm;
+	const char *pattern;
+} 
+zipforall_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -119,7 +128,7 @@ int F_GetDirecIdx(char *exact_path)
 
 //===========================================================================
 // F_AddDirec
-//	The path names can converted to full paths before adding to the table.
+//	The path names are converted to full paths before adding to the table.
 //===========================================================================
 void F_AddDirec(char *lumpname, char *symbolic_path)
 {
@@ -269,7 +278,8 @@ void F_ShutdownDirec(void)
 //===========================================================================
 int F_Access(const char *path)
 {
-	DFILE *file = F_Open(path, "r");
+	// Open for reading, but don't buffer anything.
+	DFILE *file = F_Open(path, "rx");
 	
 	if(!file) return false;
 	F_Close(file);
@@ -295,7 +305,7 @@ DFILE *F_GetFreeFile(void)
 //===========================================================================
 // F_OpenLump
 //===========================================================================
-DFILE *F_OpenLump(const char *name)
+DFILE *F_OpenLump(const char *name, boolean dontBuffer)
 {
 	int num = W_CheckNumForName( (char*) name);
 	DFILE *file;
@@ -307,9 +317,12 @@ DFILE *F_OpenLump(const char *name)
 	// Init and load in the lump data.
 	file->flags.open = true;
 	file->flags.file = false;
-	file->size = lumpinfo[num].size;
-	file->pos = file->data = Z_Malloc(file->size, PU_STATIC, 0);
-	memcpy(file->data, W_CacheLumpNum(num, PU_CACHE), file->size);
+	if(!dontBuffer)
+	{
+		file->size = lumpinfo[num].size;
+		file->pos = file->data = Z_Malloc(file->size, PU_STATIC, 0);
+		memcpy(file->data, W_CacheLumpNum(num, PU_CACHE), file->size);
+	}
 	return file;
 }
 
@@ -336,19 +349,70 @@ DFILE *F_OpenFile(const char *path, const char *mymode)
 }
 
 //===========================================================================
+// F_TranslateZipFileName
+//===========================================================================
+void F_TranslateZipFileName(const char *zipFileName, char *translated)
+{
+	char buf[256];
+
+	// Make a 'real' path out of the zip file name.
+	M_PrependBasePath(zipFileName, buf);
+	_fullpath(translated, buf, 255);
+}
+
+//===========================================================================
+// F_ZipFinder
+//	Returns true if the names match.
+//===========================================================================
+int F_ZipFinder(const char *zipFileName, void *path)
+{
+	char fullZipFn[256];
+
+	F_TranslateZipFileName(zipFileName, fullZipFn);
+
+	// Are they the same?
+	return !stricmp(path, fullZipFn);
+}
+
+//===========================================================================
+// F_OpenZip
+//	Zip data is buffered like lump data.
+//===========================================================================
+DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
+{
+	DFILE *file = F_GetFreeFile();
+
+	if(!file) return NULL;
+	
+	// Init and load in the lump data.
+	file->flags.open = true;
+	file->flags.file = false;
+	if(!dontBuffer)
+	{
+		file->size = Zip_GetSize(zipIndex);
+		file->pos = file->data = Z_Malloc(file->size, PU_STATIC, 0);
+		Zip_Read(zipIndex, file->data);
+	}
+	return file;
+}
+
+//===========================================================================
 // F_Open
 //	Opens the given file (will be translated) or lump for reading.
 //	"t" = text mode (with real files, lumps are always binary)
 //	"b" = binary
 //	"f" = must be a real file
 //	"w" = file must be in a WAD
+//	"x" = just test for access (don't buffer anything)
 //===========================================================================
 DFILE *F_Open(const char *path, const char *mode)
 {
 	char trans[256], full[256];
+	boolean dontBuffer;
 	int i;
 
 	if(!mode) mode = "";
+	dontBuffer = (strchr(mode, 'x') != NULL);
 
 	// Make it a full path.
 	M_TranslatePath(path, trans);
@@ -357,9 +421,14 @@ DFILE *F_Open(const char *path, const char *mode)
 	// Lumpdirecs take precedence.
 	if(!strchr(mode, 'f')) // Doesn't need to be a real file?
 	{
+		// First check the Zip directory.
+		zipindex_t foundZip = Zip_Find(F_ZipFinder, full);
+		if(foundZip)
+			return F_OpenZip(foundZip, dontBuffer);
+
 		for(i = 0; direc[i].path; i++)
 			if(!stricmp(full, direc[i].path))
-				return F_OpenLump(direc[i].lump);
+				return F_OpenLump(direc[i].lump, dontBuffer);
 	}
 	if(strchr(mode, 'w')) return NULL; // Must be in a WAD...
 	
@@ -380,7 +449,7 @@ void F_Close(DFILE *file)
 	else
 	{
 		// Free the stored data.
-		Z_Free(file->data);
+		if(file->data) Z_Free(file->data);
 	}
 	memset(file, 0, sizeof(*file));
 }
@@ -471,9 +540,30 @@ void F_Rewind(DFILE *file)
 }
 
 //===========================================================================
+// F_ZipFinderForAll
+//	Returns true to stop searching when forall_func returns false.
+//===========================================================================
+int F_ZipFinderForAll(const char *zipFileName, void *parm)
+{
+	zipforall_t *info = parm;
+	char fullZipFn[256];
+
+	// Convert the zip file name into a real path.
+	F_TranslateZipFileName(zipFileName, fullZipFn);
+
+	if(F_MatchName(fullZipFn, info->pattern))
+		if(!info->func(fullZipFn, info->parm))
+			return true; // Stop searching.
+
+	// Continue searching.
+	return false;
+}
+
+//===========================================================================
 // F_ForAll
 //	Parm is passed on to the callback, which is called for each file
-//	matching the filespec. Both DD_DIREC and the real files are scanned.
+//	matching the filespec. Zip directory, DD_DIREC and the real files are 
+//	scanned.
 //===========================================================================
 int F_ForAll(const char *filespec, int parm, f_forall_func_t func)
 {
@@ -482,11 +572,22 @@ int F_ForAll(const char *filespec, int parm, f_forall_func_t func)
 	directory_t specdir;
 	char fn[256];
 	int i;
+	zipforall_t zipFindInfo;
 
 	Dir_FileDir(filespec, &specdir);
 
-	// Check through the dir/WAD direcs.
+	// First check the Zip directory.
 	_fullpath(fn, filespec, 255);
+	zipFindInfo.func = func;
+	zipFindInfo.parm = parm;
+	zipFindInfo.pattern = fn;
+	if(Zip_Find(F_ZipFinderForAll, &zipFindInfo))
+	{
+		// Find didn't finish.
+		return false;
+	}
+
+	// Check through the dir/WAD direcs.
 	for(i = 0; direc[i].path; i++)
 		if(F_MatchName(direc[i].path, fn))
 			if(!func(direc[i].path, parm)) return false;

@@ -357,6 +357,7 @@ void DD_Shutdown()
 	int i;
 
 	DD_ShutdownHelp();
+	Zip_Shutdown();
 
 	// Kill the message window if it happens to be open.
 	SW_Shutdown();

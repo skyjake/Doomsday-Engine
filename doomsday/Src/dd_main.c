@@ -260,7 +260,7 @@ void DD_Main(void)
 	
 	DD_AddStartupWAD("}Data\\Doomsday.wad");
 	R_InitExternalResources();
-	
+
 	// These will invariably be overwritten by the Game.
 	strcpy(configFileName, "Doomsday.cfg");
 	sprintf(defsFileName, "%sDefs\\Doomsday.ded", ddBasePath);
@@ -272,6 +272,10 @@ void DD_Main(void)
 	Con_Message("Z_Init: Init zone memory allocation daemon.\n");
 	Z_Init();
 	bamsInit();		// Binary angle calculations.
+
+	// Initialize the zip file database.
+	Zip_Init();
+
 	Def_Init();
 	
 	if(ArgCheck("-dedicated"))
