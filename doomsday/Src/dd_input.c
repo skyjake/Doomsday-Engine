@@ -24,6 +24,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -39,6 +40,7 @@
 
 #define DEFAULT_INPUT_RATE	35	// Hz
 #define MAXEVENTS			256	// Size of the input event buffer.
+#define WHEEL_THRESHOLD		10
 
 #define KBDQUESIZE		32
 #define MAX_DOWNKEYS	32	
@@ -47,11 +49,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct repeater_s
-{
-	int key;			// The H2 key code (0 if not in use).
-	int	timer;			// How's the time?
-	int count;			// How many times has been repeated?
+typedef struct repeater_s {
+	int key;				// The key code (0 if not in use).
+	int	timer;				// How's the time?
+	int count;				// How many times has been repeated?
 } repeater_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -71,15 +72,17 @@ int			eventHead;
 int			eventTail;
 int			eventCount;
 
-int			mouseFilter = 0;		// No filtering by default.
-int			mouseInverseY = false;
-int			mouseWheelSensi = 10;	// I'm shooting in the dark here.
-int			joySensitivity = 5;
-int			joyDeadZone = 10;
+//int			mouseFilter = 0;		// No filtering by default.
+//int			mouseInverseY = false;
+//int			mouseWheelSensi = 10;	// I'm shooting in the dark here.
+//int			joySensitivity = 5;
+//int			joyDeadZone = 10;
+
+inputdev_t	inputDevices[NUM_INPUT_DEVICES];
 
 // The initial and secondary repeater delays (tics).
 int			repWait1 = 15, repWait2 = 3; 
-int			mouseDisableX = false, mouseDisableY = false;
+//int			mouseDisableX = false, mouseDisableY = false;
 boolean		shiftDown = false, altDown = false;
 boolean		showScanCodes = false;
 
@@ -90,7 +93,7 @@ byte		shiftKeyMappings[256], altKeyMappings[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static byte scantokey[256] =	
+static byte scanToKey[256] =	
 {
 //	0				1			2				3				4			5					6				7
 //	8				9			A				B				C			D					E				F
@@ -165,16 +168,308 @@ static int		inputThreadHandle;
 static int		eventQueueLock;
 
 static repeater_t keyReps[MAX_DOWNKEYS];
-static int		oldMouseX, oldMouseY;
+//static int		oldMouseX, oldMouseY;
 static int		oldMouseButtons = 0;
 static int		oldJoyBState = 0;
 static float	oldPOV = IJOY_POV_CENTER;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// DD_DumpKeyMappings
-//===========================================================================
+/*
+ * Allocate an array of bytes for the input devices keys.
+ * The allocated memory is cleared to zero.
+ */
+void I_DeviceAllocKeys(inputdev_t *dev, int count)
+{
+	dev->numKeys = count;
+	dev->keys = calloc(count, 1);
+}
+
+/*
+ * Add a new axis to the input device.
+ */
+inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name)
+{
+	inputdevaxis_t *axis;
+	
+	dev->axes = realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
+
+	axis = dev->axes + dev->numAxes - 1;
+	memset(axis, 0, sizeof(*axis));
+	strcpy(axis->name, name);
+
+	// Set reasonable defaults. The user's settings will be restored
+	// later.
+	axis->scale = 1/100.0f;
+	axis->deadZone = 5/100.0f;
+
+	return axis;
+}
+
+/* 
+ * Initialize the input device state table.
+ */
+void I_InitInputDevices(void)
+{
+	inputdev_t *dev;
+
+	memset(inputDevices, 0, sizeof(inputDevices));
+
+	// The keyboard is always assumed to be present.
+	// DDKEYs are used as key indices.
+	dev = &inputDevices[IDEV_KEYBOARD];
+	dev->flags = ID_ACTIVE;
+	strcpy(dev->name, "key");
+	I_DeviceAllocKeys(dev, 256);
+
+	// The mouse may not be active.
+	dev = &inputDevices[IDEV_MOUSE];
+	strcpy(dev->name, "mouse");
+	I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
+
+	// The wheel is translated to keys, so there is no need to
+	// create an axis for it.
+	I_DeviceNewAxis(dev, "x");
+	I_DeviceNewAxis(dev, "y");
+	
+	if(I_MousePresent())
+		dev->flags = ID_ACTIVE;
+
+	dev = &inputDevices[IDEV_JOY1];
+	strcpy(dev->name, "joy");
+	I_DeviceAllocKeys(dev, IJOY_MAXBUTTONS);
+
+	// We support eight axes.
+	I_DeviceNewAxis(dev, "x");
+	I_DeviceNewAxis(dev, "y");
+	I_DeviceNewAxis(dev, "z");
+	I_DeviceNewAxis(dev, "rx");
+	I_DeviceNewAxis(dev, "ry");
+	I_DeviceNewAxis(dev, "rz");
+	I_DeviceNewAxis(dev, "slider1");
+	I_DeviceNewAxis(dev, "slider2");
+
+	// The joystick may not be active.
+	if(I_JoystickPresent())
+		dev->flags = ID_ACTIVE;
+
+}
+
+/*
+ * Free the memory allocated for the input devices.
+ */
+void I_ShutdownInputDevices(void)
+{
+	int i;
+	inputdev_t *dev;
+
+	for(i = 0; i < NUM_INPUT_DEVICES; i++)
+	{
+		dev = inputDevices + i;
+		if(dev->keys) free(dev->keys);
+		if(dev->axes) free(dev->axes);
+	}
+}
+
+/*
+ * Return a pointer to the input device state, or NULL if the device
+ * is inactive.
+ */
+inputdev_t *I_GetDevice(int ident)
+{
+	if(inputDevices[ident].flags & ID_ACTIVE)
+		return inputDevices + ident;
+	else
+		return NULL;
+}
+
+/*
+ * Return a pointer to the input device state, or NULL if the device
+ * is inactive.
+ */
+inputdev_t *I_GetDeviceByName(const char *name)
+{
+	int i;
+
+	for(i = 0; i < NUM_INPUT_DEVICES; i++)
+	{
+		if(!stricmp(inputDevices[i].name, name))
+			return inputDevices + i;
+	}
+	return NULL;
+}
+
+/*
+ * Returns the index of the axis.
+ */
+int I_GetAxisByName(inputdev_t *device, const char *name)
+{
+	int i;
+
+	for(i = 0; i < device->numAxes; i++)
+	{
+		if(!stricmp(device->axes[i].name, name))
+			return i;
+	}
+	return -1;
+}
+
+/*
+ * Returns false if the string is invalid.
+ */
+boolean I_ParseDeviceAxis(const char *str, inputdev_t **device, int *axis)
+{
+	char name[30], *ptr;
+
+	ptr = strchr(str, '-');
+	if(!ptr) return false;
+
+	// The name of the device.
+	memset(name, 0, sizeof(name));
+	strncpy(name, str, ptr - str);
+	if((*device = I_GetDeviceByName(name)) == NULL) return false;
+
+	// The axis name.
+	if((*axis = I_GetAxisByName(*device, ptr + 1)) < 0) return false;
+   
+	return true;
+}
+
+/*
+ * Update an input device axis.  Transformation is applied.
+ */
+void I_UpdateAxis(inputdev_t *dev, int axis, float pos)
+{
+	inputdevaxis_t *a = dev->axes + axis;
+
+	// Disabled axes are always zero.
+	if(a->flags & IDA_DISABLED)
+	{
+		a->position = 0;
+		return;
+	}
+
+	// Apply scaling, deadzone and clamping.
+	pos *= a->scale;
+	if(fabs(pos) <= a->deadZone)
+	{
+		a->position = 0;
+		return;
+	}
+	pos += a->deadZone * (pos > 0? -1 : 1);	// Remove the dead zone.
+	pos *= 1.0f/(1.0f - a->deadZone);		// Normalize.
+	if(pos < -1.0f) pos = -1.0f;
+	if(pos > 1.0f) pos = 1.0f;
+	
+	if(a->flags & IDA_INVERT)
+	{
+		// Invert the axis position.
+		pos = -pos;
+	}
+
+	if(a->flags & IDA_FILTER)
+	{
+		// Average with the previous position.
+		a->position = (a->position + pos) / 2;
+	}
+	else
+	{
+		// This is the new axis position.
+		a->position = pos;
+	}
+}
+
+/*
+ * Update the input device state table.
+ */
+void I_TrackInput(event_t *ev)
+{
+	inputdev_t *dev;
+	int i;
+	
+	// Track the state of Shift and Alt.
+	if(ev->data1 == DDKEY_RSHIFT)
+	{
+		if(ev->type == ev_keydown) shiftDown = true;
+		else if(ev->type == ev_keyup) shiftDown = false;
+	}
+	if(ev->data1 == DDKEY_RALT)
+	{
+		if(ev->type == ev_keydown) altDown = true;
+		else if(ev->type == ev_keyup) altDown = false;
+	}
+
+	// Update the state table.
+	switch(ev->type)
+	{
+	case ev_keydown:
+	case ev_keyup:
+		inputDevices[IDEV_KEYBOARD].keys[ev->data1 & 0xff] =
+			(ev->type == ev_keydown);			
+		break;
+
+	case ev_mousebdown:
+	case ev_mousebup:
+		if((dev = I_GetDevice(IDEV_MOUSE)) != NULL)
+		{
+			for(i = 0; i < IMB_MAXBUTTONS; i++)
+			{
+				if(ev->data1 & (1 << i))
+					dev->keys[i] = (ev->type == ev_mousebdown);
+			}
+		}
+		break;
+
+	case ev_mouse:
+		if((dev = I_GetDevice(IDEV_MOUSE)) != NULL)
+		{
+			//Con_Printf("ev_mouse: x=%i y=%i\n", ev->data1, ev->data2);
+
+			I_UpdateAxis(dev, 0, ev->data1);
+			I_UpdateAxis(dev, 1, ev->data2);
+		}
+		break;
+
+	case ev_joybdown:
+	case ev_joybup:
+		if((dev = I_GetDevice(IDEV_JOY1)) != NULL)
+		{
+			for(i = 0; i < IJOY_MAXBUTTONS; i++)
+			{
+				if(ev->data1 & (1 << i))
+					dev->keys[i] = (ev->type == ev_joybdown);
+			}
+		}
+		break;
+
+	case ev_joystick:
+		if((dev = I_GetDevice(IDEV_JOY1)) != NULL)
+		{
+			I_UpdateAxis(dev, 0, ev->data1);
+			I_UpdateAxis(dev, 1, ev->data2);
+			I_UpdateAxis(dev, 2, ev->data3);
+			I_UpdateAxis(dev, 3, ev->data4);
+			I_UpdateAxis(dev, 4, ev->data5);
+			I_UpdateAxis(dev, 5, ev->data6);
+		}
+		break;
+
+	case ev_joyslider:
+		if((dev = I_GetDevice(IDEV_JOY1)) != NULL)
+		{
+			I_UpdateAxis(dev, 6, ev->data1);
+			I_UpdateAxis(dev, 7, ev->data2);
+		}
+		break;
+		
+	default:
+		break;
+	}
+}
+
+/*
+ * Write the current key mapping (normal, shift, alt) into a text file.
+ */
 void DD_DumpKeyMappings(char *fileName)
 {
 	FILE *file;
@@ -220,7 +515,7 @@ void DD_DefaultKeyMapping(void)
 
 	for(i = 0; i < 256; i++)
 	{
-		keyMappings[i] = scantokey[i];
+		keyMappings[i] = scanToKey[i];
 		shiftKeyMappings[i] = i >= 32 && i <= 127 
 			&& defaultShiftTable[i - 32]? defaultShiftTable[i - 32] : i;
 		altKeyMappings[i] = i;
@@ -258,10 +553,9 @@ int CCmdDumpKeyMap(int argc, char **argv)
 	return true;
 }
 
-//===========================================================================
-// CCmdKeyMap
-//	Load a keymap file.
-//===========================================================================
+/*
+ * Load a keymap file.
+ */
 int CCmdKeyMap(int argc, char **argv)
 {
 	DFILE	*file;
@@ -346,11 +640,10 @@ int CCmdKeyMap(int argc, char **argv)
 	return true;
 }
 
-//==========================================================================
-// DD_ProcessEvents
-//	Send all the events of the given timestamp down the responder chain.
-//	This is called from the refresh thread.
-//==========================================================================
+/*
+ * Send all the events of the given timestamp down the responder
+ * chain.  This is called from the refresh thread.
+ */
 void DD_ProcessEvents(void)
 {
 	event_t *ev;
@@ -364,17 +657,8 @@ void DD_ProcessEvents(void)
 		ev = &events[eventTail];
 		--eventCount;
 
-		// Track the state of Shift and Alt.
-		if(ev->data1 == DDKEY_RSHIFT)
-		{
-			if(ev->type == ev_keydown) shiftDown = true;
-			else if(ev->type == ev_keyup) shiftDown = false;
-		}
-		if(ev->data1 == DDKEY_RALT)
-		{
-			if(ev->type == ev_keydown) altDown = true;
-			else if(ev->type == ev_keyup) altDown = false;
-		}
+		// Update the state of the input device tracking table.
+		I_TrackInput(ev);
 	
 		// Does the special responder use this event?
 		if(gx.PrivilegedResponder)
@@ -585,7 +869,7 @@ void DD_ReadMouse(void)
 	ev.data3 = mouse.z;
 	
 	// Mouse axis data may be modified if not in UI mode.
-	if(!ui_active)
+/*	if(!ui_active)
 	{
 		if(mouseDisableX) ev.data1 = 0;
 		if(mouseDisableY) ev.data2 = 0;
@@ -600,8 +884,9 @@ void DD_ReadMouse(void)
 			oldMouseX = oldX;
 			oldMouseY = oldY;
 		}
-	}
-	else // In UI mode.
+	}*/
+	
+	if(ui_active) // In UI mode.
 	{
 		// Scale the movement depending on screen resolution.
 		ev.data1 *= MAX_OF(1, screenWidth/800.0f);
@@ -611,13 +896,14 @@ void DD_ReadMouse(void)
 	DD_PostEvent (&ev);
 
 	// Insert the possible mouse Z axis into the button flags.
-	if(abs(ev.data3) >= mouseWheelSensi)
+	if(abs(ev.data3) >= WHEEL_THRESHOLD)
 	{
 		mouse.buttons |= ev.data3 > 0? DDMB_MWHEELUP : DDMB_MWHEELDOWN;
 	}
 
 	// Check the buttons and send the appropriate events.
 	change = oldMouseButtons ^ mouse.buttons; // The change mask.
+
 	// Send the relevant events.
 	if((ev.data1 = mouse.buttons & change))
 	{
@@ -635,7 +921,7 @@ void DD_ReadMouse(void)
 /*
  * Applies the dead zone and clamps the value to -100...100.
  */
-void DD_JoyAxisClamp(int *val)
+/*void DD_JoyAxisClamp(int *val)
 {
 	if(abs(*val) < joyDeadZone)
 	{
@@ -650,7 +936,7 @@ void DD_JoyAxisClamp(int *val)
 	// Clamp.
 	if(*val > 100) *val = 100;
 	if(*val < -100) *val = -100;
-}
+}*/
 
 /*
  * Poll joystick input and generate events.
@@ -660,7 +946,7 @@ void DD_ReadJoystick(void)
 	event_t		ev;
 	joystate_t	state;
 	int			i, bstate;
-	int			div = 100 - joySensitivity*10;
+	//int			div = 100 - joySensitivity*10;
 
 	if(!I_JoystickPresent())
 		return;
@@ -715,21 +1001,21 @@ void DD_ReadJoystick(void)
 	// The output axis data must be in range -100..100.
 	// Increased sensitivity causes the axes to max out earlier.
 	// Check that the divisor is valid.
-	if(div < 10) div = 10;
+/*	if(div < 10) div = 10;
 	if(div > 100) div = 100;
-
-	ev.data1 = state.axis[0] / div;
-	ev.data2 = state.axis[1] / div;
-	ev.data3 = state.axis[2] / div;
-	ev.data4 = state.rotAxis[0] / div;
-	ev.data5 = state.rotAxis[1] / div;
-	ev.data6 = state.rotAxis[2] / div;
-	CLAMP(ev.data1);
+*/
+	ev.data1 = state.axis[0];
+	ev.data2 = state.axis[1];
+	ev.data3 = state.axis[2];
+	ev.data4 = state.rotAxis[0];
+	ev.data5 = state.rotAxis[1];
+	ev.data6 = state.rotAxis[2];
+/*	CLAMP(ev.data1);
 	CLAMP(ev.data2);
 	CLAMP(ev.data3);
 	CLAMP(ev.data4);
 	CLAMP(ev.data5);
-	CLAMP(ev.data6);
+	CLAMP(ev.data6);*/
 
 	DD_PostEvent(&ev);
 
@@ -737,10 +1023,10 @@ void DD_ReadJoystick(void)
 	memset(&ev, 0, sizeof(ev));
 	ev.type = ev_joyslider;
 
-	ev.data1 = state.slider[0] / div;
-	ev.data2 = state.slider[1] / div;
-	CLAMP(ev.data1);
-	CLAMP(ev.data2);
+	ev.data1 = state.slider[0];
+	ev.data2 = state.slider[1];
+/*	CLAMP(ev.data1);
+	CLAMP(ev.data2);*/
 
 	DD_PostEvent(&ev);
 }
@@ -772,6 +1058,9 @@ int DD_InputThread(void *parm)
 		DD_ReadMouse();
 		DD_ReadJoystick();
 		DD_ReadKeyboard();
+
+		// Update the axis controls via the axis bindings.
+		B_UpdateAxisControls();
 
 		// Generate ticcmds for local players.
 		for(i = 0; i < DDMAXPLAYERS; i++)

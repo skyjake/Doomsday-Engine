@@ -210,9 +210,13 @@ void DD_ShutdownAll(void)
 	SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, FALSE, 0, 0);
 #endif
 
-	// Stop all demo recording.
-	for(i = 0; i < MAXPLAYERS; i++) Demo_StopRecording(i);
+	for(i = 0; i < MAXPLAYERS; i++)
+	{
+		// Stop all demo recording.
+		Demo_StopRecording(i);
+	}
 
+	P_ControlShutdown();
 	Sv_Shutdown();
 	R_Shutdown();
 	Sys_ConShutdown();

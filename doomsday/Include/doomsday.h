@@ -104,9 +104,6 @@ int			Con_Executef(int silent, char *command, ...);
 void		Con_Message(char *message, ...);
 void		Con_Error(char *error, ...);
 
-// Console: Actions.
-void		Con_DefineActions(action_t *acts);
-
 // Console: Bindings.
 void		B_EventBuilder(char *buff, event_t *ev, boolean to_event);
 int			B_BindingsForCommand(char *command, char *buffer);

@@ -70,7 +70,7 @@ char		*serverInfo = "Multiplayer Host";
 char		*playerName = "Player";
 int			serverData[3]; 		// Some parameters passed to master server.
 
-ddplayer_t	players[MAXPLAYERS];
+ddplayer_t	ddplayers[MAXPLAYERS];
 client_t	clients[MAXPLAYERS];// All network data for the players.
 
 int			netgame;			// true if a netgame is in progress

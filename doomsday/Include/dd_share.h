@@ -1145,6 +1145,7 @@ struct mobj_s;
 typedef struct ddplayer_s
 {
 	struct mobj_s *mo;					// pointer to a (game specific) mobj
+	int			type;					// Player type (index to playerclasses)
 	fixed_t		viewz;					// focal origin above r.z
 	fixed_t		viewheight;				// base height above floor for viewz
 	fixed_t		deltaviewheight;	
@@ -1160,13 +1161,6 @@ typedef struct ddplayer_s
 	ddpsprite_t	psprites[DDMAXPSPRITES];// Player sprites.
 	void		*extradata;				// Pointer to any game-specific data.
 } ddplayer_t;
-
-// Actions.
-typedef struct
-{
-	char		name[9];		// The name of the action.
-	boolean		on;				// True if action is active.
-} action_t;
 
 #ifdef __cplusplus
 }

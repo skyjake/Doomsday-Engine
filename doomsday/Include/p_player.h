@@ -37,4 +37,6 @@ typedef struct playerclass_s {
 	fixed_t upMove[2];			// Vertical flying speed.
 } playerclass_t;
 
+int P_LocalToConsole(int localPlayer);
+
 #endif

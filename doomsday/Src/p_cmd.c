@@ -18,9 +18,9 @@
 /*
  * p_cmd.c: Tic Commands
  *
- * Tic commands are generated out of controller state. There is one 
- * command per input tic (35 Hz). The commands are used to control all
- * players.
+ * Tic commands are generated out of controller state. There is one
+ * command per input tic (35 Hz).  The commands are used to control
+ * all players.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -48,25 +48,31 @@
 // CODE --------------------------------------------------------------------
 
 /*
- * Build one command for the specified player. This routine is used to
- * generate commands for local players. The commands are added to the
- * command buffer.
+ * Build one command for the specified player.  This routine is used
+ * to generate commands for local players.  The commands are added to
+ * the command buffer.
  *
  * This function is called from the input thread.
  */
 void P_BuildCommand(int playerNumber)
 {
 	ddplayer_t *player = players + playerNumber;
-	client_t *client = clients + playerNumber;
+	//client_t *client = clients + playerNumber;
+	float pos;
 	ticcmd_t cmd;
 
 	// The command will stay 'empty' if no controls are active.
 	memset(&cmd, 0, sizeof(cmd));
 
-	// Examine the state of controllers to see which controls are active.
-	//...
+	// Examine the state of controllers to see which controls are
+	// active.
+	pos = P_ControlGetAxis(playerNumber, "walk");
 
-	// The command is now complete. Insert it into the client's command
-	// buffer, where it will be read from by the refresh thread.
+	// The player's class affects the movement speed.
+	cmd.forwardMove = (char) (0x10 * -pos);
+
+	// The command is now complete.  Insert it into the client's
+	// command buffer, where it will be read from by the refresh
+	// thread.
 	Net_NewLocalCmd(&cmd, playerNumber);
 }

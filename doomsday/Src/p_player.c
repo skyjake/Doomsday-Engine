@@ -21,6 +21,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_base.h"
+#include "de_network.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -39,3 +42,22 @@
 
 // CODE --------------------------------------------------------------------
 
+/*
+ * Determine which console is used by the given local player.  Local
+ * players are numbered starting from zero.
+ */
+int P_LocalToConsole(int localPlayer)
+{
+	int i, count;
+
+	for(i = count = 0; i < DDMAXPLAYERS; i++)
+	{
+		if(players[i].flags & DDPF_LOCAL)
+		{
+			if(count++ == localPlayer) return i;
+		}			
+	}
+	
+	// No match!
+	return -1;
+}

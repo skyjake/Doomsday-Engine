@@ -36,5 +36,6 @@
 #include "p_sight.h"
 #include "p_tick.h"
 #include "p_cmd.h"
+#include "p_control.h"
 
 #endif 

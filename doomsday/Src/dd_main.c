@@ -449,6 +449,7 @@ void DD_Main(void)
 	Con_Message("Net_InitGame: Initializing game data.\n");
 	Net_InitGame();
 	Demo_Init();
+	P_ControlInit();
 	
 	// Engine initialization is complete. Now start the GL driver and go
 	// briefly to the Console Startup mode, so the results of the game
@@ -501,6 +502,9 @@ void DD_Main(void)
 			Con_Execute(arg, false);
 		}
 	}
+
+	// Initialize the control table.
+	for(p = 0; p < DDMAXPLAYERS; p++) P_ControlTableInit(p);
 	
 	// In dedicated mode the console must be opened, so all input events
 	// will be handled by it.
@@ -653,7 +657,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &skyDetail,		0 },
 	{ &sfx_volume,		&sfx_volume },
 	{ &mus_volume,		&mus_volume },
-	{ &mouseInverseY,	&mouseInverseY },
+	{ 0, 0 }, // mouseInverseY
 	{ &usegamma,		0 },
 	{ &queryResult,		0 },
 	{ &LevelFullBright,	&LevelFullBright },
