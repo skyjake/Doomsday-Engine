@@ -6,7 +6,7 @@
 
 #include "gl_model.h"
 
-#define MAX_FRAME_MODELS		4
+#define MAX_FRAME_MODELS		DED_MAX_SUB_MODELS
 
 // Model frame flags.
 #define MFF_FULLBRIGHT			0x0001
@@ -72,7 +72,7 @@ typedef struct modeldef_s
 	struct modeldef_s *selectnext;
 
 	// Submodels.
-	submodeldef_t	sub[MAX_FRAME_MODELS];	// 4
+	submodeldef_t	sub[MAX_FRAME_MODELS];	// 8
 } modeldef_t;
 
 extern modeldef_t	*models;

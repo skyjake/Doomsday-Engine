@@ -774,7 +774,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_FLT("Shadow radius", mdl->shadowradius)
 				if(ISLABEL("Md2") || ISLABEL("Sub"))
 				{
-					if(sub >= 4)
+					if(sub >= DED_MAX_SUB_MODELS)
 						Con_Error("DED_ReadData: Too many submodels (%s).\n",
 						mdl->state);
 					FINDBEGIN;
@@ -813,7 +813,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				if(!strcmp(mdl->sprite.id, "-"))	strcpy(mdl->sprite.id,	prevmdl->sprite.id);
 				if(!strcmp(mdl->group, "-"))		strcpy(mdl->group,		prevmdl->group);
 				if(!strcmp(mdl->flags, "-"))		strcpy(mdl->flags,		prevmdl->flags);
-				for(i=0; i<4; i++)
+				for(i = 0; i < DED_MAX_SUB_MODELS; i++)
 				{
 					if(!strcmp(mdl->sub[i].filename.path, "-"))	strcpy(mdl->sub[i].filename.path,	prevmdl->sub[i].filename.path);
 					if(!strcmp(mdl->sub[i].frame, "-"))			strcpy(mdl->sub[i].frame,			prevmdl->sub[i].frame);
