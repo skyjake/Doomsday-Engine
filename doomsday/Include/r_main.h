@@ -45,6 +45,7 @@ extern fixed_t  viewcos, viewsin;
 extern int      skyflatnum;
 extern int      rend_info_tris;
 
+void			R_Register(void);
 void            R_Init(void);
 void            R_Update(void);
 void            R_Shutdown(void);
