@@ -17,6 +17,8 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "gl_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define KBDQUESIZE		32
@@ -552,6 +554,12 @@ void DD_ReadMouse(void)
 			oldMouseX = oldX;
 			oldMouseY = oldY;
 		}
+	}
+	else // In UI mode.
+	{
+		// Scale the movement depending on screen resolution.
+		ev.data1 *= MAX_OF(1, screenWidth/800.0f);
+		ev.data2 *= MAX_OF(1, screenHeight/600.0f);
 	}
 
 	DD_PostEvent (&ev);
