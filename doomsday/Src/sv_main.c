@@ -753,7 +753,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 {
 	client_t *client = &clients[playerNumber];
 	uint qSize = N_GetSendQueueSize(playerNumber);
-	uint limit = Sv_GetMaxFrameSize(playerNumber);
+	uint limit = 400; /*Sv_GetMaxFrameSize(playerNumber);*/
 
 	// If there are too many messages in the queue, the player's bandwidth
 	// is overrated.
@@ -780,7 +780,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 	}
 
 	// New messages will not be sent if there's too much already.
-	return qSize <= 3*limit;
+	return qSize <= 5*limit;
 }
 
 /*
