@@ -381,7 +381,7 @@ void Net_NewLocalCmd(ticcmd_t *cmd, int pNum)
 	client_t *cl = clients + pNum;
 
 	// Acquire exclusive usage on the local buffer.
-	Sys_AcquireMutex(cl->localCmdLock);
+	Sys_Lock(cl->localCmdLock);
 
 	if(cl->numLocal != LOCALTICS) 
 	{
@@ -389,7 +389,7 @@ void Net_NewLocalCmd(ticcmd_t *cmd, int pNum)
 		memcpy(&cl->localCmds[TICCMD_IDX(cl->numLocal++)], cmd, TICCMD_SIZE);
 	}
 
-	Sys_ReleaseMutex(cl->localCmdLock);
+	Sys_Unlock(cl->localCmdLock);
 }
 
 /*
@@ -397,7 +397,7 @@ void Net_NewLocalCmd(ticcmd_t *cmd, int pNum)
  */
 boolean Net_IsLocalPlayer(int pNum)
 {
-	return players[pNum].ingame && (players[pNum].flags & DDPF_LOCAL);
+	return players[pNum].ingame && players[pNum].flags & DDPF_LOCAL;
 }
 
 /*
@@ -417,7 +417,7 @@ void Net_SendCommandsToServer(timespan_t time)
 	{
 		if(!Net_IsLocalPlayer(i)) continue;
 
-		Sys_AcquireMutex(clients[i].localCmdLock);
+		Sys_Lock(clients[i].localCmdLock);
 
 		// The game will pack the commands into a buffer. The returned
 		// pointer points to a buffer that contains its size and the
@@ -433,7 +433,7 @@ void Net_SendCommandsToServer(timespan_t time)
 
 		// The buffer is cleared.
 		clients[i].numLocal = 0;
-		Sys_ReleaseMutex(clients[i].localCmdLock);
+		Sys_Unlock(clients[i].localCmdLock);
 	}
 }
 

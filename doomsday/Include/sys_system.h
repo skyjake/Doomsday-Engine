@@ -45,7 +45,7 @@ void	Sys_SuspendThread(int handle, boolean dopause);
 boolean	Sys_GetThreadExitCode(int handle, uint *exitCode);
 int		Sys_CreateMutex(const char *name);
 void	Sys_DestroyMutex(int handle);
-void	Sys_AcquireMutex(int handle);
-void	Sys_ReleaseMutex(int handle);
+void	Sys_Lock(int handle);
+void	Sys_Unlock(int handle);
 
 #endif

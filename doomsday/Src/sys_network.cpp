@@ -38,6 +38,9 @@
 
 /*
  * $Log$
+ * Revision 1.8  2003/09/09 21:38:24  skyjake
+ * Renamed mutex routines to Sys_Lock and Sys_Unlock
+ *
  * Revision 1.7  2003/09/08 22:19:40  skyjake
  * Float timing loop, use timespan_t in tickers, style cleanup
  *
@@ -690,7 +693,7 @@ void N_SMSReset(store_t *store)
 void N_PostMessage(netmessage_t *msg)
 {
 	// Lock the message queue.
-	Sys_AcquireMutex(gMsgMutex);
+	Sys_Lock(gMsgMutex);
 
 	// This will be the latest message.
 	msg->next = NULL;
@@ -707,7 +710,7 @@ void N_PostMessage(netmessage_t *msg)
 	// If there is no head, this'll be the first message.
 	if(gMsgHead == NULL) gMsgHead = msg;
 
-	Sys_ReleaseMutex(gMsgMutex);
+	Sys_Unlock(gMsgMutex);
 }
 
 /*
@@ -721,7 +724,7 @@ netmessage_t* N_GetMessage(void)
 {
 	if(gMsgHead == NULL) return NULL;
 
-	Sys_AcquireMutex(gMsgMutex);
+	Sys_Lock(gMsgMutex);
 
 	// This is the message we'll return.
 	netmessage_t *msg = gMsgHead;
@@ -732,7 +735,7 @@ netmessage_t* N_GetMessage(void)
 	// Advance the head pointer.
 	gMsgHead = gMsgHead->next;
 
-	Sys_ReleaseMutex(gMsgMutex);
+	Sys_Unlock(gMsgMutex);
 
 	// Identify the sender.
 	msg->player = N_IdentifyPlayer(msg->sender);

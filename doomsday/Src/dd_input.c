@@ -169,7 +169,7 @@ static char defaultShiftTable[96] =	// Contains characters 32 to 127.
 
 static boolean	stopInputThread = false;
 static int		inputThreadHandle;
-static int		eventQueueMutex;
+static int		eventQueueLock;
 
 static repeater_t keyReps[MAX_DOWNKEYS];
 static int		oldMouseX, oldMouseY;
@@ -364,7 +364,7 @@ void DD_ProcessEvents(void)
 
 	// No new events will be posted until the currently queued ones 
 	// have been processed.
-	Sys_AcquireMutex(eventQueueMutex);
+	Sys_Lock(eventQueueLock);
 
 	for(; eventTail != eventHead; eventTail = (++eventTail)&(MAXEVENTS-1))
 	{
@@ -406,7 +406,7 @@ void DD_ProcessEvents(void)
 	}
 
 	// New events can be posted again.
-	Sys_ReleaseMutex(eventQueueMutex);
+	Sys_Unlock(eventQueueLock);
 }
 
 /*
@@ -414,13 +414,13 @@ void DD_ProcessEvents(void)
  */
 void DD_ClearEvents(void)
 {
-	Sys_AcquireMutex(eventQueueMutex);
+	Sys_Lock(eventQueueLock);
 
 	eventHead = eventTail;
 	eventCount = 0;
 
 	// New events can be posted again.
-	Sys_ReleaseMutex(eventQueueMutex);
+	Sys_Unlock(eventQueueLock);
 }
 
 /*
@@ -432,13 +432,13 @@ void DD_PostEvent(event_t *ev)
 	if(eventCount == MAXEVENTS - 1) return;
 
 	// Only one thread can access the queue at a time.
-	Sys_AcquireMutex(eventQueueMutex);
+	Sys_Lock(eventQueueLock);
 
 	events[eventHead] = *ev;
 	eventHead = (++eventHead) & (MAXEVENTS - 1);
 	eventCount++;
 
-	Sys_ReleaseMutex(eventQueueMutex);
+	Sys_Unlock(eventQueueLock);
 }
 
 //===========================================================================
@@ -777,7 +777,7 @@ int DD_InputThread(void *parm)
 
 		// Generate ticcmds for local players.
 		for(i = 0; i < DDMAXPLAYERS; i++)
-			if(players[i].ingame && players[i].flags && DDPF_LOCAL)
+			if(Net_IsLocalPlayer(i))
 			{
 				// Build a command for this player.
 				P_BuildCommand(i);
@@ -827,7 +827,7 @@ void DD_InitInput(void)
 	// A mutex is used to control access to the event queue. The input 
 	// threads writes to the queue and the refresh queue reads events 
 	// from it.
-	eventQueueMutex = Sys_CreateMutex("EventQueueMutex");
+	eventQueueLock = Sys_CreateMutex("EventQueueMutex");
 
 	DD_DefaultKeyMapping();
 }
@@ -839,6 +839,6 @@ void DD_ShutdownInput(void)
 {
 	DD_StopInput();
 
-	Sys_DestroyMutex(eventQueueMutex);
-	eventQueueMutex = 0;
+	Sys_DestroyMutex(eventQueueLock);
+	eventQueueLock = 0;
 }

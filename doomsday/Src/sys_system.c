@@ -336,10 +336,10 @@ void Sys_DestroyMutex(int handle)
 /*
  * Acquire a mutex. Blocks until ownership has been acquired.
  */
-void Sys_AcquireMutex(int handle)
+void Sys_Lock(int mutexHandle)
 {
 	// Five seconds is plenty.
-	if(WaitForSingleObject((HANDLE)handle, 5000) == WAIT_TIMEOUT) 
+	if(WaitForSingleObject((HANDLE)mutexHandle, 5000) == WAIT_TIMEOUT) 
 	{
 		// Couldn't lock it.
 #ifdef _DEBUG
@@ -351,7 +351,7 @@ void Sys_AcquireMutex(int handle)
 /*
  * Release a mutex.
  */
-void Sys_ReleaseMutex(int handle)
+void Sys_Unlock(int mutexHandle)
 {
-	ReleaseMutex((HANDLE)handle);
+	ReleaseMutex((HANDLE)mutexHandle);
 }
