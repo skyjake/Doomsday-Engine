@@ -68,7 +68,7 @@ void DED_Destroy(ded_t *ded)
 {
 	int i;
 
-	free(ded->includes);
+//	free(ded->includes);
 	free(ded->flags);
 	free(ded->mobjs);
 	free(ded->states);
@@ -92,7 +92,7 @@ void DED_Destroy(ded_t *ded)
 	free(ded->sectors);
 }
 
-int DED_AddInclude(ded_t *ded, char *inc)
+/*int DED_AddInclude(ded_t *ded, char *inc)
 {
 	ded_path_t *pth = DED_NewEntry( (void**) &ded->includes, 
 		&ded->count.includes, sizeof(ded_path_t));
@@ -104,7 +104,7 @@ void DED_RemoveInclude(ded_t *ded, int index)
 {
 	DED_DelEntry(index, (void**) &ded->includes, &ded->count.includes, 
 		sizeof(ded_path_t));
-}
+}*/
 
 int DED_AddMobj(ded_t *ded, char *idstr)
 {
