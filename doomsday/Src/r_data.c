@@ -310,7 +310,7 @@ void R_InitAnimGroup(ded_group_t *def)
 	type = (def->is_texture? DD_TEXTURE : DD_FLAT);
 
 	// Create a new animation group.
-	groupNumber = R_CreateAnimGroup( type, Def_EvalFlags(def->flags) );
+	groupNumber = R_CreateAnimGroup(type, def->flags);
 	group = R_GetAnimGroup(groupNumber);
 
 	for(i = 0; i < def->count; i++)
@@ -859,6 +859,9 @@ void R_PrecacheLevel (void)
 			R_PrecacheSkinsForMobj( (mobj_t*) th);
 		}
 	}
+
+	// Sky models usually have big skins.
+	R_PrecacheSky();
 	
 	if(r_precache_sprites)
 	{
@@ -990,4 +993,27 @@ void R_AnimateAnimGroups(void)
 			}
 		}
 	}
+}
+
+//===========================================================================
+// R_GenerateDecorMap
+//	If necessary and possible, generate an RGB lightmap texture for the 
+//	decoration's light sources.
+//===========================================================================
+void R_GenerateDecorMap(ded_decor_t *def)
+{
+	int i, count;
+
+	for(i = 0, count = 0; i < DED_DECOR_NUM_LIGHTS; i++)
+	{
+		if(!R_IsValidLightDecoration(def->lights + i)) continue;
+		count++;
+	}
+
+#if 0
+	if(count > 1 || !def->is_texture)
+	{
+		def->pregen_lightmap = 10 /*dltexname*/;
+	}
+#endif
 }
