@@ -162,7 +162,7 @@ void initExtensions(void)
 #endif
 
 	// Automatic mipmap generation.
-	if(query("GL_SGIS_generate_mipmap", &extGenMip))
+	if(!ArgExists("-nosgm") && query("GL_SGIS_generate_mipmap", &extGenMip))
 	{
 		// Use nice quality, please.
 		glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
