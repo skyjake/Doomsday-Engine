@@ -30,6 +30,11 @@
 #include "dd_types.h"
 
 /*
+ * Wrappers for the Win32-style findfirst/next routines.
+ */
+#include "sys_findfile.h"
+
+/*
  * The Win32 Platform
  */
 #if defined(WIN32)
@@ -76,11 +81,6 @@ typedef unsigned int DWORD;
 #define DIR_WRONG_SEP_CHAR 	'\\'
 
 #include "Unix/sys_path.h"
-
-/*
- * Replacements for the Win32 findfirst/next routines.
- */
-#include "Unix/sys_findfile.h"
 
 #define _A_SUBDIR 	A_SUBDIR
 
