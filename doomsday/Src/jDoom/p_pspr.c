@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/07/01 23:58:56  skyjake
+// Static weapon switching (value, weaponinfo)
+//
 // Revision 1.2  2003/06/27 20:23:45  skyjake
 // Added cvar to disable weapon Y offset in A_Lower/A_Raise (view-bob-weapon-switch-lower)
 //
@@ -419,7 +422,8 @@ A_Lower
 	player->plr->psprites[0].state = DDPSP_DOWN;
 
 	// Should we disable the lowering?
-	if(!cfg.bobWeaponLower)
+	if(!cfg.bobWeaponLower 
+		|| weaponinfo[player->readyweapon].static_switch)
 	{
 		DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
 	}
@@ -449,6 +453,13 @@ A_Lower
 	player->readyweapon = player->pendingweapon; 
 	player->update |= PSF_READY_WEAPON;
 	
+	// Should we suddenly lower the weapon?
+	if(cfg.bobWeaponLower 
+		&& !weaponinfo[player->readyweapon].static_switch)
+	{
+		DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
+	}
+
     P_BringUpWeapon (player);
 }
 
@@ -467,7 +478,8 @@ A_Raise
 	player->plr->psprites[0].state = DDPSP_UP;
 
 	// Should we disable the lowering?
-	if(!cfg.bobWeaponLower)
+	if(!cfg.bobWeaponLower
+		|| weaponinfo[player->readyweapon].static_switch)
 	{
 		DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
 	}

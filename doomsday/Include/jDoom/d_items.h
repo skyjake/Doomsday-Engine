@@ -40,6 +40,7 @@ typedef struct
     int		readystate;
     int		atkstate;
     int		flashstate;
+	int		static_switch;	// Weapon is not lowered during switch.
 
 } weaponinfo_t;
 
@@ -51,6 +52,9 @@ void P_InitWeaponInfo(void);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/07/01 23:58:37  skyjake
+// Static weapon switching (value, weaponinfo)
+//
 // Revision 1.1  2003/02/26 19:18:26  skyjake
 // Initial checkin
 //

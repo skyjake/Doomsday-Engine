@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/07/01 23:58:56  skyjake
+// Static weapon switching (value, weaponinfo)
+//
 // Revision 1.1  2003/02/26 19:21:32  skyjake
 // Initial checkin
 //
@@ -227,6 +230,8 @@ void P_InitWeaponInfo()
 		GetDefState(buf, &weaponinfo[i].atkstate);
 		sprintf(buf, WPINF"%i|Flash", i);
 		GetDefState(buf, &weaponinfo[i].flashstate);
+		sprintf(buf, WPINF"%i|Static", i);
+		weaponinfo[i].static_switch = GetDefInt(buf, 0);
 	}
 }
 
