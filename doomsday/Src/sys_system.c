@@ -26,10 +26,8 @@
 #	include <process.h>
 #endif
 
-#ifdef UNIX
-#	include <SDL.h>
-#	include <SDL_thread.h>
-#endif
+#include <SDL.h>
+#include <SDL_thread.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -249,7 +247,7 @@ void Sys_OpenTextEditor(const char *filename)
  */
 int Sys_StartThread(systhreadfunc_t startPos, void *parm, int priority)
 {
-#ifdef WIN32
+#if 0 // WIN32
 	HANDLE handle;
 	DWORD id;
 
@@ -281,6 +279,7 @@ int Sys_StartThread(systhreadfunc_t startPos, void *parm, int priority)
 #endif
 }
 
+#if 0
 /*
  * Suspend or resume the execution of a thread.
  */
@@ -297,8 +296,8 @@ void Sys_SuspendThread(int handle, boolean dopause)
 	}
 #endif	
 }
+#endif
 
-#ifdef UNIX
 /*
  * Returns the return value of the thread.
  */
@@ -332,8 +331,6 @@ void Sys_Unlock(int handle)
 	if(!handle) return;
 	SDL_mutexV((SDL_mutex*)handle);
 }
-
-#endif
 
 /*
  * Create a new semaphore. Returns a handle.
@@ -373,30 +370,7 @@ void Sem_V(semaphore_t semaphore)
 	}
 }
 
-#ifdef WIN32
-#if 0
-/*
- * Return the exit code of the given thread. Returns true if the thread
- * has stopped, false if not.
- */
-boolean Sys_GetThreadExitCode(int handle, uint *exitCode)
-{
-	DWORD code;
-
-	if(!GetExitCodeThread((HANDLE)handle, &code))
-	{
-		// Bad handle?
-		return false;
-	}
-
-	// Still going?
-	if(code == STILL_ACTIVE) return false;
-
-	if(exitCode) *exitCode = code;
-	return true;
-}
-#endif
-
+#if 0 //WIN32
 /*
  * Create a new mutex. Returns a handle with which the mutex can be acquired
  * and released.
