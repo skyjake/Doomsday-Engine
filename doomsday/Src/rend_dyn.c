@@ -1490,3 +1490,52 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
 	}
 	return true;
 }
+
+/*
+ * In the situation where a subsector contains both dynamic lights and
+ * a polyobj, the lights must be clipped more carefully.  Here we
+ * check if the line of sight intersects any of the polyobj segs that
+ * face the camera.
+ */
+void DL_ClipBySight(int ssecidx)
+{
+    subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
+	lumobj_t *lumi;
+    seg_t *seg;
+    int i;
+    vec2_t v1, v2, eye, source;
+
+    // Only checks the polyobj.
+    if(ssec->poly == NULL) return;
+
+    V2_Set(eye, vx, vz);
+    
+	for(lumi = dlSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
+    {
+        if(lumi->flags & LUMF_CLIPPED)
+            continue;
+
+        // We need to figure out if any of the polyobj's segments lies
+        // between the viewpoint and the light source.
+		for(i = 0; i < ssec->poly->numsegs; i++)
+        {
+            seg = ssec->poly->segs[i];
+
+            v1[VX] = FIX2FLT(seg->v1->x);
+            v1[VY] = FIX2FLT(seg->v1->y);
+            v2[VX] = FIX2FLT(seg->v2->x);
+            v2[VY] = FIX2FLT(seg->v2->y);
+            
+            // Ignore segs facing the wrong way.
+            if(!Rend_SegFacingDir(v1, v2))
+                continue;
+
+            V2_Set(source, FIX2FLT(lumi->thing->x), FIX2FLT(lumi->thing->y));
+
+            if(V2_Intercept2(source, eye, v1, v2, NULL, NULL, NULL))
+            {
+                lumi->flags |= LUMF_CLIPPED;
+            }
+        }
+	}
+}
