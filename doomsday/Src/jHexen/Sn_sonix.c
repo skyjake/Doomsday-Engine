@@ -433,11 +433,14 @@ void SN_UpdateActiveSequences(void)
 				
 				if(!sndPlaying)
 				{
-					node->currentSoundID = *(node->sequencePtr+1);
-
-					/*Con_Message( "REPT: %s: %p\n", 
+/*#ifdef _DEBUG
+					Con_Printf("REPT: id=%i, %s: %p\n", 
+						node->currentSoundID,
 						SequenceTranslate[node->sequence].name,
-						node->mobj);*/
+						node->mobj);
+#endif
+*/
+					node->currentSoundID = *(node->sequencePtr+1);
 
 					S_StartSoundAtVolume(node->currentSoundID | DDSF_REPEAT, 
 						node->mobj, node->volume/127.0f);
