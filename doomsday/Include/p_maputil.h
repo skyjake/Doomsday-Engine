@@ -36,6 +36,7 @@ boolean	P_ThingLinesIterator (mobj_t *thing, boolean (*func)(line_t*,void*), voi
 boolean	P_ThingSectorsIterator (mobj_t *thing, boolean (*func)(sector_t*,void*), void *data);
 boolean	P_LineThingsIterator (line_t *line, boolean (*func)(mobj_t*,void*), void *data);
 boolean	P_SectorTouchingThingsIterator (sector_t *sector, boolean (*func)(mobj_t*,void*), void *data);
+boolean P_SubsectorBoxIterator (fixed_t *box, sector_t *sector, boolean (*func)(subsector_t*, void*), void *parm);
 boolean	P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, boolean (*trav) (intercept_t *));
 
 #endif 

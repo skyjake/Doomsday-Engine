@@ -861,6 +861,71 @@ boolean P_SectorTouchingThingsIterator
 	return true;
 }
 
+//===========================================================================
+// P_SubsectorBoxIterator
+//	Returns false only if the iterator func returns false.
+//===========================================================================
+boolean P_SubsectorBoxIterator
+	(fixed_t *box, sector_t *sector, boolean (*func)(subsector_t*, void*), 
+	 void *parm)
+{
+	subsector_t *sub, **iter;
+	subsectorinfo_t *info;
+	fvertex_t minBox, maxBox;
+	static int localValidCount = 0;
+	int xl, xh, yl, yh, x, y;
+
+	// All iterated subsectors are within this bounding box.
+	minBox.x = box[BOXLEFT] >> FRACBITS;
+	minBox.y = box[BOXBOTTOM] >> FRACBITS;
+	maxBox.x = box[BOXRIGHT] >> FRACBITS;
+	maxBox.y = box[BOXTOP] >> FRACBITS;
+
+	// This is only used here.
+	localValidCount++;
+
+	// Blockcoords to check.
+	xl = (box[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
+	xh = (box[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
+	yl = (box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
+	yh = (box[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
+
+	for(x = xl; x <= xh; x++)
+	{
+		for(y = yl; y <= yh; y++)
+		{
+			if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
+				continue;
+
+			if((iter = subsectorblockmap[x + y * bmapwidth]) == NULL)
+				continue;
+
+			for(; *iter; iter++)
+			{
+				sub = *iter;
+				info = SUBSECT_INFO(sub);
+
+				if(info->validcount != localValidCount)
+				{
+					info->validcount = localValidCount;
+
+					// Check the sector restriction.
+					if(sector && sub->sector != sector) continue;
+					
+					// Check the bounds.
+					if(sub->bbox[1].x < minBox.x
+						|| sub->bbox[0].x > maxBox.x
+						|| sub->bbox[1].y < minBox.y
+						|| sub->bbox[0].y > maxBox.y) continue;
+
+					if(!func(sub, parm)) return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
 /*
 ===============================================================================
 
