@@ -55,6 +55,8 @@ float			nearClip, farClip;
 int				useFog;
 int				verbose;//, noArrays = true;
 boolean			wireframeMode;
+boolean			allowCompression;
+boolean			noArrays;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -247,6 +249,9 @@ void initState()
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 #endif
 
+	// Prefer good quality in texture compression.
+	glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+
 /*#ifdef RENDER_WIREFRAME
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #else
@@ -436,8 +441,9 @@ int DG_Init(int width, int height, int bpp, int mode)
 	screenBits = deskbpp;
 	windowed = !fullscreen;
 	
+	allowCompression = true;
 	verbose = ArgExists("-verbose");
-	//noArrays = !ArgExists("-vtxar");
+	//noArrays = ArgExists("-noarray");
 	
 	if(fullscreen)
 	{
@@ -538,6 +544,10 @@ int DG_Init(int width, int height, int bpp, int mode)
 		//if(!noArrays) Con_Message("  Using vertex arrays.\n");
 	}
 	free(extbuf);
+
+	// Decide whether vertex arrays should be done manually or with real
+	// OpenGL calls.
+	InitArrays();
 
 	if(ArgCheck("-dumptextures")) 
 	{
@@ -967,6 +977,10 @@ int DG_Enable(int cap)
 #endif
 		break;
 
+	case DGL_TEXTURE_COMPRESSION:
+		allowCompression = DGL_TRUE;
+		break;
+
 	case DGL_BLENDING:
 		glEnable(GL_BLEND);
 		break;
@@ -1052,6 +1066,10 @@ void DG_Disable(int cap)
 		glDisable(GL_TEXTURE_2D);
 		break;
 
+	case DGL_TEXTURE_COMPRESSION:
+		allowCompression = DGL_FALSE;
+		break;
+
 	case DGL_BLENDING:
 		glDisable(GL_BLEND);
 		break;
@@ -1104,6 +1122,12 @@ void DG_Disable(int cap)
 	case DGL_TEXTURE7:
 		activeTexture(GL_TEXTURE0 + cap - DGL_TEXTURE0);
 		glDisable(GL_TEXTURE_2D);
+
+		// Implicit disabling of texcoord array.
+		if(noArrays)
+		{
+			DG_DisableArrays(0, 0, 1 << (cap - DGL_TEXTURE0));
+		}
 		break;
 
 	case DGL_WIREFRAME_MODE:
