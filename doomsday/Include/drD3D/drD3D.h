@@ -17,13 +17,32 @@
 #include "../doomsday.h"
 #include "../dglib.h"
 
-#define DRD3D_VERSION		203
-#define DRD3D_VERSION_TEXT	"2.0.4"
+#define DRD3D_VERSION		210
+#define DRD3D_VERSION_TEXT	"2.1.0"
 #define DRD3D_VERSION_FULL	"DGL Direct3D8 Driver Version "DRD3D_VERSION_TEXT" ("__DATE__")"
+#define MAX_TEX_UNITS		2
+#define MAX_TEX_STAGES		8
 
 #define	CLAMP01(f)			{ if(f < 0) f = 0; if(f > 1) f = 1; }
 #define SetRS(x, y)			dev->SetRenderState(x, y)
-#define SetTSS(s, x, y)		dev->SetTextureStageState(s, x, y)
+#ifdef _DEBUG
+# define SetTSS(s, x, y)	if(FAILED(dev->SetTextureStageState(s, x, y))) Con_Error("D3D: SetTSS %i (0x%X, 0x%X) failed!\n", s, x, y);
+#else
+# define SetTSS(s, x, y)	dev->SetTextureStageState(s, x, y)
+#endif
+
+typedef enum arraytype_e {
+	AR_VERTEX,
+	AR_COLOR,
+	AR_TEXCOORD0,
+	AR_TEXCOORD1,
+	AR_TEXCOORD2,
+	AR_TEXCOORD3,
+	AR_TEXCOORD4,
+	AR_TEXCOORD5,
+	AR_TEXCOORD6,
+	AR_TEXCOORD7
+} arraytype_t;
 
 //------------------------------------------------------------------------
 // Types and other useful stuff
@@ -33,12 +52,13 @@ enum { CR, CG, CB, CA };
 
 #define PI 3.14159265
 
-#define DRVERTEX_FORMAT	( D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1 )
+#define DRVTX_FORMAT (D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1 | D3DFVF_TEX2)
 
 typedef struct drvertex_s {
 	D3DVECTOR	pos;
 	D3DCOLOR	color;
-	float		s, t;
+	float		tex[2];
+	float		tex2[2];
 } drvertex_t;
 
 #define DRVSIZE ((int)sizeof(drvertex_t))
@@ -55,9 +75,9 @@ extern "C" {
 extern HINSTANCE	hinst;	// Instance handle to the DLL.
 extern Window		*window;
 extern boolean		verbose, diagnose;
-extern int			maxTexSize, maxAniso;
+extern int			maxTexSize, maxTextures, maxStages, maxAniso;
 extern boolean		useBadAlpha;
-extern boolean		availPalTex;
+extern boolean		availPalTex, availMulAdd;
 
 void	DP(const char *format, ...);
 int		DG_Init(int width, int height, int bpp, int mode);
@@ -106,6 +126,7 @@ void	DG_Func(int func, int param1, int param2);
 void	DG_Fog(int pname, float param);
 void	DG_Fogv(int pname, void *data);
 
+/*
 //===========================================================================
 // vertex.cpp
 //===========================================================================
@@ -118,6 +139,7 @@ void	BufferVertices(drvertex_t *verts, int num);
 void	BufferIndices(unsigned short *indices, int num);
 void	DrawBuffers(D3DPRIMITIVETYPE primType);
 void	EmptyBuffers(void);
+*/
 
 //===========================================================================
 // draw.cpp
@@ -144,13 +166,14 @@ void	DG_TexCoord2fv(float *data);
 void	DG_Vertices2ftv(int num, gl_ft2vertex_t *data);
 void	DG_Vertices3ftv(int num, gl_ft3vertex_t *data);
 void	DG_Vertices3fctv(int num, gl_fct3vertex_t *data);
+void	DG_DisableArrays(int vertices, int colors, int coords);
 
 //===========================================================================
 // matrix.cpp
 //===========================================================================
 void	InitMatrices(void);
 void	ShutdownMatrices(void);
-void	TransformTexCoord(drvertex_t *dv);
+void	TransformTexCoord(float st[2]);
 void	ScissorProjection(void);
 void	DG_MatrixMode(int mode);
 void	DG_PushMatrix(void);
@@ -167,8 +190,13 @@ int		DG_Project(int num, gl_fc3vertex_t *inVertices, gl_fc3vertex_t *outVertices
 //===========================================================================
 // texture.cpp
 //===========================================================================
+extern float grayMipmapFactor;
+
 void	InitTextures(void);
 void	ShutdownTextures(void);
+void	StageIdentity(void);
+void	SetUnitStage(int logicalUnit, int actualStage);
+void	ActiveTexture(int index);
 void	TextureOperatingMode(int isActive);
 byte *	GetPaletteColor(int index);
 DGLuint	DG_NewTexture(void);
