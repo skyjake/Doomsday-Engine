@@ -887,6 +887,11 @@ class MultiArea (Area):
 
         self.sizer.SetMinSize((minWidth + 6, minHeight + 6))
         self.sizer.Layout()
+
+    def refresh(self):
+        """Redraw the contents of the multiarea."""
+        
+        self.panel.Refresh()
                 
 
 class AreaDialog (wx.Dialog):
