@@ -2938,6 +2938,7 @@ static void registerCommands(void)
 	C_CMD("playext", PlayExt, "Play an external music file.");
 	C_CMD("playmusic", PlayMusic,
 		  "Play a song, an external music file or a CD track.");
+	C_CMD("playsound", PlaySound, "Play a sound effect.");
 	C_CMD("quit!", Quit, "Exit the game immediately.");
 	C_CMD("recorddemo", RecordDemo, "Start recording a demo.");
 	C_CMD("repeat", Repeat, "Repeat a command at given intervals.");
