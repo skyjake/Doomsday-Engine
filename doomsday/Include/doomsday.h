@@ -47,6 +47,7 @@ void *		W_CacheLumpName(char *name, int tag);
 void		W_ChangeCacheTag(int lump, int tag);
 const char *W_LumpSourceFile(int lump);
 uint		W_CRCNumber(void);
+boolean		W_IsFromIWAD(int lump);
 
 // Base: Zone.
 void *		_DECALL	Z_Malloc(size_t size, int tag, void *ptr);

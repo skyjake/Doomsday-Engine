@@ -2,7 +2,7 @@ NAME			"DOOMSDAY"
 DESCRIPTION		"The Doomsday Engine"
 
 ; Highest ordinal is currently 
-; --> 238 <--
+; --> 239 <--
 
 ; Other available ordinals: 158, 175
 
@@ -42,6 +42,7 @@ EXPORTS
 	W_ChangeCacheTag	@21 NONAME
 	W_LumpSourceFile	@22 NONAME
 	W_CRCNumber			@23 NONAME
+	W_IsFromIWAD		@239 NONAME
 
 ; Base: Zone.
 	Z_Malloc			@24 NONAME
