@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2003/07/29 16:36:13  skyjake
+// Added crosshair alpha slider
+//
 // Revision 1.4  2003/07/12 22:26:15  skyjake
 // Common G_StartTitle()
 //
@@ -171,8 +174,6 @@ float	skull_angle = 0;
 int		MenuTime;
 int		typein_time = 0;
 
-//static float flashcolor[3] = { 1, .7f, .1f };
-
 
 //
 // MENU TYPEDEFS
@@ -230,6 +231,7 @@ void M_HUDGreen(int option);
 void M_HUDBlue(int option);
 void M_Xhair(int option);
 void M_XhairSize(int option);
+void M_XhairAlpha(int option);
 void M_ChangeSensitivity(int choice);
 void M_SfxVol(int choice);
 void M_MusicVol(int choice);
@@ -530,11 +532,6 @@ static MenuItem_t Options2Items[] =
 	{ ITT_LRFUNC, "SFX VOLUME", M_SfxVol, 0 },
 	{ ITT_LRFUNC, "MUSIC VOLUME", M_MusicVol, 0 },
 	{ ITT_EFUNC, "AUDIO PANEL", M_OpenDCP, 1 },
-/*	{ ITT_LRFUNC, "MUSIC :", M_MusicDevice, 0 },
-	{ ITT_EFUNC, "3D SOUNDS :", M_3DSounds, 0 },
-	{ ITT_LRFUNC, "REVERB VOLUME", M_ReverbVol, 0 },
-	{ ITT_LRFUNC, "SFX FREQUENCY :", M_SfxFreq, 0 },
-	{ ITT_EFUNC, "16 BIT INTERPOLATION :", M_Sfx16bit, 0 }*/
 };
 
 static Menu_t Options2Def =
@@ -580,6 +577,7 @@ static MenuItem_t HUDItems[] =
 	{ ITT_LRFUNC, "COLOR BLUE  ", M_HUDBlue, 0 },
 	{ ITT_LRFUNC, "CROSSHAIR :", M_Xhair, 0 },
 	{ ITT_LRFUNC, "CROSSHAIR SIZE", M_XhairSize, 0 },
+	{ ITT_LRFUNC, "CROSSHAIR ALPHA", M_XhairAlpha, 0 },
 	{ ITT_LRFUNC, "SCREEN SIZE", M_SizeDisplay, 0 },
 	{ ITT_LRFUNC, "STATUS BAR SIZE", M_SizeStatusBar, 0}
 };
@@ -588,65 +586,12 @@ static Menu_t HUDDef =
 {
 	70, 40,
 	M_DrawHUD,
-	12, HUDItems,
+	13, HUDItems,
 	0, MENU_OPTIONS,
 	hu_font_a, 
 	LINEHEIGHT_A,
-	0, 12
+	0, 13
 };
-
-
-/*static MenuItem_t GraphicsItems[] = 
-{
-	{ ITT_EFUNC, "RESOLUTION...", M_EnterResolutionMenu, 0 },
-	{ ITT_LRFUNC, "SKY DETAIL", M_SkyDetail, 0 },
-	{ ITT_LRFUNC, "MIPMAPPING :", M_Mipmapping, 0 },
-	{ ITT_LRFUNC, "TEX QUALITY :", M_TexQuality, 0 },
-	{ ITT_EFUNC, "FORCE TEX RELOAD", M_ForceTexReload, 0 },
-	{ ITT_EFUNC, "FPS COUNTER :", M_FPSCounter, 0 },
-	{ ITT_EFUNC, "DYNAMIC LIGHTS :", M_DynLights, 0 },
-	{ ITT_LRFUNC, "DYNLIGHT BLENDING :", M_DLBlend, 0 },
-	{ ITT_EFUNC, "LIGHTS ON SPRITES :", M_SpriteLight, 0 },
-	{ ITT_LRFUNC, "DYNLIGHT INTENSITY", M_DLIntensity, 0 },
-	{ ITT_LRFUNC, "LENS FLARES :", M_Flares, 0 },
-	{ ITT_LRFUNC, "FLARE INTENSITY", M_FlareIntensity, 0 },
-	{ ITT_LRFUNC, "FLARE SIZE", M_FlareSize, 0 },
-	{ ITT_LRFUNC, "ALIGN SPRITES TO :", M_SpriteAlign, 0 },
-	{ ITT_EFUNC, "SPRITE BLENDING :", M_SpriteBlending, 0 },
-	{ ITT_EFUNC, "3D MODELS :", M_3DModels, 0 },
-	{ ITT_EFUNC, "PARTICLES :", M_Particles, 0 },
-	{ ITT_EFUNC, "DETAIL TEXTURES :", M_DetailTextures, 0 }
-};*/
-
-/*static Menu_t GraphicsDef =
-{
-	60, 40,
-	M_DrawGraphics,
-	18, GraphicsItems,
-	0, MENU_OPTIONS,
-	hu_font_a, //1, 0, 0, 
-	LINEHEIGHT_A,
-	0, 18
-};*/
-
-/*static MenuItem_t ResolutionItems[] =
-{
-	{ ITT_LRFUNC, "RESOLUTION :", M_ResSlider, 0 },
-//	{ ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-	{ ITT_EFUNC, "USE", M_ResSelect, 0 },
-	{ ITT_EFUNC, "SET DEFAULT", M_ResSelect, 1 }
-};
-
-static Menu_t ResolutionDef =
-{
-	60, 40,
-	M_DrawResolution,
-	3, ResolutionItems,
-	0, MENU_GRAPHICS,
-	hu_font_a, //1, 0, 0, 
-	LINEHEIGHT_A,
-	0, 3
-};*/
 
 static MenuItem_t InputItems[] =
 {
@@ -1297,8 +1242,8 @@ void M_DrawGameplay(void)
 void M_DrawHUD(void)
 {
 	Menu_t *menu = &HUDDef;
-	char *xhairnames[NUM_XHAIRS+1] = { "NONE", "CROSS", "ANGLES", "SQUARE",
-		"OPEN SQUARE", "DIAMOND", "V" };
+	char *xhairnames[NUM_XHAIRS+1] = { "NONE", "CROSS", "ANGLES", 
+		"SQUARE", "OPEN SQUARE", "DIAMOND", "V" };
 	
 	M_DrawTitle("HUD OPTIONS", menu->y - 20);
 
@@ -1312,72 +1257,10 @@ void M_DrawHUD(void)
 	M_DrawSlider(menu, 7, 11, cfg.hudColor[2]*10 + .5f);
 	M_WriteMenuText(menu, 8, xhairnames[cfg.xhair]); 
 	M_DrawSlider(menu, 9, 9, cfg.xhairSize);
-	M_DrawSlider(menu, 10, 9, screenblocks-3);
-	M_DrawSlider(menu, 11, 20, cfg.sbarscale-1);
+	M_DrawSlider(menu, 10, 16, cfg.xhairColor[3]/17);
+	M_DrawSlider(menu, 11, 9, screenblocks-3);
+	M_DrawSlider(menu, 12, 20, cfg.sbarscale-1);
 }
-
-/*void M_DrawGraphics(void)
-{
-	char *mipStr[6] = 
-	{
-		"NEAREST", "LINEAR", "N, MIP N", "L, MIP N", "N, MIP L", "L, MIP L"
-	};
-	char *texQStr[9] =
-	{
-		"0 - MINIMUM",
-		"1 - VERY LOW",
-		"2 - LOW",
-		"3 - POOR",
-		"4 - AVERAGE",
-		"5 - GOOD",
-		"6 - HIGH",
-		"7 - VERY HIGH",
-		"8 - MAXIMUM"
-	};
-	char *dlblendStr[4] = { "MULTIPLY", "ADD", "NONE", "DON'T RENDER" };
-	char *flareStr[6] = { "OFF", "1", "2", "3", "4", "5" };
-	char *alignStr[4] = { "CAMERA", "VIEW PLANE", "CAMERA (R)", "VIEW PLANE (R)" };
-	Menu_t *menu = &GraphicsDef;
-
-	M_DrawTitle("GRAPHICS OPTIONS", menu->y-20);
-
-	M_DrawSlider(menu, 1, 5, Get(DD_SKY_DETAIL)-3);
-	M_WriteMenuText(menu, 2, mipStr[Get(DD_MIPMAPPING)]);
-	M_WriteMenuText(menu, 3, texQStr[CVAR(int, "r_texquality")]);
-	M_WriteMenuText(menu, 5, yesno[cfg.showFPS]);
-	M_WriteMenuText(menu, 6, yesno[CVAR(int, "dynlights")]);
-	M_WriteMenuText(menu, 7, dlblendStr[CVAR(int, "dlblend")]);
-	M_WriteMenuText(menu, 8, yesno[CVAR(int, "sprlight")]);
-	M_DrawSlider(menu, 9, 11, CVAR(float, "dlfactor")*10 + .5f);
-	M_WriteMenuText(menu, 10, flareStr[CVAR(int, "flares")]);
-	M_DrawSlider(menu, 11, 11, CVAR(int, "flareintensity")/10);
-	M_DrawSlider(menu, 12, 11, CVAR(int, "flaresize"));
-	M_WriteMenuText(menu, 13, alignStr[CVAR(int, "spralign")]);
-	M_WriteMenuText(menu, 14, yesno[CVAR(int, "sprblend")]);
-	M_WriteMenuText(menu, 15, yesno[CVAR(int, "usemodels")!=0]);
-	M_WriteMenuText(menu, 16, yesno[CVAR(int, "useparticles")!=0]);
-	M_WriteMenuText(menu, 17, yesno[CVAR(int, "r_detail")!=0]);
-}*/
-
-/*void M_DrawResolution(void)
-{
-	Menu_t *menu = &ResolutionDef;
-	char buffer[80];
-
-	M_DrawTitle("RESOLUTION OPTIONS", menu->y-20);
-
-	if(selRes == -1)
-		strcpy(buffer, "NOT AVAILABLE");
-	else
-	{
-		sprintf(buffer, "%d X %d%s",
-			resolutions[selRes].width,
-			resolutions[selRes].height,
-			selRes == findRes(Get(DD_DEFAULT_RES_X), Get(DD_DEFAULT_RES_Y))? 
-				" (DEFAULT)" : "");			
-	}
-	M_WriteMenuText(menu, 0, buffer);
-}*/
 
 //===========================================================================
 // M_DrawMouseOpts
@@ -1519,6 +1402,16 @@ void M_XhairSize(int option)
 		if(cfg.xhairSize < 8) cfg.xhairSize++;
 	}
 	else if(cfg.xhairSize > 0) cfg.xhairSize--;
+}
+
+void M_XhairAlpha(int option)
+{
+	int val = cfg.xhairColor[3];
+
+	val += (option == RIGHT_DIR? 17 : -17);
+	if(val < 0) val = 0;
+	if(val > 255) val = 255;
+	cfg.xhairColor[3] = val;
 }
 
 void M_SizeStatusBar(int option)
