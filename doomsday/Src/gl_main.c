@@ -21,7 +21,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "config.h"
+#ifdef UNIX
+#  include "config.h"
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
