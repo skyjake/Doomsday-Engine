@@ -270,6 +270,11 @@ void DD_Ticker(timespan_t time)
 		// done here.
 		Sv_FixLocalAngles();
 	}
+	else
+	{
+		resyncFrameTimePos = true;		
+	}
+
 	if(ui_active)
 	{
 		// User interface ticks.
@@ -314,6 +319,7 @@ static boolean firstTic = true;
 void DD_ResetTimer(void)
 {
 	firstTic = true;
+	resyncFrameTimePos = true;
 	Net_ResetTimer();
 }
 

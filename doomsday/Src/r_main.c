@@ -76,6 +76,7 @@ double  lastSharpFrameTime;
 int     sharpWorldUpdated;		// Set to true after game ticker has been called.
 
 float   frameTimePos;			// 0...1: fractional part for sharp game tics
+boolean resyncFrameTimePos = true;
 
 int		loadInStartupMode = true;
 
@@ -83,6 +84,8 @@ int		loadInStartupMode = true;
 
 static viewer_t lastSharpView[2];
 static boolean resetNextViewer = true;
+
+static boolean showFrameTimePos = false;
 
 // BSP cvars.
 static int bspBuild = true;
@@ -99,6 +102,9 @@ void R_Register(void)
 	C_VAR_BYTE("rend-info-tris", &rend_info_tris, 0, 0, 1,
 			   "1=Print triangle count after rendering a frame.");
 
+	C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1,
+			   "1=Print frame time offsets.");
+	
 	C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, 0, 0, 1,
 			  "1=Filter camera movement between game tics.");
 
@@ -275,13 +281,12 @@ void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
 //===========================================================================
 void R_SetupFrame(ddplayer_t *player)
 {
-	extern timespan_t frameStartTime;
-
 	int     tableAngle, i;
 	float   yawRad, pitchRad;
 	double  nowTime;
 	viewer_t sharpView, smoothView;
 	sector_t *sector;
+	boolean justResynced = false;
 
 	// Reset the DGL triangle counter.
 	gl.GetInteger(DGL_POLY_COUNT);
@@ -382,23 +387,29 @@ void R_SetupFrame(ddplayer_t *player)
 					secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
 				}
 			}
+			
+			// If the frametime gets too far from the sharp times, it
+			// will be forced back into the correct range.  This
+			// doesn't happen during normal gameplay, only when there
+			// has been an abnormal skip in the timing (tics without
+			// frames or visa versa).
+			if(resyncFrameTimePos || frameTimePos > 3)
+			{
+				resyncFrameTimePos = false;
+				VERBOSE(Con_Message("Resyncing frametime...\n"));
+				frameTimePos = 0; //M_CycleIntoRange(frameTimePos, 1);
+				justResynced = true;
+			}
 		}
 
-		// If the frametime gets too far from the sharp times, it will be 
-		// forced back into the correct range.  This doesn't happen during
-		// normal gameplay, only when there has been an abnormal skip in the
-		// timing (tics without frames or visa versa).
-		if(frameTimePos > 3)
-		{
-			Con_Message("Resyncing frametime...\n");
-			frameTimePos = M_CycleIntoRange(frameTimePos, 1);
-		}
+		// Calculate the smoothed camera position, which is somewhere
+		// between the previous and current sharp positions. This
+		// introduces a slight delay (max. 1/35 sec) to the movement
+		// of the smoothed camera.
 
-		// Calculate the smoothed camera position, which is somewhere between
-		// the previous and current sharp positions. This introduces a slight
-		// delay (max. 1/35 sec) to the movement of the smoothed camera.
-				
-		frameTimePos += nowTime - oldTime;
+		if(!justResynced)
+			frameTimePos += nowTime - oldTime;
+
 		oldTime = nowTime;
 
 		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
@@ -413,19 +424,25 @@ void R_SetupFrame(ddplayer_t *player)
 		{
 			static double oldtime = 0;
 			static fixed_t oldx, oldy;
-			fprintf(outFile, "F=%.3f dt=%-5.3f dx=%-5.3f dy=%-5.3f Rdx=%-5.3f Rdy=%-5.3f\n", 
-				frameTimePos,
-				nowTime - oldtime,
-				FIX2FLT(smoothView.x - oldx),
-				FIX2FLT(smoothView.y - oldy),
-				FIX2FLT(smoothView.x - oldx) / (nowTime - oldtime),
-				FIX2FLT(smoothView.y - oldy) / (nowTime - oldtime));
+			fprintf(outFile, "F=%.3f dt=%-5.3f dx=%-5.3f dy=%-5.3f "
+					"Rdx=%-5.3f Rdy=%-5.3f\n", 
+					frameTimePos,
+					nowTime - oldtime,
+					FIX2FLT(smoothView.x - oldx),
+					FIX2FLT(smoothView.y - oldy),
+					FIX2FLT(smoothView.x - oldx) / (nowTime - oldtime),
+					FIX2FLT(smoothView.y - oldy) / (nowTime - oldtime));
 			oldx = smoothView.x;
 			oldy = smoothView.y;
 			oldtime = nowTime;
 		}
 #endif
 
+		if(showFrameTimePos)
+		{
+			Con_Printf("frametime = %f\n", frameTimePos);
+		}
+		
 		// $smoothplane: Set the visible offsets.
 		for(i = 0; i < numsectors; i++)
 		{
