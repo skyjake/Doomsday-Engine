@@ -2517,32 +2517,10 @@ int CCmdListFiles(int argc, char **argv)
 
 int CCmdResetLumps(int argc, char **argv)
 {
-	//extern int RegisteredSong;
-
-	// This game ends here.
-//	P_ClearMessage(&players[consoleplayer]);
-//	paused = false;
 	GL_SetFilter(0);
-//	H2_StartTitle(); // go to intro/demo mode.
-
-	// This may take a while, so stop the music and the timer.
-//	S_StopAllSound();
-//	SN_StopAllSequences();
-//	I_StopSong();
-//	I_UnRegisterSong();
-	//RegisteredSong = 0;	
-//	I_ShutdownTimer();
-
-//	I_SaveTime();
-
 	W_Reset();
 	Con_Message("Only startup files remain.\n");	
-
 	UpdateEngineState();
-
-	//I_RestoreTime();
-//	I_StartupTimer();
-	//I_ResumeSong();
 	return true;
 }
 
@@ -3004,7 +2982,7 @@ void Con_Error (char *error, ...)
 	for(i=5; i>1; i--)
 	{
 		cbline_t *cbl = Con_GetBufferLine(bufferLines - i);
-		if(!cbl) continue;
+		if(!cbl || !cbl->text) continue;
 		strcat(buff, cbl->text);
 		strcat(buff, "\n");
 	}
