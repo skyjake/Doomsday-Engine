@@ -852,10 +852,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		}
 		actions[A_USEARTIFACT].on = false;
 	}
-	if(actions[A_JUMP].on)
-	{
-		cmd->jump = true;
-	}
+
 	if(mn_SuicideConsole)
 	{
 		cmd->suicide = true;
