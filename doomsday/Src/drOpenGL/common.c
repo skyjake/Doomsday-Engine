@@ -27,6 +27,8 @@
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
 
+void    DG_Viewport(int x, int y, int width, int height);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -113,11 +115,8 @@ void initState(void)
 	// Prefer good quality in texture compression.
 	glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
-	/*#ifdef RENDER_WIREFRAME
-	   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	   #else
-	   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	   #endif */
+	// Update viewport to full display.
+	DG_Viewport(0, 0, screenWidth, screenHeight);
 }
 
 //===========================================================================
