@@ -331,11 +331,12 @@ void R_GenerateLookup (int texnum)
 	{
 		if (!patchcount[x])
 		{
-			ST_Message ("R_GenerateLookup: column without a patch (%s)\n", texture->name);
+			ST_Message ("R_GenerateLookup: column without a patch (%s)\n", 
+				texture->name);
 			free(patchcount);
 			return;
 		}
-//			Con_Error ("R_GenerateLookup: column without a patch");
+		//Con_Error ("R_GenerateLookup: column without a patch");
 		if (patchcount[x] > 1)
 		{
 			collump[x] = -1;	// use the cached block
@@ -459,7 +460,7 @@ void R_InitTextures (void)
 		texture->flags = mtexture->masked? TXF_MASKED : 0;
 
 		texture->patchcount = SHORT(mtexture->patchcount);
-		memcpy (texture->name, mtexture->name, sizeof(texture->name));
+		memcpy (texture->name, mtexture->name, 8);
 		mpatch = &mtexture->patches[0];
 		patch = &texture->patches[0];
 		for (j=0 ; j<texture->patchcount ; j++, mpatch++, patch++)
@@ -467,9 +468,11 @@ void R_InitTextures (void)
 			patch->originx = SHORT(mpatch->originx);
 			patch->originy = SHORT(mpatch->originy);
 			patch->patch = patchlookup[SHORT(mpatch->patch)];
-			if (patch->patch == -1)
-				Con_Error (
-				"R_InitTextures: Missing patch in texture %s",texture->name);
+			if(patch->patch == -1)
+			{
+				Con_Error("R_InitTextures: Missing patch in texture %s", 
+					texture->name);
+			}
 		}		
 #if 0
 		texturecolumnlump[i] = Z_Malloc (texture->width*2, PU_REFRESHTEX,0);

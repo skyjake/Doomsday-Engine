@@ -25,7 +25,7 @@ typedef struct
 
 typedef struct
 {
-	char		name[8];
+	char		name[9];	// End in \0.
 	int			handle, position, size;
 	int			sent;
 	char		group;		// Lump grouping tag (LGT_*).

@@ -88,7 +88,7 @@ typedef struct
 // or more mappatch_t structures that arrange graphic patches
 typedef struct
 {
-	char		name[8];		// for switch changing, etc
+	char		name[9];		// for switch changing, etc; ends in \0
 	short		width;
 	short		height;
 	int			flags;			// TXF_* flags.

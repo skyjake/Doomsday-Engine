@@ -230,6 +230,7 @@ void W_FillLumpInfo
 	lump->handle = rec->handle;
 	lump->position = LONG(flump->filepos);
 	lump->size = LONG(flump->size);
+	memset(lump->name, 0, sizeof(lump->name));
 	strncpy(lump->name, flump->name, 8);
 	lump->group = groupTag;
 }
