@@ -391,107 +391,141 @@ float WI_ParseFloat(char **str)
  */
 void WI_DrawPatch(int x, int y, int lump)
 {
-	char def[80], *string;
+	char def[80], temp[256], *string, *end;
 	const char *name = W_LumpName(lump);
 	dpatch_t *font = hu_font_b;
 	float r = 1, g = 0, b = 0;
 	float offX = 0, offY = 0;
-	float scaleX = 1, scaleY = 1;
+	float scaleX = 1, scaleY = 1, angle = 0;
+	float cx = x, cy = y;
 
 	// "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
 
 	strcpy(def, "Patch Replacement|");
 	strcat(def, name);
 
-	if(!W_IsFromIWAD(lump) || !Def_Get(DD_DEF_VALUE, def, &string))
+	if(!cfg.usePatchReplacement 
+		|| !W_IsFromIWAD(lump) 
+		|| !Def_Get(DD_DEF_VALUE, def, &string))
 	{
 		// Replacement string not found, draw the patch.
 		GL_DrawPatch(x, y, lump);
 		return;
 	}
 
-	// Parse the replacement string.
-	if(*string == '{') // Parameters included?
+	while(*string)
 	{
-		string++;
-		while(*string && *string != '}')
+		// Parse and draw the replacement string.
+		if(*string == '{') // Parameters included?
 		{
-			string = M_SkipWhite(string);
+			string++;
+			while(*string && *string != '}')
+			{
+				string = M_SkipWhite(string);
 
-			// What do we have here?
-			if(!strnicmp(string, "fonta", 5))
-			{
-				font = hu_font_a;
-				string += 5;
+				// What do we have here?
+				if(!strnicmp(string, "fonta", 5))
+				{
+					font = hu_font_a;
+					string += 5;
+				}
+				else if(!strnicmp(string, "fontb", 5))
+				{
+					font = hu_font_b;
+					string += 5;
+				}
+				else if(!strnicmp(string, "r", 1))
+				{
+					string++;
+					r = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "g", 1))
+				{
+					string++;
+					g = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "b", 1))
+				{
+					string++;
+					b = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "x", 1))
+				{
+					string++;
+					offX = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "y", 1))
+				{
+					string++;
+					offY = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "scalex", 6))
+				{
+					string += 6;
+					scaleX = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "scaley", 6))
+				{
+					string += 6;
+					scaleY = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "scale", 5))
+				{
+					string += 5;
+					scaleX = scaleY = WI_ParseFloat(&string);
+				}
+				else if(!strnicmp(string, "angle", 5))
+				{
+					string += 5;
+					angle = WI_ParseFloat(&string);
+				}
+				else
+				{
+					// Unknown, skip it.
+					string++;
+				}
 			}
-			else if(!strnicmp(string, "fontb", 5))
-			{
-				font = hu_font_b;
-				string += 5;
-			}
-			else if(!strnicmp(string, "r", 1))
-			{
-				string++;
-				r = WI_ParseFloat(&string);
-			}
-			else if(!strnicmp(string, "g", 1))
-			{
-				string++;
-				g = WI_ParseFloat(&string);
-			}
-			else if(!strnicmp(string, "b", 1))
-			{
-				string++;
-				b = WI_ParseFloat(&string);
-			}
-			else if(!strnicmp(string, "x", 1))
-			{
-				string++;
-				x = WI_ParseFloat(&string);
-			}
-			else if(!strnicmp(string, "y", 1))
-			{
-				string++;
-				y = WI_ParseFloat(&string);
-			}
-			else if(!strnicmp(string, "scalex", 6))
-			{
-				string += 6;
-				scaleX = WI_ParseFloat(&string);
-			}
-			else if(!strnicmp(string, "scaley", 6))
-			{
-				string += 6;
-				scaleY = WI_ParseFloat(&string);
-			}
-			else if(!strnicmp(string, "scale", 5))
-			{
-				string += 5;
-				scaleX = scaleY = WI_ParseFloat(&string);
-			}
-			else
-			{
-				// Unknown, skip it.
-				string++;
-			}
+
+			// Skip over the closing brace.
+			if(*string) string++;
 		}
 
-		// Skip over the closing brace.
-		if(*string) string++;
+		// Find the end of the visible part of the string.
+		for(end = string; *end && *end != '{'; end++);
+		
+		strncpy(temp, string, end - string);
+		temp[end - string] = 0;
+		string = end; // Continue from here.
+
+		// Setup the scaling.
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PushMatrix();
+
+		// Rotate.
+		if(angle != 0)
+		{
+			// The origin is the specified (x,y) for the patch.
+			// We'll undo the VGA aspect ratio (otherwise the result would
+			// be skewed).
+			gl.Translatef(x, y, 0);
+			gl.Scalef(1, 200.0f/240.0f, 1);
+			gl.Rotatef(angle, 0, 0, 1);
+			gl.Scalef(1, 240.0f/200.0f, 1);
+			gl.Translatef(-x, -y, 0);
+		}
+
+		gl.Translatef(cx + offX, cy + offY, 0);
+		gl.Scalef(scaleX, scaleY, 1);
+
+		// Draw it.
+		M_WriteText3(0, 0, temp, font, r, g, b, false);
+
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PopMatrix();
+
+		// Advance the current position.
+		cx += scaleX * M_StringWidth(temp, font);
 	}
-
-	// Setup the scaling.
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.PushMatrix();
-
-	gl.Translatef(x + offX, y + offY, 0);
-	gl.Scalef(scaleX, scaleY, 1);
-
-	// Draw it.
-	M_WriteText3(0, 0, string, font, r, g, b, false);
-
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.PopMatrix();
 }
 
 void WI_slamBackground(void)
@@ -661,7 +695,8 @@ void WI_drawAnimatedBack(void)
     for (i=0 ; i<NUMANIMS[wbs->epsd] ; i++)
     {
 		a = &anims[wbs->epsd][i];
-		if(a->ctr >= 0) GL_DrawPatch(a->loc.x, a->loc.y, a->p[a->ctr].lump);
+		if(a->ctr >= 0) 
+			WI_DrawPatch(a->loc.x, a->loc.y, a->p[a->ctr].lump);
     }
 
 }
@@ -714,12 +749,12 @@ WI_drawNum
     while(digits--)
     {
 		x -= fontwidth;
-		GL_DrawPatch(x, y, num[ n % 10 ].lump);
+		WI_DrawPatch(x, y, num[ n % 10 ].lump);
 		n /= 10;
     }
 
     // draw a minus sign if necessary
-    if(neg) GL_DrawPatch(x-=8, y, wiminus.lump);
+    if(neg) WI_DrawPatch(x-=8, y, wiminus.lump);
 
     return x;
 }
@@ -732,7 +767,7 @@ WI_drawPercent
 {
     if (p < 0) return;
 
-    GL_DrawPatch(x, y, percent.lump);
+    WI_DrawPatch(x, y, percent.lump);
     WI_drawNum(x, y, p, -1);
 }
 
@@ -764,7 +799,7 @@ WI_drawTime
 
 			// draw
 		    if (div==60 || t / div)
-				GL_DrawPatch(x, y, colon.lump);
+				WI_DrawPatch(x, y, colon.lump);
 	    
 		} while (t / div);
     }
@@ -1043,20 +1078,20 @@ void WI_drawDeathmatchStats(void)
     {
 		if(teaminfo[i].members)
 		{
-		    GL_DrawPatch(x-SHORT(p[i].width)/2,
+		    WI_DrawPatch(x-SHORT(p[i].width)/2,
 				DM_MATRIXY - WI_SPACINGY,
 				p[i].lump);
 	    
-			GL_DrawPatch(DM_MATRIXX-SHORT(p[i].width)/2, y,
+			WI_DrawPatch(DM_MATRIXX-SHORT(p[i].width)/2, y,
 				p[i].lump);
 
 			if(i == myteam)
 			{
-				GL_DrawPatch(x-SHORT(p[i].width)/2,
+				WI_DrawPatch(x-SHORT(p[i].width)/2,
 					DM_MATRIXY - WI_SPACINGY,
 					bstar.lump);
 
-				GL_DrawPatch(DM_MATRIXX-SHORT(p[i].width)/2, y,
+				WI_DrawPatch(DM_MATRIXX-SHORT(p[i].width)/2, y,
 					star.lump);
 		    }
 
@@ -1074,9 +1109,9 @@ void WI_drawDeathmatchStats(void)
 		}
 		else
 		{
-			GL_DrawPatch(x-SHORT(bp[i].width)/2,
+			WI_DrawPatch(x-SHORT(bp[i].width)/2,
 				DM_MATRIXY - WI_SPACINGY, bp[i].lump);
-			GL_DrawPatch(DM_MATRIXX-SHORT(bp[i].width)/2,
+			WI_DrawPatch(DM_MATRIXX-SHORT(bp[i].width)/2,
 				y, bp[i].lump);
 		}
 		x += DM_SPACINGX;
@@ -1308,7 +1343,7 @@ void WI_drawNetgameStats(void)
 		if (!teaminfo[i].members) continue;
 
 		x = NG_STATSX;
-		GL_DrawPatch(x-SHORT(p[i].width), y, p[i].lump);
+		WI_DrawPatch(x-SHORT(p[i].width), y, p[i].lump);
 		// If more than 1 member, show the member count.
 		if(teaminfo[i].members > 1)
 		{
@@ -1319,7 +1354,7 @@ void WI_drawNetgameStats(void)
 		}
 
 		if(i == myteam)
-		    GL_DrawPatch(x-SHORT(p[i].width), y, star.lump);
+		    WI_DrawPatch(x-SHORT(p[i].width), y, star.lump);
 
 		x += NG_SPACINGX;
 		WI_drawPercent(x-pwidth, y+10, cnt_kills[i]);	x += NG_SPACINGX;
