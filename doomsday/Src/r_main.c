@@ -338,6 +338,14 @@ void R_NewSharpWorld(void)
 	{
 		sector = SECTOR_PTR(i);
 		secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
+
+        // Geometry change?
+        // FIXME: There has to be better place to do this...
+        if(secinfo[i].oldfloor[1] != sector->floorheight)
+        {
+            P_FloorChanged(sector);
+        }
+        
 		secinfo[i].oldfloor[1] = sector->floorheight;
 		
 		if(abs(secinfo[i].oldfloor[0] - secinfo[i].oldfloor[1]) >=
@@ -348,7 +356,15 @@ void R_NewSharpWorld(void)
 		}
 
 		secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
-		secinfo[i].oldceil[1] = sector->ceilingheight;
+
+        // Geometry change?
+        // FIXME: There has to be better place to do this...
+        if(secinfo[i].oldceil[1] != sector->ceilingheight)
+        {
+            P_CeilingChanged(sector);
+        }
+
+        secinfo[i].oldceil[1] = sector->ceilingheight;
 
 		if(abs(secinfo[i].oldceil[0] - secinfo[i].oldceil[1]) >=
 		   MAX_SMOOTH_PLANE_MOVE)
