@@ -245,6 +245,7 @@ void DetectIWADs (void)
 		">Data\\",
 		">",
 		">Iwads\\",
+		"..\\Iwads\\",		// GMJ/BD compatibility
 		"",
 		0 
 	};
