@@ -478,7 +478,7 @@ void NetSv_SendMessageEx(int plrNum, char *msg, boolean yellow)
 		// Also show locally. No sound is played!
 		D_NetMessageNoSound(msg); 
 	}
-	Net_SendPacket(plrNum | DDSP_RELIABLE, 
+	Net_SendPacket(plrNum | DDSP_ORDERED, 
 		yellow? GPT_YELLOW_MESSAGE : GPT_MESSAGE,
 		msg, strlen(msg) + 1);
 }
@@ -504,7 +504,8 @@ void NetSv_SendYellowMessage(int plrNum, char *msg)
 //	More player state information. Had to be separate because of backwards
 //	compatibility.
 //===========================================================================
-void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
+void NetSv_SendPlayerState2
+	(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
 {
 	int pType = (srcPlrNum == destPlrNum? GPT_CONSOLEPLAYER_STATE2 
 		: GPT_PLAYER_STATE2);
@@ -530,15 +531,15 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean re
 	}
 
 	// Finally, send the packet.
-	Net_SendPacket(destPlrNum | (reliable? DDSP_RELIABLE : 0),
+	Net_SendPacket(destPlrNum | (reliable? DDSP_ORDERED : 0),
 		pType, buffer, ptr-buffer);	
 }
 
 //===========================================================================
 // NetSv_SendPlayerState
 //===========================================================================
-void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, 
-						   boolean reliable)
+void NetSv_SendPlayerState
+	(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
 {
 	int pType = srcPlrNum==destPlrNum? GPT_CONSOLEPLAYER_STATE : GPT_PLAYER_STATE;
 	player_t *pl = &players[srcPlrNum];
@@ -718,7 +719,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	Con_Printf( "\n");*/
 
 	// Finally, send the packet.
-	Net_SendPacket(destPlrNum | (reliable? DDSP_RELIABLE : 0),
+	Net_SendPacket(destPlrNum | (reliable? DDSP_ORDERED : 0),
 		pType, buffer, ptr-buffer);	
 }
 
@@ -797,7 +798,7 @@ void NetSv_SendGameState(int flags, int to)
 		}
 		
 		// Send the packet.
-		Net_SendPacket(i | DDSP_RELIABLE, GPT_GAME_STATE, buffer, ptr-buffer);
+		Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, buffer, ptr-buffer);
 	}
 }
 
@@ -832,7 +833,7 @@ void NetSv_Intermission(int flags, int state, int time)
 
 	if(flags & IMF_STATE) *ptr++ = state;
 	if(flags & IMF_TIME) WRITE_SHORT(ptr, time);
-	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_RELIABLE, GPT_INTERMISSION,
+	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_INTERMISSION,
 		buffer, ptr-buffer);
 }
 
@@ -862,7 +863,7 @@ void NetSv_Finale(int flags, char *script)
 	// First the flags, then the script.
 	*ptr++ = flags;
 	if(script) strcpy(ptr, script);
-	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_RELIABLE, GPT_FINALE,
+	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE,
 		buffer, len);
 	Z_Free(buffer);
 }
@@ -878,7 +879,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 #if __JHEXEN__
 	*ptr++ = cfg.PlayerClass[whose];
 #endif
-	Net_SendPacket(to_whom | DDSP_RELIABLE, GPT_PLAYER_INFO,
+	Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO,
 		buffer, ptr-buffer);
 }
 
@@ -921,7 +922,7 @@ void NetSv_SaveGame(unsigned int game_id)
 {
 	if(!IS_SERVER || !IS_NETGAME) return;
 	// This will make the clients save their games.
-	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_RELIABLE, GPT_SAVE,
+	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_SAVE,
 		&game_id, 4);
 }
 
@@ -929,7 +930,7 @@ void NetSv_LoadGame(unsigned int game_id)
 {
 	if(!IS_SERVER || !IS_NETGAME) return;
 	// The clients must tell their old console numbers.
-	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_RELIABLE, GPT_LOAD,
+	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_LOAD,
 		&game_id, 4);
 }
 
@@ -948,7 +949,7 @@ void NetSv_FragsForAll(player_t *player)
 //===========================================================================
 void NetSv_SendPlayerClass(int pnum, char cls)
 {
-	Net_SendPacket(pnum | DDSP_RELIABLE, GPT_CLASS, &cls, 1);
+	Net_SendPacket(pnum | DDSP_CONFIRM, GPT_CLASS, &cls, 1);
 }
 
 //===========================================================================
@@ -1005,7 +1006,7 @@ void NetSv_Paused(boolean isPaused)
 	if(!IS_SERVER || !IS_NETGAME) return;
 
 	// This will make the clients save their games.
-	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_RELIABLE, GPT_PAUSE,
+	Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_PAUSE,
 		&setPause, 1);
 }
 

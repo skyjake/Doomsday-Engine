@@ -536,9 +536,9 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		Set(DD_GAME_READY, true);
 
 		// Tell the server that we're ready. 
-		// Note: this *must be* done, or the server won't know if we're 
+		// Note: This *must be* done, or the server won't know if we're 
 		// ready to begin.
-		Net_SendPacket(DDSP_RELIABLE, DDPT_OK, NULL, 0);
+		/* Net_SendPacket(DDSP_ORDERED, DDPT_OK, NULL, 0); */
 		break;
 
 	case GPT_MESSAGE:

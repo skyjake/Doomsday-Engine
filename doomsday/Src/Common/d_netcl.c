@@ -178,6 +178,9 @@ void NetCl_UpdateGameState(byte *data)
 		mo->floorz = tmfloorz;
 		mo->ceilingz = tmceilingz;
 	}
+
+	// Tell the server we're ready to begin receiving frames.
+	Net_SendPacket(DDSP_CONFIRM, DDPT_OK, NULL, 0);
 }
 
 #if 0
@@ -600,7 +603,7 @@ void NetCl_SendPlayerInfo()
 #if __JHEXEN__
 	*ptr++ = cfg.netClass;
 #endif
-	Net_SendPacket(DDSP_RELIABLE, GPT_PLAYER_INFO, buffer, ptr-buffer);
+	Net_SendPacket(DDSP_ORDERED, GPT_PLAYER_INFO, buffer, ptr-buffer);
 }
 
 void NetCl_SaveGame(void *data)
