@@ -137,7 +137,9 @@ typedef struct {
 } sectorinfo_t;
 
 typedef struct planeinfo_s {
-	rendpoly_t	poly;
+	short		flags;
+	ushort		numvertices;
+	fvertex_t	*vertices;
 	int			pic;
 	boolean		isfloor;
 } planeinfo_t;
