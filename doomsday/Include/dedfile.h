@@ -369,7 +369,7 @@ typedef struct
 } ded_decorlight_t;
 
 // There is a fixed number of light decorations in each decoration.
-#define DED_DECOR_NUM_LIGHTS	8
+#define DED_DECOR_NUM_LIGHTS	16
 
 typedef struct ded_decor_s
 {
