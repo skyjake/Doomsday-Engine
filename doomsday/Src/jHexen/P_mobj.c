@@ -1630,6 +1630,15 @@ void P_SpawnMapThing(mapthing_t *mthing)
 				spawnMask |= classFlags[cfg.PlayerClass[i]];
 			}
 		}
+
+		// No players are in the game when a dedicated server is
+		// started. In this case, we'll be generous and spawn stuff
+		// for all the classes.
+		if(!spawnMask) 
+		{
+			spawnMask |= MTF_FIGHTER | MTF_CLERIC | MTF_MAGE;
+		}
+
 		if((mthing->options&spawnMask) == 0)
 		{
 			return;
