@@ -3,6 +3,8 @@
 //**
 //** CON_CONSOLE.C
 //**
+//** Should be completely redesigned.
+//**
 //**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
@@ -40,6 +42,23 @@
 
 #define OBSOLETE	CVF_NO_ARCHIVE|CVF_HIDE
 
+// Macros for accessing the console command values through the void ptr.
+#define CV_INT(var)		(*(int*) var->ptr)
+#define CV_BYTE(var)	(*(byte*) var->ptr)
+#define CV_FLOAT(var)	(*(float*) var->ptr)
+#define CV_CHARPTR(var)	(*(char**) var->ptr)
+
+// Operators for the "if" command.
+enum 
+{
+	IF_EQUAL,
+	IF_NOT_EQUAL,
+	IF_GREATER,
+	IF_LESS,
+	IF_GEQUAL,
+	IF_LEQUAL
+};
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct
@@ -52,7 +71,7 @@ typedef struct
 {
 	unsigned int	marker : 31;	// The tic on which the cmd should be executed.
 	unsigned int	used : 1;		// Is this in use?
-	char			subcmd[256];	// A single command w/args.
+	char			subcmd[1024];	// A single command w/args.
 } execbuff_t;
 
 typedef struct
@@ -98,6 +117,8 @@ D_CMD(Ping);
 D_CMD(Login);
 D_CMD(Logout);
 D_CMD(Dir);
+D_CMD(Toggle);
+D_CMD(If);
 
 #ifdef _DEBUG
 D_CMD(TranslateFont);
@@ -411,79 +432,81 @@ cvar_t engineCVars[] =
 ccmd_t engineCCmds[] =
 {
 	"actions",		CCmdListActs,		"List all action commands.",
+	"add",			CCmdAddSub,			"Add something to a cvar.",
+	"after",		CCmdWait,			"Execute the specified command after a delay.",
 	"alias",		CCmdAlias,			"Create aliases for a (set of) console commands.",
+	"bgturn",		CCmdBackgroundTurn, "Set console background rotation speed.",
 	"bind",			CCmdBind,			"Bind a console command to an event.",
 	"bindr",		CCmdBind,			"Bind a console command to an event (keys with repeat).",
-	"safebind",		CCmdBind,			"Bind a command to an event, unless the event is already bound.",
-	"safebindr",	CCmdBind,			"Bind a command to an event, unless the event is already bound.",
-	"bgturn",		CCmdBackgroundTurn, "Set console background rotation speed.",
 	"chat",			CCmdChat,			"Broadcast a chat message.",
 	"chatnum",		CCmdChat,			"Send a chat message to the specified player.",
 	"chatto",		CCmdChat,			"Send a chat message to the specified player.",
-	"say",			CCmdChat,			"Broadcast a chat message.",
-	"saynum",		CCmdChat,			"Send a chat message to the specified player.",
-	"sayto",		CCmdChat,			"Send a chat message to the specified player.",
 	"clear",		CCmdConsole,		"Clear the console buffer.",
 	"clearbinds",	CCmdClearBindings,	"Deletes all existing bindings.",
+	"conlocp",		CCmdMakeCamera,		"Connect a local player.",
+	"connect",		CCmdConnect,		"Connect to a server using TCP/IP.",
+	"dec",			CCmdAddSub,			"Subtract 1 from a cvar.",
 	"delbind",		CCmdDeleteBind,		"Deletes all bindings to the given console command.",
+	"demolump",		CCmdDemoLump,		"Write a reference lump file for a demo.",
+	"dir",			CCmdDir,			"Print contents of directories.",
 	"dump",			CCmdDump,			"Dump a data lump currently loaded in memory.",
+	"dumpkeymap",	CCmdDumpKeyMap,		"Write the current keymap to a file.",
 	"echo",			CCmdEcho,			"Echo the parameters on separate lines.",
+	"exec",			CCmdParse,			"Loads and executes a file containing console commands.",
+	"flareconfig",	CCmdFlareConfig,	"Configure lens flares.",
 	"fog",			CCmdFog,			"Modify fog settings.",
 	"font",			CCmdFont,			"Modify console font settings.",
-	"lowres",		CCmdLowRes,			"Select the poorest rendering quality.",
 	"help",			CCmdConsole,		"Show information about the console.",
+	"huffman",		CCmdHuffmanStats,	"Print Huffman efficiency and number of bytes sent.",
+	"if",			CCmdIf,				"Execute a command if the condition is true.",
+	"inc",			CCmdAddSub,			"Add 1 to a cvar.",
+	"keymap",		CCmdKeyMap,			"Load a DKM keymap file.",
+	"kick",			CCmdKick,			"Kick client out of the game.",
 	"listaliases",	CCmdListAliases,	"List all aliases and their expanded forms.",
 	"listbindings",	CCmdListBindings,	"List all event bindings.",
 	"listcmds",		CCmdListCmds,		"List all console commands.",
 	"listfiles",	CCmdListFiles,		"List all the loaded data files and show information about them.",
 	"listvars",		CCmdListVars,		"List all console variables and their values.",
-	"net",			CCmdNet,			"Network setup and control.",
 	"load",			CCmdLoadFile,		"Load a data file (a WAD or a lump).",
-	"quit!",		CCmdQuit,			"Exit the game immediately.",
-	"exec",			CCmdParse,			"Loads and executes a file containing console commands.",
-	"reset",		CCmdResetLumps,		"Reset the data files into what they were at startup.",
-	"repeat",		CCmdRepeat,			"Repeat a command at given intervals.",
-	"texreset",		CCmdResetTextures,	"Force a texture reload.",
-	"mipmap",		CCmdMipMap,			"Set the mipmapping mode.",
-	"setgamma",		CCmdSetGamma,		"Set the gamma correction level.",
-	"setres",		CCmdSetRes,			"Change video mode resolution or window size.",
-	"setvidramp",	CCmdUpdateGammaRamp, "Update display's hardware gamma ramp.",
-	"smoothscr",	CCmdSmoothRaw,		"Set the rendering mode of fullscreen images.",
-	"skydetail",	CCmdSkyDetail,		"Set the number of sky sphere quadrant subdivisions.",
-	"skyrows",		CCmdSkyDetail,		"Set the number of sky sphere rows.",
-	"unload",		CCmdUnloadFile,		"Unload a data file from memory.",
-	"version",		CCmdVersion,		"Show detailed version information.",
-	"after",		CCmdWait,			"Execute the specified command after a delay.",
-	"flareconfig",	CCmdFlareConfig,	"Configure lens flares.",
-	"inc",			CCmdAddSub,			"Add 1 to a cvar.",
-	"dec",			CCmdAddSub,			"Subtract 1 from a cvar.",
-	"add",			CCmdAddSub,			"Add something to a cvar.",
-	"sub",			CCmdAddSub,			"Subtract something from a cvar.",
-	"ping",			CCmdPing,			"Ping the server (or a player if you're the server).",
-	"setname",		CCmdSetName,		"Set your name.",
-	"playdemo",		CCmdPlayDemo,		"Play a demo.",
-	"recorddemo",	CCmdRecordDemo,		"Start recording a demo.",
-	"stopdemo",		CCmdStopDemo,		"Stop currently playing demo.",
-	"pausedemo",	CCmdPauseDemo,		"Pause/resume demo recording.",
-	"demolump",		CCmdDemoLump,		"Write a reference lump file for a demo.",
-	"kick",			CCmdKick,			"Kick client out of the game.",
-	"settics",		CCmdSetTicks,		"Set number of game tics per second (default: 35).",
-	"playext",		CCmdPlayExt,		"Play an external music file.",
-	"playmusic",	CCmdPlayMusic,		"Play a song, an external music file or a CD track.",
-	"stopmusic",	CCmdStopMusic,		"Stop any currently playing music.",
 	"login",		CCmdLogin,			"Log in to server console.",
 	"logout",		CCmdLogout,			"Terminate remote connection to server console.",
-	"conlocp",		CCmdMakeCamera,		"Connect a local player.",
-	"setcon",		CCmdSetConsole,		"Set console and viewplayer.",
-	"uicolor",		CCmdUIColor,		"Change Doomsday user interface colors.",
-	"panel",		CCmdOpenPanel,		"Open the Doomsday Control Panel.",
-	"keymap",		CCmdKeyMap,			"Load a DKM keymap file.",
-	"dumpkeymap",	CCmdDumpKeyMap,		"Write the current keymap to a file.",
-	"connect",		CCmdConnect,		"Connect to a server using TCP/IP.",
-	"write",		CCmdWriteConsole,	"Write variables, bindings and aliases to a file.",
-	"dir",			CCmdDir,			"Print contents of directories.",
+	"lowres",		CCmdLowRes,			"Select the poorest rendering quality.",
 	"ls",			CCmdDir,			"Print contents of directories.",
-	"huffman",		CCmdHuffmanStats,	"Print Huffman efficiency and number of bytes sent.",
+	"mipmap",		CCmdMipMap,			"Set the mipmapping mode.",
+	"net",			CCmdNet,			"Network setup and control.",
+	"panel",		CCmdOpenPanel,		"Open the Doomsday Control Panel.",
+	"pausedemo",	CCmdPauseDemo,		"Pause/resume demo recording.",
+	"ping",			CCmdPing,			"Ping the server (or a player if you're the server).",
+	"playdemo",		CCmdPlayDemo,		"Play a demo.",
+	"playext",		CCmdPlayExt,		"Play an external music file.",
+	"playmusic",	CCmdPlayMusic,		"Play a song, an external music file or a CD track.",
+	"quit!",		CCmdQuit,			"Exit the game immediately.",
+	"recorddemo",	CCmdRecordDemo,		"Start recording a demo.",
+	"repeat",		CCmdRepeat,			"Repeat a command at given intervals.",
+	"reset",		CCmdResetLumps,		"Reset the data files into what they were at startup.",
+	"safebind",		CCmdBind,			"Bind a command to an event, unless the event is already bound.",
+	"safebindr",	CCmdBind,			"Bind a command to an event, unless the event is already bound.",
+	"say",			CCmdChat,			"Broadcast a chat message.",
+	"saynum",		CCmdChat,			"Send a chat message to the specified player.",
+	"sayto",		CCmdChat,			"Send a chat message to the specified player.",
+	"setcon",		CCmdSetConsole,		"Set console and viewplayer.",
+	"setgamma",		CCmdSetGamma,		"Set the gamma correction level.",
+	"setname",		CCmdSetName,		"Set your name.",
+	"setres",		CCmdSetRes,			"Change video mode resolution or window size.",
+	"settics",		CCmdSetTicks,		"Set number of game tics per second (default: 35).",
+	"setvidramp",	CCmdUpdateGammaRamp, "Update display's hardware gamma ramp.",
+	"skydetail",	CCmdSkyDetail,		"Set the number of sky sphere quadrant subdivisions.",
+	"skyrows",		CCmdSkyDetail,		"Set the number of sky sphere rows.",
+	"smoothscr",	CCmdSmoothRaw,		"Set the rendering mode of fullscreen images.",
+	"stopdemo",		CCmdStopDemo,		"Stop currently playing demo.",
+	"stopmusic",	CCmdStopMusic,		"Stop any currently playing music.",
+	"sub",			CCmdAddSub,			"Subtract something from a cvar.",
+	"texreset",		CCmdResetTextures,	"Force a texture reload.",
+	"toggle",		CCmdToggle,			"Toggle the value of a cvar between zero and nonzero.",
+	"uicolor",		CCmdUIColor,		"Change Doomsday user interface colors.",
+	"unload",		CCmdUnloadFile,		"Unload a data file from memory.",
+	"version",		CCmdVersion,		"Show detailed version information.",
+	"write",		CCmdWriteConsole,	"Write variables, bindings and aliases to a file.",
 
 #ifdef _DEBUG
 	"TranslateFont", CCmdTranslateFont,	"Ha ha.",
@@ -514,23 +537,16 @@ static int maxLineLen;			// Maximum length of a line.
 static int bPos;				// Where the write cursor is? (which line)
 static int bFirst;				// The first visible line.
 static int bLineOff;			// How many lines from bPos? (+vislines)
-static char cmdLine[81];		// The command line.
+static char cmdLine[256];		// The command line.
+static int cmdCursor;			// Position of the cursor on the command line.
 static cbline_t *oldCmds;		// The old commands buffer.
 static int numOldCmds;
 static int ocPos;				// Old commands buffer position.
 static int complPos;			// Where is the completion cursor?
 static int lastCompletion;		// The index of the last completion (in knownWords).
 
-// Command waiting.
-/*static int waitCount;			// The wait counter (tics, 0 if none).
-static boolean waitStackEnabled;// Should new commands go to the stack, if needed?
-static char **waitStack;
-static int waitStackSize;		// How many commands on the wait stack?
-static int wsAddWhere = -1;		// Where to add in the stack? (for aliases)*/
-
 static execbuff_t *exBuff;
 static int exBuffSize;
-//static unsigned int idDealer = 0;
 static execbuff_t *curExec;
 
 // CODE --------------------------------------------------------------------
@@ -626,12 +642,12 @@ void Con_SetString(char *name, char *text)
 	if(cvar->type == CVT_CHARPTR)
 	{
 		// Free the old string, if one exists.
-		if(cvar->flags & CVF_CAN_FREE && *(char**) cvar->ptr) 
-			free( *(char**) cvar->ptr);
+		if(cvar->flags & CVF_CAN_FREE && CV_CHARPTR(cvar)) 
+			free(CV_CHARPTR(cvar));
 		// Allocate a new string.
 		cvar->flags |= CVF_CAN_FREE;
-		*(char**) cvar->ptr = malloc(strlen(text)+1);
-		strcpy( *(char**) cvar->ptr, text);
+		CV_CHARPTR(cvar) = malloc(strlen(text) + 1);
+		strcpy(CV_CHARPTR(cvar), text);
 	}
 	else 
 		Con_Error("Con_SetString: cvar is not of type char*.\n");
@@ -657,9 +673,9 @@ void Con_SetInteger(char *name, int value)
 	cvar_t *var = Con_GetVariable(name);
 
 	if(!var) return;
-	if(var->type == CVT_INT) *(int*) var->ptr = value;
-	if(var->type == CVT_BYTE) *(byte*) var->ptr = value;
-	if(var->type == CVT_FLOAT) *(float*) var->ptr = value;
+	if(var->type == CVT_INT) CV_INT(var) = value;
+	if(var->type == CVT_BYTE) CV_BYTE(var) = value;
+	if(var->type == CVT_FLOAT) CV_FLOAT(var) = value;
 }
 
 //===========================================================================
@@ -670,9 +686,9 @@ void Con_SetFloat(char *name, float value)
 	cvar_t *var = Con_GetVariable(name);
 
 	if(!var) return;
-	if(var->type == CVT_INT) *(int*) var->ptr = (int) value;
-	if(var->type == CVT_BYTE) *(byte*) var->ptr = (byte) value;
-	if(var->type == CVT_FLOAT) *(float*) var->ptr = value;
+	if(var->type == CVT_INT) CV_INT(var) = (int) value;
+	if(var->type == CVT_BYTE) CV_BYTE(var) = (byte) value;
+	if(var->type == CVT_FLOAT) CV_FLOAT(var) = value;
 }
 
 //===========================================================================
@@ -683,9 +699,10 @@ int Con_GetInteger(char *name)
 	cvar_t *var = Con_GetVariable(name);
 
 	if(!var) return 0;
-	if(var->type == CVT_INT) return *(int*) var->ptr;
-	if(var->type == CVT_BYTE) return *(byte*) var->ptr;
-	return *(int*) var->ptr;
+	if(var->type == CVT_BYTE) return CV_BYTE(var);
+	if(var->type == CVT_FLOAT) return CV_FLOAT(var);
+	if(var->type == CVT_CHARPTR) return strtol(CV_CHARPTR(var), 0, 0);
+	return CV_INT(var); 
 }
 
 //===========================================================================
@@ -695,8 +712,11 @@ float Con_GetFloat(char *name)
 {
 	cvar_t *var = Con_GetVariable(name);
 
-	if(!var || var->type != CVT_FLOAT) return 0;
-	return *(float*) var->ptr;
+	if(!var) return 0;
+	if(var->type == CVT_INT) return CV_INT(var);
+	if(var->type == CVT_BYTE) return CV_BYTE(var);
+	if(var->type == CVT_CHARPTR) return strtod(CV_CHARPTR(var), 0);
+	return CV_FLOAT(var);
 }
 
 //===========================================================================
@@ -707,9 +727,10 @@ byte Con_GetByte(char *name)
 	cvar_t *var = Con_GetVariable(name);
 
 	if(!var) return 0;
-	if(var->type == CVT_BYTE) return *(byte*) var->ptr;
-	if(var->type == CVT_INT) return *(int*) var->ptr;
-	return 0;
+	if(var->type == CVT_INT) return CV_INT(var);
+	if(var->type == CVT_FLOAT) return CV_FLOAT(var);
+	if(var->type == CVT_CHARPTR) return strtol(CV_CHARPTR(var), 0, 0);
+	return CV_BYTE(var); 
 }
 
 //===========================================================================
@@ -720,7 +741,7 @@ char *Con_GetString(char *name)
 	cvar_t *var = Con_GetVariable(name);
 
 	if(!var || var->type != CVT_CHARPTR) return "";
-	return *(char**) var->ptr;
+	return CV_CHARPTR(var);
 }
 
 //--------------------------------------------------------------------------
@@ -759,6 +780,8 @@ void Con_Init()
 	bufferLines = 0;	
 	maxBufferLines = 512; //256;
 	maxLineLen = 70;		// Should fit the screen (adjusted later).
+
+	cmdCursor = 0;
 
 	// The old commands buffer.
 	oldCmds = 0;
@@ -1223,17 +1246,16 @@ static void printcvar(cvar_t *var, char *prefix)
 		Con_Printf("%s", var->name);
 		break;
 	case CVT_BYTE:
-		Con_Printf("%s %c %d", var->name, equals, *(byte*)var->ptr);
+		Con_Printf("%s %c %d", var->name, equals, CV_BYTE(var));
 		break;
 	case CVT_INT:
-		Con_Printf("%s %c %d", var->name, equals, *(int*)var->ptr);
+		Con_Printf("%s %c %d", var->name, equals, CV_INT(var));
 		break;
 	case CVT_FLOAT:
-		Con_Printf("%s %c %s", var->name, equals, 
-			TrimmedFloat(*(float*)var->ptr));
+		Con_Printf("%s %c %g", var->name, equals, CV_FLOAT(var));
 		break;
 	case CVT_CHARPTR:
-		Con_Printf("%s %c %s", var->name, equals, *(char**)var->ptr);
+		Con_Printf("%s %c %s", var->name, equals, CV_CHARPTR(var));
 		break;
 	default:
 		Con_Printf("%s (bad type!)", var->name);
@@ -1364,7 +1386,7 @@ static int executeSubCmd(char *subcmd)
 						(!(var->flags & CVF_NO_MAX) && val > var->max)))
 						out_of_range = true;
 					else
-						*(byte*)var->ptr = val;
+						CV_BYTE(var) = val;
 				}
 				else if(var->type == CVT_INT)
 				{
@@ -1373,7 +1395,7 @@ static int executeSubCmd(char *subcmd)
 						(!(var->flags & CVF_NO_MAX) && val > var->max)))
 						out_of_range = true;
 					else
-						*(int*)var->ptr = val;
+						CV_INT(var) = val;
 				}
 				else if(var->type == CVT_FLOAT)
 				{
@@ -1382,7 +1404,7 @@ static int executeSubCmd(char *subcmd)
 						(!(var->flags & CVF_NO_MAX) && val > var->max)))
 						out_of_range = true;
 					else
-						*(float*)var->ptr = val;
+						CV_FLOAT(var) = val;
 				}
 				else if(var->type == CVT_CHARPTR)
 				{
@@ -1420,14 +1442,6 @@ static int executeSubCmd(char *subcmd)
 		{
 			calias_t *cal = caliases + i;
 			char *expcommand;
-			// This alias matches. We're going to execute it, but first
-			// check the refcount.
-/*			if(cal->refcount > 0)
-			{
-				Con_Printf( "Error: recursion in aliases.\n");
-				return false;
-			}
-			cal->refcount++;*/
 			// Expand the command with arguments.
 			expcommand = malloc(strlen(cal->command)+1);
 			strcpy(expcommand, cal->command);
@@ -1435,9 +1449,6 @@ static int executeSubCmd(char *subcmd)
 			// Do it, man!
 			SplitIntoSubCommands(expcommand, 0);
 			free(expcommand);
-			// Decrement the refcount.
-			//cal->refcount--;
-			//return ret;
 			return true;
 		}
 
@@ -1451,7 +1462,7 @@ static int executeSubCmd(char *subcmd)
 static void SplitIntoSubCommands(char *command, int markerOffset)
 {
 	int			gpos = 0, scpos = 0;
-	char		subcmd[256];
+	char		subcmd[1024];
 	int			nextsub = false;
 	int			ret = true, inquotes = false, escape = false;
 
@@ -1541,7 +1552,7 @@ static void updateCmdLine()
 		strcpy(cmdLine, "");
 	else
 		strcpy(cmdLine, oldCmds[ocPos].text);
-	complPos = strlen(cmdLine);
+	cmdCursor = complPos = strlen(cmdLine);
 	lastCompletion = -1;
 	if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
 }
@@ -1643,11 +1654,13 @@ static void completeWord()
 	{
 		strcpy(wordBegin, completion);
 		strcat(wordBegin, " ");
+		cmdCursor = strlen(cmdLine);
 	}
 	else if(numcomp > 1)
 	{
 		// More than one completion; only complete the unambiguous part.
 		strcpy(wordBegin, unambiguous);
+		cmdCursor = strlen(cmdLine);
 	}
 }
 
@@ -1657,7 +1670,6 @@ static void completeWord()
  */
 boolean Con_Responder(event_t *event)
 {
-	int pos;
 	byte ch;
 
 	if(consoleShowKeys && event->type == ev_keydown)
@@ -1759,18 +1771,25 @@ boolean Con_Responder(event_t *event)
 		// Process the command line.
 		processCmd();		
 		// Clear it.
-		cmdLine[0] = 0;
+		memset(cmdLine, 0, sizeof(cmdLine));
+		cmdCursor = 0;
 		complPos = 0;
 		lastCompletion = -1;
 		if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
 		return true;
 
 	case DDKEY_BACKSPACE:
-		pos = strlen(cmdLine);
-		if(pos) cmdLine[pos-1] = 0;
-		complPos = strlen(cmdLine);
-		lastCompletion = -1;
-		if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
+		//pos = strlen(cmdLine);
+		//if(pos) cmdLine[pos-1] = 0;
+		if(cmdCursor > 0)
+		{
+			memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor, 
+				sizeof(cmdLine) - cmdCursor);
+			--cmdCursor;
+			complPos = cmdCursor;//strlen(cmdLine);
+			lastCompletion = -1;
+			if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
+		}
 		return true;
 
 	case DDKEY_TAB:
@@ -1778,16 +1797,34 @@ boolean Con_Responder(event_t *event)
 		if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
 		return true;
 
+	case DDKEY_LEFTARROW:
+		if(cmdCursor > 0) --cmdCursor;
+		complPos = cmdCursor;
+		break;
+
+	case DDKEY_RIGHTARROW:
+		if(cmdLine[cmdCursor] != 0 && cmdCursor < maxLineLen) 
+			++cmdCursor;
+		complPos = cmdCursor;
+		break;
+
 	default:	// Check for a character.
 		ch = event->data1;
 		if(ch < 32 || ch > 127 && ch < DD_HIGHEST_KEYCODE) return true;
 		ch = DD_ModKey(ch);
 
-		pos = strlen(cmdLine);
-		if(pos > 79) pos = 79;
-		cmdLine[pos] = ch;
-		cmdLine[pos+1] = 0;
-		complPos = strlen(cmdLine);
+		if(cmdCursor < maxLineLen)
+		{
+			// Push the rest of the stuff forwards.
+			memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
+				sizeof(cmdLine) - cmdCursor - 1);
+
+			// The last char is always zero, though.
+			cmdLine[sizeof(cmdLine) - 1] = 0;
+		}
+		cmdLine[cmdCursor] = ch;
+		if(cmdCursor < maxLineLen) ++cmdCursor;
+		complPos = cmdCursor; //strlen(cmdLine);
 		lastCompletion = -1;
 
 		if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
@@ -1897,12 +1934,12 @@ void Con_DrawRuler(int y, int lineHeight, float alpha)
 //===========================================================================
 void Con_Drawer(void)
 {
-	int		i;	// Line count and buffer cursor.
+	int		i, k;	// Line count and buffer cursor.
 	float	x, y;
 	float	closeFade = 1;
 	float	gtosMulX = screenWidth/320.0f, 
 			gtosMulY = screenHeight/200.0f;
-	char	buff[256];
+	char	buff[256], temp[256];
 	float	fontScaledY = Cfont.height * Cfont.sizeY;
 	int		bgX = 64, bgY = 64;
 
@@ -2024,11 +2061,10 @@ void Con_Drawer(void)
 	// The command line.
 	strcpy(buff, ">");
 	strcat(buff, cmdLine);
-	if(ConsoleTime & 0x10) strcat(buff, "_");
+	//if(ConsoleTime & 0x10) strcat(buff, "_");
 
-	if(Cfont.Filter) 
-		Cfont.Filter(buff);
-	else if(consoleShadowText)
+	if(Cfont.Filter) Cfont.Filter(buff);
+	if(consoleShadowText)
 	{
 		// Draw a shadow.
 		gl.Color3f(0, 0, 0);
@@ -2039,6 +2075,26 @@ void Con_Drawer(void)
 	else
 		gl.Color4f(1, 1, 1, closeFade);
 	Cfont.TextOut(buff, 2, (ConsoleY*gtosMulY-fontScaledY)/Cfont.sizeY);
+
+	// Width of the current char.
+	temp[0] = cmdLine[cmdCursor];
+	temp[1] = 0;
+	k = Cfont.Width(temp);
+	if(!k) k = Cfont.Width(" ");
+
+	// What is the width?
+	memset(temp, 0, sizeof(temp));
+	strncpy(temp, buff, MIN_OF(250, cmdCursor) + 1);
+	i = Cfont.Width(temp);
+
+	// Draw the cursor in the appropriate place.
+	gl.Disable(DGL_TEXTURING);
+	GL_DrawRect(2 + i, 
+		(ConsoleY*gtosMulY-fontScaledY)/Cfont.sizeY,
+		k, Cfont.height,
+		CcolYellow[0], CcolYellow[1], CcolYellow[2],
+		closeFade * /*(ConsoleTime & 0x8? */.5f/* : .25f)*/);
+	gl.Enable(DGL_TEXTURING);
 
 	// Restore the original matrices.
 	gl.MatrixMode(DGL_MODELVIEW);
@@ -2235,7 +2291,7 @@ int CCmdListCmds(int argc, char **argv)
 		if(argc > 1) // Is there a filter?
 			if(strnicmp(ccmds[i].name, argv[1], strlen(argv[1])))
 				continue;
-		Con_Printf( "  %s\n", ccmds[i].name);
+		Con_Printf( "  %s (%s)\n", ccmds[i].name, ccmds[i].help);
 	}
 	return true;
 }
@@ -2304,6 +2360,7 @@ void Con_Open(int yes)
 	else
 	{
 		strcpy(cmdLine, "");
+		cmdCursor = 0;
 		ConsoleActive = false;
 		ConsoleDestY = 0;
 	}
@@ -2673,15 +2730,7 @@ D_CMD(AddSub)
 	}
 	cvar = Con_GetVariable(argv[1]);
 	if(!cvar) return false;
-	
-	if(cvar->type == CVT_BYTE)
-		val = *(byte*) cvar->ptr;
-	else if(cvar->type == CVT_INT)
-		val = *(int*) cvar->ptr;
-	else if(cvar->type == CVT_FLOAT)
-		val = *(float*) cvar->ptr;
-	else
-		return false;
+	val = Con_GetFloat(argv[1]);
 
 	if(!stricmp(argv[0], "inc"))
 		mod = 1;
@@ -2697,19 +2746,166 @@ D_CMD(AddSub)
 		if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max) val = cvar->max;
 		if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min) val = cvar->min;
 	}
-	if(cvar->type == CVT_BYTE)
-		*(byte*) cvar->ptr = val;
-	else if(cvar->type == CVT_INT)
-		*(int*) cvar->ptr = val;
-	else if(cvar->type == CVT_FLOAT)
-		*(float*) cvar->ptr = val;
+	Con_SetFloat(argv[1], val);
 	return true;
 }
 
-//==========================================================================
-// Con_Message
-//	Print a 'global' message (to stdout and the console).
-//==========================================================================
+/*
+ * Toggle the value of a variable between zero and nonzero.
+ */
+int CCmdToggle(int argc, char **argv)
+{
+	if(argc != 2)
+	{
+		Con_Printf("Usage: %s (cvar)\n", argv[0]);
+		return true;
+	}
+
+	Con_SetInteger(argv[1], Con_GetInteger(argv[1])? 0 : 1);
+	return true;
+}
+
+/*
+ * Execute a command if the condition passes.
+ */
+int CCmdIf(int argc, char **argv)
+{
+	struct { const char *opstr; int op; } operators[] =
+	{
+		{ "not",	IF_NOT_EQUAL },
+		{ "=",		IF_EQUAL },
+		{ ">",		IF_GREATER },
+		{ "<",		IF_LESS },
+		{ ">=",		IF_GEQUAL },
+		{ "<=",		IF_LEQUAL },
+		{ NULL }
+	};
+	int i, oper;
+	cvar_t *var;
+	boolean isTrue = false;
+
+	if(argc != 5 && argc != 6)
+	{
+		Con_Printf("Usage: %s (cvar) (operator) (value) (cmd) (else-cmd)\n", argv[0]);
+		Con_Printf("Operator must be one of: not, =, >, <, >=, <=.\n");
+		Con_Printf("The (else-cmd) can be omitted.\n");
+		return true;
+	}
+
+	var = Con_GetVariable(argv[1]);
+	if(!var) return false;
+
+	// Which operator?
+	for(i = 0; operators[i].opstr; i++)
+		if(!stricmp(operators[i].opstr, argv[2]))
+		{
+			oper = operators[i].op;
+			break;
+		}
+	if(!operators[i].opstr) return false;	// Bad operator.
+
+	// Value comparison depends on the type of the variable.
+	if(var->type == CVT_BYTE || var->type == CVT_INT)
+	{
+		int value = (var->type == CVT_INT? CV_INT(var) : CV_BYTE(var));
+		int test = strtol(argv[3], 0, 0);
+
+		isTrue = 
+			 (oper == IF_EQUAL?		value == test
+			: oper == IF_NOT_EQUAL?	value != test
+			: oper == IF_GREATER?	value > test
+			: oper == IF_LESS?		value < test
+			: oper == IF_GEQUAL?	value >= test
+			: value <= test);
+	}
+	else if(var->type == CVT_FLOAT)
+	{
+		float value = CV_FLOAT(var);
+		float test = strtod(argv[3], 0);
+
+		isTrue = 
+			 (oper == IF_EQUAL?		value == test
+			: oper == IF_NOT_EQUAL?	value != test
+			: oper == IF_GREATER?	value > test
+			: oper == IF_LESS?		value < test
+			: oper == IF_GEQUAL?	value >= test
+			: value <= test);
+	}
+	else if(var->type == CVT_CHARPTR)
+	{
+		int comp = stricmp(CV_CHARPTR(var), argv[3]);
+
+		isTrue = 
+			 (oper == IF_EQUAL?		comp == 0
+			: oper == IF_NOT_EQUAL?	comp != 0
+			: oper == IF_GREATER?	comp > 0
+			: oper == IF_LESS?		comp < 0
+			: oper == IF_GEQUAL?	comp >= 0
+			: comp <= 0);
+	}
+
+	// Should the command be executed?
+	if(isTrue)
+	{
+		Con_Execute(argv[4], ConsoleSilent);
+	}
+	else if(argc == 6)
+	{
+		Con_Execute(argv[5], ConsoleSilent);
+	}
+	CmdReturnValue = isTrue;
+	return true;
+}
+
+/*
+ * Prints a file name to the console.
+ * This is a f_forall_func_t.
+ */
+int Con_PrintFileName(const char *fn, filetype_t type, void *dir)
+{
+	// Exclude the path.
+	Con_Printf("  %s\n", fn + strlen(dir));
+
+	// Continue the listing.
+	return true;
+}
+
+/*
+ * Print contents of directories as Doomsday sees them.
+ */
+int CCmdDir(int argc, char **argv)
+{
+	char dir[256], pattern[256];
+	int i;
+
+	if(argc == 1)
+	{
+		Con_Printf("Usage: %s (dirs)\n", argv[0]);
+		Con_Printf("Prints the contents of one or more directories.\n");
+		Con_Printf("Virtual files are listed, too.\n");
+		Con_Printf("Paths are relative to the base path:\n");
+		Con_Printf("  %s\n", ddBasePath);
+		return true;
+	}
+
+	for(i = 1; i < argc; i++)
+	{
+		M_PrependBasePath(argv[i], dir);
+		Dir_ValidDir(dir);
+		Dir_MakeAbsolute(dir);
+		Con_Printf("Directory: %s\n", dir);
+
+		// Make the pattern.
+		sprintf(pattern, "%s*.*", dir);
+		F_ForAll(pattern, dir, Con_PrintFileName);
+	}
+
+	return true;
+}
+
+/*
+ * Print a 'global' message (to stdout and the console).
+ */
 void Con_Message(char *message, ...)
 {
 	va_list argptr;
@@ -2735,9 +2931,9 @@ void Con_Message(char *message, ...)
 	Con_DrawStartupScreen(true);
 }
 
-//===========================================================================
-// Con_Error
-//===========================================================================
+/*
+ * Print an error message and quit.
+ */
 void Con_Error (char *error, ...)
 {
 	extern int bufferLines;
@@ -2785,50 +2981,4 @@ void Con_Error (char *error, ...)
 
 	// Get outta here.
 	exit (1);
-}
-
-/*
- * Prints a file name to the console.
- * This is a f_forall_func_t.
- */
-int Con_PrintFileName(const char *fn, filetype_t type, void *dir)
-{
-	// Exclude the path.
-	Con_Printf("  %s\n", fn + strlen(dir));
-
-	// Continue the listing.
-	return true;
-}
-
-/*
- * Print contents of directories as Doomsday sees them.
- */
-int CCmdDir(int argc, char **argv)
-{
-	char dir[256], pattern[256];
-	int i;
-
-	if(argc == 1)
-	{
-		Con_Printf("Usage: %s (dirs)\n", argv[0]);
-		Con_Printf("Prints the contents of one or more directories.\n");
-		Con_Printf("Virtual files are listed, too.\n");
-		Con_Printf("Paths are relative to the base path:\n");
-		Con_Printf("  %s\n", ddBasePath);
-		return true;
-	}
-
-	for(i = 1; i < argc; i++)
-	{
-		M_PrependBasePath(argv[i], dir);
-		Dir_ValidDir(dir);
-		Dir_MakeAbsolute(dir);
-		Con_Printf("Directory: %s\n", dir);
-
-		// Make the pattern.
-		sprintf(pattern, "%s*.*", dir);
-		F_ForAll(pattern, dir, Con_PrintFileName);
-	}
-
-	return true;
 }
