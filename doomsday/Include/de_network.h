@@ -12,6 +12,7 @@
 #include "sv_frame.h"
 #include "sv_sound.h"
 #include "cl_def.h"
+#include "cl_player.h"
 #include "cl_mobj.h"
 #include "cl_frame.h"
 #include "cl_sound.h"

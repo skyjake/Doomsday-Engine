@@ -815,6 +815,10 @@ SOURCE=.\Include\cl_mobj.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Include\cl_player.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\cl_sound.h
 # End Source File
 # Begin Source File
