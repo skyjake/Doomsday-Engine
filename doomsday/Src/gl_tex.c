@@ -1321,7 +1321,7 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast,
 	{
 		if(i->lump == lump && i->contrast == contrast &&
            ( (i->external == NULL && external == NULL) ||
-             (i->external && external && !stricmp(i->external, external) ))
+             (i->external && external && !stricmp(i->external, external)) ))
         {
 			return i;
         }
