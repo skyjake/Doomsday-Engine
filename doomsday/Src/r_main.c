@@ -427,7 +427,7 @@ void R_SetupFrame(ddplayer_t *player)
 
 		if(frameTimePos < 0) 
 		{
-			VERBOSE("Correcting frametime (%f).\n", frameTimePos);
+			VERBOSE(Con_Printf("Correcting frametime (%f).\n", frameTimePos));
 			frameTimePos = 0;
 		}
 
