@@ -315,6 +315,23 @@ void M_RestoreRandom (void)
 }*/
 
 //===========================================================================
+// M_CycleIntoRange
+//	Returns the value mod length (length > 0).
+//===========================================================================
+float M_CycleIntoRange(float value, float length)
+{
+	if(value < 0)
+	{
+		return value - ((int)(value / length) - 1) * length;
+	}
+	if(value > length)
+	{
+		return value - ((int)(value / length)) * length;
+	}
+	return value;
+}
+
+//===========================================================================
 // M_Normalize
 //	Normalize a vector. Returns the former length.
 //===========================================================================
