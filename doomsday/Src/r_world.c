@@ -1074,7 +1074,7 @@ void R_SetupFog(void)
 	}
 
 	// Check the flags.
-	flags = Def_EvalFlags(mapinfo->flags);
+	flags = mapinfo->flags;
 	if(flags & MIF_FOG)
 	{
 		// Setup fog.
@@ -1118,7 +1118,7 @@ void R_SetupSky(void)
 	Rend_SkyParams(DD_SKY, DD_HORIZON, mapinfo->horizon_offset);
 	for(i = 0; i < 2; i++)
 	{
-		k = Def_EvalFlags(mapinfo->sky_layers[i].flags);
+		k = mapinfo->sky_layers[i].flags;
 		if(k & SLF_ENABLED)
 		{
 			Rend_SkyParams(i, DD_ENABLE, 0);
