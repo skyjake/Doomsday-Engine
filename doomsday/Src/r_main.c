@@ -211,6 +211,7 @@ void R_SetViewPos(viewer_t *v)
 	viewpitch = v->pitch;
 }
 
+#if 0
 //===========================================================================
 // R_CheckViewerLimits
 //	The components whose difference is too large for interpolation will be 
@@ -229,6 +230,7 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 	if(abs((int)dst->angle - (int)src->angle) >= ANGLE_45) 
 		src->angle = dst->angle;
 }
+#endif
 
 //===========================================================================
 // R_SetupFrame
@@ -246,9 +248,11 @@ void R_SetupFrame(ddplayer_t *player)
 
 	viewplayer = player;
 
-	viewer.angle = (isClient? player->clAngle : player->mo->angle)
-		+ viewangleoffset;
-	viewer.pitch = isClient? player->clLookDir : player->lookdir;
+	// Local players use the angles with the lowest latency.
+	viewer.angle = (player->flags & DDPF_LOCAL? player->clAngle :
+					player->mo->angle) + viewangleoffset;
+	viewer.pitch = (player->flags & DDPF_LOCAL? player->clLookDir :
+					player->lookdir);
 	viewer.x = player->mo->x + viewxOffset;
 	viewer.y = player->mo->y + viewyOffset;
 	viewer.z = player->viewz + viewzOffset;
