@@ -13,6 +13,7 @@ Flag { ID = "gnf_space"; Value = 0x80; }
 Flag { ID = "gnf_density"; Value = 0x100; }
 Flag { ID = "gnf_modelonly"; Value = 0x200; }
 Flag { ID = "gnf_scalerate"; Value = 0x400; }
+Flag { ID = "gnf_group"; Value = 0x800; }
 
 # Particle types.
 Flag { ID = "pt_point"; Value = 1; }
