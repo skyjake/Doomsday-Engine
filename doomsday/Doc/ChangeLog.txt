@@ -22,10 +22,16 @@ jHexen:
 * titlescreen sequence defined as an InFine script (ID = "title")
 
 InFine:
++ gradient rectangles
++ object rotation (pics, text objects, rectangles)
++ InFine command "ScaleXY (handle) (x) (y)"
++ InFine command "Rect (handle) (x) (y) (w) (h)"
++ InFine command "FillColor (h) (TOP/BOTTOM/BOTH) (r) (g) (b) (a)"
++ InFine command "EdgeColor (h) (TOP/BOTTOM/BOTH) (r) (g) (b) (a)"
 + InFine condition "MODE:(game-mode)"
 + InFine command "ELSE"
 + InFine command "DO" ... ";" (nestable blocks)
-+ InFine command "PlayDemo filename"
++ InFine command "PlayDemo (filename)"
 + InFine command "Cmd (console command)"
 + InFine command "OnKey (key-ident) (marker)": jump to marker when key 
   pressed
@@ -34,6 +40,11 @@ InFine:
 + InFine commands "Trigger", "NoTrigger": enable/disable menu 
   triggering mode
 + cmd 'startinf (scriptid)' (and 'stopinf')
+* generic object commands: "Del", "X", "Y", "Sx", "Sy", "Scale", "Angle"
+  "ScaleXY", "RGB", "Alpha"
+* old pic/text commands that should no longer be used: "DelPic", 
+  "DelText", "TextRGB", "TextAlpha", "Tx", "Ty", "TSx", "TSy", 
+  "TextScale"
 * InFine can run in overlay mode (e.g. during GS_LEVEL)
 * InFine states are nested (script -> demo -> script -> demo -> etc.)
 
