@@ -82,9 +82,20 @@ void Rend_DrawPlayerSprites(void)
 	spriteinfo_t info;
 	sector_t *sec = viewplayer->mo->subsector->sector;
 	float offx = pspOffX / 16.0f, offy = pspOffY / 16.0f;
+	boolean isFullBright = LevelFullBright;
 
 	// Cameramen have no psprites.
 	if(viewplayer->flags & DDPF_CAMERA) return; 
+
+	// Check for fullbright.
+	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
+	{
+		if(psp->flags & DDPSPF_RENDERED || !psp->stateptr) 
+			continue; // Not used.
+
+		// If one of the psprites is fullbright, both are.
+		if(psp->stateptr->frame & FF_FULLBRIGHT) isFullBright = true;
+	}
 
 	for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
 	{
@@ -95,7 +106,8 @@ void Rend_DrawPlayerSprites(void)
 		psp->flags |= DDPSPF_RENDERED;
 		R_GetSpriteInfo(psp->stateptr->sprite, 
 			psp->stateptr->frame & FF_FRAMEMASK, &info);
-		if(psp->stateptr->frame & FF_FULLBRIGHT || LevelFullBright)
+
+		if(isFullBright)
 		{
 			GL_SetColorAndAlpha(1, 1, 1, psp->alpha);
 		}
