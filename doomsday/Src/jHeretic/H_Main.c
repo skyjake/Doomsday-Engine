@@ -736,6 +736,7 @@ void H_PreInit(void)
 
 	// Default settings (used if no config file found).
 	memset(&cfg, 0, sizeof(cfg));
+	cfg.playerMoveSpeed = 1;
 	cfg.messageson = true;
 	cfg.dclickuse = false;
 	cfg.mouseSensiX = 8;

@@ -339,6 +339,7 @@ void D_PreInit(void)
 	// Config defaults. The real settings are read from the .cfg files
 	// but these will be used no such files are found.
 	memset(&cfg, 0, sizeof(cfg));
+	cfg.playerMoveSpeed = 1;
 	cfg.dclickuse = false;
 	cfg.mouseSensiX = cfg.mouseSensiY = 8;
 	cfg.povLookAround = true;

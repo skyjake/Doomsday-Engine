@@ -17,6 +17,7 @@ enum {
 // even used any more.
 
 typedef struct jdoom_config_s {	   // All of these might not be used any more.
+	float			playerMoveSpeed;
 	int             mouseSensiX /* = 8 */ , mouseSensiY /* = 8 */ ;
 	int             dclickuse /* = true */ ;
 	int             usemlook;	   // Mouse look (mouse Y => viewpitch)

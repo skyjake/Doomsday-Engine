@@ -410,6 +410,8 @@ cvar_t  gameCVars[] = {
 	"Player eye height. The original is 41.",
 	"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1,
 	"1=Camera players have no movement clipping.",
+	"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1,
+	"Player movement speed modifier.",
 
 	"game-fastmonsters", 0, CVT_BYTE, &fastparm, 0, 1,
 	"1=Fast monsters in non-demo single player.",

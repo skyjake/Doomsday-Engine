@@ -288,6 +288,8 @@ cvar_t  gameCVars[] = {
 	"player-jump-power", 0, CVT_FLOAT, &cfg.jumpPower, 0, 100, "Jump power.",
 	"server-game-deathmatch", 0, CVT_BYTE, &cfg.netDeathmatch, 0, 1,
 	"1=Start multiplayers games as deathmatch.",
+	"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1,
+	"Player movement speed modifier.",
 	"server-game-map", 0, CVT_BYTE, &cfg.netMap, 1, 99,
 	"Map to use in multiplayer games.",
 	"server-game-mod-damage", 0, CVT_BYTE, &cfg.netMobDamageModifier, 1, 100,

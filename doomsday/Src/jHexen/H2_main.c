@@ -198,6 +198,7 @@ void H2_PreInit(void)
 
 	// Set defaults.
 	memset(&cfg, 0, sizeof(cfg));
+	cfg.playerMoveSpeed = 1;
 	cfg.sbarscale = 20;
 	//  cfg.messageson = true;
 	cfg.dclickuse = false;

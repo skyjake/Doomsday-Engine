@@ -6,6 +6,7 @@
 extern char     SavePath[];
 
 typedef struct {
+	float			playerMoveSpeed;
 	int             chooseAndUse, lookSpeed, quakeFly;
 	boolean         fastMonsters;
 	int             usemlook, usejlook;

@@ -4,6 +4,7 @@
 #include "Doomdef.h"
 
 typedef struct {
+	float			playerMoveSpeed;
 	boolean         setsizeneeded;
 	int             setblocks;
 	int             screenblocks;

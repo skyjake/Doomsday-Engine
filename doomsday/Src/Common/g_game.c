@@ -1147,6 +1147,12 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 	}
 #endif
 
+	if(cfg.playerMoveSpeed > 1)
+		cfg.playerMoveSpeed = 1;
+
+	forward *= cfg.playerMoveSpeed;
+	side *= cfg.playerMoveSpeed;
+	
 	cmd->forwardMove += forward;
 	cmd->sideMove += side;
 
@@ -1156,36 +1162,9 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		mlook_pressed))
 	{
 		// Center view when mlook released w/lookspring, or when moving.
-//		cplr->centering = true;
-//#ifndef __JDOOM__
 		look = TOCENTER;
-//#endif
 	}
 
-/*#if __JDOOM__
-	if(cplr->playerstate == PST_LIVE && !pausestate)
-	{
-		i = 0;
-		// Key look.
-		if(actions[A_LOOKCENTER].on)
-		{
-			i = TOCENTER;
-		}
-		else
-		{
-			if(actions[A_LOOKUP].on)
-			{
-				i += cfg.lookSpeed;
-			}
-			if(actions[A_LOOKDOWN].on)
-			{
-				i -= cfg.lookSpeed;
-			}
-		}
-		// Adjust the look direction.
-		G_AdjustLookDir(cplr, i, elapsedTime);
-	}
-	#else*/
 	if(players[consoleplayer].playerstate == PST_LIVE && !pausestate)
 	{
 		G_AdjustLookDir(cplr, look, elapsedTime);
@@ -1200,9 +1179,6 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 	}
 
 #ifndef __JDOOM__
-	/*if(flyheight < 0)
-	  flyheight += 16;*/
-
 	cmd->fly = flyheight;
 #endif
 

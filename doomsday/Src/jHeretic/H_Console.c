@@ -322,6 +322,8 @@ cvar_t  gameCVars[] = {
 	"1=Fast monsters in non-demo single player.",
 	"player-eyeheight", 0, CVT_INT, &cfg.eyeHeight, 41, 54,
 	"Player eye height (the original is 41).",
+	"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1,
+	"Player movement speed modifier.",
 	"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1,
 	"Scaling for menu screens.",
 	"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1,
