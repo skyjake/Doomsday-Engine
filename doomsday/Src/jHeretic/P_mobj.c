@@ -793,7 +793,6 @@ void P_MobjThinker(mobj_t *mobj)
 	// The first three bits of the selector special byte contain a
 	// relative health level.
 	P_UpdateHealthBits(mobj);
-	P_UpdateAlpha(mobj); // $mobjalpha
 
 	// Handle X and Y momentums
 	if(mobj->momx || mobj->momy || (mobj->flags & MF_SKULLFLY))
@@ -856,10 +855,15 @@ void P_MobjThinker(mobj_t *mobj)
 	if(cfg.corpseTime && mobj->flags & MF_CORPSE) 
 	{
 		if(++mobj->corpsetics < cfg.corpseTime * TICSPERSEC)
-			mobj->alpha = 0; // Opaque.
+		{
+			mobj->translucency = 0; // Opaque.
+		}
 		else if(mobj->corpsetics < cfg.corpseTime * TICSPERSEC + VANISHTICS)
-			mobj->alpha = ((mobj->corpsetics- cfg.corpseTime * TICSPERSEC ) 
-				* 255) / VANISHTICS; // Translucent during vanishing.
+		{
+			// Translucent during vanishing.
+			mobj->translucency = ((mobj->corpsetics - cfg.corpseTime 
+				* TICSPERSEC ) * 255) / VANISHTICS; 
+		}
 		else
 		{
 			// Too long; get rid of the corpse.
