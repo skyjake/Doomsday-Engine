@@ -58,8 +58,7 @@ void DG_Clear(int bufferbits);
 //
 extern int			polyCounter;
 
-void InitVertexStack();
-void KillVertexStack();
+void CheckError(void);
 void DG_Begin(int mode);
 void DG_End(void);
 void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
@@ -79,19 +78,6 @@ void DG_TexCoord2fv(float *data);
 void DG_Vertices2ftv(int num, gl_ft2vertex_t *data);
 void DG_Vertices3ftv(int num, gl_ft3vertex_t *data);
 void DG_Vertices3fctv(int num, gl_fct3vertex_t *data);
-
-
-//-------------------------------------------------------------------------
-// list.c
-//
-/*extern int polyCounter;
-
-void renderList(rendlist_t *rl);
-void renderMaskedList(rendlist_t *mrl);
-void renderSkyMaskLists(rendlist_t *smrl, rendlist_t *skyw);
-void renderDynLightLists(rendlist_t *frl, rendlist_t *wrl, rendlist_t *grl);
-void renderDLitPass(rendlist_t *rl, int num);
-void renderDetailPass(rendlist_t *rl, int num);*/
 
 
 //-------------------------------------------------------------------------
@@ -130,6 +116,7 @@ extern int extAtiTexEnvComb;
 extern int extAniso;
 extern int extGenMip;
 extern int extBlendSub;
+extern int extS3TC;
 
 void initExtensions(void);
 
