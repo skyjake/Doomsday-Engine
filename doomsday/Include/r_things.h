@@ -55,6 +55,7 @@ typedef struct vissprite_s
 				int color;
 			} vertices[2];
 			float texc[2][2];			// u and v coordinates.
+			struct dynlight_s *light;
 		} wall;
 	};
 } vissprite_t;
