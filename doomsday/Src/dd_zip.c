@@ -56,6 +56,7 @@ typedef struct package_s {
 	struct package_s *next;
 	char name[256];
 	DFILE *file;
+	int order;
 } package_t;
 
 typedef struct zipentry_s {
@@ -127,6 +128,8 @@ typedef struct centralend_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+void Zip_RemoveDuplicateFiles(void);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -179,15 +182,15 @@ void Zip_Shutdown(void)
 }
 
 /*
- * Allocate new zipentry array elements. Returns a pointer to the first
- * new zipentry_t.
+ * Allocate a zipentry array element and return a pointer to it.
+ * Duplicate entries are removed later.
  */
-zipentry_t* Zip_NewFiles(unsigned int count)
+zipentry_t* Zip_NewFile(const char *name)
 {
 	int oldCount = gNumFiles;
 	boolean changed = false;
 	
-	gNumFiles += count;
+	gNumFiles++;
 	while(gNumFiles > gAllocatedFiles)
 	{
 		// Double the size of the array.
@@ -205,6 +208,10 @@ zipentry_t* Zip_NewFiles(unsigned int count)
 		memset(gFiles + oldCount, 0, sizeof(zipentry_t) 
 			* (gAllocatedFiles - oldCount));
 	}
+
+	// Take a copy of the name. This is freed in Zip_Shutdown().
+	gFiles[oldCount].name = malloc(strlen(name) + 1);
+	strcpy(gFiles[oldCount].name, name);
 	
 	// Return a pointer to the first new zipentry.
 	return gFiles + oldCount;
@@ -221,12 +228,26 @@ int C_DECL Zip_EntrySorter(const void *a, const void *b)
 }
 
 /*
+ * Sorts all the zip entries alphabetically.
+ */
+void Zip_SortFiles(void)
+{
+	// Sort all the zipentries by name. (Note: When lots of files loaded,
+	// most of list is already sorted. Quicksort becomes slow...)
+	qsort(gFiles, gNumFiles, sizeof(zipentry_t), Zip_EntrySorter);
+}
+
+/*
  * Adds a new package to the list of packages.
  */
 package_t* Zip_NewPackage(void)
 {
+	// When duplicates are removed, newer packages are favored.
+	static int packageCounter = 0;
+
 	package_t *newPack = calloc(sizeof(package_t), 1);
 	newPack->next = gZipRoot;
+	newPack->order = packageCounter++;
 	return gZipRoot = newPack;
 }
 
@@ -371,26 +392,62 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 		M_PrependBasePath(buf, buf);
 
 		// We can add this file to the zipentry list.
-		entry = Zip_NewFiles(1);
+		entry = Zip_NewFile(buf);
 		entry->package = pack;
 		entry->size = header->size;
 		entry->offset = header->relOffset + 4 + sizeof(localfileheader_t)
 			+ header->fileNameSize + header->extraFieldSize;
-		
-		// This memory is freed in Zip_Shutdown().
-		entry->name = malloc(strlen(buf) + 1);
-		strcpy(entry->name, buf);
 	}
 
 	// The central directory is no longer needed.
 	free(directory);
 
-	// Sort all the zipentries by name. (Note: When lots of files loaded,
-	// most of list is already sorted. Quicksort becomes slow...)
-	qsort(gFiles, gNumFiles, sizeof(zipentry_t), Zip_EntrySorter);
+	Zip_SortFiles();
+	Zip_RemoveDuplicateFiles();
 
 	// File successfully opened!
 	return true;
+}
+
+/*
+ * If two or more packages have the same file, the file from the last
+ * loaded package is the one to use. Others will be removed from the
+ * directory. The entries must be sorted before this can be done.
+ */
+void Zip_RemoveDuplicateFiles(void)
+{
+	int i;
+	boolean modified = false;
+	zipentry_t *entry, *loser;
+
+	// One scan through the directory is enough.
+	for(i = 0, entry = gFiles; i < gNumFiles - 1; i++, entry++)
+	{
+		// Is this entry the same as the next one?
+		if(!stricmp(entry[0].name, entry[1].name))
+		{
+			// One of these should be removed. The newer one survives.
+			if(entry[0].package->order > entry[1].package->order)
+				loser = entry + 1;
+			else
+				loser = entry;
+
+			// Overwrite the loser with the last entry.
+			free(loser->name);
+			memcpy(loser, &gFiles[gNumFiles - 1], sizeof(zipentry_t));
+			memset(&gFiles[gNumFiles - 1], 0, sizeof(zipentry_t));
+
+			// One less entry.
+			gNumFiles--;
+			modified = true;
+		}
+	}
+
+	if(modified)
+	{
+		// Sort the entries again.
+		Zip_SortFiles();
+	}
 }
 
 /*
