@@ -225,8 +225,6 @@ typedef struct line_s
 	
 	fixed_t bbox[4];
 
-	float	length;				// Accurate length of the line.
-
 // --- Don't change anything above ---
 
     // Animation related.
@@ -422,6 +420,9 @@ typedef struct
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2003/06/10 17:00:46  skyjake
+// On second thought, retain old line_t and add a separate lineinfo
+//
 // Revision 1.4  2003/06/10 09:15:57  skyjake
 // Added accurate line length to line_t
 //

@@ -60,6 +60,11 @@ typedef struct
 	float	visflooroffset, visceilingoffset;
 } sectorinfo_t;
 
+typedef struct
+{
+	float	length;					// Accurate length.
+} lineinfo_t;
+
 typedef struct polyblock_s
 {
 	polyobj_t *polyobj;
@@ -136,6 +141,7 @@ typedef struct lumptexinfo_s
 
 extern vertexowner_t *vertexowners;
 extern sectorinfo_t *secinfo;
+extern lineinfo_t *lineinfo;
 extern nodeindex_t *linelinks;
 extern short *blockmaplump;			// offsets in blockmap are from here
 extern short *blockmap;

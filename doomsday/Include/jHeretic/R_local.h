@@ -95,7 +95,6 @@ typedef struct line_s
 	int			validcount;			// if == validcount, already checked
 	short		sidenum[2];
 	fixed_t		bbox[4];
-	float		length;				// Accurate length of the line.
 
 	// --- You can freely make changes after this.	
 
