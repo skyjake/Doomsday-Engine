@@ -4,7 +4,7 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.7.11 (work in progress)
+Version 1.7.11
 --------------
 ! Bugfixes Only
 * revised server delta generation: fixed-size frames, prioritized 
@@ -82,6 +82,9 @@ jHexen:
 - fixed: crash when minotaur vanishes and master is dead
 - fixed: 'use artifact' sounds not audible on clientside
 - fixed: crash when "kill" used when not in a map
+- fixed: screen border flicker in fullscreen mode (again)
+- fixed: floatbobbing objects go through the floor
+- Deathkings map36: playerstart group >4 accepted
 
 InFine:
 * server sends condition truth values to clients (secret, leavehub)
