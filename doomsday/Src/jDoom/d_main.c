@@ -617,7 +617,7 @@ void D_PostInit(void)
 	{
 		if(autostart || IS_NETGAME)
 		{
-			G_InitNew(startskill, startepisode, startmap);
+			G_DeferedInitNew(startskill, startepisode, startmap);
 		}
 		else
 		{
@@ -640,7 +640,7 @@ void D_EndFrame(void)
 {
 }
 
-char   *G_Get(int id)
+char *G_Get(int id)
 {
 	switch (id)
 	{
