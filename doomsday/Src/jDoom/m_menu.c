@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.9  2003/08/30 15:07:07  skyjake
+// Doom 2: "Quit Doom" in main menu show not be all-caps
+//
 // Revision 1.8  2003/08/24 00:18:49  skyjake
 // Correct menu item case
 //
@@ -2995,11 +2998,10 @@ void M_Init (void)
 		//  kept this hack for educational purposes.
 		item = &MainItems[readthis];
 		item->func = M_QuitDOOM;
-		//item->lumpname = "M_QUITG";
-		item->text = "QUIT GAME";
+		item->text = "Quit Game";
 		M_SetNumItems(&MainDef, 6);
 		MainDef.y = 64 + 8;
-		NewDef.prevMenu = MENU_MAIN; //&MainDef;
+		NewDef.prevMenu = MENU_MAIN; 
 		ReadDef1.drawFunc = M_DrawReadThis1;
 		ReadDef1.x = 330;
 		ReadDef1.y = 165;
