@@ -41,7 +41,7 @@
 #include <ctype.h>
 
 #include <doomsday.h>
-#include <dedfile.h>
+#include <def_data.h>
 
 // MACROS ------------------------------------------------------------------
 
