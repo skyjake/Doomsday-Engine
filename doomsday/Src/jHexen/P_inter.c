@@ -697,7 +697,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
 		if(player->plr->mo->z <= player->plr->mo->floorz)
 		{
 			player->flyheight = 10; // thrust the player in the air a bit
-			player->plr->flags |= DDPF_FIXPOS;
+			player->plr->flags |= DDPF_FIXMOM;
 		}
 		return(true);
 	}
@@ -1672,7 +1672,7 @@ boolean P_MorphPlayer(player_t *player)
 	}
 	player->morphTics = MORPHTICS;
 	player->update |= PSF_MORPH_TIME | PSF_HEALTH;
-	player->plr->flags |= DDPF_FIXPOS;
+	player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
 	P_ActivateMorphWeapon(player);
 	return(true);
 }
@@ -2049,7 +2049,12 @@ void P_DamageMobj
 		ang >>= ANGLETOFINESHIFT;
 		target->momx += FixedMul(thrust, finecosine[ang]);
 		target->momy += FixedMul(thrust, finesine[ang]);
-		if(target->dplayer) target->dplayer->flags |= DDPF_FIXPOS;
+		if(target->dplayer) 
+		{
+			// Only fix momentum. Otherwise clients will find it difficult
+			// to escape from the damage inflictor.
+			target->dplayer->flags |= DDPF_FIXMOM;
+		}
 	}
 
 	//
