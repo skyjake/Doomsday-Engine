@@ -267,7 +267,17 @@ int Mus_GetExt(ded_music_t *def, char *path)
 
 	// Try the resource locator.
 	if(R_FindResource(RC_MUSIC, def->lumpname, NULL, path)) 
+	{
+		// We must read the song into a buffer, because the path may
+		// be a virtual file and FMOD doesn't know anything about those.
+		DFILE *file = F_Open(path, "rb");
+		ptr = iext->SongBuffer(len = F_Length(file));
+		F_Read(ptr, len, file);
+		F_Close(file);
+		// Clear the path so the caller knows it's in the buffer.
+		strcpy(path, "");
 		return true; // Got it!
+	}
 
 	lumpnum = W_CheckNumForName(def->lumpname);
 	if(lumpnum < 0) return false; // No such lump.
