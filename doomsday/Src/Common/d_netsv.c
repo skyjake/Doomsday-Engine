@@ -10,6 +10,7 @@
 #  include "m_random.h"
 #  include "dstrings.h"
 #  include "m_cheat.h"
+#  include "g_common.h"
 #endif
 
 #ifdef __JHERETIC__

@@ -13,6 +13,7 @@ void            G_StartTitle(void);
 
 // Spawn player at a dummy place.
 void            G_DummySpawnPlayer(int playernum);
+void            G_DeathMatchSpawnPlayer(int playernum);
 
 boolean         P_IsCamera(mobj_t *mo);
 void            P_CameraThink(player_t *player);
