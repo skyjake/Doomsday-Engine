@@ -1092,9 +1092,6 @@ void R_InitModels(void)
 	float minmark;
 	modeldef_t *me, *other, *closest;
 
-/*	Str_Clear(&missing);
-	Str_Clear(&missing_skins);*/
-
 	// Dedicated servers do nothing with models.
 	if(isDedicated || ArgCheck("-nomd2")) return;
 
@@ -1120,20 +1117,6 @@ void R_InitModels(void)
 		R_SetupModel(defs.models + i);
 	}
 	Con_HideProgress();
-
-	// Report missing files.
-/*	if(Str_Length(&missing))
-	{
-		Con_Message("The following models weren't found:\n");
-		Con_Message(Str_Text(&missing));
-		Str_Free(&missing);
-	}
-	if(Str_Length(&missing_skins))
-	{
-		Con_Message("The following skins weren't found:\n");
-		Con_Message(Str_Text(&missing_skins));
-		Str_Free(&missing_skins);
-	}*/
 
 	// Create interlinks. Note that the order in which the defs were loaded
 	// is important. We want to allow "patch" definitions, right?

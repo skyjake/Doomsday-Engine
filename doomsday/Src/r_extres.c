@@ -90,6 +90,14 @@ void R_InitExternalResources(void)
 }
 
 /*
+ * Returns a pointer to the general data path.
+ */
+const char *R_GetDataPath(void)
+{
+	return dataPath;
+}
+
+/*
  * Set the data path. The game module is responsible for calling this.
  */
 void R_SetDataPath(const char *path)

@@ -145,12 +145,14 @@ void R_Update(void)
 
 	// Go back to startup-screen mode.
 	Con_StartupInit();
-	GL_ShutdownTextureManager();
+	//GL_ShutdownTextureManager();
+	GL_TotalReset(true);
+	GL_TotalReset(false);
 	R_UpdateData();
 	R_InitSprites();	// Fully reinitialize sprites.
 	R_InitSkyMap();
 	R_UpdateTranslationTables();
-	GL_InitRefresh();
+	//GL_InitRefresh();
 	// Re-read definitions.
 	Def_Read();
 	Def_PostInit();

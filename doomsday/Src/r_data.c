@@ -840,9 +840,7 @@ void R_PrecacheLevel (void)
 				for (k = 0; k < 8; k++)
 				{
 					lump = spritelumps[sf->lump[k]].lump;
-					//spritememory += lumpinfo[lump].size;
-					//W_CacheLumpNum(lump, PU_CACHE);
-					GL_BindTexture(GL_PrepareSprite(sf->lump[k]));
+					GL_BindTexture(GL_PrepareSprite(sf->lump[k], 0));
 				}
 			}
 		}
