@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.12  2004/09/20 19:38:40  skyjake
+// Don't gib things with the noblood flag, like barrels
+//
 // Revision 1.11  2004/07/29 19:26:37  skyjake
 // Fixed endianness problems, other glitches that show up on Mac
 //
@@ -1532,7 +1535,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
 	}
 
 	// crunch bodies to giblets
-	if(thing->health <= 0)
+	if(!(thing->flags & MF_NOBLOOD) && thing->health <= 0)
 	{
 		P_SetMobjState(thing, S_GIBS);
 
@@ -1565,12 +1568,15 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
 	{
 		P_DamageMobj(thing, NULL, NULL, 10);
 
-		// spray blood in a random direction
-		mo = P_SpawnMobj(thing->x, thing->y, thing->z + thing->height / 2,
-						 MT_BLOOD);
+		if(!(thing->flags & MF_NOBLOOD))
+		{
+			// spray blood in a random direction
+			mo = P_SpawnMobj(thing->x, thing->y, thing->z + thing->height / 2,
+							 MT_BLOOD);
 
-		mo->momx = (P_Random() - P_Random()) << 12;
-		mo->momy = (P_Random() - P_Random()) << 12;
+			mo->momx = (P_Random() - P_Random()) << 12;
+			mo->momy = (P_Random() - P_Random()) << 12;
+		}
 	}
 
 	// keep checking (crush other things)   
