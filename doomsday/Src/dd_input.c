@@ -489,6 +489,13 @@ byte DD_ModKey(byte key)
 		key = shiftKeyMappings[key];
 	if(altDown)
 		key = altKeyMappings[key];
+	if(key >= DDKEY_NUMPAD7 && key <= DDKEY_NUMPAD0)
+	{
+		byte numPadKeys[10] = {
+			'7', '8', '9', '4', '5', '6', '1', '2', '3', '0'
+		};
+		return numPadKeys[key - DDKEY_NUMPAD7];
+	}
 	return key;
 }
 
