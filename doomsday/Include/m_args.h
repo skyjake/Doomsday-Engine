@@ -14,5 +14,6 @@ int			ArgCheck(char *check);
 int			ArgCheckWith(char *check, int num);
 int			ArgExists(char *check);
 int			ArgIsOption(int i);
+int			ArgRecognize(char *first, char *second);
 
 #endif //__COMMAND_LINE_ARGS_H__
