@@ -9,8 +9,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-//#define DD_PROFILE
-
 #include <stdlib.h>
 #include <math.h>
 
@@ -21,6 +19,8 @@
 #include "de_graphics.h"
 #include "de_render.h"
 #include "de_misc.h"
+
+#include "ui_main.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -506,6 +506,8 @@ void GL_LoadSystemTextures(void)
 
 	if(!texInited) return;
 
+	UI_LoadTextures();
+
 	dltexname = GL_PrepareLightTexture();
 	glowtexname = GL_PrepareGlowTexture();
 
@@ -571,6 +573,8 @@ void GL_ClearSystemTextures(void)
 	gl.DeleteTextures(1, &glowtexname);
 	dltexname = 0;
 	glowtexname = 0;
+
+	UI_ClearTextures();
 
 	// Delete the particle textures.
 	PG_ShutdownTextures();
@@ -870,17 +874,18 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
 }
 
 //===========================================================================
-// ScaleBuffer32
+// GL_ScaleBuffer32
 //===========================================================================
-static void ScaleBuffer32(byte *in, int inWidth, int inHeight,
-						  byte *out, int outWidth, int outHeight, int comps)
+void GL_ScaleBuffer32
+	(byte *in, int inWidth, int inHeight, byte *out, 
+	 int outWidth, int outHeight, int comps)
 {
 	int		i;
 	byte	*temp;// = Z_Malloc(outWidth * inHeight * comps, PU_STATIC, 0);
 
 	BEGIN_PROF( PROF_SCALE_1 );
 
-	temp = Z_Malloc(outWidth * inHeight * comps, PU_STATIC, 0);
+	temp = M_Malloc(outWidth * inHeight * comps);
 
 	// First scale horizontally, to outWidth, into the temporary buffer.
 	for(i = 0; i < inHeight; i++)
@@ -890,7 +895,6 @@ static void ScaleBuffer32(byte *in, int inWidth, int inHeight,
 	}
 
 	END_PROF( PROF_SCALE_1 );
-
 	BEGIN_PROF( PROF_SCALE_2 );
 
 	// Then scale vertically, to outHeight, into the out buffer.
@@ -899,7 +903,8 @@ static void ScaleBuffer32(byte *in, int inWidth, int inHeight,
 		scaleLine(temp + comps*i, outWidth*comps, out + comps*i, 
 			outWidth*comps, outHeight, inHeight, comps);
 	}
-	Z_Free(temp);
+
+	M_Free(temp);
 
 	END_PROF( PROF_SCALE_2 );
 }			
@@ -1078,8 +1083,7 @@ DGLuint GL_UploadTexture
 			// Stretch to fit into power-of-two.
 			if(width != levelWidth || height != levelHeight)
 			{
-				//buffer = M_Malloc(levelWidth * levelHeight * comps);
-				ScaleBuffer32(rgbaOriginal, width, height, buffer, levelWidth, 
+				GL_ScaleBuffer32(rgbaOriginal, width, height, buffer, levelWidth, 
 					levelHeight, comps);
 			}
 
@@ -1562,18 +1566,36 @@ void TranslatePatch(patch_t *patch, byte *transTable)
 }
 
 //===========================================================================
-// GL_ConvertToAlpha
+// GL_ConvertToLuminance
+//	Converts the image data to grayscale luminance in-place.
 //===========================================================================
-void GL_ConvertToAlpha(image_t *image)
+void GL_ConvertToLuminance(image_t *image)
 {
 	int p, total = image->width * image->height;
 	byte *ptr = image->pixels;
+
+	if(image->pixelSize == 1) 
+	{
+		// No need to convert anything.
+		return;
+	}
 
 	// Average the RGB colors.
 	for(p = 0; p < total; p++, ptr += image->pixelSize)
 	{
 		image->pixels[p] = (ptr[0] + ptr[1] + ptr[2]) / 3;
 	}
+	image->pixelSize = 1;
+}
+
+//===========================================================================
+// GL_ConvertToAlpha
+//===========================================================================
+void GL_ConvertToAlpha(image_t *image)
+{
+	int p, total = image->width * image->height;
+
+	GL_ConvertToLuminance(image);
 	for(p = 0; p < total; p++)
 	{
 		// Move the average color to the alpha channel, make the
@@ -1741,8 +1763,7 @@ byte *GL_LoadImageCK(image_t *img, const char *name, boolean useModelPath)
 byte *GL_LoadHighRes
 	(image_t *img, char *name, char *prefix, boolean allowColorKey)
 {
-	char resource[256];
-	char fileName[256];
+	filename_t resource, fileName;
 
 	// Form the resource name.
 	sprintf(resource, "%s%s", prefix, name);
@@ -2528,7 +2549,7 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 
 	if(!tspr)
 	{
-		char resource[80], fileName[256];
+		filename_t resource, fileName;
 		patch_t *patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
 
 		// Compose a resource name.
@@ -2596,7 +2617,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 	if(!*texture)
 	{
 		image_t image;
-		char hudResource[256], fileName[256];
+		filename_t hudResource, fileName;
 		patch_t *patch = W_CacheLumpNum(lumpNum, PU_CACHE);
 
 		// Compose a resource for the psprite.
@@ -2821,7 +2842,7 @@ unsigned int GL_SetRawImage(int lump, int part)
 	if(!info->tex[0])
 	{
 		// First try to find an external resource.
-		char fileName[256];
+		filename_t fileName;
 		if(R_FindResource(RC_PATCH, lumpinfo[lump].name, NULL, fileName)
 			&& GL_LoadImage(&image, fileName, false) != NULL)
 		{
@@ -2950,7 +2971,7 @@ void GL_SetPatch(int lump)
 	if(!lumptexinfo[lump].tex[0])
 	{
 		patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
-		char fileName[256];
+		filename_t fileName;
 		image_t image;
 
 		// Let's first try the resource locator and see if there is a
@@ -3397,7 +3418,7 @@ unsigned int GL_PrepareSkin(model_t *mdl, int skin)
 	// do anything.
 	if(!st->tex)
 	{
-		// Load the texture. R_LoadSkin allocates enough memory with Z_Malloc.
+		// Load the texture. R_LoadSkin allocates enough memory with M_Malloc.
 		image = R_LoadSkin(mdl, skin, &width, &height, &size);
 		if(!image)
 		{
