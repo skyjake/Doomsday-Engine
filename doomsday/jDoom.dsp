@@ -584,6 +584,14 @@ SOURCE=.\Include\JDoom\Mn_def.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Include\jDoom\r_data.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\jDoom\r_defs.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\JDoom\r_local.h
 # End Source File
 # Begin Source File
@@ -593,6 +601,10 @@ SOURCE=.\Include\JDoom\r_main.h
 # Begin Source File
 
 SOURCE=.\Include\JDoom\r_sky.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\jDoom\r_state.h
 # End Source File
 # Begin Source File
 
