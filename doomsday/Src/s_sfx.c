@@ -143,7 +143,7 @@ void Sfx_AllowRefresh(boolean allow)
 	// If we're denying refresh, let's make sure that if it's currently
 	// running, we don't continue until it has stopped.
 	if(!allow) while(refreshing) Sys_Sleep(0);
-	Sys_SuspendThread(refresh_handle, !allow);
+	/*Sys_SuspendThread(refresh_handle, !allow);*/
 }
 
 //===========================================================================
