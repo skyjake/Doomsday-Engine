@@ -63,7 +63,7 @@
 
 // Version numbering changes: 200 means JHexen v1.0.
 #define VERSION 200
-#define VERSION_TEXT "1.2.4"
+#define VERSION_TEXT "1.2.5"
 
 #ifdef RANGECHECK
 #define VERSIONTEXT "Version "VERSION_TEXT" +R "__DATE__" ("VER_ID")"
