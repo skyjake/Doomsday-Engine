@@ -56,8 +56,8 @@ enum {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 int     UI_ListItemHeight(uidata_list_t * listdata);
-int     UI_ListButtonHeight(ui_object_t * ob);
-int     UI_ListThumbPos(ui_object_t * ob);
+int     UI_ListButtonHeight(ui_object_t *ob);
+int     UI_ListThumbPos(ui_object_t *ob);
 void    UI_StrCpyLen(char *dest, char *src, int max_width);
 int     UI_MouseInsideBox(int x, int y, int w, int h);
 void    UI_MouseFocus(void);
@@ -185,7 +185,7 @@ void UI_ClearTextures(void)
 //===========================================================================
 // UI_InitPage
 //===========================================================================
-void UI_InitPage(ui_page_t * page, ui_object_t * objects)
+void UI_InitPage(ui_page_t * page, ui_object_t *objects)
 {
 	int     i;
 	ui_object_t *deffocus = NULL;
@@ -346,10 +346,13 @@ void UI_SetPage(ui_page_t * page)
 			uidata_list_t *dat = ob->data;
 
 			dat->numvis = (ob->h - 2 * UI_BORDER) / UI_ListItemHeight(dat);
-			if(dat->selection < dat->first)
-				dat->first = dat->selection;
-			if(dat->selection > dat->first + dat->numvis - 1)
-				dat->first = dat->selection - dat->numvis + 1;
+			if(dat->selection >= 0)
+			{
+				if(dat->selection < dat->first)
+					dat->first = dat->selection;
+				if(dat->selection > dat->first + dat->numvis - 1)
+					dat->first = dat->selection - dat->numvis + 1;
+			}
 			UI_InitColumns(ob);
 		}
 	}
@@ -418,7 +421,7 @@ void UI_Drawer(void)
 	UI_DrawMouse(ui_cx, ui_cy);
 }
 
-int UI_CountObjects(ui_object_t * list)
+int UI_CountObjects(ui_object_t *list)
 {
 	int     count;
 
@@ -429,7 +432,7 @@ int UI_CountObjects(ui_object_t * list)
 //===========================================================================
 // UI_FlagGroup
 //===========================================================================
-void UI_FlagGroup(ui_object_t * list, int group, int flags, int set)
+void UI_FlagGroup(ui_object_t *list, int group, int flags, int set)
 {
 	for(; list->type; list++)
 		if(list->group == group)
@@ -455,7 +458,7 @@ void UI_FlagGroup(ui_object_t * list, int group, int flags, int set)
 // UI_FindObject
 //  All the specified flags must be set.
 //===========================================================================
-ui_object_t *UI_FindObject(ui_object_t * list, int group, int flags)
+ui_object_t *UI_FindObject(ui_object_t *list, int group, int flags)
 {
 	for(; list->type; list++)
 		if(list->group == group && (list->flags & flags) == flags)
@@ -481,7 +484,7 @@ void UI_MouseFocus(void)
 }
 
 // Ob must be on the current page! It can't be NULL.
-void UI_Focus(ui_object_t * ob)
+void UI_Focus(ui_object_t *ob)
 {
 	int     i;
 
@@ -503,7 +506,7 @@ void UI_Focus(ui_object_t * ob)
 
 // Ob must be on the current page!
 // If ob is NULL, capture is ended.
-void UI_Capture(ui_object_t * ob)
+void UI_Capture(ui_object_t *ob)
 {
 	if(!ob)
 	{
@@ -682,7 +685,7 @@ void UIPage_Drawer(ui_page_t * page)
 	}
 }
 
-void UIFrame_Drawer(ui_object_t * ob)
+void UIFrame_Drawer(ui_object_t *ob)
 {
 	int     b = UI_BORDER;
 
@@ -692,13 +695,13 @@ void UIFrame_Drawer(ui_object_t * ob)
 				/*, UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW) */ , 1);
 }
 
-void UIText_Drawer(ui_object_t * ob)
+void UIText_Drawer(ui_object_t *ob)
 {
 	UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true,
 				 UI_COL(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
-int UIButton_Responder(ui_object_t * ob, event_t *ev)
+int UIButton_Responder(ui_object_t *ob, event_t *ev)
 {
 	if(ob->flags & UIF_CLICKED)
 	{
@@ -740,7 +743,7 @@ int UIButton_Responder(ui_object_t * ob, event_t *ev)
 	return false;
 }
 
-void UIButton_Drawer(ui_object_t * ob)
+void UIButton_Drawer(ui_object_t *ob)
 {
 	int     dis = (ob->flags & UIF_DISABLED) != 0;
 	int     act = (ob->flags & UIF_ACTIVE) != 0;
@@ -770,7 +773,7 @@ void UIButton_Drawer(ui_object_t * ob)
 				 true, UI_COL(UIC_TITLE), alpha);
 }
 
-int UIEdit_Responder(ui_object_t * ob, event_t *ev)
+int UIEdit_Responder(ui_object_t *ob, event_t *ev)
 {
 	uidata_edit_t *dat = ob->data;
 
@@ -849,7 +852,7 @@ int UIEdit_Responder(ui_object_t * ob, event_t *ev)
 	return false;
 }
 
-void UIEdit_Drawer(ui_object_t * ob)
+void UIEdit_Drawer(ui_object_t *ob)
 {
 	uidata_edit_t *dat = ob->data;
 	int     act = (ob->flags & UIF_ACTIVE) != 0;
@@ -907,7 +910,7 @@ void UIEdit_Drawer(ui_object_t * ob)
 	}
 }
 
-int UIList_Responder(ui_object_t * ob, event_t *ev)
+int UIList_Responder(ui_object_t *ob, event_t *ev)
 {
 	uidata_list_t *dat = ob->data;
 	int     i, oldsel = dat->selection, buth, barh;
@@ -941,10 +944,10 @@ int UIList_Responder(ui_object_t * ob, event_t *ev)
 				dat->first = 0;
 			}
 			// Check that it's in range.
-			if(dat->first < 0)
-				dat->first = 0;
 			if(dat->first > dat->count - dat->numvis)
 				dat->first = dat->count - dat->numvis;
+			if(dat->first < 0)
+				dat->first = 0;
 		}
 		// We're eating everything.
 		return true;
@@ -984,11 +987,12 @@ int UIList_Responder(ui_object_t * ob, event_t *ev)
 		used = true;
 		buth = UI_ListButtonHeight(ob);
 		// Clicked in the item section?
-		if(UI_MouseInsideBox
-		   (ob->x + UI_BORDER, ob->y + UI_BORDER,
-			ob->w - 2 * UI_BORDER - (dat->count >=
-									 dat->numvis ? UI_BAR_WDH : 0),
-			ob->h - 2 * UI_BORDER))
+		if(dat->count > 0 &&
+		   UI_MouseInsideBox(ob->x + UI_BORDER, ob->y + UI_BORDER,
+							 ob->w - 2 * UI_BORDER - (dat->count >=
+													  dat->
+													  numvis ? UI_BAR_WDH : 0),
+							 ob->h - 2 * UI_BORDER))
 		{
 			dat->selection =
 				dat->first + (ui_cy - ob->y -
@@ -1050,17 +1054,20 @@ int UIList_Responder(ui_object_t * ob, event_t *ev)
 		return false;
 	}
 	// Adjust the first visible item.
-	if(dat->selection < dat->first)
-		dat->first = dat->selection;
-	if(dat->selection > dat->first + dat->numvis - 1)
-		dat->first = dat->selection - dat->numvis + 1;
+	if(dat->selection >= 0)
+	{
+		if(dat->selection < dat->first)
+			dat->first = dat->selection;
+		if(dat->selection > dat->first + dat->numvis - 1)
+			dat->first = dat->selection - dat->numvis + 1;
+	}
 	// Call action function?
 	if(oldsel != dat->selection && ob->action)
 		ob->action(ob);
 	return used;
 }
 
-void UIList_Ticker(ui_object_t * ob)
+void UIList_Ticker(ui_object_t *ob)
 {
 	uidata_list_t *dat = ob->data;
 
@@ -1076,7 +1083,7 @@ void UIList_Ticker(ui_object_t * ob)
 	}
 }
 
-void UIList_Drawer(ui_object_t * ob)
+void UIList_Drawer(ui_object_t *ob)
 {
 	uidata_list_t *dat = ob->data;
 	uidata_listitem_t *items = dat->items;
@@ -1163,7 +1170,7 @@ void UIList_Drawer(ui_object_t * ob)
 //===========================================================================
 // UI_SliderButtonWidth
 //===========================================================================
-int UI_SliderButtonWidth(ui_object_t * ob)
+int UI_SliderButtonWidth(ui_object_t *ob)
 {
 	//  uidata_slider_t *dat = ob->data;
 	int     width = ob->h - UI_BAR_BORDER * 2;
@@ -1176,7 +1183,7 @@ int UI_SliderButtonWidth(ui_object_t * ob)
 //===========================================================================
 // UI_SliderThumbPos
 //===========================================================================
-int UI_SliderThumbPos(ui_object_t * ob)
+int UI_SliderThumbPos(ui_object_t *ob)
 {
 	uidata_slider_t *dat = ob->data;
 	float   range = dat->max - dat->min, useval;
@@ -1197,7 +1204,7 @@ int UI_SliderThumbPos(ui_object_t * ob)
 //===========================================================================
 // UISlider_Responder
 //===========================================================================
-int UISlider_Responder(ui_object_t * ob, event_t *ev)
+int UISlider_Responder(ui_object_t *ob, event_t *ev)
 {
 	uidata_slider_t *dat = ob->data;
 	float   oldvalue = dat->value;
@@ -1325,7 +1332,7 @@ int UISlider_Responder(ui_object_t * ob, event_t *ev)
 //===========================================================================
 // UISlider_Ticker
 //===========================================================================
-void UISlider_Ticker(ui_object_t * ob)
+void UISlider_Ticker(ui_object_t *ob)
 {
 	uidata_slider_t *dat = ob->data;
 	float   oldval;
@@ -1350,7 +1357,7 @@ void UISlider_Ticker(ui_object_t * ob)
 //===========================================================================
 // UISlider_Drawer
 //===========================================================================
-void UISlider_Drawer(ui_object_t * ob)
+void UISlider_Drawer(ui_object_t *ob)
 {
 	uidata_slider_t *dat = ob->data;
 	boolean dis = (ob->flags & UIF_DISABLED) != 0;
@@ -1407,7 +1414,7 @@ void UISlider_Drawer(ui_object_t * ob)
 // Helper Functions
 //---------------------------------------------------------------------------
 
-void UI_InitColumns(ui_object_t * ob)
+void UI_InitColumns(ui_object_t *ob)
 {
 	uidata_list_t *dat = ob->data;
 	uidata_listitem_t *list = dat->items;
@@ -1469,7 +1476,7 @@ int UI_ListItemHeight(uidata_list_t * listdata)
 	return h;
 }
 
-int UI_ListButtonHeight(ui_object_t * ob)
+int UI_ListButtonHeight(ui_object_t *ob)
 {
 	int     barh = ob->h - 2 * UI_BORDER;
 	int     buth = UI_BAR_WDH;
@@ -1479,7 +1486,7 @@ int UI_ListButtonHeight(ui_object_t * ob)
 	return buth;
 }
 
-int UI_ListThumbPos(ui_object_t * ob)
+int UI_ListThumbPos(ui_object_t *ob)
 {
 	uidata_list_t *dat = ob->data;
 	int     buth = UI_ListButtonHeight(ob);
@@ -1491,7 +1498,7 @@ int UI_ListThumbPos(ui_object_t * ob)
 		((barh - buth) * dat->first) / (dat->count - dat->numvis);
 }
 
-int UI_ListFindItem(ui_object_t * ob, int data_value)
+int UI_ListFindItem(ui_object_t *ob, int data_value)
 {
 	uidata_list_t *dat = ob->data;
 	int     i;
@@ -1527,7 +1534,7 @@ int UI_MouseInsideBox(int x, int y, int w, int h)
 // UI_MouseInside
 //  Returns true if the mouse is inside the object.
 //===========================================================================
-int UI_MouseInside(ui_object_t * ob)
+int UI_MouseInside(ui_object_t *ob)
 {
 	return UI_MouseInsideBox(ob->x, ob->y, ob->w, ob->h);
 }

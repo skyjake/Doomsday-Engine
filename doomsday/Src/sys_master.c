@@ -436,7 +436,7 @@ void N_MasterRequestList(void)
  *
  *  Returns negative if a communication is in progress.
  */
-int N_MasterGet(int index, serverinfo_t * info)
+int N_MasterGet(int index, serverinfo_t *info)
 {
 	serverlist_t *it;
 

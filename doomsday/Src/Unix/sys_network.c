@@ -36,10 +36,8 @@
 
 // Defining PRINT_PACKETS will cause the UDP transmitter and receiver
 // to print a message each time they send or receive a packet.
-//#define PRINT_PACKETS
+#undef PRINT_PACKETS
 
-#define DEFAULT_TCP_PORT	13209
-#define DEFAULT_UDP_PORT	13209
 #define MAX_NODES 			32
 #define MAX_DATAGRAM_SIZE	1300
 
@@ -405,6 +403,26 @@ uint N_GetSendQueueSize(int player)
 }
 
 /*
+ * Blocks until all the send queues have been emptied.
+ */
+void N_FlushOutgoing(void)
+{
+	int     i;
+	boolean allClear = false;
+
+	while(!allClear)
+	{
+		allClear = true;
+
+		for(i = 0; i < DDMAXPLAYERS; i++)
+			if(netNodes[i].hasJoined && N_GetSendQueueCount(i))
+				allClear = false;
+
+		Sys_Sleep(5);
+	}
+}
+
+/*
  * Initialize the transmitter thread and the send queue.
  */
 static void N_StartTransmitter(sendqueue_t *q)
@@ -481,6 +499,9 @@ static void N_StopReceiver(void)
  */
 void N_BindIncoming(IPaddress *addr, nodeid_t id)
 {
+	if(!inSock)
+		return;
+
 	Sys_Lock(mutexInSock);
 	if(addr)
 	{
@@ -606,7 +627,6 @@ boolean N_InitService(boolean inServerMode)
 			Con_Message("N_InitService: %s\n", SDLNet_GetError());
 			return false;
 		}
-
 	}
 	else
 	{
@@ -869,7 +889,7 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
 /*
  * Maybe it would be wisest to run this in a separate thread?
  */
-boolean N_LookForHosts(void)
+boolean N_LookForHosts(const char *address, int port)
 {
 	TCPsocket sock;
 	char    buf[256];
@@ -879,18 +899,21 @@ boolean N_LookForHosts(void)
 	if(!N_IsAvailable() || netServerMode)
 		return false;
 
+	if(!port)
+		port = DEFAULT_TCP_PORT;
+
 	// Get rid of previous findings.
 	memset(&located, 0, sizeof(located));
 
 	// Let's determine the address we will be looking into.
-	SDLNet_ResolveHost(&located.addr, nptIPAddress, nptIPPort);
+	SDLNet_ResolveHost(&located.addr, address, port);
 
 	// I say, anyone there?
 	sock = SDLNet_TCP_Open(&located.addr);
 	if(!sock)
 	{
-		Con_Message("N_LookForHosts: No reply from %s (port %i).\n",
-					nptIPAddress, nptIPPort);
+		Con_Message("N_LookForHosts: No reply from %s (port %i).\n", address,
+					port);
 		return false;
 	}
 
@@ -943,7 +966,7 @@ boolean N_LookForHosts(void)
 	{
 		Str_Delete(response);
 		Con_Message("N_LookForHosts: Reply from %s (port %i) was invalid.\n",
-					nptIPAddress, nptIPPort);
+					address, port);
 		return false;
 	}
 }
@@ -1012,6 +1035,7 @@ boolean N_Connect(int index)
 	// Clients are allowed to send packets to the server.
 	svNode->hasJoined = true;
 
+	allowSending = true;
 	handshakeReceived = false;
 	netgame = true;				// Allow sending/receiving of packets.
 	isServer = false;
@@ -1036,14 +1060,14 @@ boolean N_Disconnect(void)
 	if(!N_IsAvailable())
 		return false;
 
-	// Tell the Game that a disconnecting is about to happen.
+	// Tell the Game that a disconnection is about to happen.
 	if(gx.NetDisconnect)
 		gx.NetDisconnect(true);
 
 	Net_StopGame();
 	N_ClearMessages();
 
-	// Tell the Game that disconnecting is now complete.
+	// Tell the Game that the disconnection is now complete.
 	if(gx.NetDisconnect)
 		gx.NetDisconnect(false);
 
@@ -1247,8 +1271,7 @@ void N_Listen(void)
 				{
 					// Close this socket & node.
 					VERBOSE2(Con_Message
-							 ("N_Listen: Connection closed on " "node %i.\n",
-							  i));
+							 ("N_Listen: Connection closed on node %i.\n", i));
 					N_TerminateNode(i);
 				}
 				else

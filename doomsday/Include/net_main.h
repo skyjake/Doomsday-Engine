@@ -283,7 +283,7 @@ uint            Net_GetAckThreshold(int clientNumber);
 char           *Net_GetPlayerName(int player);
 ident_t         Net_GetPlayerID(int player);
 
-void            Net_PrintServerInfo(int index, serverinfo_t * info);
+void            Net_PrintServerInfo(int index, serverinfo_t *info);
 
 // Console commands.
 D_CMD(Kick);

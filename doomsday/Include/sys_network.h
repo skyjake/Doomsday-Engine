@@ -31,7 +31,10 @@ extern          "C" {
 
 #include "con_decl.h"
 
- 	// If a master action fails, the action queue is emptied.
+#define DEFAULT_TCP_PORT	13209
+#define DEFAULT_UDP_PORT	13209
+
+	// If a master action fails, the action queue is emptied.
 	typedef enum {
 		MAC_REQUEST,			   // Retrieve the list of servers from the master.
 		MAC_WAIT,				   // Wait for the server list to arrive.
@@ -46,6 +49,7 @@ extern          "C" {
 
 	extern char    *nptIPAddress;
 	extern int      nptIPPort;
+	extern int      nptUDPPort;
 
 	extern char    *serverName, *serverInfo, *playerName;
 	extern int      serverData[];
@@ -54,15 +58,15 @@ extern          "C" {
 	extern int      masterPort;
 	extern char    *masterPath;
 
-	void		    N_Register(void);
+	void            N_Register(void);
 	void            N_SystemInit(void);
 	void            N_SystemShutdown(void);
 	boolean         N_InitService(boolean inServerMode);
 	void            N_ShutdownService(void);
 	boolean         N_IsAvailable(void);
 	boolean         N_UsingInternet(void);
-	void		    N_PrintInfo(void);
-	boolean         N_LookForHosts(void);
+	void            N_PrintInfo(void);
+	boolean         N_LookForHosts(const char *address, int port);
 	void            N_Listen(void);
 
 	boolean         N_Connect(int index);
@@ -76,6 +80,7 @@ extern          "C" {
 	uint            N_GetSendQueueCount(int player);
 	uint            N_GetSendQueueSize(int player);
 	void            N_TerminateNode(nodeid_t id);
+	void            N_FlushOutgoing(void);
 
 	boolean         N_GetNodeName(nodeid_t id, char *name);
 	const char     *N_GetProtocolName(void);

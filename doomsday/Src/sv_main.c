@@ -68,7 +68,7 @@ int     sv_maxPlayers = MAXPLAYERS;
 /*
  * Fills the provided struct with information about the local server.
  */
-void Sv_GetInfo(serverinfo_t * info)
+void Sv_GetInfo(serverinfo_t *info)
 {
 	int     i;
 
@@ -122,7 +122,7 @@ void Sv_GetInfo(serverinfo_t * info)
 /*
  * Returns the length of the string.
  */
-int Sv_InfoToString(serverinfo_t * info, ddstring_t * msg)
+int Sv_InfoToString(serverinfo_t *info, ddstring_t * msg)
 {
 	int     i;
 
@@ -178,7 +178,7 @@ static boolean Sv_Tokenize(const char *line, char *label, char *value, int max)
  * Converts textual data to a serverinfo struct. Returns true if the
  * label/value pair is recognized.
  */
-boolean Sv_StringToInfo(const char *valuePair, serverinfo_t * info)
+boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
 {
 	char    label[TOKEN_LEN], value[TOKEN_LEN];
 
@@ -849,6 +849,7 @@ void Sv_StartNetGame()
 
 	netgame = true;
 	isServer = true;
+	allowSending = true;
 
 	if(!isDedicated)
 	{

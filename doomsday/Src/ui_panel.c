@@ -59,23 +59,23 @@ typedef struct cvarbutton_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void    CP_ClosePanel(ui_object_t * ob);
-void    CP_ChooseGroup(ui_object_t * ob);
-void    CP_DrawLogo(ui_object_t * ob);
-void    CP_DrawBorder(ui_object_t * ob);
-void    CP_CvarButton(ui_object_t * ob);
-void    CP_CvarList(ui_object_t * ob);
-void    CP_CvarEdit(ui_object_t * ob);
-void    CP_CvarSlider(ui_object_t * ob);
-int     CP_KeyGrabResponder(ui_object_t * ob, event_t *ev);
-void    CP_KeyGrabDrawer(ui_object_t * ob);
-void    CP_TexReset(ui_object_t * ob);
-void    CP_QuickFOV(ui_object_t * ob);
-void    CP_ResolutionInfo(ui_object_t * ob);
-void    CP_ResolutionList(ui_object_t * ob);
-void    CP_SetDefaultRes(ui_object_t * ob);
-void    CP_SetRes(ui_object_t * ob);
-void    CP_ResChanged(ui_object_t * ob);
+void    CP_ClosePanel(ui_object_t *ob);
+void    CP_ChooseGroup(ui_object_t *ob);
+void    CP_DrawLogo(ui_object_t *ob);
+void    CP_DrawBorder(ui_object_t *ob);
+void    CP_CvarButton(ui_object_t *ob);
+void    CP_CvarList(ui_object_t *ob);
+void    CP_CvarEdit(ui_object_t *ob);
+void    CP_CvarSlider(ui_object_t *ob);
+int     CP_KeyGrabResponder(ui_object_t *ob, event_t *ev);
+void    CP_KeyGrabDrawer(ui_object_t *ob);
+void    CP_TexReset(ui_object_t *ob);
+void    CP_QuickFOV(ui_object_t *ob);
+void    CP_ResolutionInfo(ui_object_t *ob);
+void    CP_ResolutionList(ui_object_t *ob);
+void    CP_SetDefaultRes(ui_object_t *ob);
+void    CP_SetRes(ui_object_t *ob);
+void    CP_ResChanged(ui_object_t *ob);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -593,7 +593,7 @@ ui_object_t ob_panel[] =
 //===========================================================================
 // CP_ClosePanel
 //===========================================================================
-void CP_ClosePanel(ui_object_t * ob)
+void CP_ClosePanel(ui_object_t *ob)
 {
 	UI_End();
 }
@@ -601,7 +601,7 @@ void CP_ClosePanel(ui_object_t * ob)
 //===========================================================================
 // CP_ChooseGroup
 //===========================================================================
-void CP_ChooseGroup(ui_object_t * ob)
+void CP_ChooseGroup(ui_object_t *ob)
 {
 	int     i;
 
@@ -617,7 +617,7 @@ void CP_ChooseGroup(ui_object_t * ob)
 //===========================================================================
 // CP_DrawLogo
 //===========================================================================
-void CP_DrawLogo(ui_object_t * ob)
+void CP_DrawLogo(ui_object_t *ob)
 {
 	UI_DrawLogo(ob->x, ob->y, ob->w, ob->h);
 }
@@ -625,7 +625,7 @@ void CP_DrawLogo(ui_object_t * ob)
 //===========================================================================
 // CP_DrawBorder
 //===========================================================================
-void CP_DrawBorder(ui_object_t * ob)
+void CP_DrawBorder(ui_object_t *ob)
 {
 	int     b = UI_BORDER;
 	ui_object_t *it;
@@ -658,7 +658,7 @@ void CP_DrawBorder(ui_object_t * ob)
 //===========================================================================
 // CP_CvarButton
 //===========================================================================
-void CP_CvarButton(ui_object_t * ob)
+void CP_CvarButton(ui_object_t *ob)
 {
 	cvarbutton_t *cb = ob->data;
 	cvar_t *var = Con_GetVariable(cb->cvarname);
@@ -678,7 +678,7 @@ void CP_CvarButton(ui_object_t * ob)
 //===========================================================================
 // CP_CvarList
 //===========================================================================
-void CP_CvarList(ui_object_t * ob)
+void CP_CvarList(ui_object_t *ob)
 {
 	uidata_list_t *list = ob->data;
 	cvar_t *var = Con_GetVariable(list->data);
@@ -699,7 +699,7 @@ void CP_CvarList(ui_object_t * ob)
 //===========================================================================
 // CP_CvarEdit
 //===========================================================================
-void CP_CvarEdit(ui_object_t * ob)
+void CP_CvarEdit(ui_object_t *ob)
 {
 	uidata_edit_t *ed = ob->data;
 
@@ -709,7 +709,7 @@ void CP_CvarEdit(ui_object_t * ob)
 //===========================================================================
 // CP_CvarSlider
 //===========================================================================
-void CP_CvarSlider(ui_object_t * ob)
+void CP_CvarSlider(ui_object_t *ob)
 {
 	uidata_slider_t *slid = ob->data;
 	cvar_t *var = Con_GetVariable(slid->data);
@@ -727,7 +727,7 @@ void CP_CvarSlider(ui_object_t * ob)
 //===========================================================================
 // CP_KeyGrabResponder
 //===========================================================================
-int CP_KeyGrabResponder(ui_object_t * ob, event_t *ev)
+int CP_KeyGrabResponder(ui_object_t *ob, event_t *ev)
 {
 	if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
 	   (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
@@ -751,7 +751,7 @@ int CP_KeyGrabResponder(ui_object_t * ob, event_t *ev)
 //===========================================================================
 // CP_KeyGrabDrawer
 //===========================================================================
-void CP_KeyGrabDrawer(ui_object_t * ob)
+void CP_KeyGrabDrawer(ui_object_t *ob)
 {
 	boolean sel = (ob->flags & UIF_FOCUS) != 0;
 	float   alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
@@ -772,7 +772,7 @@ void CP_KeyGrabDrawer(ui_object_t * ob)
 //===========================================================================
 // CP_TexReset
 //===========================================================================
-void CP_TexReset(ui_object_t * ob)
+void CP_TexReset(ui_object_t *ob)
 {
 	Con_Execute("texreset", false);
 }
@@ -780,7 +780,7 @@ void CP_TexReset(ui_object_t * ob)
 //===========================================================================
 // CP_QuickFOV
 //===========================================================================
-void CP_QuickFOV(ui_object_t * ob)
+void CP_QuickFOV(ui_object_t *ob)
 {
 	Con_SetFloat("rend-camera-fov", sld_fov.value = atoi(ob->text));
 }
@@ -788,7 +788,7 @@ void CP_QuickFOV(ui_object_t * ob)
 //===========================================================================
 // CP_ResolutionInfo
 //===========================================================================
-void CP_ResolutionInfo(ui_object_t * ob)
+void CP_ResolutionInfo(ui_object_t *ob)
 {
 	char    buf[80];
 
@@ -817,7 +817,7 @@ void CP_UpdateSetResButton(int w, int h)
 //===========================================================================
 // CP_ResolutionList
 //===========================================================================
-void CP_ResolutionList(ui_object_t * ob)
+void CP_ResolutionList(ui_object_t *ob)
 {
 	uidata_list_t *list = ob->data;
 	int     seldata =
@@ -835,7 +835,7 @@ void CP_ResolutionList(ui_object_t * ob)
 //===========================================================================
 // CP_SetDefaultRes
 //===========================================================================
-void CP_SetDefaultRes(ui_object_t * ob)
+void CP_SetDefaultRes(ui_object_t *ob)
 {
 	int     x = atoi(panel_res_x), y = atoi(panel_res_y);
 
@@ -848,7 +848,7 @@ void CP_SetDefaultRes(ui_object_t * ob)
 //===========================================================================
 // CP_SetRes
 //===========================================================================
-void CP_SetRes(ui_object_t * ob)
+void CP_SetRes(ui_object_t *ob)
 {
 	int     x = atoi(panel_res_x), y = atoi(panel_res_y);
 
@@ -868,7 +868,7 @@ void CP_SetRes(ui_object_t * ob)
 //===========================================================================
 // CP_ResChanged
 //===========================================================================
-void CP_ResChanged(ui_object_t * ob)
+void CP_ResChanged(ui_object_t *ob)
 {
 	CP_UpdateSetResButton(atoi(panel_res_x), atoi(panel_res_y));
 }
@@ -1010,7 +1010,7 @@ void CP_Drawer(ui_page_t * page)
 	UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET,
 					 y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);
 	y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h,
-						 UI_COL(UIC_TITLE),  alpha) + ui_fonthgt + 3;
+						 UI_COL(UIC_TITLE), alpha) + ui_fonthgt + 3;
 	UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, alpha * .5f, 0);
 	y += 2;
 
@@ -1033,7 +1033,7 @@ void CP_Drawer(ui_page_t * page)
 /*
  * Initializes all slider objects.
  */
-void CP_InitCvarSliders(ui_object_t * ob)
+void CP_InitCvarSliders(ui_object_t *ob)
 {
 	for(; ob->type; ob++)
 		if(ob->action == CP_CvarSlider)

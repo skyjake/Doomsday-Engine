@@ -599,6 +599,7 @@ void Net_StopGame(void)
 		// connected clients that the server is about to close.
 		Msg_Begin(psv_server_close);
 		Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
+		N_FlushOutgoing();
 	}
 	else
 	{
@@ -611,6 +612,7 @@ void Net_StopGame(void)
 	// Netgame has ended.
 	netgame = false;
 	isServer = true;
+	allowSending = false;
 
 	// No more remote users.
 	net_remoteuser = 0;
@@ -844,7 +846,7 @@ void Net_Drawer(void)
 					  UI_COL(UIC_BG_LIGHT), .5f, .5f);
 		UI_DrawRectEx(x, y, w, h, 6, false, UI_COL(UIC_BRD_HI), NULL, .5f, -1);
 		UI_Color(UI_COL(UIC_TEXT));
-		UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_COL(UIC_TEXT), 1);
+		UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_COL(UIC_TITLE), 1);
 	}
 
 	// Restore original matrix.
@@ -973,7 +975,7 @@ void Net_Ticker(timespan_t time)
  * Prints server/host information into the console. The header line is 
  * printed if 'info' is NULL.
  */
-void Net_PrintServerInfo(int index, serverinfo_t * info)
+void Net_PrintServerInfo(int index, serverinfo_t *info)
 {
 	if(!info)
 	{
@@ -1199,9 +1201,9 @@ int CCmdConnect(int argc, char **argv)
 		*ptr = 0;
 	}
 	if(argc == 3)
+	{
 		port = strtol(argv[2], 0, 0);
-	Con_SetString("net-ip-address", buf);
-	/*Con_SetInteger("net-ip-port", port); */
+	}
 
 	// If not already there, go to startup screen mode.
 	if(!startupScreen)
@@ -1222,7 +1224,7 @@ int CCmdConnect(int argc, char **argv)
 	Con_Message("Connecting to %s...\n", buf);
 
 	// Start searching at the specified location.
-	N_LookForHosts();
+	N_LookForHosts(buf, port);
 
 	for(startTime = Sys_GetSeconds();
 		Sys_GetSeconds() - startTime < net_connecttimeout; Sys_Sleep(250))
@@ -1265,8 +1267,8 @@ int CCmdNet(int argc, char **argv)
 		Con_Printf("  info\n");
 		Con_Printf("  announce\n");
 		Con_Printf("  request\n");
-		Con_Printf("  search (local or targeted query)\n");
-		Con_Printf("  servers (asks the master server)\n");
+		Con_Printf("  search (address) [port]   (local or targeted query)\n");
+		Con_Printf("  servers   (asks the master server)\n");
 		Con_Printf("  connect (idx)\n");
 		Con_Printf("  mconnect (m-idx)\n");
 		Con_Printf("  disconnect\n");
@@ -1286,7 +1288,7 @@ int CCmdNet(int argc, char **argv)
 				Con_Message("Network initialization failed!\n");
 
 			// Let everybody know of this.
-			CmdReturnValue = success;
+			return CmdReturnValue = success;
 		}
 	}
 	if(argc == 2)				// One argument?
@@ -1310,10 +1312,6 @@ int CCmdNet(int argc, char **argv)
 		else if(!stricmp(argv[1], "request"))
 		{
 			N_MasterRequestList();
-		}
-		else if(!stricmp(argv[1], "search"))
-		{
-			success = N_LookForHosts();
 		}
 		else if(!stricmp(argv[1], "servers"))
 		{
@@ -1406,6 +1404,10 @@ int CCmdNet(int argc, char **argv)
 				return false;
 			}
 		}
+		else if(!stricmp(argv[1], "search"))
+		{
+			success = N_LookForHosts(argv[2], 0);
+		}
 		else if(!stricmp(argv[1], "connect"))
 		{
 			int     idx;
@@ -1442,6 +1444,13 @@ int CCmdNet(int argc, char **argv)
 			// Start network setup.
 			DD_NetSetup(!stricmp(argv[2], "server"));
 			CmdReturnValue = true;
+		}
+	}
+	if(argc == 4)
+	{
+		if(!stricmp(argv[1], "search"))
+		{
+			success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0));
 		}
 	}
 	return success;

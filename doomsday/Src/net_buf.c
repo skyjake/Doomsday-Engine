@@ -30,6 +30,9 @@
  * the resending of timed out messages. When an Ordered message is 
  * confirmed, the next queued Ordered message is sent. Messages in the 
  * SMS are in FIFO order.
+ *
+ * TODO: At least Ordered messages should be sent through the TCP
+ * connection.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -82,8 +85,7 @@ typedef struct store_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean allowSending = true;
-
+boolean allowSending;
 netbuffer_t netBuffer;
 
 // The Sent Message Store: list of sent or queued messages waiting to be 
@@ -116,6 +118,8 @@ void N_Init(void)
 	// Create a mutex for the message queue.
 	msgMutex = Sys_CreateMutex(MSG_MUTEX_NAME);
 
+	allowSending = false;
+
 	N_SockInit();
 	N_MasterInit();
 	N_SystemInit();				// Platform dependent stuff.
@@ -130,6 +134,8 @@ void N_Shutdown(void)
 	N_SystemShutdown();
 	N_MasterShutdown();
 	N_SockShutdown();
+
+	allowSending = false;
 
 	// Close the handle of the message queue mutex.
 	Sys_DestroyMutex(msgMutex);
@@ -502,8 +508,7 @@ void N_ClearMessages(void)
 	// Also clear the sent message store.
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
-		while(stores[i].first)
-			N_SMSDestroy(stores[i].first);
+		N_SMSReset(i);
 	}
 }
 
@@ -533,8 +538,8 @@ void N_SendConfirmation(msgid_t id, nodeid_t where)
  */
 void N_SendPacket(int flags)
 {
-	int     i, dest = 0;
 	sentmessage_t *sentMsg;
+	int     i, dest = 0;
 	void   *data;
 	uint    size;
 	boolean isQueued = false;
