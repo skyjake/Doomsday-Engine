@@ -6,6 +6,9 @@
 
 Version 1.7.11 (work in progress)
 --------------
+XG:
+- when loading a savegame, line activators were not correctly restored
+
 Installer:
 - fixed: pressing Enter after typing a path will not close the installer
   dialog

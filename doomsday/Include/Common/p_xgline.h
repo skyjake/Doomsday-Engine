@@ -241,6 +241,9 @@ typedef struct
 	float chtimer;				// Chain sequence timer.
 } xgline_t;
 		
+// Used as the activator if there is no real activator.
+extern mobj_t dummything;
+
 // Initialize extended lines for the map.
 void XL_Init(void);
 
@@ -274,6 +277,7 @@ int XG_RandomInt(int min, int max);
 
 void SV_WriteXGLine(line_t *li);
 void SV_ReadXGLine(line_t *li);
+void XL_UnArchiveLines(void);
 
 #endif
 

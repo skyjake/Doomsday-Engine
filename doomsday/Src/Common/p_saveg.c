@@ -135,7 +135,7 @@ void SV_SetArchiveThing(mobj_t *mo, int num)
 mobj_t *SV_GetArchiveThing(int num)
 {
 	if(!num) return NULL;
-	return thing_archive[num-1];					
+	return thing_archive[num-1];				
 }
 
 unsigned int SV_GameID(void)
@@ -909,8 +909,6 @@ void P_UnArchiveThinkers (void)
     thinker_t*	currentthinker;
     thinker_t*	next;
     mobj_t*		mobj;
-	int			i;
-	line_t		*li;
     
     // remove all the current thinkers
     currentthinker = thinkercap.next;
@@ -976,11 +974,9 @@ end_of_thinkers:
 		mobj = (mobj_t*) currentthinker;
 		mobj->target = SV_GetArchiveThing((int)mobj->target);
 	}
-	for(i=0, li=lines; i<numlines; i++, li++)
-	{
-		if(!li->xg) continue;
-		li->xg->activator = SV_GetArchiveThing((int)li->xg->activator);
-	}
+
+	// The activator mobjs must be set.
+	XL_UnArchiveLines();
 }
 
 
