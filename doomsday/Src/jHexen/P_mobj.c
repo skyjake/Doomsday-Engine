@@ -26,6 +26,8 @@
 
 #define MAX_TID_COUNT 200
 
+#define MAX_BOB_OFFSET	0x80000
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -1167,6 +1169,11 @@ void P_MobjThinker(mobj_t *mobj)
 
 		// Negative floorclip raises the mobj off the floor.
 		mobj->floorclip = -mobj->special1;
+		if(mobj->floorclip > -MAX_BOB_OFFSET)
+		{
+			// We don't want it going through the floor.
+			mobj->floorclip = -MAX_BOB_OFFSET;
+		}
 
 		// Old floatbob used health as index, let's still increase it
 		// as before (in case somebody wants to use it).
@@ -1558,8 +1565,13 @@ void P_SpawnMapThing(mapthing_t *mthing)
 	// Check for player starts 1 to 4
 	if(mthing->type <= 4)
 	{
+		/*
 		if(mthing->arg1 < 0 || mthing->arg1 > MAX_PLAYER_STARTS)
-			Con_Error("P_SpawnMapThing: mthing->arg1 is really weird! (%d)\n", mthing->arg1);
+		{
+			Con_Message("P_SpawnMapThing: mthing->arg1 is really weird!"
+				" (%d)\n", mthing->arg1);
+		}
+		*/
 		P_RegisterPlayerStart(mthing);
 		/*playerstarts[mthing->arg1][mthing->type-1] = *mthing;
 		if(!deathmatch && !mthing->arg1)
