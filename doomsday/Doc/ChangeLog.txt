@@ -11,6 +11,8 @@ Version 1.8.1
 - fixed: game event smoothing now operates seamlessly regardless of the
   framerate
 - fixed: camera position smoothing wasn't synced correctly to frames
+- fixed: segfault related to sight checking over large distances (e.g.
+  TNT map 27)
 + dpMapLoad: glBSP 1.96 as a plugin, run on the fly when necessary
 + rend-halo-realistic: use only more realistic halos (slightly smaller,
   dimmer), no secondary lens flares; enabled by default
@@ -35,6 +37,7 @@ Version 1.8.1
 
 Common:
 * more unified handling of ticcmds
++ cvar 'player-move-speed': player movement speed modifier (0..1)
 
 jDoom:
 - fixed: '-warp' made fonts disappear
