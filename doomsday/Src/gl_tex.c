@@ -2682,16 +2682,25 @@ void GL_SetTexCoords(float *tc, int wid, int hgt)
  * Uploads the sprite in the buffer and sets the appropriate texture 
  * parameters.
  */
-unsigned int GL_PrepareSpriteBuffer(int pnum, image_t * image,
+unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
 									boolean isPsprite)
 {
 	unsigned int texture = 0;
 
 	if(!isPsprite)
 	{
+		spritelump_t *slump = spritelumps + pnum;
+		patch_t *patch = W_CacheLumpNum(slump->lump, PU_CACHE);
+
 		// Calculate light source properties.
-		GL_CalcLuminance(pnum, image->pixels, image->width, image->height,
-						 image->pixelSize);
+		GL_CalcLuminance(pnum, image->pixels, image->width,
+						 image->height, image->pixelSize);
+
+		if(patch)
+		{
+			slump->flarex *= patch->width / (float) image->width;
+			slump->flarey *= patch->height / (float) image->height;
+		}
 	}
 
 	if(image->pixelSize == 1 && filloutlines)
