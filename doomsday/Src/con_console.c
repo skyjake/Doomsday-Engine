@@ -356,6 +356,7 @@ cvar_t engineCVars[] =
 	"rend-model-distance",	CVF_NO_MAX,	CVT_INT,	&r_maxmodelz,	0, 0,	"Farther than this models revert back to sprites.",
 	"rend-model-precache",	0,			CVT_BYTE,	&r_precache_skins, 0, 1, "1=Precache 3D models at level setup (slow).",
 	"rend-model-lod",		CVF_NO_MAX,	CVT_FLOAT,	&rend_model_lod, 0, 0,	"Custom level of detail factor. 0=LOD disabled, 1=normal.",
+	"rend-model-mirror-hud", 0,			CVT_INT,	&mirrorHudModels, 0, 1,	"1=Mirror HUD weapon models.",
 	// * Render-HUD
 	"rend-hud-offset-scale", CVF_NO_MAX, CVT_FLOAT, &weaponOffsetScale, 0, 0, "Scaling of player weapon (x,y) offset.",	
 	"rend-hud-fov-shift",	CVF_NO_MAX,	CVT_FLOAT,	&weaponFOVShift,	0, 1, "When FOV > 90 player weapon is shifted downward.",
