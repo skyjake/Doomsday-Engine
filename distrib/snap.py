@@ -14,6 +14,7 @@
 # -gfx			Include Data\Graphics\
 # -sdl			Include SDL libraries
 # -test			Don't upload
+# -r N			Release "N"
 
 import os, tempfile, sys, shutil, re
 
@@ -100,7 +101,12 @@ for src, dest in files:
 		print "  Skipping " + os.path.join( baseDir, src ) + "..."
 
 # Make the archive.
-outFile = os.path.join( outDir, 'deng-snap-1.8.alpha-1.exe' )
+relName = "alpha-N"
+for i in range( len(sys.argv) ):
+	if sys.argv[i] == '-r':
+		relName = sys.argv[i + 1]
+		break
+outFile = os.path.join( outDir, "deng-snap-1.8.%s.exe" % relName )
 try:
 	os.remove( outFile )
 except:
