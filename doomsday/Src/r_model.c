@@ -270,59 +270,23 @@ int R_FindModelFile(const char *filename, char *outfn)
 			return true;
 	}
 
+	// Try loading using the base path as the starting point.
+	if(!Dir_IsAbsolute(filename))
+	{
+		strcpy(buf, ddBasePath);
+		strcat(buf, filename);
+		if(F_Access(buf)) 
+		{
+			VERBOSE2( Con_Printf("R_FindModelFile: "
+				"Base path hit: %s\n", buf) );
+
+			strcpy(outfn, buf);
+			return true; // Got it.
+		}
+	}
+
 	// No success.
 	return false;
-
-/*
-	strcpy(buf, "");
-	for(;;)
-	{
-		strcat(buf, filename);
-		M_PrependBasePath(buf, buf);
-		// DMD takes precedence over MD2.
-		M_GetFileExt(buf, ext);
-		if(!stricmp(ext, "md2"))
-		{
-			// Swap temporarily to DMD and see if it exists.
-			M_ReplaceFileExt(buf, "dmd");
-			if(F_Access(buf))
-			{
-				strcpy(outfn, buf);
-				return true;
-			}
-			M_ReplaceFileExt(buf, "md2");
-		}
-		if(F_Access(buf))
-		{
-			// Found it.
-			strcpy(outfn, buf);
-			return true;
-		}
-		// How about alternative extensions?
-		// If DMD is not found, try MD2 instead.
-		if(!stricmp(ext, "dmd"))
-		{
-			M_ReplaceFileExt(buf, "md2");
-			if(F_Access(buf))
-			{
-				// This'll do.
-				strcpy(outfn, buf);
-				return true;
-			}
-		}
-		// Try a new path.
-		memset(buf, 0, sizeof(buf));
-		// FIXME: What about paths *with* whitespace? --> Not allowed!
-		ptr = M_SkipWhite(ptr);
-		len = M_FindWhite(ptr) - ptr;
-		if(!len) break;	// No more paths to search.
-		strncat(buf, ptr, len);
-		// Advance pointer.
-		ptr += len;
-		// Make sure it's valid (well-formed, really).
-		Dir_ValidDir(buf);
-	} 
-	*/
 }
 
 //===========================================================================
