@@ -907,61 +907,6 @@ int FI_Responder(event_t *ev)
 }
 
 //===========================================================================
-// FI_DrawRawPart
-//===========================================================================
-void FI_DrawRawPart(DGLuint t1, DGLuint t2, float offx, float offy, int sel)
-{
-	if(!sel || sel == 1)
-	{
-		if(t1) gl.Bind(t1);
-		gl.Begin(DGL_QUADS);
-		gl.TexCoord2f(0, 0);
-		gl.Vertex2f(offx, offy);
-		
-		gl.TexCoord2f(1, 0);
-		gl.Vertex2f(255+offx, offy);
-		
-		gl.TexCoord2f(1, 200.0/256.0);
-		gl.Vertex2f(255+offx, 200+offy);
-		
-		gl.TexCoord2f(0, 200.0/256.0);
-		gl.Vertex2f(offx, 200+offy);
-		gl.End();
-	}
-
-	if(!sel || sel == 2)
-	{
-		if(t2) gl.Bind(t2);
-		gl.Begin(DGL_QUADS);
-		gl.TexCoord2f(0, 0);
-		gl.Vertex2f(255+offx, offy);
-		
-		gl.TexCoord2f(1, 0);
-		gl.Vertex2f(320+offx, offy);
-		
-		gl.TexCoord2f(1, 200.0/256.0);
-		gl.Vertex2f(320+offx, 200+offy);
-		
-		gl.TexCoord2f(0, 200.0/256.0);
-		gl.Vertex2f(255+offx, 200+offy);
-		gl.End();
-	}
-}
-
-//===========================================================================
-// FI_DrawRaw
-//===========================================================================
-void FI_DrawRaw(float x, float y, int lump)
-{
-	int	i;
-	for(i = 1; i <= 2; i++)
-	{
-		GL_SetRawImage(lump, i);
-		FI_DrawRawPart(0, 0, x, y, i);
-	}
-}
-
-//===========================================================================
 // FI_FilterChar
 //===========================================================================
 int FI_FilterChar(int ch)
@@ -1180,26 +1125,35 @@ void FI_Drawer(void)
 		if(!pic->used) continue;
 		sq = pic->seq;
 
-		// Setup the transformation matrix we need.
-		gl.MatrixMode(DGL_MODELVIEW);
-		gl.PushMatrix();
-		gl.Translatef(pic->x.value - fi_imgoffset[0].value, 
-			pic->y.value -fi_imgoffset[1].value, 0);
-		gl.Scalef((pic->flip[sq]? -1 : 1) * pic->scale[0].value, 
-			pic->scale[1].value, 1);
+		GL_SetNoTexture(); // Hmm...
 		gl.Color4f(pic->color[0].value, pic->color[1].value, 
 			pic->color[2].value, pic->color[3].value);
-		GL_SetNoTexture(); // Hmm...
 		
 		// Draw it.
 		if(pic->flags.is_patch) 
-			GL_DrawPatch_CS(0, 0, pic->lump[sq]);
-		else
-			FI_DrawRaw(0, 0, pic->lump[sq]);
+		{
+			// Setup the transformation matrix we need.
+			gl.MatrixMode(DGL_MODELVIEW);
+			gl.PushMatrix();
+			gl.Translatef(pic->x.value - fi_imgoffset[0].value, 
+				pic->y.value - fi_imgoffset[1].value, 0);
+			gl.Scalef((pic->flip[sq]? -1 : 1) * pic->scale[0].value, 
+				pic->scale[1].value, 1);
 
-		// Restore original transformation.
-		gl.MatrixMode(DGL_MODELVIEW);
-		gl.PopMatrix();
+			GL_DrawPatch_CS(0, 0, pic->lump[sq]);
+
+			// Restore original transformation.
+			gl.MatrixMode(DGL_MODELVIEW);
+			gl.PopMatrix();
+		}
+		else
+		{
+			GL_DrawRawScreen_CS(pic->lump[sq], 
+				pic->x.value - fi_imgoffset[0].value, 
+				pic->y.value - fi_imgoffset[1].value,
+				(pic->flip[sq]? -1 : 1) * pic->scale[0].value,
+				pic->scale[1].value);
+		}
 	}
 
 	// Draw text.
