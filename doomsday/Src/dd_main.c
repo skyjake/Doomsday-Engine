@@ -680,8 +680,7 @@ void DD_SetInteger(int ddvalue, int parm)
 			// See DD_TSPR_PARM in dd_share.h.
 			int lump = parm & 0xffffff, cls = (parm>>24) & 0xf, table = (parm>>28) & 0xf;
 			if(table)
-				GL_SetTranslatedSprite(lump,
-					translationtables-256 + cls*((/*MAXPLAYERS*/8-1)*256) + (table<<8));
+				GL_SetTranslatedSprite(lump, table, cls);
 			else
 				GL_SetSprite(lump);
 		}

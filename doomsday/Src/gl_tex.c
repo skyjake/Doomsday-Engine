@@ -2040,49 +2040,76 @@ void averageColorRGB(rgbcol_t *col, byte *data, int w, int h)
 //==========================================================================
 // GL_CalcLuminance
 //	Calculates the properties of a dynamic light that the given sprite
-//	frame casts. The buffer is supposed to be paletted.
+//	frame casts. 
+//	2003-05-30 (skyjake): Modified to handle pixel sizes 1 (==2), 3 and 4.
 //==========================================================================
-void GL_CalcLuminance(int pnum, byte *buffer, int width, int height)
+void GL_CalcLuminance(int pnum, byte *buffer, int width, int height, 
+					  int pixelsize)
 {
-	byte			*palette = W_CacheLumpNum(pallump, PU_CACHE);
-	spritelump_t	*slump = spritelumps + pnum;
-	int				i, k, c, cnt = 0, poscnt = 0;
-	byte			rgb[3], *src, *alphasrc;
-	int				limit = 0xc0, poslimit = 0xe0, collimit = 0xc0;
-	int				average[3], avcnt = 0, lowavg[3], lowcnt = 0;
-	rgbcol_t		*sprcol = &slump->color;
+	byte *palette = pixelsize == 1? W_CacheLumpNum(pallump, PU_CACHE) : NULL;
+	spritelump_t *slump = spritelumps + pnum;
+	int			 i, k, c, cnt = 0, poscnt = 0;
+	byte		 rgb[3], *src, *alphasrc = NULL;
+	int			 limit = 0xc0, poslimit = 0xe0, collimit = 0xc0;
+	int			 average[3], avcnt = 0, lowavg[3], lowcnt = 0;
+	rgbcol_t	 *sprcol = &slump->color;
 
 	slump->flarex = slump->flarey = 0;
 	memset(average, 0, sizeof(average));
 	memset(lowavg, 0, sizeof(lowavg));
 	src = buffer;
-	alphasrc = buffer + width*height;
+	
+	if(pixelsize == 1)
+	{
+		// In paletted mode, the alpha channel follows the actual image.
+		alphasrc = buffer + width*height;
+	}
 
 	for(k = 0; k < height; k++)
-		for(i = 0; i < width; i++, src++, alphasrc++)
+		for(i = 0; i < width; i++, src += pixelsize, alphasrc++)
 		{
-			if(*alphasrc < 255) continue;
+			// Alpha pixels don't count.
+			if(pixelsize == 1)
+			{
+				if(*alphasrc < 255) continue;
+			}
+			else if(pixelsize == 4)
+			{
+				if(src[3] < 255) continue;
+			}
+
 			// Bright enough?
-			memcpy(rgb, palette + (*src * 3), 3);
+			if(pixelsize == 1)
+			{
+				memcpy(rgb, palette + (*src * 3), 3);
+			}
+			else if(pixelsize >= 3)
+			{
+				memcpy(rgb, src, 3);
+			}
+
 			if(rgb[0] > poslimit || rgb[1] > poslimit || rgb[2] > poslimit)
 			{
-				// Include in the count.
+				// This pixel will participate in calculating the average
+				// center point.
 				slump->flarex += i;
 				slump->flarey += k;
 				poscnt++;
 			}
+
 			// Bright enough to affect size?
 			if(rgb[0] > limit || rgb[1] > limit || rgb[2] > limit) cnt++;
+
 			// How about the color of the light?
 			if(rgb[0] > collimit || rgb[1] > collimit || rgb[2] > collimit)
 			{
 				avcnt++;
-				for(c=0; c<3; c++) average[c] += rgb[c];
+				for(c = 0; c < 3; c++) average[c] += rgb[c];
 			}
 			else
 			{
 				lowcnt++;
-				for(c=0; c<3; c++) lowavg[c] += rgb[c];
+				for(c = 0; c < 3; c++) lowavg[c] += rgb[c];
 			}
 		}
 	if(!poscnt)
@@ -2141,40 +2168,86 @@ void GL_SetTexCoords(float *tc, int wid, int hgt)
 	}
 }
 
+/*
+ * Uploads the sprite in the buffer and sets the appropriate texture 
+ * parameters.
+ */
+unsigned int GL_PrepareSpriteBuffer
+	(int pnum, byte *buffer, int width, int height, int pixelSize)
+{
+	unsigned int texture = 0;
+
+	// Calculate light source properties.
+	GL_CalcLuminance(pnum, buffer, width, height, pixelSize);
+		
+	if(pixelSize == 1 && filloutlines) 
+		ColorOutlines(buffer, width, height);
+
+	texture = GL_UploadTexture(buffer, width, height, pixelSize != 3, true, 
+		pixelSize > 1, true);
+	gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
+	gl.TexParameter(DGL_MAG_FILTER, filterSprites? DGL_LINEAR : DGL_NEAREST);
+	gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+	gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+	// Determine coordinates for the texture.
+	GL_SetTexCoords(spritelumps[pnum].tc, width, height);
+
+	return texture;
+}
+
 //===========================================================================
 // GL_PrepareTranslatedSprite
 //===========================================================================
-unsigned int GL_PrepareTranslatedSprite(int pnum, unsigned char *table)
+unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 {
+	byte *table = translationtables-256 + tclass*((8-1)*256) + tmap*256;
 	transspr_t *tspr = GL_GetTranslatedSprite(pnum, table);
 
 	if(!tspr)
 	{
-		// There's no name for this patch, load it in.
-		patch_t		*patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
-		int			bufsize = 2 * patch->width * patch->height;
-		byte		*palette = W_CacheLumpNum(pallump, PU_CACHE);
-		byte		*buffer = M_Calloc(bufsize);
+		int width, height, pixelSize;
+		boolean isMasked = false;
+		char resource[80], fileName[256];
+		patch_t *patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
+		byte *buffer = NULL;
+
+		// Compose a resource name.
+		if(tclass || tmap)
+		{
+			sprintf(resource, "%s-table%i%i\n", 
+				lumpinfo[spritelumps[pnum].lump].name, tclass, tmap);
+		}
+		else 
+		{
+			// Not actually translated? Use the normal resource.
+			strcpy(resource, lumpinfo[spritelumps[pnum].lump].name);
+		}
+
+		if(!noHighResTex
+			&& R_FindResource(RC_PATCH, resource, "-ck", fileName)
+			&& (buffer = GL_LoadImage(fileName, &width, &height, &pixelSize,
+				&isMasked, false)) != NULL)
+		{
+			// The buffer is filled with the data.
+		}
+		else
+		{
+			// Must load from the normal lump.
+			width     = patch->width;
+			height    = patch->height;
+			pixelSize = 1;
+			buffer    = M_Calloc(2 * width * height);
 		
-		DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), 
-			patch->width, patch->height, patch, 0, 0, false, table, false);
-
-		// Calculate light source properties.
-		GL_CalcLuminance(pnum, buffer, patch->width, patch->height);
-
-		if(filloutlines) ColorOutlines(buffer, patch->width, patch->height);
+			DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), 
+				width, height, patch, 0, 0, false, table, false);
+		}
 
 		tspr = GL_NewTranslatedSprite(pnum, table);
-		tspr->tex = GL_UploadTexture(buffer, patch->width, patch->height, true, true, false, true);
-		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-		gl.TexParameter(DGL_MAG_FILTER, filterSprites? DGL_LINEAR : DGL_NEAREST);
-		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+		tspr->tex = GL_PrepareSpriteBuffer(pnum, buffer, width, height, 
+			pixelSize);
 
 		M_Free(buffer);
-
-		// Determine coordinates for the texture.
-		GL_SetTexCoords(spritelumps[pnum].tc, patch->width, patch->height);
 	}
 	return tspr->tex;
 }
@@ -2188,42 +2261,46 @@ unsigned int GL_PrepareSprite(int pnum)
 
 	if(!spritelumps[pnum].tex)
 	{
-		// There's no name for this patch, load it in.
-		byte	*palette = W_CacheLumpNum(pallump, PU_CACHE);
+		int width = 0, height = 0, pixelSize = 0; 
+		boolean isMasked = false;
+		char resource[256];
+		byte *buffer = NULL;
 		patch_t *patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
-		int		bufsize = 2 * patch->width * patch->height;
-		byte	*buffer = M_Calloc(bufsize);
+
+		// Is there an external resource for this image?
+		if(!noHighResTex
+			&& R_FindResource(RC_PATCH, lumpinfo[spritelumps[pnum].lump].name,
+				"-ck", resource) 
+			&& (buffer = GL_LoadImage(resource, &width, &height, &pixelSize, 
+				&isMasked, false)) != NULL)
+		{
+			// A high-resolution version of this sprite has been found.
+			// The buffer is filled with the data we need.
+		}
+		else
+		{
+			// There's no name for this patch, load it in.
+			width = patch->width;
+			height = patch->height;
+			buffer = M_Calloc(2 * width * height);
+			pixelSize = 1;
 
 #if _DEBUG
-		if(patch->width > 512 || patch->height > 512) 
-		{
-			Con_Error("GL_PrepareSprite: Bad patch (too big?!)\n  Assumed lump: %8s",
-				lumpinfo[spritelumps[pnum].lump].name);
-		}
+			if(patch->width > 512 || patch->height > 512) 
+			{
+				Con_Error("GL_PrepareSprite: Bad patch (too big?!)\n  "
+					"Assumed lump: %8s", lumpinfo[spritelumps[pnum].lump].name);
+			}
 #endif
 
-		DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), 
-			patch->width, patch->height, patch, 0, 0, false, 0, false);
+			DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE), 
+				width, height, patch, 0, 0, false, 0, false);
+		}
 
-		// Calculate light source properties.
-		GL_CalcLuminance(pnum, buffer, patch->width, patch->height);
-		
-		if(filloutlines) ColorOutlines(buffer, patch->width, patch->height);
-
-		spritelumps[pnum].tex = GL_UploadTexture(buffer, patch->width, 
-			patch->height, true, true, false, true);
-		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-		gl.TexParameter(DGL_MAG_FILTER, filterSprites? DGL_LINEAR : DGL_NEAREST);
-		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+		spritelumps[pnum].tex = GL_PrepareSpriteBuffer(pnum, buffer, width, 
+			height, pixelSize);
 
 		M_Free(buffer);
-
-		// Determine coordinates for the texture.
-		GL_SetTexCoords(spritelumps[pnum].tc, patch->width, patch->height);
-
-		/*CON_Printf("sp%i: x=%f y=%f\n", pnum, spritelumps[pnum].tc[VX],
-			spritelumps[pnum].tc[VY]);*/
 	}
 	return spritelumps[pnum].tex;
 }
@@ -2259,9 +2336,9 @@ void GL_SetSprite(int pnum)
 //===========================================================================
 // GL_SetTranslatedSprite
 //===========================================================================
-void GL_SetTranslatedSprite(int pnum, unsigned char *trans)
+void GL_SetTranslatedSprite(int pnum, int tmap, int tclass)
 {
-	GL_BindTexture(GL_PrepareTranslatedSprite(pnum, trans));
+	GL_BindTexture(GL_PrepareTranslatedSprite(pnum, tmap, tclass));
 }
 
 //===========================================================================
