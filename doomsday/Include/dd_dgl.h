@@ -78,6 +78,7 @@ typedef struct dgldriver_s
 	void	(*Vertices2ftv)(int num, gl_ft2vertex_t *data);
 	void	(*Vertices3ftv)(int num, gl_ft3vertex_t *data);
 	void	(*Vertices3fctv)(int num, gl_fct3vertex_t *data);
+	void	(*ArrayElement)(int index);
 	void	(*DrawElements)(int type, int count, unsigned int *indices);
 
 	// Miscellaneous.
