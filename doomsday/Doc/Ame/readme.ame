@@ -449,20 +449,17 @@ Doomsday will automatically detect the format of a sample if it's loaded from a 
 @a{acks}
 @strong{id Software}, for creating DOOM and then releasing its source code.
 
-@strong{Raven Software}, for creating Heretic and Hexen and then releasing their
-source code.
+@strong{Raven Software}, for creating Heretic and Hexen and then releasing their source code.
 
-@strong{Graham Jackson}, for helping me with the source code, fixing some Doom bugs
-and doing a lot of testing.
-
-@strong{Abbs}, for maintaining the jDoom model pack and doing wonderful work on the
-models and particle effects.
+@strong{Abbs}, for maintaining the jDoom model pack and doing wonderful work on the models and particle effects.
 
 @strong{Anton Rzheshevski} (aka Cheb), for player weapon 3D models and
-other MD2 modifications/enhancements and maintaining the jDoom model
-pack.
+other MD2 modifications/enhancements, maintaining the jDoom model
+pack and writing KickStart version 2.
 
 @strong{Greg Fisk} (Slyrr), for many excellent 3D models for jHeretic.
+
+@strong{Graham Jackson}, for helping me with the source code, fixing some Doom bugs and doing a lot of testing.
 
 All authors of the MD2 models and definition files (see the readme files
 under @file{ Md2\ } for more detailed info).
