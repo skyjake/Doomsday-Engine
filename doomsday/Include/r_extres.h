@@ -8,10 +8,11 @@
  * Resource classes. Each has its own subdir under Data\Game\.
  */
 typedef enum resourceclass_e {
-	RC_TEXTURE,	// And flats.
-	RC_PATCH,	// Not sprites, mind you. Names == lumpnames.
-	RC_MUSIC,	// Names == lumpnames.
-	RC_SFX,		// Names == lumpnames.
+	RC_TEXTURE,		// And flats.
+	RC_PATCH,		// Not sprites, mind you. Names == lumpnames.
+	RC_LIGHTMAP,
+	RC_MUSIC,		// Names == lumpnames.
+	RC_SFX,			// Names == lumpnames.
 	NUM_RESOURCE_CLASSES
 } resourceclass_t;
 

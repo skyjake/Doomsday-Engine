@@ -46,6 +46,7 @@ static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] =
 {
 	"Textures\\",
 	"Patches\\",
+	"LightMaps\\",
 	"Music\\",
 	"Sfx\\"
 };
@@ -54,6 +55,7 @@ static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] =
 static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] =
 {
 	// Graphics favor quality.
+	{ ".tga", ".png", ".pcx", NULL },
 	{ ".tga", ".png", ".pcx", NULL },
 	{ ".tga", ".png", ".pcx", NULL },
 
