@@ -435,6 +435,7 @@ extern          "C" {
         int             surface_index; // Texture or flat index.
         ded_flags_t     blend_mode;    // Blend mode flags (bm_*).
         float           shininess;
+        float           min_color[3];
         ded_path_t      shiny_map;
         ded_path_t      mask_map;
         float           mask_width;

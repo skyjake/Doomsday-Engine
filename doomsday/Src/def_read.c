@@ -1310,6 +1310,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			{
 				READLABEL;
 				RV_FLT("Shininess", ref->shininess)
+				RV_VEC("Min color", ref->min_color, 3)
 				RV_FLAGS("Blending mode", ref->blend_mode, "bm_")
                 RV_STR("Shiny map", ref->shiny_map.path)
                 RV_STR("Mask map", ref->mask_map.path) 

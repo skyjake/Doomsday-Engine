@@ -413,20 +413,28 @@ Reflection
     Shininess = 1.0;
         # Strength of the shiny effect. 1.0 is the maximum value. This
         # is used as the alpha component when doing blending.
-        
+
+    Min color { 0.0 0.0 0.0 }
+        # By default the shiny effect uses sector light as the basic color
+        # of the effect. The Min color RGB values (0..1) can be used to
+        # set a minimum light level for the effect so it'll show up even
+        # in very dark sectors.
+
     Shiny map = "";
         # Name of the external resource that is used as the shiny map for
         # this reflection. By default the resource is searched in the
         # LightMaps resource directory. The shiny map is mapped onto 
         # reflecting surfaces using a mapping that resembles cylindrical
-        # environment mapping.
+        # environment mapping. The dimensions of the map must be powers
+        # of two, for example 128 x 64 or 32 x 128.
         
     Mask map = "";
         # Name of the external resource that is used to mask out the 
         # shininess of a surfaces. The mask map is mapped onto surfaces 
         # using the same texture coordinates that are used for mapping 
         # regular textures. The darker the texel in the mask, the fainter
-        # the reflection becomes.
+        # the reflection becomes. The dimensions of the map must be powers
+        # of two, for example 128 x 64 or 32 x 128.
         
     Mask width = 1.0;
         # A factor for the width of the mask. This can be used to make the

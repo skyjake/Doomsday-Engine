@@ -4,6 +4,13 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.6
+-------------
++ Reflection -> Min color: minimum RGB color for the reflection (to
+  make the reflection visible even without regular sector light)
+- fixed: model file hash reset properly when running 'reset'
+
+
 Version 1.8.5
 -------------
 + surface reflections (shiny effects)

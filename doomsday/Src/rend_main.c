@@ -271,6 +271,23 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
 	return 0;
 }
 
+static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
+{
+    int i;
+
+    for(i = 0; i < 3; ++i)
+    {
+        DGLubyte minimum = (DGLubyte) (ref->min_color[i] * 255);
+        
+        if(color->rgba[i] < minimum)
+        {
+            color->rgba[i] = minimum;
+        }
+    }
+    
+    color->rgba[3] = (DGLubyte) (ref->shininess * 255);
+}
+
 //===========================================================================
 // Rend_AddShinyWallSeg
 //  The poly that is passed as argument to this function must not be
@@ -317,8 +334,8 @@ void Rend_AddShinyWallSeg(int texture, const rendpoly_t *poly)
     q.interpos = 0;
 
     // Strength of the shine.
-    q.vertices[0].color.rgba[3] =
-        q.vertices[1].color.rgba[3] = (DGLubyte) (255 * ref->shininess);
+    Rend_ShinySurfaceColor(&q.vertices[0].color, ref);
+    Rend_ShinySurfaceColor(&q.vertices[1].color, ref);
 
     // The mask texture is stored in the intertex.
     if(ref->use_mask && ref->use_mask->mask_tex)
@@ -388,7 +405,7 @@ void RL_AddShinyFlat(planeinfo_t *plane, rendpoly_t *poly,
     // Set shine strength.
     for(i = 0; i < poly->numvertices; ++i)
     {
-        poly->vertices[i].color.rgba[3] = (DGLubyte) (255 * ref->shininess);
+        Rend_ShinySurfaceColor(&poly->vertices[i].color, ref);
     }
 
     // Set the mask texture.
