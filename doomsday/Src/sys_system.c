@@ -301,10 +301,27 @@ void Sys_SuspendThread(int handle, boolean dopause)
  */
 int Sys_WaitThread(int handle)
 {
+#ifdef WIN32
+	DWORD exitCode = 0;
+
+	do
+	{
+		// Sleep for a while so the loop ain't so busy.
+		Sys_Sleep(5);
+
+		if(!GetExitCodeThread((HANDLE) handle, &exitCode))
+		{
+			// An error occured!
+			return 0;
+		}
+	} while(exitCode == STILL_ACTIVE);
+	return exitCode;
+#else
 	int     result;
 
 	SDL_WaitThread((SDL_Thread *) handle, &result);
 	return result;
+#endif
 }
 
 int Sys_CreateMutex(const char *name)
