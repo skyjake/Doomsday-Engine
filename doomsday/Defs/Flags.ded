@@ -67,6 +67,8 @@ Flag { ID = "df_dim"; Value = 0x1000000; }
 Flag { ID = "df_subtract"; Value = 0x2000000; }
 Flag { ID = "df_revsubtract"; Value = 0x4000000; }
 Flag { ID = "df_twosided"; Value = 0x8000000; }
+Flag { ID = "df_notexcomp"; Value = 0x10000000; }
+Flag { ID = "df_worldtime"; Value = 0x20000000; }
 
 # Model grouping
 Flag { ID = "mg_hud"; Value = 0x2; }
@@ -83,6 +85,7 @@ Flag { ID = "mg_misc"; Value = 0x200; }
 Flag { ID = "gnf_static"; Value = 1; }
 Flag { ID = "gnf_srcvel"; Value = 2; }
 Flag { ID = "gnf_spawn"; Value = 4; }
+Flag { ID = "gnf_srcdir"; Value = 8; }
 Flag { ID = "gnf_blend"; Value = 0x10; }
 Flag { ID = "gnf_floor"; Value = 0x20; }
 Flag { ID = "gnf_ceiling"; Value = 0x40; }
@@ -96,6 +99,7 @@ Flag { ID = "gnf_blendsub"; Value = 0x1000; }
 Flag { ID = "gnf_blendrsub"; Value = 0x2000; }
 Flag { ID = "gnf_blendmul"; Value = 0x4000; }
 Flag { ID = "gnf_blendimul"; Value = 0x8000; }
+Flag { ID = "gnf_extra"; Value = 0x10000; }
 
 # Particle types
 Flag { ID = "pt_point"; Value = 1; }
