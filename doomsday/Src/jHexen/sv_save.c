@@ -153,7 +153,7 @@ extern acsInfo_t *ACSInfo;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char *SavePath = DEFAULT_SAVEPATH;
+char SavePath[256] = DEFAULT_SAVEPATH;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -267,6 +267,26 @@ static thinkInfo_t ThinkerInfo[] =
 };
 
 // CODE --------------------------------------------------------------------
+
+//===========================================================================
+// SV_HxInit
+//	Init the save path.
+//===========================================================================
+void SV_HxInit(void)
+{
+	if(ArgCheckWith("-savedir", 1))
+	{
+		strcpy(SavePath, ArgNext());
+		// Add a trailing backslash is necessary.
+		if(SavePath[strlen(SavePath) - 1] != '\\') strcat(SavePath, "\\");
+	}
+	else
+	{
+		// Use the default save path.
+		sprintf(SavePath, DEFAULT_SAVEPATH "%s\\", G_Get(DD_GAME_MODE));
+	}
+	M_CheckPath(SavePath);
+}
 
 //==========================================================================
 //
