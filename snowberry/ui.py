@@ -885,7 +885,7 @@ class MultiArea (Area):
             minWidth = max(minWidth, minSize[0])
             minHeight = max(minHeight, minSize[1])
 
-        self.sizer.SetMinSize((minWidth, minHeight))
+        self.sizer.SetMinSize((minWidth + 6, minHeight + 6))
         self.sizer.Layout()
                 
 
