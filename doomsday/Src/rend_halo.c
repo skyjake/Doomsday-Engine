@@ -379,14 +379,14 @@ void H_SetupState(boolean dosetup)
 {
 	if(dosetup)
 	{
-		if(whitefog) gl.Disable(DGL_FOG);
+		if(useFog) gl.Disable(DGL_FOG);
 		gl.Disable(DGL_DEPTH_WRITE);
 		gl.Disable(DGL_DEPTH_TEST);
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
 	}
 	else
 	{
-		if(whitefog) gl.Enable(DGL_FOG);
+		if(useFog) gl.Enable(DGL_FOG);
 		gl.Enable(DGL_DEPTH_WRITE);
 		gl.Enable(DGL_DEPTH_TEST);
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
