@@ -760,9 +760,6 @@ void H_PreInit(void)
 	DD_AddIWAD("Heretic.wad");
 	DD_AddStartupWAD("}Data\\jHeretic\\jHeretic.wad"); 
 
-	// Init savegames.
-	SV_Init();
-
 	// Default settings (used if no config file found).
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.messageson = true;
@@ -916,6 +913,9 @@ void H_PostInit(void)
 		VERSIONTEXT"\n");
 	Con_FPrintf(CBLF_RULER, "");
 
+	// Init savegames.
+	SV_Init();
+
 	XG_ReadTypes();
 
 	// Set the default bindings, if needed.
@@ -1019,7 +1019,7 @@ void G_ModifyDupTiccmd(ticcmd_t *cmd)
 	if(cmd->buttons & BT_SPECIAL) cmd->buttons = 0;
 }
 
-char *H_GetString(int id)
+char *G_Get(int id)
 {
 	switch(id)
 	{
@@ -1100,17 +1100,10 @@ void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
 //===========================================================================
 game_export_t *GetGameAPI(game_import_t *imports)
 {
-//	gl_export_t *glexp;
-
 	// Take a copy of the imports, but only copy as much data as is 
 	// allowed and legal.
 	memset(&gi, 0, sizeof(gi));
 	memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
-
-/*	// Interface to DGL.
-	glexp = (gl_export_t*) GL_GetAPI();
-	memset(&gl, 0, sizeof(gl));
-	memcpy(&gl, glexp, MIN_OF(sizeof(gl_export_t), glexp->apiSize));*/
 
 	// Clear all of our exports.
 	memset(&gx, 0, sizeof(gx));
@@ -1133,15 +1126,12 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.EndFrame = H_EndFrame;
 	gx.ConsoleBackground = H_ConsoleBg;
 	gx.UpdateState = G_UpdateState;
-//	gx.DrawPlayerSprites = R_DrawPlayerSprites;
 #undef Get
-	gx.Get = H_GetString;
+	gx.Get = G_Get;
 
 	gx.R_Init = R_Init;
 
-//	gx.NetServerOpen = H_NetServerOpen;
 	gx.NetServerStart = D_NetServerStarted;
-//	gx.NetServerStop = H_NetServerClose;
 	gx.NetServerStop = D_NetServerClose;
 	gx.NetConnect = D_NetConnect;
 	gx.NetDisconnect = D_NetDisconnect;

@@ -559,13 +559,8 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
 	if(!player->morphTics)
 	{
 		// Bob the weapon based on movement speed.
-/*		angle = (128*leveltime)&FINEMASK;
-		psp->sx = FRACUNIT+FixedMul(player->bob, finecosine[angle]);
-		angle &= FINEANGLES/2-1;
-		psp->sy = WEAPONTOP+FixedMul(player->bob, finesine[angle]);*/
-
-		psp->sx = (int) H2_GetString(DD_PSPRITE_BOB_X);
-		psp->sy = (int) H2_GetString(DD_PSPRITE_BOB_Y);
+		psp->sx = (int) G_Get(DD_PSPRITE_BOB_X);
+		psp->sy = (int) G_Get(DD_PSPRITE_BOB_Y);
 
 		ddpsp->offx = ddpsp->offy = 0;
 	}

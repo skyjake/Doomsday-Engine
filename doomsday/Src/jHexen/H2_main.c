@@ -74,7 +74,6 @@ static void ExecOptionSCRIPTS(char **args, int tag);
 static void ExecOptionDEVMAPS(char **args, int tag);
 static void ExecOptionSKILL(char **args, int tag);
 static void ExecOptionPLAYDEMO(char **args, int tag);
-static void CreateSavePath(void);
 static void WarpCheck(void);
 
 #ifdef TIMEBOMB
@@ -83,7 +82,6 @@ static void DoTimeBomb(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern char *SavePath;
 extern boolean startupScreen;
 extern int demosequence;
 
@@ -261,6 +259,9 @@ void H2_PostInit(void)
 		VERSIONTEXT"\n");
 	Con_FPrintf(CBLF_RULER, "");
 
+	// Init savegame directory.
+	SV_HxInit();
+
 	H2_DefaultBindings();
 	G_SetGlowing();
 
@@ -279,11 +280,6 @@ void H2_PostInit(void)
 
 	// Init the view.
 	R_SetViewSize(cfg.screenblocks, 0);
-
-	CreateSavePath();
-
-/*	Con_Message("S_Init...\n");
-	S_Init();*/
 
 	Con_Message("P_Init: Init Playloop state.\n");
 	P_Init();
@@ -627,29 +623,6 @@ void H2_StartTitle(void)
 }*/
 
 
-//==========================================================================
-//
-// CreateSavePath
-//
-//==========================================================================
-
-static void CreateSavePath(void)
-{
-	char creationPath[121];
-	int len;
-
-	if(cdrom == true)
-	{
-		SavePath = "c:\\hexndata\\";
-	}
-	len = strlen(SavePath);
-	if (len >= 120) Con_Error("Save path too long\n");
-	strcpy(creationPath, SavePath);
-
-	creationPath[len-1] = 0;
-	_mkdir(creationPath);
-}
-
 void H2_Ticker(void)
 {
 	if(advancedemo) H2_DoAdvanceDemo();
@@ -682,7 +655,7 @@ void H2_Ticker(void)
 	}
 }*/
 
-char *H2_GetString(int id)
+char *G_Get(int id)
 {
 	switch(id)
 	{
@@ -797,7 +770,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.ConsoleBackground = H2_ConsoleBg;
 	gx.UpdateState = G_UpdateState;
 #undef Get
-	gx.Get = H2_GetString;
+	gx.Get = G_Get;
 
 	gx.NetServerStart = D_NetServerStarted;
 	gx.NetServerStop = D_NetServerClose;

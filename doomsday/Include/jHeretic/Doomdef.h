@@ -637,7 +637,7 @@ void D_QuitNetGame (void);
 
 void TryRunTics (void);
 
-char *H_GetString(int id);
+char *G_Get(int id);
 
 //---------
 //SYSTEM IO

@@ -532,7 +532,7 @@ void D_PreInit(void)
 		gi.AddStartupWAD(file);
 		Con_Message("Playing demo %s.lmp.\n", gi.Argv(p+1));
     }*/
-	SV_Init();
+
     modifiedgame = false;
 }
 
@@ -560,6 +560,7 @@ void D_PostInit(void)
 
 	Con_Message("jDoom "VERSIONTEXT"\n");
 
+	SV_Init();
 	XG_ReadTypes();
 
 	D_DefaultBindings();
@@ -766,7 +767,7 @@ void D_EndFrame(void)
 }
 
 
-char *D_Get(int id)
+char *G_Get(int id)
 {
 	switch(id)
 	{
@@ -826,17 +827,10 @@ void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
 //===========================================================================
 game_export_t *GetGameAPI(game_import_t *imports)
 {
-//	gl_export_t *glexp;
-
 	// Take a copy of the imports, but only copy as much data as is 
 	// allowed and legal.
 	memset(&gi, 0, sizeof(gi));
 	memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
-
-	// Interface to DGL.
-//	glexp = (gl_export_t*) GL_GetAPI();
-//	memset(&gl, 0, sizeof(gl));
-//	memcpy(&gl, glexp, MIN_OF(sizeof(gl_export_t), glexp->apiSize));
 
 	// Clear all of our exports.
 	memset(&gx, 0, sizeof(gx));
@@ -860,7 +854,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
 	gx.ConsoleBackground = D_ConsoleBg;
 	gx.UpdateState = G_UpdateState;
 #undef Get
-	gx.Get = D_Get;
+	gx.Get = G_Get;
 	gx.R_Init = R_Init;
 
 	gx.NetServerStart = D_NetServerStarted;

@@ -285,7 +285,7 @@ enum {VX, VY, VZ};	// Vertex indices.
 
 void D_IdentifyVersion(void);
 void D_SetPlayerPtrs(void);
-char* D_Get(int id);
+char* G_Get(int id);
 
 enum {BOXTOP,BOXBOTTOM,BOXLEFT,BOXRIGHT};	// bbox coordinates
 

@@ -776,7 +776,8 @@ void H2_IdentifyVersion(void);
 void H2_StartTitle(void);
 void H2_SetFilter(int filter);
 int H2_GetFilterColor(int filter);
-char *H2_GetString(int id);
+
+char *G_Get(int id);
 
 extern boolean advancedemo;
 
@@ -839,6 +840,7 @@ void G_DemoAborted(void);
 #define HXS_VERSION_TEXT_LENGTH 16
 #define HXS_DESCRIPTION_LENGTH 24
 
+void SV_HxInit(void);
 void SV_HxSaveGame(int slot, char *description);
 void SV_HxSaveMap(boolean savePlayers);
 void SV_HxLoadGame(int slot);

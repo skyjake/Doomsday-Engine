@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/07/03 21:23:24  skyjake
+// D_Get/H_GetString/H2_GetString => G_Get
+//
 // Revision 1.3  2003/07/01 23:58:56  skyjake
 // Static weapon switching (value, weaponinfo)
 //
@@ -358,8 +361,8 @@ A_WeaponReady
 		player->attackdown = false;
     
     // Bob the weapon based on movement speed.
-	psp->sx = (int) D_Get(DD_PSPRITE_BOB_X);
-	psp->sy = (int) D_Get(DD_PSPRITE_BOB_Y);
+	psp->sx = (int) G_Get(DD_PSPRITE_BOB_X);
+	psp->sy = (int) G_Get(DD_PSPRITE_BOB_Y);
 
 	// Psprite state.
 	player->plr->psprites[0].state = DDPSP_BOBBING;
