@@ -10,6 +10,7 @@
 #include "m_string.h"
 #include "m_nodepile.h"
 #include "m_filehash.h"
+#include "m_huffman.h"
 #include "m_profiler.h"
 
 #endif 
