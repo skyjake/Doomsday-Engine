@@ -402,7 +402,7 @@ int FR_PrepareGDIFont(HFONT hfont)
 	SelectObject(hdc, hfont);
 	// Let's first find out the sizes of all the characters.
 	// Then we can decide how large a texture we need.
-	for(i=0, x=0, y=0, maxh=0; i<256; i++)
+	for(i = 0, x = 0, y = 0, maxh = 0; i < 256; i++)
 	{
 		jfrchar_t *fc = font->chars + i;
 		SIZE size;
@@ -520,7 +520,7 @@ int FR_TextWidth(char *text)
 	if(current == -1) return 0;
 	
 	// Just add them together.
-	for(cf=fonts+current, i=0; i<len; i++)
+	for(cf = fonts + current, i = 0; i < len; i++)
 		width += cf->chars[(byte)text[i]].w;
 	
 	return width;
@@ -537,7 +537,7 @@ int FR_TextHeight(char *text)
 	if(current == -1 || !text) return 0;
 
 	// Find the greatest height.
-	for(len=strlen(text), cf=fonts+current, i=0; i<len; i++)
+	for(len = strlen(text), cf = fonts + current, i = 0; i < len; i++)
 		height = max(height, cf->chars[(byte)text[i]].h);
 
 	return height;
@@ -550,7 +550,7 @@ int FR_TextHeight(char *text)
 int FR_TextOut(char *text, int x, int y)
 {
 	float dx, dy;
-	int i, width=0, len;
+	int i, width = 0, len;
 	jfrfont_t *cf;
 
 	if(!text) return 0;
@@ -565,7 +565,7 @@ int FR_TextOut(char *text, int x, int y)
 
 	// Print it.
 	gl.Begin(DGL_QUADS);
-	for(i=0; i<len; i++)
+	for(i = 0; i < len; i++)
 	{
 		jfrchar_t *ch = cf->chars + (byte)text[i];
 		float coff = 0; //.5f;
