@@ -24,6 +24,9 @@ typedef enum
 
 } deltatype_t;
 
+// OR'd with the type number when resending Unacked deltas.
+#define DT_RESENT				0x80
+
 // Mobj delta flags. These are used to determine what a delta contains.
 // (Which parts of a delta mobj_t are used.)
 #define MDF_POS_X				0x0001
@@ -150,6 +153,10 @@ typedef struct delta_s
 	// All deltas in the same frame update have the same set ID.
 	// Clients acknowledge complete sets (and then the whole set is removed).
 	byte set;		
+
+	// Resend ID of this delta. Assigned when the delta is first resent.
+	// Zero means there is no resend ID.
+	byte resend;
 					
 	// System time when the delta was sent.
 	uint timeStamp;
@@ -301,6 +308,10 @@ typedef struct pool_s
 	// incremented after each transmitted set.
 	byte setDealer;
 
+	// The resend ID numbers are generated using this value. It's incremented
+	// for each resent delta. Zero is not used.
+	byte resendDealer;
+
 	// The delta hash table holds all kinds of deltas.
 	deltalink_t hash[POOL_HASH_SIZE];
 	
@@ -325,7 +336,7 @@ uint		Sv_GetTimeStamp(void);
 pool_t*		Sv_GetPool(int consoleNumber);
 void		Sv_RatePool(pool_t *pool);
 delta_t*	Sv_PoolQueueExtract(pool_t *pool);
-void		Sv_AckDeltaSet(int consoleNumber, int set);
+void		Sv_AckDeltaSet(int consoleNumber, int set, byte resent);
 
 void		Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector, 
 				int sourcePoly, float volume, boolean isRepeating, 
