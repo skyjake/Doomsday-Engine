@@ -29,6 +29,10 @@
 // frames or sounds playing before a mobj is sent).
 #define	CLMOBJ_TIMEOUT	20000	// 20 seconds
 
+// Missiles don't hit mobjs only after a short delay. This'll
+// allow the missile to move free of the shooter. (Quite a hack!)
+#define MISSILE_FREE_MOVE_TIME	1000
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct cmhash_s {
@@ -217,8 +221,9 @@ void Cl_SetThingState(mobj_t *mo, int stnum)
 /*
  * Updates floorz and ceilingz of the mobj.
  */
-void Cl_CheckMobj(mobj_t *mo)
+void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 {
+	mobj_t *mo = &cmo->mo;
 	boolean onFloor = false, inCeiling = false;
 
 	if(mo->z == DDMININT) 
@@ -245,6 +250,34 @@ void Cl_CheckMobj(mobj_t *mo)
 	{
 		mo->z = mo->ceilingz - mo->height;
 	}
+
+#if 0
+	// P_CheckPosition sets blockingMobj.
+#ifdef _DEBUG
+	/*if(blockingMobj)
+		Con_Printf("Collision %i\n", mo->thinker.id);*/
+	if(justCreated 
+		&& mo->ddflags & DDMF_MISSILE)
+	{
+		Con_Printf("Misl creat %i, (%x %x %x) mom (%x %x %x)\n",
+			mo->thinker.id, mo->x, mo->y, mo->z,
+			mo->momx, mo->momy, mo->momz);
+	}
+#endif
+	if(justCreated 
+		&& mo->ddflags & DDMF_MISSILE 
+		&& blockingMobj != NULL)
+	{
+		// This happens when a missile is created inside an object 
+		// (the shooter, typically). We allow the missile to noclip
+		// through mobjs until it's free.
+		cmo->flags |= CLMF_OVERLAPPING;
+
+#ifdef _DEBUG
+		Con_Printf("Overlap %i\n", mo->thinker.id);
+#endif
+	}
+#endif
 }
 
 /*
@@ -337,8 +370,10 @@ int Cl_ReadMobjDelta(void)
 	df = Msg_ReadShort();
 	if(!df)
 	{
+#ifdef _DEBUG
 		if(justCreated) //Con_Error("justCreated!\n");
 			Con_Printf("CL_RMD: deleted justCreated id=%i\n", id);
+#endif
 
 		// A Null Delta. We should delete this mobj.
 		if(cmo->mo.dplayer) 
@@ -352,7 +387,7 @@ int Cl_ReadMobjDelta(void)
 #ifdef _DEBUG
 	if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
 	{
-		Con_Error("CL_ReadMobjDelta: Mobj is being created without X,Y.\n");
+		Con_Error("Cl_ReadMobjDelta: Mobj is being created without X,Y.\n");
 	}
 #endif
 
@@ -429,7 +464,7 @@ int Cl_ReadMobjDelta(void)
 	if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z))
 	{
 		// This'll update floorz and ceilingz.
-		Cl_CheckMobj(d);
+		Cl_CheckMobj(cmo, justCreated);
 	}
 	
 	// Update players.
@@ -503,12 +538,25 @@ void Cl_MoveThing(clmobj_t *cmo)
 	// First do XY movement.
 	if(mo->momx || mo->momy)
 	{
+		// Missiles don't hit mobjs only after a short delay. This'll
+		// allow the missile to move free of the shooter. (Quite a hack!)
+		if(mo->ddflags & DDMF_MISSILE
+			&& Sys_GetRealTime() - cmo->time < MISSILE_FREE_MOVE_TIME)
+		{
+			// The mobj should be allowed to move freely though mobjs.
+			// Use the quick and dirty global variable.
+			dontHitMobjs = true;
+		}
+
 		// Move while doing collision checking.
 		if(!P_StepMove(mo, mo->momx, mo->momy, 0))
 		{
 			// There was a collision!
 			collided = true;
 		}
+
+		// Allow mobj hit checks once again.
+		dontHitMobjs = false;
 	}
 
 	if(mo->momz)
@@ -561,7 +609,7 @@ void Cl_MoveThing(clmobj_t *cmo)
 			Cl_UnsetThingPosition(cmo);
 		}
 		// [Kaboom!]
-	}	
+	}
 
 #if 0
 	mobj_t *mo = &cmo->mo;
@@ -943,7 +991,7 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 			|| moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
 		{
 			// This'll update floorz and ceilingz.
-			Cl_CheckMobj(d);
+			Cl_CheckMobj(cmo, justCreated);
 		}
 		
 		// Update players.
