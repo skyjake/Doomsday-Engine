@@ -63,11 +63,11 @@ setup(
     windows = [
         {
             "script": "snowberry.py",
-            #"icon_resources": [(1, "myprogram.ico")],
+            "icon_resources": [(1, "graphics/snowberry.ico")],
             "other_resources": [(24, 1, manifest)]
         }
-    ]#,
-    #data_files=["logo.gif",
-    #            "myprogram.ico",
+    ],
+    data_files=["graphics/snowberry.ico"]
+    #           "myprogram.ico",
     #            "ChangeLog.txt"],
 )
