@@ -330,7 +330,7 @@ void Rend_RenderSky(int hemis)
 		gl.Disable(DGL_DEPTH_WRITE);
 		// Disable culling, all triangles face the viewer.
 		gl.Disable(DGL_CULL_FACE);
-		gl.DisableArrays(true, true, 0xf);
+		gl.DisableArrays(true, true, DGL_ALL_BITS);
 
 		// Setup a proper matrix.
 		gl.MatrixMode(DGL_MODELVIEW);
