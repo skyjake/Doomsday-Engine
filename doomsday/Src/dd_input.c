@@ -200,8 +200,8 @@ inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name)
 
 	// Set reasonable defaults. The user's settings will be restored
 	// later.
-	axis->scale = 1/100.0f;
-	axis->deadZone = 5/100.0f;
+	axis->scale = 1/10.0f;
+	axis->deadZone = 0;//5/100.0f;
 
 	return axis;
 }
@@ -252,7 +252,6 @@ void I_InitInputDevices(void)
 	// The joystick may not be active.
 	if(I_JoystickPresent())
 		dev->flags = ID_ACTIVE;
-
 }
 
 /*
@@ -423,10 +422,10 @@ void I_TrackInput(event_t *ev)
 	case ev_mouse:
 		if((dev = I_GetDevice(IDEV_MOUSE)) != NULL)
 		{
-			//Con_Printf("ev_mouse: x=%i y=%i\n", ev->data1, ev->data2);
-
 			I_UpdateAxis(dev, 0, ev->data1);
-			I_UpdateAxis(dev, 1, ev->data2);
+
+			// On the mouse Y axis, positive means upward.
+			I_UpdateAxis(dev, 1, -ev->data2);
 		}
 		break;
 

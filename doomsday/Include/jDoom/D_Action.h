@@ -45,7 +45,9 @@ typedef enum
 	NUM_ACTIONS
 } haction_t;
 
+/*
 // This is the actions array.
 extern action_t actions[NUM_ACTIONS+1];
+*/
 
 #endif

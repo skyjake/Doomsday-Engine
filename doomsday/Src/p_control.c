@@ -166,6 +166,15 @@ float P_ControlGetAxis(int player, const char *name)
 }
 
 /*
+ * Return the name of an axis control.
+ */
+const char *P_ControlGetAxisName(int index)
+{
+	if(index < 0 || index >= ctlClass[CC_AXIS].count) return NULL;
+	return ctlClass[CC_AXIS].desc[index].name;
+}
+
+/*
  * Initialize the control descriptors.  These could be read from a
  * file.  The game is able to define new controls in addition to the
  * ones listed here.

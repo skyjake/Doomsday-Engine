@@ -544,11 +544,15 @@ int CCmdClearBindings(int argc, char **argv)
 	return true;
 }
 
+/*
+ * Print a list of all the bindings to the console, in plain text.
+ */ 
 int CCmdListBindings(int argc, char **argv)
 {
-	int		i;
-	char	buffer[20];
+	int i;
+	char buffer[40];
 
+	// Event bindings.
 	for(i = 0; i < numBinds; i++)
 	{
 		B_EventBuilder(buffer, &binds[i].event, false);
@@ -559,19 +563,31 @@ int CCmdListBindings(int argc, char **argv)
 		}
 		Con_Printf("%-8s : %s\n", buffer, binds[i].command);
 	}
+
+	// Axis bindings.
 	for(i = 0; i < numAxisBinds; i++)
 	{
-		//Con_Printf("
+		sprintf(buffer, "%s-%s", axisBinds[i].device->name,
+				axisBinds[i].device->axes[axisBinds[i].axis].name);
+		Con_Printf("%-8s : %s%s\n", buffer,
+				   axisBinds[i].invert? "-" : "+",
+				   P_ControlGetAxisName(axisBinds[i].control));
 	}
+	
 	Con_Printf("There are %i bindings.\n", numBinds + numAxisBinds);
 	return true;
 }
 
+/*
+ * Dump all the bindings to a text (cfg) file.  Outputs console commands.
+ */
 void B_WriteToFile(FILE *file)
 {
 	int i;
 	char buffer[20];
+	axisbinding_t *x;
 
+	// Event bindings.
 	for(i = 0; i < numBinds; i++)
 	{
 		B_EventBuilder(buffer, &binds[i].event, false);
@@ -580,6 +596,16 @@ void B_WriteToFile(FILE *file)
 		fprintf(file, " \"");
 		M_WriteTextEsc(file, binds[i].command);
 		fprintf(file, "\"\n");
+	}
+
+	// Axis bindings.
+	for(i = 0, x = axisBinds; i < numAxisBinds; i++, x++)
+	{
+		// FIXME: Using "after" is a hack...
+		fprintf(file, "after 1 { bindaxis %s-%s ", x->device->name,
+				x->device->axes[x->axis].name);
+		fprintf(file, "%s%s }\n", x->invert? "-" : "+",
+				P_ControlGetAxisName(x->control));
 	}
 }
 
@@ -683,7 +709,7 @@ axisbinding_t *B_BindAxis(inputdev_t *device, int axis, int localPlayer,
 	if(control < 0)
 	{
 		B_DeleteAxisBinding(device, axis);
-		return;
+		return NULL;
 	}		
 	
 	// Create a new binding.

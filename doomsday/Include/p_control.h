@@ -55,6 +55,7 @@ void 	P_ControlTableInit(int player);
 void 	P_ControlTableFree(int player);
 void	P_ControlReset(void);
 int 	P_ControlFindAxis(const char *name);
+const char *P_ControlGetAxisName(int index);
 boolean	P_ControlExecute(const char *command);
 float 	P_ControlGetAxis(int player, const char *name);
 void 	P_ControlSetAxis(int player, int axisControlIndex, float pos);

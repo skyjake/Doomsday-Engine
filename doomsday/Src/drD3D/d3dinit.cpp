@@ -329,6 +329,15 @@ int	InitDirect3D(void)
 		pp->FullScreen_RefreshRateInHz = targetMode.RefreshRate;
 		pp->SwapEffect = D3DSWAPEFFECT_DISCARD;
 
+		// Enable triple buffering?
+		if(ArgExists("-triple"))
+		{
+			Con_Message("Direct3D: Triple buffering enabled.\n");
+			pp->BackBufferCount = 2;
+			pp->SwapEffect = D3DSWAPEFFECT_FLIP;
+			pp->FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+		}
+
 		DP("  bbw=%i, bbh=%i bbfmt=%i", targetMode.Width,
 			targetMode.Height, targetMode.Format);
 	}
