@@ -116,18 +116,18 @@ void UploadMatrix(void)
 //	translation work correctly with the normal SetTransform(), so I have
 //	to transform the texcoords manually.
 //===========================================================================
-void TransformTexCoord(drvertex_t *dv)
+void TransformTexCoord(float st[2])
 {
 	D3DXMATRIX *mat = matStack[MAT_TEXTURE]->GetTop();
 	
 	// If this is an identity matrix, we don't have to do anything.
 	if(*mat == identityMatrix) return;
 
-	D3DXVECTOR3 vec(dv->s, dv->t, 0);
+	D3DXVECTOR3 vec(st[0], st[1], 0);
 	D3DXVECTOR4 result;
 	D3DXVec3Transform(&result, &vec, mat);
-	dv->s = result.x;
-	dv->t = result.y;
+	st[0] = result.x;
+	st[1] = result.y;
 }
 
 //===========================================================================
