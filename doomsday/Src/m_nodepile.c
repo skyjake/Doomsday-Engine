@@ -44,8 +44,7 @@ void NP_Init(nodepile_t *pile, int initial)
 	// Node zero is never used.
 	if(initial < 2) initial = 2;
 	size = sizeof(*pile->nodes) * initial;
-	pile->nodes = Z_Malloc(size, PU_LEVEL, 0);
-	memset(pile->nodes, 0, size);	
+	pile->nodes = Z_Calloc(size, PU_LEVEL, 0);
 	pile->count = initial;
 	// Index #1 is the first.
 	pile->pos = 1;
