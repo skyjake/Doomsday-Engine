@@ -196,7 +196,45 @@ void Rend_Render3DVisSprite(vissprite_t *vismdl)
 //===========================================================================
 void Rend_RenderMaskedWall(vissprite_t *vis)
 {
-	GL_BindTexture(vis->wall.texture);
+	float color[4];
+	boolean withDyn = false;
+	int normal, dyn;
+
+	// Do we have a dynamic light to blend with?
+	// This only happens when multitexturing is enabled.
+	if(vis->wall.light)
+	{
+		if(IS_MUL)
+		{
+			normal = DGL_TEXTURE1;
+			dyn = DGL_TEXTURE0;
+		}
+		else
+		{
+			normal = DGL_TEXTURE0;
+			dyn = DGL_TEXTURE1;
+		}
+		
+		RL_SelectTexUnits(2);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, IS_MUL? 4 : 5); 
+
+		// The dynamic light.
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 0 : 1);
+		gl.Bind(vis->wall.light->texture);
+		RL_FloatRGB(vis->wall.light->color, color);
+		gl.SetFloatv(DGL_ENV_COLOR, color);
+
+		// The actual texture.
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 1 : 0);
+		gl.Bind(vis->wall.texture);
+
+		withDyn = true;
+	}
+	else
+	{
+		gl.Bind(vis->wall.texture);
+		normal = DGL_TEXTURE0;
+	}
 
 	// Masked walls are sometimes used for special effects like arcs,
 	// cobwebs and bottoms of sails. In order for them to look right,
@@ -206,6 +244,10 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 	// wrapping.
 	if(vis->wall.masked)
 	{
+		if(withDyn)
+		{
+			gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 1 : 0);
+		}
 		if(vis->wall.texc[0][VX] < 0 || vis->wall.texc[0][VX] > 1 
 			|| vis->wall.texc[1][VX] < 0 || vis->wall.texc[1][VX] > 1)
 		{
@@ -227,28 +269,51 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 	gl.Begin(DGL_QUADS);
 
 	gl.Color4ubv(&vis->wall.vertices[0].color);
-	gl.TexCoord2f(vis->wall.texc[0][VX], vis->wall.texc[1][VY]);
+	gl.MultiTexCoord2f(normal, vis->wall.texc[0][VX], vis->wall.texc[1][VY]);
+	if(withDyn)
+	{
+		gl.MultiTexCoord2f(dyn, vis->wall.light->s[0], vis->wall.light->t[1]);
+	}
 	gl.Vertex3f(vis->wall.vertices[0].pos[VX], 
 		vis->wall.bottom, 
 		vis->wall.vertices[0].pos[VY]);
 
-	gl.TexCoord2fv(vis->wall.texc[0]);
+	gl.MultiTexCoord2fv(normal, vis->wall.texc[0]);
+	if(withDyn)
+	{
+		gl.MultiTexCoord2f(dyn, vis->wall.light->s[0], vis->wall.light->t[0]);
+	}
 	gl.Vertex3f(vis->wall.vertices[0].pos[VX], 
 		vis->wall.top, 
 		vis->wall.vertices[0].pos[VY]);
 
 	gl.Color4ubv(&vis->wall.vertices[1].color);
-	gl.TexCoord2f(vis->wall.texc[1][VX], vis->wall.texc[0][VY]);
+	gl.MultiTexCoord2f(normal, vis->wall.texc[1][VX], vis->wall.texc[0][VY]);
+	if(withDyn)
+	{
+		gl.MultiTexCoord2f(dyn, vis->wall.light->s[1], vis->wall.light->t[0]);
+	}
 	gl.Vertex3f(vis->wall.vertices[1].pos[VX], 
 		vis->wall.top, 
 		vis->wall.vertices[1].pos[VY]);
 
-	gl.TexCoord2fv(vis->wall.texc[1]);
+	gl.MultiTexCoord2fv(normal, vis->wall.texc[1]);
+	if(withDyn)
+	{
+		gl.MultiTexCoord2f(dyn, vis->wall.light->s[1], 	vis->wall.light->t[1]);
+	}
 	gl.Vertex3f(vis->wall.vertices[1].pos[VX], 
 		vis->wall.bottom, 
 		vis->wall.vertices[1].pos[VY]);
 
 	gl.End();
+
+	if(withDyn)
+	{
+		// Restore normal GL state.
+		RL_SelectTexUnits(1);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+	}
 }
 
 //===========================================================================

@@ -44,7 +44,6 @@ END_PROF_TIMERS()
 // FIXME: Rlist allocation could be dynamic.
 #define MAX_RLISTS			1024 
 
-#define IS_MUL				(!dlBlend && !useFog)
 #define IS_MTEX_DETAILS		(r_detail && useMultiTexDetails && numTexUnits > 1)
 #define IS_MTEX_LIGHTS		(!IS_MTEX_DETAILS && !useFog && useMultiTexLights \
 							&& numTexUnits > 1 && envModAdd)
@@ -257,6 +256,8 @@ static rendlist_t shadowList;
 void RL_AddMaskedPoly(rendpoly_t *poly)
 {
 	vissprite_t *vis = R_NewVisSprite();
+	byte brightest[3];
+	dynlight_t *dyn;
 	int i;
 	
 	vis->issprite = false;
@@ -279,14 +280,25 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 		+ (poly->top - poly->bottom)/poly->tex.height;
 
 	// We can render ONE dynamic light, maybe.
-/*	if(poly->lights && IS_MTEX_LIGHTS)
+	if(poly->lights && numTexUnits > 1 && envModAdd)
 	{
+		// Choose the brightest light.
+		memcpy(brightest, poly->lights->color, 3);
 		vis->wall.light = poly->lights;
+		for(dyn = poly->lights->next; dyn; dyn = dyn->next)
+		{
+			if((brightest[0] + brightest[1] + brightest[2])/3
+				< (dyn->color[0] + dyn->color[1] + dyn->color[2])/3)
+			{
+				memcpy(brightest, dyn->color, 3);
+				vis->wall.light = dyn;
+			}
+		}
 	}
 	else
 	{
 		vis->wall.light = NULL;
-	}*/
+	}
 }
 
 //===========================================================================
@@ -361,13 +373,17 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, byte *rgb)
 // RL_PrepareFlat
 //===========================================================================
 void RL_PrepareFlat
-	(rendpoly_t *poly, subsector_t *subsector)
+	(planeinfo_t *plane, rendpoly_t *poly, subsector_t *subsector)
 {
 	int	i;
 
+	poly->numvertices = plane->numvertices;
+
 	// Calculate the distance to each vertex.
-	for(i = 0; i < poly->numvertices; i++)
+	for(i = 0; i < plane->numvertices; i++)
 	{
+		poly->vertices[i].pos[VX] = plane->vertices[i].x;
+		poly->vertices[i].pos[VY] = plane->vertices[i].y;
 		poly->vertices[i].dist = Rend_PointDist2D(poly->vertices[i].pos);
 	}
 
