@@ -185,8 +185,8 @@ int DD_InitDGL(void)
 	// Prepare the driver struct.
 	if(!DD_InitDGLDriver())
 	{
-		DD_ErrorBox(true, "DD_InitDGL: Rendering DLL %s is incompatible.\n",
-					libName);
+		DD_ErrorBox(true, "DD_InitDGL: Rendering library %s "
+					"is incompatible.\n", libName);
 		return false;
 	}
 
