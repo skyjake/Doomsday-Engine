@@ -35,10 +35,7 @@ BEGIN_PROF_TIMERS()
 	PROF_RL_RENDER_MASKED
 END_PROF_TIMERS()
 
-#define MAX_INDICES			65536
-
-#define MAX_TEX_UNITS		4
-
+#define MAX_TEX_UNITS		4		// Only two used, really.
 #define RL_HASH_SIZE		128
 
 // Number of extra bytes to keep allocated in the end of each rendering list.
@@ -49,42 +46,22 @@ END_PROF_TIMERS()
 
 #define IS_MUL				(!dlBlend && !useFog)
 #define IS_MTEX_DETAILS		(r_detail && useMultiTexDetails && numTexUnits > 1)
-#define IS_MTEX_LIGHTS		(!IS_MTEX_DETAILS && !useFog && useMultiTexLights && numTexUnits > 1)
-
-/*
-#define BYTESIZE		1
-#define SHORTSIZE		2
-#define LONGSIZE		4
-#define FLOATSIZE		4
-*/
-/*
-#define NORMALBIAS		2 //1
-#define SHADOWBIAS		2 //1
-#define DYNLIGHTBIAS	0
-#define DLITBIAS		0
-#define DETAILBIAS		0
-*/
+#define IS_MTEX_LIGHTS		(!IS_MTEX_DETAILS && !useFog && useMultiTexLights \
+							&& numTexUnits > 1 && envModAdd)
 
 // Drawing condition flags.
-#define DCF_NO_LIGHTS				0x00000001
-#define DCF_WITH_LIGHTS				0x00000002
-/*#define DCF_FEW_LIGHTS				0x00000002
-#define DCF_FIRST_UNIT_LIGHTS		0x00000004
-#define DCF_EXTRA_UNIT_LIGHTS		0x00000008
-#define	DCF_NO_SINGLE_PASS_TEXTURE	0x00000010*/
-#define DCF_NO_BLEND				0x00000020
-#define DCF_BLEND					0x00000040
-#define DCF_SET_LIGHT_ENV0			0x00000080
-#define DCF_SET_LIGHT_ENV1			0x00000100
+#define DCF_NO_BLEND				0x00000001
+#define DCF_BLEND					0x00000002
+#define DCF_SET_LIGHT_ENV0			0x00000004
+#define DCF_SET_LIGHT_ENV1			0x00000008
 #define DCF_SET_LIGHT_ENV			(DCF_SET_LIGHT_ENV0 | DCF_SET_LIGHT_ENV1)
-#define DCF_JUST_ONE_LIGHT			0x00000200
-#define DCF_MANY_LIGHTS				0x00000400
+#define DCF_JUST_ONE_LIGHT			0x00000010
+#define DCF_MANY_LIGHTS				0x00000020
 #define DCF_SKIP					0x80000000
 
 // List Modes.
 typedef enum listmode_e
 {
-	// Major modes:
 	LM_SKYMASK,
 	LM_ALL,
 	LM_LIGHT_MOD_TEXTURE,
@@ -102,58 +79,9 @@ typedef enum listmode_e
 	LM_BLENDED_MOD_TEXTURE,
 	LM_ALL_DETAILS,
 	LM_BLENDED_DETAILS,
-	LM_SHADOW,
-
-	LM_NORMAL_MUL,			// normal surfaces (multiplicative lights)
-	LM_NORMAL_ADD,			// normal surfaces (additive lights)
-
-	// Minor modes:
-	LM_MUL_SINGLE_PASS,
-
-	LM_FEW_LIGHTS,
-	LM_MANY_LIGHTS,
-	LM_EXTRA_LIGHTS,
-	LM_NEEDS_TEXTURE,
-	
-	// Submodes:
-/*	LMS_LAST_UNIT_TEXTURE_ONLY,
-	LMS_LIGHTS_TEXTURE_MUL,
-	LMS_Z_DONE,
-	LMS_LIGHTS_ADD_FIRST,
-	LMS_LIGHTS_ADD_SUBSEQUENT,
-	LMS_TEXTURE_MUL,
-	LMS_SINGLE_TEXTURE,
-*/
-/*
-	LID_SKYMASK,				// Draw only into Z-buffer.
-	//LID_NORMAL,					// Normal walls and planes (dlBlend=1, fog).
-	//LID_NORMAL_DLIT,			// Normal, DLIT with no textures.
-	LID_DLIT_NOTEX,				// Just DLIT with no textures (automatical).
-	LID_DLIT_TEXTURED,			// DLIT with multiplicative blending.
-	LID_LIGHTS,					// Dynamic lights (always additive).
-	LID_SINGLE_PASS_LIGHTS,		// Dynamic lights (multitex, 1 source, 1 pass).
-	//LID_DYNAMIC_LIGHTS,
-	LID_DETAILS
-	//LID_SHADOWS*/
+	LM_SHADOW
 }
 listmode_t;
-
-/*// Lists for skymask.
-enum
-{
-	RLSKY_FLATS,
-	RLSKY_WALLS,
-	NUM_RLSKY
-};*/
-
-// Lists for dynamic lights.
-/*enum
-{
-	RLDYN_FLATS,
-	RLDYN_WALLS,
-	RLDYN_GLOW,
-	NUM_RLDYN
-};*/
 
 // Types of rendering primitives.
 typedef enum primtype_e
@@ -209,7 +137,7 @@ typedef struct primhdr_s
 	
 	// Generic data, common to all polys.
 	primtype_t type;	
-	short flags;				// RPF_*.
+	short flags;			// RPF_*
 
 	// Number of vertices in the primitive.
 	uint primSize;
@@ -219,27 +147,14 @@ typedef struct primhdr_s
 	// indices[1...n] > indices[0]. 
 	// All indices in the range indices[0]...indices[n] are used by this
 	// primitive (some are shared).
-	// Since everything is triangles, count is a multiple of 3.
 	ushort numIndices;	
 	uint *indices;
 
+	// First index of the other fan in a Double Fan.
 	ushort beginOther;
 
+	// The first dynamic light affecting the surface.
 	dynlight_t *light;
-
-	// Dynamic lights on the surface.
-	/*ushort numLights;
-	dynlight_t *lights;*/
-	
-	// Array of texture coordinates for lights. There is a texcoord for
-	// each element of the primitive. These can be accessed with:
-	// primSize * light + (indices[i] - indices[0])
-	//gltexcoord_t *lightCoords;	
-
-	/*union primhdr_data_u {
-		//lumobj_t	*light;			// For RPF_LIGHT polygons.
-		int			shadowradius;	// For RPF_SHADOW polygons.
-	};*/
 }
 primhdr_t;
 
@@ -292,7 +207,7 @@ float				rend_light_wall_angle = 1;
 
 // Rendering parameters for detail textures.
 float				detailFactor = .5f;
-float				detailMaxDist = 256;
+//float				detailMaxDist = 256;
 float				detailScale = 4;
 
 typedef struct listhash_s {
@@ -315,14 +230,9 @@ static glcolor_t *colors;
 
 static uint numVertices, maxVertices;
 
-//static uint numIndices;
-//static uint indices[MAX_INDICES];
-
 /*
  * The rendering lists.
  */
-//static rendlist_t rlists[MAX_RLISTS]; // The list of rendering lists.
-
 // Surfaces without lights.
 static listhash_t plainHash[RL_HASH_SIZE];
 
@@ -335,15 +245,7 @@ static listhash_t dynHash[RL_HASH_SIZE];
 static rendlist_t skyMaskList;
 static rendlist_t shadowList;
 
-// The rendering state for RL_Draw(Div)Quad and RL_DrawFlat.
-//static int with_tex, with_col, with_det;
-//static float rl_texw, rl_texh;
-//static detailinfo_t *rl_detail;
-
-
 // CODE --------------------------------------------------------------------
-
-// Some utilities first... -------------------------------------------------
 
 //===========================================================================
 // RL_AddMaskedPoly
@@ -375,6 +277,16 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	vis->wall.texc[0][VY] = poly->texoffy / (float) poly->tex.height;
 	vis->wall.texc[1][VY] = vis->wall.texc[0][VY] 
 		+ (poly->top - poly->bottom)/poly->tex.height;
+
+	// We can render ONE dynamic light, maybe.
+/*	if(poly->lights && IS_MTEX_LIGHTS)
+	{
+		vis->wall.light = poly->lights;
+	}
+	else
+	{
+		vis->wall.light = NULL;
+	}*/
 }
 
 //===========================================================================
@@ -462,8 +374,6 @@ void RL_PrepareFlat
 	// Calculate the color for each vertex.
 	RL_VertexColors(poly, Rend_SectorLight(poly->sector), poly->sector->rgb);
 }
-
-// The Rendering Lists -----------------------------------------------------
 
 //===========================================================================
 // RL_ClearHash
@@ -565,7 +475,6 @@ void RL_DestroyList(rendlist_t *rl)
 	rl->last = NULL;
 	rl->size = 0;
 	rl->flags = 0;
-//	rl->has = false;
 }
 
 //===========================================================================
@@ -599,11 +508,8 @@ void RL_DeleteLists(void)
 	RL_DeleteHash(litHash);
 	RL_DeleteHash(dynHash);
 	
-	//for(i = 0; i < NUM_RLSKY; i++) RL_DestroyList(&mask_rlists[i]);
 	RL_DestroyList(&skyMaskList);
-//	for(i = 0; i < NUM_RLDYN; i++) RL_DestroyList(&dl_rlists[i]);
 	RL_DestroyList(&shadowList);
-	//numrlists = 0;
 
 	RL_DestroyVertices();
 
@@ -777,9 +683,7 @@ rendlist_t *RL_GetLightListFor(DGLuint texture)
 	for(dest = hash->first; dest; dest = dest->next)
 	{
 		if(dest->tex.id == texture) 
-		{
 			return dest;
-		}
 	}
 
 	// There isn't a list for this yet.
@@ -815,20 +719,14 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
 		int lastOffset   = -1;
 
 		if(list->cursor)
-		{
 			cursorOffset = list->cursor - oldData;
-		}
+
 		if(list->last)
-		{
 			lastOffset = (byte*) list->last - oldData;
-		}
 
 		// Allocate more memory for the data buffer.
 		if(list->size == 0) list->size = 1024;
-		while(list->size < required)
-		{
-			list->size *= 2;
-		}
+		while(list->size < required) list->size *= 2;
 
 		list->data = Z_Realloc(list->data, list->size, PU_STATIC);
 
@@ -846,11 +744,6 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
 			{
 				hdr->indices = (uint*) (list->data 
 					+ ((byte*) hdr->indices - oldData));
-				/*if(hdr->lightCoords)
-				{
-					hdr->lightCoords = (gltexcoord_t*) (list->data 
-						+ ((byte*) hdr->lightCoords - oldData));
-				}*/
 
 				// Check here in the end; primitive composition may be 
 				// in progress.
@@ -874,36 +767,6 @@ void RL_AllocateIndices(rendlist_t *list, int numIndices)
 	list->last->indices = RL_AllocateData(list, 
 		sizeof(*list->last->indices) * numIndices);
 }
-
-/*
-//===========================================================================
-// RL_AllocateLightCoords
-//===========================================================================
-void RL_AllocateLightCoords(rendlist_t *list)
-{
-	list->last->lightCoords = RL_AllocateData(list,
-		sizeof(*list->last->lightCoords) * list->last->primSize
-		* (list->last->numLights - maxArrayLights));
-}
-*/
-
-/*
-//===========================================================================
-// RL_TexCoordArray
-//===========================================================================
-gltexcoord_t *RL_TexCoordArray(rendlist_t *list, int index)
-{
-	if(index < maxArrayLights)
-	{
-		return &texCoords[TCA_LIGHT1 + index][list->last->indices[0]];
-	}
-	else
-	{
-		return &list->last->lightCoords[ (index - maxArrayLights) 
-			* list->last->primSize ];
-	}
-}
-*/
 
 //===========================================================================
 // RL_QuadTexCoords
@@ -1034,18 +897,13 @@ void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 	list->last->primSize = 4;
 	base = RL_AllocateVertices(list->last->primSize);
 
-	// Setup the indices (in strip order).
-	RL_AllocateIndices(list, 4/*6*/);
+	// Setup the indices.
+	RL_AllocateIndices(list, 4);
 	hdr = list->last;
 	hdr->indices[0] = base;
 	hdr->indices[1] = base + 1;
 	hdr->indices[2] = base + 2;
 	hdr->indices[3] = base + 3;
-
-	/*hdr->indices[2] = base + 3;
-	hdr->indices[3] = base + 3;
-	hdr->indices[4] = base + 1;
-	hdr->indices[5] = base + 2;*/
 	
 	// Primary texture coordinates.
 	RL_QuadTexCoords(&texCoords[TCA_MAIN][base], poly, &list->tex);
@@ -1115,8 +973,7 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 
 	// Allocate the indices.
 	RL_AllocateIndices(list, 3 + poly->divs[1].num + 
-		3 + poly->divs[0].num
-		/*3 * (list->last->primSize - 2)*/);
+		3 + poly->divs[0].num);
 
 	hdr = list->last;		
 	hdr->indices[0] = base;
@@ -1145,12 +1002,6 @@ void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 	{
 		RL_QuadLightCoords(&texCoords[TCA_LIGHT][base], hdr->light);
 	}
-
-	/*RL_AllocateLightCoords(list);
-	for(dyn = list->last->lights; dyn; dyn = dyn->next)
-	{
-		RL_QuadLightCoords( RL_TexCoordArray(list, dyn->index), dyn );
-	}*/
 
 	// Index of the indices array.
 	index = 0;
@@ -1261,9 +1112,6 @@ void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 	{
 		list->last->indices[i] = base + i;
 	}
-
-	// Allocate texture coordinates for lights.
-	//RL_AllocateLightCoords(list);
 
 	for(i = 0, vtx = poly->vertices; i < poly->numvertices; i++, vtx++)
 	{
@@ -1471,7 +1319,6 @@ void RL_AddPoly(rendpoly_t *poly)
 			if(poly->lights) 
 			{
 				useLights = true;
-				//hdr->flags |= RPF_DYNLIT;
 			}
 		}
 	}
@@ -1485,49 +1332,15 @@ void RL_AddPoly(rendpoly_t *poly)
 
 	END_PROF( PROF_RL_GET_LIST );
 
-#if 0
-	// Calculate the distance to each vertex.
-	if(poly->detail && !(poly->flags & (RPF_SKY_MASK | RPF_SHADOW)))
-	{
-		// This is a "normal" poly. 
-		for(i = 0; i < poly->numvertices; i++)
-		{
-			// See if we need to calculate distances.
-			if(poly->type != RP_FLAT)
-			{
-				poly->vertices[i].dist 
-					= Rend_PointDist2D(poly->vertices[i].pos);
-			}
-			// What is the minimum distance?
-			if(!i || poly->vertices[i].dist < minDist)
-				minDist = poly->vertices[i].dist;
-		}
-		if(minDist < detailMaxDist)	// Detail limit.
-		{
-			poly->flags |= RPF_DETAIL;	// Eligible for a detail texture.
-			//if(poly->detail) li->flags |= RLF_DETAIL;
-		}
-	}
-#endif
-
 	// This becomes the new last primitive.
 	li->last = hdr = RL_AllocateData(li, sizeof(primhdr_t));
 
 	hdr->size    = 0;
-	hdr->type    = PT_FAN; //PT_TRIANGLES;
+	hdr->type    = PT_FAN; 
 	hdr->indices = NULL;
 	hdr->flags   = poly->flags;
 	hdr->light   = (useLights? poly->lights : NULL);
 
-	// Light indices.
-/*	for(i = 0, dyn = hdr->lights; dyn; dyn = dyn->next)
-	{
-		hdr->numLights++;
-		dyn->index = i++;
-	}*/
-
-	//if(hdr->lights) li->has |= RLHAS_DLIT;
-	
 	switch(poly->type)
 	{
 	case RP_QUAD:
@@ -1559,42 +1372,17 @@ void RL_AddPoly(rendpoly_t *poly)
 	END_PROF( PROF_RL_ADD_POLY );
 }
 
-/*
-//===========================================================================
-// RL_QuadTexCoords
-//===========================================================================
-void RL_QuadTexCoords(primhdr_t *prim, primquad_t *quad, texcoord_t *tex)
-{
-	tex[0].s = prim->texoffx/rl_texw;
-	tex[0].t = prim->texoffy/rl_texh;
-	tex[1].s = tex[0].s + quad->length/rl_texw;
-	tex[1].t = tex[0].t + (quad->top - quad->bottom)/rl_texh;
-}
-*/
-
 //===========================================================================
 // RL_SelectTexCoordArray
 //===========================================================================
-void RL_SelectTexCoordArray(int unit, /*primhdr_t *prim,*/ int index)
+void RL_SelectTexCoordArray(int unit, int index)
 {
 	void *coords[MAX_TEX_UNITS];
 
+	// Does this unit exist?
+	if(unit >= numTexUnits)	return;
+
 	memset(coords, 0, sizeof(coords));
-/*	if(index < maxArrayLights)
-	{
-		// Coordinates are in the main array.
-		coords[unit] = texCoords[TCA_LIGHT1 + index];
-	}
-	else
-	{
-		// Coordinates are stored in the rendering list.
-		// Technically the pointer we are giving is invalid, but we know
-		// that we're only going to be using data in the valid range
-		// (the primitive's indices).
-		coords[unit] = prim->lightCoords 
-			+ (index - maxArrayLights) * prim->primSize
-			- prim->indices[0];
-	}*/
 	coords[unit] = texCoords[index];
 	gl.Arrays(NULL, NULL, numTexUnits, coords, 0);
 }
@@ -1613,47 +1401,6 @@ void RL_FloatRGB(byte *rgb, float *dest)
 	dest[3] = 1;
 }
 
-/*
-//===========================================================================
-// RL_Clear
-//===========================================================================
-void RL_Clear(void)
-{
-	numIndices = 0;
-}
-
-//===========================================================================
-// RL_Primitive
-//===========================================================================
-void RL_Primitive(primhdr_t *prim)
-{
-	memcpy(indices + numIndices, prim->indices, 
-		sizeof(uint) * prim->numIndices);
-
-	numIndices += prim->numIndices;
-
-#ifdef _DEBUG
-	if(numIndices > MAX_INDICES)
-	{
-		Con_Error("RL_Primitive: Too many indices.\n");
-	}
-#endif
-}
-
-
-//===========================================================================
-// RL_Draw
-//===========================================================================
-void RL_Draw(void)
-{
-	BEGIN_PROF( PROF_RL_DRAW_ELEMS );
-
-	if(numIndices) gl.DrawElements(DGL_TRIANGLES, numIndices, indices);
-
-	END_PROF( PROF_RL_DRAW_ELEMS );
-}
-*/
-
 //===========================================================================
 // RL_DrawPrimitives
 //	Draws the privitives that match the conditions. If no condition bits
@@ -1662,9 +1409,7 @@ void RL_Draw(void)
 void RL_DrawPrimitives(int conditions, rendlist_t *list)
 {
 	primhdr_t *hdr;
-	//dynlight_t *dyn;
 	float color[4];
-	//int i;
 	boolean bypass = false;
 
 	// Should we just skip all this?
@@ -1682,340 +1427,49 @@ void RL_DrawPrimitives(int conditions, rendlist_t *list)
 
 	BEGIN_PROF( PROF_RL_DRAW_PRIMS );
 
-//	RL_Clear();
-
 	// Compile our list of indices.
 	for(hdr = (primhdr_t*) list->data; hdr->size; 
 		hdr = (primhdr_t*) ((byte*) hdr + hdr->size))
 	{
-		// FIXME: Precalculate the condition flags for all primitives.
-		//if(!conditions
-			//|| conditions & DCF_NO_LIGHTS && !(hdr->flags & RPF_DYNLIT)
-			//|| conditions & DCF_WITH_LIGHTS && hdr->flags & RPF_DYNLIT
-/*			|| conditions & DCF_NO_LIGHTS && !hdr->numLights
-			|| conditions & DCF_FEW_LIGHTS 
-				&& hdr->numLights > 0
-				&& hdr->numLights <= maxArrayLights
-			|| conditions & DCF_FIRST_UNIT_LIGHTS
-				&& hdr->numLights > maxArrayLights
-			|| conditions & DCF_EXTRA_UNIT_LIGHTS
-				&& hdr->numLights > numTexUnits
-			|| conditions & DCF_NO_SINGLE_PASS_TEXTURE
-				&& hdr->numLights > maxArrayLights
-			|| conditions & DCF_BLEND
-				&& list->intertex)*/
-		//{
-			//RL_Primitive(hdr);
+		// Check for skip conditions.
+		if(!bypass)
+		{
+			if(conditions & DCF_JUST_ONE_LIGHT && hdr->light->next)
+				continue;
 
-			// Check for skip conditions.
-			if(!bypass)
-			{
-				if(conditions & DCF_JUST_ONE_LIGHT && hdr->light->next)
-					continue;
+			if(conditions & DCF_MANY_LIGHTS && !hdr->light->next)
+				continue;
+		}
+		
+		if(conditions & DCF_SET_LIGHT_ENV)
+		{
+			// Use the correct texture and color for the light.
+			gl.SetInteger(DGL_ACTIVE_TEXTURE, 
+				conditions & DCF_SET_LIGHT_ENV0? 0 : 1);
+			gl.Bind(hdr->light->texture);
+			RL_FloatRGB(hdr->light->color, color);
+			gl.SetFloatv(DGL_ENV_COLOR, color);
+		}
 
-				if(conditions & DCF_MANY_LIGHTS && !hdr->light->next)
-					continue;
-			}
-			
-			if(conditions & DCF_SET_LIGHT_ENV)
-			{
-				// Use the correct texture and color for the light.
-				gl.SetInteger(DGL_ACTIVE_TEXTURE, 
-					conditions & DCF_SET_LIGHT_ENV0? 0 : 1);
-				gl.Bind(hdr->light->texture);
-				RL_FloatRGB(hdr->light->color, color);
-				gl.SetFloatv(DGL_ENV_COLOR, color);
-			}
+		// Render a primitive (or two) as a triangle fan.
+		if(hdr->type == PT_FAN)
+		{
+			gl.DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, 
+				hdr->indices);
+		}
+		else if(hdr->type == PT_DOUBLE_FAN)
+		{
+			gl.DrawElements(DGL_TRIANGLE_FAN, hdr->beginOther,
+				hdr->indices);
 
-			if(hdr->type == PT_FAN)
-			{
-				gl.DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, 
-					hdr->indices);
-			}
-			else if(hdr->type == PT_DOUBLE_FAN)
-			{
-				gl.DrawElements(DGL_TRIANGLE_FAN, hdr->beginOther,
-					hdr->indices);
-
-				gl.DrawElements(DGL_TRIANGLE_FAN, 
-					hdr->numIndices - hdr->beginOther, 
-					hdr->indices + hdr->beginOther);
-			}
-/*
-			if(conditions & ( DCF_FEW_LIGHTS 
-				| DCF_FIRST_UNIT_LIGHTS
-				| DCF_EXTRA_UNIT_LIGHTS ))
-			{
-				if(conditions & 
-					( DCF_FIRST_UNIT_LIGHTS | DCF_EXTRA_UNIT_LIGHTS ))
-				{
-					dyn = hdr->lights;
-					if(conditions & DCF_EXTRA_UNIT_LIGHTS)
-					{
-						// Find the first 'extra' light.
-						for(; dyn && dyn->index < (unsigned)numTexUnits; 
-							dyn = dyn->next);
-					}
-
-					// 'i' keeps track of the texture unit.
-					for(i = 0; dyn; i++, dyn = dyn->next)
-					{
-						if(i == numTexUnits)
-						{
-							// Out of TUs, time to draw.
-							RL_Draw();
-							if(conditions & DCF_FIRST_UNIT_LIGHTS)
-							{
-								// No more lights for this pass.
-								RL_Clear();
-								break;
-							}
-							i = 0;
-						}
-						gl.Enable(DGL_TEXTURE0 + i);
-						gl.Bind(dyn->texture);
-						RL_FloatRGB(dyn->color, color);
-						gl.SetFloatv(DGL_ENV_COLOR, color);
-						RL_SetTexCoordArray(i, hdr, dyn->index);
-					}
-					// Disable the rest of the units.
-					for(; i < numTexUnits; i++)
-						gl.Disable(DGL_TEXTURE0 + i);
-					// Draw the last set.
-					RL_Draw();
-				}
-				else
-				{
-					// Only draw the lights that fit on this pass.
-					// Setup the state for this primitive.
-					for(i = 0, dyn = hdr->lights; i < maxArrayLights; 
-						i++, dyn = (dyn? dyn->next : NULL))
-					{
-						if(i < hdr->numLights)
-						{
-							gl.Enable(DGL_TEXTURE0 + i);
-							gl.Bind(dyn->texture);
-							RL_FloatRGB(dyn->color, color);
-							gl.SetFloatv(DGL_ENV_COLOR, color);
-						}
-						else
-						{
-							// No light for this unit.
-							gl.Disable(DGL_TEXTURE0 + i);
-						}
-					}
-					RL_Draw();
-				}
-				RL_Clear();
-			}
-*/
-		//}
+			gl.DrawElements(DGL_TRIANGLE_FAN, 
+				hdr->numIndices - hdr->beginOther, 
+				hdr->indices + hdr->beginOther);
+		}
 	}
-
-	//RL_Draw();	
 
 	END_PROF( PROF_RL_DRAW_PRIMS );
 }
-
-//===========================================================================
-// RL_DoList
-//	This gets called repeatedly; only change GL state when you have to.
-//===========================================================================
-/*void RL_DoList(listmode_t mode, rendlist_t *list)
-{
-	// What kind of primitives should we draw?
-	switch(mode)
-	{
-	case LM_NO_LIGHTS:
-		RL_DrawPrimitives(DCF_NO_LIGHTS | DCF_NO_BLEND, list);	
-		break;
-
-	case LM_FEW_LIGHTS:
-		RL_DrawPrimitives(DCF_FEW_LIGHTS | DCF_NO_BLEND, list);
-		break;
-
-	case LM_MANY_LIGHTS:
-		RL_DrawPrimitives(DCF_FIRST_UNIT_LIGHTS | DCF_BLEND, list);
-		break;
-
-	case LM_EXTRA_LIGHTS:
-		RL_DrawPrimitives(DCF_EXTRA_UNIT_LIGHTS, list);
-		break;
-
-	case LM_NEEDS_TEXTURE:
-		RL_DrawPrimitives(DCF_NO_SINGLE_PASS_TEXTURE | DCF_BLEND, list);
-		break;
-
-	default:
-		// Unknown mode, do nothing.
-		return;
-	}
-}
-*/
-/*
-//===========================================================================
-// RL_SetupState
-//	The GL state includes setting up the correct vertex arrays.
-//===========================================================================
-void RL_SetupState(listmode_t mode, rendlist_t *list)
-{
-	int i;
-	void *coords[MAX_TEX_UNITS];
-	float color[4];
-
-	BEGIN_PROF( PROF_RL_SETUP_STATE );
-
-	switch(mode)
-	{
-	case LM_MUL_SINGLE_PASS:
-		// Surfaces that can be lit multiplicatively in a single pass.
-		// This state is used for the first pass.
-		gl.Enable(DGL_DEPTH_WRITE);
-		gl.Enable(DGL_DEPTH_TEST);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-
-		gl.Disable(DGL_ALPHA_TEST);
-
-		gl.Enable(DGL_BLENDING);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA); 
-
-		// Use the global vertex arrays.
-		for(i = 0; i < numTexUnits - 1; i++)
-		{
-			coords[i] = texCoords[TCA_LIGHT1 + i];
-		}
-		coords[numTexUnits - 1] = texCoords[TCA_MAIN];
-		// We're only locking the vertex and color arrays.
-		gl.DisableArrays(false, false, 0xf);
-		gl.Arrays(vertices, colors, 0, NULL, numVertices);
-		// The texture coordinates array may change, so we won't lock it.
-		gl.Arrays(NULL, NULL, numTexUnits, coords, 0);
-		break;
-
-	case LMS_LAST_UNIT_TEXTURE_ONLY:
-		// Disable all texture units except the last one.
-		for(i = 0; i < numTexUnits - 1; i++)
-		{
-			gl.Disable(DGL_TEXTURE0 + i);
-		}
-		gl.Enable(DGL_TEXTURE0 + numTexUnits - 1);
-		break;
-
-	case LMS_LIGHTS_TEXTURE_MUL:
-		// Setup the add-multiply texture environment.
-		gl.Enable(DGL_MODULATE_TEXTURE);
-		break;
-
-	case LMS_Z_DONE:
-		gl.Disable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-		break;
-
-	case LMS_LIGHTS_ADD_FIRST:
-		// First pass of the LIGHTS_ADD.
-		gl.Enable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-		gl.Disable(DGL_ALPHA_TEST);
-		gl.Enable(DGL_BLENDING);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-
-		gl.Enable(DGL_ADD_LIGHTS);
-		
-		// Setup the environment for the first stage. We need to add to the
-		// primary color.
-		gl.SetInteger(DGL_ADD_LIGHTS, 1);
-		break;
-
-	case LMS_LIGHTS_ADD_SUBSEQUENT:
-		// Subsequent passes of the LIGHTS_ADD.
-		gl.Disable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-		gl.Enable(DGL_ALPHA_TEST);
-
-		gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-
-		// Setup the environment for the first stage. We must ignore the 
-		// primary color; additive blending is used to apply the final result
-		// to the framebuffer.
-		gl.SetInteger(DGL_ADD_LIGHTS, 2);
-		break;
-
-	case LMS_TEXTURE_MUL:
-		if(list == NULL)
-		{
-			// Setup GL state for texture modulation.
-			gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
-			gl.SetInteger(DGL_MODULATE_TEXTURE, 2);
-
-			// Use the appropriate texture coord arrays.
-			coords[0] = texCoords[TCA_MAIN];
-			coords[1] = texCoords[TCA_BLEND];
-			gl.Arrays(NULL, NULL, 2, coords, 0);
-		}
-		else
-		{
-			if(list->intertex)
-			{
-				// Disable all TUs except the first two.
-				for(i = 2; i < numTexUnits; i++)
-					gl.Disable(DGL_TEXTURE0 + i);
-				gl.Enable(DGL_TEXTURE1);
-				gl.Bind(list->intertex);
-				color[0] = color[1] = color[2] = 0;
-				color[3] = list->interpos;
-				gl.SetFloatv(DGL_ENV_COLOR, color);
-
-				// Enable the appropriate texture coord arrays.
-				gl.EnableArrays(0, 0, 0x1 | 0x2);
-			}
-			else
-			{
-				// Disable all TUs except the first one.
-				for(i = 1; i < numTexUnits; i++)
-					gl.Disable(DGL_TEXTURE0 + i);
-
-				// Enable the appropriate texture coord arrays.
-				gl.EnableArrays(0, 0, 0x1);
-			}
-			gl.Enable(DGL_TEXTURE0);
-			gl.Bind(list->tex);
-		}
-		break;
-
-	case LMS_SINGLE_TEXTURE:
-		// Disable all texture units except the first one.
-		for(i = 1; i < numTexUnits; i++)
-		{
-			gl.Disable(DGL_TEXTURE0 + i);
-		}
-		gl.Disable(DGL_MODULATE_TEXTURE);
-		gl.Enable(DGL_TEXTURE0);		
-		break;
-	}
-
-	END_PROF( PROF_RL_SETUP_STATE );
-}
-*/
-
-//===========================================================================
-// RL_CleanupState
-//===========================================================================
-/*void RL_CleanupState(listmode_t mode)
-{
-	switch(mode)
-	{
-	case LM_MUL_SINGLE_PASS:
-		gl.UnlockArrays();
-		gl.Enable(DGL_DEPTH_WRITE);
-		gl.Enable(DGL_DEPTH_TEST);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-		gl.Enable(DGL_ALPHA_TEST);
-		gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 0);
-		gl.Enable(DGL_BLENDING);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-		break;
-	}
-}*/
 
 //===========================================================================
 // RL_SelectTexUnits
@@ -2032,8 +1486,10 @@ void RL_SelectTexUnits(int count)
 	// Enable the selected units.
 	for(i = count - 1; i >= 0; i--)
 	{
+		if(i >= numTexUnits) continue;
+
 		gl.Enable(DGL_TEXTURE0 + i);
-		// Enable texture coordinates for this unit.
+		// Enable the texcoord array for this unit.
 		gl.EnableArrays(0, 0, 0x1 << i);
 	}
 }
@@ -2043,6 +1499,11 @@ void RL_SelectTexUnits(int count)
 //===========================================================================
 void RL_BlendState(rendlist_t *list, int modMode)
 {
+#ifdef _DEBUG
+	if(numTexUnits < 2)
+		Con_Error("RL_BlendState: Not enough texture units.\n");
+#endif
+
 	RL_SelectTexUnits(2);
 
 	gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
@@ -2464,219 +1925,13 @@ void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 		// draw the necessary subset of primitives on the list.
 		RL_DrawPrimitives( RL_SetupListState(mode, lists[i]), lists[i] );
 	}
-
-#if false
-	if(mode == LM_NORMAL_MUL)
-	{
-		// First all the primitives that can be completed in a single pass.
-		RL_SetupState(LM_MUL_SINGLE_PASS, 0);
-
-		// Surfaces without any lights.
-		RL_SetupState(LMS_LAST_UNIT_TEXTURE_ONLY, 0);
-		RL_DoLists(LM_NO_LIGHTS, lists, num);
-
-		// Then, surfaces with Few Lights. 
-		RL_SetupState(LMS_LIGHTS_TEXTURE_MUL, 0);
-		RL_DoLists(LM_FEW_LIGHTS, lists, num);
-
-		// Lastly, surfaces with Many Lights. We'll draw as many lights as
-		// there are texture units.
-		RL_SetupState(LMS_LIGHTS_ADD_FIRST, 0);
-		RL_DoLists(LM_MANY_LIGHTS, lists, num);
-
-		// Now we have covered all the surfaces in the scene. 
-		// Draw additional lights where necessary.
-		RL_SetupState(LMS_LIGHTS_ADD_SUBSEQUENT, 0);
-		RL_DoLists(LM_EXTRA_LIGHTS, lists, num);
-
-		// We can disable Z-writing because all the surfaces have now been
-		// written into the Z-buffer.
-		RL_SetupState(LMS_Z_DONE, 0);
-
-		// Draw low-poly lights and shadows.
-
-		// Apply texture to surfaces with Many Lights. Texblending is done 
-		// during this step, except in the case of surfaces with no lights
-		// (blending was already done during the first pass).
-		RL_SetupState(LMS_TEXTURE_MUL, 0);
-		RL_DoLists(LM_NEEDS_TEXTURE, lists, num);
-
-		RL_SetupState(LMS_SINGLE_TEXTURE, 0);
-
-		//RL_DoLists(LM_MANY_LIGHTS_WITH_Z, lists, num);
-
-		RL_CleanupState(LM_MUL_SINGLE_PASS);
-	}
-#endif
-
-#if 0
-	// Setup the state.
-	switch(lid)
-	{
-	case LID_SKYMASK:
-		gl.Disable(DGL_TEXTURING);
-		// This will effectively disable color buffer writes.
-		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE);
-		break;
-
-	case LID_NORMAL:
-	case LID_NORMAL_DLIT:
-#if 0
-		gl.ZBias(NORMALBIAS);
-#endif
-		// Disable alpha blending; some video cards think alpha zero is
-		// is still translucent. And I guess things should render faster
-		// with no blending...
-		gl.Disable(DGL_BLENDING);
-		break;
-
-/*	case LID_SHADOWS:
-#if 0
-		gl.ZBias(SHADOWBIAS);
-#endif
-		if(useFog) gl.Disable(DGL_FOG);
-		gl.Disable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
-		break;*/
-
-	case LID_DLIT_TEXTURED:
-		return;
-#if 0
-		gl.ZBias(DLITBIAS);
-#endif
-		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);	
-		// Multiply src and dest colors.
-		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
-		gl.Color3f(1, 1, 1);
-		break;
-
-/*	case LID_DYNAMIC_LIGHTS:
-#if 0
-		gl.ZBias(DYNLIGHTBIAS);
-#endif
-		// Disable fog.
-		if(useFog) gl.Disable(DGL_FOG);
-		// This'll allow multiple light quads to be rendered on top of 
-		// each other.
-		gl.Disable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-		// The source is added to the destination.
-		gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE); 
-		break;*/
-
-	case LID_DETAILS:
-		if(!gl.Enable(DGL_DETAIL_TEXTURE_MODE))
-			return; // Can't render detail textures...
-#if 0
-		gl.ZBias(DETAILBIAS);
-#endif
-		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-		break;
-	}
-
-	// Render each of the provided lists.
-	RL_DoLists(lid, lists, num);
-
-	// How about some dynamic lights?
-	if(lid == LID_NORMAL_DLIT)
-	{
-		gl.Disable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-
-		gl.Enable(DGL_ALPHA_TEST);
-		gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 0);
-
-		// The (source * alpha) is added to the destination.
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ZERO /*DGL_ONE*/); 
-		gl.Enable(DGL_BLENDING);
-
-		// The dynamic lights pass.
-		RL_DoLists(LID_LIGHTS, lists, num);
-
-		// The single-pass, one light, combined light+texture pass.
-		if(multiTexLights)
-		{
-			gl.Enable(DGL_DEPTH_WRITE);
-			gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-			gl.Enable(DGL_TEXTURE1);
-						
-			RL_DoLists(LID_SINGLE_PASS_LIGHTS, lists, num);
-
-			gl.Disable(DGL_TEXTURE1);
-			gl.Enable(DGL_TEXTURE0);
-		}
-
-		// The texture modulation pass.
-	}
-
-	// Restore state.
-	switch(lid)
-	{
-	case LID_SKYMASK:
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-		gl.Enable(DGL_TEXTURING);
-		break;
-
-	case LID_NORMAL:
-	case LID_NORMAL_DLIT:
-#if 0
-		gl.ZBias(0);
-#endif
-		gl.Enable(DGL_BLENDING);
-		gl.Disable(DGL_ALPHA_TEST);
-
-		gl.Enable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA); 		
-
-		break;
-
-/*	case LID_SHADOWS:
-#if 0 
-		gl.ZBias(0);
-#endif
-		gl.Enable(DGL_DEPTH_WRITE);
-		if(useFog) gl.Enable(DGL_FOG);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-		break;*/
-
-	case LID_DLIT_TEXTURED:
-#if 0
-		gl.ZBias(0);
-#endif
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);	
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-		break;
-
-/*	case LID_DYNAMIC_LIGHTS:
-#if 0
-		gl.ZBias(0);
-#endif
-		if(useFog) gl.Enable(DGL_FOG);
-		gl.Enable(DGL_DEPTH_WRITE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA); 
-		break;*/
-
-	case LID_DETAILS:
-#if 0
-		gl.ZBias(0);
-#endif
-		gl.Disable(DGL_DETAIL_TEXTURE_MODE);
-		gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-		break;
-	}
-
-#endif
 }
 
 //===========================================================================
 // RL_CollectLists
 //	Extracts a selection of lists from the hash.
 //===========================================================================
-uint RL_CollectLists(listhash_t *table, rendlist_t **lists) //, int proFlags, int conFlags)
+uint RL_CollectLists(listhash_t *table, rendlist_t **lists) 
 {
 	rendlist_t *it;
 	uint i, count = 0;
@@ -2687,16 +1942,16 @@ uint RL_CollectLists(listhash_t *table, rendlist_t **lists) //, int proFlags, in
 		for(it = table[i].first; it; it = it->next)
 		{
 			// Only non-empty lists are collected.
-			if(it->last != NULL
-				/*&& (it->flags & proFlags) == proFlags
-				&& (it->flags & conFlags) == 0*/)
+			if(it->last != NULL)
 			{
-#ifdef _DEBUG
 				if(count == MAX_RLISTS)
 				{
+#ifdef _DEBUG
 					Con_Error("RL_CollectLists: Ran out of MAX_RLISTS.\n");
-				}
+#else
+					return count;
 #endif
+				}
 				lists[ count++ ] = it;
 			}
 		}
@@ -2878,12 +2133,6 @@ void RL_RenderAllLists(void)
 		{
 			// Blended detail textures.
 			RL_RenderLists(LM_BLENDED_DETAILS, lists, count);
-
-			/*if(!IS_MUL)
-			{
-				count = RL_CollectLists(litHash, lists);
-				RL_RenderLists(LM_BLENDED_DETAILS, lists, count);
-			}*/
 		}
 		else
 		{
@@ -2904,6 +2153,7 @@ void RL_RenderAllLists(void)
 
 	// Return to the normal GL state.
 	RL_SelectTexUnits(1);
+	gl.DisableArrays(true, true, 0xf);
 	gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
 	gl.Enable(DGL_DEPTH_WRITE);
 	gl.Enable(DGL_DEPTH_TEST);
