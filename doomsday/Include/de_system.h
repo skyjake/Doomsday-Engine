@@ -34,4 +34,8 @@
 #include "sys_mixer.h"
 #include "sys_stwin.h"
 
+#ifdef UNIX
+#  include "Unix/sys_path.h"
+#endif
+
 #endif
