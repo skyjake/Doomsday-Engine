@@ -483,6 +483,7 @@ ccmd_t engineCCmds[] =
 	"write",		CCmdWriteConsole,	"Write variables, bindings and aliases to a file.",
 	"dir",			CCmdDir,			"Print contents of directories.",
 	"ls",			CCmdDir,			"Print contents of directories.",
+	"huffman",		CCmdHuffmanStats,	"Print Huffman efficiency and number of bytes sent.",
 
 #ifdef _DEBUG
 	"TranslateFont", CCmdTranslateFont,	"Ha ha.",
