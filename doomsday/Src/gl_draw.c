@@ -369,11 +369,12 @@ void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
 	int	w, h;
 	int w2, h2;
 	float s, t;
+	int pSprMode = 1;
 	spritelump_t *slump = spritelumps + lump;
 
 	if(flip) flip = 1; // Make sure it's zero or one.
 
-	GL_SetSprite(lump, 1);
+	GL_SetSprite(lump, pSprMode);
 	w = slump->width;
 	h = slump->height;
 	w2 = CeilPow2(w);
@@ -381,8 +382,8 @@ void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
 
 	// Let's calculate texture coordinates.
 	// To remove a possible edge artifact, move the corner a bit up/left.
-	s = slump->tc[VX] - 0.4f/w2;
-	t = slump->tc[VY] - 0.4f/h2;
+	s = slump->tc[pSprMode][VX] - 0.4f/w2;
+	t = slump->tc[pSprMode][VY] - 0.4f/h2;
 
 	gl.Begin(DGL_QUADS);
 	
