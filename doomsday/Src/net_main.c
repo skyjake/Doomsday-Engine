@@ -116,6 +116,8 @@ void Net_Register(void)
 			  "Minimum number of tics between sent frames.");
 	C_VAR_INT("server-player-limit", &sv_maxPlayers, 0, 0, MAXPLAYERS,
 			  "Maximum number of players on the server.");
+
+	N_Register();
 }
 
 //===========================================================================

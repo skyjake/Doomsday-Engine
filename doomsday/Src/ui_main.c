@@ -397,6 +397,7 @@ void UI_Ticker(timespan_t time)
 		return;
 	if(!ui_page)
 		return;
+
 	if(!M_CheckTrigger(&fixed, time))
 		return;
 
