@@ -2,6 +2,7 @@
 #define __DOOMSDAY_MODEL_H__
 
 #include "dd_types.h"
+#include "r_data.h"
 
 #define MD2_MAGIC			0x32504449	
 #define NUMVERTEXNORMALS	162
@@ -148,7 +149,7 @@ typedef struct
 } dmd_packedFrame_t;
 #pragma pack()
 
-typedef struct
+/*typedef struct
 {
 	float vertex[3];
 	float normal[3];
@@ -159,7 +160,7 @@ typedef struct
 {
 	char name[16];
 	dmd_vertex_t *vertices;
-} dmd_frame_t;
+} dmd_frame_t;*/
 
 typedef struct
 {
@@ -186,19 +187,28 @@ typedef struct
 
 typedef struct
 {
-	dmd_triangle_t	*triangles;
+	//dmd_triangle_t	*triangles;
 	int				*glCommands;
 } dmd_lod_t;
 
-typedef struct model_s
-{
+typedef struct model_vertex_s {
+	float xyz[3];
+} model_vertex_t;
+
+typedef struct model_frame_s {
+	char name[16];
+	model_vertex_t *vertices;
+	model_vertex_t *normals;
+} model_frame_t;
+
+typedef struct model_s{
 	boolean			loaded;
 	char			fileName[256];	// Name of the md2 file.
 	dmd_header_t	header;
 	dmd_info_t		info;
 	dmd_skin_t		*skins;			
-	dmd_textureCoordinate_t *texCoords;
-	dmd_frame_t		*frames;
+	//dmd_textureCoordinate_t *texCoords;
+	model_frame_t	*frames;
 	dmd_levelOfDetail_t lodInfo[MAX_LODS];
 	dmd_lod_t		lods[MAX_LODS];	
 	char			*vertexUsage;	// Bitfield for each vertex.
