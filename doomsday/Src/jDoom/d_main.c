@@ -508,6 +508,7 @@ void D_PreInit(void)
 	cfg.killMessages = true;
 	cfg.bobWeapon = 1;
 	cfg.bobView = 1;
+	cfg.bobWeaponLower = true;
 	cfg.cameraNoClip = true;
 
 	D_SetPlayerPtrs();
