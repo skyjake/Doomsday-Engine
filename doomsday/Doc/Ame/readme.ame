@@ -13,9 +13,9 @@ CONTENTS: @contents{1}
 
 The Doomsday Engine is an enhanced and extended Win32 version of the DOOM engine. It was originally based on the Hexen source code but parts of it have later been completely rewritten. Doomsday is only an engine: you will also need a Game DLL. Three such DLLs are being developed alongside the engine: jDoom, jHeretic and jHexen.
 
-Doomsday is a direct descendant of JHexen. The first version of JHexen was released in October 1999. Subsequently the first version of Doomsday was released in February 2000.
+Doomsday is a direct descendant of JHexen. The first version of JHexen was released in October 1999. The first version of Doomsday was released in February 2000.
 
-The engine, jDoom, jHeretic and jHexen are being developed by Jaakko Keränen. Of late an increasing number of people has been involved in the project (see @ref{acks}{Acknowledgements}).
+The engine, jDoom, jHeretic and jHexen are being developed by Jaakko Keränen. Of late, an increasing number of people has been involved in the project (see @ref{acks}{Acknowledgements}).
 
 @section{ Features }
 
@@ -122,8 +122,7 @@ be available at:
 The Extended General Line And Sector Type Reference (XGRef) can be
 downloaded from:
 
-@ind{@link{http://www.students.tut.fi/~jotkeran/files/XGRef.pdf}}
-
+@ind{@link{http://iki.fi/code/files/XGRef.pdf}}
 
 
 
@@ -143,19 +142,24 @@ with:
 @item Working/runtime directory (for example @file{ C:\Doomsday\Run\x\ }).
 	This is the directory where the engine spends it time when a game
 	is running.
+
+@item Data directory (for example @file{ C:\Doomsday\Data\x\ }).
+	WAD files and external resources are loaded from here.
 }
 
 The @opt{-basedir} option tells the engine where the base directory is in
 relation to the runtime directory (or it's the the absolute path of the
 base directory, e.g. @file{ C:\Doomsday\ }).
 
-The principle is that @opt{-basedir} only affects built-in default paths and relative paths in DED files. @opt{-basedir} does not affect relative paths in command line options. If a relative path is given on the command line, it is interpreted in relation to the runtime directory. For example, the option @opt{-file doom.wad} will make the engine read the file @file{doom.wad}, which is located in the runtime directory. In the default configuration this is @file{ C:\Doomsday\Run\jDoom\ }. KickStart automatically uses a @opt{-basedir} of @file{..\..}, which means the root directory is the 'grandparent' of the runtime directory. The option @opt{-sbd} (@opt{-stdbasedir}) is the equivalent of @opt{-basedir ..\..}.
+The principle is that @opt{-basedir} only affects built-in default paths and relative paths in DED files. @opt{-basedir} does not affect relative paths in command line options. If a relative path is given on the command line, it is first searched in relation to the runtime directory. For example, the option @opt{-file doom.wad} will make the engine read the file @file{doom.wad}, which is located in the runtime directory. In the default configuration this is @file{ C:\Doomsday\Run\jDoom\ }. If the file is not found in the runtime directory, the data directory is searched instead.
 
-There is one exception, however: with the @opt{-file} (and @opt{-iwad}) options a relative path can begin with a greater-than character (>). When the engine loads the WAD file in question the > character is replaced with the path specified by @opt{-basedir}. For example, @opt{-file >Data\Doom.wad} would make the engine load a WAD named @file{ C:\Doomsday\Data\Doom.wad } (assuming the default Doomsday root @file{ C:\Doomsday\ }). Note that if you're executing @file{Doomsday.exe} from the command line or from a DOS batch file, you must enclose the file names that contain a > character in quotes or otherwise DOS will think you're trying to redirect output. In response files it doesn't matter if there are quotes or not. (If you really are trying to redirect output, you should use the @opt{-out} option.)
+KickStart automatically uses a @opt{-basedir} of @file{..\..}, which means the root directory is the 'grandparent' of the runtime directory. The option @opt{-sbd} (@opt{-stdbasedir}) is the equivalent of @opt{-basedir ..\..}.
 
-The default launch method (used by KickStart) is a runtime directory oriented approach. KickStart will change the current working directory to the Game's runtime folder and execute @file{Doomsday.exe} from there, with the @opt{-basedir ..\..} option. This way the engine will use the appropriate runtime folder as the working directory, but will also know where the Doomsday root directory is by prepending the base directory's @file{..\..} to default path names (like fonts and definitions files).
+There is one exception, though. With the @opt{-file} (and @opt{-iwad}) options a relative path can begin with a greater-than character (>) or a closing brace character (@}). When the engine loads the WAD file in question, the > or @} character is replaced with the path specified by @opt{-basedir}. For example, @opt{-file >Data\Doom.wad} would make the engine load a WAD named @file{ C:\Doomsday\Data\Doom.wad } (assuming the default Doomsday root @file{ C:\Doomsday\ }). Note that if you're executing @file{Doomsday.exe} from the command line or from a DOS batch file, you must enclose the file names that contain a > character in quotes or otherwise DOS will think you're trying to redirect output. In response files it doesn't matter if there are quotes or not. (If you really are trying to redirect output, you should use the @opt{-out} option.)
 
-There is an alternative approach, which could be called an executable oriented approach. @file{Doomsday.exe} is executed in the @file{Bin} directory, with the options @opt{-userdir <runtime-path> -basedir <path-to-root>}. @file{<runtime-path>} can be a relative or an absolute path to the correct runtime directory. Again, @opt{-basedir} tells the engine where the root directory is, as an absolute path or in relation to @file{<runtime-path>}. @opt{-userdir} will make the engine run in the given directory, i.e. it specifies the runtime directory.
+The default launch method (used by KickStart 1.6) is a runtime directory oriented approach. KickStart will change the current working directory to the Game's runtime folder and execute @file{Doomsday.exe} from there, with the @opt{-basedir ..\..} option. This way the engine will use the appropriate runtime folder as the working directory, but will also know where the Doomsday root directory is by adding the base directory's @file{..\..} to default path names (like fonts and definitions files).
+
+There is an alternative approach, which could be called an executable oriented approach. @file{Doomsday.exe} is executed in the @file{Bin} directory, with the options @opt{-userdir <runtime-path> -basedir <path-to-root>}. @file{<runtime-path>} can be a relative or an absolute path to the correct runtime directory. Again, @opt{-basedir} tells the engine where the root directory is, using an absolute path or in relation to @file{<runtime-path>}. @opt{-userdir} will make the engine run in the given directory, i.e. it specifies the runtime directory.
 
 Note that @opt{-game} and @opt{-gl} work a bit differently because their arguments are directly passed on to the Win32 routine @cmd{LoadLibrary}. You should either omit the path entirely (e.g. @opt{-game jHeretic.dll}) or use a full path to the DLL (e.g. @opt{-game C:\Doomsday\Bin\jHeretic.dll}), no matter where you're executing @file{Doomsday.exe}.
 
@@ -176,17 +180,24 @@ to load any type of data files, for instance PCX images. An example:
 
 @samp{@opt{-file image.pcx}}
 
-This would load the file @file{image.pcx} from the runtime directory.
-When loading files in this manner, the engine will treat the file
-as if it was a WAD file with a single data lump. The lump gets its name
-from the base of the file name, which in the example's case would be
-@file{IMAGE}. Anyone can then refer to the data lump using that name,
-just as if it was included in a WAD file.
+This would load the file @file{image.pcx} from the runtime directory (or the data directory). When loading files in this manner, the engine will treat the file as if it was a WAD file with a single data lump. The lump gets its name from the base of the file name, which in the example's case would be @file{IMAGE}. Anyone can then refer to the data lump using that name, just as if it was included in a WAD file.
 
 Any file loaded with the @opt{-file} option can't be unloaded from
 memory at runtime using the @cmd{unload} command. This is mainly a
 precaution, since unloading the main WAD file of the game or any
 data related to it would lead to fatal errors.
+
+
+
+@section{ PK3 Files }
+
+Doomsday supports the PK3 (i.e. ZIP) format. Compression is not allowed. If you try to load a compressed PK3/ZIP file, you will get an error message.
+
+PK3 files can be loaded using the @opt{-file} option. For example, @opt{-file some.pk3} will try loading @file{some.pk3} first from the runtime directory and then from the data directory.
+
+A PK3 contains a set of files. When a PK3 is loaded, all of them become virtual files that Doomsday can access just like the regular files on your hard drive. The end result is the same as if you had unpacked the PK3 into your Doomsday base directory. (Don't worry, no actual unpacking is done.) For example, the PK3 could have the file @file{Data\jDoom\Auto\Superb.wad}.
+
+PK3 files can be created with just about any ZIP program, such as WinZip. Just make sure all the files have the correct paths, or otherwise Doomsday may not be able to find them.
 
 
 
@@ -213,24 +224,13 @@ directory. When writing the @file{DD_DIREC} table, the prefix
 
 
 
-@section{ Detail Textures }
+@section{ Automatical Loading of Data and Definitions }
 
-Detail textures are grayscale images that are rendered on top of normal
-textures when walls and planes are viewed from close by. A signed-add
-blending is used, which lets the detail texture either darken or brighten
-the underlying texture: black => dark, gray => no change, white => bright.
+All WAD, PK3, ZIP and LMP files placed in the @file{ Data\<Game>\Auto\ } directory will be automatically loaded at startup.
 
-Detail textures can be assigned to specific wall textures and flats using Detail definitions (@file{Details.ded}). The definition is described in the Doomsday Engine Definitions Reference (@file{DEDDoc.txt}).
+All DED files placed in the @file{ Defs\<Game>\Auto\ } directory will be automatically read at startup.
 
-Detail textures can be loaded from PCX images or raw image data. Either way, the image must be inside a WAD file or loaded using the @opt{-file} option. When using the @opt{-file} option to load detail textures, the file names of the images become lump names (see @ref{fileopt}{@opt{-file} option}).
-
-PCX images used as detail textures must have a color depth of 8 bits and their width and height must be powers of two. The palette should be a grayscale one. It's possible to use other colors but the result can be weird due to the way the blending of detail textures is done.
-
-If the source data is a raw image, it must be either 64x64, 128x128 or 256x256 pixels in size. Raw images contain only the pixel values, (one byte per pixel) and have only one color component per pixel (they're black and white images), which means the lump or file that contains the detail texture can either be 4096, 16384 or 65536 bytes long.
-
-Using the default scaling, the pixels of detail textures are four times smaller than the pixels of regular textures.
-
-The console variables @var{rend-tex-detail}, @var{rend-tex-detail-far}, @var{rend-tex-detail-strength} and @var{rend-tex-detail-scale} control the rendering of detail textures.
+Virtual files (from a PK3 or a WAD) in the @file{Auto} directories will also be loaded.
 
 
 
@@ -250,6 +250,26 @@ automatically applied when the WAD is loaded. Normally only the last
 in multiple WADs. Use the option @opt{-alldehs} to make the engine
 apply all found @file{DEHACKED} lumps.
 
+
+
+@section{ Detail Textures }
+
+Detail textures are grayscale images that are rendered on top of normal
+textures when walls and planes are viewed from close by. A signed-add
+blending is used, which lets the detail texture either darken or brighten
+the underlying texture: black => dark, gray => no change, white => bright.
+
+Detail textures can be assigned to specific wall textures and flats using Detail definitions (@file{Details.ded}). The definition is described in the Doomsday Engine Definitions Reference (@file{DEDDoc.txt}).
+
+Detail textures can be loaded from PCX images or raw image data. Either way, the image must be inside a WAD file or loaded using the @opt{-file} option. When using the @opt{-file} option to load detail textures, the file names of the images become lump names (see @ref{fileopt}{@opt{-file} option}).
+
+PCX images used as detail textures must have a color depth of 8 bits and their width and height must be powers of two. The palette should be a grayscale one. It's possible to use other colors but the result can be weird due to the way the blending of detail textures is done.
+
+If the source data is a raw image, it must be either 64x64, 128x128 or 256x256 pixels in size. Raw images contain only the pixel values, (one byte per pixel) and have only one color component per pixel (they're black and white images), which means the lump or file that contains the detail texture can either be 4096, 16384 or 65536 bytes long.
+
+Using the default scaling, the pixels of detail textures are four times smaller than the pixels of regular textures.
+
+The console variables @var{rend-tex-detail}, @var{rend-tex-detail-far}, @var{rend-tex-detail-strength} and @var{rend-tex-detail-scale} control the rendering of detail textures.
 
 
 
@@ -377,6 +397,12 @@ Color-mapped versions of sprite frames can have external resources, too. To indi
 @ind{@file{(patchName)-table(classNum)(tableNum).ext}}
 
 @file{(patchName)} is the sprite frame lump name. @file{(classNum)} is the number of the color translation class. This number is always zero in jDoom and jHeretic. In jHexen, it's the player's class (0=Fighter, 1=Cleric, 2=Mage). @file{tableNum} is the index number of the color translation table. jDoom and jHeretic have 4 tables, jHexen has 8. For example: @file{playa1-table01-ck.png} would be the Doom player sprite frame A1 with color table 1. The @file{-ck} suffix makes the image color keyed (i.e. special colors indicate transparent pixels).
+
+
+
+@section { Raw Screens }
+
+Some background pictures are in the raw screen format, which is used to store 320 x 200 pixel paletted images. A lump containing a raw screen image (for example Heretic's TITLEPIC) is exactly 320 x 200 = 64000 bytes long. Raw screens can be replaced with external resources in the @file{Patches} directory.
 
 
 
