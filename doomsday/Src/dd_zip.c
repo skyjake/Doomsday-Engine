@@ -20,6 +20,14 @@
 
 #define SIG_LOCAL_FILE_HEADER	0x04034b50
 #define SIG_CENTRAL_FILE_HEADER	0x02014b50
+#define SIG_END_OF_CENTRAL_DIR	0x06054b50
+
+// Maximum tolerated size of the comment.
+#define	MAXIMUM_COMMENT_SIZE	2048
+
+// This is the length of the central directory end record (without the
+// comment, but with the signature).
+#define CENTRAL_END_SIZE		22
 
 // File header flags.
 #define ZFH_ENCRYPTED			0x1
@@ -76,6 +84,41 @@ typedef struct descriptor_s {
 	uint	compressedSize;
 	uint	size;
 } descriptor_t;
+
+typedef struct centralfileheader_s {
+	uint	signature;
+	ushort	version;
+	ushort	requiredVersion;
+	ushort	flags;
+	ushort	compression;
+	ushort	lastModTime;
+	ushort	lastModDate;
+	uint	crc32;
+	uint	compressedSize;
+	uint	size;
+	ushort	fileNameSize;
+	ushort	extraFieldSize;
+	ushort	commentSize;
+	ushort	diskStart;
+	ushort	internalAttrib;
+	uint	externalAttrib;
+	uint	relOffset;	
+/*  
+	file name (variable size)
+	extra field (variable size)
+	file comment (variable size)
+*/	
+} centralfileheader_t;
+
+typedef struct centralend_s {
+	ushort	disk;
+	ushort	centralStartDisk;
+	ushort	diskEntryCount;
+	ushort	totalEntryCount;
+	uint	size;
+	uint	offset;
+	ushort	commentSize;
+} centralend_t;
 #pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -188,6 +231,50 @@ package_t* Zip_NewPackage(void)
 }
 
 /*
+ * Finds the central directory end record in the end of the file.
+ * Returns true if it successfully located. This gets awfully slow if
+ * the comment is long.
+ */
+boolean Zip_LocateCentralDirectory(DFILE *file)
+{
+	int length = F_Length(file);
+	int pos = CENTRAL_END_SIZE; // Offset from the end.
+	uint signature;
+	
+	// Start from the earliest location where the signature might be.
+	while(pos < MAXIMUM_COMMENT_SIZE)
+	{
+		F_Seek(file, -pos, SEEK_END);
+
+		// Is this is signature?
+		F_Read(&signature, 4, file);
+		if(signature == SIG_END_OF_CENTRAL_DIR)
+		{
+			// This is it!
+			return true;
+		}
+
+		// Move backwards.
+		pos++;
+	}
+
+	// Scan was not successful.
+	return false;
+}
+
+/*
+ * Copies num characters (up to destSize) and adds a terminating NULL.
+ */
+void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
+{
+	// Only copy as much as we can.
+	if(num >= destSize) num = destSize - 1;
+
+	memcpy(dest, src, num);
+	dest[num] = 0;
+}
+
+/*
  * Opens the file zip, reads the directory and stores the info for later
  * access. If prevOpened is not NULL, all data will be read from there.
  */
@@ -195,11 +282,13 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 {
 	DFILE *file;
 	package_t *pack;
-	uint signature, i;
-	localfileheader_t header;
+	centralend_t summary;
+	void *directory;
+	char *pos;
+	char buf[512];
 	zipentry_t *entry;
-	char *entryName;
-	char fullPath[256];
+	int index;
+	uint i;
 	
 	if(prevOpened == NULL)
 	{
@@ -218,84 +307,83 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 	
 	VERBOSE( Con_Message("Zip_Open: %s\n", fileName) );
 
-	pack = Zip_NewPackage();
-	strcpy(pack->name, fileName);
-
-	// Read the directory and add the files into the zipentry array.
-	// We'll keep reading until there are no more files.
-	while(!deof(file))
+	// Scan the end of the file for the central directory end record.
+	if(!Zip_LocateCentralDirectory(file))
 	{
-		// First comes the signature.
-		F_Read(&signature, 4, file);
-		
-		if(signature != SIG_LOCAL_FILE_HEADER
-			&& signature != SIG_CENTRAL_FILE_HEADER)
-		{
-			Con_Message("Zip_Open: %s is not a Zip file?\n", fileName);
-			F_Close(file);
-			return false;
-		}
-
-		if(signature == SIG_CENTRAL_FILE_HEADER)
-		{
-			// There are no more files.
-			break;
-		}
-
-		// This must be a local file data segment. Read the header.
-		F_Read(&header, sizeof(header), file);
-
-		// Read the file name. This memory is freed below.
-		entryName = calloc(header.fileNameSize + 1, 1);
-		F_Read(entryName, header.fileNameSize, file);
-		
-		// Do we support the format of this file?
-		if(header.compression != ZFC_NO_COMPRESSION
-			|| header.compressedSize != header.size)
-		{
-			Con_Error("Zip_Open: %s: '%s' is compressed.\n  Compression is "
-				"not supported.\n", fileName, entryName);
-		}
-		if(header.flags & ZFH_ENCRYPTED)
-		{
-			Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is "
-				"not supported.\n", fileName, entryName);
-		}
-
-		// Skip the extra data.
-		F_Seek(file, header.extraFieldSize, SEEK_CUR);
-
-		if(header.size)
-		{
-			// Convert all slashes to backslashes, for compatibility with 
-			// the sys_filein routines.
-			for(i = 0; entryName[i]; i++)
-				if(entryName[i] == '/') entryName[i] = '\\';
-
-			// Make it absolute.
-			M_PrependBasePath(entryName, fullPath);
-
-			// We can add this file to the zipentry list.
-			entry = Zip_NewFiles(1);
-			
-			// This memory is freed in Zip_Shutdown().
-			entry->name = malloc(strlen(fullPath) + 1);
-			strcpy(entry->name, fullPath);
-
-			entry->package = pack;
-			entry->size = header.size;
-
-			// This is where the data begins.
-			entry->offset = F_Tell(file);
-
-			// Skip the data.
-			F_Seek(file, header.size, SEEK_CUR);
-		}
-
-		free(entryName);
+		Con_Error("Zip_Open: %s: Central directory not found.\n", fileName);
 	}
 
+	// Read the central directory end record.
+	F_Read(&summary, sizeof(summary), file);
+	
+	// Does the summary say something we don't like?
+	if(summary.diskEntryCount != summary.totalEntryCount)
+	{
+		Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n", 
+			fileName);
+	}
+
+	// Read the entire central directory into memory.
+	directory = malloc(summary.size);
+	F_Seek(file, summary.offset, SEEK_SET);
+	F_Read(directory, summary.size, file);
+
+	pack = Zip_NewPackage();
+	strcpy(pack->name, fileName);
 	pack->file = file;
+
+	// Read all the entries.
+	pos = directory;
+	for(index = 0; index < summary.totalEntryCount; index++, 
+		pos += sizeof(centralfileheader_t))
+	{
+		centralfileheader_t *header = (void*) pos;
+		char *nameStart = pos + sizeof(centralfileheader_t);
+
+		// Advance the cursor past the variable sized fields.
+		pos += header->fileNameSize + header->extraFieldSize 
+			+ header->commentSize;
+
+		Zip_CopyStr(buf, nameStart, header->fileNameSize, sizeof(buf));
+
+		// Directories are skipped.
+		if(buf[header->fileNameSize - 1] == '/' && !header->size)
+			continue;
+
+		// Do we support the format of this file?
+		if(header->compression != ZFC_NO_COMPRESSION
+			|| header->compressedSize != header->size)
+		{
+			Con_Error("Zip_Open: %s: '%s' is compressed.\n  Compression is "
+				"not supported.\n", fileName, buf);
+		}
+		if(header->flags & ZFH_ENCRYPTED)
+		{
+			Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is "
+				"not supported.\n", fileName, buf);
+		}
+
+		// Convert all slashes to backslashes, for compatibility with 
+		// the sys_filein routines.
+		for(i = 0; buf[i]; i++) if(buf[i] == '/') buf[i] = '\\';
+
+		// Make it absolute.
+		M_PrependBasePath(buf, buf);
+
+		// We can add this file to the zipentry list.
+		entry = Zip_NewFiles(1);
+		entry->package = pack;
+		entry->size = header->size;
+		entry->offset = header->relOffset + 4 + sizeof(localfileheader_t)
+			+ header->fileNameSize + header->extraFieldSize;
+		
+		// This memory is freed in Zip_Shutdown().
+		entry->name = malloc(strlen(buf) + 1);
+		strcpy(entry->name, buf);
+	}
+
+	// The central directory is no longer needed.
+	free(directory);
 
 	// Sort all the zipentries by name. (Note: When lots of files loaded,
 	// most of list is already sorted. Quicksort becomes slow...)
@@ -347,7 +435,7 @@ zipindex_t Zip_Find(const char *fileName)
 		mid = (begin + end) / 2;
 		
 		// How does this compare?
-		relation = strcmp(fullPath, gFiles[mid].name);
+		relation = stricmp(fullPath, gFiles[mid].name);
 		if(!relation)
 		{
 			// Got it! We return a 1-based index.
