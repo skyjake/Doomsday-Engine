@@ -21,17 +21,25 @@ dnl Configure libltdl
 AC_CONFIG_SUBDIRS(libltdl)
 
 
-dnl We want to have easily portable code.
+dnl These are pretty lax warnings.
 CFLAGS="-Wunused-variable -Wunused-function $CFLAGS"
 
 AC_PROG_CC
 
 AC_LANG(C)
 
+
 dnl Check for SDL (using C).
 SDL_VERSION=1.2.0
-AM_PATH_SDL($SDL_VERSION, :,
+AM_PATH_SDL($SDL_VERSION,:,
 	AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
+
+dnl TODO: Do more tests to see if these are available:
+dnl - OpenGL
+dnl - GLU
+dnl - SDL_net
+dnl - SDL_mixer (optional)
+dnl - OpenAL (optional)
 
 AC_OUTPUT([Makefile Src/Makefile Src/drOpenGL/Makefile
 	Src/dsSDLMixer/Makefile Src/dsOpenAL/Makefile
