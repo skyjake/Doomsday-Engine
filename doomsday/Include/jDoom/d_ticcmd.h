@@ -36,7 +36,6 @@
 #pragma pack(1)
 typedef struct
 {
-//	byte	time;			// The tick this cmd was built.
     char	forwardmove;	// *2048 for move
     char	sidemove;		// *2048 for move
     short	angle;			// <<16 for angle delta
@@ -62,6 +61,9 @@ typedef struct
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.3  2003/07/02 22:30:58  skyjake
+// Cleanup
+//
 // Revision 1.2  2003/06/28 15:46:21  skyjake
 // Removed time from ticcmd
 //
