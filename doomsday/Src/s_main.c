@@ -239,8 +239,11 @@ int S_LocalSoundAtVolumeFrom
 	// Load the sample.
 	if((sample = Sfx_Cache(soundId)) == NULL)
 	{
-		VERBOSE( Con_Message("S_LocalSoundAtVolumeFrom: Sound %i "
-			"caching failed.\n", soundId) );
+		if(sfx_avail)
+		{
+			VERBOSE( Con_Message("S_LocalSoundAtVolumeFrom: Sound %i "
+				"caching failed.\n", soundId) );
+		}
 		return false;
 	}	
 
