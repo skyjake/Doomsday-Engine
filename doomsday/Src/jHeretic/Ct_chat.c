@@ -345,7 +345,7 @@ void CT_Drawer(void)
 
 				patch = W_CacheLumpNum(pnum, PU_CACHE);
 				GL_DrawPatch(x, 10, pnum);
-				x += patch->width;
+				x += SHORT(patch->width);
 			}
 		}
 		GL_DrawPatch(x, 10, W_GetNumForName("FONTA59"));
@@ -411,7 +411,7 @@ void CT_AddChar(char c)
 	else
 	{
 		patch = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
-		msglen += patch->width;
+		msglen += SHORT(patch->width);
 	}
 }
 
@@ -440,7 +440,7 @@ void CT_BackSpace()
 	else
 	{
 		patch = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
-		msglen -= patch->width;
+		msglen -= SHORT(patch->width);
 	}
 	chat_msg[msgptr] = 0;
 }

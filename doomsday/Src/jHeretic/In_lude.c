@@ -998,7 +998,7 @@ void IN_DrawNumber(int val, int x, int y, int digits)
 	if(digits == 4)
 	{
 		patch = W_CacheLumpNum(numbers[val / 1000], PU_CACHE);
-		GL_DrawShadowedPatch(xpos + 6 - patch->width / 2 - 12, y,
+		GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2 - 12, y,
 							 numbers[val / 1000]);
 	}
 	if(digits > 2)
@@ -1006,7 +1006,7 @@ void IN_DrawNumber(int val, int x, int y, int digits)
 		if(realdigits > 2)
 		{
 			patch = W_CacheLumpNum(numbers[val / 100], PU_CACHE);
-			GL_DrawShadowedPatch(xpos + 6 - patch->width / 2, y,
+			GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y,
 								 numbers[val / 100]);
 		}
 		xpos += 12;
@@ -1017,7 +1017,7 @@ void IN_DrawNumber(int val, int x, int y, int digits)
 		if(val > 9)
 		{
 			patch = W_CacheLumpNum(numbers[val / 10], PU_CACHE);
-			GL_DrawShadowedPatch(xpos + 6 - patch->width / 2, y,
+			GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y,
 								 numbers[val / 10]);
 		}
 		else if(digits == 2 || oldval > 99)
@@ -1028,11 +1028,11 @@ void IN_DrawNumber(int val, int x, int y, int digits)
 	}
 	val = val % 10;
 	patch = W_CacheLumpNum(numbers[val], PU_CACHE);
-	GL_DrawShadowedPatch(xpos + 6 - patch->width / 2, y, numbers[val]);
+	GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y, numbers[val]);
 	if(neg)
 	{
 		patch = W_CacheLumpNum(negative, PU_CACHE);
-		GL_DrawShadowedPatch(xpos + 6 - patch->width / 2 - 12 * (realdigits),
+		GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2 - 12 * (realdigits),
 							 y, negative);
 	}
 }

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.12  2005/01/03 13:35:32  skyjake
+// Mac issues resolved
+//
 // Revision 1.11  2004/05/30 08:42:42  skyjake
 // Tweaked indentation style
 //
@@ -65,9 +68,6 @@
 #ifdef WIN32
 #  pragma warning(disable:4761)
 #endif
-
-static const char
-        rcsid[] = "$Id$";
 
 #include <stdio.h>
 #include <stdlib.h>

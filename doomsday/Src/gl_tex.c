@@ -2828,8 +2828,8 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
 
 		if(patch)
 		{
-			slump->flarex *= patch->width / (float) image->width;
-			slump->flarey *= patch->height / (float) image->height;
+			slump->flarex *= SHORT(patch->width) / (float) image->width;
+			slump->flarey *= SHORT(patch->height) / (float) image->height;
 		}
 	}
 
