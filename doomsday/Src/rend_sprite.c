@@ -446,8 +446,6 @@ void Rend_RenderSprite(vissprite_t *spr)
 {
 	int			patch = spr->mo.patch;
 	float		bot, top;
-	float		off = spritelumps[spr->mo.patch].offset;
-	float		w = spritelumps[spr->mo.patch].width; 
 	int			i, sprh;
 	float		v1[2];
 	DGLubyte	alpha;
@@ -466,7 +464,7 @@ void Rend_RenderSprite(vissprite_t *spr)
 	else
 	{
 		// Set the texture. No translation required.
-		GL_SetSprite(patch);
+		GL_SetSprite(patch, 0);
 	}
 	sprh = spritelumps[patch].height;
 

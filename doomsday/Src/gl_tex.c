@@ -1085,12 +1085,15 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 	// Search through the assignments. 
 	for(i = defs.count.details.num - 1; i >= 0; i--)
 	{
+		// Is there a detail texture assigned for this?
+		if(details[i].detail_lump < 0) continue;
+
 		if(is_wall_texture && index == details[i].wall_texture
 			|| !is_wall_texture && index == details[i].flat_lump)
 		{
 			if(dtdef) *dtdef = defs.details + i;
 			// Hey, a match. Load this?
-			if(details[i].gltex == ~0)
+			if(details[i].gltex == -1/*~0*/)
 			{
 				tex = GL_LoadDetailTexture(details[i].detail_lump);
 				// FIXME: This is a bit questionable...
@@ -1114,13 +1117,13 @@ void GL_DeleteDetailTexture(detailtex_t *dtex)
 	int i;
 	DGLuint texname = dtex->gltex;
 
-	if(texname == ~0) return; // Not loaded.
+	if(texname == -1/*~0*/) return; // Not loaded.
 	gl.DeleteTextures(1, &texname);
 
 	// Remove all references to this texture.
 	for(i = 0; i < defs.count.details.num; i++)
 		if(details[i].gltex == texname)
-			details[i].gltex = ~0;
+			details[i].gltex = -1;//(DGLunit) ~0;
 }
 
 //===========================================================================
@@ -2187,13 +2190,17 @@ void GL_SetTexCoords(float *tc, int wid, int hgt)
  * Uploads the sprite in the buffer and sets the appropriate texture 
  * parameters.
  */
-unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image)
+unsigned int GL_PrepareSpriteBuffer
+	(int pnum, image_t *image, boolean isPsprite)
 {
 	unsigned int texture = 0;
 
-	// Calculate light source properties.
-	GL_CalcLuminance(pnum, image->pixels, image->width, image->height, 
-		image->pixelSize);
+	if(!isPsprite)
+	{
+		// Calculate light source properties.
+		GL_CalcLuminance(pnum, image->pixels, image->width, image->height, 
+			image->pixelSize);
+	}
 		
 	if(image->pixelSize == 1 && filloutlines) 
 		ColorOutlines(image->pixels, image->width, image->height);
@@ -2258,7 +2265,7 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 		}
 
 		tspr = GL_NewTranslatedSprite(pnum, table);
-		tspr->tex = GL_PrepareSpriteBuffer(pnum, &image);
+		tspr->tex = GL_PrepareSpriteBuffer(pnum, &image, false);
 
 		GL_DestroyImage(&image);
 	}
@@ -2267,22 +2274,48 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 
 //===========================================================================
 // GL_PrepareSprite
+//	Sprites use lumptexinfo *and* the spritelumps. This is a hack.
+//	0 = Normal sprite
+//	1 = Psprite (HUD)
 //===========================================================================
-unsigned int GL_PrepareSprite(int pnum)
+unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 {
+	DGLuint *texture;
+	int lumpNum;
+	ushort *width, *height;
+	spritelump_t *slump;
+	lumptexinfo_t *info;
+
 	if(pnum < 0) return 0;
 
-	if(!spritelumps[pnum].tex)
+	slump = &spritelumps[pnum];
+	info = &lumptexinfo[ lumpNum = slump->lump ];
+
+	// Normal sprites and HUD sprites are stored separately.
+	// This way a sprite can be used both in the game and the HUD, and
+	// the textures can be different.
+	texture = &info->tex[spriteMode == 0? 0 : 1];
+	width   = &info->width[spriteMode == 0? 0 : 1];
+	height  = (spriteMode == 0? &info->height : &info->height2);
+
+	if(!*texture)
 	{
 		image_t image;
-		char resource[256];
-		patch_t *patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
+		char hudResource[256], fileName[256];
+		patch_t *patch = W_CacheLumpNum(lumpNum, PU_CACHE);
 
-		// Is there an external resource for this image?
+		// Compose a resource for the psprite.
+		if(spriteMode == 1)
+			sprintf(hudResource, "%s-hud", lumpinfo[lumpNum].name);
+		
+		// Is there an external resource for this image? For HUD sprites,
+		// first try the HUD version of the resource.
 		if(!noHighResTex
-			&& R_FindResource(RC_PATCH, lumpinfo[spritelumps[pnum].lump].name,
-				"-ck", resource) 
-			&& GL_LoadImage(&image, resource, false) != NULL)
+			&& ( (spriteMode == 1 && R_FindResource(RC_PATCH, hudResource, 
+					"-ck", fileName))
+				|| R_FindResource(RC_PATCH, lumpinfo[lumpNum].name, "-ck", 
+					fileName) )
+			&& GL_LoadImage(&image, fileName, false) != NULL)
 		{
 			// A high-resolution version of this sprite has been found.
 			// The buffer is now filled with the data we need.
@@ -2299,11 +2332,20 @@ unsigned int GL_PrepareSprite(int pnum)
 				image.width, image.height, patch, 0, 0, false, 0, false);
 		}
 
-		spritelumps[pnum].tex = GL_PrepareSpriteBuffer(pnum, &image);
+		*texture = GL_PrepareSpriteBuffer(pnum, &image, spriteMode == 1);
+		*width   = image.width;
+		*height  = image.height;
 
 		GL_DestroyImage(&image);
 	}
-	return spritelumps[pnum].tex;
+	
+	// HACK: Since we are dealing with both normal sprites and HUD 
+	// sprites, let's update the texture coords to match the dimensions
+	// in use.
+	slump->tex = *texture;
+	GL_SetTexCoords(slump->tc, *width, *height);
+
+	return *texture;
 }
 
 //===========================================================================
@@ -2328,10 +2370,12 @@ void GL_GetSpriteColor(int pnum, unsigned char *rgb)
  
 //===========================================================================
 // GL_SetSprite
+//	0 = Normal sprite
+//	1 = Psprite (HUD)
 //===========================================================================
-void GL_SetSprite(int pnum)
+void GL_SetSprite(int pnum, int spriteType)
 {
-	GL_BindTexture(GL_PrepareSprite(pnum));
+	GL_BindTexture(GL_PrepareSprite(pnum, spriteType));
 }
 
 //===========================================================================

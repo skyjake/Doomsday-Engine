@@ -373,7 +373,7 @@ void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
 
 	if(flip) flip = 1; // Make sure it's zero or one.
 
-	GL_SetSprite(lump);
+	GL_SetSprite(lump, 1);
 	w = slump->width;
 	h = slump->height;
 	w2 = CeilPow2(w);

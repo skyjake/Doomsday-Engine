@@ -612,7 +612,7 @@ void DL_AddLuminous(mobj_t *thing)
 		lum->flags = LUMF_CLIPPED;
 
 		// This'll ensure we have up-to-date information about the texture.
-		GL_PrepareSprite(lump);
+		GL_PrepareSprite(lump, 0);
 
 		// Let's see what our light should look like.
 		cf.size = spritelumps[lump].lumsize;

@@ -218,7 +218,7 @@ void GL_InitFont(void)
 	FR_PrepareFont("Fixed");
 	glFontFixed = glFontVariable = FR_GetCurrent();
 	Con_MaxLineLength();
-	Con_Execute("font default", true);	// Set the console font.
+	//Con_Execute("font default", true);	// Set the console font.
 }
 
 //===========================================================================
@@ -266,9 +266,6 @@ void GL_ShutdownVarFont(void)
 //===========================================================================
 void GL_Init(void)
 {
-	//boolean fullScreenStartup = ArgExists("-fullstart")
-		/*&& !ArgExists("-window")*/;
-
 	if(initOk) return;	// Already initialized.
 	if(novideo) return;
 
@@ -278,24 +275,9 @@ void GL_Init(void)
 	GL_GetGammaRamp(original_gamma_ramp);
 
 	// By default, use the resolution defined in (default).cfg.
-	/*screenWidth = defResX;
+	screenWidth = defResX;
 	screenHeight = defResY;
-	screenBits = defBPP;*/
-
-	//if(fullScreenStartup)
-	//{
-		screenWidth = defResX;
-		screenHeight = defResY;
-		screenBits = defBPP;
-	//}
-/*	else
-	{
-		// Startup screen size. DGL will modify if doesn't fit 
-		// on the screen.
-		screenWidth = 600;
-		screenHeight = 650;
-		screenBits = 0;
-	}*/
+	screenBits = defBPP;
 
 	// Check for command line options modifying the defaults.
 	if(ArgCheckWith("-width", 1)) screenWidth = atoi(ArgNext());
@@ -307,8 +289,7 @@ void GL_Init(void)
 	}
 	if(ArgCheckWith("-bpp", 1)) screenBits = atoi(ArgNext());
 
-	gl.Init(screenWidth, screenHeight, screenBits, 
-		/*fullScreenStartup && */ !ArgExists("-window"));
+	gl.Init(screenWidth, screenHeight, screenBits, !ArgExists("-window"));
 
 	// Check the maximum texture size.
 	gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &maxTexSize);
@@ -317,7 +298,10 @@ void GL_Init(void)
 		Con_Message("  Using restricted texture w/h ratio (1:8).\n");
 		ratioLimit = 8;
 		if(screenBits == 32)
-			Con_Message("  Warning: Are you sure your video card accelerates a 32 bit mode?\n");
+		{
+			Con_Message("  Warning: Are you sure your video card accelerates"
+				" a 32 bit mode?\n");
+		}
 	}
 	if(ArgCheck("-outlines"))
 	{
@@ -337,31 +321,6 @@ void GL_Init(void)
 
 	initOk = true;
 }
-
-//===========================================================================
-// GL_RuntimeMode
-//	Startup is over, so go to runtime resolution / window size.
-//===========================================================================
-/*void GL_RuntimeMode(void)
-{
-	int w, h;
-
-	if(isDedicated || novideo) return;
-
-	w = defResX;
-	h = defResY;
-
-	// Check for command line options modifying the defaults.
-	if(ArgCheckWith("-width", 1)) w = atoi(ArgNext());
-	if(ArgCheckWith("-height", 1)) h = atoi(ArgNext());
-	if(ArgCheckWith("-winsize", 2))
-	{
-		w = atoi(ArgNext());
-		h = atoi(ArgNext());
-	}
-
-	GL_ChangeResolution(w, h, screenBits);
-}*/
 
 //===========================================================================
 // GL_InitRefresh
@@ -548,6 +507,58 @@ void GL_UseFog(int yes)
 }
 
 //===========================================================================
+// GL_TotalReset
+//	This needs to be called twice: first shutdown, then restore.
+//	GL is reset back to the state it was right after initialization.
+//===========================================================================
+void GL_TotalReset(boolean doShutdown)
+{
+	static char oldFontName[256];
+	static boolean hadFog;
+	static boolean wasStartup;
+
+	if(isDedicated) return;
+
+	if(doShutdown)
+	{
+		hadFog = whitefog;
+		wasStartup = startupScreen;
+
+		// Remember the name of the font.
+		if(wasStartup) 
+			Con_StartupDone();
+		else
+			strcpy(oldFontName, FR_GetFont(FR_GetCurrent())->name);
+
+		// Delete all textures.
+		GL_ShutdownTextureManager();
+		GL_ShutdownFont();
+	}
+	else 
+	{
+		// Getting back up and running.
+		GL_InitFont();
+
+		// Go back to startup mode, if that's where we were.
+		if(wasStartup) 
+			Con_StartupInit();
+		else
+		{
+			// Restore the old font.
+			Con_Executef(true, "font name %s", oldFontName);
+			GL_Init2DState();
+		}
+		GL_InitRefresh();
+
+		// Restore map's fog settings.
+		R_SetupFog();						
+
+		// Make sure the fog is enabled, if necessary.
+		if(hadFog) GL_UseFog(true);
+	}
+}
+
+//===========================================================================
 // GL_ChangeResolution
 //	Changes the resolution to the specified one. 
 //	The change is carried out by SHUTTING DOWN the rendering DLL and then
@@ -556,37 +567,12 @@ void GL_UseFog(int yes)
 //===========================================================================
 int GL_ChangeResolution(int w, int h, int bits)
 {
-/*	int res = gl.ChangeMode(w, h, 0, !nofullscreen);
-
-	if(res == DGL_UNSUPPORTED)
-	{
-		Con_Message("I_ChangeResolution: Not supported by DGL driver.\n");
-		return false;
-	}
-	if(res == DGL_OK)
-	{
-		screenWidth = w;
-		screenHeight = h;
-		// We can't be in a 3D mode right now, so we can
-		// adjust the viewport right away.
-		gl.Viewport(0, 0, screenWidth, screenHeight);
-		Con_MaxLineLength();
-		return true;
-	}*/
-
-	char oldFontName[256];
-	boolean hadFog = whitefog;
-
 	if(novideo) return false;
 	if(screenWidth == w && screenHeight == h 
 		&& (!bits || screenBits == bits)) return true;		
 
-	// Remember the name of the font.
-	strcpy(oldFontName, FR_GetFont(FR_GetCurrent())->name);
-
-	// Delete all textures.
-	GL_ShutdownTextureManager();
-	GL_ShutdownFont();
+	// Shut everything down, but remember our settings.
+	GL_TotalReset(true);
 	gx.UpdateState(DD_RENDER_RESTART_PRE);
 
 	screenWidth = w;
@@ -598,16 +584,8 @@ int GL_ChangeResolution(int w, int h, int bits)
 	gl.Init(w, h, bits, !nofullscreen);
 
 	// Re-initialize.
-	GL_InitFont();
-	GL_Init2DState();
-	GL_InitRefresh();
-	R_SetupFog();				// Restore map's fog settings.
-	// Make sure the fog is enabled, if necessary.
-	if(hadFog) GL_UseFog(true);
+	GL_TotalReset(false);
 	gx.UpdateState(DD_RENDER_RESTART_POST);
-
-	// Restore the old font.
-	Con_Executef(true, "font name %s", oldFontName);
 
 	Con_Message("Display mode: %i x %i", screenWidth, screenHeight);
 	if(screenBits) Con_Message( " x %i", screenBits);
