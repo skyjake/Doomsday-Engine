@@ -30,6 +30,14 @@
 import os, re, sys
 import host
 
+
+def isHomeless():
+    """Homeless setup means that Snowberry uses the main installation
+    directory for user data."""
+    
+    return '-nohome' in sys.argv
+
+
 # Directory Type constants to be used with getSystemPath() and
 # getUserPath().
 ADDONS = 'addons'
@@ -52,6 +60,10 @@ if host.isMac():
     SNOWBERRY_HOME_DIR = 'Snowberry'
 else:
     SNOWBERRY_HOME_DIR = '.snowberry'
+    
+# In a homeless setup all the user data goes in the main installation folder.
+if isHomeless():
+    SNOWBERRY_HOME_DIR = '.'
 
 # This is the full path of the user's Snowberry home directory.
 homeDir = None
@@ -79,29 +91,34 @@ def _checkSnowberryHome():
     # When this is run for the first time, we'll need to figure out
     # where the home directory should be.
     if not homeDir:
-        if host.isMac():
-            # Home on the Mac.
-            homeLocation = os.path.join(os.getenv('HOME'),
-                                        'Library/Application Support')
+        if isHomeless():
+            homeLocation = os.getcwd()           
         else:
-            # First see if a HOME environment variable has been defined.
-            homeLocation = os.getenv('HOME')
+            if host.isMac():
+                # Home on the Mac.
+                homeLocation = os.path.join(os.getenv('HOME'),
+                                            'Library/Application Support')
+            else:
+                # First see if a HOME environment variable has been defined.
+                homeLocation = os.getenv('HOME')
 
-        if not homeLocation:
-            # The failsafe.
-            homeLocation = os.getcwd()
-            # The environment variable was not defined.  Let's try
-            # something else.
-            if host.isWindows():
-                if os.getenv('HOMEPATH'):
-                    homeLocation = os.getenv('HOMEDRIVE') + \
-                                   os.getenv('HOMEPATH')
-                elif os.getenv('USERPROFILE'):
-                    homeLocation = os.getenv('USERPROFILE')
-                elif os.getenv('APPDATA'):
-                    homeLocation = os.getenv('APPDATA')
+            if not homeLocation:
+                # The failsafe.
+                homeLocation = os.getcwd()
+                # The environment variable was not defined.  Let's try
+                # something else.
+                if host.isWindows():
+                    if os.getenv('HOMEPATH'):
+                        homeLocation = os.getenv('HOMEDRIVE') + \
+                                       os.getenv('HOMEPATH')
+                    elif os.getenv('USERPROFILE'):
+                        homeLocation = os.getenv('USERPROFILE')
+                    elif os.getenv('APPDATA'):
+                        homeLocation = os.getenv('APPDATA')
 
         homeDir = os.path.join(homeLocation, SNOWBERRY_HOME_DIR)
+        
+    homeDir = os.path.abspath(homeDir)
 
     # The home needs to be created if it doesn't exist yet.
     _createDir(homeDir)
@@ -147,16 +164,26 @@ def getSystemPath(which):
     """Returns the directory where the specified kind of data is
     stored.  System paths are assumed to be relative to the current
     working directory."""
-    return which
+    return os.path.abspath(which)
 
 
 def getUserPath(which):
     """Returns the directory where the specified kind of data is
     stored for the current user.  The location of the user home
     directory depends on the operating system."""
+    
     if customPaths.has_key(which):
         return customPaths[which]
-    return os.path.join(homeDir, which)
+    
+    path = os.path.join(homeDir, which)
+
+    # The system profiles directory and the user profiles directory can't
+    # be the same.
+    if which == PROFILES and path == getSystemPath(which):
+        path = os.path.join(homeDir, 'user' + which)
+    
+    print 'getUserPath:', path
+    return path
 
 
 def getBundlePaths(which):
