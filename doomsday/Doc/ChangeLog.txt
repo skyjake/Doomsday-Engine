@@ -6,6 +6,15 @@
 
 Version 1.7.11 (work in progress)
 --------------
+- external music was not loaded correctly from virtual files
+- fixed: floorclip values were restricted to 64 in mobj deltas
+- fixed: client stepup limit is now exactly 24 units
+
+jHexen:
+- fixed: no mobjs spawned when dedicated server starts
+- clientside powers were not correctly set to zero at death, map change
+- clientside Wings of Wrath icon didn't rotate when flying
+
 XG:
 - when loading a savegame, line activators were not correctly restored
 
