@@ -168,6 +168,8 @@ void Rend_Render3DVisSprite(vissprite_t *vismdl)
 {
 	int i;
 
+	if(!vismdl->mo.mf) return;
+
 	// Render all the models associated with the vissprite.
 	for(i = 0; i < MAX_FRAME_MODELS; i++)
 		if(vismdl->mo.mf->sub[i].model)
@@ -272,8 +274,8 @@ void Rend_DrawMasked (void)
 	{
 		// Draw all vissprites back to front.
 		// Sprites look better with Z buffer writes turned off.
-		for (spr = vsprsortedhead.next ; spr != &vsprsortedhead
-			; spr=spr->next)
+		for(spr = vsprsortedhead.next; spr != &vsprsortedhead; 
+			spr = spr->next)
 		{
 			if(!spr->issprite)
 			{
@@ -286,11 +288,14 @@ void Rend_DrawMasked (void)
 				// There might be a model for this sprite, let's see.
 				if(!spr->mo.mf)
 				{
-					// Render an old fashioned sprite.
-					// Ah, the nostalgia...
-					if(r_nospritez) gl.Disable(DGL_DEPTH_WRITE);
-					Rend_RenderSprite(spr);
-					if(r_nospritez) gl.Enable(DGL_DEPTH_WRITE);
+					if(spr->mo.patch >= 0)
+					{
+						// Render an old fashioned sprite.
+						// Ah, the nostalgia...
+						if(r_nospritez) gl.Disable(DGL_DEPTH_WRITE);
+						Rend_RenderSprite(spr);
+						if(r_nospritez) gl.Enable(DGL_DEPTH_WRITE);
+					}
 				}
 				else // It's a sprite and it has a modelframe (it's a 3D model).
 				{
