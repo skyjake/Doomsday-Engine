@@ -14,6 +14,7 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_render.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -57,7 +58,7 @@ static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
 ded_decor_t *Rend_GetTextureDecoration(int texture)
 {
 	if(!texture) return NULL;
-	return textures[ texturetranslation[texture] ]->decoration;
+	return textures[ texturetranslation[texture].current ]->decoration;
 }
 
 /*
@@ -68,8 +69,10 @@ ded_decor_t *Rend_GetFlatDecoration(int index)
 	flat_t *flat = R_GetFlat(index);
 
 	// Get the translated one?
-	if(flat->translation != index) flat = R_GetFlat(flat->translation);
-
+	if(flat->translation.current != index) 
+	{
+		flat = R_GetFlat(flat->translation.current);
+	}
 	return flat->decoration;
 }
 
@@ -234,6 +237,7 @@ void Rend_AddLightDecoration
 	lum->thing = &source->thing;
 	lum->center = 0;
 	lum->flags = LUMF_CLIPPED;
+	lum->tex = lum->floortex = lum->ceiltex = GL_PrepareLightTexture();
 
 	// These are the same rules as in DL_ThingRadius().
 	lum->radius = def->radius * 40 * dlRadFactor;
@@ -334,8 +338,9 @@ void Rend_DecorateLineSection
 	ded_decor_t *def;
 	ded_decorlight_t *lightDef;
 	vertex_t *v1, *v2;
-	float lh, h, v; // Horizontal and vertical offset.
-	float normal[2], delta[2], pos[3], brightMul;
+	float lh, s, t; // Horizontal and vertical offset.
+	float posBase[2], normal[2], delta[2], pos[3], brightMul;
+	float surfTexW, surfTexH, patternW, patternH;
 	int i, skip[2];
 
 	// Is this a valid section?
@@ -365,11 +370,13 @@ void Rend_DecorateLineSection
 
 	// Setup the global texture info variables.
 	GL_GetTextureInfo(texture);
+	surfTexW = texw;
+	surfTexH = texh;
 
 	// Make texOffY negative. This'll help when calculating the starting
 	// position for the pattern.
-	while(texOffY > 0) texOffY -= texh;
-
+/*	while(texOffY > 0) texOffY -= texh;
+*/
 	// Generate a number of lights.
 	for(i = 0; i < DED_DECOR_NUM_LIGHTS; i++)
 	{
@@ -385,8 +392,11 @@ void Rend_DecorateLineSection
 		// Skip must be at least one.
 		Rend_DecorationPatternSkip(lightDef, skip);
 
-		// Let's see where the bottom left light is.
-		h = lightDef->pos[VX] - FIX2FLT(side->textureoffset)
+		posBase[VX] = FIX2FLT(v1->x) + lightDef->elevation * normal[VX];
+		posBase[VY] = FIX2FLT(v1->y) + lightDef->elevation * normal[VY];
+
+
+/*		h = lightDef->pos[VX] - FIX2FLT(side->textureoffset)
 			- texw * lightDef->pattern_offset[VX];
 		while(h > texw) h -= texw;
 		for(; h < linfo->length; h += texw * skip[VX])
@@ -399,12 +409,35 @@ void Rend_DecorateLineSection
 			for(; v <= lh; v += texh * skip[VY])
 			{
 				if(v < 0) continue;
+*/
+
+		/*h = lightDef->pos[VX] - FIX2FLT(side->textureoffset)
+			- surfTexW * lightDef->pattern_offset[VX];*/
+		/*while(h < 0) h += texw;
+		while(h >= texw) h -= texw;*/
+		
+		patternW = surfTexW * skip[VX];
+		patternH = surfTexH * skip[VY];
+
+		// Let's see where the top left light is.
+		s = M_CycleIntoRange(lightDef->pos[VX] - FIX2FLT(side->textureoffset)
+			- surfTexW * lightDef->pattern_offset[VX], patternW);
+
+		for(; s < linfo->length; s += patternW)
+		{
+			t = M_CycleIntoRange(lightDef->pos[VY] - FIX2FLT(side->rowoffset)
+				- surfTexH * lightDef->pattern_offset[VY] + texOffY, 
+				patternH);
+			
+				/*while(v < 0) v += texh;
+				while(v >= texh) v -= texh;*/
+
+			for(; t < lh; t += patternH)
+			{
 				// Let there be light.
-				pos[VX] = FIX2FLT(v1->x) + lightDef->elevation * normal[VX]
-					+ delta[VX] * h/linfo->length;
-				pos[VY] = FIX2FLT(v1->y) + lightDef->elevation * normal[VY]
-					+ delta[VY] * h/linfo->length;
-				pos[VZ] = top - v;
+				pos[VX] = posBase[VX] + delta[VX] * s / linfo->length;
+				pos[VY] = posBase[VY] + delta[VY] * s / linfo->length;
+				pos[VZ] = top - t;
 				Rend_AddLightDecoration(pos, lightDef, brightMul, true);
 			}
 		}
@@ -412,7 +445,7 @@ void Rend_DecorateLineSection
 }
 
 /*
- * Returns the side, which faces the sector (if any).
+ * Returns the side that faces the sector (if any).
  */
 side_t *R_GetSectorSide(line_t *line, sector_t *sector)
 {
@@ -582,22 +615,6 @@ void Rend_DecorateLine(int index)
 			frontFloor, line->flags & ML_DONTPEGBOTTOM? -texh + (frontCeil 
 			- frontFloor) : 0);
 	}
-}
-
-/*
- * Returns the value mod length (length > 0).
- */
-float M_CycleIntoRange(float value, float length)
-{
-	if(value < 0)
-	{
-		return value - ((int)(value / length) - 1) * length;
-	}
-	if(value > length)
-	{
-		return value - ((int)(value / length)) * length;
-	}
-	return value;
 }
 
 /*
