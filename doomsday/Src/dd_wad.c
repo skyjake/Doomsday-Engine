@@ -1006,7 +1006,7 @@ int W_CheckNumForName(char *name)
 		}
 	}
 
-	VERBOSE(Con_Message("W_CheckNumForName: \"%s\" not found.\n", name));
+	VERBOSE(Con_Message("W_CheckNumForName: \"%s\" not found.\n", name8));
 	return -1;
 }
 
