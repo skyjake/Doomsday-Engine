@@ -42,7 +42,7 @@ extern char    *defaultWads;	   // A list of wad names, whitespace in between (i
 extern directory_t ddRuntimeDir, ddBinDir;
 
 #ifndef WIN32
-GETGAMEAPI      GetGameAPI;
+extern GETGAMEAPI GetGameAPI;
 #endif
 
 void            DD_Main();
