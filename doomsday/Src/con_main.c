@@ -1409,7 +1409,7 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
 static int executeSubCmd(const char *subCmd)
 {
 	int			i;
-	char		prefix;
+//	char		prefix;
 	cmdargs_t	args;
 
 	PrepareCmdArgs(&args, subCmd);
