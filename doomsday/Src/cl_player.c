@@ -278,8 +278,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
 {
 	int     num = pl - players;
 	playerstate_t *st = playerstate + num;
-
-	mobj_t /* *clmo = &st->cmo->mo, */ *mo = pl->mo;
+	mobj_t *mo = pl->mo;
 
 	if(!mo)
 		return;

@@ -885,13 +885,12 @@ void Sv_Kick(int who)
 //===========================================================================
 // Sv_Ticker
 //===========================================================================
-void Sv_Ticker(timespan_t time)
+void Sv_Ticker(void)
 {
-	static trigger_t fixed = { 1.0 / 35 };
+	//static trigger_t fixed = { 1.0 / 35 };
 	int     i;
 
-	if(!M_CheckTrigger(&fixed, time))
-		return;
+	//if(!M_CheckTrigger(&fixed, time)) return;
 
 	// Note last angles for all players.
 	for(i = 0; i < MAXPLAYERS; i++)

@@ -94,7 +94,7 @@ typedef struct foundhost_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    N_IPToString(char *buf, IPaddress * ip);
+void    N_IPToString(char *buf, IPaddress *ip);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -141,6 +141,7 @@ static SDLNet_SocketSet sockSet;
 static int hReceiver, hTransmitter;
 static sendqueue_t sendQ;
 static foundhost_t located;
+static volatile boolean stopReceiver;
 
 // CODE --------------------------------------------------------------------
 
@@ -268,7 +269,7 @@ static int N_UDPReceiver(void *parm)
 	set = SDLNet_AllocSocketSet(1);
 	SDLNet_UDP_AddSocket(set, inSock);
 
-	while(inSock)
+	while(!stopReceiver)
 	{
 		// Most of the time we will be sleeping here, waiting for
 		// incoming packets.
@@ -332,6 +333,7 @@ static int N_UDPReceiver(void *parm)
 
 	if(packet)
 		SDLNet_FreePacket(packet);
+
 	SDLNet_FreeSocketSet(set);
 	return 0;
 }
@@ -437,7 +439,7 @@ uint N_GetSendQueueSize(int player)
 /*
  * Initialize the transmitter thread and the send queue.
  */
-static void N_StartTransmitter(sendqueue_t * q)
+static void N_StartTransmitter(sendqueue_t *q)
 {
 	q->online = true;
 	q->waiting = Sem_Create(0);
@@ -451,8 +453,10 @@ static void N_StartTransmitter(sendqueue_t * q)
 /* 
  * Blocks until the transmitter thread has been exited.
  */
-static void N_StopTransmitter(sendqueue_t * q)
+static void N_StopTransmitter(sendqueue_t *q)
 {
+	int     i;
+
 	if(!hTransmitter)
 		return;
 
@@ -461,7 +465,8 @@ static void N_StopTransmitter(sendqueue_t * q)
 
 	// Increment the semaphore without adding a new message: this'll
 	// make the transmitter "run dry."
-	Sem_V(q->waiting);
+	for(i = 0; i < 10; ++i)
+		Sem_V(q->waiting);
 
 	// Wait until the transmitter thread finishes.
 	Sys_WaitThread(hTransmitter);
@@ -477,6 +482,7 @@ static void N_StopTransmitter(sendqueue_t * q)
  */
 static void N_StartReceiver(void)
 {
+	stopReceiver = false;
 	mutexInSock = Sys_CreateMutex("UDPIncomingMutex");
 	hReceiver = Sys_StartThread(N_UDPReceiver, NULL, 0);
 }
@@ -486,15 +492,16 @@ static void N_StartReceiver(void)
  */
 static void N_StopReceiver(void)
 {
-	UDPsocket sock = inSock;
+	stopReceiver = true;
 
 	// Close the incoming UDP socket.
-	inSock = NULL;
-	SDLNet_UDP_Close(sock);
+	SDLNet_UDP_Close(inSock);
 
 	// Wait for the receiver thread the stop.
 	Sys_WaitThread(hReceiver);
 	hReceiver = 0;
+
+	inSock = NULL;
 
 	Sys_DestroyMutex(mutexInSock);
 	mutexInSock = 0;
@@ -504,7 +511,7 @@ static void N_StopReceiver(void)
  * Bind or unbind the address to/from the incoming UDP socket.  When
  * the address is bound, packets from it will be accepted.
  */
-void N_BindIncoming(IPaddress * addr, nodeid_t id)
+void N_BindIncoming(IPaddress *addr, nodeid_t id)
 {
 	Sys_Lock(mutexInSock);
 	if(addr)
@@ -547,6 +554,7 @@ void N_SystemInit(void)
  */
 void N_SystemShutdown(void)
 {
+	N_ShutdownService();
 	SDLNet_Quit();
 }
 
@@ -569,7 +577,7 @@ boolean N_GetServiceProviderName(serviceprovider_t type, unsigned int index,
 /*
  * Convert an IPaddress to a string.
  */
-void N_IPToString(char *buf, IPaddress * ip)
+void N_IPToString(char *buf, IPaddress *ip)
 {
 	uint    host = SDLNet_Read32(&ip->host);
 
@@ -582,13 +590,11 @@ void N_IPToString(char *buf, IPaddress * ip)
  * socket cannot be opened, 'sock' is set to NULL.  'defaultPort'
  * should never be zero.
  */
-Uint16 N_OpenUDPSocket(UDPsocket * sock, Uint16 preferPort, Uint16 defaultPort)
+Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 {
-	Uint16  port = preferPort;
+	Uint16  port = (!preferPort ? defaultPort : preferPort);
 	int     tries = 1000;
 
-	if(!preferPort)
-		port = defaultPort;
 	*sock = NULL;
 
 	// Try opening the port, advance to next one if the opening fails.
@@ -636,10 +642,7 @@ boolean N_InitService(serviceprovider_t provider, boolean inServerMode)
 
 	if(inServerMode)
 	{
-		if(!nptIPPort)
-			port = defaultTCPPort;
-		else
-			port = nptIPPort;
+		port = (!nptIPPort ? defaultTCPPort : nptIPPort);
 
 		VERBOSE(Con_Message
 				("N_InitService: Listening TCP socket on port %i.\n", port));
@@ -1315,7 +1318,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
 }
 
 /*
- * Poll all TCP sockets for activity. Client commands are processed.
+ * Poll all TCP sockets for activity.  Client commands are processed.
  */
 void N_Listen(void)
 {

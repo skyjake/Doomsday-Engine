@@ -220,12 +220,6 @@ void DD_Ticker(timespan_t time)
 {
 	static trigger_t fixed = { 1 / 35.0 };
 
-	// Client/server ticks.
-	if(isClient)
-		Cl_Ticker(time);
-	else
-		Sv_Ticker(time);
-
 	// Demo ticker. Does stuff like smoothing of view angles.
 	Demo_Ticker(time);
 	P_Ticker(time);
@@ -237,8 +231,16 @@ void DD_Ticker(timespan_t time)
 			extern int sharpWorldUpdated;	// in r_main.c
 			extern double lastSharpFrameTime;
 
-			gx.Ticker( /*time */ );	// Game DLL.
+			gx.Ticker( /* time */ );	// Game DLL.
 
+			// Client/server ticks.  These are placed here because
+			// they still rely on fixed ticks and thus it's best to
+			// keep them in sync with the fixed game ticks.
+			if(isClient)
+				Cl_Ticker(/*time*/);
+			else
+				Sv_Ticker(/*time*/);
+			
 			// This is needed by rend_camera_smooth.  It needs to know
 			// when the world tic has occured so the next sharp
 			// position can be processed.

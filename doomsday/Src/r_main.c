@@ -72,6 +72,8 @@ int     skyflatnum;
 char    skyflatname[9] = "F_SKY";
 
 double  lastSharpFrameTime;
+int		frameClAngle;
+float	frameClLookDir;
 
 int     sharpWorldUpdated;		// Set to true after game ticker has been called.
 
@@ -255,11 +257,12 @@ void R_SetupFrame(ddplayer_t *player)
 	viewplayer = player;
 
 	sharpView.angle =
-		(isClient ? player->clAngle : player->mo->angle) + viewangleoffset;
-	sharpView.pitch = isClient ? player->clLookDir : player->lookdir;
+		(isClient ? frameClAngle : player->mo->angle) + viewangleoffset;
+	sharpView.pitch = (isClient ? frameClLookDir : player->lookdir);
 	sharpView.x = player->mo->x + viewxOffset;
 	sharpView.y = player->mo->y + viewyOffset;
 	sharpView.z = player->viewz + viewzOffset;
+	
 	// Check that the viewz doesn't go too high or low.
 	if(sharpView.z > player->mo->ceilingz - 4 * FRACUNIT)
 		sharpView.z = player->mo->ceilingz - 4 * FRACUNIT;

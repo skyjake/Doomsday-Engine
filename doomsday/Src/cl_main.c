@@ -32,6 +32,8 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
+#include "r_main.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -329,19 +331,27 @@ void Cl_GetPackets(void)
 //===========================================================================
 // Cl_Ticker
 //===========================================================================
-void Cl_Ticker(timespan_t time)
+void Cl_Ticker(void)
 {
-	static trigger_t fixed = { 1.0 / 35 };
+	//static trigger_t fixed = { 1.0 / 35 };
 
-	if(!Cl_GameReady() || clientPaused)
+	if(!isClient || !Cl_GameReady() || clientPaused)
 		return;
 
-	if(!M_CheckTrigger(&fixed, time))
-		return;
+	//if(!M_CheckTrigger(&fixed, time)) return;
 
 	Cl_LocalCommand();
 	Cl_PredictMovement();
 	Cl_MovePsprites();
+
+	// These are set here because we need to update everything at the
+	// same time.  Otherwise the camera smoothing hack will not sync
+	// correctly.
+	if(viewplayer)
+	{
+		frameClAngle = viewplayer->clAngle;
+		frameClLookDir = viewplayer->clLookDir;
+	}
 }
 
 //========================================================================
