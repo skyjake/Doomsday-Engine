@@ -24,6 +24,8 @@
 
 struct directory_s;
 
+typedef int					fixed_t;
+typedef unsigned int		angle_t;
 typedef int					spritenum_t;
 typedef unsigned int		uint;
 typedef unsigned short		ushort;
