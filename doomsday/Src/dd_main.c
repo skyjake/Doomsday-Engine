@@ -671,6 +671,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &psp_move_speed,	&psp_move_speed },
 	{ &cplr_thrust_mul,	&cplr_thrust_mul },
 	{ &clientPaused,	&clientPaused },
+	{ &weaponOffsetScaleY, &weaponOffsetScaleY }
 };
 
 //===========================================================================
