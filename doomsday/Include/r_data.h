@@ -17,6 +17,9 @@
 #define SECF_INVIS_FLOOR	0x1
 #define SECF_INVIS_CEILING	0x2
 
+#define LINE_INFO(x)	(lineinfo + GET_LINE_IDX(x))
+#define SUBSECT_INFO(x)	(subsecinfo + GET_SUBSECTOR_IDX(x))
+#define SECT_INFO(x)	(secinfo + GET_SECTOR_IDX(x))
 #define SECT_FLOOR(x)	(secinfo[GET_SECTOR_IDX(x)].visfloor)
 #define SECT_CEIL(x)	(secinfo[GET_SECTOR_IDX(x)].visceil)
 
@@ -92,15 +95,10 @@ typedef struct {
 typedef struct {
 	rendpolytype_t type;		
 	short flags;				// RPF_*.
-	//int texw, texh;				// Texture width and height.
 	float texoffx, texoffy;		// Texture coordinates for left/top (in real texcoords).
 	gltexture_t tex;
 	gltexture_t intertex;
-	//DGLuint tex;				// Used for masked textures.
-	//DGLuint blendtex;			// Used for blended textures.
-	//int blendtexw, blendtexh;	// Blend texture width and height.
 	float interpos;				// Blending strength (0..1).
-	//detailinfo_t *detail;		// Detail texture name and dimensions.
 	struct dynlight_s *lights;	// List of lights that affect this poly.
 	uint numlights;
 	sector_t *sector;			// The sector this poly belongs to (if any).
@@ -135,6 +133,7 @@ typedef struct {
 	int			flags;
 	fixed_t		oldfloor[2], oldceil[2];
 	float		visflooroffset, visceiloffset;
+	int			addspritecount;			// frame number of last R_AddSprites
 } sectorinfo_t;
 
 typedef struct planeinfo_s {
@@ -145,6 +144,7 @@ typedef struct planeinfo_s {
 
 typedef struct subsectorinfo_s {
 	planeinfo_t	floor, ceil;
+	int			validcount;
 } subsectorinfo_t;
 
 typedef struct {
