@@ -6,13 +6,20 @@
 
 Version 1.7.12 (work in progress)
 --------------
++ option -leaveramp: don't reset color settings back to previous values
+  at shutdown
++ particle generator flag "gnf_group": triggered by all in the flat's
+  animation group
 + cmd 'startinf (scriptid)' (and 'stopinf')
 * 'InFine' is an alternative name for the 'Finale' definition
 - removed obsolete settings from Control Panel: Network
+- fixed: particles sliding over ledges
 - fixed: console text gibberish on the first time the console is drawn
 - fixed: possible crash in Con_Error()
+- fixed: Generator Center angle (Y) offset was ignored with mobj sources
 
 jDoom:
++ crosshair alpha slider added to the HUD menu
 * titlescreen sequence defined as an InFine script (ID = "title")
 - fixed: intermissions/finales in Plut/TNT
 
