@@ -279,6 +279,9 @@ void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
  */
 void R_GetSharpView(viewer_t *view, ddplayer_t *player)
 {
+	if(player->mo == NULL)
+		return;
+	
 	view->angle = player->clAngle + viewangleoffset;
 	view->pitch = player->clLookDir;
 	view->x = player->mo->x + viewxOffset;

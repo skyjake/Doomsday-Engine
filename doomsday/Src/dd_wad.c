@@ -984,7 +984,10 @@ int W_CheckNumForName(char *name)
 
 	// If the name string is empty, don't bother to search.
 	if(!name[0])
+	{
+		VERBOSE(Con_Message("W_CheckNumForName: Empty name.\n"));
 		return -1;
+	}
 
 	// Make the name into two integers for easy compares
 	strncpy(name8, name, 8);
@@ -1002,6 +1005,8 @@ int W_CheckNumForName(char *name)
 			return W_Index(lump_p - lumpinfo);
 		}
 	}
+
+	VERBOSE(Con_Message("W_CheckNumForName: \"%s\" not found.\n", name));
 	return -1;
 }
 

@@ -6,6 +6,8 @@
 
 Version 1.8.2
 -------------
+- fixed: segfault when starting a new game during demo playback
+- fixed: instant camera position changes during demo playback
 - fixed: console font disappearance
 + added control panel setting for rend-tex-filter-smart
 - adjusted particle Z coordinate when touching a plane

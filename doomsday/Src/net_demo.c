@@ -544,6 +544,8 @@ void Demo_ReadLocalCamera(void)
 	if(intertics == 1)
 	{
 		// Instantaneous move.
+		printf("Instant move!\n");
+		R_ResetViewer();
 		Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], demo_framez =
 						   z, demo_onground);
 		pl->viewz = z;			// Might get an unsynced frame is not set right now.
