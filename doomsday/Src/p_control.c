@@ -48,6 +48,16 @@ enum
 	NUM_CONTROL_CLASSES
 };
 
+// Built-in controls.
+enum
+{
+	CTL_WALK = 0,
+	CTL_SIDESTEP,
+	CTL_ZFLY,
+	CTL_TURN,
+	CTL_LOOK
+};
+
 /*
  * The control descriptors contain a mapping between symbolic control
  * names and the identifier numbers.
@@ -192,7 +202,8 @@ void P_ControlInit(void)
 	 *
 	 * The names can be at most 8 chars long.
 	 */
-	
+
+	// These must match the CTL_* indices.
 	const char *axisCts[] = {
 		"WALK",
 		"SIDESTEP",
@@ -440,12 +451,75 @@ boolean P_ControlExecute(const char *command)
 
 /*
  * Update the position of an axis control.  This is called
- * periodically from the axis binding code.
+ * periodically from the axis binding code (for STICK axes).
  */
 void P_ControlSetAxis(int player, int axisControlIndex, float pos)
 {
 	if(player < 0 || player >= DDMAXPLAYERS) return;
 	if(ctlState[player].axes == NULL) return;
 	
-	ctlState[player].axes[axisControlIndex].pos = pos;	
+	ctlState[player].axes[axisControlIndex].pos = pos;
+}
+
+/*
+ * Move a control bound to a POINTER type axis.  This doesn't affect
+ * actual position of the axis control (!).
+ */
+void P_ControlAxisDelta(int player, int axisControlIndex, float delta)
+{
+	controldesc_t *desc;
+	ddplayer_t *plr;
+	
+	if(player < 0 || player >= DDMAXPLAYERS) return;
+	if(ctlState[player].axes == NULL) return;
+
+	plr = &players[player];
+	
+	// Get a description of the axis control.
+	desc = &ctlClass[CC_AXIS].desc[axisControlIndex];
+
+	switch(axisControlIndex)
+	{
+	case CTL_TURN:
+		// Modify the clientside view angle directly.
+		plr->clAngle -= (angle_t) (delta/180 * ANGLE_180);
+		break;
+
+	case CTL_LOOK:
+		// 110 corresponds 85 degrees.
+		plr->clLookDir += delta * 110.0f/85.0f;
+
+		// Make sure it doesn't wrap around.
+		if(plr->clLookDir > 110) plr->clLookDir = 110;
+		if(plr->clLookDir < -110) plr->clLookDir = -110;
+		break;
+
+	default:
+		// Undefined for other axis controls?
+		break;
+	}
+}
+
+/*
+ * Update view angles according to the "turn" or "look" axes.
+ * Done for all local players.
+ */
+void P_ControlTicker(timespan_t time)
+{
+	// FIXME: Player class turn speed.
+	// angleturn[3] = {640, 1280, 320};	// + slow turn
+	
+	float pos, mul = time * TICSPERSEC * (640 << 16) * 45.0f/ANGLE_45;
+	int i;
+
+	for(i = 0; i < DDMAXPLAYERS; i++)
+	{
+		if(!players[i].ingame || !(players[i].flags & DDPF_LOCAL)) continue;
+		
+		pos = P_ControlGetAxis(i, "turn");
+		P_ControlAxisDelta(i, CTL_TURN, mul * pos);
+
+		pos = P_ControlGetAxis(i, "look");
+		P_ControlAxisDelta(i, CTL_LOOK, mul * pos);
+	}
 }
