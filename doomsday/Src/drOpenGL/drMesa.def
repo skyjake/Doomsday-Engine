@@ -1,0 +1,62 @@
+LIBRARY			DRMESA
+DESCRIPTION		"Doomsday Graphics Library - Mesa 3D"
+
+; All exports should be prefixed DG_.
+
+EXPORTS
+	DG_Init
+	DG_Shutdown
+	DG_Clear
+	DG_Show
+	DG_Viewport
+	DG_Scissor
+	DG_GetInteger
+	DG_GetIntegerv
+	DG_SetInteger
+	DG_GetString
+	DG_Enable
+	DG_Disable
+	DG_Func
+	DG_ZBias
+	DG_NewTexture
+	DG_DeleteTextures
+	DG_TexImage
+	DG_TexParameter
+	DG_GetTexParameterv
+	DG_Palette	
+	DG_Bind
+	DG_MatrixMode
+	DG_PushMatrix
+	DG_PopMatrix
+	DG_LoadIdentity
+	DG_Translatef
+	DG_Rotatef
+	DG_Scalef
+	DG_Ortho
+	DG_Perspective
+	DG_Color3ub
+	DG_Color3ubv
+	DG_Color4ub
+	DG_Color4ubv
+	DG_Color3f
+	DG_Color3fv
+	DG_Color4f
+	DG_Color4fv
+	DG_Begin
+	DG_End
+	DG_Vertex2f
+	DG_Vertex2fv
+	DG_Vertex3f
+	DG_Vertex3fv
+	DG_TexCoord2f
+	DG_TexCoord2fv
+	DG_Vertices2ftv
+	DG_Vertices3ftv
+	DG_Vertices3fctv
+	DG_Grab
+	DG_Fog
+	DG_Fogv
+	DG_Project
+	DG_ReadPixels 
+
+	

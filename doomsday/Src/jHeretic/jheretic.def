@@ -1,0 +1,5 @@
+LIBRARY			JHERETIC
+DESCRIPTION		"JHeretic Doomsday Game DLL"
+
+EXPORTS
+	GetGameAPI		@1

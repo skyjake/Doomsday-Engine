@@ -1,0 +1,1366 @@
+
+//**************************************************************************
+//**
+//** DEDREAD.C
+//**
+//** Doomsday Engine Definition file reader.
+//**
+//** A GHASTLY MESS!!! This should be rewritten.
+//**
+//** At the moment the idea is that a lot of macros are used to read
+//** a more or less fixed structure of definitions, and if an error
+//** occurs then "goto out_of_here;". It leads to a lot more code 
+//** than an elegant parser would require.
+//**
+//** The current implementation of the reader is a "structural"
+//** approach: the definition file is parsed based on the structure 
+//** implied by the read tokens. A true parser would have syntax 
+//** definitions for a bunch of tokens, and the same parsing rules
+//** would be applied for everything.
+//**
+//**************************************************************************
+
+// HEADER FILES ------------------------------------------------------------
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include "de_base.h"
+#include "de_console.h"
+#include "de_system.h"
+#include "de_misc.h"
+#include "de_refresh.h"
+
+// MACROS ------------------------------------------------------------------
+
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
+// Some macros.
+#define STOPCHAR(x)	(isspace(x) || x == ';' || x == '#' || x == '{' \
+					|| x == '}' || x == '=' || x == '"' || x == '*')
+
+#define ISTOKEN(X)	(!stricmp(token, X))
+
+#define READSTR(X)	if(!ReadString(X, sizeof(X))) { \
+					SetError("Syntax error in string value."); \
+					retval = false; goto ded_end_read; }
+
+#define MISSING_SC_ERROR	SetError("Missing semicolon."); \
+							retval = false; goto ded_end_read; 
+
+#define CHECKSC		ReadToken(); if(!ISTOKEN(";")) { MISSING_SC_ERROR; }
+
+#define FINDBEGIN	while(!ISTOKEN("{") && !dedend) ReadToken(); 
+#define FINDEND		while(!ISTOKEN("}") && !dedend) ReadToken(); 
+
+#define ISLABEL(X)	(!stricmp(label, X))
+
+#define READLABEL	if(!ReadLabel(label)) { retval = false; goto ded_end_read; } \
+					if(ISLABEL("}")) break;
+
+#define READLABEL_NOBREAK	if(!ReadLabel(label)) { retval = false; goto ded_end_read; }
+
+#define READBYTE(X)	if(!ReadByte(&X)) { retval = false; goto ded_end_read; }
+#define READINT(X)	if(!ReadInt(&X, false)) { retval = false; goto ded_end_read; }
+#define READUINT(X)	if(!ReadInt(&X, true)) { retval = false; goto ded_end_read; }
+#define READFLT(X)	if(!ReadFloat(&X)) { retval = false; goto ded_end_read; }
+#define READNBYTEVEC(X,N) if(!ReadNByteVector(X, N)) { retval = false; goto ded_end_read; }
+
+#define RV_BYTE(lab, X)	if(ISLABEL(lab)) { READBYTE(X); } else
+#define RV_INT(lab, X)	if(ISLABEL(lab)) { READINT(X); } else
+#define RV_UINT(lab, X)	if(ISLABEL(lab)) { READUINT(X); } else
+#define RV_FLT(lab, X)	if(ISLABEL(lab)) { READFLT(X); } else
+#define RV_VEC(lab, X, N)	if(ISLABEL(lab)) { int b; FINDBEGIN; \
+						for(b=0; b<N; b++) {READFLT(X[b])} ReadToken(); } else
+#define RV_NBVEC(lab, X, N)	if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
+#define RV_STR(lab, X)	if(ISLABEL(lab)) { READSTR(X); } else
+#define RV_STR_INT(lab, S, I)	if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
+								I = strtol(token,0,0); } else
+#define RV_END			{ SetError("Unknown label."); retval = false; goto ded_end_read; }
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+char	token[128];
+char	dedReadError[256];
+int		lineNumber;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static char *sourceBuffer, *sourcePos;
+static boolean dedend = true;
+
+// CODE --------------------------------------------------------------------
+
+//==========================================================================
+// SetError
+//==========================================================================
+void SetError(char *str)
+{
+	sprintf(dedReadError, "Line %i: %s", lineNumber, str);
+}
+
+//==========================================================================
+// FGetC
+//	Reads a single character from the input file. Increments the line
+//	number counter if necessary.
+//==========================================================================
+int FGetC()
+{
+	int ch = (unsigned char) *sourcePos; 
+
+	if(ch) sourcePos++; else dedend = true;	
+	if(ch == '\n') lineNumber++;
+	if(ch == '\r') return FGetC();
+	return ch;
+}
+
+//==========================================================================
+// FUngetC
+//	Undoes an FGetC.
+//==========================================================================
+int FUngetC(int ch)
+{
+	if(dedend) return 0;
+	if(ch == '\n') lineNumber--;
+	if(sourcePos > sourceBuffer) sourcePos--;
+	return ch;
+}
+
+//==========================================================================
+// SkipComment
+//	Reads stuff until a newline is found.
+//==========================================================================
+void SkipComment()
+{
+	int ch = FGetC();
+	boolean seq = false;
+	
+	if(ch == '\n') return; // Comment ends right away.
+	if(ch != '>') // Single-line comment?
+	{
+		while(FGetC() != '\n' && !dedend);
+	}
+	else // Multiline comment?
+	{
+		while(!dedend)
+		{
+			ch = FGetC();
+			if(seq) 
+			{
+				if(ch == '#') break;
+				seq = false;
+			}
+			if(ch == '<') seq = true;
+		}
+	}
+}
+
+//==========================================================================
+// ReadToken
+//==========================================================================
+int ReadToken()
+{
+	int ch = FGetC();
+	char *out = token;
+
+	if(dedend) return false;
+
+	// Skip whitespace and comments in the beginning.
+	while((ch == '#' || isspace(ch))) 
+	{
+		if(ch == '#') SkipComment();
+		ch = FGetC();
+		if(dedend) return false;
+	}
+	// Always store the first character.
+	*out++ = ch;
+	if(STOPCHAR(ch))
+	{
+		// Stop here.
+		*out = 0;
+		return true;
+	}
+	while(!STOPCHAR(ch) && !dedend)
+	{
+		// Store the character in the buffer.
+		ch = FGetC();
+		*out++ = ch;
+	}
+	*(out-1) = 0;	// End token.
+	// Put the last read character back in the stream.
+	FUngetC(ch);
+	return true;
+}
+
+//==========================================================================
+// ReadStringEx
+//	Current pos in the file is at the first ".
+//	Does not expand escape sequences, only checks for \".
+//	Returns true if successful.
+//==========================================================================
+int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
+{
+	char *ptr = dest;
+	int ch, esc = false, newl = false;
+
+	if(!inside)
+	{
+		ReadToken();
+		if(!ISTOKEN("\"")) return false;
+	}
+	// Start reading the characters.
+	ch = FGetC();
+	while(esc || ch != '"')	// The string-end-character.
+	{
+		if(dedend) return false;
+		// If a newline is found, skip all whitespace that follows.
+		if(newl)
+		{
+			if(isspace(ch))
+			{
+				ch = FGetC();
+				continue;
+			}
+			else 
+			{
+				// End the skip.
+				newl = false;
+			}
+		}
+		// An escape character?
+		if(!esc && ch == '\\') 
+			esc = true;
+		else
+		{
+			// In case it's something other than \" or \\, just insert
+			// the whole sequence as-is.
+			if(esc && ch != '"' && ch != '\\') *ptr++ = '\\';
+			esc = false;
+		}
+		if(ch == '\n') newl = true;
+		// Store the character in the buffer.
+		if(ptr - dest < maxlen && !esc && !newl) 
+		{
+			*ptr++ = ch;
+			if(doubleq && ch == '"') *ptr++ = '"';
+		}
+		// Read the next character, please.
+		ch = FGetC();
+	}
+	// End the string in a null.
+	*ptr = 0;
+	return true;
+}
+
+//===========================================================================
+// ReadString
+//===========================================================================
+int ReadString(char *dest, int maxlen)
+{
+	return ReadStringEx(dest, maxlen, false, false);
+}
+
+//===========================================================================
+// ReadNByteVector
+//===========================================================================
+int ReadNByteVector(unsigned char *dest, int max)
+{
+	int i;
+
+	FINDBEGIN;
+	for(i = 0; i < max; i++)
+	{
+		ReadToken();
+		if(ISTOKEN("}")) return true;
+		dest[i] = strtoul(token, 0, 0);
+	}
+	FINDEND;	
+	return true;
+}
+
+//==========================================================================
+// ReadByte
+//	Returns true if successful.
+//==========================================================================
+int ReadByte(unsigned char *dest)
+{
+	ReadToken();
+	if(ISTOKEN(";"))
+	{
+		SetError("Missing integer value.");
+		return false;
+	}
+	*dest = strtoul(token, 0, 0);
+	return true;
+}
+
+//==========================================================================
+// ReadInt
+//	Returns true if successful.
+//==========================================================================
+int ReadInt(int *dest, int unsign)
+{
+	ReadToken();
+	if(ISTOKEN(";"))
+	{
+		SetError("Missing integer value.");
+		return false;
+	}
+	*dest = unsign? strtoul(token, 0, 0) : strtol(token, 0, 0);
+	return true;
+}
+
+//==========================================================================
+// ReadFloat
+//	Returns true if successful.
+//==========================================================================
+int ReadFloat(float *dest)
+{
+	ReadToken();
+	if(ISTOKEN(";"))
+	{
+		SetError("Missing float value.");
+		return false;
+	}
+	*dest = (float) strtod(token, 0);
+	return true;
+}
+
+//==========================================================================
+// ReadLabel
+//	Returns true if successful.
+//==========================================================================
+int ReadLabel(char *label)
+{
+	strcpy(label, "");
+	for(;;)
+	{
+		ReadToken();
+		if(dedend)
+		{
+			SetError("Unexpected end of file.");
+			return false;
+		}
+		if(ISTOKEN("}"))	// End block.
+		{
+			strcpy(label, token);
+			return true;
+		}
+		if(ISTOKEN(";"))
+		{
+			SetError("Label without value.");
+			return false;
+		}
+		if(ISTOKEN("=") || ISTOKEN("{")) break;
+		if(label[0]) strcat(label, " ");
+		strcat(label, token);
+	}
+	return true;
+}					
+
+//===========================================================================
+// DED_InitReader
+//===========================================================================
+void DED_InitReader(char *buffer)
+{
+	sourcePos = sourceBuffer = buffer;
+	dedend = false;
+}
+
+//==========================================================================
+// DED_ReadData
+//	Reads definitions from the given buffer.
+//	The definition is being loaded from 'sourcefile' (DED or WAD).
+//	The buffer must be null-terminated.
+//==========================================================================
+int DED_ReadData(ded_t *ded, int bDestroyOld, char *buffer,
+				 const char *sourceFile) // Just informational...
+{
+	int idx, retval = true;
+	char label[128], tmp[256];
+	ded_mobj_t *mo;
+	ded_state_t *st;
+	ded_light_t *lig;
+	int prev_ligdef_idx = -1; // For "Copy".
+	ded_model_t *mdl, *prevmdl = 0;
+	int prev_modef_idx = -1; // For "Copy".
+	ded_sound_t *snd;
+	ded_mapinfo_t *mi;
+	ded_str_t *tn;
+	ded_value_t *val;
+	ded_detailtexture_t *dtl;
+	int prev_dtldef_idx = -1; // For "Copy".
+	ded_ptcgen_t *gen;
+	int prev_gendef_idx = -1; // For "Copy".
+	ded_finale_t *fin;
+	ded_linetype_t *l;
+	ded_sectortype_t *sec;
+	int sub;
+	int depth;
+	char *rootstr = 0, *ptr;
+	int bCopyNext = false;
+	directory_t fileDir;
+
+#if !__DEDMAN__
+	// For including other files -- we must know where we are.
+	Dir_FileDir(sourceFile, &fileDir);
+#endif
+
+	lineNumber = 1;
+	if(bDestroyOld)
+	{
+		// Clear all existing definitions.
+		DED_Destroy(ded);
+		DED_Init(ded);
+	}
+
+	// Start parsing the data...
+	DED_InitReader(buffer);
+
+	while(ReadToken())
+	{
+		if(ISTOKEN("Copy") || ISTOKEN("*")) 
+		{
+			bCopyNext = true;
+			continue; // Read the next token.
+		}
+		if(ISTOKEN("SkipIf"))
+		{
+			sub = 1;
+			ReadToken();
+			if(ISTOKEN("Not"))
+			{
+				sub = 0;
+				ReadToken();
+			}
+#if !__DEDMAN__
+			if(sub == (ArgCheck(token) != 0))
+			{
+				// Ah, we're done. Get out of here.
+				goto ded_end_read; 
+			}
+#endif
+			CHECKSC;
+		}
+		if(ISTOKEN("Include"))
+		{
+			// A new include.
+			idx = DED_AddInclude(ded, "");
+			READSTR(tmp);
+#if !__DEDMAN__
+			M_TranslatePath(tmp, tmp);
+			if(!Dir_IsAbsolute(tmp))
+#endif
+				sprintf(ded->includes[idx].path, "%s%s", fileDir.path, tmp);
+			CHECKSC;
+		}
+		if(ISTOKEN("IncludeIf")) // An optional include.
+		{
+			sub = 1;
+			ReadToken();
+			if(ISTOKEN("Not")) 
+			{
+				sub = 0; 
+				ReadToken();
+			}
+#if !__DEDMAN__
+			if(sub == (ArgCheck(token) != 0))
+			{
+				idx = DED_AddInclude(ded, "");
+				READSTR(tmp);
+				M_TranslatePath(tmp, tmp);
+				if(!Dir_IsAbsolute(tmp))
+					sprintf(ded->includes[idx].path, "%s%s", fileDir.path, tmp);
+			}
+			else
+#endif
+			{
+				// Arg not found; just skip it.
+				READSTR(tmp);
+			}
+			CHECKSC;
+		}
+		if(ISTOKEN("ModelPath"))
+		{
+			// A new model path. Append to the list.
+			READSTR(label);
+			CHECKSC;
+#if !__DEDMAN__
+			R_AddModelPath(label, true);
+#endif
+		}
+		if(ISTOKEN("Header"))
+		{
+			FINDBEGIN;
+			// If we're appending an existing definition, skip the header.
+			if(!bDestroyOld)
+			{
+				while(!ISTOKEN("}") && !dedend) ReadToken();
+			}
+			else for(;;)
+			{
+				READLABEL;
+				RV_INT("Version", ded->version)
+				RV_STR("Thing prefix", ded->mobj_prefix)
+				RV_STR("State prefix", ded->state_prefix)
+				RV_STR("Sprite prefix", ded->sprite_prefix)
+				RV_STR("Sfx prefix", ded->sfx_prefix)
+				RV_STR("Mus prefix", ded->mus_prefix)
+				RV_STR("Text prefix", ded->text_prefix)
+				RV_STR("Model path", ded->model_path)
+				RV_STR("Common model flags", ded->model_flags)
+				RV_FLT("Default model scale", ded->model_scale)
+				RV_FLT("Default model offset", ded->model_offset)
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Flag"))
+		{
+			// A new flag.
+			idx = DED_AddFlag(ded, "", 0);
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", ded->flags[idx].id)
+				RV_UINT("Value", ded->flags[idx].value)
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Thing"))
+		{
+			// A new thing.
+			idx = DED_AddMobj(ded, "");
+			mo = ded->mobjs + idx;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", mo->id)
+				RV_INT("DoomEd number", mo->doomednum)
+				RV_STR("Name", mo->name)
+				RV_STR("Spawn state", mo->spawnstate)
+				RV_STR("See state", mo->seestate)
+				RV_STR("Pain state", mo->painstate)
+				RV_STR("Melee state", mo->meleestate)
+				RV_STR("Missile state", mo->missilestate)
+				RV_STR("Crash state", mo->crashstate)
+				RV_STR("Death state", mo->deathstate)
+				RV_STR("Xdeath state", mo->xdeathstate)
+				RV_STR("Raise state", mo->raisestate)
+				RV_STR("See sound", mo->seesound)
+				RV_STR("Attack sound", mo->attacksound)
+				RV_STR("Pain sound", mo->painsound)
+				RV_STR("Death sound", mo->deathsound)
+				RV_STR("Active sound", mo->activesound)
+				RV_INT("Reaction time", mo->reactiontime)
+				RV_INT("Pain chance", mo->painchance)
+				RV_INT("Spawn health", mo->spawnhealth)
+				RV_FLT("Speed", mo->speed)
+				RV_FLT("Radius", mo->radius)
+				RV_FLT("Height", mo->height)
+				RV_INT("Mass", mo->mass)
+				RV_INT("Damage", mo->damage)
+				RV_STR("Flags", mo->flags[0])
+				RV_STR("Flags2", mo->flags[1])
+				RV_STR("Flags3", mo->flags[2])
+				RV_INT("Misc1", mo->misc[0])
+				RV_INT("Misc2", mo->misc[1])
+				RV_INT("Misc3", mo->misc[2])
+				RV_INT("Misc4", mo->misc[3])
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("State"))
+		{
+			// A new state.
+			idx = DED_AddState(ded, "");
+			st = ded->states + idx;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", st->id)
+				RV_STR("Flags", st->flags)
+				RV_STR("Sprite", st->sprite.id)
+				RV_INT("Frame", st->frame)
+				RV_INT("Tics", st->tics)
+				RV_STR("Action", st->action)
+				RV_STR("Next state", st->nextstate)
+				RV_INT("Misc1", st->misc[0])
+				RV_INT("Misc2", st->misc[1])
+				RV_INT("Misc3", st->misc[2])
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Sprite"))
+		{
+			// A new sprite.
+			idx = DED_AddSprite(ded, "");
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", ded->sprites[idx].id)
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Light"))
+		{
+			// A new light.
+			idx = DED_AddLight(ded, "");
+			lig = ded->lights + idx;
+			if(prev_ligdef_idx >= 0 && bCopyNext) 
+			{
+				// Should we copy the previous definition?
+				memcpy(lig, ded->lights + prev_ligdef_idx, sizeof(*lig));
+			}
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				//RV_STR("Sprite", lig->sprite.id)
+				//RV_INT("Frame", lig->frame)
+				RV_STR("State", lig->state)
+				RV_FLT("X Offset", lig->xoffset)
+				RV_FLT("Y Offset", lig->yoffset)
+				RV_FLT("Size", lig->size)
+				RV_FLT("Red", lig->color[0])
+				RV_FLT("Green", lig->color[1])
+				RV_FLT("Blue", lig->color[2])
+				RV_VEC("Color", lig->color, 3)
+				RV_STR("Flags", lig->flags_string)
+				RV_END
+				CHECKSC;
+			}
+			prev_ligdef_idx = idx;
+		}
+		if(ISTOKEN("Model"))
+		{
+			// A new model.
+			idx = DED_AddModel(ded, "");
+			mdl = ded->models + idx;
+			sub = 0;
+			if(prev_modef_idx >= 0) 
+			{
+				prevmdl = ded->models + prev_modef_idx;
+				// Should we copy the previous definition?
+				if(bCopyNext) memcpy(mdl, prevmdl, sizeof(*mdl));
+			}
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("State", mdl->state)
+				RV_INT("Off", mdl->off)
+				RV_STR("Sprite", mdl->sprite.id)
+				RV_INT("Sprite frame", mdl->spriteframe)
+				RV_STR("Group", mdl->group)
+				RV_INT("Selector", mdl->selector)
+				RV_STR("Flags", mdl->flags)
+				RV_FLT("Inter", mdl->intermark)
+				RV_INT("Skin tics", mdl->skintics)
+				RV_FLT("Resize", mdl->resize)
+				if(ISLABEL("Scale"))
+				{
+					READFLT(mdl->scale[1]);
+					mdl->scale[0] = mdl->scale[2] = mdl->scale[1];
+				} 
+				else RV_VEC("Scale XYZ", mdl->scale, 3)
+				RV_FLT("Offset", mdl->offset[1])
+				RV_VEC("Offset XYZ", mdl->offset, 3)
+				RV_VEC("Interpolate", mdl->interrange, 2)
+				RV_FLT("Shadow radius", mdl->shadowradius)
+				if(ISLABEL("Md2") || ISLABEL("Sub"))
+				{
+					if(sub >= 4)
+						Con_Error("DED_ReadData: Too many submodels (%s).\n",
+						mdl->state);
+					FINDBEGIN;
+					for(;;)
+					{
+						READLABEL;
+						RV_STR("File", mdl->sub[sub].filename.path)
+						RV_STR("Frame", mdl->sub[sub].frame)
+						RV_INT("Frame range", mdl->sub[sub].framerange)
+						RV_INT("Skin", mdl->sub[sub].skin)
+						RV_INT("Skin range", mdl->sub[sub].skinrange)
+						RV_VEC("Offset XYZ", mdl->sub[sub].offset, 3)
+						RV_STR("Flags", mdl->sub[sub].flags)
+						RV_FLT("Transparent", mdl->sub[sub].alpha)
+						RV_FLT("Parm", mdl->sub[sub].parm)
+						RV_BYTE("Selskin mask", mdl->sub[sub].selskinbits[0])
+						RV_BYTE("Selskin shift", mdl->sub[sub].selskinbits[1])
+						RV_NBVEC("Selskins", mdl->sub[sub].selskins, 8)
+						RV_STR("Shiny skin", mdl->sub[sub].shinyskin)
+						RV_FLT("Shiny", mdl->sub[sub].shiny)
+						RV_VEC("Shiny color", mdl->sub[sub].shinycolor, 3)
+						RV_END
+						CHECKSC;
+					}
+					sub++;
+				}
+				else RV_END
+				CHECKSC;
+			}
+			// Some post-processing. No point in doing this in a fancy way,
+			// the whole reader will be rewritten sooner or later...
+			if(prevmdl)
+			{
+				int i;
+				if(!strcmp(mdl->state, "-"))		strcpy(mdl->state,		prevmdl->state);
+				if(!strcmp(mdl->sprite.id, "-"))	strcpy(mdl->sprite.id,	prevmdl->sprite.id);
+				if(!strcmp(mdl->group, "-"))		strcpy(mdl->group,		prevmdl->group);
+				if(!strcmp(mdl->flags, "-"))		strcpy(mdl->flags,		prevmdl->flags);
+				for(i=0; i<4; i++)
+				{
+					if(!strcmp(mdl->sub[i].filename.path, "-"))	strcpy(mdl->sub[i].filename.path,	prevmdl->sub[i].filename.path);
+					if(!strcmp(mdl->sub[i].frame, "-"))			strcpy(mdl->sub[i].frame,			prevmdl->sub[i].frame);
+					if(!strcmp(mdl->sub[i].flags, "-"))			strcpy(mdl->sub[i].flags,			prevmdl->sub[i].flags);
+				}
+			}
+			prev_modef_idx = idx;			
+		}
+		if(ISTOKEN("Sound"))
+		{
+			// A new sound.
+			idx = DED_AddSound(ded, "");
+			snd = ded->sounds + idx;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", snd->id)
+				RV_STR("Lump", snd->lumpname)
+				RV_STR("Name", snd->name)
+				RV_STR("Link", snd->link)
+				RV_INT("Link pitch", snd->link_pitch)
+				RV_INT("Link volume", snd->link_volume)
+				RV_INT("Priority", snd->priority)
+				RV_INT("Max channels", snd->channels)
+				RV_INT("Group", snd->group)
+				RV_STR("Flags", snd->flags)
+				RV_STR("Ext", snd->ext.path)
+				RV_STR("File", snd->ext.path)
+				RV_STR("File name", snd->ext.path)
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Music"))
+		{
+			// A new music.
+			idx = DED_AddMusic(ded, "");
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", ded->music[idx].id)
+				RV_STR("Lump", ded->music[idx].lumpname)
+				RV_STR("File name", ded->music[idx].path.path)
+				RV_STR("File", ded->music[idx].path.path)
+				RV_STR("Ext", ded->music[idx].path.path) // Both work.
+				RV_INT("CD track", ded->music[idx].cdtrack)
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Map")) // Info
+		{
+			// A new map info.
+			idx = DED_AddMapInfo(ded, "");
+			mi = ded->mapinfo + idx;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", mi->id)
+				RV_STR("Name", mi->name)
+				RV_STR("Author", mi->author)
+				RV_STR("Flags", mi->flags)
+				RV_STR("Music", mi->music)
+				RV_FLT("Par time", mi->partime)
+				RV_FLT("Fog color R", mi->fog_color[0])
+				RV_FLT("Fog color G", mi->fog_color[1])
+				RV_FLT("Fog color B", mi->fog_color[2])
+				RV_FLT("Fog start", mi->fog_start)
+				RV_FLT("Fog end", mi->fog_end)
+				RV_FLT("Fog density", mi->fog_density)
+				RV_FLT("Ambient light", mi->ambient)
+				RV_FLT("Gravity", mi->gravity)
+				RV_FLT("Sky height", mi->sky_height)
+				RV_FLT("Horizon offset", mi->horizon_offset)
+				if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
+				{
+					ded_skylayer_t *sl = mi->sky_layers + atoi(label+10)-1;
+					FINDBEGIN;
+					for(;;)
+					{
+						READLABEL;
+						RV_STR("Flags", sl->flags)
+						RV_STR("Texture", sl->texture)
+						RV_FLT("Offset", sl->offset)
+						RV_FLT("Color limit", sl->color_limit)
+						RV_END
+						CHECKSC;
+					}
+				}
+				else RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Text"))
+		{
+			// A new text.
+			idx = DED_AddText(ded, "");
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", ded->text[idx].id)
+				if(ISLABEL("Text"))
+				{
+					// Allocate a 'huge' buffer.
+					char *temp = malloc(0x10000);
+					if(ReadString(temp, 0xffff))
+					{
+						int len = strlen(temp) + 1;
+						ded->text[idx].text = realloc(temp, len);
+						//memcpy(ded->text[idx].text, temp, len);
+					}
+					else
+					{
+						free(temp);
+						SetError("Syntax error in text value.");
+						retval = false;
+						goto ded_end_read;
+					}
+				}
+				else RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Texture")) // Environment
+		{
+			// A new texenv.
+			idx = DED_AddTexEnviron(ded, "");
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("ID", ded->tenviron[idx].id)
+				if(ISLABEL("Texture"))
+				{
+					// A new texture name.
+					tn = DED_NewEntry(&ded->tenviron[idx].textures,
+						&ded->tenviron[idx].count, sizeof(*tn));
+					FINDBEGIN;
+					for(;;)
+					{
+						READLABEL;
+						RV_STR("ID", tn->str)
+						RV_END
+						CHECKSC;
+					}
+				}
+				else RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Values")) // String Values
+		{
+			depth = 0;
+			rootstr = calloc(1, 1);	// A null string.
+			FINDBEGIN;	
+			for(;;)
+			{
+				// Get the next label but don't stop on }.
+				READLABEL_NOBREAK;
+				if(strchr(label, '|'))
+				{
+					SetError("Value labels can't include | characters (ASCII 124).");
+					retval = false;
+					goto ded_end_read;
+				}
+				if(ISTOKEN("="))
+				{
+					// Define a new string.
+					char *temp = malloc(0x1000);	// A 'huge' buffer.
+					if(ReadString(temp, 0xffff))
+					{
+						// Reallocate the buffer down to actual string length.
+						temp = realloc(temp, strlen(temp) + 1);				
+						// Get a new value entry.
+						idx = DED_AddValue(ded, 0);
+						val = ded->values + idx;
+						val->text = temp;
+						// Compose the identifier.
+						val->id = malloc(strlen(rootstr) + strlen(label) + 1);
+						strcpy(val->id, rootstr);
+						strcat(val->id, label);
+					}
+					else
+					{
+						free(temp);
+						SetError("Syntax error in string value.");
+						retval = false;
+						goto ded_end_read;
+					}
+				}
+				else if(ISTOKEN("{"))
+				{
+					// Begin a new group.
+					rootstr = realloc(rootstr, strlen(rootstr)
+						+ strlen(label) + 2);
+					strcat(rootstr, label);
+					strcat(rootstr, "|");	// The separator.
+					// Increase group level.
+					depth++;
+					continue;
+				}
+				else if(ISTOKEN("}"))
+				{
+					// End group.
+					if(!depth) break;	// End root depth.
+					// Decrease level and modify roostr.
+					depth--;
+					sub = strlen(rootstr);
+					rootstr[sub-1] = 0;	// Remove last |.
+					ptr = strrchr(rootstr, '|');
+					if(ptr)
+					{
+						ptr[1] = 0;
+						rootstr = realloc(rootstr, strlen(rootstr) + 1);
+					}
+					else
+					{
+						// Back to level zero.
+						rootstr = realloc(rootstr, 1);
+						*rootstr = 0;
+					}
+				}
+				else
+				{
+					// Only the above characters are allowed.
+					SetError("Illegal token."); 
+					retval = false; 
+					goto ded_end_read;
+				}
+				CHECKSC;
+			}
+			free(rootstr);
+			rootstr = 0;
+		}
+		if(ISTOKEN("Detail")) // Detail Texture
+		{
+			idx = DED_AddDetail(ded, "");
+			dtl = ded->details + idx;
+			if(prev_dtldef_idx >= 0 && bCopyNext) 
+			{
+				// Should we copy the previous definition?
+				memcpy(dtl, ded->details + prev_dtldef_idx, sizeof(*dtl));
+			}
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("Wall", dtl->wall)
+				RV_STR("Flat", dtl->flat)
+				RV_STR("Lump", dtl->detail_lump)
+				RV_FLT("Scale", dtl->scale)
+				RV_FLT("Strength", dtl->strength)
+				RV_FLT("Distance", dtl->maxdist)
+				RV_END
+				CHECKSC;
+			}
+			prev_dtldef_idx = idx;
+		}
+		if(ISTOKEN("Generator")) // Particle Generator
+		{
+			idx = DED_AddPtcGen(ded, "");
+			gen = ded->ptcgens + idx;
+			sub = 0;
+			if(prev_gendef_idx >= 0 && bCopyNext) 
+			{
+				// Should we copy the previous definition?
+				memcpy(gen, ded->ptcgens + prev_gendef_idx, sizeof(*gen));
+			}
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("State", gen->state)
+				RV_STR("Flat", gen->flat)
+				RV_STR("Mobj", gen->type)
+				RV_STR("Alt mobj", gen->type2)
+				RV_STR("Damage mobj", gen->damage)
+				RV_STR("Map", gen->map)
+				RV_STR("Flags", gen->flags_string)
+				RV_FLT("Speed", gen->speed)
+				RV_FLT("Speed Rnd", gen->spd_variance)
+				RV_VEC("Vector", gen->vector, 3)
+				RV_FLT("Vector Rnd", gen->vec_variance)
+				RV_VEC("Center", gen->center, 3)
+				RV_FLT("Spawn radius", gen->spawn_radius)
+				RV_FLT("Min spawn radius", gen->min_spawn_radius)
+				RV_FLT("Distance", gen->maxdist)
+				RV_INT("Spawn age", gen->spawn_age)
+				RV_INT("Max age", gen->max_age)
+				RV_INT("Particles", gen->particles)
+				RV_FLT("Spawn rate", gen->spawn_rate)
+				RV_FLT("Spawn Rnd", gen->spawn_variance)
+				RV_INT("Presim", gen->presim)
+				RV_INT("Alt start", gen->alt_start)
+				RV_FLT("Alt Rnd", gen->alt_variance)
+				RV_VEC("Force axis", gen->force_axis, 3)
+				RV_FLT("Force radius", gen->force_radius)
+				RV_FLT("Force", gen->force)
+				RV_VEC("Force origin", gen->force_origin, 3)
+				if(ISLABEL("Stage"))
+				{
+					ded_ptcstage_t *st = gen->stages + sub;
+					if(sub == DED_PTC_STAGES)
+					{
+						SetError("Too many generator stages."); 
+						retval = false; 
+						goto ded_end_read;
+					}
+					FINDBEGIN;
+					for(;;)
+					{
+						READLABEL;
+						RV_STR("Type", st->type)
+						RV_INT("Tics", st->tics)
+						RV_FLT("Rnd", st->variance)
+						RV_VEC("Color", st->color, 4)
+						RV_FLT("Radius", st->radius)
+						RV_FLT("Radius rnd", st->radius_variance)
+						RV_STR("Flags", st->flags)
+						RV_FLT("Bounce", st->bounce)
+						RV_FLT("Gravity", st->gravity)
+						RV_FLT("Resistance", st->resistance)
+						RV_END
+						CHECKSC;
+					}
+					sub++;
+				} 
+				else RV_END
+				CHECKSC;
+			}
+			prev_gendef_idx = idx;
+		}
+		if(ISTOKEN("Finale"))
+		{
+			idx = DED_AddFinale(ded);
+			fin = ded->finales + idx;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_STR("Before", fin->before)
+				RV_STR("After", fin->after)
+				RV_INT("Game", fin->game)
+				if(ISLABEL("Script"))
+				{
+					// Allocate an "enormous" 64K buffer.
+					char *temp = calloc(0x10000, 1), *ptr;
+					if(fin->script) free(fin->script);
+					FINDBEGIN;
+					ptr = temp;
+					ReadToken();
+					while(!ISTOKEN("}") && !dedend)
+					{
+						if(ptr != temp) *ptr++ = ' ';
+						strcpy(ptr, token);
+						ptr += strlen(token);
+						if(ISTOKEN("\""))
+						{
+							ReadStringEx(ptr, 0x10000 - (ptr-temp), true, true);
+							ptr += strlen(ptr); // Continue from the null.
+							*ptr++ = '"';
+						}
+						ReadToken();
+						// Skip all semicolons.
+						while(ISTOKEN(";") && !dedend) ReadToken();
+					}
+					fin->script = realloc(temp, strlen(temp) + 1);
+				}
+				else RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Line"))		// Line Type
+		{
+			// A new line type.
+			idx = DED_AddLine(ded, 0);
+			l = ded->lines + idx;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_INT("ID", l->id)
+				RV_STR("Comment", l->comment)
+				RV_STR("Flags", l->flags[0])
+				RV_STR("Flags2", l->flags[1])
+				RV_STR("Flags3", l->flags[2])
+				RV_STR("Class", l->line_class)
+				RV_STR("Type", l->act_type)
+				RV_INT("Count", l->act_count)
+				RV_FLT("Time", l->act_time)
+				RV_INT("Act tag", l->act_tag)
+				RV_INT("Ap0", l->aparm[0])
+				RV_INT("Ap1", l->aparm[1])
+				RV_INT("Ap2", l->aparm[2])
+				RV_INT("Ap3", l->aparm[3])
+				RV_STR("Ap4", l->aparm_str[0])
+				RV_INT("Ap5", l->aparm[4])
+				RV_STR("Ap6", l->aparm_str[1])
+				RV_INT("Ap7", l->aparm[5])
+				RV_INT("Ap8", l->aparm[6])
+				RV_STR("Ap9", l->aparm_str[2])
+				RV_INT("Health above", l->aparm[0])
+				RV_INT("Health below", l->aparm[1])
+				RV_INT("Power above", l->aparm[2])
+				RV_INT("Power below", l->aparm[3])
+				RV_STR("Line act lref", l->aparm_str[0])
+				RV_INT("Line act lrefd", l->aparm[4])
+				RV_STR("Line inact lref", l->aparm_str[1])
+				RV_INT("Line inact lrefd", l->aparm[5])
+				RV_INT("Color", l->aparm[6])
+				RV_STR("Thing type", l->aparm_str[2])
+				RV_FLT("Ticker start time", l->ticker_start)
+				RV_FLT("Ticker end time", l->ticker_end)
+				RV_INT("Ticker tics", l->ticker_interval)
+				RV_STR("Act sound", l->act_sound)
+				RV_STR("Deact sound", l->deact_sound)
+				RV_INT("Event chain", l->ev_chain)
+				RV_INT("Act chain", l->act_chain)
+				RV_INT("Deact chain", l->deact_chain)
+				RV_STR("Wall section", l->wallsection)
+				RV_STR("Act texture", l->act_tex)
+				RV_STR("Deact texture", l->deact_tex)
+				RV_STR("Act message", l->act_msg)
+				RV_STR("Deact message", l->deact_msg)
+				RV_FLT("Texmove angle", l->texmove_angle)
+				RV_FLT("Texmove speed", l->texmove_speed)
+				RV_STR_INT("Ip0", l->iparm_str[0], l->iparm[0])
+				RV_STR_INT("Ip1", l->iparm_str[1], l->iparm[1])
+				RV_STR_INT("Ip2", l->iparm_str[2], l->iparm[2])
+				RV_STR_INT("Ip3", l->iparm_str[3], l->iparm[3])
+				RV_STR_INT("Ip4", l->iparm_str[4], l->iparm[4])
+				RV_STR_INT("Ip5", l->iparm_str[5], l->iparm[5])
+				RV_STR_INT("Ip6", l->iparm_str[6], l->iparm[6])
+				RV_STR_INT("Ip7", l->iparm_str[7], l->iparm[7])
+				RV_STR_INT("Ip8", l->iparm_str[8], l->iparm[8])
+				RV_STR_INT("Ip9", l->iparm_str[9], l->iparm[9])
+				RV_STR_INT("Ip10", l->iparm_str[10], l->iparm[10])
+				RV_STR_INT("Ip11", l->iparm_str[11], l->iparm[11])
+				RV_STR_INT("Ip12", l->iparm_str[12], l->iparm[12])
+				RV_STR_INT("Ip13", l->iparm_str[13], l->iparm[13])
+				RV_STR_INT("Ip14", l->iparm_str[14], l->iparm[14])
+				RV_STR_INT("Ip15", l->iparm_str[15], l->iparm[15])
+				RV_STR_INT("Ip16", l->iparm_str[16], l->iparm[16])
+				RV_STR_INT("Ip17", l->iparm_str[17], l->iparm[17])
+				RV_STR_INT("Ip18", l->iparm_str[18], l->iparm[18])
+				RV_STR_INT("Ip19", l->iparm_str[19], l->iparm[19])
+				RV_FLT("Fp0", l->fparm[0])
+				RV_FLT("Fp1", l->fparm[1])
+				RV_FLT("Fp2", l->fparm[2])
+				RV_FLT("Fp3", l->fparm[3])
+				RV_FLT("Fp4", l->fparm[4])
+				RV_FLT("Fp5", l->fparm[5])
+				RV_FLT("Fp6", l->fparm[6])
+				RV_FLT("Fp7", l->fparm[7])
+				RV_FLT("Fp8", l->fparm[8])
+				RV_FLT("Fp9", l->fparm[9])
+				RV_FLT("Fp10", l->fparm[10])
+				RV_FLT("Fp11", l->fparm[11])
+				RV_FLT("Fp12", l->fparm[12])
+				RV_FLT("Fp13", l->fparm[13])
+				RV_FLT("Fp14", l->fparm[14])
+				RV_FLT("Fp15", l->fparm[15])
+				RV_FLT("Fp16", l->fparm[16])
+				RV_FLT("Fp17", l->fparm[17])
+				RV_FLT("Fp18", l->fparm[18])
+				RV_FLT("Fp19", l->fparm[19])
+				RV_STR("Sp0", l->sparm[0])
+				RV_STR("Sp1", l->sparm[1])
+				RV_STR("Sp2", l->sparm[2])
+				RV_STR("Sp3", l->sparm[3])
+				RV_STR("Sp4", l->sparm[4])
+				RV_END
+				CHECKSC;
+			}
+		}
+		if(ISTOKEN("Sector"))	// Sector Type
+		{
+			// A new sector type.
+			idx = DED_AddSector(ded, 0);
+			sec = ded->sectors + idx;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_INT("ID", sec->id)
+				RV_STR("Comment", sec->comment)
+				RV_STR("Flags", sec->flags)
+				RV_INT("Act tag", sec->act_tag)
+				RV_INT("Floor chain", sec->chain[0])
+				RV_INT("Ceiling chain", sec->chain[1])
+				RV_INT("Inside chain", sec->chain[2])
+				RV_INT("Ticker chain", sec->chain[3])
+				RV_STR("Floor chain flags", sec->chain_flags[0])
+				RV_STR("Ceiling chain flags", sec->chain_flags[1])
+				RV_STR("Inside chain flags", sec->chain_flags[2])
+				RV_STR("Ticker chain flags", sec->chain_flags[3])
+				RV_FLT("Floor chain start time", sec->start[0])
+				RV_FLT("Ceiling chain start time", sec->start[1])
+				RV_FLT("Inside chain start time", sec->start[2])
+				RV_FLT("Ticker chain start time", sec->start[3])
+				RV_FLT("Floor chain end time", sec->end[0])
+				RV_FLT("Ceiling chain end time", sec->end[1])
+				RV_FLT("Inside chain end time", sec->end[2])
+				RV_FLT("Ticker chain end time", sec->end[3])
+				RV_FLT("Floor chain min interval", sec->interval[0][0])
+				RV_FLT("Ceiling chain min interval", sec->interval[1][0])
+				RV_FLT("Inside chain min interval", sec->interval[2][0])
+				RV_FLT("Ticker chain min interval", sec->interval[3][0])
+				RV_FLT("Floor chain max interval", sec->interval[0][1])
+				RV_FLT("Ceiling chain max interval", sec->interval[1][1])
+				RV_FLT("Inside chain max interval", sec->interval[2][1])
+				RV_FLT("Ticker chain max interval", sec->interval[3][1])				
+				RV_INT("Floor chain count", sec->count[0])
+				RV_INT("Ceiling chain count", sec->count[1])
+				RV_INT("Inside chain count", sec->count[2])
+				RV_INT("Ticker chain count", sec->count[3])
+				RV_STR("Ambient sound", sec->ambient_sound)
+				RV_FLT("Ambient min interval", sec->sound_interval[0])
+				RV_FLT("Ambient max interval", sec->sound_interval[1])
+				RV_FLT("Floor texmove angle", sec->texmove_angle[0])
+				RV_FLT("Ceiling texmove angle", sec->texmove_angle[1])
+				RV_FLT("Floor texmove speed", sec->texmove_speed[0])
+				RV_FLT("Ceiling texmove speed", sec->texmove_speed[1])
+				RV_FLT("Wind angle", sec->wind_angle)
+				RV_FLT("Wind speed", sec->wind_speed)
+				RV_FLT("Vertical wind", sec->vertical_wind)
+				RV_FLT("Gravity", sec->gravity)
+				RV_FLT("Friction", sec->friction)
+				RV_STR("Light fn", sec->lightfunc)
+				RV_INT("Light fn min tics", sec->light_interval[0])
+				RV_INT("Light fn max tics", sec->light_interval[1])
+				RV_STR("Red fn", sec->colfunc[0])
+				RV_STR("Green fn", sec->colfunc[1])
+				RV_STR("Blue fn", sec->colfunc[2])
+				RV_INT("Red fn min tics", sec->col_interval[0][0])
+				RV_INT("Red fn max tics", sec->col_interval[0][1])
+				RV_INT("Green fn min tics", sec->col_interval[1][0])
+				RV_INT("Green fn max tics", sec->col_interval[1][1])
+				RV_INT("Blue fn min tics", sec->col_interval[2][0])
+				RV_INT("Blue fn max tics", sec->col_interval[2][1])
+				RV_STR("Floor fn", sec->floorfunc)
+				RV_FLT("Floor fn scale", sec->floormul)
+				RV_FLT("Floor fn offset", sec->flooroff)
+				RV_INT("Floor fn min tics", sec->floor_interval[0])
+				RV_INT("Floor fn max tics", sec->floor_interval[1])
+				RV_STR("Ceiling fn", sec->ceilfunc)
+				RV_FLT("Ceiling fn scale", sec->ceilmul)
+				RV_FLT("Ceiling fn offset", sec->ceiloff)
+				RV_INT("Ceiling fn min tics", sec->ceil_interval[0])
+				RV_INT("Ceiling fn max tics", sec->ceil_interval[1])
+				RV_END
+				CHECKSC;
+			}
+		}
+		bCopyNext = false;
+	}
+	
+ded_end_read:
+	free(rootstr);
+//	fclose(file);
+	return retval;
+}
+
+//===========================================================================
+// DED_Read
+//	Returns true if the file was successfully loaded.
+//===========================================================================
+int DED_Read(ded_t *ded, const char *sPathName, int bDestroyOld)
+{
+	DFILE *file;
+	char *defData;
+	int len;
+	int result;
+	char translated[256];
+
+#if !__DEDMAN__
+	M_TranslatePath(sPathName, translated);
+#else
+	strcpy(translated, sPathName);
+#endif
+	if((file = F_Open(translated, "rb")) == NULL)
+	{
+		lineNumber = 0;
+		SetError("File can't be opened for reading.");
+		return false;
+	}
+	// Allocate a large enough buffer and read the file.
+#if __DEDMAN__
+	fseek(file, 0, SEEK_END);
+#else
+	F_Seek(file, 0, SEEK_END);
+#endif
+	len = F_Tell(file);
+	F_Rewind(file);
+	defData = calloc(len + 1, 1);
+	F_Read(defData, len, file);
+	F_Close(file);
+	// Parse the definitions.
+	result = DED_ReadData(ded, bDestroyOld, defData, translated);
+	// Now we can free the buffer.
+	free(defData);
+	return result;
+}
+
+#if !__DEDMAN__
+//===========================================================================
+// DED_ReadLump
+//	Reads definitions from the given lump.
+//===========================================================================
+int DED_ReadLump(ded_t *ded, int lump, int bDestroyOld)
+{
+	int result;
+
+	if(lump < 0 || lump >= numlumps) 
+	{
+		lineNumber = 0;
+		SetError("Bad lump number.");
+		return false;
+	}
+	result = DED_ReadData(ded, bDestroyOld, W_CacheLumpNum(lump, PU_STATIC),
+		W_LumpSourceFile(lump));
+	W_ChangeCacheTag(lump, PU_CACHE);
+	return result;
+}
+#endif

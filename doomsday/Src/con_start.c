@@ -1,0 +1,211 @@
+
+//**************************************************************************
+//**
+//** CON_START.C
+//**
+//** Draws the GL startup screen & messages.
+//**
+//**************************************************************************
+
+
+// HEADER FILES ------------------------------------------------------------
+
+#include "de_base.h"
+#include "de_console.h"
+#include "de_system.h"
+#include "de_graphics.h"
+#include "de_refresh.h"
+#include "de_ui.h"
+
+// MACROS ------------------------------------------------------------------
+#define LOGO_WIDTH			256
+#define LOGO_HEIGHT			48 //51
+#define LOGO_SCR_WIDTH		(512)
+#define LOGO_SCR_HEIGHT		(102)
+
+#define BUFFER_LEN			8000
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern int bufferLines;
+extern HWND hWndMain;
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+boolean		startupScreen = false;
+int			startupLogo;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static char *titletext;
+static fonthgt = 8;	// Height of the font.
+static DGLuint bgflat;
+char *bitmap = NULL;
+
+// CODE --------------------------------------------------------------------
+
+//===========================================================================
+// Con_StartupInit
+//===========================================================================
+void Con_StartupInit(void)
+{
+	static boolean firstTime = true;
+
+	if(novideo) return;
+
+	GL_InitVarFont();
+	fonthgt = FR_TextHeight("Doomsday!");
+
+	startupScreen = true;
+	gl.MatrixMode(DGL_PROJECTION);
+	gl.PushMatrix();
+	gl.LoadIdentity();
+	gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+
+	if(firstTime)
+	{
+		titletext = "Doomsday "DOOMSDAY_VERSION_TEXT" Startup";
+		firstTime = false;
+		bgflat = 0;
+	}
+	else
+	{
+		titletext = "Doomsday "DOOMSDAY_VERSION_TEXT;
+	}
+
+	startupLogo = 0;
+	if(W_CheckNumForName("ddlogo") != -1)
+	{
+		byte *image = W_CacheLumpName("ddlogo", PU_CACHE);
+		startupLogo = gl.NewTexture();
+		gl.TexImage(DGL_LUMINANCE, 256, 64, 0, image);
+		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
+		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+	}
+}
+
+void Con_SetBgFlat(int lump)
+{
+	bgflat = GL_BindTexFlat(R_GetFlat(lump));
+}
+
+void Con_StartupDone(void)
+{
+	if(isDedicated) return;
+	startupScreen = false;
+	gl.DeleteTextures(1, &startupLogo);
+	gl.MatrixMode(DGL_PROJECTION);
+	gl.PopMatrix();
+	GL_ShutdownVarFont();
+}
+
+//===========================================================================
+// Con_DrawStartupBackground
+//	Background with the "The Doomsday Engine" text superimposed.
+//===========================================================================
+void Con_DrawStartupBackground(void)
+{
+	float x, y, w, h;
+
+	// Background gradient.
+	gl.Disable(DGL_TEXTURING);
+	gl.Disable(DGL_BLENDING);
+	gl.Begin(DGL_QUADS);
+	UI_Color(UI_COL(UIC_BG_DARK)); // Top color.
+	gl.Vertex2f(0, 0);
+	gl.Vertex2f(screenWidth, 0); 
+	UI_Color(UI_COL(UIC_BG_LIGHT)); // Bottom color.
+	gl.Vertex2f(screenWidth, screenHeight);
+	gl.Vertex2f(0, screenHeight);
+	gl.End();
+	gl.Enable(DGL_BLENDING);
+
+	// Draw logo.
+	gl.Enable(DGL_TEXTURING);
+	gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
+	if(startupLogo)
+	{
+		// Calculate logo placement.
+		w = screenWidth/1.25f;
+		h = LOGO_HEIGHT * w/LOGO_WIDTH;
+		x = (screenWidth - w)/2;
+		y = (screenHeight - h)/2;
+
+		// Draw it in two passes: additive and subtractive. 
+		gl.Bind(startupLogo);
+		GL_DrawRect(x, y, w, h, .08f, .08f, .08f, 1);
+		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+		GL_DrawRect(x - w/170, y - w/170, w, h, .14f, .14f, .14f, 1);
+		gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
+		gl.Color3f(.08f, .08f, .08f);
+		FR_TextOut(DOOMSDAY_VERSIONTEXT, 
+			x + w - FR_TextWidth(DOOMSDAY_VERSIONTEXT),	
+			y + h);
+	}
+	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);	
+}
+
+//===========================================================================
+// Con_DrawStartupScreen
+//	Does not show anything on screen.
+//===========================================================================
+void Con_DrawStartupScreen(int show)
+{
+	int i, vislines, y, x, st;
+	int topy;
+	
+	// Print the messages in the console.
+	if(!startupScreen || ui_active) return;
+
+	Con_DrawStartupBackground();
+
+	// Draw the title.
+	FR_SetFont(glFontVariable);
+	UI_DrawTitleEx(titletext, topy = FR_TextHeight("W") + UI_BORDER*2);
+	FR_SetFont(glFontFixed);
+
+	topy += UI_BORDER;
+	vislines = (screenHeight - topy + fonthgt/2)/fonthgt;
+	y = topy;
+
+	st = bufferLines - vislines;
+	// Show the last line, too, if there's something.
+	if(Con_GetBufferLine(bufferLines-1)->len) st++;
+	if(st < 0) st = 0;
+	for(i = 0; i < vislines && st+i < bufferLines; i++)
+	{
+		cbline_t *line = Con_GetBufferLine(st+i);
+		if(!line) break;
+		if(line->flags & CBLF_RULER)
+		{
+			Con_DrawRuler(y, fonthgt, 1);
+		}
+		else
+		{
+			x = line->flags & CBLF_CENTER? 
+				(screenWidth - FR_TextWidth(line->text))/2 : 3;
+			gl.Color3f(0, 0, 0);
+			FR_TextOut(line->text, x+1, y+1);
+			gl.Color3f(1, 1, 1);
+			FR_TextOut(line->text, x, y);			
+		}
+		y += fonthgt;
+	}
+	if(show) 
+	{
+		// Update the progress bar, if one is active.
+		Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
+		gl.Show();
+	}
+}
+

@@ -1,0 +1,562 @@
+
+//**************************************************************************
+//**
+//** TEXTURE.CPP
+//**
+//** Target:		DGL Driver for Direct3D 8.1
+//** Description:	Texture management
+//**
+//**************************************************************************
+
+// HEADER FILES ------------------------------------------------------------
+
+#include "drD3D.h"
+
+// MACROS ------------------------------------------------------------------
+
+#define IDX_TO_NAME(i)		((i) + 1)
+#define NAME_TO_IDX(n)		((n) - 1)
+
+#define STSF_MIN_FILTER		0x01	// Includes mipfilter.
+#define STSF_MAG_FILTER		0x02
+#define STSF_ADDRESS_U		0x04
+#define STSF_ADDRESS_V		0x08
+#define STSF_ANISOTROPY		0x10
+#define STSF_ALL			0x1f
+
+// TYPES -------------------------------------------------------------------
+
+typedef unsigned short	ushort;
+
+typedef struct tex_s {
+	IDirect3DTexture8 *ptr;
+	int		width;
+	int		height;
+	D3DTEXTUREFILTERTYPE minFilter, mipFilter, magFilter;
+	D3DTEXTUREADDRESS addressModeU, addressModeV;
+} tex_t;
+
+#pragma pack(1)
+typedef struct mybmp_header_s {
+	char	identifier[2];
+	uint	fileSize;
+	uint	reserved;
+	uint	bitmapDataOffset;
+	uint	bitmapHeaderSize;
+	uint	width;
+	int		height;
+	short	planes;
+	short	bitsPerPixel;
+	uint	compression;
+	uint	bitmapDataSize;		// Rounded to dword.
+	int		hResolution;
+	int		vResolution;
+	uint	colors;
+	uint	importantColors;
+} mybmp_header_t;
+#pragma pack()
+
+#pragma pack(1)		// Confirm that the structures are formed correctly.
+typedef struct 		// Targa image descriptor byte; a bit field
+{
+	byte	attributeBits	: 4;	// Attribute bits associated with each pixel.
+    byte	reserved		: 1;	// A reserved bit; must be 0.
+    byte	screenOrigin	: 1;	// Location of screen origin; must be 0.
+    byte	dataInterleave	: 2;	// TGA_INTERLEAVE_*
+} TARGA_IMAGE_DESCRIPTOR;
+
+typedef struct
+{
+	byte	idFieldSize;			// Identification field size in bytes.
+	byte	colorMapType;			// Type of the color map.
+    byte	imageType;				// Image type code.
+    // Color map specification.
+	ushort  colorMapOrigin;			// Index of first color map entry.
+    ushort	colorMapLength;			// Number of color map entries.
+	byte	colorMapEntrySize;		// Number of bits in a color map entry (16/24/32).
+    // Image specification.
+    ushort	xOrigin;				// X coordinate of lower left corner.
+    ushort	yOrigin;				// Y coordinate of lower left corner.
+    ushort	imageWidth;				// Width of the image in pixels.
+    ushort	imageHeight;			// Height of the image in pixels.
+    byte	imagePixelSize;			// Number of bits in a pixel (16/24/32).
+	TARGA_IMAGE_DESCRIPTOR imageDescriptor;	// A bit field.
+} TARGA_HEADER;
+#pragma pack()		// Back to the default value.
+
+typedef struct palentry_s { byte color[4]; } palentry_t;
+
+// FUNCTION PROTOTYPES -----------------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+tex_t		*texData;
+int			numTexData;
+DGLuint		boundTexName;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static boolean		useAnisotropic = false;
+static palentry_t	texturePalette[256];
+static boolean		texActive;
+
+// CODE --------------------------------------------------------------------
+
+//===========================================================================
+// InitTextures
+//===========================================================================
+void InitTextures(void)
+{
+	useAnisotropic = ArgExists("-anifilter");
+	texActive = true;
+
+	// Allocate the texture information buffer.
+	numTexData = 32;
+	texData = (tex_t*) calloc(numTexData * sizeof(*texData), 1);
+	boundTexName = 0;
+}
+
+//===========================================================================
+// ShutdownTextures
+//===========================================================================
+void ShutdownTextures(void)
+{
+	for(int i = 0; i < numTexData; i++)
+	{
+		if(!texData[i].ptr) continue; // Not used.
+		// Delete this texture.
+		DGLuint name = IDX_TO_NAME(i);
+		DG_DeleteTextures(1, &name);
+	}
+	free(texData);
+	texData = NULL;
+	numTexData = 0;
+	boundTexName = 0;
+}
+
+//===========================================================================
+// TextureOperatingMode
+//===========================================================================
+void TextureOperatingMode(int isActive)
+{
+	texActive = isActive;
+	if(!isActive) 
+		dev->SetTexture(0, NULL);
+	else 
+		DG_Bind(boundTexName);		
+}
+
+//===========================================================================
+// GetBoundTexture
+//===========================================================================
+tex_t *GetBoundTexture(void)
+{
+	if(!boundTexName) return NULL;
+	return texData + NAME_TO_IDX(boundTexName);
+}
+
+//===========================================================================
+// InitNewTexture
+//	Sets the properties of the texture to the default settings.
+//===========================================================================
+void InitNewTexture(tex_t *tex)
+{
+	tex->width = tex->height = 0;
+	tex->minFilter = D3DTEXF_LINEAR;
+	tex->mipFilter = D3DTEXF_POINT;
+	tex->magFilter = D3DTEXF_LINEAR;
+	tex->addressModeU = D3DTADDRESS_WRAP;
+	tex->addressModeV = D3DTADDRESS_WRAP;
+}
+
+//===========================================================================
+// DG_NewTexture
+//	Creates a new texture and binds it.
+//===========================================================================
+DGLuint DG_NewTexture(void)
+{
+	int i;
+
+	// Try to find an unused texdata.
+	for(i = 0; i < numTexData; i++)
+		if(!texData[i].ptr) 
+		{
+			InitNewTexture(texData + i);
+			return DG_Bind(IDX_TO_NAME(i)), boundTexName;
+		}
+
+	// Allocate memory texdata.
+	i = numTexData;
+	numTexData *= 2;
+	texData = (tex_t*) realloc(texData, 2*i*sizeof(*texData));
+	memset(texData + i, 0, i*sizeof(*texData));
+	InitNewTexture(texData + i);
+	return DG_Bind(IDX_TO_NAME(i)), boundTexName;
+}
+
+//===========================================================================
+// SetTexStates
+//===========================================================================
+void SetTexStates(tex_t *tex, int flags)
+{
+	if(flags & STSF_MIN_FILTER) 
+	{
+		SetTSS(0, D3DTSS_MINFILTER, tex->minFilter);
+		SetTSS(0, D3DTSS_MIPFILTER, tex->mipFilter);
+	}
+	if(flags & STSF_MAG_FILTER) SetTSS(0, D3DTSS_MAGFILTER, tex->magFilter);
+	if(flags & STSF_ADDRESS_U) SetTSS(0, D3DTSS_ADDRESSU, tex->addressModeU);
+	if(flags & STSF_ADDRESS_V) SetTSS(0, D3DTSS_ADDRESSV, tex->addressModeV);
+	if(useAnisotropic && flags & STSF_ANISOTROPY)
+		SetTSS(0, D3DTSS_MAXANISOTROPY, maxAniso);
+}
+
+//===========================================================================
+// DG_TexImage
+//	The texture data is put into a Targa image structure, so creating
+//	the texture object is easy using D3DXCreateTextureFromFileInMemory.
+//===========================================================================
+int DG_TexImage(int format, int width, int height, int genMips, void *data)
+{
+	tex_t *tex = GetBoundTexture();
+	byte *buffer;
+	TARGA_HEADER *hdr;
+	byte *ptr, *in, *alphaIn;
+	int i, x, y;
+	boolean hiBits = (wantedTexDepth != 16);
+
+#if _DEBUG
+	if(!width || !height) Con_Error("DG_TexImage: No width or height!\n");
+#endif
+
+	if(!tex) return DGL_ERROR; // No texture has been bound!
+
+	// If there is a previous texture, release it.
+	if(tex->ptr)
+	{
+		dev->SetTexture(0, NULL);
+		tex->ptr->Release();
+		tex->ptr = NULL;
+	}
+
+	// Update texture width and height.
+	tex->width = width;
+	tex->height = height;
+
+	// Allocate a large enough buffer.
+	buffer = (byte*) calloc(sizeof(TARGA_HEADER) + 256*4 /*Palette*/ 
+		+ width*height*4 /*Pixels*/, 1);
+	hdr = (TARGA_HEADER*) buffer;
+
+	// Fill in the Targa data.
+	hdr->imageWidth = width;
+	hdr->imageHeight = height;
+	ptr = buffer + sizeof(*hdr);	// Writing will continue here.
+	
+	// Palette information.
+	if(format == DGL_COLOR_INDEX_8
+		|| format == DGL_COLOR_INDEX_8_PLUS_A8)
+	{
+		hdr->colorMapType = 1;
+		hdr->colorMapOrigin = 0;
+		hdr->colorMapLength = 256;
+		hdr->colorMapEntrySize = 24;
+
+		// Write the color map (BGR).
+		for(i = 0; i < 256; i++)
+		{
+			*ptr++ = texturePalette[i].color[CB];
+			*ptr++ = texturePalette[i].color[CG];
+			*ptr++ = texturePalette[i].color[CR];
+		}
+	}
+
+	if(format == DGL_COLOR_INDEX_8 
+		/*|| format == DGL_COLOR_INDEX_8_PLUS_A8*/)
+	{
+		// Color-mapped.
+		hdr->imageType = 1;
+		/*hdr->colorMapType = 1;
+		hdr->colorMapOrigin = 0;
+		hdr->colorMapLength = 256;
+		hdr->colorMapEntrySize = 24;*/
+		if(format == DGL_COLOR_INDEX_8)
+		{
+			hdr->imagePixelSize = 8;
+			hdr->imageDescriptor.attributeBits = 0;
+		}
+		else
+		{
+			hdr->imagePixelSize = 16; // Contains the 8 attribute bits.
+			hdr->imageDescriptor.attributeBits = 8;
+		}
+/*		// Write the color map (BGR).
+		for(i = 0; i < 256; i++)
+		{
+			*ptr++ = texturePalette[i].color[CB];
+			*ptr++ = texturePalette[i].color[CG];
+			*ptr++ = texturePalette[i].color[CR];
+		}
+*/
+		// Write the image data.
+		if(format == DGL_COLOR_INDEX_8)
+		{
+			// Copy line by line.
+			for(y = height - 1; y >= 0; y--, ptr += width)
+				memcpy(ptr, (byte*)data + y*width, width);
+		}
+		else // DGL_COLOR_INDEX_8_PLUS_A8
+		{
+			// The alpha values must be interleaved.
+			for(y = height - 1; y >= 0; y--)
+			{
+				in = (byte*)data + y*width;
+				alphaIn = in + width*height;
+				for(x = 0; x < width; x++)
+				{
+					*ptr++ = *in++;
+					*ptr++ = *alphaIn++;
+				}
+			}
+		}
+	}
+	else if(format == DGL_COLOR_INDEX_8_PLUS_A8)
+	{
+		hdr->imageType = 2;
+		hdr->imagePixelSize = 32;
+		hdr->imageDescriptor.attributeBits = 8;
+
+		// The alpha values must be interleaved.
+		for(y = height - 1; y >= 0; y--)
+		{
+			in = (byte*)data + y*width;
+			alphaIn = in + width*height;
+			for(x = 0; x < width; x++)
+			{
+				*ptr++ = texturePalette[*in].color[CB];
+				*ptr++ = texturePalette[*in].color[CG];
+				*ptr++ = texturePalette[*in++].color[CR];
+				*ptr++ = *alphaIn++;
+			}
+		}
+	}
+	else // Not color-mapped.
+	{
+		boolean hasAlpha = (format == DGL_RGBA 
+			|| format == DGL_LUMINANCE_PLUS_A8);
+				
+		hdr->imageType = 2;
+		hdr->colorMapType = 0;
+		hdr->imagePixelSize = hasAlpha? 32 : 24;
+		hdr->imageDescriptor.attributeBits = hasAlpha? 8 : 0;
+
+		// Write the image data.
+		switch(format)
+		{
+		case DGL_RGB:
+			for(y = height - 1; y >= 0; y--)
+			{
+				in = (byte*)data + y*width*3;				
+				for(x = 0; x < width; x++, in += 3)
+				{
+					*ptr++ = in[CB];
+					*ptr++ = in[CG];
+					*ptr++ = in[CR];
+				}
+			}
+			break;
+
+		case DGL_RGBA:
+			for(y = height - 1; y >= 0; y--)
+			{
+				in = (byte*)data + y*width*4;
+				for(x = 0; x < width; x++, in += 4)
+				{
+					*ptr++ = in[CB];
+					*ptr++ = in[CG];
+					*ptr++ = in[CR];
+					*ptr++ = in[CA];
+				}
+			}
+			break;
+
+		case DGL_LUMINANCE:
+			for(y = height - 1; y >= 0; y--)
+			{
+				in = (byte*)data + y*width;
+				for(x = 0; x < width; x++)
+				{
+					*ptr++ = *in;
+					*ptr++ = *in;
+					*ptr++ = *in++;
+				}
+			}
+			break;
+
+		case DGL_LUMINANCE_PLUS_A8:
+			for(y = height - 1; y >= 0; y--)
+			{
+				in = (byte*)data + y*width;
+				alphaIn = in + width*height;
+				for(x = 0; x < width; x++)
+				{
+					*ptr++ = *in;
+					*ptr++ = *in;
+					*ptr++ = *in++;
+					*ptr++ = *alphaIn++;
+				}
+			}
+			break;
+		}
+	}
+
+	// Create the texture.
+	if(FAILED(hr = D3DXCreateTextureFromFileInMemoryEx(dev,
+		buffer, ptr - buffer, 0, 0, genMips? 0 : 1, 0, 
+		  format == DGL_RGB? (hiBits? D3DFMT_R8G8B8 : D3DFMT_R5G6B5)
+		: format == DGL_RGBA? (hiBits? D3DFMT_A8R8G8B8 : 
+			useBadAlpha? D3DFMT_A1R5G5B5 : D3DFMT_A4R4G4B4)
+		: format == DGL_COLOR_INDEX_8? D3DFMT_P8
+		: format == DGL_COLOR_INDEX_8_PLUS_A8? D3DFMT_A8P8
+		: format == DGL_LUMINANCE? D3DFMT_L8
+		: format == DGL_LUMINANCE_PLUS_A8? D3DFMT_A8L8 : D3DFMT_UNKNOWN,
+		D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0,
+		NULL, NULL, &tex->ptr)))
+	{
+		free(buffer);
+		DXError("D3DXCreateTextureFromFileInMemoryEx");
+		return DGL_ERROR;
+	}
+	
+	// We're done!
+	free(buffer);
+	dev->SetTexture(0, tex->ptr);
+	SetTexStates(tex, STSF_ALL);
+	return DGL_OK;
+}
+
+//===========================================================================
+// DG_DeleteTextures
+//===========================================================================
+void DG_DeleteTextures(int num, DGLuint *names)
+{
+	for(int i = 0; i < num; i++)
+	{
+		// Unbind a deleted texture.
+		if(boundTexName == names[i]) DG_Bind(0);
+
+		// Check that it's a valid name.
+		int idx = NAME_TO_IDX(names[i]);
+		if(idx < 0 || idx >= numTexData) continue;
+
+		// Clear all data.
+		tex_t *tex = &texData[idx];
+		if(tex->ptr) tex->ptr->Release();
+		memset(tex, 0, sizeof(*tex));
+	}
+}
+
+//===========================================================================
+// DG_TexParameter
+//===========================================================================
+void DG_TexParameter(int pname, int param)
+{
+	tex_t *tex = GetBoundTexture();
+
+	if(!tex) return;
+
+	switch(pname)
+	{
+	case DGL_MIN_FILTER:
+		tex->minFilter = (param == DGL_NEAREST 
+			|| param == DGL_NEAREST_MIPMAP_NEAREST
+			|| param == DGL_NEAREST_MIPMAP_LINEAR? D3DTEXF_POINT
+			: useAnisotropic? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR);
+		tex->mipFilter = (param == DGL_NEAREST 
+			|| param == DGL_LINEAR? D3DTEXF_NONE 
+			: param == DGL_NEAREST_MIPMAP_NEAREST
+			|| param == DGL_LINEAR_MIPMAP_NEAREST? D3DTEXF_POINT
+			: D3DTEXF_LINEAR);
+		SetTexStates(tex, STSF_MIN_FILTER);
+		break;
+
+	case DGL_MAG_FILTER:
+		tex->magFilter = (param == DGL_NEAREST
+			|| param == DGL_NEAREST_MIPMAP_NEAREST
+			|| param == DGL_NEAREST_MIPMAP_LINEAR? D3DTEXF_POINT
+			: useAnisotropic? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR);
+		SetTexStates(tex, STSF_MAG_FILTER);
+		break;
+
+	case DGL_WRAP_S:
+		tex->addressModeU = (param == DGL_CLAMP? D3DTADDRESS_CLAMP 
+			: D3DTADDRESS_WRAP);
+		SetTexStates(tex, STSF_ADDRESS_U);
+		break;
+
+	case DGL_WRAP_T:
+		tex->addressModeV = (param == DGL_CLAMP? D3DTADDRESS_CLAMP 
+			: D3DTADDRESS_WRAP);
+		SetTexStates(tex, STSF_ADDRESS_V);
+		break;
+	}
+}
+
+//===========================================================================
+// DG_GetTexParameterv
+//===========================================================================
+void DG_GetTexParameterv(int level, int pname, int *v)
+{
+	// Currently not needed by the engine.
+}
+
+//===========================================================================
+// DG_Palette
+//===========================================================================
+void DG_Palette(int format, void *data)
+{
+	byte *ptr = (byte*) data;
+	int	size = (format == DGL_RGBA? 4 : 3);
+
+	for(int i = 0; i < 256; i++, ptr += size)
+	{
+		texturePalette[i].color[CR] = ptr[CR];
+		texturePalette[i].color[CG] = ptr[CG];
+		texturePalette[i].color[CB] = ptr[CB];
+		texturePalette[i].color[CA] = (format == DGL_RGBA? ptr[CA] : 255);
+	}
+}
+
+//===========================================================================
+// GetPaletteColor
+//===========================================================================
+byte *GetPaletteColor(int index)
+{
+	if(index < 0 || index > 255) return NULL;
+	return texturePalette[index].color;
+}
+
+//===========================================================================
+// DG_Bind
+//	Returns the name of the texture that got replaced by the call.
+//===========================================================================
+int	DG_Bind(DGLuint texture)
+{
+	int idx = NAME_TO_IDX(texture);
+	int previous = boundTexName;
+
+	if(!texture) 
+	{
+		boundTexName = 0;
+		if(dev) dev->SetTexture(0, NULL);
+		return previous;
+	}
+	if(!dev || idx < 0 || idx >= numTexData) return previous;
+	boundTexName = texture;
+	tex_t *tex = GetBoundTexture();
+	dev->SetTexture(0, tex->ptr);
+	SetTexStates(tex, STSF_ALL);
+	return previous;
+}
