@@ -27,3 +27,4 @@ void *	WAV_Load(const char *filename, int *bits, int *rate, int *samples);
 void *	WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate, int *samples);
 
 #endif 
+

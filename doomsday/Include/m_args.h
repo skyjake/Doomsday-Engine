@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #ifndef __COMMAND_LINE_ARGS_H__
 #define __COMMAND_LINE_ARGS_H__
 
-void		ArgInit(char *cmdline);
+void		ArgInit(const char *cmdline);
 void		ArgShutdown(void);
 void		ArgAbbreviate(char *longname, char *shortname);
 
@@ -36,4 +36,4 @@ int			ArgExists(char *check);
 int			ArgIsOption(int i);
 int			ArgRecognize(char *first, char *second);
 
-#endif /* __COMMAND_LINE_ARGS_H__ */
+#endif //__COMMAND_LINE_ARGS_H__

@@ -24,6 +24,9 @@
 #ifndef __DOOMSDAY_MAP_UTILITIES_H__
 #define __DOOMSDAY_MAP_UTILITIES_H__
 
+#include "m_vector.h"
+#include "p_mobj.h"
+
 #define	MAXINTERCEPTS	128
 
 #define IS_SECTOR_LINKED(thing)		((thing)->sprev != NULL)
@@ -49,14 +52,12 @@ void	P_LineOpening (line_t *linedef);
 mobj_t*	P_GetBlockRootIdx (int index);
 void	P_LinkThing (mobj_t *thing, byte flags);
 void	P_UnlinkThing (mobj_t *thing);
-boolean	P_BlockLinesIterator (int x, int y, boolean(*func)(line_t*,void*), void*);
 boolean	P_BlockThingsIterator (int x, int y, boolean(*func)(mobj_t*,void*), void* );
-boolean	P_BlockPolyobjsIterator (int x, int y, boolean(*func)(polyobj_t*,void*), void*);
 boolean	P_ThingLinesIterator (mobj_t *thing, boolean (*func)(line_t*,void*), void*);
 boolean	P_ThingSectorsIterator (mobj_t *thing, boolean (*func)(sector_t*,void*), void *data);
 boolean	P_LineThingsIterator (line_t *line, boolean (*func)(mobj_t*,void*), void *data);
 boolean	P_SectorTouchingThingsIterator (sector_t *sector, boolean (*func)(mobj_t*,void*), void *data);
-boolean P_SubsectorBoxIterator (fixed_t *box, sector_t *sector, boolean (*func)(subsector_t*, void*), void *parm);
+
 boolean	P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, boolean (*trav) (intercept_t *));
 
 #endif 

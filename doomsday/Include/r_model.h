@@ -55,6 +55,8 @@
 #define MFF_SUBTRACT			0x02000000 // Subtract blending.
 #define MFF_REVERSE_SUBTRACT	0x04000000 // Reverse subtract blending.
 #define MFF_TWO_SIDED			0x08000000 // Disable culling.
+#define MFF_NO_TEXCOMP			0x10000000 // Never compress skins.
+#define MFF_WORLD_TIME_ANIM		0x20000000
 
 typedef struct
 {
@@ -71,7 +73,6 @@ typedef struct
 
 typedef struct modeldef_s
 {
-	int				order;
 	char			id[33];
 
 	state_t			*state;		// Pointer to the states list (in dd_defns.c).
@@ -83,7 +84,7 @@ typedef struct modeldef_s
 	float			interrange[2];
 	float			offset[3];
 	float			resize, scale[3];
-	float			ptcoffset[3];
+	float			ptcoffset[MAX_FRAME_MODELS][3];
 	float			visualradius;
 	ded_model_t		*def;
 
@@ -106,14 +107,15 @@ void R_InitModels(void);
 void R_ShutdownModels(void);
 void R_ClearModelPath(void);
 void R_AddModelPath(char *addPath, boolean append);
-float R_CheckModelFor(mobj_t *mo, modeldef_t **mdef, modeldef_t **nextmdef);
+float R_CheckModelFor(struct mobj_s *mo, modeldef_t **mdef,
+					  modeldef_t **nextmdef);
 modeldef_t *R_CheckIDModelFor(const char *id);
 int R_ModelFrameNumForName(int modelnum, char *fname);
 void R_SetModelFrame(modeldef_t *modef, int frame);
 void R_SetSpriteReplacement(int sprite, char *modelname);
 int R_FindModelFile(const char *filename, char *outfn);
 byte *R_LoadSkin(model_t *mdl, int skin, int *width, int *height, int *pxsize);
-void R_PrecacheSkinsForMobj(mobj_t *mo);
+void R_PrecacheSkinsForMobj(struct mobj_s *mo);
 void R_PrecacheModelSkins(modeldef_t *modef);
 
 #endif 

@@ -39,7 +39,7 @@ extern "C" {
 #define DED_FLAGS_LEN		400
 #define DED_FUNC_LEN		255
 
-#define DED_PTC_STAGES		16
+#define DED_PTC_STAGES		32
 #define DED_MAX_SUB_MODELS	8
 
 typedef char			ded_stringid_t[DED_STRINGID_LEN+1];
@@ -142,6 +142,7 @@ typedef struct
 typedef struct
 {
 	ded_path_t		filename;
+	ded_path_t		skinfilename;	// Optional; override model's skin.
 	ded_string_t	frame;
 	int				framerange;
 	ded_flags_t		flags;			// ASCII string of the flags.
@@ -210,6 +211,7 @@ typedef struct
 
 typedef struct ded_skymodel_s {
 	ded_stringid_t	id;
+	int				layer;			// Defaults to -1.
 	float			frame_interval; // Seconds per frame.
 	float			yaw;
 	float			yaw_speed;		// Angles per second.
@@ -237,6 +239,7 @@ typedef struct
 	float			gravity;	// 1 = normal.
 	float			sky_height;
 	float			horizon_offset;
+	float			sky_color[3]; // Color of sky-lit sectors.
 	ded_skylayer_t	sky_layers[NUM_SKY_LAYERS];
 	ded_skymodel_t	sky_models[NUM_SKY_MODELS];
 } ded_mapinfo_t;
@@ -345,6 +348,14 @@ typedef struct
 	float			maxdist;
 } ded_detailtexture_t;
 
+// Embedded sound information.
+typedef struct ded_embsound_s
+{
+	ded_string_t	name;
+	int				id;				// Figured out at runtime.
+	float			volume;
+} ded_embsound_t;
+
 typedef struct
 {
 	ded_flags_t		type;
@@ -357,15 +368,18 @@ typedef struct
 	float			bounce;
 	float			resistance;		// Air resistance.
 	float			gravity;
+	float			vector_force[3];
 	float			spin[2];		// Yaw and pitch.
 	int				model;
 	ded_string_t	frame_name;		// For model particles.
 	ded_string_t	end_frame_name;
 	short			frame, end_frame;
+	ded_embsound_t	sound, hit_sound;
 } ded_ptcstage_t;
 
-typedef struct
+typedef struct ded_ptcgen_s
 {
+	struct ded_ptcgen_s *state_next; // List of generators for a state.
 	ded_stateid_t	state;			// Triggered by this state (if mobj-gen).
 	ded_string_t	flat;			// Triggered by this flat.
 	int				flat_num;
@@ -381,7 +395,9 @@ typedef struct
 	float			spd_variance;	// Spawn speed variance (0-1).
 	float			vector[3];		// Particle launch vector.
 	float			vec_variance;	// Launch vector variance (0-1). 1=totally random.
+	float			init_vec_variance; // Initial launch vector variance (0-1).
 	float			center[3];		// Offset to the mobj (relat. to source).
+	int				submodel;		// Model source: origin submodel #.
 	float			min_spawn_radius; // Spawn uncertainty box.
 	float			spawn_radius;	
 	float			maxdist;		// Max visibility for particles.

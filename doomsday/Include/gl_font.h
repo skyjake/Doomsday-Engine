@@ -22,18 +22,19 @@
 #ifndef __DGL_FONT_RENDERER_H__
 #define __DGL_FONT_RENDERER_H__
 
-#ifndef WIN32_LEAN_AND_MEAN
-#	define WIN32_LEAN_AND_MEAN
-#	define NOSOUND
-#	define NOCOMM
-#	define NOHELP
-#	define NOCOLOR
-#	define NOCLIPBOARD
-#	define NOCTLMGR
-#	define NOKERNEL
+#ifdef WIN32
+#	ifndef WIN32_LEAN_AND_MEAN
+#		define WIN32_LEAN_AND_MEAN
+#		define NOSOUND
+#		define NOCOMM
+#		define NOHELP
+#		define NOCOLOR
+#		define NOCLIPBOARD
+#		define NOCTLMGR
+#		define NOKERNEL
+#	endif
+#	include <windows.h>
 #endif
-
-#include <windows.h>
 
 #define MAX_CHARS	256			// Normal 256 ANSI characters.
 
@@ -59,8 +60,12 @@ int FR_Init();
 void FR_Shutdown();
 jfrfont_t *FR_GetFont(int id);
 
-// Prepare a GDI font. Select it as the current font.
+#ifdef WIN32
+// Prepare a GDI font. Select it as the current font. Only available
+// on Windows.
 int FR_PrepareGDIFont(HFONT hfont);
+#endif
+
 int FR_PrepareFont(char *name);
 
 // Change the current font.

@@ -235,6 +235,7 @@ typedef struct model_s{
 	dmd_levelOfDetail_t lodInfo[MAX_LODS];
 	dmd_lod_t		lods[MAX_LODS];	
 	char			*vertexUsage;	// Bitfield for each vertex.
+	boolean			allowTexComp;	// Allow texture compression with this.
 } model_t;
 
 extern model_t *modellist[MAX_MODELS];

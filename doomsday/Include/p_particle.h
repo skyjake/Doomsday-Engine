@@ -33,7 +33,7 @@
 #define PGF_STATIC				0x1		// Can't be replaced by anything.
 #define PGF_RELATIVE_VELOCITY	0x2		// Particles inherit source's velocity.
 #define PGF_SPAWN_ONLY			0x4		// Generator is spawned only when source is being spawned.
-//#define PGF_ANGLE_SPAWN		0x8		// Rotate spawn vector w/mobj angle.
+#define PGF_RELATIVE_VECTOR		0x8		// Rotate spawn vector w/mobj angle.
 #define PGF_ADD_BLEND			0x10	// Render using additive blending.
 #define PGF_FLOOR_SPAWN			0x20	// Flat-trig: spawn on floor.
 #define PGF_CEILING_SPAWN		0x40	// Flat-trig: spawn on ceiling.
@@ -46,6 +46,7 @@
 #define PGF_REVSUB_BLEND		0x2000	// Reverse subtractive blending.
 #define PGF_MUL_BLEND			0x4000	// Multiplicative blending.
 #define PGF_INVMUL_BLEND		0x8000	// Inverse multiplicative blending.
+#define PGF_STATE_CHAIN			0x10000	// Chain after existing state gen(s).
 
 // Runtime generator flags:
 #define PGF_VISIBLE				0x1000000	// Should be rendered.

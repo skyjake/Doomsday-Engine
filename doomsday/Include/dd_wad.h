@@ -41,7 +41,7 @@ enum // Lump Grouping Tags
 
 typedef struct
 {
-	char	filename[RECORD_FILENAMELEN];	// Full filename (every '\' -> '/').
+	char	filename[RECORD_FILENAMELEN]; // Full filename (every '\' -> '/').
 	int		numlumps;		// Number of lumps.
 	int		flags;			
 	DFILE	*handle;		// File handle.

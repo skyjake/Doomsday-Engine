@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,21 +22,33 @@
 #ifndef __DOOMSDAY_TYPES_H__
 #define __DOOMSDAY_TYPES_H__
 
-struct directory_s;
+// The C_DECL macro, used with functions.
+#ifndef C_DECL
+#	if defined(WIN32)
+#		define C_DECL __cdecl
+#	elif defined(UNIX)
+#		define C_DECL
+#	endif
+#endif
 
-typedef int					fixed_t;
-typedef unsigned int		angle_t;
-typedef int					spritenum_t;
+#ifndef UNIX
 typedef unsigned int		uint;
 typedef unsigned short		ushort;
 typedef unsigned int		size_t;
-typedef unsigned int		id_t;
+#endif
+
+typedef int					spritenum_t;
+typedef unsigned int		ident_t;
 typedef unsigned short		nodeindex_t;
 typedef unsigned short		thid_t;
 typedef unsigned char		byte;
 typedef double				timespan_t;
-typedef struct directory_s	directory_t;
 typedef char				filename_t[256];
+
+typedef struct directory_s {
+	int drive;
+	filename_t path;
+} directory_t;
 
 #ifdef __cplusplus
 #	define boolean			int

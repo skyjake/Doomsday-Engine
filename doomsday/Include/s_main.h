@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #define __DOOMSDAY_SOUND_MAIN_H__
 
 #include "de_defs.h"
+#include "p_mobj.h"
 
 #define SF_RANDOM_SHIFT		0x1		// Random frequency shift.
 #define SF_RANDOM_SHIFT2	0x2		// 2x bigger random frequency shift.

@@ -24,6 +24,7 @@
 #ifndef __DOOMSDAY_REFRESH_DATA_H__
 #define __DOOMSDAY_REFRESH_DATA_H__
 
+#include "dd_def.h"
 #include "p_data.h"
 #include "p_think.h"
 #include "m_nodepile.h"
@@ -58,14 +59,6 @@
 #define AGF_FLAT		0x2000
 #define AGF_PRECACHE	0x4000	// Group is just for precaching.
 
-enum
-{ // bbox coordinates
-	BOXTOP,
-	BOXBOTTOM,
-	BOXLEFT,
-	BOXRIGHT
-};
-
 // Detail texture information.
 typedef struct detailinfo_s {
 	DGLuint	tex;
@@ -77,7 +70,7 @@ typedef struct detailinfo_s {
 
 typedef struct gltexture_s {
 	DGLuint	id;
-	ushort	width, height;
+	float width, height;
 	detailinfo_t *detail;
 } gltexture_t;
 
@@ -97,6 +90,7 @@ typedef struct glcommand_vertex_s {
 #define RPF_GLOW		0x0020	// Multiply original vtx colors.
 #define RPF_DETAIL		0x0040	// Render with detail (incl. vtx distances)
 #define RPF_SHADOW		0x0100
+#define RPF_HORIZONTAL	0x0200
 #define RPF_DONE		0x8000	// This poly has already been drawn.
 
 typedef enum {
@@ -122,7 +116,6 @@ typedef struct {
 	gltexture_t intertex;
 	float interpos;				// Blending strength (0..1).
 	struct dynlight_s *lights;	// List of lights that affect this poly.
-	uint numlights;
 	DGLuint decorlightmap;		// Pregen RGB lightmap for decor lights.
 	sector_t *sector;			// The sector this poly belongs to (if any).
 
@@ -155,6 +148,7 @@ typedef struct {
 	float		bounds[4];				// Bounding box for the sector.
 	int			flags;
 	int			addspritecount;			// frame number of last R_AddSprites
+	sector_t	*lightsource;			// Main sky light source
 } sectorinfo_t;
 
 typedef struct planeinfo_s {
@@ -165,13 +159,41 @@ typedef struct planeinfo_s {
 	boolean		isfloor;
 } planeinfo_t;
 
+// Shadowpoly flags.
+#define SHPF_FRONTSIDE	0x1
+
+typedef struct shadowpoly_s {
+	struct line_s *line;
+	short flags;
+	ushort visframe;				// Last visible frame (for rendering).
+	vertex_t *outer[2];				// Left and right.
+	float inoffset[2][2];			// Offset from 'outer.'
+	float extoffset[2][2];			// Extended: offset from 'outer.'
+	float bextoffset[2][2];			// Back-extended: offset frmo 'outer.'
+} shadowpoly_t;
+
+typedef struct shadowlink_s {
+	struct shadowlink_s *next;
+	shadowpoly_t *poly;
+} shadowlink_t;
+
 typedef struct subsectorinfo_s {
 	planeinfo_t	floor, ceil;
 	int			validcount;
+	shadowlink_t *shadows;
 } subsectorinfo_t;
 
+typedef struct lineinfo_side_s {
+	struct line_s *neighbor[2];		// Left and right neighbour.
+	struct sector_s *proxsector[2];	// Sectors behind the neighbors.
+	struct line_s *backneighbor[2];	// Neighbour in the backsector (if any).
+	struct line_s *alignneighbor[2];// Aligned left and right neighbours.
+} lineinfo_side_t;
+
 typedef struct {
-	float	length;					// Accurate length.
+	float length;					// Accurate length.
+	binangle_t angle;				// Calculated from front side's normal.
+	lineinfo_side_t side[2];		// 0 = front, 1 = back
 } lineinfo_t;
 
 typedef struct polyblock_s {

@@ -23,7 +23,9 @@
 #define __DOOMSDAY_NETWORK__
 
 #include "net_main.h"
+#include "net_event.h"
 #include "net_msg.h"
+#include "net_buf.h"
 #include "net_demo.h"
 #include "sv_def.h"
 #include "sv_pool.h"

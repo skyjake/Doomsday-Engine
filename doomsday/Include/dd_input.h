@@ -33,7 +33,7 @@ extern int		mouseWheelSensi;
 extern int		joySensitivity;
 extern int		joyDeadZone;
 extern boolean	showScanCodes;
-extern int		shiftDown, altDown;
+extern boolean	shiftDown, altDown;
 
 void DD_InitInput(void);
 void DD_ShutdownInput(void);

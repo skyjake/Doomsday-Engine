@@ -22,23 +22,19 @@
 #ifndef __DOOMSDAY_GAME_DATA_H__
 #define __DOOMSDAY_GAME_DATA_H__
 
-#ifndef C_DECL
-#define C_DECL __cdecl
-#endif
+#include "dd_types.h"
 
-#define NUM_MOBJ_FLAGS		3
-#define NUM_MOBJ_MISC		4
-#define NUM_STATE_MISC		3
+#define NUM_MOBJ_FLAGS	3
+#define NUM_MOBJ_MISC	4
+#define NUM_STATE_MISC	3
 
-typedef struct
-{
+typedef struct {
 	char name[5];
 } sprname_t;
 
 typedef void (C_DECL *acfnptr_t)();
 
-typedef struct state_s
-{
+typedef struct state_s {
 	int sprite;
 	int	flags;
 	int frame;
@@ -51,8 +47,7 @@ typedef struct state_s
 	void *ptrigger;
 } state_t;
 
-typedef struct
-{
+typedef struct {
     int	doomednum;
     int	spawnstate;
     int	spawnhealth;
@@ -82,21 +77,18 @@ typedef struct
 	int misc[NUM_MOBJ_MISC];
 } mobjinfo_t;
 
-typedef struct
-{
+typedef struct {
 	char lumpname[9];
 	int lumpnum;
 	char *extfile;
 	void *data;
 } musicinfo_t;
 
-typedef struct
-{
+typedef struct {
 	char *text;				// Pointer to the text (don't modify).	
 } ddtext_t;
 
-typedef struct
-{
+typedef struct {
 	char *name;
 	char *author;
 	int music;
@@ -106,8 +98,7 @@ typedef struct
 	float partime;
 } ddmapinfo_t;
 
-typedef struct
-{
+typedef struct {
 	char *after;
 	char *before;
 	int game;
@@ -120,8 +111,7 @@ typedef ddfinale_t finalescript_t;
 #define DDLT_MAX_PARAMS		20
 #define DDLT_MAX_SPARAMS	5
 
-typedef struct
-{
+typedef struct {
 	int id;
 	int flags;
 	int flags2;
@@ -147,8 +137,7 @@ typedef struct
 
 #define DDLT_MAX_CHAINS		5
 
-typedef struct
-{
+typedef struct {
 	int id;
 	int flags;
 	int act_tag;
@@ -180,3 +169,4 @@ typedef struct
 } sectortype_t;
 
 #endif
+

@@ -50,6 +50,7 @@
 
 
 void	Z_Init (void);
+void 	Z_PrintStatus(void);
 void *	Z_Malloc (size_t size, int tag, void *ptr);
 void	Z_Free (void *ptr);
 void	Z_FreeTags (int lowtag, int hightag);

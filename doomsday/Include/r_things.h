@@ -87,7 +87,7 @@ typedef struct vissprite_s
 			float texc[2][2];			// u and v coordinates.
 			struct dynlight_s *light;
 		} wall;
-	};
+	} data;
 } vissprite_t;
 
 
@@ -146,13 +146,13 @@ extern  vissprite_t     vsprsortedhead;
 
 void	R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 void	R_GetPatchInfo(int lump, spriteinfo_t *info);
-int		R_VisualRadius(mobj_t *mo);
-fixed_t	R_GetBobOffset(mobj_t *mo);
+int		R_VisualRadius(struct mobj_s *mo);
+fixed_t	R_GetBobOffset(struct mobj_s *mo);
 float	R_MovementYaw(fixed_t momx, fixed_t momy);
 float	R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz);
-void	R_ProjectSprite(mobj_t *thing);
+void	R_ProjectSprite(struct mobj_s *thing);
 void	R_ProjectPlayerSprites(void);
-void	R_ProjectDecoration(mobj_t *source);
+void	R_ProjectDecoration(struct mobj_s *source);
 void    R_SortVisSprites(void);
 void    R_AddSprites(sector_t *sec);
 void    R_AddPSprites(void);

@@ -27,8 +27,7 @@
 // think_t is a function pointer to a routine to handle an actor
 typedef void (*think_t) ();
 
-typedef struct thinker_s
-{
+typedef struct thinker_s {
 	struct		thinker_s	*prev, *next;
 	think_t		function;
 	thid_t		id;			// Only used for mobjs (zero is not an ID).
@@ -45,4 +44,5 @@ boolean P_IsUsedMobjID(thid_t id);
 boolean P_IsMobjThinker(think_t thinker);
 
 #endif
+
 

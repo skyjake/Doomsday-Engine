@@ -32,6 +32,7 @@
 #include "rend_sprite.h"
 #include "rend_model.h"
 #include "rend_shadow.h"
+#include "rend_fakeradio.h"
 #include "rend_decor.h"
 
 #endif 

@@ -110,7 +110,9 @@ typedef struct dgldriver_s
 } 
 dgldriver_t;
 
-extern dgldriver_t gl;
+extern dgldriver_t __gl;
+
+#define gl __gl
 
 int		DD_InitDGL(void);
 void	DD_ShutdownDGL(void);

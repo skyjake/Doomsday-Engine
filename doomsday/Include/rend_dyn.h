@@ -22,6 +22,7 @@
 #ifndef __DOOMSDAY_DYNLIGHTS_H__
 #define __DOOMSDAY_DYNLIGHTS_H__
 
+#include "p_mobj.h"
 #include "rend_list.h"
 
 #define DYN_ASPECT		1.1f			// 1.2f is just too round for Doom.

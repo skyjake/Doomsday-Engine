@@ -258,3 +258,4 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text);
 D_CMD( UIColor );
 
 #endif
+

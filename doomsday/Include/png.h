@@ -3198,3 +3198,4 @@ PNG_EXTERN void png_init_mmx_flags PNGARG((png_structp png_ptr));
 #endif /* PNG_VERSION_INFO_ONLY */
 /* do not put anything past this line */
 #endif /* PNG_H */
+

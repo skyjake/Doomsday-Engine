@@ -27,7 +27,11 @@
 #define __DOOMSDAY_EXPORTS_H__
 
 // The calling convention.
-#define _DECALL	__stdcall
+#if defined(WIN32)
+#	define _DECALL	__stdcall
+#elif defined(UNIX)
+#	define _DECALL
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,26 +129,27 @@ id_t		Net_GetPlayerID(int player);
 // Play.
 float		P_AccurateDistance(fixed_t dx, fixed_t dy);
 fixed_t		P_ApproxDistance(fixed_t dx, fixed_t dy);
-int			P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line);
-int			P_BoxOnLineSide(fixed_t *tmbox, line_t *ld);
-void		P_MakeDivline(line_t *li, divline_t *dl);
+fixed_t		P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz);
+int			P_PointOnLineSide(fixed_t x, fixed_t y, struct line_s *line);
+int			P_BoxOnLineSide(fixed_t *tmbox, struct line_s *ld);
+void		P_MakeDivline(struct line_s *li, divline_t *dl);
 int			P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t *line);
 fixed_t		P_InterceptVector(divline_t *v2, divline_t *v1);
-void		P_LineOpening(line_t *linedef);
-mobj_t *	P_GetBlockRootIdx(int index);
-void		P_LinkThing(mobj_t *thing, byte flags);
-void		P_UnlinkThing(mobj_t *thing);
-boolean		P_BlockLinesIterator(int x, int y, boolean(*func)(line_t*,void*), void*);
-boolean		P_BlockThingsIterator(int x, int y, boolean(*func)(mobj_t*,void*), void*);
+void		P_LineOpening(struct line_s *linedef);
+struct mobj_s * P_GetBlockRootIdx(int index);
+void		P_LinkThing(struct mobj_s *thing, byte flags);
+void		P_UnlinkThing(struct mobj_s *thing);
+boolean		P_BlockLinesIterator(int x, int y, boolean(*func)(struct line_s*,void*), void*);
+boolean		P_BlockThingsIterator(int x, int y, boolean(*func)(struct mobj_s*,void*), void*);
 boolean		P_BlockPolyobjsIterator(int x, int y, boolean(*func)(void*,void*), void*);
-boolean		P_ThingLinesIterator(mobj_t *thing, boolean (*func)(line_t*,void*), void*);
-boolean		P_ThingSectorsIterator(mobj_t *thing, boolean (*func)(struct sector_s*,void*), void *data);
-boolean		P_LineThingsIterator(line_t *line, boolean (*func)(mobj_t*,void*), void *data);
+boolean		P_ThingLinesIterator(struct mobj_s *thing, boolean (*func)(struct line_s*,void*), void*);
+boolean		P_ThingSectorsIterator(struct mobj_s *thing, boolean (*func)(struct sector_s*,void*), void *data);
+boolean		P_LineThingsIterator(struct line_s *line, boolean (*func)(struct mobj_s*,void*), void *data);
 boolean		P_SectorTouchingThingsIterator(struct sector_s *sector, boolean (*func)(struct mobj_s *,void*), void *data);
 boolean		P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, boolean (*trav) (intercept_t *));
-boolean		P_CheckSight(mobj_t *t1, mobj_t *t2);
-void		P_SetState(mobj_t *mobj, int statenum);
-void		P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount);
+boolean		P_CheckSight(struct mobj_s *t1, struct mobj_s *t2);
+void		P_SetState(struct mobj_s *mobj, int statenum);
+void		P_SpawnDamageParticleGen(struct mobj_s *mo, struct mobj_s *inflictor, int amount);
 
 // Play: Setup.
 void		P_LoadBlockMap(int lump);
@@ -155,7 +160,7 @@ boolean		PO_MovePolyobj(int num, int x, int y);
 boolean		PO_RotatePolyobj(int num, angle_t angle);
 void		PO_UnLinkPolyobj(void *po);
 void		PO_LinkPolyobj(void *po);
-void		PO_SetCallback(void (*func)(mobj_t*, void *seg, void *po));
+void		PO_SetCallback(void (*func)(struct mobj_s*, void *seg, void *po));
 
 // Play: Thinkers.
 void		P_RunThinkers(void);
@@ -240,15 +245,15 @@ int			TGA_GetSize(char *filename, int *w, int *h);
 
 // Audio.
 void		S_LevelChange(void);
-int			S_LocalSoundAtVolumeFrom(int sound_id, mobj_t *origin, float *fixedpos, float volume);
-int			S_LocalSoundAtVolume(int sound_id, mobj_t *origin, float volume);
-int			S_LocalSound(int sound_id, mobj_t *origin);
+int			S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s *origin, float *fixedpos, float volume);
+int			S_LocalSoundAtVolume(int sound_id, struct mobj_s *origin, float volume);
+int			S_LocalSound(int sound_id, struct mobj_s *origin);
 int			S_LocalSoundFrom(int sound_id, float *fixedpos);
-int			S_StartSound(int sound_id, mobj_t *origin);
-int			S_StartSoundAtVolume(int sound_id, mobj_t *origin, float volume);
-int			S_ConsoleSound(int sound_id, mobj_t *origin, int target_console);
-void		S_StopSound(int sound_id, mobj_t *origin);
-int			S_IsPlaying(int sound_id, mobj_t *origin);
+int			S_StartSound(int sound_id, struct mobj_s *origin);
+int			S_StartSoundAtVolume(int sound_id, struct mobj_s *origin, float volume);
+int			S_ConsoleSound(int sound_id, struct mobj_s *origin, int target_console);
+void		S_StopSound(int sound_id, struct mobj_s *origin);
+int			S_IsPlaying(int sound_id, struct mobj_s *origin);
 int			S_StartMusic(char *musicid, boolean looped);
 int			S_StartMusicNum(int id, boolean looped);
 void		S_StopMusic(void);

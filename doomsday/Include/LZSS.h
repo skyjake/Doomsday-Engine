@@ -5,7 +5,11 @@
 extern "C" {
 #endif
 
-#define LZSSEXPORT	__stdcall
+#ifdef WIN32
+#	define LZSSEXPORT __stdcall
+#elif defined(UNIX)
+#	define LZSSEXPORT
+#endif
 
 #ifndef EOF 
 #define EOF    (-1)
@@ -28,14 +32,14 @@ extern "C" {
 #define LZFILE_FLAG_EOF     8        /* reached the end-of-file */
 #define LZFILE_FLAG_ERROR   16       /* an error has occurred */
 
-typedef struct LZFILE 
+typedef struct LZFILE_s
 {
    int hndl;						/* file handle */
    int flags;						/* LZFILE_FLAG_* constants */
    unsigned char *buf_pos;			/* position in buffer */
    int buf_size;					/* number of bytes in the buffer */
    long todo;						/* number of bytes still on the disk */
-   struct LZFILE *parent;			/* nested, parent file */
+   struct LZFILE_s *parent;			/* nested, parent file */
    void *pack_data; 				/* for LZSS compression */
    char *filename;					/* name of the file */
    char *password;					/* current encryption position */

@@ -86,16 +86,19 @@ typedef struct sector_s
 	short		lightlevel;
 	byte		rgb[3];
 	int 		validcount; 			// if == validcount, already checked
-	mobj_t		*thinglist; 			// list of mobjs in sector
+	struct mobj_s *thinglist; 			// list of mobjs in sector
 	int 		linecount;
 	struct line_s **lines;				// [linecount] size
 	float 		flooroffx, flooroffy; 	// floor texture offset
 	float		ceiloffx, ceiloffy;		// ceiling texture offset
-	int 		skyfix; 				// Offset to ceiling height rendering w/sky.
+	int 		skyfix; 				// Offset to ceiling height
+										// rendering w/sky.
 	float		reverb[NUM_REVERB_DATA];
-	int 		blockbox[4];			// mapblock bounding box for height changes
+	int 		blockbox[4];			// mapblock bounding box for
+										// height changes
 	plane_t		planes[2];				// PLN_*
-    degenmobj_t	soundorg;				// origin for any sounds played by the sector
+    degenmobj_t	soundorg;				// origin for any sounds
+										// played by the sector
 } sector_t;
 
 typedef struct side_s
@@ -169,8 +172,6 @@ extern byte		*lines;
 
 extern int		numsides;
 extern byte		*sides;
-
-extern subsector_t ***subsectorblockmap; // array of subsec* arrays
 
 extern fixed_t	mapgravity;				// Gravity for the current map.
 

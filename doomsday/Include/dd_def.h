@@ -23,20 +23,23 @@
 #define __DOOMSDAY_DEFS_H__
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <malloc.h>
 
 #include "dd_types.h"
 #include "dd_api.h"
 
+#ifdef WIN32
 // Disable annoying MSVC warnings.
 // 4761: integral size mismatch in argument 
 // 4244: conversion from 'type1' to 'type2', possible loss of data
 #pragma warning (disable:4761 4244)
+#endif
 
 // Important definitions.
 #define MAXPLAYERS			DDMAXPLAYERS
+#define players				ddplayers
 
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
@@ -65,17 +68,19 @@
 #define	SBARHEIGHT		39			// status bar height at bottom of screen
 
 // Heap relations.
-#define HEAP_PARENT(i)		(((i) + 1)/2 - 1)
-#define HEAP_LEFT(i)		(2*(i) + 1)
-#define HEAP_RIGHT(i)		(2*(i) + 2)
+#define HEAP_PARENT(i)	(((i) + 1)/2 - 1)
+#define HEAP_LEFT(i)	(2*(i) + 1)
+#define HEAP_RIGHT(i)	(2*(i) + 2)
 
 enum { BLEFT, BTOP, BRIGHT, BBOTTOM, BFLOOR, BCEILING };
 enum { VX, VY, VZ };				// Vertex indices.
 enum { CR, CG, CB, CA };			// Color indices.
 
-// dd_winit.c
-extern game_export_t	gx;
-extern game_import_t	gi;
+// dd_pinit.c
+extern game_export_t __gx;
+extern game_import_t __gi;
+#define gx __gx
+#define gi __gi
 
 // tab_video.c
 extern byte gammatable[5][256];

@@ -23,6 +23,7 @@
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
+#include "m_string.h"
 
 #define SV_WELCOME_STRING "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R6)"
 
@@ -52,6 +53,8 @@ void Sv_Ticker(timespan_t time);
 int Sv_Latency(byte cmdtime);
 void Sv_Kick(int who);
 void Sv_GetInfo(serverinfo_t *info);
+int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg);
+boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info);
 int Sv_GetNumPlayers(void);
 int Sv_GetNumConnected(void);
 
