@@ -33,6 +33,7 @@ struct vertexillum_s;
 struct rendpoly_s;
 
 void            SB_Register(void);
+void            SB_InitForLevel(const char *uniqueId);
 void            SB_SegHasMoved(seg_t *seg);
 void            SB_PlaneHasMoved(subsector_t *subsector, boolean theCeiling);
 void            SB_BeginFrame(void);
