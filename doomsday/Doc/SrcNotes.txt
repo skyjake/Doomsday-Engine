@@ -1,25 +1,28 @@
 
-                         Doomsday Project Sources
-                         ------------------------
-                       Release 6 - December 20, 2002
-                          (engine version 1.7.6)
+                          Doomsday Engine Sources
+                          -----------------------
+                               March 3, 2003
+                          (engine version 1.7.7)
 
                 by Jaakko Keränen <skyjake@doomsdayhq.com>
                         http://www.doomsdayhq.com/
+                       http://deng.sourceforge.net/
 
 
 ...........................................................................
 RELEASE NOTES:
 
-The code in this archive was used to build the 1.7.6 release.
+The source code is distributed under the GNU General Public License.
 
-The placement of some files has changed; you shouldn't unpack this archive
-directly on top of a previous Doomsday Sources tree.
+The code in this package was used to build the 1.7.7 release.
+
+The placement of some files was changed in 1.7.6; you shouldn't unpack this
+archive directly on top of a previous Doomsday Sources tree.
 
 ...........................................................................
 CONTENTS:
 
-Sources, data files & MSVC++ 6.0 project files for
+Source code and Microsoft Visual C++ 6.0 project files for
 - The Doomsday Engine
 - jDoom
 - jHeretic
