@@ -541,9 +541,10 @@ void R_ProjectSprite (mobj_t *thing)
 	modeldef_t	*mf = NULL, *nextmf = NULL;
 	float		interp, distance;
 	
-	if(thing->ddflags & DDMF_DONTDRAW)
+	if(thing->ddflags & DDMF_DONTDRAW || thing->translucency == 0xff)
 	{ 
-		// Never make a vissprite when DDMF_DONTDRAW is set.
+		// Never make a vissprite when DDMF_DONTDRAW is set or when
+		// the thing is fully transparent.
 		return;
 	}
 
@@ -756,9 +757,16 @@ void R_ProjectSprite (mobj_t *thing)
 	// 7 = 7/8 transparent
 	i = thing->selector >> DDMOBJ_SELECTOR_SHIFT;
 	if(i & 0xe0)
+	{
 		vis->mo.alpha = 1 - ((i&0xe0) >> 5)/8.0f;
+	}
 	else
-		vis->mo.alpha = -1;
+	{
+		if(thing->translucency)
+			vis->mo.alpha = 1 - thing->translucency/255.0f;
+		else
+			vis->mo.alpha = -1;
+	}
 
 	// Short-range visual offsets.
 	if((vis->mo.mf && r_use_srvo > 0 || !vis->mo.mf && r_use_srvo > 1)
