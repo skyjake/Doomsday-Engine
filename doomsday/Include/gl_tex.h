@@ -21,6 +21,7 @@ typedef struct image_s {
 } image_t;
 
 extern int		mipmapping, linearRaw, texQuality, filterSprites;
+extern boolean	loadExtAlways;
 extern float	texw, texh;
 extern int		texmask;	
 extern detailinfo_t *texdetail;

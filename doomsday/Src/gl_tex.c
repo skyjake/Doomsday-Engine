@@ -89,6 +89,7 @@ extern boolean	s3tcAvailable;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean			filloutlines = true;
+boolean			loadExtAlways = false;	// Always check for extres (cvar)
 boolean			paletted = false;	// Use GL_EXT_paletted_texture (cvar)
 boolean			load8bit = false;	// Load textures as 8 bit? (with paltex)
 
@@ -1746,7 +1747,7 @@ unsigned int GL_PrepareTexture(int idx)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if((highResWithPWAD || !R_IsCustomTexture(idx))
+		if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx))
 			&& GL_LoadHighResTexture(&image, tex->name) != NULL)
 		{
 			// High resolution texture loaded.
@@ -2015,7 +2016,7 @@ unsigned int GL_PrepareSky(int idx, boolean zeroMask)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if((highResWithPWAD || !R_IsCustomTexture(idx))
+		if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx))
 			&& GL_LoadHighResTexture(&image, textures[idx]->name) != NULL)
 		{
 			// High resolution texture loaded.

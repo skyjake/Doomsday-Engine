@@ -323,6 +323,7 @@ cvar_t engineCVars[] =
 	"rend-tex-gamma",		CVF_PROTECTED, CVT_INT,	&usegamma,		0, 4,	"The gamma correction level (0-4).",
 	"rend-tex-mipmap",		CVF_PROTECTED, CVT_INT,	&mipmapping,	0, 5,	"The mipmapping mode for textures.",
 	"rend-tex-paletted",	CVF_PROTECTED, CVT_BYTE, &paletted,		0, 1,	"1=Use the GL_EXT_shared_texture_palette extension.",
+	"rend-tex-external-always", 0,		CVT_BYTE,	&loadExtAlways, 0, 1,	"1=Always use external texture resources (overrides -pwadtex).",
 	"rend-tex-quality",		0,			CVT_INT,	&texQuality,	0, 8,	"The quality of textures (0-8).",
 	"rend-tex-filter-sprite", 0,		CVT_INT,	&filterSprites,	0, 1,	"1=Render smooth sprites.",
 	"rend-tex-filter-raw",	CVF_PROTECTED, CVT_INT,	&linearRaw,		0, 1,	"1=Fullscreen images (320x200) use linear interpolation.",
