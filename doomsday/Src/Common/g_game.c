@@ -1266,21 +1266,38 @@ void G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src)
 	dest->pitch = src->pitch;
 
 #ifndef __JDOOM__
-	dest->lookfly = (dest->lookfly + src->lookfly)/2;
+	dest->lookfly = src->lookfly;
 	if(src->arti)
 	{
 		dest->arti = src->arti;
 	}
 #endif
+
+	if(dest->actions & BT_SPECIAL)
+	{
+		// Don't overwrite special actions.
+		return;
+	}
 	
 	// Old Attack and Use buttons apply, if they're set.
 	dest->actions |= src->actions & (BT_ATTACK | BT_USE);
 	if(src->actions & BT_SPECIAL)
+	{
+		dest->actions = src->actions;
 		return;
+	}
+
+#ifdef __JDOOM__
+	if(src->actions & BT_JUMP)
+	{
+		dest->actions |= BT_JUMP;
+	}
+#endif
 	
 	if(src->actions & BT_CHANGE && !(dest->actions & BT_CHANGE))
 	{
 		// Use the old weapon change.
+		dest->actions &= ~BT_WEAPONMASK;
 		dest->actions |= src->actions & (BT_CHANGE | BT_WEAPONMASK);
 	}
 }
