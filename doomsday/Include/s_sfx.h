@@ -7,23 +7,21 @@
 #include "sys_sfxd.h"
 #include "de_play.h"
 
+// Begin and end macros for Critical OPerations. They are operations 
+// that can't be done while a refresh is being made. No refreshing 
+// will be done between BEGIN_COP and END_COP.
+#define BEGIN_COP		Sfx_AllowRefresh(false)
+#define END_COP			Sfx_AllowRefresh(true)
+
 typedef enum 
 {
 	SFXD_DSOUND,
 	SFXD_A3D,
 	SFXD_OPENAL,
-	SFXD_COMPATIBLE
+	SFXD_COMPATIBLE,
+	SFXD_DUMMY
 } 
 sfxdriver_e;
-
-typedef struct sfxcache_s
-{
-	struct sfxcache_s *next, *prev;
-	sfxsample_t	sample;
-	int hits;
-	int lastused;			// Tic the sample was last hit.
-}
-sfxcache_t;
 
 // Channel flags.
 #define SFXCF_NO_ORIGIN			0x1	// Sound is coming from a mystical emitter.
@@ -42,22 +40,27 @@ typedef struct sfxchannel_s
 }
 sfxchannel_t;
 
+extern boolean	sfx_avail;
 extern float	sfx_reverb_strength;
 extern int		sfx_max_cache_kb, sfx_max_cache_tics; 
+extern int		sfx_bits, sfx_rate;
 extern int		sound_3dmode, sound_16bit, sound_rate;
 
 boolean		Sfx_Init(void);
 void		Sfx_Shutdown(void);
 void		Sfx_Reset(void);
+void		Sfx_AllowRefresh(boolean allow);
 void		Sfx_LevelChange(void);
 void		Sfx_StartFrame(void);
 void		Sfx_EndFrame(void);
 void		Sfx_PurgeCache(void);
 void		Sfx_RefreshChannels(void);
-void		Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitter, float *fixedpos, int flags);
-void		Sfx_StopSound(int id, mobj_t *emitter);
+int			Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitter, float *fixedpos, int flags);
+int			Sfx_StopSound(int id, mobj_t *emitter);
 void		Sfx_StopSoundGroup(int group, mobj_t *emitter);
-int			Sfx_IsPlaying(int id, mobj_t *emitter);
+int			Sfx_CountPlaying(int id);
+void		Sfx_UnloadSoundID(int id);
+//int		Sfx_IsPlaying(int id, mobj_t *emitter);
 void		Sfx_DebugInfo(void);
 
 #endif 
