@@ -303,11 +303,13 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 	if(flags & PSF_POWERS)
 	{
 		b = NetCl_ReadByte();
+		// Only the non-zero powers are included in the message.
 #if __JHEXEN__
-		for(i=0; i<NUMPOWERS-1; i++)
+		for(i = 0; i < NUMPOWERS - 1; i++)
 			if(b & (1 << i))
 				pl->powers[i + 1] = NetCl_ReadByte() * 35;
-
+			else
+				pl->powers[i + 1] = 0;
 #else
 		for(i = 0; i < NUMPOWERS; i++)
 		{
