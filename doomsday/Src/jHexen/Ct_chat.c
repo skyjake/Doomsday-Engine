@@ -105,7 +105,7 @@ char   *CT_FromPlrText[MAXPLAYERS] = {
 int     chatchar = 0;
 
 static boolean altdown;
-static boolean shiftdown;
+static boolean ct_shiftdown;
 
 extern boolean usearti;
 
@@ -174,7 +174,7 @@ boolean CT_Responder(event_t *ev)
 	}
 	if(ev->data1 == DDKEY_RSHIFT)
 	{
-		shiftdown = (ev->type == ev_keydown);
+		ct_shiftdown = (ev->type == ev_keydown);
 		return false;
 	}
 	if(gamestate != GS_LEVEL || ev->type != ev_keydown)
@@ -271,7 +271,7 @@ boolean CT_Responder(event_t *ev)
 			CT_queueChatChar(ev->data1 - 32);
 			return true;
 		}
-		else if(shiftdown)
+		else if(ct_shiftdown)
 		{
 			if(ev->data1 == '1')
 			{

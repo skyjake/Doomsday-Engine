@@ -156,7 +156,7 @@ int     MenuTime;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean shiftdown;
+boolean shiftdown;
 
 static char *YesNo[2] = { "NO", "YES" };
 

@@ -95,35 +95,14 @@ static void DrawSlider(Menu_t * menu, int item, int width, int slot);
 
 void    MN_LoadSlotText(void);
 
-// External Data
-
-//boolean F_Responder(event_t *ev);
-
-//extern int detailLevel;
-//extern int screenblocks;
-
 // Public Data
 
 boolean MenuActive;
 int     InfoType;
 
-//boolean messageson = true;
-static boolean shiftdown;
+boolean shiftdown;
 
 // Private Data
-
-/*static MenuRes_t resolutions[] =
-   {
-   320, 240,
-   640, 480,
-   800, 600,
-   1024, 768,
-   1152, 864,
-   1280, 1024,
-   1600, 1200,
-   0, 0 // The terminator.
-   };
-   static int selRes = 0;   // Will be determined when needed. */
 
 //
 // !!! Add new controls to the end, the existing indices must remain unchanged !!!

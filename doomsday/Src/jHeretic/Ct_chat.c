@@ -80,7 +80,7 @@ char   *chat_macros[10];		/* =
 								   }; */
 
 static boolean altdown;
-static boolean shiftdown;
+static boolean ct_shiftdown;
 
 int     chatchar = 0;
 
@@ -143,7 +143,7 @@ boolean CT_Responder(event_t *ev)
 	}
 	if(ev->data1 == DDKEY_RSHIFT)
 	{
-		shiftdown = (ev->type == ev_keydown || ev->type == ev_keyrepeat);
+		ct_shiftdown = (ev->type == ev_keydown || ev->type == ev_keyrepeat);
 		return false;
 	}
 	if(ev->type != ev_keydown && ev->type != ev_keyrepeat)
@@ -191,7 +191,7 @@ boolean CT_Responder(event_t *ev)
 		CT_queueChatChar(ev->data1 - 32);
 		return true;
 	}
-	else if(shiftdown)
+	else if(ct_shiftdown)
 	{
 		if(ev->data1 == '1')
 		{

@@ -962,6 +962,7 @@ void Ed_MakeCursorVisible()
 
 boolean Ed_Responder(event_t *event)
 {
+	extern boolean shiftdown;
 	int     c;
 	char   *ptr;
 
