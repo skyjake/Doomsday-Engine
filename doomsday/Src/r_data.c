@@ -13,6 +13,7 @@
 #include "de_network.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -39,7 +40,9 @@ flat_t		*flats;
 int			firstpatch, lastpatch, numpatches;
 int			numtextures;
 texture_t	**textures;
-int			*texturetranslation;	// for global animation
+translation_t *texturetranslation;	// for global animation
+int			numgroups;
+animgroup_t *groups;
 
 // Glowing textures are always rendered fullbright.
 int			r_texglow = true;
@@ -80,7 +83,7 @@ flat_t *R_GetFlat(int lumpnum)
 	f = flats + numflats - 1;
 	memset(f, 0, sizeof(*f));
 	f->lump = lumpnum;
-	f->translation = lumpnum; 
+	f->translation.current = f->translation.next = lumpnum; 
 	memset(f->color.rgb, 0xff, 3);
 	return f;
 }
@@ -91,14 +94,13 @@ flat_t *R_GetFlat(int lumpnum)
 int R_SetFlatTranslation(int flat, int translateTo)
 {
 	flat_t *f = R_GetFlat(flat);
-	int old = f->translation;
+	int old = f->translation.current;
 
-	f->translation = translateTo;
+	f->translation.current
+		= f->translation.next 
+		= translateTo;
+	f->translation.inter = 0;
 	return old;
-/*	int old = flats[flat].translation;
-	if(flat >= numflats) Con_Error("R_SetFlatTranslation: flat >= numflats!\n");
-	flats[flat].translation = translateTo;
-	return old;*/
 }
 
 //===========================================================================
@@ -106,8 +108,12 @@ int R_SetFlatTranslation(int flat, int translateTo)
 //===========================================================================
 int R_SetTextureTranslation(int tex, int translateTo)
 {
-	int old = texturetranslation[tex];
-	texturetranslation[tex] = translateTo;
+	int old = texturetranslation[tex].current;
+
+	texturetranslation[tex].current 
+		= texturetranslation[tex].next
+		= translateTo;
+	texturetranslation[tex].inter = 0;
 	return old;
 }
 
@@ -118,7 +124,7 @@ int R_SetTextureTranslation(int tex, int translateTo)
 //===========================================================================
 void R_SetAnimGroup(int type, int number, int group)
 {
-	flat_t *flat;
+/*	flat_t *flat;
 
 	switch(type)
 	{
@@ -132,17 +138,141 @@ void R_SetAnimGroup(int type, int number, int group)
 		flat = R_GetFlat(number);
 		flat->group = group;
 		break;
+	}*/
+}
+
+//===========================================================================
+// R_CreateAnimGroup
+//	Create a new animation group. Returns the group number.
+//===========================================================================
+int R_CreateAnimGroup(int type, int flags)
+{
+	animgroup_t *group;
+
+	// Allocating one by one is inefficient, but it doesn't really matter.
+	groups = Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1),
+		PU_STATIC);
+
+	// Init the new group.
+	group = groups + numgroups;
+	memset(group, 0, sizeof(*group));
+
+	// The group number is (index + 1).
+	group->id = ++numgroups;
+	group->flags = flags;
+
+	if(type == DD_TEXTURE) group->flags |= AGF_TEXTURE;
+	if(type == DD_FLAT) group->flags |= AGF_FLAT;
+	
+	return group->id;
+}
+
+//===========================================================================
+// R_GetAnimGroup
+//===========================================================================
+animgroup_t *R_GetAnimGroup(int number)
+{
+	if(--number < 0 || number >= numgroups) return NULL;
+	return groups + number;
+}
+
+//===========================================================================
+// R_AddToAnimGroup
+//===========================================================================
+void R_AddToAnimGroup(int groupNum, int number, int tics, int randomTics)
+{
+	animgroup_t *group = R_GetAnimGroup(groupNum);
+	animframe_t *frame;
+
+	if(!group || number < 0) return;
+
+	// Allocate a new animframe.
+	group->frames = Z_Realloc(group->frames, sizeof(animframe_t) 
+		* ++group->count, PU_STATIC);
+
+	frame = group->frames + group->count - 1;
+
+	frame->number = number;
+	frame->tics = tics;
+	frame->random = randomTics;
+
+	// Mark the texture/flat as belonging to some animgroup.
+	if(group->flags & AGF_TEXTURE)
+	{
+		textures[number]->ingroup = true;
+	}
+	else
+	{
+		R_GetFlat(number)->ingroup = true;
+	}
+}
+
+//===========================================================================
+// R_IsInAnimGroup
+//===========================================================================
+boolean R_IsInAnimGroup(int groupNum, int type, int number)
+{
+	animgroup_t *group = R_GetAnimGroup(groupNum);
+	int i;
+
+	if(!group) return false;
+
+	if(type == DD_TEXTURE && !(group->flags & AGF_TEXTURE)
+		|| type == DD_FLAT && !(group->flags & AGF_FLAT))
+	{
+		// Not the right type.
+		return false;
+	}
+
+	// Is it in there?
+	for(i = 0; i < group->count; i++)
+	{
+		if(group->frames[i].number == number) return true;
+	}
+	return false;
+}
+
+//===========================================================================
+// R_InitAnimGroup
+//	Initialize an entire animation using the data in the definition.
+//===========================================================================
+void R_InitAnimGroup(ded_group_t *def)
+{
+	int i;
+	int groupNumber = 0;
+	animgroup_t *group = NULL;
+	int type, number;
+
+	type = (def->is_texture? DD_TEXTURE : DD_FLAT);
+
+	// Create a new animation group.
+	groupNumber = R_CreateAnimGroup( type, Def_EvalFlags(def->flags) );
+	group = R_GetAnimGroup(groupNumber);
+
+	for(i = 0; i < def->count; i++)
+	{
+		if(def->is_texture)
+		{
+			number = R_CheckTextureNumForName(def->members[i].name);
+		}
+		else
+		{
+			number = W_CheckNumForName(def->members[i].name);
+		}
+
+		R_AddToAnimGroup(groupNumber, number, def->members[i].tics,
+			def->members[i].random_tics);
 	}
 }
 
 //===========================================================================
 // R_InitSwitchAnimGroups
-//	Assigns switch texture pairs (SW1/SW2) to their own texture groups.
-//	This'll allow them to be precached at the same time.
+//	Assigns switch texture pairs (SW1/SW2) to their own texture precaching
+//	groups. This'll allow them to be precached at the same time.
 //===========================================================================
 void R_InitSwitchAnimGroups(void)
 {
-	int i, k, groupCounter = 2000; // Arbitrarily chosen number.
+	int i, k, group;
 
 	for(i = 0; i < numtextures; i++)
 	{
@@ -157,218 +287,15 @@ void R_InitSwitchAnimGroups(void)
 
 			if(!strnicmp(textures[k]->name + 3, textures[i]->name + 3, 5))
 			{
-				// Assign to the same group.
-				textures[i]->group = textures[k]->group = groupCounter++;
+				// Create a non-animating group for these.
+				group = R_CreateAnimGroup(DD_TEXTURE, AGF_PRECACHE);
+				R_AddToAnimGroup(group, i, 0, 0);
+				R_AddToAnimGroup(group, k, 0, 0);
 				break;
 			}
 		}
 	}
 }
-
-#if 0 //<----OBSOLETE---->
-/*
-==============================================================================
-
-						MAPTEXTURE_T CACHING
-
-when a texture is first needed, it counts the number of composite columns
-required in the texture and allocates space for a column directory and any
-new columns.  The directory will simply point inside other patches if there
-is only one patch in a given column, but any columns with multiple patches
-will have new column_ts generated.
-
-==============================================================================
-*/
-
-/*
-===================
-=
-= R_DrawColumnInCache
-=
-= Clip and draw a column from a patch into a cached post
-=
-===================
-*/
-
-void R_DrawColumnInCache (column_t *patch, byte *cache, int originy, 
-						  int cacheheight)
-{
-	int		count, position;
-	byte	*source, *dest;
-	
-	dest = (byte *)cache + 3;
-	
-	while (patch->topdelta != 0xff)
-	{
-		source = (byte *)patch + 3;
-		count = patch->length;
-		position = originy + patch->topdelta;
-		if (position < 0)
-		{
-			count += position;
-			position = 0;
-		}
-		if (position + count > cacheheight)
-			count = cacheheight - position;
-		if (count > 0)
-			memcpy (cache + position, source, count);
-		
-		patch = (column_t *)(  (byte *)patch + patch->length + 4);
-	}
-}
-
-
-/*
-===================
-=
-= R_GenerateComposite
-=
-===================
-*/
-
-void R_GenerateComposite (int texnum)
-{
-	byte		*block;
-	texture_t	*texture;
-	texpatch_t	*patch;	
-	patch_t		*realpatch;
-	int			x, x1, x2;
-	int			i;
-	column_t	*patchcol;
-	short		*collump;
-	unsigned short *colofs;
-	
-	texture = textures[texnum];
-	block = Z_Malloc (texturecompositesize[texnum], PU_REFRESHTEX, 
-		&texturecomposite[texnum]);	
-	collump = texturecolumnlump[texnum];
-	colofs = texturecolumnofs[texnum];
-		
-//
-// composite the columns together
-//
-	patch = texture->patches;
-		
-	for (i=0 , patch = texture->patches; i<texture->patchcount ; i++, patch++)
-	{
-		realpatch = W_CacheLumpNum (patch->patch, PU_CACHE);
-		x1 = patch->originx;
-		x2 = x1 + SHORT(realpatch->width);
-
-		if (x1<0)
-			x = 0;
-		else
-			x = x1;
-		if (x2 > texture->width)
-			x2 = texture->width;
-
-		for ( ; x<x2 ; x++)
-		{
-			if (collump[x] >= 0)
-				continue;		// column does not have multiple patches
-			patchcol = (column_t *)((byte *)realpatch + 
-				LONG(realpatch->columnofs[x-x1]));
-			R_DrawColumnInCache (patchcol, block + colofs[x], patch->originy,
-				texture->height);
-		}
-						
-	}
-
-// now that the texture has been built, it is purgable
-	Z_ChangeTag (block, PU_CACHE);
-}
-
-//===========================================================================
-// R_GenerateLookup
-//===========================================================================
-void R_GenerateLookup (int texnum)
-{
-	texture_t	*texture;
-	byte		*patchcount;		// [texture->width]
-	texpatch_t	*patch;	
-	patch_t		*realpatch;
-	int			x, x1, x2;
-	int			i;
-	short		*collump;
-	unsigned short	*colofs;
-	
-	texture = textures[texnum];
-
-	texturecomposite[texnum] = 0;	// composited not created yet
-	texturecompositesize[texnum] = 0;
-	collump = texturecolumnlump[texnum];
-	colofs = texturecolumnofs[texnum];
-	
-//
-// count the number of columns that are covered by more than one patch
-// fill in the lump / offset, so columns with only a single patch are
-// all done
-//
-	patchcount = (byte *) Z_Malloc(texture->width, PU_STATIC, 0);
-	memset (patchcount, 0, texture->width);
-	patch = texture->patches;
-		
-	for (i=0 , patch = texture->patches; i<texture->patchcount ; i++, patch++)
-	{
-		realpatch = W_CacheLumpNum (patch->patch, PU_CACHE);
-		x1 = patch->originx;
-		x2 = x1 + SHORT(realpatch->width);
-		if (x1 < 0)
-			x = 0;
-		else
-			x = x1;
-		if (x2 > texture->width)
-			x2 = texture->width;
-		for ( ; x<x2 ; x++)
-		{
-			patchcount[x]++;
-			collump[x] = patch->patch;
-			colofs[x] = LONG(realpatch->columnofs[x-x1])+3;
-		}
-	}
-	
-	for (x=0 ; x<texture->width ; x++)
-	{
-		if (!patchcount[x])
-		{
-			ST_Message ("R_GenerateLookup: column without a patch (%s)\n", 
-				texture->name);
-			free(patchcount);
-			return;
-		}
-		//Con_Error ("R_GenerateLookup: column without a patch");
-		if (patchcount[x] > 1)
-		{
-			collump[x] = -1;	// use the cached block
-			colofs[x] = texturecompositesize[texnum];
-			if (texturecompositesize[texnum] > 0x10000-texture->height)
-				Con_Error ("R_GenerateLookup: texture %i is >64k",texnum);
-			texturecompositesize[texnum] += texture->height;
-		}
-	}	
-	Z_Free(patchcount);
-}
-
-//===========================================================================
-// R_GetColumn
-//	FIXME: This routine should be gotten rid of! That way texture lookup
-//	generation could be forgotten for good.
-//===========================================================================
-byte *R_GetColumn (int tex, int col)
-{
-	int	lump, ofs;
-	
-	col &= texturewidthmask[tex];
-	lump = texturecolumnlump[tex][col];
-	ofs = texturecolumnofs[tex][col];
-	if (lump > 0)	
-		return (byte *)W_CacheLumpNum(lump, PU_CACHE) + ofs;
-	if (!texturecomposite[tex])
-		R_GenerateComposite (tex);
-	return texturecomposite[tex] + ofs;
-}
-
-#endif //<----OBSOLETE---->
 
 //===========================================================================
 // R_InitTextures
@@ -380,7 +307,7 @@ void R_InitTextures (void)
 	texture_t	*texture;
 	mappatch_t	*mpatch;
 	texpatch_t	*patch;
-	int			i,j;
+	int			i, j;
 	int			*maptex, *maptex2, *maptex1;
 	char		name[9], *names, *name_p;
 	int			*patchlookup;
@@ -425,14 +352,6 @@ void R_InitTextures (void)
 
 	// FIXME: Surely not all of these are still needed?
 	textures = Z_Malloc (numtextures*4, PU_REFRESHTEX, 0);
-#if 0
-	texturecolumnlump = Z_Malloc (numtextures*4, PU_REFRESHTEX, 0);
-	texturecolumnofs = Z_Malloc (numtextures*4, PU_REFRESHTEX, 0);
-	texturecomposite = Z_Malloc (numtextures*4, PU_REFRESHTEX, 0);
-	texturecompositesize = Z_Malloc (numtextures*4, PU_REFRESHTEX, 0);
-	texturewidthmask = Z_Malloc (numtextures*4, PU_REFRESHTEX, 0);
-	textureheight = Z_Malloc (numtextures*4, PU_REFRESHTEX, 0);
-#endif
 
 	sprintf(buf, "R_Init: Initializing %i textures...", numtextures);
 	Con_InitProgress(buf, numtextures);
@@ -474,40 +393,24 @@ void R_InitTextures (void)
 					texture->name);
 			}
 		}		
-#if 0
-		texturecolumnlump[i] = Z_Malloc (texture->width*2, PU_REFRESHTEX,0);
-		texturecolumnofs[i] = Z_Malloc (texture->width*2, PU_REFRESHTEX,0);
-
-		j = 1;
-		while (j*2 <= texture->width)
-			j<<=1;
-		texturewidthmask[i] = j-1;
-		textureheight[i] = texture->height<<FRACBITS;
-#endif
 	}
 
 	Z_Free (maptex1);
 	if (maptex2)
 		Z_Free (maptex2);
 
-#if 0
-	//
-	// Precalculate whatever possible.
-	//		
-	// FIXME: Surely texture lookup generation is no longer required?
-	for (i = 0; i < numtextures; i++)
-	{
-		R_GenerateLookup (i);
-		DD_Progress(1, PBARF_DONTSHOW);
-	}
-#endif
-
 	Con_HideProgress();
 
 	// Translation table for global animation.
-	texturetranslation = Z_Malloc ((numtextures+1)*4, PU_REFRESHTEX, 0);
-	for (i=0 ; i<numtextures ; i++)
-		texturetranslation[i] = i;
+	texturetranslation = Z_Malloc(sizeof(translation_t) * (numtextures+1), 
+		PU_REFRESHTEX, 0);
+	for(i = 0; i < numtextures; i++)
+	{
+		texturetranslation[i].current 
+			= texturetranslation[i].next
+			= i;
+		texturetranslation[i].inter = 0;
+	}
 
 	Z_Free(patchlookup);
 
@@ -531,7 +434,7 @@ void R_UpdateTextures (void)
 int R_TextureFlags(int texture)
 {
 	if(!r_texglow) return 0;
-	texture = texturetranslation[texture];
+	texture = texturetranslation[texture].current;
 	if(!texture) return 0;
 	return textures[texture]->flags;
 }
@@ -751,26 +654,25 @@ boolean R_IsAllowedDecoration
 //===========================================================================
 void R_PrecacheFlat(int num)
 {
-	int i;
-	flat_t *f = R_GetFlat(num), *test;
+	int i, k;
+	flat_t *f = R_GetFlat(num);
 
-	if(f->group)
+	if(f->ingroup)
 	{
-		// Iterate over all flats. We assume that all flats have been 
-		// enclosed inside an F_START...F_END block, per the specs.
-		// Note that the WAD loader will merge all F_START...F_END blocks
-		// in the loaded files into one continuous range.
-		for(i = 0; i < numlumps; i++)
-			if(lumpinfo[i].group == LGT_FLATS)
-			{
-				test = R_FindFlat(i);
-				if(test && test->group == f->group)
-					GL_BindTexture(GL_PrepareFlat(i));
+		// The flat belongs in one or more animgroups.
+		for(i = 0; i < numgroups; i++)
+		{
+			if(R_IsInAnimGroup(groups[i].id, DD_FLAT, num))
+			{			
+				// Precache this group.
+				for(k = 0; k < groups[i].count; k++)
+					GL_PrepareFlat(groups[i].frames[k].number);
 			}
+		}
 	}
 	else
 	{
-		GL_BindTexture(GL_PrepareFlat(num));
+		GL_PrepareFlat(num);
 	}
 }
 
@@ -781,18 +683,25 @@ void R_PrecacheFlat(int num)
 //===========================================================================
 void R_PrecacheTexture(int num)
 {
-	int i;
+	int i, k;
 
-	if(textures[num]->group)
+	if(textures[num]->ingroup)
 	{
-		for(i = 0; i < numtextures; i++)
-			if(textures[i]->group == textures[num]->group)
-				GL_BindTexture(GL_PrepareTexture(i));
+		// The texture belongs in one or more animgroups.
+		for(i = 0; i < numgroups; i++)
+		{
+			if(R_IsInAnimGroup(groups[i].id, DD_TEXTURE, num))
+			{			
+				// Precache this group.
+				for(k = 0; k < groups[i].count; k++)
+					GL_PrepareTexture(groups[i].frames[k].number);
+			}
+		}
 	}
 	else
 	{
 		// Just this one texture.
-		GL_BindTexture(GL_PrepareTexture(num));
+		GL_PrepareTexture(num);
 	}
 }
 
@@ -898,11 +807,6 @@ void R_PrecacheLevel (void)
 		}
 	}
 
-	/*ST_Message("PrecacheLevel: %i bytes of cache used.\n  Flats:%i, textures:%i, sprites:%i.\n",
-		flatmemory + texturememory + spritememory, 
-		flatmemory, texturememory, spritememory);*/
-
-	//Z_Free(flatpresent);
 	Z_Free(texturepresent);
 	Z_Free(spritepresent);
 
@@ -915,4 +819,98 @@ void R_PrecacheLevel (void)
 	// Done!
 	Con_Progress(100, PBARF_SET);
 	Con_HideProgress();
+}
+
+//===========================================================================
+// R_GetTranslation
+//===========================================================================
+translation_t *R_GetTranslation(boolean isTexture, int number)
+{
+	if(isTexture)
+	{
+		return texturetranslation + number;
+	}
+	else
+	{
+		return &R_GetFlat(number)->translation;
+	}
+}
+
+//===========================================================================
+// R_AnimateAnimGroups
+//===========================================================================
+void R_AnimateAnimGroups(void)
+{
+	animgroup_t *group;
+	translation_t *xlat;
+	int i, timer, k;
+	boolean isTexture;
+	
+	for(i = 0, group = groups; i < numgroups; i++, group++)
+	{
+		// The Precache groups are not intended for animation.
+		if(group->flags & AGF_PRECACHE || !group->count) continue;
+
+		isTexture = (group->flags & AGF_TEXTURE) != 0;
+
+		if(--group->timer <= 0)
+		{
+			// Advance to next frame.
+			group->index = (group->index + 1) % group->count;
+			timer = group->frames[group->index].tics;
+			if(group->frames[group->index].random)
+			{
+				timer += M_Random() % (group->frames[group->index].random + 1);
+			}
+			group->timer = group->maxtimer = timer;
+
+			// Update texture/flat translations.
+			for(k = 0; k < group->count; k++)
+			{
+				int real, current, next;
+
+				real = group->frames[k].number;
+				current = group->frames[ (group->index + k) 
+					% group->count ].number;
+				next = group->frames[ (group->index + k + 1)
+					% group->count ].number;
+
+/*#ifdef _DEBUG
+				if(isTexture)
+				{
+					Con_Printf("real=%i cur=%i next=%i\n", real,
+						current, next);
+				}
+#endif*/
+
+				xlat = R_GetTranslation(isTexture, real);
+				xlat->current = current;
+				xlat->next = next;
+				xlat->inter = 0;
+
+				// Just animate the first in the sequence?
+				if(group->flags & AGF_FIRST_ONLY) break;
+			}
+		}
+		else
+		{
+			// Update the interpolation point of animated group members.
+			for(k = 0; k < group->count; k++)
+			{
+				xlat = R_GetTranslation(isTexture, group->frames[k].number);
+
+				if(group->flags & AGF_SMOOTH)
+				{
+					xlat->inter = 1 - group->timer/(float)group->maxtimer;
+				}
+				else
+				{
+					xlat->inter = 0;
+				}
+
+				// Just animate the first in the sequence?
+				if(group->flags & AGF_FIRST_ONLY) break;
+			}
+		}
+	}
 }
