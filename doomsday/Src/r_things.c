@@ -374,6 +374,21 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo)
 }
 
 //===========================================================================
+// R_GetPatchInfo
+//===========================================================================
+void R_GetPatchInfo(int lump, spriteinfo_t *info)
+{
+	patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
+
+	memset(info, 0, sizeof(*info));
+	info->lump = info->realLump = lump;
+	info->width = patch->width;
+	info->height = patch->height;
+	info->topOffset = patch->topoffset;
+	info->offset = patch->leftoffset;
+}
+
+//===========================================================================
 // R_VisualRadius
 //	Returns the radius of the mobj as it would visually appear to be.
 //===========================================================================

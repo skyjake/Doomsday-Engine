@@ -112,6 +112,7 @@ extern	vissprite_t		vispsprites[DDMAXPSPRITES];
 extern  vissprite_t     vsprsortedhead;
 
 void	R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
+void	R_GetPatchInfo(int lump, spriteinfo_t *info);
 int		R_VisualRadius(mobj_t *mo);
 fixed_t	R_GetBobOffset(mobj_t *mo);
 void	R_ProjectSprite(mobj_t *thing);

@@ -152,6 +152,7 @@ void		R_RenderPlayerView(ddplayer_t *player);
 void		R_ViewWindow(int x, int y, int w, int h);
 void		R_SetBorderGfx(char *lumps[9]);
 void		R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
+void		R_GetPatchInfo(int lump, spriteinfo_t *info);
 int			R_FlatNumForName(char *name);
 int			R_CheckTextureNumForName(char *name);
 int			R_TextureNumForName(char *name);
