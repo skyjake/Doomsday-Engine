@@ -8,6 +8,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_system.h"
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_ui.h"
@@ -78,6 +79,8 @@ void Con_HideProgress(void)
 void Con_Progress(int count, int flags)
 {
 	int x, y, w, h, bor = 2, bar = 10;
+	int maxWidth = 500;
+	int mainBor = 5;
 	int fonthgt;
 
 	if(!progress_active 
@@ -127,7 +130,7 @@ void Con_Progress(int count, int flags)
 	// Calculate the size and dimensions of the progress window.
 	w = screenWidth - 30;
 	if(w < 50) w = 50;			// An unusual occurance...
-	if(w > 610) w = 610;		// Restrict width to the case of 640x480.
+	if(w > maxWidth) w = maxWidth;// Restrict width to the case of 640x480.
 	x = (screenWidth - w) / 2;	// Center on screen.
 	h = 2*bor + fonthgt + 15 + bar;
 	y = screenHeight - 15 - h;
@@ -138,32 +141,34 @@ void Con_Progress(int count, int flags)
 	y = screenHeight - 15 - h;*/
 
 	// Draw the (opaque black) shadow.
-	UI_Gradient(x + 4, y + 4, w, h, UI_COL(UIC_SHADOW), 0, 1, 1);
+	UI_GradientEx(x, y, w, h, mainBor, UI_COL(UIC_SHADOW), 0, 1, 1);
 
 	// Background.
-	UI_DrawRect(x, y, w, h, bor, UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), 
-		UI_COL(UIC_BRD_LOW));
+	UI_GradientEx(x, y, w, h, mainBor,
+		UI_COL(UIC_BG_MEDIUM), UI_COL(UIC_BG_LIGHT), 1, 1);
+	UI_DrawRect(x, y, w, h, mainBor, UI_COL(UIC_BRD_HI), 1);
 	x += bor;
 	y += bor;
-	w -= 2*bor;
-	h -= 2*bor;
-	UI_Gradient(x, y, w, h, UI_COL(UIC_BG_MEDIUM), UI_COL(UIC_BG_LIGHT), 1, 1);
+	w -= 2 * bor;
+	h -= 2 * bor;
 
 	// Title.
 	x += 5;
 	y += 5;
 	w -= 10;
 	gl.Color4f(0, 0, 0, .5f);
-	FR_TextOut(progress_title, x+2, y+2);
+	FR_TextOut(progress_title, x + 3, y + 3);
 	gl.Color3f(1, 1, 1);
-	FR_TextOut(progress_title, x, y);
+	FR_TextOut(progress_title, x + 1, y + 1);
 	y += fonthgt + 5;
 
 	// Bar.
-	UI_Gradient(x, y, w, bar, UI_COL(UIC_SHADOW), 0, .5f, .5f);
-	UI_DrawRect(x+1, y+1, 8 + (w-8)*progress/progress_max - 2, bar - 2, 4,
-		UI_COL(UIC_TEXT), UI_COL(UIC_BG_DARK), UI_COL(UIC_BG_LIGHT)
-		/*UI_COL(UIC_TEXT), UI_COL(UIC_BG_DARK), UI_COL(UIC_BRD_LOW)*/);
+	UI_GradientEx(x, y, w, bar, 4, UI_COL(UIC_SHADOW), 0, .7f, .3f);
+	UI_GradientEx(x + 1, y + 1, 8 + (w - 8)*progress/progress_max - 2, 
+		bar - 2, 4, UI_COL(UIC_BG_LIGHT), UI_COL(UIC_BRD_LOW), 
+		progress/(float)progress_max, -1);
+	UI_DrawRect(x + 1, y + 1, 8 + (w - 8)*progress/progress_max - 2, 
+		bar - 2, 4, UI_COL(UIC_TEXT), 1);
 
 	// Show what was drawn.
 	if(!(flags & PBARF_NOBLIT)) gl.Show();
