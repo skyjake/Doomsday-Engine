@@ -272,7 +272,6 @@ int             Net_GetTicCmd(void *cmd, int player);
 void            Net_Update(void);
 void            Net_Ticker(timespan_t time);
 void            Net_Drawer(void);
-void            Net_ResetTimer(void);
 
 boolean         Net_IsLocalPlayer(int pNum);
 void            Net_SetInitialAckTime(int clientNumber, uint period);

@@ -40,8 +40,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    Net_ResetTimer(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -186,7 +184,7 @@ void Cl_AnswerHandshake(handshake_packet_t * pShake)
 	Cl_InitMovers();
 
 	// Get ready for ticking.
-	Net_ResetTimer();
+	DD_ResetTimer();
 }
 
 void Cl_HandlePlayerInfo(playerinfo_packet_t * info)
@@ -281,7 +279,7 @@ void Cl_GetPackets(void)
 			// account, so...
 			gameTime = Msg_ReadLong() / 100.0;
 			Con_Printf("psv_sync: gameTime=%.3f\n", gameTime);
-			Net_ResetTimer();
+			DD_ResetTimer();
 			break;
 
 		case psv_handshake:

@@ -50,6 +50,8 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+void    Net_ResetTimer(void);
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void    DD_RunTics(void);
@@ -289,12 +291,23 @@ void DD_AdvanceTime(timespan_t time)
 	}
 }
 
+static boolean firstTic = true;
+
+/*
+ * Reset the game time so that on the next frame, the effect will be
+ * that no time has passed.
+ */
+void DD_ResetTimer(void)
+{
+	firstTic = true;
+	Net_ResetTimer();
+}
+
 /*
  * Run at least one tic.
  */
 void DD_RunTics(void)
 {
-	static boolean firstTic = true;
 	double  frameTime, ticLength;
 	double  nowTime = Sys_GetSeconds();
 

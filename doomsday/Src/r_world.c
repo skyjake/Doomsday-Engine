@@ -57,7 +57,7 @@ int     rendSkyLight = 1;		// cvar
 
 char    currentLevelId[64];
 
-//int leveltic;                 // Restarts when a new map is set up.
+boolean firstFrameAfterLoad;
 
 sectorinfo_t *secinfo;
 subsectorinfo_t *subsecinfo;
@@ -1362,7 +1362,7 @@ void R_SetupLevel(char *level_id, int flags)
 
 		// Now that the setup is done, let's reset the tictimer so it'll
 		// appear that no time has passed during the setup.
-		Net_ResetTimer();
+		DD_ResetTimer();
 
 		// Kill all local commands.
 		for(i = 0; i < MAXPLAYERS; i++)
@@ -1372,6 +1372,9 @@ void R_SetupLevel(char *level_id, int flags)
 
 		// Reset the level tick timer.
 		levelTime = 0;
+
+		// Inform the timing system to suspend the starting of the clock.
+		firstFrameAfterLoad = true;
 		return;
 	}
 

@@ -386,6 +386,7 @@ ticcmd_t *Net_LocalCmd()
 void Net_ResetTimer(void)
 {
 	lasttime = Sys_GetTime();
+	firstNetUpdate = true;
 }
 
 /*

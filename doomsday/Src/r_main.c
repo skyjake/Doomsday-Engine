@@ -430,9 +430,19 @@ void R_SetupFrame(ddplayer_t *player)
 //===========================================================================
 void R_RenderPlayerView(ddplayer_t *player)
 {
+	extern boolean firstFrameAfterLoad;
 	extern int psp3d, model_tri_count;
 	int     i, oldFlags;
 
+	if(firstFrameAfterLoad)
+	{
+		// Don't let the clock run yet.  There may be some texture
+		// loading still left to do that we have been unable to
+		// predetermine.
+		firstFrameAfterLoad = false;
+		DD_ResetTimer();
+	}
+	
 	// Setup for rendering the frame.
 	R_SetupFrame(player);
 	R_ClearSprites();
