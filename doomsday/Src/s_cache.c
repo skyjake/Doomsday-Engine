@@ -348,9 +348,9 @@ void Sfx_Uncache(sfxcache_t *node)
 {
 	cachehash_t *hash;
 
-	BEGIN_COP;
-
-	// Reset all channels loaded with this sample.
+	// Reset all channels loaded with this sample.  This is necessary
+	// because the channels have pointers to samples in the cache.
+	// Reseting will make a channel forget its sample data.
 	Sfx_UnloadSoundID(node->sample.id);
 
 	// Unlink the node.
@@ -359,8 +359,6 @@ void Sfx_Uncache(sfxcache_t *node)
 	if(hash->first == node) hash->first = node->next;
 	if(node->next) node->next->prev = node->prev;
 	if(node->prev) node->prev->next = node->next;
-
-	END_COP;
 
 	// Free all memory allocated for the node.
 	M_Free(node->sample.data);
