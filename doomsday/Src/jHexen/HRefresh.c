@@ -218,6 +218,9 @@ void G_Drawer(void)
 			if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) 
 				break;
 
+			// Good luck trying to render the view without a viewpoint...
+			if(!vplayer->plr->mo) break; 
+
 			if(leveltime < 2)
 			{
 				// Don't render too early; the first couple of frames 
