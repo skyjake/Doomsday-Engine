@@ -1,6 +1,6 @@
 @include{jake.ah}
 @macro{TITLE}{ The Doomsday Engine }
-@macro{VERSION}{ Version 1.8.5 }
+@macro{VERSION}{ Version 1.8.6 }
 
 @require{amestd}
 @include{darktable}
@@ -206,13 +206,45 @@ data related to it would lead to fatal errors.
 
 @section{ PK3 Files }
 
-Doomsday supports the PK3 (i.e. ZIP) format. Compression is not allowed. If you try to load a compressed PK3/ZIP file, you will get an error message.
+Doomsday supports the PK3 (i.e. ZIP) format. Compression is allowed,
+but encryption is not. If you try to load an encrypted or password
+protected ZIP/PK3 file, you will get an error message.
 
-PK3 files can be loaded using the @opt{-file} option. For example, @opt{-file some.pk3} will try loading @file{some.pk3} first from the runtime directory and then from the data directory.
+PK3 files are loaded using the @opt{-file} option. For example,
+@opt{-file some.pk3} will try loading @file{some.pk3} first from the
+runtime directory and then from the data directory.
 
-A PK3 contains a set of files. When a PK3 is loaded, all of them become virtual files that Doomsday can access just like the regular files on your hard drive. The end result is the same as if you had unpacked the PK3 into your Doomsday base directory. (Don't worry, no actual unpacking is done.) For example, the PK3 could have the file @file{Data\jDoom\Auto\Superb.wad}.
+A PK3 contains a set of files organized into directories. When a PK3
+is loaded, all of them become virtual files that Doomsday can access
+just like the regular files on your hard drive. The end result is the
+same as if you had unpacked the PK3 into your Doomsday base
+directory. (Don't worry, no actual unpacking is done.) For example,
+the PK3 could have the file @file{Data\jDoom\Auto\Superb.wad}.
 
-PK3 files can be created with just about any ZIP program, such as WinZip. Just make sure all the files have the correct paths, or otherwise Doomsday may not be able to find them.
+PK3 files can be created with just about any ZIP program, such as
+WinZip. Just make sure all the files have the correct paths, or
+otherwise Doomsday may not be able to find them.
+
+Version 1.8.6 introduces enhancements to PK3 path handling.
+
+@list{
+
+@item Files in the root of a PK3 are subject to automatic relocation
+based on file name extension: PK3/ZIP/LMP/WAD are mapped to
+@file{Data\<Game>\Auto\} and DED goes to @file{Defs\<Game>\Auto\}.  For
+example, placing @file{test.ded} into the root of a PK3 has the same
+end result as placing @file{test.ded} into @file{Defs\<Game>\Auto\}.
+
+@item Since the automatic mapping described above only affects single
+files, it is also possible to request mapping manually by adding a
+special prefix character to the name of a directory in the root of a
+PK3. If the directory begins with @file{#}, it is mapped into
+@file{Data\<Game>\Auto\}; if it begins with @file{@@}, it is mapped into
+@file{Defs\<Game>\Auto\}.
+
+@samp{@file{#CoolStuff/Some.pk3} => @file{Data/<Game>/Auto/CoolStuff/Some.pk3}}
+
+}
 
 
 
@@ -241,12 +273,66 @@ directory. When writing the @file{DD_DIREC} table, the prefix
 
 @section{ Automatical Loading of Data and Definitions }
 
-All WAD, PK3, ZIP and LMP files placed in the @file{ Data\<Game>\Auto\ } directory will be automatically loaded at startup.
+All WAD, PK3, ZIP and LMP files placed in the @file{ Data\<Game>\Auto\
+} directory will be automatically loaded at startup.  The data files
+are loaded in alphabetical order, including all the subdirectories of
+the @file{Auto} directory.
 
-All DED files placed in the @file{ Defs\<Game>\Auto\ } directory will be automatically read at startup.
+All DED files placed in the @file{ Defs\<Game>\Auto\ } directory will
+be automatically read at startup.  The definition files are also
+loaded in alphabetical order, including all the subdirectories of the
+@file{Auto} directory.
 
-Virtual files (from a PK3 or a WAD) in the @file{Auto} directories will also be loaded.
+Virtual files (from a PK3 or a WAD) in the @file{Auto} directories
+will also be loaded.
 
+
+
+@section{ Lump Assemblies instead of WADs }
+
+The automatic loading of data files can be utilised to load
+directories that contain individual data lumps.  This kind of a
+directory is called a "lump assembly" and it can be used instead of a
+WAD file.  Note that a lump assembly can only be loaded via the
+autoload mechanism (but it can be inside of a PK3 that is loaded
+manually).
+
+By default the contents of a lump assembly are loaded in alphabetical
+order.  However, some kinds of data require that the lumps are in a
+specific order (for instance map data).  You have two options if you
+want to enforce a specific order:
+
+@list{
+
+@item You can use name prefixes that are used to sort the lumps but
+are ignored when the lump names are determined.  The length of the
+prefix can be 1..9 characters long.  You specify the length of the
+prefix by adding an extension to the name of the directory that
+contains the lumps.  An example that uses a prefix with 3 characters:
+
+@samp{@file{Data\Game\Auto\DirWithPrefix.3\01_LUMPNAME.lmp}}
+
+The first three characters of the file name are ignored (@file{01_})
+and @file{LUMPNAME} becomes the name of the lump. 
+
+@item You can put a WAD inside the assembly.
+
+}
+
+The assembly can be built using a hierarchy of directories.  For
+example the contents of the PK3 might be:
+
+@samp{@pre{#assembly/
+   data1.lmp
+   data2.lmp
+   powerplant.2/
+      a-E2M3.lmp
+      b-THINGS.lmp
+   xyz.lmp
+}}
+
+@file{#assembly} would be mapped to @file{
+Data\<Game>\Auto\assembly\ }.
 
 
 @chapter{ Graphics }
@@ -269,22 +355,44 @@ For further details see the DED Reference.
 
 @section{ Detail Textures }
 
-Detail textures are grayscale images that are rendered on top of normal
-textures when walls and planes are viewed from close by. A signed-add
-blending is used, which lets the detail texture either darken or brighten
-the underlying texture: black => dark, gray => no change, white => bright.
+Detail textures are grayscale images that are rendered on top of
+normal textures when walls and planes are viewed from close by. A
+signed-add blending is used, which lets the detail texture either
+darken or brighten the underlying texture: black => dark, gray => no
+change, white => bright.
 
-Detail textures can be assigned to specific wall textures and flats using Detail definitions (@file{Details.ded}). The definition is described in the Doomsday Engine Definitions Reference (@file{DEDDoc.txt}).
+Detail textures can be assigned to specific wall textures and flats
+using Detail definitions (@file{Details.ded}). The definition is
+described in the Doomsday Engine Definitions Reference
+(@file{DEDDoc.txt}).
 
-Detail textures can be loaded from PCX images or raw image data. Either way, the image must be inside a WAD file or loaded using the @opt{-file} option. When using the @opt{-file} option to load detail textures, the file names of the images become lump names (see @ref{fileopt}{@opt{-file} option}).
+Detail textures can be loaded from external image resources (from the
+@file{Textures} directory), or PCX images and raw image data stored
+inside a WAD lump.  When using the @opt{-file} option to load detail
+texture lumps, the file names of the images become lump names (see
+@ref{fileopt}{@opt{-file} option}).
 
-PCX images used as detail textures must have a color depth of 8 bits and their width and height must be powers of two. The palette should be a grayscale one. It's possible to use other colors but the result can be weird due to the way the blending of detail textures is done.
+If an external resource is used as the detail texture, its dimensions
+must be powers of two (for example 128x64 or 256x256).  The image file
+must be in one of the supported image file formats.
 
-If the source data is a raw image, it must be either 64x64, 128x128 or 256x256 pixels in size. Raw images contain only the pixel values, (one byte per pixel) and have only one color component per pixel (they're black and white images), which means the lump or file that contains the detail texture can either be 4096, 16384 or 65536 bytes long.
+PCX images used as detail textures must have a color depth of 8 bits
+and their width and height must be powers of two. The palette should
+be a grayscale one. It is possible to use other colors but the result
+can be weird due to the way the blending of detail textures is done.
 
-Using the default scaling, the pixels of detail textures are four times smaller than the pixels of regular textures.
+If the source data is a raw image, it must be either 64x64, 128x128 or
+256x256 pixels in size. Raw images contain only the pixel values, (one
+byte per pixel) and have only one color component per pixel (they're
+black and white images), which means the lump or file that contains
+the detail texture can either be 4096, 16384 or 65536 bytes long.
 
-The console variables @var{rend-tex-detail}, @var{rend-tex-detail-far}, @var{rend-tex-detail-strength} and @var{rend-tex-detail-scale} control the rendering of detail textures.
+Using the default scaling, the pixels of detail textures are four
+times smaller than the pixels of regular textures.
+
+The console variables @var{rend-tex-detail},
+@var{rend-tex-detail-far}, @var{rend-tex-detail-strength} and
+@var{rend-tex-detail-scale} control the rendering of detail textures.
 
 
 
@@ -302,6 +410,7 @@ External resources are divided into a number of classes. Each class has its own 
 	@header{Resource Class} @tab @header{Description}
 @row{single}
 	Textures @tab Textures for walls and flats (floors and ceilings) @row
+	Flats @tab Textures just for flats (floors and ceilings) @row
 	Patches @tab Graphics for menus, fonts and sprite frames @row
 	LightMaps @tab Textures for dynamic lights @row
 	Music @tab Background music @row
@@ -343,7 +452,7 @@ For example, textures meant only for Final Doom: Plutonia Experiment would be pl
 
 
 
-@section{ Textures }
+@section{ Textures and Flats }
 
 Normal wall textures and flats can be replaced with TGA (Truevision Targa),
 PNG (Portable Network Graphics) or PCX (Zsoft Paintbrush) images. The
@@ -365,19 +474,51 @@ Note that 32-bit images are just 24-bit images with an additional 8 bits
 per pixel for the alpha channel. Contact me if you feel that it's necessary
 to add support for other formats.
 
-The recommended format for high-resolution textures is paletted PNG. It is the easiest format in which to distribute the textures due to its small size. Since the palette doesn't have to be the same as the game's, it should be enough for many textures.
+The recommended format for high-resolution textures is paletted
+PNG. It is the easiest format in which to distribute the textures due
+to its small size. Since the palette doesn't have to be the same as
+the game's, it should be enough for many textures.
 
-The high-resolution textures can be of any size. The engine will render them scaled so that they fit the size of the original texture. This means the aspect ratio of the new texture doesn't have to be the same as of the original texture. Note that the engine will have to resize all textures so that their dimensions are powers of two (e.g. 32, 64, 128, 256). This means TGA/PNG textures whose width and height are already powers of two can be loaded faster.
+The high-resolution textures can be of any size. The engine will
+render them scaled so that they fit the size of the original
+texture. This means the aspect ratio of the new texture doesn't have
+to be the same as of the original texture. Note that the engine will
+have to resize all textures so that their dimensions are powers of two
+(e.g. 32, 64, 128, 256). This means TGA/PNG textures whose width and
+height are already powers of two can be loaded faster.
 
-Color keying is done if the file name of the image ends in "-ck", for example @file{brnbigc-ck.png}. Both cyan (0,255,255) and purple (255,0,255) are used as keys. An alternative way to have transparency is to use an alpha channel. In it, white (255) means opaque and black (0) is fully transparent. All values in between can be used, too, for partly translucent pixels. When using an alpha channel, the "-ck" suffix is not needed.
+Color keying is done if the file name of the image ends in "-ck", for
+example @file{brnbigc-ck.png}. Both cyan (0,255,255) and purple
+(255,0,255) are used as keys. An alternative way to have transparency
+is to use an alpha channel. In it, white (255) means opaque and black
+(0) is fully transparent. All values in between can be used, too, for
+partly translucent pixels. When using an alpha channel, the "-ck"
+suffix is not needed.
 
-To create a high-resolution texture for the wall texture STARTAN3 you'd place a TGA file named @file{startan3.tga} or a PNG file named @file{startan3.png} into the @file{Textures} directory. The file names of images that replace flats must begin with "flat-", e.g. to replace the flat FLOOR7_2 you'd need to have a TGA file @file{flat-floor7_2.tga} in the @file{Textures} directory. If there are both PNG and TGA versions of the same texture, the engine will use the PNG version.
+To create a high-resolution texture for the wall texture STARTAN3
+you'd place a TGA file named @file{STARTAN3.tga} or a PNG file named
+@file{STARTAN3.png} into the @file{Textures} directory.
+
+The file names of images that replace flats must begin with "Flat-",
+e.g. to replace the flat FLOOR7_2 you'd need to have a TGA file
+@file{Flat-FLOOR7_2.tga} in the @file{Textures} directory. If there
+are both PNG and TGA versions of the same texture, the engine will use
+the PNG version.
+
+Version 1.8.6 added the @file{Flats} external resource directory.  In
+order to replace FLOOR7_2, it is enough to put @file{FLOOR7_2.png}
+into the @file{Flats} directory; no prefix is necessary.
 
 @notice{
-	The file names of the high-resolution textures must match the @em{texture} names, not the names of the patches that make up the textures. For example: DOOR2_5 is a patch name, DOOR3 is the texture that uses DOOR2_5.
+	The file names of the high-resolution textures must match the
+	@em{texture} names, not the names of the patches that make up
+	the textures. For example: DOOR2_5 is a patch name, DOOR3 is
+	the texture that uses DOOR2_5.
 }
 
-To disable high-resolution textures use the command line option @opt{-nohightex}. The option @opt{-texdir} can be used to change the directory from which the textures are searched.
+To disable high-resolution textures use the command line option
+@opt{-nohightex}. The option @opt{-texdir} can be used to change the
+directory from which the textures are searched.
 
 Links to high-resolution texture sites:
 
