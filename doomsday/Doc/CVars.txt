@@ -1,0 +1,135 @@
+Quick Reference: Console Variables
+==================================
+by Sapiens
+
+
+Command:	con-flat #
+Default:	con-flat 10
+Notes:		The number of the flat (texture) to use for the console background.
+		Valid settings range from 1 to the highest flat number present.
+
+Command:	con-zoom #
+Default:	con-zoom 1
+Notes:		The zoom factor for the console background.
+		Valid settings range from 0.1 to 100.
+
+Command:	ctl-use-dclick 0|1
+Notes:		1 = Double-clicking your forward/strafe key equals clicking your use key.
+
+Command:	game-corpse-sliding 0|1
+Notes:		1 = Corpses slide down stairs and ledges.
+
+Command:	game-corpse-time #
+Default:	game-corpse-time 0
+Notes:		Corpse vanish time in seconds.
+
+Command:	game-fastmonsters 0|1
+Notes:		1 = Monsters attack more quickly during non-demo single player games.
+
+Command:	hud-scale #
+Default:	hud-scale 0.6
+Notes:		Scaling for HUD info.
+		Valid settings range from 0.1 to 1.
+
+Command:	hud-status-size force #
+Default:	hud-status-size force 20
+Notes:		Status bar size.
+		Valid settings range from 1 to 20.
+
+Command:	hud-title 0|1
+Notes:		1 = Show level title and author in the beginning.
+
+Command:	hud-title-noidsoft 0|1
+Notes:		1 = Don't show map author if it's "id Software".
+
+Command:	map-alpha #
+Default:	map-alpha 0.6
+Notes:		Alpha level of the automap background.
+		Valid settings range from 0 to 1.
+
+Command:	map-alpha-lines #
+Default:	map-alpha-lines 1
+Notes:		Alpha level of automap lines.
+		Valid settings range from 0 to 1.
+
+Command:	map-cheat-counter #
+Default:	map-cheat-counter 0
+Notes:		Automap kills/items/secrets counter bitfield.
+		Valid settings range from 0 to 63.
+
+Command:	menu-effect 0|1|2
+Notes:		Disable menu effects.
+		1 = Type-in, 2 = All.
+
+Command:	map-rotate 0|1
+Notes:		1 = Automap turns with player.  Up equals forward.
+
+Command:	menu-fog 0|1
+Notes:		Menu fog mode.
+		0 = Blue vertical, 1 = Black smoke.
+
+Command:	menu-glitter #
+Default:	menu-glitter 0.5
+Notes:		Strength of type-in glitter.
+		Valid settings range from 0 to 1.
+
+Command:	menu-scale #
+Default:	menu-scale 0.9
+Notes:		Scaling for menus.
+		Valid settings range from 0.1 to 1.
+
+Command:	menu-turningskull 0|1
+Notes:		1 = Menu skull turns at slider items.
+
+Command:	msg-blink 0|1
+Notes:		1 = HUD messages blink when they're printed.
+
+Command:	msg-count #
+Default:	msg-count 4
+Notes:		Number of HUD messages displayed at the same time.
+		Valid settings range from 0 to 8.
+
+Command:	msg-scale #
+Default:	msg-scale 0.8
+Notes:		Scaling factor for HUD messages.
+		Valid settings range from 0.1 to 1.
+
+Command:	msg-secret 0|1
+Notes:		1 = Announce the discovery of secret areas.
+
+Command:	msg-uptime #
+Default:	msg-uptime 175
+Notes:		Number of tics to keep HUD messages on screen.
+		Valid settings are greater than 35.
+
+Command:	player-autoswitch 0|1
+Notes:		1 = Change weapon automatically when picking one up.
+
+Command:	player-eyeheight #
+Default:	player-eyeheight 41
+Notes:		Player eye height. (Duh.)
+		Valid settings range from 41 to 54.
+
+Command:	player-jump-power #
+Default:	player-jump-power 9
+Notes:		Jump power. (Duh again.)
+		Valid settings range from 0 to 100.
+
+Command:	rend-dev-wireframe 0|1
+Notes:		1 = Render player view in wireframe mode.
+
+Command:	server-game-cheat 0|1
+Notes:		1 = Allow cheating in multiplayer games (god, noclip, give).
+
+Command:	view-bob-height #
+Default:	view-bob-height 1
+Notes:		Scale for viewheight bobbing.
+		Valid settings range from 0 to 1.
+
+Command:	view-bob-weapon #
+Default:	view-bob-weapon 1
+Notes:		Scale for player weapon bobbing.
+		Valid settings range from 0 to 1.
+
+Command:	view-bob-weapon-switch-lower 0|1
+Notes:		1 = HUD weapon lowered during weapon switching
