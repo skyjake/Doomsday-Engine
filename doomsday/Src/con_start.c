@@ -143,11 +143,11 @@ void Con_DrawStartupBackground(void)
 
 		// Draw it in two passes: additive and subtractive. 
 		gl.Bind(startupLogo);
-		GL_DrawRect(x, y, w, h, .08f, .08f, .08f, 1);
+		GL_DrawRect(x, y, w, h, .05f, .05f, .05f, 1);
 		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
-		GL_DrawRect(x - w/170, y - w/170, w, h, .14f, .14f, .14f, 1);
+		GL_DrawRect(x - w/170, y - w/170, w, h, .1f, .1f, .1f, 1);
 		gl.Func(DGL_BLENDING, DGL_ONE, DGL_ONE);
-		gl.Color3f(.08f, .08f, .08f);
+		gl.Color3f(.05f, .05f, .05f);
 		FR_TextOut(DOOMSDAY_VERSIONTEXT, 
 			x + w - FR_TextWidth(DOOMSDAY_VERSIONTEXT),	
 			y + h);
