@@ -293,7 +293,7 @@ cvar_t engineCVars[] =
 	"rend-light-clip",		0,			CVT_INT,	&clipLights,	0, 1,	"1=Clip dynamic lights (try using with dlblend 2).",
 	"rend-light-bright",	0,			CVT_FLOAT,	&dlFactor,		0, 1,	"Intensity factor for dynamic lights.",
 	"rend-light-num",		0,			CVT_INT,	&maxDynLights,	0, 8000, "The maximum number of dynamic lights. 0=no limit.",
-	"rend-light-shrink",	0,			CVT_FLOAT,	&dlContract,	0, 1,	"Shrink dynlight wall polygons horizontally.",
+//	"rend-light-shrink",	0,			CVT_FLOAT,	&dlContract,	0, 1,	"Shrink dynlight wall polygons horizontally.",
 	"rend-light-radius-scale",	0,		CVT_FLOAT,	&dlRadFactor,	0.1f, 10, "A multiplier for dynlight radii (default: 1).",
 	"rend-light-radius-max", 0,			CVT_INT,	&dlMaxRad,		64,	512, "Maximum radius of dynamic lights (default: 128).",
 	"rend-light-wall-angle", CVF_NO_MAX, CVT_FLOAT,	&rend_light_wall_angle, 0, 0, "Intensity of angle-based wall light.",
@@ -2965,10 +2965,26 @@ void Con_Message(char *message, ...)
  */
 void Con_Error (char *error, ...)
 {
+	static boolean errorInProgress = false;
 	extern int bufferLines;
 	int i;
 	char buff[2048], err[256];
 	va_list argptr;
+
+	// Already in an error?
+	if(errorInProgress)
+	{
+		printf("Con_Error: Stack overflow imminent, aborting...\n");
+		va_start(argptr, error);
+		vprintf(error, argptr);
+		va_end(argptr);
+
+		// Exit immediately, lest we go into an infinite loop.
+		exit(1);
+	}
+
+	// We've experienced a fatal error; program will be shut down.
+	errorInProgress = true;
 
 	// Get back to the directory we started from.
 	Dir_ChDir(&ddRuntimeDir);
