@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.9  2003/06/03 15:21:30  skyjake
+//** Fixed font problem
+//**
 //** Revision 1.8  2003/05/30 16:34:11  skyjake
 //** image_t added, extres for raw screens
 //**
@@ -158,11 +161,11 @@ void PG_InitTextures(void)
 			continue;
 		}
 
-		// Create a new texture and upload the image.
-		ptctexname[i + 1] = gl.NewTexture();
-
 		VERBOSE( Con_Message("PG_InitTextures: Texture %02i: %i * %i * %i\n",
 			i, image.width, image.height, image.pixelSize) );
+
+		// Create a new texture and upload the image.
+		ptctexname[i + 1] = gl.NewTexture();
 
 		gl.TexImage(image.pixelSize == 4? DGL_RGBA : DGL_RGB, 
 			image.width, image.height, 0, image.pixels);
