@@ -7,6 +7,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+//#define DD_PROFILE
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -17,7 +19,18 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+	PROF_REFRESH_FIND_FLAT
+END_PROF_TIMERS()
+
+#define FLAT_HASH_SIZE	128
+#define FLAT_HASH(x)	(flathash + (((unsigned) x) & (FLAT_HASH_SIZE - 1)))
+
 // TYPES -------------------------------------------------------------------
+
+typedef struct flathash_s {
+	flat_t *first;
+} flathash_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -35,8 +48,7 @@ int			r_unload_unneeded = false;
 
 lumptexinfo_t *lumptexinfo = 0;
 int			numlumptexinfo = 0;
-int			numflats;
-flat_t		*flats;
+flathash_t	flathash[FLAT_HASH_SIZE];
 int			firstpatch, lastpatch, numpatches;
 int			numtextures;
 texture_t	**textures;
@@ -52,15 +64,64 @@ int			r_texglow = true;
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
+// R_ShutdownData
+//===========================================================================
+void R_ShutdownData(void)
+{
+	PRINT_PROF( PROF_REFRESH_FIND_FLAT );
+}
+
+//===========================================================================
+// R_CollectFlats
+//	Returns a NULL-terminated array of pointers to all the flats. 
+//	The array must be freed with Z_Free.
+//===========================================================================
+flat_t **R_CollectFlats(int *count)
+{
+	int i, num;
+	flat_t *f, **array;
+
+	// First count the number of flats.
+	for(num = 0, i = 0; i < FLAT_HASH_SIZE; i++)
+		for(f = flathash[i].first; f; f = f->next) 
+			num++;
+
+	// Tell this to the caller.
+	if(count) *count = num;
+
+	// Allocate the array, plus one for the terminator.
+	array = Z_Malloc(sizeof(flat_t*) * (num + 1), PU_STATIC, NULL);
+
+	// Collect the pointers.
+	for(num = 0, i = 0; i < FLAT_HASH_SIZE; i++)
+		for(f = flathash[i].first; f; f = f->next) 
+			array[num++] = f;
+
+	// Terminate.
+	array[num] = NULL;
+
+	return array;
+}
+
+//===========================================================================
 // R_FindFlat
 //	Returns a flat_t* for the given lump, if one already exists.
 //===========================================================================
 flat_t *R_FindFlat(int lumpnum)
 {
-	int i;
+	flat_t *i;
+	flathash_t *hash = FLAT_HASH(lumpnum);
 	
-	for(i = 0; i < numflats; i++)
-		if(flats[i].lump == lumpnum) return flats + i;
+	BEGIN_PROF( PROF_REFRESH_FIND_FLAT );
+
+	for(i = hash->first; i; i = i->next)
+		if(i->lump == lumpnum) 
+		{
+			END_PROF( PROF_REFRESH_FIND_FLAT );
+			return i;
+		}
+	
+	END_PROF( PROF_REFRESH_FIND_FLAT );
 	return NULL;
 }
 
@@ -71,17 +132,20 @@ flat_t *R_FindFlat(int lumpnum)
 flat_t *R_GetFlat(int lumpnum)
 {
 	flat_t *f = R_FindFlat(lumpnum);
+	flathash_t *hash;
 	
 	// Check if this lump has already been loaded as a flat.
 	if(f) return f;
 
 	// Hmm, this is an entirely new flat.
-	// FIXME: This kind of reallocation (+1, +1, ...) is inefficient.
-	flats = Z_Realloc(flats, sizeof(flat_t) * ++numflats, PU_FLAT);
+	f = Z_Calloc(sizeof(flat_t), PU_FLAT, NULL);
+	hash = FLAT_HASH(lumpnum);
+
+	// Link to the hash.
+	f->next = hash->first;
+	hash->first = f;
 
 	// Init the new one.
-	f = flats + numflats - 1;
-	memset(f, 0, sizeof(*f));
 	f->lump = lumpnum;
 	f->translation.current = f->translation.next = lumpnum; 
 	memset(f->color.rgb, 0xff, 3);
@@ -455,8 +519,7 @@ int R_FlatFlags(int flat)
 //===========================================================================
 void R_InitFlats (void)
 {
-	flats = 0;
-	numflats = 0;
+	memset(flathash, 0, sizeof(flathash));
 }
 
 //===========================================================================
@@ -465,6 +528,7 @@ void R_InitFlats (void)
 void R_UpdateFlats (void)
 {
 	Z_FreeTags(PU_FLAT, PU_FLAT);
+	memset(flathash, 0, sizeof(flathash));
 	R_InitFlats();
 }
 
