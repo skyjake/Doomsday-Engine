@@ -127,18 +127,29 @@ void SW_ReplaceNewlines(const char *in, char *out)
 //===========================================================================
 void SW_Printf(const char *format, ...)
 {
-	char    buf[2048], rep[2048];
+	static int printedChars = 0;
+	char    buf[16384], rep[16384];
 	va_list args;
+	boolean clearBox = false;
 
 	if(!msgWnd)
 		return;
 
 	va_start(args, format);
-	vsprintf(buf, format, args);
+	printedChars += vsprintf(buf, format, args);
 	va_end(args);
 
+	if(printedChars > 32768)
+	{
+		// Windows hack: too much stuff printed, clear the text box and 
+		// start over.
+		clearBox = true;
+		printedChars = 0;
+	}
+
 	SW_ReplaceNewlines(buf, rep);
-	SendDlgItemMessage(msgWnd, IDC_MESSAGES, EM_REPLACESEL, 0, (LPARAM) rep);
+	SendDlgItemMessage(msgWnd, IDC_MESSAGES, 
+		clearBox? WM_SETTEXT : EM_REPLACESEL, 0, (LPARAM) rep);
 }
 
 //===========================================================================
