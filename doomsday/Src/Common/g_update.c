@@ -164,6 +164,17 @@ void G_UpdateState(int step)
 {
 	switch(step)
 	{
+	case DD_GAME_MODE:
+		// Set the game mode string.
+#ifdef __JDOOM__
+		D_IdentifyVersion();
+#elif __JHERETIC__
+		H_IdentifyVersion();
+#else // __JHEXEN__
+		H2_IdentifyVersion();
+#endif
+		break;
+
 	case DD_PRE:
 		G_MangleState();
 		break;
@@ -173,11 +184,11 @@ void G_UpdateState(int step)
 		P_Init();
 #if __JDOOM__
 		// FIXME: Detect gamemode changes (doom -> doom2, for instance).
-		XG_ReadTypes();
+		XG_Update();
 		M_Init();
 		S_LevelMusic();
 #elif __JHERETIC__
-		XG_ReadTypes();
+		XG_Update();
 		SB_Init(); // Updates the status bar patches.
 		MN_Init();
 		S_LevelMusic();
