@@ -6,6 +6,7 @@
 
 Version 1.7.12 (work in progress)
 --------------
++ cmd 'startinf (scriptid)' (and 'stopinf')
 * 'InFine' is an alternative name for the 'Finale' definition
 - removed obsolete settings from Control Panel: Network
 - fixed: console text gibberish on the first time the console is drawn
@@ -24,22 +25,19 @@ jHexen:
 InFine:
 + gradient rectangles
 + object rotation (pics, text objects, rectangles)
-+ InFine command "ScaleXY (handle) (x) (y)"
-+ InFine command "Rect (handle) (x) (y) (w) (h)"
-+ InFine command "FillColor (h) (TOP/BOTTOM/BOTH) (r) (g) (b) (a)"
-+ InFine command "EdgeColor (h) (TOP/BOTTOM/BOTH) (r) (g) (b) (a)"
-+ InFine condition "MODE:(game-mode)"
-+ InFine command "ELSE"
-+ InFine command "DO" ... ";" (nestable blocks)
-+ InFine command "PlayDemo (filename)"
-+ InFine command "Cmd (console command)"
-+ InFine command "OnKey (key-ident) (marker)": jump to marker when key 
-  pressed
-+ InFine command "UnsetKey (key-ident)"
-+ InFine commands "Events", "NoEvents": enable/disable interactive mode
-+ InFine commands "Trigger", "NoTrigger": enable/disable menu 
-  triggering mode
-+ cmd 'startinf (scriptid)' (and 'stopinf')
++ command "ScaleXY (handle) (x) (y)"
++ command "Rect (handle) (x) (y) (w) (h)"
++ command "FillColor (h) (TOP/BOTTOM/BOTH) (r) (g) (b) (a)"
++ command "EdgeColor (h) (TOP/BOTTOM/BOTH) (r) (g) (b) (a)"
++ condition "MODE:(game-mode)"
++ command "ELSE"
++ command "DO" ... ";" (nestable blocks)
++ command "PlayDemo (filename)"
++ command "Cmd (console command)"
++ command "OnKey (key-ident) (marker)": jump to marker when key pressed
++ command "UnsetKey (key-ident)"
++ commands "Events", "NoEvents": enable/disable interactive mode
++ commands "Trigger", "NoTrigger": enable/disable menu triggering mode
 * generic object commands: "Del", "X", "Y", "Sx", "Sy", "Scale", "Angle"
   "ScaleXY", "RGB", "Alpha"
 * old pic/text commands that should no longer be used: "DelPic", 
@@ -47,6 +45,8 @@ InFine:
   "TextScale"
 * InFine can run in overlay mode (e.g. during GS_LEVEL)
 * InFine states are nested (script -> demo -> script -> demo -> etc.)
+- fixed: "WaitText" timing with \w, \W, \p, \P
+- fixed: "SoundAt" volume
 
 
 Version 1.7.11
