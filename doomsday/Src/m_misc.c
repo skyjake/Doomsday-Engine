@@ -198,9 +198,11 @@ char   *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
 	return buf;
 }
 
-//===========================================================================
-// M_ExtractFileBase
-//===========================================================================
+/*
+ * This has been modified to work with filenames of all sizes.  Of
+ * course, the caller must provide enough space. :-)
+ * --skyjake 2004-07-24
+ */
 void M_ExtractFileBase(const char *path, char *dest)
 {
 	const char *src;
@@ -208,24 +210,20 @@ void M_ExtractFileBase(const char *path, char *dest)
 
 	src = path + strlen(path) - 1;
 
-	// Back up until a \ or the start
+	// Back up until a \ or the start.
 	while(src != path && *(src - 1) != '\\' && *(src - 1) != '/')
 	{
 		src--;
 	}
 
-	// Copy up to eight characters
-	memset(dest, 0, 8);
-	length = 0;
+	// Copy up to eight characters.
 	while(*src && *src != '.')
 	{
-		if(++length == 9)
-		{
-			// This is an error?!
-			Con_Error("Filename base of %s > 8 chars", path);
-		}
 		*dest++ = toupper((int) *src++);
 	}
+	
+	// End with a terminating null.
+	*dest++ = 0;
 }
 
 //===========================================================================

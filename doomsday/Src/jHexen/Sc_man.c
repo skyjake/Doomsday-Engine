@@ -50,7 +50,7 @@ char   *sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char ScriptName[16];
+static char ScriptName[32];
 static char *ScriptBuffer;
 static char *ScriptPtr;
 static char *ScriptEndPtr;
