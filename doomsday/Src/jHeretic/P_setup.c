@@ -83,7 +83,7 @@ void P_LoadVertexes (int lump, int gllump)
 			ver = 2;
 		}
 		// There are additional vertices in gllump.
-		numvertexes += W_LumpLength(gllump) / 
+		numvertexes += (W_LumpLength(gllump) - (ver==2? 4 : 0)) / 
 			(ver==1? sizeof(mapvertex_t) : sizeof(glvert2_t));
 	}
 	vertexes = Z_Malloc (numvertexes*sizeof(vertex_t),PU_LEVEL,0);
@@ -188,23 +188,36 @@ void P_LoadSegsGL(int lump)
 	li = segs;
 	for(i=0; i<numsegs; i++, li++, gls++)
 	{
-		li->v1 = &vertexes[gls->v1 & 0x8000? firstGLvertex + (gls->v1 & ~0x8000) : gls->v1];
-		li->v2 = &vertexes[gls->v2 & 0x8000? firstGLvertex + (gls->v2 & ~0x8000) : gls->v2];
-		//Message( "seg %i: linedef %i\n", i, gls->linedef);
+		li->v1 = &vertexes[gls->v1 & 0x8000? firstGLvertex 
+			+ (gls->v1 & 0x7fff) : gls->v1];
+
+		li->v2 = &vertexes[gls->v2 & 0x8000? firstGLvertex 
+			+ (gls->v2 & 0x7fff) : gls->v2];
+
 		if(gls->linedef != -1)
 		{
 			ldef = &lines[gls->linedef];
 			li->linedef = ldef;
 			li->sidedef = &sides[ldef->sidenum[gls->side]];
 			li->frontsector = sides[ldef->sidenum[gls->side]].sector;
-			if (ldef->flags & ML_TWOSIDED)
+			if(ldef->flags & ML_TWOSIDED)
+			{
 				li->backsector = sides[ldef->sidenum[gls->side^1]].sector;
+			}
 			else
+			{
 				li->backsector = 0;
+			}
 			if(gls->side == 0)
-				li->offset = FRACUNIT * AccurateDistance(li->v1->x - ldef->v1->x, li->v1->y - ldef->v1->y); 
+			{
+				li->offset = FRACUNIT * AccurateDistance(li->v1->x 
+					- ldef->v1->x, li->v1->y - ldef->v1->y); 
+			}
 			else 
-				li->offset = FRACUNIT * AccurateDistance(li->v1->x - ldef->v2->x, li->v1->y - ldef->v2->y); 
+			{
+				li->offset = FRACUNIT * AccurateDistance(li->v1->x 
+					- ldef->v2->x, li->v1->y - ldef->v2->y); 
+			}
 			li->angle = bamsAtan2((li->v2->y - li->v1->y)>>FRACBITS, 
 				(li->v2->x - li->v1->x)>>FRACBITS) << 16;
 		}
@@ -218,7 +231,8 @@ void P_LoadSegsGL(int lump)
 		
 		// Calculate the length of the segment. We need this for
 		// the texture coordinates. -jk
-		li->length = AccurateDistance(li->v2->x - li->v1->x, li->v2->y - li->v1->y);								
+		li->length = AccurateDistance(li->v2->x - li->v1->x, 
+			li->v2->y - li->v1->y);								
 	}
 	
 	Z_Free(data);
@@ -785,7 +799,6 @@ void P_SetupLevel (int episode, int map, int playermask, skill_t skill)
 	char	levelid[9];
 	char	lumpname[9];
 	int		lumpnum, gllumpnum;
-//	mobj_t	*mobj;
 	char	*lname, *lauthor;
 	
 	totalkills = totalitems = totalsecret = 0;
@@ -891,36 +904,12 @@ void P_SetupLevel (int episode, int map, int playermask, skill_t skill)
 	TimerGame = 0;
 	if(deathmatch)
 	{
-		/*for (i=0 ; i<MAXPLAYERS ; i++)
-		{
-			if (players[i].plr->ingame)
-			{	// must give a player spot before deathmatchspawn
-				mobj = P_SpawnMobj (playerstarts[i].x<<16,
-					playerstarts[i].y<<16,0, MT_PLAYER);
-				players[i].plr->mo = mobj;
-				G_DeathMatchSpawnPlayer (i);
-				P_RemoveMobj (mobj);
-			}
-		}*/
 		parm = ArgCheck("-timer");
 		if(parm && parm < myargc-1)
 		{
 			TimerGame = atoi(Argv(parm+1))*35*60;
 		}
 	}
-	/*else if(IS_NETGAME || IS_CLIENT)
-	{
-		// Spawn players on their rightful places.
-		// Might get messy if there aren't enough starts.
-		for(i=0; i<MAXPLAYERS; i++)
-			if(players[i].plr->ingame)
-			{
-				ddplayer_t *ddpl = players[i].plr;
-				P_SpawnPlayer(&playerstarts[players[i].startspot], i);
-				// Gib anything at the spot.
-				if(IS_NETGAME) P_Telefrag(ddpl->mo);
-			}
-	}*/
 
 	P_SpawnPlayers();
 
