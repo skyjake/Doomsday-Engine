@@ -525,10 +525,13 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 	stop = (actor->lastlook-1)&3;
 	for( ; ; actor->lastlook = (actor->lastlook+1)&3 )
 	{
+		if (actor->lastlook == stop) 
+			return false;			// Time to stop looking. -jk
+
 		if (!players[actor->lastlook].plr->ingame)
 			continue;
-
-		if (c++ == 2 || actor->lastlook == stop)
+		
+		if (c++ == 2)
 			return false;           // done looking
 
 		player = &players[actor->lastlook];
