@@ -5,8 +5,6 @@
 //**
 //**************************************************************************
 
-//#define DD_PROFILE
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
@@ -23,6 +21,9 @@ BEGIN_PROF_TIMERS()
 	PROF_WRITE_DELTAS,
 	PROF_PACKET_SIZE
 END_PROF_TIMERS()
+
+// Hitting the maximum packet size allows checks for raising BWR.
+#define BWR_ADJUST_TICS		(TICSPERSEC / 2)
 
 // The minimum frame size is used when bandwidth rating is zero (poorest
 // possible connection).
@@ -47,13 +48,11 @@ void Sv_SendFrame(int playerNumber);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean net_timerefresh;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int allow_frames = false;
-int send_all_players = false;
-int frame_interval = 1; // Skip every second frame by default (17.5fps)
+int allowFrames = false;
+int send_all_players = false; // Obsolete
+int frameInterval = 1; // Skip every second frame by default (17.5fps)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -72,7 +71,7 @@ void Sv_TransmitFrame(void)
 	int	i, cTime, numInGame, pCount;
 
 	// Obviously clients don't transmit anything.
-	if(!allow_frames || isClient) 
+	if(!allowFrames || isClient) 
 	{
 		return;			
 	}
@@ -121,11 +120,11 @@ void Sv_TransmitFrame(void)
 		// to be sent at different times for each player.
 		pCount++;
 		cTime = gametic;
-		if(frame_interval > 0 && numInGame > 1)
+		if(frameInterval > 0 && numInGame > 1)
 		{
-			cTime += (pCount * frame_interval) / numInGame;
+			cTime += (pCount * frameInterval) / numInGame;
 		}
-		if(cTime <= clients[i].lastTransmit + frame_interval)
+		if(cTime <= clients[i].lastTransmit + frameInterval)
 		{
 			// Still too early to send.
 			continue;
@@ -147,72 +146,6 @@ void Sv_TransmitFrame(void)
 		}
 	}
 }
-
-#if 0
-//==========================================================================
-// Sv_RefreshClient
-//	Send all necessary data to the client (a frame packet).
-//==========================================================================
-void Sv_RefreshClient(int plrNum)
-{
-	ddplayer_t	*player = &players[plrNum];
-	client_t	*cl = &clients[plrNum];
-	int			valid = ++validcount;
-	int			refresh_started_at = Sys_GetRealTime();
-
-	if(!player->mo) 
-	{
-		// Interesting... we don't know where the client is.
-		return;		
-	}
-
-	BEGIN_PROF( PROF_GEN_DELTAS );
-
-	// The first thing we must do is generate a Delta Set for the client. 
-	Sv_DoFrameDelta(plrNum);
-
-	END_PROF( PROF_GEN_DELTAS );
-
-	// There, now we know what has changed. Let's create the Frame packet.
-	Msg_Begin(psv_frame);
-
-	// Frame time, lowest byte of gametic.
-	Msg_WriteByte(gametic);	
-
-	BEGIN_PROF( PROF_WRITE_DELTAS );
-
-	// Delta Sets.
-	Sv_WriteFrameDelta(plrNum);
-
-	END_PROF( PROF_WRITE_DELTAS );
-
-	profiler_[PROF_PACKET_SIZE].startCount++;
-	profiler_[PROF_PACKET_SIZE].totalTime += Msg_Offset();
-
-#ifdef _DEBUG
-	{
-		byte *ptr = netbuffer.msg.data;
-		totalFrameCount += Msg_Offset();
-		for(; ptr != netbuffer.cursor; ptr++)
-			byteCounts[*ptr]++;
-	}
-#endif
-	
-	// Send the frame packet as high priority.
-	Net_SendBuffer(plrNum, /*SPF_FRAME | */0xe000);
-
-	// Server acks local deltas right away.
-	if(players[plrNum].flags & DDPF_LOCAL) 
-		Sv_AckDeltaSetLocal(plrNum);
-
-	if(net_timerefresh)
-	{
-		Con_Printf("refresh %i: %i ms (len=%i b)\n", plrNum, 
-			Sys_GetRealTime()-refresh_started_at,
-			netbuffer.length);
-	}
-}
-#endif
 
 /*
  * Shutdown routine for the server.
