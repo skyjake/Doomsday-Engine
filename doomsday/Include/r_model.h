@@ -36,6 +36,7 @@
 #define MFF_DIM					0x01000000 // Never fullbright.
 #define MFF_SUBTRACT			0x02000000 // Subtract blending.
 #define MFF_REVERSE_SUBTRACT	0x04000000 // Reverse subtract blending.
+#define MFF_TWO_SIDED			0x08000000 // Disable culling.
 
 typedef struct
 {
@@ -89,9 +90,12 @@ void R_ClearModelPath(void);
 void R_AddModelPath(char *addPath, boolean append);
 float R_CheckModelFor(mobj_t *mo, modeldef_t **mdef, modeldef_t **nextmdef);
 modeldef_t *R_CheckIDModelFor(const char *id);
+int R_ModelFrameNumForName(int modelnum, char *fname);
+void R_SetModelFrame(modeldef_t *modef, int frame);
 void R_SetSpriteReplacement(int sprite, char *modelname);
 int R_FindModelFile(const char *filename, char *outfn);
 byte *R_LoadSkin(model_t *mdl, int skin, int *width, int *height, int *pxsize);
 void R_PrecacheSkinsForMobj(mobj_t *mo);
+void R_PrecacheModelSkins(modeldef_t *modef);
 
 #endif 
