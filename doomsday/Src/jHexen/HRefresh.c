@@ -40,14 +40,11 @@ void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void PageDrawer(void);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean automapactive;
 extern boolean MenuActive;
 extern boolean askforquit;
-extern boolean advancedemo;
 extern float lookOffset;
 extern int actual_leveltime;
 
@@ -55,15 +52,12 @@ extern boolean dontrender;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int demosequence;
+//int demosequence;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int pagetic;
-static char *pagename;
-
-static textype_t	*texTypes = 0;
-static int			numTexTypes = 0;
+/*static int pagetic;
+static char *pagename;*/
 
 // CODE --------------------------------------------------------------------
 
@@ -79,7 +73,6 @@ static int			numTexTypes = 0;
 */
 
 boolean	setsizeneeded;
-//int		setblocks/*, setdetail*/;
 
 void R_SetViewSize (int blocks, int detail)
 {
@@ -282,13 +275,12 @@ void G_Drawer(void)
 			break;
 		
 		case GS_INFINE:
-			FI_Drawer();
 			GL_Update(DDUF_FULLSCREEN);
 			break;
 
-		case GS_DEMOSCREEN:
+/*		case GS_DEMOSCREEN:
 			PageDrawer();
-			break;
+			break;*/
 
 		case GS_WAITING:
 			GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
@@ -298,7 +290,7 @@ void G_Drawer(void)
 			break;
 	}
 
-	if(paused && !MenuActive && !askforquit)
+	if(paused && !MenuActive && !askforquit && !fi_active)
 	{
 		if(!netgame)
 		{
@@ -310,6 +302,8 @@ void G_Drawer(void)
 			GL_DrawPatch(160, 70, W_GetNumForName("PAUSED"));
 		}
 	}
+
+	FI_Drawer();
 }
 
 //==========================================================================
@@ -318,7 +312,7 @@ void G_Drawer(void)
 //
 //==========================================================================
 
-static void PageDrawer(void)
+/*static void PageDrawer(void)
 {
 	if(!pagename) return;
 	GL_DrawRawScreen(W_GetNumForName(pagename), 0, 0);
@@ -327,7 +321,7 @@ static void PageDrawer(void)
 		GL_DrawPatch(4, 160, W_GetNumForName("ADVISOR"));
 	}
 	GL_Update(DDUF_FULLSCREEN);
-}
+}*/
 
 #define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
 
@@ -380,7 +374,7 @@ void H2_ConsoleBg(int *width, int *height)
 	*height = 64*consoleZoom;
 }
 
-
+/*
 //==========================================================================
 //
 // H2_PageTicker
@@ -446,192 +440,11 @@ void H2_DoAdvanceDemo(void)
 			break;
 	}
 }
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-/*
-========================
-=
-= R_DrawPSprite
-=
-========================
 */
 
-player_t *viewplayer;
-
-// Y-adjustment values for full screen (4 weapons)
-/*int PSpriteSY[NUMCLASSES][NUMWEAPONS] =
-{
-	{ 0, -12*FRACUNIT, -10*FRACUNIT, 10*FRACUNIT }, // Fighter
-	{ -8*FRACUNIT, 10*FRACUNIT, 10*FRACUNIT, 0 }, // Cleric
-	{ 9*FRACUNIT, 20*FRACUNIT, 20*FRACUNIT, 20*FRACUNIT }, // Mage 
-	{ 10*FRACUNIT, 10*FRACUNIT, 10*FRACUNIT, 10*FRACUNIT } // Pig
-};*/
-
-/*void R_DrawPSprite (pspdef_t *psp)
-{
-	fixed_t		tx;
-	int			x1; 
-	spriteinfo_t sprinfo;
-	float		light, alpha;
-	int			y;
-
-	// Get the sprite info.
-	gi.GetSpriteInfo(psp->state->sprite, psp->state->frame, &sprinfo);
-
-	// Calculate edges of the shape.
-	tx = psp->sx - (160 + lookOffset*1300) * FRACUNIT;
-
-	tx -= sprinfo.offset;
-	x1 = ((160<<FRACBITS)+tx ) >>FRACBITS;
-	// Set the OpenGL color & alpha.
-	light = 1;
-	alpha = 1;
-	if(viewplayer->powers[pw_invulnerability] && viewplayer->class
-		== PCLASS_CLERIC)
-	{
-		if(viewplayer->powers[pw_invulnerability] > 4*32)
-		{
-			if(viewplayer->plr->mo->flags2 & MF2_DONTDRAW)
-			{ // don't draw the psprite
-				alpha = .333f;
-			}
-			else if(viewplayer->plr->mo->flags & MF_SHADOW)
-			{
-				alpha = .666f;
-			}
-		}
-		else if(viewplayer->powers[pw_invulnerability]&8)
-		{
-			alpha = .333f;
-		}
-	}	
-	else if(psp->state->frame & FF_FULLBRIGHT)
-	{
-		// Full bright
-		light = 1;
-	}
-	else
-	{
-		// local light
-		light = viewplayer->plr->mo->subsector->sector->lightlevel / 255.0;
-	}
-
-	// Do some OpenGL rendering, oh yeah.
-	y = -(sprinfo.topOffset>>FRACBITS)+(psp->sy>>FRACBITS);
-	if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT)
-	{
-		y += PSpriteSY[viewplayer->class][players[consoleplayer].readyweapon] >> FRACBITS;
-	}
-	else 
-	{
-		y -= (39*sbarscale)/40;
-		y += (PSpriteSY[viewplayer->class][players[consoleplayer].readyweapon] >> FRACBITS) * (20-sbarscale)/20.0f;
-	}
-	light += .1f;	// Add some extra light.
-	GL_SetColorAndAlpha(light, light, light, alpha);
-	GL_DrawPSprite(x1, y, 1, sprinfo.flip, sprinfo.lump);
-}*/
-
-/*
-========================
-=
-= R_DrawPlayerSprites
-=
-========================
-*/
-
-void R_DrawPlayerSprites(ddplayer_t *viewplr)
-{
-/*	int			i;
-	pspdef_t	*psp;
-
-	viewplayer = (player_t*) viewplr->extradata;
-	for (i=0, psp=viewplayer->psprites ; i<NUMPSPRITES ; i++,psp++)
-		if (psp->state)
-			R_DrawPSprite (psp);*/
-}
-
 //==========================================================================
-// Texture types
+//
+//
+//
+//==========================================================================
 
-#if 0
-
-static void readline(char *buffer, int len, FILE *file)
-{
-	int		p;
-
-	fgets(buffer, len, file);
-	p = strlen(buffer)-1;
-	if(buffer[p] == '\n') buffer[p] = 0;
-}
-
-static char *firstchar(char *buffer)
-{
-	int		i = 0;
-
-	while(isspace(buffer[i]) && buffer[i]) i++;
-	return buffer + i;
-}
-
-void R_LoadTextureTypes()
-{
-	FILE	*file;
-	char	buff[256], *ptr;
-	int		curtype = TEXTYPE_UNKNOWN;
-	textype_t *tt;
-
-	if((file=fopen("textypes.txt", "rt")) == NULL)
-		return;
-
-	for(readline(buff, 255, file); !feof(file); readline(buff, 255, file))
-	{
-		ptr = firstchar(buff);
-		if(*ptr == '#') continue; // A comment.
-		if(*ptr == '*')
-		{
-			ptr = firstchar(ptr+1);
-			if(!stricmp(ptr, "metal"))
-				curtype = TEXTYPE_METAL;
-			else if(!stricmp(ptr, "rock"))
-				curtype = TEXTYPE_ROCK;
-			else if(!stricmp(ptr, "wood"))
-				curtype = TEXTYPE_WOOD;
-			else if(!stricmp(ptr, "cloth"))
-				curtype = TEXTYPE_CLOTH;
-			continue;
-		}
-		// Allocate a new textype entry.
-		texTypes = realloc(texTypes, sizeof(textype_t) * ++numTexTypes);
-		tt = texTypes + numTexTypes-1;
-		memset(tt, 0, sizeof(*tt));
-		strncpy(tt->name, ptr, 8);
-		tt->type = curtype;
-	}
-	Con_Message( "%d texture types loaded.\n", numTexTypes);
-	fclose(file);
-}
-
-void R_FreeTextypeTypes()
-{
-	free(texTypes);
-	texTypes = 0;
-	numTexTypes = 0;
-}
-
-int R_TextureTypeForName(char *name)
-{
-	int		i;
-
-	for(i=0; i<numTexTypes; i++)
-		if(!strnicmp(name, texTypes[i].name, 8))
-			return texTypes[i].type;
-	return TEXTYPE_UNKNOWN;
-}
-
-#endif
