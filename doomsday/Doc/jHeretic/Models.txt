@@ -1,6 +1,9 @@
 jHeretic Model Pack
 ===================
-$Id$
+$Revision$
+$Date$
+$Author$
+
 http://www.doomsdayhq.com/
 
 
