@@ -50,6 +50,8 @@ Win32:
 - crash when starting in dedicated mode
 
 Linux:
++ cvar 'music-midi-command': play MIDI music using this program (defaults 
+  to "timidity")
 + '--without-(game)' configuration option skips (game)
 + '--without-opengl' configuration option removes all OpenGL support
   from the build (for dedicated servers)
