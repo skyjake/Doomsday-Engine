@@ -32,8 +32,8 @@
 #include "r_draw.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
-#  	include <icm.h>
-#  	include <math.h>
+#  include <icm.h>
+#  include <math.h>
 #endif
 
 // MACROS ------------------------------------------------------------------
