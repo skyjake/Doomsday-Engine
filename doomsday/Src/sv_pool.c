@@ -3,6 +3,11 @@
 //**
 //** SV_POOL.C
 //**
+//** $Log$
+//** Revision 1.2  2003/02/28 18:31:02  skyjake
+//** Fixed potential lightlevel overflow
+//**
+//**
 //**************************************************************************
 
 /*
@@ -16,6 +21,8 @@ DD_SetupLevel to clear out all the old data.
 * Deltas -> Sent to client as a Set, placed in the Pool
 * Client sends Ack -> Delta Set removed from Pool, applied to Register
 * Client doesn't send Ack -> Delta Set resent
+
+Can get a bit heavy. Any optimizations?
 
 */
 
@@ -1479,7 +1486,13 @@ void Sv_WriteSectorDelta(sectordelta_t *d)
 
 	if(df & SDF_FLOORPIC) Msg_WritePackedShort(d->floorpic);
 	if(df & SDF_CEILINGPIC) Msg_WritePackedShort(d->ceilingpic);
-	if(df & SDF_LIGHT) Msg_WriteByte(d->lightlevel);
+	if(df & SDF_LIGHT) 
+	{
+		// Must fit into a byte.
+		Msg_WriteByte(d->lightlevel < 0? 0
+			: d->lightlevel > 255? 255 
+			: d->lightlevel);
+	}
 	if(df & SDF_FLOOR_TARGET) 
 		Msg_WriteShort(d->planes[PLN_FLOOR].target >> 16);
 	if(df & SDF_FLOOR_SPEED) // 7.1/4.4 fixed-point
