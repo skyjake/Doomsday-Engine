@@ -182,6 +182,19 @@ void DD_SetDefsFile(char *filename)
 }
 
 //===========================================================================
+// DD_Verbosity
+//	Sets the level of verbosity that was requested using the -verbose
+//	option(s).
+//===========================================================================
+void DD_Verbosity(void)
+{
+	int i;
+
+	for(i = 1, verbose = 0; i < Argc(); ++i)
+		if(ArgRecognize("-verbose", Argv(i))) verbose++;
+}
+
+//===========================================================================
 // DD_Main
 //	Engine and game initialization. When complete, starts the game loop.
 //===========================================================================
@@ -193,7 +206,7 @@ void DD_Main(void)
 	char	*outfilename = "Doomsday.out";
 	boolean	userdir_ok = true;
 	
-	verbose = ArgCheck("-verbose") != 0;
+	DD_Verbosity();
 	
 	// We'll redirect stdout to a log file.
 	CheckArg("-out", &outfilename);
@@ -440,7 +453,7 @@ void DD_Main(void)
 	// (shortcut for -command "net init tcpip; net server start").
 	if(ArgExists("-server"))
 	{
-		if(!N_InitService(JTNET_SERVICE_TCPIP))
+		if(!N_InitService(NSP_TCPIP, true))
 			Con_Message("Can't start server: TCP/IP not available.\n");
 		else
 			Con_Executef(false, "net server start");
@@ -522,10 +535,10 @@ void DD_AddStartupWAD(char *file/*, boolean inc_base*/)
 //===========================================================================
 void DD_CheckQuery(int query, int parm)
 {
-	int					i;
+/*	int					i;
 	jtnetserver_t		*buf;
 	serverdataquery_t	*sdq;
-	modemdataquery_t	*mdq;
+	modemdataquery_t	*mdq;*/
 	
 	switch(query)
 	{
@@ -540,7 +553,7 @@ void DD_CheckQuery(int query, int parm)
 			queryResult = (int) N_GetProtocolName();
 			break;
 			
-		case DD_NUM_SERVERS:
+/*		case DD_NUM_SERVERS:
 			queryResult = jtNetGetServerInfo(NULL, 0);
 			if(queryResult < 0) queryResult = 0;
 			break;
@@ -579,11 +592,11 @@ void DD_CheckQuery(int query, int parm)
 			
 		case DD_FLOW_CONTROL:
 			queryResult = jtNetGetInteger(JTNET_FLOWCONTROL);
-			break;
+			break;*/
 		}
 		break;
 		
-		case DD_SERVER_DATA_QUERY:
+/*		case DD_SERVER_DATA_QUERY:
 			sdq = (serverdataquery_t*) parm;
 			i = jtNetGetServerInfo(NULL, 0);
 			if(i < 0) i = 0;
@@ -604,12 +617,12 @@ void DD_CheckQuery(int query, int parm)
 				}
 				free(buf);
 			}
-			break;
+			break;*/
 			
-		case DD_MODEM_DATA_QUERY:
+/*		case DD_MODEM_DATA_QUERY:
 			mdq = (modemdataquery_t*) parm;
 			mdq->list = jtNetGetStringList(JTNET_MODEM_LIST, &mdq->num);
-			break;
+			break;*/
 			
 		default:
 			break;
