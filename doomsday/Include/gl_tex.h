@@ -17,6 +17,7 @@ typedef struct image_s {
 	int height;
 	int pixelSize;
 	boolean isMasked;
+	int originalBits;	// Bits per pixel in the image file.
 	byte *pixels;
 } image_t;
 
@@ -52,6 +53,7 @@ void			GL_DoColorKeying(byte *rgbaBuf, int width);
 void			GL_LowRes();
 void			PalIdxToRGB(byte *pal, int idx, byte *rgb);
 void			TranslatePatch(struct patch_s *patch, byte *transTable);
+void			GL_ConvertToAlpha(image_t *image);
 byte *			GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath);
 byte *			GL_LoadImageCK(image_t *img, const char *imagefn, boolean useModelPath);
 byte *			GL_LoadTexture(image_t *img, char *name);
