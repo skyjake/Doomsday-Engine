@@ -120,6 +120,7 @@ DGLuint			glowtexname;
 static boolean	texInited = false;	// Init done.
 static boolean	allowMaskedTexEnlarge = false;
 static boolean	noHighResTex = false;
+static boolean	highResWithPWAD = false;
 
 // Raw screen lumps (just lump numbers).
 static int		*rawlumps, numrawlumps;	
@@ -331,10 +332,13 @@ void GL_InitTextureManager(void)
 
 	// The -bigmtex option allows the engine to enlarge masked textures
 	// that have taller patches than they are themselves.
-	allowMaskedTexEnlarge = ArgCheck("-bigmtex") > 0;
+	allowMaskedTexEnlarge = ArgExists("-bigmtex");
 
 	// The -nohitex option disables the high resolution TGA textures.
-	noHighResTex = ArgCheck("-nohightex") > 0;
+	noHighResTex = ArgExists("-nohightex");
+
+	// Should we allow using external resources with PWAD textures?
+	highResWithPWAD = ArgExists("-pwadtex");
 
 	transsprites = 0;
 	numtranssprites = 0;
@@ -1742,7 +1746,8 @@ unsigned int GL_PrepareTexture(int idx)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if(GL_LoadHighResTexture(&image, tex->name) != NULL)
+		if((highResWithPWAD || !R_IsCustomTexture(idx))
+			&& GL_LoadHighResTexture(&image, tex->name) != NULL)
 		{
 			// High resolution texture loaded.
 			RGBData = true;
@@ -2010,7 +2015,8 @@ unsigned int GL_PrepareSky(int idx, boolean zeroMask)
 	if(!textures[idx]->tex)
 	{
 		// Try to load a high resolution version of this texture.
-		if(GL_LoadHighResTexture(&image, textures[idx]->name) != NULL)
+		if((highResWithPWAD || !R_IsCustomTexture(idx))
+			&& GL_LoadHighResTexture(&image, textures[idx]->name) != NULL)
 		{
 			// High resolution texture loaded.
 			RGBData = true;
@@ -2452,7 +2458,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 			&& GL_LoadImage(&image, fileName, false) != NULL)
 		{
 			// A high-resolution version of this sprite has been found.
-			// The buffer is now filled with the data we need.
+			// The buffer has been filled with the data we need.
 		}
 		else
 		{
