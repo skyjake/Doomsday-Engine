@@ -136,7 +136,7 @@ void initExtensions(void)
 
 	// Texture compression.
 	useCompr = DGL_FALSE;
-	if(!ArgExists("-notexcomp"))
+	if(ArgExists("-texcomp"))
 	{
 		glGetError();
 		glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &i);
