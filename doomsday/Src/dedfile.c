@@ -68,7 +68,6 @@ void DED_Destroy(ded_t *ded)
 {
 	int i;
 
-//	free(ded->includes);
 	free(ded->flags);
 	free(ded->mobjs);
 	free(ded->states);
@@ -78,33 +77,26 @@ void DED_Destroy(ded_t *ded)
 	free(ded->sounds);
 	free(ded->music);
 	free(ded->mapinfo);
-	for(i=0; i<ded->count.text.num; i++) free(ded->text[i].text);
+	for(i = 0; i < ded->count.text.num; i++) 
+	{
+		free(ded->text[i].text);
+	}
 	free(ded->text);
-	for(i=0; i<ded->count.tenviron.num; i++) free(ded->tenviron[i].textures);
+	for(i = 0; i < ded->count.tenviron.num; i++) 
+	{
+		free(ded->tenviron[i].textures);
+	}
 	free(ded->tenviron);
-	for(i=0; i<ded->count.values.num; i++)
+	for(i = 0; i < ded->count.values.num; i++)
 	{
 		free(ded->values[i].id);
 		free(ded->values[i].text);
 	}
 	free(ded->values);
 	free(ded->decorations);
+	free(ded->groups);
 	free(ded->sectors);
 }
-
-/*int DED_AddInclude(ded_t *ded, char *inc)
-{
-	ded_path_t *pth = DED_NewEntry( (void**) &ded->includes, 
-		&ded->count.includes, sizeof(ded_path_t));
-	strcpy(pth->path, inc);
-	return pth - ded->includes;
-}
-
-void DED_RemoveInclude(ded_t *ded, int index)
-{
-	DED_DelEntry(index, (void**) &ded->includes, &ded->count.includes, 
-		sizeof(ded_path_t));
-}*/
 
 int DED_AddMobj(ded_t *ded, char *idstr)
 {
@@ -361,6 +353,19 @@ void DED_RemoveDecoration(ded_t *ded, int index)
 {
 	DED_DelEntry(index, (void**) &ded->decorations, &ded->count.decorations,
 		sizeof(ded_decor_t));
+}
+
+int DED_AddGroup(ded_t *ded)
+{
+	ded_group_t *group = DED_NewEntry( (void**) &ded->groups,
+		&ded->count.groups, sizeof(ded_group_t));
+	return group - ded->groups;	
+}
+
+void DED_RemoveGroup(ded_t *ded, int index)
+{
+	DED_DelEntry(index, (void**) &ded->groups, &ded->count.groups,
+		sizeof(ded_group_t));
 }
 
 int DED_AddSector(ded_t *ded, int id)

@@ -1249,6 +1249,43 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			}						
 			prev_decordef_idx = idx;
 		}
+		if(ISTOKEN("Group"))
+		{
+			ded_group_t *grp;
+			idx = DED_AddGroup(ded);
+			grp = ded->groups + idx;
+			sub = 0;
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				if(ISLABEL("Texture") || ISLABEL("Flat"))
+				{
+					grp->is_texture = ISLABEL("Texture");
+					if(sub == DED_GROUP_NUM_MEMBERS)
+					{
+						SetError("Too many group members."); 
+						retval = false; 
+						goto ded_end_read;
+					}
+					FINDBEGIN;
+					for(;;)
+					{
+						READLABEL;
+						RV_STR("ID", grp->members[sub].name)
+						RV_FLT("Tics", grp->members[sub].tics)
+						RV_FLT("Random", grp->members[sub].random_tics)
+						RV_END
+						CHECKSC;
+					}
+					grp->count = ++sub;
+				}
+				else RV_STR("Flags", grp->flags)
+				RV_END
+				CHECKSC;
+			}
+			grp->count = ++sub;
+		}
 		if(ISTOKEN("Line"))		// Line Type
 		{
 			// A new line type.
