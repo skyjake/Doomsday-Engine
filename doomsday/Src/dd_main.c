@@ -378,6 +378,9 @@ void DD_Main(void)
 
 	// Execute the startup script (Startup.cfg).
 	Con_ParseCommands("startup.cfg", false);
+
+	// Now the game can identify the game mode.
+	gx.UpdateState(DD_GAME_MODE);
 	
 	// Now that we've read the WADs we can initialize definitions.
 	Def_Read();
