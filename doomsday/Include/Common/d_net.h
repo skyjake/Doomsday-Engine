@@ -121,6 +121,7 @@ typedef struct
 #define FINF_SCRIPT			0x04		// Script included.
 #define FINF_AFTER			0x08		// Otherwise before.
 #define FINF_SKIP			0x10
+#define FINF_OVERLAY		0x20		// Otherwise before (or after).
 
 // Ticcmd flags.
 #define CMDF_FORWARDMOVE	0x01
