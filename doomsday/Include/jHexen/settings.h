@@ -53,6 +53,7 @@ typedef struct {
 	int             dclickuse;
 	int             mapTitle;
 	float           menuScale;
+    float           hudScale;
 
 	pclass_t        PlayerClass[MAXPLAYERS];
 	byte            PlayerColor[MAXPLAYERS];

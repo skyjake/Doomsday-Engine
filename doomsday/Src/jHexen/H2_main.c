@@ -222,7 +222,8 @@ void H2_PreInit(void)
 	cfg.netMobDamageModifier = 1;
 	cfg.netMobHealthModifier = 1;
 	cfg.mapTitle = true;
-	cfg.menuScale = .9f;
+	cfg.menuScale = .75f;
+    cfg.hudScale = .6f;
 	cfg.cameraNoClip = true;
 	cfg.bobView = cfg.bobWeapon = 1;
 

@@ -171,6 +171,8 @@ void R_DrawMapTitle(void)
 	if(!lname)
 		lname = P_GetMapName(gamemap);
 
+    Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
+    
 	gl.Color4f(1, 1, 1, alpha);
 	if(lname)
 	{
@@ -182,6 +184,8 @@ void R_DrawMapTitle(void)
 	{
 		MN_DrTextA_CS(lauthor, 160 - MN_TextAWidth(lauthor) / 2, y);
 	}
+
+    Draw_EndZoom();
 
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PopMatrix();

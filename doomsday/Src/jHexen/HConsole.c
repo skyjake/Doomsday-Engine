@@ -273,9 +273,14 @@ cvar_t  gameCVars[] = {
 	"Mouse X axis sensitivity.",
 	"input-mouse-y-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiY, 0, 25,
 	"Mouse Y axis sensitivity.",
+
 	"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1,
 	"Scaling for menu screens.",
-	"msg-echo", 0, CVT_INT, &cfg.echoMsg, 0, 1,
+
+    "hud-scale", 0, CVT_FLOAT, &cfg.hudScale, .1f, 1,
+    "Scaling for HUD elements (status bar hidden).",
+
+    "msg-echo", 0, CVT_INT, &cfg.echoMsg, 0, 1,
 	"1=Echo all messages to the console.",
 	"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2,
 	"Override the transition hub message.",

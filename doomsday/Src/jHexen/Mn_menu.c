@@ -1019,6 +1019,7 @@ static void DrawMessage(void)
 	{							// No message
 		return;
 	}
+    Draw_BeginZoom(cfg.hudScale, 160, 2);
 	if(player->yellowMessage)
 	{
 		MN_DrTextAYellow(player->message,
@@ -1029,6 +1030,7 @@ static void DrawMessage(void)
 		MN_DrTextA(player->message, 160 - MN_TextAWidth(player->message) / 2,
 				   1);
 	}
+    Draw_EndZoom();
 }
 
 char   *QuitEndMsg[] = {
@@ -1127,6 +1129,7 @@ void MN_Drawer(void)
 		}
 		if(askforquit)
 		{
+            Draw_BeginZoom(cfg.hudScale, 160, 100);
 			MN_DrTextA(QuitEndMsg[typeofask - 1],
 					   160 - MN_TextAWidth(QuitEndMsg[typeofask - 1]) / 2, 80);
 			if(typeofask == 3)
@@ -1147,6 +1150,7 @@ void MN_Drawer(void)
 						   160 + MN_TextAWidth(SlotText[quicksave - 1]) / 2,
 						   90);
 			}
+            Draw_EndZoom();
 			GL_Update(DDUF_FULLSCREEN);
 		}
 	}

@@ -1027,6 +1027,8 @@ static void DrawAnimatedIcons(void)
 	if(cfg.showFullscreenMana == 1 && cfg.screenblocks > 10)
 		leftoff = 42;
 
+    Draw_BeginZoom(cfg.hudScale, 2, 2);
+    
 	// Wings of wrath
 	if(CPlayer->powers[pw_flight])
 	{
@@ -1075,6 +1077,10 @@ static void DrawAnimatedIcons(void)
 		GL_Update(DDUF_TOP | DDUF_MESSAGES);
 	}
 
+    Draw_EndZoom();
+
+    Draw_BeginZoom(cfg.hudScale, 318, 2);
+    
 	// Defensive power
 	if(CPlayer->powers[pw_invulnerability])
 	{
@@ -1098,6 +1104,8 @@ static void DrawAnimatedIcons(void)
 		}
 		GL_Update(DDUF_TOP | DDUF_MESSAGES);
 	}
+
+    Draw_EndZoom();
 }
 
 //==========================================================================
@@ -1477,6 +1485,22 @@ static void DrawWeaponPieces(void)
 	}
 }
 
+void Draw_BeginZoom(float s, float originX, float originY)
+{
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PushMatrix();
+
+    gl.Translatef(originX, originY, 0);
+    gl.Scalef(s, s, 1);
+    gl.Translatef(-originX, -originY, 0);
+}
+
+void Draw_EndZoom(void)
+{
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
+}
+
 //==========================================================================
 //
 // DrawFullScreenStuff
@@ -1494,6 +1518,7 @@ void DrawFullScreenStuff(void)
 		return;
 #endif
 
+    Draw_BeginZoom(cfg.hudScale, 5, 198);
 	if(CPlayer->plr->mo->health > 0)
 	{
 		DrBNumber(CPlayer->plr->mo->health, 5, 180);
@@ -1502,6 +1527,7 @@ void DrawFullScreenStuff(void)
 	{
 		DrBNumber(0, 5, 180);
 	}
+    Draw_EndZoom();
 
 	if(cfg.showFullscreenMana)
 	{
@@ -1536,11 +1562,13 @@ void DrawFullScreenStuff(void)
 				if(!patches[i])
 					patches[i] = bright[i];
 		}
-		for(i = 0; i < 2; i++)
+        Draw_BeginZoom(cfg.hudScale, 2, ypos);
+        for(i = 0; i < 2; i++)
 		{
 			GL_DrawPatch(2, ypos + i * 13, patches[i]);
 			DrINumber(CPlayer->mana[i], 18, ypos + i * 13);
 		}
+        Draw_EndZoom();
 	}
 
 	if(deathmatch)
@@ -1553,12 +1581,15 @@ void DrawFullScreenStuff(void)
 				temp += CPlayer->frags[i];
 			}
 		}
+        Draw_BeginZoom(cfg.hudScale, 2, 198);
 		DrINumber(temp, 45, 185);
+        Draw_EndZoom();
 	}
 	if(!inventory)
 	{
 		if(CPlayer->readyArtifact > 0)
 		{
+            Draw_BeginZoom(cfg.hudScale, 318, 198);
 			GL_DrawFuzzPatch(286, 170, W_GetNumForName("ARTIBOX"));
 			GL_DrawPatch(284, 169,
 						 W_GetNumForName(patcharti[CPlayer->readyArtifact]));
@@ -1566,10 +1597,12 @@ void DrawFullScreenStuff(void)
 			{
 				DrSmallNumber(CPlayer->inventory[inv_ptr].count, 302, 192);
 			}
+            Draw_EndZoom();
 		}
 	}
 	else
 	{
+        Draw_BeginZoom(cfg.hudScale, 160, 198);
 		x = inv_ptr - curpos;
 		for(i = 0; i < 7; i++)
 		{
@@ -1577,7 +1610,9 @@ void DrawFullScreenStuff(void)
 			if(CPlayer->inventorySlotNum > x + i &&
 			   CPlayer->inventory[x + i].type != arti_none)
 			{
-				GL_DrawPatch(49 + i * 31, 167, W_GetNumForName(patcharti[CPlayer->inventory[x + i].type]));	//, PU_CACHE));
+				GL_DrawPatch(49 + i * 31, 167,
+                             W_GetNumForName(patcharti[CPlayer->inventory
+                                                       [x + i].type]));
 
 				if(CPlayer->inventory[x + i].count > 1)
 				{
@@ -1599,6 +1634,7 @@ void DrawFullScreenStuff(void)
 						 !(leveltime & 4) ? PatchNumINVRTGEM1 :
 						 PatchNumINVRTGEM2);
 		}
+        Draw_EndZoom();
 	}
 }
 
