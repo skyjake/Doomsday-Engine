@@ -98,8 +98,6 @@ int				num_skytop_colors = 0;
 DGLuint			dltexname;	// Name of the dynamic light texture.
 DGLuint			glowtexname;
 
-char			hiTexPath[256], hiTexPath2[256];
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean	texInited = false;	// Init done.
@@ -320,18 +318,6 @@ void GL_InitTextureManager(void)
 
 	// The -nohitex option disables the high resolution TGA textures.
 	noHighResTex = ArgCheck("-nohightex") > 0;
-
-	// The -texdir option specifies a path to look for TGA textures.
-	if(ArgCheckWith("-texdir", 1))
-	{
-		M_TranslatePath(ArgNext(), hiTexPath);
-		Dir_ValidDir(hiTexPath);
-	}
-	if(ArgCheckWith("-texdir2", 1))
-	{
-		M_TranslatePath(ArgNext(), hiTexPath2);
-		Dir_ValidDir(hiTexPath2);
-	}
 
 	transsprites = 0;
 	numtranssprites = 0;
@@ -1504,32 +1490,23 @@ byte *GL_LoadImageCK(const char *name, int *width, int *height, int *pixsize,
 // GL_LoadHighRes
 //	Name must end in \0.
 //===========================================================================
-byte *GL_LoadHighRes(char *name, char *path, char *altPath, char *prefix,
-					 int *width, int *height, int *pixSize, boolean *masked,
-					 boolean allowColorKey)
+byte *GL_LoadHighRes(char *name, char *prefix, int *width, int *height, 
+					 int *pixSize, boolean *masked, boolean allowColorKey)
 {
-	char filename[256], *formats[3] = { "png", "tga", "pcx" };
-	byte *buf;
-	int p, f;
+	char resource[256];
+	char fileName[256];
 
-	for(f = 0; f < 3; f++)
-		for(p = 0; p < 2; p++)
-		{
-			// Form the file name.
-			sprintf(filename, "%s%s%s.%s", !p? altPath : path, prefix, 
-				name, formats[f]);
-			if(allowColorKey)
-			{
-				if((buf = GL_LoadImageCK(filename, width, height, pixSize, 
-					masked, false)) != NULL) return buf;
-			}
-			else
-			{
-				if((buf = GL_LoadImage(filename, width, height, pixSize, 
-					masked, false)) != NULL) return buf;
-			}
-		}
-	return NULL;
+	// Form the resource name.
+	sprintf(resource, "%s%s", prefix, name);
+
+	if(!R_FindResource(RC_TEXTURE, resource, 
+		allowColorKey? "-ck" : NULL, fileName))
+	{
+		// There is no such external resource file.
+		return NULL;	
+	}
+
+	return GL_LoadImage(fileName, width, height, pixSize, masked, false);
 }
 
 //===========================================================================
@@ -1540,8 +1517,7 @@ byte *GL_LoadHighRes(char *name, char *path, char *altPath, char *prefix,
 byte *GL_LoadTexture(char *name, int *width, int *height, int *pixsize, 
 					 boolean *masked)
 {
-	return GL_LoadHighRes(name, hiTexPath, hiTexPath2, "", width, height,
-		pixsize, masked, true);
+	return GL_LoadHighRes(name, "", width, height, pixsize, masked, true);
 }
 
 //===========================================================================
@@ -1553,7 +1529,6 @@ byte *GL_LoadHighResTexture
 	(char *name, int *width, int *height, int *pixsize, boolean *masked)
 {
 	if(noHighResTex) return NULL;
-
 	return GL_LoadTexture(name, width, height, pixsize, masked);
 }
 
@@ -1566,10 +1541,8 @@ byte *GL_LoadHighResFlat(char *name, int *width, int *height, int *pixsize)
 	boolean masked;
 	
 	if(noHighResTex) return NULL;
-
-	// FIXME: Why no subdir named "Flats"?
-	return GL_LoadHighRes(name, hiTexPath, hiTexPath2, "Flat-", width, 
-		height, pixsize, &masked, false);
+	return GL_LoadHighRes(name, "Flat-", width, height, pixsize, &masked, 
+		false);
 }
 
 //===========================================================================
@@ -2067,7 +2040,7 @@ void averageColorRGB(rgbcol_t *col, byte *data, int w, int h)
 //==========================================================================
 // GL_CalcLuminance
 //	Calculates the properties of a dynamic light that the given sprite
-//	frame casts. 
+//	frame casts. The buffer is supposed to be paletted.
 //==========================================================================
 void GL_CalcLuminance(int pnum, byte *buffer, int width, int height)
 {
@@ -2237,8 +2210,8 @@ unsigned int GL_PrepareSprite(int pnum)
 		
 		if(filloutlines) ColorOutlines(buffer, patch->width, patch->height);
 
-		spritelumps[pnum].tex = GL_UploadTexture(buffer, patch->width, patch->height,
-			true, true, false, true);
+		spritelumps[pnum].tex = GL_UploadTexture(buffer, patch->width, 
+			patch->height, true, true, false, true);
 		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
 		gl.TexParameter(DGL_MAG_FILTER, filterSprites? DGL_LINEAR : DGL_NEAREST);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
@@ -2421,77 +2394,112 @@ dont_load:
 	curtex = 0;
 }
 
+/*
+ * Loads and sets up a patch using data from the specified lump.
+ */
+void GL_PrepareLumpPatch(int lump)
+{
+	patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
+	int numpels = patch->width * patch->height, alphaChannel;
+	byte *buffer;
+
+	if(!numpels) return; // This won't do!
+
+	// Allocate memory for the patch.
+	buffer = M_Calloc(2 * numpels);
+
+	alphaChannel = DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE),
+		patch->width, patch->height, patch, 0, 0, false, 0, true);
+	if(filloutlines) ColorOutlines(buffer, patch->width, patch->height);
+	
+	// See if we have to split the patch into two parts.
+	// This is done to conserve the quality of wide textures
+	// (like the status bar) on video cards that have a pitifully
+	// small maximum texture size. ;-)
+	if(patch->width > maxTexSize) 
+	{
+		// The width of the first part is maxTexSize.
+		int part2width = patch->width - maxTexSize;
+		byte *tempbuff = M_Malloc(2 * maxTexSize * patch->height);
+		
+		// We'll use a temporary buffer for doing to splitting.
+		// First, part one.
+		pixBlt(buffer, patch->width, patch->height, tempbuff, maxTexSize, 
+			patch->height, alphaChannel, 0, 0, 0, 0, 
+			maxTexSize, patch->height);
+		lumptexinfo[lump].tex[0] = GL_UploadTexture(tempbuff, maxTexSize, 
+			patch->height, alphaChannel, false, false, false);
+		
+		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
+		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+		
+		// Then part two.
+		pixBlt(buffer, patch->width, patch->height, tempbuff, part2width, patch->height,
+			alphaChannel, maxTexSize, 0, 0, 0, part2width, patch->height);
+		lumptexinfo[lump].tex[1] = GL_UploadTexture(tempbuff, part2width, patch->height, 
+			alphaChannel, false, false, false);
+		
+		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
+		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+		
+		GL_BindTexture(lumptexinfo[lump].tex[0]);
+		
+		lumptexinfo[lump].width[0] = maxTexSize;
+		lumptexinfo[lump].width[1] = patch->width - maxTexSize;
+		
+		M_Free(tempbuff);
+	}
+	else // We can use the normal one-part method.
+	{
+		// Generate a texture.
+		lumptexinfo[lump].tex[0] = GL_UploadTexture(buffer, patch->width, patch->height, 
+			alphaChannel, false, false, false);
+		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
+		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+		
+		lumptexinfo[lump].width[0] = patch->width;
+		lumptexinfo[lump].width[1] = 0;
+	}
+	M_Free(buffer);
+}
+
 //===========================================================================
 // GL_SetPatch
 //	No mipmaps are generated for regular patches.
 //===========================================================================
 void GL_SetPatch(int lump)	
 {
-	if(lump > numlumps-1) return;
+	if(lump >= numlumps) return;
+
 	if(!lumptexinfo[lump].tex[0])
 	{
-		// Load the patch.
-		patch_t	*patch = W_CacheLumpNum(lump, PU_CACHE);
-		int		numpels = patch->width * patch->height;
-		byte	*buffer = M_Calloc(2 * numpels);
-		int		alphaChannel;
-		
-		if(!numpels) // This won't do!
+		patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
+		byte *buffer = NULL;
+		int width, height, pixsize;
+		boolean masked;
+		char fileName[256];
+
+		// Let's first try the resource locator and see if there is a
+		// 'high-resolution' version available.
+		if(!noHighResTex
+			&& R_FindResource(RC_PATCH, lumpinfo[lump].name, "-ck", fileName)
+			&& (buffer = GL_LoadImage(fileName, &width, &height, &pixsize,
+				&masked, false)))
 		{
+			// This is our texture! No mipmaps are generated.
+			lumptexinfo[lump].tex[0] = GL_UploadTexture(buffer, width, height, 
+				pixsize == 4, false, true, false);				
+
+			// The original image is no longer needed.
 			M_Free(buffer);
-			return;
-		}
 
-		alphaChannel = DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE),
-			patch->width, patch->height, patch, 0, 0, false, 0, true);
-		if(filloutlines) ColorOutlines(buffer, patch->width, patch->height);
-
-		// See if we have to split the patch into two parts.
-		// This is done to conserve the quality of wide textures
-		// (like the status bar) on video cards that have a pitifully
-		// small maximum texture size. ;-)
-		if(patch->width > maxTexSize) 
-		{
-			// The width of the first part is maxTexSize.
-			int part2width = patch->width - maxTexSize;
-			byte *tempbuff = M_Malloc(2 * maxTexSize * patch->height);
-			
-			// We'll use a temporary buffer for doing to splitting.
-			// First, part one.
-			pixBlt(buffer, patch->width, patch->height, tempbuff, maxTexSize, 
-				patch->height, alphaChannel, 0, 0, 0, 0, 
-				maxTexSize, patch->height);
-			lumptexinfo[lump].tex[0] = GL_UploadTexture(tempbuff, maxTexSize, 
-				patch->height, alphaChannel, false, false, false);
-
-			gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-			gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-			// Then part two.
-			pixBlt(buffer, patch->width, patch->height, tempbuff, part2width, patch->height,
-				alphaChannel, maxTexSize, 0, 0, 0, part2width, patch->height);
-			lumptexinfo[lump].tex[1] = GL_UploadTexture(tempbuff, part2width, patch->height, 
-				alphaChannel, false, false, false);
-
-			gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-			gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-			GL_BindTexture(lumptexinfo[lump].tex[0]);
-
-			lumptexinfo[lump].width[0] = maxTexSize;
-			lumptexinfo[lump].width[1] = patch->width - maxTexSize;
-
-			M_Free(tempbuff);
-		}
-		else // We can use the normal one-part method.
-		{
-			// Generate a texture.
-			lumptexinfo[lump].tex[0] = GL_UploadTexture(buffer, patch->width, patch->height, 
-				alphaChannel, false, false, false);
+			// Set the texture parameters.
 			gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
 			gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
@@ -2499,13 +2507,18 @@ void GL_SetPatch(int lump)
 
 			lumptexinfo[lump].width[0] = patch->width;
 			lumptexinfo[lump].width[1] = 0;
+			lumptexinfo[lump].tex[1] = 0;
 		}
+		else
+		{
+			// Use data from the normal lump.
+			GL_PrepareLumpPatch(lump);
+		}		
+
 		// The rest of the size information.
 		lumptexinfo[lump].height = patch->height;
 		lumptexinfo[lump].offx = -patch->leftoffset;
 		lumptexinfo[lump].offy = -patch->topoffset;
-
-		M_Free(buffer);
 	}
 	else
 	{
