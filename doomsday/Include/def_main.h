@@ -68,6 +68,8 @@ void            Def_PostInit(void);
 // Destroy databases.
 void            Def_Destroy(void);
 
+void            Def_GetAutoPath(char *path);
+
 // Reads the specified definition file, and creates the sprite name, 
 // state, mobjinfo, sound, music and text databases accordingly.
 void            Def_Read(void);

@@ -23,6 +23,7 @@
 
 #include "de_base.h"
 #include "de_system.h"
+#include "de_platform.h"
 #include "de_refresh.h"
 #include "de_console.h"
 #include "de_audio.h"
@@ -56,6 +57,9 @@ void    Def_ReadProcessDED(const char *filename);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern filename_t defsFileName;
+extern filename_t topDefsFileName;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -95,8 +99,6 @@ static mobjinfo_t *gettingFor;
 //===========================================================================
 void Def_Init(void)
 {
-	extern char defsFileName[256];
-	extern char topDefsFileName[256];
 	int     c;
 
 	// Sprite name list.
@@ -177,6 +179,25 @@ void Def_Destroy(void)
 
 	// Clear global variables pointing to definitions.
 	mapinfo = NULL;
+}
+
+/*
+ * Guesses the location of the Defs Auto directory based on main DED
+ * file.
+ */
+void Def_GetAutoPath(char *path)
+{
+    char *lastSlash;
+
+    strcpy(path, topDefsFileName);
+    lastSlash = strrchr(path, DIR_SEP_CHAR);
+    if(!lastSlash)
+    {
+        strcpy(path, ""); // Failure!
+        return;
+    }
+
+    strcpy(lastSlash + 1, "Auto" DIR_SEP_STR);
 }
 
 //===========================================================================
