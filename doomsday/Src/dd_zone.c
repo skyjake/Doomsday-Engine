@@ -253,8 +253,8 @@ void Z_FreeTags (int lowtag, int hightag)
 {
 	memblock_t	*block, *next;
 	
-	for (block = mainzone->blocklist.next ; block != &mainzone->blocklist 
-	; block = next)
+	for(block = mainzone->blocklist.next; block != &mainzone->blocklist; 
+		block = next)
 	{
 		next = block->next;		// get link before freeing
 		if (!block->user)
@@ -281,6 +281,8 @@ void Z_CheckHeap (void)
 			Con_Error ("Z_CheckHeap: next block doesn't have proper back link\n");
 		if (!block->user && !block->next->user)
 			Con_Error ("Z_CheckHeap: two consecutive free blocks\n");
+		if (block->user == (void**) -1)
+			Con_Error("Z_CheckHeap: bad user pointer %p\n", block->user);
 	}
 }
 
