@@ -1870,3 +1870,8 @@ Text {
   ID = "KILLMSG_SUPERSHOTGUN";
   Text = "%1 blasted %2 to tiny bits.";
 }
+
+Text {
+  ID = "KILLMSG_STOMP";
+  Text = "%1 stomped %2!!";
+}

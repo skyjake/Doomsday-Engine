@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/06/16 18:21:34  skyjake
+// Added a separate killmsg for telestomp
+//
 // Revision 1.9  2004/05/30 08:42:41  skyjake
 // Tweaked indentation style
 //
@@ -704,7 +707,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 //===========================================================================
 // P_KillMobj
 //===========================================================================
-void P_KillMobj(mobj_t *source, mobj_t *target)
+void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 {
 	mobjtype_t item;
 	mobj_t *mo;
@@ -728,7 +731,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 		{
 			source->player->frags[target->player - players]++;
 			NetSv_FragsForAll(source->player);
-			NetSv_KillMessage(source->player, target->player);
+			NetSv_KillMessage(source->player, target->player, stomping);
 		}
 	}
 	else if(!IS_NETGAME && (target->flags & MF_COUNTKILL))
@@ -745,7 +748,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 		{
 			target->player->frags[target->player - players]++;
 			NetSv_FragsForAll(target->player);
-			NetSv_KillMessage(target->player, target->player);
+			NetSv_KillMessage(target->player, target->player, stomping);
 		}
 
 		target->flags &= ~MF_SOLID;
@@ -807,6 +810,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 	mo->flags |= MF_DROPPED;	// special versions of items
 }
 
+void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+				   int damage)
+{
+	P_DamageMobj2(target, inflictor, source, damage, false);
+}
+
 //===========================================================================
 // P_DamageMobj
 //  Damages both enemies and players
@@ -818,8 +827,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 //  Source can be NULL for slime, barrel explosions
 //  and other environmental stuff.
 //===========================================================================
-void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-				  int damage)
+void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+				   int damage, boolean stomping)
 {
 	unsigned ang;
 	int     saved;
@@ -942,9 +951,6 @@ void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 			player->damagecount = 100;	// teleport stomp does 10k points...
 
 		temp = damage < 100 ? damage : 100;
-
-		/*  if (player == &players[consoleplayer])
-		   I_Tactile (40,10,40+temp*2); */
 	}
 
 	// How about some particles, yes?
@@ -955,7 +961,7 @@ void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 	target->health -= damage;
 	if(target->health <= 0)
 	{
-		P_KillMobj(source, target);
+		P_KillMobj(source, target, stomping);
 		return;
 	}
 

@@ -1606,7 +1606,8 @@ typedef enum {
 	TXT_KILLMSG_BFG,			   // 331
 	TXT_KILLMSG_CHAINSAW,		   // 332
 	TXT_KILLMSG_SUPERSHOTGUN,	   // 333
-	NUMTEXT						   // 334
+	TXT_KILLMSG_STOMP,			   // 334
+	NUMTEXT						   // 335
 } textenum_t;
 
 #endif

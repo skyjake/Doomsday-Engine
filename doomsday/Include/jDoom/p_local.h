@@ -300,6 +300,8 @@ void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 							 int damage);
+void			P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+							  int damage, boolean stomping);
 
 void            P_ExplodeMissile(mobj_t *mo);
 
@@ -312,6 +314,9 @@ void            P_ExplodeMissile(mobj_t *mo);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.7  2004/06/16 18:21:34  skyjake
+// Added a separate killmsg for telestomp
+//
 // Revision 1.6  2004/05/30 08:42:35  skyjake
 // Tweaked indentation style
 //

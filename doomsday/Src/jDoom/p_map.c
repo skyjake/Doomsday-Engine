@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.9  2004/06/16 18:25:09  skyjake
+// Added a separate killmsg for telestomp
+//
 // Revision 1.8  2004/05/30 08:42:41  skyjake
 // Tweaked indentation style
 //
@@ -140,7 +143,8 @@ boolean PIT_StompThing(mobj_t *thing, void *data)
 	if(!tmthing->player && gamemap != 30)
 		return false;
 
-	P_DamageMobj(thing, tmthing, tmthing, 10000);
+	// Do stomp damage.
+	P_DamageMobj2(thing, tmthing, tmthing, 10000, true);
 
 	return true;
 }

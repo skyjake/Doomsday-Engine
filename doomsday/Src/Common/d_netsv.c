@@ -1042,7 +1042,7 @@ void NetSv_SendPlayerClass(int pnum, char cls)
 // NetSv_KillMessage
 //  Send one of the kill messages, depending on the weapon of the killer.
 //===========================================================================
-void NetSv_KillMessage(player_t * killer, player_t * fragged)
+void NetSv_KillMessage(player_t * killer, player_t * fragged, boolean stomping)
 {
 #if __JDOOM__
 	char    buf[160], *in, tmp[2];
@@ -1054,8 +1054,8 @@ void NetSv_KillMessage(player_t * killer, player_t * fragged)
 	tmp[1] = 0;
 
 	// Choose the right kill message template.
-	in = GET_TXT(killer ==
-				 fragged ? TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
+	in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer == fragged ?
+				 TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
 				 killer->readyweapon);
 	for(; *in; in++)
 	{
