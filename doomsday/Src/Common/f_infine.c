@@ -469,13 +469,13 @@ void FI_GetMapID(char *dest, int ep, int map)
 //===========================================================================
 int FI_GetFinaleGame(void)
 {
-#if __JDOOM__
+/*#if __JDOOM__
 	if(gamemode == commercial)
 	{
 		if(gamemission == pack_plut) return 1;
 		if(gamemission == pack_tnt) return 2;
 	}
-#endif
+#endif*/
 	return 0;
 }
 
