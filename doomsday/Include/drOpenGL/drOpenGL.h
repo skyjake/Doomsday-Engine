@@ -23,20 +23,21 @@
 #define __DROPENGL_H__
 
 #ifdef WIN32
-#	define WIN32_LEAN_AND_MEAN
-#	include <windows.h>
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  include <GL/gl.h>
+#  include <GL/glext.h>
+#  include <GL/glu.h>
 #endif
 
 #ifdef UNIX
-#	include <SDL/SDL.h>
-#	include "atiext.h"
-#	define wglGetProcAddress SDL_GL_GetProcAddress
-#	define GL_GLEXT_PROTOTYPES
+#  define GL_GLEXT_PROTOTYPES
+#  include <SDL/SDL.h>
+#  include <SDL/SDL_opengl.h>
+#  include "atiext.h"
+#  define wglGetProcAddress SDL_GL_GetProcAddress
 #endif
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-#include <GL/glu.h>
 #include <string.h>
 
 #include "../doomsday.h"
