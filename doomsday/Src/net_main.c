@@ -23,6 +23,8 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "rend_bias.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define OBSOLETE		CVF_NO_ARCHIVE|CVF_HIDE	// Old ccmds.
@@ -803,6 +805,9 @@ void Net_Drawer(void)
 		if(players[i].ingame && clients[i].recording)
 			show_blink_r = true;
 
+    // Draw the Shadow Bias Editor HUD (if it is active).
+    SBE_DrawHUD();
+    
 	if(!net_dev && !show_blink_r && !consoleShowFPS)
 		return;
 
