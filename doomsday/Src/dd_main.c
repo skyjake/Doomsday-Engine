@@ -207,7 +207,14 @@ void DD_Main(void)
 	boolean	userdir_ok = true;
 	
 	DD_Verbosity();
-	
+
+	// The -userdir option sets the working directory.
+	if(ArgCheckWith("-userdir", 1))
+	{
+		Dir_MakeDir(ArgNext(), &ddRuntimeDir);
+		userdir_ok = Dir_ChDir(&ddRuntimeDir);
+	}
+
 	// We'll redirect stdout to a log file.
 	CheckArg("-out", &outfilename);
 	newout = freopen(outfilename, "w", stdout);
@@ -215,12 +222,6 @@ void DD_Main(void)
 		"You won't see anything that's printf()ed.");
 	setbuf(stdout, NULL);
 	
-	// The -userdir option sets the working directory.
-	if(ArgCheckWith("-userdir", 1))
-	{
-		Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-		userdir_ok = Dir_ChDir(&ddRuntimeDir);
-	}
 	// The current working directory is the runtime dir.
 	Dir_GetDir(&ddRuntimeDir);
 	
