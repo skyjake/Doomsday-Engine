@@ -58,7 +58,6 @@ void P_BuildCommand(int playerNumber)
 {
 	ddplayer_t *player = players + playerNumber;
 	//client_t *client = clients + playerNumber;
-	float pos;
 	ticcmd_t cmd;
 
 	// The command will stay 'empty' if no controls are active.
@@ -66,11 +65,13 @@ void P_BuildCommand(int playerNumber)
 
 	// Examine the state of controllers to see which controls are
 	// active.
-	pos = P_ControlGetAxis(playerNumber, "walk");
 
 	// The player's class affects the movement speed.
-	cmd.forwardMove = (char) (0x10 * pos);
+	// FIXME: The real movement speeds are defined by the player class.
+	cmd.forwardMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "walk"));
 
+	cmd.sideMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "sidestep"));
+	
 	// The command is now complete.  Insert it into the client's
 	// command buffer, where it will be read from by the refresh
 	// thread.
