@@ -809,6 +809,11 @@ void GL_BlendMode(blendmode_t mode)
 		gl.Func(DGL_BLENDING, DGL_ONE, DGL_SRC_ALPHA);
 		break;
 
+	case BM_ALPHA_SUBTRACT:
+		gl.Func(DGL_BLENDING_OP, DGL_SUBTRACT, 0);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+		break;
+
 	case BM_REVERSE_SUBTRACT:
 		gl.Func(DGL_BLENDING_OP, DGL_REVERSE_SUBTRACT, 0);
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
