@@ -2177,6 +2177,7 @@ int CCmdVersion(int argc, char **argv)
 	if(gl.GetString)
 		Con_Printf("%s\n", gl.GetString(DGL_VERSION));
 	Con_Printf("Game DLL: %s\n", gx.Get(DD_VERSION_LONG));
+	Con_Printf("http://sourceforge.net/projects/deng/\n");
 	return true;
 }
 

@@ -990,9 +990,14 @@ void CP_Drawer(ui_page_t * page)
 	float   alpha = panel_help_offset / (float) HELP_OFFSET;
 	int     x, y, w, h, bor;
 	char   *str;
+	char   *homeURL = "http://sourceforge.net/projects/deng/";
 
 	// First call the regular drawer.
 	UIPage_Drawer(page);
+
+	// Project home.
+	UI_TextOutEx(homeURL, screenWidth - UI_BORDER - FR_TextWidth(homeURL), 
+		UI_ScreenY(25), false, true, UI_COL(UIC_TEXT), 0.4f);
 
 	// Is the help box visible?
 	if(panel_help_offset <= 0 || !panel_help_source)
