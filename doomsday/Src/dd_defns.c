@@ -945,6 +945,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 		{ LTC_PLANE_TEXTURE, {0,2,3|MAP_FLAT,-1} },
 		{ LTC_WALL_TEXTURE, {0,3|MAP_TEX,4|MAP_TEX,5|MAP_TEX,-1} },
 		{ LTC_SOUND, {0,2|MAP_SND,-1} },
+		{ LTC_MIMIC_SECTOR, {0,2,-1} },
 		{ -1 }		
 	};
 	int i, k, a, n;
@@ -958,16 +959,12 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 	l->act_count = def->act_count;
 	l->act_time = def->act_time;
 	l->act_tag = def->act_tag;
-	for(i = k = 0; i < 10; i++)
+	for(i = 0; i < 10; i++)
 	{
-		/*if(i == 4)
-			l->aparm[i] = Def_EvalFlags(def->aparm_str[0]);
-		else if(i == 6)
-			l->aparm[i] = Def_EvalFlags(def->aparm_str[1]);
-		else*/ if(i == 9)
+		if(i == 9)
 			l->aparm[i] = Def_GetMobjNum(def->aparm9);
 		else
-			l->aparm[i] = def->aparm[i /* k++ */];
+			l->aparm[i] = def->aparm[i];
 	}
 	l->ticker_start = def->ticker_start;
 	l->ticker_end = def->ticker_end;
