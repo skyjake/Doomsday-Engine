@@ -257,7 +257,7 @@ void DD_Ticker(timespan_t time)
 			else
 				Sv_Ticker( /* time */ );
 
-			// This is needed by rend_camera_smooth.  It needs to know
+			// This is needed by camera smoothing.  It needs to know
 			// when the world tic has occured so the next sharp
 			// position can be processed.
 
@@ -374,5 +374,11 @@ void DD_RunTics(void)
 
 		// Various global variables are used for counting time.
 		DD_AdvanceTime(ticLength);
+	}
+
+	// Clients send commands periodically, not on every frame.
+	if(!isClient)
+	{
+		Net_SendCommands();
 	}
 }

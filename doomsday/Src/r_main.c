@@ -53,7 +53,6 @@ int     viewangleoffset = 0;
 int     validcount = 1;			// increment every time a check is made
 int     framecount;				// just for profiling purposes
 int     rend_info_tris = 0;
-int     rend_camera_smooth = true;	// smoothed by default
 fixed_t viewx, viewy, viewz;
 float   viewfrontvec[3], viewupvec[3], viewsidevec[3];
 fixed_t viewxOffset = 0, viewyOffset = 0, viewzOffset = 0;
@@ -76,6 +75,8 @@ float   frameTimePos;			// 0...1: fractional part for sharp game tics
 int		loadInStartupMode = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int rend_camera_smooth = true;	// smoothed by default
 
 // These are used when camera smoothing is disabled.
 static angle_t frozenAngle = 0;
@@ -104,8 +105,8 @@ void R_Register(void)
 	C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1,
 			   "1=Print frame time offsets.");
 	
-	C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, 0, 0, 1,
-			  "1=Filter camera movement between game tics.");
+	C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, CVF_HIDE, 0, 1,
+			  "1=Filter camera movement between game tics (OBSOLETE).");
 
 	C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1,
 			  "1=Build GL nodes when loading a map.");
@@ -225,7 +226,7 @@ void R_Shutdown(void)
 //===========================================================================
 void R_ResetViewer(void)
 {
-	resetNextViewer = true;
+	resetNextViewer = 1;
 }
 
 //===========================================================================
@@ -307,6 +308,9 @@ void R_NewSharpWorld(void)
 
 	if(!viewplayer) return;
 	
+	if(resetNextViewer) 
+		resetNextViewer = 2;
+
 	R_GetSharpView(&sharpView, viewplayer);
 
 	// Update the camera angles that will be used when the camera is
@@ -369,21 +373,13 @@ void R_SetupFrame(ddplayer_t *player)
 	viewplayer = player;
 	R_GetSharpView(&sharpView, viewplayer);
 
-	// Camera smoothing is only enabled if the frame rate is above 35.
-	if(!rend_camera_smooth || resetNextViewer)
+	if(resetNextViewer)
 	{
-		// Synchronize view angles to game updates.
-		if(resetNextViewer)
-		{
-			frozenAngle = sharpView.angle;
-			frozenPitch = sharpView.pitch;
-		}
-
-		resetNextViewer = false;
+		// Keep reseting until a new sharp world has arrived.
+		if(resetNextViewer > 1)
+			resetNextViewer = 0;
 
 		// Just view from the sharp position.
-		sharpView.angle = frozenAngle;
-		sharpView.pitch = frozenPitch;
 		R_SetViewPos(&sharpView);
 
 		memcpy(&lastSharpView[0], &sharpView, sizeof(sharpView));

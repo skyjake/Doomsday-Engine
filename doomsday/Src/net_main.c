@@ -372,10 +372,7 @@ void Net_SendCommands(void)
 	// Therefore they need to send a combination of all the cmds built
 	// during the wait period.
 	
-	if(isClient)
-		cmd = clients[consoleplayer].aggregateCmd;
-	else
-		cmd = clients[consoleplayer].lastCmd;
+	cmd = clients[consoleplayer].aggregateCmd;
 	
 	// The game will pack the commands into a buffer. The returned
 	// pointer points to a buffer that contains its size and the
@@ -388,12 +385,9 @@ void Net_SendCommands(void)
 	// Send the packet to the server, i.e. player zero.
 	Net_SendBuffer(0, isClient ? 0 : SPF_REBOUND);
 
-	if(isClient)
-	{
-		// Clients will begin composing a new aggregate now that this
-		// one has been sent.
-		memset(cmd, 0, TICCMD_SIZE);
-	}
+	// Clients will begin composing a new aggregate now that this
+	// one has been sent.
+	memset(cmd, 0, TICCMD_SIZE);
 }   
 
 /*
@@ -523,18 +517,9 @@ void Net_BuildLocalCommands(timespan_t time)
 		gx.BuildTicCmd(cmd, time);
 	}
 
-	if(!isClient)
-	{
-		// Clients don't send commands too often (will be called from
-		// Cl_Ticker).
-		Net_SendCommands();
-	}
-	else
-	{
-		// Be sure to merge each built command into the aggregate that
-		// will be sent periodically to the server.
-		gx.MergeTicCmd(clients[consoleplayer].aggregateCmd, cmd);
-	}
+	// Be sure to merge each built command into the aggregate that
+	// will be sent periodically to the server.
+	gx.MergeTicCmd(clients[consoleplayer].aggregateCmd, cmd);
 }
 
 //===========================================================================
