@@ -45,18 +45,20 @@ PFNGLCOLORTABLEEXTPROC glColorTableEXT = NULL;
 //===========================================================================
 GLenum ChooseFormat(int comps)
 {
+	boolean compress = (useCompr && allowCompression);
+
 	switch(comps)
 	{
 	case 1:	// Luminance
-		return useCompr? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE;
+		return compress? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE;
 
 	case 3: // RGB
-		return !useCompr? 3
+		return !compress? 3
 			: extS3TC? GL_COMPRESSED_RGB_S3TC_DXT1_EXT
 			: GL_COMPRESSED_RGB;
 
 	case 4: // RGBA
-		return !useCompr? 4 
+		return !compress? 4 
 			: extS3TC? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT // >1-bit alpha
 			: GL_COMPRESSED_RGBA;
 	}
