@@ -158,17 +158,28 @@ typedef struct {
 	sector_t       *lightsource;   // Main sky light source
 } sectorinfo_t;
 
+typedef struct vilight_s {
+    short           source;
+    byte            rgb[4];       // Light from an affecting source.
+} vilight_t;
+
 // Vertex illumination flags.
 #define VIF_LERP         0x1      // Interpolation is in progress.
 #define VIF_STILL_UNSEEN 0x2      // The color of the vertex is still unknown.
 
 typedef struct vertexillum_s {
-    gl_rgba_t color;              // Current color of the vertex.
-    gl_rgba_t dest;               // Destination color of the vertex.
-    unsigned int updatetime;      // When the value was calculated.
-    sector_t *front;              // Sector of the vertex's owner.
-    short flags;
+    gl_rgba_t       color;        // Current color of the vertex.
+    gl_rgba_t       dest;         // Destination color of the vertex.
+    unsigned int    updatetime;   // When the value was calculated.
+    //sector_t *front;              // Sector of the vertex's owner.
+    short           flags;
+    vilight_t       casted[MAX_BIAS_AFFECTED];
 } vertexillum_t;
+
+typedef struct biasaffection_s {
+    short           source;       // Index of light source.
+    //byte            rgb[3];     // Amount of light from the source.
+} biasaffection_t;
 
 typedef struct planeinfo_s {
 	short           flags;
@@ -179,7 +190,7 @@ typedef struct planeinfo_s {
     vertexillum_t  *illumination;
     biastracker_t   tracker;
     uint            updated;
-    short           affected[MAX_BIAS_AFFECTED];
+    biasaffection_t affected[MAX_BIAS_AFFECTED];
 } planeinfo_t;
 
 // Shadowpoly flags.
@@ -204,7 +215,7 @@ typedef struct seginfo_s {
     biastracker_t   tracker[3]; // 0=top, 1=middle, 2=bottom
     vertexillum_t   illum[3][4];
     uint            updated;
-    short           affected[MAX_BIAS_AFFECTED];
+    biasaffection_t affected[MAX_BIAS_AFFECTED];
 } seginfo_t;
 
 typedef struct subsectorinfo_s {

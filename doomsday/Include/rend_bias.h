@@ -38,6 +38,7 @@ void            SB_SegHasMoved(seg_t *seg);
 void            SB_PlaneHasMoved(subsector_t *subsector, boolean theCeiling);
 void            SB_BeginFrame(void);
 void            SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
+                            sector_t *sector,
                             struct vertexillum_s *illumination,
                             biastracker_t *tracker, int mapElementIndex);
 void            SB_EndFrame(void);

@@ -883,7 +883,7 @@ void R_InitSectorInfo(void)
 //===========================================================================
 void R_InitSegInfo(void)
 {
-    int i, k;
+    int i, k, j, n;
     seginfo_t *inf;
     
     seginfo = Z_Calloc(numsegs * sizeof(seginfo_t), PU_LEVEL, NULL);
@@ -892,13 +892,19 @@ void R_InitSegInfo(void)
     {
         for(k = 0; k < 4; ++k)
         {
-            inf->illum[0][k].front =
+/*            inf->illum[0][k].front =
                 inf->illum[1][k].front =
-                inf->illum[2][k].front = SEG_PTR(i)->frontsector;
+                inf->illum[2][k].front = SEG_PTR(i)->frontsector;*/
 
-            inf->illum[0][k].flags =
-                inf->illum[1][k].flags =
-                inf->illum[2][k].flags = VIF_STILL_UNSEEN;
+            for(j = 0; j < 3; ++j)
+            {
+                inf->illum[j][k].flags = VIF_STILL_UNSEEN;
+
+                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
+                {
+                    inf->illum[j][k].casted[n].source = -1;
+                }
+            }
         }
     }
 }
@@ -909,7 +915,7 @@ void R_InitSegInfo(void)
 void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
 					 subsector_t *subsector)
 {
-	int     numvrts, i;
+	int     numvrts, i, j;
 	fvertex_t *vrts, *vtx, *pv;
 
 	// Take the subsector's vertices.
@@ -960,7 +966,9 @@ void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
     for(i = 0; i < plane->numvertices; ++i)
     {
         plane->illumination[i].flags |= VIF_STILL_UNSEEN;
-        plane->illumination[i].front = subsector->sector;
+
+        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
+            plane->illumination[i].casted[j].source = -1;
     }
 }
 
