@@ -262,7 +262,11 @@ $--------------------------------------------------------------------
 	Don't initialize video.
 @row
 	@opt{-noramp} @tab @tab
-	Don't use hardware gamma/contrast/brightness.
+	Don't use hardware color settings (gamma, contrast, brightness).
+@row
+	@opt{-leaveramp} @tab @tab
+	At shutdown, don't reset color settings (gamma, contrast,
+	brightness) back to the	original values.
 }
 
 @section{ Textures }
