@@ -177,8 +177,8 @@ void DD_RegisterInput(void)
 	C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1,
 			  "1=Inversed mouse Y axis.");
 
-	C_VAR_BYTE("input-mouse-filter", &mouseFilter, 0, 0, 10,
-			   "Filter strength for mouse movement.");
+	C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, 10,
+			  "Filter strength for mouse movement.");
 
 	C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0,
 			  "Mouse input polling frequency (events per second). "
@@ -654,8 +654,13 @@ void DD_ReadMouse(void)
 			mickeys[1] += ev.data2;
 
 			// Half of the mickeys will be posted with the event.
-			ev.data1 = (mouseFilter + mickeys[0]) / (mouseFilter + 1);
-			ev.data2 = (mouseFilter + mickeys[1]) / (mouseFilter + 1);
+			ev.data1 = (mouseFilter + abs(mickeys[0])) / (mouseFilter + 1);
+			ev.data2 = (mouseFilter + abs(mickeys[1])) / (mouseFilter + 1);
+
+			if(mickeys[0] < 0) 
+				ev.data1 = -ev.data1;
+			if(mickeys[1] < 0)
+				ev.data2 = -ev.data2;
 
 			mickeys[0] -= ev.data1;
 			mickeys[1] -= ev.data2;
