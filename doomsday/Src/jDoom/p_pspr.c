@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/06/27 20:23:45  skyjake
+// Added cvar to disable weapon Y offset in A_Lower/A_Raise (view-bob-weapon-switch-lower)
+//
 // Revision 1.1  2003/02/26 19:21:57  skyjake
 // Initial checkin
 //
@@ -35,6 +38,7 @@ static const char
 rcsid[] = "$Id$";
 
 #include "doomdef.h"
+#include "d_config.h"
 #include "d_event.h"
 #include "d_netjd.h"
 
@@ -306,8 +310,10 @@ A_WeaponReady
  pspdef_t*	psp )
 {	
     statenum_t	newstate;
-    //int		angle;
     
+	// Enable the pspr Y offset (might be disabled in A_Lower).
+	DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
+
     // get out of attack state
     if (player->plr->mo->state == &states[S_PLAY_ATK1]
 		|| player->plr->mo->state == &states[S_PLAY_ATK2] )
@@ -348,12 +354,7 @@ A_WeaponReady
     else
 		player->attackdown = false;
     
-    // bob the weapon based on movement speed
-    /*angle = (128*leveltime)&FINEMASK;
-    psp->sx = FRACUNIT + FixedMul (player->bob, finecosine[angle]);
-    angle &= FINEANGLES/2-1;
-    psp->sy = WEAPONTOP + FixedMul (player->bob, finesine[angle]);*/
-	
+    // Bob the weapon based on movement speed.
 	psp->sx = (int) D_Get(DD_PSPRITE_BOB_X);
 	psp->sy = (int) D_Get(DD_PSPRITE_BOB_Y);
 
@@ -412,10 +413,16 @@ A_Lower
 ( player_t*	player,
  pspdef_t*	psp )
 {	
-    psp->sy += LOWERSPEED;
+	psp->sy += LOWERSPEED;
 	
 	// Psprite state.
 	player->plr->psprites[0].state = DDPSP_DOWN;
+
+	// Should we disable the lowering?
+	if(!cfg.bobWeaponLower)
+	{
+		DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
+	}
 
     // Is already down.
     if (psp->sy < WEAPONBOTTOM )
@@ -438,8 +445,8 @@ A_Lower
 		P_SetPsprite (player,  ps_weapon, S_NULL);
 		return;	
     }
-	
-    player->readyweapon = player->pendingweapon; 
+    
+	player->readyweapon = player->pendingweapon; 
 	player->update |= PSF_READY_WEAPON;
 	
     P_BringUpWeapon (player);
@@ -459,11 +466,20 @@ A_Raise
 	// Psprite state.
 	player->plr->psprites[0].state = DDPSP_UP;
 
-    psp->sy -= RAISESPEED;
+	// Should we disable the lowering?
+	if(!cfg.bobWeaponLower)
+	{
+		DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
+	}
+
+	psp->sy -= RAISESPEED;
 	
     if (psp->sy > WEAPONTOP )
 		return;
     
+	// Enable the pspr Y offset once again.
+	DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
+
     psp->sy = WEAPONTOP;
     
     // The weapon has been raised all the way,
