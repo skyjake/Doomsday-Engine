@@ -145,9 +145,8 @@ void P_InitParticleGen(ptcgen_t *gen, ded_ptcgen_t *def)
 		gen->stages[i].resistance = FRACUNIT * (1 - def->stages[i].resistance);
 		gen->stages[i].radius = FRACUNIT * def->stages[i].radius;
 		gen->stages[i].gravity = FRACUNIT * def->stages[i].gravity;
-		// FIXME: What!? Why are you evaluating now?
-		gen->stages[i].type = Def_EvalFlags(def->stages[i].type);
-		gen->stages[i].flags = Def_EvalFlags(def->stages[i].flags); 
+		gen->stages[i].type = def->stages[i].type;
+		gen->stages[i].flags = def->stages[i].flags; 
 	}
 
 	// Init some data.
@@ -160,8 +159,11 @@ void P_InitParticleGen(ptcgen_t *gen, ded_ptcgen_t *def)
 	// Mark everything unused.
 	memset(gen->ptcs, -1, sizeof(particle_t) * gen->count);
 
-	// Clear the contact pointers.
-	for(i = 0; i < gen->count; i++) gen->ptcs[i].contact = NULL;
+	for(i = 0; i < gen->count; i++) 
+	{
+		// Clear the contact pointers.
+		gen->ptcs[i].contact = NULL;
+	}
 }
 
 //===========================================================================
@@ -274,6 +276,17 @@ void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
 		vec[VY] = FixedMul(finesine[theta], finesine[phi]);
 		for(i = 0; i < 3; i++) pos[i] += FixedMul(vec[i], off);
 	}
+}
+
+//===========================================================================
+// P_SetParticleAngles
+//===========================================================================
+void P_SetParticleAngles(particle_t *pt, int flags)
+{
+	if(flags & PTCF_ZERO_YAW) pt->yaw = 0;
+	if(flags & PTCF_ZERO_PITCH) pt->pitch = 0;
+	if(flags & PTCF_RANDOM_YAW) pt->yaw = M_FRandom() * 65536;
+	if(flags & PTCF_RANDOM_PITCH) pt->pitch = M_FRandom() * 65536;
 }
 
 //===========================================================================
@@ -450,6 +463,9 @@ spawn_failed:
 		P_Uncertain(pt->pos, FRACUNIT * def->min_spawn_radius,
 			FRACUNIT * def->spawn_radius);
 	}
+
+	// Initial angles for the particle.
+	P_SetParticleAngles(pt, def->stages[pt->stage].flags);
 
 	// The other place where this gets updated is after moving over 
 	// a two-sided line.
@@ -634,6 +650,30 @@ fixed_t P_GetParticleZ(particle_t *pt)
 }
 
 //===========================================================================
+// P_SpinParticle
+//===========================================================================
+void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
+{
+	ded_ptcstage_t *stDef = gen->def->stages + pt->stage;	
+	uint index = pt - gen->ptcs + (int)gen/8;
+	static int yawSigns[4] = { 1, 1, -1, -1 };
+	static int pitchSigns[4] = { 1, -1, 1, -1 };
+	int yawSign, pitchSign;
+
+	yawSign = yawSigns[index % 4];
+	pitchSign = pitchSigns[index % 4];
+
+	if(stDef->spin[0] != 0)
+	{
+		pt->yaw += 65536 * yawSign * stDef->spin[0] / (360 * TICSPERSEC);
+	}
+	if(stDef->spin[1] != 0)
+	{
+		pt->pitch += 65536 * pitchSign * stDef->spin[1] / (360 * TICSPERSEC);
+	}
+}
+
+//===========================================================================
 // P_MoveParticle
 //	The movement is done in two steps: 
 //	Z movement is done first. Skyflat kills the particle.
@@ -644,9 +684,13 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 {
 	int x, y, z, xl, xh, yl, yh, bx, by;
 	ptcstage_t *st = gen->stages + pt->stage;
-	boolean zbounce = false;
+
+	boolean zBounce = false;
 	boolean hitFloor;
 	fixed_t hardRadius = st->radius/2;
+
+	// Particle rotates according to spin speed.
+	P_SpinParticle(gen, pt);
 
 	// Changes to momentum.
 	pt->mov[VZ] -= FixedMul(mapgravity, st->gravity);
@@ -731,7 +775,7 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 			}
 			if(!P_TouchParticle(pt, st, false)) return;
 			z = pt->sector->ceilingheight - hardRadius;
-			zbounce = true;
+			zBounce = true;
 			hitFloor = false;
 		}
 		// Also check the floor.
@@ -744,10 +788,10 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 			}
 			if(!P_TouchParticle(pt, st, false)) return;
 			z = pt->sector->floorheight + hardRadius;
-			zbounce = true;
+			zBounce = true;
 			hitFloor = true;
 		}
-		if(zbounce) 
+		if(zBounce) 
 		{
 			pt->mov[VZ] = FixedMul(-pt->mov[VZ], st->bounce);
 			if(!pt->mov[VZ])
@@ -947,6 +991,9 @@ void P_PtcGenThinker(ptcgen_t *gen)
 			}
 			pt->tics = def->stages[pt->stage].tics
 				* (1 - def->stages[pt->stage].variance * M_FRandom());
+
+			// Change in particle angles?
+			P_SetParticleAngles(pt, def->stages[pt->stage].flags);
 		}
 		// Try to move.
 		P_MoveParticle(gen, pt);
