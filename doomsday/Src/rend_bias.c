@@ -72,8 +72,6 @@ static void  SBE_SetColor(float *dest, float *src);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float viewfrontvec[3];
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -115,6 +113,9 @@ static int editActive = false; // Edit mode active?
 static int editGrabbed = -1;
 static int editHidden = false;
 static int editShowAll = false;
+static int editHueCircle = false;
+static float hueDistance = 100;
+static vec3_t hueOrigin, hueSide, hueUp;
 
 // CODE --------------------------------------------------------------------
 
@@ -161,6 +162,7 @@ void SB_Register(void)
     C_CMD("bldup", BLEditor, "Duplicate current/specified light, grab it.");
     C_CMD("blc", BLEditor, "Set color of light at cursor.");
     C_CMD("bli", BLEditor, "Set intensity of light at cursor.");
+    C_CMD("blhue", BLEditor, "Show/hide the hue circle for color selection.");
 
     // Normal variables.
     C_VAR_INT("rend-bias", &useBias, 0, 0, 1,
@@ -219,6 +221,71 @@ void SB_InitForLevel(const char *uniqueId)
         
         if(numSources == MAX_BIAS_LIGHTS)
             break;
+    }
+}
+
+/*
+ * Conversion from HSV to RGB.  Everything is [0,1].
+ */
+static void HSVtoRGB(float *rgb, float h, float s, float v)
+{
+    int i;
+    float f, p, q, t;
+    
+    if(s == 0)
+    {
+        // achromatic (grey)
+        rgb[0] = rgb[1] = rgb[2] = v;
+        return;
+    }
+
+    if(h >= 1)
+        h -= 1;
+    
+    h *= 6;                        // sector 0 to 5
+    i = floor(h);
+    f = h - i;                     // factorial part of h
+    p = v * (1 - s);
+    q = v * (1 - s * f);
+    t = v * (1 - s * (1 - f));
+    
+    switch(i)
+    {
+    case 0:
+        rgb[0] = v;
+        rgb[1] = t;
+        rgb[2] = p;
+        break;
+
+    case 1:
+        rgb[0] = q;
+        rgb[1] = v;
+        rgb[2] = p;
+        break;
+
+    case 2:
+        rgb[0] = p;
+        rgb[1] = v;
+        rgb[2] = t;
+        break;
+        
+    case 3:
+        rgb[0] = p;
+        rgb[1] = q;
+        rgb[2] = v;
+        break;
+
+    case 4:
+        rgb[0] = t;
+        rgb[1] = p;
+        rgb[2] = v;
+        break;
+
+    default:                
+        rgb[0] = v;
+        rgb[1] = p;
+        rgb[2] = q;
+        break;
     }
 }
 
@@ -917,6 +984,62 @@ static void SBE_SetColor(float *dest, float *src)
     }
 }
 
+static void SBE_GetHueColor(float *color, float *angle, float *sat)
+{
+    int i;
+    float dot;
+    float saturation, hue, scale;
+    float minAngle = 0.1f, range = 0.19f;
+    vec3_t h, proj;
+
+    dot = M_DotProduct(viewfrontvec, hueOrigin);
+    saturation = (acos(dot) - minAngle) / range;
+    
+    if(saturation < 0)
+        saturation = 0;
+    if(saturation > 1)
+        saturation = 1;
+    if(sat)
+        *sat = saturation;
+    
+    if(saturation == 0)
+    {
+        if(angle)
+            *angle = 0;
+        
+        HSVtoRGB(color, 0, 0, 1);
+        return;
+    }
+    
+    // Calculate hue angle by projecting the current viewfront to the
+    // hue circle plane.  Project onto the normal and subtract.
+    scale = M_DotProduct(viewfrontvec, hueOrigin) /
+        M_DotProduct(hueOrigin, hueOrigin);
+    M_Scale(h, hueOrigin, scale);
+
+    for(i = 0; i < 3; ++i)
+        proj[i] = viewfrontvec[i] - h[i];
+
+    // Now we have the projected view vector on the circle's plane.
+    // Normalize the projected vector.
+    M_Normalize(proj);
+
+    hue = acos(M_DotProduct(proj, hueUp));
+
+    if(M_DotProduct(proj, hueSide) > 0)
+        hue = 2*PI - hue;
+
+    hue /= 2*PI;
+    hue += 0.25;
+    
+    if(angle)
+        *angle = hue;
+
+    //Con_Printf("sat=%f, hue=%f\n", saturation, hue);
+   
+    HSVtoRGB(color, hue, saturation, 1);
+}
+
 void SB_EndFrame(void)
 {
     source_t *src;
@@ -954,6 +1077,12 @@ void SB_EndFrame(void)
         source_t old;
 
         memcpy(&old, src, sizeof(old));
+
+        if(editHueCircle)
+        {
+            // Get the new color from the circle.
+            SBE_GetHueColor(editColor, NULL, NULL);
+        }
         
         SBE_SetColor(src->color, editColor);
         src->intensity = editIntensity;
@@ -1114,6 +1243,30 @@ static boolean SBE_Save(const char *name)
     return true;
 }
 
+void SBE_SetHueCircle(boolean activate)
+{
+    int i;
+    
+    if(activate == editHueCircle)
+        return; // No change in state.
+
+    if(activate && SBE_GetGrabbed() == NULL)
+        return;
+    
+    editHueCircle = activate;
+
+    if(activate)
+    {        
+        // Determine the orientation of the hue circle.
+        for(i = 0; i < 3; ++i)
+        {
+            hueOrigin[i] = viewfrontvec[i];
+            hueSide[i] = viewsidevec[i];
+            hueUp[i] = viewupvec[i];
+        }
+    }
+}
+
 /*
  * Editor commands.
  */
@@ -1152,6 +1305,13 @@ int CCmdBLEditor(int argc, char **argv)
     if(!stricmp(cmd, "clear"))
     {
         SBE_Clear();
+        return true;
+    }
+
+    if(!stricmp(cmd, "hue"))
+    {
+        int activate = (argc >= 2 ? stricmp(argv[1], "off") : !editHueCircle);
+        SBE_SetHueCircle(activate);
         return true;
     }
 
@@ -1403,6 +1563,100 @@ static void SBE_DrawSource(source_t *src)
     SBE_DrawStar(src->pos, 50 + src->intensity/10, col);
 }
 
+static void SBE_HueOffset(double angle, float *offset)
+{
+    offset[0] = cos(angle) * hueSide[VX] + sin(angle) * hueUp[VX];
+    offset[1] = sin(angle) * hueUp[VY];
+    offset[2] = cos(angle) * hueSide[VZ] + sin(angle) * hueUp[VZ];
+}
+
+static void SBE_DrawHue(void)
+{
+    vec3_t eye = { vx, vy, vz };
+    vec3_t center, off, off2;
+    float steps = 32, inner = 10, outer = 30, s;
+    double angle;
+    float color[4], sel[4], hue, saturation;
+    int i;
+    
+    gl.Disable(DGL_DEPTH_TEST);
+    gl.Disable(DGL_TEXTURING);
+    gl.Disable(DGL_CULL_FACE);
+
+    // The origin of the circle.
+    for(i = 0; i < 3; ++i)
+        center[i] = eye[i] + hueOrigin[i] * hueDistance;
+
+    // Draw the circle.
+    gl.Begin(DGL_QUAD_STRIP);
+    for(i = 0; i <= steps; ++i)
+    {
+        angle = 2*PI * i/steps;
+
+        // Calculate the hue color for this angle.
+        HSVtoRGB(color, i/steps, 1, 1);
+        color[3] = .5f;
+
+        SBE_HueOffset(angle, off);
+            
+        gl.Color4fv(color);
+        gl.Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
+                    center[2] + outer * off[2]);
+
+        // Saturation decreases in the center.
+        color[0] = 1;
+        color[1] = 1;
+        color[2] = 1;
+        color[3] = .15f;
+        gl.Color4fv(color);
+        gl.Vertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
+                    center[2] + inner * off[2]);
+    }
+    gl.End();
+
+    gl.Begin(DGL_LINES);
+
+    // Draw the current hue.
+    SBE_GetHueColor(sel, &hue, &saturation);
+    SBE_HueOffset(2*PI * hue, off);
+    sel[3] = 1;
+    gl.Color4fv(sel);
+    gl.Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
+                center[2] + outer * off[2]);
+    gl.Vertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
+                center[2] + inner * off[2]);
+
+    // Draw the edges.
+    for(i = 0; i < steps; ++i)
+    {
+        SBE_HueOffset(2*PI * i/steps, off);
+        SBE_HueOffset(2*PI * (i + 1)/steps, off2);
+
+        // Calculate the hue color for this angle.
+        HSVtoRGB(color, i/steps, 1, 1);
+        color[3] = 1;
+            
+        gl.Color4fv(color);
+        gl.Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
+                    center[2] + outer * off[2]);
+        gl.Vertex3f(center[0] + outer * off2[0], center[1] + outer * off2[1],
+                    center[2] + outer * off2[2]);
+
+        // Saturation decreases in the center.
+        gl.Color4fv(sel);
+        s = inner + (outer - inner) * saturation;
+        gl.Vertex3f(center[0] + s * off[0], center[1] + s * off[1],
+                    center[2] + s * off[2]);
+        gl.Vertex3f(center[0] + s * off2[0], center[1] + s * off2[1],
+                    center[2] + s * off2[2]);
+    }
+    gl.End();
+    
+    gl.Enable(DGL_DEPTH_TEST);
+    gl.Enable(DGL_TEXTURING);
+    gl.Enable(DGL_CULL_FACE);
+}
+
 void SBE_DrawCursor(void)
 {
 #define SET_COL(x, r, g, b, a) {x[0]=(r); x[1]=(g); x[2]=(b); x[3]=(a);}
@@ -1416,6 +1670,9 @@ void SBE_DrawCursor(void)
    
     if(!editActive || !numSources || editHidden)
         return;
+
+    if(editHueCircle && SBE_GetGrabbed())
+        SBE_DrawHue();
     
     // The grabbed cursor blinks yellow.
     if(!editBlink || currentTime & 0x80)
