@@ -384,7 +384,7 @@ int R_RegisterSkin(char *skin, const char *modelfn, char *fullpath)
 //===========================================================================
 // R_LoadModelMD2
 //===========================================================================
-void R_LoadModelMD2(DFILE * file, model_t * mdl)
+void R_LoadModelMD2(DFILE *file, model_t *mdl)
 {
 	md2_header_t oldhd;
 	dmd_header_t *hd = &mdl->header;
@@ -402,31 +402,23 @@ void R_LoadModelMD2(DFILE * file, model_t * mdl)
 	hd->version = 8;
 	hd->flags = 0;
 	mdl->vertexUsage = NULL;
-	inf->skinWidth = oldhd.skinWidth;
-	inf->skinHeight = oldhd.skinHeight;
-	inf->frameSize = oldhd.frameSize;
+	inf->skinWidth = LONG(oldhd.skinWidth);
+	inf->skinHeight = LONG(oldhd.skinHeight);
+	inf->frameSize = LONG(oldhd.frameSize);
 	inf->numLODs = 1;
-	inf->numSkins = oldhd.numSkins;
-	inf->numTexCoords = oldhd.numTexCoords;
-	inf->numVertices = oldhd.numVertices;
-	inf->numFrames = oldhd.numFrames;
-	inf->offsetSkins = oldhd.offsetSkins;
-	inf->offsetTexCoords = oldhd.offsetTexCoords;
-	inf->offsetFrames = oldhd.offsetFrames;
-	inf->offsetLODs = oldhd.offsetEnd;	// Doesn't exist.
-	mdl->lodInfo[0].numTriangles = oldhd.numTriangles;
-	mdl->lodInfo[0].numGlCommands = oldhd.numGlCommands;
-	mdl->lodInfo[0].offsetTriangles = oldhd.offsetTriangles;
-	mdl->lodInfo[0].offsetGlCommands = oldhd.offsetGlCommands;
-	inf->offsetEnd = oldhd.offsetEnd;
-
-	// Allocate and load the various arrays.
-	/*mdl->texCoords = AllocAndLoad(file, inf->offsetTexCoords, 
-	   sizeof(md2_textureCoordinate_t) * inf->numTexCoords); */
-
-	/*mdl->lods[0].triangles = AllocAndLoad(file, 
-	   mdl->lodInfo[0].offsetTriangles,
-	   sizeof(md2_triangle_t) * mdl->lodInfo[0].numTriangles); */
+	inf->numSkins = LONG(oldhd.numSkins);
+	inf->numTexCoords = LONG(oldhd.numTexCoords);
+	inf->numVertices = LONG(oldhd.numVertices);
+	inf->numFrames = LONG(oldhd.numFrames);
+	inf->offsetSkins = LONG(oldhd.offsetSkins);
+	inf->offsetTexCoords = LONG(oldhd.offsetTexCoords);
+	inf->offsetFrames = LONG(oldhd.offsetFrames);
+	inf->offsetLODs = LONG(oldhd.offsetEnd);	// Doesn't exist.
+	mdl->lodInfo[0].numTriangles = LONG(oldhd.numTriangles);
+	mdl->lodInfo[0].numGlCommands = LONG(oldhd.numGlCommands);
+	mdl->lodInfo[0].offsetTriangles = LONG(oldhd.offsetTriangles);
+	mdl->lodInfo[0].offsetGlCommands = LONG(oldhd.offsetGlCommands);
+	inf->offsetEnd = LONG(oldhd.offsetEnd);
 
 	// The frames need to be unpacked.
 	frames =
@@ -451,7 +443,8 @@ void R_LoadModelMD2(DFILE * file, model_t * mdl)
 			for(c = 0; c < 3; c++)
 			{
 				frame->vertices[k].xyz[axis[c]] =
-					pVtx->vertex[c] * pfr->scale[c] + pfr->translate[c];
+					pVtx->vertex[c] * FLOAT(pfr->scale[c]) + 
+                    FLOAT(pfr->translate[c]);
 			}
 			// Aspect undoing.
 			frame->vertices[k].xyz[VY] *= rModelAspectMod;
@@ -473,7 +466,7 @@ void R_LoadModelMD2(DFILE * file, model_t * mdl)
 //===========================================================================
 // R_LoadModelDMD
 //===========================================================================
-void R_LoadModelDMD(DFILE * file, model_t * mo)
+void R_LoadModelDMD(DFILE *file, model_t *mo)
 {
 	dmd_chunk_t chunk;
 	char   *temp;
@@ -485,18 +478,32 @@ void R_LoadModelDMD(DFILE * file, model_t * mo)
 
 	// Read the chunks.
 	F_Read(&chunk, sizeof(chunk), file);
-	while(chunk.type != DMC_END)
+    
+	while(LONG(chunk.type) != DMC_END)
 	{
-		switch (chunk.type)
+		switch (LONG(chunk.type))
 		{
 		case DMC_INFO:			// Standard DMD information chunk.
-			F_Read(inf, chunk.length, file);
+			F_Read(inf, LONG(chunk.length), file);
+            inf->skinWidth = LONG(inf->skinWidth);
+            inf->skinHeight = LONG(inf->skinHeight);
+            inf->frameSize = LONG(inf->frameSize);
+            inf->numSkins = LONG(inf->numSkins);
+            inf->numVertices = LONG(inf->numVertices);
+            inf->numTexCoords = LONG(inf->numTexCoords);
+            inf->numFrames = LONG(inf->numFrames);
+            inf->numLODs = LONG(inf->numLODs);
+            inf->offsetSkins = LONG(inf->offsetSkins);
+            inf->offsetTexCoords = LONG(inf->offsetTexCoords);
+            inf->offsetFrames = LONG(inf->offsetFrames);
+            inf->offsetLODs = LONG(inf->offsetLODs);
+            inf->offsetEnd = LONG(inf->offsetEnd);
 			break;
 
 		default:
 			// Just skip all unknown chunks.
-			temp = malloc(chunk.length);
-			F_Read(temp, chunk.length, file);
+			temp = malloc(LONG(chunk.length));
+			F_Read(temp, LONG(chunk.length), file);
 			free(temp);
 		}
 		// Read the next chunk header.
@@ -509,11 +516,8 @@ void R_LoadModelDMD(DFILE * file, model_t * mo)
 	for(i = 0; i < inf->numSkins; i++)
 		F_Read(mo->skins[i].name, 64, file);
 
-	/*mo->texCoords = AllocAndLoad(file, inf->offsetTexCoords, 
-	   sizeof(dmd_textureCoordinate_t) * inf->numTexCoords); */
-
-	temp =
-		AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
+	temp = AllocAndLoad(file, inf->offsetFrames, 
+        inf->frameSize * inf->numFrames);
 	mo->frames = malloc(sizeof(model_frame_t) * inf->numFrames);
 	for(i = 0, frame = mo->frames; i < inf->numFrames; i++, frame++)
 	{
@@ -528,11 +532,12 @@ void R_LoadModelDMD(DFILE * file, model_t * mo)
 		// Translate each vertex.
 		for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; k++, pVtx++)
 		{
-			UnpackVector(pVtx->normal, frame->normals[k].xyz);
+			UnpackVector(USHORT(pVtx->normal), frame->normals[k].xyz);
 			for(c = 0; c < 3; c++)
 			{
 				frame->vertices[k].xyz[axis[c]] =
-					pVtx->vertex[c] * pfr->scale[c] + pfr->translate[c];
+					pVtx->vertex[c] * FLOAT(pfr->scale[c]) + 
+                    FLOAT(pfr->translate[c]);
 			}
 			// Aspect undo.
 			frame->vertices[k].xyz[1] *= rModelAspectMod;
@@ -542,9 +547,14 @@ void R_LoadModelDMD(DFILE * file, model_t * mo)
 
 	F_Seek(file, inf->offsetLODs, SEEK_SET);
 	F_Read(mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs, file);
-
+    
 	for(i = 0; i < inf->numLODs; i++)
 	{
+        mo->lodInfo[i].numTriangles = LONG(mo->lodInfo[i].numTriangles);
+        mo->lodInfo[i].numGlCommands = LONG(mo->lodInfo[i].numGlCommands);
+        mo->lodInfo[i].offsetTriangles = LONG(mo->lodInfo[i].offsetTriangles);
+        mo->lodInfo[i].offsetGlCommands = LONG(mo->lodInfo[i].offsetGlCommands);
+    
 		triangles[i] =
 			AllocAndLoad(file, mo->lodInfo[i].offsetTriangles,
 						 sizeof(dmd_triangle_t) * mo->lodInfo[i].numTriangles);
@@ -559,7 +569,8 @@ void R_LoadModelDMD(DFILE * file, model_t * mo)
 	for(i = 0; i < inf->numLODs; i++)
 		for(k = 0; k < mo->lodInfo[i].numTriangles; k++)
 			for(c = 0; c < 3; c++)
-				mo->vertexUsage[triangles[i][k].vertexIndices[c]] |= 1 << i;
+				mo->vertexUsage[SHORT(triangles[i][k].vertexIndices[c])] 
+                    |= 1 << i;
 
 	// We don't need the triangles any more.
 	for(i = 0; i < inf->numLODs; i++)
@@ -632,12 +643,12 @@ int R_LoadModel(char *origfn)
 
 	// Now we can load in the data.
 	F_Read(&mdl->header, sizeof(mdl->header), file);
-	if(mdl->header.magic == MD2_MAGIC)	// Load as MD2?
+	if(LONG(mdl->header.magic) == MD2_MAGIC)	// Load as MD2?
 	{
 		F_Rewind(file);
 		R_LoadModelMD2(file, mdl);
 	}
-	else if(mdl->header.magic == DMD_MAGIC)	// Load as DMD?
+	else if(LONG(mdl->header.magic) == DMD_MAGIC)	// Load as DMD?
 	{
 		R_LoadModelDMD(file, mdl);
 	}

@@ -258,6 +258,7 @@ int TGA_Load32_rgba8888(DFILE * file, int w, int h, uChar * buffer)
 
 	// Read and check the header.
 	F_Read(&header, sizeof(header), file);
+    
 	if(header.imageType != 2 ||
 	   (header.imagePixelSize != 32 && header.imagePixelSize != 24) ||
 	   (header.imageDescriptor.attributeBits != 8 &&
@@ -326,8 +327,8 @@ int TGA_GetSize(char *filename, int *w, int *h)
 	F_Read(&header, sizeof(header), file);
 	F_Close(file);
 	if(w)
-		*w = header.imageWidth;
+		*w = SHORT(header.imageWidth);
 	if(h)
-		*h = header.imageHeight;
+		*h = SHORT(header.imageHeight);
 	return 1;
 }

@@ -70,11 +70,14 @@ extern          "C" {
 #ifdef __BIG_ENDIAN__
 	short           ShortSwap(short);
 	long            LongSwap(long);
+    float           FloatSwap(float);
 #define SHORT(x)	ShortSwap(x)
 #define LONG(x)		LongSwap(x)
+#define FLOAT(x)    FloatSwap(x)
 #else
 #define SHORT(x)	(x)
 #define LONG(x)		(x)
+#define FLOAT(x)    (x)
 #endif
 
 #define USHORT(x)   ((unsigned short) SHORT(x))

@@ -258,7 +258,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, uint numVertices,
 
 	for(pos = glCommands; *pos;)
 	{
-		count = *(int *) pos;
+		count = LONG( *(int *) pos );
 		pos += 4;
 
 		// The type of primitive depends on the sign.
@@ -275,16 +275,17 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, uint numVertices,
 			pos += sizeof(glcommand_vertex_t);
 
 			if(mode != RC_OTHER_COORDS)
-				gl.TexCoord2fv(&v->s);
+            {
+                float tc[2] = { FLOAT(v->s), FLOAT(v->t) };
+				gl.TexCoord2fv(tc);
+            }
 
-			gl.ArrayElement(v->index);
+			gl.ArrayElement(LONG(v->index));
 		}
 
 		// The primitive is complete.
 		gl.End();
 	}
-
-	/* gl.UnlockArrays(); */
 }
 
 /*
