@@ -83,10 +83,12 @@ void            M_ClearRandom(void);
 
 // Math routines.
 float           M_ApproxDistancef(float dx, float dy);
+float           M_ApproxDistance3(float delta[3]);
 float           M_ApproxDistance3f(float dx, float dy, float dz);
 float           M_PointLineDistance(float *a, float *b, float *c);
 float           M_PointUnitLineDistance(float *a, float *b, float *c);
 float           M_Normalize(float *a);
+float           M_Distance(float *a, float *b);
 float           M_DotProduct(float *a, float *b);
 void            M_CrossProduct(float *a, float *b, float *out);
 void            M_PointCrossProduct(float *v1, float *v2, float *v3,

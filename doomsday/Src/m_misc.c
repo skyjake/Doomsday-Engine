@@ -393,6 +393,21 @@ float M_Normalize(float *a)
 }
 
 //===========================================================================
+// M_Distance
+//  For convenience.
+//===========================================================================
+float M_Distance(float *a, float *b)
+{
+    float delta[3];
+    int i;
+
+    for(i = 0; i < 3; ++i)
+        delta[i] = b[i] - a[i];
+
+    return M_Normalize(delta);
+}
+
+//===========================================================================
 // M_DotProduct
 //===========================================================================
 float M_DotProduct(float *a, float *b)
@@ -782,6 +797,15 @@ float M_ApproxDistancef(float dx, float dy)
 	if(dx < dy)
 		return dx + dy - dx / 2;
 	return dx + dy - dy / 2;
+}
+
+//===========================================================================
+// M_ApproxDistance3
+//===========================================================================
+float M_ApproxDistance3(float delta[3])
+{
+	return M_ApproxDistancef(
+        M_ApproxDistancef(delta[0], delta[1]), delta[2]);
 }
 
 //===========================================================================
