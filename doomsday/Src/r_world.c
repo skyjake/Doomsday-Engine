@@ -438,7 +438,7 @@ void R_CreateFloorsAndCeilings(int bspnode, int numdivlines, divline_t *divlines
 //	ceiling is lifted to match the upper sky. The raising only affects 
 //	rendering, it has no bearing on gameplay.
 //==========================================================================
-void R_SkyFix()
+void R_SkyFix(void)
 {
 	boolean		adjusted;
 	int			i, f, b;

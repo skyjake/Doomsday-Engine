@@ -788,7 +788,9 @@ void R_ProjectSprite (mobj_t *thing)
 
 void R_AddSprites (sector_t *sec)
 {
-	mobj_t		*thing;
+	mobj_t *thing;
+	spriteinfo_t spriteInfo;
+	fixed_t visibleTop;
 
 	if (sec->validcount == validcount)
 		return;		// already added
@@ -796,7 +798,26 @@ void R_AddSprites (sector_t *sec)
 	sec->validcount = validcount;
 
 	for (thing = sec->thinglist ; thing ; thing = thing->snext)
+	{
 		R_ProjectSprite (thing);
+
+		// Hack: Sprites have a tendency to extend into the ceiling in
+		// sky sectors. Here we will raise the skyfix dynamically, at 
+		// runtime, to make sure that no sprites get clipped by the sky.
+		R_GetSpriteInfo(thing->sprite, thing->frame, &spriteInfo);
+		visibleTop = thing->z + (spriteInfo.height << FRACBITS);
+
+		if(sec->ceilingpic == skyflatnum 
+			&& visibleTop > sec->ceilingheight + (sec->skyfix << FRACBITS))
+		{
+			// Raise sector skyfix.
+			sec->skyfix = ((visibleTop - sec->ceilingheight) 
+				>> FRACBITS) + 16; // Add some leeway.
+
+			// This'll adjust all adjacent sectors.
+			R_SkyFix();
+		}
+	}
 }
 
 /*
