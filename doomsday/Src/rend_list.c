@@ -104,24 +104,6 @@ enum
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct glvertex_s
-{
-	float xyz[4];		// The fourth is padding.
-}
-glvertex_t;
-
-typedef struct gltexcoord_s
-{
-	float st[2];
-}
-gltexcoord_t;
-
-typedef struct glcolor_s
-{
-	byte rgba[4];
-}
-glcolor_t;
-
 /*
  * Each primhdr begins a block of polygon data that ends up as one or
  * more triangles on the screen. Note that there are pointers to the
