@@ -69,6 +69,11 @@ int			r_texglow = true;
 void R_ShutdownData(void)
 {
 	PRINT_PROF( PROF_REFRESH_FIND_FLAT );
+
+	// Subsectorinfo is quite large (the rendpolys...). Free it from
+	// the normal heap.
+	free(subsecinfo);
+	subsecinfo = NULL;
 }
 
 //===========================================================================
