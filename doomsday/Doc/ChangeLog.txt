@@ -4,6 +4,15 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.7.9 (work in progress)
+-------------
++ cvar 'rend-light-wall-angle': intensity of angle-based wall lighting
++ cvar 'input-mouse-filter': average mouse X/Y axis values
+* "Filter mouse movement" added to Control Panel's Input page
+- DirectSound 8: fixed a problem with buffer loading; using -csd should 
+  no longer be necessary
+
+
 Version 1.7.8
 -------------
 + new master server mechanism (uses HTTP)
