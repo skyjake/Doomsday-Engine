@@ -871,20 +871,20 @@ void DL_AddLuminous(mobj_t *thing)
 			def = (ded_light_t *) thing->state->light;
 			if(def->size)
 				cf.size = def->size;
-			if(def->xoffset)
+			if(def->offset[VX])
 			{
 				// Set the x offset here.
-				lum->xOff = cf.xoffset = def->xoffset;
+				lum->xOff = cf.xoffset = def->offset[VX];
 			}
-			if(def->yoffset)
-				cf.yoffset = def->yoffset;
+			if(def->offset[VY])
+				cf.yoffset = def->offset[VY];
 			lum->flags |= def->flags;
 		}
 
 		lum->patch = lump;
 		lum->center =
-			spritelumps[lump].topoffset - FIX2FLT(lum->thing->floorclip +
-												  R_GetBobOffset(lum->thing)) -
+			spritelumps[lump].topoffset -
+            FIX2FLT(lum->thing->floorclip + R_GetBobOffset(lum->thing)) -
 			cf.yoffset;
 
 		// Will the sprite be allowed to go inside the floor?
