@@ -351,7 +351,7 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 		// This way the distance darkening has an effect.
 		for(i = 0; i < 3; i++)
 		{
-			ambientColor[i] = tempquad.vertices[0].color.rgb[i] / 150.0f;
+			ambientColor[i] = tempquad.vertices[0].color.rgba[i] / 150.0f;
 			if(ambientColor[i] > 1) ambientColor[i] = 1;
 		}
 		if(modelLight)
@@ -457,9 +457,9 @@ void Rend_RenderModel(vissprite_t *spr, int number)
 		if(!modelLight)
 		{
 			// Just the ambient light.
-			gl.Color4ub(tempquad.vertices[0].color.rgb[CR],
-				tempquad.vertices[0].color.rgb[CG],
-				tempquad.vertices[0].color.rgb[CB],
+			gl.Color4ub(tempquad.vertices[0].color.rgba[CR],
+				tempquad.vertices[0].color.rgba[CG],
+				tempquad.vertices[0].color.rgba[CB],
 				alpha * 255);
 			lightVertices = false;
 		}

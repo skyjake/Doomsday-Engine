@@ -58,7 +58,7 @@ void Rend_Draw3DPlayerSprites(void)
 	gl.Clear(DGL_DEPTH_BUFFER_BIT);
 
 	// Turn off fog.
-	if(whitefog) gl.Disable(DGL_FOG);
+	if(useFog) gl.Disable(DGL_FOG);
 
 	for(i = 0; i < DDMAXPSPRITES; i++)
 	{
@@ -67,7 +67,7 @@ void Rend_Draw3DPlayerSprites(void)
 	}
 
 	// Should we turn the fog back on?
-	if(whitefog) gl.Enable(DGL_FOG);
+	if(useFog) gl.Enable(DGL_FOG);
 }
 
 //===========================================================================
@@ -514,8 +514,8 @@ void Rend_RenderSprite(vissprite_t *spr)
 			memcpy(&tempquad.vertices[1].color, &tempquad.vertices[0].color, 3);
 			// Global variables as parameters... ugly.
 			slSpr = spr;
-			slRGB1 = tempquad.vertices[0].color.rgb;
-			slRGB2 = tempquad.vertices[1].color.rgb;
+			slRGB1 = tempquad.vertices[0].color.rgba;
+			slRGB2 = tempquad.vertices[1].color.rgba;
 			slViewVec.x = FIX2FLT(spr->mo.gx - viewx);
 			slViewVec.y = FIX2FLT(spr->mo.gy - viewy);
 			len = sqrt(slViewVec.x*slViewVec.x + slViewVec.y*slViewVec.y);
@@ -531,18 +531,18 @@ void Rend_RenderSprite(vissprite_t *spr)
 			{
 				len = 1 - (FIX2FLT(spr->mo.gz) - spr->mo.secfloor) / glowHeight;
 				for(i = 0; i < 2; i++)
-					Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgb,
+					Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgba,
 						spr->mo.floorglow, len);
 
 				len = 1 - (spr->mo.secceil - FIX2FLT(spr->mo.gzt)) / glowHeight;
 				for(i = 0; i < 2; i++)
-					Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgb,
+					Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgba,
 						spr->mo.ceilglow, len);
 			}				
 		}
-		gl.Color4ub(tempquad.vertices[0].color.rgb[CR],
-			tempquad.vertices[0].color.rgb[CG],
-			tempquad.vertices[0].color.rgb[CB],
+		gl.Color4ub(tempquad.vertices[0].color.rgba[CR],
+			tempquad.vertices[0].color.rgba[CG],
+			tempquad.vertices[0].color.rgba[CB],
 			alpha);
 	}
 
@@ -634,9 +634,9 @@ void Rend_RenderSprite(vissprite_t *spr)
 
 	if(litSprites && spr->mo.lightlevel >= 0)
 	{
-		gl.Color4ub(tempquad.vertices[1].color.rgb[CR],
-			tempquad.vertices[1].color.rgb[CG],
-			tempquad.vertices[1].color.rgb[CB],
+		gl.Color4ub(tempquad.vertices[1].color.rgba[CR],
+			tempquad.vertices[1].color.rgba[CG],
+			tempquad.vertices[1].color.rgba[CB],
 			alpha);
 	}
 	Rend_SpriteTexCoord(patch, !flip, 0);
