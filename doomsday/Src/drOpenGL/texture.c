@@ -121,7 +121,7 @@ DGLuint DG_NewTexture(void)
 
 	// Generate a new texture name and bind it.
 	glGenTextures(1, &texName);
-	glBindTexture(GL_TEXTURE_2D, currentTex = texName);
+	glBindTexture(GL_TEXTURE_2D, texName);
 	return texName;
 }
 
@@ -144,7 +144,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 	}
 
 	// Can't operate on the null texture.
-	if(!currentTex || !data) return DGL_FALSE;
+	if(!data) return DGL_FALSE;
 
 	// Check that the texture dimensions are valid.
 	if(width != Power2(width) || height != Power2(height))
@@ -292,15 +292,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 //===========================================================================
 void DG_DeleteTextures(int num, DGLuint *names)
 {
-	int		i;
-
 	if(!num || !names) return;
-	for(i = 0; i < num; i++)
-		if(currentTex == names[i]) 
-		{
-			currentTex = 0;
-			break;		
-		}
 	glDeleteTextures(num, names);
 }
 
@@ -368,10 +360,11 @@ void DG_Palette(int format, void *data)
 //===========================================================================
 int	DG_Bind(DGLuint texture)
 {
-	DGLuint	oldtex = currentTex;
+//	DGLuint	oldtex = currentTex;
 
 	// Do we need to change it?
-	if(texture != currentTex)
-		glBindTexture(GL_TEXTURE_2D, currentTex = texture);
-	return oldtex;
+	//if(texture != currentTex)
+	glBindTexture(GL_TEXTURE_2D, /*currentTex = */texture);
+	
+	return 0;//oldtex;
 }

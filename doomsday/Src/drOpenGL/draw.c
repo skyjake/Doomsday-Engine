@@ -17,6 +17,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define MAX_TEX_UNITS 4
+
 // TYPES -------------------------------------------------------------------
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
@@ -26,7 +28,7 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int			polyCounter;	// Triangle counter, really.
-int			useTexCoords = DGL_FALSE;
+char		useTexCoords[MAX_TEX_UNITS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -178,7 +180,7 @@ void DG_TexCoord2f(float s, float t)
 {
 	currentVertex.tex[0] = s;
 	currentVertex.tex[1] = t;
-	useTexCoords = DGL_TRUE;
+	useTexCoords[0] = DGL_TRUE;
 }
 
 //===========================================================================
@@ -188,7 +190,33 @@ void DG_TexCoord2fv(float *data)
 {
 	currentVertex.tex[0] = data[0];
 	currentVertex.tex[1] = data[1];
-	useTexCoords = DGL_TRUE;
+	useTexCoords[0] = DGL_TRUE;
+}
+
+//===========================================================================
+// DG_MultiTexCoord2f
+//===========================================================================
+void DG_MultiTexCoord2f(int target, float s, float t)
+{
+	float *tex = 
+		 (target == DGL_TEXTURE0? currentVertex.tex
+		: target == DGL_TEXTURE1? currentVertex.tex2 
+		: target == DGL_TEXTURE2? currentVertex.tex3
+		: currentVertex.tex4);
+
+	tex[0] = s;
+	tex[1] = t;
+	useTexCoords[target - DGL_TEXTURE0] = DGL_TRUE;
+}
+
+//===========================================================================
+// DG_MultiTexCoord2fv
+//===========================================================================
+void DG_MultiTexCoord2fv(int target, float *data)
+{
+	currentVertex.tex[0] = data[0];
+	currentVertex.tex[1] = data[1];
+	useTexCoords[target - DGL_TEXTURE0] = DGL_TRUE;
 }
 
 //===========================================================================
@@ -286,7 +314,7 @@ void DG_Begin(int mode)
 	primType = mode;
 	stackPos = 0;
 
-	useTexCoords = DGL_FALSE;
+	memset(useTexCoords, 0, sizeof(useTexCoords));
 }
 
 //===========================================================================
@@ -294,7 +322,7 @@ void DG_Begin(int mode)
 //===========================================================================
 void DG_End(void)
 {
-	int i, glPrimitive = 
+	int i, k, glPrimitive = 
 		  primType == DGL_POINTS? GL_POINTS
 		: primType == DGL_LINES? GL_LINES 
 		: primType == DGL_TRIANGLES? GL_TRIANGLES
@@ -317,7 +345,17 @@ void DG_End(void)
 		for(i = 0, v = vertexStack; i < stackPos; i++, v++)
 		{
 			glColor4fv(v->color);
-			if(useTexCoords) glTexCoord2fv(v->tex);
+			if(useTexCoords[0]) glTexCoord2fv(v->tex);
+			for(k = 1; k < MAX_TEX_UNITS; k++)
+			{
+				if(useTexCoords[k]) 
+				{
+					glMultiTexCoord2fvARB(GL_TEXTURE0 + k, 
+						  k == 1? v->tex2
+						: k == 2? v->tex3 
+						: v->tex4);
+				}
+			}
 			glVertex3fv(v->pos);
 		}
 		glEnd();
@@ -360,4 +398,111 @@ void DG_End(void)
 	primType = DGL_FALSE;
 }
 
+//===========================================================================
+// DG_EnableArrays
+//===========================================================================
+void DG_EnableArrays(int vertices, int colors, int coords)
+{
+	int i;
 
+	if(vertices) glEnableClientState(GL_VERTEX_ARRAY);
+	if(colors) glEnableClientState(GL_COLOR_ARRAY);
+	
+	for(i = 0; i < maxTexUnits; i++)
+	{
+		if(coords & (1 << i))
+		{
+			if(glClientActiveTextureARB)
+			{
+				glClientActiveTextureARB(GL_TEXTURE0 + i);
+			}
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+	}
+}
+
+//===========================================================================
+// DG_DisableArrays
+//===========================================================================
+void DG_DisableArrays(int vertices, int colors, int coords)
+{
+	int i;
+	
+	if(vertices) glDisableClientState(GL_VERTEX_ARRAY);
+	if(colors) glDisableClientState(GL_COLOR_ARRAY);
+
+	for(i = 0; i < maxTexUnits; i++)
+	{
+		if(coords & (1 << i))
+		{
+			if(glClientActiveTextureARB)
+			{
+				glClientActiveTextureARB(GL_TEXTURE0 + i);
+			}
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+	}
+}
+
+//===========================================================================
+// DG_Arrays
+//	Enable, set and optionally lock all enabled arrays.
+//===========================================================================
+void DG_Arrays(void *vertices, void *colors, int numCoords, 
+			   void **coords, int lock)
+{
+	int i;
+
+	if(vertices)
+	{
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 16, vertices);
+	}
+
+	if(colors)
+	{
+		glEnableClientState(GL_COLOR_ARRAY);
+		glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+	}
+
+	for(i = 0; i < numCoords; i++)
+	{
+		if(coords[i])
+		{
+			if(glClientActiveTextureARB)
+			{
+				glClientActiveTextureARB(GL_TEXTURE0 + i);
+			}
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
+		}
+	}
+	
+	if(lock > 0 && glLockArraysEXT)
+	{
+		// 'lock' is the number of vertices to lock.
+		glLockArraysEXT(0, lock);
+	}
+}
+
+//===========================================================================
+// DG_UnlockArrays
+//===========================================================================
+void DG_UnlockArrays(void)
+{
+	if(glUnlockArraysEXT)
+	{
+		glUnlockArraysEXT();
+	}
+}
+
+//===========================================================================
+// DG_DrawElements
+//===========================================================================
+void DG_DrawElements(int type, int count, unsigned int *indices)
+{
+	if(type == DGL_TRIANGLES) 
+	{
+		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, indices);
+	}
+}

@@ -5,6 +5,7 @@
 #define __DROPENGL_H__
 
 #define WIN32_LEAN_AND_MEAN
+
 #include <windows.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -14,8 +15,8 @@
 #include "../doomsday.h"
 #include "../dglib.h"
 
-#define DROGL_VERSION		203
-#define DROGL_VERSION_TEXT	"2.0.3"
+#define DROGL_VERSION		210
+#define DROGL_VERSION_TEXT	"2.1.0"
 #define DROGL_VERSION_FULL	"DGL OpenGL Driver Version "DROGL_VERSION_TEXT" ("__DATE__")"
 
 enum { VX, VY, VZ };
@@ -30,6 +31,9 @@ typedef struct glvertex_s {
 	float pos[3];
 	float color[4];
 	float tex[2];
+	float tex2[2];
+	float tex3[2];
+	float tex4[2];
 } glvertex_t;
 
 
@@ -37,12 +41,12 @@ typedef struct glvertex_s {
 // main.c
 //
 extern int			useFog, maxTexSize;
-extern DGLuint		currentTex;
 extern int			palExtAvailable, sharedPalExtAvailable;
 extern boolean		texCoordPtrEnabled;
 extern int			verbose, noArrays;
 extern int			useAnisotropic;
 extern float		maxAniso;
+extern int			maxTexUnits;
 
 void DG_Clear(int bufferbits);
 
@@ -109,11 +113,17 @@ int	DG_Bind(DGLuint texture);
 //-------------------------------------------------------------------------
 // ext.c
 //
+extern PFNGLCLIENTACTIVETEXTUREARBPROC	glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
 extern PFNGLMULTITEXCOORD2FARBPROC	glMultiTexCoord2fARB;
 extern PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
+extern PFNGLLOCKARRAYSEXTPROC		glLockArraysEXT;
+extern PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;
+
 extern int extMultiTex;
 extern int extTexEnvComb;
+extern int extNvTexEnvComb;
+extern int extAtiTexEnvComb;
 extern int extAniso;
 
 void initExtensions(void);

@@ -47,11 +47,11 @@ HWND			hwnd;
 //HDC				hdc;
 HGLRC			hglrc;
 int				screenWidth, screenHeight, screenBits, windowed;
-DGLuint			currentTex;
 int				palExtAvailable, sharedPalExtAvailable;
 boolean			texCoordPtrEnabled;
 int				maxTexSize;
 float			maxAniso = 1;
+int				maxTexUnits;
 int				useAnisotropic;
 float			nearClip, farClip;
 int				useFog;
@@ -185,7 +185,6 @@ void initState()
 
 	nearClip = 5;
 	farClip = 8000;	
-	currentTex = 0;
 	polyCounter = 0;
 
 	usePalTex = DGL_FALSE;
@@ -282,6 +281,131 @@ int initOpenGL()
 
 	initState();
 	return 1;
+}
+
+//===========================================================================
+// activeTexture
+//===========================================================================
+void activeTexture(const GLenum texture)
+{
+	if(!glActiveTextureARB) return;
+	glActiveTextureARB(texture);
+}
+
+//===========================================================================
+// envAddColoredAlpha
+//===========================================================================
+void envAddColoredAlpha(int activate)
+{
+	if(activate)
+	{
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE4_NV);
+		
+		// Combine: texAlpha * constRGB + 1 * prevRGB
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_ZERO);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_ONE_MINUS_SRC_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_RGB_NV, GL_PREVIOUS);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_RGB_NV, GL_SRC_COLOR);
+	}
+	else
+	{
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	}
+}
+
+//===========================================================================
+// envModMultiTex
+//	Setup the texture environment for single-pass multiplicative lighting.
+//	The last texture unit is always used for the texture modulation.
+//	TUs 1...n-1 are used for dynamic lights.
+//===========================================================================
+void envModMultiTex(int activate)
+{
+	int i;
+
+	// Setup the last TU: the modulated texture.
+	activeTexture(GL_TEXTURE0 + maxTexUnits - 1);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	// Setup TUs 1...n-1: the dynamic lights.
+	for(i = maxTexUnits - 2; i >= 0; i--)
+	{
+		activeTexture(GL_TEXTURE0 + i);
+		envAddColoredAlpha(activate);
+
+		// This is a single-pass mode. The alpha should remain unmodified
+		// during the light stage.
+		if(activate)
+		{
+			// Replace: primAlpha
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+		}
+	}
+}
+
+//===========================================================================
+// envAddLights
+//	Each texture stage is set up for additive lighting. Texels without
+//	light should remain at alpha=0.
+//===========================================================================
+void envAddLights(int activate)
+{
+	int i;
+
+	// All stages are used.
+	for(i = 0; i < maxTexUnits; i++)
+	{
+		activeTexture(GL_TEXTURE0 + i);
+		if(activate && i == 0)
+		{
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+		}
+		else
+		{
+			envAddColoredAlpha(activate);
+		}
+
+		// Texture alpha is the 'amount of light'.
+		if(activate)
+		{
+			if(i == 0)
+			{
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+			}
+			else
+			{
+				// We don't need to worry about the env constant color 
+				// (dynlight color); it's always > 0, which means some light 
+				// is getting through, and should be noted in the alpha 
+				// channel. 
+
+				// This is simply: texAlpha * 1 + prevAlpha * 1
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA,	GL_TEXTURE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA,	GL_ZERO);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_PREVIOUS);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA, GL_SRC_ALPHA);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_ALPHA_NV, GL_ZERO);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_ALPHA_NV, GL_ONE_MINUS_SRC_ALPHA);
+			}
+		}
+	}
 }
 
 
@@ -435,6 +559,8 @@ int DG_Init(int width, int height, int bpp, int mode)
 			token = strtok(NULL, " ");
 		}
 		Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));	
+		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
+		Con_Message("  Texture units: %i\n", maxTexUnits);
 		Con_Message("  Maximum texture size: %i\n", maxTexSize);
 		if(extAniso)
 		{
@@ -473,32 +599,6 @@ void DG_Shutdown(void)
 	ChangeDisplaySettings(0, 0);
 }
 
-
-/*int	ChangeMode(int width, int height, int bpp, int fullscreen)
-{
-	if(!windowed && !fullscreen)
-	{
-		// We're currently in a fullscreen mode, but the caller
-		// requests we change to windowed.
-		ChangeDisplaySettings(0, 0);
-		windowedMode(width, height);
-		return DGL_OK;
-	}
-	if(width && height && (width != screenWidth || height != screenHeight))
-	{
-		if(fullscreen)
-		{
-			if(!fullscreenMode(width, height, bpp))
-				return DGL_ERROR;
-		}
-		else
-		{
-			windowedMode(width, height);
-		}
-	}
-	return DGL_OK;
-}*/
-
 //===========================================================================
 // DG_Clear
 //===========================================================================
@@ -527,6 +627,8 @@ void DG_Show(void)
 	End();*/
 	//assert(glGetError() == GL_NO_ERROR);
 #endif
+
+	glFlush();
 
 	// Swap buffers.
 	SwapBuffers(hdc);
@@ -568,6 +670,14 @@ int	DG_GetIntegerv(int name, int *v)
 
 	case DGL_MAX_TEXTURE_SIZE:
 		*v = maxTexSize;
+		break;
+
+	case DGL_MAX_TEXTURE_UNITS:
+		*v = maxTexUnits;
+		break;
+
+	case DGL_MODULATE_ADD_COMBINE:
+		*v = extNvTexEnvComb || extAtiTexEnvComb;
 		break;
 
 	case DGL_PALETTED_TEXTURES:
@@ -617,6 +727,10 @@ int	DG_GetIntegerv(int name, int *v)
 		polyCounter = 0;
 		break;
 
+	case DGL_TEXTURE_BINDING:
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, v);
+		break;
+
 	default:
 		return DGL_ERROR;
 	}
@@ -644,6 +758,64 @@ int	DG_SetInteger(int name, int value)
 		hwnd = (HWND) value;
 		break;
 
+	case DGL_ACTIVE_TEXTURE:
+		activeTexture(GL_TEXTURE0 + value);
+		break;
+
+	case DGL_ADD_LIGHTS:
+		// Setup environment for dynlights: the first stage.
+		activeTexture(GL_TEXTURE0);
+		switch(value)
+		{
+		case 1:
+			// First pass: add to primary color.
+			envAddColoredAlpha(true);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+			break;
+
+		case 2:
+			// Subsequent passes: ignore primary color.
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+			
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);			
+			break;
+		}
+		break;
+
+	case DGL_MODULATE_TEXTURE:
+		if(value == 2)
+		{	
+			// Texture modulation and possible blending.
+			activeTexture(GL_TEXTURE0);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+			activeTexture(GL_TEXTURE1);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
+			
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);			
+		}
+		break;
+
 	default:
 		return DGL_ERROR;
 	}
@@ -661,6 +833,23 @@ char* DG_GetString(int name)
 		return DROGL_VERSION_FULL;
 	}
 	return NULL;
+}
+
+//===========================================================================
+// DG_SetFloatv
+//===========================================================================
+int DG_SetFloatv(int name, float *values)
+{
+	switch(name)
+	{
+	case DGL_ENV_COLOR:
+		glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, values);
+		break;
+
+	default:
+		return DGL_ERROR;
+	}
+	return DGL_OK;
 }
 	
 //===========================================================================
@@ -728,6 +917,26 @@ int DG_Enable(int cap)
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		break;
 
+	case DGL_TEXTURE0:
+	case DGL_TEXTURE1:
+	case DGL_TEXTURE2:
+	case DGL_TEXTURE3:
+	case DGL_TEXTURE4:
+	case DGL_TEXTURE5:
+	case DGL_TEXTURE6:
+	case DGL_TEXTURE7:
+		activeTexture(GL_TEXTURE0 + cap - DGL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		break;
+
+	case DGL_MODULATE_TEXTURE:
+		envModMultiTex(true);
+		break;
+
+	case DGL_ADD_LIGHTS:
+		envAddLights(true);
+		break;
+
 	default:
 		return DGL_FALSE;
 	}
@@ -786,6 +995,26 @@ void DG_Disable(int cap)
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		break;
+
+	case DGL_TEXTURE0:
+	case DGL_TEXTURE1:
+	case DGL_TEXTURE2:
+	case DGL_TEXTURE3:
+	case DGL_TEXTURE4:
+	case DGL_TEXTURE5:
+	case DGL_TEXTURE6:
+	case DGL_TEXTURE7:
+		activeTexture(GL_TEXTURE0 + cap - DGL_TEXTURE0);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
+	case DGL_MODULATE_TEXTURE:
+		envModMultiTex(false);
+		break;
+
+	case DGL_ADD_LIGHTS:
+		envAddLights(false);
+		break;
 	}
 }
 
@@ -797,47 +1026,47 @@ void DG_Func(int func, int param1, int param2)
 	switch(func)
 	{
 	case DGL_BLENDING:
-		glBlendFunc(param1==DGL_ZERO? GL_ZERO
-			: param1==DGL_ONE? GL_ONE
-			: param1==DGL_DST_COLOR? GL_DST_COLOR
-			: param1==DGL_ONE_MINUS_DST_COLOR? GL_ONE_MINUS_DST_COLOR
-			: param1==DGL_SRC_ALPHA? GL_SRC_ALPHA
-			: param1==DGL_ONE_MINUS_SRC_ALPHA? GL_ONE_MINUS_SRC_ALPHA
-			: param1==DGL_DST_ALPHA? GL_DST_ALPHA
-			: param1==DGL_ONE_MINUS_DST_ALPHA? GL_ONE_MINUS_DST_ALPHA
-			: param1==DGL_SRC_ALPHA_SATURATE? GL_SRC_ALPHA_SATURATE
+		glBlendFunc(param1==DGL_ZERO?			GL_ZERO
+			: param1==DGL_ONE?					GL_ONE
+			: param1==DGL_DST_COLOR?			GL_DST_COLOR
+			: param1==DGL_ONE_MINUS_DST_COLOR?	GL_ONE_MINUS_DST_COLOR
+			: param1==DGL_SRC_ALPHA?			GL_SRC_ALPHA
+			: param1==DGL_ONE_MINUS_SRC_ALPHA?	GL_ONE_MINUS_SRC_ALPHA
+			: param1==DGL_DST_ALPHA?			GL_DST_ALPHA
+			: param1==DGL_ONE_MINUS_DST_ALPHA?	GL_ONE_MINUS_DST_ALPHA
+			: param1==DGL_SRC_ALPHA_SATURATE?	GL_SRC_ALPHA_SATURATE
 			: GL_ZERO,
 
-			param2==DGL_ZERO? GL_ZERO
-			: param2==DGL_ONE? GL_ONE
-			: param2==DGL_SRC_COLOR? GL_SRC_COLOR
-			: param2==DGL_ONE_MINUS_SRC_COLOR? GL_ONE_MINUS_SRC_COLOR
-			: param2==DGL_SRC_ALPHA? GL_SRC_ALPHA
-			: param2==DGL_ONE_MINUS_SRC_ALPHA? GL_ONE_MINUS_SRC_ALPHA
-			: param2==DGL_DST_ALPHA? GL_DST_ALPHA
-			: param2==DGL_ONE_MINUS_DST_ALPHA? GL_ONE_MINUS_DST_ALPHA
+			param2==DGL_ZERO?					GL_ZERO
+			: param2==DGL_ONE?					GL_ONE
+			: param2==DGL_SRC_COLOR?			GL_SRC_COLOR
+			: param2==DGL_ONE_MINUS_SRC_COLOR?	GL_ONE_MINUS_SRC_COLOR
+			: param2==DGL_SRC_ALPHA?			GL_SRC_ALPHA
+			: param2==DGL_ONE_MINUS_SRC_ALPHA?	GL_ONE_MINUS_SRC_ALPHA
+			: param2==DGL_DST_ALPHA?			GL_DST_ALPHA
+			: param2==DGL_ONE_MINUS_DST_ALPHA?	GL_ONE_MINUS_DST_ALPHA
 			: GL_ZERO);
 		break;
 
 	case DGL_DEPTH_TEST:
-		glDepthFunc(param1==DGL_NEVER? GL_NEVER
-			: param1==DGL_LESS? GL_LESS
-			: param1==DGL_EQUAL? GL_EQUAL
-			: param1==DGL_LEQUAL? GL_LEQUAL
-			: param1==DGL_GREATER? GL_GREATER
-			: param1==DGL_NOTEQUAL? GL_NOTEQUAL
-			: param1==DGL_GEQUAL? GL_GEQUAL
+		glDepthFunc(param1==DGL_NEVER?	GL_NEVER
+			: param1==DGL_LESS?			GL_LESS
+			: param1==DGL_EQUAL?		GL_EQUAL
+			: param1==DGL_LEQUAL?		GL_LEQUAL
+			: param1==DGL_GREATER?		GL_GREATER
+			: param1==DGL_NOTEQUAL?		GL_NOTEQUAL
+			: param1==DGL_GEQUAL?		GL_GEQUAL
 			: GL_ALWAYS);
 		break;
 
 	case DGL_ALPHA_TEST:
-		glAlphaFunc(param1==DGL_NEVER? GL_NEVER
-			: param1==DGL_LESS? GL_LESS
-			: param1==DGL_EQUAL? GL_EQUAL
-			: param1==DGL_LEQUAL? GL_LEQUAL
-			: param1==DGL_GREATER? GL_GREATER
-			: param1==DGL_NOTEQUAL? GL_NOTEQUAL
-			: param1==DGL_GEQUAL? GL_GEQUAL
+		glAlphaFunc(param1==DGL_NEVER?	GL_NEVER
+			: param1==DGL_LESS?			GL_LESS
+			: param1==DGL_EQUAL?		GL_EQUAL
+			: param1==DGL_LEQUAL?		GL_LEQUAL
+			: param1==DGL_GREATER?		GL_GREATER
+			: param1==DGL_NOTEQUAL?		GL_NOTEQUAL
+			: param1==DGL_GEQUAL?		GL_GEQUAL
 			: GL_ALWAYS,
 			param2 / 255.0f);
 		break;
@@ -849,7 +1078,7 @@ void DG_Func(int func, int param1, int param2)
 //===========================================================================
 void DG_ZBias(int level)
 {
-	glDepthRange(level*.0022f, 1);
+	//glDepthRange(level*.0022f, 1);
 }
 
 //===========================================================================
