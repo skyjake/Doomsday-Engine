@@ -507,7 +507,7 @@ void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
 	// 110 corresponds 85 degrees.
 	if(pl->plr->clLookDir > 110) pl->plr->clLookDir = 110;
 	if(pl->plr->clLookDir < -110) pl->plr->clLookDir = -110;
-	cmd->lookdir = pl->plr->clLookDir/110 * DDMAXSHORT;
+	cmd->pitch = pl->plr->clLookDir/110 * DDMAXSHORT;
 }
 
 /*
@@ -899,17 +899,17 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 
     // Buttons
  
-    if(actions[A_FIRE].on) cmd->buttons |= BT_ATTACK; 
+    if(actions[A_FIRE].on) cmd->actions |= BT_ATTACK; 
 
     if(actions[A_USE].on) 
 	{ 
-		cmd->buttons |= BT_USE;
+		cmd->actions |= BT_USE;
 		// clear double clicks if hit use button 
 		dclicks = 0;                   
     } 
 
 #if __JDOOM__
-	if(actions[A_JUMP].on) cmd->buttons |= BT_JUMP;
+	if(actions[A_JUMP].on) cmd->actions |= BT_JUMP;
 #elif __JHERETIC__
 	if(actions[A_JUMP].on) cmd->arti |= AFLAG_JUMP;
 #endif
@@ -931,9 +931,9 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 		else
 			i = wp_fist;
 	
-		cmd->buttons &= ~BT_JUMP;
-		cmd->buttons |= BT_CHANGE; 
-		cmd->buttons |= i << BT_WEAPONSHIFT; 
+		cmd->actions &= ~BT_JUMP;
+		cmd->actions |= BT_CHANGE; 
+		cmd->actions |= i << BT_WEAPONSHIFT; 
 	}
 	else if(actions[A_WEAPONCYCLE2].on) // Shotgun/super sg.
 	{
@@ -947,9 +947,9 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 		else
 			i = wp_shotgun;
 
-		cmd->buttons &= ~BT_JUMP;
-		cmd->buttons |= BT_CHANGE; 
-		cmd->buttons |= i << BT_WEAPONSHIFT; 
+		cmd->actions &= ~BT_JUMP;
+		cmd->actions |= BT_CHANGE; 
+		cmd->actions |= i << BT_WEAPONSHIFT; 
 	}
 	else
 	{
@@ -957,26 +957,26 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	    for(i = 0; i < NUMWEAPONS; i++)        
 			if(actions[A_WEAPON1+i].on) 
 			{ 
-				cmd->buttons &= ~BT_JUMP;
-				cmd->buttons |= BT_CHANGE; 
-				cmd->buttons |= i << BT_WEAPONSHIFT; 
+				cmd->actions &= ~BT_JUMP;
+				cmd->actions |= BT_CHANGE; 
+				cmd->actions |= i << BT_WEAPONSHIFT; 
 				break;
 			}
 	}
 	if(actions[A_NEXTWEAPON].on || actions[A_PREVIOUSWEAPON].on)
 	{
-		cmd->buttons = BT_SPECIAL 
+		cmd->actions = BT_SPECIAL 
 			| (actions[A_NEXTWEAPON].on? BTS_NEXTWEAPON : BTS_PREVWEAPON);
 	}
 #else
 	if(actions[A_PREVIOUSWEAPON].on)
 	{
-		cmd->buttons |= BT_CHANGE | (findWeapon(players+consoleplayer, 
+		cmd->actions |= BT_CHANGE | (findWeapon(players+consoleplayer, 
 			false) << BT_WEAPONSHIFT);
 	}
 	else if(actions[A_NEXTWEAPON].on)
 	{
-		cmd->buttons |= BT_CHANGE | (findWeapon(players+consoleplayer, 
+		cmd->actions |= BT_CHANGE | (findWeapon(players+consoleplayer, 
 			true) << BT_WEAPONSHIFT);
 	}
 #if __JHERETIC__
@@ -996,8 +996,8 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 				i = wp_gauntlets;
 			}
 #endif
-			cmd->buttons |= BT_CHANGE;
-			cmd->buttons |= i << BT_WEAPONSHIFT;
+			cmd->actions |= BT_CHANGE;
+			cmd->actions |= i << BT_WEAPONSHIFT;
 			break;
 		}
 	}
@@ -1014,7 +1014,7 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 			dclicks++; 
 		if (dclicks == 2) 
 		{ 
-			cmd->buttons |= BT_USE; 
+			cmd->actions |= BT_USE; 
 			dclicks = 0; 
 		} 
 		else 
@@ -1039,7 +1039,7 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 			dclicks2++; 
 		if (dclicks2 == 2) 
 		{ 
-			cmd->buttons |= BT_USE; 
+			cmd->actions |= BT_USE; 
 			dclicks2 = 0; 
 		} 
 		else 
@@ -1115,14 +1115,14 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	}
 #endif
  
-    cmd->forwardmove += forward; 
-    cmd->sidemove += side;
+    cmd->forwardMove += forward; 
+    cmd->sideMove += side;
 
 	if(cfg.lookSpring && !actions[A_MLOOK].on 
-		&& (cmd->forwardmove > MAXPLMOVE/3 
-		|| cmd->forwardmove < -MAXPLMOVE/3
-		|| cmd->sidemove > MAXPLMOVE/3
-		|| cmd->sidemove < -MAXPLMOVE/3
+		&& (cmd->forwardMove > MAXPLMOVE/3 
+		|| cmd->forwardMove < -MAXPLMOVE/3
+		|| cmd->sideMove > MAXPLMOVE/3
+		|| cmd->sideMove < -MAXPLMOVE/3
 		|| mlook_pressed))
 
 /*		if(abs(forward) >= forwardmove[0]
@@ -1191,7 +1191,7 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 		sendpause = false; 
 		// Clients can't pause anything.
 		if(!IS_CLIENT)
-			cmd->buttons = BT_SPECIAL | BTS_PAUSE; 
+			cmd->actions = BT_SPECIAL | BTS_PAUSE; 
     } 
 
 	if(IS_CLIENT)
@@ -1454,9 +1454,9 @@ void G_SpecialButton(player_t *pl)
 {
 	if (pl->plr->ingame) 
 	{ 
-		if (pl->cmd.buttons & BT_SPECIAL) 
+		if (pl->cmd.actions & BT_SPECIAL) 
 		{ 
-			switch (pl->cmd.buttons & BT_SPECIALMASK) 
+			switch (pl->cmd.actions & BT_SPECIALMASK) 
 			{ 
 			case BTS_PAUSE: 
 				paused ^= 1; 
@@ -1470,7 +1470,7 @@ void G_SpecialButton(player_t *pl)
 				// pauses in the game.
 				NetSv_Paused(paused);
 
-				pl->cmd.buttons = 0;
+				pl->cmd.actions = 0;
 				break; 
 			} 
 		} 
