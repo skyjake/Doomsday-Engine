@@ -53,9 +53,11 @@ AC_CHECK_HEADER(SDL/SDL_net.h,
 
 OPTIONAL_SUBDIRS=""
 
+AC_DEFUN(DENG_OPTIONAL,[OPTIONAL_SUBDIRS="$OPTIONAL_SUBDIRS $1"])
+
 AC_DEFUN(DENG_USE_OPENGL,[
 	AC_CHECK_HEADER(GL/gl.h,
-		[OPTIONAL_SUBDIRS="drOpenGL $OPTIONAL_SUBDIRS"],
+		[DENG_OPTIONAL(drOpenGL)],
 		[AC_MSG_WARN([OpenGL is not available, skipping drOpenGL])])
 
 	AC_CHECK_HEADER(GL/glu.h,
@@ -72,12 +74,33 @@ AC_ARG_WITH(opengl,
 	fi],
 	[DENG_USE_OPENGL()])
 
+AC_ARG_WITH(jdoom,
+	[AS_HELP_STRING([--without-jdoom], [don't build jDoom])],
+	[if test $withval = yes;
+		then DENG_OPTIONAL(jDoom)
+	fi],
+	[DENG_OPTIONAL(jDoom)])
+
+AC_ARG_WITH(jheretic,
+	[AS_HELP_STRING([--without-jheretic], [don't build jHeretic])],
+	[if test $withval = yes;
+		then DENG_OPTIONAL(jHeretic)
+	fi],
+	[DENG_OPTIONAL(jHeretic)])
+
+AC_ARG_WITH(jhexen,
+	[AS_HELP_STRING([--without-jhexen], [don't build jHexen])],
+	[if test $withval = yes;
+		then DENG_OPTIONAL(jHexen)
+	fi],
+	[DENG_OPTIONAL(jHexen)])
+
 AC_CHECK_HEADER(SDL/SDL_mixer.h,
-	[OPTIONAL_SUBDIRS="dsSDLMixer $OPTIONAL_SUBDIRS"],
+	[DENG_OPTIONAL(dsSDLMixer)],
 	[AC_MSG_WARN([SDL_mixer is not available, skipping dsSDLMixer])])
 
 AC_CHECK_HEADER(AL/al.h,
-	[OPTIONAL_SUBDIRS="dsOpenAL $OPTIONAL_SUBDIRS"],
+	[DENG_OPTIONAL(dsOpenAL)],
 	[AC_MSG_WARN([openal is not available, skipping dsOpenAL])])
 
 AC_SUBST(OPTIONAL_SUBDIRS)

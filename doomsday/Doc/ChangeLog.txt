@@ -29,6 +29,7 @@ Win32:
 - too many console messages caused a crash during startup (extra verbosity)
 
 Linux:
++ '--without-(game)' configuration option skips (game)
 + '--without-opengl' configuration option removes all OpenGL support
   from the build (for dedicated servers)
 - demo file names were formed incorrectly
