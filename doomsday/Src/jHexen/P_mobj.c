@@ -2748,12 +2748,6 @@ void R_SetAllDoomsdayFlags(void)
 				mo->ddflags |= Class << DDMF_CLASSTRSHIFT;
 			}
 
-			// An offset for the light emitted by this object.
-/*			Class = MobjLightOffsets[mo->type];
-			if(Class < 0) Class = 8-Class;
-			// Class must now be in range 0-15.
-			mo->ddflags |= Class << DDMF_LIGHTOFFSETSHIFT;*/
-			
 			// The Mage's ice shards need to be a bit smaller.
 			// This'll make them half the normal size.
 			if(mo->type == MT_SHARDFX1)
