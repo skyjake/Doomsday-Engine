@@ -7,7 +7,7 @@
 #include "p_data.h"
 #include "r_data.h"
 
-#define MAXVISSPRITES   1024 
+#define MAXVISSPRITES   8192 
 
 // A vissprite_t is a thing or masked wall that will be drawn during 
 // a refresh.
@@ -111,7 +111,9 @@ extern  vissprite_t     vsprsortedhead;
 
 void	R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 int		R_VisualRadius(mobj_t *mo);
+void	R_ProjectSprite(mobj_t *thing);
 void	R_ProjectPlayerSprites(void);
+void	R_ProjectDecoration(mobj_t *source);
 void    R_SortVisSprites(void);
 void    R_AddSprites(sector_t *sec);
 void    R_AddPSprites(void);
