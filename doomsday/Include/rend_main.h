@@ -10,6 +10,14 @@
 #define SEG_TOP		0x2
 #define SEG_BOTTOM	0x4
 
+typedef enum blendmode_e {
+	BM_NORMAL,
+	BM_ADD,
+	BM_DARK,
+	BM_SUBTRACT,
+	BM_REVERSE_SUBTRACT
+} blendmode_t;
+
 extern float	vx, vy, vz, vang, vpitch, fieldOfView, yfov;
 extern boolean	smoothTexAnim;
 extern float	viewsidex, viewsidey;	
@@ -23,10 +31,10 @@ void	Rend_Reset(void);
 
 void	Rend_RenderMap(void);
 void	Rend_ModelViewMatrix(boolean use_angles);
+void	Rend_BlendMode(blendmode_t mode);
 
 #define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
 
-//float	Rend_PointDist2D(float c[2]);
 float	Rend_PointDist3D(float c[3]);
 float	Rend_SignedPointDist2D(float c[2]);
 int		Rend_SectorLight(sector_t *sec);
