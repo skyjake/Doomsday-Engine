@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "de_base.h"
 #include "de_system.h"
 #include "de_graphics.h"
 
@@ -264,14 +265,17 @@ int TGA_Load32_rgba8888(DFILE * file, int w, int h, uChar * buffer)
 	   header.imageDescriptor.screenOrigin != TGA_SCREEN_ORIGIN_LOWER)
 	{
 		// May or may not get displayed...
-		printf("loadTGA32_rgba8888: I don't know this format!\n");
-		printf("  (type=%i pxsize=%i abits=%i)\n", header.imageType,
-			   header.imagePixelSize, header.imageDescriptor.attributeBits);
+        VERBOSE(
+            printf("loadTGA32_rgba8888: I don't know this format!\n");
+            printf("  (type=%i pxsize=%i abits=%i)\n", header.imageType,
+                   header.imagePixelSize,
+                   header.imageDescriptor.attributeBits));
 		return TGA_FALSE;
 	}
 
-	printf("(TGA: type=%i pxsize=%i abits=%i)\n", header.imageType,
-		   header.imagePixelSize, header.imageDescriptor.attributeBits);
+	VERBOSE(
+        printf("(TGA: type=%i pxsize=%i abits=%i)\n", header.imageType,
+               header.imagePixelSize, header.imageDescriptor.attributeBits));
 
 	// Determine format.
 	if(header.imagePixelSize == 24)
