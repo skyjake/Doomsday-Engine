@@ -122,6 +122,7 @@ extern          "C" {
 	void            Sys_Quit(void);
 
 	// System: Files.
+	int             F_Access(const char *path);
 	unsigned int	F_LastModified(const char *fileName);
 
 	// Network.

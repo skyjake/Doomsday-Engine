@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 244 <--
+; --> 247 <--
 
 ; Other available ordinals: 158, 175
 
@@ -42,6 +42,7 @@ EXPORTS
 	W_LumpSourceFile	@22 NONAME
 	W_CRCNumber			@23 NONAME
 	W_IsFromIWAD		@239 NONAME
+	W_OpenAuxiliary		@247 NONAME
 
 ; Base: Zone.
 	Z_Malloc			@24 NONAME
@@ -90,6 +91,10 @@ EXPORTS
 	Sys_Sleep			@50 NONAME
 	Sys_CriticalMessage	@51 NONAME
 	Sys_Quit			@52 NONAME
+	
+; System: File I/O.
+	F_Access			@245 NONAME
+	F_LastModified		@246 NONAME
 
 ; Network.
 	Net_SendPacket		@53 NONAME
