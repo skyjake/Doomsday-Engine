@@ -447,26 +447,10 @@ void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
 	float   u, v;
     float   rotatedNormal[3];
 
-    // Rotate the view vector to approximate the vector from the eye
-    // to the center of the model.
-    //...
-    
 	for(i = 0; i < count; i++, coords++, normals++)
 	{
 		if(vertexUsage && !(vertexUsage[i] & (1 << activeLod)))
 			continue;
-
-/*		// Calculate cylindrically mapped texcoords.
-		// Quite far from perfect but very nice anyway.
-		u = QATAN2(normals->xyz[VY], normals->xyz[VX]) / (2 * PI) - normYaw;
-
-		// This'll hide the wrap-around behind the model.
-		// Works more often than not.
-		u = shinyPnt - 1 + M_CycleIntoRange(u - (shinyPnt - 1), 1);
-		u += u - shinyPnt;
-
-		v = QASIN(-normals->xyz[VZ]) / PI + 0.5f - normPitch;
-		v += v - shinyAng;*/
 
         rotatedNormal[VX] = normals->xyz[VX];
         rotatedNormal[VY] = normals->xyz[VY];
