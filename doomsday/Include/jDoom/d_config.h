@@ -72,6 +72,7 @@ typedef struct jdoom_config_s
 	boolean	customMusic;
 	boolean killMessages;
 	float	bobWeapon, bobView;
+	boolean	bobWeaponLower;
 	int		cameraNoClip;
 
 	// Crosshair.
