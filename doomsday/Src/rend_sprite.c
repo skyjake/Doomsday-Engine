@@ -523,8 +523,8 @@ void Rend_RenderSprite(vissprite_t *spr)
 			{
 				slViewVec.x /= len;
 				slViewVec.y /= len;
-				DL_RadiusIterator(spr->mo.gx, spr->mo.gy, dlMaxRad << FRACBITS, 
-					Rend_SpriteLighter);
+				DL_RadiusIterator(spr->mo.subsector, spr->mo.gx, spr->mo.gy, 
+					dlMaxRad << FRACBITS, Rend_SpriteLighter);
 			}
 			// Check floor and ceiling for glow. They count as ambient light.
 			if(spr->mo.hasglow)
