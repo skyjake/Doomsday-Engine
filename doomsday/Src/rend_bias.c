@@ -25,6 +25,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_system.h"
+#include "de_graphics.h"
 #include "de_render.h"
 #include "de_refresh.h"
 #include "de_misc.h"
@@ -1707,7 +1709,7 @@ int CCmdBLEditor(int argc, char **argv)
     return false;
 }
 
-static SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
+static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
 {
     UI_GradientEx(x, y, w, h, 6,
                   c ? c : UI_COL(UIC_BG_MEDIUM),

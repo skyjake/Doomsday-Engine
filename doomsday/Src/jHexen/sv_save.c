@@ -31,9 +31,9 @@
 #define MOBJ_NULL -1
 #define MOBJ_XX_PLAYER -2
 #define GET_BYTE (*SavePtr.b++)
-#define GET_WORD (*SavePtr.w++)
-#define GET_LONG (*SavePtr.l++)
-#define GET_FLOAT (*SavePtr.f++)
+#define GET_WORD (SHORT(*SavePtr.w++))
+#define GET_LONG (LONG(*SavePtr.l++))
+#define GET_FLOAT (FLOAT(*SavePtr.f++))
 #define GET_DATA(x,y) (memcpy((x), SavePtr.b, (y)), SavePtr.b += (y))
 #define GET_BUFFER(x) GET_DATA(x, sizeof(x))
 #define MAX_MAPS 99
@@ -892,7 +892,9 @@ void ArchivePlayer(player_t *player)
 void UnarchivePlayer(player_t *p)
 {
 	ddplayer_t *dp = p->plr;
-	int     i, version = GET_BYTE;	// 1 for now...
+	int     i, version;
+    
+    version = GET_BYTE;	// 1 for now...
 
 	cfg.PlayerClass[p - players] = GET_BYTE;
 

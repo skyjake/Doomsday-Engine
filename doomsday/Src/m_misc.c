@@ -418,7 +418,7 @@ float M_DotProduct(float *a, float *b)
 //===========================================================================
 // M_Scale
 //===========================================================================
-float M_Scale(float *dest, const float *a, float scale)
+void M_Scale(float *dest, const float *a, float scale)
 {
     dest[VX] = a[VX] * scale;
     dest[VY] = a[VY] * scale;

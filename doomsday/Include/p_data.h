@@ -180,5 +180,7 @@ void            P_ValidateLevel(void);
 void            P_LoadBlockMap(int lump);
 void            P_LoadReject(int lump);
 void            P_PolyobjChanged(polyobj_t *po);
+void            P_FloorChanged(sector_t *sector);
+void            P_CeilingChanged(sector_t *sector);
 
 #endif
