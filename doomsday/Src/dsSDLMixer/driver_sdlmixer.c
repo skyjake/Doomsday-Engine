@@ -24,6 +24,7 @@
 #include "doomsday.h"
 #include "sys_sfxd.h"
 #include "sys_musd.h"
+#include "mus2midi.h"
 
 #include <string.h>
 #include <SDL.h>
@@ -66,6 +67,16 @@ void    DM_Ext_Stop(void);
 void   *DM_Ext_SongBuffer(int length);
 int     DM_Ext_PlayFile(const char *filename, int looped);
 int     DM_Ext_PlayBuffer(int looped);
+
+// The MUS music interface.
+int     DM_Mus_Init(void);
+void    DM_Mus_Update(void);
+void    DM_Mus_Set(int property, float value);
+int     DM_Mus_Get(int property, void *value);
+void    DM_Mus_Pause(int pause);
+void    DM_Mus_Stop(void);
+void   *DM_Mus_SongBuffer(int length);
+int		DM_Mus_Play(int looped);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -126,7 +137,7 @@ int DS_Init(void)
 	// Prepare to play 16 simultaneous sounds.
 	Mix_AllocateChannels(MIX_CHANNELS);
 	channelCounter = 0;
-
+	
 	// Everything is OK.
 	initOk = true;
 	return true;
@@ -158,24 +169,6 @@ void DS_Shutdown(void)
 //===========================================================================
 sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate)
 {
-	/*  IA3dSource2 *src;
-	   bool play3d = (flags & SFXBF_3D) != 0;
-
-	   // Create a new source.
-	   if(FAILED(hr = a3d->NewSource(play3d? A3DSOURCE_TYPEDEFAULT 
-	   : A3DSOURCE_INITIAL_RENDERMODE_NATIVE, &src))) return NULL;
-
-	   // Set its format.
-	   WAVEFORMATEX format, *f = &format;
-	   memset(f, 0, sizeof(*f));
-	   f->wFormatTag = WAVE_FORMAT_PCM;
-	   f->nChannels = 1;
-	   f->nSamplesPerSec = rate;
-	   f->nBlockAlign = bits/8;
-	   f->nAvgBytesPerSec = f->nSamplesPerSec * f->nBlockAlign;
-	   f->wBitsPerSample = bits;
-	   src->SetAudioFormat((void*)f);
-	 */
 	sfxbuffer_t *buf;
 
 	// Create the buffer.
@@ -485,7 +478,7 @@ int DM_Ext_Get(int property, void *value)
 	return true;
 }
 
-void   *DM_Ext_SongBuffer(int length)
+void *DM_Ext_SongBuffer(int length)
 {
 	if(!initOk)
 		return NULL;
@@ -540,7 +533,7 @@ void DM_Ext_Stop(void)
 	Mix_HaltMusic();
 }
 
-int DM_Ext_PlayFile(const char *filename, int looped)
+static int playFile(const char *filename, int looped)
 {
 	if(!initOk)
 		return false;
@@ -556,4 +549,65 @@ int DM_Ext_PlayFile(const char *filename, int looped)
 	}
 
 	return !Mix_PlayMusic(currentMusic, looped ? -1 : 1);
+}
+
+int DM_Ext_PlayFile(const char *filename, int looped)
+{
+	Mix_SetMusicCMD(NULL);
+	return playFile(filename, looped);
+}
+
+int DM_Mus_Init(void)
+{
+	// No extra init needed.
+	return initOk;
+}
+
+void DM_Mus_Update(void)
+{
+	// Nothing to update.
+}
+
+void DM_Mus_Set(int property, float value)
+{
+	// No MUS-specific properties exist.
+}
+
+int DM_Mus_Get(int property, void *value)
+{
+	if(!initOk)
+		return false;
+
+	switch (property)
+	{
+	case MUSIP_ID:
+		strcpy(value, "SDLMixer/Mus");
+		break;
+
+	default:
+		return false;
+	}
+	return true;
+}
+
+void DM_Mus_Pause(int pause)
+{
+	// Not needed.
+}
+
+void DM_Mus_Stop(void)
+{
+	// Not needed.
+}
+
+void *DM_Mus_SongBuffer(int length)
+{
+	return DM_Ext_SongBuffer(length);
+}
+
+int	DM_Mus_Play(int looped)
+{
+	convertMusToMidi(song, songSize, BUFFERED_MUSIC_FILE);
+	Mix_SetMusicCMD("timidity");
+	return playFile(BUFFERED_MUSIC_FILE, looped);
 }
