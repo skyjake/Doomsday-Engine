@@ -77,6 +77,9 @@ echo Copying Definitions...
 xcopy /s %SRC%Defs\jDoom\*.ded		%Dist%Defs\jDoom\
 xcopy /s %SRC%Defs\jHeretic\*.ded	%Dist%Defs\jHeretic\
 xcopy /s %SRC%Defs\jHexen\*.ded		%Dist%Defs\jHexen\
+xcopy /s %SRC%Defs\jDoom\Auto\*.txt	%Dist%Defs\jDoom\Auto\
+xcopy /s %SRC%Defs\jHeretic\Auto\*.txt	%Dist%Defs\jHeretic\Auto\
+xcopy /s %SRC%Defs\jHexen\Auto\*.txt	%Dist%Defs\jHexen\Auto\
 
 REM +---------------------------------------------------------------+
 REM + Scripts    						    +
@@ -105,7 +108,7 @@ REM + Documentation						    +
 REM +---------------------------------------------------------------+
 echo Copying Documentation...
 
-xcopy %SRC%Doc\DHistory.txt           	%Dist%Doc\
+xcopy %SRC%Doc\ChangeLog.txt           	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\Readme.txt	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\Beginner.txt	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\CmdLine.txt	%Dist%Doc\
@@ -115,13 +118,10 @@ xcopy %SRC%Doc\Network.txt		%Dist%Doc\
 xcopy %SRC%Doc\Example.bat            	%Dist%Doc\
 xcopy %SRC%Doc\InFine.txt		%Dist%Doc\
 xcopy %SRC%Doc\jDoom\Doomlic.txt      	%Dist%Doc\jDoom\
-xcopy %SRC%Doc\jDoom\History.txt	%Dist%Doc\jDoom\
 xcopy %SRC%Doc\jDoom\jDoom.txt		%Dist%Doc\jDoom\
 xcopy %SRC%Doc\jHeretic\jHeretic.txt	%Dist%Doc\jHeretic\
-xcopy %SRC%Doc\jHeretic\History.txt	%Dist%Doc\jHeretic\
 xcopy %SRC%Doc\Ravenlic.txt		%Dist%Doc\jHeretic\
 xcopy %SRC%Doc\jHexen\jHexen.txt	%Dist%Doc\jHexen\
-xcopy %SRC%Doc\jHexen\History.txt	%Dist%Doc\jHexen\
 xcopy %SRC%Doc\Ravenlic.txt		%Dist%Doc\jHexen\
 
 REM +---------------------------------------------------------------+
