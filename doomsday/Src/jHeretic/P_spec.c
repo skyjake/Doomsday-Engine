@@ -165,7 +165,7 @@ int *AmbientSfx[] =
 	AmbSndSeq10		// FastFootsteps
 };
 
-animdef_t animdefs[] =
+/*animdef_t animdefs[] =
 {
 	// false = flat
 	// true = texture
@@ -178,10 +178,10 @@ animdef_t animdefs[] =
 	{true, "LAVAFL3", "LAVAFL1", 6}, // Texture: Lavaflow
 	{true, "WATRWAL3", "WATRWAL1", 4}, // Texture: Waterfall
 	{-1}
-};
+};*/
 
-anim_t anims[MAXANIMS];
-anim_t *lastanim;
+//anim_t anims[MAXANIMS];
+//anim_t *lastanim;
 
 int *TerrainTypes;
 struct
@@ -246,7 +246,7 @@ void P_InitTerrainTypes(void)
 
 void P_InitPicAnims(void)
 {
-	int i, k;
+/*	int i, k;
 
 	lastanim = anims;
 	for(i = 0; animdefs[i].istexture != -1; i++)
@@ -284,7 +284,7 @@ void P_InitPicAnims(void)
 		}
 		lastanim->speed = animdefs[i].speed;
 		lastanim++;
-	}
+	}*/
 }
 
 /*
@@ -948,11 +948,11 @@ void P_PlayerInSpecialSector(player_t *player)
 void P_UpdateSpecials(void)
 {
 	int i;
-	int pic;
-	anim_t *anim;
+/*	int pic;
+	anim_t *anim;*/
 	line_t *line;
 
-	// Animate flats and textures
+/*	// Animate flats and textures
 	for(anim = anims; anim < lastanim; anim++)
 	{
 		for(i = anim->basepic; i < anim->basepic+anim->numpics; i++)
@@ -967,7 +967,8 @@ void P_UpdateSpecials(void)
 				R_SetFlatTranslation(i, pic);
 			}
 		}
-	}
+	}*/
+
 	// Update scrolling texture offsets
 	for(i = 0; i < numlinespecials; i++)
 	{
