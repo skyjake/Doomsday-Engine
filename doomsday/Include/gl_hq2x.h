@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,21 +16,14 @@
  */
 
 /*
- * de_graphics.h: Graphics Subsystem
+ * gl_hq2x.h: High-Quality 2x Graphics Resizing
  */
 
-#ifndef __DOOMSDAY_GRAPHICS__
-#define __DOOMSDAY_GRAPHICS__
+#ifndef __DOOMSDAY_HQ2X_H__
+#define __DOOMSDAY_HQ2X_H__
 
-#include "dglib.h"
-#include "gl_main.h"
-#include "gl_draw.h"
-#include "gl_tex.h"
-#include "gl_hq2x.h"
-#include "gl_font.h"
-#include "gl_model.h"
-#include "gl_pcx.h"
-#include "gl_png.h"
-#include "gl_tga.h"
+void GL_InitSmartFilter(void);
+void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut,
+					  int Xres, int Yres, int BpL);
 
 #endif 

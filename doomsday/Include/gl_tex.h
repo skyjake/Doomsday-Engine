@@ -65,6 +65,7 @@ typedef enum lightingtex_e {
 
 extern int		mipmapping, linearRaw, texQuality, filterSprites;
 extern int		texMagMode;
+extern int		useSmartFilter;
 extern boolean	loadExtAlways;
 extern float	texw, texh;
 extern int		texmask;	
