@@ -3,6 +3,54 @@
 
 Header { Version = 5; }
 
+InFine 
+{
+  ID = "title";
+  Script {
+    # There is no skipping during the titlescreen loop.
+    NoSkip 
+    
+    # Any event shows the menu.
+    Trigger
+    
+    MARKER title_loop
+
+    # Step 1.
+    Image back "TITLE"
+    Music "titl"
+    Wait 5
+
+    # Step 2.
+    Patch advice 4 160 "ADVISOR"
+    In 0 Alpha advice 0
+    In 1 Alpha advice 1
+    Wait 5
+    
+    # Step 3.
+    PlayDemo "demo1.cdm"
+    
+    # Step 4.
+    DelPic advice
+    Image back "CREDIT"
+    Wait 5.714  # Original is 200 tics.
+    
+    # Step 5.
+    PlayDemo "demo2.cdm"
+    
+    # Step 6.
+    IF shareware
+      Image back "ORDER"
+    ELSE
+      Image back "CREDIT"
+    Wait 5.714  # Original is 200 tics.
+
+    # Step 7.
+    PlayDemo "demo3.cdm"
+    
+    GOTO title_loop
+  };
+}
+
 # Episode I: City Of The Damned
 Finale
 {
