@@ -299,7 +299,10 @@ void Rend_PolyTextureBlend(int texture, rendpoly_t *poly)
 	// If fog is active, inter=0 is accepted as well. Otherwise flickering
 	// may occur if the rendering passes don't match for blended and
 	// unblended surfaces.
-	if(!smoothTexAnim || !texture || xlat->current == xlat->next 
+	if(!smoothTexAnim 
+		|| numTexUnits < 2 
+		|| !texture 
+		|| xlat->current == xlat->next 
 		|| (!useFog && xlat->inter <= 0)) 
 	{
 		// No blending for you, my friend.
@@ -327,6 +330,7 @@ void Rend_PolyFlatBlend(int flat, rendpoly_t *poly)
 	// may occur if the rendering passes don't match for blended and
 	// unblended surfaces.
 	if(!smoothTexAnim 
+		|| numTexUnits < 2
 		|| ptr->translation.current == ptr->translation.next
 		|| (!useFog && ptr->translation.inter <= 0))
 	{
@@ -677,7 +681,6 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 				if(R_TextureFlags(sid->midtexture) & TXF_GLOW)
 					quad.flags |= RPF_GLOW;
 				
-				//if(seg->flags & DDSEGF_DLIGHT) quad.flags |= RPF_DLIT;
 				// Dynamic lights.
 				quad.lights = DL_GetSegLightLinks(segindex, SEG_MIDDLE);
 
@@ -1002,10 +1005,10 @@ void Rend_RenderSubsector(int ssecidx)
 	byte			*seg;
 	sector_t		*sect = ssec->sector;
 	int				sectoridx = GET_SECTOR_IDX(sect);
+	sectorinfo_t	*sin = secinfo + sectoridx;
 	int				flags = 0;
-	sectorinfo_t	*sin = secinfo + GET_SECTOR_IDX(sect);
 	float			sceil = sin->visceil, sfloor = sin->visfloor;
-	lumobj_t		*lumi;	// Lum Iterator, or 'snow' in Finnish.
+	lumobj_t		*lumi;	// Lum Iterator, or 'snow' in Finnish. :-)
 	subsectorinfo_t	*subin;
 	
 	if(sceil - sfloor <= 0 || ssec->numverts < 3) 
@@ -1029,12 +1032,7 @@ void Rend_RenderSubsector(int ssecidx)
 	// Mark the sector visible for this frame.
 	sin->flags |= SIF_VISIBLE;
 
-	// Dynamic lights. Processes both the ceiling and the floor, and all
-	// visible wall segments. First clear the necessary flags.
-/*	ssec->flags &= ~DDSUBF_CLEAR_MASK;
-	for(i = 0, seg = segs+SEGIDX(ssec->firstline); i < ssec->linecount; 
-		i++, seg += SEGSIZE) ((seg_t*)seg)->flags &= ~DDSUBF_CLEAR_MASK;*/
-
+	// Dynamic lights. 
 	if(useDynLights) DL_ProcessSubsector(ssec);
 
 	END_PROF( PROF_REND_SUB_LIGHTS );
