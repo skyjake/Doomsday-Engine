@@ -1479,20 +1479,21 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 //===========================================================================
 byte *GL_LoadImageCK(image_t *img, const char *name, boolean useModelPath)
 {
+	char keyFileName[256];
 	byte *pixels;
 	char *ptr;
 
-	strcpy(img->fileName, name);
+	strcpy(keyFileName, name);
 
 	// Append the "-ck" and try to load.
-	ptr = strrchr(img->fileName, '.');
+	ptr = strrchr(keyFileName, '.');
 	if(ptr)
 	{
 		memmove(ptr + 3, ptr, strlen(ptr) + 1);
 		ptr[0] = '-';
 		ptr[1] = 'c';
 		ptr[2] = 'k';
-		if((pixels = GL_LoadImage(img, img->fileName, useModelPath)) != NULL) 
+		if((pixels = GL_LoadImage(img, keyFileName, useModelPath)) != NULL) 
 			return pixels;
 	}
 	return GL_LoadImage(img, name, useModelPath);
@@ -3062,7 +3063,11 @@ unsigned int GL_PrepareShinySkin(modeldef_t *md, int sub)
 	if(!stp->tex)
 	{
 		// Load in the texture. 
-		GL_LoadImageCK(&image, stp->path, true);
+		if(!GL_LoadImageCK(&image, stp->path, true))
+		{
+			Con_Error("GL_PrepareShinySkin: Failed to load '%s'.\n", 
+				stp->path);
+		}
 
 		stp->tex = GL_UploadTexture(image.pixels, image.width, image.height, 
 			image.pixelSize == 4, true, true, false);
