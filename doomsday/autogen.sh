@@ -12,6 +12,4 @@ libtoolize --automake --ltdl
 automake --foreign -a
 autoconf
 
-# Run configure for this platform
-#./configure $*
-echo "Now you are ready to run Build/..configure"
+echo "Now you are ready to run \"cd Build; ../configure\"."
