@@ -30,6 +30,5 @@ int		Sys_GetTime(void);
 double	Sys_GetTimef(void);
 double	Sys_GetSeconds(void);
 uint	Sys_GetRealTime(void);
-void	Sys_TicksPerSecond(float num);
 
 #endif
