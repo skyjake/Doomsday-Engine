@@ -2,7 +2,6 @@
 
 SRC = 	$(wildcard Src/cl_*.c) \
 	$(wildcard Src/con_*.c) \
-	Src/dd_defns.c \
 	Src/dd_dgl.c \
 	Src/dd_help.c \
 	Src/dd_input.c \
@@ -13,7 +12,7 @@ SRC = 	$(wildcard Src/cl_*.c) \
 	Src/dd_wad.c \
 	Src/dd_zip.c \
 	Src/dd_zone.c \
-	$(wildcard Src/ded*.c) \
+	$(wildcard Src/def_*.c) \
 	$(wildcard Src/gl_*.c) \
 	$(wildcard Src/m_*.c) \
 	$(wildcard Src/net_*.c) \
