@@ -661,7 +661,7 @@ void DL_AddLuminous(mobj_t *thing)
 
 		lum->patch = lump;
 		lum->center = spritelumps[lump].topoffset
-			- FIX2FLT(lum->thing->floorclip) 
+			- FIX2FLT(lum->thing->floorclip + R_GetBobOffset(lum->thing))
 			- cf.yoffset;
 		
 		// Will the sprite be allowed to go inside the floor?
