@@ -365,7 +365,8 @@ void SV_WriteMobj(mobj_t *mobj)
 		mo.player = (player_t *)((mo.player - players) + 1);
 	
 	// Version.
-	SV_WriteByte(3);
+	// 4: Added byte 'translucency'
+	SV_WriteByte(4);
 
 	// A version 2 features: archive number and target.
 	SV_WriteShort(SV_ThingArchiveNum(mobj));
@@ -442,6 +443,8 @@ void SV_WriteMobj(mobj_t *mobj)
 	SV_WriteLong(mo.special1);
 	SV_WriteLong(mo.special2);
 #endif
+
+	SV_WriteByte(mo.translucency);
 }
 
 void SV_ReadMobj(mobj_t *mo)
@@ -530,6 +533,12 @@ void SV_ReadMobj(mobj_t *mo)
 	mo->special1 = SV_ReadLong();
 	mo->special2 = SV_ReadLong();
 #endif
+
+	// Version 4 has the translucency byte.
+	if(ver >= 4)
+	{
+		mo->translucency = SV_ReadByte();
+	}
 
 	// Restore! (unmangle)
 	mo->state = &states[(int)mo->state];

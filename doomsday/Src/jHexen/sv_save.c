@@ -270,220 +270,6 @@ static thinkInfo_t ThinkerInfo[] =
 
 //==========================================================================
 //
-// MobjConverter
-//
-//==========================================================================
-
-/*void MobjConverter(mobj_t *mobj, savemobj_t *savemobj, boolean saving)
-{
-	// We have no choice but to operate per data element.
-	// Boy, is this dull...
-	if(saving) // Convert the mobj into a savemobj.
-	{
-		memset(savemobj, 0, sizeof(*savemobj));
-		// Only copy the data we need.
-		savemobj->thinker = mobj->thinker;
-		savemobj->x = mobj->x;
-		savemobj->y = mobj->y;
-		savemobj->z = mobj->z;
-		savemobj->angle = mobj->angle;
-		savemobj->sprite = mobj->sprite;
-		savemobj->frame = mobj->frame;
-		savemobj->snext = mobj->snext;
-		savemobj->sprev = mobj->sprev;
-		savemobj->bnext = mobj->bnext;
-		savemobj->bprev = mobj->bprev;
-		savemobj->floorpic = mobj->floorpic;
-		savemobj->radius = mobj->radius;
-		savemobj->height = mobj->height;
-		savemobj->momx = mobj->momx;
-		savemobj->momy = mobj->momy;
-		savemobj->momz = mobj->momz;
-		savemobj->validcount = mobj->validcount;
-		savemobj->type = mobj->type;
-		savemobj->info = mobj->info;
-		savemobj->tics = mobj->tics;
-		savemobj->state = mobj->state;
-		savemobj->damage = mobj->damage;
-		savemobj->flags = mobj->flags;
-		savemobj->flags2 = mobj->flags2;
-		savemobj->special1 = mobj->special1;
-		savemobj->special2 = mobj->special2;
-		savemobj->health = mobj->health;
-		savemobj->movedir = mobj->movedir;
-		savemobj->movecount = mobj->movecount;
-		savemobj->target = mobj->target;
-		savemobj->reactiontime = mobj->reactiontime;
-		savemobj->threshold = mobj->threshold;
-		savemobj->player = mobj->player;
-		savemobj->lastlook = mobj->lastlook;
-		savemobj->floorclip = mobj->floorclip;
-		savemobj->archiveNum = mobj->archiveNum;
-		savemobj->tid = mobj->tid;
-		savemobj->special = mobj->special;
-		memcpy(savemobj->args, mobj->args, sizeof(mobj->args));
-	}
-	else
-	{
-		memset(mobj, 0, sizeof(*mobj));
-		mobj->thinker = savemobj->thinker;
-		mobj->x = savemobj->x;
-		mobj->y = savemobj->y;
-		mobj->z = savemobj->z;
-		mobj->angle = savemobj->angle;
-		mobj->sprite = savemobj->sprite;
-		mobj->frame = savemobj->frame;
-		mobj->snext = savemobj->snext;
-		mobj->sprev = savemobj->sprev;
-		mobj->bnext = savemobj->bnext;
-		mobj->bprev = savemobj->bprev;
-		mobj->floorpic = savemobj->floorpic;
-		mobj->radius = savemobj->radius;
-		mobj->height = savemobj->height;
-		mobj->momx = savemobj->momx;
-		mobj->momy = savemobj->momy;
-		mobj->momz = savemobj->momz;
-		mobj->validcount = savemobj->validcount;
-		mobj->type = savemobj->type;
-		mobj->info = savemobj->info;
-		mobj->tics = savemobj->tics;
-		mobj->state = savemobj->state;
-		mobj->damage = savemobj->damage;
-		mobj->flags = savemobj->flags;
-		mobj->flags2 = savemobj->flags2;
-		mobj->special1 = savemobj->special1;
-		mobj->special2 = savemobj->special2;
-		mobj->health = savemobj->health;
-		mobj->movedir = savemobj->movedir;
-		mobj->movecount = savemobj->movecount;
-		mobj->target = savemobj->target;
-		mobj->reactiontime = savemobj->reactiontime;
-		mobj->threshold = savemobj->threshold;
-		mobj->player = savemobj->player;
-		mobj->lastlook = savemobj->lastlook;
-		mobj->floorclip = savemobj->floorclip;
-		mobj->archiveNum = savemobj->archiveNum;
-		mobj->tid = savemobj->tid;
-		mobj->special = savemobj->special;
-		memcpy(mobj->args, savemobj->args, sizeof(savemobj->args));
-	}
-}
-
-//==========================================================================
-//
-// PlayerConverter
-//
-//==========================================================================
-
-// Thank God there aren't any more of these structures that are saved
-// directly to the savefile.
-void PlayerConverter(player_t *plr, saveplayer_t *saveplr, boolean saving)
-{
-	if(saving)
-	{
-		saveplr->mo = plr->plr->mo;
-		saveplr->playerstate = plr->playerstate;
-		saveplr->cmd = plr->cmd;
-		saveplr->class = plr->class;
-		saveplr->viewz = plr->plr->viewz;
-		saveplr->viewheight = plr->plr->viewheight;
-		saveplr->deltaviewheight = plr->plr->deltaviewheight;
-		saveplr->bob = plr->bob;
-		saveplr->flyheight = plr->flyheight;
-		saveplr->lookdir = plr->plr->lookdir;
-		saveplr->centering = plr->centering;
-		saveplr->health = plr->health;
-		memcpy(saveplr->armorpoints, plr->armorpoints, sizeof(plr->armorpoints));
-		memcpy(saveplr->inventory, plr->inventory, sizeof(plr->inventory));
-		saveplr->readyArtifact = plr->readyArtifact;
-		saveplr->artifactCount = plr->artifactCount;
-		saveplr->inventorySlotNum = plr->inventorySlotNum;
-		memcpy(saveplr->powers, plr->powers, sizeof(plr->powers));
-		saveplr->keys = plr->keys;
-		saveplr->pieces = plr->pieces;
-		memcpy(saveplr->frags, plr->frags, sizeof(plr->frags));
-		saveplr->readyweapon = plr->readyweapon;
-		memcpy(saveplr->weaponowned, plr->weaponowned, sizeof(plr->weaponowned));
-		memcpy(saveplr->mana, plr->mana, sizeof(plr->mana));
-		saveplr->attackdown = plr->attackdown;
-		saveplr->usedown = plr->usedown;
-		saveplr->cheats = plr->cheats;
-		saveplr->refire = plr->refire;
-		saveplr->killcount = plr->killcount;
-		saveplr->itemcount = plr->itemcount;
-		saveplr->secretcount = plr->secretcount;
-		memcpy(saveplr->message, plr->message, sizeof(plr->message));
-		saveplr->messageTics = plr->messageTics;
-		saveplr->ultimateMessage = plr->ultimateMessage;
-		saveplr->yellowMessage = plr->yellowMessage;
-		saveplr->damagecount = plr->damagecount;
-		saveplr->bonuscount = plr->bonuscount;
-		saveplr->poisoncount = plr->poisoncount;
-		saveplr->poisoner = plr->poisoner;
-		saveplr->attacker = plr->attacker;
-		saveplr->extralight = plr->plr->extralight;
-		saveplr->fixedcolormap = plr->plr->fixedcolormap;
-		saveplr->colormap = plr->colormap;
-		memcpy(saveplr->psprites, plr->psprites, sizeof(plr->psprites));
-		saveplr->morphTics = plr->morphTics;
-		saveplr->jumpTics = plr->jumpTics;
-		saveplr->worldTimer = plr->worldTimer;
-	}
-	else
-	{
-		plr->plr->mo = saveplr->mo;
-		plr->playerstate = saveplr->playerstate;
-		plr->cmd = saveplr->cmd;
-		plr->class = saveplr->class;
-		plr->plr->viewz = saveplr->viewz;
-		plr->plr->viewheight = saveplr->viewheight;
-		plr->plr->deltaviewheight = saveplr->deltaviewheight;
-		plr->bob = saveplr->bob;
-		plr->flyheight = saveplr->flyheight;
-		plr->plr->lookdir = saveplr->lookdir;
-		plr->centering = saveplr->centering;
-		plr->health = saveplr->health;
-		memcpy(plr->armorpoints, saveplr->armorpoints, sizeof(plr->armorpoints));
-		memcpy(plr->inventory, saveplr->inventory, sizeof(plr->inventory));
-		plr->readyArtifact = saveplr->readyArtifact;
-		plr->artifactCount = saveplr->artifactCount;
-		plr->inventorySlotNum = saveplr->inventorySlotNum;
-		memcpy(plr->powers, saveplr->powers, sizeof(plr->powers));
-		plr->keys = saveplr->keys;
-		plr->pieces = saveplr->pieces;
-		memcpy(plr->frags, saveplr->frags, sizeof(plr->frags));
-		plr->readyweapon = saveplr->readyweapon;
-		memcpy(plr->weaponowned, saveplr->weaponowned, sizeof(plr->weaponowned));
-		memcpy(plr->mana, saveplr->mana, sizeof(plr->mana));
-		plr->attackdown = saveplr->attackdown;
-		plr->usedown = saveplr->usedown;
-		plr->cheats = saveplr->cheats;
-		plr->refire = saveplr->refire;
-		plr->killcount = saveplr->killcount;
-		plr->itemcount = saveplr->itemcount;
-		plr->secretcount = saveplr->secretcount;
-		memcpy(plr->message, saveplr->message, sizeof(plr->message));
-		plr->messageTics = saveplr->messageTics;
-		plr->ultimateMessage = saveplr->ultimateMessage;
-		plr->yellowMessage = saveplr->yellowMessage;
-		plr->damagecount = saveplr->damagecount;
-		plr->bonuscount = saveplr->bonuscount;
-		plr->poisoncount = saveplr->poisoncount;
-		plr->poisoner = saveplr->poisoner;
-		plr->attacker = saveplr->attacker;
-		plr->plr->extralight = saveplr->extralight;
-		plr->plr->fixedcolormap = saveplr->fixedcolormap;
-		plr->colormap = saveplr->colormap;
-		memcpy(plr->psprites, saveplr->psprites, sizeof(plr->psprites));
-		plr->morphTics = saveplr->morphTics;
-		plr->jumpTics = saveplr->jumpTics;
-		plr->worldTimer = saveplr->worldTimer;
-	}
-}
-*/
-
-//==========================================================================
-//
 // SV_HxSaveGame
 //
 //==========================================================================
@@ -1476,7 +1262,8 @@ void ArchiveMobj(mobj_t *original)
 	MangleMobj(mo);
 
 	// Version number.
-	StreamOutByte(1);
+	// 2: Added the 'translucency' byte.
+	StreamOutByte(2);
 
 	StreamOutLong(mo->x);
 	StreamOutLong(mo->y);
@@ -1513,6 +1300,7 @@ void ArchiveMobj(mobj_t *original)
 	StreamOutLong(mo->tid);
 	StreamOutLong(mo->special);
 	StreamOutBuffer(mo->args, sizeof(mo->args));
+	StreamOutByte(mo->translucency);
 }
 
 //==========================================================================
@@ -1520,7 +1308,7 @@ void ArchiveMobj(mobj_t *original)
 //==========================================================================
 void UnarchiveMobj(mobj_t *mo)
 {
-	int version = GET_BYTE; // 1 for now.
+	int version = GET_BYTE; 
 
 	memset(mo, 0, sizeof(*mo));
 	mo->x = GET_LONG;
@@ -1558,6 +1346,12 @@ void UnarchiveMobj(mobj_t *mo)
 	mo->tid = GET_LONG;
 	mo->special = GET_LONG;
 	GET_BUFFER(mo->args);
+
+	if(version >= 2)
+	{
+		// Version 2 added the 'translucency' byte.
+		mo->translucency = GET_BYTE;
+	}
 
 	RestoreMobj(mo);
 }
