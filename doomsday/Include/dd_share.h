@@ -260,6 +260,8 @@ typedef unsigned angle_t;
 #define FIX2FLT(x)		( (x) / (float) FRACUNIT )
 #define Q_FIX2FLT(x)	( (float)((x)>>FRACBITS) )
 
+#ifndef NO_FIXED_ASM
+
 __inline fixed_t FixedMul (fixed_t a, fixed_t b)
 {
 	__asm {
@@ -290,6 +292,15 @@ __inline fixed_t FixedDiv2 (fixed_t a, fixed_t b)
 	// A value is returned regardless of the compiler warning.
 }
 
+#else
+
+// Don't use inline assembler in fixed-point calculations.
+// (link with Src/Common/m_fixed.c)
+fixed_t FixedMul(fixed_t a, fixed_t b);
+fixed_t FixedDiv2(fixed_t a, fixed_t b);
+
+#endif
+
 __inline fixed_t FixedDiv (fixed_t a, fixed_t b)
 {
 	if((abs(a)>>14) >= abs(b))
@@ -298,7 +309,6 @@ __inline fixed_t FixedDiv (fixed_t a, fixed_t b)
 	}
 	return(FixedDiv2(a, b));
 }
-
 
 //------------------------------------------------------------------------
 //
