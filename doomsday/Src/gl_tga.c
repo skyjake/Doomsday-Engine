@@ -14,7 +14,7 @@ int TGA_Save24_rgb565(char *filename,int w,int h,uShort *buffer)
 	uChar			*saveBuf;
 	int				saveBufStart = w*h-1;	// From the end.
 
-    if((file=fopen(filename,"wb"))==NULL) return 0;
+    if((file = fopen(filename,"wb")) == NULL) return 0;
 
 	saveBuf = malloc(w * h * 3);
 	

@@ -616,10 +616,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] =
 	{ &netgame,			0 },
 	{ &isServer,		0 },		// An *open* server?
 	{ &isClient,		0 },
-	{ &allow_frames,	&allow_frames },
+	{ &allowFrames,		&allowFrames },
 	{ &skyflatnum,		0 },
-	//	{ &numflats,		0 },
-	//	{ &firstflat,		0 },
 	{ &gametic,			0 },
 	{ &viewwindowx,		&viewwindowx },
 	{ &viewwindowy,		&viewwindowy },
