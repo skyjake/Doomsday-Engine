@@ -11,6 +11,7 @@ All Platforms
 - move polyobj management into the engine
 - move XG into the engine
 - move ACS into the engine
+- game extension plugins (actions functions, etc.)
 - shaders
 - model rendering plugins
 - MD3 support
