@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.8  2003/06/27 20:24:13  skyjake
+// Added P_UpdateMobjFlags()
+//
 // Revision 1.7  2003/06/23 08:09:25  skyjake
 // Smooth corpse fade translucency
 //
@@ -541,6 +544,8 @@ void P_MobjThinker (mobj_t* mobj)
 	// Spectres get selector = 1.
 	if(mobj->type == MT_SHADOWS) 
 		mobj->selector = mobj->selector & ~DDMOBJ_SELECTOR_MASK | 1;
+
+	P_UpdateMobjFlags(mobj);
 
 	// The first three bits of the selector special byte contain a
 	// relative health level.
