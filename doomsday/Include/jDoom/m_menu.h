@@ -62,13 +62,17 @@ void M_StartMessage(char *string,void *routine,boolean input);
 int  M_StringWidth(char *string, dpatch_t *font);
 void M_WriteText2(int x, int y, char *string, dpatch_t *font, 
 				  float	red, float green, float	blue);
-void M_WriteText3(int x, int y, char *string, dpatch_t *font, 
-				  float	red, float green, float	blue, boolean dotypein);
+void M_WriteText3(int x, int y, const char *string, dpatch_t *font, 
+				  float	red, float green, float	blue, 
+				  boolean doTypeIn, int initialCount);
 
 #endif    
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.3  2003/08/24 00:26:00  skyjake
+// Modified text writing routines
+//
 // Revision 1.2  2003/08/17 23:29:36  skyjake
 // Implemented Patch Replacement
 //
