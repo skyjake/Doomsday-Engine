@@ -70,7 +70,7 @@ int DD_InitDGLDriver(void)
 	Req(Arrays);
 	Req(UnlockArrays);
 	Req(Func);
-	Req(ZBias);	
+	//Req(ZBias);	
 
 	// Textures.
 	Req(NewTexture);
