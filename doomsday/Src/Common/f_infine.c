@@ -1540,15 +1540,18 @@ int FI_TextObjectLength(fitext_t *tex)
 {
 	int cnt;
 	char *ptr;
+	float secondLen = (tex->wait? 35.0f/tex->wait : 0);
 
 	for(cnt = 0, ptr = tex->text; *ptr; ptr++)
 	{
 		if(*ptr == '\\') // Escape?
 		{
 			if(!*++ptr) break;
+			if(*ptr == 'w') cnt += secondLen/2; 
+			if(*ptr == 'W') cnt += secondLen;
+			if(*ptr == 'p') cnt += 5 * secondLen;
+			if(*ptr == 'P') cnt += 10 * secondLen;
 			if((*ptr >= '0' && *ptr <= '9')
-				|| *ptr == 'w' || *ptr == 'W'
-				|| *ptr == 'p' || *ptr == 'P'
 				|| *ptr == 'n' || *ptr == 'N') continue;
 		}
 		cnt++;	// An actual character.
@@ -2393,9 +2396,9 @@ void FIC_Sound(void)
 void FIC_SoundAt(void)
 {
 	int num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
-	int vol = (int)(FI_GetFloat() * 128);
+	float vol = FI_GetFloat();
 
-	if(vol > 127) vol = 127;
+	if(vol > 1) vol = 1;
 	if(vol > 0 && num > 0) S_LocalSoundAtVolume(num, NULL, vol);
 }
 
