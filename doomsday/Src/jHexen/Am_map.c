@@ -11,10 +11,10 @@
 //**************************************************************************
 
 #include "h2def.h"
-#include "p_local.h"
-#include "am_map.h"
-#include "am_data.h"
-#include "settings.h"
+#include "jHexen/p_local.h"
+#include "jHexen/am_map.h"
+#include "jHexen/am_data.h"
+#include "jHexen/settings.h"
 #include <stdio.h>
 #include <assert.h>
 

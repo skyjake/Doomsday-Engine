@@ -10,9 +10,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
-#include "Doomdef.h"
-#include "Soundst.h"
-#include "settings.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/Soundst.h"
+#include "jHeretic/settings.h"
 #include "g_common.h"
 #include "f_infine.h"
 

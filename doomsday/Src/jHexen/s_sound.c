@@ -15,11 +15,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include "h2def.h"
-#include "r_local.h"
-#include "p_local.h"			// for P_ApproxDistance
-#include "sounds.h"
-#include "settings.h"
-//#include "s_common.h"
+#include "jHexen/r_local.h"
+#include "jHexen/p_local.h"			// for P_ApproxDistance
+#include "jHexen/sounds.h"
+#include "jHexen/settings.h"
 
 // MACROS ------------------------------------------------------------------
 

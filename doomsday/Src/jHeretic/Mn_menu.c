@@ -2,13 +2,13 @@
 // MN_menu.c
 
 #include <ctype.h>
-#include "Doomdef.h"
-#include "f_infine.h"
-#include "P_local.h"
-#include "R_local.h"
-#include "Soundst.h"
-#include "settings.h"
-#include "Mn_def.h"
+#include "jHeretic/Doomdef.h"
+#include "Common/f_infine.h"
+#include "jHeretic/P_local.h"
+#include "jHeretic/R_local.h"
+#include "jHeretic/Soundst.h"
+#include "jHeretic/settings.h"
+#include "jHeretic/Mn_def.h"
 
 #define NUMSAVESLOTS	8
 

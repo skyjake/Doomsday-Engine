@@ -11,7 +11,7 @@
 
 #include <ctype.h>
 
-#if __JDOOM__
+#if defined(__JDOOM__)
 #  include "doomdef.h"
 #  include "doomstat.h"
 #  include "d_netJD.h"
@@ -21,15 +21,15 @@
 #  include "hu_stuff.h"
 
 #elif __JHERETIC__
-#  include "Doomdef.h"
-#  include "Am_map.h"
-#  include "S_sound.h"
-#  include "Soundst.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/Am_map.h"
+#  include "jHeretic/S_sound.h"
+#  include "jHeretic/Soundst.h"
 
 #elif __JHEXEN__
-#  include "h2def.h"
-#  include "am_map.h"
-#  include "settings.h"
+#  include "jHexen/h2def.h"
+#  include "jHexen/am_map.h"
+#  include "jHexen/settings.h"
 #endif
 
 #include "f_infine.h"

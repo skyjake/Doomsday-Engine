@@ -19,8 +19,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
+#include "jHexen/p_local.h"
+#include "jHexen/soundst.h"
 #include "r_common.h"
 
 // MACROS ------------------------------------------------------------------

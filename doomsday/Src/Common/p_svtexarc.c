@@ -11,10 +11,10 @@
 #  include "doomdef.h"
 #  include "r_local.h"
 #elif __JHERETIC__
-#  include "Doomdef.h"
-#else							// __JHEXEN__
-#  include "h2def.h"
-#  include "r_local.h"
+#  include "jHeretic/Doomdef.h"
+#elif __JHEXEN__
+#  include "jHexen/h2def.h"
+#  include "jHexen/r_local.h"
 #endif
 
 #include "p_svtexarc.h"

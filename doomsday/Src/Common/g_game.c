@@ -44,24 +44,23 @@
 #  include <stdio.h>
 #  include <string.h>
 #  include <math.h>
-#  include "Doomdef.h"
-#  include "P_local.h"
-#  include "H_Action.h"
-#  include "Soundst.h"
-#  include "settings.h"
-#  include "p_saveg.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/P_local.h"
+#  include "jHeretic/H_Action.h"
+#  include "jHeretic/Soundst.h"
+#  include "jHeretic/settings.h"
+#  include "Common/p_saveg.h"
 #endif
 
 #if __JHEXEN__
 #  include <string.h>
 #  include <math.h>
 #  include <assert.h>
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "soundst.h"
-#  include "settings.h"
-//#include "g_demo.h"
-#  include "h2_actn.h"
+#  include "jHexen/h2def.h"
+#  include "jHexen/p_local.h"
+#  include "jHexen/soundst.h"
+#  include "jHexen/settings.h"
+#  include "jHexen/h2_actn.h"
 #  include "d_net.h"
 #endif
 

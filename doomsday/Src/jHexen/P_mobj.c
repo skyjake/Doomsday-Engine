@@ -18,10 +18,10 @@
 
 #include <math.h>
 #include "h2def.h"
-#include "p_local.h"
-#include "sounds.h"
-#include "soundst.h"
-#include "settings.h"
+#include "jHexen/p_local.h"
+#include "jHexen/sounds.h"
+#include "jHexen/soundst.h"
+#include "jHexen/settings.h"
 #include "m_bams.h"
 
 // MACROS ------------------------------------------------------------------

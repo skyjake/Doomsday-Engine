@@ -1,7 +1,7 @@
-#include "Doomdef.h"
-#include "P_local.h"
-#include "R_local.h"
-#include "settings.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
+#include "jHeretic/R_local.h"
+#include "jHeretic/settings.h"
 
 extern float lookOffset;
 

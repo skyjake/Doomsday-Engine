@@ -1,9 +1,9 @@
 
 // P_Spec.c
 
-#include "Doomdef.h"
-#include "P_local.h"
-#include "Soundst.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
+#include "jHeretic/Soundst.h"
 
 // Macros
 

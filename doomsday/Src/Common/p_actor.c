@@ -14,9 +14,9 @@
 #  include "doomdef.h"
 #  include "p_local.h"
 #elif __JHERETIC__
-#  include "Doomdef.h"
+#  include "jHeretic/Doomdef.h"
 #elif __JHEXEN__
-#  include "h2def.h"
+#  include "jHexen/h2def.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

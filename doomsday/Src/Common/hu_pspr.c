@@ -16,12 +16,12 @@
 #  include "d_config.h"
 #  include "st_stuff.h"
 #elif __JHERETIC__
-#  include "Doomdef.h"
-#  include "settings.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/settings.h"
 #elif __JHEXEN__
-#  include "h2def.h"
-#  include "settings.h"
-#  include "p_local.h"
+#  include "jHexen/h2def.h"
+#  include "jHexen/settings.h"
+#  include "jHexen/p_local.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

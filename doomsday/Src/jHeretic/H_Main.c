@@ -5,13 +5,13 @@
 #include <stdlib.h>
 //#include <direct.h>
 #include <ctype.h>
-#include "Doomdef.h"
+#include "jHeretic/Doomdef.h"
 #include "../Common/d_net.h"
-#include "P_local.h"
-#include "Soundst.h"
-#include "settings.h"
-#include "AcFnLink.h"
-#include "Mn_def.h"
+#include "jHeretic/P_local.h"
+#include "jHeretic/Soundst.h"
+#include "jHeretic/settings.h"
+#include "jHeretic/AcFnLink.h"
+#include "jHeretic/Mn_def.h"
 #include "f_infine.h"
 #include "g_update.h"
 

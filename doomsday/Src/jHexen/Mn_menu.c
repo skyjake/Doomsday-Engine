@@ -12,13 +12,13 @@
 #include <ctype.h>
 #include <math.h>
 #include "h2def.h"
-#include "p_local.h"
-#include "r_local.h"
-#include "soundst.h"
+#include "jHexen/p_local.h"
+#include "jHexen/r_local.h"
+#include "jHexen/soundst.h"
 //#include "g_demo.h"
-#include "h2_actn.h"
-#include "mn_def.h"
-#include "settings.h"
+#include "jHexen/h2_actn.h"
+#include "jHexen/mn_def.h"
+#include "jHexen/settings.h"
 #include "LZSS.h"
 #include "f_infine.h"
 

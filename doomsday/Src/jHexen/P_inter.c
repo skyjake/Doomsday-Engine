@@ -11,10 +11,9 @@
 //**************************************************************************
 
 #include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "settings.h"
-//#include "console.h"
+#include "jHexen/p_local.h"
+#include "jHexen/soundst.h"
+#include "jHexen/settings.h"
 
 int     echoMsg = 1;
 

@@ -17,8 +17,8 @@
 #endif
 
 #ifdef __JHERETIC__
-#  include "Doomdef.h"
-#  include "P_local.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/P_local.h"
 #endif
 
 #include "p_saveg.h"

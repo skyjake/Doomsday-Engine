@@ -21,14 +21,14 @@
 #endif
 
 #if __JHERETIC__
-#  include "Doomdef.h"
-#  include "S_sound.h"
-#  include "Soundst.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/S_sound.h"
+#  include "jHeretic/Soundst.h"
 #endif
 
 #if __JHEXEN__
-#  include "h2def.h"
-#  include "p_local.h"
+#  include "jHexen/h2def.h"
+#  include "jHexen/p_local.h"
 #endif
 
 #include <ctype.h>

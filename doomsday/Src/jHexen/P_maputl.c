@@ -11,7 +11,7 @@
 //**************************************************************************
 
 #include "h2def.h"
-#include "p_local.h"
+#include "jHexen/p_local.h"
 
 static mobj_t *RoughBlockCheck(mobj_t *mo, int index);
 

@@ -13,21 +13,22 @@
 #include <LZSS.h>
 
 #ifdef __JHERETIC__
-#  include "Doomdef.h"
-#  include "Dstrings.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/Dstrings.h"
+#  include "jHeretic/p_oldsvg.h"
 #endif
 
 #ifdef __JDOOM__
-#  include "doomdef.h"
-#  include "dstrings.h"
-#  include "p_local.h"
-#  include "g_game.h"
-#  include "doomstat.h"
-#  include "r_state.h"
+#  include "jDoom/doomdef.h"
+#  include "jDoom/dstrings.h"
+#  include "jDoom/p_local.h"
+#  include "jDoom/g_game.h"
+#  include "jDoom/doomstat.h"
+#  include "jDoom/r_state.h"
+#  include "p_oldsvg.h"
 #endif
 
 #include "f_infine.h"
-#include "p_oldsvg.h"
 #include "d_net.h"
 #include "p_svtexarc.h"
 

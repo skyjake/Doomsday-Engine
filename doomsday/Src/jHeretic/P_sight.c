@@ -2,8 +2,8 @@
 // We can't use the engine's sight checker if we want to be
 // backwards compatible (demos would go out of sync).
 
-#include "Doomdef.h"
-#include "P_local.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
 
 #define MAXINTERCEPTS	128
 

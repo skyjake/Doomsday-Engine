@@ -6,9 +6,9 @@
    ========================
  */
 
-#include "Doomdef.h"
-#include "Soundst.h"
-#include "settings.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/Soundst.h"
+#include "jHeretic/settings.h"
 
 #define NUMTEAMS	4			// Four colors, four teams.
 

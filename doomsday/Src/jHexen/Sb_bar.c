@@ -13,9 +13,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "settings.h"
+#include "jHexen/p_local.h"
+#include "jHexen/soundst.h"
+#include "jHexen/settings.h"
 #include "d_net.h"
 
 #ifdef DEMOCAM

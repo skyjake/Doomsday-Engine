@@ -16,14 +16,14 @@
 #  include "s_sound.h"
 
 #elif __JHERETIC__
-#  include "Doomdef.h"
-#  include "P_local.h"
-#  include "settings.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/P_local.h"
+#  include "jHeretic/settings.h"
 
 #elif __JHEXEN__
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "settings.h"
+#  include "jHexen/h2def.h"
+#  include "jHexen/p_local.h"
+#  include "jHexen/settings.h"
 #endif
 
 #include "d_net.h"

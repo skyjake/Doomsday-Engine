@@ -3,11 +3,11 @@
 
 #include <stdio.h>
 
-#include "Doomdef.h"
-#include "P_local.h"
-#include "Am_map.h"
-#include "AM_data.h"
-#include "settings.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
+#include "jHeretic/Am_map.h"
+#include "jHeretic/AM_data.h"
+#include "jHeretic/settings.h"
 
 #define LINEHEIGHT_A 10
 

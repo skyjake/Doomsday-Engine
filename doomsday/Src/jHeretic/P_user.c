@@ -1,11 +1,11 @@
 
 // P_user.c
 
-#include "Doomdef.h"
-#include "P_local.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
 #include "p_view.h"
-#include "Soundst.h"
-#include "settings.h"
+#include "jHeretic/Soundst.h"
+#include "jHeretic/settings.h"
 
 void    P_PlayerNextArtifact(player_t *player);
 

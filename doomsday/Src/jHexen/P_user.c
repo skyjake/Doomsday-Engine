@@ -13,10 +13,10 @@
 #include <math.h>
 
 #include "h2def.h"
-#include "p_local.h"
+#include "jHexen/p_local.h"
 #include "p_view.h"
-#include "soundst.h"
-#include "settings.h"
+#include "jHexen/soundst.h"
+#include "jHexen/settings.h"
 
 void    P_PlayerNextArtifact(player_t *player);
 

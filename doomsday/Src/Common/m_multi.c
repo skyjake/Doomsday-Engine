@@ -16,19 +16,17 @@
 #  include "p_local.h"
 #  include "Mn_def.h"
 #elif defined __JHERETIC__
-#  include "Doomdef.h"
-#  include "settings.h"
-#  include "Soundst.h"
-#  include "P_local.h"
-#  include "Mn_def.h"
-//#include "s_sound.h"
-//#include "Dstrings.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/settings.h"
+#  include "jHeretic/Soundst.h"
+#  include "jHeretic/P_local.h"
+#  include "jHeretic/Mn_def.h"
 #elif defined __JHEXEN__
-#  include "h2def.h"
-#  include "settings.h"
-#  include "soundst.h"
-#  include "p_local.h"
-#  include "mn_def.h"
+#  include "jHexen/h2def.h"
+#  include "jHexen/settings.h"
+#  include "jHexen/soundst.h"
+#  include "jHexen/p_local.h"
+#  include "jHexen/mn_def.h"
 #endif
 
 #include <ctype.h>

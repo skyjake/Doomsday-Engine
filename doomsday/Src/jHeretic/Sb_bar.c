@@ -1,10 +1,10 @@
 
 // SB_bar.c
 
-#include "Doomdef.h"
-#include "P_local.h"
-#include "Soundst.h"
-#include "settings.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
+#include "jHeretic/Soundst.h"
+#include "jHeretic/settings.h"
 
 // Macros
 

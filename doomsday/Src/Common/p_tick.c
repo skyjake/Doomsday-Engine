@@ -17,14 +17,14 @@
 #endif
 
 #ifdef __JHERETIC__
-#  include "Doomdef.h"
-#  include "P_local.h"
-#  include "G_game.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/P_local.h"
+#  include "jHeretic/G_game.h"
 #endif
 
 #ifdef __JHEXEN__
-#  include "h2def.h"
-#  include "p_local.h"
+#  include "jHexen/h2def.h"
+#  include "jHexen/p_local.h"
 #endif
 
 #include "g_common.h"

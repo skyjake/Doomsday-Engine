@@ -1,11 +1,11 @@
 
 // P_mobj.c
 
-#include "Doomdef.h"
-#include "P_local.h"
-#include "Sounds.h"
-#include "Soundst.h"
-#include "settings.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
+#include "jHeretic/Sounds.h"
+#include "jHeretic/Soundst.h"
+#include "jHeretic/settings.h"
 #include <math.h>
 
 #define VANISHTICS	(2*TICSPERSEC)	// $vanish

@@ -13,11 +13,11 @@
 #endif
 
 #ifdef __JHERETIC__
-#  include "Doomdef.h"
+#  include "jHeretic/Doomdef.h"
 #endif
 
 #ifdef __JHEXEN__
-#  include "h2def.h"
+#  include "jHexen/h2def.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

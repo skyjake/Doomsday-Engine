@@ -24,10 +24,10 @@
 #endif
 
 #ifdef __JHERETIC__
-#  include "Doomdef.h"
-#  include "settings.h"
-#  include "P_local.h"
-#  include "Soundst.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/settings.h"
+#  include "jHeretic/P_local.h"
+#  include "jHeretic/Soundst.h"
 #endif
 
 #include "p_xgline.h"

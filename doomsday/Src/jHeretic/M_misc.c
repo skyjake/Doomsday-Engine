@@ -1,6 +1,6 @@
 // M_misc.c
-#include "Doomdef.h"
-#include "Soundst.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/Soundst.h"
 
 //---------------------------------------------------------------------------
 //

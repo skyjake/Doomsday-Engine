@@ -25,10 +25,10 @@
 #endif
 
 #ifdef __JHERETIC__
-#  include "Doomdef.h"
-#  include "P_local.h"
-#  include "settings.h"
-#  include "Soundst.h"
+#  include "jHeretic/Doomdef.h"
+#  include "jHeretic/P_local.h"
+#  include "jHeretic/settings.h"
+#  include "jHeretic/Soundst.h"
 #endif
 
 #include "d_net.h"

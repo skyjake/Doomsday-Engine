@@ -1,7 +1,7 @@
 // Backwards compatible savegame reader.
 
-#include "Doomdef.h"
-#include "P_local.h"
+#include "jHeretic/Doomdef.h"
+#include "jHeretic/P_local.h"
 
 #define VERSIONSIZE 16
 #define SAVE_GAME_TERMINATOR 0x1d

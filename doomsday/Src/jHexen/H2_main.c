@@ -18,10 +18,10 @@
 #include <string.h>
 #include <ctype.h>
 #include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "settings.h"
-#include "h2_actn.h"
+#include "jHexen/p_local.h"
+#include "jHexen/soundst.h"
+#include "jHexen/settings.h"
+#include "jHexen/h2_actn.h"
 #include "d_net.h"
 #include "g_update.h"
 
