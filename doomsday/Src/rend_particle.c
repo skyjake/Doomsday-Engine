@@ -6,9 +6,11 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.3  2003/02/28 13:44:34  skyjake
+//** Removed code that was commented out
+//**
 //** Revision 1.2  2003/02/28 10:42:15  skyjake
 //** Added textured particles, planeflat sticks to planes
-//**
 //**
 //**************************************************************************
 
@@ -579,7 +581,6 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 
 //===========================================================================
 // PG_RenderPass
-//	
 //===========================================================================
 void PG_RenderPass(boolean use_blending)
 {
@@ -620,16 +621,10 @@ void PG_Render(void)
 	if(hasnoblend)
 	{
 		PG_RenderPass(false);
-/*		if(haslines) PG_RenderParticles(PTC_LINE, false);
-		if(haspoints) PG_RenderParticles(PTC_POINT, false);*/
 	}
 	if(hasblend)
 	{
 		// A second pass with additive blending.
-/*		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-		if(haslines) PG_RenderParticles(PTC_LINE, true);
-		if(haspoints) PG_RenderParticles(PTC_POINT, true);
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);*/
 		PG_RenderPass(true);
 	}
 
