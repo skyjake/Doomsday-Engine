@@ -1,5 +1,5 @@
-AC_INIT(deng, [1.8.0], [jaakko.keranen@iki.fi])
-AM_INIT_AUTOMAKE(deng, [1.8.0])
+AC_INIT(deng, [1.8.1], [jaakko.keranen@iki.fi])
+AM_INIT_AUTOMAKE(deng, [1.8.1])
 
 AM_CONFIG_HEADER(config.h)
 
@@ -42,17 +42,27 @@ AC_CHECK_HEADER(SDL/SDL_net.h,
 	[USELESS_VAR=1],
 	AC_MSG_ERROR([*** SDL_net not found!]))
 
-AC_CHECK_HEADER(GL/gl.h,
-	[USELESS_VAR=1],
-	AC_MSG_ERROR([*** OpenGL not found!]))
-
-AC_CHECK_HEADER(GL/glu.h,
-	[USELESS_VAR=1],
-	AC_MSG_ERROR([*** GLU not found!]))
-
 OPTIONAL_SUBDIRS=""
 
+AC_DEFUN(DENG_USE_OPENGL,[
+	AC_CHECK_HEADER(GL/gl.h,
+		[OPTIONAL_SUBDIRS="drOpenGL $OPTIONAL_SUBDIRS"],
+		[AC_MSG_WARN([OpenGL is not available, skipping drOpenGL])])
+
+	AC_CHECK_HEADER(GL/glu.h,
+		[HAVE_GLU=1],
+		[AC_MSG_ERROR([*** GLU not found!])])
+])
+
 dnl Optional libraries.
+AC_ARG_WITH(opengl,
+	[AS_HELP_STRING([--without-opengl],
+		[don't use OpenGL (default=yes)])],
+	[if test $withval = yes;
+		then DENG_USE_OPENGL()
+	fi],
+	[DENG_USE_OPENGL()])
+
 AC_CHECK_HEADER(SDL/SDL_mixer.h,
 	[OPTIONAL_SUBDIRS="dsSDLMixer $OPTIONAL_SUBDIRS"],
 	[AC_MSG_WARN([SDL_mixer is not available, skipping dsSDLMixer])])
