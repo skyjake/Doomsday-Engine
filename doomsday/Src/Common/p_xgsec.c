@@ -343,7 +343,9 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
 	}
 }
 
-// A thinker function for plane movers.
+/*
+ * A thinker function for plane movers.
+ */
 void XS_PlaneMover(xgplanemover_t *mover)
 {
 	int res, res2;
