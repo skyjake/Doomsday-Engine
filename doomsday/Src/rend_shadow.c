@@ -9,6 +9,7 @@
 
 #include "de_base.h"
 #include "de_refresh.h"
+#include "de_graphics.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
@@ -37,12 +38,26 @@ float	shadowFactor = 0.5f;
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
+// Rend_ShadowIterator
+//	This is called for each sector a shadow-caster is touching.
+//	The highest floor height will be searched.
+//===========================================================================
+boolean Rend_ShadowIterator(sector_t *sector, void *data)
+{
+	float *height = data;
+	float floor = SECT_FLOOR(sector);
+
+	if(floor > *height) *height = floor;
+	return true; // Continue iteration.
+}
+
+//===========================================================================
 // Rend_ProcessThingShadow
 //===========================================================================
 void Rend_ProcessThingShadow(mobj_t *mo)
 {
 	fixed_t		moz;
-	float		height, moh, halfmoh, color, pos[2];
+	float		height, moh, halfmoh, color, pos[2], floor;
 	sector_t	*sec = mo->subsector->sector;
 	int			radius, i;
 	rendpoly_t	poly;
@@ -78,7 +93,7 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 		* (1 - mo->translucency/255.0f);
 	halfmoh = moh/2;
 	if(height > halfmoh) color *= 1 - (height - halfmoh)/(moh - halfmoh);
-	if(whitefog) color /= 2;
+	if(useFog) color /= 2;
 	if(color <= 0) return;		// Can't be seen.
 	if(color > 1) color = 1;
 
@@ -87,16 +102,19 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 	if(!radius) return;
 	if(radius > shadowMaxRad) radius = shadowMaxRad;
 
+	// Figure out the visible floor height.
+	floor = SECT_FLOOR(mo->subsector->sector);
+	P_ThingSectorsIterator(mo, Rend_ShadowIterator, &floor);
+
 	// Prepare the poly.
 	memset(&poly, 0, sizeof(poly));
 	poly.type = RP_FLAT;
 	poly.flags = RPF_SHADOW;
-//	poly.light = (lumobj_t*) (radius*2);
-/*	gl.TexCoord2f((prim->texoffx - vtx->pos[VX])/prim->shadowradius,
-				(prim->texoffy - vtx->pos[VY])/prim->shadowradius);*/
-	poly.texoffx = pos[VX] + radius;
-	poly.texoffy = pos[VY] + radius;
-	poly.top = FIX2FLT( mo->floorz ) + 0.2f;
+	poly.tex.id = GL_PrepareLightTexture();
+	poly.tex.width = poly.tex.height = radius * 2;
+	poly.texoffx = -pos[VX] + radius;
+	poly.texoffy = -pos[VY] - radius;
+	poly.top = floor + 0.2f; // A bit above the floor.
 
 	poly.numvertices = 4;
 	poly.vertices[0].pos[VX] = pos[VX] - radius;
@@ -108,8 +126,12 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 	poly.vertices[3].pos[VX] = pos[VX] - radius;
 	poly.vertices[3].pos[VY] = pos[VY] - radius;
 	for(i = 0; i < 4; i++)
-		memset(poly.vertices[i].color.rgb, color*255, 3);
-
+	{
+		// Shadows are black.
+		memset(poly.vertices[i].color.rgba, 0, 3);
+		poly.vertices[i].color.rgba[3] = color * 255;
+	}
+	
 	RL_AddPoly(&poly);
 }
 
@@ -118,7 +140,6 @@ void Rend_ProcessThingShadow(mobj_t *mo)
 //===========================================================================
 void Rend_RenderShadows(void)
 {
-#if 0
 	sector_t *sec;
 	mobj_t *mo;
 	int i;
@@ -139,6 +160,5 @@ void Rend_RenderShadows(void)
 			Rend_ProcessThingShadow(mo);	
 		}
 	}
-#endif
 }
 
