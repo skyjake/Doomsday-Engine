@@ -774,7 +774,7 @@ boolean N_UsingInternet(void)
 	return netCurrentProvider == NSP_TCPIP;
 }
 
-boolean N_GetHostInfo(int index, struct serverinfo_s * info)
+boolean N_GetHostInfo(int index, struct serverinfo_s *info)
 {
 	if(!located.valid || index != 0)
 		return false;

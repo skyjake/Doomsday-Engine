@@ -37,7 +37,7 @@ typedef unsigned short ushort;
 typedef unsigned int size_t;
 #endif
 
-typedef int     fixed_t;
+typedef int fixed_t;
 typedef unsigned int angle_t;
 typedef int     spritenum_t;
 typedef unsigned int ident_t;

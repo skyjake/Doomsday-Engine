@@ -69,7 +69,7 @@ void            G_SecretExitLevel(void);
 void            G_WorldDone(void);
 
 void            G_Ticker(void);
-boolean         G_Responder(event_t * ev);
+boolean         G_Responder(event_t *ev);
 
 void            G_ScreenShot(void);
 
@@ -81,6 +81,9 @@ void            G_QueueBody(mobj_t * body);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.5  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

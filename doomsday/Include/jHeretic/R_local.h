@@ -187,7 +187,7 @@ angle_t         R_PointToAngle(fixed_t x, fixed_t y);
 fixed_t         R_ScaleFromGlobalAngle(angle_t visangle);
 
 //#define R_PointInSubsector        gi.R_PointInSubsector
-void            R_AddPointToBox(int x, int y, fixed_t * box);
+void            R_AddPointToBox(int x, int y, fixed_t *box);
 
 #define skyflatnum		Get(DD_SKYFLATNUM)
 

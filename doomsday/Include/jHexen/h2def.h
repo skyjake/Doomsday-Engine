@@ -798,7 +798,7 @@ void            G_StartNewInit(void);
 void            G_WorldDone(void);
 
 void            G_Ticker(void);
-boolean         G_Responder(event_t * ev);
+boolean         G_Responder(event_t *ev);
 
 void            G_ScreenShot(void);
 
@@ -1025,7 +1025,7 @@ void            IN_Drawer(void);
 
 void            CT_Init(void);
 void            CT_Drawer(void);
-boolean         CT_Responder(event_t * ev);
+boolean         CT_Responder(event_t *ev);
 void            CT_Ticker(void);
 char            CT_dequeueChatChar(void);
 
@@ -1050,7 +1050,7 @@ extern int      curpos;
 extern int      SB_state;
 void            SB_Init(void);
 void            SB_SetClassData(void);
-boolean         SB_Responder(event_t * event);
+boolean         SB_Responder(event_t *event);
 void            SB_Ticker(void);
 void            SB_Drawer(void);
 void            Draw_TeleportIcon(void);
@@ -1066,7 +1066,7 @@ void            cht_NoClipFunc(player_t * player);
 void            MN_Init(void);
 void            MN_ActivateMenu(void);
 void            MN_DeactivateMenu(void);
-boolean         MN_Responder(event_t * event);
+boolean         MN_Responder(event_t *event);
 void            MN_Ticker(void);
 void            MN_Drawer(void);
 void            MN_TextFilter(char *text);

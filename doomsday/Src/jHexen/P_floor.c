@@ -283,7 +283,7 @@ void T_MoveFloor(floormove_t * floor)
 //      HANDLE FLOOR TYPES
 //
 //==================================================================
-int EV_DoFloor(line_t * line, byte * args, floor_e floortype)
+int EV_DoFloor(line_t * line, byte *args, floor_e floortype)
 {
 	int     secnum;
 	int     rtn;
@@ -413,7 +413,7 @@ int EV_DoFloor(line_t * line, byte * args, floor_e floortype)
 //
 //============================================================================
 
-int EV_DoFloorAndCeiling(line_t * line, byte * args, boolean raise)
+int EV_DoFloorAndCeiling(line_t * line, byte *args, boolean raise)
 {
 	boolean floor, ceiling;
 	int     secnum;
@@ -606,7 +606,7 @@ static void ProcessStairSector(sector_t * sec, int type, int height,
 //      up or down.
 //==================================================================
 
-int EV_BuildStairs(line_t * line, byte * args, int direction,
+int EV_BuildStairs(line_t * line, byte *args, int direction,
 				   stairs_e stairsType)
 {
 	int     secnum;
@@ -689,7 +689,7 @@ void T_BuildPillar(pillar_t * pillar)
 //
 //=========================================================================
 
-int EV_BuildPillar(line_t * line, byte * args, boolean crush)
+int EV_BuildPillar(line_t * line, byte *args, boolean crush)
 {
 	int     secnum;
 	sector_t *sec;
@@ -762,7 +762,7 @@ int EV_BuildPillar(line_t * line, byte * args, boolean crush)
 //
 //=========================================================================
 
-int EV_OpenPillar(line_t * line, byte * args)
+int EV_OpenPillar(line_t * line, byte *args)
 {
 	int     secnum;
 	sector_t *sec;
@@ -832,7 +832,7 @@ int EV_OpenPillar(line_t * line, byte * args)
 //
 //=========================================================================
 
-int EV_FloorCrushStop(line_t * line, byte * args)
+int EV_FloorCrushStop(line_t * line, byte *args)
 {
 	thinker_t *think;
 	floormove_t *floor;

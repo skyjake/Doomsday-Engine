@@ -99,7 +99,7 @@ static short mapxstart = 0;		//x-value for the bitmap.
 
 // Functions
 
-void    DrawWuLine(int X0, int Y0, int X1, int Y1, byte * BaseColor,
+void    DrawWuLine(int X0, int Y0, int X1, int Y1, byte *BaseColor,
 				   int NumLevels, unsigned short IntensityBits);
 
 void    AM_DrawDeathmatchStats(void);
@@ -398,7 +398,7 @@ void AM_maxOutWindowScale(void)
 	AM_activateNewScale();
 }
 
-boolean AM_Responder(event_t * ev)
+boolean AM_Responder(event_t *ev)
 {
 	int     rc;
 	static int cheatstate = 0;
@@ -955,8 +955,8 @@ void AM_clearFB(int color)
    } */
 
 #if 0
-void DrawWuLine(int X0, int Y0, int X1, int Y1, byte * BaseColor,
-				int NumLevels, unsigned short IntensityBits)
+void DrawWuLine(int X0, int Y0, int X1, int Y1, byte *BaseColor, int NumLevels,
+				unsigned short IntensityBits)
 {
 	unsigned short IntensityShift, ErrorAdj, ErrorAcc;
 	unsigned short ErrorAccTemp, Weighting, WeightingComplementMask;
@@ -1221,7 +1221,7 @@ void AM_drawWalls(void)
 	//  glEnable(GL_TEXTURE_2D);
 }
 
-void AM_rotate(fixed_t * x, fixed_t * y, angle_t a)
+void AM_rotate(fixed_t *x, fixed_t *y, angle_t a)
 {
 	fixed_t tmpx;
 

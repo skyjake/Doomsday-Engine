@@ -67,7 +67,7 @@ void    CP_CvarButton(ui_object_t * ob);
 void    CP_CvarList(ui_object_t * ob);
 void    CP_CvarEdit(ui_object_t * ob);
 void    CP_CvarSlider(ui_object_t * ob);
-int     CP_KeyGrabResponder(ui_object_t * ob, event_t * ev);
+int     CP_KeyGrabResponder(ui_object_t * ob, event_t *ev);
 void    CP_KeyGrabDrawer(ui_object_t * ob);
 void    CP_TexReset(ui_object_t * ob);
 void    CP_QuickFOV(ui_object_t * ob);
@@ -720,7 +720,7 @@ void CP_CvarSlider(ui_object_t * ob)
 //===========================================================================
 // CP_KeyGrabResponder
 //===========================================================================
-int CP_KeyGrabResponder(ui_object_t * ob, event_t * ev)
+int CP_KeyGrabResponder(ui_object_t * ob, event_t *ev)
 {
 	if((ev->type == ev_mousebdown && UI_MouseInside(ob))
 	   || (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))

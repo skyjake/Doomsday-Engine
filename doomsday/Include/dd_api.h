@@ -94,7 +94,6 @@ typedef struct {
 
 	// Ticcmds.
 	void            (*BuildTicCmd) (void *cmd);
-	//void      (*DiscardTicCmd)(void *discarded, void *current);
 
 	// Networking.
 	int             (*NetServerStart) (int before);
@@ -110,9 +109,9 @@ typedef struct {
 	void            (*Ticker) (void);
 
 	// Responders.
-	                boolean(*PrivilegedResponder) (event_t * event);
-	                boolean(*MN_Responder) (event_t * event);
-	                boolean(*G_Responder) (event_t * event);
+	boolean         (*PrivilegedResponder) (event_t *event);
+	boolean         (*MN_Responder) (event_t *event);
+	boolean         (*G_Responder) (event_t *event);
 
 	// Refresh.
 	void            (*BeginFrame) (void);
@@ -124,7 +123,7 @@ typedef struct {
 
 	// Miscellaneous.
 	void            (*MobjThinker) ();
-	                fixed_t(*MobjFriction) (void *mobj);	// Returns a friction factor.
+	fixed_t         (*MobjFriction) (void *mobj);	// Returns a friction factor.
 
 	// Main structure sizes.
 	int             ticcmd_size;   // sizeof(ticcmd_t)

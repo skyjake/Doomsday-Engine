@@ -120,7 +120,7 @@ static char *povDirNames[] = {
 /*
  * B_EventMatch
  */
-static boolean B_EventMatch(event_t * ev, event_t * bev)
+static boolean B_EventMatch(event_t *ev, event_t *bev)
 {
 	// Check the type.
 	if(ev->type != bev->type)
@@ -151,7 +151,7 @@ static boolean B_EventMatch(event_t * ev, event_t * bev)
 /*
  * B_Responder
  */
-boolean B_Responder(event_t * ev)
+boolean B_Responder(event_t *ev)
 {
 	binding_t *bnd;
 	int     i;
@@ -183,7 +183,7 @@ boolean B_Responder(event_t * ev)
  * B_GetBinding
  *  Returns a binding_t for the given event.
  */
-binding_t *B_GetBinding(event_t * event, boolean create_new)
+binding_t *B_GetBinding(event_t *event, boolean create_new)
 {
 	int     i;
 	binding_t *newb;
@@ -228,7 +228,7 @@ void B_DeleteBindingIdx(int index)
  *  Rebinds old bindings.
  *  Binding to NULL will delete the binding.
  */
-void B_Bind(event_t * event, char *command)
+void B_Bind(event_t *event, char *command)
 {
 	binding_t *bnd = B_GetBinding(event, true);
 
@@ -317,7 +317,7 @@ static int buttonNumber(int flags)
  *  Converts between events and their textual representations.
  *  Buff and event must be valid sources and destinations.
  */
-void B_EventBuilder(char *buff, event_t * ev, boolean to_event)
+void B_EventBuilder(char *buff, event_t *ev, boolean to_event)
 {
 	char    prefix;
 	char   *begin;

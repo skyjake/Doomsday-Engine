@@ -40,9 +40,9 @@ extern playerstate_t playerstate[MAXPLAYERS];
 
 void            Cl_InitPlayers(void);
 void            Cl_LocalCommand(void);
-void            Cl_MovePlayer(ddplayer_t * pl);
+void            Cl_MovePlayer(ddplayer_t *pl);
 void            Cl_MoveLocalPlayer(int dx, int dy, int dz, boolean onground);
-void            Cl_UpdatePlayerPos(ddplayer_t * pl);
+void            Cl_UpdatePlayerPos(ddplayer_t *pl);
 void            Cl_MovePsprites(void);
 void            Cl_CoordsReceived(void);
 int             Cl_ReadPlayerDelta(void);

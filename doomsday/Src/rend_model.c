@@ -127,7 +127,7 @@ static float __inline qatan2(float y, float x)
 	//return atan2(y, x);
 }
 
-static void scaleAmbientRgb(float *out, byte * in, float mul)
+static void scaleAmbientRgb(float *out, byte *in, float mul)
 {
 	int     i;
 
@@ -140,7 +140,7 @@ static void scaleAmbientRgb(float *out, byte * in, float mul)
 			out[i] = in[i] * mul / 255;
 }
 
-static void scaleFloatRgb(float *out, byte * in, float mul)
+static void scaleFloatRgb(float *out, byte *in, float mul)
 {
 	memset(out, 0, sizeof(float) * 3);
 	scaleAmbientRgb(out, in, mul);

@@ -515,7 +515,7 @@ void N_SendConfirmation(msgid_t id, nodeid_t where)
 	uint    size;
 
 	// All data is sent using Huffman codes.
-	void   *data = Huff_Encode((byte *) & id, 2, &size);
+	void   *data = Huff_Encode((byte *) &id, 2, &size);
 
 	N_SendDataBuffer(data, size, where);
 
@@ -600,7 +600,7 @@ void N_SendPacket(int flags)
 
 	// Compress using Huffman codes.
 	data =
-		Huff_Encode((byte *) & netBuffer.msg,
+		Huff_Encode((byte *) &netBuffer.msg,
 					netBuffer.headerLength + netBuffer.length, &size);
 
 	// This many bytes are actually sent.

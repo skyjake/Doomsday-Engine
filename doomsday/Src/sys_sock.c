@@ -157,7 +157,7 @@ socket_t N_SockNewStream(void)
 /*
  * N_SockConnect
  */
-boolean N_SockConnect(socket_t s, struct hostent * host, unsigned short port)
+boolean N_SockConnect(socket_t s, struct hostent *host, unsigned short port)
 {
 	struct sockaddr_in addr;
 

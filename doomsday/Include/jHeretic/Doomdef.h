@@ -598,7 +598,7 @@ void            D_DoomLoop(void);
 // calls all ?_Responder, ?_Ticker, and ?_Drawer functions
 // calls I_GetTime, I_StartFrame, and I_StartTic
 
-void            D_PostEvent(event_t * ev);
+void            D_PostEvent(event_t *ev);
 
 // called by IO functions when input is detected
 
@@ -692,7 +692,7 @@ void            G_SecretExitLevel(void);
 void            G_WorldDone(void);
 
 void            G_Ticker(void);
-boolean         G_Responder(event_t * ev);
+boolean         G_Responder(event_t *ev);
 
 void            G_ScreenShot(void);
 
@@ -750,8 +750,8 @@ void            M_ClearRandom(void);
 
 void            M_FindResponseFile(void);
 
-void            M_ClearBox(fixed_t * box);
-void            M_AddToBox(fixed_t * box, fixed_t x, fixed_t y);
+void            M_ClearBox(fixed_t *box);
+void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
 
 // bounding box functions
 
@@ -774,7 +774,7 @@ void            IN_Drawer(void);
 
 void            CT_Init(void);
 void            CT_Drawer(void);
-boolean         CT_Responder(event_t * ev);
+boolean         CT_Responder(event_t *ev);
 void            CT_Ticker(void);
 char            CT_dequeueChatChar(void);
 
@@ -796,7 +796,7 @@ void            F_StartFinale(void);
 //----------------------
 
 void            SB_Init(void);
-boolean         SB_Responder(event_t * event);
+boolean         SB_Responder(event_t *event);
 void            SB_Ticker(void);
 void            SB_Drawer(void);
 void            cht_GodFunc(player_t * player);
@@ -809,7 +809,7 @@ void            cht_NoClipFunc(player_t * player);
 void            MN_Init(void);
 void            MN_ActivateMenu(void);
 void            MN_DeactivateMenu(void);
-boolean         MN_Responder(event_t * event);
+boolean         MN_Responder(event_t *event);
 void            MN_Ticker(void);
 void            MN_Drawer(void);
 void            MN_DrTextA(char *text, int x, int y);

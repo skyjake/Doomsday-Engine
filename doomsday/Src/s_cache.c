@@ -470,7 +470,7 @@ void Sfx_PurgeCache(void)
 // Sfx_GetCacheInfo
 //  Return the number of bytes and samples cached.
 //===========================================================================
-void Sfx_GetCacheInfo(uint * cacheBytes, uint * sampleCount)
+void Sfx_GetCacheInfo(uint *cacheBytes, uint *sampleCount)
 {
 	sfxcache_t *it;
 	uint    size = 0, count = 0;

@@ -47,7 +47,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    P_Uncertain(fixed_t * pos, fixed_t low, fixed_t high);
+void    P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high);
 void    P_PtcGenThinker(ptcgen_t * gen);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -269,7 +269,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t * def, sector_t * sec,
 //  The offset is spherical and random.
 //  Low and High should be positive.
 //===========================================================================
-void P_Uncertain(fixed_t * pos, fixed_t low, fixed_t high)
+void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
 {
 	fixed_t off;
 	angle_t theta, phi;
@@ -698,7 +698,7 @@ int P_TouchParticle(particle_t * pt, ptcstage_t * stage,
 // P_FixedCrossProduct
 //  Semi-fixed, actually.
 //===========================================================================
-void P_FixedCrossProduct(float *fa, fixed_t * b, fixed_t * result)
+void P_FixedCrossProduct(float *fa, fixed_t *b, fixed_t *result)
 {
 	result[VX] =
 		FixedMul(FRACUNIT * fa[VY], b[VZ]) - FixedMul(FRACUNIT * fa[VZ],
@@ -715,7 +715,7 @@ void P_FixedCrossProduct(float *fa, fixed_t * b, fixed_t * result)
 //===========================================================================
 // P_FixedDotProduct
 //===========================================================================
-fixed_t P_FixedDotProduct(fixed_t * a, fixed_t * b)
+fixed_t P_FixedDotProduct(fixed_t *a, fixed_t *b)
 {
 	return FixedMul(a[VX], b[VX]) + FixedMul(a[VY], b[VY]) + FixedMul(a[VZ],
 																	  b[VZ]);

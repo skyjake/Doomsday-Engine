@@ -118,7 +118,7 @@ void            HUlib_eraseTextLine(hu_textline_t * l);
 
 // ?
 void            HUlib_initSText(hu_stext_t * s, int x, int y, int h,
-								dpatch_t * font, int startchar, boolean * on);
+								dpatch_t * font, int startchar, boolean *on);
 
 // add a new line
 void            HUlib_addLineToSText(hu_stext_t * s);
@@ -135,7 +135,7 @@ void            HUlib_eraseSText(hu_stext_t * s);
 
 // Input Text Line widget routines
 void            HUlib_initIText(hu_itext_t * it, int x, int y, dpatch_t * font,
-								int startchar, boolean * on);
+								int startchar, boolean *on);
 
 // enforces left margin
 void            HUlib_delCharFromIText(hu_itext_t * it);
@@ -161,6 +161,9 @@ void            HUlib_eraseIText(hu_itext_t * it);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

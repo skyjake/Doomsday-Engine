@@ -371,7 +371,7 @@ void R_InitSpriteDefs(void)
 //===========================================================================
 // R_GetSpriteInfo
 //===========================================================================
-void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t * sprinfo)
+void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo)
 {
 	spritedef_t *sprdef;
 	spriteframe_t *sprframe;
@@ -407,7 +407,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t * sprinfo)
 //===========================================================================
 // R_GetPatchInfo
 //===========================================================================
-void R_GetPatchInfo(int lump, spriteinfo_t * info)
+void R_GetPatchInfo(int lump, spriteinfo_t *info)
 {
 	patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
 

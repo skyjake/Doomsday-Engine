@@ -240,7 +240,7 @@ void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
 //  Prepare rendering the view of the given player.
 //  Also handles smoothing of camera and plane movement.
 //===========================================================================
-void R_SetupFrame(ddplayer_t * player)
+void R_SetupFrame(ddplayer_t *player)
 {
 	int     tableAngle;
 	float   yawRad, pitchRad;
@@ -425,7 +425,7 @@ void R_SetupFrame(ddplayer_t * player)
 // R_RenderPlayerView
 //  Draw the view of the player inside the view window.
 //===========================================================================
-void R_RenderPlayerView(ddplayer_t * player)
+void R_RenderPlayerView(ddplayer_t *player)
 {
 	extern int psp3d, model_tri_count;
 	int     i, oldFlags;

@@ -546,7 +546,7 @@ extern          "C" {
 		} d;
 	} intercept_t;
 
-	typedef         boolean(*traverser_t) (intercept_t * in);
+	typedef boolean (*traverser_t) (intercept_t * in);
 
 	// Polyobjs.
 #define PO_MAXPOLYSEGS 64

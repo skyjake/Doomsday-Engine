@@ -374,7 +374,7 @@ int P_FindSectorFromTag(int tag, int start)
 //
 //=========================================================================
 
-boolean EV_SectorSoundChange(byte * args)
+boolean EV_SectorSoundChange(byte *args)
 {
 	int     secNum;
 	boolean rtn;
@@ -429,7 +429,7 @@ static boolean CheckedLockedDoor(mobj_t * mo, byte lock)
 //
 //==========================================================================
 
-boolean EV_LineSearchForPuzzleItem(line_t * line, byte * args, mobj_t * mo)
+boolean EV_LineSearchForPuzzleItem(line_t * line, byte *args, mobj_t * mo)
 {
 	player_t *player;
 	int     i;
@@ -489,7 +489,7 @@ boolean EV_LineSearchForPuzzleItem(line_t * line, byte * args, mobj_t * mo)
 //
 //============================================================================
 
-boolean P_ExecuteLineSpecial(int special, byte * args, line_t * line, int side,
+boolean P_ExecuteLineSpecial(int special, byte *args, line_t * line, int side,
 							 mobj_t * mo)
 {
 	boolean buttonSuccess;

@@ -628,7 +628,7 @@ int CCmdAutoMap(int argc, char **argv)
 //
 // Handle events (user inputs) in automap mode
 //
-boolean AM_Responder(event_t * ev)
+boolean AM_Responder(event_t *ev)
 {
 
 	int     rc;
@@ -1363,7 +1363,7 @@ void AM_drawWalls(void)
 // Rotation in 2D.
 // Used to rotate player arrow line character.
 //
-void AM_rotate(fixed_t * x, fixed_t * y, angle_t a)
+void AM_rotate(fixed_t *x, fixed_t *y, angle_t a)
 {
 	fixed_t tmpx;
 

@@ -332,7 +332,7 @@ int findtoken(char *string, char *token, char *delim)
 	return false;
 }
 
-int D_PrivilegedResponder(event_t * event)
+int D_PrivilegedResponder(event_t *event)
 {
 	// We're interested in key or button down events.
 	if(grabbing

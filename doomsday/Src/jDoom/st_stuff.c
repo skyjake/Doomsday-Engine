@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.10  2004/05/29 18:19:59  skyjake
+// Refined indentation style
+//
 // Revision 1.9  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -496,7 +499,7 @@ void ST_refreshBackground(void)
 
 // Respond to keyboard input events,
 //  intercept cheats.
-boolean ST_Responder(event_t * ev)
+boolean ST_Responder(event_t *ev)
 {
 	int     i;
 

@@ -40,7 +40,7 @@ static byte *readbuffer;
 // Code ------------------------------------------------------------------
 
 // Mini-Msg routines.
-void NetCl_SetReadBuffer(byte * data)
+void NetCl_SetReadBuffer(byte *data)
 {
 	readbuffer = data;
 }
@@ -62,7 +62,7 @@ int NetCl_ReadLong()
 	return *(int *) (readbuffer - 4);
 }
 
-void NetCl_Read(byte * buf, int len)
+void NetCl_Read(byte *buf, int len)
 {
 	memcpy(buf, readbuffer, len);
 	readbuffer += len;
@@ -90,7 +90,7 @@ int NetCl_IsCompatible(int other, int us)
 }
 #endif
 
-void NetCl_UpdateGameState(byte * data)
+void NetCl_UpdateGameState(byte *data)
 {
 	fixed_t grav;
 	packet_gamestate_t *gs = (packet_gamestate_t *) data;
@@ -190,7 +190,7 @@ void NetCl_UpdateGameState(byte * data)
 //===========================================================================
 // NetCl_UpdatePlayerState2
 //===========================================================================
-void NetCl_UpdatePlayerState2(byte * data, int plrNum)
+void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
 	player_t *pl = &players[plrNum];
 	unsigned int flags;
@@ -236,7 +236,7 @@ void NetCl_UpdatePlayerState2(byte * data, int plrNum)
 //===========================================================================
 // NetCl_UpdatePlayerState
 //===========================================================================
-void NetCl_UpdatePlayerState(byte * data, int plrNum)
+void NetCl_UpdatePlayerState(byte *data, int plrNum)
 {
 	player_t *pl = &players[plrNum];
 	byte    b;
@@ -442,7 +442,7 @@ void NetCl_UpdatePlayerState(byte * data, int plrNum)
 	}
 }
 
-void NetCl_UpdatePSpriteState(byte * data)
+void NetCl_UpdatePSpriteState(byte *data)
 {
 	unsigned short s;
 
@@ -451,7 +451,7 @@ void NetCl_UpdatePSpriteState(byte * data)
 	P_SetPsprite(&players[consoleplayer], ps_weapon, s);
 }
 
-void NetCl_Intermission(byte * data)
+void NetCl_Intermission(byte *data)
 {
 	int     flags;
 
@@ -535,7 +535,7 @@ void NetCl_Intermission(byte * data)
 // NetCl_Finale
 //  This is where clients start their InFine interludes.
 //===========================================================================
-void NetCl_Finale(int packetType, byte * data)
+void NetCl_Finale(int packetType, byte *data)
 {
 	int     flags;
 	int     len, numConds, i;
@@ -584,7 +584,7 @@ void NetCl_Finale(int packetType, byte * data)
 //  Clients have other players' info, but it's only "FYI"; they don't
 //  really need it.
 //===========================================================================
-void NetCl_UpdatePlayerInfo(byte * data)
+void NetCl_UpdatePlayerInfo(byte *data)
 {
 	int     num;
 

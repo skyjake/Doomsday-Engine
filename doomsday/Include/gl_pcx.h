@@ -43,13 +43,13 @@ typedef struct {
 
 int             PCX_MemoryGetSize(void *imageData, int *w, int *h);
 int             PCX_GetSize(const char *fn, int *w, int *h);
-int             PCX_MemoryLoad(byte * imgdata, int len, int buf_w, int buf_h,
-							   byte * outBuffer);
-byte           *PCX_MemoryAllocLoad(byte * imgdata, int len, int *buf_w,
-									int *buf_h, byte * outBuffer);
+int             PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
+							   byte *outBuffer);
+byte           *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w,
+									int *buf_h, byte *outBuffer);
 void            PCX_Load(const char *fn, int buf_w, int buf_h,
-						 byte * outBuffer);
+						 byte *outBuffer);
 byte           *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h,
-							  byte * outBuffer);
+							  byte *outBuffer);
 
 #endif

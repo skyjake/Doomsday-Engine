@@ -28,7 +28,7 @@
 #define AM_MSGEXITED (AM_MSGHEADER | ('x'<<8))
 
 // Called by main loop.
-boolean         AM_Responder(event_t * ev);
+boolean         AM_Responder(event_t *ev);
 
 // Called by main loop.
 void            AM_Ticker(void);
@@ -45,6 +45,9 @@ void            AM_Stop(void);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

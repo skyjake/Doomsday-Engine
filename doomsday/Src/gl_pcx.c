@@ -82,8 +82,8 @@ int PCX_GetSize(const char *fn, int *w, int *h)
 // PCX_MemoryLoad
 //  Returns true if the data is a PCX image (probably).
 //===========================================================================
-int PCX_MemoryLoad(byte * imgdata, int len, int buf_w, int buf_h,
-				   byte * outBuffer)
+int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
+				   byte *outBuffer)
 {
 	return PCX_MemoryAllocLoad(imgdata, len, &buf_w, &buf_h, outBuffer) != 0;
 }
@@ -93,8 +93,8 @@ int PCX_MemoryLoad(byte * imgdata, int len, int buf_w, int buf_h,
 //  Returns true if the data is a PCX image (probably).
 //  If outBuffer is NULL, a new buffer is allocated with M_Malloc.
 //===========================================================================
-byte   *PCX_MemoryAllocLoad(byte * imgdata, int len, int *buf_w, int *buf_h,
-							byte * outBuffer)
+byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
+							byte *outBuffer)
 {
 	pcx_t  *pcx = (pcx_t *) imgdata;
 	byte   *raw = &pcx->data, *palette;
@@ -161,7 +161,7 @@ byte   *PCX_MemoryAllocLoad(byte * imgdata, int len, int *buf_w, int *buf_h,
 //===========================================================================
 // PCX_Load
 //===========================================================================
-void PCX_Load(const char *fn, int buf_w, int buf_h, byte * outBuffer)
+void PCX_Load(const char *fn, int buf_w, int buf_h, byte *outBuffer)
 {
 	PCX_AllocLoad(fn, &buf_w, &buf_h, outBuffer);
 }
@@ -170,7 +170,7 @@ void PCX_Load(const char *fn, int buf_w, int buf_h, byte * outBuffer)
 // PCX_AllocLoad
 //  PCX loader, partly borrowed from the Q2 utils source (lbmlib.c). 
 //===========================================================================
-byte   *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte * outBuffer)
+byte   *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)
 {
 	DFILE  *file = F_Open(fn, "rb");
 	byte   *raw;

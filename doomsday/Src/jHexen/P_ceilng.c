@@ -98,7 +98,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
 //              Move a ceiling up/down and all around!
 //
 //==================================================================
-int EV_DoCeiling(line_t * line, byte * arg, ceiling_e type)
+int EV_DoCeiling(line_t * line, byte *arg, ceiling_e type)
 {
 	int     secnum, rtn;
 	sector_t *sec;
@@ -275,7 +275,7 @@ void P_ActivateInStasisCeiling(line_t * line)
 //
 //==================================================================
 
-int EV_CeilingCrushStop(line_t * line, byte * args)
+int EV_CeilingCrushStop(line_t * line, byte *args)
 {
 	int     i;
 	int     rtn;

@@ -84,7 +84,7 @@ static void WRead(void **ptr, void **dest, int length)
 //  Z_Free when it's no longer needed. The WAV file must have only one
 //  channel! All parameters must be passed, no NULLs are allowed.
 //===========================================================================
-void   *WAV_MemoryLoad(byte * data, int datalength, int *bits, int *rate,
+void   *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
 					   int *samples)
 {
 	byte   *end = data + datalength;

@@ -27,6 +27,6 @@ void            Sfx_ShutdownCache(void);
 sfxsample_t    *Sfx_Cache(int id);
 void            Sfx_CacheHit(int id);
 uint            Sfx_GetSoundLength(int id);
-void            Sfx_GetCacheInfo(uint * cacheBytes, uint * sampleCount);
+void            Sfx_GetCacheInfo(uint *cacheBytes, uint *sampleCount);
 
 #endif

@@ -1183,13 +1183,13 @@ void Con_UpdateKnownWords()
 	qsort(knownWords, numKnownWords, sizeof(knownword_t), knownWordListSorter);
 }
 
-void Con_AddCommandList(ccmd_t * cmdlist)
+void Con_AddCommandList(ccmd_t *cmdlist)
 {
 	for(; cmdlist->name; cmdlist++)
 		Con_AddCommand(cmdlist);
 }
 
-void Con_AddCommand(ccmd_t * cmd)
+void Con_AddCommand(ccmd_t *cmd)
 {
 	numCCmds++;
 	ccmds = realloc(ccmds, sizeof(ccmd_t) * numCCmds);
@@ -1226,13 +1226,13 @@ boolean Con_IsValidCommand(const char *name)
 	return Con_GetCommand(name) || Con_GetAlias(name);
 }
 
-void Con_AddVariableList(cvar_t * varlist)
+void Con_AddVariableList(cvar_t *varlist)
 {
 	for(; varlist->name; varlist++)
 		Con_AddVariable(varlist);
 }
 
-void Con_AddVariable(cvar_t * var)
+void Con_AddVariable(cvar_t *var)
 {
 	numCVars++;
 	cvars = realloc(cvars, sizeof(cvar_t) * numCVars);
@@ -1597,7 +1597,7 @@ static void addOldCmd(const char *txt)
 	strcpy(line->text, txt);
 }
 
-static void printcvar(cvar_t * var, char *prefix)
+static void printcvar(cvar_t *var, char *prefix)
 {
 	char    equals = '=';
 
@@ -2062,7 +2062,7 @@ static void completeWord()
  * Con_Responder
  *  Returns true if the event is eaten.
  */
-boolean Con_Responder(event_t * event)
+boolean Con_Responder(event_t *event)
 {
 	byte    ch;
 
@@ -2312,7 +2312,7 @@ static void consoleSetColor(int fl, float alpha)
 	gl.Color4f(r, g, b, alpha);
 }
 
-void Con_SetFont(ddfont_t * cfont)
+void Con_SetFont(ddfont_t *cfont)
 {
 	Cfont = *cfont;
 }

@@ -137,7 +137,7 @@ void            P_RemoveMobj(mobj_t * th);
 boolean         P_SetMobjState(mobj_t * mobj, statenum_t state);
 boolean         P_SetMobjStateNF(mobj_t * mobj, statenum_t state);
 void            P_ThrustMobj(mobj_t * mo, angle_t angle, fixed_t move);
-int             P_FaceMobj(mobj_t * source, mobj_t * target, angle_t * delta);
+int             P_FaceMobj(mobj_t * source, mobj_t * target, angle_t *delta);
 boolean         P_SeekerMissile(mobj_t * actor, angle_t thresh,
 								angle_t turnMax);
 void            P_MobjThinker(mobj_t * mobj);
@@ -281,12 +281,12 @@ boolean         P_MorphPlayer(player_t * player);
 
 // ***** AM_MAP *****
 
-boolean         AM_Responder(event_t * ev);
+boolean         AM_Responder(event_t *ev);
 void            AM_Ticker(void);
 void            AM_Drawer(void);
 
 // ***** A_ACTION *****
-boolean         A_LocalQuake(byte * args, mobj_t * victim);
+boolean         A_LocalQuake(byte *args, mobj_t * victim);
 void            P_SpawnDirt(mobj_t * actor, fixed_t radius);
 void C_DECL     A_BridgeRemove(mobj_t * actor);
 
@@ -344,12 +344,12 @@ extern int      po_NumPolyobjs;
 
 void            T_PolyDoor(polydoor_t * pd);
 void            T_RotatePoly(polyevent_t * pe);
-boolean         EV_RotatePoly(line_t * line, byte * args, int direction,
+boolean         EV_RotatePoly(line_t * line, byte *args, int direction,
 							  boolean overRide);
 void            T_MovePoly(polyevent_t * pe);
-boolean         EV_MovePoly(line_t * line, byte * args, boolean timesEight,
+boolean         EV_MovePoly(line_t * line, byte *args, boolean timesEight,
 							boolean overRide);
-boolean         EV_OpenPolyDoor(line_t * line, byte * args, podoortype_t type);
+boolean         EV_OpenPolyDoor(line_t * line, byte *args, podoortype_t type);
 
 #define polyobjs			((polyobj_t*) *gi.polyobjs)
 #define po_NumPolyobjs		(*gi.numpolyobjs)

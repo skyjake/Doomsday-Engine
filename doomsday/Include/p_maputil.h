@@ -43,7 +43,7 @@ float           P_MobjPointDistancef(mobj_t * start, mobj_t * end,
 									 float *fixpoint);
 void            P_SectorBoundingBox(sector_t * sec, float *bbox);
 int             P_PointOnLineSide(fixed_t x, fixed_t y, line_t * line);
-int             P_BoxOnLineSide(fixed_t * tmbox, line_t * ld);
+int             P_BoxOnLineSide(fixed_t *tmbox, line_t * ld);
 void            P_MakeDivline(line_t * li, divline_t * dl);
 int             P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t * line);
 fixed_t         P_InterceptVector(divline_t * v2, divline_t * v1);
@@ -55,23 +55,23 @@ mobj_t         *P_GetBlockRootIdx(int index);
 void            P_LinkThing(mobj_t * thing, byte flags);
 void            P_UnlinkThing(mobj_t * thing);
 boolean         P_BlockThingsIterator(int x, int y,
-									  boolean(*func) (mobj_t *, void *),
+									  boolean (*func) (mobj_t *, void *),
 									  void *);
 boolean         P_ThingLinesIterator(mobj_t * thing,
-									 boolean(*func) (line_t *, void *),
+									 boolean (*func) (line_t *, void *),
 									 void *);
 boolean         P_ThingSectorsIterator(mobj_t * thing,
-									   boolean(*func) (sector_t *, void *),
+									   boolean (*func) (sector_t *, void *),
 									   void *data);
 boolean         P_LineThingsIterator(line_t * line,
-									 boolean(*func) (mobj_t *, void *),
+									 boolean (*func) (mobj_t *, void *),
 									 void *data);
 boolean         P_SectorTouchingThingsIterator(sector_t * sector,
-											   boolean(*func) (mobj_t *,
-															   void *),
+											   boolean (*func) (mobj_t *,
+																void *),
 											   void *data);
 
 boolean         P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
-							   int flags, boolean(*trav) (intercept_t *));
+							   int flags, boolean (*trav) (intercept_t *));
 
 #endif

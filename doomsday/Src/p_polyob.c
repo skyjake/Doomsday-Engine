@@ -43,7 +43,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void UpdateSegBBox(seg_t * seg);
-static void RotatePt(int an, fixed_t * x, fixed_t * y, fixed_t startSpotX,
+static void RotatePt(int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
 					 fixed_t startSpotY);
 static boolean CheckMobjBlocking(seg_t * seg, polyobj_t * po);
 
@@ -247,7 +247,7 @@ boolean PO_MovePolyobj(int num, int x, int y)
 //==========================================================================
 // RotatePt
 //==========================================================================
-static void RotatePt(int an, fixed_t * x, fixed_t * y, fixed_t startSpotX,
+static void RotatePt(int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
 					 fixed_t startSpotY)
 {
 	fixed_t trx, try;

@@ -47,11 +47,11 @@ void    MN_DrCenterTextB_CS(char *text, int center_x, int y);
 
 void    G_BuildTiccmd(void *cmd);
 void    H_ConsoleRegistration();
-void    R_DrawPlayerSprites(ddplayer_t * viewplr);
+void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    R_SetAllDoomsdayFlags();
 void    R_DrawRingFilter();
 void    X_Drawer();
-int     H_PrivilegedResponder(event_t * event);
+int     H_PrivilegedResponder(event_t *event);
 void    H_DefaultBindings();
 
 void R_DrawLevelTitle(void)
@@ -1108,11 +1108,11 @@ game_export_t *GetGameAPI(game_import_t * imports)
 	gx.G_Drawer = D_Display;
 	gx.Ticker = H_Ticker;
 	gx.MN_Drawer = MN_Drawer;
-	gx.PrivilegedResponder = (boolean(*)(event_t *)) H_PrivilegedResponder;
+	gx.PrivilegedResponder = (boolean (*)(event_t *)) H_PrivilegedResponder;
 	gx.MN_Responder = MN_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
-	gx.MobjFriction = (fixed_t(*)(void *)) P_GetMobjFriction;
+	gx.MobjFriction = (fixed_t (*)(void *)) P_GetMobjFriction;
 	gx.EndFrame = H_EndFrame;
 	gx.ConsoleBackground = H_ConsoleBg;
 	gx.UpdateState = G_UpdateState;

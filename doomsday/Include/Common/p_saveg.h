@@ -29,7 +29,7 @@ float           SV_ReadFloat();
 // Persistent storage/archiving.
 // These are the load / save game routines.
 void            P_ArchivePlayers(void);
-void            P_UnArchivePlayers(boolean * infile, boolean * loaded);
+void            P_UnArchivePlayers(boolean *infile, boolean *loaded);
 void            P_ArchiveWorld(void);
 void            P_UnArchiveWorld(void);
 void            P_ArchiveThinkers(void);

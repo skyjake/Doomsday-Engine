@@ -288,7 +288,7 @@ void RL_AddMaskedPoly(rendpoly_t * poly)
 //  Color distance attenuation, extralight, fixedcolormap.
 //  "Torchlight" is white, regardless of the original RGB.
 //===========================================================================
-void RL_VertexColors(rendpoly_t * poly, int lightlevel, const byte * rgb)
+void RL_VertexColors(rendpoly_t * poly, int lightlevel, const byte *rgb)
 {
 	int     i;
 	float   light, real, minimum;
@@ -1508,7 +1508,7 @@ void RL_AddPoly(rendpoly_t * poly)
 //===========================================================================
 // RL_FloatRGB
 //===========================================================================
-void RL_FloatRGB(byte * rgb, float *dest)
+void RL_FloatRGB(byte *rgb, float *dest)
 {
 	int     i;
 

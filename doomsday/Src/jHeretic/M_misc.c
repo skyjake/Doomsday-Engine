@@ -96,13 +96,13 @@ void M_ClearRandom(void)
 	prndindex = 0;
 }
 
-void M_ClearBox(fixed_t * box)
+void M_ClearBox(fixed_t *box)
 {
 	box[BOXTOP] = box[BOXRIGHT] = MININT;
 	box[BOXBOTTOM] = box[BOXLEFT] = MAXINT;
 }
 
-void M_AddToBox(fixed_t * box, fixed_t x, fixed_t y)
+void M_AddToBox(fixed_t *box, fixed_t x, fixed_t y)
 {
 	if(x < box[BOXLEFT])
 		box[BOXLEFT] = x;

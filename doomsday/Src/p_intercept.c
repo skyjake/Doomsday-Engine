@@ -121,7 +121,7 @@ boolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
  *  Returns true if the traverser function returns true for all lines.
  */
 boolean P_SightTraverseIntercepts(divline_t * strace,
-								  boolean(*func) (intercept_t *))
+								  boolean (*func) (intercept_t *))
 {
 	int     count;
 	fixed_t dist;

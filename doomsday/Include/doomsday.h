@@ -84,11 +84,11 @@ extern          "C" {
 
 	// Console.
 	void            Con_Open(int yes);
-	void            Con_SetFont(ddfont_t * cfont);
-	void            Con_AddCommand(ccmd_t * cmd);
-	void            Con_AddVariable(cvar_t * var);
-	void            Con_AddCommandList(ccmd_t * cmdlist);
-	void            Con_AddVariableList(cvar_t * varlist);
+	void            Con_SetFont(ddfont_t *cfont);
+	void            Con_AddCommand(ccmd_t *cmd);
+	void            Con_AddVariable(cvar_t *var);
+	void            Con_AddCommandList(ccmd_t *cmdlist);
+	void            Con_AddVariableList(cvar_t *varlist);
 	cvar_t         *Con_GetVariable(char *name);
 	byte            Con_GetByte(char *name);
 	int             Con_GetInteger(char *name);
@@ -105,10 +105,10 @@ extern          "C" {
 	void            Con_Error(char *error, ...);
 
 	// Console: Actions.
-	void            Con_DefineActions(action_t * acts);
+	void            Con_DefineActions(action_t *acts);
 
 	// Console: Bindings.
-	void            B_EventBuilder(char *buff, event_t * ev, boolean to_event);
+	void            B_EventBuilder(char *buff, event_t *ev, boolean to_event);
 	int             B_BindingsForCommand(char *command, char *buffer);
 
 	// System.
@@ -133,7 +133,7 @@ extern          "C" {
 	fixed_t         P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz);
 	int             P_PointOnLineSide(fixed_t x, fixed_t y,
 									  struct line_s *line);
-	int             P_BoxOnLineSide(fixed_t * tmbox, struct line_s *ld);
+	int             P_BoxOnLineSide(fixed_t *tmbox, struct line_s *ld);
 	void            P_MakeDivline(struct line_s *li, divline_t * dl);
 	int             P_PointOnDivlineSide(fixed_t x, fixed_t y,
 										 divline_t * line);
@@ -143,32 +143,32 @@ extern          "C" {
 	void            P_LinkThing(struct mobj_s *thing, byte flags);
 	void            P_UnlinkThing(struct mobj_s *thing);
 	boolean         P_BlockLinesIterator(int x, int y,
-										 boolean(*func) (struct line_s *,
-														 void *), void *);
-	boolean         P_BlockThingsIterator(int x, int y,
-										  boolean(*func) (struct mobj_s *,
+										 boolean (*func) (struct line_s *,
 														  void *), void *);
+	boolean         P_BlockThingsIterator(int x, int y,
+										  boolean (*func) (struct mobj_s *,
+														   void *), void *);
 	boolean         P_BlockPolyobjsIterator(int x, int y,
-											boolean(*func) (void *, void *),
+											boolean (*func) (void *, void *),
 											void *);
 	boolean         P_ThingLinesIterator(struct mobj_s *thing,
-										 boolean(*func) (struct line_s *,
-														 void *), void *);
+										 boolean (*func) (struct line_s *,
+														  void *), void *);
 	boolean         P_ThingSectorsIterator(struct mobj_s *thing,
-										   boolean(*func) (struct sector_s *,
-														   void *),
+										   boolean (*func) (struct sector_s *,
+															void *),
 										   void *data);
 	boolean         P_LineThingsIterator(struct line_s *line,
-										 boolean(*func) (struct mobj_s *,
-														 void *), void *data);
+										 boolean (*func) (struct mobj_s *,
+														  void *), void *data);
 	boolean         P_SectorTouchingThingsIterator(struct sector_s *sector,
-												   boolean(*func) (struct
-																   mobj_s *,
-																   void *),
+												   boolean (*func) (struct
+																	mobj_s *,
+																	void *),
 												   void *data);
 	boolean         P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2,
 								   fixed_t y2, int flags,
-								   boolean(*trav) (intercept_t *));
+								   boolean (*trav) (intercept_t *));
 	boolean         P_CheckSight(struct mobj_s *t1, struct mobj_s *t2);
 	void            P_SetState(struct mobj_s *mobj, int statenum);
 	void            P_SpawnDamageParticleGen(struct mobj_s *mo,
@@ -184,16 +184,14 @@ extern          "C" {
 	boolean         PO_RotatePolyobj(int num, angle_t angle);
 	void            PO_UnLinkPolyobj(void *po);
 	void            PO_LinkPolyobj(void *po);
-	void
-
-	               
-		PO_SetCallback(void (*func) (struct mobj_s *, void *seg, void *po));
+	void            PO_SetCallback(void (*func) (struct mobj_s *, void *,
+												 void *));
 
 	// Play: Thinkers.
 	void            P_RunThinkers(void);
 	void            P_InitThinkers(void);
-	void            P_AddThinker(thinker_t * thinker);
-	void            P_RemoveThinker(thinker_t * thinker);
+	void            P_AddThinker(thinker_t *thinker);
+	void            P_RemoveThinker(thinker_t *thinker);
 
 	// Refresh.
 	int             DD_GetFrameRate(void);
@@ -201,12 +199,12 @@ extern          "C" {
 	void            R_SetupLevel(char *level_id, int flags);
 	void            R_PrecacheLevel(void);
 	void            R_PrecacheSkinsForState(int stateIndex);
-	void            R_RenderPlayerView(ddplayer_t * player);
+	void            R_RenderPlayerView(ddplayer_t *player);
 	void            R_ViewWindow(int x, int y, int w, int h);
 	void            R_SetBorderGfx(char *lumps[9]);
 	void            R_GetSpriteInfo(int sprite, int frame,
-									spriteinfo_t * sprinfo);
-	void            R_GetPatchInfo(int lump, spriteinfo_t * info);
+									spriteinfo_t *sprinfo);
+	void            R_GetPatchInfo(int lump, spriteinfo_t *info);
 	int             R_FlatNumForName(char *name);
 	int             R_CheckTextureNumForName(char *name);
 	int             R_TextureNumForName(char *name);
@@ -269,9 +267,9 @@ extern          "C" {
 	// Graphics: PCX.
 	int             PCX_GetSize(const char *fn, int *w, int *h);
 	void            PCX_Load(const char *fn, int buf_w, int buf_h,
-							 byte * outBuffer);
-	int             PCX_MemoryLoad(byte * imgdata, int len, int buf_w,
-								   int buf_h, byte * outBuffer);
+							 byte *outBuffer);
+	int             PCX_MemoryLoad(byte *imgdata, int len, int buf_w,
+								   int buf_h, byte *outBuffer);
 
 	// Graphics: PNG.
 	byte           *PNG_Load(const char *fileName, int *width, int *height,
@@ -281,11 +279,11 @@ extern          "C" {
 	int             TGA_Save24_rgb565(char *filename, int w, int h,
 									  unsigned short *buffer);
 	int             TGA_Save24_rgb888(char *filename, int w, int h,
-									  byte * buffer);
+									  byte *buffer);
 	int             TGA_Save24_rgba8888(char *filename, int w, int h,
-										byte * buffer);
+										byte *buffer);
 	int             TGA_Save16_rgb888(char *filename, int w, int h,
-									  byte * buffer);
+									  byte *buffer);
 	int             TGA_GetSize(char *filename, int *w, int *h);
 
 	// Audio.
@@ -309,8 +307,8 @@ extern          "C" {
 	void            S_StopMusic(void);
 
 	// Miscellaneous.
-	int             M_ReadFile(char const *name, byte ** buffer);
-	int             M_ReadFileCLib(char const *name, byte ** buffer);
+	int             M_ReadFile(char const *name, byte **buffer);
+	int             M_ReadFileCLib(char const *name, byte **buffer);
 	boolean         M_WriteFile(char const *name, void *source, int length);
 	void            M_ExtractFileBase(const char *path, char *dest);
 	void            M_GetFileExt(const char *path, char *ext);
@@ -321,8 +319,8 @@ extern          "C" {
 	char           *M_FindWhite(char *str);
 	byte            M_Random(void);
 	float           M_FRandom(void);
-	void            M_ClearBox(fixed_t * box);
-	void            M_AddToBox(fixed_t * box, fixed_t x, fixed_t y);
+	void            M_ClearBox(fixed_t *box);
+	void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
 	int             M_ScreenShot(char *filename, int bits);
 
 	// Miscellaneous: Math.

@@ -98,9 +98,9 @@ dynlight_t     *DL_GetSegLightLinks(int seg, int whichpart);
 // Helpers.
 boolean         DL_RadiusIterator(subsector_t * subsector, fixed_t x,
 								  fixed_t y, fixed_t radius,
-								  boolean(*func) (lumobj_t *, fixed_t));
+								  boolean (*func) (lumobj_t *, fixed_t));
 boolean         DL_BoxIterator(fixed_t box[4], void *ptr,
-							   boolean(*func) (lumobj_t *, void *));
+							   boolean (*func) (lumobj_t *, void *));
 
 int             Rend_SubsectorClipper(fvertex_t * out, subsector_t * sub,
 									  float x, float y, float radius);

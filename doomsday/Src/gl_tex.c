@@ -81,9 +81,9 @@ typedef struct dtexinst_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    averageColorIdx(rgbcol_t * sprcol, byte * data, int w, int h,
-						byte * palette, boolean has_alpha);
-void    averageColorRGB(rgbcol_t * col, byte * data, int w, int h);
+void    averageColorIdx(rgbcol_t * sprcol, byte *data, int w, int h,
+						byte *palette, boolean has_alpha);
+void    averageColorRGB(rgbcol_t * col, byte *data, int w, int h);
 byte   *GL_LoadHighResFlat(image_t * img, char *name);
 void    GL_DeleteDetailTexture(detailtex_t * dtex);
 
@@ -231,9 +231,9 @@ int WeightPow2(int num, float weight)
 //  buffer. Doesn't perform clipping, so be careful.
 //  Yeah, 13 parameters...
 //===========================================================================
-void pixBlt(byte * src, int srcWidth, int srcHeight, byte * dest,
-			int destWidth, int destHeight, int alpha, int srcRegX, int srcRegY,
-			int destRegX, int destRegY, int regWidth, int regHeight)
+void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
+			int destHeight, int alpha, int srcRegX, int srcRegY, int destRegX,
+			int destRegY, int regWidth, int regHeight)
 {
 	int     y;					// Y in the copy region.
 	int     srcNumPels = srcWidth * srcHeight;
@@ -260,7 +260,7 @@ void pixBlt(byte * src, int srcWidth, int srcHeight, byte * dest,
 //  Prepare the pal18to8 table.
 //  A time-consuming operation (64 * 64 * 64 * 256!).
 //===========================================================================
-static void LookupPal18to8(byte * palette)
+static void LookupPal18to8(byte *palette)
 {
 	int     r, g, b, i;
 	byte    palRGB[3];
@@ -713,7 +713,7 @@ void GL_BindTexture(DGLuint texname)
 //===========================================================================
 // PalIdxToRGB
 //===========================================================================
-void PalIdxToRGB(byte * pal, int idx, byte * rgb)
+void PalIdxToRGB(byte *pal, int idx, byte *rgb)
 {
 	int     c;
 	int     gammalevel = /*gammaSupport? 0 : */ usegamma;
@@ -731,7 +731,7 @@ void PalIdxToRGB(byte * pal, int idx, byte * rgb)
 //  4 = RGBA
 //===========================================================================
 void GL_ConvertBuffer(int width, int height, int informat, int outformat,
-					  byte * in, byte * out, boolean gamma)
+					  byte *in, byte *out, boolean gamma)
 {
 	byte   *palette = W_CacheLumpName("playpal", PU_CACHE);
 	int     inSize = (informat == 2 ? 1 : informat);
@@ -803,7 +803,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
 //  must be byte-aligned anyway, though; not in pixels.
 //  FIXME: Probably could be optimized.
 //===========================================================================
-static void scaleLine(byte * in, int inStride, byte * out, int outStride,
+static void scaleLine(byte *in, int inStride, byte *out, int outStride,
 					  int outLen, int inLen, int comps)
 {
 	int     i, c;
@@ -896,7 +896,7 @@ static void scaleLine(byte * in, int inStride, byte * out, int outStride,
 //===========================================================================
 // GL_ScaleBuffer32
 //===========================================================================
-void GL_ScaleBuffer32(byte * in, int inWidth, int inHeight, byte * out,
+void GL_ScaleBuffer32(byte *in, int inWidth, int inHeight, byte *out,
 					  int outWidth, int outHeight, int comps)
 {
 	int     i;
@@ -926,7 +926,7 @@ void GL_ScaleBuffer32(byte * in, int inWidth, int inHeight, byte * out,
 //  Works within the given data, reducing the size of the picture to half 
 //  its original. Width and height must be powers of two.
 //===========================================================================
-void GL_DownMipmap32(byte * in, int width, int height, int comps)
+void GL_DownMipmap32(byte *in, int width, int height, int comps)
 {
 	byte   *out;
 	int     x, y, c, outW = width >> 1, outH = height >> 1;
@@ -1044,7 +1044,7 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
 //  'data' contains indices to the playpal. If 'alphachannel' is true,
 //  'data' also contains the alpha values (after the indices).
 //===========================================================================
-DGLuint GL_UploadTexture(byte * data, int width, int height,
+DGLuint GL_UploadTexture(byte *data, int width, int height,
 						 boolean alphaChannel, boolean generateMipmaps,
 						 boolean RGBData, boolean noStretch)
 {
@@ -1516,7 +1516,7 @@ void GL_SetFlat(int idx)
 //  Modified to allow taller masked textures - GMJ Aug 2002
 //
 //===========================================================================
-static int DrawRealPatch(byte * buffer, byte * palette, int texwidth,
+static int DrawRealPatch(byte *buffer, byte *palette, int texwidth,
 						 int texheight, patch_t * patch, int origx, int origy,
 						 boolean maskZero, unsigned char *transtable,
 						 boolean checkForAlpha)
@@ -1615,7 +1615,7 @@ static int DrawRealPatch(byte * buffer, byte * palette, int texwidth,
 // TranslatePatch
 //  Translate colors in the specified patch.
 //===========================================================================
-void TranslatePatch(patch_t * patch, byte * transTable)
+void TranslatePatch(patch_t * patch, byte *transTable)
 {
 	int     count;
 	int     col = 0;
@@ -1963,7 +1963,7 @@ DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 // GL_BufferTexture
 //  Renders the given texture into the buffer.
 //===========================================================================
-boolean GL_BufferTexture(texture_t * tex, byte * buffer, int width, int height,
+boolean GL_BufferTexture(texture_t * tex, byte *buffer, int width, int height,
 						 int *has_big_patch)
 {
 	int     i, len = width * height;
@@ -2156,8 +2156,8 @@ void GL_SetTexture(int idx)
 //===========================================================================
 // LineAverageRGB
 //===========================================================================
-int LineAverageRGB(byte * imgdata, int width, int height, int line, byte * rgb,
-				   byte * palette, boolean has_alpha)
+int LineAverageRGB(byte *imgdata, int width, int height, int line, byte *rgb,
+				   byte *palette, boolean has_alpha)
 {
 	byte   *start = imgdata + width * line;
 	byte   *alphaStart = start + width * height;
@@ -2191,8 +2191,8 @@ int LineAverageRGB(byte * imgdata, int width, int height, int line, byte * rgb,
 // ImageAverageRGB
 //  The imgdata must have alpha info, too.
 //===========================================================================
-void ImageAverageRGB(byte * imgdata, int width, int height, byte * rgb,
-					 byte * palette)
+void ImageAverageRGB(byte *imgdata, int width, int height, byte *rgb,
+					 byte *palette)
 {
 	int     i, c, integerRGB[3] = { 0, 0, 0 }, count = 0;
 
@@ -2216,7 +2216,7 @@ void ImageAverageRGB(byte * imgdata, int width, int height, byte * rgb,
 //  This gets rid of the black outlines.
 //  Not a very efficient algorithm...
 //===========================================================================
-static void ColorOutlines(byte * buffer, int width, int height)
+static void ColorOutlines(byte *buffer, int width, int height)
 {
 	int     numpels = width * height;
 	byte   *ptr;
@@ -2247,7 +2247,7 @@ static void ColorOutlines(byte * buffer, int width, int height)
 //  Draws the given sky texture in a buffer. The returned buffer must be 
 //  freed by the caller. Idx must be a valid texture number.
 //===========================================================================
-void GL_BufferSkyTexture(int idx, byte ** outbuffer, int *width, int *height,
+void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
 						 boolean zeroMask)
 {
 	texture_t *tex = textures[idx];
@@ -2416,7 +2416,7 @@ skycol_t *GL_GetSkyColor(int texidx)
 // GL_GetSkyTopColor
 //  Returns the sky fadeout color of the given texture.
 //===========================================================================
-void GL_GetSkyTopColor(int texidx, byte * rgb)
+void GL_GetSkyTopColor(int texidx, byte *rgb)
 {
 	skycol_t *skycol = GL_GetSkyColor(texidx);
 
@@ -2463,7 +2463,7 @@ transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
 //  The given RGB color is scaled uniformly so that the highest component 
 //  becomes one.
 //===========================================================================
-void amplify(byte * rgb)
+void amplify(byte *rgb)
 {
 	int     i, max = 0;
 
@@ -2482,7 +2482,7 @@ void amplify(byte * rgb)
 //  Used by flares and dynamic lights. The resulting average color is 
 //  amplified to be as bright as possible.
 //===========================================================================
-void averageColorIdx(rgbcol_t * col, byte * data, int w, int h, byte * palette,
+void averageColorIdx(rgbcol_t * col, byte *data, int w, int h, byte *palette,
 					 boolean has_alpha)
 {
 	int     i;
@@ -2516,7 +2516,7 @@ void averageColorIdx(rgbcol_t * col, byte * data, int w, int h, byte * palette,
 //===========================================================================
 // averageColorRGB
 //===========================================================================
-void averageColorRGB(rgbcol_t * col, byte * data, int w, int h)
+void averageColorRGB(rgbcol_t * col, byte *data, int w, int h)
 {
 	int     i, count = w * h;
 	unsigned int cumul[3];
@@ -2541,7 +2541,7 @@ void averageColorRGB(rgbcol_t * col, byte * data, int w, int h)
 //  frame casts. 
 //  2003-05-30 (skyjake): Modified to handle pixel sizes 1 (==2), 3 and 4.
 //==========================================================================
-void GL_CalcLuminance(int pnum, byte * buffer, int width, int height,
+void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 					  int pixelsize)
 {
 	byte   *palette =
@@ -3703,7 +3703,7 @@ boolean GL_IsColorKeyed(const char *path)
 // GL_ColorKey
 //  Returns true if the given color is either (0,255,255) or (255,0,255).
 //===========================================================================
-boolean GL_ColorKey(byte * color)
+boolean GL_ColorKey(byte *color)
 {
 	return color[CB] == 0xff && ((color[CR] == 0xff && color[CG] == 0)
 								 || (color[CR] == 0 && color[CG] == 0xff));
@@ -3713,7 +3713,7 @@ boolean GL_ColorKey(byte * color)
 // GL_DoColorKeying
 //  Buffer must be RGBA. Doesn't touch the non-keyed pixels.
 //===========================================================================
-void GL_DoColorKeying(byte * rgbaBuf, int width)
+void GL_DoColorKeying(byte *rgbaBuf, int width)
 {
 	int     i;
 

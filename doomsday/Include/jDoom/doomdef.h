@@ -240,6 +240,6 @@ void            D_SetPlayerPtrs(void);
 char           *G_Get(int id);
 
 void            R_SetViewSize(int blocks, int detail);
-void            R_DrawPlayerSprites(ddplayer_t * viewplr);
+void            R_DrawPlayerSprites(ddplayer_t *viewplr);
 
 #endif							// __DOOMDEF__

@@ -1356,7 +1356,7 @@ int CCmdCycleSpy(int argc, char **argv)
 // Get info needed to make ticcmd_ts for the players.
 // Return false if the event should be checked for bindings.
 // 
-boolean G_Responder(event_t * ev)
+boolean G_Responder(event_t *ev)
 {
 	int     i;
 

@@ -508,7 +508,7 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist)
 //===========================================================================
 // Rend_ScaledAmbientLight
 //===========================================================================
-void Rend_ScaledAmbientLight(byte * out, byte * ambient, float mul)
+void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
 {
 	int     i;
 

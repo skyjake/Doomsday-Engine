@@ -271,7 +271,7 @@ void P_ThrustMobj(mobj_t * mo, angle_t angle, fixed_t move)
 //
 //----------------------------------------------------------------------------
 
-int P_FaceMobj(mobj_t * source, mobj_t * target, angle_t * delta)
+int P_FaceMobj(mobj_t * source, mobj_t * target, angle_t *delta)
 {
 	angle_t diff;
 	angle_t angle1;

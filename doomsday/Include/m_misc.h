@@ -43,8 +43,8 @@ void            M_Free(void *ptr);
 
 // File system routines.
 boolean         M_CheckFileID(const char *path);
-int             M_ReadFile(char const *name, byte ** buffer);
-int             M_ReadFileCLib(char const *name, byte ** buffer);
+int             M_ReadFile(char const *name, byte **buffer);
+int             M_ReadFileCLib(char const *name, byte **buffer);
 boolean         M_WriteFile(char const *name, void *source, int length);
 void            M_ExtractFileBase(const char *path, char *dest);
 void            M_GetFileExt(const char *path, char *ext);
@@ -58,8 +58,8 @@ const char     *M_Pretty(const char *path);
 void            M_ReadLine(char *buffer, int len, DFILE * file);
 
 // Bounding boxes.
-void            M_ClearBox(fixed_t * box);
-void            M_AddToBox(fixed_t * box, fixed_t x, fixed_t y);
+void            M_ClearBox(fixed_t *box);
+void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
 float           M_BoundingBoxDiff(float in[4], float out[4]);
 
 // Text utilities.
@@ -89,8 +89,8 @@ void            M_CrossProduct(float *a, float *b, float *out);
 void            M_PointCrossProduct(float *v1, float *v2, float *v3,
 									float *out);
 void            M_RotateVector(float vec[3], float degYaw, float degPitch);
-void            M_ProjectPointOnLinef(fixed_t * point, fixed_t * linepoint,
-									  fixed_t * delta, float gap,
+void            M_ProjectPointOnLinef(fixed_t *point, fixed_t *linepoint,
+									  fixed_t *delta, float gap,
 									  float *result);
 float           M_CycleIntoRange(float value, float length);
 

@@ -21,7 +21,7 @@ extern char     gameConfigString[128];
 void            P_Telefrag(mobj_t * thing);
 
 void            NetSv_NewPlayerEnters(int plrnumber);
-void           *NetSv_ReadCommands(byte * msg, uint size);
+void           *NetSv_ReadCommands(byte *msg, uint size);
 void            NetSv_SendGameState(int flags, int to);
 void            NetSv_SendMessage(int plrNum, char *msg);
 void            NetSv_SendYellowMessage(int plrNum, char *msg);
@@ -34,10 +34,10 @@ void            NetSv_Sound(mobj_t * origin, int sound_id, int toPlr);	// toPlr=
 void            NetSv_SoundAtVolume(mobj_t * origin, int sound_id, int volume,
 									int toPlr);
 void            NetSv_Intermission(int flags, int state, int time);
-void            NetSv_Finale(int flags, char *script, boolean * conds,
+void            NetSv_Finale(int flags, char *script, boolean *conds,
 							 int numConds);
 void            NetSv_SendPlayerInfo(int whose, int to_whom);
-void            NetSv_ChangePlayerInfo(int from, byte * data);
+void            NetSv_ChangePlayerInfo(int from, byte *data);
 void            NetSv_Ticker(void);
 void            NetSv_SaveGame(unsigned int game_id);
 void            NetSv_LoadGame(unsigned int game_id);

@@ -27,9 +27,9 @@ int             FI_Debriefing(int episode, int map);
 void            FI_DemoEnds(void);
 int             FI_SkipRequest(void);
 void            FI_Ticker(void);
-int             FI_Responder(event_t * ev);
+int             FI_Responder(event_t *ev);
 void            FI_Drawer(void);
-boolean         FI_IsMenuTrigger(event_t * ev);
+boolean         FI_IsMenuTrigger(event_t *ev);
 
 int             CCmdStartInFine(int argc, char **argv);
 int             CCmdStopInFine(int argc, char **argv);

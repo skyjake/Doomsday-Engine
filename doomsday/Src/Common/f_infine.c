@@ -1403,7 +1403,7 @@ int FI_SkipRequest(void)
 // FI_IsMenuTrigger
 //  Returns true if the event should open the menu.
 //===========================================================================
-boolean FI_IsMenuTrigger(event_t * ev)
+boolean FI_IsMenuTrigger(event_t *ev)
 {
 	if(!fi_active)
 		return false;
@@ -1413,7 +1413,7 @@ boolean FI_IsMenuTrigger(event_t * ev)
 //===========================================================================
 // FI_AteEvent
 //===========================================================================
-int FI_AteEvent(event_t * ev)
+int FI_AteEvent(event_t *ev)
 {
 	// We'll never eat key/mb/jb up events.
 	if(ev->type == ev_keyup || ev->type == ev_mousebup
@@ -1426,7 +1426,7 @@ int FI_AteEvent(event_t * ev)
 //===========================================================================
 // FI_Responder
 //===========================================================================
-int FI_Responder(event_t * ev)
+int FI_Responder(event_t *ev)
 {
 	int     i;
 

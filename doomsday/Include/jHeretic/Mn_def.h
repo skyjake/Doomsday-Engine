@@ -54,7 +54,7 @@ typedef enum {
 typedef struct {
 	ItemType_t      type;
 	char           *text;
-	                boolean(*func) (int option);
+	boolean         (*func) (int option);
 	int             option;
 	MenuType_t      menu;
 } MenuItem_t;
@@ -97,7 +97,7 @@ boolean         SCEnterMultiplayerMenu(int option);
 void            MN_TickerEx(void); // The extended ticker.
 
 // Edit field routines.
-boolean         Ed_Responder(event_t * event);
+boolean         Ed_Responder(event_t *event);
 
 void            MN_DrawTitle(char *text, int y);
 void            MN_DrawMenuText(Menu_t * menu, int index, char *text);

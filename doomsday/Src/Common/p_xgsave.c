@@ -171,7 +171,7 @@ void SV_ReadXGSector(struct sector_s *sec)
 	SV_ReadXGFunction(xg, &xg->light);
 }
 
-void SV_WriteXGPlaneMover(thinker_t * th)
+void SV_WriteXGPlaneMover(thinker_t *th)
 {
 	int     i;
 

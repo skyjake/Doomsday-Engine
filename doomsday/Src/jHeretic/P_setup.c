@@ -611,7 +611,7 @@ static void projectVector(float a[2], float b[2], float *a_on_b)
 #endif
 
 fixed_t P_PointLineDistance(line_t * line, fixed_t x, fixed_t y,
-							fixed_t * offset)
+							fixed_t *offset)
 {
 	float   a[2], b[2], c[2], d[2], len;
 

@@ -151,7 +151,7 @@ void P_InitThinkers(void)
 // P_AddThinker
 //  Adds a new thinker at the end of the list.
 //==========================================================================
-void P_AddThinker(thinker_t * thinker)
+void P_AddThinker(thinker_t *thinker)
 {
 	// Link the thinker to the thinker list.
 	thinkercap.prev->next = thinker;
@@ -177,7 +177,7 @@ void P_AddThinker(thinker_t * thinker)
 //  Deallocation is lazy -- it will not actually be freed until its
 //  thinking turn comes up.
 //==========================================================================
-void P_RemoveThinker(thinker_t * thinker)
+void P_RemoveThinker(thinker_t *thinker)
 {
 	// Has got an ID?
 	if(thinker->id)

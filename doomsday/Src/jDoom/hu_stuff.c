@@ -679,7 +679,7 @@ void HU_sendMessage(char *msg)
 		S_LocalSound(sfx_tink, 0);
 }
 
-boolean HU_Responder(event_t * ev)
+boolean HU_Responder(event_t *ev)
 {
 	char   *macromessage;
 	boolean eatkey = false;

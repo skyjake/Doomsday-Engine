@@ -33,7 +33,7 @@
 // Even when the menu is not displayed,
 // this can resize the view and change game parameters.
 // Does all the real work of the menu interaction.
-boolean         M_Responder(event_t * ev);
+boolean         M_Responder(event_t *ev);
 
 // Called by main loop,
 // only used for menu (skull cursor) animation.
@@ -67,6 +67,9 @@ void            M_WriteText3(int x, int y, const char *string, dpatch_t * font,
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.7  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.6  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

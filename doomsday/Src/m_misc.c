@@ -63,7 +63,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int FileReader(char const *name, byte ** buffer, int mallocType);
+static int FileReader(char const *name, byte **buffer, int mallocType);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -80,7 +80,7 @@ static int read_ids[MAX_READ];
 //===========================================================================
 // M_Malloc
 //===========================================================================
-void* M_Malloc(size_t size)
+void   *M_Malloc(size_t size)
 {
 	return malloc(size);
 }
@@ -88,7 +88,7 @@ void* M_Malloc(size_t size)
 //===========================================================================
 // M_Calloc
 //===========================================================================
-void* M_Calloc(size_t size)
+void   *M_Calloc(size_t size)
 {
 	return calloc(size, 1);
 }
@@ -96,7 +96,7 @@ void* M_Calloc(size_t size)
 //===========================================================================
 // M_Realloc
 //===========================================================================
-void* M_Realloc(void *ptr, size_t size)
+void   *M_Realloc(void *ptr, size_t size)
 {
 	return realloc(ptr, size);
 }
@@ -484,8 +484,8 @@ float M_PointLineDistance(float *a, float *b, float *c)
 //  Input is fixed, output is floating point. Gap is the distance left 
 //  between the line and the projected point.
 //===========================================================================
-void M_ProjectPointOnLinef(fixed_t * point, fixed_t * linepoint,
-						   fixed_t * delta, float gap, float *result)
+void M_ProjectPointOnLinef(fixed_t *point, fixed_t *linepoint, fixed_t *delta,
+						   float gap, float *result)
 {
 #define DOTPROD(a,b)	(a[VX]*b[VX] + a[VY]*b[VY])
 	float   pointvec[2] = {
@@ -529,7 +529,7 @@ float M_BoundingBoxDiff(float in[4], float out[4])
 //===========================================================================
 // M_ClearBox
 //===========================================================================
-void M_ClearBox(fixed_t * box)
+void M_ClearBox(fixed_t *box)
 {
 	box[BOXTOP] = box[BOXRIGHT] = DDMININT;
 	box[BOXBOTTOM] = box[BOXLEFT] = DDMAXINT;
@@ -538,7 +538,7 @@ void M_ClearBox(fixed_t * box)
 //===========================================================================
 // M_AddToBox
 //===========================================================================
-void M_AddToBox(fixed_t * box, fixed_t x, fixed_t y)
+void M_AddToBox(fixed_t *box, fixed_t x, fixed_t y)
 {
 	if(x < box[BOXLEFT])
 		box[BOXLEFT] = x;
@@ -586,7 +586,7 @@ boolean M_WriteFile(char const *name, void *source, int length)
 //
 //==========================================================================
 
-int M_ReadFile(char const *name, byte ** buffer)
+int M_ReadFile(char const *name, byte **buffer)
 {
 	return FileReader(name, buffer, MALLOC_ZONE);
 }
@@ -599,7 +599,7 @@ int M_ReadFile(char const *name, byte ** buffer)
 //
 //==========================================================================
 
-int M_ReadFileCLib(char const *name, byte ** buffer)
+int M_ReadFileCLib(char const *name, byte **buffer)
 {
 	return FileReader(name, buffer, MALLOC_CLIB);
 }
@@ -610,7 +610,7 @@ int M_ReadFileCLib(char const *name, byte ** buffer)
 //
 //==========================================================================
 
-static int FileReader(char const *name, byte ** buffer, int mallocType)
+static int FileReader(char const *name, byte **buffer, int mallocType)
 {
 	int     handle, count, length;
 	struct stat fileinfo;

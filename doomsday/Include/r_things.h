@@ -138,8 +138,8 @@ extern vissprite_t vissprites[MAXVISSPRITES], *vissprite_p;
 extern vissprite_t vispsprites[DDMAXPSPRITES];
 extern vissprite_t vsprsortedhead;
 
-void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t * sprinfo);
-void            R_GetPatchInfo(int lump, spriteinfo_t * info);
+void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
+void            R_GetPatchInfo(int lump, spriteinfo_t *info);
 int             R_VisualRadius(struct mobj_s *mo);
 fixed_t         R_GetBobOffset(struct mobj_s *mo);
 float           R_MovementYaw(fixed_t momx, fixed_t momy);

@@ -45,7 +45,7 @@ void            DD_ReadKeyboard(void);
 void            DD_ReadMouse(void);
 void            DD_ReadJoystick(void);
 
-void            DD_PostEvent(event_t * ev);
+void            DD_PostEvent(event_t *ev);
 void            DD_ProcessEvents(void);
 void            DD_ClearEvents(void);
 void            DD_ClearKeyRepeaters(void);

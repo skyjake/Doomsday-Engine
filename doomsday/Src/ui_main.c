@@ -356,7 +356,7 @@ void UI_SetPage(ui_page_t * page)
 	ui_moved = false;
 }
 
-int UI_Responder(event_t * ev)
+int UI_Responder(event_t *ev)
 {
 	if(!ui_active)
 		return false;
@@ -521,7 +521,7 @@ void UI_Capture(ui_object_t * ob)
 // Default Callback Functions
 //---------------------------------------------------------------------------
 
-int UIPage_Responder(ui_page_t * page, event_t * ev)
+int UIPage_Responder(ui_page_t * page, event_t *ev)
 {
 	int     i, k;
 	ui_object_t *ob;
@@ -696,7 +696,7 @@ void UIText_Drawer(ui_object_t * ob)
 				 UI_COL(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
-int UIButton_Responder(ui_object_t * ob, event_t * ev)
+int UIButton_Responder(ui_object_t * ob, event_t *ev)
 {
 	if(ob->flags & UIF_CLICKED)
 	{
@@ -768,7 +768,7 @@ void UIButton_Drawer(ui_object_t * ob)
 				 true, UI_COL(UIC_TEXT), alpha);
 }
 
-int UIEdit_Responder(ui_object_t * ob, event_t * ev)
+int UIEdit_Responder(ui_object_t * ob, event_t *ev)
 {
 	uidata_edit_t *dat = ob->data;
 
@@ -905,7 +905,7 @@ void UIEdit_Drawer(ui_object_t * ob)
 	}
 }
 
-int UIList_Responder(ui_object_t * ob, event_t * ev)
+int UIList_Responder(ui_object_t * ob, event_t *ev)
 {
 	uidata_list_t *dat = ob->data;
 	int     i, oldsel = dat->selection, buth, barh;
@@ -1195,7 +1195,7 @@ int UI_SliderThumbPos(ui_object_t * ob)
 //===========================================================================
 // UISlider_Responder
 //===========================================================================
-int UISlider_Responder(ui_object_t * ob, event_t * ev)
+int UISlider_Responder(ui_object_t * ob, event_t *ev)
 {
 	uidata_slider_t *dat = ob->data;
 	float   oldvalue = dat->value;

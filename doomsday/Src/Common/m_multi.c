@@ -960,7 +960,7 @@ void Ed_MakeCursorVisible()
 	}
 }
 
-boolean Ed_Responder(event_t * event)
+boolean Ed_Responder(event_t *event)
 {
 	int     c;
 	char   *ptr;

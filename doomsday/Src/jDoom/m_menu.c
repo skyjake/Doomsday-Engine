@@ -2094,7 +2094,7 @@ void SetMenu(MenuType_t menu)
 //
 // M_Responder
 //
-boolean M_Responder(event_t * ev)
+boolean M_Responder(event_t *ev)
 {
 	int     ch;
 	int     i;

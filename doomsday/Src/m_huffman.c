@@ -396,7 +396,7 @@ void Huff_Shutdown(void)
  * block of bits. The number of bytes in the encoded data is returned
  * in 'encodedSize'.
  */
-void   *Huff_Encode(byte * data, uint size, uint * encodedSize)
+void   *Huff_Encode(byte *data, uint size, uint *encodedSize)
 {
 	int     remaining, fits;
 	byte   *out, bit;
@@ -476,7 +476,7 @@ void   *Huff_Encode(byte * data, uint size, uint * encodedSize)
 /*
  * Decode using the Huffman tree. Returns a pointer to the decoded data.
  */
-byte   *Huff_Decode(void *data, uint size, uint * decodedSize)
+byte   *Huff_Decode(void *data, uint size, uint *decodedSize)
 {
 	huffnode_t *node;
 	uint    outBytes = 0;

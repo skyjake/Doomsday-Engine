@@ -36,7 +36,7 @@ void            P_SpawnSpecials(void);
 void            P_UpdateSpecials(void);
 
 // when needed
-boolean         P_ExecuteLineSpecial(int special, byte * args, line_t * line,
+boolean         P_ExecuteLineSpecial(int special, byte *args, line_t * line,
 									 int side, mobj_t * mo);
 boolean         P_ActivateLine(line_t * ld, mobj_t * mo, int side,
 							   int activationType);
@@ -121,7 +121,7 @@ void            T_Phase(phase_t * phase);
 void            T_Light(light_t * light);
 void            P_SpawnPhasedLight(sector_t * sector, int base, int index);
 void            P_SpawnLightSequence(sector_t * sector, int indexStep);
-boolean         EV_SpawnLight(line_t * line, byte * arg, lighttype_t type);
+boolean         EV_SpawnLight(line_t * line, byte *arg, lighttype_t type);
 
 #if 0
 typedef struct {
@@ -266,11 +266,11 @@ typedef struct {
 extern plat_t  *activeplats[MAXPLATS];
 
 void            T_PlatRaise(plat_t * plat);
-int             EV_DoPlat(line_t * line, byte * args, plattype_e type,
+int             EV_DoPlat(line_t * line, byte *args, plattype_e type,
 						  int amount);
 void            P_AddActivePlat(plat_t * plat);
 void            P_RemoveActivePlat(plat_t * plat);
-void            EV_StopPlat(line_t * line, byte * args);
+void            EV_StopPlat(line_t * line, byte *args);
 
 /*
    ===============================================================================
@@ -302,7 +302,7 @@ typedef struct {
 #define VDOORWAIT 150
 
 boolean         EV_VerticalDoor(line_t * line, mobj_t * thing);
-int             EV_DoDoor(line_t * line, byte * args, vldoor_e type);
+int             EV_DoDoor(line_t * line, byte *args, vldoor_e type);
 void            T_VerticalDoor(vldoor_t * door);
 
 //void P_SpawnDoorCloseIn30(sector_t *sec);
@@ -344,11 +344,11 @@ typedef struct {
 
 extern ceiling_t *activeceilings[MAXCEILINGS];
 
-int             EV_DoCeiling(line_t * line, byte * args, ceiling_e type);
+int             EV_DoCeiling(line_t * line, byte *args, ceiling_e type);
 void            T_MoveCeiling(ceiling_t * ceiling);
 void            P_AddActiveCeiling(ceiling_t * c);
 void            P_RemoveActiveCeiling(ceiling_t * c);
-int             EV_CeilingCrushStop(line_t * line, byte * args);
+int             EV_CeilingCrushStop(line_t * line, byte *args);
 
 /*
    ===============================================================================
@@ -434,17 +434,16 @@ typedef enum {
 result_e        T_MovePlane(sector_t * sector, fixed_t speed, fixed_t dest,
 							int crush, int floorOrCeiling, int direction);
 
-int             EV_BuildStairs(line_t * line, byte * args, int direction,
+int             EV_BuildStairs(line_t * line, byte *args, int direction,
 							   stairs_e type);
-int             EV_DoFloor(line_t * line, byte * args, floor_e floortype);
+int             EV_DoFloor(line_t * line, byte *args, floor_e floortype);
 void            T_MoveFloor(floormove_t * floor);
 void            T_BuildPillar(pillar_t * pillar);
 void            T_FloorWaggle(floorWaggle_t * waggle);
-int             EV_BuildPillar(line_t * line, byte * args, boolean crush);
-int             EV_OpenPillar(line_t * line, byte * args);
-int             EV_DoFloorAndCeiling(line_t * line, byte * args,
-									 boolean raise);
-int             EV_FloorCrushStop(line_t * line, byte * args);
+int             EV_BuildPillar(line_t * line, byte *args, boolean crush);
+int             EV_OpenPillar(line_t * line, byte *args);
+int             EV_DoFloorAndCeiling(line_t * line, byte *args, boolean raise);
+int             EV_FloorCrushStop(line_t * line, byte *args);
 boolean         EV_StartFloorWaggle(int tag, int height, int speed, int offset,
 									int timer);
 
@@ -512,9 +511,9 @@ typedef struct {
 } acsstore_t;
 
 void            P_LoadACScripts(int lump);
-boolean         P_StartACS(int number, int map, byte * args,
-						   mobj_t * activator, line_t * line, int side);
-boolean         P_StartLockedACS(line_t * line, byte * args, mobj_t * mo,
+boolean         P_StartACS(int number, int map, byte *args, mobj_t * activator,
+						   line_t * line, int side);
+boolean         P_StartLockedACS(line_t * line, byte *args, mobj_t * mo,
 								 int side);
 boolean         P_TerminateACS(int number, int map);
 boolean         P_SuspendACS(int number, int map);
@@ -539,8 +538,8 @@ extern acsstore_t ACSStore[MAX_ACS_STORE + 1];	// +1 for termination marker
 
 extern mobjtype_t TranslateThingType[];
 
-boolean         EV_ThingProjectile(byte * args, boolean gravity);
-boolean         EV_ThingSpawn(byte * args, boolean fog);
+boolean         EV_ThingProjectile(byte *args, boolean gravity);
+boolean         EV_ThingSpawn(byte *args, boolean fog);
 boolean         EV_ThingActivate(int tid);
 boolean         EV_ThingDeactivate(int tid);
 boolean         EV_ThingRemove(int tid);

@@ -911,7 +911,7 @@ void NetSv_Intermission(int flags, int state, int time)
 //  The actual script is sent to the clients. 'script' can be NULL.
 //  
 //===========================================================================
-void NetSv_Finale(int flags, char *script, boolean * conds, int numConds)
+void NetSv_Finale(int flags, char *script, boolean *conds, int numConds)
 {
 	byte   *buffer, *ptr;
 	int     i, len;
@@ -970,7 +970,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 				   ptr - buffer);
 }
 
-void NetSv_ChangePlayerInfo(int from, byte * data)
+void NetSv_ChangePlayerInfo(int from, byte *data)
 {
 	player_t *pl = players + from;
 	int     col;
@@ -1272,7 +1272,7 @@ void NetSv_Ticker(void)
  * buffer that contains the ticcmds (kludge to work around the parameter
  * passing from the engine).
  */
-void   *NetSv_ReadCommands(byte * msg, uint size)
+void   *NetSv_ReadCommands(byte *msg, uint size)
 {
 #define MAX_COMMANDS 30
 	static byte data[2 + sizeof(ticcmd_t) * MAX_COMMANDS];

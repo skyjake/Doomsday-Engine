@@ -142,13 +142,13 @@ static void OpenScript(char *name, int type)
 	}
 	else if(type == FILE_ZONE_SCRIPT)
 	{							// File script - zone
-		ScriptSize = M_ReadFile(name, (byte **) & ScriptBuffer);
+		ScriptSize = M_ReadFile(name, (byte **) &ScriptBuffer);
 		M_ExtractFileBase(name, ScriptName);
 		ScriptFreeCLib = false;	// De-allocate using gi.Z_Free()
 	}
 	else
 	{							// File script - clib
-		ScriptSize = M_ReadFileCLib(name, (byte **) & ScriptBuffer);
+		ScriptSize = M_ReadFileCLib(name, (byte **) &ScriptBuffer);
 		M_ExtractFileBase(name, ScriptName);
 		ScriptFreeCLib = true;	// De-allocate using free()
 	}

@@ -2011,8 +2011,7 @@ static void ArchiveSounds(void)
 		{						// Sound is attached to a sector, not a polyobj
 			sec = (R_PointInSubsector(node->mobj->x, node->mobj->y))->sector;
 			difference =
-				(int) ((byte *) sec -
-					   (byte *) & sectors[0]) / sizeof(sector_t);
+				(int) ((byte *) sec - (byte *) &sectors[0]) / sizeof(sector_t);
 			StreamOutLong(0);	// 0 -- sector sound origin
 		}
 		else

@@ -216,7 +216,7 @@ void R_DrawPSprite(pspdef_t * psp)
    ========================
  */
 
-void R_DrawPlayerSprites(ddplayer_t * viewplr)
+void R_DrawPlayerSprites(ddplayer_t *viewplr)
 {
 	int     i;
 	pspdef_t *psp;

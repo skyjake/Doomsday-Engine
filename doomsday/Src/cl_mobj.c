@@ -167,7 +167,7 @@ clmobj_t *Cl_FindMobj(thid_t id)
  * Aborts and returns false if the callback returns false.
  * Otherwise returns true.
  */
-boolean Cl_MobjIterator(boolean(*callback) (clmobj_t *, void *), void *parm)
+boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
 {
 	clmobj_t *cmo;
 	int     i;

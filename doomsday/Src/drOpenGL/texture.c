@@ -196,7 +196,7 @@ void setTexAniso(void)
 //  Works within the given data, reducing the size of the picture to half 
 //  its original. Width and height must be powers of two.
 //===========================================================================
-void downMip8(byte * in, byte * fadedOut, int width, int height, float fade)
+void downMip8(byte *in, byte *fadedOut, int width, int height, float fade)
 {
 	byte   *out = in;
 	int     x, y, outW = width >> 1, outH = height >> 1;

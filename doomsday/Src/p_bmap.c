@@ -194,7 +194,7 @@ void P_InitPolyBlockMap(void)
 //  in multiple mapblocks, so increment validcount before the first call 
 //  to P_BlockLinesIterator, then make one or more calls to it.
 //===========================================================================
-boolean P_BlockLinesIterator(int x, int y, boolean(*func) (line_t *, void *),
+boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
 							 void *data)
 {
 	int     offset;
@@ -259,7 +259,7 @@ boolean P_BlockLinesIterator(int x, int y, boolean(*func) (line_t *, void *),
 //  before the first call, then make one or more calls to it.
 //===========================================================================
 boolean P_BlockPolyobjsIterator(int x, int y,
-								boolean(*func) (polyobj_t *, void *),
+								boolean (*func) (polyobj_t *, void *),
 								void *data)
 {
 	polyblock_t *polyLink, *polyNext;
@@ -291,7 +291,7 @@ boolean P_BlockPolyobjsIterator(int x, int y,
 //  is specified using an vec2_t array (see m_vector.c).
 //===========================================================================
 boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t * sector,
-								boolean(*func) (subsector_t *, void *),
+								boolean (*func) (subsector_t *, void *),
 								void *parm)
 {
 	subsector_t *sub, **iter;
@@ -351,8 +351,8 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t * sector,
 // P_SubsectorBoxIterator
 //  Returns false only if the iterator func returns false.
 //===========================================================================
-boolean P_SubsectorBoxIterator(fixed_t * box, sector_t * sector,
-							   boolean(*func) (subsector_t *, void *),
+boolean P_SubsectorBoxIterator(fixed_t *box, sector_t * sector,
+							   boolean (*func) (subsector_t *, void *),
 							   void *parm)
 {
 	vec2_t  bounds[2];

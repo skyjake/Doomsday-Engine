@@ -1007,7 +1007,7 @@ void P_CalcSectorReverbs()
 // P_PointLineDistance
 //===========================================================================
 fixed_t P_PointLineDistance(line_t * line, fixed_t x, fixed_t y,
-							fixed_t * offset)
+							fixed_t *offset)
 {
 	float   a[2], b[2], c[2], d[2], len;
 

@@ -740,7 +740,7 @@ void P_ArchivePlayers(void)
 //
 // P_UnArchivePlayers
 //
-void P_UnArchivePlayers(boolean * infile, boolean * loaded)
+void P_UnArchivePlayers(boolean *infile, boolean *loaded)
 {
 	int     i;
 	int     j;

@@ -46,7 +46,7 @@ extern int      rend_info_tris;
 void            R_Init(void);
 void            R_Update(void);
 void            R_Shutdown(void);
-void            R_RenderPlayerView(ddplayer_t * player);
+void            R_RenderPlayerView(ddplayer_t *player);
 void            R_ResetViewer(void);
 void            R_ViewWindow(int x, int y, int w, int h);
 

@@ -392,7 +392,7 @@ void DD_ProcessEvents(void)
 // DD_PostEvent
 //      Called by the I/O functions when input is detected.
 //==========================================================================
-void DD_PostEvent(event_t * ev)
+void DD_PostEvent(event_t *ev)
 {
 	events[eventhead++] = *ev;
 	eventhead &= MAXEVENTS - 1;

@@ -67,7 +67,7 @@ typedef struct ddvalue_s {
 
 void    G_CheckDemoStatus();
 void    F_Drawer(void);
-boolean F_Responder(event_t * ev);
+boolean F_Responder(event_t *ev);
 void    S_InitScript(void);
 void    Net_Drawer(void);
 
@@ -812,7 +812,7 @@ void DD_SetInteger(int ddvalue, int parm)
 //===========================================================================
 ddplayer_t *DD_GetPlayer(int number)
 {
-	return (ddplayer_t *) & players[number];
+	return (ddplayer_t *) &players[number];
 }
 
 #ifdef UNIX

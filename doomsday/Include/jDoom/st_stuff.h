@@ -38,7 +38,7 @@
 //
 
 // Called by main loop.
-boolean         ST_Responder(event_t * ev);
+boolean         ST_Responder(event_t *ev);
 
 // Called by main loop.
 void            ST_Ticker(void);
@@ -67,7 +67,7 @@ typedef enum {
 	GetChatState
 } st_chatstateenum_t;
 
-boolean         ST_Responder(event_t * ev);
+boolean         ST_Responder(event_t *ev);
 
 int             D_GetFilterColor(int filter);
 
@@ -75,6 +75,9 @@ int             D_GetFilterColor(int filter);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

@@ -62,7 +62,7 @@
 void    R_InitTranslation(void);
 void    G_BuildTiccmd(void *cmd);
 void    D_Display(void);
-int     D_PrivilegedResponder(event_t * event);
+int     D_PrivilegedResponder(event_t *event);
 void    D_DefaultBindings();
 fixed_t P_GetMobjFriction(mobj_t * mo);
 
@@ -727,11 +727,11 @@ game_export_t *GetGameAPI(game_import_t * imports)
 	gx.Ticker = D_Ticker;
 	gx.G_Drawer = D_Display;
 	gx.MN_Drawer = M_Drawer;
-	gx.PrivilegedResponder = (boolean(*)(event_t *)) D_PrivilegedResponder;
+	gx.PrivilegedResponder = (boolean (*)(event_t *)) D_PrivilegedResponder;
 	gx.MN_Responder = M_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
-	gx.MobjFriction = (fixed_t(*)(void *)) P_GetMobjFriction;
+	gx.MobjFriction = (fixed_t (*)(void *)) P_GetMobjFriction;
 	gx.EndFrame = D_EndFrame;
 	gx.ConsoleBackground = D_ConsoleBg;
 	gx.UpdateState = G_UpdateState;

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.5  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -65,6 +68,6 @@ void            D_AddFile(char *file);
 void            D_DoomMain(void);
 
 // Called by IO functions when input is detected.
-void            D_PostEvent(event_t * ev);
+void            D_PostEvent(event_t *ev);
 
 #endif

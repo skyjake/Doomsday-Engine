@@ -75,7 +75,7 @@ static void DrawWeaponPieces(void);
 static void DrawFullScreenStuff(void);
 static void DrawAnimatedIcons(void);
 static boolean HandleCheats(byte key);
-static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean * eat);
+static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean *eat);
 static void CheatGodFunc(player_t * player, Cheat_t * cheat);
 static void CheatNoClipFunc(player_t * player, Cheat_t * cheat);
 static void CheatWeaponsFunc(player_t * player, Cheat_t * cheat);
@@ -1663,7 +1663,7 @@ void Draw_LoadIcon(void)
 //
 //==========================================================================
 
-boolean SB_Responder(event_t * event)
+boolean SB_Responder(event_t *event)
 {
 	if(event->type == ev_keydown)
 	{
@@ -1747,7 +1747,7 @@ static boolean HandleCheats(byte key)
 //
 //==========================================================================
 
-static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean * eat)
+static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean *eat)
 {
 	if(!cheat->pos)
 	{

@@ -151,7 +151,7 @@ void HUlib_eraseTextLine(hu_textline_t * l)
 }
 
 void HUlib_initSText(hu_stext_t * s, int x, int y, int h, dpatch_t * font,
-					 int startchar, boolean * on)
+					 int startchar, boolean *on)
 {
 	int     i;
 
@@ -229,7 +229,7 @@ void HUlib_eraseSText(hu_stext_t * s)
 }
 
 void HUlib_initIText(hu_itext_t * it, int x, int y, dpatch_t * font,
-					 int startchar, boolean * on)
+					 int startchar, boolean *on)
 {
 	it->lm = 0;					// default left margin is start of text
 	it->on = on;

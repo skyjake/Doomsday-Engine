@@ -148,7 +148,7 @@ void            XS_PlaneMover(xgplanemover_t * mover);	// A thinker for plane mo
 
 void            SV_WriteXGSector(struct sector_s *sec);
 void            SV_ReadXGSector(struct sector_s *sec);
-void            SV_WriteXGPlaneMover(thinker_t * th);
+void            SV_WriteXGPlaneMover(thinker_t *th);
 void            SV_ReadXGPlaneMover(void);
 
 #endif

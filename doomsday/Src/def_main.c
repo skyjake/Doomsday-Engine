@@ -1004,8 +1004,8 @@ static struct {
 	{
 		LTC_PLANE_MOVE,
 		{
-	0, 2, 3, 4 | MAP_SND, 5 | MAP_SND, 6 | MAP_SND, 7,
-				8 | MAP_FLAT, 9, 10 | MAP_FLAT, 11, 13, -1}},
+	0, 2, 3, 4 | MAP_SND, 5 | MAP_SND, 6 | MAP_SND, 7, 8 | MAP_FLAT, 9,
+				10 | MAP_FLAT, 11, 13, -1}},
 	{
 		LTC_BUILD_STAIRS,
 		{

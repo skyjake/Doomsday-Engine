@@ -103,6 +103,6 @@ boolean         SCEnterMultiplayerMenu(int option);
 void            MN_TickerEx(void); // The extended ticker.
 
 // Edit field routines.
-boolean         Ed_Responder(event_t * event);
+boolean         Ed_Responder(event_t *event);
 
 #endif							// __MENU_DEFS_H_

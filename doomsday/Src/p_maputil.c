@@ -267,7 +267,7 @@ int P_PointOnLineSide(fixed_t x, fixed_t y, line_t * line)
    =================
  */
 
-int P_BoxOnLineSide(fixed_t * tmbox, line_t * ld)
+int P_BoxOnLineSide(fixed_t *tmbox, line_t * ld)
 {
 	switch (ld->slopetype)
 	{
@@ -656,7 +656,7 @@ void P_LinkThing(mobj_t * thing, byte flags)
 // P_BlockThingsIterator
 //  'func' can do whatever it pleases to the mobjs.
 //===========================================================================
-boolean P_BlockThingsIterator(int x, int y, boolean(*func) (mobj_t *, void *),
+boolean P_BlockThingsIterator(int x, int y, boolean (*func) (mobj_t *, void *),
 							  void *data)
 {
 	mobj_t *mobj, *root = P_GetBlockRoot(x, y);
@@ -676,8 +676,8 @@ boolean P_BlockThingsIterator(int x, int y, boolean(*func) (mobj_t *, void *),
 //  The callback function will be called once for each line that crosses
 //  trough the object. This means all the lines will be two-sided.
 //===========================================================================
-boolean P_ThingLinesIterator(mobj_t * thing, boolean(*func) (line_t *, void *),
-							 void *data)
+boolean P_ThingLinesIterator(mobj_t * thing,
+							 boolean (*func) (line_t *, void *), void *data)
 {
 	nodeindex_t nix;
 	linknode_t *tn = thingnodes.nodes;
@@ -700,7 +700,8 @@ boolean P_ThingLinesIterator(mobj_t * thing, boolean(*func) (line_t *, void *),
 //  actually reside above or under the sector.
 //===========================================================================
 boolean P_ThingSectorsIterator(mobj_t * thing,
-							   boolean(*func) (sector_t *, void *), void *data)
+							   boolean (*func) (sector_t *, void *),
+							   void *data)
 {
 	void   *linkstore[MAXLINKED], **end = linkstore, **it;
 	nodeindex_t nix;
@@ -742,7 +743,7 @@ boolean P_ThingSectorsIterator(mobj_t * thing,
 //===========================================================================
 // P_LineThingsIterator
 //===========================================================================
-boolean P_LineThingsIterator(line_t * line, boolean(*func) (mobj_t *, void *),
+boolean P_LineThingsIterator(line_t * line, boolean (*func) (mobj_t *, void *),
 							 void *data)
 {
 	void   *linkstore[MAXLINKED], **end = linkstore, **it;
@@ -765,7 +766,7 @@ boolean P_LineThingsIterator(line_t * line, boolean(*func) (mobj_t *, void *),
 //  a bunch of LineThings iterations.)
 //===========================================================================
 boolean P_SectorTouchingThingsIterator(sector_t * sector,
-									   boolean(*func) (mobj_t *, void *),
+									   boolean (*func) (mobj_t *, void *),
 									   void *data)
 {
 	void   *linkstore[MAXLINKED], **end = linkstore, **it;
@@ -941,7 +942,7 @@ boolean PIT_AddThingIntercepts(mobj_t * thing, void *data)
  */
 
 boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
-					   int flags, boolean(*trav) (intercept_t *))
+					   int flags, boolean (*trav) (intercept_t *))
 {
 	fixed_t xt1, yt1, xt2, yt2;
 	fixed_t xstep, ystep;

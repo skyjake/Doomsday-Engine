@@ -54,7 +54,7 @@ extern boolean  message_noecho;
 void            HU_Init(void);
 void            HU_Start(void);
 
-boolean         HU_Responder(event_t * ev);
+boolean         HU_Responder(event_t *ev);
 
 void            HU_Ticker(void);
 void            HU_Drawer(void);
@@ -76,6 +76,9 @@ extern char    *mapnamesp[32], *mapnamest[32];
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

@@ -274,7 +274,7 @@ void Cl_Thrust(mobj_t * mo, angle_t angle, fixed_t move)
 // Cl_MovePlayer
 //  Predict the movement of the given player.
 //==========================================================================
-void Cl_MovePlayer(ddplayer_t * pl)
+void Cl_MovePlayer(ddplayer_t *pl)
 {
 	int     num = pl - players;
 	playerstate_t *st = playerstate + num;
@@ -328,7 +328,7 @@ void Cl_MovePlayer(ddplayer_t * pl)
 //  Move the (hidden, unlinked) client player mobj to the same coordinates
 //  where the real mobj of the player is.
 //==========================================================================
-void Cl_UpdatePlayerPos(ddplayer_t * pl)
+void Cl_UpdatePlayerPos(ddplayer_t *pl)
 {
 	int     num = pl - players;
 	mobj_t *clmo, *mo;

@@ -961,7 +961,7 @@ void DL_AddLuminous(mobj_t * thing)
 //===========================================================================
 // DL_ContactSector
 //===========================================================================
-void DL_ContactSector(lumobj_t * lum, fixed_t * box, sector_t * sector)
+void DL_ContactSector(lumobj_t * lum, fixed_t *box, sector_t * sector)
 {
 	P_SubsectorBoxIterator(box, sector, DL_AddContact, lum);
 }
@@ -1472,7 +1472,8 @@ void DL_InitForNewFrame()
  * 'subsector' is the subsector in which (x,y) resides.
  */
 boolean DL_RadiusIterator(subsector_t * subsector, fixed_t x, fixed_t y,
-						  fixed_t radius, boolean(*func) (lumobj_t *, fixed_t))
+						  fixed_t radius, boolean (*func) (lumobj_t *,
+														   fixed_t))
 {
 	lumcontact_t *con;
 	fixed_t dist;

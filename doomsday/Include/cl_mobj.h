@@ -44,7 +44,7 @@ void            Cl_Reset(void);
 void            Cl_DestroyClientMobjs();
 clmobj_t       *Cl_CreateMobj(thid_t id);
 void            Cl_DestroyMobj(clmobj_t * cmo);
-boolean         Cl_MobjIterator(boolean(*callback) (clmobj_t *, void *),
+boolean         Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *),
 								void *parm);
 void            Cl_PredictMovement(void);
 void            Cl_UnsetThingPosition(clmobj_t * cmo);

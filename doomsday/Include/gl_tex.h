@@ -85,21 +85,21 @@ int             GL_InitPalettedTexture(void);
 void            GL_DestroySkinNames(void);
 void            GL_ResetLumpTexData(void);
 void            GL_UpdateGamma(void);
-void            GL_DownMipmap32(byte * in, int width, int height, int comps);
+void            GL_DownMipmap32(byte *in, int width, int height, int comps);
 unsigned int    GL_BindTexFlat(struct flat_s *fl);
 void            GL_SetFlat(int idx);
 void            GL_BindTexture(DGLuint texname);
 void            GL_TextureFilterMode(int target, int parm);
 boolean         GL_IsColorKeyed(const char *path);
-boolean         GL_ColorKey(byte * color);
-void            GL_DoColorKeying(byte * rgbaBuf, int width);
+boolean         GL_ColorKey(byte *color);
+void            GL_DoColorKeying(byte *rgbaBuf, int width);
 void            GL_LowRes();
-void            PalIdxToRGB(byte * pal, int idx, byte * rgb);
-void            TranslatePatch(struct patch_s *patch, byte * transTable);
+void            PalIdxToRGB(byte *pal, int idx, byte *rgb);
+void            TranslatePatch(struct patch_s *patch, byte *transTable);
 void            GL_ConvertToLuminance(image_t * image);
 void            GL_ConvertToAlpha(image_t * image, boolean makeWhite);
-void            GL_ScaleBuffer32(byte * in, int inWidth, int inHeight,
-								 byte * out, int outWidth, int outHeight,
+void            GL_ScaleBuffer32(byte *in, int inWidth, int inHeight,
+								 byte *out, int outWidth, int outHeight,
 								 int comps);
 byte           *GL_LoadImage(image_t * img, const char *imagefn,
 							 boolean useModelPath);
@@ -120,7 +120,7 @@ DGLuint         GL_PrepareSky(int idx, boolean zeroMask);
 DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate);
 unsigned int    GL_PrepareSprite(int pnum, int spriteMode);
 void            GL_SetTexture(int idx);
-void            GL_GetSkyTopColor(int texidx, byte * rgb);
+void            GL_GetSkyTopColor(int texidx, byte *rgb);
 void            GL_SetSprite(int pnum, int spriteType);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void            GL_GetSpriteColor(int pnum, unsigned char *rgb);

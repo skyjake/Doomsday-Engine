@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.8  2004/05/29 18:19:59  skyjake
+// Refined indentation style
+//
 // Revision 1.7  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -83,7 +86,7 @@ void STlib_init(void)
 
 // ?
 void STlib_initNum(st_number_t * n, int x, int y, dpatch_t * pl, int *num,
-				   boolean * on, int width)
+				   boolean *on, int width)
 {
 	n->x = x;
 	n->y = y;
@@ -157,7 +160,7 @@ void STlib_updateNum(st_number_t * n, boolean refresh)
 
 //
 void STlib_initPercent(st_percent_t * p, int x, int y, dpatch_t * pl, int *num,
-					   boolean * on, dpatch_t * percent)
+					   boolean *on, dpatch_t * percent)
 {
 	STlib_initNum(&p->n, x, y, pl, num, on, 3);
 	p->p = percent;
@@ -172,7 +175,7 @@ void STlib_updatePercent(st_percent_t * per, int refresh)
 }
 
 void STlib_initMultIcon(st_multicon_t * i, int x, int y, dpatch_t * il,
-						int *inum, boolean * on)
+						int *inum, boolean *on)
 {
 	i->x = x;
 	i->y = y;
@@ -209,7 +212,7 @@ void STlib_updateMultIcon(st_multicon_t * mi, boolean refresh)
 }
 
 void STlib_initBinIcon(st_binicon_t * b, int x, int y, dpatch_t * i,
-					   boolean * val, boolean * on)
+					   boolean *val, boolean *on)
 {
 	b->x = x;
 	b->y = y;

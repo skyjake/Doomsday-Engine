@@ -47,7 +47,7 @@ action_t *ddactions = NULL;		// Pointer to the actions list.
 //===========================================================================
 // Con_DefineActions
 //===========================================================================
-void Con_DefineActions(action_t * acts)
+void Con_DefineActions(action_t *acts)
 {
 	// Store a pointer to the list of actions.
 	ddactions = acts;

@@ -133,27 +133,27 @@ void            STlib_init(void);
 
 // Number widget routines
 void            STlib_initNum(st_number_t * n, int x, int y, dpatch_t * pl,
-							  int *num, boolean * on, int width);
+							  int *num, boolean *on, int width);
 
 void            STlib_updateNum(st_number_t * n, boolean refresh);
 
 // Percent widget routines
 void            STlib_initPercent(st_percent_t * p, int x, int y,
-								  dpatch_t * pl, int *num, boolean * on,
+								  dpatch_t * pl, int *num, boolean *on,
 								  dpatch_t * percent);
 
 void            STlib_updatePercent(st_percent_t * per, int refresh);
 
 // Multiple Icon widget routines
 void            STlib_initMultIcon(st_multicon_t * mi, int x, int y,
-								   dpatch_t * il, int *inum, boolean * on);
+								   dpatch_t * il, int *inum, boolean *on);
 
 void            STlib_updateMultIcon(st_multicon_t * mi, boolean refresh);
 
 // Binary Icon widget routines
 
 void            STlib_initBinIcon(st_binicon_t * b, int x, int y, dpatch_t * i,
-								  boolean * val, boolean * on);
+								  boolean *val, boolean *on);
 
 void            STlib_updateBinIcon(st_binicon_t * bi, boolean refresh);
 
@@ -161,6 +161,9 @@ void            STlib_updateBinIcon(st_binicon_t * bi, boolean refresh);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/05/29 18:19:58  skyjake
+// Refined indentation style
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //
