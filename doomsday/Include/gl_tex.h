@@ -15,6 +15,8 @@ extern unsigned int	curtex;
 extern int		pallump;
 extern DGLuint	dltexname, glowtexname;	
 
+int				CeilPow2(int num);
+
 void			GL_InitTextureManager(void);
 void			GL_ShutdownTextureManager(void);
 void			GL_LoadSystemTextures(void);
