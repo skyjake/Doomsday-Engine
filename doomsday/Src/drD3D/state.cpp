@@ -14,6 +14,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DISABLE_STAGE(S) \
+	SetTSS(S, D3DTSS_COLOROP, D3DTOP_DISABLE); \
+	SetTSS(S, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+
 // TYPES -------------------------------------------------------------------
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
@@ -65,6 +69,7 @@ void InitState(void)
 
 	SetTSS(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 	SetTSS(1, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+	SetTSS(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
 
 	// Default state diagnose.
 #define DS(cn)	dev->GetRenderState(cn, &dw); DP(#cn" = 0x%x", dw);
@@ -147,7 +152,7 @@ void InitState(void)
 	DS(D3DRS_POSITIONORDER);
 	DS(D3DRS_NORMALORDER);
 
-	for(i = 0; i < caps.MaxTextureBlendStages; i++)
+	for(i = 0; (unsigned int) i < caps.MaxTextureBlendStages; i++)
 	{
 #undef DS
 #define DS(cn)	dev->GetTextureStageState(i, cn, &dw); DP("  " #cn " = 0x%x", dw)
@@ -189,6 +194,13 @@ int DG_Enable(int cap)
 {
 	switch(cap)
 	{
+	case DGL_TEXTURE0:
+	case DGL_TEXTURE1:
+		// Enable a texture unit.
+		ActiveTexture(cap - DGL_TEXTURE0);
+		TextureOperatingMode(DGL_TRUE);
+		break;
+
 	case DGL_TEXTURING:
 		TextureOperatingMode(DGL_TRUE);
 		break;
@@ -227,22 +239,13 @@ int DG_Enable(int cap)
 	case DGL_PALETTED_TEXTURES:
 		break;
 
-	case DGL_DETAIL_TEXTURE_MODE:
-		SetRS(D3DRS_TEXTUREFACTOR, 0xFF808080);
-
-		// S = (Arg0) * Arg1 + (1-Arg0) * Arg2.
-		SetTSS(0, D3DTSS_COLOROP, D3DTOP_LERP); // Lerp?! 
-		SetTSS(0, D3DTSS_COLORARG0, D3DTA_CURRENT);
-		SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-		SetTSS(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-				
-		// With this blending (0.5, 0.5, 0.5) means 'no change'.
-		SetRS(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
-		SetRS(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+	case DGL_TEXTURE_COMPRESSION:
+		// Sure, whatever...
 		break;
 
 	default:
 		// What was that all about?
+		Con_Error("DG_Enable: Unknown cap=0x%x\n", cap);
 		return DGL_FALSE;
 	}
 	// Enabling was successful.
@@ -256,6 +259,16 @@ void DG_Disable(int cap)
 {
 	switch(cap)
 	{
+	case DGL_TEXTURE0:
+	case DGL_TEXTURE1:
+		// Disable the texture unit.
+		ActiveTexture(cap - DGL_TEXTURE0);
+		TextureOperatingMode(DGL_FALSE);
+
+		// Implicit disabling of texcoord array.
+		DG_DisableArrays(0, 0, 1 << (cap - DGL_TEXTURE0));
+		break;
+	
 	case DGL_TEXTURING:
 		TextureOperatingMode(DGL_FALSE);
 		break;
@@ -294,15 +307,12 @@ void DG_Disable(int cap)
 	case DGL_PALETTED_TEXTURES:
 		break;
 
-	case DGL_DETAIL_TEXTURE_MODE:
-		SetTSS(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-		SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-		SetTSS(0, D3DTSS_COLORARG2, D3DTA_CURRENT);
-		SetRS(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-		SetRS(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+	case DGL_TEXTURE_COMPRESSION:
+		// Sure, whatever...
 		break;
 
 	default:
+		Con_Error("DG_Disable: Unknown cap=0x%x\n", cap);
 		break;
 	}
 }
@@ -335,6 +345,14 @@ int	DG_GetIntegerv(int name, int *v)
 		*v = maxTexSize;
 		break;
 
+	case DGL_MAX_TEXTURE_UNITS:
+		*v = maxTextures;
+		break;
+
+	case DGL_MODULATE_ADD_COMBINE:
+		*v = availMulAdd;
+		break;
+
 	case DGL_PALETTED_TEXTURES:
 		*v = DGL_TRUE;
 		break;
@@ -345,8 +363,8 @@ int	DG_GetIntegerv(int name, int *v)
 		break;
 
 	case DGL_POLY_COUNT:
-		*v = triCounter;
-		triCounter = 0;
+		*v = 0; /*triCounter;*/
+		//triCounter = 0;
 		break;
 
 	case DGL_SCISSOR_TEST:
@@ -389,6 +407,7 @@ int	DG_GetIntegerv(int name, int *v)
 		break;
 
 	default:
+		Con_Error("DG_GetIntegerv: Unknown name=0x%x\n", name);
 		return DGL_ERROR;
 	}
 	return DGL_OK;
@@ -405,7 +424,198 @@ int	DG_SetInteger(int name, int value)
 		hwnd = (HWND) value;
 		break;
 
+	case DGL_ACTIVE_TEXTURE:
+		// Change the currently active texture unit.
+		ActiveTexture(value);
+		break;
+
+	case DGL_GRAY_MIPMAP:
+		// Set gray mipmap contrast.
+		grayMipmapFactor = value/255.0f;
+		break;
+
+	case DGL_ENV_ALPHA:
+		// Set constant alpha color.
+		SetRS(D3DRS_TEXTUREFACTOR, 
+			D3DCOLOR_ARGB( MAX_OF(0, MIN_OF(value, 255)), 0, 0, 0 ));
+		break;
+
+	case DGL_MODULATE_TEXTURE:
+		StageIdentity();
+		ActiveTexture(0);
+		if(value == 0)
+		{
+			// No modulation: just replace with texture.
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+
+			DISABLE_STAGE(1);
+		}
+		else if(value == 1)
+		{
+			// Normal texture modulation with primary color.
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+			SetTSS(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+
+			DISABLE_STAGE(1);
+		}
+		else if(value == 2 || value == 3)
+		{	
+			// Texture modulation and interpolation.
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+			
+			SetTSS(1, D3DTSS_COLOROP, D3DTOP_BLENDFACTORALPHA);
+			SetTSS(1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+			SetTSS(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(1, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+			if(value == 2) 
+			{
+				// Modulate with diffuse color.
+				SetTSS(2, D3DTSS_COLOROP, D3DTOP_MODULATE);
+				SetTSS(2, D3DTSS_COLORARG1, D3DTA_DIFFUSE);
+				SetTSS(2, D3DTSS_COLORARG2, D3DTA_CURRENT);
+				SetTSS(2, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+				SetTSS(2, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+				DISABLE_STAGE(3);
+			}
+			else 
+			{
+				// Don't modulate with diffuse.
+				DISABLE_STAGE(2);
+			}
+		}
+		else if(value == 4)
+		{
+			// Apply sector light, dynamic light and texture.
+			// texAlpha * constRGB + 1 * prevRGB
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_MULTIPLYADD);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE | D3DTA_ALPHAREPLICATE);
+			SetTSS(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+			SetTSS(0, D3DTSS_COLORARG0, D3DTA_DIFFUSE);
+
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+			SetTSS(1, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			SetTSS(1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+
+			SetTSS(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+
+			DISABLE_STAGE(2);
+		}
+		else if(value == 5 || value == 10)
+		{
+			// Sector light * texture + dynamic light.
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+
+			SetTSS(1, D3DTSS_COLOROP, D3DTOP_MULTIPLYADD);
+			SetTSS(1, D3DTSS_COLORARG1, D3DTA_TEXTURE 
+				| (value == 5? D3DTA_ALPHAREPLICATE : 0));
+			SetTSS(1, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+			SetTSS(1, D3DTSS_COLORARG0, D3DTA_CURRENT);
+
+			SetTSS(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(1, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+			DISABLE_STAGE(2);
+		}
+		else if(value == 6)
+		{
+			// Simple dynlight addition (add to primary color).
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_MULTIPLYADD);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE | D3DTA_ALPHAREPLICATE);
+			SetTSS(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+			SetTSS(0, D3DTSS_COLORARG0, D3DTA_DIFFUSE);
+
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+			DISABLE_STAGE(1);
+		}
+		else if(value == 7)
+		{
+			// Dynlight addition without primary color.
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE | D3DTA_ALPHAREPLICATE);
+			SetTSS(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+			DISABLE_STAGE(1);
+		}
+		else if(value == 8 || value == 9)
+		{
+			// Texture and Detail.
+			if(value == 8)
+			{
+				SetTSS(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+				SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+				SetTSS(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+			}
+			else 
+			{
+				// Ignore diffuse color.
+				SetTSS(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+				SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			}
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+			SetTSS(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+			
+			SetTSS(1, D3DTSS_COLOROP, D3DTOP_MODULATE2X);
+			SetTSS(1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+			SetTSS(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(1, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+			DISABLE_STAGE(2);
+		}
+		else if(value == 11)
+		{
+			// Tex0: texture
+			// Tex1: shiny texture
+
+			SetTSS(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(1, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			SetTSS(1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			SetTSS(1, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+
+			SetTSS(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+			SetTSS(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			SetTSS(1, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
+
+			DISABLE_STAGE(2);
+		}
+		break;
+
+	case DGL_CULL_FACE:
+		SetRS(D3DRS_CULLMODE, value == DGL_CCW? D3DCULL_CCW : D3DCULL_CW);
+		break;			
+
 	default:
+		Con_Error("DG_SetInteger: Unknown name=0x%x\n", name);
 		return DGL_ERROR;
 	}
 	return DGL_OK;
@@ -420,8 +630,38 @@ char* DG_GetString(int name)
 	{
 	case DGL_VERSION:
 		return DRD3D_VERSION_FULL;
+
+	default:
+		Con_Error("DG_GetString: Unknown name=0x%x\n", name);
 	}
 	return NULL;
+}
+
+//===========================================================================
+// DG_SetFloatv
+//===========================================================================
+int DG_SetFloatv(int name, float *values)
+{
+	float color[4];
+	int i;
+
+	switch(name)
+	{
+	case DGL_ENV_COLOR:
+		for(i = 0; i < 4; i++) 
+		{
+			color[i] = values[i];
+			CLAMP01(color[i]);
+		}
+		SetRS(D3DRS_TEXTUREFACTOR, 
+			D3DCOLOR_COLORVALUE(color[0], color[1], color[2], color[3]));
+		break;
+
+	default:
+		Con_Error("DG_SetFloatv: Unknown name=0x%x\n", name);
+		return DGL_ERROR;
+	}
+	return DGL_OK;
 }
 
 //===========================================================================
@@ -457,6 +697,14 @@ void DG_Func(int func, int param1, int param2)
 
 	switch(func)
 	{
+	case DGL_BLENDING_OP:
+		SetRS(D3DRS_BLENDOP, 
+			  param1 == DGL_ADD? D3DBLENDOP_ADD
+			: param1 == DGL_SUBTRACT? D3DBLENDOP_SUBTRACT
+			: param1 == DGL_REVERSE_SUBTRACT? D3DBLENDOP_REVSUBTRACT
+			: D3DBLENDOP_ADD);
+		break;
+
 	case DGL_BLENDING:
 		if(param1 >= DGL_ZERO && param1 <= DGL_SRC_ALPHA_SATURATE &&
 			param2 >= DGL_ZERO && param2 <= DGL_SRC_ALPHA_SATURATE)
@@ -478,6 +726,9 @@ void DG_Func(int func, int param1, int param2)
 			SetRS(D3DRS_ALPHAREF, param2);
 		}
 		break;
+
+	default:
+		Con_Error("DG_Func: Unknown func=0x%x\n", func);
 	}
 }
 
@@ -515,6 +766,9 @@ void DG_Fog(int pname, float param)
 			SetRS(D3DRS_FOGCOLOR, D3DCOLOR_XRGB(col[CR], col[CG], col[CB]));
 		}
 		break;
+
+	default:
+		Con_Error("DG_Fog: Unknown pname=0x%x\n", pname);
 	}
 }
 
