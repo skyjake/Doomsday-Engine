@@ -609,6 +609,15 @@ int Net_TimeDelta(byte now, byte then)
 
 //===========================================================================
 // Net_GetTicCmd
+//	This is a bit complicated and quite possibly unnecessarily so. The 
+//	idea is, however, that because the ticcmds sent by clients arrive in 
+//	bursts, we'll preserve the motion by 'executing' the commands in the
+//	same order in which they were generated. If the client's connection
+//	lags a lot, the difference between the serverside and clientside 
+//	positions will be *large*, especially when the client is running.
+//	If too many commands are buffered, the client's coord announcements
+//	will be processed before the actual movement commands, resulting in 
+//	serverside warping (which is perceived by all other clients).
 //===========================================================================
 int Net_GetTicCmd(void *pCmd, int player)
 {
@@ -1034,6 +1043,17 @@ int CCmdConnect(int argc, char **argv)
 		Con_Printf("If a port is not specified port zero will be used.\n");
 		return true;
 	}
+	if(isDedicated)
+	{
+		Con_Printf("Not allowed.\n");
+		return false;
+	}
+	if(netgame)
+	{
+		Con_Printf("Already connected.\n");
+		return false;
+	}
+
 	strcpy(buf, argv[1]);
 	// If there is a port specified in the address, use it.
 	if((ptr = strrchr(buf, ':')))
@@ -1055,14 +1075,14 @@ int CCmdConnect(int argc, char **argv)
 	Con_Message("");
 
 	// Make sure TCP/IP is active.
-	N_Shutdown();
-	if(!N_Init(JTNET_SERVICE_TCPIP))
+	N_ShutdownService();
+	if(!N_InitService(JTNET_SERVICE_TCPIP))
 	{
 		Con_Message("TCP/IP not available.\n");
 		goto endConnect;
 	}
 
-	Con_Message("Attempting to connect to %s (port %i)...\n", buf, port);
+	Con_Message("Connecting to %s (port %i)...\n", buf, port);
 	
 	for(startTime = Sys_GetSeconds(); 
 		Sys_GetSeconds() - startTime < net_connecttimeout; 

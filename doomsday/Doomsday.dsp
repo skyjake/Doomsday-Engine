@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 libpng.lib libz.lib fmodvc.lib lzss.lib jtnet2.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386 /libpath:"./Bin/Release"
+# ADD LINK32 wsock32.lib libpng.lib libz.lib fmodvc.lib lzss.lib jtnet2.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386 /libpath:"./Bin/Release"
 # SUBTRACT LINK32 /profile /debug
 
 !ELSEIF  "$(CFG)" == "Doomsday - Win32 Debug"
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 libz.lib libpngd.lib fmodvc.lib jtnet2.lib dsound.lib dinput.lib dxguid.lib lzss.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /version:1.0 /subsystem:windows /debug /machine:I386 /libpath:"./Bin/Debug"
+# ADD LINK32 wsock32.lib libz.lib libpngd.lib fmodvc.lib jtnet2.lib dsound.lib dinput.lib dxguid.lib lzss.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /version:1.0 /subsystem:windows /debug /machine:I386 /libpath:"./Bin/Debug"
 # SUBTRACT LINK32 /profile /nodefaultlib
 
 !ENDIF 
@@ -219,11 +219,19 @@ SOURCE=.\Src\sys_input.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\sys_master.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\sys_mixer.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\Src\sys_network.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Src\sys_sock.c
 # End Source File
 # Begin Source File
 
@@ -720,7 +728,15 @@ SOURCE=.\Include\sys_input.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Include\sys_master.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\sys_network.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\sys_sock.h
 # End Source File
 # Begin Source File
 

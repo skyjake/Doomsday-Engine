@@ -131,6 +131,7 @@ typedef struct
 {
 	char		text[256];
 	int			data;
+	int			data2;
 } 
 uidata_listitem_t;
 

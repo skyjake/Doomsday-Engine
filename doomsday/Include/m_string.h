@@ -16,9 +16,13 @@ void Str_Free(ddstring_t *ds);
 void Str_Clear(ddstring_t *ds);
 void Str_Set(ddstring_t *ds, const char *text);
 void Str_Append(ddstring_t *ds, const char *append_text);
+void Str_PartAppend(ddstring_t *dest, const char *src, int start, int count);
 void Str_Prepend(ddstring_t *ds, const char *prepend_text);
 int Str_Length(ddstring_t *ds);
 char *Str_Text(ddstring_t *ds);
 void Str_Copy(ddstring_t *dest, ddstring_t *src);
+void Str_StripLeft(ddstring_t *ds);
+void Str_StripRight(ddstring_t *ds);
+void Str_Strip(ddstring_t *ds);
 
 #endif

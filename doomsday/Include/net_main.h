@@ -234,9 +234,6 @@ extern int resend_start;			// set when server needs our tics
 extern int resend_count;
 extern int gametime, oldentertics;
 extern int num_clmobjs;
-extern char *serverName, *serverInfo, *playerName;
-extern char *masterAddress;
-extern int masterPort;
 extern boolean masterAware;
 extern int netgame;
 extern int consoleplayer;

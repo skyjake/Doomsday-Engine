@@ -363,6 +363,7 @@ cvar_t engineCVars[] =
 	"net-serial-flowctrl",	0,			CVT_INT,	&nptSerialFlowCtrl, 0, 4, "0=None, 1=XON/XOFF, 2=RTS, 3=DTR, 4=RTS/DTR flow control.",
 	"net-master-address",	0,			CVT_CHARPTR, &masterAddress, 0, 0,	"Master server IP address / name.",
 	"net-master-port",		0,			CVT_INT,	&masterPort,	0, 65535, "Master server TCP/IP port.",
+	"net-master-path",		0,			CVT_CHARPTR, &masterPath,	0, 0,	"Master server path name.",
 	"net-queue-packets",	0,			CVT_INT,	&maxQueuePackets, 0, 16, "Max packets in send queue.",
 
 	// Sound

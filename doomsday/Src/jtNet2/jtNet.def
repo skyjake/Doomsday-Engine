@@ -31,13 +31,4 @@ EXPORTS
 	jtNetSetString			@111
 	jtNetSetCallback		@112
 	jtNetSetData			@113
-
-	jtNetOpenMaster			@120
-	jtNetCloseMaster		@121
-	jtNetConnectMaster		@122
-	jtNetDisconnectMaster	@123
-	jtNetUpdateServerInfo	@124
-	jtNetMasterHandler		@125
-	jtNetMasterGetServer	@126
-	jtNetConnectIdx			@127
 	

@@ -40,6 +40,7 @@ float		M_BoundingBoxDiff(float in[4], float out[4]);
 // Text utilities.
 char *		M_SkipWhite(char *str);
 char *		M_FindWhite(char *str);
+char *		M_SkipLine(char *str);
 void		M_WriteCommented(FILE *file, char *text);
 void		M_WriteTextEsc(FILE *file, char *text);
 boolean		M_IsComment(char *text);

@@ -1,4 +1,7 @@
-// Only DirectX 6 compatible (needs DirectPlay4).
+/* $Id$
+ * Soon to be deprecated and replaced by plain TCP/UDP.
+ * Only DirectX 6 compatible (needs DirectPlay4).
+ */
 
 #include "jtNet.h"
 #include "jtNetEx.h"
@@ -456,9 +459,6 @@ void jtNetShutdown()
 
 	if(debugfile) fclose(debugfile);
 
-	jtNetCloseMaster();
-	masterConnection = JTNET_ERROR_UNAVAILABLE;
-
 	if(dPLobby) dPLobby->Release();
 	if(dPlay) 
 	{
@@ -866,8 +866,6 @@ const char *jtNetGetString(int strid)
 	case JTNET_APPLICATION_NAME:
 		return appName;
 		break;
-	case JTNET_MASTER_ADDRESS:
-		return masterAddress;
 	}
 	return "";
 }
@@ -890,9 +888,6 @@ int jtNetSetString(int strid, char *value)
 		break;
 	case JTNET_APPLICATION_NAME:
 		strcpy(appName, value);
-		break;
-	case JTNET_MASTER_ADDRESS:
-		strcpy(masterAddress, value);
 		break;
 	default:
 		return false;
@@ -948,9 +943,6 @@ int jtNetSetInteger(int intid, int value)
 	case JTNET_SERVER_DATA3:
 		serverData[2] = value;
 		break;
-	case JTNET_MASTER_PORT:
-		masterPort = value;
-		break;
 	default:
 		return false;
 	}
@@ -1001,12 +993,6 @@ int jtNetGetInteger(int id)
 		return jtPlrNum(thisPlrId);
 	case JTNET_MY_PLAYER_ID:
 		return thisPlrId;
-	case JTNET_MASTER_PORT:
-		return masterPort;
-	case JTNET_MASTER_CONNECTION:
-		return masterConnection;
-	case JTNET_EVENT_SERVERLIST_RECEIVED:
-		return listReceived;
 	case JTNET_BANDWIDTH:
 		return caps.dwHundredBaud * 100;
 	case JTNET_EST_LATENCY:

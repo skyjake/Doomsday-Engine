@@ -98,17 +98,6 @@ SOURCE=.\Src\jtNet2\jtNet.cpp
 # Begin Source File
 
 SOURCE=.\Src\jtNet2\jtNet.def
-
-!IF  "$(CFG)" == "jtNet2 - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "jtNet2 - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=.\Src\jtNet2\master.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"

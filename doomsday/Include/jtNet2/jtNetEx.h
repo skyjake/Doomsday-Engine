@@ -1,5 +1,7 @@
-// The exported functions of the jtNet DLL + other stuff.
-
+/* $Id$
+ * The exported functions of the jtNet DLL + other stuff.
+ * jtNet is about to be deprecated soon.
+ */
 #ifndef __JNET_EXP_H__
 #define __JNET_EXP_H__
 
@@ -78,8 +80,6 @@ enum
 
 	JTNET_SERVICE,
 
-	JTNET_MASTER_CONNECTION,	// State of the connection to the master.
-
 	JTNET_EVENT_SERVERLIST_RECEIVED,	// True when the list is available.
 
 	JTNET_BANDWIDTH,
@@ -153,37 +153,6 @@ int jtNetSetCallback(int id, void *ptr);
 
 int jtNetSetData(int id, void *ptr, int size);
 int jtNetGetData(int id, int index, void *ptr, int size);
-
-// Creates the master session and the master player.
-// Servers and clients can connect after this.
-// Only called by the master lobby program.
-int jtNetOpenMaster(void);
-void jtNetCloseMaster(void);
-
-// Enter the lobby. If the local player is a serverplayer, the server's
-// name and description strings and player counts are included.
-int jtNetConnectMaster(void);
-
-// Disconnect from the master server.
-int jtNetDisconnectMaster(void);
-
-// Called by servers to update their data on the master.
-void jtNetUpdateServerInfo(void);
-
-// If the buffer is NULL, the list of servers is enumerated and
-// the number of servers is returned. The caller can then retrieve 
-// the data for each server by calling this function with indices 
-// beginning from zero until JTNET_ERROR_BAD_INDEX is returned.
-int jtNetMasterGetServer(int index, jtnetserver_t *buffer);
-
-// Try to connect to a server on the list of servers retrieved 
-// from the master.
-int jtNetConnectIdx(int index);
-
-// Handles the messages received by the master. Called periodically by 
-// the master lobby program and the client (while retrieving data from
-// the master).
-void jtNetMasterHandler(void);
 
 #ifdef __cplusplus
 }

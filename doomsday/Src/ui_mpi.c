@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_system.h"
 #include "de_network.h"
 #include "de_console.h"
 #include "de_ui.h"
@@ -222,10 +223,10 @@ void MPISetupProtocol(ui_object_t *ob)
 	nptSerialFlowCtrl = lst_flow.selection;
 	
 	// Shut down the previous active service provider.
-	if(netAvailable) N_Shutdown();
+	N_ShutdownService();
 
 	// Init with new provider, return to previous page if successful.
-	if(N_Init(lstit_protocols[nptActive].data))
+	if(N_InitService(lstit_protocols[nptActive].data))
 	{
 		// Show and hide the appropriate objects on the Client Setup page.
 		UI_FlagGroup(ob_client, 1, UIF_HIDDEN, nptActive != 0);
@@ -256,13 +257,13 @@ void MPISearch(ui_object_t *ob)
 	// Make sure the search address is right.
 	if(nptActive == 0 || nptActive == 2)
 	{
-		if(netAvailable) N_Shutdown();
+		N_ShutdownService();
 		// Update the proper variable.
 		if(nptActive == 0) 
 			Con_SetString("net-ip-address", str_ipaddr);
 		if(nptActive == 2)
 			Con_SetString("net-modem-phone", str_phone);
-		N_Init(lstit_protocols[nptActive].data);
+		N_InitService(lstit_protocols[nptActive].data);
 	}
 }
 
@@ -270,8 +271,8 @@ void MPISearch(ui_object_t *ob)
 void MPIUpdateFound(ui_object_t *ob)
 {
 	static int counter = 0;
-	jtnetserver_t *buffer, info;
-	int num, i;
+	jtnetserver_t *buffer;
+	int num, i, k;
 
 	// Call list ticker.
 	UIList_Ticker(ob);
@@ -317,21 +318,34 @@ void MPIUpdateFound(ui_object_t *ob)
 		}
 		UI_InitColumns(ob);		
 	}
+
 	if(retrieving && N_MADone())
 	{
+		serverinfo_t info;
+
+		// The list has been retrieved.
 		retrieving = false;
 		masterlist = true;
-		for(i = 0; i < MAX_FOUND; i++)
+		num = N_MasterGet(0, 0);
+		for(i = 0, k = 0; i < num && k < MAX_FOUND; i++)
 		{
-			if(jtNetMasterGetServer(i, &info) != JTNET_OK) break;
-			sprintf(lstit_found[i].text, "%s\t%s\t%s\t%i/%i Players\t%s",
-				info.app, info.name, info.description,
-				info.players, info.maxPlayers,
-				info.canJoin? "Open" : "Closed");
-			lstit_found[i].data = info.data[0];
+			N_MasterGet(i, &info);
+			
+			// Is this suitable?
+			if(info.version != DOOMSDAY_VERSION
+				|| stricmp(info.game, gx.Get(DD_GAME_ID))
+				|| !info.canJoin) continue;
+
+			sprintf(lstit_found[k].text, "%s\t%s\t%s\t%i/%i Players\tv%i",
+				info.name, info.description, info.map,
+				info.players, info.maxPlayers, info.version);
+			lstit_found[k].data = info.data[0];
+			// Connection will be formed using this index.
+			lstit_found[k].data2 = i;
+			k++;
 		}
-		lst_found.count = i;
-		UI_FlagGroup(ob_client, 4, UIF_DISABLED, !i);
+		lst_found.count = k;
+		UI_FlagGroup(ob_client, 4, UIF_DISABLED, !k);
 		UI_InitColumns(ob);
 	}
 }
@@ -350,12 +364,9 @@ void MPIRetrieve(ui_object_t *ob)
 	// Update master settings.
 	Con_SetString("net-master-address", str_masterip);
 	masterPort = atoi(str_masterport);
-	// Connect and get the list.
-	N_MAPost(mac_connect);
-	N_MAPost(mac_check_connection);
-	N_MAPost(mac_get_servers);
-	N_MAPost(mac_wait_servers);
-	N_MAPost(mac_disconnect);
+	// Get the list.
+	N_MAPost(MAC_REQUEST);
+	N_MAPost(MAC_WAIT);
 }
 
 void MPIConnect(ui_object_t *ob)
@@ -363,7 +374,8 @@ void MPIConnect(ui_object_t *ob)
 	char buf[80];
 
 	sprintf(buf, "net %sconnect %i", masterlist? "m" : "", 
-		lst_found.selection);
+		masterlist? lstit_found[lst_found.selection].data2 
+		: lst_found.selection);
 	if(Con_Execute(buf, false))
 	{
 		// Success.

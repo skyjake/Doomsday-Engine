@@ -61,6 +61,7 @@ void Sys_Init(void)
 	Sys_InitTimer();
 	Sys_InitMixer();
 	S_Init();
+	N_Init();
 }
 
 //==========================================================================

@@ -30,6 +30,7 @@ void Sv_FixLocalAngles();
 void Sv_Ticker(void);
 int Sv_Latency(byte cmdtime);
 void Sv_Kick(int who);
+int Sv_GetNumPlayers(void);
 
 // sv_pool.c
 void Sv_InitPools(void);

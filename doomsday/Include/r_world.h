@@ -7,6 +7,7 @@
 // Map Info flags.
 #define MIF_FOG				0x1		// Fog is used in the level.
 
+const char *R_GetCurrentLevelID(void);
 void R_SetupLevel(char *level_id, int flags);
 void R_SetupFog(void);
 void R_SetupSky(void);

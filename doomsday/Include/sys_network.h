@@ -12,12 +12,9 @@
 // If a master action fails, the action queue is emptied.
 typedef enum 
 {
-	mac_connect,			// Connect to master.
-	mac_check_connection,	// Wait for the connection to form.
-	mac_disconnect,			// Disconnect from master.
-	mac_get_servers,		// Retrieve the list of servers from the master.
-	mac_wait_servers,		// Wait for the server list to arrive.
-	mac_list_servers		// Print the server list in the console.
+	MAC_REQUEST,	// Retrieve the list of servers from the master.
+	MAC_WAIT,		// Wait for the server list to arrive.
+	MAC_LIST		// Print the server list in the console.
 } masteraction_t;
 
 extern boolean netAvailable;
@@ -35,8 +32,17 @@ extern int nptSerialStopBits;
 extern int nptSerialParity;
 extern int nptSerialFlowCtrl;
 
-int N_Init(int sp);
+extern char *serverName, *serverInfo, *playerName;
+extern int serverData[];
+
+extern char *masterAddress;
+extern int masterPort;
+extern char *masterPath;
+
+void N_Init();
 void N_Shutdown();
+int N_InitService(int sp);
+void N_ShutdownService();
 void N_Ticker(void);
 void N_SendPacket(int flags);
 boolean N_GetPacket();

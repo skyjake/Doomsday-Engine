@@ -1617,6 +1617,9 @@ void Draw_TeleportIcon(void)
 	// page flipping (progress bar!).
 	int i;
 
+	// Dedicated servers don't draw anything.
+	if(IS_DEDICATED) return;
+
 	for(i = 0; i < 2; i++)
 	{
 		gl.Clear(DGL_COLOR_BUFFER_BIT);

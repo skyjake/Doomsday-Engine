@@ -10,6 +10,8 @@
 #include "sys_file.h"
 #include "sys_input.h"
 #include "sys_network.h"
+#include "sys_sock.h"
+#include "sys_master.h"
 #include "sys_timer.h"
 #include "sys_mixer.h"
 #include "sys_stwin.h"

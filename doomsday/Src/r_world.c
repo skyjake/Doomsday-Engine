@@ -36,6 +36,8 @@ void R_PrepareSubsector(subsector_t *sub);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+char currentLevelId[64];
+
 sectorinfo_t *secinfo;
 vertexowner_t *vertexowners;
 nodeindex_t *linelinks;			// indices to roots
@@ -1004,6 +1006,7 @@ void R_SetupLevel(char *level_id, int flags)
 	}
 
 	Con_InitProgress("Setting up level...", 100);
+	strcpy(currentLevelId, level_id);
 
 	// First compose the vertex owners array.
 	R_InitVertexOwners();
@@ -1171,4 +1174,12 @@ void R_UpdatePlanes(void)
 				(sin->linkedceiling, false)->ceilingheight);
 		}
 	}
+}
+
+//===========================================================================
+// R_GetCurrentLevelID
+//===========================================================================
+const char *R_GetCurrentLevelID(void)
+{
+	return currentLevelId;
 }

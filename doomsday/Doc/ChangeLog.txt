@@ -4,6 +4,25 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.7.8
+-------------
++ new master server mechanism (uses HTTP)
++ cvar net-master-path (default: "/master.php"): location of the master
+  server at 'net-master-address' (default: "www.doomsdayhq.com")
++ cmd "net announce": send a server announcement to the master (if 
+  server-public is nonzero, announcements are made automatically at two
+  minute intervals)
+* cvar net-master-port (default: 0): usually zero or 80
+* clientside player coords override serverside coords under normal
+  circumstances (maxdif checks removed)
+
+jHexen:
+- fixed: dedicated server tried to draw teleport gfx and crashed
+
+jtNet2:
+- old master server stuff removed
+
+
 Version 1.7.7
 -------------
 + switch texture pairs (SW1/SW2) are precached at the same time

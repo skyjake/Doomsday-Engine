@@ -43,8 +43,8 @@ Version number rules: (major).(minor).(revision)
 
 // Version constant. Use this to verify in the DLL that the engine
 // is new enough. 
-#define DOOMSDAY_VERSION		10707
-#define DOOMSDAY_VERSION_TEXT	"1.7.7"
+#define DOOMSDAY_VERSION		10708
+#define DOOMSDAY_VERSION_TEXT	"1.7.8"
 
 #define DDMAXPLAYERS			16
 
@@ -955,14 +955,18 @@ enum
 	DDWE_DEMO_END				// Demo playback ends.
 };
 
-// Note: this is identical to jtNet's jtnetserver_t.
 typedef struct
 {
+	int		version;
 	char	name[64];
 	char	description[128];
 	int		players, maxPlayers;
 	int		canJoin;
 	int		data[3];
+	char	address[64];
+	int		port;
+	char	game[64];
+	char	map[64];
 } serverinfo_t;
 
 typedef struct

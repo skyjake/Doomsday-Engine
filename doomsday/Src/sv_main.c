@@ -14,6 +14,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define MASTER_HEARTBEAT	120 // seconds
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -551,21 +553,24 @@ void Sv_Kick(int who)
 	//players[who].ingame = false;
 }
 
+//===========================================================================
+// Sv_Ticker
+//===========================================================================
 void Sv_Ticker(void)
 {
 	int i;
 
 	if(netgame)
 	{
-		// Update master every 3 minutes.
+		// Update master every 2 minutes.
 		if(masterAware && jtNetGetInteger(JTNET_SERVICE) == 
-			JTNET_SERVICE_TCPIP && !(systics % (180*TICRATE)))
+			JTNET_SERVICE_TCPIP && !(systics % (MASTER_HEARTBEAT*TICRATE)))
 		{
-			jtNetUpdateServerInfo();
+			N_MasterAnnounceServer(true);
 		}
 	}
 	// Note last angles for all players.
-	for(i=0; i<MAXPLAYERS; i++)
+	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		if(!players[i].ingame || !players[i].mo) continue;
 		players[i].lastangle = players[i].mo->angle;
@@ -573,9 +578,27 @@ void Sv_Ticker(void)
 	Sv_PoolTicker();
 }
 
-//========================================================================
+//===========================================================================
+// Sv_GetNumPlayers
+//	Returns the number of players in the game.
+//===========================================================================
+int Sv_GetNumPlayers(void)
+{
+	int i, count;
+
+	// Clients can't count.
+	if(isClient) return 1;
+
+	for(i = count = 0; i < MAXPLAYERS; i++)
+	{
+		if(players[i].ingame && players[i].mo) count++;
+	}
+	return count;
+}
+
+//===========================================================================
 // CCmdLogout
-//========================================================================
+//===========================================================================
 int CCmdLogout(int argc, char **argv)
 {
 	// Only servers can execute this command.
@@ -590,3 +613,4 @@ int CCmdLogout(int argc, char **argv)
 	net_remoteuser = 0;
 	return true;
 }
+

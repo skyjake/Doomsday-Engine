@@ -3,11 +3,13 @@
 //**
 //** SYS_NETWORK.C
 //**
-//** Must rewrite to use DirectPlay 8!
+//** Must rewrite to use TCP/UDP.
 //**
 //**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <winsock.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -23,8 +25,6 @@
 
 #define LFID_NONE			-1
 #define DCN_MISSING_NODE	-10
-
-#define DEFAULT_MASTER_PORT	10123	
 
 #define MASTER_QUEUE_LEN	16
 
@@ -50,6 +50,9 @@ char		*serverName = "Doomsday";
 char		*serverInfo = "Multiplayer game server";
 char		*playerName = "Player";
 
+// Some parameters passed to master server.
+int			serverData[3];
+
 // Settings for the various network protocols.
 int			nptActive = 0;
 // TCP/IP.
@@ -65,9 +68,10 @@ int			nptSerialStopBits = 0;
 int			nptSerialParity = 0;
 int			nptSerialFlowCtrl = 4;
 
-// Master server info.
-char		*masterAddress = "137.226.156.135"; // SailorSat's master.
-int			masterPort = 0; //DEFAULT_MASTER_PORT;		
+// Master server info. Hardcoded defaults.
+char		*masterAddress = "www.doomsdayhq.com"; 
+int			masterPort = 0; // Uses 80 by default.
+char		*masterPath = "/master.php";
 boolean		masterAware = false;		
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -182,30 +186,30 @@ int N_GetServerData(void *data, int size)
 }
 
 //===========================================================================
-// N_Init
+// N_InitService
 //	Initialize the driver. Returns true if successful.
 //	'sp' must be one of the jtNet server provider constants.
 //===========================================================================
-int N_Init(int sp)
+int N_InitService(int sp)
 {
 	int		i;
 
 	// Clear the last frame message IDs.
-	for(i=0; i<MAXPLAYERS; i++) lastFrameId[i] = LFID_NONE;
+	for(i = 0; i < MAXPLAYERS; i++) lastFrameId[i] = LFID_NONE;
 
 	i = jtNetInit(sp);
 	if(i == JTNET_ERROR_ALREADY_INITIALIZED) 
 	{
-		Con_Message("N_Init: Network driver already initialized.\n");
+		Con_Message("N_InitService: Network driver already initialized.\n");
 		return true;
 	}
 	if(i != JTNET_ERROR_OK)
 	{
-		Con_Printf("N_Init: Failed, error code %i.\n", i);
+		Con_Printf("N_InitService: Failed, error code %i.\n", i);
 		return false;
 	}
 
-	Con_Printf("N_Init: %s initialized.\n", N_GetProtocolName());
+	Con_Printf("N_InitService: %s initialized.\n", N_GetProtocolName());
 
 	netAvailable = true;
 
@@ -255,18 +259,39 @@ int N_Init(int sp)
 }
 
 //===========================================================================
+// N_ShutdownService
+//===========================================================================
+void N_ShutdownService(void)
+{
+	if(!netAvailable) return;
+	if(netgame)
+	{
+		Con_Execute(isServer? "net server close" : "net disconnect", true);
+	}
+	netgame = false;
+	netAvailable = false;
+	jtNetShutdown();
+}
+
+//===========================================================================
+// N_Init
+//	Initialize the low-level network subsystem.
+//===========================================================================
+void N_Init(void)
+{
+	N_SockInit();
+	N_MasterInit();
+}
+
+//===========================================================================
 // N_Shutdown
 //	Shut down the low-level network interface.
 //===========================================================================
 void N_Shutdown()
 {
-	if(netgame)
-	{
-		Con_Execute(isServer? "net server close" : "net disconnect", true);
-	}
-	netAvailable = false;
-	netgame = false;
-	jtNetShutdown();
+	N_ShutdownService();
+	N_MasterShutdown();
+	N_SockShutdown();
 }
 
 // Send the data in the doomcom databuffer.
@@ -379,6 +404,9 @@ void N_ServerStart(boolean before)
 		jtNetSetString(JTNET_SERVER_INFO, serverInfo);
 		jtNetSetString(JTNET_NAME, playerName);
 		jtNetSetInteger(JTNET_SERVER_DATA1, W_CRCNumber());
+
+		// Update the server data parameters.
+		serverData[0] = W_CRCNumber();
 	}
 	else
 	{
@@ -391,8 +419,7 @@ void N_ServerStart(boolean before)
 		if(masterAware && jtNetGetInteger(JTNET_SERVICE) == 
 			JTNET_SERVICE_TCPIP)
 		{
-			N_MAPost(mac_connect);
-			N_MAPost(mac_check_connection);
+			N_MasterAnnounceServer(true);
 		}
 	}
 }
@@ -404,10 +431,9 @@ void N_ServerClose(boolean before)
 		if(masterAware && jtNetGetInteger(JTNET_SERVICE) == 
 			JTNET_SERVICE_TCPIP)
 		{
-			Con_Message("Disconnecting from master.\n");
-			// Bye-bye, master server.
-			jtNetDisconnectMaster();
 			N_MAClear();
+			// Bye-bye, master server.
+			N_MasterAnnounceServer(false);
 		}
 		if(gx.NetServerStop) gx.NetServerStop(true);
 		Net_StopGame();
@@ -458,95 +484,53 @@ void N_Disconnect(boolean before)
 	}
 }
 
-// Handle low-level net tick stuff.
+//===========================================================================
+// N_Ticker
+//	Handle low-level net tick stuff: communication with the master server.
+//===========================================================================
 void N_Ticker(void)
 {
 	masteraction_t act;
-	jtnetserver_t info;
-	int	i;
+	int	i, num;
 
-	if(!netAvailable) return;
+//	if(!netAvailable) return;
 
 	// Is there a master action to worry about?
 	if(N_MAGet(&act))
 	{
 		switch(act)
 		{
-		case mac_connect:
-			Con_Message( "Connecting to master...\n");
-			jtNetSetString(JTNET_MASTER_ADDRESS, masterAddress);
-			jtNetSetInteger(JTNET_MASTER_PORT, masterPort);
-			
-			// This'll begin the process.
-			i = jtNetConnectMaster();
-			if(i != JTNET_ERROR_PLEASE_WAIT && i != JTNET_OK)
-			{
-				Con_Message( "Failure!\n");
-				N_MAClear();
-				break;
-			}
-			// Remove this action and move onto the next one.
-			N_MARemove();
-			break;
-			
-		case mac_check_connection:
-			i = jtNetGetInteger(JTNET_MASTER_CONNECTION);
-			if(i == JTNET_OK)
-			{
-				// Connection has been formed.
-				Con_Message( "Connected to master at %s:%i.\n",
-					masterAddress, masterPort);
-				N_MARemove();
-			}
-			else if(i != JTNET_ERROR_PLEASE_WAIT)
-			{
-				Con_Message( "Failed to connect to master at %s:%i.\n", 
-					masterAddress, masterPort);
-				// Cancel all other actions.
-				N_MAClear();
-			}
-			break;
-
-		case mac_disconnect:
-			Con_Message("Disconnecting from master.\n");
-			jtNetDisconnectMaster();
-			N_MARemove();
-			break;
-
-		case mac_get_servers:
+		case MAC_REQUEST:
 			// Send the request for servers.
-			Con_Message( "Requesting a list of servers.\n");
-			if((i=jtNetMasterGetServer(0, NULL)) != JTNET_OK)
-			{
-				Con_Message( "Failure! Return code: %i.\n", i);
-				N_MAClear();
-				break;
-			}
+			N_MasterRequestList();
 			N_MARemove();					
 			break;
 
-		case mac_wait_servers:
+		case MAC_WAIT:
 			// Handle incoming messages.
-			jtNetMasterHandler();
-			if(jtNetGetInteger(JTNET_EVENT_SERVERLIST_RECEIVED))
+			if(N_MasterGet(0, 0) >= 0)
 			{
 				// The list has arrived!
-				Con_Message("Server list received.\n");
 				N_MARemove();
 			}
 			break;
 
-		case mac_list_servers:
-			for(i=0; ; i++)
+		case MAC_LIST:
+			Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n", "Name:");
+			num = i = N_MasterGet(0, 0);
+			while(--i >= 0)
 			{
-				if(jtNetMasterGetServer(i, &info) != JTNET_OK) break;
-				if(!i) Con_Printf("    %-20s P/M  L Description:\n", "Name:");
-				Con_Printf("%-2d: %-20s %d/%-2d %c %s\n", i, info.name,
+				serverinfo_t info;
+				N_MasterGet(i, &info);
+				Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", 
+					i, info.name,
 					info.players, info.maxPlayers,
-					info.canJoin? ' ':'*',
+					info.canJoin? ' ':'*', info.version, info.game,
+					info.address, info.port);
+				Con_Printf("    %s (%x) %s\n", info.map, info.data[0], 
 					info.description);
 			}
-			Con_Printf( "%i server%s found.\n", i, i!=1? "s were" : " was");
+			Con_Printf("%i server%s found.\n", num, num!=1? "s were" : " was");
 			N_MARemove();			
 			break;
 		}
@@ -574,6 +558,14 @@ int CCmdNet(int argc, char **argv)
 			N_Shutdown();
 			Con_Printf( "Network shut down.\n");
 		}
+		else if(!stricmp(argv[1], "announce"))
+		{
+			N_MasterAnnounceServer(true);
+		}
+		else if(!stricmp(argv[1], "request"))
+		{
+			N_MasterRequestList();
+		}			
 		else if(!stricmp(argv[1], "modems"))
 		{
 			int num;
@@ -620,17 +612,9 @@ int CCmdNet(int argc, char **argv)
 		}
 		else if(!stricmp(argv[1], "servers")) 
 		{
-/*			if(isServer)
-			{
-				Con_Printf( "'net servers' is only for clients.\n");
-				return false;
-			}*/
-			N_MAPost(mac_connect);
-			N_MAPost(mac_check_connection);
-			N_MAPost(mac_get_servers);
-			N_MAPost(mac_wait_servers);
-			N_MAPost(mac_list_servers);
-			N_MAPost(mac_disconnect);
+			N_MAPost(MAC_REQUEST);
+			N_MAPost(MAC_WAIT);
+			N_MAPost(MAC_LIST);
 		}
 		else if(!stricmp(argv[1], "players"))
 		{
@@ -733,7 +717,7 @@ int CCmdNet(int argc, char **argv)
 			}
 
 			// Initialization.
-			success = N_Init(sp);
+			success = N_InitService(sp);
 			if(success)
 				Con_Message( "Network initialization OK.\n");
 			else
@@ -789,14 +773,13 @@ int CCmdNet(int argc, char **argv)
 				return false;
 			}
 		}
-		else if(!stricmp(argv[1], "connect") 
-			|| !stricmp(argv[1], "mconnect"))
+		else if(!stricmp(argv[1], "connect"))
 		{	
 			int idx;
 
 			if(netgame)
 			{
-				Con_Printf( "This client is already connected.\n");
+				Con_Printf("Already connected.\n");
 				return false;
 			}
 
@@ -806,10 +789,7 @@ int CCmdNet(int argc, char **argv)
 			N_Connecting(true);
 
 			idx = strtol(argv[2], NULL, 10);
-			if(!stricmp(argv[1], "connect"))
-				success = !jtNetConnect2(idx);
-			else
-				success = !jtNetConnectIdx(idx);
+			success = !jtNetConnect2(idx);
 
 			if(success)
 			{
@@ -821,6 +801,17 @@ int CCmdNet(int argc, char **argv)
 				Con_Printf("Connection failed.\n");
 			}
 			CmdReturnValue = success;
+		}
+		else if(!stricmp(argv[1], "mconnect"))
+		{
+			serverinfo_t info;
+			if(N_MasterGet(strtol(argv[2], 0, 0), &info))
+			{
+				// Connect using TCP/IP.
+				return Con_Executef(false, "connect %s %i", info.address, 
+					info.port);
+			}
+			else return false;
 		}
 		else if(!stricmp(argv[1], "setup"))
 		{

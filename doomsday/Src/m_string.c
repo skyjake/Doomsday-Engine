@@ -10,6 +10,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <ctype.h>
+
 #include "de_base.h"
 #include "de_misc.h"
 
@@ -127,7 +129,22 @@ void Str_Append(ddstring_t *ds, const char *append_text)
 }
 
 //===========================================================================
+// Str_PartAppend
+//	Appends a portion of a string.
+//===========================================================================
+void Str_PartAppend(ddstring_t *dest, const char *src, int start, int count)
+{
+	Str_Alloc(dest, dest->length + count, true);
+	memcpy(dest->str + dest->length, src + start, count);
+	dest->length += count;
+
+	// Terminate the appended part.
+	dest->str[dest->length] = 0;
+}
+
+//===========================================================================
 // Str_Prepend
+//	Prepend is not even a word, is it? It should be 'prefix'?
 //===========================================================================
 void Str_Prepend(ddstring_t *ds, const char *prepend_text)
 {
@@ -172,4 +189,57 @@ void Str_Copy(ddstring_t *dest, ddstring_t *src)
 	dest->length = src->length;
 	dest->str = Z_Malloc(src->size, PU_STATIC, 0);
 	memcpy(dest->str, src->str, src->size);
+}
+
+//===========================================================================
+// Str_StripLeft
+//	Strip whitespace from beginning.
+//===========================================================================
+void Str_StripLeft(ddstring_t *ds)
+{
+	int i, num;
+
+	if(!ds->length) return;
+	
+	// Find out how many whitespace chars are at the beginning.
+	for(i = 0, num = 0; i < ds->length; i++)
+		if(isspace(ds->str[i])) num++; else break;
+	
+	if(num)
+	{
+		// Remove 'num' chars.
+		memmove(ds->str, ds->str + num, ds->length - num);
+		ds->length -= num;
+		ds->str[ds->length] = 0;
+	}
+}
+
+//===========================================================================
+// Str_StripRight
+//	Strip whitespace from end.
+//===========================================================================
+void Str_StripRight(ddstring_t *ds)
+{
+	int i;
+
+	if(!ds->length) return;
+
+	for(i = ds->length - 1; i >= 0; i--)
+		if(isspace(ds->str[i]))
+		{
+			// Remove this char.
+			ds->str[i] = 0;
+			ds->length--;
+		}
+		else break;
+}
+
+//===========================================================================
+// Str_Strip
+//	Strip whitespace from beginning and end.
+//===========================================================================
+void Str_Strip(ddstring_t *ds)
+{
+	Str_StripLeft(ds);
+	Str_StripRight(ds);
 }

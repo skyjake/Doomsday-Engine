@@ -439,7 +439,7 @@ void DD_Main(void)
 	// (shortcut for -command "net init tcpip; net server start").
 	if(ArgExists("-server"))
 	{
-		if(!N_Init(JTNET_SERVICE_TCPIP))
+		if(!N_InitService(JTNET_SERVICE_TCPIP))
 			Con_Message("Can't start server: TCP/IP not available.\n");
 		else
 			Con_Executef(false, "net server start");
