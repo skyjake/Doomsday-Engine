@@ -16,6 +16,9 @@ instructions are in Build/COMPILING.
 DOCUMENTATION
 -------------
 
+It is always a good idea to glance through the engine readme:
+http://www.doomsdayhq.com/doc_readme.php
+
 The Doc directory contains various documentation about the engine and
 the available command line options.  The documents are also available
 online: http://www.doomsdayhq.com/
@@ -53,6 +56,22 @@ Forums for the latest community buzz.
 The must-have packs are the 3D models and detail textures.  Since MIDI
 music is currently not supported in Linux, you might also wish to
 download a music pack (e.g. http://www.sycraft.org/).
+
+Since there is currently no Doomsday GUI launcher available for Linux,
+you will have to make sure the resource packs get loaded yourself.
+There are two ways you can load PK3s and WADs:
+
+	1) Use the special automatic resource directories.  Let's say
+	   you have installed Doomsday into the directory PREFIX.  You
+	   will find the subdirectory share/deng/Data/ under PREFIX.
+	   If you have a resource pack for jDoom, placing it into
+	   PREFIX/share/deng/Data/jDoom/Auto/ will cause it to be
+	   automatically loaded when jDoom is started (note the
+	   capital "A").  Create the directory if it doesn't exist.
+
+	2) Use the "-file" command line option when you start
+	   Doomsday.  If you e.g. have the resource pack
+	   ~/mydir/model.pk3, just use "-file ~/mydir/model.pk3".
 
 
 RUNNING THE GAME
