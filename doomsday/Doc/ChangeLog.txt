@@ -17,14 +17,24 @@ Version 1.7.12 (work in progress)
 - removed cvars 'rend-light-clip', 'rend-light-shrink'
 - fixed: possible crash in Con_Error()
 
+Sound:
+* sounds from PWADs are not replaced by automatic external resources
+
 Refresh:
++ lightmap resources are read from the Data\x\LightMaps directory
++ 'Top map', 'Bottom map', 'Side map' added to Light defs and
+  Decoration:Light defs (name of lightmap to use; empty means default,
+  "-" is none)
 + texture/flat animation sequences defined using Group defs (Anim.ded)
 + "tgf_smooth": interpolate between steps in texture/flat animation
 + particle generator flag "gnf_group": triggered by all in the flat's
   animation group
 + particle generator flags "gnf_blendsub", "gnf_blendrsub": subtractive
   blending for particles
++ particle generator flags "gnf_blendmul", "gnf_blendimul": normal and
+  inverse multiplicative blending for particles
 + added Defs/Doomsday.ded: include definitions shared by all games
++ option -nohighpat: disable high-resolution patches
 * Defs/Doomsday.ded is always read first
 * Flag definitions moved to Defs/Flags.ded
 * XG definitions moved to Defs/XG.ded
@@ -35,12 +45,15 @@ Refresh:
   a bit more memory but allows faster rendering)
 * 8-bit particle textures are interpreted as pure alpha data
 * PCX images aren't loaded redundantly from virtual files  
+- fixed: PWAD test when loading highres flats and patches (-pwadtex)
 - fixed: particles sliding over ledges
 - fixed: Generator Center angle (Y) offset was ignored with mobj sources
 
 Renderer:
 + blending modes: subtract and reverse subtract
 + cvar 'rend-model-mirror-hud': mirror HUD weapon models
++ cvar 'rend-dev-wireframe': render player view in wireframe mode
++ cvar 'rend-dev-freeze': stop updating rendering lists (for debugging)
 * renderer uses multitexturing for detail textures, dynamic lights,
   interpolated texture animation and model shiny skins
 * shiny skins are correctly masked by alpha in main skin
