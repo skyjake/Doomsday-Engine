@@ -581,14 +581,14 @@ void R_SubsectorPlanes(void)
 	subsector_t *sub;
 	fvertex_t buf[RL_MAX_POLY_SIDES];
 	
-	for(i=0; i<numsubsectors; i++)
+	for(i = 0; i < numsubsectors; i++)
 	{
 		sub = SUBSECTOR_PTR(i);
 		num = sub->numverts;
 		// We need to find a good tri-fan base vertex. 
 		// (One that doesn't generate zero-area triangles).
 		// We'll test each one and pick the first good one.
-		for(k=0; k<num; k++)
+		for(k = 0; k < num; k++)
 		{
 			if(R_TestTriFan(sub, k))
 			{
@@ -803,52 +803,51 @@ void R_InitSectorInfo(void)
 // R_InitPlanePoly
 //===========================================================================
 void R_InitPlanePoly
-	(rendpoly_t *poly, boolean reverse, subsector_t *subsector)
+	(planeinfo_t *plane, boolean reverse, subsector_t *subsector)
 {
 	int numvrts;
-	fvertex_t *vrts, *vtx;
-	rendpoly_vertex_t *rpv;
+	fvertex_t *vrts, *vtx, *pv;
 
 	// Take the subsector's vertices.
 	numvrts = subsector->numverts;
 	vrts = subsector->verts;
 
-	// We're preparing a plane here.
-	poly->type = RP_FLAT;	
-
 	// Copy the vertices to the poly.
-	if(subsector && subsector->flags & DDSUBF_MIDPOINT)
+	if(subsector->flags & DDSUBF_MIDPOINT)
 	{
 		// Triangle fan base is the midpoint of the subsector.
-		poly->numvertices = 2 + numvrts;
-		poly->vertices[0].pos[VX] = subsector->midpoint.x;
-		poly->vertices[0].pos[VY] = subsector->midpoint.y;
+		plane->numvertices = 2 + numvrts;
+		plane->vertices = Z_Malloc(sizeof(fvertex_t) * plane->numvertices,
+			PU_LEVEL, 0);
+
+		memcpy(plane->vertices, &subsector->midpoint, sizeof(fvertex_t));
 		
 		vtx = vrts + (!reverse? 0 : numvrts-1);
-		rpv = poly->vertices + 1;
+		pv = plane->vertices + 1;
 	}
 	else
 	{
-		poly->numvertices = numvrts;
+		plane->numvertices = numvrts;
+		plane->vertices = Z_Malloc(sizeof(fvertex_t) * plane->numvertices, 
+			PU_LEVEL, 0);
+
 		// The first vertex is always the same: vertex zero.
-		rpv = poly->vertices;
-		rpv->pos[VX] = vrts[0].x;
-		rpv->pos[VY] = vrts[0].y;
+		pv = plane->vertices;
+		memcpy(pv, &vrts[0], sizeof(*pv));
 
 		vtx = vrts + (!reverse? 1 : numvrts-1);
-		rpv++; 
+		pv++; 
 		numvrts--;
 	}
+
 	// Add the rest of the vertices.
-	for(; numvrts > 0; numvrts--, (!reverse? vtx++ : vtx--), rpv++)
-	{
-		rpv->pos[VX] = vtx->x;
-		rpv->pos[VY] = vtx->y;
-	}
-	if(poly->numvertices > numvrts)
+	for(; numvrts > 0; numvrts--, (!reverse? vtx++ : vtx--), pv++)
+		memcpy(pv, vtx, sizeof(*vtx));
+
+	if(subsector->flags & DDSUBF_MIDPOINT)
 	{
 		// Re-add the first vertex so the triangle fan wraps around.
-		memcpy(rpv, poly->vertices + 1, sizeof(*rpv));
+		memcpy(pv, &plane->vertices[1], sizeof(*pv));
 	}
 }
 
@@ -862,14 +861,14 @@ void R_InitSubsectorInfo(void)
 	subsectorinfo_t *info;
 	sector_t *sector;
 
-	// This is quite large, don't allocate from the zone.
 	i = sizeof(subsectorinfo_t) * numsubsectors;
 #ifdef _DEBUG
 	Con_Printf("R_InitSubsectorInfo: %i bytes.\n", i);
 #endif
-	subsecinfo = realloc(subsecinfo, i);
-	memset(subsecinfo, 0, i);
+	subsecinfo = Z_Calloc(i, PU_LEVEL, NULL);
 	
+	Z_CheckHeap();
+
 	for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
 	{
 		sub = SUBSECTOR_PTR(i);
@@ -877,12 +876,14 @@ void R_InitSubsectorInfo(void)
 		
 		// Init floor plane.
 		info->floor.isfloor = true;
-		R_InitPlanePoly(&info->floor.poly, false, sub);
+		R_InitPlanePoly(&info->floor, false, sub);
 
 		// Init ceiling plane.
 		info->ceil.isfloor = false;
-		R_InitPlanePoly(&info->ceil.poly, true, sub);	
+		R_InitPlanePoly(&info->ceil, true, sub);	
 	}
+
+	Z_CheckHeap();
 }
 
 //===========================================================================
