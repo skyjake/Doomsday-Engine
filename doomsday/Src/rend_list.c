@@ -243,7 +243,7 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 	dynlight_t *dyn;
 	int i;
 	
-	vis->issprite = false;
+	vis->type = VSPR_MASKED_WALL;
 	vis->distance = (poly->vertices[0].dist + poly->vertices[1].dist) / 2;
 	vis->wall.texture = poly->tex.id;
 	vis->wall.masked = texmask;	// Store texmask status in flip.

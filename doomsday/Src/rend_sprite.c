@@ -62,7 +62,7 @@ void Rend_Draw3DPlayerSprites(void)
 
 	for(i = 0; i < DDMAXPSPRITES; i++)
 	{
-		if(!vispsprites[i].issprite) continue; // Not used.
+		if(!vispsprites[i].type) continue; // Not used.
 		Rend_RenderModel(vispsprites + i);
 	}
 
@@ -318,7 +318,7 @@ void Rend_DrawMasked (void)
 		for(spr = vsprsortedhead.next; spr != &vsprsortedhead; 
 			spr = spr->next)
 		{
-			if(!spr->issprite)
+			if(spr->type == VSPR_MASKED_WALL)
 			{
 				// Depth writing is once again needed.
 				Rend_RenderMaskedWall(spr);
@@ -360,7 +360,7 @@ void Rend_DrawMasked (void)
 			for(spr = vsprsortedhead.next ; spr != &vsprsortedhead; 
 				spr = spr->next)
 			{
-				if(spr->issprite && spr->mo.light)
+				if(spr->type && spr->mo.light)
 					H_RenderHalo(spr, false);
 			}
 

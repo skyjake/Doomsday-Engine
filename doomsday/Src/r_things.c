@@ -466,7 +466,7 @@ void R_ProjectDecoration(mobj_t *source)
 
 	vis = R_NewVisSprite ();
 	memset(vis, 0, sizeof(*vis));
-	vis->issprite = true;
+	vis->type = VSPR_MAP_OBJECT;
 	vis->distance = Rend_PointDist2D(v1);
 	vis->mo.patch = -1; // Doesn't have one!
 	vis->mo.light = DL_GetLuminous(source->light);
@@ -498,7 +498,7 @@ void R_ProjectPlayerSprites(void)
 	{
 		vis = vispsprites + i;
 		psp->flags &= ~DDPSPF_RENDERED;
-		vis->issprite = false;
+		vis->type = false;
 		if(!useModels || !psp->stateptr) continue;
 
 		// Is there a model for this frame?
@@ -518,7 +518,7 @@ void R_ProjectPlayerSprites(void)
 		// There are 3D psprites.
 		psp3d = true;
 
-		vis->issprite = 2; // it's a psprite
+		vis->type = VSPR_HUD_MODEL; // it's a psprite
 		vis->distance = 4;
 		vis->mo.subsector = viewplayer->mo->subsector;
 		vis->mo.mf = mf;
@@ -691,7 +691,7 @@ void R_ProjectSprite (mobj_t *thing)
 	// Store information in a vissprite.
 	//
 	vis = R_NewVisSprite ();
-	vis->issprite = true;
+	vis->type = VSPR_MAP_OBJECT;
 	vis->distance = distance;
 	vis->mo.subsector = thing->subsector;
 	vis->mo.light = DL_GetLuminous(thing->light);
