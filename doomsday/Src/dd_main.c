@@ -63,6 +63,11 @@ typedef struct ddvalue_s {
 	int    *writePtr;
 } ddvalue_t;
 
+typedef struct autoload_s {
+    boolean loadFiles;   // Should files be loaded right away.
+    int count;           // Number of files loaded successfully.
+} autoload_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void    G_CheckDemoStatus();
@@ -160,28 +165,37 @@ static void AddToWadList(char *list)
 // autoDataAdder (f_forall_func_t)
 //===========================================================================
 static int autoDataAdder(const char *fileName, filetype_t type,
-						 void *loadFiles)
+						 void *ptr)
 {
+    autoload_t *data = ptr;
+    
 	// Skip directories.
 	if(type == FT_DIRECTORY)
 		return true;
 
-	if(loadFiles)
-		W_AddFile(fileName, false);
+	if(data->loadFiles)
+    {
+		if(W_AddFile(fileName, false))
+            ++data->count;
+    }
 	else
+    {
 		DD_AddStartupWAD(fileName);
-
+    }
+    
 	// Continue searching.
 	return true;
 }
 
 //===========================================================================
 // DD_AddAutoData
-//      Files with the extensions wad, lmp, pk3 and zip in the automatical data 
-//      directory are added to the wadfiles list.
+//  Files with the extensions wad, lmp, pk3 and zip in the automatical data 
+//  directory are added to the wadfiles list.  Returns the number of new
+//  files that were loaded.
 //===========================================================================
-void DD_AddAutoData(boolean loadFiles)
+int DD_AddAutoData(boolean loadFiles)
 {
+    autoload_t data;
 	const char *extensions[] = {
 		"wad", "lmp", "pk3", "zip",
 #ifdef UNIX
@@ -192,12 +206,17 @@ void DD_AddAutoData(boolean loadFiles)
 	char    pattern[256];
 	int     i;
 
+    data.loadFiles = loadFiles;
+    data.count = 0;
+
 	for(i = 0; extensions[i]; i++)
 	{
 		sprintf(pattern, "%sAuto\\*.%s", R_GetDataPath(), extensions[i]);
 		Dir_FixSlashes(pattern);
-		F_ForAll(pattern, (void *) loadFiles, autoDataAdder);
+		F_ForAll(pattern, &data, autoDataAdder);
 	}
+
+    return data.count;
 }
 
 //===========================================================================
@@ -402,10 +421,15 @@ void DD_Main(void)
 	W_InitMultipleFiles(wadfiles);
 	F_InitDirec();
 
-	// Load files from the Auto directory. (If already loaded, won't be
-	// loaded again.) This is done again because virtual files may now
-	// exist in the Auto directory.
-	DD_AddAutoData(true);
+	// Load files from the Auto directory.  (If already loaded, won't
+	// be loaded again.)  This is done again because virtual files may
+	// now exist in the Auto directory.  Repeated until no new files
+	// found.
+	while((p = DD_AddAutoData(true)) > 0)
+    {
+        VERBOSE(Con_Message("Autoload round completed with %i new files.\n",
+                            p));
+    }
 
 	// No more WADs will be loaded in startup mode after this point.
 	W_EndStartup();
