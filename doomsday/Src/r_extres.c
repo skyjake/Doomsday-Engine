@@ -55,9 +55,9 @@ static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] =
 static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] =
 {
 	// Graphics favor quality.
-	{ ".tga", ".png", ".pcx", NULL },
-	{ ".tga", ".png", ".pcx", NULL },
-	{ ".tga", ".png", ".pcx", NULL },
+	{ ".png", ".tga", ".pcx", NULL },
+	{ ".png", ".tga", ".pcx", NULL },
+	{ ".png", ".tga", ".pcx", NULL },
 
 	// Extension doesn't matter with music, FMOD will either recognize 
 	// it or not.
