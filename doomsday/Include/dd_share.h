@@ -44,7 +44,7 @@ Version number rules: (major).(minor).(revision)
 // Version constant. Use this to verify in the DLL that the engine
 // is new enough. 
 #define DOOMSDAY_VERSION		10711
-#define DOOMSDAY_VERSION_TEXT	"1.7.11"
+#define DOOMSDAY_VERSION_TEXT	"1.7.11/net"
 
 #define DDMAXPLAYERS			16
 
@@ -1074,6 +1074,7 @@ typedef struct
 #define DDPF_DEAD			0x8		// Cl & Sv: player is dead.
 #define DDPF_CAMERA			0x10	// Player is a cameraman.
 #define DDPF_LOCAL			0x20	// Player is local (e.g. player zero).
+#define DDPF_FIXMOM			0x40	// Server: send momentum to client.
 
 #define PLAYERNAMELEN		81
 
