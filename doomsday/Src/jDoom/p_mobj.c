@@ -1,77 +1,23 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log$
-// Revision 1.14  2004/05/29 09:53:29  skyjake
-// Consistent style (using GNU Indent)
-//
-// Revision 1.13  2004/05/28 19:52:58  skyjake
-// Finished switch from branch-1-7 to trunk, hopefully everything is fine
-//
-// Revision 1.9.2.2  2004/05/23 14:09:03  skyjake
-// Resolved conflict
-//
-// Revision 1.9.2.1  2004/05/16 10:01:36  skyjake
-// Merged good stuff from branch-nix for the final 1.7.15
-//
-// Revision 1.9.4.2  2003/11/22 18:09:10  skyjake
-// Cleanup
-//
-// Revision 1.9.4.1  2003/11/19 17:07:13  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.9  2003/06/30 00:04:16  skyjake
-// Use fixmom
-//
-// Revision 1.8  2003/06/27 20:24:13  skyjake
-// Added P_UpdateMobjFlags()
-//
-// Revision 1.7  2003/06/23 08:09:25  skyjake
-// Smooth corpse fade translucency
-//
-// Revision 1.6  2003/05/23 22:16:16  skyjake
-// DP8, various net-related improvements
-//
-// Revision 1.5  2003/04/29 13:11:53  skyjake
-// Missile puff ptcgen issue fixed
-//
-// Revision 1.4  2003/04/26 14:44:02  skyjake
-// Comment cleanup
-//
-// Revision 1.3  2003/04/16 09:50:06  skyjake
-// Cvar for sliding corpses
-//
-// Revision 1.2  2003/02/27 23:14:32  skyjake
-// Obsolete jDoom files removed
-//
-// Revision 1.1  2003/02/26 19:21:57  skyjake
-// Initial checkin
-//
-//
-// DESCRIPTION:
-//  Moving object handling. Spawn functions.
-//
-//-----------------------------------------------------------------------------
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ *
+ * DESCRIPTION:
+ *  Moving object handling. Spawn functions.
+ */
 
 #ifdef WIN32
 #  pragma optimize("g", off)
 #endif
-
-static const char
-        rcsid[] = "$Id$";
 
 #include <math.h>
 
@@ -89,7 +35,7 @@ static const char
 
 void    G_PlayerReborn(int player);
 void    P_SpawnMapThing(mapthing_t * mthing);
-void    P_ApplyTorque(mobj_t * mo);	// killough $dropoff_fix
+void    P_ApplyTorque(mobj_t *mo);	// killough $dropoff_fix
 
 //
 // P_SetMobjState
@@ -97,7 +43,7 @@ void    P_ApplyTorque(mobj_t * mo);	// killough $dropoff_fix
 //
 int     test;
 
-boolean P_SetMobjState(mobj_t * mobj, statenum_t state)
+boolean P_SetMobjState(mobj_t *mobj, statenum_t state)
 {
 	state_t *st;
 
@@ -112,9 +58,6 @@ boolean P_SetMobjState(mobj_t * mobj, statenum_t state)
 
 		P_SetState(mobj, state);
 		st = &states[state];
-
-		/*      if(mobj->type == MT_POSSESSED)
-		   gi.conprintf("TROOP state:%i spr=%i fr=%i\n", state, st->sprite, st->frame); */
 
 		mobj->turntime = false;	// $visangle-facetarget
 
@@ -132,7 +75,7 @@ boolean P_SetMobjState(mobj_t * mobj, statenum_t state)
 //
 // P_ExplodeMissile  
 //
-void P_ExplodeMissile(mobj_t * mo)
+void P_ExplodeMissile(mobj_t *mo)
 {
 	if(IS_CLIENT)
 	{
@@ -168,7 +111,7 @@ void P_ExplodeMissile(mobj_t * mo)
 #define FRICTION		0xe800
 
 // Returns the ground friction factor for the mobj. 
-fixed_t P_GetMobjFriction(mobj_t * mo)
+fixed_t P_GetMobjFriction(mobj_t *mo)
 {
 	return XS_Friction(mo->subsector->sector);
 }
@@ -179,7 +122,7 @@ fixed_t P_GetMobjFriction(mobj_t * mo)
 #define STOPSPEED		0x1000
 #define STANDSPEED		0x8000
 
-void P_XYMovement(mobj_t * mo)
+void P_XYMovement(mobj_t *mo)
 {
 	fixed_t ptryx;
 	fixed_t ptryy;
@@ -228,8 +171,8 @@ void P_XYMovement(mobj_t * mo)
 		// This explains the tendency for Mancubus fireballs
 		// to pass through walls.
 
-		if(xmove > MAXMOVE / 2 || ymove > MAXMOVE / 2
-		   || ((xmove < -MAXMOVE / 2 || ymove < -MAXMOVE / 2)))
+		if(xmove > MAXMOVE / 2 || ymove > MAXMOVE / 2 ||
+		   ((xmove < -MAXMOVE / 2 || ymove < -MAXMOVE / 2)))
 		{
 			ptryx = mo->x + xmove / 2;
 			ptryy = mo->y + ymove / 2;
@@ -254,8 +197,8 @@ void P_XYMovement(mobj_t * mo)
 			else if(mo->flags & MF_MISSILE)
 			{
 				// explode a missile
-				if(ceilingline && ceilingline->backsector
-				   && ceilingline->backsector->ceilingpic == skyflatnum)
+				if(ceilingline && ceilingline->backsector &&
+				   ceilingline->backsector->ceilingpic == skyflatnum)
 				{
 					// Hack to prevent missiles exploding
 					// against the sky.
@@ -287,12 +230,14 @@ void P_XYMovement(mobj_t * mo)
 	if(cfg.slidingCorpses)
 	{
 		// killough $dropoff_fix: add objects falling off ledges
-		if((mo->flags & MF_CORPSE || mo->intflags & MIF_FALLING) && !mo->player)	// Does not apply to players! -jk
+		// Does not apply to players! -jk
+		if((mo->flags & MF_CORPSE || mo->intflags & MIF_FALLING) &&
+		   !mo->player)
 		{
 			// do not stop sliding
 			//  if halfway off a step with some momentum
-			if(mo->momx > FRACUNIT / 4 || mo->momx < -FRACUNIT / 4
-			   || mo->momy > FRACUNIT / 4 || mo->momy < -FRACUNIT / 4)
+			if(mo->momx > FRACUNIT / 4 || mo->momx < -FRACUNIT / 4 ||
+			   mo->momy > FRACUNIT / 4 || mo->momy < -FRACUNIT / 4)
 			{
 				if(mo->floorz != mo->subsector->sector->floorheight)
 					return;
@@ -301,9 +246,9 @@ void P_XYMovement(mobj_t * mo)
 	}
 
 	// Stop player walking animation.
-	if(player && mo->momx > -STANDSPEED && mo->momx < STANDSPEED
-	   && mo->momy > -STANDSPEED && mo->momy < STANDSPEED
-	   && !player->cmd.forwardMove && !player->cmd.sideMove)
+	if(player && mo->momx > -STANDSPEED && mo->momx < STANDSPEED &&
+	   mo->momy > -STANDSPEED && mo->momy < STANDSPEED &&
+	   !player->cmd.forwardMove && !player->cmd.sideMove)
 	{
 		// if in a walking frame, stop moving
 		if((unsigned) ((player->plr->mo->state - states) - S_PLAY_RUN1) < 4)
@@ -311,9 +256,9 @@ void P_XYMovement(mobj_t * mo)
 	}
 
 	if(mo->momx > -STOPSPEED && mo->momx < STOPSPEED && mo->momy > -STOPSPEED
-	   && mo->momy < STOPSPEED && (!player
-								   || (player->cmd.forwardMove == 0
-									   && player->cmd.sideMove == 0)))
+	   && mo->momy < STOPSPEED && (!player ||
+								   (player->cmd.forwardMove == 0 &&
+									player->cmd.sideMove == 0)))
 	{
 		mo->momx = 0;
 		mo->momy = 0;
@@ -327,10 +272,28 @@ void P_XYMovement(mobj_t * mo)
 	}
 }
 
+static boolean PIT_Splash(sector_t *sector, mobj_t *mo)
+{
+	// Is the mobj touching the floor of this sector?
+	if(mo->z < sector->floorheight &&
+	   mo->z + mo->height / 2 > sector->floorheight)
+	{
+		// TODO: Play a sound, spawn a generator, etc.
+	}
+
+	// Continue checking.
+	return true;
+}
+
+void P_FloorSplash(mobj_t *mo)
+{
+	P_ThingSectorsIterator(mo, PIT_Splash, 0);
+}
+
 //
 // P_ZMovement
 //
-void P_ZMovement(mobj_t * mo)
+void P_ZMovement(mobj_t *mo)
 {
 	fixed_t gravity = XS_Gravity(mo->subsector->sector);
 	fixed_t dist;
@@ -366,8 +329,8 @@ void P_ZMovement(mobj_t * mo)
 															mo->height / 2);
 
 #define ABS(x)	((x)<0?-(x):(x))
-			if(dist < mo->radius + mo->target->radius
-			   && ABS(delta) < mo->height + mo->target->height)
+			if(dist < mo->radius + mo->target->radius &&
+			   ABS(delta) < mo->height + mo->target->height)
 			{
 				// Don't go INTO the target.
 				delta = 0;
@@ -437,6 +400,7 @@ void P_ZMovement(mobj_t * mo)
 				mo->dplayer->deltaviewheight = mo->momz >> 3;
 				S_StartSound(sfx_oof, mo);
 			}
+			P_FloorSplash(mo);
 			mo->momz = 0;
 		}
 		mo->z = mo->floorz;
@@ -488,7 +452,7 @@ void P_ZMovement(mobj_t * mo)
 //
 // P_NightmareRespawn
 //
-void P_NightmareRespawn(mobj_t * mobj)
+void P_NightmareRespawn(mobj_t *mobj)
 {
 	fixed_t x;
 	fixed_t y;
@@ -544,7 +508,7 @@ void P_NightmareRespawn(mobj_t * mobj)
 //===========================================================================
 // P_MobjThinker
 //===========================================================================
-void P_MobjThinker(mobj_t * mobj)
+void P_MobjThinker(mobj_t *mobj)
 {
 	if(mobj->ddflags & DDMF_REMOTE)
 		return;
@@ -587,8 +551,8 @@ void P_MobjThinker(mobj_t * mobj)
 			return;				// killough - mobj was removed
 	}
 	// non-sentient objects at rest
-	else if(!(mobj->momx | mobj->momy) && !sentient(mobj) && !(mobj->player)
-			&& cfg.slidingCorpses)
+	else if(!(mobj->momx | mobj->momy) && !sentient(mobj) && !(mobj->player) &&
+			cfg.slidingCorpses)
 	{
 		// killough 9/12/98: objects fall off ledges if they are hanging off
 		// slightly push off of ledge if hanging more than halfway off
@@ -763,10 +727,10 @@ int     itemrespawntime[ITEMQUESIZE];
 int     iquehead;
 int     iquetail;
 
-void P_RemoveMobj(mobj_t * mobj)
+void P_RemoveMobj(mobj_t *mobj)
 {
-	if((mobj->flags & MF_SPECIAL) && !(mobj->flags & MF_DROPPED)
-	   && (mobj->type != MT_INV) && (mobj->type != MT_INS))
+	if((mobj->flags & MF_SPECIAL) && !(mobj->flags & MF_DROPPED) &&
+	   (mobj->type != MT_INV) && (mobj->type != MT_INS))
 	{
 		itemrespawnque[iquehead] = mobj->spawnpoint;
 		itemrespawntime[iquehead] = leveltime;
@@ -1140,7 +1104,7 @@ void P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage)
 // Moves the missile forward a bit
 //  and possibly explodes it right there.
 //
-void P_CheckMissileSpawn(mobj_t * th)
+void P_CheckMissileSpawn(mobj_t *th)
 {
 	th->tics -= P_Random() & 3;
 	if(th->tics < 1)
@@ -1159,7 +1123,7 @@ void P_CheckMissileSpawn(mobj_t * th)
 //
 // P_SpawnMissile
 //
-mobj_t *P_SpawnMissile(mobj_t * source, mobj_t * dest, mobjtype_t type)
+mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 {
 	mobj_t *th;
 	angle_t an;
@@ -1211,7 +1175,7 @@ mobj_t *P_SpawnMissile(mobj_t * source, mobj_t * dest, mobjtype_t type)
 // P_SpawnPlayerMissile
 // Tries to aim at a nearby monster
 //
-void P_SpawnPlayerMissile(mobj_t * source, mobjtype_t type)
+void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
 {
 	mobj_t *th;
 	angle_t an;
