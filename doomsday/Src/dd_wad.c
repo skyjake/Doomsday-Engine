@@ -511,7 +511,13 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 	{ 
 		// WAD file.
 		F_Read(&header, sizeof(header), handle);
-		if(strncmp(header.identification, "IWAD", 4))
+		if(!strncmp(header.identification, "JWAD", 4))
+		{
+			// This is treated like an IWAD, but we won't set the 
+			// iwadLoaded flag.
+			rec->iwad = true;
+		}
+		else if(strncmp(header.identification, "IWAD", 4))
 		{
 			if(strncmp(header.identification, "PWAD", 4))
 			{ // Bad file id
