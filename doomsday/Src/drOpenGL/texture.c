@@ -29,6 +29,7 @@ rgba_t			palette[256];
 int				usePalTex;
 int				dumpTextures;
 int				useCompr;
+float			grayMipmapFactor = 1;
 
 // The color table extension.
 PFNGLCOLORTABLEEXTPROC glColorTableEXT = NULL;
@@ -126,6 +127,131 @@ DGLuint DG_NewTexture(void)
 }
 
 //===========================================================================
+// setTexAniso
+//===========================================================================
+void setTexAniso(void)
+{
+	// Should anisotropic filtering be used?
+	if(useAnisotropic)
+	{
+		// Go with the maximum!
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+			maxAniso);
+	}
+}
+
+//===========================================================================
+// downMip8
+//	Works within the given data, reducing the size of the picture to half 
+//	its original. Width and height must be powers of two.
+//===========================================================================
+void downMip8(byte *in, byte *fadedOut, int width, int height, float fade)
+{
+	byte *out = in;
+	int	x, y, outW = width >> 1, outH = height >> 1;
+	float invFade;
+
+	if(fade > 1) fade = 1;
+	invFade = 1 - fade;
+
+	if(width == 1 && height == 1)
+	{
+		// Nothing can be done.
+		return;
+	}
+
+	if(!outW || !outH) // Limited, 1x2|2x1 -> 1x1 reduction?
+	{
+		int outDim = width > 1? width : height;
+		for(x = 0; x < outDim; x++, in += 2)
+		{
+			*out = (in[0] + in[1]) >> 1;
+			*fadedOut++ = (byte) (*out * invFade + 0x80 * fade);
+			out++;
+		}
+	}
+	else // Unconstrained, 2x2 -> 1x1 reduction?
+	{
+		for(y = 0; y < outH; y++, in += width)
+			for(x = 0; x < outW; x++, in += 2)
+			{
+				*out = (in[0] + in[1] + in[width] + in[width + 1]) >> 2;
+				*fadedOut++ = (byte) (*out * invFade + 0x80 * fade);
+				out++;
+			}
+	}
+}	
+
+//===========================================================================
+// grayMipmap
+//===========================================================================
+int grayMipmap(int format, int width, int height, void *data)
+{
+	byte *image, *in, *out, *faded;
+	int i, numLevels, w, h, size = width * height, res;
+	float invFactor = 1 - grayMipmapFactor;
+
+	// Buffer used for the faded texture.
+	faded = malloc(size / 4);
+	image = malloc(size);
+
+	// Initial fading.
+	if(format == DGL_LUMINANCE)
+	{
+		for(i = 0, in = data, out = image; i < size; i++)
+		{
+			// Result is clamped to [0,255].
+			res = (int) (*in++ * grayMipmapFactor + 0x80 * invFactor);
+			if(res < 0) res = 0;
+			if(res > 255) res = 255;
+			*out++ = res;
+		}
+	}
+	else if(format == DGL_RGB)
+	{
+		for(i = 0, in = data, out = image; i < size; i++, in += 3)
+		{
+			// Result is clamped to [0,255].
+			res = (int) (*in * grayMipmapFactor + 0x80 * invFactor);
+			if(res < 0) res = 0;
+			if(res > 255) res = 255;
+			*out++ = res;
+		}
+	}
+
+	// How many levels will there be?
+	for(numLevels = 0, w = width, h = height; w > 1 || h > 1; 
+		w >>= 1, h >>= 1, numLevels++);
+
+	// Upload the first level right away.
+	glTexImage2D(GL_TEXTURE_2D, 0, 
+		useCompr? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE, 
+		width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
+
+	// Generate all mipmaps levels.
+	for(i = 0, w = width, h = height; i < numLevels; i++)
+	{
+		downMip8(image, faded, w, h, (i * 1.75f)/numLevels);
+
+		// Go down one level.
+		if(w > 1) w >>= 1;
+		if(h > 1) h >>= 1;
+
+		// The texture has no mipmapping, just one level.
+		glTexImage2D(GL_TEXTURE_2D, i + 1, 
+			useCompr? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE, 
+			w, h, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, faded);
+	} 
+
+	// Do we need to free the temp buffer?
+	free(faded);
+	free(image);
+
+	setTexAniso();
+	return DGL_OK;
+}
+
+//===========================================================================
 // DG_TexImage
 //	'width' and 'height' must be powers of two.
 //	Give a negative 'genMips' to set a specific mipmap level.
@@ -152,6 +278,12 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 
 	if(width > maxTexSize || height > maxTexSize)
 		return DGL_FALSE;
+
+	// Special fade-to-gray luminance texture? (used for details)
+	if(genMips == DGL_GRAY_MIPMAP)
+	{
+		return grayMipmap(format, width, height, data);
+	}
 
 	// Paletted texture?
 	if(usePalTex && format == DGL_COLOR_INDEX_8) 
@@ -277,13 +409,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 		if(needFree) free(buffer);
 	}
 	
-	// Should anisotropic filtering be used?
-	if(useAnisotropic)
-	{
-		// Go with the maximum!
-		glTexParameterf(GL_TEXTURE_2D, 
-			GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
-	}
+	setTexAniso();
 	return DGL_OK;
 }
 

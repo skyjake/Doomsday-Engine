@@ -98,6 +98,7 @@ void renderDetailPass(rendlist_t *rl, int num);*/
 //
 extern rgba_t		palette[256];
 extern int			usePalTex, dumpTextures, useCompr;
+extern float		grayMipmapFactor;
 
 int Power2(int num);
 int enablePalTexExt(int enable);
