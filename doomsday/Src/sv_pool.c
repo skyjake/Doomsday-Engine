@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.11  2003/07/01 12:38:58  skyjake
+//** Pool missile record, adde Sv_ExcludeDelta
+//**
 //** Revision 1.10  2003/06/30 00:22:01  skyjake
 //** Fixmom, resend ack, reset player mobj when player changes mobj
 //**
@@ -160,6 +163,9 @@ void Sv_InitPools(void)
 {
 	int i;
 
+	// Clients don't register anything.
+	if(isClient) return;
+
 	// Since the level has changed, PU_LEVEL memory has been freed.
 	// Reset all pools (set numbers are kept, though).
 	for(i = 0; i < MAXPLAYERS; i++)
@@ -167,6 +173,7 @@ void Sv_InitPools(void)
 		pools[i].owner = i;
 		pools[i].resendDealer = 1;
 		memset(pools[i].hash, 0, sizeof(pools[i].hash));
+		memset(pools[i].misHash, 0, sizeof(pools[i].misHash));
 		pools[i].queueSize = 0;
 		pools[i].allocatedSize = 0;
 		pools[i].queue = NULL;
@@ -527,20 +534,6 @@ boolean Sv_RegisterCompareMobj
 	if(r->momx != s->momx) df |= MDF_MOM_X;
 	if(r->momy != s->momy) df |= MDF_MOM_Y;
 	if(r->momz != s->momz) df |= MDF_MOM_Z;
-
-	/*if(s->ddflags & DDMF_MISSILE && !(df & MDFC_CREATE))
-	{
-		// The movement of missiles is predictable.
-		if(!(df & (MDF_MOM_X | MDF_MOM_Y)))
-		{
-			// No change in XY momentum. There is no need to send XY coords.
-			df &= ~(MDF_POS_X | MDF_POS_Y);
-		}
-		if(!(df & MDF_MOM_Z))
-		{
-			df &= ~MDF_POS_Z;
-		}
-	}*/
 
 	if(r->angle != s->angle) df |= MDF_ANGLE;
 	if(r->selector != s->selector) df |= MDF_SELECTOR;
@@ -1460,7 +1453,9 @@ void Sv_RemoveDelta(pool_t *pool, void *deltaPtr)
 void Sv_DrainPool(int clientNumber)
 {
 	pool_t *pool = &pools[clientNumber];
-	delta_t *delta, *next = NULL;
+	delta_t *delta;
+	misrecord_t *mis;
+	void *next = NULL;
 	int i;
 
 	// Update the number of the owner.
@@ -1482,15 +1477,26 @@ void Sv_DrainPool(int clientNumber)
 		}
 	}
 
+	// Free all missile records in the pool.
+	for(i = 0; i < POOL_MISSILE_HASH_SIZE; i++)
+	{
+		for(mis = pool->misHash[i].first; mis; mis = next)
+		{
+			next = mis->next;
+			Z_Free(mis);
+		}
+	}
+
 	// Clear all the chains.
 	memset(pool->hash, 0, sizeof(pool->hash));
+	memset(pool->misHash, 0, sizeof(pool->misHash));
 }
 
 /*
  * Returns the maximum distance for the sound. If the origin is any
  * farther, the delta will not be sent to the client in question.
  */
-fixed_t Sv_GetMaxSoundDistance(sounddelta_t *delta)
+fixed_t Sv_GetMaxSoundDistance(const sounddelta_t *delta)
 {
 	float volume = 1;
 
@@ -1506,6 +1512,94 @@ fixed_t Sv_GetMaxSoundDistance(sounddelta_t *delta)
 		return DDMAXINT;
 	}
 	return volume * sound_max_distance * FRACUNIT;
+}
+
+/*
+ * Returns the flags that remain after exclusion.
+ */
+int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
+{
+	const delta_t *delta = deltaPtr;
+	ddplayer_t *player = &players[pool->owner];
+	mobj_t *poolViewer = player->mo;
+	int flags = delta->flags;
+
+	// Can we exclude information from the delta? (for this player only)
+	if(delta->type == DT_MOBJ)
+	{
+		const mobjdelta_t *mobjDelta = deltaPtr;
+
+		if(poolViewer && poolViewer->thinker.id == delta->id)
+		{
+			// This is the mobj the owner of the pool uses as a camera.
+			flags &= ~MDF_CAMERA_EXCLUDE;
+
+			// We may have to exclude the pos/mom.
+			if(!(player->flags & DDPF_FIXPOS))
+			{
+				flags &= ~MDF_POS;
+			}
+			if(!(player->flags & DDPF_FIXMOM))
+			{
+				flags &= ~MDF_MOM;
+			}
+		}
+
+		// What about missiles? We might be allowed to exclude some 
+		// information.
+		if(mobjDelta->mo.ddflags & DDMF_MISSILE)
+		{
+			if(!Sv_IsCreateMobjDelta(delta))
+			{
+				// This'll might exclude the coordinates.
+				// The missile is put on record when the client acknowledges
+				// the Create Mobj delta.
+				flags &= ~Sv_MRCheck(pool, mobjDelta);
+			}
+			else if(Sv_IsNullMobjDelta(delta))
+			{
+				// The missile is being removed entirely.
+				// Remove the entry from the missile record.
+				Sv_MRRemove(pool, delta->id);
+			}
+		}
+	}
+	else if(delta->type == DT_PLAYER)
+	{
+		if(pool->owner == delta->id)
+		{
+			// All information does not need to be sent.
+			flags &= ~PDF_CAMERA_EXCLUDE;
+
+			if(!(player->flags & DDPF_FIXANGLES))
+			{
+				// Fixangles means that the server overrides the clientside
+				// view angles. Normally they are always clientside, so
+				// exclude them here.
+				flags &= ~( PDF_CLYAW | PDF_CLPITCH );
+			}
+		}
+		else
+		{
+			// This is a remote player, the owner of the pool doesn't need
+			// to know everything about it (like psprites).
+			flags &= ~PDF_NONCAMERA_EXCLUDE;
+		}
+	}
+	else if(Sv_IsSoundDelta(delta))
+	{
+		// Sounds that originate from too far away are not added to a pool.
+		// Stop Sound deltas have an infinite max distance, though.
+		if(Sv_DeltaDistance(delta, &pool->ownerInfo) 
+			> Sv_GetMaxSoundDistance(deltaPtr))
+		{
+			// Don't add it.
+			return 0;
+		}
+	}
+
+	// These are the flags that remain.
+	return flags;
 }
 
 /*
@@ -1527,71 +1621,21 @@ void Sv_AddDelta(pool_t *pool, void *deltaPtr)
 	delta_t *existingNew = NULL;
 	delta_t *delta = deltaPtr;
 	deltalink_t *hash = Sv_PoolHash(pool, delta->id);
-	ddplayer_t *player = &players[pool->owner];
-	mobj_t *poolViewer = player->mo;
+	int flags, originalFlags;
 
-	// The original flags of the delta are restored when the function ends.
-	int originalFlags = delta->flags;
+	// Sometimes we can exclude a part of the data, if the client has no
+	// use for it.
+	flags = Sv_ExcludeDelta(pool, delta);
 	
-	// Can we exclude information from the delta? (for this player only)
-	if(delta->type == DT_MOBJ)
+	if(!flags)
 	{
-		if(poolViewer && poolViewer->thinker.id == delta->id)
-		{
-			// This is the mobj the owner of the pool uses as a camera.
-			delta->flags &= ~MDF_CAMERA_EXCLUDE;
-
-			// We may have to exclude the pos/mom.
-			if(!(player->flags & DDPF_FIXPOS))
-			{
-				delta->flags &= ~MDF_POS;
-			}
-			if(!(player->flags & DDPF_FIXMOM))
-			{
-				delta->flags &= ~MDF_MOM;
-			}
-		}
-	}
-	else if(delta->type == DT_PLAYER)
-	{
-		if(pool->owner == delta->id)
-		{
-			// All information does not need to be sent.
-			delta->flags &= ~PDF_CAMERA_EXCLUDE;
-
-			if(!(player->flags & DDPF_FIXANGLES))
-			{
-				// Fixangles means that the server overrides the clientside
-				// view angles. Normally they are always clientside, so
-				// exclude them here.
-				delta->flags &= ~( PDF_CLYAW | PDF_CLPITCH );
-			}
-		}
-		else
-		{
-			// This is a remote player, the owner of the pool doesn't need
-			// to know everything about it (like psprites).
-			delta->flags &= ~PDF_NONCAMERA_EXCLUDE;
-		}
-	}
-	else if(Sv_IsSoundDelta(delta))
-	{
-		// Sounds that originate from too far away are not added to a pool.
-		// Stop Sound deltas have an infinite max distance, though.
-		if(Sv_DeltaDistance(delta, &pool->ownerInfo) 
-			> Sv_GetMaxSoundDistance(deltaPtr))
-		{
-			// Don't add it.
-			return;
-		}
-	}
-
-	if(!delta->flags)
-	{
-		// That was all the data... No need to add this delta.
-		delta->flags = originalFlags;
+		// No data remains... No need to add this delta.
 		return;
 	}
+
+	// Temporarily use the excluded flags.
+	originalFlags = delta->flags;
+	delta->flags = flags;
 
 	// While subtracting from old deltas, we'll look for a pointer to
 	// an existing NEW delta.
@@ -1691,6 +1735,9 @@ void Sv_PoolMobjRemoved(pool_t *pool, thid_t id)
 			Sv_RemoveDelta(pool, delta);
 		}
 	}
+
+	// Also check the missile record.
+	Sv_MRRemove(pool, id);
 }
 
 /*
@@ -2504,6 +2551,25 @@ void Sv_RatePool(pool_t *pool)
 }
 
 /*
+ * Do special things that need to be done when the delta has been acked.
+ */
+void Sv_AckDelta(pool_t *pool, delta_t *delta)
+{
+	if(Sv_IsCreateMobjDelta(delta))
+	{
+		mobjdelta_t *mobjDelta = (mobjdelta_t*) delta;
+		
+		// Created missiles are put on record.
+		if(mobjDelta->mo.ddflags & DDMF_MISSILE)
+		{
+			// Once again, we're assuming the delta is always completely
+			// filled with valid information. (There are no 'partial' deltas.)
+			Sv_MRAdd(pool, mobjDelta);
+		}
+	}
+}
+
+/*
  * Acknowledged deltas are removed from the pool, never to be seen again.
  * Clients ack deltas to tell the server they've received them.
  * If 'resent' is nonzero, ignore 'set' and ack by resend ID.
@@ -2531,6 +2597,10 @@ void Sv_AckDeltaSet(int consoleNumber, int set, byte resent)
 					Net_SetAckTime(consoleNumber, Sv_DeltaAge(delta));
 					ackTimeRegistered = true;
 				}
+
+				// There may be something that we need to do now that the
+				// delta has been acknowledged.
+				Sv_AckDelta(pool, delta);
 
 				// This delta is now finished! 
 				Sv_RemoveDelta(pool, delta);
