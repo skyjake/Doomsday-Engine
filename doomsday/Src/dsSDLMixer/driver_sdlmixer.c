@@ -21,29 +21,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomsday.h"
-#include "sys_sfxd.h"
-#include "sys_musd.h"
-#include "mus2midi.h"
-
-#include <stdlib.h>
-#include <string.h>
-#ifdef MACOSX
-#  include <SDL/SDL.h>
-#  include <SDL_mixer/SDL_mixer.h>
-#else
-#  include <SDL.h>
-#  include <SDL_mixer.h>
-#endif
+#include "driver.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define BUFFERED_MUSIC_FILE "/tmp/deng-sdlmixer-buffered-song"
-#define DEFAULT_MIDI_COMMAND "" //"timidity"
-
 // TYPES -------------------------------------------------------------------
-
-enum { VX, VY, VZ };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -91,15 +73,12 @@ int		DM_Mus_Play(int looped);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-static boolean initOk = false;
+boolean sdlInitOk = false;
+
 static int verbose;
 
 static char storage[0x40000];
 static int channelCounter = 0;
-static unsigned songSize = 0;
-static char *song;
-
-static Mix_Music *currentMusic;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -110,7 +89,7 @@ static void Msg(const char *msg)
 	Con_Message("SDLMixer: %s\n", msg);
 }
 
-static void Error()
+void DS_Error(void)
 {
 	char    buf[500];
 
@@ -120,7 +99,7 @@ static void Error()
 
 int DS_Init(void)
 {
-	if(initOk)
+	if(sdlInitOk)
 		return true;
 
 	// Are we in verbose mode?  
@@ -137,7 +116,7 @@ int DS_Init(void)
 
 	if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
 	{
-		Error();
+		DS_Error();
 		return false;
 	}
 
@@ -146,7 +125,7 @@ int DS_Init(void)
 	channelCounter = 0;
 	
 	// Everything is OK.
-	initOk = true;
+	sdlInitOk = true;
 	return true;
 }
 
@@ -155,20 +134,15 @@ int DS_Init(void)
 //===========================================================================
 void DS_Shutdown(void)
 {
-	if(!initOk)
+	if(!sdlInitOk)
 		return;
 
 	Mix_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
-	if(song)
-		free(song);
-	if(currentMusic)
-		Mix_FreeMusic(currentMusic);
+    ExtMus_Shutdown();
 
-	song = NULL;
-	currentMusic = NULL;
-	initOk = false;
+	sdlInitOk = false;
 }
 
 //===========================================================================
@@ -444,186 +418,3 @@ void DS_Listenerv(int property, float *values)
 	// Not supported.
 }
 
-int DM_Ext_Init(void)
-{
-	// The music interface is available without any extra work.
-	return initOk;
-}
-
-void DM_Ext_Update(void)
-{
-	// Nothing to update.
-}
-
-void DM_Ext_Set(int property, float value)
-{
-	if(!initOk)
-		return;
-
-	switch (property)
-	{
-	case MUSIP_VOLUME:
-		Mix_VolumeMusic(MIX_MAX_VOLUME * value);
-		break;
-	}
-}
-
-int DM_Ext_Get(int property, void *value)
-{
-	if(!initOk)
-		return false;
-
-	switch (property)
-	{
-	case MUSIP_ID:
-		strcpy(value, "SDLMixer/Ext");
-		break;
-
-	default:
-		return false;
-	}
-	return true;
-}
-
-void *DM_Ext_SongBuffer(int length)
-{
-	if(!initOk)
-		return NULL;
-
-	if(song)
-		free(song);
-	songSize = length;
-	return song = malloc(length);
-}
-
-int DM_Ext_PlayBuffer(int looped)
-{
-	if(!initOk)
-		return false;
-
-	if(song)
-	{
-		// Dump the song into a temporary file where SDL_mixer can
-		// load it.
-		FILE   *tmp = fopen(BUFFERED_MUSIC_FILE, "wb");
-
-		if(tmp)
-		{
-			fwrite(song, songSize, 1, tmp);
-			fclose(tmp);
-		}
-
-		free(song);
-		song = 0;
-		songSize = 0;
-	}
-
-	return DM_Ext_PlayFile(BUFFERED_MUSIC_FILE, looped);
-}
-
-void DM_Ext_Pause(int pause)
-{
-	if(!initOk)
-		return;
-
-	if(pause)
-		Mix_PauseMusic();
-	else
-		Mix_ResumeMusic();
-}
-
-void DM_Ext_Stop(void)
-{
-	if(!initOk)
-		return;
-
-	Mix_HaltMusic();
-}
-
-static int playFile(const char *filename, int looped)
-{
-	if(!initOk)
-		return false;
-
-	// Free any previously loaded music.
-	if(currentMusic)
-		Mix_FreeMusic(currentMusic);
-
-	if(!(currentMusic = Mix_LoadMUS(filename)))
-	{
-		Error();
-		return false;
-	}
-
-	return !Mix_PlayMusic(currentMusic, looped ? -1 : 1);
-}
-
-int DM_Ext_PlayFile(const char *filename, int looped)
-{
-	Mix_SetMusicCMD(NULL);
-	return playFile(filename, looped);
-}
-
-int DM_Mus_Init(void)
-{
-	// No extra init needed.
-	return initOk;
-}
-
-void DM_Mus_Update(void)
-{
-	// Nothing to update.
-}
-
-void DM_Mus_Set(int property, float value)
-{
-	// No MUS-specific properties exist.
-}
-
-int DM_Mus_Get(int property, void *value)
-{
-	if(!initOk)
-		return false;
-
-	switch (property)
-	{
-	case MUSIP_ID:
-		strcpy(value, "SDLMixer/Mus");
-		break;
-
-	default:
-		return false;
-	}
-	return true;
-}
-
-void DM_Mus_Pause(int pause)
-{
-	// Not needed.
-}
-
-void DM_Mus_Stop(void)
-{
-	// Not needed.
-}
-
-void *DM_Mus_SongBuffer(int length)
-{
-	return DM_Ext_SongBuffer(length);
-}
-
-int	DM_Mus_Play(int looped)
-{
-	char *command = getenv("DENG_MIDI_CMD");
-
-	if(command == NULL)
-		command = DEFAULT_MIDI_COMMAND;
-
-	// If the midi command is empty, use NULL instead.
-	if(command[0] == 0)
-		command = NULL;
-	
-	convertMusToMidi(song, songSize, BUFFERED_MUSIC_FILE);
-	Mix_SetMusicCMD(command);
-	return playFile(BUFFERED_MUSIC_FILE, looped);
-}
