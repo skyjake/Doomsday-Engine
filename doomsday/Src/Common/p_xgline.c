@@ -439,18 +439,42 @@ boolean XL_SwitchSwap(short *tex)
 	strncpy(buf, name, 8);
 	buf[8] = 0;
 
+	XG_Dev("XL_SwitchSwap: Changing texture '%s'", name);
+	
+#ifdef __JHERETIC__
+	// A kludge for Heretic.  Since it has some switch texture names
+	// that don't follow the SW1/SW2 pattern, we'll do some special
+	// checking.
+	if(!stricmp(buf, "SW1ON"))
+	{
+		*tex = R_TextureNumForName("SW1OFF");
+		return true;
+	}
+	if(!stricmp(buf, "SW1OFF"))
+	{
+		*tex = R_TextureNumForName("SW1ON");
+		return true;
+	}
+	if(!stricmp(buf, "SW2ON"))
+	{
+		*tex = R_TextureNumForName("SW2OFF");
+		return true;
+	}
+	if(!stricmp(buf, "SW2OFF"))
+	{
+		*tex = R_TextureNumForName("SW2ON");
+		return true;
+	}
+#endif
+	
 	if(!strnicmp(buf, "SW1", 3))
 	{
-		XG_Dev("XL_SwitchSwap: Changing texture '%s'", name);
-
 		buf[2] = '2';
 		*tex = R_TextureNumForName(buf);
 		return true;
 	}
 	if(!strnicmp(buf, "SW2", 3))
 	{
-		XG_Dev("XL_SwitchSwap: Changing texture '%s'", name);
-
 		buf[2] = '1';
 		*tex = R_TextureNumForName(buf);
 		return true;
