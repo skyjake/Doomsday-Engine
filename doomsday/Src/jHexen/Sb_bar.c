@@ -1693,8 +1693,12 @@ boolean SB_Responder(event_t *event)
 
 static boolean canCheat()
 {
+#ifdef _DEBUG
+	return true;
+#else
 	return !(gameskill == sk_nightmare || (netgame && !netcheat) 
 		|| players[consoleplayer].health <= 0);
+#endif
 }
 
 //==========================================================================
