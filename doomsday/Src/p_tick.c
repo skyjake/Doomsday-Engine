@@ -64,7 +64,8 @@ void P_Ticker(void)
 	if(!thinkercap.next) return; // Not initialized yet.
 
 	// New ptcgens for planes?
-	P_CheckPtcPlanes();			
+	P_CheckPtcPlanes();	
+	R_AnimateAnimGroups();
 
 	// Check all mobjs.
 	for(th = thinkercap.next; th != &thinkercap; th = th->next)
