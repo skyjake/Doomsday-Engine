@@ -1054,7 +1054,7 @@ void R_SetupModel(ded_model_t *def)
 			// MD2:        +Z is up
 			// Offset/DGL: +Y is up
 			// Game:       +Z is up
-			k = i==1? 2 : i==2? 1 : 0;
+			k = i; //i==1? 2 : i==2? 1 : 0;
 			modef->ptcoffset[i] = ((max[k] + min[k])/2
 				+ modef->sub[1].offset[i]) * modef->scale[i] 
 				+ modef->offset[i];
