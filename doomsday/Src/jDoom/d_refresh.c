@@ -61,16 +61,14 @@ void R_Init (void)
 //
 // D_PageDrawer
 //
-void D_PageDrawer (void)
+/*void D_PageDrawer (void)
 {
 	extern char *pagename;
 	if(!pagename) return;
 	GL_SetNoTexture();
 	GL_DrawPatch(0, 0, W_GetNumForName(pagename));
-
-/*	GL_SetPatch(W_GetNumForName(pagename));
-	GL_DrawRect(0, 0, 320, 200, 1, 1, 1, 1);*/
 }
+*/
 
 void R_DrawSpecialFilter(void)
 {
@@ -213,10 +211,6 @@ void D_Display (void)
 		
     redrawsbar = false;
 
-    // Change the view size if needed
-	/*if(setsizeneeded)
-	{
-		setsizeneeded = false;*/
 	// $democam: can be set on every frame
 	if(setblocks > 10 || iscam)
 	{
@@ -229,7 +223,6 @@ void D_Display (void)
 		int h = setblocks*(200-ST_HEIGHT*cfg.sbarscale/20)/10;
 		R_ViewWindow(160-(w>>1), (200-ST_HEIGHT*cfg.sbarscale/20-h)>>1, w, h);
 	}
-	//}
 
 	// Do buffered drawing.
 	switch (gamestate)
@@ -294,23 +287,16 @@ void D_Display (void)
 		WI_Drawer ();
 		break;
 
-	/*se GS_FINALE:
-		F_Drawer ();
-		break;*/
-
-	case GS_INFINE:
-		FI_Drawer();
-		break;
-
-	case GS_DEMOSCREEN:
+/*	case GS_DEMOSCREEN:
 		D_PageDrawer ();
-		break;
+		break;*/
 
 	case GS_WAITING:
 		gl.Clear(DGL_COLOR_BUFFER_BIT);
 		M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", 
 			hu_font_a, 1, 0, 0);
 	}
+
 	GL_Update(DDUF_FULLSCREEN);
 
     menuactivestate = menuactive;
@@ -318,8 +304,8 @@ void D_Display (void)
     inhelpscreensstate = inhelpscreens;
     oldgamestate = wipegamestate = gamestate;
     
-    // draw pause pic
-    if(paused)
+    // draw pause pic (but not if InFine active)
+    if(paused && !fi_active)
     {
 		if(automapactive)
 			y = 4;
@@ -328,6 +314,9 @@ void D_Display (void)
 	
 		GL_DrawPatch(126, y, W_GetNumForName("M_PAUSE"));
     }
+
+	// InFine is drawn whenever active.
+	FI_Drawer();
 }
 
 
