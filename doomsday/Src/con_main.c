@@ -2040,6 +2040,9 @@ void Con_DrawSideText(const char *text, int line, float alpha)
 
 	if(y > -fontScaledY)
 	{
+		// The side text is a bit transparent.
+		alpha *= .75f;
+
 		// scaled screen width		
 		ssw = (int) (screenWidth/Cfont.sizeX);	 
 		
@@ -2050,7 +2053,7 @@ void Con_DrawSideText(const char *text, int line, float alpha)
 		if(consoleShadowText)
 		{
 			// Draw a shadow.
-			gl.Color3f(0, 0, 0);
+			gl.Color4f(0, 0, 0, alpha);
 			Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 2, y/Cfont.sizeY + 1);
 		}
 		gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha);
