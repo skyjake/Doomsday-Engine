@@ -67,7 +67,7 @@ AC_DEFUN(DENG_USE_OPENGL,[
 
 dnl Optional libraries.
 AC_ARG_WITH(opengl,
-	[AS_HELP_STRING([--without-opengl],
+	[AC_HELP_STRING([--without-opengl],
 		[don't use OpenGL (default=yes)])],
 	[if test $withval = yes;
 		then DENG_USE_OPENGL()
@@ -75,21 +75,21 @@ AC_ARG_WITH(opengl,
 	[DENG_USE_OPENGL()])
 
 AC_ARG_WITH(jdoom,
-	[AS_HELP_STRING([--without-jdoom], [don't build jDoom])],
+	[AC_HELP_STRING([--without-jdoom], [don't build jDoom])],
 	[if test $withval = yes;
 		then DENG_OPTIONAL(jDoom)
 	fi],
 	[DENG_OPTIONAL(jDoom)])
 
 AC_ARG_WITH(jheretic,
-	[AS_HELP_STRING([--without-jheretic], [don't build jHeretic])],
+	[AC_HELP_STRING([--without-jheretic], [don't build jHeretic])],
 	[if test $withval = yes;
 		then DENG_OPTIONAL(jHeretic)
 	fi],
 	[DENG_OPTIONAL(jHeretic)])
 
 AC_ARG_WITH(jhexen,
-	[AS_HELP_STRING([--without-jhexen], [don't build jHexen])],
+	[AC_HELP_STRING([--without-jhexen], [don't build jHexen])],
 	[if test $withval = yes;
 		then DENG_OPTIONAL(jHexen)
 	fi],
