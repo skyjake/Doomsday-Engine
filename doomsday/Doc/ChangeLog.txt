@@ -4,6 +4,15 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.7.12 (work in progress)
+--------------
+- removed obsolete settings from Control Panel: Network
+- fixed: console text gibberish on the first time the console is drawn
+
+jDoom:
+- fixed: intermissions/finales in Plut/TNT
+
+
 Version 1.7.11
 --------------
 ! Bugfixes Only
