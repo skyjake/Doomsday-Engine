@@ -52,6 +52,7 @@ boolean W_RemoveFile(char *filename);
 void W_Reset();
 void W_ChangeCacheTag(int lump, int tag);
 void W_CheckIWAD(void);
+boolean W_IsFromIWAD(int lump);
 const char *W_LumpSourceFile(int lump);
 unsigned int W_CRCNumberForRecord(int idx);
 unsigned int W_CRCNumber(void);
