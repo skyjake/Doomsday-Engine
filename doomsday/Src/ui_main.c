@@ -573,6 +573,16 @@ void UIPage_Drawer(ui_page_t *page)
 	}
 }
 
+void UIFrame_Drawer(ui_object_t *ob)
+{
+	int b = UI_BORDER/2;
+
+	UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, 
+		UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW));
+	UI_Gradient(ob->x + b, ob->y + b, ob->w - 2*b, ob->h - 2*b,
+		UI_COL(UIC_BG_MEDIUM), 0, .6f, 0);
+}
+
 void UIText_Drawer(ui_object_t *ob)
 {
 	UI_TextOutEx(ob->text, ob->x, ob->y + ob->h/2, false, true, 
@@ -1681,7 +1691,8 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
 	case UIBA_DOWN:
 		UI_DrawTriangle(x + w/2 + boff, y + h/2 + boff, 
 			inside/2.75f * (arrow == UIBA_DOWN? -1 : 1), 
-			UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW),
+			/*UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW),*/
+			UI_COL(UIC_TEXT), UI_COL(UIC_TEXT), UI_COL(UIC_TEXT),
 			alpha * (disabled? .2f : 1));
 		break;
 
@@ -1689,7 +1700,8 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
 	case UIBA_RIGHT:
 		UI_DrawHorizTriangle(x + w/2 + boff, y + h/2 + boff,
 			inside/2.75f * (arrow == UIBA_RIGHT? -1 : 1),
-			UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW),
+			/*UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW),*/
+			UI_COL(UIC_TEXT), UI_COL(UIC_TEXT), UI_COL(UIC_TEXT),
 			alpha * (disabled? .2f : 1));
 		break;
 	}

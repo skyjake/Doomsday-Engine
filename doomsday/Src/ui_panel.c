@@ -595,10 +595,7 @@ void CP_DrawBorder(ui_object_t *ob)
 	void *help_ptr;
 	boolean shown;
 
-	UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, 
-		UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW));
-	UI_Gradient(ob->x + b, ob->y + b, ob->w - 2*b, ob->h - 2*b,
-		UI_COL(UIC_BG_MEDIUM), 0, .6f, 0);
+	UIFrame_Drawer(ob);
 
 	// Draw help window visual cues.
 	if(panel_show_tips)
@@ -917,14 +914,16 @@ void CP_Ticker(ui_page_t *page)
 //===========================================================================
 // CP_LabelText
 //===========================================================================
-int CP_LabelText(char *label, char *text, int x, int y, int w, int h)
+int CP_LabelText
+	(char *label, char *text, int x, int y, int w, int h, float alpha)
 {
 	int ind;
 
-	UI_ColorA(UI_COL(UIC_TEXT), .5f);
+	UI_ColorA(UI_COL(UIC_TEXT), .5f*alpha);
 	FR_TextOut(label, x, y);
 	ind = FR_TextWidth(label);
-	return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, UI_COL(UIC_TEXT), 1);
+	return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, 
+		UI_COL(UIC_TEXT), alpha);
 }
 
 //===========================================================================
@@ -932,7 +931,7 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h)
 //===========================================================================
 void CP_Drawer(ui_page_t *page)
 {
-	float alpha = .9f;
+	float alpha = panel_help_offset / (float) HELP_OFFSET;
 	int x, y, w, h, bor;
 	char *str;
 
@@ -944,14 +943,14 @@ void CP_Drawer(ui_page_t *page)
 
 	// Help box placement.
 	bor = UI_BUTTON_BORDER;
-	x = panel_help_offset - HELP_OFFSET - bor;
+	x = /*panel_help_offset - HELP_OFFSET*/ - bor;
 	y = UI_ScreenY(0);
 	w = HELP_OFFSET;
 	h = UI_ScreenH(920);
 	UI_DrawRectEx(x, y, w, h, bor, UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), 
-		UI_COL(UIC_BRD_LOW), 1);
+		UI_COL(UIC_BRD_LOW), alpha);
 	UI_Gradient(x + bor, y + bor, w - 2*bor, h - 2*bor, 
-		UI_COL(UIC_HELP), UI_COL(UIC_HELP),	1, 1 /*alpha*/);
+		UI_COL(UIC_HELP), UI_COL(UIC_HELP),	alpha /*1*/, alpha /*1*/);
 	x += 2*bor;
 	y += 2*bor;
 	w -= 4*bor;
@@ -959,25 +958,25 @@ void CP_Drawer(ui_page_t *page)
 
 	// The title (with shadow).
 	UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET, 
-		y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), 1);
+		y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);
 	y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, 
-		UI_COL(UIC_TEXT), 1) + ui_fonthgt + 3;
-	UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, .5f, 0);
+		UI_COL(UIC_TEXT), alpha) + ui_fonthgt + 3;
+	UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, alpha*.5f, 0);
 	y += 2;
 
 	// Cvar?
 	if((str = DH_GetString(panel_help, HST_CONSOLE_VARIABLE)))
-		y = CP_LabelText("CVar: ", str, x, y, w, h) + ui_fonthgt;
+		y = CP_LabelText("CVar: ", str, x, y, w, h, alpha) + ui_fonthgt;
 
 	// Default?
 	if((str = DH_GetString(panel_help, HST_DEFAULT_VALUE)))
-		y = CP_LabelText("Default: ", str, x, y, w, h) + ui_fonthgt;
+		y = CP_LabelText("Default: ", str, x, y, w, h, alpha) + ui_fonthgt;
 
 	// Information.
 	if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
 	{
 		y += ui_fonthgt/2;
-		UI_TextOutWrapEx(str, x, y, w, h, UI_COL(UIC_TEXT), 1);
+		UI_TextOutWrapEx(str, x, y, w, h, UI_COL(UIC_TEXT), alpha);
 	}
 }
 
