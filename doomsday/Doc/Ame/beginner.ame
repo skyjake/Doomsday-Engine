@@ -168,7 +168,7 @@ For the latest version go to @link{http://glbsp.sourceforge.net/}.
 The main launcher for games running on the Doomsday Engine is called Doomsday KickStart. It can be found in the folder where you extracted the files in Step 1 (@file{Kicks.exe}). To have a convenient way to start the game create a Windows shortcut for @file{Kicks.exe}.
 
 @notice{
-	If KickStart fails to run, displaying an error message about missing OCX or DLL files, get the "KickStart Full Install" from @link{http://www.doomsdayhq.com/download_util.php}.
+	If KickStart fails to run, displaying an error message about missing OCX or DLL files, get the "KickStart Full Install" from @link{http://www.doomsdayhq.com/files.php?class=5}.
 }
 
 @chapter{ Starting a game }
