@@ -155,19 +155,22 @@ void Sv_HandlePacket(void)
 			from, id);
 
 		// Check for duplicate IDs.
-		for(i = 0; i < MAXPLAYERS; i++)
+		if(!pl->ingame && !sender->handshake)
 		{
-			if(clients[i].connected && clients[i].id == id)
+			for(i = 0; i < MAXPLAYERS; i++)
 			{
-				// Send a message to everybody.
-				Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, 
-					"New client connection refused: Duplicate ID "
-					"(%08x).\n", id);
-				N_TerminateClient(from);
-				break;
+				if(clients[i].connected && clients[i].id == id)
+				{
+					// Send a message to everybody.
+					Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, 
+						"New client connection refused: Duplicate ID "
+						"(%08x).\n", id);
+					N_TerminateClient(from);
+					break;
+				}
 			}
+			if(i < MAXPLAYERS) break; // Can't continue, refused!
 		}
-		if(i < MAXPLAYERS) break; // Can't continue, refused!
 
 		// This is OK.
 		sender->id = id;
@@ -557,6 +560,9 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 		Msg_WriteByte(pNumber);
 		Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
 	}
+
+	// This client no longer has an ID number.
+	clients[pNumber].id = 0;
 }
 
 // The player will be sent the introductory handshake packets.
