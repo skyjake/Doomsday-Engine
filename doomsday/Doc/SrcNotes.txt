@@ -1,7 +1,7 @@
 
                           Doomsday Engine Sources
                           -----------------------
-                              January 8, 2004
+                              January 8, 2005
                           (engine version 1.8.6)
 
                 by Jaakko Keränen <skyjake@doomsdayhq.com>
