@@ -29,6 +29,13 @@
 #define TXF_MASKED		0x1
 #define TXF_GLOW		0x2		// For lava etc, textures that glow.
 
+// Animation group flags.
+#define AGF_SMOOTH		0x1
+#define AGF_FIRST_ONLY	0x2
+#define AGF_TEXTURE		0x1000
+#define AGF_FLAT		0x2000
+#define AGF_PRECACHE	0x4000	// Group is just for precaching.
+
 enum
 { // bbox coordinates
 	BOXTOP,
@@ -109,7 +116,7 @@ typedef struct
 	DGLuint		tex;			// Name of the associated DGL texture.
 	byte		masked;			// Is the (DGL) texture masked?
 	detailinfo_t detail;		// Detail texture information.
-	int			group;			// Animation group (or zero).
+	byte		ingroup;		// True if texture belongs to some animgroup.
 	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
 	texpatch_t	patches[1];		// [patchcount] drawn back to front
 								//  into the cached texture
@@ -120,14 +127,21 @@ typedef struct
 	byte		rgb[3];
 } rgbcol_t;
 
+typedef struct translation_s 
+{
+	int current;
+	int next;
+	float inter;
+} translation_t;
+
 typedef struct flat_s
 {
 	int			lump;
-	int			translation;
+	translation_t translation;
 	short		flags;
 	rgbcol_t	color;
 	detailinfo_t detail;		// Detail texture information.
-	int			group;			// Animation group (or zero).
+	byte		ingroup;		// True if belongs to some animgroup.
 	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
 } flat_t;
 
@@ -137,6 +151,24 @@ typedef struct lumptexinfo_s
 	unsigned short width[2], height;
 	short		offx, offy;
 } lumptexinfo_t;
+
+typedef struct animframe_s
+{
+	int number;
+	ushort tics;
+	ushort random;
+} animframe_t;
+
+typedef struct animgroup_s
+{
+	int id;
+	int flags;
+	int index;
+	int maxtimer;
+	int timer;
+	int count;
+	animframe_t *frames;	
+} animgroup_t;
 
 extern vertexowner_t *vertexowners;
 extern sectorinfo_t *secinfo;
@@ -156,17 +188,21 @@ extern	int				numlumptexinfo;
 extern  int             viewwidth, viewheight;
 extern	int				numtextures;		
 extern	texture_t		**textures;
-extern  int             *flattranslation;		// for global animation
-extern  int             *texturetranslation;	// for global animation
+extern  translation_t	*texturetranslation;	// for global animation
+extern	int				numgroups;
+extern	animgroup_t		*groups;
 extern	int				LevelFullBright;
 extern  int             numflats;
-extern flat_t			*flats;
+extern	flat_t			*flats;
 extern	int				r_texglow;
 extern	int				r_precache_sprites, r_precache_skins;
 
-void    R_InitData (void);
-void	R_UpdateData (void);
-void	R_PrecacheLevel (void);
+void    R_InitData(void);
+void	R_UpdateData(void);
+void	R_PrecacheLevel(void);
+void	R_InitAnimGroup(ded_group_t *def);
+boolean	R_IsInAnimGroup(int groupNum, int type, int number);
+void	R_AnimateAnimGroups(void);
 int		R_TextureFlags(int texture);
 int		R_FlatFlags(int flat);
 flat_t*	R_FindFlat(int lumpnum);	// May return NULL.
