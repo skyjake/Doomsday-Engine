@@ -61,6 +61,7 @@ int Def_GetMusicNum(char *id);
 int Def_EvalFlags(char *ptr);
 ded_mapinfo_t *Def_GetMapInfo(char *map_id);
 ded_light_t *Def_GetLightDef(int spr, int frame);
+ded_decor_t *Def_GetDecoration(int number, boolean is_texture, boolean has_ext);
 int Def_Get(int type, char *id, void *out);
 boolean Def_SameStateSequence(state_t *snew, state_t *sold);
 
