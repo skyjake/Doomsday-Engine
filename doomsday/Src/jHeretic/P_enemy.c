@@ -2275,6 +2275,9 @@ void P_Massacre(void)
 	mobj_t *mo;
 	thinker_t *think;
 
+	// Only massacre when in a level.
+	if(gamestate != GS_LEVEL) return;
+
 	for(think = thinkercap.next; think != &thinkercap;
 		think = think->next)
 	{

@@ -1686,6 +1686,9 @@ int P_Massacre(void)
 	mobj_t *mo;
 	thinker_t *think;
 
+	// Only massacre when in a level.
+	if(gamestate != GS_LEVEL) return 0;
+
 	count = 0;
 	for(think = gi.thinkercap->next; think != gi.thinkercap;
 		think = think->next)

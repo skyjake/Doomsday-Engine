@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/07/01 12:42:26  skyjake
+// Allow massacre only when GS_LEVEL
+//
 // Revision 1.3  2003/04/29 13:11:52  skyjake
 // Missile puff ptcgen issue fixed
 //
@@ -767,6 +770,9 @@ int P_Massacre(void)
 	int count = 0;
 	mobj_t *mo;
 	thinker_t *think;
+
+	// Only massacre when in a level.
+	if(gamestate != GS_LEVEL) return 0;
 
 	for(think = thinkercap.next; think != &thinkercap;
 		think = think->next)
