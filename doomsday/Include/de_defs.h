@@ -16,9 +16,7 @@
  */
 
 /*
- * <file name>: <short summary>
- *
- * <description>
+ * de_defs.h: Definitions Subsystem
  */
 
 #ifndef __DOOMSDAY_DEFINITIONS_H__
