@@ -1,69 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log$
-// Revision 1.13  2004/05/29 09:53:29  skyjake
-// Consistent style (using GNU Indent)
-//
-// Revision 1.12  2004/05/28 19:52:58  skyjake
-// Finished switch from branch-1-7 to trunk, hopefully everything is fine
-//
-// Revision 1.9.2.1  2004/05/16 10:01:36  skyjake
-// Merged good stuff from branch-nix for the final 1.7.15
-//
-// Revision 1.9.4.1  2003/11/19 17:07:13  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.9  2003/08/30 22:47:20  skyjake
-// Removed obsolete, ancient light decorations
-//
-// Revision 1.8  2003/08/24 00:13:59  skyjake
-// Precache player weapon model skins
-//
-// Revision 1.7  2003/07/12 22:26:35  skyjake
-// Comment
-//
-// Revision 1.6  2003/07/03 20:51:38  skyjake
-// Subtract 4 ("gNd2") from GL verts lump length
-//
-// Revision 1.5  2003/05/25 23:26:34  skyjake
-// External resource locator, setting the data path
-//
-// Revision 1.4  2003/05/23 22:43:36  skyjake
-// Fixed bug 734892: sides with bogus sectors
-//
-// Revision 1.3  2003/03/14 15:39:21  skyjake
-// Don't assume map31,32 exist
-//
-// Revision 1.2  2003/02/27 23:14:32  skyjake
-// Obsolete jDoom files removed
-//
-// Revision 1.1  2003/02/26 19:21:57  skyjake
-// Initial checkin
-//
-//
-// DESCRIPTION:
-//  Do all the WAD I/O, get map description,
-//  set up initial state and misc. LUTs.
-//
-//-----------------------------------------------------------------------------
-
-static const char
-        rcsid[] = "$Id$";
-
 #include "doomdef.h"
 #include "d_config.h"
 #include "d_netJD.h"
@@ -147,11 +81,8 @@ void P_LoadVertexes(int lump, int gllump)
 		}
 		// There are additional vertices in gllump.
 		numvertexes +=
-			(W_LumpLength(gllump) - (ver == 2 ? 4 : 0)) / (ver ==
-														   1 ?
-														   sizeof(mapvertex_t)
-														   :
-														   sizeof(glvert2_t));
+			(W_LumpLength(gllump) - (ver == 2 ? 4 : 0)) /
+			(ver == 1 ? sizeof(mapvertex_t) : sizeof(glvert2_t));
 	}
 	vertexes = Z_Malloc(numvertexes * sizeof(vertex_t), PU_LEVEL, 0);
 	data = W_CacheLumpNum(lump, PU_STATIC);
@@ -655,21 +586,6 @@ void P_GroupLines(void)
 }
 
 //===========================================================================
-// P_GetMapLumpName
-//===========================================================================
-void P_GetMapLumpName(int episode, int map, char *lumpName)
-{
-	if(gamemode == commercial)
-	{
-		sprintf(lumpName, "map%02i", map);
-	}
-	else
-	{
-		sprintf(lumpName, "E%iM%i", episode, map);
-	}
-}
-
-//===========================================================================
 // P_MapExists
 //  Returns true if the specified ep/map exists in a WAD.
 //===========================================================================
@@ -687,8 +603,8 @@ boolean P_MapExists(int episode, int map)
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
 	int     i;
-	char    lumpname[16], gl_lumpname[16], *lname, *lauthor;
-	int     lumpnum, gl_lumpnum;
+	char    levelId[16], *lname, *lauthor;
+	int     lumpNumbers[2];
 	int     setupflags = DDSLF_POLYGONIZE | DDSLF_FIX_SKY | DDSLF_REVERB;
 
 	totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
@@ -713,49 +629,45 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	numbraintargets = 0;
 	braintargeton = 0;
 
-	// Find map name.
-	P_GetMapLumpName(episode, map, lumpname);
-	sprintf(gl_lumpname, "GL_%s", lumpname);
-	Con_Message("SetupLevel: %s", lumpname);
-
 	leveltime = 0;
 	actual_leveltime = 0;
 
-	lumpnum = W_GetNumForName(lumpname);
-	gl_lumpnum = W_CheckNumForName(gl_lumpname);
+	// Locate the lumps where the map data resides in.
+	P_LocateMapLumps(episode, map, lumpNumbers);
+	P_GetMapLumpName(episode, map, levelId);
 
-	P_LoadBlockMap(lumpnum + ML_BLOCKMAP);
+	P_LoadBlockMap(lumpNumbers[0] + ML_BLOCKMAP);
 
 	// note: most of this ordering is important 
-	if(gl_lumpnum > lumpnum)
+	if(lumpNumbers[1] > lumpNumbers[0])
 	{
-		Con_Message(" (GL data found)\n");
+		Con_Message("(GL data found)\n");
 		setupflags |= DDSLF_DONT_CLIP;
 		// We have GL nodes! Let's load them in.
-		P_LoadVertexes(lumpnum + ML_VERTEXES, gl_lumpnum + 1);
-		P_LoadSectors(lumpnum + ML_SECTORS);
-		P_LoadSideDefs(lumpnum + ML_SIDEDEFS);
-		P_LoadLineDefs(lumpnum + ML_LINEDEFS);
-		P_LoadSubsectors(gl_lumpnum + 3);
-		P_LoadNodes(gl_lumpnum + 4);
-		P_LoadSegsGL(gl_lumpnum + 2);
+		P_LoadVertexes(lumpNumbers[0] + ML_VERTEXES, lumpNumbers[1] + 1);
+		P_LoadSectors(lumpNumbers[0] + ML_SECTORS);
+		P_LoadSideDefs(lumpNumbers[0] + ML_SIDEDEFS);
+		P_LoadLineDefs(lumpNumbers[0] + ML_LINEDEFS);
+		P_LoadSubsectors(lumpNumbers[1] + 3);
+		P_LoadNodes(lumpNumbers[1] + 4);
+		P_LoadSegsGL(lumpNumbers[1] + 2);
 	}
 	else
 	{
 		Con_Message("\n");
-		P_LoadVertexes(lumpnum + ML_VERTEXES, -1);
-		P_LoadSectors(lumpnum + ML_SECTORS);
-		P_LoadSideDefs(lumpnum + ML_SIDEDEFS);
-		P_LoadLineDefs(lumpnum + ML_LINEDEFS);
-		P_LoadSubsectors(lumpnum + ML_SSECTORS);
-		P_LoadNodes(lumpnum + ML_NODES);
-		P_LoadSegs(lumpnum + ML_SEGS);
+		P_LoadVertexes(lumpNumbers[0] + ML_VERTEXES, -1);
+		P_LoadSectors(lumpNumbers[0] + ML_SECTORS);
+		P_LoadSideDefs(lumpNumbers[0] + ML_SIDEDEFS);
+		P_LoadLineDefs(lumpNumbers[0] + ML_LINEDEFS);
+		P_LoadSubsectors(lumpNumbers[0] + ML_SSECTORS);
+		P_LoadNodes(lumpNumbers[0] + ML_NODES);
+		P_LoadSegs(lumpNumbers[0] + ML_SEGS);
 	}
 
 	// Must be called before any mobjs are spawned.
-	R_SetupLevel(lumpname, DDSLF_INIT_LINKS);
+	R_SetupLevel(levelId, DDSLF_INIT_LINKS);
 
-	P_LoadReject(lumpnum + ML_REJECT);
+	P_LoadReject(lumpNumbers[0] + ML_REJECT);
 	P_GroupLines();
 
 	// It's imperative that this is called!
@@ -763,12 +675,12 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	// - necessary GL data generated
 	// - sky fix
 	// - map info setup
-	R_SetupLevel(lumpname, setupflags);
+	R_SetupLevel(levelId, setupflags);
 
 	bodyqueslot = 0;
 	deathmatch_p = deathmatchstarts;
 	playerstart_p = playerstarts;
-	P_LoadThings(lumpnum + ML_THINGS);
+	P_LoadThings(lumpNumbers[0] + ML_THINGS);
 
 	P_DealPlayerStarts();
 	P_SpawnPlayers();
@@ -822,8 +734,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	for(i = 0; i < numlines; i++)
 	{
 		int     k;
-
-		lumpnum = R_TextureNumForName("NUKE24");
+		int     lumpnum = R_TextureNumForName("NUKE24");
+		
 		for(k = 0; k < 2; k++)
 			if(lines[i].sidenum[k] >= 0)
 			{
@@ -836,7 +748,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
 	// Someone may want to do something special now that the level has been
 	// fully set up.
-	R_SetupLevel(lumpname, DDSLF_FINALIZE);
+	R_SetupLevel(levelId, DDSLF_FINALIZE);
 }
 
 //===========================================================================

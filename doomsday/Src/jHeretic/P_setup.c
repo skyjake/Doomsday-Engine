@@ -807,9 +807,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	int     setupflags = DDSLF_POLYGONIZE | DDSLF_FIX_SKY | DDSLF_REVERB;
 	int     i;
 	int     parm;
-	char    levelid[9];
-	char    lumpname[9];
-	int     lumpnum, gllumpnum;
+	char    levelId[9];
+	int	    lumpNumbers[2];
 	char   *lname, *lauthor;
 
 	totalkills = totalitems = totalsecret = 0;
@@ -820,53 +819,36 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	}
 	players[consoleplayer].plr->viewz = 1;	// will be set by player think
 
-	//S_Start ();           // make sure all sounds are stopped before Z_FreeTags
 	S_LevelChange();
 
 	Z_FreeTags(PU_LEVEL, PU_PURGELEVEL - 1);
 
 	P_InitThinkers();
 
-	//
-	// look for a regular (development) map first
-	//
-	lumpname[0] = 'E';
-	lumpname[1] = '0' + episode;
-	lumpname[2] = 'M';
-	lumpname[3] = '0' + map;
-	lumpname[4] = 0;
 	leveltime = 0;
 	actual_leveltime = 0;
-	strcpy(levelid, lumpname);
 
-	Con_Message("SetupLevel: %s ", lumpname);
+	// Locate the map data.
+	P_LocateMapLumps(episode, map, lumpNumbers);
+	strcpy(levelId, W_LumpName(lumpNumbers[0]));
 
-	lumpnum = W_GetNumForName(lumpname);
+	Con_Message("SetupLevel: %s ", levelId);
+
 	// note: most of this ordering is important 
 
-	P_LoadBlockMap(lumpnum + ML_BLOCKMAP);
+	P_LoadBlockMap(lumpNumbers[0] + ML_BLOCKMAP);
 
-	// Check for GL lumps.
-	lumpname[0] = 'G';
-	lumpname[1] = 'L';
-	lumpname[2] = '_';
-	lumpname[3] = 'E';
-	lumpname[4] = '0' + episode;
-	lumpname[5] = 'M';
-	lumpname[6] = '0' + map;
-	lumpname[7] = 0;
-	gllumpnum = W_CheckNumForName(lumpname);
-	if(gllumpnum > lumpnum)
+	if(lumpNumbers[1] > lumpNumbers[0])
 	{
 		Con_Message("(GL data found)\n");
 		// We have GL nodes! Let's load them in.
-		P_LoadVertexes(lumpnum + ML_VERTEXES, gllumpnum + 1);
-		P_LoadSectors(lumpnum + ML_SECTORS);
-		P_LoadSideDefs(lumpnum + ML_SIDEDEFS);
-		P_LoadLineDefs(lumpnum + ML_LINEDEFS);
-		P_LoadSubsectors(gllumpnum + 3);
-		P_LoadNodes(gllumpnum + 4);
-		P_LoadSegsGL(gllumpnum + 2);
+		P_LoadVertexes(lumpNumbers[0] + ML_VERTEXES, lumpNumbers[1] + 1);
+		P_LoadSectors(lumpNumbers[0] + ML_SECTORS);
+		P_LoadSideDefs(lumpNumbers[0] + ML_SIDEDEFS);
+		P_LoadLineDefs(lumpNumbers[0] + ML_LINEDEFS);
+		P_LoadSubsectors(lumpNumbers[1] + 3);
+		P_LoadNodes(lumpNumbers[1] + 4);
+		P_LoadSegsGL(lumpNumbers[1] + 2);
 		// The subsectors in the GL nodes don't need processing.
 		setupflags |= DDSLF_DONT_CLIP;
 	}
@@ -877,19 +859,19 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 		// Note: most of this ordering is important
 		//
 		Con_Message("\n");
-		P_LoadVertexes(lumpnum + ML_VERTEXES, -1);
-		P_LoadSectors(lumpnum + ML_SECTORS);
-		P_LoadSideDefs(lumpnum + ML_SIDEDEFS);
-		P_LoadLineDefs(lumpnum + ML_LINEDEFS);
-		P_LoadSubsectors(lumpnum + ML_SSECTORS);
-		P_LoadNodes(lumpnum + ML_NODES);
-		P_LoadSegs(lumpnum + ML_SEGS);
+		P_LoadVertexes(lumpNumbers[0] + ML_VERTEXES, -1);
+		P_LoadSectors(lumpNumbers[0] + ML_SECTORS);
+		P_LoadSideDefs(lumpNumbers[0] + ML_SIDEDEFS);
+		P_LoadLineDefs(lumpNumbers[0] + ML_LINEDEFS);
+		P_LoadSubsectors(lumpNumbers[0] + ML_SSECTORS);
+		P_LoadNodes(lumpNumbers[0] + ML_NODES);
+		P_LoadSegs(lumpNumbers[0] + ML_SEGS);
 	}
 
 	// Must be called before any mobjs are spawned.
-	R_SetupLevel(levelid, DDSLF_INIT_LINKS);
+	R_SetupLevel(levelId, DDSLF_INIT_LINKS);
 
-	P_LoadReject(lumpnum + ML_REJECT);
+	P_LoadReject(lumpNumbers[0] + ML_REJECT);
 	P_GroupLines();
 
 	bodyqueslot = 0;
@@ -900,12 +882,12 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	// - dlBlockLinks initialized
 	// - necessary GL data generated
 	// - sky fix
-	R_SetupLevel(levelid, setupflags);
+	R_SetupLevel(levelId, setupflags);
 
 	P_InitAmbientSound();
 	P_InitMonsters();
 	P_OpenWeapons();
-	P_LoadThings(lumpnum + ML_THINGS);
+	P_LoadThings(lumpNumbers[0] + ML_THINGS);
 	P_CloseWeapons();
 
 	P_DealPlayerStarts();
@@ -952,10 +934,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 		Con_Printf("\n");
 	}
 
-	R_SetupLevel(levelid, DDSLF_FINALIZE);
+	R_SetupLevel(levelId, DDSLF_FINALIZE);
 }
 
-char   *P_GetShortLevelName(int episode, int map)
+char *P_GetShortLevelName(int episode, int map)
 {
 	char   *name = P_GetLevelName(episode, map);
 	char   *ptr;

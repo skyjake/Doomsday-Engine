@@ -548,7 +548,7 @@ void Def_Read(void)
 	Def_ReadLumpDefs();
 
 	// Any definition hooks?
-	Plug_DoHook(HOOK_DEFS);
+	Plug_DoHook(HOOK_DEFS, 0, &defs);
 
 	// Check that enough defs were found.
 	if(!defs.count.states.num || !defs.count.mobjs.num)

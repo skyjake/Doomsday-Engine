@@ -1090,24 +1090,12 @@ void P_TurnTorchesToFaceWalls()
 	}
 }
 
-/*
-   =================
-   =
-   = P_SetupLevel
-   =
-   =================
- */
-
-//#ifdef __WATCOMC__
-//extern boolean i_CDMusic;
-//#endif
-
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
 	int     i, setupflags = DDSLF_POLYGONIZE | DDSLF_FIX_SKY | DDSLF_REVERB;
 	int     parm;
-	char    lumpname[9], levelid[9];
-	int     lumpnum, gllumpnum;
+	char    levelId[9];
+	int     lumpNumbers[2];
 
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1137,15 +1125,17 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	P_InitThinkers();
 	actual_leveltime = leveltime = 0;
 
-	sprintf(lumpname, "MAP%02d", map);
-	strcpy(levelid, lumpname);
-	lumpnum = W_GetNumForName(lumpname);
+	// Locate the lumps where the map data resides.
+	P_LocateMapLumps(0, map, lumpNumbers);
+	P_GetMapLumpName(0, map, levelId);
+
+// Lazy programming at its finest...
+#define lumpnum   lumpNumbers[0]
+#define gllumpnum lumpNumbers[1]
 
 	P_LoadBlockMap(lumpnum + ML_BLOCKMAP);
 
 	// Check for GL lumps.
-	sprintf(lumpname, "GL_MAP%02d", map);
-	gllumpnum = W_CheckNumForName(lumpname);
 	if(gllumpnum > lumpnum)
 	{
 		// We have GL nodes! Let's load them in.
@@ -1174,7 +1164,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	}
 
 	// Must be called before any mobjs are spawned.
-	R_SetupLevel(levelid, DDSLF_INIT_LINKS);
+	R_SetupLevel(levelId, DDSLF_INIT_LINKS);
 
 	P_LoadReject(lumpnum + ML_REJECT);
 
@@ -1187,13 +1177,13 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
 	// Server can't be initialized before PO_Init is done, but PO_Init
 	// can't be done until SetupLevel is called...
-	R_SetupLevel(levelid, setupflags | DDSLF_NO_SERVER);
+	R_SetupLevel(levelId, setupflags | DDSLF_NO_SERVER);
 
 	// Initialize polyobjs.
 	PO_Init(lumpnum + ML_THINGS);	// Initialize the polyobjs
 
 	// Now we can init the server.
-	R_SetupLevel(levelid, DDSLF_SERVER_ONLY);
+	R_SetupLevel(levelId, DDSLF_SERVER_ONLY);
 
 	P_LoadACScripts(lumpnum + ML_BEHAVIOR);	// ACS object code
 
@@ -1214,8 +1204,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	// Set up world state.
 	P_SpawnSpecials();
 
-	//gi.SetupLevel(levelid, setupflags);
-
 	// Preload graphics.
 	if(precache)
 	{
@@ -1226,7 +1214,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	// Check if the level is a lightning level.
 	P_InitLightning();
 
-	/*  S_StopAllSound(); */
 	SN_StopAllSequences();
 	S_LevelMusic();
 
@@ -1253,7 +1240,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	Con_Message("Map %d (%d): %s\n", P_GetMapWarpTrans(map), map,
 				P_GetMapName(map));
 
-	R_SetupLevel(levelid, DDSLF_FINALIZE);
+	R_SetupLevel(levelId, DDSLF_FINALIZE);
+
+#undef gllumpnum
+#undef lumpnum
 }
 
 //===========================================================================
