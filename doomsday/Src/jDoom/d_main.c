@@ -865,13 +865,16 @@ void D_PostInit(void)
     if(p && p < myargc-1)
     {
 		if(gamemode == commercial)
+		{
 			startmap = atoi(Argv(p+1));
-		else
+			autostart = true;
+		}
+		else if(p < myargc-2)
 		{
 			startepisode = Argv(p+1)[0]-'0';
 			startmap = Argv(p+2)[0]-'0';
+			autostart = true;
 		}
-		autostart = true;
     }
 
     // turbo option

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/06/03 15:19:52  skyjake
+// Cleanups
+//
 // Revision 1.2  2003/02/27 23:14:33  skyjake
 // Obsolete jDoom files removed
 //
@@ -1077,7 +1080,6 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot)
 	int				w, h;
 	
 	R_GetSpriteInfo(sprite, 0, &sprInfo);
-	//ST_spriteLumpSize(sprite, sprInfo.lump, &w, &h);
 	w = sprInfo.width;
 	h = sprInfo.height;
 	if(sprite == SPR_ROCK)
