@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -277,7 +277,7 @@ int Sys_StartThread(systhreadfunc_t startPos, void *parm, int priority)
 	}
 	return (int) handle;
 #else
-	return (int) SDL_CreateThread(startpos, parm);
+	return (int) SDL_CreateThread(startPos, parm);
 #endif
 }
 
@@ -361,6 +361,20 @@ void Sem_P(semaphore_t semaphore)
 		SDL_SemWait((SDL_sem*)semaphore);
 	}
 }
+
+/*
+ * "Verhogen" a semaphore. Returns immediately.
+ */
+void Sem_V(semaphore_t semaphore)
+{
+	if(semaphore)
+	{
+		SDL_SemPost((SDL_sem*)semaphore);
+	}
+}
+
+#ifdef WIN32
+#if 0
 /*
  * Return the exit code of the given thread. Returns true if the thread
  * has stopped, false if not.
@@ -381,6 +395,7 @@ boolean Sys_GetThreadExitCode(int handle, uint *exitCode)
 	if(exitCode) *exitCode = code;
 	return true;
 }
+#endif
 
 /*
  * Create a new mutex. Returns a handle with which the mutex can be acquired
@@ -421,13 +436,4 @@ void Sys_Unlock(int mutexHandle)
 {
 	ReleaseMutex((HANDLE)mutexHandle);
 }
-/*
- * "Verhogen" a semaphore. Returns immediately.
- */
-void Sem_V(semaphore_t semaphore)
-{
-	if(semaphore)
-	{
-		SDL_SemPost((SDL_sem*)semaphore);
-	}
-}
+#endif

@@ -87,9 +87,6 @@ double		lastSharpFrameTime;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static viewer_t lastSharpView[2];
-static boolean	resetNextViewer = true;
-
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -187,14 +184,6 @@ void R_Shutdown(void)
 	R_ShutdownModels();
 	R_ShutdownData();
 	// Most allocated memory goes down with the zone.
-}
-
-//===========================================================================
-// R_ResetViewer
-//===========================================================================
-void R_ResetViewer(void)
-{
-	resetNextViewer = true;
 }
 
 //===========================================================================

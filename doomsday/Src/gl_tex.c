@@ -96,7 +96,8 @@ typedef struct dtexinst_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void	averageColorIdx(rgbcol_t *sprcol, byte *data, int w, int h, byte *palette, boolean has_alpha);
+void	averageColorIdx(rgbcol_t *sprcol, byte *data, int w, int h,
+						byte *palette, boolean has_alpha);
 void	averageColorRGB(rgbcol_t *col, byte *data, int w, int h);
 byte*	GL_LoadHighResFlat(image_t *img, char *name);
 void	GL_DeleteDetailTexture(detailtex_t *dtex);
@@ -3102,10 +3103,9 @@ void GL_SetPatch(int lump)
 	curtex = lumptexinfo[lump].tex[0];
 }
 
-//===========================================================================
-// GL_SetNoTexture
-//	You should use Disable(DGL_TEXTURING) instead of this.
-//===========================================================================
+/*
+ * You should use Disable(DGL_TEXTURING) instead of this.
+ */
 void GL_SetNoTexture(void)
 {
 	gl.Bind(0);
