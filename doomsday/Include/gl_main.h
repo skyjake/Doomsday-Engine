@@ -10,6 +10,7 @@ boolean			GL_IsInited(void);
 
 void			GL_Init(void);
 void			GL_Shutdown(void);
+void			GL_TotalReset(boolean doShutdown);
 void			GL_Init2DState(void);
 void			GL_SwitchTo3DState(boolean push_state);
 void			GL_Restore2DState(int step);
