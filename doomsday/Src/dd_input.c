@@ -141,7 +141,6 @@ static char defaultShiftTable[96] =	// Contains characters 32 to 127.
 /* *INDENT-ON* */
 
 static repeater_t keyReps[MAX_DOWNKEYS];
-static int oldMouseX, oldMouseY;
 static int oldMouseButtons = 0;
 static int oldJoyBState = 0;
 static float oldPOV = IJOY_POV_CENTER;
@@ -368,7 +367,8 @@ static event_t *DD_GetEvent(void)
 
 /*
  * Send all the events of the given timestamp down the responder
- * chain.
+ * chain.  This gets called at least 35 times per second.  Usually
+ * more frequently than that.
  */
 void DD_ProcessEvents(void)
 {
@@ -562,6 +562,8 @@ void DD_ReadKeyboard(void)
 //===========================================================================
 void DD_ReadMouse(void)
 {
+	static int mickeys[2] = { 0, 0 }; // For filtering.
+	
 	event_t ev;
 	mousestate_t mouse;
 	int     change;
@@ -590,12 +592,19 @@ void DD_ReadMouse(void)
 		// Filtering calculates the average with previous (x,y) value.
 		if(mouseFilter)
 		{
-			int     oldX = ev.data1, oldY = ev.data2;
+			mickeys[0] += ev.data1;
+			mickeys[1] += ev.data2;
 
-			ev.data1 = (ev.data1 + oldMouseX) / 2;
-			ev.data2 = (ev.data2 + oldMouseY) / 2;
-			oldMouseX = oldX;
-			oldMouseY = oldY;
+			// Half of the mickeys will be posted with the event.
+			ev.data1 = (1 + mickeys[0]) / 2;
+			ev.data2 = (1 + mickeys[1]) / 2;
+
+			mickeys[0] -= ev.data1;
+			mickeys[1] -= ev.data2;
+		}
+		else
+		{
+			mickeys[0] = mickeys[1] = 0;
 		}
 	}
 	else						// In UI mode.
