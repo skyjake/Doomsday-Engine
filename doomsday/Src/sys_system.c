@@ -61,6 +61,7 @@ void Sys_Init(void)
 	Sys_InitTimer();
 	Sys_InitMixer();
 	S_Init();
+	Huff_Init();
 	N_Init();
 }
 
@@ -75,6 +76,7 @@ void Sys_Shutdown(void)
 	if(gx.Shutdown) gx.Shutdown();
 
 	Net_Shutdown();
+	Huff_Shutdown();
 	// Let's shut down sound first, so Windows' HD-hogging doesn't jam
 	// the MUS player (would produce horrible bursts of notes).
 	S_Shutdown();
