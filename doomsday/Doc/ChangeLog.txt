@@ -7,8 +7,9 @@
 Version 1.8.0-rc2
 -----------------
 + control panel text has its own color (not just white)
+* maximum frame rate limited to 200
 * movement of missiles and other such objects is now smoothed
-* network setup screens updated
+* network setup screens revised
 * modems, serial links and IPX no longer supported (only TCP/IP)
 - ccmd 'playsound' was missing
 - things didn't follow moving planes smoothly
