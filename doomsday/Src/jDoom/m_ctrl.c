@@ -226,7 +226,7 @@ void M_DrawControlsMenu(void)
 	sprintf(buff, "PAGE %i/%i", menu->firstItem/menu->numVisItems+1,
 		menu->itemCount/menu->numVisItems+1);
 	M_WriteText2(160-M_StringWidth(buff, hu_font_a)/2, 
-		menu->y-14, buff, hu_font_a, 1, 0, 0);
+		menu->y-14, buff, hu_font_a, 1, .7f, .3f);
 
 	for(i=0; i<menu->numVisItems && menu->firstItem+i < menu->itemCount; i++, item++)
 	{
