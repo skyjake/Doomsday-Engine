@@ -1009,8 +1009,8 @@ void CP_Drawer(ui_page_t * page)
 	// The title (with shadow).
 	UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET,
 					 y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);
-	y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, UI_COL(UIC_TEXT),
-						 alpha) + ui_fonthgt + 3;
+	y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h,
+						 UI_COL(UIC_TITLE),  alpha) + ui_fonthgt + 3;
 	UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, alpha * .5f, 0);
 	y += 2;
 
