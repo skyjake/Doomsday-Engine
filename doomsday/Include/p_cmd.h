@@ -24,4 +24,4 @@
 
 void P_BuildCommand(int playerNumber);
 
-#endif 
+#endif
