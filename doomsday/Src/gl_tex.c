@@ -3640,8 +3640,8 @@ unsigned int GL_PrepareSkin(model_t * mdl, int skin)
 
 		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+		gl.TexParameter(DGL_WRAP_S, DGL_WRAP_S);
+		gl.TexParameter(DGL_WRAP_T, DGL_WRAP_T);
 
 		// Compression can be enabled again.
 		gl.Enable(DGL_TEXTURE_COMPRESSION);
