@@ -37,7 +37,7 @@
 #  include <SDL_mixer.h>
 #endif
 
-#define BUFFERED_MUSIC_FILE "/tmp/deng-sdlmixer-buffered-song"
+#define BUFFERED_MUSIC_FILE "deng-sdlmixer-buffered-song"
 #define DEFAULT_MIDI_COMMAND "" //"timidity"
 
 enum { VX, VY, VZ };
