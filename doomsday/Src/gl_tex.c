@@ -2350,7 +2350,8 @@ unsigned int GL_PrepareSpriteBuffer
 	gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
 	// Determine coordinates for the texture.
-	GL_SetTexCoords(spritelumps[pnum].tc, image->width, image->height);
+	GL_SetTexCoords(spritelumps[pnum].tc[isPsprite], image->width, 
+		image->height);
 
 	return texture;
 }
@@ -2418,7 +2419,6 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 {
 	DGLuint *texture;
 	int lumpNum;
-	short *width, *height;
 	spritelump_t *slump;
 
 	if(pnum < 0) return 0;
@@ -2430,9 +2430,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 	// This way a sprite can be used both in the game and the HUD, and
 	// the textures can be different. (Very few sprites are used both
 	// in the game and the HUD.)
-	texture = (spriteMode == 0? &slump->tex    : &slump->hudtex);
-	width   = (spriteMode == 0? &slump->width  : &slump->hudwidth);
-	height  = (spriteMode == 0? &slump->height : &slump->hudheight);
+	texture = (spriteMode == 0? &slump->tex : &slump->hudtex);
 
 	if(!*texture)
 	{
@@ -2469,17 +2467,8 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 		}
 
 		*texture = GL_PrepareSpriteBuffer(pnum, &image, spriteMode == 1);
-		*width   = image.width;
-		*height  = image.height;
-
 		GL_DestroyImage(&image);
 	}
-	
-	// HACK: Since we are dealing with both normal sprites and HUD 
-	// sprites, let's update the texture coords to match the dimensions
-	// in use.
-	slump->tex = *texture;
-	GL_SetTexCoords(slump->tc, *width, *height);
 
 	return *texture;
 }
