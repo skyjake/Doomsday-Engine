@@ -433,6 +433,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	int     prim_type;
 	blendmode_t mode = BM_NORMAL, new_mode;
 	vissprite_t vis;
+	boolean flatonplane, flatonwall;
 
 	if(rtype == PTC_MODEL)
 	{
@@ -565,13 +566,23 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 
 		gl.Color4fv(color);
 
+		flatonplane = (st->flags & PTCF_PLANE_FLAT && pt->sector &&
+			(pt->sector->floorheight + 2 * FRACUNIT >= pt->pos[VZ] ||
+			 pt->sector->ceilingheight - 2 * FRACUNIT <= pt->pos[VZ]));
+
+		flatonwall = (st->flags & PTCF_WALL_FLAT && pt->contact && 
+			!pt->mov[VX] && !pt->mov[VY]);
+
 		center[VX] = FIX2FLT(pt->pos[VX]);
 		center[VZ] = FIX2FLT(pt->pos[VY]);
 		center[VY] = FIX2FLT(P_GetParticleZ(pt));
 
-		center[VX] += frameTimePos * FIX2FLT(pt->mov[VX]);
-		center[VZ] += frameTimePos * FIX2FLT(pt->mov[VY]);
-		center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
+		if(!flatonplane && !flatonwall)
+		{
+			center[VX] += frameTimePos * FIX2FLT(pt->mov[VX]);
+			center[VZ] += frameTimePos * FIX2FLT(pt->mov[VY]);
+			center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
+		}
 
 		// Model particles are rendered using the normal model rendering 
 		// routine.
@@ -636,9 +647,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		if(using_texture >= 0)
 		{
 			// Should the particle be flat against a plane?         
-			if(st->flags & PTCF_PLANE_FLAT && pt->sector &&
-			   (pt->sector->floorheight + 2 * FRACUNIT >= pt->pos[VZ] ||
-				pt->sector->ceilingheight - 2 * FRACUNIT <= pt->pos[VZ]))
+			if(flatonplane)
 			{
 				gl.TexCoord2f(0, 0);
 				gl.Vertex3f(center[VX] - size, center[VY], center[VZ] - size);
@@ -653,8 +662,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 				gl.Vertex3f(center[VX] - size, center[VY], center[VZ] + size);
 			}
 			// Flat against a wall, then?
-			else if(st->flags & PTCF_WALL_FLAT && pt->contact && !pt->mov[VX]
-					&& !pt->mov[VY])
+			else if(flatonwall)
 			{
 				// There will be a slight approximation on the XY plane since
 				// the particles aren't that accurate when it comes to wall

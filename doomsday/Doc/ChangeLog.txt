@@ -22,7 +22,8 @@ Version 1.8.1
   buffering no longer a danger)
 - fixed several endianness issues to allow building on a big endian arch
 * tuned up handling of ticcmds during transfer from client to server
-* particle movement is smoothed
+* particle movement is smoothed (except flat particles that contact 
+  a surface)
 * now mouse look is always as smooth as it can be, also when
   'rend-camera-smooth' is disabled
 * all games use the same keyboard look scheme (jDoom's was different)
