@@ -31,7 +31,7 @@ def isWindows():
 
     @return True, if the operating system is Windows.
     """
-    return platform.system() == 'Windows'
+    return platform.system() == 'Microsoft Windows'
 
 
 def isMac():

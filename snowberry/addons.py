@@ -43,8 +43,10 @@ addons = {}
 ADDON_EXTENSIONS = "box|addon|pk3|wad|ded|deh"
 
 # All the possible names of the addon metadata file.
-META_NAMES = ['info', 'Info', 'info.conf', 'Info.conf']
-
+META_NAMES = ['Info', 'Info.conf']
+if paths.isCaseSensitive():
+    META_NAMES += ['info', 'info.conf']
+    
 
 class Category:
     """The category tree is built automatically based on the loaded
@@ -498,10 +500,11 @@ class BoxAddon (Addon):
         """Load all the addons inside the box."""
         
         self.loadAll(self.getContentPath(), self.optional)
-        self.loadAll(self.__makePath('Required'), self.required)
         self.loadAll(self.__makePath('required'), self.required)
-        self.loadAll(self.__makePath('Extra'), self.extra)
         self.loadAll(self.__makePath('extra'), self.extra)
+        if paths.isCaseSensitive():
+            self.loadAll(self.__makePath('Required'), self.required)
+            self.loadAll(self.__makePath('Extra'), self.extra)
 
     def loadAll(self, path, role):
         """Load all addons on the given path."""

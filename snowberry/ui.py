@@ -804,7 +804,10 @@ class MultiArea (Area):
         """
         # Create a new panel for the page.
         panel = wx.Panel(self.panel, -1)
-        panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
+        if host.isWindows():
+            panel.SetBackgroundColour(widgets.tabBgColour)
+            panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
+
         panel.Hide()
 
         # Create a new Area for the page.

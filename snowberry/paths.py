@@ -104,6 +104,12 @@ def _checkSnowberryHome():
         _createDir(getUserPath(p))
 
 
+def isCaseSensitive():
+    """Returns True if the file system is case sensitive."""
+
+    return not host.isWindows() and not host.isMac()
+
+
 def addBundlePath(path):
     """Add a path to the list of paths where files will be searched
     from.
