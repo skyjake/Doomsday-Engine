@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,16 +65,21 @@ extern void ST_NetDone(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-ddplayer_t		players[MAXPLAYERS];
-client_t		clients[MAXPLAYERS];// All network data for the players.
+char		*serverName = "Doomsday";
+char		*serverInfo = "Multiplayer Host";
+char		*playerName = "Player";
+int			serverData[3]; 		// Some parameters passed to master server.
 
-int				netgame;			// true if a netgame is in progress
-int				isServer;			// true if this computer is an open server.
-int				isClient;			// true if this computer is a client	
-int				consoleplayer;
-int				displayplayer;
+ddplayer_t	players[MAXPLAYERS];
+client_t	clients[MAXPLAYERS];// All network data for the players.
 
-int             gametic;
+int			netgame;			// true if a netgame is in progress
+int			isServer;			// true if this computer is an open server.
+int			isClient;			// true if this computer is a client	
+int			consoleplayer;
+int			displayplayer;
+
+int			gametic;
 
 // Gotframe is true if a frame packet has been received.
 int			gotframe = false;
@@ -177,7 +182,7 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 	netBuffer.player = toPlayer;
 
 	// A rebound packet?
-	if(spFlags & SPF_REBOUND_FROM)
+	if(spFlags & SPF_REBOUND)
 	{
 		reboundstore = netBuffer;
 		reboundpacket = true;
@@ -422,7 +427,7 @@ void Net_SendCommandsToServer(timespan_t time)
 		Msg_Write(msg + 2, *(ushort*) msg);
 
 		// Send the packet to the server, i.e. player zero.
-		Net_SendBuffer(0, isClient? 0 : (SPF_REBOUND_FROM | i));
+		Net_SendBuffer(0, isClient? 0 : (SPF_REBOUND | i));
 
 		// The buffer is cleared.
 		clients[i].numLocal = 0;

@@ -49,8 +49,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
+typedef struct {
 	char *name;					// Name of the routine.
 	void (C_DECL *func)();		// Pointer to the function.
 } actionlink_t;
@@ -370,29 +369,6 @@ void Def_InitTextDef(ddtext_t *txt, char *str)
 	txt->text = realloc(txt->text, strlen(txt->text) + 1);
 }
 
-/*
-//===========================================================================
-// Def_ReadIncludedDEDs
-//===========================================================================
-void Def_ReadIncludedDEDs(directory_t *mydir)
-{
-	char fn[256];
-
-	// Also read the files that were listed as includes.
-	while(defs.count.includes.num > 0)
-	{
-		strcpy(fn, defs.includes[0].path);
-		// Remove the name from the list before reading it.
-		// This'll prevent re-reading.
-		DED_DelEntry(0, &defs.includes, &defs.count.includes, 
-			sizeof(*defs.includes));
-		Def_ReadProcessDED(fn);
-		// Back to our dir.
-		Dir_ChDir(mydir);
-	}
-}
-*/
-
 //===========================================================================
 // Def_ReadDEDFile
 //	Callback for DD_ReadProcessDED.
@@ -423,37 +399,30 @@ int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
 //===========================================================================
 void Def_ReadProcessDED(const char *fileName)
 {
-	char fn[256];
-	directory_t oldDir;
+	filename_t fn, fullFn;
 	directory_t dir;
-	boolean changed = false;
 
-	Dir_GetDir(&oldDir);
-
-	// Change to the directory of the file we're about to read.
 	Dir_FileName(fileName, fn);
-	Dir_FileDir(fileName, &dir);
 
-	if(!Dir_IsEqual(&dir, &oldDir))
+	// We want an absolute path.
+	if(!Dir_IsAbsolute(fileName))
 	{
-		changed = true;
-		if(!Dir_ChDir(&dir)) 
-		{
-			// The directory doesn't exist, which means the DED file 
-			// doesn't, either.
-			return;
-		}
+		Dir_FileDir(fileName, &dir);
+		sprintf(fullFn, "%s%s", dir.path, fn);
+	}
+	else
+	{
+		strcpy(fullFn, fileName);
 	}
 
 	if(strchr(fn, '*') || strchr(fn, '?'))
-		F_ForAll(fn, 0, Def_ReadDEDFile);
-	else
-		Def_ReadDEDFile(fn, FT_NORMAL, 0);
-
-	if(changed)
 	{
-		// Back to the original directory.
-		Dir_ChDir(&oldDir);
+		// Wildcard search.
+		F_ForAll(fullFn, 0, Def_ReadDEDFile);
+	}
+	else
+	{
+		Def_ReadDEDFile(fullFn, FT_NORMAL, 0);
 	}
 }
 
@@ -491,9 +460,6 @@ void Def_ReadLumpDefs(void)
 		Con_Message("ReadLumpDefs: %i definition lump%s read.\n", 
 			c, c != 1? "s" : "");
 	}
-
-	// Read any included files.
-	//Def_ReadIncludedDEDs(&ddRuntimeDir);
 }
 
 //===========================================================================
@@ -548,13 +514,9 @@ void Def_Read(void)
 
 	for(read_count = 0, i = 0; dedFiles[i]; i++)
 	{
-		Dir_ChDir(&ddRuntimeDir);
 		Con_Message("Reading definition file: %s\n", M_Pretty(dedFiles[i]));
 		Def_ReadProcessDED(dedFiles[i]);
 	}
-
-	// Back to the directory we started from.
-	Dir_ChDir(&ddRuntimeDir);
 
 	// Read definitions from WAD files.
 	Def_ReadLumpDefs();
@@ -712,18 +674,53 @@ void Def_Read(void)
 	// Particle generators.
 	for(i = 0; i < defs.count.ptcgens.num; i++)
 	{
-		int st = Def_GetStateNum(defs.ptcgens[i].state);
-		if(defs.ptcgens[i].flat[0])
-			defs.ptcgens[i].flat_num = W_CheckNumForName(defs.ptcgens[i].flat);
+		ded_ptcgen_t *pg = defs.ptcgens + i;
+		int st = Def_GetStateNum(pg->state);
+		if(pg->flat[0])
+			pg->flat_num = W_CheckNumForName(pg->flat);
 		else
-			defs.ptcgens[i].flat_num = -1;
-		//defs.ptcgens[i].flags = Def_EvalFlags(defs.ptcgens[i].flags_string);
-		defs.ptcgens[i].type_num = Def_GetMobjNum(defs.ptcgens[i].type);
-		defs.ptcgens[i].type2_num = Def_GetMobjNum(defs.ptcgens[i].type2);
-		defs.ptcgens[i].damage_num = Def_GetMobjNum(defs.ptcgens[i].damage);
+			pg->flat_num = -1;
+		pg->type_num = Def_GetMobjNum(pg->type);
+		pg->type2_num = Def_GetMobjNum(pg->type2);
+		pg->damage_num = Def_GetMobjNum(pg->damage);
+		
+		// Figure out embedded sound ID numbers.
+		for(k = 0; k < DED_PTC_STAGES; k++)
+		{
+			if(pg->stages[k].sound.name[0])
+			{
+				pg->stages[k].sound.id 
+					= Def_GetSoundNum(pg->stages[k].sound.name);
+			}
+			if(pg->stages[k].hit_sound.name[0])
+			{
+				pg->stages[k].hit_sound.id
+					= Def_GetSoundNum(pg->stages[k].hit_sound.name);
+			}
+		}
+
 		if(st <= 0) continue; // Not state triggered, then...
-		// A pointer to the definition.
-		states[st].ptrigger = defs.ptcgens + i;
+
+		// Link the definition to the state.
+		if(pg->flags & PGF_STATE_CHAIN)
+		{
+			// Add to the chain.
+			pg->state_next = states[st].ptrigger;
+			states[st].ptrigger = pg;
+		}
+		else
+		{
+			// Make sure the previously built list is unlinked.
+			while(states[st].ptrigger)
+			{
+				ded_ptcgen_t *temp = 
+					((ded_ptcgen_t*)states[st].ptrigger)->state_next;
+				((ded_ptcgen_t*)states[st].ptrigger)->state_next = NULL;
+				states[st].ptrigger = temp;
+			}
+			states[st].ptrigger = pg;
+			pg->state_next = NULL;
+		}
 	}
 	Def_CountMsg(defs.count.ptcgens.num, "particle generators");
 

@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003 Jaakko Kerï¿½en <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@ typedef unsigned short		ushort;
 typedef unsigned int		size_t;
 #endif
 
+typedef int					fixed_t;
+typedef unsigned int		angle_t;
 typedef int					spritenum_t;
 typedef unsigned int		ident_t;
 typedef unsigned short		nodeindex_t;

@@ -1553,8 +1553,7 @@ void Con_SplitIntoSubCommands(const char *command, timespan_t markerOffset)
 {
 	int	gPos = 0, scPos = 0;
 	char subCmd[2048];
-	int	nextSub = false;
-	int	ret = true, inQuotes = false, escape = false;
+	int	inQuotes = false, escape = false;
 
 	// Is there a command to execute?
 	if(!command || command[0] == 0) return;

@@ -27,6 +27,8 @@
 #define CLMF_UNPREDICTABLE	0x02	// Temporarily hidden (until next delta)
 #define CLMF_SOUND			0x04	// Sound is queued for playing on unhide.
 #define CLMF_NULLED			0x08	// Once nulled, it can't be updated.
+#define CLMF_STICK_FLOOR	0x10	// Mobj will stick to the floor.
+#define CLMF_STICK_CEILING	0x20	// Mobj will stick to the ceiling.
 
 typedef struct clmobj_s {
 	struct clmobj_s *next, *prev;
