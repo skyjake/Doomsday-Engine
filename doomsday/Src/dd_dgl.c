@@ -118,6 +118,7 @@ int DD_InitDGLDriver(void)
 	Req(Vertices3fctv);
 	Req(Arrays);
 	Req(UnlockArrays);
+	Req(ArrayElement);
 	Req(DrawElements);
 
 	// Miscellaneous.
