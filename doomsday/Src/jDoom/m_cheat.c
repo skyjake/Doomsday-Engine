@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/03/14 15:39:21  skyjake
+// Don't assume map31,32 exist
+//
 // Revision 1.1  2003/02/26 19:21:45  skyjake
 // Initial checkin
 //
@@ -37,6 +40,7 @@ rcsid[] = "$Id$";
 #include "g_game.h"
 #include "p_inter.h"
 #include "p_local.h"
+#include "p_setup.h"
 #include "f_infine.h"
 
 // Dimensions given in characters.
@@ -221,7 +225,10 @@ boolean cht_WarpFunc(player_t *plyr, char *buf)
 	if ((gamemode == commercial)
 		&& (( epsd > 1) || (map > 32)))
 		return false;
-	
+
+	// Check that the data really does exist.
+	if(!P_MapExists(epsd, map)) return false;
+
 	// So be it.
 	P_SetMessage(plyr, STSTR_CLEV);
 	G_DeferedInitNew(gameskill, epsd, map);

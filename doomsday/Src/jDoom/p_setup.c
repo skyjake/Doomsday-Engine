@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/03/14 15:39:21  skyjake
+// Don't assume map31,32 exist
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -734,12 +737,39 @@ void P_SpawnStaticLights(void)
 }
 
 //===========================================================================
+// P_GetMapLumpName
+//===========================================================================
+void P_GetMapLumpName(int episode, int map, char *lumpName)
+{
+	if(gamemode == commercial)
+	{
+		sprintf(lumpName, "map%02i", map);
+    }
+    else
+    {
+		sprintf(lumpName, "E%iM%i", episode, map);
+	}
+}
+
+//===========================================================================
+// P_MapExists
+//	Returns true if the specified ep/map is loaded.
+//===========================================================================
+boolean P_MapExists(int episode, int map)
+{
+	char buf[20];
+
+	P_GetMapLumpName(episode, map, buf);
+	return W_CheckNumForName(buf) >= 0;
+}
+
+//===========================================================================
 // P_SetupLevel
 //===========================================================================
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
     int		i;
-    char	lumpname[9], gl_lumpname[9], *lname, *lauthor;
+    char	lumpname[16], gl_lumpname[16], *lname, *lauthor;
     int		lumpnum, gl_lumpnum;
 	int		setupflags = DDSLF_POLYGONIZE | DDSLF_FIX_SKY | DDSLF_REVERB;
 	
@@ -751,8 +781,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 			= players[i].itemcount = 0;
     }
 	
-    // Initial height of PointOfView
-    // will be set by player think.
+    // Initial height of PointOfView; will be set by player think.
     players[consoleplayer].plr->viewz = 1; 
 	
     S_LevelChange();
@@ -765,33 +794,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	memset(braintargets, 0, sizeof(braintargets));
 	numbraintargets = 0;
 	braintargeton = 0;
-
-    // if working with a devlopment map, reload it
-	//    W_Reload ();			
 	   
-    // find map name
-    if ( gamemode == commercial)
-    {
-		if (map<10)
-		{
-			sprintf(lumpname, "map0%i", map);
-			sprintf(gl_lumpname, "gl_map0%i", map);
-		}
-		else
-		{
-			sprintf (lumpname,"map%i", map);
-			sprintf (gl_lumpname, "gl_map%i", map);
-		}
-    }
-    else
-    {
-		lumpname[0] = 'E';
-		lumpname[1] = '0' + episode;
-		lumpname[2] = 'M';
-		lumpname[3] = '0' + map;
-		lumpname[4] = 0;
-		sprintf(gl_lumpname, "GL_E%iM%i", episode, map);
-    }
+    // Find map name.
+	P_GetMapLumpName(episode, map, lumpname);
+	sprintf(gl_lumpname, "GL_%s", lumpname);
 	Con_Message("SetupLevel: %s", lumpname);
     
 	leveltime = 0;

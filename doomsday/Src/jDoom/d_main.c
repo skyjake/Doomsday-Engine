@@ -290,12 +290,12 @@ boolean LumpsFound(char **list)
 	return true;
 }
 
-//
-// IdentifyVersion
-// Checks availability of IWAD files by name,
-// to determine whether registered/commercial features
-// should be executed (notably loading PWAD's).
-//
+/*
+ * IdentifyVersion
+ *	Checks availability of IWAD files by name,
+ *	to determine whether registered/commercial features
+ *	should be executed (notably loading PWAD's).
+ */
 void IdentifyVersion (void)
 {
 	typedef struct
@@ -331,7 +331,7 @@ void IdentifyVersion (void)
 	{
 		// List of lumps to detect Doom II with.
 		"map01", "map02", "map03", "map04", "map10", "map20",
-		"map25", "map30", "map31", "map32",
+		"map25", "map30", /*"map31", "map32",*/
 		"vilen1", "vileo1", "vileq1", "grnrock", NULL
 	};
 	char *plutonia_lumps[] =
