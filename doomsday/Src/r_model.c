@@ -472,6 +472,7 @@ void R_LoadModelDMD(DFILE *file, model_t *mo)
 	model_frame_t *frame;
 	int i, k, c;
 	dmd_triangle_t *triangles[MAX_LODS];
+	int axis[3] = { 0, 2, 1 };
 	
 	// Read the chunks.
 	F_Read(&chunk, sizeof(chunk), file);
@@ -521,11 +522,11 @@ void R_LoadModelDMD(DFILE *file, model_t *mo)
 			UnpackVector(pVtx->normal, frame->normals[k].xyz);
 			for(c = 0; c < 3; c++)
 			{
-				frame->vertices[k].xyz[c] = pVtx->vertex[c] * pfr->scale[c] 
-					+ pfr->translate[c];
+				frame->vertices[k].xyz[axis[c]] 
+					= pVtx->vertex[c] * pfr->scale[c] + pfr->translate[c];
 			}
 			// Aspect undo.
-			frame->vertices[k].xyz[2] *= rModelAspectMod;
+			frame->vertices[k].xyz[1] *= rModelAspectMod;
 		}
 	}
 	free(temp);
