@@ -115,8 +115,12 @@ void P_Ticker(timespan_t time)
 	static trigger_t fixed = { 1.0/35 };
 
 	if(!thinkercap.next) return; // Not initialized yet.
-	if(!M_CheckTrigger(&fixed, time)) return;
 
+	// Update local view angle controls.
+	P_ControlTicker(time);
+	
+	if(!M_CheckTrigger(&fixed, time)) return;
+	
 	// New ptcgens for planes?
 	P_CheckPtcPlanes();	
 	R_AnimateAnimGroups();
