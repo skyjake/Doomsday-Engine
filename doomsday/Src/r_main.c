@@ -281,12 +281,24 @@ void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
 //===========================================================================
 void R_SetupFrame(ddplayer_t *player)
 {
+	typedef enum adjustment_e {
+		ADJUST_IDLE,
+		ADJUST_FAST_FORWARD
+	} adjustment_t;
+
 	int     tableAngle, i;
 	float   yawRad, pitchRad;
 	double  nowTime;
 	viewer_t sharpView, smoothView;
 	sector_t *sector;
 	boolean justResynced = false;
+
+	// Probably it would be a better idea to make sure frametime never
+	// becomes negative in the first place, but adjustments are
+	// fun. :)
+	static adjustment_t adjustmentMode = ADJUST_IDLE;
+	static float remainingAdvance = 0;
+	static float advanceSpeed = .001f;
 
 	// Reset the DGL triangle counter.
 	gl.GetInteger(DGL_POLY_COUNT);
@@ -421,16 +433,39 @@ void R_SetupFrame(ddplayer_t *player)
 		// of the smoothed camera.
 
 		if(!justResynced)
+		{
 			frameTimePos += nowTime - oldTime;
+			
+			if(adjustmentMode == ADJUST_FAST_FORWARD)
+			{
+				float advance = (nowTime - oldTime) * advanceSpeed;
+				if(advance >= remainingAdvance)
+				{
+					advance = remainingAdvance;
+					remainingAdvance = 0;
+					adjustmentMode = ADJUST_IDLE;
+				}
+				else
+				{
+					remainingAdvance -= advance;
+				}
+				frameTimePos += advance;
+			}
+		}
 
 		oldTime = nowTime;
-
-		if(frameTimePos < 0) 
+		
+		if(adjustmentMode == ADJUST_IDLE)
 		{
-			VERBOSE(Con_Printf("Correcting frametime (%f).\n", frameTimePos));
+			if(frameTimePos < 0) 
+			{
+				VERBOSE(Con_Printf("Correcting frametime (%f tics).\n", 
+								   -frameTimePos));
 
-			// This'll cause a slight accelerated step forward in time.
-			frameTimePos /= 2;
+				// This'll cause a slight accelerated step forward in time.
+				remainingAdvance = -frameTimePos;
+				adjustmentMode = ADJUST_FAST_FORWARD;
+			}
 		}
 
 		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
