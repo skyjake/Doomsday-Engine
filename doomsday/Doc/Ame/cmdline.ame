@@ -238,6 +238,46 @@ $--------------------------------------------------------------------
 	@opt{ -nocenter } @tab @opt{ -noc } @tab
 	Prevents the game window from being centered on screen.
 @row
+	@opt{ -modeldir P } @tab @opt{ -md  } @tab
+	Uses the given search path instead of the one
+	specified in the primary DED file.
+@row
+	@opt{ -renorm } @tab @tab
+	Recalculates the surface normals of all MD2 models
+	when the models are loaded.
+@row
+	@opt{-fontdir P} @tab @opt{-fd} @tab
+	Looks in the given directory @file{P} for the font files.
+	Defaults to @file{ Data\Fonts\ }.
+@row
+	@opt{-gdifonts} @tab @tab
+	Use Windows' GDI fonts instead of the DFNs.
+@row
+	@opt{-maxor N} @tab @tab
+	Set the maximum number of occlusion ranges.
+	Increase the number when you get an error message
+	"Out of oranges (max N)".
+@row
+	@opt{-novideo} @tab @tab
+	Don't initialize video.
+@row
+	@opt{-noramp} @tab @tab
+	Don't use hardware gamma/contrast/brightness.
+}
+
+@section{ Textures }
+
+@table/thick{25 12 63}{
+	@header{Option} @tab @header{Abbr.} @tab @header{Description}
+@row{single}
+	@opt{ -outlines  } @tab  @tab
+	All letters, sprites, etc. will have black outlines.
+@row
+	@opt{ -bigmtex } @tab @tab
+	If a masked texture has taller patches than the
+	texture's height, the engine will resize the
+	texture so that the largest patch will fit.
+@row
 	@opt{ -anifilter } @tab @opt{ -ani } @tab
 	Use anisotropic texture filtering.
 @row
@@ -248,21 +288,13 @@ $--------------------------------------------------------------------
 	Set maximum texture size to N x N. E.g. @opt{-maxtex 128} sets
 	the maximum size to 128 x 128 pixels.
 @row
-	@opt{ -modeldir P } @tab @opt{ -md  } @tab
-	Uses the given search path instead of the one
-	specified in the primary DED file.
+	@opt{ -pwadtex } @tab @tab
+	Allow using external resources with textures whose data is read
+	from a PWAD. By default, external resources are only used with
+	textures from an IWAD.
 @row
-	@opt{ -renorm } @tab @tab
-	Recalculates the surface normals of all MD2 models
-	when the models are loaded.
-@row
-	@opt{ -bigmtex } @tab @tab
-	If a masked texture has taller patches than the
-	texture's height, the engine will resize the
-	texture so that the largest patch will fit.
-@row
-	@opt{ -outlines  } @tab  @tab
-	All letters, sprites, etc. will have black outlines.
+	@opt{-nohightex}@tab @tab
+	Disable high-resolution (PNG, TGA, PCX) textures.
 @row
 	@opt{-texdir P}@tab @opt{-td} @tab
 	Loads all high-resolution (PNG, TGA, PCX) textures
@@ -284,28 +316,10 @@ $--------------------------------------------------------------------
 	patches. This is checked first, so it can be used for
 	overriding resources in the normal @file{Patches}
 	directory.
-@row
-	@opt{-fontdir P} @tab @opt{-fd} @tab
-	Looks in the given directory @file{P} for the font files.
-	Defaults to @file{ Data\Fonts\ }.
-@row
-	@opt{-gdifonts} @tab @tab
-	Use Windows' GDI fonts instead of the DFNs.
-@row
-	@opt{-maxor N} @tab @tab
-	Set the maximum number of occlusion ranges.
-	Increase the number when you get an error message
-	"Out of oranges (max N)".
-@row
-	@opt{-nohightex}@tab @tab
-	Disable high-resolution (PNG, TGA, PCX) textures.
-@row
-	@opt{-novideo} @tab @tab
-	Don't initialize video.
-@row
-	@opt{-noramp} @tab @tab
-	Don't use hardware gamma/contrast/brightness.
+
 }
+
+
 
 @section{ OpenGL renderer }
 
