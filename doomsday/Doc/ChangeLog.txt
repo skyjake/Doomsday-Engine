@@ -10,6 +10,8 @@ Version 1.7.12 (work in progress)
 + tgf_smooth: interpolate between steps in texture/flat animation
 * renderer uses multitexturing for detail textures, dynamic lights and
   interpolated texture animation
+* if multitexturing is available, masked walls will get one dynamic 
+  light (previously masked walls were not lit by dynlights)
 * dynamic light polygons are no longer clipped
 * calculations to determine surfaces affected by a dynamic light are
   more accurate (light has a better chance to be visible)
