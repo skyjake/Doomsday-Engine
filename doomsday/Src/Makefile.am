@@ -7,7 +7,7 @@ DEFS = -DUNIX -DNO_FIXED_ASM -D__DOOMSDAY__ -DNORANGECHECKING	   \
 -DDENG_LIBRARY_DIR=\"$(libdir)\" -DDENG_BASE_DIR=\"$(pkgdatadir)\"
 doomsday_CFLAGS = @SDL_CFLAGS@ $(LTDLINCL)
 doomsday_LDFLAGS = -export-dynamic "-dlopen" self @SDL_LIBS@ -lSDL_net \
--lpng -lncurses -L/usr/X11R6/lib -lX11 -lXext
+-lpng -lz -lncurses -L/usr/X11R6/lib -lX11 -lXext
 doomsday_LDADD = $(LIBLTDL)
 
 doomsday_SOURCES = cl_frame.c cl_main.c cl_mobj.c cl_player.c	       \
