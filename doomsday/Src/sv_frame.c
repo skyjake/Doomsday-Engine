@@ -77,6 +77,21 @@ void Sv_TransmitFrame(void)
 		return;			
 	}
 
+	if(!netgame)
+	{
+		// When not running a netgame, only generate deltas when somebody
+		// is recording a demo.
+		for(i = 0; i < MAXPLAYERS; i++)
+			if(Sv_IsFrameTarget(i)) 
+				break;
+
+		if(i == MAXPLAYERS)
+		{
+			// Nobody is a frame target.
+			return;
+		}
+	}
+
 	if(gametic == lastTransmitTic) 
 	{
 		// We were just here!
@@ -101,11 +116,6 @@ void Sv_TransmitFrame(void)
 			// This player is not a valid target for frames.
 			continue;
 		}
-
-/*		// Local players are skipped if not recording a demo.
-		if(!players[i].ingame
-			|| players[i].flags & DDPF_LOCAL && !clients[i].recording) 
-			continue;*/
 		
 		// When the interval is greater than zero, this causes the frames
 		// to be sent at different times for each player.
@@ -134,18 +144,6 @@ void Sv_TransmitFrame(void)
 			clients[i].updateCount--;
 
 			Sv_SendFrame(i);
-
-			/*// Don't allow packets to pile up.
-			if(N_CheckSendQueue(i)) 
-			{
-				Sv_RefreshClient(i);*/
-/*				if(players[i].flags & DDPF_LOCAL)
-				{
-					// All the necessary data is always sent to local 
-					// players.
-					players[i].flags &= ~DDPF_FIXPOS;
-				}*/
-			//}
 		}
 	}
 }
@@ -252,17 +250,6 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
 	int df = delta->delta.flags;
 	byte moreFlags = 0;
 
-#ifdef _DEBUG
-	if(df & MDFC_NULL)
-	{
-		Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n", df);
-	}
-	if((df & 0xffff) == 0)
-	{
-		Con_Printf("Sv_WriteMobjDelta: This delta is empty.\n");
-	}
-#endif
-
 	// Do we have fast momentum?
 	if(abs(d->momx) >= MOM_FAST_LIMIT 
 		|| abs(d->momy) >= MOM_FAST_LIMIT 
@@ -295,6 +282,18 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
 			moreFlags |= (d->z == DDMININT? MDFE_Z_FLOOR : MDFE_Z_CEILING);
 		}
 	}
+
+#ifdef _DEBUG
+	if(df & MDFC_NULL)
+	{
+		Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n", df);
+	}
+	if((df & 0xffff) == 0)
+	{
+		Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n", 
+			delta->delta.id, df);
+	}
+#endif
 
 	// First the mobj ID number and flags.
 	Msg_WriteShort(delta->delta.id);
@@ -622,6 +621,35 @@ void Sv_WriteSoundDelta(const void *deltaPtr)
 }
 
 /*
+ * Write the type and possibly the set number (for Unacked deltas).
+ */
+void Sv_WriteDeltaHeader(byte type, const delta_t *delta)
+{
+	if(delta->state == DELTA_UNACKED)
+	{
+		// Flag this as Resent.
+		type |= DT_RESENT;
+	}
+
+	Msg_WriteByte(type);
+
+	// Include the set number?
+	if(type & DT_RESENT)
+	{
+		// The client will use this to avoid dupes. If the client has already
+		// received the set this delta belongs to, it means the delta has
+		// already been received. This is needed in the situation where the
+		// ack is lost or delayed.
+		Msg_WriteByte(delta->set);
+
+		// Also send the unique ID of this delta. If the client has already 
+		// received a delta with this ID, the delta is discarded. This is
+		// needed in the situation where the set is lost.
+		Msg_WriteByte(delta->resend);
+	}
+}
+
+/*
  * The delta is written to the message buffer. 
  */
 void Sv_WriteDelta(const delta_t *delta)
@@ -633,8 +661,8 @@ void Sv_WriteDelta(const delta_t *delta)
 	{
 		if(delta->flags & MDFC_NULL)
 		{
-			// Just delta type and mobj ID.
-			Msg_WriteByte(DT_NULL_MOBJ);
+			// This'll be the entire delta. No more data is needed.
+			Sv_WriteDeltaHeader(DT_NULL_MOBJ, delta);
 			Msg_WriteShort(delta->id);
 			return;
 		}
@@ -652,7 +680,7 @@ void Sv_WriteDelta(const delta_t *delta)
 	}	
 
 	// First the type of the delta.
-	Msg_WriteByte(type);
+	Sv_WriteDeltaHeader(type, delta);
 
 	switch(delta->type)
 	{
@@ -699,7 +727,20 @@ void Sv_WriteDelta(const delta_t *delta)
 int Sv_GetMaxFrameSize(int playerNumber)
 {
 	return MINIMUM_FRAME_SIZE 
-		+ 50 * clients[playerNumber].bandwidthRating;
+		+ 10 * clients[playerNumber].bandwidthRating;
+}
+
+/*
+ * Returns a unique resend ID. Never returns zero.
+ */
+byte Sv_GetNewResendID(pool_t *pool)
+{
+	byte id = pool->resendDealer;
+
+	// Advance to next ID, skipping zero.
+	while(!++pool->resendDealer);
+
+	return id;
 }
 
 /*
@@ -710,6 +751,7 @@ void Sv_SendFrame(int playerNumber)
 {
 	pool_t *pool = Sv_GetPool(playerNumber);
 	int maxFrameSize, lastStart;
+	byte oldResend;
 	delta_t *delta;
 	
 	// Does the send queue allow us to send this packet?
@@ -731,6 +773,9 @@ void Sv_SendFrame(int playerNumber)
 	// Determine the maximum size of the frame packet.
 	maxFrameSize = Sv_GetMaxFrameSize(playerNumber);
 
+	// Allow a more info for the first frame.
+	if(pool->isFirst) maxFrameSize *= 10;
+
 	// If this is the first frame after a map change, use the special
 	// first frame packet type.
 	Msg_Begin(pool->isFirst? psv_first_frame2 : psv_frame2);
@@ -748,6 +793,18 @@ void Sv_SendFrame(int playerNumber)
 	while((delta = Sv_PoolQueueExtract(pool)) != NULL
 		&& (lastStart = Msg_Offset()) < maxFrameSize)
 	{
+		oldResend = 0;
+
+		// Is this going to be a resent?
+		if(delta->state == DELTA_UNACKED && !delta->resend)
+		{
+			oldResend = pool->resendDealer;
+
+			// Assign a new unique ID for this delta. 
+			// This ID won't be changed after this.
+			delta->resend = Sv_GetNewResendID(pool);
+		}
+
 		Sv_WriteDelta(delta);
 
 		// Did we go over the limit?
@@ -755,13 +812,30 @@ void Sv_SendFrame(int playerNumber)
 		{
 			// Cancel the last delta.
 			Msg_SetOffset(lastStart);
+
+			// Restore the resend dealer.
+			if(oldResend) pool->resendDealer = oldResend;
 			break;
 		}
 		
+/*#ifdef _DEBUG
+		if(delta->state == DELTA_UNACKED)
+		{
+			Con_Printf("Resend: %i, type%i[%x], set%i, rsid%i\n",
+				delta->id, delta->type, delta->flags,
+				delta->set, delta->resend);
+		}
+#endif*/
+
 		// Update the sent delta's state.
-		delta->state     = DELTA_UNACKED;
+		if(delta->state == DELTA_NEW)
+		{
+			// New deltas are assigned to this set. Unacked deltas will
+			// remain in the set they were initially sent in.
+			delta->set = pool->setDealer;
+		}
 		delta->timeStamp = Sv_GetTimeStamp();
-		delta->set       = pool->setDealer;
+		delta->state = DELTA_UNACKED;		
 	}
 
 #ifdef DD_PROFILE
@@ -778,7 +852,7 @@ void Sv_SendFrame(int playerNumber)
 	// all the sent deltas from the pool.
 	if(players[playerNumber].flags & DDPF_LOCAL) 
 	{
-		Sv_AckDeltaSet(playerNumber, pool->setDealer);
+		Sv_AckDeltaSet(playerNumber, pool->setDealer, 0);
 	}
 
 	// Now a frame has been sent.
