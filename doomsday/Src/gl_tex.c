@@ -1233,6 +1233,7 @@ void GL_DeleteDetailTexture(detailtex_t *dtex)
 
 //===========================================================================
 // GL_BindTexFlat
+//	No translation is done.
 //===========================================================================
 unsigned int GL_BindTexFlat(flat_t *fl)
 {
@@ -1310,16 +1311,26 @@ unsigned int GL_BindTexFlat(flat_t *fl)
 
 //===========================================================================
 // GL_PrepareFlat
+//===========================================================================
+unsigned int GL_PrepareFlat(int idx)
+{
+	return GL_PrepareFlat2(idx, true);
+}
+
+//===========================================================================
+// GL_PrepareFlat
 //	Returns the OpenGL name of the texture.
 //	(idx is really a lumpnum)
 //===========================================================================
-unsigned int GL_PrepareFlat(int idx)
+unsigned int GL_PrepareFlat2(int idx, boolean translate)
 {
 	flat_t *flat = R_GetFlat(idx);
 
 	// Get the translated one?
-	if(flat->translation != idx)
-		flat = R_GetFlat(flat->translation); 
+	if(translate && flat->translation.current != idx)
+	{
+		flat = R_GetFlat(flat->translation.current);
+	}
 
 	if(!lumptexinfo[flat->lump].tex[0])
 	{
@@ -1725,6 +1736,15 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 //===========================================================================
 unsigned int GL_PrepareTexture(int idx)
 {
+	return GL_PrepareTexture2(idx, true);
+}
+
+//===========================================================================
+// GL_PrepareTexture2
+//	Returns the DGL texture name.
+//===========================================================================
+unsigned int GL_PrepareTexture2(int idx, boolean translate)
+{
 	ded_detailtexture_t *def;
 	int			originalIndex = idx;
 	texture_t	*tex;
@@ -1742,7 +1762,10 @@ unsigned int GL_PrepareTexture(int idx)
 		texdetail = 0;
 		return 0;
 	}
-	idx = texturetranslation[idx];
+	if(translate) 
+	{
+		idx = texturetranslation[idx].current;
+	}
 	tex = textures[idx];
 	if(!textures[idx]->tex)
 	{
@@ -1812,7 +1835,7 @@ unsigned int GL_PrepareTexture(int idx)
 		// Is there a decoration for this surface?
 		textures[idx]->decoration = Def_GetDecoration(idx, true, hasExternal);
 	}
-	return GL_GetTextureInfo(originalIndex);
+	return GL_GetTextureInfo2(originalIndex, translate);
 }
 
 //===========================================================================
@@ -1821,12 +1844,24 @@ unsigned int GL_PrepareTexture(int idx)
 //===========================================================================
 DGLuint GL_GetTextureInfo(int index)
 {
+	return GL_GetTextureInfo2(index, true);
+}
+
+//===========================================================================
+// GL_GetTextureInfo2
+//	Returns the texture name, if it has been prepared.
+//===========================================================================
+DGLuint GL_GetTextureInfo2(int index, boolean translate)
+{
 	texture_t *tex;
 
 	if(!index) return 0;
 	
 	// Translate the texture.
-	index = texturetranslation[index];
+	if(translate)
+	{
+		index = texturetranslation[index].current;
+	}
 	tex = textures[index];
 
 	// Set the global texture info variables.
@@ -2001,6 +2036,15 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
 //===========================================================================
 unsigned int GL_PrepareSky(int idx, boolean zeroMask)
 {
+	return GL_PrepareSky2(idx, zeroMask, true);
+}
+
+//===========================================================================
+// GL_PrepareSky2
+//	Sky textures are usually 256 pixels wide.
+//===========================================================================
+unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
+{
 	boolean	RGBData, alphaChannel;
 	image_t image;
 
@@ -2011,7 +2055,10 @@ unsigned int GL_PrepareSky(int idx, boolean zeroMask)
 		Con_Error("Skytex: %d, translated: %d\n", idx, texturetranslation[idx]);
 #endif
 */
-	idx = texturetranslation[idx];
+	if(translate)
+	{
+		idx = texturetranslation[idx].current;
+	}
 	
 	if(!textures[idx]->tex)
 	{
@@ -2857,19 +2904,56 @@ void GL_SetNoTexture(void)
 //===========================================================================
 DGLuint GL_PrepareLightTexture(void)
 {
+	int i;
+
 	if(!dltexname)
 	{
 		// We need to generate the texture, I see.
-		byte *image = W_CacheLumpName("DLIGHT", PU_CACHE);
-		if(!image) 
+		byte *data = W_CacheLumpName("DLIGHT", PU_CACHE);
+		byte *image, *alpha;
+		if(!data) 
+		{
 			Con_Error("GL_SetLightTexture: DLIGHT not found.\n");
+		}
+
+		// Prepare the data by adding an alpha channel.
+		image = Z_Malloc(64 * 64 * 2, PU_STATIC, 0);
+		memset(image, 255, 64 * 64); // The colors are just white.
+		alpha = image + 64 * 64;
+		memcpy(alpha, data, 64 * 64);
+
+		// The edges of the light texture must be fully transparent,
+		// to prevent all unwanted repeating.
+		for(i = 0; i < 64; i++)
+		{
+			// Top and bottom row.
+			alpha[i] = 0;
+			alpha[i + 64 * 63] = 0;
+				
+			// Leftmost and rightmost column.
+			alpha[i * 64] = 0;
+			alpha[63 + i * 64] = 0;
+		}
+
+/*#ifdef _DEBUG
+		for(i = 28; i < 34; i++)
+		{
+			alpha[i] = 64;
+			alpha[i + 64 * 63] = 64;
+			alpha[i * 64] = 5;
+			alpha[63 + i * 64] = 64;
+		}
+#endif*/
+
 		dltexname = gl.NewTexture();
 		// No mipmapping or resizing is needed, upload directly.
-		gl.TexImage(DGL_LUMINANCE, 64, 64, 0, image);
+		gl.TexImage(DGL_LUMINANCE_PLUS_A8, 64, 64, 0, image);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+		Z_Free(image);
 	}
 	// Set the info.
 	texw = texh = 64;
@@ -2882,19 +2966,41 @@ DGLuint GL_PrepareLightTexture(void)
 //===========================================================================
 DGLuint GL_PrepareGlowTexture(void)
 {
+	int i, lump;
+	byte *data, *image, *alpha;
+
 	if(!glowtexname)
 	{
 		// Generate the texture.
-		byte *image = W_CacheLumpName("WDLIGHT", PU_CACHE);
-		if(!image)
+		lump = W_GetNumForName("WDLIGHT");
+		data = W_CacheLumpNum(lump, PU_STATIC);
+		if(!data)
+		{
 			Con_Error("GL_PrepareGlowTexture: no wdlight texture.\n");
-		glowtexname = gl.NewTexture();
+		}
+
+		// Prepare the alpha channel.
+		image = Z_Malloc(4 * 32 * 2, PU_STATIC, 0);
+		memset(image, 255, 4 * 32); 
+		alpha = image + 4 * 32;
+		memcpy(alpha, data, 4 * 32);
+
+		for(i = 0; i < 4; i++)
+		{
+			// The bottom row must be blank.
+			alpha[i + 4 * 31] = 0;
+		}
+
 		// Upload it.
-		gl.TexImage(DGL_LUMINANCE, 4, 32, 0, image);
+		glowtexname = gl.NewTexture();
+		gl.TexImage(DGL_LUMINANCE_PLUS_A8, 4, 32, 0, image);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+
+		Z_Free(image);
+		W_ChangeCacheTag(lump, PU_CACHE);
 	}
 	// Set the info.
 	texw = 4;

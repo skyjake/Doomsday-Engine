@@ -57,12 +57,16 @@ byte *			GL_LoadImageCK(image_t *img, const char *imagefn, boolean useModelPath)
 byte *			GL_LoadTexture(image_t *img, char *name);
 void			GL_DestroyImage(image_t *img);
 DGLuint			GL_GetTextureInfo(int index);
+DGLuint			GL_GetTextureInfo2(int index, boolean translate);
 DGLuint			GL_PrepareTexture(int idx); 
+DGLuint			GL_PrepareTexture2(int idx, boolean translate);
 DGLuint			GL_PrepareFlat(int idx);
+DGLuint			GL_PrepareFlat2(int idx, boolean translate);
 DGLuint			GL_PrepareLightTexture(void);	// The dynamic light map.
 DGLuint			GL_PrepareGlowTexture(void);	// Glow map.
 DGLuint			GL_PrepareFlareTexture(int flare);
-unsigned int	GL_PrepareSky(int idx, boolean zeroMask);
+DGLuint			GL_PrepareSky(int idx, boolean zeroMask);
+DGLuint			GL_PrepareSky2(int idx, boolean zeroMask, boolean translate);
 unsigned int	GL_PrepareSprite(int pnum, int spriteMode);
 void			GL_SetTexture(int idx);
 void			GL_GetSkyTopColor(int texidx, byte *rgb);
