@@ -248,8 +248,8 @@ void P_LoadSubsectors(int lump)
 
 	for(i = 0; i < numsubsectors; i++, ss++, ms++)
 	{
-		ss->linecount = SHORT(ms->numSegs);
-		ss->firstline = SHORT(ms->firstseg);
+		ss->linecount = USHORT(ms->numSegs);
+		ss->firstline = USHORT(ms->firstseg);
 	}
 
 	Z_Free(data);
