@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.10  2003/06/30 00:22:01  skyjake
+//** Fixmom, resend ack, reset player mobj when player changes mobj
+//**
 //** Revision 1.9  2003/06/28 15:59:24  skyjake
 //** Delta score bonus for large objects, MDFC_CREATE gets smaller bonus
 //**
@@ -162,6 +165,7 @@ void Sv_InitPools(void)
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		pools[i].owner = i;
+		pools[i].resendDealer = 1;
 		memset(pools[i].hash, 0, sizeof(pools[i].hash));
 		pools[i].queueSize = 0;
 		pools[i].allocatedSize = 0;
@@ -398,6 +402,25 @@ void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mo)
 }
 
 /*
+ * Reset the data of the registered mobj to reasonable defaults.
+ * In effect, forces a resend of the zeroed entries as deltas.
+ */
+void Sv_RegisterResetMobj(dt_mobj_t *reg)
+{
+	reg->x = 0;
+	reg->y = 0;
+	reg->z = 0;
+	reg->angle = 0;
+	reg->selector = 0;
+	reg->state = 0;
+	reg->radius = 0;
+	reg->height = 0;	
+	reg->ddflags = 0;
+	reg->floorclip = 0;
+	reg->translucency = 0;
+}
+
+/*
  * Store the state of the player into the register-player.
  * Called at register init and after each delta generation cycle.
  */
@@ -477,7 +500,7 @@ boolean Sv_RegisterCompareMobj
 	int df;
 	const reg_mobj_t *regMo;
 	const dt_mobj_t *r = &dummyZeroMobj;
-	int age = gametic - reg->gametic; // Always > 0
+	//int age = gametic - reg->gametic; // Always > 0
 
 	BEGIN_PROF( PROF_GEN_MOBJ_REGCOMP );
 
@@ -497,15 +520,28 @@ boolean Sv_RegisterCompareMobj
 
 	END_PROF( PROF_GEN_MOBJ_COMPARE_FINDER );
 
-	// We will ignore predictable, linear movement.
-	// FIXME: Make sure this test actually works!!
-	if((r->x + age * r->momx) != s->x) df |= MDF_POS_X;
-	if((r->y + age * r->momy) != s->y) df |= MDF_POS_Y;
-	if((r->z + age * r->momz) != Sv_GetMaxedMobjZ(s)) df |= MDF_POS_Z;
+	if(r->x != s->x) df |= MDF_POS_X;
+	if(r->y != s->y) df |= MDF_POS_Y;
+	if(r->z != Sv_GetMaxedMobjZ(s)) df |= MDF_POS_Z;
 
 	if(r->momx != s->momx) df |= MDF_MOM_X;
 	if(r->momy != s->momy) df |= MDF_MOM_Y;
 	if(r->momz != s->momz) df |= MDF_MOM_Z;
+
+	/*if(s->ddflags & DDMF_MISSILE && !(df & MDFC_CREATE))
+	{
+		// The movement of missiles is predictable.
+		if(!(df & (MDF_MOM_X | MDF_MOM_Y)))
+		{
+			// No change in XY momentum. There is no need to send XY coords.
+			df &= ~(MDF_POS_X | MDF_POS_Y);
+		}
+		if(!(df & MDF_MOM_Z))
+		{
+			df &= ~MDF_POS_Z;
+		}
+	}*/
+
 	if(r->angle != s->angle) df |= MDF_ANGLE;
 	if(r->selector != s->selector) df |= MDF_SELECTOR;
 	if(r->translucency != s->translucency) df |= MDFC_TRANSLUCENCY;
@@ -1430,8 +1466,9 @@ void Sv_DrainPool(int clientNumber)
 	// Update the number of the owner.
 	pool->owner = clientNumber;
 
-	// Reset the set counter.
+	// Reset the counters.
 	pool->setDealer = 0;
+	pool->resendDealer = 0;
 
 	Sv_PoolQueueClear(pool);
 
@@ -1507,7 +1544,11 @@ void Sv_AddDelta(pool_t *pool, void *deltaPtr)
 			// We may have to exclude the pos/mom.
 			if(!(player->flags & DDPF_FIXPOS))
 			{
-				delta->flags &= ~( MDF_POS | MDF_MOM );
+				delta->flags &= ~MDF_POS;
+			}
+			if(!(player->flags & DDPF_FIXMOM))
+			{
+				delta->flags &= ~MDF_MOM;
 			}
 		}
 	}
@@ -1835,7 +1876,7 @@ void Sv_NewMobjDeltas(register_t *reg, boolean doUpdate, pool_t **targets)
  */
 void Sv_NewPlayerDeltas(register_t *reg, boolean doUpdate, pool_t **targets)
 {
-	playerdelta_t delta;
+	playerdelta_t player;
 	int i;
 
 	for(i = 0; i < MAXPLAYERS; i++)
@@ -1843,9 +1884,23 @@ void Sv_NewPlayerDeltas(register_t *reg, boolean doUpdate, pool_t **targets)
 		if(Sv_IsPlayerIgnored(i)) continue;
 	
 		// Compare to produce a delta.
-		if(Sv_RegisterComparePlayer(reg, i, &delta))
+		if(Sv_RegisterComparePlayer(reg, i, &player))
 		{
-			Sv_AddDeltaToPools(&delta, targets);
+			// Did the mobj change? If so, the old mobj must be zeroed
+			// in the register. Otherwise, the clients may not receive
+			// all the data they need (because of viewpoint exclusion 
+			// flags).
+			if(doUpdate && player.delta.flags & PDF_MOBJ)
+			{
+				reg_mobj_t *registered = Sv_RegisterFindMobj(reg, 
+					reg->players[i].mobj);
+				if(registered)
+				{
+					Sv_RegisterResetMobj(&registered->mo);
+				}
+			}
+
+			Sv_AddDeltaToPools(&player, targets);
 		}
 
 		if(doUpdate)
@@ -1858,30 +1913,38 @@ void Sv_NewPlayerDeltas(register_t *reg, boolean doUpdate, pool_t **targets)
 		{
 			if(players[i].flags & DDPF_FIXANGLES)
 			{
-				Sv_NewDelta(&delta, DT_PLAYER, i);
-				Sv_RegisterPlayer(&delta.player, i);
-				delta.delta.flags = PDF_CLYAW | PDF_CLPITCH;
+				Sv_NewDelta(&player, DT_PLAYER, i);
+				Sv_RegisterPlayer(&player.player, i);
+				player.delta.flags = PDF_CLYAW | PDF_CLPITCH;
 
 				// Once added to the pool, the information will not get lost.
-				Sv_AddDelta(&pools[i], &delta);
+				Sv_AddDelta(&pools[i], &player);
 
 				// Doing this once is enough.
 				players[i].flags &= ~DDPF_FIXANGLES;
 			}
 
-			// Generate a FIXPOS mobj delta, too?
-			if(players[i].flags & DDPF_FIXPOS && players[i].mo)
+			// Generate a FIXPOS/FIXMOM mobj delta, too?
+			if(players[i].mo 
+				&& players[i].flags & (DDPF_FIXPOS | DDPF_FIXMOM))
 			{
 				const mobj_t *mo = players[i].mo;
 				mobjdelta_t mobj;
 				Sv_NewDelta(&mobj, DT_MOBJ, mo->thinker.id);
 				Sv_RegisterMobj(&mobj.mo, mo);
-				mobj.delta.flags = MDF_POS | MDF_MOM;
+				if(players[i].flags & DDPF_FIXPOS)
+				{
+					mobj.delta.flags |= MDF_POS;
+				}
+				if(players[i].flags & DDPF_FIXMOM)
+				{
+					mobj.delta.flags |= MDF_MOM;
+				}
 			
 				Sv_AddDelta(&pools[i], &mobj);
 
 				// Doing this once is enough.
-				players[i].flags &= ~DDPF_FIXPOS;
+				players[i].flags &= ~(DDPF_FIXPOS | DDPF_FIXMOM);
 			}
 		}
 	}
@@ -2443,22 +2506,24 @@ void Sv_RatePool(pool_t *pool)
 /*
  * Acknowledged deltas are removed from the pool, never to be seen again.
  * Clients ack deltas to tell the server they've received them.
+ * If 'resent' is nonzero, ignore 'set' and ack by resend ID.
  */
-void Sv_AckDeltaSet(int consoleNumber, int set)
+void Sv_AckDeltaSet(int consoleNumber, int set, byte resent)
 {
 	pool_t *pool = &pools[consoleNumber];
 	delta_t *delta, *next = NULL;
 	boolean ackTimeRegistered = false;
 	int i;
 
-	// Iterate through the entire hash table. (If too inefficient, have
-	// another hash for set numbers.)
+	// Iterate through the entire hash table. 
 	for(i = 0; i < POOL_HASH_SIZE; i++)
 	{
 		for(delta = pool->hash[i].first; delta; delta = next)
 		{
 			next = delta->next;
-			if(delta->state == DELTA_UNACKED && delta->set == set)
+			if(delta->state == DELTA_UNACKED 
+				&& (!resent && delta->set == set
+					|| resent && delta->resend == resent))
 			{
 				// Register the ack time only for the first acked delta.
 				if(!ackTimeRegistered)
