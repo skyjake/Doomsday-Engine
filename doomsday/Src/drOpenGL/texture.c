@@ -501,15 +501,15 @@ void DG_TexParameter(int pname, int param)
 	{
 	default:
 		glTexParameteri(GL_TEXTURE_2D,
-						pname ==
-						DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER : pname ==
-						DGL_MAG_FILTER ? GL_TEXTURE_MAG_FILTER : pname ==
-						DGL_WRAP_S ? GL_TEXTURE_WRAP_S : GL_TEXTURE_WRAP_T,
+						pname == DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER : 
+						pname == DGL_MAG_FILTER ? GL_TEXTURE_MAG_FILTER : 
+						pname == DGL_WRAP_S ? GL_TEXTURE_WRAP_S : 
+						GL_TEXTURE_WRAP_T,
 						(param >= DGL_NEAREST &&
-						 param <=
-						 DGL_LINEAR_MIPMAP_LINEAR) ? mlevs[param -
-														   DGL_NEAREST] : param
-						== DGL_CLAMP ? GL_CLAMP : GL_REPEAT);
+						 param <= DGL_LINEAR_MIPMAP_LINEAR) ? 
+						mlevs[param - DGL_NEAREST] : 
+						param == DGL_CLAMP ? GL_CLAMP_TO_EDGE : 
+						GL_REPEAT);
 		break;
 	}
 }
