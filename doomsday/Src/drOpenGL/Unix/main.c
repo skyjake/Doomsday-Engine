@@ -56,130 +56,6 @@ boolean noArrays;
 
 // CODE --------------------------------------------------------------------
 
-#if 0
-//===========================================================================
-// fullscreenMode
-//  Change the display mode using the Win32 API.
-//  The closest available refresh rate is selected.
-//===========================================================================
-int fullscreenMode(int width, int height, int bpp)
-{
-	DEVMODE current, testMode, newMode;
-	int     res, i;
-
-	// First get the current settings.
-	memset(&current, 0, sizeof(current));
-	current.dmSize = sizeof(DEVMODE);
-	if(EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &current))
-	{
-		if(!bpp)
-			bpp = current.dmBitsPerPel;
-	}
-	else if(!bpp)
-	{
-		// A safe fallback.
-		bpp = 16;
-	}
-
-	// Override refresh rate?
-	if(ArgCheckWith("-refresh", 1))
-		current.dmDisplayFrequency = strtol(ArgNext(), 0, 0);
-
-	// Clear the structure.
-	memset(&newMode, 0, sizeof(newMode));
-	newMode.dmSize = sizeof(newMode);
-
-	// Let's enumerate all possible modes to find the most suitable one.
-	for(i = 0;; i++)
-	{
-		memset(&testMode, 0, sizeof(testMode));
-		testMode.dmSize = sizeof(DEVMODE);
-		if(!EnumDisplaySettings(NULL, i, &testMode))
-			break;
-
-		if(testMode.dmPelsWidth == (unsigned) width &&
-		   testMode.dmPelsHeight == (unsigned) height &&
-		   testMode.dmBitsPerPel == (unsigned) bpp)
-		{
-			// This looks promising. We'll take the one that best matches
-			// the current refresh rate.
-			if(abs(current.dmDisplayFrequency - testMode.dmDisplayFrequency) <
-			   abs(current.dmDisplayFrequency - newMode.dmDisplayFrequency))
-			{
-				memcpy(&newMode, &testMode, sizeof(DEVMODE));
-			}
-		}
-	}
-
-	if(!newMode.dmPelsWidth)
-	{
-		// A perfect match was not found. Let's try something.
-		newMode.dmPelsWidth = width;
-		newMode.dmPelsHeight = height;
-		newMode.dmBitsPerPel = bpp;
-		newMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL;
-	}
-
-	if((res = ChangeDisplaySettings(&newMode, 0)) != DISP_CHANGE_SUCCESSFUL)
-	{
-		Con_Message("drOpenGL.setResolution: Error %x.\n", res);
-		return 0;				// Failed, damn you.
-	}
-
-	// Set the correct window style and size.
-	SetWindowLong(windowHandle, GWL_STYLE,
-				  WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-	SetWindowPos(windowHandle, 0, 0, 0, width, height, SWP_NOZORDER);
-
-	// Update the screen size variables.
-	screenWidth = width;
-	screenHeight = height;
-	if(bpp)
-		screenBits = bpp;
-
-	// Done!
-	return 1;
-}
-
-//===========================================================================
-// windowedMode
-//  Only adjusts the window style and size.
-//===========================================================================
-void windowedMode(int width, int height)
-{
-	// We need to have a large enough client area.
-	RECT    rect;
-	int     xoff = (GetSystemMetrics(SM_CXSCREEN) - width) / 2, yoff =
-		(GetSystemMetrics(SM_CYSCREEN) - height) / 2;
-	LONG    style;
-
-	if(ArgCheck("-nocenter"))
-		xoff = yoff = 0;
-	if(ArgCheckWith("-xpos", 1))
-		xoff = atoi(ArgNext());
-	if(ArgCheckWith("-ypos", 1))
-		yoff = atoi(ArgNext());
-
-	rect.left = xoff;
-	rect.top = yoff;
-	rect.right = xoff + width;
-	rect.bottom = yoff + height;
-
-	// Set window style.
-	style =
-		GetWindowLong(windowHandle,
-					  GWL_STYLE) | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE |
-		WS_CAPTION | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-	SetWindowLong(windowHandle, GWL_STYLE, style);
-	AdjustWindowRect(&rect, style, FALSE);
-	SetWindowPos(windowHandle, 0, xoff, yoff,	/*rect.left, rect.top, */
-				 rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER);
-
-	screenWidth = width;
-	screenHeight = height;
-}
-#endif
-
 //===========================================================================
 // initOpenGL
 //===========================================================================
@@ -229,15 +105,6 @@ int DG_Init(int width, int height, int bpp, int mode)
 	Con_Message("DG_Init: OpenGL.\n");
 
 	// Are we in range here?
-	/*  if(!fullscreen)
-	   {
-	   if(width > GetSystemMetrics(SM_CXSCREEN))
-	   width = GetSystemMetrics(SM_CXSCREEN);
-
-	   if(height >  GetSystemMetrics(SM_CYSCREEN))
-	   height = GetSystemMetrics(SM_CYSCREEN);
-	   }
-	 */
 	info = SDL_GetVideoInfo();
 	screenBits = info->vfmt->BitsPerPixel;
 	screenWidth = width;
@@ -254,21 +121,6 @@ int DG_Init(int width, int height, int bpp, int mode)
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-	/*
-	   if(fullscreen)
-	   {
-	   if(!fullscreenMode(screenWidth, screenHeight, bpp))      
-	   {
-	   Con_Error("drOpenGL.Init: Resolution change failed (%d x %d).\n",
-	   screenWidth, screenHeight);
-	   }
-	   }
-	   else
-	   {
-	   windowedMode(screenWidth, screenHeight);
-	   }
-	 */
 
 	if(!initOpenGL())
 	{
