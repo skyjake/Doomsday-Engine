@@ -7,6 +7,7 @@
 #define __DOOMSDAY_SYSTEM_AUDIO_H__
 
 #include "sys_sfxd.h"
+#include "sys_sfxd_dummy.h"
 #include "sys_sfxd_ds.h"
 #include "sys_sfxd_loader.h"
 #include "sys_musd.h"
