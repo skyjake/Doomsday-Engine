@@ -22,7 +22,7 @@
 #endif
 
 #define VERSION 210
-#define VERSION_TEXT "1.3.8"
+#define VERSION_TEXT "1.4.0"
 #define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JHERETIC_VER_ID")"
 
 #include "../doomsday.h"
@@ -99,7 +99,7 @@ typedef enum
 	sk_nightmare
 } skill_t;
 
-typedef struct
+/*typedef struct
 {
 	char		forwardmove;		// *2048 for move
 	char		sidemove;			// *2048 for move
@@ -108,7 +108,7 @@ typedef struct
 	byte		buttons;
 	byte		lookfly;			// look/fly up/down/centering
 	byte		arti;				// artitype_t to use
-} ticcmd_t;
+} ticcmd_t;*/
 
 #define	BT_ATTACK		1
 #define	BT_USE			2
