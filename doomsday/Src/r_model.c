@@ -121,6 +121,7 @@ int R_NewModelFor(const char *filename)
 	return -1;
 }
 
+/*
 //===========================================================================
 // R_VertexNormals
 //	Calculate vertex normals. Only with -renorm.
@@ -131,7 +132,7 @@ void R_VertexNormals(model_t *mdl)
 	int verts = mdl->info.numVertices;
 	int i, k, j, n, cnt;
 	vector_t *normals, norm;
-	dmd_vertex_t *list;
+	model_vertex_t *list;
 	dmd_triangle_t *tri;
 //	float maxprod, diff;
 //	int idx;
@@ -173,27 +174,13 @@ void R_VertexNormals(model_t *mdl)
 			for(n = 0; n < 3; n++) norm.pos[n] /= cnt;
 			// Normalize it.
 			M_Normalize(norm.pos);
-			/*
-			// Find closest match in the normals list.
-			// FIXME: Just use the accurate normal!
-			for(j=0; j<NUMVERTEXNORMALS; j++)
-			{
-				// Get dot product.
-				for(diff=0, n=0; n<3; n++) 
-					diff += avertexnormals[j][n] * norm.pos[n];				
-				if(!j || diff > maxprod)
-				{
-					maxprod = diff;
-					idx = j;
-				}
-			}
-			list[k].lightNormalIndex = idx;*/
 			memcpy(list[k].normal, norm.pos, sizeof(norm.pos));
 		}
 	}
 
 	Z_Free(normals);
 }
+*/
 
 //===========================================================================
 // AllocAndLoad
@@ -392,8 +379,10 @@ void R_LoadModelMD2(DFILE *file, model_t *mdl)
 	md2_header_t oldhd;
 	dmd_header_t *hd = &mdl->header;
 	dmd_info_t *inf = &mdl->info;
+	model_frame_t *frame;
 	byte *frames;
 	int i, k, c;
+	int axis[3] = { 0, 2, 1 };
 
 	// Read the header.
 	F_Read(&oldhd, sizeof(oldhd), file);
@@ -422,40 +411,41 @@ void R_LoadModelMD2(DFILE *file, model_t *mdl)
 	inf->offsetEnd = oldhd.offsetEnd;
 
 	// Allocate and load the various arrays.
-	mdl->texCoords = AllocAndLoad(file, inf->offsetTexCoords, 
-		sizeof(md2_textureCoordinate_t) * inf->numTexCoords);
+	/*mdl->texCoords = AllocAndLoad(file, inf->offsetTexCoords, 
+		sizeof(md2_textureCoordinate_t) * inf->numTexCoords);*/
 
-	mdl->lods[0].triangles = AllocAndLoad(file, 
+	/*mdl->lods[0].triangles = AllocAndLoad(file, 
 		mdl->lodInfo[0].offsetTriangles,
-		sizeof(md2_triangle_t) * mdl->lodInfo[0].numTriangles);
+		sizeof(md2_triangle_t) * mdl->lodInfo[0].numTriangles);*/
 
 	// The frames need to be unpacked.
 	frames = AllocAndLoad(file, inf->offsetFrames, 
 		inf->frameSize * inf->numFrames);
-	mdl->frames = //Z_Malloc(sizeof(md2_frame_t) * mdl->header.numFrames, PU_STATIC, 0);
-		malloc(sizeof(dmd_frame_t) * inf->numFrames);
-	for(i = 0; i < inf->numFrames; i++)
+	mdl->frames = malloc(sizeof(model_frame_t) * inf->numFrames);
+	for(i = 0, frame = mdl->frames; i < inf->numFrames; i++, frame++)
 	{
 		md2_packedFrame_t *pfr = (md2_packedFrame_t*) 
 			(frames + inf->frameSize * i);
 		md2_triangleVertex_t *pVtx;
-		dmd_vertex_t *vtx;
-		memcpy(mdl->frames[i].name, pfr->name, sizeof(pfr->name));
-		mdl->frames[i].vertices = malloc(sizeof(dmd_vertex_t) 
-			* inf->numVertices); 
+
+		memcpy(frame->name, pfr->name, sizeof(pfr->name));
+		frame->vertices = malloc(sizeof(model_vertex_t) * inf->numVertices); 
+		frame->normals = malloc(sizeof(model_vertex_t) * inf->numVertices);
+
 		// Translate each vertex.
-		for(k = 0, vtx = mdl->frames[i].vertices, pVtx = pfr->vertices;
-			k < inf->numVertices; k++, vtx++, pVtx++)
+		for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; k++, pVtx++)
 		{
-			memcpy(vtx->normal, avertexnormals[pVtx->lightNormalIndex],
+			memcpy(frame->normals[k].xyz, 
+				avertexnormals[pVtx->lightNormalIndex],
 				sizeof(float) * 3);
+
 			for(c = 0; c < 3; c++)
 			{
-				vtx->vertex[c] = pVtx->vertex[c] * pfr->scale[c] + 
-					pfr->translate[c];
+				frame->vertices[k].xyz[axis[c]] = pVtx->vertex[c] 
+					* pfr->scale[c] + pfr->translate[c];
 			}
-			// Aspect mod reversal.
-			vtx->vertex[2] *= rModelAspectMod;
+			// Aspect undoing.
+			frame->vertices[k].xyz[VY] *= rModelAspectMod;
 		}
 	}
 	free(frames);
@@ -479,7 +469,9 @@ void R_LoadModelDMD(DFILE *file, model_t *mo)
 	dmd_chunk_t chunk;
 	char *temp;
 	dmd_info_t *inf = &mo->info;
+	model_frame_t *frame;
 	int i, k, c;
+	dmd_triangle_t *triangles[MAX_LODS];
 	
 	// Read the chunks.
 	F_Read(&chunk, sizeof(chunk), file);
@@ -507,33 +499,33 @@ void R_LoadModelDMD(DFILE *file, model_t *mo)
 	for(i = 0; i < inf->numSkins; i++)
 		F_Read(mo->skins[i].name, 64, file);
 
-	mo->texCoords = AllocAndLoad(file, inf->offsetTexCoords, 
-		sizeof(dmd_textureCoordinate_t) * inf->numTexCoords);
+	/*mo->texCoords = AllocAndLoad(file, inf->offsetTexCoords, 
+		sizeof(dmd_textureCoordinate_t) * inf->numTexCoords);*/
 	
 	temp = AllocAndLoad(file, inf->offsetFrames, 
 		inf->frameSize * inf->numFrames);
-	mo->frames = malloc(sizeof(dmd_frame_t) * inf->numFrames);
-	for(i = 0; i < inf->numFrames; i++)
+	mo->frames = malloc(sizeof(model_frame_t) * inf->numFrames);
+	for(i = 0, frame = mo->frames; i < inf->numFrames; i++, frame++)
 	{
 		dmd_packedFrame_t *pfr = (dmd_packedFrame_t*) 
 			(temp + inf->frameSize * i);
 		dmd_packedVertex_t *pVtx;
-		dmd_vertex_t *vtx;
-		memcpy(mo->frames[i].name, pfr->name, sizeof(pfr->name));
-		mo->frames[i].vertices = malloc(sizeof(dmd_vertex_t) 
-			* inf->numVertices); 
+		
+		memcpy(frame->name, pfr->name, sizeof(pfr->name));
+		frame->vertices = malloc(sizeof(model_vertex_t) * inf->numVertices);
+		frame->normals = malloc(sizeof(model_vertex_t) * inf->numVertices);
+
 		// Translate each vertex.
-		for(k = 0, vtx = mo->frames[i].vertices, pVtx = pfr->vertices;
-			k < inf->numVertices; k++, vtx++, pVtx++)
+		for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; k++, pVtx++)
 		{
-			UnpackVector(pVtx->normal, vtx->normal);
+			UnpackVector(pVtx->normal, frame->normals[k].xyz);
 			for(c = 0; c < 3; c++)
 			{
-				vtx->vertex[c] = pVtx->vertex[c] * pfr->scale[c] + 
-					pfr->translate[c];
+				frame->vertices[k].xyz[c] = pVtx->vertex[c] * pfr->scale[c] 
+					+ pfr->translate[c];
 			}
-			// Aspect mod reversal.
-			vtx->vertex[2] *= rModelAspectMod;
+			// Aspect undo.
+			frame->vertices[k].xyz[2] *= rModelAspectMod;
 		}
 	}
 	free(temp);
@@ -543,7 +535,7 @@ void R_LoadModelDMD(DFILE *file, model_t *mo)
 	
 	for(i = 0; i < inf->numLODs; i++)
 	{
-		mo->lods[i].triangles = AllocAndLoad(file, 
+		triangles[i] = AllocAndLoad(file, 
 			mo->lodInfo[i].offsetTriangles,
 			sizeof(dmd_triangle_t) * mo->lodInfo[i].numTriangles);
 		mo->lods[i].glCommands = AllocAndLoad(file, 
@@ -557,8 +549,12 @@ void R_LoadModelDMD(DFILE *file, model_t *mo)
 	for(i = 0; i < inf->numLODs; i++)
 		for(k = 0; k < mo->lodInfo[i].numTriangles; k++)
 			for(c = 0; c < 3; c++)
-				mo->vertexUsage[mo->lods[i].triangles[k].vertexIndices[c]]
+				mo->vertexUsage[triangles[i][k].vertexIndices[c]]
 					|= 1 << i;
+
+	// We don't need the triangles any more.
+	for(i = 0; i < inf->numLODs; i++)
+		free(triangles[i]);
 }
 
 //===========================================================================
@@ -649,9 +645,6 @@ int R_LoadModel(char *origfn)
 				origfn, i) );
 		}
 	}
-
-	// Recalculate vertex normals (only done if the -renorm option is used).
-	R_VertexNormals(mdl);
 
 	END_PROF( PROF_LM_SKINS );
 
@@ -792,9 +785,9 @@ found_next:;
 }
 
 //===========================================================================
-// R_GetDMDFrame
+// R_GetModelFrame
 //===========================================================================
-dmd_frame_t *R_GetDMDFrame(int model, int frame)
+model_frame_t *R_GetModelFrame(int model, int frame)
 {
 	return modellist[model]->frames + frame;
 }
@@ -804,17 +797,17 @@ dmd_frame_t *R_GetDMDFrame(int model, int frame)
 //===========================================================================
 void R_GetModelBounds(int model, int frame, float min[3], float max[3])
 {
-	dmd_frame_t *mframe = R_GetDMDFrame(model, frame);
+	model_frame_t *mframe = R_GetModelFrame(model, frame);
 	model_t *mo = modellist[model];
-	dmd_vertex_t *v;
+	model_vertex_t *v;
 	int i, k;
 
 	if(!mframe) Con_Error("R_GetModelBounds: bad model/frame.\n");
 	for(i = 0, v = mframe->vertices; i < mo->info.numVertices; i++, v++)
 		for(k = 0; k < 3; k++)
 		{
-			if(!i || v->vertex[k] < min[k]) min[k] = v->vertex[k];
-			if(!i || v->vertex[k] > max[k]) max[k] = v->vertex[k];
+			if(!i || v->xyz[k] < min[k]) min[k] = v->xyz[k];
+			if(!i || v->xyz[k] > max[k]) max[k] = v->xyz[k];
 		}
 }
 
@@ -827,9 +820,9 @@ float R_GetModelHRange(int model, int frame, float *top, float *bottom)
 	float min[3], max[3];
 
 	R_GetModelBounds(model, frame, min, max);
-	*top = max[VZ];
-	*bottom = min[VZ];
-	return max[VZ] - min[VZ]; 
+	*top = max[VY];
+	*bottom = min[VY];
+	return max[VY] - min[VY]; 
 }
 
 //===========================================================================
@@ -841,7 +834,7 @@ float R_GetModelHRange(int model, int frame, float *top, float *bottom)
 void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 {
 	submodeldef_t	*smf = &mf->sub[0];
-	dmd_frame_t		*mFrame = R_GetDMDFrame(smf->model, smf->frame);
+	model_frame_t	*mFrame = R_GetModelFrame(smf->model, smf->frame);
 	int				i, num = modellist[smf->model]->info.numVertices;
 	float			top, bottom, height;
 	float			scale;
@@ -885,8 +878,8 @@ float R_GetModelVisualRadius(modeldef_t *mf)
 	// Use the first submodel's bounds.
 	R_GetModelBounds(mf->sub[0].model, mf->sub[0].frame, min, max);
 	// Half of the average of width and depth.
-	return (mf->scale[VX]*(max[VX] - min[VX]) 
-		+ mf->scale[VZ]*(max[VZ]-min[VZ]))/3.5f;
+	return (mf->scale[VX] * (max[VX] - min[VX]) 
+		+ mf->scale[VZ] * (max[VZ] - min[VZ]))/3.5f;
 }
 
 //===========================================================================
@@ -894,7 +887,7 @@ float R_GetModelVisualRadius(modeldef_t *mf)
 //	Create a new modeldef or find an existing one. There can be only one
 //	model definition associated with a state/intermark pair. 
 //===========================================================================
-modeldef_t *R_GetModelDef(int state, float intermark, int select/*, int create_if_missing*/)
+modeldef_t *R_GetModelDef(int state, float intermark, int select)
 {
 	int			i;
 	modeldef_t	*md;
@@ -1199,24 +1192,28 @@ void R_InitModels(void)
 void R_ShutdownModels(void)
 {
 	int i, k;
+	model_t *m;
 
 	free(models);
 	models = NULL;
 	for(i = 1; i < MAX_MODELS; i++)
 	{
-		if(!modellist[i]) continue;
-		free(modellist[i]->skins);
-		free(modellist[i]->texCoords);
-		for(k = 0; k < modellist[i]->info.numFrames; k++)
-			free(modellist[i]->frames[k].vertices);
-		free(modellist[i]->frames);
-		for(k = 0; k < modellist[i]->info.numLODs; k++)
+		if(!(m = modellist[i])) continue;
+		free(m->skins);
+		//free(modellist[i]->texCoords);
+		for(k = 0; k < m->info.numFrames; k++)
 		{
-			free(modellist[i]->lods[k].triangles);
-			free(modellist[i]->lods[k].glCommands);
+			free(m->frames[k].vertices);
+			free(m->frames[k].normals);
 		}
-		free(modellist[i]->vertexUsage);
-		free(modellist[i]);
+		free(m->frames);
+		for(k = 0; k < m->info.numLODs; k++)
+		{
+			//free(modellist[i]->lods[k].triangles);
+			free(m->lods[k].glCommands);
+		}
+		free(m->vertexUsage);
+		free(m);
 		modellist[i] = NULL;
 	}
 }
