@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/07/12 22:25:50  skyjake
+// Use map validation routine in warp cheat
+//
 // Revision 1.2  2003/03/14 15:39:21  skyjake
 // Don't assume map31,32 exist
 //
@@ -203,31 +206,7 @@ boolean cht_WarpFunc(player_t *plyr, char *buf)
 	}
 	
 	// Catch invalid maps.
-	if (epsd < 1)
-		return false;
-	
-	if (map < 1)
-		return false;
-	
-	// Ohmygod - this is not going to work.
-	if ((gamemode == retail)
-		&& ((epsd > 4) || (map > 9)))
-		return false;
-	
-	if ((gamemode == registered)
-		&& ((epsd > 3) || (map > 9)))
-		return false;
-	
-	if ((gamemode == shareware)
-		&& ((epsd > 1) || (map > 9)))
-		return false;
-	
-	if ((gamemode == commercial)
-		&& (( epsd > 1) || (map > 32)))
-		return false;
-
-	// Check that the data really does exist.
-	if(!P_MapExists(epsd, map)) return false;
+	if(!G_ValidateMap(&epsd, &map)) return false;
 
 	// So be it.
 	P_SetMessage(plyr, STSTR_CLEV);
