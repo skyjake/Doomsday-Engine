@@ -69,6 +69,7 @@ typedef struct {
 int modelLight = 4;
 int frameInter = true;
 int mirrorHudModels = false;
+int modelShinyMultitex = true;
 int model_tri_count;
 float rend_model_lod = 256;
 
@@ -200,7 +201,7 @@ void Mod_RenderCommands
 	void *coords[2];
 
 	// Disable all vertex arrays.
-	gl.DisableArrays(true, true, 0xf);
+	gl.DisableArrays(true, true, DGL_ALL_BITS);
 
 	// Load the vertex array.
 	switch(mode)
@@ -793,7 +794,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	if(subFlags & MFF_TWO_SIDED) gl.Disable(DGL_CULL_FACE);
 
 	// Render using multiple passes? 
-	if(shininess <= 0 || byteAlpha < 255 
+	if(!modelShinyMultitex || shininess <= 0 || byteAlpha < 255 
 		|| blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR)
 		|| numTexUnits < 2 || !envModAdd)
 	{
@@ -821,7 +822,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 			// Shiny color.
 			Mod_FixedVertexColors(numVerts, modelColors, color);
 
-			if(numTexUnits > 1)
+			if(numTexUnits > 1 && modelShinyMultitex)
 			{
 				// We'll use multitexturing to clear out empty spots in
 				// the primary texture.
