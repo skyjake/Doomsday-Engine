@@ -48,7 +48,7 @@
 #define PI				3.141592657
 #define	SBARHEIGHT		39			// status bar height at bottom of screen
 
-enum { BLEFT, BTOP, BRIGHT, BBOTTOM };
+enum { BLEFT, BTOP, BRIGHT, BBOTTOM, BFLOOR, BCEILING };
 enum { VX, VY, VZ };				// Vertex indices.
 enum { CR, CG, CB, CA };			// Color indices.
 
