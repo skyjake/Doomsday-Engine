@@ -199,11 +199,18 @@ char   *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
 }
 
 /*
- * This has been modified to work with filenames of all sizes.  Of
- * course, the caller must provide enough space. :-)
- * --skyjake 2004-07-24
+ * A limit has not been specified for the maximum length of the base,
+ * so let's assume it can be a long one.
  */
 void M_ExtractFileBase(const char *path, char *dest)
+{
+    M_ExtractFileBase2(path, dest, 255, 0);
+}
+
+/*
+ * This has been modified to work with filenames of all sizes.  
+ */
+void M_ExtractFileBase2(const char *path, char *dest, int max, int ignore)
 {
 	const char *src;
 
@@ -216,9 +223,15 @@ void M_ExtractFileBase(const char *path, char *dest)
 	}
 
 	// Copy up to eight characters.
-	while(*src && *src != '.')
+	while(*src && *src != '.' && max-- > 0)
 	{
-		*dest++ = toupper((int) *src++);
+        if(ignore-- > 0)
+        {
+            src++; // Skip chars.
+            max++; // Doesn't count.
+        }
+        else
+            *dest++ = toupper((int) *src++);
 	}
 	
 	// End with a terminating null.

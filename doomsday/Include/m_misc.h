@@ -48,6 +48,8 @@ int             M_ReadFile(char const *name, byte **buffer);
 int             M_ReadFileCLib(char const *name, byte **buffer);
 boolean         M_WriteFile(char const *name, void *source, int length);
 void            M_ExtractFileBase(const char *path, char *dest);
+void            M_ExtractFileBase2(const char *path, char *dest,
+                                   int max, int ignore);
 void            M_GetFileExt(const char *path, char *ext);
 void            M_ReplaceFileExt(char *path, char *newext);
 boolean         M_CheckPath(char *path);
