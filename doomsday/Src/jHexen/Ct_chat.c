@@ -334,7 +334,7 @@ void CT_Ticker(void)
 
 	for(i=0; i < MAXPLAYERS; i++)
 	{
-		if(!players[i].plr->ingame)
+		if(!players[i].plr->ingame || !players[i].plr->mo)
 		{
 			continue;
 		}
