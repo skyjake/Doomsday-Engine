@@ -29,8 +29,8 @@ void P_PlayerNextArtifact(player_t *player);
 int lookdirSpeed=3, quakeFly=0;
 
 boolean onground;
-int newtorch; // used in the torch flicker effect.
-int newtorchdelta;
+int newtorch[MAXPLAYERS]; // used in the torch flicker effect.
+int newtorchdelta[MAXPLAYERS];
 
 int PStateNormal[NUMCLASSES] = 
 {
@@ -456,17 +456,16 @@ void P_DeathThink(player_t *player)
 		}
 	}
 
-	if(player->cmd.buttons&BT_USE)
+	if(player->cmd.buttons & BT_USE)
 	{
 		if(player == &players[consoleplayer])
 		{
-//			I_SetPalette((byte *)W_CacheLumpName("PLAYPAL", PU_CACHE));
 			H2_SetFilter(0);
 			inv_ptr = 0;
 			curpos = 0;
-			newtorch = 0;
-			newtorchdelta = 0;
 		}
+		newtorch[player - players] = 0;
+		newtorchdelta[player - players] = 0;
 		player->playerstate = PST_REBORN;
 		player->plr->mo->special1 = player->class;
 		if(player->plr->mo->special1 > 2)
@@ -667,6 +666,7 @@ void P_PlayerThink(player_t *player)
 	weapontype_t newweapon;
 	int floorType;		
 	mobj_t *pmo = player->plr->mo;		
+	int playerNumber = player - players;
 	
 	// No-clip cheat
 	if(player->cheats & CF_NOCLIP)
@@ -1009,26 +1009,28 @@ void P_PlayerThink(player_t *player)
 				player->plr->fixedcolormap = 1;
 			}
 		}
-		else if(!(leveltime&16) && player == &players[consoleplayer])
+		else if(!(leveltime&16)) /* && player == &players[consoleplayer]) */
 		{
-			if(newtorch)
+			ddplayer_t *dp = player->plr;
+			if(newtorch[playerNumber])
 			{
-				if(player->plr->fixedcolormap+newtorchdelta > 7 
-					|| player->plr->fixedcolormap+newtorchdelta < 1
-					|| newtorch == player->plr->fixedcolormap)
+				if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7 
+					|| dp->fixedcolormap + newtorchdelta[playerNumber] < 1
+					|| newtorch[playerNumber] == dp->fixedcolormap)
 				{
-					newtorch = 0;
+					newtorch[playerNumber] = 0;
 				}
 				else
 				{
-					player->plr->fixedcolormap += newtorchdelta;
+					dp->fixedcolormap += newtorchdelta[playerNumber];
 				}
 			}
 			else
 			{
-				newtorch = (M_Random()&7)+1;
-				newtorchdelta = (newtorch == player->plr->fixedcolormap) ?
-						0 : ((newtorch > player->plr->fixedcolormap) ? 1 : -1);
+				newtorch[playerNumber] = (M_Random()&7)+1;
+				newtorchdelta[playerNumber] = (newtorch[playerNumber] 
+					== dp->fixedcolormap)? 0 
+					: ((newtorch[playerNumber] > dp->fixedcolormap) ? 1 : -1);
 			}
 		}
 	}
@@ -1505,16 +1507,18 @@ void P_PlayerUseArtifact(player_t *player, artitype_t arti)
 			if(P_UseArtifact(player, arti))
 			{ // Artifact was used - remove it from inventory
 				P_PlayerRemoveArtifact(player, i);
+				if(arti < arti_firstpuzzitem)
+				{
+					S_ConsoleSound(SFX_ARTIFACT_USE, NULL, 
+						player - players);
+				}
+				else
+				{
+					S_ConsoleSound(SFX_PUZZLE_SUCCESS, NULL,
+						player - players);
+				}
 				if(player == &players[consoleplayer])
 				{
-					if(arti < arti_firstpuzzitem)
-					{
-						S_StartSound(SFX_ARTIFACT_USE, NULL);
-					}
-					else
-					{
-						S_StartSound(SFX_PUZZLE_SUCCESS, NULL);
-					}
 					ArtifactFlash = 4;
 				}
 			}
@@ -1745,9 +1749,10 @@ void P_ClientSideThink()
 	mobj_t		*mo;
 	int			i, fly;
 
-	if(!IS_CLIENT || !Get(DD_GAME_READY)) return;
-
 	mo = dpl->mo;
+
+	if(!IS_CLIENT || !Get(DD_GAME_READY) || !mo) return;
+	
 	P_CalcHeight(pl);
 
 	// Message ticker.
