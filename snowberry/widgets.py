@@ -1290,9 +1290,10 @@ class FormattedList (Widget):
 
     def __updateItemCount(self):
         w = self.getWxWidget()
+        w.Hide()
         w.SetItemCount(len(self.items))
-        w.Refresh()
         w.SetSelection(self.getSelectedIndex())
+        w.Show()
 
         #w.Freeze()
         #w.SetItemCount(len(self.items))
