@@ -15,7 +15,9 @@ typedef enum blendmode_e {
 	BM_ADD,
 	BM_DARK,
 	BM_SUBTRACT,
-	BM_REVERSE_SUBTRACT
+	BM_REVERSE_SUBTRACT,
+	BM_MUL,
+	BM_INVERSE_MUL
 } blendmode_t;
 
 extern float	vx, vy, vz, vang, vpitch, fieldOfView, yfov;

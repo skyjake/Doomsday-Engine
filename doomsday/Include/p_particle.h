@@ -20,6 +20,8 @@
 #define PGF_GROUP				0x800	// Triggered by all in anim group.
 #define PGF_SUB_BLEND			0x1000	// Subtractive blending.
 #define PGF_REVSUB_BLEND		0x2000	// Reverse subtractive blending.
+#define PGF_MUL_BLEND			0x4000	// Multiplicative blending.
+#define PGF_INVMUL_BLEND		0x8000	// Inverse multiplicative blending.
 
 // Runtime generator flags:
 #define PGF_VISIBLE				0x1000000	// Should be rendered.
