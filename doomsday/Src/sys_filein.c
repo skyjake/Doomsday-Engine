@@ -27,6 +27,12 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <time.h>
+
+#ifdef UNIX
+#  include <sys/stat.h>
+#endif
+
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
@@ -360,6 +366,7 @@ DFILE  *F_OpenLump(const char *name, boolean dontBuffer)
 	// Init and load in the lump data.
 	file->flags.open = true;
 	file->flags.file = false;
+	file->lastModified = time(NULL); // So I'm lazy... 
 	if(!dontBuffer)
 	{
 		file->size = lumpinfo[num].size;
@@ -367,6 +374,19 @@ DFILE  *F_OpenLump(const char *name, boolean dontBuffer)
 		memcpy(file->data, W_CacheLumpNum(num, PU_CACHE), file->size);
 	}
 	return file;
+}
+
+/*
+ * This only works on real files.
+ */
+static unsigned int F_GetLastModified(const char *path)
+{
+#ifdef UNIX
+	struct stat s;
+
+	stat(path, &s);
+	return s.st_mtime;
+#endif
 }
 
 //===========================================================================
@@ -392,6 +412,7 @@ DFILE  *F_OpenFile(const char *path, const char *mymode)
 		return NULL;			// Can't find the file.
 	file->flags.open = true;
 	file->flags.file = true;
+	file->lastModified = F_GetLastModified(path);	
 	return file;
 }
 
@@ -418,6 +439,7 @@ DFILE  *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 	// Init and load in the lump data.
 	file->flags.open = true;
 	file->flags.file = false;
+	file->lastModified = Zip_GetLastModified(zipIndex);
 	if(!dontBuffer)
 	{
 		file->size = Zip_GetSize(zipIndex);
@@ -436,7 +458,7 @@ DFILE  *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 //  "w" = file must be in a WAD
 //  "x" = just test for access (don't buffer anything)
 //===========================================================================
-DFILE  *F_Open(const char *path, const char *mode)
+DFILE *F_Open(const char *path, const char *mode)
 {
 	char    trans[256], full[256];
 	boolean dontBuffer;
@@ -473,7 +495,7 @@ DFILE  *F_Open(const char *path, const char *mode)
 //===========================================================================
 // F_Close
 //===========================================================================
-void F_Close(DFILE * file)
+void F_Close(DFILE *file)
 {
 	if(!file->flags.open)
 		return;
@@ -494,7 +516,7 @@ void F_Close(DFILE * file)
 // F_Read
 //  Returns the number of bytes read (up to 'count').
 //===========================================================================
-int F_Read(void *dest, int count, DFILE * file)
+int F_Read(void *dest, int count, DFILE *file)
 {
 	int     bytesleft;
 
@@ -525,7 +547,7 @@ int F_Read(void *dest, int count, DFILE * file)
 //===========================================================================
 // F_GetC
 //===========================================================================
-int F_GetC(DFILE * file)
+int F_GetC(DFILE *file)
 {
 	unsigned char ch = 0;
 
@@ -538,7 +560,7 @@ int F_GetC(DFILE * file)
 //===========================================================================
 // F_Tell
 //===========================================================================
-int F_Tell(DFILE * file)
+int F_Tell(DFILE *file)
 {
 	if(!file->flags.open)
 		return 0;
@@ -552,7 +574,7 @@ int F_Tell(DFILE * file)
 //  Returns the current position in the file, before the move, as an offset
 //  from the beginning of the file.
 //===========================================================================
-int F_Seek(DFILE * file, int offset, int whence)
+int F_Seek(DFILE *file, int offset, int whence)
 {
 	int     oldpos = F_Tell(file);
 
@@ -576,17 +598,16 @@ int F_Seek(DFILE * file, int offset, int whence)
 //===========================================================================
 // F_Rewind
 //===========================================================================
-void F_Rewind(DFILE * file)
+void F_Rewind(DFILE *file)
 {
 	F_Seek(file, 0, SEEK_SET);
 }
 
-//===========================================================================
-// F_Length
-//  Returns the length of the file, in bytes. Stream position is not 
-//  affected.
-//===========================================================================
-int F_Length(DFILE * file)
+/*
+ * Returns the length of the file, in bytes.  Stream position is not
+ * affected.
+ */
+int F_Length(DFILE *file)
 {
 	int     length, currentPosition;
 
@@ -597,6 +618,23 @@ int F_Length(DFILE * file)
 	length = F_Tell(file);
 	F_Seek(file, currentPosition, SEEK_SET);
 	return length;
+}
+
+/*
+ * Returns the time when the file was last modified, as seconds since
+ * the Epoch.  Returns zero if the file is not found.
+ */
+unsigned int F_LastModified(const char *fileName)
+{
+	// Try to open the file, but don't buffer any contents.
+	DFILE *file = F_Open(fileName, "rx");
+	unsigned modified = 0;
+
+	if(!file)
+		return 0;
+	modified = file->lastModified;
+	F_Close(file);
+	return modified;
 }
 
 //===========================================================================
@@ -612,44 +650,6 @@ int F_CountPathChars(const char *path, char ch)
 			count++;
 	return count;
 }
-
-/*
-   //===========================================================================
-   // F_ForAllCaller
-   //   Calls the backup function after determining if the given file name
-   //   is a directory or a normal file. Both searchPath and foundFile must
-   //   be absolute paths.
-   //===========================================================================
-   int F_ForAllCaller(const char *searchPath, const char *foundFile, 
-   f_forall_func_t func, void *parm)
-   {
-   const char *ch;
-   char visiblePath[256], *out;
-   boolean isDirectory = false;
-
-   // If the found file name is not on the same directory level,
-   // we have found a directory.
-   if(F_CountPathChars(foundFile, '\\') > F_CountPathChars(searchPath, '\\'))
-   {
-   isDirectory = true;
-
-   // The search path is always a valid part of the visible path.
-   strcpy(visiblePath, searchPath);
-
-   // Only copy the next level.
-   ch = foundFile + strlen(searchPath);
-   out = visiblePath + strlen(visiblePath);
-   while(*ch != '\\' && *ch) *out++ = *ch++;
-   *out = 0;
-   }
-   else
-   {
-   strcpy(visiblePath, foundFile);
-   }
-
-   return func(visiblePath, isDirectory? FT_DIRECTORY : FT_NORMAL, parm);
-   }
- */
 
 //===========================================================================
 // F_ZipFinderForAll

@@ -36,5 +36,6 @@ zipindex_t      Zip_Iterate(int (*iterator) (const char *, void *),
 							void *parm);
 uint            Zip_GetSize(zipindex_t index);
 uint            Zip_Read(zipindex_t index, void *buffer);
+uint			Zip_GetLastModified(zipindex_t index);
 
 #endif

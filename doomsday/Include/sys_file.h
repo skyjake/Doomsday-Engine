@@ -37,6 +37,7 @@ typedef struct {
 	int             size;
 	void           *data;
 	char           *pos;
+	unsigned int    lastModified;
 } DFILE;
 
 typedef enum filetype_e {
@@ -60,15 +61,6 @@ int             F_Seek(DFILE * file, int offset, int whence);
 void            F_Rewind(DFILE * file);
 int             F_ForAll(const char *filespec, void *parm,
 						 f_forall_func_t func);
-
-/*#ifndef __DOOMSDAY__
-   // Redefine to match the standard file stream routines.
-   # define DFILE               FILE
-   # define F_Open              fopen
-   # define F_Tell              ftell
-   # define F_Rewind            rewind
-   # define F_Read(x,y,z)       fread((x),(y),1,(z))
-   # define F_Close         fclose
-   #endif */
+unsigned int    F_LastModified(const char *fileName);
 
 #endif

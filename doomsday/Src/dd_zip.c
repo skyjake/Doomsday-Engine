@@ -78,6 +78,7 @@ typedef struct zipentry_s {
 	package_t *package;
 	unsigned int offset;		// Offset from the beginning of the package.
 	unsigned int size;
+	unsigned int lastModified;  // Unix timestamp.
 } zipentry_t;
 
 #pragma pack(1)
@@ -420,6 +421,10 @@ boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 		entry->package = pack;
 		entry->size = header->size;
 
+		// The modification date is inherited from the real file (note
+		// recursion).
+		entry->lastModified = file->lastModified;
+
 		// Read the local file header, which contains the correct
 		// extra field size (Info-ZIP!).
 		F_Seek(file, header->relOffset, SEEK_SET);
@@ -583,4 +588,16 @@ uint Zip_Read(zipindex_t index, void *buffer)
 	// TODO: Use zlib to inflate deflated entries.
 
 	return entry->size;
+}
+
+/*
+ * Return the last modified timestamp of the zip entry.
+ */
+uint Zip_GetLastModified(zipindex_t index)
+{
+	index--;
+	if(index < 0 || index >= zipNumFiles)
+		return 0; // Doesn't exist.
+
+	return zipFiles[index].lastModified;
 }
