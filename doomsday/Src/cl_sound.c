@@ -31,10 +31,171 @@
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// Cl_Sound
-//	Called when a sound packet is received.
-//===========================================================================
+/*
+ * Read a sound delta from the message buffer and play it.
+ * Only used with psv_frame2 packets.
+ */
+void Cl_ReadSoundDelta2(deltatype_t type)
+{
+	int sound = 0, soundFlags = 0;
+	byte flags = 0;
+	clmobj_t *cmo = NULL;
+	thid_t mobjId = 0;
+	sector_t *sector = NULL;
+	polyobj_t *poly = NULL;
+	mobj_t *emitter = NULL;
+	float volume = 1;
+
+	if(type == DT_SOUND)
+	{
+		// Delta ID is the sound ID.
+		sound = Msg_ReadShort();
+	}
+	else if(type == DT_MOBJ_SOUND)
+	{
+		if((cmo = Cl_FindMobj( mobjId = Msg_ReadShort() )) != NULL)
+		{
+			if(cmo->flags & CLMF_HIDDEN)
+			{
+				// We can't play sounds from hidden mobjs, because we 
+				// aren't sure exactly where they are located.
+				cmo = NULL;
+			}
+			else
+			{
+				emitter = &cmo->mo;
+			}
+		}		
+	}
+	else if(type == DT_SECTOR_SOUND)
+	{
+		int index = (ushort) Msg_ReadShort();
+		if(index < numsectors)
+		{
+			sector = SECTOR_PTR(index);
+			emitter = (mobj_t*) &sector->soundorg;
+		}
+	}
+	else /* DT_POLY_SOUND */
+	{
+		int index = (ushort) Msg_ReadShort();
+		if(index < po_NumPolyobjs)
+		{
+			poly = PO_PTR(index);
+			emitter = (mobj_t*) &poly->startSpot;
+		}
+	}
+
+	flags = Msg_ReadByte();
+
+	if(type != DT_SOUND)
+	{
+		// The sound ID.
+		sound = Msg_ReadShort();
+	}
+
+	if(flags & SNDDF_VOLUME)
+	{
+		byte b = Msg_ReadByte();
+		if(b == 255)
+		{
+			// Full volume, no attenuation.
+			soundFlags |= DDSF_NO_ATTENUATION;
+		}
+		else 
+		{
+			volume = b / 127.0f;
+		}
+	}
+
+	if(flags & SNDDF_REPEAT)
+	{
+		soundFlags |= DDSF_REPEAT;
+	}
+
+	// Now the entire delta has been read.
+	// Should we start or stop a sound?
+	if(volume > 0 && sound > 0)
+	{
+		// Do we need to queue this sound?
+		if(type == DT_MOBJ_SOUND && !cmo)
+		{
+			// Create a new Hidden clmobj.
+			cmo = Cl_CreateMobj(mobjId);
+			cmo->flags |= CLMF_HIDDEN | CLMF_SOUND;
+			cmo->sound = sound;
+			cmo->volume = volume;
+/*#ifdef _DEBUG
+			Con_Printf("Cl_ReadSoundDelta2(%i): Queueing: id=%i snd=%i vol=%.2f\n",
+				type, mobjId, sound, volume);
+#endif*/
+			// The sound will be started when the clmobj is unhidden.
+			return; 
+		}
+
+		// We will start a sound.
+		if(type != DT_SOUND && !emitter) 
+		{
+			// Not enough information.
+#ifdef _DEBUG
+			Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
+				type, sound);
+#endif
+			return;
+		}
+
+		// Sounds originating from the viewmobj should really originate 
+		// from the real player mobj.
+		if(cmo && cmo == playerstate[consoleplayer].cmo)
+		{
+/*#ifdef _DEBUG
+			Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
+#endif*/
+			emitter = players[consoleplayer].mo;
+		}
+
+		// First stop any sounds originating from the same emitter.
+		// We allow only one sound per emitter.
+		if(type != DT_SOUND && emitter)
+		{
+			S_StopSound(0, emitter);
+		}
+
+		S_LocalSoundAtVolume(sound | soundFlags, emitter, volume);
+
+/*#ifdef _DEBUG
+		Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f", 
+			type, sound, flags, volume);
+		if(cmo)	Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
+		else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+		else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
+		else Con_Printf("\n");
+#endif*/
+	}
+	else if(sound > 0)
+	{
+		// We must stop a sound. We'll only stop sounds from 
+		// specific sources.
+		if(emitter)
+		{
+			S_StopSound(sound, emitter);
+
+/*#ifdef _DEBUG
+			Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i", 
+				type, sound);
+			if(cmo)	Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
+			else if(sector) Con_Printf(", sector=%i\n", 
+				GET_SECTOR_IDX(sector));
+			else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
+			else Con_Printf("\n");
+#endif*/
+		}
+	}
+}
+
+/*
+ * Called when a psv_frame sound packet is received.
+ */
 void Cl_Sound(void)
 {
 	int sound, volume = 127;
@@ -44,12 +205,27 @@ void Cl_Sound(void)
 	mobj_t *mo = NULL;
 
 	flags = Msg_ReadByte();
-	sound = Msg_ReadByte();
+
+	// Sound ID.
+	if(flags & SNDF_SHORT_SOUND_ID)
+	{
+		sound = Msg_ReadShort();
+	}
+	else
+	{
+		sound = Msg_ReadByte();
+	}
+
+	// Is the ID valid?
 	if(sound < 1 || sound >= defs.count.sounds.num)
 	{
 		Con_Message("Cl_Sound: Out of bounds ID %i.\n", sound);
 		return; // Bad sound ID!
 	}
+#ifdef _DEBUG
+	Con_Printf("Cl_Sound: %i\n", sound);
+#endif
+
 	if(flags & SNDF_VOLUME) 
 	{
 		volume = Msg_ReadByte();
@@ -59,7 +235,16 @@ void Cl_Sound(void)
 			sound |= DDSF_NO_ATTENUATION;
 		}
 	}
-	if(flags & SNDF_SECTOR) 
+	if(flags & SNDF_ID)
+	{
+		thid_t sourceId = Msg_ReadShort();
+		clmobj_t *cmo = Cl_FindMobj(sourceId);
+		if(cmo)
+		{
+			S_LocalSoundAtVolume(sound, &cmo->mo, volume/127.0f);
+		}
+	}
+	else if(flags & SNDF_SECTOR) 
 	{
 		num = Msg_ReadPackedShort();
 		if(num < 0 || num >= numsectors)
@@ -68,7 +253,7 @@ void Cl_Sound(void)
 			return;
 		}
 		mo = (mobj_t*) &SECTOR_PTR(num)->soundorg;
-		S_StopSound(0, mo);
+		//S_StopSound(0, mo);
 		S_LocalSoundAtVolume(sound, mo, volume/127.0f);
 	}
 	else if(flags & SNDF_ORIGIN)
@@ -87,7 +272,9 @@ void Cl_Sound(void)
 	else 
 	{
 		// Play it from "somewhere".
+#ifdef _DEBUG
+		Con_Printf("Cl_Sound: NULL orig sound %i\n", sound);
+#endif
 		S_LocalSoundAtVolume(sound, NULL, volume/127.0f);
 	}
 }
-
