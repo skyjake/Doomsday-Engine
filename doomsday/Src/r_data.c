@@ -69,11 +69,6 @@ int			r_texglow = true;
 void R_ShutdownData(void)
 {
 	PRINT_PROF( PROF_REFRESH_FIND_FLAT );
-
-	// Subsectorinfo is quite large (the rendpolys...). Free it from
-	// the normal heap.
-	free(subsecinfo);
-	subsecinfo = NULL;
 }
 
 //===========================================================================
@@ -915,6 +910,9 @@ void R_AnimateAnimGroups(void)
 	int i, timer, k;
 	boolean isTexture;
 	
+	// The animation will only progress when the game is not paused.
+	if(clientPaused) return;
+
 	for(i = 0, group = groups; i < numgroups; i++, group++)
 	{
 		// The Precache groups are not intended for animation.
