@@ -225,6 +225,7 @@ void PrintUsage(void)
 	printf("-skin       Set the specified skin.\n");
 	printf("-skinsize   Set skin dimensions.\n");
 	printf("-tcmap      Display texture coordinate map when optimizing.\n");
+    printf("-weld       Weld vertices (only for models with one frame).\n");
 	printf("-weldtc     Weld texture coordinates (removes all duplicates).\n");
 }
 
@@ -1756,6 +1757,80 @@ void ModelFlipNormals(model_t *mo)
 }
 
 //===========================================================================
+// ReplaceVertex
+//===========================================================================
+void ReplaceVertex(model_t *mo, int to, int from)
+{
+	int lod, j, c;
+	
+	mo->modified = true;
+
+	// Change all references.
+	for(lod = 0; lod < mo->info.numLODs; lod++)
+		for(j = 0; j < mo->lodinfo[lod].numTriangles; j++)
+			for(c = 0; c < 3; c++)
+				if(mo->lods[lod].triangles[j].vertexIndices[c] == from) 
+                    mo->lods[lod].triangles[j].vertexIndices[c] = to;
+}
+
+//===========================================================================
+// ModelWeldVertices
+//===========================================================================
+void ModelWeldVertices(model_t *mo)
+{
+    int k;
+    int i, j;
+    
+	printf("Welding vertices...\n");
+
+    if(mo->info.numFrames > 1)
+    {
+        // Welding is a bit more problematic in the case of multiple
+        // frames, because a vertex can't be removed unless it's a
+        // duplicate in all frames.
+        
+        printf("Model has multiple frames: welding not supported.\n");
+        return;
+    }
+
+	for(k = 0; k < mo->info.numFrames; ++k)
+	{
+        dmd_frame_t *frame = &mo->frames[k];
+        
+		for(i = 0; i < mo->info.numVertices; ++i)
+        {
+            for(j = i + 1; j < mo->info.numVertices; ++j)
+            {
+                dmd_vertex_t *a = &frame->vertices[i];
+                dmd_vertex_t *b = &frame->vertices[j];
+
+                if(a->vertex[0] == b->vertex[0] &&
+                   a->vertex[1] == b->vertex[1] &&
+                   a->vertex[2] == b->vertex[2])
+                {
+                    printf("Duplicate found: %i and %i.\n", i, j);
+
+                    // Remove the latter one.
+                    ReplaceVertex(mo, j, i);
+
+/*                    if(j < mo->info.numVertices - 1)
+                    {
+                        memmove(&frame->vertices[j], &frame->vertices[j + 1],
+                                sizeof(dmd_vertex_t) *
+                                (mo->info.numVertices - j - 1));
+                                }*/
+
+                    /*--mo->info.numVertices;*/
+                }
+            }
+        }
+    }
+	// Also automatically renormalize and update GL commands.
+	ModelRenormalize(mo);
+	BuildGlCmds(mo);
+}
+
+//===========================================================================
 // MoveTexCoord
 //===========================================================================
 void MoveTexCoord(model_t *mo, int to, int from)
@@ -2184,6 +2259,7 @@ int main(int argc, char **argv)
 				}
 				ModelDelFrames(&model, from, to);
 			}
+            if(CheckOption("-weld")) ModelWeldVertices(&model);
 			if(CheckOption("-weldtc")) ModelWeldTexCoords(&model);
 			if(CheckOption("-flip")) ModelFlipNormals(&model);
 			if(CheckOption("-renorm")) ModelRenormalize(&model);

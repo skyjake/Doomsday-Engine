@@ -1,7 +1,7 @@
 /* $Id$ */
 #ifndef __MD2TOOL_H__
 
-#define MD2TOOL_VERSION		"1.1.0"
+#define MD2TOOL_VERSION		"1.2.0"
 #define PI					3.14159265f
 
 enum { VX, VY, VZ };
