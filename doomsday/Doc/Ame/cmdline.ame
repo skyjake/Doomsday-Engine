@@ -208,6 +208,10 @@ $--------------------------------------------------------------------
 	Specify the color depth to use. Defaults to
 	desktop color depth. E.g. @opt{-bpp 32}
 @row
+	@opt{ -refresh N } @tab @tab
+	Specify the refresh rate to use in fullscreen mode. Defaults to
+	the current display refresh rate. E.g. @opt{-refresh 75}
+@row
 	@opt{ -window } @tab @opt{ -wnd } @tab
 	Start the game in a window. By default the game runs in fullscreen mode.
 @row
