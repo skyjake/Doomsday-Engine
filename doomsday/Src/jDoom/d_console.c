@@ -35,6 +35,7 @@ DEFCC(CCmdBeginChat);
 DEFCC(CCmdMsgRefresh);
 DEFCC(CCmdAutoMap);
 DEFCC(CCmdDumpXG);
+DEFCC(CCmdMovePlane);
 DEFCC(CCmdMakeLocal);
 DEFCC(CCmdSetCamera);
 DEFCC(CCmdSetViewLock);
@@ -330,6 +331,11 @@ ccmd_t gameCCmds[] =
 	"makecam",		CCmdSetCamera,		"Toggle camera mode.",
 	"setlock",		CCmdSetViewLock,	"Set camera viewlock.",
 	"lockmode",		CCmdSetViewLock,	"Set camera viewlock mode.",
+
+	// $moveplane: console commands
+	"movefloor",	CCmdMovePlane,		"Move a sector's floor plane.",
+	"moveceil",		CCmdMovePlane,		"Move a sector's ceiling plane.",
+	"movesec",		CCmdMovePlane,		"Move a sector's both planes.",
 	NULL
 };
 

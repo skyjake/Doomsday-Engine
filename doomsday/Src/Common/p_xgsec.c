@@ -459,7 +459,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
 	thinker_t *th;
 	xgplanemover_t *mover;
 
-	for(th=thinkercap.next; th != &thinkercap; th=th->next)
+	for(th = thinkercap.next; th != &thinkercap; th = th->next)
 		if(th->function == XS_PlaneMover)
 		{
 			mover = (xgplanemover_t*) th;
@@ -1701,6 +1701,9 @@ int XS_ThrustMul(struct sector_s *sector)
 	return FRACUNIT * (-114.7338958*x*x + 208.0448223*x - 93.31092643);
 }
 
+/*
+ * Write XG types into a binary file.
+ */
 int CCmdDumpXG(int argc, char **argv)
 {
 	FILE *file;
@@ -1720,5 +1723,131 @@ int CCmdDumpXG(int argc, char **argv)
 	}
 	XG_WriteTypes(file);	
 	fclose(file);
+	return true;
+}
+
+/*
+ * $moveplane: Command line interface to the plane mover. 
+ */
+int CCmdMovePlane(int argc, char **argv)
+{
+	boolean isCeiling = !stricmp(argv[0], "moveceil");
+	boolean isBoth = !stricmp(argv[0], "movesec");
+	boolean isOffset = false, isCrusher = false;
+	sector_t *sector = NULL;
+	fixed_t units = 0, speed = FRACUNIT;
+	int i, p;
+	xgplanemover_t *mover;
+	
+	if(argc < 2)
+	{
+		Con_Printf("Usage: %s (opts)\n", argv[0]);
+		Con_Printf("Opts can be:\n");
+		Con_Printf("  here [crush] [off] (z/units) [speed]\n");
+		Con_Printf("  at (x) (y) [crush] [off] (z/units) [speed]\n");
+		Con_Printf("  tag (sector-tag) [crush] [off] (z/units) [speed]\n");
+		return true; 		
+	}
+
+	if(IS_CLIENT)
+	{
+		Con_Printf("Clients can't move planes.\n");
+		return false;
+	}
+
+	// Which mode?
+	if(!stricmp(argv[1], "here"))
+	{
+		p = 2;
+		if(!players[consoleplayer].plr->mo) return false;
+		sector = players[consoleplayer].plr->mo->subsector->sector;
+	}
+	else if(!stricmp(argv[1], "at") && argc >= 4)
+	{
+		p = 4;
+		sector = R_PointInSubsector(strtol(argv[2], 0, 0) << FRACBITS,
+			strtol(argv[3], 0, 0) << FRACBITS)->sector;
+	}
+	else if(!stricmp(argv[1], "tag") && argc >= 3)
+	{
+		p = 3;
+		// Find the first sector with the tag.
+		for(i = 0; i < numsectors; i++)
+			if(sectors[i].tag == (short) strtol(argv[2], 0, 0))
+			{
+				sector = &sectors[i];
+				break;
+			}
+	}
+
+	// No more arguments?
+	if(argc == p)
+	{
+		Con_Printf("Ceiling = %i\nFloor = %i\n", 
+			sector->ceilingheight >> FRACBITS,
+			sector->floorheight >> FRACBITS);
+		return true;
+	}
+
+	// Check for the optional 'crush' parameter.
+	if(argc >= p + 1 && !stricmp(argv[p], "crush"))
+	{
+		isCrusher = true;
+		++p;
+	}
+
+	// Check for the optional 'off' parameter.
+	if(argc >= p + 1 && !stricmp(argv[p], "off"))
+	{
+		isOffset = true;
+		++p;
+	}
+
+	// The amount to move.
+	if(argc >= p + 1) 
+	{
+		units = FRACUNIT * strtod(argv[p++], 0);
+	}
+	else 
+	{
+		Con_Printf("You must specify Z-units.\n");
+		return false; // Required parameter missing.
+	}
+
+	// The optional speed parameter.
+	if(argc >= p + 1)
+	{
+		speed = FRACUNIT * strtod(argv[p++], 0);
+		// The speed is always positive.
+		if(speed < 0) speed = -speed;
+	}
+
+	// We must now have found the sector to operate on.
+	if(!sector) return false;
+
+	mover = XS_GetPlaneMover(sector, isCeiling);				
+		
+	// Setup the thinker and add it to the list.
+	mover->destination = units + (isOffset?
+		 (isCeiling? sector->ceilingheight : sector->floorheight) : 0);
+
+	// Check that the destination is valid.
+	if(!isBoth)
+	{
+		if(isCeiling && mover->destination < sector->floorheight + 4*FRACUNIT)
+			mover->destination = sector->floorheight + 4*FRACUNIT;
+		if(!isCeiling && mover->destination > sector->ceilingheight - 4*FRACUNIT)
+			mover->destination = sector->ceilingheight - 4*FRACUNIT;
+	}
+
+	mover->speed = speed;
+	if(isCrusher) 
+	{
+		mover->crushspeed = speed/2; // Crush at half speed.
+		mover->flags |= PMF_CRUSH;
+	}
+	if(isBoth) mover->flags |= PMF_OTHER_FOLLOWS;
+
+	P_AddThinker(&mover->thinker);
 	return true;
 }

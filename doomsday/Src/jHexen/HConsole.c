@@ -45,6 +45,7 @@ DEFCC(CCmdCycleSpy);
 DEFCC(CCmdTest);
 DEFCC(CCmdSpawnMobj);
 DEFCC(CCmdPrintPlayerCoords);
+DEFCC(CCmdMovePlane);
 
 // The cheats.
 int CCmdCheatGod(int argc, char **argv);
@@ -267,6 +268,11 @@ ccmd_t gameCCmds[] =
 	"lockmode",		CCmdSetViewLock,		"Set camera viewlock mode.",
 
 	"stopfinale",	CCmdStopInFine,			"Stop the currently playing interlude/finale.",
+
+	// $moveplane: console commands
+	"movefloor",	CCmdMovePlane,			"Move a sector's floor plane.",
+	"moveceil",		CCmdMovePlane,			"Move a sector's ceiling plane.",
+	"movesec",		CCmdMovePlane,			"Move a sector's both planes.",
 
 //	"test",			CCmdTest,				"Test.",
 	NULL
