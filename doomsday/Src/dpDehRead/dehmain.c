@@ -2025,30 +2025,28 @@ int DefsHook(int hook_type, int parm, void *data)
 	return true;
 }
 
+/*
+ * This function is called automatically when the plugin is loaded.
+ * We let the engine know what we'd like to do.
+ */
+void DP_Initialize(void)
+{
+	Plug_AddHook(HOOK_DEFS, DefsHook);
+}
+
 #ifdef WIN32
-//===========================================================================
-// DllMain
-//===========================================================================
+/*
+ * Windows calls this when the DLL is loaded.
+ */
 BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	switch (fdwReason)
 	{
 	case DLL_PROCESS_ATTACH:
 		// Register our hooks.
-		Plug_AddHook(HOOK_DEFS, DefsHook);
+		DP_Initialize();
 		break;
 	}
 	return TRUE;
-}
-#endif
-
-#ifdef UNIX
-/*
- * This function is called automatically when the plugin is loaded.
- * We let the engine know what we'd like to do.
- */
-void InitPlugin(void)
-{
-	Plug_AddHook(HOOK_DEFS, DefsHook);
 }
 #endif
