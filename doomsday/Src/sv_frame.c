@@ -686,7 +686,7 @@ int Sv_GetMaxFrameSize(int playerNumber)
 		clients[playerNumber].bandwidthRating;
 
 	// What about the communications medium?
-	if(size > maxDatagramSize) size = maxDatagramSize;
+	if((uint)size > maxDatagramSize) size = maxDatagramSize;
 
 	return size;
 }
