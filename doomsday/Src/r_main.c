@@ -425,6 +425,12 @@ void R_SetupFrame(ddplayer_t *player)
 
 		oldTime = nowTime;
 
+		if(frameTimePos < 0) 
+		{
+			VERBOSE("Correcting frametime (%f).\n", frameTimePos);
+			frameTimePos = 0;
+		}
+
 		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
 							&smoothView);
 
