@@ -176,7 +176,6 @@ void UI_Init(void);
 void UI_End(void);
 void UI_LoadTextures(void);
 void UI_ClearTextures(void);
-DGLuint UI_LoadGraphics(const char *name, boolean grayscale);
 void UI_InitPage(ui_page_t *page, ui_object_t *objects);
 void UI_SetPage(ui_page_t *page);
 int UI_Responder(event_t *ev);

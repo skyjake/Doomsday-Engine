@@ -156,12 +156,22 @@ void UI_End(void)
 //===========================================================================
 void UI_LoadTextures(void)
 {
-	ui_textures[UITEX_MOUSE] = UI_LoadGraphics("Mouse", false);
-	ui_textures[UITEX_CORNER] = UI_LoadGraphics("BoxCorner", false);
-	ui_textures[UITEX_FILL] = UI_LoadGraphics("BoxFill", false);
-	ui_textures[UITEX_SHADE] = UI_LoadGraphics("BoxShade", false);
-	ui_textures[UITEX_HINT] = UI_LoadGraphics("Hint", false);
-	ui_textures[UITEX_LOGO] = UI_LoadGraphics("Logo", false);
+	int i;
+	const char *picNames[NUM_UI_TEXTURES] =
+	{
+		"Mouse",
+		"BoxCorner",
+		"BoxFill",
+		"BoxShade",
+		"Hint",
+		"Logo"
+	};
+
+	for(i = 0; i < NUM_UI_TEXTURES; i++)
+		if(!ui_textures[i])
+		{
+			ui_textures[i] = GL_LoadGraphics(picNames[i], false);
+		}
 }
 
 //===========================================================================
@@ -170,60 +180,7 @@ void UI_LoadTextures(void)
 void UI_ClearTextures(void)
 {
 	gl.DeleteTextures(NUM_UI_TEXTURES, ui_textures);
-}
-
-//===========================================================================
-// UI_LoadGraphics
-//===========================================================================
-DGLuint UI_LoadGraphics(const char *name, boolean grayscale)
-{
-	image_t image;
-	filename_t fileName;
-	DGLuint texture = 0;
-
-	if(R_FindResource(RC_GRAPHICS, name, NULL, fileName)
-		&& GL_LoadImage(&image, fileName, false))
-	{
-		// Too big for us?
-		if(image.width > maxTexSize || image.height > maxTexSize)
-		{
-			int newWidth = MIN_OF(image.width, maxTexSize);
-			int newHeight = MIN_OF(image.height, maxTexSize);
-			byte *temp = M_Malloc(newWidth * newHeight * image.pixelSize);
-			GL_ScaleBuffer32(image.pixels, image.width, image.height,
-				temp, newWidth, newHeight, image.pixelSize);
-			M_Free(image.pixels);
-			image.pixels = temp;
-			image.width = newWidth;
-			image.height = newHeight;
-		}
-
-		// Force it to grayscale.
-		if(grayscale)
-		{
-			GL_ConvertToLuminance(&image);
-		}
-
-		texture = gl.NewTexture();
-		if(image.width < 128 && image.height < 128)
-		{
-			// Small textures will never be compressed.
-			gl.Disable(DGL_TEXTURE_COMPRESSION);
-		}
-		gl.TexImage(
-			  image.pixelSize == 3? DGL_RGB
-			: image.pixelSize == 4? DGL_RGBA
-			: DGL_LUMINANCE,
-			image.width, image.height, 0, image.pixels);
-		gl.Enable(DGL_TEXTURE_COMPRESSION);
-		gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-		GL_DestroyImage(&image);
-	}
-	return texture;
+	memset(ui_textures, 0, sizeof(ui_textures));
 }
 
 //===========================================================================
