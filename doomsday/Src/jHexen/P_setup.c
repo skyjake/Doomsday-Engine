@@ -187,7 +187,7 @@ void P_LoadVertexes (int lump, int gllump)
 			ver = 2;
 		}
 		// There are additional vertices in gllump.
-		numvertexes += W_LumpLength(gllump) / 
+		numvertexes += (W_LumpLength(gllump) - (ver==2? 4 : 0)) / 
 			(ver==1? sizeof(mapvertex_t) : sizeof(glvert2_t));
 	}
 	vertexes = Z_Malloc (numvertexes*sizeof(vertex_t),PU_LEVEL,0);

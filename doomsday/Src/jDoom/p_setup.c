@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2003/07/03 20:51:38  skyjake
+// Subtract 4 ("gNd2") from GL verts lump length
+//
 // Revision 1.5  2003/05/25 23:26:34  skyjake
 // External resource locator, setting the data path
 //
@@ -123,7 +126,7 @@ void P_LoadVertexes (int lump, int gllump)
 			ver = 2;
 		}
 		// There are additional vertices in gllump.
-		numvertexes += W_LumpLength(gllump) / 
+		numvertexes += (W_LumpLength(gllump) - (ver==2? 4 : 0)) / 
 			(ver==1? sizeof(mapvertex_t) : sizeof(glvert2_t));
 	}
 	vertexes = Z_Malloc (numvertexes*sizeof(vertex_t),PU_LEVEL,0);
