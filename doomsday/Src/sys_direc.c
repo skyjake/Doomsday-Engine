@@ -46,9 +46,7 @@ void Dir_GetDir(directory_t *dir)
 	if(dir->path[strlen(dir->path)-1] != '\\')
 		strcat(dir->path, "\\");
 
-#ifdef _DEBUG
-	printf("Dir_GetDir: %s\n", dir->path);
-#endif
+	VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) );
 }
 
 int Dir_ChDir(directory_t *dir)
@@ -58,10 +56,8 @@ int Dir_ChDir(directory_t *dir)
 	_chdrive(dir->drive);
 	success = !_chdir(dir->path); // Successful if == 0.
 
-#ifdef _DEBUG
-	Con_Printf("Dir_ChDir: %s: %s\n", success? "Succeeded" : "Failed",
-		dir->path);
-#endif
+	VERBOSE2( Con_Printf("Dir_ChDir: %s: %s\n", 
+		success? "Succeeded" : "Failed", dir->path) );
 
 	return success;
 }
@@ -108,7 +104,7 @@ int Dir_FileID(const char *str)
 	// Do a little scrambling with the full path name.
 	_fullpath(temp, str, 255);
 	strupr(temp);	
-	for(i=0, ptr=temp; *ptr; ptr++, i++)
+	for(i = 0, ptr = temp; *ptr; ptr++, i++)
 		((unsigned char*) &id)[i % 4] += *ptr;
 	return id;
 }
