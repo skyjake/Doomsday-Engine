@@ -83,7 +83,7 @@ extern int			whitefog;
 
 boolean		dlInited = false;
 int			useDynLights = true, dlBlend = 0;
-float		dlFactor = 0.6f;
+float		dlFactor = 0.75f;	// was 0.6f
 int			useWallGlow = true;
 int			glowHeight = 100;
 lumobj_t	*luminousList = 0;
@@ -93,6 +93,7 @@ float		dlRadFactor = 3;
 int			maxDynLights = 0;
 int			clipLights = 1;
 float		dlContract = 0.02f; // Almost unnoticeable... a hack, though.
+int			rend_info_lums = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -105,28 +106,6 @@ lumobj_t	**dlSubLinks = 0;
 
 void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
 {
-/*	int thingRad = lum->thing->radius >> FRACBITS, 
-		thingHeight = spritelumps[lum->patch].height; 
-	int	rad = thingRad>thingHeight? thingRad : thingHeight;
-	int bigRad;
-
-	rad *= dlRadFactor;
-
-	// No point to have a too small dynamic light. It would just be
-	// a waste of time.
-	bigRad = rad*5;
-	rad *= 2;
-	if(rad < 48) rad = 48;
-	if(rad > dlMaxRad) rad = dlMaxRad;
-	if(rad > bigRad) rad = bigRad;
-	lum->radius = rad;
-
-	rad = (7*thingHeight + thingRad)/8; // < thingRad? thingHeight : thingRad;
-	//rad *= rad;
-	//ST_Message( "%i\n", rad);
-	lum->flaresize = rad;*/
-
-	//lum->radius = spritelumps[lum->patch].lumsize * 40 * dlRadFactor;
 	lum->radius = cf->size * 40 * dlRadFactor;
 	
 	// Don't make a too small or too large light.
@@ -235,7 +214,7 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 		if(backsec)
 		{
 			// Check the middle texture's mask status.
-			GL_PrepareTexture(sdef->midtexture); 
+			GL_GetTextureInfo(sdef->midtexture); 
 			if(texmask)
 			{
 				// We can't light masked textures.
@@ -299,7 +278,8 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 	dlq.texoffx = ((dlq.vertices[0].pos[VY] - pntLight[VY]) * 
 		(dlq.vertices[0].pos[VY] - dlq.vertices[1].pos[VY]) - 
 		(dlq.vertices[0].pos[VX] - pntLight[VX]) * 
-		(dlq.vertices[1].pos[VX] - dlq.vertices[0].pos[VX])) / seg->length - lum->radius;
+		(dlq.vertices[1].pos[VX] - dlq.vertices[0].pos[VX])) / seg->length 
+		- lum->radius;
 
 	// There is no need to draw the *whole* wall always. Adjust the start
 	// and end points so that only a relevant portion is included.
@@ -527,7 +507,8 @@ void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
 		// Is there a middle texture?
 		if(sdef->midtexture)
 		{
-			GL_PrepareTexture(sdef->midtexture);
+			//GL_PrepareTexture(sdef->midtexture);
+			GL_GetTextureInfo(sdef->midtexture);
 			if(!texmask)
 				DL_SetupGlowQuads(seg, opentop, openbottom, do_floor, do_ceil);
 		}
@@ -561,6 +542,55 @@ void DL_ClearForFrame(void)
 	// Clear all the roots.
 	memset(dlSubLinks, 0, sizeof(lumobj_t*) * numsubsectors);
 	memset(dlBlockLinks, 0, sizeof(lumobj_t*) * dlBlockWidth * dlBlockHeight);
+
+	numLuminous = 0;
+}
+
+//===========================================================================
+// DL_NewLuminous
+//	Allocates a new lumobj and returns a pointer to it.
+//===========================================================================
+int DL_NewLuminous(void)
+{
+	lumobj_t *newList;
+
+	numLuminous++;
+
+	// Only allocate memory when it's needed.
+	// FIXME: No upper limit?
+	if(numLuminous > maxLuminous)
+	{
+		maxLuminous *= 2;
+
+		// The first time, allocate eight lumobjs.
+		if(!maxLuminous) maxLuminous = 8;
+
+		newList = Z_Malloc(sizeof(lumobj_t) * maxLuminous, PU_STATIC, 0);
+
+		// Copy the old data over to the new list.
+		if(luminousList)
+		{
+			memcpy(newList, luminousList, sizeof(lumobj_t) 
+				* (numLuminous - 1));
+			Z_Free(luminousList);
+		}
+		luminousList = newList;
+	}
+
+	// Clear the new lumobj.
+	memset(luminousList + numLuminous - 1, 0, sizeof(lumobj_t));
+
+	return numLuminous; // == index + 1
+}
+
+//===========================================================================
+// DL_GetLuminous
+//	Returns a pointer to the lumobj with the given 1-based index.
+//===========================================================================
+lumobj_t *DL_GetLuminous(int index)
+{
+	if(!index) return NULL;
+	return luminousList + index - 1;
 }
 
 //===========================================================================
@@ -583,6 +613,7 @@ void DL_AddLuminous(mobj_t *thing)
 		&& !(thing->ddflags & DDMF_DONTDRAW))
 			|| thing->ddflags & DDMF_ALWAYSLIT)
 	{
+		// Determine the sprite frame lump of the source.
 		sprdef = &sprites[thing->sprite];
 		sprframe = &sprdef->spriteframes[ thing->frame & FF_FRAMEMASK ];
 		if(sprframe->rotate)
@@ -595,19 +626,11 @@ void DL_AddLuminous(mobj_t *thing)
 			lump = sprframe->lump[0];
 		}
 
-		// Only allocate memory when it's needed.
-		if(++numLuminous > maxLuminous)
-		{
-			lumobj_t *newlist = Z_Malloc(sizeof(lumobj_t) * (maxLuminous+=16), PU_STATIC, 0);
-			// Copy the old data over to the new list.
-			if(luminousList)
-			{
-				memcpy(newlist, luminousList, sizeof(lumobj_t) * (numLuminous-1));
-				Z_Free(luminousList);
-			}
-			luminousList = newlist;
-		}
-		lum = luminousList + numLuminous-1;
+		// This'll allow a halo to be rendered. If the light is hidden from 
+		// view by world geometry, the light pointer will be set to NULL.
+		thing->light = DL_NewLuminous();
+
+		lum = DL_GetLuminous(thing->light);
 		lum->thing = thing;
 		lum->flags = LUMF_CLIPPED;
 
@@ -660,7 +683,8 @@ void DL_AddLuminous(mobj_t *thing)
 		{
 			// Also reduce the size of the light according to 
 			// the scale flags. *Won't affect the flare.*
-			mul = 1.0f - ((thing->ddflags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT)/4.0f;
+			mul = 1.0f - ((thing->ddflags & DDMF_LIGHTSCALE) 
+				>> DDMF_LIGHTSCALESHIFT)/4.0f;
 			lum->radius *= mul;
 		}
 
@@ -677,9 +701,9 @@ void DL_AddLuminous(mobj_t *thing)
 			GL_GetSpriteColor(lum->patch, lum->rgb);
 		}
 
-		// Approximate the distance, if necessary.
-		if(maxDynLights || haloFadeMax) 
-			lum->distance = P_ApproxDistance(thing->x-viewx, thing->y-viewy);
+		// Approximate the distance in 3D.
+		lum->distance = P_ApproxDistance3(thing->x - viewx, 
+			thing->y - viewy, thing->z - viewz);
 
 		// Is there a model definition?
 		R_CheckModelFor(thing, &mf, &nextmf);
@@ -687,11 +711,17 @@ void DL_AddLuminous(mobj_t *thing)
 			lum->xyscale = MAX_OF(mf->scale[VX], mf->scale[VZ]);
 		else
 			lum->xyscale = 1;
-
-		// This'll allow a halo to be rendered. If the light is hidden from 
-		// view by world geometry, the light pointer will be set to NULL.
-		thing->light = lum;
 	}
+}
+
+int C_DECL lumobjSorter(const void *e1, const void *e2)
+{
+	lumobj_t *lum1 = DL_GetLuminous( *(const ushort*) e1 );
+	lumobj_t *lum2 = DL_GetLuminous( *(const ushort*) e2 );
+
+	if(lum1->distance > lum2->distance) return 1;
+	if(lum1->distance < lum2->distance) return -1;
+	return 0;
 }
 
 //===========================================================================
@@ -700,11 +730,28 @@ void DL_AddLuminous(mobj_t *thing)
 //===========================================================================
 void DL_LinkLuminous()
 {
-	lumobj_t	**root, *lum = luminousList;
-	int			i, bx, by;
+#define MAX_LUMS 8192 // Normally 100-200, heavy: 1000
+	ushort		order[MAX_LUMS];	
 
-	for(i = 0; i < numLuminous; i++, lum++)
+	lumobj_t	**root, *lum;
+	int			i, bx, by, num = numLuminous;
+
+	// Should the proper order be determined?
+	if(maxDynLights)
 	{
+		if(num > maxDynLights) num = maxDynLights;
+		
+		// Init the indices.
+		for(i = 0; i < numLuminous; i++)
+			order[i] = i + 1;
+
+		qsort(order, numLuminous, sizeof(ushort), lumobjSorter);
+	}
+	
+	for(i = 0; i < num; i++)
+	{
+		lum = (maxDynLights? DL_GetLuminous(order[i]) : luminousList + i);
+
 		// Link this lumobj to the dlBlockLinks, if it can be linked.
 		lum->next = NULL;
 		bx = X_TO_DLBX(lum->thing->x);
@@ -1008,15 +1055,6 @@ void DL_ProcessSubsector(rendpoly_t *poly, subsector_t *ssec)
 	}
 }
 
-int __cdecl lumobjSorter(const void *e1, const void *e2)
-{
-	lumobj_t *lum1 = (lumobj_t*) e1, *lum2 = (lumobj_t*) e2;
-
-	if(lum1->distance > lum2->distance) return 1;
-	if(lum1->distance < lum2->distance) return -1;
-	return 0;
-}
-
 //===========================================================================
 // DL_InitForNewFrame
 //	Creates the dynlight links by removing everything and then linking
@@ -1027,25 +1065,29 @@ void DL_InitForNewFrame()
 	sector_t	*seciter;
 	int			i, done = false;
 
+	// The luminousList already contains lumobjs is there are any light
+	// decorations in use.
+
 	dlInited = true;
-	numLuminous = 0;	// Clear the luminous object list.
+
 	for(i = 0; i < numsectors; i++)
 	{
 		mobj_t *iter;
 		seciter = SECTOR_PTR(i);
 		for(iter = seciter->thinglist; iter; iter = iter->snext)
 		{
-			iter->light = NULL;
+			iter->light = 0;
 			DL_AddLuminous(iter);
 		}
 	}
-	if(maxDynLights)
+
+/*	if(maxDynLights)
 	{
 		// Sort the lumobjs based on their distance.
 		qsort(luminousList, numLuminous, sizeof(lumobj_t), lumobjSorter);
 		// Force the maximum.
 		if(numLuminous > maxDynLights) numLuminous = maxDynLights;
-	}
+	}*/
 	// Link the luminous objects into the blockmap.
 	DL_LinkLuminous();
 }
