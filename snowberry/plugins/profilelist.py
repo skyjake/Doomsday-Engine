@@ -59,7 +59,7 @@ def makeHTML(name, game):
 def makeProfileHTML(profile):
     if profile is pr.getDefaults():
         # There should be a real icon for the Defaults profile.
-        iconPath = paths.findBitmap('deng')
+        iconPath = paths.findBitmap('defaults')
         return '<table width="100%" border=0 cellspacing=2 cellpadding=5>' + \
            '<tr><td align=left >' + \
            '<font size="+1"><b>' + \

@@ -154,13 +154,14 @@ def handleNotify(event):
                 categoryArea.selectTab('general-options')
         else:
             wasIt = (categoryArea.getSelectedTab() == 'general-options')
-            
+
             categoryArea.showTab('game-options')
             categoryArea.showTab('general-options', False)
 
             if wasIt:
                 categoryArea.selectTab('game-options')
 
+            categoryArea.updateIcon('game-options')
 
     elif event.hasId('addon-installed') or event.hasId('addon-uninstalled'):
         # Since the new addon will most likely introduce new settings,

@@ -1399,7 +1399,20 @@ class FormattedTabArea (FormattedList):
 
         @return HTML content as a string.
         """
-        imageName = language.translate(tabId + '-icon')
+        # Kludge for the game-options icon.  There should be a way to
+        # map the icon more flexibly so this hardcoding wouldn't be
+        # needed.
+        if tabId == 'game-options':
+            game = 'game-jdoom'
+            if pr.getActive():
+                for c in pr.getActive().getComponents():
+                    if c[:5] == 'game-':
+                        game = c
+                        break
+            imageName = language.translate(game + '-icon')
+        else:
+            imageName = language.translate(tabId + '-icon')
+
         return ('<table width="100%" border=0 cellspacing=3 cellpadding=1>' + 
                 '<tr><td width=35><img width=32 height=32 ' + 
                 'src="%s"><td align="left" valign="center">%s</td>' %
@@ -1497,6 +1510,13 @@ class FormattedTabArea (FormattedList):
         FormattedList.onItemSelected(self, ev)
 
         self.multi.showPage(self.getSelectedItem())
+
+    def updateIcon(self, identifier):
+        """Update the presentation of the specified tab.
+
+        @param identifier Tab identifier.
+        """
+        self.addItem(identifier, self.__getPresentation(identifier))
 
 #    def updateIcons(self):
 #        """Update the items in the formatted list."""

@@ -196,14 +196,14 @@ developer-options: Developer
 #
 # Tab Icons
 #
-general-options-icon: deng
-game-options-icon: deng2
-display-options-icon: deng3
-graphics-options-icon: deng4
-sound-options-icon: deng
-input-options-icon: deng2
-addons-options-icon: deng3
-developer-options-icon: deng4
+general-options-icon: general
+#game-options-icon: deng2
+display-options-icon: display
+graphics-options-icon: graphics
+sound-options-icon: sound
+input-options-icon: input
+addons-options-icon: addons
+developer-options-icon: developer
 
 #
 # Labels for the Summary Tab
