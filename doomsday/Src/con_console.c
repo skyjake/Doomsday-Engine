@@ -225,7 +225,7 @@ cvar_t engineCVars[] =
 	"ModelInter",		OBSOLETE,			CVT_INT,	&frameInter,	0, 1,	"1=Interpolate frames.",
 	"ModelAspectMod", OBSOLETE|CVF_NO_MAX|CVF_NO_MIN, CVT_FLOAT, &rModelAspectMod, 0, 0, "Scale for MD2 z-axis when model is loaded.",
 	"ModelMaxZ",	OBSOLETE|CVF_NO_MAX,		CVT_INT,	&r_maxmodelz,	0, 0,	"Farther than this models revert back to sprites.",
-	"PredictTics",	OBSOLETE|CVF_NO_MAX,		CVT_INT,	&predict_tics,	0, 0,	"Max tics to predict ahead.",
+//	"PredictTics",	OBSOLETE|CVF_NO_MAX,		CVT_INT,	&predict_tics,	0, 0,	"Max tics to predict ahead.",
 	"MaxQueuePackets",	OBSOLETE,			CVT_INT,	&maxQueuePackets, 0, 16, "Max packets in send queue.",
 	"sv_MasterAware",	OBSOLETE,			CVT_INT,	&masterAware,	0, 1,	"1=Send info to master server.",
 	"MasterAddress",	OBSOLETE,			CVT_CHARPTR, &masterAddress, 0, 0,	"Master server IP address / name.",
@@ -333,7 +333,7 @@ cvar_t engineCVars[] =
 	"rend-model-lod",		CVF_NO_MAX,	CVT_FLOAT,	&rend_model_lod, 0, 0,	"Custom level of detail factor. 0=LOD disabled, 1=normal.",
 	// * Render-HUD
 	"rend-hud-offset-scale", CVF_NO_MAX, CVT_FLOAT, &weaponOffsetScale, 0, 0, "Scaling of player weapon (x,y) offset.",	
-	"rend-hud-fov-shift",	CVF_NO_MAX,	CVT_FLOAT,	&weaponFOVShift,	0, 1, "When FOV > 90 player weapon shifts backwards.",
+	"rend-hud-fov-shift",	CVF_NO_MAX,	CVT_FLOAT,	&weaponFOVShift,	0, 1, "When FOV > 90 player weapon is shifted downward.",
 	// * Render-Mobj
 	"rend-mobj-smooth-move", 0,			CVT_INT,	&r_use_srvo,	0, 2,	"1=Use short-range visual offsets for models.\n2=Use SRVO for sprites, too (unjags actor movement).",
 	"rend-mobj-smooth-turn", 0,			CVT_INT,	&r_use_srvo_angle, 0, 1, "1=Use separate visual angle for mobjs (unjag actors).",
@@ -355,7 +355,7 @@ cvar_t engineCVars[] =
 	"server-public",	0,				CVT_INT,	&masterAware,	0, 1,	"1=Send info to master server.",
 
 	// Client
-	"client-predict",	CVF_NO_MAX,		CVT_INT,	&predict_tics,	0, 0,	"Max tics to predict ahead.",
+//	"client-predict",	CVF_NO_MAX,		CVT_INT,	&predict_tics,	0, 0,	"Max tics to predict ahead.",
 
 	// Network
 	"net-name",				0,			CVT_CHARPTR, &playerName,	0, 0,	"Your name in multiplayer games.",
