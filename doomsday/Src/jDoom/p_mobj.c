@@ -272,8 +272,10 @@ void P_XYMovement(mobj_t *mo)
 	}
 }
 
-static boolean PIT_Splash(sector_t *sector, mobj_t *mo)
+static boolean PIT_Splash(sector_t *sector, void *data)
 {
+	mobj_t *mo = data;
+	
 	// Is the mobj touching the floor of this sector?
 	if(mo->z < sector->floorheight &&
 	   mo->z + mo->height / 2 > sector->floorheight)
@@ -287,7 +289,7 @@ static boolean PIT_Splash(sector_t *sector, mobj_t *mo)
 
 void P_FloorSplash(mobj_t *mo)
 {
-	P_ThingSectorsIterator(mo, PIT_Splash, 0);
+	//P_ThingSectorsIterator(mo, PIT_Splash, mo);
 }
 
 //
