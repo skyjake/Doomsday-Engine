@@ -855,6 +855,20 @@ void Con_AddCommand(ccmd_t *cmd)
 	//Con_UpdateKnownWords();
 }
 
+/*
+ * Returns a pointer to the ccmd_t with the specified name, or NULL.
+ */
+ccmd_t *Con_GetCommand(const char *name)
+{
+	int i;
+
+	for(i = 0; i < numCCmds; i++)
+	{
+		if(!stricmp(ccmds[i].name, name)) return &ccmds[i];		
+	}
+	return NULL;
+}
+
 void Con_AddVariableList(cvar_t *varlist)
 {	
 	for(; varlist->name; varlist++) Con_AddVariable(varlist);
@@ -982,7 +996,7 @@ void Con_Send(char *command, int silent)
 	Msg_WriteShort(len | (silent? 0x8000 : 0));
 	Msg_Write(command, len);
 	// Send it reliably.
-	Net_SendBuffer(0, SPF_RELIABLE);
+	Net_SendBuffer(0, SPF_ORDERED);
 }
 
 static void ClearExecBuffer()
