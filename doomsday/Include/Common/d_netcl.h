@@ -13,10 +13,8 @@ void NetCl_SpawnMissile(int type, fixed_t x, fixed_t y, fixed_t z,
 void NetCl_UpdatePlayerState(byte *data, int plrNum);
 void NetCl_UpdatePlayerState2(byte *data, int plrNum);
 void NetCl_UpdatePSpriteState(byte *data);
-//void NetCl_PlaySound(byte *data);
-//void NetCl_PlaySectorSound(byte *data);
 void NetCl_Intermission(byte *data);
-void NetCl_Finale(byte *data);
+void NetCl_Finale(int packetType, byte *data);
 void NetCl_UpdatePlayerInfo(byte *data);
 void NetCl_SendPlayerInfo();
 void NetCl_SaveGame(void *data);

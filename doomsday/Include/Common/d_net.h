@@ -40,7 +40,8 @@ enum
 	GPT_CONSOLEPLAYER_STATE2,
 	GPT_PLAYER_STATE2,
 	GPT_YELLOW_MESSAGE,		// jHexen: yellow message.
-	GPT_PAUSE
+	GPT_PAUSE,
+	GPT_FINALE2
 };
 
 // This packet is sent by servers to clients when the game state
