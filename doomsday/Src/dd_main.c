@@ -102,7 +102,7 @@ FILE *debugfile;
 char *iwadlist[MAXWADFILES];
 char *defaultWads = ""; // A list of wad names, whitespace in between (in .cfg).
 char configFileName[256];
-char defsFileName[256];
+char defsFileName[256], topDefsFileName[256];
 char ddBasePath[256] = "";	// Doomsday root directory is at...?
 
 int queryResult = 0;
@@ -197,11 +197,13 @@ void DD_SetConfigFile(char *filename)
 }
 
 //===========================================================================
-// DD_SetDefsFile
+// DD_SetDefsFile (exported)
+//	Set the primary DED file, which is included immediately after 
+//	Doomsday.ded.
 //===========================================================================
 void DD_SetDefsFile(char *filename)
 {
-	sprintf(defsFileName, "%sDefs\\%s", ddBasePath, filename);
+	sprintf(topDefsFileName, "%sDefs\\%s", ddBasePath, filename);
 }
 
 //===========================================================================
@@ -288,7 +290,7 @@ void DD_Main(void)
 	DD_AddStartupWAD("}Data\\Doomsday.wad");
 	R_InitExternalResources();
 
-	// These will invariably be overwritten by the Game.
+	// The name of the .cfg will invariably be overwritten by the Game.
 	strcpy(configFileName, "Doomsday.cfg");
 	sprintf(defsFileName, "%sDefs\\Doomsday.ded", ddBasePath);
 	
