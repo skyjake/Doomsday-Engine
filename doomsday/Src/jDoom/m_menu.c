@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/07/12 22:26:15  skyjake
+// Common G_StartTitle()
+//
 // Revision 1.3  2003/05/25 23:25:51  skyjake
 // Added some spaces
 //
@@ -63,6 +66,7 @@ rcsid[] = "$Id$";
 #include "hu_stuff.h"
 
 #include "g_game.h"
+#include "g_common.h"
 
 #include "m_argv.h"
 #include "m_swap.h"
@@ -1535,12 +1539,11 @@ void M_SizeStatusBar(int option)
 //
 void M_EndGameResponse(int ch)
 {
-    if (ch != 'y')
-	return;
+    if (ch != 'y') return;
 		
     currentMenu->lastOn = itemOn;
     M_ClearMenus ();
-    D_StartTitle ();
+    G_StartTitle ();
 }
 
 void M_EndGame(int choice)
