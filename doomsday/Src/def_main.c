@@ -1,22 +1,37 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** DD_DEFNS.C
-//**
-//**************************************************************************
+/*
+ * def_main.c: Definitions Subsystem
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+#include <ctype.h>
+#include <io.h>
+
 #include "de_base.h"
+#include "de_defs.h"
 #include "de_system.h"
 #include "de_refresh.h"
 #include "de_console.h"
 #include "de_audio.h"
 #include "de_misc.h"
-
-#include <string.h>
-#include <ctype.h>
-#include <io.h>
 
 // XGClass.h is actually a part of the engine.
 // It just defines the various LTC_* constants.

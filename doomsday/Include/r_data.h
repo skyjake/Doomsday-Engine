@@ -8,7 +8,7 @@
 #include "p_data.h"
 #include "p_think.h"
 #include "m_nodepile.h"
-#include "dedfile.h"
+#include "de_defs.h"
 
 #define SIF_VISIBLE			0x1			// Sector is visible on this frame.
 #define SIF_FRAME_CLEAR		0x1			// Flags to clear before each frame.

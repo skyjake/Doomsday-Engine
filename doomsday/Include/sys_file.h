@@ -1,3 +1,26 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
+
+/*
+ * sys_file.h: File Stream Abstraction Layer
+ *
+ * Data can be read from memory, virtual files or actual files.
+ */
+
 #ifndef __FILE_IO_H__
 #define __FILE_IO_H__
 
@@ -38,14 +61,14 @@ int		F_Seek(DFILE *file, int offset, int whence);
 void	F_Rewind(DFILE *file);
 int		F_ForAll(const char *filespec, void *parm, f_forall_func_t func);
 
-#if !__DOOMSDAY__
+#ifndef __DOOMSDAY__
 // Redefine to match the standard file stream routines.
-#define	DFILE			FILE
-#define F_Open			fopen
-#define F_Tell			ftell
-#define F_Rewind		rewind
-#define F_Read(x,y,z)	fread(x,y,1,z)
-#define F_Close			fclose
+# define DFILE				FILE
+# define F_Open				fopen
+# define F_Tell				ftell
+# define F_Rewind			rewind
+# define F_Read(x,y,z)		fread((x),(y),1,(z))
+# define F_Close			fclose
 #endif
 
 #endif

@@ -75,7 +75,7 @@ void Msg_WriteLong(int l)
 	netbuffer.cursor += 4;
 }
 
-void Msg_Write(void *src, int len)
+void Msg_Write(const void *src, int len)
 {
 	memcpy(netbuffer.cursor, src, len);
 	netbuffer.cursor += len;

@@ -126,8 +126,8 @@ D_CMD(TranslateFont);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int executeSubCmd(char *subcmd);
-static void SplitIntoSubCommands(char *command, int markerOffset);
+static int executeSubCmd(const char *subcmd);
+static void SplitIntoSubCommands(const char *command, int markerOffset);
 calias_t *Con_GetAlias(const char *name);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -565,7 +565,7 @@ static execbuff_t *curExec;
 
 // CODE --------------------------------------------------------------------
 
-void PrepareCmdArgs(cmdargs_t *cargs, char *lpCmdLine)
+void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 {
 	int		i, len = strlen(lpCmdLine);
 
@@ -681,7 +681,7 @@ char *TrimmedFloat(float val)
 //===========================================================================
 // Con_SetString
 //===========================================================================
-void Con_SetString(char *name, char *text)
+void Con_SetString(const char *name, char *text)
 {
 	cvar_t *cvar = Con_GetVariable(name);
 
@@ -700,7 +700,7 @@ void Con_SetString(char *name, char *text)
 		Con_Error("Con_SetString: cvar is not of type char*.\n");
 }
 
-cvar_t *Con_GetVariable(char *name)
+cvar_t *Con_GetVariable(const char *name)
 {
 	int		i;
 
@@ -715,7 +715,7 @@ cvar_t *Con_GetVariable(char *name)
 // Con_SetInteger
 //	Also works with bytes.
 //===========================================================================
-void Con_SetInteger(char *name, int value)
+void Con_SetInteger(const char *name, int value)
 {
 	cvar_t *var = Con_GetVariable(name);
 
@@ -728,7 +728,7 @@ void Con_SetInteger(char *name, int value)
 //===========================================================================
 // Con_SetFloat
 //===========================================================================
-void Con_SetFloat(char *name, float value)
+void Con_SetFloat(const char *name, float value)
 {
 	cvar_t *var = Con_GetVariable(name);
 
@@ -741,7 +741,7 @@ void Con_SetFloat(char *name, float value)
 //===========================================================================
 // Con_GetInteger
 //===========================================================================
-int Con_GetInteger(char *name)
+int Con_GetInteger(const char *name)
 {
 	cvar_t *var = Con_GetVariable(name);
 
@@ -755,7 +755,7 @@ int Con_GetInteger(char *name)
 //===========================================================================
 // Con_GetFloat
 //===========================================================================
-float Con_GetFloat(char *name)
+float Con_GetFloat(const char *name)
 {
 	cvar_t *var = Con_GetVariable(name);
 
@@ -769,7 +769,7 @@ float Con_GetFloat(char *name)
 //===========================================================================
 // Con_GetByte
 //===========================================================================
-byte Con_GetByte(char *name)
+byte Con_GetByte(const char *name)
 {
 	cvar_t *var = Con_GetVariable(name);
 
@@ -783,7 +783,7 @@ byte Con_GetByte(char *name)
 //===========================================================================
 // Con_GetString
 //===========================================================================
-char *Con_GetString(char *name)
+char *Con_GetString(const char *name)
 {
 	cvar_t *var = Con_GetVariable(name);
 
@@ -1068,7 +1068,7 @@ void Con_ClearBuffer()
 
 // Send a console command to the server.
 // This shouldn't be called unless we're logged in with the right password.
-void Con_Send(char *command, int silent)
+void Con_Send(const char *command, int silent)
 {
 	unsigned short len = strlen(command) + 1;
 
@@ -1380,7 +1380,7 @@ static void expandWithArguments(char **expcommand, cmdargs_t *args)
  * executeSubCmd
  *	The command is executed forthwith!!
  */
-static int executeSubCmd(char *subcmd)
+static int executeSubCmd(const char *subcmd)
 {
 	int			i;
 	char		prefix;
@@ -1517,7 +1517,7 @@ static int executeSubCmd(char *subcmd)
 
 // Splits the command into subcommands and queues them into the 
 // execution buffer.
-static void SplitIntoSubCommands(char *command, int markerOffset)
+static void SplitIntoSubCommands(const char *command, int markerOffset)
 {
 	int			gpos = 0, scpos = 0;
 	char		subcmd[1024];
@@ -1566,7 +1566,7 @@ static void SplitIntoSubCommands(char *command, int markerOffset)
 // Con_Execute
 //	Returns false if a command fails.
 //===========================================================================
-int Con_Execute(char *command, int silent)
+int Con_Execute(const char *command, int silent)
 {
 	int ret;
 
@@ -1582,7 +1582,7 @@ int Con_Execute(char *command, int silent)
 //===========================================================================
 // Con_Executef
 //===========================================================================
-int Con_Executef(int silent, char *command, ...)
+int Con_Executef(int silent, const char *command, ...)
 {
 	va_list argptr;
 	char buffer[4096];
@@ -2187,7 +2187,7 @@ void Con_AddRuler(void)
 	}
 }
 
-void conPrintf(int flags, char *format, va_list args)
+void conPrintf(int flags, const char *format, va_list args)
 {
 	unsigned int i;
 	int			lbc; // line buffer cursor
@@ -2201,6 +2201,7 @@ void conPrintf(int flags, char *format, va_list args)
 	}
 
 	// Allocate a print buffer that will surely be enough (64Kb).
+	// FIXME: No need to allocate on EVERY printf call!
 	prbuff = malloc(65536);
 
 	// Format the message to prbuff.
@@ -2272,7 +2273,7 @@ void conPrintf(int flags, char *format, va_list args)
 }
 
 // Print into the buffer.
-void Con_Printf(char *format, ...)
+void Con_Printf(const char *format, ...)
 {
 	va_list		args;
 
@@ -2283,7 +2284,7 @@ void Con_Printf(char *format, ...)
 	va_end(args);
 }
 
-void Con_FPrintf(int flags, char *format, ...) // Flagged printf
+void Con_FPrintf(int flags, const char *format, ...) // Flagged printf
 {
 	va_list		args;
 	
@@ -2951,7 +2952,7 @@ int CCmdDir(int argc, char **argv)
 /*
  * Print a 'global' message (to stdout and the console).
  */
-void Con_Message(char *message, ...)
+void Con_Message(const char *message, ...)
 {
 	va_list argptr;
 	char *buffer;
@@ -2979,7 +2980,7 @@ void Con_Message(char *message, ...)
 /*
  * Print an error message and quit.
  */
-void Con_Error (char *error, ...)
+void Con_Error (const char *error, ...)
 {
 	static boolean errorInProgress = false;
 	extern int bufferLines;

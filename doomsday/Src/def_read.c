@@ -1,26 +1,40 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** DEDREAD.C
-//**
-//** Doomsday Engine Definition file reader.
-//**
-//** A GHASTLY MESS!!! This should be rewritten.
-//**
-//** You have been warned!
-//**
-//** At the moment the idea is that a lot of macros are used to read
-//** a more or less fixed structure of definitions, and if an error
-//** occurs then "goto out_of_here;". It leads to a lot more code 
-//** than an elegant parser would require.
-//**
-//** The current implementation of the reader is a "structural"
-//** approach: the definition file is parsed based on the structure 
-//** implied by the read tokens. A true parser would have syntax 
-//** definitions for a bunch of tokens, and the same parsing rules
-//** would be applied for everything.
-//**
-//**************************************************************************
+/*
+ * def_read.c: Doomsday Engine Definition File Reader
+ */
+
+/*
+ * A GHASTLY MESS!!! This should be rewritten.
+ *
+ * You have been warned!
+ *
+ * At the moment the idea is that a lot of macros are used to read a more 
+ * or less fixed structure of definitions, and if an error occurs then 
+ * "goto out_of_here;". It leads to a lot more code than an elegant parser
+ * would require.
+ *
+ * The current implementation of the reader is a "structural" approach: 
+ * the definition file is parsed based on the structure implied by 
+ * the read tokens. A true parser would have syntax definitions for 
+ * a bunch of tokens, and the same parsing rules would be applied for 
+ * everything.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -28,7 +42,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "de_base.h"
+#include "de_defs.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
@@ -95,7 +111,7 @@ typedef struct dedsource_s {
 	boolean atEnd;
 	int lineNumber;
 	const char *fileName;
-	int version;	// v6 does not require semicolons.
+	int version;			// v6 does not require semicolons.
 } dedsource_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

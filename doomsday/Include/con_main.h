@@ -65,24 +65,24 @@ void Con_Ticker(void);
 boolean Con_Responder(event_t *event);
 void Con_Drawer(void);
 void Con_DrawRuler(int y, int lineHeight, float alpha);
-void Con_Printf(char *format, ...);
-void Con_FPrintf(int flags, char *format, ...); // Flagged printf.
+void Con_Printf(const char *format, ...);
+void Con_FPrintf(int flags, const char *format, ...); // Flagged printf.
 void Con_SetFont(ddfont_t *cfont);
 cbline_t *Con_GetBufferLine(int num);
-int Con_Execute(char *command, int silent);
-int Con_Executef(int silent, char *command, ...);
+int Con_Execute(const char *command, int silent);
+int Con_Executef(int silent, const char *command, ...);
 
-void	Con_Message(char *message, ...);
-void	Con_Error(char *error, ...);
-cvar_t* Con_GetVariable(char *name);
-int		Con_GetInteger(char *name);
-float	Con_GetFloat(char *name);
-byte	Con_GetByte(char *name);
-char*	Con_GetString(char *name);
+void	Con_Message(const char *message, ...);
+void	Con_Error(const char *error, ...);
+cvar_t* Con_GetVariable(const char *name);
+int		Con_GetInteger(const char *name);
+float	Con_GetFloat(const char *name);
+byte	Con_GetByte(const char *name);
+char*	Con_GetString(const char *name);
 
-void	Con_SetInteger(char *name, int value);
-void	Con_SetFloat(char *name, float value);
-void	Con_SetString(char *name, char *text);
+void	Con_SetInteger(const char *name, int value);
+void	Con_SetFloat(const char *name, float value);
+void	Con_SetString(const char *name, char *text);
 
 char *TrimmedFloat(float val);
 

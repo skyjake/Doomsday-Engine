@@ -6,7 +6,7 @@ void Msg_WriteByte(byte b);
 void Msg_WriteShort(short w);
 void Msg_WritePackedShort(short w);
 void Msg_WriteLong(int l);
-void Msg_Write(void *src, int len);
+void Msg_Write(const void *src, int len);
 byte Msg_ReadByte();
 short Msg_ReadShort();
 short Msg_ReadPackedShort();

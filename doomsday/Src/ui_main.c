@@ -1,12 +1,25 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** UI_MAIN.C
-//**
-//** Doomsday User Interface.
-//** Has ties to the console routines.
-//**
-//**************************************************************************
+/*
+ * ui_main.c: Graphical User Interface
+ *
+ * Has ties to the console routines.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -74,19 +87,6 @@ int			uiMouseHeight = 32;
 // Modify these colors to change the look of the UI.
 ui_color_t ui_colors[NUM_UI_COLORS] =
 {
-#if 0 
-	// These are the original blue colors.
-	/* UIC_TEXT */		{ 1, 1, 1 },
-	/* UIC_SHADOW */	{ 0, 0, 0 },
-	/* UIC_BG_LIGHT */	{ .015f, .2f, .4f },
-	/* UIC_BG_MEDIUM */	{ .00925f, .125f, .25f },
-	/* UIC_BG_DARK */	{ .0035f, .05f, .1f },
-	/* UIC_BRD_HI */	{ 1, 1, 1 },
-	/* UIC_BRD_MED */	{ 0, 0, 0 },
-	/* UIC_BRD_LOW */	{ .015f, .2f, .4f },
-	/* UIC_HELP */		{ 0, 0, 0 }
-#else
-	// Alternative coloring.
 	/* UIC_TEXT */		{ 1, 1, 1 },
 	/* UIC_SHADOW */	{ 0, 0, 0 },
 	/* UIC_BG_LIGHT */	{ .18f, .18f, .22f },
@@ -96,7 +96,6 @@ ui_color_t ui_colors[NUM_UI_COLORS] =
 	/* UIC_BRD_MED */	{ 0, 0, 0 },
 	/* UIC_BRD_LOW */	{ .25f, .25f, .55f },
 	/* UIC_HELP */		{ .4f, .4f, .52f }
-#endif
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
