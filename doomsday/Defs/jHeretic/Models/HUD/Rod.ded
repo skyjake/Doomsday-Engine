@@ -1,3 +1,6 @@
+# TODO
+# Phx-Bird model (phoenix explosion)
+
 ## Phoenix Rod
 Model {
   State = "PHOENIXREADY";

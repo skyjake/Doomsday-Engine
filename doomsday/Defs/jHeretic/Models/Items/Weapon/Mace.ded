@@ -1,5 +1,8 @@
 Header { Version = 6; }
 
+# TODO:
+# large/small bouncing orbs
+
 ########========-------- Pickup Item: Firemace --------========########
 # Model and skin by Slyrr
 # Defs by skyjake
