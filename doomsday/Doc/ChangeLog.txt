@@ -9,6 +9,15 @@ Version 1.8.7
 + bias lighting
 + cvar 'rend-fog-default': default fog algorithm
 
+Multiplayer:
+- fixed: skill selection not working via Game Setup menu
+
+Linux:
+- fixed: disappearing enemies in jHeretic and jHexen (fix by zachkeene)
+
+Mac OS X:
+- fixed: network games (now compatible with Win + Linux)
+
 
 Version 1.8.6
 -------------
