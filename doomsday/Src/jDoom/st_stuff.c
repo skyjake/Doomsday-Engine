@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2003/08/24 00:16:48  skyjake
+// Netgame-aware cheats, "give p" => backpack
+//
 // Revision 1.4  2003/08/18 16:40:37  skyjake
 // Precache fonts
 //
@@ -49,6 +52,7 @@ rcsid[] = "$Id$";
 
 #include "doomdef.h"
 #include "d_config.h"
+#include "d_net.h"
 
 #include "m_random.h"
 
@@ -67,9 +71,6 @@ rcsid[] = "$Id$";
 #include "hu_stuff.h"
 
 #include "s_sound.h"
-
-// Needs access to LFB.
-#include "v_video.h"
 
 // State.
 #include "doomstat.h"
@@ -1219,7 +1220,9 @@ void ST_Drawer (boolean fullscreen, boolean refresh)
 void R_CachePatch(dpatch_t *dp, char *name)
 {
 	patch_t *patch;
-				
+			
+	if(IS_DEDICATED) return;
+
 	dp->lump = W_CheckNumForName(name);
 	if(dp->lump == -1) return;
 	patch = (patch_t*) W_CacheLumpNum(dp->lump, PU_CACHE);
@@ -1628,15 +1631,27 @@ boolean can_cheat(void)
 
 int CCmdCheatGod(int argc, char **argv)
 {
-	if(!can_cheat()) return false;
-	cht_GodFunc(&players[consoleplayer]);
+	if(IS_NETGAME)
+	{
+		NetCl_CheatRequest("god");
+	}
+	else
+	{
+		cht_GodFunc(&players[consoleplayer]);
+	}
 	return true;
 }
 
 int CCmdCheatNoClip(int argc, char **argv)
 {
-	if(!can_cheat()) return false;
-	cht_NoClipFunc(&players[consoleplayer]);
+	if(IS_NETGAME)
+	{
+		NetCl_CheatRequest("noclip");
+	}
+	else
+	{
+		cht_NoClipFunc(&players[consoleplayer]);
+	}
 	return true;
 }
 
@@ -1677,8 +1692,8 @@ int CCmdCheatReveal(int argc, char **argv)
 	if(!can_cheat()) return false; // Can't cheat!
 	if(argc != 2)
 	{
-		Con_Printf( "Usage: reveal (0-3)\n");
-		Con_Printf( "0=nothing, 1=show unseen, 2=full map, 3=map+things\n");
+		Con_Printf("Usage: reveal (0-3)\n");
+		Con_Printf("0=nothing, 1=show unseen, 2=full map, 3=map+things\n");
 		return true;
 	}
 	// Reset them (for 'nothing'). :-)
@@ -1697,85 +1712,107 @@ int CCmdCheatReveal(int argc, char **argv)
 
 int CCmdCheatGive(int argc, char **argv)
 {
-	char	buf[100];
-	int		i;
+	char buf[100];
+	int	i;
 	player_t *plyr = &players[consoleplayer];
 
-	if(argc != 2)
+	if(IS_CLIENT)
 	{
-		Con_Printf( "Usage: give (stuff)\n");
-		Con_Printf( "Stuff consists of one or more of:\n");
-		Con_Printf( " a - ammo\n");
-		Con_Printf( " b - berserk\n");
-		Con_Printf( " g - light amplification visor\n");
-		Con_Printf( " i - invulnerability\n");
-		Con_Printf( " k - key cards/skulls\n");
-		Con_Printf( " m - computer area map\n");
-		Con_Printf( " r - armor\n");
-		Con_Printf( " s - radiation shielding suit\n");
-		Con_Printf( " v - invisibility\n");
-		Con_Printf( " w - weapons\n");
-		Con_Printf( "Example: 'give arw' corresponds the cheat IDFA.\n");
+		if(argc != 2) return false;
+		sprintf(buf, "give %s", argv[1]);
+		NetCl_CheatRequest(buf);
+		return true;
+	}
+	if(IS_NETGAME && !netSvAllowCheats) return false;
+	if(argc != 2 && argc != 3)
+	{
+		Con_Printf("Usage:\n  give (stuff)\n");
+		Con_Printf("  give (stuff) (player)\n");
+		Con_Printf("Stuff consists of one or more of:\n");
+		Con_Printf(" a - ammo\n");
+		Con_Printf(" b - berserk\n");
+		Con_Printf(" g - light amplification visor\n");
+		Con_Printf(" i - invulnerability\n");
+		Con_Printf(" k - key cards/skulls\n");
+		Con_Printf(" m - computer area map\n");
+		Con_Printf(" p - backpack full of ammo\n");
+		Con_Printf(" r - armor\n");
+		Con_Printf(" s - radiation shielding suit\n");
+		Con_Printf(" v - invisibility\n");
+		Con_Printf(" w - weapons\n");
+		Con_Printf("Example: 'give arw' corresponds the cheat IDFA.\n");
 		return true;		
 	}
-	strcpy(buf, argv[1]);
+	if(argc == 3) 
+	{
+		i = atoi(argv[2]);
+		if(i < 0 || i >= MAXPLAYERS || !players[i].plr->ingame)
+			return false;
+		plyr = &players[i];
+	}
+	strcpy(buf, argv[1]); // Stuff is the 2nd arg.
 	strlwr(buf);
-	for(i=0; buf[i]; i++)
+	for(i = 0; buf[i]; i++)
 	{
 		switch(buf[i])
 		{
 		case 'a':
-			Con_Printf( "Ammo given.\n");
+			Con_Printf("Ammo given.\n");
 			cht_GiveFunc(plyr, 0, true, 0, 0);
 			break;
 
 		case 'b':
-			Con_Printf( "Your vision blurs! Yaarrrgh!!\n");
+			Con_Printf("Your vision blurs! Yaarrrgh!!\n");
 			cht_PowerUpFunc(plyr, pw_strength);
 			break;
 
 		case 'g':
-			Con_Printf( "Light amplification visor given.\n");
+			Con_Printf("Light amplification visor given.\n");
 			cht_PowerUpFunc(plyr, pw_infrared);
 			break;
 
 		case 'i':
-			Con_Printf( "You feel invincible!\n");
+			Con_Printf("You feel invincible!\n");
 			cht_PowerUpFunc(plyr, pw_invulnerability);
 			break;
 
 		case 'k':
-			Con_Printf( "Key cards and skulls given.\n");
+			Con_Printf("Key cards and skulls given.\n");
 			cht_GiveFunc(plyr, 0, 0, 0, true);
 			break;
 
 		case 'm':
-			Con_Printf( "Computer area map given.\n");
+			Con_Printf("Computer area map given.\n");
 			cht_PowerUpFunc(plyr, pw_allmap);
 			break;
 
+		case 'p':
+			Con_Printf("Ammo backpack given.\n");
+			P_GiveBackpack(plyr);
+			break;
+
 		case 'r':
-			Con_Printf( "Full armor given.\n");
+			Con_Printf("Full armor given.\n");
 			cht_GiveFunc(plyr, 0, 0, true, 0);
 			break;
 
 		case 's':
-			Con_Printf( "Radiation shielding suit given.\n");
+			Con_Printf("Radiation shielding suit given.\n");
 			cht_PowerUpFunc(plyr, pw_ironfeet);
 			break;
 
 		case 'v':
-			Con_Printf( "You are suddenly almost invisible!\n");
+			Con_Printf("You are suddenly almost invisible!\n");
 			cht_PowerUpFunc(plyr, pw_invisibility);
 			break;
 
 		case 'w':
-			Con_Printf( "Weapons given.\n");
+			Con_Printf("Weapons given.\n");
 			cht_GiveFunc(plyr, true, 0, 0, 0);
 			break;
 
 		default:
-			Con_Printf( "What do you mean, '%c'?\n", buf[i]);
+			Con_Printf("What do you mean, '%c'?\n", buf[i]);
 		}
 	}
 	return true;
@@ -1783,6 +1820,6 @@ int CCmdCheatGive(int argc, char **argv)
 
 int CCmdCheatMassacre(int argc, char **argv)
 {
-	Con_Printf( "%i monsters killed.\n", P_Massacre());
+	Con_Printf("%i monsters killed.\n", P_Massacre());
 	return true;
 }
