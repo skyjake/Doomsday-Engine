@@ -85,7 +85,8 @@ int     uiMouseHeight = 32;
 
 // Modify these colors to change the look of the UI.
 ui_color_t ui_colors[NUM_UI_COLORS] = {
-	/* UIC_TEXT */ {1, 1, 1},
+	/* UIC_TEXT */ {.85, .87, 1},
+	/* UIC_TITLE */ {1, 1, 1},
 	/* UIC_SHADOW */ {0, 0, 0},
 	/* UIC_BG_LIGHT */ {.18f, .18f, .22f},
 	/* UIC_BG_MEDIUM */ {.4f, .4f, .52f},
@@ -766,7 +767,7 @@ void UIButton_Drawer(ui_object_t * ob)
 				 down + ob->x +
 				 (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w /
 				  2), down + ob->y + ob->h / 2, !(ob->flags & UIF_LEFT_ALIGN),
-				 true, UI_COL(UIC_TEXT), alpha);
+				 true, UI_COL(UIC_TITLE), alpha);
 }
 
 int UIEdit_Responder(ui_object_t * ob, event_t *ev)
@@ -1566,7 +1567,7 @@ void UI_DrawTitleEx(char *text, int height)
 				UI_COL(UIC_BG_LIGHT), .8f, 1);
 	UI_Gradient(0, height, screenWidth, UI_BORDER, UI_COL(UIC_SHADOW),
 				UI_COL(UIC_BG_DARK), 1, 0);
-	UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_COL(UIC_TEXT),
+	UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_COL(UIC_TITLE),
 				 1);
 }
 
@@ -2101,6 +2102,7 @@ int CCmdUIColor(int argc, char **argv)
 	const char *objects[] =		// Also a mapping to UIC.
 	{
 		"text",
+		"title",
 		"shadow",
 		"bglight",
 		"bgmed",
