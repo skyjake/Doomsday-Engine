@@ -326,8 +326,8 @@ boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
 //===========================================================================
 boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y, fixed_t z)
 {	
-    //floatok = false;
 	int links = 0;
+	boolean goodPos;
 
 	blockingMobj = NULL;
 
@@ -338,47 +338,35 @@ boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y, fixed_t z)
 		return true;
 	}
 
-    if(!P_CheckPosition2(thing, x, y, z))
+	goodPos = P_CheckPosition2(thing, x, y, z);
+
+	// Is movement clipping in effect?
+	if(!thing->dplayer || !(thing->dplayer->flags & DDPF_NOCLIP))
 	{
-/*		if(thing->onmobj)
+		if(!goodPos)
 		{
-			mobj_t *blocking = thing->onmobj;
-
-			// Can we step on the mobj? (Hardcoded 24 stepup.)
-			if(blocking->z + blocking->height - thing->z > 24*FRACUNIT
-				|| ( blocking->subsector->sector->ceilingheight
-					- (blocking->z + blocking->height) < thing->height )
-				|| ( tmceilingz - (blocking->z + blocking->height) 
-					< thing->height ))
-			{
-				// Can't step up.
-				return false;
-			}
-		}*/
-
-		if(!thing->onmobj || thing->wallhit)
-			return false;		// Solid wall or thing.
-	}
+			if(!thing->onmobj || thing->wallhit)
+				return false;		// Solid wall or thing.
+		}
     
-	// Does it fit between contacted ceiling and floor?
-	if(tmceilingz - tmfloorz < thing->height)
-		return false;	
+		// Does it fit between contacted ceiling and floor?
+		if(tmceilingz - tmfloorz < thing->height)
+			return false;	
 		
-	//floatok = true;
-		
-	if(tmceilingz - z < thing->height)
-		return false;	// mobj must lower itself to fit
-		
-	if(thing->dplayer)
-	{
-		// Players are allowed a stepup.
-		if(tmfloorz - z > 24*FRACUNIT)
-			return false;	// too big a step up
-	}
-	else
-	{
-		// Normals mobjs are not...
-		if(tmfloorz > z) return false; // below the floor
+		if(tmceilingz - z < thing->height)
+			return false;	// mobj must lower itself to fit
+			
+		if(thing->dplayer)
+		{
+			// Players are allowed a stepup.
+			if(tmfloorz - z > 24*FRACUNIT)
+				return false;	// too big a step up
+		}
+		else
+		{
+			// Normals mobjs are not...
+			if(tmfloorz > z) return false; // below the floor
+		}
 	}
     
     // The move is OK. First unlink.
