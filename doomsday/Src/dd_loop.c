@@ -60,7 +60,7 @@ void    DD_RunTics(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     maxFrameRate = 0;		// Zero means 'unlimited'.
+int     maxFrameRate = 200;		// Zero means 'unlimited'.
 
 timespan_t sysTime, gameTime, demoTime, levelTime;
 
@@ -91,7 +91,7 @@ void DD_GameLoop(void)
 	{
 		maxFrameRate = 35;
 	}
-	
+
 	while(true)
 	{
 #ifdef WIN32
@@ -237,10 +237,10 @@ void DD_Ticker(timespan_t time)
 			// they still rely on fixed ticks and thus it's best to
 			// keep them in sync with the fixed game ticks.
 			if(isClient)
-				Cl_Ticker(/*time*/);
+				Cl_Ticker( /*time */ );
 			else
-				Sv_Ticker(/*time*/);
-			
+				Sv_Ticker( /*time */ );
+
 			// This is needed by rend_camera_smooth.  It needs to know
 			// when the world tic has occured so the next sharp
 			// position can be processed.
