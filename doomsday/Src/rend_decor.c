@@ -102,7 +102,7 @@ void Rend_ProjectDecorations(void)
 		lumobj_t *lum = DL_GetLuminous(src->thing.light);
 
 		// Clipped sources don't get halos.
-		if(lum->flags & LUMF_CLIPPED || lum->flaresize <= 0)
+		if(lum->flags & LUMF_CLIPPED || lum->flareSize <= 0)
 			continue;
 
 		R_ProjectDecoration(&src->thing);
@@ -149,7 +149,8 @@ decorsource_t *Rend_NewLightDecorationSource(void)
  * Does largely the same thing as DL_AddLuminous().
  */
 void Rend_AddLightDecoration
-	(float pos[3], ded_decorlight_t *def, float brightness, boolean isWall)
+	(float pos[3], ded_decorlight_t *def, float brightness, boolean isWall,
+	 DGLuint decorMap)
 {
 	decorsource_t *source;
 	lumobj_t *lum;
@@ -191,8 +192,8 @@ void Rend_AddLightDecoration
 	lum->center = 0;
 	lum->flags = LUMF_CLIPPED;
 	lum->tex = def->sides.tex;
-	lum->ceiltex = def->up.tex;
-	lum->floortex = def->down.tex;
+	lum->ceilTex = def->up.tex;
+	lum->floorTex = def->down.tex;
 
 	// These are the same rules as in DL_ThingRadius().
 	lum->radius = def->radius * 40 * dlRadFactor;
@@ -202,16 +203,20 @@ void Rend_AddLightDecoration
 
 	if(def->halo_radius > 0)
 	{
-		lum->flaresize = def->halo_radius * 60 * (50 + haloSize)/100.0f;
-		if(lum->flaresize < 1) lum->flaresize = 1;
+		lum->flareSize = def->halo_radius * 60 * (50 + haloSize)/100.0f;
+		if(lum->flareSize < 1) lum->flareSize = 1;
 	}
 	else
 	{
-		lum->flaresize = 0;
+		lum->flareSize = 0;
 	}
 
+	// This light source is associated with a decoration map, if one is 
+	// available.
+	lum->decorMap = decorMap;
+
 	// Zero = Texture chosen automatically.
-	lum->flaretex = def->flare_texture;
+	lum->flareTex = def->flare_texture;
 
 	for(i = 0; i < 3; i++) 
 		lum->rgb[i] = (byte) (255 * def->color[i] * fadeMul);
@@ -356,7 +361,8 @@ void Rend_DecorateLineSection
 				pos[VX] = posBase[VX] + delta[VX] * s / linfo->length;
 				pos[VY] = posBase[VY] + delta[VY] * s / linfo->length;
 				pos[VZ] = top - t;
-				Rend_AddLightDecoration(pos, lightDef, brightMul, true);
+				Rend_AddLightDecoration(pos, lightDef, brightMul, true,
+					def->pregen_lightmap);
 			}
 		}
 	}
@@ -592,7 +598,8 @@ void Rend_DecoratePlane
 					sector)) continue;
 
 				pos[VZ] = z + lightDef->elevation * elevateDir;
-				Rend_AddLightDecoration(pos, lightDef, brightMul, false);
+				Rend_AddLightDecoration(pos, lightDef, brightMul, false,
+					def->pregen_lightmap);
 			}
 		}
 	}

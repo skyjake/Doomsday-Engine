@@ -48,8 +48,10 @@ END_PROF_TIMERS()
 
 typedef struct {
 	boolean		lightFloor, lightCeiling;
+	int			subIndex;
 	subsector_t	*subsector;
 	float		fceil, ffloor;
+	DGLuint		floorDecorMap, ceilDecorMap;
 } flatitervars_t;
 
 typedef struct {
@@ -172,13 +174,13 @@ dynlight_t *DL_New(float *s, float *t)
 		dyn = Z_Malloc(sizeof(dynlight_t), PU_STATIC, NULL);
 
 		// Link the new node to the list.
-		dyn->nextused = dynFirst;
+		dyn->nextUsed = dynFirst;
 		dynFirst = dyn;
 	}
 	else
 	{
 		dyn = dynCursor;
-		dynCursor = dynCursor->nextused;
+		dynCursor = dynCursor->nextUsed;
 	}
 
 	dyn->next = NULL;
@@ -294,23 +296,37 @@ void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
 	if(lum->radius < 32) lum->radius = 32;
 	if(lum->radius > dlMaxRad) lum->radius = dlMaxRad;
 
-	lum->flaresize = cf->size * 60 * (50 + haloSize)/100.0f;
-	if(lum->flaresize < 8) lum->flaresize = 8;
+	lum->flareSize = cf->size * 60 * (50 + haloSize)/100.0f;
+	if(lum->flareSize < 8) lum->flareSize = 8;
 }
 
+//===========================================================================
+// DL_ThingColor
+//===========================================================================
 void DL_ThingColor(lumobj_t *lum, DGLubyte *outRGB, float light)
 {
-	int		i;
+	int i;
 
 	if(light < 0) light = 0;
 	if(light > 1) light = 1;
 	light *= dlFactor;
+
+	// If fog is enabled, make the light dimmer.
+	// FIXME: This should be a cvar.
 	if(useFog) light *= .5f; // Would be too much.
+
 	// Multiply with the light color.
 	for(i = 0; i < 3; i++)
 	{
-		outRGB[i] = (DGLubyte) (light * lum->rgb[i]);
-		//outRGB[i] += (255 - outRGB[i])/4; // more brightness, less color...
+		if(!lum->decorMap)
+		{
+			outRGB[i] = (DGLubyte) (light * lum->rgb[i]);
+		}
+		else 
+		{
+			// Decoration maps are pre-colored.
+			outRGB[i] = (DGLubyte) (light * 255);
+		}
 	}
 }
 
@@ -988,7 +1004,7 @@ void DL_AddLuminous(mobj_t *thing)
 		cf.yoffset = spritelumps[lump].flarey;
 
 		// X offset to the flare position.
-		lum->xoff = cf.xoffset - spritelumps[lump].width/2.0f;
+		lum->xOff = cf.xoffset - spritelumps[lump].width/2.0f;
 
 		// Does the thing have an active light definition?
 		if(thing->state && thing->state->light)
@@ -998,7 +1014,7 @@ void DL_AddLuminous(mobj_t *thing)
 			if(def->xoffset) 
 			{
 				// Set the x offset here.
-				lum->xoff = cf.xoffset = def->xoffset;
+				lum->xOff = cf.xoffset = def->xoffset;
 			}
 			if(def->yoffset) cf.yoffset = def->yoffset;		
 			lum->flags |= def->flags;
@@ -1053,20 +1069,23 @@ void DL_AddLuminous(mobj_t *thing)
 		// Is there a model definition?
 		R_CheckModelFor(thing, &mf, &nextmf);
 		if(mf && useModels)
-			lum->xyscale = MAX_OF(mf->scale[VX], mf->scale[VZ]);
+			lum->xyScale = MAX_OF(mf->scale[VX], mf->scale[VZ]);
 		else
-			lum->xyscale = 1;
+			lum->xyScale = 1;
+
+		// This light source is not associated with a decormap.
+		lum->decorMap = 0;
 
 		// Use the same default light texture for all directions.
 		if(def)
 		{
 			lum->tex = def->sides.tex;
-			lum->ceiltex = def->up.tex;
-			lum->floortex = def->down.tex;
+			lum->ceilTex = def->up.tex;
+			lum->floorTex = def->down.tex;
 		}
 		else
 		{
-			lum->tex = lum->ceiltex = lum->floortex 
+			lum->tex = lum->ceilTex = lum->floorTex 
 				= GL_PrepareLightTexture();
 		}
 	}
@@ -1335,134 +1354,21 @@ void DL_LinkLuminous()
 
 		// Link this lumobj into its subsector (always possible).
 		root = dlSubLinks + GET_SUBSECTOR_IDX(lum->thing->subsector);
-		lum->ssnext = *root;
+		lum->ssNext = *root;
 		*root = lum;
-
-		// Make lumobj contacts using a sector spread test.
-		//DL_FindContacts(lum);
 	}
 }
 
-/*void intersectionVertex(fvertex_t *out, fvertex_t *a, fvertex_t *b,
-						boolean horizontal, float boundary)
-{
-	float dx = b->x-a->x, dy = b->y-a->y;
-
-	if(horizontal)
-	{
-		out->x = a->x + (boundary - a->y) / dy * dx;
-		out->y = boundary;
-	}
-	else
-	{
-		out->x = boundary;
-		out->y = a->y + (boundary - a->x) / dx * dy;
-	}
-}*/
-
-/*
 //===========================================================================
-// Rend_SubsectorClipper
-//	Clip the subsector to the rectangle. Returns the number of vertices in 
-//	the out buffer.
+// DL_IsTexUsed
+//	Returns true if the texture is already used in the list of dynlights.
 //===========================================================================
-int Rend_SubsectorClipper
-	(fvertex_t *out, subsector_t *sub, float x, float y, float radius)
+boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
 {
-	int			i, clip, aidx, bidx, num;
-	boolean		clip_needed[4], sides[MAX_POLY_SIDES];
-	fvertex_t	inverts[MAX_POLY_SIDES];
-	fvertex_t	verts[MAX_POLY_SIDES]; // This many vertices, max!
-	fvertex_t	*vptr = verts, *a, *b;
-	fvertex_t	light[4];
-
-	light[0].x = light[3].x = x - radius;
-	light[0].y = light[1].y = y - radius;
-	light[1].x = light[2].x = x + radius;
-	light[2].y = light[3].y = y + radius;
-
-	if(sub->bbox[0].x >= light[0].x && sub->bbox[0].y >= light[0].y 
-		&& sub->bbox[1].x <= light[2].x && sub->bbox[1].y <= light[2].y)
-	{
-		// No clipping needed, the whole subsector is inside the light.
-		memcpy(out, sub->verts, sizeof(fvertex_t) * sub->numverts);
-		return sub->numverts;
-	}
-
-	// See which clips are needed.
-	clip_needed[CLIP_LEFT] = light[0].x > sub->bbox[0].x;
-	clip_needed[CLIP_TOP] = light[0].y > sub->bbox[0].y;
-	clip_needed[CLIP_RIGHT] = light[2].x < sub->bbox[1].x;
-	clip_needed[CLIP_BOTTOM] = light[2].y < sub->bbox[1].y;
-
-	// Prepare the vertex array.
-	memcpy(inverts, sub->verts, sizeof(fvertex_t) * sub->numverts);
-	num = sub->numverts;
-
-	// Horizontal clips first.
-	for(clip = CLIP_TOP; clip <= CLIP_RIGHT; clip++)
-	{
-		if(!clip_needed[clip]) continue;
-
-		// First determine on which side each vertex is.
-		for(i = 0; i < num; i++)
-		{
-			switch(clip)
-			{
-			case CLIP_TOP:
-				sides[i] = inverts[i].y >= light[0].y;
-				break;
-			case CLIP_BOTTOM:
-				sides[i] = inverts[i].y <= light[2].y;
-				break;
-			case CLIP_LEFT:
-				sides[i] = inverts[i].x >= light[0].x;
-				break;
-			case CLIP_RIGHT:
-				sides[i] = inverts[i].x <= light[2].x;
-			}
-		}
-		for(i = 0; i < num; i++)
-		{
-			a = inverts + (aidx = (i==0? num-1 : i-1));
-			b = inverts + (bidx = i);
-			if(sides[aidx] && sides[bidx])
-			{
-				// This edge is completely within the light, no need to clip it.
-				memcpy(vptr++, a, sizeof(*a));
-			}
-			else if(sides[aidx])
-			{	
-				// Only the start point is inside.
-				memcpy(vptr++, a, sizeof(*a));
-				// Add an intersection vertex.
-				intersectionVertex(vptr++, a, b, clip==CLIP_TOP || clip==CLIP_BOTTOM, 
-					clip==CLIP_TOP? light[0].y
-					: clip==CLIP_BOTTOM? light[2].y
-					: clip==CLIP_LEFT? light[0].x
-					: light[2].x);
-			}
-			else if(sides[bidx])
-			{
-				// First an intersection vertex.
-				intersectionVertex(vptr++, a, b, clip==CLIP_TOP || clip==CLIP_BOTTOM, 
-					clip==CLIP_TOP? light[0].y
-					: clip==CLIP_BOTTOM? light[2].y
-					: clip==CLIP_LEFT? light[0].x
-					: light[2].x);
-				// Then the end vertex, which is inside.
-				memcpy(vptr++, b, sizeof(*b));
-			}
-		}
-		// Prepare for another round.
-		num = vptr - verts;
-		vptr = verts;
-		memcpy(inverts, verts, sizeof(fvertex_t) * num);
-	}
-	memcpy(out, inverts, sizeof(fvertex_t) * num);
-	return num;
+	for(; node; node = node->next)
+		if(node->texture == texture) return true;
+	return false;
 }
-*/
 
 //===========================================================================
 // DL_LightIteratorFunc
@@ -1517,32 +1423,55 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, flatitervars_t *fi)
 
 	//fi->poly->light = lum;
 
-	if(applyCeiling > 0 && lum->ceiltex)
+	if(applyCeiling > 0 && lum->ceilTex)
 	{
 		// Check that the height difference is tolerable.
 		cdiff = fi->fceil - z;
 		if(cdiff < 0) cdiff = 0;
 		if(cdiff < lum->radius) 
 		{
-			// Calculate dynlight position. It may still be outside the
-			// bounding box the subsector.
-			s[0] = -x + lum->radius;
-			t[0] = y + lum->radius;
-			s[1] = t[1] = 1.0f/(2 * lum->radius);
+#if 0
+			if(!lum->decorMap
+				|| lum->decorMap != fi->ceilDecorMap
+				/*|| !DL_IsTexUsed(ceilingLightLinks[fi->subIndex], 
+					lum->decorMap)*/)
+			{
+				//if(!lum->decorMap || lum->decorMap != fi->ceilDecorMap)
+				{
+#endif
+					// Calculate dynlight position. It may still be outside 
+					// the bounding box the subsector.
+					s[0] = -x + lum->radius;
+					t[0] = y + lum->radius;
+					s[1] = t[1] = 1.0f/(2 * lum->radius);
 
-			// A dynamic light will be generated.
-			dyn = DL_New(s, t);
+					// A dynamic light will be generated.
+					dyn = DL_New(s, t);
+					dyn->flags = 0;
+					dyn->texture = lum->ceilTex;
 
-			DL_ThingColor(lum, dyn->color, LUM_FACTOR(cdiff) * applyCeiling);
-			dyn->texture = lum->ceiltex;
-			dyn->flags = 0;
+#if 0
+				}
+				/*else
+				{
+					// Don't bother with texcoords, decormaps use the same 
+					// ones as the main texture.
+					dyn = DL_New(0, 0);
+					dyn->flags = DYNF_PREGEN_DECOR;
+					dyn->texture = lum->decorMap;
+				}*/
+#endif
 
-			// Link to this ceiling's list.
-			DL_Link(dyn, ceilingLightLinks, GET_SUBSECTOR_IDX(fi->subsector));
-		}
+				DL_ThingColor(lum, dyn->color, LUM_FACTOR(cdiff) 
+					* applyCeiling);
+
+				// Link to this ceiling's list.
+				DL_Link(dyn, ceilingLightLinks, fi->subIndex);
+			}
+		//}
 	}
 
-	if(applyFloor > 0 && lum->floortex)
+	if(applyFloor > 0 && lum->floorTex)
 	{
 		fdiff = z - fi->ffloor;
 		if(fdiff < 0) fdiff = 0;
@@ -1558,7 +1487,7 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, flatitervars_t *fi)
 			dyn = DL_New(s, t);
 
 			DL_ThingColor(lum, dyn->color, LUM_FACTOR(fdiff) * applyFloor);
-			dyn->texture = lum->floortex;
+			dyn->texture = lum->floorTex;
 			dyn->flags = 0;
 
 			// Link to this floor's list.
@@ -1590,23 +1519,42 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, flatitervars_t *fi)
 }
 
 /*
+ * Return the texture name of the decoration light map for the flat.
+ * (Zero if no such texture exists.)
+ */
+DGLuint DL_GetFlatDecorLightMap(int pic)
+{
+	ded_decor_t *decor;
+
+	if(pic == skyflatnum) return 0;	
+	decor = R_GetFlat(pic)->decoration;
+	return decor? decor->pregen_lightmap : 0;
+}
+
+/*
  * Process dynamic lights for the specified subsector.
  */
 void DL_ProcessSubsector(subsector_t *ssec)
 {
-	sector_t *sect = ssec->sector;
-	//fixed_t			box[4];
 	int i;
 	byte *seg;
 	flatitervars_t fi;
 	lumcontact_t *con;
+	sector_t *sect = ssec->sector;
 
 	// First make sure we know which lumobjs are contacting us.
 	DL_SpreadBlocks(ssec);
 
 	fi.subsector = ssec;
+	fi.subIndex = GET_SUBSECTOR_IDX(ssec);
 	fi.fceil = SECT_CEIL(sect);
 	fi.ffloor = SECT_FLOOR(sect);
+
+#if 0
+	// Are there pregenerated decoration lightmaps?
+	fi.floorDecorMap = DL_GetFlatDecorLightMap(sect->floorpic);
+	fi.ceilDecorMap = DL_GetFlatDecorLightMap(sect->ceilingpic);
+#endif
 
 	// Check if lighting can be skipped.
 	fi.lightFloor = (sect->floorpic != skyflatnum);
