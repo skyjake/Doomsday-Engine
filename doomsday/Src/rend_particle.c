@@ -569,6 +569,10 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		center[VZ] = FIX2FLT(pt->pos[VY]);
 		center[VY] = FIX2FLT(P_GetParticleZ(pt));
 
+		center[VX] += frameTimePos * FIX2FLT(pt->mov[VX]);
+		center[VZ] += frameTimePos * FIX2FLT(pt->mov[VY]);
+		center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
+
 		// Model particles are rendered using the normal model rendering 
 		// routine.
 		if(rtype == PTC_MODEL && dst->model >= 0)

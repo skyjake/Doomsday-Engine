@@ -25,7 +25,7 @@
 #include "con_decl.h"
 
 extern int      haloOccludeSpeed;
-extern int      haloMode, haloBright, haloSize;
+extern int      haloMode, haloRealistic, haloBright, haloSize;
 extern float    haloFadeMax, haloFadeMin, minHaloSize;
 
 void            H_Register(void);

@@ -2740,7 +2740,7 @@ int CCmdDir(int argc, char **argv)
 		Con_Printf("Directory: %s\n", dir);
 
 		// Make the pattern.
-		sprintf(pattern, "%s*.*", dir);
+		sprintf(pattern, "%s*", dir);
 		F_ForAll(pattern, dir, Con_PrintFileName);
 	}
 
@@ -3094,6 +3094,8 @@ static void registerVariables(void)
 	// * Render-Halo
 	C_VAR_INT("rend-halo", &haloMode, 0, 0, 5,
 			  "Number of flares to draw per light.");
+	C_VAR_INT("rend-halo-realistic", &haloRealistic, 0, 0, 1,
+			  "1=Use more realistic halo effects.");
 	C_VAR_INT("rend-halo-bright", &haloBright, 0, 0, 100,
 			  "Halo/flare brightness.");
 	C_VAR_INT("rend-halo-occlusion", &haloOccludeSpeed, CVF_NO_MAX, 0, 0,

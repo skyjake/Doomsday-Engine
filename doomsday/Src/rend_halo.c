@@ -79,6 +79,7 @@ flare_t flares[NUM_FLARES] = {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     haloMode = 5, haloBright = 35, haloSize = 50;
+int		haloRealistic = true;
 int     haloOccludeSpeed = 48;
 float   haloZMagDiv = 100, haloMinRadius = 20;
 float   haloDimStart = 10, haloDimEnd = 100;
@@ -153,14 +154,17 @@ void H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 	float   halopos[3], occlusionfactor;
 	int     i, k, tex;
 	lumobj_t *lum = sourcevis->data.mo.light;
-
-	//  mobj_t          *mo = lum->thing;
-	//  float           cliprange = farClip - nearClip;
 	float   color[4], radx, rady, scale, turnangle = 0;
 	float   fadefactor = 1, secbold, secdimfactor;
 	float   coloraverage, f, distancedim, lum_distance;
 	flare_t *fl;
 
+	if(!primary && haloRealistic)
+	{
+		// In the realistic mode we don't render secondary halos.
+		return;
+	}
+	
 	lum_distance = FIX2FLT(lum->distance);
 
 	if(lum->flags & LUMF_NOHALO || lum_distance == 0 ||
@@ -290,32 +294,33 @@ void H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 			radius = haloMinRadius;
 		radius *= occlusionfactor;
 
-		/*
-		 * (farClip - clipRange/sourcevis->distance)
-		 + sourcevis->distance/40);*/// * ((50 + haloSize)/100.0f);
-		//if(lum->flareSize/sourcevis->distance < .01f) break; // Too small!
 		secbold = coloraverage - 8 * (1 - secdimfactor);
-
-		/*if(i && color[CA] < .5f && lum->flareSize < minHaloSize)
-		   break; // Don't render secondary flares. */
 
 		color[CA] *= .8f * haloBright / 100.0f;
 		if(i)
+		{
 			color[CA] *= secbold;	// Secondary flare boldness.
+		}
 		if(color[CA] <= 0)
+		{
 			break;				// Not visible.
+		}
 
-		/*      radius = lum->flareSize/255.0f * 10;
-		   if(radius > 1.5) radius = 1.5f;
-
-		   // Determine the size of the halo.
-		   flaresizefactor = (farClip - clipRange
-		   *((sourcevis->distance - nearClip)/clipRange)) * radius;
-		   size = flareSizeFactor * screenHeight/2000.0f * viewscaler;
-		 */
+		// In the realistic mode, halos are slightly dimmer.
+		if(haloRealistic)
+		{
+			color[CA] *= .8f;
+		}
+		
 		gl.Color4fv(color);
 
-		if(primary && lum->flareTex)
+		if(haloRealistic)
+		{
+			// The 'realistic' halos just use the blurry round
+			// texture.
+			tex = GL_PrepareLSTexture(LST_DYNAMIC);
+		}
+		else if(primary && lum->flareTex)
 		{
 			// Set texture explicitly.
 			if(lum->flareTex == 1)
@@ -349,6 +354,12 @@ void H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
+		// In the realistic mode, halos are slightly smaller.
+		if(haloRealistic)
+		{
+			radius *= 0.8f;
+		}
+		
 		// The final radius.
 		radx = radius * fl->size;
 		rady = radx / 1.2f;
