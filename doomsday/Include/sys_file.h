@@ -18,7 +18,12 @@ typedef struct
 	char *pos;
 } DFILE;
 
-typedef int (*f_forall_func_t)(const char *fn, int parm);
+typedef enum filetype_e {
+	FT_NORMAL,
+	FT_DIRECTORY
+} filetype_t;
+
+typedef int (*f_forall_func_t)(const char *fn, filetype_t type, void *parm);
 
 void	F_InitDirec(void);
 void	F_ShutdownDirec(void);
@@ -31,7 +36,7 @@ int		F_GetC(DFILE *file);
 int		F_Tell(DFILE *file);
 int		F_Seek(DFILE *file, int offset, int whence);
 void	F_Rewind(DFILE *file);
-int		F_ForAll(const char *filespec, int parm, f_forall_func_t func);
+int		F_ForAll(const char *filespec, void *parm, f_forall_func_t func);
 
 #if !__DOOMSDAY__
 // Redefine to match the standard file stream routines.
