@@ -9,6 +9,10 @@
 extern int	panel_show_help;
 extern int	panel_show_tips;
 
+// Helpful handlers.
+void CP_CvarSlider(ui_object_t *ob);
+void CP_InitCvarSliders(ui_object_t *ob);
+
 // Console commands.
 D_CMD( OpenPanel );
 
