@@ -282,11 +282,12 @@ int Sv_Latency(byte cmdtime)
 	return Net_TimeDelta(gametic, cmdtime);
 }
 
-//===========================================================================
-// Sv_FixLocalAngles
-//	For local players.
-//===========================================================================
-void Sv_FixLocalAngles()
+/*
+ * Check the FIXANGLES flag of local players.  Angle fixing means that
+ * the 'clientside' angles will be synced to match the angles of the
+ * player's mobj.  Usually the sync goes the other way.
+ */
+void Sv_FixLocalAngles(void)
 {
 	ddplayer_t *pl;
 	int i;
