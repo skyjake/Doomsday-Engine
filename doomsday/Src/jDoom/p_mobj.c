@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.11  2004/01/19 19:20:31  skyjake
+// Renamed ticcmd_t members (now uses common ticcmd)
+//
 // Revision 1.10  2004/01/08 12:25:15  skyjake
 // Merged from branch-nix
 //
@@ -304,8 +307,8 @@ void P_XYMovement (mobj_t* mo)
 		&& mo->momx < STANDSPEED
 		&& mo->momy > -STANDSPEED
 		&& mo->momy < STANDSPEED
-		&& !player->cmd.forwardmove
-		&& !player->cmd.sidemove)
+		&& !player->cmd.forwardMove
+		&& !player->cmd.sideMove)
 	{
 		// if in a walking frame, stop moving
 		if((unsigned)((player->plr->mo->state - states) - S_PLAY_RUN1) < 4)
@@ -316,8 +319,8 @@ void P_XYMovement (mobj_t* mo)
 		&& mo->momx < STOPSPEED
 		&& mo->momy > -STOPSPEED
 		&& mo->momy < STOPSPEED
-		&& (!player || (player->cmd.forwardmove == 0 
-			&& player->cmd.sidemove == 0)))
+		&& (!player || (player->cmd.forwardMove == 0 
+			&& player->cmd.sideMove == 0)))
     {
 		mo->momx = 0;
 		mo->momy = 0;

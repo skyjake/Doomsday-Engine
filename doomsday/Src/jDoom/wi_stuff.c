@@ -1625,13 +1625,13 @@ void WI_checkForAccelerate(void)
     {
 		if(players[i].plr->ingame)
 		{
-			if(player->cmd.buttons & BT_ATTACK)
+			if(player->cmd.actions & BT_ATTACK)
 			{
 				if (!player->attackdown) acceleratestage = 1;
 				player->attackdown = true;
 			}
 			else player->attackdown = false;
-			if(player->cmd.buttons & BT_USE)
+			if(player->cmd.actions & BT_USE)
 			{
 				if (!player->usedown) acceleratestage = 1;
 				player->usedown = true;

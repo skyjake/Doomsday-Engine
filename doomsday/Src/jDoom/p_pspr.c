@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2004/01/19 19:20:31  skyjake
+// Renamed ticcmd_t members (now uses common ticcmd)
+//
 // Revision 1.5  2004/01/08 12:25:15  skyjake
 // Merged from branch-nix
 //
@@ -357,7 +360,7 @@ A_WeaponReady
     
     // check for fire
     //  the missile launcher and bfg do not auto fire
-    if (player->cmd.buttons & BT_ATTACK)
+    if (player->cmd.actions & BT_ATTACK)
     {
 		if ( !player->attackdown
 			|| (player->readyweapon != wp_missile
@@ -390,11 +393,11 @@ void C_DECL A_ReFire( player_t*	player, pspdef_t*	psp)
 {
     // check for fire
     //  (if a weaponchange is pending, let it go through instead)
-    if ((player->cmd.buttons & BT_ATTACK) 
+    if ((player->cmd.actions & BT_ATTACK) 
 		&& player->pendingweapon == wp_nochange
 		&& player->health)
     {
-		//if(IS_CLIENT) gi.conprintf( "client refire: atk=%i\n", player->cmd.buttons & BT_ATTACK);
+		//if(IS_CLIENT) gi.conprintf( "client refire: atk=%i\n", player->cmd.actions & BT_ATTACK);
 		player->refire++;
 		P_FireWeapon (player);
     }

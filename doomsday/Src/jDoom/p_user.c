@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2004/01/19 19:20:31  skyjake
+// Renamed ticcmd_t members (now uses common ticcmd)
+//
 // Revision 1.4  2004/01/08 12:25:16  skyjake
 // Merged from branch-nix
 //
@@ -129,9 +132,9 @@ void P_CheckPlayerJump(player_t *player)
 	if(cfg.jumpEnabled 
 		&& (!IS_CLIENT || netJumpPower > 0)
 		&& P_IsPlayerOnGround(player)
-		&& !(cmd->buttons & BT_SPECIAL)
-		&& !(cmd->buttons & BT_CHANGE)
-		&& cmd->buttons & BT_JUMP
+		&& !(cmd->actions & BT_SPECIAL)
+		&& !(cmd->actions & BT_CHANGE)
+		&& cmd->actions & BT_JUMP
 		&& player->jumptics <= 0)
 	{
 		// Jump, then!
@@ -155,7 +158,7 @@ void P_MovePlayer (player_t* player)
 	if(!(player->plr->flags & DDPF_FIXANGLES))
 	{
 		plrmo->angle = cmd->angle << 16;
-		player->plr->lookdir = cmd->lookdir/(float)DDMAXSHORT * 110;
+		player->plr->lookdir = cmd->pitch/(float)DDMAXSHORT * 110;
 	}
 
     // Do not let the player control movement if not onground.
@@ -170,8 +173,8 @@ void P_MovePlayer (player_t* player)
 	{
 		// Cameramen have a 3D thrusters!
 		P_Thrust3D(player, player->plr->mo->angle,
-			player->plr->lookdir, cmd->forwardmove*2048,
-			cmd->sidemove*2048);
+			player->plr->lookdir, cmd->forwardMove*2048,
+			cmd->sideMove*2048);
 	}
 	else
 	{
@@ -180,19 +183,19 @@ void P_MovePlayer (player_t* player)
 			: cfg.airborneMovement? cfg.airborneMovement*64 
 			: 0; // Movement while in air traditionally disabled.
 
-		if (cmd->forwardmove && movemul)
+		if (cmd->forwardMove && movemul)
 		{
 			P_Thrust(player, player->plr->mo->angle, 
-				cmd->forwardmove * movemul);
+				cmd->forwardMove * movemul);
 		}
 		
-		if (cmd->sidemove && movemul)
+		if (cmd->sideMove && movemul)
 		{
 			P_Thrust(player, player->plr->mo->angle-ANG90, 
-				cmd->sidemove * movemul);
+				cmd->sideMove * movemul);
 		}
 		
-		if ( (cmd->forwardmove || cmd->sidemove) 
+		if ( (cmd->forwardMove || cmd->sideMove) 
 			&& player->plr->mo->state == &states[S_PLAY] )
 		{
 			P_SetMobjState (player->plr->mo, S_PLAY_RUN1);
@@ -254,7 +257,7 @@ void P_DeathThink (player_t* player)
     else if (player->damagecount)
 		player->damagecount--;
 	
-    if (player->cmd.buttons & BT_USE)
+    if (player->cmd.actions & BT_USE)
 		player->playerstate = PST_REBORN;
 }
 
@@ -440,8 +443,8 @@ void P_PlayerThink (player_t* player)
 		cmd->angle = plrmo->angle >> 16;	// Don't turn.
 		// The client must know of this.
 		player->plr->flags |= DDPF_FIXANGLES;
-		cmd->forwardmove = 0xc800/512;
-		cmd->sidemove = 0;
+		cmd->forwardMove = 0xc800/512;
+		cmd->sideMove = 0;
 		player->plr->mo->flags &= ~MF_JUSTATTACKED;
     }
 	
@@ -468,25 +471,25 @@ void P_PlayerThink (player_t* player)
 
 	oldweapon = player->pendingweapon;
 
-	if(cmd->buttons & BT_SPECIAL)
+	if(cmd->actions & BT_SPECIAL)
 	{
 		// There might be a special weapon change.
-		if(cmd->buttons & (BTS_NEXTWEAPON | BTS_PREVWEAPON) &&
-			!(cmd->buttons & BTS_PAUSE))
+		if(cmd->actions & (BTS_NEXTWEAPON | BTS_PREVWEAPON) &&
+			!(cmd->actions & BTS_PAUSE))
 		{
 			player->pendingweapon = P_PlayerFindWeapon(player, 
-				(cmd->buttons & BTS_NEXTWEAPON) != 0);
+				(cmd->actions & BTS_NEXTWEAPON) != 0);
 		}
-		cmd->buttons = 0;
+		cmd->actions = 0;
 	}
 
     // Check for weapon change.
-    if (cmd->buttons & BT_CHANGE)
+    if (cmd->actions & BT_CHANGE)
     {
 		// The actual changing of the weapon is done
 		//  when the weapon psprite can do it
 		//  (read: not in the middle of an attack).
-		newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+		newweapon = (cmd->actions & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
 
 /*		if (newweapon == wp_fist
 			&& player->weaponowned[wp_chainsaw]
@@ -528,7 +531,7 @@ void P_PlayerThink (player_t* player)
 		player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
 
     // check for use
-    if (cmd->buttons & BT_USE)
+    if (cmd->actions & BT_USE)
     {
 		if (!player->usedown)
 		{
