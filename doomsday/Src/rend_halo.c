@@ -176,7 +176,7 @@ void H_InitForNewFrame()
 			factor = 1;
 		}
 		for(c = 0; c < 3; c++) vtx->color[c] = lum->rgb[c] / 255.0f * factor;
-		vtx->color[CA] = lum->flaresize / 255.0f;
+		vtx->color[CA] = lum->flareSize / 255.0f;
 		vtx++;
 	}
 	// Project the vertices.
@@ -484,7 +484,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		+ sourcevis->mo.visoff[VZ];
 
 	// Apply the flare's X offset. (Positive is to the right.)
-	for(i = 0; i < 3; i++) center[i] -= lum->xoff*viewsidevec[i];
+	for(i = 0; i < 3; i++) center[i] -= lum->xOff * viewsidevec[i];
 
 	// Calculate the mirrored position.
 	// Project viewtocenter vector onto viewsidevec.
@@ -529,10 +529,10 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 
 	// The overall brightness of the flare.
 	coloraverage = (color[CR] + color[CG] + color[CB] + 1)/4;
-	//overallbrightness = lum->flaresize/25 * coloraverage;
+	//overallbrightness = lum->flareSize/25 * coloraverage;
 
 	// Small flares have stronger dimming.
-	f = lum_distance/lum->flaresize;
+	f = lum_distance/lum->flareSize;
 	if(haloDimStart 
 		&& haloDimStart < haloDimEnd
 		&& f > haloDimStart)
@@ -549,7 +549,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		if(i)
 		{
 			// Secondary flare dimming?
-			f = minHaloSize*lum->flaresize/lum_distance;
+			f = minHaloSize*lum->flareSize/lum_distance;
 			if(f > 1) f = 1;
 		}
 		f *= distancedim;
@@ -558,7 +558,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		color[CA] = f * (fl->alpha * occlusionfactor * fadefactor 
 			+ coloraverage*coloraverage/5);
 		
-		radius = lum->flaresize * (1 - coloraverage/3) 
+		radius = lum->flareSize * (1 - coloraverage/3) 
 			+ lum_distance/haloZMagDiv;
 		if(radius < haloMinRadius) radius = haloMinRadius;
 		radius *= occlusionfactor;
@@ -566,7 +566,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		/*
 			* (farClip - clipRange/sourcevis->distance)
 			+ sourcevis->distance/40);*/// * ((50 + haloSize)/100.0f);
-		//if(lum->flaresize/sourcevis->distance < .01f) break; // Too small!
+		//if(lum->flareSize/sourcevis->distance < .01f) break; // Too small!
 		secbold = coloraverage - 8*(1 - secdimfactor);
 
 		/*if(i && color[CA] < .5f && lum->flareSize < minHaloSize)
@@ -576,7 +576,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 		if(i) color[CA] *= secbold; // Secondary flare boldness.
 		if(color[CA] <= 0) break; // Not visible.
 
-/*		radius = lum->flaresize/255.0f * 10;
+/*		radius = lum->flareSize/255.0f * 10;
 		if(radius > 1.5) radius = 1.5f;
 
 		// Determine the size of the halo.
@@ -586,16 +586,16 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 */
 		gl.Color4fv(color);
 
-		if(primary && lum->flaretex)
+		if(primary && lum->flareTex)
 		{
 			// Set texture explicitly.
-			if(lum->flaretex == 1)
+			if(lum->flareTex == 1)
 				tex = GL_PrepareLightTexture();
 			else
-				tex = GL_PrepareFlareTexture(lum->flaretex - 2);
+				tex = GL_PrepareFlareTexture(lum->flareTex - 2);
 		}
-		else if(lum->flaresize > 45 
-			|| coloraverage > .90 && lum->flaresize > 20)
+		else if(lum->flareSize > 45 
+			|| coloraverage > .90 && lum->flareSize > 20)
 		{
 			// The "Very Bright" condition.
 			radius *= .65f;

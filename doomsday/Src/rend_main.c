@@ -1100,7 +1100,7 @@ void Rend_RenderSubsector(int ssecidx)
 
 	Rend_OccludeSubsector(ssec, false);
 	// Determine which dynamic light sources in the subsector get clipped.
-	for(lumi = dlSubLinks[ssecidx]; lumi; lumi = lumi->ssnext)
+	for(lumi = dlSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
 	{
 		lumi->flags &= ~LUMF_CLIPPED;
 		// FIXME: Determine the exact centerpoint of the light in 
