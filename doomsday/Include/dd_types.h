@@ -15,6 +15,7 @@ typedef unsigned short		nodeindex_t;
 typedef unsigned short		thid_t;
 typedef unsigned char		byte;
 typedef struct directory_s	directory_t;
+typedef char				filename_t[256];
 
 #ifdef __cplusplus
 #	define boolean			int
