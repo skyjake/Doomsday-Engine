@@ -1,6 +1,6 @@
 @include{jake.ah}
 @macro{TITLE}{ The Doomsday Engine }
-@macro{VERSION}{ Version 1.7.8 }
+@macro{VERSION}{ Version 1.7.9 }
 
 @require{amestd}
 @include{darktable}
@@ -11,15 +11,9 @@ CONTENTS: @contents{1}
 
 @chapter{ Introduction }
 
-The Doomsday Engine is an enhanced and extended Win32 version of the DOOM
-engine. It was originally based on the Hexen source code but parts of it
-have later been completely rewritten. Doomsday is only an engine: you will
-also need a Game DLL. Three such DLLs are being developed alongside the
-engine: jDoom, jHeretic and jHexen.
+The Doomsday Engine is an enhanced and extended Win32 version of the DOOM engine. It was originally based on the Hexen source code but parts of it have later been completely rewritten. Doomsday is only an engine: you will also need a Game DLL. Three such DLLs are being developed alongside the engine: jDoom, jHeretic and jHexen.
 
-Doomsday is a direct descendant of JHexen. The first version of JHexen was
-released in October 1999. Subsequently the first version of Doomsday was
-released in February 2000.
+Doomsday is a direct descendant of JHexen. The first version of JHexen was released in October 1999. Subsequently the first version of Doomsday was released in February 2000.
 
 The engine, jDoom, jHeretic and jHexen are being developed by Jaakko
 Keränen. Of late an increasing number of people has been involved in the
@@ -76,7 +70,7 @@ Other:
 @list{
 @item Pentium 166 (or equivalent) with 64Mb of RAM (3D models &
 	special effects disabled)
-@item Windows 95 (or newer)
+@item Windows 98 (or newer)
 @item DirectX 8 (or newer)
 @item A display adapter capable of 3D hardware acceleration
 @item At least one WAD file from the original Doom, Heretic, Hexen, etc.
@@ -138,7 +132,7 @@ downloaded from:
 $ Various technical details.
 @chapter{ Details }
 
-@section{ Paths and the command line }
+@section{ Paths and the Command Line }
 
 There are a few things you should know about the handling of relative
 paths. First of all, these are the directories that the engine is working
@@ -157,59 +151,21 @@ The @opt{-basedir} option tells the engine where the base directory is in
 relation to the runtime directory (or it's the the absolute path of the
 base directory, e.g. @file{ C:\Doomsday\ }).
 
-The principle is that @opt{-basedir} only affects built-in default paths and
-relative paths in DED files. @opt{-basedir} does not affect relative paths in
-command line options. If a relative path is given on the command line, it
-is interpreted in relation to the runtime directory. For example, the
-option @opt{-file doom.wad} will make the engine read the file
-@file{doom.wad}, which is located in the runtime directory. In the default
-configuration this is @file{ C:\Doomsday\Run\jDoom\ }. KickStart automatically
-uses a @opt{-basedir} of @file{..\..}, which means the root directory is the
-'grandparent' of the runtime directory. The option @opt{-sbd} (@opt{-stdbasedir})
-is the equivalent of @opt{-basedir ..\..}.
+The principle is that @opt{-basedir} only affects built-in default paths and relative paths in DED files. @opt{-basedir} does not affect relative paths in command line options. If a relative path is given on the command line, it is interpreted in relation to the runtime directory. For example, the option @opt{-file doom.wad} will make the engine read the file @file{doom.wad}, which is located in the runtime directory. In the default configuration this is @file{ C:\Doomsday\Run\jDoom\ }. KickStart automatically uses a @opt{-basedir} of @file{..\..}, which means the root directory is the 'grandparent' of the runtime directory. The option @opt{-sbd} (@opt{-stdbasedir}) is the equivalent of @opt{-basedir ..\..}.
 
-There is one exception, however: with the @opt{-file} (and @opt{-iwad}) options a
-relative path can begin with a greater-than character (>). When the engine
-loads the WAD file in question the > character is replaced with the path
-specified by @opt{-basedir}. For example, @opt{-file >Data\Doom.wad} would make the
-engine load a WAD named @file{ C:\Doomsday\Data\Doom.wad } (assuming the default
-Doomsday root @file{ C:\Doomsday\ }). Note that if you're executing
-@file{Doomsday.exe} from the command line or from a DOS batch file, you must
-enclose the file names that contain a > character in quotes or otherwise DOS
-will think you're trying to redirect output. In response files it doesn't matter if
-there are quotes or not. (If you really are trying to redirect output, you
-should use the @opt{-out} option.)
+There is one exception, however: with the @opt{-file} (and @opt{-iwad}) options a relative path can begin with a greater-than character (>). When the engine loads the WAD file in question the > character is replaced with the path specified by @opt{-basedir}. For example, @opt{-file >Data\Doom.wad} would make the engine load a WAD named @file{ C:\Doomsday\Data\Doom.wad } (assuming the default Doomsday root @file{ C:\Doomsday\ }). Note that if you're executing @file{Doomsday.exe} from the command line or from a DOS batch file, you must enclose the file names that contain a > character in quotes or otherwise DOS will think you're trying to redirect output. In response files it doesn't matter if there are quotes or not. (If you really are trying to redirect output, you should use the @opt{-out} option.)
 
-The default launch method (used by KickStart) is a runtime directory
-oriented approach. KickStart will change the current working directory to
-the Game's runtime folder and execute @file{Doomsday.exe} from there, with the
-@opt{-basedir ..\..} option. This way the engine will use the appropriate runtime
-folder as the working directory, but will also know where the Doomsday root
-directory is by prepending the base directory's @file{..\..} to default path
-names (like fonts and definitions files).
+The default launch method (used by KickStart) is a runtime directory oriented approach. KickStart will change the current working directory to the Game's runtime folder and execute @file{Doomsday.exe} from there, with the @opt{-basedir ..\..} option. This way the engine will use the appropriate runtime folder as the working directory, but will also know where the Doomsday root directory is by prepending the base directory's @file{..\..} to default path names (like fonts and definitions files).
 
-There is an alternative approach, which could be called an executable
-oriented approach. @file{Doomsday.exe} is executed in the @file{Bin} directory,
-with the options @opt{-userdir <runtime-path> -basedir <path-to-root>}.
-@file{<runtime-path>} can be a relative or an absolute path to the correct
-runtime directory. Again, @opt{-basedir} tells the engine where the root
-directory is, as an absolute path or in relation to @file{<runtime-path>}.
-@opt{-userdir} will make the engine run in the given directory, i.e.
-it specifies the runtime directory.
+There is an alternative approach, which could be called an executable oriented approach. @file{Doomsday.exe} is executed in the @file{Bin} directory, with the options @opt{-userdir <runtime-path> -basedir <path-to-root>}. @file{<runtime-path>} can be a relative or an absolute path to the correct runtime directory. Again, @opt{-basedir} tells the engine where the root directory is, as an absolute path or in relation to @file{<runtime-path>}. @opt{-userdir} will make the engine run in the given directory, i.e. it specifies the runtime directory.
 
-Note that @opt{-game} and @opt{-gl} work a bit differently because their
-arguments are directly passed on to the Win32 routine @cmd{LoadLibrary}. You
-should either omit the path entirely (e.g. @opt{-game jHeretic.dll}) or use
-a full path to the DLL (e.g. @opt{-game C:\Doomsday\Bin\jHeretic.dll}), no
-matter where you're executing @file{Doomsday.exe}.
+Note that @opt{-game} and @opt{-gl} work a bit differently because their arguments are directly passed on to the Win32 routine @cmd{LoadLibrary}. You should either omit the path entirely (e.g. @opt{-game jHeretic.dll}) or use a full path to the DLL (e.g. @opt{-game C:\Doomsday\Bin\jHeretic.dll}), no matter where you're executing @file{Doomsday.exe}.
 
-The default place where you should put your IWADs is @file{ Data\<Game>\ }.
-jDoom, jHeretic and jHexen will by default look for IWADs in @file{ Data\<Game>\ },
-@file{ Data\ }, the base directory and the runtime directory, in that order.
+The default place where you should put your IWADs is @file{ Data\<Game>\ }. jDoom, jHeretic and jHexen will by default look for IWADs in @file{ Data\<Game>\ }, @file{ Data\ }, the base directory and the runtime directory, in that order.
 
 
 
-@section{ The @opt{-file} option }
+@section{ The @opt{-file} Option }
 
 @a{fileopt}
 The @opt{-file} option is used to load WAD files and other data files
@@ -236,35 +192,20 @@ data related to it would lead to fatal errors.
 
 
 
-@section{ Definitions and files in WADs }
+@section{ Definitions and Files in WADs }
 
-After all DED files have been processed, the engine will check through all
-the loaded WAD files for lumps named @file{DD_DEFNS}. All the lumps with that name
-are processed just as if they were DED files, i.e. they should contain a
-DED file in plain text format. The @file{DD_DEFNS} lumps are applied in the order
-in which they have been loaded.
+After all DED files have been processed, the engine will check through all the loaded WAD files for lumps named @file{DD_DEFNS}. All the lumps with that name are processed just as if they were DED files, i.e. they should contain a DED file in plain text format. The @file{DD_DEFNS} lumps are applied in the order in which they have been loaded.
 
-Another special lump used by Doomsday is @file{DD_DIREC}. It contains a table that
-translates file paths to lump names. An example is shown below:
+Another special lump used by Doomsday is @file{DD_DIREC}. It contains a table that translates file paths to lump names. An example is shown below:
 
 @samp{
 @pre{FILE001  /Md2/jDoom/Some.md2
 FILE002  Another.ded}
 }
 
-Each line in @file{DD_DIREC} contains a lump/path pair. The paths that begin with
-a (back)slash are interpreted to start from the Doomsday base directory
-(set with @opt{-basedir}; e.g. @file{C:\Doomsday}) and paths that don't begin with a
-(back)slash are located in the runtime directory. The engine will search
-the @file{DD_DIREC}@nsp{s} first before opening any file
-(but only when reading). Note however that all kinds of files are not loaded
-using the @file{DD_DIREC}@nsp{s}: for instance demos (which are compressed
-with the LZSS library) must always be loaded from real files.
+Each line in @file{DD_DIREC} contains a lump/path pair. The paths that begin with a (back)slash are interpreted as paths that start from the Doomsday base directory (set with @opt{-basedir}; e.g. @file{C:\Doomsday}) and paths that don't begin with a (back)slash are located in the runtime directory. The engine will first search the @file{DD_DIREC}@nsp{s} before opening any file for reading. Note, however, that all kinds of files are not loaded using the @file{DD_DIREC}@nsp{s}: for instance demos (which are compressed with the LZSS library) must always be loaded from real files.
 
-I've written a simple utility for automatically creating a WAD file that
-contains the current directory and all its subdirectories plus a @file{DD_DIREC}
-lump that has (with a high probability) a unique lump name for each file.
-You could invoke the utility like this:
+I've written a simple utility for automatically creating a WAD file that contains the current directory and all its subdirectories plus a @file{DD_DIREC} lump that has (with a high probability) a unique lump name for each file. You could invoke the utility like this:
 
 @samp{@cmd{ wadtool myfiles.wad /Data/jDoom/Textures/ }}
 
@@ -274,7 +215,100 @@ directory. When writing the @file{DD_DIREC} table, the prefix
 
 
 
-@section{ High-resolution textures }
+@section{ Detail Textures }
+
+Detail textures are grayscale images that are rendered on top of normal
+textures when walls and planes are viewed from close by. A signed-add
+blending is used, which lets the detail texture either darken or brighten
+the underlying texture: black => dark, gray => no change, white => bright.
+
+Detail textures can be assigned to specific wall textures and flats using Detail definitions (@file{Details.ded}). The definition is described in the Doomsday Engine Definitions Reference (@file{DEDDoc.txt}).
+
+Detail textures can be loaded from PCX images or raw image data. Either way, the image must be inside a WAD file or loaded using the @opt{-file} option. When using the @opt{-file} option to load detail textures, the file names of the images become lump names (see @ref{fileopt}{@opt{-file} option}).
+
+PCX images used as detail textures must have a color depth of 8 bits and their width and height must be powers of two. The palette should be a grayscale one. It's possible to use other colors but the result can be weird due to the way the blending of detail textures is done.
+
+If the source data is a raw image, it must be either 64x64, 128x128 or 256x256 pixels in size. Raw images contain only the pixel values, (one byte per pixel) and have only one color component per pixel (they're black and white images), which means the lump or file that contains the detail texture can either be 4096, 16384 or 65536 bytes long.
+
+Using the default scaling, the pixels of detail textures are four times smaller than the pixels of regular textures.
+
+The console variables @var{rend-tex-detail}, @var{rend-tex-detail-far}, @var{rend-tex-detail-strength} and @var{rend-tex-detail-scale} control the rendering of detail textures.
+
+
+
+@section{ Dehacked Patches }
+
+Most features of Dehacked are supported by Doomsday's Dehacked reader.
+The loader will print a message during startup if an unsupported
+feature is used.
+
+Let's say you have the Dehacked patch @file{file.deh} in your runtime
+directory. Then you can use the command line option
+@opt{-deh file.deh} to load it at startup.
+
+If a lump named @file{DEHACKED} is found in a WAD, it will be
+automatically applied when the WAD is loaded. Normally only the last
+@file{DEHACKED} lump is used if a lump with that name is found
+in multiple WADs. Use the option @opt{-alldehs} to make the engine
+apply all found @file{DEHACKED} lumps.
+
+
+
+
+$ External resource files.
+@chapter{ Resource Files }
+
+Normally all resources such as wall textures, menu graphics and fonts, background music and sound effects are loaded from the WAD files. Doomsday has a mechanism that allows replacing these resources with external resource files placed in specific directories. The files are called
+'external' because they are regular files and not part of a WAD file.
+
+External resource files are easy to use. They do not require making changes to any configuration or definition files. As long as a resource file is placed in the correct directory, Doomsday will load and use it automatically.
+
+External resources are divided into a number of classes. Each class has its own subdirectory under the @file{ Data\<Game>\ } directory. The table below lists the resource classes and gives a brief description of each.
+
+@table{25 75}{
+	@header{Resource Class} @tab @header{Description}
+@row{single}
+	Textures @tab Textures for walls and flats (floors and ceilings) @row
+	Patches @tab Graphics for menus, fonts, background pictures @row
+	Music @tab Background music @row
+	Sfx @tab Sound effects
+}
+
+For example, sound effects for jDoom would be placed in the directory @file{ Data\jDoom\Sfx\ }.
+
+
+
+@section{ Game Modes }
+
+One Game DLL, such as jDoom, is able to run in many different modes. Each mode emulates a specific version of the original game and typically has its own IWAD file. In some cases two modes can have a resource with the same name. This is a problem if the same resource file can't be used by both modes.
+
+The resource class directory can have a subdirectory for each game mode. When Doomsday looks for an external resource, it first checks the current game mode's subdirectory. If no suitable resource is found there, the class directory is searched instead.
+
+Below is a list of all the game modes supported by jDoom, jHeretic and jHexen.
+
+@table{18 27 55}{
+	@header{Game} @tab @header{Mode} @tab @header{Description}
+@row{single}
+	jDoom @tab doom1-share @tab Shareware Doom @row
+	@tab doom1 @tab Registered Doom @row
+	@tab doom1-ultimate @tab Ultimate Doom (has a 4th episode) @row
+	@tab doom2 @tab Doom 2 @row
+	@tab doom2-plut @tab Final Doom: Plutonia Experiment @row
+	@tab doom2-tnt @tab Final Doom: TNT Evilution @row
+
+	jHeretic @tab heretic-share @tab Shareware Heretic @row
+	@tab heretic @tab Registered Heretic @row
+	@tab heretic-ext @tab Heretic: Shadow of the Serpent Riders (has episodes 4, 5) @row
+
+	jHexen @tab hexen @tab Hexen @row
+	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel
+}
+
+For example, textures meant only for Final Doom: Plutonia Experiment would be placed in the directory @file{ Data\jDoom\Textures\doom2-plut\ }.
+
+
+
+@section{ Textures }
 
 Normal wall textures and flats can be replaced with TGA (Truevision Targa),
 PNG (Portable Network Graphics) or PCX (Zsoft Paintbrush) images. The
@@ -296,45 +330,19 @@ Note that 32-bit images are just 24-bit images with an additional 8 bits
 per pixel for the alpha channel. Contact me if you feel that it's necessary
 to add support for other formats.
 
-The recommended format for high-resolution textures is paletted PNG. It is
-the easiest format in which to distribute the textures (small). Since the
-palette doesn't have to be the same as the game's, it should be enough for
-just about any texture.
+The recommended format for high-resolution textures is paletted PNG. It is the easiest format in which to distribute the textures due to its small size. Since the palette doesn't have to be the same as the game's, it should be enough for many textures.
 
-The high-resolution textures can be of any size. The engine will render
-them scaled to fit the size of the original texture. This means the aspect
-ratio of the new texture doesn't have to be the same as of the original
-texture. Note that the engine will have to resize all textures so that
-their dimensions are powers of two (e.g. 32, 64, 128, 256). This means
-TGA/PNG textures whose width and height are already powers of two can be
-loaded faster.
+The high-resolution textures can be of any size. The engine will render them scaled so that they fit the size of the original texture. This means the aspect ratio of the new texture doesn't have to be the same as of the original texture. Note that the engine will have to resize all textures so that their dimensions are powers of two (e.g. 32, 64, 128, 256). This means TGA/PNG textures whose width and height are already powers of two can be loaded faster.
 
-Color keying is done if the file name of the image ends in "-ck", for
-example @file{brnbigc-ck.png}. Both cyan (0,255,255) and purple (255,0,255) are
-used as keys. An alternative way to have transparency is to use an alpha
-channel. In it, white (255) means opaque and black (0) is fully
-transparent. All values in between can be used, too, for partly translucent
-pixels.
+Color keying is done if the file name of the image ends in "-ck", for example @file{brnbigc-ck.png}. Both cyan (0,255,255) and purple (255,0,255) are used as keys. An alternative way to have transparency is to use an alpha channel. In it, white (255) means opaque and black (0) is fully transparent. All values in between can be used, too, for partly translucent pixels. When using an alpha channel, the "-ck" suffix is not needed.
 
-High-resolution textures are loaded from the @file{ Data\<Game>\Textures\ }
-directory. For example jDoom uses the directory @file{ Data\jDoom\Textures\ }.
-To create a high-resolution texture for the wall texture STARTAN3 you'd place
-a TGA file named @file{startan3.tga} or a PNG file named @file{startan3.png}
-into the @file{Textures} directory. The filenames of images that
-replace flats must begin with "flat-", e.g. to replace the flat FLOOR7_2 you'd
-need to have a TGA file @file{flat-floor7_2.tga} in the @file{Textures}
-directory. If there are both PNG and TGA versions of the same texture,
-the engine will use the PNG version.
+To create a high-resolution texture for the wall texture STARTAN3 you'd place a TGA file named @file{startan3.tga} or a PNG file named @file{startan3.png} into the @file{Textures} directory. The file names of images that replace flats must begin with "flat-", e.g. to replace the flat FLOOR7_2 you'd need to have a TGA file @file{flat-floor7_2.tga} in the @file{Textures} directory. If there are both PNG and TGA versions of the same texture, the engine will use the PNG version.
 
-Note that the filenames of the high-resolution textures must match the
-@em{texture} names, not the names of the patches that make up the textures.
-For example: DOOR2_5 is a patch name, DOOR3 is the texture that uses
-DOOR2_5.
+@notice{
+	The file names of the high-resolution textures must match the @em{texture} names, not the names of the patches that make up the textures. For example: DOOR2_5 is a patch name, DOOR3 is the texture that uses DOOR2_5.
+}
 
-Any textures found in the @file{Textures} directory are automatically used. To
-disable high-resolution textures use the command line option @opt{-nohightex}.
-The option @opt{-texdir} can be used to change the directory from which the
-textures are searched.
+To disable high-resolution textures use the command line option @opt{-nohightex}. The option @opt{-texdir} can be used to change the directory from which the textures are searched.
 
 Links to high-resolution texture sites:
 
@@ -344,70 +352,38 @@ Links to high-resolution texture sites:
 	@link{http://switch.to/hexentextures}
 }
 
+More texture-related resources are available at DoomsdayHQ:
 
-
-@section{ Detail textures }
-
-Detail textures are grayscale images that are rendered on top of normal
-textures when walls and planes are viewed from close by. A signed-add
-blending is used, which lets the detail texture either darken or brighten
-the underlying texture: black => dark, gray => no change, white => bright.
-
-Detail textures can be assigned to specific wall textures and
-flats using Detail definitions (@file{Details.ded}). The definition is described
-in the Doomsday Engine Definitions Reference (@file{DEDDoc.txt}).
-
-Detail textures can be loaded from PCX images or raw image data. Either
-way, the image must be inside a WAD file or loaded using the @opt{-file}
-option. When using the @opt{-file} option to load detail textures, the
-file names of the images become lump names (see
-@ref{fileopt}{@opt{-file} option}).
-
-PCX images used as detail textures must have a color depth of 8 bits
-and their width and height must be powers of two. The palette should
-be a grayscale one. It's possible to use other colors but the result
-can be weird due to the way the blending of detail textures is done.
-
-If the source data is a raw image, it must be either 64x64, 128x128
-or 256x256 pixels in size. Raw images contain only the pixel values,
-(one byte per pixel) and have only one color component per pixel
-(they're black and white images), which means the lump or file that
-contains the detail texture can either be 4096, 16384 or 65536 bytes long.
-
-Using the default scaling, the pixels of detail textures are four times
-smaller than the pixels of regular textures.
-
-The console variables @var{rend-tex-detail}, @var{rend-tex-detail-far},
-@var{rend-tex-detail-strength} and @var{rend-tex-detail-scale} control
-the rendering of detail textures.
+@ind{@link{http://www.doomsdayhq.com/files.php?class=4&type=3}}
 
 
 
-@section{ Custom music and sound files }
+@section{ Patches }
+
+Patches are images that are commonly used in game menus and intermission screens. Like textures, patches can be replaced with TGA, PNG or PCX images. The @file{Patches} resource class directory is searched using the lump names of the original patches. For example, to replace the Doom menu title, you would place the file @file{m_doom.png} to the @file{Patches} directory.
+
+The original data lumps are required even if an external resource is found, because the original data includes information about offsets and the on-screen size of the patch. This means the image from the external resource can be of any arbitrary resolution: it will be scaled to match the original patch.
+
+Currently external patch resources are not precached, which may cause slight delays when the patches are first loaded.
+
+
+
+@section{ Music }
 
 Doomsday can play various external music files using the FMOD library
-(@link{http://www.fmod.org/}). FMOD supports a variety of music file
-formats including MP3, MOD and S3M (modules are a good option due
-to their good quality/size ratio). External music files can be played
+(@link{http://www.fmod.org/}). FMOD supports many music file formats including MP3, OGG, MOD and S3M (mods are a good choice due
+to their good quality/size ratio). External music files can be played at
 any time using the @cmd{playext} console command.
 
 @notice{
-	On some systems using FMOD has caused lock-ups or other
-	unwanted behavior. If this appears to be the case for you,
-	you should disable FMOD using the @opt{-nofmod} option. However,
-	this will also make it impossible to play external music
-	files such as MP3s.
+	On some systems, using FMOD with Doomsday has caused lock-ups or other unwanted behavior. If this appears to be the case for you, you should disable FMOD with the @opt{-nofmod} option. However, this will also make it impossible to play external music files such as MP3s.
 }
 
-If you don't want to edit the Audio definitions you can store
-the external music files into a WAD. In this case you must name
-the lumps so that they match the lumps of the original songs,
-and are thus loaded instead of them. Any music files supported
-by FMOD can be loaded from a WAD.
+Like other external resources, placing a music file into the @file{Music} resource class directory is enough. The file name must match the lump name of the original music data lump. For example, to replace the music for Doom's first episode's second map, the file @file{d_e1m2.mp3} would be placed in the @file{Music} directory.
 
-An example of editing the definitions: you have a terrific song
-called @file{song.mp3} and you'd like to hear it instead of
-Doom's regular "e1m2".
+It is also possible to store music files into a WAD. Again, you must name the lumps so that they match the lumps of the original songs, and are thus loaded instead of them. Any music files supported by FMOD can be loaded from a WAD.
+
+Another way to specify an external resource file is to use the @opt{Ext} key of a Music definition (in Audio.ded). An example of editing the definitions: You have a terrific song called @file{song.mp3} and you'd like to hear it instead of Doom's regular "e1m2".
 
 @list/enum{
 @item The first thing to decide is whether you want to play the
@@ -415,8 +391,7 @@ song from where it's currently located, or do you want to move it under
 the Doomsday directory. In the latter case it would be easy to
 distribute the song and its definition file to others, since they
 wouldn't have to worry about where the music file is. If you decide
-to move the song, create a directory under the @file{ Doomsday\Data\jDoom\ }
-directory called @file{Music}. Another logical choice could be
+to move the song, create a directory under the @file{ Doomsday\Data\jDoom\ } directory called @file{Music}. Another logical choice could be
 @file{ Doomsday\Music\ }. Then copy the song into the created directory.
 
 @item Open @file{Audio.ded} in a text editor. In it, you will find
@@ -424,16 +399,9 @@ a bunch of Music definitions, including:
 
 @code{Music @{ ID = "e1m2"; Lump = "D_E1M2"; @} }
 
-In order to make the change persist over version upgrades (each one
-will overwrite @file{Audio.ded}) copy the definition to @file{User.ded}
-in the @file{ Defs\jDoom\ } directory, or create a new DED file with
-any name you like in the @file{ Defs\jDoom\Auto\ } directory. Anything
-in the @file{Auto} directory will be read. If @file{User.ded} doesn't
-exist, just create a new file for it.
+In order to make the change persist over version upgrades (each one will overwrite @file{Audio.ded}) copy the definition to @file{User.ded} in the @file{ Defs\jDoom\ } directory, or create a new DED file with any name you like in the @file{ Defs\jDoom\Auto\ } directory. Everything in the @file{Auto} directory will be read automatically. If @file{User.ded} doesn't exist, just create a new file for it.
 
-@item Now you have the new Music definition, and the only thing left
-is to let the engine know which file it should load when the song
-"e1m2" is played. Edit your definition by adding the @opt{Ext} key:
+@item Now you have the new Music definition, and the only thing left is to let the engine know which file it should load when the song "e1m2" is played. Edit your definition by adding the @opt{Ext} key:
 
 @ind{@pre{Music @{
   ID = "e1m2"; Lump = "D_E1M2";
@@ -447,36 +415,23 @@ key:
 
 @code{CD track = 3;}
 
-External WAV files can be used instead of samples stored in WAD files, if you
-set the @opt{Ext} key of the corresponding Sound definition.
-Also, Doomsday will automatically detect the format of a sample
-when it's loaded from a WAD file. In this case you don't need to
-edit any definitions. Doomsday supports 8/16 bit @em{mono} PCM WAV files
-with no compression.
+
+@section{ Sound Effects }
+
+Sound samples can be replaced with WAV files. The supported formats are 8-bit and 16-bit mono PCM with no compression. The @file{Sfx} resource class directory is searched using the lump names of the original samples. For example, to replace jDoom's rocket launcher sound, the file @file{dsrlaunc.wav} would be placed in the @file{Sfx} directory.
+
+Another way to specify an external resource file is to use the Sound definition @opt{Ext} key.
+
+Doomsday will automatically detect the format of a sample if it's loaded from a WAD file, making it possible to compile a WAD out of WAV samples.
 
 
 
-@section{ Dehacked patches }
-
-Most features of Dehacked are supported by Doomsday's Dehacked reader.
-The loader will print a message during startup if an unsupported
-feature is used.
-
-Let's say you have the Dehacked patch @file{file.deh} in your runtime
-directory. Then you can use the command line option
-@opt{-deh file.deh} to load it at startup.
-
-If a lump named @file{DEHACKED} is found in a WAD, it will be
-automatically applied when the WAD is loaded. Normally only the last
-@file{DEHACKED} lump is used if a lump with that name is found
-in multiple WADs. Use the option @opt{-alldehs} to make the engine
-apply all found @file{DEHACKED} lumps.
-
-
-
-@chapter{ Known issues }
+@chapter{ Known Issues }
 
 @list{
+@item The list of reported bugs is on the deng Project page on SourceForge:
+	@link{http://sourceforge.net/projects/deng/}
+
 @item The FMOD library has been known to cause problems on some systems.
 	If you experience sudden crashes or lock-ups, try the @opt{-nofmod}
 	option. It may also be helpful to disable MIDI music entirely
@@ -486,7 +441,6 @@ apply all found @file{DEHACKED} lumps.
 	correction (@var{vid-gamma}, @var{vid-contrast}, @var{vid-bright})
 	instead.
 }
-
 
 
 
