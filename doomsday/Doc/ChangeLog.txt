@@ -8,9 +8,18 @@ Version 1.8.3
 -------------
 + Generator -> Stage -> Spin resistance { 0 0 }: factors for slowing down
   particle spinning (0..1)
+- fixed: model skin wrapping
+- fixed: halo origin calculation for high-resolution sprites
+- keycode handling in console/UI didn't always use the keymap
 
 jDoom:
 - fixed: crushed barrels now explode correctly and don't become gibs
+
+Linux:
+* MIDI music player defaults to SDL_mixer's default implementation
+  (DENG_MIDI_CMD can be used to specify an external player)
+* fixed-point math using inline assembler like in Windows (courtesy of
+  Lukasz Stelmach)
 
 Mac OS X:
 * a native build that runs on Mac OS X 10.3 
