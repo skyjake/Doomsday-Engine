@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 243 <--
+; --> 244 <--
 
 ; Other available ordinals: 158, 175
 
@@ -182,6 +182,7 @@ EXPORTS
 	GL_SetFlat				@117 NONAME
 	GL_SetTexture			@118 NONAME
 	GL_SetRawImage			@119 NONAME
+	GL_LoadGraphics			@244 NONAME
 
 ; Graphics: 2D drawing.
 	GL_DrawPatch			@120 NONAME

@@ -239,6 +239,7 @@ extern          "C" {
 	void            GL_SetFlat(int idx);
 	void            GL_SetTexture(int idx);
 	unsigned int    GL_SetRawImage(int lump, int part);
+	unsigned int    GL_LoadGraphics(const char *name, int mode);
 
 	// Graphics: 2D drawing.
 	void            GL_DrawPatch(int x, int y, int lumpnum);
