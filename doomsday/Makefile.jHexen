@@ -1,0 +1,39 @@
+# -*- Makefile -*-
+# $Id$
+
+EXCLUDED_SRC = Src/Common/p_saveg.c $(wildcard Src/Common/p_xg*.c)
+
+SRC = 	$(wildcard Src/jHexen/*.c) \
+	Src/Common/m_fixed.c \
+	$(wildcard Src/Common/d_net*.c) \
+	Src/Common/f_infine.c \
+	Src/Common/g_dglinit.c \
+	Src/Common/g_game.c \
+	Src/Common/g_update.c \
+	Src/Common/hu_pspr.c \
+	Src/Common/m_multi.c \
+	$(filter-out $(EXCLUDED_SRC),$(wildcard Src/Common/p_*.c)) \
+	Src/Common/r_common.c \
+	Src/Common/x_hair.c 
+
+INC = $(wildcard Include/*.h) $(wildcard Include/jHexen/*.h)
+OBJ = $(patsubst %.c,%.o,$(SRC))
+DEFS = -DUNIX -DNO_FIXED_ASM -D__JHEXEN__
+CFLAGS = -g -Wall -IInclude/jHexen -IInclude/Common -IInclude $(DEFS) -fPIC
+
+.PHONY: dep clean realclean
+
+jhexen.so: $(OBJ) $(INC)
+	$(CC) -shared -o jhexen.so $(OBJ)
+
+clean:
+	rm -f $(OBJ) jhexen.so
+
+realclean:
+	makedepend -fMakefile.jHexen
+	make -k -fMakefile.jHexen clean
+
+dep:
+	makedepend -fMakefile.jHexen -YInclude/jHexen -IInclude/Common -IInclude $(DEFS) $(SRC) 2> /dev/null
+
+# DO NOT DELETE
