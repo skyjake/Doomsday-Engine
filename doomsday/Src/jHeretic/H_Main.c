@@ -717,7 +717,7 @@ void H_PreInit(void)
 	// Add the JHexen cvars and ccmds to the console databases.
 	H_ConsoleRegistration();
 
-	// Add a couple of probably locations for Heretic.wad.	
+	// Add a couple of probable locations for Heretic.wad.	
 	DD_AddIWAD("}Data\\jHeretic\\Heretic.wad");
 	DD_AddIWAD("}Data\\Heretic.wad");
 	DD_AddIWAD("}Heretic.wad");

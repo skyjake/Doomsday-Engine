@@ -187,11 +187,11 @@ void H2_PreInit(void)
 	H2_ConsoleRegistration();
 
 	// The startup WADs.
-	DD_AddStartupWAD("}Data\\jHexen\\jHexen.wad");
 	DD_AddIWAD("}Data\\jHexen\\Hexen.wad");
 	DD_AddIWAD("}Data\\Hexen.wad");
 	DD_AddIWAD("}Hexen.wad");
 	DD_AddIWAD("Hexen.wad");
+	DD_AddStartupWAD("}Data\\jHexen\\jHexen.wad");
 
 	startepisode = 1;
 	startskill = sk_medium;
