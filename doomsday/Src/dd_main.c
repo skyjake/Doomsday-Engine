@@ -407,7 +407,7 @@ void DD_Main(void)
 	VERBOSE(W_PrintMapList());
 
 	// Execute the startup script (Startup.cfg).
-	Con_ParseCommands("startup.cfg", false);
+	Con_ParseCommands("Startup.cfg", false);
 
 	// Now the game can identify the game mode.
 	gx.UpdateState(DD_GAME_MODE);
@@ -770,8 +770,9 @@ void DD_SetInteger(int ddvalue, int parm)
 		else if(ddvalue == DD_TRANSLATED_SPRITE_TEXTURE)
 		{
 			// See DD_TSPR_PARM in dd_share.h.
-			int     lump = parm & 0xffffff, cls = (parm >> 24) & 0xf, table =
-				(parm >> 28) & 0xf;
+			int     lump = parm & 0xffffff; 
+			int     cls = (parm >> 24) & 0xf; 
+			int     table = (parm >> 28) & 0xf;
 
 			if(table)
 				GL_SetTranslatedSprite(lump, table, cls);
@@ -781,8 +782,9 @@ void DD_SetInteger(int ddvalue, int parm)
 		else if(ddvalue == DD_TEXTURE_GLOW)
 		{
 			// See DD_TGLOW_PARM in dd_share.h.
-			int     tnum = parm & 0xffff, istex =
-				(parm & 0x80000000) != 0, glowstate = (parm & 0x10000) != 0;
+			int     tnum = parm & 0xffff; 
+			int     istex = (parm & 0x80000000) != 0; 
+			int     glowstate = (parm & 0x10000) != 0;
 
 			if(istex)
 			{
