@@ -172,7 +172,7 @@ void Cl_ReadSoundDelta2(deltatype_t type)
 		else Con_Printf("\n");
 #endif*/
 	}
-	else if(sound > 0)
+	else if(sound >= 0)
 	{
 		// We must stop a sound. We'll only stop sounds from 
 		// specific sources.
