@@ -21,6 +21,7 @@ Refresh:
 + "tgf_smooth": interpolate between steps in texture/flat animation
 + particle generator flag "gnf_group": triggered by all in the flat's
   animation group
+* maximum number of submodels is now 8
 * texture/flat groups can be used purely for precaching
 * detail texture contrast is preprocessed: there will be multiple 
   instances of the same texture with different contrast levels (needs
