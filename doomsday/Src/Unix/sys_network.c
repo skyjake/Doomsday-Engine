@@ -36,7 +36,7 @@
 
 /* The randomized transmitted is only used for simulating a poor
  * network connection. */
-#define TRANSMIT_RANDOMIZER
+#undef TRANSMIT_RANDOMIZER
 #define RANDOMIZER_DROP_PERCENT 1
 #define RANDOMIZER_MAX_DELAY    500
 
