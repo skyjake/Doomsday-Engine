@@ -65,6 +65,10 @@ fixed_t		tmfloorz;
 fixed_t		tmceilingz;
 fixed_t		tmdropoffz;
 
+// When a mobj is contacted in PIT_CheckThing, this pointer is set.
+// It's reset to NULL in the beginning of P_CheckPosition.
+mobj_t		*blockingMobj;
+
 // Slide variables.
 fixed_t		bestslidefrac;
 fixed_t		secondslidefrac;
@@ -204,13 +208,16 @@ boolean PIT_CheckThing (mobj_t* thing, checkpos_data_t *tm)
 			tm->floorz = thing->z + thing->height;
 			return true;
 		}
-		
+/*		
 		// Under, then?
 		if(tm->z + tm->height < thing->z)
 		{
 			tm->ceilingz = thing->z;
 			return true;
-		}
+		}*/
+
+		// We're hitting this mobj.
+		blockingMobj = thing;
 	}
     return false; //!(thing->ddflags & DDMF_SOLID);
 }
@@ -231,6 +238,7 @@ boolean P_CheckPosition2(mobj_t* thing, fixed_t x, fixed_t y, fixed_t z)
 	checkpos_data_t data;
 	boolean result = true;
 
+	blockingMobj = NULL;
 	thing->onmobj = NULL;
 	thing->wallhit = false;
 
@@ -314,6 +322,8 @@ boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y, fixed_t z)
 {	
     //floatok = false;
 	int links = 0;
+
+	blockingMobj = NULL;
 
 	// Is this a real move?
 	if(thing->x == x && thing->y == y && thing->z == z)
@@ -480,6 +490,16 @@ boolean P_ThingHeightClip (mobj_t* thing)
 		if(thing->z+thing->height > thing->ceilingz)
 			thing->z = thing->ceilingz - thing->height;
     }
+
+	// On clientside, players are represented by two mobjs: the real mobj, 
+	// created by the Game, is the one that is visible and modified in this
+	// function. We'll need to sync the hidden client mobj (that receives
+	// all the changes from the server) to match the changes.
+	if(isClient && thing->dplayer)
+	{
+		Cl_UpdatePlayerPos(thing->dplayer);
+	}
+
     if(thing->ceilingz - thing->floorz < thing->height) return false;
     return true;
 }
@@ -799,8 +819,28 @@ void P_XYMovement2(mobj_t* mo, struct playerstate_s *playstate)
 			// Blocked move.
 			if(player)
 			{	
-				// Try to slide along it.
-				P_SlideMove (mo);
+				if(blockingMobj)
+				{
+					// Slide along the side of the mobj.
+					if(P_TryMove(mo, mo->x, ptryy, mo->z))
+					{
+						mo->momx = 0;
+					}
+					else if(P_TryMove(mo, ptryx, mo->y, mo->z))
+					{
+						mo->momy = 0;
+					}
+					else
+					{
+						// All movement stops here.
+						mo->momx = mo->momy = 0;
+					}
+				}
+				else
+				{
+					// Try to slide along it.
+					P_SlideMove(mo);
+				}
 			}
 			else
 			{
