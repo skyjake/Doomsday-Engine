@@ -84,7 +84,6 @@ D_CMD(Alias);
 D_CMD(ListAliases);
 D_CMD(SetGamma);
 D_CMD(SetRes);
-D_CMD(Net);
 D_CMD(Chat);
 D_CMD(Parse);
 D_CMD(DeleteBind);
@@ -354,10 +353,10 @@ cvar_t engineCVars[] =
 	"net-name",				0,			CVT_CHARPTR, &playerName,	0, 0,	"Your name in multiplayer games.",
 	"net-protocol",			0,			CVT_INT,	&nptActive,		0, 3,	"Network protocol: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial link.",
 	"net-ip-address",		0,			CVT_CHARPTR, &nptIPAddress, 0, 0,	"TCP/IP address for searching servers.",
-	"net-ip-port",			CVF_NO_MAX,	CVT_INT,	&nptIPPort,		0, 0,	"TCP/IP port to use for all data traffic.",
+	"net-ip-port",			CVF_NO_MAX,	CVT_INT,	&nptIPPort,		0, 0,	"TCP/IP port to use for all data traffic on this computer.",
 	"net-modem",			CVF_NO_MAX,	CVT_INT,	&nptModem,		0, 0,	"Index of the selected modem.",
 	"net-modem-phone",		0,			CVT_CHARPTR, &nptPhoneNum,	0, 0,	"Phone number to dial to when connecting.",
-	"net-serial-port",		0,			CVT_INT,	&nptSerialPort,	1, 8,	"COM port to use for serial link connection.",
+	"net-serial-port",		CVF_NO_MAX, CVT_INT,	&nptSerialPort,	0, 0,	"COM port to use for serial link connection.",
 	"net-serial-baud",		CVF_NO_MAX,	CVT_INT,	&nptSerialBaud,	0, 0,	"Baud rate for serial link connections.",
 	"net-serial-stopbits",	0,			CVT_INT,	&nptSerialStopBits, 0, 2, "0=1 bit, 1=1.5 bits, 2=2 bits.",
 	"net-serial-parity",	0,			CVT_INT,	&nptSerialParity, 0, 3,	"0=None, 1=odd, 2=even, 3=mark parity.",
@@ -2249,11 +2248,9 @@ D_CMD(ListAliases)
 
 int CCmdVersion(int argc, char **argv)
 {
-	Con_Printf( "Doomsday Engine %s ("__TIME__")\n", DOOMSDAY_VERSIONTEXT);
-	Con_Printf( "%s\n", gl.GetString(DGL_VERSION));
-	Con_Printf( "%s\n", jtNetGetString(JTNET_VERSION));
-//	Con_Printf( "Compiler: Microsoft Visual C++ 6.0 (SP3)\n");
-	Con_Printf( "Game DLL: %s\n", gx.Get(DD_VERSION_LONG));
+	Con_Printf("Doomsday Engine %s ("__TIME__")\n", DOOMSDAY_VERSIONTEXT);
+	Con_Printf("%s\n", gl.GetString(DGL_VERSION));
+	Con_Printf("Game DLL: %s\n", gx.Get(DD_VERSION_LONG));
 	return true;
 }
 
