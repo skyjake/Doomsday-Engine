@@ -83,6 +83,7 @@ void Rend_DrawPlayerSprites(void)
 	sector_t *sec         = viewplayer->mo->subsector->sector;
 	float offx            = pspOffX / 16.0f;
 	float offy            = pspOffY / 16.0f;
+	float offScaleY       = weaponOffsetScaleY / 1000.0f;
 	byte somethingVisible = false;
 	byte isFullBright     = (LevelFullBright != 0);
 
@@ -155,7 +156,8 @@ void Rend_DrawPlayerSprites(void)
 			}
 
 			GL_DrawPSprite(psp[i].x - info[i].offset + offx, 
-				psp[i].y - info[i].topOffset + offy,
+				offScaleY * psp[i].y + (1 - offScaleY) * 32
+				- info[i].topOffset + offy,
 				1, info[i].flip, info[i].lump);
 		}
 	}
@@ -334,7 +336,9 @@ void Rend_DrawMasked (void)
 //===========================================================================
 void Rend_SpriteTexCoord(int pnum, int x, int y)
 {
-	gl.TexCoord2f(spritelumps[pnum].tc[VX] * x, spritelumps[pnum].tc[VY] * y);
+	// Mode zero (tc[0]) is used with regular sprites.
+	gl.TexCoord2f(spritelumps[pnum].tc[0][VX] * x, 
+		spritelumps[pnum].tc[0][VY] * y);
 }
 
 //===========================================================================
