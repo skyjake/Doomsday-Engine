@@ -381,7 +381,7 @@ int DG_SetInteger(int name, int value)
 				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 
 			}
-			else				// Mode 3: Used with surfaces with no primary color.
+			else // Mode 3: Used with surfaces with no primary color.
 			{
 				// TU 2: Pass through.
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
@@ -483,7 +483,7 @@ int DG_SetInteger(int name, int value)
 			{
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			}
-			else				// Mode 9: Ignore primary color.
+			else // Mode 9: Ignore primary color.
 			{
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			}
