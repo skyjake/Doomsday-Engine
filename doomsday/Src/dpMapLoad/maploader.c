@@ -167,17 +167,17 @@ static void DumpMap(int mainLump, const char *fileName)
 			break;
 
 		strncpy(lumps[i].name, W_LumpName(mainLump + i), 8);
-		lumps[i].filepos = ftell(file);
-		lumps[i].size = W_LumpLength(mainLump + i);
+		lumps[i].filepos = LONG(ftell(file));
+		lumps[i].size = LONG(W_LumpLength(mainLump + i));
 		
-		buffer = malloc(lumps[i].size);
+		buffer = malloc(LONG(lumps[i].size));
 		W_ReadLump(mainLump + i, buffer);
-		fwrite(buffer, lumps[i].size, 1, file);
+		fwrite(buffer, LONG(lumps[i].size), 1, file);
 		free(buffer);
 	}
 
-	header.numlumps = i;
-	header.infotableofs = ftell(file);
+	header.numlumps = LONG(i);
+	header.infotableofs = LONG(ftell(file));
 
 	// Write the directory.
 	fwrite(lumps, sizeof(wadlump_t), i, file);

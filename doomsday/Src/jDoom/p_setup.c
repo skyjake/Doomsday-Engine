@@ -110,8 +110,8 @@ void P_LoadVertexes(int lump, int gllump)
 			}
 			else
 			{
-				li->x = glv->x;
-				li->y = glv->y;
+				li->x = LONG(glv->x);
+				li->y = LONG(glv->y);
 			}
 		}
 		Z_Free(glverts);
@@ -140,8 +140,8 @@ void P_LoadSegs(int lump)
 	li = segs;
 	for(i = 0; i < numsegs; i++, li++, ml++)
 	{
-		li->v1 = &vertexes[SHORT(ml->v1)];
-		li->v2 = &vertexes[SHORT(ml->v2)];
+		li->v1 = &vertexes[USHORT(ml->v1)];
+		li->v2 = &vertexes[USHORT(ml->v2)];
 
 		li->length =
 			AccurateDistance(li->v2->x - li->v1->x, li->v2->y - li->v1->y);
@@ -182,19 +182,22 @@ void P_LoadSegsGL(int lump)
 	for(i = 0; i < numsegs; i++, li++, gls++)
 	{
 		li->v1 =
-			&vertexes[gls->v1 & 0x8000 ? firstGLvertex +
-					  (gls->v1 & ~0x8000) : gls->v1];
+			&vertexes[USHORT(gls->v1) & 0x8000 ? 
+					  firstGLvertex + (USHORT(gls->v1) & ~0x8000) : 
+					  USHORT(gls->v1)];
 		li->v2 =
-			&vertexes[gls->v2 & 0x8000 ? firstGLvertex +
-					  (gls->v2 & ~0x8000) : gls->v2];
-		if(gls->linedef != -1)
+			&vertexes[USHORT(gls->v2) & 0x8000 ? 
+					  firstGLvertex + (USHORT(gls->v2) & ~0x8000) : 
+					  USHORT(gls->v2)];
+		if(USHORT(gls->linedef) != USHORT(-1))
 		{
-			ldef = &lines[gls->linedef];
+			ldef = &lines[USHORT(gls->linedef)];
 			li->linedef = ldef;
-			li->sidedef = &sides[ldef->sidenum[gls->side]];
-			li->frontsector = sides[ldef->sidenum[gls->side]].sector;
+			li->sidedef = &sides[ldef->sidenum[USHORT(gls->side)]];
+			li->frontsector = sides[ldef->sidenum[USHORT(gls->side)]].sector;
 			if(ldef->flags & ML_TWOSIDED)
-				li->backsector = sides[ldef->sidenum[gls->side ^ 1]].sector;
+				li->backsector = sides[ldef->sidenum
+									   [USHORT(gls->side) ^ 1]].sector;
 			else
 				li->backsector = 0;
 			if(gls->side == 0)

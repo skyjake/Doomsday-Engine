@@ -178,10 +178,10 @@ void AppendLevelLump(lump_t *lump, void *data, int length);
 
 // -AJA- I wanted this to simply be `BIG_ENDIAN', but some
 //       system header already defines it.  Grrrr !
-#ifdef CPU_BIG_ENDIAN
+#ifdef __BIG_ENDIAN__
 
 #define UINT16(x)  \
-  ( ((uint16_g)(x) >> 8) | ((uint16_g)(x) << 8) )
+	( ((uint16_g)((x) & 0xff00) >> 8) | ((uint16_g)((x) & 0xff) << 8) )
 
 #define UINT32(x)  \
   ( ((uint32_g)(x) >> 24) | (((uint32_g)(x) >> 8) & 0xff00) |  \

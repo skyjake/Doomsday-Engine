@@ -23,7 +23,6 @@
 
 #include "system.h"
 
-
 /* ----- The wad structures ---------------------- */
 
 // wad header
@@ -214,6 +213,5 @@ typedef struct raw_subsec_s
   uint16_g first;   // first Seg
 }
 raw_subsec_t;
-
 
 #endif /* __GLBSP_STRUCTS_H__ */

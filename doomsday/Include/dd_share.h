@@ -77,6 +77,9 @@ extern          "C" {
 #define LONG(x)		(x)
 #endif
 
+#define USHORT(x)   ((unsigned short) SHORT(x))
+#define ULONG(x)    ((unsigned long) LONG(x))
+
 #define MAX_OF(x, y)	((x) > (y)? (x) : (y))
 #define MIN_OF(x, y)	((x) < (y)? (x) : (y))
 
