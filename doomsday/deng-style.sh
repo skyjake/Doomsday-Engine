@@ -30,4 +30,5 @@ indent	--k-and-r-style \
 	--no-space-after-for \
 	--ignore-newlines \
 	--swallow-optional-blank-lines \
+	-T fixed_t -T boolean -T binangle_t -T angle_t -T byte -T uint -T ushort \
 	$*
