@@ -747,8 +747,10 @@ fixed_t P_GetParticleZ(particle_t * pt)
 {
 	if(pt->pos[VZ] == DDMAXINT)
 		return pt->sector->ceilingheight - 2 * FRACUNIT;
+
 	if(pt->pos[VZ] == DDMININT)
-		return pt->sector->floorheight + 2 * FRACUNIT;
+		return FRACUNIT * (SECT_INFO(pt->sector)->visfloor + 2);
+
 	return pt->pos[VZ];
 }
 
