@@ -50,7 +50,7 @@ REM +---------------------------------------------------------------+
 if %_PackEng%==No goto skip_eng
 set FILE=%_DestDir%\_mic_engine
 del %FILE%.exe
-rar a %FILE% %SRC%\Kicks.exe %SRC%\glbsp.* %SRC%\Doc\*.* %SRC%\Bin\*.* %SRC%\Data\*.* %SRC%\Data\Fonts %SRC%\Data\KeyMaps -xBin\jDoom.dll -x*heretic*.* -x*hexen*.* -xdeath.kss
+rar a %FILE% %SRC%\Kicks.exe %SRC%\*.cfg %SRC%\*.ksl %SRC%\glbsp.* %SRC%\Doc\*.* %SRC%\Bin\*.* %SRC%\Data\*.* %SRC%\Data\Fonts %SRC%\Data\KeyMaps -xBin\jDoom.dll -x*heretic*.* -x*hexen*.*
 rar c -z%COMMENT% %FILE%.exe
 :skip_eng
 
@@ -62,7 +62,7 @@ if %_PackJD%==No goto skip_cjd
 set FILE=%_DestDir%\_mic_jdoom
 del %FILE%.exe
 rar a %FILE% -r %SRC%\Defs\jDoom -x@..\mdefex.lst
-rar a %FILE% %SRC%\*.kss %SRC%\jDoom.exe %SRC%\Doc\jDoom\*.* %SRC%\Bin\jDoom.dll %SRC%\Run\jDoom %SRC%\Data\jDoom -x*heretic*.* -x*hexen*.* -xdeath.kss
+rar a %FILE% %SRC%\*.ksp %SRC%\jDoom.exe %SRC%\Doc\jDoom\*.* %SRC%\Bin\jDoom.dll %SRC%\Run\jDoom %SRC%\Data\jDoom -x*heretic*.* -x*hexen*.* -xdeath.ksp
 rar c -z%COMMENT% %FILE%.exe
 :skip_cjd
 
@@ -80,7 +80,7 @@ REM +---------------------------------------------------------------+
 if %_PackJH%==No goto skip_cjh
 set FILE=%_DestDir%\_mic_jheretic
 del %FILE%.exe
-rar a %FILE% -r %SRC%\Defs\jHeretic -x@..\mdefex.lst %SRC%\Heretic.kss
+rar a %FILE% -r %SRC%\Defs\jHeretic -x@..\mdefex.lst %SRC%\Heretic.ksp
 rar a %FILE% %SRC%\jHeretic.exe %SRC%\Doc\jHeretic\*.* %SRC%\Run\jHeretic %SRC%\Bin\jHeretic.dll %SRC%\Data\jHeretic -xjdoom*.* -x*hexen*.*
 rar c -z%COMMENT% %FILE%.exe
 :skip_cjh
@@ -99,7 +99,7 @@ REM +---------------------------------------------------------------+
 if %_PackJX%==No goto skip_cjx
 set FILE=%_DestDir%\_mic_jhexen
 del %FILE%.exe
-rar a %FILE% -r %SRC%\Defs\jHexen -x@..\mdefex.lst %SRC%\Hexen.kss %SRC%\Death.kss
+rar a %FILE% -r %SRC%\Defs\jHexen -x@..\mdefex.lst %SRC%\Hexen.ksp %SRC%\Death.ksp
 rar a %FILE% %SRC%\jHexen.exe %SRC%\Doc\jHexen\*.* %SRC%\Bin\jHexen.dll %SRC%\Data\jHexen %SRC%\Run\jHexen
 rar c -z%COMMENT% %FILE%.exe
 :skip_cjx
