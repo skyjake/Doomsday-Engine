@@ -775,18 +775,13 @@ void P_PlayerThink(player_t *player)
 	}
 	if(player->jumpTics)
 		player->jumpTics--;
+	P_CheckPlayerJump(player);
 	if(cmd->arti)
 	{							// Use an artifact
 		if(cmd->arti == 0xff)
-		{
 			P_PlayerNextArtifact(player);
-		}
-		else					// Jump?
-		{
-			P_CheckPlayerJump(player);
-			if(cmd->arti)
-				P_PlayerUseArtifact(player, cmd->arti);
-		}
+		else				   
+			P_PlayerUseArtifact(player, cmd->arti);
 	}
 
 	if(cmd->suicide)
