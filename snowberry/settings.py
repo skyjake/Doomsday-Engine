@@ -775,3 +775,7 @@ _newSetting(quitLaunch)
 # Load all .conf files.
 for path in paths.listPaths(paths.CONF):
     readConfigPath(path)
+
+# Any custom paths?
+if isDefined('doomsday-runtime'):
+    paths.setCustomPath(paths.RUNTIME, getSystemString('doomsday-runtime'))

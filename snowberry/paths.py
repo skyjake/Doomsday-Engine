@@ -60,6 +60,9 @@ homeDir = None
 # but before the system path.
 bundlePaths = []
 
+# The custom paths override the default user paths.
+customPaths = {}
+
 
 def _createDir(path):
     """Creates the specified directory if it doesn't already exist."""
@@ -125,6 +128,16 @@ def addBundlePath(path):
     bundlePaths.append(path)
 
 
+def setCustomPath(path, custom):
+    """Set a custom path.
+    
+    @param path The path to set (PROFILES, RUNTIME, CONF, etc.).
+    
+    @param custom The custom path to use.
+    """
+    customPaths[path] = custom
+
+
 def getHomeDirectory():
     "Returns the current user's Snowberry home directory."
     return homeDir
@@ -141,6 +154,8 @@ def getUserPath(which):
     """Returns the directory where the specified kind of data is
     stored for the current user.  The location of the user home
     directory depends on the operating system."""
+    if customPaths.has_key(which):
+        return customPaths[which]
     return os.path.join(homeDir, which)
 
 
