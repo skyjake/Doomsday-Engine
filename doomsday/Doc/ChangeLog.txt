@@ -15,6 +15,7 @@ Version 1.7.9 (work in progress)
   no longer be necessary
 
 jDoom:
++ automap added to Options -> Controls (under Misc.)
 + cvar game-corpse-sliding: corpses slide down stairs and ledges 
   (defaults to zero due to some bad behaviour; e.g. exit room of D2/22)
 * cvar game-corpsetime renamed to game-corpse-time
