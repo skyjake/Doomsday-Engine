@@ -8,9 +8,9 @@ SET DistBin=%Dist%\Bin\
 REM -- Source directories (where files will be copied from).
 SET SRC=..\doomsday\
 SET FMODLIB=D:\sdk\fmod\api\
-SET SidgarDir=C:\Projects\SiDGaR\Release\
+SET SidgarDir=D:\Projects\SiDGaR\Release\
 SET KickDir=..\kickstart\
-SET BSPDir=c:\utils\glbsp\
+SET BSPDir=D:\Utils\glbsp\
 
 IF "%1" == "rel" GOTO releasedirs
 IF "%1" == "beta" GOTO betadirs
@@ -51,6 +51,8 @@ xcopy %SRC%DLLs\LZSS.dll 	%DistBin%
 xcopy %SRC%DLLs\EAX.dll 	%DistBin%
 xcopy %SRC%DLLs\zlib.dll	%DistBin%
 xcopy %FMODLIB%fmod.dll		%DistBin%
+xcopy %SRC%DLLs\SDL_net.dll	%DistBin%
+xcopy %SRC%DLLs\SDL.dll		%DistBin%
 xcopy %SidgarDir%*.exe		%Dist%
 
 REM +---------------------------------------------------------------+
@@ -116,14 +118,16 @@ xcopy %SRC%Doc\ChangeLog.txt           	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\Readme.txt	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\Beginner.txt	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\CmdLine.txt	%Dist%Doc\
+xcopy %SRC%Doc\Ame\TXT\InFine.txt	%Dist%Doc\
 ren %Dist%Doc\Readme.txt 	Readme.txt 
 ren %Dist%Doc\Beginner.txt 	Beginner.txt 
 ren %Dist%Doc\CmdLine.txt 	CmdLine.txt 
+ren %Dist%Doc\InFine.txt	InFine.txt
 xcopy %SRC%Doc\DEDDoc.txt		%Dist%Doc\
 xcopy %SRC%Doc\DSS.txt			%Dist%Doc\
 xcopy %SRC%Doc\Network.txt		%Dist%Doc\
 xcopy %SRC%Doc\Example.bat            	%Dist%Doc\
-xcopy %SRC%Doc\InFine.txt		%Dist%Doc\
+xcopy %SRC%Doc\CVars.txt            	%Dist%Doc\
 xcopy %SRC%Doc\jDoom\Doomlic.txt      	%Dist%Doc\jDoom\
 xcopy %SRC%Doc\jDoom\jDoom.txt		%Dist%Doc\jDoom\
 xcopy %SRC%Doc\jHeretic\jHeretic.txt	%Dist%Doc\jHeretic\
