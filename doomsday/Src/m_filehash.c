@@ -319,6 +319,8 @@ void FH_Init(const char *pathList)
 	char   *tokenPaths = malloc(strlen(pathList) + 1);
 	char   *path;
 
+    FH_Clear();
+    
 	strcpy(tokenPaths, pathList);
 	path = strtok(tokenPaths, ";");
 	while(path)
