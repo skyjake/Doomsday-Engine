@@ -37,6 +37,7 @@ jDoom:
 + cvar game-corpse-sliding: corpses slide down stairs and ledges 
   (defaults to zero due to some bad behaviour; e.g. exit room of D2/22)
 * cvar game-corpsetime renamed to game-corpse-time
+- fixed bug 734892: sides with bogus sectors
 - A_Tracer() used to spawn puffs that were identical to bullet puffs, 
   this caused complications with particle generators
 

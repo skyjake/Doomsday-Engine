@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/05/23 22:43:36  skyjake
+// Fixed bug 734892: sides with bogus sectors
+//
 // Revision 1.3  2003/03/14 15:39:21  skyjake
 // Don't assume map31,32 exist
 //
@@ -494,11 +497,11 @@ void P_LoadLineDefs (int lump)
 //
 // P_LoadSideDefs
 //
-void P_LoadSideDefs (int lump)
+void P_LoadSideDefs(int lump)
 {
     byte*		data;
-    int			i;
-    mapsidedef_t*	msd;
+    int			i, index;
+    mapsidedef_t* msd;
     side_t*		sd;
 	
     numsides = W_LumpLength (lump) / sizeof(mapsidedef_t);
@@ -508,46 +511,21 @@ void P_LoadSideDefs (int lump)
 	
     msd = (mapsidedef_t *)data;
     sd = sides;
-    for (i=0 ; i<numsides ; i++, msd++, sd++)
+    for(i = 0; i < numsides; i++, msd++, sd++)
     {
 		sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
 		sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
 		sd->toptexture = R_TextureNumForName(msd->toptexture);
 		sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
 		sd->midtexture = R_TextureNumForName(msd->midtexture);
-		sd->sector = &sectors[SHORT(msd->sector)];
+		// There may be bogus sector indices here.
+		index = SHORT(msd->sector);
+		if(index >= 0 && index < numsectors)
+			sd->sector = &sectors[index];
     }
 	
     Z_Free (data);
 }
-
-
-//
-// P_LoadBlockMap
-//
-/*void P_LoadBlockMap (int lump)
-{
-    int		i;
-    int		count;
-	
-    blockmaplump = W_CacheLumpNum (lump,PU_LEVEL);
-    blockmap = blockmaplump+4;
-    count = W_LumpLength (lump)/2;
-
-    for (i=0 ; i<count ; i++)
-	blockmaplump[i] = SHORT(blockmaplump[i]);
-		
-    bmaporgx = blockmaplump[0]<<FRACBITS;
-    bmaporgy = blockmaplump[1]<<FRACBITS;
-    bmapwidth = blockmaplump[2];
-    bmapheight = blockmaplump[3];
-	
-    // clear out mobj chains
-    count = sizeof(*blocklinks)* bmapwidth*bmapheight;
-    blocklinks = Z_Malloc (count,PU_LEVEL, 0);
-    memset (blocklinks, 0, count);
-}
-*/
 
 
 //

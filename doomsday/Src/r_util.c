@@ -256,7 +256,7 @@ line_t *R_GetLineForSide(int sideNumber)
 	sector_t *sector = side->sector;
 	int i;
 
-	// Do all sides have a sector? (Possibly...)
+	// All sides may not have a sector.
 	if(!sector) return NULL;
 
 	for(i = 0; i < sector->linecount; i++)
