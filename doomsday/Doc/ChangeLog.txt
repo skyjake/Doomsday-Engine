@@ -4,7 +4,7 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.7.8
+Version 1.7.8 (work in progress)
 -------------
 + new master server mechanism (uses HTTP)
 + cvar net-master-path (default: "/master.php"): location of the master
@@ -15,12 +15,14 @@ Version 1.7.8
 * cvar net-master-port (default: 0): usually zero or 80
 * clientside player coords override serverside coords under normal
   circumstances (maxdif checks removed)
+* if one part of a psprite is fullbright, the whole psprite will be
 - fixed: psprites were rendered with depth testing enabled; Doom plasma 
   rifle fire anim was broken
+- fixed: clientside player animation didn't finish anim sequence
 - fixed: line flags weren't updated on clientside (e.g. in Hexen map13)
 
 jDoom:
-* lineattack weapons now hit planes (pistol, shotguns, chaingun) 
+* lineattack weapons hit planes (pistol, shotguns, chaingun) 
 - fixed: lineattack check for hitting sky planes, skyhack walls
 - map31 and map32 no longer assumed to exist: Doom2.wad "00f6d407" 
   should work 
