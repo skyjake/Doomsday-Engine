@@ -130,6 +130,7 @@ extern          "C" {
                                       Zero means automatic */
         float           size;      // Zero: automatic
         float           color[3];  // Red Green Blue (0,1)
+        int             lightlevel[2]; // Min/max lightlevel for bias
         ded_flags_t     flags;
         ded_lightmap_t  up, down, sides;
     } ded_light_t;
