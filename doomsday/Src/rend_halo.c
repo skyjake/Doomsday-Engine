@@ -552,7 +552,7 @@ void H_RenderHalo(vissprite_t *sourcevis, boolean primary)
 			f = minHaloSize*lum->flareSize/lum_distance;
 			if(f > 1) f = 1;
 		}
-		f *= distancedim;
+		f *= distancedim * lum->flareMul;
 
 		// The color & alpha of the flare.
 		color[CA] = f * (fl->alpha * occlusionfactor * fadefactor 

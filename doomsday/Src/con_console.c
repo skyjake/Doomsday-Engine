@@ -308,6 +308,7 @@ cvar_t engineCVars[] =
 	"rend-light-decor-wall-far", CVF_NO_MAX, CVT_FLOAT, &decorWallMaxDist, 0, 0, "Maximum distance at which wall light decorations are visible.",
 	"rend-light-decor-plane-bright", 0,	CVT_FLOAT,	&decorPlaneFactor, 0, 10, "Brightness of plane light decorations.",
 	"rend-light-decor-wall-bright", 0,	CVT_FLOAT,	&decorWallFactor, 0, 10, "Brightness of wall light decorations.",
+	"rend-light-decor-angle",	0,		CVT_FLOAT,	&decorFadeAngle, 0, 1,	"Reduce brightness if surface/view angle too steep.",
 	// * Render-Glow
 	"rend-glow",			0,			CVT_INT,	&r_texglow,		0, 1,	"1=Enable glowing textures.",
 	"rend-glow-wall",		0,			CVT_INT,	&useWallGlow,	0, 1,	"1=Render glow on walls.",

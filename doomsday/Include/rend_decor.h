@@ -9,6 +9,7 @@ extern float	decorWallMaxDist; // No decorations are visible beyond this.
 extern float	decorPlaneMaxDist;
 extern float	decorWallFactor;
 extern float	decorPlaneFactor;
+extern float	decorFadeAngle;
 
 void	Rend_InitDecorationsForFrame(void);
 void	Rend_ProjectDecorations(void);

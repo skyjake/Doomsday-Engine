@@ -43,12 +43,16 @@ float		decorWallMaxDist = 1500; // No decorations are visible beyond this.
 float		decorPlaneMaxDist = 1500;
 float		decorWallFactor = 1;
 float		decorPlaneFactor = 1;
+float		decorFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int	numSources;
 static int	maxSources;
 static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
+
+// Lights near surfaces get dimmer if the angle is too small.
+static float surfaceNormal[3];
 
 // CODE --------------------------------------------------------------------
 
@@ -155,7 +159,7 @@ void Rend_AddLightDecoration
 	decorsource_t *source;
 	lumobj_t *lum;
 	float distance = Rend_PointDist3D(pos);
-	float fadeMul = 1;
+	float fadeMul = 1, flareMul = 1;
 	float maxDist = (isWall? decorWallMaxDist : decorPlaneMaxDist);
 	int i;
 
@@ -170,6 +174,26 @@ void Rend_AddLightDecoration
 
 	// Apply the brightness factor (was calculated using sector lightlevel).
 	fadeMul *= brightness * (isWall? decorWallFactor : decorPlaneFactor);
+
+	// Brightness drops as the angle gets too big.
+	if(def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
+	{
+		float vector[3] = { pos[VX] - vx, pos[VZ] - vy, pos[VY] - vz };
+		float dot;
+		M_Normalize(vector);
+		dot = 
+			-(surfaceNormal[VX] * vector[VX]
+			+ surfaceNormal[VY] * vector[VY]
+			+ surfaceNormal[VZ] * vector[VZ]);
+		if(dot < decorFadeAngle/2)
+		{
+			flareMul = 0;
+		}
+		else if(dot < 3 * decorFadeAngle)
+		{
+			flareMul *= (dot - decorFadeAngle/2) / (2.5f * decorFadeAngle);
+		}
+	}
 
 	if(fadeMul <= 0) return;
 
@@ -217,6 +241,7 @@ void Rend_AddLightDecoration
 
 	// Zero = Texture chosen automatically.
 	lum->flareTex = def->flare_texture;
+	lum->flareMul = flareMul;
 
 	for(i = 0; i < 3; i++) 
 		lum->rgb[i] = (byte) (255 * def->color[i] * fadeMul);
@@ -290,7 +315,7 @@ void Rend_DecorateLineSection
 	ded_decorlight_t *lightDef;
 	vertex_t *v1, *v2;
 	float lh, s, t; // Horizontal and vertical offset.
-	float posBase[2], normal[2], delta[2], pos[3], brightMul;
+	float posBase[2], delta[2], pos[3], brightMul;
 	float surfTexW, surfTexH, patternW, patternH;
 	int i, skip[2];
 
@@ -311,10 +336,11 @@ void Rend_DecorateLineSection
 		v2 = line->v1;
 	}
 
-	delta[VX]  = FIX2FLT(v2->x - v1->x);
-	delta[VY]  = FIX2FLT(v2->y - v1->y);
-	normal[VX] = delta[VY] / linfo->length;
-	normal[VY] = -delta[VX] / linfo->length;
+	delta[VX] = FIX2FLT(v2->x - v1->x);
+	delta[VY] = FIX2FLT(v2->y - v1->y);
+	surfaceNormal[VX] = delta[VY] / linfo->length;
+	surfaceNormal[VZ] = -delta[VX] / linfo->length;
+	surfaceNormal[VY] = 0;
 
 	// Height of the section.
 	lh = top - bottom;
@@ -339,8 +365,8 @@ void Rend_DecorateLineSection
 		// Skip must be at least one.
 		Rend_DecorationPatternSkip(lightDef, skip);
 
-		posBase[VX] = FIX2FLT(v1->x) + lightDef->elevation * normal[VX];
-		posBase[VY] = FIX2FLT(v1->y) + lightDef->elevation * normal[VY];
+		posBase[VX] = FIX2FLT(v1->x) + lightDef->elevation * surfaceNormal[VX];
+		posBase[VY] = FIX2FLT(v1->y) + lightDef->elevation * surfaceNormal[VZ];
 		
 		patternW = surfTexW * skip[VX];
 		patternH = surfTexH * skip[VY];
@@ -554,9 +580,9 @@ void Rend_DecoratePlane
 	float pos[3], tileSize = 64, brightMul;
 	int i, skip[2];
 
-	// Keep the offsets within one tileSize.
-	//offX = M_CycleIntoRange(offX, tileSize);
-	//offY = M_CycleIntoRange(offY, tileSize);
+	surfaceNormal[VX] = 0;
+	surfaceNormal[VY] = elevateDir;
+	surfaceNormal[VZ] = 0;
 
 	// Generate a number of lights.
 	for(i = 0; i < DED_DECOR_NUM_LIGHTS; i++)

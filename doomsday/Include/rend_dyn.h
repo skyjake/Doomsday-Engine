@@ -27,6 +27,7 @@ typedef struct lumobj_s					// For dynamic lighting.
 	DGLuint	floorTex, ceilTex;			// Lightmaps for floor/ceil.
 	DGLuint decorMap;					// Decoration lightmap.
 	char	flareTex;					// Zero = automatical.
+	float	flareMul;					// Flare brightness factor.
 } 
 lumobj_t;
 
