@@ -83,8 +83,6 @@ int			extralight;			// bumped light from gun blasts
 int			skyflatnum;
 char		skyflatname[9] = "F_SKY";
 
-double		lastSharpFrameTime;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
