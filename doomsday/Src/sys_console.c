@@ -49,6 +49,8 @@ static int needNewLine = false;
 
 void Sys_ConInit()
 {
+	char title[256];
+
 	FreeConsole();
 	if(!AllocConsole()) 
 	{
@@ -58,7 +60,11 @@ void Sys_ConInit()
 	hcInput = GetStdHandle(STD_INPUT_HANDLE);
 	if(hcInput == INVALID_HANDLE_VALUE) Con_Error("bad input handle\n");
 
-	if(!SetConsoleTitle("Doomsday "DOOMSDAY_VERSION_TEXT" / Dedicated"))
+	// Compose the title.
+	sprintf(title, "Doomsday "DOOMSDAY_VERSION_TEXT" (Dedicated) : %s", 
+		gx.Get(DD_GAME_ID));
+
+	if(!SetConsoleTitle(title))
 		Con_Error("setting console title: error %i\n", GetLastError());
 
 	hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
