@@ -615,11 +615,11 @@ void P_CheckPlayerJump(player_t *player)
 	if(cfg.jumpEnabled 
 		&& (P_IsPlayerOnGround(player)
 			|| player->plr->mo->flags2 & MF2_ONMOBJ)
-		&& cmd->arti & AFLAG_JUMP
+		&& (cmd->arti != 0xff && cmd->arti & AFLAG_JUMP)
 		&& player->jumpTics <= 0)
 	{
 		// Jump, then!
-		player->plr->mo->momz = FRACUNIT * 9; //cfg.jumpPower;
+		player->plr->mo->momz = FRACUNIT * 9;
 		player->plr->mo->flags2 &= ~MF2_ONMOBJ;
 		player->jumpTics = 24;
 	}
@@ -833,16 +833,8 @@ void P_PlayerThink(player_t *player)
 		{
 			P_PlayerNextArtifact(player);
 		}
-		// Jump?
-		else
+		else // Jump?
 		{
-			/*if(cfg.jumpEnabled && (cmd->arti & AFLAG_JUMP) && onground && !player->jumpTics)
-			{
-				// Jump!
-				plrmo->momz = 9*FRACUNIT;
-				player->jumpTics = 24;
-				plrmo->flags2 &= ~MF2_ONMOBJ;
-			}*/
 			P_CheckPlayerJump(player);
 			if(cmd->arti & AFLAG_MASK)
 				P_PlayerUseArtifact(player, cmd->arti & AFLAG_MASK);
