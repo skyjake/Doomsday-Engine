@@ -30,6 +30,7 @@ boolean		M_CheckPath(char *path);
 int			M_FileExists(const char *file);
 void		M_TranslatePath(const char *path, char *translated);
 void		M_PrependBasePath(const char *path, char *newpath);
+void		M_RemoveBasePath(const char *absPath, char *newPath);
 void		M_ReadLine(char *buffer, int len, DFILE *file);
 
 // Bounding boxes.
