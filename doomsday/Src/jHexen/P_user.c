@@ -297,11 +297,11 @@ void P_MovePlayer(player_t *player)
 				P_SetMobjState(player->plr->mo, PStateRun[player->class]);
 			}
 		}
-		fly = cmd->lookfly >> 4;
-		if(fly > 7)
+		fly = cmd->fly; //lookfly >> 4;
+/*		if(fly > 7)
 		{
 			fly -= 16;
-		}
+		}*/
 		if(fly && player->powers[pw_flight])
 		{
 			if(fly != TOCENTER)
@@ -462,7 +462,7 @@ void P_DeathThink(player_t *player)
 		}
 	}
 
-	if(player->cmd.actions & BT_USE)
+	if(player->cmd.use)
 	{
 		if(player == &players[consoleplayer])
 		{
@@ -824,26 +824,19 @@ void P_PlayerThink(player_t *player)
 	default:
 		break;
 	}
+
+	if(cmd->suicide)
+	{
+		P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
+	}
+
+	if(cmd->jump && onground && !player->jumpTics)
+	{
+		P_PlayerJump(player);
+	}
+		
 	if(cmd->arti)
 	{							// Use an artifact
-		if((cmd->arti & AFLAG_JUMP) && onground && !player->jumpTics)
-		{
-			P_PlayerJump(player);
-			/*if(player->morphTics)
-			   {
-			   player->plr->mo->momz = 6*FRACUNIT;
-			   }
-			   else 
-			   {
-			   player->plr->mo->momz = 9*FRACUNIT;
-			   }
-			   player->plr->mo->flags2 &= ~MF2_ONMOBJ;
-			   player->jumpTics = 18; */
-		}
-		else if(cmd->arti & AFLAG_SUICIDE)
-		{
-			P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
-		}
 		if(cmd->arti == NUMARTIFACTS)
 		{						// use one of each artifact (except puzzle artifacts)
 			int     i;
@@ -855,20 +848,16 @@ void P_PlayerThink(player_t *player)
 		}
 		else
 		{
-			P_PlayerUseArtifact(player, cmd->arti & AFLAG_MASK);
+			P_PlayerUseArtifact(player, cmd->arti);
 		}
 	}
 	// Check for weapon change
-	if(cmd->actions & BT_SPECIAL)
-	{							// A special event has no other buttons
-		cmd->actions = 0;
-	}
-	if(cmd->actions & BT_CHANGE && !player->morphTics)
+	if(cmd->changeWeapon && !player->morphTics)
 	{
 		// The actual changing of the weapon is done when the weapon
 		// psprite can do it (A_WeaponReady), so it doesn't happen in
 		// the middle of an attack.
-		newweapon = (cmd->actions & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
+		newweapon = cmd->changeWeapon - 1;
 		if(player->weaponowned[newweapon] && newweapon != player->readyweapon)
 		{
 			player->pendingweapon = newweapon;
@@ -876,7 +865,7 @@ void P_PlayerThink(player_t *player)
 		}
 	}
 	// Check for use
-	if(cmd->actions & BT_USE)
+	if(cmd->use)
 	{
 		if(!player->usedown)
 		{
@@ -1797,15 +1786,16 @@ void P_ClientSideThink()
 		}
 	}
 
-	if(cmd->arti & AFLAG_JUMP)
+	if(cmd->jump)
 		P_PlayerJump(pl);
 
 	// Flying.
-	fly = cmd->lookfly >> 4;
-	if(fly > 7)
+	fly = cmd->fly; //lookfly >> 4;
+/*	if(fly > 7)
 	{
 		fly -= 16;
 	}
+*/
 	if(fly && pl->powers[pw_flight])
 	{
 		if(fly != TOCENTER)

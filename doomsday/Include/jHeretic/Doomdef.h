@@ -16,6 +16,7 @@
 #include "../doomsday.h"
 #include "../dd_api.h"
 #include "g_dgl.h"
+#include "p_ticcmd.h"
 #include "H_Action.h"
 
 #define Get		DD_GetInteger
@@ -60,11 +61,7 @@ enum { VX, VY, VZ };			   // Vertex indices.
 #define	ANGLETOFINESHIFT	19	   // 0x100000000 to 0x2000
 
 /*
-   ===============================================================================
-
-   GLOBAL TYPES
-
-   ===============================================================================
+ * GLOBAL TYPES
  */
 
 #ifdef WIN32
@@ -89,6 +86,7 @@ typedef enum {
 	sk_nightmare
 } skill_t;
 
+#if 0
 typedef struct {
 	char            forwardMove;   // *2048 for move
 	char            sideMove;	   // *2048 for move
@@ -116,6 +114,7 @@ typedef struct {
 // The high bits of arti are used for special flags.
 #define AFLAG_JUMP		0x80
 #define AFLAG_MASK		0x7F
+#endif
 
 typedef enum {
 	GS_LEVEL,

@@ -1281,7 +1281,7 @@ void NetSv_Ticker(void)
  * buffer that contains the ticcmds (kludge to work around the parameter
  * passing from the engine).
  */
-void   *NetSv_ReadCommands(byte *msg, uint size)
+void *NetSv_ReadCommands(byte *msg, uint size)
 {
 #define MAX_COMMANDS 30
 	static byte data[2 + sizeof(ticcmd_t) * MAX_COMMANDS];
@@ -1314,13 +1314,25 @@ void   *NetSv_ReadCommands(byte *msg, uint size)
 		if(flags & CMDF_LOOKDIR)
 			cmd->pitch = *((short *) msg)++;
 		if(flags & CMDF_BUTTONS)
-			cmd->actions = *msg++;
-#ifndef __JDOOM__
+		{
+			byte buttons = *msg++;
+ 			cmd->attack = ((buttons & CMDF_BTN_ATTACK) != 0);
+			cmd->use = ((buttons & CMDF_BTN_USE) != 0);
+			cmd->jump = ((buttons & CMDF_BTN_JUMP) != 0);
+			cmd->pause = ((buttons & CMDF_BTN_PAUSE) != 0);
+			cmd->suicide = ((buttons & CMDF_BTN_SUICIDE) != 0);
+		}
+		else
+		{
+			cmd->attack = cmd->use = cmd->jump = cmd->pause = 
+				cmd->suicide = false;
+		}
 		if(flags & CMDF_LOOKFLY)
-			cmd->lookfly = *msg++;
+			cmd->fly = *msg++;
 		if(flags & CMDF_ARTI)
 			cmd->arti = *msg++;
-#endif
+		if(flags & CMDF_CHANGE_WEAPON)
+			cmd->changeWeapon = *((short *) msg)++;
 
 		// Copy to next command (only differences have been written).
 		memcpy(cmd + 1, cmd, sizeof(ticcmd_t));

@@ -93,9 +93,6 @@ void P_RunPlayers(void)
 			gotCommands = false;
 			while(Net_GetTicCmd(&players[i].cmd, i))
 			{
-				// Check for special buttons (pause and netsave).
-				G_SpecialButton(&players[i]);
-
 				G_MergeTiccmd(&command, &players[i].cmd);
 				gotCommands = true;
 			}
@@ -106,6 +103,9 @@ void P_RunPlayers(void)
 				// player uses for thinking on this tick.
 				memcpy(&players[i].cmd, &command, sizeof(command));
 			}
+
+			// Check for special buttons (pause and netsave).
+			G_SpecialButton(&players[i]);
 
 			// The player thinks.
 			if(gamestate == GS_LEVEL && !pauseState)

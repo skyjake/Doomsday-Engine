@@ -992,13 +992,7 @@ void H_Ticker(void)
 	G_Ticker();
 }
 
-void G_ModifyDupTiccmd(ticcmd_t * cmd)
-{
-	if(cmd->actions & BT_SPECIAL)
-		cmd->actions = 0;
-}
-
-char   *G_Get(int id)
+char *G_Get(int id)
 {
 	switch (id)
 	{

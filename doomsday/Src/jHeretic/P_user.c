@@ -248,64 +248,10 @@ void P_MovePlayer(player_t *player)
 		}
 	}
 
-#if 0
-	look = cmd->lookfly & 15;
-	if(look > 7)
-	{
-		look -= 16;
-	}
-	if(look)
-	{
-		if(look == TOCENTER)
-		{
-			player->centering = true;
-		}
-		else
-		{
-			/*  player->plr->lookdir += 5*look;
-			   if(player->plr->lookdir > 90 || player->plr->lookdir < -110)
-			   {
-			   player->plr->lookdir -= 5*look;
-			   } */
-
-			int     spd = cfg.lookdirSpeed;
-
-			// We can't use a custom look speed in all situations.
-			if(netgame)
-				spd = 4;
-			else if(demoplayback || demorecording)
-				// Must be backwards compatible.
-				spd = 5;
-			player->plr->lookdir += spd * look;
-			if(player->plr->lookdir > 110 || player->plr->lookdir < -110)
-			{
-				player->plr->lookdir -= spd * look;
-			}
-		}
-	}
-	if(player->centering)
-	{
-		if(player->plr->lookdir > 0)
-		{
-			player->plr->lookdir -= 8;
-		}
-		else if(player->plr->lookdir < 0)
-		{
-			player->plr->lookdir += 8;
-		}
-		if(abs(player->plr->lookdir) < 8)
-		{
-			player->plr->lookdir = 0;
-			player->centering = false;
-		}
-	}
-#endif
-
-	fly = cmd->lookfly >> 4;
-	if(fly > 7)
-	{
+	fly = cmd->fly; //lookfly >> 4;
+/*	if(fly > 7)
 		fly -= 16;
-	}
+*/
 	if(fly && player->powers[pw_flight])
 	{
 		if(fly != TOCENTER)
@@ -335,18 +281,6 @@ void P_MovePlayer(player_t *player)
 			player->flyheight /= 2;
 		}
 	}
-
-	/*  if(cmd->lookdirdelta)
-	   {
-	   float fd = cmd->lookdirdelta / DELTAMUL;
-	   float delta = fd * fd;   // fd^2
-	   if(cmd->lookdirdelta < 0) delta = -delta;
-	   player->plr->lookdir += delta;
-	   }
-
-	   // 110 corresponds 85 degrees.
-	   if(player->plr->lookdir > 110) player->plr->lookdir = 110;
-	   if(player->plr->lookdir < -110) player->plr->lookdir = -110; */
 }
 
 /*
@@ -440,7 +374,7 @@ void P_DeathThink(player_t *player)
 		player->damagecount--;
 	}
 
-	if(player->cmd.actions & BT_USE)
+	if(player->cmd.use)
 	{
 		if(player == &players[consoleplayer])
 		{
@@ -618,7 +552,7 @@ void P_CheckPlayerJump(player_t *player)
 
 	if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0) &&
 	   (P_IsPlayerOnGround(player) || player->plr->mo->flags2 & MF2_ONMOBJ) &&
-	   (cmd->arti != 0xff && cmd->arti & AFLAG_JUMP) && player->jumpTics <= 0)
+	   cmd->jump && player->jumpTics <= 0)
 	{
 		// Jump, then!
 		player->plr->mo->momz =
@@ -708,26 +642,18 @@ void P_ClientSideThink()
 		P_PlayerInWindSector(pl);
 
 	// Flying.
-	fly = cmd->lookfly >> 4;
-	if(fly > 7)
+	fly = cmd->fly; //lookfly >> 4;
+/*	if(fly > 7)
 	{
 		fly -= 16;
 	}
+*/
 	if(fly && pl->powers[pw_flight])
 	{
 		if(fly != TOCENTER)
 		{
 			pl->flyheight = fly * 2;
-			/*if(!(mo->ddflags & DDMF_FLY))
-			   {
-			   // Start flying.
-			   mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
-			   } */
 		}
-		/*else
-		   {
-		   mo->ddflags &= ~(DDMF_FLY | DDMF_NOGRAVITY);
-		   } */
 	}
 	// We are flying when the Fly flag is set.
 	if(mo->ddflags & DDMF_FLY)
@@ -858,28 +784,26 @@ void P_PlayerThink(player_t *player)
 		else					// Jump?
 		{
 			P_CheckPlayerJump(player);
-			if(cmd->arti & AFLAG_MASK)
-				P_PlayerUseArtifact(player, cmd->arti & AFLAG_MASK);
+			if(cmd->arti)
+				P_PlayerUseArtifact(player, cmd->arti);
 		}
 	}
-	// Check for weapon change
-	if(cmd->actions & BT_SPECIAL)
-	{							// A special event has no other buttons
-		cmd->actions = 0;
+
+	if(cmd->suicide)
+	{
+		P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
 	}
-	if(cmd->actions & BT_CHANGE)
+
+	// Check for weapon change
+	if(cmd->changeWeapon)
 	{
 		int     oldweapon = player->pendingweapon;
 
 		// The actual changing of the weapon is done when the weapon
 		// psprite can do it (A_WeaponReady), so it doesn't happen in
 		// the middle of an attack.
-		newweapon = (cmd->actions & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
-		/*if(newweapon == wp_staff && player->weaponowned[wp_gauntlets]
-		   && !(player->readyweapon == wp_gauntlets))
-		   {
-		   newweapon = wp_gauntlets;
-		   } */
+		newweapon = cmd->changeWeapon - 1;
+
 		if(player->weaponowned[newweapon] && newweapon != player->readyweapon)
 		{
 			if(WeaponInShareware[newweapon] || !shareware)
@@ -891,7 +815,7 @@ void P_PlayerThink(player_t *player)
 			player->update |= PSF_PENDING_WEAPON;
 	}
 	// Check for use
-	if(cmd->actions & BT_USE)
+	if(cmd->use)
 	{
 		if(!player->usedown)
 		{

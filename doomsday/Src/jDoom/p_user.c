@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.12  2004/08/06 20:42:16  skyjake
+// Fixed ticcmd handling
+//
 // Revision 1.11  2004/06/16 18:28:47  skyjake
 // Updated style (typenames)
 //
@@ -139,8 +142,7 @@ void P_CheckPlayerJump(player_t *player)
 	ticcmd_t *cmd = &player->cmd;
 
 	if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0) &&
-	   P_IsPlayerOnGround(player) && !(cmd->actions & BT_SPECIAL) &&
-	   !(cmd->actions & BT_CHANGE) && cmd->actions & BT_JUMP &&
+	   P_IsPlayerOnGround(player) && cmd->jump &&
 	   player->jumptics <= 0)
 	{
 		// Jump, then!
@@ -259,7 +261,7 @@ void P_DeathThink(player_t *player)
 	else if(player->damagecount)
 		player->damagecount--;
 
-	if(player->cmd.actions & BT_USE)
+	if(player->cmd.use)
 		player->playerstate = PST_REBORN;
 }
 
@@ -484,42 +486,28 @@ void P_PlayerThink(player_t *player)
 
 	oldweapon = player->pendingweapon;
 
-	if(cmd->actions & BT_SPECIAL)
+	// There might be a special weapon change.
+	if(cmd->changeWeapon == TICCMD_NEXT_WEAPON ||
+	   cmd->changeWeapon == TICCMD_PREV_WEAPON)
 	{
-		// There might be a special weapon change.
-		if(cmd->actions & (BTS_NEXTWEAPON | BTS_PREVWEAPON) &&
-		   !(cmd->actions & BTS_PAUSE))
-		{
-			player->pendingweapon =
-				P_PlayerFindWeapon(player,
-								   (cmd->actions & BTS_NEXTWEAPON) != 0);
-		}
-		cmd->actions = 0;
+		player->pendingweapon =
+			P_PlayerFindWeapon(player,
+							   cmd->changeWeapon == TICCMD_NEXT_WEAPON);
+		cmd->changeWeapon = 0;
+	}
+
+	if(cmd->suicide)
+	{
+		P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
 	}
 
 	// Check for weapon change.
-	if(cmd->actions & BT_CHANGE)
+	if(cmd->changeWeapon)
 	{
 		// The actual changing of the weapon is done
 		//  when the weapon psprite can do it
 		//  (read: not in the middle of an attack).
-		newweapon = (cmd->actions & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
-
-		/*      if (newweapon == wp_fist
-		   && player->weaponowned[wp_chainsaw]
-		   && !(player->readyweapon == wp_chainsaw
-		   && player->powers[pw_strength]))
-		   {
-		   newweapon = wp_chainsaw;
-		   } */
-
-		/*if ( (gamemode == commercial)
-		   && newweapon == wp_shotgun 
-		   && player->weaponowned[wp_supershotgun]
-		   && player->readyweapon != wp_supershotgun)
-		   {
-		   newweapon = wp_supershotgun;
-		   } */
+		newweapon = cmd->changeWeapon - 1;
 
 		if(gamemode != commercial && newweapon == wp_supershotgun)
 		{
@@ -543,7 +531,7 @@ void P_PlayerThink(player_t *player)
 		player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
 
 	// check for use
-	if(cmd->actions & BT_USE)
+	if(cmd->use)
 	{
 		if(!player->usedown)
 		{

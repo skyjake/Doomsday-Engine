@@ -60,6 +60,7 @@ typedef enum {
 	ga_screenshot
 } gameaction_t;
 
+#if 0
 //
 // Button/action code definitions.
 //
@@ -100,6 +101,7 @@ typedef enum {
 	BTS_PREVWEAPON = 8,
 
 } buttoncode_t;
+#endif
 
 //
 // GLOBAL VARIABLES
@@ -116,6 +118,9 @@ extern gameaction_t gameaction;
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2004/08/06 20:42:30  skyjake
+// Fixed ticcmd handling
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

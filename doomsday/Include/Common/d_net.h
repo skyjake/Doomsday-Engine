@@ -132,7 +132,13 @@ typedef struct {
 #define CMDF_BUTTONS		0x10
 #define CMDF_LOOKFLY		0x20
 #define CMDF_ARTI			0x40
-#define CMDF_MORE_FLAGS		0x80   // Reserved for extensions.
+#define CMDF_CHANGE_WEAPON  0x80
+
+#define CMDF_BTN_ATTACK	    0x01
+#define CMDF_BTN_USE	    0x02
+#define CMDF_BTN_JUMP	    0x04
+#define CMDF_BTN_PAUSE	    0x08
+#define CMDF_BTN_SUICIDE    0x10
 
 // Networking.
 int             D_NetServerOpen(int before);

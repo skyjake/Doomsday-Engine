@@ -21,6 +21,7 @@
 #include "../dd_api.h"
 #include "g_dgl.h"
 #include "version.h"
+#include "p_ticcmd.h"
 
 #define Set DD_SetInteger
 #define Get DD_GetInteger
@@ -83,6 +84,7 @@ typedef enum {
 	sk_nightmare
 } skill_t;
 
+#if 0
 typedef struct {
 	char            forwardMove;   // *2048 for move
 	char            sideMove;	   // *2048 for move
@@ -112,6 +114,7 @@ typedef struct {
 #define AFLAG_MASK			0x3F
 #define AFLAG_SUICIDE		0x40
 #define AFLAG_JUMP			0x80
+#endif
 
 typedef enum {
 	GS_LEVEL,

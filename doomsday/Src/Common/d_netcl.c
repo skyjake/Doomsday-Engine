@@ -662,13 +662,14 @@ void NetCl_Paused(boolean setPause)
  * buffer that contains the data (kludge to work around the parameter
  * passing from the engine).
  */
-void   *NetCl_WriteCommands(ticcmd_t * cmd, int count)
+void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 {
 	static byte msg[1024];		// A shared buffer.
 	ushort *size = (ushort *) msg;
 	byte   *out = msg + 2, *flags, *start = out;
 	ticcmd_t prev;
 	int     i;
+	byte   buttons;
 
 	// Always compare against the previous command.
 	memset(&prev, 0, sizeof(prev));
@@ -699,23 +700,42 @@ void   *NetCl_WriteCommands(ticcmd_t * cmd, int count)
 			*flags |= CMDF_LOOKDIR;
 			*((short *) out)++ = cmd->pitch;
 		}
-		if(cmd->actions != prev.actions)
+
+		// Compile the button flags.
+		buttons = 0;
+		if(cmd->attack)
+			buttons |= CMDF_BTN_ATTACK;
+		if(cmd->use)
+			buttons |= CMDF_BTN_USE;
+		if(cmd->jump)
+			buttons |= CMDF_BTN_JUMP;
+		if(cmd->pause)
+			buttons |= CMDF_BTN_PAUSE;
+		if(cmd->suicide)
+			buttons |= CMDF_BTN_SUICIDE;
+
+		// Always include nonzero buttons.
+		if(buttons != 0)
 		{
 			*flags |= CMDF_BUTTONS;
-			*out++ = cmd->actions;
+			*out++ = buttons;
 		}
-#ifndef __JDOOM__
-		if(cmd->lookfly != prev.lookfly)
+
+		if(cmd->fly != prev.fly)
 		{
 			*flags |= CMDF_LOOKFLY;
-			*out++ = cmd->lookfly;
+			*out++ = cmd->fly;
 		}
 		if(cmd->arti != prev.arti)
 		{
 			*flags |= CMDF_ARTI;
 			*out++ = cmd->arti;
 		}
-#endif
+		if(cmd->changeWeapon != prev.changeWeapon)
+		{
+			*flags |= CMDF_CHANGE_WEAPON;
+			*((short *) out)++ = cmd->changeWeapon;
+		}
 
 		memcpy(&prev, cmd, sizeof(*cmd));
 	}

@@ -490,7 +490,7 @@ void IN_CheckForSkip(void)
 	{
 		if(players[i].plr->ingame)
 		{
-			if(player->cmd.actions & BT_ATTACK)
+			if(player->cmd.attack)
 			{
 				if(!player->attackdown)
 				{
@@ -502,7 +502,7 @@ void IN_CheckForSkip(void)
 			{
 				player->attackdown = false;
 			}
-			if(player->cmd.actions & BT_USE)
+			if(player->cmd.use)
 			{
 				if(!player->usedown)
 				{

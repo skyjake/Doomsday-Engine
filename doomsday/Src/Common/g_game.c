@@ -839,28 +839,26 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 					players[consoleplayer].inventory[inv_ptr].type;
 				inventory = false;
 				if(cfg.chooseAndUse)
-					cmd->arti |=
-						players[consoleplayer].inventory[inv_ptr].
-						type & AFLAG_MASK;
+					cmd->arti =
+						players[consoleplayer].inventory[inv_ptr].type;
 				else
 					cmd->arti = 0;
 			}
 			else if(usearti)
 			{
-				cmd->arti |=
-					players[consoleplayer].inventory[inv_ptr].
-					type & AFLAG_MASK;
+				cmd->arti =
+					players[consoleplayer].inventory[inv_ptr].type;
 			}
 		}
 		actions[A_USEARTIFACT].on = false;
 	}
 	if(actions[A_JUMP].on)
 	{
-		cmd->arti |= AFLAG_JUMP;
+		cmd->jump = true;
 	}
 	if(mn_SuicideConsole)
 	{
-		cmd->arti |= AFLAG_SUICIDE;
+		cmd->suicide = true;
 		mn_SuicideConsole = false;
 	}
 
@@ -937,22 +935,17 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 	// Buttons
 
 	if(actions[A_FIRE].on)
-		cmd->actions |= BT_ATTACK;
+		cmd->attack = true;
 
 	if(actions[A_USE].on)
 	{
-		cmd->actions |= BT_USE;
+		cmd->use = true;
 		// clear double clicks if hit use button 
 		dclicks = 0;
 	}
 
-#if __JDOOM__
 	if(actions[A_JUMP].on)
-		cmd->actions |= BT_JUMP;
-#elif __JHERETIC__
-	if(actions[A_JUMP].on)
-		cmd->arti |= AFLAG_JUMP;
-#endif
+		cmd->jump = true;
 
 #if __JDOOM__
 
@@ -971,9 +964,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		else
 			i = wp_fist;
 
-		cmd->actions &= ~BT_JUMP;
-		cmd->actions |= BT_CHANGE;
-		cmd->actions |= i << BT_WEAPONSHIFT;
+		cmd->changeWeapon = i + 1;
 	}
 	else if(actions[A_WEAPONCYCLE2].on)	// Shotgun/super sg.
 	{
@@ -987,9 +978,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		else
 			i = wp_shotgun;
 
-		cmd->actions &= ~BT_JUMP;
-		cmd->actions |= BT_CHANGE;
-		cmd->actions |= i << BT_WEAPONSHIFT;
+		cmd->changeWeapon = i + 1;
 	}
 	else
 	{
@@ -997,30 +986,26 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		for(i = 0; i < NUMWEAPONS; i++)
 			if(actions[A_WEAPON1 + i].on)
 			{
-				cmd->actions &= ~BT_JUMP;
-				cmd->actions |= BT_CHANGE;
-				cmd->actions |= i << BT_WEAPONSHIFT;
+				cmd->changeWeapon = i + 1;
 				break;
 			}
 	}
 	if(actions[A_NEXTWEAPON].on || actions[A_PREVIOUSWEAPON].on)
 	{
-		cmd->actions =
-			BT_SPECIAL | (actions[A_NEXTWEAPON].
-						  on ? BTS_NEXTWEAPON : BTS_PREVWEAPON);
+		cmd->changeWeapon = 
+			(actions[A_NEXTWEAPON].on ? TICCMD_NEXT_WEAPON : 
+			 TICCMD_PREV_WEAPON);
 	}
 #else
 	if(actions[A_PREVIOUSWEAPON].on)
 	{
-		cmd->actions |=
-			BT_CHANGE | (findWeapon(players + consoleplayer, false) <<
-						 BT_WEAPONSHIFT);
+		cmd->changeWeapon =
+			findWeapon(players + consoleplayer, false) + 1;
 	}
 	else if(actions[A_NEXTWEAPON].on)
 	{
-		cmd->actions |=
-			BT_CHANGE | (findWeapon(players + consoleplayer, true) <<
-						 BT_WEAPONSHIFT);
+		cmd->changeWeapon =
+			findWeapon(players + consoleplayer, true) + 1;
 	}
 #  if __JHERETIC__
 	else
@@ -1041,8 +1026,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 					i = wp_gauntlets;
 				}
 #  endif
-				cmd->actions |= BT_CHANGE;
-				cmd->actions |= i << BT_WEAPONSHIFT;
+				cmd->changeWeapon = i + 1;
 				break;
 			}
 		}
@@ -1057,7 +1041,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 			dclicks++;
 		if(dclicks == 2)
 		{
-			cmd->actions |= BT_USE;
+			cmd->use = true;
 			dclicks = 0;
 		}
 		else
@@ -1082,7 +1066,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 			dclicks2++;
 		if(dclicks2 == 2)
 		{
-			cmd->actions |= BT_USE;
+			cmd->use = true;
 			dclicks2 = 0;
 		}
 		else
@@ -1210,24 +1194,19 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		G_AdjustLookDir(cplr, look, elapsedTime);
 
 #ifndef __JDOOM__
-		if(look < 0)
+/*		if(look < 0)
 		{
 			look += 16 * elapsedTics;
 		}
-		cmd->lookfly = look;
+		cmd->fly = look;*/
 #endif
 	}
-//#endif
 
-//#if __JDOOM__
-//	if(!pausestate)
-//		G_AdjustAngle(cplr, turn);
-//#else
 #ifndef __JDOOM__
-	if(flyheight < 0)
-		flyheight += 16;
+	/*if(flyheight < 0)
+	  flyheight += 16;*/
 
-	cmd->lookfly |= flyheight << 4;
+	cmd->fly = flyheight;
 #endif
 
 	// Store the current mlook key state.
@@ -1241,7 +1220,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		sendpause = false;
 		// Clients can't pause anything.
 		if(!IS_CLIENT)
-			cmd->actions = BT_SPECIAL | BTS_PAUSE;
+			cmd->pause = true;
 	}
 
 	if(IS_CLIENT)
@@ -1264,41 +1243,19 @@ void G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src)
 	dest->angle = src->angle;
 	dest->pitch = src->pitch;
 
-#ifndef __JDOOM__
-	dest->lookfly = src->lookfly;
+	dest->fly = src->fly;
+
 	if(src->arti)
-	{
 		dest->arti = src->arti;
-	}
-#endif
 
-	if(dest->actions & BT_SPECIAL)
-	{
-		// Don't overwrite special actions.
-		return;
-	}
-	
-	// Old Attack and Use buttons apply, if they're set.
-	dest->actions |= src->actions & (BT_ATTACK | BT_USE);
-	if(src->actions & BT_SPECIAL)
-	{
-		dest->actions = src->actions;
-		return;
-	}
+	if(src->changeWeapon)
+		dest->changeWeapon = src->changeWeapon;
 
-#ifdef __JDOOM__
-	if(src->actions & BT_JUMP)
-	{
-		dest->actions |= BT_JUMP;
-	}
-#endif
-	
-	if(src->actions & BT_CHANGE && !(dest->actions & BT_CHANGE))
-	{
-		// Use the old weapon change.
-		dest->actions &= ~BT_WEAPONMASK;
-		dest->actions |= src->actions & (BT_CHANGE | BT_WEAPONMASK);
-	}
+	dest->attack |= src->attack;
+	dest->use |= src->use;
+	dest->jump |= src->jump;
+	dest->pause |= src->pause;
+	dest->suicide |= src->suicide;
 }
 
 //
@@ -1563,25 +1520,20 @@ void G_SpecialButton(player_t *pl)
 {
 	if(pl->plr->ingame)
 	{
-		if(pl->cmd.actions & BT_SPECIAL)
+		if(pl->cmd.pause)
 		{
-			switch (pl->cmd.actions & BT_SPECIALMASK)
+			paused ^= 1;
+			if(paused)
 			{
-			case BTS_PAUSE:
-				paused ^= 1;
-				if(paused)
-				{
-					// This will stop all sounds from all origins.
-					S_StopSound(0, 0);
-				}
-
-				// Servers are responsible for informing clients about
-				// pauses in the game.
-				NetSv_Paused(paused);
-
-				pl->cmd.actions = 0;
-				break;
+				// This will stop all sounds from all origins.
+				S_StopSound(0, 0);
 			}
+			
+			// Servers are responsible for informing clients about
+			// pauses in the game.
+			NetSv_Paused(paused);
+			
+			pl->cmd.pause = 0;
 		}
 	}
 }

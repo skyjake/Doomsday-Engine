@@ -28,11 +28,13 @@
 #pragma interface
 #endif
 
+#pragma pack(1)
+
+#if 0
 // The data sampled per tick (single player)
 // and transmitted to other peers (multiplayer).
 // Mainly movements/button commands per game tick,
 // plus a checksum for internal state consistency.
-#pragma pack(1)
 typedef struct {
 	char            forwardMove;   // *2048 for move
 	char            sideMove;	   // *2048 for move
@@ -40,6 +42,7 @@ typedef struct {
 	short           pitch;		   // view pitch
 	byte            actions;
 } ticcmd_t;
+#endif
 
 // This'll be used for saveplayer_t, but acts only as padding.
 typedef struct {
