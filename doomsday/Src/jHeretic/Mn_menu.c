@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include "DoomDef.h"
+#include "f_infine.h"
 #include "P_local.h"
 #include "R_local.h"
 #include "soundst.h"
@@ -2191,6 +2192,13 @@ static boolean SCSaveGame(int option)
 {
 	char *ptr;
 
+	if(!usergame)
+	{
+		// Can't save if not playing.
+		FileMenuKeySteal = false;
+		return true;
+	}
+
 	if(!FileMenuKeySteal)
 	{
 		FileMenuKeySteal = true;
@@ -2787,7 +2795,6 @@ boolean MN_Responder(event_t *event)
 	int i;
 	MenuItem_t *item;
 	extern boolean automapactive;
-	extern void D_StartTitle(void);
 	char *textBuffer;
 
 	//if(F_Responder(event)) return true;
@@ -2849,8 +2856,7 @@ boolean MN_Responder(event_t *event)
 							typeofask = 0;
 							askforquit = false;
 							paused = false;
-//							I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
-							D_StartTitle(); // go to intro/demo mode.
+							G_StartTitle(); // go to intro/demo mode.
 							break;
 						case 3:
 							P_SetMessage(&players[consoleplayer], "QUICKSAVING....", false);
@@ -2892,7 +2898,8 @@ boolean MN_Responder(event_t *event)
 	if(MenuActive == false)
 	{
 		if(key == DDKEY_ESCAPE 
-			|| gamestate == GS_DEMOSCREEN 
+			/*|| gamestate == GS_DEMOSCREEN*/
+			|| FI_IsMenuTrigger(event)
 			|| Get(DD_PLAYBACK))
 		{
 			MN_ActivateMenu();
