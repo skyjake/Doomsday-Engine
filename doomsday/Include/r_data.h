@@ -8,6 +8,7 @@
 #include "p_data.h"
 #include "p_think.h"
 #include "m_nodepile.h"
+#include "dedfile.h"
 
 #define SIF_VISIBLE			0x1			// Sector is visible on this frame.
 #define SIF_FRAME_CLEAR		0x1			// Flags to clear before each frame.
@@ -18,6 +19,11 @@
 
 #define SECT_FLOOR(x)	(secinfo[GET_SECTOR_IDX(x)].visfloor)
 #define SECT_CEIL(x)	(secinfo[GET_SECTOR_IDX(x)].visceiling)
+
+// Flags for decorations.
+#define DCRF_NO_IWAD	0x1		// Don't use if from IWAD.
+#define DCRF_PWAD		0x2		// Can use if from PWAD.
+#define DCRF_EXTERNAL	0x4		// Can use if from external resource.
 
 // Texture flags.
 #define TXF_MASKED		0x1
@@ -99,6 +105,7 @@ typedef struct
 	byte		masked;			// Is the (DGL) texture masked?
 	detailinfo_t detail;		// Detail texture information.
 	int			group;			// Animation group (or zero).
+	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
 	texpatch_t	patches[1];		// [patchcount] drawn back to front
 								//  into the cached texture
 } texture_t;
@@ -116,6 +123,7 @@ typedef struct flat_s
 	rgbcol_t	color;
 	detailinfo_t detail;		// Detail texture information.
 	int			group;			// Animation group (or zero).
+	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
 } flat_t;
 
 typedef struct lumptexinfo_s
@@ -165,5 +173,7 @@ char *	R_TextureNameForNum(int num);
 int		R_SetFlatTranslation(int flat, int translateTo);
 int		R_SetTextureTranslation(int tex, int translateTo);
 void	R_SetAnimGroup(int type, int number, int group);
+boolean	R_IsCustomTexture(int texture);
+boolean	R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal);
 
 #endif

@@ -1,4 +1,6 @@
 // Doomsday Engine Definition Files
+// (not a shining example of brilliant design, but works
+//  after a fashion)
 
 #ifndef __DOOMSDAY_DED_FILES_H__
 #define __DOOMSDAY_DED_FILES_H__
@@ -352,6 +354,33 @@ typedef struct
 	ded_ptcstage_t	stages[DED_PTC_STAGES];
 } ded_ptcgen_t;
 
+typedef struct
+{
+	float			pos[2];			// Coordinates on the surface.
+	float			elevation;		// Distance from the surface.
+	float			color[3];		// Light color.
+	float			radius;			// Dynamic light radius (-1 = no light).
+	float			halo_radius;	// Halo radius (zero = no halo).
+	int				pattern_offset[2];
+	int				pattern_skip[2]; 
+	int				light_levels[2];// Fade by sector lightlevel.
+	int				flare_texture;
+	//ded_string_t	texture;		// DL map to use (later...).
+} ded_decorlight_t;
+
+// There is a fixed number of light decorations in each decoration.
+#define DED_DECOR_NUM_LIGHTS	8
+
+typedef struct ded_decor_s
+{
+	ded_string_t	surface;		// Texture or flat name.
+	int				is_texture;		// True, if decoration for a wall.
+	ded_flags_t		flags_str;		// Flags as text.
+	int				flags;			// Evaluated flags.
+	int				surface_index;	// Flat or texture index.
+	ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
+} ded_decor_t;
+
 // The ded_t structure encapsulates all the data one definition file 
 // can contain. This is only an internal representation of the data.
 // An ASCII version is written and read by DED_Write() and DED_Read() 
@@ -392,6 +421,7 @@ typedef struct ded_s
 		ded_count_t	details;
 		ded_count_t	ptcgens;
 		ded_count_t	finales;
+		ded_count_t decorations;
 		ded_count_t	lines;
 		ded_count_t	sectors;
 	} count;
@@ -443,6 +473,9 @@ typedef struct ded_s
 
 	// Finales.
 	ded_finale_t *finales;
+
+	// Decorations.
+	ded_decor_t *decorations;
 	
 	// XG line types.
 	ded_linetype_t *lines;
@@ -473,6 +506,7 @@ int DED_AddValue(ded_t *ded, const char *id);
 int DED_AddDetail(ded_t *ded, const char *lumpname);
 int DED_AddPtcGen(ded_t *ded, const char *state);
 int DED_AddFinale(ded_t *ded);
+int DED_AddDecoration(ded_t *ded);
 int DED_AddSector(ded_t *ded, int id);
 int DED_AddLine(ded_t *ded, int id);
 
@@ -492,6 +526,7 @@ void DED_RemoveValue(ded_t *ded, int index);
 void DED_RemoveDetail(ded_t *ded, int index);
 void DED_RemovePtcGen(ded_t *ded, int index);
 void DED_RemoveFinale(ded_t *ded, int index);
+void DED_RemoveDecoration(ded_t *ded, int index);
 void DED_RemoveSector(ded_t *ded, int index);
 void DED_RemoveLine(ded_t *ded, int index);
 
