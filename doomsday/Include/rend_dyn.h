@@ -54,9 +54,10 @@ extern lumobj_t	*luminousList;
 extern lumobj_t	**dlSubLinks;
 extern int		numLuminous;
 extern int		useDynLights;
-extern int		maxDynLights, dlBlend, /*clipLights, */dlMaxRad;
-extern float	dlRadFactor, dlFactor;//, dlContract;
+extern int		maxDynLights, dlBlend, dlMaxRad;
+extern float	dlRadFactor, dlFactor;
 extern int		useWallGlow, glowHeight;
+extern float	glowFogBright;
 extern int		rend_info_lums;
 
 extern dynlight_t **floorLightLinks;
