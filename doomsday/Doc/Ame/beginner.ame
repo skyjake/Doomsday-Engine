@@ -35,7 +35,7 @@ CONTENTS: @contents{1}
     @file{jdoom_mpack.exe} @br @file{jheretic_mpack.exe} @br
     @file{jhexen_mpack.exe}
 
-@item Windows 95 (or newer).
+@item Windows 98 (or newer).
 
 @item DirectX 8.0 (or newer).
 
@@ -75,7 +75,7 @@ If there is no need to create new shortcuts, just bypass the shortcut creation d
 
 This is the procedure to follow when installing Doomsday 1.7.2 or an older version.
 
-@section{ Step 1: Decompress the distribution }
+@section{ Step 1: Unpack the distribution package }
 
 Run the distribution EXE file. A window appears asking you where the files
 should be extracted. The default folder is @file{C:\Doomsday}.
@@ -90,13 +90,7 @@ The default is @file{C:\Doomsday} here, as well. The model pack is
 not required; you don't have to install it at all, or you might
 install it at some later point in time.
 
-Even if you're only going to play one of the games, for example jDoom, it's
-recommended that you install the files into a folder named @file{Doomsday}
-(or something similar), not @file{jDoom} because if you later decide to
-install jHeretic or jHexen they should be installed into the same folder with
-jDoom. It's possible to install them into separate folders but then you've
-got multiple copies of the same files on your hard drive. (Assuming you
-care about a few MBs or the names of your folders.)
+Even if you're only going to play one of the games, for example jDoom, it's recommended that you install the files into a folder named @file{Doomsday} (or something similar), not @file{jDoom} because if you later decide to install jHeretic or jHexen they should be installed into the same folder with jDoom. It's possible to install them into separate folders but then you've got multiple copies of the same files on your hard drive. (Assuming you care about a few MBs or the names of your folders.)
 
 @section{ Step 2: Copy the WAD files }
 
@@ -125,15 +119,11 @@ various IWADs are listed below:
 	@file{HEXDD.WAD} (@file{HEXEN.WAD} needed as well)
 }
 
-Let's assume that in Step 1 you extracted the files to @file{C:\Doomsday}.
-I recommend that you copy (or move if you don't play the original game any
-more) the IWAD files you need into the appropriate @file{Data} subfolder, in
-jDoom's case @file{C:\Doomsday\Data\jDoom}. If you don't do this you'll need to
-specify the IWAD to use when launching the game.
+Let's assume that in Step 1 you extracted the files to @file{C:\Doomsday}. I recommend that you copy (or move if you don't play the original game any more) the IWAD files you need into the appropriate @file{Data} subfolder, in jDoom's case @file{C:\Doomsday\Data\jDoom}. If you don't do this you'll need to specify the IWAD to use when launching the game.
 
-@notice{Make sure you're using the latest version of the original game.
-Patches can be found by searching the internet for "doom patch" or
-something similar. Also check @link{http://www.idsoftware.com/}.}
+@notice{
+	Make sure you're using the latest version of the original game. See this F.A.Q. entry for more information: @link{http://www.doomsdayhq.com/faq.php?topic=10#question5}
+}
 
 @section{ Step 3: Run glBSP on the WAD files }
 
@@ -169,14 +159,11 @@ For the latest version go to @link{http://glbsp.sourceforge.net/}.
 
 @section{ Step 4: Create a shortcut for KickStart }
 
-The main launcher for games running on the Doomsday Engine is called
-Doomsday KickStart. It can be found in the folder where you extracted the
-files in Step 1 (@file{Kicks.exe}). To have a convenient way to start the game
-create a Windows shortcut for @file{Kicks.exe}.
+The main launcher for games running on the Doomsday Engine is called Doomsday KickStart. It can be found in the folder where you extracted the files in Step 1 (@file{Kicks.exe}). To have a convenient way to start the game create a Windows shortcut for @file{Kicks.exe}.
 
-@notice{If KickStart fails to run, displaying an error message about
-missing OCX or DLL files, get the "KickStart Full Install" from
-@link{http://www.doomsdayhq.com/download_util.php}.}
+@notice{
+	If KickStart fails to run, displaying an error message about missing OCX or DLL files, get the "KickStart Full Install" from @link{http://www.doomsdayhq.com/download_util.php}.
+}
 
 @chapter{ Starting a game }
 
@@ -185,23 +172,12 @@ missing OCX or DLL files, get the "KickStart Full Install" from
 Doomsday KickStart is the easiest way to start playing jDoom, jHeretic or
 jHexen. Select the profile you want from the list and click @button{Play}.
 
-You can create new profiles by right-clicking the profile list.
-
-Note that only the "Game" and "Definitions" tabs are profile-specific. The
-"Graphics" and "Other" tabs are common to all profiles.
-
-If you want to see the command line KickStart uses to start the game,
-right-click the Play button.
+To find more information about KickStart, go to:
+@ind{@link{http://modelyard.newdoom.com/}}
 
 @section{ Starting with the Simple Launchers }
 
-The Simple Launchers are small EXE files found in the folder where you
-installed the game (@file{jDoom.exe}, @file{jHeretic.exe}, @file{jHexen.exe}).
-They can only be run in the root Doomsday folder, which is @file{C:\Doomsday}
-by default. They just change to the correct runtime folder (e.g. @file{Run\jDoom})
-and execute @file{Doomsday.exe} with the appropriate command line options
-(@opt{-gl}, @opt{-game}, @opt{-userdir}, @opt{-basedir}; see
-@file{Doc\CmdLine.txt}).
+The Simple Launchers are small EXE files found in the folder where you installed the game (@file{jDoom.exe}, @file{jHeretic.exe}, @file{jHexen.exe}). They can only be run in the root Doomsday folder, which is @file{C:\Doomsday} by default. They just change to the correct runtime folder (e.g. @file{Run\jDoom}) and execute @file{Doomsday.exe} with the appropriate command line options (@opt{-gl}, @opt{-game}, @opt{-userdir}, @opt{-basedir}; see @file{Doc\CmdLine.txt}).
 
 The simple launchers have one command line option of their own: @opt{-d3d}.
 It'll make the game use the Direct3D renderer instead of the OpenGL one,
