@@ -351,8 +351,9 @@ void P_NewParticle(ptcgen_t *gen)
 		pt->pos[VZ] += gen->center[VZ];
 
 		// Calculate XY center with mobj angle.
-		ang = r_use_srvo_angle? (gen->source->visangle << 16)
-			: gen->source->angle;
+		ang = (r_use_srvo_angle? (gen->source->visangle << 16)
+			: gen->source->angle)
+			+ gen->center[VY] / 180.0f * ANG180;
 		ang2 = (ang + ANG90) >> ANGLETOFINESHIFT;
 		ang >>= ANGLETOFINESHIFT;
 		pt->pos[VX] += FixedMul(finecosine[ang], gen->center[VX]);
@@ -809,7 +810,7 @@ void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
 	// Bounding box of the movement line.
 	tmpz = z;
-	tmprad = st->radius;
+	tmprad = hardRadius;
 	tmpx1 = pt->pos[VX];
 	tmpx2 = x;
 	tmpy1 = pt->pos[VY];
@@ -959,10 +960,38 @@ void P_PtcGenThinker(ptcgen_t *gen)
 ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
 {
 	int	i;
+	ded_ptcgen_t *def;
 
-	for(i = 0; i < defs.count.ptcgens.num; i++)
-		if(defs.ptcgens[i].flat_num == flatpic)
-			return defs.ptcgens + i;
+	for(i = 0, def = defs.ptcgens; i < defs.count.ptcgens.num; i++, def++)
+	{
+		if(def->flags & PGF_GROUP)
+		{
+			// This generator is triggered by all the flats in 
+			// the animation group.
+			flat_t *defFlat = R_GetFlat(def->flat_num);
+			flat_t *usedFlat = R_GetFlat(flatpic);
+
+			// We only need to search if we know both the real used flat
+			// and the flat of this definition belong in an animgroup.
+			if(defFlat->ingroup && usedFlat->ingroup)
+			{
+				int g;
+				for(g = 0; g < numgroups; g++)
+				{
+					// Precache groups don't apply.
+					if(groups[g].flags & AGF_PRECACHE) continue;
+
+					if(R_IsInAnimGroup(groups[g].id, DD_FLAT, def->flat_num)
+						&& R_IsInAnimGroup(groups[g].id, DD_FLAT, flatpic))
+					{
+						// Both are in this group! This def will do.
+						return def;
+					}
+				}
+			}
+		}
+		if(def->flat_num == flatpic) return def;
+	}
 	return NULL;
 }
 
