@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.15  2003/08/30 15:22:40  skyjake
+//** BlendMode moved under GL
+//**
 //** Revision 1.14  2003/08/28 01:53:04  skyjake
 //** Movement yaw and pitch affect particle models
 //**
@@ -511,7 +514,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 			if(new_mode != mode)
 			{
 				gl.End();
-				Rend_BlendMode(mode = new_mode);
+				GL_BlendMode(mode = new_mode);
 				gl.Begin(prim_type);
 			}
 		}
@@ -738,7 +741,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	if(!with_blend) 
 	{
 		// We may have rendered subtractive stuff.
-		Rend_BlendMode(BM_NORMAL);
+		GL_BlendMode(BM_NORMAL);
 	}
 }
 
@@ -750,7 +753,7 @@ void PG_RenderPass(boolean use_blending)
 	int i;
 
 	// Set blending mode.
-	if(use_blending) Rend_BlendMode(BM_ADD);
+	if(use_blending) GL_BlendMode(BM_ADD);
 
 	if(hasModels)
 		PG_RenderParticles(PTC_MODEL, use_blending);
@@ -766,7 +769,7 @@ void PG_RenderPass(boolean use_blending)
 		}
 
 	// Restore blending mode.
-	if(use_blending) Rend_BlendMode(BM_NORMAL);
+	if(use_blending) GL_BlendMode(BM_NORMAL);
 }
 
 //===========================================================================

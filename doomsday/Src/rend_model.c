@@ -801,7 +801,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		// The first pass can be skipped if it won't be visible.
 		if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
 		{
-			Rend_BlendMode(blending);
+			GL_BlendMode(blending);
 			RL_Bind(skinTexture);
 
 			Mod_RenderCommands(RC_COMMAND_COORDS, 
@@ -815,9 +815,9 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 
 			// Set blending mode, two choices: reflected and specular.
 			if(subFlags & MFF_SHINY_SPECULAR)
-				Rend_BlendMode(BM_ADD);
+				GL_BlendMode(BM_ADD);
 			else 
-				Rend_BlendMode(BM_NORMAL);
+				GL_BlendMode(BM_NORMAL);
 
 			// Shiny color.
 			Mod_FixedVertexColors(numVerts, modelColors, color);
@@ -852,7 +852,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	{
 		// A special case: specular shininess on an opaque object.
 		// Multitextured shininess with the normal blending.
-		Rend_BlendMode(blending);
+		GL_BlendMode(blending);
 		RL_SelectTexUnits(2);
 		// Tex1*Color + Tex2RGB*ConstRGB
 		gl.SetInteger(DGL_MODULATE_TEXTURE, 10);
@@ -882,7 +882,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		gl.SetInteger(DGL_CULL_FACE, DGL_CCW);
 	}
 	gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-	Rend_BlendMode(BM_NORMAL);
+	GL_BlendMode(BM_NORMAL);
 }
 
 /*
