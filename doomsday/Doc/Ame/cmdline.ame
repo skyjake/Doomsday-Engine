@@ -242,10 +242,6 @@ $--------------------------------------------------------------------
 	Uses the given search path instead of the one
 	specified in the primary DED file.
 @row
-	@opt{ -renorm } @tab @tab
-	Recalculates the surface normals of all MD2 models
-	when the models are loaded.
-@row
 	@opt{-fontdir P} @tab @opt{-fd} @tab
 	Looks in the given directory @file{P} for the font files.
 	Defaults to @file{ Data\Fonts\ }.
@@ -262,6 +258,10 @@ $--------------------------------------------------------------------
 	@opt{-leaveramp} @tab @tab
 	At shutdown, don't reset color settings (gamma, contrast,
 	brightness) back to the	original values.
+@row
+	@opt{-gfxdir P} @tab @tab
+	Sets the directory where Doomsday graphics resources are loaded.
+	Defaults to @file{Data\Graphics}.
 }
 
 @section{ Textures }
@@ -288,12 +288,15 @@ $--------------------------------------------------------------------
 	the maximum size to 128 x 128 pixels.
 @row
 	@opt{ -pwadtex } @tab @tab
-	Allow using external resources with textures whose data is read
+	Allow using external resources with textures/flats whose data is read
 	from a PWAD. By default, external resources are only used with
 	textures from an IWAD.
 @row
 	@opt{-nohightex}@tab @tab
-	Disable high-resolution (PNG, TGA, PCX) textures.
+	Disable high-resolution (external) textures and flats.
+@row
+	@opt{-nohighpat}@tab @tab
+	Disable high-resolution (external) patches and sprites.
 @row
 	@opt{-texdir P}@tab @opt{-td} @tab
 	Loads all high-resolution (PNG, TGA, PCX) textures
@@ -333,9 +336,19 @@ $--------------------------------------------------------------------
 @table/thick{25 12 63}{
 	@header{Option} @tab @header{Abbr.} @tab @header{Description}
 @row{single}
-	@opt{-notexcomp} @tab @tab
-	Disable texture compression (if supported by the OpenGL driver).
-	Compression is enabled by default.
+	@opt{-vtxar} @tab @tab
+	Use vertex arrays. Vertex arrays are usually enabled by default.
+@row
+	@opt{-novtxar} @tab @tab
+	Disable vertex arrays. Try this when experiencing rendering errors.
+@row
+	@opt{-texcomp} @tab @tab
+	Enable texture compression (if supported by the OpenGL driver).
+	Compression is disabled by default.
+@row
+	@opt{-nosgm} @tab @tab
+	Disable the SGIS_generate_mipmap extension. Try this when
+	experiencing texture errors.
 @row
 	@opt{-allowsoftware} @tab @tab
 	Allow using the software renderer if no 3D hardware

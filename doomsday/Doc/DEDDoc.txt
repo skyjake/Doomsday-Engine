@@ -2,7 +2,7 @@
                    Doomsday Engine Definitions Reference
                         (or "Knee-Deep In The DED")
                    =====================================
-                       Revision 0.9.2 -- 08/19/2003
+                       Revision 0.9.2 -- 08/31/2003
 
         Contact <skyjake@doomsdayhq.com> if you have any questions.
 
@@ -27,7 +27,7 @@ Elements of a DED file:
 
   Use of the Header block is optional. For example:
 
-      Header { Version = 5; }
+      Header { Version = 6; }
 
   In DED version 5, there must be a semicolon after each statement,
   including blocks inside definition blocks. In version 6, semicolons are
@@ -1335,7 +1335,5 @@ Shortcuts:
 
 
 ---------------------------------------------------------------------------
-                   Doomsday Engine Definitions Reference
-
+Doomsday Engine Definitions Reference
 $Id$
-
