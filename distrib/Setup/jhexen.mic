@@ -1,5 +1,5 @@
 [Marine]
-Name = jHexen 1.2
+Name = jHexen 1.3
 Info = jHexen DLL, definitions, data files, documentation and KickStart profiles for Hexen.
 File = _mic_jhexen.exe
 Data path = Data\jHexen

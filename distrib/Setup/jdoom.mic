@@ -1,5 +1,5 @@
 [Marine]
-Name = jDoom 1.14
+Name = jDoom 1.15
 Info = jDoom DLL, definitions, data files, documentation and KickStart profiles for Doom.
 File = _mic_jdoom.exe
 Data path = Data\jDoom
