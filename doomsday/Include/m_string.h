@@ -14,6 +14,7 @@ typedef struct
 void Str_Init(ddstring_t *ds);
 void Str_Free(ddstring_t *ds);
 void Str_Clear(ddstring_t *ds);
+void Str_Reserve(ddstring_t *ds, int length);
 void Str_Set(ddstring_t *ds, const char *text);
 void Str_Append(ddstring_t *ds, const char *append_text);
 void Str_PartAppend(ddstring_t *dest, const char *src, int start, int count);
