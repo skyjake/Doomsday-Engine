@@ -11,6 +11,6 @@ extern int		rend_model_shiny_near;
 extern int		rend_model_shiny_far;
 extern float	rend_model_lod;
 
-void Rend_RenderModel(vissprite_t *spr, int number);
+void Rend_RenderModel(vissprite_t *spr);
 
 #endif 
