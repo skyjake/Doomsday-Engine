@@ -41,12 +41,14 @@ typedef struct jdoom_config_s
 	float	menuScale;
 	int		menuEffects;
 	int		menuFog;
+	float	menuGlitter;
 	float	flashcolor[3];
 	int		flashspeed;
 	boolean	turningSkull;
 	boolean	hudShown[5];	// HUD data visibility.
 	float	hudScale;		// How to scale HUD data?
 	float	hudColor[3];
+	boolean	usePatchReplacement;
 	boolean	snd_3D;
 	byte	snd_ReverbFactor;	// 0..100.
 	boolean reverbDebug;

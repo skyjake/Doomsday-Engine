@@ -274,7 +274,9 @@ cvar_t gameCVars[] =
 	"menu-color-r", 	0,			CVT_FLOAT,	&cfg.menuColor[0],	0, 1,	"Menu color red component.",
 	"menu-color-g",		0,			CVT_FLOAT,	&cfg.menuColor[1],	0, 1,	"Menu color green component.",
 	"menu-color-b",		0,			CVT_FLOAT,	&cfg.menuColor[2],	0, 1,	"Menu color blue component.",
+	"menu-glitter",		0,			CVT_FLOAT,	&cfg.menuGlitter,	0, 1,	"Strength of type-in glitter.",
 	"menu-fog",			0,			CVT_INT,	&cfg.menuFog,		0, 1,	"Menu fog mode: 0=blue vertical, 1=black smoke.",
+	"menu-patch-replacement", 0,	CVT_BYTE,	&cfg.usePatchReplacement, 0, 1, "1=Enable the Patch Replacement strings.",
 
 	"msg-count",		0,			CVT_INT,	&cfg.msgCount,		0, 8,	"Number of HUD messages displayed at the same time.",
 	"msg-scale",		CVF_NO_MAX,	CVT_FLOAT,	&cfg.msgScale,		0, 0,	"Scaling factor for HUD messages.",
