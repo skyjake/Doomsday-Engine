@@ -117,8 +117,7 @@ boolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
 }
 
 /*
- * P_SightTraverseIntercepts 
- *  Returns true if the traverser function returns true for all lines.
+ * Returns true if the traverser function returns true for all lines.
  */
 boolean P_SightTraverseIntercepts(divline_t * strace,
 								  boolean (*func) (intercept_t *))
@@ -148,6 +147,7 @@ boolean P_SightTraverseIntercepts(divline_t * strace,
 				dist = scan->frac;
 				in = scan;
 			}
+		if(!in) continue;		// huh?
 
 		if(!func(in))
 			return false;		// don't bother going farther

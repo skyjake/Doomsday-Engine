@@ -65,6 +65,8 @@ boolean PTR_SightTraverse(intercept_t * in)
 	line_t *li;
 	fixed_t slope;
 
+	if(in == NULL) return true; // Something was out of bounds?
+	
 	li = in->d.line;
 
 	// Crosses a two sided line.
