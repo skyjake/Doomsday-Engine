@@ -77,6 +77,8 @@ int     sharpWorldUpdated;		// Set to true after game ticker has been called.
 
 float   frameTimePos;			// 0...1: fractional part for sharp game tics
 
+int		loadInStartupMode = true;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static viewer_t lastSharpView[2];
@@ -109,6 +111,9 @@ void R_Register(void)
 
 	C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0,
 			  "glBSP: changes the cost assigned to SEG splits (default: 7).");
+
+	C_VAR_INT("con-show-during-setup", &loadInStartupMode, 0, 0, 1,
+			  "1=Show console when a map is being loaded.");
 }
 
 /*

@@ -607,6 +607,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	int     lumpNumbers[2];
 	int     setupflags = DDSLF_POLYGONIZE | DDSLF_FIX_SKY | DDSLF_REVERB;
 
+	// Let the engine know that we are about to start setting up a
+	// level.
+	R_SetupLevel(NULL, DDSLF_INITIALIZE);
+	
 	totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
 	wminfo.partime = 180;
 	for(i = 0; i < MAXPLAYERS; i++)

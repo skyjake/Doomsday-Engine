@@ -224,6 +224,10 @@ void H2_PreInit(void)
 	cfg.menuScale = .9f;
 	cfg.cameraNoClip = true;
 	cfg.bobView = cfg.bobWeapon = 1;
+
+	// Hexen has a nifty "Ethereal Travel" screen, so don't show the
+	// console during map setup.
+	Con_SetInteger("con-show-during-setup", 0);
 }
 
 /*

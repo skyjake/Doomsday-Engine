@@ -1310,6 +1310,14 @@ void R_SetupLevel(char *level_id, int flags)
 {
 	int     i;
 
+	if(flags & DDSLF_INITIALIZE)
+	{
+		// This is called before anything is actually done.
+		if(loadInStartupMode)
+			Con_StartupInit();
+		return;
+	}
+	
 	// First check for some special tasks.
 	if(flags & DDSLF_INIT_LINKS)
 	{
@@ -1342,6 +1350,9 @@ void R_SetupLevel(char *level_id, int flags)
 	}
 	if(flags & DDSLF_FINALIZE)
 	{
+		if(loadInStartupMode)
+			Con_StartupDone();
+		
 		// The level setup has been completed.  Run the special level
 		// setup command, which the user may alias to do something
 		// useful.

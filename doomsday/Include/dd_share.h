@@ -491,6 +491,7 @@ extern          "C" {
 #define DDSLF_AFTER_LOADING	0x40   // After loading a savegame...
 #define DDSLF_INIT_LINKS	0x80   // Init linelinks.
 #define DDSLF_FINALIZE		0x100  // After everything else is done.
+#define DDSLF_INITIALIZE    0x200  // Before anything else if done.
 
 	enum						   // Sector reverb data indices.
 	{

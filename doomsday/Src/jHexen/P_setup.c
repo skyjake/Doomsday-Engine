@@ -1097,6 +1097,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	char    levelId[9];
 	int     lumpNumbers[2];
 
+	// Let the engine know that we are about to start setting up a
+	// level.
+	R_SetupLevel(NULL, DDSLF_INITIALIZE);
+	
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		players[i].killcount = players[i].secretcount = players[i].itemcount =
