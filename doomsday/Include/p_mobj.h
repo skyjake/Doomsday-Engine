@@ -11,6 +11,7 @@ typedef struct mobj_s {
 } mobj_t;
 
 extern int tmfloorz, tmceilingz;
+extern mobj_t *blockingMobj;
 
 void P_SetState(mobj_t *mo, int statenum);
 void P_XYMovement(mobj_t* mo);
