@@ -10,6 +10,8 @@
 
 // HEADER FILES ------------------------------------------------------------
  
+//#define DD_PROFILE
+
 #include <png.h>
 #include <setjmp.h>
 
@@ -19,6 +21,11 @@
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
+
+BEGIN_PROF_TIMERS()
+	PROF_PNG_READ,
+	PROF_PNG_REBUFFER
+END_PROF_TIMERS()
 
 // TYPES -------------------------------------------------------------------
 
@@ -89,7 +96,12 @@ PNG_Load(const char *fileName, int *width, int *height, int *pixelSize)
 	if(setjmp(png_jmpbuf(png_ptr))) goto pngstop;
 	//png_init_io(png_ptr, file);
 	png_set_read_fn(png_ptr, file, my_read_data);
+
+	BEGIN_PROF( PROF_PNG_READ );
+
 	png_read_png(png_ptr, png_info, PNG_TRANSFORM_IDENTITY, NULL);
+
+	END_PROF( PROF_PNG_READ );
 	
 	// Check if it can be used.
 	if(png_info->bit_depth != 8)
@@ -111,6 +123,8 @@ PNG_Load(const char *fileName, int *width, int *height, int *pixelSize)
 	// Paletted images have three color components per pixel.
 	if(*pixelSize == 1) *pixelSize = 3;
 	if(*pixelSize == 2) *pixelSize = 4; // With alpha channel.
+
+	BEGIN_PROF( PROF_PNG_REBUFFER );
 
 	// OK, let's copy it into Doomsday's buffer.
 	// FIXME: Why not load directly into it?
@@ -138,6 +152,11 @@ PNG_Load(const char *fileName, int *width, int *height, int *pixelSize)
 		}
 	}
 	
+	END_PROF( PROF_PNG_REBUFFER );
+
+	PRINT_PROF( PROF_PNG_READ );
+	PRINT_PROF( PROF_PNG_REBUFFER );
+
 	// Shutdown.
 pngstop:
 	png_destroy_read_struct(&png_ptr, &png_info, &end_info);

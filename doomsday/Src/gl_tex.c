@@ -9,6 +9,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+//#define DD_PROFILE
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -21,6 +23,21 @@
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
+
+BEGIN_PROF_TIMERS()
+	PROF_UPLOAD_START,
+	PROF_UPLOAD_STRETCH,
+	PROF_UPLOAD_NO_STRETCHING,
+	PROF_UPLOAD_STRETCHING,
+	PROF_UPLOAD_NEWTEX,
+	PROF_UPLOAD_TEXIMAGE,
+	PROF_PNG_LOAD,
+	PROF_SCALE_1,
+	PROF_SCALE_2,
+	PROF_SCALE_MAG,
+	PROF_SCALE_MIN,
+	PROF_SCALE_NO_CHANGE
+END_PROF_TIMERS()
 
 #define TEXQ_BEST	8
 #define NUM_FLARES	3
@@ -363,6 +380,19 @@ void GL_ShutdownTextureManager()
 {
 	if(!texInited) return;
 
+	PRINT_PROF(	PROF_UPLOAD_START );
+	PRINT_PROF(	PROF_UPLOAD_STRETCH );
+	PRINT_PROF(	PROF_UPLOAD_NO_STRETCHING );
+	PRINT_PROF(	PROF_UPLOAD_STRETCHING );
+	PRINT_PROF(	PROF_UPLOAD_NEWTEX );
+	PRINT_PROF(	PROF_UPLOAD_TEXIMAGE );
+	PRINT_PROF( PROF_PNG_LOAD );
+	PRINT_PROF( PROF_SCALE_1 );
+	PRINT_PROF( PROF_SCALE_2 );
+	PRINT_PROF( PROF_SCALE_MAG );
+	PRINT_PROF( PROF_SCALE_MIN );
+	PRINT_PROF( PROF_SCALE_NO_CHANGE );
+
 	GL_ClearTextureMemory();
 
 	// Destroy all bookkeeping -- into the shredder, I say!!
@@ -686,7 +716,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
 
 //===========================================================================
 // scaleLine
-//	Len is in measured in out units. Comps is the number of components per 
+//	Len is measured in out units. Comps is the number of components per 
 //	pixel, or rather the number of bytes per pixel (3 or 4). The strides 
 //	must be byte-aligned anyway, though; not in pixels.
 //	FIXME: Probably could be optimized.
@@ -703,11 +733,15 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
 		fixed_t inPosDelta = (FRACUNIT*(inLen-1))/(outLen-1), inPos = inPosDelta;
 		byte *col1, *col2;
 		int weight, invWeight;
+
+		BEGIN_PROF( PROF_SCALE_MAG );
+
 		// The first pixel.
 		memcpy(out, in, comps);
 		out += outStride;
+
 		// Step at each out pixel between the first and last ones.
-		for(i=1; i<outLen-1; i++, out += outStride, inPos += inPosDelta)
+		for(i = 1; i < outLen - 1; i++, out += outStride, inPos += inPosDelta)
 		{
 			col1 = in + (inPos >> FRACBITS) * inStride;
 			col2 = col1 + inStride;
@@ -719,8 +753,11 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
 			if(comps == 4)
 				out[3] = (col1[3]*invWeight + col2[3]*weight) >> 16;
 		}
+
 		// The last pixel.
-		memcpy(out, in + (inLen-1)*inStride, comps);
+		memcpy(out, in + (inLen - 1)*inStride, comps);
+
+		END_PROF( PROF_SCALE_MAG );
 	}
 	else if(inToOutScale < 1)
 	{
@@ -728,6 +765,9 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
 		// the pixels contained by the out pixel.
 		unsigned int cumul[4] = {0, 0, 0, 0}, count = 0;
 		int outpos = 0;
+
+		BEGIN_PROF( PROF_SCALE_MIN );
+
 		for(i = 0; i < inLen; i++, in += inStride)
 		{
 			if((int) (i*inToOutScale) != outpos)
@@ -746,12 +786,35 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
 		}
 		// Fill in the last pixel, too.
 		if(count) for(c = 0; c < comps; c++) out[c] = cumul[c] / count;
+
+		END_PROF( PROF_SCALE_MIN );
 	}
 	else 
 	{
+		BEGIN_PROF( PROF_SCALE_NO_CHANGE );
+
 		// No need for scaling.
-		for(i = 0; i < outLen; i++, out += outStride, in += inStride)
-			memcpy(out, in, comps);
+		if(comps == 3)
+		{
+			for(i = outLen; i > 0; i--, out += outStride, in += inStride)
+			{
+				out[0] = in[0];
+				out[1] = in[1];
+				out[2] = in[2];
+			}
+		}
+		else if(comps == 4)
+		{
+			for(i = outLen; i > 0; i--, out += outStride, in += inStride)
+			{
+				out[0] = in[0];
+				out[1] = in[1];
+				out[2] = in[2];
+				out[3] = in[3];
+			}
+		}
+
+		END_PROF( PROF_SCALE_NO_CHANGE );
 	}
 }
 
@@ -762,21 +825,32 @@ static void ScaleBuffer32(byte *in, int inWidth, int inHeight,
 						  byte *out, int outWidth, int outHeight, int comps)
 {
 	int		i;
-	byte	*temp = Z_Malloc(outWidth * inHeight * comps, PU_STATIC, 0);
+	byte	*temp;// = Z_Malloc(outWidth * inHeight * comps, PU_STATIC, 0);
+
+	BEGIN_PROF( PROF_SCALE_1 );
+
+	temp = Z_Malloc(outWidth * inHeight * comps, PU_STATIC, 0);
 
 	// First scale horizontally, to outWidth, into the temporary buffer.
 	for(i = 0; i < inHeight; i++)
 	{
-		scaleLine(in + inWidth*comps*i, comps, temp + outWidth*comps*i, comps, outWidth, 
-			inWidth, comps);
+		scaleLine(in + inWidth*comps*i, comps, temp + outWidth*comps*i, 
+			comps, outWidth, inWidth, comps);
 	}
+
+	END_PROF( PROF_SCALE_1 );
+
+	BEGIN_PROF( PROF_SCALE_2 );
+
 	// Then scale vertically, to outHeight, into the out buffer.
 	for(i = 0; i < outWidth; i++)
 	{
-		scaleLine(temp + comps*i, outWidth*comps, out + comps*i, outWidth*comps, outHeight,
-			inHeight, comps);
+		scaleLine(temp + comps*i, outWidth*comps, out + comps*i, 
+			outWidth*comps, outHeight, inHeight, comps);
 	}
 	Z_Free(temp);
+
+	END_PROF( PROF_SCALE_2 );
 }			
 
 //===========================================================================
@@ -832,6 +906,9 @@ DGLuint GL_UploadTexture
 	byte *buffer, *rgbaOriginal, *idxBuffer;
 	DGLuint	texName;
 	boolean freeOriginal;
+	boolean freeBuffer;
+
+	BEGIN_PROF( PROF_UPLOAD_START );
 
 	if(noStretch)
 	{
@@ -884,12 +961,12 @@ DGLuint GL_UploadTexture
 	{
 		if(levelWidth > levelHeight) // Wide texture.
 		{
-			if(levelHeight < levelWidth/ratioLimit)
+			if(levelHeight < levelWidth / ratioLimit)
 				levelHeight = levelWidth / ratioLimit;
 		}
 		else // Tall texture.
 		{
-			if(levelWidth < levelHeight/ratioLimit)
+			if(levelWidth < levelHeight / ratioLimit)
 				levelWidth = levelHeight / ratioLimit;
 		}
 	}
@@ -898,14 +975,11 @@ DGLuint GL_UploadTexture
 	comps = alphaChannel? 4 : 3;
 
 	// Get the RGB(A) version of the original texture.
-	//rgbaOriginal = Z_Malloc(width * height * (alphaChannel? 4 : 3), PU_STATIC, 0);
 	if(RGBData)
 	{
 		// The source image can be used as-is.
 		freeOriginal = false;
 		rgbaOriginal = data;
-
-		//memcpy(rgbaOriginal, data, width * height * (alphaChannel? 4 : 3));
 	}
 	else
 	{
@@ -916,34 +990,54 @@ DGLuint GL_UploadTexture
 			data, rgbaOriginal,	!load8bit);
 	}
 	
+	END_PROF( PROF_UPLOAD_START );	
+	
+	BEGIN_PROF( PROF_UPLOAD_STRETCH );
+
 	// Prepare the RGB(A) buffer for the texture: we want a buffer with 
 	// power-of-two dimensions. It will be the mipmap level zero.
-	// The buffer will be modified by the mipmap generation (if done here).
-	buffer = M_Malloc(levelWidth * levelHeight * comps);
-	if(noStretch)
+	// The buffer will be modified in the mipmap generation (if done here).
+	if(width == levelWidth && height == levelHeight)
 	{
-		// Copy the image into a buffer with power-of-two dimensions.
-		memset(buffer, 0, levelWidth * levelHeight * comps);
-		for(i = 0; i < height; i++) // Copy line by line.
-			memcpy(buffer + levelWidth*comps*i, rgbaOriginal + width*comps*i, 
-				comps*width);
+		// No resizing necessary.
+		buffer = rgbaOriginal;
+		freeBuffer = freeOriginal;
+		freeOriginal = false;		
 	}
 	else
 	{
-		// Stretch to fit into power-of-two.
-		if(width != levelWidth || height != levelHeight)
+		freeBuffer = true;
+		buffer = M_Malloc(levelWidth * levelHeight * comps);
+		if(noStretch)
 		{
-			//buffer = M_Malloc(levelWidth * levelHeight * comps);
-			ScaleBuffer32(rgbaOriginal, width, height, buffer, levelWidth, 
-				levelHeight, comps);
+			BEGIN_PROF( PROF_UPLOAD_NO_STRETCHING );
+
+			// Copy the image into a buffer with power-of-two dimensions.
+			memset(buffer, 0, levelWidth * levelHeight * comps);
+			for(i = 0; i < height; i++) // Copy line by line.
+				memcpy(buffer + levelWidth*comps*i, rgbaOriginal + width*comps*i, 
+					comps*width);
+
+			END_PROF( PROF_UPLOAD_NO_STRETCHING );
 		}
 		else
 		{
-			// We can use the input data as-is.
-			//buffer = rgbaOriginal;
-			memcpy(buffer, rgbaOriginal, width * height * comps);
+			BEGIN_PROF( PROF_UPLOAD_STRETCHING );
+
+			// Stretch to fit into power-of-two.
+			if(width != levelWidth || height != levelHeight)
+			{
+				//buffer = M_Malloc(levelWidth * levelHeight * comps);
+				ScaleBuffer32(rgbaOriginal, width, height, buffer, levelWidth, 
+					levelHeight, comps);
+			}
+
+			END_PROF( PROF_UPLOAD_STRETCHING );
 		}
 	}
+	END_PROF( PROF_UPLOAD_STRETCH );
+
+	BEGIN_PROF( PROF_UPLOAD_NEWTEX );
 
 	// The RGB(A) copy of the source image is no longer needed.
 	if(freeOriginal) M_Free(rgbaOriginal);
@@ -951,6 +1045,8 @@ DGLuint GL_UploadTexture
 	
 	// Generate a new texture name and bind it.
 	texName = gl.NewTexture();
+
+	END_PROF( PROF_UPLOAD_NEWTEX );
 
 	if(load8bit)
 	{
@@ -996,6 +1092,8 @@ DGLuint GL_UploadTexture
 	}
 	else
 	{
+		BEGIN_PROF( PROF_UPLOAD_TEXIMAGE );
+
 		// DGL knows how to generate mipmaps for RGB(A) textures.
 		if(gl.TexImage(alphaChannel? DGL_RGBA : DGL_RGB, levelWidth, 
 			levelHeight, generateMipmaps? DGL_TRUE : DGL_FALSE, 
@@ -1004,9 +1102,11 @@ DGLuint GL_UploadTexture
 			Con_Error("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n",
 				levelWidth, levelHeight, alphaChannel);
 		}
+
+		END_PROF( PROF_UPLOAD_TEXIMAGE );
 	}
 
-	M_Free(buffer);
+	if(freeBuffer) M_Free(buffer);
 	
 	return texName;
 }
@@ -1418,8 +1518,14 @@ byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 	}
 	else if(!strcmp(ext, "png"))
 	{
-		if((img->pixels = PNG_Load(img->fileName, &img->width, &img->height, 
-			&img->pixelSize)) == NULL) return NULL;
+		BEGIN_PROF( PROF_PNG_LOAD );
+
+		img->pixels = PNG_Load(img->fileName, &img->width, &img->height, 
+			&img->pixelSize);
+
+		END_PROF( PROF_PNG_LOAD );
+
+		if(img->pixels == NULL) return NULL;
 	}
 
 	VERBOSE( Con_Message("LoadImage: %s (%ix%i)\n", img->fileName, 
@@ -2598,7 +2704,8 @@ void GL_PrepareLumpPatch(int lump)
 	{
 		// The width of the first part is maxTexSize.
 		int part2width = patch->width - maxTexSize;
-		byte *tempbuff = M_Malloc(2 * maxTexSize * patch->height);
+		byte *tempbuff = M_Malloc(2 * MAX_OF(maxTexSize, part2width) 
+			* patch->height);
 		
 		// We'll use a temporary buffer for doing to splitting.
 		// First, part one.
