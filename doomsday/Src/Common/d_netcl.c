@@ -655,32 +655,32 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 		*flags = 0;
 
 		// What has changed?
-		if(cmd->forwardmove != prev.forwardmove)
+		if(cmd->forwardMove != prev.forwardMove)
 		{
 			*flags |= CMDF_FORWARDMOVE;
-			*out++ = cmd->forwardmove;
+			*out++ = cmd->forwardMove;
 		}
-		if(cmd->sidemove != prev.sidemove)
+		if(cmd->sideMove != prev.sideMove)
 		{
 			*flags |= CMDF_SIDEMOVE;
-			*out++ = cmd->sidemove;
+			*out++ = cmd->sideMove;
 		}
 		if(cmd->angle != prev.angle)
 		{
 			*flags |= CMDF_ANGLE;
 			*((unsigned short*)out)++ = cmd->angle;
 		}
-		if(cmd->lookdir != prev.lookdir)
+		if(cmd->pitch != prev.pitch)
 		{
 			*flags |= CMDF_LOOKDIR;
-			*((short*)out)++ = cmd->lookdir;
+			*((short*)out)++ = cmd->pitch;
 		}
-		if(cmd->buttons != prev.buttons)
+		if(cmd->actions != prev.actions)
 		{
 			*flags |= CMDF_BUTTONS;
-			*out++ = cmd->buttons;
+			*out++ = cmd->actions;
 		}
-#ifndef __JDOOM__
+/*#ifndef __JDOOM__
 		if(cmd->lookfly != prev.lookfly)
 		{
 			*flags |= CMDF_LOOKFLY;
@@ -691,7 +691,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 			*flags |= CMDF_ARTI;
 			*out++ = cmd->arti;
 		}
-#endif
+#endif*/
 		
 		memcpy(&prev, cmd, sizeof(*cmd));		
 	}

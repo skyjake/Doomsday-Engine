@@ -853,7 +853,7 @@ void P_XYMovement2(mobj_t* mo, struct playerstate_s *playstate)
 		&& mo->momx < STOPSPEED
 		&& mo->momy > -STOPSPEED
 		&& mo->momy < STOPSPEED
-		&& (!playstate || (!playstate->forwardmove && !playstate->sidemove)))
+		&& (!playstate || (!playstate->forwardMove && !playstate->sideMove)))
     {
 		mo->momx = 0;
 		mo->momy = 0;

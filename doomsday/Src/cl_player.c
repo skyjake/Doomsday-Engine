@@ -103,10 +103,10 @@ void Cl_LocalCommand(void)
 		}
 	}
 
-	s->forwardmove = cl->lastCmd->forwardmove * 2048;
-	s->sidemove = cl->lastCmd->sidemove * 2048;
+	s->forwardMove = cl->lastCmd->forwardMove * 2048;
+	s->sideMove = cl->lastCmd->sideMove * 2048;
 	s->angle = pl->clAngle;
-	s->turndelta = 0;
+	s->turnDelta = 0;
 }
 
 //==========================================================================
@@ -142,14 +142,14 @@ int Cl_ReadPlayerDelta(void)
 		// Make sure the 'new' mobj is different than the old one; 
 		// there will be linking problems otherwise.
 		// FIXME: What causes the duplicate sending of mobj ids?
-		if(newid != s->mobjid) 
+		if(newid != s->mobjId) 
 		{
-			s->mobjid = newid;
+			s->mobjId = newid;
 			
 			// Find the new mobj.
-			s->cmo = Cl_FindMobj(s->mobjid);
+			s->cmo = Cl_FindMobj(s->mobjId);
 #if _DEBUG
-			Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjid, old); 
+			Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjId, old); 
 			Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.x,
 				s->cmo->mo.y, s->cmo->mo.z);
 #endif
@@ -157,7 +157,7 @@ int Cl_ReadPlayerDelta(void)
 
 #if _DEBUG
 			Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
-				s->cmo->mo.dplayer - players, s->mobjid);
+				s->cmo->mo.dplayer - players, s->mobjId);
 #endif
 
 			// Unlink this cmo (not interactive or visible).
@@ -180,12 +180,12 @@ int Cl_ReadPlayerDelta(void)
 			//Cl_UpdateRealPlayerMobj(pl->mo, &s->cmo->mo, ~0);
 		}
 	}
-	if(df & PDF_FORWARDMOVE) s->forwardmove = (char) Msg_ReadByte() * 2048;
-	if(df & PDF_SIDEMOVE) s->sidemove = (char) Msg_ReadByte() * 2048;
+	if(df & PDF_FORWARDMOVE) s->forwardMove = (char) Msg_ReadByte() * 2048;
+	if(df & PDF_SIDEMOVE) s->sideMove = (char) Msg_ReadByte() * 2048;
 	if(df & PDF_ANGLE) s->angle = Msg_ReadByte() << 24;
 	if(df & PDF_TURNDELTA) 
 	{
-		s->turndelta = ((char) Msg_ReadByte() << 24) / 16;
+		s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
 	}
 	if(df & PDF_FRICTION) s->friction = Msg_ReadByte() << 8;
 	if(df & PDF_EXTRALIGHT) 
@@ -294,14 +294,14 @@ void Cl_MovePlayer(ddplayer_t *pl)
 		if(!(pl->flags & DDPF_DEAD)) // Dead players do not move willfully.
 		{
 			int mul = (airborne? air_thrust : cplr_thrust_mul);
-			if(st->forwardmove)
-				Cl_ThrustMul(mo, st->angle, st->forwardmove, mul);
-			if(st->sidemove)
-				Cl_ThrustMul(mo, st->angle - ANG90, st->sidemove, mul);
+			if(st->forwardMove)
+				Cl_ThrustMul(mo, st->angle, st->forwardMove, mul);
+			if(st->sideMove)
+				Cl_ThrustMul(mo, st->angle - ANG90, st->sideMove, mul);
 		}
 		// Turn delta on move prediction angle.
-		st->angle += st->turndelta;
-		mo->angle += st->turndelta;
+		st->angle += st->turnDelta;
+		mo->angle += st->turnDelta;
 	}
 
 	// Mirror changes in the (hidden) client mobj. 
@@ -505,19 +505,19 @@ void Cl_ReadPlayerDelta2(boolean skip)
 
 		// Make sure the 'new' mobj is different than the old one; 
 		// there will be linking problems otherwise.
-		if(!skip && newId != s->mobjid) 
+		if(!skip && newId != s->mobjId) 
 		{
 			boolean justCreated = false;
 
-			s->mobjid = newId;
+			s->mobjId = newId;
 			
 			// Find the new mobj.
-			s->cmo = Cl_FindMobj(s->mobjid);
+			s->cmo = Cl_FindMobj(s->mobjId);
 			if(!s->cmo)
 			{
 				// This mobj hasn't yet been sent to us.
 				// We should be receiving the rest of the info very shortly.
-				s->cmo = Cl_CreateMobj(s->mobjid);	
+				s->cmo = Cl_CreateMobj(s->mobjId);	
 				justCreated = true;
 			}
 			else 
@@ -546,20 +546,20 @@ void Cl_ReadPlayerDelta2(boolean skip)
 
 #if _DEBUG
 			Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, 
-				s->mobjid, old); 
+				s->mobjId, old); 
 			Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.x,
 				s->cmo->mo.y, s->cmo->mo.z);
 			Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
-				s->cmo->mo.dplayer - players, s->mobjid);
+				s->cmo->mo.dplayer - players, s->mobjId);
 #endif
 		}
 	}
-	if(df & PDF_FORWARDMOVE) s->forwardmove = (char) Msg_ReadByte() * 2048;
-	if(df & PDF_SIDEMOVE) s->sidemove = (char) Msg_ReadByte() * 2048;
+	if(df & PDF_FORWARDMOVE) s->forwardMove = (char) Msg_ReadByte() * 2048;
+	if(df & PDF_SIDEMOVE) s->sideMove = (char) Msg_ReadByte() * 2048;
 	if(df & PDF_ANGLE) s->angle = Msg_ReadByte() << 24;
 	if(df & PDF_TURNDELTA) 
 	{
-		s->turndelta = ((char) Msg_ReadByte() << 24) / 16;
+		s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
 	}
 	if(df & PDF_FRICTION) s->friction = Msg_ReadByte() << 8;
 	if(df & PDF_EXTRALIGHT) 

@@ -1195,15 +1195,15 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 		// First the flags.
 		flags = *msg++;
 
-		if(flags & CMDF_FORWARDMOVE) cmd->forwardmove = *msg++;
-		if(flags & CMDF_SIDEMOVE) cmd->sidemove = *msg++;
+		if(flags & CMDF_FORWARDMOVE) cmd->forwardMove = *msg++;
+		if(flags & CMDF_SIDEMOVE) cmd->sideMove = *msg++;
 		if(flags & CMDF_ANGLE) cmd->angle = *((short*)msg)++;
-		if(flags & CMDF_LOOKDIR) cmd->lookdir = *((short*)msg)++;
-		if(flags & CMDF_BUTTONS) cmd->buttons = *msg++;
-#ifndef __JDOOM__
+		if(flags & CMDF_LOOKDIR) cmd->pitch = *((short*)msg)++;
+		if(flags & CMDF_BUTTONS) cmd->actions = *msg++;
+/*#ifndef __JDOOM__
 		if(flags & CMDF_LOOKFLY) cmd->lookfly = *msg++;
 		if(flags & CMDF_ARTI) cmd->arti = *msg++;
-#endif
+#endif*/
 
 		// Copy to next command (only differences have been written).
 		memcpy(cmd + 1, cmd, sizeof(ticcmd_t));

@@ -26,11 +26,11 @@
 
 typedef struct playerstate_s {
 	clmobj_t	*cmo;
-	thid_t		mobjid;
-	int			forwardmove;
-	int			sidemove;
+	thid_t		mobjId;
+	int			forwardMove;
+	int			sideMove;
 	int			angle;
-	angle_t		turndelta;
+	angle_t		turnDelta;
 	int			friction;
 } playerstate_t;
 
