@@ -6,12 +6,29 @@
 //** Low-level network routines, using DirectPlay 8.
 //** A replacement for jtNet2, which is no longer needed.
 //** Written in C++ to reduce the PITA factor of using COM.
+//** This file is way too long.
 //**
 //** $Log$
+//** Revision 1.2  2003/06/23 08:19:24  skyjake
+//** Confirmed and Ordered packets done manually
+//**
 //** Revision 1.1  2003/05/23 22:00:34  skyjake
 //** sys_network.c rewritten to C++, .cpp
 //**
 //**************************************************************************
+
+/*
+ * Confirmed/Ordered messages are stored in the Sent Message Store (SMS)
+ * when sending. Confirmations are received and sent when packets are 
+ * requested in N_GetNextMessage(). Each player has his own SMS. Message 
+ * ID history is maintained and checked to detect spurious duplicates 
+ * (result of delayed/lost confirmation). Duplicates are confirmed, but 
+ * ignored. Confirmation messages only contain the message ID (2 bytes 
+ * long). N_Update() handles the removing of old confirmed messages and 
+ * the resending of timed out messages. When an Ordered message is 
+ * confirmed, the next queued Ordered message is sent. Messages in the 
+ * SMS are in FIFO order.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -64,6 +81,14 @@ enum splisttype_t {
 	NUM_SP_LISTS
 };
 
+// Flags for the sent message store (for to-be-confirmed messages):
+#define SMSF_ORDERED	0x1	// Block other ordered messages until confirmed
+#define SMSF_QUEUED		0x2	// Ordered message waiting to be sent
+#define SMSF_CONFIRMED	0x4	// Delivery has been confirmed! (OK to remove)
+
+// Length of the received message ID history.
+#define STORE_HISTORY_SIZE	100
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct providerlist_s {
@@ -88,10 +113,29 @@ typedef struct netevent_s {
 typedef struct netmessage_s {
 	struct netmessage_s *next;
 	DPNID sender;
+	int player;			// Set in N_GetMessage().
 	unsigned int size;
 	byte *data;
 	DPNHANDLE handle;
 } netmessage_t;
+
+typedef struct sentmessage_s {
+	struct sentmessage_s *next, *prev;
+	struct store_s *store;
+	msgid_t id;
+	uint timeStamp;
+	int flags;
+	DPNID destination;
+	unsigned int size;
+	void *data;
+} sentmessage_t;
+
+typedef struct store_s {
+	sentmessage_t *first, *last;
+	msgid_t idCounter;
+	msgid_t history[STORE_HISTORY_SIZE];
+	int historyIdx;
+} store_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -102,6 +146,8 @@ typedef struct netmessage_s {
 boolean	N_InitDPObject(boolean inServerMode);
 void	N_StopLookingForHosts(void);
 boolean	N_Disconnect(void);
+int		N_IdentifyPlayer(DPNID id);
+void	N_SendDataBuffer(void *data, uint size, DPNID destination);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -165,7 +211,7 @@ static hostnode_t *gHostRoot;
 static int gHostCount;
 static DPNHANDLE gEnumHandle;
 
-// The message queue: list of messages waiting for processing.
+// The message queue: list of incoming messages waiting for processing.
 static netmessage_t *gMsgHead, *gMsgTail;
 
 // The master action queue.
@@ -180,7 +226,47 @@ static char *protocolNames[NUM_NSP] = {
 	"??", "TCP/IP", "IPX", "Modem", "Serial Link"
 };
 
+// The Sent Message Store: list of sent or queued messages waiting to be 
+// confirmed.
+static store_t stores[MAXPLAYERS];
+
 // CODE --------------------------------------------------------------------
+
+/*
+ * Generate a new, non-zero message ID.
+ */
+ushort N_GetNewMsgID(int player)
+{
+	msgid_t *c = &stores[player].idCounter;
+
+	while(!++*c);
+	return *c;
+}
+
+/*
+ * Register the ID number in the history of received IDs.
+ */
+void N_HistoryAdd(int player, msgid_t id)
+{
+	store_t *store = &stores[player];
+	store->history[ store->historyIdx++ ] = id;
+	store->historyIdx %= STORE_HISTORY_SIZE;
+}
+
+/*
+ * Returns true if the ID is already in the history.
+ */
+boolean N_HistoryCheck(int player, msgid_t id)
+{
+	store_t *store = &stores[player];
+	int i;
+
+	for(i = 0; i < STORE_HISTORY_SIZE; i++)
+	{
+		if(store->history[i] == id) return true;
+	}
+	return false;
+}
 
 /*
  * Converts the normal string to a wchar string. MaxLen is the length of
@@ -292,6 +378,215 @@ void N_ClearHosts(void)
 }
 
 /*
+ * Add a new message to the Sent Message Store.
+ */
+sentmessage_t *N_SMSCreate
+	(int player, msgid_t id, DPNID destID, void *data, uint length)
+{
+	store_t *store = &stores[player];
+	sentmessage_t *msg = (sentmessage_t*) calloc(sizeof(sentmessage_t), 1);
+
+	msg->store = store;
+	msg->id = id;
+	msg->destination = destID;
+	msg->timeStamp = Sys_GetRealTime();
+	msg->data = malloc(length);
+	memcpy(msg->data, data, length);
+	msg->size = length;
+
+	// Link it to the end of the Send Message Store.
+	if(store->last)
+	{
+		msg->prev = store->last;
+		store->last->next = msg;
+	}
+	store->last = msg;
+	if(!store->first)
+	{
+		store->first = msg;
+	}
+
+	return msg;
+}
+
+/*
+ * Destroy the message from the Sent Message Store.
+ * This is done during N_Update(), so it never conflicts with the creation
+ * of SMS nodes.
+ */
+void N_SMSDestroy(sentmessage_t *msg)
+{
+	store_t *store = msg->store;
+
+	// First unlink.
+	if(store->first == msg)
+	{
+		store->first = msg->next;
+	}
+	if(msg->prev)
+	{
+		msg->prev->next = msg->next;
+	}
+	if(msg->next)
+	{
+		msg->next->prev = msg->prev;
+	}
+	if(store->last == msg)
+	{
+		store->last = msg->prev;
+	}
+	msg->prev = msg->next = NULL;
+
+	free(msg->data);
+	free(msg);
+}
+
+/*
+ * Returns true if the Send Message Store contains any ordered messages.
+ * Ordered messages are sent in order, one at a time.
+ */
+boolean N_SMSContainsOrdered(int player)
+{
+	store_t *store = &stores[player];
+
+	for(sentmessage_t *msg = store->first; msg; msg = msg->next)
+	{
+		if(msg->flags & SMSF_CONFIRMED) 
+		{
+			continue;
+		}
+		if(msg->flags & SMSF_ORDERED) return true;
+	}
+	return false;
+}
+
+/*
+ * Resends a message from the Sent Message Store.
+ */
+void N_SMSResend(sentmessage_t *msg)
+{
+	// It's now no longer queued.
+	msg->flags &= ~SMSF_QUEUED;
+
+	// Update the timestamp on the message.
+	msg->timeStamp = Sys_GetRealTime();
+
+	N_SendDataBuffer(msg->data, msg->size, msg->destination);
+
+/*#ifdef _DEBUG
+	Con_Printf("N_SMSResend: T%i:%i.\n", msg->store - stores, msg->id);
+#endif*/
+}
+
+/*
+ * Finds the next queued message and sends it.
+ */
+void N_SMSUnqueueNext(sentmessage_t *msg)
+{
+	for(; msg; msg = msg->next)
+	{
+		if(msg->flags & SMSF_CONFIRMED) continue;
+		if(msg->flags & SMSF_QUEUED)
+		{
+/*#ifdef _DEBUG
+			Con_Printf("N_SMSUnqueueNext: Unqueueing T%i:%i.\n", 
+				msg->store - stores, msg->id);
+#endif*/
+			N_SMSResend(msg);
+			return;
+		}
+	}
+}
+
+/*
+ * Marks the specified message confirmed. It will be removed in N_Update().
+ */
+void N_SMSConfirm(int player, msgid_t id)
+{
+	store_t *store = &stores[player];
+
+	for(sentmessage_t *msg = store->first; msg; msg = msg->next)
+	{
+		if(msg->flags & SMSF_CONFIRMED) continue;
+		if(msg->id == id)
+		{
+			msg->flags |= SMSF_CONFIRMED;
+			
+			// Note how long it took to confirm the message.
+			Net_SetAckTime(player, Sys_GetRealTime() - msg->timeStamp);
+
+/*#ifdef _DEBUG
+			Con_Printf("N_SMSConfirm: T%i:%i has been delivered in %ims!\n", 
+				msg->store - stores, msg->id, 
+				Sys_GetRealTime() - msg->timeStamp);
+#endif*/
+
+			if(msg->flags & SMSF_ORDERED)
+			{
+				// The confirmation of an ordered message allows the
+				// next queued message to be sent.
+				N_SMSUnqueueNext(msg);
+			}
+			return;
+		}
+	}
+}
+
+/*
+ * Remove the confirmed messages from the Sent Message Store.
+ * Called from N_Update().
+ */
+void N_SMSDestroyConfirmed(void)
+{
+	sentmessage_t *msg, *next = NULL;
+	int i;
+
+	for(i = 0; i < MAXPLAYERS; i++)
+	{
+		for(msg = stores[i].first; msg; msg = next)
+		{
+			next = msg->next;
+			if(msg->flags & SMSF_CONFIRMED)
+			{
+				N_SMSDestroy(msg);
+			}
+		}
+	}
+}
+
+/*
+ * Resend all unconfirmed messages that are older than the client's
+ * ack threshold.
+ */
+void N_SMSResendTimedOut(void)
+{
+	sentmessage_t *msg;
+	uint nowTime = Sys_GetRealTime(), threshold;
+	int i;
+
+	for(i = 0; i < MAXPLAYERS; i++)
+	{
+		threshold = Net_GetAckThreshold(i);
+
+		for(msg = stores[i].first; msg; msg = msg->next)
+		{
+			if(msg->flags & (SMSF_CONFIRMED | SMSF_QUEUED))
+			{
+				// Confirmed messages will soon be removed and queued
+				// haven't been sent yet.
+				continue;
+			}
+
+			if(nowTime - msg->timeStamp > threshold)			
+			{
+				// This will now be resent.
+				N_SMSResend(msg);
+			}
+		}
+	}
+}
+
+/*
  * Adds the given netmessage_s to the queue of received messages.
  * Before calling this, allocate the message using malloc().
  * (Hopefully thread-safe enough.)
@@ -333,6 +628,9 @@ netmessage_t* N_GetMessage(void)
 	// Advance the head pointer.
 	gMsgHead = gMsgHead->next;
 
+	// Identify the sender.
+	msg->player = N_IdentifyPlayer(msg->sender);
+
 	return msg;
 }
 
@@ -350,7 +648,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 }
 
 /*
- * Empties the list of received messages.
+ * Empties the message buffers.
  */
 void N_ClearMessages(void)
 {
@@ -361,11 +659,18 @@ void N_ClearMessages(void)
 
 	// The queue is now empty.
 	gMsgHead = gMsgTail = NULL;
+
+	// Also clear the sent message store.
+	for(int i = 0; i < MAXPLAYERS; i++)
+	{
+		while(stores[i].first)
+			N_SMSDestroy(stores[i].first);
+	}
 }
 
 /*
  * Message receiver. Used by both the server and client message handlers.
- * The messages are placed on the message queue.
+ * The messages are placed in the message queue.
  */
 void N_ReceiveMessage(PDPNMSG_RECEIVE received)
 {
@@ -936,75 +1241,111 @@ void N_SetPlayerInfo(void)
 }
 
 /*
- * Send the data in the 'doomcom' databuffer.
- * destination is a player number.
+ * Send the buffer to the destination. For clients, the server is the only
+ * possible destination (doesn't depend on the value of 'destination').
+ */
+void N_SendDataBuffer(void *data, uint size, DPNID destination)
+{
+	DPNHANDLE asyncHandle = 0;
+	DPN_BUFFER_DESC buffer;
+
+	buffer.dwBufferSize = size;
+	buffer.pBufferData = (byte*) data;
+
+	// DirectPlay flags.
+	DWORD sendFlags = DPNSEND_NOLOOPBACK | DPNSEND_NONSEQUENTIAL
+		| DPNSEND_NOCOMPLETE;
+
+	if(gServerMode)
+	{
+		hr = gServer->SendTo(destination, &buffer, 1, SEND_TIMEOUT, 0, 
+			&asyncHandle, sendFlags);
+	}
+	else
+	{
+		hr = gClient->Send(&buffer, 1, SEND_TIMEOUT, 0, 
+			&asyncHandle, sendFlags);
+	}
+}
+
+/*
+ * Send the data in the netbuffer. The message is sent using an 
+ * unreliable, nonsequential (i.e. fast) method.
+ * 
+ * Handles broadcasts using recursion.
+ * Clients can only send stuff to the server.
  */
 void N_SendPacket(int flags)
 {
-//	int msgId;
-	int priority = flags & SPF_PRIORITY_MASK;
-	DWORD sendFlags = 0;
-	int dest;
+	//int msgId;
+	//int priority = flags & SPF_PRIORITY_MASK;
+	//DWORD sendFlags = 0;
+
+	int i, dest = 0;
+	sentmessage_t *sentMsg;
+	void *data;
+	uint size;
 
 	// Is the network available?
 	if(!allowSending || !N_IsAvailable()) return;
 
 	//Con_Message("N_SendPacket: p=%i, flags=%x\n", netbuffer.player, flags);
 
+	// Figure out the destination DPNID.
 	if(gServerMode)
 	{
 		if(netbuffer.player >= 0 && netbuffer.player < MAXPLAYERS)
 		{
-			dest = clients[netbuffer.player].nodeID;
-			// Do not send anything to local players.
-			if(players[netbuffer.player].flags & DDPF_LOCAL) return;
-			/*if(dest == DCN_MISSING_NODE)
+			if(players[ netbuffer.player ].flags & DDPF_LOCAL
+				|| !clients[ netbuffer.player ].connected) 
 			{
-				//Con_Message("SendPacket: destnode missing!\n");
+				// Do not send anything to local or disconnected players.
 				return;
-			}*/
+			}
+
+			dest = clients[ netbuffer.player ].nodeID;
 		}
 		else
 		{
-			// Broadcast to everybody.
-			dest = DPNID_ALL_PLAYERS_GROUP;
+			// Broadcast to all non-local players, using recursive calls.
+			for(i = 0; i < MAXPLAYERS; i++)
+			{
+				netbuffer.player = i;
+				N_SendPacket(flags);
+			}
+
+			// Reset back to -1 to notify of the broadcast.
+			netbuffer.player = NSP_BROADCAST;
+			return;
 		}
 	}
 
-	if(!priority)
+/*	if(!priority)
 	{
 		// Non-reliable messages go first by default.
 		if(!(flags & SPF_RELIABLE)) priority = 10;
-	}
+	}*/
 
 	/*// Priority gets a flag.
 	if(priority >= 10) sendFlags |= DPNSEND_PRIORITY_HIGH;
 */
-/*
-	if(flags & SPF_FRAME)
-	{
-		// Remove the existing frame packet from the send queue.
-		if(lastFrameId[dest] != LFID_NONE) 
-			jtNetCancel(lastFrameId[dest]);
-	}
-*/
-	// Send the packet.
-	/*jtNetSend(dest, &netbuffer.msg, netbuffer.headerLength + netbuffer.length,
-		(flags & SPF_RELIABLE) != 0, priority, 0, &msgId);*/
-
-	// More flags.
-	sendFlags |= DPNSEND_NOLOOPBACK;
+	
 
 	// Reliable delivery.
-	if(flags & SPF_RELIABLE) 
+	/*if(flags & SPF_RELIABLE) 
 		sendFlags |= DPNSEND_GUARANTEED;
 	else
-		sendFlags |= DPNSEND_NOCOMPLETE/* | DPNSEND_NONSEQUENTIAL*/;
+		sendFlags |= DPNSEND_NOCOMPLETE*//* | DPNSEND_NONSEQUENTIAL*//*;*/
 
-	DPNHANDLE asyncHandle = 0;
-	DPN_BUFFER_DESC buffer;
+	//DPNHANDLE asyncHandle = 0;
+	
+	/*DPN_BUFFER_DESC buffer;
 	buffer.dwBufferSize = netbuffer.headerLength + netbuffer.length;
-	buffer.pBufferData = (byte*) &netbuffer.msg;
+	buffer.pBufferData = (byte*) &netbuffer.msg;*/
+
+	// DirectPlay flags.
+/*	DWORD sendFlags = DPNSEND_NOLOOPBACK | DPNSEND_NONSEQUENTIAL
+		| DPNSEND_NOCOMPLETE;
 
 	if(gServerMode)
 	{
@@ -1015,19 +1356,158 @@ void N_SendPacket(int flags)
 	{
 		hr = gClient->Send(&buffer, 1, SEND_TIMEOUT, 0, 
 			&asyncHandle, sendFlags);
+	}*/
+
+	boolean isQueued = false;
+
+	if(flags & SPF_ORDERED)
+	{
+		// If the Store already contains an ordered message for this player, 
+		// this new one will be queued. The queue-status is lifted (and the 
+		// message sent) when the previous ordered message is acknowledged.
+		if(N_SMSContainsOrdered(netbuffer.player))
+		{
+			// Queued messages will not be sent yet.
+			isQueued = true;
+		}
 	}
+
+	// This is what will be sent.
+	data = &netbuffer.msg;
+	size = netbuffer.headerLength + netbuffer.length;
+
+	// Ordered and confirmed messages are placed in the Store until they
+	// have been acknowledged.
+	if(flags & SPF_CONFIRM || flags & SPF_ORDERED)
+	{
+		// Generate an ID for the message.
+		netbuffer.msg.id = N_GetNewMsgID(netbuffer.player);
+		
+		sentMsg = N_SMSCreate(netbuffer.player, netbuffer.msg.id, dest,
+			data, size);
+		
+		if(flags & SPF_ORDERED)
+		{
+			// This message will block other ordered messages to 
+			// this player.
+			sentMsg->flags |= SMSF_ORDERED;
+		}
+			
+		if(isQueued)
+		{
+			// The message will not be sent at this time.
+			sentMsg->flags |= SMSF_QUEUED;
+			return;
+		}
+	}
+	else
+	{
+		// Normal, unconfirmed messages do not use IDs.
+		netbuffer.msg.id = 0;
+	}
+
+	N_SendDataBuffer(data, size, dest);
 
 	/*
 	Con_Message("N_SendPacket: sz=%i [%x]\n", buffer.dwBufferSize, hr);
 	*/
+}
 
 /*
-	if(flags & SPF_FRAME)
+ * Returns the player number that corresponds the DPNID.
+ */
+int N_IdentifyPlayer(DPNID id)
+{
+	if(gServerMode)
 	{
-		// Update the last frame ID.
-		lastFrameId[dest] = msgId;
+		// What is the corresponding player number? Only the server keeps
+		// a list of all the IDs.
+		for(int i = 0; i < MAXPLAYERS; i++)
+			if(clients[i].nodeID == id)
+				return i;
+
+		// Bogus?
+		return -1;
 	}
-*/
+
+	// Clients receive messages only from the server.
+	return 0;
+}
+
+/*
+ * Returns the next message waiting in the incoming message queue.
+ * Confirmations are handled here.
+ *
+ * NOTE: Skips all messages from unknown DPNIDs!
+ */
+netmessage_t *N_GetNextMessage(void)
+{
+	netmessage_t *msg;
+
+	while((msg = N_GetMessage()) != NULL)
+	{
+		if(msg->player < 0)
+		{
+			// From an unknown ID?
+			N_ReleaseMessage(msg);
+
+/*#ifdef _DEBUG
+			Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
+#endif*/
+			continue;
+		}
+
+		// First check the message ID (in the first two bytes).
+		msgid_t id = *(msgid_t*) msg->data;
+		if(id)
+		{
+			// Confirmations of delivery are not time-critical, so they can 
+			// be done here.
+			if(msg->size == 2)
+			{
+				// All the message contains is a short? This is a confirmation
+				// from the receiver. The message will be removed from the SMS
+				// in N_Update().
+				N_SMSConfirm(msg->player, id);
+				N_ReleaseMessage(msg);
+				continue;
+			}
+			else
+			{
+				// The arrival of this message must be confirmed. Send a reply
+				// immediately. 
+				N_SendDataBuffer(&id, 2, msg->sender);
+
+/*#ifdef _DEBUG
+				Con_Printf("N_GetNextMessage: Acknowledged arrival of "
+					"F%i:%i.\n", msg->player, id);
+#endif*/
+			}
+
+			// It's possible that a message times out just before the 
+			// confirmation is received. It's also possible that the message
+			// was received, but the confirmation was lost. In these cases, 
+			// the recipient will get a second copy of the message. We keep 
+			// track of the ID numbers in order to detect this.
+			if(N_HistoryCheck(msg->player, id))
+			{
+/*#ifdef _DEBUG
+				Con_Printf("N_GetNextMessage: DUPE of F%i:%i.\n", 
+					msg->player, id);
+#endif*/
+				// This is a duplicate!
+				N_ReleaseMessage(msg);
+				continue;
+			}
+
+			// Record this ID in the history of received messages.
+			N_HistoryAdd(msg->player, id);
+		}
+		return msg;
+	}
+
+	// There are no more messages.
+	return NULL;
 }
 
 /*
@@ -1037,7 +1517,6 @@ void N_SendPacket(int flags)
 boolean	N_GetPacket()
 {
 	netmessage_t *msg;
-	int i;
 
 	// If there are net events pending, let's not return any 
 	// packets yet. The net events may need to be processed before 
@@ -1047,7 +1526,7 @@ boolean	N_GetPacket()
 	netbuffer.player = -1;
 	netbuffer.length = 0;
 
-	if((msg = N_GetMessage()) == NULL)
+	if((msg = N_GetNextMessage()) == NULL)
 	{
 		// No messages at this time.
 		return false;
@@ -1058,11 +1537,12 @@ boolean	N_GetPacket()
 	*/
 
 	// There was a packet!
+	netbuffer.player = msg->player;
 	netbuffer.length = msg->size - netbuffer.headerLength;	
 	memcpy(&netbuffer.msg, msg->data, 
 		MIN_OF(sizeof(netbuffer.msg), msg->size));
-	
-	if(gServerMode)
+
+/*	if(gServerMode)
 	{
 		// What is the corresponding player number? Only the server keeps
 		// a list of all the IDs.
@@ -1077,7 +1557,7 @@ boolean	N_GetPacket()
 	{
 		// Clients receive messages only from the server.
 		netbuffer.player = 0;
-	}
+	}*/
 
 	// The message can now be freed.
 	N_ReleaseMessage(msg);
@@ -1092,13 +1572,51 @@ boolean	N_GetPacket()
 }
 
 /*
- * Returns true if the send queue for the player is good for additional
- * data. If not, new data shouldn't be sent until the queue has cleared up.
+ * Returns the number of messages waiting in the player's send queue.
  */
-boolean N_CheckSendQueue(int player)
+uint N_GetSendQueueCount(int player)
 {
 	DWORD numMessages = 0;
 
+	if(gServerMode)
+	{
+		gServer->GetSendQueueInfo(clients[player].nodeID, 
+			&numMessages, NULL, 0);
+	}
+	else
+	{
+		gClient->GetSendQueueInfo(&numMessages, NULL, 0);
+	}
+
+	return numMessages;
+}
+
+/*
+ * Returns the number of bytes waiting in the player's send queue.
+ */
+uint N_GetSendQueueSize(int player)
+{
+	DWORD numBytes = 0;
+
+	if(gServerMode)
+	{
+		gServer->GetSendQueueInfo(clients[player].nodeID, 
+			NULL, &numBytes, 0);
+	}
+	else
+	{
+		gClient->GetSendQueueInfo(NULL, &numBytes, 0);
+	}
+
+	return numBytes;
+}
+
+/*
+ * Returns true if the send queue for the player is good for additional
+ * data. If not, new data shouldn't be sent until the queue has cleared up.
+ */
+/*boolean N_CheckSendQueue(int player)
+{
 	// Servers send packets to themselves only when they're recording a demo.
 	if(isServer && players[player].flags & DDPF_LOCAL) 
 		return clients[player].recording;
@@ -1111,17 +1629,8 @@ boolean N_CheckSendQueue(int player)
 	if(!clients[player].connected || player == consoleplayer) 
 		return false;
 
-	if(gServerMode)
-	{
-		gServer->GetSendQueueInfo(clients[player].nodeID, 
-			&numMessages, NULL, 0);
-	}
-	else
-	{
-		gClient->GetSendQueueInfo(&numMessages, NULL, 0);
-	}
-	return numMessages <= (DWORD) maxQueuePackets;
-}
+	return N_GetSendQueueCount(player) <= (DWORD) maxQueuePackets;
+}*/
 
 const char* N_GetProtocolName(void)
 {
@@ -1138,6 +1647,12 @@ void N_Update(void)
 	DPN_PLAYER_INFO *info = NULL;
 	DWORD size = 0;
 	char name[256];
+
+	// Remove all confirmed messages in the Send Message Store.
+	N_SMSDestroyConfirmed();
+
+	// Resend unconfirmed, timed-out messages.
+	N_SMSResendTimedOut();
 
 	// Are there any events to process?
 	while(N_NEGet(&event))
@@ -1641,6 +2156,7 @@ boolean N_Disconnect(void)
 	if(gx.NetDisconnect) gx.NetDisconnect(true);
 	
 	Net_StopGame();
+	N_ClearMessages();
 
 	// Exit the session, but reinit the client interface.
 	gClient->Close(0);
