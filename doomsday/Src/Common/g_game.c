@@ -3177,25 +3177,13 @@ void G_DemoEnds(void)
 	gamestate = GS_WAITING;
 	if(singledemo)
 		Sys_Quit();
-	/*#if __JHEXEN__
-	   H2_AdvanceDemo();
-	   #elif defined(__JHERETIC__)
-	   D_AdvanceDemo();
-	   #endif */
-
-//#ifdef __JDOOM__
 	FI_DemoEnds();
-//#endif
 }
 
 void G_DemoAborted(void)
 {
 	gamestate = GS_WAITING;
-	// We'll take no further action.
-
-//#ifdef __JDOOM__
 	FI_DemoEnds();
-//#endif
 }
 
 #if __JHERETIC__ || __JHEXEN__
