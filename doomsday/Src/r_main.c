@@ -275,6 +275,8 @@ void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
 //===========================================================================
 void R_SetupFrame(ddplayer_t *player)
 {
+	extern timespan_t frameStartTime;
+
 	int     tableAngle, i;
 	float   yawRad, pitchRad;
 	double  nowTime;
@@ -303,7 +305,7 @@ void R_SetupFrame(ddplayer_t *player)
 	}
 
 	// Camera smoothing is only enabled if the frame rate is above 35.
-	if(!rend_camera_smooth || resetNextViewer || DD_GetFrameRate() < 40)
+	if(!rend_camera_smooth || resetNextViewer) // || DD_GetFrameRate() < 35)
 	{
 		resetNextViewer = false;
 
@@ -331,10 +333,16 @@ void R_SetupFrame(ddplayer_t *player)
 	// time offsets or interpolated camera positions.
 	else if(!clientPaused)
 	{
+		static timespan_t oldTime = 0;
 		nowTime = Sys_GetTimef();
 		if(sharpWorldUpdated)
 		{
+			extern int numSharpTics;
+
 			sharpWorldUpdated = false;
+
+			frameTimePos -= numSharpTics;
+			numSharpTics = 0;
 
 			// The game tic has changed, which means we have an
 			// updated sharp camera position. However, the position is
@@ -376,22 +384,47 @@ void R_SetupFrame(ddplayer_t *player)
 			}
 		}
 
-		if(nowTime - lastSharpFrameTime > 1)
+		// If the frametime gets too far from the sharp times, it will be 
+		// forced back into the correct range.  This doesn't happen during
+		// normal gameplay, only when there has been an abnormal skip in the
+		// timing (tics without frames or visa versa).
+		if(frameTimePos > 3)
 		{
-			// This'll synchronize our frame timing with the game tics.
-			lastSharpFrameTime = nowTime - 1;
+			Con_Message("Resyncing frametime...\n");
+			frameTimePos = M_CycleIntoRange(frameTimePos, 1);
 		}
 
 		// Calculate the smoothed camera position, which is somewhere between
 		// the previous and current sharp positions. This introduces a slight
 		// delay (max. 1/35 sec) to the movement of the smoothed camera.
-		frameTimePos = nowTime - lastSharpFrameTime;
+				
+		frameTimePos += nowTime - oldTime;
+		oldTime = nowTime;
+
 		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
 							&smoothView);
 
 		smoothView.angle = sharpView.angle;
 		smoothView.pitch = sharpView.pitch;
 		R_SetViewPos(&smoothView);
+
+#if 0
+		// The Rdx and Rdy should stay constant when moving.
+		{
+			static double oldtime = 0;
+			static fixed_t oldx, oldy;
+			fprintf(outFile, "F=%.3f dt=%-5.3f dx=%-5.3f dy=%-5.3f Rdx=%-5.3f Rdy=%-5.3f\n", 
+				frameTimePos,
+				nowTime - oldtime,
+				FIX2FLT(smoothView.x - oldx),
+				FIX2FLT(smoothView.y - oldy),
+				FIX2FLT(smoothView.x - oldx) / (nowTime - oldtime),
+				FIX2FLT(smoothView.y - oldy) / (nowTime - oldtime));
+			oldx = smoothView.x;
+			oldy = smoothView.y;
+			oldtime = nowTime;
+		}
+#endif
 
 		// $smoothplane: Set the visible offsets.
 		for(i = 0; i < numsectors; i++)

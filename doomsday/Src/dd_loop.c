@@ -63,8 +63,10 @@ void    DD_RunTics(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     maxFrameRate = 200;		// Zero means 'unlimited'.
+int     numSharpTics;
 
 timespan_t sysTime, gameTime, demoTime, levelTime;
+timespan_t frameStartTime;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -180,6 +182,8 @@ void DD_DrawAndBlit(void)
 //==========================================================================
 void DD_StartFrame(void)
 {
+	frameStartTime = Sys_GetTimef();
+
 	S_StartFrame();
 	if(gx.BeginFrame)
 	{
@@ -256,6 +260,8 @@ void DD_Ticker(timespan_t time)
 			// position can be processed.
 			sharpWorldUpdated = true;
 			lastSharpFrameTime = Sys_GetTimef();
+
+			numSharpTics++;
 		}
 
 		Con_Ticker(time);		// Console.
