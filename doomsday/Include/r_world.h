@@ -4,6 +4,8 @@
 #ifndef __DOOMSDAY_REFRESH_WORLD_H__
 #define __DOOMSDAY_REFRESH_WORLD_H__
 
+extern int leveltic;				// Restarts when a new map is set up.
+
 // Map Info flags.
 #define MIF_FOG				0x1		// Fog is used in the level.
 

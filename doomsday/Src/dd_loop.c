@@ -250,10 +250,15 @@ void DD_TryRunTics (void)
 		if(!ui_active || netgame) 
 		{
 			if(availabletics > 0) availabletics--;
+
 			// The difference between gametic and demotic is that demotic
 			// is not altered at any point. Gametic changes at handshakes.
 			gametic++;
 			demotic++;
+
+			// Leveltic is reset to zero at every map change.
+			// The level time only advances when the game is not paused.
+			if(!clientPaused) leveltic++;
 		}
 	}
 }

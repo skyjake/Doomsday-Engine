@@ -37,6 +37,7 @@ void R_PrepareSubsector(subsector_t *sub);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char currentLevelId[64];
+int leveltic;					// Restarts when a new map is set up.
 
 sectorinfo_t *secinfo;
 lineinfo_t *lineinfo;
@@ -1033,6 +1034,9 @@ void R_SetupLevel(char *level_id, int flags)
 		// Now that the setup is done, let's reset the tictimer so it'll
 		// appear that no time has passed during the setup.
 		Net_ResetTimer();
+
+		// Reset the level tick timer.
+		leveltic = 0;
 		return;
 	}
 
