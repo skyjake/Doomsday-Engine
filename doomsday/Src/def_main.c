@@ -691,12 +691,15 @@ void Def_Read(void)
 		k = Def_GetStateNum(defs.lights[i].state);
 		if(k < 0)
 		{
-			Con_Message("DD_ReadDefs(Lights): Undefined state '%s'.\n",
-						defs.lights[i].state);
+            // It's probably a bias light definition, then?
+            if(!defs.lights[i].level[0])
+            {
+                Con_Message("Def_Read: Lights: Undefined state '%s'.\n",
+                            defs.lights[i].state);
+            }
 			continue;
 		}
 		states[k].light = defs.lights + i;
-		//defs.lights[i].flags = Def_EvalFlags(defs.lights[i].flags_string);
 	}
 	Def_CountMsg(defs.count.lights.num, "lights");
 

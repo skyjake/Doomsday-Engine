@@ -125,12 +125,12 @@ extern          "C" {
 
     typedef struct {
         ded_stateid_t   state;
-        float           xoffset;   // Origin offset in world coords
-        float           yoffset;   // Zero means automatic
+        char            level[64]; 
+        float           offset[3]; /* Origin offset in world coords
+                                      Zero means automatic */
         float           size;      // Zero: automatic
         float           color[3];  // Red Green Blue (0,1)
         ded_flags_t     flags;
-        //int               flags;          // Runtime
         ded_lightmap_t  up, down, sides;
     } ded_light_t;
 
