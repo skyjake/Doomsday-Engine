@@ -1,6 +1,6 @@
 # jDoom: Particle Effects
 
-Header { Version = 5; }
+Header { Version = 6; }
 
 ######=====---- PLAYER WEAPONS ----=====######
 # Rocket smoke trail.
