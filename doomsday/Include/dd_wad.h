@@ -1,7 +1,7 @@
 #ifndef __JHEXEN_WAD_H__
 #define __JHEXEN_WAD_H__
 
-#define RECORD_FILENAMELEN	200
+#define RECORD_FILENAMELEN	256
 
 // File record flags.
 #define	FRF_RUNTIME		0x1		// Loaded at runtime (for reset).
@@ -56,5 +56,7 @@ void W_CheckIWAD(void);
 const char *W_LumpSourceFile(int lump);
 unsigned int W_CRCNumberForRecord(int idx);
 unsigned int W_CRCNumber(void);
+void W_GetIWADFileName(char *buf, int bufSize);
+void W_GetPWADFileNames(char *buf, int bufSize, char separator);
 
 #endif
