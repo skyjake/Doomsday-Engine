@@ -241,7 +241,7 @@ void DD_Ticker(timespan_t time)
 		Sv_Ticker(time);
 
 	// Demo ticker. Does stuff like smoothing of view angles.
-	Demo_Ticker(time);				
+	Demo_Ticker(time);
 	P_Ticker(time);
 
 	if(!ui_active || netgame)
@@ -253,7 +253,7 @@ void DD_Ticker(timespan_t time)
 
 		// We can't sent FixAngles messages to ourselves, so it's
 		// done here.
-		//Sv_FixLocalAngles();
+		Sv_FixLocalAngles();
 	}
 	if(ui_active)
 	{
