@@ -39,34 +39,39 @@ BEGIN_PROF_TIMERS()
 	PROF_SCALE_NO_CHANGE
 END_PROF_TIMERS()
 
-#define TEXQ_BEST	8
-#define NUM_FLARES	3
+#define TEXQ_BEST 8
+#define NUM_FLARES 3
 
 #define RGB18(r, g, b) ((r)+((g)<<6)+((b)<<12))
 
 // TYPES -------------------------------------------------------------------
 
 // A translated sprite.
-typedef struct
-{
+typedef struct {
 	int				patch;
 	DGLuint			tex;
 	unsigned char	*table;
 } transspr_t;
 
 // Sky texture topline colors.
-typedef struct
-{
+typedef struct {
 	int				texidx;
 	unsigned char	rgb[3];
 } skycol_t;
 
 // Model skin.
-typedef struct
-{
+typedef struct {
 	char			path[256];
 	DGLuint			tex;
 } skintex_t;
+
+// Detail texture instance.
+typedef struct dtexinst_s {
+	struct dtexinst_s *next;
+	int				lump;
+	float			contrast;
+	DGLuint			tex;
+} dtexinst_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -108,8 +113,6 @@ int				texmask = 0;
 DGLuint			curtex = 0;
 detailinfo_t	*texdetail;
 
-//texsize_t		*lumptexsizes;	// Sizes for all the lumps. 
-
 skycol_t		*skytop_colors = NULL;
 int				num_skytop_colors = 0;
 
@@ -133,6 +136,10 @@ static int		*rawlumps, numrawlumps;
 // Created in r_model.c, when registering the skins.
 static int		numskinnames;
 static skintex_t *skinnames;
+
+// Linked list of detail texture instances. A unique texture is generated
+// for each (rounded) contrast level.
+static dtexinst_t *dtinstances;
 
 // The translated sprites.
 static transspr_t *transsprites;
@@ -208,7 +215,7 @@ int WeightPow2(int num, float weight)
 // pixBlt
 //	Copies a rectangular region of the source buffer to the destination
 //	buffer. Doesn't perform clipping, so be careful.
-//	Yeah, 13 parameters.
+//	Yeah, 13 parameters...
 //===========================================================================
 void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, 
 		   int destWidth, int destHeight,
@@ -370,6 +377,9 @@ void GL_InitTextureManager(void)
 
 	memset(flaretexnames, 0, sizeof(flaretexnames));
 
+	// Detail textures.
+	dtinstances = NULL;
+
 	// System textures loaded in GL_LoadSystemTextures.
 	dltexname = glowtexname = 0;
 
@@ -408,76 +418,6 @@ void GL_ShutdownTextureManager()
 	texInited = false;
 }
 
-#if 0
-//===========================================================================
-// GL_ResetTextureManager
-//	Shutdown and reinit is a better option.
-//===========================================================================
-void GL_ResetTextureManager(void)
-{
-	int i;
-
-	// Textures haven't been initialized, nothing to do here.
-	if(!texInited) return;	
-
-	if(texnames)
-	{
-		gl.DeleteTextures(numtextures, texnames);
-		memset(texnames, 0, sizeof(DGLuint)*numtextures);
-	}
-	if(texmasked)	
-		memset(texmasked, 0, numtextures);
-
-	if(spritenames)
-	{
-		gl.DeleteTextures(numspritelumps, spritenames);
-		memset(spritenames, 0, sizeof(DGLuint)*numspritelumps);
-		memset(spritecolors, 0, sizeof(rgbcol_t)*numspritelumps);
-	}
-
-	// Delete the translated sprite textures.
-	for(i = 0; i < numtranssprites; i++)
-	{
-		gl.DeleteTextures(1, &transsprites[i].tex);
-	}
-	free(transsprites);
-	transsprites = 0;
-	numtranssprites = 0;
-
-	free(skytop_colors);
-	skytop_colors = 0;
-	num_skytop_colors = 0;
-
-	gl.DeleteTextures(1, &dltexname);
-	gl.DeleteTextures(1, &glowtexname);
-	dltexname = glowtexname = 0;
-	gl.SetInteger(DGL_LIGHT_TEXTURE, dltexname = GL_PrepareLightTexture());
-	gl.SetInteger(DGL_GLOW_TEXTURE, glowtexname = GL_PrepareGlowTexture());
-	
-	if(flaretexnames)
-	{
-		gl.DeleteTextures(NUM_FLARES, flaretexnames);
-		memset(flaretexnames, 0, sizeof(flaretexnames));
-	}
-
-	// Delete model skins.
-	for(i = 0; i < numskinnames; i++)
-		if(skinnames[i].tex)
-		{
-			gl.DeleteTextures(1, &skinnames[i].tex);
-			skinnames[i].tex = 0; // It's gone.
-		}
-
-	// Detail textures.
-	for(i = 0; i < defs.num_details; i++)
-		if(details[i].gltex != ~0)
-		{
-			gl.DeleteTextures(1, &details[i].gltex);
-			details[i].gltex = ~0;
-		}
-}
-#endif
-
 //===========================================================================
 // GL_DestroySkinNames
 //	This is called at final shutdown. 
@@ -488,26 +428,6 @@ void GL_DestroySkinNames(void)
 	skinnames = 0;
 	numskinnames = 0;
 }
-
-
-#if 0
-//===========================================================================
-// GL_ResetLumpTexData
-//===========================================================================
-void GL_ResetLumpTexData()
-{
-	if(!texInited) return;
-
-	// Free the raw lumps book-keeping table.
-	GL_DeleteRawImages();
-
-	/*gl.DeleteTextures(mynumlumps, lumptexnames);
-	gl.DeleteTextures(mynumlumps, lumptexnames2);
-	memset(lumptexnames, 0, sizeof(DGLuint)*mynumlumps);
-	memset(lumptexnames2, 0, sizeof(DGLuint)*mynumlumps);
-	memset(lumptexsizes, 0, sizeof(texsize_t)*mynumlumps);*/
-}
-#endif
 
 //===========================================================================
 // GL_LoadSystemTextures
@@ -549,6 +469,7 @@ void GL_ClearSystemTextures(void)
 //===========================================================================
 void GL_ClearRuntimeTextures(void)
 {
+	dtexinst_t *dtex;
 	int i;
 
 	if(!texInited) return;
@@ -580,8 +501,19 @@ void GL_ClearRuntimeTextures(void)
 	}
 
 	// Delete detail textures.
+	i = 0;
+	while(dtinstances)
+	{
+		dtex = dtinstances->next;
+		gl.DeleteTextures(1, &dtinstances->tex);
+		M_Free(dtinstances);
+		dtinstances = dtex;
+		i++;
+	}
+	VERBOSE( Con_Message("GL_ClearRuntimeTextures: %i detail texture "
+		"instances.\n", i) );
 	for(i = 0; i < defs.count.details.num; i++)
-		GL_DeleteDetailTexture(details + i);
+		details[i].gltex = 0;
 
 	// Flare textures.
 	gl.DeleteTextures(NUM_FLARES, flaretexnames);
@@ -1117,17 +1049,56 @@ DGLuint GL_UploadTexture
 }
 
 //===========================================================================
-// GL_LoadDetailTexture
-//	Detail textures are 128x128 grayscale 8-bit raw data.
+// GL_GetDetailInstance
+//	The contrast is rounded.
 //===========================================================================
-DGLuint GL_LoadDetailTexture(int num)
+dtexinst_t *GL_GetDetailInstance(int lump, float contrast)
 {
-	DGLuint dtex;
+	dtexinst_t *i;
+
+	// Round off the contrast to nearest 0.1.
+	contrast = (int)((contrast + .05) * 10) / 10.0;
+
+	for(i = dtinstances; i; i = i->next)
+	{
+		if(i->lump == lump && i->contrast == contrast)
+			return i;
+	}
+
+	// Create a new instance.
+	i = M_Malloc(sizeof(dtexinst_t));
+	i->next = dtinstances;
+	dtinstances = i;
+	i->lump = lump;
+	i->contrast = contrast;
+	i->tex = 0;
+	return i;
+}
+
+//===========================================================================
+// GL_LoadDetailTexture
+//	Detail textures are grayscale images.
+//===========================================================================
+DGLuint GL_LoadDetailTexture(int num, float contrast)
+{
 	byte *lumpData, *image;
 	int w = 256, h = 256;
+	dtexinst_t *inst;
 		
 	if(num < 0) return 0; // No such lump?!
 	lumpData = W_CacheLumpNum(num, PU_STATIC);
+
+	// Apply the global detail contrast factor.
+	contrast *= detailFactor;
+
+	// Have we already got an instance of this texture loaded?
+	inst = GL_GetDetailInstance(num, contrast);
+	if(inst->tex) return inst->tex;
+
+	// Detail textures are faded to gray depending on the contrast factor.
+	// The texture is also progressively faded towards gray when each
+	// mipmap level is loaded.
+	gl.SetInteger(DGL_GRAY_MIPMAP, contrast * 255);
 
 	// First try loading it as a PCX image.
 	if(PCX_MemoryGetSize(lumpData, &w, &h))
@@ -1135,8 +1106,9 @@ DGLuint GL_LoadDetailTexture(int num)
 		// Nice...
 		image = M_Malloc(w*h*3);
 		PCX_MemoryLoad(lumpData, W_LumpLength(num), w, h, image);
-		dtex = gl.NewTexture();
-		if(!gl.TexImage(DGL_RGB, w, h, DGL_TRUE, image))
+		inst->tex = gl.NewTexture();
+		// Make faded mipmaps.
+		if(!gl.TexImage(DGL_RGB, w, h, DGL_GRAY_MIPMAP, image))
 		{
 			Con_Error("GL_LoadDetailTexture: %-8s (%ix%i): not powers of two.\n",
 				lumpinfo[num].name, w, h);
@@ -1151,7 +1123,7 @@ DGLuint GL_LoadDetailTexture(int num)
 			{
 				if(lumpinfo[num].size != 64 * 64)
 				{
-					Con_Message("GL_LoadDetailTexture: Must be 128x128 or 64x64.\n");
+					Con_Message("GL_LoadDetailTexture: Must be 256x256, 128x128 or 64x64.\n");
 					W_ChangeCacheTag(num, PU_CACHE);
 					return 0;
 				}
@@ -1161,9 +1133,9 @@ DGLuint GL_LoadDetailTexture(int num)
 		}
 		image = M_Malloc(w * h);
 		memcpy(image, W_CacheLumpNum(num, PU_CACHE), w * h);
-		dtex = gl.NewTexture();
-		// Make mipmap levels.
-		gl.TexImage(DGL_LUMINANCE, w, h, DGL_TRUE, image);
+		inst->tex = gl.NewTexture();
+		// Make faded mipmaps.
+		gl.TexImage(DGL_LUMINANCE, w, h, DGL_GRAY_MIPMAP, image);
 	}
 
 	// Set texture parameters.
@@ -1175,60 +1147,43 @@ DGLuint GL_LoadDetailTexture(int num)
 	// Free allocated memory.
 	M_Free(image);
 	W_ChangeCacheTag(num, PU_CACHE);
-	return dtex;
+	return inst->tex;
 }
 
 //===========================================================================
 // GL_PrepareDetailTexture
+//	This is only called when loading a wall texture or a flat 
+//	(not too time-critical).
 //===========================================================================
-DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
-								ded_detailtexture_t **dtdef)
+DGLuint GL_PrepareDetailTexture
+	(int index, boolean is_wall_texture, ded_detailtexture_t **dtdef)
 {
-	int i, k;
-	DGLuint tex;
+	int i;
+	detailtex_t *dt;
 
 	// Search through the assignments. 
 	for(i = defs.count.details.num - 1; i >= 0; i--)
 	{
-		// Is there a detail texture assigned for this?
-		if(details[i].detail_lump < 0) continue;
+		dt = &details[i];
 
-		if(is_wall_texture && index == details[i].wall_texture
-			|| !is_wall_texture && index == details[i].flat_lump)
+		// Is there a detail texture assigned for this?
+		if(dt->detail_lump < 0) continue;
+
+		if(is_wall_texture && index	== dt->wall_texture
+			|| !is_wall_texture && index == dt->flat_lump)
 		{
 			if(dtdef) *dtdef = defs.details + i;
+
 			// Hey, a match. Load this?
-			if(details[i].gltex == -1/*~0*/)
+			if(!dt->gltex)
 			{
-				tex = GL_LoadDetailTexture(details[i].detail_lump);
-				// FIXME: This is a bit questionable...
-				// Set the texture ID for all the definitions that use it.
-				// This way the texture gets loaded only once.
-				for(k = 0; k < defs.count.details.num; k++)
-					if(details[k].detail_lump == details[i].detail_lump)
-						details[k].gltex = tex;
+				dt->gltex = GL_LoadDetailTexture(dt->detail_lump, 
+					defs.details[i].strength);
 			}
-			return details[i].gltex;
+			return dt->gltex;
 		}
 	}
 	return 0; // There is no detail texture for this.
-}
-
-//===========================================================================
-// GL_DeleteDetailTexture
-//===========================================================================
-void GL_DeleteDetailTexture(detailtex_t *dtex)
-{
-	int i;
-	DGLuint texname = dtex->gltex;
-
-	if(texname == -1/*~0*/) return; // Not loaded.
-	gl.DeleteTextures(1, &texname);
-
-	// Remove all references to this texture.
-	for(i = 0; i < defs.count.details.num; i++)
-		if(details[i].gltex == texname)
-			details[i].gltex = -1;//(DGLunit) ~0;
 }
 
 //===========================================================================
@@ -1339,7 +1294,7 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate)
 	}
 	texw = texh = 64;
 	texmask = false;
-	texdetail = flat->detail.tex? &flat->detail : 0;
+	texdetail = (r_detail && flat->detail.tex? &flat->detail : 0);
 	return lumptexinfo[flat->lump].tex[0];
 }
 
@@ -1868,7 +1823,7 @@ DGLuint GL_GetTextureInfo2(int index, boolean translate)
 	texw = tex->width;
 	texh = tex->height;
 	texmask = tex->masked;
-	texdetail = tex->detail.tex? &tex->detail : 0;
+	texdetail = (r_detail && tex->detail.tex? &tex->detail : 0);
 	return tex->tex;
 }
 
@@ -3065,6 +3020,7 @@ int GL_GetLumpTexHeight(int lump)
 void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
 {
 	int	i, k;
+	flat_t **flats, **ptr;
 	
 	if(gameTex)
 	{
@@ -3077,13 +3033,15 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
 				gl.TexParameter(DGL_MAG_FILTER, magMode);
 			}
 		// Flats.
-		for(i = 0; i < numflats; i++)
-			if(lumptexinfo[flats[i].lump].tex[0]) // Is the texture loaded?
+		flats = R_CollectFlats(NULL);
+		for(ptr = flats; *ptr; ptr++)
+			if(lumptexinfo[(*ptr)->lump].tex[0]) // Is the texture loaded?
 			{
-				gl.Bind(lumptexinfo[flats[i].lump].tex[0]);
+				gl.Bind(lumptexinfo[(*ptr)->lump].tex[0]);
 				gl.TexParameter(DGL_MIN_FILTER, minMode);
 				gl.TexParameter(DGL_MAG_FILTER, magMode);
 			}
+		Z_Free(flats);
 		// Sprites.
 		for(i = 0; i < numspritelumps; i++)
 			if(spritelumps[i].tex)

@@ -741,7 +741,7 @@ void Def_PostInit(void)
 		details[i].flat_lump = W_CheckNumForName(defs.details[i].flat);
 		details[i].detail_lump = W_CheckNumForName
 			(defs.details[i].detail_lump);
-		details[i].gltex = -1; //~0;	// Not loaded.
+		details[i].gltex = 0; // Not loaded.
 	}
 
 	// Surface decorations.
