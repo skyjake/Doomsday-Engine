@@ -124,6 +124,7 @@ boolean Demo_BeginRecording(char *fileName, int playerNum)
 	// Compose the real file name.
 	strcpy(buf, demoPath);
 	strcat(buf, fileName);
+	M_TranslatePath(buf, buf);
 
 	// Open the demo file.
 	cl->demo = lzOpen(buf, "wp");
@@ -301,6 +302,7 @@ boolean Demo_BeginPlayback(char *fileName)
 			return false;
 	// Open the demo file.
 	sprintf(buf, "%s%s", Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
+	M_TranslatePath(buf, buf);
 	playdemo = lzOpen(buf, "rp");
 	if(!playdemo)
 		return false;			// Failed to open the file.
