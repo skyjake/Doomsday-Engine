@@ -552,39 +552,38 @@ void SB_Init(void)
 	int i;
 	int startLump;
 
-	PatchNumH2BAR = W_GetNumForName("H2BAR"); // PU_STATIC);
-	PatchNumH2TOP = W_GetNumForName("H2TOP"); // PU_STATIC);
-	PatchNumINVBAR = W_GetNumForName("INVBAR"); // PU_STATIC);
-	PatchNumLFEDGE	= W_GetNumForName("LFEDGE"); // PU_STATIC);
-	PatchNumRTEDGE	= W_GetNumForName("RTEDGE"); // PU_STATIC);
-	PatchNumSTATBAR = W_GetNumForName("STATBAR"); // PU_STATIC);
-	PatchNumKEYBAR = W_GetNumForName("KEYBAR"); // PU_STATIC);
-	PatchNumSELECTBOX = W_GetNumForName("SELECTBOX"); // PU_STATIC);
-	PatchNumMANAVIAL1 = W_GetNumForName("MANAVL1"); // PU_STATIC);
-	PatchNumMANAVIAL2 = W_GetNumForName("MANAVL2"); // PU_STATIC);
-	PatchNumMANAVIALDIM1 = W_GetNumForName("MANAVL1D"); // PU_STATIC);
-	PatchNumMANAVIALDIM2 = W_GetNumForName("MANAVL2D"); // PU_STATIC);
-	PatchNumMANADIM1 = W_GetNumForName("MANADIM1"); // PU_STATIC);
-	PatchNumMANADIM2 = W_GetNumForName("MANADIM2"); // PU_STATIC);
-	PatchNumMANABRIGHT1 = W_GetNumForName("MANABRT1"); // PU_STATIC);
-	PatchNumMANABRIGHT2 = W_GetNumForName("MANABRT2"); // PU_STATIC);
-	PatchNumINVLFGEM1 = W_GetNumForName("invgeml1"); // PU_STATIC);
-	PatchNumINVLFGEM2 = W_GetNumForName("invgeml2"); // PU_STATIC);
-	PatchNumINVRTGEM1 = W_GetNumForName("invgemr1"); // PU_STATIC);
-	PatchNumINVRTGEM2 = W_GetNumForName("invgemr2"); // PU_STATIC);
+	PatchNumH2BAR = W_GetNumForName("H2BAR");
+	PatchNumH2TOP = W_GetNumForName("H2TOP");
+	PatchNumINVBAR = W_GetNumForName("INVBAR");
+	PatchNumLFEDGE	= W_GetNumForName("LFEDGE");
+	PatchNumRTEDGE	= W_GetNumForName("RTEDGE");
+	PatchNumSTATBAR = W_GetNumForName("STATBAR");
+	PatchNumKEYBAR = W_GetNumForName("KEYBAR"); 
+	PatchNumSELECTBOX = W_GetNumForName("SELECTBOX");
+	PatchNumMANAVIAL1 = W_GetNumForName("MANAVL1"); 
+	PatchNumMANAVIAL2 = W_GetNumForName("MANAVL2");
+	PatchNumMANAVIALDIM1 = W_GetNumForName("MANAVL1D");
+	PatchNumMANAVIALDIM2 = W_GetNumForName("MANAVL2D");
+	PatchNumMANADIM1 = W_GetNumForName("MANADIM1");
+	PatchNumMANADIM2 = W_GetNumForName("MANADIM2");
+	PatchNumMANABRIGHT1 = W_GetNumForName("MANABRT1");
+	PatchNumMANABRIGHT2 = W_GetNumForName("MANABRT2");
+	PatchNumINVLFGEM1 = W_GetNumForName("invgeml1");
+	PatchNumINVLFGEM2 = W_GetNumForName("invgeml2");
+	PatchNumINVRTGEM1 = W_GetNumForName("invgemr1");
+	PatchNumINVRTGEM2 = W_GetNumForName("invgemr2");
 
-//	PatchCHAINBACK = W_CacheLumpName("CHAINBACK", PU_STATIC);
 	startLump = W_GetNumForName("IN0");
 	for(i = 0; i < 10; i++)
 	{
-		PatchNumINumbers[i] = startLump+i;//, PU_STATIC);
+		PatchNumINumbers[i] = startLump + i;
 	}
-	PatchNumNEGATIVE = W_GetNumForName("NEGNUM");//, PU_STATIC);
+	PatchNumNEGATIVE = W_GetNumForName("NEGNUM");
 	FontBNumBase = W_GetNumForName("FONTB16");
 	startLump = W_GetNumForName("SMALLIN0");
 	for(i = 0; i < 10; i++)
 	{
-		PatchNumSmNumbers[i] = /*gi.W_CacheLumpNum(*/startLump+i/*, PU_STATIC)*/;
+		PatchNumSmNumbers[i] = startLump + i;
 	}
 	PlayPalette = W_GetNumForName("PLAYPAL");
 	SpinFlylump = W_GetNumForName("SPFLY0");

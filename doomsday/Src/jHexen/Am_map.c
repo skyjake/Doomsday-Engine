@@ -267,45 +267,49 @@ void AM_changeWindowLoc(void)
 
 void AM_initVariables(void)
 {
-  int pnum;
+	int pnum;
 	thinker_t *think;
 	mobj_t *mo;
-
-  //static event_t st_notify = { ev_keyup, AM_MSGENTERED };
-
-  automapactive = true;
-//  fb = memscreen;
-
-  f_oldloc.x = DDMAXINT;
-  amclock = 0;
-  lightlev = 0;
-
-  m_paninc.x = m_paninc.y = 0;
-  ftom_zoommul = FRACUNIT;
-  mtof_zoommul = FRACUNIT;
-
-  m_w = FTOM(f_w);
-  m_h = FTOM(f_h);
-
-  // find player to center on initially
-  if (!players[pnum = consoleplayer].plr->ingame)
-    for (pnum=0;pnum<MAXPLAYERS;pnum++) if (players[pnum].plr->ingame) break;
-  plr = &players[pnum];
-  oldplr.x = plr->plr->mo->x;
-  oldplr.y = plr->plr->mo->y;
-  m_x = plr->plr->mo->x - m_w/2;
-  m_y = plr->plr->mo->y - m_h/2;
-  AM_changeWindowLoc();
-
-  // for saving & restoring
-  old_m_x = m_x;
-  old_m_y = m_y;
-  old_m_w = m_w;
-  old_m_h = m_h;
-
+	
+	//static event_t st_notify = { ev_keyup, AM_MSGENTERED };
+	
+	automapactive = true;
+	//  fb = memscreen;
+	
+	f_oldloc.x = DDMAXINT;
+	amclock = 0;
+	lightlev = 0;
+	
+	m_paninc.x = m_paninc.y = 0;
+	ftom_zoommul = FRACUNIT;
+	mtof_zoommul = FRACUNIT;
+	
+	m_w = FTOM(f_w);
+	m_h = FTOM(f_h);
+	
+	// find player to center on initially
+	if(!players[pnum = consoleplayer].plr->ingame)
+	{
+		for (pnum = 0; pnum < MAXPLAYERS; pnum++) 
+			if (players[pnum].plr->ingame) break;
+	}
+	plr = &players[pnum];
+	if(pnum == MAXPLAYERS || !plr->plr->mo) return;
+	oldplr.x = plr->plr->mo->x;
+	oldplr.y = plr->plr->mo->y;
+	m_x = plr->plr->mo->x - m_w/2;
+	m_y = plr->plr->mo->y - m_h/2;
+	AM_changeWindowLoc();
+		
+	// for saving & restoring
+	old_m_x = m_x;
+	old_m_y = m_y;
+	old_m_w = m_w;
+	old_m_h = m_h;
+	
 	// load in the location of keys, if in baby mode
-
-//	memset(KeyPoints, 0, sizeof(vertex_t)*3);
+	
+	//	memset(KeyPoints, 0, sizeof(vertex_t)*3);
 	if(gameskill == sk_baby)
 	{
 		for(think = gi.thinkercap->next; think != gi.thinkercap; think = think->next)
@@ -317,9 +321,9 @@ void AM_initVariables(void)
 			mo = (mobj_t *)think;
 		}
 	}
-
-  // inform the status bar of the change
-//c  ST_Responder(&st_notify);
+	
+	// inform the status bar of the change
+//  ST_Responder(&st_notify);
 }
 
 void AM_loadPics(void)

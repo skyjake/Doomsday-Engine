@@ -1067,9 +1067,9 @@ static void CheckForPushSpecial(line_t *line, int side, mobj_t *mobj)
 
 boolean P_TryMove (mobj_t *thing, fixed_t x, fixed_t y)
 {
-	fixed_t         oldx, oldy;
-	int                     side, oldside;
-	line_t          *ld;
+	fixed_t oldx, oldy;
+	int		side, oldside;
+	line_t  *ld;
 
 	floatok = false;
 	if(!P_CheckPosition(thing, x, y))
