@@ -56,13 +56,28 @@ typedef struct detailinfo_s {
 	float	maxdist;
 } detailinfo_t;
 
-typedef struct gltexture_s
-{
+typedef struct glvertex_s {
+	float xyz[4];		// The fourth is padding.
+} glvertex_t;
+
+typedef struct gltexcoord_s {
+	float st[2];
+} gltexcoord_t;
+
+typedef struct glcolor_s {
+	byte rgba[4];
+} glcolor_t;
+
+typedef struct gltexture_s {
 	DGLuint	id;
 	ushort	width, height;
 	detailinfo_t *detail;
-}
-gltexture_t;
+} gltexture_t;
+
+typedef struct glcommand_vertex_s {
+	float s, t;
+	int index;
+} glcommand_vertex_t;
 
 #define RL_MAX_POLY_SIDES	64
 #define RL_MAX_DIVS			64
