@@ -499,6 +499,7 @@ void Con_Init()
 	registerCommands();
 	registerVariables();
 
+	DD_RegisterInput();
 	R_Register();
 	Rend_Register();
 	Net_Register();
@@ -3248,31 +3249,6 @@ static void registerVariables(void)
 	C_VAR_INT("music-source", &mus_preference, 0, 0, 2,
 			  "Preferred music source: 0=Original MUS, "
 			  "1=External files, 2=CD.");
-
-	// Input
-	// * Input-Key
-	C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0,
-			  "The number of milliseconds to wait before first key repeat.");
-	C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0,
-			  "The number of milliseconds to wait between key repeats.");
-	C_VAR_BYTE("input-key-show-scancodes", &showScanCodes, 0, 0, 1,
-			   "1=Show scancodes of all pressed keys in the console.");
-	// * Input-Joy
-	C_VAR_INT("input-joy-sensi", &joySensitivity, 0, 0, 9,
-			  "Joystick sensitivity.");
-	C_VAR_INT("input-joy-deadzone", &joyDeadZone, 0, 0, 90,
-			  "Joystick dead zone, in percents.");
-	// * Input-Mouse
-	C_VAR_INT("input-mouse-wheel-sensi", &mouseWheelSensi, CVF_NO_MAX, 0, 0,
-			  "Mouse wheel sensitivity.");
-	C_VAR_INT("input-mouse-x-disable", &mouseDisableX, 0, 0, 1,
-			  "1=Disable mouse X axis.");
-	C_VAR_INT("input-mouse-y-disable", &mouseDisableY, 0, 0, 1,
-			  "1=Disable mouse Y axis.");
-	C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1,
-			  "1=Inversed mouse Y axis.");
-	C_VAR_BYTE("input-mouse-filter", &mouseFilter, 0, 0, 1,
-			   "1=Filter mouse X and Y axes.");
 
 	// File
 	C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0,

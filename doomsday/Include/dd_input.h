@@ -36,6 +36,7 @@ extern int      joyDeadZone;
 extern boolean  showScanCodes;
 extern boolean  shiftDown, altDown;
 
+void            DD_RegisterInput(void);
 void            DD_InitInput(void);
 void            DD_ShutdownInput(void);
 void            DD_StartInput(void);

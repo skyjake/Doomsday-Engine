@@ -47,6 +47,7 @@ typedef struct repeater_s {
 int     mouseFilter = 0;		// No filtering by default.
 int     mouseInverseY = false;
 int     mouseWheelSensi = 10;	// I'm shooting in the dark here.
+int     mouseFreq = 0;
 int     joySensitivity = 5;
 int     joyDeadZone = 10;
 
@@ -146,6 +147,43 @@ static int oldJoyBState = 0;
 static float oldPOV = IJOY_POV_CENTER;
 
 // CODE --------------------------------------------------------------------
+
+void DD_RegisterInput(void)
+{
+	C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0,
+			  "The number of milliseconds to wait before first key repeat.");
+
+	C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0,
+			  "The number of milliseconds to wait between key repeats.");
+
+	C_VAR_BYTE("input-key-show-scancodes", &showScanCodes, 0, 0, 1,
+			   "1=Show scancodes of all pressed keys in the console.");
+
+	C_VAR_INT("input-joy-sensi", &joySensitivity, 0, 0, 9,
+			  "Joystick sensitivity.");
+
+	C_VAR_INT("input-joy-deadzone", &joyDeadZone, 0, 0, 90,
+			  "Joystick dead zone, in percents.");
+	
+	C_VAR_INT("input-mouse-wheel-sensi", &mouseWheelSensi, CVF_NO_MAX, 0, 0,
+			  "Mouse wheel sensitivity.");
+
+	C_VAR_INT("input-mouse-x-disable", &mouseDisableX, 0, 0, 1,
+			  "1=Disable mouse X axis.");
+
+	C_VAR_INT("input-mouse-y-disable", &mouseDisableY, 0, 0, 1,
+			  "1=Disable mouse Y axis.");
+
+	C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1,
+			  "1=Inversed mouse Y axis.");
+
+	C_VAR_BYTE("input-mouse-filter", &mouseFilter, 0, 0, 10,
+			   "Filter strength for mouse movement.");
+
+	C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0,
+			  "Mouse input polling frequency (events per second). "
+			  "0=unlimited.");
+}
 
 //===========================================================================
 // DD_DumpKeyMappings
@@ -571,8 +609,28 @@ void DD_ReadMouse(void)
 	if(!I_MousePresent())
 		return;
 
-	// Get the mouse state.
-	I_GetMouseState(&mouse);
+	// Should we test the mouse input frequency?
+	if(mouseFreq > 0)
+	{
+		static uint lastTime = 0;
+		uint nowTime = Sys_GetRealTime();
+		
+		if(nowTime - lastTime < 1000/mouseFreq)
+		{
+			// Don't ask yet.
+			memset(&mouse, 0, sizeof(mouse));
+		}
+		else
+		{
+			lastTime = nowTime;
+			I_GetMouseState(&mouse);
+		}
+	}
+	else
+	{
+		// Get the mouse state.
+		I_GetMouseState(&mouse);
+	}
 
 	ev.type = ev_mouse;
 	ev.data1 = mouse.x;
@@ -590,14 +648,14 @@ void DD_ReadMouse(void)
 			ev.data2 = -ev.data2;
 
 		// Filtering calculates the average with previous (x,y) value.
-		if(mouseFilter)
+		if(mouseFilter > 0)
 		{
 			mickeys[0] += ev.data1;
 			mickeys[1] += ev.data2;
 
 			// Half of the mickeys will be posted with the event.
-			ev.data1 = (1 + mickeys[0]) / 2;
-			ev.data2 = (1 + mickeys[1]) / 2;
+			ev.data1 = (mouseFilter + mickeys[0]) / (mouseFilter + 1);
+			ev.data2 = (mouseFilter + mickeys[1]) / (mouseFilter + 1);
 
 			mickeys[0] -= ev.data1;
 			mickeys[1] -= ev.data2;
@@ -614,7 +672,9 @@ void DD_ReadMouse(void)
 		ev.data2 *= MAX_OF(1, screenHeight / 600.0f);
 	}
 
-	DD_PostEvent(&ev);
+	// Don't post empty events.
+	if(ev.data1 || ev.data2 || ev.data3)
+		DD_PostEvent(&ev);
 
 	// Insert the possible mouse Z axis into the button flags.
 	if(abs(ev.data3) >= mouseWheelSensi)
