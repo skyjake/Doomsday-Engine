@@ -33,6 +33,7 @@
 #define MFF_SHINY_LIT			0x200000 // Shiny skin is not fullbright.
 #define MFF_IDFRAME				0x400000 // Mobj id -> frame in frame range
 #define MFF_IDANGLE				0x800000 // Mobj id -> static angle offset
+#define MFF_DIM					0x1000000 // Never fullbright.
 
 typedef struct
 {
