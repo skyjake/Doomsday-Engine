@@ -31,7 +31,8 @@ typedef ded_stringid_t	ded_soundid_t;
 typedef ded_stringid_t	ded_musicid_t;
 typedef ded_stringid_t	ded_funcid_t;
 typedef char			ded_func_t[DED_FUNC_LEN+1];
-typedef char			ded_flags_t[DED_FLAGS_LEN+1];
+//typedef char			ded_flags_t[DED_FLAGS_LEN+1];
+typedef unsigned int	ded_flags_t;
 
 typedef struct ded_count_s { int num, max; } ded_count_t;
 
@@ -86,7 +87,7 @@ typedef struct
 	float			height;
 	int				mass;
 	int				damage;
-	char			flags[NUM_MOBJ_FLAGS][DED_FLAGS_LEN+1];
+	ded_flags_t		flags[NUM_MOBJ_FLAGS];
 	int				misc[NUM_MOBJ_MISC];
 } ded_mobj_t;
 
@@ -114,8 +115,8 @@ typedef struct
 	float			yoffset;		// Zero means automatic
 	float			size;			// Zero: automatic
 	float			color[3];		// Red Green Blue (0,1)
-	ded_flags_t		flags_string;	
-	int				flags;			// Runtime
+	ded_flags_t		flags;	
+	//int				flags;			// Runtime
 	ded_lightmap_t	up, down, sides;
 } ded_light_t;
 
@@ -253,13 +254,14 @@ typedef struct
 	int				id;
 	char			comment[64];
 	ded_flags_t		flags[3];
-	ded_stringid_t	line_class;
-	ded_stringid_t	act_type;
+	ded_flags_t		line_class;
+	ded_flags_t		act_type;
 	int				act_count;
 	float			act_time;
 	int				act_tag;
-	int				aparm[7];
-	ded_stringid_t	aparm_str[3];	// aparms 4, 6, 9
+	int				aparm[9];
+	//ded_stringid_t	aparm_str[3];	// aparms 4, 6, 9
+	ded_stringid_t	aparm9;
 	float			ticker_start;
 	float			ticker_end;
 	int				ticker_interval;
@@ -268,7 +270,7 @@ typedef struct
 	int				ev_chain;
 	int				act_chain;
 	int				deact_chain;
-	ded_stringid_t	wallsection;
+	ded_flags_t		wallsection;
 	ded_stringid_t	act_tex;
 	ded_stringid_t	deact_tex;
 	char			act_msg[128];
@@ -326,7 +328,7 @@ typedef struct
 
 typedef struct
 {
-	ded_string_t	type;
+	ded_flags_t		type;
 	int				tics;
 	float			variance;		// Stage variance (time).
 	float			color[4];		// RGBA
@@ -336,6 +338,11 @@ typedef struct
 	float			bounce;
 	float			resistance;		// Air resistance.
 	float			gravity;
+	float			spin[2];		// Yaw and pitch.
+	int				model;
+	ded_string_t	frame_name;		// For model particles.
+	ded_string_t	end_frame_name;
+	short			frame, end_frame;
 } ded_ptcstage_t;
 
 typedef struct
@@ -350,8 +357,7 @@ typedef struct
 	ded_mobjid_t	damage;			// Triggered by mobj damage of this type.
 	int				damage_num;
 	ded_string_t	map;			// Triggered by this map (or empty string).
-	ded_flags_t		flags_string;
-	int				flags;
+	ded_flags_t		flags;
 	float			speed;			// Particle spawn velocity.
 	float			spd_variance;	// Spawn speed variance (0-1).
 	float			vector[3];		// Particle launch vector.
@@ -396,9 +402,9 @@ typedef struct ded_decor_s
 {
 	ded_string_t	surface;		// Texture or flat name.
 	int				is_texture;		// True, if decoration for a wall.
-	ded_flags_t		flags_str;		// Flags as text.
-	int				flags;			// Evaluated flags.
+	ded_flags_t		flags;			
 	int				surface_index;	// Flat or texture index.
+	unsigned int	pregen_lightmap;
 	ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
 } ded_decor_t;
 
