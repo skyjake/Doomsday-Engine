@@ -155,3 +155,22 @@ void P_UpdateHealthBits(mobj_t *mobj)
 		mobj->selector |= i << DDMOBJ_SELECTOR_SHIFT;
 	}
 }
+
+//===========================================================================
+// P_UpdateMobjFlags
+//	Update gravity-related flags for Doomsday.
+//===========================================================================
+void P_UpdateMobjFlags(mobj_t *mobj)
+{
+/*	if(mobj->flags & MF_NOGRAVITY || mobj->flags2 & MF2_FLOATBOB)
+		mobj->ddflags |= DDMF_NOGRAVITY;
+	else
+		mobj->ddflags &= ~DDMF_NOGRAVITY;
+
+#ifndef __JDOOM__
+	if(mobj->flags2 & MF2_LOGRAV)
+		mobj->ddflags |= DDMF_LOWGRAVITY;
+	else
+		mobj->ddflags &= ~DDMF_LOWGRAVITY;
+#endif*/
+}
