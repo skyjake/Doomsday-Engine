@@ -8,6 +8,7 @@ Version 1.7.12 (work in progress)
 --------------
 + option -leaveramp: don't reset color settings back to previous values
   at shutdown
++ JWADs: IWAD supplements (uses normal WAD loading order)
 * music data will not be cached into the memory zone while loading 
   (large MP3s wasted a lot of space) 
 * 'InFine' is an alternative name for the 'Finale' definition
@@ -80,10 +81,15 @@ drOpenGL:
 + support for SGIS_generate_mipmap
 + support for EXT_blend_subtract
 + support for EXT_texture_compression_s3tc
++ option -notexcomp: disable texture compression
++ option -novtxar: disable vertex arrays
+* vertex arrays are disabled by default is driver's OpenGL version is
+  older than 1.3 (otherwise enabled)
 * texture compression enabled by default (use -notexcomp to disable)
-- removed -vtxar option (arrays are used always)
 
 jDoom:
++ "Patch Replacement" strings (see Defs\jDoom\Values.ded)
++ fonts precached during startup
 + crosshair alpha slider added to the HUD menu
 * titlescreen sequence defined as an InFine script (ID = "title")
 - fixed: intermissions/finales in Plut/TNT
