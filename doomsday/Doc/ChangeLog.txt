@@ -12,6 +12,10 @@ Version 1.7.9 (work in progress)
 - DirectSound 8: fixed a problem with buffer loading; using -csd should 
   no longer be necessary
 
+jHexen:
+- fixed: sound sequence delays with repeating sounds (sequence updater
+  didn't get correct information about currently playing sound effects)
+
 
 Version 1.7.8
 -------------
