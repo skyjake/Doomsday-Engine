@@ -786,7 +786,7 @@ void H_PreInit(void)
 	cfg.tomeSound = 3;
 	cfg.lookSpeed = 3;
 	cfg.xhairSize = 1;
-	for(i=0; i<3; i++) cfg.xhairColor[i] = 255;	
+	for(i = 0; i < 4; i++) cfg.xhairColor[i] = 255;	
 	cfg.netJumping = true;
 	cfg.netEpisode = 1;
 	cfg.netMap = 1;

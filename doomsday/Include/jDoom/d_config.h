@@ -76,7 +76,7 @@ typedef struct jdoom_config_s
 
 	// Crosshair.
 	int		xhair, xhairSize;
-	byte	xhairColor[3];
+	byte	xhairColor[4];
 
 	// Network.
 	boolean	netDeathmatch, netNomonsters, netRespawn, netJumping;

@@ -175,9 +175,10 @@ cvar_t gameCVars[] =
 	"hud-status-size",	CVF_PROTECTED,	CVT_INT,	&cfg.sbarscale,		1, 20,	"Status bar size (1-20).",
 	
 	"view-cross-type", CVF_NO_MAX|CVF_PROTECTED, CVT_INT, &cfg.xhair, 0, 0,	"The current crosshair.",
-	"view-cross-r",		0,			CVT_BYTE,	&cfg.xhairColor[0], 0, 255,	"Red crosshair color component.",
-	"view-cross-g",		0,			CVT_BYTE,	&cfg.xhairColor[1], 0, 255, "Green crosshair color component.",
-	"view-cross-b",		0,			CVT_BYTE,	&cfg.xhairColor[2], 0, 255, "Blue crosshair color component.",
+	"view-cross-r",		0,			CVT_BYTE,	&cfg.xhairColor[0], 0, 255,	"Crosshair color red component.",
+	"view-cross-g",		0,			CVT_BYTE,	&cfg.xhairColor[1], 0, 255, "Crosshair color green component.",
+	"view-cross-b",		0,			CVT_BYTE,	&cfg.xhairColor[2], 0, 255, "Crosshair color blue component.",
+	"view-cross-a",		0,			CVT_BYTE,	&cfg.xhairColor[3], 0, 255, "Crosshair color alpha component.",
 	"view-cross-size",	CVF_NO_MAX,		CVT_INT,	&cfg.xhairSize,		0, 0,	"Crosshair size: 1=Normal.",
 
 	"view-bob-height",	0,			CVT_FLOAT,	&cfg.bobView,		0, 1,	"Scaling factor for viewheight bobbing.",

@@ -245,7 +245,6 @@ void DetectIWADs (void)
 		">Data\\",
 		">",
 		">Iwads\\",
-		"..\\Iwads\\",		// GMJ/BD compatibility
 		"",
 		0 
 	};
@@ -686,7 +685,7 @@ void D_PreInit(void)
 	cfg.hudColor[0] = 1;
 	cfg.hudColor[1] = cfg.hudColor[2] = 0;
 	cfg.xhairSize = 1;
-	for(i=0; i<3; i++) cfg.xhairColor[i] = 255;	
+	for(i = 0; i < 4; i++) cfg.xhairColor[i] = 255;
 	cfg.snd_3D = false;
 	cfg.snd_ReverbFactor = 100;
 	cfg.moveCheckZ = true;

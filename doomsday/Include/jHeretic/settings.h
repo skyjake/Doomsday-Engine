@@ -35,7 +35,7 @@ typedef struct
 	float	bobWeapon, bobView;
 	
 	int		xhair, xhairSize;
-	byte	xhairColor[3];
+	byte	xhairColor[4];
 	boolean	messageson;
 	
 	//int		snd_3D;

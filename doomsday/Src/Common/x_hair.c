@@ -85,7 +85,8 @@ void X_Drawer(void)
 		+ Get(DD_VIEWWINDOW_SCREEN_HEIGHT)/2.0f;
 	int	i;
 	float fact = (cfg.xhairSize+1)/2.0f;
-	byte xcolor[3] = { cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2] };
+	byte xcolor[4] = { cfg.xhairColor[0], cfg.xhairColor[1], 
+		cfg.xhairColor[2], cfg.xhairColor[3] };
 	cross_t *cross;
 
 	// Is there a crosshair to draw?
@@ -105,7 +106,7 @@ void X_Drawer(void)
 
 	cross = crosshairs + cfg.xhair-1;
 
-	gl.Color3ubv(xcolor);
+	gl.Color4ubv(xcolor);
 	gl.Begin(DGL_LINES);
 	for(i=0; i<cross->numLines; i++)
 	{
@@ -129,12 +130,13 @@ int CCmdCrosshair(int argc, char **argv)
 		Con_Printf( "Usage:\n  crosshair (num)\n");
 		Con_Printf( "  crosshair size (size)\n");
 		Con_Printf( "  crosshair color (r) (g) (b)\n");
+		Con_Printf( "  crosshair color (r) (g) (b) (a)\n");
 		Con_Printf( "Num: 0=no crosshair, 1-%d: use crosshair 1...%d\n", NUM_XHAIRS, NUM_XHAIRS);
 		Con_Printf( "Size: 1=normal\n");
-		Con_Printf( "R, G, B: 0-255\n");
-		Con_Printf( "Current values: xhair=%d, size=%d, color=(%d, %d, %d)\n",
+		Con_Printf( "R, G, B, A: 0-255\n");
+		Con_Printf( "Current values: xhair=%d, size=%d, color=(%d,%d,%d,%d)\n",
 			cfg.xhair, cfg.xhairSize, cfg.xhairColor[0], 
-			cfg.xhairColor[1], cfg.xhairColor[2]);
+			cfg.xhairColor[1], cfg.xhairColor[2], cfg.xhairColor[3]);
 		return true;
 	}
 	else if(argc == 2) // Choose.
@@ -154,19 +156,20 @@ int CCmdCrosshair(int argc, char **argv)
 		if(cfg.xhairSize < 0) cfg.xhairSize = 0;
 		Con_Printf( "Crosshair size set to %d.\n", cfg.xhairSize);
 	}
-	else if(argc == 5) // Color.
+	else if(argc == 5 || argc == 6) // Color.
 	{
 		int i;
 		if(stricmp(argv[1], "color")) return false;
-		for(i=0; i<3; i++) 
+		for(i = 0; i < argc - 2; i++) 
 		{
-			cfg.xhairColor[i] = strtol(argv[2+i], NULL, 0);
+			cfg.xhairColor[i] = strtol(argv[2 + i], NULL, 0);
 			// Clamp.
 			if(cfg.xhairColor[i] < 0) cfg.xhairColor[i] = 0;
 			if(cfg.xhairColor[i] > 255) cfg.xhairColor[i] = 255;
 		}
-		Con_Printf( "Crosshair color set to (%d, %d, %d).\n", 
-			cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2]);
+		Con_Printf( "Crosshair color set to (%d, %d, %d, %d).\n", 
+			cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2],
+			cfg.xhairColor[3]);
 	}
 	else return false;
 	// Success!

@@ -11,6 +11,7 @@ Version 1.7.9 (work in progress)
 + model flag 'df_dim' (0x1000000): model is never rendered fullbright
 * "Filter mouse movement" added to Control Panel's Input page
 * -nohightex now only affects wall textures and flats
+* crosshair color alpha (cmd "crosshair color", var "view-cross-a")
 - DirectSound 8: fixed a problem with buffer loading; using -csd should 
   no longer be necessary
 

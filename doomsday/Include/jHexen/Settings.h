@@ -42,7 +42,7 @@ typedef struct
 	int	jlookDeltaMode;
 	
 	int xhair, xhairSize;
-	byte xhairColor[3];
+	byte xhairColor[4];
 	
 	int snd_3D, messageson;
 	char *chat_macros[10];
