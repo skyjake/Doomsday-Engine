@@ -693,6 +693,9 @@ void Def_Read(void)
 	// Detail textures. Initialize later...
 	Def_CountMsg(defs.count.details.num, "detail textures");
 
+	// Texture animation groups.
+	Def_CountMsg(defs.count.groups.num, "animation groups");
+
 	// Surface decorations.
 	for(i = 0; i < defs.count.decorations.num; i++)
 	{
@@ -741,6 +744,7 @@ void Def_PostInit(void)
 		details[i].gltex = -1; //~0;	// Not loaded.
 	}
 
+	// Surface decorations.
 	for(i = 0; i < defs.count.decorations.num; i++)
 	{
 		ded_decor_t *decor = defs.decorations + i;
@@ -750,6 +754,12 @@ void Def_PostInit(void)
 			decor->surface_index = R_CheckTextureNumForName(decor->surface);
 		else
 			decor->surface_index = W_CheckNumForName(decor->surface);
+	}
+
+	// Animation groups.
+	for(i = 0; i < defs.count.groups.num; i++)
+	{
+		R_InitAnimGroup(defs.groups + i);
 	}
 }
 
