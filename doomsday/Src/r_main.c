@@ -53,7 +53,7 @@ int     viewangleoffset = 0;
 int     validcount = 1;			// increment every time a check is made
 int     framecount;				// just for profiling purposes
 int     rend_info_tris = 0;
-int     rend_camera_smooth = false;
+int     rend_camera_smooth = true; // smoothed by default
 fixed_t viewx, viewy, viewz;
 float   viewfrontvec[3], viewupvec[3], viewsidevec[3];
 fixed_t viewxOffset = 0, viewyOffset = 0, viewzOffset = 0;
