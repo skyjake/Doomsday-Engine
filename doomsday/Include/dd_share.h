@@ -501,12 +501,12 @@ typedef struct
 } degenmobj_t;
 
 // Dlights are hitting this seg. Affects rendering order/blending.
-#define DDSEGF_DLIGHT		0x1	
+//#define DDSEGF_DLIGHT		0x1	
 
 // Dlights are hitting the floor/ceiling of this subsector.
-#define DDSUBF_DLIGHT_FLOOR		0x1
-#define DDSUBF_DLIGHT_CEILING	0x2
-#define DDSUBF_CLEAR_MASK		0x3		// Flags that are cleared every frame.
+//#define DDSUBF_DLIGHT_FLOOR		0x1
+//#define DDSUBF_DLIGHT_CEILING	0x2
+//#define DDSUBF_CLEAR_MASK		0x3		// Flags that are cleared every frame.
 #define DDSUBF_MIDPOINT			0x80	// Midpoint is tri-fan centre.
 
 typedef struct
