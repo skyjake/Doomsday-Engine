@@ -70,7 +70,7 @@ int CheckArg(char *tag, char **value)
 
 void ErrorBox(boolean error, char *format, ...)
 {
-	char	buff[200];
+	char buff[200];
 	va_list args;
 
 	va_start(args, format);
