@@ -92,9 +92,6 @@ cvarbutton_t cvarbuttons[] =
 	{ 0, "net-nosleep" },
 	{ 0, "net-dev" },
 	{ 0, "net-queue-show" },
-	{ 0, "server-delta-show" },
-	{ 0, "server-refresh-show" },
-	{ 0, "server-latencies" },
 	{ 0, "sound-16bit" },
 	{ 0, "sound-3d" },
 	{ 0, "sound-info" },
@@ -211,14 +208,8 @@ uidata_slider_t sld_joy_sensi = { 0, 9, 0, 1, false, "input-joy-sensi" };
 uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" }; 
 uidata_slider_t sld_keywait1 = { 5, 35, 0, 1, false, "input-key-wait1" };
 uidata_slider_t sld_keywait2 = { 2, 35, 0, 1, false, "input-key-wait2" };
-uidata_slider_t sld_net_queue_packets = { 0, 16, 0, 1, false, "net-queue-packets" };
 uidata_slider_t sld_client_pos_interval = { 0, 70, 0, 1, false, "client-pos-interval" };
 uidata_slider_t sld_server_frame_interval = { 0, 35, 0, 1, false, "server-frame-interval" };
-uidata_slider_t sld_server_frame_resend = { 0, 140, 0, 1, false, "server-frame-resend" };
-uidata_slider_t sld_server_dif_max = { 0, 256, 0, 1, false, "server-dif-max" };
-uidata_slider_t sld_server_sector_min = { 0, 16, 0, 1, false, "server-sector-min" };
-uidata_slider_t sld_server_sector_full = { 0, 16, 0, 1, false, "server-sector-full" };
-uidata_slider_t sld_server_sector_max = { 0, 16, 0, 1, false, "server-sector-max" };
 uidata_slider_t sld_sound_volume = { 0, 255, 0, 1, false, "sound-volume" };
 uidata_slider_t sld_music_volume = { 0, 255, 0, 1, false, "music-volume" };
 uidata_slider_t sld_reverb_volume = { 0, 1, 0, .01f, true, "sound-reverb-volume" };
@@ -489,32 +480,12 @@ ui_object_t ob_panel[] =
 	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"net-nosleep", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 130, 0, 55,	"Show development info", UIText_Drawer },
 	{ UI_BUTTON2,	0,	0,				680, 130, 70, 55,	"net-dev", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-	{ UI_TEXT,		0,	0,				300, 190, 0, 55,	"Print packet queue info", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 190, 70, 55,	"net-queue-show", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-	{ UI_TEXT,		0,	0,				300, 250, 0, 55,	"Maximum queued packets", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 250, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_net_queue_packets },
-	{ UI_TEXT,		0,	0,				300, 310, 0, 55,	"Cl-to-sv pos transmit tics", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 310, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_client_pos_interval },
-	{ UI_TEXT,		0,	0,				300, 370, 0, 55,	"Server login password", UIText_Drawer },
-	{ UI_EDIT,		0,	0,				680, 370, 300, 55,	"",			UIEdit_Drawer, UIEdit_Responder, 0, CP_CvarEdit, &ed_server_password },
-	{ UI_TEXT,		0,	0,				300, 430, 0, 55,	"Print sv-to-cl delta info", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 430, 70, 55,	"server-delta-show", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-	{ UI_TEXT,		0,	0,				300, 490, 0, 55,	"Print delta generation timing", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 490, 70, 55,	"server-refresh-show", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-	{ UI_TEXT,		0,	0,				300, 550, 0, 55,	"Print debug info in console", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 550, 70, 55,	"server-latencies", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-	{ UI_TEXT,		0,	0,				300, 610, 0, 55,	"Frame interval tics", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 610, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
-	{ UI_TEXT,		0,	0,				300, 670, 0, 55,	"Unack'd frame resend tics", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 670, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_resend },
-	{ UI_TEXT,		0,	0,				300, 730, 0, 55,	"Maximum client pos inaccuracy", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 730, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_dif_max },
-	{ UI_TEXT,		0,	0,				300, 790, 0, 55,	"Block range for forced sector deltas", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 790, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_sector_min },
-	{ UI_TEXT,		0,	0,				300, 850, 0, 55,	"Block limit for full sector deltas", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 850, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_sector_full },
-	{ UI_TEXT,		0,	0,				300, 910, 0, 55,	"Max block range for sector deltas", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 910, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_sector_max },
+	{ UI_TEXT,		0,	0,				300, 190, 0, 55,	"Cl-to-sv pos transmit tics", UIText_Drawer },
+	{ UI_SLIDER,	0,	0,				680, 190, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_client_pos_interval },
+	{ UI_TEXT,		0,	0,				300, 250, 0, 55,	"Server login password", UIText_Drawer },
+	{ UI_EDIT,		0,	0,				680, 250, 300, 55,	"",			UIEdit_Drawer, UIEdit_Responder, 0, CP_CvarEdit, &ed_server_password },
+	{ UI_TEXT,		0,	0,				300, 310, 0, 55,	"Frame interval tics", UIText_Drawer },
+	{ UI_SLIDER,	0,	0,				680, 310, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
 
 	{ UI_META,		12 },
 	{ UI_TEXT,		0,	0,				280, 0, 0, 50,		"Console Options", UIText_Drawer },
