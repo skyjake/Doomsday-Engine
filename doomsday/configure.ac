@@ -1,5 +1,5 @@
-AC_INIT(deng, [1.8.3], [jaakko.keranen@iki.fi])
-AM_INIT_AUTOMAKE(deng, [1.8.3])
+AC_INIT(deng, [1.8.4], [jaakko.keranen@iki.fi])
+AM_INIT_AUTOMAKE(deng, [1.8.4])
 
 AC_CANONICAL_BUILD
 

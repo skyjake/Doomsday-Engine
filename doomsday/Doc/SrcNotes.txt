@@ -1,8 +1,8 @@
 
                           Doomsday Engine Sources
                           -----------------------
-                              October 23, 2004
-                          (engine version 1.8.3)
+                             December 26, 2004
+                          (engine version 1.8.4)
 
                 by Jaakko Keränen <skyjake@doomsdayhq.com>
                 
@@ -16,7 +16,7 @@ RELEASE NOTES:
 The Doomsday Engine source code is distributed under the GNU General Public
 License (see LICENSE in the root directory).
 
-The code in this package was used to build the 1.8.3 release.
+The code in this package was used to build the 1.8.4 release.
 
 The placement of some files was changed in 1.7.6; you shouldn't install
 this package on top of a previous Doomsday Sources tree unless it's newer
@@ -34,7 +34,7 @@ is not very pretty.
 ...........................................................................
 CONTENTS:
 
-Source code and Microsoft Visual C++ 6.0/.NET project files for
+Source code and Microsoft Visual C++ 6.0/.NET build script for
 - The Doomsday Engine
 - jDoom
 - jHeretic
@@ -42,9 +42,9 @@ Source code and Microsoft Visual C++ 6.0/.NET project files for
 - drOpenGL: Doomsday OpenGL Renderer
 - drD3D: Doomsday Direct3D Renderer
 - dpDehRead: DeHackEd Reader Plugin
+- dpMapLoad: glBSP Plugin
 - dsA3D: Sound routines for A3D
 - dsCompat: Sound routines for DirectSound 6
-- jtNet2 (obsolete)
 
 Documentation
 
@@ -60,9 +60,9 @@ Utilities (binaries)
 - GNU Find
 
 ...........................................................................
-REQUIREMENTS:
+REQUIREMENTS FOR WIN32:
 
-Microsoft Visual C++ 6.0/.NET
+Microsoft Visual C++ 6.0/.NET (or Microsoft Visual C++ Toolkit)
 DirectX 8.0 SDK (or newer)
 EAX 2.0 SDK
 A3D 3.0 SDK (needed only for building dsA3D)
