@@ -1152,10 +1152,15 @@ int CCmdMakeCamera(int argc, char **argv)
 
 	// Create a new local player.
 	int cp;
-//	ddplayer_t *conp = players + consoleplayer;
 
 	if(argc < 2) return true;
 	cp = atoi(argv[1]);
+	if(cp < 0 || cp >= MAXPLAYERS) return false;
+	if(clients[cp].connected)
+	{
+		Con_Printf("Client %i already connected.\n", cp);
+		return false;
+	}
 	clients[cp].connected = true;
 	clients[cp].ready = true;
 	clients[cp].updateCount = UPDATECOUNT;
