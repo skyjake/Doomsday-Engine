@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2003/07/12 22:10:05  skyjake
+// Removed obsolete stuff
+//
 // Revision 1.1  2003/02/26 19:18:26  skyjake
 // Initial checkin
 //
@@ -56,17 +59,5 @@ void D_DoomMain (void);
 
 // Called by IO functions when input is detected.
 void D_PostEvent (event_t* ev);
-
-	
-
-//
-// BASE LEVEL
-//
-void D_PageTicker (void);
-void D_PageDrawer (void);
-void D_AdvanceDemo (void);
-void D_StartTitle (void);
-
-extern boolean advancedemo;
 
 #endif
