@@ -1407,9 +1407,6 @@ void UI_Gradient(int x, int y, int w, int h, ui_color_t *top, ui_color_t *bottom
 	gl.Enable(DGL_TEXTURING);
 }
 
-//===========================================================================
-// UI_HorizGradient
-//===========================================================================
 void UI_HorizGradient
 	(int x, int y, int w, int h, ui_color_t *left, ui_color_t *right, 
 	 float left_alpha, float right_alpha)

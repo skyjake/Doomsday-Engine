@@ -93,8 +93,8 @@ void DD_GameLoop(void)
 
 //===========================================================================
 // DD_DrawAndBlit
-//	Drawing anything outside this routine is frowned upon. Seriously
-//	frowned!
+//	Drawing anything outside this routine is frowned upon. 
+//	Seriously frowned!
 //===========================================================================
 void DD_DrawAndBlit(void)
 {
