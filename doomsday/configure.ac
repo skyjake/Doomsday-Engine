@@ -1,5 +1,5 @@
-AC_INIT(deng, [1.8.0-rc1], [jaakko.keranen@iki.fi])
-AM_INIT_AUTOMAKE(deng, [1.8.0-rc1])
+AC_INIT(deng, [1.8.0-rc2], [jaakko.keranen@iki.fi])
+AM_INIT_AUTOMAKE(deng, [1.8.0-rc2])
 
 AM_CONFIG_HEADER(config.h)
 
@@ -28,20 +28,44 @@ AC_PROG_CC
 
 AC_LANG(C)
 
-
 dnl Check for SDL (using C).
 SDL_VERSION=1.2.0
 AM_PATH_SDL($SDL_VERSION,:,
 	AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
 
-dnl TODO: Do more tests to see if these are available:
-dnl - OpenGL
-dnl - GLU
-dnl - SDL_net
-dnl - SDL_mixer (optional)
-dnl - OpenAL (optional)
+dnl Check that the required libraries are available.
+AC_CHECK_HEADER(curses.h,
+	[USELESS_VAR=1],
+	AC_MSG_ERROR([*** curses not found!]))
 
-AC_OUTPUT([Makefile Src/Makefile Src/drOpenGL/Makefile
-	Src/dsSDLMixer/Makefile Src/dsOpenAL/Makefile
+AC_CHECK_HEADER(SDL/SDL_net.h,
+	[USELESS_VAR=1],
+	AC_MSG_ERROR([*** SDL_net not found!]))
+
+AC_CHECK_HEADER(GL/gl.h,
+	[USELESS_VAR=1],
+	AC_MSG_ERROR([*** OpenGL not found!]))
+
+AC_CHECK_HEADER(GL/glu.h,
+	[USELESS_VAR=1],
+	AC_MSG_ERROR([*** GLU not found!]))
+
+OPTIONAL_SUBDIRS=""
+
+dnl Optional libraries.
+AC_CHECK_HEADER(SDL/SDL_mixer.h,
+	[OPTIONAL_SUBDIRS="dsSDLMixer $OPTIONAL_SUBDIRS"],
+	[AC_MSG_WARN([SDL_mixer is not available, skipping dsSDLMixer])])
+
+AC_CHECK_HEADER(AL/al.h,
+	[OPTIONAL_SUBDIRS="dsOpenAL $OPTIONAL_SUBDIRS"],
+	[AC_MSG_WARN([openal is not available, skipping dsOpenAL])])
+
+AC_SUBST(OPTIONAL_SUBDIRS)
+
+AC_CONFIG_FILES([ Makefile Src/Makefile Src/drOpenGL/Makefile
 	Src/jDoom/Makefile Src/jHeretic/Makefile Src/jHexen/Makefile
-	Src/dpDehRead/Makefile])
+	Src/dpDehRead/Makefile Src/dsSDLMixer/Makefile
+	Src/dsOpenAL/Makefile ])
+
+AC_OUTPUT
