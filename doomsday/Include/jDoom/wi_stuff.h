@@ -22,9 +22,8 @@
 #ifndef __WI_STUFF__
 #define __WI_STUFF__
 
-//#include "v_video.h"
-
 #include "doomdef.h"
+#include "r_defs.h"
 
 // States for the intermission
 
@@ -52,10 +51,17 @@ void WI_End(void);
 // Implements patch replacement.
 void WI_DrawPatch(int x, int y, int lump);
 
+void WI_DrawParamText
+	(int x, int y, char *string, dpatch_t *defFont, float defRed,
+	 float defGreen, float defBlue, boolean defCase, boolean defTypeIn);
+
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.3  2003/08/24 00:26:17  skyjake
+// More advanced patch replacements
+//
 // Revision 1.2  2003/08/17 23:29:36  skyjake
 // Implemented Patch Replacement
 //
