@@ -247,3 +247,24 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 	return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
 }
 
+//===========================================================================
+// R_GetLineForSide
+//===========================================================================
+line_t *R_GetLineForSide(int sideNumber)
+{
+	side_t *side = SIDE_PTR(sideNumber);
+	sector_t *sector = side->sector;
+	int i;
+
+	// Do all sides have a sector? (Possibly...)
+	if(!sector) return NULL;
+
+	for(i = 0; i < sector->linecount; i++)
+		if(sector->lines[i]->sidenum[0] == sideNumber 
+			|| sector->lines[i]->sidenum[1] == sideNumber)
+		{
+			return sector->lines[i];
+		}
+	
+	return NULL;
+}
