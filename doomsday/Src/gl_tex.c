@@ -2540,7 +2540,7 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 			strcpy(resource, lumpinfo[spritelumps[pnum].lump].name);
 		}
 
-		if(!noHighResTex
+		if(!noHighResPatches
 			&& R_FindResource(RC_PATCH, resource, "-ck", fileName)
 			&& GL_LoadImage(&image, fileName, false) != NULL)
 		{
@@ -2602,7 +2602,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 		
 		// Is there an external resource for this image? For HUD sprites,
 		// first try the HUD version of the resource.
-		if(!noHighResTex
+		if(!noHighResPatches
 			&& ( (spriteMode == 1 && R_FindResource(RC_PATCH, hudResource, 
 					"-ck", fileName))
 				|| R_FindResource(RC_PATCH, lumpinfo[lumpNum].name, "-ck", 
