@@ -11,11 +11,20 @@ CONTENTS: @contents{1}
 
 @chapter{ Introduction }
 
-The Doomsday Engine is an enhanced and extended Win32 version of the DOOM engine. It was originally based on the Hexen source code but parts of it have later been completely rewritten. Doomsday is only an engine: you will also need a Game DLL. Three such DLLs are being developed alongside the engine: jDoom, jHeretic and jHexen.
-
-Doomsday is a direct descendant of JHexen. The first version of JHexen was released in October 1999. The first version of Doomsday was released in February 2000.
-
-The engine, jDoom, jHeretic and jHexen are being developed by Jaakko Keränen. Of late, an increasing number of people has been involved in the project (see @ref{acks}{Acknowledgements}).
+The Doomsday Engine is an enhanced Doom source port for the Windows
+and Linux platforms. It is based on the source code of id Software's
+Doom and Raven Software's Heretic and Hexen. The Doomsday Engine and
+the associated ports of Doom, Heretic and Hexen have been under
+development since 1999. The first versions were released in late 1999
+and early 2000. Most of the development work has been done by Jaakko
+Keränen (skyjake). Several other people have also been involved in the
+project (see @ref{acks}{Acknowledgements}).
+ 
+The purpose of the project is to create versions of Doom, Heretic and
+Hexen that feel the same as the original games but are implemented
+using modern techniques such as 3D graphics and client/server
+networking. A lot of emphasis is placed on good-looking graphics.
+ 
 
 @section{ Features }
 
@@ -29,15 +38,20 @@ Graphics:
 @item Detail textures
 @item 3D models (uses Quake II's MD2 format)
 @item Simple environmental mapping for 3D models (shiny effects)
+@item MD2 skymodels and skyboxes
 @item Actor (monster) movement smoothing
+@item Simulated radiosity shadowing system for the environment
 @item Simple shadows for objects
 @item Fog
+@item Glowing surfaces
+@item Smart texture filtering using a modified hq2x algorithm
 }
 
 Sound:
 @list/thin{
 @item Plays music using standard Windows MIDI routines
-@item Supports DirectSound, DirectSound3D, EAX 2.0 and A3D 3.0
+@item Win32: supports DirectSound, DirectSound3D, EAX 2.0 and A3D 3.0
+@item Linux: SDL_mixer, OpenAL
 @item Uses FMOD (@link{http://www.fmod.org/}) to play music files such as MP3
 @item 3D sound effects
 @item Environmental (reverb) effects
@@ -46,8 +60,7 @@ Sound:
 
 Networking:
 @list/thin{
-@item Client/server networking
-@item Uses DirectPlay: TCP/IP, IPX, modem and serial link support
+@item TCP/UDP-based client/server networking
 @item Up to 16 players
 @item Clients can join games in progress
 @item Dedicated mode for servers
@@ -59,21 +72,20 @@ Other:
 @item Control Panel
 @item Plain text definition files for game objects and other data
 @item Files can be loaded from WAD files (see @file{wadtool})
-@item Doomsday KickStart: a launcher for games running on Doomsday
+@item Doomsday KickStart (on Win32): a launcher for games running on Doomsday
 }
 
 
 @section{ Requirements }
 
 @list{
-@item Pentium 166 (or equivalent) with 64Mb of RAM (3D models &
-	special effects disabled)
+@item Pentium 166 (or equivalent) with 64Mb of RAM (providing that
+	3D models and special effects are disabled)
 @item Windows 98 (or newer)
 @item DirectX 8 (or newer)
 @item A display adapter capable of 3D hardware acceleration
 @item At least one WAD file from the original Doom, Heretic, Hexen, etc.
 }
-
 
 
 $ An overview of the Doomsday docs.
@@ -495,11 +507,47 @@ apply all found @file{DEHACKED} lumps.
 
 
 
+@chapter{ Networking }
+
+Doomsday uses both TCP and UDP for making network connections.  If you
+are behind a firewall or you are using NAT, you must make sure that
+other computers are able to send network packets to your computer.
+This entails opening the appropriate incoming TCP/UDP ports on your
+firewall and/or configuring the NAT so that the correct ports are
+routed to your computer.
+
+All the TCP/UDP ports that Doomsday will use (in a basic setup where
+there is either one server or one client on a computer) are visible in
+the network setup screens. The corresponding console variables are
+@var{net-port-control} (TCP) and @var{net-port-data} (UDP).
+
+@section{Server Settings}
+ 
+The server uses one TCP port for listening to incoming connections. By
+default this is 13209 (setting the port to zero will mean 13209 will
+be used instead). This port must be open for incoming TCP traffic.
+ 
+The server also uses one UDP port of listening to incoming data
+messages from the clients. By default this is port 13209 (the same
+number as with TCP). This port must be open for incoming and outgoing
+UDP traffic.
+ 
+@section{Client Settings}
+ 
+The client uses one UDP port for data messages. By default this is
+13209 (just like the server). This port must be open for incoming and
+outgoing UDP traffic.
+
+
+
 @chapter{ Known Issues }
 
 @list{
 @item The list of reported bugs is on the deng Project page on SourceForge:
 	@link{http://sourceforge.net/projects/deng/}
+
+@item Display color adjustments (gamma, contrast, brightness) are
+	currently not functional in Linux.
 
 @item The FMOD library has been known to cause problems on some systems.
 	If you experience sudden crashes or lock-ups, try the @opt{-nofmod}
