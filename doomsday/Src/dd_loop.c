@@ -86,6 +86,12 @@ void DD_GameLoop(void)
 	Con_StartupDone();
 	Sys_ShowWindow(true);
 
+	// Limit the frame rate to 35 when running in dedicated mode.
+	if(isDedicated)
+	{
+		maxFrameRate = 35;
+	}
+	
 	while(true)
 	{
 #ifdef WIN32
