@@ -300,7 +300,7 @@ void DM_FModExtStop(void)
 //===========================================================================
 // DM_FModExtSongBuffer
 //===========================================================================
-void   *DM_FModExtSongBuffer(int length)
+void *DM_FModExtSongBuffer(int length)
 {
 	if(!ext_inited)
 		return NULL;
