@@ -64,6 +64,11 @@ char    retname[9];
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void W_CloseAuxiliary(void);
+static void W_CloseAuxiliaryFile(void);
+static void W_UsePrimary(void);
+static void W_UseAuxiliary(void);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -93,6 +98,7 @@ static grouping_t groups[] = {
 static lumpinfo_t *PrimaryLumpInfo;
 static int PrimaryNumLumps;
 static void **PrimaryLumpCache;
+static DFILE *AuxiliaryHandle;
 static lumpinfo_t *AuxiliaryLumpInfo;
 static int AuxiliaryNumLumps;
 static void **AuxiliaryLumpCache;
@@ -107,6 +113,29 @@ static void convertSlashes(char *modifiableBuffer)
 	for(i = 0; i < strlen(modifiableBuffer); i++)
 		if(modifiableBuffer[i] == '\\')
 			modifiableBuffer[i] = '/';
+}
+
+static int W_Index(int lump)
+{
+	if(lumpcache == AuxiliaryLumpCache)
+	{
+		lump += AUXILIARY_BASE;
+	}
+	return lump;
+}
+
+static int W_Select(int lump)
+{
+	if(lump >= AUXILIARY_BASE)
+	{
+		W_UseAuxiliary();
+		lump -= AUXILIARY_BASE;
+	}
+	else
+	{
+		W_UsePrimary();
+	}
+	return lump;
 }
 
 //==========================================================================
@@ -783,19 +812,18 @@ void W_InitFile(char *filename)
 	W_InitMultipleFiles(names);
 }
 
-#if 0
 //==========================================================================
 //
 // W_OpenAuxiliary
 //
 //==========================================================================
 
-void W_OpenAuxiliary(char *filename)
+int W_OpenAuxiliary(const char *filename)
 {
 	int     i;
 	int     size;
 	wadinfo_t header;
-	int     handle;
+	DFILE  *handle;
 	int     length;
 	filelump_t *fileinfo;
 	filelump_t *sourceLump;
@@ -805,13 +833,13 @@ void W_OpenAuxiliary(char *filename)
 	{
 		W_CloseAuxiliary();
 	}
-	if((handle = open(filename, O_RDONLY | O_BINARY)) == -1)
+	if((handle = F_Open(filename, "rb")) == NULL)
 	{
 		Con_Error("W_OpenAuxiliary: %s not found.", filename);
 		return;
 	}
 	AuxiliaryHandle = handle;
-	read(handle, &header, sizeof(header));
+	F_Read(&header, sizeof(header), handle);
 	if(strncmp(header.identification, "IWAD", 4))
 	{
 		if(strncmp(header.identification, "PWAD", 4))
@@ -823,8 +851,8 @@ void W_OpenAuxiliary(char *filename)
 	header.infotableofs = LONG(header.infotableofs);
 	length = header.numlumps * sizeof(filelump_t);
 	fileinfo = Z_Malloc(length, PU_STATIC, 0);
-	lseek(handle, header.infotableofs, SEEK_SET);
-	read(handle, fileinfo, length);
+	F_Seek(handle, header.infotableofs, SEEK_SET);
+	F_Read(fileinfo, length, handle);
 	numlumps = header.numlumps;
 
 	// Init the auxiliary lumpinfo array
@@ -849,6 +877,8 @@ void W_OpenAuxiliary(char *filename)
 	AuxiliaryLumpCache = lumpcache;
 	AuxiliaryNumLumps = numlumps;
 	AuxiliaryOpened = true;
+
+	return AUXILIARY_BASE;
 }
 
 //==========================================================================
@@ -857,7 +887,7 @@ void W_OpenAuxiliary(char *filename)
 //
 //==========================================================================
 
-void W_CloseAuxiliary(void)
+static void W_CloseAuxiliary(void)
 {
 	int     i;
 
@@ -888,15 +918,14 @@ void W_CloseAuxiliary(void)
 //
 //==========================================================================
 
-void W_CloseAuxiliaryFile(void)
+static void W_CloseAuxiliaryFile(void)
 {
 	if(AuxiliaryHandle)
 	{
-		close(AuxiliaryHandle);
+		F_Close(AuxiliaryHandle);
 		AuxiliaryHandle = 0;
 	}
 }
-#endif
 
 //==========================================================================
 //
@@ -904,7 +933,7 @@ void W_CloseAuxiliaryFile(void)
 //
 //==========================================================================
 
-void W_UsePrimary(void)
+static void W_UsePrimary(void)
 {
 	lumpinfo = PrimaryLumpInfo;
 	numlumps = PrimaryNumLumps;
@@ -917,7 +946,7 @@ void W_UsePrimary(void)
 //
 //==========================================================================
 
-void W_UseAuxiliary(void)
+static void W_UseAuxiliary(void)
 {
 	if(AuxiliaryOpened == false)
 	{
@@ -970,7 +999,7 @@ int W_CheckNumForName(char *name)
 	{
 		if(*(int *) lump_p->name == v1 && *(int *) &lump_p->name[4] == v2)
 		{
-			return lump_p - lumpinfo;
+			return W_Index(lump_p - lumpinfo);
 		}
 	}
 	return -1;
@@ -1007,6 +1036,7 @@ int W_GetNumForName(char *name)
 
 int W_LumpLength(int lump)
 {
+	lump = W_Select(lump);
 	if(lump >= numlumps)
 	{
 		Con_Error("W_LumpLength: %i >= numlumps", lump);
@@ -1020,6 +1050,7 @@ int W_LumpLength(int lump)
 //===========================================================================
 const char *W_LumpName(int lump)
 {
+	lump = W_Select(lump);
 	if(lump >= numlumps)
 	{
 		Con_Error("W_LumpName: %i >= numlumps", lump);
@@ -1062,6 +1093,7 @@ void W_ReadLumpSection(int lump, void *dest, int startoffset, int length)
 	int     c;
 	lumpinfo_t *l;
 
+	lump = W_Select(lump);
 	if(lump >= numlumps)
 	{
 		Con_Error("W_ReadLumpSection: %i >= numlumps", lump);
@@ -1085,10 +1117,11 @@ void W_ReadLumpSection(int lump, void *dest, int startoffset, int length)
 //
 //==========================================================================
 
-void   *W_CacheLumpNum(int lump, int tag)
+void* W_CacheLumpNum(int absoluteLump, int tag)
 {
 	byte   *ptr;
-
+	int    lump = W_Select(absoluteLump);
+	
 	if((unsigned) lump >= (unsigned) numlumps)
 	{
 		Con_Error("W_CacheLumpNum: %i >= numlumps", lump);
@@ -1102,7 +1135,7 @@ void   *W_CacheLumpNum(int lump, int tag)
 	}
 	if(!lumpcache[lump])
 	{							// Need to read the lump in
-		ptr = Z_Malloc(W_LumpLength(lump), tag, &lumpcache[lump]);
+		ptr = Z_Malloc(W_LumpLength(absoluteLump), tag, &lumpcache[lump]);
 		W_ReadLump(lump, lumpcache[lump]);
 	}
 	else
@@ -1173,6 +1206,7 @@ const char *W_LumpSourceFile(int lump)
 	int     i;
 	lumpinfo_t *l;
 
+	lump = W_Select(lump);
 	if(lump < 0 || lump >= numlumps)
 		Con_Error("W_LumpSourceFile: Bad lump number: %i.", lump);
 
@@ -1270,6 +1304,7 @@ boolean W_IsFromIWAD(int lump)
 {
 	int     i;
 
+	lump = W_Select(lump);
 	if(lump < 0 || lump >= numlumps)
 	{
 		// This lump doesn't exist.

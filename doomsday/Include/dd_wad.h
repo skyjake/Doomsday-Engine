@@ -32,6 +32,8 @@
 // File record flags.
 #define	FRF_RUNTIME		0x1		   // Loaded at runtime (for reset).
 
+#define AUXILIARY_BASE	1000000000
+
 enum							   // Lump Grouping Tags
 {
 	LGT_NONE = 0,
@@ -73,6 +75,7 @@ void           *W_CacheLumpName(char *name, int tag);
 boolean         W_AddFile(const char *filename, boolean allowDuplicate);
 boolean         W_RemoveFile(char *filename);
 void            W_Reset();
+int             W_OpenAuxiliary(const char *filename);
 void            W_ChangeCacheTag(int lump, int tag);
 void            W_CheckIWAD(void);
 boolean         W_IsFromIWAD(int lump);
