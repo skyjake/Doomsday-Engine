@@ -29,6 +29,8 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, byte *rgb);
 void RL_RenderAllLists();
 
 void RL_SelectTexUnits(int count);
+void RL_Bind(DGLuint texture);
+void RL_BindTo(int unit, DGLuint texture);
 void RL_FloatRGB(byte *rgb, float *dest);
 
 #endif
