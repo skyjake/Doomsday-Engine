@@ -889,20 +889,28 @@ void R_ProjectSprite(mobj_t *thing)
 			vis->data.mo.alpha = -1;
 	}
 
+	// Reset the visual offset.
+	memset(vis->data.mo.visoff, 0, sizeof(vis->data.mo.visoff));
+
 	// Short-range visual offsets.
-	if(((vis->data.mo.mf && r_use_srvo > 0) ||
-		(!vis->data.mo.mf && r_use_srvo > 1)) && thing->state &&
-	   thing->tics >= 0)
+	if((vis->data.mo.mf && r_use_srvo > 0) ||
+		(!vis->data.mo.mf && r_use_srvo > 1))
 	{
-		float   mul =
-			(thing->tics - frameTimePos) / (float) thing->state->tics;
-		for(i = 0; i < 3; i++)
-			vis->data.mo.visoff[i] = FIX2FLT(thing->srvo[i] << 8) * mul;
-	}
-	else
-	{
-		// Reset the visual offset.
-		memset(vis->data.mo.visoff, 0, sizeof(vis->data.mo.visoff));
+		if(thing->state && thing->tics >= 0)
+		{
+			float   mul =
+				(thing->tics - frameTimePos) / (float) thing->state->tics;
+			for(i = 0; i < 3; i++)
+				vis->data.mo.visoff[i] = FIX2FLT(thing->srvo[i] << 8) * mul;
+		}	
+		if(thing->momx || thing->momy || thing->momz)
+		{
+			// Use the object's speed to calculate a short-range
+			// offset.
+			vis->data.mo.visoff[VX] += FIX2FLT(thing->momx) * frameTimePos;
+			vis->data.mo.visoff[VY] += FIX2FLT(thing->momy) * frameTimePos;
+			vis->data.mo.visoff[VZ] += FIX2FLT(thing->momz) * frameTimePos;
+		}
 	}
 
 	// Glowing floor and ceiling.
