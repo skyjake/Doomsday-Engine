@@ -763,7 +763,8 @@ void P_UnArchivePlayers(boolean *infile, boolean *loaded)
 		// The ID number will determine which player this actually is.
 		pid = SV_ReadLong();
 		for(player = 0, j = 0; j < MAXPLAYERS; j++)
-			if(Net_GetPlayerID(j) == pid)
+			if((IS_NETGAME && Net_GetPlayerID(j) == pid) ||
+			   (!IS_NETGAME && j == 0))
 			{
 				// This is our guy.
 				player = players + j;
