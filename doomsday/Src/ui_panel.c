@@ -427,8 +427,6 @@ ui_object_t ob_panel[] =
 	{ UI_SLIDER,	0,	0,				680, 550, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_scale },
 	{ UI_TEXT,		0,	0,				300, 610, 0, 55,	"Detail texture contrast", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 610, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
-	{ UI_TEXT,		0,	0,				300, 670, 0, 55,	"Detail texture max distance", UIText_Drawer },
-	{ UI_SLIDER,	0,	0,				680, 670, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_far },
 	{ UI_TEXT,		0,	0,				300, 910, 0, 60,	"Force texture reset", UIText_Drawer },
 	{ UI_BUTTON,	0,	0,				680, 910, 110, 60,	"Reset!", UIButton_Drawer, UIButton_Responder, 0, CP_TexReset },
 
