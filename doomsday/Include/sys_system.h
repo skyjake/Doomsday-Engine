@@ -44,7 +44,6 @@ void	Sys_ShowWindow(boolean hide);
 // Threads:
 int		Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority);
 void	Sys_SuspendThread(int handle, boolean dopause);
-boolean	Sys_GetThreadExitCode(int handle, uint *exitCode);
 int		Sys_WaitThread(int handle);
 
 // Mutexes:
