@@ -255,7 +255,7 @@ static Control_t controls[] =
 	"sbsize -",		CLF_REPEAT,		0, 0, 0,
 
 	// Misc.
-	"pause",		0,				'p', 0, 0,
+	"pause",		0,				DDKEY_PAUSE, 0, 0,
 	"",				0,				0, 0, 0
 };
 

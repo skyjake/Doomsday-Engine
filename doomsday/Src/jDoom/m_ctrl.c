@@ -84,7 +84,7 @@ static Control_t controls[] =
 	"sbsize +",		CLF_REPEAT,		0, 0, 0,
 
 	// Misc.
-	"pause",		0,				'p', 0, 0,
+	"pause",		0,				DDKEY_PAUSE, 0, 0,
 	"screenshot",	0,				0, 0, 0,
 	"beginchat",	0,				't', 0, 0,
 	"beginchat 0",	0,				'g', 0, 0,
