@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003, 2004 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2003, 2004 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -156,7 +156,7 @@ BOOL InitGameDLL(void)
 
 //===========================================================================
 // LoadPlugin
-//  Loads the given plugin. Returns TRUE iff the plugin was loaded 
+//  Loads the given plugin. Returns TRUE iff the plugin was loaded
 //  succesfully.
 //===========================================================================
 int LoadPlugin(const char *filename)
@@ -170,13 +170,13 @@ int LoadPlugin(const char *filename)
 	if(!(hInstPlug[i] = LoadLibrary(filename)))
 		return FALSE;			// Failed!
 
-	// That was all; the plugin registered itself when it was loaded.   
+	// That was all; the plugin registered itself when it was loaded.
 	return TRUE;
 }
 
 //===========================================================================
 // InitPlugins
-//  Loads all the plugins from the startup directory. 
+//  Loads all the plugins from the startup directory.
 //===========================================================================
 int InitPlugins(void)
 {
