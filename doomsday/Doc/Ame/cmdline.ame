@@ -367,6 +367,9 @@ $--------------------------------------------------------------------
 	@opt{ -csd } @tab @tab
 	Use @file{dsCompat.dll}, the DirectSound 6 sound driver.
 @row
+	@opt{ -dummy } @tab @tab
+	Use the Dummy sound driver (does nothing).
+@row
 	@opt{ -sfxchan N } @tab @tab
 	Set the number of sound channels. 16 is the default.
 @row
