@@ -297,7 +297,7 @@ void activeTexture(const GLenum texture)
 //	Nvidia's and ATI's appropriate extensions are supported, other 
 //	cards will not be able to utilize multitextured lights.
 //===========================================================================
-void envAddColoredAlpha(int activate)
+void envAddColoredAlpha(int activate, GLenum addFactor)
 {
 	if(activate)
 	{
@@ -310,7 +310,7 @@ void envAddColoredAlpha(int activate)
 		{
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
 			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_ZERO);
@@ -359,7 +359,7 @@ void envModMultiTex(int activate)
 
 	// Setup TU 1: The dynamic light.
 	activeTexture(GL_TEXTURE0);
-	envAddColoredAlpha(activate);
+	envAddColoredAlpha(activate, GL_SRC_ALPHA);
 
 	// This is a single-pass mode. The alpha should remain unmodified
 	// during the light stage.
@@ -797,11 +797,12 @@ int	DG_SetInteger(int name, int value)
 			// Apply sector light, dynamic light and texture.
 			envModMultiTex(true);
 		}
-		else if(value == 5)
+		else if(value == 5 || value == 10)
 		{
 			// Sector light * texture + dynamic light.
 			activeTexture(GL_TEXTURE1);
-			envAddColoredAlpha(true);
+			envAddColoredAlpha(true, 
+				value == 5? GL_SRC_ALPHA : GL_SRC_COLOR);
 			
 			// Alpha remains unchanged.
 			if(extNvTexEnvComb)
@@ -830,7 +831,7 @@ int	DG_SetInteger(int name, int value)
 		{
 			// Simple dynlight addition (add to primary color).
 			activeTexture(GL_TEXTURE0);
-			envAddColoredAlpha(true);
+			envAddColoredAlpha(true, GL_SRC_ALPHA);
 		}
 		else if(value == 7)
 		{
@@ -869,6 +870,35 @@ int	DG_SetInteger(int name, int value)
 			{
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			}
+		}
+		else if(value == 11)
+		{
+			// Normal modulation, alpha of 2nd stage.
+			// Tex0: texture
+			// Tex1: shiny texture
+			activeTexture(GL_TEXTURE1);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+
+			activeTexture(GL_TEXTURE0);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE0);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 		}
 		break;
 
@@ -1097,6 +1127,13 @@ void DG_Func(int func, int param1, int param2)
 			: param2==DGL_DST_ALPHA?			GL_DST_ALPHA
 			: param2==DGL_ONE_MINUS_DST_ALPHA?	GL_ONE_MINUS_DST_ALPHA
 			: GL_ZERO);
+		break;
+
+	case DGL_BLENDING_OP:
+		if(!glBlendEquationEXT) break;
+		glBlendEquationEXT(param1==DGL_SUBTRACT?	GL_FUNC_SUBTRACT
+			: param1==DGL_REVERSE_SUBTRACT?			GL_FUNC_REVERSE_SUBTRACT
+			: GL_FUNC_ADD);
 		break;
 
 	case DGL_DEPTH_TEST:
