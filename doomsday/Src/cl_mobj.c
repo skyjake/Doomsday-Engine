@@ -211,13 +211,8 @@ void Cl_SetThingPosition(clmobj_t *cmo)
 	}
 
 	P_LinkThing(thing,
-				(thing->ddflags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) | (thing->
-																		ddflags
-																		&
-																		DDMF_SOLID
-																		?
-																		DDLINK_BLOCKMAP
-																		: 0));
+				(thing->ddflags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
+				(thing->ddflags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
 }
 
 /*
@@ -979,7 +974,13 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 
 	// Radius, height and floorclip are all bytes.
 	if(df & MDF_RADIUS)
+	{
 		d->radius = Msg_ReadByte() << FRACBITS;
+		if(d->radius >= 2*FRACUNIT)
+		{
+			d->radius -= FRACUNIT;
+		}
+	}
 	if(df & MDF_HEIGHT)
 		d->height = Msg_ReadByte() << FRACBITS;
 	if(df & MDF_FLOORCLIP)
