@@ -10,5 +10,6 @@
 #include "s_mus.h"
 #include "s_wav.h"
 #include "s_cache.h"
+#include "s_logic.h"
 
 #endif 
