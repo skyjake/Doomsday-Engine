@@ -66,6 +66,7 @@ Flag { ID = "df_idangle"; Value = 0x800000; }
 Flag { ID = "df_dim"; Value = 0x1000000; }
 Flag { ID = "df_subtract"; Value = 0x2000000; }
 Flag { ID = "df_revsubtract"; Value = 0x4000000; }
+Flag { ID = "df_twosided"; Value = 0x8000000; }
 
 # Model grouping
 Flag { ID = "mg_hud"; Value = 0x2; }
@@ -131,6 +132,38 @@ Flag { ID = "pt_tex28"; Value = 128; }
 Flag { ID = "pt_tex29"; Value = 129; }
 Flag { ID = "pt_tex30"; Value = 130; }
 Flag { ID = "pt_tex31"; Value = 131; }
+Flag { ID = "pt_model00"; Value = 1000; }
+Flag { ID = "pt_model01"; Value = 1001; }
+Flag { ID = "pt_model02"; Value = 1002; }
+Flag { ID = "pt_model03"; Value = 1003; }
+Flag { ID = "pt_model04"; Value = 1004; }
+Flag { ID = "pt_model05"; Value = 1005; }
+Flag { ID = "pt_model06"; Value = 1006; }
+Flag { ID = "pt_model07"; Value = 1007; }
+Flag { ID = "pt_model08"; Value = 1008; }
+Flag { ID = "pt_model09"; Value = 1009; }
+Flag { ID = "pt_model10"; Value = 1010; }
+Flag { ID = "pt_model11"; Value = 1011; }
+Flag { ID = "pt_model12"; Value = 1012; }
+Flag { ID = "pt_model13"; Value = 1013; }
+Flag { ID = "pt_model14"; Value = 1014; }
+Flag { ID = "pt_model15"; Value = 1015; }
+Flag { ID = "pt_model16"; Value = 1016; }
+Flag { ID = "pt_model17"; Value = 1017; }
+Flag { ID = "pt_model18"; Value = 1018; }
+Flag { ID = "pt_model19"; Value = 1019; }
+Flag { ID = "pt_model20"; Value = 1020; }
+Flag { ID = "pt_model21"; Value = 1021; }
+Flag { ID = "pt_model22"; Value = 1022; }
+Flag { ID = "pt_model23"; Value = 1023; }
+Flag { ID = "pt_model24"; Value = 1024; }
+Flag { ID = "pt_model25"; Value = 1025; }
+Flag { ID = "pt_model26"; Value = 1026; }
+Flag { ID = "pt_model27"; Value = 1027; }
+Flag { ID = "pt_model28"; Value = 1028; }
+Flag { ID = "pt_model29"; Value = 1029; }
+Flag { ID = "pt_model30"; Value = 1030; }
+Flag { ID = "pt_model31"; Value = 1031; }
 
 # Particle flags (for Generator Stages)
 Flag { ID = "ptf_stagetouch"; Value = 0x1; }
@@ -143,3 +176,7 @@ Flag { ID = "ptf_hflat"; Value = 0x10; }
 Flag { ID = "ptf_vflat"; Value = 0x80; }
 Flag { ID = "ptf_flat"; Value = 0x90; }
 Flag { ID = "ptf_force"; Value = 0x100; }
+Flag { ID = "ptf_zeroyaw"; Value = 0x200; }
+Flag { ID = "ptf_zeropitch"; Value = 0x400; }
+Flag { ID = "ptf_rndyaw"; Value = 0x800; }
+Flag { ID = "ptf_rndpitch"; Value = 0x1000; }
