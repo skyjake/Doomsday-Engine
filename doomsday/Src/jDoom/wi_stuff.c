@@ -395,7 +395,7 @@ void WI_DrawPatch(int x, int y, int lump)
 	const char *name = W_LumpName(lump);
 	dpatch_t *font = hu_font_b;
 	float r = 1, g = 0, b = 0;
-	int offX = 0, offY = 0;
+	float offX = 0, offY = 0;
 	float scaleX = 1, scaleY = 1;
 
 	// "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
@@ -447,12 +447,12 @@ void WI_DrawPatch(int x, int y, int lump)
 			else if(!strnicmp(string, "x", 1))
 			{
 				string++;
-				x = (int) WI_ParseFloat(&string);
+				x = WI_ParseFloat(&string);
 			}
 			else if(!strnicmp(string, "y", 1))
 			{
 				string++;
-				y = (int) WI_ParseFloat(&string);
+				y = WI_ParseFloat(&string);
 			}
 			else if(!strnicmp(string, "scalex", 6))
 			{
@@ -480,19 +480,15 @@ void WI_DrawPatch(int x, int y, int lump)
 		if(*string) string++;
 	}
 
-	x += offX;
-	y += offY;
-
 	// Setup the scaling.
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PushMatrix();
 
-	gl.Translatef(x, y, 0);
+	gl.Translatef(x + offX, y + offY, 0);
 	gl.Scalef(scaleX, scaleY, 1);
-	gl.Translatef(-x, -y, 0);
 
 	// Draw it.
-	M_WriteText3(x, y, string, font, r, g, b, false);
+	M_WriteText3(0, 0, string, font, r, g, b, false);
 
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PopMatrix();
