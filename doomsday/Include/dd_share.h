@@ -838,6 +838,9 @@ typedef struct
 	char *modelname;
 } spritereplacement_t;
 
+// Anim group flags.
+#define AGF_SMOOTH		0x1
+#define AGF_FIRST_ONLY	0x2
 
 //------------------------------------------------------------------------
 //
