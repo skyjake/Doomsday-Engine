@@ -251,7 +251,7 @@ extern boolean MenuActive;
 void D_PageDrawer(void)
 {
 	if(!pagename) return;
-	GL_DrawRawScreen(W_GetNumForName(pagename));
+	GL_DrawRawScreen(W_GetNumForName(pagename), 0, 0);
 	if(demosequence == 1)
 	{
 		GL_DrawPatch(4, 160, W_GetNumForName("ADVISOR"));

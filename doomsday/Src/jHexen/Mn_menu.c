@@ -3266,7 +3266,7 @@ void MN_DeactivateMenu(void)
 void MN_DrawInfo(void)
 {
 	GL_SetFilter(0);
-	GL_DrawRawScreen(W_GetNumForName("TITLE") + InfoType);
+	GL_DrawRawScreen(W_GetNumForName("TITLE") + InfoType, 0, 0);
 }
 
 

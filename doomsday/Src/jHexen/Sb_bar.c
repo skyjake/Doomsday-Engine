@@ -1622,7 +1622,7 @@ void Draw_TeleportIcon(void)
 	for(i = 0; i < 2; i++)
 	{
 		gl.Clear(DGL_COLOR_BUFFER_BIT);
-		GL_DrawRawScreen(W_CheckNumForName("TRAVLPIC"));
+		GL_DrawRawScreen(W_CheckNumForName("TRAVLPIC"), 0, 0);
 		GL_DrawPatch(100, 68, W_GetNumForName("teleicon"));
 		if(i) break;
 		gl.Show();

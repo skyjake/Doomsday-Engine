@@ -426,7 +426,7 @@ void IN_Drawer(void)
 		return;
 	}
 	GL_Update(DDUF_FULLSCREEN);
-	GL_DrawRawScreen(patchINTERPICLumpRS);
+	GL_DrawRawScreen(patchINTERPICLumpRS, 0, 0);
 
 	if(gametype == SINGLE)
 	{

@@ -295,7 +295,7 @@ void G_Drawer(void)
 			break;
 
 		case GS_WAITING:
-			GL_DrawRawScreen(W_GetNumForName("TITLE"));
+			GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
 			gl.Color3f(1, 1, 1);
 			MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
 			GL_Update(DDUF_FULLSCREEN);
@@ -325,7 +325,7 @@ void G_Drawer(void)
 static void PageDrawer(void)
 {
 	if(!pagename) return;
-	GL_DrawRawScreen(W_GetNumForName(pagename));
+	GL_DrawRawScreen(W_GetNumForName(pagename), 0, 0);
 	if(demosequence == 1)
 	{
 		GL_DrawPatch(4, 160, W_GetNumForName("ADVISOR"));
