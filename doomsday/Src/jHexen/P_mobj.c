@@ -1169,7 +1169,7 @@ void P_MobjThinker(mobj_t *mobj)
 
 		// Negative floorclip raises the mobj off the floor.
 		mobj->floorclip = -mobj->special1;
-		if(mobj->floorclip > -MAX_BOB_OFFSET)
+		if(mobj->floorclip < -MAX_BOB_OFFSET)
 		{
 			// We don't want it going through the floor.
 			mobj->floorclip = -MAX_BOB_OFFSET;
