@@ -77,15 +77,6 @@
 // Node flags.
 #define	NF_SUBSECTOR	0x8000
 
-// Tick Command template. Of course it contains much more info,
-// but these first bytes are always the same.
-typedef struct
-{
-	//byte		time;
-	char		forwardmove;		//*2048 for real move
-	char		sidemove;			//*2048 for real move
-} ticcmd_t;
-
 struct line_s;
 
 typedef struct sector_s
