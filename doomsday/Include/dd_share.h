@@ -237,7 +237,8 @@ extern          "C" {
 		DD_MAP_MUSIC,
 		DD_HIGHRES_TEXTURE_PATH,   // TGA texture directory (obsolete).
 		DD_WINDOW_HANDLE,
-		DD_DYNLIGHT_TEXTURE
+		DD_DYNLIGHT_TEXTURE,
+		DD_GAME_EXPORTS
 	};
 
 	// Macro for preparing the parameter for DD_TRANSLATED_SPRITE_TEXTURE.
