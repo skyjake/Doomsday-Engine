@@ -13,9 +13,9 @@
 #define FAR_MOBJ_DIST		1500
 
 extern int sv_maxPlayers;
-extern int allow_frames;	// Allow sending of frames.
+extern int allowFrames;	// Allow sending of frames.
 extern int send_all_players;
-extern int frame_interval;	// In tics.
+extern int frameInterval;	// In tics.
 extern int net_remoteuser;	// The client who is currently logged in.
 extern char *net_password;	// Remote login password.
 
