@@ -436,29 +436,25 @@ void P_XYMovement(mobj_t *mo)
 		}
 	}
 	player = mo->player;
-/*#ifdef DEMOCAM
-	if(!(mo->flags & MF_NOMAXMOVE))
+	
+	if(mo->momx > MAXMOVE)
 	{
-#endif*/
-		if(mo->momx > MAXMOVE)
-		{
-			mo->momx = MAXMOVE;
-		}
-		else if(mo->momx < -MAXMOVE)
-		{
-			mo->momx = -MAXMOVE;
-		}
-		if(mo->momy > MAXMOVE)
-		{
-			mo->momy = MAXMOVE;
-		}
-		else if(mo->momy < -MAXMOVE)
-		{
-			mo->momy = -MAXMOVE;
-		}
-/*#ifdef DEMOCAM
+		mo->momx = MAXMOVE;
 	}
-#endif*/
+	else if(mo->momx < -MAXMOVE)
+	{
+		mo->momx = -MAXMOVE;
+	}
+
+	if(mo->momy > MAXMOVE)
+	{
+		mo->momy = MAXMOVE;
+	}
+	else if(mo->momy < -MAXMOVE)
+	{
+		mo->momy = -MAXMOVE;
+	}
+
 	xmove = mo->momx;
 	ymove = mo->momy;
 	do
@@ -1162,18 +1158,28 @@ void P_MobjThinker(mobj_t *mobj)
 	if(mobj->flags2 & MF2_FLOATBOB)
 	{ 
 		// Floating item bobbing motion (special1 is height)
-		mobj->z = mobj->floorz +
+		/*mobj->z = mobj->floorz +
 					mobj->special1 +
-					FloatBobOffsets[(mobj->health++)&63];
+					FloatBobOffsets[(mobj->health++)&63];*/
+
+		// Keep it on the floor.
+		mobj->z = mobj->floorz;
+
+		// Negative floorclip raises the mobj off the floor.
+		mobj->floorclip = -mobj->special1;
+
+		// Old floatbob used health as index, let's still increase it
+		// as before (in case somebody wants to use it).
+		mobj->health++;
 
 		// HACK: If we are bobbing into the floor, raise special1 height.
 		// Only affects Weapon Pieces.
-		if(mobj->type >= MT_FW_SWORD1 
+		/*if(mobj->type >= MT_FW_SWORD1 
 			&& mobj->type <= MT_MW_STAFF3
 			&& mobj->z < mobj->floorz)
 		{
 			mobj->special1 += mobj->floorz - mobj->z;
-		}
+		}*/
 	}
 	else if((mobj->z != mobj->floorz) || mobj->momz || BlockingMobj)
 	{	// Handle Z momentum and gravity
@@ -2662,8 +2668,8 @@ void R_SetAllDoomsdayFlags(void)
 	mobj_t		*mo;
 
 	// Only visible things are in the sector thinglists, so this is good.
-	for(i=0; i<numsectors; i++, sec++)
-		for(mo=sec->thinglist; mo; mo=mo->snext)
+	for(i = 0; i < numsectors; i++, sec++)
+		for(mo = sec->thinglist; mo; mo = mo->snext)
 		{
 			if(IS_CLIENT && mo->ddflags & DDMF_REMOTE) continue;
 
@@ -2676,7 +2682,7 @@ void R_SetAllDoomsdayFlags(void)
 			if(mo->flags2 & MF2_FLY) 
 				mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
 			if(mo->flags2 & MF2_FLOATBOB) 
-				mo->ddflags |= DDMF_GOINGROUND | DDMF_NOGRAVITY;
+				mo->ddflags |= DDMF_BOB | DDMF_NOGRAVITY;
 			if(mo->flags2 & MF2_LOGRAV) mo->ddflags |= DDMF_LOWGRAVITY;
 			if(mo->flags & MF_NOGRAVITY/* || mo->flags2 & MF2_FLY*/) 
 				mo->ddflags |= DDMF_NOGRAVITY;
