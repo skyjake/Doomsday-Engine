@@ -1,6 +1,6 @@
 # jDoom: Light Decorations for Doom II
 
-Header { Version = 5; }
+Header { Version = 6; }
 
 # This file is skipped if not regular Doom II.
 SkipIf Not doom2;
@@ -17,3 +17,16 @@ SkipIf Not doom2;
 # One decoration can specify up to 16 lights.
 #
 
+Decoration {
+  Texture = "BSTONE3";
+  Light {
+    Color { 1 .98 .9 }
+    Offset { 33 40 }
+    Radius = .4;
+    Halo radius = .1;
+  }
+}
+
+Copy Decoration {
+  Texture = "BRICKLIT";
+}
