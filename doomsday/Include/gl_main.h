@@ -32,6 +32,7 @@ unsigned char	*GL_GrabScreen(void);
 
 extern int		screenWidth, screenHeight, screenBits;
 extern int		numTexUnits;
+extern boolean	envModAdd;
 extern int		defResX, defResY;
 extern float	nearClip, farClip;
 extern int		viewph, viewpw, viewpx, viewpy;
