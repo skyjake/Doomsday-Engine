@@ -15,8 +15,8 @@
 // for more details.
 //
 // $Log$
-// Revision 1.7  2004/05/28 17:16:41  skyjake
-// Resolved conflicts (branch-1-7 overrides)
+// Revision 1.8  2004/05/28 19:52:58  skyjake
+// Finished switch from branch-1-7 to trunk, hopefully everything is fine
 //
 // Revision 1.5.2.2  2004/05/16 10:01:37  skyjake
 // Merged good stuff from branch-nix for the final 1.7.15

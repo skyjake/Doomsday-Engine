@@ -15,8 +15,8 @@
 // for more details.
 //
 // $Log$
-// Revision 1.3  2004/05/28 17:16:40  skyjake
-// Resolved conflicts (branch-1-7 overrides)
+// Revision 1.4  2004/05/28 19:52:58  skyjake
+// Finished switch from branch-1-7 to trunk, hopefully everything is fine
 //
 // Revision 1.1.2.2  2004/05/23 14:09:03  skyjake
 // Resolved conflict

@@ -683,7 +683,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 			*flags |= CMDF_BUTTONS;
 			*out++ = cmd->actions;
 		}
-/*#ifndef __JDOOM__
+#ifndef __JDOOM__
 		if(cmd->lookfly != prev.lookfly)
 		{
 			*flags |= CMDF_LOOKFLY;
@@ -694,7 +694,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 			*flags |= CMDF_ARTI;
 			*out++ = cmd->arti;
 		}
-#endif*/
+#endif
 		
 		memcpy(&prev, cmd, sizeof(*cmd));		
 	}

@@ -961,28 +961,6 @@ typedef struct cvar_s {
 //
 //------------------------------------------------------------------------
 
-/* 
- * Tick Commands. Usually only a part of this data is transferred over 
- * the network. In addition to tick commands, clients will sent 'impulses'
- * to the server when they want to change a weapon, use an artifact, or
- * maybe commit suicide.
- */
-typedef struct ticcmd_s {
-	char		forwardMove;		//*2048 for real move
-	char		sideMove;			//*2048 for real move
-	char		upMove;				//*2048 for real move
-	ushort		angle;				// <<16 for angle (view angle)
-	short		pitch;				// View pitch
-	short		actions;			// On/off action flags
-} ticcmd_t;
-
-// Tick Command Action Flags
-#define TCAF_ATTACK			0x01
-#define TCAF_USE			0x02
-#define TCAF_JUMP			0x04
-#define TCAF_ATTACK2		0x08	// Secondary attack, not implemented
-#define TCAF_CROUCH			0x10	// Not implemented
-
 // Network Player Events
 enum
 {
@@ -1145,7 +1123,6 @@ struct mobj_s;
 typedef struct ddplayer_s
 {
 	struct mobj_s *mo;					// pointer to a (game specific) mobj
-	int			type;					// Player type (index to playerclasses)
 	fixed_t		viewz;					// focal origin above r.z
 	fixed_t		viewheight;				// base height above floor for viewz
 	fixed_t		deltaviewheight;	
@@ -1161,6 +1138,13 @@ typedef struct ddplayer_s
 	ddpsprite_t	psprites[DDMAXPSPRITES];// Player sprites.
 	void		*extradata;				// Pointer to any game-specific data.
 } ddplayer_t;
+
+// Actions.
+typedef struct
+{
+	char		name[9];		// The name of the action.
+	boolean		on;				// True if action is active.
+} action_t;
 
 #ifdef __cplusplus
 }

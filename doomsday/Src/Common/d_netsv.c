@@ -1227,10 +1227,10 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 		if(flags & CMDF_ANGLE) cmd->angle = *((short*)msg)++;
 		if(flags & CMDF_LOOKDIR) cmd->pitch = *((short*)msg)++;
 		if(flags & CMDF_BUTTONS) cmd->actions = *msg++;
-/*#ifndef __JDOOM__
+#ifndef __JDOOM__
 		if(flags & CMDF_LOOKFLY) cmd->lookfly = *msg++;
 		if(flags & CMDF_ARTI) cmd->arti = *msg++;
-#endif*/
+#endif
 
 		// Copy to next command (only differences have been written).
 		memcpy(cmd + 1, cmd, sizeof(ticcmd_t));

@@ -135,7 +135,7 @@ int enablePalTexExt(int enable)
 		return DGL_FALSE;
 	}
 #endif
-
+	
 	usePalTex = DGL_TRUE;
 	if(sharedPalExtAvailable)
 	{

@@ -90,7 +90,7 @@ typedef enum
 	sk_nightmare
 } skill_t;
 
-/*typedef struct
+typedef struct
 {
 	char		forwardMove;		// *2048 for move
 	char		sideMove;			// *2048 for move
@@ -99,7 +99,7 @@ typedef enum
 	byte		actions;
 	byte		lookfly;			// look/fly up/down/centering
 	byte		arti;				// artitype_t to use
-} ticcmd_t;*/
+} ticcmd_t;
 
 #define	BT_ATTACK		1
 #define	BT_USE			2

@@ -46,13 +46,11 @@ int		Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority);
 void	Sys_SuspendThread(int handle, boolean dopause);
 int		Sys_WaitThread(int handle);
 
-// Mutexes:
 int 	Sys_CreateMutex(const char *name); // returns the mutex handle
 void 	Sys_DestroyMutex(int mutexHandle);
 void 	Sys_Lock(int mutexHandle); 
 void 	Sys_Unlock(int mutexHandle);
 
-// Semaphores:
 semaphore_t Sem_Create(unsigned int initialValue); // returns handle
 void	Sem_Destroy(semaphore_t semaphore);
 void	Sem_P(semaphore_t semaphore);

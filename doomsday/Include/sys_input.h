@@ -36,7 +36,6 @@
 #define IMB_SIX			0x20
 #define IMB_SEVEN		0x40
 #define IMB_EIGHT		0x80
-#define IMB_MAXBUTTONS	8
 
 // Joystick.
 #define IJOY_AXISMIN	-10000

@@ -612,7 +612,7 @@ void P_CheckPlayerJump(player_t *player)
 {
 	ticcmd_t *cmd = &player->cmd;
 
-	if(cfg.jumpEnabled 
+	if(cfg.jumpEnabled
 		&& (!IS_CLIENT || netJumpPower > 0)
 		&& (P_IsPlayerOnGround(player)
 			|| player->plr->mo->flags2 & MF2_ONMOBJ)
@@ -620,7 +620,7 @@ void P_CheckPlayerJump(player_t *player)
 		&& player->jumpTics <= 0)
 	{
 		// Jump, then!
-		player->plr->mo->momz = FRACUNIT 
+		player->plr->mo->momz = FRACUNIT
 			* (IS_CLIENT? netJumpPower : cfg.jumpPower);
 		player->plr->mo->flags2 &= ~MF2_ONMOBJ;
 		player->jumpTics = 24;

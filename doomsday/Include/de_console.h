@@ -25,6 +25,7 @@
 #include "con_decl.h"
 #include "con_main.h"
 #include "con_config.h"
+#include "con_action.h"
 #include "con_bind.h"
 #include "con_start.h"
 #include "con_bar.h"

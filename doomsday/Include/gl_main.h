@@ -23,7 +23,6 @@
 #define __DOOMSDAY_GRAPHICS_H__
 
 #include "con_decl.h"
-#include "r_main.h"
 
 typedef enum blendmode_e {
 	BM_NORMAL,
@@ -41,7 +40,7 @@ void			GL_Init(void);
 void			GL_Shutdown(void);
 void			GL_TotalReset(boolean doShutdown, boolean loadLightMaps);
 void			GL_Init2DState(void);
-void			GL_SwitchTo3DState(boolean push_state, viewport_t *port);
+void			GL_SwitchTo3DState(boolean push_state);
 void			GL_Restore2DState(int step);
 void			GL_ProjectionMatrix(void);
 void			GL_RuntimeMode(void);

@@ -53,11 +53,6 @@ byte DD_ScanToKey(byte scan);
 byte DD_KeyToScan(byte key);
 byte DD_ModKey(byte key);
 
-void I_InitInputDevices(void);
-void I_ShutdownInputDevices(void);
-inputdev_t *I_GetDevice(int ident);
-boolean I_ParseDeviceAxis(const char *name, inputdev_t **device, int *axis);
-
 D_CMD( KeyMap );
 D_CMD( DumpKeyMap );
 

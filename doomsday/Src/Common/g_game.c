@@ -510,7 +510,6 @@ void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
 	cmd->pitch = pl->plr->clLookDir/110 * DDMAXSHORT;
 }
 
-#if 0
 /*
  * Builds a ticcmd from all of the available inputs. 
  */
@@ -1200,15 +1199,15 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 		// Clients mirror their local commands.
 		memcpy(&players[consoleplayer].cmd, cmd, sizeof(*cmd));
 	}
-}
-#endif
+} 
 
 //
 // G_DoLoadLevel 
 //
+ 
 void G_DoLoadLevel (void) 
 { 
-//	action_t	*act;
+	action_t	*act;
     int         i; 
 #if __JHEXEN__
     static int firstFragReset = 1;
@@ -1258,7 +1257,7 @@ void G_DoLoadLevel (void)
     memset(joybuttons, 0, sizeof(joybuttons)); 
 
 	// Deactivate all action keys.
-//	for(act=actions; act->name[0]; act++) act->on = false;
+	for(act=actions; act->name[0]; act++) act->on = false;
 
 	// Start a briefing, if there is one.
 	FI_Briefing(gameepisode, gamemap);

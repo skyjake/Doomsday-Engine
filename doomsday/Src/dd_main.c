@@ -197,6 +197,7 @@ void DD_AddAutoData(boolean loadFiles)
 void DD_SetConfigFile(char *filename)
 {
 	strcpy(configFileName, filename);
+	Dir_FixSlashes(configFileName);
 }
 
 //===========================================================================
@@ -207,6 +208,7 @@ void DD_SetConfigFile(char *filename)
 void DD_SetDefsFile(char *filename)
 {
 	sprintf(topDefsFileName, "%sDefs\\%s", ddBasePath, filename);
+	Dir_FixSlashes(topDefsFileName);
 }
 
 //===========================================================================

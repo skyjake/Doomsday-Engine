@@ -107,6 +107,124 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 	}
 }
 
+
+/*
+==================
+=
+= P_CalcHeight
+=
+=
+Calculate the walking / running height adjustment
+=
+==================
+*/
+
+#if 0
+void P_CalcHeight (player_t *player)
+{
+	int			angle;
+	fixed_t		bob;
+	ddplayer_t	*dplay = player->plr;
+	boolean		isDisp = (player == &players[displayplayer]);
+
+//
+// regular movement bobbing (needs to be calculated for gun swing even
+// if not on ground)
+// OPTIMIZE: tablify angle
+
+	player->bob = FixedMul (player->plr->mo->momx, player->plr->mo->momx)+
+		FixedMul (player->plr->mo->momy,player->plr->mo->momy);
+	player->bob >>= 2;
+	if (player->bob>MAXBOB) player->bob = MAXBOB;
+
+	if(player->plr->mo->flags2&MF2_FLY && !onground)
+	{
+		player->bob = FRACUNIT/2;
+	}	
+	
+	if((player->cheats & CF_NOMOMENTUM))
+	{
+		player->plr->viewz = player->plr->mo->z + VIEWHEIGHT;
+		if (player->plr->viewz > player->plr->mo->ceilingz-4*FRACUNIT)
+			player->plr->viewz = player->plr->mo->ceilingz-4*FRACUNIT;
+		player->plr->viewz = player->plr->mo->z + player->plr->viewheight;
+		return;
+	}
+	
+	angle = (FINEANGLES/20*leveltime) & FINEMASK;
+	bob = FixedMul ( player->bob/2, finesine[angle]);
+	
+	if(isDisp) Set(DD_VIEWZ_OFFSET, 0);
+
+	// $democam: no view offset
+	if(P_IsCamera(dplay->mo)) 
+	{
+		dplay->viewz = dplay->mo->z + dplay->viewheight;
+		return; 	
+	}
+
+	if(Get(DD_PLAYBACK))
+	{
+		dplay->viewz = dplay->mo->z + dplay->viewheight;
+		if(player->morphTics)
+			player->plr->viewz -= 20*FRACUNIT;
+		else if(dplay->mo->z <= dplay->mo->floorz && isDisp)
+			Set(DD_VIEWZ_OFFSET, bob);
+		return;
+	}
+
+//
+// move viewheight
+//
+	if (player->playerstate == PST_LIVE)
+	{
+		player->plr->viewheight += player->plr->deltaviewheight;
+		if (player->plr->viewheight > VIEWHEIGHT)
+		{
+			player->plr->viewheight = VIEWHEIGHT;
+			player->plr->deltaviewheight = 0;
+		}
+		if (player->plr->viewheight < VIEWHEIGHT/2)
+		{
+			player->plr->viewheight = VIEWHEIGHT/2;
+			if (player->plr->deltaviewheight <= 0)
+				player->plr->deltaviewheight = 1;
+		}
+
+		if (player->plr->deltaviewheight)
+		{
+			player->plr->deltaviewheight += FRACUNIT/4;
+			if (!player->plr->deltaviewheight)
+				player->plr->deltaviewheight = 1;
+		}
+	}
+
+	if(player->morphTics)
+	{
+		player->plr->viewz = player->plr->mo->z+player->plr->viewheight-(20*FRACUNIT);
+	}
+	else
+	{
+		player->plr->viewz = player->plr->mo->z+player->plr->viewheight;//+bob;
+		if(isDisp) Set(DD_VIEWZ_OFFSET, bob);
+	}
+
+	if(player->plr->mo->floorclip && player->playerstate != PST_DEAD
+		&& player->plr->mo->z <= player->plr->mo->floorz)
+	{
+		player->plr->viewz -= player->plr->mo->floorclip;
+	}
+	if(player->plr->viewz > player->plr->mo->ceilingz-4*FRACUNIT)
+	{
+		player->plr->viewz = player->plr->mo->ceilingz-4*FRACUNIT;
+	}
+	if(player->plr->viewz < player->plr->mo->floorz+4*FRACUNIT)
+	{
+		player->plr->viewz = player->plr->mo->floorz+4*FRACUNIT;
+	}
+}
+#endif
+
 /*
 =================
 =
