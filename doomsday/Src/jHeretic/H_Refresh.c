@@ -262,12 +262,17 @@ void R_SetDoomsdayFlags(mobj_t *mo)
 	// Local objects aren't sent to clients.
 	if(mo->flags & MF_LOCAL) mo->ddflags |= DDMF_LOCAL;
 	if(mo->flags & MF_SOLID) mo->ddflags |= DDMF_SOLID;
+	if(mo->flags & MF_NOGRAVITY) mo->ddflags |= DDMF_NOGRAVITY;
+	if(mo->flags2 & MF2_FLOATBOB)
+		mo->ddflags |= DDMF_NOGRAVITY | DDMF_BOB;
 	if(mo->flags & MF_MISSILE) 
 	{
 		// Mace death balls are controlled by the server.
 		//if(mo->type != MT_MACEFX4)
 		mo->ddflags |= DDMF_MISSILE;
 	}
+	if(mo->flags2 & MF2_FLY) 
+		mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
 
 	// $democam: cameramen are invisible
 	if(P_IsCamera(mo)) mo->ddflags |= DDMF_DONTDRAW;
@@ -279,10 +284,10 @@ void R_SetDoomsdayFlags(mobj_t *mo)
 		return; // No point in checking the other flags.
 	}
 	// Players get flagged for flying.
-	if(mo->player && mo->flags2 & MF2_FLY
+	/*if(mo->player && mo->flags2 & MF2_FLY
 		|| mo->z < mo->floorz) // Standing on a ledge.
-		mo->ddflags |= DDMF_NOGRAVITY;
-	
+		mo->ddflags |= DDMF_NOGRAVITY;*/
+
 	if(mo->flags2 & MF2_LOGRAV)
 		mo->ddflags |= DDMF_LOWGRAVITY;
 
