@@ -392,6 +392,61 @@ assign a detail texture to one wall texture and/or one flat picture.
 
 
 ---------------------------------------------------------------------------
+REFLECTION DEFINITIONS
+---------------------------------------------------------------------------
+...........................................................................
+
+Reflection
+{
+    Texture = "";
+        # The wall texture this reflection will be associated with. A 
+        # reflection can only be associated with either a texture or a 
+        # flat, not both.
+        
+    Flat = "";
+        # The flat this reflection will be associated with.
+
+    Blending mode = add;
+        # One of the bm_* flags defined in Flags.ded. By default 
+        # reflections use additive blending.
+        
+    Shininess = 1.0;
+        # Strength of the shiny effect. 1.0 is the maximum value. This
+        # is used as the alpha component when doing blending.
+        
+    Shiny map = "";
+        # Name of the external resource that is used as the shiny map for
+        # this reflection. By default the resource is searched in the
+        # LightMaps resource directory. The shiny map is mapped onto 
+        # reflecting surfaces using a mapping that resembles cylindrical
+        # environment mapping.
+        
+    Mask map = "";
+        # Name of the external resource that is used to mask out the 
+        # shininess of a surfaces. The mask map is mapped onto surfaces 
+        # using the same texture coordinates that are used for mapping 
+        # regular textures. The darker the texel in the mask, the fainter
+        # the reflection becomes.
+        
+    Mask width = 1.0;
+        # A factor for the width of the mask. This can be used to make the
+        # mask span beyond the mapping of the regular texture of the 
+        # surface. For example, consider a surface with a texture that is
+        # 64 texels wide. Regardless of the mask's horizontal resolution,
+        # the mask is always mapped onto the regular texture so that their
+        # edges overlap. If the mask width value is 1.0, the mask is as 
+        # wide as the 64 texel original texture. If mask width is increased 
+        # to 2.0, the mask is mapped so that it is as wide as a 128 texel 
+        # texture.
+        
+    Mask height = 1.0;
+        # A factor for the height of the mask.
+}
+
+...........................................................................
+
+
+---------------------------------------------------------------------------
 GENERATOR DEFINITIONS
 ---------------------------------------------------------------------------
 A particle generator must always be triggered somehow to be spawned. There
@@ -742,6 +797,9 @@ generators will be destroyed to make room for any new generators.
             # 0.5 = Particle loses half of its momentum each tic.
             # 1   = All movement of the particle will stop in one tic.
             
+        Spin resistance { 0 0 }
+            # Factors for slowing down particle spinning (0..1).
+                        
         Frame = "";
             # First model frame in the animation sequence of a model 
             # particle. The animation will interpolate through all the 
@@ -1372,6 +1430,17 @@ scaled to the range {-0.333 0.333} we get the zero we wanted.
             # Flags (df_*) that affect this submodel only. A XOR
             # operation is done with the flags that affect the whole
             # model.
+
+        Blending mode = normal;
+            # Blending mode for this submodel. One of the bm_* flags.
+            # Note that blending modes set by the flags override this 
+            # setting.
+
+        Shiny reaction = 1.0;
+            # A factor that modifies how shiny coordinates are 
+            # calculated for the submodel. Values below 1.0 will reduce
+            # the effect rotation of the model has on the shiny 
+            # coordinates.
 
         Skin = 0;
             # The index number of the skin to use.
