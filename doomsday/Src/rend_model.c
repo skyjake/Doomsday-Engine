@@ -458,7 +458,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	byte byteAlpha;
 	blendmode_t blending = BM_NORMAL;
 	DGLuint skinTexture, shinyTexture;
-	int zSign = (spr->issprite == 2 && mirrorHudModels != 0? -1 : 1);
+	int zSign = (spr->type == VSPR_HUD_MODEL && mirrorHudModels != 0? -1 : 1);
 	
 	if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0) 
 	{
@@ -537,7 +537,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	}
 
 	// Do we have a sky model here?
-	if(spr->issprite == 3)
+	if(spr->type == VSPR_SKY_MODEL)
 	{
 		// Sky models are animated differently.
 		// Always interpolate, if there's animation.
@@ -573,6 +573,15 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		FIX2FLT(spr->mo.gz) + mf->offset[VY] + spr->mo.visoff[VZ] 
 		- FIX2FLT(spr->mo.floorclip), spr->mo.v1[VY] + zSign * mf->offset[VZ]
 		+ spr->mo.visoff[VY]);
+
+	if(spr->type == VSPR_SKY_MODEL)
+	{
+		// Sky models have an extra rotation.
+		gl.Scalef(1, 200/240.0f, 1);
+		gl.Rotatef(spr->mo.v2[VX], 1, 0, 0);
+		gl.Rotatef(spr->mo.v2[VY], 0, 0, 1);
+		gl.Scalef(1, 240/200.0f, 1);
+	}
 
 	// Model rotation.
 	gl.Rotatef(spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle, 0, 1, 0);
@@ -632,7 +641,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		+ mf->offset[VY] + spr->mo.visoff[VZ];
 
 	// Calculate lighting.
-	if(spr->issprite == 3)
+	if(spr->type == VSPR_SKY_MODEL)
 	{	
 		// Skymodels don't have light, only color.
 		color[0] = spr->mo.rgb[0] / 255.0f;
@@ -710,20 +719,20 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		shinyColor = mf->def->sub[number].shinycolor;
 		
 		// With psprites, add the view angle/pitch.
-		offset = (spr->issprite == 2? -vang : 0);
+		offset = (spr->type == VSPR_HUD_MODEL? -vang : 0);
 
 		// Calculate normalized (0,1) model yaw and pitch.
 		normYaw = M_CycleIntoRange(
 			((spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle) 
 			+ offset) / 360, 1);
 
-		offset = (spr->issprite == 2? vpitch + 90: 0);
+		offset = (spr->type == VSPR_HUD_MODEL? vpitch + 90: 0);
 
 		normPitch = M_CycleIntoRange(
 			((spr->mo.viewaligned? spr->mo.v2[VY] : pitchAngle) 
 			+ offset) / 360, 1);
 		
-		if(spr->issprite == 2)
+		if(spr->type == VSPR_HUD_MODEL)
 		{
 			// This is a hack to accommodate the psprite coordinate space.
 			shinyAng = vpitch/360;
@@ -734,6 +743,13 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 			delta[VX] = modelCenter[VX] - vx;
 			delta[VY] = modelCenter[VY] - vz;
 			delta[VZ] = modelCenter[VZ] - vy;
+
+			if(spr->type == VSPR_SKY_MODEL)
+			{
+				delta[VX] += vx;
+				delta[VY] += vz;
+				delta[VZ] += vy;
+			}
 
 			shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], 
 				delta[VY])) / PI + 0.5f; // shinyAng is [0,1]
@@ -906,7 +922,7 @@ void Rend_RenderModel(vissprite_t *spr)
 			lights->worldVector[i] = worldLight[i];
 			lights->color[i] = ambientColor[i];
 
-			if(spr->issprite == 2)
+			if(spr->type == VSPR_HUD_MODEL)
 			{
 				// Psprites can a bit starker world light.
 				lights->lightSide = .35f;
