@@ -6,10 +6,26 @@
 
 Version 1.8.6
 -------------
-* PK3s can now be compressed (deflate)
++ "Flats" external resource category: defaults to "Data/Game/Flats/"
+* external flats are searched first from "Data/Game/Flats/"
+* PK3s can now be compressed (normal ZIP files)
+* unlimited nesting of autoloads via Auto directory and virtual files
++ PK3 path mapping: files in the root of a PK3 mapped to the Auto
+  directories (see Readme for details)
++ lump assembly prefixes (see Readme for details)
 + Reflection -> Min color: minimum RGB color for the reflection (to
   make the reflection visible even without regular sector light)
 - fixed: model file hash reset properly when running 'reset'
+- fixed: problem with multiple -file options
+
+SDL_mixer:
+* MUS data converted to MIDI is stored in the runtime directory instead
+  of /tmp
+
+Mac OS X:
++ MiniStart launcher
+* music is played using QuickTime (MIDI problems resolved)
+- multiple endianness issues fixed in texture/PK3/model handling
 
 
 Version 1.8.5
