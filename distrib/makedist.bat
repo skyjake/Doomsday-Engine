@@ -112,6 +112,9 @@ xcopy %SRC%Doc\ChangeLog.txt           	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\Readme.txt	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\Beginner.txt	%Dist%Doc\
 xcopy %SRC%Doc\Ame\TXT\CmdLine.txt	%Dist%Doc\
+ren %Dist%Doc\Readme.txt 	%Dist%Doc\Readme.txt 
+ren %Dist%Doc\Beginner.txt 	%Dist%Doc\Beginner.txt 
+ren %Dist%Doc\CmdLine.txt 	%Dist%Doc\CmdLine.txt 
 xcopy %SRC%Doc\DEDDoc.txt		%Dist%Doc\
 xcopy %SRC%Doc\DSS.txt			%Dist%Doc\
 xcopy %SRC%Doc\Network.txt		%Dist%Doc\
