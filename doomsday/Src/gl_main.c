@@ -53,6 +53,7 @@ int			screenWidth = 640, screenHeight = 480, screenBits = 32;
 // The default resolution (config file).
 int			defResX = 640, defResY = 480, defBPP = 0;	
 int			maxTexSize;
+int			numTexUnits;
 int			ratioLimit = 0;		// Zero if none.
 int			test3dfx = 0;
 int			r_framecounter;		// Used only for statistics.
@@ -318,6 +319,18 @@ void GL_Init(void)
 		Con_Message( "  Textures have outlines.\n");
 	}
 
+	// Does the graphics library support multitexturing?
+	numTexUnits = gl.GetInteger(DGL_MAX_TEXTURE_UNITS);
+	if(numTexUnits > 1 && gl.GetInteger(DGL_MODULATE_ADD_COMBINE))
+	{
+		VERBOSE( Con_Message("  Multitexturing enabled.\n") );
+	}
+	else
+	{
+		// Can't use multitexturing...
+		numTexUnits = 1;
+	}
+
 	// Initialize the renderer into a 2D state.
 	GL_Init2DState();
 	
@@ -368,7 +381,10 @@ void GL_Shutdown(void)
 	gl.Shutdown();
 
 	// Restore original gamma.
-	GL_SetGammaRamp(original_gamma_ramp);
+	if(!ArgExists("-leaveramp"))
+	{
+		GL_SetGammaRamp(original_gamma_ramp);
+	}
 
 	initOk = false;
 }
