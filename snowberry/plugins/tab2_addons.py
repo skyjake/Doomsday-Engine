@@ -18,7 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file tab_addons.py This plugin handles the Addons tab.
+## @file tab_addons.py Addons Tab
+##
+## This plugin handles commands and notifications from the addons
+## tree.  It also implements the load order dialog, the addon
+## inspector, and the addon installation dialog.
 
 import os, time, string
 import paths, events, ui, language
@@ -282,9 +286,8 @@ def showInspector(addon):
     msg += '<h3>Contents</h3>' + beginTable
     msg += makeField('Content Path', addon.getContentPath())
     msg += endTable
-
     
-    msg += "<br>format-specific data"
+    msg += "<p>format-specific data"
     msg += "<br>content analysis, size"
     msg += "<br>list of files, if a bundle"
 
