@@ -202,6 +202,10 @@ SOURCE=.\Src\sys_sfxd_ds.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\sys_sfxd_dummy.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\sys_sfxd_loader.c
 # End Source File
 # End Group
@@ -479,7 +483,15 @@ SOURCE=.\Src\gl_tga.c
 # PROP Default_Filter ""
 # Begin Source File
 
+SOURCE=.\Src\s_cache.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\s_environ.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Src\s_logic.c
 # End Source File
 # Begin Source File
 
@@ -727,6 +739,10 @@ SOURCE=.\Include\sys_sfxd_ds.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Include\sys_sfxd_dummy.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\sys_sfxd_loader.h
 # End Source File
 # End Group
@@ -785,6 +801,22 @@ SOURCE=.\Include\sys_timer.h
 
 SOURCE=.\Include\cl_def.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\Include\cl_frame.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\cl_mobj.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\cl_sound.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\cl_world.h
+# End Source File
 # End Group
 # Begin Group "Server Headers"
 
@@ -792,6 +824,10 @@ SOURCE=.\Include\cl_def.h
 # Begin Source File
 
 SOURCE=.\Include\sv_def.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\sv_frame.h
 # End Source File
 # Begin Source File
 
@@ -1008,7 +1044,15 @@ SOURCE=.\Include\de_audio.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Include\s_cache.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Include\s_environ.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\s_logic.h
 # End Source File
 # Begin Source File
 
