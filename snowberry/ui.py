@@ -1219,6 +1219,12 @@ class MainFrame (wx.Frame):
         # Listen to the 'quit' command.
         events.addCommandListener(self.handleCommand)
 
+        self.mainPanel.Freeze()
+
+    def show(self):
+        self.mainPanel.Thaw()
+        self.Show()
+
     def updateLayout(self):
         # Also update all UI areas.
         for key in uiAreas:
@@ -1294,7 +1300,7 @@ class SnowberryApp (wx.App):
 
     def showMainWindow(self):
         self.updateTitle()
-        self.mainFrame.Show()
+        self.mainFrame.show()
 
 
 def createDialog(id, alignment=Area.ALIGN_VERTICAL, size=None):
