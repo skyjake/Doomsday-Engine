@@ -394,15 +394,26 @@ void SN_UpdateActiveSequences(void)
 			node->delayTics--;
 			continue;
 		}
-		sndPlaying = S_IsPlaying(node->currentSoundID, node->mobj);
+
+		// If ID is zero, S_IsPlaying returns true if any sound is playing.
+		sndPlaying = node->currentSoundID? 
+			S_IsPlaying(node->currentSoundID, node->mobj) 
+			: false;
+
 		switch(*node->sequencePtr)
 		{
 			case SS_CMD_PLAY:
+				/*Con_Message( "play: %s: %p\n", 
+					SequenceTranslate[node->sequence].name,
+					node->mobj);*/
 				if(!sndPlaying)
 				{
 					node->currentSoundID = *(node->sequencePtr+1);
-					/*Con_Message( "%s: %p\n", SequenceTranslate[node->sequence].name,
+
+					/*Con_Message( "PLAY: %s: %p\n", 
+						SequenceTranslate[node->sequence].name,
 						node->mobj);*/
+
 					S_StartSoundAtVolume(node->currentSoundID, node->mobj,
 						node->volume/127.0f);
 				}
@@ -416,9 +427,18 @@ void SN_UpdateActiveSequences(void)
 				}
 				break;
 			case SS_CMD_PLAYREPEAT:
+				/*Con_Message( "rept: %s: %p\n", 
+					SequenceTranslate[node->sequence].name,
+					node->mobj);*/
+				
 				if(!sndPlaying)
 				{
 					node->currentSoundID = *(node->sequencePtr+1);
+
+					/*Con_Message( "REPT: %s: %p\n", 
+						SequenceTranslate[node->sequence].name,
+						node->mobj);*/
+
 					S_StartSoundAtVolume(node->currentSoundID | DDSF_REPEAT, 
 						node->mobj, node->volume/127.0f);
 				}
