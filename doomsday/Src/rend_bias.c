@@ -37,8 +37,8 @@
 // MACROS ------------------------------------------------------------------
 
 // Bias light source macros.
-#define BLF_LOCKED  0x00000001
-#define BLF_CHANGED 0x80000000
+#define BLF_LOCKED           0x40000000
+#define BLF_CHANGED          0x80000000
 
 // TYPES -------------------------------------------------------------------
 
@@ -47,6 +47,8 @@ typedef struct source_s {
     float           pos[3];
     float           color[3];
     float           intensity;
+    float           primaryIntensity;
+    int             sectorLevel[2];
     unsigned int    lastUpdateTime;
 } source_t;
 
@@ -81,7 +83,6 @@ static int numSources = 0;
 
 static int useBias = false;
 static int useSightCheck = true;
-//static int moveBiasLight = true;
 static int updateAffected = true;
 static float biasIgnoreLimit = .005f;
 static int lightSpeed = 150;
@@ -209,7 +210,10 @@ void SB_InitForLevel(const char *uniqueId)
         // The color is amplified automatically.
         SBE_SetColor(src->color, def->color);
 
-        src->intensity = def->size;
+        src->sectorLevel[0] = def->lightlevel[0];
+        src->sectorLevel[1] = def->lightlevel[1];
+
+        src->primaryIntensity = src->intensity = def->size;
 
         src->pos[VX] = def->offset[VX];
         src->pos[VY] = def->offset[VY];
@@ -605,14 +609,42 @@ void SB_BeginFrame(void)
     biastracker_t allChanges;
     int i, j, k;
     seginfo_t *sin;
+    source_t *s;
 
     // The time that applies on this frame.
     currentTime = Sys_GetRealTime();
     
     // Check which sources have changed.
     memset(&allChanges, 0, sizeof(allChanges));
-    for(i = 0; i < numSources; ++i)
+    for(i = 0, s = sources; i < numSources; ++i, ++s)
     {
+        if(s->sectorLevel[1] > 0 || s->sectorLevel[0] > 0)
+        {
+            int minLevel = s->sectorLevel[0];
+            int maxLevel = s->sectorLevel[1];
+            sector_t *sector = R_PointInSubsector
+                (FRACUNIT * s->pos[VX], FRACUNIT * s->pos[VY])->sector;
+            float oldIntensity = s->intensity;
+            
+            // The lower intensities are useless for light emission.
+            if(sector->lightlevel >= maxLevel)
+            {
+                s->intensity = s->primaryIntensity;
+            }
+            if(sector->lightlevel >= minLevel && minLevel != maxLevel)
+            {
+                s->intensity = s->primaryIntensity *
+                    (sector->lightlevel - minLevel) / (maxLevel - minLevel);
+            }
+            else
+            {
+                s->intensity = 0;
+            }
+
+            if(s->intensity != oldIntensity)
+                sources[i].flags |= BLF_CHANGED;
+        }
+        
         if(sources[i].flags & BLF_CHANGED)
         {
             SB_TrackerMark(&allChanges, i);
@@ -923,7 +955,7 @@ static source_t *SBE_GrabSource(int index)
     s = &sources[index];
 
     // Update the property cvars.
-    editIntensity = s->intensity;
+    editIntensity = s->primaryIntensity;
     for(i = 0; i < 3; ++i)
         editColor[i] = s->color[i];
 
@@ -1002,10 +1034,12 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
     if(sat)
         *sat = saturation;
     
-    if(saturation == 0)
+    if(saturation == 0 || dot > .999f)
     {
         if(angle)
             *angle = 0;
+        if(sat)
+            *sat = 0;
         
         HSVtoRGB(color, 0, 0, 1);
         return;
@@ -1044,33 +1078,6 @@ void SB_EndFrame(void)
 {
     source_t *src;
 
-#if 0
-    if(moveBiasLight)
-    {
-        /*source[0] = vx + viewfrontvec[VX]*300;
-        source[1] = vz + viewfrontvec[VZ]*300;
-        source[2] = vy + viewfrontvec[VY]*300;*/
-
-        // Set up 50 random lights (das blinkenlights!).
-        for(i = 0; i < numSources; ++i)
-        {
-            source_t *s = &sources[i];
-
-            s->pos[VX] = M_FRandom() * 4000 - 2000 + vx;
-            s->pos[VY] = M_FRandom() * 4000 - 2000 + vz;
-            s->pos[VZ] = M_FRandom() * 200 - 100 + vy;
-
-            s->color[0] = .5 + M_FRandom()/2;
-            s->color[1] = .5 + M_FRandom()/2;
-            s->color[2] = .5 + M_FRandom()/2;
-
-            s->intensity = 200 + M_FRandom() * 500;
-
-            s->flags |= BLF_CHANGED;
-        }
-    }
-#endif
-
     // Update the grabbed light.
     if(editActive && (src = SBE_GetGrabbed()) != NULL)
     {
@@ -1085,7 +1092,7 @@ void SB_EndFrame(void)
         }
         
         SBE_SetColor(src->color, editColor);
-        src->intensity = editIntensity;
+        src->primaryIntensity = src->intensity = editIntensity;
         if(!(src->flags & BLF_LOCKED))
         {
             // Update source properties.
@@ -1188,7 +1195,9 @@ static void SBE_Dupe(int which)
     {
         s = SBE_GetGrabbed();
         s->flags &= ~BLF_LOCKED;
-        editIntensity = orig->intensity;
+        s->sectorLevel[0] = orig->sectorLevel[0];
+        s->sectorLevel[1] = orig->sectorLevel[1];
+        editIntensity = orig->primaryIntensity;
         for(i = 0; i < 3; ++i)
             editColor[i] = orig->color[i];
     }    
@@ -1230,12 +1239,14 @@ static boolean SBE_Save(const char *name)
     for(i = 0, s = sources; i < numSources; ++i, ++s)
     {
         fprintf(file, "\nLight {\n");
-        fprintf(file, "  Level = \"%s\"\n", uid);
+        fprintf(file, "  Map = \"%s\"\n", uid);
         fprintf(file, "  Origin { %g %g %g }\n",
                 s->pos[0], s->pos[1], s->pos[2]);
         fprintf(file, "  Color { %g %g %g }\n",
                 s->color[0], s->color[1], s->color[2]);
-        fprintf(file, "  Intensity = %g\n", s->intensity);
+        fprintf(file, "  Intensity = %g\n", s->primaryIntensity);
+        fprintf(file, "  Sector levels { %i %i }\n", s->sectorLevel[0],
+                s->sectorLevel[1]);
         fprintf(file, "}\n");
     }
     
@@ -1350,12 +1361,17 @@ int CCmdBLEditor(int argc, char **argv)
     {
         source_t *src = &sources[which];
 
-        if(argc >= 2)
+        if(argc >= 3)
+        {
+            src->sectorLevel[0] = atoi(argv[1]);
+            src->sectorLevel[1] = atoi(argv[2]);
+        }
+        else if(argc >= 2)
         {
             editIntensity = strtod(argv[1], NULL);
         }
         
-        src->intensity = editIntensity;
+        src->primaryIntensity = src->intensity = editIntensity;
         src->flags |= BLF_CHANGED;
         return true;
     }
@@ -1450,16 +1466,15 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
     y += th;
     
-    sprintf(buf, "Distance:  %-.0f", M_Distance(eye, s->pos));
+    sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
     UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
     y += th;
 
-    sprintf(buf, "Intensity: %-.0f", s->intensity);
+    sprintf(buf, "Intens:%-5.0f L:%3i/%3i", s->primaryIntensity,
+            s->sectorLevel[0], s->sectorLevel[1]);
+
     UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
     y += th;
-
-/*void UI_Gradient(int x, int y, int w, int h, ui_color_t * top,
-  ui_color_t * bottom, float top_alpha, float bottom_alpha)*/
 
     sprintf(buf, "R:%.3f G:%.3f B:%.3f",
             s->color[0], s->color[1], s->color[2]);
@@ -1468,9 +1483,79 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     
 }
 
+
 /*
- * Editor HUD.
+ * Editor HUD
  */
+
+static void SBE_DrawLevelBar(void)
+{
+    static sector_t *lastSector = NULL;
+    static int minLevel = 0, maxLevel = 0;
+    sector_t *sector;
+    int height = 255;
+    int x = 20, y = screenHeight/2 - height/2;
+    int off = FR_TextWidth("000");
+    int secY, maxY, minY;
+    char buf[80];
+    float *pos;
+
+    if(SBE_GetGrabbed())
+        pos = SBE_GetGrabbed()->pos;
+    else
+        pos = SBE_GetNearest()->pos;
+    
+    sector = R_PointInSubsector(FRACUNIT * pos[VX],
+                                FRACUNIT * pos[VY])->sector;
+
+    if(lastSector != sector)
+    {
+        minLevel = maxLevel = sector->lightlevel;
+        lastSector = sector;
+    }
+
+    if(sector->lightlevel < minLevel)
+        minLevel = sector->lightlevel;
+    if(sector->lightlevel > maxLevel)
+        maxLevel = sector->lightlevel;
+
+    gl.Disable(DGL_TEXTURING);
+
+    gl.Begin(DGL_LINES);
+    gl.Color4f(1, 1, 1, .5f);
+    gl.Vertex2f(x + off, y);
+    gl.Vertex2f(x + off, y + height);
+    // Normal lightlevel.
+    secY = y + height * (1 - sector->lightlevel / 255.0f);
+    gl.Vertex2f(x + off - 4, secY);
+    gl.Vertex2f(x + off, secY);
+    if(maxLevel != minLevel)
+    {
+        // Max lightlevel.
+        maxY = y + height * (1 - maxLevel / 255.0f);
+        gl.Vertex2f(x + off + 4, maxY);
+        gl.Vertex2f(x + off, maxY);
+        // Min lightlevel.
+        minY = y + height * (1 - minLevel / 255.0f);
+        gl.Vertex2f(x + off + 4, minY);
+        gl.Vertex2f(x + off, minY);
+    }
+    gl.End();
+
+    gl.Enable(DGL_TEXTURING);
+
+    // The number values.
+    sprintf(buf, "%03i", sector->lightlevel);
+    UI_TextOutEx(buf, x, secY, true, true, UI_COL(UIC_TITLE), .7f);
+    if(maxLevel != minLevel)
+    {
+        sprintf(buf, "%03i", maxLevel);
+        UI_TextOutEx(buf, x + 2*off, maxY, true, true, UI_COL(UIC_TEXT), .7f);
+        sprintf(buf, "%03i", minLevel);
+        UI_TextOutEx(buf, x + 2*off, minY, true, true, UI_COL(UIC_TEXT), .7f);
+    }
+}
+
 void SBE_DrawHUD(void)
 {
     int w, h, y;
@@ -1511,6 +1596,11 @@ void SBE_DrawHUD(void)
     if((s = SBE_GetGrabbed()) != NULL)
     {
         SBE_InfoBox(s, FR_TextWidth("0") * 26, "Grabbed", alpha);
+    }
+
+    if(SBE_GetGrabbed() || SBE_GetNearest())
+    {
+        SBE_DrawLevelBar();
     }
     
 	gl.MatrixMode(DGL_PROJECTION);
@@ -1627,11 +1717,14 @@ static void SBE_DrawHue(void)
     SBE_GetHueColor(sel, &hue, &saturation);
     SBE_HueOffset(2*PI * hue, off);
     sel[3] = 1;
-    gl.Color4fv(sel);
-    gl.Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
-                center[2] + outer * off[2]);
-    gl.Vertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
-                center[2] + inner * off[2]);
+    if(saturation > 0)
+    {
+        gl.Color4fv(sel);
+        gl.Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
+                    center[2] + outer * off[2]);
+        gl.Vertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
+                    center[2] + inner * off[2]);
+    }
 
     // Draw the edges.
     for(i = 0; i < steps; ++i)
@@ -1649,7 +1742,16 @@ static void SBE_DrawHue(void)
         gl.Vertex3f(center[0] + outer * off2[0], center[1] + outer * off2[1],
                     center[2] + outer * off2[2]);
 
-        // Saturation decreases in the center.
+        if(saturation > 0)
+        {
+            // Saturation decreases in the center.
+            sel[3] = 1 - fabs(M_CycleIntoRange(hue - i/steps + .5f, 1) - .5f)
+                * 2.5f;
+        }
+        else
+        {
+            sel[3] = 1;
+        }
         gl.Color4fv(sel);
         s = inner + (outer - inner) * saturation;
         gl.Vertex3f(center[0] + s * off[0], center[1] + s * off[1],
