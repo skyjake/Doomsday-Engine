@@ -457,10 +457,6 @@ SOURCE=.\Include\Common\g_dgl.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Include\JHeretic\G_game.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Include\Common\g_update.h
 # End Source File
 # Begin Source File
