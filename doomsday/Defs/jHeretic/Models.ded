@@ -42,6 +42,7 @@ Flag { ID = "df_specular"; Value = 0x100000; }
 Flag { ID = "df_litshiny"; Value = 0x200000; }
 Flag { ID = "df_idframe"; Value = 0x400000; }
 Flag { ID = "df_idangle"; Value = 0x800000; }
+Flag { ID = "df_dim"; Value = 0x1000000; }
 
 Flag { ID = "mg_hud"; Value = 0x2; }
 Flag { ID = "mg_player"; Value = 0x4; }

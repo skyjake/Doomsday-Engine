@@ -60,28 +60,29 @@ Model {
   Md2 { File = "Barrel.md2"; Frame = "resting1"; };
 }
 
-#>
 ########======----- Fire Brazier -----======########
-### Model by yoalieh
+### Model by Slyrr
 Model {
   State = "FIREBRAZIER1";
-  Scale = 1.35;
-  Md2 { File = "FireBrazier.md2"; };
+  # Random angle is better than the alternative.
+  Flags = "df_dim df_idangle"; 
+  Scale = 0.8;
+  Md2 { File = "Brazier.md2"; };
 }
-Copy Model {State = "FIREBRAZIER2";}
-Copy Model {State = "FIREBRAZIER3";}
-Copy Model {State = "FIREBRAZIER4";}
-Copy Model {State = "FIREBRAZIER5";}
-Copy Model {State = "FIREBRAZIER6";}
-Copy Model {State = "FIREBRAZIER7";}
-Copy Model {State = "FIREBRAZIER8";}
-<#
+
+*Model { State = "FIREBRAZIER2"; }
+*Model { State = "FIREBRAZIER3"; }
+*Model { State = "FIREBRAZIER4"; }
+*Model { State = "FIREBRAZIER5"; }
+*Model { State = "FIREBRAZIER6"; }
+*Model { State = "FIREBRAZIER7"; }
+*Model { State = "FIREBRAZIER8"; }
 
 ########======----- Serpent Torch -----======########
 ### Model by (yoalieh)
 Model {
   State = "SERPTORCH1";
-  Flags = "df_idangle";
+  Flags = "df_dim df_idangle";
   Scale = 2.6;
   Md2 { File = "SerpTorch.md2"; };
 }

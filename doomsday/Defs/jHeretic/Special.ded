@@ -1,4 +1,4 @@
-# jHeretic: Special effects
+# jHeretic: Special effects (for both sprites and models)
 # Need help with DED syntax? See DEDDoc.txt.
 
 Header { Version = 5; }
