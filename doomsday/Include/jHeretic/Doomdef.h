@@ -101,7 +101,7 @@ typedef enum
 
 typedef struct
 {
-	byte		time;
+//	byte		time;
 	char		forwardmove;		// *2048 for move
 	char		sidemove;			// *2048 for move
 	unsigned short angle;			// <<16 for angle

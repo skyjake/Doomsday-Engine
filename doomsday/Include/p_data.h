@@ -60,7 +60,7 @@
 // but these first bytes are always the same.
 typedef struct
 {
-	byte		time;
+	//byte		time;
 	char		forwardmove;		//*2048 for real move
 	char		sidemove;			//*2048 for real move
 } ticcmd_t;
