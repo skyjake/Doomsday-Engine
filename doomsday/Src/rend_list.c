@@ -312,12 +312,14 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
 //===========================================================================
 void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 {
+    boolean isWall = (poly->numvertices == 2);
 	int     i;
 	float   light, real, minimum;
 	rendpoly_vertex_t *vtx;
 	boolean usewhite;
+    gl_rgba_t *secondary = NULL;
 
-	if(poly->numvertices == 2)	// A quad?
+	if(isWall)	// A quad?
 	{
 		// Do a lighting adjustment based on orientation.
 		lightlevel +=
@@ -328,6 +330,8 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 			lightlevel = 0;
 		if(lightlevel > 255)
 			lightlevel = 255;
+
+        secondary = poly->bottomcolor;
 	}
 
 	light = lightlevel / 255.0f;
@@ -377,6 +381,12 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 			vtx->color.rgba[1] = (DGLubyte) (rgb[1] * real);
 			vtx->color.rgba[2] = (DGLubyte) (rgb[2] * real);
 		}
+
+        if(isWall)
+        {
+            // The bottom edge of walls can have different colors.
+            memcpy(secondary[i].rgba, vtx->color.rgba, 4);
+        }
 	}
 }
 
@@ -1023,8 +1033,8 @@ void RL_QuadColors(gl_color_t * color, rendpoly_t *poly)
 	// Just copy RGB, set A to 255.
 	memcpy(color[0].rgba, poly->vertices[0].color.rgba, 3);
 	memcpy(color[1].rgba, poly->vertices[1].color.rgba, 3);
-	memcpy(color[2].rgba, poly->vertices[1].color.rgba, 3);
-	memcpy(color[3].rgba, poly->vertices[0].color.rgba, 3);
+	memcpy(color[2].rgba, poly->bottomcolor[1].rgba, 3);
+	memcpy(color[3].rgba, poly->bottomcolor[0].rgba, 3);
 
 	color[0].rgba[3] = color[1].rgba[3] = color[2].rgba[3] = color[3].rgba[3] =
 		255;
@@ -1154,7 +1164,6 @@ void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 	// Primary texture coordinates.
     if(poly->flags & RPF_SHINY)
     {
-        
         // Shiny environmental texture coordinates.
         RL_QuadShinyTexCoords(&texCoords[TCA_MAIN][base], poly, &poly->tex);
 
@@ -1210,7 +1219,7 @@ void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
 	gl_vertex_t *v;
 	uint    base;
 	uint    sideBase[2];
-	int     i, side, other, index, top, bottom, div;
+	int     i, side, other, index, top, bottom, div, c;
 	float   z, height = poly->top - poly->bottom, inter;
 	primhdr_t *hdr = NULL;
 
@@ -1362,7 +1371,12 @@ void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
 				}
 
 				// Color.
-				memcpy(&colors[div], &colors[top], sizeof(gl_color_t));
+				//memcpy(&colors[div], &colors[top], sizeof(gl_color_t));
+                for(c = 0; c < 4; ++c)
+                {
+                    colors[div].rgba[c] = colors[bottom].rgba[c] +
+                        (colors[top].rgba[c] - colors[bottom].rgba[c]) * inter;
+                }
 			}
 
 			// Vertex.

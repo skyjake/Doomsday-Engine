@@ -126,6 +126,7 @@ typedef struct {
 	float           length;
 	byte            numvertices;   // Number of vertices for the poly.
 	rendpoly_vertex_t vertices[RL_MAX_POLY_SIDES];
+    gl_rgba_t       bottomcolor[2];
 	struct div_t {
 		byte            num;
 		float           pos[RL_MAX_DIVS];

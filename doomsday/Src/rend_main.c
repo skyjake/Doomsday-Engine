@@ -96,6 +96,7 @@ void Rend_Register(void)
               "1=Enable shiny textures on surfaces of the map.");
     
     RL_Register();
+    SB_Register();
     Rend_ModelRegister();
 	Rend_RadioRegister();
 }
@@ -729,6 +730,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 		quad.lights = DL_GetSegLightLinks(segindex, SEG_MIDDLE);
 
 		Rend_PolyTextureBlend(sid->midtexture, &quad);
+        SB_RendPoly(&quad, false);
 		RL_AddPoly(&quad);
         if(!(flags & RWSF_NO_RADIO))
         {
@@ -854,6 +856,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 					C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
 
 				Rend_PolyTextureBlend(sid->midtexture, &quad);
+                SB_RendPoly(&quad, false);
 				RL_AddPoly(&quad);
 				if(!texmask)
                 {
@@ -918,6 +921,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.lights = DL_GetSegLightLinks(segindex, SEG_TOP);
 
 			Rend_PolyTextureBlend(sid->toptexture, &quad);
+            SB_RendPoly(&quad, false);
 			RL_AddPoly(&quad);
             Rend_AddShinyWallSeg(sid->toptexture, &quad);
             if(!(flags & RWSF_NO_RADIO))
@@ -978,6 +982,7 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			quad.lights = DL_GetSegLightLinks(segindex, SEG_BOTTOM);
 
 			Rend_PolyTextureBlend(sid->bottomtexture, &quad);
+            SB_RendPoly(&quad, false);
 			RL_AddPoly(&quad);
             if(!(flags & RWSF_NO_RADIO))
             {
@@ -1172,6 +1177,8 @@ void Rend_RenderPlane(planeinfo_t *plane, dynlight_t *lights,
 		poly.top = height;
 
 		RL_PrepareFlat(plane, &poly, subsector);
+
+        SB_RendPoly(&poly, plane->isfloor);
 
 		Rend_PolyFlatBlend(plane->pic, &poly);
 		RL_AddPoly(&poly);
