@@ -1,5 +1,5 @@
-AC_INIT(deng, [1.7.15], [jaakko.keranen@iki.fi])
-AM_INIT_AUTOMAKE(deng, [1.7.15])
+AC_INIT(deng, [1.8.0-rc1], [jaakko.keranen@iki.fi])
+AM_INIT_AUTOMAKE(deng, [1.8.0-rc1])
 
 AM_CONFIG_HEADER(config.h)
 
@@ -22,7 +22,7 @@ AC_CONFIG_SUBDIRS(libltdl)
 
 
 dnl We want to have easily portable code.
-CFLAGS="-W -Wall $CFLAGS"
+CFLAGS="-Wunused-variable -Wunused-function $CFLAGS"
 
 AC_PROG_CC
 
