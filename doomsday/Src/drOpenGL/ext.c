@@ -24,12 +24,13 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int		extMultiTex = DGL_FALSE;
-int		extTexEnvComb = DGL_FALSE;
-int		extNvTexEnvComb = DGL_FALSE;
-int		extAtiTexEnvComb = DGL_FALSE;
-int		extAniso = DGL_FALSE;
-int		extLockArray = DGL_FALSE;
+int extMultiTex;
+int	extTexEnvComb;
+int	extNvTexEnvComb;
+int	extAtiTexEnvComb;
+int	extAniso;
+int	extLockArray;
+int extGenMip;
 
 PFNGLCLIENTACTIVETEXTUREPROC	glClientActiveTextureARB = 0;
 PFNGLACTIVETEXTUREARBPROC		glActiveTextureARB = 0;
@@ -136,6 +137,7 @@ void initExtensions(void)
 		}
 	}
 
+#ifdef USE_MULTITEXTURE
 	// ARB_multitexture 
 	if(query("GL_ARB_multitexture", &extMultiTex))
 	{
@@ -144,13 +146,13 @@ void initExtensions(void)
 		GETPROC( glActiveTextureARB );
 		GETPROC( glMultiTexCoord2fARB );
 		GETPROC( glMultiTexCoord2fvARB );
-		// Check that we have enough texturing units.
-/*		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &i);
-		Con_Message("drOpenGL.initExtensions: ARB_multitexture (%i)\n", i);
-		if(i < 2) 
-		{
-			Con_Message("--(!)-- 2 texture units required!\n");
-			extMultiTex = DGL_FALSE;
-		}*/
+	}
+#endif
+
+	// Automatic mipmap generation.
+	if(query("GL_SGIS_generate_mipmap", &extGenMip))
+	{
+		// Use nice quality, please.
+		glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 	}
 }
