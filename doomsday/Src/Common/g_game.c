@@ -3183,9 +3183,9 @@ void G_DemoEnds(void)
 	   D_AdvanceDemo();
 	   #endif */
 
-#ifdef __JDOOM__
+//#ifdef __JDOOM__
 	FI_DemoEnds();
-#endif
+//#endif
 }
 
 void G_DemoAborted(void)
@@ -3193,9 +3193,9 @@ void G_DemoAborted(void)
 	gamestate = GS_WAITING;
 	// We'll take no further action.
 
-#ifdef __JDOOM__
+//#ifdef __JDOOM__
 	FI_DemoEnds();
-#endif
+//#endif
 }
 
 #if __JHERETIC__ || __JHEXEN__
