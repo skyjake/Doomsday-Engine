@@ -81,6 +81,7 @@ void Cl_CleanUp()
 	Con_Printf("Cl_CleanUp.\n");
 
 	clientPaused = false;
+	handshake_received = false;
 
 	Cl_DestroyClientMobjs();
 	Cl_InitPlayers();
