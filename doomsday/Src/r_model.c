@@ -864,9 +864,12 @@ void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 void R_ScaleModelToSprite(modeldef_t *mf, int sprite, int frame)
 {
 	spritedef_t	*spr = sprites + sprite;
-	int lump = spr->spriteframes[frame].lump[0];
-	int	off = spritelumps[lump].topoffset - spritelumps[lump].height;
+	int lump, off;
 
+	if(!spr->numframes || spr->spriteframes == NULL) return;
+
+	lump = spr->spriteframes[frame].lump[0];
+	off = spritelumps[lump].topoffset - spritelumps[lump].height;
 	if(off < 0) off = 0;
 	R_ScaleModel(mf, spritelumps[lump].height, off);
 }
