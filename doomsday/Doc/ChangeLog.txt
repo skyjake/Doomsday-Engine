@@ -4,6 +4,12 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.5
+-------------
++ Model -> Sub -> Shiny reaction: how much shiny textures react to angle
+  changes
+
+
 Version 1.8.4
 -------------
 * shiny texture coordinates are calculated using a simplified algorithm

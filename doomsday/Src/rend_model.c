@@ -82,6 +82,7 @@ int     modelLight = 4;
 int     frameInter = true;
 int     mirrorHudModels = false;
 int     modelShinyMultitex = true;
+float   modelShinyFactor = 1.0f;
 int     model_tri_count;
 float   rend_model_lod = 256;
 
@@ -114,6 +115,12 @@ static int activeLod;
 static char *vertexUsage;
 
 // CODE --------------------------------------------------------------------
+
+void Rend_ModelRegister(void)
+{
+    C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor, 0, 0, 10,
+                "General strength of model shininess effects.");
+}
 
 static float __inline qatan2(float y, float x)
 {
@@ -441,7 +448,7 @@ void Mod_FixedVertexColors(int count, gl_color_t * colors, float *color)
  */
 void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
 					 float normYaw, float normPitch, float shinyAng,
-					 float shinyPnt)
+					 float shinyPnt, float reactSpeed)
 {
 	int     i;
 	float   u, v;
@@ -458,10 +465,11 @@ void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
 
         // Rotate the normal vector so that it approximates the
         // model's orientation compared to the viewer.
-        M_RotateVector(rotatedNormal, (shinyPnt + normYaw) * 360,
-                       (shinyAng + normPitch - .5f) * 180);
+        M_RotateVector(rotatedNormal,
+                       (shinyPnt + normYaw) * 360 * reactSpeed,
+                       (shinyAng + normPitch - .5f) * 180 * reactSpeed);
 
-        u = (rotatedNormal[VX] + 1);
+        u = rotatedNormal[VX] + 1;
         v = rotatedNormal[VZ];
 
 		coords->st[0] = u;
@@ -793,7 +801,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 	}
 
 	// Calculate shiny coordinates.
-	shininess = mf->def->sub[number].shiny;
+	shininess = mf->def->sub[number].shiny * modelShinyFactor;
 	if(shininess < 0)
 		shininess = 0;
 	if(shininess > 1)
@@ -844,7 +852,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 		}
 
 		Mod_ShinyCoords(numVerts, modelTexCoords, modelNormals, normYaw,
-						normPitch, shinyAng, shinyPnt);
+						normPitch, shinyAng, shinyPnt,
+                        mf->def->sub[number].shinyreact);
 
 		// Shiny color.
 		if(subFlags & MFF_SHINY_LIT)

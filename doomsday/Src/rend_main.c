@@ -88,6 +88,7 @@ void Rend_Register(void)
 	C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1,
 			   "1=Enable interpolated texture animation.");
 
+    Rend_ModelRegister();
 	Rend_RadioRegister();
 }
 

@@ -954,6 +954,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						RV_STR("Shiny skin", mdl->sub[sub].shinyskin)
 						RV_FLT("Shiny", mdl->sub[sub].shiny)
 						RV_VEC("Shiny color", mdl->sub[sub].shinycolor, 3)
+                        RV_FLT("Shiny reaction", mdl->sub[sub].shinyreact)
 						RV_END
 						CHECKSC;
 					}

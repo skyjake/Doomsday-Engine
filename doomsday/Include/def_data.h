@@ -151,6 +151,7 @@ extern          "C" {
 		ded_string_t    shinyskin;
 		float           shiny;
 		float           shinycolor[3];
+        float           shinyreact;
 	} ded_submodel_t;
 
 	typedef struct {

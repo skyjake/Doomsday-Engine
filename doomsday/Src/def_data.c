@@ -165,6 +165,7 @@ int DED_AddModel(ded_t * ded, char *spr)
 	{
 		md->sub[i].shinycolor[0] = md->sub[i].shinycolor[1] =
 			md->sub[i].shinycolor[2] = 1;
+        md->sub[i].shinyreact = 1.0f;
 	}
 	return md - ded->models;
 }

@@ -30,6 +30,7 @@ extern int      mirrorHudModels;
 extern int      modelShinyMultitex;
 extern float    rend_model_lod;
 
+void            Rend_ModelRegister(void);
 void            Rend_RenderModel(vissprite_t * spr);
 
 #endif
