@@ -270,9 +270,9 @@ ccmd_t gameCCmds[] =
 	"stopfinale",	CCmdStopInFine,			"Stop the currently playing interlude/finale.",
 
 	// $moveplane: console commands
-	"movefloor",	CCmdMovePlane,			"Move a sector's floor plane.",
+/*	"movefloor",	CCmdMovePlane,			"Move a sector's floor plane.",
 	"moveceil",		CCmdMovePlane,			"Move a sector's ceiling plane.",
-	"movesec",		CCmdMovePlane,			"Move a sector's both planes.",
+	"movesec",		CCmdMovePlane,			"Move a sector's both planes.",*/
 
 //	"test",			CCmdTest,				"Test.",
 	NULL
