@@ -24,50 +24,46 @@
 
 // MACROS ------------------------------------------------------------------
 
-enum { CLIP_TOP, CLIP_BOTTOM, CLIP_LEFT, CLIP_RIGHT };
+//enum { CLIP_TOP, CLIP_BOTTOM, CLIP_LEFT, CLIP_RIGHT };
 
-#define ZMOD_FLAT		0 //.05f	// How much difference?
-#define ZMOD_WALL		0//.15f		
-#define DISTFACTOR		1		// Really...
+//#define ZMOD_FLAT		0 //.05f	// How much difference?
+//#define ZMOD_WALL		0//.15f		
+//#define DISTFACTOR		1		// Really...
 
 #define X_TO_DLBX(cx)			( ((cx) - dlBlockOrig.x) >> (FRACBITS+7) )
 #define Y_TO_DLBY(cy)			( ((cy) - dlBlockOrig.y) >> (FRACBITS+7) )
 #define DLB_ROOT_DLBXY(bx, by)	(dlBlockLinks + bx + by*dlBlockWidth)
 
-// Wall Surface Present flags (for DL_ProcessWallSeg).
-#define WSP_MIDDLE		0x1
-#define WSP_TOP			0x2
-#define WSP_BOTTOM		0x4
-
 #define LUM_FACTOR(dist)	(1.5f - 1.5f*(dist)/lum->radius)
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct
-{
+typedef struct {
 	boolean		lightFloor, lightCeiling;
-	rendpoly_t	*poly;
 	subsector_t	*subsector;
 	float		fceil, ffloor;
 } flatitervars_t;
 
-typedef struct
-{
+typedef struct {
 	rendpoly_t	*poly;
 	float		*v1, *v2;
 } wallitervars_t;
 
-typedef struct
-{
-	float color[3];
-	float size;
-	float xoffset, yoffset;
+typedef struct {
+	float		color[3];
+	float		size;
+	float		xoffset, yoffset;
 } lightconfig_t;
+
+typedef struct seglight_s {
+	dynlight_t	*mid;
+	dynlight_t	*top;
+	dynlight_t	*bottom;
+} seglight_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-fvertex_t *edgeClipper(int *numpoints, fvertex_t *points, int numclippers, fdivline_t *clippers);
-int Rend_MidTexturePos(rendpoly_t *quad, float tcyoff, boolean lower_unpeg);
+//fvertex_t *edgeClipper(int *numpoints, fvertex_t *points, int numclippers, fdivline_t *clippers);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -92,8 +88,14 @@ int			dlMaxRad = 256; // Dynamic lights maximum radius.
 float		dlRadFactor = 3;
 int			maxDynLights = 0;
 int			clipLights = 1;
-float		dlContract = 0.02f; // Almost unnoticeable... a hack, though.
+//float		dlContract = 0.02f; // Almost unnoticeable... a hack, though.
 int			rend_info_lums = false;
+
+// List of unused dynlight_t nodes.
+dynlight_t	*freeLights;
+
+// List of used dynlight_t nodes.
+dynlight_t	*usedLights;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -102,7 +104,118 @@ vertex_t	dlBlockOrig;
 int			dlBlockWidth, dlBlockHeight;	// In 128 blocks.
 lumobj_t	**dlSubLinks = 0;		
 
+// A list of dynlight nodes for each surface (seg, floor, ceiling).
+// The segs are indexed by seg index, floors/ceilings are indexed by
+// subsector index.
+seglight_t	*segLightLinks;
+dynlight_t	**floorLightLinks;
+dynlight_t	**ceilingLightLinks;
+
 // CODE --------------------------------------------------------------------
+
+/*
+ * Returns a new dynlight node. If the list of unused nodes is empty, 
+ * a new node is created.
+ */
+dynlight_t *DL_New(float *s, float *t)
+{
+	dynlight_t *dyn;
+
+	if(freeLights == NULL)
+	{
+		dyn = Z_Malloc(sizeof(dynlight_t), PU_STATIC, NULL);
+	}
+	else
+	{
+		// Take the first unused node.
+		dyn = freeLights;
+		freeLights = freeLights->next;
+	}
+
+	memset(dyn, 0, sizeof(*dyn));
+
+	if(s) 
+	{
+		dyn->s[0] = s[0];
+		dyn->s[1] = s[1];
+	}
+	if(t)
+	{
+		dyn->t[0] = t[0];
+		dyn->t[1] = t[1];
+	}
+
+	// Link this node in the list of used nodes.
+	dyn->nextused = usedLights;
+	return usedLights = dyn;
+}
+
+/*
+ * Moves all used dynlight nodes to the list of unused nodes, so they
+ * can be reused.
+ */
+void DL_DeleteUsed(void)
+{
+	while(usedLights)
+	{
+		dynlight_t *dyn = usedLights;
+		usedLights = usedLights->nextused;
+
+		dyn->next = freeLights;
+		freeLights = dyn;
+	}
+
+	// Clear the surface light links.
+	memset(segLightLinks, 0, numsegs * sizeof(seglight_t));
+	memset(floorLightLinks, 0, numsubsectors * sizeof(dynlight_t*));
+	memset(ceilingLightLinks, 0, numsubsectors * sizeof(dynlight_t*));
+}
+
+/*
+ * Links the dynlight node to the list.
+ */
+void DL_Link(dynlight_t *dyn, dynlight_t **list, int index)
+{
+	dyn->next = list[index];
+	list[index] = dyn;
+}
+
+void DL_SegLink(dynlight_t *dyn, int index, int segPart)
+{
+	switch(segPart)
+	{
+	case SEG_MIDDLE:
+		DL_Link(dyn, &segLightLinks[index].mid, 0);
+		break;
+
+	case SEG_TOP:
+		DL_Link(dyn, &segLightLinks[index].top, 0);
+		break;
+
+	case SEG_BOTTOM:
+		DL_Link(dyn, &segLightLinks[index].bottom, 0);
+		break;
+	}
+}
+
+/*
+ * Returns a pointer to the list of dynlights for the segment part.
+ */
+dynlight_t *DL_GetSegLightLinks(int seg, int whichpart)
+{
+	switch(whichpart)
+	{
+	case SEG_MIDDLE:
+		return segLightLinks[seg].mid;
+
+	case SEG_TOP:
+		return segLightLinks[seg].top;
+
+	case SEG_BOTTOM:
+		return segLightLinks[seg].bottom;
+	}
+	return NULL;
+}
 
 void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
 {
@@ -134,9 +247,9 @@ void DL_ThingColor(lumobj_t *lum, DGLubyte *outRGB, float light)
 }
 
 //===========================================================================
-// DL_InitBlockMap
+// DL_InitLinks
 //===========================================================================
-void DL_InitBlockMap(void)
+void DL_InitLinks(void)
 {
 	byte		*ptr;
 	vertex_t	min, max;
@@ -148,7 +261,7 @@ void DL_InitBlockMap(void)
 	// Then the blocklinks.
 	memcpy(&min, vertexes, sizeof(min));
 	memcpy(&max, vertexes, sizeof(max));
-	for(i=1, ptr=vertexes+VTXSIZE; i<numvertexes; i++, ptr += VTXSIZE)
+	for(i = 1, ptr = vertexes + VTXSIZE; i < numvertexes; i++, ptr += VTXSIZE)
 	{
 		x = ( (vertex_t*) ptr)->x;
 		y = ( (vertex_t*) ptr)->y;
@@ -166,10 +279,17 @@ void DL_InitBlockMap(void)
 	// Blocklinks is a table of lumobj_t pointers.
 	dlBlockLinks = realloc(dlBlockLinks, sizeof(lumobj_t*) 
 		* dlBlockWidth * dlBlockHeight);
+
+	// Initialize the dynlight -> surface links.
+	segLightLinks = Z_Calloc(numsegs * sizeof(seglight_t), PU_LEVEL, 0);
+	floorLightLinks = Z_Calloc(numsubsectors * sizeof(dynlight_t*), 
+		PU_LEVEL, 0);
+	ceilingLightLinks = Z_Calloc(numsubsectors * sizeof(dynlight_t*),
+		PU_LEVEL, 0);
 }
 
 // Set dlq.top and .bottom before calling this.
-static void DL_FinalizeSurface(rendpoly_t *dlq, lumobj_t *lum)
+/*static void DL_FinalizeSurface(rendpoly_t *dlq, lumobj_t *lum)
 {
 	dlq->light = lum;
 	dlq->texoffy = FIX2FLT(lum->thing->z) + lum->center 
@@ -185,6 +305,21 @@ static void DL_FinalizeSurface(rendpoly_t *dlq, lumobj_t *lum)
 	}
 	// Give the new quad to the rendering engine.
 	RL_AddPoly(dlq);
+}*/
+
+//===========================================================================
+// DL_SegTexCoords
+//	Returns true if the coords are in range.
+//===========================================================================
+boolean DL_SegTexCoords(float *t, float top, float bottom, lumobj_t *lum)
+{
+	float lightZ = FIX2FLT(lum->thing->z) + lum->center;
+	float radius = lum->radius / DYN_ASPECT;
+
+	t[0] = (lightZ + radius - top)/(2 * radius);
+	t[1] = t[0] + (top - bottom)/(2 * radius);
+
+	return t[0] < 1 && t[1] > 0;
 }
 
 //===========================================================================
@@ -196,21 +331,29 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 	int			c, present = 0;
 	sector_t	*backsec = seg->backsector;
 	side_t		*sdef = seg->sidedef;
-	float		dist, pntLight[2], uvecWall[2], fceil, ffloor, bceil, bfloor;
-	rendpoly_t	dlq;
+	float		pos[2][2], s[2], t[2];
+	float		dist, pntLight[2], uvecWall[2];
+	float		fceil, ffloor, bceil, bfloor;
+	float		top, bottom, lightZ;
+	dynlight_t	*dyn;
+	int			segindex = GET_SEG_IDX(seg);
 
 	fceil = SECT_CEIL(frontsec);
 	ffloor = SECT_FLOOR(frontsec);
+
+	// A zero-volume sector?
+	if(fceil <= ffloor) return;
+
 	if(backsec)
 	{
 		bceil = SECT_CEIL(backsec);
 		bfloor = SECT_FLOOR(backsec);
 	}
 
-	// Let's begin with an analysis of the present surfaces.	
+	// Let's begin with an analysis of the visible surfaces.	
 	if(sdef->midtexture)
 	{
-		present |= WSP_MIDDLE;
+		present |= SEG_MIDDLE;
 		if(backsec)
 		{
 			// Check the middle texture's mask status.
@@ -219,7 +362,7 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 			{
 				// We can't light masked textures.
 				// FIXME: Use vertex lighting.
-				present &= ~WSP_MIDDLE;
+				present &= ~SEG_MIDDLE;
 			}
 		}
 	}
@@ -228,53 +371,123 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 	{
 		if(fceil > bceil && sdef->toptexture)
 		{
-			present |= WSP_TOP;
+			present |= SEG_TOP;
 		}
 		// Is there a lower wall segment? 
 		if(ffloor < bfloor && sdef->bottomtexture)
 		{
-			present |= WSP_BOTTOM;
+			present |= SEG_BOTTOM;
 		}
 		// The top texture can't be present when front and back sectors
 		// both have the sky ceiling.
 		if(frontsec->ceilingpic == skyflatnum 
 			&& backsec->ceilingpic == skyflatnum)
 		{
-			present &= ~WSP_TOP;
+			present &= ~SEG_TOP;
+		}
+		// The same applies to sky floors.
+		if(frontsec->floorpic == skyflatnum
+			&& backsec->floorpic == skyflatnum)
+		{
+			present &= ~SEG_BOTTOM;
 		}
 	}
 
 	// There are no surfaces to light!
 	if(!present) return;
 
-	dlq.type = rp_quad;
+/*	dlq.type = rp_quad;
 	dlq.numvertices = 2;
 	dlq.vertices[0].pos[VX] = FIX2FLT(seg->v1->x);
 	dlq.vertices[0].pos[VY] = FIX2FLT(seg->v1->y);
 	dlq.vertices[1].pos[VX] = FIX2FLT(seg->v2->x);
-	dlq.vertices[1].pos[VY] = FIX2FLT(seg->v2->y);
+	dlq.vertices[1].pos[VY] = FIX2FLT(seg->v2->y);*/
 
-	if(!Rend_SegFacingDir(dlq.vertices[0].pos, dlq.vertices[1].pos)) 
-		return; // Facing the other way.
+	pos[0][VX] = FIX2FLT(seg->v1->x);
+	pos[0][VY] = FIX2FLT(seg->v1->y);
+	pos[1][VX] = FIX2FLT(seg->v2->x);
+	pos[1][VY] = FIX2FLT(seg->v2->y);
+
+	// We will only calculate light placement for segs that are facing
+	// the viewpoint.
+	if(!Rend_SegFacingDir(pos[0], pos[1])) return; 
 
 	pntLight[VX] = FIX2FLT(lum->thing->x);
 	pntLight[VY] = FIX2FLT(lum->thing->y);
-	
-	dist = ((dlq.vertices[0].pos[VY] - pntLight[VY]) * 
-		(dlq.vertices[1].pos[VX] - dlq.vertices[0].pos[VX]) - 
-		(dlq.vertices[0].pos[VX] - pntLight[VX]) * 
-		(dlq.vertices[1].pos[VY] - dlq.vertices[0].pos[VY])) / seg->length;
+
+	// Calculate distance between seg and light source.
+	dist = ((pos[0][VY] - pntLight[VY]) * (pos[1][VX] - pos[0][VX]) - 
+		(pos[0][VX] - pntLight[VX]) * (pos[1][VY] - pos[0][VY])) 
+		/ seg->length;
 
 	// Is it close enough and on the right side?
 	if(dist < 0 || dist > lum->radius) return; // Nope.
 
 	// Initialize the poly used for all of the lights.
-	dlq.flags = RPF_LIGHT; // This is a light polygon.
+/*	dlq.flags = RPF_LIGHT; // This is a light polygon.
 	dlq.texw = lum->radius*2;
 	dlq.texh = dlq.texw/DYN_ASPECT;
-	dlq.length = seg->length;
-	
+	dlq.length = seg->length;*/
+
+//	lightZ = FIX2FLT(lum->thing->z) + lum->center;
+
 	// Do a scalar projection for the offset.
+	s[0] = (-( (pos[0][VY] - pntLight[VY]) * (pos[0][VY] - pos[1][VY]) 
+		- (pos[0][VX] - pntLight[VX]) * (pos[1][VX] - pos[0][VX]) ) 
+		/ seg->length + lum->radius) / (2 * lum->radius);
+
+	s[1] = s[0] + seg->length / (2 * lum->radius);
+
+	// Would the light be visible?
+	if(s[0] >= 1 || s[1] <= 0) return; // Outside the seg.
+
+	// Process the visible parts of the segment.
+	if(present & SEG_MIDDLE)
+	{
+		if(backsec)
+		{
+			top    = (fceil  < bceil?  fceil  : bceil);
+			bottom = (ffloor > bfloor? ffloor : bfloor);
+			Rend_MidTexturePos(&top, &bottom, NULL, FIX2FLT(sdef->rowoffset),
+				seg->linedef? (seg->linedef->flags & ML_DONTPEGBOTTOM) != 0
+				: false);
+		}
+		else
+		{
+			top    = fceil;
+			bottom = ffloor;
+		}
+
+		if(DL_SegTexCoords(t, top, bottom, lum))
+		{
+			dyn = DL_New(s, t);
+			DL_ThingColor(lum, dyn->color, LUM_FACTOR(dist));
+			dyn->texture = lum->tex;
+			DL_SegLink(dyn, segindex, SEG_MIDDLE);	
+		}
+	}
+	if(present & SEG_TOP)
+	{
+		if(DL_SegTexCoords(t, fceil, MAX_OF(ffloor, bceil), lum))
+		{
+			dyn = DL_New(s, t);
+			DL_ThingColor(lum, dyn->color, LUM_FACTOR(dist));
+			dyn->texture = lum->tex;
+			DL_SegLink(dyn, segindex, SEG_TOP);	
+		}
+	}
+	if(present & SEG_BOTTOM)
+	{
+		if(DL_SegTexCoords(t, MIN_OF(bfloor, fceil), ffloor, lum))
+		{
+			dyn = DL_New(s, t);
+			DL_ThingColor(lum, dyn->color, LUM_FACTOR(dist));
+			dyn->texture = lum->tex;
+			DL_SegLink(dyn, segindex, SEG_BOTTOM);	
+		}
+	}
+	
+/*	// Do a scalar projection for the offset.
 	dlq.texoffx = ((dlq.vertices[0].pos[VY] - pntLight[VY]) * 
 		(dlq.vertices[0].pos[VY] - dlq.vertices[1].pos[VY]) - 
 		(dlq.vertices[0].pos[VX] - pntLight[VX]) * 
@@ -289,15 +502,6 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 	// The wall vector.
 	for(c = 0; c < 2; c++) 
 		uvecWall[c] = (dlq.vertices[1].pos[c] - dlq.vertices[0].pos[c]) / dlq.length;
-
-	// A hack...
-	if(dlContract)
-	{
-		dlq.vertices[0].pos[VX] += uvecWall[VX] * dlContract;
-		dlq.vertices[0].pos[VY] += uvecWall[VY] * dlContract;
-		dlq.vertices[1].pos[VX] -= uvecWall[VX] * dlContract;
-		dlq.vertices[1].pos[VY] -= uvecWall[VY] * dlContract;
-	}
 
 	if(dlq.texoffx > 0)
 	{
@@ -330,14 +534,6 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 
 	// Calculate the color of the light.
 	DL_ThingColor(lum, dlq.vertices[0].color.rgb, LUM_FACTOR(dist));
-
-	/*fceil = FIX2FLT(frontsec->ceilingheight);// + frontsec->skyfix;
-	ffloor = FIX2FLT(frontsec->floorheight);
-	if(backsec)
-	{
-		bceil = FIX2FLT(backsec->ceilingheight);// + backsec->skyfix;
-		bfloor = FIX2FLT(backsec->floorheight);
-	}*/
 
 	// Render the present surfaces.
 	if(present & WSP_MIDDLE) 
@@ -375,31 +571,46 @@ void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 		// Mark the seg for dlight rendering.
 		seg->flags |= DDSEGF_DLIGHT;
 	}
+	*/
 }
 
-void DL_SetupGlowQuads(seg_t *seg, fixed_t segtop, fixed_t segbottom, 
-					   boolean glow_floor, boolean glow_ceil)
+/*
+ * Generates one dynlight node per plane glow. The light is attached to 
+ * the appropriate seg part.
+ */
+void DL_CreateGlowLights
+	(seg_t *seg, int part, float segtop, float segbottom, 
+	 boolean glow_floor, boolean glow_ceil)
 {
-	rendpoly_t glow;
-	int i, g;
-	fixed_t top, bottom, glowhgt = glowHeight << FRACBITS, limit;
+	dynlight_t *dyn;
+	int i, g, segindex = GET_SEG_IDX(seg);
+	float ceil, floor, top, bottom, limit, s[2], t[2];
 	sector_t *sect = seg->sidedef->sector;
 	
 	// Check the heights.
 	if(segtop <= segbottom) return;	// No height.
+
+	ceil  = SECT_CEIL(sect);
+	floor = SECT_FLOOR(sect);
+
+	if(segtop > ceil) segtop = ceil;
+	if(segbottom < floor) segbottom = floor;
 
 	for(g = 0; g < 2; g++)
 	{
 		// Only do what's told.
 		if(g == 0 && !glow_ceil || g == 1 && !glow_floor) continue;
 
-		top = segtop;
-		bottom = segbottom;
+		// top and bottom are the coordinates for the light.
+		/*top    = segtop;
+		bottom = segbottom;*/
+	
 
+		/*
 		// Clip.						
 		if(g == 0) // Ceiling glow.
 		{
-			limit = sect->ceilingheight - glowhgt;
+			limit = ceil - glowHeight;
 			// Too low?
 			if(top < limit) continue;
 			// Clip the bottom.
@@ -407,46 +618,67 @@ void DL_SetupGlowQuads(seg_t *seg, fixed_t segtop, fixed_t segbottom,
 		}
 		else // Floor glow.
 		{
-			limit = sect->floorheight + glowhgt;
+			limit = floor + glowHeight;
 			// Too high?
 			if(bottom > limit) continue;
 			// Clip the top.
 			if(top > limit) top = limit;
-		}
+		}*/
 
-		glow.type = rp_quad;
+		/*glow.type = rp_quad;
 		glow.length = seg->length;
 		glow.flags = RPF_WALL_GLOW | RPF_LIGHT;
 		glow.vertices[0].pos[VX] = FIX2FLT(seg->v1->x);
 		glow.vertices[0].pos[VY] = FIX2FLT(seg->v1->y);
 		glow.vertices[1].pos[VX] = FIX2FLT(seg->v2->x);
-		glow.vertices[1].pos[VY] = FIX2FLT(seg->v2->y);
-		if(dlContract && glow.length)
+		glow.vertices[1].pos[VY] = FIX2FLT(seg->v2->y);*/
+
+		// Calculate texture coords for the light.
+		// The horizontal direction is easy.
+		s[0] = 0;
+		s[1] = 1;
+
+		if(g == 0)
 		{
-			float vec[2];
-			for(i = 0; i < 2; i++)
-			{
-				vec[i] = (glow.vertices[1].pos[i] 
-					- glow.vertices[0].pos[i]) / glow.length;
-			}
-			glow.vertices[0].pos[VX] += vec[VX] * dlContract;
-			glow.vertices[0].pos[VY] += vec[VY] * dlContract;
-			glow.vertices[1].pos[VX] -= vec[VX] * dlContract;
-			glow.vertices[1].pos[VY] -= vec[VY] * dlContract;
+			// Ceiling glow.
+			top = ceil;
+			bottom = ceil - glowHeight;
+
+			t[0] = (top - segtop) / glowHeight;
+			t[1] = t[0] + (segtop - segbottom) / glowHeight;
+
+			if(t[0] > 1 || t[1] < 0) continue;
 		}
-		GL_GetFlatColor(g? sect->floorpic : sect->ceilingpic,
-			glow.vertices[0].color.rgb);
+		else
+		{
+			// Floor glow.
+			bottom = floor;
+			top = floor + glowHeight;
+
+			t[1] = (segbottom - bottom) / glowHeight;
+			t[0] = t[1] + (segtop - segbottom) / glowHeight;
+
+			if(t[1] > 1 || t[0] < 0) continue;
+		}
+
+		dyn = DL_New(s, t);
+		dyn->texture = GL_PrepareGlowTexture();
+		
+		GL_GetFlatColor(g? sect->floorpic : sect->ceilingpic, dyn->color);
+
 		for(i = 0; i < 3; i++)
 		{
-			glow.vertices[0].color.rgb[i] *= dlFactor;
-			if(whitefog) glow.vertices[0].color.rgb[i] *= .4f;
+			dyn->color[i] *= dlFactor;
+			if(whitefog) dyn->color[i] *= .3f;
 		}
-		glow.top = FIX2FLT(top) - dlContract;
-		glow.bottom = FIX2FLT(bottom) + dlContract;
+		//glow.top = FIX2FLT(top) - dlContract;
+		//glow.bottom = FIX2FLT(bottom) + dlContract;
 		// texoffx will store the height.
-		glow.texoffx = g? -glowHeight : glowHeight;	// Flip for floor glow.
+		//glow.texoffx = g? -glowHeight : glowHeight;	
+		
+	
 		//glow.texoffx = glow.texoffy = 0;
-		if(g == 0) // Ceiling glow.
+		/*if(g == 0) // Ceiling glow.
 		{
 			glow.texoffy = FIX2FLT(sect->ceilingheight - top);
 		}
@@ -455,20 +687,26 @@ void DL_SetupGlowQuads(seg_t *seg, fixed_t segtop, fixed_t segbottom,
 			// We need to set texoffy so that the bottom of the texture
 			// meets bottom height.
 			glow.texoffy = FIX2FLT(bottom - sect->floorheight);
-		}
-		RL_AddPoly(&glow);
+		}*/
+		//RL_AddPoly(&glow);
 		// Mark the segment for dlight rendering.
-		seg->flags |= DDSEGF_DLIGHT;
+		//seg->flags |= DDSEGF_DLIGHT;
+
+		DL_SegLink(dyn, segindex, part);
 	}
 }
 
+/*
+ * If necessary, generate dynamic lights for plane glow.
+ */
 void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
 {
 	boolean do_floor = (R_FlatFlags(sect->floorpic) & TXF_GLOW) != 0;
 	boolean do_ceil = (R_FlatFlags(sect->ceilingpic) & TXF_GLOW) != 0;
 	sector_t *back = seg->backsector;
 	side_t *sdef = seg->sidedef;
-	fixed_t opentop, openbottom, top, bottom;
+	float fceil, ffloor, bceil, bfloor;
+	float opentop, openbottom;//, top, bottom;
 	float v1[2], v2[2];
 
 	// Check if this segment is actually facing our way.
@@ -478,44 +716,61 @@ void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
 	v2[VY] = FIX2FLT(seg->v2->y);
 	if(!Rend_SegFacingDir(v1, v2)) return;	// Nope...
 
+	// Visible plane heights.
+	fceil  = SECT_CEIL(sect);
+	ffloor = SECT_FLOOR(sect);
+	if(back)
+	{
+		bceil  = SECT_CEIL(back);
+		bfloor = SECT_FLOOR(back); 
+	}
+
 	// Determine which portions of the segment get lit.
 	if(!back)
 	{
 		// One sided.
-		// Process floor.
-		DL_SetupGlowQuads(seg, sect->ceilingheight, sect->floorheight, 
-			do_floor, do_ceil);
+		DL_CreateGlowLights(seg, SEG_MIDDLE, fceil, ffloor, do_floor, do_ceil);
 	}
 	else
 	{
-#define MIN(x,y,z)		((x)<(y)? ((z)=(y)),(x) : ((z)=(x)),(y))
-#define MAX(x,y,z)		((x)>(y)? ((z)=(y)),(x) : ((z)=(x)),(y))
+//#define MIN(x,y,z)		((x)<(y)? ((z)=(y)),(x) : ((z)=(x)),(y))
+//#define MAX(x,y,z)		((x)>(y)? ((z)=(y)),(x) : ((z)=(x)),(y))
+
 		// Two-sided.
-		opentop = MIN(sect->ceilingheight, back->ceilingheight, top);
-		openbottom = MAX(sect->floorheight, back->floorheight, bottom);
+		opentop    = MIN_OF(fceil, bceil);
+		openbottom = MAX_OF(ffloor, bfloor);
 
 		// The glow can only be visible in the front sector's height range.
-		if(top > sect->ceilingheight) top = sect->ceilingheight;
-		if(opentop > sect->ceilingheight) opentop = sect->ceilingheight;
-		if(openbottom > sect->ceilingheight) openbottom = sect->ceilingheight;
-		if(bottom > sect->ceilingheight) bottom = sect->ceilingheight;
-		if(top < sect->floorheight) top = sect->floorheight;
-		if(opentop < sect->floorheight) opentop = sect->floorheight;
-		if(openbottom < sect->floorheight) openbottom = sect->floorheight;
-		if(bottom < sect->floorheight) bottom = sect->floorheight;
+		/*if(top > fceil) top = fceil;
+		if(opentop > fceil) opentop = fceil;
+		if(openbottom > fceil) openbottom = fceil;
+		if(bottom > fceil) bottom = fceil;
+
+		if(top < ffloor) top = ffloor;
+		if(opentop < ffloor) opentop = ffloor;
+		if(openbottom < ffloor) openbottom = ffloor;
+		if(bottom < ffloor) bottom = ffloor;*/
 		
 		// Is there a middle texture?
 		if(sdef->midtexture)
 		{
-			//GL_PrepareTexture(sdef->midtexture);
 			GL_GetTextureInfo(sdef->midtexture);
 			if(!texmask)
-				DL_SetupGlowQuads(seg, opentop, openbottom, do_floor, do_ceil);
+			{
+				DL_CreateGlowLights(seg, SEG_MIDDLE, opentop, openbottom, 
+					do_floor, do_ceil);
+			}
 		}
-		if(sdef->toptexture)
-			DL_SetupGlowQuads(seg, top, opentop, do_floor, do_ceil);
-		if(sdef->bottomtexture)
-			DL_SetupGlowQuads(seg, openbottom, bottom, do_floor, do_ceil);
+		if(sdef->toptexture && fceil > bceil)
+		{
+			DL_CreateGlowLights(seg, SEG_TOP, fceil, bceil, //top, opentop, 
+				do_floor, do_ceil);
+		}
+		if(sdef->bottomtexture && ffloor < bfloor)
+		{
+			DL_CreateGlowLights(seg, SEG_BOTTOM, bfloor, ffloor, //openbottom, bottom, 
+				do_floor, do_ceil);
+		}
 	}
 }
 
@@ -711,6 +966,10 @@ void DL_AddLuminous(mobj_t *thing)
 			lum->xyscale = MAX_OF(mf->scale[VX], mf->scale[VZ]);
 		else
 			lum->xyscale = 1;
+
+		// Use the same default light texture for all directions.
+		lum->tex = lum->ceiltex = lum->floortex 
+			= GL_PrepareLightTexture();
 	}
 }
 
@@ -770,7 +1029,7 @@ void DL_LinkLuminous()
 	}
 }
 
-void intersectionVertex(fvertex_t *out, fvertex_t *a, fvertex_t *b,
+/*void intersectionVertex(fvertex_t *out, fvertex_t *a, fvertex_t *b,
 						boolean horizontal, float boundary)
 {
 	float dx = b->x-a->x, dy = b->y-a->y;
@@ -785,8 +1044,9 @@ void intersectionVertex(fvertex_t *out, fvertex_t *a, fvertex_t *b,
 		out->x = boundary;
 		out->y = a->y + (boundary - a->x) / dx * dy;
 	}
-}
+}*/
 
+/*
 //===========================================================================
 // Rend_SubsectorClipper
 //	Clip the subsector to the rectangle. Returns the number of vertices in 
@@ -888,6 +1148,7 @@ int Rend_SubsectorClipper
 	memcpy(out, inverts, sizeof(fvertex_t) * num);
 	return num;
 }
+*/
 
 //===========================================================================
 // DL_LightIteratorFunc
@@ -900,9 +1161,11 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
 	float			x = FIX2FLT(lum->thing->x), y = FIX2FLT(lum->thing->y);
 	float			z = FIX2FLT(lum->thing->z), cdiff, fdiff;	
 	float			applyCeiling, applyFloor;	// Is the light on the right side?
-	int				num_vertices;
-	fvertex_t		vertices[MAX_POLY_SIDES];
+/*	int				num_vertices;
+	fvertex_t		vertices[MAX_POLY_SIDES];*/
 	float			srcRadius;
+	dynlight_t		*dyn;
+	float			s[2], t[2];
 
 	if(haloMode)
 	{
@@ -932,16 +1195,16 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
 			applyFloor = 1 - (fi->ffloor - z)/srcRadius;
 	}
 
-	if(clipLights && (applyCeiling || applyFloor))
+/*	if(clipLights && (applyCeiling || applyFloor))
 	{
 		num_vertices = Rend_SubsectorClipper(vertices, fi->subsector, 
 			FIX2FLT(lum->thing->x), FIX2FLT(lum->thing->y), lum->radius);
 
 		// Hmm? The light doesn't reach this subsector, we can move on.
 		if(!num_vertices) return true;
-	}
+	}*/
 
-	fi->poly->light = lum;
+	//fi->poly->light = lum;
 
 	if(applyCeiling > 0)
 	{
@@ -950,7 +1213,24 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
 		if(cdiff < 0) cdiff = 0;
 		if(cdiff < lum->radius) 
 		{
-			fi->poly->top = fi->fceil - ZMOD_FLAT;
+			// Calculate dynlight position. It may still be outside the
+			// bounding box the subsector.
+			s[0] = -x + lum->radius;
+			t[0] = y + lum->radius;
+			s[1] = t[1] = 1.0f/(2 * lum->radius);
+
+			// A dynamic light will be generated.
+			dyn = DL_New(s, t);
+
+			DL_ThingColor(lum, dyn->color, LUM_FACTOR(cdiff) * applyCeiling);
+			
+			dyn->texture = lum->ceiltex;
+			dyn->flags = 0;
+
+			// Link to this ceiling's list.
+			DL_Link(dyn, ceilingLightLinks, GET_SUBSECTOR_IDX(fi->subsector));
+
+/*			fi->poly->top = fi->fceil - ZMOD_FLAT;
 			DL_ThingColor(lum, fi->poly->vertices[0].color.rgb, 
 				LUM_FACTOR(cdiff) * applyCeiling);
 			// We can add the light poly.
@@ -960,27 +1240,46 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
 				RL_PrepareFlat(fi->poly, 0, 0, RLPF_REVERSE, fi->subsector);
 			RL_AddPoly(fi->poly);
 			// Mark the ceiling for dlighting.
-			fi->subsector->flags |= DDSUBF_DLIGHT_CEILING;
+			fi->subsector->flags |= DDSUBF_DLIGHT_CEILING;*/
 		}
 	}
+
 	if(applyFloor > 0)
 	{
-		//fdiff = fabs(fi->ffloor - z);
 		fdiff = z - fi->ffloor;
 		if(fdiff < 0) fdiff = 0;
 		if(fdiff < lum->radius) 
 		{
-			fi->poly->top = fi->ffloor + ZMOD_FLAT;
-			DL_ThingColor(lum, fi->poly->vertices[0].color.rgb, 
-				LUM_FACTOR(fdiff) * applyFloor);
+			// Calculate dynlight position. It may still be outside the
+			// bounding box of the subsector.
+			s[0] = -x + lum->radius;
+			t[0] = y + lum->radius;
+			s[1] = t[1] = 1.0f/(2 * lum->radius);
+
+			// A dynamic light will be generated.
+			dyn = DL_New(s, t);
+
+			//fi->poly->top = fi->ffloor + ZMOD_FLAT;
+
+			DL_ThingColor(lum, dyn->color, LUM_FACTOR(fdiff) * applyFloor);
+
+			dyn->texture = lum->floortex;
+			dyn->flags = 0;
+
+			// Link to this floor's list.
+			DL_Link(dyn, floorLightLinks, GET_SUBSECTOR_IDX(fi->subsector));
+
+
 			// Add the light quads.
-			if(clipLights)
+/*			if(clipLights)
 				RL_PrepareFlat(fi->poly, num_vertices, vertices, RLPF_NORMAL, 0);
 			else
-				RL_PrepareFlat(fi->poly, 0, 0, RLPF_NORMAL, fi->subsector);
-			RL_AddPoly(fi->poly);
+				RL_PrepareFlat(fi->poly, 0, 0, RLPF_NORMAL, fi->subsector);*/
+
+			//RL_AddPoly(fi->poly);
+			
 			// Mark the ceiling for dlighting.
-			fi->subsector->flags |= DDSUBF_DLIGHT_FLOOR;
+			//fi->subsector->flags |= DDSUBF_DLIGHT_FLOOR;
 		}
 	}
 
@@ -999,11 +1298,14 @@ boolean DL_LightIteratorFunc(lumobj_t *lum, void *ptr)
 			DL_ProcessWallSeg(lum, fi->subsector->poly->segs[i], 
 				fi->subsector->sector);
 		}
-	
+
 	return true;
 }
 
-void DL_ProcessSubsector(rendpoly_t *poly, subsector_t *ssec)
+/*
+ * Process dynamic lights for the specified subsector.
+ */
+void DL_ProcessSubsector(subsector_t *ssec)
 {
 	sector_t		*sect = ssec->sector;
 	flatitervars_t	fi;
@@ -1011,7 +1313,6 @@ void DL_ProcessSubsector(rendpoly_t *poly, subsector_t *ssec)
 	int				i;
 	byte			*seg;
 
-	fi.poly = poly;
 	fi.subsector = ssec;
 	fi.fceil = SECT_CEIL(sect);
 	fi.ffloor = SECT_FLOOR(sect);
@@ -1024,7 +1325,7 @@ void DL_ProcessSubsector(rendpoly_t *poly, subsector_t *ssec)
 	if(viewz < sect->floorheight) fi.lightFloor = false;
 	if(viewz > sect->ceilingheight) fi.lightCeiling = false;
 
-	poly->flags = RPF_LIGHT;
+//	poly->flags = RPF_LIGHT;
 	
 	// Prepare the bounding box.
 	box[BLEFT] = (int) (ssec->bbox[0].x - dlMaxRad) << FRACBITS;
@@ -1065,9 +1366,12 @@ void DL_InitForNewFrame()
 	sector_t	*seciter;
 	int			i, done = false;
 
-	// The luminousList already contains lumobjs is there are any light
-	// decorations in use.
+	// Clear the dynlight lists, which are used to track the lights on
+	// each surface of the map.
+	DL_DeleteUsed();
 
+	// The luminousList already contains lumobjs if there are any light
+	// decorations in use.
 	dlInited = true;
 
 	for(i = 0; i < numsectors; i++)
@@ -1081,22 +1385,17 @@ void DL_InitForNewFrame()
 		}
 	}
 
-/*	if(maxDynLights)
-	{
-		// Sort the lumobjs based on their distance.
-		qsort(luminousList, numLuminous, sizeof(lumobj_t), lumobjSorter);
-		// Force the maximum.
-		if(numLuminous > maxDynLights) numLuminous = maxDynLights;
-	}*/
 	// Link the luminous objects into the blockmap.
 	DL_LinkLuminous();
 }
 
-// Calls func for all luminous objects within the specified range from (x,y).
-boolean DL_RadiusIterator(fixed_t x, fixed_t y, fixed_t radius, 
-						  boolean (*func)(lumobj_t*,fixed_t))
+/*
+ * Calls func for all luminous objects within the specified range from (x,y).
+ */
+boolean DL_RadiusIterator
+	(fixed_t x, fixed_t y, fixed_t radius, boolean (*func)(lumobj_t*,fixed_t))
 {
-	int		s, t, bx1, by1, bx2, by2;
+	int	s, t, bx1, by1, bx2, by2;
 	fixed_t	dist;
 	lumobj_t *iter;
 	
@@ -1104,12 +1403,16 @@ boolean DL_RadiusIterator(fixed_t x, fixed_t y, fixed_t radius,
 	bx2 = X_TO_DLBX(x+radius);
 	by1 = Y_TO_DLBY(y-radius);
 	by2 = Y_TO_DLBY(y+radius);
+
 	// Walk through the blocks.
-	for(t=by1; t<=by2; t++)
-		for(s=bx1; s<=bx2; s++)
+	for(t = by1; t <= by2; t++)
+		for(s = bx1; s <= bx2; s++)
 		{
 			// We can't go outside the blockmap.
-			if(s < 0 || t < 0 || s >= dlBlockWidth || t >= dlBlockHeight) continue;
+			if(s < 0 || t < 0 || s >= dlBlockWidth || t >= dlBlockHeight) 
+			{
+				continue;
+			}
 			for(iter = *DLB_ROOT_DLBXY(s, t); iter; iter = iter->next)
 			{
 				dist = P_ApproxDistance(iter->thing->x - x, iter->thing->y - y);
@@ -1122,17 +1425,20 @@ boolean DL_RadiusIterator(fixed_t x, fixed_t y, fixed_t radius,
 	return true;
 }
 
-// Box contains the coordinates of the top left and bottom right corners.
-boolean DL_BoxIterator(fixed_t box[4], void *ptr, boolean (*func)(lumobj_t*,void*))
+/*
+ * 'box' contains the coordinates of the top left and bottom right corners.
+ */
+boolean DL_BoxIterator
+	(fixed_t box[4], void *ptr, boolean (*func)(lumobj_t*,void*))
 {
-	register fixed_t x, y;
+	fixed_t		x, y;
 	int			s, t, bbc[4];	// box block coordinates
 	lumobj_t	*iter;
 	boolean		accurate;
 	
-	bbc[BLEFT] = X_TO_DLBX(box[BLEFT]);
-	bbc[BRIGHT] = X_TO_DLBX(box[BRIGHT]);
-	bbc[BTOP] = Y_TO_DLBY(box[BTOP]);
+	bbc[BLEFT]   = X_TO_DLBX(box[BLEFT]);
+	bbc[BRIGHT]  = X_TO_DLBX(box[BRIGHT]);
+	bbc[BTOP]    = Y_TO_DLBY(box[BTOP]);
 	bbc[BBOTTOM] = Y_TO_DLBY(box[BBOTTOM]);
 
 	// Can we skip the whole test?
@@ -1155,8 +1461,10 @@ boolean DL_BoxIterator(fixed_t box[4], void *ptr, boolean (*func)(lumobj_t*,void
 	for(t = bbc[BTOP]; t <= bbc[BBOTTOM]; t++)
 		for(s = bbc[BLEFT]; s <= bbc[BRIGHT]; s++)
 		{
-			// If the edge of the box is in this block, we must do an accurate check.
-			accurate = (t==bbc[BTOP] || t==bbc[BBOTTOM] || s==bbc[BLEFT] || s==bbc[BRIGHT]);
+			// If the edge of the box is in this block, we must do an 
+			// accurate check.
+			accurate = (t==bbc[BTOP] || t==bbc[BBOTTOM] 
+				|| s==bbc[BLEFT] || s==bbc[BRIGHT]);
 			// Iterate the lights in this block.
 			for(iter = *DLB_ROOT_DLBXY(s, t); iter; iter = iter->next)
 			{
@@ -1164,7 +1472,8 @@ boolean DL_BoxIterator(fixed_t box[4], void *ptr, boolean (*func)(lumobj_t*,void
 				{
 					x = iter->thing->x;
 					y = iter->thing->y;
-					if(x >= box[BLEFT] && y >= box[BTOP] && x <= box[BRIGHT] && y <= box[BBOTTOM])
+					if(x >= box[BLEFT] && y >= box[BTOP] 
+						&& x <= box[BRIGHT] && y <= box[BBOTTOM])
 					{
 						if(!func(iter, ptr)) return false;
 					}

@@ -23,9 +23,30 @@ typedef struct lumobj_s					// For dynamic lighting.
 	byte	rgb[3];						// The color.
 	float	xoff;
 	float	xyscale;					// 1.0 if there's no modeldef.
+	DGLuint	tex;						// Lightmap texture.
+	DGLuint	floortex, ceiltex;			// Lightmaps for floor/ceil.
 	char	flaretex;					// Zero = automatical.
 } 
 lumobj_t;
+
+/*
+ * The data of a projected dynamic light is stored in this structure.
+ * A list of these is associated with all the lit segs/planes in a frame.
+ */
+typedef struct dynlight_s
+{
+	struct dynlight_s *next, *nextused;
+	int		flags;
+	float	s[2], t[2];
+	byte	color[3];
+	DGLuint texture;
+	uint	index;
+}
+dynlight_t;
+
+// Flags for projected dynamic lights.
+#define DYNF_REPEAT_S	0x1
+#define DYNF_REPEAT_T	0x2
 
 extern boolean	dlInited;
 extern lumobj_t	*luminousList;
@@ -33,12 +54,15 @@ extern lumobj_t	**dlSubLinks;
 extern int		numLuminous;
 extern int		useDynLights;
 extern int		maxDynLights, dlBlend, clipLights, dlMaxRad;
-extern float	dlRadFactor, dlFactor, dlContract;
+extern float	dlRadFactor, dlFactor;//, dlContract;
 extern int		useWallGlow, glowHeight;
 extern int		rend_info_lums;
 
+extern dynlight_t **floorLightLinks;
+extern dynlight_t **ceilingLightLinks;
+
 // Setup.
-void DL_InitBlockMap();
+void DL_InitLinks();
 void DL_Clear();	// 'Physically' destroy the tables.
 
 // Action.
@@ -46,8 +70,9 @@ void DL_ClearForFrame();
 void DL_InitForNewFrame();
 int DL_NewLuminous(void);
 lumobj_t *DL_GetLuminous(int index);
-void DL_ProcessSubsector(rendpoly_t *poly, subsector_t *ssec);
+void DL_ProcessSubsector(subsector_t *ssec);
 void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsector);
+dynlight_t *DL_GetSegLightLinks(int seg, int whichpart);
 
 // Helpers.
 boolean DL_RadiusIterator(fixed_t x, fixed_t y, fixed_t radius, boolean (*func)(lumobj_t*,fixed_t));

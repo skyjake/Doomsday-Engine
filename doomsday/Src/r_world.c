@@ -1091,7 +1091,7 @@ void R_SetupLevel(char *level_id, int flags)
 	if(flags & DDSLF_FIX_SKY) R_SkyFix();
 	if(flags & DDSLF_REVERB) S_CalcSectorReverbs();
 	
-	DL_InitBlockMap();	
+	DL_InitLinks();	
 	Cl_Reset();
 	RL_DeleteLists();
 	GL_DeleteRawImages();
