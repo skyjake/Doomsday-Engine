@@ -2,22 +2,45 @@
 include 'common.php';
 page_header( "Doomsday Engine Development :: Source Code" );
 
-$pagedir = array( "packages" => "Source Packages vs. CVS",
+$pagedir = array( "overview" => "Overview",
 		  "modules" => "CVS Modules",
 		  "checkout" => "Checking Out From CVS" );
 
 page_dir( "Source Code", $pagedir );
-begin_section( "packages", $pagedir );
+begin_section( "overview", $pagedir );
 ?>
 
-<p>Under construction.</p>
+<p>The source code is distributed under the
+<a href="LICENSE">GNU General Public License</a>.</p>
+
+<p>For an overview of the current code base, see the
+<a href="status.php">Current Status</a> page.</p>
 
 <?php
 end_section();
 begin_section( "modules", $pagedir );
 ?>
 
-<p>Under construction.</p>
+<table class="tab">
+
+<tr>
+<td><tt>distrib</tt>
+<td>Scripts (DOS batch files) for creating distribution packages.
+Uses <a href="http://www.rarsoft.com/">WinRAR</a> and
+<a href="http://www.winzip.com/">WinZip</a> command line tools (wzzip).
+
+<tr>
+<td><tt>doomsday</tt>
+<td>Visual C++ 6.0 project files and source code for
+the engine, jDoom, jHeretic, jHexen, jtNet2 (soon deprecated), OpenGL
+and Direct3D renderer, DEH reader plugin and A3D, DirectSound 6 and
+OpenAL (not working at the moment) sound interfaces.
+
+<tr>
+<td><tt>web</tt>
+<td>PHP sources of this website.
+
+</table>
 
 <?php
 end_section();
