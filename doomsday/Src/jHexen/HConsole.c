@@ -63,7 +63,6 @@ int CCmdCheatReveal(int argc, char **argv);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern char *SavePath;
 extern ccmd_t netCCmds[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -108,7 +107,7 @@ cvar_t gameCVars[] =
 	"SoundDebug", OBSOLETE|CVF_NO_ARCHIVE, CVT_INT, &DebugSound, 0, 1, "1=Display sound debug information.", 
 	"ReverbDebug", OBSOLETE|CVF_NO_ARCHIVE, CVT_BYTE, &cfg.reverbDebug, 0, 1, "1=Reverberation debug information in the console.", 
 	"ShowMana", OBSOLETE, CVT_INT, &cfg.showFullscreenMana, 0, 2, "Show mana when the status bar is hidden.", 
-	"SaveDir", OBSOLETE|CVF_PROTECTED, CVT_CHARPTR, &SavePath, 0, 0, "The directory for saved games.", 
+	//"SaveDir", OBSOLETE|CVF_PROTECTED, CVT_CHARPTR, &SavePath, 0, 0, "The directory for saved games.", 
 	"ChatMacro0", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0, "Chat macro 1.", 
 	"ChatMacro1", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0, "Chat macro 2.", 
 	"ChatMacro2", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0, "Chat macro 3.", 
@@ -170,7 +169,6 @@ cvar_t gameCVars[] =
 	"ctl-run",					0,			CVT_INT,	&cfg.alwaysRun,		0, 1,	"1=Always run.",
 	"ctl-use-dclick",			0,			CVT_INT,	&cfg.dclickuse,		0, 1,	"1=Double click forward/strafe equals pressing the use key.",
 	"ctl-use-immediate",		0,			CVT_INT,	&cfg.chooseAndUse,	0, 1,	"1=Use items immediately from the inventory.",
-	"file-savedir",			CVF_PROTECTED,	CVT_CHARPTR, &SavePath,		0, 0,	"The directory for saved games.",
 	"game-fastmonsters",		0,			CVT_BYTE,	&cfg.fastMonsters,	0, 1,	"1=Fast monsters in non-demo single player.",
 	"game-icecorpse",			0,			CVT_INT,	&cfg.translucentIceCorpse, 0, 1, "1=Translucent frozen monsters.",
 	"game-maulator-time",	CVF_NO_MAX,		CVT_INT,	&MaulatorSeconds,	1, 0,	"Dark Servant lifetime, in seconds (default: 25).",
@@ -178,14 +176,14 @@ cvar_t gameCVars[] =
 	"hud-mana",					0,			CVT_INT,	&cfg.showFullscreenMana, 0, 2, "Show mana when the status bar is hidden.",
 	"hud-status-size",		CVF_PROTECTED,	CVT_INT,	&cfg.sbarscale,		1, 20,	"Status bar size (1-20).",
 	"hud-title",				0,			CVT_BYTE,	&cfg.mapTitle,		0, 1,		"1=Show map title after entering map.",
-	"input-joy-x",		0,			CVT_INT,	&cfg.joyaxis[0],	0, 4,	"X axis control: 0=None, 1=Move, 2=Turn, 3=Strafe, 4=Look.",
-	"input-joy-y",		0,			CVT_INT,	&cfg.joyaxis[1],	0, 4,	"Y axis control.",
-	"input-joy-z",		0,			CVT_INT,	&cfg.joyaxis[2],	0, 4,	"Z axis control.",
-	"input-joy-rx",		0,			CVT_INT,	&cfg.joyaxis[3],	0, 4,	"X rotational axis control.",
-	"input-joy-ry",		0,			CVT_INT,	&cfg.joyaxis[4],	0, 4,	"Y rotational axis control.",
-	"input-joy-rz",		0,			CVT_INT,	&cfg.joyaxis[5],	0, 4,	"Z rotational axis control.",
-	"input-joy-slider1", 0,			CVT_INT,	&cfg.joyaxis[6],	0, 4,	"First slider control.",
-	"input-joy-slider2", 0,			CVT_INT,	&cfg.joyaxis[7],	0, 4,	"Second slider control.",
+	"input-joy-x",				0,			CVT_INT,	&cfg.joyaxis[0],	0, 4,	"X axis control: 0=None, 1=Move, 2=Turn, 3=Strafe, 4=Look.",
+	"input-joy-y",				0,			CVT_INT,	&cfg.joyaxis[1],	0, 4,	"Y axis control.",
+	"input-joy-z",				0,			CVT_INT,	&cfg.joyaxis[2],	0, 4,	"Z axis control.",
+	"input-joy-rx",				0,			CVT_INT,	&cfg.joyaxis[3],	0, 4,	"X rotational axis control.",
+	"input-joy-ry",				0,			CVT_INT,	&cfg.joyaxis[4],	0, 4,	"Y rotational axis control.",
+	"input-joy-rz",				0,			CVT_INT,	&cfg.joyaxis[5],	0, 4,	"Z rotational axis control.",
+	"input-joy-slider1",		0,			CVT_INT,	&cfg.joyaxis[6],	0, 4,	"First slider control.",
+	"input-joy-slider2",		0,			CVT_INT,	&cfg.joyaxis[7],	0, 4,	"Second slider control.",
 	"input-mouse-x-sensi", CVF_NO_MAX,		CVT_INT,	&cfg.mouseSensiX,	0, 25, "Mouse X axis sensitivity.",
 	"input-mouse-y-sensi", CVF_NO_MAX,		CVT_INT,	&cfg.mouseSensiY,	0, 25, "Mouse Y axis sensitivity.",
 	"menu-scale",				0,			CVT_FLOAT,	&cfg.menuScale,		.1f, 1,	"Scaling for menu screens.",
