@@ -3,12 +3,12 @@
 //**
 //** REND_MODEL.C
 //**
-//** MD2/DMD renderer.
+//** 3D model renderer, version 2.0.
 //**
 //**************************************************************************
 
 // Note: Light vectors and triangle normals are considered to be
-// in a totally separate, right-handed coordinate system.
+// in a totally independent, right-handed coordinate system.
 
 // There is some more confusion with Y and Z axes as the game uses 
 // Z as the vertical axis and the rendering code and model definitions
@@ -27,9 +27,11 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
+#include "net_main.h"	// for gametic
+
 // MACROS ------------------------------------------------------------------
 
-#define MAX_VERTS			4096
+#define MAX_VERTS			4096	// Maximum number of vertices per model.
 #define MAX_MODEL_LIGHTS	10
 #define DOTPROD(a, b)		(a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)			qatan2(y,x)
@@ -39,8 +41,17 @@
 
 typedef enum rendcmd_e {
 	RC_COMMAND_COORDS,
-	RC_OTHER_COORDS
+	RC_OTHER_COORDS,
+	RC_BOTH_COORDS
 } rendcmd_t;
+
+typedef enum blendmode_e {
+	BM_NORMAL,
+	BM_ADD,
+	BM_DARK,
+	BM_SUBTRACT,
+	BM_REVERSE_SUBTRACT
+} blendmode_t;
 
 typedef struct {
 	boolean		used;
@@ -49,14 +60,9 @@ typedef struct {
 	float		worldVector[3];	// Light direction vector (world space).
 	float		vector[3];		// Light direction vector (model space).
 	float		color[3];		// How intense the light is (0..1, RGB).
+	float		offset;
+	float		lightSide, darkSide; // Factors for world light.
 } mlight_t;
-
-/*typedef struct {
-	float		vertex[3];
-	float		shinytexcoord[2];
-	float		color[3];
-	float		normal[3];
-} mvertex_t;*/
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -66,15 +72,10 @@ typedef struct {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int gametic;
-extern float vx, vy, vz;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int modelLight = 4;
 int frameInter = true;
-int rend_model_shiny_near = 500;
-int rend_model_shiny_far = 750;
 int model_tri_count;
 float rend_model_lod = 256;
 
@@ -87,7 +88,7 @@ static float floorLight[3] = { 0, 0, -1 };
 static mlight_t lights[MAX_MODEL_LIGHTS] =
 {
 	// The first light is the world light.
-	false, 0, NULL, { 0, 0, 0 }, { 1, 1, 1 }
+	false, 0, NULL
 };
 static int numLights;
 
@@ -101,8 +102,11 @@ static glvertex_t modelNormals[MAX_VERTS];
 static glcolor_t modelColors[MAX_VERTS];
 static gltexcoord_t modelTexCoords[MAX_VERTS];
 
+// Global variables for ease of use. (Egads!)
 static float modelCenter[3];
 static float ambientColor[3];
+static int activeLod;
+static char *vertexUsage;
 
 // CODE --------------------------------------------------------------------
 
@@ -190,576 +194,6 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
 	return mdl->frames + index;
 }
 
-#if 0
-//===========================================================================
-// R_RenderModel
-//	This has swollen somewhat; a rewrite would be in order!
-//===========================================================================
-void Rend_RenderModel(vissprite_t *spr, int number)
-{
-	modeldef_t		*mf = spr->mo.mf, *nextmf = spr->mo.nextmf;
-	submodeldef_t	*smf = &mf->sub[number];
-	model_t			*mdl = modellist[smf->model];
-	dmd_frame_t		*frame = R_GetVisibleFrame(mf, number, spr->mo.id);
-	dmd_frame_t		*nextframe = NULL;
-	byte			*ptr;
-	int				pass, i, k, c, count, sectorlight;
-	dmd_glCommandVertex_t *glc;
-	dmd_vertex_t *vtx, *nextvtx;
-	int				additiveBlending = 0; // +1 or -1
-	boolean			lightVertices = false;
-	float			alpha, customAlpha, yawAngle, pitchAngle;
-	rendpoly_t		tempquad;
-	mlight_t		*light;
-	mvertex_t		*vertices, *mVtx;
-	int				numVertices;
-	float			modelCenter[3];
-	float			lightCenter[3], dist, intensity;
-	lumobj_t		*lum;
-	float			vtxLight[4], dot;
-	int				mflags = smf->flags;
-	int				useskin;
-	int				numlights = 0;
-	float			ambientColor[3] = { 0, 0, 0 };
-	float			inv, interpos, endpos;
-	float			shininess = mf->def->sub[number].shiny;
-	float			*shinycol = mf->def->sub[number].shinycolor;
-	float			sh_u, sh_v, sh_ang, sh_pnt, *nptr;
-	float			delta[3], mdl_nyaw, mdl_npitch;
-	float			lodFactor;
-	int				activeLod = 0;
-
-	// Distance reduces shininess (if not truly shiny).
-	if(shininess > 0 && shininess < 1 
-		&& spr->distance > rend_model_shiny_near)
-	{
-		if(spr->distance < rend_model_shiny_far)
-		{
-			shininess *= 1 - (spr->distance - rend_model_shiny_near) 
-				/ (rend_model_shiny_far - rend_model_shiny_near);
-		}
-		else
-		{
-			// Too far away.
-			shininess = 0;
-		}
-	}
-
-	useskin = smf->skin;
-	// Selskin overrides the skin range.
-	if(mflags & MFF_SELSKIN)
-	{
-		i = (spr->mo.selector >> DDMOBJ_SELECTOR_SHIFT)
-			& mf->def->sub[number].selskinbits[0]; // Selskin mask
-		c = mf->def->sub[number].selskinbits[1]; // Selskin shift
-		if(c > 0) i >>= c; else i <<= -c;
-		if(i > 7) i = 7; // Maximum number of skins for selskin.
-		if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
-		useskin = mf->def->sub[number].selskins[i];
-	}
-	// Is there a skin range for this frame?
-	// (During model setup skintics and skinrange are set to >0.)
-	if(smf->skinrange > 1)
-	{
-		// What rule to use for determining the skin?
-		useskin += (mflags & MFF_IDSKIN? spr->mo.id
-			: gametic/mf->skintics) % smf->skinrange;
-	}
-
-	interpos = spr->mo.inter;
-
-	// Scale interpos. Intermark becomes zero and endmark becomes one.
-	// (Full sub-interpolation!) But only do it for the standard interrange.
-	// If a custom one is defined, don't touch interpos.
-	if(mf->interrange[0] == 0 && mf->interrange[1] == 1)
-	{
-		if(mf->internext) 
-			endpos = mf->internext->intermark;
-		else
-			endpos = 1;
-		interpos = (interpos - mf->intermark) / (endpos - mf->intermark);		
-	}
-
-	if(mf->scale[VX] == 0
-		&& mf->scale[VY] == 0
-		&& mf->scale[VZ] == 0) return;	// Why bother? It's infinitely small...
-
-	// Check for possible interpolation.
-	if(frameInter 
-		&& nextmf
-		&& !(smf->flags & MFF_DONT_INTERPOLATE))
-	{
-		if(nextmf->sub[number].model == smf->model)
-		{
-			//nextframe = mdl->frames + nextmf->sub[number].frame;
-			nextframe = R_GetVisibleFrame(nextmf, number, spr->mo.id);
-			nextvtx = nextframe->vertices;
-		}
-	}
-
-	// Need translation?
-	if(smf->flags & MFF_SKINTRANS) 
-		useskin = (spr->mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
-
-	// Submodel can define a custom Transparency level.
-	customAlpha = 1 - smf->alpha/255.0f;
-
-	// Light level.
-	if(missileBlend && (spr->mo.flags & DDMF_BRIGHTSHADOW
-		|| mflags & MFF_BRIGHTSHADOW))
-	{
-		alpha = .80f;	//204;	// 80 %.
-		additiveBlending = 1;
-	}
-	else if(mflags & MFF_BRIGHTSHADOW2)
-	{
-		alpha = customAlpha; // NOTE: CustomAlpha is used here!!
-		additiveBlending = 1;
-	}
-	else if(mflags & MFF_DARKSHADOW)
-	{
-		alpha = customAlpha; 
-		additiveBlending = -1;
-	}
-	else if(spr->mo.flags & DDMF_SHADOW || mflags & MFF_SHADOW2)
-		alpha = .2f; 
-	else if(spr->mo.flags & DDMF_ALTSHADOW || mflags & MFF_SHADOW1)
-		alpha = .62f;	
-/*	else if(spr->alpha >= 0)
-		alpha = spr->alpha * customAlpha; */
-	else
-		alpha = customAlpha;
-
-	// More custom alpha?
-	if(spr->mo.alpha >= 0) alpha *= spr->mo.alpha;
-
-	if(alpha <= 0) return; // Fully transparent.
-
-	// Init. Set the texture.
-	if(shininess < 1) GL_BindTexture(GL_PrepareSkin(mdl, useskin));
-
-	yawAngle = spr->mo.yaw;
-	pitchAngle = spr->mo.pitch;
-
-	// Coordinates to the center of the model.
-	modelCenter[VX] = Q_FIX2FLT(spr->mo.gx) + mf->offset[VX] 
-		+ spr->mo.visoff[VX];
-	modelCenter[VY] = Q_FIX2FLT(spr->mo.gy) + mf->offset[VZ] 
-		+ spr->mo.visoff[VY];
-	modelCenter[VZ] = Q_FIX2FLT((spr->mo.gz+spr->mo.gzt) >> 1) 
-		+ mf->offset[VY] + spr->mo.visoff[VZ];
-
-	if((spr->mo.lightlevel < 0 || mflags & MFF_FULLBRIGHT) 
-		&& !(mflags & MFF_DIM)) 
-	{
-		ambientColor[0] = ambientColor[1] = ambientColor[2] = 1;
-		gl.Color4f(1, 1, 1, alpha);
-	}
-	else
-	{
-		tempquad.vertices[0].dist = Rend_PointDist2D(spr->mo.v1);
-		tempquad.numvertices = 1;
-		sectorlight = r_ambient > spr->mo.lightlevel? r_ambient 
-			: spr->mo.lightlevel;
-		RL_VertexColors(&tempquad, sectorlight, spr->mo.rgb);
-		// This way the distance darkening has an effect.
-		for(i = 0; i < 3; i++)
-		{
-			ambientColor[i] = tempquad.vertices[0].color.rgba[i] / 150.0f;
-			if(ambientColor[i] > 1) ambientColor[i] = 1;
-		}
-		if(modelLight)
-		{
-			memset(lights, 0, sizeof(lights));
-			lightVertices = true;
-			// The model should be lit with world light. 
-			numlights++;
-			lights[0].used = true;
-			// Set the correct intensity.
-			for(i=0; i<3; i++) 
-			{
-				lights[0].vector[i] = worldLight[i];
-				lights[0].color[i] = ambientColor[i];// * 1.8f;
-				// Now we can diminish the actual ambient light that
-				// hits the object. (Gotta have some contrast.)
-				ambientColor[i] *= .5f; //.9f;
-			}
-			// Rotate the light direction to model space.
-			M_RotateVector(lights[0].vector, -yawAngle, -pitchAngle);
-			//ambientLight *= .9f;
-			// Plane glow?
-			if(spr->mo.hasglow)
-			{
-				if(spr->mo.ceilglow[0] 
-					|| spr->mo.ceilglow[1] 
-					|| spr->mo.ceilglow[2])
-				{
-					light = lights + numlights++;
-					light->used = true;
-					memcpy(light->vector, &ceilingLight, sizeof(ceilingLight));
-					M_RotateVector(light->vector, -yawAngle, -pitchAngle);
-					dist = 1 - (spr->mo.secceil - FIX2FLT(spr->mo.gzt)) / glowHeight;
-					scaleFloatRgb(light->color, spr->mo.ceilglow, dist);
-					scaleAmbientRgb(ambientColor, spr->mo.ceilglow, dist/3);
-				}
-				if(spr->mo.floorglow[0] 
-					|| spr->mo.floorglow[1] 
-					|| spr->mo.floorglow[2])
-				{
-					light = lights + numlights++;
-					light->used = true;
-					memcpy(light->vector, &floorLight, sizeof(floorLight));
-					M_RotateVector(light->vector, -yawAngle, -pitchAngle);
-					dist = 1 - (FIX2FLT(spr->mo.gz) - spr->mo.secfloor) / glowHeight;
-					scaleFloatRgb(light->color, spr->mo.floorglow, dist);
-					scaleAmbientRgb(ambientColor, spr->mo.floorglow, dist/3);
-				}
-			}
-		}
-		// Add extra light using dynamic lights.
-		if(modelLight > numlights && dlInited)
-		{
-			// Find the nearest sources of light. They will be used to
-			// light the vertices a bit later. First initialize the array.
-			for(i=numlights; i<MAX_MODEL_LIGHTS; i++) 
-				lights[i].dist = DDMAXINT;
-			mlSpr = spr;
-			DL_RadiusIterator(spr->mo.subsector, spr->mo.gx, spr->mo.gy, 
-				dlMaxRad << FRACBITS, modelLighter);
-
-			// Calculate the directions and intensities of the lights.
-			for(i=numlights, light=lights+1; i<modelLight; i++, light++)
-			{
-				if(!light->lum) continue;
-				lum = light->lum;
-			
-				// This isn't entirely accurate, but who could notice?
-				dist = FIX2FLT(light->dist);				
-
-				// The intensity of the light.
-				intensity = (1 - dist/(lum->radius*2)) * 2;
-				if(intensity < 0) intensity = 0;
-				if(intensity > 1) intensity = 1;
-
-				if(intensity == 0)
-				{
-					// No point in lighting with this!
-					light->lum = NULL;
-					continue;
-				}
-
-				light->used = true;
-
-				// The center of the light source.
-				lightCenter[VX] = Q_FIX2FLT(lum->thing->x);
-				lightCenter[VY] = Q_FIX2FLT(lum->thing->y);
-				lightCenter[VZ] = Q_FIX2FLT(lum->thing->z) + lum->center;
-
-				// Calculate the normalized direction vector, 
-				// pointing out of the model.
-				for(c=0; c<3; c++) 
-				{
-					light->vector[c] = (lightCenter[c] - modelCenter[c]) / dist;
-					// ...and the color of the light.
-					light->color[c] = lum->rgb[c]/255.0f * intensity;
-				}
-
-				// We must transform the light vector to model space.
-				M_RotateVector(light->vector, -yawAngle, -pitchAngle);				
-			}
-			numlights = i;
-		}
-		if(!modelLight)
-		{
-			// Just the ambient light.
-			gl.Color4ub(tempquad.vertices[0].color.rgba[CR],
-				tempquad.vertices[0].color.rgba[CG],
-				tempquad.vertices[0].color.rgba[CB],
-				alpha * 255);
-			lightVertices = false;
-		}
-	}
-
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.PushMatrix();
-
-	// Model space => World space
-	gl.Translatef(spr->mo.v1[VX] + mf->offset[VX] + spr->mo.visoff[VX], 
-		FIX2FLT(spr->mo.gz) + mf->offset[VY] + spr->mo.visoff[VZ] 
-		- FIX2FLT(spr->mo.floorclip), 
-		spr->mo.v1[VY] + mf->offset[VZ] + spr->mo.visoff[VY]);
-
-	// Model rotation.
-	gl.Rotatef(spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle, 0, 1, 0);
-	gl.Rotatef(spr->mo.viewaligned? spr->mo.v2[VY] : pitchAngle, 0, 0, 1); 
-
-	// Scaling and model space offset.
-	gl.Scalef(mf->scale[VX], mf->scale[VY], mf->scale[VZ]);
-	gl.Translatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
-
-	// Change the blending mode.
-	if(additiveBlending > 0)		// Bright.
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-	else if(additiveBlending < 0)	// Dark.
-		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ONE_MINUS_SRC_ALPHA);
-
-	// Should we prepare for shiny rendering?
-	if(shininess > 0)
-	{
-		// Calculate normalized (0,1) model yaw and pitch.
-		mdl_nyaw = (spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle) / 360;
-		mdl_npitch = (spr->mo.viewaligned? spr->mo.v2[VY] : pitchAngle) / 360;
-		
-		// Are they in range?
-		while(mdl_nyaw < 0) mdl_nyaw++;
-		while(mdl_nyaw > 1) mdl_nyaw--;
-		while(mdl_npitch < 0) mdl_npitch++;
-		while(mdl_npitch > 1) mdl_npitch--;
-		
-		delta[VX] = modelCenter[VX] - vx;
-		delta[VY] = modelCenter[VY] - vz;
-		delta[VZ] = modelCenter[VZ] - vy;
-		sh_ang = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY]))
-			/ PI + 0.5f; // sh_ang is [0,1]
-		sh_pnt = QATAN2(delta[VY], delta[VX]) / (2*PI);
-	}
-
-	// Prepare the vertices (calculate interpolated coordinates,
-	// lighting, texture coordinates, normals).
-	numVertices = mdl->info.numVertices;
-	vertices = Z_Malloc(sizeof(mvertex_t) * numVertices, PU_STATIC, 0);
-
-	// Calculate the suitable LOD.
-	if(mdl->info.numLODs > 1 && rend_model_lod != 0)
-	{
-		lodFactor = rend_model_lod * screenWidth/640.0f 
-			/ (fieldOfView/90.0f);
-		if(lodFactor) lodFactor = 1/lodFactor;
-		
-		// Determine the LOD we will be using.
-		activeLod = (int) (lodFactor * spr->distance);
-		if(activeLod < 0) activeLod = 0;
-		if(activeLod >= mdl->info.numLODs) 
-			activeLod = mdl->info.numLODs - 1;
-	}
-	else
-	{
-		// Why bother...
-		lodFactor = 0;
-		activeLod = 0;
-	}
-
-	// Calculate interpolated vertices, shiny texcoords and lighting.
-	for(i = 0, mVtx = vertices, vtx = frame->vertices; 
-		i < numVertices; i++, mVtx++, vtx++)
-	{
-		// Is this vertex used at this LOD?
-		if(mdl->vertexUsage	&& !(mdl->vertexUsage[i] & (1 << activeLod)))
-			continue; // Not used; can be skipped.
-	
-		if(nextframe)
-		{
-			inv = 1 - interpos;
-			nextvtx = nextframe->vertices + i; 
-		}
-
-		// Calculate the surface normal at this vertex.
-		memcpy(mVtx->normal, vtx->normal, sizeof(mVtx->normal));
-		if(nextframe
-			&& (vtx->normal[VX] != nextvtx->normal[VX]
-				|| vtx->normal[VY] != nextvtx->normal[VY]
-				|| vtx->normal[VZ] != nextvtx->normal[VZ]))
-		{
-			// Interpolate to next position.
-			nptr = nextvtx->normal;
-			mVtx->normal[VX] = mVtx->normal[VX]*inv + nptr[VX]*interpos;
-			mVtx->normal[VY] = mVtx->normal[VY]*inv + nptr[VY]*interpos;
-			mVtx->normal[VZ] = mVtx->normal[VZ]*inv + nptr[VZ]*interpos;
-			// Normalize it (approximately).
-			dist = M_ApproxDistancef(mVtx->normal[VZ],
-				M_ApproxDistancef(mVtx->normal[VX], mVtx->normal[VY]));
-			if(dist)
-			{
-				mVtx->normal[VX] /= dist;
-				mVtx->normal[VY] /= dist;
-				mVtx->normal[VZ] /= dist;
-			}
-		}
-
-		// Shiny texture coordinates, too, if they're needed.
-		if(shininess > 0)
-		{
-			// Calculate cylindrically mapped texcoords.
-			// Quite far from perfect but very nice anyway.
-			sh_u = QATAN2(mVtx->normal[VY], mVtx->normal[VX]) / (2*PI) - mdl_nyaw;
-			// This'll hide the wrap-around behind the model.
-			// Works more often than not.
-			while(sh_u > sh_pnt) sh_u--;
-			while(sh_u < sh_pnt-1) sh_u++;
-			sh_u += sh_u - sh_pnt; 
-
-			sh_v = QASIN(-mVtx->normal[VZ])/PI + 0.5f - mdl_npitch;
-			sh_v += sh_v - sh_ang;
-			
-			mVtx->shinytexcoord[VX] = sh_u;
-			mVtx->shinytexcoord[VY] = sh_v;
-		}
-				
-		// Also calculate the light level at the vertex?
-		if(lightVertices) 
-		{
-			// Begin with total darkness.
-			vtxLight[0] = vtxLight[1] = vtxLight[2] = 0;
-			
-			// Add light from each source.
-			for(k = 0, light = lights; k < numlights; k++, light++)
-			{
-				if(!light->used) continue;
-				dot = DOTPROD(light->vector, mVtx->normal); 
-				dot *= 1.25f; // Looks-good factor :-).
-				if(dot <= 0) continue; // No light from the wrong side.
-				if(dot > 1) dot = 1;
-				for(c = 0; c < 3; c++)
-					vtxLight[c] += dot * light->color[c];
-			}
-			
-			// Check for ambient, too.
-			for(k = 0; k < 3; k++)
-			{
-				if(vtxLight[k] < ambientColor[k]) 
-					vtxLight[k] = ambientColor[k];
-
-				// This is the final color.
-				mVtx->color[k] = vtxLight[k];
-			}
-		}
-				
-		// The interpolated vertex coordinates.
-		if(nextframe)
-		{
-			mVtx->vertex[VX] = vtx->vertex[VX] * inv 
-				+ nextvtx->vertex[VX] * interpos;
-			mVtx->vertex[VY] = vtx->vertex[VZ] * inv 
-				+ nextvtx->vertex[VZ] * interpos;
-			mVtx->vertex[VZ] = vtx->vertex[VY] * inv 
-				+ nextvtx->vertex[VY] * interpos;
-		}
-		else
-		{
-			mVtx->vertex[VX] = vtx->vertex[VX];
-			mVtx->vertex[VY] = vtx->vertex[VZ];
-			mVtx->vertex[VZ] = vtx->vertex[VY];
-		}		
-	}
-
-	// Render the model in two passes:
-	// Pass 0 = regular
-	// Pass 1 = shiny skin
-	for(pass = 0; pass < 2; pass++)
-	{
-		//float starttime = I_GetSeconds();
-
-		if(pass == 0 && shininess >= 1) continue;
-		if(pass == 1 && shininess <= 0) continue;
-
-		switch(pass)
-		{
-		case 0:
-			break;
-
-		case 1: // Initialize the shiny skin pass.
-			// Change the texture.
-			GL_BindTexture(GL_PrepareShinySkin(mf, number));
-
-			// We're rendering on top of pass zero (usually).
-			gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-
-			// Set blending mode, two choices: reflected and specular.
-			gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, 
-				mflags & MFF_SHINY_SPECULAR? DGL_ONE	// Specular.
-				: DGL_ONE_MINUS_SRC_ALPHA);				// Reflected.
-
-			if(mflags & MFF_SHINY_LIT) 
-			{
-				gl.Color4f(ambientColor[0] * shinycol[0],
-					ambientColor[1] * shinycol[1], 
-					ambientColor[2] * shinycol[2], shininess);
-			}
-			else
-			{
-				gl.Color4f(shinycol[0], shinycol[1], shinycol[2], shininess);
-			}
-			break;
-		}
-
-		// Draw the triangles using the GL commands.
-		ptr = (byte*) mdl->lods[activeLod].glCommands;
-		while(*ptr)
-		{
-			count = *(int*) ptr;
-			ptr += 4;
-			gl.Begin(count > 0? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
-			if(count < 0) count = -count;
-			model_tri_count += count - 2;
-			while(count--)
-			{	
-				glc = (dmd_glCommandVertex_t*) ptr;
-				ptr += sizeof(dmd_glCommandVertex_t);
-				mVtx = vertices + glc->vertexIndex;
-
-				// Texture coordinate.
-				if(pass == 0) 
-				{
-					// Regular pass: just use the texcoord at the vertex.
-					gl.TexCoord2fv(&glc->s);//, glc->t);
-
-					if(lightVertices) 
-					{
-						memcpy(vtxLight, mVtx->color, sizeof(mVtx->color));
-						vtxLight[3] = alpha;
-						// Set the color.
-						gl.Color4fv(vtxLight);								
-					}
-				}
-				else if(pass == 1)
-				{
-					gl.TexCoord2fv(mVtx->shinytexcoord);
-				}
-				gl.Vertex3fv(mVtx->vertex);
-			}
-			gl.End();
-		}
-		
-		// Restore old rendering state.
-		switch(pass)
-		{
-		case 0:
-			break;
-
-		case 1:
-			gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
-			if(!additiveBlending)
-				gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-			break;
-		}
-
-		//ST_Message("mdltime:%.2f sec\n", I_GetSeconds()-starttime);
-	}
-	
-	Z_Free(vertices);
-
-	// Restore renderer state.
-	gl.MatrixMode(DGL_MODELVIEW);
-	gl.PopMatrix();
-
-	if(additiveBlending)
-	{
-		// Change to normal blending.
-		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-	}
-}
-#endif
-
 /*
  * Render a set of GL commands using the given data.
  */
@@ -770,12 +204,29 @@ void Mod_RenderCommands
 	byte *pos;
 	glcommand_vertex_t *v;
 	int count;
+	void *coords[2];
 
 	// Disable all vertex arrays.
 	gl.DisableArrays(true, true, 0xf);
 
-	// Load and lock the vertex array.
-	gl.Arrays(vertices, colors, 0, NULL, numVertices);
+	// Load the vertex array.
+	switch(mode)
+	{
+	case RC_OTHER_COORDS:
+		coords[0] = texCoords;
+		gl.Arrays(vertices, colors, 1, coords, 0);
+		break;
+
+	case RC_BOTH_COORDS:
+		coords[0] = NULL;
+		coords[1] = texCoords;
+		gl.Arrays(vertices, colors, 2, coords, 0);
+		break;
+
+	default:
+		gl.Arrays(vertices, colors, 0, NULL, 0 /* numVertices */);
+		break;
+	}
 
 	for(pos = glCommands; *pos; )
 	{
@@ -794,7 +245,7 @@ void Mod_RenderCommands
 			v = (glcommand_vertex_t*) pos;
 			pos += sizeof(glcommand_vertex_t);
 
-			if(mode == RC_COMMAND_COORDS)
+			if(mode != RC_OTHER_COORDS)
 				gl.TexCoord2fv(&v->s);
 
 			gl.ArrayElement(v->index);
@@ -804,7 +255,7 @@ void Mod_RenderCommands
 		gl.End();
 	}
 	
-	gl.UnlockArrays();
+	/* gl.UnlockArrays(); */
 }
 
 /*
@@ -829,49 +280,24 @@ void Mod_LerpVertices
 	}
 
 	inv = 1 - pos;
-	for(i = 0; i < count; i++, start++, end++, out++)
+
+	if(vertexUsage)
 	{
-		out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
-		out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
-		out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
+		for(i = 0; i < count; i++, start++, end++, out++)
+			if(vertexUsage[i] & (1 << activeLod))
+			{
+				out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
+				out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
+				out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
+			}
 	}
-}
-
-/*
- * Interpolate between two sets of normals.
- */
-void Mod_LerpNormals
-	(float pos, int count, model_vertex_t *start, model_vertex_t *end, 
-	 glvertex_t *out)
-{
-	int i;
-	float inv, length;
-
-	if(start == end || pos == 0)
+	else
 	{
-		for(i = 0; i < count; i++, start++, out++)
+		for(i = 0; i < count; i++, start++, end++, out++)
 		{
-			out->xyz[0] = start->xyz[0];
-			out->xyz[1] = start->xyz[1];
-			out->xyz[2] = start->xyz[2];
-		}
-		return;
-	}
-
-	inv = 1 - pos;
-	for(i = 0; i < count; i++, start++, end++, out++)
-	{
-		out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
-		out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
-		out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
-
-		// Normals must stay normal.
-		length = M_ApproxDistance3f(out->xyz[0], out->xyz[1], out->xyz[2]);
-		if(length)
-		{
-		/*	out->xyz[0] /= length;
-			out->xyz[1] /= length;
-			out->xyz[2] /= length;*/
+			out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
+			out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
+			out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
 		}
 	}
 }
@@ -880,34 +306,66 @@ void Mod_LerpNormals
  * Calculate vertex lighting.
  */
 void Mod_VertexColors
-	(int count, glcolor_t *out, glvertex_t *normal, byte alpha)
+	(int count, glcolor_t *out, glvertex_t *normal, byte alpha,
+	 float ambient[3])
 {
 	int i, k;
-	float color[3], dot;
+	float color[3], extra[3], *dest, dot;
 	mlight_t *light;
 
 	for(i = 0; i < count; i++, out++, normal++)
 	{
+		if(vertexUsage && !(vertexUsage[i] & (1 << activeLod)))
+			continue;
+
 		// Begin with total darkness.
 		memset(color, 0, sizeof(color));
+		memset(extra, 0, sizeof(extra));
 					
 		// Add light from each source.
 		for(k = 0, light = lights; k < numLights; k++, light++)
 		{
 			if(!light->used) continue;
 			dot = DOTPROD(light->vector, normal->xyz); 
-			dot *= 1.2f; // Looks-good factor :-).
-			if(dot <= 0) continue; // No light from the wrong side.
-			if(dot > 1) dot = 1;
-			color[0] += dot * light->color[0];
-			color[1] += dot * light->color[1];
-			color[2] += dot * light->color[2];
+			//dot *= 1.2f; // Looks-good factor :-).
+			if(light->lum)
+			{
+				dest = color;
+			}
+			else
+			{
+				// This is world light (won't be affected by ambient).
+				// Ability to both light and shade.
+				dest = extra;
+				dot += light->offset; // Shift a bit towards the light.
+				if(dot > 0) 
+					dot *= light->lightSide; 
+				else 
+					dot *= light->darkSide; 
+			}
+			// No light from the wrong side.
+			if(dot <= 0) 
+			{
+				// Lights with a source won't shade anything.
+				if(light->lum) continue;
+				if(dot < -1) dot = -1;	
+			}
+			else
+			{
+				if(dot > 1) dot = 1;
+			}
+
+			dest[0] += dot * light->color[0];
+			dest[1] += dot * light->color[1];
+			dest[2] += dot * light->color[2];
 		}
 			
 		// Check for ambient and convert to ubyte.
 		for(k = 0; k < 3; k++)
 		{
-			if(color[k] < ambientColor[k]) color[k] = ambientColor[k];
+			if(color[k] < ambient[k]) color[k] = ambient[k];
+			color[k] += extra[k];
+			if(color[k] < 0) color[k] = 0;
 			if(color[k] > 1) color[k] = 1;
 
 			// This is the final color.
@@ -930,6 +388,84 @@ void Mod_FullBrightVertexColors(int count, glcolor_t *colors, byte alpha)
 }
 
 /*
+ * Set all the colors into the array to the same values.
+ */
+void Mod_FixedVertexColors(int count, glcolor_t *colors, float *color)
+{
+	byte rgba[4] = { color[0] * 255, color[1] * 255, color[2] * 255,
+		color[3] * 255 };
+
+	for(; count-- > 0; colors++)
+		memcpy(colors->rgba, rgba, 4);
+}
+
+/*
+ * Calculate cylindrically mapped, shiny texture coordinates.
+ */
+void Mod_ShinyCoords
+	(int count, gltexcoord_t *coords, glvertex_t *normals, 
+	 float normYaw, float normPitch, float shinyAng, float shinyPnt)
+{
+	int i;
+	float u, v;
+
+	for(i = 0; i < count; i++, coords++, normals++)
+	{
+		if(vertexUsage && !(vertexUsage[i] & (1 << activeLod)))
+			continue;
+
+		// Calculate cylindrically mapped texcoords.
+		// Quite far from perfect but very nice anyway.
+		u = QATAN2(normals->xyz[VY], normals->xyz[VX]) / (2*PI) - normYaw;
+
+		// This'll hide the wrap-around behind the model.
+		// Works more often than not.
+		u = shinyPnt - 1 + M_CycleIntoRange(u - (shinyPnt - 1), 1);
+		u += u - shinyPnt; 
+
+		v = QASIN(-normals->xyz[VZ])/PI + 0.5f - normPitch;
+		v += v - shinyAng;
+		
+		coords->st[0] = u;
+		coords->st[1] = v;
+	}
+}
+
+/*
+ * Set the GL blending mode.
+ */
+void Mod_BlendMode(blendmode_t mode)
+{
+	switch(mode)
+	{
+	case BM_ADD:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+		break;
+
+	case BM_DARK:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_ONE_MINUS_SRC_ALPHA);
+		break;
+
+	case BM_SUBTRACT:
+		gl.Func(DGL_BLENDING_OP, DGL_SUBTRACT, 0);
+		gl.Func(DGL_BLENDING, DGL_ONE, DGL_SRC_ALPHA);
+		break;
+
+	case BM_REVERSE_SUBTRACT:
+		gl.Func(DGL_BLENDING_OP, DGL_REVERSE_SUBTRACT, 0);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+		break;
+
+	default:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+		break;
+	}
+}
+
+/*
  * Render a submodel from the vissprite.
  */
 void Mod_RenderSubModel(vissprite_t *spr, int number)
@@ -947,10 +483,15 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	float inter, endPos;
 	float yawAngle, pitchAngle;
 	float alpha, customAlpha;
-	float dist, intensity, lightCenter[3];
+	float dist, intensity, lightCenter[3], delta[3], color[4];
+	float ambient[3];
+	float shininess, *shinyColor;
+	float normYaw, normPitch, shinyAng, shinyPnt;
 	mlight_t *light;
 	byte byteAlpha;
-
+	blendmode_t blending = BM_NORMAL;
+	DGLuint skinTexture, shinyTexture;
+	
 	if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0) 
 	{
 		// Why bother? It's infinitely small...
@@ -964,17 +505,17 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 		|| subFlags & MFF_BRIGHTSHADOW))
 	{
 		alpha = .80f;	
-		//additiveBlending = 1;
+		blending = BM_ADD;
 	}
 	else if(subFlags & MFF_BRIGHTSHADOW2)
 	{
 		alpha = customAlpha; 
-		//additiveBlending = 1;
+		blending = BM_ADD;
 	}
 	else if(subFlags & MFF_DARKSHADOW)
 	{
 		alpha = customAlpha; 
-		//additiveBlending = -1;
+		blending = BM_DARK;
 	}
 	else if(spr->mo.flags & DDMF_SHADOW || subFlags & MFF_SHADOW2)
 		alpha = .2f; 
@@ -988,6 +529,10 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	if(alpha <= 0) return; // Fully transparent.
 	if(alpha > 1) alpha = 1;
 	byteAlpha = alpha * 255;
+
+	// Extra blending modes.
+	if(subFlags & MFF_SUBTRACT) blending = BM_SUBTRACT;
+	if(subFlags & MFF_REVERSE_SUBTRACT) blending = BM_REVERSE_SUBTRACT;	
 
 	useSkin = smf->skin;
 
@@ -1071,6 +616,31 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	if(inter < 0) inter = 0;
 	if(inter > 1) inter = 1;
 
+	// Determine the suitable LOD.
+	if(mdl->info.numLODs > 1 && rend_model_lod != 0)
+	{
+		float lodFactor = rend_model_lod * screenWidth/640.0f 
+			/ (fieldOfView/90.0f);
+		if(lodFactor) lodFactor = 1/lodFactor;
+		
+		// Determine the LOD we will be using.
+		activeLod = (int) (lodFactor * spr->distance);
+		if(activeLod < 0) activeLod = 0;
+		if(activeLod >= mdl->info.numLODs) activeLod = mdl->info.numLODs - 1;
+		vertexUsage = mdl->vertexUsage;
+	}
+	else
+	{
+		activeLod = 0;
+		vertexUsage = NULL;
+	}
+
+	// Interpolate vertices and normals.
+	Mod_LerpVertices(inter, numVerts, frame->vertices, nextFrame->vertices,
+		modelVertices);
+	Mod_LerpVertices(inter, numVerts, frame->normals, nextFrame->normals,
+		modelNormals);
+
 	// Coordinates to the center of the model.
 	modelCenter[VX] = FIX2FLT(spr->mo.gx) + mf->offset[VX] 
 		+ spr->mo.visoff[VX];
@@ -1079,20 +649,17 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 	modelCenter[VZ] = FIX2FLT((spr->mo.gz + spr->mo.gzt) >> 1) 
 		+ mf->offset[VY] + spr->mo.visoff[VZ];
 
-	// Interpolate vertices and normals.
-	Mod_LerpVertices(inter, numVerts, frame->vertices, nextFrame->vertices,
-		modelVertices);
-	Mod_LerpNormals(inter, numVerts, frame->normals, nextFrame->normals,
-		modelNormals);
-
 	// Calculate lighting.
 	if((spr->mo.lightlevel < 0 || subFlags & MFF_FULLBRIGHT) 
 		&& !(subFlags & MFF_DIM)) 
 	{
+		ambient[0] = ambient[1] = ambient[2] = 1;
 		Mod_FullBrightVertexColors(numVerts, modelColors, byteAlpha);
 	}
 	else
 	{
+		memcpy(ambient, ambientColor, sizeof(float) * 3);
+
 		// Calculate color for light sources nearby.
 		// Rotate light vectors to model's space.
 		for(i = 0, light = lights; i < numLights; i++, light++)
@@ -1138,17 +705,141 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 			// We must transform the light vector to model space.
 			M_RotateVector(light->vector, -yawAngle, -pitchAngle);				
 		}
-		Mod_VertexColors(numVerts, modelColors, modelNormals, byteAlpha);
+		Mod_VertexColors(numVerts, modelColors, modelNormals, 
+			byteAlpha, ambient);
 	}
 
-	gl.Disable(DGL_TEXTURING);
-	Mod_RenderCommands(RC_COMMAND_COORDS, mdl->lods[0].glCommands,
-		numVerts, modelVertices, modelColors, NULL);
-	gl.Enable(DGL_TEXTURING);
+	// Calculate shiny coordinates.
+	shininess = mf->def->sub[number].shiny;
+	if(shininess < 0) shininess = 0;
+	if(shininess > 1) shininess = 1;
+	if(shininess > 0)
+	{
+		shinyColor = mf->def->sub[number].shinycolor;
+		
+		// Calculate normalized (0,1) model yaw and pitch.
+		normYaw = M_CycleIntoRange(
+			(spr->mo.viewaligned? spr->mo.v2[VX] : yawAngle) / 360, 1);
+		normPitch = M_CycleIntoRange(
+			(spr->mo.viewaligned? spr->mo.v2[VY] : pitchAngle) / 360, 1);
+		
+		delta[VX] = modelCenter[VX] - vx;
+		delta[VY] = modelCenter[VY] - vz;
+		delta[VZ] = modelCenter[VZ] - vy;
+
+		shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY]))
+			/ PI + 0.5f; // shinyAng is [0,1]
+		shinyPnt = QATAN2(delta[VY], delta[VX]) / (2*PI);
+
+		Mod_ShinyCoords(numVerts, modelTexCoords, modelNormals, 
+			normYaw, normPitch, shinyAng, shinyPnt);
+
+		// Shiny color.
+		if(subFlags & MFF_SHINY_LIT)
+		{
+			for(c = 0; c < 3; c++)
+				color[c] = ambient[c] * shinyColor[c];
+		}
+		else
+		{
+			for(c = 0; c < 3; c++)
+				color[c] = shinyColor[c];
+		}
+		color[3] = shininess;
+
+		shinyTexture = GL_PrepareShinySkin(mf, number);
+	}
+
+	skinTexture = GL_PrepareSkin(mdl, useSkin);
+
+	// Render using multiple passes? 
+	if(shininess <= 0 || byteAlpha < 255 
+		|| blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR)
+		|| numTexUnits < 2 || !envModAdd)
+	{
+		// The first pass can be skipped if it won't be visible.
+		if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
+		{
+			Mod_BlendMode(blending);
+			gl.Bind(skinTexture);
+
+			Mod_RenderCommands(RC_COMMAND_COORDS, 
+				mdl->lods[activeLod].glCommands,
+				numVerts, modelVertices, modelColors, NULL);
+		}
+
+		if(shininess > 0)
+		{
+			gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
+
+			// Set blending mode, two choices: reflected and specular.
+			if(subFlags & MFF_SHINY_SPECULAR)
+				Mod_BlendMode(BM_ADD);
+			else 
+				Mod_BlendMode(BM_NORMAL);
+
+			// Shiny color.
+			Mod_FixedVertexColors(numVerts, modelColors, color);
+
+			if(numTexUnits > 1)
+			{
+				// We'll use multitexturing to clear out empty spots in
+				// the primary texture.
+				RL_SelectTexUnits(2);
+				gl.SetInteger(DGL_MODULATE_TEXTURE, 11);
+				gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+				gl.Bind(shinyTexture);
+				gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
+				gl.Bind(skinTexture);
+
+				Mod_RenderCommands(RC_BOTH_COORDS,
+					mdl->lods[activeLod].glCommands,
+					numVerts, modelVertices, modelColors, modelTexCoords);
+
+				RL_SelectTexUnits(1);
+				gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+			}
+			else
+			{
+				// Empty spots will get shine, too.
+				gl.Bind(shinyTexture);
+				Mod_RenderCommands(RC_OTHER_COORDS, 
+					mdl->lods[activeLod].glCommands,
+					numVerts, modelVertices, modelColors, modelTexCoords);
+			}
+		}
+	}
+	else 
+	{
+		// A special case: specular shininess on an opaque object.
+		// Multitextured shininess with the normal blending.
+		Mod_BlendMode(blending);
+		RL_SelectTexUnits(2);
+		// Tex1*Color + Tex2RGB*ConstRGB
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 10);
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, 1);
+		// Multiply by shininess.
+		for(c = 0; c < 3; c++) color[c] *= color[3];
+		gl.SetFloatv(DGL_ENV_COLOR, color);
+		gl.Bind(shinyTexture);
+
+		gl.SetInteger(DGL_ACTIVE_TEXTURE, 0);
+		gl.Bind(skinTexture);
+		
+		Mod_RenderCommands(RC_BOTH_COORDS, 
+			mdl->lods[activeLod].glCommands,
+			numVerts, modelVertices, modelColors, modelTexCoords);
+
+		RL_SelectTexUnits(1);
+		gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+	}
 
 	// We're done!
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PopMatrix();
+	
+	gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
+	Mod_BlendMode(BM_NORMAL);
 }
 
 /*
@@ -1175,15 +866,7 @@ void Rend_RenderModel(vissprite_t *spr)
 
 	// Determine the ambient light affecting the model.
 	for(i = 0; i < 3; i++)
-	{
-		if(!modelLight)
-			ambientColor[i] = quad.vertices[0].color.rgba[i] / 255.0f;
-		else
-		{
-			ambientColor[i] = quad.vertices[0].color.rgba[i] / 150.0f;
-			if(ambientColor[i] > 1) ambientColor[i] = 1;
-		}
-	}
+		ambientColor[i] = quad.vertices[0].color.rgba[i] / 255.0f;
 
 	if(modelLight)
 	{
@@ -1196,15 +879,26 @@ void Rend_RenderModel(vissprite_t *spr)
 		// Set the correct intensity.
 		for(i = 0; i < 3; i++) 
 		{
-			lights[0].worldVector[i] = worldLight[i];
-			lights[0].color[i] = ambientColor[i];// * 1.8f;
-			// Now we can diminish the actual ambient light that
-			// hits the object. (Gotta have some contrast.)
-			ambientColor[i] *= .5f; //.9f;
-		}
+			lights->worldVector[i] = worldLight[i];
+			lights->color[i] = ambientColor[i];
 
-		// Rotate the light direction to model space.
-		//M_RotateVector(lights[0].vector, -yawAngle, -pitchAngle);
+			if(spr->issprite == 2)
+			{
+				// Psprites can a bit starker world light.
+				lights->lightSide = .35f;
+				lights->darkSide = .5f;
+				lights->offset = 0;
+			}
+			else
+			{
+				// World light can both light and shade. Normal objects
+				// get more shade than light (to prevent them from 
+				// becoming too bright when compared to ambient light).
+				lights->lightSide = .2f;
+				lights->darkSide = .8f;
+				lights->offset = .3f;
+			}
+		}
 
 		// Plane glow?
 		if(spr->mo.hasglow)
@@ -1216,7 +910,6 @@ void Rend_RenderModel(vissprite_t *spr)
 				light = lights + numLights++;
 				light->used = true;
 				memcpy(light->worldVector, &ceilingLight, sizeof(ceilingLight));
-				//M_RotateVector(light->vector, -yawAngle, -pitchAngle);
 				dist = 1 - (spr->mo.secceil - FIX2FLT(spr->mo.gzt)) 
 					/ glowHeight;
 				scaleFloatRgb(light->color, spr->mo.ceilglow, dist);
@@ -1229,7 +922,6 @@ void Rend_RenderModel(vissprite_t *spr)
 				light = lights + numLights++;
 				light->used = true;
 				memcpy(light->worldVector, &floorLight, sizeof(floorLight));
-				//M_RotateVector(light->vector, -yawAngle, -pitchAngle);
 				dist = 1 - (FIX2FLT(spr->mo.gz) - spr->mo.secfloor) 
 					/ glowHeight;
 				scaleFloatRgb(light->color, spr->mo.floorglow, dist);
