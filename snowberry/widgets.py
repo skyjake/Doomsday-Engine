@@ -2241,10 +2241,18 @@ class Tree (Widget):
 
         @param event An events.Notify object.
         """
+        Widget.onNotify(self, event)
+        
         if event.hasId('addon-attached') or event.hasId('addon-detached'):
             if event.getProfile() is pr.getActive():
                 self.refreshCategoryLabels(event.getProfile())
                 self.refreshItems(event.getProfile())
+
+    def retranslate(self):
+        """Update all the items in the tree."""
+
+        self.refreshCategoryLabels(pr.getActive())
+        self.refreshItems(pr.getActive())
 
     def getSelectedAddon(self):
         """Returns the currently selected addon.
