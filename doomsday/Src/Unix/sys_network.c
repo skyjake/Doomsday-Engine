@@ -1051,7 +1051,7 @@ boolean N_Connect(int index)
 	// Clients are allowed to send packets to the server.
 	svNode->hasJoined = true;
 	
-	handshake_received = false;
+	handshakeReceived = false;
 	netgame = true; // Allow sending/receiving of packets.
 	isServer = false;
 	isClient = true;
