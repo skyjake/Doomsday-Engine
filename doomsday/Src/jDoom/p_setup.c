@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.8  2003/08/24 00:13:59  skyjake
+// Precache player weapon model skins
+//
 // Revision 1.7  2003/07/12 22:26:35  skyjake
 // Comment
 //
@@ -59,6 +62,7 @@ rcsid[] = "$Id$";
 #include "doomstat.h"
 #include "m_bams.h"
 #include "hu_stuff.h"
+#include "r_common.h"
 #include "d_items.h" // has GetDefInt
 
 // External Data ------------------------------------------------------------
@@ -849,7 +853,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     //	UNUSED P_ConnectSubsectors ();
 	
     // preload graphics
-    if(precache) R_PrecacheLevel();
+    if(precache) 
+	{
+		R_PrecacheLevel();
+		R_PrecachePSprites();
+	}
 	
 	// Print some info. These also appear on the screen.
 	lname = (char*) Get(DD_MAP_NAME);

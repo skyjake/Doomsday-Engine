@@ -19,6 +19,7 @@
 #include "h2def.h"
 #include "p_local.h"
 #include "soundst.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1178,7 +1179,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	//gi.SetupLevel(levelid, setupflags);
 
 	// Preload graphics.
-	if(precache) R_PrecacheLevel ();
+	if(precache) 
+	{
+		R_PrecacheLevel ();
+		R_PrecachePSprites();
+	}
 
 	// Check if the level is a lightning level.
 	P_InitLightning();

@@ -5,6 +5,7 @@
 #include "P_local.h"
 #include "soundst.h"
 #include "s_sound.h"
+#include "r_common.h"
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
@@ -917,7 +918,11 @@ void P_SetupLevel (int episode, int map, int playermask, skill_t skill)
 	P_SpawnSpecials ();
 
 // preload graphics
-	if (precache) R_PrecacheLevel();
+	if (precache) 
+	{
+		R_PrecacheLevel();
+		R_PrecachePSprites();
+	}
 
 	S_LevelMusic();
 
