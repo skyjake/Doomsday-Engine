@@ -6,6 +6,7 @@
 
 Version 1.8.1
 -------------
++ dpMapLoad: glBSP 1.96 as a plugin, run on the fly when necessary
 + rend-halo-realistic: use only more realistic halos (slightly smaller,
   dimmer), no secondary lens flares; enabled by default
 - fixed: FakeRadio bug where vertical shadows were rendered above and
