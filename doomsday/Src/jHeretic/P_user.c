@@ -413,7 +413,7 @@ void P_DeathThink(player_t *player)
 		}
 	}
 
-	player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS;
+	player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 	P_CalcHeight(player);
 
     if(!IS_NETGAME && player->attacker && player->attacker != plrmo)
@@ -577,7 +577,7 @@ boolean P_UndoPlayerChicken(player_t *player)
 	player->powers[pw_weaponlevel2] = 0;
 	player->health = mo->health = MAXHEALTH;
 	player->plr->mo = mo;
-	player->plr->flags |= DDPF_FIXPOS;
+	player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
 	player->update |= PSF_CHICKEN_TIME | PSF_HEALTH;
 	angle >>= ANGLETOFINESHIFT;
 	fog = P_SpawnMobj(x+20*finecosine[angle],
@@ -710,20 +710,23 @@ void P_ClientSideThink()
 		if(fly != TOCENTER)
 		{
 			pl->flyheight = fly*2;
-			if(!(mo->ddflags & DDMF_FLY))
+			/*if(!(mo->ddflags & DDMF_FLY))
 			{
 				// Start flying.
 				mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
-			}
+			}*/
 		}
-		else
+		/*else
 		{
 			mo->ddflags &= ~(DDMF_FLY | DDMF_NOGRAVITY);
-		}
+		}*/
 	}
 	// We are flying when the Fly flag is set.
 	if(mo->ddflags & DDMF_FLY)
 	{
+		// Keep the Heretic fly flag in sync.
+		mo->flags2 |= MF2_FLY;
+
 		mo->momz = pl->flyheight * FRACUNIT;
 		if(pl->flyheight) pl->flyheight /= 2;
 		// Do some fly-bobbing.
