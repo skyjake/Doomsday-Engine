@@ -28,7 +28,10 @@
 #include "de_render.h"
 #include "de_refresh.h"
 #include "de_misc.h"
+#include "de_ui.h"
 #include "p_sight.h"
+
+#include <math.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -107,6 +110,8 @@ static float editIntensity;
  */
 static int editActive = false; // Edit mode active?
 static int editGrabbed = -1;
+static int editHidden = false;
+static int editShowAll = false;
 
 // CODE --------------------------------------------------------------------
 
@@ -117,7 +122,7 @@ void SB_Register(void)
 {
     // Editing variables.
     C_VAR_INT("edit-bias-blink", &editBlink, 0, 0, 1,
-              "1=Blink the nearest light (when nothing is grabbed).");
+              "1=Blink the cursor.");
 
     C_VAR_FLOAT("edit-bias-grab-distance", &editDistance, 0, 10, 1000,
                 "Distance to the grabbed bias light.");
@@ -134,17 +139,15 @@ void SB_Register(void)
     C_VAR_FLOAT("edit-bias-intensity", &editIntensity, 0, 1, 50000,
                 "Intensity of the bias light.");
 
+    C_VAR_INT("edit-bias-hide", &editHidden, 0, 0, 1,
+              "1=Hide bias light editor's HUD.");
+
+    C_VAR_INT("edit-bias-show-sources", &editShowAll, 0, 0, 1,
+              "1=Show all light sources.");
+    
     // Commands for light editing.
-    // - bledit: enter edit mode
-    // - blquit: exit edit mode
-    // - blsave: save current lights to a DED
-    // - blnew: allocate new light, grab it
-    // - bldel: delete current/given light
-    // - bllock: lock current/given light, ungrab
-    // - blunlock: unlock current/given light
-    // - blgrab: grab current/given light, or release the currently grabbed
 	C_CMD("bledit", BLEditor, "Enter bias light edit mode.");
-    C_CMD("blquit", BLEditor, "Quit bias light edit mode.");
+    C_CMD("blquit", BLEditor, "Exit bias light edit mode.");
     C_CMD("blclear", BLEditor, "Delete all lights.");
     C_CMD("blsave", BLEditor, "Write the current lights to a DED file.");
     C_CMD("blnew", BLEditor, "Allocate new light and grab it.");
@@ -152,6 +155,9 @@ void SB_Register(void)
     C_CMD("bllock", BLEditor, "Lock current/specified light.");
     C_CMD("blunlock", BLEditor, "Unlock current/specified light.");
     C_CMD("blgrab", BLEditor, "Grab current/specified light, or ubgrab.");
+    C_CMD("bldup", BLEditor, "Duplicate current/specified light, grab it.");
+    C_CMD("blc", BLEditor, "Set color of light at cursor.");
+    C_CMD("bli", BLEditor, "Set intensity of light at cursor.");
 
     // Normal variables.
     C_VAR_INT("rend-bias", &useBias, 0, 0, 1,
@@ -490,6 +496,22 @@ void SB_BeginFrame(void)
 }
 
 /*
+ * Tests against trackChanged.
+ */
+static boolean SB_ChangeInAffected(short *affected)
+{
+    int i;
+
+    for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
+    {
+        if(affected[i] < 0) break;
+        if(SB_TrackerCheck(&trackChanged, affected[i]))
+            return true;
+    }
+    return false;
+}                                      
+
+/*
  * Poly can be a either a wall or a plane (ceiling or a floor).
  */
 void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
@@ -500,6 +522,8 @@ void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
     float pos[3];
     float normal[3];
     int i;
+    boolean forced;
+    short *affected;
 
     if(!useBias)
         return;
@@ -509,6 +533,10 @@ void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
     
     if(poly->numvertices == 2)
     {
+        // Has any of the old affected lights changed?
+        affected = seginfo[mapElementIndex].affected;
+        forced = SB_ChangeInAffected(affected);
+        
         SB_UpdateSegAffected(mapElementIndex, poly);
         
         // It's a wall.
@@ -523,12 +551,16 @@ void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
             SB_EvalPoint((i >= 2 ? &poly->bottomcolor[i - 2] :
                           &poly->vertices[i].color),
                          &illumination[i],
-                         pos, normal, false,
-                         seginfo[mapElementIndex].affected);
+                         pos, normal, forced, affected);
         }
     }
     else
     {
+        // Has any of the old affected lights changed?
+        affected = (isFloor ? subsecinfo[mapElementIndex].floor.affected :
+                    subsecinfo[mapElementIndex].ceil.affected);
+        forced = SB_ChangeInAffected(affected);
+        
         SB_UpdateSubsectorAffected(mapElementIndex, poly);
 
         // It's a plane.
@@ -543,8 +575,7 @@ void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
             
             SB_EvalPoint(&poly->vertices[i].color,
                          &illumination[i],
-                         pos, normal, false,
-                         subsecinfo[mapElementIndex].floor.affected);
+                         pos, normal, forced, affected);
         }
     }
 
@@ -771,7 +802,7 @@ static source_t *SBE_GetNearest(void)
         
     for(i = 0; i < numSources; ++i)
     {
-        len = M_Distance(hand, sources[i].pos[k]);
+        len = M_Distance(hand, sources[i].pos);
         if(i == 0 || len < minDist)
         {
             minDist = len;
@@ -781,10 +812,33 @@ static source_t *SBE_GetNearest(void)
     return nearest;
 }
 
+static void SBE_SetColor(float *dest, float *src)
+{
+    float largest = 0;
+    int i;
+
+    // Amplify the color.
+    for(i = 0; i < 3; ++i)
+    {
+        dest[i] = src[i];
+        if(largest < dest[i])
+            largest = dest[i];
+    }
+    if(largest > 0)
+    {
+        for(i = 0; i < 3; ++i)
+            dest[i] /= largest;
+    }
+    else
+    {
+        // Replace black with white.
+        dest[0] = dest[1] = dest[2] = 1;
+    }
+}
+
 void SB_EndFrame(void)
 {
     source_t *src;
-    int i;
 
 #if 0
     if(moveBiasLight)
@@ -816,9 +870,8 @@ void SB_EndFrame(void)
     // Update the grabbed light.
     if(editActive && (src = SBE_GetGrabbed()) != NULL)
     {
-        for(i = 0; i < 3; ++i)
-            src->color[i] = editColor[i];
-
+        SBE_SetColor(src->color, editColor);
+ 
         src->intensity = editIntensity;
 
         if(!(src->flags & BLF_LOCKED))
@@ -908,6 +961,21 @@ static void SBE_Grab(int which)
         editGrabbed = -1;
 }
 
+static void SBE_Dupe(int which)
+{
+    source_t *orig = &sources[which], *s;
+    int i;
+
+    if(SBE_New())
+    {
+        s = SBE_GetGrabbed();
+        s->flags &= ~BLF_LOCKED;
+        editIntensity = orig->intensity;
+        for(i = 0; i < 3; ++i)
+            editColor[i] = orig->color[i];
+    }    
+}
+
 /*
  * Editor commands.
  */
@@ -961,6 +1029,44 @@ int CCmdBLEditor(int argc, char **argv)
     else
         which = SBE_GetNearest() - sources;
 
+    if(!stricmp(cmd, "c") && numSources > 0)
+    {
+        source_t *src = &sources[which];
+        float r = 1, g = 1, b = 1;
+
+        if(argc >= 4)
+        {
+            r = strtod(argv[1], NULL);
+            g = strtod(argv[2], NULL);
+            b = strtod(argv[3], NULL);
+        }
+        else if(argc >= 2)
+        {
+            r = g = b = strtod(argv[1], NULL);
+        }
+
+        editColor[0] = r;
+        editColor[1] = g;
+        editColor[2] = b;
+        SBE_SetColor(src->color, editColor);
+        src->flags |= BLF_CHANGED;
+        return true;
+    }
+
+    if(!stricmp(cmd, "i") && numSources > 0)
+    {
+        source_t *src = &sources[which];
+
+        if(argc >= 2)
+        {
+            editIntensity = strtod(argv[1], NULL);
+        }
+        
+        src->intensity = editIntensity;
+        src->flags |= BLF_CHANGED;
+        return true;
+    }
+    
     if(argc > 1)
     {
         which = atoi(argv[1]);
@@ -978,6 +1084,12 @@ int CCmdBLEditor(int argc, char **argv)
         return true;
     }
 
+    if(!stricmp(cmd, "dup"))
+    {
+        SBE_Dupe(which);
+        return true;
+    }
+    
     if(!stricmp(cmd, "lock"))
     {
         SBE_Lock(which);
@@ -999,41 +1111,140 @@ int CCmdBLEditor(int argc, char **argv)
     return false;
 }
 
+static SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
+{
+    UI_GradientEx(x, y, w, h, 6,
+                  c ? c : UI_COL(UIC_BG_MEDIUM),
+                  c ? c : UI_COL(UIC_BG_LIGHT),
+                  .2f, .4f);
+    UI_DrawRectEx(x, y, w, h, 6, false, c ? c : UI_COL(UIC_BRD_HI),
+                  NULL, .4f, -1);
+}
+
+static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
+{
+    float eye[3] = { vx, vz, vy };
+    int w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
+    int th = FR_TextHeight("a"), h = th * 6 + 16;
+    int x = screenWidth - 10 - w - rightX, y = screenHeight - 10 - h;
+    char buf[80];
+    ui_color_t color;
+
+    color.red = s->color[0];
+    color.green = s->color[1];
+    color.blue = s->color[2];
+
+    SBE_DrawBox(x, y, w, h, &color);
+    x += 8;
+    y += 8 + th/2;
+    
+    // - index #
+    // - locked status
+    // - coordinates
+    // - distance from eye
+    // - intensity
+    // - color
+
+    UI_TextOutEx(title, x, y, false, true, UI_COL(UIC_TITLE), alpha);
+    y += th;
+
+    sprintf(buf, "# %03i %s", s - sources,
+            s->flags & BLF_LOCKED ? "(lock)" : "");
+    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    y += th;
+
+    sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
+    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    y += th;
+    
+    sprintf(buf, "Distance:  %-.0f", M_Distance(eye, s->pos));
+    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    y += th;
+
+    sprintf(buf, "Intensity: %-.0f", s->intensity);
+    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    y += th;
+
+/*void UI_Gradient(int x, int y, int w, int h, ui_color_t * top,
+  ui_color_t * bottom, float top_alpha, float bottom_alpha)*/
+
+    sprintf(buf, "R:%.3f G:%.3f B:%.3f",
+            s->color[0], s->color[1], s->color[2]);
+    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    y += th;
+    
+}
+
 /*
  * Editor HUD.
  */
 void SBE_DrawHUD(void)
 {
-    if(!editActive)
+    int w, h, y;
+    char buf[80];
+    float alpha = .8f;
+    source_t *s;
+    
+    if(!editActive || editHidden)
         return;
 
+	// Go into screen projection mode.
+	gl.MatrixMode(DGL_PROJECTION);
+	gl.PushMatrix();
+	gl.LoadIdentity();
+	gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+
+    // Overall stats: numSources / MAX (left)
+    sprintf(buf, "%i / %i (%i remaining)", numSources, MAX_BIAS_LIGHTS,
+            MAX_BIAS_LIGHTS - numSources);
+    w = FR_TextWidth(buf) + 16;
+    h = FR_TextHeight(buf) + 16;
+    y = 30; /* screenHeight - 10 - h */
+    SBE_DrawBox(10, y, w, h, 0);
+    UI_TextOutEx(buf, 18, y + h / 2, false, true,
+                 UI_COL(UIC_TITLE), alpha);
+
+    // Stats for nearest & grabbed:
+    if(numSources)
+    {
+        s = SBE_GetNearest();
+        SBE_InfoBox(s, 0, SBE_GetGrabbed() ? "Nearest" : "Highlighted", alpha);
+    }
+
+    if((s = SBE_GetGrabbed()) != NULL)
+    {
+        SBE_InfoBox(s, FR_TextWidth("0") * 26, "Grabbed", alpha);
+    }
     
+	gl.MatrixMode(DGL_PROJECTION);
+	gl.PopMatrix();
 }
 
 void SBE_DrawCursor(void)
 {
-    source_t *s;
-    float distance;
-    float hand[3];
-    float size = 20000;
-   
-    if(!editActive || !numSources)
-        return;
+#define SET_COL(x, r, g, b, a) {x[0]=(r); x[1]=(g); x[2]=(b); x[3]=(a);}
 
+    double t = Sys_GetRealTime()/100.0f;
+    source_t *s;
+    float hand[3];
+    float size = 10000, distance;
+    float black[4] = { 0, 0, 0, 0 }, col[4];
+   
+    if(!editActive || !numSources || editHidden)
+        return;
+    
     // The grabbed cursor blinks yellow.
-    if(currentTime & 0x100)
-        gl.Color4f(1.0f, 1.0f, .8f, .7f);
+    if(!editBlink || currentTime & 0x80)
+        SET_COL(col, 1.0f, 1.0f, .8f, .5f)
     else
-        gl.Color4f(.5f, .5f, .4f, .3f);
+        SET_COL(col, .7f, .7f, .5f, .4f)
     
     s = SBE_GetGrabbed();
     if(!s)
     {
-        // The nearest cursor blinks blue.
-        if(currentTime & 0x200)
-            gl.Color4f(0, .1f, 1, .7f);
-        else
-            gl.Color4f(0, .05f, .5f, .3f);
+        // The nearest cursor phases blue.
+        SET_COL(col, sin(t)*.2f, .2f + sin(t)*.15f, .9f + sin(t)*.3f,
+                   .8f - sin(t)*.2f)
 
         s = SBE_GetNearest();
     }
@@ -1041,7 +1252,7 @@ void SBE_DrawCursor(void)
     gl.Disable(DGL_TEXTURING);
 
     SBE_GetHand(hand);
-    if(M_Distance(s->pos, hand) > 2 * editDistance)
+    if((distance = M_Distance(s->pos, hand)) > 2 * editDistance)
     {
         // Show where it is.
         gl.Disable(DGL_DEPTH_TEST);
@@ -1049,16 +1260,65 @@ void SBE_DrawCursor(void)
 
     gl.Begin(DGL_LINES);
     {
-        gl.Vertex3f(s->pos[VX] - size, s->pos[VY], s->pos[VZ]);
-        gl.Vertex3f(s->pos[VX] + size, s->pos[VY], s->pos[VZ]);
+        gl.Color4fv(black);
+        gl.Vertex3f(s->pos[VX] - size, s->pos[VZ], s->pos[VY]);
+        gl.Color4fv(col);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        gl.Color4fv(black);
+        gl.Vertex3f(s->pos[VX] + size, s->pos[VZ], s->pos[VY]);
 
-        gl.Vertex3f(s->pos[VX], s->pos[VY] - size, s->pos[VZ]);
-        gl.Vertex3f(s->pos[VX], s->pos[VY] + size, s->pos[VZ]);
-
-        gl.Vertex3f(s->pos[VX], s->pos[VY], s->pos[VZ] - size);
-        gl.Vertex3f(s->pos[VX], s->pos[VY], s->pos[VZ] + size);
+        gl.Color4fv(black);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ] - size, s->pos[VY]);
+        gl.Color4fv(col);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        gl.Color4fv(black);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ] + size, s->pos[VY]);
+        
+        gl.Color4fv(black);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY] - size);
+        gl.Color4fv(col);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        gl.Color4fv(black);
+        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY] + size);
     }
     gl.End();
+
+    // Show if the source is locked.
+    if(s->flags & BLF_LOCKED)
+    {
+        float eye[3] = { vx, vz, vy };
+        float lock = 2 + M_Distance(eye, s->pos)/100;
+
+        gl.Color4f(1, 1, 1, 1);
+        
+        gl.MatrixMode(DGL_MODELVIEW);
+        gl.PushMatrix();
+
+        gl.Translatef(s->pos[VX], s->pos[VZ], s->pos[VY]);
+
+        gl.Rotatef(t/2, 0, 0, 1);
+        gl.Rotatef(t, 1, 0, 0);
+        gl.Rotatef(t * 15, 0, 1, 0);
+
+        gl.Begin(DGL_LINES);
+        gl.Vertex3f(-lock, 0, - lock);
+        gl.Vertex3f(+lock, 0, - lock);
+        
+        gl.Vertex3f(+ lock, 0, - lock);
+        gl.Vertex3f(+ lock, 0, + lock);
+        
+        gl.Vertex3f(+ lock, 0, + lock);
+        gl.Vertex3f(- lock, 0, + lock);
+        
+        gl.Vertex3f(- lock, 0, + lock);
+        gl.Vertex3f(- lock, 0, - lock);
+        gl.End();
+        
+        gl.PopMatrix();
+    }
 
     gl.Enable(DGL_TEXTURING);
     gl.Enable(DGL_DEPTH_TEST);
