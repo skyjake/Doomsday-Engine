@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.4  2003/08/24 00:17:37  skyjake
+// Separate function for giving backpack
+//
 // Revision 1.3  2003/06/30 00:03:44  skyjake
 // Only fixmom on damage
 //
@@ -325,6 +328,25 @@ P_GiveCard
 }
 
 //===========================================================================
+// P_GiveBackpack
+//===========================================================================
+void P_GiveBackpack(player_t *player)
+{
+	int i;
+
+	if (!player->backpack)
+	{
+		player->update |= PSF_MAX_AMMO;
+		for (i=0 ; i<NUMAMMO ; i++)
+			player->maxammo[i] *= 2;
+		player->backpack = true;
+	}
+	for (i=0 ; i<NUMAMMO ; i++)
+		P_GiveAmmo (player, i, 1);
+	P_SetMessage(player, GOTBACKPACK);
+}
+
+//===========================================================================
 // P_GivePower
 //===========================================================================
 boolean P_GivePower(player_t* player, int power)
@@ -380,10 +402,9 @@ P_TouchSpecialThing
 ( mobj_t*	special,
  mobj_t*	toucher )
 {
-    player_t*	player;
-    int		i;
-    fixed_t	delta;
-    int		sound;
+    player_t *player;
+    fixed_t delta;
+    int sound;
 	
     delta = special->z - toucher->z;
 	
@@ -634,15 +655,7 @@ P_TouchSpecialThing
 		break;
 		
 	case SPR_BPAK:
-		if (!player->backpack)
-		{
-			for (i=0 ; i<NUMAMMO ; i++)
-				player->maxammo[i] *= 2;
-			player->backpack = true;
-		}
-		for (i=0 ; i<NUMAMMO ; i++)
-			P_GiveAmmo (player, i, 1);
-		P_SetMessage(player, GOTBACKPACK);
+		P_GiveBackpack(player);
 		break;
 		
 		// weapons
