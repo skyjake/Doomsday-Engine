@@ -18,8 +18,6 @@
 #include "de_render.h"
 #include "de_graphics.h"
 
-#include "cl_def.h"
-
 // MACROS ------------------------------------------------------------------
 
 #define MAXSKYLAYERS		2		
@@ -28,19 +26,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct 
-{
-	float x,y,z;
-} skyvertex_t;
-
-typedef struct skymodel_s {
-	ded_skymodel_t *def;
-	modeldef_t *model;	
-	int frame;
-	int timer;
-	int maxTimer;
-	float yaw;
-} skymodel_t;
+typedef struct skyvertex_s { float x, y, z; } skyvertex_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -58,10 +44,6 @@ extern byte			topLineRGB[3];
 
 skylayer_t	skyLayers[MAXSKYLAYERS];
 int			firstLayer, activeLayers;
-
-skymodel_t	skyModels[NUM_SKY_MODELS];
-boolean		skyModelsInited = false;
-boolean		alwaysDrawSphere = false;
 
 skyvertex_t	*skyVerts = NULL;	// Vertices for the upper hemisphere.
 int			numSkyVerts = 0;
@@ -82,69 +64,6 @@ static boolean		yflip;
 static fadeout_t	*currentFO;
 
 // CODE --------------------------------------------------------------------
-
-//===========================================================================
-// R_SetupSkyModels
-//	The sky models are set up using the data in the definition.
-//===========================================================================
-void R_SetupSkyModels(ded_mapinfo_t *info)
-{
-	int i;
-	ded_skymodel_t *def;
-	skymodel_t *sky;
-
-	// Clear the whole sky models data.
-	memset(skyModels, 0, sizeof(skyModels));
-
-	// Normally the sky sphere is not drawn if models are in use.
-	alwaysDrawSphere = (Def_EvalFlags(info->flags) & MIF_DRAW_SPHERE) != 0;
-
-	// The normal sphere is used if no models will be set up.
-	skyModelsInited = false;
-
-	for(i = 0, def = info->sky_models, sky = skyModels; 
-		i < NUM_SKY_MODELS; i++, def++, sky++)
-	{
-		// Is the model ID set?
-		if((sky->model = R_CheckIDModelFor(def->id)) == NULL) 
-			continue;
-
-		// There is a model here.
-		skyModelsInited = true;
-
-		sky->def = def;
-		sky->maxTimer = (int) (TICSPERSEC * def->frame_interval);
-		sky->yaw = def->yaw;
-		sky->frame = sky->model->sub[0].frame;
-	}
-}
-
-//===========================================================================
-// R_SkyTicker
-//	Animate sky models.
-//===========================================================================
-void R_SkyTicker(void)
-{
-	int i;
-	skymodel_t *sky;
-
-	if(!skyModelsInited || clientPaused) return;
-
-	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
-	{
-		if(!sky->def) continue;
-
-		// Turn the model.
-		sky->yaw += sky->def->yaw_speed / TICSPERSEC;
-
-		// Is it time to advance to the next frame?
-		if(sky->maxTimer > 0 && ++sky->timer >= sky->maxTimer)
-		{
-			sky->timer = 0;
-			sky->frame++;
-		}
-	}
-}
 
 //===========================================================================
 // Rend_RenderSkyModels
@@ -188,14 +107,7 @@ void Rend_RenderSkyModels(void)
 		vis.mo.v2[1] = sky->def->rotate[1];
 		vis.mo.inter = inter;
 		vis.mo.mf = sky->model;
-		for(k = 0; k < DED_MAX_SUB_MODELS; k++)
-		{
-			model_t *mdl = modellist[sky->model->sub[k].model];
-			if(!sky->model->sub[k].model) continue;
-			// Modify the modeldef itself: set the current frame.
-			sky->model->sub[k].frame 
-				= sky->frame % mdl->info.numFrames;
-		}
+		R_SetModelFrame(sky->model, sky->frame);
 		vis.mo.yaw = sky->yaw;
 		vis.mo.lightlevel = -1; // Fullbright.
 		for(k = 0; k < 3; k++)
