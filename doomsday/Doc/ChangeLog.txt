@@ -4,6 +4,33 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.1
+-------------
++ rend-halo-realistic: use only more realistic halos (slightly smaller,
+  dimmer), no secondary lens flares; enabled by default
+- GL must not be loaded at all in dedicated mode
+- file finder had problems descending into subdirectories
+- input events are processed immediately: mouse lag is gone both in the
+  game and in the UI
+- mouse filter is more careful not to ever lose any mickeys
+- all pending ticcmds are always processed immediately (excessive
+  buffering no longer a danger)
+* tuned up handling of ticcmds during transfer from client to server
+* particle movement is smoothed
+* now mouse look is always as smooth as it can be, also when
+  'rend-camera-smooth' is disabled
+* all games use the same keyboard look scheme (jDoom's was different)
+* framerate is measured more accurately
+
+Win32:
+- too many console messages caused a crash during startup (extra verbosity)
+
+Linux:
++ '--without-opengl' configuration option removes all OpenGL support
+  from the build (for dedicated servers)
+- demo file names were formed incorrectly
+
+
 Version 1.8.0
 -------------
 - fixed: game clock must not be running while map is being loaded
