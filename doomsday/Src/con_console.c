@@ -310,6 +310,7 @@ cvar_t engineCVars[] =
 	"rend-glow",			0,			CVT_INT,	&r_texglow,		0, 1,	"1=Enable glowing textures.",
 	"rend-glow-wall",		0,			CVT_INT,	&useWallGlow,	0, 1,	"1=Render glow on walls.",
 	"rend-glow-height",		0,			CVT_INT,	&glowHeight,	0, 1024,"Height of wall glow.",
+	"rend-glow-fog-bright", 0,			CVT_FLOAT,	&glowFogBright, 0, 1,	"Brightness of wall glow when fog is enabled.",
 	// * Render-Halo
 	"rend-halo",			0,			CVT_INT,	&haloMode,		0, 5,	"Number of flares to draw per light.",
 	"rend-halo-bright",		0,			CVT_INT,	&haloBright,	0, 100,	"Halo/flare brightness.",
@@ -359,6 +360,7 @@ cvar_t engineCVars[] =
 	"rend-model-lod",		CVF_NO_MAX,	CVT_FLOAT,	&rend_model_lod, 0, 0,	"Custom level of detail factor. 0=LOD disabled, 1=normal.",
 	"rend-model-mirror-hud", 0,			CVT_INT,	&mirrorHudModels, 0, 1,	"1=Mirror HUD weapon models.",
 	"rend-model-spin-speed", CVF_NO_MAX|CVF_NO_MIN, CVT_FLOAT, &modelSpinSpeed, 0, 0, "Speed of model spinning, 1=normal.",
+	"rend-model-shiny-multitex", 0,		CVT_INT,	&modelShinyMultitex, 0, 1, "1=Enable multitexturing with shiny model skins.",
 	// * Render-HUD
 	"rend-hud-offset-scale", CVF_NO_MAX, CVT_FLOAT, &weaponOffsetScale, 0, 0, "Scaling of player weapon (x,y) offset.",	
 	"rend-hud-fov-shift",	CVF_NO_MAX,	CVT_FLOAT,	&weaponFOVShift,	0, 1, "When FOV > 90 player weapon is shifted downward.",
