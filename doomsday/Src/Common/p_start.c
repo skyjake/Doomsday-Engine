@@ -100,6 +100,14 @@ void P_DealPlayerStarts(void)
 				// Keep looking.
 			}
 		}
+
+		// If still without a start spot, assign one randomly.
+		if(pl->startspot == -1)
+		{
+			// It's likely that some players will get the same start
+			// spots.
+			pl->startspot = M_Random() % num;
+		}
 	}
 
 	if(IS_NETGAME)

@@ -488,9 +488,17 @@ void NetSv_NewPlayerEnters(int plrnumber)
 	// Re-deal player starts.
 	P_DealPlayerStarts();
 
-	// Spawn the player into the world.
-	// FIXME: Spawn a telefog in front of the player.
-	P_SpawnPlayer(&playerstarts[plr->startspot], plrnumber);
+	if(deathmatch)
+	{
+		G_DeathMatchSpawnPlayer(plrnumber);
+	}
+	else
+	{
+		// Spawn the player into the world.
+		// FIXME: Spawn a telefog in front of the player.
+		P_SpawnPlayer(&playerstarts[plr->startspot], plrnumber);
+	}
+	
 	// Get rid of anybody at the starting spot.
 	P_Telefrag(plr->plr->mo);
 }
