@@ -2,7 +2,7 @@
 include 'common.php';
 page_header('Doomsday Engine Development :: About');
 
-$pagedir = array( "what" => "What Is This?",
+$pagedir = array( "what" => "About Doomsday",
 		  "join" => "Getting Involved" );
 
 page_dir( "About", $pagedir );
