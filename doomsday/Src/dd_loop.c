@@ -202,13 +202,15 @@ void DD_EndFrame (void)
 
 /*
  * Change the time scaling factor.
+ *
+ * FIXME: Time scaling should not occur at this high a level.
  */
 void DD_ChangeTimeScale(float newScale)
 {
-	timeScale = newScale;
+/*	timeScale = newScale;
 
 	// Tell the timing core to start over.
-	firstTic = true;
+	firstTic = true;*/
 }
 
 float DD_GetTimeScale(void)
