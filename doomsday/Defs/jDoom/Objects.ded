@@ -11651,3 +11651,61 @@ State {
   Frame = 32769;
   Next state = "EXPLODE1";
 }
+
+# A_Tracer() spawns rocket puffs. This is copied from the original 
+# PUFF type.
+Thing {
+  ID = "ROCKETPUFF";
+  DoomEd number = -1;
+  Spawn state = "ROCKETPUFF1";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Radius = 8;
+  Height = 8;
+  Mass = 100;
+  Flags = "mf_noblockmap mf_nogravity mf_viewalign";
+}
+
+State {
+  ID = "ROCKETPUFF1";
+  Sprite = "PUFF";
+  Frame = 32768;
+  Tics = 4;
+  Next state = "ROCKETPUFF2";
+}
+
+State {
+  ID = "ROCKETPUFF2";
+  Sprite = "PUFF";
+  Frame = 1;
+  Tics = 4;
+  Next state = "ROCKETPUFF3";
+}
+
+State {
+  ID = "ROCKETPUFF3";
+  Sprite = "PUFF";
+  Frame = 2;
+  Tics = 4;
+  Next state = "ROCKETPUFF4";
+}
+
+State {
+  ID = "ROCKETPUFF4";
+  Sprite = "PUFF";
+  Frame = 3;
+  Tics = 4;
+  Next state = "NULL";
+}

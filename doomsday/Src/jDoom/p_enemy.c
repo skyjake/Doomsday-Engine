@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2003/04/29 13:11:52  skyjake
+// Missile puff ptcgen issue fixed
+//
 // Revision 1.2  2003/02/27 23:14:32  skyjake
 // Obsolete jDoom files removed
 //
@@ -1247,48 +1250,47 @@ void C_DECL A_Tracer (mobj_t* actor)
     fixed_t	slope;
     mobj_t*	dest;
     mobj_t*	th;
-		
-    if (gametic & 3)
-	return;
+	
+    if (gametic & 3) return;
     
     // spawn a puff of smoke behind the rocket		
-    P_SpawnPuff (actor->x, actor->y, actor->z);
+    P_SpawnCustomPuff(actor->x, actor->y, actor->z, MT_ROCKETPUFF);
 	
     th = P_SpawnMobj (actor->x-actor->momx,
 		      actor->y-actor->momy,
-		      actor->z, MT_SMOKE);
+			  actor->z, MT_SMOKE);
     
     th->momz = FRACUNIT;
     th->tics -= P_Random()&3;
     if (th->tics < 1)
-	th->tics = 1;
+		th->tics = 1;
     
     // adjust direction
     dest = actor->tracer;
 	
     if (!dest || dest->health <= 0)
-	return;
+		return;
     
     // change angle	
     exact = R_PointToAngle2 (actor->x,
 			     actor->y,
-			     dest->x,
-			     dest->y);
-
+				 dest->x,
+				 dest->y);
+	
     if (exact != actor->angle)
     {
-	if (exact - actor->angle > 0x80000000)
-	{
-	    actor->angle -= TRACEANGLE;
-	    if (exact - actor->angle < 0x80000000)
-		actor->angle = exact;
-	}
-	else
-	{
-	    actor->angle += TRACEANGLE;
-	    if (exact - actor->angle > 0x80000000)
-		actor->angle = exact;
-	}
+		if (exact - actor->angle > 0x80000000)
+		{
+			actor->angle -= TRACEANGLE;
+			if (exact - actor->angle < 0x80000000)
+				actor->angle = exact;
+		}
+		else
+		{
+			actor->angle += TRACEANGLE;
+			if (exact - actor->angle > 0x80000000)
+				actor->angle = exact;
+		}
     }
 	
     exact = actor->angle>>ANGLETOFINESHIFT;
@@ -1297,25 +1299,24 @@ void C_DECL A_Tracer (mobj_t* actor)
     
     // change slope
     dist = P_ApproxDistance (dest->x - actor->x,
-			    dest->y - actor->y);
+		dest->y - actor->y);
     
     dist = dist / actor->info->speed;
-
-    if (dist < 1)
-	dist = 1;
+	
+    if (dist < 1) dist = 1;
     slope = (dest->z+40*FRACUNIT - actor->z) / dist;
-
+	
     if (slope < actor->momz)
-	actor->momz -= FRACUNIT/8;
+		actor->momz -= FRACUNIT/8;
     else
-	actor->momz += FRACUNIT/8;
+		actor->momz += FRACUNIT/8;
 }
 
 
 void C_DECL A_SkelWhoosh (mobj_t*	actor)
 {
     if (!actor->target)
-	return;
+		return;
     A_FaceTarget (actor);
     S_StartSound(sfx_skeswg, actor);
 }
@@ -1323,10 +1324,10 @@ void C_DECL A_SkelWhoosh (mobj_t*	actor)
 void C_DECL A_SkelFist (mobj_t*	actor)
 {
     int		damage;
-
+	
     if (!actor->target)
-	return;
-		
+		return;
+	
     A_FaceTarget (actor);
 	
     if (P_CheckMeleeRange (actor))

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.5  2003/04/29 13:11:53  skyjake
+// Missile puff ptcgen issue fixed
+//
 // Revision 1.4  2003/04/26 14:44:02  skyjake
 // Comment cleanup
 //
@@ -1063,32 +1066,39 @@ void P_SpawnMapThing (mapthing_t* mthing)
 //
 extern fixed_t attackrange;
 
-void
-P_SpawnPuff
-( fixed_t	x,
-  fixed_t	y,
-  fixed_t	z )
+//===========================================================================
+// P_SpawnCustomPuff
+//===========================================================================
+mobj_t* P_SpawnCustomPuff(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 {
     mobj_t*	th;
 
 	// Clients do not spawn puffs.
-	if(IS_CLIENT) return;
+	if(IS_CLIENT) return NULL;
 	
-    z += ((P_Random()-P_Random())<<10);
+    z += ((P_Random()-P_Random()) << 10);
 
-    th = P_SpawnMobj (x,y,z, MT_PUFF);
+    th = P_SpawnMobj(x, y, z, type);
     th->momz = FRACUNIT;
     th->tics -= P_Random()&3;
 
-    if (th->tics < 1)
-	th->tics = 1;
-	
-    // don't make punches spark on the wall
-    if (attackrange == MELEERANGE)
-	P_SetMobjState (th, S_PUFF3);
+	// Make it last at least one tic.
+    if(th->tics < 1) th->tics = 1;
+
+	return th;
 }
 
-
+//===========================================================================
+// P_SpawnPuff
+//===========================================================================
+void P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z)
+{
+    mobj_t*	th = P_SpawnCustomPuff(x, y, z, MT_PUFF);
+	
+    // don't make punches spark on the wall
+    if(th && attackrange == MELEERANGE) 
+		P_SetMobjState(th, S_PUFF3);
+}
 
 //===========================================================================
 // P_SpawnBlood

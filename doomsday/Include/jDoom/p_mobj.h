@@ -271,14 +271,13 @@ typedef struct mobj_s
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.3  2003/04/29 13:10:56  skyjake
+// Missile puff ptcgen issue fixed
+//
 // Revision 1.2  2003/02/27 23:14:31  skyjake
 // Obsolete jDoom files removed
 //
 // Revision 1.1  2003/02/26 19:18:32  skyjake
 // Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:13  Jaakko
-// Added all headers
-//
 //
 //-----------------------------------------------------------------------------
