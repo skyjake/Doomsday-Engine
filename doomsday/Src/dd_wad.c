@@ -1279,3 +1279,17 @@ void W_GetPWADFileNames(char *buf, int bufSize, char separator)
 			M_LimitedStrCat(temp, 64, separator, buf, bufSize);
 		}
 }
+
+/*
+ * Returns true if the specified lump is in an IWAD. Otherwise it's 
+ * from a PWAD.
+ */
+boolean W_IsFromIWAD(int lump)
+{
+	int i;
+
+	for(i = 0; i < numrecords; i++)
+		if(records[i].handle == lumpinfo[lump].handle)
+			return records[i].iwad != 0;
+	return false;
+}
