@@ -93,6 +93,9 @@ typedef struct
 	float			lumsize;
 	float			tc[2];			// Texture coordinates.
 	DGLuint			tex;			// Name of the associated DGL texture.
+	DGLuint			hudtex;
+	short			hudwidth;
+	short			hudheight;
 	rgbcol_t		color;			// Average color, for lighting.
 } spritelump_t;
 

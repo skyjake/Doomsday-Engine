@@ -2410,7 +2410,7 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
 
 //===========================================================================
 // GL_PrepareSprite
-//	Sprites use lumptexinfo *and* the spritelumps. This is a hack.
+//	Spritemodes:
 //	0 = Normal sprite
 //	1 = Psprite (HUD)
 //===========================================================================
@@ -2418,21 +2418,21 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 {
 	DGLuint *texture;
 	int lumpNum;
-	ushort *width, *height;
+	short *width, *height;
 	spritelump_t *slump;
-	lumptexinfo_t *info;
 
 	if(pnum < 0) return 0;
 
 	slump = &spritelumps[pnum];
-	info = &lumptexinfo[ lumpNum = slump->lump ];
+	lumpNum = slump->lump;
 
 	// Normal sprites and HUD sprites are stored separately.
 	// This way a sprite can be used both in the game and the HUD, and
-	// the textures can be different.
-	texture = &info->tex[spriteMode == 0? 0 : 1];
-	width   = &info->width[spriteMode == 0? 0 : 1];
-	height  = (spriteMode == 0? &info->height : &info->height2);
+	// the textures can be different. (Very few sprites are used both
+	// in the game and the HUD.)
+	texture = (spriteMode == 0? &slump->tex    : &slump->hudtex);
+	width   = (spriteMode == 0? &slump->width  : &slump->hudwidth);
+	height  = (spriteMode == 0? &slump->height : &slump->hudheight);
 
 	if(!*texture)
 	{
@@ -2493,6 +2493,12 @@ void GL_DeleteSprite(int spritelump)
 
 	gl.DeleteTextures(1, &spritelumps[spritelump].tex);
 	spritelumps[spritelump].tex = 0;
+
+	if(spritelumps[spritelump].hudtex)
+	{
+		gl.DeleteTextures(1, &spritelumps[spritelump].hudtex);
+		spritelumps[spritelump].hudtex = 0;
+	}
 }
 
 //===========================================================================
