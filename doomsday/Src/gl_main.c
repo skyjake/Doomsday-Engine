@@ -303,6 +303,15 @@ void GL_Init(void)
 				" a 32 bit mode?\n");
 		}
 	}
+	// Set a custom maximum size?
+	if(ArgCheckWith("-maxtex", 1))
+	{
+		int customSize = CeilPow2(strtol(ArgNext(), 0, 0));
+		if(maxTexSize < customSize) customSize = maxTexSize;
+		maxTexSize = customSize;
+		Con_Message("  Using maximum texture size of %i x %i.\n", 
+			maxTexSize, maxTexSize);
+	}
 	if(ArgCheck("-outlines"))
 	{
 		filloutlines = false;
