@@ -6,11 +6,21 @@
 
 Version 1.7.10 (work in progress)
 --------------
++ support for ZIP/PK3 files (no compression!), can be loaded like WAD 
+  files (-file, load; no unload, though), contents added to the virtual
+  file hierarchy (package root dir => Doomsday base dir)
++ after runtime directory has been searched, data files are also 
+  searched from the default data directory (e.g. Data\jDoom\):
+  "-file Test.wad" will load Data\jDoom\Test.wad
 + sprite frames can be replaced with external resources (Patches)
 + raw screens can be replaced with external resources (Patches)
++ sound flag 'sf_dontstop' (0x20): sound does not stop even if emitter 
+  is destroyed (sound cannot be stopped until it finishes normally)
 - fixed: sprites were sometimes clipped by a sky ceiling
 
 jDoom:
+* barrel/rocket explosions continue even after barrel/rocket is gone 
+  (barexp uses sf_dontstop)
 * Pause key is now the default binding for pause (was P)
 
 jHeretic:
