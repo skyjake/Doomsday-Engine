@@ -115,6 +115,16 @@ void Rend_BlendMode(blendmode_t mode)
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
 		break;
 
+	case BM_MUL:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
+		break;
+
+	case BM_INVERSE_MUL:
+		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+		gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
+		break;
+
 	default:
 		gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
 		gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
