@@ -63,7 +63,7 @@ void Rend_Draw3DPlayerSprites(void)
 	for(i = 0; i < DDMAXPSPRITES; i++)
 	{
 		if(!vispsprites[i].issprite) continue; // Not used.
-		Rend_Render3DVisSprite(vispsprites + i);
+		Rend_RenderModel(vispsprites + i);
 	}
 
 	// Should we turn the fog back on?
@@ -161,31 +161,6 @@ void Rend_DrawPlayerSprites(void)
 				1, info[i].flip, info[i].lump);
 		}
 	}
-}
-
-//===========================================================================
-// Rend_Render3DVisSprite
-//===========================================================================
-void Rend_Render3DVisSprite(vissprite_t *vismdl)
-{
-	int i;
-
-	if(!vismdl->mo.mf) return;
-
-	// Render all the models associated with the vissprite.
-	for(i = 0; i < MAX_FRAME_MODELS; i++)
-		if(vismdl->mo.mf->sub[i].model)
-		{
-			boolean disableZ = (vismdl->mo.mf->flags & MFF_DISABLE_Z_WRITE
-				|| vismdl->mo.mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
-
-			if(disableZ) gl.Disable(DGL_DEPTH_WRITE);
-
-			// Render the submodel.
-			Rend_RenderModel(vismdl, i);
-
-			if(disableZ) gl.Enable(DGL_DEPTH_WRITE);
-		}
 }
 
 //===========================================================================
@@ -313,6 +288,7 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 		// Restore normal GL state.
 		RL_SelectTexUnits(1);
 		gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
+		gl.DisableArrays(true, true, 0x1);
 	}
 }
 
@@ -366,7 +342,7 @@ void Rend_DrawMasked (void)
 				}
 				else // It's a sprite and it has a modelframe (it's a 3D model).
 				{
-					Rend_Render3DVisSprite(spr);
+					Rend_RenderModel(spr);
 				}
 				// How about a halo?
 				if(spr->mo.light) 
