@@ -4,6 +4,11 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.4
+-------------
+- fixed: FakeRadio hanged in maps with some unusual map geometry
+
+
 Version 1.8.3
 -------------
 + Generator -> Stage -> Spin resistance { 0 0 }: factors for slowing down
