@@ -520,7 +520,10 @@ void NetCl_Finale(int packetType, byte *data)
 	if(flags & FINF_BEGIN && script)
 	{
 		// Start the script.
-		FI_StartScript(script, (flags & FINF_AFTER) != 0);
+		FI_Start(script, 
+			  flags & FINF_AFTER? FIMODE_AFTER 
+			: flags & FINF_OVERLAY? FIMODE_OVERLAY
+			: FIMODE_BEFORE);
 	}
 	if(flags & FINF_END)
 	{
