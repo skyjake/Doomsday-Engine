@@ -22,7 +22,6 @@ EXPORTS
 	DG_Arrays
 	DG_UnlockArrays
 	DG_Func
-	DG_ZBias
 	DG_NewTexture
 	DG_DeleteTextures
 	DG_TexImage
