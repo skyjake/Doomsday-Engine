@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.13  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.12  2004/08/06 20:42:16  skyjake
 // Fixed ticcmd handling
 //
@@ -64,9 +67,6 @@
 //  Pending weapon.
 //
 //-----------------------------------------------------------------------------
-
-static const char
-        rcsid[] = "$Id$";
 
 #include <math.h>
 

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.7  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.6  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -64,9 +67,6 @@
 //  
 //    
 //-----------------------------------------------------------------------------
-
-static const char
-        rcsid[] = "$Id$";
 
 #include "tables.h"
 

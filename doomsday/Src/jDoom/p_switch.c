@@ -16,6 +16,9 @@
 //
 //
 // $Log$
+// Revision 1.9  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.8  2004/05/30 08:42:42  skyjake
 // Tweaked indentation style
 //
@@ -48,9 +51,6 @@
 //  Switches, buttons. Two-state animation. Exits.
 //
 //-----------------------------------------------------------------------------
-
-static const char
-        rcsid[] = "$Id$";
 
 #include "doomdef.h"
 #include "p_local.h"

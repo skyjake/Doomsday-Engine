@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.5  2004/05/29 09:53:29  skyjake
 // Consistent style (using GNU Indent)
 //
@@ -39,12 +42,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-        rcsid[] = "$Id$";
-
-#ifdef __GNUG__
-#  pragma implementation "m_swap.h"
-#endif
 #include "m_swap.h"
 
 // Not needed with big endian.

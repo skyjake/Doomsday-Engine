@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.13  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.12  2004/09/20 19:38:40  skyjake
 // Don't gib things with the noblood flag, like barrels
 //
@@ -69,9 +72,6 @@
 //  Shooting and aiming.
 //
 //-----------------------------------------------------------------------------
-
-static const char
-        rcsid[] = "$Id$";
 
 #include <stdlib.h>
 #include <math.h>

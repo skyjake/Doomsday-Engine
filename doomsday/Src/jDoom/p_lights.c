@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.7  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.6  2004/05/30 08:42:41  skyjake
 // Tweaked indentation style
 //
@@ -42,9 +45,6 @@
 //  Muzzle flash?
 //
 //-----------------------------------------------------------------------------
-
-static const char
-        rcsid[] = "$Id$";
 
 #include "m_random.h"
 

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.9  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.8  2004/05/30 08:42:41  skyjake
 // Tweaked indentation style
 //
@@ -50,9 +53,6 @@
 //  and some PIT_* functions to use for iteration.
 //
 //-----------------------------------------------------------------------------
-
-static const char
-        rcsid[] = "$Id$";
 
 #include <stdlib.h>
 

@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.12  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.11  2004/06/16 18:28:47  skyjake
 // Updated style (typenames)
 //
@@ -69,9 +72,6 @@
 #ifdef WIN32
 #  pragma optimize("g", off)
 #endif
-
-static const char
-        rcsid[] = "$Id$";
 
 // Data.
 #include "doomdef.h"

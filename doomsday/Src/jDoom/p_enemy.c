@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.12  2005/01/01 22:58:52  skyjake
+// Resolved a bunch of compiler warnings
+//
 // Revision 1.11  2004/07/29 19:26:37  skyjake
 // Fixed endianness problems, other glitches that show up on Mac
 //
@@ -68,9 +71,6 @@
 #ifdef WIN32
 #  pragma optimize("g", off)
 #endif
-
-static const char
-        rcsid[] = "$Id$";
 
 #include <stdlib.h>
 

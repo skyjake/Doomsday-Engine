@@ -266,11 +266,11 @@ int DG_GetIntegerv(int name, int *v)
 		break;
 
 	case DGL_SCISSOR_TEST:
-		glGetIntegerv(GL_SCISSOR_TEST, v);
+		glGetIntegerv(GL_SCISSOR_TEST, (GLint*) v);
 		break;
 
 	case DGL_SCISSOR_BOX:
-		glGetIntegerv(GL_SCISSOR_BOX, v);
+		glGetIntegerv(GL_SCISSOR_BOX, (GLint*) v);
 		v[1] = FLIP(v[1] + v[3] - 1);
 		break;
 
@@ -310,7 +310,7 @@ int DG_GetIntegerv(int name, int *v)
 		break;
 
 	case DGL_TEXTURE_BINDING:
-		glGetIntegerv(GL_TEXTURE_BINDING_2D, v);
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, (GLint*) v);
 		break;
 
 	default:
