@@ -1561,7 +1561,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 	if(target->type == MT_MINOTAUR)
 	{
 		master = (mobj_t *)target->special1;
-		if(master->health > 0)
+		if(master && master->health > 0)
 		{
 			if (!ActiveMinotaur(master->player))
 			{
