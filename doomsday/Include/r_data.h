@@ -22,6 +22,7 @@
 #ifndef __DOOMSDAY_REFRESH_DATA_H__
 #define __DOOMSDAY_REFRESH_DATA_H__
 
+#include "gl_main.h"
 #include "dd_def.h"
 #include "p_data.h"
 #include "p_think.h"
@@ -89,6 +90,7 @@ typedef struct glcommand_vertex_s {
 #define RPF_DETAIL		0x0040	   // Render with detail (incl. vtx distances)
 #define RPF_SHADOW		0x0100
 #define RPF_HORIZONTAL	0x0200
+#define RPF_SHINY       0x0400     // Shiny surface.
 #define RPF_DONE		0x8000	   // This poly has already been drawn.
 
 typedef enum {
@@ -117,6 +119,7 @@ typedef struct {
 	struct dynlight_s *lights;	   // List of lights that affect this poly.
 	DGLuint         decorlightmap; // Pregen RGB lightmap for decor lights.
 	sector_t       *sector;		   // The sector this poly belongs to (if any).
+    blendmode_t     blendmode;     // Primitive-specific blending mode.
 
 	// The geometry:
 	float           top, bottom;
@@ -229,7 +232,10 @@ typedef struct {
 	byte            masked;		   // Is the (DGL) texture masked?
 	detailinfo_t    detail;		   // Detail texture information.
 	byte            ingroup;	   // True if texture belongs to some animgroup.
-	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
+	struct ded_decor_s *decoration;	/* Pointer to the surface
+                                     * decoration, if any. */
+    struct ded_reflection_s *reflection; // Surface reflection definition.
+
 	texpatch_t      patches[1];	   // [patchcount] drawn back to front
 } texture_t;					   //   into the cached texture
 
@@ -252,6 +258,7 @@ typedef struct flat_s {
 	detailinfo_t    detail;		   // Detail texture information.
 	byte            ingroup;	   // True if belongs to some animgroup.
 	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
+    struct ded_reflection_s *reflection; // Surface reflection definition.
 } flat_t;
 
 typedef struct lumptexinfo_s {
