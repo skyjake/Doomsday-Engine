@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.6  2003/06/13 22:03:33  skyjake
+//** Added profilers, fixed floorclip 64 limit
+//**
 //** Revision 1.5  2003/03/12 20:29:19  skyjake
 //** Added lineflags to side deltas
 //**
@@ -32,6 +35,8 @@
  * Can get a bit heavy. Any optimizations?
  */
 
+#define DD_PROFILE
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
@@ -40,7 +45,18 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+#include "m_profiler.h"
+
 // MACROS ------------------------------------------------------------------
+
+BEGIN_PROF_TIMERS()
+	PROF_GEN_NULL,
+	PROF_GEN_MOBJ,
+	PROF_GEN_PLAYER,
+	PROF_GEN_SECTOR,
+	PROF_GEN_SIDE,
+	PROF_GEN_POLY
+END_PROF_TIMERS()
 
 //#define FIXED8_8(x)			(((x) & 0xffff00) >> 8)
 #define FIXED8_8(x)			(((x)*256) >> 16)
@@ -120,6 +136,19 @@ void Sv_InitPools(void)
 		// Initialize the registers with known world data.
 		Sv_InitPoolForClient(i);
 	}
+}
+
+//===========================================================================
+// Sv_ShutdownPools
+//===========================================================================
+void Sv_ShutdownPools(void)
+{
+	PRINT_PROF( PROF_GEN_NULL );
+	PRINT_PROF( PROF_GEN_MOBJ );
+	PRINT_PROF( PROF_GEN_PLAYER );
+	PRINT_PROF( PROF_GEN_SECTOR );
+	PRINT_PROF( PROF_GEN_SIDE );
+	PRINT_PROF( PROF_GEN_POLY );
 }
 
 //==========================================================================
@@ -1221,20 +1250,46 @@ void Sv_DoFrameDelta(int playerNum)
 	// will receive this Set Number.
 	pool->setNumber++;
 
+	BEGIN_PROF( PROF_GEN_NULL );
+
 	// Generate Null Deltas for destroyed mobjs. This is done first so all
 	// the destroyed mobjs will be removed from the client's register.
 	Sv_GenNullDeltas(pool);
 
+	END_PROF( PROF_GEN_NULL );
+
+	BEGIN_PROF( PROF_GEN_MOBJ );
+
 	// Generate Deltas for mobjs near the client.
 	Sv_GenMobjDeltas(playerNum);
+
+	END_PROF( PROF_GEN_MOBJ );
+
+	BEGIN_PROF( PROF_GEN_PLAYER );
 
 	// Generate Deltas for all necessary players.
 	Sv_GenPlayerDeltas(playerNum);
 
+	END_PROF( PROF_GEN_PLAYER );
+
+	BEGIN_PROF( PROF_GEN_SECTOR );
+
 	// Generate world deltas.
 	Sv_GenSectorDeltas(playerNum);
+
+	END_PROF( PROF_GEN_SECTOR );
+
+	BEGIN_PROF( PROF_GEN_SIDE );
+
 	Sv_GenSideDeltas(playerNum);
+
+	END_PROF( PROF_GEN_SIDE );
+
+	BEGIN_PROF( PROF_GEN_POLY );
+
 	Sv_GenPolyDeltas(playerNum);
+
+	END_PROF( PROF_GEN_POLY );
 }
 
 //==========================================================================
@@ -1258,6 +1313,8 @@ void Sv_WriteMobjDelta(mobjdelta_t *delta)
 	//
 	// FIXME: Optimize to write as few bytes as possible!
 	//
+
+	if(d->floorclip > 64*FRACUNIT) df |= MDF_LONG_FLOORCLIP;
 
 	// Flags. What elements are included in the delta?
 	if(d->selector & ~DDMOBJ_SELECTOR_MASK) df |= MDF_SELSPEC;
@@ -1331,7 +1388,13 @@ void Sv_WriteMobjDelta(mobjdelta_t *delta)
 	// Radius, height and floorclip are all bytes.
 	if(df & MDF_RADIUS) Msg_WriteByte(d->radius >> FRACBITS);
 	if(df & MDF_HEIGHT) Msg_WriteByte(d->height >> FRACBITS);
-	if(df & MDF_FLOORCLIP) Msg_WriteByte(d->floorclip >> 14);
+	if(df & MDF_FLOORCLIP) 
+	{
+		if(df & MDF_LONG_FLOORCLIP)
+			Msg_WritePackedShort(d->floorclip >> 14);
+		else
+			Msg_WriteByte(d->floorclip >> 14);
+	}
 
 	if(net_showsets) Con_Printf("- mo %i (%x) [%i b]\n", d->thinker.id, df,
 		Msg_Offset() - startmsgpos);
