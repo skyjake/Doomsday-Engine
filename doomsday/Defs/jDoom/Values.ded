@@ -1,6 +1,5 @@
-# jDoom 1.13.0: Values
-# Mind yur speling: jDoom only uses the identifiers it knows about.
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Values
+# (mind yur speling; jDoom only uses the identifiers it knows about)
 
 Header { Version = 5; }
 
@@ -24,6 +23,10 @@ Values {
       Misl = "1";
     };
   };
+  
+  # Weapon Info|*|Static defaults to "0".
+  # "1" will prevent the lowering of the HUD weapon when doing a switch.
+  
   Weapon Info {
     0 {
       Type = "noammo";

@@ -1,12 +1,9 @@
 # jDoom: Lights
-# Need help with DED syntax? See DEDDoc.txt.
 
 Header { Version = 5; }
 
-# Flags for Light definitions.
-Flag { ID = "lgf_nohalo"; Value = 0x100; }
+#####====--- LIGHT DECORATIONS ---====#####
 
-# Flags for Decoration definitions:
 # Decoration will not be used with IWAD resources.
 Flag { ID = "dcf_noiwad"; Value = 0x1; }
 
@@ -16,6 +13,17 @@ Flag { ID = "dcf_pwad"; Value = 0x2; }
 # Allow using decoration with external resources.
 Flag { ID = "dcf_ext"; Value = 0x4; }
 
+Include "Doom1Lights.ded";
+Include "Doom2Lights.ded";
+
+
+#####====--- LIGHT SOURCE PROPERTIES ---====#####
+
+# Flags for Light definitions.
+Flag { ID = "lgf_nohalo"; Value = 0x100; }
+
+# The default properties of all light-emitting objects are determined
+# automatically by the engine.
 
 # The blue health bottles should be lit a bit more brightly.
 Light { State = "BON1"; Size = 0.5; Color { .05 .05 .85 }; }
@@ -36,9 +44,3 @@ Copy Light {
   State = "BAR2";
   Size = 0.32;
 }
-
-
-#####====--- LIGHT DECORATIONS ---====#####
-
-Include "Doom1Lights.ded";
-Include "Doom2Lights.ded";

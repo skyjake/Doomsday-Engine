@@ -1,5 +1,5 @@
-# jDoom 1.12.4: Finales and interludes (Final DOOM/TNT)
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Intermissions and Finales (Final DOOM/TNT)
+# (see Doc\InFine.txt)
 
 Header { Version = 5; }
 
@@ -8,12 +8,10 @@ Header { Version = 5; }
 # in the script, no need to go about modifying the Text defs.
 
 ########========-------- TNT: EVILUTION --------========########
-# Game = 2
 
 Finale
 {
   Before = "MAP07";
-  Game = 2;
   Script {
     music "read_m"
     flat SLIME16
@@ -27,7 +25,6 @@ Finale
 Finale
 {
   Before = "MAP12";
-  Game = 2;
   Script {
     music "read_m"
     flat RROCK14
@@ -41,7 +38,6 @@ Finale
 Finale
 {
   Before = "MAP21";
-  Game = 2;
   Script {
     music "read_m"
     flat RROCK07
@@ -56,7 +52,6 @@ Finale
 Finale
 {
   After = "MAP30";
-  Game = 2;
   Script {
     music "read_m"
     flat RROCK17
@@ -307,7 +302,6 @@ Finale
 Finale
 {
   Before = "MAP31";
-  Game = 2;
   Script {
     music "read_m";
     flat RROCK13;
@@ -322,7 +316,6 @@ Finale
 Finale
 {
   Before = "MAP32";
-  Game = 2;
   Script {
     music "read_m";
     flat RROCK19;

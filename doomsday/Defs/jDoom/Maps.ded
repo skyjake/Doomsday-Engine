@@ -1,5 +1,4 @@
-# jDoom Maps
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Maps
 
 Header { Version = 5; }
 

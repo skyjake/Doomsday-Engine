@@ -3,9 +3,18 @@
 
 Header { Version = 5; }
 
-Flag { ID = "lgf_nohalo"; Value = 0x100; }
+#####====--- LIGHT DECORATIONS ---====#####
+#
+# The default flags allow using these only with the original textures.
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external 
+# resources.
+#
+# There can only be one decoration per texture/flat. Newer decorations
+# override older ones. 
+#
+# One decoration can specify up to 16 lights.
+#
 
-# Flags for Decoration definitions:
 # Decoration will not be used with IWAD resources.
 Flag { ID = "dcf_noiwad"; Value = 0x1; }
 
@@ -15,6 +24,10 @@ Flag { ID = "dcf_pwad"; Value = 0x2; }
 # Allow using decoration with external resources.
 Flag { ID = "dcf_ext"; Value = 0x4; }
 
+
+#####====--- LIGHT SOURCE PROPERTIES ---====#####
+
+Flag { ID = "lgf_nohalo"; Value = 0x100; }
 
 # A halo would look bad for the chandelier because it wouldn't be
 # rendered around the candle flames.

@@ -1,14 +1,9 @@
-# jDoom 1.13.0: Sprites
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Sprites
 #
 # Order of definitions is very important here!
 # Only add new Sprites *after* the existing definitions.
 
-Header
-{
-  Version = 5;
-  Sprite prefix = "SPR_";
-}
+Header { Version = 5; }
 
 Sprite { ID = "TROO"; }
 Sprite { ID = "SHTG"; }

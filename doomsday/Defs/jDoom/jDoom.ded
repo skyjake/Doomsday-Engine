@@ -1,10 +1,10 @@
 #
-# jDoom Definitions
+# -=- jDoom Definitions -=-
 #
-# If you modify this file bear in mind that it will get overwritten
-# whenever you install a new version of jDoom.
+# This file is overwritten on every upgrade. Add custom definitions
+# to User.ded.
 #
-# Need help with DED syntax? See DEDDoc.txt.
+# For information about DED syntax and semantics, see Doc\DEDDoc.txt.
 #
 
 Header {

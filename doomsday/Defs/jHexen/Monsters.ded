@@ -58,57 +58,51 @@ Model { State="ETTIN_DEATH2_1"; Scale=3.3 ;Md2 {File="ettin_die.md2"; Frame="dea
 
 Generator {
   State = "ETTIN_DEATH2_1";
-    Flags = "gnf_modelonly";
-    Speed = 1.1;
-    Speed Rnd = 5.0;
-    Vector { 0.1 0.1 0.1 };
-    Vector Rnd = 5;
-    Center { 0.0 0.0 40.0 };
-    Spawn radius = 40.0;
-    Min spawn radius = 15.0;
-    Distance = 600.0;
-    Spawn age = 5;
-    Max age = 450;
-    Particles = 200;
-    Spawn rate = 100.0;
-    Stage
-    {
-        Type = "pt_point";
-        Tics = 35;
-        Color { 0.8 0.0 0.0 0.9 };
-        Radius = 14.0;
-        Flags = "ptf_stagetouch ptf_flat";
-        Gravity = 0.6;
-        Resistance = 0.01;
-  Radius rnd = 1; # Comment this line if NOT using the latest binary snapshot
-    };
-    Stage
-    {
-        Type = "pt_point";
-        Tics = 350;
-        Color { 0.8 0.0 0.0 0.9 };
-        Flags = "ptf_flat";
-        Resistance = 0.8;
-  Rnd=1;
-    };
-    Stage
-    {
-        Type = "pt_point";
-        Tics = 1;
-        Color { 0.8 0.0 0.0 0.1 };
-        Flags = "ptf_flat";
-  Radius = 25;
-  Radius rnd = 1; # Comment this line if NOT using the latest binary snapshot
-  Rnd=1;
-    };
-
+  Flags = "gnf_modelonly";
+  Speed = 1.1;
+  Speed Rnd = 5.0;
+  Vector { 0.1 0.1 0.1 };
+  Vector Rnd = 5;
+  Center { 0.0 0.0 40.0 };
+  Spawn radius = 40.0;
+  Min spawn radius = 15.0;
+  Distance = 600.0;
+  Spawn age = 5;
+  Max age = 450;
+  Particles = 200;
+  Spawn rate = 100.0;
+  Stage {
+    Type = "pt_point";
+    Tics = 35;
+    Color { 0.8 0.0 0.0 0.9 };
+    Radius = 14.0;
+    Flags = "ptf_stagetouch ptf_flat";
+    Gravity = 0.6;
+    Resistance = 0.01;
+    Radius rnd = 1; 
+  };
+  Stage {
+    Type = "pt_point";
+    Tics = 350;
+    Color { 0.8 0.0 0.0 0.9 };
+    Flags = "ptf_flat";
+    Resistance = 0.8;
+    Rnd=1;
+  };
+  Stage {
+    Type = "pt_point";
+    Tics = 1;
+    Color { 0.8 0.0 0.0 0.1 };
+    Flags = "ptf_flat";
+    Radius = 25;
+    Radius rnd = 1; 
+    Rnd=1;
+  };
 }
 
-
-
-
-Model { State="ETTIN_ICE1"; 
-  Scale=3.3; 
+Model { 
+  State = "ETTIN_ICE1"; 
+  Scale = 3.3; 
   Md2 {   
     Flags = "df_specular";
     File="ettin.md2";
@@ -123,7 +117,7 @@ Model { State="ETTIN_ICE1";
     Flags = "df_specular";
     File="ettin_ice.md2";
     Frame="Icy";
-          Transparent = 0.6;
+    Transparent = 0.6;
     Shiny = 0.06;
     Shiny skin = "icy_shin.pcx";
     Shiny color = {0.5 0.5 0.8 } ;
@@ -134,41 +128,38 @@ Model { State="ETTIN_ICE1";
 
 Generator {
   State = "ETTIN_ICE1";
-    Speed = 0.5;
-    Speed Rnd = 3.0;
-    Vector { 0.1 0.1 0.1 };
-    Vector Rnd = 5;
-    Center { 0.0 0.0 40.0 };
-    Spawn radius = 50.0;
-    Min spawn radius = 20;
-    Distance = 0.0;
-    Spawn age = 7;
-    Max age = 120;
-    Particles = 200;
-    Spawn rate = 50.0;
-    Stage
-    {
-        Type = "pt_point";
-        Tics = 65;
-  Rnd = 0.6;
-        Color { 0.5 0.5 1 0.15 };
-        Radius = 25.0;
-        Flags = "ptf_stagetouch";
-        Bounce = 0.1;
-        Gravity = 0.2;
-        Resistance = 0.5;
-  Radius Rnd = 1;
-    };
-    Stage
-    {
-        Type = "pt_point";
-        Tics = 35;
-        Color { 0.7 0.7 1 0.08 };
-        Radius = 0.5;
-        Flags = "ptf_bright ptf_dietouch";
-        Bounce = 0.0;
-        Gravity = 0.2;
-        Resistance = 0.5;
-    };
-
+  Speed = 0.5;
+  Speed Rnd = 3.0;
+  Vector { 0.1 0.1 0.1 };
+  Vector Rnd = 5;
+  Center { 0.0 0.0 40.0 };
+  Spawn radius = 50.0;
+  Min spawn radius = 20;
+  Distance = 0.0;
+  Spawn age = 7;
+  Max age = 120;
+  Particles = 200;
+  Spawn rate = 50.0;
+  Stage {
+    Type = "pt_point";
+    Tics = 65;
+    Rnd = 0.6;
+    Color { 0.5 0.5 1 0.15 };
+    Radius = 25.0;
+    Flags = "ptf_stagetouch";
+    Bounce = 0.1;
+    Gravity = 0.2;
+    Resistance = 0.5;
+    Radius Rnd = 1;
+  };
+  Stage {
+    Type = "pt_point";
+    Tics = 35;
+    Color { 0.7 0.7 1 0.08 };
+    Radius = 0.5;
+    Flags = "ptf_bright ptf_dietouch";
+    Bounce = 0.0;
+    Gravity = 0.2;
+    Resistance = 0.5;
+  };
 }

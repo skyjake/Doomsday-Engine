@@ -1,5 +1,4 @@
 # jDoom: XG Lines and Sectors
-# Need help with DED syntax? See DEDDoc.txt.
 
 # Line Types
 Flag { ID = "ltc_none"; }

@@ -1,5 +1,5 @@
-# jDoom 1.12.4: Finales and interludes
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Intermissions and Finales
+# (see Doc\InFine.txt)
 
 Header { Version = 5; }
 
@@ -9,8 +9,8 @@ Header { Version = 5; }
 
 # How about some custom finales for Plutonia and TNT?
 
-Include "PlutFinales.ded";
-Include "TNTFinales.ded";
+IncludeIf doom2-plut "PlutFinales.ded";
+IncludeIf doom2-tnt "TNTFinales.ded";
 
 ######======------ SHAREWARE/REG/ULTIMATE DOOM ------======######
 
@@ -114,6 +114,9 @@ Finale
 }
 
 #########=========--------- DOOM II ---------=========#########
+
+# The rest of this file is skipped if not regular Doom II.
+SkipIf Not doom2;
 
 Finale
 {

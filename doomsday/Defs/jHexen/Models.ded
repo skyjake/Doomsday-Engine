@@ -1,5 +1,4 @@
 # jHexen: Models
-# Need help with DED syntax? See DEDDoc.txt.
 
 Header { Version = 5; }
 

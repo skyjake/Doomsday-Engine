@@ -1,8 +1,4 @@
 # jDoom: Models
-# Need help with DED syntax? See DEDDoc.txt.
-#
-# If you modify this file bear in mind that it will get overwritten
-# whenever you install a new version of jDoom.
 
 Header { Version = 5; }
 

@@ -1,14 +1,9 @@
-# jDoom 1.14: Text Strings
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Text Strings
 #
 # Do not change the order of these definitions!
 #
 
-Header
-{
-  Version = 5;
-  Text prefix = "TXT_";
-}
+Header { Version = 5; }
 
 Text {
   ID = "D_DEVSTR";

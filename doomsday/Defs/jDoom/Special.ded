@@ -1,5 +1,4 @@
-# jDoom: Special effects
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Special Effects
 
 Header { Version = 5; }
 
@@ -15,6 +14,7 @@ Flag { ID = "gnf_density"; Value = 0x100; }
 Flag { ID = "gnf_modelonly"; Value = 0x200; }
 Flag { ID = "gnf_scalerate"; Value = 0x400; }
 
+# Particle types.
 Flag { ID = "pt_point"; Value = 1; }
 Flag { ID = "pt_line"; Value = 2; }
 Flag { ID = "pt_tex00"; Value = 100; }
@@ -29,8 +29,13 @@ Flag { ID = "pt_tex08"; Value = 108; }
 Flag { ID = "pt_tex09"; Value = 109; }
 Flag { ID = "pt_tex10"; Value = 110; }
 Flag { ID = "pt_tex11"; Value = 111; }
+Flag { ID = "pt_tex12"; Value = 112; }
+Flag { ID = "pt_tex13"; Value = 113; }
+Flag { ID = "pt_tex14"; Value = 114; }
+Flag { ID = "pt_tex15"; Value = 115; }
 # These really go up to pt_tex31.
 
+# Particle flags (for Stages).
 Flag { ID = "ptf_stagetouch"; Value = 0x1; }
 Flag { ID = "ptf_stagevtouch"; Value = 0x20; }
 Flag { ID = "ptf_stagehtouch"; Value = 0x40; }

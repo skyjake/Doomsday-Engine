@@ -1,19 +1,8 @@
-# jDoom 1.12.1: Audio
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Music and Sound Effects
 
-Header
-{
-  Version = 5;
-  Sfx prefix = "sfx_";
-  Mus prefix = "mus_";
-}
+Header { Version = 5; }
 
-Flag { ID = "sf_shift"; Value = 0x1; }
-Flag { ID = "sf_shift2"; Value = 0x2; }
-Flag { ID = "sf_exclude"; Value = 0x4; }
-Flag { ID = "sf_nodist"; Value = 0x8; }
-Flag { ID = "sf_repeat"; Value = 0x10; }
-Flag { ID = "sf_dontstop"; Value = 0x20; }
+#####====--- MUSIC ---====#####
 
 Music { ID = "None"; }
 Music { ID = "e1m1"; Lump = "D_E1M1"; }
@@ -83,6 +72,17 @@ Music { ID = "ultima"; Lump = "D_ULTIMA"; }
 Music { ID = "read_m"; Lump = "D_READ_M"; }
 Music { ID = "dm2ttl"; Lump = "D_DM2TTL"; }
 Music { ID = "dm2int"; Lump = "D_DM2INT"; }
+
+
+#####====--- SOUND EFFECTS ---====#####
+
+Flag { ID = "sf_shift"; Value = 0x1; }
+Flag { ID = "sf_shift2"; Value = 0x2; }
+Flag { ID = "sf_exclude"; Value = 0x4; }
+Flag { ID = "sf_nodist"; Value = 0x8; }
+Flag { ID = "sf_repeat"; Value = 0x10; }
+Flag { ID = "sf_dontstop"; Value = 0x20; }
+
 
 Sound {
   ID = "None";

@@ -1,5 +1,4 @@
 # jDoom: Light Decorations for Doom I
-# Need help with DED syntax? See DEDDoc.txt.
 
 Header { Version = 5; }
 
@@ -17,7 +16,7 @@ SkipIf doom2-tnt;
 # There can only be one decoration per texture/flat. Newer decorations
 # override older ones. 
 #
-# One decoration can specify up to eight lights.
+# One decoration can specify up to 16 lights.
 #
 
 #

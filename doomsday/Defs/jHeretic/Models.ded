@@ -1,10 +1,4 @@
 # jHeretic: Models
-#
-# If you modify this file bear in mind that it will get overwritten
-# whenever you install a new version.
-#
-# Need help with DED syntax? See DEDDoc.txt.
-#
 
 Header { Version = 5; }
 

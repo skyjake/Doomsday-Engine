@@ -1,13 +1,9 @@
 # jHexen: Sprites
-# Need help with DED syntax? See DEDDoc.txt.
 #
 # Order of definitions is very important here!
 # Only add new Sprites *after* the existing definitions.
 
-Header {
-  Version = 5;
-  Sprite prefix = "SPR_";
-}
+Header { Version = 5; }
 
 Sprite { ID = "MAN1"; }
 Sprite { ID = "ACLO"; }

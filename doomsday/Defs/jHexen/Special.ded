@@ -1,5 +1,4 @@
 # jHexen: Effects
-# Need help with DED syntax? See DEDDoc.txt.
 
 Header { Version = 5; }
 
@@ -14,9 +13,11 @@ Flag { ID = "gnf_space"; Value = 0x80; }
 Flag { ID = "gnf_density"; Value = 0x100; }
 Flag { ID = "gnf_modelonly"; Value = 0x200; }
 
+# Particle types.
 Flag { ID = "pt_point"; Value = 1; }
 Flag { ID = "pt_line"; Value = 2; }
 
+# Particle flags (for Stages).
 Flag { ID = "ptf_stagetouch"; Value = 0x1; }
 Flag { ID = "ptf_stagevtouch"; Value = 0x20; }
 Flag { ID = "ptf_stagehtouch"; Value = 0x40; }

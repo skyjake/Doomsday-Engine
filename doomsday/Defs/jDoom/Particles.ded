@@ -1,5 +1,4 @@
-# jDoom: Particle effects
-# Need help with DED syntax? See DEDDoc.txt.
+# jDoom: Particle Effects
 
 Header { Version = 5; }
 

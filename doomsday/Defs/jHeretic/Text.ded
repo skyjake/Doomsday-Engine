@@ -1,10 +1,6 @@
 # jHeretic: Text Strings
-# Need help with DED syntax? See DEDDoc.txt.
 
-Header {
-  Version = 5;
-  Text prefix = "TXT_";
-}
+Header { Version = 5; }
 
 Text {
   ID = "PRESSKEY";

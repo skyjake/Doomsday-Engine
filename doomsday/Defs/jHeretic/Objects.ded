@@ -1,14 +1,10 @@
 # jHeretic: Objects
-# Need help with DED syntax? See DEDDoc.txt.
 #
 # Order of definitions is very important here!
 # Only add new States and Things *after* the existing definitions.
+#
 
-Header {
-  Version = 5;
-  Thing prefix = "MT_";
-  State prefix = "S_";
-}
+Header { Version = 5; }
 
 Flag { ID = "mf_special"; Value = 0x1; }
 Flag { ID = "mf_solid"; Value = 0x2; }
