@@ -162,7 +162,7 @@ void downMip8(byte *in, byte *fadedOut, int width, int height, float fade)
 
 	if(!outW || !outH) // Limited, 1x2|2x1 -> 1x1 reduction?
 	{
-		int outDim = width > 1? width : height;
+		int outDim = width > 1? outW : outH;
 		for(x = 0; x < outDim; x++, in += 2)
 		{
 			*out = (in[0] + in[1]) >> 1;

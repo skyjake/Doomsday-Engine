@@ -810,18 +810,18 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
 
 	if(!outW || !outH) // Limited, 1x2|2x1 -> 1x1 reduction?
 	{
-		int outDim = width > 1? width : height;
+		int outDim = width > 1? outW : outH;
 		out = in;
-		for(x=0; x<outDim; x++, in += comps*2)
-			for(c=0; c<comps; c++, out++) 
+		for(x = 0; x < outDim; x++, in += comps*2)
+			for(c = 0; c < comps; c++, out++) 
 				*out = (in[c] + in[comps+c]) >> 1;
 	}
 	else // Unconstrained, 2x2 -> 1x1 reduction?
 	{
 		out = in;
-		for(y=0; y<outH; y++, in += width*comps)
-			for(x=0; x<outW; x++, in += comps*2)
-				for(c=0; c<comps; c++, out++) 
+		for(y = 0; y < outH; y++, in += width*comps)
+			for(x = 0; x < outW; x++, in += comps*2)
+				for(c = 0; c < comps; c++, out++) 
 					*out = (in[c] + in[comps + c] + in[comps*width + c] + in[comps*(width+1) + c]) >> 2;
 	}
 }	
