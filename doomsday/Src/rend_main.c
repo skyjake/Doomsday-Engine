@@ -868,16 +868,6 @@ void Rend_RenderSubsector(int ssecidx)
 	}
 	Rend_OccludeSubsector(ssec, true);
 
-/*	else if(haloMode)
-	{
-		// Flares are on, but dynamic lights aren't processed. We must
-		// mark the rendered luminous objects ourselves.
-		for(i = 0; i < numLuminous; i++)
-		{
-			if(luminousList[i].thing->subsector == ssec)
-				luminousList[i].flags |= LUMF_RENDERED;
-		}
-	}*/
 	// Mark the particle generators in the sector visible.
 	PG_SectorIsVisible(sect);
 
@@ -896,7 +886,7 @@ void Rend_RenderSubsector(int ssecidx)
 
 	// Is there a polyobj on board?
 	if(ssec->poly)
-		for(i=0; i<ssec->poly->numsegs; i++)
+		for(i = 0; i < ssec->poly->numsegs; i++)
 			Rend_RenderWallSeg(ssec->poly->segs[i], sect, 0);
 
 	sectorlight = Rend_SectorLight(sect);
