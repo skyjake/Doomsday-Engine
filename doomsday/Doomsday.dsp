@@ -96,23 +96,6 @@ LINK32=link.exe
 # Begin Group "Base"
 
 # PROP Default_Filter ""
-# Begin Group "Definitions"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\Src\dd_defns.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\Src\dedfile.c
-# ADD CPP /Gz
-# End Source File
-# Begin Source File
-
-SOURCE=.\Src\dedread.c
-# End Source File
-# End Group
 # Begin Source File
 
 SOURCE=.\Src\dd_dgl.c
@@ -582,6 +565,22 @@ SOURCE=.\Src\ui_mpi.c
 SOURCE=.\Src\ui_panel.c
 # End Source File
 # End Group
+# Begin Group "Definitions"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\Src\def_data.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Src\def_main.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Src\def_read.c
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\Src\Doomsday.def
@@ -606,22 +605,6 @@ SOURCE=.\Src\template.c
 # Begin Group "Base Headers"
 
 # PROP Default_Filter ""
-# Begin Group "Definition Headers"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\Include\dd_defns.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\dd_dfdat.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Include\dedfile.h
-# End Source File
-# End Group
 # Begin Source File
 
 SOURCE=.\Include\dd_api.h
@@ -1163,6 +1146,26 @@ SOURCE=.\Include\ui_mpi.h
 SOURCE=.\Include\ui_panel.h
 # End Source File
 # End Group
+# Begin Group "Definition Headers"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\Include\de_defs.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\def_data.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\def_main.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\def_share.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\Include\doomsday.h
@@ -1210,5 +1213,9 @@ SOURCE=.\Res\icon2.ico
 SOURCE=.\res\icon3.ico
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=.\Doc\Banner.txt
+# End Source File
 # End Target
 # End Project
