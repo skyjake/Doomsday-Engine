@@ -278,7 +278,7 @@ package_t *Zip_NewPackage(void)
  * Returns true if it successfully located. This gets awfully slow if
  * the comment is long.
  */
-boolean Zip_LocateCentralDirectory(DFILE * file)
+boolean Zip_LocateCentralDirectory(DFILE *file)
 {
 	/*      int length = F_Length(file); */
 	int     pos = CENTRAL_END_SIZE;	// Offset from the end.
@@ -291,7 +291,7 @@ boolean Zip_LocateCentralDirectory(DFILE * file)
 
 		// Is this is signature?
 		F_Read(&signature, 4, file);
-		if(signature == SIG_END_OF_CENTRAL_DIR)
+		if(ULONG(signature) == SIG_END_OF_CENTRAL_DIR)
 		{
 			// This is it!
 			return true;
@@ -322,7 +322,7 @@ void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
  * Opens the file zip, reads the directory and stores the info for later
  * access. If prevOpened is not NULL, all data will be read from there.
  */
-boolean Zip_Open(const char *fileName, DFILE * prevOpened)
+boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 {
 	DFILE  *file;
 	package_t *pack;
@@ -361,16 +361,16 @@ boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 	F_Read(&summary, sizeof(summary), file);
 
 	// Does the summary say something we don't like?
-	if(summary.diskEntryCount != summary.totalEntryCount)
+	if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
 	{
 		Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n",
 				  M_Pretty(fileName));
 	}
 
 	// Read the entire central directory into memory.
-	directory = malloc(summary.size);
-	F_Seek(file, summary.offset, SEEK_SET);
-	F_Read(directory, summary.size, file);
+	directory = malloc(ULONG(summary.size));
+	F_Seek(file, ULONG(summary.offset), SEEK_SET);
+	F_Read(directory, ULONG(summary.size), file);
 
 	pack = Zip_NewPackage();
 	strcpy(pack->name, fileName);
@@ -378,7 +378,7 @@ boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 
 	// Read all the entries.
 	pos = directory;
-	for(index = 0; index < summary.totalEntryCount;
+	for(index = 0; index < USHORT(summary.totalEntryCount);
 		index++, pos += sizeof(centralfileheader_t))
 	{
 		localfileheader_t localHeader;
@@ -387,23 +387,23 @@ boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 
 		// Advance the cursor past the variable sized fields.
 		pos +=
-			header->fileNameSize + header->extraFieldSize +
-			header->commentSize;
+			USHORT(header->fileNameSize) + USHORT(header->extraFieldSize) +
+			USHORT(header->commentSize);
 
-		Zip_CopyStr(buf, nameStart, header->fileNameSize, sizeof(buf));
+		Zip_CopyStr(buf, nameStart, USHORT(header->fileNameSize), sizeof(buf));
 
 		// Directories are skipped.
-		if(buf[header->fileNameSize - 1] == '/' && !header->size)
-			continue;
+		if(buf[USHORT(header->fileNameSize) - 1] == '/' && 
+            ULONG(header->size) == 0) continue;
 
 		// Do we support the format of this file?
-		if(header->compression != ZFC_NO_COMPRESSION ||
-		   header->compressedSize != header->size)
+		if(USHORT(header->compression) != ZFC_NO_COMPRESSION ||
+		   ULONG(header->compressedSize) != ULONG(header->size))
 		{
 			Con_Error("Zip_Open: %s: '%s' is compressed.\n  Compression is "
 					  "not supported.\n", M_Pretty(fileName), buf);
 		}
-		if(header->flags & ZFH_ENCRYPTED)
+		if(USHORT(header->flags) & ZFH_ENCRYPTED)
 		{
 			Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is "
 					  "not supported.\n", M_Pretty(fileName), buf);
@@ -419,7 +419,7 @@ boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 		// We can add this file to the zipentry list.
 		entry = Zip_NewFile(buf);
 		entry->package = pack;
-		entry->size = header->size;
+		entry->size = ULONG(header->size);
 
 		// The modification date is inherited from the real file (note
 		// recursion).
@@ -427,12 +427,12 @@ boolean Zip_Open(const char *fileName, DFILE * prevOpened)
 
 		// Read the local file header, which contains the correct
 		// extra field size (Info-ZIP!).
-		F_Seek(file, header->relOffset, SEEK_SET);
+		F_Seek(file, ULONG(header->relOffset), SEEK_SET);
 		F_Read(&localHeader, sizeof(localHeader), file);
 
 		entry->offset =
-			header->relOffset + sizeof(localfileheader_t) +
-			header->fileNameSize + localHeader.extraFieldSize;
+			ULONG(header->relOffset) + sizeof(localfileheader_t) +
+			USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
 	}
 
 	// The central directory is no longer needed.
