@@ -18,10 +18,16 @@
 // Change with server version?
 #define SV_CONSOLE_FLAGS	(CBLF_WHITE|CBLF_LIGHT|CBLF_GREEN)
 
-#define NETBUFFER_MAXDATA	32768 //16384 //9215
+#define NETBUFFER_MAXDATA	32768
 
 #define PING_TIMEOUT		1000	// Ping timeout (ms).
 #define MAX_PINGS			10
+
+// The default bandwidth rating for new clients.
+#define BWR_DEFAULT			10
+
+// A modest acktime used by default for new clients (500 ms ping).
+#define ACK_DEFAULT			500
 
 #define MONITORTICS			7
 
@@ -49,7 +55,7 @@ enum
 	psv_handshake,
 	psv_server_close,
 	psv_frame,
-	psv_player_exit,
+	psv_player_exit,		/* 10 */
 	psv_console_text,
 	pcl_ack_shake,
 	psv_sync,
@@ -59,11 +65,13 @@ enum
 	pcl_ack_sets,			
 	pkt_coords,
 	pkt_democam,
-	pkt_democam_resume,
-	pcl_hello2,			// Includes game id
-
-	// World events.
-	psv_plane_sound		= DDPT_PLANE_SOUND,			// 32
+	pkt_democam_resume,		/* 20 */
+	pcl_hello2,				// Includes game ID
+	psv_frame2,				// Frame packet v2
+	psv_first_frame2,		// First psv_frame2 after map change 
+	psv_sound2,
+	psv_stop_sound,
+	psv_music,
 	
 	// Game specific events.
 	pkt_game_marker		= DDPT_FIRST_GAME_EVENT		// 64
@@ -71,18 +79,18 @@ enum
 
 // Use the number defined in dd_share.h for sound packets. 
 // This is for backwards compatibility.
-#define psv_sound			DDPT_SOUND
+#define psv_sound			71 /* DDPT_SOUND */
 
 #define RESENDCOUNT			10
 #define HANDSHAKECOUNT		17
-#define UPDATECOUNT			5
+#define UPDATECOUNT			20
 
 // These dd-flags are packed (i.e. included in mobj deltas).
-#define DDMF_PACK_MASK		0x3ceff1ff 
+#define DDMF_PACK_MASK		0x3cfff1ff 
 
-// Size of the client coordinate buffer, used by server to calculate 
-// coord errors.
-#define NUM_CERR			4
+// A client's acknowledgement threshold depends on the average of his
+// acknowledgement times.
+#define NUM_ACK_TIMES		32
 
 // The consoleplayer's camera position is written to the demo file
 // every 3rd tic.
@@ -140,8 +148,16 @@ typedef struct
 	// Older or as old tics than this are discarded.
 	byte	runTime;
 
-	int		lag;
-	int		lagStress;
+	// Bandwidth rating for connection. Determines how much information
+	// can be sent to the client. Determined dynamically.
+	int		bandwidthRating;
+
+	// A record of the past few acknowledgement times.
+	uint	ackTimes[NUM_ACK_TIMES];
+	int		ackIdx;
+
+/*	int		lag;
+	int		lagStress;*/
 
 	// Clients use this to determine how long ago they received the
 	// last update of this client.
@@ -183,16 +199,21 @@ typedef struct
 	// View console. Which player this client is viewing?
 	int		viewConsole;
 
-	int		errorPos;
-	vertex_t error[NUM_CERR];
+	/*int		errorPos;
+	vertex_t error[NUM_CERR];*/
 } 
 client_t;
 
+typedef unsigned short msgid_t;
+
+#pragma pack(1)
 typedef struct
 {
+	msgid_t	id;
 	byte	type;
 	byte	data[NETBUFFER_MAXDATA];
 } netdata_t;
+#pragma pack()
 
 typedef struct
 {
@@ -247,28 +268,34 @@ extern client_t clients[MAXPLAYERS];
 //---------------------------------------------------------------------------
 // Functions
 //---------------------------------------------------------------------------
-void Net_Init(void);
-void Net_Shutdown(void);
-void Net_AllocArrays(void);
-void Net_DestroyArrays(void);
-void Net_SendPacket(int to_player, int type, void *data, int length);
-boolean Net_GetPacket(void);
-void Net_SendBuffer(int to_player, int sp_flags);
-void Net_InitGame (void);
-void Net_StartGame (void);
-void Net_StopGame (void);
-void Net_SendPing(int player, int count);
-void Net_PingResponse(void);
-void Net_ShowPingSummary(int player);
-void Net_ShowChatMessage();
-int Net_TimeDelta(byte now, byte then);
-int Net_GetTicCmd(void *cmd, int player);
-void Net_Update(void);
-void Net_Ticker(void);
-void Net_Drawer(void);
+void	Net_Init(void);
+void	Net_Shutdown(void);
+void	Net_AllocArrays(void);
+void	Net_DestroyArrays(void);
+void	Net_SendPacket(int to_player, int type, void *data, int length);
+boolean	Net_GetPacket(void);
+void	Net_SendBuffer(int to_player, int sp_flags);
+void	Net_InitGame (void);
+void	Net_StartGame (void);
+void	Net_StopGame (void);
+void	Net_SendPing(int player, int count);
+void	Net_PingResponse(void);
+void	Net_ShowPingSummary(int player);
+void	Net_ShowChatMessage();
+int		Net_TimeDelta(byte now, byte then);
+int		Net_GetTicCmd(void *cmd, int player);
+void	Net_Update(void);
+void	Net_Ticker(void);
+void	Net_Drawer(void);
+void	Net_ResetTimer(void);
 
-char* Net_GetPlayerName(int player);
-id_t Net_GetPlayerID(int player);
+void	Net_SetInitialAckTime(int clientNumber, uint period);
+void	Net_SetAckTime(int clientNumber, uint period);
+uint	Net_GetAckTime(int clientNumber);
+uint	Net_GetAckThreshold(int clientNumber);
+
+char*	Net_GetPlayerName(int player);
+id_t	Net_GetPlayerID(int player);
 
 // Console commands.
 D_CMD( Kick );
