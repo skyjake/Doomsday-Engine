@@ -531,18 +531,13 @@ void AM_changeWindowScale(void)
 
 void AM_doFollowPlayer(void)
 {
-  if (f_oldloc.x != plr->plr->mo->x || f_oldloc.y != plr->plr->mo->y)
-  {
-//  m_x = FTOM(MTOF(plr->plr->mo->x - m_w/2));
-//  m_y = FTOM(MTOF(plr->plr->mo->y - m_h/2));
-//  m_x = plr->plr->mo->x - m_w/2;
-//  m_y = plr->plr->mo->y - m_h/2;
-    /*m_x = FTOM(MTOF(plr->plr->mo->x)) - m_w/2;
-    m_y = FTOM(MTOF(plr->plr->mo->y)) - m_h/2;*/
-    m_x = plr->plr->mo->x - m_w/2;
-    m_y = plr->plr->mo->y - m_h/2;
-    m_x2 = m_x + m_w;
-    m_y2 = m_y + m_h;
+	if(!plr->plr->mo) return;
+	if (f_oldloc.x != plr->plr->mo->x || f_oldloc.y != plr->plr->mo->y)
+	{
+		m_x = plr->plr->mo->x - m_w/2;
+		m_y = plr->plr->mo->y - m_h/2;
+		m_x2 = m_x + m_w;
+		m_y2 = m_y + m_h;
 
   	 // do the parallax parchment scrolling.
 /*
@@ -563,9 +558,9 @@ void AM_doFollowPlayer(void)
     while(mapystart < 0)
 			mapystart += finit_height;
 */
-	 f_oldloc.x = plr->plr->mo->x;
-    f_oldloc.y = plr->plr->mo->y;
-  }
+		f_oldloc.x = plr->plr->mo->x;
+		f_oldloc.y = plr->plr->mo->y;
+	}
 }
 
 // Ripped out for Heretic
