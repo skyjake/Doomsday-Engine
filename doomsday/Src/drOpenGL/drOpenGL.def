@@ -60,6 +60,7 @@ EXPORTS
 	DG_Vertices2ftv
 	DG_Vertices3ftv
 	DG_Vertices3fctv
+	DG_ArrayElement
 	DG_DrawElements
 	DG_Grab
 	DG_Fog
