@@ -17,15 +17,13 @@ Version 1.7.12 (work in progress)
 - removed cvars 'rend-light-clip', 'rend-light-shrink'
 - fixed: possible crash in Con_Error()
 
-Sound:
-* sounds from PWADs are not replaced with automatic external resources
-
 Definitions:
++ DED version 6: semicolons are optional (the default is 6)
 + added Defs/Doomsday.ded: include definitions shared by all games
 + 'Top map', 'Bottom map', 'Side map' added to Light defs and
   Decoration:Light defs (name of lightmap to use; empty means default,
   "-" is none)
-+ up to eight sky models can be defined in a Map Info definition
++ up to 32 sky models can be defined in a Map Info definition
 + added an ID key to the Model definition
 * Defs/Doomsday.ded is always read first
 * Flag definitions moved to Defs/Flags.ded
@@ -33,6 +31,9 @@ Definitions:
 * maximum number of submodels is now 8
 * Map Info definitions can be copied
 * 'InFine' is an alternative name for the 'Finale' definition
+
+Sound:
+* sounds from PWADs are not replaced with automatic external resources
 
 Refresh:
 + named Model definitions (Model:ID), not assigned to any state
@@ -96,6 +97,8 @@ drOpenGL:
 
 jDoom:
 + "Patch Replacement" strings (see Defs\jDoom\Values.ded)
++ cvar 'menu-patch-replacement': enable or disable replacement strings
++ cvar 'menu-glitter': letters glow as they are typed in
 + fonts precached during startup
 + crosshair alpha slider added to the HUD menu
 * titlescreen sequence defined as an InFine script (ID = "title")
