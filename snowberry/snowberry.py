@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
+## @file snowberry.py The main module.
+##
+## This module is the main module for the entire launcher.
+
 #import profile
 import language, ui, plugins, profiles
 

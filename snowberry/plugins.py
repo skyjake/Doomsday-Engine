@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
+## @file plugins.py Plugin Loader
+##
+## If a plugin init() raises an exception, the plugin is ignored.
+
 import sys, os, re
 import settings as st
 import language, paths
@@ -58,7 +62,11 @@ def loadAll():
     # Initialize all plugins.
     for importStatement, initStatement, searchPath in initCommands:
         sys.path = searchPath
-        exec(initStatement)
+        try:
+            exec(initStatement)
+        except:
+            # Any problems during init cause the plugin to be ignored.
+            pass
     
     sys.path = oldPath
 

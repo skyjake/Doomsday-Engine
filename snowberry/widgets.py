@@ -1801,11 +1801,17 @@ class TabArea (Widget):
                                                     iconManager.get(iconName))
 
     def retranslate(self):
+        """Retranslate the tab labels."""
+    
         for identifier, panel in self.panelMap:
             pageIndex = self.__getPanelIndex(panel)
             if pageIndex != None:
-                self.getWxWidget().SetPageText(
-                    pageIndex, language.translate(identifier))
+                try:
+                    self.getWxWidget().SetPageText(
+                        pageIndex, language.translate(identifier))
+                except:
+                    # wxWidgets hasn't implemented the appropriate method?
+                    pass
 
     def onTabChange(self, ev):
         """Handle the wxWidgets event that occurs when the currently
@@ -2251,8 +2257,9 @@ class Tree (Widget):
     def retranslate(self):
         """Update all the items in the tree."""
 
-        self.refreshCategoryLabels(pr.getActive())
-        self.refreshItems(pr.getActive())
+        if pr.getActive():
+            self.refreshCategoryLabels(pr.getActive())
+            self.refreshItems(pr.getActive())
 
     def getSelectedAddon(self):
         """Returns the currently selected addon.

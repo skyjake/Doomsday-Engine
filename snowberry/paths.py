@@ -41,6 +41,11 @@ PROFILES = 'profiles'
 GRAPHICS = 'graphics'
 RUNTIME = 'runtime'
 
+# On the Mac, change the current directory to Resources inside the bundle.
+if host.isMac():
+    import __main__
+    os.chdir(os.path.dirname(os.path.abspath(__main__.__file__)))
+
 # This is the name of the directory under which Snowberry's files will
 # be stored in the user's home directory.
 if host.isMac():

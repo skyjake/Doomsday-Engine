@@ -738,6 +738,11 @@ def getSystemInteger(id):
     """Return the value of a system configuration setting.  These
     include things such as fonts and button sizes."""
     return int(getSystemString(id))
+    
+
+def getSystemBoolean(id):
+    """Return the boolean value of a system configuration setting."""
+    return isDefined(id) and getSystemString(id) == 'yes'        
 
 
 def readConfigPath(path):

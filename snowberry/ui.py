@@ -36,10 +36,15 @@
 
 import sys, os, wx, string
 import wx.wizard as wiz
-import host, events, widgets, language
+import host, events, widgets, language, paths
 import profiles as pr
 import settings as st
 import logger
+
+
+# Optional areas.
+USE_TITLE_AREA = not st.getSystemBoolean('hide-area-title')
+USE_HELP_AREA = not st.getSystemBoolean('hide-area-help')
 
 # An array of UI areas.
 uiAreas = {}
@@ -69,7 +74,6 @@ def selectTab(id):
 
     @param id Identifier of the tab.
     """
-    #mainPanel.selectTabPanel(uiAreas[id].getPanel())
     mainPanel.getTabs().selectTab(id)
 
 
@@ -81,18 +85,6 @@ def createTab(id):
 
     @return An Area object that represents the new tab.
     """
-    #panel = mainPanel.createTabPanel(id)
-    #tabs = mainPanel.getTabs()
-
-    # The label is determined by the translation of the identifier.
-    #tabs.AddPage(panel, language.translate(id))
-
-    # Create the Area and set the default layout parameters.
-    #area = Area(id, panel, Area.ALIGN_VERTICAL, border=3)
-    #area.setExpanding(True)
-    #area.setWeight(1)
-    #_newArea(area)
-    
     area = mainPanel.getTabs().addTab(id)
     area.setBorder(3)
 
@@ -156,6 +148,99 @@ def chooseFolder(prompt, default):
     @return The selected path.
     """
     return wx.DirSelector(language.translate(prompt), default)
+
+
+def createDialog(id, alignment=1, size=None):
+    """Create an empty modal dialog box.
+
+    @param id Identifier of the dialog area.  The title of the dialog
+    is the translation of this identifier.
+
+    @return A widgets.DialogArea object.
+    """
+    dialog = AreaDialog(mainPanel, -1, id, size, alignment)
+    dialog.center()
+    return dialog
+
+
+def createButtonDialog(id, titleText, buttons, defaultButton=None):
+    """Returns the area where the caller may add the contents of the
+    dialog.
+
+    @param id Identifier of the dialog.
+    @param buttons An array of button commands.
+    @param defaultButton The identifier of the default button.
+
+    @return Tuple (dialog, user-area)
+    """
+    dialog = createDialog(id, Area.ALIGN_HORIZONTAL)
+    area = dialog.getArea()
+    area.setBackgroundColor(255, 255, 255)
+
+    # The Snowberry logo is on the left.
+    area.setWeight(0)
+    imageArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0)
+    imageArea.setWeight(1)
+    imageArea.setExpanding(True)
+    imageArea.addSpacer()
+    imageArea.setWeight(0)
+    imageArea.createImage('snowberry')
+
+    area.setWeight(1)
+    contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=6)
+    contentArea.setWeight(0)
+    if titleText != None:
+        title = contentArea.createText('')
+        title.setTitleStyle()
+        title.setText(titleText)
+        title.setMinSize(400, 20)
+
+        contentArea.createLine()
+
+    contentArea.setWeight(1)
+    userArea = contentArea.createArea(border=6)
+
+    # Create the buttons.
+    contentArea.setWeight(0)
+    buttonArea = contentArea.createArea(alignment=Area.ALIGN_HORIZONTAL,
+                                        border=0)
+    # If no explicit spacing is defined, use the default right
+    # alignment.
+    if '' not in buttons:
+        # The implied spacer.
+        buttonArea.addSpacer()
+        
+    buttonArea.setBorder(6)
+    buttonArea.setWeight(0)
+
+    if not host.isMac():
+        # Follow the general guidelines of the platform.
+        if '' in buttons:
+            # Only reverse the portion after the ''.
+            index = buttons.index('') + 1
+            sub = buttons[index:]
+            sub.reverse()
+            buttons = buttons[:index] + sub
+        else:
+            buttons.reverse()
+
+    for button in buttons:
+        # If an empty identifier is given, insert a space here.
+        if button == '':
+            buttonArea.setWeight(1)
+            buttonArea.addSpacer()
+            buttonArea.setWeight(0)
+            continue
+        
+        if button == defaultButton:
+            style = widgets.Button.STYLE_DEFAULT
+        else:
+            style = widgets.Button.STYLE_NORMAL
+            
+        widget = buttonArea.createButton(button, style=style)
+        dialog.identifyWidget(button, widget)
+
+    return dialog, userArea
 
 
 class Area (widgets.Widget):
@@ -1119,9 +1204,10 @@ class MainPanel (wx.Panel):
 
         # Title area.
         #sizer = wx.BoxSizer(wx.VERTICAL)
-        titlePanel = wx.Panel(self, -1, style=wx.NO_BORDER)
-        _newArea( Area(Area.TITLE, titlePanel, Area.ALIGN_HORIZONTAL) )
-        bSizer.Add(titlePanel, 0, wx.EXPAND)
+        if USE_TITLE_AREA:
+            titlePanel = wx.Panel(self, -1, style=wx.NO_BORDER)
+            _newArea( Area(Area.TITLE, titlePanel, Area.ALIGN_HORIZONTAL) )
+            bSizer.Add(titlePanel, 0, wx.EXPAND)
 
         #profSizer = wx.BoxSizer(wx.HORIZONTAL)
         # Profile area.
@@ -1183,8 +1269,21 @@ INITIAL_SASH_POS = 210
 
 
 class MainFrame (wx.Frame):
+    """The main frame is the main window of Snowberry."""
+
     def __init__(self, title):
-        wx.Frame.__init__(self, None, -1, title, size = (900, 500))
+        if host.isMac():
+            initialSize = (900, 550)
+        else:
+            initialSize = (900, 500)
+            
+        # The configuration may define a window size.
+        if st.isDefined('main-width'):
+            initialSize = (st.getSystemInteger('main-width'), initialSize[1])
+        if st.isDefined('main-height'):
+            initialSize = (initialSize[0], st.getSystemInteger('main-height'))
+        
+        wx.Frame.__init__(self, None, -1, title, size=initialSize)
 
         # Set the icon for the frame.
         icon = wx.Icon('graphics/snowberry.ico', wx.BITMAP_TYPE_ICO)
@@ -1194,23 +1293,33 @@ class MainFrame (wx.Frame):
         self.Hide()
 
         SPLITTER_ID = 9501
+        self.splitter = None
+        
+        # The parentWin is where the main panel and the help panel 
+        # are inside.
+        parentWin = self
 
-        self.splitter = wx.SplitterWindow(self, SPLITTER_ID,
-                                          style=wx.SP_3DSASH)
-        self.splitter.SetMinimumPaneSize(10)
+        if USE_HELP_AREA:
+            # The help area is in a splitter.
+            self.splitter = wx.SplitterWindow(self, SPLITTER_ID,
+                                              style=wx.SP_3DSASH)
+            self.splitter.SetMinimumPaneSize(10)
+            parentWin = self.splitter
 
-        self.mainPanel = MainPanel(self.splitter)
+        self.mainPanel = MainPanel(parentWin)
 
         # Create the help area.
-        self.helpPanel = wx.Panel(self.splitter, -1, style = wx.NO_BORDER)
-        self.helpPanel.SetBackgroundColour(wx.WHITE)
-        _newArea( Area(Area.HELP, self.helpPanel, Area.ALIGN_VERTICAL,
-                       border=4) )
-
-        # Init the splitter.
-        self.splitter.SplitVertically(self.mainPanel, self.helpPanel,
-                                      -INITIAL_SASH_POS)
-        self.splitPos = None
+        if self.splitter:
+            self.helpPanel = wx.Panel(self.splitter, -1, style = wx.NO_BORDER)
+            self.helpPanel.SetBackgroundColour(wx.WHITE)
+            _newArea( Area(Area.HELP, self.helpPanel, Area.ALIGN_VERTICAL,
+                           border=4) )
+            # Init the splitter.
+            self.splitter.SplitVertically(self.mainPanel, self.helpPanel,
+                                          -INITIAL_SASH_POS)
+            self.splitPos = None
+        else:
+            self.helpPanel = None
 
         # Listen for changes in the sash position.
         wx.EVT_SPLITTER_SASH_POS_CHANGED(self, SPLITTER_ID,
@@ -1230,10 +1339,17 @@ class MainFrame (wx.Frame):
         events.addCommandListener(self.handleCommand)
 
         self.mainPanel.Freeze()
+        if self.helpPanel:
+            self.helpPanel.Freeze()
+            self.helpPanel.Hide()
+        #self.Hide()
 
     def show(self):
         self.mainPanel.Thaw()
         self.Show()
+        if self.helpPanel:
+            self.helpPanel.Thaw()
+            self.helpPanel.Show()
 
     def updateLayout(self):
         # Also update all UI areas.
@@ -1242,27 +1358,37 @@ class MainFrame (wx.Frame):
 
         self.mainPanel.updateLayout()
         #self.Show()
-        self.mainPanel.GetSizer().Fit(self)
+        
+        if not host.isMac():
+            self.mainPanel.GetSizer().Fit(self)
 
         # The main panel's sizer does not account for the help panel.
-        if not host.isWindows():
+        if host.isUnix():
             windowSize = self.GetSizeTuple()
             self.SetSize((windowSize[0] + INITIAL_SASH_POS, windowSize[1]))
 
     def onWindowSize(self, ev):
+        """Handle the wxWidgets event that is sent when the main window 
+        size changes.
+        
+        @param ev The wxWidgets event.
+        """
+        # Allow others to handle this event as well.
         ev.Skip()
 
-        if self.splitPos:
-            pos = self.splitPos
-        else:
-            pos = INITIAL_SASH_POS
+        if self.splitter:
+            if self.splitPos:
+                pos = self.splitPos
+            else:
+                pos = INITIAL_SASH_POS
 
-        self.splitter.SetSashPosition(ev.GetSize()[0] - pos)
+            self.splitter.SetSashPosition(ev.GetSize()[0] - pos)
 
     def onSplitChange(self, ev):
         """Update the splitter anchor position."""
 
-        self.splitPos = self.GetClientSizeTuple()[0] - ev.GetSashPosition()
+        if self.splitter:
+            self.splitPos = self.GetClientSizeTuple()[0] - ev.GetSashPosition()
 
     def onWindowClose(self, ev):
         """Handle the window close event that is sent when the user
@@ -1275,6 +1401,19 @@ class MainFrame (wx.Frame):
         # Send a 'quit' command so that everyone has a chance to save
         # their current status.
         events.send(events.Notify('quit'))
+        
+        # Save window size to UserHome/conf/window.conf.
+        winSize = self.GetSizeTuple()
+        fileName = os.path.join(paths.getUserPath(paths.CONF), 'window.conf')
+        try:
+            f = file(fileName, 'w')
+            f.write('# This file is generated automatically.\n')
+            f.write('appearance main (\n')
+            f.write('  width = %i\n  height = %i\n' % winSize)
+            f.write(')\n')
+        except: 
+            # Window size not saved.
+            pass
 
         # Destroy the main frame.
         self.Destroy()
@@ -1311,99 +1450,6 @@ class SnowberryApp (wx.App):
     def showMainWindow(self):
         self.updateTitle()
         self.mainFrame.show()
-
-
-def createDialog(id, alignment=Area.ALIGN_VERTICAL, size=None):
-    """Create an empty modal dialog box.
-
-    @param id Identifier of the dialog area.  The title of the dialog
-    is the translation of this identifier.
-
-    @return A widgets.DialogArea object.
-    """
-    dialog = AreaDialog(mainPanel, -1, id, size, alignment)
-    dialog.center()
-    return dialog
-
-
-def createButtonDialog(id, titleText, buttons, defaultButton=None):
-    """Returns the area where the caller may add the contents of the
-    dialog.
-
-    @param id Identifier of the dialog.
-    @param buttons An array of button commands.
-    @param defaultButton The identifier of the default button.
-
-    @return Tuple (dialog, user-area)
-    """
-    dialog = createDialog(id, Area.ALIGN_HORIZONTAL)
-    area = dialog.getArea()
-    area.setBackgroundColor(255, 255, 255)
-
-    # The Snowberry logo is on the left.
-    area.setWeight(0)
-    imageArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0)
-    imageArea.setWeight(1)
-    imageArea.setExpanding(True)
-    imageArea.addSpacer()
-    imageArea.setWeight(0)
-    imageArea.createImage('snowberry')
-
-    area.setWeight(1)
-    contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=6)
-    contentArea.setWeight(0)
-    if titleText != None:
-        title = contentArea.createText('')
-        title.setTitleStyle()
-        title.setText(titleText)
-        title.setMinSize(400, 20)
-
-        contentArea.createLine()
-
-    contentArea.setWeight(1)
-    userArea = contentArea.createArea(border=6)
-
-    # Create the buttons.
-    contentArea.setWeight(0)
-    buttonArea = contentArea.createArea(alignment=Area.ALIGN_HORIZONTAL,
-                                        border=0)
-    # If no explicit spacing is defined, use the default right
-    # alignment.
-    if '' not in buttons:
-        # The implied spacer.
-        buttonArea.addSpacer()
-        
-    buttonArea.setBorder(6)
-    buttonArea.setWeight(0)
-
-    if not host.isMac():
-        # Follow the general guidelines of the platform.
-        if '' in buttons:
-            # Only reverse the portion after the ''.
-            index = buttons.index('') + 1
-            sub = buttons[index:]
-            sub.reverse()
-            buttons = buttons[:index] + sub
-        else:
-            buttons.reverse()
-
-    for button in buttons:
-        # If an empty identifier is given, insert a space here.
-        if button == '':
-            buttonArea.setWeight(1)
-            buttonArea.addSpacer()
-            buttonArea.setWeight(0)
-            continue
-        
-        if button == defaultButton:
-            style = widgets.Button.STYLE_DEFAULT
-        else:
-            style = widgets.Button.STYLE_NORMAL
-            
-        widget = buttonArea.createButton(button, style=style)
-        dialog.identifyWidget(button, widget)
-
-    return dialog, userArea
 
 
 def prepareWindows():

@@ -102,10 +102,13 @@ def init():
                                        wg.Button.STYLE_MINI)
 
     # Set the title graphics.
-    area = ui.getArea(ui.Area.TITLE)
-
     global bannerImage
-    bannerImage = area.createImage('banner-default')
+    try:
+        area = ui.getArea(ui.Area.TITLE)
+        bannerImage = area.createImage('banner-default')
+    except:
+        # There is no title area.
+        bannerImage = None
 
     # Register a listener for notifications.
     events.addNotifyListener(notifyHandler)
@@ -172,7 +175,8 @@ def notifyHandler(event):
             profileList.setPopupMenu(normalMenu)
 
         # Update the banner image.
-        bannerImage.setImage(pr.getActive().getBanner())
+        if bannerImage:
+            bannerImage.setImage(pr.getActive().getBanner())
 
     elif event.hasId('profile-list-selected'):
         # Change the currently active profile.
