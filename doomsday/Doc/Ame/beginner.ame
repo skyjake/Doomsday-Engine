@@ -1,5 +1,6 @@
 @include{jake.ah}
 @macro{TITLE}{ A Beginner's Guide To Doomsday }
+@macro{SUBTITLE}{ or "The Apocalypse For First-Timers" }
 
 @require{amestd}
 @include{darktable}
@@ -12,22 +13,18 @@ CONTENTS: @contents{1}
 @chapter{ What do you need? }
 
 @list{
-@item One of the self-extracting distribution archives:
+@item One of the distribution packages:
 
     @table{45 55}{
 		@header{File name} @tab @header{Contains}
 	@row{single}
-		@file{doomsday(version).exe} @tab Doomsday, jDoom, jHeretic, jHexen
+		@file{deng-inst-(version).exe} @tab Installer, jDoom, jHeretic, jHexen
 	@row
-		@file{jdoom(version).exe} @tab Doomsday, jDoom
-	@row
-		@file{jheretic(version).exe} @tab Doomsday, jHeretic
-	@row
-		@file{jhexen(version).exe} @tab Doomsday, jHexen
+		@file{deng-(version).zip} @tab jDoom, jHeretic, jHexen
 	}
 
   	All can be downloaded from @link{http://www.doomsdayhq.com/},
-  	directly from @link{ftp://jfiles@@server1.thefourwinds.net/} or
+	from @link{ftp://jfiles@@server1.thefourwinds.net/} or
   	from the mirror site @link{http://www.jbserver.com/~jdoom/}.
 
 @item 3D models are distributed in separate archives. Downloading one or
@@ -54,8 +51,7 @@ The distribution archives have included a special installation wizard since Doom
 
 @section{ Installing into a new folder }
 
-Execute the main distribution archive, which is one of:
-@file{doomsday(ver).exe}, @file{jdoom(ver).exe}, @file{jheretic(ver).exe} and @file{jhexen(ver).exe}.
+Execute the distribution package @file{deng-inst-(ver).exe}.
 
 Type the path of the folder into the edit box or choose an existing folder using the @button{Browse} button. Example: @file{C:\Games\Doomsday}. There is a button with a folder icon on the left side of the edit box. Click the button.
 
