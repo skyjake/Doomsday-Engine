@@ -2,7 +2,7 @@ NAME			"DOOMSDAY"
 DESCRIPTION		"The Doomsday Engine"
 
 ; Highest ordinal is currently 
-; --> 240 <--
+; --> 242 <--
 
 ; Other available ordinals: 158, 175
 
@@ -159,6 +159,8 @@ EXPORTS
 	R_SetAnimGroup				@232 NONAME
 	R_PointToAngle2				@101 NONAME
 	R_PointInSubsector			@102 NONAME
+	R_CreateAnimGroup			@241 NONAME
+	R_AddToAnimGroup			@242 NONAME
 
 ; Renderer.
 	Rend_Reset			@103 NONAME

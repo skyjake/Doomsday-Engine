@@ -162,6 +162,8 @@ char *		R_TextureNameForNum(int num);
 int			R_SetFlatTranslation(int flat, int translate_to);
 int			R_SetTextureTranslation(int tex, int translate_to);
 void		R_SetAnimGroup(int type, int number, int group);
+int			R_CreateAnimGroup(int type, int flags);
+void		R_AddToAnimGroup(int groupNum, int number, int tics, int randomTics);
 angle_t		R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
 struct subsector_s *R_PointInSubsector(fixed_t x, fixed_t y);
 
