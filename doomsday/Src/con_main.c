@@ -2172,7 +2172,8 @@ D_CMD(ListAliases)
 int CCmdVersion(int argc, char **argv)
 {
 	Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
-	Con_Printf("%s\n", gl.GetString(DGL_VERSION));
+	if(gl.GetString)
+		Con_Printf("%s\n", gl.GetString(DGL_VERSION));
 	Con_Printf("Game DLL: %s\n", gx.Get(DD_VERSION_LONG));
 	return true;
 }
