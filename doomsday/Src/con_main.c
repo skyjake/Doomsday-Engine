@@ -353,6 +353,7 @@ cvar_t engineCVars[] =
 	"rend-tex-quality",		0,			CVT_INT,	&texQuality,	0, 8,	"The quality of textures (0-8).",
 	"rend-tex-filter-sprite", 0,		CVT_INT,	&filterSprites,	0, 1,	"1=Render smooth sprites.",
 	"rend-tex-filter-raw",	CVF_PROTECTED, CVT_INT,	&linearRaw,		0, 1,	"1=Fullscreen images (320x200) use linear interpolation.",
+	"rend-tex-filter-smart", 0,			CVT_INT,	&useSmartFilter, 0, 1,	"1=Use hq2x-filtering on all textures.",
 	"rend-tex-detail",		0,			CVT_INT,	&r_detail,		0, 1,	"1=Render with detail textures.",
 	"rend-tex-detail-scale", CVF_NO_MIN|CVF_NO_MAX, CVT_FLOAT, &detailScale, 0, 0, "Global detail texture factor.",
 	"rend-tex-detail-strength", 0,		CVT_FLOAT,	&detailFactor, 0, 10,	"Global detail texture strength factor.",
@@ -2025,6 +2026,38 @@ void Con_DrawRuler(int y, int lineHeight, float alpha)
 	Con_DrawRuler2(y, lineHeight, alpha, screenWidth);
 }
 
+/*
+ * Draw a 'side' text in the console. This is intended for extra
+ * information about the current game mode.
+ */
+void Con_DrawSideText(const char *text, int line, float alpha)
+{
+	char buf[300];
+	float gtosMulY = screenHeight/200.0f;
+	float fontScaledY = Cfont.height * Cfont.sizeY;
+	float y = ConsoleY*gtosMulY - fontScaledY*(1 + line);
+	int ssw;
+
+	if(y > -fontScaledY)
+	{
+		// scaled screen width		
+		ssw = (int) (screenWidth/Cfont.sizeX);	 
+		
+		// Print the version.
+		strncpy(buf, text, sizeof(buf));
+		if(Cfont.Filter) Cfont.Filter(buf);
+
+		if(consoleShadowText)
+		{
+			// Draw a shadow.
+			gl.Color3f(0, 0, 0);
+			Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 2, y/Cfont.sizeY + 1);
+		}
+		gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha);
+		Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 3, y/Cfont.sizeY);
+	}
+}
+
 //===========================================================================
 // Con_Drawer
 //	Slightly messy...
@@ -2034,7 +2067,6 @@ void Con_Drawer(void)
 	int		i, k;	// Line count and buffer cursor.
 	float	x, y;
 	float	closeFade = 1;
-//	float	gtosMulX = screenWidth/320.0f;
 	float	gtosMulY = screenHeight/200.0f;
 	char	buff[256], temp[256];
 	float	fontScaledY;
@@ -2097,24 +2129,9 @@ void Con_Drawer(void)
 	gl.LoadIdentity();
 	gl.Scalef(Cfont.sizeX, Cfont.sizeY, 1);
 
-	// The version.
-	y = ConsoleY*gtosMulY - fontScaledY*2;
-	if(y > -fontScaledY)
-	{
-		int ssw = (int) (screenWidth/Cfont.sizeX);	 // scaled screen width
-		// Print the version.
-		strcpy(buff, gx.Get(DD_VERSION_SHORT));
-		if(Cfont.Filter) 
-			Cfont.Filter(buff);
-		else if(consoleShadowText)
-		{
-			// Draw a shadow.
-			gl.Color3f(0, 0, 0);
-			Cfont.TextOut(buff, ssw - Cfont.Width(buff)-2, y/Cfont.sizeY+1);
-		}
-		gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], closeFade);
-		Cfont.TextOut(buff, ssw - Cfont.Width(buff)-3, y/Cfont.sizeY);
-	}
+	// The game & version number.
+	Con_DrawSideText(gx.Get(DD_GAME_ID), 2, closeFade);
+	Con_DrawSideText(gx.Get(DD_GAME_MODE), 1, closeFade);
 
 	gl.Color4f(1, 1, 1, closeFade);
 
