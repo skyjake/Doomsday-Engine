@@ -165,7 +165,7 @@ void initExtensions(void)
 	if(ArgExists("-texcomp"))
 	{
 		glGetError();
-		glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &i);
+		glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, (GLint*)&i);
 		if(i && glGetError() == GL_NO_ERROR)
 		{
 			useCompr = DGL_TRUE;
