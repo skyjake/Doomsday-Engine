@@ -11,6 +11,7 @@
 #include "sv_pool.h"
 #include "sv_frame.h"
 #include "sv_sound.h"
+#include "sv_missile.h"
 #include "cl_def.h"
 #include "cl_player.h"
 #include "cl_mobj.h"
