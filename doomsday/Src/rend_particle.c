@@ -1,57 +1,75 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** REND_PARTICLE.C
-//**
-//** Rendering of particle generators.
-//**
-//** $Log$
-//** Revision 1.16  2003/08/30 22:50:04  skyjake
-//** Don't load particle textures if they're already loaded
-//**
-//** Revision 1.15  2003/08/30 15:22:40  skyjake
-//** BlendMode moved under GL
-//**
-//** Revision 1.14  2003/08/28 01:53:04  skyjake
-//** Movement yaw and pitch affect particle models
-//**
-//** Revision 1.13  2003/08/24 00:40:23  skyjake
-//** Added model particles
-//**
-//** Revision 1.12  2003/08/16 21:39:49  skyjake
-//** Texture alpha conversion, mul/imul blending, fixed bug in blending changes
-//**
-//** Revision 1.11  2003/08/15 22:18:44  skyjake
-//** Added subtractive blending, 8-bit noalpha textures converted to pure alpha
-//**
-//** Revision 1.10  2003/08/10 00:01:54  skyjake
-//** Follow the Begin/End semantics
-//**
-//** Revision 1.9  2003/06/03 15:21:30  skyjake
-//** Fixed font problem
-//**
-//** Revision 1.8  2003/05/30 16:34:11  skyjake
-//** image_t added, extres for raw screens
-//**
-//** Revision 1.7  2003/05/25 19:28:38  skyjake
-//** Fixed bug 743201
-//**
-//** Revision 1.6  2003/05/23 22:07:54  skyjake
-//** Modified verbosity
-//**
-//** Revision 1.5  2003/04/16 09:49:42  skyjake
-//** -nohightex must only affect walls/flats
-//**
-//** Revision 1.4  2003/03/14 15:42:38  skyjake
-//** Only report first missing Particle*
-//**
-//** Revision 1.3  2003/02/28 13:44:34  skyjake
-//** Removed code that was commented out
-//**
-//** Revision 1.2  2003/02/28 10:42:15  skyjake
-//** Added textured particles, planeflat sticks to planes
-//**
-//**************************************************************************
+/*
+ * rend_particle.c: Particle Effects
+ */
+
+/*
+ * $Log$
+ * Revision 1.17  2003/09/04 17:19:37  skyjake
+ * Added a proper GPL banner
+ *
+ * Revision 1.16  2003/08/30 22:50:04  skyjake
+ * Don't load particle textures if they're already loaded
+ *
+ * Revision 1.15  2003/08/30 15:22:40  skyjake
+ * BlendMode moved under GL
+ *
+ * Revision 1.14  2003/08/28 01:53:04  skyjake
+ * Movement yaw and pitch affect particle models
+ *
+ * Revision 1.13  2003/08/24 00:40:23  skyjake
+ * Added model particles
+ *
+ * Revision 1.12  2003/08/16 21:39:49  skyjake
+ * Texture alpha conversion, mul/imul blending, fixed bug in blending changes
+ *
+ * Revision 1.11  2003/08/15 22:18:44  skyjake
+ * Added subtractive blending, 8-bit noalpha textures converted to pure alpha
+ *
+ * Revision 1.10  2003/08/10 00:01:54  skyjake
+ * Follow the Begin/End semantics
+ *
+ * Revision 1.9  2003/06/03 15:21:30  skyjake
+ * Fixed font problem
+ *
+ * Revision 1.8  2003/05/30 16:34:11  skyjake
+ * image_t added, extres for raw screens
+ *
+ * Revision 1.7  2003/05/25 19:28:38  skyjake
+ * Fixed bug 743201
+ *
+ * Revision 1.6  2003/05/23 22:07:54  skyjake
+ * Modified verbosity
+ *
+ * Revision 1.5  2003/04/16 09:49:42  skyjake
+ * -nohightex must only affect walls/flats
+ *
+ * Revision 1.4  2003/03/14 15:42:38  skyjake
+ * Only report first missing Particle*
+ *
+ * Revision 1.3  2003/02/28 13:44:34  skyjake
+ * Removed code that was commented out
+ *
+ * Revision 1.2  2003/02/28 10:42:15  skyjake
+ * Added textured particles, planeflat sticks to planes
+ *
+ */
 
 // HEADER FILES ------------------------------------------------------------
 

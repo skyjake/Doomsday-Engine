@@ -1,18 +1,30 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** REND_MODEL.C
-//**
-//** 3D model renderer, version 2.0.
-//**
-//**************************************************************************
-
-// Note: Light vectors and triangle normals are considered to be
-// in a totally independent, right-handed coordinate system.
-
-// There is some more confusion with Y and Z axes as the game uses 
-// Z as the vertical axis and the rendering code and model definitions
-// use the Y axis.
+/*
+ * rend_model.c: 3D Model Renderer v2.0
+ *
+ * Note: Light vectors and triangle normals are considered to be
+ * in a totally independent, right-handed coordinate system.
+ *
+ * There is some more confusion with Y and Z axes as the game uses 
+ * Z as the vertical axis and the rendering code and model definitions
+ * use the Y axis.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 

@@ -1,16 +1,30 @@
+/* DE1: $Id$
+ * Copyright (C) 2003 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
-//**************************************************************************
-//**
-//** S_LOGIC.C
-//**
-//** The Logical Sound Manager. Tracks all currently playing sounds
-//** in the world, regardless of whether Sfx is available or if the 
-//** sounds are actually audible to anyone.
-//**
-//** Uses PU_LEVEL, so this has to be inited for every map. (Done via
-//** S_LevelChange()).
-//**
-//**************************************************************************
+/*
+ * s_logic.c: The Logical Sound Manager
+ *
+ * The Logical Sound Manager. Tracks all currently playing sounds
+ * in the world, regardless of whether Sfx is available or if the 
+ * sounds are actually audible to anyone.
+ *
+ * Uses PU_LEVEL, so this has to be inited for every map. 
+ * (Done via S_LevelChange()).
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
