@@ -14,18 +14,19 @@
 typedef struct lumobj_s					// For dynamic lighting.
 {
 	struct lumobj_s *next;				// Next in the same DL block, or NULL.
-	struct lumobj_s *ssnext;			// Next in the same subsector, or NULL.
+	struct lumobj_s *ssNext;			// Next in the same subsector, or NULL.
 	int		flags;
 	mobj_t	*thing;
 	float	center; 					// Offset to center from mobj Z.
 	int		radius, patch, distance;	// Radius: lights are spheres.
-	int		flaresize;					// Radius for this light source.
+	int		flareSize;					// Radius for this light source.
 	byte	rgb[3];						// The color.
-	float	xoff;
-	float	xyscale;					// 1.0 if there's no modeldef.
+	float	xOff;
+	float	xyScale;					// 1.0 if there's no modeldef.
 	DGLuint	tex;						// Lightmap texture.
-	DGLuint	floortex, ceiltex;			// Lightmaps for floor/ceil.
-	char	flaretex;					// Zero = automatical.
+	DGLuint	floorTex, ceilTex;			// Lightmaps for floor/ceil.
+	DGLuint decorMap;					// Decoration lightmap.
+	char	flareTex;					// Zero = automatical.
 } 
 lumobj_t;
 
@@ -35,7 +36,7 @@ lumobj_t;
  */
 typedef struct dynlight_s
 {
-	struct dynlight_s *next, *nextused;
+	struct dynlight_s *next, *nextUsed;
 	int		flags;
 	float	s[2], t[2];
 	byte	color[3];
@@ -44,8 +45,9 @@ typedef struct dynlight_s
 dynlight_t;
 
 // Flags for projected dynamic lights.
-#define DYNF_REPEAT_S	0x1
-#define DYNF_REPEAT_T	0x2
+/*#define DYNF_REPEAT_S	0x1
+#define DYNF_REPEAT_T	0x2*/
+#define DYNF_PREGEN_DECOR	0x1	// Pregen RGB lightmap for a light decoration.
 
 extern boolean	dlInited;
 extern lumobj_t	*luminousList;
