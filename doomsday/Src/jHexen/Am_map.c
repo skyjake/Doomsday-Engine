@@ -584,21 +584,17 @@ void AM_updateLightLev(void)
 
 void AM_Ticker (void)
 {
-
-  if (!automapactive) return;
-
-  amclock++;
-
-  if (followplayer) AM_doFollowPlayer();
-
-  // Change the zoom if necessary
-  if (ftom_zoommul != FRACUNIT) AM_changeWindowScale();
-
-  // Change x,y location
-  if (m_paninc.x || m_paninc.y) AM_changeWindowLoc();
-  // Update light level
-// AM_updateLightLev();
-
+	if (!automapactive || !players[consoleplayer].plr->mo) return;
+	
+	amclock++;
+	
+	if(followplayer) AM_doFollowPlayer();
+	
+	// Change the zoom if necessary
+	if(ftom_zoommul != FRACUNIT) AM_changeWindowScale();
+	
+	// Change x,y location
+	if(m_paninc.x || m_paninc.y) AM_changeWindowLoc();
 }
 
 void AM_clearFB(int color)
