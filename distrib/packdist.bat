@@ -8,6 +8,7 @@ cd distrib
 del %FILE%
 wzzip -a -ex -P %FILE% *.ks? *.cfg *.txt *.exe 
 wzzip -a -ex -r -P %FILE% Run\*.* Doc\*.* Data\*.* Bin\*.*
+wzzip -a -ex -P %FILE% Defs\*.ded
 wzzip -a -ex -P -x@..\mdefex.lst %FILE% Defs\jDoom\*.ded Defs\jDoom\Auto\*.*
 wzzip -a -ex -P -x@..\mdefex.lst %FILE% Defs\jHeretic\*.ded Defs\jHeretic\Auto\*.*
 wzzip -a -ex -P -x@..\mdefex.lst %FILE% Defs\jHexen\*.ded Defs\jHexen\Auto\*.*

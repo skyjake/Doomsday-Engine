@@ -77,6 +77,7 @@ REM + Definitions						    +
 REM +---------------------------------------------------------------+
 echo Copying Definitions...
 
+xcopy %SRC%Defs\*.ded			%Dist%Defs\
 xcopy /s %SRC%Defs\jDoom\*.ded		%Dist%Defs\jDoom\
 xcopy /s %SRC%Defs\jHeretic\*.ded	%Dist%Defs\jHeretic\
 xcopy /s %SRC%Defs\jHexen\*.ded		%Dist%Defs\jHexen\

@@ -50,7 +50,7 @@ REM +---------------------------------------------------------------+
 if %_PackEng%==No goto skip_eng
 set FILE=%_DestDir%\_mic_engine
 del %FILE%.exe
-rar a %FILE% %SRC%\Kicks.exe %SRC%\*.cfg %SRC%\*.ksl %SRC%\glbsp.* %SRC%\Doc\*.* %SRC%\Bin\*.* %SRC%\Data\*.* %SRC%\Data\Fonts %SRC%\Data\Graphics %SRC%\Data\KeyMaps -xBin\jDoom.dll -x*heretic*.* -x*hexen*.*
+rar a %FILE% %SRC%\Kicks.exe %SRC%\*.cfg %SRC%\*.ksl %SRC%\glbsp.* %SRC%\Doc\*.* %SRC%\Bin\*.* %SRC%\Defs\*.ded %SRC%\Data\*.* %SRC%\Data\Fonts %SRC%\Data\Graphics %SRC%\Data\KeyMaps -xBin\jDoom.dll -x*heretic*.* -x*hexen*.*
 rar c -z%COMMENT% %FILE%.exe
 :skip_eng
 
