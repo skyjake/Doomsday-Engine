@@ -728,9 +728,13 @@ void SV_HxLoadMap(void)
 {
 	char fileName[100];
 
+#ifdef _DEBUG
+	Con_Printf("SV_HxLoadMap: Begin, G_InitNew...\n");
+#endif
+
 	// We don't want to see a briefing if we're loading a map.
 	brief_disabled = true;
-	
+
 	// Load a base level
 	G_InitNew(gameskill, gameepisode, gamemap);
 
@@ -739,6 +743,10 @@ void SV_HxLoadMap(void)
 
 	// Create the name
 	sprintf(fileName, "%shex6%02d.hxs", SavePath, gamemap);
+
+#ifdef _DEBUG
+	Con_Printf("SV_HxLoadMap: Reading %s\n", fileName);
+#endif
 
 	// Load the file
 	M_ReadFile(fileName, &SaveBuffer);
@@ -1568,6 +1576,17 @@ static int GetMobjNum(mobj_t *mobj)
 
 static void RestoreMobj(mobj_t *mobj)
 {
+	// Restore DDMF flags set only in P_SpawnMobj. R_SetAllDoomsdayFlags
+	// might not set these because it only iterates seclinked mobjs.
+	if(mobj->flags & MF_SOLID) 
+	{
+		mobj->ddflags |= DDMF_SOLID;
+	}
+	if(mobj->flags2 & MF2_DONTDRAW) 
+	{
+		mobj->ddflags |= DDMF_DONTDRAW;
+	}
+
 	mobj->visangle = mobj->angle >> 16;
 	mobj->state = &states[(int)mobj->state];
 	if(mobj->player)
@@ -2051,6 +2070,7 @@ static void UnarchivePolyobjs(void)
 	int i;
 	fixed_t deltaX;
 	fixed_t deltaY;
+	angle_t angle;
 
 	AssertSegment(ASEG_POLYOBJS);
 	if(GET_LONG != po_NumPolyobjs)
@@ -2063,10 +2083,13 @@ static void UnarchivePolyobjs(void)
 		{
 			Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
 		}
-		PO_RotatePolyobj(polyobjs[i].tag, (angle_t)GET_LONG);
-		deltaX = GET_LONG-polyobjs[i].startSpot.x;
-		deltaY = GET_LONG-polyobjs[i].startSpot.y;
+		angle = (angle_t) GET_LONG;
+		PO_RotatePolyobj(polyobjs[i].tag, angle);
+		polyobjs[i].destAngle = angle;
+		deltaX = GET_LONG - polyobjs[i].startSpot.x;
+		deltaY = GET_LONG - polyobjs[i].startSpot.y;
 		PO_MovePolyobj(polyobjs[i].tag, deltaX, deltaY);
+		// FIXME: What about speed? It isn't saved at all?
 	}
 }
 
