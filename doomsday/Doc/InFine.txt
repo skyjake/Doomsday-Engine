@@ -2,7 +2,7 @@
                               InFine Scripts
                               ==============
                 by Jaakko Keränen <skyjake@doomsdayhq.com>
-                         Version 1.0 -- 04/01/2002
+                         Version 1.0 -- 06/26/2003
 
 
 CONTENTS:
@@ -199,7 +199,7 @@ color (red) (green) (blue)
     Set the background color. If no background flat is specified, the whole
     screen is filled with this color. The color values are given as
     floating-point numbers, and must be between zero and one. The default
-    background color is white (color 1 1 1).
+    background color is black (color 0 0 0).
 
 flat (flat-lump)
     Set the flat that is used as a tiled background. Give the name of the
