@@ -10,6 +10,7 @@
 #include <stdlib.h>
 //#include <io.h>
 #include <ctype.h>
+#include <math.h>
 
 /*
    // Oh, gross hack! But io.h clashes with vldoor_e::open/close...
@@ -685,22 +686,6 @@ char   *G_Get(int id)
 	// ID not recognized, return NULL.
 	return 0;
 }
-
-/*
-   void G_DiscardTiccmd(ticcmd_t *discarded, ticcmd_t *current)
-   {
-   // We're only interested in buttons.
-   // Old Attack and Use buttons apply, if they're set.
-   current->buttons |= discarded->buttons & (BT_ATTACK | BT_USE);
-   if(discarded->buttons & BT_SPECIAL || current->buttons & BT_SPECIAL) 
-   return;
-   if(discarded->buttons & BT_CHANGE && !(current->buttons & BT_CHANGE))
-   {
-   // Use the old weapon change.
-   current->buttons |= discarded->buttons & (BT_CHANGE | BT_WEAPONMASK);
-   }
-   }
- */
 
 //===========================================================================
 // GetGameAPI
