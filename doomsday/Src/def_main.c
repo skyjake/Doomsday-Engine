@@ -878,6 +878,7 @@ void Def_PostInit(void)
 		}
 	}
 
+    // Detail textures.
 	DED_DelArray((void **) &details, &count_details);
 	DED_NewEntries((void **) &details, &count_details, sizeof(*details),
 				   defs.count.details.num);
@@ -887,7 +888,7 @@ void Def_PostInit(void)
 			R_CheckTextureNumForName(defs.details[i].wall);
 		details[i].flat_lump = W_CheckNumForName(defs.details[i].flat);
 		details[i].detail_lump =
-			W_CheckNumForName(defs.details[i].detail_lump);
+			W_CheckNumForName(defs.details[i].detail_lump.path);
 		details[i].gltex = 0;	// Not loaded.
 	}
 

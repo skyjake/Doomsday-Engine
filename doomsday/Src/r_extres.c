@@ -320,5 +320,6 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
 	}
 
 	// Couldn't find anything.
+    VERBOSE2(Con_Message("Failed to locate resource: %s\n", name));
 	return false;
 }

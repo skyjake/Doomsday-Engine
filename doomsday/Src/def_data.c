@@ -342,7 +342,7 @@ int DED_AddDetail(ded_t * ded, const char *lumpname)
 											&ded->count.details,
 											sizeof(ded_detailtexture_t));
 
-	strcpy(dtl->detail_lump, lumpname);
+	strcpy(dtl->detail_lump.path, lumpname);
 	dtl->scale = 1;
 	dtl->strength = 1;
 	return dtl - ded->details;

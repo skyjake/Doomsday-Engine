@@ -75,6 +75,7 @@ typedef struct dtexinst_s {
 	int     lump;
 	float   contrast;
 	DGLuint tex;
+    const char *external;
 } dtexinst_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -532,7 +533,7 @@ boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
     {
         // Need to load the shiny texture.
         ref->shiny_tex = GL_LoadGraphics2(RC_LIGHTMAP, ref->shiny_map.path,
-                                          LGM_NORMAL, false);
+                                          LGM_NORMAL, DGL_FALSE);
         if(ref->shiny_tex == 0)
         {
             VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
@@ -549,7 +550,7 @@ boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
         {
             ref->mask_tex = GL_LoadGraphics2(RC_LIGHTMAP,
                                              ref->mask_map.path,
-                                             LGM_NORMAL, true);
+                                             LGM_NORMAL, DGL_TRUE);
             if(ref->mask_tex == 0)
             {
                 VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
@@ -1308,7 +1309,8 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
 // GL_GetDetailInstance
 //  The contrast is rounded.
 //===========================================================================
-dtexinst_t *GL_GetDetailInstance(int lump, float contrast)
+dtexinst_t *GL_GetDetailInstance(int lump, float contrast,
+                                 const char *external)
 {
 	dtexinst_t *i;
 
@@ -1317,8 +1319,12 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast)
 
 	for(i = dtinstances; i; i = i->next)
 	{
-		if(i->lump == lump && i->contrast == contrast)
+		if(i->lump == lump && i->contrast == contrast &&
+           ( (i->external == NULL && external == NULL) ||
+             (i->external && external && !stricmp(i->external, external) ))
+        {
 			return i;
+        }
 	}
 
 	// Create a new instance.
@@ -1326,6 +1332,7 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast)
 	i->next = dtinstances;
 	dtinstances = i;
 	i->lump = lump;
+    i->external = external;
 	i->contrast = contrast;
 	i->tex = 0;
 	return i;
@@ -1335,70 +1342,94 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast)
 // GL_LoadDetailTexture
 //  Detail textures are grayscale images.
 //===========================================================================
-DGLuint GL_LoadDetailTexture(int num, float contrast)
+DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
 {
 	byte   *lumpData, *image;
 	int     w = 256, h = 256;
 	dtexinst_t *inst;
 
-	if(num < 0)
+	if(num < 0 && external == NULL)
 		return 0;				// No such lump?!
-	lumpData = W_CacheLumpNum(num, PU_STATIC);
 
 	// Apply the global detail contrast factor.
 	contrast *= detailFactor;
 
 	// Have we already got an instance of this texture loaded?
-	inst = GL_GetDetailInstance(num, contrast);
-	if(inst->tex)
+	inst = GL_GetDetailInstance(num, contrast, external);
+	if(inst->tex != 0)
+    {
 		return inst->tex;
+    }
 
 	// Detail textures are faded to gray depending on the contrast factor.
 	// The texture is also progressively faded towards gray when each
 	// mipmap level is loaded.
 	gl.SetInteger(DGL_GRAY_MIPMAP, contrast * 255);
 
-	// First try loading it as a PCX image.
-	if(PCX_MemoryGetSize(lumpData, &w, &h))
-	{
-		// Nice...
-		image = M_Malloc(w * h * 3);
-		PCX_MemoryLoad(lumpData, W_LumpLength(num), w, h, image);
-		inst->tex = gl.NewTexture();
-		// Make faded mipmaps.
-		if(!gl.TexImage(DGL_RGB, w, h, DGL_GRAY_MIPMAP, image))
-		{
-			Con_Error
-				("GL_LoadDetailTexture: %-8s (%ix%i): not powers of two.\n",
-				 lumpinfo[num].name, w, h);
-		}
-	}
-	else						// It must be a raw image.
-	{
-		// How big is it?
-		if(lumpinfo[num].size != 256 * 256)
-		{
-			if(lumpinfo[num].size != 128 * 128)
-			{
-				if(lumpinfo[num].size != 64 * 64)
-				{
-					Con_Message
-						("GL_LoadDetailTexture: Must be 256x256, "
-                         "128x128 or 64x64.\n");
-					W_ChangeCacheTag(num, PU_CACHE);
-					return 0;
-				}
-				w = h = 64;
-			}
-			else
-				w = h = 128;
-		}
-		image = M_Malloc(w * h);
-		memcpy(image, W_CacheLumpNum(num, PU_CACHE), w * h);
-		inst->tex = gl.NewTexture();
-		// Make faded mipmaps.
-		gl.TexImage(DGL_LUMINANCE, w, h, DGL_GRAY_MIPMAP, image);
-	}
+    // Try external first.
+    if(external != NULL)
+    {
+        inst->tex = GL_LoadGraphics2(RC_TEXTURE, external, LGM_NORMAL,
+            DGL_GRAY_MIPMAP);
+        
+        if(inst->tex == 0)
+        {
+            VERBOSE(Con_Message("GL_LoadDetailTexture: "
+                                "Failed to load: %s\n", external));
+        }
+    }
+    else
+    {
+    	lumpData = W_CacheLumpNum(num, PU_STATIC);
+    
+        // First try loading it as a PCX image.
+        if(PCX_MemoryGetSize(lumpData, &w, &h))
+        {
+            // Nice...
+            image = M_Malloc(w * h * 3);
+            PCX_MemoryLoad(lumpData, W_LumpLength(num), w, h, image);
+            inst->tex = gl.NewTexture();
+            // Make faded mipmaps.
+            if(!gl.TexImage(DGL_RGB, w, h, DGL_GRAY_MIPMAP, image))
+            {
+                Con_Error
+                    ("GL_LoadDetailTexture: %-8s (%ix%i): "
+                     "not powers of two.\n", lumpinfo[num].name, w, h);
+            }
+        }
+        else // It must be a raw image.
+        {
+            // How big is it?
+            if(lumpinfo[num].size != 256 * 256)
+            {
+                if(lumpinfo[num].size != 128 * 128)
+                {
+                    if(lumpinfo[num].size != 64 * 64)
+                    {
+                        Con_Message
+                            ("GL_LoadDetailTexture: Must be 256x256, "
+                             "128x128 or 64x64.\n");
+                        W_ChangeCacheTag(num, PU_CACHE);
+                        return 0;
+                    }
+                    w = h = 64;
+                }
+                else
+                {
+                    w = h = 128;
+                }
+            }
+            image = M_Malloc(w * h);
+            memcpy(image, W_CacheLumpNum(num, PU_CACHE), w * h);
+            inst->tex = gl.NewTexture();
+            // Make faded mipmaps.
+            gl.TexImage(DGL_LUMINANCE, w, h, DGL_GRAY_MIPMAP, image);
+        }
+
+        // Free allocated memory.
+        M_Free(image);
+        W_ChangeCacheTag(num, PU_CACHE);
+    }
 
 	// Set texture parameters.
 	gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR_MIPMAP_LINEAR);
@@ -1406,9 +1437,6 @@ DGLuint GL_LoadDetailTexture(int num, float contrast)
 	gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
 	gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
 
-	// Free allocated memory.
-	M_Free(image);
-	W_ChangeCacheTag(num, PU_CACHE);
 	return inst->tex;
 }
 
@@ -1422,14 +1450,16 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 {
 	int     i;
 	detailtex_t *dt;
+    ded_detailtexture_t *def;
 
 	// Search through the assignments. 
 	for(i = defs.count.details.num - 1; i >= 0; i--)
 	{
-		dt = &details[i];
+        def = defs.details + i;
+        dt = &details[i];
 
 		// Is there a detail texture assigned for this?
-		if(dt->detail_lump < 0)
+		if(dt->detail_lump < 0 && !def->is_external)
 			continue;
 
 		if((is_wall_texture && index == dt->wall_texture) ||
@@ -1437,27 +1467,16 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 		{
 			if(dtdef)
             {
-				*dtdef = defs.details + i;
+				*dtdef = def;
             }
 
 			// Hey, a match. Load this?
             if(!dt->gltex)
             {
-                if(defs.details[i].is_external)
-                {
-                    // Load from an external file (current unused).
-                    // FIXME: This doesn't handle contrast.
-                    dt->gltex =
-                        GL_LoadGraphics2(RC_TEXTURE,
-                                         defs.details[i].detail_lump,
-                                         LGM_NORMAL, true);
-                }
-                else
-                {
-                    dt->gltex =
-                        GL_LoadDetailTexture(dt->detail_lump,
-                                             defs.details[i].strength);
-                }
+                dt->gltex =
+                    GL_LoadDetailTexture(dt->detail_lump, def->strength,
+                                         (def->is_external?
+                                          def->detail_lump.path : NULL));
             }
 			return dt->gltex;
 		}
@@ -2002,7 +2021,7 @@ byte   *GL_LoadHighResFlat(image_t * img, char *name)
 //  actual pixel colors all white.
 //===========================================================================
 DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, boolean useMipmap)
+                         gfxmode_t mode, int useMipmap)
 {
 	image_t image;
 	filename_t fileName;
@@ -2046,8 +2065,7 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
 					2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
 					3 ? DGL_RGB : image.pixelSize ==
 					4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height,
-                    useMipmap ? DGL_TRUE : DGL_FALSE,
-					image.pixels);
+                    useMipmap, image.pixels);
 		gl.Enable(DGL_TEXTURE_COMPRESSION);
         gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
         gl.TexParameter(DGL_MIN_FILTER,
@@ -2065,7 +2083,7 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
 //===========================================================================
 DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 {
-    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, false);
+    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, DGL_FALSE);
 }
 
 //===========================================================================

@@ -330,7 +330,7 @@ extern          "C" {
     typedef struct {
         ded_string_t    wall;        // Name of a wall texture.
         ded_string_t    flat;        // Name of a flat.
-        ded_string_t    detail_lump; // The lump with the detail texture.
+        ded_path_t      detail_lump; // The lump with the detail texture.
         boolean         is_external; // True, if detail_lump is external.
         float           scale;
         float           strength;

@@ -110,7 +110,7 @@ void            GL_DestroyImage(image_t * img);
 byte           *GL_LoadTexture(image_t * img, char *name);
 DGLuint         GL_LoadGraphics(const char *name, gfxmode_t mode);
 DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                                 gfxmode_t mode, boolean useMipmap);
+                                 gfxmode_t mode, int useMipmap);
 DGLuint         GL_GetTextureInfo(int index);
 DGLuint         GL_GetTextureInfo2(int index, boolean translate);
 DGLuint         GL_PrepareTexture(int idx);

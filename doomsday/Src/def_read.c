@@ -1271,18 +1271,19 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			{
 				READLABEL;
 				RV_STR("Wall", dtl->wall)
+                RV_STR("Texture", dtl->wall) // alias
 				RV_STR("Flat", dtl->flat)
 				if(ISLABEL("Lump"))
 				{
-					READSTR(dtl->detail_lump)
+					READSTR(dtl->detail_lump.path)
 					dtl->is_external = false;
 				}
-                else /*if(ISLABEL("File"))
+                else if(ISLABEL("File"))
                 {
-                    READSTR(dtl->detail_lump)
+                    READSTR(dtl->detail_lump.path)
                     dtl->is_external = true;
                 }
-				else*/
+				else
                 RV_FLT("Scale", dtl->scale)
 				RV_FLT("Strength", dtl->strength)
 				RV_FLT("Distance", dtl->maxdist)
