@@ -358,6 +358,7 @@ cvar_t engineCVars[] =
 	"rend-model-precache",	0,			CVT_BYTE,	&r_precache_skins, 0, 1, "1=Precache 3D models at level setup (slow).",
 	"rend-model-lod",		CVF_NO_MAX,	CVT_FLOAT,	&rend_model_lod, 0, 0,	"Custom level of detail factor. 0=LOD disabled, 1=normal.",
 	"rend-model-mirror-hud", 0,			CVT_INT,	&mirrorHudModels, 0, 1,	"1=Mirror HUD weapon models.",
+	"rend-model-spin-speed", CVF_NO_MAX|CVF_NO_MIN, CVT_FLOAT, &modelSpinSpeed, 0, 0, "Speed of model spinning, 1=normal.",
 	// * Render-HUD
 	"rend-hud-offset-scale", CVF_NO_MAX, CVT_FLOAT, &weaponOffsetScale, 0, 0, "Scaling of player weapon (x,y) offset.",	
 	"rend-hud-fov-shift",	CVF_NO_MAX,	CVT_FLOAT,	&weaponFOVShift,	0, 1, "When FOV > 90 player weapon is shifted downward.",
@@ -527,6 +528,7 @@ char trimmed_float_buffer[32];	// Returned by TrimmedFloat().
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean ConsoleInited;	// Has Con_Init() been called?
 static boolean ConsoleActive;	// Is the console active?
 static float ConsoleY;			// Where the console bottom is currently?
 static float ConsoleDestY;		// Where the console bottom should be?
@@ -803,6 +805,8 @@ static int C_DECL knownWordListSorter(const void *e1, const void *e2)
 //===========================================================================
 void Con_Init()
 {
+	ConsoleInited = true;
+
 	ConsoleActive = false;
 	ConsoleY = 0;
 	ConsoleOpenY = 90;
@@ -2976,12 +2980,14 @@ void Con_Error (char *error, ...)
 	va_list argptr;
 
 	// Already in an error?
-	if(errorInProgress)
+	if(!ConsoleInited || errorInProgress)
 	{
 		printf("Con_Error: Stack overflow imminent, aborting...\n");
+
 		va_start(argptr, error);
-		vprintf(error, argptr);
+		vsprintf(buff, error, argptr);
 		va_end(argptr);
+		Sys_MessageBox(buff, true);
 
 		// Exit immediately, lest we go into an infinite loop.
 		exit(1);
