@@ -1,0 +1,6 @@
+name: Example Bundle 7
+category: sound
+
+toggle stupid-option7 (
+  option: -invalid
+)

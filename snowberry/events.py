@@ -1,0 +1,330 @@
+# -*- coding: iso-8859-1 -*-
+# $Id$
+# Snowberry: Extensible Launcher for the Doomsday Engine
+#
+# Copyright (C) 2004, 2005
+#   Jaakko Keränen <jaakko.keranen@iki.fi>
+#   Antti Kopponen <antti.kopponen@tut.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not: http://www.opensource.org/
+
+## @file events.py Event Bus
+
+import traceback
+
+# The event listeners.
+commandListeners = []
+notifyListeners = []
+
+# Send counter.  Used to determine if a send() is currently underway.
+sendDepth = 0
+
+# Events waiting to be sent (FIFO queue).
+queuedEvents = []
+
+
+class Event:
+    def __init__(self, id):
+        self.id = id
+
+    def getId(self):
+        return self.id
+
+    def hasId(self, id):
+        """Test whether the event is of certain type.
+
+        @param id The event identifier to test.
+
+        @return True, if the event's identifier matches the specified
+        id.  Otherwise false.
+        """        
+        return self.id == id
+    
+        
+class Command (Event):
+    def __init__(self, id):
+        Event.__init__(self, id)
+        self.myClass = Command
+
+
+class Notify (Event):
+    def __init__(self, id):
+        Event.__init__(self, id)
+        self.myClass = Notify
+
+
+class PopulateNotify (Notify):
+    """A PopulateNotify requests any listeners to populate an area
+    with widgets."""
+
+    def __init__(self, identifier, area):
+        Notify.__init__(self, 'populating-area')
+        self.areaId = identifier
+        self.area = area
+
+    def getArea(self):
+        return self.area
+
+    def getAreaId(self):
+        return self.areaId
+
+
+class SelectNotify (Notify):
+    """SelectNotify should be sent when something gets selected.  This
+    can be for example an item in a list, or an icon."""
+    
+    def __init__(self, id, newSelection, doubleClicked=False):
+        """Construct a new selection notification.
+
+        @param id Identifies where the selection has occured.  The
+        suffix '-selected' will be automatically appended.
+
+        @param newSelection Identifier of the item that is now selected.
+
+        @param doubleClicked True, if the selection was done using a
+        double click.
+        """
+        Notify.__init__(self, id + "-selected")
+        self.selection = newSelection
+        self.doubleClick = doubleClicked
+
+    def getSelection(self):
+        """Returns the identifier of the item that is now selected."""
+        return self.selection
+
+    def isDoubleClick(self):
+        return self.doubleClick
+
+
+class FocusNotify (Notify):
+    """FocusNotify should be sent when something gains the input
+    focus.  Not all widgets send this, though."""
+
+    def __init__(self, id):
+        """Construct a new focus change event.
+        @param id Identifier of the object that now has the focus.
+        """
+        Notify.__init__(self, "focus-changed")
+        self.focus = id
+
+    def getFocus(self):
+        """Return the identifier of whatever now has the focus."""
+        return self.focus
+
+
+class FocusRequestNotify (FocusNotify):
+    def __init__(self, id):
+        FocusNotify.__init__(self, id)
+        self.id = 'focus-request'
+
+
+class ValueNotify (Notify):
+    """ValueNotify is sent by a profile when a profiles.Value in it
+    changes its value."""
+
+    def __init__(self, settingId, newValue, profile):
+        Notify.__init__(self, "value-changed")
+        self.settingId = settingId
+        self.newValue = newValue
+        self.profile = profile
+
+    def getSetting(self):
+        return self.settingId
+
+    def getValue(self):
+        return self.newValue
+
+    def getProfile(self):
+        return self.profile
+    
+
+class EditNotify (Notify):
+    """EditNotify must be sent when an editable widget changes its
+    value.  The owner of the widget can then react to the change."""
+
+    def __init__(self, id, newValue):
+        Notify.__init__(self, "widget-edited")
+        self.widget = id
+        self.newValue = newValue
+
+    def getWidget(self):
+        return self.widget
+
+    def getValue(self):
+        return self.newValue
+
+
+class AttachNotify (Notify):
+    """An AttachNotify is sent when an addon is attached or detached
+    from a profile."""
+
+    def __init__(self, addonIdentifier, profile, isAttached=True):
+        if isAttached:
+            eventId = 'addon-attached'
+        else:
+            eventId = 'addon-detached'
+        Notify.__init__(self, eventId)
+        self.addon = addonIdentifier
+        self.profile = profile
+
+    def getAddon(self):
+        return self.addon
+
+    def getProfile(self):
+        return self.profile
+
+    
+class ProfileNotify (Notify):
+    """ProfileNotify is sent when a profile's information has changed
+    or a new profile has been loaded."""
+    
+    def __init__(self, profile):
+        Notify.__init__(self, 'profile-updated')
+        self.profile = profile
+    
+    def getProfile(self):
+        return self.profile
+
+
+class LaunchNotify (Notify):
+    """LaunchNotify is sent when the command line options for
+    launching a game has been compiled."""
+
+    def __init__(self, commandLineOptions):
+        Notify.__init__(self, 'launching')
+        self.options = commandLineOptions
+
+    def getOptions(self):
+        """This is the actual list of parameters that will be used for
+        launching the game.  Notification listeners are permitted to
+        edit the options, but it should be noted that there are no
+        guarantees as to which listener gets to handle the options
+        first.
+
+        @return An array of command line parameter strings.
+        """
+        return self.options
+
+
+class LanguageNotify (Notify):
+    """A LanguageNotify is sent when the user interface language is
+    changed."""
+
+    def __init__(self, newLanguage):
+        Notify.__init__(self, 'language-changed')
+        # We'll assume the language identifier begins with 'language-'.
+        self.lang = newLanguage[9:]
+
+    def getLanguage(self):
+        return self.lang
+
+
+#class AddonNotify (Notify):
+#    """AddonNotify is sent when an addon is installed or uninstalled.
+#    Plugins should refresh their widgets to reflect the new
+#    configuration."""##
+#
+#    def __init__(self, 
+
+
+def addCommandListener(callback):
+    """Register a new Command listener callback function.  When a
+    Command event is sent, the callback will get called.
+
+    @param callback Callback function for Commands.
+    """
+    commandListeners.append(callback)
+
+
+def removeCommandListener(callback):
+    """Remove an existing Command listener callback function.
+
+    @param callback Callback function for Commands.
+    """
+    commandListeners.remove(callback)
+
+        
+def addNotifyListener(callback):
+    """Register a new Notify listener callback function.  When a
+    Notify event is sent, the callback will get called.
+
+    @param callback Callback function for Notifys.
+    """
+    notifyListeners.append(callback)
+
+        
+def removeNotifyListener(callback):
+    """Remove an existing Notify listener callback function.
+
+    @param callback Callback function for Notifys.
+    """
+    notifyListeners.remove(callback)
+
+        
+def send(event):
+    """Broadcast an event to all listeners of the appropriate type.
+    The event is processed synchronously: all listeners will be
+    notified immediately during the execution of this function.
+
+    @param event The event to send.  All listeners will get the same
+    event object.
+    """
+    global sendDepth, queuedEvents
+
+    sendDepth += 1
+    
+    # Commands and Notifys go to a different set of listeners.
+    if event.myClass == Command:
+        listeners = commandListeners
+    else:
+        listeners = notifyListeners
+
+    # Send the event to all the appropriate listeners.
+    for callback in listeners:
+        try:
+            callback(event)
+        except Exception, x:
+            # Ignore exceptions.
+            # TODO: Handle the errors properly.
+            print "Exception during event processing!"
+            traceback.print_exc()
+
+    # If event processing is complete but events are queued, send them
+    # now.
+    if sendDepth == 1:
+        while len(queuedEvents) > 0:
+            # Listeners may call sendAfter() during this while loop.
+            roster = queuedEvents
+            queuedEvents = []
+            for ev in roster:
+                send(ev)
+
+    sendDepth -= 1
+
+
+def sendAfter(event):
+    """Broadcast an event to all listeners of the appropriate type.
+    If this is called during the execution of send(), the event will
+    be delayed until send() is finished.
+
+    @param event The event to send.
+    """
+    global sendDepth, queuedEvents
+
+    if sendDepth > 0:
+        # A send() is currently underway.  Queue the event.
+        queuedEvents.append(event)
+    else:
+        # We can send immediately.
+        send(event)

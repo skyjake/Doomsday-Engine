@@ -1,0 +1,425 @@
+# $Id$
+#
+# Strings for U.S. English
+#
+# Note that all of these are automatically inserted into the "english"
+# language, even with no "language english" block in the beginning of
+# the file.
+#
+# This file is the default language file.  If another language does
+# not have a translation for a certain string, the translation is
+# looked up in this language file.
+
+
+# The key 'language-english' comes from the name of this file.
+# Supposed to appear in the language selection list.
+language-english: English (US)
+
+#
+# Setup Wizard
+#
+run-setup-wizard: Show Setup Wizard
+setup-wizard: Setup Wizard
+wizard-language: Language
+wizard-language-explanation = "The Snowberry user interface supports localization.
+Select the language you want to use."
+wizard-games: Game Profiles
+wizard-games-all: Select all
+wizard-games-clear: Clear all
+wizard-select-games =
+"Select the games you would like to set up.
+Note that you must have a copy of the original
+game installed."
+wizard-locate-iwad = "In order to play this game, you will need to locate 
+the main data file of the game."
+wizard-locate-iwad-deathkings = "Unlike the other games, the Death Kings WAD will be
+installed as an addon. Death Kings is an extension
+to Hexen."
+wizard-suggested-iwad: Original name:
+deathkings-selection-title: Locate HEXDD.WAD
+wizard-launching: Launching
+wizard-launching-explanation: Should Snowberry be closed when a game is started?
+
+#
+# Windows and Dialogs
+#
+ok: OK
+cancel: Cancel
+reset: Reset
+browse: Browse
+install: Install
+new-profile-dialog: Create New Profile
+new-profile-title: New Profile
+new-profile-name: Name
+new-profile-game: Game library
+rename-profile-dialog: Rename Profile
+rename-profile-title: Renaming Profile
+rename-profile-name: New name
+reset-profile-dialog: Reset Profile
+reset-profile-title: Are You Sure?
+reset-profile-query: Are you sure you want to reset <b>%1</b> to defaults? This will clear all customized settings in the profile, and deselect all the addons.
+delete-profile-dialog: Delete Profile
+delete-profile-title: Are You Sure?
+delete-profile-query: Are you sure you want to delete <b>%1</b>?
+duplicate-profile-dialog: Duplicate Profile
+duplicate-profile-title: Duplicating Profile
+duplicating-profile: You are creating a duplicate of <b>%1</b>.
+unhide-profile-dialog: Show Profiles
+unhide-profile-title: Show Hidden Profiles
+unhiding-profiles: Select one or more hidden profiles to show.
+unhide-select-all: Select all
+unhide-clear-all: Clear all
+view-command-line-dialog: Command Line
+view-command-line-title: Viewing Command Line Options
+install-addon-dialog: Addon Installer
+install-addon-title: Choose Addons to Install
+addon-dialog-folder: Folder:
+addon-dialog-folder-browse: ...
+addon-dialog-folder-uninstalled: Uninstalled
+addon-dialog-browse-prompt: Choose Folder
+addon-dialog-found: Addons in the selected folder:
+addon-dialog-name: Name
+addon-dialog-type: Type
+addon-dialog-type-box: Box Container
+addon-dialog-type-wad: WAD Data File
+addon-dialog-type-addon: Bundle
+addon-dialog-type-pk3: Package
+addon-dialog-type-ded: Definition File
+addon-dialog-type-deh: DeHackEd Patch
+uninstall-addon-dialog: Uninstall Addon
+uninstall-addon-title: Are You Sure?
+uninstall-addon-query: Are you sure you want to uninstall <b>%1</b>?
+load-order-dialog: Load Order
+load-order-title: Addon Loading Order
+load-order-message: All addons that will be loaded:
+load-order-move-up: Up
+load-order-move-down: Down
+load-order-move-top: First
+load-order-move-bottom: Last
+
+conflict-wizard: Addon Wizard
+conflict-wizard-title: Resolving Addon Conflicts
+
+category-conflict-message = "<b>%1</b> excludes the
+following addons:%2 <p>Select which of these addons should be
+loaded."
+
+conflict-choice1 = "Load %1.
+The excluded addons are not loaded."
+conflict-choice2: Don't load %1.
+
+value-conflict-message = "<b>%1</b> cannot be used with the
+following settings:%2 <p>%1 won't be loaded."
+
+keyword-conflict-message = "<b>%1</b> excludes the following
+resources:%2 <p>Select which of these addons should be loaded."
+
+provide-conflict-message = "There are conflicting resources:%1
+<p>The addons listed below provide conflicting versions of the
+same resource. Only one of these addons can be loaded.
+<p>Select the one that should be loaded."
+
+missing-requirements-message = "<b>%1</b> cannot be used because all
+the resources it requires are not being loaded.  <p>In order to use %1,
+you must also load addons that provide these required resources:"
+
+#
+# Profiles and Components
+#
+defaults-profile: Defaults
+game-jdoom: jDoom
+game-jheretic: jHeretic
+game-jhexen: jHexen
+game-jdoom-icon: orb-doom
+game-jheretic-icon: orb-heretic
+game-jhexen-icon: orb-hexen
+
+#
+# Button Labels
+#
+play: Play
+stop: Stop
+continue: Continue...
+new-profile: +
+delete-profile: -
+duplicate-profile: Dup
+install-addon: +
+uninstall-addon: -
+load-order: Load Order
+addon-settings: Settings
+
+#
+# Popup Menu Items
+#
+menu-new-profile: New...
+menu-rename-profile: Rename
+menu-reset-profile: Reset to defaults
+menu-duplicate-profile: Duplicate
+menu-delete-profile: Delete
+menu-hide-profile: Hide
+menu-unhide-profiles: Show...
+menu-uninstall-addon: Uninstall
+menu-addon-info: Info
+menu-load-order: Load Order...
+menu-install-addon: Install New...
+menu-addon-settings: Settings
+menu-check-category: Check category
+menu-uncheck-category: Uncheck category
+menu-expand-all-categories: Expand all
+menu-collapse-all-categories: Collapse all
+menu-reset-slider: Reset to default
+menu-view-command-line: View command line
+
+#
+# Tab Labels
+#
+tab-summary: Summary
+tab-addons: Addons
+tab-settings: Settings
+general-options: Snowberry
+game-options: Game
+display-options: Display
+graphics-options: Graphics
+sound-options: Sound
+input-options: Input
+addons-options: Addons
+developer-options: Developer
+
+#
+# Tab Icons
+#
+general-options-icon: deng
+game-options-icon: deng2
+display-options-icon: deng3
+graphics-options-icon: deng4
+sound-options-icon: deng
+input-options-icon: deng2
+addons-options-icon: deng3
+developer-options-icon: deng4
+
+#
+# Labels for the Summary Tab
+#
+loaded-addons: Loaded Addons
+custom-settings: Customized Settings
+system-settings: System Settings
+summary-run-in-window: run in window
+summary-color-depth-16: 16-bit colors
+summary-color-depth-32: 32-bit colors
+
+#
+# Labels for the Addons Tab
+#
+default-addons-root: Default Addons
+available-addons-root: Available Addons
+
+#
+# Addon Categories
+#
+category: All categories
+category-graphics: Graphics
+category-graphics-3d: 3D Resources
+category-graphics-textures: Textures
+category-graphics-ui: User Interface
+category-music: Music
+category-sound: Sound
+category-effects: Effects
+category-effects-particle: Particle Effects
+category-effects-light: Lighting Effects
+
+#
+# File Types
+#
+file-type-iwad: Game data files (*.wad)
+file-type-box: Boxes (*.box)
+file-type-bundle: Addon bundles (*.addon)
+file-type-pk3: PK3 files (*.pk3)
+file-type-wad: WAD files (*.wad)
+file-type-ded: Definition files (*.ded)
+file-type-dehacked: DeHackEd patches (*.deh)
+file-type-anything: All files
+
+#
+# Settings
+#
+no: No
+yes: Yes
+default: Default
+browse-button: ...
+
+language: Language
+quit-on-launch: Quit when game launched
+game: Game component
+iwad: Game data file
+iwad-selection-title: Choose Game Data File
+memory-zone: Memory usage (MB)
+
+renderer: Renderer library
+renderer-opengl: OpenGL
+renderer-direct3d: Microsoft Direct3D
+
+opengl-options: OpenGL
+direct3d-options: Direct3D
+
+color-depth: Color depth
+color-depth-16: 16-bit
+color-depth-32: 32-bit
+
+run-in-window: Run game in a window
+
+window-size: Display resolution
+window-size-640x480: 640 x 480
+window-size-800x600: 800 x 600
+window-size-1024x768: 1024 x 768
+window-size-1152x864: 1152 x 864
+window-size-1280x960: 1280 x 960
+window-size-1280x1024: 1280 x 1024
+window-size-1400x1050: 1400 x 1050
+window-size-1600x1200: 1600 x 1200
+window-size-custom: Custom
+
+custom-window-group: Custom window
+window-width: Width
+window-height: Height
+center-window: Center window
+window-pos-x: X position
+window-pos-y: Y position
+
+refresh-rate: Refresh rate (Hz)
+triple-buffering: Triple buffering
+
+enable-gamma: Use color adjustments
+enable-highres-textures: Use external textures
+enable-highres-patches: Use external patches
+
+texture-compression: Texture compression
+disable-genmips: Disable SGIS_generate_mipmap
+
+d3d-config-dialog: Show D3D config dialog
+
+zbuffer-depth: Z-buffer depth
+zbuffer-depth-16: 16-bit
+zbuffer-depth-32: 32-bit
+
+texture-depth: Texture color depth
+texture-depth-16: 16-bit
+texture-depth-32: 32-bit
+
+texture-options: Texture options
+extres-with-pwad: Allow external with PWADs
+anisotropic-filter: Anisotropic filtering
+paletted-textures: Paletted textures
+
+maximum-texture-size: Maximum texture size
+maximum-texture-size-unlimited: Hardware
+maximum-texture-size-64: 64 x 64
+maximum-texture-size-128: 128 x 128
+maximum-texture-size-256: 256 x 256
+maximum-texture-size-512: 512 x 512
+maximum-texture-size-1024: 1024 x 1024
+maximum-texture-size-2048: 2048 x 2048
+maximum-texture-size-4096: 4096 x 4096
+
+sound-driver: Sound driver
+sound-driver-ds8: Built-in (DirectSound 8)
+sound-driver-ds6: Compatible (DirectSound 6)
+sound-driver-a3d: Aureal A3D
+sound-driver-dummy: Dummy (no sound)
+
+sound-channels: Sound channels
+disable-audio: Disable all audio
+disable-sound-effects: Disable sound effects
+disable-music: Disable music
+disable-primary-buffer: Don't set primary buffer format
+disable-fmod: Disable FMOD
+
+eax-options: EAX options
+disable-eax: Disable EAX
+ignore-eax-errors: Ignore EAX errors
+
+disable-win-sys-keys: Disable Windows system keys
+disable-mouse: Disable mouse
+disable-joystick: Disable joystick
+
+verbosity: Verbose messages
+verbosity-none: No
+verbosity-devel: Level 1
+verbosity-extra: Level 2
+
+custom-cmdline: Custom options
+
+#
+# Help
+#
+help-welcome = "Welcome to Snowberry. Select a profile from the
+list on the left."
+
+help-command = "To start a game, press the <b>Play</b> button."
+
+help-command-defaults = "The <b>Defaults</b> profile contains
+settings common to all profiles."
+
+help-tab-summary = "The Summary tab shows the most important information
+about the current profile."
+
+help-tab-addons = "Select the addons you would like to use with the
+current profile.<p>The <b>Settings</b> button allows you to
+customize the selected addon.<p>To change the order in which addons
+are loaded, press the <b>Load Order</b> button."
+
+help-tab-settings = "The Settings tab allows you to customize the
+current profile and the addons you've selected for loading.
+<p>To change the default settings for all profiles,
+select the <b>Defaults</b> profile."
+
+#
+# Settings Help
+#
+help-value-from-defaults = "The value of this setting comes from the
+<b>%1</b> profile."
+help-value-current: Current value
+help-value-min: Min
+help-value-max: Max
+help-value-default: Default
+
+iwad-help = "The game data file contains all the maps, graphics, sound
+effects, and other game content. You must specify a game data file in
+order to play.  <p>Game data files are called IWAD files and they use
+the file name extension WAD. They are usually 4-20 MB in
+size. You will find one in the directory where you have installed a
+copy of the original Doom, Heretic, or Hexen."
+
+window-size-help = "To define a custom resolution (for example to play
+in widescreen mode): 
+<ul>
+<li>Set this to Custom.
+<li>Enter the width and height into the corresponding fields.
+</ul>"
+
+window-width-help = "The width of the game window, or custom horizontal 
+resolution."
+
+window-height-help = "The height of the game window, or custom vertical
+resolution."
+
+center-window-help: The game window is positioned in the center of the screen.
+
+#
+# Addon Help
+#
+help-addon-mode-brief: Brief
+help-addon-mode-detailed: Detailed
+help-addon-version: Version
+help-addon-summary: Summary
+help-addon-contact: Contact
+help-addon-author: Author
+help-addon-copyright: Copyright
+help-addon-license: License
+help-addon-date: Date
+help-addon-dependencies: Dependencies
+help-addon-excluded-categories: Excluded categories
+help-addon-excludes: Excludes
+help-addon-requires: Requires
+help-addon-provides: Provides
+help-addon-offers: Offers
+help-addon-part-of-box: This addon is a part of <a href="%1">%2</a>.

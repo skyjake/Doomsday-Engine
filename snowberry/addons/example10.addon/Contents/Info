@@ -1,0 +1,6 @@
+name: Example Bundle 10
+category: effects/light
+
+toggle stupid-option10 (
+  option: -invalid
+)
