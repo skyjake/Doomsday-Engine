@@ -36,6 +36,7 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 int DM_Ext_PlayFile(const char *filename, int looped);
+void DM_Ext_Stop(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -69,7 +70,7 @@ void ExtMus_Init(void)
 
 void ExtMus_Shutdown(void)
 {
-    qtInited = false;
+    DM_Ext_Stop();
     
 	if(song)
 		free(song);
@@ -81,6 +82,7 @@ void ExtMus_Shutdown(void)
 
 	song = NULL;
 	movie = NULL;
+    qtInited = false;    
 }
 
 int DM_Ext_Init(void)
@@ -200,6 +202,7 @@ static int playFile(const char *filename, int looped)
 {
 	OSErr error = noErr;
     CFStringRef pathStr;
+    CFStringRef escapedStr;
     CFURLRef url;
     FSRef fsRef;
     FSSpec fsSpec;
@@ -218,14 +221,17 @@ static int playFile(const char *filename, int looped)
     // Now we'll open the file using Carbon and QuickTime.
     pathStr = CFStringCreateWithCString(NULL, filename, 
         CFStringGetSystemEncoding());
-    url = CFURLCreateWithString(NULL, pathStr, NULL);
+    escapedStr = CFURLCreateStringByAddingPercentEscapes(
+        NULL, pathStr, NULL, CFSTR(""), kCFStringEncodingUTF8);
+    url = CFURLCreateWithString(NULL, escapedStr, NULL);
 	CFRelease(pathStr);
+    CFRelease(escapedStr);
     
     // We've got the URL, get the FSSpec.
 	if(!CFURLGetFSRef(url, &fsRef))
     {
         // File does not exist??
-        CFRelease(url);
+        if(url) CFRelease(url);
         DS_Error();
         return false;
     }
