@@ -80,6 +80,9 @@ other such files will be stored in this directory.
 RUNNING A DEDICATED SERVER
 --------------------------
 
+You can give the option "--without-opengl" to the configure script if
+you don't want to compile the OpenGL renderer at all.
+
 Start the game as you normally would, but use the "-dedicated" command
 line option.  This will make Doomsday run in a text-only console mode.
 For more instructions on how to configure the server, see
