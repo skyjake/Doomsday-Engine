@@ -124,7 +124,7 @@ rar a %FILE% %_PackDir%\deng.mic %_PackDir%\_mic_engine.exe
 :skip_eng
 
 if %_PackFull%==No goto skip_full
-set FILE=%_DestDir%\doomsday1070
+set FILE=%_DestDir%\deng-inst-1
 del %FILE%.exe
 rar a %FILE% %_PackDir%\setup.exe
 rar c -zsetupcom.txt %FILE%.exe

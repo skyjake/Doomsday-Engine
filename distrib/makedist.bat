@@ -1,6 +1,7 @@
 @ECHO OFF
 REM -- Makes the Doomsday distribution in the Distrib subdir.
 
+SET COPYCMD=/Y
 SET Dist=Distrib\
 SET DistBin=%Dist%\Bin\
 
@@ -8,7 +9,7 @@ REM -- Source directories (where files will be copied from).
 SET SRC=..\doomsday\
 SET FMODLIB=D:\sdk\fmod\api\
 SET SidgarDir=C:\Projects\SiDGaR\Release\
-SET KickDir=C:\Projects\KickStart\
+SET KickDir=..\kickstart\
 SET BSPDir=c:\utils\glbsp\
 
 IF "%1" == "rel" GOTO releasedirs
@@ -129,7 +130,8 @@ REM +---------------------------------------------------------------+
 echo Copying Other Files...
 
 xcopy %KickDir%Kicks.exe 	%Dist%
-xcopy %KickDir%Profiles\*.kss   %Dist%
+xcopy %KickDir%*.ks?   		%Dist%
+xcopy %KickDir%*.cfg   		%Dist%
 xcopy %BSPDir%glbsp.exe   	%Dist%
 xcopy %BSPDir%glbsp.txt   	%Dist%
 
