@@ -9,6 +9,9 @@
 //** This file is way too long.
 //**
 //** $Log$
+//** Revision 1.3  2003/06/27 20:20:28  skyjake
+//** Protect incoming message queue using a mutex
+//**
 //** Revision 1.2  2003/06/23 08:19:24  skyjake
 //** Confirmed and Ordered packets done manually
 //**
@@ -59,6 +62,8 @@ extern "C"
 #define NETEVENT_QUEUE_LEN	32
 #define SEND_TIMEOUT		15000	// 15 seconds
 #define RELEASE(x)			if(x) ((x)->Release(), (x)=NULL)
+
+#define MSG_MUTEX_NAME		"MsgQueueMutex"
 
 // Net events.
 typedef enum neteventtype_e {
@@ -214,6 +219,10 @@ static DPNHANDLE gEnumHandle;
 // The message queue: list of incoming messages waiting for processing.
 static netmessage_t *gMsgHead, *gMsgTail;
 
+// A mutex is used to protect the addition and removal of messages from
+// the message queue.
+static HANDLE gMsgMutex;
+
 // The master action queue.
 static masteraction_t masterQueue[MASTER_QUEUE_LEN];
 static int mqHead, mqTail;
@@ -231,6 +240,29 @@ static char *protocolNames[NUM_NSP] = {
 static store_t stores[MAXPLAYERS];
 
 // CODE --------------------------------------------------------------------
+
+/*
+ * Acquire or release ownership of the message queue mutex.
+ * Returns true if successful.
+ */
+boolean N_LockQueue(boolean doAcquire)
+{
+	if(doAcquire)
+	{
+		// Five seconds is plenty.
+		if(WaitForSingleObject(gMsgMutex, 5000) == WAIT_TIMEOUT) 
+		{
+			// Couldn't lock it.
+			return false;
+		}
+	}
+	else
+	{
+		// Release it, then.
+		ReleaseMutex(gMsgMutex);
+	}
+	return true;
+}
 
 /*
  * Generate a new, non-zero message ID.
@@ -589,10 +621,13 @@ void N_SMSResendTimedOut(void)
 /*
  * Adds the given netmessage_s to the queue of received messages.
  * Before calling this, allocate the message using malloc().
- * (Hopefully thread-safe enough.)
+ * We use a mutex to synchronize access to the message queue.
+ * This is called in the DirectPlay thread.
  */
 void N_PostMessage(netmessage_t *msg)
 {
+	N_LockQueue(true);
+
 	// This will be the latest message.
 	msg->next = NULL;
 
@@ -607,17 +642,22 @@ void N_PostMessage(netmessage_t *msg)
 
 	// If there is no head, this'll be the first message.
 	if(gMsgHead == NULL) gMsgHead = msg;
+
+	N_LockQueue(false);
 }
 
 /*
  * Extracts the next message from the queue of received messages.
  * Returns NULL if no message is found. The caller must release the
  * message when it's no longer needed, using N_ReleaseMessage().
- * (Hopefully thread-safe enough.)
+ * We use a mutex to synchronize access to the message queue.
+ * This is called in the Doomsday thread.
  */
 netmessage_t* N_GetMessage(void)
 {
-	if(!gMsgHead) return NULL;
+	if(gMsgHead == NULL) return NULL;
+
+	N_LockQueue(true);
 
 	// This is the message we'll return.
 	netmessage_t *msg = gMsgHead;
@@ -627,6 +667,8 @@ netmessage_t* N_GetMessage(void)
 
 	// Advance the head pointer.
 	gMsgHead = gMsgHead->next;
+
+	N_LockQueue(false);
 
 	// Identify the sender.
 	msg->player = N_IdentifyPlayer(msg->sender);
@@ -974,6 +1016,9 @@ boolean N_CheckDirectPlay(void)
  */
 void N_Init(void)
 {
+	// Create a mutex for the message queue.
+	gMsgMutex = CreateMutex(NULL, FALSE, MSG_MUTEX_NAME);
+
 	N_SockInit();
 	N_MasterInit();
 	N_InitDirectPlay();
@@ -989,6 +1034,10 @@ void N_Shutdown(void)
 	N_ShutdownDirectPlay();
 	N_MasterShutdown();
 	N_SockShutdown();
+
+	// Close the handle of the message queue mutex.
+	CloseHandle(gMsgMutex);
+	gMsgMutex = NULL;
 }
 
 /*
