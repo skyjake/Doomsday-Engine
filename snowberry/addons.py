@@ -864,6 +864,7 @@ def install(sourceName):
 
     destName = os.path.join(destPath,
                             os.path.basename(sourceName))
+    
     try:
         # Directories must be copied as a tree.
         if os.path.isdir(sourceName):

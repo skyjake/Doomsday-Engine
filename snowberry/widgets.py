@@ -980,7 +980,7 @@ class List (Widget):
             # Check the state of each item.
             for i in range(w.GetItemCount()):
                 state = w.GetItemState(i, wx.LIST_STATE_SELECTED)
-                if state == wx.LIST_STATE_SELECTED:
+                if state & wx.LIST_STATE_SELECTED:
                     selected.append(self.items[i])
             return selected
 
@@ -1359,7 +1359,11 @@ class FormattedList (Widget):
 class FormattedTabArea (FormattedList):
     """FormattedTabArea extends FormattedList by pairing it up with a
     previously created MultiArea.  This class implements the same
-    interface as TabArea."""
+    interface as TabArea.
+
+    This widget class is different from the other classes.  The other
+    classes encapsulate a single wxWidgets widget.  FormattedTabArea
+    combines a FormattedList with a MultiArea object."""
 
     def __init__(self, parent, wxId, id):
         """Constuct a new formatted tab area.
@@ -1370,12 +1374,13 @@ class FormattedTabArea (FormattedList):
 
         @param id The identifier of the formatted list.
 
+        @param ownerArea The Area in which the formatted tab area
+        resides.
         """
         FormattedList.__init__(self, parent, wxId, id,
                                style=wx.SUNKEN_BORDER)
 
         self.setSorted(False)
-        
         self.multi = None
 
         # List of all currently hidden tabs.
@@ -2133,7 +2138,7 @@ class Tree (Widget):
                                 justBoxParts = False
 
                     item = hier.categories[category]
-                    tree.SetItemBold(item, count > 0)
+                    tree.SetItemBold(item, checkCount > 0)
                     
                     if category is ao.getRootCategory():
                         label = rootLabel
