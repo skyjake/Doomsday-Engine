@@ -40,10 +40,13 @@
 #  include <math.h>
 #endif
 
+// SDL's gamma settings seem more robust.
+#if 0 
 #if defined(UNIX) && defined(HAVE_X11_EXTENSIONS_XF86VMODE_H)
 #  define XFREE_GAMMA
 #  include <X11/Xlib.h>
 #  include <X11/extensions/xf86vmode.h>
+#endif
 #endif
 
 #if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
