@@ -4,6 +4,9 @@ COMPILING DOOMSDAY AND THE LIBRARIES
 This document describes the recommended way for building Doomsday and
 the libraries on a *nix system (i.e. only Linux at the moment).
 
+If you want generic instructions on compiling see the INSTALL file in
+the base of the Doomsday source tree.
+
 
 REQUIREMENTS:
 -------------
