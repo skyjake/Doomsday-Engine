@@ -221,7 +221,7 @@ void Demo_WritePacket(int playernum)
 	if(clients[playernum].recordpaused)
 	{
 		// Some types of packet are not written in record-paused mode.
-		if(netbuffer.msg.type == DDPT_SOUND
+		if(netbuffer.msg.type == psv_sound
 			|| netbuffer.msg.type == DDPT_MESSAGE) return;
 	}
 
@@ -245,11 +245,12 @@ void Demo_WritePacket(int playernum)
 	lzWrite(&ptime, 1, file);
 
 	// The header.
-	hdr.length = netbuffer.headerLength + netbuffer.length;
+	hdr.length = 1/*netbuffer.headerLength*/ + netbuffer.length;
 	lzWrite(&hdr, sizeof(hdr), file);
 
 	// Write the packet itself.
-	lzWrite(&netbuffer.msg, hdr.length, file);
+	lzPutC(netbuffer.msg.type, file);
+	lzWrite(netbuffer.msg.data, netbuffer.length, file);
 }
 
 void Demo_BroadcastPacket(void)
@@ -352,9 +353,11 @@ boolean Demo_ReadPacket(void)
 	lzRead(&hdr, sizeof(hdr), playdemo);
 
 	// Get the packet.
-	netbuffer.length = hdr.length - netbuffer.headerLength;
+	netbuffer.length = hdr.length - 1/*netbuffer.headerLength*/;
 	netbuffer.player = 0;	// From the server.
-	lzRead(&netbuffer.msg, hdr.length, playdemo);
+	netbuffer.msg.id = 0;
+	netbuffer.msg.type = lzGetC(playdemo);
+	lzRead(netbuffer.msg.data, netbuffer.length, playdemo);
 	netbuffer.cursor = netbuffer.msg.data;
 
 /*	Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime, 
