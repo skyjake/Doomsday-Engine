@@ -14,6 +14,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define SUPPORT(x)	(x? "OK" : "not supported")
+
 // TYPES -------------------------------------------------------------------
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
@@ -249,20 +251,30 @@ int	InitDirect3D(void)
     DCf(MaxPixelShaderValue);
 
 	// Maximums.
+	maxTextures = MIN_OF(caps.MaxSimultaneousTextures, MAX_TEX_UNITS);
+	maxStages = caps.MaxTextureBlendStages;
 	maxTexSize = MIN_OF(caps.MaxTextureWidth, caps.MaxTextureHeight);
 	maxAniso = caps.MaxAnisotropy;
-	
+	availMulAdd = (caps.TextureOpCaps & D3DTEXOPCAPS_MULTIPLYADD != 0);
+	/*
 	if(verbose)
-	{
-		Con_Message("Direct3D information:\n");
-		PrintAdapterInfo();
-		Con_Message("  Maximum texture size: %i x %i\n",
-			caps.MaxTextureWidth, caps.MaxTextureHeight);
-		if(caps.MaxTextureAspectRatio)
-			Con_Message("  Maximum texture aspect ratio: 1:%i\n",
-				caps.MaxTextureAspectRatio);
-		Con_Message("  Maximum anisotropy: %i\n", maxAniso);
-	}
+	{*/
+	Con_Message("Direct3D information:\n");
+	PrintAdapterInfo();
+	Con_Message("  Texture units: %i\n", maxTextures);
+	Con_Message("  Texture blending stages: %i\n", maxStages);
+	Con_Message("  Modulate2X: %s\n", 
+		SUPPORT(caps.TextureOpCaps & D3DTEXOPCAPS_MODULATE2X));
+	Con_Message("  MultiplyAdd: %s\n", SUPPORT(availMulAdd));
+	Con_Message("  BlendFactorAlpha: %s\n", 
+		SUPPORT(caps.TextureOpCaps & D3DTEXOPCAPS_BLENDFACTORALPHA));
+	Con_Message("  Maximum texture size: %i x %i\n",
+		caps.MaxTextureWidth, caps.MaxTextureHeight);
+	if(caps.MaxTextureAspectRatio)
+		Con_Message("  Maximum texture aspect ratio: 1:%i\n",
+			caps.MaxTextureAspectRatio);
+	Con_Message("  Maximum anisotropy: %i\n", maxAniso);
+/*	}*/
 	
 	// Configure the presentation parameters.
 	pp = &presentParms;
@@ -337,7 +349,7 @@ int	InitDirect3D(void)
 		DXError("CreateDevice");
 		return DGL_ERROR;
 	}
-	dev->SetVertexShader(DRVERTEX_FORMAT);
+	dev->SetVertexShader(DRVTX_FORMAT);
 
 	// Clear the screen with a mid-gray color.
 	dev->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 
