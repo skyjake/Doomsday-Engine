@@ -10,7 +10,8 @@ SET PACKAGE=snowberry-beta
 REM -- Make the executable.
 python setup.py py2exe
 
-del %PACKAGE%.exe
+REM -- Don't build a separate package.
+REM del %PACKAGE%.exe
 
-rar a %PACKAGE% -ep dist\*.pyd dist\*.dll dist\*.exe dist\*.ico dist\*.zip
-rar a %PACKAGE% -r -x*\CVS* -x*.pyc -x*~ -xobserver.py addons\README addons\example.addon conf\*.conf graphics\*.bmp graphics\*.png lang\*.lang plugins\example.plugin plugins\*.py profiles\README profiles\*.prof
+REM rar a %PACKAGE% -ep dist\*.pyd dist\*.dll dist\*.exe dist\*.ico dist\*.zip
+REM rar a %PACKAGE% -r -x*\CVS* -x*.pyc -x*~ -xobserver.py addons\README addons\example.addon conf\*.conf graphics\*.bmp graphics\*.png graphics\*.jpg lang\*.lang plugins\example.plugin plugins\*.py profiles\README profiles\*.prof
