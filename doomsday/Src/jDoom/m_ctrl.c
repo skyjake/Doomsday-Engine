@@ -158,7 +158,7 @@ static MenuItem_t ControlsItems[] =
 	{ ITT_EFUNC, "LARGER STATBAR :", SCControlConfig, 42 },
 	{ ITT_EMPTY, NULL, NULL, 0 },
 	{ ITT_EMPTY, "MISCELLANEOUS", NULL, 0 },
-//	{ ITT_EFUNC, "STOP DEMO :", SCControlConfig, A_STOPDEMO },
+	{ ITT_EFUNC, "AUTOMAP :", SCControlConfig, 53 },
 	{ ITT_EFUNC, "PAUSE :", SCControlConfig, 43 },
 	{ ITT_EFUNC, "SCREENSHOT :", SCControlConfig, 44 },
 	{ ITT_EFUNC, "CHAT :", SCControlConfig, 45 },
@@ -173,7 +173,7 @@ Menu_t ControlsDef =
 {
 	32, 40,
 	M_DrawControlsMenu,
-	60, ControlsItems,
+	61, ControlsItems,
 	1, MENU_OPTIONS,
 	hu_font_a, //1, 0, 0, 
 	LINEHEIGHT_A,
