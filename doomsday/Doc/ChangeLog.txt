@@ -9,8 +9,14 @@ Version 1.7.9 (work in progress)
 + cvar 'rend-light-wall-angle': intensity of angle-based wall lighting
 + cvar 'input-mouse-filter': average mouse X/Y axis values
 * "Filter mouse movement" added to Control Panel's Input page
+* -nohightex now only affects wall textures and flats
 - DirectSound 8: fixed a problem with buffer loading; using -csd should 
   no longer be necessary
+
+jDoom:
++ cvar game-corpse-sliding: corpses slide down stairs and ledges 
+  (defaults to zero due to some bad behaviour; e.g. exit room of D2/22)
+* cvar game-corpsetime renamed to game-corpse-time
 
 jHexen:
 - fixed: sound sequence delays with repeating sounds (sequence updater
