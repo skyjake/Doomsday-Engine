@@ -285,10 +285,6 @@ void G_Drawer(void)
 			IN_Drawer();
 			break;
 		
-		/*case GS_FINALE:
-			F_Drawer();
-			break;*/
-		
 		case GS_INFINE:
 			FI_Drawer();
 			GL_Update(DDUF_FULLSCREEN);

@@ -966,11 +966,6 @@ extern boolean automapactive;
 
 void SB_Drawer(void)
 {
-/*	// Sound info debug stuff
-	if(DebugSound == true)
-	{
-		DrawSoundInfo();
-	}*/
 	CPlayer = &players[consoleplayer];
 	if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT && !automapactive
 #ifdef DEMOCAM 
@@ -983,9 +978,13 @@ void SB_Drawer(void)
 	else
 	{
 		float fscale = cfg.sbarscale/20.0f;
+
 		// Setup special status bar matrix.
 		if(cfg.sbarscale != 20)
 		{
+			// Update borders around status bar (could flicker otherwise).
+			GL_Update(DDUF_BORDER);
+
 			gl.MatrixMode(DGL_MODELVIEW);
 			gl.PushMatrix();
 			gl.Translatef(160 - 320*fscale/2, 200*(1-fscale), 0);
