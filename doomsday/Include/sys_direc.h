@@ -13,6 +13,7 @@ void	Dir_FileName(const char *str, char *name);
 void	Dir_MakeDir(const char *path, directory_t *dir);
 int		Dir_FileID(const char *str);
 void	Dir_ValidDir(char *str);
+boolean Dir_IsEqual(directory_t *a, directory_t *b);
 int		Dir_IsAbsolute(const char *str);
 void	Dir_MakeAbsolute(char *path);
 

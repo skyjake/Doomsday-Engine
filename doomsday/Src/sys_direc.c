@@ -46,7 +46,7 @@ void Dir_GetDir(directory_t *dir)
 	if(dir->path[strlen(dir->path)-1] != '\\')
 		strcat(dir->path, "\\");
 
-	VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) );
+	/* VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) ); */
 }
 
 int Dir_ChDir(directory_t *dir)
@@ -107,6 +107,16 @@ int Dir_FileID(const char *str)
 	for(i = 0, ptr = temp; *ptr; ptr++, i++)
 		((unsigned char*) &id)[i % 4] += *ptr;
 	return id;
+}
+
+//===========================================================================
+// Dir_IsEqual
+//	Returns true if the directories are equal.
+//===========================================================================
+boolean Dir_IsEqual(directory_t *a, directory_t *b)
+{
+	if(a->drive != b->drive) return false;
+	return !stricmp(a->path, b->path);
 }
 
 //===========================================================================
