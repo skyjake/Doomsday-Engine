@@ -6,43 +6,53 @@
 
 Version 1.7.12 (work in progress)
 --------------
++ option -leaveramp: don't reset color settings back to previous values
+  at shutdown
+* music data will not be cached into the memory zone while loading 
+  (large MP3s wasted a lot of space) 
+* 'InFine' is an alternative name for the 'Finale' definition
+- removed obsolete settings from Control Panel: Network
+- removed detail texture maximum distance cvar and Control Panel slider
+- removed cvars 'rend-light-clip', 'rend-light-shrink'
+- fixed: possible crash in Con_Error()
+
+Refresh:
 + texture/flat animation sequences defined using Group defs (Anim.ded)
-+ tgf_smooth: interpolate between steps in texture/flat animation
++ "tgf_smooth": interpolate between steps in texture/flat animation
++ particle generator flag "gnf_group": triggered by all in the flat's
+  animation group
+* texture/flat groups can be used purely for precaching
+* detail texture contrast is preprocessed: there will be multiple 
+  instances of the same texture with different contrast levels (needs
+  a bit more memory but allows faster rendering)
+* PCX images aren't loaded redundantly from virtual files  
+- fixed: particles sliding over ledges
+- fixed: Generator Center angle (Y) offset was ignored with mobj sources
+
+Renderer:
 + model blending modes: subtract and reverse subtract
 * renderer uses multitexturing for detail textures, dynamic lights,
   interpolated texture animation and model shiny skins
+* shiny skins are correctly masked by alpha in main skin
 * if multitexturing is available, masked walls will get one dynamic 
   light (previously masked walls were not lit by dynlights)
 * dynamic light polygons are no longer clipped
 * calculations to determine surfaces affected by a dynamic light are
   more accurate (light has a better chance to be visible)
-* detail texture contrast is preprocessed: there will be multiple 
-  instances of the same texture with different contrast levels (needs
-  a bit more memory but allows faster rendering)
-+ option -leaveramp: don't reset color settings back to previous values
-  at shutdown
-+ particle generator flag "gnf_group": triggered by all in the flat's
-  animation group
-+ cmd 'startinf (scriptid)' (and 'stopinf')
-* 'InFine' is an alternative name for the 'Finale' definition
-- removed obsolete settings from Control Panel: Network
-- removed detail texture maximum distance cvar and Control Panel slider
-- removed cvars 'rend-light-clip', 'rend-light-shrink'
+- removed option -maxor: clipper has now unlimited nodes
 - fixed: leaking lights (impossible route detection)
 - fixed: stray pixels along polygon edges in dynamically lit areas
 - fixed: detail texture blending when fog is enabled
 - fixed: object shadows weren't affected by fog
 - fixed: skymask holes in skyfixed sectors
-- fixed: particles sliding over ledges
 - fixed: console text gibberish on the first time the console is drawn
-- fixed: possible crash in Con_Error()
-- fixed: Generator Center angle (Y) offset was ignored with mobj sources
 
 drOpenGL:
 + support for multitexturing
 + NV_texture_env_combine4 or ATI_texture_env_combine3 required when 
   rendering dynamic lights with multitexturing
 + support for SGIS_generate_mipmap
++ support for EXT_blend_subtract
 - removed -vtxar option (arrays are used always)
 
 jDoom:
@@ -59,6 +69,7 @@ jHexen:
 * titlescreen sequence defined as an InFine script (ID = "title")
 
 InFine:
++ cmd 'startinf (scriptid)' (and 'stopinf')
 + gradient rectangles
 + object rotation (pics, text objects, rectangles)
 + command "ScaleXY (handle) (x) (y)"
