@@ -85,7 +85,7 @@ int     uiMouseHeight = 32;
 
 // Modify these colors to change the look of the UI.
 ui_color_t ui_colors[NUM_UI_COLORS] = {
-	/* UIC_TEXT */ {.85, .87, 1},
+	/* UIC_TEXT */ {.85f, .87f, 1},
 	/* UIC_TITLE */ {1, 1, 1},
 	/* UIC_SHADOW */ {0, 0, 0},
 	/* UIC_BG_LIGHT */ {.18f, .18f, .22f},
