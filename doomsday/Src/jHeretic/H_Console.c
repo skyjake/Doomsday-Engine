@@ -81,7 +81,7 @@ cvar_t  gameCVars[] = {
 	"0=None, 1=Move, 2=Turn, 3=Strafe, 4=Look.",
 	//"i_JoyDeadZone", OBSOLETE, CVT_INT, &cfg.joydead, 10, 90, "Joystick dead zone, in percents.", 
 	//"FPS", OBSOLETE | CVF_NO_ARCHIVE, CVT_INT, &cfg.showFPS, 0, 1,
-	"1=Show the frames per second counter.",
+	//"1=Show the frames per second counter.",
 	"EchoMsg", OBSOLETE, CVT_INT, &cfg.echoMsg, 0, 1,
 	"1=Echo all messages to the console.",
 	"ImmediateUse", OBSOLETE, CVT_INT, &cfg.chooseAndUse, 0, 1,
