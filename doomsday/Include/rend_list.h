@@ -15,7 +15,7 @@ extern int		useMultiTexLights;
 extern int		useMultiTexDetails;
 
 extern float	rend_light_wall_angle;
-extern float	detailFactor, detailMaxDist, detailScale;
+extern float	detailFactor, detailScale;
 
 void RL_Init();
 void RL_ClearLists();
