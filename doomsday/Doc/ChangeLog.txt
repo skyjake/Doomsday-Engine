@@ -4,6 +4,18 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.alpha-2
+-------------------
+! Alpha Release
+* controller axes can be bound to specific local players
+* engine handles all controls (incomplete)
+* 'walk' and 'sidestep' axis controls can be bound (partially implemented)
++ 'bindaxis' command: bind a controller axis to an axis control (e.g.
+  "bindaxis mouse-y walk")
+- fixed: sound system (on Win32), may still crash during shutdown
+- removed obsolete settings from the Control Panel
+
+
 Version 1.8.alpha-1
 -------------------
 ! Alpha Release
