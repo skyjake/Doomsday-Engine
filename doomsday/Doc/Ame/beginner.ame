@@ -19,24 +19,26 @@ CONTENTS: @contents{1}
 	@row{single}
 		@file{doomsday(version).exe} @tab Doomsday, jDoom, jHeretic, jHexen
 	@row
-		@file{doom(version).exe} @tab Doomsday, jDoom
+		@file{jdoom(version).exe} @tab Doomsday, jDoom
 	@row
 		@file{jheretic(version).exe} @tab Doomsday, jHeretic
 	@row
 		@file{jhexen(version).exe} @tab Doomsday, jHexen
 	}
 
-  	All can be downloaded from @link{http://www.doomsdayhq.com/}
-  	or directly from @link{ftp://jfiles@@server1.thefourwinds.net/}.
+  	All can be downloaded from @link{http://www.doomsdayhq.com/},
+  	directly from @link{ftp://jfiles@@server1.thefourwinds.net/} or
+  	from the mirror site @link{http://www.jbserver.com/~jdoom/}.
 
-@item 3D models are distributed in separate archives:
+@item 3D models are distributed in separate archives. Downloading one or
+ 	more model pack is optional.
 
     @file{jdoom_mpack.exe} @br @file{jheretic_mpack.exe} @br
     @file{jhexen_mpack.exe}
 
 @item Windows 95 (or newer).
 
-@item DirectX 6.0 (or newer).
+@item DirectX 8.0 (or newer).
 
 @item A display adapter with 3D hardware acceleration.
 
@@ -48,21 +50,26 @@ CONTENTS: @contents{1}
 
 @chapter{ Automatical installation }
 
-Since Doomsday 1.7.3 the distribution archives have included a special installation wizard.
+The distribution archives have included a special installation wizard since Doomsday 1.7.3.
 
 @section{ Installing into a new folder }
 
-Type the path of the folder into the edit box or choose an existing folder using the browsing button.
+Execute the main distribution archive, which is one of:
+@file{doomsday(ver).exe}, @file{jdoom(ver).exe}, @file{jheretic(ver).exe} and @file{jhexen(ver).exe}.
 
-After the files have been extracted, a WAD files dialog will appear. Locate all the main WAD files you have installed. I recommend keeping the glBSP option checked because running it will fix many glitches in the maps. Note that shortcuts can only be created for the WAD files you locate using the dialog.
+Type the path of the folder into the edit box or choose an existing folder using the @button{Browse} button. Example: @file{C:\Games\Doomsday}. There is a button with a folder icon on the left side of the edit box. Click the button.
 
-The shortcut creation dialog will allow you to select a Start menu program group and gives you the option to automatically create shortcuts to the KickStart launcher. The fast launch shortcuts will be created in the selected Start menu program group. They allow you to immediately launch the game using a specific WAD and renderer.
+After the files have been extracted, a WAD Files dialog will appear. The dialog lists a number of WAD files from supported games (Doom, Heretic, Hexen). Locate the WAD files you have on your hard drive. I recommend keeping the glBSP option checked because running it will fix many glitches in the maps. Note that the installation wizard can only create shortcuts for the WAD files you locate using this dialog.
+
+The shortcut creation dialog will allow you to select a Start Menu program group and gives you the option to automatically create shortcuts for the KickStart launcher. The fast launch shortcuts will be created in the selected Start Menu program group. They allow you to immediately launch the game using a specific WAD and renderer.
+
+If you have downloaded any model packs, you may now install them in any order you like. They use the same installation wizard as the main distribution archive.
 
 @section{ Upgrading an old version }
 
 The @button{Upgrade} button is available if you have installed a version of Doomsday in the past using the wizard. Clicking the button will make the installer extract the new files into the folder where you have the older version installed.
 
-The WAD files dialog will then appear. If you already have all the WAD files you need copied into the appropriate folders, just click @button{Continue}.
+The WAD files dialog will then appear. If you have already located all of your WAD files in the past, you don't need to enter them again in the dialog. Click @button{Continue} when you're done.
 
 If there is no need to create new shortcuts, just bypass the shortcut creation dialog by clicking @button{Continue}.
 
@@ -70,7 +77,7 @@ If there is no need to create new shortcuts, just bypass the shortcut creation d
 
 This is the procedure to follow when installing Doomsday 1.7.2 or an older version.
 
-@section{ Step 1: Uncompress the distribution }
+@section{ Step 1: Decompress the distribution }
 
 Run the distribution EXE file. A window appears asking you where the files
 should be extracted. The default folder is @file{C:\Doomsday}.
