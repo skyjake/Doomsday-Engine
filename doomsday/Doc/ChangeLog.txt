@@ -8,6 +8,7 @@ Version 1.7.9 (work in progress)
 -------------
 + cvar 'rend-light-wall-angle': intensity of angle-based wall lighting
 + cvar 'input-mouse-filter': average mouse X/Y axis values
++ model flag 'df_dim' (0x1000000): model is never rendered fullbright
 * "Filter mouse movement" added to Control Panel's Input page
 * -nohightex now only affects wall textures and flats
 - DirectSound 8: fixed a problem with buffer loading; using -csd should 
