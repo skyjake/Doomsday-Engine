@@ -64,7 +64,7 @@ desc = With the sensitivity value of zero the whole axis range is in use. When t
 [Smooth cam]
 cvar = rend-camera-smooth
 def = No
-desc = Camera movement is interpolated between the ticks of the 35 Hz game clock. Note that this only affects the camera, so other game objects and structures still move only 35 times per second. They may seem to stutter a bit as they move, even though they move the same way as with camera smoothing turned off. Also, player controls may seem somewhat lagged: because of the interpolation, the movement of the camera is delayed 1/35 seconds.
+desc = Camera movement is interpolated between the ticks of the 35 Hz game clock. Note that this does not affect the movement of game objects such as missiles. They may seem to stutter a bit as they move, even though they move the same way as with camera smoothing turned off. Also, player controls may seem somewhat lagged: because of the interpolation, the movement of the camera is delayed 1/35 seconds.
 
 [Field Of View]
 cvar = rend-camera-fov
