@@ -158,8 +158,12 @@ static void AddToWadList(char *list)
 //===========================================================================
 // autoDataAdder (f_forall_func_t)
 //===========================================================================
-static int autoDataAdder(const char *fileName, int loadFiles)
+static int autoDataAdder
+	(const char *fileName, filetype_t type, void *loadFiles)
 {
+	// Skip directories.
+	if(type == FT_DIRECTORY) return true;
+
 	if(loadFiles)
 		W_AddFile(fileName, false);
 	else
@@ -183,7 +187,7 @@ void DD_AddAutoData(boolean loadFiles)
 	for(i = 0; extensions[i]; i++)
 	{
 		sprintf(pattern, "%sAuto\\*.%s", R_GetDataPath(), extensions[i]);
-		F_ForAll(pattern, loadFiles, autoDataAdder);
+		F_ForAll(pattern, (void*) loadFiles, autoDataAdder);
 	}
 }
 

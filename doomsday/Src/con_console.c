@@ -369,7 +369,7 @@ cvar_t engineCVars[] =
 
 	// Sound
 	"sound-volume",			0,			CVT_INT,	&sfx_volume,	0, 255, "Sound effects volume (0-255).",
-	"sound-info",				0,			CVT_BYTE,	&sound_info,	0, 1,	"1=Show sound debug information.",
+	"sound-info",				0,			CVT_INT,	&sound_info,	0, 1,	"1=Show sound debug information.",
 	"sound-rate",				0,			CVT_INT,	&sound_rate,	11025, 44100, "Sound effects sample rate (11025, 22050, 44100).",
 	"sound-16bit",				0,			CVT_INT,	&sound_16bit,	0, 1,	"1=16-bit sound effects/resampling.",
 	"sound-3d",					0,			CVT_INT,	&sound_3dmode,	0, 1,	"1=Play sound effects in 3D.",
@@ -2769,10 +2769,8 @@ void Con_Error (char *error, ...)
  * Prints a file name to the console.
  * This is a f_forall_func_t.
  */
-int Con_PrintFileName(const char *fn, int parm)
+int Con_PrintFileName(const char *fn, filetype_t type, void *dir)
 {
-	const char *dir = (const char*) parm;
-
 	// Exclude the path.
 	Con_Printf("  %s\n", fn + strlen(dir));
 
@@ -2807,7 +2805,7 @@ int CCmdDir(int argc, char **argv)
 
 		// Make the pattern.
 		sprintf(pattern, "%s*.*", dir);
-		F_ForAll(pattern, (int) dir, Con_PrintFileName);
+		F_ForAll(pattern, dir, Con_PrintFileName);
 	}
 
 	return true;

@@ -161,9 +161,10 @@ void R_PrependDataPath(const char *origPath, char *newPath)
 /*
  * Callback function used in R_TryResourceFile.
  */
-int R_FileFinder(const char *fn, int parm)
+int R_FileFinder(const char *fn, filetype_t type, void *buf)
 {
-	char *buf = (char*) parm;
+	// Skip directories.
+	if(type == FT_DIRECTORY) return true;
 
 	// This'll do fine!
 	if(buf) strcpy(buf, fn);
@@ -191,7 +192,7 @@ boolean R_TryResourceFile
 		if(**ext == '*') // Anything goes?
 		{
 			strcpy(extPlace, ".*");
-			if(!F_ForAll(buf, (int) foundFileName, R_FileFinder))
+			if(!F_ForAll(buf, foundFileName, R_FileFinder))
 			{
 				// A match was found.
 				return true;

@@ -342,8 +342,11 @@ void Def_ReadIncludedDEDs(directory_t *mydir)
 // Def_ReadDEDFile
 //	Callback for DD_ReadProcessDED.
 //===========================================================================
-int Def_ReadDEDFile(const char *fn, int parm)
+int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
 {
+	// Skip directories.
+	if(type == FT_DIRECTORY) return true;
+
 	if(M_CheckFileID(fn) 
 		&& !DED_Read(&defs, fn, read_count==1))
 	{
@@ -372,7 +375,7 @@ void Def_ReadProcessDED(char *filename)
 		if(strchr(fn, '*') || strchr(fn, '?'))
 			F_ForAll(fn, 0, Def_ReadDEDFile);
 		else
-			Def_ReadDEDFile(fn, 0);
+			Def_ReadDEDFile(fn, FT_NORMAL, 0);
 
 		Def_ReadIncludedDEDs(&dir);
 	}
