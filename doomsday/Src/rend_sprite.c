@@ -458,10 +458,10 @@ void Rend_RenderSprite(vissprite_t *spr)
 	// Do we need to translate any of the colors?
 	if(spr->mo.flags & DDMF_TRANSLATION)
 	{
-		dc_translation = translationtables-256 + spr->mo.class*((8-1)*256) +
-			((spr->mo.flags & DDMF_TRANSLATION) >> (DDMF_TRANSSHIFT-8));
 		// We need to prepare a translated version of the sprite.
-		GL_SetTranslatedSprite(patch, dc_translation);
+		GL_SetTranslatedSprite(patch, 
+			(spr->mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT, 
+			spr->mo.class);
 	}
 	else
 	{

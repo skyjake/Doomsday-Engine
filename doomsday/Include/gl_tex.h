@@ -54,7 +54,7 @@ unsigned int	GL_PrepareSprite(int pnum);
 void			GL_SetTexture(int idx);
 void			GL_GetSkyTopColor(int texidx, byte *rgb);
 void			GL_SetSprite(int pnum);
-void			GL_SetTranslatedSprite(int pnum, unsigned char *trans);
+void			GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void			GL_GetSpriteColor(int pnum, unsigned char *rgb);
 void			GL_GetFlatColor(int fnum, unsigned char *rgb);
 void			GL_NewSplitTex(int lump, DGLuint part2name);
