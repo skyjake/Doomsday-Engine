@@ -199,7 +199,7 @@ void DD_InitHelp(void)
 	helpRoot.next = helpRoot.prev = &helpRoot;
 
 	// Control Panel help.
-	DH_ReadStrings(">Data\\CPHelp.txt");	
+	DH_ReadStrings("}Data\\CPHelp.txt");	
 
 	// Help is now available.
 	helpInited = true;

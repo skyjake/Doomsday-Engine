@@ -67,7 +67,7 @@ boolean		shiftDown = false, altDown = false;
 boolean		showScanCodes = false;
 
 // A customizable mapping of the scantokey array.
-char		keyMapPath[256] = ">Data\\KeyMaps\\";
+char		keyMapPath[256] = "}Data\\KeyMaps\\";
 byte		keyMappings[256];
 byte		shiftKeyMappings[256], altKeyMappings[256];
 
