@@ -64,23 +64,67 @@ int				verbose, noArrays = true;
 //===========================================================================
 // fullscreenMode
 //	Change the display mode using the Win32 API.
+//	The closest available refresh rate is selected.
 //===========================================================================
 int fullscreenMode(int width, int height, int bpp)
 {
-	DEVMODE	newMode;
-	int		res;
+	DEVMODE	current, testMode, newMode;
+	int		res, i;
 
-	// Switch to the requested resolution.
-	memset(&newMode, 0, sizeof(newMode));	// Clear the structure.
+	// First get the current settings.
+	memset(&current, 0, sizeof(current));
+	current.dmSize = sizeof(DEVMODE);
+	if(EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &current))
+	{
+		if(!bpp) bpp = current.dmBitsPerPel;
+	}	
+	else if(!bpp)
+	{
+		// A safe fallback.
+		bpp = 16;
+	}
+
+	// Override refresh rate?
+	if(ArgCheckWith("-refresh", 1))
+		current.dmDisplayFrequency = strtol(ArgNext(), 0, 0);
+
+	// Clear the structure.
+	memset(&newMode, 0, sizeof(newMode));	
 	newMode.dmSize = sizeof(newMode);
-	newMode.dmPelsWidth = width;
-	newMode.dmPelsHeight = height;
-	newMode.dmBitsPerPel = bpp;
-	newMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
-	if(bpp) newMode.dmFields |= DM_BITSPERPEL;
+
+	// Let's enumerate all possible modes to find the most suitable one.
+	for(i = 0; ; i++)
+	{
+		memset(&testMode, 0, sizeof(testMode));
+		testMode.dmSize = sizeof(DEVMODE);
+		if(!EnumDisplaySettings(NULL, i, &testMode)) break;
+
+		if(testMode.dmPelsWidth == (unsigned) width 
+			&& testMode.dmPelsHeight == (unsigned) height
+			&& testMode.dmBitsPerPel == (unsigned) bpp)
+		{
+			// This looks promising. We'll take the one that best matches
+			// the current refresh rate.
+			if(abs(current.dmDisplayFrequency - testMode.dmDisplayFrequency)
+				< abs(current.dmDisplayFrequency - newMode.dmDisplayFrequency))
+			{
+				memcpy(&newMode, &testMode, sizeof(DEVMODE));
+			}
+		}
+	}
+
+	if(!newMode.dmPelsWidth)
+	{
+		// A perfect match was not found. Let's try something.
+		newMode.dmPelsWidth = width;
+		newMode.dmPelsHeight = height;
+		newMode.dmBitsPerPel = bpp;
+		newMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL;
+	}
+
 	if((res=ChangeDisplaySettings(&newMode, 0)) != DISP_CHANGE_SUCCESSFUL)
 	{
-		Con_Message("drOpenGL.setResolution: Error %d.\n", res);
+		Con_Message("drOpenGL.setResolution: Error %x.\n", res);
 		return 0; // Failed, damn you.
 	}
 

@@ -50,12 +50,15 @@ void DXError(const char *funcName)
 //	Returns a supported display mode that matches the current window 
 //	configuration. Used only when running fullscreen.
 //===========================================================================
-boolean GetMode(D3DDISPLAYMODE *match)
+boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 {
 	D3DDISPLAYMODE mode;
 	int i, num = d3d->GetAdapterModeCount(adapter);
 	int targetBits = (!wantedColorDepth? window->bits : wantedColorDepth);
-	
+	int found = false;
+
+	memset(match, 0, sizeof(*match));
+
 	DP("GetMode:");
 	DP("Requesting: %i x %i x %i", window->width, window->height, targetBits);
 
@@ -79,14 +82,19 @@ boolean GetMode(D3DDISPLAYMODE *match)
 					&& (mode.Format == D3DFMT_X8R8G8B8 
 						|| mode.Format == D3DFMT_A8R8G8B8)))
 		{
-			// This is the one!
-			memcpy(match, &mode, sizeof(mode));
-			return true;
+			// This might be the one!
+			found = true;
+
+			// If the refresh rate is closer, use it.
+			if(abs(wantedRefresh - mode.RefreshRate)
+				< abs(wantedRefresh - match->RefreshRate))
+			{
+				memcpy(match, &mode, sizeof(mode));
+			}
 		}
 	}
 
-	// No suitable mode was found.
-	return false;
+	return found;
 }
 
 //===========================================================================
@@ -130,6 +138,7 @@ int	InitDirect3D(void)
 {
 	D3DDISPLAYMODE targetMode;
 	D3DPRESENT_PARAMETERS *pp;
+	int wantedRefresh;
 
 	DP("InitDirect3D:");
 
@@ -150,11 +159,17 @@ int	InitDirect3D(void)
 		DXError("GetAdapterDisplayMode");
 		return DGL_ERROR;
 	}
-
 	DP("Current display mode:");
 	DP("  w=%i, h=%i, rfsh=%i, fmt=%i", 
 		displayMode.Width, displayMode.Height, 
 		displayMode.RefreshRate, displayMode.Format);
+
+	// By default we'll use the current refresh rate.
+	wantedRefresh = displayMode.RefreshRate;
+
+	// Override refresh rate?
+	if(ArgCheckWith("-refresh", 1))
+		wantedRefresh = strtol(ArgNext(), 0, 0);
 
 	// Let's see what this adapter can do for us.
 	if(FAILED(hr = d3d->GetDeviceCaps(adapter, D3DDEVTYPE_HAL, &caps)))
@@ -268,7 +283,7 @@ int	InitDirect3D(void)
 
 		// Running fullscreen.
 		// Does the adapter support a display mode that suits our needs?
-		if(!GetMode(&targetMode))
+		if(!GetMode(&targetMode, wantedRefresh))
 		{
 			Con_Message("Direct3D: Display adapter does not support "
 				"the requested mode.\n");
@@ -277,7 +292,7 @@ int	InitDirect3D(void)
 		pp->BackBufferWidth = targetMode.Width;
 		pp->BackBufferHeight = targetMode.Height;
 		pp->BackBufferFormat = targetMode.Format;
-		pp->FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+		pp->FullScreen_RefreshRateInHz = targetMode.RefreshRate;
 		pp->SwapEffect = D3DSWAPEFFECT_DISCARD;
 
 		DP("  bbw=%i, bbh=%i bbfmt=%i", targetMode.Width,
