@@ -26,6 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
 #include "sys_direc.h"
@@ -323,19 +324,72 @@ void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
 }
 
 /*
+ * The path inside the pack is mapped to another virtual location.
+ *
+ * Data files (pk3, zip, lmp, wad) in the root are mapped to Data/Game/Auto.
+ * Definition files (ded) in the root are mapped to Defs/Game/Auto.
+ * Paths that begin with a '@' are mapped to Defs/Game/Auto.
+ * Paths that begin with a '#' are mapped to Data/Game/Auto.
+ */
+void Zip_MapPath(char *path)
+{
+    char mapped[512];
+
+    if(path[0] == '@') // Manually mapped to Defs.
+    {
+        Def_GetAutoPath(mapped);
+        strcat(mapped, path + 1);
+        strcpy(path, mapped);
+    }
+    else if(path[0] == '#') // Manually mapped to Data.
+    {
+        sprintf(mapped, "%sAuto" DIR_SEP_STR "%s", R_GetDataPath(),
+            path + 1);
+        strcpy(path, mapped);
+    }
+    else if(strchr(path, DIR_SEP_CHAR) == NULL)
+    {
+        // The name contains no directory separators.
+        // Check the extension.
+        char *ext = strrchr(path, '.');
+        if(ext != NULL)
+        {
+            ++ext;
+            
+            if(!stricmp(ext, "pk3") ||
+               !stricmp(ext, "zip") ||
+               !stricmp(ext, "lmp") ||
+               !stricmp(ext, "wad"))
+            {
+                // Data files are mapped to the Data directory.
+                sprintf(mapped, "%sAuto" DIR_SEP_STR, R_GetDataPath());
+            }
+            else if(!stricmp(ext, "ded"))
+            {
+                // Definitions are mapped to the Defs directory.
+                Def_GetAutoPath(mapped);
+            }
+
+            strcat(mapped, path);
+            strcpy(path, mapped);
+        }
+    }
+}
+
+/*
  * Opens the file zip, reads the directory and stores the info for later
  * access. If prevOpened is not NULL, all data will be read from there.
  */
 boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 {
-	DFILE  *file;
-	package_t *pack;
 	centralend_t summary;
+	zipentry_t *entry;
+	package_t *pack;
 	void   *directory;
 	char   *pos;
 	char    buf[512];
-	zipentry_t *entry;
 	int     index;
+	DFILE  *file;
 
 	if(prevOpened == NULL)
 	{
@@ -416,6 +470,10 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 		// Convert all slashes to the host OS's directory separator,
 		// for compatibility with the sys_filein routines.
 		Dir_FixSlashes(buf);
+
+        // In some cases the path inside the pack is mapped to another
+        // virtual location.
+        Zip_MapPath(buf);
 
 		// Make it absolute.
 		M_PrependBasePath(buf, buf);
