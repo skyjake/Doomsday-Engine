@@ -719,7 +719,7 @@ boolean R_IsCustomTexture(int texture)
 
 //===========================================================================
 // R_IsAllowedDecoration
-//	Returns true if the given decorations works under the specified 
+//	Returns true if the given decoration works under the specified 
 //	circumstances.
 //===========================================================================
 boolean R_IsAllowedDecoration
