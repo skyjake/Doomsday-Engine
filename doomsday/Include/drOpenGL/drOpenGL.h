@@ -14,8 +14,8 @@
 #include "../doomsday.h"
 #include "../dglib.h"
 
-#define DROGL_VERSION		202
-#define DROGL_VERSION_TEXT	"2.0.2"
+#define DROGL_VERSION		203
+#define DROGL_VERSION_TEXT	"2.0.3"
 #define DROGL_VERSION_FULL	"DGL OpenGL Driver Version "DROGL_VERSION_TEXT" ("__DATE__")"
 
 enum { VX, VY, VZ };
