@@ -24,10 +24,10 @@
 #define MAX_PINGS			10
 
 // The default bandwidth rating for new clients.
-#define BWR_DEFAULT			10
+#define BWR_DEFAULT			40
 
-// A modest acktime used by default for new clients (500 ms ping).
-#define ACK_DEFAULT			500
+// A modest acktime used by default for new clients (1 sec ping).
+#define ACK_DEFAULT			1000
 
 #define MONITORTICS			7
 
@@ -71,7 +71,7 @@ enum
 	psv_first_frame2,		// First psv_frame2 after map change 
 	psv_sound2,
 	psv_stop_sound,
-	psv_music,
+	pcl_acks,
 	
 	// Game specific events.
 	pkt_game_marker		= DDPT_FIRST_GAME_EVENT		// 64
