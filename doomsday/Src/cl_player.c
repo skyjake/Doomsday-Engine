@@ -64,6 +64,7 @@ void Cl_InitPlayers(void)
 	{
 		players[i].psprites[0].stateptr = NULL;
 		players[i].psprites[1].stateptr = NULL;
+		memset(clients[i].lastcmd, 0, sizeof(*clients[i].lastcmd));
 	}
 }
 
@@ -76,6 +77,17 @@ void Cl_LocalCommand(void)
 	ddplayer_t *pl = players + consoleplayer;
 	client_t *cl = clients + consoleplayer;
 	playerstate_t *s = playerstate + consoleplayer;
+
+	if(leveltic < 10)
+	{
+		// In the very beginning of a level, moving is not allowed.
+		memset(cl->lastcmd, 0, sizeof(*cl->lastcmd));
+		if(s->cmo)
+		{
+			s->cmo->mo.momx = 0;
+			s->cmo->mo.momy = 0;
+		}
+	}
 
 	s->forwardmove = cl->lastcmd->forwardmove * 2048;
 	s->sidemove = cl->lastcmd->sidemove * 2048;
@@ -241,7 +253,6 @@ void Cl_MovePlayer(ddplayer_t *pl)
 {
 	int num = pl - players;
 	playerstate_t *st = playerstate + num;
-	int time_mul = 1; /*, old_friction;*/
 	mobj_t *clmo = &st->cmo->mo, *mo = pl->mo;
 
 	if(!mo) return;
@@ -254,18 +265,6 @@ void Cl_MovePlayer(ddplayer_t *pl)
 		return;
 	}
 
-/*	// If we're predicting backwards in time, reverse momentum.
-	// Everything else stays the same.
-	if(!pred_forward) 
-	{
-		time_mul = -1;
-		mo->momx = -mo->momx;
-		mo->momy = -mo->momy;
-		mo->momz = -mo->momz;
-		old_friction = st->friction;
-		st->friction = FixedDiv(FRACUNIT, st->friction);
-	}*/
-
 	// Move.
 	P_XYMovement2(mo, st);
 	P_ZMovement(mo);
@@ -276,28 +275,20 @@ void Cl_MovePlayer(ddplayer_t *pl)
 	// information about non-local player movement.)
 	if(num == consoleplayer)
 	{
-		if((mo->z <= mo->floorz || mo->ddflags & DDMF_FLY)
-			&& !(pl->flags & DDPF_DEAD)) // Dead players do not move willfully.
+		fixed_t air_thrust = FRACUNIT/32;
+		boolean airborne = (mo->z > mo->floorz && !(mo->ddflags & DDMF_FLY));
+		if(!(pl->flags & DDPF_DEAD)) // Dead players do not move willfully.
 		{
-			int mul = /*(num == consoleplayer)?*/ cplr_thrust_mul /*: FRACUNIT*/;
+			int mul = (airborne? air_thrust : cplr_thrust_mul);
 			if(st->forwardmove)
 				Cl_ThrustMul(mo, st->angle, st->forwardmove, mul);
 			if(st->sidemove)
 				Cl_ThrustMul(mo, st->angle - ANG90, st->sidemove, mul);
 		}
 		// Turn delta on move prediction angle.
-		st->angle += st->turndelta * time_mul;
-		mo->angle += st->turndelta * time_mul;
+		st->angle += st->turndelta;
+		mo->angle += st->turndelta;
 	}
-
-	// Undo the reversing.
-/*	if(!pred_forward)
-	{
-		mo->momx = -mo->momx;
-		mo->momy = -mo->momy;
-		mo->momz = -mo->momz;
-		st->friction = old_friction;
-	}*/
 
 	// Mirror changes in the (hidden) client mobj. 
 	Cl_UpdatePlayerPos(pl);
@@ -500,7 +491,7 @@ void Cl_ReadPlayerDelta2(void)
 			{
 				// This mobj hasn't yet been sent to us.
 				// We should be receiving the rest of the info very shortly.
-				s->cmo = Cl_CreateMobj(s->mobjid);		
+				s->cmo = Cl_CreateMobj(s->mobjid);	
 				justCreated = true;
 			}
 			else 
