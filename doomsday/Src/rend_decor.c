@@ -373,10 +373,6 @@ void Rend_DecorateLineSection
 	surfTexW = texw;
 	surfTexH = texh;
 
-	// Make texOffY negative. This'll help when calculating the starting
-	// position for the pattern.
-/*	while(texOffY > 0) texOffY -= texh;
-*/
 	// Generate a number of lights.
 	for(i = 0; i < DED_DECOR_NUM_LIGHTS; i++)
 	{
@@ -394,27 +390,6 @@ void Rend_DecorateLineSection
 
 		posBase[VX] = FIX2FLT(v1->x) + lightDef->elevation * normal[VX];
 		posBase[VY] = FIX2FLT(v1->y) + lightDef->elevation * normal[VY];
-
-
-/*		h = lightDef->pos[VX] - FIX2FLT(side->textureoffset)
-			- texw * lightDef->pattern_offset[VX];
-		while(h > texw) h -= texw;
-		for(; h < linfo->length; h += texw * skip[VX])
-		{
-			if(h < 0) continue;
-			v = lightDef->pos[VY] - FIX2FLT(side->rowoffset)
-				- texh * lightDef->pattern_offset[VY]
-				+ texOffY;
-			while(v > texh) v -= texh;
-			for(; v <= lh; v += texh * skip[VY])
-			{
-				if(v < 0) continue;
-*/
-
-		/*h = lightDef->pos[VX] - FIX2FLT(side->textureoffset)
-			- surfTexW * lightDef->pattern_offset[VX];*/
-		/*while(h < 0) h += texw;
-		while(h >= texw) h -= texw;*/
 		
 		patternW = surfTexW * skip[VX];
 		patternH = surfTexH * skip[VY];
@@ -429,9 +404,6 @@ void Rend_DecorateLineSection
 				- surfTexH * lightDef->pattern_offset[VY] + texOffY, 
 				patternH);
 			
-				/*while(v < 0) v += texh;
-				while(v >= texh) v -= texh;*/
-
 			for(; t < lh; t += patternH)
 			{
 				// Let there be light.
@@ -502,7 +474,7 @@ boolean Rend_SectorDecorationBounds(sector_t *sector, sectorinfo_t *sin)
 	bounds[BBOTTOM]  = FRACUNIT * sin->bounds[BTOP];
 	bounds[BTOP]     = FRACUNIT * sin->bounds[BBOTTOM];
 	bounds[BFLOOR]   = FRACUNIT * sin->visfloor;
-	bounds[BCEILING] = FRACUNIT * sin->visceiling;
+	bounds[BCEILING] = FRACUNIT * sin->visceil;
 
 	return Rend_CheckDecorationBounds(bounds, decorPlaneMaxDist);
 }
