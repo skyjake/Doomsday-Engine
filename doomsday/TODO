@@ -22,3 +22,4 @@ Linux
 =====
 - audio subsystem (sound/music, using OpenAL/FMOD?)
 - "setres" when gamemode!=GS_LEVEL doesn't update OpenGL viewport?
+- plugin loading
