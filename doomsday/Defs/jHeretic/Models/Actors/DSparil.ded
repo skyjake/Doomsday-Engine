@@ -1,14 +1,552 @@
-Header { Version = 5; }
+Header { Version = 6; }
 
-ModelPath "MD2/jHeretic/Monst/DSparil";
+# Models by Slyrr
+# Definitions by SkyJake
 
-########========-------- D'SPARIL --------========########
+########========-------- RIDING D'SPARIL --------========########
+
+Model {
+  State = "SRCR1_LOOK1";
+  Scale XYZ { 0.95 0.75 0.95 };
+  Sub { 
+    File = "Actors/DSparil/Chaos.md2"; 
+    Frame = "idle01"; 
+  }
+  Sub { 
+    File = "Actors/DSparil/SRider.md2"; 
+    Frame = "idle01"; 
+  }
+  Sub { 
+    File = "Actors/DSparil/SRTrident.md2"; 
+    Frame = "idle01"; 
+    Flags = specular;
+    Shiny = .3;
+    Shiny skin = "Common/Shiny.pcx";  
+  }
+}
+
+Copy Model {
+  Inter = 0.25;
+  Sub { Frame = "idle02"; }
+  Sub { Frame = "idle02"; }
+  Sub { Frame = "idle02"; }
+}
+
+Copy Model {
+  Inter = 0.5;
+  Sub { Frame = "idle03"; }
+  Sub { Frame = "idle03"; }
+  Sub { Frame = "idle03"; }
+}
+
+Copy Model {
+  Inter = 0.75;
+  Sub { Frame = "idle04"; }
+  Sub { Frame = "idle04"; }
+  Sub { Frame = "idle04"; }
+}
+
+Copy Model {
+  State = "SRCR1_LOOK2";
+  Inter = 0;
+  Sub { Frame = "idle05"; }
+  Sub { Frame = "idle05"; }
+  Sub { Frame = "idle05"; }
+}
+
+Copy Model {
+  Inter = 0.25;
+  Sub { Frame = "idle06"; }
+  Sub { Frame = "idle06"; }
+  Sub { Frame = "idle06"; }
+}
+
+Copy Model {
+  Inter = 0.5;
+  Sub { Frame = "idle07"; }
+  Sub { Frame = "idle07"; }
+  Sub { Frame = "idle07"; }
+}
+
+Copy Model {
+  Inter = 0.75;
+  Sub { Frame = "idle08"; }
+  Sub { Frame = "idle08"; }
+  Sub { Frame = "idle08"; }
+}
+
+# Pain Sequence
+
+Copy Model {
+  State = "SRCR1_PAIN1";
+  Inter = 0;
+  Sub { Frame = "pain01"; }
+  Sub { Frame = "pain01"; }
+  Sub { Frame = "pain01"; }
+}
+
+Copy Model {
+  Inter = 0.999;
+  Sub { Frame = "idle01"; }
+  Sub { Frame = "idle01"; }
+  Sub { Frame = "idle01"; }
+}
+
+# Walk Sequence
+
+Copy Model {
+  State = "SRCR1_WALK1";
+  Inter = 0;
+  Sub { Frame = "walk01"; }
+  Sub { Frame = "walk01"; }
+  Sub { Frame = "walk01"; }
+}
+
+Copy Model {
+  Inter = 0.5;
+  Sub { Frame = "walk02"; }
+  Sub { Frame = "walk02"; }
+  Sub { Frame = "walk02"; }
+}
+
+Copy Model {
+  State = "SRCR1_WALK2";
+  Inter = 0;
+  Sub { Frame = "walk03"; }
+  Sub { Frame = "walk03"; }
+  Sub { Frame = "walk03"; }
+}
+
+Copy Model {
+  Inter = 0.5;
+  Sub { Frame = "walk04"; }
+  Sub { Frame = "walk04"; }
+  Sub { Frame = "walk04"; }
+}
+
+Copy Model {
+  State = "SRCR1_WALK3";
+  Inter = 0;
+  Sub { Frame = "walk05"; }
+  Sub { Frame = "walk05"; }
+  Sub { Frame = "walk05"; }
+}
+
+Copy Model {
+  Inter = 0.5;
+  Sub { Frame = "walk06"; }
+  Sub { Frame = "walk06"; }
+  Sub { Frame = "walk06"; }
+}
+
+Copy Model {
+  State = "SRCR1_WALK4";
+  Inter = 0;
+  Sub { Frame = "walk07"; }
+  Sub { Frame = "walk07"; }
+  Sub { Frame = "walk07"; }
+}
+
+# Attack Sequence
+
+Copy Model {
+  State = "SRCR1_ATK1";
+  Inter = 0;
+  Sub { Frame = "attack01"; }
+  Sub { Frame = "attack01"; }
+  Sub { Frame = "attack01"; }
+}
+
+Copy Model {
+  State = "SRCR1_ATK2";
+  Sub { Frame = "attack02"; }
+  Sub { Frame = "attack02"; }
+  Sub { Frame = "attack02"; }
+}
+
+Copy Model {
+  State = "SRCR1_ATK3";
+  Sub { Frame = "attack03"; }
+  Sub { Frame = "attack03"; }
+  Sub { Frame = "attack03"; }
+}
+
+Copy Model {
+  Inter = 0.5;
+  Sub { Frame = "attack06"; }
+  Sub { Frame = "attack06"; }
+  Sub { Frame = "attack06"; }
+}
+
+# Double Attack Sequence
+
+Copy Model {
+  State = "SRCR1_ATK4";
+  Inter = 0;
+  Sub { Frame = "attack03"; }
+  Sub { Frame = "attack03"; }
+  Sub { Frame = "attack03"; }
+}
+
+Copy Model {
+  State = "SRCR1_ATK5";
+  Sub { Frame = "attack02"; }
+  Sub { Frame = "attack02"; }
+  Sub { Frame = "attack02"; }
+}
+
+Copy Model {
+  State = "SRCR1_ATK6";
+  Sub { Frame = "attack03"; }
+  Sub { Frame = "attack03"; }
+  Sub { Frame = "attack03"; }
+}
+
+Copy Model {
+  State = "SRCR1_ATK7";
+  Sub { Frame = "attack05"; }
+  Sub { Frame = "attack05"; }
+  Sub { Frame = "attack05"; }
+}
+
+# Death Sequence
+
+Copy Model {
+  State = "SRCR1_DIE1";
+  Inter = 0;
+  Sub { Frame = "death01"; }
+  Sub { Frame = "death01"; }
+  Sub { Frame = "death01"; }
+}
+
+Copy Model {
+  State = "SRCR1_DIE2";
+  Sub { Frame = "death02"; }
+  Sub { Frame = "death02"; }
+  Sub { Frame = "death02"; }
+}
+
+Copy Model {
+  State = "SRCR1_DIE3";
+  Sub { Frame = "death03"; }
+  Sub { Frame = "death03"; }
+  Sub { Frame = "death03"; }
+}
+
+Copy Model {
+  State = "SRCR1_DIE4";
+  Sub { Frame = "death04"; }
+  Sub { 
+    Frame = "death04"; 
+    Flags = specular | noz;
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.25;
+    Transparent = 0.3;    
+  }
+  Sub { 
+    Frame = "death04"; 
+    Flags = specular | noz;
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.25;
+    Transparent = 0.3;
+  }
+}
+
+Copy Model {
+  State = "SRCR1_DIE5";
+  Sub { Frame = "death05"; }
+  Sub { 
+    Frame = "death05";
+    Transparent = 0.5;
+    Shiny = 0.5;
+  }
+  Sub { 
+    Frame = "death05"; 
+    Transparent = 0.5;
+    Shiny = 0.5;
+  }
+}
+
+Copy Model {
+  State = "SRCR1_DIE6";
+  Sub { Frame = "death06"; }
+  Sub { 
+    Frame = "death06";
+    Transparent = 0.7;
+    Shiny = 0.75;
+  }
+  Sub { 
+    Frame = "death06"; 
+    Transparent = 0.7;
+    Shiny = 0.75;
+  }
+}
+
+Copy Model {
+  State = "SRCR1_DIE7";
+  Sub { Frame = "death07"; }
+  Sub { 
+    Frame = "death07";
+    Transparent = 0.9;
+    Shiny = 1;
+  }
+  Sub { 
+    Frame = "death07"; 
+    Transparent = 0.9;
+    Shiny = 1;
+  }
+}
+
+Copy Model {
+  State = "SRCR1_DIE8";
+  Sub { Frame = "death08"; }
+  Sub { Frame = "death08"; }  
+  Sub { Frame = "death08"; }  
+}
+
+Copy Model {
+  State = "SRCR1_DIE9";
+  Sub { Frame = "death08"; }
+  Sub { 
+    Transparent = 0.999; 
+    Shiny = 0.5; 
+  }  
+  Sub { 
+    Transparent = 0.999;
+    Shiny = 0.5;
+  }  
+}
+
+Copy Model {
+  State = "SRCR1_DIE10";
+  Sub { }
+  Sub { 
+    Transparent = 1; 
+    Shiny = 0; 
+  }  
+  Sub { 
+    Transparent = 1;
+    Shiny = 0;
+  }  
+}
+
+Copy Model { State = "SRCR1_DIE11"; }
+Copy Model { State = "SRCR1_DIE12"; }
+Copy Model { State = "SRCR1_DIE13"; }
+Copy Model { State = "SRCR1_DIE14"; }
+Copy Model { State = "SRCR1_DIE15"; }
+Copy Model { State = "SRCR1_DIE16"; }
+Copy Model { State = "SRCR1_DIE17"; }
+
+# Serpent death gibs
+
+Generator {
+  State = "SRCR1_DIE2";
+  Particles = 200;
+  Speed = 4;
+  Speed rnd = 1;
+  Vector { 0 0 .5 };
+  Vector rnd = 1;
+  Center { 0 0 60 };
+  Spawn radius = 20;
+  Spawn age = 3;
+  Max age = 500;
+  Spawn rate = 58;
+  Spawn rnd = .3;
+    
+  Stage {
+    Type = point; 
+    Flags = flat | stagetouch;
+    Tics = 270; 
+    Radius = 5; Radius rnd = 1;
+    Color { .8 0 0 1 };
+    Gravity = .07;
+  }
+  Stage {
+    Type = point;
+    Flags = flat;
+    Tics = 200;
+    Resistance = 1;
+    Radius = 30; Radius rnd = .8;
+    Color { .8 0 0 1 };
+  }  
+  Stage {
+    Type = point;
+    Flags = flat; 
+    Radius = 1;    
+    Color { .8 0 0 0 };
+    Resistance = 1;
+  }
+}
+
+# D'Sparil Pain Sparkle
+
+Generator {
+  State = "SRCR1_DIE7";
+  Flags = blend;
+  Particles = 100;
+  Speed = 5;
+  Speed rnd = 1;
+  Vector { 0 0 0 };
+  Vector rnd = 1;
+  Center { 25 180 125 };
+  Spawn radius = 5;
+  Spawn age = 30;
+  Max age = 65;
+  Spawn rate = 1.5;
+    
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 3; 
+    Radius = 3; Radius rnd = 1;
+    Color { .5 .9 1 0 };
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 10; 
+    Radius = 30; Radius rnd = 1;
+    Color { .6 .9 1 .25 };
+    Resistance = .05;    
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 5; 
+    Radius = 15; Radius rnd = 1;
+    Color { .9 1 1 .5 };
+    Resistance = .05;    
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 17; 
+    Radius = 10; Radius rnd = 1;
+    Color { .9 .95 1 .2 };
+    Resistance = .1;
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Radius = 0;
+    Color { .5 .9 1 0 };
+  }
+}
+
+########========-------- WALKING D'SPARIL --------========########
+
+# Rise sparkle
+Generator {
+  State = "SOR2_RISE1";
+  Flags = blend;
+  Particles = 100;
+  Speed = 10;
+  Speed rnd = 1;
+  Vector { 0 0 4 };
+  Vector rnd = 1;
+  Center { 0 0 20 };
+  Spawn radius = 10;
+  Spawn age = 30;
+  Max age = 65;
+  Spawn rate = 1.5;
+    
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 3; 
+    Radius = 3; Radius rnd = 1;
+    Color { .5 .9 1 0 };
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 10; 
+    Radius = 30; Radius rnd = 1;
+    Color { .6 .9 1 .25 };
+    Resistance = .05;    
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 5; 
+    Radius = 15; Radius rnd = 1;
+    Color { .9 1 1 .5 };
+    Resistance = .05;    
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Tics = 17; 
+    Radius = 10; Radius rnd = 1;
+    Color { .9 .95 1 .2 };
+    Resistance = .1;
+  }
+  Stage {
+    Type = point; 
+    Flags = bright;
+    Radius = 0;
+    Color { .5 .9 1 0 };
+  }
+}
+
+# D'Sparil Rises! (SOR2_RISE1 - SOR2_RISE7)
+Model {
+  State = "SOR2_RISE1";
+  Scale = .8;
+  Offset = -50;
+  Sub { 
+    File = "Actors/DSparil/dsparil.md2"; 
+    Frame = "death02"; 
+    Flags = specular;
+    Shiny = .5;
+    Transparent = .9;
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny color { .9 .95 1 };
+  }
+}
+
+*Model { 
+  State = "SOR2_RISE2"; Offset = -35;
+  Sub { Transparent = .7; Shiny = .6; }
+}   
+*Model { 
+  State = "SOR2_RISE3"; Offset = -22; 
+  Sub { Transparent = .5; Shiny = .8; }   
+}
+*Model { 
+  State = "SOR2_RISE4"; Offset = -15; 
+  Sub { Shiny = .75; Transparent = .3; }   
+}   
+*Model { 
+  State = "SOR2_RISE5"; Offset = -8; 
+  Sub { Shiny = .5; Transparent = .2; }   
+}   
+*Model { 
+  State = "SOR2_RISE6"; Offset = -3; 
+  Sub { Shiny = .25; Transparent = .1; }   
+}   
+*Model { 
+  State = "SOR2_RISE7"; Offset = 0; 
+  Sub {
+    Shiny = 0;
+    Transparent = 0;
+  }
+}   
+
+# Idle Sequence
 
 Model {
   State = "SOR2_LOOK1";
   Scale = .8;
-  Md2 { File = "dsparil.md2"; Frame = "idle01"; };
-  Md2 { File = "trident.md2"; Frame = "idle01"; };
+  Md2 { File = "Actors/DSparil/dsparil.md2"; Frame = "idle01"; };
+  Md2 { 
+    File = "Actors/DSparil/trident.md2"; 
+    Frame = "idle01"; 
+    Flags = specular;
+    Shiny = .3;
+    Shiny skin = "Common/Shiny.pcx";  
+  }
 }
 *Model { Inter = 0.5; Md2 { Frame = "idle05"; }; Md2 { Frame = "idle05"; }; }
 *Model {
@@ -100,7 +638,7 @@ Model {
 }
 *Model {
   State = "SOR2_DIE7";
-  Md2 { File = "dskel2.md2"; Frame = "death01"; };
+  Md2 { File = "Actors/DSparil/dskel2.md2"; Frame = "death01"; };
   Md2 { };
   Md2 { File = ""; };
   Md2 { File = ""; };
@@ -114,3 +652,239 @@ Model {
 *Model { State = "SOR2_DIE14";  Md2 { Frame = "death13"; }; }
 *Model { State = "SOR2_DIE15";  Md2 { Frame = "death16"; }; }
   
+  
+#####====---
+# D'Sparil (Walking) Effects
+
+# Telefade sparkles.
+Generator {
+  State = "SOR2TELEFADE1";
+  Flags = "gnf_blend gnf_modelonly";
+  Particles = 50;
+  Center { 0 0 40 };
+  Spawn radius = 40;
+  Spawn age = -1;
+  Max age = 80;
+  Spawn rate = 4;
+  
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright";
+    Tics = 10; Rnd = .9;
+    Color { 0 .1 1 .5 };
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright";
+    Radius = 4;
+    Tics = 20; Rnd = .9;
+    Color { .1 .6 1 1 };
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright";
+    Tics = 10; Rnd = .9;
+    Color { 0 0 1 0 };
+  };
+}
+
+# Green death swirl.
+Generator {
+  State = "SOR2_DIE1";
+  Flags = "gnf_blend";
+  Particles = 500;
+  Speed = .5;
+  Speed rnd = .2;
+  Center { 0 0 64 };
+  Min spawn radius = 30;
+  Spawn radius = 50;
+  Spawn age = 130;
+  Max age = 290;
+  Spawn rate = 2;
+  Spawn rnd = 1;
+  Vector rnd = 1;
+  Force axis { 0 0 -.3 };
+  Force = 0.01;
+  Force radius = 45;
+  
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 0;
+    Tics = 20; Rnd = .3;
+    Color { 1 1 1 0 };
+    Resistance = 0.015;
+    Bounce = .2;
+  };    
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 3;
+    Tics = 30; Rnd = .2;
+    Color { .9 1 .95 1 };
+    Resistance = 0.015; #Gravity = -0.2; 
+    Bounce = .2;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 5;
+    Tics = 40; Rnd = .2;
+    Color { .8 1 .95 1 };
+    Resistance = 0.015; #Gravity = 0.2; 
+    Bounce = .2;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 12;
+    Tics = 40; Rnd = .2;
+    Color { .3 1 .4 .8 };
+    Resistance = 0.015; #Gravity = 0.2; 
+    Bounce = .2;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 3;
+    Tics = 50; Rnd = .2;
+    Color { 0 1 0 .5 };
+    Resistance = 0.015; #Gravity = 0.2; 
+    Bounce = .2;
+  };
+  Stage {
+    Type = "pt_point"; 
+  };
+}
+
+# Small line death sparks.
+Generator {
+  State = "SOR2_DIE3";
+  Flags = "gnf_blend";
+  Particles = 70;
+  Speed = 5;
+  Speed rnd = .4;
+  Vector { 0 0 .2 };
+  Vector rnd = .8;  
+  Center { 0 0 64 };
+  Spawn radius = 20;
+  Spawn age = 100;
+  Max age = 200;
+  Spawn rate = 3;
+  Spawn Rnd = 1;
+  
+  Stage {
+    Type = "pt_line"; Flags = "ptf_bright";
+    Tics = 50; Rnd = .8;
+    Radius = 1;
+    Color { .5 .6 1 1 };
+    Resistance = 0.05; Gravity = -0.08; Bounce = .2;
+  };
+  Stage { 
+    Type = "pt_point"; 
+    Color { .5 .6 1 0 };
+  };
+}
+
+# The rain.
+Generator {
+  State = "SOR2_DIE8";
+  Flags = "gnf_blend";
+  Particles = 200;
+  Speed = .5;
+  Speed rnd = .1;
+  Vector { 0 0 -1 };
+  Center { 0 0 160 };
+  Spawn radius = 25;
+  Spawn age = -1;
+  Max age = -1;
+  Spawn rate = .35;
+  Spawn Rnd = 1;
+    
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Tics = 60; Rnd = .1;
+    Color { 0 0 1 .8 };
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Tics = 90; Rnd = .6;
+    Radius = 1.2;
+    Color { .6 .8 1 .75 };
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Tics = 60; Rnd = .6;
+    Color { 0 0 1 .5 };
+    Gravity = -0.001;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Tics = 90; Rnd = .1;
+    Radius = 1.5;
+    Color { .9 .95 1 1 };
+    Gravity = -0.002;
+  };
+  Stage { 
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Tics = 20; Rnd = .1;
+    Color { 0 0 1 0 };
+    Gravity = -0.002;
+  };
+  Stage { 
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Tics = 40;
+    Radius = 7;
+    Color { 0 0 1 .4 };
+    Gravity = -0.002;
+  };
+  Stage { 
+    Type = "pt_point"; 
+    Color { 0 0 1 0 };
+  };
+}
+
+# Blue death swirl => cloud.
+Generator {
+  State = "SOR2_DIE7";
+  Flags = "gnf_blend";
+  Particles = 500;
+  Speed = 2.5;
+  Speed rnd = .2;
+  Center { 0 0 64 };
+  Spawn radius = 30;
+  Spawn age = 5;
+  Max age = 300;
+  Spawn rate = 100;
+  Vector rnd = 1;
+  Force axis { 0 0 .4 };
+  Force = 0.004;
+  Force radius = 45;
+  
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 4;
+    Tics = 60; Rnd = .3;
+    Color { .9 .95 1 1 };
+    Resistance = 0.015; 
+    Bounce = .2;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 4;
+    Tics = 70; Rnd = .3;
+    Color { .8 .95 1 1 };
+    Resistance = 0.015; 
+    Bounce = .2;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright";
+    Radius = 10;
+    Tics = 50; Rnd = .3;
+    Color { .3 .4 1 .8 };
+    Resistance = 0.02; Gravity = -0.01; 
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_force";
+    Radius = 5;
+    Tics = 80; Rnd = .5;
+    Color { 0 0 1 .6 };
+    Resistance = 0.015;
+  };
+  Stage {
+    Type = "pt_point"; 
+    Radius = 15;
+  };
+}

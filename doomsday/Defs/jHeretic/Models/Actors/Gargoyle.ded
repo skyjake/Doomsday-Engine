@@ -6,7 +6,7 @@ Model {
   State = "IMP_FLY1";
   Offset = 25;
   Scale = 1.2;
-  Md2 { File = "Gargoyle.md2"; Frame = "fly01"; };
+  Md2 { File = "Actors/Gargoyle/Gargoyle.md2"; Frame = "fly01"; };
 }
 
 *Model {

@@ -1,0 +1,8 @@
+########========-------- TOME OF POWER --------========########
+
+Model {
+  State = "ARTI_PWBK1";
+  Flags = "df_spin";
+  Offset = -3;
+  Md2 { File = "Items/Tome/Tome.md2"; };
+}

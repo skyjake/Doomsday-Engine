@@ -4,7 +4,7 @@ Header { Version = 5; }
 
 Model {
   State = "CLINK_LOOK1";
-  Md2 { File = "Sabre.md2"; Frame = "idle01"; };
+  Md2 { File = "Actors/Sabreclaw/Sabre.md2"; Frame = "idle01"; };
 }
 
 *Model { Inter = 0.25; Md2 { Frame = "idle02"; }; }
@@ -50,7 +50,7 @@ Model {
   State = "CLINK_DIE3";
   Inter = 0;
   Offset = -13;
-  Md2 { File = "Sabre-Death.md2"; Frame = "death01"; };
+  Md2 { File = "Actors/Sabreclaw/Sabre-Death.md2"; Frame = "death01"; };
 }
 *Model { Inter = 0.5; Md2 { Frame = "death02"; }; }
 *Model { State = "CLINK_DIE4"; Inter = 0; Md2 { Frame = "death03"; }; }
@@ -60,3 +60,104 @@ Model {
 *Model { State = "CLINK_DIE6"; Inter = 0; Md2 { Frame = "death07"; }; }
 *Model { Inter = 0.5; Md2 { Frame = "death08"; }; }
 *Model { State = "CLINK_DIE7"; Inter = 0; Md2 { Frame = "death10"; }; }
+
+
+#####====---
+# Sabreclaw death explosion (model only).
+# Big red cloud.
+Generator {
+  State = "CLINK_DIE1";
+  Flags = "gnf_modelonly";
+  Particles = 100;
+  Speed = 9;
+  Speed rnd = .8;
+  Center { 0 0 28 };
+  Spawn radius = 7;
+  Spawn age = 15;
+  Max age = 80;
+  Spawn rate = 2;
+  Vector rnd = 1;
+
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 5;
+    Tics = 10;
+    Rnd = 0.2;
+    Color { 1 .95 .4 .95 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 15;
+    Tics = 20;
+    Rnd = 0.2;
+    Color { 1 .2 .01 .5 };
+    Resistance = 0.25;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 18;
+    Tics = 10;
+    Color { 1 .1 0 .2 };
+    Resistance = 0.25;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 15;
+    Tics = 20;
+    Color { .3 .3 .3 .2 };
+    Resistance = 0.4;
+  };
+  Stage { Type = "pt_point"; };
+}
+
+# The small particles.
+Generator {
+  State = "CLINK_DIE2";
+  Flags = "gnf_blend gnf_modelonly";
+  Particles = 100;
+  Speed = 7;
+  Speed rnd = .4;
+  Center { 0 0 28 };
+  Spawn radius = 5;
+  Spawn age = 2;
+  Max age = 80;
+  Spawn rate = 50;
+  Vector rnd = 1;
+
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 1.5;
+    Tics = 20;
+    Rnd = .2;
+    Color { 1 .95 .8 1 };
+    Resistance = 0.03;
+    Gravity = 0.05;
+    Bounce = 0.7;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 1.25;
+    Tics = 20;
+    Rnd = .2;
+    Color { .7 .2 0 1 };
+    Resistance = 0.03;
+    Gravity = 0.05;
+    Bounce = 0.7;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 1;
+    Tics = 20;
+    Color { 0 0 0 1 };
+    Resistance = 0.1;
+    Gravity = 0.05;
+    Bounce = 0.7;
+  };
+  Stage { Type = "pt_point"; };
+}

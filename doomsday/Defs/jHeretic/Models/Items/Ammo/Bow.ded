@@ -1,0 +1,41 @@
+Header { Version = 5; }
+
+########========-------- SMALL BOW AMMO --------========########
+# Model by Yoalieh, defs by skyJake
+Model {
+  State = "AMC1";
+  Flags = "df_spin df_specular";
+  Scale XYZ { 1.2 0.8 1.2 };
+  Md2 {
+    File = "Items/Ammo/Bow/BowAmmo1.md2";
+    Transparent = 0.4;
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.15;
+  };
+}
+
+########========-------- HEFTY BOW AMMO --------========########
+# Model by Yoalieh, defs by skyJake
+Model {
+  State = "AMC2_1";
+  Flags = "df_spin";
+  Scale XYZ { 0.85 0.64 0.85 };
+  Md2 {
+    File = "Items/Ammo/Bow/BowAmmoCase.md2";
+  };
+  Md2 {
+    File = "Items/Ammo/Bow/BowAmmo2.md2";
+    Flags = "df_specular df_fullbright";
+    Transparent = 0.4;
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.15;
+  };
+}
+
+Copy Model {
+  State = "AMC2_2";
+  Md2 { };
+  Md2 { Flags = "df_specular"; };
+}
+
+Copy Model { State = "AMC2_3"; }

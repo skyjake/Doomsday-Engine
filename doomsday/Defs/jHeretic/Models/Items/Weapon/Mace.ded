@@ -1,0 +1,15 @@
+Header { Version = 6; }
+
+########========-------- Pickup Item: Firemace --------========########
+# Model and skin by Slyrr
+# Defs by skyjake
+
+Model {
+  State = "WMCE";
+  Flags = autoscale | spin | litshiny;
+  Sub {
+    File = "Items/Weapon/Mace/Firemace.md2";
+    Shiny = .2;
+    Shiny skin = "Common/SoftShiny.pcx";
+  }
+}

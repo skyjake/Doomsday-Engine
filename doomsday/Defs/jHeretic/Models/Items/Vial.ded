@@ -1,0 +1,15 @@
+########========-------- SMALL HEALTH VIAL --------========########
+
+Model {
+  State = "ITEM_PTN1_1";
+  Flags = "df_spin";
+  Offset = 30;
+  Md2 {
+    File = "Items/Vial/Vial.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.12;
+  };
+}
+
+Copy Model { State = "ITEM_PTN1_2"; }
+Copy Model { State = "ITEM_PTN1_3"; }

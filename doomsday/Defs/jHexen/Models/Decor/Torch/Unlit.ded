@@ -1,0 +1,8 @@
+########========-------- UNLIT WALL TORCH --------========########
+
+Model {
+  State = "ZWALLTORCH_U";
+  Scale = 1.1;
+  Offset = -4;
+  Md2 { File = "Decor/Torch/Unlit/WtorchUnlit.md2"; };
+}

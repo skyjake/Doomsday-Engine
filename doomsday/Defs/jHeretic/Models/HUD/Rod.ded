@@ -1,0 +1,47 @@
+## Phoenix Rod
+Model {
+  State = "PHOENIXREADY";
+  Scale = 0.1;
+  Offset = -0.5;
+  Md2 { File = "HUD/Rod/Phx-Rod.md2"; Frame = "Frame1"; };
+}
+*Model { State = "PHOENIXUP"; }
+*Model { State = "PHOENIXDOWN"; }
+*Model { State = "PHOENIXATK1_1";
+  Offset XYZ { 0.0 -0.5 -0.2 };
+  Md2 { };
+  Md2 { File = "HUD/Rod/Phx-Flash.md2"; Frame = "Phx_Flash"; Flags = "df_brightshadow2 df_fullbright"; Skin = 0; };
+}
+*Model { State = "PHOENIXATK1_2";
+  Offset XYZ { 0.0 -0.5 -0.7 };
+  Md2 { Flags = "df_fullbright";};
+  Md2 { File = "HUD/Rod/Phx-Flash.md2"; Frame = "Phx_Flash"; Flags = "df_brightshadow2 df_fullbright"; Skin = 1; };
+}
+*Model { State = "PHOENIXATK1_3";
+  Offset XYZ { 0.0 -0.5 -0.5 };
+  Md2 { };
+  Md2 { File = "HUD/Rod/Phx-Flash.md2"; Frame = "Phx_Flash"; Flags = "df_brightshadow2 df_fullbright"; Skin = 2; };
+ }
+*Model { State = "PHOENIXATK1_4";
+  Offset XYZ { 0.0 -0.5 -0.2 };
+  Md2 { };
+  Md2 { File = "HUD/Rod/Phx-Flash.md2"; Frame = "Phx_Flash"; Flags = "df_brightshadow2 df_fullbright"; Skin = 0; };
+ }
+*Model { State = "PHOENIXATK1_5";
+  Offset XYZ { 0.0 -0.5 0.0 };
+  Md2 { };
+}
+*Model { State = "PHOENIXATK2_1"; }
+  Offset XYZ { 0.0 -0.5 -0.2 };
+  Md2 { };
+  Md2 { File = "HUD/Rod/Phx-Flash.md2"; Frame = "Phx_Flash"; Flags = "df_brightshadow2 df_fullbright"; Skin = 0; };
+*Model { State = "PHOENIXATK2_2"; }
+  Offset XYZ { 0.0 -0.5 -0.7 };
+  Md2 { Flags = "df_fullbright";};
+  Md2 { File = "HUD/Rod/Phx-Flash.md2"; Frame = "Phx_Flash"; Flags = "df_brightshadow2 df_fullbright"; Skin = 1; };
+*Model { State = "PHOENIXATK2_3"; }
+*Model { State = "PHOENIXATK2_4"; }
+  Offset XYZ { 0.0 -0.5 -0.2 };
+  Md2 { };
+  Md2 { File = "HUD/Rod/Phx-Flash.md2"; Frame = "Phx_Flash"; Flags = "df_brightshadow2 df_fullbright"; Skin = 0; };
+

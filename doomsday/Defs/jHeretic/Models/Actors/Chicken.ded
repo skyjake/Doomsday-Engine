@@ -1,145 +1,143 @@
 Header { Version = 5; }
 
-ModelPath "MD2/jHeretic/Monst/Chicken";
-
 ########========-------- CHICKEN --------========########
 
 Model {
   State = "CHICKEN_LOOK1";
-  Md2 { File = "Chicken.md2"; Frame = "Look"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Look"; };
 }
 
 Model {
   State = "CHICKEN_LOOK2";
-  Md2 { File = "Chicken.md2"; Frame = "Look"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Look"; };
 }
 
 Model {
   State = "CHICKEN_WALK1";
   Inter = 0;
-  Md2 { File = "Chicken.md2"; Frame = "Walk1"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Walk1"; };
 }
 
 Model {
   State = "CHICKEN_WALK1";
   Inter = 0.5;
-  Md2 { File = "Chicken.md2"; Frame = "Walk2"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Walk2"; };
 }
 
 Model {
   State = "CHICKEN_WALK2";
   Inter = 0;
-  Md2 { File = "Chicken.md2"; Frame = "Walk3"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Walk3"; };
 }
 
 Model {
   State = "CHICKEN_WALK2";
   Inter = 0.5;
-  Md2 { File = "Chicken.md2"; Frame = "Walk4"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Walk4"; };
 }
 
 Model {
   State = "CHICKEN_PAIN1";
-  Md2 { File = "Chicken.md2"; Frame = "Pain1"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Pain1"; };
 }
 
 Model {
   State = "CHICKEN_PAIN2";
-  Md2 { File = "Chicken.md2"; Frame = "Pain2"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Pain2"; };
 }
 
 Model {
   State = "CHICKEN_ATK1";
   Inter = 0;
   Interpolate { 0 0.666 };
-  Md2 { File = "Chicken.md2"; Frame = "Attack1"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Attack1"; };
 }
 
 Model {
   State = "CHICKEN_ATK1";
   Inter = .75;
   Interpolate { 0.666 1.333 };
-  Md2 { File = "Chicken.md2"; Frame = "Attack2"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Attack2"; };
 }
 
 Model {
   State = "CHICKEN_ATK2";
   Inter = 0.5;
   Interpolate { 0.333 1 };
-  Md2 { File = "Chicken.md2"; Frame = "Attack3"; };
+  Md2 { File = "Actors/Chicken/Chicken.md2"; Frame = "Attack3"; };
 }
 
 Model {
   State = "CHICKEN_DIE1";
   Inter = 0;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die1"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die1"; };
 }
 
 Model {
   State = "CHICKEN_DIE1";
   Inter = 0.7;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die2"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die2"; };
 }
 
 Model {
   State = "CHICKEN_DIE2";
   Inter = 0.4;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die3"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die3"; };
 }
 
 Model {
   State = "CHICKEN_DIE3";
   Inter = 0.1;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die4"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die4"; };
 }
 
 Model {
   State = "CHICKEN_DIE3";
   Inter = 0.8;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die5"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die5"; };
 }
 
 Model {
   State = "CHICKEN_DIE4";
   Inter = 0.5;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die6"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die6"; };
 }
 
 Model {
   State = "CHICKEN_DIE5";
   Inter = 0.2;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die7"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die7"; };
 }
 
 Model {
   State = "CHICKEN_DIE5";
   Inter = 0.9;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die8"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die8"; };
 }
 
 Model {
   State = "CHICKEN_DIE6";
   Inter = 0.6;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die9"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die9"; };
 }
 
 Model {
   State = "CHICKEN_DIE7";
   Inter = 0.3;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die10"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die10"; };
 }
 
 Model {
   State = "CHICKEN_DIE8";
   Inter = 0;
-  Md2 { File = "Chicken-Die.md2"; Frame = "Die11"; };
+  Md2 { File = "Actors/Chicken/Chicken-Die.md2"; Frame = "Die11"; };
 }
 
 ###=====------- Feathers -------=====###
 
 Model {
   State = "FEATHER1";
-  Md2 { File = "Feather.md2"; Frame = "Feath1"; Flags = "df_alignyaw"; };
+  Md2 { File = "Actors/Chicken/Feather.md2"; Frame = "Feath1"; Flags = "df_alignyaw"; };
 }
 
 *Model {

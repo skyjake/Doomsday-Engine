@@ -5,7 +5,7 @@ Header { Version = 5; }
 Model {
   Scale XYZ {1.1 1.15 1.1};
   State = "SNAKE_LOOK1";
-  Md2 { File = "ophid.md2"; Frame = "LOOK1";};
+  Md2 { File = "Actors/Ophidian/ophid.md2"; Frame = "LOOK1";};
 
 }
 
@@ -81,7 +81,7 @@ Copy Model { State = "SNAKE_ATK9";  Md2 { Frame = "ATTACK3";};}
 Copy Model { State = "SNAKE_PAIN1";  Md2 { Frame = "PAIN1";};}
 Copy Model { State = "SNAKE_PAIN2"; #> Md2 { Frame = "PAIN2"; }; <# }
 
-Copy Model { State = "SNAKE_DIE1";  Md2 { File = "Ophid-Squish.md2"; Frame = "splt0";}; Md2 { File = "Ophid-Tail.md2"; Frame = "DEATH1";};}
+Copy Model { State = "SNAKE_DIE1";  Md2 { File = "Actors/Ophidian/Ophid-Squish.md2"; Frame = "splt0";}; Md2 { File = "Actors/Ophidian/Ophid-Tail.md2"; Frame = "DEATH1";};}
 Copy Model { State = "SNAKE_DIE2";  Md2 { Frame = "splt1";}; Md2 { Frame = "DEATH2";};}
 Copy Model { State = "SNAKE_DIE3";  Md2 { Frame = "splt2";}; Md2 { Frame = "DEATH3";};}
 Copy Model { State = "SNAKE_DIE4";  Md2 { Frame = "splt3";}; Md2 { Frame = "DEATH4";};}

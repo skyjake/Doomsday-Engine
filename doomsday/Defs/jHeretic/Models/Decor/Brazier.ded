@@ -1,0 +1,49 @@
+########======----- Fire Brazier -----======########
+### Model by Slyrr
+Model {
+  State = "FIREBRAZIER1";
+  # Random angle is better than the alternative.
+  Flags = "df_dim df_idangle"; 
+  Scale = 0.8;
+  Md2 { File = "Decor/Brazier/Brazier.md2"; };
+}
+
+*Model { State = "FIREBRAZIER2"; }
+*Model { State = "FIREBRAZIER3"; }
+*Model { State = "FIREBRAZIER4"; }
+*Model { State = "FIREBRAZIER5"; }
+*Model { State = "FIREBRAZIER6"; }
+*Model { State = "FIREBRAZIER7"; }
+*Model { State = "FIREBRAZIER8"; }
+
+#####====---
+# Fire Brazier flame.
+Generator {
+  Mobj = "MISC6";
+  Flags = "gnf_static gnf_blend gnf_modelonly";
+  Center { 0 0 46 };
+  Particles = 200;
+  Speed = 0.8;
+  Speed rnd = 1;
+  Spawn radius = 3;
+  Spawn age = -1;
+  Max age = -1;
+  Spawn rate = 1;
+  Vector { 0 0 1 };
+  Vector rnd = 0.4;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 13;
+    Tics = 14;
+    Rnd = 0.3;
+    Color { 1 .85 .25 .8 };
+    Gravity = -0.35;
+    Resistance = 0.1;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 4;
+    Color { 1 .35 0 .2 };
+  };
+}

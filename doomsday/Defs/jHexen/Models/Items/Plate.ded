@@ -1,0 +1,12 @@
+########========-------- BREAST PLATE --------========########
+
+Model {
+  State = "ARMOR_1";
+  Flags = "df_specular df_spin";
+  Offset = -2;
+  Md2 {
+    File = "Items/Plate/Bplate.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.1;
+  };
+}

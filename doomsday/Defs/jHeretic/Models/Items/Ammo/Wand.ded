@@ -1,0 +1,28 @@
+Header { Version = 6; }
+
+########========-------- SMALL WAND AMMO --------========########
+# Model by Yoalieh, defs by skyJake
+Model {
+  State = "AMG1";
+  Flags = spin | specular;
+  Sub {
+    File = "Items/Ammo/Wand/WandAmmo1.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.07;
+  }
+}
+
+########========-------- HEFTY WAND AMMO --------========########
+# Model by Yoalieh, defs by skyJake
+Model {
+  State = "AMG2_1";
+  Flags = spin | autoscale | specular;
+  Sub {
+    File = "Items/Ammo/Wand/WandAmmo2.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.1;
+  }
+}
+
+Copy Model { State = "AMG2_2"; }
+Copy Model { State = "AMG2_3"; }

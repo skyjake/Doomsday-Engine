@@ -5,7 +5,7 @@ Header { Version = 5; }
 Model {
   State = "MNTR_LOOK1";
   Scale = 1.15;
-  Md2 { File = "Mauler.md2"; Frame = "idle01"; };
+  Md2 { File = "Actors/Mauler/Mauler.md2"; Frame = "idle01"; };
 }
 
 *Model { Md2 { Frame = "idle02"; }; Inter = 0.25; }

@@ -5,7 +5,7 @@ Header { Version = 5; }
 
 Model {
   State = "HEAD_LOOK";
-  Md2 { File = "liche.md2"; Frame = "idle01"; };
+  Md2 { File = "Actors/Liche/Liche.md2"; Frame = "idle01"; };
 }
 
 *Model { State = "HEAD_FLOAT"; }

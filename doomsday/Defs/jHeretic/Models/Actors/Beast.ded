@@ -5,7 +5,7 @@ Header { Version = 5; }
 Model {
   State = "BEAST_LOOK1";
   Scale = 0.95;
-  Md2 { File = "Beast.md2"; Frame = "idle01"; };
+  Md2 { File = "Actors/Beast/Beast.md2"; Frame = "idle01"; };
 }
 
 *Model {

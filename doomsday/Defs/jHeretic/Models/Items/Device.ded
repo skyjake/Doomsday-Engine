@@ -1,0 +1,13 @@
+########======------ CHAOS DEVICE (TELEPORT) ------======########
+
+Model {
+  State = "ARTI_ATLP1";
+  Flags = "df_spin";
+  Scale = 1.2;
+  Offset = -5;
+  Md2 { File = "Items/Device/Teleport.md2"; };
+}
+
+* Model { State = "ARTI_ATLP2"; };
+* Model { State = "ARTI_ATLP3"; };
+* Model { State = "ARTI_ATLP4"; };

@@ -4,7 +4,7 @@ Header { Version = 5; }
 
 Model {
   State = "MUMMY_LOOK1";
-  Md2 { File = "Golem.md2"; Frame = "idle01"; };
+  Md2 { File = "Actors/Golem/Golem.md2"; Frame = "idle01"; };
 }
 
 *Model {
@@ -152,9 +152,9 @@ Model {
 *Model {
   State = "MUMMY_DIE1";
   Inter = 0;
-  Md2 { File = "Golem-Death.md2"; Frame = "death01"; };
+  Md2 { File = "Actors/Golem/Golem-Death.md2"; Frame = "death01"; };
   Md2 {
-    File = "Golem-Ghost.md2";
+    File = "Actors/Golem/Golem-Ghost.md2";
     Frame = "death01";
     Flags = "df_brightshadow2 df_fullbright";
     Transparent = 0.65;
@@ -219,3 +219,46 @@ Model {
 *Model { State = "MUMMY_SOUL6"; }
 *Model { State = "MUMMY_SOUL7"; }
 
+
+#####====---
+# Mummy leader attack fire.
+Generator {
+  State = "MUMMYL_ATK2";
+  Flags = "gnf_blend gnf_modelonly";  
+  Particles = 100;
+  Speed = 4;
+  Speed rnd = .5;
+  Center { 0 0 10 };
+  Spawn radius = 12;
+  Spawn age = 20;
+  Max age = 80;
+  Spawn rate = 7;
+  Vector { 0 0 1 };
+  Vector rnd = 0.9;
+
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Radius = 0;
+    Tics = 4; Rnd = .4;
+    Color { 1 1 1 1 };
+    Resistance = 0.1; Gravity = -0.3;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Radius = 12;
+    Tics = 18; Rnd = .5;
+    Color { 1 .95 .8 .8 };
+    Resistance = 0.1; Gravity = -0.3;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_bright ptf_dietouch";
+    Radius = 9;
+    Tics = 10; Rnd = .6;
+    Color { 1 .7 .5 .4 };
+    Resistance = 0.1; Gravity = -0.3;
+  };
+  Stage { 
+    Type = "pt_point"; 
+    Radius = 6;
+  };
+}

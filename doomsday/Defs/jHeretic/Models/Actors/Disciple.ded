@@ -7,7 +7,7 @@ Model {
   State = "WIZARD_LOOK1";
   Offset = 30;
   Scale = 3;
-  Md2 { File = "disciple.md2"; Frame = "stand0002"; };
+  Md2 { File = "Actors/Disciple/Disciple.md2"; Frame = "stand0002"; };
 }
 
 *Model {

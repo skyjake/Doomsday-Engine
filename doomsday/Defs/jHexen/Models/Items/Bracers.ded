@@ -1,0 +1,20 @@
+########========-------- BRACERS --------========########
+
+Model {
+  State = "ARTI_ARMOR1";
+  Flags = "df_spin df_specular";
+  Md2 {
+    File = "Items/Bracers/Bracers.md2";
+    Shiny skin = "Common/Shiny2.pcx";
+    Shiny = 0.7;
+    Shiny color { 1 0.1 1 };
+  };
+}
+
+* Model { State = "ARTI_ARMOR2"; }
+* Model { State = "ARTI_ARMOR3"; }
+* Model { State = "ARTI_ARMOR4"; }
+* Model { State = "ARTI_ARMOR5"; }
+* Model { State = "ARTI_ARMOR6"; }
+* Model { State = "ARTI_ARMOR7"; }
+* Model { State = "ARTI_ARMOR8"; }

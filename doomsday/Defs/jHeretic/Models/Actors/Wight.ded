@@ -5,14 +5,14 @@ Header { Version = 5; }
 Model {
   State = "KNIGHT_STND1";
   Scale = 0.92;
-  Flags = "df_ptoffsub1";
-  Md2 { File = "Wight.md2"; Frame = "idle01"; };
+  Md2 { File = "Actors/Wight/Wight.md2"; Frame = "idle01"; };
   Md2 {
-    File = "Wight-Axe.md2";
+    File = "Actors/Wight/Wight-Axe.md2";
     Frame = "idle01";
-    Flags = "df_fullbright df_specular";
-    Shiny skin = "Shiny.pcx";
+    Flags = "df_fullbright df_specular df_noz";
+    Shiny skin = "Common/Shiny.pcx";
     Shiny = .4;
+    Shiny color { .7 1 .7 };
   };
 }
 
@@ -219,9 +219,13 @@ Model {
 
 *Model {
   State = "KNIGHT_DIE3";
-  Flags = "df_noptc df_ptoffsub1";        # Stop the axe flame.
+  Flags = "df_noptc";        # Stop the axe flame.
   Md2 { Frame = "death06"; };
-  Md2 { Frame = "death06"; Flags = ""; }; # No more fullbright.
+  Md2 { 
+    Frame = "death06"; 
+    Flags = ""; # No more fullbright.
+    Shiny = 0;  # No more shine.
+  }; 
 }
 
 *Model {
@@ -254,11 +258,11 @@ Model {
   State = "SPINAXE1";
   Scale XYZ { 1 1 2 };
   Md2 { 
-    File = "Wight-FlyingAxe.md2"; 
+    File = "Actors/Wight/Wight-FlyingAxe.md2"; 
     Frame = "attack10"; 
     Offset XYZ { -25 -40 0 };    
     Flags = "df_specular";
-    Shiny skin = "Shiny.pcx";
+    Shiny skin = "Common/Shiny.pcx";
     Shiny = .4;
   };
 }
@@ -282,11 +286,11 @@ Model {
   State = "REDAXE1";
   Scale XYZ { 1 1 2 };
   Md2 {
-    File = "Wight-FlyingAxe.md2";
+    File = "Actors/Wight/Wight-FlyingAxe.md2";
     Frame = "attack01";
     Offset XYZ { -22 -40 0 };
     Flags = "df_specular";
-    Shiny skin = "Shiny.pcx";
+    Shiny skin = "Common/Shiny.pcx";
     Shiny = .4;
  };
 }
@@ -302,3 +306,138 @@ Model {
 *Model { Md2 { Frame = "attack09"; }; Inter = 0.5; }
 *Model { Md2 { Frame = "attack10"; }; Inter = 0.68; }
 *Model { Md2 { Frame = "attack11"; }; Inter = 0.85; }
+
+
+#####====---
+# Undead Warrior (Wight) axe flame.
+Generator {
+  Mobj = "KNIGHT";
+  Flags = "gnf_blend gnf_modelonly";
+  Submodel = 1; # The axe is a submodel.
+  Particles = 200;
+  Speed = 1;
+  Speed rnd = 1;
+  Spawn radius = 3;
+  Spawn age = -1;
+  Max age = -1;
+  Spawn rate = 1.2;
+  Vector { 0 0 1 };
+  Vector rnd = 0.4;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 13;
+    Tics = 10;
+    Rnd = 0.3;
+    Color { .4 1 .4 .7 };
+    Gravity = -0.4;
+    Resistance = 0.1;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 5;
+    Color { 0.1 1 0.1 .25 };
+  };
+}
+
+# The thrown green axe.
+Generator {
+  Mobj = "KNIGHTAXE";
+  Flags = "gnf_blend";
+  Particles = 200;
+  Speed = 1;
+  Speed rnd = 1;
+  Spawn radius = 3;
+  Spawn age = -1;
+  Max age = -1;
+  Spawn rate = 1.2;
+  Vector { 0 0 1 };
+  Vector rnd = 0.4;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 13;
+    Tics = 10;
+    Rnd = 0.3;
+    Color { .4 1 .4 .7 };
+    Gravity = -0.4;
+    Resistance = 0.1;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 5;
+    Color { 0.1 1 0.1 .25 };
+  };
+}
+
+# Green axe explosion.
+Generator {
+  State = "SPINAXEX1";
+  Flags = "gnf_blend";
+  Particles = 100;
+  Speed = 6;
+  Speed rnd = .8;
+  Spawn radius = 2;
+  Spawn age = 2;
+  Max age = 40;
+  Spawn rate = 50;
+  Vector rnd = 1;
+
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 15;
+    Tics = 20;
+    Rnd = .8;
+    Color { .8 1 .4 .7 };
+    Resistance = 0.1;
+    Gravity = -0.15;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 10;
+    Tics = 10;
+    Rnd = .5;
+    Color { 0.1 1 0.1 .25 };
+    Resistance = 0.1;
+    Gravity = -0.15;
+  };
+  Stage { Type = "pt_point"; };
+}
+
+# Red axe explosion (blood spurt).
+Generator {
+  State = "REDAXEX1";
+  Particles = 60;
+  Speed = 6;
+  Speed rnd = .7;
+  Spawn radius = 2;
+  Spawn age = 2;
+  Max age = 220;
+  Spawn rate = 30;
+  Vector rnd = 1;
+
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_stagetouch ptf_flat";
+    Radius = 2;
+    Tics = 220;
+    Color { .7 0 0 1 };
+    Resistance = 0.05;
+    Gravity = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_flat";
+    Radius = 12;
+    Tics = 130;
+    Color { .7 0 0 1 };
+    Resistance = 1;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_flat";
+    Color { .4 0 0 1 };
+  };
+}

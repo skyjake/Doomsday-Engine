@@ -1,0 +1,31 @@
+########========-------- FLECHETTE --------========########
+
+Model {
+  State = "ARTI_PSBG1";
+  Flags = "df_spin";
+  Scale = 2.35;
+  Offset = 20;
+  Md2 {
+    File = "Items/Flechette/Flechette.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.1;
+  };
+}
+
+# Cleric.
+Copy Model { State = "POISONBAG1"; }
+
+# Mage.
+Copy Model { State = "FIREBOMB1"; }
+* Model { State = "FIREBOMB2"; }
+* Model { State = "FIREBOMB3"; }
+
+# Fighter.
+Copy Model {
+  State = "THROWINGBOMB1";
+  Offset = 0;
+}
+* Model { State = "THROWINGBOMB2"; }
+* Model { State = "THROWINGBOMB3"; }
+* Model { State = "THROWINGBOMB4"; }
+* Model { State = "THROWINGBOMB5"; }

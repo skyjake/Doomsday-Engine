@@ -1,0 +1,9 @@
+Header { Version = 6; }
+
+Model {
+  State = "ITEM_SPMP1";
+  Flags = spin | autoscale;
+  Sub { 
+    File = "Items/Map/Map.md2"; 
+  }
+}

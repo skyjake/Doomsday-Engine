@@ -1,0 +1,11 @@
+########========-------- PLATINUM HELMET --------========########
+
+Model {
+  State = "ARMOR_3";
+  Flags = "df_spin df_specular";
+  Md2 {
+    File = "Items/Helmet/Helmet.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.1;
+  };
+}
