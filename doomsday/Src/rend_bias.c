@@ -63,9 +63,9 @@ D_CMD(BLEditor);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void         SB_EvalPoint(gl_rgba_t *light, struct vertexillum_s *illum,
-                          float *point, float *normal, boolean forced,
-                          short *affectedSources);
+void         SB_EvalPoint(gl_rgba_t *light,
+                          vertexillum_t *illum, short *affectedSources,
+                          float *point, float *normal);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -320,7 +320,7 @@ static float SB_PlaneDot(source_t *src, float point[3], boolean theCeiling)
 
     normal[VX] = 0;
     normal[VY] = 0;
-    normal[VZ] = (theCeiling? -1 : 1);
+    normal[VZ] = (theCeiling ? -1 : 1);
 
     return SB_Dot(src, point, normal);
 }
@@ -359,6 +359,21 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
         if(src->intensity <= 0)
             continue;
 
+        // Calculate minimum 2D distance to the subsector.
+        // FIXME: This is probably too accurate an estimate.
+        for(i = 0; i < poly->numvertices; ++i)
+        {
+            V2_Set(delta,
+                   poly->vertices[i].pos[VX] - src->pos[VX],
+                   poly->vertices[i].pos[VY] - src->pos[VY]);
+            len = V2_Length(delta);
+            
+            if(i == 0 || len < distance)
+                distance = len;
+        }
+        if(distance < 1)
+            distance = 1;
+        
         for(theCeiling = 0; theCeiling < 2; ++theCeiling)
         {
             // Estimate the effect on this plane.
@@ -370,23 +385,6 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
             dot = SB_PlaneDot(src, point, theCeiling);
             if(dot <= 0)
                 continue;
-
-            // Calculate minimum 2D distance to the subsector.
-            if(!theCeiling)
-            {
-                for(i = 0; i < poly->numvertices; ++i)
-                {
-                    V2_Set(delta,
-                           poly->vertices[i].pos[VX] - src->pos[VX],
-                           poly->vertices[i].pos[VY] - src->pos[VY]);
-                    len = V2_Length(delta);
-                    
-                    if(i == 0 || len < distance)
-                        distance = len;
-                }
-                if(distance < 1)
-                    distance = 1;
-            }
 
             intensity = /*dot * */ src->intensity / distance;
         
@@ -435,7 +433,6 @@ void SB_TrackerApply(biastracker_t *dest, const biastracker_t *src)
     }
 }
 
-
 /*
  * Clears changes of src from dest.
  */
@@ -450,6 +447,41 @@ void SB_TrackerClear(biastracker_t *dest, const biastracker_t *src)
 }
 
 /*
+ * Tests against trackChanged.
+ */
+static boolean SB_ChangeInAffected(short *affected, biastracker_t *changed)
+{
+    int i;
+
+    for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
+    {
+        if(affected[i] < 0) break;
+        if(SB_TrackerCheck(changed, affected[i]))
+            return true;
+    }
+    return false;
+}                                      
+
+/*
+ * This is done in the beginning of the frame when a light source has
+ * changed.  The planes that the change affects will need to be
+ * re-evaluated.
+ */
+void SB_MarkPlaneChanges(planeinfo_t *plane, biastracker_t *allChanges)
+{
+    int i;
+    
+    SB_TrackerApply(&plane->tracker, allChanges);
+
+    if(SB_ChangeInAffected(plane->affected, allChanges))
+    {
+        // Mark the illumination unseen to force an update.
+        for(i = 0; i < plane->numvertices; ++i)
+            plane->illumination[i].flags |= VIF_STILL_UNSEEN;
+    }
+}
+
+/*
  * Do initial processing that needs to be done before rendering a
  * frame.  Changed lights cause the tracker bits to the set for all
  * segs and planes.
@@ -457,7 +489,8 @@ void SB_TrackerClear(biastracker_t *dest, const biastracker_t *src)
 void SB_BeginFrame(void)
 {
     biastracker_t allChanges;
-    int i;
+    int i, j, k;
+    seginfo_t *sin;
 
     // The time that applies on this frame.
     currentTime = Sys_GetRealTime();
@@ -482,34 +515,29 @@ void SB_BeginFrame(void)
     // Apply to all segs.
     for(i = 0; i < numsegs; ++i)
     {
-        SB_TrackerApply(&seginfo[i].tracker[0], &allChanges);
-        SB_TrackerApply(&seginfo[i].tracker[1], &allChanges);
-        SB_TrackerApply(&seginfo[i].tracker[2], &allChanges);
+        sin = &seginfo[i];
+
+        for(j = 0; j < 3; ++j)
+            SB_TrackerApply(&sin->tracker[j], &allChanges);
+
+        // Everything that is affected by the changed lights will need
+        // an update.
+        if(SB_ChangeInAffected(sin->affected, &allChanges))
+        {
+            // Mark the illumination unseen to force an update.
+            for(j = 0; j < 3; ++j)
+                for(k = 0; k < 4; ++k)
+                    sin->illum[j][k].flags |= VIF_STILL_UNSEEN;
+        }
     }
 
     // Apply to all planes.
     for(i = 0; i < numsubsectors; ++i)
     {
-        SB_TrackerApply(&subsecinfo[i].floor.tracker, &allChanges);
-        SB_TrackerApply(&subsecinfo[i].ceil.tracker, &allChanges);
+        SB_MarkPlaneChanges(&subsecinfo[i].floor, &allChanges);
+        SB_MarkPlaneChanges(&subsecinfo[i].ceil, &allChanges);
     }
 }
-
-/*
- * Tests against trackChanged.
- */
-static boolean SB_ChangeInAffected(short *affected)
-{
-    int i;
-
-    for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
-    {
-        if(affected[i] < 0) break;
-        if(SB_TrackerCheck(&trackChanged, affected[i]))
-            return true;
-    }
-    return false;
-}                                      
 
 /*
  * Poly can be a either a wall or a plane (ceiling or a floor).
@@ -535,7 +563,9 @@ void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
     {
         // Has any of the old affected lights changed?
         affected = seginfo[mapElementIndex].affected;
-        forced = SB_ChangeInAffected(affected);
+          /*forced = SB_ChangeInAffected(affected);*/
+
+        forced = false; //seginfo[mapElementIndex].forced;
         
         SB_UpdateSegAffected(mapElementIndex, poly);
         
@@ -550,16 +580,20 @@ void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
             
             SB_EvalPoint((i >= 2 ? &poly->bottomcolor[i - 2] :
                           &poly->vertices[i].color),
-                         &illumination[i],
-                         pos, normal, forced, affected);
+                         &illumination[i], affected,
+                         pos, normal);
         }
     }
     else
     {
-        // Has any of the old affected lights changed?
         affected = (isFloor ? subsecinfo[mapElementIndex].floor.affected :
                     subsecinfo[mapElementIndex].ceil.affected);
+
+/*        // Has any of the old affected lights changed?
         forced = SB_ChangeInAffected(affected);
+*/
+        forced = false; /*(isFloor ? subsecinfo[mapElementIndex].floor.forced :
+                          subsecinfo[mapElementIndex].ceil.forced);*/
         
         SB_UpdateSubsectorAffected(mapElementIndex, poly);
 
@@ -574,8 +608,8 @@ void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor,
             pos[VZ] = poly->top;
             
             SB_EvalPoint(&poly->vertices[i].color,
-                         &illumination[i],
-                         pos, normal, forced, affected);
+                         &illumination[i], affected,
+                         pos, normal);
         }
     }
 
@@ -626,9 +660,9 @@ void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
  * FIXME: Only recalculate the changed lights.  The colors contributed
  * by the others can be saved with the 'affected' array.
  */
-void SB_EvalPoint(gl_rgba_t *light, vertexillum_t *illum,
-                  float *point, float *normal, boolean forced,
-                  short *affectedSources)
+void SB_EvalPoint(gl_rgba_t *light,
+                  vertexillum_t *illum, short *affectedSources,
+                  float *point, float *normal)
 {
     gl_rgba_t new;
     float dot;
@@ -637,7 +671,7 @@ void SB_EvalPoint(gl_rgba_t *light, vertexillum_t *illum,
     float level;
     int i, idx;
     source_t *affecting[MAX_BIAS_AFFECTED + 1], **aff;
-    boolean illuminationChanged = (forced != 0);
+    boolean illuminationChanged = false;
     unsigned int latestSourceUpdate = 0;
 
     // Vertices that are rendered for the first time need to be fully
@@ -870,18 +904,23 @@ void SB_EndFrame(void)
     // Update the grabbed light.
     if(editActive && (src = SBE_GetGrabbed()) != NULL)
     {
-        SBE_SetColor(src->color, editColor);
- 
-        src->intensity = editIntensity;
+        source_t old;
 
+        memcpy(&old, src, sizeof(old));
+        
+        SBE_SetColor(src->color, editColor);
+        src->intensity = editIntensity;
         if(!(src->flags & BLF_LOCKED))
         {
             // Update source properties.
             SBE_GetHand(src->pos);
         }
 
-        // The light must be re-evaluated.
-        src->flags |= BLF_CHANGED;
+        if(memcmp(&old, src, sizeof(old)))
+        {
+            // The light must be re-evaluated.
+            src->flags |= BLF_CHANGED;
+        }
     }
 }
 
@@ -917,6 +956,9 @@ static boolean SBE_New(void)
 
 static void SBE_Clear(void)
 {
+    while(numSources-- > 0)
+        sources[numSources].flags |= BLF_CHANGED;
+
     numSources = 0;
     editGrabbed = -1;
 
@@ -936,8 +978,8 @@ static void SBE_Delete(int which)
     for(i = which; i < numSources; ++i)
         sources[i].flags |= BLF_CHANGED;
 
-    memmove(&sources[i], &sources[i + 1],
-            sizeof(source_t) * (numSources - i - 1));
+    memmove(&sources[which], &sources[which + 1],
+            sizeof(source_t) * (numSources - which - 1));
 
     // One fewer.
     numSources--;    
@@ -1195,11 +1237,11 @@ void SBE_DrawHUD(void)
 	gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
 
     // Overall stats: numSources / MAX (left)
-    sprintf(buf, "%i / %i (%i remaining)", numSources, MAX_BIAS_LIGHTS,
+    sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS,
             MAX_BIAS_LIGHTS - numSources);
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
-    y = 30; /* screenHeight - 10 - h */
+    y = screenHeight - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
     UI_TextOutEx(buf, 18, y + h / 2, false, true,
                  UI_COL(UIC_TITLE), alpha);
@@ -1220,6 +1262,52 @@ void SBE_DrawHUD(void)
 	gl.PopMatrix();
 }
 
+void SBE_DrawStar(float pos[3], float size, float color[4])
+{
+    float black[4] = { 0, 0, 0, 0 };
+
+    gl.Begin(DGL_LINES);
+    {
+        gl.Color4fv(black);
+        gl.Vertex3f(pos[VX] - size, pos[VZ], pos[VY]);
+        gl.Color4fv(color);
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY]);
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY]);
+        gl.Color4fv(black);
+        gl.Vertex3f(pos[VX] + size, pos[VZ], pos[VY]);
+
+        gl.Vertex3f(pos[VX], pos[VZ] - size, pos[VY]);
+        gl.Color4fv(color);
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY]);
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY]);
+        gl.Color4fv(black);
+        gl.Vertex3f(pos[VX], pos[VZ] + size, pos[VY]);
+        
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY] - size);
+        gl.Color4fv(color);
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY]);
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY]);
+        gl.Color4fv(black);
+        gl.Vertex3f(pos[VX], pos[VZ], pos[VY] + size);
+    }
+    gl.End();
+}
+
+static void SBE_DrawSource(source_t *src)
+{
+    float col[4], d;
+    float eye[3] = { vx, vz, vy };
+    
+    col[0] = src->color[0];
+    col[1] = src->color[1];
+    col[2] = src->color[2];
+    d = (M_Distance(eye, src->pos) - 100) / 1000;
+    if(d < 1) d = 1;
+    col[3] = 1.0f / d;
+
+    SBE_DrawStar(src->pos, 50 + src->intensity/10, col);
+}
+
 void SBE_DrawCursor(void)
 {
 #define SET_COL(x, r, g, b, a) {x[0]=(r); x[1]=(g); x[2]=(b); x[3]=(a);}
@@ -1228,7 +1316,8 @@ void SBE_DrawCursor(void)
     source_t *s;
     float hand[3];
     float size = 10000, distance;
-    float black[4] = { 0, 0, 0, 0 }, col[4];
+    float col[4];
+    float eye[3] = { vx, vz, vy };
    
     if(!editActive || !numSources || editHidden)
         return;
@@ -1258,38 +1347,11 @@ void SBE_DrawCursor(void)
         gl.Disable(DGL_DEPTH_TEST);
     }
 
-    gl.Begin(DGL_LINES);
-    {
-        gl.Color4fv(black);
-        gl.Vertex3f(s->pos[VX] - size, s->pos[VZ], s->pos[VY]);
-        gl.Color4fv(col);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
-        gl.Color4fv(black);
-        gl.Vertex3f(s->pos[VX] + size, s->pos[VZ], s->pos[VY]);
-
-        gl.Color4fv(black);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ] - size, s->pos[VY]);
-        gl.Color4fv(col);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
-        gl.Color4fv(black);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ] + size, s->pos[VY]);
-        
-        gl.Color4fv(black);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY] - size);
-        gl.Color4fv(col);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY]);
-        gl.Color4fv(black);
-        gl.Vertex3f(s->pos[VX], s->pos[VZ], s->pos[VY] + size);
-    }
-    gl.End();
+    SBE_DrawStar(s->pos, size, col);
 
     // Show if the source is locked.
     if(s->flags & BLF_LOCKED)
     {
-        float eye[3] = { vx, vz, vy };
         float lock = 2 + M_Distance(eye, s->pos)/100;
 
         gl.Color4f(1, 1, 1, 1);
@@ -1304,20 +1366,40 @@ void SBE_DrawCursor(void)
         gl.Rotatef(t * 15, 0, 1, 0);
 
         gl.Begin(DGL_LINES);
-        gl.Vertex3f(-lock, 0, - lock);
-        gl.Vertex3f(+lock, 0, - lock);
+        gl.Vertex3f(-lock, 0, -lock);
+        gl.Vertex3f(+lock, 0, -lock);
         
-        gl.Vertex3f(+ lock, 0, - lock);
-        gl.Vertex3f(+ lock, 0, + lock);
+        gl.Vertex3f(+lock, 0, -lock);
+        gl.Vertex3f(+lock, 0, +lock);
         
-        gl.Vertex3f(+ lock, 0, + lock);
-        gl.Vertex3f(- lock, 0, + lock);
+        gl.Vertex3f(+lock, 0, +lock);
+        gl.Vertex3f(-lock, 0, +lock);
         
-        gl.Vertex3f(- lock, 0, + lock);
-        gl.Vertex3f(- lock, 0, - lock);
+        gl.Vertex3f(-lock, 0, +lock);
+        gl.Vertex3f(-lock, 0, -lock);
         gl.End();
         
         gl.PopMatrix();
+    }
+
+    if(SBE_GetNearest() != SBE_GetGrabbed() && SBE_GetGrabbed())
+    {
+        gl.Disable(DGL_DEPTH_TEST);
+        SBE_DrawSource(SBE_GetNearest());
+    }
+    
+    // Show all sources?
+    if(editShowAll)
+    {
+        int i;
+
+        gl.Disable(DGL_DEPTH_TEST);
+        for(i = 0; i < numSources; ++i)
+        {
+            if(s == &sources[i])
+                continue;
+            SBE_DrawSource(&sources[i]);
+        }
     }
 
     gl.Enable(DGL_TEXTURING);
