@@ -77,9 +77,9 @@ struct mus_header {
 };
 
 struct mus_event {
-	byte channel:4;
-	byte event:3;
-	byte last:1;
+	byte channel;
+	byte event;
+	byte last;
 };
 
 struct midi_event
@@ -131,22 +131,24 @@ static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
 
 static boolean getNextEvent(struct midi_event *ev)
 {
-	struct mus_event *evDesc;
-//	byte    midiStatus, midiChan, midiParm1, midiParm2;
-	int     scoreEnd = 0;
+	struct mus_event evDesc;
 	int     i;
+	byte    musEvent;
 
 	ev->deltaTime = readTime;
 	readTime = 0;
 
-	evDesc = (struct mus_event *) readPos++;
+	musEvent = *readPos++;
+	evDesc.channel = musEvent & 0xf;
+	evDesc.event = (musEvent >> 4) & 0x7;
+	evDesc.last = (musEvent >> 7) & 0x1;
 	ev->command = 0;
 	ev->size = 0;
 	memset(ev->parms, 0, sizeof(ev->parms));
 	//midiStatus = midiChan = midiParm1 = midiParm2 = 0;
 
 	// Construct the MIDI event.
-	switch(evDesc->event)
+	switch(evDesc.event)
 	{
 	case MUS_EV_PLAY_NOTE:
 		ev->command = 0x90;
@@ -155,9 +157,9 @@ static boolean getNextEvent(struct midi_event *ev)
 		ev->parms[0] = *readPos++;
 		// Is the volume there, too?
 		if(ev->parms[0] & 0x80)
-			chanVols[evDesc->channel] = *readPos++;
+			chanVols[evDesc.channel] = *readPos++;
 		ev->parms[0] &= 0x7f;
-		if((i = chanVols[evDesc->channel]) > 127)
+		if((i = chanVols[evDesc.channel]) > 127)
 			i = 127;
 		ev->parms[1] = i;
 		break;
@@ -209,11 +211,11 @@ static boolean getNextEvent(struct midi_event *ev)
 		return false;
 
 	default:
-		Con_Error("MUS_SongPlayer: Unknown MUS event %d.\n", evDesc->event);
+		Con_Error("MUS_SongPlayer: Unknown MUS event %d.\n", evDesc.event);
 	}
 
 	// Choose the channel.
-	i = evDesc->channel;
+	i = evDesc.channel;
 	// Redirect MUS channel 16 to MIDI channel 10 (percussion).
 	if(i == 15)
 		i = 9;
@@ -222,7 +224,7 @@ static boolean getNextEvent(struct midi_event *ev)
 	ev->command |= i;
 	
 	// Check if this was the last event in a group.
-	if(!evDesc->last)
+	if(!evDesc.last)
 		return true;
 
 	// Read the time delta.
