@@ -653,8 +653,15 @@ void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec, int flags)
 			else
 			{
 				// Texture missing? Take the ceiling texture.
-				quad.tex = curtex = GL_PrepareFlat(frontsec->ceilingpic);				
-				//quad.flags = RPF_MISSING_WALL;
+				int replacement = frontsec->ceilingpic;
+				if(replacement == skyflatnum)
+				{
+					// The skyflat is not an appropriate replacement!
+					// Note that both the front and back ceilings can't be
+					// sky (the upper seg is not visible in that case).
+					replacement = backsec->ceilingpic;
+				}
+				quad.tex = curtex = GL_PrepareFlat(replacement);
 			}
 			quad.detail = texdetail;
 			// Calculate texture coordinates.
