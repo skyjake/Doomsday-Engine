@@ -31,6 +31,7 @@
 #	include <SDL/SDL.h>
 #	include "atiext.h"
 #	define wglGetProcAddress SDL_GL_GetProcAddress
+#	define GL_GLEXT_PROTOTYPES
 #endif
 
 #include <GL/gl.h>
@@ -138,6 +139,7 @@ int	DG_Bind(DGLuint texture);
 //-------------------------------------------------------------------------
 // ext.c
 //
+#ifdef WIN32
 extern PFNGLCLIENTACTIVETEXTUREARBPROC	glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
 extern PFNGLMULTITEXCOORD2FARBPROC	glMultiTexCoord2fARB;
@@ -146,6 +148,8 @@ extern PFNGLMULTITEXCOORD2FVARBPROC	glMultiTexCoord2fvARB;
 extern PFNGLBLENDEQUATIONEXTPROC	glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC		glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC		glUnlockArraysEXT;
+extern PFNGLCOLORTABLEEXTPROC		glColorTableEXT;
+#endif
 
 extern int extMultiTex;
 extern int extTexEnvComb;
