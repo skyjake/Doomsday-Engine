@@ -1,0 +1,89 @@
+THE DOOMSDAY ENGINE
+===================
+by Jaakko Keränen <jaakko.keranen@iki.fi>
+
+$Date$
+
+
+INSTALLING
+----------
+
+If you're not familiar with compiling stuff in a Unix environment, see
+the generic instructions in the INSTALL file.  Doomsday specific
+instructions are in Build/COMPILING.
+
+
+DOCUMENTATION
+-------------
+
+The Doc directory contains various documentation about the engine and
+the available command line options.  The documents are also available
+online: http://www.doomsdayhq.com/
+
+
+REQUIREMENTS
+------------
+
+In addition to the libraries needed to build Doomsday, you will need
+one or more IWAD files from a supported game.  For example, DOOM.WAD
+from Ultimate Doom would be suitable.  If you don't own any of the
+original games (Doom, Heretic or Hexen), you can always use the
+shareware/demo versions.
+
+You won't be able to play without an IWAD file!
+
+
+GLBSP
+-----
+
+Get it from glbsp.sourceforge.net.
+
+Run it on all of your WAD files.  This will provide Doomsday with more
+accurate map data and get rid of a host of graphical glitches.
+
+
+ADDITIONAL RESOURCE PACKS
+-------------------------
+
+There is a wealth of additional resource packs for Doomsday on the
+internet.  One starting point is Doomsday HQ
+(http://www.doomsdayhq.com/).  I recommend also visiting the DHQ
+Forums for the latest community buzz.
+
+The must-have packs are the 3D models and detail textures.  Since MIDI
+music is currently not supported in Linux, you might also wish to
+download a music pack (e.g. http://www.sycraft.org/).
+
+
+RUNNING THE GAME
+----------------
+
+These instructions apply to the Linux version of Doomsday.
+
+The default location for the doomsday executable is /usr/local/bin,
+but that can be changed by providing your own prefix for the configure
+script (see Build/COMPILING).
+
+I recommend creating your own startup scripts for jDoom, jHeretic and
+jHexen.  In them, you can specify any command line options you wish to
+use.  Below is a simple example.
+
+  #!/bin/sh
+  /usr/local/bin/doomsday -game jdoom -file ~/wads/doom.wad \
+      -userdir ~/doomsday/jdoom
+
+Before running this script you will need to create the runtime
+directory ~/doomsday/jdoom.  All savegame files, message logs and
+other such files will be stored in this directory.
+
+
+RUNNING A DEDICATED SERVER
+--------------------------
+
+Start the game as you normally would, but use the "-dedicated" command
+line option.  This will make Doomsday run in a text-only console mode.
+For instructions on how to configure the server, see Doc/Network.txt.
+
+Quick instructions:
+
+
