@@ -20,7 +20,7 @@
 #include "d_netjd.h"
 #include "wi_stuff.h"
 #include "d_config.h"
-#include "mn_def.h"
+#include "m_menu.h"
 #include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
@@ -367,6 +367,137 @@ static dpatch_t*	lnames;
 
 // CODE --------------------------------------------------------------------
 
+/*
+ * Expected: <whitespace> = <whitespace> <float>
+ */
+float WI_ParseFloat(char **str)
+{
+	float value;
+	char *end;
+
+	*str = M_SkipWhite(*str);
+	if(**str != '=') return 0; // Now I'm confused!
+	*str = M_SkipWhite(*str + 1);
+	value = strtod(*str, &end);
+	*str = end;
+	return value;
+}
+
+/*
+ * This routine tests for a string-replacement for the patch. If one is
+ * found, it's used instead of the original graphic. 
+ *
+ * If the patch is not in an IWAD, it won't be replaced!
+ */
+void WI_DrawPatch(int x, int y, int lump)
+{
+	char def[80], *string;
+	const char *name = W_LumpName(lump);
+	dpatch_t *font = hu_font_b;
+	float r = 1, g = 0, b = 0;
+	int offX = 0, offY = 0;
+	float scaleX = 1, scaleY = 1;
+
+	// "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
+
+	strcpy(def, "Patch Replacement|");
+	strcat(def, name);
+
+	if(!W_IsFromIWAD(lump) || !Def_Get(DD_DEF_VALUE, def, &string))
+	{
+		// Replacement string not found, draw the patch.
+		GL_DrawPatch(x, y, lump);
+		return;
+	}
+
+	// Parse the replacement string.
+	if(*string == '{') // Parameters included?
+	{
+		string++;
+		while(*string && *string != '}')
+		{
+			string = M_SkipWhite(string);
+
+			// What do we have here?
+			if(!strnicmp(string, "fonta", 5))
+			{
+				font = hu_font_a;
+				string += 5;
+			}
+			else if(!strnicmp(string, "fontb", 5))
+			{
+				font = hu_font_b;
+				string += 5;
+			}
+			else if(!strnicmp(string, "r", 1))
+			{
+				string++;
+				r = WI_ParseFloat(&string);
+			}
+			else if(!strnicmp(string, "g", 1))
+			{
+				string++;
+				g = WI_ParseFloat(&string);
+			}
+			else if(!strnicmp(string, "b", 1))
+			{
+				string++;
+				b = WI_ParseFloat(&string);
+			}
+			else if(!strnicmp(string, "x", 1))
+			{
+				string++;
+				x = (int) WI_ParseFloat(&string);
+			}
+			else if(!strnicmp(string, "y", 1))
+			{
+				string++;
+				y = (int) WI_ParseFloat(&string);
+			}
+			else if(!strnicmp(string, "scalex", 6))
+			{
+				string += 6;
+				scaleX = WI_ParseFloat(&string);
+			}
+			else if(!strnicmp(string, "scaley", 6))
+			{
+				string += 6;
+				scaleY = WI_ParseFloat(&string);
+			}
+			else if(!strnicmp(string, "scale", 5))
+			{
+				string += 5;
+				scaleX = scaleY = WI_ParseFloat(&string);
+			}
+			else
+			{
+				// Unknown, skip it.
+				string++;
+			}
+		}
+
+		// Skip over the closing brace.
+		if(*string) string++;
+	}
+
+	x += offX;
+	y += offY;
+
+	// Setup the scaling.
+	gl.MatrixMode(DGL_MODELVIEW);
+	gl.PushMatrix();
+
+	gl.Translatef(x, y, 0);
+	gl.Scalef(scaleX, scaleY, 1);
+	gl.Translatef(-x, -y, 0);
+
+	// Draw it.
+	M_WriteText3(x, y, string, font, r, g, b, false);
+
+	gl.MatrixMode(DGL_MODELVIEW);
+	gl.PopMatrix();
+}
+
 void WI_slamBackground(void)
 {
 	GL_DrawPatch(0, 0, bg.lump);
@@ -385,13 +516,13 @@ void WI_drawLF(void)
     int y = WI_TITLEY;
 
     // draw <LevelName> 
-    GL_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->last].width))/2,
+    WI_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->last].width))/2,
 		y, lnames[wbs->last].lump);
 
     // draw "Finished!"
     y += (5*SHORT(lnames[wbs->last].height))/4;
     
-    GL_DrawPatch((SCREENWIDTH - SHORT(finished.width))/2,
+    WI_DrawPatch((SCREENWIDTH - SHORT(finished.width))/2,
 		y, finished.lump);
 }
 
@@ -403,13 +534,13 @@ void WI_drawEL(void)
     int y = WI_TITLEY;
 
     // draw "Entering"
-    GL_DrawPatch((SCREENWIDTH - SHORT(entering.width))/2,
+    WI_DrawPatch((SCREENWIDTH - SHORT(entering.width))/2,
 		y, entering.lump);
 
     // draw level
     y += (5*SHORT(lnames[wbs->next].height))/4;
 
-    GL_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->next].width))/2,
+    WI_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->next].width))/2,
 		y, lnames[wbs->next].lump);
 }
 
@@ -440,7 +571,7 @@ WI_drawOnLnode
 
     if (fits && i<2)
     {
-		GL_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y,
+		WI_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y,
 		    c[i].lump);
     }
     else
@@ -644,7 +775,7 @@ WI_drawTime
     else
     {
 		// "sucks"
-		GL_DrawPatch(x - SHORT(sucks.width), y, sucks.lump); 
+		WI_DrawPatch(x - SHORT(sucks.width), y, sucks.lump); 
     }
 }
 
@@ -901,18 +1032,18 @@ void WI_drawDeathmatchStats(void)
     WI_drawLF();
 
     // draw stat titles (top line)
-    GL_DrawPatch(DM_TOTALSX-SHORT(total.width)/2,
+    WI_DrawPatch(DM_TOTALSX-SHORT(total.width)/2,
 		DM_MATRIXY-WI_SPACINGY+10,
 		total.lump);
     
-    GL_DrawPatch(DM_KILLERSX, DM_KILLERSY, killers.lump);
-    GL_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, victims.lump);
+    WI_DrawPatch(DM_KILLERSX, DM_KILLERSY, killers.lump);
+    WI_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, victims.lump);
 
     // draw P?
     x = DM_MATRIXX + DM_SPACINGX;
     y = DM_MATRIXY;
 
-    for(i=0; i<NUM_TEAMS/*MAXPLAYERS*/; i++)
+    for(i = 0; i < NUM_TEAMS; i++)
     {
 		if(teaminfo[i].members)
 		{
@@ -1160,17 +1291,17 @@ void WI_drawNetgameStats(void)
     WI_drawLF();
 
     // draw stat titles (top line)
-    GL_DrawPatch(NG_STATSX+NG_SPACINGX-SHORT(kills.width),
+    WI_DrawPatch(NG_STATSX+NG_SPACINGX-SHORT(kills.width),
 		NG_STATSY, kills.lump);
 
-    GL_DrawPatch(NG_STATSX+2*NG_SPACINGX-SHORT(items.width),
+    WI_DrawPatch(NG_STATSX+2*NG_SPACINGX-SHORT(items.width),
 		NG_STATSY, items.lump);
 
-    GL_DrawPatch(NG_STATSX+3*NG_SPACINGX-SHORT(secret.width),
+    WI_DrawPatch(NG_STATSX+3*NG_SPACINGX-SHORT(secret.width),
 		NG_STATSY, secret.lump);
  
     if (dofrags)
-		GL_DrawPatch(NG_STATSX+4*NG_SPACINGX-SHORT(frags.width),
+		WI_DrawPatch(NG_STATSX+4*NG_SPACINGX-SHORT(frags.width),
 		    NG_STATSY, frags.lump);
 
     // draw stats
@@ -1338,21 +1469,21 @@ void WI_drawStats(void)
     
     WI_drawLF();
 
-    GL_DrawPatch(SP_STATSX, SP_STATSY, kills.lump);
+    WI_DrawPatch(SP_STATSX, SP_STATSY, kills.lump);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cnt_kills[0]);
 
-    GL_DrawPatch(SP_STATSX, SP_STATSY+lh, items.lump);
+    WI_DrawPatch(SP_STATSX, SP_STATSY+lh, items.lump);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY+lh, cnt_items[0]);
 
-    GL_DrawPatch(SP_STATSX, SP_STATSY+2*lh, sp_secret.lump);
+    WI_DrawPatch(SP_STATSX, SP_STATSY+2*lh, sp_secret.lump);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0]);
 
-    GL_DrawPatch(SP_TIMEX, SP_TIMEY, time.lump);
+    WI_DrawPatch(SP_TIMEX, SP_TIMEY, time.lump);
     WI_drawTime(SCREENWIDTH/2 - SP_TIMEX, SP_TIMEY, cnt_time);
 
     if (wbs->epsd < 3)
     {
-		GL_DrawPatch(SCREENWIDTH/2 + SP_TIMEX, SP_TIMEY, par.lump);
+		WI_DrawPatch(SCREENWIDTH/2 + SP_TIMEX, SP_TIMEY, par.lump);
 		WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cnt_par);
     }
 

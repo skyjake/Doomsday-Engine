@@ -15,6 +15,10 @@
 // for more details.
 //
 // $Log$
+// Revision 1.6  2003/08/17 23:32:36  skyjake
+// Implemented Patch Replacement
+// (GL_DrawPatch => WI_DrawPatch)
+//
 // Revision 1.5  2003/07/29 16:36:13  skyjake
 // Added crosshair alpha slider
 //
@@ -81,6 +85,7 @@ rcsid[] = "$Id$";
 
 #include "m_menu.h"
 #include "mn_def.h"
+#include "wi_stuff.h"
 
 
 void P_SetMessage(player_t *player, char *msg);
@@ -725,7 +730,7 @@ void M_DrawLoad(void)
 {
     int             i;
 	
-    GL_DrawPatch(72, 28, W_GetNumForName("M_LOADG"));
+    WI_DrawPatch(72, 28, W_GetNumForName("M_LOADG"));
     for (i = 0;i < load_end; i++)
     {
 		M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
@@ -783,7 +788,7 @@ void M_DrawSave(void)
 {
     int             i;
 	
-    GL_DrawPatch(72, 28, W_GetNumForName("M_SAVEG"));
+    WI_DrawPatch(72, 28, W_GetNumForName("M_SAVEG"));
     for (i = 0;i < load_end; i++)
     {
 		M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
@@ -1094,7 +1099,7 @@ void M_Sfx16bit(int choice)
 //
 void M_DrawMainMenu(void)
 {
-    GL_DrawPatch(94, 2, W_GetNumForName("M_DOOM"));
+    WI_DrawPatch(94, 2, W_GetNumForName("M_DOOM"));
 }
 
 
@@ -1105,8 +1110,8 @@ void M_DrawMainMenu(void)
 //
 void M_DrawNewGame(void)
 {
-    GL_DrawPatch(96,14,W_GetNumForName("M_NEWG"));
-    GL_DrawPatch(54,38,W_GetNumForName("M_SKILL"));
+    WI_DrawPatch(96,14,W_GetNumForName("M_NEWG"));
+    WI_DrawPatch(54,38,W_GetNumForName("M_SKILL"));
 }
 
 void M_NewGame(int choice)
@@ -1131,8 +1136,7 @@ int     epi;
 
 void M_DrawEpisode(void)
 {
-    //GL_DrawPatch(54, 38, W_GetNumForName("M_EPISOD"));
-	GL_DrawPatch(96, 14, W_GetNumForName("M_NEWG"));
+	WI_DrawPatch(96, 14, W_GetNumForName("M_NEWG"));
 	M_DrawTitle(episodemsg, 40);
 }
 
@@ -1188,8 +1192,7 @@ char	msgNames[2][9]		= {"M_MSGOFF","M_MSGON"};
 
 void M_DrawOptions(void)
 {
-	GL_DrawPatch(94,2,W_GetNumForName("M_DOOM"));
-    //GL_DrawPatch(108,60,W_GetNumForName("M_OPTTTL"));
+	WI_DrawPatch(94,2,W_GetNumForName("M_DOOM"));
 	M_DrawTitle("OPTIONS", 60);
 }
 
@@ -2031,19 +2034,26 @@ int M_StringHeight(char* string, dpatch_t *font)
 	return h;
 }
 
+void M_WriteText2
+	(int x, int y, char *string, dpatch_t *font, 
+	 float red, float green, float blue)
+{
+	M_WriteText3(x, y, string, font, red, green, blue, true);
+}
 
 //
 //      Write a string using a colored, custom font
 //
 void
-M_WriteText2
+M_WriteText3
 ( int		x,
  int		y,
  char*		string,
  dpatch_t	*font,
  float		red,
  float		green,
- float		blue
+ float		blue,
+ boolean	dotypein
  )
 {
     int		w;
@@ -2054,7 +2064,7 @@ M_WriteText2
 	int		count = 0, maxcount = typein_time*2, yoff;
 
 	// Disable type-in?
-	if(cfg.menuEffects > 0) maxcount = 0xffff;
+	if(!dotypein || cfg.menuEffects > 0) maxcount = 0xffff;
 
 	if(red >= 0) gl.Color4f(red, green, blue, menu_alpha);
 
@@ -2771,7 +2781,10 @@ void M_Drawer (void)
 		if(currentMenu->items[i].lumpname)
 		{
 			if(currentMenu->items[i].lumpname[0])
-				GL_DrawPatch(x, y, W_GetNumForName(currentMenu->items[i].lumpname));
+			{
+				WI_DrawPatch(x, y, 
+					W_GetNumForName(currentMenu->items[i].lumpname));
+			}
 		}
 		else if(currentMenu->items[i].text)
 		{

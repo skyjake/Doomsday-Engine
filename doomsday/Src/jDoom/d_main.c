@@ -505,7 +505,6 @@ void D_PreInit(void)
 	D_ConsoleRegistration();
 
 	DD_AddStartupWAD("}Data\\jDoom\\jDoom.wad"); // FONTA and FONTB, M_THERM2
-
 	DetectIWADs();
 
     /*p = ArgCheck ("-playdemo");
