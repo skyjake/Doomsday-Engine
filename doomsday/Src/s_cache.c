@@ -526,7 +526,11 @@ sfxsample_t *Sfx_Cache(int id)
 	// If external didn't succeed, let's try the default resource dir.
 	if(!samp.data)
 	{
-		if(R_FindResource(RC_SFX, info->lumpname, NULL, buf)
+		// If the sound has an invalid lumpname, search external anyway.
+		// If the original sound is from a PWAD, we won't look for an
+		// external resource (probably a custom sound).
+		if((info->lumpnum < 0 || W_IsFromIWAD(info->lumpnum))
+			&& R_FindResource(RC_SFX, info->lumpname, NULL, buf)
 			&& (samp.data = WAV_Load(buf, &samp.bytesper, &samp.rate,
 				&samp.numsamples)))
 		{
