@@ -6,6 +6,9 @@
 //** Rendering of particle generators.
 //**
 //** $Log$
+//** Revision 1.5  2003/04/16 09:49:42  skyjake
+//** -nohightex must only affect walls/flats
+//**
 //** Revision 1.4  2003/03/14 15:42:38  skyjake
 //** Only report first missing Particle*
 //**
@@ -138,7 +141,7 @@ void PG_InitTextures(void)
 
 		// Try to load the texture.
 		sprintf(filename, "Particle%02i", i);
-		if(!(image = GL_LoadHighResTexture(filename, &width, &height, 
+		if(!(image = GL_LoadTexture(filename, &width, &height, 
 			&pixsize, &masked)))
 		{
 			// Just show the first 'not found'.

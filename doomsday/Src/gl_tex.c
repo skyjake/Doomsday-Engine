@@ -1512,7 +1512,6 @@ byte *GL_LoadHighRes(char *name, char *path, char *altPath, char *prefix,
 	byte *buf;
 	int p, f;
 
-	if(noHighResTex) return NULL;
 	for(f = 0; f < 3; f++)
 		for(p = 0; p < 2; p++)
 		{
@@ -1534,14 +1533,28 @@ byte *GL_LoadHighRes(char *name, char *path, char *altPath, char *prefix,
 }
 
 //===========================================================================
+// GL_LoadTexture
+//	Use this when loading custom textures from the Data\*\Textures dir.
+//	The returned buffer must be freed with M_Free.
+//===========================================================================
+byte *GL_LoadTexture(char *name, int *width, int *height, int *pixsize, 
+					 boolean *masked)
+{
+	return GL_LoadHighRes(name, hiTexPath, hiTexPath2, "", width, height,
+		pixsize, masked, true);
+}
+
+//===========================================================================
 // GL_LoadHighResTexture
+//	Use this when loading high-res wall textures.
 //	The returned buffer must be freed with M_Free.
 //===========================================================================
 byte *GL_LoadHighResTexture
 	(char *name, int *width, int *height, int *pixsize, boolean *masked)
 {
-	return GL_LoadHighRes(name, hiTexPath, hiTexPath2, "", width, height,
-		pixsize, masked, true);
+	if(noHighResTex) return NULL;
+
+	return GL_LoadTexture(name, width, height, pixsize, masked);
 }
 
 //===========================================================================
@@ -1552,6 +1565,8 @@ byte *GL_LoadHighResFlat(char *name, int *width, int *height, int *pixsize)
 {
 	boolean masked;
 	
+	if(noHighResTex) return NULL;
+
 	// FIXME: Why no subdir named "Flats"?
 	return GL_LoadHighRes(name, hiTexPath, hiTexPath2, "Flat-", width, 
 		height, pixsize, &masked, false);
