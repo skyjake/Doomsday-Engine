@@ -11,6 +11,7 @@ extern event_t	events[MAXEVENTS];
 extern int		eventhead;
 extern int		eventtail;
 extern int		repWait1, repWait2;
+extern int		mouseFilter;
 extern int		mouseDisableX, mouseDisableY;
 extern int		mouseInverseY;
 extern int		mouseWheelSensi;
