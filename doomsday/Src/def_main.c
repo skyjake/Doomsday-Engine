@@ -318,8 +318,8 @@ ded_decor_t *Def_GetDecoration(int number, boolean is_texture, boolean has_ext)
 	ded_decor_t *def;
 	int     i;
 
-	for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0;
-		i--, def--)
+	for(i = defs.count.decorations.num - 1, def = defs.decorations + i;
+        i >= 0; i--, def--)
 	{
 		if(!def->is_texture == !is_texture && number == def->surface_index)
 		{
@@ -329,6 +329,31 @@ ded_decor_t *Def_GetDecoration(int number, boolean is_texture, boolean has_ext)
 		}
 	}
 	return 0;
+}
+
+/*
+ * Currently reflections cannot specify any conditions when it is
+ * appropriate to use them: if a high-resolution texture or a custom
+ * patch overrides the texture that the reflection was meant to be
+ * used with, nothing is done to react to the situation.
+ */
+ded_reflection_t *Def_GetReflection(int number, boolean is_texture)
+{
+    ded_reflection_t *ref;
+    int     i;
+
+    for(i = defs.count.reflections.num - 1, ref = defs.reflections + i;
+        i >= 0; --i, --ref)
+    {
+        if(!ref->is_texture == !is_texture && number == ref->surface_index)
+        {
+            // It would be great to have a unified system that would
+            // determine whether effects such as decorations and
+            // reflections are allowed for a certain resource...
+            return ref;
+        }
+    }
+    return 0;
 }
 
 int Def_GetFlagValue(char *flag)
@@ -789,6 +814,9 @@ void Def_Read(void)
 	   } */
 	Def_CountMsg(defs.count.decorations.num, "surface decorations");
 
+    // Surface reflections.
+    Def_CountMsg(defs.count.reflections.num, "surface reflections");
+
 	// Other data:
 	Def_CountMsg(defs.count.mapinfo.num, "map infos");
 	Def_CountMsg(defs.count.finales.num, "finales");
@@ -877,6 +905,54 @@ void Def_PostInit(void)
 		decor->pregen_lightmap = 0;
 	}
 
+    // Surface reflections.
+    for(i = 0; i < defs.count.reflections.num; ++i)
+    {
+        ded_reflection_t *ref = defs.reflections + i;
+
+        ref->surface_index = -1;
+        if(ref->is_texture)
+            ref->surface_index = R_CheckTextureNumForName(ref->surface);
+        else
+            ref->surface_index = W_CheckNumForName(ref->surface);
+
+        // Initialize the pointers to handle textures.
+        ref->shiny_tex = ref->mask_tex = 0;
+        ref->use_shiny = ref->use_mask = NULL;
+
+        if(ref->shiny_map.path[0])
+        {
+            ref->use_shiny = ref;
+            
+            // Find the earliest instance of this texture.
+            for(k = 0; k < i; ++k)
+            {
+                if(!stricmp(ref->shiny_map.path,
+                            defs.reflections[k].shiny_map.path))
+                {
+                    ref->use_shiny = &defs.reflections[k];
+                    break;
+                }
+            }
+        }
+
+        if(ref->mask_map.path[0])
+        {
+            ref->use_mask = ref;
+
+            // Find the earliest instance of this texture.
+            for(k = 0; k < i; ++k)
+            {
+                if(!stricmp(ref->mask_map.path,
+                            defs.reflections[k].mask_map.path))
+                {
+                    ref->use_mask = &defs.reflections[k];
+                    break;
+                }
+            }
+        }
+    }
+    
 	// Animation groups.
 	for(i = 0; i < defs.count.groups.num; i++)
 	{

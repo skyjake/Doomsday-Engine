@@ -657,6 +657,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 	ded_ptcgen_t *gen;
 	int prev_gendef_idx = -1; // For "Copy".
 	int prev_decordef_idx = -1; // For "Copy".
+    int prev_refdef_idx = -1; // For "Copy".
 	ded_finale_t *fin;
 	ded_linetype_t *l;
 	ded_sectortype_t *sec;
@@ -941,6 +942,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						RV_STR("File", mdl->sub[sub].filename.path)
 						RV_STR("Frame", mdl->sub[sub].frame)
 						RV_INT("Frame range", mdl->sub[sub].framerange)
+                        RV_FLAGS("Blending mode", mdl->sub[sub].blendmode, "bm_")
 						RV_INT("Skin", mdl->sub[sub].skin)
 						RV_STR("Skin file", mdl->sub[sub].skinfilename.path)
 						RV_INT("Skin range", mdl->sub[sub].skinrange)
@@ -1270,14 +1272,62 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				READLABEL;
 				RV_STR("Wall", dtl->wall)
 				RV_STR("Flat", dtl->flat)
-				RV_STR("Lump", dtl->detail_lump)
-				RV_FLT("Scale", dtl->scale)
+				if(ISLABEL("Lump"))
+				{
+					READSTR(dtl->detail_lump)
+					dtl->is_external = false;
+				}
+                else /*if(ISLABEL("File"))
+                {
+                    READSTR(dtl->detail_lump)
+                    dtl->is_external = true;
+                }
+				else*/
+                RV_FLT("Scale", dtl->scale)
 				RV_FLT("Strength", dtl->strength)
 				RV_FLT("Distance", dtl->maxdist)
 				RV_END
 				CHECKSC;
 			}
 			prev_dtldef_idx = idx;
+		}
+		if(ISTOKEN("Reflection")) // Surface reflection
+		{
+            ded_reflection_t *ref = NULL;
+            
+			idx = DED_AddReflection(ded);
+			ref = &ded->reflections[idx];
+            
+			if(prev_refdef_idx >= 0 && bCopyNext)
+			{
+				// Should we copy the previous definition?
+				memcpy(ref, ded->reflections + prev_refdef_idx, sizeof(*ref));
+			}
+            
+			FINDBEGIN;
+			for(;;)
+			{
+				READLABEL;
+				RV_FLT("Shininess", ref->shininess)
+				RV_FLAGS("Blending mode", ref->blend_mode, "bm_")
+                RV_STR("Shiny map", ref->shiny_map.path)
+                RV_STR("Mask map", ref->mask_map.path) 
+				RV_FLT("Mask width", ref->mask_width)
+				RV_FLT("Mask height", ref->mask_height)
+				if(ISLABEL("Texture"))
+				{
+					READSTR(ref->surface)
+					ref->is_texture = true;
+				}
+				else if(ISLABEL("Flat"))
+				{
+					READSTR(ref->surface)
+					ref->is_texture = false;
+				}
+				else RV_END
+				CHECKSC;
+			}
+			prev_refdef_idx = idx;
 		}
 		if(ISTOKEN("Generator")) // Particle Generator
 		{
