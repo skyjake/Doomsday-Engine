@@ -452,7 +452,7 @@ void Net_Update(void)
 			{
 				gx.BuildTicCmd(cmd);
 				// Set the time stamp. Only the lowest byte is stored.
-				cmd->time = gametic + availabletics;
+				//cmd->time = gametic + availabletics;
 				// Availabletics counts the tics that have cmds.
 				availabletics++;
 				if(isClient)
