@@ -219,8 +219,6 @@ void Sv_RefreshClient(int plrNum)
  */
 void Sv_Shutdown(void)
 {
-	int i;
-
 	PRINT_PROF( PROF_GEN_DELTAS );
 	PRINT_PROF( PROF_WRITE_DELTAS );
 	PRINT_PROF( PROF_PACKET_SIZE );
@@ -228,6 +226,8 @@ void Sv_Shutdown(void)
 #if _DEBUG
 	if(totalFrameCount > 0)
 	{
+		int i;
+
 		// Byte probabilities.
 		for(i = 0; i < 256; i++)
 		{
