@@ -182,7 +182,13 @@ static int autoDataAdder(const char *fileName, filetype_t type,
 //===========================================================================
 void DD_AddAutoData(boolean loadFiles)
 {
-	const char *extensions[] = { "wad", "lmp", "pk3", "zip", NULL };
+	const char *extensions[] = {
+		"wad", "lmp", "pk3", "zip",
+#ifdef UNIX
+		"WAD", "LMP", "PK3", "ZIP", // upper case alternatives
+#endif
+		NULL
+	};
 	char    pattern[256];
 	int     i;
 
@@ -540,8 +546,8 @@ void DD_Main(void)
 	// (shortcut for -command "net init tcpip; net server start").
 	if(ArgExists("-server"))
 	{
-		if(!N_InitService(NSP_TCPIP, true))
-			Con_Message("Can't start server: TCP/IP not available.\n");
+		if(!N_InitService(true))
+			Con_Message("Can't start server: network init failed.\n");
 		else
 			Con_Executef(false, "net server start");
 	}
