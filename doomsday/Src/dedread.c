@@ -488,6 +488,7 @@ boolean DED_CheckCondition(const char *cond, boolean expected)
 int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 {
 	char dummy[128];
+	int dummyInt;
 	int idx, retval = true;
 	char label[128], tmp[256];
 	ded_mobj_t *mo;
@@ -1149,7 +1150,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			}
 			prev_gendef_idx = idx;
 		}
-		if(ISTOKEN("Finale"))
+		if(ISTOKEN("Finale") || ISTOKEN("InFine"))
 		{
 			idx = DED_AddFinale(ded);
 			fin = ded->finales + idx;
@@ -1157,9 +1158,10 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			for(;;)
 			{
 				READLABEL;
+				RV_STR("ID", fin->id)
 				RV_STR("Before", fin->before)
 				RV_STR("After", fin->after)
-				RV_INT("Game", fin->game)
+				RV_INT("Game", dummyInt)
 				if(ISLABEL("Script"))
 				{
 					// Allocate an "enormous" 64K buffer.
@@ -1180,8 +1182,6 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 							*ptr++ = '"';
 						}
 						ReadToken();
-						// Skip all semicolons.
-						while(ISTOKEN(";") && !source->atEnd) ReadToken();
 					}
 					fin->script = realloc(temp, strlen(temp) + 1);
 				}
