@@ -441,10 +441,12 @@ void WI_DrawParamText
 				}
 				else if(!strnicmp(string, "case", 4))
 				{
+					string += 4;
 					caseScale = true;
 				}
 				else if(!strnicmp(string, "nocase", 6))
 				{
+					string += 6;
 					caseScale = false;
 				}
 				else if(!strnicmp(string, "ups", 3))
