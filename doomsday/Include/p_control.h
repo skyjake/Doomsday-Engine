@@ -51,6 +51,7 @@ typedef struct controlaxis_s {
 
 void 	P_ControlInit(void);
 void 	P_ControlShutdown(void);
+void 	P_ControlTicker(timespan_t time);
 void 	P_ControlTableInit(int player);
 void 	P_ControlTableFree(int player);
 void	P_ControlReset(void);
@@ -59,5 +60,6 @@ const char *P_ControlGetAxisName(int index);
 boolean	P_ControlExecute(const char *command);
 float 	P_ControlGetAxis(int player, const char *name);
 void 	P_ControlSetAxis(int player, int axisControlIndex, float pos);
+void 	P_ControlAxisDelta(int player, int axisControlIndex, float delta);
 
 #endif 
