@@ -29,6 +29,7 @@
 #include <stdarg.h>
 
 #include "de_base.h"
+#include "de_misc.h"
 #include "de_console.h"
 #include "sys_stwin.h"
 #include "resource.h"
@@ -165,7 +166,7 @@ int SW_IsActive(void)
 //===========================================================================
 void SW_Init(void)
 {
-	if(msgWnd)
+	if(msgWnd || ArgCheck("-nostwin"))
 		return;					// Already initialized.
 
 	msgWnd =
