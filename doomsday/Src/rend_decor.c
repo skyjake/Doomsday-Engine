@@ -660,6 +660,10 @@ void Rend_DecorateSector(int index)
 	sector_t *sector = SECTOR_PTR(index);
 	ded_decor_t *def;
 
+	// The sector must have height if it wants decorations.
+	if(sector->ceilingheight <= sector->floorheight) 
+		return;
+
 	// Is this sector close enough for the decorations to be visible?
 	if(!Rend_SectorDecorationBounds(sector, &secinfo[index]))
 		return;
