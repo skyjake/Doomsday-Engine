@@ -56,6 +56,7 @@ Copy Map Info {
 Copy Map Info {
   ID = "E2M1";
   Name = "E2M1: Deimos Anomaly";
+  Sky light color { 1.0  0.85  0.85 };
   Sky Layer 1 {
     Texture = "SKY2";
   };
@@ -104,6 +105,8 @@ Copy Map Info {
 Copy Map Info {
   ID = "E3M1";
   Name = "E3M1: Hell Keep";
+  # This is hell, give it a reddish tint.
+  Sky light color { 1.0  0.7  0.7 };
   Sky Layer 1 {
     Texture = "SKY3";
   };
@@ -152,6 +155,8 @@ Copy Map Info {
 Copy Map Info {
   ID = "E4M1";
   Name = "E4M1: Hell Beneath";
+  # The sky is orange.
+  Sky light color { 1.0  0.75  0.6 }; 
   Sky Layer 1 {
     Texture = "SKY4";
   };

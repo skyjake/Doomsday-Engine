@@ -27,7 +27,7 @@ Decoration {
   Light {
     Color { 1 1 1 };
     Offset { 32 32 };
-    Halo radius = 1;
+    Halo radius = .7;
     Radius = .95;
     Flare texture = 1;
   };
