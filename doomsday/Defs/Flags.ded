@@ -87,8 +87,11 @@ Flag { ID = "gnf_density"; Value = 0x100; }
 Flag { ID = "gnf_modelonly"; Value = 0x200; }
 Flag { ID = "gnf_scalerate"; Value = 0x400; }
 Flag { ID = "gnf_group"; Value = 0x800; }
+Flag { ID = "gnf_blendadd"; Value = 0x10; }
 Flag { ID = "gnf_blendsub"; Value = 0x1000; }
 Flag { ID = "gnf_blendrsub"; Value = 0x2000; }
+Flag { ID = "gnf_blendmul"; Value = 0x4000; }
+Flag { ID = "gnf_blendimul"; Value = 0x8000; }
 
 # Particle types
 Flag { ID = "pt_point"; Value = 1; }
