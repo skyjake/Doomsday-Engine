@@ -27,6 +27,7 @@
 enum							   // Colors.
 {
 	UIC_TEXT,
+	UIC_TITLE,
 	UIC_SHADOW,
 	UIC_BG_LIGHT,
 	UIC_BG_MEDIUM,
