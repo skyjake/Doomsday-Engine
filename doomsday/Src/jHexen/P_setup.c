@@ -1077,8 +1077,21 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 	}
 	players[consoleplayer].plr->viewz = 1; // will be set by player think
 
+#if _DEBUG
+	Z_CheckHeap();
+#endif
+
 	S_LevelChange();
+
+#if _DEBUG
+	Z_CheckHeap();
+#endif
+
 	S_StartMusic("chess", true); // Waiting-for-level-load song
+
+#if _DEBUG
+	Z_CheckHeap();
+#endif
 
 	Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1);
 
