@@ -1797,22 +1797,30 @@ void P_ClientSideThink()
 			if(!(mo->ddflags & DDMF_FLY))
 			{
 				// Start flying.
-				mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
+		//		mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
 			}
 		}
 		else
 		{
-			mo->ddflags &= ~(DDMF_FLY | DDMF_NOGRAVITY);
+		//	mo->ddflags &= ~(DDMF_FLY | DDMF_NOGRAVITY);
 		}
 	}
 	// We are flying when the Fly flag is set.
 	if(mo->ddflags & DDMF_FLY)
 	{
+		// Keep the Hexen fly flag in sync.
+		mo->flags2 |= MF2_FLY;
+
 		mo->momz = pl->flyheight * FRACUNIT;
 		if(pl->flyheight) pl->flyheight /= 2;
 		// Do some fly-bobbing.
 		if(mo->z > mo->floorz && leveltime & 2)
 			mo->z += finesine[(FINEANGLES/20*leveltime>>2)&FINEMASK];
+	}
+	else
+	{
+		// Clear the Fly flag.
+		mo->flags2 &= ~MF2_FLY;
 	}
 
 	if(mo->subsector->sector->special)
