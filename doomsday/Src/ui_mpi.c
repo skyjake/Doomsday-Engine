@@ -149,7 +149,7 @@ ui_object_t ob_server[] =	// Observer?
 	{ UI_TEXT,		0,	0,		50, 500,	0, 80,		"Max. players",		UIText_Drawer },
 	{ UI_SLIDER,	0,	0,		320, 510,	350, 60,	"",					UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_player_limit },
 	{ UI_TEXT,		1,	0,		50, 650,	0, 80,		"Master TCP/IP address", UIText_Drawer },
-	{ UI_EDIT,		1,	0,		320, 650,	380, 80,	"",					UIEdit_Drawer, UIEdit_Responder, 0, 0, &ed_masterip },
+	{ UI_EDIT,		1,	0,		320, 650,	350, 80,	"",					UIEdit_Drawer, UIEdit_Responder, 0, 0, &ed_masterip },
 	{ UI_BUTTON,	0,	0,		50, 920,	200, 80,	"Network Setup",	UIButton_Drawer, UIButton_Responder, 0, MPIGotoPage, &page_protocol },
 	{ UI_BUTTON2,	2,	0,		300, 920,	200, 80,	"Public Server",	UIButton_Drawer, UIButton_Responder, 0, MPIToggleMasterItems, &masterAware },
 	{ UI_BUTTON,	0,	UIF_DEFAULT, 750, 920, 200, 80,	"Start",			UIButton_Drawer, UIButton_Responder, 0, MPIStartServer },
