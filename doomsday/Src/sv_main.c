@@ -136,6 +136,7 @@ void Sv_FixLocalAngles()
 
 void Sv_HandlePacket(void)
 {
+	id_t id;
 	int i, mask, from = netbuffer.player;
 	ddplayer_t *pl = &players[from];
 	client_t *sender = &clients[from];
@@ -149,9 +150,27 @@ void Sv_HandlePacket(void)
 	case pcl_hello:
 	case pcl_hello2:
 		// Get the ID of the client.
-		sender->id = Msg_ReadLong();
-		Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", from,
-			sender->id);
+		id = Msg_ReadLong();
+		Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", 
+			from, id);
+
+		// Check for duplicate IDs.
+		for(i = 0; i < MAXPLAYERS; i++)
+		{
+			if(clients[i].connected && clients[i].id == id)
+			{
+				// Send a message to everybody.
+				Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, 
+					"New client connection refused: Duplicate ID "
+					"(%08x).\n", id);
+				N_TerminateClient(from);
+				break;
+			}
+		}
+		if(i < MAXPLAYERS) break; // Can't continue, refused!
+
+		// This is OK.
+		sender->id = id;
 		
 		if(netbuffer.msg.type == pcl_hello2)
 		{
@@ -328,13 +347,13 @@ void Sv_GetPackets(void)
 	int             netconsole;
 	int				start, num, i;
 	client_t		*sender;
-	ticcmd_t		*cmd;
+	byte			*unpacked;
 
 	while(Net_GetPacket())
 	{
 		switch(netbuffer.msg.type)
 		{
-		case pkt_ticcmd:
+		case pcl_commands:
 			// Determine who sent this packet.
 			netconsole = netbuffer.player;
 			if(netconsole < 0 || netconsole >= MAXPLAYERS) continue; 
@@ -349,13 +368,23 @@ void Sv_GetPackets(void)
 			// than zero.
 			sender->updateCount = UPDATECOUNT;
 			
+			// Unpack the commands in the packet. Since the game defines the
+			// ticcmd_t structure, it is the only one who can do this.
+			unpacked = (byte*) gx.NetPlayerEvent(netbuffer.length, 
+				DDPE_READ_COMMANDS, netbuffer.msg.data);
+
+			// The first two bytes contain the number of commands.
+			num = *(ushort*) unpacked;
+			unpacked += 2;
+
 			// Add the tics into the client's ticcmd buffer, if there is room.
 			// If the buffer overflows, the rest of the cmds will be forgotten.
-			num = Msg_ReadByte();
 			if(sender->numtics + num > BACKUPTICS) 
+			{
 				num = BACKUPTICS - sender->numtics;
+			}
 			start = sender->firsttic + sender->numtics;
-
+			
 			// Increase the counter.
 			sender->numtics += num;
 
@@ -363,12 +392,8 @@ void Sv_GetPackets(void)
 			for(i = start; num > 0; num--, i++)
 			{
 				if(i >= BACKUPTICS) i -= BACKUPTICS;
-				cmd = (ticcmd_t*) &sender->ticcmds[TICCMD_IDX(i)];
-				Msg_Read(cmd, TICCMD_SIZE);
-
-				// Check the time stamp.
-				/*time = gametic - Sv_Latency(cmd->time);
-				if(time > sender->time) sender->time = time;*/
+				memcpy(sender->ticcmds+TICCMD_IDX(i), unpacked, TICCMD_SIZE);
+				unpacked += TICCMD_SIZE;
 			}
 			break;
 
