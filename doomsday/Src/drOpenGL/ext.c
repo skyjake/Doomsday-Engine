@@ -32,6 +32,7 @@ int	extAtiTexEnvComb;
 int	extAniso;
 int	extLockArray;
 int extGenMip;
+int extS3TC;
 
 PFNGLCLIENTACTIVETEXTUREPROC	glClientActiveTextureARB;
 PFNGLACTIVETEXTUREARBPROC		glActiveTextureARB;
@@ -135,7 +136,7 @@ void initExtensions(void)
 
 	// Texture compression.
 	useCompr = DGL_FALSE;
-	if(ArgCheck("-texcomp"))
+	if(!ArgExists("-notexcomp"))
 	{
 		glGetError();
 		glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &i);
@@ -145,6 +146,8 @@ void initExtensions(void)
 			Con_Message("OpenGL: Texture compression (%i formats).\n", i);
 		}
 	}
+
+	query("GL_EXT_texture_compression_s3tc", &extS3TC);
 
 #ifdef USE_MULTITEXTURE
 	// ARB_multitexture 
