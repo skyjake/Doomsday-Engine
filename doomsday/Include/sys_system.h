@@ -42,5 +42,10 @@ void	Sys_OpenTextEditor(const char *filename);
 void	Sys_ShowWindow(boolean hide);
 int		Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority);
 void	Sys_SuspendThread(int handle, boolean dopause);
+boolean	Sys_GetThreadExitCode(int handle, uint *exitCode);
+int		Sys_CreateMutex(const char *name);
+void	Sys_DestroyMutex(int handle);
+void	Sys_AcquireMutex(int handle);
+void	Sys_ReleaseMutex(int handle);
 
 #endif

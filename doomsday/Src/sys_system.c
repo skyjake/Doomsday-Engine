@@ -250,18 +250,17 @@ void Sys_OpenTextEditor(const char *filename)
 	spawnlp(P_NOWAIT, "notepad.exe", "notepad.exe", filename, 0);
 }
 
-//===========================================================================
-// Sys_StartThread
-//	Priority can be -3...3, with zero being the normal priority.
-//	Returns a handle to the started thread.
-//===========================================================================
-int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
+/*
+ * Priority can be -3...3, with zero being the normal priority.
+ * Returns a handle to the started thread.
+ */
+int Sys_StartThread(systhreadfunc_t startPos, void *parm, int priority)
 {
 	HANDLE handle;
 	DWORD id;
 
 	// Use 512 Kb for the stack (too much/little?).
-	handle = CreateThread(0, 0x80000, startpos, parm, 0, &id);
+	handle = CreateThread(0, 0x80000, startPos, parm, 0, &id);
 	if(!handle)
 	{
 		Con_Message("Sys_StartThread: Failed to start new thread (%x).\n",
@@ -285,16 +284,74 @@ int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
 	return (int) handle;
 }
 
-//===========================================================================
-// Sys_SuspendThread
-//	Suspends or resumes the execution of a thread.
-//===========================================================================
+/*
+ * Suspend or resume the execution of a thread.
+ */
 void Sys_SuspendThread(int handle, boolean dopause)
 {
 	if(dopause)
-		SuspendThread( (HANDLE) handle);
+		SuspendThread( (HANDLE) handle );
 	else
-		ResumeThread( (HANDLE) handle);
+		ResumeThread( (HANDLE) handle );
 }
 
+/*
+ * Return the exit code of the given thread. Returns true if the thread
+ * has stopped, false if not.
+ */
+boolean Sys_GetThreadExitCode(int handle, uint *exitCode)
+{
+	DWORD code;
 
+	if(!GetExitCodeThread((HANDLE)handle, &code))
+	{
+		// Bad handle?
+		return false;
+	}
+
+	// Still going?
+	if(code == STILL_ACTIVE) return false;
+
+	if(exitCode) *exitCode = code;
+	return true;
+}
+
+/*
+ * Create a new mutex. Returns a handle with which the mutex can be acquired
+ * and released.
+ */
+int Sys_CreateMutex(const char *name)
+{
+	return (int) CreateMutex(NULL, FALSE, name);
+}
+
+/*
+ * Destroy the mutex object. 
+ */
+void Sys_DestroyMutex(int handle)
+{
+	CloseHandle((HANDLE)handle);
+}
+
+/*
+ * Acquire a mutex. Blocks until ownership has been acquired.
+ */
+void Sys_AcquireMutex(int handle)
+{
+	// Five seconds is plenty.
+	if(WaitForSingleObject((HANDLE)handle, 5000) == WAIT_TIMEOUT) 
+	{
+		// Couldn't lock it.
+#ifdef _DEBUG
+		Con_Error("Sys_AcquireMutex: Failed to acquire mutex.\n");
+#endif
+	}
+}
+
+/*
+ * Release a mutex.
+ */
+void Sys_ReleaseMutex(int handle)
+{
+	ReleaseMutex((HANDLE)handle);
+}
