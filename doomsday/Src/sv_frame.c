@@ -285,6 +285,17 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
 	// Flags. What elements are included in the delta?
 	if(d->selector & ~DDMOBJ_SELECTOR_MASK) df |= MDF_SELSPEC;
 
+	// Floor/ceiling z?
+	if(df & MDF_POS_Z)
+	{
+		if(d->z == DDMININT || d->z == DDMAXINT)
+		{
+			df &= ~MDF_POS_Z;
+			df |= MDF_MORE_FLAGS;
+			moreFlags |= (d->z == DDMININT? MDFE_Z_FLOOR : MDFE_Z_CEILING);
+		}
+	}
+
 	// First the mobj ID number and flags.
 	Msg_WriteShort(delta->delta.id);
 	Msg_WriteShort(df & 0xffff);
@@ -470,7 +481,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
 	Msg_WriteShort(delta->delta.id);
 
 	// Flags as a packed short. (Usually only one byte, though.)
-	Msg_WritePackedShort(df & 0xffff);
+	Msg_WriteShort(df & 0xffff);
 
 	if(df & SDF_FLOORPIC) Msg_WritePackedShort(d->floorPic);
 	if(df & SDF_CEILINGPIC) Msg_WritePackedShort(d->ceilingPic);
