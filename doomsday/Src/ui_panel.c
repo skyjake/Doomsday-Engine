@@ -137,6 +137,7 @@ cvarbutton_t cvarbuttons[] = {
 	{0, "rend-info-tris"},
 	{0, "rend-sky-full"},
 	{0, "rend-shadow"},
+	{0, "rend-fakeradio"},
 	{0, 0}
 };
 
@@ -277,6 +278,8 @@ uidata_slider_t sld_shadow_dark =
 uidata_slider_t sld_shadow_far = { 0, 3000, 0, 1, false, "rend-shadow-far" };
 uidata_slider_t sld_shadow_radmax =
 	{ 0, 128, 0, 1, false, "rend-shadow-radius-max" };
+uidata_slider_t sld_fakeradio_dark =
+	{ 0, 2, 0, .01f, true, "rend-fakeradio-darkness" };
 uidata_slider_t sld_vid_gamma = { .1f, 3, 0, .01f, true, "vid-gamma" };
 uidata_slider_t sld_vid_contrast = { 0, 5, 0, .01f, true, "vid-contrast" };
 uidata_slider_t sld_vid_bright = { -2, 2, 0, .01f, true, "vid-bright" };
@@ -408,7 +411,11 @@ ui_object_t ob_panel[] =
 	{ UI_SLIDER,	0,	0,				680, 495, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_shadow_far },
 	{ UI_TEXT,		0,	0,				300, 555, 0, 55,	"Maximum shadow radius", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 555, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_shadow_radmax },
-
+	{ UI_TEXT,		0,	0,				300, 615, 0, 55,	"Simulate radiosity", UIText_Drawer },
+	{ UI_BUTTON2,	0,	0,				680, 615, 70, 55,	"rend-fakeradio", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+	{ UI_TEXT,		0,	0,				300, 675, 0, 55,	"Radiosity shadow darkness", UIText_Drawer },
+	{ UI_SLIDER,	0,	0,				680, 675, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fakeradio_dark },
+	
 	{ UI_META,		6 },
 	{ UI_TEXT,		0,	0,				280, 0, 0, 50,		"Graphics Options: Lights", UIText_Drawer },
 	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Enable dynamic lights", UIText_Drawer },
@@ -722,8 +729,8 @@ void CP_CvarSlider(ui_object_t * ob)
 //===========================================================================
 int CP_KeyGrabResponder(ui_object_t * ob, event_t *ev)
 {
-	if((ev->type == ev_mousebdown && UI_MouseInside(ob))
-	   || (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
+	if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
+	   (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
 	{
 		// We want the focus.
 		return true;
@@ -877,8 +884,8 @@ ui_object_t *CP_FindHover(void)
 
 	for(ob = ob_panel; ob->type; ob++)
 	{
-		if(ob->flags & UIF_HIDDEN || ob->type != UI_TEXT || ob->group < 2
-		   || ob->relx < 280)
+		if(ob->flags & UIF_HIDDEN || ob->type != UI_TEXT || ob->group < 2 ||
+		   ob->relx < 280)
 			continue;
 		// Extend the detection area to the right edge of the screen.
 		if(UI_MouseInsideBox(ob->x, ob->y, screenWidth, ob->h))
