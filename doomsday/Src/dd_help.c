@@ -193,13 +193,16 @@ char *DH_GetString(void *foundNode, int type)
 //===========================================================================
 void DD_InitHelp(void)
 {
+	char helpFileName[256];
+
 	if(helpInited) return;
 
 	// Init the links.
 	helpRoot.next = helpRoot.prev = &helpRoot;
 
 	// Control Panel help.
-	DH_ReadStrings("}Data\\CPHelp.txt");	
+	M_TranslatePath("}Data\\CPHelp.txt", helpFileName);
+	DH_ReadStrings(helpFileName);	
 
 	// Help is now available.
 	helpInited = true;
