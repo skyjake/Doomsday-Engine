@@ -917,7 +917,7 @@ extern          "C" {
 		void           *ptr;	   // Pointer to the data.
 		float           min, max;  /* Minimum and maximum values
 								      (for ints and floats). */
-		char           *help;	   // A short help text.
+		const char     *help;	   // A short help text.
 	} cvar_t;
 
 	//------------------------------------------------------------------------

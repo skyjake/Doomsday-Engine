@@ -712,7 +712,7 @@ void M_ForceUppercase(char *text)
 	}
 }
 
-void M_WriteCommented(FILE * file, char *text)
+void M_WriteCommented(FILE * file, const char *text)
 {
 	char   *buff = malloc(strlen(text) + 1), *line;
 

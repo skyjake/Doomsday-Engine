@@ -99,49 +99,10 @@ typedef struct knownword_S {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-D_CMD(ListCmds);
-D_CMD(ListVars);
-D_CMD(Console);
-D_CMD(Version);
-D_CMD(Quit);
-D_CMD(LoadFile);
-D_CMD(UnloadFile);
-D_CMD(ResetLumps);
-D_CMD(ListFiles);
-D_CMD(BackgroundTurn);
-D_CMD(Dump);
-D_CMD(SkyDetail);
-D_CMD(Fog);
-D_CMD(Bind);
-D_CMD(ListBindings);
-D_CMD(Font);
-D_CMD(Alias);
-D_CMD(ListAliases);
-D_CMD(SetGamma);
-D_CMD(SetRes);
-D_CMD(Chat);
-D_CMD(Parse);
-D_CMD(DeleteBind);
-D_CMD(Wait);
-D_CMD(Repeat);
-D_CMD(Echo);
-D_CMD(FlareConfig);
-D_CMD(ListActs);
-D_CMD(ClearBindings);
-D_CMD(AddSub);
-D_CMD(Ping);
-D_CMD(Login);
-D_CMD(Logout);
-D_CMD(Dir);
-D_CMD(Toggle);
-D_CMD(If);
-
-#ifdef _DEBUG
-D_CMD(TranslateFont);
-#endif
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void registerCommands(void);
+static void registerVariables(void);
 static int executeSubCmd(const char *subCmd);
 void    Con_SplitIntoSubCommands(const char *command, timespan_t markerOffset);
 calias_t *Con_GetAlias(const char *name);
@@ -151,7 +112,7 @@ calias_t *Con_GetAlias(const char *name);
 extern boolean paletted, r_s3tc;	// Use GL_EXT_paletted_texture
 extern int freezeRLs;
 
-extern cvar_t netCVars[], inputCVars[];
+//extern cvar_t netCVars[], inputCVars[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -175,598 +136,13 @@ boolean consoleShowFPS = false;
 boolean consoleShadowText = true;
 
 cvar_t *cvars = NULL;
-int     numCVars = 0;
+int     numCVars, maxCVars;
 
 ccmd_t *ccmds = NULL;			// The list of console commands.
-int     numCCmds = 0;			// Number of console commands.
+int     numCCmds, maxCCmds;		// Number of console commands.
 
 calias_t *caliases = NULL;
 int     numCAliases = 0;
-
-// Console variables (old <= 1.5.x versions first, 1.6.0 below).
-// (Cvars provide access to global variables via the console.)
-// FIXME: These don't really all belong here.
-cvar_t  engineCVars[] = {
-	"bgAlpha", OBSOLETE, CVT_INT, &consoleAlpha, 0, 100,
-	"Console background translucency.",
-	"bgLight", OBSOLETE, CVT_INT, &consoleLight, 0, 100,
-	"Console background light level.",
-	"CompletionMode", OBSOLETE, CVT_INT, &conCompMode, 0, 1,
-	"How to complete words when pressing Tab:\n0=Show completions, 1=Cycle through them.",
-	"ConsoleDump", OBSOLETE, CVT_BYTE, &consoleDump, 0, 1,
-	"1=Dump all console messages to Doomsday.out.",
-	"ConsoleKey", OBSOLETE, CVT_INT, &consoleActiveKey, 0, 255,
-	"Key to activate the console (ASCII code, default is tilde, 96).",
-	"ConsoleShowKeys", OBSOLETE, CVT_BYTE, &consoleShowKeys, 0, 1,
-	"1=Show ASCII codes of pressed keys in the console.",
-	"SilentCVars", OBSOLETE, CVT_BYTE, &conSilentCVars, 0, 1,
-	"1=Don't show the value of a cvar when setting it.",
-	"dlBlend", OBSOLETE, CVT_INT, &dlBlend, 0, 3,
-	"Dynamic lights color blending mode:\n0=normal, 1=additive, 2=no blending.",
-	//  "dlClip",           OBSOLETE,           CVT_INT,    &clipLights,    0, 1,   "1=Clip dynamic lights (try using with dlblend 2).",
-	"dlFactor", OBSOLETE, CVT_FLOAT, &dlFactor, 0, 1,
-	"Intensity factor for dynamic lights.",
-	"DynLights", OBSOLETE, CVT_INT, &useDynLights, 0, 1,
-	"1=Render dynamic lights.",
-	"WallGlow", OBSOLETE, CVT_INT, &useWallGlow, 0, 1,
-	"1=Render glow on walls.",
-	"GlowHeight", OBSOLETE, CVT_INT, &glowHeight, 0, 1024,
-	"Height of wall glow.",
-	"i_JoySensi", OBSOLETE, CVT_INT, &joySensitivity, 0, 9,
-	"Joystick sensitivity.",
-	"i_MouseInvY", OBSOLETE, CVT_INT, &mouseInverseY, 0, 1,
-	"1=Inversed mouse Y axis.",
-	"i_mWheelSensi", OBSOLETE | CVF_NO_MAX, CVT_INT, &mouseWheelSensi, 0, 0,
-	"Mouse wheel sensitivity.",
-	"i_KeyWait1", OBSOLETE | CVF_NO_MAX, CVT_INT, &repWait1, 6, 0,
-	"The number of 35 Hz ticks to wait before first key repeat.",
-	"i_KeyWait2", OBSOLETE | CVF_NO_MAX, CVT_INT, &repWait2, 1, 0,
-	"The number of 35 Hz ticks to wait between key repeats.",
-	"i_MouseDisX", OBSOLETE, CVT_INT, &mouseDisableX, 0, 1,
-	"1=Disable mouse X axis.",
-	"i_MouseDisY", OBSOLETE, CVT_INT, &mouseDisableY, 0, 1,
-	"1=Disable mouse Y axis.",
-	"MaxDl", OBSOLETE | CVF_NO_MAX, CVT_INT, &maxDynLights, 0, 0,
-	"The maximum number of dynamic lights. 0=no limit.",
-	"n_ServerName", OBSOLETE, CVT_CHARPTR, &serverName, 0, 0,
-	"The name of this computer if it's a server.",
-	"n_ServerInfo", OBSOLETE, CVT_CHARPTR, &serverInfo, 0, 0,
-	"The description given of this computer if it's a server.",
-	"n_PlrName", OBSOLETE, CVT_CHARPTR, &playerName, 0, 0,
-	"Your name in multiplayer games.",
-	"npt_Active", OBSOLETE, CVT_INT, &nptActive, 0, 3,
-	"Network protocol: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial link.",
-	"npt_IPAddress", OBSOLETE, CVT_CHARPTR, &nptIPAddress, 0, 0,
-	"TCP/IP address for searching servers.",
-	"npt_IPPort", OBSOLETE | CVF_NO_MAX, CVT_INT, &nptIPPort, 0, 0,
-	"TCP/IP port to use for all data traffic.",
-	"npt_Modem", OBSOLETE | CVF_NO_MAX, CVT_INT, &nptModem, 0, 0,
-	"Index of the selected modem.",
-	"npt_PhoneNum", OBSOLETE, CVT_CHARPTR, &nptPhoneNum, 0, 0,
-	"Phone number to dial to when connecting.",
-	"npt_SerialPort", OBSOLETE, CVT_INT, &nptSerialPort, 1, 8,
-	"COM port to use for serial link connection.",
-	"npt_SerialBaud", OBSOLETE | CVF_NO_MAX, CVT_INT, &nptSerialBaud, 0, 0,
-	"Baud rate for serial link connections.",
-	"npt_SerialStopBits", OBSOLETE, CVT_INT, &nptSerialStopBits, 0, 2,
-	"0=1 bit, 1=1.5 bits, 2=2 bits.",
-	"npt_SerialParity", OBSOLETE, CVT_INT, &nptSerialParity, 0, 3,
-	"0=None, 1=odd, 2=even, 3=mark parity.",
-	"npt_SerialFlowCtrl", OBSOLETE, CVT_INT, &nptSerialFlowCtrl, 0, 4,
-	"0=None, 1=XON/XOFF, 2=RTS, 3=DTR, 4=RTS/DTR flow control.",
-	"r_Ambient", OBSOLETE, CVT_INT, &r_ambient, 0, 255, "Ambient light level.",
-	"r_FOV", OBSOLETE, CVT_FLOAT, &fieldOfView, 1, 179, "Field of view.",
-	"r_Gamma", OBSOLETE | CVF_PROTECTED, CVT_INT, &usegamma, 0, 4,
-	"The gamma correction level (0-4).",
-	"r_SmoothRaw", OBSOLETE | CVF_PROTECTED, CVT_INT, &linearRaw, 0, 1,
-	"1=Fullscreen images (320x200) use linear interpolation.",
-	"r_Mipmapping", OBSOLETE | CVF_PROTECTED, CVT_INT, &mipmapping, 0, 5,
-	"The mipmapping mode for textures.",
-	"r_SkyDetail", OBSOLETE | CVF_PROTECTED, CVT_INT, &skyDetail, 3, 7,
-	"Number of sky sphere quadrant subdivisions.",
-	"r_SkyRows", OBSOLETE | CVF_PROTECTED, CVT_INT, &skyRows, 1, 8,
-	"Number of sky sphere rows.",
-	"r_SkyDist", OBSOLETE | CVF_NO_MAX, CVT_FLOAT, &skyDist, 1, 0,
-	"Sky sphere radius.",
-	"r_FullSky", OBSOLETE, CVT_INT, &r_fullsky, 0, 1,
-	"1=Always render the full sky sphere.",
-	"r_Paletted", OBSOLETE | CVF_PROTECTED, CVT_BYTE, &paletted, 0, 1,
-	"1=Use the GL_EXT_shared_texture_palette extension.",
-	"r_SpriteFilter", OBSOLETE, CVT_INT, &filterSprites, 0, 1,
-	"1=Render smooth sprites.",
-	"r_Textures", OBSOLETE | CVF_NO_ARCHIVE, CVT_BYTE, &renderTextures, 0, 1,
-	"1=Render with textures.",
-	"r_TexQuality", OBSOLETE, CVT_INT, &texQuality, 0, 8,
-	"The quality of textures (0-8).",
-	"r_MaxSpriteAngle", OBSOLETE, CVT_FLOAT, &maxSpriteAngle, 0, 90,
-	"Maximum angle for slanted sprites (spralign 2).",
-	"r_dlMaxRad", OBSOLETE, CVT_INT, &dlMaxRad, 64, 512,
-	"Maximum radius of dynamic lights (default: 128).",
-	"r_dlRadFactor", OBSOLETE, CVT_FLOAT, &dlRadFactor, 0.1f, 10,
-	"A multiplier for dynlight radii (default: 1).",
-	"r_TexGlow", OBSOLETE, CVT_INT, &r_texglow, 0, 1,
-	"1=Enable glowing textures.",
-	"r_WeaponOffsetScale", OBSOLETE | CVF_NO_MAX, CVT_FLOAT,
-	&weaponOffsetScale, 0, 0, "Scaling of player weapon (x,y) offset.",
-	"r_NoSpriteZ", OBSOLETE, CVT_INT, &r_nospritez, 0, 1,
-	"1=Don't write sprites in the Z buffer.",
-	"r_Precache", OBSOLETE, CVT_BYTE, &r_precache_sprites, 0, 1,
-	"1=Precache sprites at level setup (slow).",
-	"r_UseSRVO", OBSOLETE, CVT_INT, &r_use_srvo, 0, 2,
-	"1=Use short-range visual offsets for models.\n2=Use SRVO for sprites, too (unjags actor movement).",
-	"r_UseVisAngle", OBSOLETE, CVT_INT, &r_use_srvo_angle, 0, 1,
-	"1=Use separate visual angle for mobjs (unjag actors).",
-	"r_Detail", OBSOLETE, CVT_INT, &r_detail, 0, 1,
-	"1=Render with detail textures.",
-	"DefaultWads", OBSOLETE, CVT_CHARPTR, &defaultWads, 0, 0,
-	"The list of WADs to be loaded at startup.",
-	"DefResX", OBSOLETE | CVF_NO_MAX, CVT_INT, &defResX, 320, 0,
-	"Default resolution (X).",
-	"DefResY", OBSOLETE | CVF_NO_MAX, CVT_INT, &defResY, 240, 0,
-	"Default resolution (Y).",
-	"SimpleSky", OBSOLETE, CVT_INT, &simpleSky, 0, 2,
-	"Sky rendering mode: 0=normal, 1=quads.",
-	"SprAlign", OBSOLETE, CVT_INT, &alwaysAlign, 0, 3,
-	"1=Always align sprites with the view plane.\n2=Align to camera, unless slant > r_maxSpriteAngle.",
-	"SprBlend", OBSOLETE, CVT_INT, &missileBlend, 0, 1,
-	"1=Use additive blending for explosions.",
-	"SprLight", OBSOLETE, CVT_INT, &litSprites, 0, 1,
-	"1=Sprites lit using dynamic lights.",
-	"s_VolMIDI", OBSOLETE | CVF_PROTECTED, CVT_INT,
-	&mus_volume /*&snd_MusicVolume */ , 0, 255,
-	"MIDI music volume (0-255).",
-	"s_VolSFX", OBSOLETE, CVT_INT, &sfx_volume /*&snd_SfxVolume */ , 0, 255,
-	"Sound effects volume (0-255).",
-	"UseModels", OBSOLETE | CVF_NO_MAX, CVT_INT, &useModels, 0, 1,
-	"Render using 3D models when possible.",
-	"UseParticles", OBSOLETE, CVT_INT, &r_use_particles, 0, 1,
-	"1=Render particle effects.",
-	"MaxParticles", OBSOLETE | CVF_NO_MAX, CVT_INT, &r_max_particles, 0, 0,
-	"Maximum number of particles to render. 0=no limit.",
-	"PtcSpawnRate", OBSOLETE, CVT_FLOAT, &r_particle_spawn_rate, 0, 5,
-	"Particle spawn rate multiplier (default: 1).",
-	"ModelLight", OBSOLETE, CVT_INT, &modelLight, 0, 10,
-	"Maximum number of light sources on models.",
-	"ModelInter", OBSOLETE, CVT_INT, &frameInter, 0, 1,
-	"1=Interpolate frames.",
-	"ModelAspectMod", OBSOLETE | CVF_NO_MAX | CVF_NO_MIN, CVT_FLOAT,
-	&rModelAspectMod, 0, 0, "Scale for MD2 z-axis when model is loaded.",
-	"ModelMaxZ", OBSOLETE | CVF_NO_MAX, CVT_INT, &r_maxmodelz, 0, 0,
-	"Farther than this models revert back to sprites.",
-	//  "PredictTics",  OBSOLETE|CVF_NO_MAX,        CVT_INT,    &predict_tics,  0, 0,   "Max tics to predict ahead.",
-	//  "MaxQueuePackets",  OBSOLETE,           CVT_INT,    &maxQueuePackets, 0, 16, "Max packets in send queue.",
-	"sv_MasterAware", OBSOLETE, CVT_INT, &masterAware, 0, 1,
-	"1=Send info to master server.",
-	"MasterAddress", OBSOLETE, CVT_CHARPTR, &masterAddress, 0, 0,
-	"Master server IP address / name.",
-	"MasterPort", OBSOLETE, CVT_INT, &masterPort, 0, 65535,
-	"Master server TCP/IP port.",
-	"vid_Gamma", OBSOLETE, CVT_FLOAT, &vid_gamma, 0.1f, 6,
-	"Display gamma correction factor: 1=normal.",
-	"vid_Contrast", OBSOLETE, CVT_FLOAT, &vid_contrast, 0, 10,
-	"Display contrast: 1=normal.",
-	"vid_Bright", OBSOLETE, CVT_FLOAT, &vid_bright, -2, 2,
-	"Display brightness: -1=dark, 0=normal, 1=light.",
-
-	//===========================================================================
-	// The new, consistent names (1.6.0 ->)
-	//===========================================================================
-	// Console
-	"con-alpha", 0, CVT_INT, &consoleAlpha, 0, 100,
-	"Console background translucency.",
-	"con-light", 0, CVT_INT, &consoleLight, 0, 100,
-	"Console background light level.",
-	"con-completion", 0, CVT_INT, &conCompMode, 0, 1,
-	"How to complete words when pressing Tab:\n0=Show completions, 1=Cycle through them.",
-	"con-dump", 0, CVT_BYTE, &consoleDump, 0, 1,
-	"1=Dump all console messages to Doomsday.out.",
-	"con-key-activate", 0, CVT_INT, &consoleActiveKey, 0, 255,
-	"Key to activate the console (ASCII code, default is tilde, 96).",
-	"con-key-show", 0, CVT_BYTE, &consoleShowKeys, 0, 1,
-	"1=Show ASCII codes of pressed keys in the console.",
-	"con-var-silent", 0, CVT_BYTE, &conSilentCVars, 0, 1,
-	"1=Don't show the value of a cvar when setting it.",
-	"con-progress", 0, CVT_BYTE, &progress_enabled, 0, 1,
-	"1=Show progress bar.",
-	"con-fps", 0, CVT_BYTE, &consoleShowFPS, 0, 1,
-	"1=Show FPS counter on screen.",
-	"con-text-shadow", 0, CVT_BYTE, &consoleShadowText, 0, 1,
-	"1=Text in the console has a shadow (might be slow).",
-
-	// User Interface
-	"ui-panel-help", 0, CVT_BYTE, &panel_show_help, 0, 1,
-	"1=Enable help window in Control Panel.",
-	"ui-panel-tips", 0, CVT_BYTE, &panel_show_tips, 0, 1,
-	"1=Show help indicators in Control Panel.",
-	"ui-cursor-width", CVF_NO_MAX, CVT_INT, &uiMouseWidth, 1, 0,
-	"Mouse cursor width.",
-	"ui-cursor-height", CVF_NO_MAX, CVT_INT, &uiMouseHeight, 1, 0,
-	"Mouse cursor height.",
-
-	// Video
-	"vid-res-x", CVF_NO_MAX, CVT_INT, &defResX, 320, 0,
-	"Default resolution (X).",
-	"vid-res-y", CVF_NO_MAX, CVT_INT, &defResY, 240, 0,
-	"Default resolution (Y).",
-	"vid-gamma", 0, CVT_FLOAT, &vid_gamma, 0.1f, 6,
-	"Display gamma correction factor: 1=normal.",
-	"vid-contrast", 0, CVT_FLOAT, &vid_contrast, 0, 10,
-	"Display contrast: 1=normal.",
-	"vid-bright", 0, CVT_FLOAT, &vid_bright, -2, 2,
-	"Display brightness: -1=dark, 0=normal, 1=light.",
-
-	// Render
-	"rend-dev-freeze", 0, CVT_INT, &freezeRLs, 0, 1,
-	"1=Stop updating rendering lists.",
-	"rend-dev-wireframe", 0, CVT_INT, &renderWireframe, 0, 1,
-	"1=Render player view in wireframe mode.",
-	"rend-dev-framecount", CVF_PROTECTED, CVT_INT, &framecount, 0, 0,
-	"Frame counter.",
-	// * Render-Info
-	"rend-info-tris", 0, CVT_BYTE, &rend_info_tris, 0, 1,
-	"1=Print triangle count after rendering a frame.",
-	"rend-info-lums", 0, CVT_BYTE, &rend_info_lums, 0, 1,
-	"1=Print lumobj count after rendering a frame.",
-	// * Render-Light
-	"rend-light-ambient", 0, CVT_INT, &r_ambient, 0, 255,
-	"Ambient light level.",
-	"rend-light", 0, CVT_INT, &useDynLights, 0, 1, "1=Render dynamic lights.",
-	"rend-light-blend", 0, CVT_INT, &dlBlend, 0, 3,
-	"Dynamic lights color blending mode:\n0=normal, 1=additive, 2=no blending.",
-	//  "rend-light-clip",      0,          CVT_INT,    &clipLights,    0, 1,   "1=Clip dynamic lights (try using with dlblend 2).",
-	"rend-light-bright", 0, CVT_FLOAT, &dlFactor, 0, 1,
-	"Intensity factor for dynamic lights.",
-	"rend-light-num", 0, CVT_INT, &maxDynLights, 0, 8000,
-	"The maximum number of dynamic lights. 0=no limit.",
-	//  "rend-light-shrink",    0,          CVT_FLOAT,  &dlContract,    0, 1,   "Shrink dynlight wall polygons horizontally.",
-	"rend-light-radius-scale", 0, CVT_FLOAT, &dlRadFactor, 0.1f, 10,
-	"A multiplier for dynlight radii (default: 1).",
-	"rend-light-radius-max", 0, CVT_INT, &dlMaxRad, 64, 512,
-	"Maximum radius of dynamic lights (default: 128).",
-	"rend-light-wall-angle", CVF_NO_MAX, CVT_FLOAT, &rend_light_wall_angle, 0,
-	0, "Intensity of angle-based wall light.",
-	"rend-light-multitex", 0, CVT_INT, &useMultiTexLights, 0, 1,
-	"1=Use multitexturing when rendering dynamic lights.",
-	// * Render-Light-Decor
-	"rend-light-decor", 0, CVT_BYTE, &useDecorations, 0, 1,
-	"1=Enable surface light decorations.",
-	"rend-light-decor-plane-far", CVF_NO_MAX, CVT_FLOAT, &decorPlaneMaxDist, 0,
-	0, "Maximum distance at which plane light decorations are visible.",
-	"rend-light-decor-wall-far", CVF_NO_MAX, CVT_FLOAT, &decorWallMaxDist, 0,
-	0, "Maximum distance at which wall light decorations are visible.",
-	"rend-light-decor-plane-bright", 0, CVT_FLOAT, &decorPlaneFactor, 0, 10,
-	"Brightness of plane light decorations.",
-	"rend-light-decor-wall-bright", 0, CVT_FLOAT, &decorWallFactor, 0, 10,
-	"Brightness of wall light decorations.",
-	"rend-light-decor-angle", 0, CVT_FLOAT, &decorFadeAngle, 0, 1,
-	"Reduce brightness if surface/view angle too steep.",
-	"rend-light-sky", 0, CVT_INT, &rendSkyLight, 0, 1,
-	"1=Use special light color in sky sectors.",
-	// * Render-Glow
-	"rend-glow", 0, CVT_INT, &r_texglow, 0, 1, "1=Enable glowing textures.",
-	"rend-glow-wall", 0, CVT_INT, &useWallGlow, 0, 1,
-	"1=Render glow on walls.",
-	"rend-glow-height", 0, CVT_INT, &glowHeight, 0, 1024,
-	"Height of wall glow.",
-	"rend-glow-fog-bright", 0, CVT_FLOAT, &glowFogBright, 0, 1,
-	"Brightness of wall glow when fog is enabled.",
-	// * Render-Halo
-	"rend-halo", 0, CVT_INT, &haloMode, 0, 5,
-	"Number of flares to draw per light.",
-	"rend-halo-bright", 0, CVT_INT, &haloBright, 0, 100,
-	"Halo/flare brightness.",
-	"rend-halo-occlusion", CVF_NO_MAX, CVT_INT, &haloOccludeSpeed, 0, 0,
-	"Rate at which occluded halos fade.",
-	"rend-halo-size", 0, CVT_INT, &haloSize, 0, 100, "Size of halos.",
-	"rend-halo-secondary-limit", CVF_NO_MAX, CVT_FLOAT, &minHaloSize, 0, 0,
-	"Minimum halo size.",
-	"rend-halo-fade-far", CVF_NO_MAX, CVT_FLOAT, &haloFadeMax, 0, 0,
-	"Distance at which halos are no longer visible.",
-	"rend-halo-fade-near", CVF_NO_MAX, CVT_FLOAT, &haloFadeMin, 0, 0,
-	"Distance to begin fading halos.",
-	// * Render-FakeRadio
-	"rend-fakeradio", 0, CVT_INT, &rendFakeRadio, 0, 1,
-	"1=Enable simulated radiosity lighting.",
-	// * Render-Camera
-	"rend-camera-fov", 0, CVT_FLOAT, &fieldOfView, 1, 179, "Field of view.",
-	"rend-camera-smooth", 0, CVT_INT, &rend_camera_smooth, 0, 1,
-	"1=Filter camera movement between game tics.",
-	// * Render-Texture
-	"rend-tex", CVF_NO_ARCHIVE, CVT_INT, &renderTextures, 0, 1,
-	"1=Render with textures.",
-	"rend-tex-gamma", CVF_PROTECTED, CVT_INT, &usegamma, 0, 4,
-	"The gamma correction level (0-4).",
-	"rend-tex-mipmap", CVF_PROTECTED, CVT_INT, &mipmapping, 0, 5,
-	"The mipmapping mode for textures.",
-	"rend-tex-paletted", CVF_PROTECTED, CVT_BYTE, &paletted, 0, 1,
-	"1=Use the GL_EXT_shared_texture_palette extension.",
-	"rend-tex-external-always", 0, CVT_BYTE, &loadExtAlways, 0, 1,
-	"1=Always use external texture resources (overrides -pwadtex).",
-	"rend-tex-quality", 0, CVT_INT, &texQuality, 0, 8,
-	"The quality of textures (0-8).",
-	"rend-tex-filter-sprite", 0, CVT_INT, &filterSprites, 0, 1,
-	"1=Render smooth sprites.",
-	"rend-tex-filter-raw", CVF_PROTECTED, CVT_INT, &linearRaw, 0, 1,
-	"1=Fullscreen images (320x200) use linear interpolation.",
-	"rend-tex-filter-smart", 0, CVT_INT, &useSmartFilter, 0, 1,
-	"1=Use hq2x-filtering on all textures.",
-	"rend-tex-detail", 0, CVT_INT, &r_detail, 0, 1,
-	"1=Render with detail textures.",
-	"rend-tex-detail-scale", CVF_NO_MIN | CVF_NO_MAX, CVT_FLOAT, &detailScale,
-	0, 0, "Global detail texture factor.",
-	"rend-tex-detail-strength", 0, CVT_FLOAT, &detailFactor, 0, 10,
-	"Global detail texture strength factor.",
-	//"rend-tex-detail-far",    CVF_NO_MAX, CVT_FLOAT,  &detailMaxDist, 1, 0,   "Maximum distance where detail textures are visible.",
-	"rend-tex-detail-multitex", 0, CVT_INT, &useMultiTexDetails, 0, 1,
-	"1=Use multitexturing when rendering detail textures.",
-	"rend-tex-anim-smooth", 0, CVT_BYTE, &smoothTexAnim, 0, 1,
-	"1=Enable interpolated texture animation.",
-	// * Render-Sky
-	"rend-sky-detail", CVF_PROTECTED, CVT_INT, &skyDetail, 3, 7,
-	"Number of sky sphere quadrant subdivisions.",
-	"rend-sky-rows", CVF_PROTECTED, CVT_INT, &skyRows, 1, 8,
-	"Number of sky sphere rows.",
-	"rend-sky-distance", CVF_NO_MAX, CVT_FLOAT, &skyDist, 1, 0,
-	"Sky sphere radius.",
-	"rend-sky-full", 0, CVT_INT, &r_fullsky, 0, 1,
-	"1=Always render the full sky sphere.",
-	"rend-sky-simple", 0, CVT_INT, &simpleSky, 0, 2,
-	"Sky rendering mode: 0=normal, 1=quads.",
-	// * Render-Sprite
-	"rend-sprite-align-angle", 0, CVT_FLOAT, &maxSpriteAngle, 0, 90,
-	"Maximum angle for slanted sprites (spralign 2).",
-	"rend-sprite-noz", 0, CVT_INT, &r_nospritez, 0, 1,
-	"1=Don't write sprites in the Z buffer.",
-	"rend-sprite-precache", 0, CVT_BYTE, &r_precache_sprites, 0, 1,
-	"1=Precache sprites at level setup (slow).",
-	"rend-sprite-align", 0, CVT_INT, &alwaysAlign, 0, 3,
-	"1=Always align sprites with the view plane.\n2=Align to camera, unless slant > r_maxSpriteAngle.",
-	"rend-sprite-blend", 0, CVT_INT, &missileBlend, 0, 1,
-	"1=Use additive blending for explosions.",
-	"rend-sprite-lit", 0, CVT_INT, &litSprites, 0, 1,
-	"1=Sprites lit using dynamic lights.",
-	// * Render-Model
-	"rend-model", CVF_NO_MAX, CVT_INT, &useModels, 0, 1,
-	"Render using 3D models when possible.",
-	"rend-model-lights", 0, CVT_INT, &modelLight, 0, 10,
-	"Maximum number of light sources on models.",
-	"rend-model-inter", 0, CVT_INT, &frameInter, 0, 1, "1=Interpolate frames.",
-	"rend-model-aspect", CVF_NO_MAX | CVF_NO_MIN, CVT_FLOAT, &rModelAspectMod,
-	0, 0, "Scale for MD2 z-axis when model is loaded.",
-	"rend-model-distance", CVF_NO_MAX, CVT_INT, &r_maxmodelz, 0, 0,
-	"Farther than this models revert back to sprites.",
-	"rend-model-precache", 0, CVT_BYTE, &r_precache_skins, 0, 1,
-	"1=Precache 3D models at level setup (slow).",
-	"rend-model-lod", CVF_NO_MAX, CVT_FLOAT, &rend_model_lod, 0, 0,
-	"Custom level of detail factor. 0=LOD disabled, 1=normal.",
-	"rend-model-mirror-hud", 0, CVT_INT, &mirrorHudModels, 0, 1,
-	"1=Mirror HUD weapon models.",
-	"rend-model-spin-speed", CVF_NO_MAX | CVF_NO_MIN, CVT_FLOAT,
-	&modelSpinSpeed, 0, 0, "Speed of model spinning, 1=normal.",
-	"rend-model-shiny-multitex", 0, CVT_INT, &modelShinyMultitex, 0, 1,
-	"1=Enable multitexturing with shiny model skins.",
-	// * Render-HUD
-	"rend-hud-offset-scale", CVF_NO_MAX, CVT_FLOAT, &weaponOffsetScale, 0, 0,
-	"Scaling of player weapon (x,y) offset.",
-	"rend-hud-fov-shift", CVF_NO_MAX, CVT_FLOAT, &weaponFOVShift, 0, 1,
-	"When FOV > 90 player weapon is shifted downward.",
-	// * Render-Mobj
-	"rend-mobj-smooth-move", 0, CVT_INT, &r_use_srvo, 0, 2,
-	"1=Use short-range visual offsets for models.\n2=Use SRVO for sprites, too (unjags actor movement).",
-	"rend-mobj-smooth-turn", 0, CVT_INT, &r_use_srvo_angle, 0, 1,
-	"1=Use separate visual angle for mobjs (unjag actors).",
-	// * Rend-Particle
-	"rend-particle", 0, CVT_INT, &r_use_particles, 0, 1,
-	"1=Render particle effects.",
-	"rend-particle-max", CVF_NO_MAX, CVT_INT, &r_max_particles, 0, 0,
-	"Maximum number of particles to render. 0=no limit.",
-	"rend-particle-rate", 0, CVT_FLOAT, &r_particle_spawn_rate, 0, 5,
-	"Particle spawn rate multiplier (default: 1).",
-	"rend-particle-diffuse", CVF_NO_MAX, CVT_FLOAT, &rend_particle_diffuse, 0,
-	0, "Diffuse factor for particles near the camera.",
-	"rend-particle-visible-near", CVF_NO_MAX, CVT_INT,
-	&rend_particle_nearlimit, 0, 0,
-	"Minimum visible distance for a particle.",
-	// * Rend-Shadow
-	"rend-shadow", 0, CVT_INT, &useShadows, 0, 1,
-	"1=Render shadows under objects.",
-	"rend-shadow-darkness", 0, CVT_FLOAT, &shadowFactor, 0, 1,
-	"Darkness factor for object shadows.",
-	"rend-shadow-far", CVF_NO_MAX, CVT_INT, &shadowMaxDist, 0, 0,
-	"Maximum distance where shadows are visible.",
-	"rend-shadow-radius-max", CVF_NO_MAX, CVT_INT, &shadowMaxRad, 0, 0,
-	"Maximum radius of object shadows.",
-
-	// Server
-	"server-name", 0, CVT_CHARPTR, &serverName, 0, 0,
-	"The name of this computer if it's a server.",
-	"server-info", 0, CVT_CHARPTR, &serverInfo, 0, 0,
-	"The description given of this computer if it's a server.",
-	"server-public", 0, CVT_INT, &masterAware, 0, 1,
-	"1=Send info to master server.",
-
-	// Client
-	//  "client-predict",   CVF_NO_MAX,     CVT_INT,    &predict_tics,  0, 0,   "Max tics to predict ahead.",
-
-	// Network
-	"net-name", 0, CVT_CHARPTR, &playerName, 0, 0,
-	"Your name in multiplayer games.",
-	"net-protocol", 0, CVT_INT, &nptActive, 0, 3,
-	"Network protocol: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial link.",
-	"net-ip-address", 0, CVT_CHARPTR, &nptIPAddress, 0, 0,
-	"TCP/IP address for searching servers.",
-	"net-ip-port", CVF_NO_MAX, CVT_INT, &nptIPPort, 0, 0,
-	"TCP/IP port to use for all data traffic on this computer.",
-	"net-modem", CVF_NO_MAX, CVT_INT, &nptModem, 0, 0,
-	"Index of the selected modem.",
-	"net-modem-phone", 0, CVT_CHARPTR, &nptPhoneNum, 0, 0,
-	"Phone number to dial to when connecting.",
-	"net-serial-port", CVF_NO_MAX, CVT_INT, &nptSerialPort, 0, 0,
-	"COM port to use for serial link connection.",
-	"net-serial-baud", CVF_NO_MAX, CVT_INT, &nptSerialBaud, 0, 0,
-	"Baud rate for serial link connections.",
-	"net-serial-stopbits", 0, CVT_INT, &nptSerialStopBits, 0, 2,
-	"0=1 bit, 1=1.5 bits, 2=2 bits.",
-	"net-serial-parity", 0, CVT_INT, &nptSerialParity, 0, 3,
-	"0=None, 1=odd, 2=even, 3=mark parity.",
-	"net-serial-flowctrl", 0, CVT_INT, &nptSerialFlowCtrl, 0, 4,
-	"0=None, 1=XON/XOFF, 2=RTS, 3=DTR, 4=RTS/DTR flow control.",
-	"net-master-address", 0, CVT_CHARPTR, &masterAddress, 0, 0,
-	"Master server IP address / name.",
-	"net-master-port", 0, CVT_INT, &masterPort, 0, 65535,
-	"Master server TCP/IP port.",
-	"net-master-path", 0, CVT_CHARPTR, &masterPath, 0, 0,
-	"Master server path name.",
-	//  "net-queue-packets",    0,          CVT_INT,    &maxQueuePackets, 0, 16, "Max packets in send queue.",
-
-	// Sound
-	"sound-volume", 0, CVT_INT, &sfx_volume, 0, 255,
-	"Sound effects volume (0-255).",
-	"sound-info", 0, CVT_INT, &sound_info, 0, 1,
-	"1=Show sound debug information.",
-	"sound-rate", 0, CVT_INT, &sound_rate, 11025, 44100,
-	"Sound effects sample rate (11025, 22050, 44100).",
-	"sound-16bit", 0, CVT_INT, &sound_16bit, 0, 1,
-	"1=16-bit sound effects/resampling.",
-	"sound-3d", 0, CVT_INT, &sound_3dmode, 0, 1, "1=Play sound effects in 3D.",
-	"sound-reverb-volume", 0, CVT_FLOAT, &sfx_reverb_strength, 0, 10,
-	"Reverb effects general volume (0=disable).",
-
-	// Music 
-	"music-volume", 0, CVT_INT, &mus_volume, 0, 255, "Music volume (0-255).",
-	"music-source", 0, CVT_INT, &mus_preference, 0, 2,
-	"Preferred music source: 0=Original MUS, 1=External files, 2=CD.",
-
-	// Input
-	// * Input-Key
-	"input-key-delay1", CVF_NO_MAX, CVT_INT, &keyRepeatDelay1, 50, 0,
-	"The number of milliseconds to wait before first key repeat.",
-	"input-key-delay2", CVF_NO_MAX, CVT_INT, &keyRepeatDelay2, 20, 0,
-	"The number of milliseconds to wait between key repeats.",
-	"input-key-show-scancodes", 0, CVT_BYTE, &showScanCodes, 0, 1,
-	"1=Show scancodes of all pressed keys in the console.",
-	// * Input-Joy
-	"input-joy-sensi", 0, CVT_INT, &joySensitivity, 0, 9,
-	"Joystick sensitivity.",
-	"input-joy-deadzone", 0, CVT_INT, &joyDeadZone, 0, 90,
-	"Joystick dead zone, in percents.",
-	// * Input-Mouse
-	"input-mouse-wheel-sensi", CVF_NO_MAX, CVT_INT, &mouseWheelSensi, 0, 0,
-	"Mouse wheel sensitivity.",
-	"input-mouse-x-disable", 0, CVT_INT, &mouseDisableX, 0, 1,
-	"1=Disable mouse X axis.",
-	"input-mouse-y-disable", 0, CVT_INT, &mouseDisableY, 0, 1,
-	"1=Disable mouse Y axis.",
-	"input-mouse-y-inverse", 0, CVT_INT, &mouseInverseY, 0, 1,
-	"1=Inversed mouse Y axis.",
-	"input-mouse-filter", 0, CVT_BYTE, &mouseFilter, 0, 1,
-	"1=Filter mouse X and Y axes.",
-
-	// File
-	"file-startup", 0, CVT_CHARPTR, &defaultWads, 0, 0,
-	"The list of WADs to be loaded at startup.",
-
-	NULL
-};
-
-// Console commands. Names in LOWER CASE (yeah, that's cOnsISteNt).
-ccmd_t  engineCCmds[] = {
-	"actions", CCmdListActs, "List all action commands.",
-	"add", CCmdAddSub, "Add something to a cvar.",
-	"after", CCmdWait, "Execute the specified command after a delay.",
-	"alias", CCmdAlias, "Create aliases for a (set of) console commands.",
-	"bgturn", CCmdBackgroundTurn, "Set console background rotation speed.",
-	"bind", CCmdBind, "Bind a console command to an event.",
-	"bindr", CCmdBind,
-	"Bind a console command to an event (keys with repeat).",
-	"chat", CCmdChat, "Broadcast a chat message.",
-	"chatnum", CCmdChat, "Send a chat message to the specified player.",
-	"chatto", CCmdChat, "Send a chat message to the specified player.",
-	"clear", CCmdConsole, "Clear the console buffer.",
-	"clearbinds", CCmdClearBindings, "Deletes all existing bindings.",
-	"conlocp", CCmdMakeCamera, "Connect a local player.",
-	"connect", CCmdConnect, "Connect to a server using TCP/IP.",
-	"dec", CCmdAddSub, "Subtract 1 from a cvar.",
-	"delbind", CCmdDeleteBind,
-	"Deletes all bindings to the given console command.",
-	"demolump", CCmdDemoLump, "Write a reference lump file for a demo.",
-	"dir", CCmdDir, "Print contents of directories.",
-	"dump", CCmdDump, "Dump a data lump currently loaded in memory.",
-	"dumpkeymap", CCmdDumpKeyMap, "Write the current keymap to a file.",
-	"echo", CCmdEcho, "Echo the parameters on separate lines.",
-	"exec", CCmdParse,
-	"Loads and executes a file containing console commands.",
-	"flareconfig", CCmdFlareConfig, "Configure lens flares.",
-	"fog", CCmdFog, "Modify fog settings.",
-	"font", CCmdFont, "Modify console font settings.",
-	"help", CCmdConsole, "Show information about the console.",
-	"huffman", CCmdHuffmanStats,
-	"Print Huffman efficiency and number of bytes sent.",
-	"if", CCmdIf, "Execute a command if the condition is true.",
-	"inc", CCmdAddSub, "Add 1 to a cvar.",
-	"keymap", CCmdKeyMap, "Load a DKM keymap file.",
-	"kick", CCmdKick, "Kick client out of the game.",
-	"listaliases", CCmdListAliases,
-	"List all aliases and their expanded forms.",
-	"listbindings", CCmdListBindings, "List all event bindings.",
-	"listcmds", CCmdListCmds, "List all console commands.",
-	"listfiles", CCmdListFiles,
-	"List all the loaded data files and show information about them.",
-	"listvars", CCmdListVars, "List all console variables and their values.",
-	"load", CCmdLoadFile, "Load a data file (a WAD or a lump).",
-	"login", CCmdLogin, "Log in to server console.",
-	"logout", CCmdLogout, "Terminate remote connection to server console.",
-	"lowres", CCmdLowRes, "Select the poorest rendering quality.",
-	"ls", CCmdDir, "Print contents of directories.",
-	"mipmap", CCmdMipMap, "Set the mipmapping mode.",
-	"net", CCmdNet, "Network setup and control.",
-	"panel", CCmdOpenPanel, "Open the Doomsday Control Panel.",
-	"pausedemo", CCmdPauseDemo, "Pause/resume demo recording.",
-	"ping", CCmdPing, "Ping the server (or a player if you're the server).",
-	"playdemo", CCmdPlayDemo, "Play a demo.",
-	"playext", CCmdPlayExt, "Play an external music file.",
-	"playmusic", CCmdPlayMusic,
-	"Play a song, an external music file or a CD track.",
-	"quit!", CCmdQuit, "Exit the game immediately.",
-	"recorddemo", CCmdRecordDemo, "Start recording a demo.",
-	"repeat", CCmdRepeat, "Repeat a command at given intervals.",
-	"reset", CCmdResetLumps,
-	"Reset the data files into what they were at startup.",
-	"safebind", CCmdBind,
-	"Bind a command to an event, unless the event is already bound.",
-	"safebindr", CCmdBind,
-	"Bind a command to an event, unless the event is already bound.",
-	"say", CCmdChat, "Broadcast a chat message.",
-	"saynum", CCmdChat, "Send a chat message to the specified player.",
-	"sayto", CCmdChat, "Send a chat message to the specified player.",
-	"setcon", CCmdSetConsole, "Set console and viewplayer.",
-	"setgamma", CCmdSetGamma, "Set the gamma correction level.",
-	"setname", CCmdSetName, "Set your name.",
-	"setres", CCmdSetRes, "Change video mode resolution or window size.",
-	"settics", CCmdSetTicks,
-	"Set number of game tics per second (default: 35).",
-	"setvidramp", CCmdUpdateGammaRamp, "Update display's hardware gamma ramp.",
-	"skydetail", CCmdSkyDetail,
-	"Set the number of sky sphere quadrant subdivisions.",
-	"skyrows", CCmdSkyDetail, "Set the number of sky sphere rows.",
-	"smoothscr", CCmdSmoothRaw, "Set the rendering mode of fullscreen images.",
-	"stopdemo", CCmdStopDemo, "Stop currently playing demo.",
-	"stopmusic", CCmdStopMusic, "Stop any currently playing music.",
-	"sub", CCmdAddSub, "Subtract something from a cvar.",
-	"texreset", CCmdResetTextures, "Force a texture reload.",
-	"toggle", CCmdToggle,
-	"Toggle the value of a cvar between zero and nonzero.",
-	"uicolor", CCmdUIColor, "Change Doomsday user interface colors.",
-	"unload", CCmdUnloadFile, "Unload a data file from memory.",
-	"version", CCmdVersion, "Show detailed version information.",
-	"write", CCmdWriteConsole,
-	"Write variables, bindings and aliases to a file.",
-
-#ifdef _DEBUG
-	"TranslateFont", CCmdTranslateFont, "Ha ha.",
-#endif
-	NULL
-};
 
 knownword_t *knownWords = 0;	// The list of known words (for completion).
 int     numKnownWords = 0;
@@ -1120,10 +496,11 @@ void Con_Init()
 	exBuffSize = 0;
 
 	// Register the engine commands and variables.
-	Con_AddCommandList(engineCCmds);
-	Con_AddVariableList(engineCVars);
-	Con_AddVariableList(netCVars);
-	Con_AddVariableList(inputCVars);
+	registerCommands();
+	registerVariables();
+
+	Net_Register();
+	I_Register();
 	H_Register();
 }
 
@@ -1191,16 +568,17 @@ void Con_AddCommandList(ccmd_t *cmdlist)
 
 void Con_AddCommand(ccmd_t *cmd)
 {
-	numCCmds++;
-	ccmds = realloc(ccmds, sizeof(ccmd_t) * numCCmds);
+	if(++numCCmds > maxCCmds)
+	{
+		maxCCmds *= 2;
+		if(maxCCmds < numCCmds)
+			maxCCmds = numCCmds;
+		ccmds = realloc(ccmds, sizeof(ccmd_t) * maxCCmds);
+	}
 	memcpy(ccmds + numCCmds - 1, cmd, sizeof(ccmd_t));
 
 	// Sort them.
 	qsort(ccmds, numCCmds, sizeof(ccmd_t), wordListSorter);
-
-	// Update the list of known words.
-	// This must be done right away because ccmds' address can change.
-	//Con_UpdateKnownWords();
 }
 
 /*
@@ -1234,16 +612,18 @@ void Con_AddVariableList(cvar_t *varlist)
 
 void Con_AddVariable(cvar_t *var)
 {
-	numCVars++;
-	cvars = realloc(cvars, sizeof(cvar_t) * numCVars);
+	if(++numCVars > maxCVars)
+	{
+		// Allocate more memory.
+		maxCVars *= 2;
+		if(maxCVars < numCVars)
+			maxCVars = numCVars;
+		cvars = realloc(cvars, sizeof(cvar_t) * maxCVars);
+	}
 	memcpy(cvars + numCVars - 1, var, sizeof(cvar_t));
 
 	// Sort them.
 	qsort(cvars, numCVars, sizeof(cvar_t), wordListSorter);
-
-	// Update the list of known words.
-	// This must be done right away because ccmds' address can change.
-	//Con_UpdateKnownWords();
 }
 
 // Returns NULL if the specified alias can't be found.
@@ -3476,4 +2856,449 @@ void Con_Error(const char *error, ...)
 
 	// Get outta here.
 	exit(1);
+}
+
+D_CMD(SkyDetail);
+D_CMD(Fog);
+D_CMD(Bind);
+D_CMD(ListBindings);
+D_CMD(SetGamma);
+D_CMD(SetRes);
+D_CMD(Chat);
+D_CMD(DeleteBind);
+D_CMD(FlareConfig);
+D_CMD(ListActs);
+D_CMD(ClearBindings);
+D_CMD(Ping);
+D_CMD(Login);
+D_CMD(Logout);
+
+#ifdef _DEBUG
+D_CMD(TranslateFont);
+#endif
+
+// Register console commands.  The names should be in LOWER CASE.
+static void registerCommands(void)
+{
+	C_CMD("actions", ListActs, "List all action commands.");
+	C_CMD("add", AddSub, "Add something to a cvar.");
+	C_CMD("after", Wait, "Execute the specified command after a delay.");
+	C_CMD("alias", Alias, "Create aliases for a (set of) console commands.");
+	C_CMD("bgturn", BackgroundTurn, "Set console background rotation speed.");
+	C_CMD("bind", Bind, "Bind a console command to an event.");
+	C_CMD("bindr", Bind,
+		  "Bind a console command to an event (keys with repeat).");
+	C_CMD("chat", Chat, "Broadcast a chat message.");
+	C_CMD("chatnum", Chat, "Send a chat message to the specified player.");
+	C_CMD("chatto", Chat, "Send a chat message to the specified player.");
+	C_CMD("clear", Console, "Clear the console buffer.");
+	C_CMD("clearbinds", ClearBindings, "Deletes all existing bindings.");
+	C_CMD("conlocp", MakeCamera, "Connect a local player.");
+	C_CMD("connect", Connect, "Connect to a server using TCP/IP.");
+	C_CMD("dec", AddSub, "Subtract 1 from a cvar.");
+	C_CMD("delbind", DeleteBind,
+		  "Deletes all bindings to the given console command.");
+	C_CMD("demolump", DemoLump, "Write a reference lump file for a demo.");
+	C_CMD("dir", Dir, "Print contents of directories.");
+	C_CMD("dump", Dump, "Dump a data lump currently loaded in memory.");
+	C_CMD("dumpkeymap", DumpKeyMap, "Write the current keymap to a file.");
+	C_CMD("echo", Echo, "Echo the parameters on separate lines.");
+	C_CMD("exec", Parse,
+		  "Loads and executes a file containing console commands.");
+	C_CMD("flareconfig", FlareConfig, "Configure lens flares.");
+	C_CMD("fog", Fog, "Modify fog settings.");
+	C_CMD("font", Font, "Modify console font settings.");
+	C_CMD("help", Console, "Show information about the console.");
+	C_CMD("huffman", HuffmanStats,
+		  "Print Huffman efficiency and number of bytes sent.");
+	C_CMD("if", If, "Execute a command if the condition is true.");
+	C_CMD("inc", AddSub, "Add 1 to a cvar.");
+	C_CMD("keymap", KeyMap, "Load a DKM keymap file.");
+	C_CMD("kick", Kick, "Kick client out of the game.");
+	C_CMD("listaliases", ListAliases,
+		  "List all aliases and their expanded forms.");
+	C_CMD("listbindings", ListBindings, "List all event bindings.");
+	C_CMD("listcmds", ListCmds, "List all console commands.");
+	C_CMD("listfiles", ListFiles,
+		  "List all the loaded data files and show information about them.");
+	C_CMD("listvars", ListVars,
+		  "List all console variables and their values.");
+	C_CMD("load", LoadFile, "Load a data file (a WAD or a lump).");
+	C_CMD("login", Login, "Log in to server console.");
+	C_CMD("logout", Logout, "Terminate remote connection to server console.");
+	C_CMD("lowres", LowRes, "Select the poorest rendering quality.");
+	C_CMD("ls", Dir, "Print contents of directories.");
+	C_CMD("mipmap", MipMap, "Set the mipmapping mode.");
+	C_CMD("net", Net, "Network setup and control.");
+	C_CMD("panel", OpenPanel, "Open the Doomsday Control Panel.");
+	C_CMD("pausedemo", PauseDemo, "Pause/resume demo recording.");
+	C_CMD("ping", Ping, "Ping the server (or a player if you're the server).");
+	C_CMD("playdemo", PlayDemo, "Play a demo.");
+	C_CMD("playext", PlayExt, "Play an external music file.");
+	C_CMD("playmusic", PlayMusic,
+		  "Play a song, an external music file or a CD track.");
+	C_CMD("quit!", Quit, "Exit the game immediately.");
+	C_CMD("recorddemo", RecordDemo, "Start recording a demo.");
+	C_CMD("repeat", Repeat, "Repeat a command at given intervals.");
+	C_CMD("reset", ResetLumps,
+		  "Reset the data files into what they were at startup.");
+	C_CMD("safebind", Bind,
+		  "Bind a command to an event, unless the event is already bound.");
+	C_CMD("safebindr", Bind,
+		  "Bind a command to an event, unless the event is already bound.");
+	C_CMD("say", Chat, "Broadcast a chat message.");
+	C_CMD("saynum", Chat, "Send a chat message to the specified player.");
+	C_CMD("sayto", Chat, "Send a chat message to the specified player.");
+	C_CMD("setcon", SetConsole, "Set console and viewplayer.");
+	C_CMD("setgamma", SetGamma, "Set the gamma correction level.");
+	C_CMD("setname", SetName, "Set your name.");
+	C_CMD("setres", SetRes, "Change video mode resolution or window size.");
+	C_CMD("settics", SetTicks,
+		  "Set number of game tics per second (default: 35).");
+	C_CMD("setvidramp", UpdateGammaRamp,
+		  "Update display's hardware gamma ramp.");
+	C_CMD("skydetail", SkyDetail,
+		  "Set the number of sky sphere quadrant subdivisions.");
+	C_CMD("skyrows", SkyDetail, "Set the number of sky sphere rows.");
+	C_CMD("smoothscr", SmoothRaw,
+		  "Set the rendering mode of fullscreen images.");
+	C_CMD("stopdemo", StopDemo, "Stop currently playing demo.");
+	C_CMD("stopmusic", StopMusic, "Stop any currently playing music.");
+	C_CMD("sub", AddSub, "Subtract something from a cvar.");
+	C_CMD("texreset", ResetTextures, "Force a texture reload.");
+	C_CMD("toggle", Toggle,
+		  "Toggle the value of a cvar between zero and nonzero.");
+	C_CMD("uicolor", UIColor, "Change Doomsday user interface colors.");
+	C_CMD("unload", UnloadFile, "Unload a data file from memory.");
+	C_CMD("version", Version, "Show detailed version information.");
+	C_CMD("write", WriteConsole,
+		  "Write variables, bindings and aliases to a file.");
+
+#ifdef _DEBUG
+	C_CMD("translatefont", TranslateFont, "Ha ha.");
+#endif
+}
+
+static void registerVariables(void)
+{
+	// Console
+	C_VAR_INT("con-alpha", &consoleAlpha, 0, 0, 100,
+			  "Console background translucency.");
+	C_VAR_INT("con-light", &consoleLight, 0, 0, 100,
+			  "Console background light level.");
+	C_VAR_INT("con-completion", &conCompMode, 0, 0, 1,
+			  "How to complete words when pressing Tab:\n"
+			  "0=Show completions, 1=Cycle through them.");
+	C_VAR_BYTE("con-dump", &consoleDump, 0, 0, 1,
+			   "1=Dump all console messages to Doomsday.out.");
+	C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255,
+			  "Key to activate the console (ASCII code, "
+			  "default is tilde, 96).");
+	C_VAR_BYTE("con-key-show", &consoleShowKeys, 0, 0, 1,
+			   "1=Show ASCII codes of pressed keys in the console.");
+	C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1,
+			   "1=Don't show the value of a cvar when setting it.");
+	C_VAR_BYTE("con-progress", &progress_enabled, 0, 0, 1,
+			   "1=Show progress bar.");
+	C_VAR_BYTE("con-fps", &consoleShowFPS, 0, 0, 1,
+			   "1=Show FPS counter on screen.");
+	C_VAR_BYTE("con-text-shadow", &consoleShadowText, 0, 0, 1,
+			   "1=Text in the console has a shadow (might be slow).");
+
+	// User Interface
+	C_VAR_BYTE("ui-panel-help", &panel_show_help, 0, 0, 1,
+			   "1=Enable help window in Control Panel.");
+	C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1,
+			   "1=Show help indicators in Control Panel.");
+	C_VAR_INT("ui-cursor-width", &uiMouseWidth, CVF_NO_MAX, 1, 0,
+			  "Mouse cursor width.");
+	C_VAR_INT("ui-cursor-height", &uiMouseHeight, CVF_NO_MAX, 1, 0,
+			  "Mouse cursor height.");
+
+	// Video
+	C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0,
+			  "Default resolution (X).");
+	C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0,
+			  "Default resolution (Y).");
+	C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6,
+				"Display gamma correction factor: 1=normal.");
+	C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10,
+				"Display contrast: 1=normal.");
+	C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2,
+				"Display brightness: -1=dark, 0=normal, 1=light.");
+
+	// Render
+	C_VAR_INT("rend-dev-freeze", &freezeRLs, 0, 0, 1,
+			  "1=Stop updating rendering lists.");
+	C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1,
+			  "1=Render player view in wireframe mode.");
+	C_VAR_INT("rend-dev-framecount", &framecount, CVF_PROTECTED, 0, 0,
+			  "Frame counter.");
+	// * Render-Info
+	C_VAR_BYTE("rend-info-tris", &rend_info_tris, 0, 0, 1,
+			   "1=Print triangle count after rendering a frame.");
+	C_VAR_BYTE("rend-info-lums", &rend_info_lums, 0, 0, 1,
+			   "1=Print lumobj count after rendering a frame.");
+	// * Render-Light
+	C_VAR_INT("rend-light-ambient", &r_ambient, 0, 0, 255,
+			  "Ambient light level.");
+	C_VAR_INT("rend-light", &useDynLights, 0, 0, 1,
+			  "1=Render dynamic lights.");
+	C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 3,
+			  "Dynamic lights color blending mode:\n"
+			  "0=normal, 1=additive, 2=no blending.");
+
+	C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1,
+				"Intensity factor for dynamic lights.");
+	C_VAR_INT("rend-light-num", &maxDynLights, 0, 0, 8000,
+			  "The maximum number of dynamic lights. 0=no limit.");
+
+	C_VAR_FLOAT("rend-light-radius-scale", &dlRadFactor, 0, 0.1f, 10,
+				"A multiplier for dynlight radii (default: 1).");
+	C_VAR_INT("rend-light-radius-max", &dlMaxRad, 0, 64, 512,
+			  "Maximum radius of dynamic lights (default: 128).");
+	C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX, 0,
+				0, "Intensity of angle-based wall light.");
+	C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1,
+			  "1=Use multitexturing when rendering dynamic lights.");
+	// * Render-Light-Decor
+	C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1,
+			   "1=Enable surface light decorations.");
+	C_VAR_FLOAT("rend-light-decor-plane-far", &decorPlaneMaxDist, CVF_NO_MAX,
+				0, 0, "Maximum distance at which plane light "
+				"decorations are visible.");
+	C_VAR_FLOAT("rend-light-decor-wall-far", &decorWallMaxDist, CVF_NO_MAX, 0,
+				0, "Maximum distance at which wall light decorations "
+				"are visible.");
+	C_VAR_FLOAT("rend-light-decor-plane-bright", &decorPlaneFactor, 0, 0, 10,
+				"Brightness of plane light decorations.");
+	C_VAR_FLOAT("rend-light-decor-wall-bright", &decorWallFactor, 0, 0, 10,
+				"Brightness of wall light decorations.");
+	C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1,
+				"Reduce brightness if surface/view angle too steep.");
+	C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1,
+			  "1=Use special light color in sky sectors.");
+	// * Render-Glow
+	C_VAR_INT("rend-glow", &r_texglow, 0, 0, 1, "1=Enable glowing textures.");
+	C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1,
+			  "1=Render glow on walls.");
+	C_VAR_INT("rend-glow-height", &glowHeight, 0, 0, 1024,
+			  "Height of wall glow.");
+	C_VAR_FLOAT("rend-glow-fog-bright", &glowFogBright, 0, 0, 1,
+				"Brightness of wall glow when fog is enabled.");
+	// * Render-Halo
+	C_VAR_INT("rend-halo", &haloMode, 0, 0, 5,
+			  "Number of flares to draw per light.");
+	C_VAR_INT("rend-halo-bright", &haloBright, 0, 0, 100,
+			  "Halo/flare brightness.");
+	C_VAR_INT("rend-halo-occlusion", &haloOccludeSpeed, CVF_NO_MAX, 0, 0,
+			  "Rate at which occluded halos fade.");
+	C_VAR_INT("rend-halo-size", &haloSize, 0, 0, 100, "Size of halos.");
+	C_VAR_FLOAT("rend-halo-secondary-limit", &minHaloSize, CVF_NO_MAX, 0, 0,
+				"Minimum halo size.");
+	C_VAR_FLOAT("rend-halo-fade-far", &haloFadeMax, CVF_NO_MAX, 0, 0,
+				"Distance at which halos are no longer visible.");
+	C_VAR_FLOAT("rend-halo-fade-near", &haloFadeMin, CVF_NO_MAX, 0, 0,
+				"Distance to begin fading halos.");
+	// * Render-FakeRadio
+	C_VAR_INT("rend-fakeradio", &rendFakeRadio, 0, 0, 1,
+			  "1=Enable simulated radiosity lighting.");
+	// * Render-Camera
+	C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179, "Field of view.");
+	C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, 0, 0, 1,
+			  "1=Filter camera movement between game tics.");
+	// * Render-Texture
+	C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1,
+			  "1=Render with textures.");
+	C_VAR_INT("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4,
+			  "The gamma correction level (0-4).");
+	C_VAR_INT("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
+			  "The mipmapping mode for textures.");
+	C_VAR_BYTE("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
+			   "1=Use the GL_EXT_shared_texture_palette extension.");
+	C_VAR_BYTE("rend-tex-external-always", &loadExtAlways, 0, 0, 1,
+			   "1=Always use external texture resources (overrides -pwadtex).");
+	C_VAR_INT("rend-tex-quality", &texQuality, 0, 0, 8,
+			  "The quality of textures (0-8).");
+	C_VAR_INT("rend-tex-filter-sprite", &filterSprites, 0, 0, 1,
+			  "1=Render smooth sprites.");
+	C_VAR_INT("rend-tex-filter-raw", &linearRaw, CVF_PROTECTED, 0, 1,
+			  "1=Fullscreen images (320x200) use linear interpolation.");
+	C_VAR_INT("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1,
+			  "1=Use hq2x-filtering on all textures.");
+	C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1,
+			  "1=Render with detail textures.");
+	C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX,
+				0, 0, "Global detail texture factor.");
+	C_VAR_FLOAT("rend-tex-detail-strength", &detailFactor, 0, 0, 10,
+				"Global detail texture strength factor.");
+	C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1,
+			  "1=Use multitexturing when rendering detail textures.");
+	C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1,
+			   "1=Enable interpolated texture animation.");
+	// * Render-Sky
+	C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7,
+			  "Number of sky sphere quadrant subdivisions.");
+	C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8,
+			  "Number of sky sphere rows.");
+	C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0,
+				"Sky sphere radius.");
+	C_VAR_INT("rend-sky-full", &r_fullsky, 0, 0, 1,
+			  "1=Always render the full sky sphere.");
+	C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2,
+			  "Sky rendering mode: 0=normal, 1=quads.");
+	// * Render-Sprite
+	C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90,
+				"Maximum angle for slanted sprites (spralign 2).");
+	C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1,
+			  "1=Don't write sprites in the Z buffer.");
+	C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1,
+			   "1=Precache sprites at level setup (slow).");
+	C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3,
+			  "1=Always align sprites with the view plane.\n"
+			  "2=Align to camera, unless slant > r_maxSpriteAngle.");
+	C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1,
+			  "1=Use additive blending for explosions.");
+	C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1,
+			  "1=Sprites lit using dynamic lights.");
+	// * Render-Model
+	C_VAR_INT("rend-model", &useModels, CVF_NO_MAX, 0, 1,
+			  "Render using 3D models when possible.");
+	C_VAR_INT("rend-model-lights", &modelLight, 0, 0, 10,
+			  "Maximum number of light sources on models.");
+	C_VAR_INT("rend-model-inter", &frameInter, 0, 0, 1,
+			  "1=Interpolate frames.");
+	C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod, CVF_NO_MAX | CVF_NO_MIN,
+				0, 0, "Scale for MD2 z-axis when model is loaded.");
+	C_VAR_INT("rend-model-distance", &r_maxmodelz, CVF_NO_MAX, 0, 0,
+			  "Farther than this models revert back to sprites.");
+	C_VAR_BYTE("rend-model-precache", &r_precache_skins, 0, 0, 1,
+			   "1=Precache 3D models at level setup (slow).");
+	C_VAR_FLOAT("rend-model-lod", &rend_model_lod, CVF_NO_MAX, 0, 0,
+				"Custom level of detail factor. 0=LOD disabled, 1=normal.");
+	C_VAR_INT("rend-model-mirror-hud", &mirrorHudModels, 0, 0, 1,
+			  "1=Mirror HUD weapon models.");
+	C_VAR_FLOAT("rend-model-spin-speed", &modelSpinSpeed,
+				CVF_NO_MAX | CVF_NO_MIN, 0, 0,
+				"Speed of model spinning, 1=normal.");
+	C_VAR_INT("rend-model-shiny-multitex", &modelShinyMultitex, 0, 0, 1,
+			  "1=Enable multitexturing with shiny model skins.");
+	// * Render-HUD
+	C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX, 0, 0,
+				"Scaling of player weapon (x,y) offset.");
+	C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1,
+				"When FOV > 90 player weapon is shifted downward.");
+	// * Render-Mobj
+	C_VAR_INT("rend-mobj-smooth-move", &r_use_srvo, 0, 0, 2,
+		"1=Use short-range visual offsets for models.\n"
+			  "2=Use SRVO for sprites, too (unjags actor movement).");
+	C_VAR_INT("rend-mobj-smooth-turn", &r_use_srvo_angle, 0, 0, 1,
+			  "1=Use separate visual angle for mobjs (unjag actors).");
+	// * Rend-Particle
+	C_VAR_INT("rend-particle", &r_use_particles, 0, 0, 1,
+			  "1=Render particle effects.");
+	C_VAR_INT("rend-particle-max", &r_max_particles, CVF_NO_MAX, 0, 0,
+			  "Maximum number of particles to render. 0=no limit.");
+	C_VAR_FLOAT("rend-particle-rate", &r_particle_spawn_rate, 0, 0, 5,
+				"Particle spawn rate multiplier (default: 1).");
+	C_VAR_FLOAT("rend-particle-diffuse", &rend_particle_diffuse, CVF_NO_MAX, 0,
+				0, "Diffuse factor for particles near the camera.");
+	C_VAR_INT("rend-particle-visible-near", &rend_particle_nearlimit,
+			  CVF_NO_MAX, 0, 0, "Minimum visible distance for a particle.");
+	// * Rend-Shadow
+	C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1,
+			  "1=Render shadows under objects.");
+	C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 1,
+				"Darkness factor for object shadows.");
+	C_VAR_INT("rend-shadow-far", &shadowMaxDist, CVF_NO_MAX, 0, 0,
+			  "Maximum distance where shadows are visible.");
+	C_VAR_INT("rend-shadow-radius-max", &shadowMaxRad, CVF_NO_MAX, 0, 0,
+			  "Maximum radius of object shadows.");
+
+	// Server
+	C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0,
+				  "The name of this computer if it's a server.");
+	C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0,
+				  "The description given of this computer if it's a server.");
+	C_VAR_INT("server-public", &masterAware, 0, 0, 1,
+			  "1=Send info to master server.");
+
+	// Network
+	C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0,
+				  "Your name in multiplayer games.");
+	C_VAR_INT("net-protocol", &nptActive, 0, 0, 3,
+			  "Network protocol: 0=TCP/IP, 1=IPX, 2=Modem, 3=Serial link.");
+	C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0,
+				  "TCP/IP address for searching servers.");
+	C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0,
+			  "TCP/IP port to use for all data traffic on this computer.");
+	C_VAR_INT("net-modem", &nptModem, CVF_NO_MAX, 0, 0,
+			  "Index of the selected modem.");
+	C_VAR_CHARPTR("net-modem-phone", &nptPhoneNum, 0, 0, 0,
+				  "Phone number to dial to when connecting.");
+	C_VAR_INT("net-serial-port", &nptSerialPort, CVF_NO_MAX, 0, 0,
+			  "COM port to use for serial link connection.");
+	C_VAR_INT("net-serial-baud", &nptSerialBaud, CVF_NO_MAX, 0, 0,
+			  "Baud rate for serial link connections.");
+	C_VAR_INT("net-serial-stopbits", &nptSerialStopBits, 0, 0, 2,
+			  "0=1 bit, 1=1.5 bits, 2=2 bits.");
+	C_VAR_INT("net-serial-parity", &nptSerialParity, 0, 0, 3,
+			  "0=None, 1=odd, 2=even, 3=mark parity.");
+	C_VAR_INT("net-serial-flowctrl", &nptSerialFlowCtrl, 0, 0, 4,
+			  "0=None, 1=XON/XOFF, 2=RTS, 3=DTR, 4=RTS/DTR flow control.");
+	C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0,
+				  "Master server IP address / name.");
+	C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535,
+			  "Master server TCP/IP port.");
+	C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0,
+				  "Master server path name.");
+
+	// Sound
+	C_VAR_INT("sound-volume", &sfx_volume, 0, 0, 255,
+			  "Sound effects volume (0-255).");
+	C_VAR_INT("sound-info", &sound_info, 0, 0, 1,
+			  "1=Show sound debug information.");
+	C_VAR_INT("sound-rate", &sound_rate, 0, 11025, 44100,
+			  "Sound effects sample rate (11025, 22050, 44100).");
+	C_VAR_INT("sound-16bit", &sound_16bit, 0, 0, 1,
+			  "1=16-bit sound effects/resampling.");
+	C_VAR_INT("sound-3d", &sound_3dmode, 0, 0, 1,
+			  "1=Play sound effects in 3D.");
+	C_VAR_FLOAT("sound-reverb-volume", &sfx_reverb_strength, 0, 0, 10,
+				"Reverb effects general volume (0=disable).");
+
+	// Music 
+	C_VAR_INT("music-volume", &mus_volume, 0, 0, 255, "Music volume (0-255).");
+	C_VAR_INT("music-source", &mus_preference, 0, 0, 2,
+			  "Preferred music source: 0=Original MUS, "
+			  "1=External files, 2=CD.");
+
+	// Input
+	// * Input-Key
+	C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0,
+			  "The number of milliseconds to wait before first key repeat.");
+	C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0,
+			  "The number of milliseconds to wait between key repeats.");
+	C_VAR_BYTE("input-key-show-scancodes", &showScanCodes, 0, 0, 1,
+			   "1=Show scancodes of all pressed keys in the console.");
+	// * Input-Joy
+	C_VAR_INT("input-joy-sensi", &joySensitivity, 0, 0, 9,
+			  "Joystick sensitivity.");
+	C_VAR_INT("input-joy-deadzone", &joyDeadZone, 0, 0, 90,
+			  "Joystick dead zone, in percents.");
+	// * Input-Mouse
+	C_VAR_INT("input-mouse-wheel-sensi", &mouseWheelSensi, CVF_NO_MAX, 0, 0,
+			  "Mouse wheel sensitivity.");
+	C_VAR_INT("input-mouse-x-disable", &mouseDisableX, 0, 0, 1,
+			  "1=Disable mouse X axis.");
+	C_VAR_INT("input-mouse-y-disable", &mouseDisableY, 0, 0, 1,
+			  "1=Disable mouse Y axis.");
+	C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1,
+			  "1=Inversed mouse Y axis.");
+	C_VAR_BYTE("input-mouse-filter", &mouseFilter, 0, 0, 1,
+			   "1=Filter mouse X and Y axes.");
+
+	// File
+	C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0,
+				  "The list of WADs to be loaded at startup.");
 }

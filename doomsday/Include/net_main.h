@@ -250,6 +250,7 @@ extern client_t clients[MAXPLAYERS];
 //---------------------------------------------------------------------------
 // Functions
 //---------------------------------------------------------------------------
+void            Net_Register(void);
 void            Net_Init(void);
 void            Net_Shutdown(void);
 void            Net_AllocArrays(void);

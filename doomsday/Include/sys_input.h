@@ -63,6 +63,7 @@ typedef struct {
 
 extern boolean  usejoystick;
 
+void            I_Register(void);
 int             I_Init(void);
 void            I_Shutdown(void);
 boolean         I_MousePresent(void);

@@ -25,7 +25,8 @@
 #include "sys_file.h"
 
 #define MAX_READ	8192
-#define ISSPACE(c)	((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
+#define ISSPACE(c)	((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
+					 (c) == '\r')
 
 typedef struct trigger_s {
 	timespan_t      duration;
@@ -66,7 +67,7 @@ float           M_BoundingBoxDiff(float in[4], float out[4]);
 char           *M_SkipWhite(char *str);
 char           *M_FindWhite(char *str);
 char           *M_SkipLine(char *str);
-void            M_WriteCommented(FILE * file, char *text);
+void            M_WriteCommented(FILE * file, const char *text);
 void            M_WriteTextEsc(FILE * file, char *text);
 boolean         M_IsComment(char *text);
 char           *M_LimitedStrCat(const char *str, unsigned int maxWidth,

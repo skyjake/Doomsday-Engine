@@ -61,34 +61,6 @@ int     joydevice = 0;			// Joystick index to use.
 boolean usejoystick = false;	// Joystick input enabled?
 int     joyInverseAxis[8];		// Axis inversion (default: all false).
 
-cvar_t  inputCVars[] = {
-	"i_JoyDevice", CVF_HIDE | CVF_NO_ARCHIVE | CVF_NO_MAX | CVF_PROTECTED,
-	CVT_INT, &joydevice, 0, 0, "ID of joystick to use (if more than one).",
-	"i_UseJoystick", CVF_HIDE | CVF_NO_ARCHIVE, CVT_BYTE, &usejoystick, 0, 1,
-	"1=Enable joystick input.",
-	//--------------------------------------------------------------------------
-	"input-joy-device", CVF_NO_MAX | CVF_PROTECTED, CVT_INT, &joydevice, 0, 0,
-	"ID of joystick to use (if more than one).",
-	"input-joy", 0, CVT_BYTE, &usejoystick, 0, 1, "1=Enable joystick input.",
-	"input-joy-x-inverse", 0, CVT_INT, &joyInverseAxis[0], 0, 1,
-	"1=Inverse joystick X axis.",
-	"input-joy-y-inverse", 0, CVT_INT, &joyInverseAxis[1], 0, 1,
-	"1=Inverse joystick Y axis.",
-	"input-joy-z-inverse", 0, CVT_INT, &joyInverseAxis[2], 0, 1,
-	"1=Inverse joystick Z axis.",
-	"input-joy-rx-inverse", 0, CVT_INT, &joyInverseAxis[3], 0, 1,
-	"1=Inverse joystick RX axis.",
-	"input-joy-ry-inverse", 0, CVT_INT, &joyInverseAxis[4], 0, 1,
-	"1=Inverse joystick RY axis.",
-	"input-joy-rz-inverse", 0, CVT_INT, &joyInverseAxis[5], 0, 1,
-	"1=Inverse joystick RZ axis.",
-	"input-joy-slider1-inverse", 0, CVT_INT, &joyInverseAxis[6], 0, 1,
-	"1=Inverse joystick slider 1.",
-	"input-joy-slider2-inverse", 0, CVT_INT, &joyInverseAxis[7], 0, 1,
-	"1=Inverse joystick slider 2.",
-	NULL
-};
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initOk = false;
@@ -102,6 +74,29 @@ static DIDEVICEINSTANCE firstJoystick;
 static int counter;
 
 // CODE --------------------------------------------------------------------
+
+void I_Register(void)
+{
+	C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0,
+			  "ID of joystick to use (if more than one).");
+	C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1, "1=Enable joystick input.");
+	C_VAR_INT("input-joy-x-inverse", &joyInverseAxis[0], 0, 0, 1,
+			  "1=Inverse joystick X axis.");
+	C_VAR_INT("input-joy-y-inverse", &joyInverseAxis[1], 0, 0, 1,
+			  "1=Inverse joystick Y axis.");
+	C_VAR_INT("input-joy-z-inverse", &joyInverseAxis[2], 0, 0, 1,
+			  "1=Inverse joystick Z axis.");
+	C_VAR_INT("input-joy-rx-inverse", &joyInverseAxis[3], 0, 0, 1,
+			  "1=Inverse joystick RX axis.");
+	C_VAR_INT("input-joy-ry-inverse", &joyInverseAxis[4], 0, 0, 1,
+			  "1=Inverse joystick RY axis.");
+	C_VAR_INT("input-joy-rz-inverse", &joyInverseAxis[5], 0, 0, 1,
+			  "1=Inverse joystick RZ axis.");
+	C_VAR_INT("input-joy-slider1-inverse", &joyInverseAxis[6], 0, 0, 1,
+			  "1=Inverse joystick slider 1.");
+	C_VAR_INT("input-joy-slider2-inverse", &joyInverseAxis[7], 0, 0, 1,
+			  "1=Inverse joystick slider 2.");
+}
 
 //===========================================================================
 // I_ErrorMsg
