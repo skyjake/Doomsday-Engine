@@ -676,7 +676,8 @@ void CP_CvarButton(ui_object_t *ob)
 	if(!var)
 		return;
 	// Change state.
-	*(char *) var->ptr = cb->active;
+	//*(char *) var->ptr = cb->active;
+	Con_SetInteger(cb->cvarname, cb->active);
 }
 
 //===========================================================================
