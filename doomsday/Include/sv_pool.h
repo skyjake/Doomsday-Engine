@@ -91,6 +91,7 @@ typedef enum
 #define SIDF_TOPTEX			0x01
 #define SIDF_MIDTEX			0x02
 #define SIDF_BOTTOMTEX		0x04
+#define SIDF_LINE_FLAGS		0x08
 
 #define PODF_DEST_X				0x01
 #define PODF_DEST_Y				0x02
@@ -159,6 +160,7 @@ typedef struct
 	short		toptexture;
 	short		midtexture;
 	short		bottomtexture;
+	byte		lineflags;	// note: only a byte!
 } sidedelta_t;
 
 typedef struct

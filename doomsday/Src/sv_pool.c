@@ -4,6 +4,9 @@
 //** SV_POOL.C
 //**
 //** $Log$
+//** Revision 1.5  2003/03/12 20:29:19  skyjake
+//** Added lineflags to side deltas
+//**
 //** Revision 1.4  2003/03/07 18:04:36  skyjake
 //** Sv_ClientCoords simply accepts coords, check removed
 //**
@@ -16,20 +19,18 @@
 //**************************************************************************
 
 /*
-
-Delta Pools use PU_LEVEL, which means all the memory allocated for them
-is deallocated when the level changes. Sv_InitPools is called in 
-DD_SetupLevel to clear out all the old data.
-
-* Real state vs. Register+Pool -> Changes in the world?
-* Changes in the world -> Deltas
-* Deltas -> Sent to client as a Set, placed in the Pool
-* Client sends Ack -> Delta Set removed from Pool, applied to Register
-* Client doesn't send Ack -> Delta Set resent
-
-Can get a bit heavy. Any optimizations?
-
-*/
+ * Delta Pools use PU_LEVEL, which means all the memory allocated for them
+ * is deallocated when the level changes. Sv_InitPools is called in 
+ * DD_SetupLevel to clear out all the old data.
+ *
+ * 1. Real state vs. Register+Pool -> Changes in the world?
+ * 2. Changes in the world -> Deltas
+ * 3. Deltas -> Sent to client as a Set, placed in the Pool
+ * 4. Client sends Ack -> Delta Set removed from Pool, applied to Register
+ * 5. Client doesn't send Ack -> Delta Set resent
+ *
+ * Can get a bit heavy. Any optimizations?
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -225,11 +226,6 @@ void Sv_ApplyMobjDelta(mobj_t *state, mobjdelta_t *delta)
 		state->state = d->state;
 		state->tics = d->state->tics;
 	}
-	//if(df & MDF_TICS) state->tics = d->tics;
-	//if(df & MDF_SPRITE) state->sprite = d->sprite;
-	//if(df & MDF_FRAME) state->frame = d->frame;
-	//if(df & MDF_NEXTFRAME) state->nextframe = d->nextframe;
-	//if(df & MDF_NEXTTIME) state->nexttime = d->nexttime;
 	if(df & MDF_RADIUS) state->radius = d->radius;
 	if(df & MDF_HEIGHT) state->height = d->height;
 	if(df & MDF_FLAGS) state->ddflags = d->ddflags;
@@ -264,18 +260,6 @@ void Sv_ApplyPlayerDelta(playerdelta_t *state, playerdelta_t *d)
 		for(i=0; i<2; i++)
 		{
 			off = 16 + i*8;
-			/*if(df & (PSDF_SPRITE << off)) 
-				state->psp[i].sprite = d->psp[i].sprite;
-			if(df & (PSDF_FRAME << off)) 
-				state->psp[i].frame = d->psp[i].frame;
-			if(df & (PSDF_NEXT << off))
-			{
-				state->psp[i].nextframe = d->psp[i].nextframe;
-			//if(df & (PSDF_NEXT << off))
-				state->psp[i].nexttime = d->psp[i].nexttime;
-			}
-			if(df & (PSDF_TICS << off)) 
-				state->psp[i].tics = d->psp[i].tics;*/
 			if(df & (PSDF_STATEPTR << off))
 			{
 				state->psp[i].stateptr = d->psp[i].stateptr;
@@ -345,6 +329,7 @@ void Sv_ApplySideDelta(sidedelta_t *state, sidedelta_t *d)
 	if(df & SIDF_TOPTEX) state->toptexture = d->toptexture;
 	if(df & SIDF_MIDTEX) state->midtexture = d->midtexture;
 	if(df & SIDF_BOTTOMTEX) state->bottomtexture = d->bottomtexture;
+	if(df & SIDF_LINE_FLAGS) state->lineflags = d->lineflags;
 }
 
 //==========================================================================
@@ -444,11 +429,6 @@ void Sv_CompareMobj(mobj_t *mo, mobjdelta_t *state, mobjdelta_t *delta)
 	if(mo->momy != s->momy) df |= MDF_MOM_Y;
 	if(mo->momz != s->momz) df |= MDF_MOM_Z;
 	if(mo->angle != s->angle) df |= MDF_ANGLE;
-	//if(mo->tics != s->tics) df |= MDF_TICS;
-	//if(mo->sprite != s->sprite) df |= MDF_SPRITE;
-	//if(mo->frame != s->frame) df |= MDF_FRAME;
-	//if(mo->nextframe != s->nextframe) df |= MDF_NEXTFRAME;
-	//if(mo->nexttime != s->nexttime) df |= MDF_NEXTTIME;
 	if(mo->selector != s->selector) df |= MDF_SELECTOR;
 	if(!Def_SameStateSequence(mo->state, s->state)) df |= MDF_STATE;
 	if(mo->radius != s->radius) df |= MDF_RADIUS;
@@ -504,13 +484,7 @@ void Sv_ComparePlayer(int num, playerdelta_t *s, playerdelta_t *d)
 		off = 16 + i*8;
 		dps = d->psp + i;
 		sps = s->psp + i;
-		//if(dps->sprite != sps->sprite) df |= PSDF_SPRITE << off; 
-		//if(dps->frame != sps->frame) df |= PSDF_FRAME << off;
-		//if(dps->nextframe != sps->nextframe) df |= PSDF_NEXT/*FRAME*/ << off;
-		//if(dps->nexttime != sps->nexttime) df |= PSDF_NEXT/*TIME*/ << off;
-		//if(dps->tics != sps->tics) df |= PSDF_TICS << off;
 		
-		//if(!Sv_SameStateSequence(dps->stateptr, sps->stateptr)) 
 		if(dps->stateptr != sps->stateptr) df |= PSDF_STATEPTR << off;
 
 		if(dps->light != sps->light) df |= PSDF_LIGHT << off;
@@ -571,7 +545,7 @@ void Sv_CompareSector(int num, sectordelta_t *s, sectordelta_t *d)
 //==========================================================================
 // Sv_CompareSide
 //==========================================================================
-void Sv_CompareSide(int num, sidedelta_t *s, sidedelta_t *d)
+void Sv_CompareSide(line_t *line, int num, sidedelta_t *s, sidedelta_t *d)
 {
 	side_t *sid = SIDE_PTR(num);
 	int df = 0;
@@ -581,11 +555,13 @@ void Sv_CompareSide(int num, sidedelta_t *s, sidedelta_t *d)
 	d->toptexture = sid->toptexture;
 	d->midtexture = sid->midtexture;
 	d->bottomtexture = sid->bottomtexture;
+	d->lineflags = line? line->flags & 0xff : 0;
 
 	// Determine which data is different.
 	if(d->toptexture != s->toptexture) df |= SIDF_TOPTEX;
 	if(d->midtexture != s->midtexture) df |= SIDF_MIDTEX;
 	if(d->bottomtexture != s->bottomtexture) df |= SIDF_BOTTOMTEX;
+	if(d->lineflags != s->lineflags) df |= SIDF_LINE_FLAGS;
 
 	d->delta.flags = df;
 }
@@ -995,8 +971,9 @@ void Sv_GenPlayerDeltas(int playerNum)
 // Sv_GenSideDelta
 //	Generates a side delta for the given side.
 //==========================================================================
-void Sv_GenSideDelta(pool_t *pool, short sidenum)
+void Sv_GenSideDelta(pool_t *pool, line_t *line, int whichSide)
 {
+	int sidenum = line->sidenum[whichSide];
 	sidedelta_t regstate, dt;
 	
 	// Do we have a valid side number here?
@@ -1008,8 +985,11 @@ void Sv_GenSideDelta(pool_t *pool, short sidenum)
 	// Apply the deltas already waiting in the pool.
 	Sv_ApplyDeltas(pool, DT_SIDE, sidenum, &regstate.delta);
 
-	// Do the compare.
-	Sv_CompareSide(sidenum, &regstate, &dt);
+	// Do the compare. 
+	Sv_CompareSide(line, sidenum, &regstate, &dt);
+
+	// We only need to send line flags with one side.
+	if(whichSide) dt.delta.flags &= ~SIDF_LINE_FLAGS;
 
 	// Add the result to the pool.
 	if(dt.delta.flags) Sv_AddSideDelta(pool, &dt);
@@ -1021,8 +1001,8 @@ void Sv_GenSideDelta(pool_t *pool, short sidenum)
 //==========================================================================
 boolean Sv_GenSideDeltasFor(line_t *line, pool_t *pool)
 {
-	Sv_GenSideDelta(pool, line->sidenum[0]);
-	Sv_GenSideDelta(pool, line->sidenum[1]);
+	Sv_GenSideDelta(pool, line, 0);
+	Sv_GenSideDelta(pool, line, 1);
 	return true;
 }
 
@@ -1230,7 +1210,7 @@ void Sv_GenPolyDeltas(int playerNum)
 //==========================================================================
 // Sv_DoFrameDelta
 //	Updates the pool with new deltas.
-//	The set number of the pool is incremented.
+//	The Set Number of the pool is incremented.
 //	This is the "main interface" to the Delta Pools.
 //==========================================================================
 void Sv_DoFrameDelta(int playerNum)
@@ -1238,7 +1218,7 @@ void Sv_DoFrameDelta(int playerNum)
 	pool_t *pool = pools + playerNum;
 
 	// A new set will be generated. All new deltas that are generated
-	// will receive this set number.
+	// will receive this Set Number.
 	pool->setNumber++;
 
 	// Generate Null Deltas for destroyed mobjs. This is done first so all
@@ -1412,11 +1392,6 @@ void Sv_WritePlayerDelta(playerdelta_t *d)
 				else
 					Msg_WritePackedShort(0);
 			}
-			//if(psdf & PSDF_SPRITE) Msg_WritePackedShort(psp->sprite + 1);
-			//if(psdf & PSDF_FRAME) Msg_WriteByte(psp->frame);
-			//if(psdf & PSDF_NEXT/*FRAME*/) Msg_WriteByte(psp->nextframe);
-			//if(psdf & PSDF_NEXT/*TIME*/) Msg_WriteByte(psp->nexttime);
-			//if(psdf & PSDF_TICS) Msg_WriteByte(psp->tics);
 			if(psdf & PSDF_LIGHT) 
 			{
 				k = psp->light * 255;
@@ -1545,6 +1520,7 @@ void Sv_WriteSideDelta(sidedelta_t *d)
 	if(df & SIDF_TOPTEX) Msg_WritePackedShort(d->toptexture);
 	if(df & SIDF_MIDTEX) Msg_WritePackedShort(d->midtexture);
 	if(df & SIDF_BOTTOMTEX) Msg_WritePackedShort(d->bottomtexture);
+	if(df & SIDF_LINE_FLAGS) Msg_WriteByte(d->lineflags);
 }
 
 //==========================================================================
@@ -1610,8 +1586,7 @@ int Sv_WriteDeltas(pool_t *pool, int set, int type)
 	int written = false;
 	delta_t *dt;
 
-	for(dt = pool->setRoot.next; dt != &pool->setRoot;
-		dt = dt->next)
+	for(dt = pool->setRoot.next; dt != &pool->setRoot; dt = dt->next)
 	{
 		if(dt->type != type || dt->set != set) continue;
 		written = true;
@@ -1949,7 +1924,7 @@ void Sv_InitialWorld(void)
 
 	// Init sides.
 	for(i = 0; i < numsides; i++)
-		Sv_CompareSide(i, sideInit + i, sideInit + i);
+		Sv_CompareSide(R_GetLineForSide(i), i, sideInit + i, sideInit + i);
 
 	// Init polyobjs.
 	for(i = 0; i < po_NumPolyobjs; i++)
