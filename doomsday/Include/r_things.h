@@ -9,12 +9,21 @@
 
 #define MAXVISSPRITES   8192 
 
+// These constants are used as the type of vissprite_s.
+enum 
+{
+	VSPR_MASKED_WALL,
+	VSPR_MAP_OBJECT,
+	VSPR_HUD_MODEL,
+	VSPR_SKY_MODEL
+};
+
 // A vissprite_t is a thing or masked wall that will be drawn during 
 // a refresh.
 typedef struct vissprite_s
 {
 	struct vissprite_s *prev, *next;
-	boolean			issprite;			// True if this is a sprite (otherwise a wall segment).
+	byte			type;				// True if this is a sprite (otherwise a wall segment).
 	float			distance;			// Vissprites are sorted by distance.
 
 	// An anonymous union for the data.
