@@ -338,6 +338,10 @@ SOURCE=.\Src\p_particle.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\p_player.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\p_polyob.c
 # End Source File
 # Begin Source File
@@ -888,6 +892,10 @@ SOURCE=.\Include\p_mobj.h
 # Begin Source File
 
 SOURCE=.\Include\p_particle.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\p_player.h
 # End Source File
 # Begin Source File
 
