@@ -128,6 +128,26 @@ sfxdriver_t *DS_ImportExternal(void)
 		i->PlayBuffer = Imp("DM_Ext_PlayBuffer");
 	}
 
+	// The driver may also offer a MUS music interface.
+	if(Imp("DM_Mus_Init"))
+	{
+		musdriver_t *m = &musd_loaded;
+		musinterface_mus_t *i = &musd_loaded_imus;
+
+		m->Init = Imp("DS_Init");
+		m->Shutdown = dummyVoid;
+
+		i->gen.Init = Imp("DM_Mus_Init");
+		i->gen.Update = Imp("DM_Mus_Update");
+		i->gen.Set = Imp("DM_Mus_Set");
+		i->gen.Get = Imp("DM_Mus_Get");
+		i->gen.Pause = Imp("DM_Mus_Pause");
+		i->gen.Stop = Imp("DM_Mus_Stop");
+
+		i->SongBuffer = Imp("DM_Mus_SongBuffer");
+		i->Play = Imp("DM_Mus_Play");
+	}
+
 	// We should free the DLL at shutdown.
 	d->Shutdown = DS_UnloadExternal;
 	return d;
