@@ -154,6 +154,10 @@ typedef struct
 	// can be sent to the client. Determined dynamically.
 	int		bandwidthRating;
 
+	// During the adjust period, raising the BWR is allowed (hitting max 
+	// frame size).
+	int		bwrAdjustTime;
+
 	// A record of the past few acknowledgement times.
 	uint	ackTimes[NUM_ACK_TIMES];
 	int		ackIdx;
