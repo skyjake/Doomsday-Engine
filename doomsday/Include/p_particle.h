@@ -18,6 +18,8 @@
 #define PGF_MODEL_ONLY			0x200	// Only spawn if source is a 3D model.
 #define PGF_SCALED_RATE			0x400	// Spawn rate affected by a factor.
 #define PGF_GROUP				0x800	// Triggered by all in anim group.
+#define PGF_SUB_BLEND			0x1000	// Subtractive blending.
+#define PGF_REVSUB_BLEND		0x2000	// Reverse subtractive blending.
 
 // Runtime generator flags:
 #define PGF_VISIBLE				0x1000000	// Should be rendered.
