@@ -88,7 +88,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="./Include,./Include/jtNet2"
-				PreprocessorDefinitions="__DOOMSDAY__,WIN32_GAMMA,WIN32,_DEBUG,_WINDOWS"
+				PreprocessorDefinitions="ZLIB_DLL,__DOOMSDAY__,WIN32_GAMMA,WIN32,_DEBUG,_WINDOWS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
@@ -187,6 +187,12 @@
 				</File>
 				<File
 					RelativePath=".\Src\dd_zip.c">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							CallingConvention="2"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\Src\dd_zone.c">
@@ -407,6 +413,9 @@
 			<Filter
 				Name="Renderer"
 				Filter="">
+				<File
+					RelativePath="Src\rend_bias.c">
+				</File>
 				<File
 					RelativePath=".\Src\rend_clip.c">
 				</File>
@@ -852,6 +861,9 @@
 				Filter="">
 				<File
 					RelativePath=".\Include\de_render.h">
+				</File>
+				<File
+					RelativePath="Include\rend_bias.h">
 				</File>
 				<File
 					RelativePath=".\Include\rend_clip.h">

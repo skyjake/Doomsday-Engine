@@ -166,7 +166,7 @@
 #      undef FAR
 #    endif
 #    include <windows.h>
-#    define ZEXPORT  WINAPI
+#    define ZEXPORT  __cdecl //WINAPI
 #    ifdef WIN32
 #      define ZEXPORTVA  WINAPIV
 #    else
