@@ -28,6 +28,7 @@
 #include "p_think.h"
 #include "m_nodepile.h"
 #include "def_data.h"
+#include "rend_bias.h"
 
 #define SIF_VISIBLE			0x1	   // Sector is visible on this frame.
 #define SIF_FRAME_CLEAR		0x1	   // Flags to clear before each frame.
@@ -37,6 +38,7 @@
 #define SECF_INVIS_CEILING	0x2
 
 #define LINE_INFO(x)	(lineinfo + GET_LINE_IDX(x))
+#define SEG_INFO(x)     (seginfo + GET_SEG_IDX(x))
 #define SUBSECT_INFO(x)	(subsecinfo + GET_SUBSECTOR_IDX(x))
 #define SECT_INFO(x)	(secinfo + GET_SECTOR_IDX(x))
 #define SECT_FLOOR(x)	(secinfo[GET_SECTOR_IDX(x)].visfloor)
@@ -108,7 +110,7 @@ typedef struct {
 
 // rendpoly_t is only for convenience; the data written in the rendering
 // list data buffer is taken from this struct.
-typedef struct {
+typedef struct rendpoly_s {
 	rendpolytype_t  type;
 	short           flags;		   // RPF_*.
 	float           texoffx, texoffy;	/* Texture coordinates for left/top
@@ -156,12 +158,28 @@ typedef struct {
 	sector_t       *lightsource;   // Main sky light source
 } sectorinfo_t;
 
+// Vertex illumination flags.
+#define VIF_LERP         0x1      // Interpolation is in progress.
+#define VIF_STILL_UNSEEN 0x2      // The color of the vertex is still unknown.
+
+typedef struct vertexillum_s {
+    gl_rgba_t color;              // Current color of the vertex.
+    gl_rgba_t dest;               // Destination color of the vertex.
+    unsigned int updatetime;      // When the value was calculated.
+    sector_t *front;              // Sector of the vertex's owner.
+    short flags;
+} vertexillum_t;
+
 typedef struct planeinfo_s {
 	short           flags;
 	ushort          numvertices;
 	fvertex_t      *vertices;
 	int             pic;
 	boolean         isfloor;
+    vertexillum_t  *illumination;
+    biastracker_t   tracker;
+    uint            updated;
+    short           affected[MAX_BIAS_AFFECTED];
 } planeinfo_t;
 
 // Shadowpoly flags.
@@ -182,6 +200,13 @@ typedef struct shadowlink_s {
 	shadowpoly_t   *poly;
 } shadowlink_t;
 
+typedef struct seginfo_s {
+    biastracker_t   tracker[3]; // 0=top, 1=middle, 2=bottom
+    vertexillum_t   illum[3][4];
+    uint            updated;
+    short           affected[MAX_BIAS_AFFECTED];
+} seginfo_t;
+
 typedef struct subsectorinfo_s {
 	planeinfo_t     floor, ceil;
 	int             validcount;
@@ -189,10 +214,10 @@ typedef struct subsectorinfo_s {
 } subsectorinfo_t;
 
 typedef struct lineinfo_side_s {
-	struct line_s  *neighbor[2];   // Left and right neighbour.
-	struct sector_s *proxsector[2];	// Sectors behind the neighbors.
-	struct line_s  *backneighbor[2];	// Neighbour in the backsector (if any).
-	struct line_s  *alignneighbor[2];	// Aligned left and right neighbours.
+	struct line_s  *neighbor[2];      // Left and right neighbour.
+	struct sector_s *proxsector[2];	  // Sectors behind the neighbors.
+	struct line_s  *backneighbor[2];  // Neighbour in the backsector (if any).
+	struct line_s  *alignneighbor[2]; // Aligned left and right neighbours.
 } lineinfo_side_t;
 
 typedef struct {
@@ -286,6 +311,7 @@ typedef struct animgroup_s {
 
 extern vertexowner_t *vertexowners;
 extern sectorinfo_t *secinfo;
+extern seginfo_t *seginfo;
 extern subsectorinfo_t *subsecinfo;
 extern lineinfo_t *lineinfo;
 extern nodeindex_t *linelinks;
