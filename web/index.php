@@ -14,6 +14,12 @@ website. The site provides information and instructions for Doomsday
 Engine developers.
 </p>
 
+<p><center>
+  <a href="http://www.doomsdayhq.com/">
+  <img border="0" src="images/mainshot.jpg" />
+  </a>
+</center></p>
+
 <p>The <a href="http://www.doomsdayhq.com/">Doomsday Engine</a> is a
 Doom source port for the Windows platform. It is based on the source
 code of <a href="http://www.idsoftware.com/">id Software</a>'s Doom
