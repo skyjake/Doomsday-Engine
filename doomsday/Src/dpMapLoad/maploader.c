@@ -125,6 +125,9 @@ static boolean IsMapLump(int lump)
 	const char *name = W_LumpName(lump);
 	int i;
 
+	if(!name) 
+		return false;
+
 	for(i = 0; levelLumps[i]; ++i)
 	{
 		if(!strcmp(name, levelLumps[i]))

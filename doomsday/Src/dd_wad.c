@@ -1051,9 +1051,10 @@ int W_LumpLength(int lump)
 const char *W_LumpName(int lump)
 {
 	lump = W_Select(lump);
-	if(lump >= numlumps)
+	if(lump >= numlumps || lump < 0)
 	{
-		Con_Error("W_LumpName: %i >= numlumps", lump);
+		return NULL; // The caller must be able to handle this...
+		//Con_Error("W_LumpName: %i >= numlumps", lump);
 	}
 	return lumpinfo[lump].name;
 }
