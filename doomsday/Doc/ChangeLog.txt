@@ -9,6 +9,11 @@ Version 1.8.3
 jDoom:
 - fixed: crushed barrels now explode correctly and don't become gibs
 
+Mac OS X:
+* a native build that runs on Mac OS X 10.3 
+* now compiles with Xcode
+- fixed various glitches with regards to loading of plugins
+
 
 Version 1.8.2
 -------------
