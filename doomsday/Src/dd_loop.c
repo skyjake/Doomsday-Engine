@@ -76,7 +76,6 @@ void DD_GameLoop(void)
 		DD_TryRunTics();
 		// Update clients.
 		Sv_TransmitFrame();
-		/* I_UpdateCDMusic(); */
 		DD_EndFrame();		
 		if(!novideo) 
 		{
