@@ -14,7 +14,11 @@ Version 1.7.11 (work in progress)
 * revised low-level networking: implement confirmed/ordered packets 
   manually, detect duplicates
 * mobj translucency 0-255 (selector still overrides)
+* mobj floatbobbing is done by engine (clientside), DDMF_BOB added
+* client is allowed some movement while airborne (easier jumping)
+- fixed: pausing the game also stops spinning models, floatbob
 - external music was not loaded correctly from virtual files
+- fixed: clientside mobjs and players on moving planes
 - fixed: external sound resources reloaded every time the sound starts
 - fixed: tracking of currently playing sounds
 - fixed: floorclip values were restricted to 64 in mobj deltas
@@ -25,15 +29,20 @@ Version 1.7.11 (work in progress)
 - fixed: base path validation (could be missing a slash)
 - fixed: path of CPHelp.txt was sometimes not translated
 - fixed: mobj translucency didn't affect the shadow
+- fixed: incoming message queue protected by a mutex
 - music is not restarted if it's already playing
   
 jDoom:
++ cvar 'view-bob-weapon-switch-lower': if zero, HUD weapon is not 
+  lowered during a weapon switch
 * game-corpse-time: corpses fade smoothly 
 
 jHeretic:
 * game-corpse-time: corpses fade smoothly 
   
 jHexen:
+- fixed: polyobj destination/speed for sliding doors (e.g. map05)
+- fixed: restoring polyobjs and hidden mobjs from saved map
 - fixed: problem with excessive sound sequence repeat (e.g. map12)
 - fixed: torch light for remote players
 - fixed: no mobjs spawned when dedicated server starts
@@ -42,6 +51,9 @@ jHexen:
 - fixed: dedicated server deadlock when monsters don't find any players
 - fixed: crash when minotaur vanishes and master is dead
 - fixed: 'use artifact' sounds not audible on clientside
+
+InFine:
+* default background color is now black
 
 XG:
 - when loading a savegame, line activators were not correctly restored
