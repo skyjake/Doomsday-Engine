@@ -49,10 +49,16 @@ void WI_Start(wbstartstruct_t *wbstartstruct);
 void WI_SetState(stateenum_t st);
 void WI_End(void);
 
+// Implements patch replacement.
+void WI_DrawPatch(int x, int y, int lump);
+
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2003/08/17 23:29:36  skyjake
+// Implemented Patch Replacement
+//
 // Revision 1.1  2003/02/26 19:18:52  skyjake
 // Initial checkin
 //
