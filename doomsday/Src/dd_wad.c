@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 
+#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -540,14 +541,31 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 	if(!loadingForStartup)
 		rec->flags = FRF_RUNTIME;
 
-	if(stricmp(extension, "wad") && stricmp(extension, "gwa"))
+	if(stricmp(extension, "wad") && stricmp(extension, "gwa")) // lmp?
 	{
+        int offset = 0;
+        char *slash = NULL;
+        
 		// Single lump file.
 		fileinfo = &singleinfo;
 		freeFileInfo = NULL;
 		singleinfo.filepos = 0;
 		singleinfo.size = F_Length(handle);
-		M_ExtractFileBase(filename, singleinfo.name);
+
+        // Is there a prefix to be omitted in the name?
+        slash = strrchr(filename, DIR_SEP_CHAR);
+        // The slash mustn't be too early in the string.
+        if(slash && slash >= filename + 2) 
+        {
+            // Good old negative indices.
+            if(slash[-2] == '.' && slash[-1] >= '1' &&
+               slash[-1] <= '9')
+            {
+                offset = slash[-1] - '1' + 1;
+            }
+        }
+        
+		M_ExtractFileBase2(filename, singleinfo.name, 8, offset);
 		rec->numlumps = 1;
 	}
 	else
@@ -989,9 +1007,10 @@ int W_CheckNumForName(char *name)
 		return -1;
 	}
 
+    memset(name8, 0, sizeof(name8));
+
 	// Make the name into two integers for easy compares
 	strncpy(name8, name, 8);
-	name8[8] = 0;				// in case the name was a full 8 chars
 	strupr(name8);				// case insensitive
 	v1 = *(int *) name8;
 	v2 = *(int *) &name8[4];
