@@ -455,13 +455,15 @@ void Cl_MovePsprites(void)
  * Reads a single psv_frame2 player delta from the message buffer and 
  * applies it to the player in question. 
  */
-void Cl_ReadPlayerDelta2(void)
+void Cl_ReadPlayerDelta2(boolean skip)
 {
 	int df = 0, psdf, i, idx;
 	playerstate_t *s;
 	ddplayer_t *pl;
 	ddpsprite_t *psp;
-	int num;
+	static playerstate_t dummyState;
+	static ddplayer_t dummyPlayer;
+	int num, newId;
 
 	// The first byte consists of a player number and some flags.
 	num = Msg_ReadByte();
@@ -469,17 +471,27 @@ void Cl_ReadPlayerDelta2(void)
 	df |= Msg_ReadByte();	// Second byte is just flags.
 	num &= 0xf;				// Clear the upper bits of the number.
 
-	s = playerstate + num;
-	pl = players + num;
+	if(!skip)
+	{
+		s = playerstate + num;
+		pl = players + num;
+	}
+	else
+	{
+		// We're skipping, read the data into dummies.
+		s = &dummyState;
+		pl = &dummyPlayer;
+	}
 
 	if(df & PDF_MOBJ) 
 	{
 		clmobj_t *old = s->cmo;
-		int newId = Msg_ReadShort();
+
+		newId = Msg_ReadShort();
 
 		// Make sure the 'new' mobj is different than the old one; 
 		// there will be linking problems otherwise.
-		if(newId != s->mobjid) 
+		if(!skip && newId != s->mobjid) 
 		{
 			boolean justCreated = false;
 

@@ -563,28 +563,36 @@ int Cl_ReadPolyDelta(void)
  * Reads a sector delta from the psv_frame2 message buffer and applies it 
  * to the world.
  */
-void Cl_ReadSectorDelta2(void)
+void Cl_ReadSectorDelta2(boolean skip)
 {
 	unsigned short num;
 	sector_t *sec;
 	int df;
 	boolean wasChanged = false;
+	static sector_t dummy; // Used when skipping.
 
 	// Sector index number.
 	num = Msg_ReadShort();
 
-#ifdef _DEBUG
-	if(num >= numsectors)
-	{
-		// This is worrisome.
-		Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
-	}
-#endif
-
-	sec = SECTOR_PTR(num);
-
 	// Flags.
 	df = Msg_ReadShort();
+
+	if(!skip)
+	{
+#ifdef _DEBUG
+		if(num >= numsectors)
+		{
+			// This is worrisome.
+			Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
+		}
+#endif
+		sec = SECTOR_PTR(num);
+	}
+	else
+	{
+		// Read the data into the dummy if we're skipping.
+		sec = &dummy;
+	}
 
 	if(df & SDF_FLOORPIC) 
 		sec->floorpic = Cl_TranslateLump( Msg_ReadPackedShort() );
@@ -629,6 +637,9 @@ void Cl_ReadSectorDelta2(void)
 	if(df & SDF_COLOR_GREEN) sec->rgb[1] = Msg_ReadByte();
 	if(df & SDF_COLOR_BLUE) sec->rgb[2] = Msg_ReadByte();
 
+	// The whole delta has been read. If we're about to skip, let's do so.
+	if(skip) return;
+
 	// If the plane heights were changed, we need to update the mobjs in
 	// the sector.
 	if(wasChanged)
@@ -652,14 +663,27 @@ void Cl_ReadSectorDelta2(void)
 /*
  * Reads a side delta from the message buffer and applies it to the world.
  */
-void Cl_ReadSideDelta2(void)
+void Cl_ReadSideDelta2(boolean skip)
 {
 	unsigned short num;
+	int df, toptexture, midtexture, bottomtexture;
+	byte lineFlags;
 	side_t *sid;
-	int df;
 
+	// First read all the data.
 	num = Msg_ReadShort();
 
+	// Flags.
+	df = Msg_ReadByte();
+
+	if(df & SIDF_TOPTEX) toptexture = Msg_ReadPackedShort();
+	if(df & SIDF_MIDTEX) midtexture = Msg_ReadPackedShort();
+	if(df & SIDF_BOTTOMTEX) bottomtexture = Msg_ReadPackedShort();
+	if(df & SIDF_LINE_FLAGS) lineFlags = Msg_ReadByte();
+
+	// Must we skip this?
+	if(skip) return;
+	
 #ifdef _DEBUG
 	if(num >= numsides)
 	{
@@ -670,28 +694,23 @@ void Cl_ReadSideDelta2(void)
 
 	sid = SIDE_PTR(num);
 
-	// Flags.
-	df = Msg_ReadByte();
-
 	if(df & SIDF_TOPTEX) 
-		sid->toptexture = Msg_ReadPackedShort();
+		sid->toptexture = toptexture;
 	if(df & SIDF_MIDTEX) 
-		sid->midtexture = Msg_ReadPackedShort();
+		sid->midtexture = midtexture;
 	if(df & SIDF_BOTTOMTEX) 
-		sid->bottomtexture = Msg_ReadPackedShort();
+		sid->bottomtexture = bottomtexture;
 	if(df & SIDF_LINE_FLAGS)
 	{
-		byte updatedFlags = Msg_ReadByte();
 		line_t *line = R_GetLineForSide(num);
-
 		if(line)
 		{
 			// The delta includes the entire lowest byte.
 			line->flags &= ~0xff;
-			line->flags |= updatedFlags;
+			line->flags |= lineFlags;
 #if _DEBUG
 			Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n", 
-				GET_LINE_IDX(line), updatedFlags);
+				GET_LINE_IDX(line), lineFlags);
 #endif
 		}
 	}
@@ -701,13 +720,27 @@ void Cl_ReadSideDelta2(void)
  * Reads a poly delta from the message buffer and applies it to 
  * the world.
  */
-void Cl_ReadPolyDelta2(void)
+void Cl_ReadPolyDelta2(boolean skip)
 {
 	int df;
 	unsigned short num;
 	polyobj_t *po;
+	int destX, destY, speed, destAngle, angleSpeed;
 
 	num = Msg_ReadPackedShort();
+
+	// Flags.
+	df = Msg_ReadByte();
+
+	if(df & PODF_DEST_X) 
+		destX = (Msg_ReadShort() << 16) + ((char)Msg_ReadByte() << 8);
+	if(df & PODF_DEST_Y)
+		destY = (Msg_ReadShort() << 16) + ((char)Msg_ReadByte() << 8);
+	if(df & PODF_SPEED) speed = Msg_ReadShort() << 8;
+	if(df & PODF_DEST_ANGLE) destAngle = Msg_ReadShort() << 16;
+	if(df & PODF_ANGSPEED) angleSpeed = Msg_ReadShort() << 16;
+
+	if(skip) return;
 
 #ifdef _DEBUG
 	if(num >= po_NumPolyobjs)
@@ -719,21 +752,12 @@ void Cl_ReadPolyDelta2(void)
 
 	po = PO_PTR(num);
 
-	// Flags.
-	df = Msg_ReadByte();
-
-	if(df & PODF_DEST_X) 
-		po->dest.x = (Msg_ReadShort() << 16) + ((char)Msg_ReadByte() << 8);
-	if(df & PODF_DEST_Y)
-		po->dest.y = (Msg_ReadShort() << 16) + ((char)Msg_ReadByte() << 8);
-	if(df & PODF_SPEED) 
-		po->speed = Msg_ReadShort() << 8;
-	if(df & PODF_DEST_ANGLE) 
-		po->destAngle = Msg_ReadShort() << 16;
-	if(df & PODF_ANGSPEED) 
-		po->angleSpeed = Msg_ReadShort() << 16;
-	if(df & PODF_PERPETUAL_ROTATE) 
-		po->destAngle = -1;
+	if(df & PODF_DEST_X) po->dest.x = destX;
+	if(df & PODF_DEST_Y) po->dest.y = destY;
+	if(df & PODF_SPEED) po->speed = speed;
+	if(df & PODF_DEST_ANGLE) po->destAngle = destAngle;
+	if(df & PODF_ANGSPEED) po->angleSpeed = angleSpeed;
+	if(df & PODF_PERPETUAL_ROTATE) po->destAngle = -1;
 
 	// Update the polyobj's mover thinkers.
 	Cl_SetPolyMover(num, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),

@@ -108,13 +108,13 @@ void Cl_UnlinkMobj(clmobj_t *cmo)
 {
 	cmhash_t *hash = Cl_MobjHash(cmo->mo.thinker.id);
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
 	if(cmo->flags & CLMF_HIDDEN)
 	{
 		Con_Printf("Cl_UnlinkMobj: Hidden mobj %i unlinked.\n", 
 			cmo->mo.thinker.id);
 	}
-#endif
+#endif*/
 
 	if(hash->first == cmo) hash->first = cmo->next;
 	if(hash->last == cmo) hash->last = cmo->prev;
@@ -770,59 +770,20 @@ void Cl_RevealMobj(clmobj_t *cmo)
  *
  * For client mobjs that belong to players, updates the real player mobj.
  */
-void Cl_ReadMobjDelta2(boolean allowCreate)
+void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 {
 	boolean linked = true, justCreated = false;
-	clmobj_t *cmo;
+	clmobj_t *cmo = NULL;
 	mobj_t *d;
+	static mobj_t dummy;
 	int df = 0;
 	byte moreFlags = 0, fastMom = false;
 	short mom;
 	thid_t id = Msg_ReadShort();	// Read the ID.
 
-	// Get a mobj for this.
-	cmo = Cl_FindMobj(id);
-	if(!cmo)
-	{
-		// This is a new ID, allocate a new mobj.
-		cmo = Cl_CreateMobj(id);
-		justCreated = true;
-		linked = false;
-
-		if(!allowCreate)
-		{
-			// This clmobj should be hidden until the Create mobj
-			// delta arrives. (created, but not linked to the world)
-			cmo->flags |= CLMF_HIDDEN;		
-
-/*#ifdef _DEBUG
-			Con_Printf("Cl_RMD2: Mobj %i created as Hidden.\n", id);
-#endif*/
-		}
-	}
-
-	if(!(cmo->flags & CLMF_NULLED))
-	{
-		// Now that we've received a delta, the mobj's Predictable again.
-		cmo->flags &= ~CLMF_UNPREDICTABLE;
-
-		// This clmobj is evidently alive.
-		cmo->time = Sys_GetRealTime();
-	}
-
 	// Flags.
 	df = Msg_ReadShort();
-#ifdef _DEBUG
-	if(!df)
-	{	
-		Con_Error("Cl_RMD2: Mobj %i delta is void.\n", id);
-	}
-/*	if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
-	{
-		Con_Printf("Cl_ReadMobjDelta2: Mo %i created without X/Y.\n", id);
-	}*/
-#endif
-	
+
 	// More flags?
 	if(df & MDF_MORE_FLAGS)
 	{
@@ -832,15 +793,53 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
 		if(moreFlags & MDFE_FAST_MOM) fastMom = true;
 	}
 
-	d = &cmo->mo;
-
-	// Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-	if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) 
-		&& linked
-		&& !d->dplayer)
+	if(!skip)
 	{
-		linked = false;
-		Cl_UnsetThingPosition(cmo);
+		// Get a mobj for this.
+		cmo = Cl_FindMobj(id);
+		if(!cmo)
+		{
+			// This is a new ID, allocate a new mobj.
+			cmo = Cl_CreateMobj(id);
+			justCreated = true;
+			linked = false;
+
+			if(!allowCreate)
+			{
+				// This clmobj should be hidden until the Create mobj
+				// delta arrives. (created, but not linked to the world)
+				cmo->flags |= CLMF_HIDDEN;		
+
+/*#ifdef _DEBUG
+				Con_Printf("Cl_RMD2: Mobj %i created as Hidden.\n", id);
+#endif*/
+			}
+		}
+
+		if(!(cmo->flags & CLMF_NULLED))
+		{
+			// Now that we've received a delta, the mobj's Predictable again.
+			cmo->flags &= ~CLMF_UNPREDICTABLE;
+
+			// This clmobj is evidently alive.
+			cmo->time = Sys_GetRealTime();
+		}
+
+		d = &cmo->mo;
+
+		// Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
+		if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) 
+			&& linked
+			&& !d->dplayer)
+		{
+			linked = false;
+			Cl_UnsetThingPosition(cmo);
+		}
+	}
+	else
+	{
+		// We're skipping.
+		d = &dummy;
 	}
 
 	// Coordinates with three bytes.
@@ -867,14 +866,6 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
 		d->z = DDMAXINT;
 	}
 
-#ifdef _DEBUG
-	if(!d->x && !d->y)
-	{
-		/*Con_Printf("Cl_RMD2: %i: x,y zeroed t%i(%s)\n", id, d->type,
-			defs.mobjs[d->type].id);*/
-	}
-#endif
-
 	// Momentum using 8.8 fixed point.
 	if(df & MDF_MOM_X) 
 	{
@@ -900,7 +891,10 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
 	if(df & MDF_SELSPEC) d->selector |= Msg_ReadByte() << 24;
 
 	if(df & MDF_STATE) 
-		Cl_SetThingState(d, (unsigned short) Msg_ReadPackedShort());
+	{
+		ushort stateIdx = Msg_ReadPackedShort();
+		if(!skip) Cl_SetThingState(d, stateIdx);
+	}
 
 	// Pack flags into a word (3 bytes?).
 	// FIXME: Do the packing!
@@ -923,6 +917,9 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
 	}
 
 	if(moreFlags & MDFE_TRANSLUCENCY) d->translucency = Msg_ReadByte();
+
+	// The delta has now been read. We can now skip if necessary.
+	if(skip) return;
 
 	// Is it time to remove the Hidden status?
 	if(allowCreate && cmo->flags & CLMF_HIDDEN)
@@ -962,7 +959,7 @@ void Cl_ReadMobjDelta2(boolean allowCreate)
  * Null mobjs deltas have their own type in a psv_frame2 packet.
  * Here we remove the mobj in question.
  */
-void Cl_ReadNullMobjDelta2(void)
+void Cl_ReadNullMobjDelta2(boolean skip)
 {
 	clmobj_t *cmo;
 	thid_t id;
@@ -970,18 +967,13 @@ void Cl_ReadNullMobjDelta2(void)
 	// The delta only contains an ID.
 	id = Msg_ReadShort();
 
+	if(skip) return;
+
 #ifdef _DEBUG
 	Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
 #endif
 
-	cmo = Cl_FindMobj(id);
-/*#ifdef _DEBUG
-	if(!cmo)
-	{
-		Con_Error("Cl_ReadNullMobjDelta2: Null %i, doesn't exist!\n", id);
-	}
-#endif*/
-	if(!cmo) 
+	if((cmo = Cl_FindMobj(id)) == NULL) 
 	{
 		// Wasted bandwidth...
 		return;
@@ -998,8 +990,6 @@ void Cl_ReadNullMobjDelta2(void)
 		playerstate[cmo->mo.dplayer - players].cmo = NULL;
 	}
 	
-	// Cl_DestroyMobj(cmo);
-
 	// This'll allow playing sounds from the mobj for a little while.
 	// The mobj will soon time out and be permanently removed.
 	cmo->time = Sys_GetRealTime();

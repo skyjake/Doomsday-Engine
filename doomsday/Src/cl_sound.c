@@ -35,7 +35,7 @@
  * Read a sound delta from the message buffer and play it.
  * Only used with psv_frame2 packets.
  */
-void Cl_ReadSoundDelta2(deltatype_t type)
+void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
 	int sound = 0, soundFlags = 0;
 	byte flags = 0;
@@ -112,6 +112,9 @@ void Cl_ReadSoundDelta2(deltatype_t type)
 	{
 		soundFlags |= DDSF_REPEAT;
 	}
+
+	// The delta has been read. Are we skipping?
+	if(skip) return;
 
 	// Now the entire delta has been read.
 	// Should we start or stop a sound?
