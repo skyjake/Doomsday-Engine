@@ -240,6 +240,7 @@ static Control_t controls[] = {
 
 	// Misc.
 	"pause", 0, DDKEY_PAUSE, 0, 0,
+	"screenshot", 0, 0, 0, 0,
 	"", 0, 0, 0, 0
 };
 
@@ -594,13 +595,14 @@ static MenuItem_t ControlsItems[] = {
 	{ITT_EMPTY, NULL, NULL, 0, MENU_NONE},
 	{ITT_EMPTY, "MISCELLANEOUS", NULL, 0, MENU_NONE},
 	{ITT_EFUNC, "STOP DEMO :", SCControlConfig, A_STOPDEMO, MENU_NONE},
-	{ITT_EFUNC, "PAUSE :", SCControlConfig, 58, MENU_NONE}
+	{ITT_EFUNC, "PAUSE :", SCControlConfig, 58, MENU_NONE},
+	{ITT_EFUNC, "SCREENSHOT :", SCControlConfig, 59, MENU_NONE}
 };
 
 static Menu_t ControlsMenu = {
 	32, 26,
 	DrawControlsMenu,
-	71, ControlsItems,
+	72, ControlsItems,
 	1,
 	MENU_OPTIONS,
 	MN_DrTextA_CS, 9,
