@@ -43,8 +43,8 @@ Version number rules: (major).(minor).(revision)
 
 // Version constant. Use this to verify in the DLL that the engine
 // is new enough. 
-#define DOOMSDAY_VERSION		10711
-#define DOOMSDAY_VERSION_TEXT	"1.7.11"
+#define DOOMSDAY_VERSION		10712
+#define DOOMSDAY_VERSION_TEXT	"1.7.12"
 
 #define DDMAXPLAYERS			16
 
@@ -201,6 +201,7 @@ enum
 	DD_FLAT,
 	DD_GAME_MODE,	// 16 chars max (swdoom, doom1, udoom, tnt, heretic...) 
 	DD_GAME_CONFIG,	// String: dm/co-op, jumping, etc.
+	DD_DEF_FINALE,
 
 	// Queries
 	DD_TEXTURE_HEIGHT_QUERY			= 0x2000,
