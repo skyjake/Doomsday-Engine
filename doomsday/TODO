@@ -5,12 +5,13 @@ by Jaakko Keränen <jaakko.keranen@iki.fi>
 
 All Platforms
 =============
-- fix "settics"
-- ack packets using the TCP connection
++ fix "settics"
+- fix ticcmd buffering with slowed-down time
 - new integrated playsim core in the engine
 - move polyobj management into the engine
 - move XG into the engine
 - move ACS into the engine
+- ack packets using the TCP connection (in groups)
 - shaders
 - model rendering plugins
 - MD3 support
