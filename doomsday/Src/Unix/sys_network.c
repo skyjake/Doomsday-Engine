@@ -978,12 +978,15 @@ void N_TerminateNode(nodeid_t id)
 
 	// Cancel this node's packets in the send queue by setting their
 	// node pointers to NULL.
-	Sem_P(sendQ.mutex);
-	for(i = sendQ.first; i; i = i->next)
-		if(i->node == node)
-			i->node = NULL;
-	Sem_V(sendQ.mutex);
-
+    if(sendQ.first != sendQ.last)
+    {
+        Sem_P(sendQ.mutex);
+        for(i = sendQ.first; i; i = i->next)
+            if(i->node == node)
+                i->node = NULL;
+        Sem_V(sendQ.mutex);
+    }
+    
 	// Clear the node's data.
 	Sem_Destroy(node->mutex);
 	memset(node, 0, sizeof(*node));
