@@ -298,6 +298,10 @@ SOURCE=.\Src\sv_main.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Src\sv_missile.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Src\sv_pool.c
 # End Source File
 # Begin Source File
@@ -836,6 +840,10 @@ SOURCE=.\Include\sv_def.h
 # Begin Source File
 
 SOURCE=.\Include\sv_frame.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Include\sv_missile.h
 # End Source File
 # Begin Source File
 
