@@ -39,7 +39,7 @@ typedef struct
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void Def_ReadProcessDED(char *filename);
+void Def_ReadProcessDED(const char *filename);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -380,14 +380,14 @@ int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
 //===========================================================================
 // Def_ReadProcessDED
 //===========================================================================
-void Def_ReadProcessDED(char *filename)
+void Def_ReadProcessDED(const char *fileName)
 {
 	char fn[256];
 	directory_t dir;
 
 	// Change to the directory of the file we're about to read.
-	Dir_FileName(filename, fn);
-	Dir_FileDir(filename, &dir);
+	Dir_FileName(fileName, fn);
+	Dir_FileDir(fileName, &dir);
 	if(Dir_ChDir(&dir)) // Make sure the directory exists.
 	{
 		if(strchr(fn, '*') || strchr(fn, '?'))
