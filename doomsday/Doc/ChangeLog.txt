@@ -4,6 +4,17 @@
                Legend: + added, - fixed, * improved/changed
 
 
+Version 1.8.0-rc2
+-----------------
++ control panel text has its own color (not just white)
+* movement of missiles and other such objects is now smoothed
+* network setup screens updated
+* modems, serial links and IPX no longer supported (only TCP/IP)
+- ccmd 'playsound' was missing
+- things didn't follow moving planes smoothly
+- fixed an input event processing bug that caused duplicated events
+
+
 Version 1.8.0-rc1
 -----------------
 ! Release Candidate
