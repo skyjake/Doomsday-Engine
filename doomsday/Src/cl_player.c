@@ -28,8 +28,6 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean	pred_forward;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 playerstate_t	playerstate[MAXPLAYERS];
@@ -90,6 +88,8 @@ void Cl_LocalCommand(void)
 //	Reads a single player delta from the message buffer and applies
 //	it to the player in question. Returns false only if the list of 
 //	deltas ends.
+//
+//	THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
 //==========================================================================
 int Cl_ReadPlayerDelta(void)
 {
@@ -135,12 +135,12 @@ int Cl_ReadPlayerDelta(void)
 #endif
 
 			// Unlink this cmo (not interactive or visible).
-			Cl_UnsetThingPosition(&s->cmo->mo);
+			Cl_UnsetThingPosition(s->cmo);
 			// Make the old clmobj a non-player one.
 			if(old) 
 			{	
 				old->mo.dplayer = NULL;
-				Cl_SetThingPosition(&old->mo);
+				Cl_SetThingPosition(old);
 				Cl_UpdateRealPlayerMobj(pl->mo, &s->cmo->mo, ~0);
 			}
 			else
@@ -241,7 +241,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
 {
 	int num = pl - players;
 	playerstate_t *st = playerstate + num;
-	int time_mul = 1, old_friction;
+	int time_mul = 1; /*, old_friction;*/
 	mobj_t *clmo = &st->cmo->mo, *mo = pl->mo;
 
 	if(!mo) return;
@@ -254,7 +254,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
 		return;
 	}
 
-	// If we're predicting backwards in time, reverse momentum.
+/*	// If we're predicting backwards in time, reverse momentum.
 	// Everything else stays the same.
 	if(!pred_forward) 
 	{
@@ -264,7 +264,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
 		mo->momz = -mo->momz;
 		old_friction = st->friction;
 		st->friction = FixedDiv(FRACUNIT, st->friction);
-	}
+	}*/
 
 	// Move.
 	P_XYMovement2(mo, st);
@@ -291,13 +291,13 @@ void Cl_MovePlayer(ddplayer_t *pl)
 	}
 
 	// Undo the reversing.
-	if(!pred_forward)
+/*	if(!pred_forward)
 	{
 		mo->momx = -mo->momx;
 		mo->momy = -mo->momy;
 		mo->momz = -mo->momz;
 		st->friction = old_friction;
-	}
+	}*/
 
 	// Mirror changes in the (hidden) client mobj. 
 	Cl_UpdatePlayerPos(pl);
@@ -336,6 +336,11 @@ void Cl_UpdatePlayerPos(ddplayer_t *pl)
 void Cl_CoordsReceived(void)
 {
 	if(playback) return;
+
+#ifdef _DEBUG
+	Con_Printf("Cl_CoordsReceived\n");
+#endif
+
 	xfix = Msg_ReadShort() << 16;
 	yfix = Msg_ReadShort() << 16;
 	fixtics = fixspeed;
@@ -354,15 +359,12 @@ void Cl_CoordsReceived(void)
 //==========================================================================
 void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
 {
-//	clmobj_t *cmo = playerstate[consoleplayer].cmo;
 	ddplayer_t *pl = players + consoleplayer;
 	mobj_t *mo;
 	int i;
 
 	mo = pl->mo;
 	if(!mo) return;
-
-	//CON_Printf("Cl_MLP: mo->ddf=%x\n", mo->ddflags);
 
 	// Place the new momentum in the appropriate place.
 	cp_momx[gametic % LOCALCAM_WRITE_TICS] = dx;
@@ -379,24 +381,18 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
 
 	if(dx || dy)
 	{
-		//Cl_UnsetThingPosition(mo);
-		P_UnlinkThing(mo); //, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+		P_UnlinkThing(mo);
 		mo->x += dx;
 		mo->y += dy;
 		P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-		//Cl_SetThingPosition(mo);
 	}
-	//Cl_CheckMobj(mo);
 
-	//P_CheckPosition2(mo, mo->x, mo->y, mo->z);	
 	mo->subsector = R_PointInSubsector(mo->x, mo->y);
-	mo->floorz = mo->subsector->sector->floorheight; //tmfloorz;
-	mo->ceilingz = mo->subsector->sector->ceilingheight; //tmceilingz;
+	mo->floorz = mo->subsector->sector->floorheight; 
+	mo->ceilingz = mo->subsector->sector->ceilingheight;
 
 	if(onground)
 	{
-		//mo->z = mo->floorz;
-		//pl->viewheight = z - mo->z;
 		mo->z = z - 1;
 		pl->viewheight = 1;
 	}
@@ -462,4 +458,131 @@ void Cl_MovePsprites(void)
 	// The other psprite gets the same coords.
 	psp[1].x = psp->x;
 	psp[1].y = psp->y;
+}
+
+/*
+ * Reads a single psv_frame2 player delta from the message buffer and 
+ * applies it to the player in question. 
+ */
+void Cl_ReadPlayerDelta2(void)
+{
+	int df = 0, psdf, i, idx;
+	playerstate_t *s;
+	ddplayer_t *pl;
+	ddpsprite_t *psp;
+	int num;
+
+	// The first byte consists of a player number and some flags.
+	num = Msg_ReadByte();
+	df = (num & 0xf0) << 8;
+	df |= Msg_ReadByte();	// Second byte is just flags.
+	num &= 0xf;				// Clear the upper bits of the number.
+
+	s = playerstate + num;
+	pl = players + num;
+
+	if(df & PDF_MOBJ) 
+	{
+		clmobj_t *old = s->cmo;
+		int newId = Msg_ReadShort();
+
+		// Make sure the 'new' mobj is different than the old one; 
+		// there will be linking problems otherwise.
+		if(newId != s->mobjid) 
+		{
+			boolean justCreated = false;
+
+			s->mobjid = newId;
+			
+			// Find the new mobj.
+			s->cmo = Cl_FindMobj(s->mobjid);
+			if(!s->cmo)
+			{
+				// This mobj hasn't yet been sent to us.
+				// We should be receiving the rest of the info very shortly.
+				s->cmo = Cl_CreateMobj(s->mobjid);		
+				justCreated = true;
+			}
+			else 
+			{
+				// The client mobj is already known to us.
+				// Unlink it (not interactive or visible).
+				Cl_UnsetThingPosition(s->cmo);
+			}
+
+			s->cmo->mo.dplayer = pl;
+
+			// Make the old clmobj a non-player one (if any).
+			if(old) 
+			{	
+				old->mo.dplayer = NULL;
+				Cl_SetThingPosition(old);
+			}
+
+			// If it was just created, the coordinates are not yet correct.
+			// The update will be made when the mobj data is received.
+			if(!justCreated)
+			{
+				// Replace the hidden client mobj with the real player mobj.
+				Cl_UpdateRealPlayerMobj(pl->mo, &s->cmo->mo, 0xffffffff);
+			}
+
+#if _DEBUG
+			Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, 
+				s->mobjid, old); 
+			Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.x,
+				s->cmo->mo.y, s->cmo->mo.z);
+			Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
+				s->cmo->mo.dplayer - players, s->mobjid);
+#endif
+		}
+	}
+	if(df & PDF_FORWARDMOVE) s->forwardmove = (char) Msg_ReadByte() * 2048;
+	if(df & PDF_SIDEMOVE) s->sidemove = (char) Msg_ReadByte() * 2048;
+	if(df & PDF_ANGLE) s->angle = Msg_ReadByte() << 24;
+	if(df & PDF_TURNDELTA) 
+	{
+		s->turndelta = ((char) Msg_ReadByte() << 24) / 16;
+	}
+	if(df & PDF_FRICTION) s->friction = Msg_ReadByte() << 8;
+	if(df & PDF_EXTRALIGHT) 
+	{
+		i = Msg_ReadByte();
+		pl->fixedcolormap = i & 7;	
+		pl->extralight = i & 0xf8;	
+	}
+	if(df & PDF_FILTER) 
+		pl->filter = Msg_ReadLong();
+	if(df & PDF_CLYAW) // Only sent when Fixangles is used.
+		pl->clAngle = Msg_ReadShort() << 16;
+	if(df & PDF_CLPITCH) // Only sent when Fixangles is used.
+		pl->clLookDir = Msg_ReadShort() * 110.0 / DDMAXSHORT;
+	if(df & PDF_PSPRITES)
+	{
+		for(i = 0; i < 2; i++)
+		{
+			// First the flags.
+			psdf = Msg_ReadByte();
+			psp = pl->psprites + i;
+			if(psdf & PSDF_STATEPTR)
+			{
+				idx = Msg_ReadPackedShort();
+				if(!idx) 
+					psp->stateptr = 0;
+				else if(idx < count_states.num)
+				{
+					psp->stateptr = states + (idx - 1);
+					psp->tics = psp->stateptr->tics;
+				}
+			}
+			if(psdf & PSDF_LIGHT) psp->light = Msg_ReadByte() / 255.0f;
+			if(psdf & PSDF_ALPHA) psp->alpha = Msg_ReadByte() / 255.0f;
+			if(psdf & PSDF_STATE) psp->state = Msg_ReadByte();
+			if(psdf & PSDF_OFFSET)
+			{
+				psp->offx = (char) Msg_ReadByte() * 2;
+				psp->offy = (char) Msg_ReadByte() * 2;
+			}
+		}
+	}
 }
