@@ -2822,7 +2822,6 @@ boolean MN_Responder(event_t *event)
 		{
 			paused = false;
 			MN_DeactivateMenu();
-			SB_state = -1; //refresh the statbar
 			GL_Update(DDUF_BORDER);
 			menuDark = 0;	// Darkness immediately gone.
 		}

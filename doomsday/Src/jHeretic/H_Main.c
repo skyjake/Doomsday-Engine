@@ -173,14 +173,11 @@ void D_Display(void)
 		CT_Drawer();
 		if(!iscam) SB_Drawer(); // $democam
 		// Also update view borders?
-		if(Get(DD_VIEWWINDOW_WIDTH) != 320) GL_Update(DDUF_BORDER);
+		if(Get(DD_VIEWWINDOW_HEIGHT) != 200) GL_Update(DDUF_BORDER);
 		break;
 	case GS_INTERMISSION:
 		IN_Drawer ();
 		break;
-	/*case GS_FINALE:
-		F_Drawer ();
-		break;*/
 	case GS_INFINE:
 		FI_Drawer();
 		break;

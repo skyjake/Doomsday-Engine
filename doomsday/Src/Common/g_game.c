@@ -1778,10 +1778,10 @@ void G_PlayerFinishLevel (int player)
 	p->messageTics = 0;
 	p->rain1 = NULL;
 	p->rain2 = NULL;
-	if(p == &players[consoleplayer])
+/*	if(p == &players[consoleplayer])
 	{
 		SB_state = -1; // refresh the status bar
-	}
+	}*/
 #endif
     
     p->plr->mo->flags &= ~MF_SHADOW;		// cancel invisibility 
@@ -1922,7 +1922,6 @@ void G_PlayerReborn (int player)
 #elif __JHERETIC__
 	if(p == &players[consoleplayer])
 	{
-		SB_state = -1; // refresh the status bar
 		inv_ptr = 0; // reset the inventory pointer
 		curpos = 0;
 	}

@@ -707,7 +707,6 @@ char ammopic[][10] =
 	{"INAMLOB"}
 };
 
-int SB_state = -1;
 static int oldarti = 0;
 static int oldartiCount = 0;
 static int oldfrags = -9999;
@@ -727,16 +726,10 @@ void SB_Drawer(void)
 	int frame;
 	static boolean hitCenterFrame;
 
-	// Sound info debug stuff
-/*	if(DebugSound == true)
-	{
-		DrawSoundInfo();
-	}*/
 	CPlayer = &players[consoleplayer];
 	if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT && !automapactive)
 	{
 		DrawFullScreenStuff();
-		SB_state = -1;
 	}
 	else
 	{
@@ -750,42 +743,34 @@ void SB_Drawer(void)
 			gl.Scalef(fscale, fscale, 1);
 		}
 
-		//if(SB_state == -1)
+		GL_DrawPatch(0, 158, PatchBARBACK);
+		if(players[consoleplayer].cheats&CF_GODMODE)
 		{
-			GL_DrawPatch(0, 158, PatchBARBACK);
-			if(players[consoleplayer].cheats&CF_GODMODE)
-			{
-				GL_DrawPatch(16, 167, W_GetNumForName("GOD1"));
-				GL_DrawPatch(287, 167, W_GetNumForName("GOD2"));
-			}
-			oldhealth = -1;
+			GL_DrawPatch(16, 167, W_GetNumForName("GOD1"));
+			GL_DrawPatch(287, 167, W_GetNumForName("GOD2"));
 		}
+		oldhealth = -1;
+
 		DrawCommonBar();
 		if(!inventory)
 		{
-			//if(SB_state != 0)
-			{
-				// Main interface
-				GL_DrawPatch(34, 160, PatchSTATBAR);
-				oldarti = 0;
-				oldammo = -1;
-				oldarmor = -1;
-				oldweapon = -1;
-				oldfrags = -9999; //can't use -1, 'cuz of negative frags
-				oldlife = -1;
-				oldkeys = -1;
-			}
+			// Main interface
+			GL_DrawPatch(34, 160, PatchSTATBAR);
+			oldarti = 0;
+			oldammo = -1;
+			oldarmor = -1;
+			oldweapon = -1;
+			oldfrags = -9999; //can't use -1, 'cuz of negative frags
+			oldlife = -1;
+			oldkeys = -1;
+
 			DrawMainBar();
-			SB_state = 0;
 		}
 		else
 		{
-			//if(SB_state != 1)
-			{
-				GL_DrawPatch(34, 160, PatchINVBAR);
-			}
+			GL_DrawPatch(34, 160, PatchINVBAR);
+
 			DrawInventoryBar();
-			SB_state = 1;
 		}
 	
 		// Restore the old modelview matrix.
@@ -1310,7 +1295,6 @@ static void CheatGodFunc(player_t *player, Cheat_t *cheat)
 	{
 		P_SetMessage(player, TXT_CHEATGODOFF, false);
 	}
-	SB_state = -1;
 }
 
 static void CheatNoClipFunc(player_t *player, Cheat_t *cheat)

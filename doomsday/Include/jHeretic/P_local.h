@@ -279,7 +279,6 @@ void AM_Drawer(void);
 
 // ***** SB_BAR *****
 
-extern int SB_state;
 extern int ArtifactFlash;
 void SB_PaletteFlash(void);
 

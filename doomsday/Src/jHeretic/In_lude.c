@@ -195,7 +195,6 @@ void IN_Stop(void)
 
 	intermission = false;
 	IN_UnloadPics();
-	SB_state = -1;
 	GL_Update(DDUF_BORDER);
 }
 
