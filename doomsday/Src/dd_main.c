@@ -748,8 +748,14 @@ int DD_GetInteger(int ddvalue)
 		}
 		return 0;
 	}
+
+	// We have to separately calculate the 35 Hz ticks.
+	if(ddvalue == DD_GAMETIC)
+		return SECONDS_TO_TICKS(gameTime);
+
 	if(ddValues[ddvalue].readPtr == NULL)
 		return 0;
+	
 	return *ddValues[ddvalue].readPtr;
 }
 
