@@ -28,6 +28,8 @@
 #include "de_play.h"
 #include "de_refresh.h"
 
+#include "rend_bias.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -181,9 +183,9 @@ void P_LoadBlockMap(int lump)
    blockrings[i].next = blockrings[i].prev = (mobj_t*) &blockrings[i];
    } */
 
-//==========================================================================
-// P_LoadReject
-//==========================================================================
+/*
+ * Load the REJECT data lump.
+ */
 void P_LoadReject(int lump)
 {
 	rejectmatrix = W_CacheLumpNum(lump, PU_LEVEL);
@@ -193,4 +195,59 @@ void P_LoadReject(int lump)
 	{
 		Con_Message("P_LoadReject: No REJECT data found.\n");
 	}
+}
+
+void P_PlaneChanged(sector_t *sector, boolean theCeiling)
+{
+    int i, k;
+    subsector_t *sub;
+    seg_t *seg;
+    
+    // FIXME: Find a better way to find the subsectors of a sector.
+    
+    for(i = 0; i < numsubsectors; ++i)
+    {
+        sub = SUBSECTOR_PTR(i);
+
+        // Only the subsectors of the changed sector.
+        if(sub->sector != sector)
+            continue;
+
+        for(k = 0; k < sub->linecount; ++k)
+        {
+            seg = SEG_PTR(k + sub->firstline);
+
+            // Inform the shadow bias of changed geometry.
+            SB_SegHasMoved(seg);
+        }
+
+        // Inform the shadow bias of changed geometry.
+        SB_PlaneHasMoved(sub, theCeiling);
+    }
+}
+
+/*
+ * When a change is made, this must be called to inform the engine of
+ * it.  Repercussions include notifications to the renderer, network...
+ */
+void P_FloorChanged(sector_t *sector)
+{
+    P_PlaneChanged(sector, false);
+}
+
+void P_CeilingChanged(sector_t *sector)
+{
+    P_PlaneChanged(sector, true);
+}
+
+void P_PolyobjChanged(polyobj_t *po)
+{
+    seg_t **seg = po->segs;
+    int i;
+
+    for(i = 0; i < po->numsegs; ++i, ++seg)
+    {
+        // Shadow bias must be told.
+        SB_SegHasMoved(*seg);
+    }
 }

@@ -241,6 +241,10 @@ boolean PO_MovePolyobj(int num, int x, int y)
 	po->startSpot.x += x;
 	po->startSpot.y += y;
 	PO_LinkPolyobj(po);
+
+    // A change has occured.
+    P_PolyobjChanged(po);
+    
 	return true;
 }
 
@@ -345,6 +349,7 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
 	}
 	po->angle += angle;
 	PO_LinkPolyobj(po);
+    P_PolyobjChanged(po);
 	return true;
 }
 
