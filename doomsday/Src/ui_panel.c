@@ -389,8 +389,9 @@ ui_object_t ob_panel[] =
 
 	{ UI_META,		5 },
 	{ UI_TEXT,		0,	0,				280, 0, 0, 50,		"Graphics Options", UIText_Drawer },
-	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Smooth camera movement", UIText_Drawer },
-	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"rend-camera-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+	{ UI_META,		5,  0,				0, -60 },
+//	{ UI_TEXT,		0,	0,				300, 70, 0, 55,		"Smooth camera movement", UIText_Drawer },
+//	{ UI_BUTTON2,	0,	0,				680, 70, 70, 55,	"rend-camera-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 	{ UI_TEXT,		0,	0,				300, 130, 0, 55,	"Field Of View angle", UIText_Drawer },
 	{ UI_SLIDER,	0,	0,				680, 130, 300, 55,	"",			UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
 	{ UI_BUTTON,	0,	0,				680, 190, 70, 60,	"90",		UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
