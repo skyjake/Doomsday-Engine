@@ -45,7 +45,6 @@ FILE   *debugfile;
 void    MN_DrCenterTextA_CS(char *text, int center_x, int y);
 void    MN_DrCenterTextB_CS(char *text, int center_x, int y);
 
-void    G_BuildTiccmd(void *cmd);
 void    H_ConsoleRegistration();
 void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    R_SetAllDoomsdayFlags();
@@ -1103,8 +1102,8 @@ game_export_t *GetGameAPI(game_import_t * imports)
 	gx.PreInit = H_PreInit;
 	gx.PostInit = H_PostInit;
 	gx.Shutdown = H_Shutdown;
-	gx.BuildTicCmd = G_BuildTiccmd;
-	//gx.DiscardTicCmd = (void (*)(void*,void*)) G_DiscardTiccmd;
+	gx.BuildTicCmd = (void (*)(void*, float)) G_BuildTiccmd;
+	gx.MergeTicCmd = (void (*)(void*, void*)) G_MergeTiccmd;
 	gx.G_Drawer = D_Display;
 	gx.Ticker = H_Ticker;
 	gx.MN_Drawer = MN_Drawer;

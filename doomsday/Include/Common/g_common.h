@@ -1,6 +1,8 @@
 #ifndef __COMMON_GAME_H__
 #define __COMMON_GAME_H__
 
+#include "dd_share.h"
+
 enum {
 	JOYAXIS_NONE,
 	JOYAXIS_MOVE,
@@ -9,6 +11,8 @@ enum {
 	JOYAXIS_LOOK
 };
 
+void			G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime);
+void			G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src);
 void            G_StartTitle(void);
 
 // Spawn player at a dummy place.

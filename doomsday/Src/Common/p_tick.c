@@ -11,6 +11,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
+#  include "d_event.h"
 #  include "p_local.h"
 #  include "doomstat.h"
 #endif
@@ -66,8 +67,10 @@ boolean P_IsPaused(void)
 // This is called at all times, no matter gamestate.
 void P_RunPlayers(void)
 {
-	boolean pausestate = P_IsPaused();
+	boolean pauseState = P_IsPaused();
 	int     i;
+	ticcmd_t command;
+	boolean gotCommands;
 
 	// This is not for clients.
 	if(IS_CLIENT)
@@ -80,30 +83,40 @@ void P_RunPlayers(void)
 	for(i = 0; i < MAXPLAYERS; i++)
 		if(players[i].plr->ingame)
 		{
+			// We will combine all the waiting commands into this
+			// buffer.
+			memset(&command, 0, sizeof(command));
+			
 			// Get all the commands for the player.
+			gotCommands = false;
 			while(Net_GetTicCmd(&players[i].cmd, i))
 			{
 				// Check for special buttons (pause and netsave).
 				G_SpecialButton(&players[i]);
 
-				// The player thinks.
-				if(gamestate == GS_LEVEL && !pausestate)
-				{
-					P_PlayerThink(&players[i]);
-				}
+				G_MergeTiccmd(&command, &players[i].cmd);
+				gotCommands = true;
+			}
 
-				// Local players run one tic at a time.
-				if(players[i].plr->flags & DDPF_LOCAL)
-					break;
+			if(gotCommands)
+			{
+				// The new merged command will be the one that the
+				// player uses for thinking on this tick.
+				memcpy(&players[i].cmd, &command, sizeof(command));
+			}
+
+			// The player thinks.
+			if(gamestate == GS_LEVEL && !pauseState)
+			{
+				P_PlayerThink(&players[i]);
 			}
 		}
 }
 
-//===========================================================================
-// P_DoTick
-//  Called 35 times per second. 
-//  The heart of play sim.
-//===========================================================================
+/*
+ * Called 35 times per second. 
+ * The heart of play sim.
+ */
 void P_DoTick(void)
 {
 #if __JDOOM__ || __JHEXEN__

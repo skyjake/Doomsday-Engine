@@ -149,6 +149,10 @@ typedef struct {
 	// Last command executed, reused if a new one isn't found.
 	ticcmd_t       *lastCmd;
 
+	// Clients merge several ticcmds into this one, which is them sent
+	// periodically to the server.
+	ticcmd_t       *aggregateCmd;
+
 	int             lastTransmit;
 
 	// If >0, the server will send the next world frame to the client.
@@ -262,6 +266,8 @@ void            Net_SendBuffer(int to_player, int sp_flags);
 void            Net_InitGame(void);
 void            Net_StartGame(void);
 void            Net_StopGame(void);
+void			Net_BuildLocalCommands(timespan_t time);
+void			Net_SendCommands(void);
 void            Net_SendPing(int player, int count);
 void            Net_PingResponse(void);
 void            Net_ShowPingSummary(int player);

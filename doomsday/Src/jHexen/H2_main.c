@@ -14,7 +14,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <direct.h>
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
@@ -42,7 +41,6 @@ typedef struct {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void    R_ExecuteSetViewSize(void);
-void    G_BuildTiccmd(ticcmd_t * cmd);
 void    F_Drawer(void);
 void    I_HideMouse(void);
 void    S_InitScript(void);
@@ -741,8 +739,8 @@ game_export_t *GetGameAPI(game_import_t * imports)
 	gx.PreInit = H2_PreInit;
 	gx.PostInit = H2_PostInit;
 	gx.Shutdown = H2_Shutdown;
-	gx.BuildTicCmd = (void (*)(void *)) G_BuildTiccmd;
-	//gx.DiscardTicCmd = (void (*)(void*, void*)) G_DiscardTiccmd;
+	gx.BuildTicCmd = (void (*)(void*, float)) G_BuildTiccmd;
+	gx.MergeTicCmd = (void (*)(void*, void*)) G_MergeTiccmd;
 	gx.Ticker = H2_Ticker;
 	gx.G_Drawer = G_Drawer;
 	gx.MN_Drawer = MN_Drawer;

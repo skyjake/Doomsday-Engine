@@ -36,6 +36,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+// Clients don't send commands on every tic.
+#define CLIENT_TICCMD_INTERVAL	2
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -332,23 +335,40 @@ void Cl_GetPackets(void)
 void Cl_Ticker(void)
 {
 	//static trigger_t fixed = { 1.0 / 35 };
+	static int ticSendTimer = 0;
+	//	ddplayer_t *pl;
+	//int i;
 
 	if(!isClient || !Cl_GameReady() || clientPaused)
 		return;
 
+	// Check if client view angles should be modified.
+/*	for(i = 0, pl = players; i < MAXPLAYERS; ++i, ++pl)
+	{
+		pl->clAngle += time * pl->clAngleSpeed;
+		pl->clLookDir += time * pl->clLookDirSpeed;
+
+		if(pl->clLookDir > 110)
+		{
+			pl->clLookDir = 110;
+		}
+		if(pl->clLookDir < -110)
+		{
+			pl->clLookDir = -110;
+		}
+		}*/
+	
 	//if(!M_CheckTrigger(&fixed, time)) return;
 
 	Cl_LocalCommand();
 	Cl_PredictMovement();
 	Cl_MovePsprites();
 
-	// These are set here because we need to update everything at the
-	// same time.  Otherwise the camera smoothing hack will not sync
-	// correctly.
-	if(viewplayer)
+	// Clients don't send commands on every tic (over the network).
+	if(++ticSendTimer > CLIENT_TICCMD_INTERVAL)
 	{
-		frameClAngle = viewplayer->clAngle;
-		frameClLookDir = viewplayer->clLookDir;
+		ticSendTimer = 0;
+		Net_SendCommands();
 	}
 }
 

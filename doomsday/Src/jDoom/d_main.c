@@ -61,7 +61,6 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void    R_InitTranslation(void);
-void    G_BuildTiccmd(void *cmd);
 void    D_Display(void);
 int     D_PrivilegedResponder(event_t *event);
 void    D_DefaultBindings();
@@ -707,8 +706,8 @@ game_export_t *GetGameAPI(game_import_t * imports)
 	gx.PreInit = D_PreInit;
 	gx.PostInit = D_PostInit;
 	gx.Shutdown = D_Shutdown;
-	gx.BuildTicCmd = G_BuildTiccmd;
-	//gx.DiscardTicCmd = (void (*)(void*,void*)) G_DiscardTiccmd;
+	gx.BuildTicCmd = (void (*)(void*, float)) G_BuildTiccmd;
+	gx.MergeTicCmd = (void (*)(void*, void*)) G_MergeTiccmd;
 	gx.Ticker = D_Ticker;
 	gx.G_Drawer = D_Display;
 	gx.MN_Drawer = M_Drawer;

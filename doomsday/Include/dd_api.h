@@ -93,7 +93,8 @@ typedef struct {
 	char           *(*Get) (int id);
 
 	// Ticcmds.
-	void            (*BuildTicCmd) (void *cmd);
+	void            (*BuildTicCmd) (void *cmd, float elapsedTime);
+	void            (*MergeTicCmd) (void *dest, void *src);
 
 	// Networking.
 	int             (*NetServerStart) (int before);

@@ -72,8 +72,6 @@ int     skyflatnum;
 char    skyflatname[9] = "F_SKY";
 
 double  lastSharpFrameTime;
-int     frameClAngle;
-float   frameClLookDir;
 
 int     sharpWorldUpdated;		// Set to true after game ticker has been called.
 
@@ -203,8 +201,8 @@ void R_InterpolateViewer(viewer_t * start, viewer_t * end, float pos,
 	out->x = inv * start->x + pos * end->x;
 	out->y = inv * start->y + pos * end->y;
 	out->z = inv * start->z + pos * end->z;
-	out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
-	out->pitch = inv * start->pitch + pos * end->pitch;
+//	out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
+//	out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
 //===========================================================================
@@ -244,30 +242,32 @@ void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
 //===========================================================================
 void R_SetupFrame(ddplayer_t *player)
 {
-	int     tableAngle;
+	int     tableAngle, i;
 	float   yawRad, pitchRad;
-	viewer_t sharpView, smoothView;
 	double  nowTime;
+	viewer_t sharpView, smoothView;
 	sector_t *sector;
-	int     i;
 
 	// Reset the DGL triangle counter.
 	gl.GetInteger(DGL_POLY_COUNT);
 
 	viewplayer = player;
 
-	sharpView.angle =
-		(isClient ? frameClAngle : player->mo->angle) + viewangleoffset;
-	sharpView.pitch = (isClient ? frameClLookDir : player->lookdir);
+	sharpView.angle = player->clAngle + viewangleoffset;
+	sharpView.pitch = player->clLookDir;
 	sharpView.x = player->mo->x + viewxOffset;
 	sharpView.y = player->mo->y + viewyOffset;
 	sharpView.z = player->viewz + viewzOffset;
 
 	// Check that the viewz doesn't go too high or low.
 	if(sharpView.z > player->mo->ceilingz - 4 * FRACUNIT)
+	{
 		sharpView.z = player->mo->ceilingz - 4 * FRACUNIT;
+	}
 	if(sharpView.z < player->mo->floorz + 4 * FRACUNIT)
+	{
 		sharpView.z = player->mo->floorz + 4 * FRACUNIT;
+	}
 
 	// Camera smoothing is only enabled if the frame rate is above 35.
 	if(!rend_camera_smooth || resetNextViewer || DD_GetFrameRate() < 40)
@@ -276,6 +276,7 @@ void R_SetupFrame(ddplayer_t *player)
 
 		// Just view from the sharp position.
 		R_SetViewPos(&sharpView);
+		frameTimePos = 0;
 		lastSharpFrameTime = Sys_GetTimef();
 		memcpy(&lastSharpView[0], &sharpView, sizeof(sharpView));
 		memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
@@ -354,6 +355,9 @@ void R_SetupFrame(ddplayer_t *player)
 		frameTimePos = nowTime - lastSharpFrameTime;
 		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
 							&smoothView);
+
+		smoothView.angle = sharpView.angle;
+		smoothView.pitch = sharpView.pitch;
 		R_SetViewPos(&smoothView);
 
 		// $smoothplane: Set the visible offsets.
@@ -371,12 +375,6 @@ void R_SetupFrame(ddplayer_t *player)
 						sector->ceilingheight * frameTimePos -
 						sector->ceilingheight);
 		}
-
-		/*      Con_Printf("%.3f: s%.4f e%.4f = %.4f\n", 
-		   nowTime - lastSharpFrameTime, 
-		   lastSharpView[0].angle/(float)ANGLE_MAX,
-		   sharpView.angle/(float)ANGLE_MAX,
-		   smoothView.angle/(float)ANGLE_MAX); */
 	}
 
 	extralight = player->extralight;
@@ -442,7 +440,7 @@ void R_RenderPlayerView(ddplayer_t *player)
 		firstFrameAfterLoad = false;
 		DD_ResetTimer();
 	}
-	
+
 	// Setup for rendering the frame.
 	R_SetupFrame(player);
 	R_ClearSprites();

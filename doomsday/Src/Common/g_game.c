@@ -5,7 +5,8 @@
 //**
 //** Top-level game routines.
 //** Compiles for jDoom, jHeretic and jHexen.
-//** Could use some tidying up.
+//**
+//** Could use a LOT of tidying up!
 //**
 //**************************************************************************
 
@@ -308,7 +309,8 @@ fixed_t sidemove[NUMCLASSES][2] = {
 #endif
 
 boolean gamekeydown[NUMGKEYS];
-int     turnheld;				// for accelerative turning 
+float   turnheld;				// for accelerative turning 
+float   lookheld;
 
 //int           do_chimes;
 
@@ -340,7 +342,6 @@ int     bodyqueslot;
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-int     lookheld;
 int     inventoryTics;
 #endif
 
@@ -403,8 +404,7 @@ static int findWeapon(player_t *plr, boolean forward)
 		if(i < 0)
 			i = NUMWEAPONS - 2;
 #  elif __JHEXEN__
-		c < NUMWEAPONS;
-		c++, forward ? i++ : i--)
+		c < NUMWEAPONS; c++, forward ? i++ : i--)
 	{
 		if(i > NUMWEAPONS - 1)
 			i = 0;
@@ -487,17 +487,27 @@ char G_MakeLookDelta(float offset)
 	return (signed char) offset;
 }
 
-void G_AdjustAngle(player_t *player, int turn)
+/*
+ * Turn client angle.  If 'elapsed' is negative, the turn delta is
+ * considered an immediate change.
+ */
+void G_AdjustAngle(player_t *player, int turn, float elapsed)
 {
-	if(!player->plr->mo)
-		return;					// Sorry, can't help you, pal.
+	fixed_t delta = 0;
+	
+	if(!player->plr->mo ||
+		player->playerstate == PST_DEAD)
+		return; // Sorry, can't help you, pal.
 
-	// Turn around.
-	if(player->playerstate != PST_DEAD)
-		player->plr->clAngle += (turn << FRACBITS);
+	delta = (fixed_t) (turn << FRACBITS);
+
+	if(elapsed > 0)
+		delta *= elapsed * 35;
+		
+	player->plr->clAngle += delta;
 }
 
-void G_AdjustLookDir(player_t *player, int look)
+void G_AdjustLookDir(player_t *player, int look, float elapsed)
 {
 	ddplayer_t *ddplr = player->plr;
 
@@ -509,22 +519,23 @@ void G_AdjustLookDir(player_t *player, int look)
 		}
 		else
 		{
-			int     spd = cfg.lookSpeed;
-
-			ddplr->clLookDir += spd * look;
+			ddplr->clLookDir += cfg.lookSpeed * look * elapsed * 35;
 		}
 	}
+
 	if(player->centering)
 	{
-		if(ddplr->clLookDir > 0)
+		float step = 8 * elapsed * 35;
+		
+		if(ddplr->clLookDir > step)
 		{
-			ddplr->clLookDir -= 8;
+			ddplr->clLookDir -= step;
 		}
-		else if(ddplr->clLookDir < 0)
+		else if(ddplr->clLookDir < -step)
 		{
-			ddplr->clLookDir += 8;
+			ddplr->clLookDir += step;
 		}
-		if(abs(ddplr->clLookDir) < 8)
+		else
 		{
 			ddplr->clLookDir = 0;
 			player->centering = false;
@@ -532,10 +543,11 @@ void G_AdjustLookDir(player_t *player, int look)
 	}
 }
 
-void G_SetCmdViewAngles(ticcmd_t * cmd, player_t *pl)
+void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
 {
 	// These will be sent to the server (or P_MovePlayer).
 	cmd->angle = pl->plr->clAngle >> 16;
+	
 	// 110 corresponds 85 degrees.
 	if(pl->plr->clLookDir > 110)
 		pl->plr->clLookDir = 110;
@@ -547,26 +559,26 @@ void G_SetCmdViewAngles(ticcmd_t * cmd, player_t *pl)
 /*
  * Builds a ticcmd from all of the available inputs. 
  */
-void G_BuildTiccmd(ticcmd_t * cmd)
+void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 {
 	static boolean mlook_pressed = false;
+	float elapsedTics = elapsedTime * 35;
 
-#if __JDOOM__
-	boolean pausestate = paused || (!IS_NETGAME && menuactive);
-#endif
+	boolean pausestate = P_IsPaused();
 	int     i;
-	boolean strafe;
-	boolean bstrafe;
-	int     speed;
-	int     tspeed;
-	int     forward;
-	int     side;
+	boolean strafe = 0;
+	boolean bstrafe = 0;
+	int     speed = 0;
+	int     tspeed = 0;
+	int     forward = 0;
+	int     side = 0;
 	int     turn = 0;
 	player_t *cplr = &players[consoleplayer];
 	int     joyturn = 0, joystrafe = 0, joyfwd = 0, joylook = 0;
 	int    *axes[5] = { 0, &joyfwd, &joyturn, &joystrafe, &joylook };
+	int	    look = 0, lspeed = 0;
 #if __JHERETIC__ || __JHEXEN__
-	int     flyheight, look, arti, lspeed;
+	int     flyheight = 0;
 #endif
 #if __JHEXEN__
 	int     pClass = players[consoleplayer].class;
@@ -586,12 +598,6 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	strafe = actions[A_STRAFE].on;
 	speed = actions[A_SPEED].on;
 
-#if __JDOOM__
-	forward = side = 0;
-#else
-	forward = side = look = arti = flyheight = 0;
-#endif
-
 	// Walk -> run, run -> walk.
 	if(cfg.alwaysRun)
 		speed = !speed;
@@ -600,7 +606,7 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	if(joyturn < -0				/*cfg.joydead */
 	   || joyturn > 0			/*cfg.joydead */
 	   || actions[A_TURNRIGHT].on || actions[A_TURNLEFT].on)
-		turnheld++;
+		turnheld += elapsedTics;
 	else
 		turnheld = 0;
 
@@ -609,24 +615,17 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	else
 		tspeed = speed;
 
-#if __JHERETIC__ || __JHEXEN__
+	// Determine the appropriate look speed based on how long the key
+	// has been held down.
 	if(actions[A_LOOKDOWN].on || actions[A_LOOKUP].on)
-	{
-		lookheld++;
-	}
+		lookheld += elapsedTics;
 	else
-	{
 		lookheld = 0;
-	}
+
 	if(lookheld < SLOWTURNTICS)
-	{
 		lspeed = 1;
-	}
 	else
-	{
 		lspeed = 2;
-	}
-#endif
 
 	// let movement keys cancel each other out
 	if(strafe)
@@ -725,7 +724,6 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 		side += sidemove[pClass][speed] * JOY(joystrafe);
 #endif
 
-#if __JHERETIC__
 	// Look up/down/center keys
 	if(!cfg.lookSpring || (cfg.lookSpring && !forward))
 	{
@@ -742,6 +740,8 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 			look = TOCENTER;
 		}
 	}
+
+#if __JHERETIC__
 	// Fly up/down/drop keys
 	if(actions[A_FLYUP].on)
 	{
@@ -806,22 +806,6 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 #endif
 
 #if __JHEXEN__
-	// Look up/down/center keys
-	if(!cfg.lookSpring || (cfg.lookSpring && !forward))
-	{
-		if(actions[A_LOOKUP].on)
-		{
-			look = lspeed;
-		}
-		if(actions[A_LOOKDOWN].on)
-		{
-			look = -lspeed;
-		}
-		if(actions[A_LOOKCENTER].on)
-		{
-			look = TOCENTER;
-		}
-	}
 	// Fly up/down/drop keys
 	if(actions[A_FLYUP].on)
 	{
@@ -1118,26 +1102,30 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	if(strafe)
 		side += mousex * 2;
 	else
-		turn -= mousex * 0x8;
+	{
+		//turn -= mousex * 8;
 
-#if __JDOOM__
+		// Mouse angle changes are immediate.
+		if(!pausestate)
+			G_AdjustAngle(cplr, mousex * -8, -1);
+	}
+
 	if(!pausestate)
 	{
-#else
-	if(!paused)
-	{
-		G_AdjustAngle(cplr, turn);
-#endif
+		// Speed based turning.
+		G_AdjustAngle(cplr, turn, elapsedTime);
+		
 		if(strafe || (!cfg.usemlook && !actions[A_MLOOK].on) ||
 		   players[consoleplayer].playerstate == PST_DEAD)
 		{
-			forward += mousey;
+			forward += mousey * elapsedTics;
 		}
 		else
 		{
-			float   adj =
-				(((mousey * 0x8) << 16) / (float) ANGLE_180 * 180 * 110.0 /
-				 85.0);
+			float adj =
+				(((mousey * 8) << 16) / (float) ANGLE_180) * 180 *
+				110.0 / 85.0;
+			
 			if(cfg.mlookInverseY)
 				adj = -adj;
 			cplr->plr->clLookDir += adj;
@@ -1147,7 +1135,7 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 			if(cfg.jlookDeltaMode)
 				cplr->plr->clLookDir +=
 					joylook / 20.0f * cfg.lookSpeed *
-					(cfg.jlookInverseY ? -1 : 1);
+					(cfg.jlookInverseY ? -1 : 1) * elapsedTics;
 			else
 				cplr->plr->clLookDir =
 					joylook * 1.1f * (cfg.jlookInverseY ? -1 : 1);
@@ -1185,21 +1173,15 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	   (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3
 		|| cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3 ||
 		mlook_pressed))
-
-		/*      if(abs(forward) >= forwardmove[0]
-		   || abs(side) >= sidemove[0]
-		   || (!cfg.usemlook && mlook_pressed))
-		   look = TOCENTER;
-		 */
 	{
 		// Center view when mlook released w/lookspring, or when moving.
-		cplr->centering = true;
-#ifndef __JDOOM__
+//		cplr->centering = true;
+//#ifndef __JDOOM__
 		look = TOCENTER;
-#endif
+//#endif
 	}
 
-#if __JDOOM__
+/*#if __JDOOM__
 	if(cplr->playerstate == PST_LIVE && !pausestate)
 	{
 		i = 0;
@@ -1220,26 +1202,32 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 			}
 		}
 		// Adjust the look direction.
-		G_AdjustLookDir(cplr, i);
+		G_AdjustLookDir(cplr, i, elapsedTime);
 	}
-#else
-	if(players[consoleplayer].playerstate == PST_LIVE)
+	#else*/
+	if(players[consoleplayer].playerstate == PST_LIVE && !pausestate)
 	{
-		G_AdjustLookDir(cplr, look);
+		G_AdjustLookDir(cplr, look, elapsedTime);
+
+#ifndef __JDOOM__
 		if(look < 0)
 		{
-			look += 16;
+			look += 16 * elapsedTics;
 		}
 		cmd->lookfly = look;
-	}
 #endif
+	}
+//#endif
 
-#if __JDOOM__
-	if(!pausestate)
-		G_AdjustAngle(cplr, turn);
-#else
+//#if __JDOOM__
+//	if(!pausestate)
+//		G_AdjustAngle(cplr, turn);
+//#else
+#ifndef __JDOOM__
 	if(flyheight < 0)
-		flyheight += 16;
+	{
+		flyheight += 16 * elapsedTime * 35;
+	}
 	cmd->lookfly |= flyheight << 4;
 #endif
 
@@ -1261,6 +1249,39 @@ void G_BuildTiccmd(ticcmd_t * cmd)
 	{
 		// Clients mirror their local commands.
 		memcpy(&players[consoleplayer].cmd, cmd, sizeof(*cmd));
+	}
+}
+
+/*
+ * Combine the source ticcmd with the destination ticcmd.  This is
+ * done when there are multiple ticcmds to execute on a single game
+ * tick.
+ */
+void G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src)
+{
+	dest->forwardMove = src->forwardMove;
+	dest->sideMove = src->sideMove;
+
+	dest->angle = src->angle;
+	dest->pitch = src->pitch;
+
+#ifndef __JDOOM__
+	dest->lookfly = (dest->lookfly + src->lookfly)/2;
+	if(src->arti)
+	{
+		dest->arti = src->arti;
+	}
+#endif
+	
+	// Old Attack and Use buttons apply, if they're set.
+	dest->actions |= src->actions & (BT_ATTACK | BT_USE);
+	if(src->actions & BT_SPECIAL)
+		return;
+	
+	if(src->actions & BT_CHANGE && !(dest->actions & BT_CHANGE))
+	{
+		// Use the old weapon change.
+		dest->actions |= src->actions & (BT_CHANGE | BT_WEAPONMASK);
 	}
 }
 
@@ -1441,21 +1462,21 @@ boolean G_Responder(event_t *ev)
 		return false;
 
 	case ev_mouse:
-		mousex += (ev->data1 * (cfg.mouseSensiX * 2 + 5)) / 6;
-		mousey += (ev->data2 * (cfg.mouseSensiY * 2 + 5)) / 6;
-		return (true);			// eat events
+		mousex += ev->data1 * (1 + cfg.mouseSensiX/5.0f);
+		mousey += ev->data2 * (1 + cfg.mouseSensiY/5.0f);
+		return true;			// eat events
 
 	case ev_mousebdown:
 		for(i = 0; i < NUM_MOUSE_BUTTONS; i++)
 			if(ev->data1 & (1 << i))
 				mousebuttons[i] = true;
-		return (false);
+		return false;
 
 	case ev_mousebup:
 		for(i = 0; i < NUM_MOUSE_BUTTONS; i++)
 			if(ev->data1 & (1 << i))
 				mousebuttons[i] = false;
-		return (false);
+		return false;
 
 	case ev_joystick:			// Joystick movement
 		joymove[JA_X] = ev->data1;

@@ -33,9 +33,6 @@
 // Never wait a too short time for acks.
 #define ACK_MINIMUM_THRESHOLD	50
 
-// Clients don't send commands on every tic.
-#define CLIENT_TICCMD_INTERVAL	2
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -56,8 +53,8 @@ char   *serverInfo = "Multiplayer Host";
 char   *playerName = "Player";
 int     serverData[3];			// Some parameters passed to master server.
 
-byte   *localticcmds;
-int     numlocal;				// Number of cmds in the buffer.
+//byte   *localticcmds;
+//int     numlocal;				// Number of cmds in the buffer.
 
 ddplayer_t ddplayers[MAXPLAYERS];
 client_t clients[MAXPLAYERS];	// All network data for the players.
@@ -67,9 +64,6 @@ int     isServer;				// true if this computer is an open server.
 int     isClient;				// true if this computer is a client    
 int     consoleplayer;
 int     displayplayer;
-
-//int         gametic;
-int     lasttime, availabletics, realtics;
 
 // Gotframe is true if a frame packet has been received.
 int     gotframe = false;
@@ -368,6 +362,7 @@ int CCmdChat(int argc, char **argv)
 	return true;
 }
 
+#if 0
 // Returns a pointer to a new local ticcmd so it can be built.
 // Returns NULL if the buffer is full.
 ticcmd_t *Net_LocalCmd()
@@ -378,6 +373,7 @@ ticcmd_t *Net_LocalCmd()
 	// One more command. The counter is cleared when the cmds are sent.
 	return (ticcmd_t *) & localticcmds[TICCMD_IDX(numlocal++)];
 }
+#endif
 
 /*
  * After a long period with no updates (map setup), calling this will
@@ -385,40 +381,76 @@ ticcmd_t *Net_LocalCmd()
  */
 void Net_ResetTimer(void)
 {
-	lasttime = Sys_GetTime();
 	firstNetUpdate = true;
 }
 
 /*
- * Build ticcmds for console player, sends out a packet.
+ * Send the local player(s) ticcmds to the server.
+ */
+void Net_SendCommands(void)
+{
+	byte   *msg;
+	ticcmd_t *cmd;
+
+	// Clients send their ticcmds to the server at regular intervals,
+	// but significantly less often than new ticcmds are built.
+	// Therefore they need to send a combination of all the cmds built
+	// during the wait period.
+	
+	if(isClient)
+		cmd = clients[consoleplayer].aggregateCmd;
+	else
+		cmd = clients[consoleplayer].lastCmd;
+	
+	// The game will pack the commands into a buffer. The returned
+	// pointer points to a buffer that contains its size and the
+	// packed commands.
+	msg = (byte *) gx.NetPlayerEvent(1, DDPE_WRITE_COMMANDS, cmd);
+	
+	Msg_Begin(pcl_commands);
+	Msg_Write(msg + 2, *(ushort *) msg);
+
+	// Send the packet to the server, i.e. player zero.
+	Net_SendBuffer(0, isClient ? 0 : SPF_REBOUND);
+
+	if(isClient)
+	{
+		// Clients will begin composing a new aggregate now that this
+		// one has been sent.
+		memset(cmd, 0, TICCMD_SIZE);
+	}
+}   
+
+/*
+ * Handle incoming packets, clients send ticcmds and coordinates to
+ * the server.
  */
 void Net_Update(void)
 {
-	static int ticSendTimer = 0;
-	int     nowtime;
-	int     newtics;
-	int     i;
+	static int lastTime = 0;
 
+	int     nowTime;
+	int     newTics;
+
+	// This timing is only used by the client when it determines if it
+	// is time to send ticcmds or coordinates to the server.
+	
 	// Check time.
-	nowtime = Sys_GetTime();
+	nowTime = Sys_GetTime();
 
-	// Synchronize tics with game time, not the clock?
-	//if(!net_ticsync) nowtime = gametic;
-
+	// Clock reset?
 	if(firstNetUpdate)
 	{
 		firstNetUpdate = false;
-		lasttime = nowtime;
+		lastTime = nowTime;
 	}
-	newtics = nowtime - lasttime;
-	if(newtics <= 0)
+	newTics = nowTime - lastTime;
+	if(newTics <= 0)
 		goto listen;			// Nothing new to update.
 
-	lasttime = nowtime;
+	lastTime = nowTime;
 
-	// Realtics counts the actual time that has passed.
-	realtics += newtics;
-
+#if 0
 	// Build new ticcmds for console player.
 	for(i = 0; i < newtics; i++)
 	{
@@ -454,40 +486,16 @@ void Net_Update(void)
 			}
 		}
 	}
+#endif
 
 	// This is as far as dedicated servers go.
 	if(isDedicated)
 		goto listen;
 
-	// Clients don't send commands on every tic.
-	ticSendTimer += newtics;
-	if(!isClient || ticSendTimer > CLIENT_TICCMD_INTERVAL)
-	{
-		byte   *msg;
-
-		ticSendTimer = 0;
-
-		// The game will pack the commands into a buffer. The returned
-		// pointer points to a buffer that contains its size and the
-		// packed commands.
-		msg =
-			(byte *) gx.NetPlayerEvent(numlocal, DDPE_WRITE_COMMANDS,
-									   localticcmds);
-
-		Msg_Begin(pcl_commands);
-		Msg_Write(msg + 2, *(ushort *) msg);
-
-		// Send the packet to the server, i.e. player zero.
-		Net_SendBuffer(0, isClient ? 0 : SPF_REBOUND);
-
-		// The buffer is cleared.
-		numlocal = 0;
-	}
-
 	// Clients will periodically send their coordinates to the server so
 	// any prediction errors can be fixed. Client movement is almost 
 	// entirely local.
-	coordTimer -= newtics;
+	coordTimer -= newTics;
 	if(isClient && allowFrames && coordTimer < 0 && players[consoleplayer].mo)
 	{
 		mobj_t *mo = players[consoleplayer].mo;
@@ -517,6 +525,43 @@ void Net_Update(void)
 		Sv_GetPackets();
 }
 
+/*
+ * Build a ticcmd for the local player.
+ */
+void Net_BuildLocalCommands(timespan_t time)
+{
+	ticcmd_t *cmd;
+	
+	if(isDedicated) return;
+
+	// Ticcmd of the local player.
+	cmd = clients[consoleplayer].lastCmd;
+	
+	if(playback || ui_active)
+	{
+		// No actions can be undertaken during demo playback or when
+		// in UI mode.
+		memset(cmd, 0, sizeof(*cmd));
+	}
+	else
+	{
+		gx.BuildTicCmd(cmd, time);
+	}
+
+	if(!isClient)
+	{
+		// Clients don't send commands too often (will be called from
+		// Cl_Ticker).
+		Net_SendCommands();
+	}
+	else
+	{
+		// Be sure to merge each built command into the aggregate that
+		// will be sent periodically to the server.
+		gx.MergeTicCmd(clients[consoleplayer].aggregateCmd, cmd);
+	}
+}
+
 //===========================================================================
 // Net_AllocArrays
 //  Called from Net_Init to initialize the ticcmd arrays.
@@ -525,10 +570,12 @@ void Net_AllocArrays(void)
 {
 	int     i;
 
+#if 0
 	// Local ticcmds are stored into this array before they're copied
 	// to netplayer[0]'s ticcmds buffer.
 	localticcmds = calloc(LOCALTICS, TICCMD_SIZE);
 	numlocal = 0;				// Nothing in the buffer.
+#endif
 
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
@@ -538,6 +585,7 @@ void Net_AllocArrays(void)
 		clients[i].ticCmds = calloc(BACKUPTICS, TICCMD_SIZE);
 		// The last cmd that was executed is stored here.
 		clients[i].lastCmd = calloc(1, TICCMD_SIZE);
+		clients[i].aggregateCmd = calloc(1, TICCMD_SIZE);
 		clients[i].runTime = -1;
 	}
 }
@@ -546,14 +594,19 @@ void Net_DestroyArrays(void)
 {
 	int     i;
 
+#if 0
 	free(localticcmds);
 	localticcmds = NULL;
+#endif
+	
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
 		free(clients[i].ticCmds);
 		free(clients[i].lastCmd);
+ 		free(clients[i].aggregateCmd);
 		clients[i].ticCmds = NULL;
 		clients[i].lastCmd = NULL;
+		clients[i].aggregateCmd = NULL;
 	}
 }
 
@@ -839,7 +892,7 @@ void Net_Drawer(void)
 	{
 		int     x, y = 30, w, h;
 
-		sprintf(buf, "%i FPS", DD_GetFrameRate());
+		sprintf(buf, "%.1f FPS", DD_GetFrameRate());
 		w = FR_TextWidth(buf) + 16;
 		h = FR_TextHeight(buf) + 16;
 		x = screenWidth - w - 10;
