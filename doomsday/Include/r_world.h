@@ -8,6 +8,7 @@ extern int leveltic;				// Restarts when a new map is set up.
 
 // Map Info flags.
 #define MIF_FOG				0x1		// Fog is used in the level.
+#define MIF_DRAW_SPHERE		0x2		// Always draw the sky sphere.
 
 const char *R_GetCurrentLevelID(void);
 void R_SetupLevel(char *level_id, int flags);
