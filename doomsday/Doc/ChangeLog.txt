@@ -4,7 +4,7 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.7.10 (work in progress)
+Version 1.7.10
 --------------
 + support for ZIP/PK3 files (no compression!), can be loaded like WAD 
   files (-file, load; no unload, though), contents added to the virtual
