@@ -253,6 +253,27 @@ char * ArgNext(void)
 	return args[++last_match];
 }
 
+//===========================================================================
+// ArgRecognize
+//	Returns true if the two parameters are equivalent according to the
+//	abbreviations.
+//===========================================================================
+int ArgRecognize(char *first, char *second)
+{
+	int k;
+
+	// A simple match?
+	if(!stricmp(first, second)) return true;
+
+	for(k = 0; k < num_names; k++)
+	{
+		if(stricmp(first, names[k]->long_name)) continue;
+		// names[k] now matches the first string.
+		if(!stricmp(names[k]->short_name, second)) return true;
+	}
+	return false;
+}
+
 //==========================================================================
 // ArgCheck
 //	Checks for the given parameter in the program's command line arguments.
@@ -260,20 +281,13 @@ char * ArgNext(void)
 //==========================================================================
 int ArgCheck(char *check)
 {
-	int i, k;
+	int i;
 
 	for(i = 1; i < num_args; i++)
 	{
-		if(!stricmp(check, args[i])) 
+		// Check the short names for this arg, too.
+		if(ArgRecognize(check, args[i]))
 			return last_match = i;
-		
-		// Check the short names for this arg.
-		for(k = 0; k < num_names; k++)
-		{
-			if(stricmp(check, names[k]->long_name)) continue;
-			if(!stricmp(names[k]->short_name, args[i]))
-				return last_match = i;
-		}
 	}
 	return last_match = 0;
 }
