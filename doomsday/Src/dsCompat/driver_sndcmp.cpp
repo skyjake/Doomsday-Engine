@@ -682,7 +682,7 @@ void EAXMuldw(DWORD prop, float mul)
 				prop, hr & 0xffff);*/
 		return;
 	}
-	EAXSetdw(prop, LinLog(pow(10, value/2000.0f) * mul));
+	EAXSetdw(prop, LinLog(pow(10.0f, value/2000.0f) * mul));
 }
 
 //===========================================================================

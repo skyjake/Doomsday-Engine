@@ -100,8 +100,8 @@ boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 			memcpy(&fallback, &mode, sizeof(mode));
 
 			// If the refresh rate is closer, use it.
-			if(abs(wantedRefresh - mode.RefreshRate)
-				<= abs(wantedRefresh - match->RefreshRate))
+			if(abs(int(wantedRefresh - mode.RefreshRate))
+				<= abs(int(wantedRefresh - match->RefreshRate)))
 			{
 				// This might be the one!
 				found = true;

@@ -26,7 +26,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
-#include <stdio.h>
+#include <cstdio>
 #include <d3dx8.h>
 
 // Warning about a function having no return value.
