@@ -2,94 +2,9 @@
                    Doomsday Engine Definitions Reference
                         (or "Knee-Deep In The DED")
                    =====================================
-                       Revision 0.9.1 -- 08/17/2003
+                       Revision 0.9.2 -- 08/19/2003
 
         Contact <skyjake@doomsdayhq.com> if you have any questions.
-
-
----------------------------------------------------------------------------
-STANDARD DED FILES
----------------------------------------------------------------------------
-Included in the main Game distribution (all of these are in the
-"Defs\<Game>\" directory):
-
-* <Game>.ded
-
-  The primary DED of the Game. Included automatically by default. Includes
-  the other standard DED files: Objects.ded, Sprites.ded, Audio.ded,
-  Maps.ded, Text.ded, Values.ded and Models.ded. Also includes User.ded,
-  which is reserved for any custom definitions. Distributions should not
-  usually include an User.ded.
-
-* Objects.ded
-
-  All Thing and State definitions. Included from primary DED. Also defines
-  all mf_* (and mf2_*) flags.
-
-* Sprites.ded
-
-  Sprite definitions.
-
-* Special.ded
-
-  Particle generator definitions.
-
-* Lights.ded
-
-  Light definitions.
-
-* Details.ded
-
-  Detail texture definitions.
-
-* Audio.ded
-
-  Sound, Music and Texture Environment definitions. Included from primary
-  DED.
-
-* Maps.ded
-
-  Map Info definitions. Included from primary DED. Also defines all mif_*
-  and slf_* flags.
-
-* Finales.ded
-
-  Finale/interlude scripts. Included from primary DED.
-
-* Text.ded
-
-  Text definitions. Included from primary DED.
-
-* Values.ded
-
-  Value definitions (custom string pairs). Included from primary DED.
-
-* Models.ded
-
-  Included from the primary DED (usually <Game>.ded). Defines model flags
-  (df_*) and groups (mg_*) and includes the top-level model definition
-  files (e.g. Monsters.ded, HUDWeapons.ded). Models.ded contains nothing
-  else (no actual Model definitions).
-
-Default grouping of model definitions (really depends on the Game):
-
-* Monsters.ded          Enemies
-* Weapons.ded           Weapons and ammo (items)
-* Items.ded             Items
-* Players.ded           Players
-* HUDWeapons.ded        HUD weapons (psprites)
-* Technology.ded        Technology-related decorations
-* Nature.ded            Nature decorations: plants, rocks, etc.
-* Decorations.ded       Other decorations
-* FX.ded                Special (model-related) effects (fire, explo)
-
-Additional standard DED files:
-
-* User.ded
-
-  Any custom definitions. Not included in regular distributions (so the
-  user's customizations won't be overwritten). Included from the primary
-  DED.
 
 
 ---------------------------------------------------------------------------
@@ -110,10 +25,14 @@ Elements of a DED file:
 
 * Header block
 
-  Use of the Header block is optional but it is recommended that you at
-  least use a version declaration:
+  Use of the Header block is optional. For example:
 
       Header { Version = 5; }
+
+  In DED version 5, there must be a semicolon after each statement,
+  including blocks inside definition blocks. In version 6, semicolons are
+  optional. If you don't include a version declaration, version 6 is
+  assumed.
 
 * Directives
 
@@ -140,29 +59,35 @@ DIRECTIVES
 ...........................................................................
 
 Include "Other.ded";
-    # The Include directive causes the parser to read the given DED
-    # file. Included files are read *after* the file, which they were
-    # included from.
+    # The Include directive causes the parser to read the specified DED
+    # file. The contents of the included file are read immediately after
+    # the directive has been parsed.
 
 IncludeIf <Not> -option "Other.ded";
-    # The given DED file is included if the option "-option" is (not)
-    # found in the command line. Alternatively "-option" can be a game 
-    # mode string: 
-    
-IncludeIf doom1-ultimate "Other.ded";
+    # The specified DED file is included if the option "-option" is (not)
+    # found in the command line. Alternatively "-option" can be a game
+    # mode string:
+
+IncludeIf <Not> doom1-ultimate "Other.ded";
+    # The specified DED file is included if the string matches (or does
+    # not match) the current game mode.
 
 SkipIf <Not> -option;
     # The rest of the file is skipped if the option "-option" is (not)
-    # found in the command line. Alternatively "-option" can be a game 
+    # found in the command line. Alternatively "-option" can be a game
     # mode string.
+
+SkipIf <Not> doom1-ultimate;
+    # The rest of the file is skipped if the string matches (or does not
+    # match) the current game mode.
 
 ModelPath "MD2\Game\Item";
     # The ModelPath directive appends a new path to the list of model
-    # search paths. NOTE: This directive has no scope: it affects all the 
-    # definitions that come before and after it. Also, be careful with 
-    # backslashes. Since they are used as escape characters in strings you 
-    # can't for example do this: "MD2\Game\Path\". That would mean the last 
-    # character of the path is " but the string itself doesn't end. You can 
+    # search paths. NOTE: This directive has no scope: it affects all the
+    # definitions that come before and after it. Also, be careful with
+    # backslashes. Since they are used as escape characters in strings you
+    # can't for example do this: "MD2\Game\Path\". That would mean the last
+    # character of the path is " but the string itself doesn't end. You can
     # use forward slashes instead of backslashes.
 
 ...........................................................................
@@ -304,7 +229,7 @@ all keys).
 
     Color { 0.0 0.0 0.0 };
         # Sets all three color components at the same time.
-        
+
     Top map = "";
     Bottom map = "";
     Side map = "";
@@ -322,7 +247,7 @@ all keys).
 DECORATION DEFINITIONS
 ---------------------------------------------------------------------------
 You can define multiple Decorations for the same texture/flat, but only the
-latest one that passes the conditions will be used. By default (if you 
+latest one that passes the conditions will be used. By default (if you
 specify no usage flags), a Decoration is only used with resources loaded
 from an IWAD.
 ...........................................................................
@@ -332,14 +257,14 @@ from an IWAD.
     # If "Copy" is found all the data of the previous definition is
     # copied to this one as defaults. For the first definition in a
     # file "Copy" has no effect.
-    
+
     Texture = "";
         # Name of the texture with which this decoration is used.
-        
+
     Flat = "";
-        # Name of the flat with which this decoration is used. You can 
+        # Name of the flat with which this decoration is used. You can
         # only specify either a Texture or a Flat, not both.
-        
+
     Flags = "";
         # dcf_noiwad: Don't use this decoration if the resource is loaded
         #       from an IWAD.
@@ -349,28 +274,28 @@ from an IWAD.
         #
         # dcf_ext: This decoration can be used with external resources.
 
-    Light 
+    Light
     {
         # Each decoration can specify up to 8 lights.
-        
+
         Offset { 0.0 0.0 };
-            # Origin of the light in texture coordinates. 
-            
+            # Origin of the light in texture coordinates.
+
         Distance = 1.0;
             # Distance between the origin of the light and the surface.
-            
+
         Color { 0.0 0.0 0.0 };
             # RGB color (values 0-1) of the light. Color (0,0,0) marks
             # the end of the light definitions. Any lights that follow are
             # not rendered.
-            
+
         Radius = 1.0;
             # Radius of the dynamic light.
-            
+
         Halo radius = 0.0;
-            # Radius of the halo. Zero means no halo is rendered. Note 
+            # Radius of the halo. Zero means no halo is rendered. Note
             # that halo radius 1.0 produces quite a large flare.
-            
+
         Flare texture = 0;
             # Texture to use for the primary flare (i.e. the halo itself):
             # 0 = Texture chosen automatically.
@@ -378,34 +303,34 @@ from an IWAD.
             # 2 = FLARE.
             # 3 = BRFLARE.
             # 4 = BIGFLARE.
-            
+
         Top map = "";
         Bottom map = "";
         Side map = "";
             # Name of the light map to use. The top map is used for ceiling
             # planes, the bottom map for floors and the side map for walls.
-            # If left blank (the default), the standard round dynlight texture
-            # is used. Use "-" to disable a map entirely. No light will then be
-            # cast in the direction.
-            
+            # If left blank (the default), the standard round dynlight
+            # texture is used. Use "-" to disable a map entirely. No light
+            # will then be cast in the direction.
+
         Levels { 0 0 };
             # Two integers (0-255) that mark the sector light levels where
-            # the light is at zero and maximum brightness, respectively. 
-            # For example, the levels { 100 200 } mean that the light is 
-            # not visible under light level 100, fades gradually to full 
-            # brightness when nearing light level 200, and stays full 
-            # bright over 200. The first level can be higher than the 
-            # second. The behaviour is then reversed: the light is at full 
+            # the light is at zero and maximum brightness, respectively.
+            # For example, the levels { 100 200 } mean that the light is
+            # not visible under light level 100, fades gradually to full
+            # brightness when nearing light level 200, and stays full
+            # bright over 200. The first level can be higher than the
+            # second. The behaviour is then reversed: the light is at full
             # brightness only below the lower light level.
-            
+
         Pattern skip { 0 0 };
             # Normally the light is repeated on a surface as many times as
             # the texture or flat repeats. The pattern skip values allow
-            # sparser repeats for horizontal and vertical patterns, 
+            # sparser repeats for horizontal and vertical patterns,
             # respectively. For example, the skips { 1 2 } will make the
-            # light only appear on every second horizontal repeat and 
+            # light only appear on every second horizontal repeat and
             # every third vertical repeat.
-            
+
         Pattern offset { 0 0 };
             # Used with pattern skip to offset the origin of the pattern.
             # For example, the offset { 1 0 } will shift the origin of the
@@ -535,22 +460,22 @@ generators will be destroyed to make room for any new generators.
     Mobj = "";
         # Makes this a Type triggered generator. The value must be a
         # defined thing ID (e.g. "PLAYER"). All Type triggered generators
-        # are spawned in the beginning of a level, and they create 
-        # particles using all mobjs of the given type as sources. Use the 
-        # gnf_static flag to prevent the generator from being removed by 
-        # later generators (could happen when the maximum number of 
+        # are spawned in the beginning of a level, and they create
+        # particles using all mobjs of the given type as sources. Use the
+        # gnf_static flag to prevent the generator from being removed by
+        # later generators (could happen when the maximum number of
         # generators is reached).
 
     Alt mobj = "";
         # Alternate mobj type for Type triggered generators.
 
     Damage mobj = "";
-        # Makes this a Damage triggered generator. They are spawned when a 
+        # Makes this a Damage triggered generator. They are spawned when a
         # mobj of the specified type receives damage. The initial movement
-        # direction is calculated from the positions of the mobjs involved 
+        # direction is calculated from the positions of the mobjs involved
         # in the operation, so that positive speed values will make the
-        # particles move away from the inflictor (in the direction of the 
-        # damage). 
+        # particles move away from the inflictor (in the direction of the
+        # damage).
         #
         # NOTE: Damage triggered particle generators currently do not work
         #       on the clientside (netgames and demos).
@@ -631,14 +556,14 @@ generators will be destroyed to make room for any new generators.
 
     Spawn radius = 0.0;
         # Particles will be spawned at a random distance from the center of
-        # the source, at a distance of at most this many units. A flat 
-        # distribution inside a cube is used if the Min spawn radius is 
+        # the source, at a distance of at most this many units. A flat
+        # distribution inside a cube is used if the Min spawn radius is
         # zero.
- 
+
     Min spawn radius = 0.0;
         # Particles will be spawned at least this many units away from the
         # center of the source. Setting this to a nonzero value will enable
-        # the more advanced algorithm for choosing particle spawn 
+        # the more advanced algorithm for choosing particle spawn
         # coordinates: a random point is chosen inside a sphere with the
         # radius of Spawn radius, but not closer than Min spawn radius.
 
@@ -687,22 +612,22 @@ generators will be destroyed to make room for any new generators.
         # 1   = Always start from Alt start.
 
     Force = 0.0;
-        # Strength of the sphere force that pulls or pushes particles 
+        # Strength of the sphere force that pulls or pushes particles
         # towards the surface of the sphere. In most cases the value should
         # be less than one.
-        
+
     Force radius = 0.0;
-        # Radius of the sphere for sphere force. The force will push or 
+        # Radius of the sphere for sphere force. The force will push or
         # pull particles to the surface of this sphere, centered around the
-        # center of the generator (with the offset specified with Force 
+        # center of the generator (with the offset specified with Force
         # origin applied).
-        
+
     Force origin { 0.0 0.0 0.0 };
         # Defines the coordinates for the force sphere in relation to the
         # center of the source.
-        
+
     Force axis { 0.0 0.0 0.0 };
-        # The sphere force can also rotate particles around an axis. The 
+        # The sphere force can also rotate particles around an axis. The
         # length of the axis defines how strong the rotation is.
 
     Stage
@@ -844,7 +769,7 @@ Music
 ---------------------------------------------------------------------------
 TEXTURE ENVIRONMENT DEFINITIONS
 ---------------------------------------------------------------------------
-The Texture Environment definitions are used to calculate the 3D sound 
+The Texture Environment definitions are used to calculate the 3D sound
 characteristics of the sectors in a map.
 ...........................................................................
 
@@ -872,8 +797,12 @@ MAP INFO DEFINITIONS
 ---------------------------------------------------------------------------
 ...........................................................................
 
-Map Info
+<Copy> Map Info
 {
+    # If the "Copy" attribute is used, all the data of the previous
+    # definition is copied to this one. For the first definition in a file
+    # "Copy" has no effect.
+
     ID = "";
         # Map identifier. Could be "ExMy" or "MAPxy" depending on the
         # game. Example: if this map info is meant for the first map
@@ -891,6 +820,9 @@ Map Info
 
     Flags = "";
         # mif_fog: Enable fog in the map.
+        #
+        # mif_sphere: Draw the sky sphere even when sky models have been
+        #       set up.
 
     Music = "";
         # Identifier of the song to play during this map. Notice that
@@ -959,6 +891,42 @@ Map Info
         Texture = "";
         Offset = 0.0;
         Color limit = 0.0;
+    };
+
+    Sky Model
+    {
+        # There can be up to 32 Sky Model blocks in a Map Info definition.
+        # Each block defines one a sky model.
+
+        ID = "";
+            # Identifier of the Model definition that describes the 3D
+            # model. If left empty, this sky model will be disabled.
+
+        Frame interval = 1.0;
+            # The number of seconds between frame changes. Sky model
+            # animation is interpolated. The model is animated by going
+            # through all its frames one by one.
+
+        Color { 1.0 1.0 1.0 1.0 };
+            # RGBA color for the model.
+
+        Offset factor { 0.0 0.0 0.0 };
+            # The position of the sky model may depend on the coordinates
+            # of the camera. The Offset factor key sets a factor for each
+            # axis (X, Y, Z) separately. Small factors (< 1.0) can be used
+            # to create the illusion that the sky model is larger than it
+            # really is. If the factors are zero, the sky model's origin 
+            # will be positioned at the camera's viewpoint.
+            
+        Rotate { 0.0 0.0 };
+            # Additional rotation around the X and Z axes, respectively (in 
+            # degrees). These are applied after normal rotation.
+            
+        Yaw = 0.0;
+            # Initial rotation around the Y axis (in degrees).
+            
+        Yaw speed = 0.0;
+            # Angular velocity around the Y axis (in degrees per second).
     };
 }
 
@@ -1076,10 +1044,10 @@ Values
 ---------------------------------------------------------------------------
 MODEL DEFINITIONS
 ---------------------------------------------------------------------------
-A 'Model' can be thought of as a collection of one to four MD2 models. Each
-MD2 file assigned to a Model is called a submodel. Thus a Model can have up
-to four submodels. In the Model definition the submodels are defined
-sequentially starting from zero. The engine handles the submodels
+A 'Model' can be thought of as a collection of one to eight MD2 models.
+Each MD2 file assigned to a Model is called a submodel. Thus a Model can
+have up to eight submodels. In the Model definition the submodels are
+defined sequentially starting from zero. The engine handles the submodels
 separately, which makes it possible to interpolate the animation of each
 submodel independently of the other submodels.
 
@@ -1158,8 +1126,14 @@ scaled to the range {-0.333 0.333} we get the zero we wanted.
     # copied to this one as defaults. For the first definition in a
     # file "Copy" has no effect.
 
+    ID = "";
+        # The identifier of this definition. You can only set either the ID 
+        # key or the State key, not both. Models with an ID can't be 
+        # assigned to Thing States.
+
     State = "";
-        # The State this model will be used with.
+        # The State this model will be used with. You can only set either 
+        # the ID key or the State key, not both.
 
     Off = 0;
         # Offset to state index. Use carefully! If State indices
@@ -1221,7 +1195,7 @@ scaled to the range {-0.333 0.333} we get the zero we wanted.
         #
         # df_noz: The model is rendered with Z-buffer writes disabled.
         #
-        # df_nomaxz: Model is used at all distances regardless of the 
+        # df_nomaxz: Model is used at all distances regardless of the
         #        model visibility settings.
         #
         # df_selskin
@@ -1233,8 +1207,8 @@ scaled to the range {-0.333 0.333} we get the zero we wanted.
         # df_specular
         # df_litshiny
         #
-        # df_idframe: An offset derived from the ID number of the object 
-        #        is added to the current frame index of the object. Frame 
+        # df_idframe: An offset derived from the ID number of the object
+        #        is added to the current frame index of the object. Frame
         #        range must also be set.
         #
         # df_idangle: The model gets a unique yaw angle offset calculated
@@ -1272,14 +1246,14 @@ scaled to the range {-0.333 0.333} we get the zero we wanted.
         # sprite and frame associated with the State of this model.
 
     Shadow radius = 0;
-        # With the default value of zero the shadow radius is 
+        # With the default value of zero the shadow radius is
         # automatically calculated.
 
-    Md2 # Or Sub
+    Sub # Or Md2
     {
-        # There can be four Md2 blocks in a Model definition.
-        # Each block defines a submodel. You can use the keyword "Sub"
-        # instead of Md2 to begin the block.
+        # There can be eight Sub blocks in a Model definition.
+        # Each block defines a submodel. You can use the keyword "Md2"
+        # instead of Sub to begin the block.
 
         File = "";
             # MD2 file, e.g. "Monst\Trooper.md2". The given file name
@@ -1291,7 +1265,7 @@ scaled to the range {-0.333 0.333} we get the zero we wanted.
 
         Frame = "";
             # Name of the MD2 frame to use.
-            
+
         Frame range = 0;
             # Used with the df_idframe flag. Defines how many consecutive
             # frames make up the range for the frame index offset, which
@@ -1364,3 +1338,4 @@ Shortcuts:
                    Doomsday Engine Definitions Reference
 
 $Id$
+
