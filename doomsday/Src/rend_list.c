@@ -916,9 +916,9 @@ static float RL_ShinyVertical(float dy, float dx)
 void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
                            gltexture_t *tex)
 {
-    vec2_t surface;
+    vec2_t surface, normal, projected, s, reflected;
     vec2_t view;
-    float dot, distance;
+    float distance, angle, prevAngle;
     int i;
 
     // Quad surface vector.
@@ -927,6 +927,8 @@ void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
            poly->length,
            (poly->vertices[1].pos[VY] - poly->vertices[0].pos[VY]) /
            poly->length);
+
+    V2_Set(normal, surface[VY], -surface[VX]);
 
     // Calculate coordinates based on viewpoint and surface normal.
     for(i = 0; i < 2; ++i)
@@ -938,10 +940,29 @@ void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
 
         distance = V2_Normalize(view);
         
-        dot = V2_DotProduct(surface, view);
+        V2_Project(projected, view, normal);
+        V2_Subtract(s, projected, view);
+        V2_Scale(s, 2);
+        V2_Sum(reflected, view, s);
 
+        angle = acos(reflected[VY]) / PI;
+        if(reflected[VX] < 0)
+        {
+            angle = 1 - angle;
+        }
+
+        if(i == 0)
+        {
+            prevAngle = angle;
+        }
+        else
+        {
+            if(angle > prevAngle) angle -= 1;
+        }
+        
         // Horizontal coordinates.
-        tc[ (i == 0 ? 0 : 1) ].st[0] = tc[ (i == 0 ? 3 : 2) ].st[0] = dot;
+        tc[ (i == 0 ? 0 : 1) ].st[0] = tc[ (i == 0 ? 3 : 2) ].st[0] =
+            angle + .3f;     /*acos(-dot)/PI*/
 
         // Vertical coordinates.
         tc[ (i == 0 ? 0 : 1) ].st[1] =
