@@ -6,7 +6,7 @@
 
 #include "sys_file.h"
 
-#define MAX_READ	500
+#define MAX_READ	8192
 #define ISSPACE(c)	((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
 extern int	read_count;
@@ -31,6 +31,7 @@ int			M_FileExists(const char *file);
 void		M_TranslatePath(const char *path, char *translated);
 void		M_PrependBasePath(const char *path, char *newpath);
 void		M_RemoveBasePath(const char *absPath, char *newPath);
+const char*	M_Pretty(const char *path);
 void		M_ReadLine(char *buffer, int len, DFILE *file);
 
 // Bounding boxes.
