@@ -61,11 +61,16 @@ int DD_InitDGLDriver(void)
 	Req(GetInteger);
 	Req(GetIntegerv);
 	Req(SetInteger);
+	Opt(SetFloatv);
 	Req(GetString);
 	Req(Enable);
 	Req(Disable);
+	Req(EnableArrays);
+	Req(DisableArrays);
+	Req(Arrays);
+	Req(UnlockArrays);
 	Req(Func);
-	Req(ZBias);
+	Req(ZBias);	
 
 	// Textures.
 	Req(NewTexture);
@@ -106,9 +111,14 @@ int DD_InitDGLDriver(void)
 	Req(Vertex3fv);
 	Req(TexCoord2f);
 	Req(TexCoord2fv);
+	Opt(MultiTexCoord2f);
+	Opt(MultiTexCoord2fv);
 	Req(Vertices2ftv);
 	Req(Vertices3ftv);
 	Req(Vertices3fctv);
+	Req(Arrays);
+	Req(UnlockArrays);
+	Req(DrawElements);
 
 	// Miscellaneous.
 	Req(Grab);
