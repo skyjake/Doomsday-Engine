@@ -253,11 +253,6 @@ $--------------------------------------------------------------------
 	@opt{-gdifonts} @tab @tab
 	Use Windows' GDI fonts instead of the DFNs.
 @row
-	@opt{-maxor N} @tab @tab
-	Set the maximum number of occlusion ranges.
-	Increase the number when you get an error message
-	"Out of oranges (max N)".
-@row
 	@opt{-novideo} @tab @tab
 	Don't initialize video.
 @row
@@ -330,10 +325,6 @@ $--------------------------------------------------------------------
 @table/thick{25 12 63}{
 	@header{Option} @tab @header{Abbr.} @tab @header{Description}
 @row{single}
-	@opt{-vtxar} @tab @tab
-	Use vertex arrays. May result in slightly better performance,
-	but not supported by all drivers.
-@row
 	@opt{-texcomp} @tab @tab
 	Use texture compression (if supported by the OpenGL driver).
 @row
