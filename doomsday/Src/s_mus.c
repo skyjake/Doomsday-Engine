@@ -43,6 +43,8 @@ int mus_preference = MUSP_EXT;
 
 static boolean mus_avail = false;
 
+static int current_song = -1;
+
 // The interfaces.
 static musinterface_mus_t *imus = 0;
 static musinterface_ext_t *iext = 0;
@@ -69,7 +71,8 @@ boolean Mus_Init(void)
 {
 	int i;
 	
-	if(mus_avail || ArgExists("-nomusic")) return true;
+	if(isDedicated || mus_avail || ArgExists("-nomusic")) 
+		return true;
 
 	// The Win driver is always initialized.
 	if(musd_win.Init())
@@ -121,6 +124,7 @@ boolean Mus_Init(void)
 		Con_Printf("\n");
 	}
 
+	current_song = -1;
 	mus_avail = true;
 	return true;
 }
@@ -197,6 +201,8 @@ void Mus_Stop(void)
 	int i;
 
 	if(!mus_avail) return;
+
+	current_song = -1;
 
 	// Stop all interfaces.
 	for(i = 0; interfaces[i].ip; i++)
@@ -313,12 +319,16 @@ int Mus_GetCD(ded_music_t *def)
 int Mus_Start(ded_music_t *def, boolean looped)
 {
 	char path[300];
-	int order[3], i;
+	int order[3], i, song_id = def - defs.music;
 
-	if(!mus_avail) return false;
+	// We will not restart the currently playing song.
+	if(!mus_avail || song_id == current_song) return false;
 
 	// Stop the currently playing song.
 	Mus_Stop();
+
+	// This is the song we're playing now.
+	current_song = song_id;
 
 	// Choose the order in which to try to start the song.
 	order[0] = mus_preference;
