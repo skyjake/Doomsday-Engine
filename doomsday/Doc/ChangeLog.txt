@@ -10,6 +10,12 @@ Version 1.7.12 (work in progress)
 + tgf_smooth: interpolate between steps in texture/flat animation
 * renderer uses multitexturing for detail textures, dynamic lights and
   interpolated texture animation
+* dynamic light polygons are no longer clipped
+* calculations to determine surfaces affected by a dynamic light are
+  more accurate (light has a better chance to be visible)
+* detail texture contrast is preprocessed: there will be multiple 
+  instances of the same texture with different contrast levels (needs
+  a bit more memory but allows faster rendering)
 + option -leaveramp: don't reset color settings back to previous values
   at shutdown
 + particle generator flag "gnf_group": triggered by all in the flat's
@@ -17,6 +23,8 @@ Version 1.7.12 (work in progress)
 + cmd 'startinf (scriptid)' (and 'stopinf')
 * 'InFine' is an alternative name for the 'Finale' definition
 - removed obsolete settings from Control Panel: Network
+- removed cvars 'rend-light-clip', 'rend-light-shrink'
+- fixed: leaking lights (impossible route detection)
 - fixed: stray pixels along polygon edges in dynamically lit areas
 - fixed: detail texture blending when fog is enabled
 - fixed: object shadows weren't affected by fog
@@ -27,7 +35,9 @@ Version 1.7.12 (work in progress)
 - fixed: Generator Center angle (Y) offset was ignored with mobj sources
 
 drOpenGL:
-* support for multitexturing
++ support for multitexturing
++ NV_texture_env_combine4 or ATI_texture_env_combine3 required when 
+  rendering dynamic lights with multitexturing
 
 jDoom:
 + crosshair alpha slider added to the HUD menu
