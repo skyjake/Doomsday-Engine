@@ -147,6 +147,12 @@ void * Z_Malloc (size_t size, int tag, void *user)
 	size_t		extra;
 	memblock_t	*start, *rover, *new, *base;
 
+	if(!size) 
+	{
+		// You can't allocate 'nothing'.
+		return NULL;
+	}
+
 //
 // scan through the block list looking for the first free block
 // of sufficient size, throwing out any purgable blocks along the way
@@ -238,9 +244,12 @@ void *Z_Realloc(void *ptr, size_t n, int malloctag)
 	void *p = Z_Malloc(n, tag, 0); // User always 0
 	if(ptr)
 	{
+		size_t bsize;
 		// Has old data; copy it.
-		memblock_t *block = (memblock_t*) ((char*)ptr - sizeof(memblock_t));
-		memcpy(p, ptr, n <= block->size ? n : block->size);
+		memblock_t *block = (memblock_t*) ((char*)ptr 
+			- sizeof(memblock_t));
+		bsize = block->size - sizeof(memblock_t);
+		memcpy(p, ptr, MIN_OF(n, bsize));
 		Z_Free(ptr);
 	}
 	return p;
@@ -275,6 +284,8 @@ void Z_CheckHeap (void)
 	{
 		if (block->next == &mainzone->blocklist)
 			break;			// all blocks have been hit	
+		if (block->size == 0)
+			Con_Error ("Z_CheckHeap: zero-size block\n");
 		if ( (byte *)block + block->size != (byte *)block->next)
 			Con_Error ("Z_CheckHeap: block size does not touch the next block\n");
 		if ( block->next->prev != block)
@@ -360,15 +371,17 @@ void *Z_Recalloc(void *ptr, size_t n, int calloctag)
 {
 	memblock_t *block;
 	void *p;
+	size_t bsize;
 
 	if(ptr)	// Has old data.
 	{
 		p = Z_Malloc(n, Z_GetTag(ptr), NULL);
 		block = (memblock_t*) ((char*)ptr - sizeof(memblock_t));
-		if(block->size <= n)
+		bsize = block->size - sizeof(memblock_t);
+		if(bsize <= n)
 		{
-			memcpy(p, ptr, block->size);
-			memset((char*)p + block->size, 0, n - block->size);
+			memcpy(p, ptr, bsize);
+			memset((char*)p + bsize, 0, n - bsize);
 		}
 		else
 		{
