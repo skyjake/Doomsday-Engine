@@ -5,6 +5,17 @@ Header { Version = 5; }
 
 Flag { ID = "lgf_nohalo"; Value = 0x100; }
 
+# Flags for Decoration definitions:
+# Decoration will not be used with IWAD resources.
+Flag { ID = "dcf_noiwad"; Value = 0x1; }
+
+# Allow using decoration with PWAD resources.
+Flag { ID = "dcf_pwad"; Value = 0x2; }    
+
+# Allow using decoration with external resources.
+Flag { ID = "dcf_ext"; Value = 0x4; }
+
+
 # A halo would look bad for the chandelier because it wouldn't be
 # rendered around the candle flames.
 Light { State = "ZCHANDELIER1"; Size = 0.8; Flags = "lgf_nohalo"; }
