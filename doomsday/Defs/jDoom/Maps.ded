@@ -1,7 +1,5 @@
 # jDoom: Maps
 
-Header { Version = 5; }
-
 Map Info {
   ID = "E1M1";
   Name = "E1M1: Hangar";
@@ -12,7 +10,7 @@ Map Info {
   Sky Layer 1 {
     Flags = "slf_enable";
     Texture = "SKY1";
-  };
+  }
 }
 
 Copy Map Info {

@@ -1,5 +1,3 @@
-Header { Version = 5; }
-
 ModelPath "MD2/jDoom/Monst";
 
 Model {
