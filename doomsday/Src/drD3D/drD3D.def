@@ -1,5 +1,5 @@
 LIBRARY			DRD3D
-DESCRIPTION		"Doomsday Graphics Library - Direct3D"
+;DESCRIPTION		"Doomsday Graphics Library - Direct3D"
 
 ; All exports should be prefixed DG_.
 

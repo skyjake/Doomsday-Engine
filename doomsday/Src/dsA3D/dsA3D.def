@@ -1,5 +1,5 @@
 LIBRARY			DSA3D
-DESCRIPTION		"Doomsday Sound Driver - A3D 3.0"
+;DESCRIPTION		"Doomsday Sound Driver - A3D 3.0"
 
 ; All exports should be prefixed DS_.
 
