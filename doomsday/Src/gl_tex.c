@@ -1517,7 +1517,7 @@ void GL_SetFlat(int idx)
 //
 //===========================================================================
 static int DrawRealPatch(byte *buffer, byte *palette, int texwidth,
-						 int texheight, patch_t * patch, int origx, int origy,
+						 int texheight, patch_t *patch, int origx, int origy,
 						 boolean maskZero, unsigned char *transtable,
 						 boolean checkForAlpha)
 {
@@ -1963,13 +1963,15 @@ DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 // GL_BufferTexture
 //  Renders the given texture into the buffer.
 //===========================================================================
-boolean GL_BufferTexture(texture_t * tex, byte *buffer, int width, int height,
+boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 						 int *has_big_patch)
 {
-	int     i, len = width * height;
+	int     i, len;
 	boolean alphaChannel;
 	byte   *palette = W_CacheLumpNum(pallump, PU_STATIC);
 	patch_t *patch;
+
+	len = width * height;
 
 	// Clear the buffer.
 	memset(buffer, 0, 2 * len);
