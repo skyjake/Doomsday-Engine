@@ -22,7 +22,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
+#ifdef HAVE_CONFIG_H
 #  include "config.h"
+#endif
 #endif
 
 #include "de_base.h"

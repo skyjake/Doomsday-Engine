@@ -373,7 +373,7 @@ int PG_ListVisibleParticles(void)
 			if(order[m].distance < mindist)
 				continue;		// Too near.
 
-			stagetype = gen->stages[pt->stage].type;
+			stagetype = gen->stages[(int)pt->stage].type;
 			if(stagetype == PTC_POINT)
 			{
 				hasPoints[0] = true;
@@ -486,8 +486,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 	{
 		gen = active_ptcgens[order[i].gen];
 		pt = gen->ptcs + order[i].index;
-		st = &gen->stages[pt->stage];
-		dst = &gen->def->stages[pt->stage];
+		st = &gen->stages[(int)pt->stage];
+		dst = &gen->def->stages[(int)pt->stage];
 
 		// Only render one type of particles.
 		if((rtype == PTC_MODEL && dst->model < 0) ||

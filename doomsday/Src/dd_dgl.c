@@ -8,7 +8,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
-#  include <ltdl.h>
+#  ifdef MACOSX
+#    include "sys_dylib.h"
+#  else
+#    include <ltdl.h>
+#  endif
 typedef lt_dlhandle HINSTANCE;
 #endif
 
@@ -20,9 +24,13 @@ typedef lt_dlhandle HINSTANCE;
 
 // Default values.
 #if defined WIN32
-#  	define DEFAULT_LIB_NAME "drOpenGL.dll"
+#  define DEFAULT_LIB_NAME "drOpenGL.dll"
 #elif defined UNIX
-#  	define DEFAULT_LIB_NAME "libdropengl"
+#  ifdef MACOSX
+#    define DEFAULT_LIB_NAME "drOpenGL.bundle"
+#  else
+#    define DEFAULT_LIB_NAME "libdropengl"
+#  endif
 #endif
 
 // Optional function. Doesn't need to be exported.

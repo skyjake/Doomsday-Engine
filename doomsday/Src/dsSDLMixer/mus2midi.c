@@ -26,6 +26,7 @@
 
 #include "doomsday.h"
 #include <stdio.h>
+#include <string.h>
 
 // MACROS ------------------------------------------------------------------
 

@@ -28,8 +28,13 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <SDL.h>
-#include <SDL_mixer.h>
+#ifdef MACOSX
+#  include <SDL/SDL.h>
+#  include <SDL_mixer/SDL_mixer.h>
+#else
+#  include <SDL.h>
+#  include <SDL_mixer.h>
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -130,7 +135,7 @@ int DS_Init(void)
 		return false;
 	}
 
-	if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048))
+	if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
 	{
 		Error();
 		return false;
