@@ -29,6 +29,7 @@
 #include "de_refresh.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "de_defs.h"
 #include "p_sight.h"
 
 #include <math.h>
@@ -66,6 +67,8 @@ D_CMD(BLEditor);
 void         SB_EvalPoint(gl_rgba_t *light,
                           vertexillum_t *illum, short *affectedSources,
                           float *point, float *normal);
+
+static void  SBE_SetColor(float *dest, float *src);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -173,6 +176,50 @@ void SB_Register(void)
 
     C_VAR_INT("rend-dev-bias-affected", &updateAffected, CVF_NO_ARCHIVE, 0, 1,
               "1=Keep track which sources affect which surfaces.");
+}
+
+/*
+ * Initializes the bias lights according to the loaded Light
+ * definitions.
+ */
+void SB_InitForLevel(const char *uniqueId)
+{
+    ded_light_t *def;
+    source_t *src;
+    int i;
+
+    // Start with no sources whatsoever.
+    numSources = 0;
+
+    // Check all the loaded Light definitions for any matches.
+    for(i = 0; i < defs.count.lights.num; ++i)
+    {
+        def = &defs.lights[i];
+
+        if(def->state[0] || stricmp(uniqueId, def->level))
+            continue;
+
+        src = &sources[numSources++];
+
+        // All lights loaded from a DED are automatically locked.
+        src->flags = BLF_CHANGED | BLF_LOCKED; 
+
+        // The color is amplified automatically.
+        SBE_SetColor(src->color, def->color);
+
+        src->intensity = def->size;
+
+        src->pos[VX] = def->offset[VX];
+        src->pos[VY] = def->offset[VY];
+        src->pos[VZ] = def->offset[VZ];
+
+        // This'll enforce an update (although the vertices are also
+        // STILL_UNSEEN).
+        src->lastUpdateTime = 0;
+        
+        if(numSources == MAX_BIAS_LIGHTS)
+            break;
+    }
 }
 
 static void SB_WallNormal(rendpoly_t *poly, float normal[3])
@@ -1018,6 +1065,55 @@ static void SBE_Dupe(int which)
     }    
 }
 
+static boolean SBE_Save(const char *name)
+{
+    filename_t fileName;
+    FILE *file;
+    int i;
+    source_t *s;
+    const char *uid = R_GetUniqueLevelID();
+
+    if(!name)
+    {
+        sprintf(fileName, "%s.ded", R_GetCurrentLevelID());
+    }
+    else
+    {
+        strcpy(fileName, name);
+        if(!strchr(fileName, '.'))
+        {
+            // Append the file name extension.
+            strcat(fileName, ".ded");
+        }
+    }
+
+    Con_Printf("Saving to %s...\n", fileName);
+
+    if((file = fopen(fileName, "wt")) == NULL)
+        return false;
+
+    fprintf(file, "# %i Bias Lights for %s\n\n", numSources, uid);
+    
+    // Since there can be quite a lot of these, make sure we'll skip
+    // the ones that are definitely not suitable.
+    fprintf(file, "SkipIf Not %s\n", gx.Get(DD_GAME_MODE));
+
+    for(i = 0, s = sources; i < numSources; ++i, ++s)
+    {
+        fprintf(file, "\nLight {\n");
+        fprintf(file, "  Level = \"%s\"\n", uid);
+        fprintf(file, "  Origin { %g %g %g }\n",
+                s->pos[0], s->pos[1], s->pos[2]);
+        fprintf(file, "  Color { %g %g %g }\n",
+                s->color[0], s->color[1], s->color[2]);
+        fprintf(file, "  Intensity = %g\n", s->intensity);
+        fprintf(file, "}\n");
+    }
+    
+    fclose(file);
+    return true;
+}
+
 /*
  * Editor commands.
  */
@@ -1050,8 +1146,7 @@ int CCmdBLEditor(int argc, char **argv)
 
     if(!stricmp(cmd, "save"))
     {
-        Con_Printf("Not implemented yet.\n");
-        return true;
+        return SBE_Save(argc >= 2 ? argv[1] : NULL);
     }
 
     if(!stricmp(cmd, "clear"))
@@ -1081,10 +1176,6 @@ int CCmdBLEditor(int argc, char **argv)
             r = strtod(argv[1], NULL);
             g = strtod(argv[2], NULL);
             b = strtod(argv[3], NULL);
-        }
-        else if(argc >= 2)
-        {
-            r = g = b = strtod(argv[1], NULL);
         }
 
         editColor[0] = r;
@@ -1244,6 +1335,10 @@ void SBE_DrawHUD(void)
     y = screenHeight - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
     UI_TextOutEx(buf, 18, y + h / 2, false, true,
+                 UI_COL(UIC_TITLE), alpha);
+
+    // The map ID.
+    UI_TextOutEx((char*)R_GetUniqueLevelID(), 18, y - h/2, false, true,
                  UI_COL(UIC_TITLE), alpha);
 
     // Stats for nearest & grabbed:
