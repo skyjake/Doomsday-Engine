@@ -221,18 +221,6 @@ boolean Net_GetPacket(void)
 	return true;
 }
 
-/*boolean Net_GetLatestFramePacket(void)
-   {
-   if(!isClient || !latest_frame_size) return false;
-   // Place the latest frame packet to the netBuffer.
-   memcpy(&netBuffer.msg, &latest_frame_packet, latest_frame_size);
-   netBuffer.cursor = netBuffer.msg.data;
-   netBuffer.length = latest_frame_size - netBuffer.headerLength;
-   // Clear the buffer.
-   latest_frame_size = 0;
-   return true;
-   } */
-
 //===========================================================================
 // Net_SendPacket
 //  This is the public interface of the message sender.
@@ -361,19 +349,6 @@ int CCmdChat(int argc, char **argv)
 	gx.NetPlayerEvent(consoleplayer, DDPE_CHAT_MESSAGE, buffer);
 	return true;
 }
-
-#if 0
-// Returns a pointer to a new local ticcmd so it can be built.
-// Returns NULL if the buffer is full.
-ticcmd_t *Net_LocalCmd()
-{
-	// Check that the localtics buffer still has room.
-	if(numlocal == LOCALTICS)
-		return NULL;
-	// One more command. The counter is cleared when the cmds are sent.
-	return (ticcmd_t *) & localticcmds[TICCMD_IDX(numlocal++)];
-}
-#endif
 
 /*
  * After a long period with no updates (map setup), calling this will
@@ -1139,7 +1114,7 @@ int CCmdSetName(int argc, char **argv)
 //===========================================================================
 int CCmdSetTicks(int argc, char **argv)
 {
-	extern double lastSharpFrameTime;
+//	extern double lastSharpFrameTime;
 
 	if(argc != 2)
 	{
@@ -1149,7 +1124,7 @@ int CCmdSetTicks(int argc, char **argv)
 	}
 	firstNetUpdate = true;
 	Sys_TicksPerSecond(strtod(argv[1], 0));
-	lastSharpFrameTime = Sys_GetTimef();
+//	lastSharpFrameTime = Sys_GetTimef();
 	return true;
 }
 

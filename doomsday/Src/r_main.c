@@ -71,16 +71,15 @@ int     extralight;				// bumped light from gun blasts
 int     skyflatnum;
 char    skyflatname[9] = "F_SKY";
 
-double  lastSharpFrameTime;
-
-int     sharpWorldUpdated;		// Set to true after game ticker has been called.
-
 float   frameTimePos;			// 0...1: fractional part for sharp game tics
-boolean resyncFrameTimePos = true;
 
 int		loadInStartupMode = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// These are used when camera smoothing is disabled.
+static angle_t frozenAngle = 0;
+static float frozenPitch = 0;
 
 static viewer_t lastSharpView[2];
 static boolean resetNextViewer = true;
@@ -274,75 +273,119 @@ void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
 		src->angle = dst->angle;
 }
 
-//===========================================================================
-// R_SetupFrame
-//  Prepare rendering the view of the given player.
-//  Also handles smoothing of camera and plane movement.
-//===========================================================================
+/*
+ * Retrieve the current sharp camera position.
+ */
+void R_GetSharpView(viewer_t *view, ddplayer_t *player)
+{
+	view->angle = player->clAngle + viewangleoffset;
+	view->pitch = player->clLookDir;
+	view->x = player->mo->x + viewxOffset;
+	view->y = player->mo->y + viewyOffset;
+	view->z = player->viewz + viewzOffset;
+
+	// Check that the viewz doesn't go too high or low.
+	if(view->z > player->mo->ceilingz - 4 * FRACUNIT)
+	{
+		view->z = player->mo->ceilingz - 4 * FRACUNIT;
+	}
+	if(view->z < player->mo->floorz + 4 * FRACUNIT)
+	{
+		view->z = player->mo->floorz + 4 * FRACUNIT;
+	}
+}
+
+/* 
+ * Update the sharp world data by rotating the stored values of plane
+ * heights and sharp camera positions.
+ */
+void R_NewSharpWorld(void)
+{
+	int i; 
+	sector_t *sector;
+	viewer_t sharpView;
+
+	if(!viewplayer) return;
+	
+	R_GetSharpView(&sharpView, viewplayer);
+
+	// Update the camera angles that will be used when the camera is
+	// not smoothed.
+	frozenAngle = sharpView.angle;
+	frozenPitch = sharpView.pitch;
+
+	// The game tic has changed, which means we have an updated sharp
+	// camera position.  However, the position is at the beginning of
+	// the tic and we are most likely not at a sharp tic boundary, in
+	// time.  We will move the viewer positions one step back in the
+	// buffer.  The effect of this is that [0] is the previous sharp
+	// position and [1] is the current one.
+			
+	memcpy(&lastSharpView[0], &lastSharpView[1], sizeof(viewer_t));
+	memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
+
+	R_CheckViewerLimits(lastSharpView, &sharpView);
+
+	// $smoothplane: Roll the height tracker buffers.
+	for(i = 0; i < numsectors; i++)
+	{
+		sector = SECTOR_PTR(i);
+		secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
+		secinfo[i].oldfloor[1] = sector->floorheight;
+		
+		if(abs(secinfo[i].oldfloor[0] - secinfo[i].oldfloor[1]) >=
+		   MAX_SMOOTH_PLANE_MOVE)
+		{
+			// Too fast: make an instantaneous jump.
+			secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
+		}
+
+		secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
+		secinfo[i].oldceil[1] = sector->ceilingheight;
+
+		if(abs(secinfo[i].oldceil[0] - secinfo[i].oldceil[1]) >=
+		   MAX_SMOOTH_PLANE_MOVE)
+		{
+			// Too fast: make an instantaneous jump.
+			secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
+		}
+	}
+}
+
+/*
+ * Prepare rendering the view of the given player.
+ * Also handles smoothing of camera and plane movement.
+ */
 void R_SetupFrame(ddplayer_t *player)
 {
-	typedef enum adjustment_e {
-		ADJUST_IDLE,
-		ADJUST_FAST_FORWARD
-	} adjustment_t;
-
 	int     tableAngle, i;
 	float   yawRad, pitchRad;
-	double  nowTime;
 	viewer_t sharpView, smoothView;
 	sector_t *sector;
-	boolean justResynced = false;
-
-	// Probably it would be a better idea to make sure frametime never
-	// becomes negative in the first place, but adjustments are
-	// fun. :)
-	static adjustment_t adjustmentMode = ADJUST_IDLE;
-	static float remainingAdvance = 0;
-	static float advanceSpeed = .001f;
 
 	// Reset the DGL triangle counter.
 	gl.GetInteger(DGL_POLY_COUNT);
 
 	viewplayer = player;
-
-	sharpView.angle = player->clAngle + viewangleoffset;
-	sharpView.pitch = player->clLookDir;
-	sharpView.x = player->mo->x + viewxOffset;
-	sharpView.y = player->mo->y + viewyOffset;
-	sharpView.z = player->viewz + viewzOffset;
-
-	// Check that the viewz doesn't go too high or low.
-	if(sharpView.z > player->mo->ceilingz - 4 * FRACUNIT)
-	{
-		sharpView.z = player->mo->ceilingz - 4 * FRACUNIT;
-	}
-	if(sharpView.z < player->mo->floorz + 4 * FRACUNIT)
-	{
-		sharpView.z = player->mo->floorz + 4 * FRACUNIT;
-	}
+	R_GetSharpView(&sharpView, viewplayer);
 
 	// Camera smoothing is only enabled if the frame rate is above 35.
 	if(!rend_camera_smooth || resetNextViewer)
 	{
-		static angle_t frozenAngle = 0;
-		static float frozenPitch = 0;
-
 		// Synchronize view angles to game updates.
-		if(resetNextViewer || sharpWorldUpdated)
+		if(resetNextViewer)
 		{
 			frozenAngle = sharpView.angle;
 			frozenPitch = sharpView.pitch;
 		}
 
-		sharpWorldUpdated = false;
 		resetNextViewer = false;
 
 		// Just view from the sharp position.
 		sharpView.angle = frozenAngle;
 		sharpView.pitch = frozenPitch;
 		R_SetViewPos(&sharpView);
-		frameTimePos = 0;
-		lastSharpFrameTime = Sys_GetTimef();
+
 		memcpy(&lastSharpView[0], &sharpView, sizeof(sharpView));
 		memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
 
@@ -363,114 +406,15 @@ void R_SetupFrame(ddplayer_t *player)
 	// time offsets or interpolated camera positions.
 	else if(!clientPaused)
 	{
-		static timespan_t oldTime = 0;
-		nowTime = Sys_GetTimef();
-		if(sharpWorldUpdated)
-		{
-			extern int numSharpTics;
-
-			sharpWorldUpdated = false;
-
-			frameTimePos -= numSharpTics;
-			numSharpTics = 0;
-
-			// The game tic has changed, which means we have an
-			// updated sharp camera position. However, the position is
-			// at the beginning of the tic and we are most likely not
-			// at a sharp tic boundary, in time. We will update
-			// lastSharpFrameTime so it tells the time of the new
-			// sharp position, and then move the viewer positions one
-			// step back in the buffer.  The effect of this is that
-			// [0] is the previous sharp position and [1] is the
-			// current one.
-
-			memcpy(&lastSharpView[0], &lastSharpView[1], sizeof(viewer_t));
-			memcpy(&lastSharpView[1], &sharpView, sizeof(sharpView));
-			R_CheckViewerLimits(lastSharpView, &sharpView);
-
-			// $smoothplane: Roll the height tracker buffers.
-			for(i = 0; i < numsectors; i++)
-			{
-				sector = SECTOR_PTR(i);
-				secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
-				secinfo[i].oldfloor[1] = sector->floorheight;
-
-				if(abs(secinfo[i].oldfloor[0] - secinfo[i].oldfloor[1]) >=
-				   MAX_SMOOTH_PLANE_MOVE)
-				{
-					// Too fast: make an instantaneous jump.
-					secinfo[i].oldfloor[0] = secinfo[i].oldfloor[1];
-				}
-
-				secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
-				secinfo[i].oldceil[1] = sector->ceilingheight;
-
-				if(abs(secinfo[i].oldceil[0] - secinfo[i].oldceil[1]) >=
-				   MAX_SMOOTH_PLANE_MOVE)
-				{
-					// Too fast: make an instantaneous jump.
-					secinfo[i].oldceil[0] = secinfo[i].oldceil[1];
-				}
-			}
-			
-			// If the frametime gets too far from the sharp times, it
-			// will be forced back into the correct range.  This
-			// doesn't happen during normal gameplay, only when there
-			// has been an abnormal skip in the timing (tics without
-			// frames or visa versa).
-			if(resyncFrameTimePos || frameTimePos > 3)
-			{
-				resyncFrameTimePos = false;
-				VERBOSE(Con_Message("Resyncing frametime...\n"));
-				frameTimePos = 0; //M_CycleIntoRange(frameTimePos, 1);
-				justResynced = true;
-			}
-		}
-
 		// Calculate the smoothed camera position, which is somewhere
 		// between the previous and current sharp positions. This
 		// introduces a slight delay (max. 1/35 sec) to the movement
 		// of the smoothed camera.
 
-		if(!justResynced)
-		{
-			frameTimePos += nowTime - oldTime;
-			
-			if(adjustmentMode == ADJUST_FAST_FORWARD)
-			{
-				float advance = (nowTime - oldTime) * advanceSpeed;
-				if(advance >= remainingAdvance)
-				{
-					advance = remainingAdvance;
-					remainingAdvance = 0;
-					adjustmentMode = ADJUST_IDLE;
-				}
-				else
-				{
-					remainingAdvance -= advance;
-				}
-				frameTimePos += advance;
-			}
-		}
-
-		oldTime = nowTime;
-		
-		if(adjustmentMode == ADJUST_IDLE)
-		{
-			if(frameTimePos < 0) 
-			{
-				VERBOSE(Con_Printf("Correcting frametime (%f tics).\n", 
-								   -frameTimePos));
-
-				// This'll cause a slight accelerated step forward in time.
-				remainingAdvance = -frameTimePos;
-				adjustmentMode = ADJUST_FAST_FORWARD;
-			}
-		}
-
 		R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
 							&smoothView);
 
+		// Always use the latest view angles known to us.
 		smoothView.angle = sharpView.angle;
 		smoothView.pitch = sharpView.pitch;
 		R_SetViewPos(&smoothView);
@@ -494,11 +438,6 @@ void R_SetupFrame(ddplayer_t *player)
 		}
 #endif
 
-		if(showFrameTimePos)
-		{
-			Con_Printf("frametime = %f\n", frameTimePos);
-		}
-		
 		// $smoothplane: Set the visible offsets.
 		for(i = 0; i < numsectors; i++)
 		{
@@ -516,6 +455,11 @@ void R_SetupFrame(ddplayer_t *player)
 		}
 	}
 
+	if(showFrameTimePos)
+	{
+		Con_Printf("frametime = %f\n", frameTimePos);
+	}
+	
 	extralight = player->extralight;
 	tableAngle = viewangle >> ANGLETOFINESHIFT;
 	viewsin = finesine[tableAngle];

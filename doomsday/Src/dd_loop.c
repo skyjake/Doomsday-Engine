@@ -63,7 +63,6 @@ void    DD_RunTics(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     maxFrameRate = 200;		// Zero means 'unlimited'.
-int     numSharpTics;
 
 timespan_t sysTime, gameTime, demoTime, levelTime;
 timespan_t frameStartTime;
@@ -232,6 +231,7 @@ float DD_GetFrameRate(void)
 void DD_Ticker(timespan_t time)
 {
 	static trigger_t fixed = { 1 / 35.0 };
+	static float realFrameTimePos = 0;
 
 	// Demo ticker. Does stuff like smoothing of view angles.
 	Net_BuildLocalCommands(time);
@@ -240,11 +240,13 @@ void DD_Ticker(timespan_t time)
 
 	if(!ui_active || netgame)
 	{
+		// Advance frametime.  It will be reduced when new sharp world
+		// positions are calculated, so that frametime always stays within
+		// the range 0..1.
+		realFrameTimePos += time * TICSPERSEC;
+	
 		if(M_CheckTrigger(&fixed, time))
 		{
-			extern int sharpWorldUpdated;	// in r_main.c
-			extern double lastSharpFrameTime;
-
 			gx.Ticker( /* time */ );	// Game DLL.
 
 			// Server ticks.  These are placed here because
@@ -258,21 +260,22 @@ void DD_Ticker(timespan_t time)
 			// This is needed by rend_camera_smooth.  It needs to know
 			// when the world tic has occured so the next sharp
 			// position can be processed.
-			sharpWorldUpdated = true;
-			lastSharpFrameTime = Sys_GetTimef();
 
-			numSharpTics++;
+			// Frametime will be set back by one tick.
+			realFrameTimePos -= 1;
+
+			R_NewSharpWorld();
 		}
+
+		// While paused, don't modify frametime so things keep still.
+		if(!clientPaused)
+			frameTimePos = realFrameTimePos;
 
 		Con_Ticker(time);		// Console.
 
 		// We can't sent FixAngles messages to ourselves, so it's
 		// done here.
 		Sv_FixLocalAngles();
-	}
-	else
-	{
-		resyncFrameTimePos = true;		
 	}
 
 	if(ui_active)
@@ -287,23 +290,18 @@ void DD_Ticker(timespan_t time)
  */
 void DD_AdvanceTime(timespan_t time)
 {
-	//systics++;
 	sysTime += time;
 
 	if(!ui_active || netgame)
 	{
-		//if(availabletics > 0) availabletics--;
-
 		// The difference between gametic and demotic is that demotic
 		// is not altered at any point. Gametic changes at handshakes.
-		/*gametic++;
-		   demotic++; */
 		gameTime += time;
 		demoTime += time;
 
 		// Leveltic is reset to zero at every map change.
 		// The level time only advances when the game is not paused.
-		if(!clientPaused)		/*leveltic++; */
+		if(!clientPaused)
 		{
 			levelTime += time;
 		}
@@ -319,7 +317,6 @@ static boolean firstTic = true;
 void DD_ResetTimer(void)
 {
 	firstTic = true;
-	resyncFrameTimePos = true;
 	Net_ResetTimer();
 }
 
@@ -378,94 +375,4 @@ void DD_RunTics(void)
 		// Various global variables are used for counting time.
 		DD_AdvanceTime(ticLength);
 	}
-
-	// Do one final network update. (Network needs its own thread...)
-	Net_Update();
 }
-
-#if 0
-//===========================================================================
-// DD_TryRunTics
-//      Run at least one tic.
-//===========================================================================
-void DD_TryRunTics(void)
-{
-	int     counts;
-
-	// Low-level network update.
-	N_Update();
-
-	// High-level network update.
-	Net_Update();
-
-	// Wait for at least one tic. (realtics >= availabletics)
-	while(!
-		  (counts =
-		   (isDedicated || netgame || ui_active ? realtics : availabletics)))
-	{
-		if((!isDedicated && rend_camera_smooth) || net_dontsleep ||
-		   !net_ticsync)
-			break;
-		Sys_Sleep(3);
-		Net_Update();
-	}
-
-	// If we are running in timedemo mode, always run only one tic.
-	if(!net_ticsync)
-		counts = 1;
-
-	// We'll tick away all the tics we can.
-	// Zero the real tics counter.
-	realtics = 0;
-
-	// Run the tics.
-	while(counts--)
-	{
-		// Client/server ticks.
-		if(isClient)
-			Cl_Ticker();
-		else
-			Sv_Ticker();
-
-		// Demo ticker. Does stuff like smoothing of view angles.
-		Demo_Ticker();
-		P_Ticker();
-
-		if(!ui_active || netgame)
-		{
-			gx.Ticker();		// Game DLL.
-			Con_Ticker();		// Console.
-			// We can't sent FixAngles messages to ourselves, so it's
-			// done here.
-			Sv_FixLocalAngles();
-		}
-		if(ui_active)
-		{
-			// User interface ticks.
-			UI_Ticker();
-		}
-		// The netcode gets to tick.
-		Net_Ticker();
-		Net_Update();
-
-		// This tick is done, advance time.
-		systics++;
-		if(!ui_active || netgame)
-		{
-			if(availabletics > 0)
-				availabletics--;
-
-			// The difference between gametic and demotic is that demotic
-			// is not altered at any point. Gametic changes at handshakes.
-			gametic++;
-			demotic++;
-
-			// Leveltic is reset to zero at every map change.
-			// The level time only advances when the game is not paused.
-			if(!clientPaused)
-				leveltic++;
-		}
-	}
-}
-
-#endif

@@ -52,5 +52,6 @@ void            R_Shutdown(void);
 void            R_RenderPlayerView(ddplayer_t *player);
 void            R_ResetViewer(void);
 void            R_ViewWindow(int x, int y, int w, int h);
+void			R_NewSharpWorld(void);
 
 #endif
