@@ -128,6 +128,7 @@ D_CMD(TranslateFont);
 
 static int executeSubCmd(char *subcmd);
 static void SplitIntoSubCommands(char *command, int markerOffset);
+calias_t *Con_GetAlias(const char *name);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -525,6 +526,7 @@ static boolean ConsoleActive;	// Is the console active?
 static float ConsoleY;			// Where the console bottom is currently?
 static float ConsoleDestY;		// Where the console bottom should be?
 static int ConsoleTime;			// How many ticks has the console been open?
+static int ConsoleBlink;		// Cursor blink timer.
 
 static float funnyAng;
 static boolean openingOrClosing = true;
@@ -561,10 +563,11 @@ void PrepareCmdArgs(cmdargs_t *cargs, char *lpCmdLine)
 	// Prepare.
 	for(i=0; i<len; i++)
 	{
+#define IS_ESC_CHAR(x)	((x) == '"' || (x) == '\\' || (x) == '{' || (x) == '}')
 		// Whitespaces are separators.
 		if(ISSPACE(cargs->cmdLine[i])) cargs->cmdLine[i] = 0;
-		if(cargs->cmdLine[i] == '\\' && (cargs->cmdLine[i+1] == '"' ||
-			cargs->cmdLine[i+1] == '\\')) // Escape sequence?
+		if(cargs->cmdLine[i] == '\\'	
+			&& IS_ESC_CHAR(cargs->cmdLine[i+1]))	// Escape sequence?
 		{
 			memmove(cargs->cmdLine+i, cargs->cmdLine+i+1, sizeof(cargs->cmdLine)-i-1);
 			len--;
@@ -576,15 +579,15 @@ void PrepareCmdArgs(cmdargs_t *cargs, char *lpCmdLine)
 			cargs->cmdLine[i] = 0;
 			for(++i; i<len && cargs->cmdLine[i] != '"'; i++)
 			{
-				if(cargs->cmdLine[i] == '\\' && (cargs->cmdLine[i+1] == '"' ||
-					cargs->cmdLine[i+1] == '\\')) // Escape sequence?
+				if(cargs->cmdLine[i] == '\\' 
+					&& IS_ESC_CHAR(cargs->cmdLine[i+1])) // Escape sequence?
 				{
 					memmove(cargs->cmdLine+i, cargs->cmdLine+i+1, sizeof(cargs->cmdLine)-i-1);
 					len--;
 					continue;
 				}
 			}
-			// Unterminated quotes?
+			// Quote not terminated?
 			if(i == len) break;
 			// An empty set of quotes?
 			if(i == start+1) 
@@ -592,10 +595,42 @@ void PrepareCmdArgs(cmdargs_t *cargs, char *lpCmdLine)
 			else
 				cargs->cmdLine[i] = 0;
 		}
+		if(cargs->cmdLine[i] == '{') // Find matching end.
+		{
+			// Braces are another notation for quotes.
+			int level = 0;
+			int start = i;
+			cargs->cmdLine[i] = 0;
+			for(++i; i < len; i++)
+			{
+				if(cargs->cmdLine[i] == '\\' 
+					&& IS_ESC_CHAR(cargs->cmdLine[i+1])) // Escape sequence?
+				{
+					memmove(cargs->cmdLine+i, cargs->cmdLine+i+1, 
+						sizeof(cargs->cmdLine)-i-1);
+					len--;
+					i++;
+					continue;
+				}
+				if(cargs->cmdLine[i] == '}') 
+				{
+					if(!level) break;
+					level--;
+				}
+				if(cargs->cmdLine[i] == '{') level++;
+			}
+			// Quote not terminated?
+			if(i == len) break;
+			// An empty set of braces?
+			if(i == start + 1) 
+				cargs->cmdLine[i] = SC_EMPTY_QUOTE;
+			else
+				cargs->cmdLine[i] = 0;
+		}
 	}
 	// Scan through the cmdLine and get the beginning of each token.
 	cargs->argc = 0;
-	for(i=0; i<len; i++)
+	for(i = 0; i < len; i++)
 	{
 		if(!cargs->cmdLine[i]) continue;
 		// Is this an empty quote?
@@ -893,6 +928,14 @@ ccmd_t *Con_GetCommand(const char *name)
 	return NULL;
 }
 
+/*
+ * Returns true if the given string is a valid command or alias.
+ */
+boolean Con_IsValidCommand(const char *name)
+{
+	return Con_GetCommand(name) || Con_GetAlias(name);
+}
+
 void Con_AddVariableList(cvar_t *varlist)
 {	
 	for(; varlist->name; varlist++) Con_AddVariable(varlist);
@@ -913,7 +956,7 @@ void Con_AddVariable(cvar_t *var)
 }
 
 // Returns NULL if the specified alias can't be found.
-calias_t *Con_GetAlias(char *name)
+calias_t *Con_GetAlias(const char *name)
 {
 	int			i;
 
@@ -1171,7 +1214,8 @@ void Con_Ticker(void)
 
 	if(!ConsoleActive) return;	// We have nothing further to do here.
 
-	ConsoleTime++;	// Increase the ticker.
+	ConsoleTime++;		// Increase the ticker.
+	ConsoleBlink++;		// Cursor blink timer (0 = visible).
 }
 
 cbline_t *Con_GetBufferLine(int num)
@@ -1775,37 +1819,40 @@ boolean Con_Responder(event_t *event)
 		cmdCursor = 0;
 		complPos = 0;
 		lastCompletion = -1;
+		ConsoleBlink = 0;
 		if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
 		return true;
 
 	case DDKEY_BACKSPACE:
-		//pos = strlen(cmdLine);
-		//if(pos) cmdLine[pos-1] = 0;
 		if(cmdCursor > 0)
 		{
 			memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor, 
 				sizeof(cmdLine) - cmdCursor);
 			--cmdCursor;
-			complPos = cmdCursor;//strlen(cmdLine);
+			complPos = cmdCursor;
 			lastCompletion = -1;
+			ConsoleBlink = 0;
 			if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
 		}
 		return true;
 
 	case DDKEY_TAB:
 		completeWord();
+		ConsoleBlink = 0;
 		if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
 		return true;
 
 	case DDKEY_LEFTARROW:
 		if(cmdCursor > 0) --cmdCursor;
 		complPos = cmdCursor;
+		ConsoleBlink = 0;
 		break;
 
 	case DDKEY_RIGHTARROW:
 		if(cmdLine[cmdCursor] != 0 && cmdCursor < maxLineLen) 
 			++cmdCursor;
 		complPos = cmdCursor;
+		ConsoleBlink = 0;
 		break;
 
 	default:	// Check for a character.
@@ -1826,6 +1873,7 @@ boolean Con_Responder(event_t *event)
 		if(cmdCursor < maxLineLen) ++cmdCursor;
 		complPos = cmdCursor; //strlen(cmdLine);
 		lastCompletion = -1;
+		ConsoleBlink = 0;
 
 		if(isDedicated) Sys_ConUpdateCmdLine(cmdLine);
 		return true;
@@ -2093,7 +2141,7 @@ void Con_Drawer(void)
 		(ConsoleY*gtosMulY-fontScaledY)/Cfont.sizeY,
 		k, Cfont.height,
 		CcolYellow[0], CcolYellow[1], CcolYellow[2],
-		closeFade * /*(ConsoleTime & 0x8? */.5f/* : .25f)*/);
+		closeFade * (ConsoleBlink & 0x10? .2f : .5f));
 	gl.Enable(DGL_TEXTURING);
 
 	// Restore the original matrices.
@@ -2356,6 +2404,7 @@ void Con_Open(int yes)
 		ConsoleActive = true;
 		ConsoleDestY = ConsoleOpenY;
 		ConsoleTime = 0;
+		ConsoleBlink = 0;
 	}
 	else
 	{
