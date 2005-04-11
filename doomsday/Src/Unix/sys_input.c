@@ -36,6 +36,8 @@
 #define KEYBUFSIZE		32
 #define INV(x, axis)	(joyInverseAxis[axis]? -x : x)
 
+#define CONVCONST		((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -63,6 +65,9 @@ static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;
 
 static int wheelCount;
+
+static SDL_Joystick *joy;
+static int numbuttons, numaxes;
 
 // CODE --------------------------------------------------------------------
 
@@ -331,9 +336,38 @@ void I_InitMouse(void)
 //===========================================================================
 void I_InitJoystick(void)
 {
+        int joycount;
+
 	if(ArgCheck("-nojoy"))
 		return;
-	//  useJoystick = true;
+
+	if ((joycount = SDL_NumJoysticks()) > 0) {
+        	if (joydevice > joycount) {
+                	Con_Message("I_InitJoystick: joydevice = %i, out of range.\n",
+				joydevice);
+			joy = SDL_JoystickOpen(0);
+		}
+		else joy = SDL_JoystickOpen(joydevice);
+        }
+        
+	if (joy) {
+		// Show some info.
+		Con_Message("I_InitJoystick: %s\n", SDL_JoystickName(SDL_JoystickIndex(joy)));
+		
+		// We'll handle joystick events manually
+		SDL_JoystickEventState(SDL_IGNORE);
+
+		numaxes = SDL_JoystickNumAxes(joy);
+		numbuttons = SDL_JoystickNumButtons(joy);
+		if (numbuttons > IJOY_MAXBUTTONS)
+			numbuttons = IJOY_MAXBUTTONS;
+
+		useJoystick = true;
+	}
+	else {
+		Con_Message("I_InitJoystick: No joysticks found\n");
+		useJoystick = false;
+ 	}
 }
 
 //===========================================================================
@@ -357,6 +391,7 @@ void I_Shutdown(void)
 {
 	if(!initOk)
 		return;					// Not initialized.
+	if (joy) SDL_JoystickClose(joy);
 	initOk = false;
 }
 
@@ -439,29 +474,75 @@ void I_GetMouseState(mousestate_t *state)
 // I_GetJoystickState
 //===========================================================================
 void I_GetJoystickState(joystate_t * state)
-{
+{	
+	int i, pov;
 	memset(state, 0, sizeof(*state));
 
 	// Initialization has not been done.
 	if(!I_JoystickPresent() || !usejoystick || !initOk)
 		return;
 
-	/*  state->axis[0] = INV(dijoy.lX, 0);
-	   state->axis[1] = INV(dijoy.lY, 1);
-	   state->axis[2] = INV(dijoy.lZ, 2);
+	// Update joysticks
+	SDL_JoystickUpdate();
 
-	   state->rotAxis[0] = INV(dijoy.lRx, 3);
-	   state->rotAxis[1] = INV(dijoy.lRy, 4);
-	   state->rotAxis[2] = INV(dijoy.lRz, 5);
+	// Grab the first three axes. SDL returns a value between -32768 and
+        // 32767, but Doomsday is expecting -10000 to 10000. We'll convert
+        // as we go.
 
-	   state->slider[0] = INV(dijoy.rglSlider[0], 6);
-	   state->slider[1] = INV(dijoy.rglSlider[1], 7);
+	// FIXME: would changing IJOY_AXISMIN and IJOY_AXISMAX to -32768 and
+	// 32767 break the Windows version? If not that would make this 
+	// cleaner.
 
-	   for(i = 0; i < IJOY_MAXBUTTONS; i++)
-	   state->buttons[i] = (dijoy.rgbButtons[i] & 0x80) != 0;
-	   pov = dijoy.rgdwPOV[0];
-	   if((pov & 0xffff) == 0xffff)
-	   state->povAngle = IJOY_POV_CENTER;
-	   else
-	   state->povAngle = pov / 100.0f; */
+	for (i = 0; i < 3; i++) {
+		int value;
+		if (i > numaxes) break;
+		
+		value = SDL_JoystickGetAxis(joy, i);
+		value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN; 
+
+		state->axis[i] = INV(value, i);
+	}
+
+	// Dunno what to do with these using SDL so we'll set them
+	// all to 0 for now.
+
+	state->rotAxis[0] = 0;
+	state->rotAxis[1] = 0;
+	state->rotAxis[2] = 0;
+
+	state->slider[0] = 0;
+	state->slider[1] = 0;
+
+	for(i = 0; i < numbuttons; i++)
+		state->buttons[i] = SDL_JoystickGetButton(joy, i);
+
+	pov = SDL_JoystickGetHat(joy, 0);
+	switch(pov) {
+		case SDL_HAT_UP:
+			state->povAngle = 0;
+			break;
+		case SDL_HAT_RIGHT:
+			state->povAngle = 90;
+			break;
+		case SDL_HAT_DOWN:
+			state->povAngle = 180;
+			break;
+		case SDL_HAT_LEFT:
+			state->povAngle = 270;
+			break;
+		case SDL_HAT_RIGHTUP:
+			state->povAngle = 45;
+			break;
+		case SDL_HAT_RIGHTDOWN:
+			state->povAngle = 135;
+			break;
+		case SDL_HAT_LEFTUP:
+			state->povAngle = 315;
+			break;
+		case SDL_HAT_LEFTDOWN:
+			state->povAngle = 225;
+			break;
+		default:
+			state->povAngle = IJOY_POV_CENTER;
+	}
 }

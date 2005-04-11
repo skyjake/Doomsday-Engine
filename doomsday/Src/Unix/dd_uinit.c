@@ -291,7 +291,7 @@ int main(int argc, char **argv)
 	// run in dedicated mode.
 	if(!ArgExists("-dedicated"))
 	{
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO))
+		if(SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK))
 		{
 			DD_ErrorBox(true, "SDL Init Failed: %s\n", SDL_GetError());
 			return 5;
