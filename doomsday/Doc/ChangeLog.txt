@@ -13,6 +13,7 @@ Multiplayer:
 - fixed: skill selection not working via Game Setup menu
 
 Linux:
++ SDL joystick support (by zachkeene)
 - fixed: disappearing enemies in jHeretic and jHexen (fix by zachkeene)
 
 Mac OS X:
