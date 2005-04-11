@@ -305,6 +305,11 @@ example:
 
 @samp{@cmd{-vdmap "D:\Games\MyAuto" "C:\Doomsday\Data\jDoom\Auto"}}
 
+Note, however, that @opt{-vdmap} only affects real files. It does not
+affect virtual files in PK3s or anywhere else.  The virtual directory
+mappings are tried when all other methods of finding a file fail. So,
+all real files and virtual files override @opt{-vdmap}.
+
 
 
 @section{ Lump Assemblies instead of WADs }
