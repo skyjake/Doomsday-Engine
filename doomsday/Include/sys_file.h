@@ -49,6 +49,7 @@ typedef int     (*f_forall_func_t) (const char *fn, filetype_t type,
 									void *parm);
 
 void            F_InitMapping(void);
+void            F_AddMapping(const char* source, const char* destination);
 void            F_InitDirec(void);
 void            F_ShutdownDirec(void);
 int             F_Access(const char *path);

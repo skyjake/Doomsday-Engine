@@ -89,7 +89,6 @@ void    F_ResetDirec(void);
 static lumpdirec_t direc[MAX_LUMPDIRS + 1];
 static filehandle_t* files;
 static unsigned int filesCount;
-static unsigned int filesMax;
 
 static vdmapping_t* vdMappings;
 static unsigned int vdMappingsCount;
@@ -401,7 +400,7 @@ void F_CloseAll(void)
 {
 	int     i;
 
-	for(i = 0; i < filesMax; i++)
+	for(i = 0; i < filesCount; i++)
 		//if(files[i].file->flags.open)
         if(files[i].file != NULL)
         {
@@ -411,7 +410,6 @@ void F_CloseAll(void)
     free(files);
     files = NULL;
     filesCount = 0;
-    filesMax = 0;
 }
 
 //===========================================================================
@@ -444,33 +442,32 @@ int F_Access(const char *path)
 //===========================================================================
 DFILE *F_GetFreeFile(void)
 {
-	int     i;
+	int     i, oldCount;
 
-	for(i = 0; i < filesMax; i++)
+	for(i = 0; i < filesCount; i++)
         if(files[i].file == NULL)
 		{
             files[i].file = calloc(1, sizeof(DFILE));
 			return files[i].file;
 		}
 
+    oldCount = filesCount;
+
     // Allocate more memory.
-    if(++filesCount > filesMax)
+    filesCount *= 2;
+    if(filesCount < 16)
+        filesCount = 16;
+
+    files = realloc(files, sizeof(filehandle_t) * filesCount);
+
+    // Clear the new handles.
+    for(i = oldCount; i < filesCount; ++i)
     {
-        filesMax *= 2;
-        if(filesMax < filesCount)
-            filesMax = 2*filesCount;
-
-        files = realloc(files, sizeof(filehandle_t) * filesMax);
-
-        // Clear the new handle.
-        for(i = filesCount - 1; i < filesMax; ++i)
-        {
-            memset(files + i, 0, sizeof(filehandle_t));
-        }
+        memset(files + i, 0, sizeof(filehandle_t));
     }
 
-    files[filesCount - 1].file = calloc(1, sizeof(DFILE));
-	return files[filesCount - 1].file;
+    files[oldCount].file = calloc(1, sizeof(DFILE));
+	return files[oldCount].file;
 }
 
 //===========================================================================

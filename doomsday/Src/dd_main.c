@@ -254,6 +254,23 @@ void DD_Verbosity(void)
 }
 
 //===========================================================================
+// DD_DefineBuiltinVDM
+//      Define Auto mappings for the runtime directory.
+//===========================================================================
+void DD_DefineBuiltinVDM(void)
+{
+    filename_t dest;
+
+    // Data files.
+    sprintf(dest, "%sAuto", R_GetDataPath());
+    F_AddMapping("Auto", dest);
+
+    // Definition files.
+    Def_GetAutoPath(dest);
+    F_AddMapping("Auto", dest);
+}
+
+//===========================================================================
 // DD_Main
 //      Engine and game initialization. When complete, starts the game loop.
 //      What a mess...
@@ -378,6 +395,9 @@ void DD_Main(void)
 	if(gx.PreInit)
 		gx.PreInit();
 
+    // Automatically create an Auto mapping in the runtime directory.
+    DD_DefineBuiltinVDM();
+    
 	// Initialize subsystems
 	Net_Init();					// Network before anything else.
 
