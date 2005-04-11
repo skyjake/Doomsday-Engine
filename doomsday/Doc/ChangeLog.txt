@@ -9,6 +9,8 @@ Version 1.8.7
 + bias lighting
 + option '-vdmap': map files in one directory to another directory
   (virtual directory mapping)
++ subdirectory "Auto" of the runtime directory mapped automatically to
+  both "Defs/<Game>/Auto" and "Data/<Game>/Auto"
 + cvar 'rend-fog-default': default fog algorithm
 - removed limit on the number of opened files
 
