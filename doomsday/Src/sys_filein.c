@@ -41,14 +41,22 @@
 // MACROS ------------------------------------------------------------------
 
 #define MAX_LUMPDIRS	1024
-#define MAX_FILES		2048
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
+    DFILE  *file;
+} filehandle_t;
+ 
+typedef struct {
 	char    lump[9];
 	char   *path;				// Full path name.
 } lumpdirec_t;
+
+typedef struct {
+    char   *source;             // Full path name.
+    char   *target;             // Full path name.
+} vdmapping_t;
 
 typedef struct {
 	f_forall_func_t func;
@@ -57,9 +65,16 @@ typedef struct {
 	const char *pattern;
 } zipforall_t;
 
+typedef struct foundentry_s {
+    filename_t name;
+    int     attrib;
+} foundentry_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+void F_ResetMapping(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -72,7 +87,13 @@ void    F_ResetDirec(void);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static lumpdirec_t direc[MAX_LUMPDIRS + 1];
-static DFILE files[MAX_FILES];
+static filehandle_t* files;
+static unsigned int filesCount;
+static unsigned int filesMax;
+
+static vdmapping_t* vdMappings;
+static unsigned int vdMappingsCount;
+static unsigned int vdMappingsMax;
 
 // CODE --------------------------------------------------------------------
 
@@ -117,7 +138,7 @@ int F_MatchName(const char *string, const char *pattern)
 // F_SkipSpace
 //  Skips all whitespace except newlines.
 //===========================================================================
-char   *F_SkipSpace(char *ptr)
+char *F_SkipSpace(char *ptr)
 {
 	while(*ptr && *ptr != '\n' && isspace(*ptr))
 		ptr++;
@@ -127,7 +148,7 @@ char   *F_SkipSpace(char *ptr)
 //===========================================================================
 // F_FindNewline
 //===========================================================================
-char   *F_FindNewline(char *ptr)
+char *F_FindNewline(char *ptr)
 {
 	while(*ptr && *ptr != '\n')
 		ptr++;
@@ -200,6 +221,45 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
 }
 
 //===========================================================================
+// F_AddMapping
+//  The path names are converted to full paths before adding to the table.
+//  Files in the source directory are mapped to the target directory.
+//===========================================================================
+void F_AddMapping(const char* source, const char* destination)
+{
+    filename_t src;
+    filename_t dst;
+    vdmapping_t *vd;
+
+    // Convert to absolute path names.
+    M_TranslatePath(source, src);
+    Dir_ValidDir(src);
+    Dir_MakeAbsolute(src);
+
+    M_TranslatePath(destination, dst);
+    Dir_ValidDir(dst);
+    Dir_MakeAbsolute(dst);
+
+    // Allocate more memory if necessary.
+    if(++vdMappingsCount > vdMappingsMax)
+    {
+        vdMappingsMax *= 2;
+        if(vdMappingsMax < vdMappingsCount)
+            vdMappingsMax = 2*vdMappingsCount;
+
+        vdMappings = realloc(vdMappings, sizeof(vdmapping_t) * vdMappingsMax);
+    }
+
+    // Fill in the info into the array.
+    vd = &vdMappings[vdMappingsCount - 1];
+    vd->source = strdup(src);
+    vd->target = strdup(dst);
+
+    VERBOSE(Con_Message("F_AddMapping: %s mapped to %s.\n",
+                        vd->source, vd->target));
+}
+
+//===========================================================================
 // F_ParseDirecData
 //  LUMPNAM0 \Path\In\The\Base.ext
 //  LUMPNAM1 Path\In\The\RuntimeDir.ext
@@ -249,6 +309,27 @@ void F_ParseDirecData(char *buffer)
 	}
 }
 
+void F_InitMapping(void)
+{
+    int     i;
+    
+    F_ResetMapping();
+    
+    // Create virtual directory mappings by processing all -vdmap
+    // options. 
+    for(i = 0; i < Argc(); i++)
+    {
+        if(stricmp(Argv(i), "-vdmap"))
+            continue; // This is not the option we're looking for.
+
+        if(i < Argc() - 1 && !ArgIsOption(i + 1) && !ArgIsOption(i + 2))
+        {
+            F_AddMapping(Argv(i + 1), Argv(i + 2));
+            i += 2;
+        }
+    }
+}
+
 //===========================================================================
 // F_InitDirec
 //  Initialize the WAD/dir translations. Called after WADs have been read.
@@ -283,15 +364,22 @@ void F_InitDirec(void)
 }
 
 //===========================================================================
-// F_CloseAll
+// F_ResetMapping
 //===========================================================================
-void F_CloseAll(void)
+void F_ResetMapping(void)
 {
-	int     i;
+    int     i;
 
-	for(i = 0; i < MAX_FILES; i++)
-		if(files[i].flags.open)
-			F_Close(files + i);
+    // Free the allocated memory.
+    for(i = 0; i < vdMappingsCount; ++i)
+    {
+        free(vdMappings[i].source);
+        free(vdMappings[i].target);
+    }
+
+    free(vdMappings);
+    vdMappings = NULL;
+    vdMappingsCount = vdMappingsMax = 0;
 }
 
 //===========================================================================
@@ -307,10 +395,31 @@ void F_ResetDirec(void)
 }
 
 //===========================================================================
+// F_CloseAll
+//===========================================================================
+void F_CloseAll(void)
+{
+	int     i;
+
+	for(i = 0; i < filesMax; i++)
+		//if(files[i].file->flags.open)
+        if(files[i].file != NULL)
+        {
+			F_Close(files[i].file);
+        }
+
+    free(files);
+    files = NULL;
+    filesCount = 0;
+    filesMax = 0;
+}
+
+//===========================================================================
 // F_ShutdownDirec
 //===========================================================================
 void F_ShutdownDirec(void)
 {
+    F_ResetMapping();
 	F_ResetDirec();
 	F_CloseAll();
 }
@@ -333,23 +442,58 @@ int F_Access(const char *path)
 //===========================================================================
 // F_GetFreeFile
 //===========================================================================
-DFILE  *F_GetFreeFile(void)
+DFILE *F_GetFreeFile(void)
 {
 	int     i;
 
-	for(i = 0; i < MAX_FILES; i++)
-		if(!files[i].flags.open)
+	for(i = 0; i < filesMax; i++)
+        if(files[i].file == NULL)
 		{
-			memset(files + i, 0, sizeof(DFILE));
-			return files + i;
+            files[i].file = calloc(1, sizeof(DFILE));
+			return files[i].file;
 		}
-	return NULL;
+
+    // Allocate more memory.
+    if(++filesCount > filesMax)
+    {
+        filesMax *= 2;
+        if(filesMax < filesCount)
+            filesMax = 2*filesCount;
+
+        files = realloc(files, sizeof(filehandle_t) * filesMax);
+
+        // Clear the new handle.
+        for(i = filesCount - 1; i < filesMax; ++i)
+        {
+            memset(files + i, 0, sizeof(filehandle_t));
+        }
+    }
+
+    files[filesCount - 1].file = calloc(1, sizeof(DFILE));
+	return files[filesCount - 1].file;
+}
+
+//===========================================================================
+// F_Release
+//  Frees the memory allocated to the handle.
+//===========================================================================
+void F_Release(DFILE *file)
+{
+    int     i;
+    
+    // Clear references to the handle.
+    for(i = 0; i < filesCount; ++i)
+        if(files[i].file == file)
+            files[i].file = NULL;
+
+    // File was allocated in F_GetFreeFile.
+    free(file);
 }
 
 //===========================================================================
 // F_OpenLump
 //===========================================================================
-DFILE  *F_OpenLump(const char *name, boolean dontBuffer)
+DFILE *F_OpenLump(const char *name, boolean dontBuffer)
 {
 	int     num = W_CheckNumForName((char *) name);
 	DFILE  *file;
@@ -392,12 +536,32 @@ static unsigned int F_GetLastModified(const char *path)
 }
 
 //===========================================================================
+// F_MapPath
+//  Returns true if the mapping matched the path.
+//===========================================================================
+boolean F_MapPath(const char *path, vdmapping_t *vd, char *mapped)
+{
+    int targetLen = strlen(vd->target);
+    
+    if(!strnicmp(path, vd->target, targetLen))
+    {
+        // Replace the beginning with the source path.
+        strcpy(mapped, vd->source);
+        strcat(mapped, path + targetLen);
+        return true;
+    }
+    return false;
+}
+
+//===========================================================================
 // F_OpenFile
 //===========================================================================
-DFILE  *F_OpenFile(const char *path, const char *mymode)
+DFILE *F_OpenFile(const char *path, const char *mymode)
 {
 	DFILE  *file = F_GetFreeFile();
 	char    mode[8];
+    int     i;
+    filename_t mapped;
 
 	if(!file)
 		return NULL;
@@ -411,7 +575,29 @@ DFILE  *F_OpenFile(const char *path, const char *mymode)
 	// Try opening as a real file.
 	file->data = fopen(path, mode);
 	if(!file->data)
-		return NULL;			// Can't find the file.
+    {
+        // Any applicable virtual directory mappings?
+        for(i = 0; i < vdMappingsCount; ++i)
+        {
+            if(F_MapPath(path, &vdMappings[i], mapped))
+            {
+                // The mapping was successful.
+                if((file->data = fopen(mapped, mode)) != NULL)
+                {
+                    // Success!
+                    VERBOSE(Con_Message("F_OpenFile: %s opened as %s.\n",
+                                        mapped, path));
+                    break;
+                }
+            }
+        }
+        if(!file->data)
+        {
+            // Still can't find it.
+            F_Release(file);
+            return NULL;        // Can't find the file.
+        }
+    }
 	file->flags.open = true;
 	file->flags.file = true;
 	file->lastModified = F_GetLastModified(path);	
@@ -431,7 +617,7 @@ void F_TranslateZipFileName(const char *zipFileName, char *translated)
 // F_OpenZip
 //  Zip data is buffered like lump data.
 //===========================================================================
-DFILE  *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
+DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 {
 	DFILE  *file = F_GetFreeFile();
 
@@ -512,6 +698,8 @@ void F_Close(DFILE *file)
 			M_Free(file->data);
 	}
 	memset(file, 0, sizeof(*file));
+
+    F_Release(file);
 }
 
 //===========================================================================
@@ -669,6 +857,12 @@ int F_ZipFinderForAll(const char *zipFileName, void *parm)
 	return false;
 }
 
+C_DECL int F_EntrySorter(const void* a, const void* b)
+{
+    return stricmp(((const foundentry_t*)a)->name,
+                   ((const foundentry_t*)b)->name);
+}
+
 //===========================================================================
 // F_ForAllDescend
 //  Descends into 'physical' subdirectories.
@@ -679,52 +873,97 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
 	char    fn[256], spec[256];
 	char    localPattern[256];
 	finddata_t fd;
+    int     i, count, max;
+    foundentry_t *found;
 
-	sprintf(localPattern, "%s%s", path, pattern);
+    sprintf(localPattern, "%s%s", path, pattern);
+   
+    // Collect a list of paths.  The list contains files in all the
+    // paths mapped to the current path.
+    count = 0;
+    max = 16;
+    found = malloc(max * sizeof(*found));
 
-	// We'll look through all files.
-	sprintf(spec, "%s*", path);
+    for(i = -1; i < (int)vdMappingsCount; ++i)
+    {
+        sprintf(spec, "%s*", path);
 
-	if(!myfindfirst(spec, &fd))
-	{
-		// The first file found!
-		do
-		{
-			// Compile the full pathname of the found file.
-			strcpy(fn, path);
-			strcat(fn, fd.name);
+        if(i >= 0)
+        {
+            filename_t mapped;
+            
+            // Possible virtual mapping.
+            if(!F_MapPath(spec, &vdMappings[i], mapped))
+            {
+                // The mapping didn't match this one.
+                continue;
+            }
+            strcpy(spec, mapped);
 
-			// Descend recursively into subdirectories.
-			if(fd.attrib & A_SUBDIR)
-			{
-				if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
-				{
-					strcat(fn, DIR_SEP_STR);
-					if(!F_ForAllDescend(pattern, fn, parm, func))
-					{
-						myfindend(&fd);
-						return false;
-					}
-				}
-			}
-			else
-			{
-				// Does this match the pattern?
-				if(F_MatchName(fn, localPattern))
-				{
-					// If the callback returns false, stop immediately.
-					if(!func(fn, FT_NORMAL, parm))
-					{
-						myfindend(&fd);
-						return false;
-					}
-				}
-			}
-		}
-		while(!myfindnext(&fd));
-	}
-	myfindend(&fd);
+            // Also map the local pattern.
+            //F_MapPath(localPattern, &vdMappings[i], mapped);
+            //strcpy(localPattern, mapped);            
+        }
 
+        if(!myfindfirst(spec, &fd))
+        {
+            // The first file found!
+            do {
+                // Ignore the relative directory names.
+                if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
+                {
+                    if(count >= max)
+                    {
+                        max *= 2;
+                        found = realloc(found, sizeof(*found) * max);
+                    }
+                    memset(&found[count], 0, sizeof(*found));
+                    strncpy(found[count].name, fd.name,
+                            sizeof(filename_t) - 1);
+                    found[count].attrib = fd.attrib;
+                    count++;
+                }
+            } while(!myfindnext(&fd));
+        }
+        myfindend(&fd);
+    }
+
+    // Sort all the found entries.
+    qsort(found, count, sizeof(foundentry_t), F_EntrySorter);
+
+    for(i = 0; i < count; ++i)
+    {
+        // Compile the full pathname of the found file.
+        strcpy(fn, path);
+        strcat(fn, found[i].name);
+
+        // Descend recursively into subdirectories.
+        if(found[i].attrib & A_SUBDIR)
+        {
+            strcat(fn, DIR_SEP_STR);
+            if(!F_ForAllDescend(pattern, fn, parm, func))
+            {
+                free(found);
+                return false;
+            }
+        }
+        else
+        {
+            // Does this match the pattern?
+            if(F_MatchName(fn, localPattern))
+            {
+                // If the callback returns false, stop immediately.
+                if(!func(fn, FT_NORMAL, parm))
+                {
+                    free(found);
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Free the memory allocate for the list of found entries.
+    free(found);
 	return true;
 }
 

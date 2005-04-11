@@ -82,7 +82,7 @@ void DD_ResolvePath(char *path)
 /*
  * Convert the given path to an absolute path.
  */
-char   *_fullpath(char *full, const char *original, int maxLen)
+char *_fullpath(char *full, const char *original, int maxLen)
 {
 	ddstring_t dir;
 	char    workDir[512];		// Fixed-size array...

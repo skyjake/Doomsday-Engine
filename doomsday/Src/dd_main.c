@@ -331,6 +331,8 @@ void DD_Main(void)
 			Con_Message("  %i: %s\n", p, Argv(p));
 	}
 
+    F_InitMapping();
+    
 	// Initialize the key mappings.
 	DD_InitInput();
 
