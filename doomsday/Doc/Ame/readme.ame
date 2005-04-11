@@ -305,6 +305,9 @@ example:
 
 @samp{@cmd{-vdmap "D:\Games\MyAuto" "C:\Doomsday\Data\jDoom\Auto"}}
 
+You can define an unlimited number of virtual directory mappings using
+multiple @opt{-vdmap} options.
+
 Note, however, that @opt{-vdmap} only affects real files. It does not
 affect virtual files in PK3s or anywhere else.  The virtual directory
 mappings are tried when all other methods of finding a file fail. So,
