@@ -517,7 +517,12 @@ def processSettingBlock(e):
     if e.getType() == 'appearance' or e.getType() == 'configure':
         # Insert the keys into the system configuration dictionary.
         for key in e.getContents():
-            sysConfig[e.getName() + '-' + key.getName()] = key.getValue()
+            if e.getName() == 'addon-path':
+                # A custom addon path.
+                paths.addAddonPath(key.getValue())
+            else:
+                # Regular sysConfig string.
+                sysConfig[e.getName() + '-' + key.getName()] = key.getValue()
         return
     
     setting = None

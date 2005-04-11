@@ -28,7 +28,7 @@
 ## installation directory, and also contains Doomsday.
 
 import os, re, sys
-import host
+import host, events
 
 
 def isHomeless():
@@ -48,6 +48,10 @@ PLUGINS = 'plugins'
 PROFILES = 'profiles'
 GRAPHICS = 'graphics'
 RUNTIME = 'runtime'
+
+# List of custom addons directories.
+addonPaths = []
+
 
 # On the Mac, change the current directory to Resources inside the bundle.
 if host.isMac():
@@ -268,6 +272,51 @@ def quote(fileName):
     return '"' + fileName.replace('"', '""') + '"'
 
 
+def addAddonPath(path):
+    """Define a new custom directory for addons.  Addons can be loaded
+    from all the custom directories.  Installed addons always go to
+    the default addons directory.
+
+    @param path  Absolute path of the new custom addons directory.
+    """
+    if path not in addonPaths:
+        addonPaths.append(path)
+
+
+def getAddonPaths():
+    """Returns all the custom addon paths.
+
+    @return An array containing full paths.
+    """
+    return addonPaths
+
+
+def saveAddonPaths():
+    """Write the custom addon paths to a configuration file."""
+
+    fileName = os.path.join(getUserPath(CONF), 'addon-paths.conf')
+    try:
+        f = file(fileName, 'w')
+        f.write('# This file is generated automatically.\n')
+        f.write('configure addon-path (\n')
+        for p in addonPaths:
+            f.write('  readonly: %s\n' % p)
+        f.write(')\n')
+    except: 
+        # Paths not saved.
+        pass
+
+
+def handleNotify(event):
+    """When the <code>quit</code> notification is sent, save the
+    custom addon paths."""
+
+    if event.hasId('quit'):
+        saveAddonPaths()
+
+
 ## When this module is initialized, check for the home directory.
 ## It is created automatically if it doesn't exist yet.
 _checkSnowberryHome()
+
+events.addNotifyListener(handleNotify)

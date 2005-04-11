@@ -1275,6 +1275,11 @@ class MainFrame (wx.Frame):
     """The main frame is the main window of Snowberry."""
 
     def __init__(self, title):
+        """Initialize the main window.
+
+        @param title  Title for the main window.
+        """
+
         if host.isMac():
             initialSize = (900, 550)
         else:
@@ -1347,6 +1352,17 @@ class MainFrame (wx.Frame):
             self.helpPanel.Freeze()
             self.helpPanel.Hide()
         #self.Hide()
+
+        # Create a menu bar.
+        menuBar = wx.MenuBar()
+
+        menu = wx.Menu()
+        menu.Append(wx.ID_ABOUT, language.translate('menu-about'))
+
+        menuBar.Append(menu, language.translate('menu-game'))
+
+        # Show the menu.
+        self.SetMenuBar(menuBar)
 
     def show(self):
         self.mainPanel.Thaw()

@@ -1187,11 +1187,12 @@ readMetaCache()
 
 # Load all the installed addons in the system and user addon
 # databases.
-for name in paths.listFiles(paths.ADDONS):
-    # Case insensitive.
-    if re.search("(?i)^([^.#].*)\.(" + ADDON_EXTENSIONS + ")$",
-                 os.path.basename(name)):
-        load(name)
+for repository in [paths.ADDONS] + paths.getAddonPaths():
+    for name in paths.listFiles(repository):
+        # Case insensitive.
+        if re.search("(?i)^([^.#].*)\.(" + ADDON_EXTENSIONS + ")$",
+                     os.path.basename(name)):
+            load(name)
 
 # Save the updated cache.
 writeMetaCache()
