@@ -854,7 +854,7 @@ int F_ZipFinderForAll(const char *zipFileName, void *parm)
 	return false;
 }
 
-C_DECL int F_EntrySorter(const void* a, const void* b)
+static int C_DECL F_EntrySorter(const void* a, const void* b)
 {
     return stricmp(((const foundentry_t*)a)->name,
                    ((const foundentry_t*)b)->name);
