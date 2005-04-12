@@ -337,9 +337,6 @@ void DD_Main(void)
 
 	Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
 
-	// Information about the memory zone.
-	Z_PrintStatus();
-
 	// Print the used command line.
 	if(verbose)
 	{

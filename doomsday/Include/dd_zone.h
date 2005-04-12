@@ -24,9 +24,6 @@
 #ifndef __DOOMSDAY_ZONE_H__
 #define __DOOMSDAY_ZONE_H__
 
-#define MINIMUM_HEAP_SIZE	0x4000000	// 64 Mb
-#define MAXIMUM_HEAP_SIZE	0x10000000	// 256 Mb
-
 // tags < 50 are not overwritten until freed
 #define	PU_STATIC		1		   // static entire execution time
 #define	PU_SOUND		2		   // static while playing
@@ -49,24 +46,27 @@
 #define	PU_CACHE		101
 
 void            Z_Init(void);
-void            Z_PrintStatus(void);
+void            Z_Shutdown(void);
+//void            Z_PrintStatus(void);
 void           *Z_Malloc(size_t size, int tag, void *ptr);
 void            Z_Free(void *ptr);
-void            Z_FreeTags(int lowtag, int hightag);
+void            Z_FreeTags(int lowTag, int highTag);
 void            Z_CheckHeap(void);
 void            Z_ChangeTag2(void *ptr, int tag);
-void            Z_ChangeUser(void *ptr, void *newuser);	//-jk
+void            Z_ChangeUser(void *ptr, void *newUser);	//-jk
 void           *Z_GetUser(void *ptr);
 int             Z_GetTag(void *ptr);
-void           *Z_Realloc(void *ptr, size_t n, int malloctag);
+void           *Z_Realloc(void *ptr, size_t n, int mallocTag);
 void           *Z_Calloc(size_t size, int tag, void *user);
-void           *Z_Recalloc(void *ptr, size_t n, int calloctag);
-int             Z_FreeMemory(void);
+void           *Z_Recalloc(void *ptr, size_t n, int callocTag);
+size_t          Z_FreeMemory(void);
 
 typedef struct memblock_s {
-	size_t          size;		   // including the header and possibly tiny fragments
+	size_t          size;		   /* including the header and possibly
+                                      tiny fragments */
 	void          **user;		   // NULL if a free block
 	int             tag;		   // purgelevel
+    struct memvolume_s *volume;    // volume this block belongs to
 	int             id;			   // should be ZONEID
 	struct memblock_s *next, *prev;
 } memblock_t;

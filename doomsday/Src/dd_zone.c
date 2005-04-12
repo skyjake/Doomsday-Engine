@@ -27,6 +27,8 @@
  * 
  * It is of no value to free a cachable block, because it will get 
  * overwritten automatically if needed.
+ *
+ * The zone is composed of multiple memory volumes.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -40,9 +42,24 @@
 
 // MACROS ------------------------------------------------------------------
 
+// Size of one memory zone volume.
+#define MEMORY_VOLUME_SIZE  0x2000000	// 32 Mb
+
 #define	ZONEID	0x1d4a11
 
+#define MINFRAGMENT	64
+
 // TYPES -------------------------------------------------------------------
+
+/*
+ * The memory is composed of multiple volumes.  New volumes are
+ * allocated when necessary.
+ */
+typedef struct memvolume_s {
+    memzone_t  *zone;
+    size_t      size;
+    struct memvolume_s *next;
+} memvolume_t;    
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -54,32 +71,15 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-memzone_t *mainzone;
-size_t  zoneSize;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static memvolume_t *volumeRoot;
 
 // CODE --------------------------------------------------------------------
 
 /*
-   ==============================================================================
-
-   ZONE MEMORY ALLOCATION
-
-   There is never any space between memblocks, and there will never be two
-   contiguous free memblocks.
-
-   The rover can be left pointing at a non-empty block
-
-   It is of no value to free a cachable block, because it will get overwritten
-   automatically if needed
-
-   ==============================================================================
+ * Conversion from string to long, with the "k" and "m" suffixes.
  */
-
-//===========================================================================
-// superatol
-//===========================================================================
 long superatol(char *s)
 {
 	char   *endptr;
@@ -92,14 +92,18 @@ long superatol(char *s)
 	return val;
 }
 
-void   *Z_Create(size_t * size)
+/*
+ * Create a new memory volume.  The new volume is added to the list of
+ * memory volumes.
+ */
+memvolume_t *Z_Create(size_t volumeSize)
 {
-#define RETRY_STEP	0x80000		// Half a meg.
+/*#define RETRY_STEP	0x80000		// Half a meg.
 	byte   *ptr;
 
 	// Check for the -maxzone option.
 	if(ArgCheckWith("-maxzone", 1))
-		maxzone = superatol(ArgNext());
+    maxzone = superatol(ArgNext());
 
 	zoneSize = maxzone;
 	if(zoneSize < MINIMUM_HEAP_SIZE)
@@ -116,14 +120,48 @@ void   *Z_Create(size_t * size)
 
 	*size = zoneSize;
 	return ptr;
+*/
+
+    memblock_t *block;
+    memvolume_t *vol = calloc(1, sizeof(memvolume_t));
+    
+    vol->next = volumeRoot;
+    volumeRoot = vol;
+    vol->size = volumeSize;
+
+    // Allocate memory for the zone volume.
+    vol->zone = malloc(vol->size);
+
+    // Clear the start of the zone.
+    memset(vol->zone, 0, sizeof(memzone_t) + sizeof(memblock_t));
+    vol->zone->size = vol->size;
+
+	// Set the entire zone to one free block.
+	vol->zone->blocklist.next
+        = vol->zone->blocklist.prev
+        = block
+        = (memblock_t *) ((byte *) vol->zone + sizeof(memzone_t));
+    
+	vol->zone->blocklist.user = (void *) vol->zone;
+	vol->zone->blocklist.volume = vol;
+	vol->zone->blocklist.tag = PU_STATIC;
+	vol->zone->rover = block;
+
+	block->prev = block->next = &vol->zone->blocklist;
+	block->user = NULL;			// free block
+	block->size = vol->zone->size - sizeof(memzone_t);
+
+    printf("Z_Create: New %.1f MB memory volume.\n",
+           vol->size / 1024.0 / 1024.0);
+
+    return vol;
 }
 
-//==========================================================================
-// Z_PrintStatus
-//==========================================================================
+#if 0
 void Z_PrintStatus(void)
 {
-	Con_Message("Memory zone: %.1f Mb.\n", zoneSize / 1024.0 / 1024.0);
+	Con_Message("Memory zone: Using %.1f Mb volumes.\n",
+                zoneSize / 1024.0 / 1024.0);
 
 	if(zoneSize < (size_t) maxzone)
 	{
@@ -137,46 +175,65 @@ void Z_PrintStatus(void)
 		Con_Error("  Insufficient memory!");
 	}
 }
+#endif
 
-//===========================================================================
-// Z_Init
-//===========================================================================
+/*
+ * Initialize the memory zone.
+ */   
 void Z_Init(void)
 {
-	memblock_t *block;
-	size_t  size;
-
-	mainzone = (memzone_t *) Z_Create(&size);
-	mainzone->size = size;
-
-	// set the entire zone to one free block
-
-	mainzone->blocklist.next = mainzone->blocklist.prev = block =
-		(memblock_t *) ((byte *) mainzone + sizeof(memzone_t));
-	mainzone->blocklist.user = (void *) mainzone;
-	mainzone->blocklist.tag = PU_STATIC;
-	mainzone->rover = block;
-
-	block->prev = block->next = &mainzone->blocklist;
-	block->user = NULL;			// free block
-	block->size = mainzone->size - sizeof(memzone_t);
+    // Create the first volume.
+    Z_Create(MEMORY_VOLUME_SIZE);
 }
 
-//===========================================================================
-// Z_Free
-//===========================================================================
+/*
+ * Shut down the memory zone by destroying all the volumes.
+ */   
+void Z_Shutdown(void)
+{
+    size_t totalMemory = 0;
+    int numVolumes = 0;
+    
+    // Destroy all the memory volumes.
+    while(volumeRoot)
+    {
+        memvolume_t *vol = volumeRoot;
+        volumeRoot = vol->next;
+
+        // Calculate stats.
+        numVolumes++;
+        totalMemory += vol->size;
+        
+        free(vol->zone);
+        free(vol);
+    }
+
+    printf("Z_Shutdown: Used %i volumes, total %i bytes.\n",
+           numVolumes, totalMemory);
+}
+
+/*
+ * Free memory that was allocated with Z_Malloc.
+ */
 void Z_Free(void *ptr)
 {
 	memblock_t *block, *other;
+    memvolume_t *volume;
 
 	block = (memblock_t *) ((byte *) ptr - sizeof(memblock_t));
 	if(block->id != ZONEID)
-		Con_Error("Z_Free: freed a pointer without ZONEID");
+    {
+		Con_Error("Z_Free: attempt to free pointer without ZONEID");
+    }
+
+    // The block was allocated from this volume.
+    volume = block->volume;
 
 	if(block->user > (void **) 0x100)	// smaller values are not pointers
 		*block->user = 0;		// clear the user's mark
 	block->user = NULL;			// mark as free
 	block->tag = 0;
+    block->volume = NULL;
 	block->id = 0;
 
 	other = block->prev;
@@ -185,8 +242,8 @@ void Z_Free(void *ptr)
 		other->size += block->size;
 		other->next = block->next;
 		other->next->prev = other;
-		if(block == mainzone->rover)
-			mainzone->rover = other;
+		if(block == volume->zone->rover)
+			volume->zone->rover = other;
 		block = other;
 	}
 
@@ -196,115 +253,151 @@ void Z_Free(void *ptr)
 		block->size += other->size;
 		block->next = other->next;
 		block->next->prev = block;
-		if(other == mainzone->rover)
-			mainzone->rover = block;
+		if(other == volume->zone->rover)
+			volume->zone->rover = block;
 	}
 }
 
-//===========================================================================
-// Z_Malloc
-//  You can pass a NULL user if the tag is < PU_PURGELEVEL.
-//===========================================================================
-#define MINFRAGMENT	64
-
-void   *Z_Malloc(size_t size, int tag, void *user)
+/*
+ * You can pass a NULL user if the tag is < PU_PURGELEVEL.
+ */
+void *Z_Malloc(size_t size, int tag, void *user)
 {
 	size_t  extra;
 	memblock_t *start, *rover, *new, *base;
+    memvolume_t *volume;
 
 	if(!size)
 	{
-		// You can't allocate 'nothing'.
+		// You can't allocate "nothing."
 		return NULL;
 	}
 
-	//
-	// scan through the block list looking for the first free block
-	// of sufficient size, throwing out any purgable blocks along the way
-	//
-	size += sizeof(memblock_t);	// account for size of block header
+    // Account for size of block header.
+    size += sizeof(memblock_t);	
 
-	//
-	// if there is a free block behind the rover, back up over them
-	//
-	base = mainzone->rover;
-	if(!base->prev->user)
-		base = base->prev;
+    /*
+    printf("Z_Malloc: %i bytes (%lu bytes unreserved)\n", size,
+           Z_FreeMemory());
+    */
+   
+    // Iterate through memory volumes until we can find one with
+    // enough free memory.  (Note: we *will* find one that's large
+    // enough.)
+    for(volume = volumeRoot; ; volume = volume->next)
+    {
+        if(volume == NULL)
+        {
+            // We've run out of volumes.  Let's allocate a new one
+            // with enough memory.
+            size_t newVolumeSize = MEMORY_VOLUME_SIZE;
 
-	rover = base;
-	start = base->prev;
+            if(newVolumeSize < size + 0x1000)
+                newVolumeSize = size + 0x1000; // with some spare memory
 
-	do
-	{
-		if(rover == start)		// scanned all the way around the list
-		{
-			Con_Error("Z_Malloc: Failed on allocation of %i bytes.\n"
-					  "  Please increase the size of the memory zone "
-					  "with the -maxzone option.", size);
-		}
-		if(rover->user)
-		{
-			if(rover->tag < PU_PURGELEVEL)
-				// hit a block that can't be purged, so move base past it
-				base = rover = rover->next;
-			else
-			{
-				// free the rover block (adding the size to base)
-				base = base->prev;	// the rover can be the base block
-				Z_Free((byte *) rover + sizeof(memblock_t));
-				base = base->next;
-				rover = base->next;
-			}
-		}
-		else
-			rover = rover->next;
-	} while(base->user || base->size < size);
+            volume = Z_Create(newVolumeSize);
+        }
+        
+        // Scan through the block list looking for the first free block of
+        // sufficient size, throwing out any purgable blocks along the
+        // way.
 
-	//
-	// found a block big enough
-	//
-	extra = base->size - size;
-	if(extra > MINFRAGMENT)
-	{							// there will be a free fragment after the allocated block
-		new = (memblock_t *) ((byte *) base + size);
-		new->size = extra;
-		new->user = NULL;		// free block
-		new->tag = 0;
-		new->prev = base;
-		new->next = base->next;
-		new->next->prev = new;
-		base->next = new;
-		base->size = size;
-	}
+        // If there is a free block behind the rover, back up over them.
+        base = volume->zone->rover;
+        if(!base->prev->user)
+            base = base->prev;
 
-	if(user)
-	{
-		base->user = user;		// mark as an in use block
-		*(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
-	}
-	else
-	{
-		if(tag >= PU_PURGELEVEL)
-			Con_Error("Z_Malloc: an owner is required for purgable blocks");
-		base->user = (void *) 2;	// mark as in use, but unowned  
-	}
-	base->tag = tag;
+        rover = base;
+        start = base->prev;
 
-	mainzone->rover = base->next;	// next allocation will start looking here
+        do
+        {
+            if(rover == start)		
+            {
+                // Scanned all the way around the list.
+                // Move over to the next volume.
+                goto nextVolume;
+                
+                /*Con_Error("Z_Malloc: Failed on allocation of %i bytes.\n"
+                          "  Please increase the size of the memory zone "
+                          "with the -maxzone option.", size);*/
+            }
+            if(rover->user)
+            {
+                if(rover->tag < PU_PURGELEVEL)
+                {
+                    // Hit a block that can't be purged, so move base
+                    // past it.
+                    base = rover = rover->next;
+                }
+                else
+                {
+                    // Free the rover block (adding the size to base).
+                    base = base->prev;	// the rover can be the base block
+                    Z_Free((byte *) rover + sizeof(memblock_t));
+                    base = base->next;
+                    rover = base->next;
+                }
+            }
+            else
+            {
+                rover = rover->next;
+            }
+        } while(base->user || base->size < size);
 
-	base->id = ZONEID;
-	return (void *) ((byte *) base + sizeof(memblock_t));
+        // Found a block big enough.
+        extra = base->size - size;
+        if(extra > MINFRAGMENT)
+        {
+            // There will be a free fragment after the allocated
+            // block.
+            new = (memblock_t *) ((byte *) base + size);
+            new->size = extra;
+            new->user = NULL;		// free block
+            new->tag = 0;
+            new->volume = NULL;
+            new->prev = base;
+            new->next = base->next;
+            new->next->prev = new;
+            base->next = new;
+            base->size = size;
+        }
+        
+        if(user)
+        {
+            base->user = user;		// mark as an in use block
+            *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
+        }
+        else
+        {
+            if(tag >= PU_PURGELEVEL)
+                Con_Error("Z_Malloc: an owner is required for "
+                          "purgable blocks");
+            base->user = (void *) 2;	// mark as in use, but unowned  
+        }
+        base->tag = tag;
+
+        // next allocation will start looking here
+        volume->zone->rover = base->next;
+        
+        base->volume = volume;
+        base->id = ZONEID;
+
+        return (void *) ((byte *) base + sizeof(memblock_t));
+
+    nextVolume:;
+        // Move to the next volume.
+    }
 }
 
-//===========================================================================
-// Z_Realloc
-//  Only resizes blocks with no user. If a block with a user is 
-//  reallocated, the user will lose its current block and be set to
-//  NULL. Does not change the tag of existing blocks.
-//===========================================================================
-void   *Z_Realloc(void *ptr, size_t n, int malloctag)
+/*
+ * Only resizes blocks with no user. If a block with a user is
+ * reallocated, the user will lose its current block and be set to
+ * NULL. Does not change the tag of existing blocks.
+ */
+void *Z_Realloc(void *ptr, size_t n, int mallocTag)
 {
-	int     tag = ptr ? Z_GetTag(ptr) : malloctag;
+	int     tag = ptr ? Z_GetTag(ptr) : mallocTag;
 	void   *p = Z_Malloc(n, tag, 0);	// User always 0
 
 	if(ptr)
@@ -321,53 +414,62 @@ void   *Z_Realloc(void *ptr, size_t n, int malloctag)
 	return p;
 }
 
-//===========================================================================
-// Z_FreeTags
-//===========================================================================
-void Z_FreeTags(int lowtag, int hightag)
+/*
+ * Free memory blocks in all volumes with a tag in the specified range.
+ */
+void Z_FreeTags(int lowTag, int highTag)
 {
+    memvolume_t *volume;
 	memblock_t *block, *next;
 
-	for(block = mainzone->blocklist.next; block != &mainzone->blocklist;
-		block = next)
-	{
-		next = block->next;		// get link before freeing
-		if(!block->user)
-			continue;			// free block
-		if(block->tag >= lowtag && block->tag <= hightag)
-			Z_Free((byte *) block + sizeof(memblock_t));
-	}
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        for(block = volume->zone->blocklist.next;
+            block != &volume->zone->blocklist;
+            block = next)
+        {
+            next = block->next;		// get link before freeing
+            if(!block->user)
+                continue;			// free block
+            if(block->tag >= lowTag && block->tag <= highTag)
+                Z_Free((byte *) block + sizeof(memblock_t));
+        }
+    }
 }
 
-//===========================================================================
-// Z_CheckHeap
-//===========================================================================
+/*
+ * Check all zone volumes for consistency.
+ */
 void Z_CheckHeap(void)
 {
+    memvolume_t *volume;
 	memblock_t *block;
 
-	for(block = mainzone->blocklist.next;; block = block->next)
-	{
-		if(block->next == &mainzone->blocklist)
-			break;				// all blocks have been hit 
-		if(block->size == 0)
-			Con_Error("Z_CheckHeap: zero-size block\n");
-		if((byte *) block + block->size != (byte *) block->next)
-			Con_Error
-				("Z_CheckHeap: block size does not touch the next block\n");
-		if(block->next->prev != block)
-			Con_Error
-				("Z_CheckHeap: next block doesn't have proper back link\n");
-		if(!block->user && !block->next->user)
-			Con_Error("Z_CheckHeap: two consecutive free blocks\n");
-		if(block->user == (void **) -1)
-			Con_Error("Z_CheckHeap: bad user pointer %p\n", block->user);
-	}
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        for(block = volume->zone->blocklist.next; ; block = block->next)
+        {
+            if(block->next == &volume->zone->blocklist)
+                break;				// all blocks have been hit 
+            if(block->size == 0)
+                Con_Error("Z_CheckHeap: zero-size block\n");
+            if((byte *) block + block->size != (byte *) block->next)
+                Con_Error("Z_CheckHeap: block size does not touch the "
+                          "next block\n");
+            if(block->next->prev != block)
+                Con_Error("Z_CheckHeap: next block doesn't have proper "
+                          "back link\n");
+            if(!block->user && !block->next->user)
+                Con_Error("Z_CheckHeap: two consecutive free blocks\n");
+            if(block->user == (void **) -1)
+                Con_Error("Z_CheckHeap: bad user pointer %p\n", block->user);
+        }
+    }
 }
 
-//===========================================================================
-// Z_ChangeTag2
-//===========================================================================
+/*
+ * Change the tag of a memory block.
+ */
 void Z_ChangeTag2(void *ptr, int tag)
 {
 	memblock_t *block;
@@ -380,23 +482,23 @@ void Z_ChangeTag2(void *ptr, int tag)
 	block->tag = tag;
 }
 
-//===========================================================================
-// Z_ChangeUser
-//===========================================================================
-void Z_ChangeUser(void *ptr, void *newuser)
+/*
+ * Change the user of a memory block.
+ */
+void Z_ChangeUser(void *ptr, void *newUser)
 {
 	memblock_t *block;
 
 	block = (memblock_t *) ((byte *) ptr - sizeof(memblock_t));
 	if(block->id != ZONEID)
 		Con_Error("Z_ChangeUser: block without ZONEID");
-	block->user = newuser;
+	block->user = newUser;
 }
 
-//===========================================================================
-// Z_GetUser
-//===========================================================================
-void   *Z_GetUser(void *ptr)
+/*
+ * Get the user of a memory block.
+ */
+void *Z_GetUser(void *ptr)
 {
 	memblock_t *block;
 
@@ -406,9 +508,9 @@ void   *Z_GetUser(void *ptr)
 	return block->user;
 }
 
-//===========================================================================
-// Z_GetTag
-//===========================================================================
+/*
+ * Get the tag of a memory block.
+ */
 int Z_GetTag(void *ptr)
 {
 	memblock_t *block;
@@ -419,24 +521,21 @@ int Z_GetTag(void *ptr)
 	return block->tag;
 }
 
-//===========================================================================
-// Z_Calloc
-//  Memory allocation utility: malloc and clear.
-//===========================================================================
-void   *Z_Calloc(size_t size, int tag, void *user)
+/*
+ * Memory allocation utility: malloc and clear.
+ */
+void *Z_Calloc(size_t size, int tag, void *user)
 {
 	void   *ptr = Z_Malloc(size, tag, user);
 
-	// Failing a malloc is a fatal error.
 	memset(ptr, 0, size);
 	return ptr;
 }
 
-//===========================================================================
-// Z_Recalloc
-//  Realloc and set possible new memory to zero.
-//===========================================================================
-void   *Z_Recalloc(void *ptr, size_t n, int calloctag)
+/*
+ * Realloc and set possible new memory to zero.
+ */
+void *Z_Recalloc(void *ptr, size_t n, int callocTag)
 {
 	memblock_t *block;
 	void   *p;
@@ -461,26 +560,34 @@ void   *Z_Recalloc(void *ptr, size_t n, int calloctag)
 	}
 	else						// Totally new allocation.
 	{
-		p = Z_Calloc(n, calloctag, NULL);
+		p = Z_Calloc(n, callocTag, NULL);
 	}
 	return p;
 }
 
-//===========================================================================
-// Z_FreeMemory
-//===========================================================================
-int Z_FreeMemory(void)
+/*
+ * Calculate the amount of unused memory in all volumes combined.
+ */
+size_t Z_FreeMemory(void)
 {
+    memvolume_t *volume;
 	memblock_t *block;
-	int     free = 0;
+	size_t  free = 0;
 
-	for(block = mainzone->blocklist.next; block != &mainzone->blocklist;
-		block = block->next)
-	{
-		if(!block->user || block->tag >= PU_PURGELEVEL)
-		{
-			free += block->size;
-		}
-	}
+    Z_CheckHeap();
+
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        for(block = volume->zone->blocklist.next;
+            block != &volume->zone->blocklist;
+            block = block->next)
+        {
+            if(!block->user) // || block->tag >= PU_PURGELEVEL)
+            {
+                free += block->size;
+                //printf("  block of %i bytes\n", block->size);
+            }
+        }
+    }
 	return free;
 }
