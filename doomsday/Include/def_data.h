@@ -38,7 +38,7 @@ extern          "C" {
 #define DED_PATH_LEN        128
 #define DED_FUNC_LEN        255
 
-#define DED_PTC_STAGES      32
+//#define DED_PTC_STAGES      32
 #define DED_MAX_SUB_MODELS  8
 
     typedef char    ded_stringid_t[DED_STRINGID_LEN + 1];
@@ -402,7 +402,8 @@ extern          "C" {
         float           force_axis[3];  /* Rotation axis of the sphere force
                                            (+ speed). */
         float           force_origin[3];    // Offset for the force sphere.
-        ded_ptcstage_t  stages[DED_PTC_STAGES];
+        ded_ptcstage_t *stages; //[DED_PTC_STAGES];
+        ded_count_t     stage_count;
     } ded_ptcgen_t;
 
     typedef struct {
@@ -587,6 +588,7 @@ extern          "C" {
     int             DED_AddValue(ded_t * ded, const char *id);
     int             DED_AddDetail(ded_t * ded, const char *lumpname);
     int             DED_AddPtcGen(ded_t * ded, const char *state);
+    int             DED_AddPtcGenStage(ded_ptcgen_t *gen);
     int             DED_AddFinale(ded_t * ded);
     int             DED_AddDecoration(ded_t * ded);
     int             DED_AddReflection(ded_t * ded);

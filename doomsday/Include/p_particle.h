@@ -116,7 +116,7 @@ typedef struct ptcgen_s {
 	int             age;
 	int             count;		   // Number of particles.
 	particle_t     *ptcs;		   // List of particles.
-	ptcstage_t      stages[MAX_PTC_STAGES];
+	ptcstage_t     *stages;
 } ptcgen_t;
 
 extern ptcgen_t *active_ptcgens[MAX_ACTIVE_PTCGENS];

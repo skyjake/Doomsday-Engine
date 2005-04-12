@@ -201,7 +201,6 @@ void DD_InitCommandLine(const char *cmdLine)
  */
 void DD_ShutdownAll(void)
 {
-	extern memzone_t *mainzone;
 	int     i;
 
 	DD_ShutdownHelp();
@@ -226,7 +225,7 @@ void DD_ShutdownAll(void)
 	F_ShutdownDirec();
 	FH_Clear();
 	ArgShutdown();
-	free(mainzone);
+    Z_Shutdown();
 	DD_ShutdownDGL();
 
 	// Close the message output file.

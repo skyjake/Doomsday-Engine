@@ -903,7 +903,7 @@ void M_TranslatePath(const char *path, char *translated)
 			strcpy(buf, path);
 		strcpy(translated, buf);
 	}
-	else
+	else if(translated != path)
 	{
 		strcpy(translated, path);
 	}

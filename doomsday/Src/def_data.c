@@ -31,7 +31,7 @@
 // Helper Routines -------------------------------------------------------
 
 // Returns a pointer to the new block of memory.
-void   *DED_NewEntries(void **ptr, ded_count_t * cnt, int elem_size, int count)
+void *DED_NewEntries(void **ptr, ded_count_t * cnt, int elem_size, int count)
 {
 	void   *np;
 
@@ -49,7 +49,7 @@ void   *DED_NewEntries(void **ptr, ded_count_t * cnt, int elem_size, int count)
 }
 
 // Returns a pointer to the new block of memory.
-void   *DED_NewEntry(void **ptr, ded_count_t * cnt, int elem_size)
+void *DED_NewEntry(void **ptr, ded_count_t * cnt, int elem_size)
 {
 	return DED_NewEntries(ptr, cnt, elem_size, 1);
 }
@@ -120,6 +120,12 @@ void DED_Destroy(ded_t * ded)
 	free(ded->decorations);
 	free(ded->groups);
 	free(ded->sectors);
+    for(i = 0; i < ded->count.ptcgens.num; i++)
+    {
+        free(ded->ptcgens[i].stages);
+    }
+    free(ded->ptcgens);
+    free(ded->finales);
 }
 
 int DED_AddMobj(ded_t * ded, char *idstr)
@@ -359,21 +365,26 @@ int DED_AddPtcGen(ded_t * ded, const char *state)
 	ded_ptcgen_t *gen = DED_NewEntry((void **) &ded->ptcgens,
 									 &ded->count.ptcgens,
 									 sizeof(ded_ptcgen_t));
-	int     i;
 
 	strcpy(gen->state, state);
 
 	// Default choice (use either submodel zero or one).
 	gen->submodel = -1;
 
-	for(i = 0; i < DED_PTC_STAGES; i++)
-	{
-		gen->stages[i].model = -1;
-		gen->stages[i].sound.volume = 1;
-		gen->stages[i].hit_sound.volume = 1;
-	}
-
 	return gen - ded->ptcgens;
+}
+
+int DED_AddPtcGenStage(ded_ptcgen_t *gen)
+{
+    ded_ptcstage_t *stage = DED_NewEntry((void **) &gen->stages,
+                                         &gen->stage_count,
+                                         sizeof(ded_ptcstage_t));
+
+    stage->model = -1;
+    stage->sound.volume = 1;
+    stage->hit_sound.volume = 1;
+
+    return stage - gen->stages;
 }
 
 void DED_RemovePtcGen(ded_t * ded, int index)

@@ -153,8 +153,10 @@ void P_InitParticleGen(ptcgen_t * gen, ded_ptcgen_t * def)
 	gen->def = def;
 	gen->flags = def->flags;
 	gen->ptcs = Z_Malloc(sizeof(particle_t) * gen->count, PU_LEVEL, 0);
-
-	for(i = 0; i < MAX_PTC_STAGES; i++)
+    gen->stages = Z_Malloc(sizeof(ptcstage_t) * def->stage_count.num,
+                           PU_LEVEL, 0);
+    
+	for(i = 0; i < def->stage_count.num; i++)
 	{
 		gen->stages[i].bounce = FRACUNIT * def->stages[i].bounce;
 		gen->stages[i].resistance = FRACUNIT * (1 - def->stages[i].resistance);
@@ -1112,7 +1114,7 @@ void P_PtcGenThinker(ptcgen_t * gen)
 		if(pt->tics-- <= 0)
 		{
 			// Advance to next stage.
-			if(++pt->stage == MAX_PTC_STAGES ||
+			if(++pt->stage == def->stage_count.num ||
 			   gen->stages[pt->stage].type == PTC_NONE)
 			{
 				// Kill the particle.

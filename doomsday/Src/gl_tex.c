@@ -2637,7 +2637,7 @@ void averageColorIdx(rgbcol_t * col, byte *data, int w, int h, byte *palette,
 	r = g = b = count = 0;
 	for(i = 0; i < w * h; i++)
 	{
-		if(alphaStart[i] || !has_alpha)
+		if(!has_alpha || alphaStart[i])
 		{
 			count++;
 			memcpy(rgb, palette + 3 * data[i], 3);

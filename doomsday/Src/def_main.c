@@ -69,7 +69,6 @@ state_t *states;				// State list.
 mobjinfo_t *mobjinfo;			// Map object info database.
 sfxinfo_t *sounds;				// Sound effect list.
 
-//musicinfo_t   *music;     // Music list.
 ddtext_t *texts;				// Text list.
 detailtex_t *details;			// Detail texture assignments.
 mobjinfo_t **stateowners;		// A pointer for each state.
@@ -78,7 +77,6 @@ ded_count_t count_states;
 ded_count_t count_mobjinfo;
 ded_count_t count_sounds;
 
-//int           num_music;
 ded_count_t count_texts;
 ded_count_t count_details;
 ded_count_t count_stateowners;
@@ -162,10 +160,12 @@ void Def_Init(void)
 //===========================================================================
 void Def_Destroy(void)
 {
+    int i;
+    
 	// To make sure...
 	DED_Destroy(&defs);
 	DED_Init(&defs);
-
+   
 	// Destroy the databases.
 	DED_DelArray((void **) &sprnames, &count_sprnames);
 	DED_DelArray((void **) &states, &count_states);
@@ -409,7 +409,7 @@ int Def_EvalFlags(char *ptr)
 // DD_InitTextDef
 //  Escape sequences are un-escaped (\n, \r, \t, \s, \_).
 //===========================================================================
-void Def_InitTextDef(ddtext_t * txt, char *str)
+void Def_InitTextDef(ddtext_t *txt, char *str)
 {
 	char   *out, *in;
 
@@ -784,7 +784,7 @@ void Def_Read(void)
 		pg->damage_num = Def_GetMobjNum(pg->damage);
 
 		// Figure out embedded sound ID numbers.
-		for(k = 0; k < DED_PTC_STAGES; k++)
+		for(k = 0; k < pg->stage_count.num; k++)
 		{
 			if(pg->stages[k].sound.name[0])
 			{
@@ -876,7 +876,7 @@ void Def_PostInit(void)
 	// Particle generators: model setup.
 	for(i = 0, gen = defs.ptcgens; i < defs.count.ptcgens.num; i++, gen++)
 	{
-		for(k = 0, st = gen->stages; k < DED_PTC_STAGES; k++, st++)
+		for(k = 0, st = gen->stages; k < gen->stage_count.num; k++, st++)
 		{
 			if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
 				continue;

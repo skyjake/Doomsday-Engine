@@ -1344,6 +1344,15 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 			{
 				// Should we copy the previous definition?
 				memcpy(gen, ded->ptcgens + prev_gendef_idx, sizeof(*gen));
+
+                // Duplicate the stages array.
+                if(ded->ptcgens[prev_gendef_idx].stages)
+                {
+                    gen->stages = malloc(sizeof(ded_ptcstage_t) *
+                                         gen->stage_count.max);
+                    memcpy(gen->stages, ded->ptcgens[prev_gendef_idx].stages,
+                           sizeof(ded_ptcstage_t) * gen->stage_count.num);
+                }
 			}
 			FINDBEGIN;
 			for(;;)
@@ -1380,13 +1389,13 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_VEC("Force origin", gen->force_origin, 3)
 				if(ISLABEL("Stage"))
 				{
-					ded_ptcstage_t *st = gen->stages + sub;
-					if(sub == DED_PTC_STAGES)
-					{
-						SetError("Too many generator stages.");
-						retval = false;
-						goto ded_end_read;
-					}
+                    if(sub >= gen->stage_count.num)
+                    {
+                        // Allocate new stage.
+                        sub = DED_AddPtcGenStage(gen);
+                    }
+					ded_ptcstage_t *st = &gen->stages[sub];
+
 					FINDBEGIN;
 					for(;;)
 					{
@@ -1413,7 +1422,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 						RV_END
 						CHECKSC;
 					}
-					sub++;
+                    sub++;
 				}
 				else RV_END
 				CHECKSC;
@@ -1758,7 +1767,7 @@ ded_end_read:
 // DED_Read
 //      Returns true if the file was successfully loaded.
 //===========================================================================
-int DED_Read(ded_t * ded, const char *sPathName)
+int DED_Read(ded_t *ded, const char *sPathName)
 {
 	DFILE  *file;
 	char   *defData;

@@ -515,7 +515,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 		}
 
 		// Is there a next stage for this particle?
-		if(pt->stage >= MAX_PTC_STAGES - 1 || !gen->stages[pt->stage + 1].type)
+		if(pt->stage >= gen->def->stage_count.num - 1 ||
+           !gen->stages[pt->stage + 1].type)
 		{
 			// There is no "next stage". Use the current one.
 			next_dst = gen->def->stages + pt->stage;
