@@ -7,6 +7,9 @@ $Date$
 
 INSTALLING
 ----------
+This is a source code package.  To install Doomsday you will need to 
+compile it yourself.  Note that binaries are available for certain
+platforms: http://deng.sourceforge.net/dew/Engine/InstallUpgrade
 
 If you're not familiar with compiling stuff in a Unix environment, see
 the generic instructions in the INSTALL file.  Doomsday specific
