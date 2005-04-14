@@ -1364,7 +1364,12 @@ class MainFrame (wx.Frame):
         # Show the menu.
         self.SetMenuBar(menuBar)
 
+        # Handle menu commands.
+        wx.EVT_MENU(self, wx.ID_ABOUT, self.onAbout)
+
     def show(self):
+        """Show the main window."""
+        
         self.mainPanel.Thaw()
         self.Show()
         if self.helpPanel:
@@ -1372,6 +1377,8 @@ class MainFrame (wx.Frame):
             self.helpPanel.Show()
 
     def updateLayout(self):
+        """Update the layout of the widgets inside the main window."""
+        
         # Also update all UI areas.
         for key in uiAreas:
             uiAreas[key].updateLayout()
@@ -1440,6 +1447,31 @@ class MainFrame (wx.Frame):
         # Destroy the main frame.
         self.Destroy()
         return True
+
+    def onAbout(self, ev):
+        """Handle the About command."""
+
+        # Create the About dialog and show it.
+        dialog, area = createButtonDialog(
+            'about-dialog', language.translate('about-title'), ['ok'], 'ok')
+
+        content = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0)
+        content.setWeight(0)
+
+        content.createText('').setText(
+            language.translate('about-version') + ' ' +
+            st.getSystemString('snowberry-version'))
+
+        content.createText('about-subtitle')
+
+        content.setBorder(6)
+        content.setWeight(1)
+        box = content.createArea(boxedWithTitle='about-credits')
+        info = box.createFormattedText()
+        info.setMinSize(300, 200)
+        info.setText(language.translate('about-info'))
+        
+        dialog.run()
 
     def handleCommand(self, event):
         """This is called whenever someone broadcasts an

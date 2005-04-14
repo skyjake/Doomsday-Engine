@@ -43,6 +43,26 @@ wizard-launching-explanation: Should Snowberry be closed when a game is started?
 #
 # Windows and Dialogs
 #
+about-dialog: About Snowberry
+about-title: Snowberry
+about-subtitle: Extensible Launcher for the Doomsday Engine
+about-version: Version
+about-credits: Details and Credits
+about-info = "<tt>http://deng.sourceforge.net/</tt>
+<p>This program is distributed under the <i>GNU General Public
+License.</i>
+<p>
+<b>Authors:</b><br>
+Antti Kopponen<br>
+Emma Kallio<br>
+Jaakko Ker&auml;nen<br>
+Jari Asp<br>
+Toni Kokkonen<br>
+Veikko Eeva
+<p>
+<b>With special thanks to:</b><br>
+Daniel Swanson"
+
 ok: OK
 cancel: Cancel
 reset: Reset
@@ -440,7 +460,7 @@ issue-dialog: Problems Detected
 issue-dialog-title: Problems Detected
 
 error-read-config-file: Configuration Error
-error-read-config-file-text: An error was detected in the configuration file <tt>%1</tt>.
+error-read-config-file-text: An error was detected in the configuration file <tt>%1</tt>.<p><b>Reason:</b><p>%2
 
 error-read-info-file: Addon Info Error
 error-read-info-file-text: There was an error in the metadata file <tt>%1</tt> of addon <b>%2</b>.

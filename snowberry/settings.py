@@ -32,6 +32,7 @@
 # The addons may contain extra settings.
 import os, re
 import logger
+import host
 import language
 import paths, parser
 import addons as ao
@@ -471,6 +472,15 @@ def readConfigFile(fileName):
         while True:
             e = p.get()
 
+            if e.isKey() and e.getName() == 'required-platform':
+                # This configuration file is specific to a particular
+                # platform.
+                if (e.getValue() == 'windows' and not host.isWindows()) or \
+                   (e.getValue() == 'mac' and not host.isMac()) or \
+                   (e.getValue() == 'unix' and not host.isUnix()):
+                    # Look, we ran out early.
+                    raise parser.OutOfElements
+
             # Config files may contain blocks that group similar
             # settings together.
             if e.isBlock() and e.getType() == 'group':
@@ -490,9 +500,12 @@ def readConfigFile(fileName):
         # Parsing was completed.
         pass
 
-    except:
+    except Exception, exception:
         # Log an error message.
-        logger.add(logger.HIGH, 'error-read-config-file', fileName)
+        import traceback
+        traceback.print_exc()
+        logger.add(logger.HIGH, 'error-read-config-file', fileName,
+                  str(exception))
 
     # Process all the elements we got from the configuration files.
     for e in elements:

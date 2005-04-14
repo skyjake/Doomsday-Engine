@@ -39,9 +39,10 @@ import profiles as pr
 import settings as st
 
 # A Windows kludge: background colour for tabs and the controls in them.
-tabBgColour = wx.Colour(st.getSystemInteger('tab-background-red'),
-                        st.getSystemInteger('tab-background-green'),
-                        st.getSystemInteger('tab-background-blue'))
+tabBgColour = wx.Colour(250, 250, 250)
+#st.getSystemInteger('tab-background-red'),
+#                        st.getSystemInteger('tab-background-green'),
+#                        st.getSystemInteger('tab-background-blue'))
 
 # The image list for all the icons used in the UI.
 iconManager = None
