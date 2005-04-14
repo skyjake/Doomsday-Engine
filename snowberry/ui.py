@@ -175,7 +175,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     """
     dialog = createDialog(id, Area.ALIGN_HORIZONTAL)
     area = dialog.getArea()
-    area.setBackgroundColor(255, 255, 255)
+    #area.setBackgroundColor(255, 255, 255)
 
     # The Snowberry logo is on the left.
     area.setWeight(0)
