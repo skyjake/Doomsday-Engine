@@ -534,10 +534,9 @@ size_t Z_FreeMemory(void)
             block != &volume->zone->blocklist;
             block = block->next)
         {
-            if(!block->user) // || block->tag >= PU_PURGELEVEL)
+            if(!block->user) 
             {
                 free += block->size;
-                //printf("  block of %i bytes\n", block->size);
             }
         }
     }
