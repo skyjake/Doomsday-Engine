@@ -1389,12 +1389,15 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 				RV_VEC("Force origin", gen->force_origin, 3)
 				if(ISLABEL("Stage"))
 				{
+                    ded_ptcstage_t *st = NULL;
+                    
                     if(sub >= gen->stage_count.num)
                     {
                         // Allocate new stage.
                         sub = DED_AddPtcGenStage(gen);
                     }
-					ded_ptcstage_t *st = &gen->stages[sub];
+
+                    st = &gen->stages[sub];
 
 					FINDBEGIN;
 					for(;;)
