@@ -25,4 +25,4 @@
 # or
 #DEFAULT (echo ""; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog
 
-doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -S "[ deng-CVS ] " %s skyjake@users.sourceforge.net
+doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s skyjake@users.sourceforge.net
