@@ -98,30 +98,6 @@ long superatol(char *s)
  */
 memvolume_t *Z_Create(size_t volumeSize)
 {
-/*#define RETRY_STEP	0x80000		// Half a meg.
-	byte   *ptr;
-
-	// Check for the -maxzone option.
-	if(ArgCheckWith("-maxzone", 1))
-    maxzone = superatol(ArgNext());
-
-	zoneSize = maxzone;
-	if(zoneSize < MINIMUM_HEAP_SIZE)
-		zoneSize = MINIMUM_HEAP_SIZE;
-	if(zoneSize > MAXIMUM_HEAP_SIZE)
-		zoneSize = MAXIMUM_HEAP_SIZE;
-	zoneSize += RETRY_STEP;
-
-	do
-	{							// Until we get the memory (usually succeeds on the first try).
-		zoneSize -= RETRY_STEP;	// leave some memory alone
-		ptr = malloc(zoneSize);
-	} while(!ptr);
-
-	*size = zoneSize;
-	return ptr;
-*/
-
     memblock_t *block;
     memvolume_t *vol = calloc(1, sizeof(memvolume_t));
     
@@ -156,26 +132,6 @@ memvolume_t *Z_Create(size_t volumeSize)
 
     return vol;
 }
-
-#if 0
-void Z_PrintStatus(void)
-{
-	Con_Message("Memory zone: Using %.1f Mb volumes.\n",
-                zoneSize / 1024.0 / 1024.0);
-
-	if(zoneSize < (size_t) maxzone)
-	{
-		Con_Message("  The requested amount was %.1f Mb.\n",
-					maxzone / 1024.0 / 1024.0);
-	}
-
-	if(zoneSize < 0x180000)
-	{
-		// FIXME: This is a strange place to check this...
-		Con_Error("  Insufficient memory!");
-	}
-}
-#endif
 
 /*
  * Initialize the memory zone.
@@ -317,10 +273,6 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 // Scanned all the way around the list.
                 // Move over to the next volume.
                 goto nextVolume;
-                
-                /*Con_Error("Z_Malloc: Failed on allocation of %i bytes.\n"
-                          "  Please increase the size of the memory zone "
-                          "with the -maxzone option.", size);*/
             }
             if(rover->user)
             {
@@ -372,7 +324,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         {
             if(tag >= PU_PURGELEVEL)
                 Con_Error("Z_Malloc: an owner is required for "
-                          "purgable blocks");
+                          "purgable blocks.\n");
             base->user = (void *) 2;	// mark as in use, but unowned  
         }
         base->tag = tag;
