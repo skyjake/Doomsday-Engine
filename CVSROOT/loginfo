@@ -25,4 +25,15 @@
 # or
 #DEFAULT (echo ""; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog
 
+
+# Notifications for the 'doomsday' module.
+# Add new email addresses to the end of the line.
+
 doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s skyjake@users.sourceforge.net
+
+#
+# Example:
+# there can be any number of syncmail lines
+#
+#somemodule /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s addr1@my.com addr2@your.com
+#
