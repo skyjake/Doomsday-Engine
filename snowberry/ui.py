@@ -1364,7 +1364,8 @@ class MainFrame (wx.Frame):
         events.addCommandListener(self.handleCommand)
 
         #self.mainPanel.Hide()
-        self.splitter.Freeze()
+        if self.splitter:
+            self.splitter.Freeze()
         #if self.helpPanel:
         #    self.helpPanel.Freeze()
         #    self.helpPanel.Hide()
@@ -1386,8 +1387,9 @@ class MainFrame (wx.Frame):
 
     def show(self):
 #<<<<<<< ui.py
-        self.splitter.Thaw()
-        self.splitter.Refresh()
+        if self.splitter:
+            self.splitter.Thaw()
+            self.splitter.Refresh()
         #self.mainPanel.Show()
         #self.Show()
         #if self.helpPanel:
