@@ -722,7 +722,9 @@ class Area (widgets.Widget):
         if setting.getType() != 'toggle':       
             area.createText(setting.getId(), ':', 16, widgets.Text.RIGHT)
         else:
-            area.addSpacer()
+            # Check boxes use a secondary indicator label.
+            label = area.createText('toggle-use-default-value',
+                                    align=widgets.Text.RIGHT)
 
         area.setWeight(0)
         area.addSpacer()
@@ -732,7 +734,9 @@ class Area (widgets.Widget):
 
         if setting.getType() == 'toggle':
             # Toggle settings have just a checkbox.
-            area.createCheckBox(setting.getId(), False)
+            check = area.createCheckBox(setting.getId(), False)
+            check.setDefaultIndicator(label)
+            
             #drop = area.createDropList(setting.getId())
 
             # Add all the possible choices into the list.

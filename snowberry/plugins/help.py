@@ -365,9 +365,9 @@ def showSettingInfo(setting):
 
     # Min and max for the range and slider settings.
     if setting.getType() == 'slider' or setting.getType() == 'range':
-        msg += '<b>' + language.translate('help-value-min') + ':</b> ' + \
+        msg += '<b>' + language.translate('help-value-min') + ':</b><br>' + \
                str(setting.getMinimum())
-        msg += ' <b>' + language.translate('help-value-max') + ':</b> ' + \
+        msg += '<p><b>' + language.translate('help-value-max') + ':</b><br>' + \
                str(setting.getMaximum())
         msg += '<p>'
 

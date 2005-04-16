@@ -71,8 +71,10 @@ def breakLongLines(text, maxLineLength):
             # Break it up!
             if text[i] != ' ':
                 brokenText += text[i]
-            brokenText += '\n'
-            lineLen = 0
+            if not skipping:
+                # Newlines are not inserted if we're skipping.
+                brokenText += '\n'
+                lineLen = 0
         else:
             brokenText += text[i]
 
@@ -518,24 +520,107 @@ class Button (Widget):
 class CheckBox (Widget):
     """A check box widget."""
 
+    # Check box states:
+    STATE_INACTIVE = 0
+    STATE_ACTIVE = 1
+    STATE_DEFAULT = 2
+
     def __init__(self, parent, wxId, label, isChecked):
         Widget.__init__(self, wx.CheckBox(parent, wxId,
-                                          language.translate(label)))
-        self.label = label
+                                          language.translate(label),
+                                          style=wx.CHK_3STATE |
+                                          wx.CHK_ALLOW_3RD_STATE_FOR_USER))
+        self.widgetId = label
+
+        #if isChecked:
+        #    self.state = CheckBox.STATE_ACTIVE
+        #else:
+        #    self.state = CheckBox.STATE_INACTIVE
 
         # Set the initial value of the checkbox.
         w = self.getWxWidget()
         w.SetValue(isChecked)
 
         # We want focus notifications.
-        self.setFocusId(self.label)
+        self.setFocusId(self.widgetId)
+
+        self.indicator = None
 
         # When the checkbox is focused, send a notification.
         wx.EVT_CHECKBOX(parent, wxId, self.onClick)
 
+    def setDefaultIndicator(self, indicatorTextWidget):
+        """Set the Text widget that displays when the check box is in
+        the Default state.
+
+        @param indicatorTextWidget  A Widgets.Text widget.
+        """
+        self.indicator = indicatorTextWidget
+        self.indicator.getWxWidget().SetForegroundColour(
+            wx.Colour(170, 170, 170))
+        self.updateState()
+        self.indicator.setFocusId(self.widgetId)
+
+    def updateState(self):
+        """Update the state of the indicator to match one of the three
+        states."""
+
+        if self.indicator:
+            w = self.getWxWidget()
+            if w.Get3StateValue() == wx.CHK_UNDETERMINED:
+                self.indicator.getWxWidget().Show()
+            else:
+                self.indicator.getWxWidget().Hide()
+
+            #self.indicator.setText(indicator)
+
     def onClick(self, event):
-        events.send(events.EditNotify(self.label,
-                                      self.getWxWidget().IsChecked()))
+        """Swap through the three states when the check box is clicked."""
+
+        if self.widgetId:
+            w = self.getWxWidget()
+            state = w.Get3StateValue()
+
+            if state == wx.CHK_CHECKED:
+                pr.getActive().setValue(self.widgetId, 'yes')
+                newValue = 'yes'
+                
+            elif state == wx.CHK_UNCHECKED:
+                pr.getActive().setValue(self.widgetId, 'no')
+                newValue = 'no'
+
+            else:
+                pr.getActive().removeValue(self.widgetId)
+                newValue = 'default'
+
+            self.updateState()
+            events.send(events.EditNotify(self.widgetId, newValue))
+        
+        # Let wxWidgets process the event, too.
+        event.Skip()
+
+    def onNotify(self, event):
+        """Handle notifications.  When the active profile changes, the
+        check box's state is updated."""
+        
+        Widget.onNotify(self, event)
+
+        if self.widgetId:
+            if event.hasId('active-profile-changed'):
+                w = self.getWxWidget()
+                
+                # Get the value for the setting as it has been defined
+                # in the currently active profile.
+                value = pr.getActive().getValue(self.widgetId, False)
+                if value:
+                    if value.getValue() == 'yes':
+                        w.Set3StateValue(wx.CHK_CHECKED)
+                    else:
+                        w.Set3StateValue(wx.CHK_UNCHECKED)
+                else:
+                    w.Set3StateValue(wx.CHK_UNDETERMINED)
+
+                self.updateState()
 
 
 class RadioButton (Widget):
@@ -628,8 +713,15 @@ class Text (Widget):
         self.getWxWidget().SetLabel(text)
 
     def onClick(self, ev):
-        if self.widgetId:
-            event = events.FocusRequestNotify(self.widgetId)
+        """Clicking a label causes a focus request to be sent."""
+        
+        #myId = self.widgetId
+        #if not myId:
+        #    # Use focus ID if this widget has no setting.
+        #    myId = self.focusId
+        
+        if self.focusId:
+            event = events.FocusRequestNotify(self.focusId)
             events.send(event)
 
         ev.Skip()
@@ -769,6 +861,8 @@ class FormattedText (Widget):
 
             # Break it up if too long lines detected.
             brokenText = breakLongLines(text, 70)
+            
+            print brokenText
             
             Widget.__init__(self, fancy.StaticFancyText(parent, wxId,
                                                         brokenText))
