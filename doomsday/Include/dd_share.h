@@ -828,30 +828,6 @@ extern          "C" {
 
 	//------------------------------------------------------------------------
 	//
-	// Texture definition
-	//
-	//------------------------------------------------------------------------
-
-	typedef struct {
-		short           originx;
-		short           originy;
-		short           patch;
-		short           stepdir;
-		short           colormap;
-	} mappatch_t;
-
-	typedef struct {
-		char            name[8];
-		boolean         masked;
-		short           width;
-		short           height;
-		void          **columndirectory;	// OBSOLETE
-		short           patchcount;
-		mappatch_t      patches[1];
-	} maptexture_t;
-
-	//------------------------------------------------------------------------
-	//
 	// Console
 	//
 	//------------------------------------------------------------------------

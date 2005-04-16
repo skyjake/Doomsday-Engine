@@ -60,6 +60,25 @@
 #define AGF_FLAT		0x2000
 #define AGF_PRECACHE	0x4000	   // Group is just for precaching.
 
+// Texture definition
+typedef struct {
+    short           originx;
+    short           originy;
+    short           patch;
+    short           stepdir;
+    short           colormap;
+} mappatch_t;
+
+typedef struct {
+    char            name[8];
+    boolean         masked;
+    short           width;
+    short           height;
+    void          **columndirectory;	// OBSOLETE
+    short           patchcount;
+    mappatch_t      patches[1];
+} maptexture_t;
+
 // Detail texture information.
 typedef struct detailinfo_s {
 	DGLuint         tex;
