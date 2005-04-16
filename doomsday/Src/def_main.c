@@ -160,8 +160,6 @@ void Def_Init(void)
 //===========================================================================
 void Def_Destroy(void)
 {
-    int i;
-    
 	// To make sure...
 	DED_Destroy(&defs);
 	DED_Init(&defs);
