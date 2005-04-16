@@ -555,6 +555,16 @@ class Area (widgets.Widget):
         self.__addWidget(widget)
         return widget
 
+    def createRichText(self, text):
+        """Create a static rich text label widget inside the area.
+        Initially the widget contains no text.
+
+        @return A widgets.FormattedText object.
+        """
+        widget = widgets.FormattedText(self.panel, -1, False, text)
+        self.__addWidget(widget)
+        return widget
+
     def createList(self, name, style=widgets.List.STYLE_SINGLE):
         """Create a list widget inside the area.  Initially the list
         is empty.
@@ -888,7 +898,7 @@ class MultiArea (Area):
         @param identifier Identifier of the new page.
         """
         # Create a new panel for the page.
-        panel = wx.Panel(self.panel, -1)
+        panel = wx.Panel(self.panel, -1, style=wx.CLIP_CHILDREN)
         if host.isWindows():
             panel.SetBackgroundColour(widgets.tabBgColour)
             panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
@@ -1191,7 +1201,8 @@ class WizardPage (wiz.PyWizardPage):
 
 class MainPanel (wx.Panel):
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent, -1, style=wx.NO_BORDER)
+        wx.Panel.__init__(self, parent, -1, style=wx.NO_BORDER |
+                          wx.CLIP_CHILDREN)
 
         #topSizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -1205,19 +1216,22 @@ class MainPanel (wx.Panel):
         # Title area.
         #sizer = wx.BoxSizer(wx.VERTICAL)
         if USE_TITLE_AREA:
-            titlePanel = wx.Panel(self, -1, style=wx.NO_BORDER)
+            titlePanel = wx.Panel(self, -1,
+                                  style=wx.NO_BORDER | wx.CLIP_CHILDREN)
             _newArea( Area(Area.TITLE, titlePanel, Area.ALIGN_HORIZONTAL) )
             bSizer.Add(titlePanel, 0, wx.EXPAND)
 
         #profSizer = wx.BoxSizer(wx.HORIZONTAL)
         # Profile area.
-        profilePanel = wx.Panel(self, -1, style=wx.NO_BORDER)
+        profilePanel = wx.Panel(self, -1, style=wx.NO_BORDER
+                                 | wx.CLIP_CHILDREN)
         area = Area(Area.PROFILES, profilePanel, Area.ALIGN_VERTICAL, 10)
         _newArea(area)
         cSizer.Add(profilePanel, 2, wx.EXPAND)
 
         #self.NOTEBOOK_ID = 9500
-        tabPanel = wx.Panel(self, -1, style=wx.NO_BORDER)
+        tabPanel = wx.Panel(self, -1, style=wx.NO_BORDER
+                             | wx.CLIP_CHILDREN)
         tabsArea = Area(Area.TABS, tabPanel, Area.ALIGN_VERTICAL, 0)
         _newArea(tabsArea)
 
@@ -1226,7 +1240,8 @@ class MainPanel (wx.Panel):
         #wx.EVT_NOTEBOOK_PAGE_CHANGED(self, self.NOTEBOOK_ID, self.onTabChange)
 
         # Command area.
-        commandPanel = wx.Panel(self, -1, style=wx.NO_BORDER)
+        commandPanel = wx.Panel(self, -1, style=wx.NO_BORDER
+                                 | wx.CLIP_CHILDREN)
         area = Area(Area.COMMAND, commandPanel, Area.ALIGN_HORIZONTAL, 10)
         # The command area is aligned to the right.
         area.addSpacer()
@@ -1298,7 +1313,7 @@ class MainFrame (wx.Frame):
         self.SetIcon(icon)
         
         #self.Iconize(True)
-        self.Hide()
+        #self.Hide()
 
         SPLITTER_ID = 9501
         self.splitter = None
@@ -1320,7 +1335,8 @@ class MainFrame (wx.Frame):
 
         # Create the help area.
         if self.splitter:
-            self.helpPanel = wx.Panel(self.splitter, -1, style = wx.NO_BORDER)
+            self.helpPanel = wx.Panel(self.splitter, -1, style = wx.NO_BORDER
+                                      | wx.CLIP_CHILDREN)
             self.helpPanel.SetBackgroundColour(wx.WHITE)
             _newArea( Area(Area.HELP, self.helpPanel, Area.ALIGN_VERTICAL,
                            border=4) )
@@ -1347,34 +1363,46 @@ class MainFrame (wx.Frame):
         # Listen to the 'quit' command.
         events.addCommandListener(self.handleCommand)
 
-        self.mainPanel.Freeze()
-        if self.helpPanel:
-            self.helpPanel.Freeze()
-            self.helpPanel.Hide()
+        #self.mainPanel.Hide()
+        self.splitter.Freeze()
+        #if self.helpPanel:
+        #    self.helpPanel.Freeze()
+        #    self.helpPanel.Hide()
         #self.Hide()
 
         # Create a menu bar.
-        menuBar = wx.MenuBar()
+        #menuBar = wx.MenuBar()
 
-        menu = wx.Menu()
-        menu.Append(wx.ID_ABOUT, language.translate('menu-about'))
+        #menu = wx.Menu()
+        #menu.Append(wx.ID_ABOUT, language.translate('menu-about'))
 
-        menuBar.Append(menu, language.translate('menu-game'))
+        #menuBar.Append(menu, language.translate('menu-game'))
 
         # Show the menu.
-        self.SetMenuBar(menuBar)
+        #self.SetMenuBar(menuBar)
 
         # Handle menu commands.
-        wx.EVT_MENU(self, wx.ID_ABOUT, self.onAbout)
+        #wx.EVT_MENU(self, wx.ID_ABOUT, self.onAbout)
 
     def show(self):
-        """Show the main window."""
-        
-        self.mainPanel.Thaw()
-        self.Show()
-        if self.helpPanel:
-            self.helpPanel.Thaw()
-            self.helpPanel.Show()
+#<<<<<<< ui.py
+        self.splitter.Thaw()
+        self.splitter.Refresh()
+        #self.mainPanel.Show()
+        #self.Show()
+        #if self.helpPanel:
+        #    self.helpPanel.Thaw()
+        #    self.helpPanel.Show()
+        pass
+#=======
+#        """Show the main window."""
+#        
+#        self.mainPanel.Thaw()
+#        self.Show()
+#        if self.helpPanel:
+#            self.helpPanel.Thaw()
+#            self.helpPanel.Show()
+#>>>>>>> 1.14
 
     def updateLayout(self):
         """Update the layout of the widgets inside the main window."""

@@ -272,9 +272,9 @@ def commandHandler(event):
             language.translate('reset-profile-title'),
             ['no', 'yes'], 'no')
 
-        message = area.createFormattedText()
         text = language.translate('reset-profile-query')
-        message.setText(language.expand(text, pr.getActive().getName()))
+        message = area.createRichText(
+            language.expand(text, pr.getActive().getName()))
 
         if dialog.run() == 'yes':
             pr.reset(pr.getActive().getId())
@@ -285,9 +285,8 @@ def commandHandler(event):
             language.translate('delete-profile-title'),
             ['no', 'yes'], 'no')
 
-        message = area.createFormattedText()
         text = language.translate('delete-profile-query')
-        message.setText(language.expand(text, pr.getActive().getName()))
+        area.createRichText(language.expand(text, pr.getActive().getName()))
 
         if dialog.run() == 'yes':
             # Get the values from the controls.
@@ -301,8 +300,7 @@ def commandHandler(event):
 
         text = language.translate('duplicating-profile')
         area.setWeight(3)
-        message = area.createFormattedText()
-        message.setText(language.expand(text, pr.getActive().getName()))
+        area.createRichText(language.expand(text, pr.getActive().getName()))
 
         area.setWeight(1)
         entry = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)

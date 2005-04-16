@@ -32,7 +32,7 @@ import wx
 import wx.html
 import wx.lib.intctrl as intctrl
 import wx.lib.scrolledpanel as scrolled
-#import wx.lib.fancytext as fancy
+import wx.lib.fancytext as fancy
 import host, events, ui, language, paths
 import addons as ao
 import profiles as pr
@@ -668,6 +668,9 @@ class TextField (Widget):
 class MyHtmlWindow (wx.html.HtmlWindow):
     def __init__(self, parent, wxId):
         wx.html.HtmlWindow.__init__(self, parent, wxId)
+        #self.SetBackgroundStyle(wx.BG_STYLE_COLOUR)
+        #self.SetBackgroundColour(wx.SystemSettings_GetColour(
+        #    wx.SYS_COLOUR_WINDOW))
         self.SetBorders(3)
 
     def OnLinkClicked(self, link):
@@ -679,35 +682,84 @@ class MyHtmlWindow (wx.html.HtmlWindow):
 
 
 class FormattedText (Widget):
-    def __init__(self, parent, wxId):
-        Widget.__init__(self, MyHtmlWindow(parent, wxId))
+    def __init__(self, parent, wxId, useHtmlFormatting=True, initialText=''):
+        """Constructor.
+
+        @param parent  Parent wxWidget ID.
+        @param wxId    ID of the formatted text widget.
+        @param useHtmlFormatting  Use a HTML window widget.
+        @param initialText  Initial contents.
+        """
+
+        self.useHtml = useHtmlFormatting
+        
+        if self.useHtml:
+            Widget.__init__(self, MyHtmlWindow(parent, wxId))
+        else:
+            text = initialText.replace('<b>', '<font weight="bold">')
+            text = text.replace('</b>', '</font>')
+            text = text.replace('<i>', '<font style="italic">')
+            text = text.replace('</i>', '</font>')
+            text = text.replace('<tt>', '<font family="fixed">')
+            text = text.replace('</tt>', '</font>')
+
+            # Break it up if too long lines detected.
+            brokenText = ''
+            lineLen = 0
+            skipping = False
+            for i in range(len(text)):
+                if text[i] == '<':
+                    skipping = True
+                elif skipping and text[i] == '>':
+                    skipping = False
+
+                if not skipping:
+                    lineLen += 1
+                    
+                if text[i] == ' ' and lineLen > 70:
+                    # Break it up!
+                    brokenText += '\n'
+                    lineLen = 0
+                else:
+                    brokenText += text[i]
+            
+            Widget.__init__(self, fancy.StaticFancyText(parent, wxId,
+                                                        brokenText))
 
     def setText(self, formattedText):
         "Set new HTML content into the formatted text widget."
         w = self.getWxWidget()
-        
-        fontName = None
-        fontSize = None
-        
-        if st.isDefined("style-html-font"):
-            fontName = st.getSystemString("style-html-font")
-        if st.isDefined("style-html-size"):
-            fontSize = st.getSystemString("style-html-size")
+
+        if self.useHtml:
+            fontName = None
+            fontSize = None
             
-        if fontName != None or fontSize != None:
-            fontElem = "<font"
-            if fontName != None:
-                fontElem += ' face="%s"' % fontName
-            if fontSize != None:
-                fontElem += ' size="%s"' % fontSize
-            fontElem += ">"
-        else:
-            fontElem = None
+            if st.isDefined("style-html-font"):
+                fontName = st.getSystemString("style-html-font")
+            if st.isDefined("style-html-size"):
+                fontSize = st.getSystemString("style-html-size")
+            
+            if fontName != None or fontSize != None:
+                fontElem = "<font"
+                if fontName != None:
+                    fontElem += ' face="%s"' % fontName
+                if fontSize != None:
+                    fontElem += ' size="%s"' % fontSize
+                fontElem += ">"
+            else:
+                fontElem = None
+
+            #color = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+            #print color
         
-        if fontElem == None:
-            w.SetPage(formattedText)
-        else:
-            w.SetPage(fontElem + formattedText + '</font>')
+            #formattedText = '<body bgcolor="#%02x%02x%02x">' \
+            #                % (color.Red(), color.Green(), color.Blue()) \
+            #                + formattedText + '</body>'
+        
+            if fontElem == None:
+                w.SetPage(formattedText)
+            else:
+                w.SetPage(fontElem + formattedText + '</font>')
 
     def setSystemBackground(self):
         """Use the window background colour as the background colour
@@ -1662,7 +1714,7 @@ class TabArea (Widget):
         book = self.getWxWidget()
         #tab = scrolled.ScrolledPanel(book, -1)
         #tab.SetupScrolling()
-        tab = wx.Panel(book, -1)
+        tab = wx.Panel(book, -1, style=wx.CLIP_CHILDREN)
 
         if host.isWindows():
             tab.SetBackgroundColour(tabBgColour)

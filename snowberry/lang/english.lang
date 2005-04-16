@@ -77,7 +77,7 @@ rename-profile-title: Renaming Profile
 rename-profile-name: New name
 reset-profile-dialog: Reset Profile
 reset-profile-title: Are You Sure?
-reset-profile-query: Are you sure you want to reset <b>%1</b> to defaults? This will clear all customized settings in the profile, and deselect all the addons.
+reset-profile-query: Are you sure you want to reset <b>%1</b> to defaults? This will clear all customized settings in the profile and deselect all the addons.
 delete-profile-dialog: Delete Profile
 delete-profile-title: Are You Sure?
 delete-profile-query: Are you sure you want to delete <b>%1</b>?
@@ -175,6 +175,8 @@ install-addon: +
 uninstall-addon: -
 load-order: Load Order
 addon-settings: Settings
+about: About Snowberry
+preferences: Preferences
 
 #
 # Popup Menu Items
@@ -375,6 +377,11 @@ verbosity-devel: Level 1
 verbosity-extra: Level 2
 
 custom-cmdline: Custom options
+
+addon-paths: Custom Addon Folders
+addon-paths-info: Additional folders to load addons from:
+new-addon-path: +
+delete-addon-path: -
 
 #
 # Help

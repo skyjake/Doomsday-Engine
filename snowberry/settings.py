@@ -790,6 +790,8 @@ quitLaunch = ToggleSetting('quit-on-launch', '', 'yes', '')
 quitLaunch.setGroup('general-options')
 _newSetting(quitLaunch)
 
+
+
 # Load all .conf files.
 for path in paths.listPaths(paths.CONF):
     readConfigPath(path)
