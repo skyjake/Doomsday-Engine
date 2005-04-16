@@ -694,6 +694,10 @@ class Area (widgets.Widget):
         return widget
 
     def createSetting(self, setting):
+        self.setBorder(4)
+        return self.doCreateSetting(setting)
+
+    def doCreateSetting(self, setting, leftWeight=1, rightWeight=2):
         """Create one or more widgets that can be used to edit the
         value of the specified setting.  Automatically creates a
         subarea that contains all the widgets of the setting.
@@ -709,7 +713,7 @@ class Area (widgets.Widget):
 
         # All settings have a similarly positioned label on the left
         # side.
-        area.setWeight(1)
+        area.setWeight(leftWeight)
         #label = area.createArea(alignment = Area.ALIGN_HORIZONTAL, border=0)
         #label.setWeight(1)
         #label.addSpacer()
@@ -724,7 +728,7 @@ class Area (widgets.Widget):
         area.addSpacer()
         
         # Create the actual widget(s) for the setting.
-        area.setWeight(2)
+        area.setWeight(rightWeight)
 
         if setting.getType() == 'toggle':
             # Toggle settings have just a checkbox.
@@ -789,10 +793,12 @@ class Area (widgets.Widget):
             #area.setWeight(1)
             #area.createText(setting.getId())
             #area.setWeight(2)
-            text = area.createTextField(setting.getId())
-            area.setWeight(0)
-            browseButton = area.createButton('browse-button',
-                                             style=widgets.Button.STYLE_MINI)
+            sub = area.createArea(alignment=Area.ALIGN_HORIZONTAL, border=0)
+            sub.setWeight(1)
+            text = sub.createTextField(setting.getId())
+            sub.setWeight(0)
+            browseButton = sub.createButton('browse-button',
+                                            style=widgets.Button.STYLE_MINI)
 
             def browseAction():
                 # Open a file browser for selecting the value for a file
@@ -874,6 +880,10 @@ class BoxedArea (Area):
     def retranslate(self):
         """Update the title of the box."""
         pass
+        
+    def createSetting(self, setting):
+        self.setBorder(2)
+        return self.doCreateSetting(setting, 19, 40)
 
 
 class MultiArea (Area):

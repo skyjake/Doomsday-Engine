@@ -340,7 +340,7 @@ extres-with-pwad: Allow external with PWADs
 anisotropic-filter: Anisotropic filtering
 paletted-textures: Paletted textures
 
-maximum-texture-size: Maximum texture size
+maximum-texture-size: Maximum size
 maximum-texture-size-unlimited: Hardware
 maximum-texture-size-64: 64 x 64
 maximum-texture-size-128: 128 x 128
