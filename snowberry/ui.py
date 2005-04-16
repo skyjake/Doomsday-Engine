@@ -521,7 +521,8 @@ class Area (widgets.Widget):
         self.__addWidget(widget)
         return widget
 
-    def createText(self, name='', suffix=''):
+    def createText(self, name='', suffix='', maxLineLength=0,
+                   align=widgets.Text.LEFT):
         """Create a text label widget inside the area.
 
         @param name Identifier of the text label widget.  The actual
@@ -530,7 +531,8 @@ class Area (widgets.Widget):
 
         @return A widgets.Text object.
         """
-        widget = widgets.Text(self.panel, -1, name, suffix)
+        widget = widgets.Text(self.panel, -1, name, suffix, maxLineLength,
+                              align)
         self.__addWidget(widget)
         return widget
 
@@ -705,36 +707,52 @@ class Area (widgets.Widget):
         area = self.createArea(alignment = Area.ALIGN_HORIZONTAL)
         area.setExpanding(False)
 
+        # All settings have a similarly positioned label on the left
+        # side.
+        area.setWeight(1)
+        #label = area.createArea(alignment = Area.ALIGN_HORIZONTAL, border=0)
+        #label.setWeight(1)
+        #label.addSpacer()
+        #label.setWeight(0)
+
+        if setting.getType() != 'toggle':       
+            area.createText(setting.getId(), ':', 16, widgets.Text.RIGHT)
+        else:
+            area.addSpacer()
+
+        area.setWeight(0)
+        area.addSpacer()
+        
+        # Create the actual widget(s) for the setting.
+        area.setWeight(2)
+
         if setting.getType() == 'toggle':
             # Toggle settings have just a checkbox.
-            #area.createCheckBox(setting.getId(), False)
-            area.setWeight(5)
-            area.createText(setting.getId())
-            area.setWeight(2)
-            drop = area.createDropList(setting.getId())
+            area.createCheckBox(setting.getId(), False)
+            #drop = area.createDropList(setting.getId())
 
             # Add all the possible choices into the list.
-            drop.addItem('default')
-            drop.addItem('yes')
-            drop.addItem('no')
+            #drop.addItem('default')
+            #drop.addItem('yes')
+            #drop.addItem('no')
 
             # By default, select the default choice.  This will get
             # updated shortly, though.
-            drop.selectItem('default')
+            #drop.selectItem('default')
 
         elif setting.getType() == 'range':
             # Create a label and the integer edit field.
-            area.setWeight(5)
-            area.createText(setting.getId())
-            area.setWeight(2)
+            #area.setWeight(5)
+            #area.createText(setting.getId())
+            #area.setWeight(2)
             nf = area.createNumberField(setting.getId())
             nf.setRange(setting.getMinimum(), setting.getMaximum())
 
         elif setting.getType() == 'slider':
             # Create a label and a slider.
-            area.setWeight(2)
-            area.createText(setting.getId())
-            area.setWeight(2)
+            #area.setWeight(2)
+            #area.createText(setting.getId())
+            #area.setWeight(2)
             slider = area.createSlider(setting.getId())
             slider.setRange(setting.getMinimum(),
                             setting.getMaximum(),
@@ -742,9 +760,9 @@ class Area (widgets.Widget):
 
         elif setting.getType() == 'choice':
             # Create a label and a drop-down list.
-            area.setWeight(2)
-            area.createText(setting.getId())
-            area.setWeight(2)
+            #area.setWeight(2)
+            #area.createText(setting.getId())
+            #area.setWeight(2)
             drop = area.createDropList(setting.getId())
 
             # Insert the choices into the list.
@@ -761,16 +779,16 @@ class Area (widgets.Widget):
 
         elif setting.getType() == 'text':
             # Create a text field.
-            area.setWeight(1)
-            area.createText(setting.getId())
-            area.setWeight(2)
+            #area.setWeight(1)
+            #area.createText(setting.getId())
+            #area.setWeight(2)
             text = area.createTextField(setting.getId())
 
         elif setting.getType() == 'file':
             # Create a text field and a button.
-            area.setWeight(1)
-            area.createText(setting.getId())
-            area.setWeight(2)
+            #area.setWeight(1)
+            #area.createText(setting.getId())
+            #area.setWeight(2)
             text = area.createTextField(setting.getId())
             area.setWeight(0)
             browseButton = area.createButton('browse-button',

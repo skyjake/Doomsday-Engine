@@ -48,6 +48,37 @@ tabBgColour = wx.Colour(250, 250, 250)
 iconManager = None
 
 
+def breakLongLines(text, maxLineLength):
+    """Break long lines with newline characters.
+
+    @param maxLineLength  Maximum length of a line, in characters.
+
+    @return The new text with newlines inserted."""
+    
+    brokenText = ''
+    lineLen = 0
+    skipping = False
+    for i in range(len(text) - 1):
+        if text[i] == '<':
+            skipping = True
+        elif skipping and text[i] == '>':
+            skipping = False
+
+        if not skipping:
+            lineLen += 1
+                    
+        if (text[i] in ' -/:;') and lineLen > maxLineLength:
+            # Break it up!
+            if text[i] != ' ':
+                brokenText += text[i]
+            brokenText += '\n'
+            lineLen = 0
+        else:
+            brokenText += text[i]
+
+    return brokenText + text[-1]   
+
+
 def initIconManager():
     """Initialize a manager for all the icons used in the user
     interface.
@@ -531,8 +562,8 @@ class RadioButton (Widget):
 
 
 class MyStaticText (wx.StaticText):
-    def __init__(self, parent, wxId, label):
-        wx.StaticText.__init__(self, parent, wxId, label)
+    def __init__(self, parent, wxId, label, style=0):
+        wx.StaticText.__init__(self, parent, wxId, label, style=style)
         if host.isWindows():
             # No background.
             self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
@@ -545,19 +576,52 @@ class MyStaticText (wx.StaticText):
 class Text (Widget):
     """A static text widget that displays a string of text."""
 
-    def __init__(self, parent, wxId, id, suffix=''):
-        Widget.__init__(self, MyStaticText(parent, wxId,
-            language.translate(id) + suffix))
-        self.widgetId = id
-        self.setNormalStyle()
+    # Alignments.
+    LEFT = 0
+    MIDDLE = 1
+    RIGHT = 2
+    
+    def __init__(self, parent, wxId, id, suffix='', maxLineLength=0, align=0):
+        """Constructor.
+
+        @param parent
+        @param wxId
+        @param id      Identifier of the text string.
+        @param suffix  Suffix for the translated version of the text.
+        @param maxLineLength  Maximum line length for the text (in characters).
+        @param alignment      Alignment (LEFT, MIDDLE, RIGHT).
+        """
+        # Prepare the text string.
+        self.maxLineLength = maxLineLength
         self.suffix = suffix
+        self.widgetId = id
+
+        # Alignment style flag.
+        styleFlags = 0
+        if align == Text.LEFT:
+            styleFlags |= wx.ALIGN_LEFT
+        elif align == Text.MIDDLE:
+            styleFlags |= wx.ALIGN_CENTRE
+        elif align == Text.RIGHT:
+            styleFlags |= wx.ALIGN_RIGHT
+            
+        Widget.__init__(self, MyStaticText(parent, wxId,
+                                           self.__prepareText(),
+                                           style = styleFlags))
+        self.setNormalStyle()
 
         # When the text is clicked, send a notification.
         wx.EVT_LEFT_DOWN(self.getWxWidget(), self.onClick)
 
+    def __prepareText(self):
+        text = language.translate(self.widgetId) + self.suffix
+        if self.maxLineLength > 0:
+            text = breakLongLines(text, self.maxLineLength)
+        return text
+
     def retranslate(self):
         if self.widgetId:
-            self.setText(language.translate(self.widgetId) + self.suffix)
+            self.setText(self.__prepareText())
 
     def setText(self, text):
         "Set new untranslated content into the text widget."
@@ -704,24 +768,7 @@ class FormattedText (Widget):
             text = text.replace('</tt>', '</font>')
 
             # Break it up if too long lines detected.
-            brokenText = ''
-            lineLen = 0
-            skipping = False
-            for i in range(len(text)):
-                if text[i] == '<':
-                    skipping = True
-                elif skipping and text[i] == '>':
-                    skipping = False
-
-                if not skipping:
-                    lineLen += 1
-                    
-                if text[i] == ' ' and lineLen > 70:
-                    # Break it up!
-                    brokenText += '\n'
-                    lineLen = 0
-                else:
-                    brokenText += text[i]
+            brokenText = breakLongLines(text, 70)
             
             Widget.__init__(self, fancy.StaticFancyText(parent, wxId,
                                                         brokenText))
@@ -1176,6 +1223,15 @@ class DropList (Widget):
         self.items = []
         self.getWxWidget().Clear()
 
+    def __filter(self, itemText):
+        """Filter the item text so it can be displayed on screen."""
+
+        # Set the maximum length.
+        if len(itemText) > 30:
+            return '...' + itemText[-30:]
+
+        return itemText
+
     def retranslate(self):
         """Update the text of the items in the drop list. Preserve
         current selection."""
@@ -1186,7 +1242,7 @@ class DropList (Widget):
         # We will replace all the items in the list.
         drop.Clear()        
         for i in range(len(self.items)):
-            drop.Append(language.translate(self.items[i]))
+            drop.Append(self.__filter(language.translate(self.items[i])))
 
         drop.SetSelection(sel)
 
@@ -1196,7 +1252,7 @@ class DropList (Widget):
         @param items An array of strings.
         """
         self.items.append(item)
-        self.getWxWidget().Append(language.translate(item))
+        self.getWxWidget().Append(self.__filter(language.translate(item)))
 
     def selectItem(self, item):
         """Change the current selection.  This does not send any
@@ -1231,7 +1287,7 @@ class DropList (Widget):
         self.items = []
         for id, item in translated:
             self.items.append(id)
-            w.Append(item)
+            w.Append(self.__filter(item))
 
     def getItems(self):
         """Returns the identifiers of the items in the list.

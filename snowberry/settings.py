@@ -539,7 +539,7 @@ def processSettingBlock(e):
         return
     
     setting = None
-        
+
     # Each block represents either a component or a setting.
     if e.getType() == 'component':
         # Create a new component.
@@ -789,8 +789,6 @@ _newSetting(lang)
 quitLaunch = ToggleSetting('quit-on-launch', '', 'yes', '')
 quitLaunch.setGroup('general-options')
 _newSetting(quitLaunch)
-
-
 
 # Load all .conf files.
 for path in paths.listPaths(paths.CONF):
