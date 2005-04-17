@@ -58,7 +58,9 @@ def handleNotify(event):
         commands.createButton('new-addon-path', wg.Button.STYLE_MINI)
         commands.createButton('delete-addon-path', wg.Button.STYLE_MINI)
         commands.setExpanding(False)
-        commands.createText('restart-required').setSmallStyle()
+        commands.setWeight(1)
+        commands.createText('restart-required',
+                            align=wg.Text.RIGHT).setSmallStyle()
         
         # Checkboxes for hiding parts of the UI.
         box = area.createArea(boxedWithTitle='ui-parts', border=3)
@@ -67,5 +69,5 @@ def handleNotify(event):
         box.createSetting(st.getSystemSetting('main-hide-title'))
         box.createSetting(st.getSystemSetting('main-hide-help'))
         
-        box.createText('restart-required').setSmallStyle()
+        box.createText('restart-required', align=wg.Text.RIGHT).setSmallStyle()
         
