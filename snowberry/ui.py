@@ -43,8 +43,8 @@ import logger
 from widgets import uniConv
 
 
-SETTING_WEIGHT_LEFT = 10
-SETTING_WEIGHT_RIGHT = 15
+SETTING_WEIGHT_LEFT = 1
+SETTING_WEIGHT_RIGHT = 2
 
 # Border widths in areas.
 if host.isWindows():
@@ -1377,7 +1377,7 @@ class MainPanel (wx.Panel):
 
 
 INITIAL_SASH_POS = 210
-INITIAL_PROFILE_SASH_POS = 230
+INITIAL_PROFILE_SASH_POS = 200
 
 if st.isDefined('main-split-position'):
     INITIAL_SASH_POS = st.getSystemInteger('main-split-position')
@@ -1428,12 +1428,14 @@ class MainFrame (wx.Frame):
         if USE_HELP_AREA:
             # The help area is in a splitter.
             self.splitter = wx.SplitterWindow(self, SPLITTER_ID,
-                                              style=wx.SP_3DSASH)
+                                              style=wx.SP_3DSASH |
+                                              wx.SP_NO_XP_THEME)
             self.splitter.SetMinimumPaneSize(10)
             parentWin = self.splitter
 
         self.profSplitter = wx.SplitterWindow(parentWin, PROF_SPLITTER_ID,
-                                              style=wx.SP_3DSASH)
+                                              style=wx.SP_3DSASH |
+                                              wx.SP_NO_XP_THEME)
         self.profSplitter.SetMinimumPaneSize(100)
 
         # Profile panel.
@@ -1537,10 +1539,10 @@ class MainFrame (wx.Frame):
         #self.Show()
         
         if not host.isMac(): 
-            self.mainPanel.GetSizer().Fit(self)
+            self.mainPanel.GetSizer().Fit(self.mainPanel)
 
         # The main panel's sizer does not account for the help panel.
-        if host.isUnix() or host.isWindows():
+        if host.isUnix(): # or host.isWindows():
             windowSize = self.GetSizeTuple()
             self.SetSize((windowSize[0] + INITIAL_SASH_POS, windowSize[1]))
 
