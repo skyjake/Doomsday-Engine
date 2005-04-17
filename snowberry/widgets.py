@@ -50,7 +50,7 @@ def uniConv(str):
         # Don't do Unicode on Windows.
         return str
     else:
-        return str.decode('iso-8859-1')
+        return str.decode(host.getEncoding())
 
 
 def uniDeconv(str):
@@ -64,7 +64,7 @@ def uniDeconv(str):
         # Don't do Unicode on Windows.
         return str
     else:
-        return str.encode('iso-8859-1')
+        return str.encode(host.getEncoding())
     
 
 # A Windows kludge: background colour for tabs and the controls in them.

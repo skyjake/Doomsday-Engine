@@ -48,3 +48,12 @@ def isUnix():
     @return True, if the operating system is Unix.
     """
     return not isWindows() and not isMac()
+    
+    
+def getEncoding():
+    """Returns the character encoding."""
+    
+    if isMac():
+        return "iso-8859-1" #"mac-roman"
+    else:
+        return "iso-8859-1"
