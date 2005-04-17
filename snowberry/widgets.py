@@ -51,6 +51,20 @@ def uniConv(str):
         return str
     else:
         return str.decode('iso-8859-1')
+
+
+def uniDeconv(str):
+    """Encode Unicode back to local character encoding.
+
+    @param str  Unicode string.
+    
+    @return String.
+    """
+    if host.isWindows():
+        # Don't do Unicode on Windows.
+        return str
+    else:
+        return str.encode('iso-8859-1')
     
 
 # A Windows kludge: background colour for tabs and the controls in them.
@@ -778,7 +792,7 @@ class TextField (Widget):
 
     def getText(self):
         """Return the text in the text field."""
-        return self.getWxWidget().GetValue()
+        return uniDeconv(self.getWxWidget().GetValue())
 
     def setText(self, text):
         self.willNotify = False
