@@ -355,6 +355,8 @@ sound-driver: Sound driver
 sound-driver-ds8: Built-in (DirectSound 8)
 sound-driver-ds6: Compatible (DirectSound 6)
 sound-driver-a3d: Aureal A3D
+sound-driver-sdlmixer: SDL_mixer
+sound-driver-openal: OpenAL
 sound-driver-dummy: Dummy (no sound)
 
 sound-channels: Sound channels
@@ -385,6 +387,9 @@ new-addon-path: +
 delete-addon-path: -
 
 ui-parts: User Interface
+main-hide-title: Hide title banner
+main-hide-help: Hide help panel
+
 restart-required: Changes take effect after restarting.
 
 #
