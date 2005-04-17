@@ -33,9 +33,21 @@ import host, events
 
 def isHomeless():
     """Homeless setup means that Snowberry uses the main installation
-    directory for user data."""
-    
-    return '-nohome' in sys.argv
+    directory for user data.  In Windows, the default is homeless
+    mode."""
+
+    noHome = '-nohome' in sys.argv
+    useHome = '-home' in sys.argv
+
+    # The default.
+    if useHome:
+        return False
+
+    if noHome:
+        return True
+
+    # The default is homeless in Windows.
+    return host.isWindows()
 
 
 # Directory Type constants to be used with getSystemPath() and
