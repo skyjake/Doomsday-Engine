@@ -20,7 +20,7 @@
 
 ## @file preferences.py Preferences dialog
 
-import ui, events, language
+import ui, events, language, paths
 import widgets as wg
 import settings as st
 
@@ -49,18 +49,43 @@ def handleNotify(event):
         box = area.createArea(boxedWithTitle='addon-paths', border=3)
         box.setWeight(0)
         box.createText('addon-paths-info')
-        box.setWeight(2)
         pathList = box.createList('addon-paths-list')
+        pathList.setMinSize(100, 90)
+
+        # Insert the current custom paths into the list.
+        for p in paths.getAddonPaths():
+            pathList.addItem(p)
+
+        def addAddonPath():
+            selection = ui.chooseFolder('addon-paths-add-prompt', '')
+            if selection:
+                pathList.addItem(selection)
+                pathList.selectItem(selection)
+                paths.addAddonPath(selection)
+
+        def removeAddonPath():
+            selection = pathList.getSelectedItem()
+            if selection:
+                pathList.removeItem(selection)
+                paths.removeAddonPath(selection)
         
-        box.setWeight(1)
+        box.setWeight(0)
         commands = box.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
         commands.setWeight(0)
-        commands.createButton('new-addon-path', wg.Button.STYLE_MINI)
-        commands.createButton('delete-addon-path', wg.Button.STYLE_MINI)
+
+        # Button for adding new paths.
+        button = commands.createButton('new-addon-path', wg.Button.STYLE_MINI)
+        button.addReaction(addAddonPath)
+        
+        # Button for removing a path.
+        button = commands.createButton('delete-addon-path',
+                                       wg.Button.STYLE_MINI)
+        button.addReaction(removeAddonPath)
+        
         commands.setExpanding(False)
         commands.setWeight(1)
-        commands.createText('restart-required',
-                            align=wg.Text.RIGHT).setSmallStyle()
+        commands.createText('restart-required', align=wg.Text.RIGHT
+                            ).setSmallStyle()
         
         # Checkboxes for hiding parts of the UI.
         box = area.createArea(boxedWithTitle='ui-parts', border=3)

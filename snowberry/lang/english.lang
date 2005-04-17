@@ -385,6 +385,7 @@ addon-paths: Custom Addon Folders
 addon-paths-info: Additional folders to load addons from:
 new-addon-path: +
 delete-addon-path: -
+addon-paths-add-prompt: Add Custom Addon Path
 
 ui-parts: User Interface
 main-hide-title: Hide title banner

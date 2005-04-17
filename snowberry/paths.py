@@ -295,6 +295,15 @@ def addAddonPath(path):
         addonPaths.append(path)
 
 
+def removeAddonPath(path):
+    """Remove a custom directory for addons.
+
+    @param path  Absolute path of the custom addons directory.
+    """
+    if path in addonPaths:
+        addonPaths.remove(path)
+
+
 def getAddonPaths():
     """Returns all the custom addon paths.
 

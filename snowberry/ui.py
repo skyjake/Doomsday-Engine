@@ -40,6 +40,7 @@ import host, events, widgets, language, paths
 import profiles as pr
 import settings as st
 import logger
+from widgets import uniConv
 
 
 # Optional areas.
@@ -1026,7 +1027,7 @@ class AreaDialog (wx.Dialog):
     """AreaDialog implements a wxDialog that has an Area inside it."""
 
     def __init__(self, parent, wxId, id, size, align=Area.ALIGN_VERTICAL):
-        wx.Dialog.__init__(self, parent, wxId, language.translate(id),
+        wx.Dialog.__init__(self, parent, wxId, uniConv(language.translate(id)),
                            style=(wx.RESIZE_BORDER | wx.CLOSE_BOX |
                                   wx.CAPTION))
         self.dialogId = id

@@ -38,6 +38,21 @@ import addons as ao
 import profiles as pr
 import settings as st
 
+
+def uniConv(str):
+    """Decode character encoding to Unicode.
+
+    @param str  String in local encoding.
+    
+    @return Unicode string.
+    """
+    if host.isWindows():
+        # Don't do Unicode on Windows.
+        return str
+    else:
+        return str.decode('iso-8859-1')
+    
+
 # A Windows kludge: background colour for tabs and the controls in them.
 tabBgColour = wx.Colour(250, 250, 250)
 #st.getSystemInteger('tab-background-red'),
@@ -273,7 +288,8 @@ class Widget:
                 wxId = idCounter
                 idCounter += 1
                 self.commandMap[wxId] = itemCommand
-                menu.Append(wxId, language.translate('menu-' + itemId))
+                menu.Append(wxId,
+                            uniConv(language.translate('menu-' + itemId)))
                 wx.EVT_MENU(self.getWxWidget(), wxId, self.onPopupCommand)
 
             # Display the menu.  The callback gets called during this.
@@ -463,9 +479,11 @@ class Button (Widget):
     def __init__(self, parent, wxId, id, style):
         # Create a wxButton of the appropriate type.
         if style != Button.STYLE_MINI:
-            widget = wx.Button(parent, wxId, language.translate(id))
+            widget = wx.Button(parent, wxId,
+                               uniConv(language.translate(id)))
         else:
-            widget = wx.ToggleButton(parent, wxId, language.translate(id))
+            widget = wx.ToggleButton(parent, wxId,
+                                     uniConv(language.translate(id)))
 
         # Default buttons are usually a bit different visually.
         if style == Button.STYLE_DEFAULT:
@@ -497,7 +515,7 @@ class Button (Widget):
             wx.EVT_TOGGLEBUTTON(parent, wxId, self.onToggle)
 
     def retranslate(self):
-        self.getWxWidget().SetLabel(language.translate(self.widgetId))
+        self.getWxWidget().SetLabel(uniConv(language.translate(self.widgetId)))
 
     def onClick(self, ev):
         """Handle a wxWidgets button click event."""
@@ -522,7 +540,7 @@ class CheckBox (Widget):
 
     def __init__(self, parent, wxId, label, isChecked):
         Widget.__init__(self, wx.CheckBox(parent, wxId,
-                                          language.translate(label),
+                                          uniConv(language.translate(label)),
                                           style=wx.CHK_3STATE |
                                           wx.CHK_ALLOW_3RD_STATE_FOR_USER))
         self.widgetId = label
@@ -625,6 +643,11 @@ class CheckBox (Widget):
 
                 self.updateState()
 
+    def retranslate(self):
+        if self.widgetId:
+            self.getWxWidget().SetLabel(
+                uniConv(language.translate(self.widgetId)))
+
 
 class RadioButton (Widget):
     """A radio button widget."""
@@ -694,7 +717,7 @@ class Text (Widget):
             styleFlags |= wx.ALIGN_RIGHT
             
         Widget.__init__(self, MyStaticText(parent, wxId,
-                                           self.__prepareText(),
+                                           uniConv(self.__prepareText()),
                                            style = styleFlags |
                                            wx.ST_NO_AUTORESIZE))
         self.setNormalStyle()
@@ -714,7 +737,7 @@ class Text (Widget):
 
     def setText(self, text):
         "Set new untranslated content into the text widget."
-        self.getWxWidget().SetLabel(text)
+        self.getWxWidget().SetLabel(uniConv(text))
 
     def onClick(self, ev):
         """Clicking a label causes a focus request to be sent."""
@@ -865,8 +888,8 @@ class FormattedText (Widget):
             # Break it up if too long lines detected.
             brokenText = breakLongLines(text, 70)
             
-            Widget.__init__(self, fancy.StaticFancyText(parent, wxId,
-                                                        brokenText))
+            Widget.__init__(self, fancy.StaticFancyText(
+                parent, wxId, uniConv(brokenText)))
 
     def setText(self, formattedText):
         "Set new HTML content into the formatted text widget."
@@ -899,9 +922,9 @@ class FormattedText (Widget):
             #                + formattedText + '</body>'
         
             if fontElem == None:
-                w.SetPage(formattedText)
+                w.SetPage(uniConv(formattedText))
             else:
-                w.SetPage(fontElem + formattedText + '</font>')
+                w.SetPage(uniConv(fontElem + formattedText + '</font>'))
 
     def setSystemBackground(self):
         """Use the window background colour as the background colour
@@ -1118,13 +1141,29 @@ class List (Widget):
         @param identifier Identifier of the item.
         """
         w = self.getWxWidget()
-        w.Append(language.translate(identifier))
+        if language.isDefined(identifier):
+            visibleText = language.translate(identifier)
+        else:
+            visibleText = identifier
+        w.Append(visibleText)
         self.items.append(identifier)
 
         # In a checklistbox, the items can be checked.
         if self.style == List.STYLE_CHECKBOX:
             if isChecked:
                 w.Check(w.GetCount() - 1)
+
+    def removeItem(self, identifier):
+        """Remove an item from the listbox.
+
+        @param identifier  Identifier of the item to remove.
+        """
+        w = self.getWxWidget()
+        for i in range(len(self.items)):
+            if identifier == self.items[i]:
+                w.Delete(i)
+                self.items.remove(identifier)
+                break
 
     def addItemWithColumns(self, identifier, *columns):
         w = self.getWxWidget()
@@ -1325,7 +1364,7 @@ class DropList (Widget):
         if len(itemText) > 30:
             return '...' + itemText[-30:]
 
-        return itemText
+        return uniConv(itemText)
 
     def retranslate(self):
         """Update the text of the items in the drop list. Preserve
@@ -1451,7 +1490,7 @@ class FormattedList (Widget):
         self.items = []
         self.__updateItemCount()
 
-    def addItem(self, itemId, itemText, toIndex=None):
+    def addItem(self, itemId, rawItemText, toIndex=None):
         """Add a new item into the formatted list box.  No translation
         is done.  Instead, the provided item text is displayed using
         HTML formatting.
@@ -1464,6 +1503,8 @@ class FormattedList (Widget):
         @param toIndex Optional index where the item should be placed.
         If None, the item is added to the end of the list.
         """
+        itemText = uniConv(rawItemText)
+        
         # If this item identifier already exists, update its
         # description without making any further changes.
         for i in range(len(self.items)):
@@ -2036,10 +2077,11 @@ class MyTreeCtrl (wx.TreeCtrl):
     placed below the items that don't have children."""
 
     def __init__(self, parent, wxId):
-        wx.TreeCtrl.__init__(self, parent, wxId, style=(wx.TR_NO_LINES |
-                                                        wx.TR_HAS_BUTTONS |
-                                                        wx.TR_TWIST_BUTTONS |
-                                                        wx.TR_HIDE_ROOT))
+        wx.TreeCtrl.__init__(self, parent, wxId,
+                             style=(wx.TR_NO_LINES |
+                                    wx.TR_HAS_BUTTONS |
+                                    wx.TR_TWIST_BUTTONS |
+                                    wx.TR_HIDE_ROOT))
 
     def OnCompareItems(self, item1, item2):
         """Override this function in the derived class to change the
@@ -2360,7 +2402,7 @@ class Tree (Widget):
             if totalCount == 0:
                 tree.SetItemBold(hier.root, False)
                 tree.SetItemTextColour(hier.root, self.grayColour)
-                tree.SetItemText(hier.root, rootLabel)
+                tree.SetItemText(hier.root, uniConv(rootLabel))
                 tree.Collapse(hier.root)
                 # Expansion of an empty tree should be vetoed.
             else:
@@ -2405,7 +2447,7 @@ class Tree (Widget):
                     elif count == 0:
                         tree.Collapse(item)
                         tree.SetItemTextColour(item, self.grayColour)
-                    tree.SetItemText(item, label)
+                    tree.SetItemText(item, uniConv(label))
 
         # Expand and collapse the roots based on which profile is
         # selected.
