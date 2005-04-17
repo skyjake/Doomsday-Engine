@@ -172,9 +172,10 @@ def handleCommand(event):
             language.translate('uninstall-addon-title'),
             ['no', 'yes'], 'no')
 
-        message = area.createFormattedText()
+        #message = area.createFormattedText()
+        area.setExpanding(True)
         text = language.translate('uninstall-addon-query')
-        message.setText(language.expand(text, language.translate(addon)))
+        area.createRichText(language.expand(text, language.translate(addon)))
 
         if dialog.run() == 'yes':
             ao.uninstall(tree.getSelectedAddon())

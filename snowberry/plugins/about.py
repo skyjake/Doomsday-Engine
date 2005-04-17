@@ -60,7 +60,7 @@ def handleCommand(event):
         content.setWeight(1)
         box = content.createArea(boxedWithTitle='about-credits')
         info = box.createFormattedText()
-        info.setMinSize(300, 200)
+        info.setMinSize(300, 280)
         info.setText(language.translate('about-info'))
         
         dialog.run()

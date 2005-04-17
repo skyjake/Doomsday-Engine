@@ -600,9 +600,10 @@ class CheckBox (Widget):
                     '(' + language.translate('toggle-use-default-value') + \
                     ': ' + language.translate(
                     pr.getDefaults().getValue(self.widgetId).getValue()) + ')')
-                self.indicator.getWxWidget().Show()
+                #self.indicator.getWxWidget().Show()
             else:
-                self.indicator.getWxWidget().Hide()
+                self.indicator.setText('')
+                #self.indicator.getWxWidget().Hide()
 
     def onClick(self, event):
         """Swap through the three states when the check box is clicked."""

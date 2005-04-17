@@ -43,6 +43,14 @@ import logger
 from widgets import uniConv
 
 
+# Border widths in areas.
+if host.isWindows():
+    AREA_BORDER = 2
+    AREA_BORDER_BOXED = 2
+else:
+    AREA_BORDER = 4
+    AREA_BORDER_BOXED = 2
+
 # Optional areas.
 USE_TITLE_AREA = not st.getSystemBoolean('main-hide-title')
 USE_HELP_AREA = not st.getSystemBoolean('main-hide-help')
@@ -696,7 +704,7 @@ class Area (widgets.Widget):
         return widget
 
     def createSetting(self, setting):
-        self.setBorder(4)
+        self.setBorder(AREA_BORDER)
         return self.doCreateSetting(setting)
 
     def doCreateSetting(self, setting, leftWeight=1, rightWeight=2):
@@ -888,7 +896,7 @@ class BoxedArea (Area):
         pass
         
     def createSetting(self, setting):
-        self.setBorder(2)
+        self.setBorder(AREA_BORDER_BOXED)
         return self.doCreateSetting(setting, 19, 40)
 
 
@@ -1351,7 +1359,7 @@ class MainFrame (wx.Frame):
             initialSize = (st.getSystemInteger('main-width'), initialSize[1])
         if st.isDefined('main-height'):
             initialSize = (initialSize[0], st.getSystemInteger('main-height'))
-        
+
         wx.Frame.__init__(self, None, -1, title, size=initialSize)
 
         # Set the icon for the frame.
@@ -1462,11 +1470,11 @@ class MainFrame (wx.Frame):
         self.mainPanel.updateLayout()
         #self.Show()
         
-        if not host.isMac():
+        if not host.isMac(): 
             self.mainPanel.GetSizer().Fit(self)
 
         # The main panel's sizer does not account for the help panel.
-        if host.isUnix():
+        if host.isUnix() or host.isWindows():
             windowSize = self.GetSizeTuple()
             self.SetSize((windowSize[0] + INITIAL_SASH_POS, windowSize[1]))
 
