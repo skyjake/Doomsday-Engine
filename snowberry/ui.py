@@ -184,11 +184,11 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     """
     dialog = createDialog(id, Area.ALIGN_HORIZONTAL)
     area = dialog.getArea()
-    #area.setBackgroundColor(255, 255, 255)
 
     # The Snowberry logo is on the left.
     area.setWeight(0)
-    imageArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0)
+    imageArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0,
+                                backgroundColor=wx.Colour(255, 255, 255))
     imageArea.setWeight(1)
     imageArea.setExpanding(True)
     imageArea.addSpacer()
@@ -199,12 +199,16 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=6)
     contentArea.setWeight(0)
     if titleText != None:
-        title = contentArea.createText('')
+        contentArea.setBorder(0)
+        titleArea = contentArea.createArea(border=6,
+            backgroundColor=wx.Colour(255, 255, 255))
+        contentArea.setBorder(6)
+        title = titleArea.createText('')
         title.setTitleStyle()
         title.setText(titleText)
         title.setMinSize(400, 20)
 
-        contentArea.createLine()
+        #contentArea.createLine()
 
     contentArea.setWeight(1)
     userArea = contentArea.createArea(border=6)
@@ -471,18 +475,29 @@ class Area (widgets.Widget):
         for widget in self.widgets:
             widget.enable(doEnable)
 
-    def createArea(self, alignment=1, border=0, boxedWithTitle=None):
+    def createChildPanel(self):
+        """Create a new wxPanel inside this area's panel.  The new
+        panel can be given to a subarea, whose background color can
+        then be set."""
+
+        return wx.Panel(self.panel, -1)
+        
+    def createArea(self, alignment=1, border=0, boxedWithTitle=None,
+                   backgroundColor=None):
         """Create a sub-area that is a part of the parent area and can
         contain widgets.
 
-        @param alignment Widget alignment inside the sub-area.  Can be
+        @param alignment  Widget alignment inside the sub-area.  Can be
         either ALIGN_VERTICAL or ALIGN_HORIZONTAL.
 
-        @param border Border width for the sub-area (pixels).
+        @param border  Border width for the sub-area (pixels).
 
-        @param boxedWithTitle If you want to enclose the area inside a
+        @param boxedWithTitle  If you want to enclose the area inside a
         box frame, give the identifier of the box title here.  The
         actual label text is the translation of the identifier.
+
+        @param backgroundColor  If specified, the new area will have
+        its own wxPanel with the color as a background color.
 
         @return An Area object that represents the contents of the
         area.
@@ -491,6 +506,9 @@ class Area (widgets.Widget):
         if boxedWithTitle:
             subArea = BoxedArea(boxedWithTitle, self, self.panel,
                                 alignment, border)
+        elif backgroundColor:
+            subArea = ColoredArea(backgroundColor, self, self.panel,
+                                  alignment, border)
         else:
             subArea = Area('', self.panel, alignment, border, self)
 
@@ -900,8 +918,29 @@ class BoxedArea (Area):
         return self.doCreateSetting(setting, 19, 40)
 
 
+class ColoredArea (Area):
+    """ColoredArea uses its own wxPanel so it can have a background
+    color.  In other aspects it works like a regular Area."""
+
+    def __init__(self, color, parentArea, panel, alignment=0, border=0):
+        """Construct a new colored area.  Instances of ColoredArea are
+        always sub-areas."""
+
+        # The ColoredArea uses its own panel.
+        colorPanel = wx.Panel(panel, -1)
+        colorPanel.SetBackgroundColour(color)
+        colorPanel.SetBackgroundStyle(wx.BG_STYLE_COLOUR)
+
+        Area.__init__(self, '', colorPanel, alignment, border, parentArea)
+
+        colorPanel.SetSizer(self.sizer)
+
+    def getWxWidget(self):
+        return self.panel
+
+
 class MultiArea (Area):
-    """A MultiArea contains multiple subareas.  Only one of them will
+    """MultiArea contains multiple subareas.  Only one of them will
     be visible at a time.  All the subareas are visible in the same
     space."""
 
