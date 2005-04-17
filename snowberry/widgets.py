@@ -558,7 +558,10 @@ class CheckBox (Widget):
         self.indicator = indicatorTextWidget
         self.indicator.getWxWidget().SetForegroundColour(
             wx.Colour(170, 170, 170))
+        self.indicator.setSmallStyle()
         self.updateState()
+
+        # Clicking on the indicator will move focus to the setting widget.
         self.indicator.setFocusId(self.widgetId)
 
     def updateState(self):
@@ -568,11 +571,13 @@ class CheckBox (Widget):
         if self.indicator:
             w = self.getWxWidget()
             if w.Get3StateValue() == wx.CHK_UNDETERMINED:
+                self.indicator.setText(
+                    '(' + language.translate('toggle-use-default-value') + \
+                    ': ' + language.translate(
+                    pr.getDefaults().getValue(self.widgetId).getValue()) + ')')
                 self.indicator.getWxWidget().Show()
             else:
                 self.indicator.getWxWidget().Hide()
-
-            #self.indicator.setText(indicator)
 
     def onClick(self, event):
         """Swap through the three states when the check box is clicked."""
@@ -580,6 +585,11 @@ class CheckBox (Widget):
         if self.widgetId:
             w = self.getWxWidget()
             state = w.Get3StateValue()
+
+            if (state == wx.CHK_UNDETERMINED and 
+                pr.getActive() is pr.getDefaults()):
+                state = wx.CHK_UNCHECKED
+                w.Set3StateValue(state)
 
             if state == wx.CHK_CHECKED:
                 pr.getActive().setValue(self.widgetId, 'yes')
@@ -692,7 +702,7 @@ class Text (Widget):
             
         Widget.__init__(self, MyStaticText(parent, wxId,
                                            self.__prepareText(),
-                                           style = styleFlags))
+                                           style = styleFlags | wx.ST_NO_AUTORESIZE))
         self.setNormalStyle()
 
         # When the text is clicked, send a notification.
