@@ -46,7 +46,7 @@ def handleNotify(event):
         area.setBorder(1)
         area.setWeight(0)
 
-        box = area.createArea(boxedWithTitle='addon-paths')
+        box = area.createArea(boxedWithTitle='addon-paths', border=3)
         box.setWeight(0)
         box.createText('addon-paths-info')
         pathList = box.createList('addon-paths-list')
