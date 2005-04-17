@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file preferences.py Preferences dialog
+## @file preferences.py Preferences in the Defaults/Snowberry Settings
 
 import ui, events, language, paths
 import widgets as wg
@@ -46,7 +46,7 @@ def handleNotify(event):
         area.setBorder(1)
         area.setWeight(0)
 
-        box = area.createArea(boxedWithTitle='addon-paths', border=3)
+        box = area.createArea(boxedWithTitle='addon-paths')
         box.setWeight(0)
         box.createText('addon-paths-info')
         pathList = box.createList('addon-paths-list')
@@ -95,4 +95,3 @@ def handleNotify(event):
         box.createSetting(st.getSystemSetting('main-hide-help'))
         
         box.createText('restart-required', align=wg.Text.RIGHT).setSmallStyle()
-        
