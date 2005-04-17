@@ -231,7 +231,8 @@ developer-options-icon: developer
 # Labels for the Summary Tab
 #
 loaded-addons: Loaded Addons
-custom-settings: Customized Settings
+custom-settings = "Customized
+Settings"
 system-settings: System Settings
 summary-run-in-window: run in window
 summary-color-depth-16: 16-bit colors

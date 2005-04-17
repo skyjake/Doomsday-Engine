@@ -43,6 +43,9 @@ import logger
 from widgets import uniConv
 
 
+SETTING_WEIGHT_LEFT = 10
+SETTING_WEIGHT_RIGHT = 15
+
 # Border widths in areas.
 if host.isWindows():
     AREA_BORDER = 2
@@ -725,7 +728,9 @@ class Area (widgets.Widget):
         self.setBorder(AREA_BORDER)
         return self.doCreateSetting(setting)
 
-    def doCreateSetting(self, setting, leftWeight=1, rightWeight=2):
+    def doCreateSetting(self, setting,
+                        leftWeight=SETTING_WEIGHT_LEFT,
+                        rightWeight=SETTING_WEIGHT_RIGHT):
         """Create one or more widgets that can be used to edit the
         value of the specified setting.  Automatically creates a
         subarea that contains all the widgets of the setting.
@@ -915,7 +920,9 @@ class BoxedArea (Area):
         
     def createSetting(self, setting):
         self.setBorder(AREA_BORDER_BOXED)
-        return self.doCreateSetting(setting, 19, 40)
+        #return self.doCreateSetting(setting, 19, 40)
+        return self.doCreateSetting(setting, SETTING_WEIGHT_LEFT * 20 - 1,
+                                    SETTING_WEIGHT_RIGHT * 20)
 
 
 class ColoredArea (Area):
@@ -1303,23 +1310,19 @@ class MainPanel (wx.Panel):
             _newArea( Area(Area.TITLE, titlePanel, Area.ALIGN_HORIZONTAL) )
             bSizer.Add(titlePanel, 0, wx.EXPAND)
 
-        #profSizer = wx.BoxSizer(wx.HORIZONTAL)
         # Profile area.
-        profilePanel = wx.Panel(self, -1, style=wx.NO_BORDER
-                                 | wx.CLIP_CHILDREN)
-        area = Area(Area.PROFILES, profilePanel, Area.ALIGN_VERTICAL, 10)
-        _newArea(area)
-        cSizer.Add(profilePanel, 2, wx.EXPAND)
+        #profilePanel = wx.Panel(self, -1, style=wx.NO_BORDER
+        #                         | wx.CLIP_CHILDREN)
+        #area = Area(Area.PROFILES, profilePanel, Area.ALIGN_VERTICAL, 10)
+        #_newArea(area)
+        #cSizer.Add(profilePanel, 0, wx.EXPAND)
 
-        #self.NOTEBOOK_ID = 9500
-        tabPanel = wx.Panel(self, -1, style=wx.NO_BORDER
-                             | wx.CLIP_CHILDREN)
+        tabPanel = wx.Panel(self, -1,
+                            style=wx.NO_BORDER | wx.CLIP_CHILDREN)
         tabsArea = Area(Area.TABS, tabPanel, Area.ALIGN_VERTICAL, 0)
         _newArea(tabsArea)
 
-        #wx.Notebook(self, self.NOTEBOOK_ID)
         dSizer.Add(tabPanel, 5, wx.EXPAND | wx.ALL, 3)
-        #wx.EVT_NOTEBOOK_PAGE_CHANGED(self, self.NOTEBOOK_ID, self.onTabChange)
 
         # Command area.
         commandPanel = wx.Panel(self, -1, style=wx.NO_BORDER
@@ -1374,9 +1377,14 @@ class MainPanel (wx.Panel):
 
 
 INITIAL_SASH_POS = 210
+INITIAL_PROFILE_SASH_POS = 230
 
 if st.isDefined('main-split-position'):
     INITIAL_SASH_POS = st.getSystemInteger('main-split-position')
+
+if st.isDefined('main-profile-split-position'):
+    INITIAL_PROFILE_SASH_POS = st.getSystemInteger(
+        'main-profile-split-position')
 
 
 class MainFrame (wx.Frame):
@@ -1409,9 +1417,11 @@ class MainFrame (wx.Frame):
         #self.Hide()
 
         SPLITTER_ID = 9501
+        PROF_SPLITTER_ID = 9502
         self.splitter = None
+        self.profSplitter = None
         
-        # The parentWin is where the main panel and the help panel 
+        # The parentWin is where the profSplitter and the help panel
         # are inside.
         parentWin = self
 
@@ -1422,9 +1432,21 @@ class MainFrame (wx.Frame):
             self.splitter.SetMinimumPaneSize(10)
             parentWin = self.splitter
 
-        self.mainPanel = MainPanel(parentWin)
+        self.profSplitter = wx.SplitterWindow(parentWin, PROF_SPLITTER_ID,
+                                              style=wx.SP_3DSASH)
+        self.profSplitter.SetMinimumPaneSize(100)
+
+        # Profile panel.
+        profilePanel = wx.Panel(self.profSplitter, -1, style=wx.NO_BORDER
+                                | wx.CLIP_CHILDREN)
+        area = Area(Area.PROFILES, profilePanel, Area.ALIGN_VERTICAL, 10)
+        _newArea(area)
+
+        # Create panels inside the profile splitter.
+        self.mainPanel = MainPanel(self.profSplitter)
 
         self.splitPos = None
+        self.profSplitPos = INITIAL_PROFILE_SASH_POS
 
         # Create the help area.
         if self.splitter:
@@ -1434,14 +1456,19 @@ class MainFrame (wx.Frame):
             _newArea( Area(Area.HELP, self.helpPanel, Area.ALIGN_VERTICAL,
                            border=4) )
             # Init the splitter.
-            self.splitter.SplitVertically(self.mainPanel, self.helpPanel,
+            self.splitter.SplitVertically(self.profSplitter, self.helpPanel,
                                           -INITIAL_SASH_POS)
         else:
             self.helpPanel = None
 
+        self.profSplitter.SplitVertically(profilePanel, self.mainPanel,
+                                          self.profSplitPos)
+
         # Listen for changes in the sash position.
         wx.EVT_SPLITTER_SASH_POS_CHANGED(self, SPLITTER_ID,
                                          self.onSplitChange)
+        wx.EVT_SPLITTER_SASH_POS_CHANGED(self, PROF_SPLITTER_ID,
+                                         self.onProfSplitChange)
 
         # The main panel should be globally accessible.
         global mainPanel
@@ -1540,6 +1567,11 @@ class MainFrame (wx.Frame):
         if self.splitter:
             self.splitPos = self.GetClientSizeTuple()[0] - ev.GetSashPosition()
 
+    def onProfSplitChange(self, ev):
+        """Update the profile splitter anchor position."""
+
+        self.profSplitPos = ev.GetSashPosition()
+
     def onWindowClose(self, ev):
         """Handle the window close event that is sent when the user
         tries to close the main window.  Broadcasts a 'quit'
@@ -1562,6 +1594,7 @@ class MainFrame (wx.Frame):
             f.write('  width = %i\n  height = %i\n' % winSize)
             if self.splitPos != None:
                 f.write('  split-position = %i\n' % self.splitPos)
+            f.write('  profile-split-position = %i\n' % self.profSplitPos)
             f.write(')\n')
         except: 
             # Window size not saved.
