@@ -181,6 +181,11 @@ class Profile:
         """
         global defaults
 
+        # If this is a system setting, let's consult the system
+        # configuration.
+        if st.isDefined(id):
+            return Value(id, st.getSystemString(id))
+
         # First look in the Values in this profile.
         for v in self.values:
             if v.getId() == id:
@@ -213,6 +218,10 @@ class Profile:
         @param doNotify If True, a notification event will be sent.
         """
         value = None
+
+        if st.isDefined(settingId):
+            # System settings are not saved into profiles.
+            return
 
         # Change the value of an existing Value.
         for v in self.values:

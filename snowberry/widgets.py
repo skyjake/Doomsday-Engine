@@ -520,11 +520,6 @@ class Button (Widget):
 class CheckBox (Widget):
     """A check box widget."""
 
-    # Check box states:
-    STATE_INACTIVE = 0
-    STATE_ACTIVE = 1
-    STATE_DEFAULT = 2
-
     def __init__(self, parent, wxId, label, isChecked):
         Widget.__init__(self, wx.CheckBox(parent, wxId,
                                           language.translate(label),
@@ -532,14 +527,12 @@ class CheckBox (Widget):
                                           wx.CHK_ALLOW_3RD_STATE_FOR_USER))
         self.widgetId = label
 
-        #if isChecked:
-        #    self.state = CheckBox.STATE_ACTIVE
-        #else:
-        #    self.state = CheckBox.STATE_INACTIVE
-
         # Set the initial value of the checkbox.
         w = self.getWxWidget()
-        w.SetValue(isChecked)
+        if isChecked:
+            w.Set3StateValue(wx.CHK_CHECKED)
+        else:
+            w.Set3StateValue(wx.CHK_UNCHECKED)
 
         # We want focus notifications.
         self.setFocusId(self.widgetId)
@@ -618,7 +611,7 @@ class CheckBox (Widget):
         if self.widgetId:
             if event.hasId('active-profile-changed'):
                 w = self.getWxWidget()
-                
+
                 # Get the value for the setting as it has been defined
                 # in the currently active profile.
                 value = pr.getActive().getValue(self.widgetId, False)
@@ -702,7 +695,8 @@ class Text (Widget):
             
         Widget.__init__(self, MyStaticText(parent, wxId,
                                            self.__prepareText(),
-                                           style = styleFlags | wx.ST_NO_AUTORESIZE))
+                                           style = styleFlags |
+                                           wx.ST_NO_AUTORESIZE))
         self.setNormalStyle()
 
         # When the text is clicked, send a notification.
@@ -725,13 +719,12 @@ class Text (Widget):
     def onClick(self, ev):
         """Clicking a label causes a focus request to be sent."""
         
-        #myId = self.widgetId
-        #if not myId:
-        #    # Use focus ID if this widget has no setting.
-        #    myId = self.focusId
+        focusId = self.focusId
+        if not focusId:
+            focusId = self.widgetId
         
-        if self.focusId:
-            event = events.FocusRequestNotify(self.focusId)
+        if focusId:
+            event = events.FocusRequestNotify(focusId)
             events.send(event)
 
         ev.Skip()
@@ -871,8 +864,6 @@ class FormattedText (Widget):
 
             # Break it up if too long lines detected.
             brokenText = breakLongLines(text, 70)
-            
-            print brokenText
             
             Widget.__init__(self, fancy.StaticFancyText(parent, wxId,
                                                         brokenText))

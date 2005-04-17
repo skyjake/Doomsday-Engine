@@ -22,35 +22,45 @@
 
 import ui, events, language
 import widgets as wg
+import settings as st
+from ui import Area
 
 
 def init():
-    # Register a listener for detecting the completion of Snowberry
-    # startup.
-    events.addNotifyListener(handleNotify)
+    # Create the About button in the Preferences Command area.
+    area = ui.getArea(Area.PREFCOMMAND)
+    area.createButton('about')
 
     # Listen for the About button.
     events.addCommandListener(handleCommand)
 
 
-def handleNotify(event):
-    """Handle notifications."""
+def handleCommand(event):
+    """Handle the About command and display the About Snowberry
+    dialog.
 
-    if (event.hasId('populating-area') and \
-        event.getAreaId() == 'general-options'):
-        # Create the About button.
-        area = event.getArea()
-        area.setExpanding(False)
-        area.setBorder(10)
-        area.createButton('about')
+    @param event  An events.Command event.
+    """
+
+    if event.hasId('about'):
+        # Create the About dialog and show it.
+        dialog, area = ui.createButtonDialog(
+            'about-dialog', language.translate('about-title'), ['ok'], 'ok')
+
+        content = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0)
+        content.setWeight(0)
+
+        content.createText('').setText(
+            language.translate('about-version') + ' ' +
+            st.getSystemString('snowberry-version'))
+
+        content.createText('about-subtitle')
+
+        content.setBorder(6)
+        content.setWeight(1)
+        box = content.createArea(boxedWithTitle='about-credits')
+        info = box.createFormattedText()
+        info.setMinSize(300, 200)
+        info.setText(language.translate('about-info'))
         
-        #area.setExpanding(False)
-        #entry = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)
-        #entry.setBorder(10)
-        #entry.setExpanding(False)
-
-        # The name of the profile.
-        #entry.setWeight(0)
-        #entry.createText('about-button-help')
-        #entry.setWeight(0)
-        #entry.createButton('about')
+        dialog.run()

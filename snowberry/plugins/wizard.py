@@ -31,6 +31,10 @@ HAS_BEEN_RUN = 'setup-wizard-shown'
 
 
 def init():
+    # Create the Rerun button in the Preferences Command area.
+    area = ui.getArea(ui.Area.PREFCOMMAND)
+    area.createButton('run-setup-wizard')
+    
     # Register a listener for detecting the completion of Snowberry
     # startup.
     events.addNotifyListener(handleNotify)
@@ -42,15 +46,15 @@ def init():
 def handleNotify(event):
     """Handle notifications."""
 
-    if (event.hasId('populating-area') and 
-        event.getAreaId() == 'general-options'):
-        # Create the re-run button.
-        area = event.getArea()
-        area.setExpanding(False)
-        area.setBorder(10)
-        area.createButton('run-setup-wizard')
+    #if (event.hasId('populating-area') and 
+    #    event.getAreaId() == 'general-options'):
+    #    # Create the re-run button.
+    #    area = event.getArea()
+    #    area.setExpanding(False)
+    #    area.setBorder(10)
+    #    area.createButton('run-setup-wizard')
 
-    elif event.hasId('init-done'):
+    if event.hasId('init-done'):
         # If this is the first launch ever, we'll display the wizard.
         if not pr.getDefaults().getValue(HAS_BEEN_RUN):
             runWizard()

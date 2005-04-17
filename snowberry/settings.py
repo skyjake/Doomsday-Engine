@@ -30,13 +30,14 @@
 ## components and settings.
 
 # The addons may contain extra settings.
-import os, re
+import os, re, string
 import logger
 import host
 import language
 import paths, parser
 import addons as ao
 import profiles as pr
+import events
 
 # Dictionary for system configuration (fonts, buttons sizes).
 sysConfig = {}
@@ -44,8 +45,11 @@ sysConfig = {}
 # Dictionary for all known components.
 allComponents = {}
 
-# Dictionary for all known settings.
+# Dictionary for all normal settings (no system settings).
 allSettings = {}
+
+# Dictionary for system settings.
+systemSettings = {}
 
 # Setting creation order counter.
 creationOrder = 1
@@ -407,7 +411,7 @@ def _newComponent(component):
     """Add a new Component to the allComponents dictionary."""
     # Dictionaries are good because they don't allow duplicate IDs.
     allComponents[component.getId()] = component
-
+    
 
 def getComponent(id):
     """Returns the component with the specified identifier."""
@@ -440,9 +444,27 @@ def _newSetting(setting):
     return setting
 
 
+def _newSystemSetting(systemSetting):
+    """Add a new Setting to the systemSettings dictionary.
+
+    @param systemSetting A Setting object.
+
+    @return The same Setting object that was given as a parameter.
+    """
+    # Dictionaries are good because they don't allow duplicate IDs.
+    systemSettings[systemSetting.getId()] = systemSetting
+    sysConfig[systemSetting.getId()] = systemSetting.getDefault()
+    return systemSetting
+
+
 def getSetting(id):
     """Returns the setting with the specified identifier."""
     return allSettings[id]
+
+
+def getSystemSetting(id):
+    """Returns the system setting with the specified identifier."""
+    return systemSettings[id]
 
 
 def getSettings(func=None):
@@ -773,7 +795,45 @@ def readConfigPath(path):
         if paths.hasExtension('conf', name):
             # Load this configuration file.
             readConfigFile(os.path.join(path, name))
-            
+
+
+def handleNotify(event):
+    """Handle notifications.
+
+    @param event An events.Notify event.
+    """
+    if event.hasId('quit'):
+        # The system settings aren't part of any profile, so they need
+        # to be saved separately.
+        saveSystemConfigSettings()
+
+    elif event.hasId('widget-edited'):
+        # When system settings are modified, we immediately update the
+        # sysConfig dictionary here.
+        if isDefined(event.getWidget()):
+            sysConfig[event.getWidget()] = event.getValue()
+
+
+def saveSystemConfigSettings():
+    """Write the values of the system config settings into a
+    configuration file called <tt>system.conf</tt>."""
+
+    fileName = os.path.join(paths.getUserPath(paths.CONF), 'system.conf')
+    try:
+        f = file(fileName, 'w')
+        f.write('# This file is generated automatically.\n')
+
+        for s in systemSettings:
+            parts = s.split('-')
+            f.write('configure %s ( ' % parts[0])
+            f.write('%s = ' % string.join(parts[1:], '-'))
+            f.write('%s )\n' % getSystemString(s))
+
+    except: 
+        # Paths not saved.
+        import traceback
+        traceback.print_exc()
+
 
 #
 # Module Initialization:
@@ -790,6 +850,12 @@ quitLaunch = ToggleSetting('quit-on-launch', '', 'yes', '')
 quitLaunch.setGroup('general-options')
 _newSetting(quitLaunch)
 
+# System settings.
+tog = ToggleSetting('main-hide-title', '', 'no', '')
+_newSystemSetting(tog)
+tog = ToggleSetting('main-hide-help', '', 'no', '')
+_newSystemSetting(tog)
+
 # Load all .conf files.
 for path in paths.listPaths(paths.CONF):
     readConfigPath(path)
@@ -797,3 +863,6 @@ for path in paths.listPaths(paths.CONF):
 # Any custom paths?
 if isDefined('doomsday-runtime'):
     paths.setCustomPath(paths.RUNTIME, getSystemString('doomsday-runtime'))
+
+# Listen for the quit notification so we can save some settings.
+events.addNotifyListener(handleNotify)

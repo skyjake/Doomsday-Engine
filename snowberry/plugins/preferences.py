@@ -22,6 +22,7 @@
 
 import ui, events, language
 import widgets as wg
+import settings as st
 
 
 def init():
@@ -38,6 +39,7 @@ def handleNotify(event):
 
     if (event.hasId('populating-area') and 
         event.getAreaId() == 'general-options'):
+
         # Create the addon paths list.
         area = event.getArea()
         area.setExpanding(True)
@@ -47,28 +49,23 @@ def handleNotify(event):
         box = area.createArea(boxedWithTitle='addon-paths', border=3)
         box.setWeight(0)
         box.createText('addon-paths-info')
+        box.setWeight(2)
+        pathList = box.createList('addon-paths-list')
+        
         box.setWeight(1)
-        box.createList('addon-paths-list')
-
-        box.setWeight(0)
         commands = box.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
         commands.setWeight(0)
         commands.createButton('new-addon-path', wg.Button.STYLE_MINI)
         commands.createButton('delete-addon-path', wg.Button.STYLE_MINI)
-        #commands.setWeight(1)
-        #commands.addSpacer()
+        commands.setExpanding(False)
+        commands.createText('restart-required').setSmallStyle()
         
-        #area.setExpanding(False)
-        #area.setBorder(10)
-        #area.createButton('preferences')
-        
-        #area.setExpanding(False)
-        #entry = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)
-        #entry.setBorder(10)
-        #entry.setExpanding(False)
+        # Checkboxes for hiding parts of the UI.
+        box = area.createArea(boxedWithTitle='ui-parts', border=3)
+        box.setWeight(0)
 
-        # The name of the profile.
-        #entry.setWeight(0)
-        #entry.createText('about-button-help')
-        #entry.setWeight(0)
-        #entry.createButton('about')
+        box.createSetting(st.getSystemSetting('main-hide-title'))
+        box.createSetting(st.getSystemSetting('main-hide-help'))
+        
+        box.createText('restart-required').setSmallStyle()
+        

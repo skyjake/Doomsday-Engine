@@ -202,10 +202,11 @@ def generateOptions(profile):
         cmdLine.append(st.getSystemString('common-options'))
 
     # All profiles use the same runtime directory.
-    userPath = paths.getUserPath(paths.RUNTIME)
-    basePath = os.path.abspath(st.getSystemString('doomsday-base'))
+    if st.isDefined('doomsday-base'):
+        basePath = os.path.abspath(st.getSystemString('doomsday-base'))
+        cmdLine.append('-basedir ' + paths.quote(basePath))
 
-    cmdLine.append('-basedir ' + paths.quote(basePath))
+    userPath = paths.getUserPath(paths.RUNTIME)
     cmdLine.append('-userdir ' + paths.quote(userPath))
 
     # Get the command line options from each setting.

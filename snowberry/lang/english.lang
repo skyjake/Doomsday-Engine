@@ -18,7 +18,7 @@ language-english: English (US)
 #
 # Setup Wizard
 #
-run-setup-wizard: Show Setup Wizard
+run-setup-wizard: Setup Wizard
 setup-wizard: Setup Wizard
 wizard-language: Language
 wizard-language-explanation = "The Snowberry user interface supports localization.
@@ -48,7 +48,7 @@ about-title: Snowberry
 about-subtitle: Extensible Launcher for the Doomsday Engine
 about-version: Version
 about-credits: Details and Credits
-about-info = "<tt>http://deng.sourceforge.net/</tt>
+about-info = "<b>Website:</b><br><tt>http://deng.sourceforge.net/</tt>
 <p>This program is distributed under the <i>GNU General Public
 License.</i>
 <p>
@@ -175,7 +175,7 @@ install-addon: +
 uninstall-addon: -
 load-order: Load Order
 addon-settings: Settings
-about: About Snowberry
+about: About
 preferences: Preferences
 
 #
@@ -309,7 +309,7 @@ window-size-1400x1050: 1400 x 1050
 window-size-1600x1200: 1600 x 1200
 window-size-custom: Custom
 
-custom-window-group: Custom window
+custom-window-group: Custom Window
 window-width: Width
 window-height: Height
 center-window: Center window
@@ -336,7 +336,7 @@ texture-depth: Texture color depth
 texture-depth-16: 16-bit
 texture-depth-32: 32-bit
 
-texture-options: Texture options
+texture-options: Texture Options
 extres-with-pwad: Allow external with PWADs
 anisotropic-filter: Anisotropic filtering
 paletted-textures: Paletted textures
@@ -364,7 +364,7 @@ disable-music: Disable music
 disable-primary-buffer: Don't set primary buffer format
 disable-fmod: Disable FMOD
 
-eax-options: EAX options
+eax-options: EAX Options
 disable-eax: Disable EAX
 ignore-eax-errors: Ignore EAX errors
 
@@ -383,6 +383,9 @@ addon-paths: Custom Addon Folders
 addon-paths-info: Additional folders to load addons from:
 new-addon-path: +
 delete-addon-path: -
+
+ui-parts: User Interface
+restart-required: Changes take effect after restarting.
 
 #
 # Help

@@ -43,8 +43,8 @@ import logger
 
 
 # Optional areas.
-USE_TITLE_AREA = not st.getSystemBoolean('hide-area-title')
-USE_HELP_AREA = not st.getSystemBoolean('hide-area-help')
+USE_TITLE_AREA = not st.getSystemBoolean('main-hide-title')
+USE_HELP_AREA = not st.getSystemBoolean('main-hide-help')
 
 # An array of UI areas.
 uiAreas = {}
@@ -264,6 +264,7 @@ class Area (widgets.Widget):
     TITLE = 'main-title'
     PROFILES = 'main-profiles'
     COMMAND = 'main-command'
+    PREFCOMMAND = 'main-pref-command'
     TABS = 'main-tabs'
     HELP = 'main-help'
 
@@ -714,10 +715,6 @@ class Area (widgets.Widget):
         # All settings have a similarly positioned label on the left
         # side.
         area.setWeight(leftWeight)
-        #label = area.createArea(alignment = Area.ALIGN_HORIZONTAL, border=0)
-        #label.setWeight(1)
-        #label.addSpacer()
-        #label.setWeight(0)
 
         if setting.getType() != 'toggle':       
             area.createText(setting.getId(), ':', 16, widgets.Text.RIGHT)
@@ -734,7 +731,11 @@ class Area (widgets.Widget):
 
         if setting.getType() == 'toggle':
             # Toggle settings have just a checkbox.
-            check = area.createCheckBox(setting.getId(), False)
+            isChecked = False
+            if pr.getActive():
+                isChecked = (pr.getActive().getValue(setting.getId()).
+                             getValue() == 'yes')
+            check = area.createCheckBox(setting.getId(), isChecked)
             check.setDefaultIndicator(label)
             
             #drop = area.createDropList(setting.getId())
@@ -1242,6 +1243,7 @@ class MainPanel (wx.Panel):
         bSizer = wx.BoxSizer(wx.VERTICAL)
         cSizer = wx.BoxSizer(wx.HORIZONTAL)
         dSizer = wx.BoxSizer(wx.VERTICAL)
+        eSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.verticalSizer = bSizer
 
@@ -1281,7 +1283,18 @@ class MainPanel (wx.Panel):
         area.setWeight(0)
         _newArea(area)
 
-        dSizer.Add(commandPanel, 0, wx.EXPAND)
+        # Preferences command area.
+        prefCommandPanel = wx.Panel(self, -1, style=wx.NO_BORDER |
+                                    wx.CLIP_CHILDREN)
+        area = Area(Area.PREFCOMMAND, prefCommandPanel,
+                    Area.ALIGN_HORIZONTAL, 10)
+        area.setExpanding(False)
+        area.setWeight(0)
+        _newArea(area)
+
+        eSizer.Add(prefCommandPanel, 0, wx.EXPAND)
+        eSizer.Add(commandPanel, 1, wx.EXPAND)
+        dSizer.Add(eSizer, 0, wx.EXPAND)
         cSizer.Add(dSizer, 5, wx.EXPAND) # notebook
         bSizer.Add(cSizer, 1, wx.EXPAND)
         aSizer.Add(bSizer, 7, wx.EXPAND)
@@ -1509,31 +1522,6 @@ class MainFrame (wx.Frame):
         # Destroy the main frame.
         self.Destroy()
         return True
-
-    def onAbout(self, ev):
-        """Handle the About command."""
-
-        # Create the About dialog and show it.
-        dialog, area = createButtonDialog(
-            'about-dialog', language.translate('about-title'), ['ok'], 'ok')
-
-        content = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0)
-        content.setWeight(0)
-
-        content.createText('').setText(
-            language.translate('about-version') + ' ' +
-            st.getSystemString('snowberry-version'))
-
-        content.createText('about-subtitle')
-
-        content.setBorder(6)
-        content.setWeight(1)
-        box = content.createArea(boxedWithTitle='about-credits')
-        info = box.createFormattedText()
-        info.setMinSize(300, 200)
-        info.setText(language.translate('about-info'))
-        
-        dialog.run()
 
     def handleCommand(self, event):
         """This is called whenever someone broadcasts an
