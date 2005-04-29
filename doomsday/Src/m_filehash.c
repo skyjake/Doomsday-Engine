@@ -200,7 +200,7 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
 }
 
 /*
- * This is hash function. It uses the base part of the file name to
+ * This is a hash function. It uses the base part of the file name to
  * generate a somewhat-random number between 0 and HASH_SIZE.
  */
 uint FH_HashFunction(const char *name)
