@@ -3152,6 +3152,8 @@ static void registerVariables(void)
 			  "1=Fullscreen images (320x200) use linear interpolation.");
 	C_VAR_INT("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1,
 			  "1=Use hq2x-filtering on all textures.");
+    C_VAR_INT("rend-tex-filter-mag", &texMagMode, 0, 0, 1,
+              "1=Use bilinear filtering for texture magnification.");
 	C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1,
 			  "1=Render with detail textures.");
 	C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX,

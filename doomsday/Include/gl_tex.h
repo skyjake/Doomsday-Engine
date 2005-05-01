@@ -67,6 +67,7 @@ extern int      mipmapping, linearRaw, texQuality, filterSprites;
 extern int      texMagMode;
 extern int      useSmartFilter;
 extern boolean  loadExtAlways;
+extern int      texMagMode;
 extern float    texw, texh;
 extern int      texmask;
 extern detailinfo_t *texdetail;

@@ -2075,7 +2075,7 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
 					4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height,
                     useMipmap, image.pixels);
 		gl.Enable(DGL_TEXTURE_COMPRESSION);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+        gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
         gl.TexParameter(DGL_MIN_FILTER,
                         useMipmap ? glmode[mipmapping] : DGL_LINEAR);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
@@ -2505,7 +2505,7 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
 			GL_UploadTexture(image.pixels, image.width, image.height,
 							 alphaChannel, true, RGBData, false);
 		gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
         gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
         gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
 
@@ -3277,7 +3277,7 @@ void GL_PrepareLumpPatch(int lump)
 							 alphaChannel, false, false, false);
 
 		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
@@ -3295,7 +3295,7 @@ void GL_PrepareLumpPatch(int lump)
 			GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
 							 alphaChannel, false, false, false);
 		gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-		gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+		gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
 		gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 		gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
@@ -3337,7 +3337,7 @@ void GL_SetPatch(int lump)
 
 			// Set the texture parameters.
 			gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-			gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+			gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
 			gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
 			gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
