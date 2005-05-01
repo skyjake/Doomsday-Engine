@@ -143,7 +143,7 @@ direcnode_t *FH_DirecNode(const char *name, direcnode_t * parent)
 
 	// Just iterate through all directory nodes.
 	for(node = direcFirst; node; node = node->next)
-		if(!strcmp(node->path, name) && node->parent == parent)
+		if(!stricmp(node->path, name) && node->parent == parent)
 			return node;
 
 	// Add a new node.
@@ -182,7 +182,7 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
 
 	// Let's try to make it a relative path.
 	M_RemoveBasePath(path, relPath);
-	strlwr(relPath);
+	//strlwr(relPath);
 
 	tokPath = cursor = malloc(strlen(relPath) + 1);
 	strcpy(tokPath, relPath);
@@ -206,18 +206,20 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
 uint FH_HashFunction(const char *name)
 {
 	unsigned short key = 0;
-	int     i;
+	int     i, ch;
 
 	// We stop when the name ends or the extension begins.
 	for(i = 0; *name && *name != '.'; i++, name++)
 	{
+        ch = tolower(*name);
+        
 		if(i == 0)
-			key ^= *name;
+			key ^= ch;
 		else if(i == 1)
-			key *= *name;
+			key *= ch;
 		else if(i == 2)
 		{
-			key -= *name;
+			key -= ch;
 			i = -1;
 		}
 	}
@@ -236,7 +238,7 @@ void FH_AddFile(const char *filePath, direcnode_t * dir)
 
 	// Extract the file name.
 	Dir_FileName(filePath, name);
-	strlwr(name);
+	//strlwr(name);
 
 	// Create a new node and link it to the hash table.
 	node = malloc(sizeof(hashnode_t));
@@ -274,6 +276,8 @@ int FH_ProcessFile(const char *fn, filetype_t type, void *parm)
 	if(pos)
 		*pos = 0;
 
+    VERBOSE2(Con_Message("FH_ProcessFile: %s\n", path));
+    
 	// Add a node for this file.
 	FH_AddFile(fn, FH_BuildDirecNodes(path));
 
@@ -326,8 +330,10 @@ void FH_Init(const char *pathList)
 	while(path)
 	{
 		// We'll be using strcmp.
-		strlwr(path);
+		//strlwr(path);
 
+        VERBOSE2(Con_Message("FH_Init: %s\n", path));
+        
 		// Convert all slashes to backslashes, so things are compatible 
 		// with the sys_file routines.
 		Dir_FixSlashes(path);
@@ -370,7 +376,7 @@ boolean FH_MatchDirectory(hashnode_t * node, const char *name)
 			return false;
 
 		// Does this match the node's directory?
-		if(strcmp(direc->path, pos))
+		if(stricmp(direc->path, pos))
 		{
 			// Mismatch! This is not it.
 			return false;
@@ -428,7 +434,7 @@ boolean FH_Find(const char *name, char *foundPath)
 
 	// Convert the given file name into a file name we can process.
 	strcpy(validName, name);
-	strlwr(validName);
+	//strlwr(validName);
 	Dir_FixSlashes(validName);
 
 	// Extract the base name.
@@ -444,7 +450,7 @@ boolean FH_Find(const char *name, char *foundPath)
 	for(node = slot->first; node; node = node->next)
 	{
 		// The file name in the node has no path.
-		if(strcmp(node->fileName, baseName))
+		if(stricmp(node->fileName, baseName))
 			continue;
 
 		// If the directory compare passes, this is the match.
