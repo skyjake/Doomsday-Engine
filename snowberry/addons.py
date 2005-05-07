@@ -25,7 +25,7 @@
 ## for instance, database administration, installing and un-installing
 ## addons.
 
-import os, re, string, zipfile, shutil
+import os, re, string, zipfile, shutil, struct
 import logger, events, paths, profiles as pr, language, parser
 import settings as st
 
@@ -687,10 +687,162 @@ class WADAddon (Addon):
     def __init__(self, identifier, source):
         Addon.__init__(self, identifier, source)
 
+        # We assume this is a PWAD until closer inspection.
+        self.wadType = 'PWAD'
+        self.lumps = []
+
     def getType(self):
         return 'addon-type-wad'
 
+    def readMetaData(self):
+        """Generate metadata by making guesses based on the WAD file
+        name and contents."""
 
+        metadata = ''
+
+        # Defaults.
+        game = ''
+
+        # Look at the path where the WAD file is located.
+        path = self.getContentPath().lower()
+
+        if 'heretic' in path or 'htic' in path:
+            game = 'jheretic'
+
+        elif 'hexen' in path or 'hxn' in path or 'hexendk' in path or \
+             'deathkings' in path:
+            game = 'jhexen'
+
+        elif 'doom' in path or 'doom2' in path or 'final' in path or \
+             'finaldoom' in path or 'tnt' in path or 'plutonia' in path:
+            game = 'jdoom'
+
+        # Read the WAD directory.
+        self.lumps = self.readLumpDirectory()
+        lumps = self.lumps
+
+        # What can be determined by looking at the lump names?
+        for lump in lumps:
+            if lump[:2] == 'D_':
+                # Doom music lump.
+                game = 'jdoom'
+
+        if 'BEHAVIOR' in lumps or 'MAPINFO' in lumps:
+            # Hexen-specific lumps.
+            game = 'jhexen'
+
+        if 'ADVISOR' in lumps or 'M_HTIC' in lumps:
+            game = 'jheretic'
+
+        if 'M_DOOM' in lumps:
+            game = 'jdoom'
+
+        episodic = False
+        maps = False
+
+        # Are there any ExMy maps in the WAD?
+        for lump in lumps:
+            if len(lump) == 4 and lump[0] == 'E' and lump[2] == 'M' and \
+               lump[1] in string.digits and lump[3] in string.digits:
+                episodic = True
+
+                # Episodes 5 and 6 exist in Heretic.
+                if lump[1] == '5' or lump[1] == '6':
+                    game = 'jheretic'
+
+        # Are there any MAPxy in the WAD?
+        for lump in lumps:
+            if len(lump) == 5 and lump[:3] == 'MAP' and \
+               lump[3] in string.digits and lump[4] in string.digits:
+                maps = True
+                break
+
+        if episodic and game == 'jhexen':
+            # Guessed wrong.
+            game = ''
+
+        if maps and game == 'jheretic':
+            # Guessed wrong.
+            game = ''
+
+        # Determine a category for the WAD.
+        if self.wadType == 'IWAD':
+            metadata += "category: gamedata/primary\n"
+        elif self.wadType == 'JWAD':
+            metadata += "category: gamedata/doomsday\n"
+        elif self.wadType == 'PWAD':
+            category = 'gamedata/'
+
+            if maps or episodic:
+                category += 'maps/'
+
+                # Category based on the name.
+                base = paths.getBase(self.getContentPath()).lower()
+
+                if base[0] in string.digits:
+                    category += '09/'
+                if base[0] in 'abcdefg':
+                    category += 'ag/'
+                if base[0] in 'hijklm':
+                    category += 'hm/'
+                if base[0] in 'nopqrs':
+                    category += 'ns/'
+                if base[0] in 'tuvwxyz':
+                    category += 'tz/'
+            
+            metadata += "category: %s\n" % category
+
+        # Game component.
+        metadata += "component: game-%s\n" % game
+
+        self.parseConfiguration(metadata)
+
+    def readLumpDirectory(self):
+        """Open the WAD file and read the lump directory at the end of
+        the file."""
+
+        lumps = []
+
+        try:
+            f = file(self.getContentPath(), 'rb')
+
+            # Type of the WAD file. This affects categorization.
+            self.wadType = f.read(4)
+
+            count, dirOffset = struct.unpack('II', f.read(8))
+            
+            f.seek(dirOffset)
+
+            while count > 0:
+                # Pos and size ignored for now.
+                #filePos, lumpSize = struct.unpack('II', f.read(8))
+                f.seek(8, 1)
+
+                # Make sure the name is in upper case.
+                name = f.read(8).upper()
+                if len(name) != 8:
+                    break
+                
+                for i in range(len(name)):
+                    if ord(name[i]) < 32:
+                        name = name[:i]
+                        break
+
+                if len(name) > 0:
+                    lumps.append(name)
+
+                count -= 1
+
+            f.close()
+
+        except Exception, x:
+            raise x
+            # Ignore errors.
+            #pass
+
+        return lumps
+
+        
 class DehackedAddon (Addon):
     def __init__(self, identifier, source):
         Addon.__init__(self, identifier, source)

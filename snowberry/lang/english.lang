@@ -257,6 +257,15 @@ category-sound: Sound
 category-effects: Effects
 category-effects-particle: Particle Effects
 category-effects-light: Lighting Effects
+category-gamedata: Game Data
+category-gamedata-doomsday: Doomsday Game Files
+category-gamedata-primary: Primary Data Files
+category-gamedata-maps: Maps
+category-gamedata-maps-ag: A-G
+category-gamedata-maps-hm: H-M
+category-gamedata-maps-ns: N-S
+category-gamedata-maps-tz: T-Z
+category-gamedata-maps-09: 0-9
 
 #
 # File Types
