@@ -350,25 +350,25 @@ void Zip_MapPath(char *path)
     char mapped[512];
 
     if(strchr(path, DIR_SEP_CHAR) != NULL)
-	{
+    {
         // There is at least one level of directory structure inside
         // the archive.
 
         // Check the beginning of the path.
-		if(!strnicmp("LightMaps" DIR_SEP_STR, path, 10) ||
+        if(!strnicmp("LightMaps" DIR_SEP_STR, path, 10) ||
            !strnicmp("Music" DIR_SEP_STR, path, 6) ||
            !strnicmp("Textures" DIR_SEP_STR, path, 9) ||
            !strnicmp("Flats" DIR_SEP_STR, path, 6) ||
            !strnicmp("ShineMaps" DIR_SEP_STR, path, 10) ||
            !strnicmp("DetailTextures" DIR_SEP_STR, path, 15) ||
            !strnicmp("Patches" DIR_SEP_STR, path, 8))           
-		{
+        {
             // Contents mapped to keyname folder.
-			sprintf(mapped, "%s%s", R_GetDataPath(), path);
-			strcpy(path, mapped);
+            sprintf(mapped, "%s%s", R_GetDataPath(), path);
+            strcpy(path, mapped);
             return;
-		}
-	}    
+        }
+    }    
 
     if(path[0] == '@') // Manually mapped to Defs.
     {
