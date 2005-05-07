@@ -238,7 +238,7 @@ int R_FindModelFile(const char *filename, char *outfn)
 
 	if(!filename || !filename[0])
 		return false;
-
+    
 	// DMD takes precedence over MD2.
 	strcpy(buf, filename);
 	M_GetFileExt(buf, ext);
@@ -611,6 +611,8 @@ int R_LoadModel(char *origfn)
 	if(!origfn[0])
 		return 0;				// No model specified.
 
+    VERBOSE2(Con_Message("R_LoadModel: %s\n", origfn));
+    
 	if(!R_FindModelFile(origfn, filename))
 	{
 		R_MissingModel(origfn);
