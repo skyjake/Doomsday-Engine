@@ -24,6 +24,12 @@
 #ifndef __DOOMSDAY_ZONE_H__
 #define __DOOMSDAY_ZONE_H__
 
+/*
+ * Define this to force all memory blocks to be allocated from
+ * the real heap.
+ */
+//#define FAKE_MEMORY_ZONE 1
+
 // tags < 50 are not overwritten until freed
 #define	PU_STATIC		1		   // static entire execution time
 #define	PU_SOUND		2		   // static while playing
@@ -69,6 +75,9 @@ typedef struct memblock_s {
     struct memvolume_s *volume;    // volume this block belongs to
 	int             id;			   // should be ZONEID
 	struct memblock_s *next, *prev;
+#ifdef FAKE_MEMORY_ZONE
+    void           *area;         // the real memory area
+#endif
 } memblock_t;
 
 typedef struct {
@@ -77,11 +86,23 @@ typedef struct {
 	memblock_t     *rover;
 } memzone_t;
 
-#define Z_ChangeTag(p,t) \
+
+#ifdef FAKE_MEMORY_ZONE
+// Fake memory zone allocates memory from the real heap.
+#define Z_ChangeTag(p,t) Z_ChangeTag2(p,t)
+
+memblock_t     *Z_GetBlock(void *ptr);
+
+#else
+// Real memory zone allocates memory from a custom heap.
+#define Z_GetBlock(ptr) ((memblock_t*) ((byte*)(ptr) - sizeof(memblock_t)))
+#define Z_ChangeTag(p,t)                      \
 { \
 if (( (memblock_t *)( (byte *)(p) - sizeof(memblock_t)))->id!=0x1d4a11) \
 	Con_Error("Z_CT at "__FILE__":%i",__LINE__); \
 Z_ChangeTag2(p,t); \
 };
+#endif
+
 
 #endif

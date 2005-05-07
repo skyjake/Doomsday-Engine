@@ -28,6 +28,8 @@
 #include "de_console.h"
 #include "de_network.h"
 
+#include <assert.h>
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -119,22 +121,31 @@ thid_t P_NewMobjID(void)
 //==========================================================================
 void P_RunThinkers(void)
 {
-	thinker_t *currentthinker;
+	thinker_t *current, *next;
 
-	currentthinker = thinkercap.next;
-	while(currentthinker != &thinkercap)
+	current = thinkercap.next;
+	while(current != &thinkercap)
 	{
-		if(currentthinker->function == (think_t) - 1)
-		{						// Time to remove it
-			currentthinker->next->prev = currentthinker->prev;
-			currentthinker->prev->next = currentthinker->next;
-			Z_Free(currentthinker);
-		}
-		else if(currentthinker->function)
+#ifdef FAKE_MEMORY_ZONE
+        assert(current->next != NULL);
+        assert(current->prev != NULL);
+#endif
+
+        next = current->next;
+        
+		if(current->function == (think_t) -1)
 		{
-			currentthinker->function(currentthinker);
+            // Time to remove it.
+			current->next->prev = current->prev;
+			current->prev->next = current->next;
+			Z_Free(current);
 		}
-		currentthinker = currentthinker->next;
+		else if(current->function)
+		{
+			current->function(current);
+		}
+
+		current = next;
 	}
 }
 

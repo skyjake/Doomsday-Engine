@@ -1176,7 +1176,7 @@ void* W_CacheLumpNum(int absoluteLump, int tag)
 //
 //==========================================================================
 
-void   *W_CacheLumpName(char *name, int tag)
+void *W_CacheLumpName(char *name, int tag)
 {
 	return W_CacheLumpNum(W_GetNumForName(name), tag);
 }
@@ -1184,9 +1184,8 @@ void   *W_CacheLumpName(char *name, int tag)
 void W_ChangeCacheTag(int lump, int tag)
 {
 	if(lumpcache[lump])
-		if(((memblock_t *) ((byte *) (lumpcache[lump]) -
-							sizeof(memblock_t)))->id == 0x1d4a11)
-		{						// taken directly from the Z_ChangeTag macro
+		//if(Z_GetBlock(lumpcache[lump])->id == 0x1d4a11)
+		{					   
 			Z_ChangeTag2(lumpcache[lump], tag);
 		}
 }

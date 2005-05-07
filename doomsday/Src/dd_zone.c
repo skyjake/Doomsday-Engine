@@ -159,6 +159,10 @@ void Z_Shutdown(void)
         // Calculate stats.
         numVolumes++;
         totalMemory += vol->size;
+
+#ifdef FAKE_MEMORY_ZONE
+        Z_FreeTags(0, DDMAXINT);
+#endif
         
         free(vol->zone);
         free(vol);
@@ -168,6 +172,29 @@ void Z_Shutdown(void)
            numVolumes, totalMemory);
 }
 
+#ifdef FAKE_MEMORY_ZONE
+memblock_t *Z_GetBlock(void *ptr)
+{
+    memvolume_t *volume;
+	memblock_t *block;
+
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        for(block = volume->zone->blocklist.next;
+            block != &volume->zone->blocklist;
+            block = block->next)
+        {
+            if(block->area == ptr)
+            {
+                return block;
+            }
+        }
+    }
+    Con_Error("Z_GetBlock: There is no memory block for %p.\n", ptr);
+    return NULL;
+}
+#endif
+
 /*
  * Free memory that was allocated with Z_Malloc.
  */
@@ -176,7 +203,7 @@ void Z_Free(void *ptr)
 	memblock_t *block, *other;
     memvolume_t *volume;
 
-	block = (memblock_t *) ((byte *) ptr - sizeof(memblock_t));
+	block = Z_GetBlock(ptr);
 	if(block->id != ZONEID)
     {
 		Con_Error("Z_Free: attempt to free pointer without ZONEID");
@@ -191,6 +218,11 @@ void Z_Free(void *ptr)
 	block->tag = 0;
     block->volume = NULL;
 	block->id = 0;
+
+#ifdef FAKE_MEMORY_ZONE
+    free(block->area);
+    block->area = NULL;
+#endif
 
 	other = block->prev;
 	if(!other->user)
@@ -231,11 +263,6 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
     // Account for size of block header.
     size += sizeof(memblock_t);	
-
-    /*
-    printf("Z_Malloc: %i bytes (%lu bytes unreserved)\n", size,
-           Z_FreeMemory());
-    */
    
     // Iterate through memory volumes until we can find one with
     // enough free memory.  (Note: we *will* find one that's large
@@ -314,11 +341,19 @@ void *Z_Malloc(size_t size, int tag, void *user)
             base->next = new;
             base->size = size;
         }
-        
+
+#ifdef FAKE_MEMORY_ZONE
+        base->area = malloc(size - sizeof(memblock_t));	        
+#endif
+               
         if(user)
         {
             base->user = user;		// mark as an in use block
+#ifdef FAKE_MEMORY_ZONE
+            *(void **) user = base->area;
+#else
             *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
+#endif
         }
         else
         {
@@ -335,7 +370,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
         base->volume = volume;
         base->id = ZONEID;
 
+#ifdef FAKE_MEMORY_ZONE
+        return base->area;
+#else
         return (void *) ((byte *) base + sizeof(memblock_t));
+#endif
 
     nextVolume:;
         // Move to the next volume.
@@ -357,7 +396,7 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
 		size_t  bsize;
 
 		// Has old data; copy it.
-		memblock_t *block = (memblock_t *) ((char *) ptr - sizeof(memblock_t));
+		memblock_t *block = Z_GetBlock(ptr);
 
 		bsize = block->size - sizeof(memblock_t);
 		memcpy(p, ptr, MIN_OF(n, bsize));
@@ -384,7 +423,11 @@ void Z_FreeTags(int lowTag, int highTag)
             if(!block->user)
                 continue;			// free block
             if(block->tag >= lowTag && block->tag <= highTag)
+#ifdef FAKE_MEMORY_ZONE
+                Z_Free(block->area);
+#else
                 Z_Free((byte *) block + sizeof(memblock_t));
+#endif
         }
     }
 }
@@ -424,11 +467,10 @@ void Z_CheckHeap(void)
  */
 void Z_ChangeTag2(void *ptr, int tag)
 {
-	memblock_t *block;
-
-	block = (memblock_t *) ((byte *) ptr - sizeof(memblock_t));
+	memblock_t *block = Z_GetBlock(ptr);
+    
 	if(block->id != ZONEID)
-		Con_Error("Z_ChangeTag: freed a pointer without ZONEID");
+		Con_Error("Z_ChangeTag: modifying a block without ZONEID");
 	if(tag >= PU_PURGELEVEL && (unsigned) block->user < 0x100)
 		Con_Error("Z_ChangeTag: an owner is required for purgable blocks");
 	block->tag = tag;
@@ -439,9 +481,8 @@ void Z_ChangeTag2(void *ptr, int tag)
  */
 void Z_ChangeUser(void *ptr, void *newUser)
 {
-	memblock_t *block;
-
-	block = (memblock_t *) ((byte *) ptr - sizeof(memblock_t));
+	memblock_t *block = Z_GetBlock(ptr);
+    
 	if(block->id != ZONEID)
 		Con_Error("Z_ChangeUser: block without ZONEID");
 	block->user = newUser;
@@ -452,9 +493,8 @@ void Z_ChangeUser(void *ptr, void *newUser)
  */
 void *Z_GetUser(void *ptr)
 {
-	memblock_t *block;
-
-	block = (memblock_t *) ((byte *) ptr - sizeof(memblock_t));
+	memblock_t *block = Z_GetBlock(ptr);
+    
 	if(block->id != ZONEID)
 		Con_Error("Z_GetUser: block without ZONEID");
 	return block->user;
@@ -465,9 +505,8 @@ void *Z_GetUser(void *ptr)
  */
 int Z_GetTag(void *ptr)
 {
-	memblock_t *block;
+	memblock_t *block = Z_GetBlock(ptr);
 
-	block = (memblock_t *) ((byte *) ptr - sizeof(memblock_t));
 	if(block->id != ZONEID)
 		Con_Error("Z_GetTag: block without ZONEID");
 	return block->tag;
@@ -496,7 +535,7 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
 	if(ptr)						// Has old data.
 	{
 		p = Z_Malloc(n, Z_GetTag(ptr), NULL);
-		block = (memblock_t *) ((char *) ptr - sizeof(memblock_t));
+		block = Z_GetBlock(ptr);
 		bsize = block->size - sizeof(memblock_t);
 		if(bsize <= n)
 		{
