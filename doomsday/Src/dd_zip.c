@@ -332,10 +332,43 @@ void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
  * Definition files (ded) in the root are mapped to Defs/Game/Auto.
  * Paths that begin with a '@' are mapped to Defs/Game/Auto.
  * Paths that begin with a '#' are mapped to Data/Game/Auto.
+ *
+ * DJS 05/05/05
+ * The folder in the root is mapped to another location
+ *
+ * Location is one of the following keynames.
+ * Folder 'LightMaps' is mapped to Data/Game/LightMaps
+ * Folder 'Music' is mapped to Data/Game/Music
+ * Folder 'Textures' is mapped to Data/Game/Textures
+ * Folder 'Flats' is mapped to Data/Game/Flats
+ * Folder 'ShineMaps' is mapped to Data/Game/ShineMaps
+ * Folder 'DetailTextures' is mapped to Data/Game/DetailTextures
+ * Folder 'Patches' is mapped to Data/Game/Patches
  */
 void Zip_MapPath(char *path)
 {
     char mapped[512];
+
+    if(strchr(path, DIR_SEP_CHAR) != NULL)
+	{
+        // There is at least one level of directory structure inside
+        // the archive.
+
+        // Check the beginning of the path.
+		if(!strnicmp("LightMaps" DIR_SEP_STR, path, 10) ||
+           !strnicmp("Music" DIR_SEP_STR, path, 6) ||
+           !strnicmp("Textures" DIR_SEP_STR, path, 9) ||
+           !strnicmp("Flats" DIR_SEP_STR, path, 6) ||
+           !strnicmp("ShineMaps" DIR_SEP_STR, path, 10) ||
+           !strnicmp("DetailTextures" DIR_SEP_STR, path, 15) ||
+           !strnicmp("Patches" DIR_SEP_STR, path, 8))           
+		{
+            // Contents mapped to keyname folder.
+			sprintf(mapped, "%s%s", R_GetDataPath(), path);
+			strcpy(path, mapped);
+            return;
+		}
+	}    
 
     if(path[0] == '@') // Manually mapped to Defs.
     {
