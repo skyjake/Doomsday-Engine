@@ -1486,8 +1486,11 @@ class MainFrame (wx.Frame):
         events.addCommandListener(self.handleCommand)
 
         #self.mainPanel.Hide()
-        if self.splitter:
-            self.splitter.Freeze()
+
+        #if self.splitter:
+        #    self.splitter.Freeze()
+
+            
         #if self.helpPanel:
         #    self.helpPanel.Freeze()
         #    self.helpPanel.Hide()
@@ -1636,7 +1639,10 @@ class SnowberryApp (wx.App):
 
     def showMainWindow(self):
         self.updateTitle()
-        self.mainFrame.show()
+        #self.mainFrame.Show()
+        self.mainFrame.Thaw()
+        self.mainFrame.Refresh()
+        #self.mainFrame.show()
 
 
 def prepareWindows():
@@ -1646,6 +1652,7 @@ def prepareWindows():
 
     app.mainFrame.updateLayout()
     app.mainFrame.Show()
+    app.mainFrame.Freeze()
 
 
 def startMainLoop():
