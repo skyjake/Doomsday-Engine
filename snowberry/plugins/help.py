@@ -74,7 +74,7 @@ def showLogo(doShow=True):
     helpArea = ui.getArea(ui.Area.HELP)
 
     if not logo and doShow:
-        logo = helpArea.createImage('snowberry')
+        logo = helpArea.createImage('help-logo')
         helpArea.updateLayout()
 
     elif logo and not doShow:
