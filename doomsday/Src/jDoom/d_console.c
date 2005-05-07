@@ -34,7 +34,6 @@ DEFCC(CCmdCheatMassacre);
 DEFCC(CCmdBeginChat);
 DEFCC(CCmdMsgRefresh);
 DEFCC(CCmdAutoMap);
-DEFCC(CCmdDumpXG);
 DEFCC(CCmdMovePlane);
 DEFCC(CCmdMakeLocal);
 DEFCC(CCmdSetCamera);
@@ -484,8 +483,6 @@ ccmd_t  gameCCmds[] = {
 	"beginchat", CCmdBeginChat, "Begin chat mode.",
 	"msgrefresh", CCmdMsgRefresh, "Show last HUD message.",
 	"automap", CCmdAutoMap, "Show automap.",
-
-	"dumpxg", CCmdDumpXG, "Dump XG line and sector types to a file.",
 
 	// Menu Actions
 	"helpscreen", CCmdMenuAction, "Show the Help screens.",

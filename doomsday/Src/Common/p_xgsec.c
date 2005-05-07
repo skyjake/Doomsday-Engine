@@ -2029,6 +2029,7 @@ void XS_Update(void)
 		}
 }
 
+#if 0 // no longer supported in 1.8.7
 /*
  * Write XG types into a binary file.
  */
@@ -2053,6 +2054,7 @@ int CCmdDumpXG(int argc, char **argv)
 	fclose(file);
 	return true;
 }
+#endif
 
 /*
  * $moveplane: Command line interface to the plane mover. 
