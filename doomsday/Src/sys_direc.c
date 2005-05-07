@@ -133,18 +133,28 @@ void Dir_FileName(const char *str, char *name)
 	strcat(name, ext);
 }
 
+/*
+ * Calculate an identifier for the file based on its full path name.
+ * The identifier is the CRC-32 value for the path.  (Sufficiently low
+ * danger of collisions?)
+ */
 int Dir_FileID(const char *str)
 {
-	int     i, id = 0x5c33f10e;
-	char    temp[256], *ptr;
-
+    char temp[256];
+    
+    // First normalize the name.
 	memset(temp, 0, sizeof(temp));
-	// Do a little scrambling with the full path name.
 	_fullpath(temp, str, 255);
+
+#if defined(WIN32) || defined(MACOSX)
+    // This is a case insensitive operation.
 	strupr(temp);
-	for(i = 0, ptr = temp; *ptr; ptr++, i++)
-		((unsigned char *) &id)[i % 4] += ((*ptr) << (i % 3 - 1));
-	return id;
+#endif
+
+    VERBOSE2(Con_Message("Dir_FileID: %s = 0x%08x\n", temp,
+                         M_CRC32(temp, strlen(temp))));
+    
+    return M_CRC32(temp, strlen(temp));
 }
 
 //===========================================================================

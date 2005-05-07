@@ -99,6 +99,7 @@ void            M_ProjectPointOnLinef(fixed_t *point, fixed_t *linepoint,
 									  fixed_t *delta, float gap,
 									  float *result);
 float           M_CycleIntoRange(float value, float length);
+uint            M_CRC32(byte *data, uint length);
 
 // Time utilities.
 boolean         M_CheckTrigger(trigger_t * trigger, timespan_t advanceTime);
