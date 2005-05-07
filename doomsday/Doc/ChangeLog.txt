@@ -17,6 +17,7 @@ Version 1.8.7
 - removed fixed limit on the number of particle generator stages
 - removed fixed limit on the number of opened files
 - fixed: minor memory leaks concerning definition data
+- less chance of file name collisions thanks to CRC32 in Dir_FileID
 
 Multiplayer:
 - fixed: skill selection not working via Game Setup menu
