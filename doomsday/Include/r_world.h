@@ -43,5 +43,6 @@ void            R_ClearSectorFlags(void);
 void            R_SkyFix(void);
 void            R_OrderVertices(line_t *line, sector_t *sector,
 								vertex_t * verts[2]);
+void            R_GetMapSize(vertex_t *min, vertex_t *max);
 
 #endif

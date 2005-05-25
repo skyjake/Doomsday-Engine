@@ -32,6 +32,8 @@ typedef struct biastracker_s {
 struct vertexillum_s;
 struct rendpoly_s;
 
+extern int      useBias; // Bias lighting enabled.
+
 void            SB_Register(void);
 void            SB_InitForLevel(const char *uniqueId);
 void            SB_SegHasMoved(seg_t *seg);

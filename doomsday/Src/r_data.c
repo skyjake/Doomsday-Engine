@@ -131,10 +131,10 @@ flat_t *R_FindFlat(int lumpnum)
 	return NULL;
 }
 
-//===========================================================================
-// R_GetFlat
-//  Flat management.
-//===========================================================================
+/*
+ * Get a flat_t data structure for a flat specified with a WAD lump
+ * number.  Allocates a new flat_t if it hasn't been loaded yet.
+ */
 flat_t *R_GetFlat(int lumpnum)
 {
 	flat_t *f = R_FindFlat(lumpnum);

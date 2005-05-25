@@ -64,6 +64,7 @@ void            M_ReadLine(char *buffer, int len, DFILE * file);
 void            M_ClearBox(fixed_t *box);
 void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
 float           M_BoundingBoxDiff(float in[4], float out[4]);
+void            M_JoinBoxes(float box[4], const float other[4]);
 
 // Text utilities.
 char           *M_SkipWhite(char *str);

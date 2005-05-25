@@ -39,7 +39,7 @@ Include/p_data.h Include/p_intercept.h Include/p_maputil.h	       \
 Include/p_mobj.h Include/p_particle.h Include/p_polyob.h	       \
 Include/p_sight.h Include/p_think.h Include/p_tick.h Include/png.h     \
 Include/pngconf.h Include/r_data.h Include/r_draw.h Include/r_extres.h \
-Include/r_model.h Include/r_shadow.h Include/r_sky.h		       \
+Include/r_lgrid.h Include/r_model.h Include/r_shadow.h Include/r_sky.h \
 Include/r_things.h Include/r_util.h Include/r_world.h		       \
 Include/rend_bias.h Include/rend_clip.h Include/rend_decor.h	       \
 Include/rend_dyn.h Include/rend_fakeradio.h Include/rend_halo.h	       \

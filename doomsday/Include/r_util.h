@@ -32,6 +32,7 @@ fixed_t         R_PointToDist(fixed_t x, fixed_t y);
 line_t         *R_GetLineForSide(int sideNumber);
 subsector_t    *R_PointInSubsector(fixed_t x, fixed_t y);
 boolean         R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector);
+boolean         R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector);
 int             R_GetSectorNumForDegen(void *degenmobj);
 
 #endif

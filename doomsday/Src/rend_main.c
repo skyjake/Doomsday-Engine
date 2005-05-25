@@ -97,6 +97,7 @@ void Rend_Register(void)
     
     RL_Register();
     SB_Register();
+    LG_Register();
     Rend_ModelRegister();
 	Rend_RadioRegister();
 }
@@ -1342,6 +1343,7 @@ void Rend_RenderMap(void)
 		C_ClearRanges();		// Clear the clipper.
 		R_ClearSectorFlags();
 		DL_ClearForFrame();		// Zeroes the links.
+        LG_Update();
         SB_BeginFrame();
 
 		// Generate surface decorations for the frame.

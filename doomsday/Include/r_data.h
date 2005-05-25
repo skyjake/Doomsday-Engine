@@ -32,6 +32,7 @@
 
 #define SIF_VISIBLE			0x1	   // Sector is visible on this frame.
 #define SIF_FRAME_CLEAR		0x1	   // Flags to clear before each frame.
+#define SIF_LIGHT_CHANGED   0x2
 
 // Sector flags.
 #define SECF_INVIS_FLOOR	0x1
@@ -52,6 +53,7 @@
 // Texture flags.
 #define TXF_MASKED		0x1
 #define TXF_GLOW		0x2		   // For lava etc, textures that glow.
+#define TXF_PTCGEN      0x8        // Ptcgen def has been determined.
 
 // Animation group flags.
 #define AGF_SMOOTH		0x1
@@ -166,15 +168,20 @@ typedef struct linkmobj_s {
 
 typedef struct {
 	float           visfloor, visceil;	// Visible floor and ceiling, floats.
-	sector_t       *linkedfloor;   // Floor attached to another sector.
-	sector_t       *linkedceil;	   // Ceiling attached to another sector.
+	sector_t       *linkedfloor;        // Floor attached to another sector.
+	sector_t       *linkedceil;         // Ceiling attached to another sector.
 	boolean         permanentlink;
-	float           bounds[4];	   // Bounding box for the sector.
+	float           bounds[4];          // Bounding box for the sector.
 	int             flags;
 	fixed_t         oldfloor[2], oldceil[2];
+    int             oldlightlevel;
+    byte            oldrgb[3];
 	float           visflooroffset, visceiloffset;
-	int             addspritecount;	// frame number of last R_AddSprites
-	sector_t       *lightsource;   // Main sky light source
+	int             addspritecount;     // frame number of last R_AddSprites
+	sector_t       *lightsource;        // Main sky light source
+    int             blockcount;         // Number of gridblocks in the sector.
+    int             changedblockcount;  // Number of blocks to mark changed.
+    unsigned short *blocks;             // Light grid block indices.
 } sectorinfo_t;
 
 typedef struct vilight_s {
@@ -313,8 +320,10 @@ typedef struct flat_s {
 	rgbcol_t        color;
 	detailinfo_t    detail;		   // Detail texture information.
 	byte            ingroup;	   // True if belongs to some animgroup.
-	struct ded_decor_s *decoration;	// Pointer to the surface decoration, if any.
+	struct ded_decor_s *decoration;// Pointer to the surface decoration,
+                                   // if any.
     struct ded_reflection_s *reflection; // Surface reflection definition.
+    struct ded_ptcgen_s *ptcgen;   // Particle generator for the flat.
 } flat_t;
 
 typedef struct lumptexinfo_s {

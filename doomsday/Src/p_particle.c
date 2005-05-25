@@ -1137,15 +1137,24 @@ void P_PtcGenThinker(ptcgen_t * gen)
 	}
 }
 
-//===========================================================================
-// P_GetPtcGenForFlat
-//  Returns the ptcgen definition for the given flat.
-//===========================================================================
+/*
+ * Returns the ptcgen definition for the given flat.
+ */
 ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
 {
-	int     i;
 	ded_ptcgen_t *def;
+	int     i;
+    int     g;
+    flat_t *flat = R_GetFlat(flatpic);
 
+    if(flat->flags & TXF_PTCGEN)
+    {
+        return flat->ptcgen;
+    }
+
+    // The generator will be determined now.
+    flat->flags |= TXF_PTCGEN;
+    
 	for(i = 0, def = defs.ptcgens; i < defs.count.ptcgens.num; i++, def++)
 	{
 		if(def->flags & PGF_GROUP)
@@ -1159,8 +1168,6 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
 			// and the flat of this definition belong in an animgroup.
 			if(defFlat->ingroup && usedFlat->ingroup)
 			{
-				int     g;
-
 				for(g = 0; g < numgroups; g++)
 				{
 					// Precache groups don't apply.
@@ -1171,15 +1178,19 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
 					   R_IsInAnimGroup(groups[g].id, DD_FLAT, flatpic))
 					{
 						// Both are in this group! This def will do.
-						return def;
+                        return flat->ptcgen = def;
 					}
 				}
 			}
 		}
+
 		if(def->flat_num == flatpic)
-			return def;
+        {
+            return flat->ptcgen = def;
+        }
 	}
-	return NULL;
+
+    return flat->ptcgen = NULL;
 }
 
 //===========================================================================

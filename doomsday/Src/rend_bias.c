@@ -20,6 +20,8 @@
  *
  * Calculating macro-scale lighting on the fly.  The editing
  * functionality is also implemented here.
+ *
+ * TODO: Split this up into multiple source files.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -85,7 +87,7 @@ static void  SBE_SetColor(float *dest, float *src);
 static source_t sources[MAX_BIAS_LIGHTS];
 static int numSources = 0, numSourceDelta = 0;
 
-static int useBias = false;
+int useBias = false;
 static int useSightCheck = true;
 static int biasMin = 220;
 static int biasMax = 255;
@@ -769,6 +771,13 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 
 /*
  * Poly can be a either a wall or a plane (ceiling or a floor).
+ *
+ * Parameters:
+ *
+ * poly             Rendering polygon (wall or plane).
+ * illumination     Illumination for each corner of the polygon.
+ * tracker          Tracker of all the changed lights for this polygon.
+ * mapElementIndex  Index of the seg or subsector in the global arrays.
  */
 void SB_RendPoly(struct rendpoly_s *poly, boolean isFloor, sector_t *sector,
                  struct vertexillum_s *illumination,
@@ -962,6 +971,18 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
 }
 
 /*
+ * Add ambient light.
+ */
+void SB_AmbientLight(float *point, gl_rgba_t *light)
+{
+    // Add grid light (represents ambient lighting).
+    byte color[3];
+    
+    LG_Evaluate(point, color);
+    SB_AddLight(light, color, 1.0f);
+}
+ 
+/*
  * Applies shadow bias to the given point.  If 'forced' is true, new
  * lighting is calculated regardless of whether the lights affecting
  * the point have changed.  This is needed when there has been world
@@ -1046,6 +1067,7 @@ void SB_EvalPoint(gl_rgba_t *light,
     {
         // Reuse the previous value.
         SB_LerpIllumination(illum, light);
+        SB_AmbientLight(point, light);
         return;
     }
     
@@ -1181,10 +1203,10 @@ void SB_EvalPoint(gl_rgba_t *light,
             }
         }
 
-        if(biasAmount > 0) 
+        /*if(biasAmount > 0) 
         {
             SB_AddLight(&new, willOverride ? NULL : biasColor, biasAmount);
-        }
+            }*/
 
         // Is there a new destination?
         if(memcmp(illum->dest.rgba, new.rgba, 3))
@@ -1212,6 +1234,8 @@ void SB_EvalPoint(gl_rgba_t *light,
     {
         memcpy(light->rgba, new.rgba, 4);
     }
+    
+    SB_AmbientLight(point, light);
 }
 
 

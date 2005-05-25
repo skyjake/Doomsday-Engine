@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2003, 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2005 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,23 +16,19 @@
  */
 
 /*
- * de_refresh.h: Refresh Subsystem (Resource Management)
+ * <file name>: <short summary>
+ *
+ * <description>
  */
 
-#ifndef __DOOMSDAY_REFRESH__
-#define __DOOMSDAY_REFRESH__
+#ifndef __DOOMSDAY_REFRESH_LIGHT_GRID_H__
+#define __DOOMSDAY_REFRESH_LIGHT_GRID_H__
 
-#include "r_data.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "r_model.h"
-#include "r_draw.h"
-#include "r_world.h"
-#include "r_shadow.h"
-#include "r_sky.h"
-#include "r_util.h"
-#include "r_extres.h"
-#include "r_shadow.h"
-#include "r_lgrid.h"
+void            LG_Register(void);
+void            LG_Init(void);
+void            LG_SectorChanged(sector_t *sector, sectorinfo_t *info);
+void            LG_Update(void);
+void            LG_Evaluate(const float *point, byte *color);
+void            LG_Debug(void);
 
 #endif

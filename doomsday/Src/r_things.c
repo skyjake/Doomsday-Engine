@@ -791,7 +791,16 @@ void R_ProjectSprite(mobj_t *thing)
 	vis->data.mo.gzt =
 		vis->data.mo.gz + ((fixed_t) spritelumps[lump].topoffset << FRACBITS);
 
-	memcpy(vis->data.mo.rgb, R_GetSectorLightColor(sect), 3);
+    if(useBias)
+    {
+        float point[3] = { FIX2FLT(thing->x), FIX2FLT(thing->y),
+                           FIX2FLT(thing->z + thing->height/2)};
+        LG_Evaluate(point, vis->data.mo.rgb);
+    }
+    else
+    {
+        memcpy(vis->data.mo.rgb, R_GetSectorLightColor(sect), 3);
+    }
 
 	vis->data.mo.viewaligned = align;
 
@@ -875,6 +884,11 @@ void R_ProjectSprite(mobj_t *thing)
 	{
 		vis->data.mo.lightlevel = -1;
 	}
+    else if(useBias)
+    {
+        // The light color has been evaluated with the light grid.
+        vis->data.mo.lightlevel = 255;       
+    }
 	else
 	{
 		// Diminished light.

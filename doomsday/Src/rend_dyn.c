@@ -337,29 +337,13 @@ void DL_ThingColor(lumobj_t * lum, DGLubyte * outRGB, float light)
 //===========================================================================
 void DL_InitLinks(void)
 {
-	byte   *ptr;
 	vertex_t min, max;
-	int     i, x, y;
 
 	// First initialize the subsector links (root pointers).
 	dlSubLinks = Z_Calloc(sizeof(lumobj_t *) * numsubsectors, PU_LEVEL, 0);
 
 	// Then the blocklinks.
-	memcpy(&min, vertexes, sizeof(min));
-	memcpy(&max, vertexes, sizeof(max));
-	for(i = 1, ptr = vertexes + VTXSIZE; i < numvertexes; i++, ptr += VTXSIZE)
-	{
-		x = ((vertex_t *) ptr)->x;
-		y = ((vertex_t *) ptr)->y;
-		if(x < min.x)
-			min.x = x;
-		if(x > max.x)
-			max.x = x;
-		if(y < min.y)
-			min.y = y;
-		if(y > max.y)
-			max.y = y;
-	}
+    R_GetMapSize(&min, &max);
 
 	// Origin has fixed-point coordinates.
 	memcpy(&dlBlockOrig, &min, sizeof(min));

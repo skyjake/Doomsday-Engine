@@ -71,6 +71,7 @@ nodeindex_t     *linelinks;			// indices to roots
 static boolean noSkyColorGiven;
 static byte skyColorRGB[4], balancedRGB[4];
 static float skyColorBalance;
+static float mapBounds[4];
 
 // CODE --------------------------------------------------------------------
 
@@ -825,7 +826,20 @@ void R_InitSectorInfo(void)
 
 	// Calculate bounding boxes for all sectors.
 	for(i = 0; i < numsectors; i++)
+    {
 		P_SectorBoundingBox(SECTOR_PTR(i), secinfo[i].bounds);
+
+        if(i == 0)
+        {
+            // The first sector is used as is.
+            memcpy(mapBounds, secinfo[i].bounds, sizeof(mapBounds));
+        }
+        else
+        {
+            // Expand the bounding box.
+            M_JoinBoxes(mapBounds, secinfo[i].bounds);
+        }
+    }
 
 	for(i = 0, info = secinfo; i < numsectors; i++, info++)
 	{
@@ -1472,9 +1486,15 @@ void R_SetupLevel(char *level_id, int flags)
 	// Init Particle Generator links.
 	PG_InitForLevel();
 
-	// Make sure subsector floors and ceilings will be rendered correctly.
+	// Make sure subsector floors and ceilings will be rendered
+	// correctly.
 	R_SubsectorPlanes();
-	R_InitSectorInfo();
+
+    // The map bounding box will be updated during sector info
+    // initialization.
+    memset(mapBounds, 0, sizeof(mapBounds));
+    R_InitSectorInfo();
+    
     R_InitSegInfo();
 	R_InitSubsectorInfo();
 	R_InitLineInfo();
@@ -1551,6 +1571,9 @@ void R_SetupLevel(char *level_id, int flags)
 
     // Tell shadow bias to initialize the bias light sources.
     SB_InitForLevel(R_GetUniqueLevelID());
+
+    // Initialize the lighting grid.
+    LG_Init();
     
 	Con_Progress(10, 0);		// 50%.
 }
@@ -1622,6 +1645,24 @@ void R_UpdatePlanes(void)
 		if(sin->permanentlink)
 			continue;
 		sin->linkedfloor = sin->linkedceil = NULL;
+
+        // Check if there are any lightlevel or color changes.
+        sec = SECTOR_PTR(i);
+        if(sec->lightlevel != sin->oldlightlevel ||
+           sec->rgb[0] != sin->oldrgb[0] ||
+           sec->rgb[1] != sin->oldrgb[1] ||
+           sec->rgb[2] != sin->oldrgb[2])
+        {
+            sin->flags |= SIF_LIGHT_CHANGED;
+            sin->oldlightlevel = sec->lightlevel;
+            memcpy(sin->oldrgb, sec->rgb, 3);
+
+            LG_SectorChanged(sec, sin);
+        }
+        else
+        {
+            sin->flags &= ~SIF_LIGHT_CHANGED;
+        }
 	}
 
 	// Assign new links.
@@ -1724,4 +1765,39 @@ const byte *R_GetSectorLightColor(sector_t *sector)
 	}
 	// Return the sky color.
 	return skyColorRGB;
+}
+
+/*
+ * Calculate the size of the entire map.
+ */
+void R_GetMapSize(vertex_t *min, vertex_t *max)
+{
+/*    byte *ptr;
+    int i;
+    fixed_t x;
+    fixed_t y;
+    
+	memcpy(min, vertexes, sizeof(min));
+	memcpy(max, vertexes, sizeof(max));
+    
+	for(i = 1, ptr = vertexes + VTXSIZE; i < numvertexes; i++, ptr += VTXSIZE)
+	{
+		x = ((vertex_t *) ptr)->x;
+		y = ((vertex_t *) ptr)->y;
+        
+		if(x < min->x)
+			min->x = x;
+		if(x > max->x)
+			max->x = x;
+		if(y < min->y)
+			min->y = y;
+		if(y > max->y)
+			max->y = y;
+            }*/
+
+    min->x = FRACUNIT * mapBounds[BLEFT];
+    min->y = FRACUNIT * mapBounds[BTOP];
+
+    max->x = FRACUNIT * mapBounds[BRIGHT];
+    max->y = FRACUNIT * mapBounds[BBOTTOM];
 }

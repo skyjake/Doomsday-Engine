@@ -330,6 +330,57 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 }
 
 //===========================================================================
+// R_IsPointInSector2
+//  Returns true if the point is inside the sector, according
+//  to the edge lines of the subsector. Uses the well-known algorithm 
+//  described here: http://www.alienryderflex.com/polygon/
+//
+//  More accurate than R_IsPointInSector.
+//===========================================================================
+boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
+{
+	int     i;
+    subsector_t *subsector;
+	fvertex_t *vi, *vj;
+    float fx, fy;
+
+    subsector = R_PointInSubsector(x, y);
+    if(subsector->sector != sector)
+    {
+        // Wrong sector.
+        return false;
+    }
+
+    fx = FIX2FLT(x);
+    fy = FIX2FLT(y);
+   
+	for(i = 0; i < subsector->numverts; i++)
+	{
+		vi = &subsector->verts[i];
+        vj = &subsector->verts[(i + 1) % subsector->numverts];
+
+        if(((vi->y - fy) * (vj->x - vi->x) -
+            (vi->x - fx) * (vj->y - vi->y)) < 0)
+        {
+            // Outside the subsector's edges.
+            return false;
+        }
+
+/*		if((vi->y < fy && vj->y >= fy) || (vj->y < fy && vi->y >= fy))
+		{
+			if(vi->x + (((fy - vi->y)/(vj->y - vi->y)) * (vj->x - vi->x)) < fx)
+			{
+				// Toggle oddness.
+				isOdd = !isOdd;
+			}
+            }*/
+	}
+
+    // All tests passed.
+	return true;
+}
+
+//===========================================================================
 // R_GetSectorNumForDegen
 //  Returns the index of the sector who owns the given degenmobj.
 //===========================================================================

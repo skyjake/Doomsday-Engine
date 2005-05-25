@@ -807,6 +807,9 @@ void Net_Drawer(void)
 
     // Draw the Shadow Bias Editor HUD (if it is active).
     SBE_DrawHUD();
+
+    // Draw lightgrid debug display.
+    LG_Debug();
     
 	if(!net_dev && !show_blink_r && !consoleShowFPS)
 		return;

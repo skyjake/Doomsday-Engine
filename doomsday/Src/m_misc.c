@@ -585,6 +585,25 @@ void M_AddToBox(fixed_t *box, fixed_t x, fixed_t y)
 		box[BOXTOP] = y;
 }
 
+//===========================================================================
+// M_JoinBoxes
+//===========================================================================
+void M_JoinBoxes(float bbox[4], const float other[4])
+{
+    if(other[BLEFT] < bbox[BLEFT])
+        bbox[BLEFT] = other[BLEFT];
+    
+    if(other[BRIGHT] > bbox[BRIGHT])
+        bbox[BRIGHT] = other[BRIGHT];
+    
+    if(other[BTOP] < bbox[BTOP])
+        bbox[BTOP] = other[BTOP];
+    
+    if(other[BBOTTOM] > bbox[BBOTTOM])
+        bbox[BBOTTOM] = other[BBOTTOM];
+    
+}
+
 /*
    ==================
    =
