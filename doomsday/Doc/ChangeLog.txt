@@ -6,7 +6,7 @@
 
 Version 1.8.7
 -------------
-+ bias lighting
++ bias lighting: direct sources and smooth sector lighting
 + option '-vdmap': map files in one directory to another directory
   (virtual directory mapping)
 + subdirectory "Auto" of the runtime directory mapped automatically to
