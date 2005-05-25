@@ -83,8 +83,9 @@ extern          "C" {
 #define USHORT(x)   ((unsigned short) SHORT(x))
 #define ULONG(x)    ((unsigned long) LONG(x))
 
-#define MAX_OF(x, y)	((x) > (y)? (x) : (y))
-#define MIN_OF(x, y)	((x) < (y)? (x) : (y))
+#define MAX_OF(x, y)            ((x) > (y)? (x) : (y))
+#define MIN_OF(x, y)            ((x) < (y)? (x) : (y))
+#define MINMAX_OF(a, x, b)      ((x) < (a)? (a) : (x) > (b)? (b) : (x))
 
 	enum {
 		// TexFilterMode targets
