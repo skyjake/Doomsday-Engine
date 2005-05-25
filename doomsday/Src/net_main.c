@@ -24,6 +24,7 @@
 #include "de_ui.h"
 
 #include "rend_bias.h"
+#include "r_lgrid.h"
 
 // MACROS ------------------------------------------------------------------
 

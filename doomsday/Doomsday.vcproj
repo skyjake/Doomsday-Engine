@@ -389,6 +389,9 @@
 					RelativePath=".\Src\r_extres.c">
 				</File>
 				<File
+					RelativePath="Src\r_lgrid.c">
+				</File>
+				<File
 					RelativePath=".\Src\r_main.c">
 				</File>
 				<File
@@ -836,6 +839,9 @@
 				</File>
 				<File
 					RelativePath=".\Include\r_extres.h">
+				</File>
+				<File
+					RelativePath="Include\r_lgrid.h">
 				</File>
 				<File
 					RelativePath=".\Include\r_main.h">
