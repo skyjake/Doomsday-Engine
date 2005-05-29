@@ -12,7 +12,8 @@
 #include <stdlib.h>
 #include "jHeretic/Doomdef.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/settings.h"
+#include "jHeretic/d_config.h"
+#include "jHeretic/Mn_def.h"
 #include "g_common.h"
 #include "f_infine.h"
 
@@ -33,7 +34,7 @@ DEFCC(CCmdViewSize);
 DEFCC(CCmdInventory);
 DEFCC(CCmdScreenShot);
 DEFCC(CCmdHereticFont);
-DEFCC(CCmdMenuAction);
+
 DEFCC(CCmdCycleSpy);
 DEFCC(CCmdCrosshair);
 DEFCC(CCmdSpawnMobj);
@@ -46,18 +47,21 @@ DEFCC(CCmdCheatClip);
 DEFCC(CCmdCheatGive);
 DEFCC(CCmdCheatWarp);
 DEFCC(CCmdCheatPig);
+DEFCC(CCmdSuicide);
 DEFCC(CCmdCheatMassacre);
 DEFCC(CCmdCheatWhere);
 DEFCC(CCmdCheatReveal);
+
 DEFCC(CCmdBeginChat);
+DEFCC(CCmdMsgRefresh);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern char *chat_macros[10];
-
 extern int testcvar;
+
+extern boolean mn_SuicideConsole;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -104,8 +108,8 @@ cvar_t  gameCVars[] = {
 	"1=Lookspring active.",
 	"NoAutoAim", OBSOLETE, CVT_INT, &cfg.noAutoAim, 0, 1,
 	"1=Autoaiming disabled.",
-	"h_ViewSize", OBSOLETE | CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 11,
-	"View window size (3-11).",
+	"h_ViewSize", OBSOLETE | CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13,
+	"View window size (3-13).",
 	"h_sbSize", OBSOLETE | CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20,
 	"Status bar size (1-20).",
 	"XHair", OBSOLETE | CVF_NO_MAX | CVF_PROTECTED, CVT_INT, &cfg.xhair, 0, 0,
@@ -124,32 +128,32 @@ cvar_t  gameCVars[] = {
 	"1=Enable custom (external) music files.\n",
 	//  "SoundDebug", OBSOLETE|CVF_NO_ARCHIVE, CVT_INT, &DebugSound, 0, 1, "1=Display sound debug information.", 
 	//"ReverbDebug", OBSOLETE|CVF_NO_ARCHIVE, CVT_BYTE, &cfg.reverbDebug, 0, 1, "1=Reverberation debug information in the console.", 
-	"Messages", OBSOLETE, CVT_INT, &cfg.messageson, 0, 1, "1=Show messages.",
-	"ShowMana", OBSOLETE, CVT_INT, &cfg.showFullscreenMana, 0, 1,
-	"1=Show mana when the status bar is hidden.",
-	"ShowArmor", OBSOLETE, CVT_INT, &cfg.showFullscreenArmor, 0, 1,
+	"Messages", OBSOLETE, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"ShowAmmo", OBSOLETE, CVT_BYTE, &cfg.hudShown[0], 0, 1,
+	"1=Show ammo when the status bar is hidden.",
+	"ShowArmor", OBSOLETE, CVT_BYTE, &cfg.hudShown[1], 0, 1,
 	"1=Show armor when the status bar is hidden.",
-	"ShowKeys", OBSOLETE, CVT_INT, &cfg.showFullscreenKeys, 0, 1,
+	"ShowKeys", OBSOLETE, CVT_BYTE, &cfg.hudShown[2], 0, 1,
 	"1=Show keys when the status bar is hidden.",
-	"ChatMacro0", OBSOLETE, CVT_CHARPTR, &chat_macros[0], 0, 0,
+	"ChatMacro0", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0,
 	"Chat macro 1.",
-	"ChatMacro1", OBSOLETE, CVT_CHARPTR, &chat_macros[1], 0, 0,
+	"ChatMacro1", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0,
 	"Chat macro 2.",
-	"ChatMacro2", OBSOLETE, CVT_CHARPTR, &chat_macros[2], 0, 0,
+	"ChatMacro2", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0,
 	"Chat macro 3.",
-	"ChatMacro3", OBSOLETE, CVT_CHARPTR, &chat_macros[3], 0, 0,
+	"ChatMacro3", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[3], 0, 0,
 	"Chat macro 4.",
-	"ChatMacro4", OBSOLETE, CVT_CHARPTR, &chat_macros[4], 0, 0,
+	"ChatMacro4", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[4], 0, 0,
 	"Chat macro 5.",
-	"ChatMacro5", OBSOLETE, CVT_CHARPTR, &chat_macros[5], 0, 0,
+	"ChatMacro5", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[5], 0, 0,
 	"Chat macro 6.",
-	"ChatMacro6", OBSOLETE, CVT_CHARPTR, &chat_macros[6], 0, 0,
+	"ChatMacro6", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[6], 0, 0,
 	"Chat macro 7.",
-	"ChatMacro7", OBSOLETE, CVT_CHARPTR, &chat_macros[7], 0, 0,
+	"ChatMacro7", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0,
 	"Chat macro 8.",
-	"ChatMacro8", OBSOLETE, CVT_CHARPTR, &chat_macros[8], 0, 0,
+	"ChatMacro8", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0,
 	"Chat macro 9.",
-	"ChatMacro9", OBSOLETE, CVT_CHARPTR, &chat_macros[9], 0, 0,
+	"ChatMacro9", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0,
 	"Chat macro 10.",
 	"NoMonsters", OBSOLETE, CVT_BYTE, &cfg.netNomonsters, 0, 1,
 	"1=No monsters.",
@@ -178,8 +182,7 @@ cvar_t  gameCVars[] = {
 	"1=Fast monsters in non-demo single player.",
 	"EyeHeight", OBSOLETE, CVT_INT, &cfg.eyeHeight, 41, 54,
 	"Player eye height (the original is 41).",
-	"MenuScale", OBSOLETE, CVT_FLOAT, &cfg.menuScale, .1f, 1,
-	"Scaling for menu screens.",
+
 	"LevelTitle", OBSOLETE, CVT_BYTE, &cfg.levelTitle, 0, 1,
 	"1=Show level title and author in the beginning.",
 	"CounterCheat", OBSOLETE, CVT_BYTE, &cfg.counterCheat, 0, 63,
@@ -218,8 +221,6 @@ cvar_t  gameCVars[] = {
 	"1=Joystick values => look angle delta.",
 	"hud-fps", CVF_NO_ARCHIVE, CVT_INT, &cfg.showFPS, 0, 1,
 	"1=Show the frames per second counter.",
-	"msg-echo", 0, CVT_INT, &cfg.echoMsg, 0, 1,
-	"1=Echo all messages to the console.",
 
 	"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1,
 	"1=Use items immediately from the inventory.",
@@ -241,10 +242,14 @@ cvar_t  gameCVars[] = {
 	"1=Lookspring active.",
 	"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1,
 	"1=Autoaiming disabled.",
-	"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 11,
-	"View window size (3-11).",
+	"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13,
+	"View window size (3-13).",
 	"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20,
 	"Status bar size (1-20).",
+	"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1,
+	"Status bar Alpha level.",
+	"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1,
+	"Status bar icons & counters Alpha level.",
 
 	"view-cross-type", CVF_NO_MAX | CVF_PROTECTED, CVT_INT, &cfg.xhair, 0, 0,
 	"The current crosshair.",
@@ -271,24 +276,35 @@ cvar_t  gameCVars[] = {
 	//  "sound-debug",  CVF_NO_ARCHIVE, CVT_INT,    &DebugSound,        0, 1,   "1=Display sound debug information.",
 	//  "sound-reverb-debug", CVF_NO_ARCHIVE,   CVT_BYTE,   &cfg.reverbDebug,   0, 1,   "1=Reverberation debug information in the console.",
 
-	"msg-show", 0, CVT_INT, &cfg.messageson, 0, 1, "1=Show messages.",
-	"hud-mana", 0, CVT_INT, &cfg.showFullscreenMana, 0, 1,
-	"1=Show mana when the status bar is hidden.",
-	"hud-armor", 0, CVT_INT, &cfg.showFullscreenArmor, 0, 1,
+	"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1,
+	"1=Show ammo when the status bar is hidden.",
+	"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1,
 	"1=Show armor when the status bar is hidden.",
-	"hud-keys", 0, CVT_INT, &cfg.showFullscreenKeys, 0, 1,
+	"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1,
 	"1=Show keys when the status bar is hidden.",
+	"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1,
+	"1=Show health when the status bar is hidden.",
+	"hud-artifact", 0, CVT_BYTE, &cfg.hudShown[HUD_ARTI], 0, 1,
+	"1=Show artifact when the status bar is hidden.",
 
-	"chat-macro0", 0, CVT_CHARPTR, &chat_macros[0], 0, 0, "Chat macro 1.",
-	"chat-macro1", 0, CVT_CHARPTR, &chat_macros[1], 0, 0, "Chat macro 2.",
-	"chat-macro2", 0, CVT_CHARPTR, &chat_macros[2], 0, 0, "Chat macro 3.",
-	"chat-macro3", 0, CVT_CHARPTR, &chat_macros[3], 0, 0, "Chat macro 4.",
-	"chat-macro4", 0, CVT_CHARPTR, &chat_macros[4], 0, 0, "Chat macro 5.",
-	"chat-macro5", 0, CVT_CHARPTR, &chat_macros[5], 0, 0, "Chat macro 6.",
-	"chat-macro6", 0, CVT_CHARPTR, &chat_macros[6], 0, 0, "Chat macro 7.",
-	"chat-macro7", 0, CVT_CHARPTR, &chat_macros[7], 0, 0, "Chat macro 8.",
-	"chat-macro8", 0, CVT_CHARPTR, &chat_macros[8], 0, 0, "Chat macro 9.",
-	"chat-macro9", 0, CVT_CHARPTR, &chat_macros[9], 0, 0, "Chat macro 10.",
+    	"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, .1f, 1,
+    	"Scaling for HUD elements (status bar hidden).",
+	"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, "HUD info color red component.",
+	"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, "HUD info color green component.",
+	"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, "HUD info color alpha component.",
+	"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1, "HUD info alpha value.",
+	"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1, "HUD icon alpha value.",
+
+	"chat-macro0", 0, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0, "Chat macro 1.",
+	"chat-macro1", 0, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0, "Chat macro 2.",
+	"chat-macro2", 0, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0, "Chat macro 3.",
+	"chat-macro3", 0, CVT_CHARPTR, &cfg.chat_macros[3], 0, 0, "Chat macro 4.",
+	"chat-macro4", 0, CVT_CHARPTR, &cfg.chat_macros[4], 0, 0, "Chat macro 5.",
+	"chat-macro5", 0, CVT_CHARPTR, &cfg.chat_macros[5], 0, 0, "Chat macro 6.",
+	"chat-macro6", 0, CVT_CHARPTR, &cfg.chat_macros[6], 0, 0, "Chat macro 7.",
+	"chat-macro7", 0, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0, "Chat macro 8.",
+	"chat-macro8", 0, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0, "Chat macro 9.",
+	"chat-macro9", 0, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0, "Chat macro 10.",
 
 	// Game settings for servers.
 	"server-game-nomonsters", 0, CVT_BYTE, &cfg.netNomonsters, 0, 1,
@@ -324,16 +340,28 @@ cvar_t  gameCVars[] = {
 	"Player eye height (the original is 41).",
 	"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1,
 	"Player movement speed modifier.",
-	"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1,
-	"Scaling for menu screens.",
+
 	"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1,
 	"1=Show level title and author in the beginning.",
-	"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63,
-	"6-bit bitfield. Show kills, items and secret counters in automap.",
-	"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1,
-	"Size factor for the counters in the automap.",
 	"game-corpsetime", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0,
 	"Number of seconds after which dead monsters disappear.",
+
+	"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2,
+	"Alignment of HUD messages. 0 = left, 1 = center, 2 = right.",
+	"msg-echo", 0, CVT_INT, &cfg.echoMsg, 0, 1,
+	"1=Echo all messages to the console.",
+	"msg-show", 0, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8,
+	"Number of HUD messages displayed at the same time.",
+	"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0,
+	"Scaling factor for HUD messages.",
+	"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0,
+	"Number of tics to keep HUD messages on screen.",
+	"msg-blink", 0, CVT_BYTE, &cfg.msgBlink, 0, 1,
+	"1=HUD messages blink when they're printed.",
+	"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1, "Color of HUD messages red component.",
+	"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1, "Color of HUD messages green component.",
+	"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1, "Color of HUD messages blue component.",
 
 	"xg-dev", 0, CVT_INT, &xgDev, 0, 1, "1=Print XG debug messages.",
 
@@ -350,6 +378,7 @@ ccmd_t  gameCCmds[] = {
 	"give", CCmdCheatGive,
 	"Cheat command to give you various kinds of things.",
 	"god", CCmdCheatGod, "I don't think He needs any help...",
+	"suicide", 	CCmdSuicide, "Kill yourself. What did you think?",
 	"kill", CCmdCheatMassacre, "Kill all the monsters on the level.",
 	"hereticfont", CCmdHereticFont, "Use the Heretic font.",
 	"invleft", CCmdInventory, "Move inventory cursor to the left.",
@@ -367,19 +396,8 @@ ccmd_t  gameCCmds[] = {
 
 	"spy", CCmdCycleSpy, "Change the viewplayer when not in deathmatch.",
 
-	// Menu actions.
-	"infoscreen", CCmdMenuAction, "Display the original Hexen help screens.",
-	"savegame", CCmdMenuAction, "Save the game.",
-	"loadgame", CCmdMenuAction, "Load a saved game.",
-	"soundmenu", CCmdMenuAction, "Open the sound menu.",
-	"quicksave", CCmdMenuAction, "Quicksave the game.",
-	"endgame", CCmdMenuAction, "End the current game.",
-	"togglemsgs", CCmdMenuAction, "Toggle messages on/off (cvar messages).",
-	"quickload", CCmdMenuAction, "Load the last quicksaved game.",
-	"quit", CCmdMenuAction, "Quit jHeretic.",
-	"togglegamma", CCmdMenuAction, "Change the gamma correction level.",
-
-	"beginchat", CCmdBeginChat, "Enter chat mode. Destination optional.",
+	"beginchat", CCmdBeginChat, "Begin chat mode.",
+	"msgrefresh", CCmdMsgRefresh, "Show last HUD message.",
 
 	"spawnmobj", CCmdSpawnMobj, "Spawn a new mobj.",
 	"coord", CCmdPrintPlayerCoords,
@@ -421,9 +439,55 @@ void H_ConsoleRegistration()
 	D_NetConsoleRegistration();
 }
 
+
+int CCmdPause(int argc, char **argv)
+{
+	extern boolean sendpause;
+
+	if(!menuactive)
+		sendpause = true;
+	return true;
+}
+
+void SuicideResponse(int option, void *data)
+{
+	if(option != 'y')
+		return;
+
+	GL_Update(DDUF_BORDER);
+	mn_SuicideConsole = true;	
+}
+
+int CCmdSuicide(int argc, char **argv)
+{
+	if(gamestate != GS_LEVEL)
+	{
+		S_LocalSound(sfx_chat, NULL);
+		Con_Printf("Can only suicide when in a game!\n", argv[0]);
+		return true;
+
+	}
+
+	if(deathmatch)
+	{
+		S_LocalSound(sfx_chat, NULL);
+		Con_Printf("Can't suicide during a deathmatch!\n", argv[0]);
+		return true;		
+	}
+
+	if (!stricmp(argv[0], "suicide"))
+	{
+		Con_Open(false);
+		menuactive = false;
+		M_StartMessage("Are you sure you want to suicide?\n\nPress Y or N.", SuicideResponse, true);
+		return true;
+	}
+	return false;
+}
+
 int CCmdViewSize(int argc, char **argv)
 {
-	int     min = 3, max = 11, *val = &cfg.screenblocks;
+	int     min = 3, max = 13, *val = &cfg.screenblocks;
 
 	if(argc != 2)
 	{
@@ -460,6 +524,28 @@ int CCmdScreenShot(int argc, char **argv)
 	return true;
 }
 
+int ConTextOut(char *text, int x, int y)
+{
+	extern int typein_time;
+	int     old = typein_time;
+
+	typein_time = 0xffffff;
+	M_WriteText2(x, y, text, hu_font_a, -1, -1, -1, -1);
+	typein_time = old;
+	return 0;
+}
+
+
+int ConTextWidth(char *text)
+{
+	return M_StringWidth(text, hu_font_a);
+}
+
+void ConTextFilter(char *text)
+{
+	strupr(text);
+}
+
 DEFCC(CCmdHereticFont)
 {
 	ddfont_t cfont;
@@ -468,9 +554,9 @@ DEFCC(CCmdHereticFont)
 	cfont.height = 9;
 	cfont.sizeX = 1.2f;
 	cfont.sizeY = 2;
-	cfont.TextOut = MN_DrTextA_CS;
-	cfont.Width = MN_TextAWidth;
-	cfont.Filter = MN_TextFilter;
+	cfont.TextOut = ConTextOut;
+	cfont.Width = ConTextWidth;
+	cfont.Filter = ConTextFilter;
 	Con_SetFont(&cfont);
 	return true;
 }

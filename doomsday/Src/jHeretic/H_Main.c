@@ -9,11 +9,16 @@
 #include "../Common/d_net.h"
 #include "jHeretic/P_local.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/settings.h"
+#include "jHeretic/d_config.h"
 #include "jHeretic/AcFnLink.h"
 #include "jHeretic/Mn_def.h"
+#include "../Common/hu_msg.h"
+#include "../Common/hu_stuff.h"
+#include "../Common/am_map.h"
 #include "f_infine.h"
 #include "g_update.h"
+
+#define viewheight	Get(DD_VIEWWINDOW_HEIGHT)
 
 game_import_t gi;
 game_export_t gx;
@@ -24,7 +29,7 @@ boolean ExtendedWAD = false;	// true if episodes 4 and 5 present
 boolean nomonsters;				// checkparm of -nomonsters
 boolean respawnparm;			// checkparm of -respawn
 boolean debugmode;				// checkparm of -debug
-boolean ravpic;					// checkparm of -ravpic
+boolean devparm;					// checkparm of -devparm
 boolean cdrom;					// true if cd-rom mode active
 boolean singletics;				// debug flag to cancel adaptiveness
 boolean noartiskip;				// whether shift-enter skips an artifact
@@ -34,10 +39,15 @@ int     startepisode;
 int     startmap;
 boolean autostart;
 extern boolean automapactive;
+extern boolean amap_fullyopen;
 extern float lookOffset;
 
 static boolean devMap;
 static char gameModeString[17];
+
+// default font colours
+const float deffontRGB[] = { .425f, 0.986f, 0.378f};
+const float deffontRGB2[] = { 1.0f, 1.0f, 1.0f};
 
 FILE   *debugfile;
 
@@ -50,8 +60,8 @@ void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    R_SetAllDoomsdayFlags();
 void    R_DrawRingFilter();
 void    X_Drawer();
-int     H_PrivilegedResponder(event_t *event);
-void    H_DefaultBindings();
+int     D_PrivilegedResponder(event_t *event);
+void    D_DefaultBindings();
 
 void R_DrawLevelTitle(void)
 {
@@ -74,7 +84,8 @@ void R_DrawLevelTitle(void)
 
 	lname = (char *) Get(DD_MAP_NAME);
 	lauthor = (char *) Get(DD_MAP_AUTHOR);
-	gl.Color4f(1, 1, 1, alpha);
+    Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
+
 	if(lname)
 	{
 		// Skip the ExMx.
@@ -85,14 +96,17 @@ void R_DrawLevelTitle(void)
 			while(*lname && isspace(*lname))
 				lname++;
 		}
-		MN_DrCenterTextB_CS(lname, 160, y);
+		M_WriteText3(160 - M_StringWidth(lname, hu_font_b) / 2, y, lname,
+					hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], alpha, false, 0);
 		y += 20;
 	}
-	gl.Color4f(.5f, .5f, .5f, alpha);
+
 	if(lauthor && stricmp(lauthor, "raven software"))
 	{
-		MN_DrCenterTextA_CS(lauthor, 160, y);
+		M_WriteText3(160 - M_StringWidth(lauthor, hu_font_a) / 2, y, lauthor,
+					hu_font_a, .5f, .5f, .5f, alpha, false, 0);
 	}
+    Draw_EndZoom();
 }
 
 //---------------------------------------------------------------------------
@@ -105,32 +119,60 @@ void R_DrawLevelTitle(void)
 
 void    R_ExecuteSetViewSize(void);
 
-extern boolean finalestage;
+// wipegamestate can be set to -1 to force a wipe on the next draw
+gamestate_t wipegamestate = GS_DEMOSCREEN;
+extern boolean inhelpscreens;
 
+extern boolean finalestage;
+#define SIZEFACT 4
+#define SIZEFACT2 16
 void D_Display(void)
 {
-	extern boolean MenuActive;
-	extern boolean askforquit;
+	static boolean viewactivestate = false;
+	static boolean menuactivestate = false;
+	static boolean inhelpscreensstate = false;
+	static int targx =0, targy = 0, targw =0, targh = 0;
+	static int x =0, y = 0, w =320, h = 200, offy = 0;
+	static int fullscreenmode = 0;
+	static gamestate_t oldgamestate = -1;
+	int     ay;
 	player_t *vplayer = &players[displayplayer];
 	boolean iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0;	// $democam
 
+	// $democam: can be set on every frame
 	if(cfg.setblocks > 10 || iscam)
 	{
 		// Full screen.
-		R_ViewWindow(0, 0, 320, 200);
+		targx = 0;
+		targy = 0;
+		targw = 320;
+		targh = 200;
 	}
 	else
 	{
-		int     w = cfg.setblocks * 32;
-		int     h =
-			cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
-		R_ViewWindow(160 - (w >> 1),
-					 (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) >> 1, w, h);
+		targw = cfg.setblocks * 32;
+		targh = cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
+		targx = 160 - (targw >> 1);
+		targy = (200 - SBARHEIGHT * cfg.sbarscale / 20 - targh) >> 1;
 	}
 
-	//
-	// do buffered drawing
-	//
+	if(targw > w)
+		w+= (((targw-w)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targw < w)
+		w-= (((w-targw)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targh > h)
+		h+= (((targh-h)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targh < h)
+		h-= (((h-targh)>> 1)+SIZEFACT2)>>SIZEFACT;
+
+	if(cfg.setblocks < 10)
+	{
+		offy = (SBARHEIGHT * cfg.sbarscale/20);
+		R_ViewWindow(160-(w>>1), 100-((h+offy) >>1), w, h);
+	} else
+		R_ViewWindow(targx, targy, targw, targh);
+
+	// Do buffered drawing
 	switch (gamestate)
 	{
 	case GS_LEVEL:
@@ -143,31 +185,71 @@ void D_Display(void)
 			// a bug, but since there's an easy fix...
 			break;
 		}
-		if(automapactive)
-			AM_Drawer();
-		else
+		if(!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1 || cfg.automapWidth < 1 || cfg.automapHeight < 1)
 		{
-			// Set flags for the renderer.
+			// Draw the player view.
 			if(IS_CLIENT)
+			{
+				// Server updates mobj flags in NetSv_Ticker.
 				R_SetAllDoomsdayFlags();
-			GL_SetFilter(vplayer->plr->filter);
+			}
 			// The view angle offset.
 			Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
-			// With invulnerability, we want fullbright lighting.
+			GL_SetFilter(vplayer->plr->filter);
+
+			// How about fullbright?
 			Set(DD_FULLBRIGHT, vplayer->powers[pw_invulnerability]);
+
+			// Render the view with possible custom filters.
 			R_RenderPlayerView(vplayer->plr);
+
 			if(vplayer->powers[pw_invulnerability])
 				R_DrawRingFilter();
+
+			// Crosshair.
 			if(!iscam)
 				X_Drawer();
-			R_DrawLevelTitle();
 		}
-		CT_Drawer();
-		if(!iscam)
-			SB_Drawer();		// $democam
-		// Also update view borders?
-		if(Get(DD_VIEWWINDOW_HEIGHT) != 200)
+
+        // Draw the automap?
+        if(automapactive)
+            AM_Drawer();
+
+        // These various HUD's will be drawn unless Doomsday advises not to
+        if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
+		{
+
+            // Level information is shown for a few seconds in the 
+            // beginning of a level.
+            R_DrawLevelTitle();
+
+            // Do we need to render a full status bar at this point?
+            if (!(automapactive && cfg.automapHudDisplay == 0 )){
+
+                if(!iscam)
+                    if(true == (viewheight == 200) )
+                    {
+                        // Fullscreen. Which mode?
+                        ST_Drawer(cfg.setblocks - 10, true);	// $democam
+                    } else {
+                        ST_Drawer(0 , true);	// $democam
+                    }
+
+                    fullscreenmode = viewheight == 200;
+
+                }
+
+            HU_Drawer();
+		}
+
+		// Need to update the borders?
+		if(oldgamestate != GS_LEVEL ||
+			((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
+			 	cfg.sbarscale < 20 || (cfg.sbarscale == 20 && h < targh) || (automapactive && cfg.automapHudDisplay == 0 ))))
+		{
+			// Update the borders.
 			GL_Update(DDUF_BORDER);
+		}
 		break;
 
 	case GS_INTERMISSION:
@@ -182,21 +264,26 @@ void D_Display(void)
 	default:
 		break;
 	}
+
 	GL_Update(DDUF_FULLSCREEN);
 
-	if(paused && !MenuActive && !askforquit && !fi_active)
+	menuactivestate = menuactive;
+	viewactivestate = viewactive;
+	inhelpscreensstate = inhelpscreens;
+	oldgamestate = wipegamestate = gamestate;
+
+	// draw pause pic (but not if InFine active)
+	if(paused && !fi_active)
 	{
-		if(!IS_NETGAME)
-		{
-			GL_DrawPatch(160, Get(DD_VIEWWINDOW_Y) + 5,
-						 W_GetNumForName("PAUSED"));
-		}
+		if(automapactive)
+			ay = 4;
 		else
-		{
-			GL_DrawPatch(160, 70, W_GetNumForName("PAUSED"));
-		}
+			ay = 4;	// in jDOOM this is viewwindowy + 4
+
+		GL_DrawPatch(160, ay, W_GetNumForName("PAUSED"));
 	}
 
+	// InFine is drawn whenever active.
 	FI_Drawer();
 }
 
@@ -724,7 +811,7 @@ void H_PreInit(void)
 	R_SetDataPath("}Data\\jHeretic\\");
 	R_SetBorderGfx(borderLumps);
 	Con_DefineActions(actions);
-	// Add the JHexen cvars and ccmds to the console databases.
+	// Add the jHeretic cvars and ccmds to the console databases.
 	H_ConsoleRegistration();
 
 	// Add a couple of probable locations for Heretic.wad.  
@@ -737,7 +824,6 @@ void H_PreInit(void)
 	// Default settings (used if no config file found).
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.playerMoveSpeed = 1;
-	cfg.messageson = true;
 	cfg.dclickuse = false;
 	cfg.mouseSensiX = 8;
 	cfg.mouseSensiY = 8;
@@ -749,10 +835,34 @@ void H_PreInit(void)
 	cfg.ringFilter = 1;
 	cfg.eyeHeight = 41;
 	cfg.menuScale = .9f;
+	cfg.menuColor[0] = deffontRGB[0];	// use the default colour by default.
+	cfg.menuColor[1] = deffontRGB[1];
+	cfg.menuColor[2] = deffontRGB[2];
+	cfg.menuColor2[0] = deffontRGB2[0];	// use the default colour by default.
+	cfg.menuColor2[1] = deffontRGB2[1];
+	cfg.menuColor2[2] = deffontRGB2[2];
+	cfg.menuEffects = 1;
+	cfg.menuFog = 4;
+	cfg.menuSlam = true;
+	cfg.flashcolor[0] = .7f;
+	cfg.flashcolor[1] = .9f;
+	cfg.flashcolor[2] = 1;
+	cfg.flashspeed = 4;
+	cfg.turningSkull = false;
 	cfg.sbarscale = 20;
-	cfg.showFullscreenMana = 1;
-	cfg.showFullscreenArmor = 1;
-	cfg.showFullscreenKeys = 1;
+	cfg.hudShown[HUD_AMMO] = true;
+	cfg.hudShown[HUD_ARMOR] = true;
+	cfg.hudShown[HUD_KEYS] = true;
+	cfg.hudShown[HUD_HEALTH] = true;
+	cfg.hudShown[HUD_ARTI] = true;
+    	cfg.hudScale = .7f;
+	cfg.hudColor[0] = .325f;
+	cfg.hudColor[1] = .686f;
+	cfg.hudColor[2] = .278f;
+	cfg.hudColor[3] = 1;
+	cfg.hudIconAlpha = 1;
+	cfg.usePatchReplacement = true;
+
 	cfg.tomeCounter = 10;
 	cfg.tomeSound = 3;
 	cfg.lookSpeed = 3;
@@ -766,22 +876,76 @@ void H_PreInit(void)
 	cfg.netColor = 4;			// Use the default color by default.
 	cfg.levelTitle = true;
 	cfg.customMusic = true;
-	cfg.counterCheatScale = .7f;
+
 	cfg.cameraNoClip = true;
 	cfg.bobView = cfg.bobWeapon = 1;
 	cfg.jumpPower = 9;
+
+	cfg.statusbarAlpha = 1;
+	cfg.statusbarCounterAlpha = 1;
+
+	cfg.automapPos = 5;
+	cfg.automapWidth = 1.0f;
+	cfg.automapHeight = 1.0f;
+
+	cfg.automapL0[0] = 0.42f;	// Unseen areas
+	cfg.automapL0[1] = 0.42f;
+	cfg.automapL0[2] = 0.42f;
+
+	cfg.automapL1[0] = 0.41f;	// onesided lines 
+	cfg.automapL1[1] = 0.30f;
+	cfg.automapL1[2] = 0.15f;
+
+	cfg.automapL2[0] = 0.82f;	// floor height change lines
+	cfg.automapL2[1] = 0.70f;
+	cfg.automapL2[2] = 0.52f;
+
+	cfg.automapL3[0] = 0.47f;	// ceiling change lines
+	cfg.automapL3[1] = 0.30f;
+	cfg.automapL3[2] = 0.16f;
+
+	cfg.automapBack[0] = 1.0f;
+	cfg.automapBack[1] = 1.0f;
+	cfg.automapBack[2] = 1.0f;
+	cfg.automapBack[3] = 1.0f;
+	cfg.automapLineAlpha = 1.0f;
+	cfg.automapShowDoors = true;
+	cfg.automapDoorGlow = 8;
+	cfg.automapHudDisplay = 2;
+	cfg.automapRotate = true;
+	cfg.automapBabyKeys = true;
+	cfg.counterCheatScale = .7f; //From jHeretic
+
+	cfg.msgShow = true;
+	cfg.msgCount = 4;
+	cfg.msgScale = .8f;
+	cfg.msgUptime = 5 * TICSPERSEC;
+	cfg.msgAlign = ALIGN_CENTER;
+	cfg.msgBlink = true;
+
+	cfg.msgColor[0] = deffontRGB2[0];
+	cfg.msgColor[1] = deffontRGB2[1];
+	cfg.msgColor[2] = deffontRGB2[2];
 
 	//  M_FindResponseFile();
 	//  setbuf(stdout, NULL);
 	nomonsters = ArgCheck("-nomonsters");
 	respawnparm = ArgCheck("-respawn");
-	ravpic = ArgCheck("-ravpic");
+	devparm = ArgCheck("-devparm");
 	noartiskip = ArgCheck("-noartiskip");
 	debugmode = ArgCheck("-debug");
 	startskill = sk_medium;
 	startepisode = 1;
 	startmap = 1;
 	autostart = false;
+
+	G_Register();			// read-only game status cvars (for playsim)
+
+	// Add the automap related cvars and ccmds to the console databases
+	AM_Register();
+
+	// Add the menu related cvars and ccmds to the console databases
+	MN_Register();
 
 	// Check for -CDROM
 	cdrom = false;
@@ -896,9 +1060,10 @@ void H_PostInit(void)
 	SV_Init();
 
 	XG_ReadTypes();
+	XG_Register();			// register XG classnames
 
 	// Set the default bindings, if needed.
-	H_DefaultBindings();
+	D_DefaultBindings();
 
 	// Init the view.
 	R_SetViewSize(cfg.screenblocks, 0);
@@ -931,15 +1096,17 @@ void H_PostInit(void)
 					startmap, startskill + 1);
 	}
 
-	Con_Message("MN_Init: Init menu system.\n");
-	MN_Init();
-	CT_Init();
-
 	Con_Message("P_Init: Init Playloop state.\n");
 	P_Init();
 
-	Con_Message("SB_Init: Loading patches.\n");
-	SB_Init();
+	Con_Message("HU_Init: Setting up heads up display.\n");
+	HU_Init();
+
+	Con_Message("ST_Init: Loading patches.\n");
+	ST_Init();
+
+	Con_Message("MN_Init: Init menu system.\n");
+	MN_Init();
 
 	//
 	// start the apropriate game based on parms
@@ -1101,9 +1268,9 @@ game_export_t *GetGameAPI(game_import_t * imports)
 	gx.MergeTicCmd = (void (*)(void*, void*)) G_MergeTiccmd;
 	gx.G_Drawer = D_Display;
 	gx.Ticker = H_Ticker;
-	gx.MN_Drawer = MN_Drawer;
-	gx.PrivilegedResponder = (boolean (*)(event_t *)) H_PrivilegedResponder;
-	gx.MN_Responder = MN_Responder;
+	gx.MN_Drawer = M_Drawer;
+	gx.PrivilegedResponder = (boolean (*)(event_t *)) D_PrivilegedResponder;
+	gx.MN_Responder = M_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
 	gx.MobjFriction = (fixed_t (*)(void *)) P_GetMobjFriction;
