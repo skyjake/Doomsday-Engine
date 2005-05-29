@@ -12,25 +12,28 @@
 #include <ctype.h>
 
 #if defined(__JDOOM__)
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "d_netJD.h"
-#  include "m_swap.h"
-#  include "v_video.h"
-#  include "s_sound.h"
-#  include "hu_stuff.h"
-
+# include "doomdef.h"
+# include "doomstat.h"
+# include "d_netJD.h"
+# include "m_swap.h"
+# include "v_video.h"
+# include "s_sound.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/Am_map.h"
-#  include "jHeretic/S_sound.h"
-#  include "jHeretic/Soundst.h"
-
+# include "jHeretic/Doomdef.h"
+# include "jHeretic/S_sound.h"
+# include "jHeretic/Soundst.h"
+# include "Common/Am_map.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
-#  include "jHexen/am_map.h"
-#  include "jHexen/settings.h"
+# include "jHexen/h2def.h"
+# include "jHexen/d_config.h"
+# include "Common/am_map.h"
+#elif __JSTRIFE__
+# include "jStrife/h2def.h"
+# include "jStrife/d_config.h"
+# include "Common/am_map.h"
 #endif
+
+#include "Common/hu_stuff.h"
 
 #include "f_infine.h"
 
@@ -239,9 +242,12 @@ void    FIC_NoShowMenu(void);
 extern int actual_leveltime;
 extern boolean secretexit;
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 extern int LeaveMap;
 #endif
+
+extern dpatch_t hu_font[HU_FONTSIZE];
+extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -371,10 +377,6 @@ static fitext_t fi_dummytext;
 
 static boolean condition_presets[NUM_FICONDS];
 
-#if !__JDOOM__
-static int FontABase, FontBBase;
-#endif
-
 // CODE --------------------------------------------------------------------
 
 //===========================================================================
@@ -386,14 +388,7 @@ void FI_ClearState(void)
 {
 	int     i, c;
 
-#if !__JDOOM__
-	players[consoleplayer].messageTics = 1;
-#endif
-#if __JHEXEN__
-	strcpy(players[consoleplayer].message, "");
-#else
 	players[consoleplayer].message = NULL;
-#endif
 
 	// General game state.
 	gameaction = ga_nothing;
@@ -596,7 +591,7 @@ void FI_Start(char *finalescript, infinemode_t mode)
 		// conditions.
 		fi->conditions[FICOND_SECRET] = (secretexit != 0);
 
-#ifdef __JHEXEN__
+#if __JHEXEN__
 		// Current hub has been completed?
 		fi->conditions[FICOND_LEAVEHUB] =
 			(P_GetMapCluster(gamemap) != P_GetMapCluster(LeaveMap));
@@ -630,10 +625,6 @@ void FI_Start(char *finalescript, infinemode_t mode)
 					 fi->conditions, NUM_FICONDS);
 	}
 
-#ifndef __JDOOM__
-	FontABase = W_GetNumForName("FONTA_S") + 1;
-	FontBBase = W_GetNumForName("FONTB_S") + 1;
-#endif
 	memset(&fi_dummytext, 0, sizeof(fi_dummytext));
 }
 
@@ -670,7 +661,7 @@ void FI_End(void)
 		{
 			if(IS_CLIENT)
 			{
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 				Draw_TeleportIcon();
 #endif
 				return;
@@ -756,7 +747,7 @@ void FI_GetMapID(char *dest, int ep, int map)
 		sprintf(dest, "E%iM%i", ep, map);
 #elif __JHERETIC__
 	sprintf(dest, "E%iM%i", ep, map);
-#elif __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 	sprintf(dest, "MAP%02i", map);
 #endif
 }
@@ -1533,18 +1524,11 @@ int FI_FilterChar(int ch)
 int FI_CharWidth(int ch, boolean fontb)
 {
 	ch = FI_FilterChar(ch);
-#if __JDOOM__
+
 	if(ch < 33)
 		return 4;
 	return fontb ? SHORT(hu_font_b[ch - HU_FONTSTART].width) : 
 		SHORT(hu_font_a[ch - HU_FONTSTART].width);
-#else
-	if(ch < 33)
-		return 5;
-	return SHORT( ((patch_t *) 
-				   W_CacheLumpNum((fontb ? FontBBase : FontABase) + ch - 33,
-								  PU_CACHE))->width );
-#endif
 }
 
 //===========================================================================
@@ -1580,14 +1564,12 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
 	int     lump;
 
 	ch = FI_FilterChar(ch);
-#if __JDOOM__
+
 	if(fontb)
 		lump = hu_font_b[ch - HU_FONTSTART].lump;
 	else
 		lump = hu_font_a[ch - HU_FONTSTART].lump;
-#else
-	lump = (fontb ? FontBBase : FontABase) + ch - 33;
-#endif
+
 	// Draw the character. Don't try to draw spaces.
 	if(ch > 32)
 		GL_DrawPatch_CS(x, y, lump);
@@ -1789,6 +1771,12 @@ void FI_Drawer(void)
 	// Don't draw anything until we are sure the script has started.
 	if(!fi_active || !fi_cmd_executed)
 		return;
+
+	// Go into screen projection mode.
+	gl.MatrixMode(DGL_PROJECTION);
+	gl.PushMatrix();
+	gl.LoadIdentity();
+	gl.Ortho(0, 0, 320,200, -1, 1);
 
 	// Draw the background.
 	if(fi->bgflat >= 0)
