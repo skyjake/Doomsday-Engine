@@ -13,6 +13,10 @@
 #include "../jHexen/p_local.h"
 #endif
 
+#ifdef __JSTRIFE__
+#include "../jStrife/p_local.h"
+#endif
+
 extern boolean  cyclingMaps, mapCycleNoExit;
 extern int      netSvAllowCheats;
 extern char    *mapCycle;

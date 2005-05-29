@@ -13,7 +13,7 @@ boolean         P_FuzzySpawn(mapthing_t * spot, int playernum,
 							 boolean doTeleSpark);
 void            P_SpawnPlayers(void);
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 mapthing_t     *P_GetPlayerStart(int group, int pnum);
 #endif
 

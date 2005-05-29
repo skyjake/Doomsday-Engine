@@ -9,6 +9,8 @@
 
 #ifdef __JHEXEN__
 #define PLR_COLOR(pl, x)	(((unsigned)(x)) > 7? (pl) % 8 : (x))
+#elif __JSTRIFE__
+#define PLR_COLOR(pl, x)	(((unsigned)(x)) > 7? (pl) % 8 : (x))
 #else
 #define PLR_COLOR(pl, x)	(((unsigned)(x)) > 3? (pl) % 4 : (x))
 #endif
@@ -46,8 +48,6 @@ enum {
 };
 
 #if 0
-// This struct is *obsolete* (portability issues)
-//
 // This packet is sent by servers to clients when the game state
 // changes.
 typedef struct {
@@ -64,6 +64,9 @@ typedef struct {
 	byte            skill:3;
 	short           gravity;	   // signed fixed-8.8
 #if __JHEXEN__
+	float           damagemod;	   // netMobDamageModifier (UNUSED)
+	float           healthmod;	   // netMobHealthModifier (UNUSED)
+#elif __JSTRIFE__
 	float           damagemod;	   // netMobDamageModifier (UNUSED)
 	float           healthmod;	   // netMobHealthModifier (UNUSED)
 #endif
@@ -106,6 +109,15 @@ typedef struct {
 #endif
 
 #ifdef __JHEXEN__
+#define PSF_ARMOR			PSF_ARMOR_POINTS	// For convenience.
+#define PSF_WEAPONS			(PSF_PENDING_WEAPON | PSF_READY_WEAPON)
+#define PSF_INVENTORY		0x0008 // ArtifactCount and invSlotNum, too.
+#define PSF_MORPH_TIME		0x4000
+#define PSF_LOCAL_QUAKE		0x8000
+#define PSF_REBORN			0xf7ff
+#endif
+
+#ifdef __JSTRIFE__
 #define PSF_ARMOR			PSF_ARMOR_POINTS	// For convenience.
 #define PSF_WEAPONS			(PSF_PENDING_WEAPON | PSF_READY_WEAPON)
 #define PSF_INVENTORY		0x0008 // ArtifactCount and invSlotNum, too.
