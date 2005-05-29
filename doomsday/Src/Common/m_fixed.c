@@ -16,7 +16,7 @@
  */
 
 /*
- * m_fixed.c: Naive Fixed-Point Math
+ * m_fixed.c: Fixed-Point Math
  *
  * Define NO_FIXED_ASM to disable the assembler version.
  */
