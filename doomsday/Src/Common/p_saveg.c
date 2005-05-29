@@ -1050,9 +1050,9 @@ void P_ArchiveSpecials(void)
 		{
 		ceiling:                               // killough 2/14/98
 			SV_WriteByte(tc_ceiling);
-			memcpy(&ceiling, th, sizeofceiling);
+			memcpy(&ceiling, th, SIZE_OF_CEILING);
 			ceiling.sector = (sector_t *) (ceiling.sector - sectors);
-			SV_Write(&ceiling, sizeofceiling);
+			SV_Write(&ceiling, SIZE_OF_CEILING);
 			continue;
 		}
 
@@ -1078,9 +1078,9 @@ void P_ArchiveSpecials(void)
 		{
 		plat:   // killough 2/14/98: added fix for original plat height above
 			SV_WriteByte(tc_plat);
-			memcpy(&plat, th, sizeofplat);
+			memcpy(&plat, th, SIZE_OF_PLAT);
 			plat.sector = (sector_t *) (plat.sector - sectors);
-			SV_Write(&plat, sizeofplat);
+			SV_Write(&plat, SIZE_OF_PLAT);
 			continue;
 		}
 
@@ -1141,7 +1141,7 @@ void P_UnArchiveSpecials(void)
 
 		case tc_ceiling:
 			ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVEL, NULL);
-			SV_Read(ceiling, sizeofceiling);
+			SV_Read(ceiling, SIZE_OF_CEILING);
 #ifdef _DEBUG
 			if((int) ceiling->sector >= numsectors ||
 			   (int) ceiling->sector < 0)
@@ -1177,7 +1177,7 @@ void P_UnArchiveSpecials(void)
 
 		case tc_plat:
 			plat = Z_Malloc(sizeof(*plat), PU_LEVEL, NULL);
-			SV_Read(plat, sizeofplat);
+			SV_Read(plat, SIZE_OF_PLAT);
 			plat->sector = &sectors[(int) plat->sector];
 			plat->sector->specialdata = plat;
 
