@@ -317,6 +317,11 @@ void DL_ThingColor(lumobj_t * lum, DGLubyte * outRGB, float light)
 	if(useFog)
 		light *= .5f;			// Would be too much.
 
+	if(lum->decorMap)
+	{	// Decoration maps are pre-colored.
+		light *= 255;
+	}
+
 	// Multiply with the light color.
 	for(i = 0; i < 3; i++)
 	{
@@ -327,7 +332,7 @@ void DL_ThingColor(lumobj_t * lum, DGLubyte * outRGB, float light)
 		else
 		{
 			// Decoration maps are pre-colored.
-			outRGB[i] = (DGLubyte) (light * 255);
+			outRGB[i] = (DGLubyte) (light);
 		}
 	}
 }
