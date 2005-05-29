@@ -12,6 +12,7 @@
 
 #include "h2def.h"
 #include "d_net.h"
+#include "hu_stuff.h"
 #include <ctype.h>
 
 // MACROS ------------------------------------------------------------------
@@ -526,14 +527,14 @@ static void DrDeathTally(void)
 			}
 			else
 			{
-				temp = MN_TextAWidth("--") / 2;
+				temp = M_StringWidth("--", hu_font_a) / 2;
 				if(bold)
 				{
-					MN_DrTextAYellow("--", x - temp, y);
+					M_WriteText2(x - temp, y, "--", hu_font_a, 1, 0.7f, 0.3f, 1);
 				}
 				else
 				{
-					MN_DrTextA("--", x - temp, y);
+					M_WriteText2(x - temp, y, "--", hu_font_a, 1, 1, 1, 1);
 				}
 			}
 		}
@@ -561,7 +562,8 @@ static void DrNumber(int val, int x, int y, int wrapThresh)
 	{
 		sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
 	}
-	MN_DrTextA(buff, x - MN_TextAWidth(buff) / 2, y);
+		
+	M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff, hu_font_a, 1, 1, 1, 1);
 }
 
 //==========================================================================
@@ -578,7 +580,8 @@ static void DrNumberBold(int val, int x, int y, int wrapThresh)
 	{
 		sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
 	}
-	MN_DrTextAYellow(buff, x - MN_TextAWidth(buff) / 2, y);
+
+	M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff, hu_font_a, 1, 0.7f, 0.3f, 1);
 }
 
 //===========================================================================
