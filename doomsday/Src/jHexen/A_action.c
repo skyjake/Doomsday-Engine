@@ -188,7 +188,7 @@ void C_DECL A_PotteryCheck(mobj_t *actor)
 	int     i;
 	mobj_t *pmo;
 
-	if(!netgame)
+	if(!IS_NETGAME)
 	{
 		pmo = players[consoleplayer].plr->mo;
 		if(P_CheckSight(actor, pmo) &&
