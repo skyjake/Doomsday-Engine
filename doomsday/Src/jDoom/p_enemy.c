@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.13  2005/05/29 12:47:07  danij
+// Added various Doom.exe bug fixes (with compatibility options) for Lost Souls spawning inside walls, Archviles raising invincible ghosts etc using fixes by Lee K from PrBoom.
+//
 // Revision 1.12  2005/01/01 22:58:52  skyjake
 // Resolved a bunch of compiler warnings
 //
@@ -1354,9 +1357,29 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
 
 	corpsehit = thing;
 	corpsehit->momx = corpsehit->momy = 0;
-	corpsehit->height <<= 2;
-	check = P_CheckPosition(corpsehit, corpsehit->x, corpsehit->y);
-	corpsehit->height >>= 2;
+
+// DJS - Used the PRBoom method to fix archvile raising ghosts
+//	If !raiseghosts then ressurect a "normal" MF_SOLID one.
+
+	if (cfg.raiseghosts)
+	{
+		corpsehit->height <<= 2;
+		check = P_CheckPosition(corpsehit, corpsehit->x, corpsehit->y);
+		corpsehit->height >>= 2;
+	} else {
+        	int height,radius;
+
+        	height = corpsehit->height; // save temporarily
+        	radius = corpsehit->radius; // save temporarily
+        	corpsehit->height = corpsehit->info->height;
+        	corpsehit->radius = corpsehit->info->radius;
+        	corpsehit->flags |= MF_SOLID;
+        	check = P_CheckPosition(corpsehit,corpsehit->x,corpsehit->y);
+       	 	corpsehit->height = height; // restore
+        	corpsehit->radius = radius; // restore                      //   ^
+        	corpsehit->flags &= ~MF_SOLID;
+	}
+// raiseghosts
 
 	if(!check)
 		return true;			// doesn't fit here
@@ -1415,7 +1438,15 @@ void C_DECL A_VileChase(mobj_t *actor)
 					info = corpsehit->info;
 
 					P_SetMobjState(corpsehit, info->raisestate);
-					corpsehit->height <<= 2;
+
+					if (cfg.raiseghosts)			// DJS - raiseghosts
+					{
+						corpsehit->height <<= 2;
+					} else {
+                      				corpsehit->height = info->height;
+                     				corpsehit->radius = info->radius;
+					}					// raiseghosts
+
 					corpsehit->flags = info->flags;
 					corpsehit->health = info->spawnhealth;
 					corpsehit->target = NULL;
@@ -1649,22 +1680,25 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
 	int     count;
 	thinker_t *currentthinker;
 
-	// count total number of skull currently on the level
-	count = 0;
-
-	currentthinker = thinkercap.next;
-	while(currentthinker != &thinkercap)
+	if(cfg.maxskulls)	// DJS - Compat option for unlimited lost soul spawns
 	{
-		if((currentthinker->function == P_MobjThinker) &&
-		   ((mobj_t *) currentthinker)->type == MT_SKULL)
-			count++;
-		currentthinker = currentthinker->next;
-	}
+		// count total number of skull currently on the level
+		count = 0;
 
-	// if there are allready 20 skulls on the level,
-	// don't spit another one
-	if(count > 20)
-		return;
+		currentthinker = thinkercap.next;
+		while(currentthinker != &thinkercap)
+		{
+			if((currentthinker->function == P_MobjThinker) &&
+		   	((mobj_t *) currentthinker)->type == MT_SKULL)
+				count++;
+			currentthinker = currentthinker->next;
+		}
+
+		// if there are allready 20 skulls on the level,
+		// don't spit another one
+		if(count > 20)
+			return;
+	}			// DJS - Compat option for unlimited lost soul spawns
 
 	// okay, there's playe for another one
 	an = angle >> ANGLETOFINESHIFT;
@@ -1677,7 +1711,32 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
 	y = actor->y + FixedMul(prestep, finesine[an]);
 	z = actor->z + 8 * FRACUNIT;
 
-	newmobj = P_SpawnMobj(x, y, z, MT_SKULL);
+	if(cfg.allowskullsinwalls)	// DJS - Compat option to prevent spawning lost souls inside walls /from prBoom
+	{
+		newmobj = P_SpawnMobj(x, y, z, MT_SKULL);
+	} else {
+      		// Check whether the Lost Soul is being fired through a 1-sided
+      		// wall or an impassible line, or a "monsters can't cross" line.
+      		// If it is, then we don't allow the spawn. This is a bug fix, but
+      		// it should be considered an enhancement, since it may disturb
+      		// existing demos, so don't do it in compatibility mode.
+
+      		if (P_CheckSides(actor,x,y))
+        		return;
+
+      		newmobj = P_SpawnMobj(x, y, z, MT_SKULL);
+
+      		// Check to see if the new Lost Soul's z value is above the
+      		// ceiling of its new sector, or below the floor. If so, kill it.
+
+      		if ((newmobj->z > (newmobj->subsector->sector->ceilingheight - newmobj->height)) ||
+          		(newmobj->z < newmobj->subsector->sector->floorheight))
+        	{
+          		// kill it immediately
+          		P_DamageMobj(newmobj,actor,actor,10000);
+          		return;
+        	}
+	}				// DJS - Compat option to prevent spawning lost souls inside walls /from prBoom
 
 	// Check for movements.
 	// killough $dropoff_fix

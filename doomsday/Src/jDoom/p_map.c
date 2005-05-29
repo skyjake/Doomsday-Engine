@@ -15,6 +15,12 @@
 // for more details.
 //
 // $Log$
+// Revision 1.14  2005/05/29 12:47:07  danij
+// Added various Doom.exe bug fixes (with compatibility options) for Lost Souls spawning inside walls, Archviles raising invincible ghosts etc using fixes by Lee K from PrBoom.
+//
+// Revision 1.14  2005/04/16 04:41:35  danij
+// Fix for lost souls spawning inside walls
+//
 // Revision 1.13  2005/01/01 22:58:52  skyjake
 // Resolved a bunch of compiler warnings
 //
@@ -94,6 +100,12 @@ mobj_t *tmthing;
 int     tmflags;
 fixed_t tmx, tmy, tmz, tmheight;
 line_t *tmhitline;
+
+// DJS - from prBoom
+static int pe_x; // Pain Elemental position for Lost Soul checks
+static int pe_y; // Pain Elemental position for Lost Soul checks
+static int ls_x; // Lost Soul position for Lost Soul checks
+static int ls_y; // Lost Soul position for Lost Soul checks
 
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
@@ -232,6 +244,38 @@ boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y)
 //
 // MOVEMENT ITERATOR FUNCTIONS
 //
+
+// DJS / adapted from prBoom
+//                                                                  // phares
+// PIT_CrossLine                                                    //   |
+// Checks to see if a PE->LS trajectory line crosses a blocking     //   V
+// line. Returns false if it does.
+//
+// tmbbox holds the bounding box of the trajectory. If that box
+// does not touch the bounding box of the line in question,
+// then the trajectory is not blocked. If the PE is on one side
+// of the line and the LS is on the other side, then the
+// trajectory is blocked.
+//
+// Currently this assumes an infinite line, which is not quite
+// correct. A more correct solution would be to check for an
+// intersection of the trajectory and the line, but that takes
+// longer and probably really isn't worth the effort.
+//
+
+static boolean PIT_CrossLine (line_t* ld, void *data)	// DJS *data is unused
+{
+  if (!(ld->flags & ML_TWOSIDED) ||
+      (ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS)))
+    if (!(tmbbox[BOXLEFT]   > ld->bbox[BOXRIGHT]  ||
+          tmbbox[BOXRIGHT]  < ld->bbox[BOXLEFT]   ||
+          tmbbox[BOXTOP]    < ld->bbox[BOXBOTTOM] ||
+          tmbbox[BOXBOTTOM] > ld->bbox[BOXTOP]))
+      if (P_PointOnLineSide(pe_x,pe_y,ld) != P_PointOnLineSide(ls_x,ls_y,ld))
+        return(false);  // line blocks trajectory                   //   ^
+  return(true); // line doesn't block trajectory                    //   |
+}
+
 
 // $unstuck: used to test intersection between thing and line
 // assuming NO movement occurs -- used to avoid sticky situations.
@@ -445,6 +489,53 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 
 	return !(thing->flags & MF_SOLID);
 }
+
+// DJS - from prBoom
+// This routine checks for Lost Souls trying to be spawned      // phares
+// across 1-sided lines, impassible lines, or "monsters can't   //   |
+// cross" lines. Draw an imaginary line between the PE          //   V
+// and the new Lost Soul spawn spot. If that line crosses
+// a 'blocking' line, then disallow the spawn. Only search
+// lines in the blocks of the blockmap where the bounding box
+// of the trajectory line resides. Then check bounding box
+// of the trajectory vs. the bounding box of each blocking
+// line to see if the trajectory and the blocking line cross.
+// Then check the PE and LS to see if they're on different
+// sides of the blocking line. If so, return true, otherwise
+// false.
+
+boolean P_CheckSides(mobj_t* actor, int x, int y)
+  {
+  int bx,by,xl,xh,yl,yh;
+
+  pe_x = actor->x;
+  pe_y = actor->y;
+  ls_x = x;
+  ls_y = y;
+
+  // Here is the bounding box of the trajectory
+
+  tmbbox[BOXLEFT]   = pe_x < x ? pe_x : x;
+  tmbbox[BOXRIGHT]  = pe_x > x ? pe_x : x;
+  tmbbox[BOXTOP]    = pe_y > y ? pe_y : y;
+  tmbbox[BOXBOTTOM] = pe_y < y ? pe_y : y;
+
+  // Determine which blocks to look in for blocking lines
+
+  xl = (tmbbox[BOXLEFT]   - bmaporgx)>>MAPBLOCKSHIFT;
+  xh = (tmbbox[BOXRIGHT]  - bmaporgx)>>MAPBLOCKSHIFT;
+  yl = (tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
+  yh = (tmbbox[BOXTOP]    - bmaporgy)>>MAPBLOCKSHIFT;
+
+  // xl->xh, yl->yh determine the mapblock set to search
+
+  for (bx = xl ; bx <= xh ; bx++)
+    for (by = yl ; by <= yh ; by++)
+      if (!P_BlockLinesIterator(bx,by,PIT_CrossLine, 0))
+        return true;                                                //   ^
+  return(false);                                                    //   |
+}                                                                 // phares
+
 
 //
 // MOVEMENT CLIPPING
