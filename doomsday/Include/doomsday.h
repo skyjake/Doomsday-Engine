@@ -110,7 +110,7 @@ extern          "C" {
 
 	// Console: Bindings.
 	void            B_EventBuilder(char *buff, event_t *ev, boolean to_event);
-	int             B_BindingsForCommand(char *command, char *buffer);
+	int             B_BindingsForCommand(char *command, char *buffer, int bindClass);
 
 	// System.
 	void            Sys_TicksPerSecond(float num);
@@ -263,9 +263,9 @@ extern          "C" {
 								float g, float b, float a);
 	void            GL_DrawRectTiled(int x, int y, int w, int h, int tw,
 									 int th);
-	void            GL_DrawCutRectTiled(int x, int y, int w, int h, int tw,
-										int th, int cx, int cy, int cw,
-										int ch);
+	void			GL_DrawCutRectTiled(int x, int y, int w, int h, int tw,
+									int th, int txoff, int tyoff, int cx,
+									int cy, int cw, int ch);
 	void            GL_DrawPSprite(float x, float y, float scale, int flip,
 								   int lump);
 	void            GL_SetFilter(int filter_rgba);

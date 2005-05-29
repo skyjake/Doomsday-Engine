@@ -53,6 +53,9 @@ void            DD_ClearKeyRepeaters(void);
 byte            DD_ScanToKey(byte scan);
 byte            DD_KeyToScan(byte key);
 byte            DD_ModKey(byte key);
+int		DD_IsKeyDown(int code);
+int		DD_IsMouseBDown(int code);
+int		DD_IsJoyBDown(int code);
 
 D_CMD(KeyMap);
 D_CMD(DumpKeyMap);

@@ -165,6 +165,9 @@ extern          "C" {
 		DD_CPLAYER_THRUST_MUL,
 		DD_CLIENT_PAUSED,
 		DD_WEAPON_OFFSET_SCALE_Y,  // 1000x
+        DD_MONOCHROME_PATCHES,		// DJS - convert patch image data to monochrome. 1= linear 2= weighted
+        DD_GAME_DATA_FORMAT,
+        DD_GAME_DRAW_HUD_HINT,        // Doomsday advises not to draw the HUD
 		DD_LAST_VALUE,
 
 		// General constants (not to be used with Get/Set).
@@ -432,11 +435,23 @@ extern          "C" {
 		int             data4;
 		int             data5;
 		int             data6;
+		int             useclass;	// use a specific bindclass command
 	} event_t;
 
 	// The mouse wheel is considered two extra mouse buttons.
 #define DDMB_MWHEELUP		0x1000
 #define DDMB_MWHEELDOWN		0x2000
+
+	enum {
+		BDC_NORMAL = 1,
+		BDC_BIASEDITOR,
+		BDC_CLASS1,
+		BDC_CLASS2,
+		BDC_CLASS3,
+		BDC_CLASS4,
+		BDC_CLASS5,
+		NUMBINDCLASSES
+	};
 
 	//------------------------------------------------------------------------
 	//
@@ -884,6 +899,7 @@ extern          "C" {
 #define CVF_NO_MAX			0x8	   // Don't use the maximum.
 #define CVF_CAN_FREE		0x10   // The string can be freed.
 #define CVF_HIDE			0x20
+#define CVF_READ_ONLY		0x40   // Can't be changed manually at all
 
 	// Console variable types.
 	typedef enum {

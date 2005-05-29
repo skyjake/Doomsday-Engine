@@ -24,10 +24,16 @@
 
 #include <stdio.h>
 
-void            B_Bind(event_t *event, char *command);
+typedef struct {
+	int		id;
+	int		active;
+	char	*name;
+} bindclass_t;
+
+void            B_Bind(event_t *event, char *command, int bindClass);
 void            B_EventBuilder(char *buff, event_t *ev, boolean to_event);
-int             B_BindingsForCommand(char *command, char *buffer);
-void            B_ClearBinding(char *command);
+int             B_BindingsForCommand(char *command, char *buffer, int bindClass);
+void            B_ClearBinding(char *command, int bindClass);
 boolean         B_Responder(event_t *ev);
 void            B_WriteToFile(FILE * file);
 void            B_Shutdown();
