@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.13  2005/05/29 12:54:36  danij
+// WeaponAutoSwitch now works in co-op. Common key array names.
+//
 // Revision 1.12  2005/01/01 22:58:52  skyjake
 // Resolved a bunch of compiler warnings
 //
@@ -225,8 +228,12 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 			P_GiveAmmo(player, weaponinfo[weapon].ammo, 5);
 		else
 			P_GiveAmmo(player, weaponinfo[weapon].ammo, 2);
-		player->pendingweapon = weapon;
-		player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+
+		if( cfg.weaponAutoSwitch || deathmatch == 1 )
+		{
+			player->pendingweapon = weapon;
+			player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+		}
 
 		/*if (player == &players[consoleplayer])
 		   { */
@@ -254,7 +261,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 		gaveweapon = true;
 		player->weaponowned[weapon] = true;
 		player->update |= PSF_OWNED_WEAPONS;
-		if( /*!INCOMPAT_OK || */ cfg.weaponAutoSwitch)
+		if( cfg.weaponAutoSwitch )
 		{
 			player->pendingweapon = weapon;
 			player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
@@ -311,13 +318,13 @@ boolean P_GiveArmor(player_t *player, int armortype)
 //
 // P_GiveCard
 //
-void P_GiveCard(player_t *player, card_t card)
+void P_GiveKey(player_t *player, card_t card)
 {
-	if(player->cards[card])
+	if(player->keys[card])
 		return;
 
 	player->bonuscount = BONUSADD;
-	player->cards[card] = 1;
+	player->keys[card] = 1;
 	player->update |= PSF_KEYS;
 }
 
@@ -471,49 +478,49 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 		// cards
 		// leave cards for everyone
 	case SPR_BKEY:
-		if(!player->cards[it_bluecard])
+		if(!player->keys[it_bluecard])
 			P_SetMessage(player, GOTBLUECARD);
-		P_GiveCard(player, it_bluecard);
+		P_GiveKey(player, it_bluecard);
 		if(!IS_NETGAME)
 			break;
 		return;
 
 	case SPR_YKEY:
-		if(!player->cards[it_yellowcard])
+		if(!player->keys[it_yellowcard])
 			P_SetMessage(player, GOTYELWCARD);
-		P_GiveCard(player, it_yellowcard);
+		P_GiveKey(player, it_yellowcard);
 		if(!IS_NETGAME)
 			break;
 		return;
 
 	case SPR_RKEY:
-		if(!player->cards[it_redcard])
+		if(!player->keys[it_redcard])
 			P_SetMessage(player, GOTREDCARD);
-		P_GiveCard(player, it_redcard);
+		P_GiveKey(player, it_redcard);
 		if(!IS_NETGAME)
 			break;
 		return;
 
 	case SPR_BSKU:
-		if(!player->cards[it_blueskull])
+		if(!player->keys[it_blueskull])
 			P_SetMessage(player, GOTBLUESKUL);
-		P_GiveCard(player, it_blueskull);
+		P_GiveKey(player, it_blueskull);
 		if(!IS_NETGAME)
 			break;
 		return;
 
 	case SPR_YSKU:
-		if(!player->cards[it_yellowskull])
+		if(!player->keys[it_yellowskull])
 			P_SetMessage(player, GOTYELWSKUL);
-		P_GiveCard(player, it_yellowskull);
+		P_GiveKey(player, it_yellowskull);
 		if(!IS_NETGAME)
 			break;
 		return;
 
 	case SPR_RSKU:
-		if(!player->cards[it_redskull])
+		if(!player->keys[it_redskull])
 			P_SetMessage(player, GOTREDSKULL);
-		P_GiveCard(player, it_redskull);
+		P_GiveKey(player, it_redskull);
 		if(!IS_NETGAME)
 			break;
 		return;

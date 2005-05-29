@@ -136,7 +136,7 @@ static void SV_ReadPlayer(player_t *pl)
 	pl->armortype = SV_ReadLong();
 
 	SV_Read(pl->powers, NUMPOWERS * 4);
-	SV_Read(pl->cards, NUMCARDS * 4);
+	SV_Read(pl->keys, NUMKEYS * 4);
 	pl->backpack = SV_ReadLong();
 
 	SV_Read(pl->frags, 4 * 4);

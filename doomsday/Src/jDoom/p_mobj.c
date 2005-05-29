@@ -895,8 +895,8 @@ void P_SpawnPlayer(mapthing_t * mthing, int pnum)
 
 	// give all cards in death match mode
 	if(deathmatch)
-		for(i = 0; i < NUMCARDS; i++)
-			p->cards[i] = true;
+		for(i = 0; i < NUMKEYS; i++)
+			p->keys[i] = true;
 
 	if(pnum == consoleplayer)
 	{
