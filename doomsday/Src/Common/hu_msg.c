@@ -277,7 +277,7 @@ char ForeignTranslation(unsigned char ch)
  *  strcatQuoted
  *
  */
-void strcatQuoted(char *dest, char *src)
+static void StrCatQuoted(char *dest, char *src)
 {
 	int     k = strlen(dest) + 1, i;
 
@@ -535,7 +535,7 @@ void HU_sendMessage(char *msg)
 	if(chat_to == HU_BROADCAST)
 	{
 		strcpy(buff, "chat ");
-		strcatQuoted(buff, msg);
+		StrCatQuoted(buff, msg);
 		Con_Execute(buff, false);
 	}
 	else
@@ -545,7 +545,7 @@ void HU_sendMessage(char *msg)
 			if(players[i].plr->ingame && cfg.PlayerColor[i] == chat_to)
 			{
 				sprintf(buff, "chatNum %d ", i);
-				strcatQuoted(buff, msg);
+				StrCatQuoted(buff, msg);
 				Con_Execute(buff, false);
 			}
 	}
