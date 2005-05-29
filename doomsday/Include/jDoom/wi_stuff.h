@@ -46,18 +46,13 @@ void            WI_Start(wbstartstruct_t * wbstartstruct);
 void            WI_SetState(stateenum_t st);
 void            WI_End(void);
 
-// Implements patch replacement.
-void            WI_DrawPatch(int x, int y, int lump);
-
-void            WI_DrawParamText(int x, int y, char *string,
-								 dpatch_t * defFont, float defRed,
-								 float defGreen, float defBlue,
-								 boolean defCase, boolean defTypeIn);
-
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.7  2005/05/29 05:45:09  danij
+// Moved text drawing routines to the commonised hu_stuff.c
+//
 // Revision 1.6  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

@@ -32,6 +32,4 @@
 // Include the refresh/render data structs.
 #include "r_data.h"
 
-void            R_CachePatch(dpatch_t * dp, char *name);
-
 #endif							// __R_LOCAL__
