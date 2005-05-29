@@ -37,6 +37,7 @@
 
 #define KBDQUESIZE		32
 #define MAX_DOWNKEYS	16		// Most keyboards support 6 or 7.
+#define NUMKKEYS		256
 
 #define CLAMP(x) DD_JoyAxisClamp(&x)	//x = (x < -100? -100 : x > 100? 100 : x)
 
@@ -65,6 +66,8 @@ int     mouseFreq = 0;
 int     joySensitivity = 5;
 int     joyDeadZone = 10;
 
+boolean allowMouseMod = true; // can mouse data be modified?
+
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
 int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;	// milliseconds
@@ -73,9 +76,9 @@ boolean shiftDown = false, altDown = false;
 boolean showScanCodes = false;
 
 // A customizable mapping of the scantokey array.
-char    keyMapPath[256] = "}Data\\KeyMaps\\";
-byte    keyMappings[256];
-byte    shiftKeyMappings[256], altKeyMappings[256];
+char    keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
+byte    keyMappings[NUMKKEYS];
+byte    shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -83,8 +86,12 @@ static event_t events[MAXEVENTS];
 static int eventhead;
 static int eventtail;
 
+static byte downKeys[NUMKKEYS];
+static byte downMouseButtons[IMB_MAXBUTTONS];
+static byte downJoyButtons[IJOY_MAXBUTTONS];
+
 /* *INDENT-OFF* */
-static byte scantokey[256] =	
+static byte scantokey[NUMKKEYS] =	
 {
 //	0				1			2				3				4			5					6				7
 //	8				9			A				B				C			D					E				F
@@ -538,6 +545,9 @@ void DD_ReadKeyboard(void)
 
 	// Check the repeaters.
 	ev.type = ev_keyrepeat;
+
+	// Don't specify a class
+	ev.useclass = 0;
 	for(i = 0; i < MAX_DOWNKEYS; i++)
 	{
 		repeater_t *rep = keyReps + i;
@@ -545,6 +555,7 @@ void DD_ReadKeyboard(void)
 		if(!rep->key)
 			continue;
 		ev.data1 = rep->key;
+
 		if(!rep->count && sysTime - rep->timer >= keyRepeatDelay1 / 1000.0)
 		{
 			// The first time.
@@ -573,9 +584,13 @@ void DD_ReadKeyboard(void)
 
 		// Check the type of the event.
 		if(ke->event == IKE_KEY_DOWN)	// Key pressed?
+		{
 			ev.type = ev_keydown;
-		else if(ke->event == IKE_KEY_UP)	// Key released?
+			downKeys[ev.data1] = true;
+		} else if(ke->event == IKE_KEY_UP){	// Key released?
 			ev.type = ev_keyup;
+			downKeys[ev.data1] = false;
+		}
 
 		// Use the table to translate the scancode to a ddkey.
 #ifdef WIN32
@@ -657,9 +672,11 @@ void DD_ReadMouse(void)
 	ev.data1 = mouse.x;
 	ev.data2 = mouse.y;
 	ev.data3 = mouse.z;
+	// Don't specify a class
+	ev.useclass = 0;
 
 	// Mouse axis data may be modified if not in UI mode.
-	if(!ui_active)
+	if(allowMouseMod)
 	{
 		if(mouseDisableX)
 			ev.data1 = 0;
@@ -714,11 +731,13 @@ void DD_ReadMouse(void)
 	if((ev.data1 = mouse.buttons & change))
 	{
 		ev.type = ev_mousebdown;
+		downMouseButtons[ev.data1] = true;
 		DD_PostEvent(&ev);
 	}
 	if((ev.data1 = oldMouseButtons & change))
 	{
 		ev.type = ev_mousebup;
+		downMouseButtons[ev.data1] = false;
 		DD_PostEvent(&ev);
 	}
 	oldMouseButtons = mouse.buttons;
@@ -768,17 +787,22 @@ void DD_ReadJoystick(void)
 		if(state.buttons[i])
 			bstate |= 1 << i;	// Set the bits.
 
+	// Don't specify a class
+	ev.useclass = 0;
+
 	// Check for button state changes. 
 	i = oldJoyBState ^ bstate;	// The change mask.
 	// Send the relevant events.
 	if((ev.data1 = bstate & i))
 	{
 		ev.type = ev_joybdown;
+		downJoyButtons[ev.data1] = true;
 		DD_PostEvent(&ev);
 	}
 	if((ev.data1 = oldJoyBState & i))
 	{
 		ev.type = ev_joybup;
+		downJoyButtons[ev.data1] = false;
 		DD_PostEvent(&ev);
 	}
 	oldJoyBState = bstate;
@@ -841,4 +865,31 @@ void DD_ReadJoystick(void)
 	CLAMP(ev.data2);
 
 	DD_PostEvent(&ev);
+}
+
+/*
+ *	DD_IsKeyDown
+ *		Simply return the key state from the downKeys array
+ */
+int DD_IsKeyDown(int code)
+{
+	return downKeys[code];
+}
+
+/*
+ *  DD_IsMouseBDown
+ *		Simply return the key state from the downMouseButtons array
+ */
+int DD_IsMouseBDown(int code)
+{
+	return downMouseButtons[code];
+}
+
+/*
+ *  DD_IsJoyBDown
+ *		Simply return the key state from the downJoyButtons array
+ */
+int DD_IsJoyBDown(int code)
+{
+	return downJoyButtons[code];
 }

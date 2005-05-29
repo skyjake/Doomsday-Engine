@@ -112,6 +112,8 @@ calias_t *Con_GetAlias(const char *name);
 extern boolean paletted, r_s3tc;	// Use GL_EXT_paletted_texture
 extern int freezeRLs;
 
+extern bindclass_t bindClasses[];
+
 //extern cvar_t netCVars[], inputCVars[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -314,6 +316,13 @@ void Con_SetString(const char *name, char *text)
 
 	if(!cvar)
 		return;
+
+	if(cvar->flags & CVF_READ_ONLY)
+	{
+		Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force)\n", name);
+		return;
+	}
+
 	if(cvar->type == CVT_CHARPTR)
 	{
 		// Free the old string, if one exists.
@@ -349,6 +358,13 @@ void Con_SetInteger(const char *name, int value)
 
 	if(!var)
 		return;
+
+	if(var->flags & CVF_READ_ONLY)
+	{
+		Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force)\n", name);
+		return;
+	}
+
 	if(var->type == CVT_INT)
 		CV_INT(var) = value;
 	if(var->type == CVT_BYTE)
@@ -366,6 +382,13 @@ void Con_SetFloat(const char *name, float value)
 
 	if(!var)
 		return;
+
+	if(var->flags & CVF_READ_ONLY)
+	{
+		Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force)\n", name);
+		return;
+	}
+
 	if(var->type == CVT_INT)
 		CV_INT(var) = (int) value;
 	if(var->type == CVT_BYTE)
@@ -541,12 +564,12 @@ void Con_UpdateKnownWords()
 			known_vars++;
 
 	// Fill the known words table.
-	numKnownWords = numCCmds + known_vars + numCAliases;
+	numKnownWords = numCCmds + known_vars + numCAliases + (NUMBINDCLASSES -1);
 	knownWords = realloc(knownWords, len =
 						 sizeof(knownword_t) * numKnownWords);
 	memset(knownWords, 0, len);
 
-	// Commands, variables and aliases are known words.
+	// Commands, variables, aliases, and bind class names are known words.
 	for(i = 0, c = 0; i < numCCmds; i++, c++)
 	{
 		strncpy(knownWords[c].word, ccmds[i].name, 63);
@@ -559,6 +582,10 @@ void Con_UpdateKnownWords()
 	for(i = 0; i < numCAliases; i++, c++)
 	{
 		strncpy(knownWords[c].word, caliases[i].name, 63);
+	}
+	for(i = 0; i < NUMBINDCLASSES -1; i++, c++)
+	{
+		strncpy(knownWords[c].word, bindClasses[i].name, 63);
 	}
 
 	// Sort it so we get nice alphabetical word completions.
@@ -986,7 +1013,7 @@ static void printcvar(cvar_t *var, char *prefix)
 {
 	char    equals = '=';
 
-	if(var->flags & CVF_PROTECTED)
+	if(var->flags & CVF_PROTECTED || var->flags & CVF_READ_ONLY)
 		equals = ':';
 
 	Con_Printf(prefix);
@@ -1135,6 +1162,10 @@ static int executeSubCmd(const char *subCmd)
 					Con_Printf
 						("Use the command: '%s force %s' to modify it anyway.\n",
 						 var->name, argptr);
+				}
+				else if(var->flags & CVF_READ_ONLY)
+				{
+					Con_Printf("%s is read-only. It can't be changed (not even with force)\n", var->name);
 				}
 				else if(var->type == CVT_BYTE)
 				{
@@ -1587,17 +1618,32 @@ boolean Con_Responder(event_t *event)
 		return true;
 
 	case DDKEY_LEFTARROW:
+
 		if(cmdCursor > 0)
-			--cmdCursor;
+		{
+			if(shiftDown)
+				cmdCursor = 0;
+			else
+				--cmdCursor;
+		}
 		complPos = cmdCursor;
 		ConsoleBlink = 0;
 		break;
 
 	case DDKEY_RIGHTARROW:
 		if(cmdLine[cmdCursor] != 0 && cmdCursor < maxLineLen)
-			++cmdCursor;
+		{
+			if(shiftDown)
+				cmdCursor = strlen(cmdLine);
+			else
+				++cmdCursor;
+		}
 		complPos = cmdCursor;
 		ConsoleBlink = 0;
+		break;
+
+	case DDKEY_F5:
+		Con_Execute("clear", true);
 		break;
 
 	default:					// Check for a character.
@@ -1605,6 +1651,18 @@ boolean Con_Responder(event_t *event)
 		ch = DD_ModKey(ch);
 		if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
 			return true;
+
+		if(ch == 'c' && altDown) // if alt + c clear the current cmdline
+		{
+			memset(cmdLine, 0, sizeof(cmdLine));
+			cmdCursor = 0;
+			complPos = 0;
+			lastCompletion = -1;
+			ConsoleBlink = 0;
+			if(isDedicated)
+				Sys_ConUpdateCmdLine(cmdLine);
+			return true;
+		}
 
 		if(cmdCursor < maxLineLen)
 		{
@@ -1829,6 +1887,16 @@ void Con_Drawer(void)
 	// The border.
 	GL_DrawRect(0, (int) ConsoleY * gtosMulY + 3, screenWidth, 2, 0, 0, 0,
 				closeFade);
+
+	// Subtle shadow.
+	gl.Begin(DGL_QUADS);
+	gl.Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
+	gl.Vertex2f(0, (int) ConsoleY * gtosMulY + 5);
+	gl.Vertex2f(screenWidth, (int) ConsoleY * gtosMulY + 5);
+	gl.Color4f(0, 0, 0, 0);
+	gl.Vertex2f(screenWidth, (int) ConsoleY * gtosMulY + 13);
+	gl.Vertex2f(0, (int) ConsoleY * gtosMulY + 13);
+	gl.End();
 
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PushMatrix();
@@ -2111,6 +2179,10 @@ int CCmdConsole(int argc, char **argv)
 				("Shift-Ins/Del Move console window three lines at a time.\n");
 			Con_Printf("Home          Jump to the beginning of the buffer.\n");
 			Con_Printf("End           Jump to the end of the buffer.\n");
+			Con_Printf("F5            Clear the buffer.\n");
+			Con_Printf("Alt-C         Clear the command-lne.\n");
+			Con_Printf("Shift-left    Move cursor to the start of the command line.\n");
+			Con_Printf("Shift-right   Move cursor to the end of the command line.\n");
 			Con_Printf("\n");
 			Con_Printf
 				("Type \"listcmds\" to see a list of available commands.\n");
@@ -2484,20 +2556,6 @@ D_CMD(Parse)
 	return true;
 }
 
-D_CMD(DeleteBind)
-{
-	int     i;
-
-	if(argc == 1)
-	{
-		Con_Printf("Usage: %s (cmd) ...\n", argv[0]);
-		return true;
-	}
-	for(i = 1; i < argc; i++)
-		B_ClearBinding(argv[i]);
-	return true;
-}
-
 //===========================================================================
 // CCmdWait
 //===========================================================================
@@ -2571,6 +2629,13 @@ D_CMD(AddSub)
 	cvar = Con_GetVariable(argv[1]);
 	if(!cvar)
 		return false;
+
+	if(cvar->flags & CVF_READ_ONLY)
+	{
+		Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force)\n", argv[1]);
+		return false;
+	}
+
 	val = Con_GetFloat(argv[1]);
 
 	if(!stricmp(argv[0], "inc"))
@@ -2889,6 +2954,8 @@ D_CMD(SkyDetail);
 D_CMD(Fog);
 D_CMD(Bind);
 D_CMD(ListBindings);
+D_CMD(ListBindClasses);
+D_CMD(EnableBindClass);
 D_CMD(SetGamma);
 D_CMD(SetRes);
 D_CMD(Chat);
@@ -2933,6 +3000,7 @@ static void registerCommands(void)
 	C_CMD("dump", Dump, "Dump a data lump currently loaded in memory.");
 	C_CMD("dumpkeymap", DumpKeyMap, "Write the current keymap to a file.");
 	C_CMD("echo", Echo, "Echo the parameters on separate lines.");
+	C_CMD("enablebindclass", EnableBindClass, "Enable a binding class.");
 	C_CMD("exec", Parse,
 		  "Loads and executes a file containing console commands.");
 	C_CMD("flareconfig", FlareConfig, "Configure lens flares.");
@@ -2948,6 +3016,7 @@ static void registerCommands(void)
 	C_CMD("listaliases", ListAliases,
 		  "List all aliases and their expanded forms.");
 	C_CMD("listbindings", ListBindings, "List all event bindings.");
+	C_CMD("listbindclasses", ListBindClasses, "List all event binding classes.");
 	C_CMD("listcmds", ListCmds, "List all console commands.");
 	C_CMD("listfiles", ListFiles,
 		  "List all the loaded data files and show information about them.");
