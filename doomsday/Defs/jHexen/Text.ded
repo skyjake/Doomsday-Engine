@@ -615,3 +615,33 @@ Text {
     \_X_FAC12 TPORT1 TPORT2 TPORT3 TPORT4 TPORT5 TPORT6 TPORT7
     \_TPORT8 TPORT9";
 }
+
+Text {
+  ID = "AMSTR_ROTATEON";
+  Text = "Rotate mode ON";
+}
+
+Text {
+  ID = "AMSTR_ROTATEOFF";
+  Text = "Rotate mode OFF";
+}
+
+Text {
+  ID = "AMSTR_GRIDON";
+  Text = "Grid ON";
+}
+
+Text {
+  ID = "AMSTR_GRIDOFF";
+  Text = "Grid OFF";
+}
+
+Text {
+  ID = "AMSTR_MARKEDSPOT";
+  Text = "Marked Spot";
+}
+
+Text {
+  ID = "AMSTR_MARKSCLEARED";
+  Text = "All Marks Cleared";
+}

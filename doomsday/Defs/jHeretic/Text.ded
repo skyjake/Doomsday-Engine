@@ -798,3 +798,13 @@ Text {
   ID = "EPISODE5";
   Text = "The Stagnant Demesne";
 }
+
+Text {
+  ID = "AMSTR_ROTATEON";
+  Text = "Rotate mode ON";
+}
+
+Text {
+  ID = "AMSTR_ROTATEOFF";
+  Text = "Rotate mode OFF";
+}

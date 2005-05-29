@@ -1031,6 +1031,11 @@ Text {
 }
 
 Text {
+  ID = "HUSTR_CHATMACRO0";
+  Text = "No";
+}
+
+Text {
   ID = "HUSTR_CHATMACRO1";
   Text = "I'm ready to kick butt!";
 }
@@ -1073,11 +1078,6 @@ Text {
 Text {
   ID = "HUSTR_CHATMACRO9";
   Text = "Yes";
-}
-
-Text {
-  ID = "HUSTR_CHATMACRO0";
-  Text = "No";
 }
 
 Text {
@@ -1874,4 +1874,14 @@ Text {
 Text {
   ID = "KILLMSG_STOMP";
   Text = "%1 stomped %2!!";
+}
+
+Text {
+  ID = "AMSTR_ROTATEON";
+  Text = "Rotate mode ON";
+}
+
+Text {
+  ID = "AMSTR_ROTATEOFF";
+  Text = "Rotate mode OFF";
 }
