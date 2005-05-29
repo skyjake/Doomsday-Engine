@@ -515,7 +515,7 @@ typedef struct saveplayer_s {
 	int             refire;		   // refired shots are less accurate
 
 	int             killcount, itemcount, secretcount;	// for intermission
-	char            message[80];   // hint messages
+	char            *message;   // hint messages
 	int             messageTics;   // counter for showing messages
 	short           ultimateMessage;
 	short           yellowMessage;
@@ -571,7 +571,7 @@ typedef struct player_s {
 	int             refire;		   // refired shots are less accurate
 
 	int             killcount, itemcount, secretcount;	// for intermission
-	char            message[80];   // hint messages
+	char           *message;   // hint messages
 	int             messageTics;   // counter for showing messages
 	short           ultimateMessage;
 	short           yellowMessage;
@@ -609,7 +609,11 @@ extern fixed_t *finecosine;
 
 extern gameaction_t gameaction;
 
-extern boolean  paused;
+extern boolean  automapactive;	   // In AutoMap mode?
+extern boolean  menuactive;		   // Menu overlayed?
+extern boolean  paused;			   // Game Pause?
+
+extern boolean  viewactive;
 
 extern boolean  shareware;		   // true if other episodes not present
 
@@ -628,7 +632,7 @@ extern boolean  nofullscreen;	   // checkparm of -nofullscreen
 
 extern boolean  usergame;		   // ok to save / end game
 
-extern boolean  ravpic;			   // checkparm of -ravpic
+extern boolean  devparm;		   // checkparm of -devparm
 
 extern boolean  altpal;			   // checkparm to use an alternate palette routine
 
@@ -638,8 +642,8 @@ extern boolean  deathmatch;		   // only if started as net death
 
 extern boolean  netcheat;		   // allow cheating during netgames
 
-//extern boolean netgame; // only true if >1 player
-#define netgame	 Get(DD_NETGAME)
+
+#define IS_NETGAME	 Get(DD_NETGAME)
 
 extern boolean  cmdfrag;		   // true if a CMD_FRAG packet should be sent out every
 
@@ -1033,7 +1037,7 @@ void            SB_Init(void);
 void            SB_SetClassData(void);
 boolean         SB_Responder(event_t *event);
 void            SB_Ticker(void);
-void            SB_Drawer(void);
+void            SB_Drawer(int fullscreenmode, boolean refresh);
 void            Draw_TeleportIcon(void);
 void            Draw_SaveIcon(void);
 void            Draw_LoadIcon(void);
@@ -1049,9 +1053,9 @@ void            cht_NoClipFunc(player_t *player);
 void            MN_Init(void);
 void            MN_ActivateMenu(void);
 void            MN_DeactivateMenu(void);
-boolean         MN_Responder(event_t *event);
+boolean         M_Responder(event_t *event);
 void            MN_Ticker(void);
-void            MN_Drawer(void);
+void            M_Drawer(void);
 void            MN_TextFilter(char *text);
 void            MN_DrTextA(char *text, int x, int y);
 void            MN_DrTextAYellow(char *text, int x, int y);
@@ -1069,6 +1073,9 @@ void            MN_DrTextB_CS(char *text, int x, int y);
 //#define INCOMPAT_OK       (!demorecording && !demoplayback && !netgame)
 
 void            strcatQuoted(char *dest, char *src);
+
+extern byte     gammatable[5][256];
+extern int      usegamma;
 
 #include "sounds.h"
 #include "soundst.h"
