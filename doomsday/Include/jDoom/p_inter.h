@@ -27,7 +27,7 @@
 #endif
 
 boolean         P_GivePower(player_t *, int);
-void            P_GiveCard(player_t *player, card_t card);
+void            P_GiveKey(player_t *player, card_t card);
 boolean         P_GiveBody(player_t *player, int num);
 void            P_GiveBackpack(player_t *player);
 
@@ -35,6 +35,9 @@ void            P_GiveBackpack(player_t *player);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.7  2005/05/29 05:58:19  danij
+// Commonised key array names.
+//
 // Revision 1.6  2004/06/16 18:28:46  skyjake
 // Updated style (typenames)
 //
