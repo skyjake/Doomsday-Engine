@@ -1192,10 +1192,10 @@ void P_SpawnSpecials(void)
 	//
 	//  Init other misc stuff
 	//
-	for(i = 0; i < MAXCEILINGS; i++)
-		activeceilings[i] = NULL;
-	for(i = 0; i < MAXPLATS; i++)
-		activeplats[i] = NULL;
+	P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
+
+	P_RemoveAllActivePlats();     // killough
+
 	for(i = 0; i < MAXBUTTONS; i++)
 		memset(&buttonlist[i], 0, sizeof(button_t));
 

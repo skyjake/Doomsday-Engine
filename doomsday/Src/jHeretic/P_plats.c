@@ -5,7 +5,7 @@
 #include "jHeretic/P_local.h"
 #include "jHeretic/Soundst.h"
 
-plat_t *activeplats[MAXPLATS];
+platlist_t *activeplats;
 
 //==================================================================
 //
@@ -184,57 +184,105 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
 	return rtn;
 }
 
+//
+// P_ActivateInStasis()
+//
+// Activate a plat that has been put in stasis
+// (stopped perpetual floor, instant floor/ceil toggle)
+//
+// Passed the tag of the plat that should be reactivated
+// Returns nothing
+//
 void P_ActivateInStasis(int tag)
 {
-	int     i;
-
-	for(i = 0; i < MAXPLATS; i++)
-		if(activeplats[i] && (activeplats[i])->tag == tag &&
-		   (activeplats[i])->status == in_stasis)
-		{
-			(activeplats[i])->status = (activeplats[i])->oldstatus;
-			(activeplats[i])->thinker.function = T_PlatRaise;
-		}
+  platlist_t *pl;
+  for (pl=activeplats; pl; pl=pl->next)   // search the active plats
+  {
+    plat_t *plat = pl->plat;              // for one in stasis with right tag
+    if (plat->tag == tag && plat->status == in_stasis)
+    {
+		plat->status = plat->oldstatus;
+		plat->thinker.function = T_PlatRaise;
+	}
+  }
 }
 
-void EV_StopPlat(line_t *line)
+//
+// EV_StopPlat()
+//
+// Handler for "stop perpetual floor" linedef type
+//
+// Passed the linedef that stopped the plat
+// Returns true if a plat was put in stasis
+//
+// jff 2/12/98 added int return value, fixed return
+//
+int EV_StopPlat(line_t* line)
 {
-	int     j;
-
-	for(j = 0; j < MAXPLATS; j++)
-		if(activeplats[j] && ((activeplats[j])->status != in_stasis) &&
-		   ((activeplats[j])->tag == line->tag))
-		{
-			(activeplats[j])->oldstatus = (activeplats[j])->status;
-			(activeplats[j])->status = in_stasis;
-			(activeplats[j])->thinker.function = NULL;
-		}
+  platlist_t *pl;
+  for (pl=activeplats; pl; pl=pl->next)  // search the active plats
+  {
+    plat_t *plat = pl->plat;             // for one with the tag not in stasis
+    if (plat->status != in_stasis && plat->tag == line->tag)
+    {
+      plat->oldstatus = plat->status;    // put it in stasis
+      plat->status = in_stasis;
+      plat->thinker.function = NULL;
+	}
+  }
+  return 1;
 }
 
-void P_AddActivePlat(plat_t * plat)
+//
+// P_AddActivePlat()
+//
+// Add a plat to the head of the active plat list
+//
+// Passed a pointer to the plat to add
+// Returns nothing
+//
+void P_AddActivePlat(plat_t* plat)
 {
-	int     i;
-
-	for(i = 0; i < MAXPLATS; i++)
-		if(activeplats[i] == NULL)
-		{
-			activeplats[i] = plat;
-			return;
-		}
-	Con_Error("P_AddActivePlat: no more plats!");
+  platlist_t *list = malloc(sizeof *list);
+  list->plat = plat;
+  plat->list = list;
+  if ((list->next = activeplats))
+    list->next->prev = &list->next;
+  list->prev = &activeplats;
+  activeplats = list;
 }
 
-void P_RemoveActivePlat(plat_t * plat)
+//
+// P_RemoveActivePlat()
+//
+// Remove a plat from the active plat list
+//
+// Passed a pointer to the plat to remove
+// Returns nothing
+//
+void P_RemoveActivePlat(plat_t* plat)
 {
-	int     i;
+  platlist_t *list = plat->list;
+  plat->sector->specialdata = NULL;
+  P_RemoveThinker(&plat->thinker);
+  if ((*list->prev = list->next))
+    list->next->prev = list->prev;
+  free(list);
+}
 
-	for(i = 0; i < MAXPLATS; i++)
-		if(plat == activeplats[i])
-		{
-			(activeplats[i])->sector->specialdata = NULL;
-			P_RemoveThinker(&(activeplats[i])->thinker);
-			activeplats[i] = NULL;
-			return;
-		}
-	Con_Error("P_RemoveActivePlat: can't find plat!");
+//
+// P_RemoveAllActivePlats()
+//
+// Remove all plats from the active plat list
+//
+// Passed nothing, returns nothing
+//
+void P_RemoveAllActivePlats(void)
+{
+  while (activeplats)
+  {
+    platlist_t *next = activeplats->next;
+    free(activeplats);
+    activeplats = next;
+  }
 }

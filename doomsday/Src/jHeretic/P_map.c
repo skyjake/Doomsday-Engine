@@ -3,7 +3,7 @@
 #include "jHeretic/Doomdef.h"
 #include "jHeretic/P_local.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/settings.h"
+#include "jHeretic/d_config.h"
 
 /*
    ===============================================================================
@@ -1276,6 +1276,13 @@ boolean PTR_ShootTraverse(intercept_t * in)
 	mobj_t *mo;
 	divline_t *trace = (divline_t *) Get(DD_TRACE_ADDRESS);
 
+	// These were added for the plane-hitpoint algo.
+	// FIXME: This routine is getting rather bloated.
+	boolean lineWasHit;
+	subsector_t *contact, *originSub;
+	fixed_t ctop, cbottom, dx, dy, dz, step, stepx, stepy, stepz;
+	int     divisor;
+
 	if(in->isaline)
 	{
 		li = in->d.line;
@@ -1310,30 +1317,97 @@ boolean PTR_ShootTraverse(intercept_t * in)
 		// hit line
 		//
 	  hitline:
-		// position a bit closer
+		lineWasHit = true;
+
+		// Position a bit closer.
 		frac = in->frac - FixedDiv(4 * FRACUNIT, attackrange);
 		x = trace->x + FixedMul(trace->dx, frac);
 		y = trace->y + FixedMul(trace->dy, frac);
 		z = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
 
-		if(li->frontsector->ceilingpic == skyflatnum)
+		// Is it a sky hack wall? If the hitpoint is above the visible 
+		// line, no puff must be shown.
+		if(li->backsector && li->frontsector->ceilingpic == skyflatnum &&
+		   li->backsector->ceilingpic == skyflatnum &&
+		   (z > li->frontsector->ceilingheight ||
+			z > li->backsector->ceilingheight))
+			return false;
+
+		// This is subsector where the trace originates.
+		originSub = R_PointInSubsector(trace->x, trace->y);
+
+		dx = x - trace->x;
+		dy = y - trace->y;
+		dz = z - shootz;
+
+		if(dz != 0)
 		{
-			if(z > li->frontsector->ceilingheight)
-				return false;	// don't shoot the sky!
-			if(li->backsector && li->backsector->ceilingpic == skyflatnum)
-				return false;	// it's a sky hack wall
+			contact = R_PointInSubsector(x, y);
+			step = P_ApproxDistance3(dx, dy, dz);
+			stepx = FixedDiv(dx, step);
+			stepy = FixedDiv(dy, step);
+			stepz = FixedDiv(dz, step);
+
+			// Backtrack until we find a non-empty sector.
+			while(contact->sector->ceilingheight <=
+				  contact->sector->floorheight && contact != originSub)
+			{
+				dx -= 8 * stepx;
+				dy -= 8 * stepy;
+				dz -= 8 * stepz;
+				x = trace->x + dx;
+				y = trace->y + dy;
+				z = shootz + dz;
+				contact = R_PointInSubsector(x, y);
+			}
+
+			// Should we backtrack to hit a plane instead?
+			ctop = contact->sector->ceilingheight - 4 * FRACUNIT;
+			cbottom = contact->sector->floorheight + 4 * FRACUNIT;
+			divisor = 2;
+
+			// We must not hit a sky plane.
+			if((z > ctop && contact->sector->ceilingpic == skyflatnum) ||
+			   (z < cbottom && contact->sector->floorpic == skyflatnum))
+				return false;
+
+			// Find the approximate hitpoint by stepping back and
+			// forth using smaller and smaller steps. 
+			while((z > ctop || z < cbottom) && divisor <= 128)
+			{
+				// We aren't going to hit a line any more.
+				lineWasHit = false;
+
+				// Take a step backwards.
+				x -= dx / divisor;
+				y -= dy / divisor;
+				z -= dz / divisor;
+
+				// Divisor grows.
+				divisor <<= 1;
+
+				// Move forward until limits breached.
+				while((dz > 0 && z <= ctop) || (dz < 0 && z >= cbottom))
+				{
+					x += dx / divisor;
+					y += dy / divisor;
+					z += dz / divisor;
+				}
+			}
 		}
 
+		// Spawn bullet puffs.
 		P_SpawnPuff(x, y, z);
 
-		if(li->special)
+		if(lineWasHit && li->special)
 		{
 			// Extended shoot events only happen when the bullet actually
 			// hits the line.
 			XL_ShootLine(li, 0, shootthing);
 		}
 
-		return false;			// don't go any farther
+		// don't go any farther
+		return false;
 	}
 
 	//
@@ -1426,7 +1500,15 @@ fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance)
 				   PTR_AimTraverse);
 
 	if(linetarget)
-		return aimslope;
+		if(!t1->player)
+			return aimslope;
+
+	if(t1->player)
+	{
+		// The slope is determined by lookdir.
+		return FRACUNIT * (tan(LOOKDIR2RAD(t1->dplayer->lookdir)) / 1.2);
+	}
+
 	return 0;
 }
 

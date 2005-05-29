@@ -11,7 +11,7 @@
 //==================================================================
 //==================================================================
 
-ceiling_t *activeceilings[MAXCEILINGS];
+ceilinglist_t *activeceilings;
 
 //==================================================================
 //
@@ -162,81 +162,111 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
 	return rtn;
 }
 
-//==================================================================
 //
-//      Add an active ceiling
+// P_AddActiveCeiling()
 //
-//==================================================================
-void P_AddActiveCeiling(ceiling_t * c)
+// Adds a ceiling to the head of the list of active ceilings
+//
+// Passed the ceiling motion structure
+// Returns nothing
+//
+void P_AddActiveCeiling(ceiling_t* ceiling)
 {
-	int     i;
-
-	for(i = 0; i < MAXCEILINGS; i++)
-		if(activeceilings[i] == NULL)
-		{
-			activeceilings[i] = c;
-			return;
-		}
+  ceilinglist_t *list = malloc(sizeof *list);
+  list->ceiling = ceiling;
+  ceiling->list = list;
+  if ((list->next = activeceilings))
+    list->next->prev = &list->next;
+  list->prev = &activeceilings;
+  activeceilings = list;
 }
 
-//==================================================================
 //
-//      Remove a ceiling's thinker
+// P_RemoveActiveCeiling()
 //
-//==================================================================
-void P_RemoveActiveCeiling(ceiling_t * c)
+// Removes a ceiling from the list of active ceilings
+//
+// Passed the ceiling motion structure
+// Returns nothing
+//
+void P_RemoveActiveCeiling(ceiling_t* ceiling)
 {
-	int     i;
-
-	for(i = 0; i < MAXCEILINGS; i++)
-		if(activeceilings[i] == c)
-		{
-			activeceilings[i]->sector->specialdata = NULL;
-			P_RemoveThinker(&activeceilings[i]->thinker);
-			activeceilings[i] = NULL;
-			break;
-		}
+  ceilinglist_t *list = ceiling->list;
+  ceiling->sector->specialdata = NULL;  //jff 2/22/98
+  P_RemoveThinker(&ceiling->thinker);
+  if ((*list->prev = list->next))
+    list->next->prev = list->prev;
+  free(list);
 }
 
-//==================================================================
 //
-//      Restart a ceiling that's in-stasis
+// P_RemoveAllActiveCeilings()
 //
-//==================================================================
-void P_ActivateInStasisCeiling(line_t *line)
+// Removes all ceilings from the active ceiling list
+//
+// Passed nothing, returns nothing
+//
+void P_RemoveAllActiveCeilings(void)
 {
-	int     i;
-
-	for(i = 0; i < MAXCEILINGS; i++)
-		if(activeceilings[i] && (activeceilings[i]->tag == line->tag) &&
-		   (activeceilings[i]->direction == 0))
-		{
-			activeceilings[i]->direction = activeceilings[i]->olddirection;
-			activeceilings[i]->thinker.function = T_MoveCeiling;
-		}
+  while (activeceilings)
+  {
+    ceilinglist_t *next = activeceilings->next;
+    free(activeceilings);
+    activeceilings = next;
+  }
 }
 
-//==================================================================
 //
-//      EV_CeilingCrushStop
-//      Stop a ceiling from crushing!
+// P_ActivateInStasisCeiling()
 //
-//==================================================================
-int EV_CeilingCrushStop(line_t *line)
+// Reactivates all stopped crushers with the right tag
+//
+// Passed the line reactivating the crusher
+// Returns true if a ceiling reactivated
+//
+//jff 4/5/98 return if activated
+int P_ActivateInStasisCeiling(line_t *line)
 {
-	int     i;
-	int     rtn;
+  ceilinglist_t *cl;
+  int rtn=0;
 
-	rtn = 0;
-	for(i = 0; i < MAXCEILINGS; i++)
-		if(activeceilings[i] && (activeceilings[i]->tag == line->tag) &&
-		   (activeceilings[i]->direction != 0))
-		{
-			activeceilings[i]->olddirection = activeceilings[i]->direction;
-			activeceilings[i]->thinker.function = NULL;
-			activeceilings[i]->direction = 0;	// in-stasis
-			rtn = 1;
-		}
+  for (cl=activeceilings; cl; cl=cl->next)
+  {
+    ceiling_t *ceiling = cl->ceiling;
+    if (ceiling->tag == line->tag && ceiling->direction == 0)
+    {
+		ceiling->direction = ceiling->olddirection;
+		ceiling->thinker.function	 = T_MoveCeiling;
+		//jff 4/5/98 return if activated
+        rtn=1;
+    }
+  }
+  return rtn;
+}
 
-	return rtn;
+//
+// EV_CeilingCrushStop()
+//
+// Stops all active ceilings with the right tag
+//
+// Passed the linedef stopping the ceilings
+// Returns true if a ceiling put in stasis
+//
+int EV_CeilingCrushStop(line_t* line)
+{
+  int rtn=0;
+
+  ceilinglist_t *cl;
+  for (cl=activeceilings; cl; cl=cl->next)
+  {
+    ceiling_t *ceiling = cl->ceiling;
+    if (ceiling->direction != 0 && ceiling->tag == line->tag)
+    {
+      ceiling->olddirection = ceiling->direction;
+      ceiling->direction = 0;
+      ceiling->thinker.function = NULL;
+      rtn=1;
+    }
+  }
+  return rtn;
 }
