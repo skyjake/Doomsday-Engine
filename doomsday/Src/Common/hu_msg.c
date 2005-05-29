@@ -38,7 +38,7 @@
 #elif __JHERETIC__
 # include "../jHeretic/doomdef.h"
 # include "../jHeretic/d_config.h"
-# include "../jHeretic/mn_def.h"
+# include "../jHeretic/Mn_def.h"
 # include "../jHeretic/s_sound.h"
 # include "../jHeretic/Doomdata.h"
 # include "../jHeretic/R_local.h"

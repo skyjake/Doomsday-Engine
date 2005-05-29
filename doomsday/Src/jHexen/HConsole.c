@@ -12,7 +12,7 @@
 #include "h2def.h"
 #include "d_config.h"
 #include "d_net.h"
-#include "jHexen/Mn_def.h"
+#include "jHexen/mn_def.h"
 #include "../Common/hu_stuff.h"
 #include "f_infine.h"
 #include "g_common.h"

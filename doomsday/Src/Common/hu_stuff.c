@@ -41,7 +41,7 @@
 # include "../jDoom/dstrings.h"
 #elif __JHERETIC__
 # include "../jHeretic/Doomdef.h"
-# include "../jHeretic/mn_def.h"
+# include "../jHeretic/Mn_def.h"
 # include "../jHeretic/d_config.h"
 #elif __JHEXEN__
 # include "../jHexen/h2def.h"

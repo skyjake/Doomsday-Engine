@@ -39,7 +39,7 @@
 # include "../jHeretic/Dstrings.h"
 #elif __JHEXEN__
 # include "../jHexen/h2_actn.h"
-# include "../jHexen/Mn_def.h"
+# include "../jHexen/mn_def.h"
 # include "../jHexen/h2def.h"
 # include "../jHexen/d_config.h"
 #elif __JSTRIFE__

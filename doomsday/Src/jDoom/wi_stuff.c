@@ -22,7 +22,7 @@
 #include "wi_stuff.h"
 #include "d_config.h"
 #include "m_menu.h"
-#include "mn_def.h"
+#include "Mn_def.h"
 #include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------

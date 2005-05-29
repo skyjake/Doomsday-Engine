@@ -12,7 +12,7 @@
 #include "s_sound.h"
 #include "hu_stuff.h"
 #include "m_menu.h"
-#include "mn_def.h"
+#include "Mn_def.h"
 #include "f_infine.h"
 
 // Macros -----------------------------------------------------------------
