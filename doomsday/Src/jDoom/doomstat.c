@@ -16,7 +16,7 @@
 //
 //
 // DESCRIPTION:
-//  Put all global tate variables here.
+//  Put all global state variables here.
 //
 //-----------------------------------------------------------------------------
 
