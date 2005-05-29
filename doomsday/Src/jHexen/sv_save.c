@@ -15,7 +15,7 @@
 #include "LZSS.h"
 #include "h2def.h"
 #include "jHexen/p_local.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
 #include "p_svtexarc.h"
 #include "f_infine.h"
 
@@ -488,7 +488,7 @@ void SV_HxLoadGame(int slot)
 		{
 			// If the consoleplayer isn't in the save, it must be some
 			// other player's file?
-			P_SetMessage(players, GET_TXT(TXT_LOADMISSING), true);
+			P_SetMessage(players, GET_TXT(TXT_LOADMISSING));
 		}
 		else
 		{
@@ -617,7 +617,7 @@ void SV_HxMapTeleport(int map, int position)
 		players[i].attacker = NULL;
 		players[i].poisoner = NULL;
 
-		if(netgame)
+		if(IS_NETGAME || deathmatch)
 		{
 			if(players[i].playerstate == PST_DEAD)
 			{					// In a network game, force all players to be alive
@@ -650,7 +650,7 @@ void SV_HxMapTeleport(int map, int position)
 			P_SpawnPlayer(P_GetPlayerStart(position, i), i);
 		}
 
-		if(playerWasReborn && netgame && !deathmatch)
+		if(playerWasReborn && IS_NETGAME && !deathmatch)
 		{						// Restore keys and weapons when reborn in co-op
 			players[i].keys = oldKeys;
 			players[i].pieces = oldPieces;
@@ -708,7 +708,7 @@ void SV_HxMapTeleport(int map, int position)
 	}
 
 	// For single play, save immediately into the reborn slot
-	if(!netgame)
+	if(!IS_NETGAME && !deathmatch)
 	{
 		SV_HxSaveGame(REBORN_SLOT, REBORN_DESCRIPTION);
 	}

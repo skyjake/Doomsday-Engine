@@ -16,7 +16,7 @@
 #include "jHexen/p_local.h"
 #include "p_view.h"
 #include "jHexen/soundst.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
 
 void    P_PlayerNextArtifact(player_t *player);
 
@@ -940,7 +940,7 @@ void P_PlayerThink(player_t *player)
 	{
 		player->powers[pw_infrared]--;
 	}
-	if(player->powers[pw_flight] && netgame)
+	if(player->powers[pw_flight] && IS_NETGAME)
 	{
 		if(!--player->powers[pw_flight])
 		{
@@ -1708,7 +1708,7 @@ boolean P_UseArtifact(player_t *player, artitype_t arti)
 		}
 		else
 		{
-			P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+			P_SetYellowMessage(player, TXT_USEPUZZLEFAILED);
 			return false;
 		}
 		break;

@@ -13,7 +13,9 @@
 #include "h2def.h"
 #include "jHexen/p_local.h"
 #include "jHexen/soundst.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
+#include "jHexen/st_stuff.h"
+#include "Common/hu_msg.h"
 
 int     echoMsg = 1;
 
@@ -57,46 +59,33 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
 extern void strupr(char *s);
 #endif
 
+static char msgbuff[MAX_LINELEN+30];
+
 //--------------------------------------------------------------------------
 //
 // PROC P_SetMessage
 //
 //--------------------------------------------------------------------------
 
-void P_SetMessage(player_t *player, char *message, boolean ultmsg)
+void P_SetMessage(player_t *pl, char *msg)
 {
-	extern boolean messageson;
-	extern int echoMsg;
-
-	if((player->ultimateMessage || !messageson) && !ultmsg)
+	if(strlen(msg) > 79)
 	{
-		return;
-	}
-	if(strlen(message) > 79)
-	{
-		memcpy(player->message, message, 80);
-		player->message[80] = 0;
+		memcpy(msgbuff, msg, 80);
 	}
 	else
 	{
-		strcpy(player->message, message);
+		strcpy(msgbuff, msg);
 	}
-	strupr(player->message);
-	player->messageTics = MESSAGETICS;
-	player->yellowMessage = false;
-	if(ultmsg)
-	{
-		player->ultimateMessage = true;
-	}
-	if(player == &players[consoleplayer])
-		GL_Update(DDUF_TOP);
 
-	// Also show the message in the console (if the message is for us).
-	if(echoMsg && player == players + consoleplayer)
-		Con_FPrintf(CBLF_CYAN, "%s\n", message);
+	pl->message = msgbuff;
+	pl->messageTics = MESSAGETICS;
+
+	if(pl == &players[consoleplayer] && cfg.echoMsg)
+		Con_FPrintf(CBLF_CYAN, "%s\n", msg);
 
 	// Servers are responsible for sending these messages to the clients.
-	NetSv_SendMessage(player - players, message);
+	NetSv_SendMessage(pl - players, msg);
 }
 
 //==========================================================================
@@ -105,40 +94,20 @@ void P_SetMessage(player_t *player, char *message, boolean ultmsg)
 //
 //==========================================================================
 
-void P_SetYellowMessage(player_t *player, char *message, boolean ultmsg)
+void P_SetYellowMessage(player_t *pl, char *msg)
 {
-	extern boolean messageson;
-	extern int echoMsg;
+	// we'll be using param text to colour the message
+	strcpy (msgbuff, "{r=1; g=0.7; b=0.3;}");
+	strcat (msgbuff, msg);
+
+	pl->message = msgbuff;
+	pl->messageTics = 5 * MESSAGETICS;	// Bold messages last longer
+
+	if(pl == &players[consoleplayer] && cfg.echoMsg)
+		Con_FPrintf(CBLF_CYAN, "%s\n", msg);
 
 	// Servers are responsible for sending these messages to the clients.
-	NetSv_SendYellowMessage(player - players, message);
-
-	if((player->ultimateMessage || !messageson) && !ultmsg)
-	{
-		return;
-	}
-	if(strlen(message) > 79)
-	{
-		memcpy(player->message, message, 80);
-		player->message[80] = 0;
-	}
-	else
-	{
-		strcpy(player->message, message);
-	}
-	player->messageTics = 5 * MESSAGETICS;	// Bold messages last longer
-	player->yellowMessage = true;
-	if(ultmsg)
-	{
-		player->ultimateMessage = true;
-	}
-	if(player == &players[consoleplayer])
-	{
-		GL_Update(DDUF_TOP);
-	}
-	// Also show the message in the console.
-	if(echoMsg)
-		Con_FPrintf(CBLF_CYAN, "%s\n", message);
+	NetSv_SendMessage(pl - players, msg);
 }
 
 //==========================================================================
@@ -236,7 +205,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 	remove = true;
 	if(player->class != weaponClass)
 	{							// Wrong class, but try to pick up for mana
-		if(netgame && !deathmatch)
+		if(IS_NETGAME && !deathmatch)
 		{						// Can't pick up weapons for other classes in coop netplay
 			return;
 		}
@@ -255,7 +224,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 			}
 		}
 	}
-	else if(netgame && !deathmatch)
+	else if(IS_NETGAME && !deathmatch)
 	{							// Cooperative net-game
 		if(player->weaponowned[weaponType])
 		{
@@ -304,7 +273,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 		}
 	}
 
-	P_SetMessage(player, message, false);
+	P_SetMessage(player, message);
 	if(weapon->special)
 	{
 		P_ExecuteLineSpecial(weapon->special, weapon->args, NULL, 0,
@@ -328,7 +297,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 	S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, player - players);
 	if(player == &players[consoleplayer])
 	{
-		SB_PaletteFlash(false);
+		ST_doPaletteStuff(false);
 	}
 }
 
@@ -348,7 +317,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 
    if(player->class != class)
    { // player cannot use this weapon, take it anyway, and get mana
-   if(netgame && !deathmatch)
+   if(IS_NETGAME && !deathmatch)
    { // Can't pick up weapons for other classes in coop netplay
    return false;
    }
@@ -361,7 +330,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
    return P_GiveMana(player, MANA_2, 25);
    }        
    }
-   if(netgame && !deathmatch)
+   if(IS_NETGAME && !deathmatch)
    { // Cooperative net-game
    if(player->weaponowned[weapon])
    {
@@ -477,7 +446,7 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
 	gaveWeapon = false;
 	if(player->class != matchClass)
 	{							// Wrong class, but try to pick up for mana
-		if(netgame && !deathmatch)
+		if(IS_NETGAME && !deathmatch)
 		{						// Can't pick up wrong-class weapons in coop netplay
 			return;
 		}
@@ -489,7 +458,7 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
 			return;
 		}
 	}
-	else if(netgame && !deathmatch)
+	else if(IS_NETGAME && !deathmatch)
 	{							// Cooperative net-game
 		if(player->pieces & pieceValue)
 		{						// Already has the piece
@@ -535,7 +504,7 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
 	player->bonuscount += BONUSADD;
 	if(player == &players[consoleplayer])
 	{
-		SB_PaletteFlash(false);
+		ST_doPaletteStuff(false);
 	}
 
 	// Check if fourth weapon assembled
@@ -553,13 +522,13 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
 
 	if(gaveWeapon)
 	{
-		P_SetMessage(player, GET_TXT(fourthWeaponText[matchClass]), false);
+		P_SetMessage(player, GET_TXT(fourthWeaponText[matchClass]));
 		// Play the build-sound full volume for all players
 		S_StartSound(SFX_WEAPON_BUILD, NULL);
 	}
 	else
 	{
-		P_SetMessage(player, GET_TXT(weaponPieceText[matchClass]), false);
+		P_SetMessage(player, GET_TXT(weaponPieceText[matchClass]));
 		S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, player - players);
 	}
 }
@@ -806,15 +775,13 @@ static void TryPickupArtifact(player_t *player, artitype_t artifactType,
 		{
 			SetDormantArtifact(artifact);
 			S_StartSound(SFX_PICKUP_ARTIFACT, artifact);
-			P_SetMessage(player, GET_TXT(artifactMessages[artifactType]),
-						 false);
+			P_SetMessage(player, GET_TXT(artifactMessages[artifactType]));
 		}
 		else
 		{						// Puzzle item
 			S_StartSound(SFX_PICKUP_ITEM, NULL);
-			P_SetMessage(player, GET_TXT(artifactMessages[artifactType]),
-						 true);
-			if(!netgame || deathmatch)
+			P_SetMessage(player, GET_TXT(artifactMessages[artifactType]));
+			if(!IS_NETGAME || deathmatch)
 			{					// Remove puzzle items if not cooperative netplay
 				P_RemoveMobj(artifact);
 			}
@@ -870,7 +837,7 @@ boolean P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo)
 	}
 	else
 	{
-		if(arti >= arti_firstpuzzitem && netgame && !deathmatch)
+		if(arti >= arti_firstpuzzitem && IS_NETGAME && !deathmatch)
 		{						// Can't carry more than 1 puzzle item in coop netplay
 			return false;
 		}
@@ -1008,35 +975,35 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 		{
 			return;
 		}
-		P_SetMessage(player, TXT_ITEMHEALTH, false);
+		P_SetMessage(player, TXT_ITEMHEALTH);
 		break;
 	case SPR_ARM1:
 		if(!P_GiveArmor(player, ARMOR_ARMOR, -1))
 		{
 			return;
 		}
-		P_SetMessage(player, TXT_ARMOR1, false);
+		P_SetMessage(player, TXT_ARMOR1);
 		break;
 	case SPR_ARM2:
 		if(!P_GiveArmor(player, ARMOR_SHIELD, -1))
 		{
 			return;
 		}
-		P_SetMessage(player, TXT_ARMOR2, false);
+		P_SetMessage(player, TXT_ARMOR2);
 		break;
 	case SPR_ARM3:
 		if(!P_GiveArmor(player, ARMOR_HELMET, -1))
 		{
 			return;
 		}
-		P_SetMessage(player, TXT_ARMOR3, false);
+		P_SetMessage(player, TXT_ARMOR3);
 		break;
 	case SPR_ARM4:
 		if(!P_GiveArmor(player, ARMOR_AMULET, -1))
 		{
 			return;
 		}
-		P_SetMessage(player, TXT_ARMOR4, false);
+		P_SetMessage(player, TXT_ARMOR4);
 		break;
 
 		// Keys
@@ -1056,8 +1023,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 			return;
 		}
 		P_SetMessage(player,
-					 GET_TXT(TextKeyMessages[special->sprite - SPR_KEY1]),
-					 true);
+					 GET_TXT(TextKeyMessages[special->sprite - SPR_KEY1]));
 		sound = SFX_PICKUP_KEY;
 
 		// Check and process the special now in case the key doesn't
@@ -1069,7 +1035,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 			special->special = 0;
 		}
 
-		if(!netgame)
+		if(!IS_NETGAME)
 		{						// Only remove keys in single player game
 			break;
 		}
@@ -1077,7 +1043,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 		S_ConsoleSound(sound, NULL, player - players);
 		if(player == &players[consoleplayer])
 		{
-			SB_PaletteFlash(false);
+			ST_doPaletteStuff(false);
 		}
 		return;
 
@@ -1187,14 +1153,14 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 		{
 			return;
 		}
-		P_SetMessage(player, TXT_MANA_1, false);
+		P_SetMessage(player, TXT_MANA_1);
 		break;
 	case SPR_MAN2:
 		if(!P_GiveMana(player, MANA_2, 15))
 		{
 			return;
 		}
-		P_SetMessage(player, TXT_MANA_2, false);
+		P_SetMessage(player, TXT_MANA_2);
 		break;
 	case SPR_MAN3:				// Double Mana Dodecahedron
 		if(!P_GiveMana(player, MANA_1, 20))
@@ -1208,7 +1174,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 		{
 			P_GiveMana(player, MANA_2, 20);
 		}
-		P_SetMessage(player, TXT_MANA_BOTH, false);
+		P_SetMessage(player, TXT_MANA_BOTH);
 		break;
 
 		// 2nd and 3rd Mage Weapons
@@ -1290,7 +1256,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 	S_ConsoleSound(sound, NULL, player - players);
 	if(player == &players[consoleplayer])
 	{
-		SB_PaletteFlash(false);
+		ST_doPaletteStuff(false);
 	}
 }
 
@@ -1365,7 +1331,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 				//target->player->update |= PSF_FRAGS;
 				NetSv_FragsForAll(target->player);
 
-				/*if(cmdfrag && netgame && source->player == &players[consoleplayer])
+				/*if(cmdfrag && IS_NETGAME && source->player == &players[consoleplayer])
 				   { // Send out a frag count packet
 				   //gi.SendFrags(source->player->plr);
 				   } */
@@ -1376,7 +1342,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 				//source->player->update |= PSF_FRAGS;
 				NetSv_FragsForAll(source->player);
 
-				/*if(cmdfrag && netgame && source->player == &players[consoleplayer])
+				/*if(cmdfrag && IS_NETGAME && source->player == &players[consoleplayer])
 				   { // Send out a frag count packet
 				   //gi.SendFrags(source->player->plr);
 				   } */
@@ -1391,7 +1357,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 			//target->player->update |= PSF_FRAGS;
 			NetSv_FragsForAll(target->player);
 
-			/*if(cmdfrag && netgame && target->player == &players[consoleplayer])
+			/*if(cmdfrag && IS_NETGAME && target->player == &players[consoleplayer])
 			   { // Send out a frag count packet
 			   //gi.SendFrags(target->player->plr);
 			   } */
@@ -1455,7 +1421,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 		// mobj death, record as player's kill in netgame + coop
 		// could not find MF_ targets->flags that indicated *only*
 		// enemies (not trees, pots, etc), so built a list
-		if(netgame && !deathmatch && source && source->player &&
+		if(IS_NETGAME && !deathmatch && source && source->player &&
 		   source->player->plr && (target->type == MT_CENTAUR ||
 								   target->type == MT_CENTAURLEADER ||
 								   target->type == MT_DEMON ||
@@ -2116,7 +2082,7 @@ void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 		if(player == &players[consoleplayer])
 		{
 			//          I_Tactile(40, 10, 40+temp*2);
-			SB_PaletteFlash(false);
+			ST_doPaletteStuff(false);
 		}
 	}
 

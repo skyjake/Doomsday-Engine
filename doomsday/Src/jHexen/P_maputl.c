@@ -858,7 +858,7 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 			{
 				if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
 				   || ((link->type == MT_MINOTAUR) &&
-					   (((mobj_t *) link->special1) == mo)) || (netgame &&
+					   (((mobj_t *) link->special1) == mo)) || (IS_NETGAME &&
 																!deathmatch &&
 																link->player))
 					continue;
@@ -876,7 +876,7 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 			{
 				if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
 				   || ((link->type == MT_MINOTAUR) &&
-					   (link->special1 == mo->special1)) || (netgame &&
+					   (link->special1 == mo->special1)) || (IS_NETGAME &&
 															 !deathmatch &&
 															 link->player))
 					continue;
@@ -892,7 +892,7 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 				(link->player && link != mo->target)) &&
 			   !(link->flags2 & MF2_DORMANT))
 			{
-				if(!(link->flags & MF_SHOOTABLE) || netgame && !deathmatch &&
+				if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
 				   link->player)
 					continue;
 
@@ -917,7 +917,7 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 				(link->player && link != mo->target)) &&
 			   !(link->flags2 & MF2_DORMANT))
 			{
-				if(!(link->flags & MF_SHOOTABLE) || netgame && !deathmatch &&
+				if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
 				   link->player || link == mo->target)
 					continue;
 

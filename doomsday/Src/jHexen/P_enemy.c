@@ -13,6 +13,7 @@
 #include "h2def.h"
 #include "jHexen/p_local.h"
 #include "jHexen/soundst.h"
+#include "jHexen/st_stuff.h"
 
 // Macros
 // Types
@@ -524,7 +525,7 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 	angle_t an;
 	fixed_t dist;
 
-	if(!netgame && players[0].health <= 0)
+	if(!IS_NETGAME && players[0].health <= 0)
 	{							// Single player game and player is dead, look for monsters
 		return (P_LookForMonsters(actor));
 	}
@@ -752,7 +753,7 @@ void C_DECL A_Chase(mobj_t *actor)
 	//
 	// possibly choose another target
 	//
-	if(netgame && !actor->threshold && !P_CheckSight(actor, actor->target))
+	if(IS_NETGAME && !actor->threshold && !P_CheckSight(actor, actor->target))
 	{
 		if(P_LookForPlayers(actor, true))
 			return;				// got a new target
@@ -2046,7 +2047,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
 	//
 	// possibly choose another target
 	//
-	if(netgame && !actor->threshold && !P_CheckSight(actor, actor->target))
+	if(IS_NETGAME && !actor->threshold && !P_CheckSight(actor, actor->target))
 	{
 		if(P_LookForPlayers(actor, true))
 			return;				// got a new target
@@ -2246,7 +2247,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
 	//
 	// possibly choose another target
 	//
-	if(netgame && !actor->threshold && !P_CheckSight(actor, actor->target))
+	if(IS_NETGAME && !actor->threshold && !P_CheckSight(actor, actor->target))
 	{
 		if(P_LookForPlayers(actor, true))
 			return;				// got a new target
@@ -4622,7 +4623,7 @@ void C_DECL A_FastChase(mobj_t *actor)
 	//
 	// possibly choose another target
 	//
-	if(netgame && !actor->threshold && !P_CheckSight(actor, actor->target))
+	if(IS_NETGAME && !actor->threshold && !P_CheckSight(actor, actor->target))
 	{
 		if(P_LookForPlayers(actor, true))
 			return;				// got a new target
@@ -4669,7 +4670,7 @@ void C_DECL A_MageAttack(mobj_t *actor)
 
 void C_DECL A_ClassBossHealth(mobj_t *actor)
 {
-	if(netgame && !deathmatch)	// co-op only
+	if(IS_NETGAME && !deathmatch)	// co-op only
 	{
 		if(!actor->special1)
 		{
@@ -4716,7 +4717,7 @@ void C_DECL A_FreezeDeath(mobj_t *actor)
 		actor->player->bonuscount = 0;
 		if(actor->player == &players[consoleplayer])
 		{
-			SB_PaletteFlash(false);
+			ST_doPaletteStuff(false);
 		}
 	}
 	else if(actor->flags & MF_COUNTKILL && actor->special)

@@ -14,7 +14,7 @@
 
 #include "h2def.h"
 #include "jHexen/p_local.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -341,7 +341,7 @@ boolean P_StartACS(int number, int map, byte *args, mobj_t *activator,
 	{							// Script not found
 		//Con_Error("P_StartACS: Unknown script number %d", number);
 		sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
-		P_SetMessage(&players[consoleplayer], ErrorMsg, true);
+		P_SetMessage(&players[consoleplayer], ErrorMsg);
 	}
 	statePtr = &ACSInfo[infoIndex].state;
 	if(*statePtr == ASTE_SUSPENDED)
@@ -437,7 +437,7 @@ boolean P_StartLockedACS(line_t *line, byte *args, mobj_t *mo, int side)
 		{
 			sprintf(LockedBuffer, "YOU NEED THE %s\n",
 					GET_TXT(TextKeyMessages[lock - 1]));
-			P_SetMessage(mo->player, LockedBuffer, true);
+			P_SetMessage(mo->player, LockedBuffer);
 			S_StartSound(SFX_DOOR_LOCKED, mo);
 			return false;
 		}
@@ -1475,7 +1475,7 @@ static int CmdEndPrint(void)
 {
 	if(ACScript->activator && ACScript->activator->player)
 	{
-		P_SetMessage(ACScript->activator->player, PrintBuffer, true);
+		P_SetMessage(ACScript->activator->player, PrintBuffer);
 	}
 	else
 	{
@@ -1484,7 +1484,7 @@ static int CmdEndPrint(void)
 		// Send to everybody.
 		for(i = 0; i < MAXPLAYERS; i++)
 			if(players[i].plr->ingame)
-				P_SetMessage(&players[i], PrintBuffer, true);
+				P_SetMessage(&players[i], PrintBuffer);
 	}
 
 	return SCRIPT_CONTINUE;
@@ -1498,7 +1498,7 @@ static int CmdEndPrintBold(void)
 	{
 		if(players[i].plr->ingame)
 		{
-			P_SetYellowMessage(&players[i], PrintBuffer, true);
+			P_SetYellowMessage(&players[i], PrintBuffer);
 		}
 	}
 	return SCRIPT_CONTINUE;
@@ -1547,7 +1547,7 @@ static int CmdGameType(void)
 {
 	int     gametype;
 
-	if(netgame == false)
+	if(IS_NETGAME == false)
 	{
 		gametype = GAME_SINGLE_PLAYER;
 	}

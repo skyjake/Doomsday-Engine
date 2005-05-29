@@ -21,7 +21,9 @@
 #include "jHexen/p_local.h"
 #include "jHexen/sounds.h"
 #include "jHexen/soundst.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
+#include "jHexen/st_stuff.h"
+#include "Common/hu_stuff.h"
 #include "m_bams.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1526,7 +1528,7 @@ void P_SpawnPlayer(mapthing_t * mthing, int playernum)
 	p->plr->mo = mobj;
 	p->playerstate = PST_LIVE;
 	p->refire = 0;
-	P_ClearMessage(p);
+	p->message = NULL;
 	p->damagecount = 0;
 	p->bonuscount = 0;
 	p->poisoncount = 0;
@@ -1539,6 +1541,15 @@ void P_SpawnPlayer(mapthing_t * mthing, int playernum)
 	if(deathmatch)
 	{							// Give all keys in death match mode
 		p->keys = 2047;
+	}
+
+	if(playernum == consoleplayer)
+	{
+		// wake up the status bar
+		ST_Start();
+
+		// wake up the heads up text
+		HU_Start();
 	}
 }
 
@@ -1622,7 +1633,7 @@ void P_SpawnMapThing(mapthing_t * mthing)
 	}
 
 	// Check current game type with spawn flags
-	if(netgame == false)
+	if(IS_NETGAME == false)
 	{
 		spawnMask = MTF_GSINGLE;
 	}
@@ -1658,7 +1669,7 @@ void P_SpawnMapThing(mapthing_t * mthing)
 	}
 
 	// Check current character classes with spawn flags
-	if(netgame == false)
+	if(IS_NETGAME == false)
 	{							// Single player
 		if((mthing->options & classFlags[cfg.PlayerClass[0]]) == 0)
 		{						// Not for current class
@@ -2412,7 +2423,7 @@ mobj_t *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
 	float   fangle = LOOKDIR2RAD(source->player->plr->lookdir);
 	float   movfac = 1;
 	boolean dontAim =
-		cfg.noAutoAim /*&& !demorecording && !demoplayback && !netgame */ ;
+		cfg.noAutoAim /*&& !demorecording && !demoplayback && !IS_NETGAME */ ;
 
 	// Try to find a target
 	an = source->angle;
@@ -2560,7 +2571,7 @@ mobj_t *P_SPMAngle(mobj_t *source, mobjtype_t type, angle_t angle)
 	float   fangle = LOOKDIR2RAD(source->player->plr->lookdir);
 	float   movfac = 1;
 	boolean dontAim =
-		cfg.noAutoAim /*&& !demorecording && !demoplayback && !netgame */ ;
+		cfg.noAutoAim /*&& !demorecording && !demoplayback && !IS_NETGAME */ ;
 
 	//
 	// see which target is to be aimed at
@@ -2623,7 +2634,7 @@ mobj_t *P_SPMAngleXYZ(mobj_t *source, fixed_t x, fixed_t y, fixed_t z,
 	float   fangle = LOOKDIR2RAD(source->player->plr->lookdir);
 	float   movfac = 1;
 	boolean dontAim =
-		cfg.noAutoAim /*&& !demorecording && !demoplayback && !netgame */ ;
+		cfg.noAutoAim /*&& !demorecording && !demoplayback && !IS_NETGAME */ ;
 
 	//
 	// see which target is to be aimed at
@@ -2642,7 +2653,7 @@ mobj_t *P_SPMAngleXYZ(mobj_t *source, fixed_t x, fixed_t y, fixed_t z,
 		if(!linetarget || dontAim)
 		{
 			an = angle;
-			/*if(demoplayback || demorecording)// || netgame)
+			/*if(demoplayback || demorecording)// || IS_NETGAME)
 			   slope = (((int)source->player->plr->lookdir)<<FRACBITS)/173;
 			   else
 			   { */
