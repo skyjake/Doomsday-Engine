@@ -23,6 +23,8 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern int gsvMapMusic;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -61,28 +63,30 @@ int S_GetMusicNum(int episode, int map)
 	return mnum;
 }
 
-//===========================================================================
-// S_LevelMusic
-//===========================================================================
+/*
+ * Starts playing the music for this level
+ */
 void S_LevelMusic(void)
 {
-	if(gamestate != GS_LEVEL)
-		return;
+    int songid;
 
-	// Start new music for the level.
-	if(Get(DD_MAP_MUSIC) == -1)
-		S_StartMusicNum(S_GetMusicNum(gameepisode, gamemap), true);
-	else
-		S_StartMusicNum(Get(DD_MAP_MUSIC), true);
+    if(gamestate != GS_LEVEL)
+        return;
 
-	//  mus_paused = 0;
-	/*  if(gi.Get(DD_MAP_MUSIC) == -1)
-	   S_ChangeMusic(S_GetMusicNum(gameepisode, gamemap), true);
-	   else
-	   S_ChangeMusic(gi.Get(DD_MAP_MUSIC), true); */
+    // Start new music for the level.
+    if(Get(DD_MAP_MUSIC) == -1)
+    {
+        songid = S_GetMusicNum(gameepisode, gamemap);
+        S_StartMusicNum(songid, true);
+    }
+    else
+    {
+		songid = Get(DD_MAP_MUSIC);
+        S_StartMusicNum(songid, true);
+    }
 
-	//  nextcleanup = 15;
-	//  listenerSector = NULL;
+    // set the game status cvar for the map music
+    gsvMapMusic = songid;
 }
 
 //===========================================================================
