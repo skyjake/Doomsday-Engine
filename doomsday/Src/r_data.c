@@ -50,6 +50,8 @@ typedef struct flathash_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+int gamedataformat;	// use a game-specifc data format where applicable
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     r_precache_skins = true;
@@ -416,8 +418,10 @@ void R_InitSwitchAnimGroups(void)
 //===========================================================================
 void R_InitTextures(void)
 {
+	strifemaptexture_t *smtexture;
 	maptexture_t *mtexture;
 	texture_t *texture;
+	strifemappatch_t *smpatch;
 	mappatch_t *mpatch;
 	texpatch_t *patch;
 	int     i, j;
@@ -483,28 +487,67 @@ void R_InitTextures(void)
 		offset = LONG(*directory);
 		if(offset > maxoff)
 			Con_Error("R_InitTextures: bad texture directory");
-		mtexture = (maptexture_t *) ((byte *) maptex + offset);
-		texture = textures[i] =
-			Z_Calloc(sizeof(texture_t) +
-					 sizeof(texpatch_t) * (SHORT(mtexture->patchcount) - 1),
-					 PU_REFRESHTEX, 0);
-		texture->width = SHORT(mtexture->width);
-		texture->height = SHORT(mtexture->height);
-		texture->flags = mtexture->masked ? TXF_MASKED : 0;
 
-		texture->patchcount = SHORT(mtexture->patchcount);
-		memcpy(texture->name, mtexture->name, 8);
-		mpatch = &mtexture->patches[0];
-		patch = &texture->patches[0];
-		for(j = 0; j < texture->patchcount; j++, mpatch++, patch++)
+		if(gamedataformat == 0)
 		{
-			patch->originx = SHORT(mpatch->originx);
-			patch->originy = SHORT(mpatch->originy);
-			patch->patch = patchlookup[SHORT(mpatch->patch)];
-			if(patch->patch == -1)
+			mtexture = (maptexture_t *) ((byte *) maptex + offset);
+
+			texture = textures[i] =
+				Z_Calloc(sizeof(texture_t) +
+					 	sizeof(texpatch_t) * (SHORT(mtexture->patchcount) - 1),
+					 	PU_REFRESHTEX, 0);
+			texture->width = SHORT(mtexture->width);
+			texture->height = SHORT(mtexture->height);
+
+			texture->flags = mtexture->masked ? TXF_MASKED : 0;
+
+			texture->patchcount = SHORT(mtexture->patchcount);
+
+			memcpy(texture->name, mtexture->name, 8);
+
+			mpatch = &mtexture->patches[0];
+			patch = &texture->patches[0];
+
+			for(j = 0; j < texture->patchcount; j++, mpatch++, patch++)
 			{
-				Con_Error("R_InitTextures: Missing patch in texture %s",
+				patch->originx = SHORT(mpatch->originx);
+				patch->originy = SHORT(mpatch->originy);
+				patch->patch = patchlookup[SHORT(mpatch->patch)];
+				if(patch->patch == -1)
+				{
+					Con_Error("R_InitTextures: Missing patch in texture %s",
 						  texture->name);
+				}
+			}
+
+		} else if(gamedataformat == 3){  // strife format
+			smtexture = (strifemaptexture_t *) ((byte *) maptex + offset);
+
+			texture = textures[i] =
+				Z_Calloc(sizeof(texture_t) +
+					 	sizeof(texpatch_t) * (SHORT(smtexture->patchcount) - 1),
+					 	PU_REFRESHTEX, 0);
+			texture->width = SHORT(smtexture->width);
+			texture->height = SHORT(smtexture->height);
+
+			texture->flags = 0;
+			texture->patchcount = SHORT(smtexture->patchcount);
+
+			memcpy(texture->name, smtexture->name, 8);
+
+			smpatch = &smtexture->patches[0];
+			patch = &texture->patches[0];
+
+			for(j = 0; j < texture->patchcount; j++, smpatch++, patch++)
+			{
+				patch->originx = SHORT(smpatch->originx);
+				patch->originy = SHORT(smpatch->originy);
+				patch->patch = patchlookup[SHORT(smpatch->patch)];
+				if(patch->patch == -1)
+				{
+					Con_Error("R_InitTextures: Missing patch in texture %s",
+						  texture->name);
+				}
 			}
 		}
 	}

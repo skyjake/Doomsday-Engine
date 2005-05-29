@@ -1,4 +1,4 @@
-/* DE1: $Id$
+﻿/* DE1: $Id$
  * Copyright (C) 2003, 2004 Jaakko Ker�en <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,6 +93,9 @@ extern int renderTextures;
 extern char skyflatname[9];
 extern fixed_t mapgravity;
 extern int gotframe;
+extern int monochrome;
+extern int gamedataformat;
+extern int gamedrawhud;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -346,7 +349,7 @@ void DD_Main(void)
 	}
 
     F_InitMapping();
-    
+
 	// Initialize the key mappings.
 	DD_InitInput();
 
@@ -394,7 +397,7 @@ void DD_Main(void)
 
     // Automatically create an Auto mapping in the runtime directory.
     DD_DefineBuiltinVDM();
-    
+
 	// Initialize subsystems
 	Net_Init();					// Network before anything else.
 
@@ -753,7 +756,10 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 	{&psp_move_speed, &psp_move_speed},
 	{&cplr_thrust_mul, &cplr_thrust_mul},
 	{(int *) &clientPaused, (int *) &clientPaused},
-	{&weaponOffsetScaleY, &weaponOffsetScaleY}
+	{&weaponOffsetScaleY, &weaponOffsetScaleY},
+	{&monochrome, &monochrome},
+	{&gamedataformat, &gamedataformat},
+	{&gamedrawhud, 0}
 };
 /* *INDENT-ON* */
 

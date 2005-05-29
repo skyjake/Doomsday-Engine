@@ -103,6 +103,7 @@ boolean filloutlines = true;
 boolean loadExtAlways = false;	// Always check for extres (cvar)
 boolean paletted = false;		// Use GL_EXT_paletted_texture (cvar)
 boolean load8bit = false;		// Load textures as 8 bit? (w/paltex)
+int	monochrome = 0;			// desaturate a patch (average colours)
 int     useSmartFilter = 0;		// Smart filter mode (cvar: 1=hq2x)
 
 // Convert a 18-bit RGB (666) value to a playpal index. 
@@ -2383,6 +2384,32 @@ static void ColorOutlines(byte *buffer, int width, int height)
 }
 
 //===========================================================================
+// DeSaturate
+//  Desaturates the texture in the dest buffer by averaging the colour then
+//  looking up the nearest match in the PLAYPAL
+//===========================================================================
+static void DeSaturate(byte *buffer, int width, int height)
+{
+	byte *rgb;
+  	byte *palette = W_CacheLumpNum(pallump, PU_CACHE);
+	int i, temp = 0, paletteIndex = 0;
+	int numpels = width * height;
+
+	for(i = 0; i < numpels; i++)
+	{
+  		rgb = &palette[buffer[i] * 3];
+
+		if(monochrome == 1)
+			temp = ( rgb[0] + rgb[1] + rgb[2]) / 3;		// average
+		else
+			temp = ( (3*rgb[0]) + (4*rgb[1]) + (2*rgb[2])) / 9;		// weighted average
+
+		paletteIndex = pal18to8[ RGB18(temp >> 2, temp >> 2, temp >> 2) ];
+		buffer[i] = paletteIndex;
+	}
+}
+
+//===========================================================================
 // GL_BufferSkyTexture
 //  Draws the given sky texture in a buffer. The returned buffer must be 
 //  freed by the caller. Idx must be a valid texture number.
@@ -3241,6 +3268,9 @@ void GL_PrepareLumpPatch(int lump)
 					  0, 0, false, 0, true);
 	if(filloutlines)
 		ColorOutlines(buffer, SHORT(patch->width), SHORT(patch->height));
+
+	if(monochrome)
+		DeSaturate(buffer, SHORT(patch->width), SHORT(patch->height));
 
 	// See if we have to split the patch into two parts.
 	// This is done to conserve the quality of wide textures
