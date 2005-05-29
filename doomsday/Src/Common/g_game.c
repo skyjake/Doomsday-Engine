@@ -11,6 +11,7 @@
 //**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
+#include <ctype.h>
 
 #if __JDOOM__
 #  include <string.h>
@@ -26,18 +27,16 @@
 #  include "m_random.h"
 #  include "p_local.h"
 #  include "p_setup.h"
-#  include "p_saveg.h"
 #  include "p_tick.h"
 #  include "d_main.h"
 #  include "d_netJD.h"
 #  include "wi_stuff.h"
-#  include "hu_stuff.h"
 #  include "st_stuff.h"
-#  include "am_map.h"
 #  include "p_local.h"
 #  include "s_sound.h"
 #  include "dstrings.h"
 #  include "g_game.h"
+#  include "Common/p_saveg.h"
 #endif
 
 #if __JHERETIC__
@@ -48,7 +47,7 @@
 #  include "jHeretic/P_local.h"
 #  include "jHeretic/H_Action.h"
 #  include "jHeretic/Soundst.h"
-#  include "jHeretic/settings.h"
+#  include "jHeretic/d_config.h"
 #  include "Common/p_saveg.h"
 #endif
 
@@ -59,10 +58,27 @@
 #  include "jHexen/h2def.h"
 #  include "jHexen/p_local.h"
 #  include "jHexen/soundst.h"
-#  include "jHexen/settings.h"
+#  include "jHexen/d_config.h"
 #  include "jHexen/h2_actn.h"
+#  include "jHexen/st_stuff.h"
 #  include "d_net.h"
 #endif
+
+#if __JSTRIFE__
+#  include <string.h>
+#  include <math.h>
+#  include <assert.h>
+#  include "jStrife/h2def.h"
+#  include "jStrife/p_local.h"
+#  include "jStrife/soundst.h"
+#  include "jStrife/d_config.h"
+#  include "jStrife/h2_actn.h"
+#  include "jStrife/st_stuff.h"
+#  include "d_net.h"
+#endif
+
+#include "../Common/am_map.h"
+#include "../Common/hu_stuff.h"
 
 #include "f_infine.h"
 
@@ -80,11 +96,17 @@
 #  define MAXPLMOVE       0x32
 #endif
 
+#if __JSTRIFE__
+#  define MAXPLMOVE       0x32
+#endif
+
 #define SLOWTURNTICS		6
 #define NUMGKEYS			256
 #define	BODYQUESIZE			32
 #define JOY(x)				(x /*-cfg.joydead*/) / (100 /*-cfg.joydead*/)
 #define NUM_MOUSE_BUTTONS	6
+
+#define READONLYCVAR		CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE
 
 // TYPES -------------------------------------------------------------------
 
@@ -194,7 +216,7 @@ void    G_DoWorldDone(void);
 void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 void    G_DoTeleportNewMap(void);
 void    G_DoSingleReborn(void);
 void    H2_PageTicker(void);
@@ -209,6 +231,7 @@ void    G_StopDemo(void);
 
 #if __JDOOM__
 extern char *pagename;
+extern GameMission_t gamemission;
 #endif
 
 #if __JHERETIC__
@@ -221,12 +244,14 @@ extern int inv_ptr;
 extern int playerkeys;
 #endif
 
-#if __JHEXEN__
 extern boolean mn_SuicideConsole;
+
+#if __JHEXEN__ || __JSTRIFE__
 extern boolean inventory;
 extern int curpos;
 extern int inv_ptr;
 extern boolean artiskip;
+extern int     AutoArmorSave[NUMCLASSES];
 #endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -236,8 +261,9 @@ gamestate_t gamestate = GS_DEMOSCREEN;
 skill_t gameskill;
 int     gameepisode;
 int     gamemap;
+int		nextmap;				// if non zero this will be the next map
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 boolean respawnmonsters;
 #endif
 
@@ -277,6 +303,9 @@ jheretic_config_t cfg;
 #elif __JHEXEN__
 jhexen_config_t cfg;
 
+#elif  __JSTRIFE__
+jstrife_config_t cfg;
+
 //#error "sbarscale and others need to be initialized."
 #endif
 
@@ -287,11 +316,11 @@ float   lookOffset = 0;
 
 fixed_t angleturn[3] = { 640, 1280, 320 };	// + slow turn 
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 fixed_t forwardmove[2] = { 0x19, 0x32 };
 fixed_t sidemove[2] = { 0x18, 0x28 };
 
-#else
+#elif __JHEXEN__
 fixed_t MaxPlayerMove[NUMCLASSES] = { 0x3C, 0x32, 0x2D, 0x31 };
 fixed_t forwardmove[NUMCLASSES][2] = {
 	{0x1D, 0x3C},
@@ -340,11 +369,11 @@ mobj_t *bodyque[BODYQUESIZE];
 int     bodyqueslot;
 #endif
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 int     inventoryTics;
 #endif
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 byte    demoDisabled = 0;		// is demo playing disabled?
 
 // Position indicator for cooperative net-play reborn
@@ -356,11 +385,310 @@ int     LeavePosition;
 boolean secretexit;
 char    savename[256];
 
+#if __JHEXEN__ || __JSTRIFE__
+int maphub = 0;
+#endif
+
+// vars used with game status cvars
+int gsvInLevel = 0;
+int gsvCurrentMusic = 0;
+int gsvMapMusic = -1;
+
+int gsvArmor = 0;
+int gsvHealth = 0;
+
+#if !__JHEXEN__
+int gsvKills = 0;
+int gsvItems = 0;
+int gsvSecrets = 0;
+#endif
+
+int gsvCurrentWeapon;
+int gsvWeapons[NUMWEAPONS];
+int gsvKeys[NUMKEYS];
+
+#if !__JHEXEN__
+int gsvAmmo[NUMAMMO];
+#else
+int gsvAmmo[NUMMANA];
+#endif
+
+char *gsvMapName = "N/A";
+
+#if __JHERETIC__ || __JHEXEN__
+int gsvArtifacts[NUMARTIFACTS];
+#endif
+
+#if __JHEXEN__
+int gsvWPieces[4];
+#endif
+
+cvar_t  gamestatusCVars[] = {
+   "game-state", READONLYCVAR, CVT_INT, &gamestate, 0, 0,
+       "Current game state.",
+   "game-state-level", READONLYCVAR, CVT_INT, &gsvInLevel, 0, 0,
+       "1= Currently playing a level.",
+   "game-paused", READONLYCVAR, CVT_INT, &paused, 0, 0,
+       "1= Game paused.",
+   "game-skill", READONLYCVAR, CVT_INT, &gameskill, 0, 0,
+       "Current skill level.",
+
+   "map-id", READONLYCVAR, CVT_INT, &gamemap, 0, 0,
+       "Current map id.",
+   "map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapName, 0, 0,
+       "Current map name.",
+   "map-episode", READONLYCVAR, CVT_INT, &gameepisode, 0, 0,
+       "Current episode.",
+#if __JDOOM__
+   "map-mission", READONLYCVAR, CVT_INT, &gamemission, 0, 0,
+       "Current mission.",
+#endif
+#if __JHEXEN__ || __JSTRIFE__
+   "map-hub", READONLYCVAR, CVT_INT, &maphub, 0, 0,
+       "Current hub.",
+#endif
+   "game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0,
+       "Currently playing music (id).",
+   "map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0,
+       "Music (id) for current map.",
+#if !__JHEXEN__
+   "game-stats-kills", READONLYCVAR, CVT_INT, &gsvKills, 0, 0,
+       "Current number of kills.",
+   "game-stats-items", READONLYCVAR, CVT_INT, &gsvItems, 0, 0,
+       "Current number of items.",
+   "game-stats-secrets", READONLYCVAR, CVT_INT, &gsvSecrets, 0, 0,
+       "Current number of discovered secrets.",
+#endif
+
+   "player-health", READONLYCVAR, CVT_INT, &gsvHealth, 0, 0,
+       "Current health ammount.",
+   "player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0,
+       "Current armor ammount.",
+   "player-weapons-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0,
+       "Current weapon (id)",
+
+#if __JDOOM__
+   // Ammo
+   "player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[am_clip], 0, 0,
+       "Current number of bullets.",
+   "player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[am_shell], 0, 0,
+       "Current number of shells.",
+   "player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[am_cell], 0, 0,
+       "Current number of cells.",
+   "player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[am_misl], 0, 0,
+       "Current number of missiles.",
+   // Weapons
+   "player-weapons-fist", READONLYCVAR, CVT_INT, &gsvWeapons[wp_fist], 0, 0,
+       "1 = Player has fist.",
+   "player-weapons-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[wp_pistol], 0, 0,
+       "1 = Player has pistol.",
+   "player-weapons-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_shotgun], 0, 0,
+       "1 = Player has shotgun.",
+   "player-weapons-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chaingun], 0, 0,
+       "1 = Player has chaingun.",
+   "player-weapons-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[wp_missile], 0, 0,
+       "1 = Player has missile launcher.",
+   "player-weapons-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[wp_plasma], 0, 0,
+       "1 = Player has plasma rifle.",
+   "player-weapons-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[wp_bfg], 0, 0,
+       "1 = Player has BFG.",
+   "player-weapons-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chainsaw], 0, 0,
+       "1 = Player has chainsaw.",
+   "player-weapons-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_supershotgun], 0, 0,
+       "1 = Player has super shotgun.",
+   "player-keycards-blue", READONLYCVAR, CVT_INT, &gsvKeys[it_bluecard], 0, 0,
+       "1 = Player has blue keycard.",
+   "player-keycards-yellow", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowcard], 0, 0,
+       "1 = Player has yellow keycard.",
+   // Keys
+   "player-keycards-red", READONLYCVAR, CVT_INT, &gsvKeys[it_redcard], 0, 0,
+       "1 = Player has red keycard.",
+   "player-skullkeys-blue", READONLYCVAR, CVT_INT, &gsvKeys[it_blueskull], 0, 0,
+       "1 = Player has blue skullkey.",
+   "player-skullkeys-yellow", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowskull], 0, 0,
+       "1 = Player has yellow skullkey.",
+   "player-skullkeys-red", READONLYCVAR, CVT_INT, &gsvKeys[it_redskull], 0, 0,
+       "1 = Player has red skullkey.",
+#elif __JHERETIC__
+   // Ammo
+   "player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[am_goldwand], 0, 0,
+       "Current amount of ammo for the goldwand.",
+   "player-ammo-crossbow", READONLYCVAR, CVT_INT, &gsvAmmo[am_crossbow], 0, 0,
+       "Current amount of ammo for the crossbow.",
+   "player-ammo-dragonclaw", READONLYCVAR, CVT_INT, &gsvAmmo[am_blaster], 0, 0,
+       "Current amount of ammo for the Dragon Claw.",
+   "player-ammo-hellstaff", READONLYCVAR, CVT_INT, &gsvAmmo[am_skullrod], 0, 0,
+       "Current amount of ammo for the Hell Staff.",
+   "player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[am_phoenixrod], 0, 0,
+       "Current amount of ammo for the Phoenix Rod.",
+   "player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[am_mace], 0, 0,
+       "Current amount of ammo for the mace.",
+	// Weapons
+   "player-weapons-staff", READONLYCVAR, CVT_INT, &gsvWeapons[wp_staff], 0, 0,
+       "1 = Player has staff.",
+   "player-weapons-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[wp_goldwand], 0, 0,
+       "1 = Player has goldwand.",
+   "player-weapons-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[wp_crossbow], 0, 0,
+       "1 = Player has crossbow.",
+   "player-weapons-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[wp_blaster], 0, 0,
+       "1 = Player has the Dragon Claw.",
+   "player-weapons-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[wp_skullrod], 0, 0,
+       "1 = Player has the Hell Staff.",
+   "player-weapons-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[wp_phoenixrod], 0, 0,
+       "1 = Player has the Phoenix Rod.",
+   "player-weapons-mace", READONLYCVAR, CVT_INT, &gsvWeapons[wp_mace], 0, 0,
+       "1 = Player has mace.",
+   "player-weapons-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[wp_gauntlets], 0, 0,
+       "1 = Player has gauntlets.",
+   // Keys
+   "player-keys-yellow", READONLYCVAR, CVT_INT, &gsvKeys[key_yellow], 0, 0,
+       "1 = Player has yellow key.",
+   "player-keys-green", READONLYCVAR, CVT_INT, &gsvKeys[key_green], 0, 0,
+       "1 = Player has green key.",
+   "player-keys-blue", READONLYCVAR, CVT_INT, &gsvKeys[key_blue], 0, 0,
+       "1 = Player has blue key.",
+   // Artifacts
+   "player-artifacts-ring", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0,
+       "Current number of Rings of Invincibility.",
+   "player-artifacts-shadowsphere", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invisibility], 0, 0,
+       "Current number of Shadowsphere artifacts.",
+   "player-artifacts-crystalvial", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0,
+       "Current number of Crystal Vials.",
+   "player-artifacts-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0,
+       "Current number of Mystic Urn artifacts.",
+   "player-artifacts-tomeofpower", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_tomeofpower], 0, 0,
+       "Current number of Tome of Power artifacts.",
+   "player-artifacts-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0,
+       "Current number of torches.",
+   "player-artifacts-firebomb", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_firebomb], 0, 0,
+       "Current number of Time Bombs Of The Ancients.",
+   "player-artifacts-egg", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0,
+       "Current number of Morph Ovum artifacts.",
+   "player-artifacts-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0,
+       "Current number of Wings of Wrath artifacts.",
+   "player-artifacts-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0,
+       "Current number of Chaos Devices.",
+#elif __JHEXEN__
+   // Mana
+   "player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[MANA_1], 0, 0,
+       "Current amount of blue mana.",
+   "player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[MANA_2], 0, 0,
+       "Current ammount of green mana.",
+   // Keys
+   "player-keys-steel", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_1], 0, 0,
+       "1 = Player has steel key.",
+   "player-keys-cave", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_2], 0, 0,
+       "1 = Player has cave key.",
+   "player-keys-axe", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_3], 0, 0,
+       "1 = Player has axe key.",
+   "player-keys-fire", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_4], 0, 0,
+       "1 = Player has fire key.",
+   "player-keys-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_5], 0, 0,
+       "1 = Player has emerald key.",
+   "player-keys-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_6], 0, 0,
+       "1 = Player has dungeon key.",
+   "player-keys-silver", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_7], 0, 0,
+       "1 = Player has silver key.",
+   "player-keys-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_8], 0, 0,
+       "1 = Player has rusted key.",
+   "player-keys-horn", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_9], 0, 0,
+       "1 = Player has horn key.",
+   "player-keys-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_A], 0, 0,
+       "1 = Player has swamp key.",
+   "player-keys-castle", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_B], 0, 0,
+       "1 = Player has castle key.",
+   // Weapons
+   "player-weapons-first", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIRST], 0, 0,
+       "1 = Player has first weapon.",
+   "player-weapons-second", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SECOND], 0, 0,
+       "1 = Player has second weapon.",
+   "player-weapons-third", READONLYCVAR, CVT_INT, &gsvWeapons[WP_THIRD], 0, 0,
+       "1 = Player has third weapon.",
+   "player-weapons-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FOURTH], 0, 0,
+       "1 = Player has fourth weapon.",
+   // Weapon Pieces
+   "player-weapons-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0,
+       "1 = Player has piece 1.",
+   "player-weapons-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0,
+       "1 = Player has piece 2.",
+   "player-weapons-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0,
+       "1 = Player has piece 3.",
+   "player-weapons-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0,
+       "1 = Player has all pieces.",
+   // Artifacts
+   "player-artifacts-defender", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0,
+       "Current number of Icons Of The Defender.",
+   "player-artifacts-quartzflask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0,
+       "Current number of Quartz Flasks.",
+   "player-artifacts-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0,
+       "Current number of Mystic Urn artifacts.",
+   "player-artifacts-mysticambit", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_healingradius], 0, 0,
+       "Current number of Mystic Ambit Incantations.",
+   "player-artifacts-darkservant", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_summon], 0, 0,
+       "Current number of Dark Servant artifacts.",
+   "player-artifacts-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0,
+       "Current number of torches.",
+   "player-artifacts-porkalator", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0,
+       "Current number of Porkalaor artifacts.",
+   "player-artifacts-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0,
+       "Current number of Wings of Wrath artifacts.",
+   "player-artifacts-repulsion", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_blastradius], 0, 0,
+       "Current number of Discs Of Repulsion.",
+   "player-artifacts-flechette", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_poisonbag], 0, 0,
+       "Current number of Flechettes.",
+   "player-artifacts-banishment", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleportother], 0, 0,
+       "Current number of Banishment Devices.",
+   "player-artifacts-speed", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_speed], 0, 0,
+       "Current number of Boots of Speed.",
+   "player-artifacts-might", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostmana], 0, 0,
+       "Current number of Kraters Of Might.",
+   "player-artifacts-bracers", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostarmor], 0, 0,
+       "Current number of Dragonskin Bracers.",
+   "player-artifacts-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0,
+       "Current number of Chaos Devices.",
+   "player-artifacts-skull", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull], 0, 0,
+       "1 = Player has Yorick's Skull.",
+   "player-artifacts-heart", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgembig], 0, 0,
+       "1 = Player has Heart Of D'Sparil.",
+   "player-artifacts-ruby", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemred], 0, 0,
+       "1 = Player has Ruby Planet.",
+   "player-artifacts-emerald1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen1], 0, 0,
+       "1 = Player has Emerald Planet 1.",
+   "player-artifacts-emerald2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen2], 0, 0,
+       "1 = Player has Emerald Planet 2.",
+   "player-artifacts-sapphire1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue1], 0, 0,
+       "1 = Player has Sapphire Planet 1.",
+   "player-artifacts-sapphire2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue2], 0, 0,
+       "1 = Player has Sapphire Planet 2.",
+   "player-artifacts-daemoncodex", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook1], 0, 0,
+       "1 = Player has Daemon Codex.",
+   "player-artifacts-liberoscura", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook2], 0, 0,
+       "1 = Player has Liber Oscura.",
+   "player-artifacts-flamemask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull2], 0, 0,
+       "1 = Player has Flame Mask.",
+   "player-artifacts-glaiveseal", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzfweapon], 0, 0,
+       "1 = Player has Glaive Seal.",
+   "player-artifacts-holyrelic", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzcweapon], 0, 0,
+       "1 = Player has Holy Relic.",
+   "player-artifacts-sigilmagus", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzmweapon], 0, 0,
+       "1 = Player has Sigil of the Magus.",
+   "player-artifacts-gear1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear1], 0, 0,
+       "1 = Player has Clock Gear 1.",
+   "player-artifacts-gear2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear2], 0, 0,
+       "1 = Player has Clock Gear 2.",
+   "player-artifacts-gear3", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear3], 0, 0,
+       "1 = Player has Clock Gear 3.",
+   "player-artifacts-gear4", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear4], 0, 0,
+       "1 = Player has Clock Gear 4.",
+#endif
+   NULL
+};
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 boolean usearti = true;
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 static skill_t TempSkill;
 static int TempEpisode;
 static int TempMap;
@@ -369,11 +697,20 @@ static int GameLoadSlot;
 
 // CODE --------------------------------------------------------------------
 
+void G_Register(void)
+{
+	int     i;
+
+	for(i = 0; gamestatusCVars[i].name; i++)
+		Con_AddVariable(gamestatusCVars + i);
+}
+
 /*
  * Begin the titlescreen animation sequence.
  */
 void G_StartTitle(void)
 {
+
 	char   *name = "title";
 	void   *script;
 
@@ -387,9 +724,10 @@ void G_StartTitle(void)
 	}
 
 	FI_Start(script, FIMODE_LOCAL);
+
 }
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 static int findWeapon(player_t *plr, boolean forward)
 {
 	int     i, c;
@@ -402,7 +740,7 @@ static int findWeapon(player_t *plr, boolean forward)
 			i = 0;
 		if(i < 0)
 			i = NUMWEAPONS - 2;
-#  elif __JHEXEN__
+#  elif __JHEXEN__ || __JSTRIFE__
 		c < NUMWEAPONS; c++, forward ? i++ : i--)
 	{
 		if(i > NUMWEAPONS - 1)
@@ -576,10 +914,10 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 	int     joyturn = 0, joystrafe = 0, joyfwd = 0, joylook = 0;
 	int    *axes[5] = { 0, &joyfwd, &joyturn, &joystrafe, &joylook };
 	int	    look = 0, lspeed = 0;
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 	int     flyheight = 0;
 #endif
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	int     pClass = players[consoleplayer].class;
 #endif
 
@@ -629,7 +967,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 	// let movement keys cancel each other out
 	if(strafe)
 	{
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 		if(actions[A_TURNRIGHT].on)
 			side += sidemove[speed];
 		if(actions[A_TURNLEFT].on)
@@ -660,7 +998,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		turn += angleturn[tspeed] * JOY(-joyturn);
 
 	// Joystick strafe.
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 	if(joystrafe < -0 /*cfg.joydead */ )
 		side -= sidemove[speed] * JOY(-joystrafe);
 	if(joystrafe > 0 /*cfg.joydead */ )
@@ -689,7 +1027,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 #endif
 	}
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 	if(joyfwd < -0 /*cfg.joydead */ )
 		forward += forwardmove[speed] * JOY(-joyfwd);
 	if(joyfwd > 0 /*cfg.joydead */ )
@@ -701,7 +1039,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 		forward -= forwardmove[pClass][speed] * JOY(joyfwd);
 #endif
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 	if(actions[A_STRAFERIGHT].on)
 		side += sidemove[speed];
 	if(actions[A_STRAFELEFT].on)
@@ -804,7 +1142,13 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 	}
 #endif
 
-#if __JHEXEN__
+	if(mn_SuicideConsole)
+	{
+		cmd->suicide = true;
+		mn_SuicideConsole = false;
+	}
+
+#if __JHEXEN__ || __JSTRIFE__
 	// Fly up/down/drop keys
 	if(actions[A_FLYUP].on)
 	{
@@ -850,12 +1194,6 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 			}
 		}
 		actions[A_USEARTIFACT].on = false;
-	}
-
-	if(mn_SuicideConsole)
-	{
-		cmd->suicide = true;
-		mn_SuicideConsole = false;
 	}
 
 	// Artifact hot keys
@@ -1236,63 +1574,95 @@ void G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src)
 
 void G_DoLoadLevel(void)
 {
-	action_t *act;
-	int     i;
+    action_t *act;
+    int     i;
+    char   *lname, *ptr;
 
-#if __JHEXEN__
-	static int firstFragReset = 1;
+#if __JHEXEN__ || __JSTRIFE__
+    static int firstFragReset = 1;
 #endif
 
-	levelstarttic = gametic;	// for time calculation
-	gamestate = GS_LEVEL;
+    levelstarttic = gametic;	// for time calculation
+    gamestate = GS_LEVEL;
 
-	// If we're the server, let clients know the map will change.
-	NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-	for(i = 0; i < MAXPLAYERS; i++)
-	{
-		if(players[i].plr->ingame && players[i].playerstate == PST_DEAD)
-			players[i].playerstate = PST_REBORN;
-#if __JHEXEN__
-		if(!netgame || (netgame != 0 && deathmatch != 0) ||
-		   firstFragReset == 1)
-		{
-			memset(players[i].frags, 0, sizeof(players[i].frags));
-			firstFragReset = 0;
-		}
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        if(players[i].plr->ingame && players[i].playerstate == PST_DEAD)
+            players[i].playerstate = PST_REBORN;
+#if __JHEXEN__ || __JSTRIFE__
+        if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) ||
+            firstFragReset == 1)
+        {
+            memset(players[i].frags, 0, sizeof(players[i].frags));
+            firstFragReset = 0;
+        }
 #else
-		memset(players[i].frags, 0, sizeof(players[i].frags));
+        memset(players[i].frags, 0, sizeof(players[i].frags));
 #endif
-	}
+    }
 
+#if __JHEXEN__ || __JSTRIFE__
+    SN_StopAllSequences();
+#endif
+
+    // Set all player mobjs to NULL.
+    for(i = 0; i < MAXPLAYERS; i++)
+        players[i].plr->mo = NULL;
+
+    P_SetupLevel(gameepisode, gamemap, 0, gameskill);
+    Set(DD_DISPLAYPLAYER, consoleplayer);	// view the guy you are playing    
+    starttime = Sys_GetTime();
+    gameaction = ga_nothing;
+    Z_CheckHeap();
+
+    // clear cmd building stuff
+    memset(gamekeydown, 0, sizeof(gamekeydown));
+    memset(joymove, 0, sizeof(joymove));
+    mousex = mousey = 0;
+    sendpause = paused = false;
+    memset(mousebuttons, 0, sizeof(mousebuttons));
+    memset(joybuttons, 0, sizeof(joybuttons));
+
+    // Deactivate all action keys.
+    for(act = actions; act->name[0]; act++)
+        act->on = false;
+
+    // set the game status cvar for map name
+    lname = (char *) Get(DD_MAP_NAME);
+#if __JDOOM__
+    // Plutonia and TNT are special cases.
+    if(gamemission == pack_plut)
+        lname = mapnamesp[gamemap - 1];
+    else if(gamemission == pack_tnt)
+        lname = mapnamest[gamemap - 1];
+#endif
+    if(lname)
+    {
+        ptr = strchr(lname, ':');	// Skip the E#M# or Level #.
+        if(ptr)
+        {
+            lname = ptr + 1;
+            while(*lname && isspace(*lname))
+                lname++;
+        }
+    }
 #if __JHEXEN__
-	SN_StopAllSequences();
+    // In jHexen we can look in the MAPINFO for the map name
+    if(!lname)
+        lname = P_GetMapName(gamemap);
 #endif
+    // If still no name, call it unnamed.
+    if(!lname)
+        lname = "unnamed";
 
-	// Set all player mobjs to NULL.
-	for(i = 0; i < MAXPLAYERS; i++)
-		players[i].plr->mo = NULL;
+	// Set the map name
+    gsvMapName = lname;
 
-	P_SetupLevel(gameepisode, gamemap, 0, gameskill);
-	Set(DD_DISPLAYPLAYER, consoleplayer);	// view the guy you are playing    
-	starttime = Sys_GetTime();
-	gameaction = ga_nothing;
-	Z_CheckHeap();
-
-	// clear cmd building stuff
-	memset(gamekeydown, 0, sizeof(gamekeydown));
-	memset(joymove, 0, sizeof(joymove));
-	mousex = mousey = 0;
-	sendpause = paused = false;
-	memset(mousebuttons, 0, sizeof(mousebuttons));
-	memset(joybuttons, 0, sizeof(joybuttons));
-
-	// Deactivate all action keys.
-	for(act = actions; act->name[0]; act++)
-		act->on = false;
-
-	// Start a briefing, if there is one.
-	FI_Briefing(gameepisode, gamemap);
+    // Start a briefing, if there is one.
+    FI_Briefing(gameepisode, gamemap);
 }
 
 int CCmdCycleSpy(int argc, char **argv)
@@ -1325,7 +1695,7 @@ boolean G_Responder(event_t *ev)
 {
 	int     i;
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 	player_t *plr = &players[consoleplayer];
 
 	//extern boolean MenuActive;
@@ -1357,31 +1727,19 @@ boolean G_Responder(event_t *ev)
 	if(FI_Responder(ev))
 		return true;
 
-#if __JHEXEN__
-	if(CT_Responder(ev))
-	{							// Chat ate the event
-		return (true);
-	}
-#endif
-
 	switch (gamestate)
 	{
 	case GS_LEVEL:
-#if __JDOOM__
+
 		if(HU_Responder(ev))
 			return true;		// chat ate the event 
-		if(ST_Responder(ev))
-			return true;		// status window ate it 
 
-#elif __JHERETIC__
-		if(CT_Responder(ev))	// Chat ate the event
+#if __JHEXEN__ || __JSTRIFE__
+		if(ST_Responder(ev))		// Status bar ate the event
+			return (false);		// why is this false for jHexen??
+#else
+		if(ST_Responder(ev))		// Status bar ate the event
 			return true;
-		if(SB_Responder(ev))	// Status bar ate the event
-			return true;
-
-#elif __JHEXEN__
-		if(SB_Responder(ev))	// Status bar ate the event
-			return (false);
 #endif
 		if(AM_Responder(ev))
 			return true;		// automap ate it 
@@ -1469,7 +1827,7 @@ boolean G_Responder(event_t *ev)
 	return false;
 }
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 void G_InventoryTicker(void)
 {
 	if(!players[consoleplayer].plr->ingame)
@@ -1516,6 +1874,13 @@ void G_SpecialButton(player_t *pl)
 void G_Ticker(void)
 {
 	int     i;
+	player_t *plyr = &players[consoleplayer];
+	static gamestate_t oldgamestate = -1;
+
+
+#if __JHERETIC__ | __JHEXEN__
+	int		k;
+#endif
 
 	if(IS_CLIENT && !Get(DD_GAME_READY))
 		return;
@@ -1552,7 +1917,7 @@ void G_Ticker(void)
 	{
 		switch (gameaction)
 		{
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		case ga_initnew:
 			G_DoInitNew();
 			break;
@@ -1571,18 +1936,18 @@ void G_Ticker(void)
 			G_DoNewGame();
 			break;
 		case ga_loadgame:
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 			Draw_LoadIcon();
 #endif
 			G_DoLoadGame();
 			break;
 		case ga_savegame:
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 			Draw_SaveIcon();
 #endif
 			G_DoSaveGame();
 			break;
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		case ga_playdemo:
 			if(demoDisabled)
 			{
@@ -1646,7 +2011,7 @@ void G_Ticker(void)
 		lookOffset += diff;
 	}
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 	G_InventoryTicker();
 #endif
 
@@ -1666,6 +2031,10 @@ void G_Ticker(void)
 	switch (gamestate)
 	{
 	case GS_LEVEL:
+		// update in-level game status cvar
+		if(oldgamestate != GS_LEVEL)
+			gsvInLevel = 1;
+
 		P_DoTick();
 		HU_UpdatePsprites();
 
@@ -1676,15 +2045,10 @@ void G_Ticker(void)
 		if(IS_DEDICATED)
 			break;
 
-#if __JDOOM__
 		ST_Ticker();
 		AM_Ticker();
 		HU_Ticker();
-#else
-		SB_Ticker();
-		AM_Ticker();
-		CT_Ticker();
-#endif
+
 		break;
 
 	case GS_INTERMISSION:
@@ -1693,10 +2057,79 @@ void G_Ticker(void)
 #else
 		IN_Ticker();
 #endif
-		break;
 
 	default:
+		if(oldgamestate != gamestate)
+		{
+			// update game status cvars 
+			gsvInLevel = 0;
+			gsvMapName = "N/A";
+			gsvMapMusic = -1;
+		}
 		break;
+	}
+
+	oldgamestate = gamestate;
+
+	// DJS 07/05/05
+	// Update the game status cvars for player data
+	if(plyr)
+	{
+		gsvHealth = plyr->health;
+#if !__JHEXEN__
+		// Level stats
+		gsvKills = plyr->killcount;
+		gsvItems = plyr->itemcount;
+		gsvSecrets = plyr->secretcount;
+#endif
+        // armor
+#if __JHEXEN__
+		gsvArmor = FixedDiv(
+		AutoArmorSave[plyr->class] + plyr->armorpoints[ARMOR_ARMOR] +
+		plyr->armorpoints[ARMOR_SHIELD] +
+		plyr->armorpoints[ARMOR_HELMET] +
+		plyr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+#else
+		gsvArmor = plyr->armorpoints;
+#endif
+		// owned keys
+#if __JHEXEN__
+		for( i= 0; i < NUMKEYS; i++)
+			gsvKeys[i] = (plyr->keys & (1 << i))? 1 : 0;
+#else
+		for( i= 0; i < NUMKEYS; i++)
+			gsvKeys[i] = plyr->keys[i];
+#endif
+		// current weapon
+		gsvCurrentWeapon = plyr->readyweapon;
+
+		// owned weapons
+		for( i= 0; i < NUMWEAPONS; i++)
+			gsvWeapons[i] = plyr->weaponowned[i];
+#if __JHEXEN__
+		// mana amounts
+		for( i= 0; i < NUMMANA; i++)
+			gsvAmmo[i] = plyr->mana[i];
+
+		// weapon pieces
+		gsvWPieces[0] = (plyr->pieces & WPIECE1)? 1 : 0;
+		gsvWPieces[1] = (plyr->pieces & WPIECE2)? 1 : 0;
+		gsvWPieces[2] = (plyr->pieces & WPIECE3)? 1 : 0;
+		gsvWPieces[3] = (plyr->pieces == 7)? 1 : 0;
+#else
+		// current ammo amounts
+		for( i= 0; i < NUMAMMO; i++)
+			gsvAmmo[i] = plyr->ammo[i];
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+		// artifacts
+		for( i= 0; i < NUMINVENTORYSLOTS; i++)
+		{
+				k = plyr->inventory[i].type;
+				gsvArtifacts[k] = plyr->inventory[i].count;
+		}
+#endif
 	}
 
 	// InFine ticks whenever it's active.
@@ -1727,8 +2160,18 @@ void G_InitPlayer(int player)
 	// clear everything else to defaults 
 	G_PlayerReborn(player);
 }
+#if __JSTRIFE__
 
-#if __JHEXEN__
+// 
+int P_GetMapCluster(Map)
+{
+	return 1;
+}
+
+#endif
+
+#if __JHEXEN__ || __JSTRIFE__
+
 //==========================================================================
 //
 // G_PlayerExitMap
@@ -1799,7 +2242,7 @@ void G_PlayerExitMap(int playerNumber)
 
 //
 // G_PlayerFinishLevel
-// Can when a player completes a level.
+// Called when a player completes a level.
 //
 void G_PlayerFinishLevel(int player)
 {
@@ -1823,7 +2266,7 @@ void G_PlayerFinishLevel(int player)
 	p->update |= PSF_POWERS | PSF_KEYS;
 	memset(p->powers, 0, sizeof(p->powers));
 #  if __JDOOM__
-	memset(p->cards, 0, sizeof(p->cards));
+	memset(p->keys, 0, sizeof(p->keys));
 #  elif __JHERETIC__
 	p->update |= PSF_CHICKEN_TIME;
 	memset(p->keys, 0, sizeof(p->keys));
@@ -1897,13 +2340,13 @@ void G_PlayerReborn(int player)
 	int     itemcount;
 	int     secretcount;
 
-#if !__JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 	int     i;
 #endif
 #if __JHERETIC__
 	boolean secret = false;
 	int     spot;
-#elif __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 	uint    worldTimer;
 #endif
 
@@ -1911,7 +2354,7 @@ void G_PlayerReborn(int player)
 	killcount = players[player].killcount;
 	itemcount = players[player].itemcount;
 	secretcount = players[player].secretcount;
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	worldTimer = players[player].worldTimer;
 #endif
 
@@ -1933,12 +2376,13 @@ void G_PlayerReborn(int player)
 	players[player].killcount = killcount;
 	players[player].itemcount = itemcount;
 	players[player].secretcount = secretcount;
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	players[player].worldTimer = worldTimer;
-	players[player].class = cfg.PlayerClass[player];
 	players[player].colormap = cfg.PlayerColor[player];
 #endif
-
+#if __JHEXEN__ 
+	players[player].class = cfg.PlayerClass[player];
+#endif
 	p->usedown = p->attackdown = true;	// don't do anything immediately 
 	p->playerstate = PST_LIVE;
 	p->health = MAXHEALTH;
@@ -1969,7 +2413,7 @@ void G_PlayerReborn(int player)
 
 #endif
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 	// Reset maxammo.
 	for(i = 0; i < NUMAMMO; i++)
 		p->maxammo[i] = maxammo[i];
@@ -1991,7 +2435,7 @@ void G_PlayerReborn(int player)
 		PSF_INVENTORY | PSF_POWERS | PSF_KEYS | PSF_OWNED_WEAPONS | PSF_AMMO |
 		PSF_MAX_AMMO | PSF_PENDING_WEAPON | PSF_READY_WEAPON;
 
-#elif __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 	if(p == &players[consoleplayer])
 	{
 		SB_state = -1;			// refresh the status bar
@@ -2037,7 +2481,7 @@ void G_DeathMatchSpawnPlayer(int playernum)
 		i = P_Random() % selections;
 		if(P_CheckSpot(playernum, &deathmatchstarts[i], true))
 		{
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 			deathmatchstarts[i].type = playernum + 1;
 #endif
 			break;
@@ -2051,7 +2495,7 @@ void G_DeathMatchSpawnPlayer(int playernum)
 	}
 	P_SpawnPlayer(&deathmatchstarts[i], playernum);
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 	// Gib anything at the spot.
 	P_Telefrag(players[playernum].plr->mo);
 #endif
@@ -2089,7 +2533,7 @@ void G_QueueBody(mobj_t *body)
 // 
 void G_DoReborn(int playernum)
 {
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	int     i;
 	boolean oldWeaponowned[NUMWEAPONS];
 	int     oldKeys;
@@ -2108,7 +2552,7 @@ void G_DoReborn(int playernum)
 		// We've just died, don't do a briefing now.
 		brief_disabled = true;
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		if(SV_HxRebornSlotAvailable())
 		{						// Use the reborn code if the slot is available
 			gameaction = ga_singlereborn;
@@ -2146,7 +2590,7 @@ void G_DoReborn(int playernum)
 			return;
 		}
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		// Cooperative net-play, retain keys and weapons
 		oldKeys = players[playernum].keys;
 		oldPieces = players[playernum].pieces;
@@ -2171,7 +2615,7 @@ void G_DoReborn(int playernum)
 			P_SpawnPlayer(assigned, playernum);
 			return;
 		}
-#elif __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 		foundSpot = false;
 		if(P_CheckSpot
 		   (playernum, P_GetPlayerStart(RebornPosition, playernum), true))
@@ -2225,7 +2669,7 @@ void G_DoReborn(int playernum)
 			players[playernum].pendingweapon = bestWeapon;
 		}
 #endif
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 		Con_Printf("- force spawning at %i.\n", players[playernum].startspot);
 
 		// Fuzzy returns false if it needs telefragging.
@@ -2284,7 +2728,7 @@ int     cpars[32] = {
 
 #endif
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 //==========================================================================
 //
 // G_StartNewInit
@@ -2295,7 +2739,11 @@ void G_StartNewInit(void)
 {
 	SV_HxInitBaseSlot();
 	SV_HxClearRebornSlot();
+
+#if __JHEXEN__
 	P_ACSInitNewGame();
+#endif
+
 	// Default the player start spot group to 0
 	RebornPosition = 0;
 }
@@ -2311,7 +2759,11 @@ void G_StartNewGame(skill_t skill)
 	int     realMap;
 
 	G_StartNewInit();
+#if __JHEXEN__
 	realMap = P_TranslateMap(1);
+#elif __JSTRIFE__
+	realMap = 1;
+#endif
 	if(realMap == -1)
 	{
 		realMap = 1;
@@ -2388,7 +2840,7 @@ void G_SecretExitLevel(void)
 	gameaction = ga_completed;
 }
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 //==========================================================================
 //
 // G_Completed
@@ -2405,7 +2857,7 @@ void G_Completed(int map, int position)
 	if(shareware && map > 4)
 	{
 		// Not possible in the 4-level demo.
-		P_SetMessage(&players[consoleplayer], "PORTAL INACTIVE -- DEMO", true);
+		P_SetMessage(&players[consoleplayer], "PORTAL INACTIVE -- DEMO");
 		return;
 	}
 
@@ -2436,7 +2888,7 @@ void G_DoCompleted(void)
 	{
 		if(players[i].plr->ingame)
 		{
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 			G_PlayerExitMap(i);
 #else
 			G_PlayerFinishLevel(i);	// take away cards and stuff 
@@ -2447,6 +2899,9 @@ void G_DoCompleted(void)
 		}
 	}
 #if __JHERETIC__
+	if(automapactive)
+		AM_Stop();
+
 	prevmap = gamemap;
 	if(secretexit == true)
 	{
@@ -2553,6 +3008,13 @@ void G_DoCompleted(void)
 			wminfo.next = gamemap;	// go to next level 
 	}
 
+	// Is there an overide for wminfo.next? (eg from an XG line)
+	if(nextmap > 0)
+	{
+		wminfo.next = nextmap -1;	// wminfo is zero based
+		nextmap = 0;
+	}
+
 	wminfo.maxkills = totalkills;
 	wminfo.maxitems = totalitems;
 	wminfo.maxsecret = totalsecret;
@@ -2573,7 +3035,7 @@ void G_DoCompleted(void)
 	IN_Start();
 #endif
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	if(LeaveMap == -1 && LeavePosition == -1)
 	{
 		gameaction = ga_victory;
@@ -2673,7 +3135,7 @@ void G_DoWorldDone(void)
 	viewactive = true;
 }
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 //==========================================================================
 //
 // G_DoSingleReborn
@@ -2702,7 +3164,7 @@ void G_DoSingleReborn(void)
 //
 //==========================================================================
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 void G_LoadGame(int slot)
 {
 	GameLoadSlot = slot;
@@ -2728,9 +3190,9 @@ void G_DoLoadGame(void)
 	FI_Reset();
 	gameaction = ga_nothing;
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	SV_HxLoadGame(GameLoadSlot);
-	if(!netgame)
+	if(!IS_NETGAME)
 	{							// Copy the base slot to the reborn slot
 		SV_HxUpdateRebornSlot();
 	}
@@ -2762,11 +3224,11 @@ void G_SaveGame(int slot, char *description)
 
 void G_DoSaveGame(void)
 {
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	SV_HxSaveGame(savegameslot, savedescription);
 	gameaction = ga_nothing;
 	savedescription[0] = 0;
-	P_SetMessage(&players[consoleplayer], TXT_GAMESAVED, true);
+	P_SetMessage(&players[consoleplayer], TXT_GAMESAVED);
 
 #else
 	char    name[100];
@@ -2780,12 +3242,12 @@ void G_DoSaveGame(void)
 #  if __JDOOM__
 	P_SetMessage(players + consoleplayer, GGSAVED);
 #  elif __JHERETIC__
-	P_SetMessage(&players[consoleplayer], TXT_GAMESAVED, true);
+	P_SetMessage(&players[consoleplayer], TXT_GAMESAVED);
 #  endif
 #endif
 }
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 //==========================================================================
 //
 // G_DeferredNewGame
@@ -2811,7 +3273,7 @@ void G_DoInitNew(void)
 // Can be called by the startup code or the menu task,
 // consoleplayer, displayplayer, playeringame[] should be set. 
 //
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 skill_t d_skill;
 int     d_episode;
 int     d_map;
@@ -2819,7 +3281,7 @@ int     d_map;
 
 void G_DeferedInitNew(skill_t skill, int episode, int map)
 {
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	TempSkill = skill;
 	TempEpisode = episode;
 	TempMap = map;
@@ -2835,7 +3297,7 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
 void G_DoNewGame(void)
 {
 	G_StopDemo();
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 	if(!IS_NETGAME)
 	{
 		deathmatch = false;
@@ -2914,7 +3376,7 @@ boolean G_ValidateMap(int *episode, int *map)
 		ok = false;
 	}
 
-#elif __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 	if(*map > 99)
 	{
 		*map = 99;
@@ -2955,7 +3417,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
 	M_ClearRandom();
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 #  if __JDOOM__
 	if(skill == sk_nightmare || respawnparm)
 #  elif __JHERETIC__
@@ -3006,7 +3468,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 		for(i = 0; i < MAXPLAYERS; i++)
 		{
 			players[i].playerstate = PST_REBORN;
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 			players[i].worldTimer = 0;
 #else
 			players[i].didsecret = false;
@@ -3016,9 +3478,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
 	usergame = true;			// will be set false if a demo 
 	paused = false;
-#if __JDOOM__
 	automapactive = false;
-#endif
 	viewactive = true;
 	gameepisode = episode;
 	gamemap = map;
@@ -3109,17 +3569,6 @@ void G_DemoAborted(void)
 	gamestate = GS_WAITING;
 	FI_DemoEnds();
 }
-
-#if __JHERETIC__ || __JHEXEN__
-int CCmdPause(int argc, char **argv)
-{
-	extern boolean MenuActive;
-
-	if(!MenuActive)
-		sendpause = true;
-	return true;
-}
-#endif
 
 //===========================================================================
 // P_Thrust3D
