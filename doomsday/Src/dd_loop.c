@@ -67,6 +67,12 @@ int     maxFrameRate = 200;		// Zero means 'unlimited'.
 timespan_t sysTime, gameTime, demoTime, levelTime;
 timespan_t frameStartTime;
 
+boolean stopTime = false;  // If true the time counters won't be incremented
+boolean tickUI = false; // If true the UI will be tick'd
+boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netgame)
+
+boolean drawGame = true; // If false the game viewport won't be rendered
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static double lastFrameTime;
@@ -156,13 +162,7 @@ void DD_DrawAndBlit(void)
 	// aforementioned operation.
 	gl.Begin(DGL_SEQUENCE);
 
-	if(ui_active)
-	{
-		// Draw user interface.
-		UI_Drawer();
-		UpdateState = I_FULLSCRN;
-	}
-	else
+	if(drawGame)
 	{
 		// Draw the game graphics.
 		gx.G_Drawer();
@@ -174,9 +174,17 @@ void DD_DrawAndBlit(void)
 		// Debug information.
 		Net_Drawer();
 		S_Drawer();
-		// Draw console.
-		Con_Drawer();
 	}
+
+	if(ui_active)
+	{
+		// Draw user interface.
+		UI_Drawer();
+		UpdateState = I_FULLSCRN;
+	}
+
+	// Draw console.
+	Con_Drawer();
 
 	// End the sequence.
 	gl.End();
@@ -247,7 +255,7 @@ void DD_Ticker(timespan_t time)
 	Demo_Ticker(time);
 	P_Ticker(time);
 
-	if(!ui_active || netgame)
+	if(tickFrame || netgame)
 	{
 		// Advance frametime.  It will be reduced when new sharp world
 		// positions are calculated, so that frametime always stays within
@@ -287,7 +295,7 @@ void DD_Ticker(timespan_t time)
 		Sv_FixLocalAngles();
 	}
 
-	if(ui_active)
+	if(tickUI)
 	{
 		// User interface ticks.
 		UI_Ticker(time);
@@ -301,7 +309,7 @@ void DD_AdvanceTime(timespan_t time)
 {
 	sysTime += time;
 
-	if(!ui_active || netgame)
+	if(!stopTime || netgame)
 	{
 		// The difference between gametic and demotic is that demotic
 		// is not altered at any point. Gametic changes at handshakes.

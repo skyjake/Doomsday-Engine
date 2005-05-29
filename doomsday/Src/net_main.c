@@ -858,6 +858,10 @@ void Net_Drawer(void)
 	{
 		int     x, y = 30, w, h;
 
+        // If the ui is active draw the counter a bit further down
+        if(ui_active)
+            y += 20;
+
 		sprintf(buf, "%.1f FPS", DD_GetFrameRate());
 		w = FR_TextWidth(buf) + 16;
 		h = FR_TextHeight(buf) + 16;

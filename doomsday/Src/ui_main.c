@@ -66,6 +66,14 @@ void    UI_MouseFocus(void);
 
 extern int maxTexSize;
 
+extern boolean stopTime;
+extern boolean tickUI;
+extern boolean tickFrame;
+extern boolean drawGame;
+extern boolean allowMouseMod;
+// extern boolean dialogActive;
+// extern boolean dialogInput;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean ui_active = false;		// The user interface is active.
@@ -99,55 +107,78 @@ ui_color_t ui_colors[NUM_UI_COLORS] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean allowEscape; // Allow the user to exit a ui page using the escape key
+
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// UI_Init
-//===========================================================================
-void UI_Init(void)
+/*
+ * Called when entering a ui page
+ */
+void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
+             boolean mousemod, boolean noescape)
 {
-	if(ui_active)
-		return;
-	ui_active = true;
+    if(ui_active)
+        return;
+    ui_active = true;
 
-	// Setup state.
-	Con_StartupInit();
+    // Adjust the engine state
+    stopTime = halttime;
+    tickUI = tckui;
+    tickFrame = tckframe;
+    drawGame = drwgame;
+    allowMouseMod = mousemod;
 
-	// Change font.
-	FR_SetFont(glFontVariable);
-	ui_fonthgt = FR_TextHeight("W");
+    // Setup state.
+    Con_StartupInit();
 
-	// Should the mouse cursor be visible?
-	ui_showmouse = !ArgExists("-nomouse");
+    // Change font.
+    FR_SetFont(glFontVariable);
+    ui_fonthgt = FR_TextHeight("W");
 
-	// Load graphics.
+    // Should the mouse cursor be visible?
+    if(!mousemod)
+        ui_showmouse = !ArgExists("-nomouse");
+    else
+        ui_showmouse = false;
 
-	ui_cx = screenWidth / 2;
-	ui_cy = screenHeight / 2;
-	ui_moved = false;
+	// Allow use of the escape key to exit the ui?
+    allowEscape = !noescape;
+
+    // Load graphics.
+    ui_cx = screenWidth / 2;
+    ui_cy = screenHeight / 2;
+    ui_moved = false;
 }
 
-//===========================================================================
-// UI_End
-//===========================================================================
+/*
+ * Called upon exiting a ui page
+ */
 void UI_End(void)
 {
-	event_t rel;
+    event_t rel;
 
-	if(!ui_active)
-		return;
-	ui_active = false;
-	// Restore old state.
-	Con_StartupDone();
+    if(!ui_active)
+        return;
+    ui_active = false;
+    // Restore old state.
+    Con_StartupDone();
 
-	// Inform everybody that the shift key was (possibly) released while
-	// the UI was eating all the input events.
-	if(!shiftDown)
-	{
-		rel.type = ev_keyup;
-		rel.data1 = DDKEY_RSHIFT;
-		DD_PostEvent(&rel);
-	}
+    // Restore the engine state
+    tickFrame = true;
+    stopTime = false;
+    tickUI = false;
+    drawGame = true;
+    allowMouseMod = true;
+
+    // Inform everybody that the shift key was (possibly) released while
+    // the UI was eating all the input events.
+    if(!shiftDown)
+    {
+        rel.type = ev_keyup;
+        rel.data1 = DDKEY_RSHIFT;
+        rel.useclass = 0;
+        DD_PostEvent(&rel);
+    }
 }
 
 //===========================================================================
@@ -182,77 +213,79 @@ void UI_ClearTextures(void)
 	memset(ui_textures, 0, sizeof(ui_textures));
 }
 
-//===========================================================================
-// UI_InitPage
-//===========================================================================
+/*
+ * Initialises ui page data prior to use
+ */
 void UI_InitPage(ui_page_t * page, ui_object_t *objects)
 {
-	int     i;
-	ui_object_t *deffocus = NULL;
-	ui_object_t meta;
+    int     i;
+    ui_object_t *deffocus = NULL;
+    ui_object_t meta;
 
-	memset(page, 0, sizeof(*page));
-	page->objects = objects;
-	page->capture = -1;			// No capture.
-	page->focus = -1;
-	page->responder = UIPage_Responder;
-	page->drawer = UIPage_Drawer;
-	page->ticker = UIPage_Ticker;
-	page->count = UI_CountObjects(objects);
-	for(i = 0; i < page->count; i++)
-	{
-		objects[i].flags &= ~UIF_FOCUS;
-		if(objects[i].type == UI_TEXT || objects[i].type == UI_BOX ||
-		   objects[i].type == UI_META)
-			objects[i].flags |= UIF_NO_FOCUS;
-		if(objects[i].flags & UIF_DEFAULT)
-			deffocus = objects + i;
-		// Reset timer.
-		objects[i].timer = 0;
-	}
-	if(deffocus)
-	{
-		page->focus = deffocus - objects;
-		deffocus->flags |= UIF_FOCUS;
-	}
-	else
-	{
-		// Find an object for focus.
-		for(i = 0; i < page->count; i++)
-		{
-			if(!(objects[i].flags & UIF_NO_FOCUS))
-			{
-				// Set default focus.
-				page->focus = i;
-				objects[i].flags |= UIF_FOCUS;
-				break;
-			}
-		}
-	}
-	// Meta effects.
-	for(i = 0, meta.type = 0; i < page->count; i++)
-	{
-		if(!meta.type && objects[i].type != UI_META)
-			continue;
-		if(objects[i].type == UI_META)
-		{
-			// This will be the meta for now.
-			memcpy(&meta, objects + i, sizeof(meta));
-			// Neutralize the actual object.
-			objects[i].group = UIG_NONE;
-			objects[i].flags |= UIF_HIDDEN;
-			objects[i].relx = objects[i].rely = 0;
-			objects[i].relw = objects[i].relh = 0;
-			continue;
-		}
-		// Apply the meta.
-		if(meta.group != UIG_NONE)
-			objects[i].group = meta.group;
-		objects[i].relx += meta.relx;
-		objects[i].rely += meta.rely;
-		objects[i].relw += meta.relw;
-		objects[i].relh += meta.relh;
-	}
+    memset(page, 0, sizeof(*page));
+    page->objects = objects;
+    page->capture = -1;    // No capture.
+    page->focus = -1;
+    page->responder = UIPage_Responder;
+    page->drawer = UIPage_Drawer;
+    page->background = true;    // render background by default
+    page->header = true;    // render header by default
+    page->ticker = UIPage_Ticker;
+    page->count = UI_CountObjects(objects);
+    for(i = 0; i < page->count; i++)
+    {
+        objects[i].flags &= ~UIF_FOCUS;
+        if(objects[i].type == UI_TEXT || objects[i].type == UI_BOX ||
+            objects[i].type == UI_META)
+            objects[i].flags |= UIF_NO_FOCUS;
+        if(objects[i].flags & UIF_DEFAULT)
+            deffocus = objects + i;
+        // Reset timer.
+        objects[i].timer = 0;
+    }
+    if(deffocus)
+    {
+        page->focus = deffocus - objects;
+        deffocus->flags |= UIF_FOCUS;
+    }
+    else
+    {
+        // Find an object for focus.
+        for(i = 0; i < page->count; i++)
+        {
+            if(!(objects[i].flags & UIF_NO_FOCUS))
+            {
+                // Set default focus.
+                page->focus = i;
+                objects[i].flags |= UIF_FOCUS;
+                break;
+            }
+        }
+    }
+    // Meta effects.
+    for(i = 0, meta.type = 0; i < page->count; i++)
+    {
+        if(!meta.type && objects[i].type != UI_META)
+            continue;
+        if(objects[i].type == UI_META)
+        {
+            // This will be the meta for now.
+            memcpy(&meta, objects + i, sizeof(meta));
+            // Neutralize the actual object.
+            objects[i].group = UIG_NONE;
+            objects[i].flags |= UIF_HIDDEN;
+            objects[i].relx = objects[i].rely = 0;
+            objects[i].relw = objects[i].relh = 0;
+            continue;
+        }
+        // Apply the meta.
+        if(meta.group != UIG_NONE)
+            objects[i].group = meta.group;
+        objects[i].relx += meta.relx;
+        objects[i].rely += meta.rely;
+        objects[i].relw += meta.relw;
+            objects[i].relh += meta.relh;
+    }
 }
 
 //===========================================================================
@@ -360,37 +393,43 @@ void UI_SetPage(ui_page_t * page)
 	ui_moved = false;
 }
 
+/*
+ * Directs events through the ui and current page if active
+ */
 int UI_Responder(event_t *ev)
 {
-	if(!ui_active)
-		return false;
-	if(!ui_page)
-		return false;
-	// Check for Shift events.
-	switch (ev->type)
-	{
-	case ev_mouse:
-		if(ev->data1 || ev->data2)
-			ui_moved = true;
-		ui_cx += ev->data1;
-		ui_cy += ev->data2;
-		if(ui_cx < 0)
-			ui_cx = 0;
-		if(ui_cy < 0)
-			ui_cy = 0;
-		if(ui_cx >= screenWidth)
-			ui_cx = screenWidth - 1;
-		if(ui_cy >= screenHeight)
-			ui_cy = screenHeight - 1;
-		break;
+    if(!ui_active)
+        return false;
+    if(!ui_page)
+        return false;
 
-	default:
-		break;
-	}
-	// Call the page's responder.
-	ui_page->responder(ui_page, ev);
-	// If the UI is active, all events are eaten by it.
-	return true;
+    // Check for Shift events.
+    switch (ev->type)
+    {
+        case ev_mouse:
+            if(ev->data1 || ev->data2)
+                ui_moved = true;
+            ui_cx += ev->data1;
+            ui_cy += ev->data2;
+            if(ui_cx < 0)
+                ui_cx = 0;
+            if(ui_cy < 0)
+                ui_cy = 0;
+            if(ui_cx >= screenWidth)
+                ui_cx = screenWidth - 1;
+            if(ui_cy >= screenHeight)
+                ui_cy = screenHeight - 1;
+            break;
+
+        default:
+            break;
+    }
+
+    // Call the page's responder.
+    ui_page->responder(ui_page, ev);
+    // If the UI is active, all events are eaten by it.
+
+    return true;
 }
 
 void UI_Ticker(timespan_t time)
@@ -409,16 +448,32 @@ void UI_Ticker(timespan_t time)
 	ui_page->ticker(ui_page);
 }
 
+/*
+ * Draws the current ui page if active
+ */
 void UI_Drawer(void)
 {
-	if(!ui_active)
-		return;
-	if(!ui_page)
-		return;
-	// Call the active page's drawer.
-	ui_page->drawer(ui_page);
-	// Draw mouse cursor.
-	UI_DrawMouse(ui_cx, ui_cy);
+    if(!ui_active)
+        return;
+    if(!ui_page)
+        return;
+
+    // Go into screen projection mode.
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+
+    // Call the active page's drawer.
+    ui_page->drawer(ui_page);
+    // Draw mouse cursor.
+    UI_DrawMouse(ui_cx, ui_cy);
+
+    // Restore the original matrices.
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PopMatrix();
 }
 
 int UI_CountObjects(ui_object_t *list)
@@ -558,7 +613,7 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
 	if(ev->type == ev_keydown || ev->type == ev_keyrepeat)
 	{
 		// We won't accept repeats with Esc.
-		if(ev->data1 == DDKEY_ESCAPE && ev->type == ev_keydown)
+		if(ev->data1 == DDKEY_ESCAPE && ev->type == ev_keydown && allowEscape)
 		{
 			UI_SetPage(page->previous);
 			// If we have no more a page, disactive UI.
@@ -566,6 +621,10 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
 				UI_End();
 			return true;		// The event was used.
 		}
+//        // If current UI is a dialog not requiring input we'll ignore the event
+//        if(dialogActive && !dialogInput)
+//            return false;
+
 		// Tab is used for navigation.
 		if(ev->data1 == DDKEY_TAB)
 		{
@@ -650,39 +709,42 @@ void UIPage_Ticker(ui_page_t * page)
 	}
 }
 
+/*
+ * Draws the ui including all objects on the current page
+ */
 void UIPage_Drawer(ui_page_t * page)
 {
-	int     i;
-	float   t;
-	ui_object_t *ob;
-	ui_color_t focuscol;
+    int     i;
+    float   t;
+    ui_object_t *ob;
+    ui_color_t focuscol;
 
-	// Draw background.
-	Con_DrawStartupBackground();
-	// Draw title.
-	UI_DrawTitle(page);
-	// Draw each object, unless they're hidden.
-	for(i = 0, ob = page->objects; i < page->count; i++, ob++)
-	{
-		if(ob->flags & UIF_HIDDEN || !ob->drawer)
-			continue;
-		ob->drawer(ob);
-		if(ob->flags & UIF_FOCUS &&
-		   (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
-		{
-			t = (1 + sin(page->timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
-			UI_MixColors(UI_COL(UIC_BRD_LOW), UI_COL(UIC_BRD_HI), &focuscol,
-						 t);
-			UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER,
-					 UI_COL(UIC_BRD_LOW), UI_COL(UIC_BRD_LOW), .2f + t * .3f,
-					 -1);
-			gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-			// Draw a focus rectangle.
-			UI_DrawRect(ob->x - 1, ob->y - 1, ob->w + 2, ob->h + 2, UI_BORDER,
-						&focuscol, 1);
-			gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-		}
-	}
+    // Draw background?
+    if(page->background)
+        Con_DrawStartupBackground();
+    // Draw title?
+    if(page->header)
+        UI_DrawTitle(page);
+    // Draw each object, unless they're hidden.
+    for(i = 0, ob = page->objects; i < page->count; i++, ob++)
+    {
+        if(ob->flags & UIF_HIDDEN || !ob->drawer)
+            continue;
+        ob->drawer(ob);
+        if(ob->flags & UIF_FOCUS &&
+            (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
+        {
+            t = (1 + sin(page->timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
+            UI_MixColors(UI_COL(UIC_BRD_LOW), UI_COL(UIC_BRD_HI), &focuscol, t);
+            UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER,
+                     UI_COL(UIC_BRD_LOW), UI_COL(UIC_BRD_LOW), .2f + t * .3f, -1);
+            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+            // Draw a focus rectangle.
+            UI_DrawRect(ob->x - 1, ob->y - 1, ob->w + 2, ob->h + 2, UI_BORDER,
+                        &focuscol, 1);
+            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+        }
+    }
 }
 
 void UIFrame_Drawer(ui_object_t *ob)

@@ -1163,7 +1163,7 @@ int CCmdOpenPanel(int argc, char **argv)
 		list->selection = UI_ListFindItem(ob, RES(640, 480));
 	CP_ResolutionList(ob);
 
-	UI_Init();
+	UI_Init(true, true, false, false, false, false);
 	UI_SetPage(&page_panel);
 	UI_Focus(foc);
 	return true;
