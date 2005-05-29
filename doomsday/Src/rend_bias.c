@@ -65,6 +65,8 @@ typedef struct affection_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+extern void Con_ClearActions(void);
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(BLEditor);
@@ -78,9 +80,24 @@ void         SB_EvalPoint(gl_rgba_t *light,
 
 static void  SBE_SetColor(float *dest, float *src);
 
+void SBE_MenuSave(ui_object_t *ob);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern int gamedrawhud;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+const char *saveFile = NULL;
+
+static ui_page_t page_bias;
+
+static ui_object_t ob_bias[] = {	// bias editor page
+	{UI_BUTTON, 0, UIF_DEFAULT, 400, 450, 180, 70, "Save", UIButton_Drawer,
+	 UIButton_Responder, 0, SBE_MenuSave},
+
+	{UI_NONE}
+};
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -129,6 +146,7 @@ static int editShowIndices = true;
 static int editHueCircle = false;
 static float hueDistance = 100;
 static vec3_t hueOrigin, hueSide, hueUp;
+
 
 // CODE --------------------------------------------------------------------
 
@@ -179,6 +197,7 @@ void SB_Register(void)
     C_CMD("blc", BLEditor, "Set color of light at cursor.");
     C_CMD("bli", BLEditor, "Set intensity of light at cursor.");
     C_CMD("blhue", BLEditor, "Show/hide the hue circle for color selection.");
+    C_CMD("blmenu", BLEditor, "Show/hide the bias menu.");
 
     // Normal variables.
     C_VAR_INT("rend-bias", &useBias, 0, 0, 1,
@@ -1419,14 +1438,22 @@ void SB_EndFrame(void)
 
 static void SBE_Begin(void)
 {
+    // Advise the game not to draw any HUD displays
+    gamedrawhud = false;
     editActive = true;
     editGrabbed = -1;
+    // Enable the biaseditor binding class
+    Con_Execute("enablebindclass biaseditor 1", true);
     Con_Printf("Bias light editor: ON\n");
 }
 
 static void SBE_End(void)
 {
+    // Advise the game it can safely draw any HUD displays again
+    gamedrawhud = true;
     editActive = false;
+    // Disable the biaseditor binding class
+    Con_Execute("enablebindclass biaseditor 0", true);
     Con_Printf("Bias light editor: OFF\n");
 }
 
@@ -1567,6 +1594,11 @@ static boolean SBE_Save(const char *name)
     return true;
 }
 
+void SBE_MenuSave(ui_object_t *ob)
+{
+    SBE_Save(saveFile);
+}
+
 void SBE_SetHueCircle(boolean activate)
 {
     int i;
@@ -1642,6 +1674,20 @@ int CCmdBLEditor(int argc, char **argv)
     if(!stricmp(cmd, "new"))
     {
         return SBE_New();
+    }
+
+    if(!stricmp(cmd, "menu"))
+    {
+        Con_ClearActions(); // clear the actions array
+        Con_Open(false); // close the console if open
+
+        // show the bias menu interface
+        UI_InitPage(&page_bias, ob_bias);
+        sprintf(page_bias.title, "Doomsday BIAS Light Editor");
+        page_bias.background = false;  // we don't want a background
+        UI_Init(false, true, true, true, false, false);
+        UI_SetPage(&page_bias);
+        return true;
     }
 
     // Has the light index been given as an argument?
