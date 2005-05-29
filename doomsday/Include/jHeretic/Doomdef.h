@@ -25,6 +25,12 @@
 extern game_import_t gi;
 extern game_export_t gx;
 
+extern boolean  automapactive;	   // In AutoMap mode?
+extern boolean  menuactive;	   // Menu overlayed?
+extern boolean  paused;		   // Game Pause?
+
+extern boolean  viewactive;
+
 #define NUM_XHAIRS		6
 
 // Data tables.
@@ -291,6 +297,13 @@ typedef enum {
 	NUMPSPRITES
 } psprnum_t;
 
+// A combination of patch data and its lump number.
+typedef struct {
+	int             width, height;
+	int             leftoffset, topoffset;
+	int             lump;
+} dpatch_t;
+
 typedef struct {
 	state_t        *state;		   // a NULL state means not active
 	int             tics;
@@ -498,7 +511,7 @@ extern boolean  debugmode;		   // checkparm of -debug
 
 extern boolean  usergame;		   // ok to save / end game
 
-extern boolean  ravpic;			   // checkparm of -ravpic
+extern boolean  devparm;		   // checkparm of -devparm
 
 extern boolean  altpal;			   // checkparm to use an alternate palette routine
 
@@ -767,16 +780,6 @@ void            IN_Stop(void);
 void            IN_Ticker(void);
 void            IN_Drawer(void);
 
-//----------------------
-// Chat mode (CT_chat.c)
-//----------------------
-
-void            CT_Init(void);
-void            CT_Drawer(void);
-boolean         CT_Responder(event_t *ev);
-void            CT_Ticker(void);
-char            CT_dequeueChatChar(void);
-
 extern boolean  chatmodeon;
 extern boolean  ultimatemsg;
 
@@ -794,10 +797,10 @@ void            F_StartFinale(void);
 // STATUS BAR (SB_bar.c)
 //----------------------
 
-void            SB_Init(void);
-boolean         SB_Responder(event_t *event);
-void            SB_Ticker(void);
-void            SB_Drawer(void);
+void            ST_Init(void);
+boolean         ST_Responder(event_t *event);
+void            ST_Ticker(void);
+void            ST_Drawer(int fullscreenmode, boolean refresh);
 void            cht_GodFunc(player_t *player);
 void            cht_NoClipFunc(player_t *player);
 
@@ -808,9 +811,9 @@ void            cht_NoClipFunc(player_t *player);
 void            MN_Init(void);
 void            MN_ActivateMenu(void);
 void            MN_DeactivateMenu(void);
-boolean         MN_Responder(event_t *event);
+boolean         M_Responder(event_t *event);
 void            MN_Ticker(void);
-void            MN_Drawer(void);
+void            M_Drawer(void);
 void            MN_DrTextA(char *text, int x, int y);
 int             MN_TextAWidth(char *text);
 void            MN_DrTextB(char *text, int x, int y);
