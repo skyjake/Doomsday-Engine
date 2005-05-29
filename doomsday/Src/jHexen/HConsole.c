@@ -10,8 +10,10 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "h2def.h"
-#include "settings.h"
+#include "d_config.h"
 #include "d_net.h"
+#include "jHexen/Mn_def.h"
+#include "../Common/hu_stuff.h"
 #include "f_infine.h"
 #include "g_common.h"
 
@@ -29,7 +31,7 @@ void    SN_InitSequenceScript(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-int     CCmdPause(int argc, char **argv);
+DEFCC(CCmdPause);
 int     CCmdCheat(int argc, char **argv);
 int     CCmdScriptInfo(int argc, char **argv);
 int     CCmdSuicide(int argc, char **argv);
@@ -40,12 +42,15 @@ int     CCmdInventory(int argc, char **argv);
 int     CCmdScreenShot(int argc, char **argv);
 
 DEFCC(CCmdHexenFont);
-DEFCC(CCmdMenuAction);
+
 DEFCC(CCmdCycleSpy);
 DEFCC(CCmdTest);
 DEFCC(CCmdSpawnMobj);
 DEFCC(CCmdPrintPlayerCoords);
 DEFCC(CCmdMovePlane);
+
+DEFCC(CCmdBeginChat);
+DEFCC(CCmdMsgRefresh);
 
 // The cheats.
 int     CCmdCheatGod(int argc, char **argv);
@@ -64,6 +69,8 @@ int     CCmdCheatReveal(int argc, char **argv);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern ccmd_t netCCmds[];
+
+extern boolean mn_SuicideConsole;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -133,7 +140,7 @@ cvar_t  gameCVars[] = {
 	"1=Display sound debug information.",
 	"ReverbDebug", OBSOLETE | CVF_NO_ARCHIVE, CVT_BYTE, &cfg.reverbDebug, 0, 1,
 	"1=Reverberation debug information in the console.",
-	"ShowMana", OBSOLETE, CVT_INT, &cfg.showFullscreenMana, 0, 2,
+	"ShowMana", OBSOLETE, CVT_BYTE, &cfg.hudShown[HUD_MANA], 0, 2,
 	"Show mana when the status bar is hidden.",
 	//"SaveDir", OBSOLETE|CVF_PROTECTED, CVT_CHARPTR, &SavePath, 0, 0, "The directory for saved games.", 
 	"ChatMacro0", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0,
@@ -178,14 +185,14 @@ cvar_t  gameCVars[] = {
 	"Override the transition hub message.",
 	"DemoDisabled", OBSOLETE, CVT_BYTE, &cfg.demoDisabled, 0, 2,
 	"Disable demos.",
-	"MenuScale", OBSOLETE, CVT_FLOAT, &cfg.menuScale, .1f, 1,
-	"Scaling for menu screens.",
 	"MaulatorTime", OBSOLETE | CVF_NO_MAX, CVT_INT, &MaulatorSeconds, 1, 0,
 	"Dark Servant lifetime, in seconds (default: 25).",
 	"FastMonsters", OBSOLETE, CVT_BYTE, &cfg.fastMonsters, 0, 1,
 	"1=Fast monsters in non-demo single player.",
 	"MapTitle", OBSOLETE, CVT_BYTE, &cfg.mapTitle, 0, 1,
 	"1=Show map title after entering map.",
+	"CounterCheat", OBSOLETE, CVT_BYTE, &cfg.counterCheat, 0, 63,
+	"6-bit bitfield. Show kills, items and secret counters in automap.",
 
 	//===========================================================================
 	// New names (1.1.0 =>)
@@ -249,8 +256,12 @@ cvar_t  gameCVars[] = {
 	"Dark Servant lifetime, in seconds (default: 25).",
 	"hud-fps", CVF_NO_ARCHIVE, CVT_INT, &cfg.showFPS, 0, 1,
 	"1=Show the frames per second counter.",
-	"hud-mana", 0, CVT_INT, &cfg.showFullscreenMana, 0, 2,
-	"Show mana when the status bar is hidden.",
+	"hud-mana", 0, CVT_BYTE, &cfg.hudShown[HUD_MANA], 0, 2,
+	"Show mana when the status bar is hidden. 1= top, 2= bottom, 0= off",
+	"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1,
+	"Show health when the status bar is hidden.",
+	"hud-artifact", 0, CVT_BYTE, &cfg.hudShown[HUD_ARTI], 0, 1,
+	"Show artifact when the status bar is hidden.",
 	"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20,
 	"Status bar size (1-20).",
 	"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1,
@@ -274,16 +285,38 @@ cvar_t  gameCVars[] = {
 	"input-mouse-y-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiY, 0, 25,
 	"Mouse Y axis sensitivity.",
 
-	"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1,
-	"Scaling for menu screens.",
+    	"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, .1f, 1,
+    	"Scaling for HUD elements (status bar hidden).",
+	"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, "HUD info color.",
+	"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, "HUD info color.",
+	"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, "HUD info color.",
+	"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1, "HUD info alpha value.",
+	"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1, "HUD icon alpha value.",
 
-    "hud-scale", 0, CVT_FLOAT, &cfg.hudScale, .1f, 1,
-    "Scaling for HUD elements (status bar hidden).",
+	"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1,
+	"Status bar Alpha level.",
+	"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1,
+	"Status bar icons & counters Alpha level.",
 
-    "msg-echo", 0, CVT_INT, &cfg.echoMsg, 0, 1,
+	"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2,
+	"Alignment of HUD messages. 0 = left, 1 = center, 2 = right.",
+	"msg-echo", 0, CVT_INT, &cfg.echoMsg, 0, 1,
 	"1=Echo all messages to the console.",
+	"msg-show", 0, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8,
+	"Number of HUD messages displayed at the same time.",
+	"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0,
+	"Scaling factor for HUD messages.",
+	"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0,
+	"Number of tics to keep HUD messages on screen.",
+	"msg-blink", 0, CVT_BYTE, &cfg.msgBlink, 0, 1,
+	"1=HUD messages blink when they're printed.",
 	"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2,
 	"Override the transition hub message.",
+	"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1, "Normal color of HUD messages red component.",
+	"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1, "Normal color of HUD messages green component.",
+	"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1, "Normal color of HUD messages blue component.",
+
 	"player-class", 0, CVT_BYTE, &cfg.netClass, 0, 2,
 	"Player class in multiplayer games.",
 	"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 8,
@@ -307,8 +340,8 @@ cvar_t  gameCVars[] = {
 	"1=Respawn in a random class (deathmatch).",
 	"server-game-skill", 0, CVT_BYTE, &cfg.netSkill, 0, 4,
 	"Skill level in multiplayer games.",
-	"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 11,
-	"View window size (3-11).",
+	"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13,
+	"View window size (3-13).",
 	NULL
 };
 
@@ -323,6 +356,7 @@ ccmd_t  gameCCmds[] = {
 	"give", CCmdCheatGive,
 	"Cheat command to give you various kinds of things.",
 	"god", CCmdCheatGod, "I don't think He needs any help...",
+	"suicide", 	CCmdSuicide, "Kill yourself. What did you think?",
 	"kill", CCmdCheatMassacre, "Kill all the monsters on the level.",
 	"hexenfont", CCmdHexenFont, "Use the Hexen font.",
 	"invleft", CCmdInventory, "Move inventory cursor to the left.",
@@ -341,18 +375,8 @@ ccmd_t  gameCCmds[] = {
 	"where", CCmdCheatWhere, "Prints your map number and exact location.",
 	"spy", CCmdCycleSpy, "Change the viewplayer when not in deathmatch.",
 
-	// Menu actions.
-	"infoscreen", CCmdMenuAction, "Display the original Hexen help screens.",
-	"savegame", CCmdMenuAction, "Save the game.",
-	"loadgame", CCmdMenuAction, "Load a saved game.",
-	"soundmenu", CCmdMenuAction, "Open the sound menu.",
-	"suicide", CCmdMenuAction, "Kill yourself. What did you think?",
-	"quicksave", CCmdMenuAction, "Quicksave the game.",
-	"endgame", CCmdMenuAction, "End the current game.",
-	"togglemsgs", CCmdMenuAction, "Toggle messages on/off (cvar messages).",
-	"quickload", CCmdMenuAction, "Load the last quicksaved game.",
-	"quit", CCmdMenuAction, "Quit JHexen.",
-	"togglegamma", CCmdMenuAction, "Change the gamma correction level.",
+	"beginchat", CCmdBeginChat, "Begin chat mode.",
+	"msgrefresh", CCmdMsgRefresh, "Show last HUD message.",
 
 	"spawnmobj", CCmdSpawnMobj, "Spawn a new mobj.",
 	"coord", CCmdPrintPlayerCoords,
@@ -395,9 +419,55 @@ void H2_ConsoleRegistration()
 	D_NetConsoleRegistration();
 }
 
+
+int CCmdPause(int argc, char **argv)
+{
+	extern boolean sendpause;
+
+	if(!menuactive)
+		sendpause = true;
+	return true;
+}
+
+void SuicideResponse(int option, void *data)
+{
+	if(option != 'y')
+		return;
+
+	GL_Update(DDUF_BORDER);
+	mn_SuicideConsole = true;	
+}
+
+int CCmdSuicide(int argc, char **argv)
+{
+	if(gamestate != GS_LEVEL)
+	{
+		S_LocalSound(SFX_CHAT, NULL);
+		Con_Printf("Can only suicide when in a game!\n", argv[0]);
+		return true;
+
+	}
+
+	if(deathmatch)
+	{
+		S_LocalSound(SFX_CHAT, NULL);
+		Con_Printf("Can't suicide during a deathmatch!\n", argv[0]);
+		return true;		
+	}
+
+	if (!stricmp(argv[0], "suicide"))
+	{
+		Con_Open(false);
+		menuactive = false;
+		M_StartMessage("Are you sure you want to suicide?\n\nPress Y or N.", SuicideResponse, true);
+		return true;
+	}
+	return false;
+}
+
 int CCmdViewSize(int argc, char **argv)
 {
-	int     min = 3, max = 11, *val = &cfg.screenblocks;
+	int     min = 3, max = 13, *val = &cfg.screenblocks;
 
 	if(argc != 2)
 	{
@@ -434,6 +504,27 @@ int CCmdScreenShot(int argc, char **argv)
 	return true;
 }
 
+int ConTextOut(char *text, int x, int y)
+{
+	extern int typein_time;
+	int     old = typein_time;
+
+	typein_time = 0xffffff;
+	M_WriteText2(x, y, text, hu_font_a, -1, -1, -1, -1);
+	typein_time = old;
+	return 0;
+}
+
+int ConTextWidth(char *text)
+{
+	return M_StringWidth(text, hu_font_a);
+}
+
+void ConTextFilter(char *text)
+{
+	strupr(text);
+}
+
 DEFCC(CCmdHexenFont)
 {
 	ddfont_t cfont;
@@ -442,9 +533,9 @@ DEFCC(CCmdHexenFont)
 	cfont.height = 9;
 	cfont.sizeX = 1.2f;
 	cfont.sizeY = 2;
-	cfont.TextOut = MN_DrTextA_CS;
-	cfont.Width = MN_TextAWidth;
-	cfont.Filter = MN_TextFilter;
+	cfont.TextOut = ConTextOut;
+	cfont.Width = ConTextWidth;
+	cfont.Filter = ConTextFilter;
 	Con_SetFont(&cfont);
 	return true;
 }

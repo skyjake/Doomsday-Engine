@@ -20,7 +20,11 @@
 #include "h2def.h"
 #include "jHexen/p_local.h"
 #include "jHexen/soundst.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
+#include "jHexen/mn_def.h"
+#include "../Common/hu_stuff.h"
+#include "jHexen/st_stuff.h"
+#include "../Common/am_map.h"
 #include "jHexen/h2_actn.h"
 #include "d_net.h"
 #include "g_update.h"
@@ -47,10 +51,10 @@ void    S_InitScript(void);
 void    G_Drawer(void);
 void    H2_ConsoleBg(int *width, int *height);
 void    H2_EndFrame(void);
-int     H2_PrivilegedResponder(event_t *event);
+int     D_PrivilegedResponder(event_t *event);
 void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    H2_ConsoleRegistration();
-void    H2_DefaultBindings();
+void    D_DefaultBindings();
 void    SB_HandleCheatNotification(int fromplayer, void *data, int length);
 int     HU_PSpriteYOffset(player_t *pl);
 
@@ -94,7 +98,7 @@ boolean nomonsters;				// checkparm of -nomonsters
 boolean respawnparm;			// checkparm of -respawn
 boolean randomclass;			// checkparm of -randclass
 boolean debugmode;				// checkparm of -debug
-boolean ravpic;					// checkparm of -ravpic
+boolean devparm;				// checkparm of -devparm
 boolean nofullscreen;			// checkparm of -nofullscreen
 boolean cdrom;					// true if cd-rom mode active
 boolean cmdfrag;				// true if a CMD_FRAG packet should be sent out
@@ -105,6 +109,10 @@ boolean dontrender;				// don't render the player view (debug)
 skill_t startskill;
 int     startepisode;
 int     startmap;
+
+// default font colours
+const float deffontRGB[] = { 1.0f, 0.0f, 0.0f};
+const float deffontRGB2[] = { 1.0f, 1.0f, 1.0f};
 
 // Network games parameters.
 
@@ -182,6 +190,14 @@ void H2_PreInit(void)
 	// Add the JHexen cvars and ccmds to the console databases.
 	H2_ConsoleRegistration();
 
+	G_Register();			// read-only game status cvars (for playsim)
+
+	// Add the automap related cvars and ccmds to the console databases
+	AM_Register();
+
+	// Add the menu related cvars and ccmds to the console databases
+	MN_Register();
+
 	// The startup WADs.
 	DD_AddIWAD("}Data\\jHexen\\Hexen.wad");
 	DD_AddIWAD("}Data\\Hexen.wad");
@@ -208,7 +224,9 @@ void H2_PreInit(void)
 	cfg.joyaxis[0] = JOYAXIS_TURN;
 	cfg.joyaxis[1] = JOYAXIS_MOVE;
 	cfg.screenblocks = cfg.setblocks = 10;
-	cfg.showFullscreenMana = 1;
+	cfg.hudShown[HUD_MANA] = true;
+	cfg.hudShown[HUD_HEALTH] = true;
+	cfg.hudShown[HUD_ARTI] = true;
 	cfg.lookSpeed = 3;
 	cfg.xhairSize = 1;
 	for(i = 0; i < 4; i++)
@@ -223,9 +241,74 @@ void H2_PreInit(void)
 	cfg.netMobHealthModifier = 1;
 	cfg.mapTitle = true;
 	cfg.menuScale = .75f;
-    cfg.hudScale = .7f;
+	cfg.menuColor[0] = deffontRGB[0];	// use the default colour by default.
+	cfg.menuColor[1] = deffontRGB[1];
+	cfg.menuColor[2] = deffontRGB[2];
+	cfg.menuColor2[0] = deffontRGB2[0];	// use the default colour by default.
+	cfg.menuColor2[1] = deffontRGB2[1];
+	cfg.menuColor2[2] = deffontRGB2[2];
+	cfg.menuEffects = 1;
+	cfg.menuFog = 4;
+	cfg.menuSlam = true;
+	cfg.flashcolor[0] = 1.0f;
+	cfg.flashcolor[1] = .5f;
+	cfg.flashcolor[2] = .5f;
+	cfg.flashspeed = 4;
+	cfg.turningSkull = false;
+    	cfg.hudScale = .7f;
+	cfg.hudColor[0] = deffontRGB[0];	// use the default colour by default.
+	cfg.hudColor[1] = deffontRGB[1];
+	cfg.hudColor[2] = deffontRGB[2];
+	cfg.hudColor[3] = 1;
+	cfg.hudIconAlpha = 1;
+	cfg.usePatchReplacement = true;
 	cfg.cameraNoClip = true;
 	cfg.bobView = cfg.bobWeapon = 1;
+
+	cfg.statusbarAlpha = 1;
+	cfg.statusbarCounterAlpha = 1;
+
+	cfg.automapPos = 5;
+	cfg.automapWidth = 1.0f;
+	cfg.automapHeight = 1.0f;
+
+	cfg.automapL0[0] = 0.42f;	// Unseen areas
+	cfg.automapL0[1] = 0.42f;
+	cfg.automapL0[2] = 0.42f;
+
+	cfg.automapL1[0] = 0.41f;	// onesided lines 
+	cfg.automapL1[1] = 0.30f;
+	cfg.automapL1[2] = 0.15f;
+
+	cfg.automapL2[0] = 0.82f;	// floor height change lines
+	cfg.automapL2[1] = 0.70f;
+	cfg.automapL2[2] = 0.52f;
+
+	cfg.automapL3[0] = 0.47f;	// ceiling change lines
+	cfg.automapL3[1] = 0.30f;
+	cfg.automapL3[2] = 0.16f;
+
+	cfg.automapBack[0] = 1.0f;
+	cfg.automapBack[1] = 1.0f;
+	cfg.automapBack[2] = 1.0f;
+	cfg.automapBack[3] = 1.0f;
+	cfg.automapLineAlpha = 1.0f;
+	cfg.automapShowDoors = true;
+	cfg.automapDoorGlow = 8;
+	cfg.automapHudDisplay = 2;
+	cfg.automapRotate = true;
+	cfg.automapBabyKeys = false;
+	cfg.counterCheatScale = .7f; //From jHeretic
+
+	cfg.msgShow = true;
+	cfg.msgCount = 4;
+	cfg.msgScale = .8f;
+	cfg.msgUptime = 5 * TICSPERSEC;
+	cfg.msgAlign = ALIGN_CENTER;
+	cfg.msgBlink = true;
+	cfg.msgColor[0] = deffontRGB2[0];
+	cfg.msgColor[1] = deffontRGB2[1];
+	cfg.msgColor[2] = deffontRGB2[2];
 
 	// Hexen has a nifty "Ethereal Travel" screen, so don't show the
 	// console during map setup.
@@ -273,7 +356,7 @@ void H2_PostInit(void)
 	// Init savegame directory.
 	SV_HxInit();
 
-	H2_DefaultBindings();
+	D_DefaultBindings();
 	G_SetGlowing();
 
 	// Check the -class argument.
@@ -295,11 +378,11 @@ void H2_PostInit(void)
 	Con_Message("P_Init: Init Playloop state.\n");
 	P_Init();
 
+	Con_Message("HU_Init: Setting up heads up display.\n");
+	HU_Init();
+
 	Con_Message("MN_Init: Init menu system.\n");
 	MN_Init();
-
-	Con_Message("CT_Init: Init chat mode data.\n");
-	CT_Init();
 
 	InitMapMusicInfo();			// Init music fields in mapinfo
 
@@ -319,8 +402,8 @@ void H2_PostInit(void)
 					P_GetMapName(startmap), startmap, startskill + 1);
 	}
 
-	Con_Message("SB_Init: Loading patches.\n");
-	SB_Init();
+	Con_Message("ST_Init: Loading patches.\n");
+	ST_Init();
 
 	//  if(CheckRecordFrom()) return;
 
@@ -356,7 +439,7 @@ void H2_PostInit(void)
 	if(gameaction != ga_loadgame)
 	{
 		GL_Update(DDUF_FULLSCREEN | DDUF_BORDER);
-		if(autostart || netgame)
+		if(autostart || IS_NETGAME)
 		{
 			G_StartNewInit();
 			G_InitNew(startskill, startepisode, startmap);
@@ -366,6 +449,7 @@ void H2_PostInit(void)
 			G_StartTitle();
 		}
 	}
+
 }
 
 //==========================================================================
@@ -382,7 +466,7 @@ static void HandleArgs()
 	nomonsters = ArgExists("-nomonsters");
 	respawnparm = ArgExists("-respawn");
 	randomclass = ArgExists("-randclass");
-	ravpic = ArgExists("-ravpic");
+	devparm = ArgExists("-devparm");
 	artiskip = ArgExists("-artiskip");
 	debugmode = ArgExists("-debug");
 	cfg.netDeathmatch = ArgExists("-deathmatch");
@@ -749,9 +833,9 @@ game_export_t *GetGameAPI(game_import_t * imports)
 	gx.MergeTicCmd = (void (*)(void*, void*)) G_MergeTiccmd;
 	gx.Ticker = H2_Ticker;
 	gx.G_Drawer = G_Drawer;
-	gx.MN_Drawer = MN_Drawer;
-	gx.PrivilegedResponder = (boolean (*)(event_t *)) H2_PrivilegedResponder;
-	gx.MN_Responder = MN_Responder;
+	gx.MN_Drawer = M_Drawer;
+	gx.PrivilegedResponder = (boolean (*)(event_t *)) D_PrivilegedResponder;
+	gx.MN_Responder = M_Responder;
 	gx.G_Responder = G_Responder;
 	gx.MobjThinker = P_MobjThinker;
 	gx.MobjFriction = (fixed_t (*)(void *)) P_GetMobjFriction;
