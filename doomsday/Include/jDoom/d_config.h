@@ -10,7 +10,8 @@ enum {
 	HUD_ARMOR,
 	HUD_AMMO,
 	HUD_KEYS,
-	HUD_FRAGS
+	HUD_FRAGS,
+	HUD_FACE
 };
 
 // This struct should be cleaned up. Currently some of the data isn't
@@ -28,6 +29,9 @@ typedef struct jdoom_config_s {	   // All of these might not be used any more.
 	int             jlookInverseY; // Inverse jlook Y axis.
 	int             joyaxis[8];
 	int             jlookDeltaMode;
+	boolean         setsizeneeded;
+	int             setblocks;
+	int             screenblocks;
 	int             showFPS, lookSpring;
 	boolean         povLookAround /* = false */ ;
 	int             jumpEnabled /* = false */ ;
@@ -43,12 +47,14 @@ typedef struct jdoom_config_s {	   // All of these might not be used any more.
 	float           menuGlitter;
 	float           menuShadow;
 	int             menuQuitSound;
+	boolean		menuSlam;
 	float           flashcolor[3];
 	int             flashspeed;
 	boolean         turningSkull;
-	boolean         hudShown[5];   // HUD data visibility.
+	boolean         hudShown[6];   // HUD data visibility.
 	float           hudScale;	   // How to scale HUD data?
-	float           hudColor[3];
+	float           hudColor[4];
+	float		hudIconAlpha;
 	boolean         usePatchReplacement;
 	boolean         snd_3D;
 	byte            snd_ReverbFactor;	// 0..100.
@@ -57,22 +63,51 @@ typedef struct jdoom_config_s {	   // All of these might not be used any more.
 	boolean         weaponAutoSwitch;
 	boolean         secretMsg;
 	int             plrViewHeight;
-	boolean         counterCheat;
 	boolean         levelTitle, hideAuthorIdSoft;
 	float           menuColor[3];
+	float           menuColor2[3];
 	boolean         mobjInter;
 	boolean         noCoopDamage, noTeamDamage;
 	boolean         noCoopWeapons, noCoopAnything;
 	boolean         noNetBFG;
 	boolean         coopRespawnItems;
-	float           automapAlpha, automapLineAlpha;
-	int             automapRotate;
+
+	float		statusbarAlpha;
+	float		statusbarCounterAlpha;
+
+	//Compatibility options
+	boolean		raiseghosts;
+	boolean		maxskulls;
+	boolean		allowskullsinwalls;
+
+	//Automap stuff
+	boolean		counterCheat;
+	float           counterCheatScale;
+	int		automapPos;
+	float		automapWidth;
+	float		automapHeight;
+	float           automapL0[3];
+	float           automapL1[3];
+	float           automapL2[3];
+	float           automapL3[3];
+	float           automapBack[4];
+	float		automapLineAlpha;
+	boolean         automapRotate;
+	int		automapHudDisplay;
 	boolean         automapShowDoors;
 	float           automapDoorGlow;
+	boolean		automapBabyKeys;
+
 	int             msgCount;
 	float           msgScale;
 	int             msgUptime;
 	int             msgBlink;
+	int		msgAlign;
+	boolean         msgShow;
+	float           msgColor[3];
+
+	char           *chat_macros[10];
+
 	int             corpseTime;
 	boolean         customMusic;
 	boolean         killMessages;
