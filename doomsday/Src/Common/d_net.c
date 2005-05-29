@@ -7,7 +7,7 @@
 #  include "../jDoom/s_sound.h"
 #  include "../jDoom/g_game.h"
 #  include "../jDoom/m_menu.h"
-#  include "../jDoom/hu_stuff.h"
+#  include "../Common/hu_stuff.h"
 #  include "../jDoom/st_stuff.h"
 #endif
 
@@ -15,14 +15,21 @@
 #  include "../jHeretic/Doomdef.h"
 #  include "../jHeretic/P_local.h"
 #  include "../jHeretic/Soundst.h"
-#  include "../jHeretic/settings.h"
+#  include "../jHeretic/d_config.h"
 #endif
 
 #if __JHEXEN__
 #  include "../jHexen/h2def.h"
 #  include "../jHexen/p_local.h"
 #  include "../jHexen/soundst.h"
-#  include "../jHexen/settings.h"
+#  include "../jHexen/d_config.h"
+#endif
+
+#if __JSTRIFE__
+#  include "../jStrife/h2def.h"
+#  include "../jStrife/p_local.h"
+#  include "../jStrife/soundst.h"
+#  include "../jStrife/d_config.h"
 #endif
 
 #include "g_common.h"
@@ -51,6 +58,8 @@ int CCmdSetColor(int argc, char **argv)
 {
 #if __JHEXEN__
 	int     numColors = 8;
+#elif __JSTRIFE__
+	int     numColors = 8;
 #else
 	int     numColors = 4;
 #endif
@@ -77,6 +86,7 @@ int CCmdSetColor(int argc, char **argv)
 #endif
 		// Change the color of the mobj (translation flags).
 		players[0].plr->mo->flags &= ~MF_TRANSLATION;
+
 #if __JHEXEN__
 		// Additional difficulty is caused by the fact that the Fighter's
 		// colors 0 (blue) and 2 (yellow) must be swapped.
@@ -137,8 +147,13 @@ int CCmdSetMap(int argc, char **argv)
 	// Only the server can change the map.
 	if(!IS_SERVER)
 		return false;
-    
-#if !__JHEXEN__
+#ifdef __JDOOM__
+	if(argc != 3)
+	{
+		Con_Printf("Usage: %s (episode) (map)\n", argv[0]);
+		return true;
+	}
+#elif __JHERETIC__
 	if(argc != 3)
 	{
 		Con_Printf("Usage: %s (episode) (map)\n", argv[0]);
@@ -156,12 +171,20 @@ int CCmdSetMap(int argc, char **argv)
 	deathmatch = cfg.netDeathmatch;
 	nomonsters = cfg.netNomonsters;
 
-#ifndef __JHEXEN__
+#ifdef __JDOOM__
 	respawnparm = cfg.netRespawn;
 	cfg.jumpEnabled = cfg.netJumping;
 	ep = atoi(argv[1]);
 	map = atoi(argv[2]);
-#else
+#elif __JHERETIC__
+	respawnparm = cfg.netRespawn;
+	cfg.jumpEnabled = cfg.netJumping;
+	ep = atoi(argv[1]);
+	map = atoi(argv[2]);
+#elif __JSTRIFE__
+	ep = 1;
+	map = atoi(argv[1]);
+#elif __JHEXEN__
 	randomclass = cfg.netRandomclass;
 	ep = 1;
 	map = P_TranslateMap(atoi(argv[1]));
@@ -177,7 +200,9 @@ int CCmdSetMap(int argc, char **argv)
 //===========================================================================
 void D_ChatSound(void)
 {
-#if __JHEXEN__
+#ifdef __JHEXEN__
+	S_LocalSound(SFX_CHAT, NULL);
+#elif __JSTRIFE__
 	S_LocalSound(SFX_CHAT, NULL);
 #else
 	S_LocalSound(sfx_chat, NULL);
@@ -194,12 +219,7 @@ void D_NetMessageEx(char *msg, boolean play_sound)
 	// This is intended to be a local message. Let's make sure P_SetMessage
 	// doesn't forward it anywhere.
 	netSvAllowSendMsg = false;
-#if __JDOOM__
 	P_SetMessage(players + consoleplayer, msgBuff);
-#else
-	MN_TextFilter(msgBuff);
-	P_SetMessage(players + consoleplayer, msgBuff, true);
-#endif
 	if(play_sound)
 		D_ChatSound();
 	netSvAllowSendMsg = true;
@@ -233,20 +253,7 @@ int D_NetServerClose(int before)
 #if __JHEXEN__
 		randomclass = false;
 #endif
-
-#if __JDOOM__
 		D_NetMessage("NETGAME ENDS");
-#endif
-
-#if __JHERETIC__
-		P_SetMessage(&players[consoleplayer], "NETGAME ENDS", true);
-		S_StartSound(sfx_dorcls, NULL);
-#endif
-
-#if __JHEXEN__
-		P_SetMessage(&players[consoleplayer], "NETGAME ENDS", true);
-		S_StartSound(SFX_DOOR_METAL_CLOSE, NULL);
-#endif
 	}
 	return true;
 }
@@ -262,6 +269,7 @@ int D_NetServerStarted(int before)
 
 	// We're the server, so...
 	cfg.PlayerColor[0] = PLR_COLOR(0, cfg.netColor);
+
 #if __JHEXEN__
 	cfg.PlayerClass[0] = cfg.netClass;
 #endif
@@ -269,10 +277,14 @@ int D_NetServerStarted(int before)
 	// Set the game parameters.
 	deathmatch = cfg.netDeathmatch;
 	nomonsters = cfg.netNomonsters;
-#if !__JHEXEN__
+
+#if __JDOOM__
 	respawnparm = cfg.netRespawn;
 	cfg.jumpEnabled = cfg.netJumping;
-#else
+#elif __JHERETIC__
+	respawnparm = cfg.netRespawn;
+	cfg.jumpEnabled = cfg.netJumping;
+#elif __JHEXEN__
 	randomclass = cfg.netRandomclass;
 #endif
 
@@ -324,7 +336,7 @@ int D_NetDisconnect(int before)
 	// Restore normal game state.
 	deathmatch = false;
 	nomonsters = false;
-#if __JHEXEN__
+#ifdef __JHEXEN__
 	randomclass = false;
 #endif
 
@@ -521,9 +533,11 @@ int D_NetWorldEvent(int type, int parm, void *data)
 		// Restore normal game state.
 		deathmatch = false;
 		nomonsters = false;
-#if !__JHEXEN__
+#ifdef __JDOOM__
 		respawnparm = false;
-#else
+#elif __JHERETIC__
+		respawnparm = false;
+#elif __JHEXEN__
 		randomclass = false;
 #endif
 		break;
@@ -571,18 +585,18 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		break;
 
 	case GPT_MESSAGE:
-#ifdef __JDOOM__
 		strcpy(msgBuff, data);
 		P_SetMessage(&players[consoleplayer], msgBuff);
-#else
-		P_SetMessage(&players[consoleplayer], data, true);
-#endif
+
 		break;
 
-#ifdef __JHEXEN__
+#ifndef __JDOOM__
+#ifndef __JHERETIC__
 	case GPT_YELLOW_MESSAGE:
-		P_SetYellowMessage(&players[consoleplayer], data, true);
+		strcpy(msgBuff, data);
+		P_SetYellowMessage(&players[consoleplayer], msgBuff);
 		break;
+#endif
 #endif
 
 	case GPT_CONSOLEPLAYER_STATE:
@@ -618,10 +632,12 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 		NetCl_UpdatePlayerInfo(data);
 		break;
 
-#if __JHEXEN__
+#ifndef __JDOOM__
+#ifndef __JHERETIC__
 	case GPT_CLASS:
 		players[consoleplayer].class = bData[0];
 		break;
+#endif
 #endif
 
 	case GPT_SAVE:
@@ -651,7 +667,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 ccmd_t  netCCmds[] = {
 	{"setcolor", CCmdSetColor, "Set player color."},
 	{"setmap", CCmdSetMap, "Set map."},
-#if __JHEXEN__
+#ifdef __JHEXEN__
 	{"setclass", CCmdSetClass, "Set player class."},
 #endif
 	{"startcycle", CCmdMapCycle, "Begin map rotation."},
@@ -685,7 +701,6 @@ void D_NetConsoleRegistration(void)
 
 	for(i = 0; netCCmds[i].name; i++)
 		Con_AddCommand(netCCmds + i);
-        
 	for(i = 0; netCVars[i].name; i++)
 		Con_AddVariable(netCVars + i);
 }

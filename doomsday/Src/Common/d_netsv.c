@@ -11,19 +11,19 @@
 #  include "dstrings.h"
 #  include "m_cheat.h"
 #  include "g_common.h"
-#endif
-
-#ifdef __JHERETIC__
+#elif __JHERETIC__
 #  include "../jHeretic/Doomdef.h"
 #  include "../jHeretic/Soundst.h"
 #  include "../jHeretic/P_local.h"
-#  include "../jHeretic/settings.h"
-#endif
-
-#ifdef __JHEXEN__
+#  include "../jHeretic/d_config.h"
+#elif __JHEXEN__
 #  include "../jHexen/h2def.h"
 #  include "../jHexen/p_local.h"
-#  include "../jHexen/settings.h"
+#  include "../jHexen/d_config.h"
+#elif __JSTRIFE__
+#  include "../jStrife/h2def.h"
+#  include "../jStrife/p_local.h"
+#  include "../jStrife/d_config.h"
 #endif
 
 #include "d_net.h"
@@ -31,7 +31,7 @@
 
 // MACROS -----------------------------------------------------------------
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 #  define SOUND_COUNTDOWN		SFX_PICKUP_KEY
 #elif __JDOOM__
 #  define SOUND_COUNTDOWN		sfx_getpow
@@ -68,7 +68,7 @@ enum {
 
 void    R_SetAllDoomsdayFlags();
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 void    SB_ChangePlayerClass(player_t *player, int newclass);
 #endif
 
@@ -90,7 +90,7 @@ static int cycleIndex;
 static int cycleCounter = -1, cycleMode = CYCLE_IDLE;
 static int oldPals[MAXPLAYERS];
 
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 static int oldClasses[MAXPLAYERS];
 #endif
 
@@ -138,7 +138,7 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
 	char   *ptr = mapCycle, *end;
 	int     i, pos = -1, episode, mission;
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	int     m;
 #endif
 	char    tmp[3], lump[10];
@@ -232,6 +232,12 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
 								tmp[1] ==
 								'*' ? 1 + M_Random() % 9 : tmp[1] - '0');
 					}
+#elif __JSTRIFE__
+					sprintf(lump, "MAP%i%i", episode =
+							tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
+							mission =
+							tmp[1] ==
+							'*' ? M_Random() % 10 : tmp[1] - '0');
 #elif __JHERETIC__
 					sprintf(lump, "E%iM%i", episode =
 							tmp[0] == '*' ? 1 + M_Random() % 6 : tmp[0] - '0',
@@ -280,7 +286,7 @@ void NetSv_CycleToMapNum(int map)
 		sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
 #elif __JHERETIC__
 	sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
-#elif __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 	sprintf(cmd, "setmap %i", map);
 #endif
 	Con_Execute(cmd, false);
@@ -578,7 +584,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
 	if(flags & PSF2_STATE)
 	{
 		*ptr++ = pl->playerstate |
-#ifndef __JHEXEN__				// Hexen doesn't have armortype.
+#if __JDOOM__ || __JHERETIC__				// Hexen doesn't have armortype.
 			(pl->armortype << 4);
 #else
 			0;
@@ -617,7 +623,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	if(flags & PSF_STATE)
 	{
 		*ptr++ = pl->playerstate |
-#if !__JHEXEN__					// Hexen doesn't have armortype.
+#if __JDOOM__ || __JHERETIC__					// Hexen doesn't have armortype.
 			(pl->armortype << 4);
 #else
 			0;
@@ -628,7 +634,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 		*ptr++ = pl->health;
 	if(flags & PSF_ARMOR_POINTS)
 	{
-#ifdef __JHEXEN__
+#if __JHEXEN__
 		// Hexen has many types of armor points, send them all.
 		for(i = 0; i < NUMARMOR; i++)
 			*ptr++ = pl->armorpoints[i];
@@ -637,7 +643,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #endif
 	}
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 	if(flags & PSF_INVENTORY)
 	{
 		*ptr++ = pl->inventorySlotNum;
@@ -652,7 +658,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	if(flags & PSF_POWERS)		// Austin P.?
 	{
 		// First see which powers should be sent.
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		for(i = 1, *ptr = 0; i < NUMPOWERS; i++)
 			if(pl->powers[i])
 				*ptr |= 1 << (i - 1);
@@ -670,14 +676,14 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 		ptr++;
 
 		// Send the non-zero powers.
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		for(i = 1; i < NUMPOWERS; i++)
 			if(pl->powers[i])
 				*ptr++ = (pl->powers[i] + 34) / 35;
 #else
 		for(i = 0; i < NUMPOWERS; i++)
 		{
-#  ifdef __JDOOM__
+#  if __JDOOM__
 			if(i == pw_ironfeet || i == pw_strength)
 				continue;
 #  endif
@@ -690,13 +696,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	{
 		*ptr = 0;
 
-#ifdef __JDOOM__
-		for(i = 0; i < NUMCARDS; i++)
-			if(pl->cards[i])
-				*ptr |= 1 << i;
-#endif
-
-#ifdef __JHERETIC__
+#if __JDOOM__ | __JHERETIC__
 		for(i = 0; i < NUMKEYS; i++)
 			if(pl->keys[i])
 				*ptr |= 1 << i;
@@ -726,7 +726,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	}
 	if(flags & PSF_AMMO)
 	{
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		// 200 is the mana limit for Hexen.
 		for(i = 0; i < NUMMANA; i++)
 			*ptr++ = pl->mana[i];
@@ -737,7 +737,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	}
 	if(flags & PSF_MAX_AMMO)
 	{
-#ifndef __JHEXEN__				// Hexen has no use for max ammo.
+#if __JDOOM__ || __JHERETIC__				// Hexen has no use for max ammo.
 		for(i = 0; i < NUMAMMO; i++)
 			WRITE_SHORT(ptr, pl->maxammo[i]);
 #endif
@@ -770,7 +770,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 	}
 #endif
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	if(flags & PSF_MORPH_TIME)
 	{
 		// Send as seconds.
@@ -827,7 +827,7 @@ void NetSv_SendGameState(int flags, int to)
     // Send an update to all the players in the game.
 	for(i = 0; i < MAXPLAYERS; i++)
 	{
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
         int gameStateSize = 16;
 #else
         int gameStateSize = 8;
@@ -860,13 +860,13 @@ void NetSv_SendGameState(int flags, int to)
         ptr[4] = (deathmatch & 0x3)
             | (!nomonsters? 0x4 : 0)
             | (respawnparm? 0x8 : 0)
-#ifndef __JHEXEN__                
+#if __JDOOM__ || __JHERETIC__              
             | (cfg.jumpEnabled? 0x10 : 0)
             | (gameskill << 5);
 #else
         ;
 #endif
-#ifndef __JHEXEN__            
+#if __JDOOM__ || __JHERETIC__            
         ptr[5] = 0;
 
 #else
@@ -895,7 +895,7 @@ void NetSv_SendGameState(int flags, int to)
 		gs->deathmatch = deathmatch;
 		gs->monsters = !nomonsters;
 		gs->respawn = respawnparm;
-#if !__JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 		gs->jumping = cfg.jumpEnabled;
 #endif
 		gs->gravity = SHORT((Get(DD_GRAVITY) >> 8) & 0xffff);
@@ -939,7 +939,7 @@ void NetSv_Intermission(int flags, int state, int time)
 	}
 #endif
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	if(flags & IMF_BEGIN)
 	{
 		*ptr++ = state;			// LeaveMap
@@ -1257,7 +1257,7 @@ void NetSv_Ticker(void)
 #endif
 	}
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	// Keep track of player class changes (fighter, cleric, mage, pig).
 	// Notify clients accordingly. This is mostly just FYI (it'll update
 	// pl->class on the clientside).
@@ -1298,7 +1298,8 @@ void NetSv_Ticker(void)
 		if(plr->update & (PSF_OWNED_WEAPONS | PSF_STATE))
 		{
 			NetSv_SendPlayerState2(i, i,
-								   (plr->update & PSF_OWNED_WEAPONS ?
+								   (plr->
+									update & PSF_OWNED_WEAPONS ?
 									PSF2_OWNED_WEAPONS : 0) | (plr->
 															   update &
 															   PSF_STATE ?

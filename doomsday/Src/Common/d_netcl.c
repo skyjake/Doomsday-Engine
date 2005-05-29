@@ -8,22 +8,22 @@
 #  include "../jDoom/g_game.h"
 #  include "../jDoom/st_stuff.h"
 #  include "../jDoom/wi_stuff.h"
-#  include "../jDoom/am_map.h"
-#endif
-
-#ifdef __JHERETIC__
+#elif __JHERETIC__
 #  include "../jHeretic/Doomdef.h"
 #  include "../jHeretic/P_local.h"
 #  include "../jHeretic/Soundst.h"
-#  include "../jHeretic/settings.h"
-#endif
-
-#ifdef __JHEXEN__
+#  include "../jHeretic/d_config.h"
+#elif __JHEXEN__
 #  include "../jHexen/h2def.h"
 #  include "../jHexen/p_local.h"
-#  include "../jHexen/settings.h"
+#  include "../jHexen/d_config.h"
+#elif __JSTRIFE__
+#  include "../jStrife/h2def.h"
+#  include "../jStrife/p_local.h"
+#  include "../jStrife/d_config.h"
 #endif
 
+#include "am_map.h"
 #include "p_saveg.h"
 #include "d_net.h"
 #include "d_netsv.h"
@@ -111,7 +111,7 @@ void NetCl_UpdateGameState(byte *data)
     gsDeathmatch = data[4] & 0x3;
     gsMonsters = (data[4] & 0x4? true : false);
     gsRespawn = (data[4] & 0x8? true : false);
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
     gsJumping = (data[4] & 0x10? true : false);
     gsSkill = (data[4] >> 5);
 #else
@@ -140,7 +140,7 @@ void NetCl_UpdateGameState(byte *data)
 	grav = SHORT((gsGravity) << 8);
 
 	// Some statistics.
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	Con_Message("Game state: Map=%i Skill=%i %s\n", gsMap, gsSkill,
 				deathmatch == 1 ? "Deathmatch" : deathmatch ==
 				2 ? "Deathmatch2" : "Co-op");
@@ -162,7 +162,7 @@ void NetCl_UpdateGameState(byte *data)
 #endif
 
 	// Start reading after the GS packet.
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	NetCl_SetReadBuffer(data + 16);
 #else
     NetCl_SetReadBuffer(data + 8);
@@ -238,7 +238,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 	{
 		b = NetCl_ReadByte();
 		pl->playerstate = b & 0xf;
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 		pl->armortype = b >> 4;
 #endif
 		// Set or clear the DEAD flag for this player.
@@ -281,7 +281,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 	{
 		b = NetCl_ReadByte();
 		pl->playerstate = b & 0xf;
-#if !__JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 		pl->armortype = b >> 4;
 #endif
 		// Set or clear the DEAD flag for this player.
@@ -305,7 +305,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 #endif
 	}
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 	if(flags & PSF_INVENTORY)
 	{
 		pl->inventorySlotNum = NetCl_ReadByte();
@@ -335,7 +335,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 	{
 		b = NetCl_ReadByte();
 		// Only the non-zero powers are included in the message.
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		for(i = 0; i < NUMPOWERS - 1; i++)
 			if(b & (1 << i))
 				pl->powers[i + 1] = NetCl_ReadByte() * 35;
@@ -358,12 +358,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 	if(flags & PSF_KEYS)
 	{
 		b = NetCl_ReadByte();
-#ifdef __JDOOM__
-		for(i = 0; i < NUMCARDS; i++)
-			pl->cards[i] = (b & (1 << i)) != 0;
-#endif
-
-#ifdef __JHERETIC__
+#if __JDOOM__ | __JHERETIC__
 		for(i = 0; i < NUMKEYS; i++)
 			pl->keys[i] = (b & (1 << i)) != 0;
 #endif
@@ -392,7 +387,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 	}
 	if(flags & PSF_AMMO)
 	{
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		for(i = 0; i < NUMMANA; i++)
 			pl->mana[i] = NetCl_ReadByte();
 #else
@@ -402,7 +397,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 	}
 	if(flags & PSF_MAX_AMMO)
 	{
-#if !__JHEXEN__					// Hexen has no use for max ammo.
+#if __JDOOM__ || __JHERETIC__					// Hexen has no use for max ammo.
 		for(i = 0; i < NUMAMMO; i++)
 			pl->maxammo[i] = NetCl_ReadShort();
 #endif
@@ -449,7 +444,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 	}
 #endif
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	if(flags & PSF_MORPH_TIME)
 	{
 		pl->morphTics = NetCl_ReadByte() * 35;
@@ -483,7 +478,7 @@ void NetCl_Intermission(byte *data)
 	extern int interstate;
 	extern int intertime;
 #endif
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	extern int interstate;
 	extern int LeaveMap, LeavePosition;
 #endif
@@ -538,7 +533,7 @@ void NetCl_Intermission(byte *data)
 	}
 #endif
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	if(flags & IMF_BEGIN)
 	{
 		LeaveMap = NetCl_ReadByte();
@@ -625,7 +620,7 @@ void NetCl_UpdatePlayerInfo(byte *data)
 	ST_updateGraphics();
 #endif
 
-#if !__JHEXEN__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 	Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
 			   cfg.PlayerColor[num]);
 #else
