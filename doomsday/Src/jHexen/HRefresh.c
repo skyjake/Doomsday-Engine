@@ -15,10 +15,16 @@
 #include <ctype.h>
 #include "h2def.h"
 #include "jHexen/p_local.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
+#include "jHexen/mn_def.h"
+#include "../Common/hu_stuff.h"
+#include "jHexen/st_stuff.h"
+#include "../Common/am_map.h"
 #include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
+
+#define viewheight	Get(DD_VIEWWINDOW_HEIGHT)
 
 // TYPES -------------------------------------------------------------------
 
@@ -42,10 +48,11 @@ void    MN_DrCenterTextA_CS(char *text, int center_x, int y);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean automapactive;
-extern boolean MenuActive;
-extern boolean askforquit;
+extern boolean amap_fullyopen;
 extern float lookOffset;
 extern int actual_leveltime;
+
+extern float deffontRGB[];
 
 extern boolean dontrender;
 
@@ -173,16 +180,17 @@ void R_DrawMapTitle(void)
 
     Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
     
-	gl.Color4f(1, 1, 1, alpha);
 	if(lname)
 	{
-		MN_DrTextB_CS(lname, 160 - MN_TextBWidth(lname) / 2, y);
+		M_WriteText3(160 - M_StringWidth(lname, hu_font_b) / 2, y, lname,
+					hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], alpha, false, 0);
 		y += 20;
 	}
-	gl.Color4f(.5f, .5f, .5f, alpha);
+
 	if(lauthor)
 	{
-		MN_DrTextA_CS(lauthor, 160 - MN_TextAWidth(lauthor) / 2, y);
+		M_WriteText3(160 - M_StringWidth(lauthor, hu_font_a) / 2, y, lauthor,
+					hu_font_a, .5f, .5f, .5f, alpha, false, 0);
 	}
 
     Draw_EndZoom();
@@ -197,8 +205,21 @@ void R_DrawMapTitle(void)
 //
 //==========================================================================
 
+// wipegamestate can be set to -1 to force a wipe on the next draw
+gamestate_t wipegamestate = GS_DEMOSCREEN;
+extern boolean inhelpscreens;
+#define SIZEFACT 4
+#define SIZEFACT2 16
 void G_Drawer(void)
 {
+	static boolean viewactivestate = false;
+	static boolean menuactivestate = false;
+	static boolean inhelpscreensstate = false;
+	static int targx =0, targy = 0, targw =0, targh = 0;
+	static int x =0, y = 0, w =320, h = 200, offy = 0;
+	static int fullscreenmode = 0;
+	static gamestate_t oldgamestate = -1;
+	int     py;
 	player_t *vplayer = &players[displayplayer];
 	boolean iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0;	// $democam
 
@@ -206,16 +227,34 @@ void G_Drawer(void)
 	if(cfg.setblocks > 10 || iscam)
 	{
 		// Full screen.
-		R_ViewWindow(0, 0, 320, 200);
+		targx = 0;
+		targy = 0;
+		targw = 320;
+		targh = 200;
 	}
 	else
 	{
-		int     w = cfg.setblocks * 32;
-		int     h =
-			cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
-		R_ViewWindow(160 - (w >> 1),
-					 (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) >> 1, w, h);
+		targw = cfg.setblocks * 32;
+		targh = cfg.setblocks * (200 - SBARHEIGHT * cfg.sbarscale / 20) / 10;
+		targx = 160 - (targw >> 1);
+		targy = (200 - SBARHEIGHT * cfg.sbarscale / 20 - targh) >> 1;
 	}
+
+	if(targw > w)
+		w+= (((targw-w)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targw < w)
+		w-= (((w-targw)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targh > h)
+		h+= (((targh-h)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targh < h)
+		h-= (((h-targh)>> 1)+SIZEFACT2)>>SIZEFACT;
+
+	if(cfg.setblocks < 10)
+	{
+		offy = (SBARHEIGHT * cfg.sbarscale/20);
+		R_ViewWindow(160-(w>>1), 100-((h+offy) >>1), w, h);
+	} else
+		R_ViewWindow(targx, targy, targw, targh);
 
 	// Do buffered drawing
 	switch (gamestate)
@@ -236,18 +275,18 @@ void G_Drawer(void)
 			// a bug, but since there's an easy fix...
 			break;
 		}
-		if(automapactive)
-		{
-			AM_Drawer();
-		}
-		else
+
+		if(!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1 || cfg.automapWidth < 1 || cfg.automapHeight < 1)
 		{
 			boolean special200 = false;
 
 			R_HandleSectorSpecials();
 			// Set flags for the renderer.
 			if(IS_CLIENT)
+			{
+				// Server updates mobj flags in NetSv_Ticker.
 				R_SetAllDoomsdayFlags();
+			}
 			GL_SetFilter(vplayer->plr->filter);	// $democam
 			// Check for the sector special 200: use sky2.
 			// I wonder where this is used?
@@ -288,18 +327,50 @@ void G_Drawer(void)
 			}
 			if(!iscam)
 				X_Drawer();		// Draw the crosshair.
-			R_DrawMapTitle();
-		}
-		GL_Update(DDUF_FULLSCREEN);
-		if(!iscam)
-			SB_Drawer();		// $democam
-		// We'll draw the chat text *after* the status bar to
-		// be a bit clearer.
-		CT_Drawer();
 
-		// Also update view borders?
-		if(Get(DD_VIEWWINDOW_HEIGHT) != 200)
+		}
+
+        // Draw the automap?
+        if(automapactive)
+            AM_Drawer();
+
+        // These various HUD's will be drawn unless Doomsday advises not to
+        if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
+		{
+
+            // Level information is shown for a few seconds in the 
+            // beginning of a level.
+			R_DrawMapTitle();
+
+            GL_Update(DDUF_FULLSCREEN);
+
+            // DJS - Do we need to render a full status bar at this point?
+            if (!(automapactive && cfg.automapHudDisplay == 0 )){
+
+                if(!iscam)
+                    if(true == (viewheight == 200) )
+                    {
+                        // Fullscreen. Which mode?
+                        ST_Drawer(cfg.setblocks - 10, true);	// $democam
+                    } else {
+                        ST_Drawer(0 , true);	// $democam
+                    }
+
+                fullscreenmode = viewheight == 200;
+
+            }
+
+            HU_Drawer();
+		}
+
+		// Need to update the borders?
+		if(oldgamestate != GS_LEVEL ||
+			(Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
+			 	cfg.sbarscale < 20 || (automapactive && cfg.automapHudDisplay == 0 )))
+		{
+			// Update the borders.
 			GL_Update(DDUF_BORDER);
+		}
 		break;
 
 	case GS_INTERMISSION:
@@ -321,19 +392,22 @@ void G_Drawer(void)
 		break;
 	}
 
-	if(paused && !MenuActive && !askforquit && !fi_active)
+	menuactivestate = menuactive;
+	viewactivestate = viewactive;
+	inhelpscreensstate = inhelpscreens;
+	oldgamestate = wipegamestate = gamestate;
+
+	if(paused && !fi_active)
 	{
-		if(!netgame)
-		{
-			GL_DrawPatch(160, Get(DD_VIEWWINDOW_Y) + 5,
-						 W_GetNumForName("PAUSED"));
-		}
+		if(automapactive)
+			py = 4;
 		else
-		{
-			GL_DrawPatch(160, 70, W_GetNumForName("PAUSED"));
-		}
+			py = 4;	// in jDOOM this is viewwindowy + 4
+
+		GL_DrawPatch(160, py, W_GetNumForName("PAUSED"));
 	}
 
+	// InFine is drawn whenever active.
 	FI_Drawer();
 }
 
