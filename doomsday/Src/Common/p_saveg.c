@@ -240,12 +240,7 @@ void SV_WritePlayer(int playernum)
 	SV_WriteLong(pl->armortype);
 
 	SV_Write(pl->powers, NUMPOWERS * 4);
-#ifdef __JDOOM__
-	SV_Write(pl->cards, NUMCARDS * 4);
-#endif
-#ifdef __JHERETIC__
 	SV_Write(pl->keys, NUMKEYS * 4);
-#endif
 	SV_WriteLong(pl->backpack);
 
 	SV_Write(pl->frags, 4 * 4);
@@ -309,12 +304,7 @@ void SV_ReadPlayer(player_t *pl)
 	pl->armortype = SV_ReadLong();
 
 	SV_Read(pl->powers, NUMPOWERS * 4);
-#ifdef __JDOOM__
-	SV_Read(pl->cards, NUMCARDS * 4);
-#endif
-#ifdef __JHERETIC__
 	SV_Read(pl->keys, NUMKEYS * 4);
-#endif
 	pl->backpack = SV_ReadLong();
 
 	SV_Read(pl->frags, 4 * 4);
@@ -1031,33 +1021,38 @@ void P_ArchiveSpecials(void)
 	lightflash_t flash;
 	strobe_t strobe;
 	glow_t  glow;
-	int     i;
 
 	// save off the current thinkers
 	for(th = thinkercap.next; th != &thinkercap; th = th->next)
 	{
 		if(th->function == NULL)
 		{
-			for(i = 0; i < MAXCEILINGS; i++)
-				if(activeceilings[i] == (ceiling_t *) th)
-					break;
+			platlist_t *pl;
+			ceilinglist_t *cl;     //jff 2/22/98 need this for ceilings too now
 
-			if(i < MAXCEILINGS)
-			{
-				SV_WriteByte(tc_ceiling);
-				memcpy(&ceiling, th, sizeof(ceiling));
-				ceiling.sector = (sector_t *) (ceiling.sector - sectors);
-				SV_Write(&ceiling, sizeof(ceiling));
-			}
-			continue;
+          // killough 2/8/98: fix plat original height bug.
+          // Since acv==NULL, this could be a plat in stasis.
+          // so check the active plats list, and save this
+          // plat (jff: or ceiling) even if it is in stasis.
+
+          for (pl=activeplats; pl; pl=pl->next)
+            if (pl->plat == (plat_t *) th)      // killough 2/14/98
+              goto plat;
+
+          for (cl=activeceilings; cl; cl=cl->next)
+            if (cl->ceiling == (ceiling_t *) th)      //jff 2/22/98
+              goto ceiling;
+
+          continue;
 		}
 
 		if(th->function == T_MoveCeiling)
 		{
+		ceiling:                               // killough 2/14/98
 			SV_WriteByte(tc_ceiling);
-			memcpy(&ceiling, th, sizeof(ceiling));
+			memcpy(&ceiling, th, sizeofceiling);
 			ceiling.sector = (sector_t *) (ceiling.sector - sectors);
-			SV_Write(&ceiling, sizeof(ceiling));
+			SV_Write(&ceiling, sizeofceiling);
 			continue;
 		}
 
@@ -1081,10 +1076,11 @@ void P_ArchiveSpecials(void)
 
 		if(th->function == T_PlatRaise)
 		{
+		plat:   // killough 2/14/98: added fix for original plat height above
 			SV_WriteByte(tc_plat);
-			memcpy(&plat, th, sizeof(plat));
+			memcpy(&plat, th, sizeofplat);
 			plat.sector = (sector_t *) (plat.sector - sectors);
-			SV_Write(&plat, sizeof(plat));
+			SV_Write(&plat, sizeofplat);
 			continue;
 		}
 
@@ -1145,7 +1141,7 @@ void P_UnArchiveSpecials(void)
 
 		case tc_ceiling:
 			ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVEL, NULL);
-			SV_Read(ceiling, sizeof(*ceiling));
+			SV_Read(ceiling, sizeofceiling);
 #ifdef _DEBUG
 			if((int) ceiling->sector >= numsectors ||
 			   (int) ceiling->sector < 0)
@@ -1181,7 +1177,7 @@ void P_UnArchiveSpecials(void)
 
 		case tc_plat:
 			plat = Z_Malloc(sizeof(*plat), PU_LEVEL, NULL);
-			SV_Read(plat, sizeof(*plat));
+			SV_Read(plat, sizeofplat);
 			plat->sector = &sectors[(int) plat->sector];
 			plat->sector->specialdata = plat;
 
@@ -1469,11 +1465,10 @@ int SV_LoadGame(char *filename)
 		{
 			if(!i)
 			{
-#ifdef __JDOOM__
+#ifndef __JHEXEN__
+#ifndef __JSTRIFE__
 				P_SetMessage(players, GET_TXT(TXT_LOADMISSING));
 #endif
-#ifdef __JHERETIC__
-				P_SetMessage(players, GET_TXT(TXT_LOADMISSING), true);
 #endif
 			}
 			else

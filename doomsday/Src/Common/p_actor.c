@@ -17,6 +17,8 @@
 #  include "jHeretic/Doomdef.h"
 #elif __JHEXEN__
 #  include "jHexen/h2def.h"
+#elif __JSTRIFE__
+#  include "jStrife/h2def.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

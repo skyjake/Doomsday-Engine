@@ -15,6 +15,9 @@
 #elif __JHEXEN__
 #  include "jHexen/h2def.h"
 #  include "jHexen/r_local.h"
+#elif __JSTRIFE__
+#  include "jStrife/h2def.h"
+#  include "jStrife/r_local.h"
 #endif
 
 #include "p_svtexarc.h"
@@ -26,7 +29,10 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // Savegame I/O:
-#if !__JHEXEN__
+#ifdef __JDOOM__
+void    SV_Write(void *data, int len);
+void    SV_WriteShort(short val);
+#elif __JHERETIC__
 void    SV_Write(void *data, int len);
 void    SV_WriteShort(short val);
 #else
@@ -174,14 +180,18 @@ void SV_WriteTexArchive(texarchive_t * arc)
 {
 	int     i;
 
-#if !__JHEXEN__
+#ifdef __JDOOM__
+	SV_WriteShort(arc->count);
+#elif __JHERETIC__
 	SV_WriteShort(arc->count);
 #else
 	StreamOutWord(arc->count);
 #endif
 	for(i = 0; i < arc->count; i++)
 	{
-#if !__JHEXEN__
+#ifdef __JDOOM__
+		SV_Write(arc->table[i].name, 8);
+#elif __JHERETIC__
 		SV_Write(arc->table[i].name, 8);
 #else
 		StreamOutBuffer(arc->table[i].name, 8);
