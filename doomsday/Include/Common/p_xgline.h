@@ -149,6 +149,7 @@ enum							   // Wall sections.
 
 enum							   // Line reference type.
 {
+	LREF_NONE,
 	LREF_SELF,
 	LREF_TAGGED,
 	LREF_LINE_TAGGED,
@@ -176,14 +177,18 @@ enum							   // Line -> Plane reference type.
 	LPREF_ALL_CEILINGS,
 
 	LPREF_SPECIAL,				   // 2nd param of reference treated in a special way.
+	LPREF_BACK_FLOOR,
+	LPREF_BACK_CEILING,
 
 	// Line -> Sector references (same as ->Plane, really).
-	LSREF_MY = LPREF_MY_FLOOR,
+	LSREF_NONE = LPREF_NONE,
+	LSREF_MY,
 	LSREF_TAGGED,
 	LSREF_LINE_TAGGED,
 	LSREF_ACT_TAGGED,
 	LSREF_INDEX,
-	LSREF_ALL
+	LSREF_ALL,
+	LSREF_BACK = LPREF_BACK_FLOOR
 };
 
 enum							   // Sector -> Plane reference type.
@@ -218,7 +223,9 @@ enum							   // Sector -> Plane reference type.
 	SPREF_LINE_TAGGED_CEILING,
 	SPREF_TAGGED_CEILING,
 	SPREF_ACT_TAGGED_CEILING,
-	SPREF_INDEX_CEILING
+	SPREF_INDEX_CEILING,
+	SPREF_BACK_FLOOR,
+	SPREF_BACK_CEILING,
 };
 
 enum							   // Special lightlevel sources.
@@ -230,7 +237,17 @@ enum							   // Special lightlevel sources.
 	LIGHTREF_HIGHEST,			   // Highest surrounding.
 	LIGHTREF_LOWEST,			   // Lowest surrounding.
 	LIGHTREF_NEXT_HIGHEST,		   // Next highest surrounding.
-	LIGHTREF_NEXT_LOWEST		   // Next lowest surrounding.
+	LIGHTREF_NEXT_LOWEST,		   // Next lowest surrounding.
+	LIGHTREF_BACK				   // Actline's back sector.
+};
+
+enum							  // Line.data references
+{
+	LDREF_NONE,		// Not actually used atm
+	LDREF_SPECIAL,
+	LDREF_TAG,
+	LDREF_ACTTAG,
+	LDREF_COUNT
 };
 
 // Chain sequence flags.
@@ -256,6 +273,9 @@ extern struct mobj_s dummything;
 
 // Initialize extended lines for the map.
 void            XL_Init(void);
+
+// Register the XG classnames for XGdev
+void            XG_Register(void);
 
 // Think for each extended line.
 void            XL_Ticker(void);
