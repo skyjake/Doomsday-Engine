@@ -18,7 +18,7 @@
 #include "jHexen/r_local.h"
 #include "jHexen/p_local.h"			// for P_ApproxDistance
 #include "jHexen/sounds.h"
-#include "jHexen/settings.h"
+#include "jHexen/d_config.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -37,6 +37,8 @@ void    S_StopSoundID(int sound_id);	//, int priority);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern int gsvMapMusic;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -484,18 +486,20 @@ void S_Reset(void)
 }
 #endif
 
-//===========================================================================
-// S_LevelMusic
-//  Starts the song of the current level.
-//===========================================================================
+/*
+ * Starts the song of the current level.
+ */
 void S_LevelMusic(void)
 {
-	int     idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
+    int     idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
 
-	// Update the 'currentmap' music definition.
-	Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gamemap));
-	Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, (void *) P_GetMapCDTrack(gamemap));
-	S_StartMusic("currentmap", true);
+    // Update the 'currentmap' music definition.
+    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gamemap));
+    Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, (void *) P_GetMapCDTrack(gamemap));
+    S_StartMusic("currentmap", true);
+
+    // set the game status cvar for the map music
+    gsvMapMusic = idx;
 }
 
 //==========================================================================
