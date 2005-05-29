@@ -22,6 +22,7 @@
 #include "wi_stuff.h"
 #include "d_config.h"
 #include "m_menu.h"
+#include "mn_def.h"
 #include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
@@ -162,6 +163,9 @@ typedef struct {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern dpatch_t hu_font[HU_FONTSIZE];
+extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -358,267 +362,6 @@ static dpatch_t *lnames;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Expected: <whitespace> = <whitespace> <float>
- */
-float WI_ParseFloat(char **str)
-{
-	float   value;
-	char   *end;
-
-	*str = M_SkipWhite(*str);
-	if(**str != '=')
-		return 0;				// Now I'm confused!
-	*str = M_SkipWhite(*str + 1);
-	value = strtod(*str, &end);
-	*str = end;
-	return value;
-}
-
-/*
- * Draw a string of text controlled by parameter blocks.
- */
-void WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont,
-					  float defRed, float defGreen, float defBlue,
-					  boolean defCase, boolean defTypeIn)
-{
-	char    temp[256], *end;
-	dpatch_t *font = defFont;
-	float   r = defRed, g = defGreen, b = defBlue;
-	float   offX = 0, offY = 0;
-	float   scaleX = 1, scaleY = 1, angle = 0, extraScale;
-	float   cx = x, cy = y;
-	int     charCount = 0;
-	boolean typeIn = defTypeIn;
-	boolean caseScale = defCase;
-	struct {
-		float   scale, offset;
-	} caseMod[2];				// 1=upper, 0=lower
-	int     curCase;
-
-	caseMod[0].scale = 1;
-	caseMod[0].offset = 3;
-	caseMod[1].scale = 1.25f;
-	caseMod[1].offset = 0;
-
-	while(*string)
-	{
-		// Parse and draw the replacement string.
-		if(*string == '{')		// Parameters included?
-		{
-			string++;
-			while(*string && *string != '}')
-			{
-				string = M_SkipWhite(string);
-
-				// What do we have here?
-				if(!strnicmp(string, "fonta", 5))
-				{
-					font = hu_font_a;
-					string += 5;
-				}
-				else if(!strnicmp(string, "fontb", 5))
-				{
-					font = hu_font_b;
-					string += 5;
-				}
-				else if(!strnicmp(string, "flash", 5))
-				{
-					string += 5;
-					typeIn = true;
-				}
-				else if(!strnicmp(string, "noflash", 7))
-				{
-					string += 7;
-					typeIn = false;
-				}
-				else if(!strnicmp(string, "case", 4))
-				{
-					string += 4;
-					caseScale = true;
-				}
-				else if(!strnicmp(string, "nocase", 6))
-				{
-					string += 6;
-					caseScale = false;
-				}
-				else if(!strnicmp(string, "ups", 3))
-				{
-					string += 3;
-					caseMod[1].scale = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "upo", 3))
-				{
-					string += 3;
-					caseMod[1].offset = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "los", 3))
-				{
-					string += 3;
-					caseMod[0].scale = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "loo", 3))
-				{
-					string += 3;
-					caseMod[0].offset = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "break", 5))
-				{
-					string += 5;
-					cx = x;
-					cy += scaleY * SHORT(font[0].height);
-				}
-				else if(!strnicmp(string, "r", 1))
-				{
-					string++;
-					r = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "g", 1))
-				{
-					string++;
-					g = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "b", 1))
-				{
-					string++;
-					b = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "x", 1))
-				{
-					string++;
-					offX = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "y", 1))
-				{
-					string++;
-					offY = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "scalex", 6))
-				{
-					string += 6;
-					scaleX = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "scaley", 6))
-				{
-					string += 6;
-					scaleY = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "scale", 5))
-				{
-					string += 5;
-					scaleX = scaleY = WI_ParseFloat(&string);
-				}
-				else if(!strnicmp(string, "angle", 5))
-				{
-					string += 5;
-					angle = WI_ParseFloat(&string);
-				}
-				else
-				{
-					// Unknown, skip it.
-					if(*string != '}')
-						string++;
-				}
-			}
-
-			// Skip over the closing brace.
-			if(*string)
-				string++;
-		}
-
-		for(end = string; *end && *end != '{';)
-		{
-			if(caseScale)
-			{
-				curCase = -1;
-				// Select a substring with characters of the same case
-				// (or whitespace).
-				for(; *end && *end != '{'; end++)
-				{
-					// We can skip whitespace.
-					if(isspace(*end))
-						continue;
-
-					if(curCase < 0)
-						curCase = (isupper(*end) != 0);
-					else if(curCase != (isupper(*end) != 0))
-						break;
-				}
-			}
-			else
-			{
-				// Find the end of the visible part of the string.
-				for(; *end && *end != '{'; end++);
-			}
-
-			strncpy(temp, string, end - string);
-			temp[end - string] = 0;
-			string = end;		// Continue from here.
-
-			// Setup the scaling.
-			gl.MatrixMode(DGL_MODELVIEW);
-			gl.PushMatrix();
-
-			// Rotate.
-			if(angle != 0)
-			{
-				// The origin is the specified (x,y) for the patch.
-				// We'll undo the VGA aspect ratio (otherwise the result would
-				// be skewed).
-				gl.Translatef(x, y, 0);
-				gl.Scalef(1, 200.0f / 240.0f, 1);
-				gl.Rotatef(angle, 0, 0, 1);
-				gl.Scalef(1, 240.0f / 200.0f, 1);
-				gl.Translatef(-x, -y, 0);
-			}
-
-			gl.Translatef(cx + offX,
-						  cy + offY +
-						  (caseScale ? caseMod[curCase].offset : 0), 0);
-			extraScale = (caseScale ? caseMod[curCase].scale : 1);
-			gl.Scalef(scaleX, scaleY * extraScale, 1);
-
-			// Draw it.
-			M_WriteText3(0, 0, temp, font, r, g, b, typeIn,
-						 typeIn ? charCount : 0);
-			charCount += strlen(temp);
-
-			// Advance the current position.
-			cx += scaleX * M_StringWidth(temp, font);
-
-			gl.MatrixMode(DGL_MODELVIEW);
-			gl.PopMatrix();
-		}
-	}
-}
-
-/*
- * This routine tests for a string-replacement for the patch. If one is
- * found, it's used instead of the original graphic. 
- *
- * If the patch is not in an IWAD, it won't be replaced!
- */
-void WI_DrawPatch(int x, int y, int lump)
-{
-	char    def[80], *string;
-	const char *name = W_LumpName(lump);
-
-	// "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
-
-	strcpy(def, "Patch Replacement|");
-	strcat(def, name);
-
-	if(!cfg.usePatchReplacement || !W_IsFromIWAD(lump) ||
-	   !Def_Get(DD_DEF_VALUE, def, &string))
-	{
-		// Replacement string not found, draw the patch.
-		GL_DrawPatch(x, y, lump);
-		return;
-	}
-
-	WI_DrawParamText(x, y, string, hu_font_b, 1, 0, 0, false, false);
-}
-
 void WI_slamBackground(void)
 {
 	GL_DrawPatch(0, 0, bg.lump);
@@ -637,13 +380,13 @@ void WI_drawLF(void)
 	int     y = WI_TITLEY;
 
 	// draw <LevelName> 
-	WI_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->last].width)) / 2, y,
+	WI_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->last].width)) / 2, y, 1, 1, 1, 1,
 				 lnames[wbs->last].lump);
 
 	// draw "Finished!"
 	y += (5 * SHORT(lnames[wbs->last].height)) / 4;
 
-	WI_DrawPatch((SCREENWIDTH - SHORT(finished.width)) / 2, y, finished.lump);
+	WI_DrawPatch((SCREENWIDTH - SHORT(finished.width)) / 2, y, 1, 1, 1, 1, finished.lump);
 }
 
 // Draws "Entering <LevelName>"
@@ -652,12 +395,12 @@ void WI_drawEL(void)
 	int     y = WI_TITLEY;
 
 	// draw "Entering"
-	WI_DrawPatch((SCREENWIDTH - SHORT(entering.width)) / 2, y, entering.lump);
+	WI_DrawPatch((SCREENWIDTH - SHORT(entering.width)) / 2, y, 1, 1, 1, 1, entering.lump);
 
 	// draw level
 	y += (5 * SHORT(lnames[wbs->next].height)) / 4;
 
-	WI_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->next].width)) / 2, y,
+	WI_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->next].width)) / 2, y, 1, 1, 1, 1,
 				 lnames[wbs->next].lump);
 }
 
@@ -686,7 +429,7 @@ void WI_drawOnLnode(int n, dpatch_t * c)
 
 	if(fits && i < 2)
 	{
-		WI_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y,
+		WI_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y, 1, 1, 1, 1,
 					 c[i].lump);
 	}
 	else
@@ -787,7 +530,7 @@ void WI_drawAnimatedBack(void)
 	{
 		a = &anims[wbs->epsd][i];
 		if(a->ctr >= 0)
-			WI_DrawPatch(a->loc.x, a->loc.y, a->p[a->ctr].lump);
+			WI_DrawPatch(a->loc.x, a->loc.y, 1, 1, 1, 1, a->p[a->ctr].lump);
 	}
 
 }
@@ -836,13 +579,13 @@ int WI_drawNum(int x, int y, int n, int digits)
 	while(digits--)
 	{
 		x -= fontwidth;
-		WI_DrawPatch(x, y, num[n % 10].lump);
+		WI_DrawPatch(x, y, 1, 1, 1, 1, num[n % 10].lump);
 		n /= 10;
 	}
 
 	// draw a minus sign if necessary
 	if(neg)
-		WI_DrawPatch(x -= 8, y, wiminus.lump);
+		WI_DrawPatch(x -= 8, y, 1, 1, 1, 1, wiminus.lump);
 
 	return x;
 }
@@ -852,7 +595,7 @@ void WI_drawPercent(int x, int y, int p)
 	if(p < 0)
 		return;
 
-	WI_DrawPatch(x, y, percent.lump);
+	WI_DrawPatch(x, y, 1, 1, 1, 1, percent.lump);
 	WI_drawNum(x, y, p, -1);
 }
 
@@ -879,14 +622,14 @@ void WI_drawTime(int x, int y, int t)
 
 			// draw
 			if(div == 60 || t / div)
-				WI_DrawPatch(x, y, colon.lump);
+				WI_DrawPatch(x, y, 1, 1, 1, 1, colon.lump);
 
 		} while(t / div);
 	}
 	else
 	{
 		// "sucks"
-		WI_DrawPatch(x - SHORT(sucks.width), y, sucks.lump);
+		WI_DrawPatch(x - SHORT(sucks.width), y, 1, 1, 1, 1, sucks.lump);
 	}
 }
 
@@ -1146,10 +889,10 @@ void WI_drawDeathmatchStats(void)
 
 	// draw stat titles (top line)
 	WI_DrawPatch(DM_TOTALSX - SHORT(total.width) / 2,
-				 DM_MATRIXY - WI_SPACINGY + 10, total.lump);
+				 DM_MATRIXY - WI_SPACINGY + 10, 1, 1, 1, 1, total.lump);
 
-	WI_DrawPatch(DM_KILLERSX, DM_KILLERSY, killers.lump);
-	WI_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, victims.lump);
+	WI_DrawPatch(DM_KILLERSX, DM_KILLERSY, 1, 1, 1, 1, killers.lump);
+	WI_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, 1, 1, 1, 1, victims.lump);
 
 	// draw P?
 	x = DM_MATRIXX + DM_SPACINGX;
@@ -1159,17 +902,17 @@ void WI_drawDeathmatchStats(void)
 	{
 		if(teaminfo[i].members)
 		{
-			WI_DrawPatch(x - SHORT(p[i].width) / 2, DM_MATRIXY - WI_SPACINGY,
+			WI_DrawPatch(x - SHORT(p[i].width) / 2, DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1,
 						 p[i].lump);
 
-			WI_DrawPatch(DM_MATRIXX - SHORT(p[i].width) / 2, y, p[i].lump);
+			WI_DrawPatch(DM_MATRIXX - SHORT(p[i].width) / 2, y, 1, 1, 1, 1, p[i].lump);
 
 			if(i == myteam)
 			{
 				WI_DrawPatch(x - SHORT(p[i].width) / 2,
-							 DM_MATRIXY - WI_SPACINGY, bstar.lump);
+							 DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1, bstar.lump);
 
-				WI_DrawPatch(DM_MATRIXX - SHORT(p[i].width) / 2, y, star.lump);
+				WI_DrawPatch(DM_MATRIXX - SHORT(p[i].width) / 2, y, 1, 1, 1, 1, star.lump);
 			}
 
 			// If more than 1 member, show the member count.
@@ -1180,16 +923,16 @@ void WI_drawDeathmatchStats(void)
 				sprintf(tmp, "%i", teaminfo[i].members);
 				M_WriteText2(x - p[i].width / 2 + 1,
 							 DM_MATRIXY - WI_SPACINGY + p[i].height - 8, tmp,
-							 hu_font_a, 1, 1, 1);
+							 hu_font_a, 1, 1, 1, 1);
 				M_WriteText2(DM_MATRIXX - p[i].width / 2 + 1,
-							 y + p[i].height - 8, tmp, hu_font_a, 1, 1, 1);
+							 y + p[i].height - 8, tmp, hu_font_a, 1, 1, 1, 1);
 			}
 		}
 		else
 		{
-			WI_DrawPatch(x - SHORT(bp[i].width) / 2, DM_MATRIXY - WI_SPACINGY,
+			WI_DrawPatch(x - SHORT(bp[i].width) / 2, DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1,
 						 bp[i].lump);
-			WI_DrawPatch(DM_MATRIXX - SHORT(bp[i].width) / 2, y, bp[i].lump);
+			WI_DrawPatch(DM_MATRIXX - SHORT(bp[i].width) / 2, y, 1, 1, 1, 1, bp[i].lump);
 		}
 		x += DM_SPACINGX;
 		y += WI_SPACINGY;
@@ -1402,17 +1145,17 @@ void WI_drawNetgameStats(void)
 	WI_drawLF();
 
 	// draw stat titles (top line)
-	WI_DrawPatch(NG_STATSX + NG_SPACINGX - SHORT(kills.width), NG_STATSY,
+	WI_DrawPatch(NG_STATSX + NG_SPACINGX - SHORT(kills.width), NG_STATSY, 1, 1, 1, 1,
 				 kills.lump);
 
-	WI_DrawPatch(NG_STATSX + 2 * NG_SPACINGX - SHORT(items.width), NG_STATSY,
+	WI_DrawPatch(NG_STATSX + 2 * NG_SPACINGX - SHORT(items.width), NG_STATSY, 1, 1, 1, 1,
 				 items.lump);
 
-	WI_DrawPatch(NG_STATSX + 3 * NG_SPACINGX - SHORT(secret.width), NG_STATSY,
+	WI_DrawPatch(NG_STATSX + 3 * NG_SPACINGX - SHORT(secret.width), NG_STATSY, 1, 1, 1, 1,
 				 secret.lump);
 
 	if(dofrags)
-		WI_DrawPatch(NG_STATSX + 4 * NG_SPACINGX - SHORT(frags.width),
+		WI_DrawPatch(NG_STATSX + 4 * NG_SPACINGX - SHORT(frags.width), 1, 1, 1, 1,
 					 NG_STATSY, frags.lump);
 
 	// draw stats
@@ -1424,7 +1167,7 @@ void WI_drawNetgameStats(void)
 			continue;
 
 		x = NG_STATSX;
-		WI_DrawPatch(x - SHORT(p[i].width), y, p[i].lump);
+		WI_DrawPatch(x - SHORT(p[i].width), y, 1, 1, 1, 1, p[i].lump);
 		// If more than 1 member, show the member count.
 		if(teaminfo[i].members > 1)
 		{
@@ -1432,11 +1175,11 @@ void WI_drawNetgameStats(void)
 
 			sprintf(tmp, "%i", teaminfo[i].members);
 			M_WriteText2(x - p[i].width + 1, y + p[i].height - 8, tmp,
-						 hu_font_a, 1, 1, 1);
+						 hu_font_a, 1, 1, 1, 1);
 		}
 
 		if(i == myteam)
-			WI_DrawPatch(x - SHORT(p[i].width), y, star.lump);
+			WI_DrawPatch(x - SHORT(p[i].width), y, 1, 1, 1, 1, star.lump);
 
 		x += NG_SPACINGX;
 		WI_drawPercent(x - pwidth, y + 10, cnt_kills[i]);
@@ -1586,21 +1329,21 @@ void WI_drawStats(void)
 
 	WI_drawLF();
 
-	WI_DrawPatch(SP_STATSX, SP_STATSY, kills.lump);
+	WI_DrawPatch(SP_STATSX, SP_STATSY, 1, 1, 1, 1, kills.lump);
 	WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cnt_kills[0]);
 
-	WI_DrawPatch(SP_STATSX, SP_STATSY + lh, items.lump);
+	WI_DrawPatch(SP_STATSX, SP_STATSY + lh, 1, 1, 1, 1, items.lump);
 	WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cnt_items[0]);
 
-	WI_DrawPatch(SP_STATSX, SP_STATSY + 2 * lh, sp_secret.lump);
+	WI_DrawPatch(SP_STATSX, SP_STATSY + 2 * lh, 1, 1, 1, 1, sp_secret.lump);
 	WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cnt_secret[0]);
 
-	WI_DrawPatch(SP_TIMEX, SP_TIMEY, time.lump);
+	WI_DrawPatch(SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, time.lump);
 	WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cnt_time);
 
 	if(wbs->epsd < 3)
 	{
-		WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, par.lump);
+		WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, par.lump);
 		WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cnt_par);
 	}
 
