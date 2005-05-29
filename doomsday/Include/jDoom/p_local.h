@@ -253,6 +253,8 @@ extern fixed_t  tmceilingz;
 
 extern line_t  *ceilingline;
 
+boolean        P_CheckSides(mobj_t* actor, int x, int y);	// DJS - from prBoom
+
 boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
 boolean         P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y,
 								 fixed_t z);
@@ -313,6 +315,9 @@ void            P_ExplodeMissile(mobj_t *mo);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.9  2005/05/29 06:02:08  danij
+// Removed fixed limits on number of active plats/ceilings using modified code from PrBoom. Added various Doom.exe bug fixes (with compatibility options) for Lost Souls spawning inside walls, Archviles raising invincible ghosts etc using fixes by Lee K from PrBoom.
+//
 // Revision 1.8  2004/06/16 18:28:46  skyjake
 // Updated style (typenames)
 //

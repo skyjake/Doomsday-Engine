@@ -134,8 +134,7 @@ void            T_LightFlash(lightflash_t * flash);
 void            P_SpawnLightFlash(sector_t *sector);
 void            T_StrobeFlash(strobe_t * flash);
 
-void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow,
-								   int inSync);
+void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync);
 
 void            EV_StartLightStrobing(line_t *line);
 void            EV_TurnTagLightsOff(line_t *line);
@@ -217,21 +216,34 @@ typedef struct {
 	int             tag;
 	plattype_e      type;
 
+	struct platlist *list;   // killough
 } plat_t;
+
+// size of a plat (num of bytes) for backward save game compatibility - DJS
+static int sizeofplat = sizeof(thinker_t) + sizeof(sector_t*)
+			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
+			+ (sizeof(plat_e)*2) + sizeof(boolean) + sizeof(plattype_e);
+
+// New limit-free plat structure -- killough
+
+typedef struct platlist {
+  plat_t *plat;
+  struct platlist *next,**prev;
+} platlist_t;
 
 #define PLATWAIT		3
 #define PLATSPEED		FRACUNIT
-#define MAXPLATS		128
 
-extern plat_t  *activeplats[MAXPLATS];
+extern platlist_t *activeplats;
 
 void            T_PlatRaise(plat_t * plat);
 
 int             EV_DoPlat(line_t *line, plattype_e type, int amount);
+int		EV_StopPlat(line_t* line);
 
 void            P_AddActivePlat(plat_t * plat);
 void            P_RemoveActivePlat(plat_t * plat);
-void            EV_StopPlat(line_t *line);
+void		P_RemoveAllActivePlats( void );    // killough
 void            P_ActivateInStasis(int tag);
 
 //
@@ -368,22 +380,32 @@ typedef struct {
 	// ID
 	int             tag;
 	int             olddirection;
-
+	struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
 } ceiling_t;
+
+// size of a ceiling (num of bytes) for backward save game compatibility - DJS
+static int sizeofceiling = sizeof(thinker_t) + sizeof(ceiling_e)
+			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
+			+ sizeof(sector_t*) + sizeof(boolean);
+
+typedef struct ceilinglist {
+  ceiling_t *ceiling;
+  struct ceilinglist *next,**prev;
+} ceilinglist_t;
 
 #define CEILSPEED		FRACUNIT
 #define CEILWAIT		150
-#define MAXCEILINGS		30
 
-extern ceiling_t *activeceilings[MAXCEILINGS];
+extern ceilinglist_t *activeceilings;
 
 int             EV_DoCeiling(line_t *line, ceiling_e type);
 
 void            T_MoveCeiling(ceiling_t * ceiling);
 void            P_AddActiveCeiling(ceiling_t * c);
 void            P_RemoveActiveCeiling(ceiling_t * c);
+void		P_RemoveAllActiveCeilings(void);
 int             EV_CeilingCrushStop(line_t *line);
-void            P_ActivateInStasisCeiling(line_t *line);
+int		P_ActivateInStasisCeiling(line_t *line);
 
 //
 // P_FLOOR
@@ -467,6 +489,9 @@ int             EV_Teleport(line_t *line, int side, mobj_t *thing);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.8  2005/05/29 06:02:09  danij
+// Removed fixed limits on number of active plats/ceilings using modified code from PrBoom. Added various Doom.exe bug fixes (with compatibility options) for Lost Souls spawning inside walls, Archviles raising invincible ghosts etc using fixes by Lee K from PrBoom.
+//
 // Revision 1.7  2004/06/16 18:28:46  skyjake
 // Updated style (typenames)
 //
