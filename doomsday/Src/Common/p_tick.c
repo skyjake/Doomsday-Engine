@@ -14,17 +14,16 @@
 #  include "d_event.h"
 #  include "p_local.h"
 #  include "doomstat.h"
-#endif
-
-#ifdef __JHERETIC__
+#elif __JHERETIC__
 #  include "jHeretic/Doomdef.h"
 #  include "jHeretic/P_local.h"
 #  include "jHeretic/G_game.h"
-#endif
-
-#ifdef __JHEXEN__
+#elif __JHEXEN__
 #  include "jHexen/h2def.h"
 #  include "jHexen/p_local.h"
+#elif __JSTRIFE__
+#  include "jStrife/h2def.h"
+#  include "jStrife/p_local.h"
 #endif
 
 #include "g_common.h"
@@ -59,11 +58,7 @@ int     TimerGame;
  */
 boolean P_IsPaused(void)
 {
-#if __JDOOM__
 	return paused || (!IS_NETGAME && menuactive);
-#else
-	return paused;
-#endif
 }
 
 // This is called at all times, no matter gamestate.
@@ -121,11 +116,9 @@ void P_RunPlayers(void)
  */
 void P_DoTick(void)
 {
-#if __JDOOM__ || __JHEXEN__
 	// If the game is paused, nothing will happen.
 	if(paused)
 		return;
-#endif
 
 	actual_leveltime++;
 
@@ -141,26 +134,31 @@ void P_DoTick(void)
 		if(!--TimerGame)
 			G_ExitLevel();
 	}
-	// If the game is paused, nothing will happen.
-	if(paused)
+	// pause if in menu and at least one tic has been run
+	if(!IS_NETGAME && menuactive && !Get(DD_PLAYBACK) &&
+	   players[consoleplayer].plr->viewz != 1)
 		return;
 
-#else							// __JHEXEN__
+#elif __JHEXEN__
 	if(!IS_CLIENT && TimerGame)
 	{
 		if(!--TimerGame)
 			G_Completed(P_TranslateMap(P_GetMapNextMap(gamemap)), 0);
 	}
+	// pause if in menu and at least one tic has been run
+	if(!IS_NETGAME && menuactive && !Get(DD_PLAYBACK) &&
+	   players[consoleplayer].plr->viewz != 1)
+		return;
 #endif
 
 	P_RunThinkers();
 	P_UpdateSpecials();
 
-#if __JDOOM__
+#if __JDOOM__ || __JSTRIFE__
 	P_RespawnSpecials();
 #elif __JHERETIC__
 	P_AmbientSound();
-#elif __JHEXEN__
+#else
 	P_AnimateSurfaces();
 #endif
 
