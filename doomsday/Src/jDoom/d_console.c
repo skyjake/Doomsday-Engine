@@ -12,6 +12,7 @@
 #include "s_sound.h"
 #include "hu_stuff.h"
 #include "m_menu.h"
+#include "mn_def.h"
 #include "f_infine.h"
 
 // Macros -----------------------------------------------------------------
@@ -22,7 +23,6 @@
 // External Functions -----------------------------------------------------
 
 DEFCC(CCmdCycleSpy);
-DEFCC(CCmdMenuAction);
 DEFCC(CCmdCrosshair);
 DEFCC(CCmdCheat);
 DEFCC(CCmdCheatGod);
@@ -31,9 +31,9 @@ DEFCC(CCmdCheatWarp);
 DEFCC(CCmdCheatReveal);
 DEFCC(CCmdCheatGive);
 DEFCC(CCmdCheatMassacre);
+DEFCC(CCmdSuicide);
 DEFCC(CCmdBeginChat);
 DEFCC(CCmdMsgRefresh);
-DEFCC(CCmdAutoMap);
 DEFCC(CCmdMovePlane);
 DEFCC(CCmdMakeLocal);
 DEFCC(CCmdSetCamera);
@@ -53,10 +53,9 @@ DEFCC(CCmdDoomFont);
 
 // External Data ----------------------------------------------------------
 
-//extern int do_chimes;
-extern char *chat_macros[];
-extern int showMessages;
 extern boolean hu_showallfrags;
+
+extern boolean mn_SuicideConsole;
 
 // Public Data ------------------------------------------------------------
 
@@ -102,20 +101,12 @@ cvar_t  gameCVars[] = {
 	"1=Lookspring active.",
 	"NoAutoAim", OBSOLETE, CVT_INT, &cfg.noAutoAim, 0, 1,
 	"1=Autoaiming disabled.",
-	"d_ViewSize", OBSOLETE | CVF_PROTECTED, CVT_INT, &screenblocks, 3, 11,
-	"View window size (3-11).",
+	"d_ViewSize", OBSOLETE | CVF_PROTECTED, CVT_INT, &screenblocks, 3, 13,
+	"View window size (3-13).",
 	"d_sbSize", OBSOLETE | CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20,
 	"Status bar size (1-20).",
-	"MapAlpha", OBSOLETE, CVT_FLOAT, &cfg.automapAlpha, 0, 1,
+	"MapAlpha", OBSOLETE, CVT_FLOAT, &cfg.automapBack[0], 0, 1,
 	"Alpha level of the automap background.",
-	"flash_R", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[0], 0, 1,
-	"Menu selection flash color, red component.",
-	"flash_G", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[1], 0, 1,
-	"Menu selection flash color, green component.",
-	"flash_B", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[2], 0, 1,
-	"Menu selection flash color, blue component.",
-	"flash_Speed", OBSOLETE, CVT_INT, &cfg.flashspeed, 0, 50,
-	"Menu selection flash speed.",
 	"TurningSkull", OBSOLETE, CVT_BYTE, &cfg.turningSkull, 0, 1,
 	"1=Menu skull turns at slider items.",
 	"hud_Health", OBSOLETE, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1,
@@ -152,26 +143,26 @@ cvar_t  gameCVars[] = {
 	"1=Enable custom (external) music files.",
 	"ReverbDebug", OBSOLETE | CVF_NO_ARCHIVE, CVT_BYTE, &cfg.reverbDebug, 0, 1,
 	"1=Reverb debug information in the console.",
-	"Messages", OBSOLETE, CVT_INT, &showMessages, 0, 1, "1=Show messages.",
-	"ChatMacro0", OBSOLETE, CVT_CHARPTR, &chat_macros[0], 0, 0,
+	"Messages", OBSOLETE, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"ChatMacro0", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0,
 	"Chat macro 1.",
-	"ChatMacro1", OBSOLETE, CVT_CHARPTR, &chat_macros[1], 0, 0,
+	"ChatMacro1", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0,
 	"Chat macro 2.",
-	"ChatMacro2", OBSOLETE, CVT_CHARPTR, &chat_macros[2], 0, 0,
+	"ChatMacro2", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0,
 	"Chat macro 3.",
-	"ChatMacro3", OBSOLETE, CVT_CHARPTR, &chat_macros[3], 0, 0,
+	"ChatMacro3", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[3], 0, 0,
 	"Chat macro 4.",
-	"ChatMacro4", OBSOLETE, CVT_CHARPTR, &chat_macros[4], 0, 0,
+	"ChatMacro4", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[4], 0, 0,
 	"Chat macro 5.",
-	"ChatMacro5", OBSOLETE, CVT_CHARPTR, &chat_macros[5], 0, 0,
+	"ChatMacro5", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[5], 0, 0,
 	"Chat macro 6.",
-	"ChatMacro6", OBSOLETE, CVT_CHARPTR, &chat_macros[6], 0, 0,
+	"ChatMacro6", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[6], 0, 0,
 	"Chat macro 7.",
-	"ChatMacro7", OBSOLETE, CVT_CHARPTR, &chat_macros[7], 0, 0,
+	"ChatMacro7", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0,
 	"Chat macro 8.",
-	"ChatMacro8", OBSOLETE, CVT_CHARPTR, &chat_macros[8], 0, 0,
+	"ChatMacro8", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0,
 	"Chat macro 9.",
-	"ChatMacro9", OBSOLETE, CVT_CHARPTR, &chat_macros[9], 0, 0,
+	"ChatMacro9", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0,
 	"Chat macro 10.",
 	"NoMonsters", OBSOLETE, CVT_BYTE, &cfg.netNomonsters, 0, 1,
 	"1=No monsters.",
@@ -209,12 +200,8 @@ cvar_t  gameCVars[] = {
 	"1=Announce the discovery of secret areas.",
 	"EyeHeight", OBSOLETE, CVT_INT, &cfg.plrViewHeight, 41, 54,
 	"Player eye height. The original is 41.",
-	"MenuScale", OBSOLETE, CVT_FLOAT, &cfg.menuScale, .1f, 1,
-	"Scaling for menus.",
-	"MenuEffects", OBSOLETE, CVT_INT, &cfg.menuEffects, 0, 2,
-	"Disable menu effects: 1=type-in, 2=all.",
-	"CounterCheat", OBSOLETE, CVT_INT, &cfg.counterCheat, 0, 63,
-	"Automap kills/items/secret counter bitfield.",
+	"CounterCheat", OBSOLETE, CVT_BYTE, &cfg.counterCheat, 0, 63,
+	"6-bit bitfield. Show kills, items and secret counters in automap.",
 	"LevelTitle", OBSOLETE, CVT_BYTE, &cfg.levelTitle, 0, 1,
 	"1=Show level title and author in the beginning.",
 	"Menu_R", OBSOLETE, CVT_FLOAT, &cfg.menuColor[0], 0, 1,
@@ -285,34 +272,17 @@ cvar_t  gameCVars[] = {
 	"1=Lookspring active.",
 	"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1,
 	"1=Autoaiming disabled.",
-	"view-size", CVF_PROTECTED, CVT_INT, &screenblocks, 3, 11,
-	"View window size (3-11).",
+	"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13,
+	"View window size (3-13).",
+
 	"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20,
 	"Status bar size (1-20).",
-	"map-alpha", 0, CVT_FLOAT, &cfg.automapAlpha, 0, 1,
-	"Alpha level of the automap background.",
-	"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1,
-	"Alpha level of automap lines.",
-	"map-rotate", 0, CVT_INT, &cfg.automapRotate, 0, 1,
-	"1=Automap turns with player, up=forward.",
-	"map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1,
-	"1=Show door colors in automap.",
-	"map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200,
-	"Door glow thickness in the automap (with map-door-colors).",
-
-	"menu-flash-r", 0, CVT_FLOAT, &cfg.flashcolor[0], 0, 1,
-	"Menu selection flash color, red component.",
-	"menu-flash-g", 0, CVT_FLOAT, &cfg.flashcolor[1], 0, 1,
-	"Menu selection flash color, green component.",
-	"menu-flash-b", 0, CVT_FLOAT, &cfg.flashcolor[2], 0, 1,
-	"Menu selection flash color, blue component.",
-	"menu-flash-speed", 0, CVT_INT, &cfg.flashspeed, 0, 50,
-	"Menu selection flash speed.",
-	"menu-turningskull", 0, CVT_BYTE, &cfg.turningSkull, 0, 1,
-	"1=Menu skull turns at slider items.",
-	"menu-quitsound", 0, CVT_INT, &cfg.menuQuitSound, 0, 1,
-	"1=Play a sound when quitting the game.",
-
+	"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1,
+	"Status bar Alpha level.",
+	"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1,
+	"Status bar icons & counters Alpha level.",
+	"hud-face", 0, CVT_BYTE, &cfg.hudShown[HUD_FACE], 0, 1,
+	"1=Show Doom guy's face in HUD.",
 	"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1,
 	"1=Show health in HUD.",
 	"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1,
@@ -325,9 +295,11 @@ cvar_t  gameCVars[] = {
 	"1=Show deathmatch frags in HUD.",
 	"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10,
 	"Scaling for HUD info.",
-	"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, "HUD info color.",
-	"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, "HUD info color.",
-	"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, "HUD info color.",
+	"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, "HUD info color red component.",
+	"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, "HUD info color green component.",
+	"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, "HUD info color alpha component.",
+	"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1, "HUD info alpha value.",
+	"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1, "HUD icon alpha value.",
 	"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1,
 	"Debug: HUD shows all frags of all players.",
 
@@ -353,18 +325,16 @@ cvar_t  gameCVars[] = {
 	"music-custom", 0, CVT_BYTE, &cfg.customMusic, 0, 1,
 	"1=Enable custom (external) music files.",
 
-	"msg-show", 0, CVT_INT, &showMessages, 0, 1, "1=Show messages.",
-
-	"chat-macro0", 0, CVT_CHARPTR, &chat_macros[0], 0, 0, "Chat macro 1.",
-	"chat-macro1", 0, CVT_CHARPTR, &chat_macros[1], 0, 0, "Chat macro 2.",
-	"chat-macro2", 0, CVT_CHARPTR, &chat_macros[2], 0, 0, "Chat macro 3.",
-	"chat-macro3", 0, CVT_CHARPTR, &chat_macros[3], 0, 0, "Chat macro 4.",
-	"chat-macro4", 0, CVT_CHARPTR, &chat_macros[4], 0, 0, "Chat macro 5.",
-	"chat-macro5", 0, CVT_CHARPTR, &chat_macros[5], 0, 0, "Chat macro 6.",
-	"chat-macro6", 0, CVT_CHARPTR, &chat_macros[6], 0, 0, "Chat macro 7.",
-	"chat-macro7", 0, CVT_CHARPTR, &chat_macros[7], 0, 0, "Chat macro 8.",
-	"chat-macro8", 0, CVT_CHARPTR, &chat_macros[8], 0, 0, "Chat macro 9.",
-	"chat-macro9", 0, CVT_CHARPTR, &chat_macros[9], 0, 0, "Chat macro 10.",
+	"chat-macro0", 0, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0, "Chat macro 1.",
+	"chat-macro1", 0, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0, "Chat macro 2.",
+	"chat-macro2", 0, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0, "Chat macro 3.",
+	"chat-macro3", 0, CVT_CHARPTR, &cfg.chat_macros[3], 0, 0, "Chat macro 4.",
+	"chat-macro4", 0, CVT_CHARPTR, &cfg.chat_macros[4], 0, 0, "Chat macro 5.",
+	"chat-macro5", 0, CVT_CHARPTR, &cfg.chat_macros[5], 0, 0, "Chat macro 6.",
+	"chat-macro6", 0, CVT_CHARPTR, &cfg.chat_macros[6], 0, 0, "Chat macro 7.",
+	"chat-macro7", 0, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0, "Chat macro 8.",
+	"chat-macro8", 0, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0, "Chat macro 9.",
+	"chat-macro9", 0, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0, "Chat macro 10.",
 
 	// Game settings for servers.
 	"server-game-nomonsters", 0, CVT_BYTE, &cfg.netNomonsters, 0, 1,
@@ -412,6 +382,14 @@ cvar_t  gameCVars[] = {
 	"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1,
 	"Player movement speed modifier.",
 
+	// Compatibility options
+	"game-raiseghosts", 0, CVT_BYTE, &cfg.raiseghosts, 0, 1,
+	"1= Archviles raise ghosts from squished corpses.",
+	"game-maxskulls", 0, CVT_BYTE, &cfg.maxskulls, 0, 1,
+	"1= Pain Elementals can't spawn Lost Souls if more than twenty already exist.",
+	"game-skullsinwalls", 0, CVT_BYTE, &cfg.allowskullsinwalls, 0, 1,
+	"1= Pain Elementals can spawn Lost Souls inside walls.",
+
 	"game-fastmonsters", 0, CVT_BYTE, &fastparm, 0, 1,
 	"1=Fast monsters in non-demo single player.",
 	"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1,
@@ -420,32 +398,19 @@ cvar_t  gameCVars[] = {
 	"Corpse vanish time in seconds, 0=disabled.",
 	"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1,
 	"1=Corpses slide down stairs and ledges.",
-	"msg-secret", 0, CVT_INT, &cfg.secretMsg, 0, 1,
-	"1=Announce the discovery of secret areas.",
 
-	"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1, "Scaling for menus.",
-	"menu-effect", 0, CVT_INT, &cfg.menuEffects, 0, 2,
-	"Disable menu effects: 1=type-in, 2=all.",
-	"map-cheat-counter", 0, CVT_INT, &cfg.counterCheat, 0, 63,
-	"Automap kills/items/secret counter bitfield.",
 	"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1,
 	"1=Show level title and author in the beginning.",
 	"hud-title-noidsoft", 0, CVT_BYTE, &cfg.hideAuthorIdSoft, 0, 1,
 	"1=Don't show map author if it's \"id Software\".",
-	"menu-color-r", 0, CVT_FLOAT, &cfg.menuColor[0], 0, 1,
-	"Menu color red component.",
-	"menu-color-g", 0, CVT_FLOAT, &cfg.menuColor[1], 0, 1,
-	"Menu color green component.",
-	"menu-color-b", 0, CVT_FLOAT, &cfg.menuColor[2], 0, 1,
-	"Menu color blue component.",
-	"menu-glitter", 0, CVT_FLOAT, &cfg.menuGlitter, 0, 1,
-	"Strength of type-in glitter.",
-	"menu-fog", 0, CVT_INT, &cfg.menuFog, 0, 2,
-	"Menu fog mode: 0=shimmer, 1=black smoke, 2=blue vertical.",
-	"menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 1,
-	"1=Enable the Patch Replacement strings.",
-	"menu-shadow", 0, CVT_FLOAT, &cfg.menuShadow, 0, 1,
-	"Menu text shadow darkness.",
+
+	"msg-show", 0, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"msg-secret", 0, CVT_INT, &cfg.secretMsg, 0, 1,
+	"1=Announce the discovery of secret areas.",
+
+	"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2,
+	"Alignment of HUD messages. 0 = left, 1 = center, 2 = right.",
+
 	"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8,
 	"Number of HUD messages displayed at the same time.",
 	"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0,
@@ -454,6 +419,9 @@ cvar_t  gameCVars[] = {
 	"Number of tics to keep HUD messages on screen.",
 	"msg-blink", 0, CVT_BYTE, &cfg.msgBlink, 0, 1,
 	"1=HUD messages blink when they're printed.",
+	"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1, "Color of HUD messages red component.",
+	"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1, "Color of HUD messages green component.",
+	"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1, "Color of HUD messages blue component.",
 
 	"xg-dev", 0, CVT_INT, &xgDev, 0, 1, "1=Print XG debug messages.",
 
@@ -479,22 +447,10 @@ ccmd_t  gameCCmds[] = {
 	"reveal", CCmdCheatReveal, "Map cheat.",
 	"give", CCmdCheatGive, "Gives you weapons, ammo, power-ups, etc.",
 	"kill", CCmdCheatMassacre, "Kill all the monsters on the level.",
+	"suicide", 	CCmdSuicide, "Kill yourself. What did you think?",
 	"doomfont", CCmdDoomFont, "Use the Doom font in the console.",
 	"beginchat", CCmdBeginChat, "Begin chat mode.",
 	"msgrefresh", CCmdMsgRefresh, "Show last HUD message.",
-	"automap", CCmdAutoMap, "Show automap.",
-
-	// Menu Actions
-	"helpscreen", CCmdMenuAction, "Show the Help screens.",
-	"savegame", CCmdMenuAction, "Open the save game menu.",
-	"loadgame", CCmdMenuAction, "Open the load game menu.",
-	"soundmenu", CCmdMenuAction, "Open the sound settings menu.",
-	"quicksave", CCmdMenuAction, "Quicksave the game.",
-	"endgame", CCmdMenuAction, "End the game.",
-	"togglemsgs", CCmdMenuAction, "Messages on/off.",
-	"quickload", CCmdMenuAction, "Load the quicksaved game.",
-	"quit", CCmdMenuAction, "Quit the game and return to the OS.",
-	"togglegamma", CCmdMenuAction, "Cycle gamma correction levels.",
 
 	"startinf", CCmdStartInFine, "Start an InFine script.",
 	"stopinf", CCmdStopInFine, "Stop the currently playing interlude/finale.",
@@ -550,9 +506,45 @@ int CCmdScreenShot(int argc, char **argv)
 	return true;
 }
 
+void SuicideResponse(int option, void *data)
+{
+	if(option != 'y')
+		return;
+
+	GL_Update(DDUF_BORDER);
+	mn_SuicideConsole = true;	
+}
+
+int CCmdSuicide(int argc, char **argv)
+{
+	if(gamestate != GS_LEVEL)
+	{	
+		S_LocalSound(sfx_oof, NULL);
+		Con_Printf("Can only suicide when in a game!\n", argv[0]);
+		return true;
+
+	}
+
+	if(deathmatch)
+	{
+		S_LocalSound(sfx_oof, NULL);
+		Con_Printf("Can't suicide during a deathmatch!\n", argv[0]);
+		return true;		
+	}
+
+	if (!stricmp(argv[0], "suicide"))
+	{
+		Con_Open(false);
+		menuactive = false;
+		M_StartMessage("Are you sure you want to suicide?\n\nPress Y or N.", SuicideResponse, true);
+		return true;
+	}
+	return false;
+}
+
 int CCmdViewSize(int argc, char **argv)
 {
-	int     min = 3, max = 11, *val = &screenblocks;
+	int     min = 3, max = 13, *val = &cfg.screenblocks;
 
 	if(argc != 2)
 	{
@@ -567,15 +559,9 @@ int CCmdViewSize(int argc, char **argv)
 		val = &cfg.sbarscale;
 	}
 	if(!stricmp(argv[1], "+"))
-	{
 		(*val)++;
-		S_LocalSound(sfx_stnmov, NULL);
-	}
 	else if(!stricmp(argv[1], "-"))
-	{
 		(*val)--;
-		S_LocalSound(sfx_stnmov, NULL);
-	}
 	else
 		*val = strtol(argv[1], NULL, 0);
 
@@ -585,7 +571,7 @@ int CCmdViewSize(int argc, char **argv)
 		*val = max;
 
 	// Update the view size if necessary.
-	R_SetViewSize(screenblocks, 0);
+	R_SetViewSize(cfg.screenblocks, 0);
 	return true;
 }
 
@@ -604,7 +590,7 @@ int ConTextOut(char *text, int x, int y)
 	int     old = typein_time;
 
 	typein_time = 0xffffff;
-	M_WriteText2(x, y, text, hu_font_a, -1, -1, -1);
+	M_WriteText2(x, y, text, hu_font_a, -1, -1, -1, -1);
 	typein_time = old;
 	return 0;
 }

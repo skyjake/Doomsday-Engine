@@ -40,7 +40,7 @@
 #include "wi_stuff.h"
 #include "st_stuff.h"
 
-#include "am_map.h"
+#include "../Common/am_map.h"
 #include "p_setup.h"
 #include "p_saveg.h"
 #include "d_main.h"
@@ -346,6 +346,7 @@ void D_PreInit(void)
 	cfg.joyaxis[0] = JOYAXIS_TURN;
 	cfg.joyaxis[1] = JOYAXIS_MOVE;
 	cfg.sbarscale = 20;			// Full size.
+	cfg.screenblocks = cfg.setblocks = 10;
 	cfg.echoMsg = true;
 	cfg.lookSpeed = 3;
 	cfg.usePatchReplacement = true;
@@ -363,9 +364,12 @@ void D_PreInit(void)
 	cfg.hudShown[HUD_AMMO] = true;
 	cfg.hudShown[HUD_KEYS] = true;
 	cfg.hudShown[HUD_FRAGS] = true;
+	cfg.hudShown[HUD_FACE] = false;
 	cfg.hudScale = .6f;
 	cfg.hudColor[0] = 1;
 	cfg.hudColor[1] = cfg.hudColor[2] = 0;
+	cfg.hudColor[3] = 1;
+	cfg.hudIconAlpha = 1;
 	cfg.xhairSize = 1;
 	for(i = 0; i < 4; i++)
 		cfg.xhairColor[i] = 255;
@@ -385,14 +389,57 @@ void D_PreInit(void)
 	cfg.levelTitle = true;
 	cfg.hideAuthorIdSoft = true;
 	cfg.menuColor[0] = 1;
-	cfg.automapAlpha = .6f;
-	cfg.automapLineAlpha = 1;
+	cfg.menuColor2[0] = 1;
+	cfg.menuSlam = false;
+
+	cfg.maxskulls = true;
+	cfg.allowskullsinwalls = false;
+
+	cfg.statusbarAlpha = 1;
+	cfg.statusbarCounterAlpha = 1;
+
+	cfg.automapPos = 5;
+	cfg.automapWidth = 1.0f;
+	cfg.automapHeight = 1.0f;
+
+	cfg.automapL0[0] = 0.4f;	// Unseen areas
+	cfg.automapL0[1] = 0.4f;
+	cfg.automapL0[2] = 0.4f;
+
+	cfg.automapL1[0] = 1.0f;	// onesided lines 
+	cfg.automapL1[1] = 0.0f;
+	cfg.automapL1[2] = 0.0f;
+
+	cfg.automapL2[0] = 0.77f;	// floor height change lines
+	cfg.automapL2[1] = 0.6f;
+	cfg.automapL2[2] = 0.325f;
+
+	cfg.automapL3[0] = 1.0f;	// ceiling change lines
+	cfg.automapL3[1] = 0.95f;
+	cfg.automapL3[2] = 0.0f;
+
+	cfg.automapBack[0] = 0.0f;
+	cfg.automapBack[1] = 0.0f;
+	cfg.automapBack[2] = 0.0f;
+	cfg.automapBack[3] = 0.7f;
+	cfg.automapLineAlpha = .7f;
 	cfg.automapShowDoors = true;
-	cfg.automapDoorGlow = true;
+	cfg.automapDoorGlow = 8;
+	cfg.automapHudDisplay = 2;
+	cfg.automapRotate = true;
+	cfg.automapBabyKeys = false;
+	cfg.counterCheatScale = .7f; //From jHeretic
+
+	cfg.msgShow = true;
 	cfg.msgCount = 4;
 	cfg.msgScale = .8f;
 	cfg.msgUptime = 5 * TICSPERSEC;
+	cfg.msgAlign = ALIGN_LEFT;
 	cfg.msgBlink = true;
+
+	cfg.msgColor[0] = 1;
+	cfg.msgColor[1] = cfg.msgColor[2] = 0;
+
 	cfg.customMusic = true;
 	cfg.killMessages = true;
 	cfg.bobWeapon = 1;
@@ -406,8 +453,13 @@ void D_PreInit(void)
 	R_SetDataPath("}Data\\jDoom\\");
 	Con_DefineActions(actions);
 	Set(DD_SKYFLAT_NAME, (int) SKYFLATNAME);
-	// Add the JDoom cvars and ccmds to the console databases.
-	D_ConsoleRegistration();
+
+	// Add the cvars and ccmds to the console databases
+
+	D_ConsoleRegistration();	// main command list
+	G_Register();			// read-only game status cvars (for playsim)
+	AM_Register();			// for the automap
+	MN_Register();			// for the menu
 
 	DD_AddStartupWAD("}Data\\jDoom\\jDoom.wad");	// FONTA and FONTB, M_THERM2
 	DetectIWADs();
@@ -424,7 +476,7 @@ void D_PreInit(void)
 	modifiedgame = false;
 }
 
-char   *BorderLumps[] = {
+char   *borderLumps[] = {
 	"FLOOR7_2",
 	"brdr_t",
 	"brdr_r",
@@ -449,9 +501,10 @@ void D_PostInit(void)
 
 	SV_Init();
 	XG_ReadTypes();
+	XG_Register();			// register XG classnames
 
 	D_DefaultBindings();
-	R_SetViewSize(screenblocks, 0);
+	R_SetViewSize(cfg.screenblocks, 0);
 	G_SetGlowing();
 
 	// Initialize weapon info using definitions.
@@ -490,8 +543,8 @@ void D_PostInit(void)
 	}
 
 	if(gamemode == commercial)	// Doom2 has a different background.
-		BorderLumps[0] = "GRNROCK";
-	R_SetBorderGfx(BorderLumps);
+		borderLumps[0] = "GRNROCK";
+	R_SetBorderGfx(borderLumps);
 
 	// get skill / episode / map from parms
 	gameskill = startskill = sk_medium;
@@ -604,8 +657,8 @@ void D_PostInit(void)
 	Con_Message("ST_Init: Init status bar.\n");
 	ST_Init();
 
-	Con_Message("M_Init: Init miscellaneous info.\n");
-	M_Init();
+	Con_Message("MN_Init: Init miscellaneous info.\n");
+	MN_Init();
 
 	p = ArgCheck("-loadgame");
 	if(p && p < myargc - 1)
@@ -633,7 +686,7 @@ void D_Shutdown(void)
 
 void D_Ticker(void)
 {
-	M_Ticker();
+	MN_Ticker();
 	G_Ticker();
 }
 
