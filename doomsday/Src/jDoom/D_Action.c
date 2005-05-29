@@ -85,6 +85,18 @@ action_t actions[NUM_ACTIONS + 1] = {
 	,							// Weapon cycle 1: fist/chain saw
 	{"weapon3", 0}
 	,							// Weapon cycle 2: shotgun/super shotgun
+	{"mzoomin", 0}
+	,
+	{"mzoomout", 0}
+	,
+	{"mpanup", 0}
+	,
+	{"mpandown", 0}
+	,
+	{"mpanleft", 0}
+	,
+	{"mpanright", 0}
+	,
 	{"", 0}						// A terminator.
 };
 
