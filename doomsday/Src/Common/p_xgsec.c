@@ -25,9 +25,16 @@
 
 #ifdef __JHERETIC__
 #  include "jHeretic/Doomdef.h"
-#  include "jHeretic/settings.h"
+#  include "jHeretic/d_config.h"
 #  include "jHeretic/P_local.h"
 #  include "jHeretic/Soundst.h"
+#endif
+
+#ifdef __JSTRIFE__
+#  include "jStrife/h2def.h"
+#  include "jStrife/d_config.h"
+#  include "jStrife/p_local.h"
+#  include "jStrife/Soundst.h"
 #endif
 
 #include "p_xgline.h"
@@ -61,6 +68,7 @@ void    XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern mobj_t dummything;
+extern boolean xgdatalumps;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -245,7 +253,8 @@ void XS_SetSectorType(struct sector_s *sec, int special)
 		{
 			angle_t angle = 0;
 
-			XL_TraverseLines(0, LREF_TAGGED, info->act_tag, (int) sec, &angle,
+			// -1 to support binary XG data with old flag values
+			XL_TraverseLines(0, xgdatalumps? LREF_TAGGED -1: LREF_TAGGED, info->act_tag, (int) sec, &angle,
 							 XLTrav_LineAngle);
 			// Convert to degrees.
 			if(info->flags & STF_ACT_TAG_TEXMOVE)
@@ -781,6 +790,19 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
 			*planesector = actline->frontsector;
 		return true;
 	}
+	if(ref == SPREF_BACK_FLOOR)
+	{
+		if(!actline || !actline->backsector)
+			return false;
+		// Actline's back floor.
+		if(height)
+			*height = actline->backsector->floorheight;
+		if(pic)
+			*pic = actline->backsector->floorpic;
+		if(planesector)
+			*planesector = actline->backsector;
+		return true;
+	}
 	if(ref == SPREF_MY_CEILING)
 	{
 		if(!actline || !actline->frontsector)
@@ -792,6 +814,19 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
 			*pic = actline->frontsector->ceilingpic;
 		if(planesector)
 			*planesector = actline->frontsector;
+		return true;
+	}
+	if(ref == SPREF_BACK_CEILING)
+	{
+		if(!actline || !actline->backsector)
+			return false;
+		// Actline's back ceiling.
+		if(height)
+			*height = actline->backsector->ceilingheight;
+		if(pic)
+			*pic = actline->backsector->ceilingpic;
+		if(planesector)
+			*planesector = actline->backsector;
 		return true;
 	}
 	if(ref == SPREF_ORIGINAL_FLOOR)
@@ -1254,6 +1289,11 @@ int XSTrav_SectorLight(sector_t *sector, boolean ceiling, int data,
 			uselevel = line->frontsector->lightlevel;
 			break;
 
+		case LIGHTREF_BACK:
+			if(line->backsector)
+				uselevel = line->backsector->lightlevel;
+			break;
+
 		case LIGHTREF_ORIGINAL:
 			uselevel = sector->origlight;
 			break;
@@ -1308,6 +1348,11 @@ int XSTrav_SectorLight(sector_t *sector, boolean ceiling, int data,
 		{
 		case LIGHTREF_MY:
 			memcpy(usergb, line->frontsector->rgb, 3);
+			break;
+
+		case LIGHTREF_BACK:
+			if(line->backsector)
+				memcpy(usergb, line->backsector->rgb, 3);
 			break;
 
 		case LIGHTREF_ORIGINAL:

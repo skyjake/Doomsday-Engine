@@ -21,6 +21,11 @@
 #  include "jHeretic/P_local.h"
 #endif
 
+#ifdef __JSTRIFE__
+#  include "jStrife/h2def.h"
+#  include "jStrife/p_local.h"
+#endif
+
 #include "p_saveg.h"
 #include "p_xg.h"
 

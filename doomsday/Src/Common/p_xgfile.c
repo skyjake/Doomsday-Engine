@@ -15,6 +15,10 @@
 #  include "Doomdef.h"
 #endif
 
+#ifdef __JSTRIFE__
+#  include "jStrife/h2def.h"
+#endif
+
 #include "p_xg.h"
 
 // MACROS ------------------------------------------------------------------
@@ -36,6 +40,8 @@ typedef enum {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+boolean xgdatalumps = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -274,6 +280,8 @@ void XG_ReadXGLump(char *name)
 
 	if(lump < 0)
 		return;					// No such lump.
+
+	xgdatalumps = true;
 
 	Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.\n");
 
