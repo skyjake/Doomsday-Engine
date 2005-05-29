@@ -10,6 +10,9 @@
 //**
 //**************************************************************************
 
+#ifndef __P_SPEC_H__
+#define __P_SPEC_H__
+
 //#pragma pack(1)
 
 extern int     *TerrainTypes;
@@ -546,3 +549,5 @@ boolean         EV_ThingRemove(int tid);
 boolean         EV_ThingDestroy(int tid);
 
 //#pragma pack()
+
+#endif

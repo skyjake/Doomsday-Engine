@@ -1,3 +1,5 @@
+#ifndef __P_SPEC_H__
+#define __P_SPEC_H__
 
 // P_spec.h
 
@@ -389,3 +391,5 @@ boolean         P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle);
 boolean         EV_Teleport(line_t *line, int side, mobj_t *thing);
 
 #pragma pack()
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef __ST_STUFF_H__
+#define __ST_STUFF_H__
+
 // Called by main loop.
 boolean         ST_Responder(event_t *ev);
 
@@ -29,3 +32,5 @@ typedef enum {
 	WaitDestState,
 	GetChatState
 } st_chatstateenum_t;
+
+#endif
