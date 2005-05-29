@@ -5,7 +5,9 @@
 #include "jHeretic/P_local.h"
 #include "jHeretic/Sounds.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/settings.h"
+#include "jHeretic/d_config.h"
+#include "jHeretic/st_stuff.h"
+#include "hu_stuff.h"
 #include <math.h>
 
 #define VANISHTICS	(2*TICSPERSEC)	// $vanish
@@ -1179,6 +1181,15 @@ void P_SpawnPlayer(mapthing_t * mthing, int plrnum)
 	{
 		playerkeys = 0;
 		GL_Update(DDUF_STATBAR);
+	}
+
+	if(plrnum == consoleplayer)
+	{
+		// wake up the status bar
+		ST_Start();
+
+		// wake up the heads up text
+		HU_Start();
 	}
 }
 

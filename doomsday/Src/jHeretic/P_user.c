@@ -5,7 +5,7 @@
 #include "jHeretic/P_local.h"
 #include "p_view.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/settings.h"
+#include "jHeretic/d_config.h"
 
 void    P_PlayerNextArtifact(player_t *player);
 
@@ -594,7 +594,6 @@ void P_ClientSideThink()
 	pl->messageTics--;			// Can go negative
 	if(!pl->messageTics)
 	{							// Refresh the screen when a message goes away
-		ultimatemsg = false;	// clear out any chat messages.
 		//BorderTopRefresh = true;
 		GL_Update(DDUF_TOP);
 	}
@@ -746,7 +745,6 @@ void P_PlayerThink(player_t *player)
 	player->messageTics--;		// Can go negative
 	if(!player->messageTics)
 	{							// Refresh the screen when a message goes away
-		ultimatemsg = false;	// clear out any chat messages.
 		//BorderTopRefresh = true;
 		GL_Update(DDUF_TOP);
 	}
