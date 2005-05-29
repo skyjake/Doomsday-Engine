@@ -318,6 +318,8 @@
 
 #define AMSTR_FOLLOWON GET_TXT(TXT_AMSTR_FOLLOWON)
 #define AMSTR_FOLLOWOFF GET_TXT(TXT_AMSTR_FOLLOWOFF)
+#define AMSTR_ROTATEON GET_TXT(TXT_AMSTR_ROTATEON)
+#define AMSTR_ROTATEOFF GET_TXT(TXT_AMSTR_ROTATEOFF)
 
 #define AMSTR_GRIDON GET_TXT(TXT_AMSTR_GRIDON)
 #define AMSTR_GRIDOFF GET_TXT(TXT_AMSTR_GRIDOFF)
@@ -433,6 +435,9 @@
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2005/05/29 05:37:55  danij
+// Added textdefs for automap messages and XG class names. Updated style (uses spaces rather than tabs).
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //
