@@ -167,7 +167,7 @@ typedef enum {
 	it_yellowskull,
 	it_redskull,
 
-	NUMCARDS
+	NUMKEYS
 } card_t;
 
 // The defined weapons,

@@ -173,7 +173,7 @@ typedef struct player_s {
 
 	// Power ups. invinc and invis are tic counters.
 	int             powers[NUMPOWERS];
-	boolean         cards[NUMCARDS];
+	boolean         keys[NUMKEYS];
 	boolean         backpack;
 
 	int             frags[MAXPLAYERS];
@@ -281,6 +281,9 @@ typedef struct {
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2005/05/29 05:56:55  danij
+// Commonised key arrays. Game Status Cvars.
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

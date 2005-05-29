@@ -29,6 +29,8 @@
 //
 // GAME
 //
+void		G_Register(void);
+
 void            G_DeathMatchSpawnPlayer(int playernum);
 
 boolean         G_ValidateMap(int *episode, int *map);
@@ -81,6 +83,9 @@ void            G_QueueBody(mobj_t *body);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.8  2005/05/29 05:56:55  danij
+// Commonised key arrays. Game Status Cvars.
+//
 // Revision 1.7  2004/05/30 08:42:35  skyjake
 // Tweaked indentation style
 //
