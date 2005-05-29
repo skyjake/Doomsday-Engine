@@ -12,10 +12,13 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h2def.h"
+#include "jHexen/h2def.h"
 #include "jHexen/p_local.h"
 #include "jHexen/soundst.h"
-#include "jHexen/settings.h"
+#include "Common/hu_stuff.h"
+#include "jHexen/st_stuff.h"
+#include "jHexen/d_config.h"
+#include "Common/st_lib.h"
 #include "d_net.h"
 
 #ifdef DEMOCAM
@@ -45,6 +48,68 @@ typedef enum {
 	CHT_PUZZLE
 } cheattype_t;
 
+// inventory
+#define ST_INVENTORYX			50
+#define ST_INVENTORYY			163
+
+// how many inventory slots are visible
+#define NUMVISINVSLOTS 7
+
+// invslot artifact count (relative to each slot)
+#define ST_INVCOUNTOFFX			30
+#define ST_INVCOUNTOFFY			22
+
+// current artifact (sbbar)
+#define ST_ARTIFACTWIDTH	24
+#define ST_ARTIFACTX			143
+#define ST_ARTIFACTY			163
+
+// current artifact count (sbar)
+#define ST_ARTIFACTCWIDTH	2
+#define ST_ARTIFACTCX			174
+#define ST_ARTIFACTCY			184
+
+// HEALTH number pos.
+#define ST_HEALTHWIDTH		3
+#define ST_HEALTHX			64
+#define ST_HEALTHY			176
+
+// MANA A
+#define ST_MANAAWIDTH		3
+#define ST_MANAAX			91
+#define ST_MANAAY			181
+
+// MANA A ICON
+#define ST_MANAAICONX			77
+#define ST_MANAAICONY			164
+
+// MANA A VIAL
+#define ST_MANAAVIALX			94
+#define ST_MANAAVIALY			164
+
+// MANA B
+#define ST_MANABWIDTH		3
+#define ST_MANABX			123
+#define ST_MANABY			181
+
+// MANA B ICON
+#define ST_MANABICONX			110
+#define ST_MANABICONY			164
+
+// MANA B VIAL
+#define ST_MANABVIALX			102
+#define ST_MANABVIALY			164
+
+// ARMOR number pos.
+#define ST_ARMORWIDTH		2
+#define ST_ARMORX			274
+#define ST_ARMORY			176
+
+// Frags pos.
+#define ST_FRAGSWIDTH		3
+#define ST_FRAGSX			64
+#define ST_FRAGSY			176
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct Cheat_s {
@@ -59,20 +124,18 @@ typedef struct Cheat_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    SB_PaletteFlash(boolean forceChange);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 //static void DrawSoundInfo(void);
-static void DrINumber(signed int val, int x, int y);
+static void DrINumber(signed int val, int x, int y, float r, float g, float b, float a);
 static void DrRedINumber(signed int val, int x, int y);
-static void DrBNumber(signed int val, int x, int y);
-static void DrawCommonBar(void);
-static void DrawMainBar(void);
-static void DrawInventoryBar(void);
+static void DrBNumber(signed int val, int x, int y, float Red, float Green, float Blue, float Alpha);
+static void DrawChain(void);
+void ST_drawWidgets(boolean refresh);
+static void DrawInventoryItems(void);
 static void DrawKeyBar(void);
 static void DrawWeaponPieces(void);
-static void DrawFullScreenStuff(void);
+static void ST_doFullscreenStuff(void);
 static void DrawAnimatedIcons(void);
 static boolean HandleCheats(byte key);
 static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean *eat);
@@ -113,6 +176,8 @@ extern byte *memscreen;
 extern int ArmorIncrement[NUMCLASSES][NUMARMOR];
 extern int AutoArmorSave[NUMCLASSES];
 
+extern boolean automapactive;
+
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
 int     DebugSound;				// Debug flag for displaying sound info
@@ -121,54 +186,235 @@ int     curpos;
 int     inv_ptr;
 int     ArtifactFlash;
 
+// ST_Start() has just been called
+static boolean st_firsttime;
+
+// fullscreen hud alpha value
+static float hudalpha = 0.0f;
+
+// slide statusbar amount 1.0 is fully open
+static float showbar = 0.0f;
+
+// whether left-side main status bar is active
+static boolean st_statusbaron;
+
+// main player in game
+static player_t *plyr;
+
+// used for timing
+static unsigned int st_clock;
+
+// used when in chat 
+static st_chatstateenum_t st_chatstate;
+
+// whether in automap or first-person
+static st_stateenum_t st_gamestate;
+
+// whether status bar chat is active
+static boolean st_chat;
+
+// value of st_chat before message popped up
+static boolean st_oldchat;
+
+// whether chat window has the cursor on
+static boolean st_cursoron;
+
+// current inventory slot indices. 0 = none
+static int st_invslot[NUMVISINVSLOTS];
+
+// current inventory slot count indices. 0 = none
+static int st_invslotcount[NUMVISINVSLOTS];
+
+// current armor level
+static int armorlevel = 0;
+
+// current artifact index. 0 = none
+static int st_artici = 0;
+
+// current artifact widget
+static st_multicon_t w_artici;
+
+// current artifact count widget
+static st_number_t w_articount;
+
+// inventory slot widgets
+static st_multicon_t w_invslot[NUMVISINVSLOTS];
+
+// inventory slot count widgets
+static st_number_t w_invslotcount[NUMVISINVSLOTS];
+
+// current mana A icon index. 0 = none
+static int st_manaAicon = 0;
+
+// current mana B icon index. 0 = none
+static int st_manaBicon = 0;
+
+// current mana A vial index. 0 = none
+static int st_manaAvial = 0;
+
+// current mana B vial index. 0 = none
+static int st_manaBvial = 0;
+
+// current mana A icon widget
+static st_multicon_t w_manaAicon;
+
+// current mana B icon widget
+static st_multicon_t w_manaBicon;
+
+// current mana A vial widget
+static st_multicon_t w_manaAvial;
+
+// current mana B vial widget
+static st_multicon_t w_manaBvial;
+
+// health widget
+static st_number_t w_health;
+
+// in deathmatch only, summary of frags stats
+static st_number_t w_frags;
+
+// armor widget
+static st_number_t w_armor;
+
+// current mana level
+static int manaACount = 0;
+static int manaBCount = 0;
+
+// mana A counter widget
+static st_number_t w_manaACount;
+
+// mana B widget
+static st_number_t w_manaBCount;
+
+// used by the mana glympf and vials
+static int     manaPatchNum1, manaPatchNum2, manaVialPatchNum1, manaVialPatchNum2;
+
+ // number of frags so far in deathmatch
+static int st_fragscount;
+
+// !deathmatch
+static boolean st_fragson;
+
+
 /*#ifndef __WATCOMC__
    boolean i_CDMusic; // in Watcom, defined in i_ibm
    #endif */
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// whether to use alpha blending
+static boolean st_blended = false;
+
 static byte CheatLookup[256];
 static int HealthMarker;
 static player_t *CPlayer;
-static int SpinFlylump;
-static int SpinMinotaurLump;
-static int SpinSpeedLump;
-static int SpinDefenseLump;
+
 
 static int FontBNumBase;
-static int PlayPalette;
+int lu_palette;
 
-static int PatchNumH2BAR;
-static int PatchNumH2TOP;
-static int PatchNumLFEDGE;
-static int PatchNumRTEDGE;
-static int PatchNumKILLS;
-static int PatchNumMANAVIAL1;
-static int PatchNumMANAVIAL2;
-static int PatchNumMANAVIALDIM1;
-static int PatchNumMANAVIALDIM2;
-static int PatchNumMANADIM1;
-static int PatchNumMANADIM2;
-static int PatchNumMANABRIGHT1;
-static int PatchNumMANABRIGHT2;
-static int PatchNumCHAIN;
-static int PatchNumSTATBAR;
-static int PatchNumKEYBAR;
+static int oldarti = 0;
+static int oldartiCount = 0;
+
+static int oldhealth = -1;
+
+/*
+   static int oldarti = 0;
+   static int oldartiCount = 0;
+   static int oldfrags = -9999;
+   static int oldmana1 = -1;
+   static int oldmana2 = -1;
+   static int oldarmor = -1;
+   static int oldlife = -1;
+   static int oldpieces = -1;
+   static int oldweapon = -1;
+   static int oldkeys = -1;
+ */
+
+static dpatch_t PatchNumH2BAR;
+static dpatch_t PatchNumH2TOP;
+static dpatch_t PatchNumLFEDGE;
+static dpatch_t PatchNumRTEDGE;
+static dpatch_t PatchNumKILLS;
+static dpatch_t PatchNumMANAVIAL1;
+static dpatch_t PatchNumMANAVIAL2;
+static dpatch_t PatchNumMANAVIALDIM1;
+static dpatch_t PatchNumMANAVIALDIM2;
+static dpatch_t PatchNumMANADIM1;
+static dpatch_t PatchNumMANADIM2;
+static dpatch_t PatchNumMANABRIGHT1;
+static dpatch_t PatchNumMANABRIGHT2;
+static dpatch_t PatchNumCHAIN;
+static dpatch_t PatchNumSTATBAR;
+static dpatch_t PatchNumKEYBAR;
+static dpatch_t PatchNumSELECTBOX;
+static dpatch_t PatchNumINumbers[10];
+static dpatch_t PatchNumNEGATIVE;
+static dpatch_t PatchNumSmNumbers[10];
+static dpatch_t PatchMANAAVIALS[2];
+static dpatch_t PatchMANABVIALS[2];
+static dpatch_t PatchMANAAICONS[2];
+static dpatch_t PatchMANABICONS[2];
+static dpatch_t PatchNumINVBAR;
+static dpatch_t PatchNumWEAPONSLOT;
+static dpatch_t PatchNumWEAPONFULL;
+static dpatch_t PatchNumPIECE1;
+static dpatch_t PatchNumPIECE2;
+static dpatch_t PatchNumPIECE3;
+static dpatch_t PatchNumINVLFGEM1;
+static dpatch_t PatchNumINVLFGEM2;
+static dpatch_t PatchNumINVRTGEM1;
+static dpatch_t PatchNumINVRTGEM2;
+
+static dpatch_t     PatchARTIFACTS[38];
+
+static dpatch_t SpinFlylump;
+static dpatch_t SpinMinotaurLump;
+static dpatch_t SpinSpeedLump;
+static dpatch_t SpinDefenseLump;
+
 static int PatchNumLIFEGEM;
-static int PatchNumSELECTBOX;
-static int PatchNumINumbers[10];
-static int PatchNumNEGATIVE;
-static int PatchNumSmNumbers[10];
-static int PatchNumINVBAR;
-static int PatchNumWEAPONSLOT;
-static int PatchNumWEAPONFULL;
-static int PatchNumPIECE1;
-static int PatchNumPIECE2;
-static int PatchNumPIECE3;
-static int PatchNumINVLFGEM1;
-static int PatchNumINVLFGEM2;
-static int PatchNumINVRTGEM1;
-static int PatchNumINVRTGEM2;
+
+char    artifactlist[][10] = {
+	{"USEARTIA"},				// use artifact flash
+	{"USEARTIB"},
+	{"USEARTIC"},
+	{"USEARTID"},
+	{"USEARTIE"},
+	{"ARTIBOX"},				// none
+	{"ARTIINVU"},				// invulnerability
+	{"ARTIPTN2"},				// health
+	{"ARTISPHL"},				// superhealth
+	{"ARTIHRAD"},				// healing radius
+	{"ARTISUMN"},				// summon maulator
+	{"ARTITRCH"},				// torch
+	{"ARTIPORK"},				// egg
+	{"ARTISOAR"},				// fly
+	{"ARTIBLST"},				// blast radius
+	{"ARTIPSBG"},				// poison bag
+	{"ARTITELO"},				// teleport other
+	{"ARTISPED"},				// speed
+	{"ARTIBMAN"},				// boost mana
+	{"ARTIBRAC"},				// boost armor
+	{"ARTIATLP"},				// teleport
+	{"ARTISKLL"},				// arti_puzzskull
+	{"ARTIBGEM"},				// arti_puzzgembig
+	{"ARTIGEMR"},				// arti_puzzgemred
+	{"ARTIGEMG"},				// arti_puzzgemgreen1
+	{"ARTIGMG2"},				// arti_puzzgemgreen2
+	{"ARTIGEMB"},				// arti_puzzgemblue1
+	{"ARTIGMB2"},				// arti_puzzgemblue2
+	{"ARTIBOK1"},				// arti_puzzbook1
+	{"ARTIBOK2"},				// arti_puzzbook2
+	{"ARTISKL2"},				// arti_puzzskull2
+	{"ARTIFWEP"},				// arti_puzzfweapon
+	{"ARTICWEP"},				// arti_puzzcweapon
+	{"ARTIMWEP"},				// arti_puzzmweapon
+	{"ARTIGEAR"},				// arti_puzzgear1
+	{"ARTIGER2"},				// arti_puzzgear2
+	{"ARTIGER3"},				// arti_puzzgear3
+	{"ARTIGER4"},				// arti_puzzgear4
+};
 
 // Toggle god mode
 static byte CheatGodSeq[] = {
@@ -510,66 +756,199 @@ static Cheat_t Cheats[] = {
 
 // CODE --------------------------------------------------------------------
 
+void ST_loadGraphics(void)
+{
+	int     i;
+
+	char    namebuf[9];
+
+	FontBNumBase = W_GetNumForName("FONTB16");	// to be removed
+
+	R_CachePatch(&PatchNumH2BAR, "H2BAR");
+	R_CachePatch(&PatchNumH2TOP, "H2TOP");
+	R_CachePatch(&PatchNumINVBAR, "INVBAR");
+	R_CachePatch(&PatchNumLFEDGE, "LFEDGE");
+	R_CachePatch(&PatchNumRTEDGE, "RTEDGE");
+	R_CachePatch(&PatchNumSTATBAR, "STATBAR");
+	R_CachePatch(&PatchNumKEYBAR, "KEYBAR");
+	R_CachePatch(&PatchNumSELECTBOX, "SELECTBOX");
+
+	R_CachePatch(&PatchMANAAVIALS[0], "MANAVL1D");
+	R_CachePatch(&PatchMANABVIALS[0], "MANAVL2D");
+	R_CachePatch(&PatchMANAAVIALS[1], "MANAVL1");
+	R_CachePatch(&PatchMANABVIALS[1], "MANAVL2");
+
+	R_CachePatch(&PatchMANAAICONS[0], "MANADIM1");
+	R_CachePatch(&PatchMANABICONS[0], "MANADIM2");
+	R_CachePatch(&PatchMANAAICONS[1], "MANABRT1");
+	R_CachePatch(&PatchMANABICONS[1], "MANABRT2");
+
+	R_CachePatch(&PatchNumINVLFGEM1, "invgeml1");
+	R_CachePatch(&PatchNumINVLFGEM2, "invgeml2");
+	R_CachePatch(&PatchNumINVRTGEM1, "invgemr1");
+	R_CachePatch(&PatchNumINVRTGEM2, "invgemr2");
+	R_CachePatch(&PatchNumNEGATIVE, "NEGNUM");
+	R_CachePatch(&PatchNumKILLS, "KILLS");
+	R_CachePatch(&SpinFlylump, "SPFLY0");
+	R_CachePatch(&SpinMinotaurLump, "SPMINO0");
+	R_CachePatch(&SpinSpeedLump, "SPBOOT0");
+	R_CachePatch(&SpinDefenseLump, "SPSHLD0");
+
+	for(i = 0; i < 10; i++)
+	{
+		sprintf(namebuf, "IN%d", i);
+		R_CachePatch(&PatchNumINumbers[i], namebuf);
+	}
+
+	for(i = 0; i < 10; i++)
+	{
+		sprintf(namebuf, "SMALLIN%d", i);
+		R_CachePatch(&PatchNumSmNumbers[i], namebuf);
+	}
+
+	// artifact icons (+5 for the use-artifact flash patches)
+	for(i = 0; i < (NUMARTIFACTS + 5); i++)
+	{
+		sprintf(namebuf, "%s", artifactlist[i]);
+		R_CachePatch(&PatchARTIFACTS[i], namebuf);
+	}
+
+}
+
 //==========================================================================
 //
 // SB_Init
 //
 //==========================================================================
 
-void SB_Init(void)
+void ST_loadData(void)
 {
 	int     i;
-	int     startLump;
 
-	PatchNumH2BAR = W_GetNumForName("H2BAR");
-	PatchNumH2TOP = W_GetNumForName("H2TOP");
-	PatchNumINVBAR = W_GetNumForName("INVBAR");
-	PatchNumLFEDGE = W_GetNumForName("LFEDGE");
-	PatchNumRTEDGE = W_GetNumForName("RTEDGE");
-	PatchNumSTATBAR = W_GetNumForName("STATBAR");
-	PatchNumKEYBAR = W_GetNumForName("KEYBAR");
-	PatchNumSELECTBOX = W_GetNumForName("SELECTBOX");
-	PatchNumMANAVIAL1 = W_GetNumForName("MANAVL1");
-	PatchNumMANAVIAL2 = W_GetNumForName("MANAVL2");
-	PatchNumMANAVIALDIM1 = W_GetNumForName("MANAVL1D");
-	PatchNumMANAVIALDIM2 = W_GetNumForName("MANAVL2D");
-	PatchNumMANADIM1 = W_GetNumForName("MANADIM1");
-	PatchNumMANADIM2 = W_GetNumForName("MANADIM2");
-	PatchNumMANABRIGHT1 = W_GetNumForName("MANABRT1");
-	PatchNumMANABRIGHT2 = W_GetNumForName("MANABRT2");
-	PatchNumINVLFGEM1 = W_GetNumForName("invgeml1");
-	PatchNumINVLFGEM2 = W_GetNumForName("invgeml2");
-	PatchNumINVRTGEM1 = W_GetNumForName("invgemr1");
-	PatchNumINVRTGEM2 = W_GetNumForName("invgemr2");
-
-	startLump = W_GetNumForName("IN0");
-	for(i = 0; i < 10; i++)
-	{
-		PatchNumINumbers[i] = startLump + i;
-	}
-	PatchNumNEGATIVE = W_GetNumForName("NEGNUM");
-	FontBNumBase = W_GetNumForName("FONTB16");
-	startLump = W_GetNumForName("SMALLIN0");
-	for(i = 0; i < 10; i++)
-	{
-		PatchNumSmNumbers[i] = startLump + i;
-	}
-	PlayPalette = W_GetNumForName("PLAYPAL");
-	SpinFlylump = W_GetNumForName("SPFLY0");
-	SpinMinotaurLump = W_GetNumForName("SPMINO0");
-	SpinSpeedLump = W_GetNumForName("SPBOOT0");
-	SpinDefenseLump = W_GetNumForName("SPSHLD0");
+	lu_palette = W_GetNumForName("PLAYPAL");
 
 	for(i = 0; i < 256; i++)
 	{
 		CheatLookup[i] = CHEAT_ENCRYPT(i);
 	}
 
-	//if(deathmatch)
-	//{
-	PatchNumKILLS = W_GetNumForName("KILLS");
-	//}
 	SB_SetClassData();
+
+	ST_loadGraphics();
+}
+
+void ST_initData(void)
+{
+	int i;
+
+	st_firsttime = true;
+	plyr = &players[consoleplayer];
+
+	st_clock = 0;
+	st_chatstate = StartChatState;
+	st_gamestate = FirstPersonState;
+
+	st_statusbaron = true;
+	st_oldchat = st_chat = false;
+	st_cursoron = false;
+
+	for(i = 0; i < NUMVISINVSLOTS; i++)
+	{
+		st_invslot[i] = 0;
+		st_invslotcount[i] = 0;
+	}
+
+	STlib_init();
+}
+
+void ST_createWidgets(void)
+{
+	int i, width, temp;
+
+	// health num
+	STlib_initNum(&w_health, ST_HEALTHX, ST_HEALTHY, PatchNumINumbers,
+					  &plyr->health, &st_statusbaron, ST_HEALTHWIDTH, &cfg.statusbarCounterAlpha);
+
+	// frags sum
+	STlib_initNum(&w_frags, ST_FRAGSX, ST_FRAGSY, PatchNumINumbers, &st_fragscount,
+				  &st_fragson, ST_FRAGSWIDTH, &cfg.statusbarCounterAlpha);
+
+	// armor num - should be colored later
+	STlib_initNum(&w_armor, ST_ARMORX, ST_ARMORY, PatchNumINumbers,
+					  &armorlevel, &st_statusbaron, ST_ARMORWIDTH, &cfg.statusbarCounterAlpha );
+
+	// manaA count
+	STlib_initNum(&w_manaACount, ST_MANAAX, ST_MANAAY, PatchNumSmNumbers,
+					  &manaACount, &st_statusbaron, ST_MANAAWIDTH, &cfg.statusbarCounterAlpha);
+
+	// manaB count
+	STlib_initNum(&w_manaBCount, ST_MANABX, ST_MANABY, PatchNumSmNumbers,
+					  &manaBCount, &st_statusbaron, ST_MANABWIDTH, &cfg.statusbarCounterAlpha);
+
+	// current mana A icon
+	STlib_initMultIcon(&w_manaAicon, ST_MANAAICONX, ST_MANAAICONY, PatchMANAAICONS, &st_manaAicon,
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
+
+	// current mana B icon
+	STlib_initMultIcon(&w_manaBicon, ST_MANABICONX, ST_MANABICONY, PatchMANABICONS, &st_manaBicon,
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
+
+	// current mana A vial
+	STlib_initMultIcon(&w_manaAvial, ST_MANAAVIALX, ST_MANAAVIALY, PatchMANAAVIALS, &st_manaAvial,
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
+
+	// current mana B vial
+	STlib_initMultIcon(&w_manaBvial, ST_MANABVIALX, ST_MANABVIALY, PatchMANABVIALS, &st_manaBvial,
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
+
+	// current artifact (stbar not inventory)
+	STlib_initMultIcon(&w_artici, ST_ARTIFACTX, ST_ARTIFACTY, PatchARTIFACTS, &st_artici,
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
+
+	// current artifact count
+	STlib_initNum(&w_articount, ST_ARTIFACTCX, ST_ARTIFACTCY, PatchNumSmNumbers,
+					  &oldartiCount, &st_statusbaron, ST_ARTIFACTCWIDTH, &cfg.statusbarCounterAlpha);
+
+	// inventory slots
+	width = PatchARTIFACTS[5].width + 1;
+	temp = 0;
+
+	for (i = 0; i < NUMVISINVSLOTS; i++){
+		// inventory slot icon
+		STlib_initMultIcon(&w_invslot[i], ST_INVENTORYX + temp , ST_INVENTORYY, PatchARTIFACTS, &st_invslot[i],
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
+
+		// inventory slot counter
+		STlib_initNum(&w_invslotcount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX, ST_INVENTORYY + ST_INVCOUNTOFFY, PatchNumSmNumbers,
+					  &st_invslotcount[i], &st_statusbaron, ST_ARTIFACTCWIDTH, &cfg.statusbarCounterAlpha);
+
+		temp += width;
+	}
+}
+
+static boolean st_stopped = true;
+
+void ST_Start(void)
+{
+
+	if(!st_stopped)
+		ST_Stop();
+
+	ST_initData();
+	ST_createWidgets();
+	st_stopped = false;
+}
+
+void ST_Stop(void)
+{
+	if(st_stopped)
+		return;
+	st_stopped = true;
+}
+
+void ST_Init(void)
+{
+	ST_loadData();
 }
 
 //==========================================================================
@@ -581,25 +960,181 @@ void SB_Init(void)
 void SB_SetClassData(void)
 {
 	int     class;
+	char    namebuf[9];
 
 	class = cfg.PlayerClass[consoleplayer];	// original player class (not pig)
-	PatchNumWEAPONSLOT = W_GetNumForName("wpslot0") + class;
-	PatchNumWEAPONFULL = W_GetNumForName("wpfull0") + class;
-	PatchNumPIECE1 = W_GetNumForName("wpiecef1") + class;
-	PatchNumPIECE2 = W_GetNumForName("wpiecef2") + class;
-	PatchNumPIECE3 = W_GetNumForName("wpiecef3") + class;
-	PatchNumCHAIN = W_GetNumForName("chain") + class;
-	if(!netgame)
+
+	sprintf(namebuf, "wpslot%d", 0 + class);
+	R_CachePatch(&PatchNumWEAPONSLOT, namebuf);
+
+	sprintf(namebuf, "wpfull%d", 0 + class);
+	R_CachePatch(&PatchNumWEAPONFULL, namebuf);
+
+	switch(class)
+	{
+		case 0:	// fighter
+			R_CachePatch(&PatchNumPIECE1, "wpiecef1");
+			R_CachePatch(&PatchNumPIECE2, "wpiecef2");
+			R_CachePatch(&PatchNumPIECE3, "wpiecef3");
+			R_CachePatch(&PatchNumCHAIN, "chain");
+			break;
+
+		case 1:	// cleric
+			R_CachePatch(&PatchNumPIECE1, "wpiecec1");
+			R_CachePatch(&PatchNumPIECE2, "wpiecec2");
+			R_CachePatch(&PatchNumPIECE3, "wpiecec3");
+			R_CachePatch(&PatchNumCHAIN, "chain2");
+			break;
+
+		case 2:	// mage
+			R_CachePatch(&PatchNumPIECE1, "wpiecem1");
+			R_CachePatch(&PatchNumPIECE2, "wpiecem2");
+			R_CachePatch(&PatchNumPIECE3, "wpiecem3");
+			R_CachePatch(&PatchNumCHAIN, "chain3");
+			break;
+
+		default:
+			break;
+	}
+
+	if(!IS_NETGAME)
 	{							// single player game uses red life gem (the second gem)
 		PatchNumLIFEGEM = W_GetNumForName("lifegem") + MAXPLAYERS * class + 1;
 	}
 	else
 	{
-		PatchNumLIFEGEM =
-			W_GetNumForName("lifegem") + MAXPLAYERS * class + consoleplayer;
+		PatchNumLIFEGEM = W_GetNumForName("lifegem") + MAXPLAYERS * class + consoleplayer;
 	}
+
 	SB_state = -1;
 	GL_Update(DDUF_FULLSCREEN);
+}
+
+void ST_updateWidgets(void)
+{
+	int     i, x;
+
+	// used by w_frags widget
+	st_fragson = deathmatch && st_statusbaron;
+
+	st_fragscount = 0;
+
+	for(i = 0; i < MAXPLAYERS; i++)
+	{
+		if(i != consoleplayer)
+			st_fragscount += plyr->frags[i];
+		else
+			st_fragscount -= plyr->frags[i];
+	}
+
+	// current artifact
+	if(ArtifactFlash)
+	{
+		st_artici = 5 - ArtifactFlash;
+		ArtifactFlash--;
+		oldarti = -1;			// so that the correct artifact fills in after the flash
+	}
+	else if(oldarti != plyr->readyArtifact ||
+			oldartiCount != plyr->inventory[inv_ptr].count)
+	{
+		if(plyr->readyArtifact > 0)
+		{
+			st_artici = plyr->readyArtifact + 5;
+		}
+		oldarti = plyr->readyArtifact;
+		oldartiCount = plyr->inventory[inv_ptr].count;
+	}
+
+	// Armor
+	armorlevel = FixedDiv(
+		AutoArmorSave[plyr->class] + plyr->armorpoints[ARMOR_ARMOR] +
+		plyr->armorpoints[ARMOR_SHIELD] +
+		plyr->armorpoints[ARMOR_HELMET] +
+		plyr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+
+	// mana A
+	manaACount = plyr->mana[0];
+
+	// mana B
+	manaBCount = plyr->mana[1];
+
+	st_manaAicon = st_manaBicon = st_manaAvial = st_manaBvial = -1;
+
+	// Mana
+	if(plyr->mana[0] == 0)				// Draw Dim Mana icon
+		st_manaAicon = 0;
+
+	if(plyr->mana[1] == 0)				// Draw Dim Mana icon						
+		st_manaBicon = 0;
+
+
+	// Update mana graphics based upon mana count weapon type
+	if(plyr->readyweapon == WP_FIRST)
+	{
+		st_manaAicon = 0;
+		st_manaBicon = 0;
+
+		st_manaAvial = 0;
+		st_manaBvial = 0;
+	}
+	else if(plyr->readyweapon == WP_SECOND)
+	{
+		// If there is mana for this weapon, make it bright!
+		if(st_manaAicon == -1)
+		{
+			st_manaAicon = 1;
+		}
+
+		st_manaAvial = 1;
+
+		st_manaBicon = 0;
+		st_manaBvial = 0;
+	}
+	else if(plyr->readyweapon == WP_THIRD)
+	{
+		st_manaAicon = 0;
+		st_manaAvial = 0;
+
+		// If there is mana for this weapon, make it bright!
+		if(st_manaBicon == -1)
+		{
+			st_manaBicon = 1;
+		}
+
+		st_manaBvial = 1;
+	}
+	else
+	{
+		st_manaAvial = 1;
+		st_manaBvial = 1;
+
+		// If there is mana for this weapon, make it bright!
+		if(st_manaAicon == -1)
+		{
+			st_manaAicon = 1;
+		}
+		if(st_manaBicon == -1)
+		{
+			st_manaBicon = 1;
+		}
+	}
+
+	// update the inventory
+
+	x = inv_ptr - curpos;
+
+	for(i = 0; i < NUMVISINVSLOTS; i++)
+	{
+		st_invslot[i] = plyr->inventory[x + i].type +5;  // plus 5 for useartifact patches
+		st_invslotcount[i] = plyr->inventory[x + i].count;
+	}
+
+/*
+	// get rid of chat window if up because of message
+	if(!--st_msgcounter)
+		st_chat = st_oldchat;
+*/
+
 }
 
 //==========================================================================
@@ -608,13 +1143,15 @@ void SB_SetClassData(void)
 //
 //==========================================================================
 
-void SB_Ticker(void)
+void ST_Ticker(void)
 {
 	int     delta;
 	int     curHealth;
 
 	if(!players[consoleplayer].plr->mo)
 		return;
+
+	ST_updateWidgets();
 
 	curHealth = players[consoleplayer].plr->mo->health;
 	if(curHealth < 0)
@@ -657,9 +1194,11 @@ void SB_Ticker(void)
 //
 //==========================================================================
 
-static void DrINumber(signed int val, int x, int y)
+static void DrINumber(signed int val, int x, int y, float r, float g, float b, float a)
 {
 	int     oldval;
+
+	gl.Color4f(r,g,b,a);
 
 	// Make sure it's a three digit number.
 	if(val < -999)
@@ -677,28 +1216,29 @@ static void DrINumber(signed int val, int x, int y)
 		}
 		if(val > 9)
 		{
-			GL_DrawPatch(x + 8, y, PatchNumINumbers[val / 10]);
-			GL_DrawPatch(x, y, PatchNumNEGATIVE);
+			GL_DrawPatch_CS(x + 8, y, PatchNumINumbers[val / 10].lump);
+			GL_DrawPatch_CS(x, y, PatchNumNEGATIVE.lump);
 		}
 		else
 		{
-			GL_DrawPatch(x + 8, y, PatchNumNEGATIVE);
+			GL_DrawPatch_CS(x + 8, y, PatchNumNEGATIVE.lump);
 		}
 		val = val % 10;
-		GL_DrawPatch(x + 16, y, PatchNumINumbers[val]);
+		GL_DrawPatch_CS(x + 16, y, PatchNumINumbers[val].lump);
 		return;
 	}
 	if(val > 99)
 	{
-		GL_DrawPatch(x, y, PatchNumINumbers[val / 100]);
+		GL_DrawPatch_CS(x, y, PatchNumINumbers[val / 100].lump);
 	}
 	val = val % 100;
 	if(val > 9 || oldval > 99)
 	{
-		GL_DrawPatch(x + 8, y, PatchNumINumbers[val / 10]);
+		GL_DrawPatch_CS(x + 8, y, PatchNumINumbers[val / 10].lump);
 	}
 	val = val % 10;
-	GL_DrawPatch(x + 16, y, PatchNumINumbers[val]);
+	GL_DrawPatch_CS(x + 16, y, PatchNumINumbers[val].lump);
+
 }
 
 //==========================================================================
@@ -745,7 +1285,7 @@ static void DrRedINumber(signed int val, int x, int y)
 //
 //==========================================================================
 
-static void DrBNumber(signed int val, int x, int y)
+static void DrBNumber(signed int val, int x, int y, float red, float green, float blue, float alpha)
 {
 	patch_t *patch;
 	int     xpos;
@@ -766,22 +1306,34 @@ static void DrBNumber(signed int val, int x, int y)
 	if(val > 99)
 	{
 		patch = W_CacheLumpNum(FontBNumBase + val / 100, PU_CACHE);
-		GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y,
+		GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
 							 FontBNumBase + val / 100);
+		GL_SetColorAndAlpha(red, green, blue, alpha);
+		GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
+							 FontBNumBase + val / 100);
+		GL_SetColorAndAlpha(1, 1, 1, 1);
 	}
 	val = val % 100;
 	xpos += 12;
 	if(val > 9 || oldval > 99)
 	{
 		patch = W_CacheLumpNum(FontBNumBase + val / 10, PU_CACHE);
-		GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y,
+		GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
 							 FontBNumBase + val / 10);
+		GL_SetColorAndAlpha(red, green, blue, alpha);
+		GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
+							 FontBNumBase + val / 10);
+		GL_SetColorAndAlpha(1, 1, 1, 1);
 	}
 	val = val % 10;
 	xpos += 12;
 	patch = W_CacheLumpNum(FontBNumBase + val, PU_CACHE);
-	GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y, 
-        FontBNumBase + val);
+	GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
+							 FontBNumBase + val);
+	GL_SetColorAndAlpha(red, green, blue, alpha);
+	GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
+							 FontBNumBase + val);
+	GL_SetColorAndAlpha(1, 1, 1, 1);
 }
 
 //==========================================================================
@@ -792,8 +1344,10 @@ static void DrBNumber(signed int val, int x, int y)
 //
 //==========================================================================
 
-static void DrSmallNumber(int val, int x, int y)
+static void DrSmallNumber(int val, int x, int y, float r, float g, float b, float a)
 {
+	gl.Color4f(r,g,b,a);
+
 	if(val <= 0)
 	{
 		return;
@@ -804,15 +1358,15 @@ static void DrSmallNumber(int val, int x, int y)
 	}
 	if(val > 99)
 	{
-		GL_DrawPatch(x, y, PatchNumSmNumbers[val / 100]);
-		GL_DrawPatch(x + 4, y, PatchNumSmNumbers[(val % 100) / 10]);
+		GL_DrawPatch_CS(x, y, PatchNumSmNumbers[val / 100].lump);
+		GL_DrawPatch_CS(x + 4, y, PatchNumSmNumbers[(val % 100) / 10].lump);
 	}
 	else if(val > 9)
 	{
-		GL_DrawPatch(x + 4, y, PatchNumSmNumbers[val / 10]);
+		GL_DrawPatch_CS(x + 4, y, PatchNumSmNumbers[val / 10].lump);
 	}
 	val %= 10;
-	GL_DrawPatch(x + 8, y, PatchNumSmNumbers[val]);
+	GL_DrawPatch_CS(x + 8, y, PatchNumSmNumbers[val].lump);
 }
 
 //==========================================================================
@@ -881,131 +1435,302 @@ static void DrawSoundInfo(void)
 }
 #endif
 
-//==========================================================================
-//
-// SB_Drawer
-//
-//==========================================================================
-
-char    patcharti[][10] = {
-	{"ARTIBOX"},				// none
-	{"ARTIINVU"},				// invulnerability
-	{"ARTIPTN2"},				// health
-	{"ARTISPHL"},				// superhealth
-	{"ARTIHRAD"},				// healing radius
-	{"ARTISUMN"},				// summon maulator
-	{"ARTITRCH"},				// torch
-	{"ARTIPORK"},				// egg
-	{"ARTISOAR"},				// fly
-	{"ARTIBLST"},				// blast radius
-	{"ARTIPSBG"},				// poison bag
-	{"ARTITELO"},				// teleport other
-	{"ARTISPED"},				// speed
-	{"ARTIBMAN"},				// boost mana
-	{"ARTIBRAC"},				// boost armor
-	{"ARTIATLP"},				// teleport
-	{"ARTISKLL"},				// arti_puzzskull
-	{"ARTIBGEM"},				// arti_puzzgembig
-	{"ARTIGEMR"},				// arti_puzzgemred
-	{"ARTIGEMG"},				// arti_puzzgemgreen1
-	{"ARTIGMG2"},				// arti_puzzgemgreen2
-	{"ARTIGEMB"},				// arti_puzzgemblue1
-	{"ARTIGMB2"},				// arti_puzzgemblue2
-	{"ARTIBOK1"},				// arti_puzzbook1
-	{"ARTIBOK2"},				// arti_puzzbook2
-	{"ARTISKL2"},				// arti_puzzskull2
-	{"ARTIFWEP"},				// arti_puzzfweapon
-	{"ARTICWEP"},				// arti_puzzcweapon
-	{"ARTIMWEP"},				// arti_puzzmweapon
-	{"ARTIGEAR"},				// arti_puzzgear1
-	{"ARTIGER2"},				// arti_puzzgear2
-	{"ARTIGER3"},				// arti_puzzgear3
-	{"ARTIGER4"},				// arti_puzzgear4
-};
-
 int     SB_state = -1;
 
-static int oldarti = 0;
-static int oldartiCount = 0;
-
 /*
-   static int oldarti = 0;
-   static int oldartiCount = 0;
-   static int oldfrags = -9999;
-   static int oldmana1 = -1;
-   static int oldmana2 = -1;
-   static int oldarmor = -1;
-   static int oldhealth = -1;
-   static int oldlife = -1;
-   static int oldpieces = -1;
-   static int oldweapon = -1;
-   static int oldkeys = -1;
+ *   ST_refreshBackground
+ *
+ *	Draws the whole statusbar backgound
  */
-
-extern boolean automapactive;
-
-void SB_Drawer(void)
+void ST_refreshBackground(void)
 {
-	CPlayer = &players[consoleplayer];
-	if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT && !automapactive
-#ifdef DEMOCAM
-	   && (demoplayback && democam.mode)
-#endif
-		)
+	int x, y, w, h;
+	float cw, cw2, ch;
+
+	if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
 	{
-		DrawFullScreenStuff();
-	}
-	else
-	{
-		float   fscale = cfg.sbarscale / 20.0f;
+		gl.Color4f(1, 1, 1, cfg.statusbarAlpha);
 
-		// Setup special status bar matrix.
-		if(cfg.sbarscale != 20)
-		{
-			// Update borders around status bar (could flicker otherwise).
-			GL_Update(DDUF_BORDER);
+		GL_SetPatch(PatchNumH2BAR.lump);
 
-			gl.MatrixMode(DGL_MODELVIEW);
-			gl.PushMatrix();
-			gl.Translatef(160 - 320 * fscale / 2, 200 * (1 - fscale), 0);
-			gl.Scalef(fscale, fscale, 1);
-		}
+		gl.Begin(DGL_QUADS);
 
-		GL_DrawPatch(0, 134, PatchNumH2BAR);
+		// top
+		x = 0;
+		y = 135;
+		w = 320;
+		h = 27;
+		ch = 0.41538461538461538461538461538462f;
 
-		DrawCommonBar();
+		gl.TexCoord2f(0, 0);
+		gl.Vertex2f(x, y);
+		gl.TexCoord2f(1, 0);
+		gl.Vertex2f(x + w, y);
+		gl.TexCoord2f(1, ch);
+		gl.Vertex2f(x + w, y + h);
+		gl.TexCoord2f(0, ch);
+		gl.Vertex2f(x, y + h);
+
+		// left statue
+		x = 0;
+		y = 162;
+		w = 38;
+		h = 38;
+		cw = 0.11875f;
+		ch = 0.41538461538461538461538461538462f;
+
+		gl.TexCoord2f(0, ch);
+		gl.Vertex2f(x, y);
+		gl.TexCoord2f(cw, ch);
+		gl.Vertex2f(x + w, y);
+		gl.TexCoord2f(cw, 1);
+		gl.Vertex2f(x + w, y + h);
+		gl.TexCoord2f(0, 1);
+		gl.Vertex2f(x, y + h);
+
+		// right statue
+		x = 282;
+		y = 162;
+		w = 38;
+		h = 38;
+		cw = 0.88125f;
+		ch = 0.41538461538461538461538461538462f;
+
+		gl.TexCoord2f(cw, ch);
+		gl.Vertex2f(x, y);
+		gl.TexCoord2f(1, ch);
+		gl.Vertex2f(x + w, y);
+		gl.TexCoord2f(1, 1);
+		gl.Vertex2f(x + w, y + h);
+		gl.TexCoord2f(cw, 1);
+		gl.Vertex2f(x, y + h);
+
+		// bottom (behind the chain)
+		x = 38;
+		y = 192;
+		w = 244;
+		h = 8;
+		cw = 0.11875f;
+		cw2 = 0.88125f;
+		ch = 0.87692307692307692307692307692308f;
+
+		gl.TexCoord2f(cw, ch);
+		gl.Vertex2f(x, y);
+		gl.TexCoord2f(cw2, ch);
+		gl.Vertex2f(x + w, y);
+		gl.TexCoord2f(cw2, 1);
+		gl.Vertex2f(x + w, y + h);
+		gl.TexCoord2f(cw, 1);
+		gl.Vertex2f(x, y + h);
+
+		gl.End();
+
 		if(!inventory)
 		{
 			// Main interface
 			if(!automapactive)
 			{
-				GL_DrawPatch(38, 162, PatchNumSTATBAR);
+				if(deathmatch)
+				{
+					GL_DrawPatch_CS(38, 162, PatchNumKILLS.lump);
+				}
+
+				// left of statbar (upto weapon puzzle display)
+				GL_SetPatch(PatchNumSTATBAR.lump);
+				gl.Begin(DGL_QUADS);
+
+				x = deathmatch ? 68 : 38;
+				y = 162;
+				w = deathmatch ? 122 : 152;
+				h = 30;
+				cw = deathmatch ? 0.12295081967213114754098360655738f : 0;
+				cw2 = 0.62295081967213114754098360655738f;
+				ch = 0.96774193548387096774193548387097f;
+
+				gl.TexCoord2f(cw, 0);
+				gl.Vertex2f(x, y);
+				gl.TexCoord2f(cw2, 0);
+				gl.Vertex2f(x + w, y);
+				gl.TexCoord2f(cw2, ch);
+				gl.Vertex2f(x + w, y + h);
+				gl.TexCoord2f(cw, ch);
+				gl.Vertex2f(x, y + h);
+
+				// right of statbar (after weapon puzzle display)
+				x = 247;
+				y = 162;
+				w = 35;
+				h = 30;
+				cw = 0.85655737704918032786885245901639f;
+				ch = 0.96774193548387096774193548387097f;
+
+				gl.TexCoord2f(cw, 0);
+				gl.Vertex2f(x, y);
+				gl.TexCoord2f(1, 0);
+				gl.Vertex2f(x + w, y);
+				gl.TexCoord2f(1, ch);
+				gl.Vertex2f(x + w, y + h);
+				gl.TexCoord2f(cw, ch);
+				gl.Vertex2f(x, y + h);
+
+				gl.End();
+
+				DrawWeaponPieces();
 			}
 			else
 			{
-				GL_DrawPatch(38, 162, PatchNumKEYBAR);
+				GL_DrawPatch_CS(38, 162, PatchNumKEYBAR.lump);
 			}
+
+		} else {
+			// INVBAR
+			GL_SetPatch(PatchNumINVBAR.lump);
+			gl.Begin(DGL_QUADS);
+
+			x = 38;
+			y = 162;
+			w = 244;
+			h = 30;
+			ch = 0.96774193548387096774193548387097f;
+
+			gl.TexCoord2f(0, 0);
+			gl.Vertex2f(x, y);
+			gl.TexCoord2f(1, 0);
+			gl.Vertex2f(x + w, y);
+			gl.TexCoord2f(1, ch);
+			gl.Vertex2f(x + w, y + h);
+			gl.TexCoord2f(0, ch);
+			gl.Vertex2f(x, y + h);
+
+			gl.End();
+		}
+
+		DrawChain();
+
+	} else if (cfg.statusbarAlpha != 0){
+
+		GL_DrawPatch(0, 134, PatchNumH2BAR.lump);
+
+		GL_DrawPatch(0, 134, PatchNumH2TOP.lump);
+
+		if(!inventory)
+		{
+			// Main interface
 			if(!automapactive)
 			{
-				DrawMainBar();
+				GL_DrawPatch(38, 162, PatchNumSTATBAR.lump);
+
+				if(CPlayer->pieces == 7)
+				{
+					GL_DrawPatch(190, 162, PatchNumWEAPONFULL.lump);
+
+				} else {
+					GL_DrawPatch(190, 162, PatchNumWEAPONSLOT.lump);
+				}
+
+				DrawWeaponPieces();
 			}
 			else
 			{
+				GL_DrawPatch(38, 162, PatchNumKEYBAR.lump);
 				DrawKeyBar();
 			}
+
+		} else {
+			GL_DrawPatch(38, 162, PatchNumINVBAR.lump);
 		}
-		else
+
+		DrawChain();
+	}
+}
+
+/*
+ *   ST_doRefresh
+ *
+ *	All drawing for the status bar starts and ends here
+ */
+void ST_doRefresh(void)
+{
+	st_firsttime = false;
+
+	if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
+	{
+		float fscale = cfg.sbarscale / 20.0f;
+		float h = 200 * (1 - fscale);
+
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PushMatrix();
+		gl.Translatef(160 - 320 * fscale / 2, h /showbar, 0);
+		gl.Scalef(fscale, fscale, 1);
+	}
+
+	// draw status bar background
+	ST_refreshBackground();
+
+	// and refresh all widgets
+	ST_drawWidgets(true);
+
+	if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
+	{
+		// Restore the normal modelview matrix.
+		gl.MatrixMode(DGL_MODELVIEW);
+		gl.PopMatrix();
+	}
+}
+
+void ST_Drawer(int fullscreenmode, boolean refresh )
+{
+	st_firsttime = st_firsttime || refresh;
+	st_statusbaron = (fullscreenmode < 2) || ( automapactive && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
+
+	CPlayer = &players[consoleplayer];
+
+	// Do palette shifts
+	ST_doPaletteStuff(false);
+
+	// Either slide the status bar in or fade out the fullscreen hud
+	if(st_statusbaron)
+	{
+		if(hudalpha > 0.0f)
 		{
-			DrawInventoryBar();
-		}
-		// Restore the old modelview matrix.
-		if(cfg.sbarscale != 20)
+			st_statusbaron = 0;
+			hudalpha-=0.1f;
+		} else 	if( showbar < 1.0f)
+			showbar+=0.1f;
+	} else {
+		if (fullscreenmode == 3)
 		{
-			gl.MatrixMode(DGL_MODELVIEW);
-			gl.PopMatrix();
+			if( hudalpha > 0.0f)
+			{
+				hudalpha-=0.1f;
+				fullscreenmode = 2;
+			}
+		} else{	
+			if( showbar > 0.0f)
+			{
+				showbar-=0.1f;
+				st_statusbaron = 1;
+			} else if(hudalpha < 1.0f)
+				hudalpha+=0.1f;
 		}
 	}
-	SB_PaletteFlash(false);
+
+	// Always try to render statusbar with alpha in fullscreen modes
+	if(fullscreenmode)
+		st_blended = 1;
+	else
+		st_blended = 0;
+
+	if(st_statusbaron){
+		ST_doRefresh();
+	} else if (fullscreenmode != 3
+#ifdef DEMOCAM
+	    || (demoplayback && democam.mode)
+#endif
+					){
+		ST_doFullscreenStuff();
+	}
+
 	DrawAnimatedIcons();
 }
 
@@ -1020,12 +1745,13 @@ static void DrawAnimatedIcons(void)
 	int     leftoff = 0;
 	int     frame;
 	static boolean hitCenterFrame;
+	float iconalpha = (st_statusbaron? 1: hudalpha) - ( 1 - cfg.hudIconAlpha);
 
 	//  extern int screenblocks;
 
 	// If the fullscreen mana is drawn, we need to move the icons on the left
 	// a bit to the right.
-	if(cfg.showFullscreenMana == 1 && cfg.screenblocks > 10)
+	if(cfg.hudShown[HUD_MANA] == 1 && cfg.screenblocks > 10)
 		leftoff = 42;
 
     Draw_BeginZoom(cfg.hudScale, 2, 2);
@@ -1041,11 +1767,11 @@ static void DrawAnimatedIcons(void)
 			{
 				if(hitCenterFrame && (frame != 15 && frame != 0))
 				{
-					GL_DrawPatch(20 + leftoff, 19, SpinFlylump + 15);
+					GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + 15);
 				}
 				else
 				{
-					GL_DrawPatch(20 + leftoff, 19, SpinFlylump + frame);
+					GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + frame);
 					hitCenterFrame = false;
 				}
 			}
@@ -1053,12 +1779,12 @@ static void DrawAnimatedIcons(void)
 			{
 				if(!hitCenterFrame && (frame != 15 && frame != 0))
 				{
-					GL_DrawPatch(20 + leftoff, 19, SpinFlylump + frame);
+					GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + frame);
 					hitCenterFrame = false;
 				}
 				else
 				{
-					GL_DrawPatch(20 + leftoff, 19, SpinFlylump + 15);
+					GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + 15);
 					hitCenterFrame = true;
 				}
 			}
@@ -1073,7 +1799,7 @@ static void DrawAnimatedIcons(void)
 		   !(CPlayer->powers[pw_speed] & 16))
 		{
 			frame = (leveltime / 3) & 15;
-			GL_DrawPatch(60 + leftoff, 19, SpinSpeedLump + frame);
+			GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha, SpinSpeedLump.lump + frame);
 		}
 		GL_Update(DDUF_TOP | DDUF_MESSAGES);
 	}
@@ -1089,7 +1815,7 @@ static void DrawAnimatedIcons(void)
 		   !(CPlayer->powers[pw_invulnerability] & 16))
 		{
 			frame = (leveltime / 3) & 15;
-			GL_DrawPatch(260, 19, SpinDefenseLump + frame);
+			GL_DrawPatchLitAlpha(260, 19, 1, iconalpha, SpinDefenseLump.lump + frame);
 		}
 		GL_Update(DDUF_TOP | DDUF_MESSAGES);
 	}
@@ -1101,7 +1827,7 @@ static void DrawAnimatedIcons(void)
 		   !(CPlayer->powers[pw_minotaur] & 16))
 		{
 			frame = (leveltime / 3) & 15;
-			GL_DrawPatch(300, 19, SpinMinotaurLump + frame);
+			GL_DrawPatchLitAlpha(300, 19, 1, iconalpha, SpinMinotaurLump.lump + frame);
 		}
 		GL_Update(DDUF_TOP | DDUF_MESSAGES);
 	}
@@ -1111,14 +1837,14 @@ static void DrawAnimatedIcons(void)
 
 //==========================================================================
 //
-// SB_PaletteFlash
+// ST_doPaletteStuff
 //
 // Sets the new palette based upon the current values of
 // consoleplayer->damagecount and consoleplayer->bonuscount.
 //
 //==========================================================================
 
-void SB_PaletteFlash(boolean forceChange)
+void ST_doPaletteStuff(boolean forceChange)
 {
 	static int sb_palette = 0;
 	int     palette;
@@ -1181,15 +1907,18 @@ void SB_PaletteFlash(boolean forceChange)
 
 //==========================================================================
 //
-// DrawCommonBar
+// DrawChain
 //
 //==========================================================================
 
-void DrawCommonBar(void)
+void DrawChain(void)
 {
-	int     healthPos;
+	float     healthPos;
+	float     gemglow;
 
-	GL_DrawPatch(0, 134, PatchNumH2TOP);
+	int x, x2, y, w, w2, w3, h;
+	int gemoffset = 36;
+	float cw, cw2;
 
 	healthPos = HealthMarker;
 	if(healthPos < 0)
@@ -1200,201 +1929,185 @@ void DrawCommonBar(void)
 	{
 		healthPos = 100;
 	}
-	GL_DrawPatch(28 + (((healthPos * 196) / 100) % 9), 193, PatchNumCHAIN);
-	GL_DrawPatch(7 + ((healthPos * 11) / 5), 193, PatchNumLIFEGEM);
-	GL_DrawPatch(0, 193, PatchNumLFEDGE);
-	GL_DrawPatch(277, 193, PatchNumRTEDGE);
+
+	gemglow = healthPos / 100;
+
+	// draw the chain
+	x = 44;
+	y = 193;
+	w = 232;
+	h = 7;
+	cw = (healthPos / 113) + 0.054f;
+
+	GL_SetPatch(PatchNumCHAIN.lump);
+
+	gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+
+	gl.Color4f(1, 1, 1, cfg.statusbarCounterAlpha);
+
+	gl.Begin(DGL_QUADS);
+
+	gl.TexCoord2f( 0 - cw, 0);
+	gl.Vertex2f(x, y);
+
+	gl.TexCoord2f( 0.948f - cw, 0);
+	gl.Vertex2f(x + w, y);
+
+	gl.TexCoord2f( 0.948f - cw, 1);
+	gl.Vertex2f(x + w, y + h);
+
+	gl.TexCoord2f( 0 - cw, 1);
+	gl.Vertex2f(x, y + h);
+
+	gl.End();
+
+
+	healthPos = ((healthPos * 256) / 117) - gemoffset;
+
+	x = 44;
+	y = 193;
+	w2 = 86;
+	h = 7;
+	cw = 0;
+	cw2 = 1;
+
+	// calculate the size of the quad, position and tex coords
+	if ((x + healthPos) < x){
+		x2 = x;
+		w3 = w2 + healthPos;
+		cw = (1.0f / w2) * (w2 - w3);
+		cw2 = 1;
+	} else if((x + healthPos + w2) > (x + w) ){
+		x2 = x + healthPos;
+		w3 = w2 - ((x + healthPos + w2) - (x + w));
+		cw = 0;
+		cw2 = (1.0f / w2) * (w2 - (w2 - w3));
+	} else {
+		x2 = x + healthPos;
+		w3 = w2;
+		cw = 0;
+		cw2 = 1;
+	}
+
+	GL_SetPatch(PatchNumLIFEGEM);
+
+	// draw the life gem
+	gl.Color4f(1, 1, 1, cfg.statusbarCounterAlpha);
+
+	gl.Begin(DGL_QUADS);
+
+	gl.TexCoord2f( cw, 0);
+	gl.Vertex2f(x2, y);
+
+	gl.TexCoord2f( cw2, 0);
+	gl.Vertex2f(x2 + w3, y);
+
+	gl.TexCoord2f( cw2, 1);
+	gl.Vertex2f(x2 + w3, y + h);
+
+	gl.TexCoord2f( cw, 1);
+	gl.Vertex2f(x2, y + h);
+
+	gl.End();
+
+	// how about a glowing gem?
+	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+	gl.Bind(Get(DD_DYNLIGHT_TEXTURE));
+
+	GL_DrawRect(x + healthPos + 25, y - 3, 34, 18, 1, 0, 0, gemglow - (1 - cfg.statusbarCounterAlpha));
+
+	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+
+	GL_Update(DDUF_STATBAR);
 }
 
 //==========================================================================
 //
-// DrawMainBar
+// ST_drawWidgets
 //
 //==========================================================================
 
-void DrawMainBar(void)
-{
-	int     i;
-	int     temp;
-	int     manaPatchNum1, manaPatchNum2, manaVialPatchNum1, manaVialPatchNum2;
-
-	manaPatchNum1 = manaPatchNum2 = manaVialPatchNum1 = manaVialPatchNum2 = -1;
-
-	// Ready artifact
-	if(ArtifactFlash)
-	{
-		GL_DrawPatch(148, 164,
-					 W_GetNumForName("useartia") + ArtifactFlash - 1);
-		ArtifactFlash--;
-		oldarti = -1;			// so that the correct artifact fills in after the flash
-		GL_Update(DDUF_STATBAR);
-	}
-	else if(oldarti != CPlayer->readyArtifact ||
-			oldartiCount != CPlayer->inventory[inv_ptr].count)
-	{
-		if(CPlayer->readyArtifact > 0)
-		{
-			GL_DrawPatch(143, 163,
-						 W_GetNumForName(patcharti[CPlayer->readyArtifact]));
-			if(CPlayer->inventory[inv_ptr].count > 1)
-			{
-				DrSmallNumber(CPlayer->inventory[inv_ptr].count, 162, 184);
-			}
-		}
-	}
-
-	// Frags
-	if(deathmatch)
-	{
-		temp = 0;
-		for(i = 0; i < MAXPLAYERS; i++)
-		{
-			temp += CPlayer->frags[i];
-		}
-		GL_DrawPatch(38, 162, PatchNumKILLS);
-		DrINumber(temp, 40, 176);
-	}
-	else
-	{
-		temp = HealthMarker;
-		if(temp < 0)
-		{
-			temp = 0;
-		}
-		else if(temp > 100)
-		{
-			temp = 100;
-		}
-		if(temp >= 25)
-		{
-			DrINumber(temp, 40, 176);
-		}
-		else
-		{
-			DrRedINumber(temp, 40, 176);
-		}
-	}
-	// Mana
-	temp = CPlayer->mana[0];
-	DrSmallNumber(temp, 79, 181);
-	if(temp == 0)
-	{							// Draw Dim Mana icon
-		manaPatchNum1 = PatchNumMANADIM1;
-	}
-	GL_Update(DDUF_STATBAR);
-	temp = CPlayer->mana[1];
-	DrSmallNumber(temp, 111, 181);
-	if(temp == 0)
-	{							// Draw Dim Mana icon
-		manaPatchNum2 = PatchNumMANADIM2;
-	}
-	GL_Update(DDUF_STATBAR);
-	// Update mana graphics based upon mana count/weapon type */
-	if(CPlayer->readyweapon == WP_FIRST)
-	{
-		manaPatchNum1 = PatchNumMANADIM1;
-		manaPatchNum2 = PatchNumMANADIM2;
-		manaVialPatchNum1 = PatchNumMANAVIALDIM1;
-		manaVialPatchNum2 = PatchNumMANAVIALDIM2;
-	}
-	else if(CPlayer->readyweapon == WP_SECOND)
-	{
-		// If there is mana for this weapon, make it bright!
-		if(manaPatchNum1 == -1)
-		{
-			manaPatchNum1 = PatchNumMANABRIGHT1;
-		}
-		manaVialPatchNum1 = PatchNumMANAVIAL1;
-		manaPatchNum2 = PatchNumMANADIM2;
-		manaVialPatchNum2 = PatchNumMANAVIALDIM2;
-	}
-	else if(CPlayer->readyweapon == WP_THIRD)
-	{
-		manaPatchNum1 = PatchNumMANADIM1;
-		manaVialPatchNum1 = PatchNumMANAVIALDIM1;
-		// If there is mana for this weapon, make it bright!
-		if(manaPatchNum2 == -1)
-		{
-			manaPatchNum2 = PatchNumMANABRIGHT2;
-		}
-		manaVialPatchNum2 = PatchNumMANAVIAL2;
-	}
-	else
-	{
-		manaVialPatchNum1 = PatchNumMANAVIAL1;
-		manaVialPatchNum2 = PatchNumMANAVIAL2;
-		// If there is mana for this weapon, make it bright!
-		if(manaPatchNum1 == -1)
-		{
-			manaPatchNum1 = PatchNumMANABRIGHT1;
-		}
-		if(manaPatchNum2 == -1)
-		{
-			manaPatchNum2 = PatchNumMANABRIGHT2;
-		}
-	}
-	GL_DrawPatch(77, 164, manaPatchNum1);
-	GL_DrawPatch(110, 164, manaPatchNum2);
-	GL_DrawPatch(94, 164, manaVialPatchNum1);
-	GL_DrawPatch(102, 164, manaVialPatchNum2);
-
-	GL_SetNoTexture();
-	GL_DrawRect(95, 165, 3, 22 - (22 * CPlayer->mana[0]) / MAX_MANA, 0, 0, 0,
-				1);
-	GL_DrawRect(103, 165, 3, 22 - (22 * CPlayer->mana[1]) / MAX_MANA, 0, 0, 0,
-				1);
-
-	GL_Update(DDUF_STATBAR);
-
-	// Armor
-	temp =
-		AutoArmorSave[CPlayer->class] + CPlayer->armorpoints[ARMOR_ARMOR] +
-		CPlayer->armorpoints[ARMOR_SHIELD] +
-		CPlayer->armorpoints[ARMOR_HELMET] +
-		CPlayer->armorpoints[ARMOR_AMULET];
-	DrINumber(FixedDiv(temp, 5 * FRACUNIT) >> FRACBITS, 250, 176);
-
-	DrawWeaponPieces();
-}
-
-//==========================================================================
-//
-// DrawInventoryBar
-//
-//==========================================================================
-
-void DrawInventoryBar(void)
+void ST_drawWidgets(boolean refresh)
 {
 	int     i;
 	int     x;
 
-	x = inv_ptr - curpos;
-	GL_DrawPatch(38, 162, PatchNumINVBAR);
-	for(i = 0; i < 7; i++)
+	oldhealth = -1;
+	if(!inventory)
 	{
-		if(CPlayer->inventorySlotNum > x + i &&
-		   CPlayer->inventory[x + i].type != arti_none)
-		{
-			GL_DrawPatch(50 + i * 31, 163,
-						 W_GetNumForName(patcharti
-										 [CPlayer->inventory[x + i].type]));
-			if(CPlayer->inventory[x + i].count > 1)
+	    if(!automapactive){
+
+		// Frags
+		if(deathmatch)
+				STlib_updateNum(&w_frags, refresh);
+		else
+				STlib_updateNum(&w_health, refresh);
+
+		// draw armor
+		STlib_updateNum(&w_armor, refresh);
+
+		// current artifact
+		if(CPlayer->readyArtifact > 0){
+			STlib_updateMultIcon(&w_artici, refresh);
+			if(!ArtifactFlash && CPlayer->inventory[inv_ptr].count > 1)
+				STlib_updateNum(&w_articount, refresh);
+		}
+
+		// manaA count
+		if(manaACount > 0)
+			STlib_updateNum(&w_manaACount, refresh);
+
+		// manaB count
+		if(manaBCount > 0)
+			STlib_updateNum(&w_manaBCount, refresh);
+
+		// manaA icon
+		STlib_updateMultIcon(&w_manaAicon, refresh);
+
+		// manaB icon
+		STlib_updateMultIcon(&w_manaBicon, refresh);
+
+		// manaA vial
+		STlib_updateMultIcon(&w_manaAvial, refresh);
+
+		// manaB vial
+		STlib_updateMultIcon(&w_manaBvial, refresh);
+
+		// Draw the mana bars
+		GL_SetNoTexture();
+		GL_DrawRect(95, 165, 3, 22 - (22 * CPlayer->mana[0]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
+		GL_DrawRect(103, 165, 3, 22 - (22 * CPlayer->mana[1]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
+
+	    } else {
+		DrawKeyBar();
+	    }
+
+	}
+	else
+	{	// Draw Inventory
+
+		x = inv_ptr - curpos;
+
+		for(i = 0; i < NUMVISINVSLOTS; i++){
+			if( plyr->inventory[x + i].type != arti_none)
 			{
-				DrSmallNumber(CPlayer->inventory[x + i].count, 68 + i * 31,
-							  185);
+				STlib_updateMultIcon(&w_invslot[i], refresh);
+
+				if( plyr->inventory[x + i].count > 1)
+					STlib_updateNum(&w_invslotcount[i], refresh);
 			}
 		}
-	}
-	GL_DrawPatch(50 + curpos * 31, 163, PatchNumSELECTBOX);
-	if(x != 0)
-	{
-		GL_DrawPatch(42, 163,
-					 !(leveltime & 4) ? PatchNumINVLFGEM1 : PatchNumINVLFGEM2);
-	}
-	if(CPlayer->inventorySlotNum - x > 7)
-	{
-		GL_DrawPatch(269, 163,
-					 !(leveltime & 4) ? PatchNumINVRTGEM1 : PatchNumINVRTGEM2);
+
+		// Draw selector box
+		GL_DrawPatch(ST_INVENTORYX + curpos * 31, 163, PatchNumSELECTBOX.lump);
+
+		// Draw more left indicator
+		if(x != 0)
+			GL_DrawPatchLitAlpha(42, 163, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchNumINVLFGEM1.lump : PatchNumINVLFGEM2.lump);
+
+		// Draw more right indicator
+		if(CPlayer->inventorySlotNum - x > 7)
+			GL_DrawPatchLitAlpha(269, 163, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchNumINVRTGEM1.lump : PatchNumINVRTGEM2.lump);
 	}
 }
 
@@ -1415,7 +2128,7 @@ void DrawKeyBar(void)
 	{
 		if(CPlayer->keys & (1 << i))
 		{
-			GL_DrawPatch(xPosition, 163, W_GetNumForName("keyslot1") + i);
+			GL_DrawPatchLitAlpha(xPosition, 163, 1, cfg.statusbarCounterAlpha, W_GetNumForName("keyslot1") + i);
 			xPosition += 20;
 		}
 	}
@@ -1432,18 +2145,18 @@ void DrawKeyBar(void)
 		}
 		if(CPlayer->armorpoints[i] <= (ArmorIncrement[CPlayer->class][i] >> 2))
 		{
-			GL_DrawFuzzPatch(150 + 31 * i, 164,
+			GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha * 0.3, 
 							 W_GetNumForName("armslot1") + i);
 		}
 		else if(CPlayer->armorpoints[i] <=
 				(ArmorIncrement[CPlayer->class][i] >> 1))
 		{
-			GL_DrawAltFuzzPatch(150 + 31 * i, 164,
+			GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha * 0.6, 
 								W_GetNumForName("armslot1") + i);
 		}
 		else
 		{
-			GL_DrawPatch(150 + 31 * i, 164, W_GetNumForName("armslot1") + i);
+			GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha, W_GetNumForName("armslot1") + i);
 		}
 	}
 }
@@ -1463,79 +2176,71 @@ static int PieceX[NUMCLASSES][3] = {
 
 static void DrawWeaponPieces(void)
 {
-	if(CPlayer->pieces == 7)
-	{
-		GL_DrawPatch(190, 162, PatchNumWEAPONFULL);
-		return;
-	}
-	GL_DrawPatch(190, 162, PatchNumWEAPONSLOT);
-	if(CPlayer->pieces & WPIECE1)
-	{
-		GL_DrawPatch(PieceX[cfg.PlayerClass[consoleplayer]][0], 162,
-					 PatchNumPIECE1);
-	}
-	if(CPlayer->pieces & WPIECE2)
-	{
-		GL_DrawPatch(PieceX[cfg.PlayerClass[consoleplayer]][1], 162,
-					 PatchNumPIECE2);
-	}
-	if(CPlayer->pieces & WPIECE3)
-	{
-		GL_DrawPatch(PieceX[cfg.PlayerClass[consoleplayer]][2], 162,
-					 PatchNumPIECE3);
-	}
-}
 
-void Draw_BeginZoom(float s, float originX, float originY)
-{
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
+	GL_DrawPatchLitAlpha(190, 162, 1, cfg.statusbarAlpha, PatchNumWEAPONSLOT.lump);
 
-    gl.Translatef(originX, originY, 0);
-    gl.Scalef(s, s, 1);
-    gl.Translatef(-originX, -originY, 0);
-}
-
-void Draw_EndZoom(void)
-{
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+	if(plyr->pieces == 7) // All pieces
+		GL_DrawPatchLitAlpha(190, 162, 1, cfg.statusbarCounterAlpha, PatchNumWEAPONFULL.lump);
+	else
+	{
+		if(CPlayer->pieces & WPIECE1)
+		{
+			GL_DrawPatchLitAlpha(PieceX[cfg.PlayerClass[consoleplayer]][0], 162,
+							1, cfg.statusbarCounterAlpha, PatchNumPIECE1.lump);
+		}
+		if(CPlayer->pieces & WPIECE2)
+		{
+			GL_DrawPatchLitAlpha(PieceX[cfg.PlayerClass[consoleplayer]][1], 162,
+							1, cfg.statusbarCounterAlpha, PatchNumPIECE2.lump);
+		}
+		if(CPlayer->pieces & WPIECE3)
+		{
+			GL_DrawPatchLitAlpha(PieceX[cfg.PlayerClass[consoleplayer]][2], 162,
+							1, cfg.statusbarCounterAlpha, PatchNumPIECE3.lump);
+		}
+	}
 }
 
 //==========================================================================
 //
-// DrawFullScreenStuff
+// ST_doFullscreenStuff
 //
 //==========================================================================
 
-void DrawFullScreenStuff(void)
+void ST_doFullscreenStuff(void)
 {
 	int     i;
 	int     x;
 	int     temp;
+	float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
+	float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
 
 #ifdef DEMOCAM
 	if(demoplayback && democam.mode)
 		return;
 #endif
 
+    if(cfg.hudShown[HUD_HEALTH])
+    {
     Draw_BeginZoom(cfg.hudScale, 5, 198);
 	if(CPlayer->plr->mo->health > 0)
 	{
-		DrBNumber(CPlayer->plr->mo->health, 5, 180);
+		DrBNumber(CPlayer->plr->mo->health, 5, 180,
+					  cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 	}
 	else
 	{
-		DrBNumber(0, 5, 180);
+		DrBNumber(0, 5, 180, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 	}
     Draw_EndZoom();
+    }
 
-	if(cfg.showFullscreenMana)
+	if(cfg.hudShown[HUD_MANA])
 	{
-		int     dim[2] = { PatchNumMANADIM1, PatchNumMANADIM2 };
-		int     bright[2] = { PatchNumMANABRIGHT1, PatchNumMANABRIGHT2 };
+		int     dim[2] = { PatchNumMANADIM1.lump, PatchNumMANADIM2.lump };
+		int     bright[2] = { PatchNumMANABRIGHT1.lump, PatchNumMANABRIGHT2.lump };
 		int     patches[2] = { 0, 0 };
-		int     ypos = cfg.showFullscreenMana == 2 ? 152 : 2;
+		int     ypos = cfg.hudShown[HUD_MANA] == 2 ? 152 : 2;
 
 		for(i = 0; i < 2; i++)
 			if(CPlayer->mana[i] == 0)
@@ -1566,8 +2271,8 @@ void DrawFullScreenStuff(void)
         Draw_BeginZoom(cfg.hudScale, 2, ypos);
         for(i = 0; i < 2; i++)
 		{
-			GL_DrawPatch(2, ypos + i * 13, patches[i]);
-			DrINumber(CPlayer->mana[i], 18, ypos + i * 13);
+			GL_DrawPatchLitAlpha(2, ypos + i * 13, 1, iconalpha, patches[i]);
+			DrINumber(CPlayer->mana[i], 18, ypos + i * 13, 1, 1, 1, textalpha);
 		}
         Draw_EndZoom();
 	}
@@ -1583,22 +2288,24 @@ void DrawFullScreenStuff(void)
 			}
 		}
         Draw_BeginZoom(cfg.hudScale, 2, 198);
-		DrINumber(temp, 45, 185);
+		DrINumber(temp, 45, 185, 1, 1, 1, textalpha);
         Draw_EndZoom();
 	}
 	if(!inventory)
 	{
-		if(CPlayer->readyArtifact > 0)
-		{
-            Draw_BeginZoom(cfg.hudScale, 318, 198);
-			GL_DrawFuzzPatch(286, 170, W_GetNumForName("ARTIBOX"));
-			GL_DrawPatch(284, 169,
-						 W_GetNumForName(patcharti[CPlayer->readyArtifact]));
-			if(CPlayer->inventory[inv_ptr].count > 1)
+		if(cfg.hudShown[HUD_ARTI]){
+			if(CPlayer->readyArtifact > 0)
 			{
-				DrSmallNumber(CPlayer->inventory[inv_ptr].count, 302, 192);
+            	    Draw_BeginZoom(cfg.hudScale, 318, 198);
+				GL_DrawPatchLitAlpha(286, 170, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
+				GL_DrawPatchLitAlpha(284, 169, 1, iconalpha,
+						 W_GetNumForName(artifactlist[CPlayer->readyArtifact+5]));
+				if(CPlayer->inventory[inv_ptr].count > 1)
+				{
+					DrSmallNumber(CPlayer->inventory[inv_ptr].count, 302, 192, 1, 1, 1, textalpha);
+				}
+            	    Draw_EndZoom();
 			}
-            Draw_EndZoom();
 		}
 	}
 	else
@@ -1607,33 +2314,33 @@ void DrawFullScreenStuff(void)
 		x = inv_ptr - curpos;
 		for(i = 0; i < 7; i++)
 		{
-			GL_DrawFuzzPatch(50 + i * 31, 168, W_GetNumForName("ARTIBOX"));
+			GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
 			if(CPlayer->inventorySlotNum > x + i &&
 			   CPlayer->inventory[x + i].type != arti_none)
 			{
-				GL_DrawPatch(49 + i * 31, 167,
-                             W_GetNumForName(patcharti[CPlayer->inventory
-                                                       [x + i].type]));
+				GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==curpos? hudalpha : iconalpha,
+                             W_GetNumForName(artifactlist[CPlayer->inventory
+                                                       [x + i].type+5]));
 
 				if(CPlayer->inventory[x + i].count > 1)
 				{
 					DrSmallNumber(CPlayer->inventory[x + i].count, 66 + i * 31,
-								  188);
+								  188,1, 1, 1, i==curpos? hudalpha : textalpha/2);
 				}
 			}
 		}
-		GL_DrawPatch(50 + curpos * 31, 167, PatchNumSELECTBOX);
+		GL_DrawPatchLitAlpha(50 + curpos * 31, 167, 1, hudalpha,PatchNumSELECTBOX.lump);
 		if(x != 0)
 		{
-			GL_DrawPatch(40, 167,
-						 !(leveltime & 4) ? PatchNumINVLFGEM1 :
-						 PatchNumINVLFGEM2);
+			GL_DrawPatchLitAlpha(40, 167, 1, iconalpha,
+						 !(leveltime & 4) ? PatchNumINVLFGEM1.lump :
+						 PatchNumINVLFGEM2.lump);
 		}
 		if(CPlayer->inventorySlotNum - x > 7)
 		{
-			GL_DrawPatch(268, 167,
-						 !(leveltime & 4) ? PatchNumINVRTGEM1 :
-						 PatchNumINVRTGEM2);
+			GL_DrawPatchLitAlpha(268, 167, 1, iconalpha,
+						 !(leveltime & 4) ? PatchNumINVRTGEM1.lump :
+						 PatchNumINVRTGEM2.lump);
 		}
         Draw_EndZoom();
 	}
@@ -1700,7 +2407,7 @@ void Draw_LoadIcon(void)
 //
 //==========================================================================
 
-boolean SB_Responder(event_t *event)
+boolean ST_Responder(event_t *event)
 {
 	if(event->type == ev_keydown)
 	{
@@ -1719,7 +2426,7 @@ static boolean canCheat()
 #ifdef _DEBUG
 	return true;
 #else
-	return !(gameskill == sk_nightmare || (netgame && !netcheat) ||
+	return !(gameskill == sk_nightmare || (IS_NETGAME && !netcheat) ||
 			 players[consoleplayer].health <= 0);
 #endif
 }
@@ -1741,7 +2448,7 @@ static boolean HandleCheats(byte key)
 	{							// Can't cheat in nightmare mode
 		return (false);
 	}
-	else if(netgame)
+	else if(IS_NETGAME)
 	{							// change CD track is the only cheat available in deathmatch
 		eat = false;
 		/*      if(i_CDMusic)
@@ -1837,11 +2544,11 @@ static void CheatGodFunc(player_t *player, Cheat_t * cheat)
 	player->update |= PSF_STATE;
 	if(player->cheats & CF_GODMODE)
 	{
-		P_SetMessage(player, TXT_CHEATGODON, true);
+		P_SetMessage(player, TXT_CHEATGODON);
 	}
 	else
 	{
-		P_SetMessage(player, TXT_CHEATGODOFF, true);
+		P_SetMessage(player, TXT_CHEATGODOFF);
 	}
 	SB_state = -1;
 }
@@ -1852,11 +2559,11 @@ static void CheatNoClipFunc(player_t *player, Cheat_t * cheat)
 	player->update |= PSF_STATE;
 	if(player->cheats & CF_NOCLIP)
 	{
-		P_SetMessage(player, TXT_CHEATNOCLIPON, true);
+		P_SetMessage(player, TXT_CHEATNOCLIPON);
 	}
 	else
 	{
-		P_SetMessage(player, TXT_CHEATNOCLIPOFF, true);
+		P_SetMessage(player, TXT_CHEATNOCLIPOFF);
 	}
 }
 
@@ -1878,7 +2585,7 @@ static void CheatWeaponsFunc(player_t *player, Cheat_t * cheat)
 	{
 		player->mana[i] = MAX_MANA;
 	}
-	P_SetMessage(player, TXT_CHEATWEAPONS, true);
+	P_SetMessage(player, TXT_CHEATWEAPONS);
 }
 
 static void CheatHealthFunc(player_t *player, Cheat_t * cheat)
@@ -1892,14 +2599,14 @@ static void CheatHealthFunc(player_t *player, Cheat_t * cheat)
 	{
 		player->health = player->plr->mo->health = MAXHEALTH;
 	}
-	P_SetMessage(player, TXT_CHEATHEALTH, true);
+	P_SetMessage(player, TXT_CHEATHEALTH);
 }
 
 static void CheatKeysFunc(player_t *player, Cheat_t * cheat)
 {
 	player->update |= PSF_KEYS;
 	player->keys = 2047;
-	P_SetMessage(player, TXT_CHEATKEYS, true);
+	P_SetMessage(player, TXT_CHEATKEYS);
 }
 
 static void CheatSoundFunc(player_t *player, Cheat_t * cheat)
@@ -1907,11 +2614,11 @@ static void CheatSoundFunc(player_t *player, Cheat_t * cheat)
 	DebugSound = !DebugSound;
 	if(DebugSound)
 	{
-		P_SetMessage(player, TXT_CHEATSOUNDON, true);
+		P_SetMessage(player, TXT_CHEATSOUNDON);
 	}
 	else
 	{
-		P_SetMessage(player, TXT_CHEATSOUNDOFF, true);
+		P_SetMessage(player, TXT_CHEATSOUNDOFF);
 	}
 }
 
@@ -1922,11 +2629,11 @@ static void CheatTickerFunc(player_t *player, Cheat_t * cheat)
 	   DisplayTicker = !DisplayTicker;
 	   if(DisplayTicker)
 	   {
-	   P_SetMessage(player, TXT_CHEATTICKERON, true);
+	   P_SetMessage(player, TXT_CHEATTICKERON);
 	   }
 	   else
 	   {
-	   P_SetMessage(player, TXT_CHEATTICKEROFF, true);
+	   P_SetMessage(player, TXT_CHEATTICKEROFF);
 	   } */
 }
 
@@ -1942,7 +2649,7 @@ static void CheatArtifactAllFunc(player_t *player, Cheat_t * cheat)
 			P_GiveArtifact(player, i, NULL);
 		}
 	}
-	P_SetMessage(player, TXT_CHEATARTIFACTS3, true);
+	P_SetMessage(player, TXT_CHEATARTIFACTS3);
 }
 
 static void CheatPuzzleFunc(player_t *player, Cheat_t * cheat)
@@ -1953,13 +2660,13 @@ static void CheatPuzzleFunc(player_t *player, Cheat_t * cheat)
 	{
 		P_GiveArtifact(player, i, NULL);
 	}
-	P_SetMessage(player, TXT_CHEATARTIFACTS3, true);
+	P_SetMessage(player, TXT_CHEATARTIFACTS3);
 }
 
 static void CheatInitFunc(player_t *player, Cheat_t * cheat)
 {
 	G_DeferedInitNew(gameskill, gameepisode, gamemap);
-	P_SetMessage(player, TXT_CHEATWARP, true);
+	P_SetMessage(player, TXT_CHEATWARP);
 }
 
 static void CheatWarpFunc(player_t *player, Cheat_t * cheat)
@@ -1975,19 +2682,19 @@ static void CheatWarpFunc(player_t *player, Cheat_t * cheat)
 	ones = cheat->args[1] - '0';
 	if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
 	{							// Bad map
-		P_SetMessage(player, TXT_CHEATBADINPUT, true);
+		P_SetMessage(player, TXT_CHEATBADINPUT);
 		return;
 	}
 	//map = P_TranslateMap((cheat->args[0]-'0')*10+cheat->args[1]-'0');
 	map = P_TranslateMap(tens * 10 + ones);
 	if(map == -1)
 	{							// Not found
-		P_SetMessage(player, TXT_CHEATNOMAP, true);
+		P_SetMessage(player, TXT_CHEATNOMAP);
 		return;
 	}
 	if(map == gamemap)
 	{							// Don't try to teleport to current map
-		P_SetMessage(player, TXT_CHEATBADINPUT, true);
+		P_SetMessage(player, TXT_CHEATBADINPUT);
 		return;
 	}
 	if(DevMaps)
@@ -2000,7 +2707,7 @@ static void CheatWarpFunc(player_t *player, Cheat_t * cheat)
 		}
 		else
 		{						// Can't find
-			P_SetMessage(player, TXT_CHEATNOMAP, true);
+			P_SetMessage(player, TXT_CHEATNOMAP);
 			return;
 		}
 	}
@@ -2009,11 +2716,11 @@ static void CheatWarpFunc(player_t *player, Cheat_t * cheat)
 		sprintf(mapName, "MAP%02d", map);
 		if(W_CheckNumForName(mapName) == -1)
 		{						// Can't find
-			P_SetMessage(player, TXT_CHEATNOMAP, true);
+			P_SetMessage(player, TXT_CHEATNOMAP);
 			return;
 		}
 	}
-	P_SetMessage(player, TXT_CHEATWARP, true);
+	P_SetMessage(player, TXT_CHEATWARP);
 	G_TeleportNewMap(map, 0);
 	//G_Completed(-1, -1);//map, 0);
 }
@@ -2030,7 +2737,7 @@ static void CheatPigFunc(player_t *player, Cheat_t * cheat)
 	{
 		P_MorphPlayer(player);
 	}
-	P_SetMessage(player, "SQUEAL!!", true);
+	P_SetMessage(player, "SQUEAL!!");
 }
 
 static void CheatMassacreFunc(player_t *player, Cheat_t * cheat)
@@ -2040,7 +2747,7 @@ static void CheatMassacreFunc(player_t *player, Cheat_t * cheat)
 
 	count = P_Massacre();
 	sprintf(buffer, "%d MONSTERS KILLED\n", count);
-	P_SetMessage(player, buffer, true);
+	P_SetMessage(player, buffer);
 }
 
 static void CheatIDKFAFunc(player_t *player, Cheat_t * cheat)
@@ -2056,28 +2763,28 @@ static void CheatIDKFAFunc(player_t *player, Cheat_t * cheat)
 		player->weaponowned[i] = false;
 	}
 	player->pendingweapon = WP_FIRST;
-	P_SetMessage(player, TXT_CHEATIDKFA, true);
+	P_SetMessage(player, TXT_CHEATIDKFA);
 }
 
 static void CheatQuickenFunc1(player_t *player, Cheat_t * cheat)
 {
-	P_SetMessage(player, "TRYING TO CHEAT?  THAT'S ONE....", true);
+	P_SetMessage(player, "TRYING TO CHEAT?  THAT'S ONE....");
 }
 
 static void CheatQuickenFunc2(player_t *player, Cheat_t * cheat)
 {
-	P_SetMessage(player, "THAT'S TWO....", true);
+	P_SetMessage(player, "THAT'S TWO....");
 }
 
 static void CheatQuickenFunc3(player_t *player, Cheat_t * cheat)
 {
 	P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000);
-	P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.", true);
+	P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.");
 }
 
 static void CheatClassFunc1(player_t *player, Cheat_t * cheat)
 {
-	P_SetMessage(player, "ENTER NEW PLAYER CLASS (0 - 2)", true);
+	P_SetMessage(player, "ENTER NEW PLAYER CLASS (0 - 2)");
 }
 
 //==========================================================================
@@ -2132,7 +2839,7 @@ static void CheatClassFunc2(player_t *player, Cheat_t * cheat)
 	class = cheat->args[0] - '0';
 	if(class > 2 || class < 0)
 	{
-		P_SetMessage(player, "INVALID PLAYER CLASS", true);
+		P_SetMessage(player, "INVALID PLAYER CLASS");
 		return;
 	}
 	SB_ChangePlayerClass(player, class);
@@ -2140,7 +2847,7 @@ static void CheatClassFunc2(player_t *player, Cheat_t * cheat)
 
 static void CheatVersionFunc(player_t *player, Cheat_t * cheat)
 {
-	P_SetMessage(player, VERSIONTEXT, true);
+	P_SetMessage(player, VERSIONTEXT);
 }
 
 static void CheatDebugFunc(player_t *player, Cheat_t * cheat)
@@ -2151,17 +2858,17 @@ static void CheatDebugFunc(player_t *player, Cheat_t * cheat)
 			P_GetMapWarpTrans(gamemap), gamemap,
 			player->plr->mo->x >> FRACBITS, player->plr->mo->y >> FRACBITS,
 			player->plr->mo->z >> FRACBITS);
-	P_SetMessage(player, textBuffer, true);
+	P_SetMessage(player, textBuffer);
 }
 
 static void CheatScriptFunc1(player_t *player, Cheat_t * cheat)
 {
-	P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?", true);
+	P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?");
 }
 
 static void CheatScriptFunc2(player_t *player, Cheat_t * cheat)
 {
-	P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?", true);
+	P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?");
 }
 
 static void CheatScriptFunc3(player_t *player, Cheat_t * cheat)
@@ -2183,7 +2890,7 @@ static void CheatScriptFunc3(player_t *player, Cheat_t * cheat)
 	if(P_StartACS(script, 0, args, player->plr->mo, NULL, 0))
 	{
 		sprintf(textBuffer, "RUNNING SCRIPT %.2d", script);
-		P_SetMessage(player, textBuffer, true);
+		P_SetMessage(player, textBuffer);
 	}
 }
 
@@ -2210,11 +2917,11 @@ static void CheatTrackFunc1(player_t *player, Cheat_t * cheat)
 	   }
 	   if(gi.CD(DD_INIT, 0) == -1)
 	   {
-	   P_SetMessage(player, "ERROR INITIALIZING CD", true);
+	   P_SetMessage(player, "ERROR INITIALIZING CD");
 	   }
 	   sprintf(buffer, "ENTER DESIRED CD TRACK (%.2d - %.2d):\n",
 	   gi.CD(DD_GET_FIRST_TRACK, 0), gi.CD(DD_GET_LAST_TRACK, 0));  
-	   P_SetMessage(player, buffer, true); */
+	   P_SetMessage(player, buffer); */
 }
 
 //===========================================================================
@@ -2235,7 +2942,7 @@ static void CheatTrackFunc2(player_t *player, Cheat_t * cheat)
 	   track = (cheat->args[0]-'0')*10+(cheat->args[1]-'0');
 	   if(track < gi.CD(DD_GET_FIRST_TRACK, 0) || track > gi.CD(DD_GET_LAST_TRACK, 0))
 	   {
-	   P_SetMessage(player, "INVALID TRACK NUMBER\n", true);
+	   P_SetMessage(player, "INVALID TRACK NUMBER\n");
 	   return;
 	   } 
 	   if(track == gi.CD(DD_GET_CURRENT_TRACK,0))
@@ -2245,12 +2952,12 @@ static void CheatTrackFunc2(player_t *player, Cheat_t * cheat)
 	   if(gi.CD(DD_PLAY_LOOP, track))
 	   {
 	   sprintf(buffer, "ERROR WHILE TRYING TO PLAY CD TRACK: %.2d\n", track);
-	   P_SetMessage(player, buffer, true);
+	   P_SetMessage(player, buffer);
 	   }
 	   else
 	   { // No error encountered while attempting to play the track
 	   sprintf(buffer, "PLAYING TRACK: %.2d\n", track);
-	   P_SetMessage(player, buffer, true);  
+	   P_SetMessage(player, buffer);  
 	   } */
 }
 
@@ -2279,7 +2986,7 @@ int CCmdCheat(int argc, char **argv)
 		ev.type = ev_keydown;
 		ev.data1 = argv[1][i];
 		ev.data2 = ev.data3 = 0;
-		SB_Responder(&ev);
+		ST_Responder(&ev);
 	}
 	return true;
 }
