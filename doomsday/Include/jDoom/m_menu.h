@@ -35,9 +35,14 @@
 // Does all the real work of the menu interaction.
 boolean         M_Responder(event_t *ev);
 
+// Called by Init
+// registers all the CCmds and CVars for the menu
+void 		MN_Register(void);
+
 // Called by main loop,
 // only used for menu (skull cursor) animation.
-void            M_Ticker(void);
+// and menu fog, fading in and out...
+void            MN_Ticker(void);
 
 // Called by main loop,
 // draws the menus directly into the screen buffer.
@@ -45,7 +50,7 @@ void            M_Drawer(void);
 
 // Called by D_DoomMain,
 // loads the config file.
-void            M_Init(void);
+void            MN_Init(void);
 void            M_LoadData(void);
 void            M_UnloadData(void);
 
@@ -56,17 +61,19 @@ void            M_ClearMenus(void);
 
 void            M_StartMessage(char *string, void *routine, boolean input);
 
-int             M_StringWidth(char *string, dpatch_t * font);
-void            M_WriteText2(int x, int y, char *string, dpatch_t * font,
-							 float red, float green, float blue);
-void            M_WriteText3(int x, int y, const char *string, dpatch_t * font,
-							 float red, float green, float blue,
+void            M_WriteText2(int x, int y, char *string, dpatch_t *font,
+							 float red, float green, float blue, float alpha);
+void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
+							 float red, float green, float blue, float alpha,
 							 boolean doTypeIn, int initialCount);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.8  2005/05/29 05:40:10  danij
+// Commonised menu code.
+//
 // Revision 1.7  2004/05/29 18:19:58  skyjake
 // Refined indentation style
 //
