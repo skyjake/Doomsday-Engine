@@ -52,10 +52,15 @@ void            cht_PowerUpFunc(player_t *plyr, int i);
 void            cht_ChoppersFunc(player_t *plyr);
 void            cht_PosFunc(player_t *plyr);
 
+boolean 	cht_Responder(event_t *ev);
+
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2005/05/29 05:47:13  danij
+// Added cht_Responder() for responding to cheats. Moved all cheat related code to m_cheat.c
+//
 // Revision 1.5  2004/06/16 18:28:46  skyjake
 // Updated style (typenames)
 //
