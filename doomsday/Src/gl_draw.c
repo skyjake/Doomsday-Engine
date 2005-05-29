@@ -259,10 +259,12 @@ void GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th)
 }
 
 // The cut rectangle must be inside the other one.
-void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int cx,
+void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int txoff, int tyoff, int cx,
 						 int cy, int cw, int ch)
 {
 	float   ftw = tw, fth = th;
+	float	txo = (1.0f / (float)tw) * (float)txoff;
+	float	tyo = (1.0f / (float)th) * (float)tyoff;
 
 	// We'll draw at max four rectangles.
 	int     toph = cy - y, bottomh = y + h - (cy + ch), sideh =
@@ -272,13 +274,13 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int cx,
 	if(toph > 0)
 	{
 		// The top rectangle.
-		gl.TexCoord2f(0, 0);
+		gl.TexCoord2f(txo, tyo);
 		gl.Vertex2f(x, y);
-		gl.TexCoord2f(w / ftw, 0);
-		gl.Vertex2f(x + w, y);
-		gl.TexCoord2f(w / ftw, toph / fth);
+		gl.TexCoord2f(txo + (w / ftw), tyo);
+		gl.Vertex2f(x + w, y );
+		gl.TexCoord2f(txo + (w / ftw), tyo + (toph / fth));
 		gl.Vertex2f(x + w, y + toph);
-		gl.TexCoord2f(0, toph / fth);
+		gl.TexCoord2f(txo, tyo + (toph / fth));
 		gl.Vertex2f(x, y + toph);
 	}
 	if(lefth > 0 && sideh > 0)
@@ -286,13 +288,13 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int cx,
 		float   yoff = toph / fth;
 
 		// The left rectangle.
-		gl.TexCoord2f(0, yoff);
+		gl.TexCoord2f(txo, yoff + tyo);
 		gl.Vertex2f(x, y + toph);
-		gl.TexCoord2f(lefth / ftw, yoff);
+		gl.TexCoord2f(txo + (lefth / ftw), yoff + tyo);
 		gl.Vertex2f(x + lefth, y + toph);
-		gl.TexCoord2f(lefth / ftw, yoff + sideh / fth);
+		gl.TexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
 		gl.Vertex2f(x + lefth, y + toph + sideh);
-		gl.TexCoord2f(0, yoff + sideh / fth);
+		gl.TexCoord2f(txo, yoff + tyo + sideh / fth);
 		gl.Vertex2f(x, y + toph + sideh);
 	}
 	if(righth > 0 && sideh > 0)
@@ -302,13 +304,13 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int cx,
 		float   yoff = toph / fth;
 
 		// The left rectangle.
-		gl.TexCoord2f(xoff, yoff);
+		gl.TexCoord2f(xoff + txo, yoff + tyo);
 		gl.Vertex2f(ox, y + toph);
-		gl.TexCoord2f(xoff + righth / ftw, yoff);
+		gl.TexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
 		gl.Vertex2f(ox + righth, y + toph);
-		gl.TexCoord2f(xoff + righth / ftw, yoff + sideh / fth);
+		gl.TexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
 		gl.Vertex2f(ox + righth, y + toph + sideh);
-		gl.TexCoord2f(xoff, yoff + sideh / fth);
+		gl.TexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
 		gl.Vertex2f(ox, y + toph + sideh);
 	}
 	if(bottomh > 0)
@@ -316,13 +318,13 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th, int cx,
 		int     oy = y + toph + sideh;
 		float   yoff = (toph + sideh) / fth;
 
-		gl.TexCoord2f(0, yoff);
+		gl.TexCoord2f(txo, yoff + tyo);
 		gl.Vertex2f(x, oy);
-		gl.TexCoord2f(w / ftw, yoff);
+		gl.TexCoord2f(txo + w / ftw, yoff + tyo);
 		gl.Vertex2f(x + w, oy);
-		gl.TexCoord2f(w / ftw, yoff + bottomh / fth);
+		gl.TexCoord2f(txo + w / ftw, yoff + tyo + bottomh / fth);
 		gl.Vertex2f(x + w, oy + bottomh);
-		gl.TexCoord2f(0, yoff + bottomh / fth);
+		gl.TexCoord2f(txo, yoff + tyo + bottomh / fth);
 		gl.Vertex2f(x, oy + bottomh);
 	}
 	gl.End();

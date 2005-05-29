@@ -115,10 +115,15 @@ void R_DrawViewBorder(void)
 	if(viewwidth == 320 && viewheight == 200)
 		return;
 
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Ortho(0, 0, 320, 200, -1, 1);
+
 	// View background.
 	GL_SetColorAndAlpha(1, 1, 1, 1);
 	GL_SetFlat(R_FlatNumForName(borderGfx[BG_BACKGROUND]));
-	GL_DrawCutRectTiled(0, 0, 320, 200, 64, 64, viewwindowx - bwidth,
+	GL_DrawCutRectTiled(0, 0, 320, 200, 64, 64, 0, 0, viewwindowx - bwidth,
 						viewwindowy - bwidth, viewwidth + 2 * bwidth,
 						viewheight + 2 * bwidth);
 
@@ -128,7 +133,7 @@ void R_DrawViewBorder(void)
 					 lumptexinfo[lump].height, 16, lumptexinfo[lump].height);
 	// Border bottom.
 	GL_SetPatch(lump = W_GetNumForName(borderGfx[BG_BOTTOM]));
-	GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight, viewwidth,
+	GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
 					 lumptexinfo[lump].height, 16, lumptexinfo[lump].height);
 
 	// Left view border.
@@ -138,7 +143,7 @@ void R_DrawViewBorder(void)
 					 lumptexinfo[lump].width[0], 16);
 	// Right view border.
 	GL_SetPatch(lump = W_GetNumForName(borderGfx[BG_RIGHT]));
-	GL_DrawRectTiled(viewwindowx + viewwidth, viewwindowy,
+	GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
 					 lumptexinfo[lump].width[0], viewheight,
 					 lumptexinfo[lump].width[0], 16);
 
@@ -152,6 +157,11 @@ void R_DrawViewBorder(void)
 	GL_DrawPatch(viewwindowx - bwidth, viewwindowy + viewheight,
 				 W_GetNumForName(borderGfx[BG_BOTTOMLEFT]));
 	GL_UsePatchOffset(true);
+
+    gl.PopMatrix();
+
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
 }
 
 //===========================================================================
