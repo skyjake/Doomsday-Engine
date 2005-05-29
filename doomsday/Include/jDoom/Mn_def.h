@@ -84,6 +84,8 @@ typedef struct {
 	int             firstItem, numVisItems;
 } Menu_t;
 
+extern char *yesno[];
+
 extern int      MenuTime;
 extern boolean  shiftdown;
 extern Menu_t  *currentMenu;
@@ -142,7 +144,5 @@ boolean         Ed_Responder(event_t *event);
 
 // Widget routines.
 boolean       	Cl_Responder(event_t *event); 	// Handles control in a menu widget
-
-static char *yesno[3] = { "NO", "YES", "MAYBE?" };
 
 #endif							// __MENU_DEFS_H_

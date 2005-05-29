@@ -323,6 +323,12 @@ int     saveCharIndex;			// which char we're editing
 
 char    endstring[160];
 
+#if __JDOOM__
+static char *yesno[3] = { "NO", "YES", "MAYBE?" };
+#else
+static char *yesno[2] = { "NO", "YES" };
+#endif
+
 #if __JDOOM__ || __JHERETIC__
 char   *episodemsg;
 #endif

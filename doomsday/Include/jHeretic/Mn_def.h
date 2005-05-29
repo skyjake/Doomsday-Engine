@@ -84,6 +84,8 @@ typedef struct {
 	int             firstItem, numVisItems;
 } Menu_t;
 
+extern char *yesno[];
+
 extern int      MenuTime;
 extern boolean  shiftdown;
 extern Menu_t  *currentMenu;
@@ -139,8 +141,6 @@ boolean       	Cl_Responder(event_t *event); 	// Handles control in a menu widge
 
 // Edit field routines.
 boolean         Ed_Responder(event_t *event);
-
-static char *yesno[2] = { "NO", "YES" };
 
 // Called by Init
 // registers all the CCmds and CVars for the menu
