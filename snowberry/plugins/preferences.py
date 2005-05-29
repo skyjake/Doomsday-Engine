@@ -31,7 +31,7 @@ def init():
     events.addNotifyListener(handleNotify)
 
     # Listen for the About button.
-    events.addCommandListener(handleCommand)
+    #events.addCommandListener(handleCommand)
 
 
 def handleNotify(event):
