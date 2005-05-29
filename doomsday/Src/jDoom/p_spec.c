@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.11  2005/05/29 12:45:09  danij
+// Removed fixed limits on number of active plats/ceilings using modified code from PrBoom.
+//
 // Revision 1.10  2004/06/16 18:28:47  skyjake
 // Updated style (typenames)
 //
@@ -1333,12 +1336,9 @@ void P_SpawnSpecials(void)
 		}
 	}
 
-	//  Init other misc stuff
-	for(i = 0; i < MAXCEILINGS; i++)
-		activeceilings[i] = NULL;
+	P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
 
-	for(i = 0; i < MAXPLATS; i++)
-		activeplats[i] = NULL;
+	P_RemoveAllActivePlats();     // killough
 
 	for(i = 0; i < MAXBUTTONS; i++)
 		memset(&buttonlist[i], 0, sizeof(button_t));

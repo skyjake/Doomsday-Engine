@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.8  2005/05/29 12:45:09  danij
+// Removed fixed limits on number of active plats/ceilings using modified code from PrBoom.
+//
 // Revision 1.7  2005/01/01 22:58:52  skyjake
 // Resolved a bunch of compiler warnings
 //
@@ -224,7 +227,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 	case 133:
 		if(!p)
 			return 0;
-		if(!p->cards[it_bluecard] && !p->cards[it_blueskull])
+		if(!p->keys[it_bluecard] && !p->keys[it_blueskull])
 		{
 			P_SetMessage(p, PD_BLUEO);
 			S_StartSound(sfx_oof, p->plr->mo);
@@ -236,7 +239,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 	case 135:
 		if(!p)
 			return 0;
-		if(!p->cards[it_redcard] && !p->cards[it_redskull])
+		if(!p->keys[it_redcard] && !p->keys[it_redskull])
 		{
 			P_SetMessage(p, PD_REDO);
 			S_StartSound(sfx_oof, p->plr->mo);
@@ -248,7 +251,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 	case 137:
 		if(!p)
 			return 0;
-		if(!p->cards[it_yellowcard] && !p->cards[it_yellowskull])
+		if(!p->keys[it_yellowcard] && !p->keys[it_yellowskull])
 		{
 			P_SetMessage(p, PD_YELLOWO);
 			S_StartSound(sfx_oof, p->plr->mo);
@@ -360,7 +363,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 		if(!player)
 			return;
 
-		if(!player->cards[it_bluecard] && !player->cards[it_blueskull])
+		if(!player->keys[it_bluecard] && !player->keys[it_blueskull])
 		{
 			P_SetMessage(player, PD_BLUEK);
 			S_StartSound(sfx_oof, player->plr->mo);
@@ -373,7 +376,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 		if(!player)
 			return;
 
-		if(!player->cards[it_yellowcard] && !player->cards[it_yellowskull])
+		if(!player->keys[it_yellowcard] && !player->keys[it_yellowskull])
 		{
 			P_SetMessage(player, PD_YELLOWK);
 			S_StartSound(sfx_oof, player->plr->mo);
@@ -386,7 +389,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 		if(!player)
 			return;
 
-		if(!player->cards[it_redcard] && !player->cards[it_redskull])
+		if(!player->keys[it_redcard] && !player->keys[it_redskull])
 		{
 			P_SetMessage(player, PD_REDK);
 			S_StartSound(sfx_oof, player->plr->mo);
