@@ -414,7 +414,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 		{
 			if(thing->flags & MF_SHOOTABLE && thing != tmthing->target)
 			{
-				if(netgame && !deathmatch && thing->player)
+				if(IS_NETGAME && !deathmatch && thing->player)
 				{				// don't attack other co-op players
 					return true;
 				}
@@ -1662,7 +1662,7 @@ boolean PTR_AimTraverse(intercept_t * in)
 	{							// corpse or something
 		return true;
 	}
-	if(th->player && netgame && !deathmatch)
+	if(th->player && IS_NETGAME && !deathmatch)
 	{							// don't aim at fellow co-op players
 		return true;
 	}
@@ -1721,6 +1721,13 @@ boolean PTR_ShootTraverse(intercept_t * in)
 
 	extern mobj_t LavaInflictor;
 
+	// These were added for the plane-hitpoint algo.
+	// FIXME: This routine is getting rather bloated.
+	boolean lineWasHit;
+	subsector_t *contact, *originSub;
+	fixed_t ctop, cbottom, dx, dy, dz, step, stepx, stepy, stepz;
+	int     divisor;
+
 	if(in->isaline)
 	{
 		li = in->d.line;
@@ -1758,21 +1765,96 @@ boolean PTR_ShootTraverse(intercept_t * in)
 		// hit line
 		//
 	  hitline:
-		// position a bit closer
+		lineWasHit = true;
+
+		// Position a bit closer.
 		frac = in->frac - FixedDiv(4 * FRACUNIT, attackrange);
 		x = trace->x + FixedMul(trace->dx, frac);
 		y = trace->y + FixedMul(trace->dy, frac);
 		z = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
 
-		if(li->frontsector->ceilingpic == skyflatnum)
+		// Is it a sky hack wall? If the hitpoint is above the visible 
+		// line, no puff must be shown.
+		if(li->backsector && li->frontsector->ceilingpic == skyflatnum &&
+		   li->backsector->ceilingpic == skyflatnum &&
+		   (z > li->frontsector->ceilingheight ||
+			z > li->backsector->ceilingheight))
+			return false;
+
+		// This is subsector where the trace originates.
+		originSub = R_PointInSubsector(trace->x, trace->y);
+
+		dx = x - trace->x;
+		dy = y - trace->y;
+		dz = z - shootz;
+
+		if(dz != 0)
 		{
-			if(z > li->frontsector->ceilingheight)
-				return false;	// don't shoot the sky!
-			if(li->backsector && li->backsector->ceilingpic == skyflatnum)
-				return false;	// it's a sky hack wall
+			contact = R_PointInSubsector(x, y);
+			step = P_ApproxDistance3(dx, dy, dz);
+			stepx = FixedDiv(dx, step);
+			stepy = FixedDiv(dy, step);
+			stepz = FixedDiv(dz, step);
+
+			// Backtrack until we find a non-empty sector.
+			while(contact->sector->ceilingheight <=
+				  contact->sector->floorheight && contact != originSub)
+			{
+				dx -= 8 * stepx;
+				dy -= 8 * stepy;
+				dz -= 8 * stepz;
+				x = trace->x + dx;
+				y = trace->y + dy;
+				z = shootz + dz;
+				contact = R_PointInSubsector(x, y);
+			}
+
+			// Should we backtrack to hit a plane instead?
+			ctop = contact->sector->ceilingheight - 4 * FRACUNIT;
+			cbottom = contact->sector->floorheight + 4 * FRACUNIT;
+			divisor = 2;
+
+			// We must not hit a sky plane.
+			if((z > ctop && contact->sector->ceilingpic == skyflatnum) ||
+			   (z < cbottom && contact->sector->floorpic == skyflatnum))
+				return false;
+
+			// Find the approximate hitpoint by stepping back and
+			// forth using smaller and smaller steps. 
+			while((z > ctop || z < cbottom) && divisor <= 128)
+			{
+				// We aren't going to hit a line any more.
+				lineWasHit = false;
+
+				// Take a step backwards.
+				x -= dx / divisor;
+				y -= dy / divisor;
+				z -= dz / divisor;
+
+				// Divisor grows.
+				divisor <<= 1;
+
+				// Move forward until limits breached.
+				while((dz > 0 && z <= ctop) || (dz < 0 && z >= cbottom))
+				{
+					x += dx / divisor;
+					y += dy / divisor;
+					z += dz / divisor;
+				}
+			}
 		}
 
 		P_SpawnPuff(x, y, z);
+
+/*		// JHEXEN doesn't have XG yet!
+		if(lineWasHit && li->special)
+		{
+			// Extended shoot events only happen when the bullet actually
+			// hits the line.
+			XL_ShootLine(li, 0, shootthing);
+		}
+*/
+
 		return false;			// don't go any farther
 	}
 
@@ -1784,16 +1866,6 @@ boolean PTR_ShootTraverse(intercept_t * in)
 		return true;			// can't shoot self
 	if(!(th->flags & MF_SHOOTABLE))
 		return true;			// corpse or something
-
-	//
-	// check for physical attacks on a ghost
-	//
-	/*  FIX:  Impliment Heretic 2 weapons here
-	   if(th->flags&MF_SHADOW && shootthing->player->readyweapon == wp_staff)
-	   {
-	   return(true);
-	   }
-	 */
 
 	// check angles to see if the thing can be aimed at
 	dist = FixedMul(attackrange, in->frac);
@@ -1857,7 +1929,7 @@ fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance)
 	y2 = t1->y + (distance >> FRACBITS) * finesine[angle];
 	shootz = t1->z + (t1->height >> 1) + 8 * FRACUNIT;
 
-	/*  if(demoplayback || demorecording)// || netgame)
+	/*  if(demoplayback || demorecording)// || IS_NETGAME)
 	   {
 	   topslope = 100*FRACUNIT/160;    // can't shoot outside view angles
 	   bottomslope = -100*FRACUNIT/160;
@@ -1877,7 +1949,15 @@ fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance)
 				   PTR_AimTraverse);
 
 	if(linetarget)
-		return aimslope;
+		if(!t1->player)
+			return aimslope;
+
+	if(t1->player)
+	{
+		// The slope is determined by lookdir.
+		return FRACUNIT * (tan(LOOKDIR2RAD(t1->dplayer->lookdir)) / 1.2);
+	}
+
 	return 0;
 }
 
