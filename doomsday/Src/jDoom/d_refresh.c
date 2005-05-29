@@ -24,6 +24,8 @@
 extern char MobjLightOffsets[NUMMOBJTYPES];
 extern int actual_leveltime;
 
+extern boolean amap_fullyopen;
+
 // Private Data -------------------------------------------------------------
 
 static boolean setsizeneeded;
@@ -115,18 +117,6 @@ void R_DrawLevelTitle(void)
 	int     y = 12;
 	char   *lname, *lauthor, *ptr;
 
-#if 0
-	char    buf[80];
-
-	//int st = players[consoleplayer].plr->psprites[0].state;
-	sprintf(buf, "p0:%p/%p p1:%p/%p",	/*st==0? "bob" : st==1? "fire" : st==2? "down" : "up" */
-			players[0].psprites[0].state, players[0].psprites[1].state,
-			players[1].psprites[0].state, players[1].psprites[1].state);
-	/*sprintf(buf, "p%i r%i", players[consoleplayer].pendingweapon,
-	   players[consoleplayer].readyweapon); */
-	M_WriteText(10, 50, buf);
-#endif
-
 	if(!cfg.levelTitle || actual_leveltime > 6 * 35)
 		return;
 
@@ -166,14 +156,14 @@ void R_DrawLevelTitle(void)
 				lname++;
 		}
 		M_WriteText2(160 - M_StringWidth(lname, hu_font_b) / 2, y, lname,
-					 hu_font_b, -1, -1, -1);
+					 hu_font_b, -1, -1, -1, -1);
 		y += 14;				//9;
 	}
 	gl.Color4f(.5f, .5f, .5f, alpha);
 	if(lauthor && (!cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
 	{
-		M_WriteText2(160 - M_StringWidth(lauthor, hu_font) / 2, y, lauthor,
-					 hu_font_a, -1, -1, -1);
+		M_WriteText2(160 - M_StringWidth(lauthor, hu_font_a) / 2, y, lauthor,
+					 hu_font_a, -1, -1, -1, -1);
 	}
 
 	gl.MatrixMode(DGL_MODELVIEW);
@@ -188,8 +178,8 @@ void R_DrawLevelTitle(void)
 //
 void R_SetViewSize(int blocks, int detail)
 {
-	setsizeneeded = true;
-	setblocks = blocks;
+	cfg.setsizeneeded = true;
+	cfg.setblocks = blocks;
 	setdetail = detail;
 }
 
@@ -204,15 +194,18 @@ extern boolean inhelpscreens;
 extern float lookOffset;
 
 void    R_SetAllDoomsdayFlags();
-
+#define SIZEFACT 4
+#define SIZEFACT2 16
 void D_Display(void)
 {
 	static boolean viewactivestate = false;
 	static boolean menuactivestate = false;
 	static boolean inhelpscreensstate = false;
-	static boolean fullscreen = false;
+	static int targx =0, targy = 0, targw =0, targh = 0;
+	static int x =0, y = 0, w =320, h = 200, offy = 0;
+	static int fullscreenmode = 0;
 	static gamestate_t oldgamestate = -1;
-	int     y;
+	int     ay;
 	boolean redrawsbar;
 	player_t *player = &players[displayplayer];
 	boolean iscam = (player->plr->flags & DDPF_CAMERA) != 0;	// $democam
@@ -223,19 +216,38 @@ void D_Display(void)
 	redrawsbar = false;
 
 	// $democam: can be set on every frame
-	if(setblocks > 10 || iscam)
+	if(cfg.setblocks > 10 || iscam)
 	{
 		// Full screen.
-		R_ViewWindow(0, 0, 320, 200);
+		targx = 0;
+		targy = 0;
+		targw = 320;
+		targh = 200;
 	}
 	else
 	{
-		int     w = setblocks * 32;
-		int     h = setblocks * (200 - ST_HEIGHT * cfg.sbarscale / 20) / 10;
-
-		R_ViewWindow(160 - (w >> 1),
-					 (200 - ST_HEIGHT * cfg.sbarscale / 20 - h) >> 1, w, h);
+		targw = cfg.setblocks * 32;
+		targh = cfg.setblocks * (200 - ST_HEIGHT * cfg.sbarscale / 20) / 10;
+		targx = 160 - (targw >> 1);
+		targy = (200 - ST_HEIGHT * cfg.sbarscale / 20 - targh) >> 1;
 	}
+
+	if(targw > w)
+		w+= (((targw-w)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targw < w)
+		w-= (((w-targw)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targh > h)
+		h+= (((targh-h)>> 1)+SIZEFACT2)>>SIZEFACT;
+	if(targh < h)
+		h-= (((h-targh)>> 1)+SIZEFACT2)>>SIZEFACT;
+
+	if(cfg.setblocks < 10)
+	{
+		offy = (ST_HEIGHT * cfg.sbarscale/20);
+		R_ViewWindow(160-(w>>1), 100-((h+offy) >>1), w, h);
+	} else
+		R_ViewWindow(targx, targy, targw, targh);
+
 
 	// Do buffered drawing.
 	switch (gamestate)
@@ -250,7 +262,7 @@ void D_Display(void)
 			// a bug, but since there's an easy fix...
 			break;
 		}
-		if(!automapactive || cfg.automapAlpha < 1)
+		if(!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1 || cfg.automapWidth < 1 || cfg.automapHeight < 1)
 		{
 			// Draw the player view.
 			if(IS_CLIENT)
@@ -258,9 +270,10 @@ void D_Display(void)
 				// Server updates mobj flags in NetSv_Ticker.
 				R_SetAllDoomsdayFlags();
 			}
-			// Don't draw self.
+			// The view angle offset.
 			Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
 			GL_SetFilter(players[displayplayer].plr->filter);	// $democam
+
 			// How about fullbright?
 			Set(DD_FULLBRIGHT, (player->powers[pw_infrared] > 4 * 32) ||
 				(player->powers[pw_infrared] & 8) ||
@@ -274,29 +287,51 @@ void D_Display(void)
 			if(!iscam)
 				X_Drawer();		// $democam
 		}
-		if(automapactive)
-			AM_Drawer();
 
-		// Level information is shown for a few seconds in the 
-		// beginning of a level.
-		R_DrawLevelTitle();
+        // Draw the automap?
+        if(automapactive)
+            AM_Drawer();
 
-		if((viewheight != 200))
-			redrawsbar = true;
-		if(inhelpscreensstate && !inhelpscreens)
-			redrawsbar = true;	// just put away the help screen
-		if(!iscam)
-			ST_Drawer(viewheight == 200, redrawsbar);	// $democam
-		fullscreen = viewheight == 200;
-		HU_Drawer();
+        // These various HUD's will be drawn unless Doomsday advises not to
+        if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
+		{
+            // Level information is shown for a few seconds in the 
+            // beginning of a level.
+            R_DrawLevelTitle();
+
+            if((viewheight != 200))
+                redrawsbar = true;
+            if(inhelpscreensstate && !inhelpscreens)
+                redrawsbar = true;	// just put away the help screen
+
+            // Do we need to render a full status bar at this point?
+            if (!(automapactive && cfg.automapHudDisplay == 0 ))
+            {
+                if(!iscam)
+                    if(true == (viewheight == 200) )
+                    {
+                        // Fullscreen. Which mode?
+                        ST_Drawer( cfg.setblocks - 10 , redrawsbar);	// $democam
+                    }
+                    else
+                    {
+                        ST_Drawer( 0 , redrawsbar);	// $democam
+                    }
+                fullscreenmode = viewheight == 200;
+            }
+
+		    HU_Drawer();
+		}
+
 		// Need to update the borders?
 		if(oldgamestate != GS_LEVEL ||
-		   ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-			 cfg.sbarscale < 20)))
+		   	((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
+			 	cfg.sbarscale < 20 || (cfg.sbarscale == 20 && h < targh) || (automapactive && cfg.automapHudDisplay == 0 ))))
 		{
 			// Update the borders.
 			GL_Update(DDUF_BORDER);
 		}
+
 		break;
 
 	case GS_INTERMISSION:
@@ -305,8 +340,7 @@ void D_Display(void)
 
 	case GS_WAITING:
 		gl.Clear(DGL_COLOR_BUFFER_BIT);
-		M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", hu_font_a, 1, 0,
-					 0);
+		M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", hu_font_a, 1, 0, 0, 1);
 
 	default:
 		break;
@@ -323,11 +357,11 @@ void D_Display(void)
 	if(paused && !fi_active)
 	{
 		if(automapactive)
-			y = 4;
+			ay = 4;
 		else
-			y = viewwindowy + 4;
+			ay = viewwindowy + 4;
 
-		WI_DrawPatch(126, y, W_GetNumForName("M_PAUSE"));
+		WI_DrawPatch(126, ay, 1, 1, 1, 1, W_GetNumForName("M_PAUSE"));
 	}
 
 	// InFine is drawn whenever active.

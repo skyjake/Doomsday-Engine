@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.13  2005/05/29 13:07:39  danij
+// Fullscreen no HUD mode. Fullscreen floating status bar mode. Alpha blended HUD and statusbar. Show Doom guy's face in fullscreen HUD.
+//
 // Revision 1.12  2005/01/03 13:35:32  skyjake
 // Mac issues resolved
 //
@@ -125,7 +128,7 @@ enum {
 #define ST_X				0
 #define ST_X2				104
 
-#define ST_FX  			143
+#define ST_FX  			144
 #define ST_FY  			169
 
 // Should be set to patch width
@@ -284,11 +287,20 @@ enum {
 #define ST_MAPTITLEY		0
 #define ST_MAPHEIGHT		1
 
+// slide statusbar amount 1.0 is fully open
+static float showbar = 0.0f;
+
+// fullscreen hud alpha value
+static float hudalpha = 0.0f;
+
 // main player in game
 static player_t *plyr;
 
 // ST_Start() has just been called
 static boolean st_firsttime;
+
+// whether to use alpha blending
+static boolean st_blended = false;
 
 // used to execute ST_Init() only once
 static int veryfirsttime = 1;
@@ -342,7 +354,7 @@ static dpatch_t tallpercent;
 static dpatch_t shortnum[10];
 
 // 3 key-cards, 3 skulls
-static dpatch_t keys[NUMCARDS];
+static dpatch_t keys[NUMKEYS];
 
 // face status patches
 static dpatch_t faces[ST_NUMFACES];
@@ -407,81 +419,6 @@ static int keyboxes[3];
 // a random number per tick
 static int st_randomnumber;
 
-// Massive bunches of cheat shit
-//  to keep it from being easy to figure them out.
-// Yeah, right...
-unsigned char cheat_mus_seq[] = {
-	0xb2, 0x26, 0xb6, 0xae, 0xea, 1, 0, 0, 0xff
-};
-
-unsigned char cheat_choppers_seq[] = {
-	0xb2, 0x26, 0xe2, 0x32, 0xf6, 0x2a, 0x2a, 0xa6, 0x6a, 0xea, 0xff	// id...
-};
-
-unsigned char cheat_god_seq[] = {
-	0xb2, 0x26, 0x26, 0xaa, 0x26, 0xff	// iddqd
-};
-
-unsigned char cheat_ammo_seq[] = {
-	0xb2, 0x26, 0xf2, 0x66, 0xa2, 0xff	// idkfa
-};
-
-unsigned char cheat_ammonokey_seq[] = {
-	0xb2, 0x26, 0x66, 0xa2, 0xff	// idfa
-};
-
-// Smashing Pumpkins Into Samml Piles Of Putried Debris. 
-unsigned char cheat_noclip_seq[] = {
-	0xb2, 0x26, 0xea, 0x2a, 0xb2,	// idspispopd
-	0xea, 0x2a, 0xf6, 0x2a, 0x26, 0xff
-};
-
-//
-unsigned char cheat_commercial_noclip_seq[] = {
-	0xb2, 0x26, 0xe2, 0x36, 0xb2, 0x2a, 0xff	// idclip
-};
-
-unsigned char cheat_powerup_seq[7][10] = {
-	{0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x6e, 0xff},	// beholdv
-	{0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xea, 0xff},	// beholds
-	{0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xb2, 0xff},	// beholdi
-	{0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x6a, 0xff},	// beholdr
-	{0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xa2, 0xff},	// beholda
-	{0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0x36, 0xff},	// beholdl
-	{0xb2, 0x26, 0x62, 0xa6, 0x32, 0xf6, 0x36, 0x26, 0xff}	// behold
-};
-
-unsigned char cheat_clev_seq[] = {
-	0xb2, 0x26, 0xe2, 0x36, 0xa6, 0x6e, 1, 0, 0, 0xff	// idclev
-};
-
-// my position cheat
-unsigned char cheat_mypos_seq[] = {
-	0xb2, 0x26, 0xb6, 0xba, 0x2a, 0xf6, 0xea, 0xff	// idmypos
-};
-
-// Now what?
-cheatseq_t cheat_mus = { cheat_mus_seq, 0 };
-cheatseq_t cheat_god = { cheat_god_seq, 0 };
-cheatseq_t cheat_ammo = { cheat_ammo_seq, 0 };
-cheatseq_t cheat_ammonokey = { cheat_ammonokey_seq, 0 };
-cheatseq_t cheat_noclip = { cheat_noclip_seq, 0 };
-cheatseq_t cheat_commercial_noclip = { cheat_commercial_noclip_seq, 0 };
-
-cheatseq_t cheat_powerup[7] = {
-	{cheat_powerup_seq[0], 0},
-	{cheat_powerup_seq[1], 0},
-	{cheat_powerup_seq[2], 0},
-	{cheat_powerup_seq[3], 0},
-	{cheat_powerup_seq[4], 0},
-	{cheat_powerup_seq[5], 0},
-	{cheat_powerup_seq[6], 0}
-};
-
-cheatseq_t cheat_choppers = { cheat_choppers_seq, 0 };
-cheatseq_t cheat_clev = { cheat_clev_seq, 0 };
-cheatseq_t cheat_mypos = { cheat_mypos_seq, 0 };
-
 // 
 extern char *mapnames[];
 
@@ -492,19 +429,109 @@ void    ST_Stop(void);
 
 void ST_refreshBackground(void)
 {
-	if(st_statusbaron)
+
+	int x, y, w, h;
+	float cw, cw2, ch;
+
+	GL_SetPatch(sbar.lump);
+
+	if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
 	{
-		GL_DrawPatch(ST_X, ST_Y, sbar.lump);
-		if(IS_NETGAME)
-			GL_DrawPatch(ST_FX, ST_Y, faceback.lump);
+		// Alpha blended status bar, we'll need to cut it up into smaller bits...
+
+		gl.Color4f(1, 1, 1, cfg.statusbarAlpha);
+
+		gl.Begin(DGL_QUADS);
+
+			// (up to faceback if deathmatch, else ST_ARMS)
+			x = ST_X;
+			y = ST_Y;
+			w = st_armson ? 104 : 143;
+			h = 32;
+			cw = st_armson ? 0.325f : 0.446875f;
+
+			gl.TexCoord2f(0, 0);
+			gl.Vertex2f(x, y);
+			gl.TexCoord2f(cw, 0);
+			gl.Vertex2f(x + w, y);
+			gl.TexCoord2f(cw, 1);
+			gl.Vertex2f(x + w, y + h);
+			gl.TexCoord2f(0, 1);
+			gl.Vertex2f(x, y + h);
+
+			if(IS_NETGAME)
+			{
+				// (fiddly little bit above faceback)
+				x = ST_X + 144;
+				y = ST_Y;
+				w = 35;
+				h = 1;
+				cw = 0.446875f;
+				cw2 = 0.55625f;
+				ch = 0.03125f;
+
+				gl.TexCoord2f(cw, 0);
+				gl.Vertex2f(x, y);
+				gl.TexCoord2f(cw2, 0);
+				gl.Vertex2f(x + w, y);
+				gl.TexCoord2f(cw2, ch);
+				gl.Vertex2f(x + w, y + h);
+				gl.TexCoord2f(cw, ch);
+				gl.Vertex2f(x, y + h);
+
+				// (after faceback)
+				x = ST_X + 178;
+				y = ST_Y;
+				w = 142;
+				h = 32;
+				cw = 0.55625f;
+
+			} else {
+				// (including area behind the face)
+				x = ST_X + 144;
+				y = ST_Y;
+				w = 176;
+				h = 32;
+				cw = 0.45f;
+			}
+
+			gl.TexCoord2f(cw, 0);
+			gl.Vertex2f(x, y);
+			gl.TexCoord2f(1, 0);
+			gl.Vertex2f(x + w, y);
+			gl.TexCoord2f(1, 1);
+			gl.Vertex2f(x + w, y + h);
+			gl.TexCoord2f(cw, 1);
+			gl.Vertex2f(x, y + h);
+
+			gl.End();
+
+			if(st_armson)  // arms baground
+			{
+				GL_DrawPatch_CS(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
+			}
+
+			if(IS_NETGAME) // faceback
+				GL_DrawPatch_CS(ST_FX, ST_Y+1, faceback.lump);
+
+	} else if(cfg.statusbarAlpha != 0.0f){
+
+			// we can just render the full thing as normal
+			GL_DrawPatch(ST_X, ST_Y, sbar.lump);
+
+			if(st_armson)  // arms baground
+				GL_DrawPatch(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
+
+			if(IS_NETGAME) // faceback
+				GL_DrawPatch(ST_FX, ST_Y+1, faceback.lump);
 	}
+
 }
 
 // Respond to keyboard input events,
 //  intercept cheats.
 boolean ST_Responder(event_t *ev)
 {
-	int     i;
 
 	// Filter automap on/off.
 	if(ev->type == ev_keyup && ((ev->data1 & 0xffff0000) == AM_MSGHEADER))
@@ -525,81 +552,9 @@ boolean ST_Responder(event_t *ev)
 	// if a user keypress...
 	else if(ev->type == ev_keydown)
 	{
-		if(!IS_NETGAME)
-		{
-			// b. - enabled for more debug fun.
-			// if (gameskill != sk_nightmare) {
-
-			// 'dqd' cheat for toggleable god mode
-			if(cht_CheckCheat(&cheat_god, ev->data1))
-			{
-				cht_GodFunc(plyr);
-			}
-			// 'fa' cheat for killer fucking arsenal
-			else if(cht_CheckCheat(&cheat_ammonokey, ev->data1))
-			{
-				cht_GiveFunc(plyr, true, true, true, false);
-				P_SetMessage(plyr, STSTR_FAADDED);
-			}
-			// 'kfa' cheat for key full ammo
-			else if(cht_CheckCheat(&cheat_ammo, ev->data1))
-			{
-				cht_GiveFunc(plyr, true, true, true, true);
-				P_SetMessage(plyr, STSTR_KFAADDED);
-			}
-			// 'mus' cheat for changing music
-			else if(cht_CheckCheat(&cheat_mus, ev->data1))
-			{
-				char    buf[3];
-
-				P_SetMessage(plyr, STSTR_MUS);
-				cht_GetParam(&cheat_mus, buf);
-				cht_MusicFunc(plyr, buf);	// Might set plyr->message.
-			}
-			// Simplified, accepting both "noclip" and "idspispopd".
-			// no clipping mode cheat
-			else if(cht_CheckCheat(&cheat_noclip, ev->data1) ||
-					cht_CheckCheat(&cheat_commercial_noclip, ev->data1))
-			{
-				cht_NoClipFunc(plyr);
-			}
-			// 'behold?' power-up cheats
-			for(i = 0; i < 6; i++)
-			{
-				if(cht_CheckCheat(&cheat_powerup[i], ev->data1))
-				{
-					cht_PowerUpFunc(plyr, i);
-					P_SetMessage(plyr, STSTR_BEHOLDX);
-				}
-			}
-
-			// 'behold' power-up menu
-			if(cht_CheckCheat(&cheat_powerup[6], ev->data1))
-			{
-				P_SetMessage(plyr, STSTR_BEHOLD);
-			}
-			// 'choppers' invulnerability & chainsaw
-			else if(cht_CheckCheat(&cheat_choppers, ev->data1))
-			{
-				cht_ChoppersFunc(plyr);
-				P_SetMessage(plyr, STSTR_CHOPPERS);
-			}
-			// 'mypos' for player position
-			else if(cht_CheckCheat(&cheat_mypos, ev->data1))
-			{
-				cht_PosFunc(plyr);
-			}
-		}
-
-		// 'clev' change-level cheat
-		if(cht_CheckCheat(&cheat_clev, ev->data1))
-		{
-			char    buf[3];
-
-			cht_GetParam(&cheat_clev, buf);
-			cht_WarpFunc(plyr, buf);
-		}
+		cht_Responder(ev);
 	}
+
 	return false;
 }
 
@@ -809,9 +764,9 @@ void ST_updateWidgets(void)
 	// update keycard multiple widgets
 	for(i = 0; i < 3; i++)
 	{
-		keyboxes[i] = plyr->cards[i] ? i : -1;
+		keyboxes[i] = plyr->keys[i] ? i : -1;
 
-		if(plyr->cards[i + 3])
+		if(plyr->keys[i + 3])
 			keyboxes[i] = i + 3;
 	}
 
@@ -946,12 +901,6 @@ void ST_drawWidgets(boolean refresh)
 	STlib_updatePercent(&w_health, refresh);
 	STlib_updatePercent(&w_armor, refresh);
 
-	if(st_armson)
-	{
-		// The STARMS background is not used in deathmatch.
-		STlib_updateBinIcon(&w_armsbg, refresh);
-	}
-
 	for(i = 0; i < 6; i++)
 		STlib_updateMultIcon(&w_arms[i], refresh);
 
@@ -968,23 +917,24 @@ void ST_doRefresh(void)
 {
 	st_firsttime = false;
 
-	if(cfg.sbarscale < 20)
+	if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
 	{
-		float   fscale = cfg.sbarscale / 20.0f;
+		float fscale = cfg.sbarscale / 20.0f;
+		float h = 200 * (1 - fscale);
 
 		gl.MatrixMode(DGL_MODELVIEW);
 		gl.PushMatrix();
-		gl.Translatef(160 - 320 * fscale / 2, 200 * (1 - fscale), 0);
+		gl.Translatef(160 - 320 * fscale / 2, h /showbar, 0);
 		gl.Scalef(fscale, fscale, 1);
 	}
 
-	// draw status bar background to off-screen buff
+	// draw status bar background
 	ST_refreshBackground();
 
 	// and refresh all widgets
 	ST_drawWidgets(true);
 
-	if(cfg.sbarscale < 20)
+	if(cfg.sbarscale < 20 || (cfg.sbarscale == 20 && showbar < 1.0f))
 	{
 		// Restore the normal modelview matrix.
 		gl.MatrixMode(DGL_MODELVIEW);
@@ -1008,7 +958,7 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
 	}
 }
 
-void ST_drawHUDSprite(int sprite, int x, int y, int hotspot)
+void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
 {
 	spriteinfo_t sprInfo;
 	int     w, h;
@@ -1034,7 +984,7 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot)
 		y -= h;
 		break;
 	}
-	gl.Color3f(1, 1, 1);
+	gl.Color4f(1, 1, 1, alpha );
 	GL_DrawPSprite(x, y, sprite == SPR_ROCK ? 1 / 1.5 : 1, false,
 				   sprInfo.lump);
 }
@@ -1045,6 +995,8 @@ void ST_doFullscreenStuff(void)
 	char    buf[20];
 	int     w, h, pos = 0, spr, i;
 	int     h_width = 320 / cfg.hudScale, h_height = 200 / cfg.hudScale;
+	float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
+	float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
 	int     ammo_sprite[NUMAMMO] = {
 		SPR_AMMO,
 		SPR_SBOX,
@@ -1062,8 +1014,9 @@ void ST_doFullscreenStuff(void)
 		}
 		sprintf(buf, "FRAGS:%i", st_fragscount);
 		M_WriteText2(2, i, buf, hu_font_a, cfg.hudColor[0], cfg.hudColor[1],
-					 cfg.hudColor[2]);
+					 cfg.hudColor[2], textalpha);
 	}
+
 
 	// Setup the scaling matrix.
 	gl.MatrixMode(DGL_MODELVIEW);
@@ -1073,95 +1026,127 @@ void ST_doFullscreenStuff(void)
 	// draw the visible HUD data, first health
 	if(cfg.hudShown[HUD_HEALTH])
 	{
-		ST_drawHUDSprite(SPR_STIM, 2, h_height - 2, HOT_BLEFT);
+		ST_drawHUDSprite(SPR_STIM, 2, h_height - 2, HOT_BLEFT, iconalpha);
 		ST_HUDSpriteSize(SPR_STIM, &w, &h);
 		sprintf(buf, "%i%%", plr->health);
 		M_WriteText2(w + 4, h_height - 14, buf, hu_font_b, cfg.hudColor[0],
-					 cfg.hudColor[1], cfg.hudColor[2]);
-		pos = 68;
+					 cfg.hudColor[1], cfg.hudColor[2], textalpha);
+		pos = 60;
 	}
 
 	if(cfg.hudShown[HUD_AMMO] &&
 	   weaponinfo[plr->readyweapon].ammo != am_noammo)
 	{
 		spr = ammo_sprite[weaponinfo[plr->readyweapon].ammo];
-		ST_drawHUDSprite(spr, pos + 2, h_height - 2, HOT_BLEFT);
+		ST_drawHUDSprite(spr, pos + 2, h_height - 2, HOT_BLEFT, iconalpha);
 		ST_HUDSpriteSize(spr, &w, &h);
 		sprintf(buf, "%i", plr->ammo[weaponinfo[plr->readyweapon].ammo]);
 		M_WriteText2(pos + w + 4, h_height - 14, buf, hu_font_b,
-					 cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2]);
+					 cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 	}
 
-	pos = h_width - 2;
+	// doom guy's face | use a bit of extra scale
+	if(cfg.hudShown[HUD_FACE])
+	{
+		pos = (h_width/2) -(faceback.width/2) + 6;
+
+Draw_BeginZoom(0.7f, pos , h_height - 1);
+		gl.Color4f(1,1,1,iconalpha);
+		if(IS_NETGAME)
+			GL_DrawPatch_CS( pos, h_height - faceback.height + 1, faceback.lump);
+
+		GL_DrawPatch_CS( pos, h_height - faceback.height, faces[st_faceindex].lump);
+Draw_EndZoom();
+	}
+
+	pos = h_width - 1;
 	if(cfg.hudShown[HUD_ARMOR])
 	{
-		spr = plr->armortype == 2 ? SPR_ARM2 : SPR_ARM1;
-		ST_drawHUDSprite(spr, h_width - 49, h_height - 2, HOT_BRIGHT);
-		ST_HUDSpriteSize(spr, &w, &h);
 		sprintf(buf, "%i%%", plr->armorpoints);
-		M_WriteText2(h_width - 47, h_height - 14, buf, hu_font_b,
-					 cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2]);
-		pos = h_width - w - 58;
+		spr = plr->armortype == 2 ? SPR_ARM2 : SPR_ARM1;
+		ST_drawHUDSprite(spr, h_width - 49, h_height - 2, HOT_BRIGHT, iconalpha);
+		ST_HUDSpriteSize(spr, &w, &h);
+
+		M_WriteText2(h_width - M_StringWidth(buf, hu_font_b) - 2, h_height - 14, buf, hu_font_b,
+					 cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+		pos = h_width - w - 52;
 	}
 
+	// Keys  | use a bit of extra scale
 	if(cfg.hudShown[HUD_KEYS])
 	{
+Draw_BeginZoom(0.75f, pos , h_height - 2);
 		for(i = 0; i < 3; i++)
 		{
 			spr = 0;
 			if(plr->
-			   cards[i == 0 ? it_redcard : i ==
+			   keys[i == 0 ? it_redcard : i ==
 					 1 ? it_yellowcard : it_bluecard])
 				spr = i == 0 ? SPR_RKEY : i == 1 ? SPR_YKEY : SPR_BKEY;
 			if(plr->
-			   cards[i == 0 ? it_redskull : i ==
+			   keys[i == 0 ? it_redskull : i ==
 					 1 ? it_yellowskull : it_blueskull])
 				spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
 			if(spr)
 			{
-				ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BRIGHT);
+				ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BRIGHT,iconalpha);
 				ST_HUDSpriteSize(spr, &w, &h);
 				pos -= w + 2;
 			}
 		}
+Draw_EndZoom();
 	}
 
 	gl.MatrixMode(DGL_MODELVIEW);
 	gl.PopMatrix();
 }
 
-void ST_Drawer(boolean fullscreen, boolean refresh)
+void ST_Drawer(int fullscreenmode, boolean refresh)
 {
-	st_statusbaron = (!fullscreen) || automapactive;
 	st_firsttime = st_firsttime || refresh;
+	st_statusbaron = (fullscreenmode < 2) || ( automapactive && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
 
-	// Do red-/gold-shifts from damage/items
+	// Do palette shifts
 	ST_doPaletteStuff();
 
+	// Either slide the status bar in or fade out the fullscreen hud
 	if(st_statusbaron)
-		ST_doRefresh();
+	{
+		if(hudalpha > 0.0f)
+		{
+			st_statusbaron = 0;
+			hudalpha-=0.1f;
+		} else 	if( showbar < 1.0f)
+			showbar+=0.1f;
+	} else {
+		if (fullscreenmode == 3)
+		{
+			if( hudalpha > 0.0f)
+			{
+				hudalpha-=0.1f;
+				fullscreenmode = 2;
+			}
+		} else{	
+			if( showbar > 0.0f)
+			{
+				showbar-=0.1f;
+				st_statusbaron = 1;
+			} else if(hudalpha < 1.0f)
+				hudalpha+=0.1f;
+		}
+	}
+
+	// Always try to render statusbar with alpha in fullscreen modes
+	if(fullscreenmode)
+		st_blended = 1;
 	else
+		st_blended = 0;
+
+	if(st_statusbaron){
+		ST_doRefresh();
+	} else if (fullscreenmode != 3){
 		ST_doFullscreenStuff();
-}
-
-void R_CachePatch(dpatch_t * dp, char *name)
-{
-	patch_t *patch;
-
-	if(IS_DEDICATED)
-		return;
-
-	dp->lump = W_CheckNumForName(name);
-	if(dp->lump == -1)
-		return;
-	patch = (patch_t *) W_CacheLumpNum(dp->lump, PU_CACHE);
-	dp->width = patch->width;
-	dp->height = patch->height;
-	dp->leftoffset = patch->leftoffset;
-	dp->topoffset = patch->topoffset;
-
-	// Precache the texture while we're at it.
-	GL_SetPatch(dp->lump);
+	}
 }
 
 void ST_loadGraphics(void)
@@ -1188,7 +1173,7 @@ void ST_loadGraphics(void)
 	R_CachePatch(&tallpercent, "STTPRCNT");
 
 	// key cards
-	for(i = 0; i < NUMCARDS; i++)
+	for(i = 0; i < NUMKEYS; i++)
 	{
 		sprintf(namebuf, "STKEYS%d", i);
 		R_CachePatch(&keys[i], namebuf);
@@ -1255,16 +1240,6 @@ void ST_loadData(void)
 	ST_loadGraphics();
 }
 
-void ST_unloadGraphics(void)
-{
-	// Nothing to do.
-}
-
-void ST_unloadData(void)
-{
-	ST_unloadGraphics();
-}
-
 void ST_initData(void)
 {
 	int     i;
@@ -1305,74 +1280,70 @@ void ST_createWidgets(void)
 	// ready weapon ammo
 	STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum,
 				  &plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
-				  &st_statusbaron, ST_AMMOWIDTH);
+				  &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
 
 	// the last weapon type
 	w_ready.data = plyr->readyweapon;
 
 	// health percentage
 	STlib_initPercent(&w_health, ST_HEALTHX, ST_HEALTHY, tallnum,
-					  &plyr->health, &st_statusbaron, &tallpercent);
-
-	// arms background
-	STlib_initBinIcon(&w_armsbg, ST_ARMSBGX, ST_ARMSBGY, &armsbg,
-					  &st_notdeathmatch, &st_statusbaron);
+					  &plyr->health, &st_statusbaron, &tallpercent, &cfg.statusbarCounterAlpha);
 
 	// weapons owned
 	for(i = 0; i < 6; i++)
 	{
 		STlib_initMultIcon(&w_arms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
 						   ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i],
-						   (int *) &plyr->weaponowned[i + 1], &st_armson);
+						   (int *) &plyr->weaponowned[i + 1], &st_armson, &cfg.statusbarCounterAlpha);
 	}
 
 	// frags sum
 	STlib_initNum(&w_frags, ST_FRAGSX, ST_FRAGSY, tallnum, &st_fragscount,
-				  &st_fragson, ST_FRAGSWIDTH);
+				  &st_fragson, ST_FRAGSWIDTH, &cfg.statusbarCounterAlpha);
 
 	// faces
 	STlib_initMultIcon(&w_faces, ST_FACESX, ST_FACESY, faces, &st_faceindex,
-					   &st_statusbaron);
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
 
 	// armor percentage - should be colored later
 	STlib_initPercent(&w_armor, ST_ARMORX, ST_ARMORY, tallnum,
-					  &plyr->armorpoints, &st_statusbaron, &tallpercent);
+					  &plyr->armorpoints, &st_statusbaron, &tallpercent, &cfg.statusbarCounterAlpha);
 
 	// keyboxes 0-2
 	STlib_initMultIcon(&w_keyboxes[0], ST_KEY0X, ST_KEY0Y, keys, &keyboxes[0],
-					   &st_statusbaron);
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
 
 	STlib_initMultIcon(&w_keyboxes[1], ST_KEY1X, ST_KEY1Y, keys, &keyboxes[1],
-					   &st_statusbaron);
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
 
 	STlib_initMultIcon(&w_keyboxes[2], ST_KEY2X, ST_KEY2Y, keys, &keyboxes[2],
-					   &st_statusbaron);
+					   &st_statusbaron, &cfg.statusbarCounterAlpha);
 
 	// ammo count (all four kinds)
 	STlib_initNum(&w_ammo[0], ST_AMMO0X, ST_AMMO0Y, shortnum, &plyr->ammo[0],
-				  &st_statusbaron, ST_AMMO0WIDTH);
+				  &st_statusbaron, ST_AMMO0WIDTH, &cfg.statusbarCounterAlpha);
 
 	STlib_initNum(&w_ammo[1], ST_AMMO1X, ST_AMMO1Y, shortnum, &plyr->ammo[1],
-				  &st_statusbaron, ST_AMMO1WIDTH);
+				  &st_statusbaron, ST_AMMO1WIDTH, &cfg.statusbarCounterAlpha);
 
 	STlib_initNum(&w_ammo[2], ST_AMMO2X, ST_AMMO2Y, shortnum, &plyr->ammo[2],
-				  &st_statusbaron, ST_AMMO2WIDTH);
+				  &st_statusbaron, ST_AMMO2WIDTH, &cfg.statusbarCounterAlpha);
 
 	STlib_initNum(&w_ammo[3], ST_AMMO3X, ST_AMMO3Y, shortnum, &plyr->ammo[3],
-				  &st_statusbaron, ST_AMMO3WIDTH);
+				  &st_statusbaron, ST_AMMO3WIDTH, &cfg.statusbarCounterAlpha);
 
 	// max ammo count (all four kinds)
 	STlib_initNum(&w_maxammo[0], ST_MAXAMMO0X, ST_MAXAMMO0Y, shortnum,
-				  &plyr->maxammo[0], &st_statusbaron, ST_MAXAMMO0WIDTH);
+				  &plyr->maxammo[0], &st_statusbaron, ST_MAXAMMO0WIDTH, &cfg.statusbarCounterAlpha);
 
 	STlib_initNum(&w_maxammo[1], ST_MAXAMMO1X, ST_MAXAMMO1Y, shortnum,
-				  &plyr->maxammo[1], &st_statusbaron, ST_MAXAMMO1WIDTH);
+				  &plyr->maxammo[1], &st_statusbaron, ST_MAXAMMO1WIDTH, &cfg.statusbarCounterAlpha);
 
 	STlib_initNum(&w_maxammo[2], ST_MAXAMMO2X, ST_MAXAMMO2Y, shortnum,
-				  &plyr->maxammo[2], &st_statusbaron, ST_MAXAMMO2WIDTH);
+				  &plyr->maxammo[2], &st_statusbaron, ST_MAXAMMO2WIDTH, &cfg.statusbarCounterAlpha);
 
 	STlib_initNum(&w_maxammo[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, shortnum,
-				  &plyr->maxammo[3], &st_statusbaron, ST_MAXAMMO3WIDTH);
+		&plyr->maxammo[3], &st_statusbaron, ST_MAXAMMO3WIDTH, &cfg.statusbarCounterAlpha);
 
 }
 
@@ -1401,240 +1372,4 @@ void ST_Init(void)
 {
 	veryfirsttime = 0;
 	ST_loadData();
-}
-
-//---------------------------------------------------------------------------
-// CONSOLE COMMANDS 
-//---------------------------------------------------------------------------
-
-// This is the multipurpose cheat ccmd.
-int CCmdCheat(int argc, char **argv)
-{
-	unsigned int i;
-
-	if(argc != 2)
-	{
-		// Usage information.
-		Con_Printf("Usage: cheat (cheat)\nFor example, 'cheat idclev25'.\n");
-		return true;
-	}
-	// Give each of the characters in argument two to the ST event handler.
-	for(i = 0; i < strlen(argv[1]); i++)
-	{
-		event_t ev;
-
-		ev.type = ev_keydown;
-		ev.data1 = argv[1][i];
-		ev.data2 = ev.data3 = 0;
-		ST_Responder(&ev);
-	}
-	return true;
-}
-
-boolean can_cheat(void)
-{
-	return !IS_NETGAME;
-}
-
-int CCmdCheatGod(int argc, char **argv)
-{
-	if(IS_NETGAME)
-	{
-		NetCl_CheatRequest("god");
-	}
-	else
-	{
-		cht_GodFunc(&players[consoleplayer]);
-	}
-	return true;
-}
-
-int CCmdCheatNoClip(int argc, char **argv)
-{
-	if(IS_NETGAME)
-	{
-		NetCl_CheatRequest("noclip");
-	}
-	else
-	{
-		cht_NoClipFunc(&players[consoleplayer]);
-	}
-	return true;
-}
-
-int CCmdCheatWarp(int argc, char **argv)
-{
-	char    buf[10];
-
-	if(!can_cheat())
-		return false;
-	memset(buf, 0, sizeof(buf));
-	if(gamemode == commercial)
-	{
-		if(argc != 2)
-			return false;
-		sprintf(buf, "%.2i", atoi(argv[1]));
-	}
-	else
-	{
-		if(argc == 2)
-		{
-			if(strlen(argv[1]) < 2)
-				return false;
-			strncpy(buf, argv[1], 2);
-		}
-		else if(argc == 3)
-		{
-			buf[0] = argv[1][0];
-			buf[1] = argv[2][0];
-		}
-		else
-			return false;
-	}
-	cht_WarpFunc(&players[consoleplayer], buf);
-	return true;
-}
-
-int CCmdCheatReveal(int argc, char **argv)
-{
-	extern int cheating;
-	int     option;
-
-	if(!can_cheat())
-		return false;			// Can't cheat!
-	if(argc != 2)
-	{
-		Con_Printf("Usage: reveal (0-3)\n");
-		Con_Printf("0=nothing, 1=show unseen, 2=full map, 3=map+things\n");
-		return true;
-	}
-	// Reset them (for 'nothing'). :-)
-	cheating = 0;
-	players[consoleplayer].powers[pw_allmap] = false;
-	option = atoi(argv[1]);
-	if(option < 0 || option > 3)
-		return false;
-	if(option == 1)
-		players[consoleplayer].powers[pw_allmap] = true;
-	else if(option == 2)
-		cheating = 1;
-	else if(option == 3)
-		cheating = 2;
-	return true;
-}
-
-int CCmdCheatGive(int argc, char **argv)
-{
-	char    buf[100];
-	int     i;
-	player_t *plyr = &players[consoleplayer];
-
-	if(IS_CLIENT)
-	{
-		if(argc != 2)
-			return false;
-		sprintf(buf, "give %s", argv[1]);
-		NetCl_CheatRequest(buf);
-		return true;
-	}
-	if(IS_NETGAME && !netSvAllowCheats)
-		return false;
-	if(argc != 2 && argc != 3)
-	{
-		Con_Printf("Usage:\n  give (stuff)\n");
-		Con_Printf("  give (stuff) (player)\n");
-		Con_Printf("Stuff consists of one or more of:\n");
-		Con_Printf(" a - ammo\n");
-		Con_Printf(" b - berserk\n");
-		Con_Printf(" g - light amplification visor\n");
-		Con_Printf(" i - invulnerability\n");
-		Con_Printf(" k - key cards/skulls\n");
-		Con_Printf(" m - computer area map\n");
-		Con_Printf(" p - backpack full of ammo\n");
-		Con_Printf(" r - armor\n");
-		Con_Printf(" s - radiation shielding suit\n");
-		Con_Printf(" v - invisibility\n");
-		Con_Printf(" w - weapons\n");
-		Con_Printf("Example: 'give arw' corresponds the cheat IDFA.\n");
-		return true;
-	}
-	if(argc == 3)
-	{
-		i = atoi(argv[2]);
-		if(i < 0 || i >= MAXPLAYERS || !players[i].plr->ingame)
-			return false;
-		plyr = &players[i];
-	}
-	strcpy(buf, argv[1]);		// Stuff is the 2nd arg.
-	strlwr(buf);
-	for(i = 0; buf[i]; i++)
-	{
-		switch (buf[i])
-		{
-		case 'a':
-			Con_Printf("Ammo given.\n");
-			cht_GiveFunc(plyr, 0, true, 0, 0);
-			break;
-
-		case 'b':
-			Con_Printf("Your vision blurs! Yaarrrgh!!\n");
-			cht_PowerUpFunc(plyr, pw_strength);
-			break;
-
-		case 'g':
-			Con_Printf("Light amplification visor given.\n");
-			cht_PowerUpFunc(plyr, pw_infrared);
-			break;
-
-		case 'i':
-			Con_Printf("You feel invincible!\n");
-			cht_PowerUpFunc(plyr, pw_invulnerability);
-			break;
-
-		case 'k':
-			Con_Printf("Key cards and skulls given.\n");
-			cht_GiveFunc(plyr, 0, 0, 0, true);
-			break;
-
-		case 'm':
-			Con_Printf("Computer area map given.\n");
-			cht_PowerUpFunc(plyr, pw_allmap);
-			break;
-
-		case 'p':
-			Con_Printf("Ammo backpack given.\n");
-			P_GiveBackpack(plyr);
-			break;
-
-		case 'r':
-			Con_Printf("Full armor given.\n");
-			cht_GiveFunc(plyr, 0, 0, true, 0);
-			break;
-
-		case 's':
-			Con_Printf("Radiation shielding suit given.\n");
-			cht_PowerUpFunc(plyr, pw_ironfeet);
-			break;
-
-		case 'v':
-			Con_Printf("You are suddenly almost invisible!\n");
-			cht_PowerUpFunc(plyr, pw_invisibility);
-			break;
-
-		case 'w':
-			Con_Printf("Weapons given.\n");
-			cht_GiveFunc(plyr, true, 0, 0, 0);
-			break;
-
-		default:
-			Con_Printf("What do you mean, '%c'?\n", buf[i]);
-		}
-	}
-	return true;
-}
-
-int CCmdCheatMassacre(int argc, char **argv)
-{
-	Con_Printf("%i monsters killed.\n", P_Massacre());
-	return true;
 }
