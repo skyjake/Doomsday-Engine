@@ -51,7 +51,12 @@ typedef enum {
 
 	// Game system actions.
 	A_STOPDEMO,
-
+	A_MAPZOOMIN,
+	A_MAPZOOMOUT,
+	A_MAPPANUP,
+	A_MAPPANDOWN,
+	A_MAPPANLEFT,
+	A_MAPPANRIGHT,
 	NUM_ACTIONS
 } h2action_t;
 
