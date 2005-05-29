@@ -44,7 +44,7 @@ boolean         ST_Responder(event_t *ev);
 void            ST_Ticker(void);
 
 // Called by main loop.
-void            ST_Drawer(boolean fullscreen, boolean refresh);
+void            ST_Drawer(int fullscreenmode, boolean refresh);
 
 // Called when the console player is spawned on each level.
 void            ST_Start(void);
@@ -67,14 +67,15 @@ typedef enum {
 	GetChatState
 } st_chatstateenum_t;
 
-boolean         ST_Responder(event_t *ev);
-
 int             D_GetFilterColor(int filter);
 
 #endif
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2005/05/29 05:48:44  danij
+// Minor changes.
+//
 // Revision 1.5  2004/05/29 18:19:58  skyjake
 // Refined indentation style
 //
