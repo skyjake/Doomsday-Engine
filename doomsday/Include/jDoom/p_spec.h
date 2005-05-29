@@ -220,9 +220,10 @@ typedef struct {
 } plat_t;
 
 // size of a plat (num of bytes) for backward save game compatibility - DJS
-static int sizeofplat = sizeof(thinker_t) + sizeof(sector_t*)
-			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
-			+ (sizeof(plat_e)*2) + sizeof(boolean) + sizeof(plattype_e);
+#define SIZE_OF_PLAT (sizeof(thinker_t) + sizeof(sector_t*)     \
+                      + (sizeof(fixed_t)*3) + (sizeof(int)*3)   \
+                      + (sizeof(plat_e)*2) + sizeof(boolean)    \
+                      + sizeof(plattype_e))
 
 // New limit-free plat structure -- killough
 
@@ -239,11 +240,11 @@ extern platlist_t *activeplats;
 void            T_PlatRaise(plat_t * plat);
 
 int             EV_DoPlat(line_t *line, plattype_e type, int amount);
-int		EV_StopPlat(line_t* line);
+int             EV_StopPlat(line_t* line);
 
 void            P_AddActivePlat(plat_t * plat);
 void            P_RemoveActivePlat(plat_t * plat);
-void		P_RemoveAllActivePlats( void );    // killough
+void            P_RemoveAllActivePlats( void );    // killough
 void            P_ActivateInStasis(int tag);
 
 //
@@ -384,13 +385,13 @@ typedef struct {
 } ceiling_t;
 
 // size of a ceiling (num of bytes) for backward save game compatibility - DJS
-static int sizeofceiling = sizeof(thinker_t) + sizeof(ceiling_e)
-			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
-			+ sizeof(sector_t*) + sizeof(boolean);
+#define SIZE_OF_CEILING (sizeof(thinker_t) + sizeof(ceiling_e)      \
+                         + (sizeof(fixed_t)*3) + (sizeof(int)*3)    \
+                         + sizeof(sector_t*) + sizeof(boolean))
 
 typedef struct ceilinglist {
-  ceiling_t *ceiling;
-  struct ceilinglist *next,**prev;
+    ceiling_t *ceiling;
+    struct ceilinglist *next,**prev;
 } ceilinglist_t;
 
 #define CEILSPEED		FRACUNIT
@@ -403,9 +404,9 @@ int             EV_DoCeiling(line_t *line, ceiling_e type);
 void            T_MoveCeiling(ceiling_t * ceiling);
 void            P_AddActiveCeiling(ceiling_t * c);
 void            P_RemoveActiveCeiling(ceiling_t * c);
-void		P_RemoveAllActiveCeilings(void);
+void            P_RemoveAllActiveCeilings(void);
 int             EV_CeilingCrushStop(line_t *line);
-int		P_ActivateInStasisCeiling(line_t *line);
+int             P_ActivateInStasisCeiling(line_t *line);
 
 //
 // P_FLOOR
@@ -486,38 +487,3 @@ int             EV_Teleport(line_t *line, int side, mobj_t *thing);
 #pragma pack()
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log$
-// Revision 1.8  2005/05/29 06:02:09  danij
-// Removed fixed limits on number of active plats/ceilings using modified code from PrBoom. Added various Doom.exe bug fixes (with compatibility options) for Lost Souls spawning inside walls, Archviles raising invincible ghosts etc using fixes by Lee K from PrBoom.
-//
-// Revision 1.7  2004/06/16 18:28:46  skyjake
-// Updated style (typenames)
-//
-// Revision 1.6  2004/05/30 08:42:35  skyjake
-// Tweaked indentation style
-//
-// Revision 1.5  2004/05/29 09:53:11  skyjake
-// Consistent style (using GNU Indent)
-//
-// Revision 1.4  2004/05/28 17:16:35  skyjake
-// Resolved conflicts (branch-1-7 overrides)
-//
-// Revision 1.2.2.1  2004/05/16 10:01:30  skyjake
-// Merged good stuff from branch-nix for the final 1.7.15
-//
-// Revision 1.2.4.1  2003/11/19 17:08:47  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.2  2003/06/11 15:45:10  skyjake
-// Increased MAXPLATS to 128
-//
-// Revision 1.1  2003/02/26 19:18:37  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:13  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------
