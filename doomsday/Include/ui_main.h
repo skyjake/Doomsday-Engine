@@ -123,6 +123,8 @@ typedef struct ui_object_s {
 typedef struct ui_page_s {
 	ui_object_t    *objects;	   // List of objects, UI_NONE terminates.
 	char            title[128];	   // Title for the screen.
+	boolean         background;    // Draw the background?
+    boolean         header;        // Draw the header bar?
 	int             focus;		   // Index of the focus object.
 	int             capture;	   // Index of the capture object.
 	void            (*drawer) (struct ui_page_s *);
@@ -178,7 +180,8 @@ extern int      uiMouseWidth;
 extern int      uiMouseHeight;
 
 // Functions.
-void            UI_Init(void);
+void            UI_Init(boolean halttime, boolean tckui, boolean tckframe,
+                        boolean drwgame, boolean mousemod, boolean noescape);
 void            UI_End(void);
 void            UI_LoadTextures(void);
 void            UI_ClearTextures(void);
