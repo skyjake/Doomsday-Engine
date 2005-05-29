@@ -159,7 +159,7 @@ void Def_Init(void)
 //  Destroy databases.
 //===========================================================================
 void Def_Destroy(void)
-{
+{   
 	// To make sure...
 	DED_Destroy(&defs);
 	DED_Init(&defs);
@@ -1128,11 +1128,15 @@ static struct {
 	{
 		LTC_MUSIC,
 		{
-	0 | MAP_MUS, -1}},
+	0 | MAP_MUS, 2, -1}},
 	{
 		LTC_LINE_COUNT,
 		{
 	0, -1}},
+	{
+		LTC_END_LEVEL,
+		{
+	0, 1, 3, -1}},
 	{
 		LTC_DISABLE_IF_ACTIVE,
 		{
@@ -1169,6 +1173,8 @@ static struct {
 void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
 {
 	int     i, k, a, n;
+
+	int temp;
 
 	l->id = def->id;
 	l->flags = def->flags[0];
@@ -1213,6 +1219,7 @@ void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
 			continue;
 		for(k = 0; k < 20; k++)
 		{
+			temp = 0;
 			a = mappings[i].map[k];
 			n = a & MAP_MASK;
 			if(a < 0)
@@ -1234,11 +1241,22 @@ void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
 			}
 			else if(a & MAP_MUS)
 			{
-				l->iparm[n] = Friendly(Def_GetMusicNum(def->iparm_str[n]));
+				temp = Friendly(Def_GetMusicNum(def->iparm_str[n]));
+
+				if(temp == 0)
+				{
+					temp = Def_EvalFlags(def->iparm_str[n]);
+					if(temp)
+						l->iparm[n] = temp;
+				} else
+					l->iparm[n] = Friendly(Def_GetMusicNum(def->iparm_str[n]));
 			}
 			else
 			{
-				l->iparm[n] = Def_EvalFlags(def->iparm_str[n]);
+				temp = Def_EvalFlags(def->iparm_str[n]);
+
+				if(temp)
+					l->iparm[n] = temp;
 			}
 		}
 		break;
