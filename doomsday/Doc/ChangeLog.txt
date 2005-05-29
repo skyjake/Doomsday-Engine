@@ -4,7 +4,7 @@
                Legend: + added, - fixed, * improved/changed
 
 
-Version 1.8.7
+Version 1.9.0
 -------------
 + bias lighting: direct sources and smooth sector lighting
 + option '-vdmap': map files in one directory to another directory
@@ -18,6 +18,107 @@ Version 1.8.7
 - removed fixed limit on the number of opened files
 - fixed: minor memory leaks concerning definition data
 - less chance of file name collisions thanks to CRC32 in Dir_FileID
++ binding classes: multiple commands can be bound to the same event
++ ccmd 'enablebindclass': Enable/disable/toggle binding classes or view their status
++ ccmd 'listbindclasses': Print a list of available binding classes
+* ccmd 'listbindings': List bindings in a specific binding class
+  (eg 'listbindings map')
+* ccmd 'bind': Bind a command for a specific binding class to a key/button
+  (eg 'bind map +f follow')
+* ccmd 'delbind': Delete a binding in a specific binding class
+  (eg 'delbind map mpanup')
++ PK3 path mapping: files in 'keyword-named' folders in the root of a PK3
+  mapped to directories (see Readme for details)
++ F5 in console: Clear console text buffer
++ Alt + C in console: Clear command line
++ Shift + cursorleft/cursorright: Move cursor to start/end of the command line
+
+All Games:
++ game status cvars
+  read-only cvars that show the status of various player/game values
+  ('player-health' 'map-name' etc)
++ windowed automap:
+  cvar 'map-width': width of automap window
+  cvar 'map-height': height of automap window
+  cvar 'map-position': (0-8) position of automap window, left to right, top to bottom 
+  (eg 'map-position 3' automap window relative to top right corner)
++ automap options menu
++ menu widget for changing colors
++ cvars 'msg-color-x': Color used for HUD messages
++ cvar 'msg-align': Set the horizontal alignment of HUD messages
++ Fullscreen view with no HUD
++ Fullscreen view with 'floating' status bar
++ cvar 'hud-status-alpha': Alpha value of statusbar background
++ cvar 'hud-status-icon-a': Alpha value of statusbar icons/counters
++ cvar 'hud-color-a': Alpha value of fullscreen HUD counters
++ cvar 'hud-icon-alpha': Alpha value of fullscreen HUD icons
++ cvars 'menu-color2-X': Secondary colors used for menu text
++ cvar 'menu-slam': 'Slam' menu when opening/closing
++ cvar 'map-huddisplay': Set the HUD display mode while in the automap
+  (0 = none, 1 = current HUD, 2 = statusbar)
++ menu-fog mode 3: "Grey fog"
++ menu-fog mode 4: "Darken"
+* Improved cfg consistency between games
+* Automap keys are bindable
+* Automap colors can be customised via console, cfg files and the menu.
+- fixed: alignment in view border patch drawing
+
+jDoom:
++ Doom.exe compatibility options/fixes
+  maxskulls: remove max LostSoul spawn limit on Pain Elementals (off by default)
+  skullsinwalls: prevent LostSouls from being spawned inside walls (on by default)
+  raiseghosts: prevent Archviles from raising ghosts (on by default)
++ ccmd 'suicide': commit suicide in non deathmatch games
++ cvar 'map-babykeys': show key locations in the automap on easy skill
++ cvar 'hud-face': show Doom Guy's face in the fullscreen HUD
+* removed fixed limit on the number of active plats
+* removed fixed limit on the number of active switches
+- fixed: Automatic weapon switching now works in Co-op games
+
+jHeretic:
+* Uses jDoom's Menu code
+  All features, cvars, ccmds from jDoom supported
+* Uses jDoom's HUD message code (msg buffer)
+  All features, cvars, ccmds from jDoom supported
++ ccmd 'suicide': commit suicide in non deathmatch games
++ ccmd 'hereticfont': Use the Heretic font in the console
++ cvar 'map-babykeys': show key locations in the automap on easy skill
++ cvar 'hud-artifact': show the current artifact in the fullscreen HUD
++ cvar 'hud-keys': show keys in the fullscreen HUD
++ cvar 'hud-health': show health in the fullscreen HUD
++ Added patches for missing ASCII characters to jHeretic.wad
+* removed fixed limit on the number of active plats
+* removed fixed limit on the number of active switches
+- fixed: lineattack weapons hit planes
+- fixed: various alignment glitches in statusbar drawing
+* changed: command-line option -ravpic is now -devparm 
+
+jHexen:
+* Uses jDoom's Menu code
+  All features, cvars, ccmds from jDoom supported
+* Uses jDoom's HUD message code (msg buffer)
+  All features, cvars, ccmds from jDoom supported
++ ccmd 'hexenfont': Use the Hexen font in the console
++ cvar 'hud-artifact': show current artifact in fullscreen HUD
++ cvar 'hud-health': show health in fullscreen HUD
++ Added patches for missing ASCII characters to jHexen.wad
+* changed: command-line option -ravpic is now -devparm 
+
+XG:
++ ltc_end_level: Specify next level on exit (Ip3)
++ line->line references (lrefs):
+  lref_none
++ line->plane references (lprefs):
+  lpref_back_floor
+  lpref_back_ceiling
++ sector->plane references (sprefs):
+  spref_back_floor
+  spref_back_ceiling
++ line->sector references (lsrefs):
+  lsref_none
+  lsref_back
++ light level reference (lightref):
+  lightref_back
 
 Multiplayer:
 - fixed: skill selection not working via Game Setup menu
