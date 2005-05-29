@@ -8,7 +8,9 @@
 
 #include "jHeretic/Doomdef.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/settings.h"
+#include "jHeretic/d_config.h"
+#include "Common/hu_stuff.h"
+#include "jHeretic/mn_def.h"
 
 #define NUMTEAMS	4			// Four colors, four teams.
 
@@ -48,9 +50,8 @@ void    IN_DrawStatBack(void);
 void    IN_DrawSingleStats(void);
 void    IN_DrawCoopStats(void);
 void    IN_DrawDMStats(void);
-void    IN_DrawNumber(int val, int x, int y, int digits);
-void    IN_DrawTime(int x, int y, int h, int m, int s);
-void    IN_DrTextB(char *text, int x, int y);
+void    IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a);
+void    IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a);
 
 static boolean skipintermission;
 int     interstate = 0;
@@ -96,6 +97,13 @@ static fixed_t dSlideY[NUMTEAMS];
 static char *KillersText[] = { "K", "I", "L", "L", "E", "R", "S" };
 
 //extern char *LevelNames[];
+
+extern dpatch_t hu_font[HU_FONTSIZE];
+extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
+
+// default font colours
+extern float deffontRGB[];
+extern float deffontRGB2[];
 
 typedef struct {
 	int     x;
@@ -356,16 +364,16 @@ void IN_LoadPics(void)
 	}
 	beenthere = W_GetNumForName("IN_X");
 	goingthere = W_GetNumForName("IN_YAH");
-	FontBLumpBase = W_GetNumForName("FONTB16");
+
 	for(i = 0; i < 10; i++)
 	{
-		numbers[i] = FontBLumpBase + i;
+		numbers[i] = hu_font_b[i+15].lump;
 	}
-	FontBLump = W_GetNumForName("FONTB_S") + 1;
-	negative = W_GetNumForName("FONTB13");
+	negative = hu_font_b[13].lump;
 
-	slash = W_GetNumForName("FONTB15");
-	percent = W_GetNumForName("FONTB05");
+	slash = hu_font_b[14].lump;
+	percent = hu_font_b[5].lump;
+
 	patchFaceOkayBase = W_GetNumForName("FACEA0");
 	patchFaceDeadBase = W_GetNumForName("FACEB0");
 }
@@ -593,6 +601,7 @@ void IN_Drawer(void)
 
 void IN_DrawStatBack(void)
 {
+	gl.Color4f(1, 1, 1, 1);
 	GL_SetFlat(R_FlatNumForName("FLOOR16"));
 	GL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
 }
@@ -609,10 +618,11 @@ void IN_DrawOldLevel(void)
 	int     x;
 	char   *levelname = P_GetShortLevelName(gameepisode, prevmap);
 
-	x = 160 - MN_TextBWidth(levelname) / 2;
-	IN_DrTextB(levelname, x, 3);
-	x = 160 - MN_TextAWidth("FINISHED") / 2;
-	MN_DrTextA("FINISHED", x, 25);
+	x = 160 - M_StringWidth(levelname, hu_font_b) / 2;
+	M_WriteText2(x, 3, levelname, hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+
+	x = 160 - M_StringWidth("FINISHED", hu_font_a) / 2;
+	M_WriteText2(x, 25, "FINISHED", hu_font_a, deffontRGB2[0], deffontRGB2[1],deffontRGB2[2], 1);
 
 	if(prevmap == 9)
 	{
@@ -659,10 +669,11 @@ void IN_DrawYAH(void)
 	int     x;
 	char   *levelname = P_GetShortLevelName(gameepisode, gamemap);
 
-	x = 160 - MN_TextAWidth("NOW ENTERING:") / 2;
-	MN_DrTextA("NOW ENTERING:", x, 10);
-	x = 160 - MN_TextBWidth(levelname) / 2;
-	IN_DrTextB(levelname, x, 20);
+	x = 160 - M_StringWidth("NOW ENTERING:", hu_font_a) / 2;
+	M_WriteText2(x, 10, "NOW ENTERING:", hu_font_a, deffontRGB2[0], deffontRGB2[1], deffontRGB2[2], 1);
+
+	x = 160 - M_StringWidth(levelname, hu_font_b) / 2;
+	M_WriteText2(x, 20, levelname, hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 
 	if(prevmap == 9)
 	{
@@ -693,18 +704,20 @@ void IN_DrawYAH(void)
 
 void IN_DrawSingleStats(void)
 {
+
 	int     x;
 	static int sounds;
 	char   *levelname = P_GetShortLevelName(gameepisode, prevmap);
 
-	IN_DrTextB("KILLS", 50, 65);
-	IN_DrTextB("ITEMS", 50, 90);
-	IN_DrTextB("SECRETS", 50, 115);
+	M_WriteText2(50, 65, "KILLS", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	M_WriteText2(50, 90, "ITEMS", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	M_WriteText2(50, 115, "SECRETS", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 
-	x = 160 - MN_TextBWidth(levelname) / 2;
-	IN_DrTextB(levelname, x, 3);
-	x = 160 - MN_TextAWidth("FINISHED") / 2;
-	MN_DrTextA("FINISHED", x, 25);
+	x = 160 - M_StringWidth(levelname, hu_font_b) / 2;
+	M_WriteText2(x, 3, levelname, hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+
+	x = 160 - M_StringWidth("FINISHED", hu_font_a) / 2;
+	M_WriteText2(x, 25, "FINISHED", hu_font_a, deffontRGB2[0], deffontRGB2[1], deffontRGB2[2], 1);
 
 	if(intertime < 30)
 	{
@@ -716,9 +729,11 @@ void IN_DrawSingleStats(void)
 		S_LocalSound(sfx_dorcls, NULL);
 		sounds++;
 	}
-	IN_DrawNumber(players[consoleplayer].killcount, 200, 65, 3);
-	GL_DrawShadowedPatch(237, 65, slash);
-	IN_DrawNumber(totalkills, 248, 65, 3);
+	IN_DrawNumber(players[consoleplayer].killcount, 200, 65, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	GL_DrawPatchLitAlpha(250, 67, 0, .4f, slash);
+	gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	GL_DrawPatch_CS(248, 65, slash);
+	IN_DrawNumber(totalkills, 248, 65, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 	if(intertime < 60)
 	{
 		return;
@@ -728,9 +743,11 @@ void IN_DrawSingleStats(void)
 		S_LocalSound(sfx_dorcls, NULL);
 		sounds++;
 	}
-	IN_DrawNumber(players[consoleplayer].itemcount, 200, 90, 3);
-	GL_DrawShadowedPatch(237, 90, slash);
-	IN_DrawNumber(totalitems, 248, 90, 3);
+	IN_DrawNumber(players[consoleplayer].itemcount, 200, 90, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	GL_DrawPatchLitAlpha(250, 92, 0, .4f, slash);
+	gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	GL_DrawPatch_CS(248, 90, slash);
+	IN_DrawNumber(totalitems, 248, 90, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 	if(intertime < 90)
 	{
 		return;
@@ -740,9 +757,11 @@ void IN_DrawSingleStats(void)
 		S_LocalSound(sfx_dorcls, NULL);
 		sounds++;
 	}
-	IN_DrawNumber(players[consoleplayer].secretcount, 200, 115, 3);
-	GL_DrawShadowedPatch(237, 115, slash);
-	IN_DrawNumber(totalsecret, 248, 115, 3);
+	IN_DrawNumber(players[consoleplayer].secretcount, 200, 115, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	GL_DrawPatchLitAlpha(250, 117, 0, .4f, slash);
+	gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	GL_DrawPatch_CS(248, 115, slash);
+	IN_DrawNumber(totalsecret, 248, 115, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 	if(intertime < 150)
 	{
 		return;
@@ -755,18 +774,22 @@ void IN_DrawSingleStats(void)
 
 	if(!ExtendedWAD || gameepisode < 4)
 	{
-		IN_DrTextB("TIME", 85, 160);
-		IN_DrawTime(155, 160, hours, minutes, seconds);
+		M_WriteText2(85, 160, "TIME", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+		IN_DrawTime(155, 160, hours, minutes, seconds, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 	}
 	else
 	{
-		x = 160 - MN_TextAWidth("NOW ENTERING:") / 2;
-		MN_DrTextA("NOW ENTERING:", x, 160);
+		x = 160 - M_StringWidth("NOW ENTERING:", hu_font_a) / 2;
+		M_WriteText2(x, 160, "NOW ENTERING:", hu_font_a, deffontRGB2[0], deffontRGB2[1], deffontRGB2[2], 1);
+
 		levelname = P_GetShortLevelName(gameepisode, gamemap);
-		x = 160 - MN_TextBWidth(levelname) / 2;
-		IN_DrTextB(levelname, x, 170);
+
+		x = 160 - M_StringWidth(levelname, hu_font_b) / 2;
+		M_WriteText2(x, 170, levelname, hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+
 		skipintermission = false;
 	}
+
 }
 
 //========================================================================
@@ -784,20 +807,24 @@ void IN_DrawCoopStats(void)
 
 	static int sounds;
 
-	IN_DrTextB("KILLS", 95, 35);
-	IN_DrTextB("BONUS", 155, 35);
-	IN_DrTextB("SECRET", 232, 35);
-	x = 160 - MN_TextBWidth(levelname) / 2;
-	IN_DrTextB(levelname, x, 3);
-	x = 160 - MN_TextAWidth("FINISHED") / 2;
-	MN_DrTextA("FINISHED", x, 25);
+	M_WriteText2(95, 35, "KILLS", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	M_WriteText2(155, 35, "BONUS", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	M_WriteText2(232, 35, "SECRET", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+
+	x = 160 - M_StringWidth(levelname, hu_font_b) / 2;
+	M_WriteText2(x, 3, levelname, hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+
+	x = 160 - M_StringWidth("FINISHED", hu_font_a) / 2;
+	M_WriteText2(x, 25, "FINISHED", hu_font_a, deffontRGB2[0], deffontRGB2[1], deffontRGB2[2], 1);
 
 	ypos = 50;
 	for(i = 0; i < NUMTEAMS; i++)
 	{
 		if(teamInfo[i].members)	//players[i].plr->ingame)
 		{
-			GL_DrawShadowedPatch(25, ypos, patchFaceOkayBase + i);
+			GL_DrawPatchLitAlpha(27, ypos+2, 0, .4f, patchFaceOkayBase + i);
+			gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+			GL_DrawPatch_CS(25, ypos, patchFaceOkayBase + i);
 			if(intertime < 40)
 			{
 				sounds = 0;
@@ -809,12 +836,18 @@ void IN_DrawCoopStats(void)
 				S_LocalSound(sfx_dorcls, NULL);
 				sounds++;
 			}
-			IN_DrawNumber(killPercent[i], 85, ypos + 10, 3);
-			GL_DrawShadowedPatch(121, ypos + 10, percent);
-			IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3);
-			GL_DrawShadowedPatch(196, ypos + 10, percent);
-			IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3);
-			GL_DrawShadowedPatch(273, ypos + 10, percent);
+			IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+			GL_DrawPatchLitAlpha(123, ypos + 12, 0, .4f, percent);
+			gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+			GL_DrawPatch_CS(121, ypos + 10, percent);
+			IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+			GL_DrawPatchLitAlpha(198, ypos + 12, 0, .4f, percent);
+			gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+			GL_DrawPatch_CS(196, ypos + 10, percent);
+			IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+			GL_DrawPatchLitAlpha(275, ypos + 12, 0, .4f, percent);
+			gl.Color4f(deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+			GL_DrawPatch_CS(273, ypos + 10, percent);
 			ypos += 37;
 		}
 	}
@@ -841,11 +874,12 @@ void IN_DrawDMStats(void)
 	xpos = 90;
 	ypos = 55;
 
-	IN_DrTextB("TOTAL", 265, 30);
-	MN_DrTextA("VICTIMS", 140, 8);
+	M_WriteText2(265, 30, "TOTAL", hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
+	M_WriteText2(140, 8, "VICTIMS", hu_font_a, deffontRGB2[0], deffontRGB2[1], deffontRGB2[2], 1);
+
 	for(i = 0; i < 7; i++)
 	{
-		MN_DrTextA(KillersText[i], 10, 80 + 9 * i);
+		M_WriteText2(10, 80 + 9 * i, KillersText[i], hu_font_a, deffontRGB2[0], deffontRGB2[1], deffontRGB2[2], 1);
 	}
 	if(intertime < 20)
 	{
@@ -896,7 +930,7 @@ void IN_DrawDMStats(void)
 				{
 					IN_DrawNumber(teamInfo[i].frags[j]
 								  /*players[i].frags[j] */ , kpos, ypos + 10,
-								  3);
+								  3, deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 					kpos += 43;
 				}
 			}
@@ -904,12 +938,14 @@ void IN_DrawDMStats(void)
 			{
 				if(!(intertime & 16))
 				{
-					IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3);
+					IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3,
+							deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 				}
 			}
 			else
 			{
-				IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3);
+				IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3,
+							deffontRGB[0], deffontRGB[1], deffontRGB[2], 1);
 			}
 			ypos += 36;
 			xpos += 43;
@@ -923,21 +959,22 @@ void IN_DrawDMStats(void)
 //
 //========================================================================
 
-void IN_DrawTime(int x, int y, int h, int m, int s)
+void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a)
 {
 	if(h)
 	{
-		IN_DrawNumber(h, x, y, 2);
-		IN_DrTextB(":", x + 26, y);
+		IN_DrawNumber(h, x, y, 2, r, g, b, a);
+
+		M_WriteText2(x + 26, y, ":", hu_font_b, r, g, b, a);
 	}
 	x += 34;
 	if(m || h)
 	{
-		IN_DrawNumber(m, x, y, 2);
+		IN_DrawNumber(m, x, y, 2, r, g, b, a);
 	}
 	x += 34;
-	IN_DrTextB(":", x - 8, y);
-	IN_DrawNumber(s, x, y, 2);
+	M_WriteText2(x-8, y, ":", hu_font_b, r, g, b, a);
+	IN_DrawNumber(s, x, y, 2, r, g, b, a);
 }
 
 //========================================================================
@@ -946,9 +983,8 @@ void IN_DrawTime(int x, int y, int h, int m, int s)
 //
 //========================================================================
 
-void IN_DrawNumber(int val, int x, int y, int digits)
+void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a)
 {
-	patch_t *patch;
 	int     xpos;
 	int     oldval;
 	int     realdigits;
@@ -997,17 +1033,17 @@ void IN_DrawNumber(int val, int x, int y, int digits)
 	}
 	if(digits == 4)
 	{
-		patch = W_CacheLumpNum(numbers[val / 1000], PU_CACHE);
-		GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2 - 12, y,
-							 numbers[val / 1000]);
+		GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 1000].width / 2 - 12, y + 2, 0, .4f, numbers[val / 1000]);
+		gl.Color4f(r, g, b, a);
+		GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 1000].width / 2 - 12, y, numbers[val / 1000]);
 	}
 	if(digits > 2)
 	{
 		if(realdigits > 2)
 		{
-			patch = W_CacheLumpNum(numbers[val / 100], PU_CACHE);
-			GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y,
-								 numbers[val / 100]);
+			GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 100].width / 2, y+2, 0, .4f, numbers[val / 100]);
+			gl.Color4f(r, g, b, a);
+			GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 100].width / 2, y, numbers[val / 100]);
 		}
 		xpos += 12;
 	}
@@ -1016,52 +1052,26 @@ void IN_DrawNumber(int val, int x, int y, int digits)
 	{
 		if(val > 9)
 		{
-			patch = W_CacheLumpNum(numbers[val / 10], PU_CACHE);
-			GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y,
-								 numbers[val / 10]);
+			GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 10].width / 2, y+2, 0, .4f, numbers[val / 10]);
+			gl.Color4f(r, g, b, a);
+			GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 10].width / 2, y, numbers[val / 10]);
 		}
 		else if(digits == 2 || oldval > 99)
 		{
-			GL_DrawShadowedPatch(xpos, y, numbers[0]);
+			GL_DrawPatchLitAlpha(xpos+2, y+2, 0, .4f, numbers[0]);
+			gl.Color4f(r, g, b, a);
+			GL_DrawPatch_CS(xpos, y, numbers[0]);
 		}
 		xpos += 12;
 	}
 	val = val % 10;
-	patch = W_CacheLumpNum(numbers[val], PU_CACHE);
-	GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2, y, numbers[val]);
+	GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val].width / 2, y+2, 0, .4f, numbers[val]);
+	gl.Color4f(r, g, b, a);
+	GL_DrawPatch_CS(xpos + 6 - hu_font_b[val].width / 2, y, numbers[val]);
 	if(neg)
 	{
-		patch = W_CacheLumpNum(negative, PU_CACHE);
-		GL_DrawShadowedPatch(xpos + 6 - SHORT(patch->width) / 2 - 12 * (realdigits),
-							 y, negative);
-	}
-}
-
-//========================================================================
-//
-// IN_DrTextB
-//
-// Draws shadowed text.
-//
-//========================================================================
-
-void IN_DrTextB(char *text, int x, int y)
-{
-	char    c;
-	patch_t *p;
-
-	while((c = *text++) != 0)
-	{
-		c = MN_FilterChar(c);
-		if(c < 33)
-		{
-			x += 8;
-		}
-		else
-		{
-			p = W_CacheLumpNum(FontBLump + c - 33, PU_CACHE);
-			GL_DrawShadowedPatch(x, y, FontBLump + c - 33);
-			x += p->width - 1;
-		}
+		GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[negative].width / 2 - 12 * (realdigits), y+2, 0, .4f, negative);
+		gl.Color4f(r, g, b, a);
+		GL_DrawPatch_CS(xpos + 6 - hu_font_b[negative].width / 2 - 12 * (realdigits), y, negative);
 	}
 }
