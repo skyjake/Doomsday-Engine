@@ -133,8 +133,7 @@ typedef struct {
 void            T_LightFlash(lightflash_t * flash);
 void            P_SpawnLightFlash(sector_t *sector);
 void            T_StrobeFlash(strobe_t * flash);
-void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow,
-								   int inSync);
+void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync);
 void            EV_StartLightStrobing(line_t *line);
 void            EV_TurnTagLightsOff(line_t *line);
 void            EV_LightTurnOn(line_t *line, int bright);
@@ -211,19 +210,33 @@ typedef struct {
 	boolean         crush;
 	int             tag;
 	plattype_e      type;
+
+	struct platlist *list;   // killough
 } plat_t;
+
+// size of a plat (num of bytes) for backward save game compatibility - DJS
+static int sizeofplat = sizeof(thinker_t) + sizeof(sector_t*)
+			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
+			+ (sizeof(plat_e)*2) + sizeof(boolean) + sizeof(plattype_e);
+
+// New limit-free plat structure -- killough
+
+typedef struct platlist {
+  plat_t *plat;
+  struct platlist *next,**prev;
+} platlist_t;
 
 #define	PLATWAIT	3
 #define	PLATSPEED	FRACUNIT
-#define	MAXPLATS	128
 
-extern plat_t  *activeplats[MAXPLATS];
+extern platlist_t *activeplats;
 
 void            T_PlatRaise(plat_t * plat);
 int             EV_DoPlat(line_t *line, plattype_e type, int amount);
 void            P_AddActivePlat(plat_t * plat);
 void            P_RemoveActivePlat(plat_t * plat);
-void            EV_StopPlat(line_t *line);
+void		P_RemoveAllActivePlats( void );    // killough
+int		EV_StopPlat(line_t* line);    // killough
 void            P_ActivateInStasis(int tag);
 
 /*
@@ -287,20 +300,32 @@ typedef struct {
 	int             direction;	   // 1 = up, 0 = waiting, -1 = down
 	int             tag;		   // ID
 	int             olddirection;
+
+	struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
 } ceiling_t;
+
+// size of a ceiling (num of bytes) for backward save game compatibility - DJS
+static int sizeofceiling = sizeof(thinker_t) + sizeof(ceiling_e)
+			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
+			+ sizeof(sector_t*) + sizeof(boolean);
+
+typedef struct ceilinglist {
+  ceiling_t *ceiling;
+  struct ceilinglist *next,**prev;
+} ceilinglist_t;
 
 #define	CEILSPEED		FRACUNIT
 #define	CEILWAIT		150
-#define MAXCEILINGS		30
 
-extern ceiling_t *activeceilings[MAXCEILINGS];
+extern ceilinglist_t *activeceilings;
 
 int             EV_DoCeiling(line_t *line, ceiling_e type);
 void            T_MoveCeiling(ceiling_t * ceiling);
 void            P_AddActiveCeiling(ceiling_t * c);
 void            P_RemoveActiveCeiling(ceiling_t * c);
+void		P_RemoveAllActiveCeilings(void);
 int             EV_CeilingCrushStop(line_t *line);
-void            P_ActivateInStasisCeiling(line_t *line);
+int		P_ActivateInStasisCeiling(line_t *line);
 
 /*
    ===============================================================================

@@ -260,7 +260,7 @@ extern int      maxammo[NUMAMMO];
 extern int      clipammo[NUMAMMO];
 
 void            P_GiveKey(player_t *player, keytype_t key);
-void            P_SetMessage(player_t *player, char *message, boolean ultmsg);
+void            P_SetMessage(player_t *pl, char *message);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 							 int damage);
@@ -276,10 +276,14 @@ boolean         AM_Responder(event_t *ev);
 void            AM_Ticker(void);
 void            AM_Drawer(void);
 
+// mn_menu, sb_bar
+void            Draw_BeginZoom(float s, float originX, float originY);
+void            Draw_EndZoom(void);
+
 // ***** SB_BAR *****
 
 extern int      ArtifactFlash;
-void            SB_PaletteFlash(void);
+void            ST_doPaletteStuff(void);
 
 #include "P_spec.h"
 
