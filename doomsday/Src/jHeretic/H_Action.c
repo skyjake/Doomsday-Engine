@@ -68,6 +68,12 @@ action_t actions[NUM_ACTIONS + 1] = {
 	"panic", 0,
 	"demostop", 0,
 	"jump", 0,
+	"mzoomin", 0,
+	"mzoomout", 0,
+	"mpanup", 0,
+	"mpandown", 0,
+	"mpanleft", 0,
+	"mpanright", 0,
 	"", 0
 };
 
