@@ -81,6 +81,24 @@ typedef struct {
     mappatch_t      patches[1];
 } maptexture_t;
 
+// strifeformat texture definition variants
+typedef struct
+{
+    short	originx;
+    short	originy;
+    short	patch;
+} strifemappatch_t;
+
+typedef struct
+{
+    char		name[8];
+    boolean         unused;
+    short		width;
+    short		height;
+    short		patchcount;
+    strifemappatch_t	patches[1];
+} strifemaptexture_t;
+
 // Detail texture information.
 typedef struct detailinfo_s {
 	DGLuint         tex;
