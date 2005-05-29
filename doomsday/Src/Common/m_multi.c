@@ -8,7 +8,6 @@
 #  include "doomstat.h"
 #  include "m_menu.h"
 #  include "d_config.h"
-#  include "hu_stuff.h"
 #  include "m_misc.h"
 #  include "m_random.h"
 #  include "s_sound.h"
@@ -17,27 +16,31 @@
 #  include "Mn_def.h"
 #elif defined __JHERETIC__
 #  include "jHeretic/Doomdef.h"
-#  include "jHeretic/settings.h"
+#  include "jHeretic/d_config.h"
 #  include "jHeretic/Soundst.h"
 #  include "jHeretic/P_local.h"
 #  include "jHeretic/Mn_def.h"
 #elif defined __JHEXEN__
 #  include "jHexen/h2def.h"
-#  include "jHexen/settings.h"
+#  include "jHexen/d_config.h"
 #  include "jHexen/soundst.h"
 #  include "jHexen/p_local.h"
 #  include "jHexen/mn_def.h"
+#elif defined __JSTRIFE__
+#  include "jStrife/h2def.h"
+#  include "jStrife/d_config.h"
+#  include "jStrife/soundst.h"
+#  include "jStrife/p_local.h"
+#  include "jStrife/mn_def.h"
 #endif
+
+#include "Common/hu_stuff.h"
 
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
 // Macros -----------------------------------------------------------------
-
-#if defined(__JHERETIC__) || defined(__JHEXEN__)
-#  define currentMenu CurrentMenu
-#endif
 
 #define MAX_EDIT_LEN		256
 #define SLOT_WIDTH			200
@@ -59,31 +62,31 @@ void    DrawMultiplayerMenu(void);
 void    DrawGameSetupMenu(void);
 void    DrawPlayerSetupMenu(void);
 
-boolean SCEnterHostMenu(int option);
-boolean SCEnterJoinMenu(int option);
-boolean SCEnterGameSetup(int option);
-boolean SCSetProtocol(int option);
-boolean SCGameSetupFunc(int option);
-boolean SCGameSetupEpisode(int option);
-boolean SCGameSetupMission(int option);
-boolean SCGameSetupSkill(int option);
-boolean SCGameSetupDeathmatch(int option);
-boolean SCGameSetupDamageMod(int option);
-boolean SCGameSetupHealthMod(int option);
-boolean SCOpenServer(int option);
-boolean SCCloseServer(int option);
-boolean SCChooseHost(int option);
-boolean SCStartStopDisconnect(int option);
-boolean SCEnterPlayerSetupMenu(int option);
-void    SCPlayerClass(int option);
-boolean SCPlayerColor(int option);
-boolean SCAcceptPlayer(int option);
+void 	SCEnterHostMenu(int option, void *data);
+void 	SCEnterJoinMenu(int option, void *data);
+void 	SCEnterGameSetup(int option, void *data);
+void 	SCSetProtocol(int option, void *data);
+void 	SCGameSetupFunc(int option, void *data);
+void 	SCGameSetupEpisode(int option, void *data);
+void 	SCGameSetupMission(int option, void *data);
+void 	SCGameSetupSkill(int option, void *data);
+void 	SCGameSetupDeathmatch(int option, void *data);
+void 	SCGameSetupDamageMod(int option, void *data);
+void 	SCGameSetupHealthMod(int option, void *data);
+void 	SCOpenServer(int option, void *data);
+void 	SCCloseServer(int option, void *data);
+void 	SCChooseHost(int option, void *data);
+void 	SCStartStopDisconnect(int option, void *data);
+void 	SCEnterPlayerSetupMenu(int option, void *data);
+void    SCPlayerClass(int option, void *data);
+void 	SCPlayerColor(int option, void *data);
+void 	SCAcceptPlayer(int option, void *data);
 
 void    ResetJoinMenuItems();
 
 // Edit fields.
 void    DrawEditField(Menu_t * menu, int index, EditField_t * ef);
-boolean SCEditField(int efptr);
+void 	SCEditField(int efptr, void *data);
 
 // Private data -----------------------------------------------------------
 
@@ -102,33 +105,32 @@ static char shiftTable[59] =	// Contains characters 32 to 90.
 static EditField_t plrNameEd;
 static int plrColor;
 
-#ifdef __JHEXEN__
+#if __JHEXEN__
 static int plrClass;
 #endif
 
+// External data ----------------------------------------------------------
+
+extern float menu_alpha;
+
 // Menus ------------------------------------------------------------------
 
-#ifdef __JDOOM__
-#  define EXTRADEF
-#else
-#  define EXTRADEF	,MENU_NONE
-#endif
 
 MenuItem_t MultiplayerItems[] = {
-	{ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 EXTRADEF},
-	{ITT_EFUNC, "join game", SCEnterJoinMenu, 0 EXTRADEF},
-	{ITT_EFUNC, "host game", SCEnterHostMenu, 0 EXTRADEF},
+	{ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 },
+	{ITT_EFUNC, "join game", SCEnterJoinMenu, 0 },
+	{ITT_EFUNC, "host game", SCEnterHostMenu, 0 },
 };
 
 MenuItem_t MultiplayerServerItems[] = {
-	{ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 EXTRADEF},
-	{ITT_EFUNC, "game setup", SCEnterHostMenu, 0 EXTRADEF},
-	{ITT_EFUNC, "close server", SCCloseServer, 0 EXTRADEF}
+	{ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 },
+	{ITT_EFUNC, "game setup", SCEnterHostMenu, 0 },
+	{ITT_EFUNC, "close server", SCCloseServer, 0 }
 };
 
 MenuItem_t MultiplayerClientItems[] = {
-	{ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 EXTRADEF},
-	{ITT_EFUNC, "disconnect", SCEnterJoinMenu, 0 EXTRADEF}
+	{ITT_EFUNC, "player setup", SCEnterPlayerSetupMenu, 0 },
+	{ITT_EFUNC, "disconnect", SCEnterJoinMenu, 0 }
 };
 
 Menu_t  MultiplayerMenu = {
@@ -136,42 +138,25 @@ Menu_t  MultiplayerMenu = {
 	DrawMultiplayerMenu,
 	3, MultiplayerItems,
 	0, MENU_MAIN,
-#ifdef __JDOOM__
-	hu_font_a,
+	hu_font_a,cfg.menuColor2,
 	LINEHEIGHT_A,
-#else
-	MN_DrTextA_CS, 10,
-#endif
 	0, 3
 };
 
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 
 #  define NUM_GAMESETUP_ITEMS		9
 
 MenuItem_t GameSetupItems1[] = {
-	{ITT_LRFUNC, "MAP:", SCGameSetupMission, 0, MENU_NONE},
-	{ITT_EMPTY, NULL, NULL, 0, MENU_NONE},
-	{ITT_LRFUNC, "SKILL:", SCGameSetupSkill, 0, MENU_NONE},
-	{ITT_EFUNC, "DEATHMATCH:", SCGameSetupFunc, (int) &cfg.netDeathmatch,
-	 MENU_NONE},
-	{ITT_EFUNC, "MONSTERS:", SCGameSetupFunc, (int) &cfg.netNomonsters,
-	 MENU_NONE},
-	{ITT_EFUNC, "RANDOM CLASSES:", SCGameSetupFunc, (int) &cfg.netRandomclass,
-	 MENU_NONE},
-	{ITT_LRFUNC, "DAMAGE MOD:", SCGameSetupDamageMod, 0, MENU_NONE},
-	{ITT_LRFUNC, "HEALTH MOD:", SCGameSetupHealthMod, 0, MENU_NONE},
-	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0, MENU_NONE}
-};
-
-Menu_t  GameSetupMenu = {
-	90, 64,
-	DrawGameSetupMenu,
-	NUM_GAMESETUP_ITEMS, GameSetupItems1,
-	0,
-	MENU_MULTIPLAYER,
-	MN_DrTextA_CS, 9,
-	0, NUM_GAMESETUP_ITEMS
+	{ITT_LRFUNC, "MAP:", SCGameSetupMission, 0},
+	{ITT_EMPTY, NULL, NULL, 0},
+	{ITT_LRFUNC, "SKILL:", SCGameSetupSkill, 0},
+	{ITT_EFUNC, "DEATHMATCH:", SCGameSetupFunc, 0, NULL, &cfg.netDeathmatch },
+	{ITT_EFUNC, "MONSTERS:", SCGameSetupFunc, 0, NULL, &cfg.netNomonsters },
+	{ITT_EFUNC, "RANDOM CLASSES:", SCGameSetupFunc, 0, NULL, &cfg.netRandomclass },
+	{ITT_LRFUNC, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
+	{ITT_LRFUNC, "HEALTH MOD:", SCGameSetupHealthMod, 0},
+	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0}
 };
 
 #else
@@ -186,13 +171,10 @@ MenuItem_t GameSetupItems1[] =	// for Heretic
 	{ITT_LRFUNC, "MISSION :", SCGameSetupMission, 0},
 	{ITT_LRFUNC, "SKILL :", SCGameSetupSkill, 0},
 	{ITT_LRFUNC, "DEATHMATCH :", SCGameSetupDeathmatch, 0},
-	{ITT_EFUNC, "MONSTERS :", SCGameSetupFunc,
-	 (int) &cfg.netNomonsters EXTRADEF},
-	{ITT_EFUNC, "RESPAWN MONSTERS :", SCGameSetupFunc,
-	 (int) &cfg.netRespawn EXTRADEF},
-	{ITT_EFUNC, "ALLOW JUMPING :", SCGameSetupFunc,
-	 (int) &cfg.netJumping EXTRADEF},
-	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0 EXTRADEF}
+	{ITT_EFUNC, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNomonsters },
+	{ITT_EFUNC, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
+	{ITT_EFUNC, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
+	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0 }
 };
 
 #  elif __JDOOM__
@@ -205,23 +187,15 @@ MenuItem_t GameSetupItems1[] =	// for Doom 1
 	{ITT_LRFUNC, "MISSION :", SCGameSetupMission, 0},
 	{ITT_LRFUNC, "SKILL :", SCGameSetupSkill, 0},
 	{ITT_LRFUNC, "MODE :", SCGameSetupDeathmatch, 0},
-	{ITT_EFUNC, "MONSTERS :", SCGameSetupFunc,
-	 (int) &cfg.netNomonsters EXTRADEF},
-	{ITT_EFUNC, "RESPAWN MONSTERS :", SCGameSetupFunc,
-	 (int) &cfg.netRespawn EXTRADEF},
-	{ITT_EFUNC, "ALLOW JUMPING :", SCGameSetupFunc,
-	 (int) &cfg.netJumping EXTRADEF},
-	{ITT_EFUNC, "NO COOP DAMAGE :", SCGameSetupFunc,
-	 (int) &cfg.noCoopDamage EXTRADEF},
-	{ITT_EFUNC, "NO COOP WEAPONS :", SCGameSetupFunc,
-	 (int) &cfg.noCoopWeapons EXTRADEF},
-	{ITT_EFUNC, "NO COOP OBJECTS :", SCGameSetupFunc,
-	 (int) &cfg.noCoopAnything EXTRADEF},
-	{ITT_EFUNC, "NO BFG 9000 :", SCGameSetupFunc,
-	 (int) &cfg.noNetBFG EXTRADEF},
-	{ITT_EFUNC, "NO TEAM DAMAGE :", SCGameSetupFunc,
-	 (int) &cfg.noTeamDamage EXTRADEF},
-	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0 EXTRADEF}
+	{ITT_EFUNC, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNomonsters },
+	{ITT_EFUNC, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
+	{ITT_EFUNC, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
+	{ITT_EFUNC, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
+	{ITT_EFUNC, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
+	{ITT_EFUNC, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
+	{ITT_EFUNC, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
+	{ITT_EFUNC, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
+	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0 }
 };
 
 MenuItem_t GameSetupItems2[] =	// for Doom 2
@@ -229,64 +203,57 @@ MenuItem_t GameSetupItems2[] =	// for Doom 2
 	{ITT_LRFUNC, "LEVEL :", SCGameSetupMission, 0},
 	{ITT_LRFUNC, "SKILL :", SCGameSetupSkill, 0},
 	{ITT_LRFUNC, "MODE :", SCGameSetupDeathmatch, 0},
-	{ITT_EFUNC, "MONSTERS :", SCGameSetupFunc,
-	 (int) &cfg.netNomonsters EXTRADEF},
-	{ITT_EFUNC, "RESPAWN MONSTERS :", SCGameSetupFunc,
-	 (int) &cfg.netRespawn EXTRADEF},
-	{ITT_EFUNC, "ALLOW JUMPING :", SCGameSetupFunc,
-	 (int) &cfg.netJumping EXTRADEF},
-	{ITT_EFUNC, "NO COOP DAMAGE :", SCGameSetupFunc,
-	 (int) &cfg.noCoopDamage EXTRADEF},
-	{ITT_EFUNC, "NO COOP WEAPONS :", SCGameSetupFunc,
-	 (int) &cfg.noCoopWeapons EXTRADEF},
-	{ITT_EFUNC, "NO COOP OBJECTS :", SCGameSetupFunc,
-	 (int) &cfg.noCoopAnything EXTRADEF},
-	{ITT_EFUNC, "NO BFG 9000 :", SCGameSetupFunc,
-	 (int) &cfg.noNetBFG EXTRADEF},
-	{ITT_EFUNC, "NO TEAM DAMAGE :", SCGameSetupFunc,
-	 (int) &cfg.noTeamDamage EXTRADEF},
-	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0 EXTRADEF}
+	{ITT_EFUNC, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNomonsters },
+	{ITT_EFUNC, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
+	{ITT_EFUNC, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
+	{ITT_EFUNC, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
+	{ITT_EFUNC, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
+	{ITT_EFUNC, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
+	{ITT_EFUNC, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
+	{ITT_EFUNC, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
+	{ITT_EFUNC, "PROCEED...", SCOpenServer, 0 }
 };
 
 #  endif
 
+#endif
+
 Menu_t  GameSetupMenu = {
-#  ifdef __JDOOM__
+#  if __JDOOM__
 	90, 54,
-#  elif defined __JHERETIC__
+#  elif __JHERETIC__
 	74, 64,
+#  elif __JHEXEN__  || __JSTRIFE__
+	90, 64,
 #  endif
 	DrawGameSetupMenu,
 	NUM_GAMESETUP_ITEMS, GameSetupItems1,
 	0, MENU_MULTIPLAYER,
-#  ifdef __JDOOM__
 	hu_font_a,					//1, 0, 0, 
+	cfg.menuColor2,
 	LINEHEIGHT_A,
-#  elif defined __JHERETIC__
-	MN_DrTextA_CS, 10,
-#  endif
 	0, NUM_GAMESETUP_ITEMS
 };
 
-#endif							// __JHEXEN__
 
-#if __JHEXEN__
+
+#if __JHEXEN__ || __JSTRIFE__
 #  define NUM_PLAYERSETUP_ITEMS	6
 #else
 #  define NUM_PLAYERSETUP_ITEMS	6
 #endif
 
 MenuItem_t PlayerSetupItems[] = {
-	{ITT_EFUNC, "", SCEditField, (int) &plrNameEd EXTRADEF},
+	{ITT_EFUNC, "", SCEditField, 0, NULL, &plrNameEd },
 	{ITT_EMPTY, NULL, NULL, 0},
 #if __JHEXEN__
-	{ITT_LRFUNC, "Class:", SCPlayerClass, 0, MENU_NONE},
+	{ITT_LRFUNC, "Class:", SCPlayerClass, 0},
 #else
 	{ITT_EMPTY, NULL, NULL, 0},
 #endif
 	{ITT_LRFUNC, "Color:", SCPlayerColor, 0},
 	{ITT_EMPTY, NULL, NULL, 0},
-	{ITT_EFUNC, "Accept Changes", SCAcceptPlayer, 0 EXTRADEF}
+	{ITT_EFUNC, "Accept Changes", SCAcceptPlayer, 0 }
 };
 
 Menu_t  PlayerSetupMenu = {
@@ -294,13 +261,7 @@ Menu_t  PlayerSetupMenu = {
 	DrawPlayerSetupMenu,
 	NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
 	0, MENU_MULTIPLAYER,
-#if __JDOOM__
-	hu_font_b, LINEHEIGHT_B,
-#elif __JHERETIC__
-	MN_DrTextB_CS, ITEM_HEIGHT,
-#else							// __JHEXEN__
-	MN_DrTextB_CS, ITEM_HEIGHT,
-#endif
+	hu_font_b, cfg.menuColor, LINEHEIGHT_B,
 	0, NUM_PLAYERSETUP_ITEMS
 };
 
@@ -319,21 +280,14 @@ int Executef(int silent, char *format, ...)
 
 void Notify(char *msg)
 {
-#ifdef __JDOOM__
+
 	if(msg)
 		P_SetMessage(players + consoleplayer, msg);
+#ifdef __JDOOM__
 	S_LocalSound(sfx_dorcls, NULL);
-#endif
-
-#ifdef __JHERETIC__
-	if(msg)
-		P_SetMessage(&players[consoleplayer], msg, true);
+#elif __JHERETIC__
 	S_LocalSound(sfx_chat, NULL);
-#endif
-
-#ifdef __JHEXEN__
-	if(msg)
-		P_SetMessage(&players[consoleplayer], msg, true);
+#elif __JHEXEN__ || __JSTRIFE__
 	S_LocalSound(SFX_CHAT, NULL);
 #endif
 }
@@ -343,63 +297,40 @@ void DrANumber(int number, int x, int y)
 	char    buff[40];
 
 	sprintf(buff, "%i", number);
-#ifdef __JDOOM__
-	M_WriteText2(x, y, buff, hu_font_a, 1, 1, 1);
-#else
-	MN_DrTextA_CS(buff, x, y);
-#endif
+
+	M_WriteText2(x, y, buff, hu_font_a, 1, 1, 1, menu_alpha);
 }
 
 void MN_DrCenterTextA_CS(char *text, int center_x, int y)
 {
-#ifdef __JDOOM__
 	M_WriteText2(center_x - M_StringWidth(text, hu_font_a) / 2, y, text,
-				 hu_font_a, 1, 0, 0);
-#else
-	MN_DrTextA_CS(text, center_x - MN_TextAWidth(text) / 2, y);
-#endif
+				 hu_font_a, 1, 0, 0, menu_alpha);
 }
 
 void MN_DrCenterTextB_CS(char *text, int center_x, int y)
 {
-#ifdef __JDOOM__
 	M_WriteText2(center_x - M_StringWidth(text, hu_font_b) / 2, y, text,
-				 hu_font_b, 1, 0, 0);
-#else
-	MN_DrTextB_CS(text, center_x - MN_TextBWidth(text) / 2, y);
-#endif
+				 hu_font_b, 1, 0, 0, menu_alpha);
 }
 
 #ifdef __JDOOM__
 static void MN_DrTextA_CS(char *text, int x, int y)
 {
-	M_WriteText2(x, y, text, hu_font_a, 1, 0, 0);
+	M_WriteText2(x, y, text, hu_font_a, 1, 0, 0, menu_alpha);
 }
 
 static void MN_DrTextB_CS(char *text, int x, int y)
 {
-	M_WriteText2(x, y, text, hu_font_b, 1, 0, 0);
+	M_WriteText2(x, y, text, hu_font_b, 1, 0, 0, menu_alpha);
 }
 
-#else
-
-void M_WriteMenuText(Menu_t * menu, int index, char *text)
-{
-	MN_DrawMenuText(menu, index, text);
-}
-
-void M_DrawTitle(char *text, int y)
-{
-	// For now we're ignoring the color.
-	MN_DrawTitle(text, y);
-}
 #endif
 
 //*****
 
 void DrawMultiplayerMenu(void)
 {
-	M_DrawTitle("MULTIPLAYER", MultiplayerMenu.y - 20);
+	M_DrawTitle("MULTIPLAYER", MultiplayerMenu.y - 30);
 }
 
 void DrawGameSetupMenu(void)
@@ -416,13 +347,15 @@ void DrawGameSetupMenu(void)
 
 #if __JHEXEN__
 	char   *mapName = P_GetMapName(P_TranslateMap(cfg.netMap));
+#elif __JSTRIFE__
+	char   *mapName = "unnamed";
 #endif
 
 	M_DrawTitle("GAME SETUP", menu->y - 20);
 
 	idx = 0;
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 
 #  ifdef __JDOOM__
 	if(gamemode != commercial)
@@ -449,12 +382,13 @@ void DrawGameSetupMenu(void)
 
 #  endif						// __JDOOM__
 
-#else							// __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 
 	sprintf(buf, "%i", cfg.netMap);
 	M_WriteMenuText(menu, 0, buf);
-	MN_DrTextAYellow_CS(mapName, 160 - MN_TextAWidth(mapName) / 2,
-						menu->y + menu->itemHeight);
+	M_WriteText2(160 - M_StringWidth(mapName, hu_font_a) / 2, menu->y + menu->itemHeight, mapName,
+					hu_font_a, 1, 0.7f, 0.3f, menu_alpha);
+
 	M_WriteMenuText(menu, 2, skillText[cfg.netSkill]);
 	M_WriteMenuText(menu, 3, dmText[cfg.netDeathmatch]);
 	M_WriteMenuText(menu, 4, boolText[!cfg.netNomonsters]);
@@ -485,7 +419,7 @@ void DrawPlayerSetupMenu(void)
 	Menu_t *menu = &PlayerSetupMenu;
 	int     useColor = plrColor;
 
-#ifdef __JHEXEN__
+#if __JHEXEN__
 	int     numColors = 8;
 	int     sprites[3] = { SPR_PLAY, SPR_CLER, SPR_MAGE };
 #else
@@ -493,12 +427,8 @@ void DrawPlayerSetupMenu(void)
 	int     numColors = 4;
 	int     sprites[3] = { SPR_PLAY, SPR_PLAY, SPR_PLAY };
 #endif
-	int     alpha;
 
-	M_DrawTitle("PLAYER SETUP", menu->y - 20);
-
-	// Get current alpha.
-	gl.GetIntegerv(DGL_A, &alpha);
+	M_DrawTitle("PLAYER SETUP", menu->y - 28);
 
 	DrawEditField(menu, 0, &plrNameEd);
 
@@ -534,23 +464,24 @@ void DrawPlayerSetupMenu(void)
 				menu->y + 90 - sprInfo.topOffset,
 #endif
 				CeilPow2(sprInfo.width), CeilPow2(sprInfo.height), 1, 1, 1,
-				alpha / 255.0f);
+				menu_alpha);
 
 	if(plrColor == numColors)
 	{
-		gl.Color4f(1, 1, 1, alpha / 255.0f);
-		MN_DrTextA_CS("AUTOMATIC", 184,
+		M_WriteText2(184,
 #ifdef __JDOOM__
-					  menu->y + 49);
+					  menu->y + 49,
 #elif defined __JHERETIC__
-					  menu->y + 65);
+					  menu->y + 65,
 #else
-					  menu->y + 64);
+					  menu->y + 64,
 #endif
+					  "AUTOMATIC", hu_font_a, 1, 1, 1, menu_alpha);
 	}
+
 }
 
-boolean SCEnterMultiplayerMenu(int option)
+void SCEnterMultiplayerMenu(int option, void *data)
 {
 	int     count;
 
@@ -583,39 +514,29 @@ boolean SCEnterMultiplayerMenu(int option)
 		count = 3;
 	}
 	MultiplayerMenu.itemCount = MultiplayerMenu.numVisItems = count;
-#ifdef __JDOOM__
+
 	MultiplayerMenu.lastOn = 0;
-#else
-	MultiplayerMenu.oldItPos = 0;
-#endif
 
 	SetMenu(MENU_MULTIPLAYER);
-	return true;
 }
 
-boolean SCEnterHostMenu(int option)
+void SCEnterHostMenu(int option, void *data)
 {
-	SCEnterGameSetup(0);
-	return true;
+	SCEnterGameSetup(0, NULL);
 }
 
-boolean SCEnterJoinMenu(int option)
+void SCEnterJoinMenu(int option, void *data)
 {
 	if(IS_NETGAME)
 	{
 		Con_Execute("net disconnect", false);
-#ifdef __JDOOM__
 		M_ClearMenus();
-#else
-		MN_DeactivateMenu();
-#endif
-		return true;
+		return;
 	}
 	Con_Execute("net setup client", false);
-	return true;
 }
 
-boolean SCEnterGameSetup(int option)
+void SCEnterGameSetup(int option, void *data)
 {
 	// See to it that the episode and mission numbers are correct.
 #ifdef __JDOOM__
@@ -650,25 +571,23 @@ boolean SCEnterGameSetup(int option)
 		cfg.netEpisode = 6;
 	if(cfg.netEpisode == 6 && cfg.netMap > 3)
 		cfg.netMap = 3;
-#elif defined __JHEXEN__
+#elif defined __JHEXEN__ || __JSTRIFE__
 	if(cfg.netMap < 1)
 		cfg.netMap = 1;
 	if(cfg.netMap > 31)
 		cfg.netMap = 31;
 #endif
 	SetMenu(MENU_GAMESETUP);
-	return true;
 }
 
-boolean SCGameSetupFunc(int option)
+void SCGameSetupFunc(int option, void *data)
 {
-	byte   *ptr = (byte *) option;
+	byte   *ptr = data;
 
 	*ptr ^= 1;
-	return true;
 }
 
-boolean SCGameSetupDeathmatch(int option)
+void SCGameSetupDeathmatch(int option, void *data)
 {
 	if(option == RIGHT_DIR)
 	{
@@ -683,16 +602,15 @@ boolean SCGameSetupDeathmatch(int option)
 	{
 		cfg.netDeathmatch--;
 	}
-	return true;
 }
 
-boolean SCGameSetupEpisode(int option)
+void SCGameSetupEpisode(int option, void *data)
 {
 #ifdef __JDOOM__
 	if(gamemode == shareware)
 	{
 		cfg.netEpisode = 1;
-		return true;
+		return;
 	}
 	if(option == RIGHT_DIR)
 	{
@@ -707,7 +625,7 @@ boolean SCGameSetupEpisode(int option)
 	if(shareware)
 	{
 		cfg.netEpisode = 1;
-		return true;
+		return;
 	}
 	if(option == RIGHT_DIR)
 	{
@@ -719,10 +637,10 @@ boolean SCGameSetupEpisode(int option)
 		cfg.netEpisode--;
 	}
 #endif
-	return true;
+	return;
 }
 
-boolean SCGameSetupMission(int option)
+void SCGameSetupMission(int option, void *data)
 {
 	if(option == RIGHT_DIR)
 	{
@@ -732,7 +650,7 @@ boolean SCGameSetupMission(int option)
 #elif defined __JHERETIC__
 		if(cfg.netMap < 9)
 			cfg.netMap++;
-#elif defined __JHEXEN__
+#elif defined __JHEXEN__ || __JSTRIFE__
 		if(cfg.netMap < 31)
 			cfg.netMap++;
 #endif
@@ -741,10 +659,10 @@ boolean SCGameSetupMission(int option)
 	{
 		cfg.netMap--;
 	}
-	return true;
+	return;
 }
 
-boolean SCGameSetupSkill(int option)
+void SCGameSetupSkill(int option, void *data)
 {
 	if(option == RIGHT_DIR)
 	{
@@ -755,57 +673,46 @@ boolean SCGameSetupSkill(int option)
 	{
 		cfg.netSkill--;
 	}
-	return true;
+	return;
 }
 
-boolean SCOpenServer(int option)
+void SCOpenServer(int option, void *data)
 {
 	if(IS_NETGAME)
 	{
 		// Game already running, just change level.
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 		Executef(false, "setmap %i", cfg.netMap);
 #else
 		Executef(false, "setmap %i %i", cfg.netEpisode, cfg.netMap);
 #endif
 
-#ifdef __JDOOM__
 		M_ClearMenus();
-#else
-		MN_DeactivateMenu();
-#endif
-		return true;
+		return;
 	}
 
 	// Go to DMI to setup server.
 	Con_Execute("net setup server", false);
-	return true;
 }
 
-boolean SCCloseServer(int option)
+void SCCloseServer(int option, void *data)
 {
 	Con_Execute("net server close", false);
-#ifdef __JDOOM__
 	M_ClearMenus();
-#else
-	MN_DeactivateMenu();
-#endif
-	return true;
 }
 
-boolean SCEnterPlayerSetupMenu(int option)
+void SCEnterPlayerSetupMenu(int option, void *data)
 {
 	strncpy(plrNameEd.text, *(char **) Con_GetVariable("net-name")->ptr, 255);
 	plrColor = cfg.netColor;
-#ifdef __JHEXEN__
+#if __JHEXEN__
 	plrClass = cfg.netClass;
 #endif
 	SetMenu(MENU_PLAYERSETUP);
-	return true;
 }
 
-#ifdef __JHEXEN__
-void SCPlayerClass(int option)
+#if __JHEXEN__
+void SCPlayerClass(int option, void *data)
 {
 	if(option == RIGHT_DIR)
 	{
@@ -817,11 +724,11 @@ void SCPlayerClass(int option)
 }
 #endif
 
-boolean SCPlayerColor(int option)
+void SCPlayerColor(int option, void *data)
 {
 	if(option == RIGHT_DIR)
 	{
-#ifdef __JHEXEN__
+#if __JHEXEN__
 		if(plrColor < 8)
 			plrColor++;
 #else
@@ -831,15 +738,14 @@ boolean SCPlayerColor(int option)
 	}
 	else if(plrColor > 0)
 		plrColor--;
-	return true;
 }
 
-boolean SCAcceptPlayer(int option)
+void SCAcceptPlayer(int option, void *data)
 {
 	char    buf[300];
 
 	cfg.netColor = plrColor;
-#ifdef __JHEXEN__
+#if __JHEXEN__
 	cfg.netClass = plrClass;
 #endif
 
@@ -852,7 +758,7 @@ boolean SCAcceptPlayer(int option)
 		sprintf(buf, "setname ");
 		strcatQuoted(buf, plrNameEd.text);
 		Con_Execute(buf, false);
-#ifdef __JHEXEN__
+#if __JHEXEN__
 		// Must do 'setclass' first; the real class and color do not change
 		// until the server sends us a notification -- this means if we do
 		// 'setcolor' first, the 'setclass' after it will override the color
@@ -863,11 +769,10 @@ boolean SCAcceptPlayer(int option)
 	}
 
 	SetMenu(MENU_MULTIPLAYER);
-	return true;
 }
 
-#if __JHEXEN__
-boolean SCGameSetupDamageMod(int option)
+#if __JHEXEN__ || __JSTRIFE__
+void SCGameSetupDamageMod(int option, void *data)
 {
 	if(option == RIGHT_DIR)
 	{
@@ -876,10 +781,9 @@ boolean SCGameSetupDamageMod(int option)
 	}
 	else if(cfg.netMobDamageModifier > 1)
 		cfg.netMobDamageModifier--;
-	return true;
 }
 
-boolean SCGameSetupHealthMod(int option)
+void SCGameSetupHealthMod(int option, void *data)
 {
 	if(option == RIGHT_DIR)
 	{
@@ -888,7 +792,6 @@ boolean SCGameSetupHealthMod(int option)
 	}
 	else if(cfg.netMobHealthModifier > 1)
 		cfg.netMobHealthModifier--;
-	return true;
 }
 #endif
 
@@ -910,12 +813,8 @@ void MN_TickerEx(void)			// The extended ticker.
 
 // Edit fields --------------------------------------------------------------
 
-#ifdef __JDOOM__
-int Ed_VisibleSlotChars(char *text,
-						int (*widthFunc) (char *text, dpatch_t * font))
-#else
-int Ed_VisibleSlotChars(char *text, int (*widthFunc) (char *text))
-#endif
+
+int Ed_VisibleSlotChars(char *text, int (*widthFunc) (char *text, dpatch_t *font))
 {
 	char    cbuf[2] = { 0, 0 };
 	int     i, w;
@@ -923,11 +822,7 @@ int Ed_VisibleSlotChars(char *text, int (*widthFunc) (char *text))
 	for(i = 0, w = 0; text[i]; i++)
 	{
 		cbuf[0] = text[i];
-#ifdef __JDOOM__
-		w += widthFunc(cbuf, hu_font);
-#else
-		w += widthFunc(cbuf);
-#endif
+		w += widthFunc(cbuf, hu_font_a);
 		if(w > SLOT_WIDTH)
 			break;
 	}
@@ -945,11 +840,8 @@ void Ed_MakeCursorVisible()
 	len = strlen(buf);
 	for(i = 0; i < len; i++)
 	{
-#ifdef __JDOOM__
 		vis = Ed_VisibleSlotChars(buf + i, M_StringWidth);
-#else
-		vis = Ed_VisibleSlotChars(buf + i, MN_TextAWidth);
-#endif
+
 		if(i + vis >= len)
 		{
 			ActiveEdit->firstVisible = i;
@@ -1018,7 +910,7 @@ void DrawEditField(Menu_t * menu, int index, EditField_t * ef)
 	int     x = menu->x, y = menu->y + menu->itemHeight * index, vis;
 	char    buf[MAX_EDIT_LEN + 1], *text;
 
-#ifdef __JDOOM__
+
 	M_DrawSaveLoadBorder(x + 11, y + 5);
 	strcpy(buf, ef->text);
 	strupr(buf);
@@ -1027,29 +919,16 @@ void DrawEditField(Menu_t * menu, int index, EditField_t * ef)
 	text = buf + ef->firstVisible;
 	vis = Ed_VisibleSlotChars(text, M_StringWidth);
 	text[vis] = 0;
-	M_WriteText2(x + 5, y + 5, text, hu_font_a, 1, 1, 1);
+	M_WriteText2(x + 8, y + 5, text, hu_font_a, 1, 1, 1, menu_alpha);
 
-#else
-	GL_DrawPatch_CS(x, y, W_GetNumForName("M_FSLOT"));
-	strcpy(buf, ef->text);
-	strupr(buf);
-	if(ActiveEdit == ef && MenuTime & 0x8)
-		strcat(buf, "_");
-	text = buf + ef->firstVisible;
-	vis = Ed_VisibleSlotChars(text, MN_TextAWidth);
-	text[vis] = 0;
-	MN_DrTextA_CS(text, x + 5, y + 5);
-
-#endif
 }
 
-boolean SCEditField(int efptr)
+void SCEditField(int efptr, void *data)
 {
-	EditField_t *ef = (EditField_t *) efptr;
+	EditField_t *ef = data;
 
 	// Activate this edit field.
 	ActiveEdit = ef;
 	strcpy(ef->oldtext, ef->text);
 	Ed_MakeCursorVisible();
-	return true;
 }
