@@ -11,24 +11,25 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "p_setup.h"
-#  include "p_local.h"
-#  include "m_menu.h"
-#  include "dstrings.h"
-#  include "s_sound.h"
-#endif
-
-#if __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/S_sound.h"
-#  include "jHeretic/Soundst.h"
-#endif
-
-#if __JHEXEN__
-#  include "jHexen/h2def.h"
-#  include "jHexen/p_local.h"
+# include "doomdef.h"
+# include "doomstat.h"
+# include "p_setup.h"
+# include "p_local.h"
+# include "m_menu.h"
+# include "dstrings.h"
+# include "s_sound.h"
+#elif __JHERETIC__
+# include "jHeretic/Doomdef.h"
+# include "jHeretic/S_sound.h"
+# include "jHeretic/Soundst.h"
+#elif __JHEXEN__
+# include "jHexen/h2def.h"
+# include "jHexen/p_local.h"
+# include "jHexen/st_stuff.h"
+#elif __JSTRIFE__
+# include "jStrife/h2def.h"
+# include "jStrife/p_local.h"
+# include "jStrife/st_stuff.h"
 #endif
 
 #include <ctype.h>
@@ -36,7 +37,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 #  define thinkercap					(*gi.thinkercap)
 #endif
 
@@ -49,6 +50,11 @@
 
 #if __JHEXEN__
 void    S_InitScript(void);
+#endif
+
+#ifndef __JDOOM__
+void            M_LoadData(void);
+void            M_UnloadData(void);
 #endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -190,34 +196,35 @@ void G_UpdateState(int step)
 #if __JDOOM__
 		// FIXME: Detect gamemode changes (doom -> doom2, for instance).
 		XG_Update();
-		M_Init();
+		MN_Init();
 		S_LevelMusic();
 #elif __JHERETIC__
 		XG_Update();
-		SB_Init();				// Updates the status bar patches.
+		ST_Init();				// Updates the status bar patches.
 		MN_Init();
 		S_LevelMusic();
 #elif __JHEXEN__
-		SB_Init();				// Updates the status bar patches.
+		ST_Init();				// Updates the status bar patches.
 		MN_Init();
 		S_InitScript();
 		SN_InitSequenceScript();
+#elif __JSTRIFE__
+		XG_Update();
+		ST_Init();				// Updates the status bar patches.
+		MN_Init();
+		S_LevelMusic();
 #endif
 		G_SetGlowing();
 		break;
 
 	case DD_RENDER_RESTART_PRE:
-#if __JDOOM__
 		// Free the menufog texture.
 		M_UnloadData();
-#endif
 		break;
 
 	case DD_RENDER_RESTART_POST:
-#if __JDOOM__
 		// Reload the menufog texture.
 		M_LoadData();
-#endif
 		break;
 	}
 }

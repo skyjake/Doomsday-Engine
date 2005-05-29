@@ -15,11 +15,15 @@
 #  include "g_common.h"
 #elif __JHERETIC__
 #  include "jHeretic/Doomdef.h"
-#  include "jHeretic/settings.h"
+#  include "jHeretic/d_config.h"
 #elif __JHEXEN__
 #  include "jHexen/h2def.h"
 #  include "jHexen/p_local.h"
-#  include "jHexen/settings.h"
+#  include "jHexen/d_config.h"
+#elif __JSTRIFE__
+#  include "jStrife/h2def.h"
+#  include "jStrife/p_local.h"
+#  include "jStrife/d_config.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -80,7 +84,7 @@ void P_CalcHeight(player_t *player)
 		morphed = true;
 #endif
 
-#if __JHEXEN__
+#ifdef __JHEXEN__
 	// When flying, don't bob the view.
 	if(pmo->flags2 & MF2_FLY && pmo->z > pmo->floorz)
 	{
@@ -190,12 +194,14 @@ void P_CalcHeight(player_t *player)
 				dplay->viewz -= FOOTCLIPSIZE;
 			}
 #endif
-#if __JHEXEN__
+#ifndef __JDOOM__
+#ifndef __JHERETIC__
 			// Foot clipping is done for living players.
 			if(pmo->floorclip && pmo->z <= pmo->floorz)
 			{
 				dplay->viewz -= pmo->floorclip;
 			}
+#endif
 #endif
 		}
 	}

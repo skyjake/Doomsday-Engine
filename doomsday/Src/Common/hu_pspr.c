@@ -10,18 +10,22 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "p_local.h"
-#  include "d_config.h"
-#  include "st_stuff.h"
+# include "doomdef.h"
+# include "doomstat.h"
+# include "p_local.h"
+# include "d_config.h"
+# include "st_stuff.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/settings.h"
+# include "jHeretic/Doomdef.h"
+# include "jHeretic/d_config.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
-#  include "jHexen/settings.h"
-#  include "jHexen/p_local.h"
+# include "jHexen/h2def.h"
+# include "jHexen/d_config.h"
+# include "jHexen/p_local.h"
+#elif __JSTRIFE__
+# include "jStrife/h2def.h"
+# include "jStrife/d_config.h"
+# include "jStrife/p_local.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -64,6 +68,13 @@ int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
 };
 #endif
 
+#if __JSTRIFE__
+// Y-adjustment values for full screen (10 weapons)
+int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
+#endif
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -87,7 +98,7 @@ int HU_PSpriteYOffset(player_t *pl)
 	return PSpriteSY[pl->readyweapon] * (20 - cfg.sbarscale) / 20.0f -
 		FRACUNIT * (39 * cfg.sbarscale) / 40.0f;
 
-#elif __JHEXEN__
+#elif __JHEXEN__ || __JSTRIFE__
 	if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT)
 		return PSpriteSY[pl->class][pl->readyweapon];
 	return PSpriteSY[pl->class][pl->readyweapon] * (20 -
@@ -210,6 +221,17 @@ void HU_UpdatePlayerSprite(int pnum)
 			}
 		}
 		else if(psp->state->frame & FF_FULLBRIGHT)
+		{
+			// Full bright
+			ddpsp->light = 1;
+		}
+		else
+		{
+			// local light
+			ddpsp->light = pl->plr->mo->subsector->sector->lightlevel / 255.0;
+		}
+#elif __JSTRIFE__
+		if(psp->state->frame & FF_FULLBRIGHT)
 		{
 			// Full bright
 			ddpsp->light = 1;

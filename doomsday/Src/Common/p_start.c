@@ -14,16 +14,18 @@
 #  include "d_config.h"
 #  include "g_game.h"
 #  include "s_sound.h"
-
 #elif __JHERETIC__
 #  include "jHeretic/Doomdef.h"
 #  include "jHeretic/P_local.h"
-#  include "jHeretic/settings.h"
-
+#  include "jHeretic/d_config.h"
 #elif __JHEXEN__
 #  include "jHexen/h2def.h"
 #  include "jHexen/p_local.h"
-#  include "jHexen/settings.h"
+#  include "jHexen/d_config.h"
+#elif __JSTRIFE__
+#  include "jStrife/h2def.h"
+#  include "jStrife/p_local.h"
+#  include "jStrife/d_config.h"
 #endif
 
 #include "d_net.h"
@@ -31,7 +33,7 @@
 // MACROS ------------------------------------------------------------------
 
 // Maximum number of different player starts.
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JHERETIC__
 #  define MAX_START_SPOTS 4
 #else
 #  define MAX_START_SPOTS 8
@@ -136,10 +138,10 @@ boolean P_CheckSpot(int playernum, mapthing_t * mthing, boolean doTeleSpark)
 	unsigned an;
 	mobj_t *mo;
 
-#if __JDOOM__ || __JHEXEN__
+#if __JDOOM__ || __JHEXEN__ || __JSTRIFE__
 	subsector_t *ss;
 #endif
-#if __JDOOM__
+#if __JDOOM__ || __JSTRIFE__
 	int     i;
 #endif
 #if __JHERETIC__ || __JHEXEN__
@@ -147,7 +149,7 @@ boolean P_CheckSpot(int playernum, mapthing_t * mthing, boolean doTeleSpark)
 	boolean using_dummy = false;
 #endif
 
-#if __JDOOM__
+#if __JDOOM__ || __JSTRIFE__
 	if(!players[playernum].plr->mo)
 	{
 		// first spawn of level, before corpses
@@ -210,7 +212,7 @@ boolean P_CheckSpot(int playernum, mapthing_t * mthing, boolean doTeleSpark)
 		// spawn a teleport fog 
 		an = (ANG45 * (mthing->angle / 45)) >> ANGLETOFINESHIFT;
 
-#if __JDOOM__ || __JHEXEN__
+#if __JDOOM__ || __JHEXEN__ || __JSTRIFE__
 		ss = R_PointInSubsector(x, y);
 		mo = P_SpawnMobj(x + 20 * finecosine[an], y + 20 * finesine[an],
 						 ss->sector->floorheight, MT_TFOG);
@@ -221,7 +223,7 @@ boolean P_CheckSpot(int playernum, mapthing_t * mthing, boolean doTeleSpark)
 		// don't start sound on first frame
 		if(players[consoleplayer].plr->viewz != 1)
 		{
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 			S_StartSound(SFX_TELEPORT, mo);
 #else
 			S_StartSound(sfx_telept, mo);
@@ -321,7 +323,7 @@ void P_SpawnPlayers(void)
 	}
 }
 
-#if __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 //==========================================================================
 // P_GetPlayerStart
 //  Hexen specific. Returns the correct start for the player. The start
@@ -363,7 +365,7 @@ void P_GetMapLumpName(int episode, int map, char *lumpName)
 	sprintf(lumpName, "E%iM%i", episode, map);
 #endif
 
-#ifdef __JHEXEN__
+#if __JHEXEN__ || __JSTRIFE__
 	sprintf(lumpName, "MAP%02i", map);
 #endif
 }

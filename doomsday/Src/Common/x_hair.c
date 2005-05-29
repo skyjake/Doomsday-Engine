@@ -12,13 +12,16 @@
 
 #if __JDOOM__
 #  include "doomdef.h"
-#  include "d_config.h"
+#  include "jDoom/d_config.h"
 #elif __JHERETIC__
 #  include "Doomdef.h"
-#  include "settings.h"
+#  include "jHeretic/d_config.h"
 #elif __JHEXEN__
 #  include "h2def.h"
-#  include "settings.h"
+#  include "jHexen/d_config.h"
+#elif __JSTRIFE__
+#  include "h2def.h"
+#  include "jStrife/d_config.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
