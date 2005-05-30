@@ -28,7 +28,7 @@
 #include "d_config.h"
 #include "r_sky.h"
 
-#include "v_video.h"
+  //#include "v_video.h"
 
 #include "m_argv.h"
 #include "m_menu.h"
@@ -40,7 +40,8 @@
 #include "wi_stuff.h"
 #include "st_stuff.h"
 
-#include "../Common/am_map.h"
+#include "Common/am_map.h"
+#include "Common/hu_stuff.h"
 #include "p_setup.h"
 #include "p_saveg.h"
 #include "d_main.h"

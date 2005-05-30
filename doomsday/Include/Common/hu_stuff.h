@@ -18,8 +18,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __HU_STUFF_H__
-#define __HU_STUFF_H__
+#ifndef __COMMON_HU_STUFF_H__
+#define __COMMON_HU_STUFF_H__
+
+#include "doomsday.h"
 
 #ifdef __JDOOM__
 #include "d_event.h"
@@ -29,7 +31,7 @@
 #include "jHeretic/Doomdef.h"
 
 #elif __JHEXEN__
-#include "jHexen/mn_def.h"
+//#include "jHexen/mn_def.h"
 
 #elif __JSTRIFE__
 #include "jStrife/mn_def.h"
@@ -55,6 +57,13 @@ enum {
 // HEADS UP TEXT
 //
 
+// A combination of patch data and its lump number.
+typedef struct dpatch_s {
+	int             width, height;
+	int             leftoffset, topoffset;
+	int             lump;
+} dpatch_t;
+
 // The fonts.
 extern dpatch_t hu_font[HU_FONTSIZE];
 extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
@@ -65,11 +74,13 @@ void    HU_Ticker(void);
 void    R_CachePatch(dpatch_t * dp, char *name);
 
 // Implements patch replacement.
-void    WI_DrawPatch(int x, int y, float r, float g, float b, float a, int lump);
+void    WI_DrawPatch(int x, int y, float r, float g, float b, float a,
+                     int lump);
 
-void    WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont, float defRed,
-                         float defGreen, float defBlue, float defAlpha,
-                         boolean defCase, boolean defTypeIn, int halign);
+void    WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont,
+                         float defRed, float defGreen, float defBlue,
+                         float defAlpha, boolean defCase, boolean defTypeIn,
+                         int halign);
 
 int     M_DrawText(int x, int y, boolean direct, char *string);
 

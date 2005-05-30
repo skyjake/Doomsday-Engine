@@ -1384,7 +1384,7 @@ void stramb(char *amb, const char *str)
 //  Look at the last word and try to complete it. If there are
 //  several possibilities, print them.
 //===========================================================================
-static void completeWord()
+static void completeWord(void)
 {
 	int     pass, i, c, cp = strlen(cmdLine) - 1;
 	int     numcomp = 0;

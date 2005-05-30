@@ -582,16 +582,6 @@ void DD_ReadKeyboard(void)
 	{
 		keyevent_t *ke = keyevs + i;
 
-		// Check the type of the event.
-		if(ke->event == IKE_KEY_DOWN)	// Key pressed?
-		{
-			ev.type = ev_keydown;
-			downKeys[ev.data1] = true;
-		} else if(ke->event == IKE_KEY_UP){	// Key released?
-			ev.type = ev_keyup;
-			downKeys[ev.data1] = false;
-		}
-
 		// Use the table to translate the scancode to a ddkey.
 #ifdef WIN32
 		ev.data1 = DD_ScanToKey(ke->code);
@@ -599,6 +589,18 @@ void DD_ReadKeyboard(void)
 #ifdef UNIX
 		ev.data1 = ke->code;
 #endif
+
+		// Check the type of the event.
+		if(ke->event == IKE_KEY_DOWN)	// Key pressed?
+		{
+			ev.type = ev_keydown;
+			downKeys[ev.data1] = true;
+		}
+        else if(ke->event == IKE_KEY_UP) // Key released?
+        {
+			ev.type = ev_keyup;
+			downKeys[ev.data1] = false;
+		}
 
 		// Should we print a message in the console?
 		if(showScanCodes && ev.type == ev_keydown)

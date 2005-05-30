@@ -20,20 +20,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __STLIB__
-#define __STLIB__
+#ifndef __COMMON_STLIB__
+#define __COMMON_STLIB__
 
-// We are referring to patches.
-
-#ifdef __JDOOM__
-#include "jDoom/r_defs.h"
-#elif __JHERETIC__
 #include "Common/hu_stuff.h"
-#elif __JHEXEN__
-#include "Common/hu_stuff.h"
-#elif __JSTRIFE__
-#include "Common/hu_stuff.h"
-#endif
 
 //
 // Background and foreground screen numbers
@@ -177,35 +167,3 @@ void            STlib_initBinIcon(st_binicon_t * b, int x, int y, dpatch_t * i,
 void            STlib_updateBinIcon(st_binicon_t * bi, boolean refresh);
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log$
-// Revision 1.1  2005/05/29 05:30:05  danij
-// Commonised HUD widget code.
-//
-// Revision 1.6  2005/02/24 16:42:32  DaniJ
-// Compiles for jDoom/jHeretic/jHexen
-//
-// Revision 1.5  2004/05/29 18:19:58  skyjake
-// Refined indentation style
-//
-// Revision 1.4  2004/05/29 09:53:11  skyjake
-// Consistent style (using GNU Indent)
-//
-// Revision 1.3  2004/05/28 17:16:35  skyjake
-// Resolved conflicts (branch-1-7 overrides)
-//
-// Revision 1.1.2.1  2004/05/16 10:01:30  skyjake
-// Merged good stuff from branch-nix for the final 1.7.15
-//
-// Revision 1.1.4.1  2003/11/19 17:08:47  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.1  2003/02/26 19:18:47  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:14  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------

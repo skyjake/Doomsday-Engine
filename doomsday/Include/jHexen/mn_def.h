@@ -4,13 +4,7 @@
 #define __MENU_DEFS_H_
 
 #include "jHexen/h2def.h"
-
-// A combination of patch data and its lump number.
-typedef struct {
-	int             width, height;
-	int             leftoffset, topoffset;
-	int             lump;
-} dpatch_t;
+#include "Common/hu_stuff.h"
 
 // Macros
 
@@ -68,11 +62,11 @@ typedef enum {
 
 typedef struct {
 	ItemType_t      type;
-	char            *text;
-	void            (*func) (int option, void *data);
+	char           *text;
+	void          (*func) (int option, void *data);
 	int             option;
-	char            *lumpname;
-	void		*data;
+	char           *lumpname;
+	void           *data;
 } MenuItem_t;
 
 typedef struct {
@@ -83,8 +77,8 @@ typedef struct {
 	MenuItem_t     *items;
 	int             lastOn;
 	MenuType_t      prevMenu;
-	dpatch_t	*font;		// Font for menu items.
-	float		*color;		// their color.
+	dpatch_t       *font;		// Font for menu items.
+	float          *color;		// their color.
 	int             itemHeight;
 	// For multipage menus.
 	int             firstItem, numVisItems;
@@ -93,7 +87,7 @@ typedef struct {
 extern int      MenuTime;
 extern boolean  shiftdown;
 extern Menu_t  *currentMenu;
-extern short      itemOn;
+extern short    itemOn;
 
 void            SetMenu(MenuType_t menu);
 

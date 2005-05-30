@@ -35,10 +35,13 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-// Version constants. The Game module can use DOOMSDAY_VERSION to verify 
-// that the engine is new enough. 
+/*
+ * Version constants.  The Game module can use DOOMSDAY_VERSION to
+ * verify that the engine is new enough.  Don't change
+ * DOOMSDAY_VERSION unless you wish to break compatibility.
+ */
 #define DOOMSDAY_VERSION		10801
-#define DOOMSDAY_RELEASE_NAME	"7"
-#define DOOMSDAY_VERSION_TEXT	"1.8."DOOMSDAY_RELEASE_NAME
+#define DOOMSDAY_RELEASE_NAME	"0-beta1"
+#define DOOMSDAY_VERSION_TEXT	"1.9."DOOMSDAY_RELEASE_NAME
 
 #endif

@@ -22,7 +22,7 @@
 #ifndef __M_MENU__
 #define __M_MENU__
 
-#include "r_defs.h"
+#include "hu_stuff.h"
 #include "d_event.h"
 
 //
@@ -71,6 +71,9 @@ void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.9  2005/05/30 17:27:06  skyjake
+// Fixes (now compiles and runs in Linux)
+//
 // Revision 1.8  2005/05/29 05:40:10  danij
 // Commonised menu code.
 //

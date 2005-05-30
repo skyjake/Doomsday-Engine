@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.2  2005/05/30 17:27:05  skyjake
+// Fixes (now compiles and runs in Linux)
+//
 // Revision 1.1  2005/05/29 12:37:34  danij
 // Commonised HUD widget code. Alpha blending for widgets.
 //
@@ -68,36 +71,32 @@ static const char
 #ifdef __JDOOM__
 #include "jDoom/doomdef.h"
 #include "jDoom/d_config.h"
-#include "Common/v_video.h"
-#include "Common/m_swap.h"
 #include "jDoom/st_stuff.h"
-#include "Common/st_lib.h"
-#include "Common/hu_stuff.h"
 #include "jDoom/r_local.h"
+#include "Common/hu_stuff.h"
+#include "Common/m_swap.h"
+#include "Common/st_lib.h"
 
 #elif __JHERETIC__
-#include "jHeretic/doomdef.h"
+#include "jHeretic/Doomdef.h"
 #include "jHeretic/d_config.h"
-#include "Common/v_video.h"
 #include "jHeretic/st_stuff.h"
-#include "Common/st_lib.h"
 #include "jHeretic/R_local.h"
+#include "Common/st_lib.h"
 
 #elif __JHEXEN__
 #include "jHexen/h2def.h"
 #include "jHexen/d_config.h"
-#include "Common/v_video.h"
 #include "jHexen/st_stuff.h"
-#include "Common/st_lib.h"
 #include "jHexen/r_local.h"
+#include "Common/st_lib.h"
 
 #elif __JSTRIFE__
 #include "jStrife/h2def.h"
 #include "jStrife/d_config.h"
-#include "Common/v_video.h"
 #include "jStrife/st_stuff.h"
-#include "Common/st_lib.h"
 #include "jStrife/r_local.h"
+#include "Common/st_lib.h"
 #endif
 
 // in AM_map.c

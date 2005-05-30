@@ -45,7 +45,6 @@
 # include "jDoom/dstrings.h"
 # include "d_main.h"
 # include "d_config.h"
-# include "v_video.h"
 # include "g_game.h"
 # include "g_common.h"
 # include "jDoom/m_argv.h"
@@ -2171,11 +2170,9 @@ boolean M_Responder(event_t *ev)
  */
 boolean Cl_Responder(event_t *event)
 {
-	extern boolean shiftdown;
-
 	int     i;
 	int     firstWVI, lastWVI;	// first and last visible item
-	int	withalpha;		// if a 4 color widget is needed
+	int     withalpha;          // if a 4 color widget is needed
 	MenuItem_t *item;
 
 	// Is there an active edit field?

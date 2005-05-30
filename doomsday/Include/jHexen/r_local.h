@@ -13,6 +13,8 @@
 #ifndef __R_LOCAL__
 #define __R_LOCAL__
 
+#include "h2def.h"
+      
 //#pragma pack(1)
 
 #define ANGLETOSKYSHIFT         22 // sky map is 256*128*4 maps

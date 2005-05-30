@@ -297,13 +297,6 @@ typedef enum {
 	NUMPSPRITES
 } psprnum_t;
 
-// A combination of patch data and its lump number.
-typedef struct {
-	int             width, height;
-	int             leftoffset, topoffset;
-	int             lump;
-} dpatch_t;
-
 typedef struct {
 	state_t        *state;		   // a NULL state means not active
 	int             tics;

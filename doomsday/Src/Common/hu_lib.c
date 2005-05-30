@@ -25,26 +25,25 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "../jDoom/doomdef.h"
-# include "../jDoom/d_config.h"
-# include "../jDoom/r_local.h"
+# include "jDoom/doomdef.h"
+# include "jDoom/d_config.h"
+# include "jDoom/r_local.h"
 #elif __JHERETIC__
-# include "../jHeretic/doomdef.h"
-# include "../jHeretic/d_config.h"
-# include "../jHeretic/r_local.h"
+# include "jHeretic/Doomdef.h"
+# include "jHeretic/d_config.h"
+# include "jHeretic/R_local.h"
 #elif __JHEXEN__
-# include "../jHexen/h2def.h"
-# include "../jHexen/d_config.h"
-# include "../jHexen/r_local.h"
+# include "jHexen/h2def.h"
+# include "jHexen/d_config.h"
+# include "jHexen/r_local.h"
 #elif __JSTRIFE__
-# include "../jStrife/h2def.h"
-# include "../jStrife/d_config.h"
-# include "../jStrife/r_local.h"
+# include "jStrife/h2def.h"
+# include "jStrife/d_config.h"
+# include "jStrife/r_local.h"
 #endif
 
-#include "../Common/v_video.h"
-#include "../Common/m_swap.h"
-#include "../Common/hu_lib.h"
+#include "Common/m_swap.h"
+#include "Common/hu_lib.h"
 #include "r_draw.h"
 
 // MACROS ------------------------------------------------------------------

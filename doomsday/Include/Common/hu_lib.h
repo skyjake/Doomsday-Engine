@@ -22,16 +22,7 @@
 #ifndef __HULIB__
 #define __HULIB__
 
-// We are referring to patches.
-#ifdef __JDOOM__
-#  include "../jDoom/r_defs.h"
-#elif __JHERETIC__
-#  include "../jHeretic/Doomdef.h"
-#elif __JHEXEN__
-#  include "../jHexen/h2def.h"
-#elif __JSTRIFE__
-#  include "../jStrife/h2def.h"
-#endif
+#include "Common/hu_stuff.h"
 
 // background and foreground screen numbers
 // different from other modules.
@@ -55,7 +46,7 @@ typedef struct {
 	int             x;
 	int             y;
 
-	dpatch_t       *f;			   // font
+	struct dpatch_s *f;			   // font
 	int             sc;			   // start character
 	char            l[HU_MAXLINELENGTH + 1];	// line of text
 	int             len;		   // current line length
@@ -170,6 +161,9 @@ void            HUlib_eraseIText(hu_itext_t * it);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.2  2005/05/30 17:27:06  skyjake
+// Fixes (now compiles and runs in Linux)
+//
 // Revision 1.1  2005/05/29 05:21:04  danij
 // Commonised HUD widget code.
 //

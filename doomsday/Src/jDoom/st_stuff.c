@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.14  2005/05/30 17:27:05  skyjake
+// Fixes (now compiles and runs in Linux)
+//
 // Revision 1.13  2005/05/29 13:07:39  danij
 // Fullscreen no HUD mode. Fullscreen floating status bar mode. Alpha blended HUD and statusbar. Show Doom guy's face in fullscreen HUD.
 //
@@ -84,7 +87,7 @@
 #include "g_game.h"
 
 #include "st_stuff.h"
-#include "st_lib.h"
+#include "Common/st_lib.h"
 #include "r_local.h"
 
 #include "p_local.h"
@@ -93,7 +96,7 @@
 #include "am_map.h"
 #include "m_menu.h"
 #include "m_cheat.h"
-#include "hu_stuff.h"
+#include "Common/hu_stuff.h"
 
 #include "s_sound.h"
 

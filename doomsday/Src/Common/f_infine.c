@@ -16,13 +16,12 @@
 # include "doomstat.h"
 # include "d_netJD.h"
 # include "m_swap.h"
-# include "v_video.h"
 # include "s_sound.h"
 #elif __JHERETIC__
 # include "jHeretic/Doomdef.h"
 # include "jHeretic/S_sound.h"
 # include "jHeretic/Soundst.h"
-# include "Common/Am_map.h"
+# include "Common/am_map.h"
 #elif __JHEXEN__
 # include "jHexen/h2def.h"
 # include "jHexen/d_config.h"

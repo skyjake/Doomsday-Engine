@@ -197,11 +197,4 @@ typedef struct {
 
 } node_t;
 
-// A combination of patch data and its lump number.
-typedef struct {
-	int             width, height;
-	int             leftoffset, topoffset;
-	int             lump;
-} dpatch_t;
-
 #endif

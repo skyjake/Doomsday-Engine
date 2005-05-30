@@ -25,32 +25,32 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "../jDoom/doomdef.h"
-# include "../jDoom/d_config.h"
-# include "../jDoom/m_menu.h"
-# include "../jDoom/Mn_def.h"
-# include "../jDoom/s_sound.h"
-# include "../jDoom/doomstat.h"
-# include "../jDoom/r_local.h"
-# include "../jDoom/p_local.h"
-# include "../jDoom/dstrings.h"  // Data.
+# include "jDoom/doomdef.h"
+# include "jDoom/d_config.h"
+# include "jDoom/m_menu.h"
+# include "jDoom/Mn_def.h"
+# include "jDoom/s_sound.h"
+# include "jDoom/doomstat.h"
+# include "jDoom/r_local.h"
+# include "jDoom/p_local.h"
+# include "jDoom/dstrings.h"  // Data.
 #elif __JHERETIC__
-# include "../jHeretic/doomdef.h"
-# include "../jHeretic/d_config.h"
-# include "../jHeretic/Mn_def.h"
-# include "../jHeretic/s_sound.h"
-# include "../jHeretic/Doomdata.h"
-# include "../jHeretic/R_local.h"
-# include "../jHeretic/p_local.h"
-# include "../jHeretic/Dstrings.h"  // Data.
+# include "jHeretic/Doomdef.h"
+# include "jHeretic/d_config.h"
+# include "jHeretic/Mn_def.h"
+# include "jHeretic/S_sound.h"
+# include "jHeretic/Doomdata.h"
+# include "jHeretic/R_local.h"
+# include "jHeretic/P_local.h"
+# include "jHeretic/Dstrings.h"  // Data.
 #elif __JHEXEN__
-# include "../jHexen/h2def.h"
-# include "../jHexen/d_config.h"
-# include "../jHexen/mn_def.h"
-# include "../jHexen/sounds.h"
-# include "../jHexen/r_local.h"
-# include "../jHexen/p_local.h"
-# include "../jHexen/textdefs.h"  // Data.
+# include "jHexen/h2def.h"
+# include "jHexen/d_config.h"
+# include "jHexen/mn_def.h"
+# include "jHexen/sounds.h"
+# include "jHexen/r_local.h"
+# include "jHexen/p_local.h"
+# include "jHexen/textdefs.h"  // Data.
 #elif __JSTRIFE__
 # include "../jStrife/h2def.h"
 # include "../jStrife/d_config.h"

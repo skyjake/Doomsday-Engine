@@ -35,6 +35,7 @@
 #  include "m_random.h"
 #  include "p_inter.h"
 #  include "r_defs.h"
+#  include "g_game.h"
 #endif
 
 #ifdef __JHERETIC__
@@ -42,6 +43,7 @@
 #  include "jHeretic/P_local.h"
 #  include "jHeretic/d_config.h"
 #  include "jHeretic/Soundst.h"
+#  include "jHeretic/G_game.h"
 #endif
 
 #ifdef __JSTRIFE__
@@ -51,7 +53,6 @@
 #  include "jStrife/sounds.h"
 #endif
 
-#include "g_game.h"
 #include "d_net.h"
 #include "p_xgline.h"
 #include "p_xgsec.h"
