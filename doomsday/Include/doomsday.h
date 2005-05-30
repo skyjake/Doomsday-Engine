@@ -323,6 +323,7 @@ extern          "C" {
 	void            M_TranslatePath(const char *path, char *translated);
 	char           *M_SkipWhite(char *str);
 	char           *M_FindWhite(char *str);
+    char           *M_StrCatQuoted(char *dest, char *src);
 	byte            M_Random(void);
 	float           M_FRandom(void);
 	void            M_ClearBox(fixed_t *box);

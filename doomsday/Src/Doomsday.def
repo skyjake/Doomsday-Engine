@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 247 <--
+; --> 248 <--
 
 ; Other available ordinals: 158, 175
 
@@ -246,6 +246,7 @@ EXPORTS
 	M_TranslatePath		@140 NONAME
 	M_SkipWhite			@141 NONAME
 	M_FindWhite			@142 NONAME
+	M_StrCatQuoted		@248 NONAME
 	M_Random			@143 NONAME
 	M_FRandom			@144 NONAME
 	M_ClearBox			@208 NONAME

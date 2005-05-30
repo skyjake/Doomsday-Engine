@@ -76,6 +76,7 @@ boolean         M_IsComment(char *text);
 char           *M_LimitedStrCat(const char *str, unsigned int maxWidth,
 								char separator, char *buf,
 								unsigned int bufLength);
+char           *M_StrCatQuoted(char *dest, char *src);
 
 // Random numbers.
 byte            M_Random(void);

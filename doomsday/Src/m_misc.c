@@ -1045,6 +1045,32 @@ const char *M_Pretty(const char *path)
 }
 
 /*
+ * Concatenates src to dest as a quoted string.  " is escaped to \".
+ * Returns dest.
+ */
+char* M_StrCatQuoted(char *dest, char *src)
+{
+	int     k = strlen(dest) + 1, i;
+
+	strcat(dest, "\"");
+	for(i = 0; src[i]; i++)
+	{
+		if(src[i] == '"')
+		{
+			strcat(dest, "\\\"");
+			k += 2;
+		}
+		else
+		{
+			dest[k++] = src[i];
+			dest[k] = 0;
+		}
+	}
+	strcat(dest, "\"");
+    return dest;
+}
+
+/*
  * Advances time and return true if the trigger is triggered.
  */
 boolean M_CheckTrigger(trigger_t * trigger, timespan_t advanceTime)
