@@ -111,8 +111,6 @@ static int plrClass;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    StrCatQuoted(char *dest, char *src);
-
 // External data ----------------------------------------------------------
 
 extern float menu_alpha;
@@ -754,13 +752,13 @@ void SCAcceptPlayer(int option, void *data)
 #endif
 
 	strcpy(buf, "net-name ");
-	StrCatQuoted(buf, plrNameEd.text);
+	M_StrCatQuoted(buf, plrNameEd.text);
 	Con_Execute(buf, false);
 
 	if(IS_NETGAME)
 	{
 		sprintf(buf, "setname ");
-		StrCatQuoted(buf, plrNameEd.text);
+		M_StrCatQuoted(buf, plrNameEd.text);
 		Con_Execute(buf, false);
 #if __JHEXEN__
 		// Must do 'setclass' first; the real class and color do not change

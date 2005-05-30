@@ -306,48 +306,47 @@ DEFCC(CCmdMapAction);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 #ifdef __JDOOM__
-    void AM_drawFragsTable(void);
-
+void AM_drawFragsTable(void);
 #elif __JHEXEN__
-    void AM_drawDeathmatchStats(void);
+void AM_drawDeathmatchStats(void);
 #elif __JSTRIFE__
-    void AM_drawDeathmatchStats(void);
+void AM_drawDeathmatchStats(void);
 #endif
 
 static void AM_changeWindowScale(void);
 static void AM_drawLevelName(void);
 static void AM_drawWorldTimer(void);
 
-void     AM_drawMline2(mline_t * ml, mapline_t c, boolean caps, boolean glowmode, boolean blend);
+void    AM_drawMline2(mline_t * ml, mapline_t c, boolean caps, \
+                      boolean glowmode, boolean blend);
 
-void     AM_Start(void);
-void     AM_addMark(void);
-void     AM_clearMarks(void);
-void     AM_saveScaleAndLoc(void);
-void     AM_minOutWindowScale(void);
-void     AM_saveScaleAndLoc(void);
-void     AM_restoreScaleAndLoc(void);
-void     AM_setWinPos(void);
+void    AM_Start(void);
+void    AM_addMark(void);
+void    AM_clearMarks(void);
+void    AM_saveScaleAndLoc(void);
+void    AM_minOutWindowScale(void);
+void    AM_saveScaleAndLoc(void);
+void    AM_restoreScaleAndLoc(void);
+void    AM_setWinPos(void);
 
-void     M_DrawMAP(void);
+void    M_DrawMapMenu(void);
 
 //automap menu items
-void    M_MAPPos(int option, void *data);
-void    M_MAPW(int option, void *data);
-void    M_MAPH(int option, void *data);
-void    M_MAPAlphaLines(int option, void *data);
-void    M_MAPDoorColors(int option, void *data);
-void    M_MAPDoorGlow(int option, void *data);
-void    M_MAPRotate(int option, void *data);
-void    M_MAPStatusbar(int option, void *data);
-void    M_MAPKills(int option, void *data);
-void    M_MAPItems(int option, void *data);
-void    M_MAPSecrets(int option, void *data);
+void    M_MapPosition(int option, void *data);
+void    M_MapWidth(int option, void *data);
+void    M_MapHeight(int option, void *data);
+void    M_MapLineAlpha(int option, void *data);
+void    M_MapDoorColors(int option, void *data);
+void    M_MapDoorGlow(int option, void *data);
+void    M_MapRotate(int option, void *data);
+void    M_MapStatusbar(int option, void *data);
+void    M_MapKills(int option, void *data);
+void    M_MapItems(int option, void *data);
+void    M_MapSecrets(int option, void *data);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern float menu_alpha;
-extern char *yesno[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -2725,13 +2724,13 @@ static void AM_drawWorldTimer(void)
 #ifdef __JDOOM__
 
 MenuItem_t MAPItems[] = {
-    {ITT_LRFUNC, "window position : ",    M_MAPPos, 0 },
-    {ITT_LRFUNC, "window width :       ",    M_MAPW, 0 },
-    {ITT_LRFUNC, "window height :     ",    M_MAPH, 0 },
-    {ITT_LRFUNC, "hud display :        ",    M_MAPStatusbar, 0 },
-    {ITT_LRFUNC, "kills count :         ", M_MAPKills, 0 },
-    {ITT_LRFUNC, "items count :         ", M_MAPItems, 0 },
-    {ITT_LRFUNC, "secrets count :    ",    M_MAPSecrets, 0 },
+    {ITT_LRFUNC, "window position : ",    M_MapPosition, 0 },
+    {ITT_LRFUNC, "window width :       ",    M_MapWidth, 0 },
+    {ITT_LRFUNC, "window height :     ",    M_MapHeight, 0 },
+    {ITT_LRFUNC, "hud display :        ",    M_MapStatusbar, 0 },
+    {ITT_LRFUNC, "kills count :         ", M_MapKills, 0 },
+    {ITT_LRFUNC, "items count :         ", M_MapItems, 0 },
+    {ITT_LRFUNC, "secrets count :    ",    M_MapSecrets, 0 },
     {ITT_EMPTY,  "automap colours",        NULL, 0 },
     {ITT_EFUNC,  "   walls",        SCColorWidget, 1 },
     {ITT_EFUNC,  "   floor height changes", SCColorWidget, 2 },
@@ -2739,14 +2738,14 @@ MenuItem_t MAPItems[] = {
     {ITT_EFUNC,  "   unseen areas",        SCColorWidget, 0 },
     {ITT_EFUNC,  "   background",        SCColorWidget, 4 },
     {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_EFUNC,  "door colors :        ",    M_MAPDoorColors, 0 },
-    {ITT_LRFUNC, "door glow : ",        M_MAPDoorGlow, 0 },
-    {ITT_LRFUNC, "line alpha :          ",    M_MAPAlphaLines, 0 },
+    {ITT_EFUNC,  "door colors :        ",    M_MapDoorColors, 0 },
+    {ITT_LRFUNC, "door glow : ",        M_MapDoorGlow, 0 },
+    {ITT_LRFUNC, "line alpha :          ",    M_MapLineAlpha, 0 },
 };
 
 Menu_t MapDef = {
     70, 40,
-    M_DrawMAP,
+    M_DrawMapMenu,
     17, MAPItems,
     0, MENU_OPTIONS,
     hu_font_a,
@@ -2758,18 +2757,18 @@ Menu_t MapDef = {
 #else
 
 MenuItem_t MAPItems[] = {
-    {ITT_LRFUNC, "window position : ", M_MAPPos, 0 },
-    {ITT_LRFUNC, "window width :       ", M_MAPW, 0 },
+    {ITT_LRFUNC, "window position : ", M_MapPosition, 0 },
+    {ITT_LRFUNC, "window width :       ", M_MapWidth, 0 },
     {ITT_EMPTY, NULL, NULL, 0 },
     {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_LRFUNC, "window height :     ", M_MAPH, 0 },
+    {ITT_LRFUNC, "window height :     ", M_MapHeight, 0 },
     {ITT_EMPTY, NULL, NULL, 0 },
     {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_LRFUNC,  "hud display :      ", M_MAPStatusbar, 0 },
+    {ITT_LRFUNC,  "hud display :      ", M_MapStatusbar, 0 },
 #ifdef __JHERETIC__
-    {ITT_LRFUNC, "kills count :           ", M_MAPKills, 0 },
-    {ITT_LRFUNC, "items count :          ", M_MAPItems, 0 },
-    {ITT_LRFUNC, "secrets count :     ", M_MAPSecrets, 0 },
+    {ITT_LRFUNC, "kills count :           ", M_MapKills, 0 },
+    {ITT_LRFUNC, "items count :          ", M_MapItems, 0 },
+    {ITT_LRFUNC, "secrets count :     ", M_MapSecrets, 0 },
 #endif
     {ITT_INERT, "automap colours", NULL, 0 },
 #ifndef __JHERETIC__
@@ -2783,16 +2782,16 @@ MenuItem_t MAPItems[] = {
     {ITT_EFUNC, "   ceiling height changes", SCColorWidget, 3 },
     {ITT_EFUNC, "   unseen areas", SCColorWidget, 0 },
     {ITT_EFUNC, "   background", SCColorWidget, 4 },
-    {ITT_EFUNC,  "door colors :        ", M_MAPDoorColors, 0 },
-    {ITT_LRFUNC, "door glow :", M_MAPDoorGlow, 0 },
+    {ITT_EFUNC,  "door colors :        ", M_MapDoorColors, 0 },
+    {ITT_LRFUNC, "door glow :", M_MapDoorGlow, 0 },
     {ITT_EMPTY, NULL, NULL, 0 },
     {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_LRFUNC, "line alpha :         ", M_MAPAlphaLines, 0 }
+    {ITT_LRFUNC, "line alpha :         ", M_MapLineAlpha, 0 }
 };
 
 Menu_t MapDef = {
     64, 30,
-    M_DrawMAP,
+    M_DrawMapMenu,
     23, MAPItems,
     0, MENU_OPTIONS,
     hu_font_a,
@@ -2808,13 +2807,15 @@ extern short    itemOn;
  * Draws the automap options menu
  * Uses a bit of a kludge for multi pages with jHeretic/jHexen. 
  */
-void M_DrawMAP(void)
+void M_DrawMapMenu(void)
 {
     Menu_t *menu = &MapDef;
     MenuItem_t *item = menu->items + menu->firstItem;
 
-    char   *posnames[9] = { "TOP LEFT", "TOP CENTER", "TOP RIGHT", "CENTER LEFT", "CENTER", "CENTER RIGHT", "BOTTOM LEFT", "BOTTOM CENTER", "BOTTOM RIGHT" };
+    char   *posnames[9] = { "TOP LEFT", "TOP CENTER", "TOP RIGHT", "CENTER LEFT", "CENTER", \
+                            "CENTER RIGHT", "BOTTOM LEFT", "BOTTOM CENTER", "BOTTOM RIGHT" };
     char   *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
+    char *yesno[2] = { "NO", "YES" };
 #ifndef __JHEXEN__
 #ifndef __JSTRIFE__
     char   *countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
@@ -2901,7 +2902,7 @@ void M_DrawMAP(void)
 /*
  * Set automap window width
  */
-void M_MAPW(int option, void *data)
+void M_MapWidth(int option, void *data)
 {
     M_FloatMod10(&cfg.automapWidth, option);
 }
@@ -2909,7 +2910,7 @@ void M_MAPW(int option, void *data)
 /*
  * Set automap window height
  */
-void M_MAPH(int option, void *data)
+void M_MapHeight(int option, void *data)
 {
     M_FloatMod10(&cfg.automapHeight, option);
 }
@@ -2917,7 +2918,7 @@ void M_MAPH(int option, void *data)
 /*
  * Set automap line alpha
  */
-void M_MAPAlphaLines(int option, void *data)
+void M_MapLineAlpha(int option, void *data)
 {
     M_FloatMod10(&cfg.automapLineAlpha, option);
 }
@@ -2925,7 +2926,7 @@ void M_MAPAlphaLines(int option, void *data)
 /*
  * Set show line/teleport lines in different color
  */
-void M_MAPDoorColors(int option, void *data)
+void M_MapDoorColors(int option, void *data)
 {
     cfg.automapShowDoors = !cfg.automapShowDoors;
 }
@@ -2933,7 +2934,7 @@ void M_MAPDoorColors(int option, void *data)
 /*
  * Set glow line amount
  */
-void M_MAPDoorGlow(int option, void *data)
+void M_MapDoorGlow(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
@@ -2947,7 +2948,7 @@ void M_MAPDoorGlow(int option, void *data)
 /*
  * Set rotate mode
  */
-void M_MAPRotate(int option, void *data)
+void M_MapRotate(int option, void *data)
 {
     cfg.automapRotate = !cfg.automapRotate;
 }
@@ -2955,7 +2956,7 @@ void M_MAPRotate(int option, void *data)
 /*
  * Set which HUD to draw when in automap
  */
-void M_MAPStatusbar(int option, void *data)
+void M_MapStatusbar(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
@@ -2969,7 +2970,7 @@ void M_MAPStatusbar(int option, void *data)
 /*
  * Set map window position
  */
-void M_MAPPos(int option, void *data)
+void M_MapPosition(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
@@ -2983,7 +2984,7 @@ void M_MAPPos(int option, void *data)
 /*
  * Set the show kills counter
  */
-void M_MAPKills(int option, void *data)
+void M_MapKills(int option, void *data)
 {
     int     op = (cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2);
 
@@ -2999,7 +3000,7 @@ void M_MAPKills(int option, void *data)
 /*
  * Set the show items counter
  */
-void M_MAPItems(int option, void *data)
+void M_MapItems(int option, void *data)
 {
     int     op =
         ((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3);
@@ -3016,7 +3017,7 @@ void M_MAPItems(int option, void *data)
 /*
  * Set the show secrets counter
  */
-void M_MAPSecrets(int option, void *data)
+void M_MapSecrets(int option, void *data)
 {
     int     op =
         ((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4);

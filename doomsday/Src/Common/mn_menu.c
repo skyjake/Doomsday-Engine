@@ -334,7 +334,7 @@ char   *episodemsg;
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-int     mouseSensitivity;		// has default
+int     mouseSensitivity;    // has default
 #endif
 
 boolean shiftdown;
@@ -344,14 +344,14 @@ float   menu_alpha = 0;
 int     menu_color = 0;
 float   skull_angle = 0;
 
-int     frame;				// used by any graphic animations that need to be pumped
+int     frame;    // used by any graphic animations that need to be pumped
 
 int     MenuTime;
 
-short   itemOn;					// menu item skull is on
-short   previtemOn;				// menu item skull was last on (for restoring when leaving widget control)
-short   skullAnimCounter;			// skull animation counter
-short   whichSkull;				// which skull to draw
+short   itemOn;    // menu item skull is on
+short   previtemOn;    // menu item skull was last on (for restoring when leaving widget control)
+short   skullAnimCounter;    // skull animation counter
+short   whichSkull;    // which skull to draw
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

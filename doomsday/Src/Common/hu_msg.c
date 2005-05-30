@@ -273,31 +273,6 @@ char ForeignTranslation(unsigned char ch)
 }
 
 /*
- *  strcatQuoted
- *
- */
-static void StrCatQuoted(char *dest, char *src)
-{
-	int     k = strlen(dest) + 1, i;
-
-	strcat(dest, "\"");
-	for(i = 0; src[i]; i++)
-	{
-		if(src[i] == '"')
-		{
-			strcat(dest, "\\\"");
-			k += 2;
-		}
-		else
-		{
-			dest[k++] = src[i];
-			dest[k] = 0;
-		}
-	}
-	strcat(dest, "\"");
-}
-
-/*
  * HUMsg_Clear
  *
  *  	Clears the message buffer.
@@ -534,7 +509,7 @@ void HU_sendMessage(char *msg)
 	if(chat_to == HU_BROADCAST)
 	{
 		strcpy(buff, "chat ");
-		StrCatQuoted(buff, msg);
+		M_StrCatQuoted(buff, msg);
 		Con_Execute(buff, false);
 	}
 	else
@@ -544,7 +519,7 @@ void HU_sendMessage(char *msg)
 			if(players[i].plr->ingame && cfg.PlayerColor[i] == chat_to)
 			{
 				sprintf(buff, "chatNum %d ", i);
-				StrCatQuoted(buff, msg);
+				M_StrCatQuoted(buff, msg);
 				Con_Execute(buff, false);
 			}
 	}
