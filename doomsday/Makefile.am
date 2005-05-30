@@ -2,6 +2,10 @@ SUBDIRS = libltdl Src
 
 DISTCLEANFILES = *~
 
+#
+# TODO: Having all the headers here is perhaps not the best solution.
+#
+
 Headers = Include/cl_def.h Include/dd_api.h Include/LZSS.h	       \
 Include/Common/d_netcl.h Include/Common/d_net.h			       \
 Include/Common/d_netsv.h Include/Common/f_infine.h		       \
@@ -13,33 +17,36 @@ Include/Common/p_svtexarc.h Include/Common/p_view.h		       \
 Include/Common/p_xg.h Include/Common/p_xgline.h			       \
 Include/Common/p_xgsec.h Include/Common/r_common.h		       \
 Include/Common/x_hair.h Include/Common/xgclass.h Include/cl_frame.h    \
-Include/cl_mobj.h Include/cl_player.h Include/cl_sound.h	       \
-Include/cl_world.h Include/con_action.h Include/con_bar.h	       \
-Include/con_bind.h Include/con_config.h Include/con_decl.h	       \
-Include/con_main.h Include/con_start.h Include/m_misc.h		       \
-Include/dd_def.h Include/dd_dgl.h Include/dd_help.h Include/dd_input.h \
-Include/dd_loop.h Include/dd_main.h Include/dd_pinit.h		       \
-Include/dd_plugin.h Include/dd_share.h Include/dd_types.h	       \
-Include/dd_version.h Include/dd_wad.h Include/dd_winit.h	       \
-Include/dd_zip.h Include/dd_zone.h Include/de_audio.h		       \
-Include/de_base.h Include/de_console.h Include/de_defs.h	       \
-Include/de_graphics.h Include/de_misc.h Include/de_network.h	       \
-Include/de_platform.h Include/de_play.h Include/de_refresh.h	       \
-Include/de_render.h Include/de_system.h Include/de_ui.h		       \
-Include/def_data.h Include/def_main.h Include/def_share.h	       \
-Include/dglib.h Include/doomsday.h Include/gl_pcx.h Include/gl_draw.h  \
-Include/gl_font.h Include/gl_hq2x.h Include/gl_main.h		       \
-Include/gl_model.h Include/gl_png.h Include/gl_tex.h Include/gl_tga.h  \
-Include/m_args.h Include/m_bams.h Include/m_filehash.h		       \
-Include/m_huffman.h Include/sv_def.h Include/m_nodepile.h	       \
-Include/m_profiler.h Include/m_string.h Include/m_vector.h	       \
-Include/net_buf.h Include/net_demo.h Include/net_event.h	       \
-Include/net_main.h Include/net_msg.h Include/p_bmap.h Include/r_main.h \
-Include/p_data.h Include/p_intercept.h Include/p_maputil.h	       \
-Include/p_mobj.h Include/p_particle.h Include/p_polyob.h	       \
-Include/p_sight.h Include/p_think.h Include/p_tick.h Include/png.h     \
-Include/pngconf.h Include/r_data.h Include/r_draw.h Include/r_extres.h \
-Include/r_lgrid.h Include/r_model.h Include/r_shadow.h Include/r_sky.h \
+Include/Common/am_map.h Include/Common/hu_lib.h			       \
+Include/Common/hu_msg.h Include/Common/hu_stuff.h		       \
+Include/Common/m_swap.h Include/Common/st_lib.h Include/cl_mobj.h      \
+Include/cl_player.h Include/cl_sound.h Include/cl_world.h	       \
+Include/con_action.h Include/con_bar.h Include/con_bind.h	       \
+Include/con_config.h Include/con_decl.h Include/con_main.h	       \
+Include/con_start.h Include/m_misc.h Include/dd_def.h Include/dd_dgl.h \
+Include/dd_help.h Include/dd_input.h Include/dd_loop.h		       \
+Include/dd_main.h Include/dd_pinit.h Include/dd_plugin.h	       \
+Include/dd_share.h Include/dd_types.h Include/dd_version.h	       \
+Include/dd_wad.h Include/dd_winit.h Include/dd_zip.h Include/dd_zone.h \
+Include/de_audio.h Include/de_base.h Include/de_console.h	       \
+Include/de_defs.h Include/de_graphics.h Include/de_misc.h	       \
+Include/de_network.h Include/de_platform.h Include/de_play.h	       \
+Include/de_refresh.h Include/de_render.h Include/de_system.h	       \
+Include/de_ui.h Include/def_data.h Include/def_main.h		       \
+Include/def_share.h Include/dglib.h Include/doomsday.h		       \
+Include/gl_pcx.h Include/gl_draw.h Include/gl_font.h Include/gl_hq2x.h \
+Include/gl_main.h Include/gl_model.h Include/gl_png.h Include/gl_tex.h \
+Include/gl_tga.h Include/m_args.h Include/m_bams.h		       \
+Include/m_filehash.h Include/m_huffman.h Include/sv_def.h	       \
+Include/m_nodepile.h Include/m_profiler.h Include/m_string.h	       \
+Include/m_vector.h Include/net_buf.h Include/net_demo.h		       \
+Include/net_event.h Include/net_main.h Include/net_msg.h	       \
+Include/p_bmap.h Include/r_main.h Include/p_data.h		       \
+Include/p_intercept.h Include/p_maputil.h Include/p_mobj.h	       \
+Include/p_particle.h Include/p_polyob.h Include/p_sight.h	       \
+Include/p_think.h Include/p_tick.h Include/png.h Include/pngconf.h     \
+Include/r_data.h Include/r_draw.h Include/r_extres.h Include/r_lgrid.h \
+Include/r_model.h Include/r_shadow.h Include/r_sky.h		       \
 Include/r_things.h Include/r_util.h Include/r_world.h		       \
 Include/rend_bias.h Include/rend_clip.h Include/rend_decor.h	       \
 Include/rend_dyn.h Include/rend_fakeradio.h Include/rend_halo.h	       \
@@ -82,7 +89,7 @@ Include/jDoom/r_defs.h Include/jDoom/r_local.h Include/jDoom/r_sky.h   \
 Include/jDoom/r_state.h Include/jDoom/s_sound.h Include/jDoom/st_lib.h \
 Include/jDoom/st_stuff.h Include/jDoom/tables.h			       \
 Include/jDoom/v_video.h Include/jDoom/version.h			       \
-Include/jDoom/wi_stuff.h Include/jDoom/x_hair.h			       \
+Include/jDoom/wi_stuff.h Include/jDoom/x_hair.h Include/jDoom/m_ctrl.h \
 Include/jHeretic/AM_data.h Include/jHeretic/AcFnLink.h		       \
 Include/jHeretic/Am_map.h Include/jHeretic/CT_chat.h		       \
 Include/jHeretic/Doomdata.h Include/jHeretic/Doomdef.h		       \
@@ -94,14 +101,17 @@ Include/jHeretic/S_sound.h Include/jHeretic/Sounds.h		       \
 Include/jHeretic/Soundst.h Include/jHeretic/p_oldsvg.h		       \
 Include/jHeretic/resource.h Include/jHeretic/settings.h		       \
 Include/jHeretic/version.h Include/jHexen/AcFnLink.h		       \
-Include/jHexen/am_data.h Include/jHexen/am_map.h		       \
-Include/jHexen/ct_chat.h Include/jHexen/dstrings.h		       \
-Include/jHexen/h2_actn.h Include/jHexen/h2def.h Include/jHexen/info.h  \
-Include/jHexen/mn_def.h Include/jHexen/p_local.h		       \
-Include/jHexen/p_spec.h Include/jHexen/r_local.h		       \
-Include/jHexen/settings.h Include/jHexen/sounds.h		       \
-Include/jHexen/soundst.h Include/jHexen/textdefs.h		       \
-Include/jHexen/version.h Include/jHexen/xddefs.h
+Include/jHeretic/d_config.h Include/jHeretic/m_ctrl.h		       \
+Include/jHeretic/st_stuff.h Include/jHexen/am_data.h		       \
+Include/jHexen/am_map.h Include/jHexen/ct_chat.h		       \
+Include/jHexen/dstrings.h Include/jHexen/h2_actn.h		       \
+Include/jHexen/h2def.h Include/jHexen/info.h Include/jHexen/mn_def.h   \
+Include/jHexen/p_local.h Include/jHexen/p_spec.h		       \
+Include/jHexen/r_local.h Include/jHexen/settings.h		       \
+Include/jHexen/sounds.h Include/jHexen/soundst.h		       \
+Include/jHexen/textdefs.h Include/jHexen/version.h		       \
+Include/jHexen/xddefs.h Include/jHexen/d_config.h		       \
+Include/jHexen/m_ctrl.h Include/jHexen/st_stuff.h
 
 EXTRA_DIST = LICENSE apply-style.sh autogen.sh deng-header-style.sh   \
 deng-style.sh indent-typenames.sh tags.sh Doc/ChangeLog.txt	      \
