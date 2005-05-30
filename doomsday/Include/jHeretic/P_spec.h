@@ -217,9 +217,10 @@ typedef struct {
 } plat_t;
 
 // size of a plat (num of bytes) for backward save game compatibility - DJS
-static int sizeofplat = sizeof(thinker_t) + sizeof(sector_t*)
-			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
-			+ (sizeof(plat_e)*2) + sizeof(boolean) + sizeof(plattype_e);
+#define SIZE_OF_PLAT (sizeof(thinker_t) + sizeof(sector_t*)     \
+                      + (sizeof(fixed_t)*3) + (sizeof(int)*3)   \
+                      + (sizeof(plat_e)*2) + sizeof(boolean)    \
+                      + sizeof(plattype_e))
 
 // New limit-free plat structure -- killough
 
@@ -307,9 +308,9 @@ typedef struct {
 } ceiling_t;
 
 // size of a ceiling (num of bytes) for backward save game compatibility - DJS
-static int sizeofceiling = sizeof(thinker_t) + sizeof(ceiling_e)
-			+ (sizeof(fixed_t)*3) + (sizeof(int)*3)
-			+ sizeof(sector_t*) + sizeof(boolean);
+#define SIZE_OF_CEILING (sizeof(thinker_t) + sizeof(ceiling_e)      \
+                         + (sizeof(fixed_t)*3) + (sizeof(int)*3)    \
+                         + sizeof(sector_t*) + sizeof(boolean))
 
 typedef struct ceilinglist {
   ceiling_t *ceiling;
