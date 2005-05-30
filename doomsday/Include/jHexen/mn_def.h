@@ -90,8 +90,6 @@ typedef struct {
 	int             firstItem, numVisItems;
 } Menu_t;
 
-extern char *yesno[];
-
 extern int      MenuTime;
 extern boolean  shiftdown;
 extern Menu_t  *currentMenu;

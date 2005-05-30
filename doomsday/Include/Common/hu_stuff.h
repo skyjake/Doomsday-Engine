@@ -73,8 +73,6 @@ void    WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont, float d
 
 int     M_DrawText(int x, int y, boolean direct, char *string);
 
-void    StrCatQuoted(char *dest, char *src);
-
 int 	M_StringWidth(char *string, dpatch_t * font);
 int 	M_StringHeight(char *string, dpatch_t * font);
 
