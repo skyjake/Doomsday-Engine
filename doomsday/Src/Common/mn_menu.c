@@ -355,6 +355,8 @@ short   whichSkull;				// which skull to draw
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int    usegamma;
+
 #ifndef __JDOOM__
 static int SkullBaseLump;
 #endif

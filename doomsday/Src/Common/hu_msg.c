@@ -29,7 +29,6 @@
 # include "../jDoom/d_config.h"
 # include "../jDoom/m_menu.h"
 # include "../jDoom/Mn_def.h"
-# include "../jDoom/m_misc.h"
 # include "../jDoom/s_sound.h"
 # include "../jDoom/doomstat.h"
 # include "../jDoom/r_local.h"

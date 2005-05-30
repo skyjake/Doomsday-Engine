@@ -347,6 +347,7 @@ void    M_MAPSecrets(int option, void *data);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern float menu_alpha;
+extern char *yesno[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
