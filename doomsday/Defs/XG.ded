@@ -36,7 +36,7 @@ Text { ID = "xgclass007"; Text = "Sector Type"; }
 Text { ID = "xgclass008"; Text = "Sector Light"; }
 Text { ID = "xgclass009"; Text = "Activate"; }
 Text { ID = "xgclass010"; Text = "Key"; }
-Text { ID = "xgclass011"; Text = "Music is a really long name that should be shortened"; }
+Text { ID = "xgclass011"; Text = "Music"; }
 Text { ID = "xgclass012"; Text = "Line Count"; }
 Text { ID = "xgclass013"; Text = "End Level"; }
 Text { ID = "xgclass014"; Text = "Disable if Active"; }
