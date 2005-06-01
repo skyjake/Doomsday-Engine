@@ -13,6 +13,7 @@
 #include "h2def.h"
 #include "d_net.h"
 #include "hu_stuff.h"
+#include "mn_def.h"
 #include <ctype.h>
 
 // MACROS ------------------------------------------------------------------
@@ -562,7 +563,7 @@ static void DrNumber(int val, int x, int y, int wrapThresh)
 	{
 		sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
 	}
-		
+
 	M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff, hu_font_a, 1, 1, 1, 1);
 }
 
