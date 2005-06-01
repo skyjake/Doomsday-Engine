@@ -28,42 +28,7 @@ REM   vcbuild all
 REM
 
 REM -- Set up paths.
-SET BIN_DIR=Bin\Release
-SET OBJ_DIR=Obj\Release
-
-REM -=- Requirements for Doomsday.exe -=-
-REM
-REM ---- Platform SDK:
-SET PLATFORM_INC=D:\VS.NET\Vc7\PlatformSDK\Include
-SET PLATFORM_LIB=D:\VS.NET\VC7\PlatformSDK\Lib
-SET LIBCI_LIB=D:\VS.NET\Vc7\Lib
-REM ---- DirectX:
-SET DX_INC=D:\sdk\dx8\include
-SET DX_LIB=D:\sdk\dx8\lib
-REM ---- FMOD:
-SET FMOD_INC=D:\sdk\fmod\api\inc
-SET FMOD_LIB=D:\sdk\fmod\api\lib
-REM ---- Creative Labs EAX:
-SET EAX_INC=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Include
-SET EAX_LIB=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Libs
-REM ---- SDL:
-SET SDL_INC=D:\sdk\SDL-1.2.6\include
-SET SDL_LIB=D:\sdk\SDL-1.2.6\lib
-REM ---- SDL_net:
-SET SDLNET_INC=D:\sdk\SDL_net-1.2.5\include
-SET SDLNET_LIB=D:\sdk\SDL_net-1.2.5\lib
-
-REM -=- Requirements for drOpenGL.dll -=-
-REM
-REM ---- OpenGL (GL/gl.h, GL/glext.h, GL/glu.h):
-SET GL_INC=D:\VS.NET\Vc7\Include
-
-REM -=- Requirements for dsA3D.dll -=-
-REM
-REM ---- Aureal A3D:
-SET A3D_INC=D:\sdk\Aureal\A3D 3.0 SDK\sdk\inc
-SET A3D_LIB=D:\sdk\Aureal\A3D 3.0 SDK\sdk\lib
-
+CALL vcconfig.bat
 
 REM -- Compiler and linker options.
 SET DEFINES=/D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS"
@@ -163,21 +128,21 @@ GOTO Done
 REM *** jDoom.dll
 :jDoom
 md %OBJ_DIR%\jDoom
-cl /O2 /Ob1 /I "./Include/jDoom" /I "./Include/Common" /I "./Include" /D "__JDOOM__" %DLLDEFINES% /D "JDOOM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jDoom/" /Fd"./%OBJ_DIR%/jDoom/" /W3 /Gz   Src\Common\d_netsv.c Src\Common\d_netcl.c Src\Common\d_net.c Src\Common\m_multi.c Src\jDoom\m_menu.c Src\jDoom\m_ctrl.c Src\Common\g_dglinit.c Src\jDoom\d_refresh.c Src\jDoom\d_main.c Src\jDoom\d_console.c Src\Common\p_xgsec.c Src\Common\p_xgsave.c Src\Common\p_xgline.c Src\Common\p_xgfile.c Src\Common\p_view.c Src\jDoom\p_user.c Src\Common\p_tick.c Src\jDoom\p_telept.c Src\jDoom\p_switch.c Src\Common\p_svtexarc.c Src\Common\p_start.c Src\jDoom\p_spec.c Src\jDoom\p_sound.c Src\jDoom\p_setup.c Src\Common\p_saveg.c Src\jDoom\p_pspr.c Src\jDoom\p_plats.c Src\jDoom\p_oldsvg.c Src\jDoom\p_mobj.c Src\jDoom\p_maputl.c Src\jDoom\p_map.c Src\jDoom\p_lights.c Src\jDoom\p_inter.c Src\jDoom\p_floor.c Src\jDoom\p_enemy.c Src\jDoom\p_doors.c Src\jDoom\p_ceilng.c Src\Common\p_actor.c Src\Common\x_hair.c Src\jDoom\wi_stuff.c Src\jDoom\st_stuff.c Src\jDoom\st_lib.c Src\jDoom\hu_stuff.c Src\Common\hu_pspr.c Src\jDoom\hu_msg.c Src\jDoom\hu_lib.c Src\Common\f_infine.c Src\jDoom\am_map.c Src\jDoom\v_video.c Src\jDoom\tables.c Src\jDoom\r_sky.c Src\Common\r_common.c Src\jDoom\m_swap.c Src\jDoom\m_random.c Src\jDoom\m_misc.c Src\Common\m_fixed.c Src\jDoom\m_cheat.c Src\Common\g_update.c Src\Common\g_game.c Src\jDoom\dstrings.c Src\jDoom\doomstat.c Src\jDoom\doomdef.c Src\jDoom\d_items.c Src\jDoom\D_Action.c Src\jDoom\AcFnLink.c   /link  /OUT:"./%BIN_DIR%/jDoom.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:".\Src\jDoom\jDoom.def" /IMPLIB:"./%BIN_DIR%/jDoom.lib" ./%BIN_DIR%/doomsday.lib lzss.lib
+cl /O2 /Ob1 /I "./Include/jDoom" /I "./Include/Common" /I "./Include" /D "__JDOOM__" %DLLDEFINES% /D "JDOOM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jDoom/" /Fd"./%OBJ_DIR%/jDoom/" /W3 /Gz   Src\Common\d_netsv.c Src\Common\d_netcl.c Src\Common\d_net.c Src\Common\m_multi.c Src\Common\mn_menu.c Src\Common\m_ctrl.c Src\Common\g_dglinit.c Src\jDoom\d_refresh.c Src\jDoom\d_main.c Src\jDoom\d_console.c Src\Common\p_xgsec.c Src\Common\p_xgsave.c Src\Common\p_xgline.c Src\Common\p_xgfile.c Src\Common\p_view.c Src\jDoom\p_user.c Src\Common\p_tick.c Src\jDoom\p_telept.c Src\jDoom\p_switch.c Src\Common\p_svtexarc.c Src\Common\p_start.c Src\jDoom\p_spec.c Src\jDoom\p_sound.c Src\jDoom\p_setup.c Src\Common\p_saveg.c Src\jDoom\p_pspr.c Src\jDoom\p_plats.c Src\jDoom\p_oldsvg.c Src\jDoom\p_mobj.c Src\jDoom\p_maputl.c Src\jDoom\p_map.c Src\jDoom\p_lights.c Src\jDoom\p_inter.c Src\jDoom\p_floor.c Src\jDoom\p_enemy.c Src\jDoom\p_doors.c Src\jDoom\p_ceilng.c Src\Common\p_actor.c Src\Common\x_hair.c Src\jDoom\wi_stuff.c Src\jDoom\st_stuff.c Src\Common\st_lib.c Src\Common\hu_stuff.c Src\Common\hu_pspr.c Src\Common\hu_msg.c Src\Common\hu_lib.c Src\Common\f_infine.c Src\Common\am_map.c Src\jDoom\tables.c Src\jDoom\r_sky.c Src\Common\r_common.c Src\jDoom\m_swap.c Src\jDoom\m_random.c Src\Common\m_fixed.c Src\jDoom\m_cheat.c Src\Common\g_update.c Src\Common\g_game.c Src\jDoom\dstrings.c Src\jDoom\doomstat.c Src\jDoom\doomdef.c Src\jDoom\d_items.c Src\jDoom\D_Action.c Src\jDoom\AcFnLink.c   /link  /OUT:"./%BIN_DIR%/jDoom.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:".\Src\jDoom\jDoom.def" /IMPLIB:"./%BIN_DIR%/jDoom.lib" ./%BIN_DIR%/doomsday.lib lzss.lib
 GOTO Done
 
 
 REM *** jHeretic.dll
 :jHeretic
 md %OBJ_DIR%\jHeretic
-cl /O2 /Ob1 /I "./Include/jHeretic" /I "./Include/Common" /I "./Include" /D "__JHERETIC__" %DLLDEFINES% /D "JHERETIC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jHeretic/" /Fd"./%OBJ_DIR%/jHeretic/" /W3 /Gz Src\Common\d_netsv.c Src\Common\d_netcl.c Src\Common\d_net.c Src\Common\m_multi.c Src\jHeretic\Mn_menu.c Src\Common\g_dglinit.c Src\jHeretic\H_Refresh.c Src\jHeretic\H_Main.c Src\jHeretic\H_Console.c Src\jHeretic\H_Action.c Src\Common\p_xgsec.c Src\Common\p_xgsave.c Src\Common\p_xgline.c Src\Common\p_xgfile.c Src\Common\p_view.c Src\Common\p_tick.c Src\Common\p_svtexarc.c Src\Common\p_start.c Src\jHeretic\p_sound.c Src\Common\p_saveg.c Src\Common\p_actor.c Src\jHeretic\P_user.c Src\jHeretic\P_telept.c Src\jHeretic\P_switch.c Src\jHeretic\P_spec.c Src\jHeretic\P_sight.c Src\jHeretic\P_setup.c Src\jHeretic\P_pspr.c Src\jHeretic\P_plats.c Src\jHeretic\P_oldsvg.c Src\jHeretic\P_mobj.c Src\jHeretic\P_maputl.c Src\jHeretic\P_map.c Src\jHeretic\P_lights.c Src\jHeretic\P_inter.c Src\jHeretic\P_floor.c Src\jHeretic\P_enemy.c Src\jHeretic\P_doors.c Src\jHeretic\P_ceilng.c Src\Common\x_hair.c Src\Common\r_common.c Src\Common\m_fixed.c Src\Common\hu_pspr.c Src\Common\g_update.c Src\Common\g_game.c Src\Common\f_infine.c Src\jHeretic\V_video.c Src\jHeretic\Tables.c Src\jHeretic\Sb_bar.c Src\jHeretic\M_misc.c Src\jHeretic\In_lude.c Src\jHeretic\Ct_chat.c Src\jHeretic\Am_map.c Src\jHeretic\AcFnLink.c   /link /OUT:"./%BIN_DIR%/jHeretic.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:".\Src\jHeretic\jHeretic.def" /IMPLIB:"./%BIN_DIR%/jHeretic.lib" ./%BIN_DIR%/doomsday.lib lzss.lib 
+cl /O2 /Ob1 /I "./Include/jHeretic" /I "./Include/Common" /I "./Include" /D "__JHERETIC__" %DLLDEFINES% /D "JHERETIC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jHeretic/" /Fd"./%OBJ_DIR%/jHeretic/" /W3 /Gz Src\Common\d_netsv.c Src\Common\d_netcl.c Src\Common\d_net.c Src\Common\m_multi.c Src\Common\mn_menu.c Src\Common\m_ctrl.c Src\Common\g_dglinit.c Src\jHeretic\H_Refresh.c Src\jHeretic\H_Main.c Src\jHeretic\H_Console.c Src\jHeretic\H_Action.c Src\Common\p_xgsec.c Src\Common\p_xgsave.c Src\Common\p_xgline.c Src\Common\p_xgfile.c Src\Common\p_view.c Src\Common\p_tick.c Src\Common\p_svtexarc.c Src\Common\p_start.c Src\jHeretic\p_sound.c Src\Common\p_saveg.c Src\Common\p_actor.c Src\jHeretic\P_user.c Src\jHeretic\P_telept.c Src\jHeretic\P_switch.c Src\jHeretic\P_spec.c Src\jHeretic\P_sight.c Src\jHeretic\P_setup.c Src\jHeretic\P_pspr.c Src\jHeretic\P_plats.c Src\jHeretic\P_oldsvg.c Src\jHeretic\P_mobj.c Src\jHeretic\P_maputl.c Src\jHeretic\P_map.c Src\jHeretic\P_lights.c Src\jHeretic\P_inter.c Src\jHeretic\P_floor.c Src\jHeretic\P_enemy.c Src\jHeretic\P_doors.c Src\jHeretic\P_ceilng.c Src\Common\x_hair.c Src\Common\r_common.c Src\Common\m_fixed.c Src\Common\hu_pspr.c Src\Common\g_update.c Src\Common\g_game.c Src\Common\f_infine.c Src\jHeretic\Tables.c Src\jHeretic\st_stuff.c Src\Common\hu_stuff.c Src\jHeretic\M_misc.c Src\jHeretic\In_lude.c Src\Common\st_lib.c Src\Common\hu_lib.c Src\Common\hu_msg.c Src\Common\am_map.c Src\jHeretic\AcFnLink.c   /link /OUT:"./%BIN_DIR%/jHeretic.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:".\Src\jHeretic\jHeretic.def" /IMPLIB:"./%BIN_DIR%/jHeretic.lib" ./%BIN_DIR%/doomsday.lib lzss.lib 
 GOTO Done
 
 
 REM *** jHexen.dll
 :jHexen
 md %OBJ_DIR%\jHexen
-cl /O2 /Ob1 /I "Include" /I "Include/jHexen" /I "Include/Common" /D "__JHEXEN__" %DLLDEFINES% /D "JHEXEN_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jHexen/" /Fd"./%OBJ_DIR%/jHexen/" /W3 /Gz Src\Common\d_netsv.c Src\Common\d_netcl.c Src\Common\d_net.c Src\Common\m_multi.c Src\jHexen\Mn_menu.c Src\Common\g_update.c Src\Common\g_dglinit.c Src\jHexen\HRefresh.c Src\jHexen\HConsole.c Src\jHexen\H2_main.c Src\jHexen\H2_Actn.c Src\Common\p_view.c Src\Common\p_tick.c Src\Common\p_svtexarc.c Src\Common\p_start.c Src\Common\p_actor.c Src\jHexen\P_user.c Src\jHexen\P_things.c Src\jHexen\P_telept.c Src\jHexen\P_switch.c Src\jHexen\P_spec.c Src\jHexen\P_sight.c Src\jHexen\P_setup.c Src\jHexen\P_pspr.c Src\jHexen\P_plats.c Src\jHexen\P_mobj.c Src\jHexen\P_maputl.c Src\jHexen\P_map.c Src\jHexen\P_lights.c Src\jHexen\P_inter.c Src\jHexen\P_floor.c Src\jHexen\P_enemy.c Src\jHexen\P_doors.c Src\jHexen\P_ceilng.c Src\jHexen\P_anim.c Src\jHexen\P_acs.c Src\Common\x_hair.c Src\jHexen\s_sound.c Src\Common\r_common.c Src\Common\m_fixed.c Src\Common\hu_pspr.c Src\Common\g_game.c Src\Common\f_infine.c Src\jHexen\Tables.c Src\jHexen\sv_save.c Src\jHexen\Sn_sonix.c Src\jHexen\Sc_man.c Src\jHexen\Sb_bar.c Src\jHexen\Po_man.c Src\jHexen\M_misc.c Src\jHexen\In_lude.c Src\jHexen\Ct_chat.c Src\jHexen\Am_map.c Src\jHexen\AcFnLink.c Src\jHexen\A_action.c    /link /OUT:"./%BIN_DIR%/jHexen.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:".\Src\jHexen\jHexen.def" /IMPLIB:"./%BIN_DIR%/jHexen.lib" ./%BIN_DIR%/doomsday.lib lzss.lib
+cl /O2 /Ob1 /I "Include" /I "Include/jHexen" /I "Include/Common" /D "__JHEXEN__" %DLLDEFINES% /D "JHEXEN_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jHexen/" /Fd"./%OBJ_DIR%/jHexen/" /W3 /Gz Src\Common\d_netsv.c Src\Common\d_netcl.c Src\Common\d_net.c Src\Common\m_multi.c Src\Common\Mn_menu.c Src\Common\m_ctrl.c Src\Common\g_update.c Src\Common\g_dglinit.c Src\jHexen\HRefresh.c Src\jHexen\HConsole.c Src\jHexen\H2_main.c Src\jHexen\H2_Actn.c Src\Common\p_view.c Src\Common\p_tick.c Src\Common\p_svtexarc.c Src\Common\p_start.c Src\Common\p_actor.c Src\jHexen\P_user.c Src\jHexen\P_things.c Src\jHexen\P_telept.c Src\jHexen\P_switch.c Src\jHexen\P_spec.c Src\jHexen\P_sight.c Src\jHexen\P_setup.c Src\jHexen\P_pspr.c Src\jHexen\P_plats.c Src\jHexen\P_mobj.c Src\jHexen\P_maputl.c Src\jHexen\P_map.c Src\jHexen\P_lights.c Src\jHexen\P_inter.c Src\jHexen\P_floor.c Src\jHexen\P_enemy.c Src\jHexen\P_doors.c Src\jHexen\P_ceilng.c Src\jHexen\P_anim.c Src\jHexen\P_acs.c Src\Common\x_hair.c Src\jHexen\s_sound.c Src\Common\r_common.c Src\Common\m_fixed.c Src\Common\hu_pspr.c Src\Common\g_game.c Src\Common\f_infine.c Src\jHexen\Tables.c Src\jHexen\sv_save.c Src\jHexen\Sn_sonix.c Src\jHexen\Sc_man.c Src\Common\hu_stuff.c Src\Common\hu_msg.c Src\Common\hu_lib.c Src\Common\st_lib.c Src\jHexen\Po_man.c Src\jHexen\M_misc.c Src\jHexen\In_lude.c Src\jHexen\st_stuff.c Src\Common\am_map.c Src\jHexen\AcFnLink.c Src\jHexen\A_action.c    /link /OUT:"./%BIN_DIR%/jHexen.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:".\Src\jHexen\jHexen.def" /IMPLIB:"./%BIN_DIR%/jHexen.lib" ./%BIN_DIR%/doomsday.lib lzss.lib
 GOTO Done
 
 
