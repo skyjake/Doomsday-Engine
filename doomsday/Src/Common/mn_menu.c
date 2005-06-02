@@ -1797,7 +1797,7 @@ void M_Drawer(void)
 		{
 			scale = currentMenu->itemHeight / (float) LINEHEIGHT;
 			w = cursorst[whichSkull].width * scale;			// skull size
-			h = SKULLH * scale;
+			h = cursorst[whichSkull].height * scale;
 			off_x = (WidgetEdit? ColorWidgetMnu.x : currentMenu->x) + SKULLXOFF * scale + w / 2;
 
 			off_y =
@@ -1805,8 +1805,8 @@ void M_Drawer(void)
 								(WidgetEdit? ColorWidgetMnu.firstItem : currentMenu->firstItem)) *
 				currentMenu->itemHeight + currentMenu->itemHeight / 2 -1;
 
-			if(currentMenu->font == hu_font_b)
-				off_y += SKULLYOFF;
+			//if(currentMenu->font == hu_font_b)
+			//	off_y += SKULLYOFF;
 
 			GL_SetPatch(cursorst[whichSkull].lump);
 			gl.MatrixMode(DGL_MODELVIEW);
@@ -1816,7 +1816,7 @@ void M_Drawer(void)
 			if(skull_angle)
                 gl.Rotatef(skull_angle, 0, 0, 1);
             gl.Scalef(1, 1.2f, 1);
-            GL_DrawRect(-w , -(h / 2), w, h, 1, 1, 1, menu_alpha);
+            GL_DrawRect(-(w/2) , -(h / 2), w, h, 1, 1, 1, menu_alpha);
             gl.PopMatrix();
         }
 

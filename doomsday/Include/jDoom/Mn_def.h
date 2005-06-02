@@ -21,8 +21,8 @@
 #define LINEHEIGHT_B	15
 #define LINEHEIGHT_A	8
 
-#define SKULLXOFF		-20
-#define SKULLYOFF		2
+#define SKULLXOFF		-32
+#define SKULLYOFF		6
 #define SKULLW			20
 #define SKULLH			19
 #define CURSORPREF	"M_SKULL%d"
