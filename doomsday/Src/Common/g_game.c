@@ -1698,8 +1698,6 @@ boolean G_Responder(event_t *ev)
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 	player_t *plr = &players[consoleplayer];
 
-	//extern boolean MenuActive;
-
 	if(!actions[A_USEARTIFACT].on)
 	{							// flag to denote that it's okay to use an artifact
 		if(!inventory)
@@ -1709,7 +1707,7 @@ boolean G_Responder(event_t *ev)
 		usearti = true;
 	}
 
-#else
+#endif
 	// any other key pops up menu if in demos
 	if(gameaction == ga_nothing && !singledemo &&
 	   (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
@@ -1722,7 +1720,6 @@ boolean G_Responder(event_t *ev)
 		}
 		return false;
 	}
-#endif
 
 	if(FI_Responder(ev))
 		return true;
