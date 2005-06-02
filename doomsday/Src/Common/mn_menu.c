@@ -113,9 +113,9 @@ static int menusnds[] = {
 	sfx_chat,
 	sfx_switch,
 	sfx_chat,
-	sfx_pstop,
-	sfx_stnmov,
 	sfx_switch,
+	sfx_switch,
+	sfx_stnmov,
 	sfx_chat
 #elif __JHEXEN__
 	SFX_CHAT,
