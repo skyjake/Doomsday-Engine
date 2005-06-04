@@ -101,7 +101,7 @@ Include/jHeretic/S_sound.h Include/jHeretic/Sounds.h		       \
 Include/jHeretic/Soundst.h Include/jHeretic/p_oldsvg.h		       \
 Include/jHeretic/resource.h Include/jHeretic/settings.h		       \
 Include/jHeretic/version.h Include/jHexen/AcFnLink.h		       \
-Include/jHeretic/d_config.h Include/jHeretic/m_ctrl.h		       \
+Include/jHeretic/h_config.h Include/jHeretic/m_ctrl.h		       \
 Include/jHeretic/st_stuff.h Include/jHexen/am_data.h		       \
 Include/jHexen/am_map.h Include/jHexen/ct_chat.h		       \
 Include/jHexen/dstrings.h Include/jHexen/h2_actn.h		       \
@@ -110,7 +110,7 @@ Include/jHexen/p_local.h Include/jHexen/p_spec.h		       \
 Include/jHexen/r_local.h Include/jHexen/settings.h		       \
 Include/jHexen/sounds.h Include/jHexen/soundst.h		       \
 Include/jHexen/textdefs.h Include/jHexen/version.h		       \
-Include/jHexen/xddefs.h Include/jHexen/d_config.h		       \
+Include/jHexen/xddefs.h Include/jHexen/x_config.h		       \
 Include/jHexen/m_ctrl.h Include/jHexen/st_stuff.h
 
 EXTRA_DIST = LICENSE apply-style.sh autogen.sh deng-header-style.sh   \
