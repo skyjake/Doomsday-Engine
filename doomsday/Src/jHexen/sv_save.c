@@ -15,7 +15,7 @@
 #include "LZSS.h"
 #include "h2def.h"
 #include "jHexen/p_local.h"
-#include "jHexen/d_config.h"
+#include "x_config.h"
 #include "p_svtexarc.h"
 #include "f_infine.h"
 

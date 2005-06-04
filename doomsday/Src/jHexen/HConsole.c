@@ -10,7 +10,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "h2def.h"
-#include "d_config.h"
+#include "x_config.h"
 #include "d_net.h"
 #include "jHexen/mn_def.h"
 #include "../Common/hu_stuff.h"

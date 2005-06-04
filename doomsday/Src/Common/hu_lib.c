@@ -30,11 +30,11 @@
 # include "jDoom/r_local.h"
 #elif __JHERETIC__
 # include "jHeretic/Doomdef.h"
-# include "jHeretic/d_config.h"
+# include "jHeretic/h_config.h"
 # include "jHeretic/R_local.h"
 #elif __JHEXEN__
 # include "jHexen/h2def.h"
-# include "jHexen/d_config.h"
+# include "jHexen/x_config.h"
 # include "jHexen/r_local.h"
 #elif __JSTRIFE__
 # include "jStrife/h2def.h"

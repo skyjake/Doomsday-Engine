@@ -24,7 +24,7 @@
 # include "Common/am_map.h"
 #elif __JHEXEN__
 # include "jHexen/h2def.h"
-# include "jHexen/d_config.h"
+# include "jHexen/x_config.h"
 # include "Common/am_map.h"
 #elif __JSTRIFE__
 # include "jStrife/h2def.h"

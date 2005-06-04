@@ -62,7 +62,7 @@
 # include "jHeretic/P_local.h"
 # include "jHeretic/R_local.h"
 # include "jHeretic/Soundst.h"
-# include "jHeretic/d_config.h"
+# include "jHeretic/h_config.h"
 # include "jHeretic/Mn_def.h"
 #elif __JHEXEN__
 # include "jHexen/h2def.h"
@@ -71,7 +71,7 @@
 # include "jHexen/soundst.h"
 # include "jHexen/h2_actn.h"
 # include "jHexen/mn_def.h"
-# include "jHexen/d_config.h"
+# include "jHexen/x_config.h"
 # include "LZSS.h"
 #elif __JSTRIFE__
 # include "jStrife/h2def.h"

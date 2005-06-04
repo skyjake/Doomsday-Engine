@@ -14,7 +14,7 @@
 
 #include "h2def.h"
 #include "jHexen/p_local.h"
-#include "jHexen/d_config.h"
+#include "x_config.h"
 
 // MACROS ------------------------------------------------------------------
 

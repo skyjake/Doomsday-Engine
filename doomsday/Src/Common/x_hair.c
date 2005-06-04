@@ -15,10 +15,10 @@
 #  include "jDoom/d_config.h"
 #elif __JHERETIC__
 #  include "Doomdef.h"
-#  include "jHeretic/d_config.h"
+#  include "h_config.h"
 #elif __JHEXEN__
 #  include "h2def.h"
-#  include "jHexen/d_config.h"
+#  include "x_config.h"
 #elif __JSTRIFE__
 #  include "h2def.h"
 #  include "jStrife/d_config.h"

@@ -12,11 +12,11 @@
 #  include "../jHeretic/Doomdef.h"
 #  include "../jHeretic/P_local.h"
 #  include "../jHeretic/Soundst.h"
-#  include "../jHeretic/d_config.h"
+#  include "../jHeretic/h_config.h"
 #elif __JHEXEN__
 #  include "../jHexen/h2def.h"
 #  include "../jHexen/p_local.h"
-#  include "../jHexen/d_config.h"
+#  include "../jHexen/x_config.h"
 #elif __JSTRIFE__
 #  include "../jStrife/h2def.h"
 #  include "../jStrife/p_local.h"

@@ -47,7 +47,7 @@
 #  include "jHeretic/P_local.h"
 #  include "jHeretic/H_Action.h"
 #  include "jHeretic/Soundst.h"
-#  include "jHeretic/d_config.h"
+#  include "h_config.h"
 #  include "Common/p_saveg.h"
 #endif
 
@@ -58,7 +58,7 @@
 #  include "jHexen/h2def.h"
 #  include "jHexen/p_local.h"
 #  include "jHexen/soundst.h"
-#  include "jHexen/d_config.h"
+#  include "x_config.h"
 #  include "jHexen/h2_actn.h"
 #  include "jHexen/st_stuff.h"
 #  include "d_net.h"

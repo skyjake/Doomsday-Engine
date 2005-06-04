@@ -16,13 +16,13 @@
 #  include "Mn_def.h"
 #elif defined __JHERETIC__
 #  include "jHeretic/Doomdef.h"
-#  include "jHeretic/d_config.h"
+#  include "h_config.h"
 #  include "jHeretic/Soundst.h"
 #  include "jHeretic/P_local.h"
 #  include "jHeretic/Mn_def.h"
 #elif defined __JHEXEN__
 #  include "jHexen/h2def.h"
-#  include "jHexen/d_config.h"
+#  include "x_config.h"
 #  include "jHexen/soundst.h"
 #  include "jHexen/p_local.h"
 #  include "jHexen/mn_def.h"

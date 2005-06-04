@@ -5,7 +5,7 @@
 #include "jHeretic/P_local.h"
 #include "jHeretic/Sounds.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/d_config.h"
+#include "jHeretic/h_config.h"
 #include "jHeretic/st_stuff.h"
 #include "hu_stuff.h"
 #include <math.h>

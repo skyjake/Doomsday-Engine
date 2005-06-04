@@ -17,10 +17,10 @@
 # include "st_stuff.h"
 #elif __JHERETIC__
 # include "jHeretic/Doomdef.h"
-# include "jHeretic/d_config.h"
+# include "h_config.h"
 #elif __JHEXEN__
 # include "jHexen/h2def.h"
-# include "jHexen/d_config.h"
+# include "x_config.h"
 # include "jHexen/p_local.h"
 #elif __JSTRIFE__
 # include "jStrife/h2def.h"

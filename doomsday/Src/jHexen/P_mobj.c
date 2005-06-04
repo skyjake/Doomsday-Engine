@@ -21,7 +21,7 @@
 #include "jHexen/p_local.h"
 #include "jHexen/sounds.h"
 #include "jHexen/soundst.h"
-#include "jHexen/d_config.h"
+#include "x_config.h"
 #include "jHexen/st_stuff.h"
 #include "Common/hu_stuff.h"
 #include "m_bams.h"

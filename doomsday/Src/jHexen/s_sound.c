@@ -18,7 +18,7 @@
 #include "jHexen/r_local.h"
 #include "jHexen/p_local.h"			// for P_ApproxDistance
 #include "jHexen/sounds.h"
-#include "jHexen/d_config.h"
+#include "x_config.h"
 
 // MACROS ------------------------------------------------------------------
 

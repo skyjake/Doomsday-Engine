@@ -20,7 +20,7 @@
 #include "h2def.h"
 #include "jHexen/p_local.h"
 #include "jHexen/soundst.h"
-#include "jHexen/d_config.h"
+#include "x_config.h"
 #include "jHexen/mn_def.h"
 #include "../Common/hu_stuff.h"
 #include "jHexen/st_stuff.h"

@@ -9,7 +9,7 @@
 #include "../Common/d_net.h"
 #include "jHeretic/P_local.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/d_config.h"
+#include "jHeretic/h_config.h"
 #include "jHeretic/AcFnLink.h"
 #include "jHeretic/Mn_def.h"
 #include "../Common/hu_msg.h"

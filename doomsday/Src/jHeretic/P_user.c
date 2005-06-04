@@ -5,7 +5,7 @@
 #include "jHeretic/P_local.h"
 #include "p_view.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/d_config.h"
+#include "jHeretic/h_config.h"
 
 void    P_PlayerNextArtifact(player_t *player);
 

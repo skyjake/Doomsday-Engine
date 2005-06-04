@@ -41,7 +41,7 @@
 #ifdef __JHERETIC__
 #  include "jHeretic/Doomdef.h"
 #  include "jHeretic/P_local.h"
-#  include "jHeretic/d_config.h"
+#  include "h_config.h"
 #  include "jHeretic/Soundst.h"
 #  include "jHeretic/G_game.h"
 #endif

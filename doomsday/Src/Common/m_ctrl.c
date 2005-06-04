@@ -38,13 +38,13 @@
 # include "jHeretic/Doomdef.h"
 # include "jHeretic/Mn_def.h"
 # include "jHeretic/H_Action.h"
-# include "jHeretic/d_config.h"
+# include "jHeretic/h_config.h"
 # include "jHeretic/m_ctrl.h"
 #elif __JHEXEN__
 # include "jHexen/h2def.h"
 # include "jHexen/mn_def.h"
 # include "jHexen/h2_actn.h"
-# include "jHexen/d_config.h"
+# include "jHexen/x_config.h"
 # include "Common/hu_stuff.h"
 # include "jHexen/m_ctrl.h"
 #endif

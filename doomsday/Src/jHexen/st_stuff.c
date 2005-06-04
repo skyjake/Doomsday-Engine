@@ -18,7 +18,7 @@
 #include "jHexen/soundst.h"
 #include "Common/hu_stuff.h"
 #include "jHexen/st_stuff.h"
-#include "jHexen/d_config.h"
+#include "x_config.h"
 #include "Common/st_lib.h"
 #include "d_net.h"
 

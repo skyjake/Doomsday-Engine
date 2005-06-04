@@ -15,6 +15,9 @@
 // for more details.
 //
 // $Log$
+// Revision 1.3  2005/06/04 08:14:59  skyjake
+// Use h_config.h and x_config.h instead of d_config.h
+//
 // Revision 1.2  2005/05/30 17:27:05  skyjake
 // Fixes (now compiles and runs in Linux)
 //
@@ -79,14 +82,14 @@ static const char
 
 #elif __JHERETIC__
 #include "jHeretic/Doomdef.h"
-#include "jHeretic/d_config.h"
+#include "jHeretic/h_config.h"
 #include "jHeretic/st_stuff.h"
 #include "jHeretic/R_local.h"
 #include "Common/st_lib.h"
 
 #elif __JHEXEN__
 #include "jHexen/h2def.h"
-#include "jHexen/d_config.h"
+#include "jHexen/x_config.h"
 #include "jHexen/st_stuff.h"
 #include "jHexen/r_local.h"
 #include "Common/st_lib.h"

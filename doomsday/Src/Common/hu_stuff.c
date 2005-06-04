@@ -42,11 +42,11 @@
 #elif __JHERETIC__
 # include "../jHeretic/Doomdef.h"
 # include "../jHeretic/Mn_def.h"
-# include "../jHeretic/d_config.h"
+# include "../jHeretic/h_config.h"
 #elif __JHEXEN__
 # include "../jHexen/h2def.h"
 # include "../jHexen/mn_def.h"
-# include "../jHexen/d_config.h"
+# include "../jHexen/x_config.h"
 #elif __JSTRIFE__
 # include "../jStrife/h2def.h"
 # include "../jStrife/mn_def.h"

@@ -16,7 +16,7 @@
 #include "jHexen/p_local.h"
 #include "p_view.h"
 #include "jHexen/soundst.h"
-#include "jHexen/d_config.h"
+#include "x_config.h"
 
 void    P_PlayerNextArtifact(player_t *player);
 

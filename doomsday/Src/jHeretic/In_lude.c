@@ -8,7 +8,7 @@
 
 #include "jHeretic/Doomdef.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/d_config.h"
+#include "jHeretic/h_config.h"
 #include "Common/hu_stuff.h"
 #include "jHeretic/Mn_def.h"
 
