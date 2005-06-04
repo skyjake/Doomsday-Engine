@@ -29,7 +29,8 @@
 # Notifications for the 'doomsday' module.
 # Add new email addresses to the end of the line.
 
-doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s skyjake@users.sourceforge.net dani.j@ddsdesign.co.uk
+# 2005-06-04: Disabled because of 'space shortage'
+#doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s skyjake@users.sourceforge.net dani.j@ddsdesign.co.uk
 
 #
 # Example:
@@ -37,3 +38,4 @@ doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s sk
 #
 #somemodule /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s addr1@my.com addr2@your.com
 #
+
