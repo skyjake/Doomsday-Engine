@@ -17,7 +17,7 @@ CTLCFG_TYPE SCControlConfig(int option, void *data);
 typedef struct {
 	char   *command;			// The command to execute.
 	int     flags;
-	int	bindClass;			// Class it should be bound into
+	int     bindClass;			// Class it should be bound into
 	int     defKey;				// 
 	int     defMouse;			// Zero means there is no default.
 	int     defJoy;				//
