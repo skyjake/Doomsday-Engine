@@ -26,7 +26,7 @@
 ## as changing of the user interface language.
 
 import os, re, string, shutil
-import events, paths, parser, language
+import events, paths, cfparser, language
 import settings as st
 import addons as ao
 
@@ -696,12 +696,12 @@ def load(path, notify=True):
 
     # Parse the file.
     elements = []
-    p = parser.FileParser(path)
+    p = cfparser.FileParser(path)
     try:
         while True:
             elements.append(p.get())
 
-    except parser.OutOfElements:
+    except cfparser.OutOfElements:
         pass
 
     # Should be use an existing profile?

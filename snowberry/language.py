@@ -20,7 +20,7 @@
 
 ## @file language.py Localisation
 
-import os, sys, paths, parser, events
+import os, sys, paths, cfparser, events
 
 # This dictionary holds all the known languages.  It maps language
 # identifiers to dictionaries of strings.
@@ -55,8 +55,8 @@ def processLanguageBlock(block, prefix=None):
     """Process a block of language strings.  The block must contain
     key elements.
 
-    @param block A parser.Block object that contains the language
-    strings as parser.KeyElement objects.
+    @param block A cfparser.Block object that contains the language
+    strings as cfparser.KeyElement objects.
 
     @param prefix Prefix to add to the beginning of the string ids.
     """
@@ -81,11 +81,11 @@ def load(fileName):
     """Loads a language file and stores the strings into the database.
     @param fileName Name of the language file.
     """
-    p = parser.FileParser(fileName)
+    p = cfparser.FileParser(fileName)
 
     # Construct a block element to hold all the strings.
     languageName = paths.getBase(fileName)
-    impliedBlock = parser.BlockElement('language', languageName)
+    impliedBlock = cfparser.BlockElement('language', languageName)
 
     try:
         while True:

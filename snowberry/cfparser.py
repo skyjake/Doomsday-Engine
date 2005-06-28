@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file parser.py Configuration File Parser
+## @file cfparser.py Configuration File Parser
 ##
 ## This module implements a recursive descent parser that can be used
 ## for reading the various configuration files that Snowberry uses.

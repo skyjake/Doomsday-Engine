@@ -26,7 +26,7 @@
 ## addons.
 
 import os, re, string, zipfile, shutil, struct
-import logger, events, paths, profiles as pr, language, parser
+import logger, events, paths, profiles as pr, language, cfparser
 import settings as st
 
 # This is a list of all the categories that include exclusions regarding
@@ -383,7 +383,7 @@ class Addon:
         @param configSource The raw configuration data.
         """
         try:
-            p = parser.Parser(configSource)
+            p = cfparser.Parser(configSource)
 
             while True:
                 elem = p.get()
@@ -447,11 +447,11 @@ class Addon:
                     else:
                         ownerId = self.getBox().getId()
                         # The addon's identifier determines the group.
-                        elem.add(parser.KeyElement('group', self.getId()))
-                    elem.add(parser.KeyElement('addon', ownerId))
+                        elem.add(cfparser.KeyElement('group', self.getId()))
+                    elem.add(cfparser.KeyElement('addon', ownerId))
                     st.processSettingBlock(elem)
 
-        except parser.OutOfElements:
+        except cfparser.OutOfElements:
             pass
 
 

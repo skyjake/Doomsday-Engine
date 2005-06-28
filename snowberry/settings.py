@@ -34,7 +34,7 @@ import os, re, string
 import logger
 import host
 import language
-import paths, parser
+import paths, cfparser
 import addons as ao
 import profiles as pr
 import events
@@ -484,7 +484,7 @@ def readConfigFile(fileName):
     """Reads a configuration file from the specified path.  The file
     must be a .conf file that contains either settings or components,
     or both."""
-    p = parser.FileParser(fileName)
+    p = cfparser.FileParser(fileName)
 
     # We'll collect all the elements into this array.
     elements = []
@@ -501,7 +501,7 @@ def readConfigFile(fileName):
                    (e.getValue() == 'mac' and not host.isMac()) or \
                    (e.getValue() == 'unix' and not host.isUnix()):
                     # Look, we ran out early.
-                    raise parser.OutOfElements
+                    raise cfparser.OutOfElements
 
             # Config files may contain blocks that group similar
             # settings together.
@@ -513,12 +513,12 @@ def readConfigFile(fileName):
                     if not sub.isBlock():
                         continue
                     # Add the 'group' key element to the setting.
-                    sub.add(parser.KeyElement('group', e.getName()))
+                    sub.add(cfparser.KeyElement('group', e.getName()))
                     elements.append(sub)
             else:
                 elements.append(e)
 
-    except parser.OutOfElements:
+    except cfparser.OutOfElements:
         # Parsing was completed.
         pass
 
@@ -542,7 +542,7 @@ def readConfigFile(fileName):
 def processSettingBlock(e):
     """Process a Block that contains the definition of a setting.
 
-    @param e A parser.BlockElement object.
+    @param e A cfparser.BlockElement object.
     """
     if not e.isBlock():
         return
