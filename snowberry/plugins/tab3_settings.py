@@ -125,6 +125,16 @@ def handleCommand(event):
 
         # Switch to the correct tab.
         addonArea.selectTab(event.addon)
+        
+    elif event.hasId('show-snowberry-settings'):
+        # Change to the Defaults profile.
+        pr.setActive(pr.getDefaults())
+    
+        # Switch to the Settings tab.
+        ui.selectTab(SETTINGS)
+        
+        # Switch to the Snowberry category.
+        categoryArea.selectTab('general-options')        
 
 
 def handleNotify(event):

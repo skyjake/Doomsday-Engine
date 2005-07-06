@@ -28,11 +28,14 @@ from ui import Area
 
 def init():
     # Create the About button in the Preferences Command area.
-    area = ui.getArea(Area.PREFCOMMAND)
-    area.createButton('about')
+    #area = ui.getArea(Area.PREFCOMMAND)
+    #area.createButton('about')
 
     # Listen for the About button.
     events.addCommandListener(handleCommand)
+    
+    # Commands for the popup menu.
+    ui.addPopupMenuCommand(2, 'about')
 
 
 def handleCommand(event):

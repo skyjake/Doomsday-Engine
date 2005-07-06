@@ -62,6 +62,25 @@ USE_HELP_AREA = not st.getSystemBoolean('main-hide-help')
 uiAreas = {}
 mainPanel = None
 
+# Items for the popup menu. Three separate levels of priority.
+popupMenuItems = [[], [], []]
+
+
+def addPopupMenuCommand(level, identifier, label=None):
+    """Insert a new popup menu item for the Menu button.
+    
+    @param level       Priority level (0, 1, 2).
+    @param identifier  Identifier of the command.
+    @param label       Label for the command. If not specified, the same
+                       as the identifier.
+    """
+    global popupMenuItems
+    
+    if(label == None):
+        popupMenuItems[level].append(identifier)
+    else:
+        popupMenuItems[level].append((identifier, label))
+
 
 def getArea(id):
     """Returns the UI area with the specified ID.
@@ -1342,6 +1361,9 @@ class MainPanel (wx.Panel):
         area.setExpanding(False)
         area.setWeight(0)
         _newArea(area)
+        
+        # Create the Menu button in the Preferences Command area.
+        self.menuButton = area.createButton('popup-menu')
 
         eSizer.Add(prefCommandPanel, 0, wx.EXPAND)
         eSizer.Add(commandPanel, 1, wx.EXPAND)
@@ -1395,7 +1417,10 @@ class MainFrame (wx.Frame):
 
         @param title  Title for the main window.
         """
+        # Commands for the popup menu.
+        self.menuCommandMap = {}
 
+        # FIXME: Layout is botched. Way too wide.
         if host.isMac():
             initialSize = (900, 550)
         else:
@@ -1619,6 +1644,55 @@ class MainFrame (wx.Frame):
         """
         if event.hasId('quit'):
             self.Close()
+            
+        elif event.hasId('popup-menu'):
+            # TODO: This would be more logical as a part of MainPanel.
+            # Show the popup commands menu.
+            menu = wx.Menu()
+            self.menuCommandMap = {}
+
+            global popupMenuItems
+            
+            menuItems = []
+            
+            # Three levels of priority.
+            for prio in range(3):
+                if len(popupMenuItems[prio]) > 0 and len(menuItems) > 0:
+                    # Separate the priority levels.
+                    menuItems.append('-')
+                menuItems += popupMenuItems[prio]
+
+            #menuItems = ['play', '-', 'about', 'run-setup-wizard', '-', 'quit']
+
+            # Create the menu items.
+            for item in menuItems:
+                if type(item) == tuple:
+                    itemId = item[0]
+                    itemCommand = item[1]
+                else:
+                    itemId = item
+                    itemCommand = item
+
+                if itemId == '-':
+                    # This is just a separator.
+                    menu.AppendSeparator()
+                    continue
+                
+                # Generate a new ID for the item.
+                wxId = wx.NewId()
+                self.menuCommandMap[wxId] = itemCommand
+                menu.Append(wxId,
+                            uniConv(language.translate('menu-' + itemId)))
+                wx.EVT_MENU(self, wxId, self.onPopupCommand)
+
+            # Display the menu.  The callback gets called during this.
+            button = self.mainPanel.menuButton.getWxWidget()
+            button.PopupMenu(menu, (0, button.GetSizeTuple()[1]))
+            menu.Destroy()
+
+    def onPopupCommand(self, ev):
+        """Called when a selection is made in the popup menu."""
+        events.send(events.Command(self.menuCommandMap[ev.GetId()]))
 
 
 class SnowberryApp (wx.App):

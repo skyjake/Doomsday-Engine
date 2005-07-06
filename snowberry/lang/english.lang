@@ -90,7 +90,7 @@ unhiding-profiles: Select one or more hidden profiles to show.
 unhide-select-all: Select all
 unhide-clear-all: Clear all
 view-command-line-dialog: Command Line
-view-command-line-title: Viewing Command Line Options
+view-command-line-title: Previewing Command Line Options
 install-addon-dialog: Addon Installer
 install-addon-title: Choose Addons to Install
 addon-dialog-folder: Folder:
@@ -176,6 +176,7 @@ uninstall-addon: -
 load-order: Load Order
 addon-settings: Settings
 about: About
+popup-menu: Menu
 preferences: Preferences
 
 #
@@ -190,15 +191,20 @@ menu-hide-profile: Hide
 menu-unhide-profiles: Show...
 menu-uninstall-addon: Uninstall
 menu-addon-info: Info
-menu-load-order: Load Order...
-menu-install-addon: Install New...
+menu-load-order: Load order...
+menu-install-addon: Install new...
 menu-addon-settings: Settings
 menu-check-category: Check category
 menu-uncheck-category: Uncheck category
 menu-expand-all-categories: Expand all
 menu-collapse-all-categories: Collapse all
 menu-reset-slider: Reset to default
-menu-view-command-line: View command line
+menu-play: Launch selected game
+menu-view-command-line: Preview command line
+menu-run-setup-wizard: Show setup wizard
+menu-show-snowberry-settings: Preferences
+menu-about: About
+menu-quit: Quit
 
 #
 # Tab Labels

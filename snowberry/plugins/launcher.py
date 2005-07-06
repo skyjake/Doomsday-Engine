@@ -87,6 +87,11 @@ def init():
 
     # Register for listening to commands.
     events.addCommandListener(handleCommand)
+    
+    # Commands for the popup menu.
+    ui.addPopupMenuCommand(0, 'play')
+    ui.addPopupMenuCommand(1, 'view-command-line')
+    ui.addPopupMenuCommand(2, 'quit')
 
 
 def handleNotify(event):
@@ -98,6 +103,10 @@ def handleNotify(event):
 
 
 def handleCommand(event):
+    if pr.getActive() is pr.getDefaults():
+        # We're not even listening when the Defaults profile is selected.
+        return;
+
     if event.hasId('play'):
         # Launch the game with the active profile.
         startGame(pr.getActive())

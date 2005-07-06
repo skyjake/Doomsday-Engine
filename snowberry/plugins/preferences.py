@@ -32,6 +32,9 @@ def init():
 
     # Listen for the About button.
     #events.addCommandListener(handleCommand)
+    
+    # Commands for the popup menu.
+    ui.addPopupMenuCommand(1, 'show-snowberry-settings')
 
 
 def handleNotify(event):

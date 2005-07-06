@@ -274,9 +274,6 @@ class Widget:
         self.menuItems = menuItems
 
     def onRightClick(self, ev):
-        # Let wxWidgets handle the event, too.
-        ev.Skip()
-
         # Display the popup menu.
         if self.menuItems and self.getWxWidget().IsEnabled():
             menu = wx.Menu()
@@ -309,6 +306,9 @@ class Widget:
             # Display the menu.  The callback gets called during this.
             self.getWxWidget().PopupMenu(menu, ev.GetPosition())
             menu.Destroy()
+            
+        # Let wxWidgets handle the event, too.
+        ev.Skip()      
 
     def onPopupCommand(self, ev):
         events.send(events.Command(self.commandMap[ev.GetId()]))
