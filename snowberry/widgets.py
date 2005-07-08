@@ -899,16 +899,16 @@ class FormattedText (Widget):
             text = text.replace('</i>', '</font>')
             text = text.replace('<tt>', '<font family="fixed">')
             text = text.replace('</tt>', '</font>')
-            if host.isWindows():
-                # fancytext doesn't support non-ascii chars?
-                text = text.replace('ä', 'a')
-                text = text.replace('ö', 'o')
-                text = text.replace('ü', 'u')
-                text = text.replace('å', 'a')
-                text = text.replace('Ä', 'A')
-                text = text.replace('Ö', 'O')
-                text = text.replace('Ü', 'U')
-                text = text.replace('Å', 'A')
+
+            # fancytext doesn't support non-ascii chars?
+            text = text.replace('ä', 'a')
+            text = text.replace('ö', 'o')
+            text = text.replace('ü', 'u')
+            text = text.replace('å', 'a')
+            text = text.replace('Ä', 'A')
+            text = text.replace('Ö', 'O')
+            text = text.replace('Ü', 'U')
+            text = text.replace('Å', 'A')
 
             # Break it up if too long lines detected.
             brokenText = breakLongLines(text, 70)

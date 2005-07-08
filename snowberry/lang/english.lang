@@ -118,6 +118,7 @@ load-order-move-top: First
 load-order-move-bottom: Last
 
 addon-inspector-dialog: Addon Inspector
+addon-type-generic: Generic Addon
 addon-type-box: Snowberry Box
 addon-type-bundle: Snowberry Bundle
 addon-type-pk3: PK3 Package
@@ -272,6 +273,8 @@ category-gamedata-maps-hm: H-M
 category-gamedata-maps-ns: N-S
 category-gamedata-maps-tz: T-Z
 category-gamedata-maps-09: 0-9
+category-patches: DeHackEd Patches
+category-definitions: Doomsday Engine Definitions
 
 #
 # File Types

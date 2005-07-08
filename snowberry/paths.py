@@ -53,6 +53,7 @@ def isHomeless():
 # Directory Type constants to be used with getSystemPath() and
 # getUserPath().
 ADDONS = 'addons'
+MANIFESTS = 'manifests'
 UNINSTALLED = 'uninstalled'
 CONF = 'conf'
 LANG = 'lang'
@@ -140,8 +141,8 @@ def _checkSnowberryHome():
     _createDir(homeDir)
 
     # Create the rest of the user directories if they don't exist yet.
-    for p in [ADDONS, UNINSTALLED, CONF, LANG, PLUGINS, PROFILES, GRAPHICS,
-              RUNTIME]:
+    for p in [ADDONS, MANIFESTS, UNINSTALLED, CONF, LANG, PLUGINS, PROFILES,
+              GRAPHICS, RUNTIME]:
         _createDir(getUserPath(p))
 
 
@@ -256,6 +257,7 @@ def findBitmap(name):
 
 def getBase(path):
     """Returns the file name sans path and extension."""
+    
     base = os.path.basename(path)
     if base.find('.') < 0:
         # There is no extension.
@@ -282,6 +284,13 @@ def quote(fileName):
     """Return the gives path in quotes so that it may be used as a
     command line option."""
     return '"' + fileName.replace('"', '""') + '"'
+
+
+def fixSlashes(path):
+    """Replace all forward and backward slashes with the correct
+    slashes of the host OS."""
+
+    
 
 
 def addAddonPath(path):

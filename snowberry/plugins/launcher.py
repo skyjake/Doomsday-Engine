@@ -222,9 +222,14 @@ def generateOptions(profile):
     for setting in effectiveSettings:
         # If the setting's required addons are not being loaded, skip
         # this setting.
+        skipThis = False
         for req in setting.getRequiredAddons():
             if req not in usedAddonIds:
-                continue
+                skipThis = True
+                break
+
+        if skipThis:
+            continue
         
         # All settings can't be used at all times.  In
         # case of a conflict, some of the settings are ignored.

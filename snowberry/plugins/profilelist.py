@@ -80,13 +80,14 @@ def init():
     # Create the profile list and the profile control buttons.
     area = ui.getArea(ui.Area.PROFILES)
     area.setWeight(1)
-    area.setBorder(3)
+    area.setBorder(0) #3)
 
     global profileList
     profileList = area.createFormattedList("profile-list")
 
     # This should be a small button.
     area.setWeight(0)
+    area.setBorder(3)
     controls = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
     controls.setExpanding(False)
     #area.setExpanding(False)

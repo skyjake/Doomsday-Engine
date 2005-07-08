@@ -288,15 +288,15 @@ def showInspector(addon):
     msg += makeField('Content Path', addon.getContentPath())
     msg += endTable
     
-    msg += "<p>format-specific data"
-    msg += "<br>content analysis, size"
-    msg += "<br>list of files, if a bundle"
+    #msg += "<p>format-specific data"
+    #msg += "<br>content analysis, size"
+    #msg += "<br>list of files, if a bundle"
 
     msg += '<h3>Identifiers</h3>'
-    msg += "<br>all internal identifiers used by the addon"
+    #msg += "<br>all internal identifiers used by the addon"
 
     msg += '<h3>Metadata</h3>'
-    msg += "<br>metadata analysis, source"
+    #msg += "<br>metadata analysis, source"
 
     text = area.createFormattedText()
     text.setMinSize(600, 400)

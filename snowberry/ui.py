@@ -880,6 +880,37 @@ class Area (widgets.Widget):
             if setting.hasToExist():
                 text.setValidator(lambda fileName: os.path.exists(fileName))
 
+        elif setting.getType() == 'folder':
+            # Create a text field and a button, like with a file setting.
+            sub = area.createArea(alignment=Area.ALIGN_HORIZONTAL, border=0)
+            sub.setWeight(1)
+            text = sub.createTextField(setting.getId())
+            sub.setWeight(0)
+            browseButton = sub.createButton('browse-button',
+                                            style=widgets.Button.STYLE_MINI)
+
+            def folderBrowseAction():
+                # Open a folder browser for selecting the value for a file
+                # setting.
+                settingId = setting.getId()
+                value = pr.getActive().getValue(settingId)
+                if not value:
+                    currentValue = ''
+                else:
+                    currentValue = value.getValue()
+                
+                selection = chooseFolder(settingId + '-selection-title',
+                                         currentValue)
+                
+                if len(selection) > 0:
+                    pr.getActive().setValue(settingId, selection)
+
+            browseButton.addReaction(folderBrowseAction)
+
+            # If the file must exist, don't accept nonexistent files.
+            if setting.hasToExist():
+                text.setValidator(lambda fileName: os.path.exists(fileName))
+
         return area
 
 
@@ -1570,9 +1601,9 @@ class MainFrame (wx.Frame):
             self.mainPanel.GetSizer().Fit(self.mainPanel)
 
         # The main panel's sizer does not account for the help panel.
-        if host.isUnix(): # or host.isWindows():
-            windowSize = self.GetSizeTuple()
-            self.SetSize((windowSize[0] + INITIAL_SASH_POS, windowSize[1]))
+        #if host.isUnix(): # or host.isWindows():
+        #    windowSize = self.GetSizeTuple()
+        #    self.SetSize((windowSize[0] + INITIAL_SASH_POS, windowSize[1]))
 
     def onWindowSize(self, ev):
         """Handle the wxWidgets event that is sent when the main window 

@@ -37,6 +37,7 @@ import language
 import paths, cfparser
 import addons as ao
 import profiles as pr
+import expressions as ex
 import events
 
 # Dictionary for system configuration (fonts, buttons sizes).
@@ -83,6 +84,9 @@ class Setting:
         self.type = type
         self.id = id
         self.option = option
+
+        # Append value after option on the command line.
+        self.valueAfterOption = True
 
         # Settings will appear in the order they have been created.
         global creationOrder
@@ -135,34 +139,6 @@ class Setting:
         """
         return self.default
 
-    def expandVariables(self, params):
-        """The option string of the setting can contain variables that
-        will be replaced with contextual information during launch.
-        The variables are:
-        - $BUNDLE: Path of the addon bundle of the setting.
-
-        @param params The command line paramers that may contain
-        variables.
-
-        @return The expanded string.
-        """
-        if len(self.addons) > 0:
-            # This is hardcoded to take the first addon.  Settings
-            # don't need to be
-            bundlePath = ao.get(self.addons[0]).getContentPath()
-        else:
-            bundlePath = ''
-
-        replacements = [('$BUNDLE/', os.path.join(bundlePath, '')),
-                        ('$BUNDLE\\', os.path.join(bundlePath, '')),
-                        ('$BUNDLE', bundlePath)]
-
-        for rep in replacements:
-            params = params.replace(rep[0], rep[1])
-
-        # Return the fully expanded string.
-        return params
-
     def getRequiredComponents(self):
         """Returns a listing of the components required by the setting.
 
@@ -196,6 +172,12 @@ class Setting:
 
     def getSubGroup(self):
         return self.subGroup
+
+    def setValueAfterOption(self, doAppend):
+        self.valueAfterOption = (doAppend == 'yes')
+
+    def isValueAfterOption(self):
+        return self.valueAfterOption
 
     def addRequiredComponent(self, component):
         if component:
@@ -249,7 +231,27 @@ class Setting:
         @return A string that contains all the necessary command line
         options.
         """
-        return ""
+        cmdLine = self.composeCommandLine(profile)
+
+        # Evaluate expressions in the command line.
+        return ex.evaluate(cmdLine, self.getContextAddon())
+
+    def composeCommandLine(self, profile):
+        """Overridden by subclasses."""
+        return ''
+
+    def getContextAddon(self):
+        """Determines the addon with which the setting is associated.
+        If the setting is not associated with an addon, return None.
+
+        @return  Addon object.
+        """
+        if len(self.addons) > 0:
+            # This is hardcoded to take the first addon.  Settings
+            # don't need to be bound to just one addon...!
+            return ao.get(self.addons[0])
+        else:
+            return None                
     
 
 class ToggleSetting (Setting):
@@ -261,13 +263,13 @@ class ToggleSetting (Setting):
             self.default = 'no'
         self.inactiveOption = inactiveOption
 
-    def getCommandLine(self, profile):
+    def composeCommandLine(self, profile):
         value = profile.getValue(self.getId())
         if value:
             if value.getValue() == 'yes':
-                return self.expandVariables(self.getOption())
+                return self.getOption()
             elif self.inactiveOption:
-                return self.expandVariables(self.inactiveOption)
+                return self.inactiveOption
         return ""
         
 
@@ -285,11 +287,14 @@ class RangeSetting (Setting):
     def getMaximum(self):
         return self.max
     
-    def getCommandLine(self, profile):
+    def composeCommandLine(self, profile):
         value = profile.getValue(self.getId())
         if value:
-            return self.expandVariables(self.getOption() + ' ' +
-                                        value.getValue() + self.suffix)
+            if self.isValueAfterOption():
+                return self.getOption() + ' ' + value.getValue() + self.suffix
+            else:
+                # No value after option.
+                return self.getOption() 
         return ""
 
 
@@ -344,14 +349,13 @@ class ChoiceSetting (Setting):
         """
         return self.alternatives
 
-    def getCommandLine(self, profile):
+    def composeCommandLine(self, profile):
         value = profile.getValue(self.getId())
         if value:
             # Find the corresponding command line parameter.
             try:
                 index = self.alternatives.index(value.getValue())
-                return self.expandVariables(self.getOption() + ' ' + \
-                                            self.cmdLines[index])
+                return self.getOption() + ' ' + self.cmdLines[index]
             except:
                 # Unknown choice, how strange.
                 pass
@@ -380,14 +384,28 @@ class FileSetting (Setting):
         return self.mustExist
 
     def getAllowedTypes(self):
+        """@return Allowed types as a an array of tuples (name, extension).
+        """
         return self.allowedTypes
 
-    def getCommandLine(self, profile):
+    def composeCommandLine(self, profile):
         value = profile.getValue(self.getId())
         if value:
-            return self.getOption() + ' ' + \
-                   paths.quote(self.expandVariables(value.getValue()))
+            if self.isValueAfterOption():
+                v = self.getOption() + ' $PATH<' + value.getValue() + '>'
+            else:
+                v = self.getOption()
+            return v
         return ""
+
+
+class FolderSetting (FileSetting):
+    """A folder name setting, selected using a standard folder
+    selection dialog."""
+
+    def __init__(self, id, option, mustExist, default):
+        FileSetting.__init__(self, id, option, mustExist, [], default)
+        self.type = 'folder'
 
 
 class TextSetting (Setting):
@@ -399,11 +417,14 @@ class TextSetting (Setting):
         if len(default):
             self.default = default
 
-    def getCommandLine(self, profile):
+    def composeCommandLine(self, profile):
         value = profile.getValue(self.getId())
         if value:
-            return self.getOption() + ' ' + \
-                   self.expandVariables(value.getValue())
+            if self.isValueAfterOption():
+                v = self.getOption() + ' ' + paths.quote(value.getValue())
+            else:
+                v = self.getOption()
+            return v
         return ""
 
 
@@ -610,6 +631,12 @@ def processSettingBlock(e):
                               e.findValue('must-exist'),
                               allowedTypes,
                               e.findValue('default'))
+
+    elif e.getType() == 'folder':
+        setting = FolderSetting(e.getName(),
+                                e.findValue('option'),
+                                e.findValue('must-exist'),
+                                e.findValue('default'))
                                       
     elif e.getType() == 'choice':
         # Identifiers of the choices.
@@ -643,6 +670,10 @@ def processSettingBlock(e):
             setting.setGroup(e.findValue('group'))
         if e.find('subgroup'):
             setting.setSubGroup(e.findValue('subgroup'))
+
+        # Automatically append value after option on the command line?
+        if e.find('value-after-option'):
+            setting.setValueAfterOption(e.findValue('value-after-option'))
             
         # Any required components or addons?
         setting.addRequiredComponent(e.findValue('component'))

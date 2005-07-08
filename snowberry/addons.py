@@ -214,7 +214,10 @@ class Addon:
 
         @return The last modification time.
         """
-        return os.path.getmtime(self.source)
+        try:
+            return os.path.getmtime(self.source)
+        except OSError:
+            return 0
 
     def setBox(self, box):
         """Set the BoxAddon this addon is inside of.
@@ -323,8 +326,12 @@ class Addon:
     def getCommandLine(self, profile):
         """Return the command line options to load and configure the
         addon.  This basic implementation assumes no configurability
-        and a single source file."""
-        return '-file ' + paths.quote(self.source)
+        and a single source file.
+        """
+        if not paths.hasExtension('manifest', self.source):
+            return '-file ' + paths.quote(self.source)
+        else:
+            return ''
 
     def addKeywords(self, type, identifiers):
         """Define a new keyword for the addon.
@@ -857,6 +864,15 @@ class DehackedAddon (Addon):
         @todo  Check profile for extra options?
         """
         return '-deh ' + paths.quote(self.source)
+
+    def readMetaData(self):
+        """Generate metadata by making guesses based on the DEH patch
+        name and contents."""
+
+        metadata = 'category: patches'
+
+        self.parseConfiguration(metadata)
+    
         
 
 class DEDAddon (Addon):
@@ -873,6 +889,14 @@ class DEDAddon (Addon):
         @todo  Check profile for extra options?
         """
         return '-def ' + paths.quote(self.source)
+
+    def readMetaData(self):
+        """Generate metadata by making guesses based on the DED patch
+        name and contents."""
+
+        metadata = 'category: definitions'
+
+        self.parseConfiguration(metadata)
 
 
 def _getLatestModTime(startPath):
@@ -1155,9 +1179,29 @@ def load(fileName, containingBox=None):
     if extension == 'box':
         addon.loadContents()
 
-    # Define the strings of this addon in the language.
+    # TODO: Define the strings of this addon in the language.
 
     return identifier
+
+
+def loadManifest(fileName):
+    """Manifests contain metadata for other addons.  A manifest may
+    augment or replace the metadata of an existing addon, or define an
+    entirely new addon.
+
+    @param fileName  Path of the manifest file.
+    """
+    identifier = paths.getBase(fileName)
+
+    if exists(identifier):
+        addon = get(identifier)
+    else:
+        # Create a new addon.
+        addon = Addon(identifier, fileName)
+        addons[identifier] = addon
+
+    # The manifest contains metadata configuration.
+    addon.parseConfiguration(file(fileName).read())
 
 
 def readMetaCache():
@@ -1361,6 +1405,14 @@ for repository in [paths.ADDONS] + paths.getAddonPaths():
         if re.search("(?i)^([^.#].*)\.(" + ADDON_EXTENSIONS + ")$",
                      os.path.basename(name)):
             load(name)
+
+# Load all the manifests.
+for folder in [paths.getSystemPath(paths.MANIFESTS),
+               paths.getUserPath(paths.MANIFESTS)]:
+    for name in paths.listFiles(folder):
+        # Case insensitive.
+        if paths.hasExtension('manifest', name):
+            loadManifest(name)
 
 # Save the updated cache.
 writeMetaCache()
