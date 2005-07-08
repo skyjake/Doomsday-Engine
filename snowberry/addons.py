@@ -193,16 +193,6 @@ class Addon:
         """
         return self.source
 
-    def getCommandLine(self, profile):
-        """Returns the command line that is given to Doomsday Engine.
-
-        @param profile The profile for which the command line is being
-        generated.
-
-        @return String The generated command line.
-        """
-        return ""
-
     def getLastModified(self):
         """Returns the time when the addon data was last modified.
         This is used to determine if the metadata needs to be updated.
@@ -556,7 +546,16 @@ class BoxAddon (Addon):
             language.define('english',
                             self.makeLocalId('readme'),
                             file(readme).read())
+                            
+    def getCommandLine(self, profile):
+        """Returns the command line that is given to Doomsday Engine.
 
+        @param profile The profile for which the command line is being
+        generated.
+        @return String The generated command line.
+        """
+        return ""
+                            
 
 class BundleAddon (Addon):
     """The Bundle is the most sophicated of the addons.  It is a
@@ -793,7 +792,8 @@ class WADAddon (Addon):
             metadata += "category: %s\n" % category
 
         # Game component.
-        metadata += "component: game-%s\n" % game
+        if game != '':
+            metadata += "component: game-%s\n" % game
 
         self.parseConfiguration(metadata)
 
@@ -849,6 +849,14 @@ class DehackedAddon (Addon):
 
     def getType(self):
         return 'addon-type-dehacked'
+
+    def getCommandLine(self, profile):
+        """Return the command line options to load and configure the
+        addon.  Use <tt>-deh</tt> for loading DeHackEd files.
+        
+        @todo  Check profile for extra options?
+        """
+        return '-deh ' + paths.quote(self.source)
         
 
 class DEDAddon (Addon):
@@ -857,6 +865,14 @@ class DEDAddon (Addon):
 
     def getType(self):
         return 'addon-type-ded'
+        
+    def getCommandLine(self, profile):
+        """Return the command line options to load and configure the
+        addon.  Use <tt>-def</tt> for loading definition files.
+        
+        @todo  Check profile for extra options?
+        """
+        return '-def ' + paths.quote(self.source)
 
 
 def _getLatestModTime(startPath):
@@ -1116,7 +1132,7 @@ def load(fileName, containingBox=None):
     elif extension == 'ded':
         addon = DEDAddon(identifier, fileName)
     elif extension == 'deh':
-        addon = DEHAddon(identifier, fileName)
+        addon = DehackedAddon(identifier, fileName)
 
     # Set the container.
     if containingBox:

@@ -198,7 +198,7 @@ def generateOptions(profile):
     # required parts of boxes).
     usedAddonIds = profile.getFinalAddons()
     usedAddons = map(lambda id: ao.get(id), usedAddonIds)
-
+    
     # Determine the settings that apply to the components and
     # addons.
     effectiveSettings = st.getCompatibleSettings(profile)
