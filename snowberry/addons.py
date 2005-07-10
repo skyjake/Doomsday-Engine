@@ -40,7 +40,7 @@ rootCategory = None
 addons = {}
 
 # File name extensions of the supported addon formats.
-ADDON_EXTENSIONS = "box|addon|pk3|zip|lmp|wad|ded|deh"
+ADDON_EXTENSIONS = ['box', 'addon', 'pk3', 'zip', 'lmp', 'wad', 'ded', 'deh']
 
 # All the possible names of the addon metadata file.
 META_NAMES = ['Info', 'Info.conf']
@@ -997,6 +997,11 @@ def _getCategory(name, prefix=None):
     return cat
 
 
+def getAddonExtensions():
+    """Returns a list of all possible file name extensions for addons."""
+    return ADDON_EXTENSIONS
+
+
 def getRootCategory():
     """Returns the root category.
 
@@ -1067,7 +1072,13 @@ def install(sourceName):
 
     @throws Exception The installation failed.
     """
-    destPath = paths.getUserPath(paths.ADDONS)
+    isManifest = paths.hasExtension('manifest', sourceName)
+    
+    if isManifest:
+        # Manifests are copied to the manifest directory.
+        destPath = paths.getUserPath(paths.MANIFESTS)
+    else:
+        destPath = paths.getUserPath(paths.ADDONS)
 
     destName = os.path.join(destPath,
                             os.path.basename(sourceName))
@@ -1080,7 +1091,10 @@ def install(sourceName):
             shutil.copy2(sourceName, destName)
 
         # Load the new addon.
-        identifier = load(destName)
+        if not isManifest:
+            identifier = load(destName)
+        else:
+            identifier = loadManifest(destName)
 
         # Now that the addon has been installed, save the updated cache.
         writeMetaCache()
@@ -1110,12 +1124,24 @@ def uninstall(identifier):
 
     if os.path.exists(destPath):
         # Simply remove any existing addons with the same name.
+        # TODO: Is this wise? Rename old.
         if os.path.isdir(destPath):
             shutil.rmtree(destPath)
         else:
             os.remove(destPath)
 
     shutil.move(path, destPath)
+
+    # Is there a manifest to uninstall?
+    manifest = addon.getId() + '.manifest'
+    manifestFile = os.path.join(paths.getUserPath(paths.MANIFESTS), manifest)
+    if os.path.exists(manifestFile):
+        # Move it to the uninstalled folder.
+        destPath = os.path.join(paths.getUserPath(paths.UNINSTALLED),
+                                manifest)
+        if os.path.exists(destPath):
+            os.remove(destPath)
+        shutil.move(manifestFile, destPath)
 
     # Mark as uninstalled.
     addon.uninstall()
@@ -1133,6 +1159,30 @@ def uninstall(identifier):
     
 
 
+def formIdentifier(fileName):
+    """Forms the identifier of the addon based on the addon's file name.
+
+    @param fileName  File name of the addon.
+
+    @return  Tuple: (identifier, effective extension)
+    """
+    baseName = os.path.basename(fileName)
+    found = re.search("(?i)(.*)\.(" + \
+                      string.join(ADDON_EXTENSIONS, '|') + ")$", baseName)
+    if not found:
+        return ('', '')
+    
+    identifier = found.group(1).lower()
+    extension = found.group(2).lower()
+    if extension == 'addon':
+        extension = 'bundle'
+
+    # The identifier also includes the type of the addon.
+    identifier += "-" + extension
+
+    return (identifier, extension)
+
+
 def load(fileName, containingBox=None):
     """Loads the specific addon.  If its metadata hasn't yet been
     cached, it will be retrieved and stored into the data cache.  All
@@ -1147,15 +1197,19 @@ def load(fileName, containingBox=None):
     @return The identifier of the loaded addon.
     """
     # Form the identifier of the addon.
-    baseName = os.path.basename(fileName)
-    found = re.search("(?i)(.*)\.(" + ADDON_EXTENSIONS + ")$", baseName)
-    identifier = found.group(1).lower()
-    extension = found.group(2).lower()
-    if extension == 'addon':
-        extension = 'bundle'
+    #baseName = os.path.basename(fileName)
+    #found = re.search("(?i)(.*)\.(" + \
+    #string.join(ADDON_EXTENSIONS, '|') + ")$", baseName)
+    #identifier = found.group(1).lower()
+    #extension = found.group(2).lower()
+    #if extension == 'addon':
+    #    extension = 'bundle'
 
     # The identifier also includes the type of the addon.
-    identifier += "-" + extension
+    #identifier += "-" + extension
+
+    # Form the identifier of the addon.
+    identifier, extension = formIdentifier(fileName)
 
     addon = None
 
@@ -1207,6 +1261,8 @@ def loadManifest(fileName):
     entirely new addon.
 
     @param fileName  Path of the manifest file.
+
+    @return  Identifier of the addon the manifest is associated with.
     """
     identifier = paths.getBase(fileName)
 
@@ -1219,6 +1275,8 @@ def loadManifest(fileName):
 
     # The manifest contains metadata configuration.
     addon.parseConfiguration(file(fileName).read())
+
+    return identifier
 
 
 def readMetaCache():
@@ -1419,7 +1477,8 @@ readMetaCache()
 for repository in [paths.ADDONS] + paths.getAddonPaths():
     for name in paths.listFiles(repository):
         # Case insensitive.
-        if re.search("(?i)^([^.#].*)\.(" + ADDON_EXTENSIONS + ")$",
+        if re.search("(?i)^([^.#].*)\.(" + \
+                     string.join(ADDON_EXTENSIONS, '|') + ")$",
                      os.path.basename(name)):
             load(name)
 

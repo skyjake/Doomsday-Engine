@@ -742,11 +742,15 @@ def getComponentSettings():
 
 
 def haveSettingsForAddon(addon):
-    """Checks if there are any settings for the specified addon.
+    """Checks if there are any settings for the specified addon. This
+    only affects non-implicit settings, i.e. settings that the user
+    can manipulate.
 
     @param addon Addon identifier.
     """
     for s in allSettings.values():
+        if s.getType() == 'implicit':
+            continue
         if addon in s.getRequiredAddons():
             return True
 

@@ -98,7 +98,8 @@ def handleNotification(event):
 
     @param event An events.Notify object.
     """
-    if event.hasId('active-profile-changed'):
+    if event.hasId('active-profile-changed') or \
+           event.hasId('active-profile-refreshed'):
         # Fill the tree with an updated listing of addons.
         tree.populateWithAddons(pr.getActive())
         settingsButton.disable()
@@ -442,10 +443,11 @@ def chooseAddons(dialogId, title, actionButton):
         # Update the found addons list.
         foundList.removeAllItems()
         dialog.disableWidget(actionButton)
+        extensions = ao.getAddonExtensions() + ['manifest']
 
         # This should be done in addons.py.
-        for name in os.listdir(pathField.getText()):
-            extensions = ['wad', 'addon', 'box', 'pk3', 'ded', 'deh', 'zip']
+        fileNames = os.listdir(pathField.getText())
+        for name in fileNames:
             type = ''
             for ext in extensions:
                 if paths.hasExtension(ext, name):
@@ -455,6 +457,25 @@ def chooseAddons(dialogId, title, actionButton):
             if not type:
                 # Unknown files are skipped.
                 continue
+
+            # Manifests don't appear in the list if the corresponding
+            # addon is in the same directory.
+            if paths.hasExtension('manifest', name):
+                foundSame = False
+
+                # Identifier of the addon the manifest belongs to.
+                manifestId = paths.getBase(name)
+
+                # See if the addon is in the list.
+                for other in fileNames:
+                    if other == name:
+                        continue
+                    if manifestId == ao.formIdentifier(other)[0]:
+                        foundSame = True
+                        break                    
+                if foundSame:
+                    # Don't add it.
+                    continue
             
             foundList.addItemWithColumns(
                 name, name, language.translate('addon-dialog-type-' + type))
@@ -479,8 +500,18 @@ def chooseAddons(dialogId, title, actionButton):
 
     dialog.addEndCommand(actionButton)
     if dialog.run() == actionButton:
-        return map(lambda name: os.path.join(pathField.getText(), name),
-                   foundList.getSelectedItems())
+        addonFiles = map(lambda name: os.path.join(pathField.getText(), name),
+                         foundList.getSelectedItems())
+
+        # Include any associated manifests.
+        for name in addonFiles:
+            manifest = ao.formIdentifier(name)[0] + '.manifest'
+            manifestFile = os.path.join(pathField.getText(), manifest)
+            if manifest not in addonFiles and os.path.exists(manifestFile):
+                addonFiles.append(manifestFile)
+                print 'including ' + manifestFile + ' due to ' + name
+
+        return addonFiles
 
     # The dialog was canceled.
     return []

@@ -148,7 +148,8 @@ def handleNotify(event):
             area.updateLayout()
 
     elif (event.hasId('value-changed') or
-        event.hasId('active-profile-changed')):
+          event.hasId('active-profile-changed') or
+          event.hasId('active-profile-refreshed')):
         # Update any settings with value dependencies.
         enableByRequirements(pr.getActive())
         showCompatibleAddons(pr.getActive())

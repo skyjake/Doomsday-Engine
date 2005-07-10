@@ -108,6 +108,7 @@ addon-dialog-type-pk3: Package
 addon-dialog-type-zip: ZIP Archive
 addon-dialog-type-ded: Definition File
 addon-dialog-type-deh: DeHackEd Patch
+addon-dialog-type-manifest: Addon Manifest
 uninstall-addon-dialog: Uninstall Addon
 uninstall-addon-title: Are You Sure?
 uninstall-addon-query: Are you sure you want to uninstall <b>%1</b>?

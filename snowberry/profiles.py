@@ -513,11 +513,15 @@ def getProfiles(func=None):
     return [p for p in profiles if not func or func(p)]
 
 
-def refresh():
+def refresh(hasChanged=False):
     """Send a notification that will cause everybody to refresh their
-    state with regards to the active profile."""
-    
-    events.send(events.Notify('active-profile-changed'))
+    state with regards to the active profile.
+    """
+    if hasChanged:
+        evName = 'active-profile-changed'
+    else:
+        evName = 'active-profile-refreshed'
+    events.send(events.Notify(evName))
 
 
 def setActive(profile):
@@ -530,7 +534,7 @@ def setActive(profile):
 
     if profile is not active:
         active = profile
-        refresh()
+        refresh(True)
 
 
 def getActive():

@@ -111,7 +111,8 @@ def handleNotify(event):
         setField(FIELD_COMMAND, language.translate('help-command-defaults'))
         updateHelpText()                     
     
-    elif event.hasId('active-profile-changed'):
+    elif event.hasId('active-profile-changed') or \
+             event.hasId('active-profile-refreshed'):
         if pr.getActive() is pr.getDefaults():
             setField(FIELD_COMMAND,
                      language.translate('help-command-defaults'))

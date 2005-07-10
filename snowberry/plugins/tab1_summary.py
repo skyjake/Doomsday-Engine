@@ -96,7 +96,8 @@ def init():
 
 
 def notifyHandler(event):
-    if event.hasId('active-profile-changed'):
+    if event.hasId('active-profile-changed') or \
+           event.hasId('active-profile-refreshed'):
         p = pr.getActive()
         titleLabel.setText(p.getName())
 
@@ -104,7 +105,8 @@ def notifyHandler(event):
         updateSummary(p)
 
         # Change to the Summary tab automatically.
-        if st.getSystemBoolean('summary-profile-change-autoselect'):
+        if event.hasId('active-profile-changed') and \
+               st.getSystemBoolean('summary-profile-change-autoselect'):
             ui.selectTab(SUMMARY)
 
     elif event.hasId('value-changed') or \
