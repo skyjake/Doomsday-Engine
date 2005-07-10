@@ -1692,12 +1692,15 @@ class MainFrame (wx.Frame):
             
             # Three levels of priority.
             for prio in range(3):
+                # Sort the items based on translated labels.
+                popupMenuItems[prio].sort(
+                    lambda x, y: cmp(language.translate('menu-' + x),
+                                     language.translate('menu-' + y)))
+                
                 if len(popupMenuItems[prio]) > 0 and len(menuItems) > 0:
                     # Separate the priority levels.
                     menuItems.append('-')
                 menuItems += popupMenuItems[prio]
-
-            #menuItems = ['play', '-', 'about', 'run-setup-wizard', '-', 'quit']
 
             # Create the menu items.
             for item in menuItems:
