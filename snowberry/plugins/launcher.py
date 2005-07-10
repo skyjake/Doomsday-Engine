@@ -26,7 +26,9 @@
 ## A cleaner implementation might define its own dialog class for the
 ## resolver, derived from AreaDialog.
 
-import os, string, time
+# TODO: Implement a timer service so wx isn't needed here.
+
+import os, string, time, wx
 import ui
 import events
 import paths
@@ -35,6 +37,24 @@ import widgets as wg
 import profiles as pr
 import settings as st
 import addons as ao
+
+
+class MessageTimer (wx.Timer):
+    """The message timer will clear the launch message when the 
+    timer expires."""
+
+    def __init__(self):
+        wx.Timer.__init__(self)
+        
+    def Notify(self):
+        """Called when the timer expires."""
+        
+        # Clear the launch message.
+        setLaunchMessage('')
+
+
+# An instance of the message timer.
+launchTextTimer = MessageTimer()
 
 
 class ResolveStatus:
@@ -67,12 +87,16 @@ class ResolveStatus:
 
 def init():
     """Create the Play button."""
+    
     area = ui.getArea(ui.Area.COMMAND)
     area.addSpacer()
 
     global logFileName
     logFileName = os.path.join(paths.getUserPath(paths.RUNTIME),
                                "Conflicts.log")
+
+    global launchText
+    launchText = area.createText('') #launch-message')
 
     global playButton
     playButton = area.createButton('play', wg.Button.STYLE_DEFAULT)
@@ -149,11 +173,24 @@ def handleCommand(event):
         dialog.run()        
 
 
+def setLaunchMessage(text):
+    """Launch message is displayed next to the Play button."""
+    
+    launchText.setText(text)
+    ui.getArea(ui.Area.COMMAND).updateLayout()
+    
+    if text:
+        # Clear the message after a short delay.
+        launchTextTimer.Start(4000, wx.TIMER_ONE_SHOT)
+
+
 def startGame(profile):
     """Start the game using the specified profile.
 
     @param profile A profiles.Profile object.
     """
+    setLaunchMessage(language.translate('launch-message'))
+    
     # Broadcast a notification about the launch of a game.
 
     # Locate the paths and binaries.  Most of these are configured in
@@ -171,7 +208,6 @@ def startGame(profile):
     file(responseFile, 'w').write(options + "\n")
 
     # Execute the command line.
-    print engineBin
     os.spawnv(os.P_NOWAIT, engineBin, [engineBin,
                                        '@' + paths.quote(responseFile)])
 
