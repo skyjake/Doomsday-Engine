@@ -243,9 +243,9 @@ def populateWithSettings(areaId, area, settings):
 
         for s in subGroupSettings:
             settingArea = where.createSetting(s)
-
-            # Add it into the array of shown settings.
-            shownSettings.append((s, settingArea))
+            if settingArea:
+                # Add it into the array of shown settings.
+                shownSettings.append((s, settingArea))
 
     area.updateLayout()
 

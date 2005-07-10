@@ -759,6 +759,10 @@ class Area (widgets.Widget):
         @return The area which contains all the widgets of the
         setting.
         """
+        if setting.getType() == 'implicit':
+            # No widgets for implicit settings.
+            return
+        
         # Create a subarea for all the widgets of the setting.
         area = self.createArea(alignment = Area.ALIGN_HORIZONTAL)
         area.setExpanding(False)

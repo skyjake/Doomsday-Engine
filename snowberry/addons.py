@@ -40,7 +40,7 @@ rootCategory = None
 addons = {}
 
 # File name extensions of the supported addon formats.
-ADDON_EXTENSIONS = "box|addon|pk3|wad|ded|deh"
+ADDON_EXTENSIONS = "box|addon|pk3|zip|lmp|wad|ded|deh"
 
 # All the possible names of the addon metadata file.
 META_NAMES = ['Info', 'Info.conf']
@@ -899,6 +899,21 @@ class DEDAddon (Addon):
         self.parseConfiguration(metadata)
 
 
+class LumpAddon (Addon):
+    def __init__(self, identifier, source):
+        Addon.__init__(self, identifier, source)
+
+    def getType(self):
+        return 'addon-type-lump'
+        
+    def readMetaData(self):
+        """Generate metadata for the lump."""
+
+        metadata = 'category: gamedata/lumps'
+
+        self.parseConfiguration(metadata)
+
+
 def _getLatestModTime(startPath):
     """Descends recursively into the subdirectories in startPath to
     find out which file has the latest modification time.
@@ -1149,7 +1164,7 @@ def load(fileName, containingBox=None):
         addon = BoxAddon(identifier, fileName)
     elif extension == 'bundle':
         addon = BundleAddon(identifier, fileName)
-    elif extension == 'pk3':
+    elif extension == 'pk3' or extension == 'zip':
         addon = PK3Addon(identifier, fileName)
     elif extension == 'wad':
         addon = WADAddon(identifier, fileName)
@@ -1157,6 +1172,8 @@ def load(fileName, containingBox=None):
         addon = DEDAddon(identifier, fileName)
     elif extension == 'deh':
         addon = DehackedAddon(identifier, fileName)
+    elif extension == 'lmp':
+        addon = LumpAddon(identifier, fileName)
 
     # Set the container.
     if containingBox:

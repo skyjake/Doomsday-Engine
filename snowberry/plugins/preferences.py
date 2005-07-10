@@ -94,7 +94,10 @@ def handleNotify(event):
         box = area.createArea(boxedWithTitle='ui-parts', border=3)
         box.setWeight(0)
 
+        # TODO: Create widgets for all system settings?
         box.createSetting(st.getSystemSetting('main-hide-title'))
         box.createSetting(st.getSystemSetting('main-hide-help'))
+        box.createSetting(st.getSystemSetting(
+            'summary-profile-change-autoselect'))
         
         box.createText('restart-required', align=wg.Text.RIGHT).setSmallStyle()

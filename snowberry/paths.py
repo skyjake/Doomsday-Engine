@@ -208,12 +208,16 @@ def getBundlePaths(which):
     return map(lambda p: os.path.join(p, which), bundlePaths)
 
 
-def listPaths(which):
+def listPaths(which, userFirst=True):
     """Returns an array of search paths for the specified kind of files.
     """
-    return [getUserPath(which)] + getBundlePaths(which) + \
-           [getSystemPath(which)]
-
+    if userFirst:
+        return [getUserPath(which)] + getBundlePaths(which) + \
+               [getSystemPath(which)]
+    else:
+        return [getSystemPath(which)] + getBundlePaths(which) + \
+               [getUserPath(which)]
+               
 
 def listFiles(which):
     """Returns a list of all the files of the specified kind.
@@ -259,11 +263,11 @@ def getBase(path):
     """Returns the file name sans path and extension."""
     
     base = os.path.basename(path)
-    if base.find('.') < 0:
+    pos = base.rfind('.')
+    if pos < 0:
         # There is no extension.
         return base
     # Find the last dot.
-    pos = base.find('.')
     return base[:pos]
 
 
@@ -276,7 +280,7 @@ def hasExtension(extension, fileName):
 
     @return True, if the extension is found.
     """
-    return re.search("^[^.#][^.]*\." + extension + "$",
+    return re.search("^[^.#].*\." + extension + "$",
                      os.path.basename(fileName).lower()) != None
 
 

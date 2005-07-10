@@ -103,6 +103,10 @@ def notifyHandler(event):
         # Update the summary entries.
         updateSummary(p)
 
+        # Change to the Summary tab automatically.
+        if st.getSystemBoolean('summary-profile-change-autoselect'):
+            ui.selectTab(SUMMARY)
+
     elif event.hasId('value-changed') or \
          event.hasId('addon-attached') or \
          event.hasId('addon-detached'):

@@ -238,7 +238,7 @@ class Setting:
 
     def composeCommandLine(self, profile):
         """Overridden by subclasses."""
-        return ''
+        return self.getOption()
 
     def getContextAddon(self):
         """Determines the addon with which the setting is associated.
@@ -593,7 +593,10 @@ def processSettingBlock(e):
         setting = ToggleSetting(e.getName(),
                                 e.findValue('option'),
                                 e.findValue('default'),
-                                e.findValue('option-inactive')) 
+                                e.findValue('option-inactive'))
+
+    elif e.getType() == 'implicit':
+        setting = Setting(e.getType(), e.getName(), e.findValue('option'))
 
     elif e.getType() == 'range':
         setting = RangeSetting(e.getName(),
@@ -886,9 +889,11 @@ tog = ToggleSetting('main-hide-title', '', 'no', '')
 _newSystemSetting(tog)
 tog = ToggleSetting('main-hide-help', '', 'no', '')
 _newSystemSetting(tog)
+tog = ToggleSetting('summary-profile-change-autoselect', '', 'yes', '')
+_newSystemSetting(tog)
 
 # Load all .conf files.
-for path in paths.listPaths(paths.CONF):
+for path in paths.listPaths(paths.CONF, False):
     readConfigPath(path)
 
 # Any custom paths?

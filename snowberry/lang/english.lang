@@ -98,12 +98,14 @@ addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Uninstalled
 addon-dialog-browse-prompt: Choose Folder
 addon-dialog-found: Addons in the selected folder:
+addon-dialog-addons-copied: Installed addons are copied to your personal addons folder.
 addon-dialog-name: Name
 addon-dialog-type: Type
 addon-dialog-type-box: Box Container
 addon-dialog-type-wad: WAD Data File
 addon-dialog-type-addon: Bundle
 addon-dialog-type-pk3: Package
+addon-dialog-type-zip: ZIP Archive
 addon-dialog-type-ded: Definition File
 addon-dialog-type-deh: DeHackEd Patch
 uninstall-addon-dialog: Uninstall Addon
@@ -125,6 +127,7 @@ addon-type-pk3: PK3 Package
 addon-type-wad: WAD File
 addon-type-dehacked: DeHackEd Patch
 addon-type-ded: Doomsday Engine Definitions
+addon-type-lump: Data Lump
 
 conflict-wizard: Addon Wizard
 conflict-wizard-title: Resolving Addon Conflicts
@@ -273,6 +276,7 @@ category-gamedata-maps-hm: H-M
 category-gamedata-maps-ns: N-S
 category-gamedata-maps-tz: T-Z
 category-gamedata-maps-09: 0-9
+category-gamedata-lumps: Data Lumps
 category-patches: DeHackEd Patches
 category-definitions: Doomsday Engine Definitions
 
@@ -409,6 +413,7 @@ addon-paths-add-prompt: Add Custom Addon Path
 ui-parts: User Interface
 main-hide-title: Hide title banner
 main-hide-help: Hide help panel
+summary-profile-change-autoselect: Show Summary when profile changed
 
 restart-required: Changes take effect after restarting.
 

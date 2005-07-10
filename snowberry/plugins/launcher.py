@@ -171,6 +171,7 @@ def startGame(profile):
     file(responseFile, 'w').write(options + "\n")
 
     # Execute the command line.
+    print engineBin
     os.spawnv(os.P_NOWAIT, engineBin, [engineBin,
                                        '@' + paths.quote(responseFile)])
 
@@ -218,6 +219,21 @@ def generateOptions(profile):
     userPath = paths.getUserPath(paths.RUNTIME)
     cmdLine.append('-userdir ' + paths.quote(userPath))
 
+    # Resolve conflicting addons by letting the user choose between
+    # them.
+    if not resolveAddonConflicts(usedAddons, profile):
+        # Launch aborted!
+        return None
+
+    # Get the command line options for loading all the addons.
+    for addon in usedAddons:
+        params = addon.getCommandLine(profile).strip()
+        if params:
+            cmdLine.append(params)
+
+    # Update IDs of used addons.
+    usedAddonsId = map(lambda a: a.getId(), usedAddons)
+
     # Get the command line options from each setting.
     for setting in effectiveSettings:
         # If the setting's required addons are not being loaded, skip
@@ -237,18 +253,6 @@ def generateOptions(profile):
             params = setting.getCommandLine(profile).strip()
             if params:
                 cmdLine.append(params)
-
-    # Resolve conflicting addons by letting the user choose between
-    # them.
-    if not resolveAddonConflicts(usedAddons, profile):
-        # Launch aborted!
-        return None
-
-    # Get the command line options for loading all the addons.
-    for addon in usedAddons:
-        params = addon.getCommandLine(profile).strip()
-        if params:
-            cmdLine.append(params)
 
     # Send a launch options notification.  This is done so that
     # plugins are able to observe/modify the list of launch options.

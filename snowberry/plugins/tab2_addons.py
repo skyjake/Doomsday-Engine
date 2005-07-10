@@ -413,6 +413,8 @@ def chooseAddons(dialogId, title, actionButton):
     folderArea.setWeight(0)
     browseButton = folderArea.createButton('addon-dialog-folder-browse',
                                            style=wg.Button.STYLE_MINI)
+    folderArea.setWeight(0)
+    folderArea.addSpacer()
     uninstButton = folderArea.createButton('addon-dialog-folder-uninstalled')
 
     def goToUninstalled():
@@ -424,6 +426,9 @@ def chooseAddons(dialogId, title, actionButton):
     area.setWeight(1)
     foundList = area.createList('', style=wg.List.STYLE_COLUMNS)
     foundList.setMinSize(500, 300)
+
+    area.setWeight(0)
+    area.createText('addon-dialog-addons-copied')
 
     def selectAction():
         dialog.enableWidget(actionButton)
@@ -440,7 +445,7 @@ def chooseAddons(dialogId, title, actionButton):
 
         # This should be done in addons.py.
         for name in os.listdir(pathField.getText()):
-            extensions = ['wad', 'addon', 'box', 'pk3', 'ded', 'deh']
+            extensions = ['wad', 'addon', 'box', 'pk3', 'ded', 'deh', 'zip']
             type = ''
             for ext in extensions:
                 if paths.hasExtension(ext, name):
