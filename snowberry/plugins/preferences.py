@@ -99,5 +99,6 @@ def handleNotify(event):
         box.createSetting(st.getSystemSetting('main-hide-help'))
         box.createSetting(st.getSystemSetting(
             'summary-profile-change-autoselect'))
+        box.createSetting(st.getSystemSetting('profile-large-icons'))
         
         box.createText('restart-required', align=wg.Text.RIGHT).setSmallStyle()

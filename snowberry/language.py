@@ -104,7 +104,7 @@ def load(fileName):
 def loadAll():
     """Load the <tt>.lang</tt> files from the lang directories.
     """
-    for fileName in paths.listFiles(paths.LANG):
+    for fileName in paths.listFiles(paths.LANG, False):
         # We'll load all the files with the .lang extension.
         if paths.hasExtension('lang', fileName):
             # Load this language file.

@@ -211,22 +211,20 @@ def getBundlePaths(which):
 def listPaths(which, userFirst=True):
     """Returns an array of search paths for the specified kind of files.
     """
-    if userFirst:
-        return [getUserPath(which)] + getBundlePaths(which) + \
-               [getSystemPath(which)]
-    else:
-        return [getSystemPath(which)] + getBundlePaths(which) + \
-               [getUserPath(which)]
+    p = [getUserPath(which)] + getBundlePaths(which) + [getSystemPath(which)]
+    if not userFirst:
+        p.reverse()
+    return p
                
 
-def listFiles(which):
+def listFiles(which, userFirst=True):
     """Returns a list of all the files of the specified kind.
 
     @return An array of absolute file names.
     """
     files = []
 
-    for path in listPaths(which):
+    for path in listPaths(which, userFirst):
         try:
             for name in os.listdir(path):
                 full = os.path.join(path, name)

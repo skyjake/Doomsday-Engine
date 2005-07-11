@@ -49,8 +49,14 @@ def makeHTML(name, game):
     # The name of the game.
     gameName = language.translate(game)
 
+    if st.getSystemBoolean('profile-large-icons'):
+        iconSize = '50'
+    else:
+        iconSize = '24'
+    
     return '<table width="100%" border=0 cellspacing=2 cellpadding=5>' + \
-           '<tr><td width="48"><img src="' + iconPath + '"><td>' + \
+           '<tr><td width="' + iconSize + '"><img width="' + iconSize + \
+           '" height="' + iconSize + '" src="' + iconPath + '"><td>' + \
            '<font size="+1"><b>' + name + '</b></font><br>' + \
            '<font color="#808080">' + gameName + '</font>' + \
            '</table>'

@@ -895,6 +895,8 @@ tog = ToggleSetting('main-hide-help', '', 'no', '')
 _newSystemSetting(tog)
 tog = ToggleSetting('summary-profile-change-autoselect', '', 'yes', '')
 _newSystemSetting(tog)
+tog = ToggleSetting('profile-large-icons', '', 'yes', '')
+_newSystemSetting(tog)
 
 # Load all .conf files.
 for path in paths.listPaths(paths.CONF, False):
