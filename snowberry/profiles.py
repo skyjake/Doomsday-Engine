@@ -29,6 +29,7 @@ import os, re, string, shutil
 import events, paths, cfparser, language
 import settings as st
 import addons as ao
+import ui
 
 # The list of available profiles.  All of these will be displayed in the
 # Profile List Box.
@@ -517,11 +518,15 @@ def refresh(hasChanged=False):
     """Send a notification that will cause everybody to refresh their
     state with regards to the active profile.
     """
+    ui.freeze()
+    
     if hasChanged:
         evName = 'active-profile-changed'
     else:
         evName = 'active-profile-refreshed'
     events.send(events.Notify(evName))
+
+    ui.unfreeze() 
 
 
 def setActive(profile):

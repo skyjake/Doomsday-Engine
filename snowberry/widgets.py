@@ -2466,8 +2466,8 @@ class Tree (Widget):
                         if checkCount > 0:
                             label += ' (' + str(checkCount) + ')'
                             # Don't force-open the Defaults root.
-                            if item is not hier.root and not justBoxParts:
-                                tree.Expand(item)
+                            #if item is not hier.root and not justBoxParts:
+                            #    tree.Expand(item)
                         tree.SetItemTextColour(item, wx.BLACK)
                     elif count == 0:
                         tree.Collapse(item)

@@ -425,7 +425,8 @@ restart-required: Changes take effect after restarting.
 #
 help-welcome = "Welcome to Snowberry. This is a launcher application 
 that lets you launch <b>Doomsday Engine</b> with ease. Select a game profile 
-from the list on the left."
+from the list on the left.<p>The user interface of the launcher can be 
+modified in <b>Menu</b> -&gt; <b>Preferences</b>."
 
 help-command = "To start a game, press the <b>Play</b> button."
 

@@ -1783,6 +1783,15 @@ def startMainLoop():
     app.MainLoop()
 
 
+def freeze():
+    app.mainFrame.Freeze()
+
+
+def unfreeze():
+    app.mainFrame.Thaw()
+    app.mainFrame.Refresh()
+
+
 # Initialize the UI module by creating the main window of the application.
 app = SnowberryApp()
 
