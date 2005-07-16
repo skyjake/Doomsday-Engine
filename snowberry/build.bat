@@ -7,6 +7,8 @@ REM -- scripts into a self-extracting RAR archive.
 SET RAR=-s -m5 -sfx
 SET PACKAGE=snowberry-beta
 
+rd/s/q dist
+
 REM -- Make the executable.
 python setup.py py2exe
 
