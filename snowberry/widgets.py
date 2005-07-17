@@ -196,6 +196,9 @@ class Widget:
         # displayed.
         wx.EVT_RIGHT_UP(wxWidget, self.onRightClick)
 
+        # A notification is sent when the widget is entered.
+        wx.EVT_ENTER_WINDOW(wxWidget, self.onEnterWidget)
+
         # Listen for focus changes.
         wx.EVT_SET_FOCUS(wxWidget, self.onFocus)
 
@@ -319,10 +322,17 @@ class Widget:
 
         @param event A wxWidgets event.
         """
-        event.Skip()
         # Send a focus event if a focus identifier has been specified.
         if self.focusId:
             events.send(events.FocusNotify(self.focusId))
+        event.Skip()
+
+    def onEnterWidget(self, event):
+        """Handle the wxWidget event of entering the window."""
+
+        if self.focusId:
+            events.send(events.FocusNotify(self.focusId))
+        event.Skip()
 
     def onNotify(self, event):
         """Handle a notification.  All widgets are automatically
@@ -404,7 +414,17 @@ class Widget:
         newFont = wx.Font(size, wx.DEFAULT, style, weight, faceName=font)
         w = self.getWxWidget()
         w.SetFont(newFont)
-        w.SetSize(w.GetBestSize())
+
+        #w.SetSize(w.GetBestSize())
+        #bestSize = w.GetBestSize()
+        #w.SetMinSize((0,bestSize[1]))
+
+        self.updateDefaultSize()
+
+    def updateDefaultSize(self):
+        w = self.getWxWidget()
+        bestSize = w.GetBestSize()
+        w.SetMinSize((0,bestSize[1]))
 
     def setNormalStyle(self):
         """Set the style of the text label to Widget.NORMAL."""
@@ -524,9 +544,14 @@ class Button (Widget):
         if style != Button.STYLE_MINI:
             # We will handle the click event ourselves.
             wx.EVT_BUTTON(parent, wxId, self.onClick)
+            #self.updateDefaultSize()
         else:
             # Pop back up when toggled down.
             wx.EVT_TOGGLEBUTTON(parent, wxId, self.onToggle)
+
+    def updateDefaultSize(self):
+        w = self.getWxWidget()
+        w.SetMinSize(w.GetBestSize())
 
     def retranslate(self):
         self.getWxWidget().SetLabel(uniConv(language.translate(self.widgetId)))
@@ -598,7 +623,7 @@ class CheckBox (Widget):
             if w.Get3StateValue() == wx.CHK_UNDETERMINED:
                 self.indicator.setText(
                     '(' + language.translate('toggle-use-default-value') + \
-                    ': ' + language.translate(
+                    language.translate(
                     pr.getDefaults().getValue(self.widgetId).getValue()) + ')')
                 #self.indicator.getWxWidget().Show()
             else:
@@ -1343,9 +1368,10 @@ class DropList (Widget):
         wx.EVT_LEFT_DOWN(self.getWxWidget(), self.onLeftClick)
 
     def onLeftClick(self, event):
-        event.Skip()
         if self.widgetId:
             events.send(events.FocusNotify(self.widgetId))
+            self.getWxWidget().SetFocus()
+        event.Skip()
 
     def onItemSelected(self, ev):
         """Handle the wxWidgets event that is sent when the current

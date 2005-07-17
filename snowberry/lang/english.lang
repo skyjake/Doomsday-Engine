@@ -301,7 +301,8 @@ no: No
 yes: Yes
 default: Default
 browse-button: ...
-toggle-use-default-value: default
+#toggle-use-default-value = "default: "
+toggle-use-default-value = ""
 
 language: Language
 quit-on-launch: Quit when game launched

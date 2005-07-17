@@ -170,6 +170,22 @@ def updateHelpText():
     currentSetting = None
 
 
+# Background color for table header entries.
+bgColor = "#E8E8E8"
+tableRow = '<tr>'
+tableBegin = '<table width="100%" cellspacing="1" cellpadding="2">'
+tableEnd = '</table><p>'
+
+
+def entryHeader(text, span=1):
+    width = ''
+    return '<td %s bgcolor="%s" valign="top" colspan="%i"><font size="-1">%s</font>' % (width, bgColor, span, text)
+
+def entryContent(text, span=1):
+    return '<td valign="top" colspan="%i"><font size="-1">%s</font>' \
+           % (span, text)
+
+
 def showAddonInfo(addon):
     """Display a summary of an addon in the help panel.
 
@@ -184,8 +200,6 @@ def showAddonInfo(addon):
     currentAddon = addon
 
     oneLiners = (detailedAddonMode == False)
-    tableRow = '<tr>'
-    bgColor = "#E8E8E8"
     ident = addon.getId()
     
     # Begin the page with a table that contains the basic info.
@@ -204,21 +218,11 @@ def showAddonInfo(addon):
     msg += '</font></center><br>'
 
     # Summary table.
-    msg += '<table width="100%" cellspacing="1" cellpadding="2">'
+    msg += tableBegin
 
     msg += '<tr><td colspan="2"><b><font size="+1">' + \
            language.translate(ident) + \
            '</font></b>'
-
-    def entryHeader(text, span=1):
-        #if span == 1:
-        #    width = 'width="10%"'
-        #else:
-        width = ''
-        return '<td %s bgcolor="%s" valign="top" colspan="%i"><font size="-1">%s</font>' % (width, bgColor, span, text)
-
-    def entryContent(text, span=1):
-        return '<td valign="top" colspan="%i"><font size="-1">%s</font>' % (span, text)
 
     def makeField(msg, fieldId, oneLiner=True):
         title = language.translate('help-addon-' + fieldId)
@@ -303,7 +307,7 @@ def showAddonInfo(addon):
 
         msg += tableRow + entryContent(content, 2)            
 
-    msg += '</table><p>'
+    msg += tableEnd
 
     # Inside a box?
     if addon.getBox():
@@ -341,11 +345,14 @@ def showSettingInfo(setting):
            '</font></b>'
 
     # The command line option.
-    msg += '<br><table bgcolor="#E8E8E8" width="100%"><tr><td>' + \
+    msg += '<br><table bgcolor="' + bgColor + '" width="100%"><tr><td>' + \
            '<font size="-1"><tt>' + \
            setting.getCommandLine(prof) + '</tt></font></table><p>'
 
+    fromDefaults = False
+
     if prof.getValue(ident, False) == None:
+        fromDefaults = True
         # The value comes from the default profile.
         msg += language.expand(
             language.translate('help-value-from-defaults'),
@@ -357,33 +364,55 @@ def showSettingInfo(setting):
         else:
             return v
 
+    msg += tableBegin
+
     # The current value of the setting.
     value = prof.getValue(ident)
     if value:
-        msg += '<b>%s:</b><br>' % language.translate('help-value-current')
-        msg += valueToText(value.getValue())
-        msg += '<p>'
+        #msg += '<b>%s:</b><br>' % language.translate('help-value-current')
+        #msg += valueToText(value.getValue())
+        #msg += '<p>'
+
+        msg += tableRow + \
+               entryHeader(language.translate('help-value-current')) + \
+               entryContent(valueToText(value.getValue()))
 
     # Min and max for the range and slider settings.
     if setting.getType() == 'slider' or setting.getType() == 'range':
-        msg += '<b>' + language.translate('help-value-min') + ':</b><br>' + \
-               str(setting.getMinimum())
-        msg += '<p><b>' + language.translate('help-value-max') + ':</b><br>' + \
-               str(setting.getMaximum())
-        msg += '<p>'
+        #msg += '<b>' + language.translate('help-value-min') + ':</b><br>' + \
+        #       str(setting.getMinimum())
+        #msg += '<p><b>' + language.translate('help-value-max') + \
+        #       ':</b><br>' + str(setting.getMaximum())
+        #msg += '<p>'
+
+        msg += tableRow + entryHeader(language.translate('help-value-min')) + \
+               entryContent(str(setting.getMinimum())) + \
+               tableRow + entryHeader(language.translate('help-value-max')) + \
+               entryContent(str(setting.getMaximum()))
 
     # The default.
     if prof.getValue(ident, False) != None and prof is pr.getDefaults():
         if setting.getDefault() != None:
-            msg += '<b>%s:</b><br>' % language.translate('help-value-default')
-            msg += valueToText(str(setting.getDefault()))
-            msg += '<p>'
-    elif prof is not pr.getDefaults():
+            #msg += '<b>%s:</b><br>' % language.translate('help-value-default')
+            #msg += valueToText(str(setting.getDefault()))
+            #msg += '<p>'
+
+            msg += tableRow + \
+                   entryHeader(language.translate('help-value-default')) + \
+                   entryContent(valueToText(str(setting.getDefault())))
+            
+    elif not fromDefaults and prof is not pr.getDefaults():
         defValue = pr.getDefaults().getValue(ident)
         if defValue:
-            msg += '<b>%s:</b><br>' % language.translate('help-value-default')
-            msg += valueToText(defValue.getValue())
-            msg += '<p>'
+            #msg += '<b>%s:</b><br>' % language.translate('help-value-default')
+            #msg += valueToText(defValue.getValue())
+            #msg += '<p>'
+
+            msg += tableRow + \
+                   entryHeader(language.translate('help-value-default')) + \
+                   entryContent(valueToText(defValue.getValue()))
+
+    msg += tableEnd
 
     # The help text of this setting.
     helpId = ident + '-help'
