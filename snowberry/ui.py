@@ -222,7 +222,8 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     imageArea.createImage('snowberry')
 
     area.setWeight(1)
-    contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=6)
+    contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL, 
+                                  border=6)
     contentArea.setWeight(0)
     if titleText != None:
         contentArea.setBorder(0)
@@ -236,6 +237,10 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
 
         #contentArea.createLine()
 
+    if host.isMac():
+        # Generous borders on the Mac.
+        contentArea.setBorder(10)
+
     contentArea.setWeight(1)
     userArea = contentArea.createArea(border=6)
 
@@ -243,6 +248,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     contentArea.setWeight(0)
     buttonArea = contentArea.createArea(alignment=Area.ALIGN_HORIZONTAL,
                                         border=0)
+                                        
     # If no explicit spacing is defined, use the default right
     # alignment.
     if '' not in buttons:
@@ -279,6 +285,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
         widget = buttonArea.createButton(button, style=style)
         dialog.identifyWidget(button, widget)
 
+    dialog.center()
     return dialog, userArea
 
 

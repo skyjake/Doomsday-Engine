@@ -940,28 +940,47 @@ class FormattedText (Widget):
         if self.useHtml:
             Widget.__init__(self, MyHtmlWindow(parent, wxId))
         else:
-            text = initialText.replace('<b>', '<font weight="bold">')
-            text = text.replace('</b>', '</font>')
-            text = text.replace('<i>', '<font style="italic">')
-            text = text.replace('</i>', '</font>')
-            text = text.replace('<tt>', '<font family="fixed">')
-            text = text.replace('</tt>', '</font>')
+            if host.isMac():
+                # It appears wxWidgets fancy text is broken on the Mac.
+                useFancy = False
+            else:
+                useFancy = True
+            
+            if useFancy:
+                text = initialText.replace('<b>', '<font weight="bold">')
+                text = text.replace('</b>', '</font>')
+                text = text.replace('<i>', '<font style="italic">')
+                text = text.replace('</i>', '</font>')
+                text = text.replace('<tt>', '<font family="fixed">')
+                text = text.replace('</tt>', '</font>')
 
-            # fancytext doesn't support non-ascii chars?
-            text = text.replace('ä', 'a')
-            text = text.replace('ö', 'o')
-            text = text.replace('ü', 'u')
-            text = text.replace('å', 'a')
-            text = text.replace('Ä', 'A')
-            text = text.replace('Ö', 'O')
-            text = text.replace('Ü', 'U')
-            text = text.replace('Å', 'A')
+                # fancytext doesn't support non-ascii chars?
+                text = text.replace('ä', 'a')
+                text = text.replace('ö', 'o')
+                text = text.replace('ü', 'u')
+                text = text.replace('å', 'a')
+                text = text.replace('Ä', 'A')
+                text = text.replace('Ö', 'O')
+                text = text.replace('Ü', 'U')
+                text = text.replace('Å', 'A')
+
+            else:
+                text = initialText.replace('<b>', '')
+                text = text.replace('</b>', '')
+                text = text.replace('<i>', '')
+                text = text.replace('</i>', '')
+                text = text.replace('<tt>', '')
+                text = text.replace('</tt>', '')
 
             # Break it up if too long lines detected.
             brokenText = breakLongLines(text, 70)
             
-            Widget.__init__(self, fancy.StaticFancyText(
-                parent, wxId, uniConv(brokenText)))
+            if useFancy:
+                Widget.__init__(self, fancy.StaticFancyText(
+                    parent, wxId, uniConv(brokenText)))
+            else:
+                Widget.__init__(self, wx.StaticText(parent, wxId, 
+                                uniConv(brokenText)))
 
             self.resizeToBestSize()
 
