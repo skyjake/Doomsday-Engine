@@ -28,7 +28,7 @@
 
 # TODO: Implement a timer service so wx isn't needed here.
 
-import os, string, time, wx
+import os, string, time
 import ui
 import events
 import paths
@@ -39,14 +39,14 @@ import settings as st
 import addons as ao
 
 
-class MessageTimer (wx.Timer):
+class MessageTimer (ui.Timer):
     """The message timer will clear the launch message when the 
     timer expires."""
 
     def __init__(self):
-        wx.Timer.__init__(self)
+        ui.Timer.__init__(self)
         
-    def Notify(self):
+    def expire(self):
         """Called when the timer expires."""
         
         # Clear the launch message.
@@ -177,11 +177,12 @@ def setLaunchMessage(text):
     """Launch message is displayed next to the Play button."""
     
     launchText.setText(text)
+    launchText.resizeToBestSize()
     ui.getArea(ui.Area.COMMAND).updateLayout()
     
     if text:
         # Clear the message after a short delay.
-        launchTextTimer.Start(4000, wx.TIMER_ONE_SHOT)
+        launchTextTimer.start(4000)
 
 
 def startGame(profile):

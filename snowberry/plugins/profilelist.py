@@ -335,8 +335,6 @@ def commandHandler(event):
     elif event.hasId('unhide-profiles'):
         # Display a dialog bog for unhiding hidden profiles.
         hiddenProfiles = pr.getProfiles(lambda p: p.isHidden())
-        #hiddenProfiles.sort(lambda a, b: cmp(language.translate(a.getId()),
-        #                                     language.translate(b.getId())))
 
         dialog, area = ui.createButtonDialog(
             'unhide-profile-dialog',
@@ -348,6 +346,7 @@ def commandHandler(event):
 
         area.setWeight(3)
         profList = area.createList('', wg.List.STYLE_CHECKBOX)
+        profList.setMinSize(50, 150)
 
         def selectAll():
             # Check the entire list.

@@ -142,15 +142,16 @@ def runWizard():
     # Language selection page.
     langPage = ui.WizardPage(wiz, 'wizard-language')
     area = langPage.getArea()
-    area.createText('wizard-language-explanation')
+    area.createText('wizard-language-explanation').resizeToBestSize()
     area.createSetting(st.getSetting('language'))
 
     # Game selection.
     gamePage = ProfileWizardPage(wiz, 'wizard-games', None)
     gamePage.follows(langPage)
     area = gamePage.getArea()
-    area.createText('wizard-select-games')
+    area.createText('wizard-select-games').resizeToBestSize()
     games = area.createList('', style=wg.List.STYLE_CHECKBOX)
+    games.setMinSize(50, 200)
     gamePage.setGameList(games)
 
     def allGames():
@@ -229,7 +230,7 @@ def runWizard():
     quitPage = ProfileWizardPage(wiz, 'wizard-launching', games)
     quitPage.follows(previousPage)
     area = quitPage.getArea()
-    area.createText('wizard-launching-explanation')
+    area.createText('wizard-launching-explanation').resizeToBestSize()
     area.createSetting(st.getSetting('quit-on-launch'))
 
     if wiz.run(langPage) == 'ok':

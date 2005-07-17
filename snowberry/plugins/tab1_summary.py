@@ -144,6 +144,7 @@ def updateSummary(profile):
         summary[-1] += ' ...'
         
     addonListing.setText(string.join(summary, "\n"))
+    addonListing.resizeToBestSize()
 
     # Values defined in the profile.
     summary = []
@@ -185,6 +186,7 @@ def updateSummary(profile):
         summary = ['-']
         
     valuesListing.setText(string.join(summary, "\n"))
+    valuesListing.resizeToBestSize()
     
     # The system summary shows the basic display settings.
     summary = []
@@ -215,5 +217,6 @@ def updateSummary(profile):
         summary.append(language.translate(value.getValue()))
 
     systemSummary.setText(string.join(summary, '\n'))
+    systemSummary.resizeToBestSize()
 
     ui.getArea(SUMMARY).updateLayout()

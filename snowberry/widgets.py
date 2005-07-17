@@ -422,10 +422,17 @@ class Widget:
         self.updateDefaultSize()
 
     def updateDefaultSize(self):
+        """By default widgets can be scaled horizontally to zero width."""
         w = self.getWxWidget()
         bestSize = w.GetBestSize()
-        w.SetMinSize((0,bestSize[1]))
+        w.SetMinSize((0, bestSize[1]))
 
+    def resizeToBestSize(self):
+        w = self.getWxWidget()
+        bestSize = w.GetBestSize()
+        w.SetMinSize(bestSize)
+        w.SetSize(bestSize)      
+        
     def setNormalStyle(self):
         """Set the style of the text label to Widget.NORMAL."""
         self.setStyle(Widget.NORMAL)
@@ -450,6 +457,15 @@ class Widget:
         """Set the style of the text label to Widget.TITLE."""
         self.setStyle(Widget.TITLE)
 
+    def freeze(self):
+        """Prevent updates from occurring on the screen."""
+        self.getWxWidget().Freeze()
+
+    def unfreeze(self):
+        """Allow updates to occur."""
+        self.getWxWidget().Thaw()
+        self.getWxWidget().Refresh()
+        
 
 class Line (Widget):
     """A static horizontal divider line."""
@@ -941,8 +957,10 @@ class FormattedText (Widget):
             Widget.__init__(self, fancy.StaticFancyText(
                 parent, wxId, uniConv(brokenText)))
 
+            self.resizeToBestSize()
+
     def setText(self, formattedText):
-        "Set new HTML content into the formatted text widget."
+        """Set new HTML content into the formatted text widget."""
         w = self.getWxWidget()
 
         if self.useHtml:
@@ -1530,8 +1548,25 @@ class FormattedList (Widget):
         self.addSorted = True
 
         # Listen for selection changes.
+        wx.EVT_RIGHT_DOWN(self.getWxWidget(), self.onRightDown)      
         wx.EVT_LISTBOX(parent, wxId, self.onItemSelected)
         wx.EVT_LISTBOX_DCLICK(parent, wxId, self.onItemDoubleClick)
+
+    def onRightDown(self, event):
+        """Right button down."""
+
+        w = self.getWxWidget()
+
+        #print "right down in list " + str(event.GetPosition())
+        item = w.HitTest(event.GetPosition())
+        #print item
+        if item >= 0:
+            w.SetSelection(item)
+            if self.widgetId:
+                events.send(events.SelectNotify(
+                    self.widgetId, self.items[item][0]))
+
+        event.Skip()
 
     def setSorted(self, doSort):
         self.addSorted = doSort

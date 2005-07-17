@@ -1339,6 +1339,33 @@ class WizardPage (wiz.PyWizardPage):
         WizardDialog."""
         
         return self.prev
+
+
+class Timer (wx.Timer):
+    """A timer class."""
+
+    def __init__(self, notifyId=''):
+        """Initialize the timer."""
+        wx.Timer.__init__(self)
+        self.notifyId = notifyId
+        
+    def Notify(self):
+        """Called when the timer expires."""
+        self.expire()
+
+    def start(self, milliSeconds):
+        """Start the timer in one-shot mode.
+
+        @param milliSeconds  Milliseconds after which the timer expires.
+        """
+        self.Start(milliSeconds, wx.TIMER_ONE_SHOT)
+
+    def expire(self):
+        """Send a notification if one has been defined. This method can be
+        overridden by subclasses.
+        """
+        if self.notifyId:
+            events.send(events.Notify(self.notifyId))
         
 
 class MainPanel (wx.Panel):
