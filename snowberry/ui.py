@@ -47,9 +47,13 @@ SETTING_WEIGHT_LEFT = 1
 SETTING_WEIGHT_RIGHT = 2
 
 # Border widths in areas.
+# TODO: Move these to a .conf.
 if host.isWindows():
     AREA_BORDER = 2
     AREA_BORDER_BOXED = 2
+elif host.isUnix():
+    AREA_BORDER = 2
+    AREA_BORDER_BOXED = 1
 else:
     AREA_BORDER = 4
     AREA_BORDER_BOXED = 2
@@ -824,9 +828,6 @@ class Area (widgets.Widget):
 
         elif setting.getType() == 'choice':
             # Create a label and a drop-down list.
-            #area.setWeight(2)
-            #area.createText(setting.getId())
-            #area.setWeight(2)
             drop = area.createDropList(setting.getId())
 
             # Insert the choices into the list.
@@ -1485,6 +1486,8 @@ class MainFrame (wx.Frame):
         # FIXME: Layout is botched. Way too wide.
         if host.isMac():
             initialSize = (900, 550)
+        elif host.isUnix():
+            initialSize = (900, 610)
         else:
             initialSize = (900, 500)
             

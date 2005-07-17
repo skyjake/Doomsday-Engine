@@ -683,9 +683,8 @@ class CheckBox (Widget):
         Widget.onNotify(self, event)
 
         if self.widgetId:
+            w = self.getWxWidget()
             if event.hasId('active-profile-changed'):
-                w = self.getWxWidget()
-
                 # Get the value for the setting as it has been defined
                 # in the currently active profile.
                 value = pr.getActive().getValue(self.widgetId, False)
@@ -698,6 +697,13 @@ class CheckBox (Widget):
                     w.Set3StateValue(wx.CHK_UNDETERMINED)
 
                 self.updateState()
+
+            elif event.hasId('value-changed') and \
+                     event.getSetting() == self.widgetId:
+                if event.getValue() == 'yes':
+                    w.Set3StateValue(wx.CHK_CHECKED)
+                elif event.getValue() == 'no':
+                    w.Set3StateValue(wx.CHK_UNCHECKED)
 
     def retranslate(self):
         if self.widgetId:

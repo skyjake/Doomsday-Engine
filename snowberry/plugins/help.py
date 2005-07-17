@@ -31,6 +31,9 @@ helpTextTimer = ui.Timer('show-help-text-now')
 # A widget will be created during initialization.
 helpText = None
 
+# This is true if the help panel shouldn't be updated at the moment.
+helpDisabled = False
+
 # The Snowberry logo in the bottom of the help panel.
 logo = None
 
@@ -98,6 +101,7 @@ def handleCommand(event):
     @param event A events.Command object.
     """
     global detailedAddonMode
+    global helpDisabled
     
     if event.hasId('help-addon-mode-brief'):
         detailedAddonMode = False
@@ -109,17 +113,27 @@ def handleCommand(event):
         if currentAddon:
             showAddonInfo(currentAddon)
 
+    elif event.hasId('freeze'):
+        helpDisabled = True
+
+    elif event.hasId('unfreeze'):
+        helpDisabled = False
+        updateHelpText()    
+
 
 def handleNotify(event):
     """This is called when somebody sends a notification.
 
     @param event A events.Notify object.
     """
+    if helpDisabled:
+        return
+    
     if event.hasId('init-done'):
         setField(FIELD_MAIN, language.translate('help-welcome'))
         setField(FIELD_COMMAND, language.translate('help-command-defaults'))
         updateHelpText()    
-        
+
     elif event.hasId('show-help-text-now'):
         helpText.unfreeze()
                         
@@ -144,7 +158,7 @@ def handleNotify(event):
             # It wasn't an addon.
             pass
 
-    elif event.hasId('focus-changed'):
+    elif event.hasId('focus-changed'): 
         try:
             setting = st.getSetting(event.getFocus())
             showSettingInfo(setting)
@@ -190,12 +204,14 @@ tableEnd = '</table><p>'
 
 
 def entryHeader(text, span=1):
+    htmlSize = st.getSystemInteger('style-html-size') - 1
     width = ''
-    return '<td %s bgcolor="%s" valign="top" colspan="%i"><font size="-1">%s</font>' % (width, bgColor, span, text)
+    return '<td %s bgcolor="%s" valign="top" colspan="%i"><font size="%i">%s</font>' % (width, bgColor, span, htmlSize, text)
 
 def entryContent(text, span=1):
-    return '<td valign="top" colspan="%i"><font size="-1">%s</font>' \
-           % (span, text)
+    htmlSize = st.getSystemInteger('style-html-size') - 1
+    return '<td valign="top" colspan="%i"><font size="%i">%s</font>' \
+           % (span, htmlSize, text)
 
 
 def showAddonInfo(addon):

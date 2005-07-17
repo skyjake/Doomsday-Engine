@@ -118,6 +118,9 @@ class ProfileWizardPage (ui.WizardPage):
 def runWizard():
     """Run the wizard dialog."""
 
+    # Make sure the help panel isn't updated during the wizard.
+    events.send(events.Command('freeze'))
+
     suggested = {
         'doom1': 'DOOM.WAD',
         'doom1-share': 'DOOM1.WAD',
@@ -261,3 +264,6 @@ def runWizard():
 
     # This'll destroy all the pages of the wizard as well.
     wiz.destroy()
+
+    # Enable help panel updates again.
+    events.send(events.Command('unfreeze'))

@@ -28,8 +28,11 @@ import paths
 
 profileList = None
 
+# If set to true, the profile list won't be updated on notifications.
+profileListDisabled = False
+
 # Popup menus.
-defaultsMenu = ['new-profile', 'unhide-profiles']
+defaultsMenu = ['reset-profile', '-', 'new-profile', 'unhide-profiles']
 
 normalMenu = ['hide-profile',
               'rename-profile',
@@ -168,7 +171,7 @@ def notifyHandler(event):
             profileList.addItem(p.getId(), makeProfileHTML(p),
                                 toIndex=destIndex)
 
-    elif event.hasId('active-profile-changed'):
+    elif event.hasId('active-profile-changed') and not profileListDisabled:
         # Highlight the correct profile in the list.
         profileList.selectItem(pr.getActive().getId())
 
@@ -198,7 +201,17 @@ def notifyHandler(event):
 def commandHandler(event):
     """This is called when a Command event is broadcasted."""
 
-    if event.hasId('new-profile'):
+    global profileListDisabled
+
+    if event.hasId('freeze'):
+        profileListDisabled = True
+
+    elif event.hasId('unfreeze'):
+        profileListDisabled = False
+        #notifyHandler(events.Notify('active-profile-changed'))
+        pr.refresh()
+
+    elif event.hasId('new-profile'):
         dialog, area = ui.createButtonDialog(
             'new-profile-dialog',
             language.translate('new-profile-title'),

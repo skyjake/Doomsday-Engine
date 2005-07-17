@@ -407,7 +407,7 @@ def chooseAddons(dialogId, title, actionButton):
     folderArea.setExpanding(False)
     folderArea.setBorder(2)
     folderArea.setWeight(0)
-    folderArea.createText('addon-dialog-folder')
+    folderArea.createText('addon-dialog-folder').resizeToBestSize()
     folderArea.setWeight(1)
     pathField = folderArea.createTextField('')
     pathField.setText(os.getcwd())

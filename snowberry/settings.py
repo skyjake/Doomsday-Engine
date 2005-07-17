@@ -812,10 +812,15 @@ def getSystemString(id):
     return sysConfig[id]
 
 
-def getSystemInteger(id):
+def getSystemInteger(id, defaultValue=None):
     """Return the value of a system configuration setting.  These
     include things such as fonts and button sizes."""
-    return int(getSystemString(id))
+    try:
+        return int(getSystemString(id))
+    except:
+        if defaultValue != None:
+            return defaultValue
+        return 0
     
 
 def getSystemBoolean(id):

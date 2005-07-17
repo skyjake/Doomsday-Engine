@@ -35,6 +35,9 @@ import language
 
 SUMMARY = 'tab-summary'
 
+# If true, the summary tab won't be updated on notifications.
+summaryDisabled = False
+
 
 def init():
     "Create the Summary page."
@@ -93,9 +96,23 @@ def init():
 
     # Listen for active profile changes.
     events.addNotifyListener(notifyHandler)
+    events.addCommandListener(commandHandler)
+
+
+def commandHandler(event):
+    global summaryDisabled
+    
+    if event.hasId('freeze'):
+        summaryDisabled = True
+
+    elif event.hasId('unfreeze'):
+        summaryDisabled = False
 
 
 def notifyHandler(event):
+    if summaryDisabled:
+        return
+    
     if event.hasId('active-profile-changed') or \
            event.hasId('active-profile-refreshed'):
         p = pr.getActive()
