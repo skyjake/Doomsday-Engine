@@ -416,7 +416,7 @@ addon-paths-add-prompt: Add Custom Addon Path
 ui-parts: User Interface
 main-hide-title: Hide title banner
 main-hide-help: Hide help panel
-summary-profile-change-autoselect: Show Summary when profile changed
+summary-profile-change-autoselect: Profile change shows Summary
 profile-large-icons: Large profile icons
 
 restart-required: Changes take effect after restarting.

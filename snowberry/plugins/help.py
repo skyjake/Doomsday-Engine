@@ -24,6 +24,26 @@ import profiles as pr
 import addons as ao
 import settings as st
 
+import wx
+
+class HelpInitTimer (wx.Timer):
+    """The message timer will show the welcome text after a brief delay."""
+
+    def __init__(self):
+        wx.Timer.__init__(self)
+        
+    def Notify(self):
+        """Called when the timer expires."""
+        
+        # Clear the launch message.
+        #setLaunchMessage('')
+        events.send(events.Notify('show-help-text-now'))
+
+
+# An instance of the message timer.
+helpTextTimer = HelpInitTimer()
+
+
 # A widget will be created during initialization.
 helpText = None
 
@@ -53,6 +73,9 @@ def init():
     global helpText
     helpArea.setBorder(3)
     helpText = helpArea.createFormattedText()
+
+    helpText.getWxWidget().Freeze()
+    helpTextTimer.Start(10, wx.TIMER_ONE_SHOT)
 
     # Set parameters suitable for the logo.
     helpArea.setWeight(0)
@@ -109,8 +132,12 @@ def handleNotify(event):
     if event.hasId('init-done'):
         setField(FIELD_MAIN, language.translate('help-welcome'))
         setField(FIELD_COMMAND, language.translate('help-command-defaults'))
-        updateHelpText()                     
-    
+        updateHelpText()    
+        
+    elif event.hasId('show-help-text-now'):
+        helpText.getWxWidget().Thaw()
+        helpText.getWxWidget().Refresh()
+                        
     elif event.hasId('active-profile-changed') or \
              event.hasId('active-profile-refreshed'):
         if pr.getActive() is pr.getDefaults():
