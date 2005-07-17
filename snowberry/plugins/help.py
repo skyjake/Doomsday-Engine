@@ -126,6 +126,10 @@ def handleNotify(event):
 
     @param event A events.Notify object.
     """
+    if event.hasId('show-help-text-now'):
+        helpText.unfreeze()    
+        return
+    
     if helpDisabled:
         return
     
