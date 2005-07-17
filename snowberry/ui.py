@@ -1496,7 +1496,7 @@ class MainFrame (wx.Frame):
         elif host.isUnix():
             initialSize = (900, 610)
         else:
-            initialSize = (900, 500)
+            initialSize = (925, 600)
             
         # The configuration may define a window size.
         if st.isDefined('main-width'):
@@ -1525,14 +1525,14 @@ class MainFrame (wx.Frame):
         if USE_HELP_AREA:
             # The help area is in a splitter.
             self.splitter = wx.SplitterWindow(self, SPLITTER_ID,
-                                              style=wx.SP_3DSASH |
-                                              wx.SP_NO_XP_THEME)
+                                              style=wx.SP_3DSASH)# |
+                                              #wx.SP_NO_XP_THEME)
             self.splitter.SetMinimumPaneSize(10)
             parentWin = self.splitter
 
         self.profSplitter = wx.SplitterWindow(parentWin, PROF_SPLITTER_ID,
-                                              style=wx.SP_3DSASH |
-                                              wx.SP_NO_XP_THEME)
+                                              style=wx.SP_3DSASH)# |
+                                              #wx.SP_NO_XP_THEME)
         self.profSplitter.SetMinimumPaneSize(100)
 
         # Profile panel.
