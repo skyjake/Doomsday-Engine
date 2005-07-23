@@ -42,10 +42,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-intercept_t *intercepts = 0, *intercept_p;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// Must be static so these are not confused with intercepts in game libs.
+static intercept_t *intercepts = 0;
+static intercept_t *intercept_p = 0;
 static int maxIntercepts = 0;
 
 // CODE --------------------------------------------------------------------

@@ -4,6 +4,10 @@
 #ifndef __ACTION_LINK_H__
 #define __ACTION_LINK_H__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 #include "dd_share.h"
 
 typedef struct {

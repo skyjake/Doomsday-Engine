@@ -547,7 +547,7 @@ void DD_ReadKeyboard(void)
 	ev.type = ev_keyrepeat;
 
 	// Don't specify a class
-	ev.useclass = 0;
+	ev.useclass = -1;
 	for(i = 0; i < MAX_DOWNKEYS; i++)
 	{
 		repeater_t *rep = keyReps + i;
@@ -675,7 +675,7 @@ void DD_ReadMouse(void)
 	ev.data2 = mouse.y;
 	ev.data3 = mouse.z;
 	// Don't specify a class
-	ev.useclass = 0;
+	ev.useclass = -1;
 
 	// Mouse axis data may be modified if not in UI mode.
 	if(allowMouseMod)
@@ -790,7 +790,7 @@ void DD_ReadJoystick(void)
 			bstate |= 1 << i;	// Set the bits.
 
 	// Don't specify a class
-	ev.useclass = 0;
+	ev.useclass = -1;
 
 	// Check for button state changes. 
 	i = oldJoyBState ^ bstate;	// The change mask.

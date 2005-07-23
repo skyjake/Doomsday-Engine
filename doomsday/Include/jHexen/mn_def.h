@@ -3,6 +3,10 @@
 #ifndef __MENU_DEFS_H_
 #define __MENU_DEFS_H_
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 #include "jHexen/h2def.h"
 #include "Common/hu_stuff.h"
 
@@ -74,7 +78,7 @@ typedef struct {
 	int             y;
 	void            (*drawFunc) (void);
 	int             itemCount;
-	MenuItem_t     *items;
+	const MenuItem_t *items;
 	int             lastOn;
 	MenuType_t      prevMenu;
 	dpatch_t       *font;		// Font for menu items.
@@ -105,14 +109,15 @@ extern Menu_t   PlayerSetupMenu;
 //extern Menu_t SerialMenu;
 //extern Menu_t ModemMenu;
 
-void		M_DrawSaveLoadBorder(int x, int y);
-void            M_WriteMenuText(Menu_t * menu, int index, char *text);
+void            M_StartControlPanel(void);
+void            M_DrawSaveLoadBorder(int x, int y);
+void            M_WriteMenuText(const Menu_t * menu, int index, char *text);
 int             M_StringWidth(char *string,  dpatch_t  *font);
-int     	M_StringHeight(char *string, dpatch_t *font);
+int             M_StringHeight(char *string, dpatch_t *font);
 
 void            M_StartMessage(char *string, void *routine, boolean input);
 
-void		M_WriteText(int x, int y, char *string);
+void            M_WriteText(int x, int y, char *string);
 void            M_WriteText2(int x, int y, char * string, dpatch_t *font,
 							 float red, float green, float blue, float alpha);
 void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
@@ -120,23 +125,23 @@ void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
 							 boolean doTypeIn, int initialCount);
 
 // Color widget.
-void    DrawColorWidget();
-void	SCColorWidget(int index, void *data);
-void    M_WGCurrentColor(int option, void *data);
+void            DrawColorWidget();
+void            SCColorWidget(int index, void *data);
+void            M_WGCurrentColor(int option, void *data);
 
-void    M_SetupNextMenu(Menu_t * menudef);
-void    M_DrawTitle(char *text, int y);
-void    M_DrawSlider(Menu_t * menu, int index, int width, int dot);
-void 	M_DrawColorBox(Menu_t * menu, int index, float r, float g, float b, float a);
-void    M_ClearMenus(void);
-void 	M_FloatMod10(float *variable, int option);
+void            M_SetupNextMenu(Menu_t * menudef);
+void            M_DrawTitle(char *text, int y);
+void            M_DrawSlider(const Menu_t * menu, int index, int width, int dot);
+void            M_DrawColorBox(const Menu_t * menu, int index, float r, float g, float b, float a);
+void            M_ClearMenus(void);
+void            M_FloatMod10(float *variable, int option);
 
-void         SCEnterMultiplayerMenu(int option, void *data);
+void            SCEnterMultiplayerMenu(int option, void *data);
 void            MN_TickerEx(void); // The extended ticker.
 
 // Called by Init
 // registers all the CCmds and CVars for the menu
-void 		MN_Register(void);
+void            MN_Register(void);
 
 // Widget routines.
 boolean       	Cl_Responder(event_t *event); 	// Handles control in a menu widget

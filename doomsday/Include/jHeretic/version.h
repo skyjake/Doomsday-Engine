@@ -1,6 +1,10 @@
 #ifndef __JHERETIC_VERSION_H__
 #define __JHERETIC_VERSION_H__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 //#define VERSION 130 // Original Heretic version.
 
 #define SAVE_VERSION	130		   // Don't change this.

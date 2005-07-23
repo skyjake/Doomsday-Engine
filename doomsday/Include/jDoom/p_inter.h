@@ -22,6 +22,10 @@
 #ifndef __P_INTER__
 #define __P_INTER__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #ifdef __GNUG__
 #pragma interface
 #endif
@@ -35,6 +39,12 @@ void            P_GiveBackpack(player_t *player);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.8  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.7.2.1  2005/06/15 18:22:41  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.7  2005/05/29 05:58:19  danij
 // Commonised key array names.
 //

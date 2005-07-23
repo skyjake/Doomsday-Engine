@@ -127,13 +127,10 @@ typedef struct Cheat_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-//static void DrawSoundInfo(void);
 static void DrINumber(signed int val, int x, int y, float r, float g, float b, float a);
-static void DrRedINumber(signed int val, int x, int y);
 static void DrBNumber(signed int val, int x, int y, float Red, float Green, float Blue, float Alpha);
 static void DrawChain(void);
 void ST_drawWidgets(boolean refresh);
-static void DrawInventoryItems(void);
 static void DrawKeyBar(void);
 static void DrawWeaponPieces(void);
 static void ST_doFullscreenStuff(void);
@@ -288,7 +285,7 @@ static st_number_t w_manaACount;
 static st_number_t w_manaBCount;
 
 // used by the mana glympf and vials
-static int     manaPatchNum1, manaPatchNum2, manaVialPatchNum1, manaVialPatchNum2;
+//static int     manaPatchNum1, manaPatchNum2, manaVialPatchNum1, manaVialPatchNum2;
 
  // number of frags so far in deathmatch
 static int st_fragscount;
@@ -337,10 +334,10 @@ static dpatch_t PatchNumH2TOP;
 static dpatch_t PatchNumLFEDGE;
 static dpatch_t PatchNumRTEDGE;
 static dpatch_t PatchNumKILLS;
-static dpatch_t PatchNumMANAVIAL1;
-static dpatch_t PatchNumMANAVIAL2;
-static dpatch_t PatchNumMANAVIALDIM1;
-static dpatch_t PatchNumMANAVIALDIM2;
+//static dpatch_t PatchNumMANAVIAL1;
+//static dpatch_t PatchNumMANAVIAL2;
+//static dpatch_t PatchNumMANAVIALDIM1;
+//static dpatch_t PatchNumMANAVIALDIM2;
 static dpatch_t PatchNumMANADIM1;
 static dpatch_t PatchNumMANADIM2;
 static dpatch_t PatchNumMANABRIGHT1;
@@ -725,34 +722,34 @@ static byte CheatTrackSeq2[] = {
 };
 
 static Cheat_t Cheats[] = {
-	{CheatTrackFunc1, CheatTrackSeq1, NULL, 0, 0, 0},
-	{CheatTrackFunc2, CheatTrackSeq2, NULL, 0, 0, 0},
-	{CheatGodFunc, CheatGodSeq, NULL, 0, 0, 0},
-	{CheatNoClipFunc, CheatNoClipSeq, NULL, 0, 0, 0},
-	{CheatWeaponsFunc, CheatWeaponsSeq, NULL, 0, 0, 0},
-	{CheatHealthFunc, CheatHealthSeq, NULL, 0, 0, 0},
-	{CheatKeysFunc, CheatKeysSeq, NULL, 0, 0, 0},
-	{CheatSoundFunc, CheatSoundSeq, NULL, 0, 0, 0},
-	{CheatTickerFunc, CheatTickerSeq, NULL, 0, 0, 0},
-	{CheatArtifactAllFunc, CheatArtifactAllSeq, NULL, 0, 0, 0},
-	{CheatPuzzleFunc, CheatPuzzleSeq, NULL, 0, 0, 0},
-	{CheatWarpFunc, CheatWarpSeq, NULL, 0, 0, 0},
-	{CheatPigFunc, CheatPigSeq, NULL, 0, 0, 0},
-	{CheatMassacreFunc, CheatMassacreSeq, NULL, 0, 0, 0},
-	{CheatIDKFAFunc, CheatIDKFASeq, NULL, 0, 0, 0},
-	{CheatQuickenFunc1, CheatQuickenSeq1, NULL, 0, 0, 0},
-	{CheatQuickenFunc2, CheatQuickenSeq2, NULL, 0, 0, 0},
-	{CheatQuickenFunc3, CheatQuickenSeq3, NULL, 0, 0, 0},
-	{CheatClassFunc1, CheatClass1Seq, NULL, 0, 0, 0},
-	{CheatClassFunc2, CheatClass2Seq, NULL, 0, 0, 0},
-	{CheatInitFunc, CheatInitSeq, NULL, 0, 0, 0},
-	{CheatVersionFunc, CheatVersionSeq, NULL, 0, 0, 0},
-	{CheatDebugFunc, CheatDebugSeq, NULL, 0, 0, 0},
-	{CheatScriptFunc1, CheatScriptSeq1, NULL, 0, 0, 0},
-	{CheatScriptFunc2, CheatScriptSeq2, NULL, 0, 0, 0},
-	{CheatScriptFunc3, CheatScriptSeq3, NULL, 0, 0, 0},
-	{CheatRevealFunc, CheatRevealSeq, NULL, 0, 0, 0},
-	{NULL, NULL, NULL, 0, 0, 0}	// Terminator
+	{CheatTrackFunc1, CheatTrackSeq1, NULL, {0, 0}, 0},
+	{CheatTrackFunc2, CheatTrackSeq2, NULL, {0, 0}, 0},
+	{CheatGodFunc, CheatGodSeq, NULL, {0, 0}, 0},
+	{CheatNoClipFunc, CheatNoClipSeq, NULL, {0, 0}, 0},
+	{CheatWeaponsFunc, CheatWeaponsSeq, NULL, {0, 0}, 0},
+	{CheatHealthFunc, CheatHealthSeq, NULL, {0, 0}, 0},
+	{CheatKeysFunc, CheatKeysSeq, NULL, {0, 0}, 0},
+	{CheatSoundFunc, CheatSoundSeq, NULL, {0, 0}, 0},
+	{CheatTickerFunc, CheatTickerSeq, NULL, {0, 0}, 0},
+	{CheatArtifactAllFunc, CheatArtifactAllSeq, NULL, {0, 0}, 0},
+	{CheatPuzzleFunc, CheatPuzzleSeq, NULL, {0, 0}, 0},
+	{CheatWarpFunc, CheatWarpSeq, NULL, {0, 0}, 0},
+	{CheatPigFunc, CheatPigSeq, NULL, {0, 0}, 0},
+	{CheatMassacreFunc, CheatMassacreSeq, NULL, {0, 0}, 0},
+	{CheatIDKFAFunc, CheatIDKFASeq, NULL, {0, 0}, 0},
+	{CheatQuickenFunc1, CheatQuickenSeq1, NULL, {0, 0}, 0},
+	{CheatQuickenFunc2, CheatQuickenSeq2, NULL, {0, 0}, 0},
+	{CheatQuickenFunc3, CheatQuickenSeq3, NULL, {0, 0}, 0},
+	{CheatClassFunc1, CheatClass1Seq, NULL, {0, 0}, 0},
+	{CheatClassFunc2, CheatClass2Seq, NULL, {0, 0}, 0},
+	{CheatInitFunc, CheatInitSeq, NULL, {0, 0}, 0},
+	{CheatVersionFunc, CheatVersionSeq, NULL, {0, 0}, 0},
+	{CheatDebugFunc, CheatDebugSeq, NULL, {0, 0}, 0},
+	{CheatScriptFunc1, CheatScriptSeq1, NULL, {0, 0}, 0},
+	{CheatScriptFunc2, CheatScriptSeq2, NULL, {0, 0}, 0},
+	{CheatScriptFunc3, CheatScriptSeq3, NULL, {0, 0}, 0},
+	{CheatRevealFunc, CheatRevealSeq, NULL, {0, 0}, 0},
+	{NULL, NULL, NULL, {0, 0}, 0}	// Terminator
 };
 
 // CODE --------------------------------------------------------------------
@@ -1250,6 +1247,7 @@ static void DrINumber(signed int val, int x, int y, float r, float g, float b, f
 //
 //==========================================================================
 
+#if 0 // UNUSED
 static void DrRedINumber(signed int val, int x, int y)
 {
 	int     oldval;
@@ -1277,6 +1275,7 @@ static void DrRedINumber(signed int val, int x, int y)
 	val = val % 10;
 	GL_DrawPatch(x + 16, y, W_GetNumForName("inred0") + val);
 }
+#endif
 
 //==========================================================================
 //

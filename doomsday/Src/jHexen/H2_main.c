@@ -28,6 +28,7 @@
 #include "jHexen/h2_actn.h"
 #include "d_net.h"
 #include "g_update.h"
+#include "jHexen/m_ctrl.h"
 
 #include "AcFnLink.h"
 
@@ -54,7 +55,6 @@ void    H2_EndFrame(void);
 int     D_PrivilegedResponder(event_t *event);
 void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    H2_ConsoleRegistration();
-void    D_DefaultBindings();
 void    SB_HandleCheatNotification(int fromplayer, void *data, int length);
 int     HU_PSpriteYOffset(player_t *pl);
 
@@ -356,7 +356,7 @@ void H2_PostInit(void)
 	// Init savegame directory.
 	SV_HxInit();
 
-	D_DefaultBindings();
+	G_DefaultBindings();
 	G_SetGlowing();
 
 	// Check the -class argument.

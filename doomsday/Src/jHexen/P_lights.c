@@ -110,6 +110,7 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
 	boolean think;
 	boolean rtn;
 
+    // FIXME: arg is unsigned char so these comparisons are always false.
 	arg1 = arg[1] > 255 ? 255 : arg[1];
 	arg1 = arg1 < 0 ? 0 : arg1;
 	arg2 = arg[2] > 255 ? 255 : arg[2];

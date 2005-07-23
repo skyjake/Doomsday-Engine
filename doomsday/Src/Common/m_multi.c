@@ -316,6 +316,7 @@ void MN_DrCenterTextB_CS(char *text, int center_x, int y)
 }
 
 #ifdef __JDOOM__
+/*
 static void MN_DrTextA_CS(char *text, int x, int y)
 {
 	M_WriteText2(x, y, text, hu_font_a, 1, 0, 0, menu_alpha);
@@ -325,7 +326,7 @@ static void MN_DrTextB_CS(char *text, int x, int y)
 {
 	M_WriteText2(x, y, text, hu_font_b, 1, 0, 0, menu_alpha);
 }
-
+*/
 #endif
 
 //*****

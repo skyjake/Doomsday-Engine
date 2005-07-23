@@ -13,6 +13,10 @@
 #ifndef __P_LOCAL__
 #define __P_LOCAL__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 #ifndef __R_LOCAL__
 #include "r_local.h"
 #endif
@@ -346,7 +350,7 @@ boolean         EV_MovePoly(line_t *line, byte *args, boolean timesEight,
 							boolean overRide);
 boolean         EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type);
 
-#define polyobjs			((polyobj_t*) *gi.polyobjs)
+#define polyobjs			(*(polyobj_t**)gi.polyobjs)
 #define po_NumPolyobjs		(*gi.numpolyobjs)
 
 void            PO_Init(int lump);

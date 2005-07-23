@@ -74,7 +74,7 @@ typedef struct wav_format_s {
 static void WRead(void **ptr, void **dest, int length)
 {
 	*dest = *ptr;
-	(char *) *ptr += length;
+    *(char**) ptr += length;
 }
 
 //===========================================================================

@@ -310,7 +310,11 @@ void DD_Main(void)
 	// The base path is always the same and depends on the build
 	// configuration.  Usually this is something like
 	// "/usr/share/deng/".
+#ifdef MACOSX
+    strcpy(ddBasePath, "./");
+#else
 	strcpy(ddBasePath, DENG_BASE_DIR);
+#endif
 #endif
 
 #ifdef WIN32

@@ -381,13 +381,22 @@ void GL_InitVarFont(void)
 
 	if(novideo || varFontInited)
 		return;
+        
+    VERBOSE2(Con_Message("GL_InitVarFont.\n"));
+        
 	old_font = FR_GetCurrent();
+    VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", old_font));    
+    
 	FR_PrepareFont(screenHeight < 300 ? "Small7" : screenHeight <
 				   400 ? "Small8" : screenHeight <
 				   480 ? "Small10" : screenHeight <
 				   600 ? "System" : screenHeight < 800 ? "System12" : "Large");
 	glFontVariable = FR_GetCurrent();
+    VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n", glFontVariable));    
+    
 	FR_SetFont(old_font);
+    VERBOSE2(Con_Message("GL_InitVarFont: Restored old font %i.\n", old_font));
+        
 	varFontInited = true;
 }
 
@@ -440,6 +449,16 @@ void GL_Init(void)
 
 	gl.Init(screenWidth, screenHeight, screenBits, !ArgExists("-window"));
 
+	// Initialize the renderer into a 2D state.
+	GL_Init2DState();
+
+	// Initialize font renderer.
+	GL_InitFont();
+
+	// Set the gamma in accordance with vid-gamma, vid-bright and 
+	// vid-contrast.
+	GL_SetGamma();
+
 	// Check the maximum texture size.
 	gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &maxTexSize);
 	if(maxTexSize == 256)
@@ -474,24 +493,14 @@ void GL_Init(void)
 	envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
 	if(numTexUnits > 1)
 	{
-		Con_Message("  Multitexturing enabled (%s).\n",
+		Con_Printf("  Multitexturing enabled (%s).\n",
 					envModAdd ? "full" : "partial");
 	}
 	else
 	{
 		// Can't use multitexturing...
-		Con_Message("  Multitexturing not available.\n");
+		Con_Printf("  Multitexturing not available.\n");
 	}
-
-	// Initialize the renderer into a 2D state.
-	GL_Init2DState();
-
-	// Initialize font renderer.
-	GL_InitFont();
-
-	// Set the gamma in accordance with vid-gamma, vid-bright and 
-	// vid-contrast.
-	GL_SetGamma();
 
 	initOk = true;
 }

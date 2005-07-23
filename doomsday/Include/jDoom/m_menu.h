@@ -22,6 +22,10 @@
 #ifndef __M_MENU__
 #define __M_MENU__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #include "hu_stuff.h"
 #include "d_event.h"
 
@@ -71,6 +75,12 @@ void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.10  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.9.2.1  2005/06/15 18:22:41  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.9  2005/05/30 17:27:06  skyjake
 // Fixes (now compiles and runs in Linux)
 //

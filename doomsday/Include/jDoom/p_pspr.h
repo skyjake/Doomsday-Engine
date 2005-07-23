@@ -22,6 +22,10 @@
 #ifndef __P_PSPR__
 #define __P_PSPR__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // Basic data types.
 // Needs fixed point, and BAM angles.
 #include "tables.h"
@@ -69,6 +73,12 @@ typedef struct {
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.5.2.1  2005/06/15 18:22:42  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.5  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

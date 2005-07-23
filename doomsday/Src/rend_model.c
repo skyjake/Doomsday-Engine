@@ -1007,10 +1007,8 @@ void Rend_RenderModel(vissprite_t * spr)
 	// This way the distance darkening has an effect.
 	quad.vertices[0].dist = Rend_PointDist2D(spr->data.mo.v1);
 	quad.numvertices = 1;
-	RL_VertexColors(&quad,
-					r_ambient >
-					spr->data.mo.lightlevel ? r_ambient : spr->data.mo.
-					lightlevel, spr->data.mo.rgb);
+	RL_VertexColors(&quad, r_ambient > spr->data.mo.lightlevel ? r_ambient 
+                    : spr->data.mo.lightlevel, spr->data.mo.rgb);
 
 	// Determine the ambient light affecting the model.
 	for(i = 0; i < 3; i++)

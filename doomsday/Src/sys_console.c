@@ -120,7 +120,7 @@ void Sys_ConPostEvents()
 			ev.data1 = DDKEY_DOWNARROW;
 		else
 			ev.data1 = DD_ScanToKey(key->wVirtualScanCode);
-		ev.useclass = 0;
+		ev.useclass = -1;
 		DD_PostEvent(&ev);
 	}
 }

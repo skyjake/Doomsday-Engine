@@ -69,7 +69,7 @@ Include/Unix/sys_findfile.h Include/Unix/sys_path.h		       \
 Include/drD3D/window.h Include/drD3D/box.h Include/drD3D/drD3D.h       \
 Include/drOpenGL/atiext.h Include/drOpenGL/drOpenGL.h		       \
 Src/jDoom/AcFnLink.h Include/jDoom/D_Action.h Include/jDoom/Mn_def.h   \
-Include/jDoom/SndIdx.h Include/jDoom/am_map.h Include/jDoom/d_config.h \
+Include/jDoom/SndIdx.h Include/jDoom/d_config.h			       \
 Include/jDoom/d_console.h Include/jDoom/d_englsh.h		       \
 Include/jDoom/d_event.h Include/jDoom/d_french.h		       \
 Include/jDoom/d_items.h Include/jDoom/d_main.h Include/jDoom/d_netJD.h \
@@ -77,21 +77,20 @@ Include/jDoom/d_player.h Include/jDoom/d_think.h		       \
 Include/jDoom/d_ticcmd.h Include/jDoom/doomdata.h		       \
 Include/jDoom/doomdef.h Include/jDoom/doomstat.h		       \
 Include/jDoom/doomtype.h Include/jDoom/dstrings.h		       \
-Include/jDoom/g_game.h Include/jDoom/hu_lib.h Include/jDoom/hu_msg.h   \
-Include/jDoom/hu_stuff.h Include/jDoom/info.h Include/jDoom/m_argv.h   \
-Include/jDoom/m_cheat.h Include/jDoom/m_menu.h Include/jDoom/m_misc.h  \
-Include/jDoom/m_random.h Include/jDoom/m_swap.h			       \
-Include/jDoom/oldinfo.h Include/jDoom/p_inter.h			       \
+Include/jDoom/g_game.h  \
+Include/jDoom/info.h Include/jDoom/m_argv.h Include/jDoom/m_cheat.h    \
+Include/jDoom/m_menu.h Include/jDoom/m_random.h \
+Include/jDoom/oldinfo.h Include/jDoom/p_inter.h \
 Include/jDoom/p_local.h Include/jDoom/p_mobj.h			       \
 Include/jDoom/p_oldsvg.h Include/jDoom/p_pspr.h			       \
 Include/jDoom/p_setup.h Include/jDoom/p_spec.h Include/jDoom/r_data.h  \
 Include/jDoom/r_defs.h Include/jDoom/r_local.h Include/jDoom/r_sky.h   \
-Include/jDoom/r_state.h Include/jDoom/s_sound.h Include/jDoom/st_lib.h \
+Include/jDoom/r_state.h Include/jDoom/s_sound.h  \
 Include/jDoom/st_stuff.h Include/jDoom/tables.h			       \
-Include/jDoom/v_video.h Include/jDoom/version.h			       \
+Include/jDoom/version.h			       \
 Include/jDoom/wi_stuff.h Include/jDoom/x_hair.h Include/jDoom/m_ctrl.h \
-Include/jHeretic/AM_data.h Include/jHeretic/AcFnLink.h		       \
-Include/jHeretic/Am_map.h Include/jHeretic/CT_chat.h		       \
+Include/jHeretic/AcFnLink.h		       \
+		       \
 Include/jHeretic/Doomdata.h Include/jHeretic/Doomdef.h		       \
 Include/jHeretic/Dstrings.h Include/jHeretic/G_game.h		       \
 Include/jHeretic/H_Action.h Include/jHeretic/Info.h		       \
@@ -99,15 +98,15 @@ Include/jHeretic/Mn_def.h Include/jHeretic/P_local.h		       \
 Include/jHeretic/P_spec.h Include/jHeretic/R_local.h		       \
 Include/jHeretic/S_sound.h Include/jHeretic/Sounds.h		       \
 Include/jHeretic/Soundst.h Include/jHeretic/p_oldsvg.h		       \
-Include/jHeretic/resource.h Include/jHeretic/settings.h		       \
+Include/jHeretic/resource.h 		       \
 Include/jHeretic/version.h Include/jHexen/AcFnLink.h		       \
 Include/jHeretic/h_config.h Include/jHeretic/m_ctrl.h		       \
-Include/jHeretic/st_stuff.h Include/jHexen/am_data.h		       \
-Include/jHexen/am_map.h Include/jHexen/ct_chat.h		       \
+Include/jHeretic/st_stuff.h 		       \
+		       \
 Include/jHexen/dstrings.h Include/jHexen/h2_actn.h		       \
 Include/jHexen/h2def.h Include/jHexen/info.h Include/jHexen/mn_def.h   \
 Include/jHexen/p_local.h Include/jHexen/p_spec.h		       \
-Include/jHexen/r_local.h Include/jHexen/settings.h		       \
+Include/jHexen/r_local.h 		       \
 Include/jHexen/sounds.h Include/jHexen/soundst.h		       \
 Include/jHexen/textdefs.h Include/jHexen/version.h		       \
 Include/jHexen/xddefs.h Include/jHexen/x_config.h		       \

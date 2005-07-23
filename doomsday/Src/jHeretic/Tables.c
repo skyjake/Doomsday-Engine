@@ -1,4 +1,4 @@
-#include "Doomdef.h"
+#include "jHeretic/Doomdef.h"
 
 int     finetangent[4096] = {
 	-170910304, -56965752, -34178904, -24413316, -18988036, -15535599,

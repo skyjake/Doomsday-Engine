@@ -22,6 +22,10 @@
 #ifndef __P_LOCAL__
 #define __P_LOCAL__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #ifndef __R_LOCAL__
 #include "r_local.h"
 #endif
@@ -315,6 +319,12 @@ void            P_ExplodeMissile(mobj_t *mo);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.10  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.9.2.1  2005/06/15 18:22:42  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.9  2005/05/29 06:02:08  danij
 // Removed fixed limits on number of active plats/ceilings using modified code from PrBoom. Added various Doom.exe bug fixes (with compatibility options) for Lost Souls spawning inside walls, Archviles raising invincible ghosts etc using fixes by Lee K from PrBoom.
 //

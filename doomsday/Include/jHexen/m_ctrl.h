@@ -4,6 +4,13 @@
 #ifndef __JHEXEN_CONTROLS__
 #define __JHEXEN_CONTROLS__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
+#include "jHexen/h2_actn.h"
+
+void    G_DefaultBindings(void);
 void    M_DrawControlsMenu(void);
 
 #define CTLCFG_TYPE void
@@ -17,7 +24,7 @@ CTLCFG_TYPE SCControlConfig(int option, void *data);
 typedef struct {
 	char   *command;			// The command to execute.
 	int     flags;
-	int	bindClass;			// Class it should be bound into
+	int     bindClass;			// Class it should be bound into
 	int     defKey;				// 
 	int     defMouse;			// Zero means there is no default.
 	int     defJoy;				//
@@ -26,105 +33,106 @@ typedef struct {
 //
 // !!! Add new controls to the end, the existing indices must remain unchanged !!!
 //
-static Control_t controls[] = {
+static const Control_t controls[] = {
 	// Actions (must be first so the A_* constants can be used).
-	"left", CLF_ACTION, BDC_NORMAL, DDKEY_LEFTARROW, 0, 0,
-	"right", CLF_ACTION, BDC_NORMAL, DDKEY_RIGHTARROW, 0, 0,
-	"forward", CLF_ACTION, BDC_NORMAL, DDKEY_UPARROW, 0, 0,
-	"backward", CLF_ACTION, BDC_NORMAL, DDKEY_DOWNARROW, 0, 0,
-	"strafel", CLF_ACTION, BDC_NORMAL, ',', 0, 0,
-	"strafer", CLF_ACTION, BDC_NORMAL, '.', 0, 0,
-	"jump", CLF_ACTION, BDC_NORMAL, '/', 2, 5,
-	"fire", CLF_ACTION, BDC_NORMAL, DDKEY_RCTRL, 1, 1,
-	"use", CLF_ACTION, BDC_NORMAL, ' ', 0, 4,
-	"strafe", CLF_ACTION, BDC_NORMAL, DDKEY_RALT, 3, 2,
+    {"left", CLF_ACTION, BDC_NORMAL, DDKEY_LEFTARROW, 0, 0},
+	{"right", CLF_ACTION, BDC_NORMAL, DDKEY_RIGHTARROW, 0, 0},
+	{"forward", CLF_ACTION, BDC_NORMAL, DDKEY_UPARROW, 0, 0},
+	{"backward", CLF_ACTION, BDC_NORMAL, DDKEY_DOWNARROW, 0, 0},
+	{"strafel", CLF_ACTION, BDC_NORMAL, ',', 0, 0},
+	{"strafer", CLF_ACTION, BDC_NORMAL, '.', 0, 0},
+	{"jump", CLF_ACTION, BDC_NORMAL, '/', 2, 5},
+	{"fire", CLF_ACTION, BDC_NORMAL, DDKEY_RCTRL, 1, 1},
+	{"use", CLF_ACTION, BDC_NORMAL, ' ', 0, 4},
+	{"strafe", CLF_ACTION, BDC_NORMAL, DDKEY_RALT, 3, 2},
 
-	"speed", CLF_ACTION, BDC_NORMAL, DDKEY_RSHIFT, 0, 3,
-	"flyup", CLF_ACTION, BDC_NORMAL, DDKEY_PGUP, 0, 8,
-	"flydown", CLF_ACTION, BDC_NORMAL, DDKEY_INS, 0, 9,
-	"falldown", CLF_ACTION, BDC_NORMAL, DDKEY_HOME, 0, 0,
-	"lookup", CLF_ACTION, BDC_NORMAL, DDKEY_PGDN, 0, 6,
-	"lookdown", CLF_ACTION, BDC_NORMAL, DDKEY_DEL, 0, 7,
-	"lookcntr", CLF_ACTION, BDC_NORMAL, DDKEY_END, 0, 0,
-	"usearti", CLF_ACTION, BDC_NORMAL, DDKEY_ENTER, 0, 0,
-	"mlook", CLF_ACTION, BDC_NORMAL, 'm', 0, 0,
-	"jlook", CLF_ACTION, BDC_NORMAL, 'j', 0, 0,
+	{"speed", CLF_ACTION, BDC_NORMAL, DDKEY_RSHIFT, 0, 3},
+	{"flyup", CLF_ACTION, BDC_NORMAL, DDKEY_PGUP, 0, 8},
+	{"flydown", CLF_ACTION, BDC_NORMAL, DDKEY_INS, 0, 9},
+	{"falldown", CLF_ACTION, BDC_NORMAL, DDKEY_HOME, 0, 0},
+	{"lookup", CLF_ACTION, BDC_NORMAL, DDKEY_PGDN, 0, 6},
+	{"lookdown", CLF_ACTION, BDC_NORMAL, DDKEY_DEL, 0, 7},
+	{"lookcntr", CLF_ACTION, BDC_NORMAL, DDKEY_END, 0, 0},
+	{"usearti", CLF_ACTION, BDC_NORMAL, DDKEY_ENTER, 0, 0},
+	{"mlook", CLF_ACTION, BDC_NORMAL, 'm', 0, 0},
+	{"jlook", CLF_ACTION, BDC_NORMAL, 'j', 0, 0},
 
-	"nextwpn", CLF_ACTION, BDC_NORMAL, 0, 0, 0,
-	"prevwpn", CLF_ACTION, BDC_NORMAL, 0, 0, 0,
-	"weapon1", CLF_ACTION, BDC_NORMAL, '1', 0, 0,
-	"weapon2", CLF_ACTION, BDC_NORMAL, '2', 0, 0,
-	"weapon3", CLF_ACTION, BDC_NORMAL, '3', 0, 0,
-	"weapon4", CLF_ACTION, BDC_NORMAL, '4', 0, 0,
-	"panic", CLF_ACTION, BDC_NORMAL, DDKEY_BACKSPACE, 0, 0,
-	"torch", CLF_ACTION, BDC_NORMAL, 0, 0, 0,
-	"health", CLF_ACTION, BDC_NORMAL, '\\', 0, 0,
-	"mystic", CLF_ACTION, BDC_NORMAL, 0, 0, 0,
+	{"nextwpn", CLF_ACTION, BDC_NORMAL, 0, 0, 0},
+	{"prevwpn", CLF_ACTION, BDC_NORMAL, 0, 0, 0},
+	{"weapon1", CLF_ACTION, BDC_NORMAL, '1', 0, 0},
+	{"weapon2", CLF_ACTION, BDC_NORMAL, '2', 0, 0},
+	{"weapon3", CLF_ACTION, BDC_NORMAL, '3', 0, 0},
+	{"weapon4", CLF_ACTION, BDC_NORMAL, '4', 0, 0},
+	{"panic", CLF_ACTION, BDC_NORMAL, DDKEY_BACKSPACE, 0, 0},
+	{"torch", CLF_ACTION, BDC_NORMAL, 0, 0, 0},
+	{"health", CLF_ACTION, BDC_NORMAL, '\\', 0, 0},
+	{"mystic", CLF_ACTION, BDC_NORMAL, 0, 0, 0},
 
-	"krater", CLF_ACTION, BDC_NORMAL, 0, 0, 0,
-	"spdboots", CLF_ACTION, BDC_NORMAL, 0, 0, 0,
-	"blast", CLF_ACTION, BDC_NORMAL, '9', 0, 0,
-	"teleport", CLF_ACTION, BDC_NORMAL, '8', 0, 0,
-	"teleothr", CLF_ACTION, BDC_NORMAL, '7', 0, 0,
-	"poison", CLF_ACTION, BDC_NORMAL, '0', 0, 0,
-	"cantdie", CLF_ACTION, BDC_NORMAL, '5', 0, 0,
-	"servant", CLF_ACTION, BDC_NORMAL, 0, 0, 0,
-	"egg", CLF_ACTION, BDC_NORMAL, '6', 0, 0,
-	"demostop", CLF_ACTION, BDC_NORMAL, 'o', 0, 0,
+	{"krater", CLF_ACTION, BDC_NORMAL, 0, 0, 0},
+	{"spdboots", CLF_ACTION, BDC_NORMAL, 0, 0, 0},
+	{"blast", CLF_ACTION, BDC_NORMAL, '9', 0, 0},
+	{"teleport", CLF_ACTION, BDC_NORMAL, '8', 0, 0},
+	{"teleothr", CLF_ACTION, BDC_NORMAL, '7', 0, 0},
+	{"poison", CLF_ACTION, BDC_NORMAL, '0', 0, 0},
+	{"cantdie", CLF_ACTION, BDC_NORMAL, '5', 0, 0},
+	{"servant", CLF_ACTION, BDC_NORMAL, 0, 0, 0},
+	{"egg", CLF_ACTION, BDC_NORMAL, '6', 0, 0},
+	{"demostop", CLF_ACTION, BDC_NORMAL, 'o', 0, 0},
 
 	// Menu hotkeys (default: F1 - F12).
-	"infoscreen", 0, BDC_NORMAL, DDKEY_F1, 0, 0,
-	"loadgame", 0, BDC_NORMAL, DDKEY_F3, 0, 0,
-	"savegame", 0, BDC_NORMAL, DDKEY_F2, 0, 0,
-	"soundmenu", 0, BDC_NORMAL, DDKEY_F4, 0, 0,
-	"suicide", 0, BDC_NORMAL, DDKEY_F5, 0, 0,
-	"quicksave", 0, BDC_NORMAL, DDKEY_F6, 0, 0,
-	"endgame", 0, BDC_NORMAL, DDKEY_F7, 0, 0,
-	"togglemsgs", 0, BDC_NORMAL, DDKEY_F8, 0, 0,
-	"quickload", 0, BDC_NORMAL, DDKEY_F9, 0, 0,
-	"quit", 0, BDC_NORMAL, DDKEY_F10, 0, 0,
-	"togglegamma", 0, BDC_NORMAL, DDKEY_F11, 0, 0,
-	"spy", 0, BDC_NORMAL, DDKEY_F12, 0, 0,
+	{"infoscreen", 0, BDC_NORMAL, DDKEY_F1, 0, 0},
+	{"loadgame", 0, BDC_NORMAL, DDKEY_F3, 0, 0},
+	{"savegame", 0, BDC_NORMAL, DDKEY_F2, 0, 0},
+	{"soundmenu", 0, BDC_NORMAL, DDKEY_F4, 0, 0},
+	{"suicide", 0, BDC_NORMAL, DDKEY_F5, 0, 0},
+	{"quicksave", 0, BDC_NORMAL, DDKEY_F6, 0, 0},
+	{"endgame", 0, BDC_NORMAL, DDKEY_F7, 0, 0},
+	{"togglemsgs", 0, BDC_NORMAL, DDKEY_F8, 0, 0},
+	{"quickload", 0, BDC_NORMAL, DDKEY_F9, 0, 0},
+	{"quit", 0, BDC_NORMAL, DDKEY_F10, 0, 0},
+	{"togglegamma", 0, BDC_NORMAL, DDKEY_F11, 0, 0},
+	{"spy", 0, BDC_NORMAL, DDKEY_F12, 0, 0},
 
 	// Inventory.
-	"invleft", CLF_REPEAT, BDC_NORMAL, '[', 0, 0,
-	"invright", CLF_REPEAT, BDC_NORMAL, ']', 0, 0,
+	{"invleft", CLF_REPEAT, BDC_NORMAL, '[', 0, 0},
+	{"invright", CLF_REPEAT, BDC_NORMAL, ']', 0, 0},
 
 	// Screen controls.
-	"viewsize +", CLF_REPEAT, BDC_NORMAL, '=', 0, 0,
-	"viewsize -", CLF_REPEAT, BDC_NORMAL, '-', 0, 0,
-	"sbsize +", CLF_REPEAT, BDC_NORMAL, 0, 0, 0,
-	"sbsize -", CLF_REPEAT, BDC_NORMAL, 0, 0, 0,
+	{"viewsize +", CLF_REPEAT, BDC_NORMAL, '=', 0, 0},
+	{"viewsize -", CLF_REPEAT, BDC_NORMAL, '-', 0, 0},
+	{"sbsize +", CLF_REPEAT, BDC_NORMAL, 0, 0, 0},
+	{"sbsize -", CLF_REPEAT, BDC_NORMAL, 0, 0, 0},
 
 	// Misc.
-	"pause", 0, BDC_NORMAL, DDKEY_PAUSE, 0, 0,
-	"screenshot", 0, BDC_NORMAL, 0, 0, 0,
+	{"pause", 0, BDC_NORMAL, DDKEY_PAUSE, 0, 0},
+	{"screenshot", 0, BDC_NORMAL, 0, 0, 0},
 
-	"automap", 0, BDC_NORMAL, DDKEY_TAB, 0, 0,
-	"follow", 0, BDC_CLASS1, 'f', 0, 0,
-	"rotate", 0, BDC_CLASS1, 'r', 0, 0,
-	"grid", 0, BDC_CLASS1, 'g', 0, 0,
-	"mzoomin", CLF_ACTION, BDC_CLASS1, '=', 0, 0,
-	"mzoomout", CLF_ACTION, BDC_CLASS1, '-', 0, 0,
-	"zoommax", 0, BDC_CLASS1, '0', 0, 0,
-	"addmark", 0, BDC_CLASS1, 'm', 0, 0,
-	"clearmarks", 0, BDC_CLASS1, 'c', 0, 0,
-	"mpanup", CLF_ACTION, BDC_CLASS2, DDKEY_UPARROW, 0, 0,
-	"mpandown", CLF_ACTION, BDC_CLASS2, DDKEY_DOWNARROW, 0, 0,
-	"mpanleft", CLF_ACTION, BDC_CLASS2, DDKEY_LEFTARROW, 0, 0,
-	"mpanright", CLF_ACTION, BDC_CLASS2, DDKEY_RIGHTARROW, 0, 0,
+	{"automap", 0, BDC_NORMAL, DDKEY_TAB, 0, 0},
+	{"follow", 0, BDC_CLASS1, 'f', 0, 0},
+	{"rotate", 0, BDC_CLASS1, 'r', 0, 0},
+	{"grid", 0, BDC_CLASS1, 'g', 0, 0},
+	{"mzoomin", CLF_ACTION, BDC_CLASS1, '=', 0, 0},
+	{"mzoomout", CLF_ACTION, BDC_CLASS1, '-', 0, 0},
+	{"zoommax", 0, BDC_CLASS1, '0', 0, 0},
+	{"addmark", 0, BDC_CLASS1, 'm', 0, 0},
+	{"clearmarks", 0, BDC_CLASS1, 'c', 0, 0},
+	{"mpanup", CLF_ACTION, BDC_CLASS2, DDKEY_UPARROW, 0, 0},
+	{"mpandown", CLF_ACTION, BDC_CLASS2, DDKEY_DOWNARROW, 0, 0},
+	{"mpanleft", CLF_ACTION, BDC_CLASS2, DDKEY_LEFTARROW, 0, 0},
+	{"mpanright", CLF_ACTION, BDC_CLASS2, DDKEY_RIGHTARROW, 0, 0},
 
-	"beginchat", 0, BDC_NORMAL, 't', 0, 0,
-	"beginchat 0", 0, BDC_NORMAL, 'g', 0, 0,
-	"beginchat 1", 0, BDC_NORMAL, 'y', 0, 0,
-	"beginchat 2", 0, BDC_NORMAL, 'r', 0, 0,
-	"beginchat 3", 0, BDC_NORMAL, 'b', 0, 0,
+	{"beginchat", 0, BDC_NORMAL, 't', 0, 0},
+    {"beginchat 0", 0, BDC_NORMAL, 'g', 0, 0},    
+    {"beginchat 1", 0, BDC_NORMAL, 'y', 0, 0},
+    {"beginchat 2", 0, BDC_NORMAL, 'r', 0, 0},
+    {"beginchat 3", 0, BDC_NORMAL, 'b', 0, 0},
 
-	"", 0, 0, 0, 0, 0
+    {"", 0, 0, 0, 0, 0}
 };
-static Control_t *grabbing = NULL;
 
-static MenuItem_t ControlsItems[] = {
+extern const Control_t *grabbing;
+
+static const MenuItem_t ControlsItems[] = {
 	{ITT_EMPTY, "PLAYER ACTIONS", NULL, 0},
 	{ITT_EFUNC, "LEFT :", SCControlConfig, A_TURNLEFT},
 	{ITT_EFUNC, "RIGHT :", SCControlConfig, A_TURNRIGHT},
@@ -217,17 +225,6 @@ static MenuItem_t ControlsItems[] = {
 	{ITT_EFUNC, "RED CHAT :", SCControlConfig, 76},
 	{ITT_EFUNC, "BLUE CHAT :", SCControlConfig, 77},
 	{ITT_EFUNC, "SCREENSHOT :", SCControlConfig, 59}
-};
-
-Menu_t ControlsDef = {
-	32, 21,
-	M_DrawControlsMenu,
-	92, ControlsItems,
-	1, MENU_OPTIONS,
-	hu_font_a,					//1, 0, 0,
-	cfg.menuColor2, 
-	LINEHEIGHT_A,
-	0, 17
 };
 
 #endif

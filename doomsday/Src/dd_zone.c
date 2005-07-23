@@ -168,7 +168,7 @@ void Z_Shutdown(void)
         free(vol);
     }
 
-    printf("Z_Shutdown: Used %i volumes, total %i bytes.\n",
+    printf("Z_Shutdown: Used %i volumes, total %lu bytes.\n",
            numVolumes, totalMemory);
 }
 

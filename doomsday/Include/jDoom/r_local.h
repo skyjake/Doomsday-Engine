@@ -23,6 +23,11 @@
 #ifndef __R_LOCAL__
 #define __R_LOCAL__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
+
 // Binary Angles, sine/cosine/atan lookups.
 #include "tables.h"
 

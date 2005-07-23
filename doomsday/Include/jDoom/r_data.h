@@ -23,6 +23,10 @@
 #ifndef __R_DATA__
 #define __R_DATA__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #include "r_defs.h"
 #include "r_state.h"
 
@@ -31,6 +35,12 @@
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.6  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.5.2.1  2005/06/15 18:22:42  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.5  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

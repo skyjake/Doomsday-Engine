@@ -471,7 +471,7 @@ void FI_NewState(const char *script)
 
 void FI_DeleteXImage(fipic_t *pic)
 {
-	gl.DeleteTextures(1, &pic->lump[0]);
+	gl.DeleteTextures(1, (DGLuint*)&pic->lump[0]);
 	pic->lump[0] = 0;
 	pic->flags.is_ximage = false;
 }
@@ -1772,10 +1772,10 @@ void FI_Drawer(void)
 		return;
 
 	// Go into screen projection mode.
-	gl.MatrixMode(DGL_PROJECTION);
-	gl.PushMatrix();
-	gl.LoadIdentity();
-	gl.Ortho(0, 0, 320,200, -1, 1);
+	//gl.MatrixMode(DGL_PROJECTION);
+	//gl.PushMatrix();
+	//gl.LoadIdentity();
+	//gl.Ortho(0, 0, 320, 200, -1, 1);
 
 	// Draw the background.
 	if(fi->bgflat >= 0)

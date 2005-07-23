@@ -4,6 +4,10 @@
 #ifndef __P_SETUP__
 #define __P_SETUP__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // Called by startup code.
 void            P_Init(void);
 

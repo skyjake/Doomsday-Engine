@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 #include "version.h"
 
 #ifdef WIN32

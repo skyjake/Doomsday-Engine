@@ -3,7 +3,9 @@
 #include "jHeretic/Doomdef.h"
 #include "jHeretic/P_local.h"
 #include "jHeretic/Soundst.h"
-#include "jHeretic/d_config.h"
+#include "jHeretic/h_config.h"
+
+#include <math.h>
 
 /*
    ===============================================================================

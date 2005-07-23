@@ -342,7 +342,9 @@ void HU_Init(void)
 	int     i;
 	int     j;
 	char    buffer[9];
+#ifndef __JDOOM__    
 	dpatch_t tmp;
+#endif
 
 #ifdef __JDOOM__
 

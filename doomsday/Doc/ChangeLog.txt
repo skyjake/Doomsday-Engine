@@ -18,6 +18,7 @@ Version 1.9.0
 - removed fixed limit on the number of opened files
 - fixed: minor memory leaks concerning definition data
 - less chance of file name collisions thanks to CRC32 in Dir_FileID
+- fixed: crash during startup when running with extra verbosity
 + binding classes: multiple commands can be bound to the same event
 + ccmd 'enablebindclass': Enable/disable/toggle binding classes or view their status
 + ccmd 'listbindclasses': Print a list of available binding classes
@@ -71,6 +72,8 @@ jDoom:
 + ccmd 'suicide': commit suicide in non deathmatch games
 + cvar 'map-babykeys': show key locations in the automap on easy skill
 + cvar 'hud-face': show Doom Guy's face in the fullscreen HUD
++ cvar 'server-game-respawn-monsters-nightmare': monsters respawn in Nightmare
+  skill
 * removed fixed limit on the number of active plats
 * removed fixed limit on the number of active switches
 - fixed: Automatic weapon switching now works in Co-op games

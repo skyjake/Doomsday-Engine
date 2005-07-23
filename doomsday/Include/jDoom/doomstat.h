@@ -9,6 +9,10 @@
 #ifndef __D_STATE__
 #define __D_STATE__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // We need globally shared data structures,
 //  for defining the global state variables.
 #include "doomdata.h"

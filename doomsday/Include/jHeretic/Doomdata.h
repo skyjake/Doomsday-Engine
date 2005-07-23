@@ -6,6 +6,10 @@
 #ifndef __DOOMDATA__
 #define __DOOMDATA__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
 typedef enum { false, true } boolean;

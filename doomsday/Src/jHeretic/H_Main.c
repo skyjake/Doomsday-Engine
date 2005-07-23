@@ -6,17 +6,18 @@
 //#include <direct.h>
 #include <ctype.h>
 #include "jHeretic/Doomdef.h"
-#include "../Common/d_net.h"
+#include "Common/d_net.h"
 #include "jHeretic/P_local.h"
 #include "jHeretic/Soundst.h"
 #include "jHeretic/h_config.h"
 #include "jHeretic/AcFnLink.h"
 #include "jHeretic/Mn_def.h"
-#include "../Common/hu_msg.h"
-#include "../Common/hu_stuff.h"
-#include "../Common/am_map.h"
+#include "Common/hu_msg.h"
+#include "Common/hu_stuff.h"
+#include "Common/am_map.h"
 #include "f_infine.h"
 #include "g_update.h"
+#include "jHeretic/m_ctrl.h"
 
 #define viewheight	Get(DD_VIEWWINDOW_HEIGHT)
 
@@ -61,7 +62,6 @@ void    R_SetAllDoomsdayFlags();
 void    R_DrawRingFilter();
 void    X_Drawer();
 int     D_PrivilegedResponder(event_t *event);
-void    D_DefaultBindings();
 
 void R_DrawLevelTitle(void)
 {
@@ -132,7 +132,7 @@ void D_Display(void)
 	static boolean menuactivestate = false;
 	static boolean inhelpscreensstate = false;
 	static int targx =0, targy = 0, targw =0, targh = 0;
-	static int x =0, y = 0, w =320, h = 200, offy = 0;
+	static int /*x = 0, y = 0, */w = 320, h = 200, offy = 0;
 	static int fullscreenmode = 0;
 	static gamestate_t oldgamestate = -1;
 	int     ay;
@@ -1063,7 +1063,7 @@ void H_PostInit(void)
 	XG_Register();			// register XG classnames
 
 	// Set the default bindings, if needed.
-	D_DefaultBindings();
+	G_DefaultBindings();
 
 	// Init the view.
 	R_SetViewSize(cfg.screenblocks, 0);

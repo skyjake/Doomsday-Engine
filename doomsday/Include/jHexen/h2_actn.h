@@ -1,6 +1,10 @@
 #ifndef __JHEXEN_ACTIONS_H__
 #define __JHEXEN_ACTIONS_H__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 #include "h2def.h"
 
 // These must correspond the action_t's in the actions array!

@@ -23,6 +23,10 @@
 #ifndef __DOOMTYPE__
 #define __DOOMTYPE__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // Predefined with some OS.
 #ifdef UNIX
 

@@ -788,8 +788,9 @@ void DG_Func(int func, int param1, int param2)
 //===========================================================================
 void DG_MatrixMode(int mode)
 {
-	glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION : mode ==
-				 DGL_TEXTURE ? GL_TEXTURE : GL_MODELVIEW);
+	glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION : 
+                 mode == DGL_TEXTURE ? GL_TEXTURE : 
+                 GL_MODELVIEW);
 }
 
 //===========================================================================
@@ -798,6 +799,10 @@ void DG_MatrixMode(int mode)
 void DG_PushMatrix(void)
 {
 	glPushMatrix();
+    if(glGetError() == GL_STACK_OVERFLOW)
+    {
+        Con_Error("DG_PushMatrix: Stack overflow.\n");
+    }
 }
 
 //===========================================================================
@@ -806,6 +811,10 @@ void DG_PushMatrix(void)
 void DG_PopMatrix(void)
 {
 	glPopMatrix();
+    if(glGetError() == GL_STACK_UNDERFLOW)
+    {
+        Con_Error("DG_PopMatrix: Stack underflow.\n");
+    }
 }
 
 //===========================================================================

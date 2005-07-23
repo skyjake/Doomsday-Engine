@@ -312,7 +312,7 @@ void Cl_GetPackets(void)
 
 		case psv_console_text:
 			i = Msg_ReadLong();
-			Con_FPrintf(i, netBuffer.cursor);
+			Con_FPrintf(i, (char*)netBuffer.cursor);
 			break;
 
 		case pkt_login:

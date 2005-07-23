@@ -8,6 +8,10 @@
 #include "R_local.h"
 #endif
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_saveg.h"

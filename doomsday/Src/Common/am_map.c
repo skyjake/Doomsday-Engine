@@ -355,76 +355,76 @@ boolean automapactive = false;
 boolean amap_fullyopen = false;
 
 cvar_t  mapCVars[] = {
-    "map-position", 0, CVT_INT, &cfg.automapPos, 0, 8,
-        "Relative position of the automap.\n0-8 Left to right, top to bottom",
-    "map-width", 0, CVT_FLOAT, &cfg.automapWidth, 0, 1,
-        "Automap width scale factor.",
-    "map-height", 0, CVT_FLOAT, &cfg.automapHeight, 0, 1,
-        "Automap height scale factor.",
-    "map-color-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1,
-        "Automap unseen areas, red component.",
-    "map-color-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1,
-        "Automap unseen areas, green component.",
-    "map-color-unseen-b", 0, CVT_FLOAT, &cfg.automapL0[2], 0, 1,
-        "Automap unseen areas, blue component.",
-    "map-color-wall-r", 0, CVT_FLOAT, &cfg.automapL1[0], 0, 1,
-        "Automap walls, red component.",
-    "map-color-wall-g", 0, CVT_FLOAT, &cfg.automapL1[1], 0, 1,
-        "Automap walls, green component.",
-    "map-color-wall-b", 0, CVT_FLOAT, &cfg.automapL1[2], 0, 1,
-        "Automap walls, blue component.",
-    "map-color-floor-r", 0, CVT_FLOAT, &cfg.automapL2[0], 0, 1,
-        "Automap floor height difference lines, red component.",
-    "map-color-floor-g", 0, CVT_FLOAT, &cfg.automapL2[1], 0, 1,
-        "Automap floor height difference lines, green component.",
-    "map-color-floor-b", 0, CVT_FLOAT, &cfg.automapL2[2], 0, 1,
-        "Automap floor height difference lines, blue component.",
-    "map-color-ceiling-r", 0, CVT_FLOAT, &cfg.automapL3[0], 0, 1,
-        "Automap ceiling height difference lines, red component.",
-    "map-color-ceiling-g", 0, CVT_FLOAT, &cfg.automapL3[1], 0, 1,
-        "Automap ceiling height difference lines, green component.",
-    "map-color-ceiling-b", 0, CVT_FLOAT, &cfg.automapL3[2], 0, 1,
-        "Automap ceiling height difference lines, blue component.",
-    "map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1,
-        "Automap background color, red component.",
-    "map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1,
-        "Automap background color, green component.",
-    "map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1,
-        "Automap background color, blue component.",
-    "map-background-a", 0, CVT_FLOAT, &cfg.automapBack[3], 0, 1,
-        "Alpha level of the automap background.",
-    "map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1,
-        "Alpha level of automap lines.",
-    "map-rotate", 0, CVT_INT, &cfg.automapRotate, 0, 1,
-        "1=Automap turns with player, up=forward.",
-    "map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2,
-        "0=No HUD when in the automap\n1=Current HUD display shown when in the automap\n2=Always show Status Bar when in the automap",
-    "map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1,
-        "1=Show door colors in automap.",
-    "map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200,
-        "Door glow thickness in the automap (with map-door-colors).",
+    {"map-position", 0, CVT_INT, &cfg.automapPos, 0, 8,
+        "Relative position of the automap.\n0-8 Left to right, top to bottom"},
+    {"map-width", 0, CVT_FLOAT, &cfg.automapWidth, 0, 1,
+        "Automap width scale factor."},
+    {"map-height", 0, CVT_FLOAT, &cfg.automapHeight, 0, 1,
+        "Automap height scale factor."},
+    {"map-color-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1,
+        "Automap unseen areas, red component."},
+    {"map-color-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1,
+        "Automap unseen areas, green component."},
+    {"map-color-unseen-b", 0, CVT_FLOAT, &cfg.automapL0[2], 0, 1,
+        "Automap unseen areas, blue component."},
+    {"map-color-wall-r", 0, CVT_FLOAT, &cfg.automapL1[0], 0, 1,
+        "Automap walls, red component."},
+    {"map-color-wall-g", 0, CVT_FLOAT, &cfg.automapL1[1], 0, 1,
+        "Automap walls, green component."},
+    {"map-color-wall-b", 0, CVT_FLOAT, &cfg.automapL1[2], 0, 1,
+        "Automap walls, blue component."},
+    {"map-color-floor-r", 0, CVT_FLOAT, &cfg.automapL2[0], 0, 1,
+        "Automap floor height difference lines, red component."},
+    {"map-color-floor-g", 0, CVT_FLOAT, &cfg.automapL2[1], 0, 1,
+        "Automap floor height difference lines, green component."},
+    {"map-color-floor-b", 0, CVT_FLOAT, &cfg.automapL2[2], 0, 1,
+        "Automap floor height difference lines, blue component."},
+    {"map-color-ceiling-r", 0, CVT_FLOAT, &cfg.automapL3[0], 0, 1,
+        "Automap ceiling height difference lines, red component."},
+    {"map-color-ceiling-g", 0, CVT_FLOAT, &cfg.automapL3[1], 0, 1,
+        "Automap ceiling height difference lines, green component."},
+    {"map-color-ceiling-b", 0, CVT_FLOAT, &cfg.automapL3[2], 0, 1,
+        "Automap ceiling height difference lines, blue component."},
+    {"map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1,
+        "Automap background color, red component."},
+    {"map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1,
+        "Automap background color, green component."},
+    {"map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1,
+        "Automap background color, blue component."},
+    {"map-background-a", 0, CVT_FLOAT, &cfg.automapBack[3], 0, 1,
+        "Alpha level of the automap background."},
+    {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1,
+        "Alpha level of automap lines."},
+    {"map-rotate", 0, CVT_BYTE, &cfg.automapRotate, 0, 1,
+        "1=Automap turns with player, up=forward."},
+    {"map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2,
+        "0=No HUD when in the automap\n1=Current HUD display shown when in the automap\n2=Always show Status Bar when in the automap"},
+    {"map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1,
+        "1=Show door colors in automap."},
+    {"map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200,
+        "Door glow thickness in the automap (with map-door-colors)."},
 #ifndef __JHEXEN__
 #ifndef __JSTRIFE__
-    "map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63,
-        "6-bit bitfield. Show kills, items and secret counters in automap.",
-    "map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1,
-        "Size factor for the counters in the automap.",
-    "map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1,
-        "1=Show keys in automap (easy skill mode only).",
+    {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63,
+        "6-bit bitfield. Show kills, items and secret counters in automap."},
+    {"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1,
+        "Size factor for the counters in the automap."},
+    {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1,
+        "1=Show keys in automap (easy skill mode only)."},
 #endif
 #endif
-    NULL
+    {NULL}
 };
 
 ccmd_t  mapCCmds[] = {
-    "automap", CCmdMapAction, "Show automap.",
-    "follow", CCmdMapAction, "Toggle Follow mode in the automap.",
-    "rotate", CCmdMapAction, "Toggle Rotate mode in the automap.",
-    "addmark", CCmdMapAction, "Add a mark in the automap.",
-    "clearmarks", CCmdMapAction, "Clear all marks in the automap.",
-    "grid", CCmdMapAction, "Toggle the grid in the automap.",
-    "zoommax", CCmdMapAction, "Zoom out to the max in the automap.",
-    NULL
+    {"automap", CCmdMapAction, "Show automap."},
+    {"follow", CCmdMapAction, "Toggle Follow mode in the automap."},
+    {"rotate", CCmdMapAction, "Toggle Rotate mode in the automap."},
+    {"addmark", CCmdMapAction, "Add a mark in the automap."},
+    {"clearmarks", CCmdMapAction, "Clear all marks in the automap."},
+    {"grid", CCmdMapAction, "Toggle the grid in the automap."},
+    {"zoommax", CCmdMapAction, "Zoom out to the max in the automap."},
+    {NULL}
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -478,7 +478,7 @@ static int scrwidth = 0;    // real screen dimensions
 static int scrheight = 0;
 
 static int finit_height = SCREENHEIGHT;
-static int finit_width = SCREENWIDTH;
+//static int finit_width = SCREENWIDTH;
 
 static float am_alpha = 0;
 
@@ -862,7 +862,9 @@ void AM_changeWindowLoc(void)
 void AM_initVariables(void)
 {
     int     pnum;
+#ifdef __JDOOM__    
     static event_t st_notify = { ev_keyup, AM_MSGENTERED };
+#endif
 
     thinker_t *think;
     mobj_t *mo;
@@ -882,7 +884,10 @@ void AM_initVariables(void)
         winy = 0;
         winw = scrwidth;
         winh = scrheight;
-    } else { // smooth scale/move from center
+    } 
+    else 
+    { 
+        // smooth scale/move from center
         winx = 160;
         winy = 100;
         winw = 0;
@@ -1052,7 +1057,9 @@ void AM_LevelInit(void)
  */
 void AM_Stop(void)
 {
+#ifdef __JDOOM__
     static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED };
+#endif    
 
     AM_unloadPics();
     automapactive = false;
@@ -1119,9 +1126,9 @@ void AM_maxOutWindowScale(void)
 boolean AM_Responder(event_t *ev)
 {
     int     rc;
-    static int cheatstate = 0;
-    static int bigstate = 0;
-    static char buffer[20];
+    //static int cheatstate = 0;
+    //static int bigstate = 0;
+    //static char buffer[20];
 
     rc = false;
 
@@ -2210,36 +2217,42 @@ void AM_GL_SetupState()
     gl.Ortho(0, 0, scrwidth, scrheight, -1, 1);
 
     // Do we want a background texture?
-    if (maplumpnum){
+    if (maplumpnum)
+    {
         gl.Enable(DGL_TEXTURING);
 
         GL_SetColorAndAlpha(cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], (am_alpha - (1- cfg.automapBack[3])));
         GL_SetRawImage(maplumpnum, 0);        // We only want the left portion.
         GL_DrawRectTiled(winx, winy, winw, winh, 128, 100);
-    } else {
+    } 
+    else 
+    {
         // nope just a solid color
         GL_SetNoTexture();
         GL_DrawRect(winx, winy, winw, winh, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], (am_alpha - (1- cfg.automapBack[3])));
     }
 
     // How about an outside border?
-    if (cfg.automapHeight != 1 || cfg.automapWidth != 1 ){
+    if (cfg.automapHeight != 1 || cfg.automapWidth != 1 )
+    {
         gl.Begin(DGL_LINES);
         gl.Color4f(0.5f, 1, 0.5f, am_alpha - (1 - (cfg.automapLineAlpha /2)) );
 
-        if (cfg.automapHeight != 1){
-            gl.Vertex2f(winx-1,     winy-1);
-            gl.Vertex2f(winx+winw+1,     winy-1);
+        if (cfg.automapHeight != 1)
+        {
+            gl.Vertex2f(winx-1, winy-1);
+            gl.Vertex2f(winx+winw+1, winy-1);
 
-            gl.Vertex2f(winx+winw+1,     winy+winh+1);
-            gl.Vertex2f(winx-1,     winy+winh+1);
+            gl.Vertex2f(winx+winw+1, winy+winh+1);
+            gl.Vertex2f(winx-1, winy+winh+1);
         }
-        if (cfg.automapWidth != 1){
-            gl.Vertex2f(winx+winw+1,     winy-1);
-            gl.Vertex2f(winx+winw+1,     winy+winh+1);
+        if (cfg.automapWidth != 1)
+        {
+            gl.Vertex2f(winx+winw+1, winy-1);
+            gl.Vertex2f(winx+winw+1, winy+winh+1);
 
-            gl.Vertex2f(winx-1,     winy+winh+1);
-            gl.Vertex2f(winx-1,     winy-1);
+            gl.Vertex2f(winx-1, winy+winh+1);
+            gl.Vertex2f(winx-1, winy-1);
         }
         gl.End();
     }
@@ -2265,6 +2278,7 @@ void AM_GL_SetupState()
  */
 void AM_GL_RestoreState()
 {
+    gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 
     gl.MatrixMode(DGL_MODELVIEW);
@@ -2808,17 +2822,17 @@ extern short    itemOn;
  */
 void M_DrawMapMenu(void)
 {
-    Menu_t *menu = &MapDef;
-    MenuItem_t *item = menu->items + menu->firstItem;
+    const Menu_t *menu = &MapDef;
+#if !defined( __JDOOM__ ) && !defined( __JHERETIC__ )
+    const MenuItem_t *item = menu->items + menu->firstItem;
+#endif
 
     char   *posnames[9] = { "TOP LEFT", "TOP CENTER", "TOP RIGHT", "CENTER LEFT", "CENTER", \
                             "CENTER RIGHT", "BOTTOM LEFT", "BOTTOM CENTER", "BOTTOM RIGHT" };
     char   *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
     char *yesno[2] = { "NO", "YES" };
-#ifndef __JHEXEN__
-#ifndef __JSTRIFE__
+#if !defined(__JHEXEN__) && !defined(__JSTRIFE__)
     char   *countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
-#endif
 #endif
 
 #ifndef __JDOOM__
@@ -2864,8 +2878,9 @@ void M_DrawMapMenu(void)
         M_WriteMenuText(menu, 8, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
         M_WriteMenuText(menu, 9, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
         M_WriteMenuText(menu, 10, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-
-    } else {
+    } 
+    else 
+    {
         M_DrawColorBox(menu, 13, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
         M_DrawColorBox(menu, 14, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
         M_DrawColorBox(menu, 15, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
@@ -2881,8 +2896,9 @@ void M_DrawMapMenu(void)
         M_DrawSlider(menu, 2, 11, cfg.automapWidth * 10 + .25f);
         M_DrawSlider(menu, 5, 11, cfg.automapHeight * 10 + .25f);
         M_WriteMenuText(menu, 7, hudviewnames[cfg.automapHudDisplay]);
-
-    } else {
+    } 
+    else 
+    {
         M_DrawColorBox(menu, 13, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
         M_DrawColorBox(menu, 14, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
         M_DrawColorBox(menu, 15, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);

@@ -106,7 +106,7 @@ static void DrINumber(signed int val, int x, int y, float r, float g, float b, f
 static void DrBNumber(signed int val, int x, int y, float Red, float Green, float Blue, float Alpha);
 static void DrawChain(void);
 void ST_drawWidgets(boolean refresh);
-static void DrawInventoryItems(void);
+//static void DrawInventoryItems(void);
 static void ST_doFullscreenStuff(void);
 static boolean HandleCheats(byte key);
 static boolean CheatAddKey(Cheat_t * cheat, byte key, boolean *eat);
@@ -232,13 +232,13 @@ int     lu_palette;
 
 static int oldarti = 0;
 static int oldartiCount = 0;
-static int oldfrags = -9999;
+//static int oldfrags = -9999;
 static int oldammo = -1;
-static int oldarmor = -1;
+//static int oldarmor = -1;
 static int oldweapon = -1;
 static int oldhealth = -1;
-static int oldlife = -1;
-static int oldkeys = -1;
+//static int oldlife = -1;
+//static int oldkeys = -1;
 
 // ammo patch names
 char    ammopic[][10] = {
@@ -270,8 +270,8 @@ char    artifactlist[][10] = {
 	{"ARTIATLP"}				// teleport
 };
 
-static dpatch_t     PatchLTFACE;
-static dpatch_t     PatchRTFACE;
+//static dpatch_t     PatchLTFACE;
+//static dpatch_t     PatchRTFACE;
 static dpatch_t     PatchBARBACK;
 static dpatch_t     PatchCHAIN;
 static dpatch_t     PatchSTATBAR;
@@ -286,10 +286,10 @@ static dpatch_t     PatchINVRTGEM2;
 static dpatch_t     PatchINumbers[10];
 static dpatch_t     PatchNEGATIVE;
 static dpatch_t     PatchSmNumbers[10];
-static dpatch_t     PatchBLACKSQ;
+//static dpatch_t     PatchBLACKSQ;
 static dpatch_t     PatchINVBAR;
-static dpatch_t     PatchARMCLEAR;
-static dpatch_t     PatchCHAINBACK;
+//static dpatch_t     PatchARMCLEAR;
+//static dpatch_t     PatchCHAINBACK;
 static dpatch_t     PatchAMMOICONS[11];
 static dpatch_t     PatchARTIFACTS[16];
 static dpatch_t     spinbooklump;
@@ -479,23 +479,23 @@ static byte CheatIDDQDSeq[] = {
 };
 
 static Cheat_t Cheats[] = {
-	{CheatGodFunc, CheatGodSeq, NULL, 0, 0, 0},
-	{CheatNoClipFunc, CheatNoClipSeq, NULL, 0, 0, 0},
-	{CheatWeaponsFunc, CheatWeaponsSeq, NULL, 0, 0, 0},
-	{CheatPowerFunc, CheatPowerSeq, NULL, 0, 0, 0},
-	{CheatHealthFunc, CheatHealthSeq, NULL, 0, 0, 0},
-	{CheatKeysFunc, CheatKeysSeq, NULL, 0, 0, 0},
-	{CheatSoundFunc, CheatSoundSeq, NULL, 0, 0, 0},
-	{CheatTickerFunc, CheatTickerSeq, NULL, 0, 0, 0},
-	{CheatArtifact1Func, CheatArtifact1Seq, NULL, 0, 0, 0},
-	{CheatArtifact2Func, CheatArtifact2Seq, NULL, 0, 0, 0},
-	{CheatArtifact3Func, CheatArtifact3Seq, NULL, 0, 0, 0},
-	{CheatWarpFunc, CheatWarpSeq, NULL, 0, 0, 0},
-	{CheatChickenFunc, CheatChickenSeq, NULL, 0, 0, 0},
-	{CheatMassacreFunc, CheatMassacreSeq, NULL, 0, 0, 0},
-	{CheatIDKFAFunc, CheatIDKFASeq, NULL, 0, 0, 0},
-	{CheatIDDQDFunc, CheatIDDQDSeq, NULL, 0, 0, 0},
-	{NULL, NULL, NULL, 0, 0, 0}	// Terminator
+	{CheatGodFunc, CheatGodSeq, NULL, {0, 0}, 0},
+	{CheatNoClipFunc, CheatNoClipSeq, NULL, {0, 0}, 0},
+	{CheatWeaponsFunc, CheatWeaponsSeq, NULL, {0, 0}, 0},
+	{CheatPowerFunc, CheatPowerSeq, NULL, {0, 0}, 0},
+	{CheatHealthFunc, CheatHealthSeq, NULL, {0, 0}, 0},
+	{CheatKeysFunc, CheatKeysSeq, NULL, {0, 0}, 0},
+	{CheatSoundFunc, CheatSoundSeq, NULL, {0, 0}, 0},
+	{CheatTickerFunc, CheatTickerSeq, NULL, {0, 0}, 0},
+	{CheatArtifact1Func, CheatArtifact1Seq, NULL, {0, 0}, 0},
+	{CheatArtifact2Func, CheatArtifact2Seq, NULL, {0, 0}, 0},
+	{CheatArtifact3Func, CheatArtifact3Seq, NULL, {0, 0}, 0},
+	{CheatWarpFunc, CheatWarpSeq, NULL, {0, 0}, 0},
+	{CheatChickenFunc, CheatChickenSeq, NULL, {0, 0}, 0},
+	{CheatMassacreFunc, CheatMassacreSeq, NULL, {0, 0}, 0},
+	{CheatIDKFAFunc, CheatIDKFASeq, NULL, {0, 0}, 0},
+	{CheatIDDQDFunc, CheatIDDQDSeq, NULL, {0, 0}, 0},
+	{NULL, NULL, NULL, {0, 0}, 0}	// Terminator
 };
 
 void ST_loadGraphics()

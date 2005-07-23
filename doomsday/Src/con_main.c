@@ -564,7 +564,7 @@ void Con_UpdateKnownWords()
 			known_vars++;
 
 	// Fill the known words table.
-	numKnownWords = numCCmds + known_vars + numCAliases + (NUMBINDCLASSES -1);
+	numKnownWords = numCCmds + known_vars + numCAliases + (NUMBINDCLASSES);
 	knownWords = realloc(knownWords, len =
 						 sizeof(knownword_t) * numKnownWords);
 	memset(knownWords, 0, len);
@@ -583,7 +583,7 @@ void Con_UpdateKnownWords()
 	{
 		strncpy(knownWords[c].word, caliases[i].name, 63);
 	}
-	for(i = 0; i < NUMBINDCLASSES -1; i++, c++)
+	for(i = 0; i < NUMBINDCLASSES; i++, c++)
 	{
 		strncpy(knownWords[c].word, bindClasses[i].name, 63);
 	}
@@ -1324,6 +1324,7 @@ int Con_Execute(const char *command, int silent)
 
 	if(silent)
 		ConsoleSilent = false;
+
 	return ret;
 }
 
@@ -1475,8 +1476,7 @@ static void completeWord(void)
 }
 
 /*
- * Con_Responder
- *  Returns true if the event is eaten.
+ * Returns true if the event is eaten.
  */
 boolean Con_Responder(event_t *event)
 {
@@ -2114,7 +2114,7 @@ void Con_Printf(const char *format, ...)
 {
 	va_list args;
 
-	if(ConsoleSilent)
+	if(!ConsoleInited || ConsoleSilent)
 		return;
 
 	va_start(args, format);
@@ -2126,7 +2126,7 @@ void Con_FPrintf(int flags, const char *format, ...)	// Flagged printf
 {
 	va_list args;
 
-	if(ConsoleSilent)
+	if(!ConsoleInited || ConsoleSilent)
 		return;
 
 	va_start(args, format);

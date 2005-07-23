@@ -260,7 +260,7 @@ void convertMusToMidi(unsigned char *data, uint length, const char *outFile)
 	}
 
 	// Start with the MIDI header.
-	strcpy(buffer, "MThd");
+	strcpy((char*)buffer, "MThd");
 	fwrite(buffer, 4, 1, file);
 
 	// Header size.
@@ -283,7 +283,7 @@ void convertMusToMidi(unsigned char *data, uint length, const char *outFile)
 	fwrite(buffer, 6, 1, file);
 
 	// Track header.
-	strcpy(buffer, "MTrk");
+	strcpy((char*)buffer, "MTrk");
 	fwrite(buffer, 4, 1, file);
 
 	// Length of the track in bytes.

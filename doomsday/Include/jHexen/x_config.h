@@ -14,28 +14,28 @@ enum {
 // This struct should be cleaned up. Currently some of the data isn't
 // even used any more.
 
+// WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
+//          depending on build settings.
+
 typedef struct {
 	float			playerMoveSpeed;
 	int             chooseAndUse, lookSpeed, quakeFly;
-	boolean         fastMonsters;
+	byte            fastMonsters;
 	int             usemlook, usejlook;
 	int             mouseSensiX, mouseSensiY;
 
 	int             screenblocks;
 	int             setblocks;
-	boolean         hudShown[4];   // HUD data visibility.
-    	float           hudScale;
+	byte            hudShown[4];   // HUD data visibility.
+    float           hudScale;
 	float           hudColor[4];
 	float			hudIconAlpha;
-	boolean         usePatchReplacement;
-	int 		showFPS, lookSpring;
-	int 		mlookInverseY;
-	int             echoMsg;	   //, simpleSky;
-	int             translucentIceCorpse;	//, consoleAlpha, consoleLight;
-	//int repWait1, repWait2;
-	//int maxDynLights, dlBlend, missileBlend;
-	//int haloMode, flareBoldness, flareSize;
-	int /*alwaysAlign, */ sbarscale;
+	byte            usePatchReplacement;
+	int             showFPS, lookSpring;
+	int             mlookInverseY;
+	int             echoMsg;
+	int             translucentIceCorpse;
+	int             sbarscale;
 
 	byte            netMap, netClass, netColor, netSkill;
 	byte            netEpisode;	   // unused in Hexen
@@ -47,10 +47,10 @@ typedef struct {
 	int             cameraNoClip;
 	float           bobView, bobWeapon;
 
-	boolean         jumpEnabled;   // Always true
+	int             jumpEnabled;   // Always true
 	float           jumpPower;
 	int             usemouse, noAutoAim, alwaysRun;
-	boolean         povLookAround;
+	byte            povLookAround;
 	int             joySensitivity, jlookInverseY;
 	int             joyaxis[8];
 	int             jlookDeltaMode;
@@ -62,36 +62,36 @@ typedef struct {
 	float           msgScale;
 	int             msgUptime;
 	int             msgBlink;
-	int		msgAlign;
-	boolean         msgShow;
+	int             msgAlign;
+	byte            msgShow;
 	float           msgColor[3];
 
-	float		statusbarAlpha;
-	float		statusbarCounterAlpha;
+	float           statusbarAlpha;
+	float           statusbarCounterAlpha;
 
-	//Automap stuff
-	int		automapPos;
-	float		automapWidth;
-	float		automapHeight;
+	// Automap stuff.
+	int             automapPos;
+	float           automapWidth;
+	float           automapHeight;
 	float           automapL0[3];
 	float           automapL1[3];
 	float           automapL2[3];
 	float           automapL3[3];
 	float           automapBack[4];
-	float		automapLineAlpha;
-	boolean         automapRotate;
-	boolean		automapHudDisplay;
-	boolean         automapShowDoors;
+	float           automapLineAlpha;
+	byte            automapRotate;
+	byte            automapHudDisplay;
+	byte            automapShowDoors;
 	float           automapDoorGlow;
-	boolean		automapBabyKeys;
+	byte            automapBabyKeys;
 
-	boolean		counterCheat;
+	byte            counterCheat;
 	float           counterCheatScale;
 
 	int             snd_3D, messageson;
 	char           *chat_macros[10];
 	float           snd_ReverbFactor;
-	boolean         reverbDebug;
+	byte            reverbDebug;
 
 	int             dclickuse;
 	int             mapTitle;
@@ -102,10 +102,10 @@ typedef struct {
 	float           menuShadow;
 	float           flashcolor[3];
 	int             flashspeed;
-	boolean         turningSkull;
+	byte            turningSkull;
 	float           menuColor[3];
 	float           menuColor2[3];
-	boolean		menuSlam;
+	byte            menuSlam;
 
 	pclass_t        PlayerClass[MAXPLAYERS];
 	byte            PlayerColor[MAXPLAYERS];

@@ -28,6 +28,8 @@
 #include "de_system.h"
 #include "de_misc.h"
 
+#include <ctype.h>
+
 // MACROS ------------------------------------------------------------------
 
 // Number of entries in the hash table.

@@ -22,6 +22,10 @@
 #ifndef __R_STATE__
 #define __R_STATE__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // Need data structure definitions.
 #include "d_player.h"
 #include "r_data.h"
@@ -52,13 +56,13 @@ extern fixed_t *spritetopoffset;
 #define numlines		(*gi.numlines)
 #define numsides		(*gi.numsides)
 
-#define vertexes		((vertex_t*)(*gi.vertexes))
-#define segs			((seg_t*)(*gi.segs))
-#define	sectors			((sector_t*)(*gi.sectors))
-#define subsectors		((subsector_t*)(*gi.subsectors))
-#define nodes			((node_t*)(*gi.nodes))
-#define lines			((line_t*)(*gi.lines))
-#define sides			((side_t*)(*gi.sides))
+#define vertexes		(*(vertex_t**)gi.vertexes)
+#define segs			(*(seg_t**)gi.segs)
+#define	sectors			(*(sector_t**)gi.sectors)
+#define subsectors		(*(subsector_t**)gi.subsectors)
+#define nodes			(*(node_t**)gi.nodes)
+#define lines			(*(line_t**)gi.lines)
+#define sides			(*(side_t**)gi.sides)
 
 /*
 
@@ -103,6 +107,12 @@ extern int      sscount;
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.5  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.4.2.1  2005/06/15 18:22:42  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.4  2004/05/29 09:53:11  skyjake
 // Consistent style (using GNU Indent)
 //

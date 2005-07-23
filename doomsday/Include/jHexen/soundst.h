@@ -13,6 +13,10 @@
 #ifndef __SOUNDSTH__
 #define __SOUNDSTH__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 //#define S_sfx (*gi.sounds)
 
 #define MAX_SND_DIST    2025

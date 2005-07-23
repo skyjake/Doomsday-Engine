@@ -100,7 +100,9 @@ void NetCl_UpdateGameState(byte *data)
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
     byte gsRespawn = 0;
+#ifndef __JHEXEN__
     byte gsJumping = 0;
+#endif
     byte gsSkill = 0;
     short gsGravity = 0;
 
@@ -576,14 +578,14 @@ void NetCl_Finale(int packetType, byte *data)
 
 		// Read the script into level-scope memory. It will be freed 
 		// when the next level is loaded.
-		len = strlen(readbuffer);
+		len = strlen((char*)readbuffer);
 		script = Z_Malloc(len + 1, PU_LEVEL, 0);
-		strcpy(script, readbuffer);
+		strcpy((char*)script, (char*)readbuffer);
 	}
 	if(flags & FINF_BEGIN && script)
 	{
 		// Start the script.
-		FI_Start(script,
+		FI_Start((char*)script,
 				 flags & FINF_AFTER ? FIMODE_AFTER : flags & FINF_OVERLAY ?
 				 FIMODE_OVERLAY : FIMODE_BEFORE);
 	}
@@ -712,12 +714,14 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 		if(cmd->angle != prev.angle)
 		{
 			*flags |= CMDF_ANGLE;
-			*((unsigned short *) out)++ = SHORT(cmd->angle);
+			*(unsigned short *) out = SHORT(cmd->angle);
+            out += 2;
 		}
 		if(cmd->pitch != prev.pitch)
 		{
 			*flags |= CMDF_LOOKDIR;
-			*((short *) out)++ = SHORT(cmd->pitch);
+			*(short *) out = SHORT(cmd->pitch);
+            out += 2;
 		}
 
 		// Compile the button flags.
@@ -753,7 +757,8 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 		if(cmd->changeWeapon != prev.changeWeapon)
 		{
 			*flags |= CMDF_CHANGE_WEAPON;
-			*((short *) out)++ = SHORT(cmd->changeWeapon);
+			*(short *) out = SHORT(cmd->changeWeapon);
+            out += 2;
 		}
 
 		memcpy(&prev, cmd, sizeof(*cmd));

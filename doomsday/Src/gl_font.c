@@ -64,9 +64,9 @@ extern HWND hWndMain;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int initOk = 0;
-static int numFonts;
-static jfrfont_t *fonts;		// The list of fonts.
-static int current;				// Index of the current font.
+static int numFonts = 0;
+static jfrfont_t *fonts = NULL;	// The list of fonts.
+static int currentFontIndex;				// Index of the current font.
 static char fontpath[256] = "";
 
 // CODE --------------------------------------------------------------------
@@ -82,7 +82,7 @@ int FR_Init()
 
 	numFonts = 0;
 	fonts = 0;					// No fonts!
-	current = -1;
+	currentFontIndex = -1;
 	initOk = 1;
 
 	// Check the font path.
@@ -113,8 +113,8 @@ static void FR_DestroyFontIdx(int idx)
 			sizeof(jfrfont_t) * (numFonts - idx - 1));
 	numFonts--;
 	fonts = realloc(fonts, sizeof(jfrfont_t) * numFonts);
-	if(current == idx)
-		current = -1;
+	if(currentFontIndex == idx)
+		currentFontIndex = -1;
 }
 
 //===========================================================================
@@ -126,14 +126,14 @@ void FR_Shutdown()
 	while(numFonts)
 		FR_DestroyFontIdx(0);
 	fonts = 0;
-	current = -1;
+	currentFontIndex = -1;
 	initOk = 0;
 }
 
 //===========================================================================
 // OutByte
 //===========================================================================
-static void OutByte(FILE * f, byte b)
+static void OutByte(FILE *f, byte b)
 {
 	fwrite(&b, sizeof(b), 1, f);
 }
@@ -141,7 +141,7 @@ static void OutByte(FILE * f, byte b)
 //===========================================================================
 // OutShort
 //===========================================================================
-static void OutShort(FILE * f, short s)
+static void OutShort(FILE *f, short s)
 {
 	fwrite(&s, sizeof(s), 1, f);
 }
@@ -149,7 +149,7 @@ static void OutShort(FILE * f, short s)
 //===========================================================================
 // InByte
 //===========================================================================
-static byte InByte(DFILE * f)
+static byte InByte(DFILE *f)
 {
 	byte    b;
 
@@ -160,12 +160,12 @@ static byte InByte(DFILE * f)
 //===========================================================================
 // InShort
 //===========================================================================
-static unsigned short InShort(DFILE * f)
+static unsigned short InShort(DFILE *f)
 {
 	unsigned short s;
 
 	F_Read(&s, sizeof(s), f);
-	return SHORT(s);
+	return USHORT(s);
 }
 
 //===========================================================================
@@ -178,7 +178,7 @@ int FR_GetFontIdx(int id)
 	for(i = 0; i < numFonts; i++)
 		if(fonts[i].id == id)
 			return i;
-	Con_Message("FR_GetFontIdx: Unknown ID %i.\n", id);
+	Con_Printf("FR_GetFontIdx: Unknown ID %i.\n", id);
 	return -1;
 }
 
@@ -190,8 +190,8 @@ void FR_DestroyFont(int id)
 	int     idx = FR_GetFontIdx(id);
 
 	FR_DestroyFontIdx(idx);
-	if(current == idx)
-		current = -1;
+	if(currentFontIndex == idx)
+		currentFontIndex = -1;
 }
 
 //===========================================================================
@@ -280,11 +280,12 @@ int FR_NewFont(void)
 {
 	jfrfont_t *font;
 
+    currentFontIndex = numFonts;
 	fonts = realloc(fonts, sizeof(jfrfont_t) * ++numFonts);
-	font = fonts + numFonts - 1;
+	font = fonts + currentFontIndex;
 	memset(font, 0, sizeof(jfrfont_t));
 	font->id = FR_GetMaxId() + 1;
-	return (current = numFonts - 1);
+	return currentFontIndex;
 }
 
 //===========================================================================
@@ -312,7 +313,7 @@ int FR_PrepareFont(char *name)
 		{NULL, 0}
 	};
 #endif
-	char    buf[64];
+    filename_t buf;
 	DFILE  *file;
 	int     i, c, bit, mask, version, format, numPels;
 	jfrfont_t *font;
@@ -332,8 +333,8 @@ int FR_PrepareFont(char *name)
 			{
 				if(verbose)
 				{
-					Con_Message("FR_PrepareFont: GDI font for \"%s\".\n",
-								fontmapper[i].name);
+					Con_Printf("FR_PrepareFont: GDI font for \"%s\".\n",
+							   fontmapper[i].name);
 				}
 				if(fontmapper[i].winfontname)
 				{
@@ -357,7 +358,7 @@ int FR_PrepareFont(char *name)
 				{
 					FR_PrepareGDIFont(GetStockObject(fontmapper[i].gdires));
 				}
-				strcpy(fonts[current].name, name);
+				strcpy(fonts[currentFontIndex].name, name);
 				return true;
 			}
 #endif
@@ -365,20 +366,26 @@ int FR_PrepareFont(char *name)
 		return false;
 	}
 
-	if(verbose)
-		Con_Message("FR_PrepareFont: %s\n", M_Pretty(buf));
+	VERBOSE2(Con_Printf("FR_PrepareFont: %s\n", M_Pretty(buf)));
 
 	version = InByte(file);
 
+    VERBOSE2(Con_Printf("FR_PrepareFont: Version %i.\n", version));
+
 	// Load the font from the file.
 	FR_NewFont();
-	font = fonts + current;
+	font = fonts + currentFontIndex;
 	strcpy(font->name, name);
+    
+    VERBOSE(Con_Printf("FR_PrepareFont: New font %i: %s.\n", currentFontIndex, 
+                       font->name));
 
 	// Load in the data.
 	font->texWidth = InShort(file);
 	font->texHeight = InShort(file);
 	numChars = InShort(file);
+    VERBOSE2(Con_Printf("FR_PrepareFont: Dimensions %i x %i, with %i chars.\n", 
+                        font->texWidth, font->texHeight, numChars));
 	for(i = 0; i < numChars; i++)
 	{
 		ch = &font->chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
@@ -392,8 +399,8 @@ int FR_PrepareFont(char *name)
 	format = InByte(file);
 	if(format > 0)
 	{
-		Con_Message("FR_PrepareFont: Font %s is in unknown format %i.\n", buf,
-					format);
+		Con_Printf("FR_PrepareFont: Font %s is in unknown format %i.\n", buf,
+                   format);
 		goto unknown_format;
 	}
 
@@ -411,15 +418,19 @@ int FR_PrepareFont(char *name)
 		}
 	}
 
+    VERBOSE2(Con_Printf("FR_PrepareFont: Creating GL texture.\n"));
+
 	// Load in the texture.
 	font->texture = gl.NewTexture();
 	gl.TexImage(DGL_RGBA, font->texWidth, font->texHeight, 0, image);
 	gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
 	gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
-	free(image);
+	free(image); image = 0;
 
   unknown_format:
 	F_Close(file);
+    
+    VERBOSE2(Con_Printf("FR_PrepareFont: Loaded %s.\n", name));
 	return true;
 }
 
@@ -439,7 +450,7 @@ int FR_PrepareGDIFont(HFONT hfont)
 
 	// Create a new font.
 	FR_NewFont();
-	font = fonts + current;
+	font = fonts + currentFontIndex;
 
 	// Now we'll create the actual data.
 	hdc = CreateCompatibleDC(NULL);
@@ -543,11 +554,15 @@ int FR_PrepareGDIFont(HFONT hfont)
 //===========================================================================
 void FR_SetFont(int id)
 {
-	int     idx = FR_GetFontIdx(id);
+	int     idx = -1;
+    
+    idx = FR_GetFontIdx(id);
+
+    VERBOSE2(Con_Printf("FR_SetFont: Font id %i has index %i.\n", id, idx));
 
 	if(idx == -1)
 		return;					// No such font.
-	current = idx;
+	currentFontIndex = idx;
 }
 
 //===========================================================================
@@ -555,9 +570,9 @@ void FR_SetFont(int id)
 //===========================================================================
 int FR_CharWidth(int ch)
 {
-	if(current == -1)
+	if(currentFontIndex == -1)
 		return 0;
-	return fonts[current].chars[ch].w;
+	return fonts[currentFontIndex].chars[ch].w;
 }
 
 //===========================================================================
@@ -568,11 +583,11 @@ int FR_TextWidth(char *text)
 	int     i, width = 0, len = strlen(text);
 	jfrfont_t *cf;
 
-	if(current == -1)
+	if(currentFontIndex == -1)
 		return 0;
 
 	// Just add them together.
-	for(cf = fonts + current, i = 0; i < len; i++)
+	for(cf = fonts + currentFontIndex, i = 0; i < len; i++)
 		width += cf->chars[(byte) text[i]].w;
 
 	return width;
@@ -586,11 +601,11 @@ int FR_TextHeight(char *text)
 	int     i, height = 0, len;
 	jfrfont_t *cf;
 
-	if(current == -1 || !text)
+	if(currentFontIndex == -1 || !text)
 		return 0;
 
 	// Find the greatest height.
-	for(len = strlen(text), cf = fonts + current, i = 0; i < len; i++)
+	for(len = strlen(text), cf = fonts + currentFontIndex, i = 0; i < len; i++)
 		height = MAX_OF(height, cf->chars[(byte) text[i]].h);
 
 	return height;
@@ -611,9 +626,9 @@ int FR_TextOut(char *text, int x, int y)
 	len = strlen(text);
 
 	// Check the font.
-	if(current == -1)
+	if(currentFontIndex == -1)
 		return 0;				// No selected font.
-	cf = fonts + current;
+	cf = fonts + currentFontIndex;
 
 	// Set the texture.
 	gl.Bind(cf->texture);
@@ -655,7 +670,7 @@ int FR_TextOut(char *text, int x, int y)
 //===========================================================================
 int FR_GetCurrent()
 {
-	if(current == -1)
+	if(currentFontIndex == -1)
 		return 0;
-	return fonts[current].id;
+	return fonts[currentFontIndex].id;
 }

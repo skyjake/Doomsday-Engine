@@ -5,26 +5,27 @@ by Jaakko Keranen <jaakko.keranen@iki.fi>
 $Date$
 
 
-INSTALLING
-----------
-This is a source code package.  To install Doomsday you will need to 
-compile it yourself.  Note that binaries are available for certain
-platforms: http://deng.sourceforge.net/dew/Engine/InstallUpgrade
+INTRODUCTION
+------------
 
-If you're not familiar with compiling stuff in a Unix environment, see
-the generic instructions in the INSTALL file.  Doomsday specific
-instructions are in Build/COMPILING.
+This document contains brief notes about the Linux version of the
+Doomsday Engine.  See the main Doomsday Readme in the Doc directory
+for more information about the engine itself.
 
 
-DOCUMENTATION
--------------
+COMPILING
+---------
 
-It is always a good idea to glance through the engine readme:
-http://www.doomsdayhq.com/doc_readme.php
+Compiling instructions can be found in Build/COMPILING.
 
-The Doc directory contains various documentation about the engine and
-the available command line options.  The documents are also available
-online: http://www.doomsdayhq.com/
+If you are not familiar with compiling programs in a Unix environment,
+see the generic instructions in the INSTALL file.  Also carefully
+study the requirements listed in Build/COMPILING and make sure you
+have installed all the needed development resources and packages that
+your Linux distribution provides.
+
+Note that binaries are available for certain platforms:
+http://deng.sourceforge.net/dew/Engine/InstallUpgrade
 
 
 REQUIREMENTS
@@ -37,6 +38,42 @@ original games (Doom, Heretic or Hexen), you can always use the
 shareware/demo versions.
 
 You won't be able to play without an IWAD file!
+
+
+ADDITIONAL RESOURCE PACKS
+-------------------------
+
+There is a wealth of additional resource packs for Doomsday on the
+internet.  One starting point is Doomsday HQ
+(http://www.doomsdayhq.com/).  I recommend also visiting the DHQ
+Forums for the latest community buzz.
+
+The must-have packs are the 3D models and detail textures.  You might
+also wish to download a music pack (e.g., http://www.sycraft.org/).
+
+If you prefer to launch the game from the command line or using a
+custom shell script, there are two ways you can load PK3s and WADs:
+
+	1) Use the special automatic resource directories.  You have
+	   two options: the user-specific Auto directory, or the
+	   system-wide Auto directory.
+
+	   The user-specific Auto directory is located in the runtime
+	   directory.  The -userdir option defines the runtime
+	   directory.  By default the current directory is used.
+
+	   Let's say you have installed Doomsday into the directory
+	   PREFIX.  You will find the subdirectory "share/deng/Data/"
+	   under PREFIX.  If you have a resource pack for jDoom,
+	   placing it into the system-wide Auto directory
+	   "PREFIX/share/deng/Data/jDoom/Auto/" will cause it to be
+	   automatically loaded when any user starts jDoom.
+
+	   Note the capital "A" in Auto.
+
+	2) Use the "-file" command line option when you start
+	   Doomsday.  If you e.g. have the resource pack
+	   ~/mydir/model.pk3, just use "-file ~/mydir/model.pk3".
 
 
 MIDI MUSIC
@@ -56,10 +93,10 @@ this:
   export DENG_MIDI_CMD="aplaymidi -p 65:0"
 
 The default program for MIDI playback is "timidity".  Note, however,
-that music playback may become choppy since timidity does it entirely
-in software.  It is best to experiment with different timidity
-settings (e.g. buffering and process niceness) if you would like to
-reduce the artifacts in software music playback.
+that music playback may become choppy since timidity plays music
+entirely in software.  It is best to experiment with different
+timidity settings (e.g., buffering and process niceness) if you would
+like to reduce any artifacts in software music playback.
 
 
 GLBSP
@@ -72,47 +109,17 @@ your WADs.
 However, if you need it, you can get glBSP from glbsp.sourceforge.net.
 
 
-ADDITIONAL RESOURCE PACKS
--------------------------
-
-There is a wealth of additional resource packs for Doomsday on the
-internet.  One starting point is Doomsday HQ
-(http://www.doomsdayhq.com/).  I recommend also visiting the DHQ
-Forums for the latest community buzz.
-
-The must-have packs are the 3D models and detail textures.  Since MIDI
-music is currently not supported in Linux, you might also wish to
-download a music pack (e.g. http://www.sycraft.org/).
-
-Since there is currently no Doomsday GUI launcher available for Linux,
-you will have to make sure the resource packs get loaded yourself.
-There are two ways you can load PK3s and WADs:
-
-	1) Use the special automatic resource directories.  Let's say
-	   you have installed Doomsday into the directory PREFIX.  You
-	   will find the subdirectory share/deng/Data/ under PREFIX.
-	   If you have a resource pack for jDoom, placing it into
-	   PREFIX/share/deng/Data/jDoom/Auto/ will cause it to be
-	   automatically loaded when jDoom is started (note the
-	   capital "A").  Create the directory if it doesn't exist.
-
-	2) Use the "-file" command line option when you start
-	   Doomsday.  If you e.g. have the resource pack
-	   ~/mydir/model.pk3, just use "-file ~/mydir/model.pk3".
-
-
 RUNNING THE GAME
 ----------------
 
 These instructions apply to the Linux version of Doomsday.
 
-The default location for the doomsday executable is /usr/local/bin,
-but that can be changed by providing your own prefix for the configure
-script (see Build/COMPILING).
+The Snowberry launcher is available for Linux.
 
-I recommend creating your own startup scripts for jDoom, jHeretic and
-jHexen.  In them, you can specify any command line options you wish to
-use.  Below is a simple example.
+If you prefer launching from the command line, I recommend creating
+your own startup scripts for jDoom, jHeretic and jHexen.  In them, you
+can specify any command line options you wish to use.  Below is a
+simple example.
 
   #!/bin/sh
   /usr/local/bin/doomsday -game jdoom -file ~/wads/doom.wad \
@@ -121,6 +128,10 @@ use.  Below is a simple example.
 Before running this script you will need to create the runtime
 directory ~/doomsday/jdoom.  All savegame files, message logs and
 other such files will be stored in this directory.
+
+The default location for the doomsday executable is /usr/local/bin,
+but that can be changed by providing your own prefix for the configure
+script (see Build/COMPILING).
 
 
 RUNNING A DEDICATED SERVER
@@ -142,8 +153,12 @@ Brief instructions:
 	   "net-port-data") port numbers.  The TCP port is used for
 	   accepting new clients.  The UDP port is used for data
 	   traffic.  The default port number is 13209 for both TCP and
-	   UDP.  This step has to be done only once because the port
-	   numbers are saved into the config file.
+	   UDP.
+
+	   This step has to be done only once because the port numbers
+	   are saved automatically into the game config file.  You may
+	   also wish to write your own .cfg startup script that
+	   executes all the necessary commands.
 
 	3. "net init tcpip"
 
@@ -162,3 +177,14 @@ Even briefer instructions:
 	   numbers.
 
 	2. Start with the command line options "-dedicated -server".
+
+
+DOCUMENTATION
+-------------
+
+It is always a good idea to glance through the engine readme:
+http://www.doomsdayhq.com/doc_readme.php
+
+The Doc directory contains various documentation about the engine and
+the available command line options.  The documents are also available
+online: http://www.doomsdayhq.com/

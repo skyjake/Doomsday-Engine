@@ -8,11 +8,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-#  include "doomdef.h"
+#  include "jDoom/doomdef.h"
 #endif
 
 #ifdef __JHERETIC__
-#  include "Doomdef.h"
+#  include "jHeretic/Doomdef.h"
 #endif
 
 #ifdef __JSTRIFE__

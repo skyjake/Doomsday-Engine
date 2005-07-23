@@ -4,6 +4,10 @@
 #ifndef __AUDIO_CONSTANTS_H__
 #define __AUDIO_CONSTANTS_H__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 // Sounds.
 typedef enum {
 	SFX_NONE,					   // 000

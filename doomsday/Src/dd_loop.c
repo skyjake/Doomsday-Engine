@@ -288,12 +288,13 @@ void DD_Ticker(timespan_t time)
 		if(!clientPaused)
 			frameTimePos = realFrameTimePos;
 
-		Con_Ticker(time);		// Console.
-
 		// We can't sent FixAngles messages to ourselves, so it's
 		// done here.
 		Sv_FixLocalAngles();
 	}
+
+    // Console is always ticking.
+	Con_Ticker(time);		
 
 	if(tickUI)
 	{

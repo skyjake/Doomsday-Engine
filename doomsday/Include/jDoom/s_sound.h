@@ -1,6 +1,10 @@
 #ifndef __S_SOUND__
 #define __S_SOUND__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 //#include "d_player.h"
 #include "r_defs.h"
 

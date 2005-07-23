@@ -1,6 +1,10 @@
 #ifndef __JHEXEN_VERSION_H__
 #define __JHEXEN_VERSION_H__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 // Past distributions
 //#define VERSIONTEXT "ID V1.2"
 //#define VERSIONTEXT "RETAIL STORE BETA"       // 9/26/95

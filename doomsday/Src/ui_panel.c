@@ -1075,6 +1075,8 @@ int CCmdOpenPanel(int argc, char **argv)
 	if(isDedicated)
 		return false;
 
+    Con_Execute("conclose", true);
+        
 	// The help window is hidden.
 	panel_help_active = false;
 	panel_help_offset = 0;

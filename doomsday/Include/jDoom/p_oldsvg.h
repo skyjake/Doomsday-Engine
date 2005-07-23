@@ -1,6 +1,10 @@
 #ifndef __P_V19_SAVEG__
 #define __P_V19_SAVEG__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 void            SV_v19_LoadGame(char *filename);
 
 // Persistent storage/archiving.

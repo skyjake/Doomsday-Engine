@@ -4,6 +4,10 @@
 #ifndef __AUDIO_CONSTANTS_H__
 #define __AUDIO_CONSTANTS_H__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 // Sounds.
 typedef enum {
 	sfx_None,					   // 000

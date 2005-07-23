@@ -73,6 +73,7 @@ void Con_StartupInit(void)
 	fontHgt = FR_TextHeight("Doomsday!");
 
 	startupScreen = true;
+
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PushMatrix();
 	gl.LoadIdentity();
@@ -149,6 +150,10 @@ void Con_DrawStartupScreen(int show)
 	// Print the messages in the console.
 	if(!startupScreen || ui_active)
 		return;
+        
+    //gl.MatrixMode(DGL_PROJECTION);
+    //gl.LoadIdentity();       
+    //gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
 
 	Con_DrawStartupBackground();
 

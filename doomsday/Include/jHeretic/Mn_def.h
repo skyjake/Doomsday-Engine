@@ -14,7 +14,7 @@
 #define SELECTOR_XOFFSET (-28)
 #define SELECTOR_YOFFSET (-1)
 #define SLOTTEXTLEN     16
-#define ASCII_CURSOR '_'
+#define ASCII_CURSOR    '_'
 
 #define LINEHEIGHT 20
 #define LINEHEIGHT_A 10
@@ -24,7 +24,7 @@
 #define SKULLYOFF		6
 #define SKULLW			22
 #define SKULLH			15
-#define CURSORPREF	"M_SLCTR%d"
+#define CURSORPREF      "M_SLCTR%d"
 #define SKULLBASELMP	"M_SKL00"
 
 #define NUMSAVESLOTS	8
@@ -74,11 +74,11 @@ typedef struct {
 	int             y;
 	void            (*drawFunc) (void);
 	int             itemCount;
-	MenuItem_t     *items;
+	const MenuItem_t *items;
 	int             lastOn;
 	MenuType_t      prevMenu;
-	dpatch_t       	*font;		   // Font for menu items.
-	float		*color;		// their color.
+	dpatch_t       *font;       // Font for menu items.
+	float          *color;      // their color.
 	int             itemHeight;
 	// For multipage menus.
 	int             firstItem, numVisItems;
@@ -104,12 +104,12 @@ extern Menu_t   TCPIPMenu;
 extern Menu_t   SerialMenu;
 extern Menu_t   ModemMenu;
 
-void		M_DrawSaveLoadBorder(int x, int y);
+void            M_DrawSaveLoadBorder(int x, int y);
 void            M_DrawTitle(char *text, int y);
 int             M_StringWidth(char *string, dpatch_t * font);
-int     	M_StringHeight(char *string, dpatch_t * font);
-void            M_WriteMenuText(Menu_t * menu, int index, char *text);
-void		M_WriteText(int x, int y, char *string);
+int             M_StringHeight(char *string, dpatch_t * font);
+void            M_WriteMenuText(const Menu_t * menu, int index, char *text);
+void            M_WriteText(int x, int y, char *string);
 void            M_WriteText2(int x, int y, char * string, dpatch_t * font,
 							 float red, float green, float blue, float alpha);
 void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
@@ -121,17 +121,17 @@ void    DrawColorWidget();
 void	SCColorWidget(int index, void *data);
 void    M_WGCurrentColor(int option, void *data);
 
-void    M_SetupNextMenu(Menu_t * menudef);
-void    M_DrawSlider(Menu_t * menu, int index, int width, int dot);
+void    M_SetupNextMenu(Menu_t* menudef);
+void    M_DrawSlider(const Menu_t* menu, int index, int width, int dot);
 void    M_StartControlPanel(void);
-void 	M_DrawColorBox(Menu_t * menu, int index, float r, float g, float b, float a);
+void 	M_DrawColorBox(const Menu_t* menu, int index, float r, float g, float b, float a);
 void    M_StartMessage(char *string, void *routine, boolean input);
 void    M_StopMessage(void);
 void    M_ClearMenus(void);
 void 	M_FloatMod10(float *variable, int option);
 
 
-void        SCEnterMultiplayerMenu(int option, void *data);
+void            SCEnterMultiplayerMenu(int option, void *data);
 void            MN_TickerEx(void); // The extended ticker.
 
 // Widget routines.
@@ -142,6 +142,6 @@ boolean         Ed_Responder(event_t *event);
 
 // Called by Init
 // registers all the CCmds and CVars for the menu
-void 		MN_Register(void);
+void            MN_Register(void);
 
 #endif							// __MENU_DEFS_H_

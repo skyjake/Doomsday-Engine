@@ -176,7 +176,7 @@ void UI_End(void)
     {
         rel.type = ev_keyup;
         rel.data1 = DDKEY_RSHIFT;
-        rel.useclass = 0;
+        rel.useclass = -1;
         DD_PostEvent(&rel);
     }
 }
@@ -470,8 +470,8 @@ void UI_Drawer(void)
     UI_DrawMouse(ui_cx, ui_cy);
 
     // Restore the original matrices.
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();
+    //gl.MatrixMode(DGL_MODELVIEW);
+    //gl.PopMatrix();
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 }

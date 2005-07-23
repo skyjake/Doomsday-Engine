@@ -22,6 +22,10 @@
 #ifndef __G_GAME__
 #define __G_GAME__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #include "doomdef.h"
 #include "d_event.h"
 #include "d_player.h"
@@ -83,6 +87,12 @@ void            G_QueueBody(mobj_t *body);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.9  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.8.2.1  2005/06/15 18:22:41  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.8  2005/05/29 05:56:55  danij
 // Commonised key arrays. Game Status Cvars.
 //

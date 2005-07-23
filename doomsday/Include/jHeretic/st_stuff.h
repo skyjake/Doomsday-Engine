@@ -1,6 +1,10 @@
 #ifndef __ST_STUFF_H__
 #define __ST_STUFF_H__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 // Called by main loop.
 boolean         ST_Responder(event_t *ev);
 

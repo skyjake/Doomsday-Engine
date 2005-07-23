@@ -106,6 +106,7 @@ void LG_Register(void)
               "Size of a grid block in the light grid (default: 31).");
 }
 
+#if 0 // obsolete
 static boolean HasIndex(int x, int y, unsigned short *indices, int *count)
 {
     unsigned short index = x + y*lgBlockWidth;
@@ -133,6 +134,34 @@ static void AddIndex(int x, int y, unsigned short *indices, int *count)
     indices[*count] = index;
     (*count)++;
 }
+#endif
+
+/*
+ * Determines if the index (x, y) is in the bitfield.
+ */
+static boolean HasIndexBit(int x, int y, uint *bitfield)
+{
+    uint index = x + y*lgBlockWidth;
+    
+    // Assume 32-bit uint.
+    return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
+}
+
+/*
+ * Sets the index (x, y) in the bitfield.
+ * Count is incremented when a zero bit is changed to one.
+ */
+static void AddIndexBit(int x, int y, uint *bitfield, int *count)
+{
+    uint index = x + y*lgBlockWidth;
+
+    // Assume 32-bit uint.
+    if(!HasIndexBit(index, 0, bitfield))
+    {
+        (*count)++;
+    }
+    bitfield[index >> 5] |= (1 << (index & 0x1f));
+}
 
 /*
  * Initialize the light grid for the current level.
@@ -147,10 +176,12 @@ void LG_Init(void)
     int     a, b, x, y;
     int     count;
     int     changedCount;
-    unsigned short *indices;
-    unsigned short *contributorIndices;
+    int     bitfieldSize;
+    uint   *indexBitfield;
+    uint   *contributorBitfield;
+    //unsigned short *indices;
+    //unsigned short *contributorIndices;
     gridblock_t *block;
-    gridblock_t *other;
 
     if(!lgEnabled)
     {
@@ -169,9 +200,14 @@ void LG_Init(void)
     lgBlockWidth = ((width / blockSize) >> FRACBITS) + 1;
     lgBlockHeight = ((height / blockSize) >> FRACBITS) + 1;
 
-    indices = M_Malloc(sizeof(unsigned short) * lgBlockWidth * lgBlockHeight);
+    /*indices = M_Malloc(sizeof(unsigned short) * lgBlockWidth * lgBlockHeight);
     contributorIndices = M_Malloc(sizeof(unsigned short) * lgBlockWidth
-                                  * lgBlockHeight);
+                                  * lgBlockHeight);*/
+
+    // Bitfields for marking affected blocks. Make sure each bit is in a word.
+    bitfieldSize = 4 * (31 + lgBlockWidth * lgBlockHeight) / 32;
+    indexBitfield = M_Calloc(bitfieldSize);
+    contributorBitfield = M_Calloc(bitfieldSize);
     
     // TODO: It would be possible to only allocate memory for the grid
     // blocks that are going to be in use.
@@ -194,18 +230,12 @@ void LG_Init(void)
             center.y = lgOrigin.y + y * (blockSize << FRACBITS)
                 + (blockSize << (FRACBITS - 1));
 
-            //Con_Message("  %i, %i: %i, %i\n", x, y, center.x/FRACUNIT, center.y/FRACUNIT);
-            
             block->sector = R_PointInSubsector(center.x, center.y)->sector;
-
-            //Con_Message("    -> sector %i\n", GET_SECTOR_IDX(block->sector));
 
             if(!R_IsPointInSector2(center.x, center.y, block->sector))
             {
                 // This block is not inside any sector.
                 block->sector = NULL;
-
-                //Con_Message("      VETOED!\n");
             }
         }
     }
@@ -216,6 +246,9 @@ void LG_Init(void)
         sector_t *sector = SECTOR_PTR(i);
         sectorinfo_t *info = SECT_INFO(sector);
 
+        // Clear the bitfields.
+        memset(indexBitfield, 0, bitfieldSize);
+        memset(contributorBitfield, 0, bitfieldSize);
         count = changedCount = 0;
         
         for(block = grid, y = 0; y < lgBlockHeight; ++y)
@@ -224,7 +257,7 @@ void LG_Init(void)
             {
                 if(block->sector == sector)
                 {
-                    //AddIndex(x, y, indices, &count);
+                    // TODO: Determine min/max a/b before going into the loop.
                     for(b = -2; b <= 2; ++b)
                     {
                         if(y + b < 0 || y + b >= lgBlockHeight)
@@ -235,25 +268,26 @@ void LG_Init(void)
                             if(x + a < 0 || x + a >= lgBlockWidth)
                                 continue;
 
-                            //other = GRID_BLOCK(x + a, y + b);
-                            //if(other->sector == sector)
-                            //{
-                            AddIndex(x + a, y + b, indices, &count);
-                                //}
+                            //AddIndex(x + a, y + b, indices, &count);
+                            AddIndexBit(x + a, y + b, indexBitfield, 
+                                        &changedCount);
                         }
                     }
                 }
             }
         }
 
-        changedCount = count;
-        count = 0;
+        //changedCount = count;
+        //count = 0;
 
+        // Determine contributor blocks. Contributors are the blocks that are
+        // close enough to contribute light to affected blocks.
         for(y = 0; y < lgBlockHeight; ++y)
         {
             for(x = 0; x < lgBlockWidth; ++x)
             {
-                if(!HasIndex(x, y, indices, &changedCount))
+                //if(!HasIndex(x, y, indices, &changedCount))
+                if(!HasIndexBit(x, y, indexBitfield))
                     continue;                    
                 
                 // Add the contributor blocks.
@@ -267,30 +301,57 @@ void LG_Init(void)
                         if(x + a < 0 || x + a >= lgBlockWidth)
                             continue;
 
-                        if(!HasIndex(x + a, y + b, indices, &changedCount))
+                        //if(!HasIndex(x + a, y + b, indices, &changedCount))
+                        if(!HasIndexBit(x + a, y + b, indexBitfield))
                         {
-                            AddIndex(x + a, y + b, contributorIndices, &count);
+                            //AddIndex(x + a, y + b, contributorIndices, &count);                       
+                            AddIndexBit(x + a, y + b, contributorBitfield,
+                                        &count);
                         }
                     }
                 }
             }
         }
 
-        Con_Message("  Sector %i: %i / %i\n", i, changedCount, count);
+        // Count the number indices in both bitfields.
+        /*for(x = 0; x < lgBlockWidth * lgBlockHeight; x++)
+        {
+            if(HasIndexBit(x, 0, indexBitfield))
+                changedCount++;
+
+            if(HasIndexBit(x, 0, contributorBitfield))
+                count++;
+        }*/
+
+        VERBOSE2(Con_Message("  Sector %i: %i / %i\n", i, changedCount, count));
                     
         info->changedblockcount = changedCount;
         info->blockcount = changedCount + count;
 
         info->blocks = Z_Malloc(sizeof(unsigned short) * info->blockcount,
                                 PU_LEVEL, 0);
-        memcpy(info->blocks, indices,
+        for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight; 
+            ++x)
+        {
+            if(HasIndexBit(x, 0, indexBitfield))
+                info->blocks[a++] = x;
+            else if(HasIndexBit(x, 0, contributorBitfield))
+                info->blocks[b++] = x;
+        }
+        
+        assert(a == changedCount);
+        assert(b == info->blockcount);
+        
+        /*memcpy(info->blocks, indices,
                sizeof(unsigned short) * changedCount);
         memcpy(info->blocks + changedCount, contributorIndices,
-               sizeof(unsigned short) * count);
+               sizeof(unsigned short) * count);*/
     }
 
-    M_Free(indices);
-    M_Free(contributorIndices);
+    //M_Free(indices);
+    //M_Free(contributorIndices);
+    M_Free(indexBitfield);
+    M_Free(contributorBitfield);
 }
 
 /*

@@ -4,6 +4,10 @@
 #ifndef __ACTION_LINK_H__
 #define __ACTION_LINK_H__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 #include "dd_share.h"
 
 typedef struct {

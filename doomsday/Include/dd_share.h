@@ -443,7 +443,7 @@ extern          "C" {
 #define DDMB_MWHEELDOWN		0x2000
 
 	enum {
-		BDC_NORMAL = 1,
+		BDC_NORMAL,
 		BDC_BIASEDITOR,
 		BDC_CLASS1,
 		BDC_CLASS2,

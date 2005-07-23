@@ -85,8 +85,8 @@ static teaminfo_t teamInfo[NUMTEAMS];
 static int interpic, beenthere, goingthere, numbers[10], negative, slash,
 	percent;
 
-static int FontBLump;
-static int FontBLumpBase;
+//static int FontBLump;
+//static int FontBLumpBase;
 static int patchFaceOkayBase;
 static int patchFaceDeadBase;
 

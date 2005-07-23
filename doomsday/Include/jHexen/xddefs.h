@@ -13,6 +13,10 @@
 #ifndef __XDDEFS__
 #define __XDDEFS__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 /*#ifndef __BYTEBOOL__
    #define __BYTEBOOL__
    typedef enum {false, true} h2bool;

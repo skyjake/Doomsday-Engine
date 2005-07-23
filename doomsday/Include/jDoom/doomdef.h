@@ -23,6 +23,10 @@
 #ifndef __DOOMDEF__
 #define __DOOMDEF__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #ifdef WIN32
 #pragma warning(disable:4244 4761)
 #endif

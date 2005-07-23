@@ -51,11 +51,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-CTLCFG_TYPE SCControlConfig(int option, void *data)
-{
-	grabbing = controls + option;
-}
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -67,15 +62,23 @@ CTLCFG_TYPE SCControlConfig(int option, void *data)
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern float   menu_alpha;
+extern Menu_t  ControlsDef;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+const Control_t *grabbing = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
+CTLCFG_TYPE SCControlConfig(int option, void *data)
+{
+	grabbing = controls + option;
+}
+
 /*
- *  spacecat
+ * spacecat
  */
 void spacecat(char *str, const char *catstr)
 {
@@ -89,16 +92,16 @@ void spacecat(char *str, const char *catstr)
 }
 
 /*
- *  M_DrawControlsMenu
+ * M_DrawControlsMenu
  */
 void M_DrawControlsMenu(void)
 {
 	int     i;
 	char    controlCmd[80];
 	char    buff[80], prbuff[80], *token;
-	Menu_t *menu = &ControlsDef;
-	MenuItem_t *item = menu->items + menu->firstItem;
-	Control_t *ctrl;
+	const Menu_t *menu = &ControlsDef;
+	const MenuItem_t *item = menu->items + menu->firstItem;
+	const Control_t *ctrl;
 
 #if __JDOOM__
 	M_DrawTitle("CONTROLS", menu->y - 28);
@@ -170,13 +173,12 @@ void M_DrawControlsMenu(void)
 }
 
 /*
- *  D_DefaultBindings:
- *		Set default bindings for unbound Controls.
+ * Set default bindings for unbound Controls.
  */
-void D_DefaultBindings()
+void G_DefaultBindings(void)
 {
 	int     i;
-	Control_t *ctr;
+	const Control_t *ctr;
 	char    evname[80], cmd[256], buff[256];
 	event_t event;
 
@@ -186,6 +188,7 @@ void D_DefaultBindings()
 		ctr = controls + i;
 		// If this command is bound to something, skip it.
 		sprintf(cmd, "%s%s", ctr->flags & CLF_ACTION ? "+" : "", ctr->command);
+        memset(buff, 0, sizeof(buff));
 		if(B_BindingsForCommand(cmd, buff, -1))
 			continue;
 
@@ -196,7 +199,7 @@ void D_DefaultBindings()
 			event.type = ev_keydown;
 			event.data1 = ctr->defKey;
 			B_EventBuilder(evname, &event, false);
-			sprintf(cmd, "%s %d %s %s",
+			sprintf(cmd, "%s bdc%d %s %s",
 					ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
 					controls[i].bindClass, evname + 1, buff);
 			Con_Execute(cmd, true);
@@ -206,7 +209,7 @@ void D_DefaultBindings()
 			event.type = ev_mousebdown;
 			event.data1 = 1 << (ctr->defMouse - 1);
 			B_EventBuilder(evname, &event, false);
-			sprintf(cmd, "%s %d %s %s",
+			sprintf(cmd, "%s bdc%d %s %s",
 					ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
 					controls[i].bindClass, evname + 1, buff);
 			Con_Execute(cmd, true);
@@ -216,7 +219,7 @@ void D_DefaultBindings()
 			event.type = ev_joybdown;
 			event.data1 = 1 << (ctr->defJoy - 1);
 			B_EventBuilder(evname, &event, false);
-			sprintf(cmd, "%s %d %s %s",
+			sprintf(cmd, "%s bdc%d %s %s",
 					ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
 					controls[i].bindClass, evname + 1, buff);
 			Con_Execute(cmd, true);
@@ -245,13 +248,14 @@ int findtoken(char *string, char *token, char *delim)
  */
 int D_PrivilegedResponder(event_t *event)
 {
+	char    cmd[256], buff[256], evname[80];
+
 	// We're interested in key or button down events.
 	if(grabbing &&
 	   (event->type == ev_keydown || event->type == ev_mousebdown ||
 		event->type == ev_joybdown || event->type == ev_povdown))
 	{
 		// We'll grab this event.
-		char    cmd[256], buff[256], evname[80];
 		boolean del = false;
 
 		// Check for a cancel.
@@ -271,7 +275,8 @@ int D_PrivilegedResponder(event_t *event)
 		// If this binding already exists, remove it.
 		sprintf(cmd, "%s%s", grabbing->flags & CLF_ACTION ? "+" : "",
 				grabbing->command);
-		if(B_BindingsForCommand(cmd, buff,grabbing->bindClass))	// Check for bindings in this class only
+        memset(buff, 0, sizeof(buff));
+		if(B_BindingsForCommand(cmd, buff, grabbing->bindClass)) // Check for bindings in this class only
 			if(findtoken(buff, evname, " "))	// Get rid of it?
 			{
 				del = true;
@@ -279,7 +284,7 @@ int D_PrivilegedResponder(event_t *event)
 			}
 		if(!del)
 			sprintf(buff, "\"%s\"", grabbing->command);
-		sprintf(cmd, "%s %d %s %s",
+		sprintf(cmd, "%s bdc%d %s %s",
 				grabbing->flags & CLF_REPEAT ? "bindr" : "bind", grabbing->bindClass, evname + 1,
 				buff);
 		Con_Execute(cmd, false);

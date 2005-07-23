@@ -13,7 +13,7 @@
 #include "h2def.h"
 #include "d_net.h"
 #include "hu_stuff.h"
-#include "mn_def.h"
+#include "jHexen/mn_def.h"
 #include <ctype.h>
 
 // MACROS ------------------------------------------------------------------

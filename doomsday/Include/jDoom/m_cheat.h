@@ -22,6 +22,10 @@
 #ifndef __M_CHEAT__
 #define __M_CHEAT__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #include "doomstat.h"
 
 //
@@ -58,6 +62,12 @@ boolean 	cht_Responder(event_t *ev);
 //-----------------------------------------------------------------------------
 //
 // $Log$
+// Revision 1.7  2005/07/23 08:47:08  skyjake
+// Merged 1.9.0-beta1 and beta2 into HEAD
+//
+// Revision 1.6.2.1  2005/06/15 18:22:41  skyjake
+// Numerous fixes after compiling with gcc-4.0 on Mac
+//
 // Revision 1.6  2005/05/29 05:47:13  danij
 // Added cht_Responder() for responding to cheats. Moved all cheat related code to m_cheat.c
 //

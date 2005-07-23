@@ -13,6 +13,10 @@
 #ifndef __H2DEF__
 #define __H2DEF__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

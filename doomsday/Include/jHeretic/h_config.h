@@ -18,9 +18,12 @@ enum {
 // This struct should be cleaned up. Currently some of the data isn't
 // even used any more.
 
+// WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
+//          depending on build settings.
+
 typedef struct {
 	float			playerMoveSpeed;
-	boolean         setsizeneeded;
+	byte            setsizeneeded;
 	int             setblocks;
 	int             screenblocks;
 	int             sbarscale;
@@ -34,14 +37,14 @@ typedef struct {
 	int             jlookDeltaMode;
 	int             jlookInverseY;		// Inverse jlook Y axis.
 	int             tomeCounter, tomeSound;
-	boolean         hudShown[6];   		// HUD data visibility.
-    	float           hudScale;
+	byte            hudShown[6];   		// HUD data visibility.
+    float           hudScale;
 	float           hudColor[4];
 	float			hudIconAlpha;
-	boolean         usePatchReplacement;
+	byte            usePatchReplacement;
 	int             showFPS, lookSpring;
 	int             mouseSensiX, mouseSensiY;
-	boolean         povLookAround;
+	byte            povLookAround;
 	int             echoMsg;
 	int             dclickuse, lookSpeed;
 	int             ringFilter;
@@ -51,10 +54,10 @@ typedef struct {
 	int             menuFog;
 	float           menuGlitter;
 	float           menuShadow;
-	boolean		menuSlam;
+	byte            menuSlam;
 	float           flashcolor[3];
 	int             flashspeed;
-	boolean         turningSkull;
+	byte            turningSkull;
 	float           menuColor[3];
 	float           menuColor2[3];
 	int             levelTitle;
@@ -69,40 +72,40 @@ typedef struct {
 	float           msgScale;
 	int             msgUptime;
 	int             msgBlink;
-	int		msgAlign;
-	boolean         msgShow;
+	int             msgAlign;
+	byte            msgShow;
 	float           msgColor[3];
 
 	int             jumpEnabled;
 	float           jumpPower;
-	boolean         fastMonsters;
-	boolean         customMusic;
+	byte            fastMonsters;
+	byte            customMusic;
 
-	float		statusbarAlpha;
-	float		statusbarCounterAlpha;
+	float           statusbarAlpha;
+	float           statusbarCounterAlpha;
 
 	char           *chat_macros[10];
 
-	//Automap stuff
-	boolean		counterCheat;
+	// Automap stuff.
+	byte            counterCheat;
 	float           counterCheatScale;
-	int		automapPos;
-	float		automapWidth;
-	float		automapHeight;
+	int             automapPos;
+	float           automapWidth;
+	float           automapHeight;
 	float           automapL0[3];
 	float           automapL1[3];
 	float           automapL2[3];
 	float           automapL3[3];
 	float           automapBack[4];
-	float		automapLineAlpha;
-	boolean         automapRotate;
-	boolean		automapHudDisplay;
-	boolean         automapShowDoors;
+	float           automapLineAlpha;
+	byte            automapRotate;
+	byte            automapHudDisplay;
+	byte            automapShowDoors;
 	float           automapDoorGlow;
-	boolean		automapBabyKeys;
+    byte            automapBabyKeys;
 
 	// Networking.
-	boolean         netDeathmatch, netNomonsters, netRespawn, netJumping;
+	byte            netDeathmatch, netNomonsters, netRespawn, netJumping;
 	byte            netEpisode, netMap, netSkill, netSlot;
 	byte            netColor;
 

@@ -1,6 +1,10 @@
 #ifndef __JDOOM_VERSION_H__
 #define __JDOOM_VERSION_H__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // DOOM version
 //enum { VERSION = 110 }; // obsolete
 

@@ -302,7 +302,7 @@ cvar_t  gameCVars[] = {
 	"Alignment of HUD messages. 0 = left, 1 = center, 2 = right.",
 	"msg-echo", 0, CVT_INT, &cfg.echoMsg, 0, 1,
 	"1=Echo all messages to the console.",
-	"msg-show", 0, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1, "1=Show messages.",
 	"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8,
 	"Number of HUD messages displayed at the same time.",
 	"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0,

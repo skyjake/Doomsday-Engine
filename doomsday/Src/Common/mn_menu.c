@@ -52,6 +52,7 @@
 # include "jDoom/doomstat.h"
 # include "jDoom/p_local.h"
 # include "jDoom/m_menu.h"
+# include "jDoom/m_ctrl.h"
 # include "jDoom/Mn_def.h"
 # include "jDoom/wi_stuff.h"
 # include "Common/x_hair.h"
@@ -64,6 +65,7 @@
 # include "jHeretic/Soundst.h"
 # include "jHeretic/h_config.h"
 # include "jHeretic/Mn_def.h"
+# include "jHeretic/m_ctrl.h"
 #elif __JHEXEN__
 # include "jHexen/h2def.h"
 # include "jHexen/p_local.h"
@@ -71,6 +73,7 @@
 # include "jHexen/soundst.h"
 # include "jHexen/h2_actn.h"
 # include "jHexen/mn_def.h"
+# include "jHexen/m_ctrl.h"
 # include "jHexen/x_config.h"
 # include "LZSS.h"
 #elif __JSTRIFE__
@@ -280,7 +283,7 @@ Menu_t *currentMenu;
 int     detailLevel;
 int     screenblocks = 10;		// has default
 
-#if __JDOOM__ || __JHERETIC__
+#if __JHERETIC__
 static int MenuEpisode;
 #endif
 
@@ -354,7 +357,7 @@ short   whichSkull;    // which skull to draw
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int    usegamma;
+int        usegamma;
 
 #ifndef __JDOOM__
 static int SkullBaseLump;
@@ -402,9 +405,9 @@ static float mfAlpha = 0;
 static float mfYjoin = 0.5f;
 static boolean updown = true;
 
-static float   menuScale = .8f;
+//static float   menuScale = .8f;
 
-static float bgAlpha = 0, outFade = 0;
+static float outFade = 0;
 static boolean fadingOut = false;
 static int menuDarkTicks = 15;
 static int slamInTicks = 9;
@@ -414,11 +417,11 @@ static float menu_calpha = 0;
 
 static boolean FileMenuKeySteal;
 static boolean slottextloaded;
-static char SlotText[NUMSAVESLOTS][SLOTTEXTLEN + 2];
-static char oldSlotText[SLOTTEXTLEN + 2];
-static int SlotStatus[NUMSAVESLOTS];
-static int slotptr;
-static int currentSlot;
+//static char SlotText[NUMSAVESLOTS][SLOTTEXTLEN + 2];
+//static char oldSlotText[SLOTTEXTLEN + 2];
+//static int SlotStatus[NUMSAVESLOTS];
+//static int slotptr;
+//static int currentSlot;
 static int quicksave;
 static int quickload;
 
@@ -895,6 +898,45 @@ static MenuItem_t HUDItems[] = {
 #endif
 };
 
+#ifdef __JDOOM__
+Menu_t ControlsDef = {
+	32, 40,
+	M_DrawControlsMenu,
+	73, ControlsItems,
+	1, MENU_OPTIONS,
+	hu_font_a,					//1, 0, 0, 
+	cfg.menuColor2,
+	LINEHEIGHT_A,
+	0, 16
+};
+#endif
+
+#ifdef __JHERETIC__
+Menu_t ControlsDef = {
+	32, 26,
+	M_DrawControlsMenu,
+	92, ControlsItems,
+	1, MENU_OPTIONS,
+	hu_font_a,					//1, 0, 0,
+	cfg.menuColor2,
+	LINEHEIGHT_A,
+	0, 17
+};
+#endif
+
+#ifdef __JHEXEN__
+Menu_t ControlsDef = {
+	32, 21,
+	M_DrawControlsMenu,
+	92, ControlsItems,
+	1, MENU_OPTIONS,
+	hu_font_a,					//1, 0, 0,
+	cfg.menuColor2, 
+	LINEHEIGHT_A,
+	0, 17
+};
+#endif
+
 static Menu_t HUDDef = {
 #ifndef __JDOOM__
 	64, 30,
@@ -1048,7 +1090,7 @@ static Menu_t JoyConfigMenu = {
 	0, 11
 };
 
-Menu_t *menulist[] = {
+Menu_t* menulist[] = {
 	&MainDef,
 #if __JHEXEN__
 	&ClassDef,
@@ -1122,107 +1164,90 @@ static Menu_t ColorWidgetMnu = {
 };
 
 // Cvars for the menu
-cvar_t  menuCVars[] = {
+cvar_t menuCVars[] = 
+{
 	// Old names (obsolete) -------------------------------------------------------
 
-	"flash_R", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[0], 0, 1,
-	"Menu selection flash color, red component.",
-	"flash_G", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[1], 0, 1,
-	"Menu selection flash color, green component.",
-	"flash_B", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[2], 0, 1,
-	"Menu selection flash color, blue component.",
-	"flash_Speed", OBSOLETE, CVT_INT, &cfg.flashspeed, 0, 50,
-	"Menu selection flash speed.",
-	"MenuScale", OBSOLETE, CVT_FLOAT, &cfg.menuScale, .1f, 1,
-	"Scaling for menus.",
-	"MenuEffects", OBSOLETE, CVT_INT, &cfg.menuEffects, 0, 2,
-	"Disable menu effects: 1=type-in, 2=all.",
-	"Menu_R", OBSOLETE, CVT_FLOAT, &cfg.menuColor[0], 0, 1,
-	"Menu color red component.",
-	"Menu_G", OBSOLETE, CVT_FLOAT, &cfg.menuColor[1], 0, 1,
-	"Menu color green component.",
-	"Menu_B", OBSOLETE, CVT_FLOAT, &cfg.menuColor[2], 0, 1,
-	"Menu color blue component.",
-	"MenuFog", OBSOLETE, CVT_INT, &cfg.menuFog, 0, 1,
-	"Menu fog mode: 0=blue vertical, 1=black smoke.",
+	{"flash_R", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[0], 0, 1,
+        "Menu selection flash color, red component."},
+	{"flash_G", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[1], 0, 1,
+        "Menu selection flash color, green component."},
+	{"flash_B", OBSOLETE, CVT_FLOAT, &cfg.flashcolor[2], 0, 1,
+        "Menu selection flash color, blue component."},
+	{"flash_Speed", OBSOLETE, CVT_INT, &cfg.flashspeed, 0, 50,
+        "Menu selection flash speed."},
+	{"MenuScale", OBSOLETE, CVT_FLOAT, &cfg.menuScale, .1f, 1,
+        "Scaling for menus."},
+	{"MenuEffects", OBSOLETE, CVT_INT, &cfg.menuEffects, 0, 2,
+        "Disable menu effects: 1=type-in, 2=all."},
+	{"Menu_R", OBSOLETE, CVT_FLOAT, &cfg.menuColor[0], 0, 1,
+        "Menu color red component."},
+	{"Menu_G", OBSOLETE, CVT_FLOAT, &cfg.menuColor[1], 0, 1,
+        "Menu color green component."},
+	{"Menu_B", OBSOLETE, CVT_FLOAT, &cfg.menuColor[2], 0, 1,
+        "Menu color blue component."},
+    {"MenuFog", OBSOLETE, CVT_INT, &cfg.menuFog, 0, 1,
+        "Menu fog mode: 0=blue vertical, 1=black smoke."},
 
 	// NEW names ------------------------------------------------------------------
 
-	"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1,
-			"Scaling for menus.",
-
-	"menu-flash-r", 0, CVT_FLOAT, &cfg.flashcolor[0], 0, 1,
-			"Menu selection flash color, red component.",
-
-	"menu-flash-g", 0, CVT_FLOAT, &cfg.flashcolor[1], 0, 1,
-			"Menu selection flash color, green component.",
-
-	"menu-flash-b", 0, CVT_FLOAT, &cfg.flashcolor[2], 0, 1,
-			"Menu selection flash color, blue component.",
-
-	"menu-flash-speed", 0, CVT_INT, &cfg.flashspeed, 0, 50,
-			"Menu selection flash speed.",
-
-	"menu-turningskull", 0, CVT_BYTE, &cfg.turningSkull, 0, 1,
-			"1=Menu skull turns at slider items.",
-
-	"menu-effect", 0, CVT_INT, &cfg.menuEffects, 0, 2,
-			"Disable menu effects: 1=type-in, 2=all.",
-
-	"menu-color-r", 0, CVT_FLOAT, &cfg.menuColor[0], 0, 1,
-			"Menu color red component.",
-
-	"menu-color-g", 0, CVT_FLOAT, &cfg.menuColor[1], 0, 1,
-			"Menu color green component.",
-
-	"menu-color-b", 0, CVT_FLOAT, &cfg.menuColor[2], 0, 1,
-			"Menu color blue component.",
-
-	"menu-colorb-r", 0, CVT_FLOAT, &cfg.menuColor2[0], 0, 1,
-			"Menu color B red component.",
-
-	"menu-colorb-g", 0, CVT_FLOAT, &cfg.menuColor2[1], 0, 1,
-			"Menu color B green component.",
-
-	"menu-colorb-b", 0, CVT_FLOAT, &cfg.menuColor2[2], 0, 1,
-			"Menu color B blue component.",
-
-	"menu-glitter", 0, CVT_FLOAT, &cfg.menuGlitter, 0, 1,
-			"Strength of type-in glitter.",
-
-	"menu-fog", 0, CVT_INT, &cfg.menuFog, 0, 4,
-			"Menu fog mode: 0=shimmer, 1=black smoke, 2=blue vertical, 3=grey smoke, 4=dimmed.",
-
-	"menu-shadow", 0, CVT_FLOAT, &cfg.menuShadow, 0, 1,
-			"Menu text shadow darkness.",
-
-	"menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 1,
-			"1=Enable the Patch Replacement strings.",
-
-	"menu-slam", 0, CVT_BYTE, &cfg.menuSlam, 0, 1,
-			"1=Slam the menu when opening.",
-
+	{"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1,
+			"Scaling for menus."},
+	{"menu-flash-r", 0, CVT_FLOAT, &cfg.flashcolor[0], 0, 1,
+			"Menu selection flash color, red component."},
+	{"menu-flash-g", 0, CVT_FLOAT, &cfg.flashcolor[1], 0, 1,
+			"Menu selection flash color, green component."},
+	{"menu-flash-b", 0, CVT_FLOAT, &cfg.flashcolor[2], 0, 1,
+			"Menu selection flash color, blue component."},
+	{"menu-flash-speed", 0, CVT_INT, &cfg.flashspeed, 0, 50,
+			"Menu selection flash speed."},
+	{"menu-turningskull", 0, CVT_BYTE, &cfg.turningSkull, 0, 1,
+			"1=Menu skull turns at slider items."},
+	{"menu-effect", 0, CVT_INT, &cfg.menuEffects, 0, 2,
+			"Disable menu effects: 1=type-in, 2=all."},
+	{"menu-color-r", 0, CVT_FLOAT, &cfg.menuColor[0], 0, 1,
+			"Menu color red component."},
+	{"menu-color-g", 0, CVT_FLOAT, &cfg.menuColor[1], 0, 1,
+			"Menu color green component."},
+	{"menu-color-b", 0, CVT_FLOAT, &cfg.menuColor[2], 0, 1,
+			"Menu color blue component."},
+	{"menu-colorb-r", 0, CVT_FLOAT, &cfg.menuColor2[0], 0, 1,
+			"Menu color B red component."},
+	{"menu-colorb-g", 0, CVT_FLOAT, &cfg.menuColor2[1], 0, 1,
+			"Menu color B green component."},
+	{"menu-colorb-b", 0, CVT_FLOAT, &cfg.menuColor2[2], 0, 1,
+			"Menu color B blue component."},
+	{"menu-glitter", 0, CVT_FLOAT, &cfg.menuGlitter, 0, 1,
+			"Strength of type-in glitter."},
+	{"menu-fog", 0, CVT_INT, &cfg.menuFog, 0, 4,
+			"Menu fog mode: 0=shimmer, 1=black smoke, 2=blue vertical, 3=grey smoke, 4=dimmed."},
+	{"menu-shadow", 0, CVT_FLOAT, &cfg.menuShadow, 0, 1,
+			"Menu text shadow darkness."},
+	{"menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 1,
+			"1=Enable the Patch Replacement strings."},
+	{"menu-slam", 0, CVT_BYTE, &cfg.menuSlam, 0, 1,
+			"1=Slam the menu when opening."},
 #ifdef __JDOOM__
-	"menu-quitsound", 0, CVT_INT, &cfg.menuQuitSound, 0, 1,
-			"1=Play a sound when quitting the game.",
+	{"menu-quitsound", 0, CVT_INT, &cfg.menuQuitSound, 0, 1,
+			"1=Play a sound when quitting the game."},
 #endif
 
-	NULL
+	{NULL}
 };
 
 // Console commands for the menu
 ccmd_t  menuCCmds[] = {
-	"helpscreen",   CCmdMenuAction, "Show the Help screens.",
-	"savegame",     CCmdMenuAction, "Open the save game menu.",
-	"loadgame",     CCmdMenuAction, "Open the load game menu.",
-	"soundmenu",    CCmdMenuAction, "Open the sound settings menu.",
-	"quicksave",    CCmdMenuAction, "Quicksave the game.",
-	"endgame",      CCmdMenuAction, "End the game.",
-	"togglemsgs",   CCmdMenuAction, "Messages on/off.",
-	"quickload",    CCmdMenuAction, "Load the quicksaved game.",
-	"quit",         CCmdMenuAction, "Quit the game and return to the OS.",
-	"togglegamma",  CCmdMenuAction, "Cycle gamma correction levels.",
-	NULL
+	{"helpscreen",   CCmdMenuAction, "Show the Help screens."},
+	{"savegame",     CCmdMenuAction, "Open the save game menu."},
+	{"loadgame",     CCmdMenuAction, "Open the load game menu."},
+	{"soundmenu",    CCmdMenuAction, "Open the sound settings menu."},
+	{"quicksave",    CCmdMenuAction, "Quicksave the game."},
+	{"endgame",      CCmdMenuAction, "End the game."},
+	{"togglemsgs",   CCmdMenuAction, "Messages on/off."},
+	{"quickload",    CCmdMenuAction, "Load the quicksaved game."},
+	{"quit",         CCmdMenuAction, "Quit the game and return to the OS."},
+	{"togglegamma",  CCmdMenuAction, "Cycle gamma correction levels."},
+	{NULL}
 };
 
 // Code -------------------------------------------------------------------
@@ -1288,7 +1313,7 @@ void M_UnloadData(void)
 	if(Get(DD_NOVIDEO))
 		return;
 	if(menuFogTexture)
-		gl.DeleteTextures(1, &menuFogTexture);
+		gl.DeleteTextures(1, (DGLuint*) &menuFogTexture);
 	menuFogTexture = 0;
 }
 
@@ -1556,15 +1581,12 @@ void M_SetMenuMatrix(float time)
 {
 	boolean allowScaling = (currentMenu != &ReadDef1 && currentMenu != &ReadDef2
 #ifndef __JDOOM__
-								&& currentMenu != &ReadDef3
+                            && currentMenu != &ReadDef3
 #endif
-											);
+                            );
 
-    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PushMatrix();
-
+    // Use a plain 320x200 projection.
     gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
     gl.LoadIdentity();
     gl.Ortho(0, 0, 320, 200, -1, 1);
 
@@ -1572,16 +1594,17 @@ void M_SetMenuMatrix(float time)
 	if(mfAlpha)
 		M_DrawBackground();
 
-	gl.PopMatrix();
+	//gl.PopMatrix();
 
-	gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, 320, 200, -1, 1);
+	//gl.MatrixMode(DGL_PROJECTION);
+    //gl.PushMatrix();
+    //gl.LoadIdentity();
+    //gl.Ortho(0, 0, 320, 200, -1, 1);
 
 	if(allowScaling)
 	{
 		// Scale by the menuScale.
+        gl.MatrixMode(DGL_MODELVIEW);
 		gl.Translatef(160, 100, 0);
 
 		if(cfg.menuSlam){
@@ -1602,16 +1625,14 @@ void M_SetMenuMatrix(float time)
 }
 
 /*
- *  M_Drawer:
+ * This is the main menu drawing routine (called every tic by the drawing loop)
+ * Draws the current menu 'page' by calling the funcs attached to each 
+ * menu item.
  *
- *		This is the main menu drawing routine (called every tic by the drawing loop)
- *		Draws the current menu 'page' by calling the funcs attached to each menu item.
- *
- *		Also draws any current menu message 'Are you sure you want to quit?'
+ * Also draws any current menu message 'Are you sure you want to quit?'
  */
 void M_Drawer(void)
 {
-
 	static short x;
 	static short y;
 	short   i;
@@ -1626,12 +1647,14 @@ void M_Drawer(void)
 
 	boolean allowScaling = (currentMenu != &ReadDef1 && currentMenu != &ReadDef2
 #ifndef __JDOOM__
-								&& currentMenu != &ReadDef3
+                            && currentMenu != &ReadDef3
 #endif
-											);
+                            );
 
 	inhelpscreens = false;
 
+    // FIXME: This FSP indicator is obsolete since the engine can display a 
+    // much more accurate frame rate counter.
 	if(cfg.showFPS)
 	{
 		char    fpsbuff[80];
@@ -1644,25 +1667,22 @@ void M_Drawer(void)
 	if(!menuactive && menu_alpha > 0 )  // fading out
 	{
 		temp = outFade + 1;
-	} else {
+	} 
+    else 
+    {
 		effTime = (MenuTime > slamInTicks) ? slamInTicks : MenuTime;
 		temp = (effTime / (float) slamInTicks);
 	}
 
+    // These are popped in the end of the function.
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PushMatrix();
+
 	// Setup matrix.
 	if(messageToPrint || ( menuactive || (menu_alpha > 0 || mfAlpha > 0)) )
-		M_SetMenuMatrix(messageToPrint? 1:temp);	// don't slam messages
-
-#ifdef __JHEXEN__
-#ifdef TIMEBOMB
-	// Beta blinker ***
-	if(leveltime & 16)
-	{
-		MN_DrTextA(BETA_FLASH_TEXT,
-				   160 - (MN_TextAWidth(BETA_FLASH_TEXT) >> 1), 12);
-	}
-#endif							// TIMEBOMB
-#endif
+		M_SetMenuMatrix(messageToPrint? 1 : temp);	// don't slam messages
 
 	// Horiz. & Vertically center string and print it.
 	if(messageToPrint)
@@ -1694,8 +1714,9 @@ void M_Drawer(void)
 
 		goto end_draw_menu;
 	}
-	if(!menuactive && menu_alpha == 0 && mfAlpha == 0 )
-		return;
+
+	if(!menuactive && menu_alpha == 0 && mfAlpha == 0)
+		goto end_draw_menu;
 
 	if(currentMenu->drawFunc)
 		currentMenu->drawFunc();	// call Draw routine
@@ -1714,7 +1735,8 @@ void M_Drawer(void)
 			{
 				if(currentMenu->items[i].lumpname[0])
 				{
-					WI_DrawPatch(x, y, 1, 1, 1, menu_alpha, W_GetNumForName(currentMenu->items[i].lumpname));
+					WI_DrawPatch(x, y, 1, 1, 1, menu_alpha, 
+                        W_GetNumForName(currentMenu->items[i].lumpname));
 				}
 			}
 			else if(currentMenu->items[i].text)
@@ -1735,7 +1757,6 @@ void M_Drawer(void)
 					g = .7f;
 					b = .3f;
 	#endif
-
 				}
 				else if(itemOn == i && !WidgetEdit)
 				{
@@ -1753,22 +1774,26 @@ void M_Drawer(void)
 					r = currentMenu->color[0];
 					g = currentMenu->color[1];
 					b = currentMenu->color[2];
+                }
 
-				}
-
-				// changed from font[0].height to font[17].height (in jHeretic/jHexen font[0] is 1 pixel high)
+				// changed from font[0].height to font[17].height 
+                // (in jHeretic/jHexen font[0] is 1 pixel high)
 				WI_DrawParamText(x, y + currentMenu->itemHeight - 
 								SHORT(currentMenu->font[17].height) - 1, 
 								currentMenu->items[i].text, currentMenu->font, 
-								r, g, b, menu_alpha, currentMenu->font == hu_font_b, true, ALIGN_LEFT);
+								r, g, b, menu_alpha, 
+                                currentMenu->font == hu_font_b, true, 
+                                ALIGN_LEFT);
 
 			}
 			y += currentMenu->itemHeight;
 		}
 
 		// Draw an alpha'd rect over the whole screen (eg when in a widget)
-		if(WidgetEdit && menu_calpha > 0){
-
+		if(WidgetEdit && menu_calpha > 0)
+        {
+#if 0
+// FIXME: This will not do; there is no need to change the projection.
 			gl.PopMatrix();
 			gl.PushMatrix();
 
@@ -1780,15 +1805,18 @@ void M_Drawer(void)
 			GL_SetNoTexture();
 			GL_DrawRect(0, 0, 320, 200, 0.1f, 0.1f, 0.1f, menu_calpha);
 
+            gl.MatrixMode(DGL_PROJECTION);
 			gl.PopMatrix();
 
 			// Note: do not re-setup the matrix for menu rendering as widgets
 			// are drawn with their own scale, independant of cfg.menuscale.
+#endif            
 		}
 
 		// DRAW Colour Widget?
-		if(WidgetEdit){
-		Draw_BeginZoom(0.5f, 160, 100);
+		if(WidgetEdit)
+        {
+            Draw_BeginZoom(0.5f, 160, 100);
 			DrawColorWidget();
 		}
 
@@ -1796,14 +1824,16 @@ void M_Drawer(void)
 		if(allowScaling)
 		{
 			scale = currentMenu->itemHeight / (float) LINEHEIGHT;
-			w = cursorst[whichSkull].width * scale;			// skull size
-			h = cursorst[whichSkull].height * scale;
-			off_x = (WidgetEdit? ColorWidgetMnu.x : currentMenu->x) + SKULLXOFF * scale + w / 2;
+			w = SHORT(cursorst[whichSkull].width) * scale; // skull size
+			h = SHORT(cursorst[whichSkull].height) * scale;
+			off_x = (WidgetEdit? ColorWidgetMnu.x : currentMenu->x) + 
+                SKULLXOFF * scale + w / 2;
 
 			off_y =
-				(WidgetEdit? ColorWidgetMnu.y : currentMenu->y) + (itemOn -
-								(WidgetEdit? ColorWidgetMnu.firstItem : currentMenu->firstItem)) *
-				currentMenu->itemHeight + currentMenu->itemHeight / 2 -1;
+				(WidgetEdit? ColorWidgetMnu.y : currentMenu->y) + (itemOn - 
+                    (WidgetEdit? ColorWidgetMnu.firstItem : 
+                        currentMenu->firstItem)) *
+				currentMenu->itemHeight + currentMenu->itemHeight / 2 - 1;
 
 			//if(currentMenu->font == hu_font_b)
 			//	off_y += SKULLYOFF;
@@ -1817,20 +1847,23 @@ void M_Drawer(void)
                 gl.Rotatef(skull_angle, 0, 0, 1);
             gl.Scalef(1, 1.2f, 1);
             GL_DrawRect(-(w/2) , -(h / 2), w, h, 1, 1, 1, menu_alpha);
+            gl.MatrixMode(DGL_MODELVIEW);
             gl.PopMatrix();
         }
 
         if(WidgetEdit)
+        {
             Draw_EndZoom();
+        }
 	}
 
   end_draw_menu:
 
-    // Restore original matrix.
-	gl.MatrixMode(DGL_PROJECTION);
+    // Restore original matrices.
+	gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
 
-	gl.MatrixMode(DGL_MODELVIEW);
+	gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 }
 
@@ -1859,7 +1892,7 @@ boolean M_Responder(event_t *ev)
 	static int joywait = 0;
 
 	int     firstVI, lastVI;	// first and last visible item
-	MenuItem_t *item;
+	const MenuItem_t *item;
 
 	if(ev->data1 == DDKEY_RSHIFT)
 	{
@@ -2173,7 +2206,7 @@ boolean Cl_Responder(event_t *event)
 	int     i;
 	int     firstWVI, lastWVI;	// first and last visible item
 	int     withalpha;          // if a 4 color widget is needed
-	MenuItem_t *item;
+	const MenuItem_t *item;
 
 	// Is there an active edit field?
 	if(!WidgetEdit)
@@ -2402,7 +2435,7 @@ void M_DrawTitle(char *text, int y)
 //
 //---------------------------------------------------------------------------
 
-void M_WriteMenuText(Menu_t * menu, int index, char *text)
+void M_WriteMenuText(const Menu_t * menu, int index, char *text)
 {
 	int     off = 0;
 
@@ -2474,13 +2507,14 @@ void DrawMessage(void)
 
 }
 
-char   *QuitEndMsg[] = {
-	"ARE YOU SURE YOU WANT TO QUIT?",
-	"ARE YOU SURE YOU WANT TO END THE GAME?",
+const char* QuitEndMsg[] = 
+{
+	"ARE YOU SURE YOU WANT TO QUIT?",	
+    "ARE YOU SURE YOU WANT TO END THE GAME?",
 	"DO YOU WANT TO QUICKSAVE THE GAME NAMED",
 	"DO YOU WANT TO QUICKLOAD THE GAME NAMED",
 	"ARE YOU SURE YOU WANT TO SUICIDE?",
-	NULL
+	NULL 
 };
 
 #define BETA_FLASH_TEXT "BETA"
@@ -2616,7 +2650,9 @@ void M_DrawBackground(void)
 
    	}
 
+    gl.MatrixMode(DGL_TEXTURE);
 	gl.LoadIdentity();
+    
 	gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
@@ -3151,7 +3187,7 @@ void M_DrawHUDMenu(void)
 	};
 
 #ifndef __JDOOM__
-	MenuItem_t *item = menu->items + menu->firstItem;
+	//const MenuItem_t *item = menu->items + menu->firstItem;
 	char  *token;
 
 	M_DrawTitle("hud options", 4);
@@ -3168,14 +3204,17 @@ void M_DrawHUDMenu(void)
 #endif
 
 #if __JHEXEN__ || __JSTRIFE__
-	if(menu->firstItem < menu->numVisItems){
+	if(menu->firstItem < menu->numVisItems)
+    {
 		M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
 		M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
 		M_DrawSlider(menu, 3, 9, cfg.xhairSize);
 		M_DrawSlider(menu, 6, 11, cfg.screenblocks - 3);
 		M_DrawSlider(menu, 9, 20, cfg.sbarscale - 1);
 		M_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
-	} else {
+	} 
+    else 
+    {
 		M_WriteMenuText(menu, 16, yesno[cfg.hudShown[HUD_MANA] != 0]);
 		M_WriteMenuText(menu, 17, yesno[cfg.hudShown[HUD_HEALTH]]);
 		M_WriteMenuText(menu, 18, yesno[cfg.hudShown[HUD_ARTI]]);
@@ -3183,14 +3222,17 @@ void M_DrawHUDMenu(void)
 		M_DrawSlider(menu, 21, 10, cfg.hudScale * 10 - 3 + .5f);
 	}
 #elif __JHERETIC__
-	if(menu->firstItem < menu->numVisItems){
+	if(menu->firstItem < menu->numVisItems)
+    {
 		M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
 		M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
 		M_DrawSlider(menu, 3, 9, cfg.xhairSize);
 		M_DrawSlider(menu, 6, 11, cfg.screenblocks - 3);
 		M_DrawSlider(menu, 9, 20, cfg.sbarscale - 1);
 		M_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
-	} else {
+	} 
+    else 
+    {
 		M_WriteMenuText(menu, 16, yesno[cfg.hudShown[HUD_AMMO]]);
 		M_WriteMenuText(menu, 17, yesno[cfg.hudShown[HUD_ARMOR]]);
 		M_WriteMenuText(menu, 18, yesno[cfg.hudShown[HUD_ARTI]]);
@@ -3792,7 +3834,7 @@ void M_Episode(int option, void *data)
 	// Yet another hack...
 	if((gamemode == registered) && (option > 2))
 	{
-		Con_Message("M_Episode: 4th episode requires UltimateDOOM\n");
+		Con_Message("M_Episode: 4th episode requires Ultimate DOOM\n");
 		option = 0;
 	}
 
@@ -4169,12 +4211,11 @@ void M_DrawThermo2(int x, int y, int thermWidth, int thermDot, int height)
 #endif
 
 /*
- *   M_DrawColorBox
- *		Draws a little colour box using the background box for a border
+ * Draws a little colour box using the background box for a border
  */
-void M_DrawColorBox(Menu_t * menu, int index, float r, float g, float b, float a)
+void M_DrawColorBox(const Menu_t * menu, int index, float r, float g, float b, float a)
 {
-	int x = menu->x+4;
+	int x = menu->x + 4;
 	int y = menu->y + menu->itemHeight * (index  - menu->firstItem) + 4;
 
 	if (a < 0) a = 1;
@@ -4190,75 +4231,88 @@ void M_DrawColorBox(Menu_t * menu, int index, float r, float g, float b, float a
  */
 void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green, float blue, float alpha, boolean background, int border)
 {
-
 	dpatch_t	*t,*b,*l,*r,*tl,*tr,*br,*bl;
 
 	int	up;
 
-	switch(border){
-		case BORDERUP:
-			t = &borderpatches[2];
-			b = &borderpatches[0];
-			l = &borderpatches[1];
-			r = &borderpatches[3];
-			tl = &borderpatches[6];
-			tr = &borderpatches[7];
-			br = &borderpatches[4];
-			bl = &borderpatches[5];
+	switch(border)
+    {
+    case BORDERUP:
+        t = &borderpatches[2];
+        b = &borderpatches[0];
+        l = &borderpatches[1];
+        r = &borderpatches[3];
+        tl = &borderpatches[6];
+        tr = &borderpatches[7];
+        br = &borderpatches[4];
+        bl = &borderpatches[5];
 
-			up = -1;
+        up = -1;
+        break;
+        
+    case BORDERDOWN:
+        t = &borderpatches[0];
+        b = &borderpatches[2];
+        l = &borderpatches[3];
+        r = &borderpatches[1];
+        tl = &borderpatches[4];
+        tr = &borderpatches[5];
+        br = &borderpatches[6];
+        bl = &borderpatches[7];
 
-			break;
-		case BORDERDOWN:
-			t = &borderpatches[0];
-			b = &borderpatches[2];
-			l = &borderpatches[3];
-			r = &borderpatches[1];
-			tl = &borderpatches[4];
-			tr = &borderpatches[5];
-			br = &borderpatches[6];
-			bl = &borderpatches[7];
-
-			up = 1;
-
-			break;
-		default:
-			break;
+        up = 1;
+        break;
+        
+    default:
+        break;
 	}
 
 	GL_SetColorAndAlpha(red, green, blue, menu_alpha);
 
-	if(background){
+	if(background)
+    {
 		GL_SetFlat(R_FlatNumForName(borderLumps[0]));
 		GL_DrawRectTiled(x, y, w, h, 64, 64);
 	}
 
-	if(border){
+	if(border)
+    {
 		// Top
 		GL_SetPatch(t->lump);
-		GL_DrawRectTiled(x, y - t->height, w, t->height, up * t->width, up * t->height);
+		GL_DrawRectTiled(x, y - SHORT(t->height), w, SHORT(t->height), 
+                         up * SHORT(t->width), up * SHORT(t->height));
 		// Bottom
 		GL_SetPatch(b->lump);
-		GL_DrawRectTiled(x, y + h, w, b->height, up * b->width, up * b->height);
+		GL_DrawRectTiled(x, y + h, w, SHORT(b->height), up * SHORT(b->width), 
+                         up * SHORT(b->height));
 		// Left
 		GL_SetPatch(l->lump);
-		GL_DrawRectTiled(x - l->width, y, l->width, h, up * l->width, up * l->height);
+		GL_DrawRectTiled(x - SHORT(l->width), y, SHORT(l->width), h, 
+                         up * SHORT(l->width), up * SHORT(l->height));
 		// Right
 		GL_SetPatch(r->lump);
-		GL_DrawRectTiled(x + w, y, r->width, h, up * r->width, up * r->height);
+		GL_DrawRectTiled(x + w, y, SHORT(r->width), h, up * SHORT(r->width), 
+                         up * SHORT(r->height));
 
 		// Top Left
 		GL_SetPatch(tl->lump);
-		GL_DrawRectTiled(x - tl->width, y - tl->height, tl->width, tl->height, up * tl->width, up * tl->height);
+		GL_DrawRectTiled(x - SHORT(tl->width), y - SHORT(tl->height), 
+                         SHORT(tl->width), SHORT(tl->height), 
+                         up * SHORT(tl->width), up * SHORT(tl->height));
 		// Top Right
 		GL_SetPatch(tr->lump);
-		GL_DrawRectTiled(x + w, y - tr->height, tr->width, tr->height, up * tr->width, up * tr->height);
+		GL_DrawRectTiled(x + w, y - SHORT(tr->height), SHORT(tr->width), 
+                         SHORT(tr->height), up * SHORT(tr->width), 
+                         up * SHORT(tr->height));
 		// Bottom Right
 		GL_SetPatch(br->lump);
-		GL_DrawRectTiled(x + w, y + h, br->width, br->height, up * br->width, up * br->height);
+		GL_DrawRectTiled(x + w, y + h, SHORT(br->width), SHORT(br->height), 
+                         up * SHORT(br->width), up * SHORT(br->height));
 		// Bottom Left
 		GL_SetPatch(bl->lump);
-		GL_DrawRectTiled(x - bl->width, y + h, bl->width, bl->height, up * bl->width, up * bl->height);
+		GL_DrawRectTiled(x - SHORT(bl->width), y + h, SHORT(bl->width), 
+                         SHORT(bl->height), up * SHORT(bl->width), 
+                         up * SHORT(bl->height));
 	}
 }
 
@@ -4268,7 +4322,7 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green, flo
 //
 //---------------------------------------------------------------------------
 
-void M_DrawSlider(Menu_t * menu, int item, int width, int slot)
+void M_DrawSlider(const Menu_t * menu, int item, int width, int slot)
 {
 #ifndef __JDOOM__
 	int     x;

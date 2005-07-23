@@ -143,7 +143,7 @@ cvar_t  gameCVars[] = {
 	"1=Enable custom (external) music files.",
 	"ReverbDebug", OBSOLETE | CVF_NO_ARCHIVE, CVT_BYTE, &cfg.reverbDebug, 0, 1,
 	"1=Reverb debug information in the console.",
-	"Messages", OBSOLETE, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"Messages", OBSOLETE, CVT_BYTE, &cfg.msgShow, 0, 1, "1=Show messages.",
 	"ChatMacro0", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0,
 	"Chat macro 1.",
 	"ChatMacro1", OBSOLETE, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0,
@@ -196,7 +196,7 @@ cvar_t  gameCVars[] = {
 	"JumpPower", OBSOLETE, CVT_FLOAT, &cfg.jumpPower, 0, 100, "Jump power.",
 	"AutoSwitch", OBSOLETE, CVT_BYTE, &cfg.weaponAutoSwitch, 0, 1,
 	"1=Change weapon automatically when picking one up.",
-	"SecretMsg", OBSOLETE, CVT_INT, &cfg.secretMsg, 0, 1,
+	"SecretMsg", OBSOLETE, CVT_BYTE, &cfg.secretMsg, 0, 1,
 	"1=Announce the discovery of secret areas.",
 	"EyeHeight", OBSOLETE, CVT_INT, &cfg.plrViewHeight, 41, 54,
 	"Player eye height. The original is 41.",
@@ -365,6 +365,9 @@ cvar_t  gameCVars[] = {
 	"1=Disable all multiplayer objects in co-op games.",
 	"server-game-coop-respawn-items", 0, CVT_BYTE, &cfg.coopRespawnItems, 0, 1,
 	"1=Respawn items in co-op games.",
+    {"server-game-respawn-monsters-nightmare", 0, CVT_BYTE, 
+        &cfg.respawnMonstersNightmare, 0, 1, 
+        "1=Monster respawning in Nightmare difficulty enabled."},
 
 	// Player data.
 	"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 3,
@@ -404,8 +407,8 @@ cvar_t  gameCVars[] = {
 	"hud-title-noidsoft", 0, CVT_BYTE, &cfg.hideAuthorIdSoft, 0, 1,
 	"1=Don't show map author if it's \"id Software\".",
 
-	"msg-show", 0, CVT_INT, &cfg.msgShow, 0, 1, "1=Show messages.",
-	"msg-secret", 0, CVT_INT, &cfg.secretMsg, 0, 1,
+	"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1, "1=Show messages.",
+	"msg-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1,
 	"1=Announce the discovery of secret areas.",
 
 	"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2,

@@ -89,14 +89,14 @@ extern boolean xgdatalumps;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 struct mobj_s dummything;
-int     xgDev;    // Print dev messages.
+int     xgDev = 0;    // Print dev messages.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static linetype_t typebuffer;
 static char msgbuf[80];
 
-static char xgClassNames[NUMXGCLASSES-1][CLASSNAMELENGTH];   // Classnames for use in xgDev messages
+char xgClassNames[NUMXGCLASSES-1][CLASSNAMELENGTH];   // Classnames for use in xgDev messages
 
 // CODE --------------------------------------------------------------------
 
@@ -398,50 +398,53 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, int data,
  * Returns the value requested by reftype from the line using data from 
  * either line or context (will always be linetype_t).
  */
-int XL_ValidateLineRef(line_t *line,int reftype, void *context, char *parmname)
+int XL_ValidateLineRef(line_t *line, int reftype, void *context, char *parmname)
 {
-    linetype_t *info = context;
+    //linetype_t *info = context;
     int answer = 0;
 
     switch(reftype)
     {
-        case LDREF_SPECIAL:    // Line Special
-            XG_Dev("XL_ValidateLineRef: Using Line Special (%i) as %s",line->special, parmname);
-            answer = line->special;
+    case LDREF_SPECIAL:    // Line Special
+        XG_Dev("XL_ValidateLineRef: Using Line Special (%i) as %s", 
+            line->special, parmname);
+        answer = line->special;
+        break;
+    case LDREF_TAG:    // line Tag
+        XG_Dev("XL_ValidateLineRef: Using Line Tag (%i) as %s", line->tag, parmname);
+        answer = line->tag;
+        break;
+    case LDREF_ACTTAG:    // line ActTag
+        if(!line->xg)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
             break;
-        case LDREF_TAG:    // line Tag
-            XG_Dev("XL_ValidateLineRef: Using Line Tag (%i) as %s",line->tag, parmname);
-            answer = line->tag;
-            break;
-        case LDREF_ACTTAG:    // line ActTag
-            if(!line->xg)
-            {
-                XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
-                break;
-            }
+        }
 
-            if(!line->xg->info.act_tag)
-            {
-                XG_Dev("XL_ValidateLineRef: REFERENCE DOESNT HAVE AN ACT TAG");
-                break;
-            }
+        if(!line->xg->info.act_tag)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE DOESNT HAVE AN ACT TAG");
+            break;
+        }
 
-            XG_Dev("XL_ValidateLineRef: Using Line ActTag (%i) as %s",line->xg->info.act_tag, parmname);
-            answer = line->xg->info.act_tag;
+        XG_Dev("XL_ValidateLineRef: Using Line ActTag (%i) as %s", 
+            line->xg->info.act_tag, parmname);
+        answer = line->xg->info.act_tag;
+        break;
+    case LDREF_COUNT:    // line count
+        if(!line->xg)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
             break;
-        case LDREF_COUNT:    // line count
-            if(!line->xg)
-            {
-                XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
-                break;
-            }
+        }
 
-            XG_Dev("XL_ValidateLineRef: Using Line Count (%i) as %s",line->xg->info.act_count, parmname);
-            answer = line->xg->info.act_count;
-            break;
-        default:    // Could be explicit, return the actual int value
-            answer = reftype;
-            break;
+        XG_Dev("XL_ValidateLineRef: Using Line Count (%i) as %s", 
+            line->xg->info.act_count, parmname);
+        answer = line->xg->info.act_count;
+        break;
+    default:    // Could be explicit, return the actual int value
+        answer = reftype;
+        break;
     }
 
     return answer;

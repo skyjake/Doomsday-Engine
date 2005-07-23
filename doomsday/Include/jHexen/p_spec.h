@@ -13,6 +13,10 @@
 #ifndef __P_SPEC_H__
 #define __P_SPEC_H__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 //#pragma pack(1)
 
 extern int     *TerrainTypes;

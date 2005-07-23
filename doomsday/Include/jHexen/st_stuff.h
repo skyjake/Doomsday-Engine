@@ -2,6 +2,10 @@
 #ifndef __ST_STUFF_H__
 #define __ST_STUFF_H__
 
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
 // Called by main loop.
 boolean         ST_Responder(event_t *ev);
 

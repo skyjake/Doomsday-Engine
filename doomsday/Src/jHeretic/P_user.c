@@ -702,8 +702,6 @@ void P_PlayerThink(player_t *player)
 	weapontype_t newweapon;
 	mobj_t *plrmo = player->plr->mo;
 
-	extern boolean ultimatemsg;
-
 	// No-clip cheat
 	if(player->cheats & CF_NOCLIP)
 	{

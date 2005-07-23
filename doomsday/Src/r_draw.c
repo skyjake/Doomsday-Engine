@@ -158,9 +158,7 @@ void R_DrawViewBorder(void)
 				 W_GetNumForName(borderGfx[BG_BOTTOMLEFT]));
 	GL_UsePatchOffset(true);
 
-    gl.PopMatrix();
-
-    gl.MatrixMode(DGL_MODELVIEW);
+    gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 }
 

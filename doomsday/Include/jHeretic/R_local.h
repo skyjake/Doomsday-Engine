@@ -3,6 +3,10 @@
 #ifndef __R_LOCAL__
 #define __R_LOCAL__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 #include "p_xg.h"
 
 #define	ANGLETOSKYSHIFT		22	   // sky map is 256*128*4 maps
@@ -135,17 +139,16 @@ typedef struct {
 #define numlines		(*gi.numlines)
 #define numsides		(*gi.numsides)
 
-#define vertexes		((vertex_t*)(*gi.vertexes))
-#define segs			((seg_t*)(*gi.segs))
-#define	sectors			((sector_t*)(*gi.sectors))
-#define subsectors		((subsector_t*)(*gi.subsectors))
-#define nodes			((node_t*)(*gi.nodes))
-#define lines			((line_t*)(*gi.lines))
-#define sides			((side_t*)(*gi.sides))
+#define vertexes		(*(vertex_t**)gi.vertexes)
+#define segs			(*(seg_t**)gi.segs)
+#define	sectors			(*(sector_t**)gi.sectors)
+#define subsectors		(*(subsector_t**)gi.subsectors)
+#define nodes			(*(node_t**)gi.nodes)
+#define lines			(*(line_t**)gi.lines)
+#define sides			(*(side_t**)gi.sides)
 
-//extern    fixed_t     viewx, viewy, viewz;
-//extern    angle_t     viewangle;
-#define viewangle	Get(DD_VIEWANGLE)
+#define viewangle	    Get(DD_VIEWANGLE)
+
 extern player_t *viewplayer;
 
 extern angle_t  clipangle;

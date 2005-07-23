@@ -1,6 +1,10 @@
 #ifndef __P_V13_SAVEG__
 #define __P_V13_SAVEG__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 void            SV_v13_LoadGame(char *filename);
 
 // Persistent storage/archiving.

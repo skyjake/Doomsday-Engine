@@ -32,6 +32,7 @@
 
 #include "m_argv.h"
 #include "m_menu.h"
+#include "jDoom/m_ctrl.h"
 
 #include "g_game.h"
 #include "g_common.h"
@@ -64,7 +65,6 @@
 void    R_InitTranslation(void);
 void    D_Display(void);
 int     D_PrivilegedResponder(event_t *event);
-void    D_DefaultBindings();
 fixed_t P_GetMobjFriction(mobj_t *mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -385,7 +385,7 @@ void D_PreInit(void)
 	cfg.netEpisode = 1;
 	cfg.netMap = 1;
 	cfg.netSkill = sk_medium;
-	cfg.netColor = 4;
+	cfg.netColor = 4; 
 	cfg.plrViewHeight = 41;
 	cfg.levelTitle = true;
 	cfg.hideAuthorIdSoft = true;
@@ -447,6 +447,7 @@ void D_PreInit(void)
 	cfg.bobView = 1;
 	cfg.bobWeaponLower = true;
 	cfg.cameraNoClip = true;
+    cfg.respawnMonstersNightmare = true;
 
 	D_SetPlayerPtrs();
 	DD_SetConfigFile("jDoom.cfg");
@@ -477,7 +478,7 @@ void D_PreInit(void)
 	modifiedgame = false;
 }
 
-char   *borderLumps[] = {
+char *borderLumps[] = {
 	"FLOOR7_2",
 	"brdr_t",
 	"brdr_r",
@@ -504,7 +505,7 @@ void D_PostInit(void)
 	XG_ReadTypes();
 	XG_Register();			// register XG classnames
 
-	D_DefaultBindings();
+	G_DefaultBindings();
 	R_SetViewSize(cfg.screenblocks, 0);
 	G_SetGlowing();
 

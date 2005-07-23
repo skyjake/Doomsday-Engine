@@ -25,6 +25,10 @@
 #ifndef __P_SPEC__
 #define __P_SPEC__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 // Many of the structs here will be directly written to savegames,
 // this'll keep things compatible.
 #pragma pack(1)

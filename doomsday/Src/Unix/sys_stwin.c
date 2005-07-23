@@ -39,6 +39,11 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+#ifdef MACOSX
+void PrintInStartupWindow(const char *message);
+void CloseStartupWindow(void);
+#endif
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -67,15 +72,18 @@ int SW_IsActive(void)
 //===========================================================================
 void SW_Printf(const char *format, ...)
 {
-	/*
-	   va_list args;
+#ifdef MACOSX
+    char buf[16384];
+    va_list args;
 
-	   if(!SW_IsActive()) return;
+	if(!SW_IsActive()) return;
 
-	   va_start(args, format);
-	   vprintf(format, args);
-	   va_end(args);
-	 */
+    va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+    
+    PrintInStartupWindow(buf);
+#endif
 }
 
 //===========================================================================
@@ -97,6 +105,10 @@ void SW_Shutdown(void)
 	if(!swActive)
 		return;					// Not initialized.
 	swActive = false;
+    
+#ifdef MACOSX
+    CloseStartupWindow();
+#endif
 }
 
 //===========================================================================

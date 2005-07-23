@@ -3,6 +3,10 @@
 #ifndef __MENU_DEFS_H_
 #define __MENU_DEFS_H_
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #include "Common/hu_stuff.h"
 #include "r_defs.h"
 
@@ -65,8 +69,8 @@ typedef struct {
 	char            *text;
 	void            (*func) (int option, void *data);
 	int             option;
-	char            *lumpname;
-	void		*data;
+	char           *lumpname;
+	void           *data;
 } MenuItem_t;
 
 typedef struct {
@@ -74,11 +78,11 @@ typedef struct {
 	int             y;
 	void            (*drawFunc) (void);
 	int             itemCount;
-	MenuItem_t     *items;
+	const MenuItem_t *items;
 	int             lastOn;
 	MenuType_t      prevMenu;
 	dpatch_t       *font;		   // Font for menu items.
-	float		*color;		// their color.
+	float          *color;		// their color.
 	int             itemHeight;
 	// For multipage menus.
 	int             firstItem, numVisItems;
@@ -91,7 +95,7 @@ extern short    itemOn;
 
 extern Menu_t   MapDef;
 
-extern Menu_t   ControlsDef;
+//extern Menu_t   ControlsDef;
 
 // Multiplayer menus.
 extern Menu_t   MultiplayerMenu;
@@ -111,7 +115,7 @@ void	M_DrawTitle(char *text, int y);
 void	M_WriteText(int x, int y, char *string);
 void	M_WriteText2(int x, int y, char *string, dpatch_t *font,
 							 float red, float green, float blue, float alpha);
-void	M_WriteMenuText(Menu_t * menu, int index, char *text);
+void	M_WriteMenuText(const Menu_t * menu, int index, char *text);
 
 // Color widget.
 void    DrawColorWidget();
@@ -121,8 +125,8 @@ void    M_WGCurrentColor(int option, void *data);
 void    M_DrawSaveLoadBorder(int x, int y);
 void    M_SetupNextMenu(Menu_t * menudef);
 void    M_DrawThermo(int x, int y, int thermWidth, int thermDot);
-void    M_DrawSlider(Menu_t * menu, int index, int width, int dot);
-void 	M_DrawColorBox(Menu_t * menu, int index, float r, float g, float b, float a);
+void    M_DrawSlider(const Menu_t * menu, int index, int width, int dot);
+void 	M_DrawColorBox(const Menu_t * menu, int index, float r, float g, float b, float a);
 int     M_StringWidth(char *string, dpatch_t * font);
 int     M_StringHeight(char *string, dpatch_t * font);
 void    M_StartControlPanel(void);

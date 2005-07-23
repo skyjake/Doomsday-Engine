@@ -14,6 +14,8 @@
 #include "jHexen/p_local.h"
 #include "jHexen/soundst.h"
 
+#include <math.h>
+
 static void CheckForPushSpecial(line_t *line, int side, mobj_t *mobj);
 
 /*

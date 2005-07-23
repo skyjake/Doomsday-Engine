@@ -216,7 +216,7 @@ void G_Drawer(void)
 	static boolean menuactivestate = false;
 	static boolean inhelpscreensstate = false;
 	static int targx =0, targy = 0, targw =0, targh = 0;
-	static int x =0, y = 0, w =320, h = 200, offy = 0;
+	static int /*x = 0, y = 0, */ w = 320, h = 200, offy = 0;
 	static int fullscreenmode = 0;
 	static gamestate_t oldgamestate = -1;
 	int     py;
