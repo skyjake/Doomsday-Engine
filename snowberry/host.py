@@ -24,6 +24,7 @@
 ## where Snowberry is running.
 
 import platform
+import string
 
 
 def isWindows():
@@ -31,7 +32,10 @@ def isWindows():
 
     @return True, if the operating system is Windows.
     """
-    return platform.system() == 'Microsoft Windows'
+    system = platform.system().lower()
+    if 'microsoft' in system or 'windows' in system:
+        return True
+    return False
 
 
 def isMac():
