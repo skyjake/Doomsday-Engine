@@ -235,6 +235,7 @@ def listFiles(which, userFirst=True):
             # do anything.
             pass
 
+    files.sort()
     return files
 
 

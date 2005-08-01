@@ -1196,6 +1196,7 @@ class Slider (Widget):
 
 
 class List (Widget):
+    """List control widget.  Supports several styles."""
 
     # List styles.
     STYLE_SINGLE = 0
@@ -1214,6 +1215,7 @@ class List (Widget):
                                               style=(wx.LC_REPORT |
                                                      wx.SIMPLE_BORDER)))
             wx.EVT_LIST_ITEM_SELECTED(parent, wxId, self.onItemSelected)
+            wx.EVT_LIST_ITEM_DESELECTED(parent, wxId, self.onItemDeselected)
         else:
             # Normal listbox.
             if style == List.STYLE_MULTIPLE:
@@ -1328,13 +1330,52 @@ class List (Widget):
         else:
             return self.items[index]
 
-    def selectItem(self, identifier):
+    def selectItem(self, identifier, doSelect=True):
+        """Select one item from the list.  If no identifier is
+        provided, the selection is cleared."""
+
+        w = self.getWxWidget()
+
+        if identifier == '' or identifier == None:
+            # Clear selection.
+            if self.style == List.STYLE_COLUMNS:
+                # Check the state of each item.
+                for i in range(w.GetItemCount()):
+                    state = w.GetItemState(i, wx.LIST_STATE_SELECTED)
+                    if state & wx.LIST_STATE_SELECTED:
+                        w.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
+            return
+        
         try:
             index = self.items.index(identifier)
-            self.getWxWidget().SetSelection(index)
+
+            if self.style == List.STYLE_COLUMNS:
+                # Check the one item.
+                if doSelect:
+                    w.SetItemState(index, wx.LIST_STATE_SELECTED,
+                                   wx.LIST_STATE_SELECTED)
+                else:
+                    w.SetItemState(index, 0, wx.LIST_STATE_SELECTED)
+            else:
+                w.SetSelection(index)
         except:
             pass
 
+    def deselectItem(self, identifier):
+        self.selectItem(identifier, False)
+
+    def ensureVisible(self, identifier):
+        """Makes sure an item is visible.
+
+        @param identifier  Identifier of the item to make visible.
+        """
+        w = self.getWxWidget()
+        try:
+            index = self.items.index(identifier)
+            w.EnsureVisible(index)
+        except:
+            pass
+                
     def checkItem(self, identifier, doCheck=True):
         """Check or uncheck an item in a list that was created with
         the Check style.
@@ -1387,9 +1428,27 @@ class List (Widget):
 
         @param event A wxWidgets event.
         """
+        if self.widgetId and self.style == List.STYLE_COLUMNS:
+            # Identifier of the selected item is sent with the
+            # notification.
+            item = self.items[event.GetIndex()]
+            
+            # Send a notification about the selected item.
+            events.send(events.SelectNotify(self.widgetId, item))
 
         event.Skip()
         self.react()
+
+    def onItemDeselected(self, event):
+        """Handle the wxWidgets item deselection event.
+
+        @param event  A wxWidgets event.
+        """
+        if self.widgetId:
+            item = self.items[event.GetIndex()]
+            events.send(events.DeselectNotify(self.widgetId, item))
+
+        event.Skip()
         
 
 class DropList (Widget):

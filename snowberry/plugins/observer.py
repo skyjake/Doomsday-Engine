@@ -33,9 +33,12 @@ def init():
 def handleNotify(event):
     print
     print "Notify: " + event.getId()
-    
+
     if 'selection' in dir(event):
         print "  Selection = " + str(event.getSelection())
+
+    if 'deselection' in dir(event):
+        print "  Deselection = " + str(event.getDeselection())
 
     if event.hasId('focus-changed'):
         print "  New focus on " + event.getFocus()

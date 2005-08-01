@@ -216,6 +216,7 @@ menu-quit: Quit
 # Tab Labels
 #
 tab-summary: Summary
+tab-maps: Maps
 tab-addons: Addons
 tab-settings: Settings
 general-options: Snowberry
@@ -249,6 +250,13 @@ system-settings: System Settings
 summary-run-in-window: run in window
 summary-color-depth-16: 16-bit colors
 summary-color-depth-32: 32-bit colors
+
+#
+# Labels for the Maps Tab
+#
+maps-list-identifier: WAD Addon
+maps-list-count: Contents
+maps-list-clear: Clear all
 
 #
 # Labels for the Addons Tab
@@ -436,6 +444,10 @@ settings common to all profiles."
 
 help-tab-summary = "The Summary tab shows the most important information
 about the current profile."
+
+help-tab-maps = "The Maps tab provides a quick way to select which WAD
+addons to use with the current profile. The selections made here are
+reflected on the Addons tab."
 
 help-tab-addons = "Select the addons you would like to use with the
 current profile.<p>The <b>Settings</b> button allows you to

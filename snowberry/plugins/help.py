@@ -154,7 +154,10 @@ def handleNotify(event):
         setField(FIELD_CURRENT_TAB,
                  language.translate('help-' + event.getSelection()))
 
-    elif event.hasId('addon-tree-selected'):
+    # TODO: These event types are from the Addons and Maps tabs. There
+    # should be another way to register these (not hardcoded...)
+    elif event.hasId('addon-tree-selected') or \
+             event.hasId('maps-list-selected'):
         # Display information about the selected addon in the panel.
         try:
             showAddonInfo(ao.get(event.getSelection()))

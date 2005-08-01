@@ -25,11 +25,17 @@
 ## as a list control where it's easier to select one addon instead of
 ## checking/unchecking a tree.
 
-import ui
+import ui, events
 import widgets as wg
+import addons as ao
+import profiles as pr
+
 
 MAPS = 'tab-maps'
 
+
+# React to selection notifications.
+listenSelections = True
 
 # The map list box (has columns).
 mapListBox = None
@@ -44,8 +50,8 @@ def init():
     mapListBox = area.createList('maps-list', wg.List.STYLE_COLUMNS)
 
     # The columns.
-    mapListBox.addColumn('maps-list-identifier')
-    mapListBox.addColumn('maps-list-count')
+    mapListBox.addColumn('maps-list-identifier', 150)
+    mapListBox.addColumn('maps-list-count', 100)
 
     # Some buttons in the bottom.
     area.setWeight(0)
@@ -57,9 +63,72 @@ def init():
     # Listen to our commands.
     events.addCommandListener(handleCommand)
 
+    events.addNotifyListener(handleNotify)
+
     
 def handleCommand(event):
     """Handle a command event."""
     
-    if events.hasId('maps-list-clear'):
+    if event.hasId('maps-list-clear'):
         mapListBox.selectItem(None)
+
+
+def handleNotify(event):
+    """Handle a notification event."""
+
+    global listenSelections
+
+    if event.hasId('active-profile-changed'):
+        refreshList()
+
+    # TODO: Listen to notifications about selected and deselected list
+    # items.
+    # TODO: Listen to addon-attached and addon-detached.
+
+    if event.hasId('maps-list-selected') and listenSelections:
+        pr.getActive().useAddon(event.getSelection())
+
+    if event.hasId('maps-list-deselected'):
+        pr.getActive().dontUseAddon(event.getDeselection())
+
+    if event.hasId('addon-attached'):
+        listenSelections = False
+        mapListBox.selectItem(event.getAddon())
+        listenSelections = True
+
+    if event.hasId('addon-detached'):
+        listenSelections = False
+        mapListBox.deselectItem(event.getAddon())
+        listenSelections = True
+    
+
+def refreshList():
+    """Fill the maps list with addons."""
+
+    # Clear the list.
+    mapListBox.removeAllItems()
+
+    wads = [a for a in ao.getAvailableAddons(pr.getActive())
+            if a.getType() == 'addon-type-wad']
+
+    # Translate addon names.
+    wads.sort(lambda a, b: cmp(a.getId(), b.getId()))
+
+    for wad in wads:
+        # TODO: More information titles.
+        mapListBox.addItemWithColumns(wad.getId(),
+                                      wad.getId(),
+                                      '50 maps')
+
+    prof = pr.getActive()
+    usedAddons = prof.getUsedAddons()
+    theFirst = True
+
+    # Select the addons currently attached to the profile.
+    # Also make sure the first one is visible.
+    for addonId in usedAddons:
+        mapListBox.selectItem(addonId)
+        if theFirst:
+            # Make sure it's visible.
+            mapListBox.ensureVisible(addonId)
+            theFirst = False

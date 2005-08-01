@@ -107,6 +107,23 @@ class SelectNotify (Notify):
         return self.doubleClick
 
 
+class DeselectNotify (Notify):
+    """DeselectNotify is sent when something is deselected."""
+
+    def __init__(self, id, deselectedItemIdentifier):
+        """Construct a new deselection notification.
+
+        @param id  Identifies where the deselection has occured.
+
+        @param deselectedItemIdentifer  Deselected item.
+        """
+        Notify.__init__(self, id + '-deselected')
+        self.deselection = deselectedItemIdentifier
+
+    def getDeselection(self):
+        return self.deselection
+
+
 class FocusNotify (Notify):
     """FocusNotify should be sent when something gains the input
     focus.  Not all widgets send this, though."""
