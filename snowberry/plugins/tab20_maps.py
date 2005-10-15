@@ -61,9 +61,13 @@ def init():
     clearButton = buttonArea.createButton('maps-list-clear')
 
     # Listen to our commands.
-    events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['maps-list-clear'])
 
-    events.addNotifyListener(handleNotify)
+    events.addNotifyListener(handleNotify, ['active-profile-changed',
+                                            'maps-list-selected',
+                                            'maps-list-deselected',
+                                            'addon-attached',
+                                            'addon-detached'])
 
     
 def handleCommand(event):

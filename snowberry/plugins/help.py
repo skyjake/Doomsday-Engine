@@ -64,16 +64,27 @@ def init():
     # Unfreeze the help text after a minor delay. This'll make the app
     # init a bit smoother.
     helpText.freeze()
-    helpTextTimer.start(10)
+    helpTextTimer.start(1000)
 
     # Set parameters suitable for the logo.
     helpArea.setWeight(0)
     helpArea.setBorder(0)
 
     # Register a listener.
-    events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['help-addon-mode-brief',
+                                              'help-addon-mode-detailed',
+                                              'freeze', 'unfreeze'])
 
-    events.addNotifyListener(handleNotify)
+    events.addNotifyListener(handleNotify, ['show-help-text-now',
+                                            'init-done',
+                                            'active-profile-changed',
+                                            'active-profile-refreshed',
+                                            'tab-selected',
+                                            'addon-tree-selected',
+                                            'maps-list-selected',
+                                            'focus-changed',
+                                            'value-changed',
+                                            'language-changed'] )
 
 
 def showLogo(doShow=True):

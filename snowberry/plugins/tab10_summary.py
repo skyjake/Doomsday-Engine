@@ -95,8 +95,12 @@ def init():
     valuesListing = valuesInfo.createText()
 
     # Listen for active profile changes.
-    events.addNotifyListener(notifyHandler)
-    events.addCommandListener(commandHandler)
+    events.addNotifyListener(notifyHandler, ['active-profile-changed',
+                                             'active-profile-refreshed',
+                                             'value-changed',
+                                             'addon-attached',
+                                             'addon-detached'])
+    events.addCommandListener(commandHandler, ['freeze', 'unfreeze'])
 
 
 def commandHandler(event):

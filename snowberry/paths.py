@@ -352,4 +352,4 @@ def handleNotify(event):
 ## It is created automatically if it doesn't exist yet.
 _checkSnowberryHome()
 
-events.addNotifyListener(handleNotify)
+events.addNotifyListener(handleNotify, ['quit'])

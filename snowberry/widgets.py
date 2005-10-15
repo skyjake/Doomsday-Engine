@@ -202,13 +202,29 @@ class Widget:
         # Listen for focus changes.
         wx.EVT_SET_FOCUS(wxWidget, self.onFocus)
 
-        # Register a notification listener.
-        events.addNotifyListener(self.onNotify)
-        events.addCommandListener(self.onCommand)
+        # Register a notification listener. These notifications are expected
+        # to be handled by all widgets.
+        events.addNotifyListener(self.onNotify, ['language-changed',
+                                                 'focus-request'])
+        # Widgets are not automatically listening to commands.
+        #events.addCommandListener(self.onCommand)
 
     def getWxWidget(self):
         """Returns the real wxWidget of this widget."""
         return self.wxWidget
+
+    def addProfileChangeListener(self):
+        """Adds a listener callback that listens to changes of the active
+        profile. Only those widgets that manage a setting should need this."""
+        
+        events.addNotifyListener(self.onNotify, ['active-profile-changed'])                                 
+
+    def addValueChangeListener(self):
+        """Adds a listener callback that listens to value change notifications
+        sent with this widget's identifier."""
+
+        events.addNotifyListener(self.onNotify, 
+                                 [self.widgetId + '-value-changed'])
 
     def clear(self):
         """This is called when the widget is removed from the area by
@@ -614,6 +630,10 @@ class CheckBox (Widget):
 
         # When the checkbox is focused, send a notification.
         wx.EVT_CHECKBOX(parent, wxId, self.onClick)
+        
+        # Listen for value changes.
+        self.addValueChangeListener()
+        self.addProfileChangeListener()
 
     def setDefaultIndicator(self, indicatorTextWidget):
         """Set the Text widget that displays when the check box is in
@@ -698,8 +718,7 @@ class CheckBox (Widget):
 
                 self.updateState()
 
-            elif event.hasId('value-changed') and \
-                     event.getSetting() == self.widgetId:
+            elif event.hasId(self.widgetId + '-value-changed'):
                 if event.getValue() == 'yes':
                     w.Set3StateValue(wx.CHK_CHECKED)
                 elif event.getValue() == 'no':
@@ -837,6 +856,9 @@ class TextField (Widget):
 
         # The default validator accepts anything.
         self.validator = lambda text: True
+        
+        # Listen to value changes.
+        self.addValueChangeListener()
 
     def getText(self):
         """Return the text in the text field."""
@@ -894,10 +916,9 @@ class TextField (Widget):
         """
         Widget.onNotify(self, event)
 
-        if self.reactToNotify and event.hasId('value-changed'):
-            if event.getSetting() == self.widgetId:
-                # This is our value.
-                self.setText(event.getValue())
+        if self.reactToNotify and event.hasId(self.widgetId + '-value-changed'):
+            # This is our value.
+            self.setText(event.getValue())
 
         if self.widgetId and event.hasId('active-profile-changed'):
             # Get the value for the setting as it has been defined
@@ -1048,6 +1069,10 @@ class NumberField (Widget):
 
         # Listen for changes.
         intctrl.EVT_INT(parent, wxId, self.onChange)
+        
+        # Listen to value changes.
+        self.addValueChangeListener()
+        self.addProfileChangeListener()
 
     def setRange(self, min, max):
         """Set the allowed range for the field.  Setting a limit to
@@ -1093,13 +1118,12 @@ class NumberField (Widget):
         Widget.onNotify(self, event)
         
         if self.widgetId:
-            if self.reactToNotify and event.hasId('value-changed'):
-                if event.getSetting() == self.widgetId:
-                    # This is our value.
-                    if event.getValue() != None:
-                        self.setValue(int(event.getValue()))
-                    else:
-                        self.setValue(None)
+            if self.reactToNotify and event.hasId(self.widgetId + '-value-changed'):
+                # This is our value.
+                if event.getValue() != None:
+                    self.setValue(int(event.getValue()))
+                else:
+                    self.setValue(None)
 
             elif event.hasId('active-profile-changed'):
                 # Get the value for the setting as it has been defined
@@ -1134,6 +1158,11 @@ class Slider (Widget):
         # Add a command for reseting the slider.
         self.resetCommand = self.widgetId + '-reset-to-default'
         self.setPopupMenu([('reset-slider', self.resetCommand)])
+        
+        # Listen to our reset command.
+        events.addCommandListener(self.onCommand, [self.resetCommand])
+        self.addValueChangeListener()
+        self.addProfileChangeListener()
 
         self.oldValue = None
 
@@ -1183,16 +1212,16 @@ class Slider (Widget):
 
         if self.widgetId:
             if (event.hasId('active-profile-changed') or
-                (event.hasId('value-changed') and
-                 event.getSetting() == self.widgetId)):
+                event.hasId(self.widgetId + '-value-changed')):
                 self.__getValueFromProfile()
 
     def onCommand(self, event):
+        """Handle the slider reset command."""
+        
         Widget.onCommand(self, event)
 
-        if self.widgetId:
-            if event.hasId(self.resetCommand):
-                pr.getActive().removeValue(self.widgetId)
+        if self.widgetId and event.hasId(self.resetCommand):
+            pr.getActive().removeValue(self.widgetId)
 
 
 class List (Widget):
@@ -1464,6 +1493,9 @@ class DropList (Widget):
 
         # We want focus notifications.
         self.setFocusId(id)
+
+        # Listen to profile changes so we can update the selection.
+        self.addProfileChangeListener()
 
         # Handle item selection events.
         wx.EVT_CHOICE(parent, wxId, self.onItemSelected)
@@ -2337,6 +2369,11 @@ class Tree (Widget):
 
         # The root items.
         self.removeAll()
+        
+        # In addition to the normal notifications, listen to addon attachment
+        # and detachment notifications.
+        events.addNotifyListener(self.onNotify, ['addon-attached', 
+                                                 'addon-detached'])
 
     def createCategories(self):
         """Create menu items for all the categories.  The appearance

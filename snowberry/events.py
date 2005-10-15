@@ -23,9 +23,10 @@
 
 import traceback
 
-# The event listeners.
-commandListeners = []
-notifyListeners = []
+# The event listeners. The dictionaries match event identifiers to lists
+# of callbacks. The None identifier applies to all events sent.
+commandListeners = {None:[]}
+notifyListeners = {None:[]}
 
 # Send counter.  Used to determine if a send() is currently underway.
 sendDepth = 0
@@ -164,6 +165,13 @@ class ValueNotify (Notify):
 
     def getProfile(self):
         return self.profile
+        
+    def getTargetedEvent(self):
+        """Make a new event that is targetable to a specific handler."""
+        
+        ev = ValueNotify(self.settingId, self.newValue, self.profile)
+        ev.id = self.settingId + '-value-changed'
+        return ev
     
 
 class EditNotify (Notify):
@@ -255,13 +263,42 @@ class LanguageNotify (Notify):
 #    def __init__(self, 
 
 
-def addCommandListener(callback):
+def addListener(listeners, eventIds, callback):
+    if eventIds == None:
+        # General purpose callback.
+        listeners[None].append(callback)
+        #print "General purpose callback " + str(callback)
+        
+    # No duplicates allowed.
+    elif callback not in listeners[None]:
+        for id in eventIds:
+            if not listeners.has_key(id):
+                listeners[id] = [callback]
+            else:
+                if callback not in listeners[id]:
+                    listeners[id].append(callback)
+                #else:
+                #    print "Duplicate addition of listener " + str(callback) + " into " + id
+
+
+def addCommandListener(callback, eventIds = None):
     """Register a new Command listener callback function.  When a
     Command event is sent, the callback will get called.
 
     @param callback Callback function for Commands.
+    @param eventIds List of event identifiers.
     """
-    commandListeners.append(callback)
+    addListener(commandListeners, eventIds, callback)
+
+
+def addNotifyListener(callback, eventIds = None):
+    """Register a new Notify listener callback function.  When a
+    Notify event is sent, the callback will get called.
+
+    @param callback Callback function for Notifys.
+    @param eventIds List of event identifiers.
+    """
+    addListener(notifyListeners, eventIds, callback)
 
 
 def removeCommandListener(callback):
@@ -269,24 +306,25 @@ def removeCommandListener(callback):
 
     @param callback Callback function for Commands.
     """
-    commandListeners.remove(callback)
-
+    for key in commandListeners.keys():
+        try:
+            commandListeners[key].remove(callback)
+        except:
+            # Not necessarily in this list.
+            pass
         
-def addNotifyListener(callback):
-    """Register a new Notify listener callback function.  When a
-    Notify event is sent, the callback will get called.
-
-    @param callback Callback function for Notifys.
-    """
-    notifyListeners.append(callback)
-
         
 def removeNotifyListener(callback):
     """Remove an existing Notify listener callback function.
 
     @param callback Callback function for Notifys.
     """
-    notifyListeners.remove(callback)
+    for key in notifyListeners.keys():
+        try:
+            notifyListeners[key].remove(callback)
+        except:
+            # Not necessarily in this list.
+            pass
 
         
 def send(event):
@@ -301,20 +339,39 @@ def send(event):
 
     sendDepth += 1
     
+    # If a value-changed event is sent, also send the specially targeted
+    # event meant to be handled by the widget who handles the value.
+    if event.hasId('value-changed'):
+        # Place it in the beginning of the queue.
+        queuedEvents.insert(0, event.getTargetedEvent())
+    
     # Commands and Notifys go to a different set of listeners.
     if event.myClass == Command:
         listeners = commandListeners
     else:
         listeners = notifyListeners
 
+    # The identifier of the event to be sent.
+    sendId = event.getId()
+    
+    # Always include the unfiltered callbacks.
+    callbacks = [c for c in listeners[None]]
+    
+    if listeners.has_key(sendId):
+        # The specialized callbacks.
+        callbacks += listeners[sendId]
+
+    print "Sending " + sendId + ":"
+    print callbacks
+
     # Send the event to all the appropriate listeners.
-    for callback in listeners:
+    for callback in callbacks:
         try:
             callback(event)
         except Exception, x:
             # Ignore exceptions.
             # TODO: Handle the errors properly.
-            print "Exception during event processing!"
+            print "Exception during '%s' event processing!" % sendId
             traceback.print_exc()
 
     # If event processing is complete but events are queued, send them

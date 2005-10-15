@@ -37,10 +37,10 @@ def init():
     
     # Register a listener for detecting the completion of Snowberry
     # startup.
-    events.addNotifyListener(handleNotify)
+    events.addNotifyListener(handleNotify, ['init-done', 'wizard-selected'])
 
     # Listen for wizard commands.
-    events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['run-setup-wizard'])
     
     # Commands for the popup menu.
     ui.addPopupMenuCommand(1, 'run-setup-wizard')    
@@ -48,14 +48,6 @@ def init():
 
 def handleNotify(event):
     """Handle notifications."""
-
-    #if (event.hasId('populating-area') and 
-    #    event.getAreaId() == 'general-options'):
-    #    # Create the re-run button.
-    #    area = event.getArea()
-    #    area.setExpanding(False)
-    #    area.setBorder(10)
-    #    area.createButton('run-setup-wizard')
 
     if event.hasId('init-done'):
         # If this is the first launch ever, we'll display the wizard.

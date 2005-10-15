@@ -107,10 +107,11 @@ def init():
     playButton.setPopupMenu(['view-command-line'])
 
     # Register for listening to notifications.
-    events.addNotifyListener(handleNotify)
+    events.addNotifyListener(handleNotify, ['active-profile-changed'])
 
     # Register for listening to commands.
-    events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['play', 'view-command-line',
+                                              'continue'])
     
     # Commands for the popup menu.
     ui.addPopupMenuCommand(0, 'play')

@@ -28,7 +28,7 @@ import settings as st
 def init():
     # Register a listener for detecting the completion of Snowberry
     # startup.
-    events.addNotifyListener(handleNotify)
+    events.addNotifyListener(handleNotify, ['populating-area'])
 
     # Listen for the About button.
     #events.addCommandListener(handleCommand)

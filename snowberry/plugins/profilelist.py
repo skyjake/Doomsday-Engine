@@ -121,10 +121,20 @@ def init():
         bannerImage = None
 
     # Register a listener for notifications.
-    events.addNotifyListener(notifyHandler)
-
+    events.addNotifyListener(notifyHandler, ['quit', 'language-changed',
+                                             'profile-updated',
+                                             'active-profile-changed',
+                                             'profile-list-selected'])
+                                             
     # Register a listener for commands.
-    events.addCommandListener(commandHandler)
+    events.addCommandListener(commandHandler, ['freeze', 'unfreeze',
+                                               'new-profile', 
+                                               'rename-profile',
+                                               'reset-profile', 
+                                               'delete-profile',
+                                               'duplicate-profile',
+                                               'hide-profile', 
+                                               'unhide-profiles'])
 
 
 def notifyHandler(event):

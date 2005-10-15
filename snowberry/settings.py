@@ -912,4 +912,4 @@ if isDefined('doomsday-runtime'):
     paths.setCustomPath(paths.RUNTIME, getSystemString('doomsday-runtime'))
 
 # Listen for the quit notification so we can save some settings.
-events.addNotifyListener(handleNotify)
+events.addNotifyListener(handleNotify, ['quit', 'widget-edited'])

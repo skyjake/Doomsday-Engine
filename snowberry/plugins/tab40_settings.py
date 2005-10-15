@@ -47,10 +47,16 @@ def init():
     createWidgets()
 
     # Register a notification listener.
-    events.addNotifyListener(handleNotify)
+    events.addNotifyListener(handleNotify, ['init-done',
+                                            'value-changed',
+                                            'active-profile-changed',
+                                            'active-profile-refreshed',
+                                            'addon-installed',
+                                            'addon-uninstalled'])
 
     # The addon-settings command is handled here.
-    events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['show-addon-settings',
+                                              'show-snowberry-settings'])
 
 
 def createWidgets():

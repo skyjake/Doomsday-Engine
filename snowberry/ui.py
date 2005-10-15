@@ -55,7 +55,7 @@ elif host.isUnix():
     AREA_BORDER = 2
     AREA_BORDER_BOXED = 1
 else:
-    AREA_BORDER = 4
+    AREA_BORDER = 3
     AREA_BORDER_BOXED = 2
 
 # Optional areas.
@@ -1019,7 +1019,7 @@ class MultiArea (Area):
         self.currentPage = None
         self.pages = {}
 
-        events.addNotifyListener(self.onNotify)
+        events.addNotifyListener(self.onNotify, ['preparing-windows'])
 
     def destroy(self):
         """Destroy all the pages."""
@@ -1468,8 +1468,8 @@ class MainPanel (wx.Panel):
         self.verticalSizer.Layout()
 
 
-INITIAL_SASH_POS = 210
-INITIAL_PROFILE_SASH_POS = 200
+INITIAL_SASH_POS = 180
+INITIAL_PROFILE_SASH_POS = 170
 
 if st.isDefined('main-split-position'):
     INITIAL_SASH_POS = st.getSystemInteger('main-split-position')
@@ -1505,6 +1505,8 @@ class MainFrame (wx.Frame):
             initialSize = (initialSize[0], st.getSystemInteger('main-height'))
 
         wx.Frame.__init__(self, None, -1, title, size=initialSize)
+        #self.SetExtraStyle(wx.FRAME_EX_METAL)
+        #self.Create(None, -1, title, size=initialSize)
 
         # Set the icon for the frame.
         icon = wx.Icon('graphics/snowberry.ico', wx.BITMAP_TYPE_ICO)
@@ -1579,8 +1581,8 @@ class MainFrame (wx.Frame):
         # Maintain the splitter position.
         wx.EVT_SIZE(self, self.onWindowSize)
 
-        # Listen to the 'quit' command.
-        events.addCommandListener(self.handleCommand)
+        # Listen to some commands.
+        events.addCommandListener(self.handleCommand, ['quit', 'popup-menu'])
 
         #self.mainPanel.Hide()
 

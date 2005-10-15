@@ -32,7 +32,7 @@ def init():
     #area.createButton('about')
 
     # Listen for the About button.
-    events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['about'])
     
     # Commands for the popup menu.
     ui.addPopupMenuCommand(2, 'about')

@@ -86,11 +86,24 @@ def init():
     buttonArea.createButton('load-order')
 
     # Registering a notification listener.
-    events.addNotifyListener(handleNotification)
+    events.addNotifyListener(handleNotification, ['active-profile-changed',
+                                                  'active-profile-refreshed',
+                                                  'addon-popup-request',
+                                                  'addon-tree-selected',
+                                                  'addon-installed',
+                                                  'addon-uninstalled'])
 
     # Registering a command listener to handle the Command events sent
     # by the buttons created above.
-    events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['install-addon',
+                                              'uninstall-addon',
+                                              'addon-info',
+                                              'addon-settings',
+                                              'load-order',
+                                              'expand-all-categories',
+                                              'collapse-all-categories',
+                                              'check-category',
+                                              'uncheck-category'])
 
 
 def handleNotification(event):
