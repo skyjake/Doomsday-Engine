@@ -104,6 +104,10 @@ def init():
                                               'collapse-all-categories',
                                               'check-category',
                                               'uncheck-category'])
+                                              
+    # Changing the current addon in the tree is done using commands with
+    # the name of the addon as an identifier.
+    events.addCommandListener(handleAnyCommand)                                            
 
 
 def handleNotification(event):
@@ -151,6 +155,16 @@ def handleNotification(event):
         tree.populateWithAddons(pr.getActive())
 
 
+def handleAnyCommand(event):
+    """Handle any command. This is called whenever a command is broadcasted.
+    Must not do anything slow."""
+    
+    # Is the command an addon identifier?
+    if ao.exists(event.getId()):
+        # Select the addon in the tree.
+        tree.selectAddon(event.getId())
+        
+
 def handleCommand(event):
     """This is called when someone sends a command event.
 
@@ -160,11 +174,7 @@ def handleCommand(event):
     # tree.  The action will target this addon.
     selected = ''
 
-    # Is the command an addon identifier?
-    if ao.exists(event.getId()):
-        tree.selectAddon(event.getId())
-        
-    elif event.hasId('install-addon'):
+    if event.hasId('install-addon'):
         # Open the file selection dialog.
         for selection in \
                 chooseAddons('install-addon-dialog',

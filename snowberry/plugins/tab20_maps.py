@@ -25,7 +25,8 @@
 ## as a list control where it's easier to select one addon instead of
 ## checking/unchecking a tree.
 
-import ui, events
+import os
+import ui, events, language
 import widgets as wg
 import addons as ao
 import profiles as pr
@@ -50,8 +51,8 @@ def init():
     mapListBox = area.createList('maps-list', wg.List.STYLE_COLUMNS)
 
     # The columns.
-    mapListBox.addColumn('maps-list-identifier', 150)
-    mapListBox.addColumn('maps-list-count', 100)
+    mapListBox.addColumn('maps-list-identifier', 180)
+    mapListBox.addColumn('maps-list-count', 200)
 
     # Some buttons in the bottom.
     area.setWeight(0)
@@ -85,10 +86,6 @@ def handleNotify(event):
     if event.hasId('active-profile-changed'):
         refreshList()
 
-    # TODO: Listen to notifications about selected and deselected list
-    # items.
-    # TODO: Listen to addon-attached and addon-detached.
-
     if event.hasId('maps-list-selected') and listenSelections:
         pr.getActive().useAddon(event.getSelection())
 
@@ -120,9 +117,13 @@ def refreshList():
 
     for wad in wads:
         # TODO: More information titles.
+        if not language.isDefined(wad.getId()):
+            visibleName = language.translate(wad.getId())
+        else:
+            visibleName = os.path.basename(wad.getContentPath())
         mapListBox.addItemWithColumns(wad.getId(),
-                                      wad.getId(),
-                                      '50 maps')
+                                      visibleName,
+                                      wad.getShortContentAnalysis())
 
     prof = pr.getActive()
     usedAddons = prof.getUsedAddons()

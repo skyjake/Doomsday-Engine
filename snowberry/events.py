@@ -361,8 +361,8 @@ def send(event):
         # The specialized callbacks.
         callbacks += listeners[sendId]
 
-    print "Sending " + sendId + ":"
-    print callbacks
+    #print "Sending " + sendId + ":"
+    #print callbacks
 
     # Send the event to all the appropriate listeners.
     for callback in callbacks:

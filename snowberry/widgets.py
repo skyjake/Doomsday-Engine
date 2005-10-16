@@ -49,6 +49,8 @@ def uniConv(str):
     if host.isWindows():
         # Don't do Unicode on Windows.
         return str
+    elif type(str) == unicode:
+        return str
     else:
         return str.decode(host.getEncoding())
 
@@ -62,6 +64,8 @@ def uniDeconv(str):
     """
     if host.isWindows():
         # Don't do Unicode on Windows.
+        return str
+    elif type(str) != unicode:
         return str
     else:
         return str.encode(host.getEncoding())
@@ -859,6 +863,7 @@ class TextField (Widget):
         
         # Listen to value changes.
         self.addValueChangeListener()
+        self.addProfileChangeListener()
 
     def getText(self):
         """Return the text in the text field."""

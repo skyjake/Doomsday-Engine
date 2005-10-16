@@ -804,6 +804,35 @@ class WADAddon (Addon):
 
         self.parseConfiguration(metadata)
 
+    def getShortContentAnalysis(self):
+        """Forms a short single line of text that describes the contents
+        of the WAD."""
+
+        # The directory must already be read by this time.
+        analysis = []              
+        mapCount = 0
+        hasCustomTextures = False
+        
+        for lump in self.lumps:
+            # Count the number of maps.
+            if len(lump) == 4 and lump[0] == 'E' and lump[2] == 'M' and \
+               lump[1] in string.digits and lump[3] in string.digits:
+                mapCount += 1
+            elif len(lump) == 5 and lump[:3] == 'MAP' and \
+               lump[3] in string.digits and lump[4] in string.digits:
+                mapCount += 1
+            # Any custom textures?
+            elif lump == 'PNAMES' or lump == 'TEXTURE1' or lump == 'TEXTURE2':
+                hasCustomTextures = True
+        
+        if mapCount > 0:
+            analysis.append( language.expand(
+                language.translate('wad-analysis-maps'), str(mapCount)) )
+        if hasCustomTextures:
+            analysis.append(language.translate('wad-analysis-custom-textures'))
+        
+        return string.join(analysis, ', ').capitalize()
+
     def readLumpDirectory(self):
         """Open the WAD file and read the lump directory at the end of
         the file."""
@@ -816,8 +845,9 @@ class WADAddon (Addon):
             # Type of the WAD file. This affects categorization.
             self.wadType = f.read(4)
 
-            count, dirOffset = struct.unpack('II', f.read(8))
-            
+            # WADs use little-endian byte ordering.
+            count, dirOffset = struct.unpack('<II', f.read(8))
+           
             f.seek(dirOffset)
 
             while count > 0:
