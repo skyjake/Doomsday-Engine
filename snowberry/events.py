@@ -339,12 +339,6 @@ def send(event):
 
     sendDepth += 1
     
-    # If a value-changed event is sent, also send the specially targeted
-    # event meant to be handled by the widget who handles the value.
-    if event.hasId('value-changed'):
-        # Place it in the beginning of the queue.
-        queuedEvents.insert(0, event.getTargetedEvent())
-    
     # Commands and Notifys go to a different set of listeners.
     if event.myClass == Command:
         listeners = commandListeners
@@ -385,6 +379,12 @@ def send(event):
                 send(ev)
 
     sendDepth -= 1
+    
+    # If a value-changed event is sent, also send the specially targeted
+    # event meant to be handled by the widget who handles the value.
+    if event.hasId('value-changed'):
+        # Place it in the beginning of the queue.
+        send(event.getTargetedEvent())
 
 
 def sendAfter(event):
