@@ -140,7 +140,7 @@ class BlockElement(Element):
     def add(self, childElement):
         "Add a new element to this block's contents."
         if not childElement:
-            raise Exception("!!! Attempted to a None child.")
+            raise Exception("attempted to append an invalid child element to a block")
 
         self.contents.append(childElement)
 
@@ -346,7 +346,7 @@ class Parser:
         quotation marks in the beginning and the end."""
 
         if self.peekToken() != '"':
-            raise ParseFailed('expected string to begin with "')
+            raise ParseFailed('expected string to begin with \'"\', but \'%s\' found instead' % self.peekToken())
 
         # The collected characters.
         chars = []
@@ -426,21 +426,27 @@ class Parser:
         # How about some attributes?
         # Syntax: {token value} '('
         
-        self.nextToken()
-        while self.peekToken() != '(':
-            keyName = self.peekToken()
+        try:
             self.nextToken()
-            value = self.parseValue()
+            while self.peekToken() != '(':
+                keyName = self.peekToken()
+                self.nextToken()
+                value = self.parseValue()
 
-            # This becomes a key element inside the block.
-            block.add(KeyElement(keyName, value))
+                # This becomes a key element inside the block.
+                block.add(KeyElement(keyName, value))
 
-        # Move past the opening parentheses.
-        self.nextToken()
+            # Move past the opening parentheses.
+            self.nextToken()
 
-        while self.peekToken() != ')':
-            element = self.parseElement()
-            block.add(element)
+            while self.peekToken() != ')':
+                element = self.parseElement()
+                if element == None:
+                    raise ParseFailed("block element was never closed, end of file encountered before ')' was found")
+                block.add(element)
+
+        except EOFError:
+            raise ParseFailed("end of file encountered unexpectedly while parsing a block element")
 
         # Move past the closing parentheses.
         self.nextToken()
@@ -452,7 +458,7 @@ class Parser:
         element = ListElement(name)
 
         if self.peekToken() != '<':
-            raise ParseFailed("list must begin with a '<'")
+            raise ParseFailed("list must begin with a '<', but '%s' found instead" % self.peekToken())
 
         # List syntax:
         # list ::= list-identifier '<' [value {',' value}] '>'
@@ -474,7 +480,7 @@ class Parser:
 
             # There should be a comma here.
             if separator != ',':
-                raise ParseFailed("list values must be separated with a ','")
+                raise ParseFailed("list values must be separated with a comma, but '%s' found instead" % separator)
 
         return element
 

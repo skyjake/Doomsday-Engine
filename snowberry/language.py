@@ -95,8 +95,15 @@ def load(fileName):
             # Only key elements are recognized.
             if e.isKey():
                 impliedBlock.add(e)
-    except:
+    
+    except cfparser.OutOfElements:
+        # All OK.
         pass
+
+    except:
+        import logger
+        logger.add(logger.MEDIUM, 'warning-read-language', languageName, 
+                   fileName)
 
     processLanguageBlock(impliedBlock)
 

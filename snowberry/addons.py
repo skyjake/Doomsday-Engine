@@ -699,6 +699,10 @@ class WADAddon (Addon):
 
     def getType(self):
         return 'addon-type-wad'
+        
+    def isPWAD(self):   
+        """Determines if this addon is a PWAD addon."""
+        return self.wadType == 'PWAD'
 
     def readMetaData(self):
         """Generate metadata by making guesses based on the WAD file
@@ -1304,7 +1308,11 @@ def loadManifest(fileName):
         addons[identifier] = addon
 
     # The manifest contains metadata configuration.
-    addon.parseConfiguration(file(fileName).read())
+    try:
+        addon.parseConfiguration(file(fileName).read())
+        
+    except Exception, x:
+        logger.add(logger.HIGH, 'error-read-manifest', fileName, str(x))
 
     return identifier
 

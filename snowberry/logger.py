@@ -23,7 +23,8 @@
 ## This module collections warnings and errors and displays them when
 ## asked to.
 
-import ui, language
+import sys, traceback
+import ui, language, string
 
 
 # An array with the currently collection issues.
@@ -79,12 +80,18 @@ def show():
     fgColor = ['black', 'black', 'white']
     severeName = ['Note', 'Warning', 'Error']
 
+    isFirst = True
+
     # Compose a HTML formatted version of each issue.
     for severe in [HIGH, MEDIUM, LOW]:
         # Show the important issues first.
         for issue in allIssues:
             if issue[0] != severe:
                 continue
+
+            if not isFirst:
+                msg += '<hr>'
+            isFirst = False
 
             msg += '<table width="100%" border=0 cellspacing=3 cellpadding=4>'
             msg += '<tr><td bgcolor="%s" width="20%%" align=center>' % \
@@ -95,10 +102,20 @@ def show():
                 language.translate(issue[1]), *issue[2])
             msg += '</h3>' + language.expand(
                 language.translate(issue[1] + '-text'), *issue[2])
-            msg += '</table><hr>'
+            msg += '</table>'
 
     message.setText(msg)
     dialog.run()
         
-    # No more issues to show.
-    issues = []
+    # Only show each issue once.
+    allIssues = []
+
+
+def formatTraceback():
+    """Make a rough HTML formatting of the system traceback.   
+    @return Traceback as a string of HTML text."""    
+    
+    str = string.join(traceback.format_list(
+                      traceback.extract_tb(sys.exc_traceback)), '\n')
+    str = str.replace('\n', '<br>')                    
+    return '<font size=-2><pre>' + str + '</pre></font>'

@@ -24,7 +24,7 @@
 
 import sys, os, re
 import settings as st
-import language, paths
+import language, paths, logger
 
 PLUGIN_PATH = 'plugins'
 
@@ -78,6 +78,10 @@ def loadSingle(fileName):
     @param fileName File name of the the plugin.
     """
     name = paths.getBase(fileName)
+    
+    # Old plugin names.
+    if name == 'tab1_summary' or name == 'tab2_addons' or name == 'tab3_settings':
+        logger.add(logger.MEDIUM, 'warning-obsolete-plugin', name, fileName)
     
     # Initialization will be done after everything has been loaded.
     initCommands.append(('import ' + name, name + '.init()', sys.path))

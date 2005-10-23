@@ -10,7 +10,6 @@
 # not have a translation for a certain string, the translation is
 # looked up in this language file.
 
-
 # The key 'language-english' comes from the name of this file.
 # Supposed to appear in the language selection list.
 language-english: English (US)
@@ -254,7 +253,7 @@ summary-color-depth-32: 32-bit colors
 #
 # Labels for the Maps Tab
 #
-maps-list-identifier: WAD Addon
+maps-list-identifier: PWAD Addon
 maps-list-count: Contents
 maps-list-clear: Clear all
 
@@ -533,3 +532,18 @@ error-read-info-file-text: There was an error in the metadata file <tt>%1</tt> o
 
 error-read-zip-info-file: PK3 Info Error
 error-read-zip-info-file-text: There was an error in the metadata entry of the addon <b>%2</b>, in the file <tt>%1</tt>.
+
+error-parsing-profile: Profile Error
+error-parsing-profile-text: The profile <tt>%1</tt> could not be loaded because its contents were found to be invalid. To correct the problem you should manually edit the file and fix the invalid portions, or delete the file.<p><b>Reason:</b><p>%2
+
+error-read-profile: Profile Error
+error-read-profile-text: The profile <tt>%1</tt> could not be loaded because an unexpected error occured. To correct the problem you should manually edit the file and fix the invalid portions, or delete the file.<p><b>Traceback:</b><p>%2
+
+error-read-manifest: Addon Manifest Error
+error-read-manifest-text: An error was detected in the manifest file <tt>%1</tt>.<p><b>Reason:</b><p>%2
+
+warning-obsolete-plugin: Obsolete Plugin
+warning-obsolete-plugin-text: The plugin <b>%1</b> loaded from <tt>%2</tt> is from an obsolete version. You should delete this plugin. Otherwise unexpected behavior may occur.
+
+warning-read-language: Language Definition
+warning-read-language-text: There was a problem reading the language definition <b>%1</b> from <tt>%2</tt>. Only a portion of the file was read successfully. As a result, some text strings may be missing.

@@ -26,7 +26,7 @@
 ## as changing of the user interface language.
 
 import os, re, string, shutil
-import events, paths, cfparser, language
+import events, paths, cfparser, language, logger
 import settings as st
 import addons as ao
 import ui
@@ -711,7 +711,19 @@ def load(path, notify=True):
             elements.append(p.get())
 
     except cfparser.OutOfElements:
+        # The file ended normally.
         pass
+
+    except cfparser.ParseFailed, ex:
+        # Show the error dialog.
+        logger.add(logger.HIGH, 'error-parsing-profile', path, str(ex))
+        return
+                
+    except Exception:
+        # All other errors also cause the error dialog to appear.
+        logger.add(logger.HIGH, 'error-read-profile', path,
+                   logger.formatTraceback())
+        return
 
     # Should be use an existing profile?
     profile = get(identifier)

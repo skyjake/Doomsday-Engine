@@ -110,7 +110,7 @@ def refreshList():
     mapListBox.removeAllItems()
 
     wads = [a for a in ao.getAvailableAddons(pr.getActive())
-            if a.getType() == 'addon-type-wad']
+            if a.getType() == 'addon-type-wad' and a.isPWAD()]
 
     # Translate addon names.
     wads.sort(lambda a, b: cmp(a.getId(), b.getId()))
