@@ -30,7 +30,7 @@
 # Add new email addresses to the end of the line.
 
 # 2005-06-04: Disabled because of 'space shortage'
-doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s skyjake@users.sourceforge.net dani.j@ddsdesign.co.uk
+#doomsday /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u -S "[ deng-CVS ] " %s skyjake@users.sourceforge.net dani.j@ddsdesign.co.uk
 
 #
 # Example:
