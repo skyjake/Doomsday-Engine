@@ -116,6 +116,7 @@ def formatTraceback():
     @return Traceback as a string of HTML text."""    
     
     str = string.join(traceback.format_list(
-                      traceback.extract_tb(sys.exc_traceback)), '\n')
-    str = str.replace('\n', '<br>')                    
-    return '<font size=-2><pre>' + str + '</pre></font>'
+                      traceback.extract_tb(sys.exc_traceback)), '<br>')
+    str = str.replace('\n', '<br>')
+    str = str.replace(' ', '&nbsp;')
+    return '<font size="-3"><tt>' + str + '</tt></font>'

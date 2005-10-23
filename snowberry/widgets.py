@@ -1315,7 +1315,11 @@ class List (Widget):
     def removeAllItems(self):
         """Remove all the items in the list."""
 
-        self.getWxWidget().DeleteAllItems()
+        if self.style == List.STYLE_MULTIPLE or \
+               self.style == List.STYLE_SINGLE:
+            self.getWxWidget().Clear()
+        else:
+            self.getWxWidget().DeleteAllItems()
         self.items = []
 
     def getItems(self):

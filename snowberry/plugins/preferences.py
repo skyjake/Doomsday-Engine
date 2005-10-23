@@ -25,10 +25,15 @@ import widgets as wg
 import settings as st
 
 
+# List widget of custom addon paths.
+pathList = None
+
+
 def init():
     # Register a listener for detecting the completion of Snowberry
     # startup.
-    events.addNotifyListener(handleNotify, ['populating-area'])
+    events.addNotifyListener(handleNotify, ['populating-area',
+                                            'addon-paths-changed'])
 
     # Listen for the About button.
     #events.addCommandListener(handleCommand)
@@ -39,6 +44,8 @@ def init():
 
 def handleNotify(event):
     """Handle notifications."""
+
+    global pathList
 
     if (event.hasId('populating-area') and 
         event.getAreaId() == 'general-options'):
@@ -102,3 +109,9 @@ def handleNotify(event):
         box.createSetting(st.getSystemSetting('profile-large-icons'))
         
         box.createText('restart-required', align=wg.Text.RIGHT).setSmallStyle()
+
+    elif event.hasId('addon-paths-changed'):
+        # Insert the current custom paths into the list.
+        pathList.removeAllItems()
+        for p in paths.getAddonPaths():
+            pathList.addItem(p)

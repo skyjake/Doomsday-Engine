@@ -189,7 +189,7 @@ def updateSummary(profile):
             if (setting.getGroup() == 'general-options' or
                 setting.getGroup() == 'game-options'):
                 continue
-        except:
+        except KeyError:
             # This isn't even a valid setting!
             continue
 

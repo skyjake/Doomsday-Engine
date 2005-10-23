@@ -1499,6 +1499,20 @@ def findConflicts(roster, profile):
     return []
 
 
+def loadAll():
+    """Load all addons and manifests."""
+    
+    # Load all the installed addons in the system and user addon
+    # databases.
+    for repository in [paths.ADDONS] + paths.getAddonPaths():
+        for name in paths.listFiles(repository):
+            # Case insensitive.
+            if re.search("(?i)^([^.#].*)\.(" + \
+                         string.join(ADDON_EXTENSIONS, '|') + ")$",
+                         os.path.basename(name)):
+                load(name)
+
+
 #
 # Module Initialization
 #
@@ -1510,15 +1524,7 @@ categories.append(rootCategory)
 # Load the metadata cache.
 readMetaCache()
 
-# Load all the installed addons in the system and user addon
-# databases.
-for repository in [paths.ADDONS] + paths.getAddonPaths():
-    for name in paths.listFiles(repository):
-        # Case insensitive.
-        if re.search("(?i)^([^.#].*)\.(" + \
-                     string.join(ADDON_EXTENSIONS, '|') + ")$",
-                     os.path.basename(name)):
-            load(name)
+loadAll()
 
 # Load all the manifests.
 for folder in [paths.getSystemPath(paths.MANIFESTS),

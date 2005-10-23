@@ -321,7 +321,7 @@ def getAddonPaths():
 
     @return An array containing full paths.
     """
-    return addonPaths
+    return [p for p in addonPaths]
 
 
 def saveAddonPaths():

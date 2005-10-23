@@ -21,8 +21,6 @@
 
 ## @file events.py Event Bus
 
-import traceback
-
 # The event listeners. The dictionaries match event identifiers to lists
 # of callbacks. The None identifier applies to all events sent.
 commandListeners = {None:[]}
@@ -363,10 +361,11 @@ def send(event):
         try:
             callback(event)
         except Exception, x:
-            # Ignore exceptions.
-            # TODO: Handle the errors properly.
-            print "Exception during '%s' event processing!" % sendId
-            traceback.print_exc()
+			# Report errors.
+            import logger
+            logger.add(logger.HIGH, 'error-runtime-exception-during-event',
+					   sendId, str(x), logger.formatTraceback())
+            logger.show()
 
     # If event processing is complete but events are queued, send them
     # now.

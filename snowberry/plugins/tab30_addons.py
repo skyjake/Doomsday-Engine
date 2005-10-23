@@ -30,6 +30,7 @@ import widgets as wg
 import profiles as pr
 import settings as st
 import addons as ao
+import logger
 
 ADDONS = 'tab-addons'
 
@@ -91,7 +92,8 @@ def init():
                                                   'addon-popup-request',
                                                   'addon-tree-selected',
                                                   'addon-installed',
-                                                  'addon-uninstalled'])
+                                                  'addon-uninstalled',
+                                                  'addon-paths-changed'])
 
     # Registering a command listener to handle the Command events sent
     # by the buttons created above.
@@ -151,6 +153,11 @@ def handleNotification(event):
         tree.populateWithAddons(pr.getActive())
         tree.selectAddon(event.addon)
 
+    elif event.hasId('addon-paths-changed'):
+        tree.removeAll()
+        tree.createCategories()
+        tree.populateWithAddons(pr.getActive())
+
     elif event.hasId('addon-uninstalled'):
         tree.populateWithAddons(pr.getActive())
 
@@ -182,8 +189,11 @@ def handleCommand(event):
                              'install'):
             try:
                 ao.install(selection)
-            except:
-                pass
+            except Exception, ex:
+                logger.add(logger.HIGH, 'error-addon-installation-failed',
+                           selection, str(ex))
+
+		logger.show()
 
     elif event.hasId('uninstall-addon'):
         addon = tree.getSelectedAddon()

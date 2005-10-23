@@ -172,7 +172,7 @@ def handleNotify(event):
         # Display information about the selected addon in the panel.
         try:
             showAddonInfo(ao.get(event.getSelection()))
-        except:
+        except KeyError:
             # It wasn't an addon.
             pass
 
@@ -180,7 +180,7 @@ def handleNotify(event):
         try:
             setting = st.getSetting(event.getFocus())
             showSettingInfo(setting)
-        except:
+        except KeyError:
             # It was likely not a setting id.
             pass
 

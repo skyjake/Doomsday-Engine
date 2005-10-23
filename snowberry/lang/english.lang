@@ -36,7 +36,9 @@ installed as an addon. Death Kings is an extension
 to Hexen."
 wizard-suggested-iwad: Original name:
 deathkings-selection-title: Locate HEXDD.WAD
-wizard-launching: Launching
+wizard-addon-paths: Addon Folders
+wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell Snowberry to load them from their current location. Specify the folders below. The folders can be edited in Snowberry Preferences later on. If you later install addons using the Addons tab, they will be copied to Snowberry's addon folder. 
+wizard-launching: Launching Options
 wizard-launching-explanation: Should Snowberry be closed when a game is started?
 
 #
@@ -523,6 +525,12 @@ help-addon-part-of-box: This addon is a part of <a href="%1">%2</a>.
 #
 issue-dialog: Problems Detected
 issue-dialog-title: Problems Detected
+
+error-runtime-exception-during-event: Runtime Error
+error-runtime-exception-during-event-text: An unexpected error occured during the processing of event <b>%1</b>. Please report this incident to <tt>skyjake@users.sourceforge.net</tt>.<p><b>Exception:</b><p>%2<p><b>Traceback:</b><p>%3
+
+error-addon-installation-failed: Addon Installation Error
+error-addon-installation-failed-text: Installation of addon <tt>%1</tt> failed. <p><b>Reason:</b><p>%2
 
 error-read-config-file: Configuration Error
 error-read-config-file-text: An error was detected in the configuration file <tt>%1</tt>.<p><b>Reason:</b><p>%2

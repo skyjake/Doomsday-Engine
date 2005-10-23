@@ -247,6 +247,7 @@ def populateWithSettings(areaId, area, settings):
         else:
             # Create a subgroup.
             where = area.createArea(border=2, boxedWithTitle=i)
+            where.setWeight(0)
 
         for s in subGroupSettings:
             settingArea = where.createSetting(s)

@@ -221,9 +221,46 @@ def runWizard():
 
                 browseButton.addReaction(browseDeathKings)
 
+	# Addon paths.
+	pathsPage = ProfileWizardPage(wiz, 'wizard-addon-paths', games)
+	pathsPage.follows(previousPage)
+	area = pathsPage.getArea()
+	area.createText('wizard-addon-paths-explanation',
+                    maxLineLength=50).resizeToBestSize()
+
+    pathList = area.createList('addon-paths-list')
+    pathList.setMinSize(100, 120)
+
+    # Insert the current custom paths into the list.
+    for p in paths.getAddonPaths():
+        pathList.addItem(p)
+
+    def addAddonPath():
+        selection = ui.chooseFolder('addon-paths-add-prompt', '')
+        if selection:
+            pathList.addItem(selection)
+            pathList.selectItem(selection)
+
+    def removeAddonPath():
+        selection = pathList.getSelectedItem()
+        if selection:
+            pathList.removeItem(selection)
+
+    area.setWeight(0)
+    commands = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
+    commands.setWeight(0)
+
+    # Button for adding new paths.
+    button = commands.createButton('new-addon-path', wg.Button.STYLE_MINI)
+    button.addReaction(addAddonPath)
+
+    # Button for removing a path.
+    button = commands.createButton('delete-addon-path', wg.Button.STYLE_MINI)
+    button.addReaction(removeAddonPath)
+
     # Launch options.
-    quitPage = ProfileWizardPage(wiz, 'wizard-launching', games)
-    quitPage.follows(previousPage)
+    quitPage = ui.WizardPage(wiz, 'wizard-launching') 
+    quitPage.follows(pathsPage)
     area = quitPage.getArea()
     area.createText('wizard-launching-explanation').resizeToBestSize()
     area.createSetting(st.getSetting('quit-on-launch'))
@@ -247,6 +284,25 @@ def runWizard():
             except:
                 # TODO: Handle error.
                 pass
+
+        # Update custom addon paths.
+        currentAddonPaths = paths.getAddonPaths()
+        wasModified = False
+        for path in pathList.getItems():
+            if path not in currentAddonPaths:
+                paths.addAddonPath(path)
+                wasModified = True
+        for path in currentAddonPaths:
+            if path not in pathList.getItems():
+                paths.removeAddonPath(path)
+                wasModified = True
+
+        if wasModified:
+            ao.loadAll()
+
+        events.send(events.Notify('addon-paths-changed'))
+
+        # TODO: Load addons from new paths.
 
         # The wizard will only be shown once automatically.
         pr.getDefaults().setValue(HAS_BEEN_RUN, 'yes', False)
