@@ -27,7 +27,7 @@
 void            C_Init(void);
 boolean         C_IsFull(void);
 void            C_ClearRanges(void);
-void            C_Ranger(void);	   // Debugging aid.
+void            C_Ranger(void);    // Debugging aid.
 int             C_SafeAddRange(binangle_t startAngle, binangle_t endAngle);
 boolean         C_IsPointVisible(float x, float y, float height);
 
@@ -36,7 +36,7 @@ void            C_AddViewRelSeg(float x1, float y1, float x2, float y2);
 
 // Add an occlusion segment relative to the current viewpoint.
 void            C_AddViewRelOcclusion(float *v1, float *v2, float height,
-									  boolean tophalf);
+                                      boolean tophalf);
 
 // Check a segment relative to the current viewpoint.
 int             C_CheckViewRelSeg(float x1, float y1, float x2, float y2);

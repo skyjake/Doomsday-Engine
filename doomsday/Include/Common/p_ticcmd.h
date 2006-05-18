@@ -23,26 +23,26 @@
 #define __COMMON_TICCMD_H__
 
 typedef struct ticcmd_s {
-	char            forwardMove;   // *2048 for move
-	char            sideMove;	   // *2048 for move
-	short           angle;		   // <<16 for angle delta
-	short           pitch;		   // view pitch
-	char			fly;		   // Fly up/down; fall down
-	byte		    arti;
-	// Actions:
-	char	   	    attack;
-	char			use;
-    char		    jump;
-	short		    changeWeapon;  // Absolute number, next/prev
-	char		    pause;
-	char		    suicide;
+    char            forwardMove;   // *2048 for move
+    char            sideMove;      // *2048 for move
+    short           angle;         // <<16 for angle delta
+    short           pitch;         // view pitch
+    char            fly;           // Fly up/down; fall down
+    byte            arti;
+    // Actions:
+    char            attack;
+    char            use;
+    char            jump;
+    short           changeWeapon;  // Absolute number, next/prev
+    char            pause;
+    char            suicide;       // Now ignored in ticcmds
 } ticcmd_t;
 
 // Special flyspeed for falling down.
-#define TICCMD_FALL_DOWN		DDMINCHAR
+#define TICCMD_FALL_DOWN        DDMINCHAR
 
 // Special weapon numbers for the changeWeapon field.
-#define TICCMD_NEXT_WEAPON		DDMINSHORT
-#define TICCMD_PREV_WEAPON		(DDMINSHORT + 1)
+#define TICCMD_NEXT_WEAPON      DDMINSHORT
+#define TICCMD_PREV_WEAPON      (DDMINSHORT + 1)
 
 #endif

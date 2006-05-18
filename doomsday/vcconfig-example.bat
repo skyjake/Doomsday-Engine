@@ -11,6 +11,9 @@ SET PLATFORM_INC=D:\VS.NET\Vc7\PlatformSDK\Include
 SET PLATFORM_LIB=D:\VS.NET\VC7\PlatformSDK\Lib
 SET LIBCI_LIB=D:\VS.NET\Vc7\Lib
 
+REM ---- Python Interpreter
+SET PYTHON_DIR=D:\Python24
+
 REM ---- DirectX:
 SET DX_INC=D:\sdk\dx8\include
 SET DX_LIB=D:\sdk\dx8\lib

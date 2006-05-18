@@ -1,10 +1,25 @@
-// DESCRIPTION:
-//   All the global variables that store the internal state.
-//   Theoretically speaking, the internal state of the engine
-//    should be found by looking at the variables collected
-//    here, and every relevant module will have to include
-//    this header file.
-//   In practice, things are a bit messy.
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ */
+
+/*
+ * All the global variables that store the internal state.
+ * Theoretically speaking, the internal state of the engine
+ * should be found by looking at the variables collected
+ * here, and every relevant module will have to include
+ * this header file.
+ * In practice, things are a bit messy.
+ */
 
 #ifndef __D_STATE__
 #define __D_STATE__
@@ -27,24 +42,21 @@
 // ------------------------
 // Command line parameters.
 //
-extern boolean  nomonsters;		   // checkparm of -nomonsters
-extern boolean  respawnparm;	   // checkparm of -respawn
-extern boolean  fastparm;		   // checkparm of -fast
+extern int     verbose;
 
-extern boolean  devparm;		   // DEBUG: launched with -devparm
+extern boolean  nomonsters;        // checkparm of -nomonsters
+extern boolean  respawnparm;       // checkparm of -respawn
+extern boolean  fastparm;          // checkparm of -fast
+
+extern boolean  devparm;           // DEBUG: launched with -devparm
 
 // -----------------------------------------------------
 // Game Mode - identify IWAD as shareware, retail etc.
 //
 extern GameMode_t gamemode;
+extern int      gamemodebits;
 extern GameMission_t gamemission;
 
-// Set if homebrew PWAD stuff has been added.
-extern boolean  modifiedgame;
-
-// -------------------------------------------
-// Language.
-extern Language_t language;
 
 // -------------------------------------------
 // Selected skill type, map etc.
@@ -57,7 +69,7 @@ extern int      startmap;
 
 extern boolean  autostart;
 
-// Selected by user. 
+// Selected by user.
 extern skill_t  gameskill;
 extern int      gameepisode;
 extern int      gamemap;
@@ -70,8 +82,8 @@ extern boolean  monsterinfight;
 // An enum might handle altdeath/cooperative better.
 extern boolean  deathmatch;
 
-#define snd_SfxVolume		(Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume		(Get(DD_MUSIC_VOLUME)/17)
+#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
+#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
 
 // -------------------------
 // Status flags for refresh.
@@ -82,25 +94,25 @@ extern boolean  deathmatch;
 //  status bar explicitely.
 extern boolean  statusbaractive;
 
-extern boolean  automapactive;	   // In AutoMap mode?
-extern boolean  menuactive;		   // Menu overlayed?
-extern boolean  paused;			   // Game Pause?
+extern boolean  automapactive;     // In AutoMap mode?
+extern boolean  menuactive;        // Menu overlayed?
+extern boolean  paused;            // Game Pause?
 
 extern boolean  viewactive;
 
 extern boolean  nodrawers;
 extern boolean  noblit;
 
-#define viewwindowx		Get(DD_VIEWWINDOW_X)
-#define viewwindowy		Get(DD_VIEWWINDOW_Y)
+#define viewwindowx     Get(DD_VIEWWINDOW_X)
+#define viewwindowy     Get(DD_VIEWWINDOW_Y)
 
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
 extern int      viewangleoffset;
 
 // Player taking events, and displaying.
-#define consoleplayer	Get(DD_CONSOLEPLAYER)
-#define displayplayer	Get(DD_DISPLAYPLAYER)
+#define consoleplayer   Get(DD_CONSOLEPLAYER)
+#define displayplayer   Get(DD_DISPLAYPLAYER)
 
 // -------------------------------------
 // Scores, rating.
@@ -111,8 +123,8 @@ extern int      totalitems;
 extern int      totalsecret;
 
 // Timer, for scores.
-extern int      levelstarttic;	   // gametic at level start
-extern int      leveltime;		   // tics in game play for par
+extern int      levelstarttic;     // gametic at level start
+extern int      leveltime;         // tics in game play for par
 
 // --------------------------------------
 // DEMO playback/recording related stuff.
@@ -136,19 +148,15 @@ extern gamestate_t gamestate;
 //  according to user inputs. Partly load from
 //  WAD, partly set at startup time.
 
-#define gametic		Get(DD_GAMETIC)
+#define gametic     Get(DD_GAMETIC)
 
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
 // Player spawn spots for deathmatch.
 #define MAX_DM_STARTS   16
-extern mapthing_t deathmatchstarts[MAX_DM_STARTS];
-extern mapthing_t *deathmatch_p;
-
-// Player spawn spots.
-//extern  mapthing_t      playerstarts[MAXPLAYERS];
-//extern  mapthing_t*       playerstart_p;
+extern thing_t deathmatchstarts[MAX_DM_STARTS];
+extern thing_t *deathmatch_p;
 
 // Intermission stats.
 // Parameters for world map / intermission.
@@ -183,12 +191,13 @@ extern int      bodyqueslot;
 
 // Needed to store the number of the dummy sky flat.
 // Used for rendering, as well as tracking projectiles etc.
-#define	skyflatnum	Get(DD_SKYFLATNUM)
+#define skyflatnum  Get(DD_SKYFLATNUM)
+#define SKYFLATNAME  "F_SKY1"
 
 extern int      rndindex;
 extern int      prndindex;
 
-#define	maketic		Get(DD_MAKETIC)
-#define ticdup		1
+#define maketic     Get(DD_MAKETIC)
+#define ticdup      1
 
 #endif

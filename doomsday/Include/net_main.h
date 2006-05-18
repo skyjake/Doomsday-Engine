@@ -247,7 +247,7 @@ extern int      displayplayer;
 extern int      realtics, availabletics;
 extern int      isServer, isClient;
 extern boolean  allow_net_traffic; // Should net traffic be allowed?
-extern int      net_dontsleep, net_ticsync;
+extern byte     net_dontsleep, net_ticsync;
 extern ddplayer_t ddplayers[MAXPLAYERS];
 extern client_t clients[MAXPLAYERS];
 

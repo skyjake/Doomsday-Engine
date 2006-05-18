@@ -67,14 +67,16 @@ typedef enum {
 
 // Object flags.
 #define UIF_HIDDEN		0x1
-#define UIF_DISABLED	0x2		   // Can't be interacted with.
-#define UIF_PAUSED		0x4		   // Ticker not called.
+#define UIF_DISABLED	0x2         // Can't be interacted with.
+#define UIF_PAUSED		0x4         // Ticker not called.
 #define UIF_CLICKED		0x8
-#define UIF_ACTIVE		0x10	   // Object active.
-#define UIF_FOCUS		0x20	   // Has focus.
-#define UIF_NO_FOCUS	0x40	   // Can't receive focus.
-#define UIF_DEFAULT		0x80	   // Has focus by default.
+#define UIF_ACTIVE		0x10        // Object active.
+#define UIF_FOCUS		0x20        // Has focus.
+#define UIF_NO_FOCUS	0x40        // Can't receive focus.
+#define UIF_DEFAULT		0x80        // Has focus by default.
 #define UIF_LEFT_ALIGN	0x100
+#define UIF_FADE_AWAY   0x200       // Fade UI away while the control is active.
+#define UIF_NEVER_FADE  0x400
 #define UIF_ID0			0x10000000
 #define UIF_ID1			0x20000000
 #define UIF_ID2			0x40000000
@@ -183,6 +185,8 @@ extern int      uiMouseHeight;
 void            UI_Init(boolean halttime, boolean tckui, boolean tckframe,
                         boolean drwgame, boolean mousemod, boolean noescape);
 void            UI_End(void);
+void            UI_SetAlpha(float alpha);
+float           UI_Alpha(void);
 void            UI_LoadTextures(void);
 void            UI_ClearTextures(void);
 void            UI_InitPage(ui_page_t * page, ui_object_t *objects);

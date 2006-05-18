@@ -28,7 +28,7 @@ extern boolean  startupScreen;
 void            Con_StartupInit(void);
 void            Con_StartupDone(void);
 void            Con_SetBgFlat(int lump);
-void            Con_DrawStartupBackground(void);
+void            Con_DrawStartupBackground(float alpha);
 void            Con_DrawStartupScreen(int show);
 
 #endif

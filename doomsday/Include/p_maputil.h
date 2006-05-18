@@ -54,6 +54,7 @@ void            P_LineOpening(line_t *linedef);
 mobj_t         *P_GetBlockRootIdx(int index);
 void            P_LinkThing(mobj_t *thing, byte flags);
 void            P_UnlinkThing(mobj_t *thing);
+void            P_PointToBlock(fixed_t x, fixed_t y, int *bx, int *by);
 boolean         P_BlockThingsIterator(int x, int y,
 									  boolean (*func) (mobj_t *, void *),
 									  void *);

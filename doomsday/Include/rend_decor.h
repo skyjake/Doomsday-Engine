@@ -22,7 +22,7 @@
 #ifndef __DOOMSDAY_RENDER_DECOR_H__
 #define __DOOMSDAY_RENDER_DECOR_H__
 
-extern boolean  useDecorations;
+extern byte     useDecorations;
 extern float    decorWallMaxDist;  // No decorations are visible beyond this.
 extern float    decorPlaneMaxDist;
 extern float    decorWallFactor;

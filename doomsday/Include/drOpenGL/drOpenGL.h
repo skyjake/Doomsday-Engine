@@ -43,31 +43,31 @@
 #include "../doomsday.h"
 #include "../dglib.h"
 
-#define USE_MULTITEXTURE	1
-#define MAX_TEX_UNITS		2	   // More won't be used.
+#define USE_MULTITEXTURE    1
+#define MAX_TEX_UNITS       2      // More won't be used.
 
-#define DROGL_VERSION		230
-#define DROGL_VERSION_TEXT	"2.3."DOOMSDAY_RELEASE_NAME
-#define DROGL_VERSION_FULL	"DGL OpenGL Driver Version "DROGL_VERSION_TEXT" ("__DATE__")"
+#define DROGL_VERSION       230
+#define DROGL_VERSION_TEXT  "2.3."DOOMSDAY_RELEASE_NAME
+#define DROGL_VERSION_FULL  "DGL OpenGL Driver Version "DROGL_VERSION_TEXT" ("__DATE__")"
 
 enum { VX, VY, VZ };
 enum { CR, CG, CB, CA };
 
 typedef enum arraytype_e {
-	AR_VERTEX,
-	AR_COLOR,
-	AR_TEXCOORD0,
-	AR_TEXCOORD1,
-	AR_TEXCOORD2,
-	AR_TEXCOORD3,
-	AR_TEXCOORD4,
-	AR_TEXCOORD5,
-	AR_TEXCOORD6,
-	AR_TEXCOORD7
+    AR_VERTEX,
+    AR_COLOR,
+    AR_TEXCOORD0,
+    AR_TEXCOORD1,
+    AR_TEXCOORD2,
+    AR_TEXCOORD3,
+    AR_TEXCOORD4,
+    AR_TEXCOORD5,
+    AR_TEXCOORD6,
+    AR_TEXCOORD7
 } arraytype_t;
 
 typedef struct rgba_s {
-	unsigned char   color[4];
+    unsigned char   color[4];
 } rgba_t;
 
 void            initState(void);
@@ -83,6 +83,7 @@ extern boolean  allowCompression;
 extern boolean  noArrays;
 extern int      verbose;
 extern int      useAnisotropic;
+extern int      useVSync;
 extern float    maxAniso;
 extern int      maxTexUnits;
 extern boolean  wireframeMode;
@@ -129,7 +130,7 @@ int             Power2(int num);
 int             enablePalTexExt(int enable);
 DGLuint         DG_NewTexture(void);
 int             DG_TexImage(int format, int width, int height, int mipmap,
-							void *data);
+                            void *data);
 void            DG_DeleteTextures(int num, DGLuint * names);
 void            DG_TexParameter(int pname, int param);
 void            DG_GetTexParameterv(int level, int pname, int *v);
@@ -156,6 +157,7 @@ extern int      extTexEnvComb;
 extern int      extNvTexEnvComb;
 extern int      extAtiTexEnvComb;
 extern int      extAniso;
+extern int      extVSync;
 extern int      extGenMip;
 extern int      extBlendSub;
 extern int      extS3TC;

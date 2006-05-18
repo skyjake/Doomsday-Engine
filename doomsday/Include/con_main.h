@@ -45,7 +45,7 @@ typedef struct {
 extern int      CmdReturnValue;
 
 extern int      consoleAlpha, consoleLight;
-extern boolean  consoleDump, consoleShowFPS, consoleShadowText;
+extern byte     consoleDump, consoleShowFPS, consoleShadowText;
 
 void            Con_Init();
 void            Con_Shutdown();
@@ -68,8 +68,8 @@ void            Con_Printf(const char *format, ...);
 void            Con_FPrintf(int flags, const char *format, ...);	// Flagged printf.
 void            Con_SetFont(ddfont_t *cfont);
 cbline_t       *Con_GetBufferLine(int num);
-int             Con_Execute(const char *command, int silent);
-int             Con_Executef(int silent, const char *command, ...);
+int             Con_Execute(int src, const char *command, int silent);
+int             Con_Executef(int src, int silent, const char *command, ...);
 
 void            Con_Message(const char *message, ...);
 void            Con_Error(const char *error, ...);
@@ -79,9 +79,9 @@ float           Con_GetFloat(const char *name);
 byte            Con_GetByte(const char *name);
 char           *Con_GetString(const char *name);
 
-void            Con_SetInteger(const char *name, int value);
-void            Con_SetFloat(const char *name, float value);
-void            Con_SetString(const char *name, char *text);
+void            Con_SetInteger(const char *name, int value, byte override);
+void            Con_SetFloat(const char *name, float value, byte override);
+void            Con_SetString(const char *name, char *text, byte override);
 
 char           *TrimmedFloat(float val);
 

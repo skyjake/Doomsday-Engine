@@ -29,4 +29,5 @@ void            Con_ClearActions(void);
 // Returns true if the action was changed successfully.
 int             Con_ActionCommand(char *cmd, boolean has_prefix);
 
+D_CMD(ListActs);
 #endif

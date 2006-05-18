@@ -31,7 +31,7 @@ extern ddplayer_t *viewplayer;
 extern angle_t  clipangle;
 extern fixed_t  finetangent[FINEANGLES / 2];
 
-extern float    frameTimePos;	   // 0...1: fractional part for sharp game tics
+extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
 extern boolean  resyncFrameTimePos;
 extern int      loadInStartupMode;
 extern int      validcount;
@@ -44,13 +44,14 @@ extern fixed_t  viewcos, viewsin;
 extern int      skyflatnum;
 extern int      rend_info_tris;
 
-void			R_Register(void);
+void            R_Register(void);
 void            R_Init(void);
 void            R_Update(void);
 void            R_Shutdown(void);
+void            R_SetupWorldFrame(void);
 void            R_RenderPlayerView(ddplayer_t *player);
 void            R_ResetViewer(void);
 void            R_ViewWindow(int x, int y, int w, int h);
-void			R_NewSharpWorld(void);
+void            R_NewSharpWorld(void);
 
 #endif

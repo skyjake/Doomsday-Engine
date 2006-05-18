@@ -1,23 +1,20 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// DESCRIPTION:
-//  Sprite animation.
-//
-//-----------------------------------------------------------------------------
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ */
+
+/*
+ * Sprite animation.
+ */
 
 #ifndef __P_PSPR__
 #define __P_PSPR__
@@ -47,8 +44,8 @@
 // Frame flags:
 // handles maximum brightness (torches, muzzle flare, light sources)
 //
-#define FF_FULLBRIGHT	0x8000	   // flag in thing->frame
-#define FF_FRAMEMASK	0x7fff
+#define FF_FULLBRIGHT   0x8000     // flag in thing->frame
+#define FF_FRAMEMASK    0x7fff
 
 //
 // Overlay psprites are scaled shapes
@@ -56,49 +53,17 @@
 // coordinates are given for a 320*200 view screen.
 //
 typedef enum {
-	ps_weapon,
-	ps_flash,
-	NUMPSPRITES
+    ps_weapon,
+    ps_flash,
+    NUMPSPRITES
 } psprnum_t;
 
 typedef struct {
-	state_t        *state;		   // a NULL state means not active
-	int             tics;
-	fixed_t         sx;
-	fixed_t         sy;
+    state_t        *state;         // a NULL state means not active
+    int             tics;
+    fixed_t         sx;
+    fixed_t         sy;
 
 } pspdef_t;
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log$
-// Revision 1.6  2005/07/23 08:47:08  skyjake
-// Merged 1.9.0-beta1 and beta2 into HEAD
-//
-// Revision 1.5.2.1  2005/06/15 18:22:42  skyjake
-// Numerous fixes after compiling with gcc-4.0 on Mac
-//
-// Revision 1.5  2004/05/29 09:53:11  skyjake
-// Consistent style (using GNU Indent)
-//
-// Revision 1.4  2004/05/28 17:16:35  skyjake
-// Resolved conflicts (branch-1-7 overrides)
-//
-// Revision 1.2.2.1  2004/05/16 10:01:30  skyjake
-// Merged good stuff from branch-nix for the final 1.7.15
-//
-// Revision 1.2.4.1  2003/11/19 17:08:47  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.2  2003/02/27 23:14:31  skyjake
-// Obsolete jDoom files removed
-//
-// Revision 1.1  2003/02/26 19:18:36  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:13  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------

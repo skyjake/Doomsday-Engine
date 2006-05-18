@@ -62,7 +62,7 @@ typedef struct {
 	float           povAngle;	   // 0 - 359 degrees.
 } joystate_t;
 
-extern boolean  usejoystick;
+extern byte     usejoystick;
 
 void            I_Register(void);
 int             I_Init(void);

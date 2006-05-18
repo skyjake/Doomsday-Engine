@@ -31,62 +31,66 @@
 
 // These constants are used as the type of vissprite_s.
 enum {
-	VSPR_MASKED_WALL,
-	VSPR_MAP_OBJECT,
-	VSPR_HUD_MODEL,
-	VSPR_SKY_MODEL,
-	VSPR_PARTICLE_MODEL
+    VSPR_MASKED_WALL,
+    VSPR_MAP_OBJECT,
+    VSPR_HUD_MODEL,
+    VSPR_SKY_MODEL,
+    VSPR_PARTICLE_MODEL
 };
 
-// A vissprite_t is a thing or masked wall that will be drawn during 
+// A vissprite_t is a thing or masked wall that will be drawn during
 // a refresh.
 typedef struct vissprite_s {
-	struct vissprite_s *prev, *next;
-	byte            type;		   // True if this is a sprite (otherwise a wall segment).
-	float           distance;	   // Vissprites are sorted by distance.
+    struct vissprite_s *prev, *next;
+    byte            type;          // True if this is a sprite (otherwise a wall segment).
+    float           distance;      // Vissprites are sorted by distance.
 
-	// An anonymous union for the data.
-	union vissprite_data_u {
-		struct vissprite_mobj_s {
-			int             patch;
-			subsector_t    *subsector;
-			fixed_t         gx, gy;	// for line side calculation
-			fixed_t         gz, gzt;	// global bottom / top for silhouette clipping
-			boolean         flip;  // Flip texture?
-			float           v1[2], v2[2];	// The vertices (v1 is the left one).
-			int             flags; // for color translation and shadow draw
-			uint            id;
-			int             selector;
-			int             class; // player class (used in translation)
-			fixed_t         floorclip;
-			boolean         viewaligned;	// Align to view plane.
-			float           secfloor, secceil;
-			boolean         hasglow;
-			byte            floorglow[3];	// Floor glow color.
-			byte            ceilglow[3];	// Ceiling glow color.
-			byte            rgb[3];	// Sector light color.
-			int             lightlevel;
-			float           alpha;
-			float           visoff[3];	// Last-minute offset to coords.
-			struct modeldef_s *mf, *nextmf;
-			float           yaw, pitch;	// For models.
-			float           inter; // Frame interpolation, 0..1
-			struct lumobj_s *light;	// For the halo (NULL if no halo).
-			boolean		    flooradjust; // Allow moving sprite to match visible floor.
-		} mo;
-		struct vissprite_wall_s {
-			int             texture;
-			boolean         masked;
-			float           top;   // Top and bottom height.
-			float           bottom;
-			struct vissprite_wall_vertex_s {
-				float           pos[2];	// x and y coordinates.
-				unsigned char   color[4];
-			} vertices[2];
-			float           texc[2][2];	// u and v coordinates.
-			struct dynlight_s *light;
-		} wall;
-	} data;
+    // An anonymous union for the data.
+    union vissprite_data_u {
+        struct vissprite_mobj_s {
+            int             patch;
+            subsector_t    *subsector;
+            fixed_t         gx, gy; // for line side calculation
+            fixed_t         gz, gzt;    // global bottom / top for silhouette clipping
+            boolean         flip;  // Flip texture?
+            float           v1[2], v2[2];   // The vertices (v1 is the left one).
+            int             flags; // for color translation and shadow draw
+            uint            id;
+            int             selector;
+            int             class; // player class (used in translation)
+            fixed_t         floorclip;
+            boolean         viewaligned;    // Align to view plane.
+            float           secfloor, secceil;
+            boolean         hasglow;
+            byte            floorglow[3];   // Floor glow color.
+            byte            ceilglow[3];    // Ceiling glow color.
+            float           floorglowamount;
+            float           ceilglowamount;
+            byte            rgb[3]; // Sector light color.
+            int             lightlevel;
+            float           alpha;
+            float           visoff[3];  // Last-minute offset to coords.
+            struct modeldef_s *mf, *nextmf;
+            float           yaw, pitch; // For models.
+            float           inter; // Frame interpolation, 0..1
+            struct lumobj_s *light; // For the halo (NULL if no halo).
+            boolean         flooradjust; // Allow moving sprite to match visible floor.
+        } mo;
+        struct vissprite_wall_s {
+            int             texture;
+            boolean         masked;
+            float           top;   // Top and bottom height.
+            float           bottom;
+            blendmode_t     blendmode; // Blendmode to be used when drawing
+                                       // (two sided mid textures only)
+            struct vissprite_wall_vertex_s {
+                float           pos[2]; // x and y coordinates.
+                unsigned char   color[4];
+            } vertices[2];
+            float           texc[2][2]; // u and v coordinates.
+            struct dynlight_s *light;
+        } wall;
+    } data;
 } vissprite_t;
 
 // Sprites are patches with a special naming convention so they can be
@@ -99,29 +103,29 @@ typedef struct vissprite_s {
 // for all views.
 
 typedef struct {
-	boolean         rotate;		   // if false use 0 for any position
-	int             lump[8];	   // sprite lump to use for view angles 0-7
-	byte            flip[8];	   // flip (1 = flip) to use for view angles 0-7
+    boolean         rotate;        // if false use 0 for any position
+    int             lump[8];       // sprite lump to use for view angles 0-7
+    byte            flip[8];       // flip (1 = flip) to use for view angles 0-7
 } spriteframe_t;
 
 typedef struct {
-	int             numframes;
-	spriteframe_t  *spriteframes;
+    int             numframes;
+    spriteframe_t  *spriteframes;
 } spritedef_t;
 
 typedef struct {
-	int             lump;		   // Real lump number.
-	short           width;
-	short           height;
-	short           offset;
-	short           topoffset;
-	float           flarex;		   // Offset to flare.
-	float           flarey;
-	float           lumsize;
-	float           tc[2][2];	   // Prepared texture coordinates.
-	DGLuint         tex;		   // Name of the associated DGL texture.
-	DGLuint         hudtex;		   // Name of the HUD sprite texture.
-	rgbcol_t        color;		   // Average color, for lighting.
+    int             lump;          // Real lump number.
+    short           width;
+    short           height;
+    short           offset;
+    short           topoffset;
+    float           flarex;        // Offset to flare.
+    float           flarey;
+    float           lumsize;
+    float           tc[2][2];      // Prepared texture coordinates.
+    DGLuint         tex;           // Name of the associated DGL texture.
+    DGLuint         hudtex;        // Name of the HUD sprite texture.
+    rgbcol_t        color;         // Average color, for lighting.
 } spritelump_t;
 
 extern spritedef_t *sprites;

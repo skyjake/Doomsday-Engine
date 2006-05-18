@@ -24,8 +24,8 @@
 
 #include "con_decl.h"
 
-extern int      panel_show_help;
-extern int      panel_show_tips;
+extern byte     panel_show_help;
+extern byte     panel_show_tips;
 
 // Helpful handlers.
 void            CP_CvarSlider(ui_object_t *ob);

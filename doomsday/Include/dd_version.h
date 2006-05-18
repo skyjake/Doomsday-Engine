@@ -22,10 +22,10 @@
 #ifndef __DOOMSDAY_VERSION_INFO_H__
 #define __DOOMSDAY_VERSION_INFO_H__
 
-/*  
+/*
  * Version number rules: (major).(minor).(revision)-(release)
  *
- * Major version will be 1 for now (few things short of a complete 
+ * Major version will be 1 for now (few things short of a complete
  * rewrite will increase the major version).
  *
  * Minor version increases with important feature releases.
@@ -40,8 +40,8 @@
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
-#define DOOMSDAY_VERSION		10801
-#define DOOMSDAY_RELEASE_NAME	"0-beta2"
+#define DOOMSDAY_VERSION		10801 // Don't touch; see above.
+#define DOOMSDAY_RELEASE_NAME	"0-beta4"
 #define DOOMSDAY_VERSION_TEXT	"1.9."DOOMSDAY_RELEASE_NAME
 
 #endif

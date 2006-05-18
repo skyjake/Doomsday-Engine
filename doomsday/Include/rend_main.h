@@ -27,17 +27,22 @@
 #include "r_things.h"
 
 // Parts of a wall segment.
-#define SEG_MIDDLE	0x1
-#define SEG_TOP		0x2
-#define SEG_BOTTOM	0x4
+#define SEG_MIDDLE  0x1
+#define SEG_TOP     0x2
+#define SEG_BOTTOM  0x4
+
+// Light mod matrix range
+#define MOD_RANGE 100
 
 extern float    vx, vy, vz, vang, vpitch, fieldOfView, yfov;
-extern boolean  smoothTexAnim;
+extern byte     smoothTexAnim;
 extern float    viewsidex, viewsidey;
 extern int      missileBlend, litSprites;
 extern boolean  useFog;
 extern byte     fogColor[4];
 extern int      r_ambient;
+
+extern signed short lightRangeModMatrix[MOD_RANGE][255];
 
 void            Rend_Register(void);
 void            Rend_Init(void);
@@ -53,6 +58,12 @@ float           Rend_SignedPointDist2D(float c[2]);
 int             Rend_SectorLight(sector_t *sec);
 int             Rend_SegFacingDir(float v1[2], float v2[2]);
 int             Rend_MidTexturePos(float *top, float *bottom, float *texoffy,
-								   float tcyoff, boolean lower_unpeg);
+                                   float tcyoff, boolean lower_unpeg);
+boolean         Rend_IsWallSectionPVisible(line_t* line, int section,
+                                           boolean backside);
 
+void            Rend_ApplyLightAdaptation(int* lightvalue);
+int             Rend_GetLightAdaptVal(int lightvalue);
+
+void            Rend_CalcLightRangeModMatrix(struct cvar_s* unused);
 #endif

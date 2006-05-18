@@ -24,7 +24,7 @@
 
 void            Rend_RadioRegister(void);
 void            Rend_RadioInitForSector(sector_t *sector);
-void            Rend_RadioWallSection(seg_t *seg, rendpoly_t *origQuad);
+void            Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad);
 void            Rend_RadioSubsectorEdges(subsector_t *subsector);
 
 #endif

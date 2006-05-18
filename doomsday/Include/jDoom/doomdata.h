@@ -1,25 +1,20 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// DESCRIPTION:
-//  all external data is defined here
-//  most of the data is loaded into different structures at run time
-//  some internal structures shared by many modules are here
-//
-//-----------------------------------------------------------------------------
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ */
+
+/*
+ * Thing and linedef attributes
+ */
 
 #ifndef __DOOMDATA__
 #define __DOOMDATA__
@@ -28,193 +23,92 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// The most basic types we use, portability.
-#include "doomtype.h"
-
-// Some global defines, that configure the game.
-#include "doomdef.h"
-
-//
-// Map level types.
-// The following data structures define the persistent format
-// used in the lumps of the WAD files.
-//
-
-// Lump order in a map WAD: each map needs a couple of lumps
-// to provide a complete scene geometry description.
+// Base plane ids.
 enum {
-	ML_LABEL,					   // A separator, name, ExMx or MAPxx
-	ML_THINGS,					   // Monsters, items..
-	ML_LINEDEFS,				   // LineDefs, from editing
-	ML_SIDEDEFS,				   // SideDefs, from editing
-	ML_VERTEXES,				   // Vertices, edited and BSP splits generated
-	ML_SEGS,					   // LineSegs, from LineDefs split by BSP
-	ML_SSECTORS,				   // SubSectors, list of LineSegs
-	ML_NODES,					   // BSP nodes
-	ML_SECTORS,					   // Sectors, from editing
-	ML_REJECT,					   // LUT, sector-sector visibility    
-	ML_BLOCKMAP					   // LUT, motion clipping, walls/grid element
+    PLN_FLOOR,
+    PLN_CEILING
 };
 
-// A single Vertex.
-typedef struct {
-	short           x;
-	short           y;
-} mapvertex_t;
+// This is the common thing_t
+typedef struct thing_s {
+    short           x;
+    short           y;
+    short           height;
+    short           angle;
+    short           type;
+    short           options;
+} thing_t;
 
-// A SideDef, defining the visual appearance of a wall,
-// by setting textures and offsets.
-typedef struct {
-	short           textureoffset;
-	short           rowoffset;
-	char            toptexture[8];
-	char            bottomtexture[8];
-	char            midtexture[8];
-	// Front sector, towards viewer.
-	short           sector;
-} mapsidedef_t;
-
-// A LineDef, as used for editing, and as input
-// to the BSP builder.
-typedef struct {
-	short           v1;
-	short           v2;
-	short           flags;
-	short           special;
-	short           tag;
-	// sidenum[1] will be -1 if one sided
-	short           sidenum[2];
-} maplinedef_t;
+extern thing_t* things;
 
 //
 // LineDef attributes.
 //
 
 // Solid, is an obstacle.
-#define ML_BLOCKING		1
+#define ML_BLOCKING     1
 
 // Blocks monsters only.
-#define ML_BLOCKMONSTERS	2
+#define ML_BLOCKMONSTERS    2
 
-// Backside will not be present at all
-//  if not two sided.
-#define ML_TWOSIDED		4
-
-// If a texture is pegged, the texture will have
-// the end exposed to air held constant at the
-// top or bottom of the texture (stairs or pulled
-// down things) and will move with a height change
-// of one of the neighbor sectors.
-// Unpegged textures allways have the first row of
-// the texture at the top pixel of the line for both
-// top and bottom textures (use next to windows).
+// Backside will not be present at all if not two sided.
+#define ML_TWOSIDED     4
 
 // upper texture unpegged
-#define ML_DONTPEGTOP		8
+#define ML_DONTPEGTOP       8
 
 // lower texture unpegged
-#define ML_DONTPEGBOTTOM	16
+#define ML_DONTPEGBOTTOM    16
 
 // In AutoMap: don't map as two sided: IT'S A SECRET!
-#define ML_SECRET		32
+#define ML_SECRET       32
 
 // Sound rendering: don't let sound cross two of these.
-#define ML_SOUNDBLOCK		64
+#define ML_SOUNDBLOCK       64
 
 // Don't draw on the automap at all.
-#define ML_DONTDRAW		128
+#define ML_DONTDRAW     128
 
 // Set if already seen, thus drawn in automap.
-#define ML_MAPPED		256
+#define ML_MAPPED       256
 
-// Sector definition, from editing.
-typedef struct {
-	short           floorheight;
-	short           ceilingheight;
-	char            floorpic[8];
-	char            ceilingpic[8];
-	short           lightlevel;
-	short           special;
-	short           tag;
-} mapsector_t;
+// Allows a USE action to pass through a line with a special
+#define ML_PASSUSE    512
 
-// SubSector, as generated by BSP.
-typedef struct {
-	short           numSegs;
-	// Index of first one, segs are stored sequentially.
-	short           firstseg;
-} mapsubsector_t;
+// If set allows any mobj to trigger the line's special
+#define ML_ALLTRIGGER 1024
 
-// LineSeg, generated by splitting LineDefs
-// using partition lines selected by BSP builder.
-typedef struct {
-	short           v1;
-	short           v2;
-	short           angle;
-	short           linedef;
-	short           side;
-	short           offset;
-} mapseg_t;
+// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
+// ML_BLOCKING -> ML_MAPPED inc will persist.
+#define ML_INVALID    2048
+#define VALIDMASK     0x000001ff
 
-// BSP node structure.
-
-// Indicate a leaf.
-#define	NF_SUBSECTOR	0x8000
-
-typedef struct {
-	// Partition line from (x,y) to x+dx,y+dy)
-	short           x;
-	short           y;
-	short           dx;
-	short           dy;
-
-	// Bounding box for each child,
-	// clip against view frustum.
-	short           bbox[2][4];
-
-	// If NF_SUBSECTOR its a subsector,
-	// else it's a node of another subtree.
-	unsigned short  children[2];
-
-} mapnode_t;
-
-// Thing definition, position, orientation and type,
-// plus skill/visibility flags and attributes.
-typedef struct {
-	short           x;
-	short           y;
-	short           angle;
-	short           type;
-	short           options;
-} mapthing_t;
-
-#endif							// __DOOMDATA__
-//-----------------------------------------------------------------------------
 //
-// $Log$
-// Revision 1.5  2005/07/23 08:47:07  skyjake
-// Merged 1.9.0-beta1 and beta2 into HEAD
+// Thing attributes.
 //
-// Revision 1.4.2.1  2005/06/15 18:22:41  skyjake
-// Numerous fixes after compiling with gcc-4.0 on Mac
-//
-// Revision 1.4  2004/05/29 09:53:11  skyjake
-// Consistent style (using GNU Indent)
-//
-// Revision 1.3  2004/05/28 17:16:35  skyjake
-// Resolved conflicts (branch-1-7 overrides)
-//
-// Revision 1.1.2.1  2004/05/16 10:01:30  skyjake
-// Merged good stuff from branch-nix for the final 1.7.15
-//
-// Revision 1.1.4.1  2003/11/19 17:08:47  skyjake
-// Modified to compile with gcc and -DUNIX
-//
-// Revision 1.1  2003/02/26 19:18:26  skyjake
-// Initial checkin
-//
-// Revision 1.1  2002/09/29 01:04:12  Jaakko
-// Added all headers
-//
-//
-//-----------------------------------------------------------------------------
+
+// Appears in Easy skill modes
+#define MTF_EASY    1
+
+// Appears in Medium skill modes
+#define MTF_MEDIUM    2
+
+// Appears in Hard skill modes
+#define MTF_HARD    4
+
+// THING is deaf
+#define MTF_DEAF    8
+
+// Appears in Multiplayer game modes only
+#define MTF_NOTSINGLE    16
+
+// Doesn't appear in Deathmatch
+#define MTF_NOTDM    32
+
+// Doesn't appear in Coop
+#define MTF_NOTCOOP    64
+
+// THING is invulnerble and inert
+#define MTF_DORMANT    512
+
+#endif

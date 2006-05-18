@@ -64,6 +64,8 @@
 #define ORDER(x,y,a,b)	( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 #define LAST_CHAR(str)	(str[strlen(str) - 1])
 
+#define ASSERT_NOT_64BIT() {if( sizeof(void*)!=sizeof(int) ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
+
 #define MAXEVENTS		64
 #define	SBARHEIGHT		39		   // status bar height at bottom of screen
 #define PI				3.141592657

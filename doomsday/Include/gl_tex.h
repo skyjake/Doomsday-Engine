@@ -33,40 +33,59 @@
  * it must be discarded with GL_DestroyImage.
  */
 typedef struct image_s {
-	char            fileName[256];
-	int             width;
-	int             height;
-	int             pixelSize;
-	boolean         isMasked;
-	int             originalBits;  // Bits per pixel in the image file.
-	byte           *pixels;
+    char            fileName[256];
+    int             width;
+    int             height;
+    int             pixelSize;
+    boolean         isMasked;
+    int             originalBits;  // Bits per pixel in the image file.
+    byte           *pixels;
 } image_t;
 
 /*
  * Processing modes for GL_LoadGraphics.
  */
 typedef enum gfxmode_e {
-	LGM_NORMAL = 0,
-	LGM_GRAYSCALE = 1,
-	LGM_GRAYSCALE_ALPHA = 2,
-	LGM_WHITE_ALPHA = 3
+    LGM_NORMAL = 0,
+    LGM_GRAYSCALE = 1,
+    LGM_GRAYSCALE_ALPHA = 2,
+    LGM_WHITE_ALPHA = 3
 } gfxmode_t;
 
 /*
  * Textures used in the lighting system.
  */
 typedef enum lightingtex_e {
-	LST_DYNAMIC,				   // Round dynamic light
-	LST_GRADIENT,				   // Top-down gradient
-	LST_RADIO_CO,				   // FakeRadio closed/open corner shadow
-	LST_RADIO_CC,				   // FakeRadio closed/closed corner shadow
-	NUM_LIGHTING_TEXTURES
+    LST_DYNAMIC,                   // Round dynamic light
+    LST_GRADIENT,                  // Top-down gradient
+    LST_RADIO_CO,                  // FakeRadio closed/open corner shadow
+    LST_RADIO_CC,                  // FakeRadio closed/closed corner shadow
+    LST_RADIO_OO,                  // FakeRadio open/open shadow
+    LST_RADIO_OE,                  // FakeRadio open/edge shadow
+    NUM_LIGHTING_TEXTURES
 } lightingtex_t;
+
+typedef enum flaretex_e {
+    FXT_FLARE,                     // (flare)
+    FXT_BRFLARE,                   // (brFlare)
+    FXT_BIGFLARE,                  // (bigFlare)
+    NUM_FLARE_TEXTURES
+} flaretex_t;
+
+/*
+ * Textures used in world rendering.
+ * eg a surface with a missing tex/flat is drawn using the "missing" graphic
+ */
+typedef enum ddtexture_e {
+    DDT_MISSING,          // Drawn if a texture/flat is missing
+    DDT_BBOX,             // Drawn when rendering bounding boxes
+    NUM_DD_TEXTURES
+} ddtexture_t;
 
 extern int      mipmapping, linearRaw, texQuality, filterSprites;
 extern int      texMagMode;
 extern int      useSmartFilter;
-extern boolean  loadExtAlways;
+extern byte     loadExtAlways;
 extern int      texMagMode;
 extern float    texw, texh;
 extern int      texmask;
@@ -74,12 +93,13 @@ extern detailinfo_t *texdetail;
 extern unsigned int curtex;
 extern int      pallump;
 extern DGLuint  lightingTexNames[NUM_LIGHTING_TEXTURES];
+extern DGLuint  flareTexNames[NUM_FLARE_TEXTURES];
 
 int             CeilPow2(int num);
 
 void            GL_InitTextureManager(void);
 void            GL_ShutdownTextureManager(void);
-void            GL_LoadSystemTextures(boolean loadLightMaps);
+void            GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlareMaps);
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
@@ -101,17 +121,17 @@ void            TranslatePatch(struct patch_s *patch, byte *transTable);
 void            GL_ConvertToLuminance(image_t * image);
 void            GL_ConvertToAlpha(image_t * image, boolean makeWhite);
 void            GL_ScaleBuffer32(byte *in, int inWidth, int inHeight,
-								 byte *out, int outWidth, int outHeight,
-								 int comps);
+                                 byte *out, int outWidth, int outHeight,
+                                 int comps);
 byte           *GL_LoadImage(image_t * img, const char *imagefn,
-							 boolean useModelPath);
+                             boolean useModelPath);
 byte           *GL_LoadImageCK(image_t * img, const char *imagefn,
-							   boolean useModelPath);
+                               boolean useModelPath);
 void            GL_DestroyImage(image_t * img);
 byte           *GL_LoadTexture(image_t * img, char *name);
 DGLuint         GL_LoadGraphics(const char *name, gfxmode_t mode);
 DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                                 gfxmode_t mode, int useMipmap);
+                                 gfxmode_t mode, int useMipmap, boolean clamped);
 DGLuint         GL_GetTextureInfo(int index);
 DGLuint         GL_GetTextureInfo2(int index, boolean translate);
 DGLuint         GL_PrepareTexture(int idx);
@@ -119,19 +139,20 @@ DGLuint         GL_PrepareTexture2(int idx, boolean translate);
 DGLuint         GL_PrepareFlat(int idx);
 DGLuint         GL_PrepareFlat2(int idx, boolean translate);
 DGLuint         GL_PrepareLSTexture(lightingtex_t which);
-DGLuint         GL_PrepareFlareTexture(int flare);
+DGLuint         GL_PrepareFlareTexture(flaretex_t flare);
 DGLuint         GL_PrepareSky(int idx, boolean zeroMask);
 DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate);
+DGLuint         GL_PrepareDDTexture(ddtexture_t idx);
 unsigned int    GL_PrepareSprite(int pnum, int spriteMode);
 void            GL_SetTexture(int idx);
 void            GL_GetSkyTopColor(int texidx, byte *rgb);
 void            GL_SetSprite(int pnum, int spriteType);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
-void            GL_GetSpriteColor(int pnum, unsigned char *rgb);
+void            GL_GetSpriteColorf(int pnum, float *rgb);
 void            GL_GetFlatColor(int fnum, unsigned char *rgb);
 void            GL_NewSplitTex(int lump, DGLuint part2name);
 DGLuint         GL_GetOtherPart(int lump);
-void            GL_SetPatch(int lump);	// No mipmaps are generated.
+void            GL_SetPatch(int lump);  // No mipmaps are generated.
 void            GL_SetNoTexture(void);
 int             GL_GetLumpTexWidth(int lump);
 int             GL_GetLumpTexHeight(int lump);

@@ -127,6 +127,7 @@ typedef struct {
 	int             act_sound, deact_sound;
 	int             ev_chain, act_chain, deact_chain;
 	int             wallsection, act_tex, deact_tex;
+    int             act_linetype, deact_linetype;
 	char           *act_msg, *deact_msg;
 	float           texmove_angle;
 	float           texmove_speed;

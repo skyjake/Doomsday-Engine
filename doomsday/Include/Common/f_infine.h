@@ -31,7 +31,7 @@ int             FI_Responder(event_t *ev);
 void            FI_Drawer(void);
 boolean         FI_IsMenuTrigger(event_t *ev);
 
-int             CCmdStartInFine(int argc, char **argv);
-int             CCmdStopInFine(int argc, char **argv);
+DEFCC(CCmdStartInFine);
+DEFCC(CCmdStopInFine);
 
 #endif

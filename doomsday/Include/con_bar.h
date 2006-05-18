@@ -28,7 +28,7 @@
 #define PBARF_NOBACKGROUND	8
 #define PBARF_NOBLIT		16
 
-extern int      progress_enabled;
+extern byte     progress_enabled;
 
 void            Con_InitProgress(const char *title, int full);
 void            Con_HideProgress(void);

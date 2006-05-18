@@ -1,23 +1,20 @@
 #ifndef __COMMON_PLAYSTART_H__
 #define __COMMON_PLAYSTART_H__
 
-#define MAXSTARTS	100
+extern thing_t *playerstarts;
+extern int      numPlayerStarts;
 
-extern mapthing_t playerstarts[MAXSTARTS], *playerstart_p;
-
-void            P_RegisterPlayerStart(mapthing_t * mthing);
+void            P_Init(void);
+int             P_RegisterPlayerStart(thing_t * mthing);
+void            P_FreePlayerStarts(void);
+boolean         P_CheckSpot(int playernum, thing_t * mthing,
+                            boolean doTeleSpark);
+boolean         P_FuzzySpawn(thing_t * spot, int playernum,
+                             boolean doTeleSpark);
+thing_t        *P_GetPlayerStart(int group, int pnum);
 void            P_DealPlayerStarts(void);
-boolean         P_CheckSpot(int playernum, mapthing_t * mthing,
-							boolean doTeleSpark);
-boolean         P_FuzzySpawn(mapthing_t * spot, int playernum,
-							 boolean doTeleSpark);
 void            P_SpawnPlayers(void);
-
-#if __JHEXEN__ || __JSTRIFE__
-mapthing_t     *P_GetPlayerStart(int group, int pnum);
-#endif
-
-void			P_GetMapLumpName(int episode, int map, char *lumpName);
-void			P_LocateMapLumps(int episode, int map, int *lumpIndices);
+void            P_GetMapLumpName(int episode, int map, char *lumpName);
+void            P_LocateMapLumps(int episode, int map, int *lumpIndices);
 
 #endif

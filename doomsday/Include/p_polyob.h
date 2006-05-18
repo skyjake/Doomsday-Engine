@@ -24,10 +24,12 @@
 #ifndef __DOOMSDAY_POLYOB_H__
 #define __DOOMSDAY_POLYOB_H__
 
+#include "p_data.h"
+
 //==========================================================================
 // Data
 //==========================================================================
-extern byte    *polyobjs;		   // list of all poly-objects on the level
+extern struct polyobj_s *polyobjs;		   // list of all poly-objects on the level
 extern int      po_NumPolyobjs;
 
 //==========================================================================

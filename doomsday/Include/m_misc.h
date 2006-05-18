@@ -24,13 +24,13 @@
 
 #include "sys_file.h"
 
-#define MAX_READ	8192
-#define ISSPACE(c)	((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
-					 (c) == '\r')
+#define MAX_READ    8192
+#define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
+                     (c) == '\r')
 
 typedef struct trigger_s {
-	timespan_t      duration;
-	timespan_t      accum;
+    timespan_t      duration;
+    timespan_t      accum;
 } trigger_t;
 
 extern int      read_count;
@@ -74,8 +74,8 @@ void            M_WriteCommented(FILE * file, const char *text);
 void            M_WriteTextEsc(FILE * file, char *text);
 boolean         M_IsComment(char *text);
 char           *M_LimitedStrCat(const char *str, unsigned int maxWidth,
-								char separator, char *buf,
-								unsigned int bufLength);
+                                char separator, char *buf,
+                                unsigned int bufLength);
 char           *M_StrCatQuoted(char *dest, char *src);
 
 // Random numbers.
@@ -95,11 +95,11 @@ void            M_Scale(float *dest, const float *a, float scale);
 float           M_DotProduct(float *a, float *b);
 void            M_CrossProduct(float *a, float *b, float *out);
 void            M_PointCrossProduct(float *v1, float *v2, float *v3,
-									float *out);
+                                    float *out);
 void            M_RotateVector(float vec[3], float degYaw, float degPitch);
 void            M_ProjectPointOnLinef(fixed_t *point, fixed_t *linepoint,
-									  fixed_t *delta, float gap,
-									  float *result);
+                                      fixed_t *delta, float gap,
+                                      float *result);
 float           M_CycleIntoRange(float value, float length);
 uint            M_CRC32(byte *data, uint length);
 

@@ -6,6 +6,5 @@ void            P_SetThingSRVOZ(mobj_t *mo, int stepz);
 void            P_SRVOAngleTicker(mobj_t *mo);
 void            P_ClearThingSRVO(mobj_t *mo);
 void            P_UpdateHealthBits(mobj_t *mobj);
-void            P_UpdateMobjFlags(mobj_t *mobj);
 
 #endif
