@@ -24,29 +24,8 @@ Flag { ID = "ltc_wall_texture"; Value = 0x12; }
 Flag { ID = "ltc_command"; Value = 0x13; }
 Flag { ID = "ltc_sound"; Value = 0x14; }
 Flag { ID = "ltc_mimic_sector"; Value = 0x15; }
-
-Text { ID = "xgclass000"; Text = "None"; }
-Text { ID = "xgclass001"; Text = "Chain Sequence"; }
-Text { ID = "xgclass002"; Text = "Plane Move"; }
-Text { ID = "xgclass003"; Text = "Build Stairs"; }
-Text { ID = "xgclass004"; Text = "Damage"; }
-Text { ID = "xgclass005"; Text = "Power"; }
-Text { ID = "xgclass006"; Text = "Line Type"; }
-Text { ID = "xgclass007"; Text = "Sector Type"; }
-Text { ID = "xgclass008"; Text = "Sector Light"; }
-Text { ID = "xgclass009"; Text = "Activate"; }
-Text { ID = "xgclass010"; Text = "Key"; }
-Text { ID = "xgclass011"; Text = "Music"; }
-Text { ID = "xgclass012"; Text = "Line Count"; }
-Text { ID = "xgclass013"; Text = "End Level"; }
-Text { ID = "xgclass014"; Text = "Disable if Active"; }
-Text { ID = "xgclass015"; Text = "Enable if Active"; }
-Text { ID = "xgclass016"; Text = "Explode"; }
-Text { ID = "xgclass017"; Text = "Plane Texture"; }
-Text { ID = "xgclass018"; Text = "Wall Texture"; }
-Text { ID = "xgclass019"; Text = "Command"; }
-Text { ID = "xgclass020"; Text = "Sound"; }
-Text { ID = "xgclass021"; Text = "Mimic Sector"; }
+Flag { ID = "ltc_teleport"; Value = 0x16; }
+Flag { ID = "ltc_line_teleport"; Value = 0x17; }
 
 Flag { ID = "ltf_active"; Value = 0x1; }
 Flag { ID = "ltf_player_use_a"; Value = 0x2; }
@@ -129,6 +108,7 @@ Flag { ID = "ltf2_global_d_msg"; Value = 0x8000000; }
 Flag { ID = "ltf2_global_msg"; Value = 0xC000000; }
 Flag { ID = "ltf2_group_act"; Value = 0x10000000; }
 Flag { ID = "ltf2_group_deact"; Value = 0x20000000; }
+Flag { ID = "ltf2_override_any"; Value = 0x40000000; }
 
 Flag { ID = "lat_timed_off"; }
 Flag { ID = "lat_timed_on"; Value = 0x1; }
@@ -160,6 +140,10 @@ Flag { ID = "lpref_all_ceilings"; Value = 0xC; }
 Flag { ID = "lpref_special"; Value = 0xD; }
 Flag { ID = "lpref_back_floor"; Value = 0xE; }
 Flag { ID = "lpref_back_ceiling"; Value = 0xF; }
+Flag { ID = "lpref_thing_exist_floors"; Value = 0x10; }
+Flag { ID = "lpref_thing_exist_ceilings"; Value = 0x11; }
+Flag { ID = "lpref_thing_noexist_floors"; Value = 0x12; }
+Flag { ID = "lpref_thing_noexist_ceilings"; Value = 0x13; }
 
 Flag { ID = "lsref_none"; }
 Flag { ID = "lsref_my"; Value = 0x1; }
@@ -169,6 +153,8 @@ Flag { ID = "lsref_act_tagged"; Value = 0x4; }
 Flag { ID = "lsref_index"; Value = 0x5; }
 Flag { ID = "lsref_all"; Value = 0x6; }
 Flag { ID = "lsref_back"; Value = 0x7; }
+Flag { ID = "lsref_thing_exist"; Value = 0x8; }
+Flag { ID = "lsref_thing_noexist"; Value = 0x9; }
 
 Flag { ID = "spref_none"; }
 Flag { ID = "spref_my_floor"; Value = 0x1; }
@@ -203,6 +189,9 @@ Flag { ID = "spref_act_tagged_ceiling"; Value = 0x23; }
 Flag { ID = "spref_index_ceiling"; Value = 0x24; }
 Flag { ID = "spref_back_floor"; Value = 0x25; }
 Flag { ID = "spref_back_ceiling"; Value = 0x26; }
+Flag { ID = "spref_special"; Value = 0x27; }
+Flag { ID = "spref_line_act_tagged_floor"; Value = 0x28; }
+Flag { ID = "spref_line_act_tagged_ceiling"; Value = 0x29; }
 
 Flag { ID = "lightref_none"; }
 Flag { ID = "lightref_my"; Value = 0x1; }
@@ -214,10 +203,21 @@ Flag { ID = "lightref_next_highest"; Value = 0x6; }
 Flag { ID = "lightref_next_lowest"; Value = 0x7; }
 Flag { ID = "lightref_back"; Value = 0x8; }
 
-Flag { ID = "ldref_special"; Value = 0x1; }
-Flag { ID = "ldref_tag"; Value = 0x2; }
-Flag { ID = "ldref_acttag"; Value = 0x3; }
-Flag { ID = "ldref_count"; Value = 0x4; }
+Flag { ID = "ldref_none"; }
+Flag { ID = "ldref_id"; Value = 0x1; }
+Flag { ID = "ldref_special"; Value = 0x2; }
+Flag { ID = "ldref_tag"; Value = 0x3; }
+Flag { ID = "ldref_acttag"; Value = 0x4; }
+Flag { ID = "ldref_count"; Value = 0x5; }
+Flag { ID = "ldref_angle"; Value = 0x6; }
+Flag { ID = "ldref_length"; Value = 0x7; }
+Flag { ID = "ldref_offsetx"; Value = 0x8; }
+Flag { ID = "ldref_offsety"; Value = 0x9; }
+
+Flag { ID = "sdf_fade_top_mid";  Value = 0x1; }
+Flag { ID = "sdf_fade_mid_top";  Value = 0x2; }
+Flag { ID = "sdf_fade_mid_bottom";  Value = 0x4; }
+Flag { ID = "sdf_fade_bottom_mid";  Value = 0x8; }
 
 Flag { ID = "chsf_done_d"; Value = 0x1; }
 Flag { ID = "chsf_loop"; Value = 0x2; }

@@ -18,7 +18,6 @@ Flag { ID = "mf_nogravity"; Value = 0x200; }
 Flag { ID = "mf_dropoff"; Value = 0x400; }
 Flag { ID = "mf_pickup"; Value = 0x800; }
 Flag { ID = "mf_noclip"; Value = 0x1000; }
-Flag { ID = "mf_slide"; Value = 0x2000; }
 Flag { ID = "mf_float"; Value = 0x4000; }
 Flag { ID = "mf_teleport"; Value = 0x8000; }
 Flag { ID = "mf_missile"; Value = 0x10000; }
@@ -34,11 +33,29 @@ Flag { ID = "mf_notdmatch"; Value = 0x2000000; }
 Flag { ID = "mf_translation"; Value = 0xC000000; }
 Flag { ID = "mf_transshift"; Value = 0x1A; }
 Flag { ID = "mf_local"; Value = 0x10000000; }
-Flag { ID = "mf_brightexplode"; Value = 0x20000000; }
-Flag { ID = "mf_brightshadow"; Value = 0x40000000; }
+Flag { ID = "mf_brightshadow"; Value = 0x20000000; }
+Flag { ID = "mf_brightexplode"; Value = 0x40000000; }
 Flag { ID = "mf_viewalign"; Value = 0x80000000; }
-Flag { ID = "mf2_alwayslit"; Value = 0x1; }
 
+Flag { ID = "mf2_lograv"; Value = 0x1; }
+Flag { ID = "mf2_floorbounce"; Value = 0x4; }
+Flag { ID = "mf2_thrughost"; Value = 0x8; }
+Flag { ID = "mf2_fly"; Value = 0x10; }
+Flag { ID = "mf2_floorclip"; Value = 0x20; }
+Flag { ID = "mf2_spawnfloat"; Value = 0x40; }
+Flag { ID = "mf2_noteleport"; Value = 0x80; }
+Flag { ID = "mf2_rip"; Value = 0x100; }
+Flag { ID = "mf2_pushable"; Value = 0x200; }
+Flag { ID = "mf2_slide"; Value = 0x400; }
+Flag { ID = "mf2_alwayslit"; Value = 0x800; }
+Flag { ID = "mf2_passmobj"; Value = 0x1000; }
+Flag { ID = "mf2_cannotpush"; Value = 0x2000; }
+Flag { ID = "mf2_radiusattacknomaxz"; Value = 0x4000; }
+Flag { ID = "mf2_boss"; Value = 0x8000; }
+Flag { ID = "mf2_nodmgthrust"; Value = 0x20000; }
+Flag { ID = "mf2_telestomp"; Value = 0x40000; }
+Flag { ID = "mf2_floatbob"; Value = 0x80000; }
+Flag { ID = "mf2_dontdraw"; Value = 0x100000; }
 
 Thing {
   ID = "PLAYER";
@@ -62,6 +79,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_dropoff mf_pickup mf_notdmatch";
+  Flags2 = "mf2_slide mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -89,6 +107,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -116,6 +135,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -143,6 +163,7 @@ Thing {
   Height = 56;
   Mass = 500;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -167,6 +188,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_nogravity mf_brightshadow";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -194,6 +216,7 @@ Thing {
   Height = 56;
   Mass = 500;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -220,6 +243,7 @@ Thing {
   Mass = 100;
   Damage = 10;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -244,6 +268,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_nogravity";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -271,6 +296,7 @@ Thing {
   Height = 64;
   Mass = 1000;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -297,6 +323,7 @@ Thing {
   Mass = 100;
   Damage = 8;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -324,6 +351,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -351,6 +379,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -378,6 +407,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -405,6 +435,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = "mf_solid mf_shootable mf_shadow mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -432,6 +463,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = "mf_solid mf_shootable mf_float mf_nogravity mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -459,6 +491,7 @@ Thing {
   Height = 64;
   Mass = 1000;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -485,6 +518,7 @@ Thing {
   Mass = 100;
   Damage = 8;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -512,6 +546,7 @@ Thing {
   Height = 64;
   Mass = 1000;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -540,6 +575,7 @@ Thing {
   Mass = 50;
   Damage = 3;
   Flags = "mf_solid mf_shootable mf_float mf_nogravity";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -567,6 +603,7 @@ Thing {
   Height = 100;
   Mass = 1000;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp mf2_boss";
 }
 
 Thing {
@@ -594,6 +631,7 @@ Thing {
   Height = 64;
   Mass = 600;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -621,6 +659,7 @@ Thing {
   Height = 110;
   Mass = 1000;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp mf2_boss";
 }
 
 Thing {
@@ -648,6 +687,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = "mf_solid mf_shootable mf_float mf_nogravity mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -674,6 +714,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
+  Flags2 = "mf2_passmobj mf2_telestomp";
 }
 
 Thing {
@@ -699,6 +740,7 @@ Thing {
   Height = 72;
   Mass = 10000000;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_shootable mf_countkill";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -724,6 +766,7 @@ Thing {
   Height = 16;
   Mass = 10000000;
   Flags = "mf_solid mf_shootable";
+  Flags2 = "mf2_radiusattacknomaxz mf2_telestomp";
 }
 
 Thing {
@@ -798,6 +841,7 @@ Thing {
   Mass = 100;
   Damage = 3;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity mf_noclip";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -822,6 +866,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_nogravity";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -846,7 +891,7 @@ Thing {
   Height = 42;
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_noblood";
-  Flags2 = "mf2_alwayslit";
+  Flags2 = "mf2_alwayslit mf2_telestomp";
 }
 
 Thing {
@@ -873,6 +918,7 @@ Thing {
   Mass = 100;
   Damage = 3;
   Flags = "mf_brightexplode mf_dropoff mf_missile mf_noblockmap mf_nogravity mf_brightshadow";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -899,6 +945,7 @@ Thing {
   Mass = 100;
   Damage = 5;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -925,6 +972,7 @@ Thing {
   Mass = 100;
   Damage = 20;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity mf_brightexplode";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -951,6 +999,7 @@ Thing {
   Mass = 100;
   Damage = 5;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity mf_brightshadow";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -977,6 +1026,7 @@ Thing {
   Mass = 100;
   Damage = 100;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity mf_brightexplode mf_brightshadow";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -1003,6 +1053,7 @@ Thing {
   Mass = 100;
   Damage = 5;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
+  Flags2 = "mf2_noteleport";
 }
 
 Thing {
@@ -1027,6 +1078,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Flags = "mf_noblockmap mf_nogravity mf_viewalign";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -1051,6 +1103,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_viewalign";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -1075,6 +1128,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_nogravity";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -1099,6 +1153,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_nogravity";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -1123,6 +1178,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags2 = "mf2_cannotpush";
 }
 
 Thing {
@@ -1147,6 +1203,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_noblockmap mf_nogravity mf_brightshadow";
+  Flags2 = "mf2_cannotpush mf2_noteleport";
 }
 
 Thing {
@@ -2036,6 +2093,7 @@ Thing {
   Height = 80;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2060,6 +2118,7 @@ Thing {
   Height = 60;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2084,6 +2143,7 @@ Thing {
   Height = 48;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2108,6 +2168,7 @@ Thing {
   Height = 53;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2132,6 +2193,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2156,6 +2218,7 @@ Thing {
   Height = 53;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2180,6 +2243,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2204,6 +2268,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2228,6 +2293,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2252,6 +2318,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2276,6 +2343,7 @@ Thing {
   Height = 35;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2300,6 +2368,7 @@ Thing {
   Height = 70;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2324,6 +2393,7 @@ Thing {
   Height = 60;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2348,6 +2418,7 @@ Thing {
   Height = 60;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2372,6 +2443,7 @@ Thing {
   Height = 60;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2396,6 +2468,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2420,6 +2493,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2444,6 +2518,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2468,6 +2543,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2492,6 +2568,7 @@ Thing {
   Height = 128;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2540,6 +2617,7 @@ Thing {
   Height = 60;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2564,6 +2642,7 @@ Thing {
   Height = 68;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2588,6 +2667,7 @@ Thing {
   Height = 84;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2612,6 +2692,7 @@ Thing {
   Height = 84;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2636,6 +2717,7 @@ Thing {
   Height = 68;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -2660,6 +2742,7 @@ Thing {
   Height = 52;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3011,6 +3094,7 @@ Thing {
   Height = 67;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3034,6 +3118,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
+  Flags2 = "mf2_cannotpush";
 }
 
 Thing {
@@ -3058,6 +3143,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3082,6 +3168,7 @@ Thing {
   Height = 43;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3106,6 +3193,7 @@ Thing {
   Height = 66;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3130,6 +3218,7 @@ Thing {
   Height = 66;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3154,6 +3243,7 @@ Thing {
   Height = 124;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3178,6 +3268,7 @@ Thing {
   Height = 30;
   Mass = 100;
   Flags = "mf_solid mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3202,6 +3293,7 @@ Thing {
   Height = 88;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3226,6 +3318,7 @@ Thing {
   Height = 88;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3250,6 +3343,7 @@ Thing {
   Height = 64;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3274,6 +3368,7 @@ Thing {
   Height = 64;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3298,6 +3393,7 @@ Thing {
   Height = 64;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {
@@ -3322,6 +3418,7 @@ Thing {
   Height = 64;
   Mass = 100;
   Flags = "mf_solid mf_spawnceiling mf_nogravity mf_local";
+  Flags2 = "mf2_telestomp";
 }
 
 Thing {

@@ -1,0 +1,38 @@
+# jDoom: Plutonia specific Animation Sequences
+
+Header { Version = 5; }
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "FIREBLU1"; Tics = 8; };
+  Texture { ID = "AROCK2"; Tics = 8; };
+  Texture { ID = "AROCK3"; Tics = 8; };
+  Texture { ID = "AROCK4"; Tics = 8; };
+  Texture { ID = "AROCK5"; Tics = 8; };
+  Texture { ID = "FIREBLU2"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "DBRAIN1"; Tics = 8; };
+  Texture { ID = "MC2"; Tics = 8; };
+  Texture { ID = "MC3"; Tics = 8; };
+  Texture { ID = "MC4"; Tics = 8; };
+  Texture { ID = "MC5"; Tics = 8; };
+  Texture { ID = "MC6"; Tics = 8; };
+  Texture { ID = "MC7"; Tics = 8; };
+  Texture { ID = "MC8"; Tics = 8; };
+  Texture { ID = "MC10"; Tics = 8; };
+  Texture { ID = "MC11"; Tics = 8; };
+  Texture { ID = "MC12"; Tics = 8; };
+  Texture { ID = "MC13"; Tics = 8; };
+  Texture { ID = "MC14"; Tics = 8; };
+  Texture { ID = "MC15"; Tics = 8; };
+  Texture { ID = "MC16"; Tics = 8; };
+  Texture { ID = "MC17"; Tics = 8; };
+  Texture { ID = "MC18"; Tics = 8; };
+  Texture { ID = "MC19"; Tics = 8; };
+  Texture { ID = "DBRAIN4"; Tics = 8; };
+}

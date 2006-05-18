@@ -1,9 +1,22 @@
 # jDoom: Maps
 
+# Used for any maps without a map info definition
+Map Info {
+  ID = "*";
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY1";
+  };
+}
+
 Map Info {
   ID = "E1M1";
   Name = "E1M1: Hangar";
   Author = "id Software";
+  Par time = 30;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -16,46 +29,55 @@ Map Info {
 Copy Map Info {
   ID = "E1M2";
   Name = "E1M2: Nuclear Plant";
+  Par time = 75;
 }
 
 Copy Map Info {
   ID = "E1M3";
   Name = "E1M3: Toxin Refinery";
+  Par time = 120;
 }
 
 Copy Map Info {
   ID = "E1M4";
   Name = "E1M4: Command Control";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E1M5";
   Name = "E1M5: Phobos Lab";
+  Par time = 165;
 }
 
 Copy Map Info {
   ID = "E1M6";
   Name = "E1M6: Central Processing";
+  Par time = 180;
 }
 
 Copy Map Info {
   ID = "E1M7";
   Name = "E1M7: Computer Station";
+  Par time = 180;
 }
 
 Copy Map Info {
   ID = "E1M8";
   Name = "E1M8: Phobos Anomaly";
+  Par time = 30;
 }
 
 Copy Map Info {
   ID = "E1M9";
   Name = "E1M9: Military Base";
+  Par time = 165;
 }
 
 Copy Map Info {
   ID = "E2M1";
   Name = "E2M1: Deimos Anomaly";
+  Par time = 90;
   Sky light color { 1.0  0.85  0.85 };
   Sky Layer 1 {
     Texture = "SKY2";
@@ -65,46 +87,55 @@ Copy Map Info {
 Copy Map Info {
   ID = "E2M2";
   Name = "E2M2: Containment Area";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E2M3";
   Name = "E2M3: Refinery";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E2M4";
   Name = "E2M4: Deimos Lab";
+  Par time = 120;
 }
 
 Copy Map Info {
   ID = "E2M5";
   Name = "E2M5: Command Center";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E2M6";
   Name = "E2M6: Halls of the Damned";
+  Par time = 360;
 }
 
 Copy Map Info {
   ID = "E2M7";
   Name = "E2M7: Spawning Vats";
+  Par time = 240;
 }
 
 Copy Map Info {
   ID = "E2M8";
   Name = "E2M8: Tower of Babel";
+  Par time = 30;
 }
 
 Copy Map Info {
   ID = "E2M9";
   Name = "E2M9: Fortress of Mystery";
+  Par time = 170;
 }
 
 Copy Map Info {
   ID = "E3M1";
   Name = "E3M1: Hell Keep";
+  Par time = 90;
   # This is hell, give it a reddish tint.
   Sky light color { 1.0  0.7  0.7 };
   Sky Layer 1 {
@@ -115,46 +146,55 @@ Copy Map Info {
 Copy Map Info {
   ID = "E3M2";
   Name = "E3M2: Slough of Despair";
+  Par time = 45;
 }
 
 Copy Map Info {
   ID = "E3M3";
   Name = "E3M3: Pandemonium";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E3M4";
   Name = "E3M4: House of Pain";
+  Par time = 150;
 }
 
 Copy Map Info {
   ID = "E3M5";
   Name = "E3M5: Unholy Cathedral";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E3M6";
   Name = "E3M6: Mt. Erebus";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E3M7";
   Name = "E3M7: Limbo";
+  Par time = 165;
 }
 
 Copy Map Info {
   ID = "E3M8";
   Name = "E3M8: Dis";
+  Par time = 30;
 }
 
 Copy Map Info {
   ID = "E3M9";
   Name = "E3M9: Warrens";
+  Par time = 135;
 }
 
 Copy Map Info {
   ID = "E4M1";
   Name = "E4M1: Hell Beneath";
+  Par time = 90;
   # The sky is orange.
   Sky light color { 1.0  0.75  0.6 }; 
   Sky Layer 1 {
@@ -165,47 +205,63 @@ Copy Map Info {
 Copy Map Info {
   ID = "E4M2";
   Name = "E4M2: Perfect Hatred";
+  Par time = 120;
 }
 
 Copy Map Info {
   ID = "E4M3";
   Name = "E4M3: Sever The Wicked";
+  Par time = 120;
 }
 
 Copy Map Info {
   ID = "E4M4";
   Name = "E4M4: Unruly Evil";
+  Par time = 90;
 }
 
 Copy Map Info {
   ID = "E4M5";
   Name = "E4M5: They Will Repent";
+  Par time = 150;
 }
 
 Copy Map Info {
   ID = "E4M6";
   Name = "E4M6: Against Thee Wickedly";
+  Par time = 120;
 }
 
 Copy Map Info {
   ID = "E4M7";
   Name = "E4M7: And Hell Followed";
+  Par time = 120;
 }
 
 Copy Map Info {
   ID = "E4M8";
   Name = "E4M8: Unto The Cruel";
+ # Doesn't have a par time
 }
 
 Copy Map Info {
   ID = "E4M9";
   Name = "E4M9: Fear";
+  Par time = 90;
 }
+
+# Plutonia and TNT have different map definitions
+IncludeIf doom2-plut "PlutMaps.ded";
+IncludeIf doom2-tnt "TNTMaps.ded";
+
+# The rest of this file is skipped if not Doom2
+SkipIf Not doom2;
 
 Map Info {
   ID = "MAP01";
   Name = "Level 1: Entryway";
   Author = "id Software";
+  Par time = 30;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -219,6 +275,7 @@ Map Info {
   ID = "MAP02";
   Name = "Level 2: Underhalls";
   Author = "id Software";
+  Par time = 90;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -232,6 +289,7 @@ Map Info {
   ID = "MAP03";
   Name = "Level 3: The Gantlet";
   Author = "id Software";
+  Par time = 120;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -245,6 +303,7 @@ Map Info {
   ID = "MAP04";
   Name = "Level 4: The Focus";
   Author = "id Software";
+  Par time = 120;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -258,6 +317,7 @@ Map Info {
   ID = "MAP05";
   Name = "Level 5: The Waste Tunnels";
   Author = "id Software";
+  Par time = 90;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -271,6 +331,7 @@ Map Info {
   ID = "MAP06";
   Name = "Level 6: The Crusher";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -284,6 +345,7 @@ Map Info {
   ID = "MAP07";
   Name = "Level 7: Dead Simple";
   Author = "id Software";
+  Par time = 120;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -297,6 +359,7 @@ Map Info {
   ID = "MAP08";
   Name = "Level 8: Tricks and Traps";
   Author = "id Software";
+  Par time = 120;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -310,6 +373,7 @@ Map Info {
   ID = "MAP09";
   Name = "Level 9: The Pit";
   Author = "id Software";
+  Par time = 270;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -323,6 +387,7 @@ Map Info {
   ID = "MAP10";
   Name = "Level 10: Refueling Base";
   Author = "id Software";
+  Par time = 90;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -336,6 +401,7 @@ Map Info {
   ID = "MAP11";
   Name = "Level 11: 'O' of Destruction!";
   Author = "id Software";
+  Par time = 210;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -349,6 +415,7 @@ Map Info {
   ID = "MAP12";
   Name = "Level 12: The Factory";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -362,6 +429,7 @@ Map Info {
   ID = "MAP13";
   Name = "Level 13: Downtown";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -375,6 +443,7 @@ Map Info {
   ID = "MAP14";
   Name = "Level 14: The Inmost Dens";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -388,6 +457,7 @@ Map Info {
   ID = "MAP15";
   Name = "Level 15: Industrial Zone";
   Author = "id Software";
+  Par time = 210;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -401,6 +471,7 @@ Map Info {
   ID = "MAP16";
   Name = "Level 16: Suburbs";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -414,6 +485,7 @@ Map Info {
   ID = "MAP17";
   Name = "Level 17: Tenements";
   Author = "id Software";
+  Par time = 420;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -427,6 +499,7 @@ Map Info {
   ID = "MAP18";
   Name = "Level 18: The Courtyard";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -440,6 +513,7 @@ Map Info {
   ID = "MAP19";
   Name = "Level 19: The Citadel";
   Author = "id Software";
+  Par time = 210;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -453,6 +527,7 @@ Map Info {
   ID = "MAP20";
   Name = "Level 20: Gotcha!";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -466,6 +541,7 @@ Map Info {
   ID = "MAP21";
   Name = "Level 21: Nirvana";
   Author = "id Software";
+  Par time = 240;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -479,6 +555,7 @@ Map Info {
   ID = "MAP22";
   Name = "Level 22: The Catacombs";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -492,6 +569,7 @@ Map Info {
   ID = "MAP23";
   Name = "Level 23: Barrels o' Fun";
   Author = "id Software";
+  Par time = 180;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -505,6 +583,7 @@ Map Info {
   ID = "MAP24";
   Name = "Level 24: The Chasm";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -518,6 +597,7 @@ Map Info {
   ID = "MAP25";
   Name = "Level 25: Bloodfalls";
   Author = "id Software";
+  Par time = 150;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -531,6 +611,7 @@ Map Info {
   ID = "MAP26";
   Name = "Level 26: The Abandoned Mines";
   Author = "id Software";
+  Par time = 300;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -544,6 +625,7 @@ Map Info {
   ID = "MAP27";
   Name = "Level 27: Monster Condo";
   Author = "id Software";
+  Par time = 330;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -557,6 +639,7 @@ Map Info {
   ID = "MAP28";
   Name = "Level 28: The Spirit World";
   Author = "id Software";
+  Par time = 420;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -570,6 +653,7 @@ Map Info {
   ID = "MAP29";
   Name = "Level 29: The Living End";
   Author = "id Software";
+  Par time = 300;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -583,6 +667,7 @@ Map Info {
   ID = "MAP30";
   Name = "Level 30: Icon of Sin";
   Author = "id Software";
+  Par time = 180;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -596,6 +681,7 @@ Map Info {
   ID = "MAP31";
   Name = "Level 31: Wolfenstein";
   Author = "id Software";
+  Par time = 120;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
@@ -609,23 +695,13 @@ Map Info {
   ID = "MAP32";
   Name = "Level 32: Grosse";
   Author = "id Software";
+  Par time = 30;
   Gravity = 1;
   Sky height = 0.49;
   Horizon offset = -0.105;
   Sky Layer 1 {
     Flags = "slf_enable";
     Texture = "SKY3";
-  };
-}
-
-Map Info {
-  ID = "*";
-  Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
   };
 }
 

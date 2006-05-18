@@ -288,8 +288,13 @@ Text {
 }
 
 Text {
-  ID = "TXT_WPNMACE";
-  Text = "FIREMACE";
+  ID = "TXT_WPNSTAFF";
+  Text = "STAFF";
+}
+
+Text {
+  ID = "TXT_WPNWAND";
+  Text = "CRYSTAL WAND";
 }
 
 Text {
@@ -313,8 +318,18 @@ Text {
 }
 
 Text {
+  ID = "TXT_WPNMACE";
+  Text = "FIREMACE";
+}
+
+Text {
   ID = "TXT_WPNGAUNTLETS";
   Text = "GAUNTLETS OF THE NECROMANCER";
+}
+
+Text {
+  ID = "TXT_WPNBEAK";
+  Text = "BEAK";
 }
 
 Text {

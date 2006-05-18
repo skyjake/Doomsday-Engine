@@ -27,6 +27,7 @@ Flag { # Allow using decoration with external resources.
 
 # Lights
 Flag { ID = "lgf_nohalo"; Value = 0x100; }
+Flag { ID = "lgf_dontturnhalo"; Value = 0x200; }
 
 # Map Info
 Flag { ID = "mif_fog"; Value = 0x1; }

@@ -190,3 +190,6 @@ Group
   Texture { ID = "DBRAIN3"; Tics = 8; };
   Texture { ID = "DBRAIN4"; Tics = 8; };
 }
+
+IncludeIf doom2-plut "PlutAnim.ded";
+IncludeIf doom2-tnt "TNTAnim.ded";

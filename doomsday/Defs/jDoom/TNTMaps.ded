@@ -1,0 +1,210 @@
+# jDoom: TNT Maps
+
+Map Info {
+  ID = "MAP01";
+  Name = "Level 1: System Control";
+  Author = "Team TNT";
+  Par time = 30;
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = enable;
+    Texture = "SKY1";
+  };
+}
+
+Copy Map Info {
+  ID = "MAP02";
+  Name = "Level 2: Human BBQ";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP03";
+  Name = "Level 3: Power Control";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP04";
+  Name = "Level 4: Wormhole";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP05";
+  Name = "Level 5: Hanger";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP06";
+  Name = "Level 6: Open Season";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP07";
+  Name = "Level 7: Prison";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP08";
+  Name = "Level 8: Metal";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP09";
+  Name = "Level 9: Stronghold";
+  Par time = 270;
+}
+
+Copy Map Info {
+  ID = "MAP10";
+  Name = "Level 10: Redemption";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP11";
+  Name = "Level 11: Storage Facility";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP12";
+  Name = "Level 12: Crater";
+  Par time = 150;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Copy Map Info {
+  ID = "MAP13";
+  Name = "Level 13: Nukage Processing";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP14";
+  Name = "Level 14: Steel Works";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP15";
+  Name = "Level 15: Dead Zone";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP16";
+  Name = "Level 16: Deepest Reaches";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP17";
+  Name = "Level 17: Processing Area";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP18";
+  Name = "Level 18: Mill";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP19";
+  Name = "Level 19: Shipping/Respawning";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP20";
+  Name = "Level 20: Central Processing";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP21";
+  Name = "Level 21: Administration Center";
+  Par time = 240;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Copy Map Info {
+  ID = "MAP22";
+  Name = "Level 22: Habitat";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP23";
+  Name = "Level 23: Lunar Mining Project";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP24";
+  Name = "Level 24: Quarry";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP25";
+  Name = "Level 25: Baron's Den";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP26";
+  Name = "Level 26: Ballistyx";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP27";
+  Name = "Level 27: Mount Pain";
+  Par time = 330;
+}
+
+Copy Map Info {
+  ID = "MAP28";
+  Name = "Level 28: Heck";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP29";
+  Name = "Level 29: River Styx";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP30";
+  Name = "Level 30: Last Call";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP31";
+  Name = "Level 31: Pharaoh";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP32";
+  Name = "Level 32: Caribbean";
+  Par time = 30;
+}
+

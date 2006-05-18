@@ -1885,3 +1885,74 @@ Text {
   ID = "AMSTR_ROTATEOFF";
   Text = "Rotate mode OFF";
 }
+
+Text {
+  ID = "WEAPON0";
+  Text = "Fist";
+}
+
+Text {
+  ID = "WEAPON1";
+  Text = "Pistol";
+}
+
+Text {
+  ID = "WEAPON2";
+  Text = "Shotgun";
+}
+
+Text {
+  ID = "WEAPON3";
+  Text = "Chaingun";
+}
+
+Text {
+  ID = "WEAPON4";
+  Text = "Rocket Launcher";
+}
+
+Text {
+  ID = "WEAPON5";
+  Text = "Plasma Rifle";
+}
+
+Text {
+  ID = "WEAPON6";
+  Text = "BFG";
+}
+
+Text {
+  ID = "WEAPON7";
+  Text = "Chainsaw";
+}
+
+Text {
+  ID = "WEAPON8";
+  Text = "Super Shotgun";
+}
+
+Text {
+  ID = "SKILL1";
+  Text = "I'm too young to die.";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Hey, not too rough.";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Hurt me plenty.";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "Ultra-Violence.";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Nightmare!";
+}
+
