@@ -8,11 +8,17 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#define snd_SfxVolume		(Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume		(Get(DD_MUSIC_VOLUME)/17)
+#include "jHeretic/r_defs.h"
 
-#include "R_local.h"
+#include "jHeretic/Sounds.h"                // Sfx and music indices.
 
-void            S_SectorSound(sector_t *sec, int id);
+enum {
+    SORG_CENTER,
+    SORG_FLOOR,
+    SORG_CEILING
+};
+
+void            S_LevelMusic(void);
+void            S_SectorSound(sector_t *sector, int origin, int sound_id);
 
 #endif

@@ -4,6 +4,8 @@
 #ifndef __INFO_CONSTANTS_H__
 #define __INFO_CONSTANTS_H__
 
+#include "xgclass.h"
+
 // Sprites.
 typedef enum {
     SPR_IMPX,                       // 000
@@ -1516,7 +1518,7 @@ typedef enum {
 
 // Text.
 typedef enum {
-    TXT_PRESSKEY = 22,            // 22
+    TXT_PRESSKEY,
     TXT_PRESSYN,
     TXT_TXT_PAUSED,
     TXT_QUITMSG,
@@ -1572,12 +1574,15 @@ typedef enum {
     TXT_TXT_AMMOSKULLROD2,
     TXT_TXT_AMMOPHOENIXROD1,
     TXT_TXT_AMMOPHOENIXROD2,
-    TXT_TXT_WPNMACE,
+    TXT_TXT_WPNSTAFF,
+    TXT_TXT_WPNWAND,
     TXT_TXT_WPNCROSSBOW,
     TXT_TXT_WPNBLASTER,
     TXT_TXT_WPNSKULLROD,
     TXT_TXT_WPNPHOENIXROD,
+    TXT_TXT_WPNMACE,
     TXT_TXT_WPNGAUNTLETS,
+    TXT_TXT_WPNBEAK,
     TXT_TXT_CHEATGODON,
     TXT_TXT_CHEATGODOFF,
     TXT_TXT_CHEATNOCLIPON,

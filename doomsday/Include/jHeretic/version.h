@@ -17,6 +17,8 @@
 #  endif
 #endif
 
+#define GAMENAMETEXT "jHeretic"
+
 #define VERSION 210
 #define VERSION_TEXT "1.4."DOOMSDAY_RELEASE_NAME
 #define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JHERETIC_VER_ID")"
