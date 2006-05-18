@@ -32,20 +32,20 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_ARG_NAMES	256
+#define MAX_ARG_NAMES   256
 
 // TYPES -------------------------------------------------------------------
 
-enum							// Parser modes.
+enum                            // Parser modes.
 {
-	PM_NORMAL,
-	PM_NORMAL_REC,
-	PM_COUNT
+    PM_NORMAL,
+    PM_NORMAL_REC,
+    PM_COUNT
 };
 
 typedef struct {
-	char    long_name[32];
-	char    short_name[8];
+    char    long_name[32];
+    char    short_name[8];
 } argname_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -69,286 +69,291 @@ static int last_match;
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-// ArgParse
-//  Parses the given command line. 
-//==========================================================================
+/*
+ * Parses the given command line.
+ */
 int ArgParse(int mode, const char *cmdline)
 {
-	char    word[512], *ptr, *response, *cmd = (char *) cmdline;
-	int     i;
-	int     count = 0;
-	FILE   *file;
-	boolean quote = false;
-	boolean is_response;
+#define MAX_WORDLENGTH 512
 
-	// Init normal mode?
-	if(mode == PM_NORMAL)
-		arg_pos = 0;
+    char    word[MAX_WORDLENGTH], *ptr, *response;
+    unsigned char *cmd = (unsigned char *) cmdline;
+    int     i;
+    int     count = 0;
+    int     ccount;
+    FILE   *file;
+    boolean quote = false;
+    boolean is_response;
 
-	for(; *cmd;)
-	{
-		// Must allow: -cmd "echo ""this is a command"""
-		// But also: @"\Program Files\test.rsp\"
-		// And also: @\"Program Files"\test.rsp
-		// Hello" My"Friend means "Hello MyFriend"
+    // Init normal mode?
+    if(mode == PM_NORMAL)
+        arg_pos = 0;
 
-		// Skip initial whitespace.
-		cmd = M_SkipWhite(cmd);
+    for(; *cmd;)
+    {
+        // Must allow: -cmd "echo ""this is a command"""
+        // But also: @"\Program Files\test.rsp\"
+        // And also: @\"Program Files"\test.rsp
+        // Hello" My"Friend means "Hello MyFriend"
 
-		// Check for response files.
-		if(*cmd == '@')
-		{
-			is_response = true;
-			cmd = M_SkipWhite(cmd + 1);
-		}
-		else
-		{
-			is_response = false;
-		}
+        // Skip initial whitespace.
+        cmd = M_SkipWhite(cmd);
 
-		for(ptr = word; *cmd && (quote || !isspace(*cmd)); cmd++)
-		{
-			if(!quote)
-			{
-				// We're not inside quotes.
-				if(*cmd == '\"')	// Quote begins.
-				{
-					quote = true;
-					continue;
-				}
-			}
-			else
-			{
-				// We're inside quotes.
-				if(*cmd == '\"')	// Quote ends.
-				{
-					if(cmd[1] == '\"')	// Doubles?
-					{
-						// Normal processing, but output only one quote.
-						cmd++;
-					}
-					else
-					{
-						quote = false;
-						continue;
-					}
-				}
-			}
-			*ptr++ = *cmd;
-		}
-		// Append NULL to the word.
-		*ptr++ = 0;
+        // Check for response files.
+        if(*cmd == '@')
+        {
+            is_response = true;
+            cmd = M_SkipWhite(cmd + 1);
+        }
+        else
+        {
+            is_response = false;
+        }
 
-		// Word has been extracted, examine it.
-		if(is_response)			// Response file?
-		{
-			// Try to open it.
-			if((file = fopen(word, "rt")) != NULL)
-			{
-				// How long is it?
-				fseek(file, 0, SEEK_END);
-				i = ftell(file);
-				rewind(file);
-				response = calloc(i + 1, 1);
-				fread(response, 1, i, file);
-				fclose(file);
-				count +=
-					ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC,
-							 response);
-				free(response);
-			}
-		}
-		else if(!strcmp(word, "--"))	// End of arguments.
-		{
-			return count;
-		}
-		else if(word[0])		// Make sure there *is* a word.
-		{
-			// Increase argument count.
-			count++;
-			if(mode != PM_COUNT)
-			{
-				// Allocate memory for the argument and copy it to the list.
-				args[arg_pos] = malloc(strlen(word) + 1);
-				strcpy(args[arg_pos++], word);
-			}
-		}
-	}
-	return count;
+        ccount = 0;
+        for(ptr = word; *cmd && (quote || !isspace(*cmd)); cmd++, ccount++)
+        {
+            if(!quote)
+            {
+                // We're not inside quotes.
+                if(*cmd == '\"')    // Quote begins.
+                {
+                    quote = true;
+                    continue;
+                }
+            }
+            else
+            {
+                // We're inside quotes.
+                if(*cmd == '\"')    // Quote ends.
+                {
+                    if(cmd[1] == '\"')  // Doubles?
+                    {
+                        // Normal processing, but output only one quote.
+                        cmd++;
+                        ccount++;
+                    }
+                    else
+                    {
+                        quote = false;
+                        continue;
+                    }
+                }
+            }
+            if(ccount > MAX_WORDLENGTH -1)
+                Con_Error("ArgParse: too many characters in word!");
+
+            *ptr++ = *cmd;
+        }
+        // Append NULL to the word.
+        *ptr++ = '\0';
+
+        // Word has been extracted, examine it.
+        if(is_response)         // Response file?
+        {
+            // Try to open it.
+            if((file = fopen(word, "rt")) != NULL)
+            {
+                // How long is it?
+                if(fseek(file, 0, SEEK_END))
+                    Con_Error("ArgParse: fseek failed on SEEK_END!");
+
+                i = ftell(file);
+                rewind(file);
+
+                if((response = calloc(i + 1, 1)) == NULL)
+                    Con_Error("ArgParse: failed on alloc of %d bytes.",
+                              i + 1);
+
+                fread(response, 1, i, file);
+                fclose(file);
+                count +=
+                    ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC,
+                             response);
+                free(response);
+            }
+        }
+        else if(!strcmp(word, "--"))    // End of arguments.
+        {
+            return count;
+        }
+        else if(word[0])        // Make sure there *is* a word.
+        {
+            // Increase argument count.
+            count++;
+            if(mode != PM_COUNT)
+            {
+                // Allocate memory for the argument and copy it to the list.
+                args[arg_pos] = malloc(strlen(word) + 1);
+                strcpy(args[arg_pos++], word);
+            }
+        }
+    }
+    return count;
 }
 
-//==========================================================================
-// ArgInit
-//  Initializes the command line arguments list.
-//==========================================================================
+/*
+ * Initializes the command line arguments list.
+ */
 void ArgInit(const char *cmdline)
 {
-	// Clear the names register.
-	num_names = 0;
-	memset(names, 0, sizeof(names));
+    // Clear the names register.
+    num_names = 0;
+    memset(names, 0, sizeof(names));
 
-	// First count the number of arguments.
-	num_args = ArgParse(PM_COUNT, cmdline);
+    // First count the number of arguments.
+    num_args = ArgParse(PM_COUNT, cmdline);
 
-	// Allocate memory for the list.
-	args = calloc(num_args, sizeof(char *));
+    // Allocate memory for the list.
+    args = calloc(num_args, sizeof(char *));
 
-	// Then create the actual list of arguments.
-	ArgParse(PM_NORMAL, cmdline);
+    // Then create the actual list of arguments.
+    ArgParse(PM_NORMAL, cmdline);
 }
 
-//==========================================================================
-// ArgShutdown
-//  Frees the memory allocated for the command line.
-//==========================================================================
+/*
+ * Frees the memory allocated for the command line.
+ */
 void ArgShutdown(void)
 {
-	int     i;
+    int     i;
 
-	for(i = 0; i < num_args; i++)
-		free(args[i]);
-	free(args);
-	args = NULL;
-	num_args = 0;
-	for(i = 0; i < num_names; i++)
-		free(names[i]);
-	memset(names, 0, sizeof(names));
-	num_names = 0;
+    for(i = 0; i < num_args; i++)
+        free(args[i]);
+    free(args);
+    args = NULL;
+    num_args = 0;
+    for(i = 0; i < num_names; i++)
+        free(names[i]);
+    memset(names, 0, sizeof(names));
+    num_names = 0;
 }
 
-//==========================================================================
-// ArgAbbreviate
-//  Registers a short name for a long arg name.
-//  The short name can then be used on the command line and CheckParm 
-//  will know to match occurances of the short name with the long name.
-//==========================================================================
+/*
+ * Registers a short name for a long arg name.
+ * The short name can then be used on the command line and CheckParm
+ * will know to match occurances of the short name with the long name.
+*/
 void ArgAbbreviate(char *longname, char *shortname)
 {
-	argname_t *name;
+    argname_t *name;
 
-	if(num_names == MAX_ARG_NAMES)
-		return;
-	names[num_names++] = name = calloc(1, sizeof(*name));
-	strncpy(name->long_name, longname, sizeof(name->long_name) - 1);
-	strncpy(name->short_name, shortname, sizeof(name->short_name) - 1);
+    if(num_names == MAX_ARG_NAMES)
+        return;
+
+    if((name = calloc(1, sizeof(*name))) == NULL)
+        Con_Error("ArgAbbreviate: calloc failed on allocation of %d bytes.",
+                  sizeof(*name));
+
+    names[num_names++] = name;
+    strncpy(name->long_name, longname, sizeof(name->long_name) - 1);
+    strncpy(name->short_name, shortname, sizeof(name->short_name) - 1);
 }
 
-//==========================================================================
-// Argc
-//  Returns the number of arguments on the command line.
-//==========================================================================
+/*
+ * Returns the number of arguments on the command line.
+ */
 int Argc(void)
 {
-	return num_args;
+    return num_args;
 }
 
-//==========================================================================
-// Argv
-//  Returns a pointer to the i'th argument.
-//==========================================================================
-char   *Argv(int i)
+/*
+ * Returns a pointer to the i'th argument.
+ */
+char *Argv(int i)
 {
-	if(i < 0 || i >= num_args)
-		Con_Error("Argv: There is no arg %i.\n", i);
-	return args[i];
+    if(i < 0 || i >= num_args)
+        Con_Error("Argv: There is no arg %i.\n", i);
+    return args[i];
 }
 
-//==========================================================================
-// ArgvPtr
-//  Returns a pointer to the i'th argument's pointer.
-//==========================================================================
+/*
+ * Returns a pointer to the i'th argument's pointer.
+ */
 char  **ArgvPtr(int i)
 {
-	if(i < 0 || i >= num_args)
-		Con_Error("ArgvPtr: There is no arg %i.\n", i);
-	return &args[i];
+    if(i < 0 || i >= num_args)
+        Con_Error("ArgvPtr: There is no arg %i.\n", i);
+    return &args[i];
 }
 
-//==========================================================================
-// ArgNext
-//==========================================================================
 char   *ArgNext(void)
 {
-	if(!last_match || last_match >= Argc() - 1)
-		return NULL;
-	return args[++last_match];
+    if(!last_match || last_match >= Argc() - 1)
+        return NULL;
+    return args[++last_match];
 }
 
-//===========================================================================
-// ArgRecognize
-//  Returns true if the two parameters are equivalent according to the
-//  abbreviations.
-//===========================================================================
+/*
+ * Returns true if the two parameters are equivalent according to the
+ * abbreviations.
+ */
 int ArgRecognize(char *first, char *second)
 {
-	int     k;
+    int     k;
 
-	// A simple match?
-	if(!stricmp(first, second))
-		return true;
+    // A simple match?
+    if(!stricmp(first, second))
+        return true;
 
-	for(k = 0; k < num_names; k++)
-	{
-		if(stricmp(first, names[k]->long_name))
-			continue;
-		// names[k] now matches the first string.
-		if(!stricmp(names[k]->short_name, second))
-			return true;
-	}
-	return false;
+    for(k = 0; k < num_names; k++)
+    {
+        if(stricmp(first, names[k]->long_name))
+            continue;
+        // names[k] now matches the first string.
+        if(!stricmp(names[k]->short_name, second))
+            return true;
+    }
+    return false;
 }
 
-//==========================================================================
-// ArgCheck
-//  Checks for the given parameter in the program's command line arguments.
-//  Returns the argument number (1 to argc-1) or 0 if not present.
-//==========================================================================
+/*
+ * Checks for the given parameter in the program's command line arguments.
+ * Returns the argument number (1 to argc-1) or 0 if not present.
+ */
 int ArgCheck(char *check)
 {
-	int     i;
+    int     i;
 
-	for(i = 1; i < num_args; i++)
-	{
-		// Check the short names for this arg, too.
-		if(ArgRecognize(check, args[i]))
-			return last_match = i;
-	}
-	return last_match = 0;
+    for(i = 1; i < num_args; i++)
+    {
+        // Check the short names for this arg, too.
+        if(ArgRecognize(check, args[i]))
+            return last_match = i;
+    }
+    return last_match = 0;
 }
 
-//==========================================================================
-// ArgCheckWith
-//  Checks for the given parameter in the program's command line arguments
-//  and it is followed by N other arguments.
-//  Returns the argument number (1 to argc-1) or 0 if not present.
-//==========================================================================
+/*
+ * Checks for the given parameter in the program's command line arguments
+ * and it is followed by N other arguments.
+ * Returns the argument number (1 to argc-1) or 0 if not present.
+ */
 int ArgCheckWith(char *check, int num)
 {
-	int     i = ArgCheck(check);
+    int     i = ArgCheck(check);
 
-	if(!i || i + num >= num_args)
-		return 0;
-	return i;
+    if(!i || i + num >= num_args)
+        return 0;
+    return i;
 }
 
-//==========================================================================
-// ArgIsOption
-//  Returns true if the given argument begins with a hyphen.
-//==========================================================================
+/*
+ * Returns true if the given argument begins with a hyphen.
+ */
 int ArgIsOption(int i)
 {
-	if(i < 0 || i >= num_args)
-		return false;
-	return args[i][0] == '-';
+    if(i < 0 || i >= num_args)
+        return false;
+    return args[i][0] == '-';
 }
 
-//==========================================================================
-// ArgExists
-//  Returns true if the given parameter exists in the program's command
-//  line arguments, false if not.
-//==========================================================================
+/*
+ * Returns true if the given parameter exists in the program's command
+ * line arguments, false if not.
+ */
 int ArgExists(char *check)
 {
-	return ArgCheck(check) != 0;
+    return ArgCheck(check) != 0;
 }

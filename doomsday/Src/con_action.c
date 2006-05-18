@@ -38,77 +38,76 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-action_t *ddactions = NULL;		// Pointer to the actions list.
+action_t *ddactions = NULL;     // Pointer to the actions list.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// Con_DefineActions
-//===========================================================================
+/*
+ * Con_DefineActions
+ */
 void Con_DefineActions(action_t *acts)
 {
-	// Store a pointer to the list of actions.
-	ddactions = acts;
+    // Store a pointer to the list of actions.
+    ddactions = acts;
 }
 
-//===========================================================================
-// Con_ClearActions
-//===========================================================================
+/*
+ * Con_ClearActions
+ */
 void Con_ClearActions(void)
 {
-	action_t *act;
+    action_t *act;
 
-	for(act = ddactions; act->name[0]; act++)
-		act->on = false;
+    for(act = ddactions; act->name[0]; act++)
+        act->on = false;
 }
 
-//===========================================================================
-// Con_ActionCommand
-//  The command begins with a '+' or a '-'.
-//  Returns true if the action was changed successfully.
-//  If has_prefix is false, the state of the action is negated.
-//===========================================================================
+/*
+ * The command begins with a '+' or a '-'.
+ * Returns true if the action was changed successfully.
+ * If has_prefix is false, the state of the action is negated.
+ */
 int Con_ActionCommand(char *cmd, boolean has_prefix)
 {
-	char    prefix = cmd[0];
-	int     v1, v2;
-	char    name8[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	action_t *act;
+    char    prefix = cmd[0];
+    int     v1, v2;
+    char    name8[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    action_t *act;
 
-	if(ddactions == NULL)
-		return false;
+    if(ddactions == NULL)
+        return false;
 
-	strncpy(name8, cmd + (has_prefix ? 1 : 0), 8);
-	v1 = *(int *) name8;
-	v2 = *(int *) &name8[4];
+    strncpy(name8, cmd + (has_prefix ? 1 : 0), 8);
+    v1 = *(int *) name8;
+    v2 = *(int *) &name8[4];
 
-	// Try to find a matching action by searching through the list.
-	for(act = ddactions; act->name[0]; act++)
-	{
-		if(v1 == *(int *) act->name && v2 == *(int *) &act->name[4])
-		{
-			// This is a match!
-			if(has_prefix)
-				act->on = prefix == '+' ? true : false;
-			else
-				act->on = !act->on;
-			return true;
-		}
-	}
-	return false;
+    // Try to find a matching action by searching through the list.
+    for(act = ddactions; act->name[0]; act++)
+    {
+        if(v1 == *(int *) act->name && v2 == *(int *) &act->name[4])
+        {
+            // This is a match!
+            if(has_prefix)
+                act->on = prefix == '+' ? true : false;
+            else
+                act->on = !act->on;
+            return true;
+        }
+    }
+    return false;
 }
 
-//===========================================================================
-// CCmdListActs
-//===========================================================================
-int CCmdListActs(int argc, char **argv)
+/*
+ * Prints a list of the action names registered by the game DLL.
+ */
+D_CMD(ListActs)
 {
-	action_t *act;
+    action_t *act;
 
-	Con_Message("Action commands registered by the game DLL:\n");
-	for(act = ddactions; act->name[0]; act++)
-		Con_Message("  %s\n", act->name);
-	return true;
+    Con_Message("Action commands registered by the game DLL:\n");
+    for(act = ddactions; act->name[0]; act++)
+        Con_Message("  %s\n", act->name);
+    return true;
 }

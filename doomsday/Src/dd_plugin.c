@@ -26,13 +26,13 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define HOOKMASK(x)		((x) & 0xffffff)
+#define HOOKMASK(x)     ((x) & 0xffffff)
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-	int     exclude;
-	hookfunc_t list[MAX_HOOKS];
+    int     exclude;
+    hookfunc_t list[MAX_HOOKS];
 } hookreg_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -58,31 +58,31 @@ hookreg_t hooks[NUM_HOOK_TYPES];
  */
 int Plug_AddHook(int hookType, hookfunc_t hook)
 {
-	int     i, type = HOOKMASK(hookType);
+    int     i, type = HOOKMASK(hookType);
 
-	// The type must be good.
-	if(type < 0 || type >= NUM_HOOK_TYPES)
-		return false;
+    // The type must be good.
+    if(type < 0 || type >= NUM_HOOK_TYPES)
+        return false;
 
-	// Exclusive hooks.
-	if(hookType & HOOKF_EXCLUSIVE)
-	{
-		hooks[type].exclude = true;
-		memset(hooks[type].list, 0, sizeof(hooks[type].list));
-	}
-	else if(hooks[type].exclude)
-	{
-		// An exclusive hook has closed down this list.
-		return false;
-	}
+    // Exclusive hooks.
+    if(hookType & HOOKF_EXCLUSIVE)
+    {
+        hooks[type].exclude = true;
+        memset(hooks[type].list, 0, sizeof(hooks[type].list));
+    }
+    else if(hooks[type].exclude)
+    {
+        // An exclusive hook has closed down this list.
+        return false;
+    }
 
-	for(i = 0; i < MAX_HOOKS && hooks[type].list[i]; i++);
-	if(i == MAX_HOOKS)
-		return false;			// No more hooks allowed!
+    for(i = 0; i < MAX_HOOKS && hooks[type].list[i]; i++);
+    if(i == MAX_HOOKS)
+        return false;           // No more hooks allowed!
 
-	// Add the hook.
-	hooks[type].list[i] = hook;
-	return true;
+    // Add the hook.
+    hooks[type].list[i] = hook;
+    return true;
 }
 
 /*
@@ -91,23 +91,23 @@ int Plug_AddHook(int hookType, hookfunc_t hook)
  */
 int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
-	int     i, type = HOOKMASK(hookType);
+    int     i, type = HOOKMASK(hookType);
 
-	// The type must be good.
-	if(type < 0 || type >= NUM_HOOK_TYPES)
-		return false;
-	for(i = 0; i < MAX_HOOKS; i++)
-		if(hooks[type].list[i] == hook)
-		{
-			hooks[type].list[i] = NULL;
-			if(hookType & HOOKF_EXCLUSIVE)
-			{
-				// Exclusive hook removed; allow normal hooks.
-				hooks[type].exclude = false;
-			}
-			return true;
-		}
-	return false;
+    // The type must be good.
+    if(type < 0 || type >= NUM_HOOK_TYPES)
+        return false;
+    for(i = 0; i < MAX_HOOKS; i++)
+        if(hooks[type].list[i] == hook)
+        {
+            hooks[type].list[i] = NULL;
+            if(hookType & HOOKF_EXCLUSIVE)
+            {
+                // Exclusive hook removed; allow normal hooks.
+                hooks[type].exclude = false;
+            }
+            return true;
+        }
+    return false;
 }
 
 /*
@@ -118,22 +118,40 @@ int Plug_RemoveHook(int hookType, hookfunc_t hook)
  */
 int Plug_DoHook(int hookType, int parm, void *data)
 {
-	int     i, ret = 0;
-	boolean allGood = true;
+    int     i, ret = 0;
+    boolean allGood = true;
 
-	// Try all the hooks.
-	for(i = 0; i < MAX_HOOKS; i++)
-		if(hooks[hookType].list[i])
-		{
-			if(hooks[hookType].list[i] (hookType, parm, data))
-			{
-				// One hook executed; return nonzero from this routine.
-				ret = 1;
-			}
-			else
-				allGood = false;
-		}
-	if(ret && allGood)
-		ret |= 2;
-	return ret;
+    // Try all the hooks.
+    for(i = 0; i < MAX_HOOKS; i++)
+        if(hooks[hookType].list[i])
+        {
+            if(hooks[hookType].list[i] (hookType, parm, data))
+            {
+                // One hook executed; return nonzero from this routine.
+                ret = 1;
+            }
+            else
+                allGood = false;
+        }
+    if(ret && allGood)
+        ret |= 2;
+    return ret;
+}
+
+/*
+ * Check if a plugin is available of the specified type.
+ *
+ * @param hookType:     Type of hook to check we have a plugin for.
+ * @return int:         (True) if a plugin is available for this hook type.
+ */
+int Plug_CheckForHook(int hookType)
+{
+    int     i;
+
+    // Try all the hooks.
+    for(i = 0; i < MAX_HOOKS; i++)
+        if(hooks[hookType].list[i])
+            return true;
+
+    return false;
 }

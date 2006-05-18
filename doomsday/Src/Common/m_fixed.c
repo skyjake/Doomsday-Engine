@@ -23,6 +23,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef __BIG_ENDIAN__
+#include <string.h>
+#endif
+
 #include "dd_share.h"
 
 // MACROS ------------------------------------------------------------------
@@ -47,16 +51,16 @@
 
 fixed_t FixedMul(fixed_t a, fixed_t b)
 {
-	// Let's do this in an ultra-slow way.
-	return (fixed_t) (((double) a * (double) b) / FRACUNIT);
+    // Let's do this in an ultra-slow way.
+    return (fixed_t) (((double) a * (double) b) / FRACUNIT);
 }
 
 fixed_t FixedDiv2(fixed_t a, fixed_t b)
 {
-	if(!b)
-		return 0;
-	// We've got cycles to spare!
-	return (fixed_t) (((double) a / (double) b) * FRACUNIT);
+    if(!b)
+        return 0;
+    // We've got cycles to spare!
+    return (fixed_t) (((double) a / (double) b) * FRACUNIT);
 }
 
 #endif
@@ -66,56 +70,61 @@ fixed_t FixedDiv2(fixed_t a, fixed_t b)
 
 fixed_t FixedMul(fixed_t a, fixed_t b)
 {
-	asm volatile (
-		"imull %2\n\t"
-		"shrdl $16, %%edx, %%eax"
-		: "=a" (a)
-		: "a" (a), "r" (b)
-		: "edx"
-	);
-	return a;
+    asm volatile (
+        "imull %2\n\t"
+        "shrdl $16, %%edx, %%eax"
+        : "=a" (a)
+        : "a" (a), "r" (b)
+        : "edx"
+    );
+    return a;
 }
 
 fixed_t FixedDiv2(fixed_t a, fixed_t b)
 {
-	asm volatile (
-		"cdq\n\t"
-		"shldl $16, %%eax, %%edx\n\t"
-		"sall $16 ,%%eax\n\t"
-		"idivl %2"
-		: "=a" (a)
-		: "a" (a), "r" (b)
-		: "edx"
-	);
-	return a;
+    asm volatile (
+        "cdq\n\t"
+        "shldl $16, %%eax, %%edx\n\t"
+        "sall $16 ,%%eax\n\t"
+        "idivl %2"
+        : "=a" (a)
+        : "a" (a), "r" (b)
+        : "edx"
+    );
+    return a;
 }
 
 #endif
 
 fixed_t FixedDiv(fixed_t a, fixed_t b)
 {
-	if((abs(a) >> 14) >= abs(b))
-	{
-		return ((a ^ b) < 0 ? DDMININT : DDMAXINT);
-	}
-	return (FixedDiv2(a, b));
+    if((abs(a) >> 14) >= abs(b))
+    {
+        return ((a ^ b) < 0 ? DDMININT : DDMAXINT);
+    }
+    return (FixedDiv2(a, b));
 }
 
 #ifdef __BIG_ENDIAN__
 short ShortSwap(short n)
 {
-	return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
+    return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
 }
 
 long LongSwap(long n)
 {
-	return (((n & 0xff) << 24) | ((n & 0xff00) << 8) | 
-			((n & 0xff0000) >> 8) | ((n & 0xff000000) >> 24));
+    return (((n & 0xff) << 24) | ((n & 0xff00) << 8) |
+            ((n & 0xff0000) >> 8) | ((n & 0xff000000) >> 24));
 }
 
 float FloatSwap(float f)
 {
-    long n = LongSwap(*(long*) &f);
-    return *(float*) &n;
+    long temp = 0;
+    float returnValue = 0;
+    
+    memcpy(&temp, &f, 4); // Must be 4.
+    temp = LongSwap(temp);
+    memcpy(&returnValue, &temp, 4); // Must be 4.
+    return returnValue;
 }
 #endif

@@ -24,6 +24,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <time.h>
+#include <math.h>
 #include <stdarg.h>
 
 #ifdef __JDOOM__
@@ -36,26 +37,27 @@
 #  include "p_inter.h"
 #  include "r_defs.h"
 #  include "g_game.h"
-#endif
-
-#ifdef __JHERETIC__
+#elif __JHERETIC__
 #  include "jHeretic/Doomdef.h"
 #  include "jHeretic/P_local.h"
+#  include "jHeretic/h_stat.h"
 #  include "h_config.h"
 #  include "jHeretic/Soundst.h"
 #  include "jHeretic/G_game.h"
-#endif
-
-#ifdef __JSTRIFE__
+#elif __JSTRIFE__
 #  include "jStrife/h2def.h"
 #  include "jStrife/p_local.h"
 #  include "jStrife/d_config.h"
 #  include "jStrife/sounds.h"
 #endif
 
+#include "dmu_lib.h"
+
+#include "Common/p_mapsetup.h"
 #include "d_net.h"
 #include "p_xgline.h"
 #include "p_xgsec.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -66,9 +68,65 @@
         : evtype == XLE_USE? "USE" \
         : evtype == XLE_SHOOT? "SHOOT" \
         : evtype == XLE_HIT? "HIT" \
-        : evtype == XLE_TICKER? "TICKER" : "???")
+        : evtype == XLE_TICKER? "TICKER" \
+        : evtype == XLE_AUTO? "AUTO" \
+        : evtype == XLE_FORCED? "FORCED" \
+        : evtype == XLE_FUNC? "FUNCTION" : "???")
+
+#define LREFTYPESTR(reftype) (reftype == LREF_NONE? "NONE" \
+        : reftype == LREF_SELF? "SELF" \
+        : reftype == LREF_TAGGED? "TAGGED LINES" \
+        : reftype == LREF_LINE_TAGGED? "LINE TAGGED LINES" \
+        : reftype == LREF_ACT_TAGGED? "ACT TAGGED LINES" \
+        : reftype == LREF_INDEX? "INDEXED LINE" \
+        : reftype == LREF_ALL? "ALL LINES" : "???")
+
+#define LPREFTYPESTR(reftype) (reftype == LPREF_NONE? "NONE" \
+        : reftype == LPREF_MY_FLOOR? "MY FLOOR" \
+        : reftype == LPREF_TAGGED_FLOORS? "TAGGED FLOORS" \
+        : reftype == LPREF_LINE_TAGGED_FLOORS? "LINE TAGGED FLOORS" \
+        : reftype == LPREF_ACT_TAGGED_FLOORS? "ACT TAGGED FLOORS" \
+        : reftype == LPREF_INDEX_FLOOR? "INDEXED FLOOR" \
+        : reftype == LPREF_ALL_FLOORS? "ALL FLOORS" \
+        : reftype == LPREF_MY_CEILING? "MY CEILING" \
+        : reftype == LPREF_TAGGED_CEILINGS? "TAGGED CEILINGS" \
+        : reftype == LPREF_LINE_TAGGED_CEILINGS? "LINE TAGGED CEILINGS" \
+        : reftype == LPREF_ACT_TAGGED_CEILINGS? "ACT TAGGED CEILINGS" \
+        : reftype == LPREF_INDEX_CEILING? "INDEXED CEILING" \
+        : reftype == LPREF_ALL_CEILINGS? "ALL CEILINGS" \
+        : reftype == LPREF_SPECIAL? "SPECIAL" \
+        : reftype == LPREF_BACK_FLOOR? "BACK FLOOR" \
+        : reftype == LPREF_BACK_CEILING? "BACK CEILING" \
+        : reftype == LPREF_THING_EXIST_FLOORS? "SECTORS WITH THING - FLOOR" \
+        : reftype == LPREF_THING_EXIST_CEILINGS? "SECTORS WITH THING - CEILING" \
+        : reftype == LPREF_THING_NOEXIST_FLOORS? "SECTORS WITHOUT THING - FLOOR" \
+        : reftype == LPREF_THING_NOEXIST_CEILINGS? "SECTORS WITHOUT THING - CEILING" : "???")
+
+#define LSREFTYPESTR(reftype) (reftype == LSREF_NONE? "NONE" \
+        : reftype == LSREF_MY? "MY SECTOR" \
+        : reftype == LSREF_TAGGED? "TAGGED SECTORS" \
+        : reftype == LSREF_LINE_TAGGED? "LINE TAGGED SECTORS" \
+        : reftype == LSREF_ACT_TAGGED? "ACT TAGGED SECTORS" \
+        : reftype == LSREF_INDEX? "INDEXED SECTOR" \
+        : reftype == LSREF_ALL? "ALL SECTORS" \
+        : reftype == LSREF_BACK? "BACK SECTOR" \
+        : reftype == LSREF_THING_EXIST? "SECTORS WITH THING" \
+        : reftype == LSREF_THING_NOEXIST? "SECTORS WITHOUT THING" : "???")
 
 #define GET_TXT(x)    ((*gi.text)[x].text)
+
+#define TO_DMU_TOP_COLOR(x) (x == 0? DMU_TOP_COLOR_RED \
+        : x == 1? DMU_TOP_COLOR_GREEN \
+        : DMU_TOP_COLOR_BLUE)
+
+#define TO_DMU_MIDDLE_COLOR(x) (x == 0? DMU_MIDDLE_COLOR_RED \
+        : x == 1? DMU_MIDDLE_COLOR_GREEN \
+        : x == 2? DMU_MIDDLE_COLOR_BLUE \
+        : DMU_MIDDLE_COLOR_ALPHA)
+
+#define TO_DMU_BOTTOM_COLOR(x) (x == 0? DMU_BOTTOM_COLOR_RED \
+        : x == 1? DMU_BOTTOM_COLOR_GREEN \
+        : DMU_BOTTOM_COLOR_BLUE)
 
 // TYPES -------------------------------------------------------------------
 
@@ -77,14 +135,34 @@ boolean         G_ValidateMap(int *episode, int *map);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    XL_ChangeTexture(line_t *line, int sidenum, int section, int texture);
+void    XL_ChangeTexture(line_t *line, int sidenum, int section, int texture,
+                         blendmode_t blend, byte rgba[4], int flags);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+int C_DECL XL_DoChainSequence();
+int C_DECL XL_DoDamage();
+int C_DECL XL_DoPower();
+int C_DECL XL_DoKey();
+int C_DECL XL_DoExplode();
+int C_DECL XL_DoCommand();
+
+int C_DECL XLTrav_ChangeLineType();
+int C_DECL XLTrav_Activate();
+int C_DECL XLTrav_Music();
+int C_DECL XLTrav_LineCount();
+int C_DECL XLTrav_EndLevel();
+int C_DECL XLTrav_DisableLine();
+int C_DECL XLTrav_EnableLine();
+int C_DECL XLTrav_ChangeWallTexture();
+int C_DECL XLTrav_LineTeleport();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int nextmap;
 extern boolean xgdatalumps;
+
+extern int PlayerColors[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -96,9 +174,246 @@ int     xgDev = 0;    // Print dev messages.
 static linetype_t typebuffer;
 static char msgbuf[80];
 
-char xgClassNames[NUMXGCLASSES-1][CLASSNAMELENGTH];   // Classnames for use in xgDev messages
+/* ADD NEW XG CLASSES TO THE END - ORIGINAL INDICES MUST STAY THE SAME!!! */
+xgclass_t xgClasses[NUMXGCLASSES] =
+{
+    { NULL, NULL, TRAV_NONE, 0, 1, 0, "None" },
+      // Dummy class (has no functions but enables use of secondary actions) (no params)
+
+    { XL_DoChainSequence, NULL, TRAV_NONE, 0, 1, 0, "Chain Sequence",
+      // Excute a chain of other XG line types (a zero ends the list)
+       {{XGPF_INT, "Chain Flags", "chsf_", 0},              // ip0: (chsf_) chain sequence flags
+        {XGPF_INT, "Line Type 0", "", -1},                  // ip1: Type to execute
+        {XGPF_INT, "Line Type 1", "", -1},                  // ip2:  ""  ""  ""
+        {XGPF_INT, "Line Type 2", "", -1},                  // ip3:  ""  ""  ""
+        {XGPF_INT, "Line Type 3", "", -1},                  // ip4:  ""  ""  ""
+        {XGPF_INT, "Line Type 4", "", -1},                  // ip5:  ""  ""  ""
+        {XGPF_INT, "Line Type 5", "", -1},                  // ip6:  ""  ""  ""
+        {XGPF_INT, "Line Type 6", "", -1},                  // ip7:  ""  ""  ""
+        {XGPF_INT, "Line Type 7", "", -1},                  // ip8:  ""  ""  ""
+        {XGPF_INT, "Line Type 8", "", -1},                  // ip9:  ""  ""  ""
+        {XGPF_INT, "Line Type 9", "", -1},                  // ip10: ""  ""  ""
+        {XGPF_INT, "Line Type 10", "", -1},                 // ip11: ""  ""  ""
+        {XGPF_INT, "Line Type 11", "", -1},                 // ip12: ""  ""  ""
+        {XGPF_INT, "Line Type 12", "", -1},                 // ip13: ""  ""  ""
+        {XGPF_INT, "Line Type 13", "", -1},                 // ip14: ""  ""  ""
+        {XGPF_INT, "Line Type 14", "", -1},                 // ip15: ""  ""  ""
+        {XGPF_INT, "Line Type 15", "", -1},                 // ip16: ""  ""  ""
+        {XGPF_INT, "Line Type 16", "", -1},                 // ip17: ""  ""  ""
+        {XGPF_INT, "Line Type 17", "", -1},                 // ip18: ""  ""  ""
+        {XGPF_INT, "Line Type 18", "", -1} }},              // ip19: ""  ""  ""
+
+    { XSTrav_MovePlane, XS_InitMovePlane, TRAV_PLANES, 0, 1, 0, "Move Plane",
+      // Move one or more planes. Optionaly change textures/types on start/end
+       {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0: (plane ref) plane(s) to move.
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Destination Ref", "spref_", 2},         // ip2: destination height type (zero, relative to current, surrounding highest/lowest floor/ceiling)
+        {XGPF_INT, "Move Flags", "pmf_", 3},                // ip3: flags (PMF_*)
+        {XGPF_INT, "Start Sound", "", 4 | MAP_SND},         // ip4: start sound
+        {XGPF_INT, "End Sound", "", 5 | MAP_SND},           // ip5: end sound
+        {XGPF_INT, "Move Sound", "", 6 | MAP_SND},          // ip6: move sound
+        {XGPF_INT, "Start Texture Ref", "spref_", 7},       // ip7: start texture origin (uses same ids as i2) (spec: use ip8 as tex num)
+        {XGPF_INT, "Start Texture Num", "", 8 | MAP_FLAT},  // ip8: data component or number/name of flat
+        {XGPF_INT, "End Texture Ref", "spref_", 9},         // ip9: end texture origin (uses same ids as i2) (spec: use ip10 as tex num)
+        {XGPF_INT, "End Texture Num", "", 10 | MAP_FLAT},   // ip10: data component or number/name of flat
+        {XGPF_INT, "Start Type Ref", "lpref_", 11},         // ip11: (plane ref) start sector type (spec: use i12 as type ID)
+        {XGPF_INT, "Start Type Num", "", -1},               // ip12: data component or type ID
+        {XGPF_INT, "End Type Ref", "lpref_", 13},           // ip13: (plane ref) end sector type (spec: use i14 as type ID)
+        {XGPF_INT, "End Type Num", "", -1} }},              // ip14: data component or type ID
+
+    { XSTrav_BuildStairs, XS_InitStairBuilder, TRAV_PLANES, 0, 1, 0, "Build Stairs",
+      // Moves one or more planes, incrementing their height with each move
+       {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0: (plane ref) plane to start from
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Spread Texture", "", -1},               // ip2: (true/false) stop when texture changes
+        {XGPF_INT, "Spread Build", "", -1},                 // ip3: (true/false) spread build?
+        {XGPF_INT, "Start Sound", "", 4 | MAP_SND},         // ip4: start build sound (doesn't wait)
+        {XGPF_INT, "Step Start Sound", "", 5 | MAP_SND},    // ip5: step start sound
+        {XGPF_INT, "Step End Sound", "", 6 | MAP_SND},      // ip6: step end sound
+        {XGPF_INT, "Step Move Sound", "", 7 | MAP_SND} }},  // ip7: step move sound
+
+    { XL_DoDamage, NULL, TRAV_NONE, 0, 1, 0, "Damage",
+      // Deals health damage to the activator
+       {{XGPF_INT, "Min Delta", "", -1},                    // ip0: min damage delta
+        {XGPF_INT, "Max Delta", "", -1},                    // ip1: max damage delta
+        {XGPF_INT, "Min Limit", "", -1},                    // ip2: min limit (wont damage if health bellow)
+        {XGPF_INT, "Max Limit", "", -1} }},                 // ip3: max limit (wont damage if health above)
+
+    { XL_DoPower, NULL, TRAV_NONE, 0, 1, 0, "Power",
+      // Deals armor damage to the activator (must be a player)
+       {{XGPF_INT, "Min Delta", "", -1},                    // ip0: min power delta
+        {XGPF_INT, "Max Delta", "", -1},                    // ip1: max power delta
+        {XGPF_INT, "Min Limit", "", -1},                    // ip2: min limit
+        {XGPF_INT, "Max Limit", "", -1} }},                 // ip3: max limit
+
+    { XLTrav_ChangeLineType, NULL, TRAV_LINES, 0, 1, 0, "Line Type",
+      // Changes a line's type (must be an XG type)
+       {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Line Type", "", -1} }},                 // ip2: new type (must be an XG line type)
+
+    { XSTrav_SectorType, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Type",
+      // Changes a sector's type (must be an XG type)
+       {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Sector Type", "", -1} }},               // ip2: new type (zero or an XG sector type)
+
+    { XSTrav_SectorLight, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Light",
+      // Change the light level and/or color  of the target sector(s).
+       {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Change Light", "", -1},                 // ip2: if non-zero light level will be changed
+        {XGPF_INT, "Change Color", "", -1},                 // ip3: if non-zero colour will be changed
+        {XGPF_INT, "Light Ref", "lightref_", 4},            // ip4: (light ref) sector to get the initial light delta from.
+                                                            //      lightref_none makes ip5 an absolute value
+        {XGPF_INT, "Light Delta", "", -1},                  // ip5: offset to the delta or absolute value
+        {XGPF_INT, "Color Ref", "lightref_", 6},            // ip6: (light ref) sector to get the initial colour deltas from.
+                                                            //      lightref_none makes ip7-9 absolute values
+        {XGPF_INT, "Red Delta", "", -1},                    // ip7: offset to red delta
+        {XGPF_INT, "Green Delta", "", -1},                  // ip8: offset to green delta
+        {XGPF_INT, "Blue Delta", "", -1} }},                // ip9: offset to blue delta
+
+    { XLTrav_Activate, NULL, TRAV_LINES, 0, 1, 0, "Activate",
+      // Sends a chain event to all the referenced lines
+       {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to activate
+        {XGPF_INT, "Target Num", "", -1} }},                // ip1:
+
+    { XL_DoKey, NULL, TRAV_NONE, 0, 1, 0, "Key",
+      // Gives/takes keys to/from the activator (must be a player)
+      // Params are bitfields! Bit 1 (0x1) corresponds key 1, bit 2 (0x2) key 2, etc.
+       {{XGPF_INT, "Give Keys", "", -1},                    // ip0: keys to give
+        {XGPF_INT, "Take Keys", "", -1} }},                 // ip1: keys to take away.
+
+    { XLTrav_Music, NULL, TRAV_LINES, 2, 3, 0, "Music",
+      // Changes the music track being played
+       {{XGPF_INT, "Song ID", "ldref_", 0 | MAP_MUS},       // ip0: song id/name or (line data ref from ip2)
+        {XGPF_INT, "Play Looped", "", -1},                  // ip1: non-zero means play looped
+        {XGPF_INT, "Data Ref", "lref_", 2},                 // ip2: (line ref) used with line data ref eg set music track to line-tag
+        {XGPF_INT, "Data Num", "", -1} }},                  // ip3:
+
+    { XLTrav_LineCount, NULL, TRAV_LINES, 0, 1, 0, "Line Count",
+      // Changes the XG line(s)' internal activation counter
+       {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Set Absolute", "", -1},                 // ip2: non-zero makes ip3 absolute
+        {XGPF_INT, "Count Delta", "", -1} }},               // ip3: count delta or absolute
+
+    { XLTrav_EndLevel, NULL, TRAV_LINES, 1, 2, 0, "End Level",
+      // Ends the current level
+       {{XGPF_INT, "Secret Exit", "", -1},                  // ip0: non-zero goto secret level
+        {XGPF_INT, "Data Ref", "lref_", 1},                 // ip1: (line ref) line to acquire (line data ref) from
+        {XGPF_INT, "Data Num", "", -1},                     // ip2:
+        {XGPF_INT, "Goto Level", "ldref_", 3} }},           // ip3: level ID or (line data ref from ip1)
+
+    { XLTrav_DisableLine, NULL, TRAV_LINES, 0, 1, 0, "Disable Line",
+      // Disables the referenced line(s) if active
+       {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to disable
+        {XGPF_INT, "Target Num", "", -1} }},                // ip1:
+
+    { XLTrav_EnableLine, NULL, TRAV_LINES, 0, 1, 0, "Enable Line",
+      // Enables the referenced line(s) if active
+       {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to enable
+        {XGPF_INT, "Target Num", "", -1} }},                // ip1:
+
+    { XL_DoExplode, NULL, TRAV_NONE, 0, 1, 0, "Explode" },
+      // Explodes the activator (no params)
+
+    { XSTrav_PlaneTexture, NULL, TRAV_PLANES, 0, 1, 0, "Plane Texture",
+      // Change the texture and/or surface color of a plane
+       {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0 : (plane ref) plane(s) to change
+        {XGPF_INT, "Target Num", "", -1},                   // ip1 : ref data
+        {XGPF_INT, "Texture Ref", "spref_", 2},             // ip2 : Texture ref
+        {XGPF_INT, "Texture Num", "", 3 | MAP_FLAT},        // ip3 : texture number (flat), used with SPREF_NONE
+        {XGPF_INT, "Red Delta", "", -1},                    // ip4 : plane surface color (red)
+        {XGPF_INT, "Green Delta", "", -1},                  // ip5 : "" (green)
+        {XGPF_INT, "Blue Delta", "", -1} }},                // ip6 : "" (blue)
+
+    { XLTrav_ChangeWallTexture, NULL, TRAV_LINES, 0, 1, 0, "Wall Texture",
+      // Changes texture(s) on the referenced line(s).
+      // Changes surface colour(s), alpha, mid textue blendmode and sidedef flags
+       {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Side Num", "", -1},                     // ip2: non-zero change the back side
+        {XGPF_INT, "Top Texture", "", 3 | MAP_TEX},         // ip3: top texture to change to (blank indicates no change)
+        {XGPF_INT, "Middle Texture", "", 4 | MAP_TEX},      // ip4: middle texture to change to (blank indicates no change)
+        {XGPF_INT, "Bottom Texture", "", 5 | MAP_TEX},      // ip5: bottom texture to change to (blank indicates no change)
+        {XGPF_INT, "Set Mid If None", "", -1},              // ip6: set mid texture even if previously zero
+        {XGPF_INT, "Sidedef Flags", "sdf_", 7},             // ip7: (sdf_) sidedef flags (used with surface colour blending, fullbright etc)
+        {XGPF_INT, "Middle Blendmode", "bm_", 8},           // ip8: (bm_) middle texture blendmode
+        {XGPF_INT, "Top Red Delta", "", -1},                // ip9:
+        {XGPF_INT, "Top Green Delta", "", -1},              // ip10:
+        {XGPF_INT, "Top Blue Delta", "", -1},               // ip11:
+        {XGPF_INT, "Middle Red Delta", "", -1},             // ip12:
+        {XGPF_INT, "Middle Green Delta", "", -1},           // ip13:
+        {XGPF_INT, "Middle Blue Delta", "", -1},            // ip14:
+        {XGPF_INT, "Middle Alpha Delta", "", -1},           // ip15:
+        {XGPF_INT, "Bottom Red Delta", "", -1},             // ip16:
+        {XGPF_INT, "Bottom Green Delta", "", -1},           // ip17:
+        {XGPF_INT, "Bottom Blue Delta", "", -1} }},         // ip18:
+
+    { XL_DoCommand, NULL, TRAV_NONE, 0, 1, 0, "Command" },
+      // Executes a console command (CCmd)
+
+    { XSTrav_SectorSound, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Sound",
+      // Plays a sound in sector(s)
+       {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to play the sound in
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Sound ID", "", 2 | MAP_SND},            // ip2: sound name/id to play
+        {XGPF_INT, "Origin", "", -1} }},                    // ip3: non-zero = play from a specific origin (1=floor, 2=ceiling) else 0=center
+
+    { XSTrav_MimicSector, NULL, TRAV_SECTORS, 0, 1, 0, "Mimic Sector",
+      // Copies all properties from target sector to destination sector(s)
+       {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "Mimic Ref", "spref_", 2},               // ip2: (spref) sector to mimic
+        {XGPF_INT, "Mimic Num", "", -1} }},                 // ip3:
+
+    { XSTrav_Teleport, NULL, TRAV_SECTORS, 0, 1, 0, "Teleport",
+      // Teleports the activator to the first teleport exit in the target sector
+       {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to teleport to (first acceptable target is used)
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "No Flash", "", -1},                     // ip2: non-zero = no flash (or sound)
+        {XGPF_INT, "No Sound", "", -1},                     // ip3: non-zero = no sound
+        {XGPF_INT, "Always Stomp", "", -1} }},              // ip4: non-zero = Always telefrag
+
+    { XLTrav_LineTeleport, NULL, TRAV_LINES, 0, 1, 1 | XLE_CROSS, "Line Teleport",
+      // Teleports the activator to the referenced line
+       {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) teleport destination
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "No Flash", "", -1},                     // ip2: non-zero = spawn MT_TFOG
+        {XGPF_INT, "Teleport Sound", "", 3 | MAP_SND},      // ip3: sound ID/name to play (or silent)
+        {XGPF_INT, "Exit Side", "", -1},                    // ip4: non-zero = exit from the back of the target line
+        {XGPF_INT, "Always Stomp", "", -1} }}               // ip5: non-zero = Always telefrag
+};
 
 // CODE --------------------------------------------------------------------
+
+cvar_t xgCVars[] =
+{
+    {"xg-dev", CVF_NO_ARCHIVE, CVT_INT, &xgDev, 0, 1, "1=Print XG debug messages."},
+    {NULL}
+};
+
+ccmd_t  xgCCmds[] =
+{
+    {"movefloor",  CCmdMovePlane,     "Move a sector's floor plane.", 0 },
+    {"moveceil",   CCmdMovePlane,     "Move a sector's ceiling plane.", 0 },
+    {"movesec",    CCmdMovePlane,     "Move a sector's both planes.", 0 },
+    {NULL}
+};
+
+/*
+ * Register XG CCmds & CVars (called during pre init)
+ */
+void XG_Register(void)
+{
+    int     i;
+
+    for(i = 0; xgCVars[i].name; i++)
+        Con_AddVariable(xgCVars + i);
+    for(i = 0; xgCCmds[i].name; i++)
+        Con_AddCommand(xgCCmds + i);
+}
 
 /*
  * Debug message printer.
@@ -111,36 +426,10 @@ void XG_Dev(const char *format, ...)
     if(!xgDev)
         return;
     va_start(args, format);
-    vsprintf(buffer, format, args);
+    vsnprintf(buffer, sizeof(buffer), format, args);
     strcat(buffer, "\n");
     Con_Message(buffer);
     va_end(args);
-}
-
-void XG_Register(void)
-{
-    int i;
-    char *name;
-    char buffer[CLASSNAMELENGTH];
-
-    // Register XG class names (retrieved from text defs loaded by Doomsday)
-    for(i = 0; i < NUMXGCLASSES; i++)
-    {
-        memset(buffer,0,sizeof(buffer));
-        name = GET_TXT(TXT_XGCLASS000 + i);
-
-        // If the string is too long, shorten it
-        if(strlen(name) > (CLASSNAMELENGTH -1))
-            strncpy(buffer,name,(CLASSNAMELENGTH -1));
-        else
-            strcpy(buffer,name);
-
-        // Append the terminator
-        strcat(buffer,"\0");
-
-        // Set the name
-        strcpy(xgClassNames[i],buffer);
-    }
 }
 
 // Init XG data for the level.
@@ -176,6 +465,91 @@ void XG_Update(void)
 }
 
 /*
+ * Adds the given binary format line type to the generated types array
+ */
+int XL_AddAutoGenType(linetype_t *newtype)
+{
+    return true;
+}
+
+/*
+ * Converts a line ID number to a line type
+ * (BOOM support)
+ */
+int XL_AutoGenType(int id, linetype_t *outptr)
+{
+    linetype_t *l;
+
+    return false; // Cos we don't work yet
+
+    // Do the magic
+    // is the ID in the range 12160 -> 32768
+    if(!(id >= 12160 && id <= 32768))
+        return false;
+
+    // Have we already generated a line of this type?
+    if(1)
+    {
+        // Then return a ptr to it
+        outptr = l;
+        return true;
+    }
+
+    // Which bitfield format are we generating from?
+    if(1) //XG format
+    {
+        /*
+         // Generate the new line type
+        l->id = id;
+        l->flags = def->flags[0];
+        l->flags2 = def->flags[1];
+        l->flags3 = def->flags[2];
+        l->line_class = def->line_class;
+        l->act_type = def->act_type;
+        l->act_count = def->act_count;
+        l->act_time = def->act_time;
+     //   l->act_tag = def->act_tag;
+        for(i = 0; i < 10; i++)
+        {
+            if(i == 9)
+                l->aparm[i] = Def_GetMobjNum(def->aparm9);
+            else
+                l->aparm[i] = def->aparm[i];
+        }
+     //   l->ticker_start = def->ticker_start;
+     //   l->ticker_end = def->ticker_end;
+     //   l->ticker_interval = def->ticker_interval;
+        l->act_sound = Friendly(Def_GetSoundNum(def->act_sound));
+        l->deact_sound = Friendly(Def_GetSoundNum(def->deact_sound));
+        l->ev_chain = def->ev_chain;
+        l->act_chain = def->act_chain;
+        l->deact_chain = def->deact_chain;
+        l->act_linetype = def->act_linetype;
+        l->deact_linetype = def->deact_linetype;
+        l->wallsection = def->wallsection;
+        l->act_tex = Friendly(R_CheckTextureNumForName(def->act_tex));
+        l->deact_tex = Friendly(R_CheckTextureNumForName(def->deact_tex));
+        l->act_msg = def->act_msg;
+        l->deact_msg = def->deact_msg;
+        l->texmove_angle = def->texmove_angle;
+        l->texmove_speed = def->texmove_speed;*/
+
+        // Add it to the generated line types array
+        XL_AddAutoGenType(l);
+        outptr = l;
+    }
+#if __JDOOM__
+    else // BOOM format
+    {
+        // Generate the new line type
+        outptr = l;
+    }
+#endif
+
+    return true;
+ }
+
+/*
  * Returns true if the type is defined.
  */
 linetype_t *XL_GetType(int id)
@@ -193,6 +567,11 @@ linetype_t *XL_GetType(int id)
     // Does Doomsday have a definition for this?
     if(Def_Get(DD_DEF_LINE_TYPE, (char *) id, &typebuffer))
         return &typebuffer;
+
+    // Is this a type we can generate automatically?
+    if(XL_AutoGenType(id, &typebuffer))
+        return &typebuffer;
+
     // A definition was not found.
     return NULL;
 }
@@ -220,26 +599,30 @@ float XG_RandomPercentFloat(float value, int percent)
  */
 void XL_SetLineType(line_t *line, int id)
 {
+    xline_t *xline = P_XLine(line);
+
     if(XL_GetType(id))
     {
-        XG_Dev("XL_SetLineType: Line %i, type %i.", line - lines, id);
-
-        line->special = id;
+        xline->special = id;
         // Allocate memory for the line type data.
-        if(!line->xg)
-            line->xg = Z_Malloc(sizeof(xgline_t), PU_LEVEL, 0);
+        if(!xline->xg)
+            xline->xg = Z_Malloc(sizeof(xgline_t), PU_LEVEL, 0);
         // Init the extended line state.
-        line->xg->disabled = false;
-        line->xg->timer = 0;
-        line->xg->ticker_timer = 0;
-        memcpy(&line->xg->info, &typebuffer, sizeof(linetype_t));
+        xline->xg->disabled = false;
+        xline->xg->timer = 0;
+        xline->xg->ticker_timer = 0;
+        memcpy(&xline->xg->info, &typebuffer, sizeof(linetype_t));
         // Initial active state.
-        line->xg->active = (typebuffer.flags & LTF_ACTIVE) != 0;
-        line->xg->activator = &dummything;
+        xline->xg->active = (typebuffer.flags & LTF_ACTIVE) != 0;
+        xline->xg->activator = &dummything;
+
+        XG_Dev("XL_SetLineType: Line %i (%s), ID %i.", P_ToIndex(line),
+               xgClasses[xline->xg->info.line_class].className, id);
+
     }
     else if(id)
     {
-        XG_Dev("XL_SetLineType: Line %i, type %i NOT DEFINED.", line - lines, id);
+        XG_Dev("XL_SetLineType: Line %i, type %i NOT DEFINED.", P_ToIndex(line), id);
     }
 }
 
@@ -249,6 +632,7 @@ void XL_SetLineType(line_t *line, int id)
 void XL_Init(void)
 {
     int    i;
+    line_t *line;
 
     memset(&dummything, 0, sizeof(dummything));
 
@@ -258,8 +642,10 @@ void XL_Init(void)
 
     for(i = 0; i < numlines; i++)
     {
-        lines[i].xg = 0;
-        XL_SetLineType(lines + i, lines[i].special);
+        line = P_ToPtr(DMU_LINE, i);
+        P_XLine(line)->xg = 0;
+
+        XL_SetLineType(line, P_XLine(line)->special);
     }
 }
 
@@ -267,37 +653,52 @@ void XL_Init(void)
  * Executes the specified function on all planes that match
  * the reference (reftype). If a function fails it returns false.
  */
-int XL_TraversePlanes(line_t *line, int reftype, int ref, int data,
-                      void *context, int (*func) (sector_t *sector,
-                                                  boolean ceiling, int data,
-                                                  void *context))
+int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
+                      void *context, boolean travsectors, mobj_t *activator,
+                      int (C_DECL *func)())
 {
     int     i;
+    mobj_t *mo;
+    boolean    ok;
+    sector_t *frontsector, *backsector;
+    char    buff[50];
 
-    XG_Dev("XL_TraversePlanes: Line %i, ref (%i, %i)", line - lines, reftype, ref);
+    if(ref)
+        sprintf(buff,": %i",ref);
+
+    XG_Dev("XL_Traverse%s: Line %i, ref (%s%s)",
+           travsectors? "Sectors":"Planes", P_ToIndex(line),
+           travsectors? LSREFTYPESTR(reftype) : LPREFTYPESTR(reftype), ref? buff: "");
 
     if(reftype == LPREF_NONE)
         return false;        // This is not a reference!
 
+    frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+
     // References to a single plane
     if(reftype == LPREF_MY_FLOOR)
-        return func(line->frontsector, false, data, context);
+        return func(frontsector, false, data, context, activator);
     if(reftype == LPREF_BACK_FLOOR)
-        if(line->backsector)
-            return func(line->backsector, false, data, context);
+    {
+        if(backsector)
+            return func(backsector, false, data, context, activator);
         else
-            XG_Dev("XL_TraversePlanes: Line %i has no back sector!)", line - lines);
+            XG_Dev("  Line %i has no back sector!", P_ToIndex(line));
+    }
     if(reftype == LPREF_MY_CEILING)
-        return func(line->frontsector, true, data, context);
+        return func(frontsector, true, data, context, activator);
     if(reftype == LPREF_BACK_CEILING)
-        if(line->backsector)
-            return func(line->backsector, true, data, context);
+    {
+        if(backsector)
+            return func(backsector, true, data, context, activator);
         else
-            XG_Dev("XL_TraversePlanes: Line %i has no back sector!)", line - lines);
+            XG_Dev("  Line %i has no back sector!", P_ToIndex(line));
+    }
     if(reftype == LPREF_INDEX_FLOOR)
-        return func(sectors + ref, false, data, context);
+        return func(P_ToPtr(DMU_SECTOR, ref), false, data, context, activator);
     if(reftype == LPREF_INDEX_CEILING)
-        return func(sectors + ref, true, data, context);
+        return func(P_ToPtr(DMU_SECTOR, ref), true, data, context, activator);
 
     // References to multiple planes
     for(i = 0; i < numsectors; i++)
@@ -305,143 +706,246 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, int data,
         if(reftype == LPREF_ALL_FLOORS || reftype == LPREF_ALL_CEILINGS)
         {
             if(!func
-               (sectors + i, reftype == LPREF_ALL_CEILINGS, data, context))
+               (P_ToPtr(DMU_SECTOR, i), reftype == LPREF_ALL_CEILINGS, data,
+                context, activator))
                 return false;
         }
         if((reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
-           && sectors[i].tag == ref)
+           && xsectors[i].tag == ref)
         {
             if(!func
-               (sectors + i, reftype == LPREF_TAGGED_CEILINGS, data, context))
+               (P_ToPtr(DMU_SECTOR, i), reftype == LPREF_TAGGED_CEILINGS, data,
+                context, activator))
                 return false;
         }
         if((reftype == LPREF_LINE_TAGGED_FLOORS ||
             reftype == LPREF_LINE_TAGGED_CEILINGS) &&
-            sectors[i].tag == line->tag)
+            xsectors[i].tag == P_XLine(line)->tag)
         {
             if(!func
-               (sectors + i, reftype == LPREF_LINE_TAGGED_CEILINGS, data,
-                context))
+               (P_ToPtr(DMU_SECTOR, i), reftype == LPREF_LINE_TAGGED_CEILINGS, data,
+                context, activator))
                 return false;
         }
         if((reftype == LPREF_ACT_TAGGED_FLOORS ||
-            reftype == LPREF_ACT_TAGGED_CEILINGS) && sectors[i].xg &&
-            sectors[i].xg->info.act_tag == ref)
+            reftype == LPREF_ACT_TAGGED_CEILINGS) && xsectors[i].xg &&
+            xsectors[i].xg->info.act_tag == ref)
         {
             if(!func
-               (sectors + i, reftype == LPREF_ACT_TAGGED_CEILINGS, data,
-               context))
+               (P_ToPtr(DMU_SECTOR, i), reftype == LPREF_ACT_TAGGED_CEILINGS, data,
+               context, activator))
                return false;
+        }
+        // Reference all sectors with (at least) one mobj of specified type inside
+        if(reftype == LPREF_THING_EXIST_FLOORS ||
+            reftype == LPREF_THING_EXIST_CEILINGS)
+        {
+            ok = true;
+
+            for(mo = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); ok && mo; mo = mo->snext)
+            {
+                if(mo->type == P_XLine(line)->xg->info.aparm[9])
+                {
+                    XG_Dev("  Thing of type %i found in sector id %i.",
+                           P_XLine(line)->xg->info.aparm[9], i);
+
+                    if(!func
+                       (P_ToPtr(DMU_SECTOR, i), reftype == LPREF_THING_EXIST_CEILINGS,
+                        data, context, activator))
+                        return false;
+
+                    ok = false;
+                }
+            }
+        }
+        // Reference all sectors with NONE of the specified mobj type inside
+        if(reftype == LPREF_THING_NOEXIST_FLOORS ||
+            reftype == LPREF_THING_NOEXIST_CEILINGS)
+        {
+            ok = true;
+
+            for(mo = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); ok && mo; mo = mo->snext)
+            {
+                if(mo->type != P_XLine(line)->xg->info.aparm[9])
+                    continue;
+                else
+                    ok = false;
+            }
+
+            if(ok)
+            {
+                XG_Dev("  No things of type %i found in sector id %i.",
+                           P_XLine(line)->xg->info.aparm[9], i);
+
+                if(!func
+                   (P_ToPtr(DMU_SECTOR, i), reftype == LPREF_THING_NOEXIST_CEILINGS,
+                    data, context, activator))
+                    return false;
+            }
         }
     }
     return true;
 }
 
 /*
- * Returns false if func returns false, otherwise true.
- * Stops checking when false is returned.
+ * Executes the specified function on all lines that match
+ * the reference (reftype). Returns false if func returns false,
+ * otherwise true. Stops checking when false is returned.
  */
-int XL_TraverseLines(line_t *line, int rtype, int ref, int data,
-                     void *context, int (*func) (line_t *line, int data,
-                                                 void *context))
+int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
+                     void *context, mobj_t * activator, int (C_DECL *func)())
 {
     int    i;
     int    reftype = rtype;
+    char   buff[50];
 
     // Binary XG data from DD_XGDATA uses the old flag values.
     // Add one to the ref type.
     if(xgdatalumps)
         reftype+= 1;
 
-    XG_Dev("XL_TraverseLines: Line %i, ref (%i, %i)", line - lines, reftype, ref);
+    if(ref)
+        sprintf(buff," : %i",ref);
+
+    XG_Dev("XL_TraverseLines: Line %i, ref (%s%s)",
+           P_ToIndex(line), LREFTYPESTR(reftype), ref? buff : "");
 
     if(reftype == LREF_NONE)
-        return func(NULL, data, context);
+        return func(NULL, true, data, context, activator);  // Not a real reference
 
-    // Traversing self is simple.
-    if(reftype == LREF_SELF)
-        return func(line, data, context);
+    // References to single lines
+    if(reftype == LREF_SELF) // Traversing self is simple.
+        return func(line, true, data, context, activator);
     if(reftype == LREF_INDEX)
-        return func(lines + ref, data, context);
-    if(reftype == LREF_ALL)
+        return func(P_ToPtr(DMU_LINE, ref), true, data, context, activator);
+
+    // References to multiple lines
+    for(i = 0; i < numlines; i++)
     {
-        for(i = 0; i < numlines; i++)
-            if(!func(lines + i, data, context))
+        if(reftype == LREF_ALL)
+        {
+            if(!func(P_ToPtr(DMU_LINE, i), true, data, context, activator))
                 return false;
-    }
-    if(reftype == LREF_TAGGED)
-    {
-        for(i = 0; i < numlines; i++)
-            if(lines[i].tag == ref)
-                if(!func(lines + i, data, context))
+        }
+        if(reftype == LREF_TAGGED)
+        {
+            if(xlines[i].tag == ref)
+                if(!func(P_ToPtr(DMU_LINE, i), true, data, context, activator))
                     return false;
-    }
-    if(reftype == LREF_LINE_TAGGED)
-    {
-        // Ref is true if line itself should be excluded.
-        for(i = 0; i < numlines; i++)
-            if(lines[i].tag == line->tag && (!ref || lines + i != line))
-                if(!func(lines + i, data, context))
+        }
+        if(reftype == LREF_LINE_TAGGED)
+        {
+            // Ref is true if line itself should be excluded.
+            if(xlines[i].tag == P_XLine(line)->tag && (!ref || P_ToPtr(DMU_LINE, i) != line))
+                if(!func(P_ToPtr(DMU_LINE, i), true, data, context, activator))
                     return false;
-    }
-    if(reftype == LREF_ACT_TAGGED)
-    {
-        for(i = 0; i < numlines; i++)
-            if(lines[i].xg && lines[i].xg->info.act_tag == ref)
-                if(!func(lines + i, data, context))
+        }
+        if(reftype == LREF_ACT_TAGGED)
+        {
+            if(xlines[i].xg && xlines[i].xg->info.act_tag == ref)
+                if(!func(P_ToPtr(DMU_LINE, i), true, data, context, activator))
                     return false;
+        }
     }
     return true;
 }
 
 /*
- * Returns the value requested by reftype from the line using data from 
+ * Returns the value requested by reftype from the line using data from
  * either line or context (will always be linetype_t).
  */
 int XL_ValidateLineRef(line_t *line, int reftype, void *context, char *parmname)
 {
-    //linetype_t *info = context;
     int answer = 0;
+    side_t *side;
 
     switch(reftype)
     {
+    case LDREF_ID:    // Line ID
+        answer = P_ToIndex(line);
+        XG_Dev("XL_ValidateLineRef: Using Line ID (%i) as %s", answer, parmname);
+        break;
+
     case LDREF_SPECIAL:    // Line Special
-        XG_Dev("XL_ValidateLineRef: Using Line Special (%i) as %s", 
-            line->special, parmname);
-        answer = line->special;
+        answer = P_XLine(line)->special;
+        XG_Dev("XL_ValidateLineRef: Using Line Special (%i) as %s", answer, parmname);
         break;
+
     case LDREF_TAG:    // line Tag
-        XG_Dev("XL_ValidateLineRef: Using Line Tag (%i) as %s", line->tag, parmname);
-        answer = line->tag;
+        answer = P_XLine(line)->tag;
+        XG_Dev("XL_ValidateLineRef: Using Line Tag (%i) as %s", answer, parmname);
         break;
+
     case LDREF_ACTTAG:    // line ActTag
-        if(!line->xg)
+        if(!P_XLine(line)->xg)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
             break;
         }
 
-        if(!line->xg->info.act_tag)
+        if(!P_XLine(line)->xg->info.act_tag)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE DOESNT HAVE AN ACT TAG");
             break;
         }
 
-        XG_Dev("XL_ValidateLineRef: Using Line ActTag (%i) as %s", 
-            line->xg->info.act_tag, parmname);
-        answer = line->xg->info.act_tag;
+        answer = P_XLine(line)->xg->info.act_tag;
+        XG_Dev("XL_ValidateLineRef: Using Line ActTag (%i) as %s", answer, parmname);
         break;
+
     case LDREF_COUNT:    // line count
-        if(!line->xg)
+        if(!P_XLine(line)->xg)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
             break;
         }
 
-        XG_Dev("XL_ValidateLineRef: Using Line Count (%i) as %s", 
-            line->xg->info.act_count, parmname);
-        answer = line->xg->info.act_count;
+        answer = P_XLine(line)->xg->info.act_count;
+        XG_Dev("XL_ValidateLineRef: Using Line Count (%i) as %s", answer, parmname);
         break;
+
+    case LDREF_ANGLE:    // line angle
+        answer = (R_PointToAngle2(0, 0, P_GetFixedp(line, DMU_DX),
+                                  P_GetFixedp(line, DMU_DY))
+                 / (float) ANGLE_MAX *360);
+        XG_Dev("XL_ValidateLineRef: Using Line Angle (%i) as %s", answer, parmname);
+        break;
+
+    case LDREF_LENGTH:    // line length
+        // Answer should be in map units.
+        answer = P_GetFixedp(line, DMU_LENGTH) >> FRACBITS;
+
+        XG_Dev("XL_ValidateLineRef: Using Line Length (%i) as %s", answer, parmname);
+        break;
+
+    case LDREF_OFFSETX:    // x offset
+        // Can this ever fail?
+        side = P_GetPtrp(line, DMU_SIDE0);
+        if(!side)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            break;
+        }
+
+        answer = P_GetIntp(side, DMU_TEXTURE_OFFSET_X);
+
+        XG_Dev("XL_ValidateLineRef: Using Line X Offset (%i) as %s", answer, parmname);
+        break;
+
+    case LDREF_OFFSETY:    // y offset
+        // Can this ever fail?
+        side = P_GetPtrp(line, DMU_SIDE0);
+        if(!side)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            break;
+        }
+
+        answer = P_GetIntp(side, DMU_TEXTURE_OFFSET_Y);
+
+        XG_Dev("XL_ValidateLineRef: Using Line Y Offset (%i) as %s", answer, parmname);
+        break;
+
     default:    // Could be explicit, return the actual int value
         answer = reftype;
         break;
@@ -450,94 +954,378 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context, char *parmname)
     return answer;
 }
 
-int XLTrav_ChangeLineType(line_t *line, int data, void *context)
+/*
+ * Executes the lines' function as defined by its class type
+ */
+void XL_DoFunction(linetype_t * info, line_t *line, int sidenum,
+                          mobj_t *act_thing, int evtype)
 {
-    XL_SetLineType(line, data);
-    return true;    // Keep looking.
+    xgclass_t *xgClass = xgClasses + info->line_class;
+
+    XG_Dev("XL_DoFunction: Line %i, side %i, activator id %i, event %s",
+            P_ToIndex(line), sidenum, act_thing ? act_thing->thinker.id : 0,
+            EVTYPESTR(evtype));
+    XG_Dev("  Executing class: %s (0x%X)...", xgClass->className, info->line_class);
+
+    // Does this class only work with certain events?
+    if(xgClass->evtypeflags > 0)
+    {
+        if(!(xgClass->evtypeflags & evtype))
+        {
+            XG_Dev("  THIS CLASS DOES NOT SUPPORT %s EVENTS!", EVTYPESTR(evtype));
+            return;
+        }
+    }
+
+    // Does this class have an init function?
+    if(xgClass->initFunc)
+        xgClass->initFunc(line);
+
+    // Does this class have a do function?
+    if(xgClass->doFunc)
+    {
+        // Do we need to traverse?
+        switch(xgClass->traverse)
+        {
+            case TRAV_NONE: // No need for traversal, call the doFunc
+                xgClass->doFunc(line, true, (int) line, info, act_thing);
+                break;
+            case TRAV_LINES: // Traverse lines, executing doFunc for each
+                XL_TraverseLines(line, info->iparm[xgClass->travref],
+                                 info->iparm[xgClass->travdata], line,
+                                 info, act_thing, xgClass->doFunc);
+                break;
+            case TRAV_PLANES: // Traverse planes, executing doFunc for each
+            case TRAV_SECTORS:
+                XL_TraversePlanes(line, info->iparm[xgClass->travref],
+                                  info->iparm[xgClass->travdata], line,
+                                  info, xgClass->traverse == TRAV_SECTORS? true : false,
+                                  act_thing, xgClass->doFunc);
+                break;
+        }
+    }
 }
 
-int XLTrav_ChangeWallTexture(line_t *line, int data, void *context)
+int C_DECL XLTrav_QuickActivate(line_t *line, boolean dummy, void *context,
+                                void *context2, mobj_t *activator)
 {
-    linetype_t *info = context;
-    side_t *side;
+    xline_t *xline = P_XLine(line);
 
-    // i2: sidenum
-    // i3: top texture (zero if no change)
-    // i4: mid texture (zero if no change)
-    // i5: bottom texture (zero if no change)
-    // i6: (true/false) set midtexture even if previously zero
-
-    // Is there a sidedef?
-    if(line->sidenum[info->iparm[2]] < 0)
+    if(!xline->xg)
         return true;
-
-    XG_Dev("XLTrav_ChangeWallTexture: Line %i", line - lines);
-
-    side = sides + line->sidenum[info->iparm[2]];
-
-    if(info->iparm[3])
-        XL_ChangeTexture(line, info->iparm[2], LWS_UPPER, info->iparm[3]);
-    if(info->iparm[4] && (side->midtexture || info->iparm[6]))
-        XL_ChangeTexture(line, info->iparm[2], LWS_MID, info->iparm[4]);
-    if(info->iparm[5])
-        XL_ChangeTexture(line, info->iparm[2], LWS_LOWER, info->iparm[5]);
-
+    xline->xg->active = (int) context;
+    xline->xg->timer = XLTIMER_STOPPED;    // Stop timer.
     return true;
 }
 
-int XLTrav_Activate(line_t *line, int data, void *context)
+/*
+ * Returns true if the line is active.
+ */
+int C_DECL XLTrav_CheckLine(line_t *line, boolean dummy, void *context,
+                            void *context2, mobj_t *activator)
 {
-    XL_LineEvent(XLE_CHAIN, 0, line, 0, context);
-    return true;    // Keep looking.
+    xline_t *xline = P_XLine(line);
+
+    if(!xline->xg)
+        return false;    // Stop checking!
+    return (xline->xg->active != 0) == ((int) context != 0);
 }
 
 /*
  * &param data  If true, the line will receive a chain event if not activate.
  *      If data=false, then ... if active.
  */
-int XLTrav_SmartActivate(line_t *line, int data, void *context)
+int C_DECL XLTrav_SmartActivate(line_t *line, boolean dummy, void *context, void *context2,
+                         mobj_t *activator)
 {
-    if(data != line->xg->active)
-        XL_LineEvent(XLE_CHAIN, 0, line, 0, context);
+    xline_t *xline = P_XLine(line);
+
+    if(!xline->xg)
+        return false;
+
+    if((int)context != xline->xg->active)
+        XL_LineEvent(XLE_CHAIN, 0, line, 0, context2);
     return true;
 }
 
-int XLTrav_LineCount(line_t *line, int data, void *context)
+
+//
+// XG Line Type Classes which don't require traversal
+//
+
+int C_DECL XL_DoChainSequence(line_t *line, boolean dummy, void *context,
+                              void *context2, mobj_t *activator)
 {
-    if(!line->xg)
-        return true;            // Must have extended type.
-    if(context)
-        line->xg->info.act_count = data;
+    xline_t *xline = P_XLine(line);
+    linetype_t *info = context2;
+
+    if(!xline->xg)
+        return false;
+
+    xline->xg->chidx = 1;        // This is the first.
+    // Start counting the first interval.
+    xline->xg->chtimer = XG_RandomPercentFloat(info->fparm[1], info->fparm[0]);
+    return true;
+}
+
+int C_DECL XL_DoDamage(line_t *line, boolean dummy, void *context,
+                       void *context2, mobj_t *activator)
+{
+    int i;
+    linetype_t *info = context2;
+
+    if(!activator)
+    {
+/*        if(evtype == XLE_FUNC)
+            XG_Dev("  Sector Functions don't have activators! Use a Sector Chain instead.");
+        else*/
+            XG_Dev("  No activator! Can't damage anything.");
+
+        return false;
+    }
+
+    if(activator->health > info->iparm[2])
+    {
+        // Iparms define the min and max damage to inflict.
+        // The real amount is random.
+        i = XG_RandomInt(info->iparm[0], info->iparm[1]);
+        if(i > 0)
+            P_DamageMobj(activator, 0, 0, i);
+        else if(i < 0)
+        {
+            activator->health -= i;
+            // Don't go above a given level.
+            if(activator->health > info->iparm[3])
+                activator->health = info->iparm[3];
+            if(activator->player)
+            {
+                // This is player.
+                activator->player->health = activator->health;
+                activator->player->update |= PSF_HEALTH;
+            }
+        }
+    }
+    return true;
+}
+
+int C_DECL XL_DoPower(line_t *line, boolean dummy, void *context,
+                      void *context2, mobj_t *activator)
+{
+    player_t *player = 0;
+    linetype_t *info = context2;
+
+    if(activator)
+        player = activator->player;
+
+    if(!player)  // Must be a player.
+    {
+/*        if(evtype == XLE_FUNC)
+            XG_Dev("  Sector Functions don't have activators! Use a Sector Chain instead.");
+        else*/
+            XG_Dev("  Activator MUST be a player...");
+
+        return false;
+    }
+    player->armorpoints += XG_RandomInt(info->iparm[0], info->iparm[1]);
+    if(player->armorpoints < info->iparm[2])
+        player->armorpoints = info->iparm[2];
+    if(player->armorpoints > info->iparm[3])
+        player->armorpoints = info->iparm[3];
+
+    return true;
+}
+
+int C_DECL XL_DoKey(line_t *line, boolean dummy, void *context,
+                    void *context2, mobj_t *activator)
+{
+    int i;
+    player_t *player = 0;
+    linetype_t *info = context2;
+
+    if(activator)
+        player = activator->player;
+
+    if(!player)  // Must be a player.
+    {
+/*        if(evtype == XLE_FUNC)
+            XG_Dev("  Sector Functions don't have activators! Use a Sector Chain instead.");
+        else*/
+            XG_Dev("  Activator MUST be a player...");
+
+        return false;
+    }
+    for(i = 0; i < NUMKEYS; i++)
+    {
+        if(info->iparm[0] & (1 << i))
+            P_GiveKey(player, i);
+        if(info->iparm[1] & (1 << i))
+            player->keys[i] = false;
+    }
+    return true;
+}
+
+int C_DECL XL_DoExplode(line_t *line, boolean dummy, void *context,
+                        void *context2, mobj_t *activator)
+{
+    if(!activator)
+    {
+/*        if(evtype == XLE_FUNC)
+            XG_Dev("  Sector Functions don't have activators! Use a Sector Chain instead.");
+        else*/
+            XG_Dev("  No activator! Can't explode anything.");
+        return false;
+    }
+    P_ExplodeMissile(activator);
+    return true;
+}
+
+int C_DECL XL_DoCommand(line_t *line, boolean dummy, void *context,
+                        void *context2, mobj_t *activator)
+{
+    linetype_t *info = context2;
+
+    DD_Execute(info->sparm[0], true);
+    return true;
+}
+
+//
+// Following classes require traversal hence "Trav_"
+//
+
+int C_DECL XLTrav_ChangeLineType(line_t *line, boolean dummy, void *context,
+                          void *context2, mobj_t *activator)
+{
+    linetype_t *info = context2;
+
+    XL_SetLineType(line, info->iparm[2]);
+    return true;    // Keep looking.
+}
+
+int C_DECL XLTrav_ChangeWallTexture(line_t *line, boolean dummy, void *context,
+                             void *context2, mobj_t *activator)
+{
+    linetype_t *info = context2;
+    side_t *side;
+    blendmode_t blend = BM_NORMAL;
+    byte rgba[4];
+    int texture = 0;
+
+    // i2: sidenum
+    // i3: top texture (zero if no change)
+    // i4: mid texture (zero if no change, -1 to remove)
+    // i5: bottom texture (zero if no change)
+    // i6: (true/false) set midtexture even if previously zero
+    // i7: sdf_* flags
+    // i8: mid texture blendmode
+    // i9: top texture red
+    // i10: top texture green
+    // i11: top texture blue
+    // i12: mid texture red
+    // i13: mid texture green
+    // i14: mid texture blue
+    // i15: mid texture alpha
+    // i16: bottom texture red
+    // i17: bottom texture green
+    // i18: bottom texture blue
+
+    // Is there a sidedef?
+    if(info->iparm[2])
+    {
+        if(P_GetPtrp(line, DMU_BACK_SECTOR) < 0)
+            return true;
+
+        side = P_GetPtrp(line, DMU_SIDE1);
+    }
     else
-        line->xg->info.act_count += data;
+    {
+        if(P_GetPtrp(line, DMU_FRONT_SECTOR) < 0)
+            return true;
+
+        side = P_GetPtrp(line, DMU_SIDE0);
+    }
+
+    XG_Dev("XLTrav_ChangeWallTexture: Line %i", P_ToIndex(line));
+
+    rgba[0] = info->iparm[9];
+    rgba[1] = info->iparm[10];
+    rgba[2] = info->iparm[11];
+    XL_ChangeTexture(line, info->iparm[2], LWS_UPPER, info->iparm[3],
+                     blend, rgba, info->iparm[7]);
+
+    rgba[0] = info->iparm[12];
+    rgba[1] = info->iparm[13];
+    rgba[2] = info->iparm[14];
+    rgba[3] = info->iparm[15];
+
+    if(info->iparm[4] && (P_GetIntp(side, DMU_MIDDLE_TEXTURE) ||
+                          info->iparm[6]))
+    {
+        if(!P_GetPtrp(line, DMU_BACK_SECTOR) && info->iparm[4] == -1)
+            texture = 0;
+        else
+            texture = info->iparm[4];
+    }
+
+    XL_ChangeTexture(line, info->iparm[2], LWS_MID, texture,
+                     info->iparm[8], rgba, info->iparm[7]);
+
+    rgba[0] = info->iparm[16];
+    rgba[1] = info->iparm[17];
+    rgba[2] = info->iparm[18];
+    XL_ChangeTexture(line, info->iparm[2], LWS_LOWER, info->iparm[5],
+                     blend, rgba, info->iparm[7]);
+
     return true;
 }
 
-int XLTrav_Music(line_t *line, int data, void *context)
+int C_DECL XLTrav_Activate(line_t *line, boolean dummy, void *context,
+                    void *context2, mobj_t *activator)
+{
+    XL_LineEvent(XLE_CHAIN, 0, line, 0, activator);
+    return true;    // Keep looking.
+}
+
+int C_DECL XLTrav_LineCount(line_t *line, boolean dummy, void *context, void *context2,
+                     mobj_t *activator)
+{
+    xline_t *xline = P_XLine(line);
+    linetype_t *info = context2;
+
+    if(!xline->xg)
+        return true;            // Must have extended type.
+    if(info->iparm[2])
+        xline->xg->info.act_count = info->iparm[3];
+    else
+        xline->xg->info.act_count += info->iparm[3];
+    return true;
+}
+
+int C_DECL XLTrav_Music(line_t *line, boolean dummy, void *context, void *context2,
+                 mobj_t *activator)
 {
     int song = 0;
     int temp = 0;
-    linetype_t *info = context;
+    linetype_t *info = context2;
 
-    if(data == 1)    // we might have a data reference to evaluate
+    if(info->iparm[2] == LREF_NONE)
+    {    // the old format, use ip0 explicitly
+        song = info->iparm[0];
+    }
+    else    // we might have a data reference to evaluate
     {
-        if( info->iparm[2] == LREF_NONE)    // data (ip0) will be used to determine next level
+        if(info->iparm[2] == LREF_NONE)    // data (ip0) will be used to determine next level
         {
             song = info->iparm[0];
 
         }
         else
         { // evaluate ip0 for a data reference
-            temp = XL_ValidateLineRef(line,info->iparm[0], context, "Music ID");
+            temp = XL_ValidateLineRef(line,info->iparm[0], context2, "Music ID");
             if(!temp)
                 XG_Dev("XLTrav_Music: Reference data not valid. Song not changed");
             else
                 song = temp;
         }
-    }
-    else
-    {    // the old format, use ip0 explicitly
-        song = info->iparm[0];
     }
 
     // FIXME: Add code to validate song id here
@@ -550,12 +1338,207 @@ int XLTrav_Music(line_t *line, int data, void *context)
     return false;    // only do this once!
 }
 
-int XL_ValidateMap(int map, int type)
+// maximum fixed_t units to move object to avoid hiccups
+#define FUDGEFACTOR 10
+
+int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, void *context2,
+                        mobj_t *mobj)
 {
-    int episode, level = map;
+    int fudge = FUDGEFACTOR;
+    int side = 0, stepdown;
+    unsigned    an;
+    mobj_t    *flash;
+    line_t *line = (line_t *) context;
+    linetype_t *info = (linetype_t *) context2;
+    vertex_t *newv1, *newv2;
+    vertex_t *oldv1, *oldv2;
+    sector_t *newfrontsector, *newbacksector;
+    fixed_t newx, newy, newz, pos, s, c;
+    fixed_t oldldx, oldldy, newldx, newldy;
+    angle_t angle;
+
+    // retrieve a few properties to make this look neater.
+    oldv1 = P_GetPtrp(line, DMU_VERTEX1);
+    oldv2 = P_GetPtrp(line, DMU_VERTEX2);
+    oldldx = P_GetFixedp(line, DMU_DX);
+    oldldy = P_GetFixedp(line, DMU_DY);
+
+    newv1 = P_GetPtrp(newline, DMU_VERTEX1);
+    newv2 = P_GetPtrp(newline, DMU_VERTEX2);
+    newldx = P_GetFixedp(newline, DMU_DX);
+    newldy = P_GetFixedp(newline, DMU_DY);
+    newfrontsector = P_GetPtrp(newline, DMU_FRONT_SECTOR);
+    newbacksector = P_GetPtrp(newline, DMU_BACK_SECTOR);
+
+    // don't teleport things marked noteleport!
+    if(mobj->flags2 & MF2_NOTELEPORT)
+    {
+        XG_Dev("XLTrav_LineTeleport: Activator can't be teleported (THING is unteleportable)");
+        return false; // No point continuing...
+    }
+
+    // We shouldn't be trying to teleport to the same line
+    if(newline == line)
+    {
+        XG_Dev("XLTrav_LineTeleport: Target == Origin. Continuing search...");
+        return true; // Keep looking
+    }
+
+    // i2: 1 = Spawn Fog
+    // i3: Sound = Sound to play
+    // i4: 1 = reversed
+    // i5: 1 = always telestomp
+
+    XG_Dev("XLTrav_LineTeleport: %s, %s, %s",
+           info->iparm[2]? "Spawn Flash":"No Flash", info->iparm[3]? "Play Sound":"Silent",
+           info->iparm[4]? "Reversed":"Normal.");
+
+    // Spawn flash at the old position?
+    if(info->iparm[2])
+    {
+        flash = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], mobj->pos[VZ], MT_TFOG);
+
+        // Play a sound?
+        if(info->iparm[3])
+            S_StartSound(info->iparm[3], flash);
+    }
+
+    // Get the thing's position along the source linedef
+    if(abs(oldldx) > abs(oldldy))
+        pos = FixedDiv(mobj->pos[VX] - P_GetFixedp(oldv1, DMU_X), oldldx);
+    else
+        pos = FixedDiv(mobj->pos[VY] - P_GetFixedp(oldv1, DMU_Y), oldldy);
+
+    // Get the angle between the two linedefs, for rotating
+    // orientation and momentum. Rotate 180 degrees, and flip
+    // the position across the exit linedef, if reversed.
+    angle = (info->iparm[4] ? pos = FRACUNIT-pos, 0 : ANG180) +
+             R_PointToAngle2(0, 0, newldx, newldy) -
+             R_PointToAngle2(0, 0, oldldx, oldldy);
+
+    // Interpolate position across the exit linedef
+    newx = P_GetFixedp(newv2, DMU_X) - FixedMul(pos, newldx);
+    newy = P_GetFixedp(newv2, DMU_Y) - FixedMul(pos, newldy);
+
+    // Sine, cosine of angle adjustment
+    s = finesine[angle>>ANGLETOFINESHIFT];
+    c = finecosine[angle>>ANGLETOFINESHIFT];
+
+    // Whether walking towards first side of exit linedef steps down
+    if(P_GetFixedp(newfrontsector, DMU_FLOOR_HEIGHT) <
+       P_GetFixedp(newbacksector, DMU_FLOOR_HEIGHT))
+        stepdown = true;
+    else
+        stepdown = false;
+
+    // Height of thing above ground
+    newz = mobj->pos[VZ] - mobj->floorz;
+
+    // Side to exit the linedef on positionally.
+    //
+    // Notes:
+    //
+    // This flag concerns exit position, not momentum. Due to
+    // roundoff error, the thing can land on either the left or
+    // the right side of the exit linedef, and steps must be
+    // taken to make sure it does not end up on the wrong side.
+    //
+    // Exit momentum is always towards side 1 in a reversed
+    // teleporter, and always towards side 0 otherwise.
+    //
+    // Exiting positionally on side 1 is always safe, as far
+    // as avoiding oscillations and stuck-in-wall problems,
+    // but may not be optimum for non-reversed teleporters.
+    //
+    // Exiting on side 0 can cause oscillations if momentum
+    // is towards side 1, as it is with reversed teleporters.
+    //
+    // Exiting on side 1 slightly improves player viewing
+    // when going down a step on a non-reversed teleporter.
+
+    if(!info->iparm[4] || (mobj->player && stepdown))
+        side = 1;
+
+    // Make sure we are on correct side of exit linedef.
+    while(P_PointOnLineSide(newx, newy, newline) != side && --fudge>=0)
+    {
+        if(abs(newldx) > abs(newldy))
+            newy -= ((newldx < 0) != side ? -1 : 1);
+        else
+            newx += ((newldy < 0) != side ? -1 : 1);
+    }
+
+    // Do the Teleport
+    if(!P_TeleportMove(mobj, newx, newy, (info->iparm[5] > 0? true : false)))
+    {
+        XG_Dev("XLTrav_Teleport: Something went horribly wrong... aborting.");
+        return false;
+    }
+
+    // Adjust z position to be same height above ground as before.
+    // Ground level at the exit is measured as the higher of the
+    // two floor heights at the exit linedef.
+    if(stepdown)
+        mobj->pos[VZ] = newz + P_GetFixedp(newfrontsector, DMU_FLOOR_HEIGHT);
+    else
+        mobj->pos[VZ] = newz + P_GetFixedp(newbacksector, DMU_FLOOR_HEIGHT);
+
+    // Rotate mobj's orientation according to difference in linedef angles
+    mobj->angle += angle;
+
+    // Update momentum of mobj crossing teleporter linedef?
+    newx = mobj->momx;
+    newy = mobj->momy;
+
+    // Rotate mobj's momentum to come out of exit just like it entered
+    mobj->momx = FixedMul(newx, c) - FixedMul(newy, s);
+    mobj->momy = FixedMul(newy, c) + FixedMul(newx, s);
+
+    // Feet clipped?
+    if(mobj->flags2 & MF2_FLOORCLIP)
+    {
+        if(mobj->pos[VZ] == P_GetFixedp(mobj->subsector,
+                                   DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
+           P_GetThingFloorType(mobj) >= FLOOR_LIQUID)
+        {
+            mobj->floorclip = 10 * FRACUNIT;
+        }
+        else
+        {
+            mobj->floorclip = 0;
+        }
+    }
+
+    // Spawn flash at the new position?
+    if(info->iparm[2])
+    {
+        an = mobj->angle >> ANGLETOFINESHIFT;
+        flash = P_SpawnMobj(mobj->pos[VX] + 24 * finecosine[an],
+                            mobj->pos[VY] + 24 * finesine[an],
+                            mobj->pos[VZ], MT_TFOG);
+
+        // Play a sound?
+        if(info->iparm[3])
+            S_StartSound(info->iparm[3], flash);
+    }
+
+    // Adjust the player's view, incase there has been a height change
+    if(mobj->player)
+    {
+        mobj->dplayer->viewz = mobj->pos[VZ] + mobj->dplayer->viewheight;
+        mobj->dplayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    }
+
+    return false; // do this only once!
+}
+
+
+int XL_ValidateMap(int val, int type)
+{
+    int episode, level = val;
 
 #ifdef __JDOOM__
-    if (gamemode == commercial)
+    if(gamemode == commercial)
         episode = gameepisode;
     else
         episode = 0;
@@ -564,27 +1547,33 @@ int XL_ValidateMap(int map, int type)
 #endif
 
     if(!G_ValidateMap(&episode, &level))
-        XG_Dev("XLTrav_EndLevel: NOT A VALID MAP NUMBER %i (next level set to %i)",map,level);
-    else
-        XG_Dev("XLTrav_EndLevel: Next level set to %i",map);
+        XG_Dev("XLTrav_EndLevel: NOT A VALID MAP NUMBER %i (next level set to %i)",val,level);
 
     return level;
 }
 
-int XLTrav_EndLevel(line_t *line, int data, void *context)
+int C_DECL XLTrav_EndLevel(line_t *line, boolean dummy, void *context,
+                           void *context2, mobj_t *activator)
 {
     int map = 0;
     int temp = 0;
-    linetype_t *info = context;
+    linetype_t *info = context2;
 
-    if( info->iparm[1] == LREF_NONE)    // data (ip3) will be used to determine next level
+    // Is this a secret exit?
+    if(info->iparm[0] > 0)
     {
-        map = XL_ValidateMap(data, 0);
+        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        return false;
+    }
+
+    if(info->iparm[1] == LREF_NONE)    // (ip3) will be used to determine next level
+    {
+        map = XL_ValidateMap(info->iparm[3], 0);
 
     }
     else
     {    // we have a data reference to evaluate
-        temp = XL_ValidateLineRef(line,info->iparm[3], context, "Map Number");
+        temp = XL_ValidateLineRef(line,info->iparm[3], context2, "Map Number");
         if(temp > 0)
             map = XL_ValidateMap(temp, info->iparm[3]);
         else
@@ -597,44 +1586,42 @@ int XLTrav_EndLevel(line_t *line, int data, void *context)
         nextmap = map;
     }
 
-    G_ExitLevel();
+    G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
     return false;    // only do this once!
 }
 
-int XLTrav_DisableLine(line_t *line, int data, void *context)
+int C_DECL XLTrav_DisableLine(line_t *line, boolean dummy, void *context,
+                              void *context2, mobj_t *activator)
 {
-    if(!line->xg)
+    xline_t *origline = P_XLine((line_t*) context);
+    xline_t *xline = P_XLine(line);
+
+    if(!xline->xg)
         return true;
-    line->xg->disabled = data;
+    xline->xg->disabled = origline->xg->active;
     return true;    // Keep looking.
 }
 
-int XLTrav_QuickActivate(line_t *line, int data, void *context)
+int C_DECL XLTrav_EnableLine(line_t *line, boolean dummy, void *context,
+                             void *context2, mobj_t *activator)
 {
-    if(!line->xg)
-        return true;
-    line->xg->active = data;
-    line->xg->timer = XLTIMER_STOPPED;    // Stop timer.
-    return true;
-}
+    xline_t *origline = P_XLine((line_t*) context);
+    xline_t *xline = P_XLine(line);
 
-/*
- * Returns true if the line is active.
- */
-int XLTrav_CheckLine(line_t *line, int data, void *context)
-{
-    if(!line->xg)
-        return false;    // Stop checking!
-    return (line->xg->active != 0) == (data != 0);
+    if(!xline->xg)
+        return true;
+    xline->xg->disabled = !origline->xg->active;
+    return true;    // Keep looking.
 }
 
 /*
  * Checks if the given lines are active or inactive.
  * Returns true if all are in the specified state.
  */
-boolean XL_CheckLineStatus(line_t *line, int reftype, int ref, int active)
+boolean XL_CheckLineStatus(line_t *line, int reftype, int ref, int active,
+                           mobj_t *activator)
 {
-    return XL_TraverseLines(line, reftype, ref, active, 0, XLTrav_CheckLine);
+    return XL_TraverseLines(line, reftype, ref, &active, 0, activator, XLTrav_CheckLine);
 }
 
 boolean XL_CheckMobjGone(int thingtype)
@@ -654,7 +1641,7 @@ boolean XL_CheckMobjGone(int thingtype)
             // Not dead.
             XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
                    "health=%i, pos=(%i,%i)", thingtype, mo->thinker.id,
-                   mo->health, mo->x >> FRACBITS, mo->y >> FRACBITS);
+                   mo->health, mo->pos[VX] >> FRACBITS, mo->pos[VY] >> FRACBITS);
             return false;
         }
     }
@@ -663,340 +1650,172 @@ boolean XL_CheckMobjGone(int thingtype)
     return true;
 }
 
-boolean XL_SwitchSwap(short *tex)
+boolean XL_SwitchSwap(side_t* side, int section)
 {
-    char   *name = R_TextureNameForNum(*tex);
+    char   *name;
     char    buf[10];
+    int     texid = 0;
+    boolean makeChange = false;
+
+    if(!side)
+        return false;
+
+    // Which section of the wall are we checking?
+    if(section == LWS_UPPER)
+        name = R_TextureNameForNum(P_GetIntp(side, DMU_TOP_TEXTURE));
+    else if(section == LWS_MID)
+        name = R_TextureNameForNum(P_GetIntp(side, DMU_MIDDLE_TEXTURE));
+    else if(section == LWS_LOWER)
+        name = R_TextureNameForNum(P_GetIntp(side, DMU_BOTTOM_TEXTURE));
+    else
+        return false;
 
     strncpy(buf, name, 8);
     buf[8] = 0;
 
-    if(strcmp(name,"AASHITTY")) // yuck fix me
-    XG_Dev("XL_SwitchSwap: Changing texture '%s'", name);
-
+    // Does this texture have another switch texture?
+    // FIXME: Use the switch texture list in p_switches for this.
 #ifdef __JHERETIC__
     // A kludge for Heretic.  Since it has some switch texture names
     // that don't follow the SW1/SW2 pattern, we'll do some special
     // checking.
     if(!stricmp(buf, "SW1ON"))
     {
-        *tex = R_TextureNumForName("SW1OFF");
-        return true;
+        texid = R_TextureNumForName("SW1OFF");
+        makeChange = true;
     }
     if(!stricmp(buf, "SW1OFF"))
     {
-        *tex = R_TextureNumForName("SW1ON");
-        return true;
+        texid = R_TextureNumForName("SW1ON");
+        makeChange = true;
     }
     if(!stricmp(buf, "SW2ON"))
     {
-        *tex = R_TextureNumForName("SW2OFF");
-        return true;
+        texid = R_TextureNumForName("SW2OFF");
+        makeChange = true;
     }
     if(!stricmp(buf, "SW2OFF"))
     {
-        *tex = R_TextureNumForName("SW2ON");
-        return true;
+        texid = R_TextureNumForName("SW2ON");
+        makeChange = true;
     }
 #endif
 
     if(!strnicmp(buf, "SW1", 3))
     {
         buf[2] = '2';
-        *tex = R_TextureNumForName(buf);
-        return true;
+        texid = R_TextureNumForName(buf);
+        makeChange = true;
     }
     if(!strnicmp(buf, "SW2", 3))
     {
         buf[2] = '1';
-        *tex = R_TextureNumForName(buf);
+        texid = R_TextureNumForName(buf);
+        makeChange = true;
+    }
+
+    // Are we doing a switch swap?
+    if(makeChange)
+    {
+        // Which section of the wall are we working on?
+        // Make the change.
+        if(section == LWS_UPPER)
+            P_SetIntp(side, DMU_TOP_TEXTURE, texid);
+        else if(section == LWS_MID)
+            P_SetIntp(side, DMU_MIDDLE_TEXTURE, texid);
+        else if(section == LWS_LOWER)
+            P_SetIntp(side, DMU_BOTTOM_TEXTURE, texid);
+        else
+            return false;
+
+        // The change was successfull.
         return true;
     }
-    return false;
+    else
+        return false;
 }
 
 void XL_SwapSwitchTextures(line_t *line, int snum)
 {
-    int    sidenum = line->sidenum[snum];
     side_t *side;
 
-    if(sidenum < 0)
+    if(snum)
+        side = P_GetPtrp(line, DMU_SIDE1);
+    else
+        side = P_GetPtrp(line, DMU_SIDE0);
+
+    if(!side)
         return;
 
-    XG_Dev("XL_SwapSwitchTextures: Line %i, side %i", line - lines, sidenum);
-
-    side = sides + sidenum;
-    XL_SwitchSwap(&side->midtexture);
-    XL_SwitchSwap(&side->toptexture);
-    XL_SwitchSwap(&side->bottomtexture);
+    if(XL_SwitchSwap(side, LWS_UPPER) ||
+       XL_SwitchSwap(side, LWS_MID) ||
+       XL_SwitchSwap(side, LWS_LOWER) )
+        XG_Dev("XL_SwapSwitchTextures: Line %i, side %i", P_ToIndex(line),
+                P_ToIndex(side));
 }
 
 /*
  * Changes texture of the given line.
  */
-void XL_ChangeTexture(line_t *line, int sidenum, int section, int texture)
+void XL_ChangeTexture(line_t *line, int sidenum, int section, int texture,
+                      blendmode_t blendmode, byte rgba[4], int flags)
 {
-    side_t *side = sides + line->sidenum[sidenum];
+    int i;
+    int currentFlags;
+    side_t *side = P_GetPtrp(line, sidenum? DMU_SIDE1:DMU_SIDE0);
 
-    if(line->sidenum[sidenum] < 0)
+    if(!side)
         return;
 
-        XG_Dev("XL_ChangeTexture: Line %i, side %i, section %i, texture %i",
-               line - lines, sidenum, section, texture);
+    // Clamping is not necessary since the rgba array has already a byte type.
 
+    XG_Dev("XL_ChangeTexture: Line %i, side %i, section %i, texture %i",
+           P_ToIndex(line), sidenum, section, texture);
+    XG_Dev("  red %i, green %i, blue %i, alpha %i, blendmode %i",
+           rgba[0], rgba[1], rgba[2], rgba[3], blendmode);
+
+    // Which wall section are we working on?
     if(section == LWS_MID)
-        side->midtexture = texture;
-    if(section == LWS_UPPER)
-        side->toptexture = texture;
-    if(section == LWS_LOWER)
-        side->bottomtexture = texture;
-}
-
-/*
- * Apply the function defined by the line's class and parameters.
- */
-void XL_DoFunction(linetype_t * info, line_t *line, int sidenum,
-                   mobj_t *act_thing)
-{
-    xgline_t *xg = line->xg;
-    player_t *activator = act_thing->player;
-    int    i;
-
-    XG_Dev("XL_DoFunction: Line %i, side %i, activator id %i", line - lines,
-            sidenum, act_thing ? act_thing->thinker.id : 0);
-    XG_Dev("  Executing class 0x%X - %s...", info->line_class,xgClassNames[info->line_class]);
-
-    switch (info->line_class)
     {
-    case LTC_CHAIN_SEQUENCE:
-        // Line data defines the current position in the sequence.
-        // i0: flags (loop, deact when done)
-        // i1..i19: line types
-        // f0: interval randomness (100 means real interval can be 0%..200%).
-        // f1..f19: intervals (seconds)
-        xg->chidx = 1;        // This is the first.
-        // Start counting the first interval.
-        xg->chtimer = XG_RandomPercentFloat(info->fparm[1], info->fparm[0]);
-        break;
+        // Are we removing the middle texture?
+        if(texture == -1)
+            P_SetIntp(side, DMU_MIDDLE_TEXTURE, 0);
+        else if(texture)
+            P_SetIntp(side, DMU_MIDDLE_TEXTURE, texture);
 
-    case LTC_PLANE_MOVE:
-        // i0 + i1: (plane ref) plane to move.
-        // i2: destination type (zero, relative to current, surrounding 
-        //     highest/lowest floor/ceiling)
-        // i3: flags (PMF_*)
-        // i4: start sound
-        // i5: end sound
-        // i6: move sound
-        // i7: start texture origin (uses same ids as i2)
-        // i8: start texture index (used with PMD_ZERO).
-        // i9: end texture origin (uses same ids as i2)
-        // i10: end texture (used with PMD_ZERO)
-        // i11 + i12: (plane ref) start sector type (spec: use i12)
-        // i13 + i14: (plane ref) end sector type (spec: use i14)
-        // f0: move speed (units per tic).
-        // f1: crush speed (units per tic).
-        // f2: destination offset
-        // f3: move sound min interval (seconds)
-        // f4: move sound max interval (seconds)
-        // f5: time to wait before starting the move
-        // f6: wait increment for each plane that gets moved
-        line->xg->fdata = info->fparm[5];    // fdata keeps track of wait time
-        line->xg->idata = true;    // play sound
-        XL_TraversePlanes(line, info->iparm[0], info->iparm[1], (int) line,
-                          info, XSTrav_MovePlane);
-        break;
+        // Are we changing the blendmode?
+        if(blendmode)
+            P_SetIntp(side, DMU_MIDDLE_BLENDMODE, blendmode);
 
-    case LTC_BUILD_STAIRS:
-        // i0 + i1: (plane ref) plane to start from
-        // i2: (true/false) stop when texture changes
-        // i3: (true/false) spread build? 
-        // i4: start build sound (doesn't wait)
-        // i5: step start sound
-        // i6: step end sound
-        // i7: step move sound          
-        // f0: build speed
-        // f1: step size (signed)
-        // f2: time to wait before starting the first step
-        // f3: time to wait between steps 
-        // f4: move sound min interval (seconds)
-        // f5: move sound max interval (seconds)
-        // f6: build speed delta per step
-        XS_InitStairBuilder();
-        XL_TraversePlanes(line, info->iparm[0], info->iparm[1], (int) line,
-                          info, XSTrav_BuildStairs);
-        break;
-
-    case LTC_DAMAGE:
-        // Iparm2 and 3 define how far we're allowed to go.
-        // i0: min damage
-        // i1: max damage
-        // i2: min limit
-        // i3: max limit
-        if(act_thing->health > info->iparm[2])
-        {
-            // Iparms define the min and max damage to inflict.
-            // The real amount is random.
-            i = XG_RandomInt(info->iparm[0], info->iparm[1]);
-            if(i > 0)
-                P_DamageMobj(act_thing, 0, 0, i);
-            else if(i < 0)
-            {
-                act_thing->health -= i;
-                // Don't go above a given level.
-                if(act_thing->health > info->iparm[3])
-                    act_thing->health = info->iparm[3];
-                if(activator)
-                {
-                    // This is player.
-                    activator->health = act_thing->health;
-                    activator->update |= PSF_HEALTH;
-                }
-            }
-        }
-        break;
-
-    case LTC_POWER:
-        // i0: min power delta
-        // i1: max power delta
-        // i2: min limit
-        // i3: max limit
-        if(!activator)
-            break;    // Must be a player.
-        activator->armorpoints += XG_RandomInt(info->iparm[0], info->iparm[1]);
-        if(activator->armorpoints < info->iparm[2])
-            activator->armorpoints = info->iparm[2];
-        if(activator->armorpoints > info->iparm[3])
-            activator->armorpoints = info->iparm[3];
-        break;
-
-    case LTC_SECTOR_TYPE:
-        // i0 + i1: plane ref
-        // i2: new type (zero or xg sector)
-        XL_TraversePlanes(line, info->iparm[0], info->iparm[1], info->iparm[2],
-                          0, XSTrav_SectorType);
-        break;
-
-    case LTC_SECTOR_LIGHT:
-        // Change the light level of the target sector(s).
-        XL_TraversePlanes(line, info->iparm[0], info->iparm[1], (int) line,
-                          info, XSTrav_SectorLight);
-        break;
-
-    case LTC_LINE_TYPE:
-        // Change target line type. (i0 + i1: line ref, i2: new type)
-        XL_TraverseLines(line, info->iparm[0], info->iparm[1], info->iparm[2],
-                         0, XLTrav_ChangeLineType);
-        break;
-
-    case LTC_KEY:
-        if(!activator)
-            break;        // Must be a player.
-        // i0 give keys, i1 take keys away.
-        for(i = 0; i < NUMKEYS; i++)
-        {
-            if(info->iparm[0] & (1 << i))
-                P_GiveKey(activator, i);
-            if(info->iparm[1] & (1 << i))
-                activator->keys[i] = false;
-        }
-        break;
-
-    case LTC_ACTIVATE:
-        // i0 + i1: line ref.
-        // Sends a chain event to all the referenced lines.
-        // Act_thing is used as the activator for each.
-        XL_TraverseLines(line, info->iparm[0], info->iparm[1], 0, act_thing,
-                         XLTrav_Activate);
-        break;
-
-    case LTC_MUSIC:
-        // i0: (ldref) data from reference or explict song id
-        // i1: play looped
-        // i2 + i3: line ref
-
-        // for backwards compatibility traverse self if not ip2 and use ip0 explicitly
-        if(info->iparm[2])
-            i = info->iparm[2];
-        else
-            i = LREF_SELF;
-
-        XL_TraverseLines(line, i, info->iparm[3], (info->iparm[2] == LREF_NONE)? 0: 1, info,
-                         XLTrav_Music);
-        break;
-
-    case LTC_SOUND:
-        XL_TraversePlanes(line, info->iparm[0], info->iparm[1], info->iparm[2],
-                          0, XSTrav_SectorSound);
-        break;
-
-    case LTC_LINE_COUNT:
-        // i0 + i1: line ref.
-        // i2: (true/false) is i3 an absolute value
-        // i3: value
-        XL_TraverseLines(line, info->iparm[0], info->iparm[1], info->iparm[3],
-                         (void *) info->iparm[2], XLTrav_LineCount);
-        break;
-
-    case LTC_END_LEVEL:
-        // i0: non-zero go to secret level
-        // i1 + i2: line ref
-        // i3: (ldref) data from reference OR explicit level number IF Ip1 = lpref_none
-        if(info->iparm[0] > 0)
-            G_SecretExitLevel();
-        else {
-            XL_TraverseLines(line, info->iparm[1], info->iparm[2], info->iparm[3], info,
-                             XLTrav_EndLevel);
-        }
-        break;
-
-    case LTC_DISABLE_IF_ACTIVE:
-        // i0 + i1: line ref.
-        XL_TraverseLines(line, info->iparm[0], info->iparm[1], xg->active, 0,
-                         XLTrav_DisableLine);
-        break;
-
-    case LTC_ENABLE_IF_ACTIVE:
-        // i0 + i1: line ref.
-        XL_TraverseLines(line, info->iparm[0], info->iparm[1], !xg->active, 0,
-                         XLTrav_DisableLine);
-        break;
-
-    case LTC_EXPLODE:
-        if(!act_thing)
-            break;
-        P_ExplodeMissile(act_thing);
-        break;
-
-    case LTC_PLANE_TEXTURE:
-        // i0 + i1: plane ref
-        // i2: (spref) texture origin
-        // i3: texture number (flat), used with SPREF_NONE
-        XL_TraversePlanes(line, info->iparm[0], info->iparm[1], (int) line,
-                          info, XSTrav_PlaneTexture);
-        break;
-
-    case LTC_WALL_TEXTURE:
-        // i0 + i1: line ref
-        // i2: sidenum
-        // i3: top texture (zero if no change)
-        // i4: mid texture (zero if no change)
-        // i5: bottom texture (zero if no change)
-        XL_TraverseLines(line, info->iparm[0], info->iparm[1], 0, info,
-                         XLTrav_ChangeWallTexture);
-        break;
-
-    case LTC_COMMAND:
-        // s0: console command to execute
-        Con_Execute(info->sparm[0], true);
-        break;
-
-    case LTC_MIMIC_SECTOR:
-        // i0 + i1: sector ref
-        // i2: (spref) sector to mimic
-        XL_TraversePlanes(line, info->iparm[0], info->iparm[1], (int) line,
-                          info, XSTrav_MimicSector);
-        break;
+        // Are we changing the surface color?
+        for(i = 0; i < 4; i++)
+            if(rgba[i])
+                P_SetBytep(side, TO_DMU_MIDDLE_COLOR(i), rgba[i]);
     }
+    else if(section == LWS_UPPER)
+    {
+        if(texture)
+            P_SetIntp(side, DMU_TOP_TEXTURE, texture);
+
+        for(i = 0; i < 3; i++)
+            if(rgba[i])
+                P_SetBytep(side, TO_DMU_TOP_COLOR(i), rgba[i]);
+    }
+    else if(section == LWS_LOWER)
+    {
+        if(texture)
+            P_SetIntp(side, DMU_BOTTOM_TEXTURE, texture);
+
+        for(i = 0; i < 3; i++)
+            if(rgba[i])
+                P_SetBytep(side, TO_DMU_BOTTOM_COLOR(i), rgba[i]);
+    }
+
+    // Adjust the side's flags
+    currentFlags = P_GetIntp(side, DMU_FLAGS);
+    currentFlags |= flags;
+
+    P_SetIntp(side, DMU_FLAGS, currentFlags);
 }
 
 void XL_Message(mobj_t *act, char *msg, boolean global)
@@ -1040,16 +1859,20 @@ void XL_Message(mobj_t *act, char *msg, boolean global)
  * XL_ActivateLine
  */
 void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
-                     int sidenum, mobj_t *data)
+                     int sidenum, mobj_t *data, int evtype)
 {
-    xgline_t *xg = line->xg;
+    byte rgba[4] = { 0, 0, 0, 0 };
+    xgline_t *xg;
+    sector_t *frontsector;
     mobj_t *activator_thing = (mobj_t *) data;
+    degenmobj_t *soundorg = 0;
 
-    //      player_t *activator = activator_thing->player;
-    degenmobj_t *soundorg;
+    xg = P_XLine(line)->xg;
+    frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
-    XG_Dev("XL_ActivateLine: %s line %i, side %i",
-           activating ? "Activating" : "Deactivating", line - lines, sidenum);
+    XG_Dev("XL_ActivateLine: %s line %i, side %i, type %i",
+           activating ? "Activating" : "Deactivating", P_ToIndex(line),
+           sidenum, P_XLine(line)->special);
 
     if(xg->disabled)
     {
@@ -1065,41 +1888,23 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
     }
 
     // Activation should happen on the front side.
-    if(line->frontsector)
-        soundorg = &line->frontsector->soundorg;
+    if(frontsector)
+        soundorg = P_GetPtrp(frontsector, DMU_SOUND_ORIGIN);
 
     // Let the line know who's activating it.
     xg->activator = data;
 
     // Process (de)activation chains. Chains always pass as an activation
     // method, but the other requirements of the chained type must be met.
-    // Also play sounds.
-    if(activating)
+    if(activating && info->act_chain)
     {
-        XL_Message(activator_thing, info->act_msg,
-                   (info->flags2 & LTF2_GLOBAL_A_MSG) != 0);
-
-        if(info->act_sound)
-            S_StartSound(info->act_sound, (mobj_t *) soundorg);
-        // Change the texture of the line if asked to.
-        if(info->wallsection && info->act_tex)
-            XL_ChangeTexture(line, sidenum, info->wallsection, info->act_tex);
-        if(info->act_chain)
-            XL_LineEvent(XLE_CHAIN, info->act_chain, line, sidenum, data);
+        XG_Dev("  Line has Act Chain (type %i) - It will be processed first...",info->act_chain);
+        XL_LineEvent(XLE_CHAIN, info->act_chain, line, sidenum, data);
     }
-    else
+    else if(!activating && info->deact_chain)
     {
-        XL_Message(activator_thing, info->deact_msg,
-                   (info->flags2 & LTF2_GLOBAL_D_MSG) != 0);
-
-        if(info->deact_sound)
-            S_StartSound(info->deact_sound, (mobj_t *) soundorg);
-        // Change the texture of the line if asked to.
-        if(info->wallsection && info->deact_tex)
-            XL_ChangeTexture(line, sidenum, info->wallsection,
-                             info->deact_tex);
-        if(info->deact_chain)
-            XL_LineEvent(XLE_CHAIN, info->deact_chain, line, sidenum, data);
+        XG_Dev("  Line has Deact Chain (type %i) - It will be processed first...",info->deact_chain);
+        XL_LineEvent(XLE_CHAIN, info->deact_chain, line, sidenum, data);
     }
 
     // Automatically swap any SW* textures.
@@ -1114,7 +1919,7 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
     if((activating && info->flags2 & LTF2_GROUP_ACT) ||
        (!activating && info->flags2 & LTF2_GROUP_DEACT))
     {
-        XL_TraverseLines(line, LREF_LINE_TAGGED, true, activating, 0,
+        XL_TraverseLines(line, LREF_LINE_TAGGED, true, &activating, 0, activator_thing,
                          XLTrav_SmartActivate);
     }
 
@@ -1122,7 +1927,7 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
     // the same line tag.
     if(info->flags2 & LTF2_MULTIPLE)
     {
-        XL_TraverseLines(line, LREF_LINE_TAGGED, true, activating, 0,
+        XL_TraverseLines(line, LREF_LINE_TAGGED, true, &activating, 0, activator_thing,
                          XLTrav_QuickActivate);
     }
 
@@ -1132,16 +1937,54 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
         (!activating && info->flags2 & LTF2_WHEN_DEACTIVATED)))
     {
         if(!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1)
-            XL_DoFunction(info, line, sidenum, activator_thing);
+            XL_DoFunction(info, line, sidenum, activator_thing, evtype);
         else
-            XG_Dev("  Line %i FUNCTION TEST FAILED", line - lines);
+            XG_Dev("  Line %i FUNCTION TEST FAILED", P_ToIndex(line));
     }
     else
     {
         if(activating)
-            XG_Dev("  Line %i does nothing when activated", line - lines);
+            XG_Dev("  Line %i has no activation function", P_ToIndex(line));
         else
-            XG_Dev("  Line %i does nothing when deactivated", line - lines);
+        {
+            XG_Dev("  Line %i has no deactivation function", P_ToIndex(line));
+        }
+    }
+
+    // Now do any secondary actions that should happen AFTER
+    // the function of the line (regardless if one was applied or not)
+    if(activating)
+    {
+        XL_Message(activator_thing, info->act_msg,
+                   (info->flags2 & LTF2_GLOBAL_A_MSG) != 0);
+
+        if(info->act_sound)
+            S_StartSound(info->act_sound, (mobj_t *) soundorg);
+
+        // Change the texture of the line if asked to.
+        if(info->wallsection && info->act_tex)
+            XL_ChangeTexture(line, sidenum, info->wallsection, info->act_tex, BM_NORMAL, rgba, 0); //FIXME
+
+        // Change the class of the line if asked to
+        if(info->act_linetype)
+            XL_SetLineType(line, info->act_linetype);
+    }
+    else
+    {
+        XL_Message(activator_thing, info->deact_msg,
+                   (info->flags2 & LTF2_GLOBAL_D_MSG) != 0);
+
+        if(info->deact_sound)
+            S_StartSound(info->deact_sound, (mobj_t *) soundorg);
+
+        // Change the texture of the line if asked to.
+        if(info->wallsection && info->deact_tex)
+            XL_ChangeTexture(line, sidenum, info->wallsection,
+                             info->deact_tex, BM_NORMAL, rgba, 0); //FIXME
+
+        // Change the class of the line if asked to
+        if(info->deact_linetype)
+            XL_SetLineType(line, info->deact_linetype);
     }
 }
 
@@ -1197,19 +2040,36 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
 int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
                  void *data)
 {
-    xgline_t *xg = line->xg;
-    linetype_t *info = &xg->info;
-    boolean active = xg->active;
+    xgline_t *xg;
+    linetype_t *info;
+    boolean active;
     mobj_t *activator_thing = (mobj_t *) data;
-    player_t *activator = activator_thing->player;
+    player_t *activator = 0;
     int     i;
+    int     flags;
+    boolean anyTrigger = false;
+
+    xg = P_XLine(line)->xg;
+    info = &xg->info;
+    active = xg->active;
+    flags = P_GetIntp(line, DMU_FLAGS);
 
     // Clients rely on the server, they don't do XG themselves.
     if(IS_CLIENT)
         return false;
 
-    XG_Dev("XL_LineEvent: %s line %i, side %i (chained type %i)",
-           EVTYPESTR(evtype), line - lines, sidenum, linetype);
+    if(activator_thing)
+         activator = activator_thing->player;
+
+#ifdef __JDOOM__
+    // BOOM intergration
+    if(flags & ML_ALLTRIGGER && !(info->flags2 & LTF2_OVERRIDE_ANY))
+        anyTrigger = true;
+#endif
+
+    XG_Dev("XL_LineEvent: %s line %i, side %i (chained type %i)%s",
+           EVTYPESTR(evtype), P_ToIndex(line), sidenum, linetype,
+           anyTrigger? " ANY Trigger":"");
 
     if(xg->disabled)
     {
@@ -1231,7 +2091,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
         if(XL_LineEvent(evtype, info->ev_chain, line, sidenum, data))
         {
             XG_Dev("  Event %s, line %i, side %i OVERRIDDEN BY EVENT CHAIN %i",
-                   EVTYPESTR(evtype), line - lines, sidenum, info->ev_chain);
+                   EVTYPESTR(evtype), P_ToIndex(line), sidenum, info->ev_chain);
             return true;
         }
     }
@@ -1242,27 +2102,28 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
        (!active && info->act_type == LTACT_COUNTED_ON))
     {
         // Can't be processed at this time.
-        XG_Dev("  Line %i: Active=%i, type=%i ABORTING EVENT", line - lines,
+        XG_Dev("  Line %i: Active=%i, type=%i ABORTING EVENT", P_ToIndex(line),
                active, info->act_type);
         return false;
     }
+
     // Check the type of the event vs. the requirements of the line.
-    if(evtype == XLE_CHAIN)
+    if(evtype == XLE_CHAIN || evtype == XLE_FUNC)
         goto type_passes;
     if(evtype == XLE_USE &&
-       ((info->flags & LTF_PLAYER_USE_A && activator && !active) ||
+       (((info->flags & LTF_PLAYER_USE_A && activator && !active) ||
         (info->flags & LTF_OTHER_USE_A && !activator && !active) ||
         (info->flags & LTF_PLAYER_USE_D && activator && active) ||
-        (info->flags & LTF_OTHER_USE_D && !activator && active)))
+        (info->flags & LTF_OTHER_USE_D && !activator && active)) || anyTrigger))
         goto type_passes;
     if(evtype == XLE_SHOOT &&
-       ((info->flags & LTF_PLAYER_SHOOT_A && activator && !active) ||
+       (((info->flags & LTF_PLAYER_SHOOT_A && activator && !active) ||
         (info->flags & LTF_OTHER_SHOOT_A && !activator && !active) ||
         (info->flags & LTF_PLAYER_SHOOT_D && activator && active) ||
-        (info->flags & LTF_OTHER_SHOOT_D && !activator && active)))
+        (info->flags & LTF_OTHER_SHOOT_D && !activator && active)) || anyTrigger))
         goto type_passes;
     if(evtype == XLE_CROSS &&
-       ((info->flags & LTF_PLAYER_CROSS_A && activator && !active) ||
+       (((info->flags & LTF_PLAYER_CROSS_A && activator && !active) ||
         (info->flags & LTF_MONSTER_CROSS_A &&
          activator_thing->flags & MF_COUNTKILL && !active) ||
         (info->flags & LTF_MISSILE_CROSS_A &&
@@ -1273,10 +2134,10 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
          activator_thing->flags & MF_COUNTKILL && active) ||
         (info->flags & LTF_MISSILE_CROSS_D &&
          activator_thing->flags & MF_MISSILE && active) ||
-        (info->flags & LTF_ANY_CROSS_D && active)))
+        (info->flags & LTF_ANY_CROSS_D && active)) || anyTrigger))
         goto type_passes;
     if(evtype == XLE_HIT &&
-       ((info->flags & LTF_PLAYER_HIT_A && activator && !active) ||
+       (((info->flags & LTF_PLAYER_HIT_A && activator && !active) ||
         (info->flags & LTF_OTHER_HIT_A && !activator && !active) ||
         (info->flags & LTF_MONSTER_HIT_A &&
          activator_thing->flags & MF_COUNTKILL && !active) ||
@@ -1287,7 +2148,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
         (info->flags & LTF_MONSTER_HIT_D &&
          activator_thing->flags & MF_COUNTKILL && active) ||
         (info->flags & LTF_MISSILE_HIT_D && activator_thing->flags & MF_MISSILE
-         && active) || (info->flags & LTF_ANY_HIT_D && active)))
+         && active) || (info->flags & LTF_ANY_HIT_D && active)) || anyTrigger))
         goto type_passes;
     if(evtype == XLE_TICKER &&
        ((info->flags & LTF_TICKER_A && !active) ||
@@ -1295,8 +2156,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
         goto type_passes;
 
     // Type doesn't pass, sorry.
-    XG_Dev("  Line %i: ACT REQUIREMENTS NOT FULFILLED, ABORTING EVENT",
-           line - lines);
+    XG_Dev("  Line %i: ACT REQUIREMENTS NOT FULFILLED, ABORTING EVENT", P_ToIndex(line));
     return false;
 
   type_passes:
@@ -1304,10 +2164,9 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
     if(info->flags & LTF_NO_OTHER_USE_SECRET)
     {
         // Non-players can't use this line if line is flagged secret.
-        if(evtype == XLE_USE && !activator && line->flags & ML_SECRET)
+        if(evtype == XLE_USE && !activator && flags & ML_SECRET)
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to no_other_use_secret",
-                   line - lines);
+            XG_Dev("  Line %i: ABORTING EVENT due to no_other_use_secret", P_ToIndex(line));
             return false;
         }
     }
@@ -1321,8 +2180,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
         // Check the activator's type.
         if(!activator_thing || activator_thing->type != info->aparm[9])
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to activator type",
-               line - lines);
+            XG_Dev("  Line %i: ABORTING EVENT due to activator type", P_ToIndex(line));
             return false;
         }
     }
@@ -1332,8 +2190,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
         // Only allow (de)activation from the front side.
         if(sidenum != 0)
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to line side test",
-                   line - lines);
+            XG_Dev("  Line %i: ABORTING EVENT due to line side test", P_ToIndex(line));
             return false;
         }
     }
@@ -1341,7 +2198,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
     // Check counting.
     if(!info->act_count)
     {
-        XG_Dev("  Line %i: ABORTING EVENT due to Count = 0", line - lines);
+        XG_Dev("  Line %i: ABORTING EVENT due to Count = 0", P_ToIndex(line));
         return false;
     }
 
@@ -1359,17 +2216,17 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
        (!activator || activator->armorpoints >= info->aparm[3]))
         return false;
     if(info->flags2 & LTF2_LINE_ACTIVE)
-        if(!XL_CheckLineStatus(line, info->aparm[4], info->aparm[5], true))
+        if(!XL_CheckLineStatus(line, info->aparm[4], info->aparm[5], true,
+                               activator_thing))
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to line_active test",
-                   line - lines);
+            XG_Dev("  Line %i: ABORTING EVENT due to line_active test", P_ToIndex(line));
             return false;
         }
     if(info->flags2 & LTF2_LINE_INACTIVE)
-        if(!XL_CheckLineStatus(line, info->aparm[6], info->aparm[7], false))
+        if(!XL_CheckLineStatus(line, info->aparm[6], info->aparm[7], false,
+                               activator_thing))
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to line_inactive test",
-                   line - lines);
+            XG_Dev("  Line %i: ABORTING EVENT due to line_inactive test", P_ToIndex(line));
             return false;
         }
     // Check game mode.
@@ -1377,8 +2234,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
     {
         if(!(info->flags2 & (LTF2_COOPERATIVE | LTF2_DEATHMATCH)))
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to netgame mode",
-                   line - lines);
+            XG_Dev("  Line %i: ABORTING EVENT due to netgame mode", P_ToIndex(line));
             return false;
         }
     }
@@ -1386,8 +2242,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
     {
         if(!(info->flags2 & LTF2_SINGLEPLAYER))
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to game mode (1p)",
-                   line - lines);
+            XG_Dev("  Line %i: ABORTING EVENT due to game mode (1p)", P_ToIndex(line));
             return false;
         }
     }
@@ -1402,7 +2257,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
     if(!(info->flags2 & i))
     {
         XG_Dev("  Line %i: ABORTING EVENT due to skill level (%i)",
-               line - lines, gameskill);
+               P_ToIndex(line), gameskill);
         return false;
     }
     // Check activator color.
@@ -1413,7 +2268,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
         if(cfg.PlayerColor[activator - players] != info->aparm[8])
         {
             XG_Dev("  Line %i: ABORTING EVENT due to activator color (%i)",
-                   line - lines, cfg.PlayerColor[activator - players]);
+                   P_ToIndex(line), cfg.PlayerColor[activator-players]);
             return false;
         }
     }
@@ -1426,28 +2281,27 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
         if(!activator)
         {
             XG_Dev("  Line %i: ABORTING EVENT due to missing key "
-                   "(no activator)", line - lines);
+                   "(no activator)", P_ToIndex(line));
             return false;
         }
         // Check that all the flagged keys are present.
         if(!XL_CheckKeys(activator_thing, info->flags2))
         {
-            XG_Dev("  Line %i: ABORTING EVENT due to missing key",
-                   line - lines);
-            return false;		// Keys missing!
+            XG_Dev("  Line %i: ABORTING EVENT due to missing key", P_ToIndex(line));
+            return false;        // Keys missing!
         }
     }
 
     // All tests passed, use this event.
-    if(info->act_count > 0 && evtype != XLE_CHAIN)
+    if(info->act_count > 0 && evtype != XLE_CHAIN && evtype != XLE_FUNC)
     {
         // Decrement counter.
         info->act_count--;
 
-        XG_Dev("  Line %i: Decrementing counter, now %i", line - lines,
+        XG_Dev("  Line %i: Decrementing counter, now %i", P_ToIndex(line),
                info->act_count);
     }
-    XL_ActivateLine(!active, info, line, sidenum, activator_thing);
+    XL_ActivateLine(!active, info, line, sidenum, activator_thing, evtype);
     return true;
 }
 
@@ -1456,7 +2310,7 @@ int XL_LineEvent(int evtype, int linetype, line_t *line, int sidenum,
  */
 int XL_CrossLine(line_t *line, int sidenum, mobj_t *thing)
 {
-    if(!line->xg)
+    if(!P_XLine(line)->xg)
         return false;
     return XL_LineEvent(XLE_CROSS, 0, line, sidenum, thing);
 }
@@ -1466,7 +2320,7 @@ int XL_CrossLine(line_t *line, int sidenum, mobj_t *thing)
  */
 int XL_UseLine(line_t *line, int sidenum, mobj_t *thing)
 {
-    if(!line->xg)
+    if(!P_XLine(line)->xg)
         return false;
     return XL_LineEvent(XLE_USE, 0, line, sidenum, thing);
 }
@@ -1476,41 +2330,54 @@ int XL_UseLine(line_t *line, int sidenum, mobj_t *thing)
  */
 int XL_ShootLine(line_t *line, int sidenum, mobj_t *thing)
 {
-    if(!line->xg)
+    if(!P_XLine(line)->xg)
         return false;
     return XL_LineEvent(XLE_SHOOT, 0, line, sidenum, thing);
 }
 
 int XL_HitLine(line_t *line, int sidenum, mobj_t *thing)
 {
-    if(!line->xg)
+    if(!P_XLine(line)->xg)
         return false;
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
 void XL_DoChain(line_t *line, int chain, boolean activating, mobj_t *act_thing)
 {
-    line_t  dummy;
-    xgline_t dummyxg;
-
-    XG_Dev("XL_DoChain: Line %i, chained type %i", line - lines, chain);
-    XG_Dev("  (dummy line will show up as %i)", &dummy - lines);
+    line_t*  dummyLine;
+    xline_t* xdummyLine;
 
     // We'll use a dummy line for the chain.
-    memcpy(&dummy, line, sizeof(*line));
-    memcpy(&dummyxg, line->xg, sizeof(*line->xg));
-    dummy.sidenum[0] = -1;
-    dummy.sidenum[1] = -1;
-    dummy.xg = &dummyxg;
-    dummyxg.active = !activating;
+    dummyLine = P_AllocDummyLine();
+    xdummyLine = P_XLine(dummyLine);
+    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_LEVEL, 0);
 
-    XL_LineEvent(XLE_CHAIN, chain, &dummy, 0, act_thing);
+    XG_Dev("XL_DoChain: Line %i, chained type %i", P_ToIndex(line), chain);
+    XG_Dev("  (dummy line will show up as %i)", P_ToIndex(dummyLine));
+
+    // Copy all properties to the dummy
+    P_CopyLine(line, dummyLine);
+
+    P_SetIntp(dummyLine, DMU_SIDE0, -1);
+    P_SetIntp(dummyLine, DMU_SIDE1, -1);
+
+    xdummyLine->xg->active = !activating;
+
+    // Make the chain event
+    XL_LineEvent(XLE_CHAIN, chain, dummyLine, 0, act_thing);
+
+    // Free the dummy
+    Z_Free(xdummyLine->xg);
+    P_FreeDummyLine(dummyLine);
 }
 
 void XL_ChainSequenceThink(line_t *line)
 {
-    xgline_t *xg = line->xg;
-    linetype_t *info = &xg->info;
+    xgline_t *xg;
+    linetype_t *info;
+
+    xg = P_XLine(line)->xg;
+    info = &xg->info;
 
     // Only process active chain sequences.
     if(info->line_class != LTC_CHAIN_SEQUENCE || !xg->active)
@@ -1528,7 +2395,7 @@ void XL_ChainSequenceThink(line_t *line)
     // If the counter goes to zero, it's time to execute the chain.
     if(xg->chtimer < 0)
     {
-        XG_Dev("XL_ChainSequenceThink: Line %i, executing...", line - lines);
+        XG_Dev("XL_ChainSequenceThink: Line %i, executing...", P_ToIndex(line));
 
         // Are there any more chains?
         if(xg->chidx < DDLT_MAX_PARAMS && info->iparm[xg->chidx])
@@ -1558,7 +2425,7 @@ void XL_ChainSequenceThink(line_t *line)
         else if(info->iparm[0] & CHSF_DEACTIVATE_WHEN_DONE)
         {
         // The sequence has been completed.
-            XL_ActivateLine(false, info, line, 0, xg->activator);
+            XL_ActivateLine(false, info, line, 0, xg->activator, XLE_CHAIN);
         }
     }
 }
@@ -1568,12 +2435,9 @@ void XL_ChainSequenceThink(line_t *line)
  */
 void XL_Think(line_t *line)
 {
-    xgline_t *xg = line->xg;
-    linetype_t *info = &xg->info;
     float   levtime = TIC2FLT(leveltime);
-    fixed_t xoff, yoff, spd;
-    side_t *sid;
-    int     i;
+    xgline_t *xg = P_XLine(line)->xg;
+    linetype_t *info = &xg->info;
 
     if(xg->disabled)
         return;        // Disabled, do nothing.
@@ -1600,7 +2464,7 @@ void XL_Think(line_t *line)
             (info->flags2 & LTF2_WHEN_INACTIVE && !xg->active)) &&
             (!(info->flags2 & LTF2_WHEN_LAST) || info->act_count == 1))
         {
-            XL_DoFunction(info, line, 0, xg->activator);
+            XL_DoFunction(info, line, 0, xg->activator, XLE_FORCED);
         }
     }
 
@@ -1614,31 +2478,48 @@ void XL_Think(line_t *line)
     {
         if(info->act_time >= 0 && xg->timer > FLT2TIC(info->act_time))
         {
-            XG_Dev("XL_Think: Line %i, timed to go %s", line - lines,
+            XG_Dev("XL_Think: Line %i, timed to go %s", P_ToIndex(line),
                     xg->active ? "INACTIVE" : "ACTIVE");
 
             // Swap line state without any checks.
-            XL_ActivateLine(!xg->active, info, line, 0, &dummything);
+            XL_ActivateLine(!xg->active, info, line, 0, &dummything, XLE_AUTO);
         }
     }
 
     if(info->texmove_speed)
     {
         // The texture should be moved. Calculate the offsets.
+        int offset; // The current offset.
+        side_t* side;
+
         angle_t ang =
             ((angle_t) (ANGLE_MAX * (info->texmove_angle / 360))) >>
             ANGLETOFINESHIFT;
-        spd = FRACUNIT * info->texmove_speed;
-        xoff = -FixedMul(finecosine[ang], spd);
-        yoff = FixedMul(finesine[ang], spd);
+
+        fixed_t spd = FRACUNIT * info->texmove_speed;
+        fixed_t xoff = -FixedMul(finecosine[ang], spd);
+        fixed_t yoff = FixedMul(finesine[ang], spd);
+
         // Apply to both sides of the line.
-        for(i = 0; i < 2; i++)
+        // Front side
+        side = P_GetPtrp(line, DMU_SIDE0);
+        if(side)
         {
-            if(line->sidenum[i] < 0)
-                continue;
-            sid = sides + line->sidenum[i];
-            sid->textureoffset += xoff;
-            sid->rowoffset += yoff;
+            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_TEXTURE_OFFSET_X, offset);
+
+            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_TEXTURE_OFFSET_Y, offset);
+        }
+        // back side
+        side = P_GetPtrp(line, DMU_SIDE1);
+        if(side)
+        {
+            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_TEXTURE_OFFSET_X, offset);
+
+            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_TEXTURE_OFFSET_Y, offset);
         }
     }
 }
@@ -1652,9 +2533,9 @@ void XL_Think(line_t *line)
 
     for(i = 0; i < numlines; i++)
     {
-        if(!lines[i].xg)
+        if(!xlines[i].xg)
             continue;        // Not an extended line.
-        XL_Think(lines + i);
+        XL_Think(P_ToPtr(DMU_LINE, i));
     }
 }
 
@@ -1669,9 +2550,9 @@ void XL_Update(void)
 
     // It's all PU_LEVEL memory, so we can just lose it.
     for(i = 0; i < numlines; i++)
-        if(lines[i].xg)
+        if(xlines[i].xg)
         {
-            lines[i].xg = NULL;
-            lines[i].special = 0;
+            xlines[i].xg = NULL;
+            xlines[i].special = 0;
         }
 }

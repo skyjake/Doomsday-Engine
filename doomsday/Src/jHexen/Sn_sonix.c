@@ -171,8 +171,8 @@ void SN_InitSequenceScript(void)
 {
 	int     i, j;
 	int     inSequence;
-	int    *tempDataStart;
-	int    *tempDataPtr;
+	int    *tempDataStart = 0;
+	int    *tempDataPtr = 0;
 
 	inSequence = -1;
 	ActiveSequences = 0;

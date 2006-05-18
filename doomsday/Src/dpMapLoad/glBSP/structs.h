@@ -2,9 +2,9 @@
 // STRUCT : Doom structures, raw on-disk layout
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 #define __GLBSP_STRUCTS_H__
 
 #include "system.h"
+
 
 /* ----- The wad structures ---------------------- */
 
@@ -158,10 +159,15 @@ typedef struct raw_hexen_thing_s
 } 
 raw_hexen_thing_t;
 
-// -JL- polyobj thing types
+// -JL- Hexen polyobj thing types
 #define PO_ANCHOR_TYPE      3000
 #define PO_SPAWN_TYPE       3001
 #define PO_SPAWNCRUSH_TYPE  3002
+
+// -JL- ZDoom polyobj thing types
+#define ZDOOM_PO_ANCHOR_TYPE      9300
+#define ZDOOM_PO_SPAWN_TYPE       9301
+#define ZDOOM_PO_SPAWNCRUSH_TYPE  9302
 
 
 /* ----- The BSP tree structures ----------------------- */
@@ -189,6 +195,17 @@ typedef struct raw_gl_seg_s
 raw_gl_seg_t;
 
 
+typedef struct raw_v3_seg_s
+{
+  uint32_g start;      // from this vertex...
+  uint32_g end;        // ... to this vertex
+  uint16_g linedef;    // linedef that this seg goes along, or -1
+  uint16_g side;       // 0 if on right of linedef, 1 if on left
+  uint32_g partner;    // partner seg number, or -1
+}
+raw_v3_seg_t;
+
+
 typedef struct raw_bbox_s
 {
   sint16_g maxy, miny;
@@ -213,5 +230,24 @@ typedef struct raw_subsec_s
   uint16_g first;   // first Seg
 }
 raw_subsec_t;
+
+
+typedef struct raw_v3_subsec_s
+{
+  uint32_g num;     // number of Segs in this Sub-Sector
+  uint32_g first;   // first Seg
+}
+raw_v3_subsec_t;
+
+
+typedef struct raw_v5_node_s
+{
+  sint16_g x, y;         // starting point
+  sint16_g dx, dy;       // offset to ending point
+  raw_bbox_t b1, b2;     // bounding rectangles
+  uint32_g right, left;  // children: Node or SSector (if high bit is set)
+}
+raw_v5_node_t;
+
 
 #endif /* __GLBSP_STRUCTS_H__ */

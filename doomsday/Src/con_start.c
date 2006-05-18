@@ -113,24 +113,34 @@ void Con_StartupDone(void)
 
 /*
  * Background with the "The Doomsday Engine" text superimposed.
+ *
+ * @param alpha  Alpha level to use when drawing the background.
  */
-void Con_DrawStartupBackground(void)
+void Con_DrawStartupBackground(float alpha)
 {
 	float   mul = (startupLogo ? 1.5f : 1.0f);
 	ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
 
 	// Background gradient picture.
 	gl.Bind(startupLogo);
-	gl.Disable(DGL_BLENDING);
+    if(alpha < 1.0)
+    {
+        gl.Enable(DGL_BLENDING);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    }
+    else
+    {
+        gl.Disable(DGL_BLENDING);
+    }
 	gl.Begin(DGL_QUADS);
 	// Top color.
-	gl.Color3f(dark->red * mul, dark->green * mul, dark->blue * mul);
+	gl.Color4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
 	gl.TexCoord2f(0, 0);
 	gl.Vertex2f(0, 0);
 	gl.TexCoord2f(1, 0);
 	gl.Vertex2f(screenWidth, 0);
 	// Bottom color.
-	gl.Color3f(light->red * mul, light->green * mul, light->blue * mul);
+	gl.Color4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
 	gl.TexCoord2f(1, 1);
 	gl.Vertex2f(screenWidth, screenHeight);
 	gl.TexCoord2f(0, 1);
@@ -155,7 +165,7 @@ void Con_DrawStartupScreen(int show)
     //gl.LoadIdentity();       
     //gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
 
-	Con_DrawStartupBackground();
+	Con_DrawStartupBackground(1.0);
 
 	// Draw the title.
 	FR_SetFont(glFontVariable);

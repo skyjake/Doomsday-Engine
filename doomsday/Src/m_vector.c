@@ -49,14 +49,14 @@
  */
 void V2_Set(pvec2_t vec, vectorcomp_t x, vectorcomp_t y)
 {
-	vec[VX] = x;
-	vec[VY] = y;
+    vec[VX] = x;
+    vec[VY] = y;
 }
 
 void V2_SetFixed(pvec2_t vec, fixed_t x, fixed_t y)
 {
-	vec[VX] = FIX2FLT(x);
-	vec[VY] = FIX2FLT(y);
+    vec[VX] = FIX2FLT(x);
+    vec[VY] = FIX2FLT(y);
 }
 
 /*
@@ -64,9 +64,9 @@ void V2_SetFixed(pvec2_t vec, fixed_t x, fixed_t y)
  */
 float V2_Length(const pvec2_t vec)
 {
-	if(vec[VX] == 0 && vec[VY] == 0)
-		return 0;
-	return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
+    if(vec[VX] == 0 && vec[VY] == 0)
+        return 0;
+    return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
 }
 
 /*
@@ -74,10 +74,10 @@ float V2_Length(const pvec2_t vec)
  */
 float V2_Distance(const pvec2_t a, const pvec2_t b)
 {
-	vec2_t  vec;
+    vec2_t  vec;
 
-	V2_Subtract(vec, b, a);
-	return V2_Length(vec);
+    V2_Subtract(vec, b, a);
+    return V2_Length(vec);
 }
 
 /*
@@ -86,14 +86,14 @@ float V2_Distance(const pvec2_t a, const pvec2_t b)
  */
 float V2_Normalize(float *vec)
 {
-	float   len = V2_Length(vec);
+    float   len = V2_Length(vec);
 
-	if(len != 0)
-	{
-		vec[VX] /= len;
-		vec[VY] /= len;
-	}
-	return len;
+    if(len != 0)
+    {
+        vec[VX] /= len;
+        vec[VY] /= len;
+    }
+    return len;
 }
 
 /*
@@ -101,8 +101,8 @@ float V2_Normalize(float *vec)
  */
 void V2_Copy(pvec2_t dest, const pvec2_t src)
 {
-	dest[VX] = src[VX];
-	dest[VY] = src[VY];
+    dest[VX] = src[VX];
+    dest[VY] = src[VY];
 }
 
 /*
@@ -110,8 +110,8 @@ void V2_Copy(pvec2_t dest, const pvec2_t src)
  */
 void V2_Scale(pvec2_t vec, float scalar)
 {
-	vec[VX] *= scalar;
-	vec[VY] *= scalar;
+    vec[VX] *= scalar;
+    vec[VY] *= scalar;
 }
 
 /*
@@ -119,8 +119,8 @@ void V2_Scale(pvec2_t vec, float scalar)
  */
 void V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
 {
-	dest[VX] = src1[VX] + src2[VX];
-	dest[VY] = src1[VY] + src2[VY];
+    dest[VX] = src1[VX] + src2[VX];
+    dest[VY] = src1[VY] + src2[VY];
 }
 
 /*
@@ -128,8 +128,8 @@ void V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
  */
 void V2_Subtract(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
 {
-	dest[VX] = src1[VX] - src2[VX];
-	dest[VY] = src1[VY] - src2[VY];
+    dest[VX] = src1[VX] - src2[VX];
+    dest[VY] = src1[VY] - src2[VY];
 }
 
 /*
@@ -137,7 +137,7 @@ void V2_Subtract(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
  */
 float V2_DotProduct(const pvec2_t a, const pvec2_t b)
 {
-	return a[VX] * b[VX] + a[VY] * b[VY];
+    return a[VX] * b[VX] + a[VY] * b[VY];
 }
 
 /*
@@ -145,12 +145,12 @@ float V2_DotProduct(const pvec2_t a, const pvec2_t b)
  */
 float V2_ScalarProject(const pvec2_t a, const pvec2_t b)
 {
-	float   dot = V2_DotProduct(a, b);
-	float   len = V2_Length(b);
+    float   dot = V2_DotProduct(a, b);
+    float   len = V2_Length(b);
 
-	if(len == 0)
-		return 0;
-	return dot / len;
+    if(len == 0)
+        return 0;
+    return dot / len;
 }
 
 /*
@@ -159,15 +159,15 @@ float V2_ScalarProject(const pvec2_t a, const pvec2_t b)
  */
 void V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b)
 {
-	float   div = V2_DotProduct(b, b);
+    float   div = V2_DotProduct(b, b);
 
-	if(div == 0)
-	{
-		dest[VX] = dest[VY] = 0;
-		return;
-	}
-	V2_Copy(dest, b);
-	V2_Scale(dest, V2_DotProduct(a, b) / div);
+    if(div == 0)
+    {
+        dest[VX] = dest[VY] = 0;
+        return;
+    }
+    V2_Copy(dest, b);
+    V2_Scale(dest, V2_DotProduct(a, b) / div);
 }
 
 /*
@@ -175,19 +175,19 @@ void V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b)
  */
 boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
 {
-	float   aLen = V2_Length(a);
-	float   bLen = V2_Length(b);
-	float   dot;
+    float   aLen = V2_Length(a);
+    float   bLen = V2_Length(b);
+    float   dot;
 
-	// Both must be non-zero vectors.
-	if(aLen == 0 || bLen == 0)
-		return true;
+    // Both must be non-zero vectors.
+    if(aLen == 0 || bLen == 0)
+        return true;
 
-	dot = V2_DotProduct(a, b) / aLen / bLen;
+    dot = V2_DotProduct(a, b) / aLen / bLen;
 
-	// If it's close enough, we'll consider them parallel.
+    // If it's close enough, we'll consider them parallel.
 #define EPSILON .9999f
-	return dot > EPSILON || dot < -EPSILON;
+    return dot > EPSILON || dot < -EPSILON;
 }
 
 /*
@@ -195,7 +195,7 @@ boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
  */
 boolean V2_IsZero(const pvec2_t vec)
 {
-	return vec[VX] == 0 && vec[VY] == 0;
+    return vec[VX] == 0 && vec[VY] == 0;
 }
 
 /*
@@ -204,42 +204,42 @@ boolean V2_IsZero(const pvec2_t vec)
  * factor for the first line.
  */
 float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
-					  const pvec2_t delta2, pvec2_t point)
+                      const pvec2_t delta2, pvec2_t point)
 {
-	/*
-	 *     (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
-	 * r = ----------------------------- 
-	 *     (XB-XA)(YD-YC)-(YB-YA)(XD-XC)
-	 */
+    /*
+     *     (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
+     * r = -----------------------------
+     *     (XB-XA)(YD-YC)-(YB-YA)(XD-XC)
+     */
 
-	float   r, div = delta1[VX] * delta2[VY] - delta1[VY] * delta2[VX];
-	int     i;
+    float   r, div = delta1[VX] * delta2[VY] - delta1[VY] * delta2[VX];
+    int     i;
 
-	if(div == 0)
-	{
-		// Special case: lines are parallel.
-		r = 0;
-	}
-	else
-	{
-		r = ((p1[VY] - p2[VY]) * delta2[VX] -
-			 (p1[VX] - p2[VX]) * delta2[VY]) / div;
-	}
+    if(div == 0)
+    {
+        // Special case: lines are parallel.
+        r = 0;
+    }
+    else
+    {
+        r = ((p1[VY] - p2[VY]) * delta2[VX] -
+             (p1[VX] - p2[VX]) * delta2[VY]) / div;
+    }
 
-	/*
-	 * XI=XA+r(XB-XA)
-	 * YI=YA+r(YB-YA)
-	 */
+    /*
+     * XI=XA+r(XB-XA)
+     * YI=YA+r(YB-YA)
+     */
 
-	if(point)
-	{
-		// Calculate the intersection point.
-		for(i = 0; i < 2; i++)
-			point[i] = p1[i] + r * delta1[i];
-	}
+    if(point)
+    {
+        // Calculate the intersection point.
+        for(i = 0; i < 2; i++)
+            point[i] = p1[i] + r * delta1[i];
+    }
 
-	// Return the scaling factor.
-	return r;
+    // Return the scaling factor.
+    return r;
 }
 
 /*
@@ -247,32 +247,32 @@ float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
  * arguments are all points.
  */
 float V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
-				   const pvec2_t d, pvec2_t point)
+                   const pvec2_t d, pvec2_t point)
 {
-	vec2_t  ab = { b[VX] - a[VX], b[VY] - a[VY] };
-	vec2_t  cd = { d[VX] - c[VX], d[VY] - c[VY] };
+    vec2_t  ab = { b[VX] - a[VX], b[VY] - a[VY] };
+    vec2_t  cd = { d[VX] - c[VX], d[VY] - c[VY] };
 
-	return V2_Intersection(a, ab, c, cd, point);
+    return V2_Intersection(a, ab, c, cd, point);
 }
 
 /*
  * Returns true if the two lines intercept.
  */
 boolean V2_Intercept2(const pvec2_t a, const pvec2_t b, const pvec2_t c,
-					  const pvec2_t d, pvec2_t point, float *abFrac,
-					  float *cdFrac)
+                      const pvec2_t d, pvec2_t point, float *abFrac,
+                      float *cdFrac)
 {
-	float   ab, cd;
+    float   ab, cd;
 
-	ab = V2_Intercept(a, b, c, d, point);
-	cd = V2_Intercept(c, d, a, b, NULL);
+    ab = V2_Intercept(a, b, c, d, point);
+    cd = V2_Intercept(c, d, a, b, NULL);
 
-	if(abFrac)
-		*abFrac = ab;
-	if(cdFrac)
-		*cdFrac = cd;
+    if(abFrac)
+        *abFrac = ab;
+    if(cdFrac)
+        *cdFrac = cd;
 
-	return (ab >= 0 && ab <= 1 && cd >= 0 && cd <= 1);
+    return (ab >= 0 && ab <= 1 && cd >= 0 && cd <= 1);
 }
 
 /*
@@ -280,12 +280,12 @@ boolean V2_Intercept2(const pvec2_t a, const pvec2_t b, const pvec2_t c,
  */
 void V2_Lerp(pvec2_t dest, const pvec2_t a, const pvec2_t b, float c)
 {
-	int     i;
+    int     i;
 
-	for(i = 0; i < 2; i++)
-	{
-		dest[i] = a[i] + c * (b[i] - a[i]);
-	}
+    for(i = 0; i < 2; i++)
+    {
+        dest[i] = a[i] + c * (b[i] - a[i]);
+    }
 }
 
 /*
@@ -293,19 +293,19 @@ void V2_Lerp(pvec2_t dest, const pvec2_t a, const pvec2_t b, float c)
  */
 void V2_InitBox(arvec2_t box, const pvec2_t point)
 {
-	V2_Copy(box[0], point);
-	V2_Copy(box[1], point);
+    V2_Copy(box[0], point);
+    V2_Copy(box[1], point);
 }
 
 void V2_AddToBox(arvec2_t box, const pvec2_t point)
 {
-	if(point[VX] < box[0][VX])
-		box[0][VX] = point[VX];
-	if(point[VX] > box[1][VX])
-		box[1][VX] = point[VX];
+    if(point[VX] < box[0][VX])
+        box[0][VX] = point[VX];
+    if(point[VX] > box[1][VX])
+        box[1][VX] = point[VX];
 
-	if(point[VY] < box[0][VY])
-		box[0][VY] = point[VY];
-	if(point[VY] > box[1][VY])
-		box[1][VY] = point[VY];
+    if(point[VY] < box[0][VY])
+        box[0][VY] = point[VY];
+    if(point[VY] > box[1][VY])
+        box[1][VY] = point[VY];
 }

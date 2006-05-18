@@ -1,5 +1,6 @@
 /* DE1: $Id$
- * Copyright (C) 2005 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *                    (add more authors here)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

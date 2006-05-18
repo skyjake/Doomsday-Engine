@@ -54,34 +54,34 @@ boolean alwaysDrawSphere = false;
  */
 void R_SetupSkyModels(ded_mapinfo_t * info)
 {
-	int     i;
-	ded_skymodel_t *def;
-	skymodel_t *sky;
+    int     i;
+    ded_skymodel_t *def;
+    skymodel_t *sky;
 
-	// Clear the whole sky models data.
-	memset(skyModels, 0, sizeof(skyModels));
+    // Clear the whole sky models data.
+    memset(skyModels, 0, sizeof(skyModels));
 
-	// Normally the sky sphere is not drawn if models are in use.
-	alwaysDrawSphere = (info->flags & MIF_DRAW_SPHERE) != 0;
+    // Normally the sky sphere is not drawn if models are in use.
+    alwaysDrawSphere = (info->flags & MIF_DRAW_SPHERE) != 0;
 
-	// The normal sphere is used if no models will be set up.
-	skyModelsInited = false;
+    // The normal sphere is used if no models will be set up.
+    skyModelsInited = false;
 
-	for(i = 0, def = info->sky_models, sky = skyModels; i < NUM_SKY_MODELS;
-		i++, def++, sky++)
-	{
-		// Is the model ID set?
-		if((sky->model = R_CheckIDModelFor(def->id)) == NULL)
-			continue;
+    for(i = 0, def = info->sky_models, sky = skyModels; i < NUM_SKY_MODELS;
+        i++, def++, sky++)
+    {
+        // Is the model ID set?
+        if((sky->model = R_CheckIDModelFor(def->id)) == NULL)
+            continue;
 
-		// There is a model here.
-		skyModelsInited = true;
+        // There is a model here.
+        skyModelsInited = true;
 
-		sky->def = def;
-		sky->maxTimer = (int) (TICSPERSEC * def->frame_interval);
-		sky->yaw = def->yaw;
-		sky->frame = sky->model->sub[0].frame;
-	}
+        sky->def = def;
+        sky->maxTimer = (int) (TICSPERSEC * def->frame_interval);
+        sky->yaw = def->yaw;
+        sky->frame = sky->model->sub[0].frame;
+    }
 }
 
 /*
@@ -89,18 +89,18 @@ void R_SetupSkyModels(ded_mapinfo_t * info)
  */
 void R_PrecacheSky(void)
 {
-	int     i;
-	skymodel_t *sky;
+    int     i;
+    skymodel_t *sky;
 
-	if(!skyModelsInited)
-		return;
+    if(!skyModelsInited)
+        return;
 
-	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
-	{
-		if(!sky->def)
-			continue;
-		R_PrecacheModelSkins(sky->model);
-	}
+    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
+    {
+        if(!sky->def)
+            continue;
+        R_PrecacheModelSkins(sky->model);
+    }
 }
 
 /*
@@ -108,29 +108,29 @@ void R_PrecacheSky(void)
  */
 void R_SkyTicker(void)
 {
-	int     i;
-	skymodel_t *sky;
+    int     i;
+    skymodel_t *sky;
 
-	if(!skyModelsInited || clientPaused)
-		return;
+    if(!skyModelsInited || clientPaused)
+        return;
 
-	for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
-	{
-		if(!sky->def)
-			continue;
+    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
+    {
+        if(!sky->def)
+            continue;
 
-		// Turn the model.
-		sky->yaw += sky->def->yaw_speed / TICSPERSEC;
+        // Turn the model.
+        sky->yaw += sky->def->yaw_speed / TICSPERSEC;
 
-		// Is it time to advance to the next frame?
-		if(sky->maxTimer > 0 && ++sky->timer >= sky->maxTimer)
-		{
-			sky->timer = 0;
-			sky->frame++;
+        // Is it time to advance to the next frame?
+        if(sky->maxTimer > 0 && ++sky->timer >= sky->maxTimer)
+        {
+            sky->timer = 0;
+            sky->frame++;
 
-			// Execute a console command?
-			if(sky->def->execute)
-				Con_Execute(sky->def->execute, true);
-		}
-	}
+            // Execute a console command?
+            if(sky->def->execute)
+                Con_Execute(CMDS_DED, sky->def->execute, true);
+        }
+    }
 }

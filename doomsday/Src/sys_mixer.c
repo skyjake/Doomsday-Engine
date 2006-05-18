@@ -16,7 +16,7 @@
  */
 
 /*
- * sys_mixer.c: Win32 Multimedia Mixer 
+ * sys_mixer.c: Win32 Multimedia Mixer
  *
  * Mainly used by the Win Mus driver for setting the CD volume.
  */
@@ -38,10 +38,10 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct mixerdata_s {
-	boolean available;
-	MIXERLINE line;
-	MIXERLINECONTROLS controls;
-	MIXERCONTROL volume;
+    boolean available;
+    MIXERLINE line;
+    MIXERLINECONTROLS controls;
+    MIXERCONTROL volume;
 } mixerdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -63,213 +63,200 @@ static mixerdata_t mixCD, mixMidi;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// Sys_InitMixerLine
-//===========================================================================
 void Sys_InitMixerLine(mixerdata_t * mix, DWORD type)
 {
-	memset(mix, 0, sizeof(*mix));
-	mix->line.cbStruct = sizeof(mix->line);
-	mix->line.dwComponentType = type;
-	if((res =
-		mixerGetLineInfo((HMIXEROBJ) mixer, &mix->line,
-						 MIXER_GETLINEINFOF_COMPONENTTYPE)) !=
-	   MMSYSERR_NOERROR)
-	{
-		if(verbose)
-			Con_Message("  Error getting line info: " "Error %i\n", res);
-		return;
-	}
+    memset(mix, 0, sizeof(*mix));
+    mix->line.cbStruct = sizeof(mix->line);
+    mix->line.dwComponentType = type;
+    if((res =
+        mixerGetLineInfo((HMIXEROBJ) mixer, &mix->line,
+                         MIXER_GETLINEINFOF_COMPONENTTYPE)) !=
+       MMSYSERR_NOERROR)
+    {
+        if(verbose)
+            Con_Message("  Error getting line info: " "Error %i\n", res);
+        return;
+    }
 
-	if(verbose)
-	{
-		Con_Message("  Destination line idx: %i\n", mix->line.dwDestination);
-		Con_Message("  Line ID: 0x%x\n", mix->line.dwLineID);
-		Con_Message("  Channels: %i\n", mix->line.cChannels);
-		Con_Message("  Controls: %i\n", mix->line.cControls);
-		Con_Message("  Name: %s (%s)\n", mix->line.szName,
-					mix->line.szShortName);
-	}
+    if(verbose)
+    {
+        Con_Message("  Destination line idx: %i\n", mix->line.dwDestination);
+        Con_Message("  Line ID: 0x%x\n", mix->line.dwLineID);
+        Con_Message("  Channels: %i\n", mix->line.cChannels);
+        Con_Message("  Controls: %i\n", mix->line.cControls);
+        Con_Message("  Name: %s (%s)\n", mix->line.szName,
+                    mix->line.szShortName);
+    }
 
-	mix->controls.cbStruct = sizeof(mix->controls);
-	mix->controls.dwLineID = mix->line.dwLineID;
-	mix->controls.dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
-	mix->controls.cControls = 1;
-	mix->controls.cbmxctrl = sizeof(mix->volume);
-	mix->controls.pamxctrl = &mix->volume;
-	if((res =
-		mixerGetLineControls((HMIXEROBJ) mixer, &mix->controls,
-							 MIXER_GETLINECONTROLSF_ONEBYTYPE)) !=
-	   MMSYSERR_NOERROR)
-	{
-		if(verbose)
-			Con_Message("  Error getting line controls " "(vol): error %i\n",
-						res);
-		return;
-	}
+    mix->controls.cbStruct = sizeof(mix->controls);
+    mix->controls.dwLineID = mix->line.dwLineID;
+    mix->controls.dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
+    mix->controls.cControls = 1;
+    mix->controls.cbmxctrl = sizeof(mix->volume);
+    mix->controls.pamxctrl = &mix->volume;
+    if((res =
+        mixerGetLineControls((HMIXEROBJ) mixer, &mix->controls,
+                             MIXER_GETLINECONTROLSF_ONEBYTYPE)) !=
+       MMSYSERR_NOERROR)
+    {
+        if(verbose)
+            Con_Message("  Error getting line controls " "(vol): error %i\n",
+                        res);
+        return;
+    }
 
-	if(verbose)
-	{
-		Con_Message("  Volume control ID: 0x%x\n", mix->volume.dwControlID);
-		Con_Message("  Name: %s (%s)\n", mix->volume.szName,
-					mix->volume.szShortName);
-		Con_Message("  Min/Max: %i/%i\n", mix->volume.Bounds.dwMinimum,
-					mix->volume.Bounds.dwMaximum);
-	}
+    if(verbose)
+    {
+        Con_Message("  Volume control ID: 0x%x\n", mix->volume.dwControlID);
+        Con_Message("  Name: %s (%s)\n", mix->volume.szName,
+                    mix->volume.szShortName);
+        Con_Message("  Min/Max: %i/%i\n", mix->volume.Bounds.dwMinimum,
+                    mix->volume.Bounds.dwMaximum);
+    }
 
-	// This mixer line is now available.
-	mix->available = true;
+    // This mixer line is now available.
+    mix->available = true;
 }
 
-//===========================================================================
-// Sys_InitMixer
-//  A ridiculous amount of code to do something this simple.
-//  But mixers are pretty abstract a subject, I guess... 
-//  (No, the API just sucks.)
-//===========================================================================
+/*
+ * A ridiculous amount of code to do something this simple.
+ * But mixers are pretty abstract a subject, I guess...
+ * (No, the API just sucks.)
+ */
 int Sys_InitMixer(void)
 {
-	MIXERCAPS mixerCaps;
-	int     num = mixerGetNumDevs();	// Number of mixer devices.
+    MIXERCAPS mixerCaps;
+    int     num = mixerGetNumDevs();    // Number of mixer devices.
 
-	if(initOk || ArgCheck("-nomixer") || ArgCheck("-nomusic") || isDedicated)
-		return true;
+    if(initOk || ArgCheck("-nomixer") || ArgCheck("-nomusic") || isDedicated)
+        return true;
 
-	if(verbose)
-	{
-		// In verbose mode, print a lot of extra information.
-		Con_Message("Sys_InitMixer: Number of mixer devices: %i\n", num);
-	}
+    if(verbose)
+    {
+        // In verbose mode, print a lot of extra information.
+        Con_Message("Sys_InitMixer: Number of mixer devices: %i\n", num);
+    }
 
-	// Open the mixer device.
-	res = mixerOpen(&mixer, 0, 0, 0, MIXER_OBJECTF_MIXER);
-	if(res != MMSYSERR_NOERROR)
-	{
-		if(verbose)
-			Con_Message("  Error opening mixer: Error %i\n", res);
-		return 0;
-	}
+    // Open the mixer device.
+    res = mixerOpen(&mixer, 0, 0, 0, MIXER_OBJECTF_MIXER);
+    if(res != MMSYSERR_NOERROR)
+    {
+        if(verbose)
+            Con_Message("  Error opening mixer: Error %i\n", res);
+        return 0;
+    }
 
-	// Get the device caps.
-	mixerGetDevCaps((UINT) mixer, &mixerCaps, sizeof(mixerCaps));
+    // Get the device caps.
+    mixerGetDevCaps((UINT) mixer, &mixerCaps, sizeof(mixerCaps));
 
-	Con_Message("Sys_InitMixer: %s\n", mixerCaps.szPname);
-	if(verbose)
-		Con_Message("  Audio line destinations: %i\n",
-					mixerCaps.cDestinations);
+    Con_Message("Sys_InitMixer: %s\n", mixerCaps.szPname);
+    if(verbose)
+        Con_Message("  Audio line destinations: %i\n",
+                    mixerCaps.cDestinations);
 
-	// Init CD mixer.
-	if(verbose)
-		Con_Message("Init CD audio line:\n");
-	Sys_InitMixerLine(&mixCD, MIXERLINE_COMPONENTTYPE_SRC_COMPACTDISC);
-	if(verbose)
-		Con_Message("Init synthesizer line:\n");
-	Sys_InitMixerLine(&mixMidi, MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER);
+    // Init CD mixer.
+    if(verbose)
+        Con_Message("Init CD audio line:\n");
+    Sys_InitMixerLine(&mixCD, MIXERLINE_COMPONENTTYPE_SRC_COMPACTDISC);
+    if(verbose)
+        Con_Message("Init synthesizer line:\n");
+    Sys_InitMixerLine(&mixMidi, MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER);
 
-	// We're successful.
-	initOk = true;
-	return true;
+    // We're successful.
+    initOk = true;
+    return true;
 }
 
-//===========================================================================
-// Sys_ShutdownMixer
-//===========================================================================
 void Sys_ShutdownMixer(void)
 {
-	if(!initOk)
-		return;					// Can't uninitialize if not inited.
+    if(!initOk)
+        return;                 // Can't uninitialize if not inited.
 
-	mixerClose(mixer);
-	mixer = NULL;
-	initOk = false;
+    mixerClose(mixer);
+    mixer = NULL;
+    initOk = false;
 }
 
-//===========================================================================
-// Sys_Mixer4i
-//===========================================================================
 int Sys_Mixer4i(int device, int action, int control, int parm)
 {
-	MIXERCONTROLDETAILS ctrlDetails;
-	MIXERCONTROLDETAILS_UNSIGNED mcdUnsigned[2];
-	MIXERCONTROL *mctrl;
-	MIXERLINE *mline;
-	mixerdata_t *mix;
-	int     i;
+    MIXERCONTROLDETAILS ctrlDetails;
+    MIXERCONTROLDETAILS_UNSIGNED mcdUnsigned[2];
+    MIXERCONTROL *mctrl;
+    MIXERLINE *mline;
+    mixerdata_t *mix;
+    int     i;
 
-	if(!initOk)
-		return MIX_ERROR;
+    if(!initOk)
+        return MIX_ERROR;
 
-	// This is quite specific at the moment. 
-	// Only allow setting the CD volume.
-	if(device != MIX_CDAUDIO && device != MIX_MIDI)
-		return MIX_ERROR;
-	if(control != MIX_VOLUME)
-		return MIX_ERROR;
+    // This is quite specific at the moment.
+    // Only allow setting the CD volume.
+    if(device != MIX_CDAUDIO && device != MIX_MIDI)
+        return MIX_ERROR;
+    if(control != MIX_VOLUME)
+        return MIX_ERROR;
 
-	// Choose the mixer line.
-	mix = (device == MIX_CDAUDIO ? &mixCD : &mixMidi);
+    // Choose the mixer line.
+    mix = (device == MIX_CDAUDIO ? &mixCD : &mixMidi);
 
-	// Is the mixer line for the requested device available?
-	if(!mix->available)
-		return MIX_ERROR;
+    // Is the mixer line for the requested device available?
+    if(!mix->available)
+        return MIX_ERROR;
 
-	mline = &mix->line;
-	mctrl = &mix->volume;
+    mline = &mix->line;
+    mctrl = &mix->volume;
 
-	// Init the data structure.
-	memset(&ctrlDetails, 0, sizeof(ctrlDetails));
-	ctrlDetails.cbStruct = sizeof(ctrlDetails);
-	ctrlDetails.dwControlID = mctrl->dwControlID;
-	ctrlDetails.cChannels = 1;	//mline->cChannels;
-	ctrlDetails.cbDetails = sizeof(mcdUnsigned);
-	ctrlDetails.paDetails = &mcdUnsigned;
+    // Init the data structure.
+    memset(&ctrlDetails, 0, sizeof(ctrlDetails));
+    ctrlDetails.cbStruct = sizeof(ctrlDetails);
+    ctrlDetails.dwControlID = mctrl->dwControlID;
+    ctrlDetails.cChannels = 1;  //mline->cChannels;
+    ctrlDetails.cbDetails = sizeof(mcdUnsigned);
+    ctrlDetails.paDetails = &mcdUnsigned;
 
-	switch (action)
-	{
-	case MIX_GET:
-		res =
-			mixerGetControlDetails((HMIXEROBJ) mixer, &ctrlDetails,
-								   MIXER_GETCONTROLDETAILSF_VALUE);
-		if(res != MMSYSERR_NOERROR)
-			return MIX_ERROR;
+    switch (action)
+    {
+    case MIX_GET:
+        res =
+            mixerGetControlDetails((HMIXEROBJ) mixer, &ctrlDetails,
+                                   MIXER_GETCONTROLDETAILSF_VALUE);
+        if(res != MMSYSERR_NOERROR)
+            return MIX_ERROR;
 
-		// The bigger one is the real volume.
-		i = mcdUnsigned[mcdUnsigned[0].dwValue >
-						mcdUnsigned[1].dwValue ? 0 : 1].dwValue;
+        // The bigger one is the real volume.
+        i = mcdUnsigned[mcdUnsigned[0].dwValue >
+                        mcdUnsigned[1].dwValue ? 0 : 1].dwValue;
 
-		// Return the value in range 0-255.
-		return (255 * (i - mctrl->Bounds.dwMinimum)) /
-			(mctrl->Bounds.dwMaximum - mctrl->Bounds.dwMinimum);
+        // Return the value in range 0-255.
+        return (255 * (i - mctrl->Bounds.dwMinimum)) /
+            (mctrl->Bounds.dwMaximum - mctrl->Bounds.dwMinimum);
 
-	case MIX_SET:
-		// Clamp it.
-		if(parm < 0)
-			parm = 0;
-		if(parm > 255)
-			parm = 255;
+    case MIX_SET:
+        // Clamp it.
+        if(parm < 0)
+            parm = 0;
+        if(parm > 255)
+            parm = 255;
 
-		// Set both channels to the same volume (center balance).
-		mcdUnsigned[0].dwValue = mcdUnsigned[1].dwValue =
-			(parm * (mctrl->Bounds.dwMaximum - mctrl->Bounds.dwMinimum)) /
-			255 + mctrl->Bounds.dwMinimum;
+        // Set both channels to the same volume (center balance).
+        mcdUnsigned[0].dwValue = mcdUnsigned[1].dwValue =
+            (parm * (mctrl->Bounds.dwMaximum - mctrl->Bounds.dwMinimum)) /
+            255 + mctrl->Bounds.dwMinimum;
 
-		res =
-			mixerSetControlDetails((HMIXEROBJ) mixer, &ctrlDetails,
-								   MIXER_SETCONTROLDETAILSF_VALUE);
-		if(res != MMSYSERR_NOERROR)
-			return MIX_ERROR;
-		break;
+        res =
+            mixerSetControlDetails((HMIXEROBJ) mixer, &ctrlDetails,
+                                   MIXER_SETCONTROLDETAILSF_VALUE);
+        if(res != MMSYSERR_NOERROR)
+            return MIX_ERROR;
+        break;
 
-	default:
-		return MIX_ERROR;
-	}
-	return MIX_OK;
+    default:
+        return MIX_ERROR;
+    }
+    return MIX_OK;
 }
 
-//===========================================================================
-// Sys_Mixer3i
-//===========================================================================
 int Sys_Mixer3i(int device, int action, int control)
 {
-	return Sys_Mixer4i(device, action, control, 0);
+    return Sys_Mixer4i(device, action, control, 0);
 }

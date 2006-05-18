@@ -2,9 +2,9 @@
 // NODE : Recursively create nodes and return the pointers.
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -44,6 +44,7 @@
 #include <limits.h>
 #include <assert.h>
 
+#include "analyze.h"
 #include "blockmap.h"
 #include "level.h"
 #include "node.h"
@@ -68,7 +69,7 @@ static superblock_t *quick_alloc_supers = NULL;
 //
 static int PointOnLineSide(seg_t *part, float_g x, float_g y)
 {
-  float_g perp = ComputePerpDist(part, x, y);
+  float_g perp = UtilPerpDist(part, x, y);
   
   if (fabs(perp) <= DIST_EPSILON)
     return 0;
@@ -194,7 +195,7 @@ void FreeSuper(superblock_t *block)
   quick_alloc_supers = block;
 }
 
-#if 0
+#if 0 // DEBUGGING CODE
 static void TestSuperWorker(superblock_t *block, int *real, int *mini)
 {
   seg_t *cur;
@@ -351,6 +352,8 @@ static seg_t *CreateOneSeg(linedef_t *line, vertex_t *start, vertex_t *end,
   {
     PrintWarn("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
         line->index);
+
+    MarkSoftFailure(LIMIT_BAD_SIDE);
   }
  
   seg->start   = start;
@@ -377,18 +380,19 @@ static seg_t *CreateOneSeg(linedef_t *line, vertex_t *start, vertex_t *end,
 superblock_t *CreateSegs(void)
 {
   int i;
+  int bw, bh;
 
   seg_t *left, *right;
   superblock_t *block;
 
-  PrintMsg("Creating Segs...\n");
+  PrintVerbose("Creating Segs...\n");
 
   block = NewSuperBlock();
  
-  block->x1 = block_x;
-  block->y1 = block_y;
-  block->x2 = block->x1 + 128 * RoundPOW2(block_w);
-  block->y2 = block->y1 + 128 * RoundPOW2(block_h);
+  GetBlockmapBounds(&block->x1, &block->y1, &bw, &bh);
+
+  block->x2 = block->x1 + 128 * UtilRoundPOW2(bw);
+  block->y2 = block->y1 + 128 * UtilRoundPOW2(bh);
 
   // step through linedefs and get side numbers
 
@@ -403,12 +407,16 @@ superblock_t *CreateSegs(void)
     // ignore zero-length lines
     if (line->zero_len)
       continue;
-    
+
+    // ignore overlapping lines
+    if (line->overlap)
+      continue;
+
     // check for Humungously long lines
     if (ABS(line->start->x - line->end->x) >= 10000 ||
         ABS(line->start->y - line->end->y) >= 10000)
     {
-      if (ComputeDist(line->start->x - line->end->x,
+      if (UtilComputeDist(line->start->x - line->end->x,
           line->start->y - line->end->y) >= 30000)
       {
         PrintWarn("Linedef #%d is VERY long, it may cause problems\n",
@@ -446,6 +454,30 @@ superblock_t *CreateSegs(void)
         PrintWarn("Linedef #%d is 2s but has no left sidedef\n",
             line->index);
         line->two_sided = 0;
+      }
+
+      // handle the 'One-Sided Window' trick
+      if (line->window_effect)
+      {
+        seg_t *left = NewSeg();
+
+        left->start   = line->end;
+        left->end     = line->start;
+        left->side    = 1;
+        left->linedef = NULL; // miniseg
+        left->sector  = NULL; //
+
+        left->source_line = line;
+        left->index = -1;
+
+        RecomputeSeg(left);
+
+        AddSegToSuper(block, left);
+
+        // setup partner info (it's very strange to have a miniseg
+        // and a normal seg partnered together).
+        left->partner = right;
+        right->partner = left;
       }
     }
   }
@@ -491,9 +523,12 @@ static void ClockwiseOrder(subsec_t *sub)
   int i;
   int total = 0;
 
-  #if DEBUG_SUBSEC
+  int first = 0;
+  int score = -1;
+
+# if DEBUG_SUBSEC
   PrintDebug("Subsec: Clockwising %d\n", sub->index);
-  #endif
+# endif
 
   // count segs and create an array to manipulate them
   for (cur=sub->seg_list; cur; cur=cur->next)
@@ -523,8 +558,8 @@ static void ClockwiseOrder(subsec_t *sub)
 
     angle_g angle1, angle2;
 
-    angle1 = ComputeAngle(A->start->x-sub->mid_x, A->start->y-sub->mid_y);
-    angle2 = ComputeAngle(B->start->x-sub->mid_x, B->start->y-sub->mid_y);
+    angle1 = UtilComputeAngle(A->start->x - sub->mid_x, A->start->y - sub->mid_y);
+    angle2 = UtilComputeAngle(B->start->x - sub->mid_x, B->start->y - sub->mid_y);
 
     if (angle1 + ANG_EPSILON < angle2)
     {
@@ -543,30 +578,51 @@ static void ClockwiseOrder(subsec_t *sub)
     }
   }
 
+  // choose the seg that will be first (the game engine will typically use
+  // that to determine the sector).  In particular, we don't like self
+  // referencing linedefs (they are often used for deep-water effects).
+  for (i=0; i < total; i++)
+  {
+    int cur_score = 2;
+
+    if (! array[i]->linedef)
+      cur_score = 0;
+    else if (array[i]->linedef->self_ref)
+      cur_score = 1;
+
+    if (cur_score > score)
+    {
+      first = i;
+      score = cur_score;
+    }
+  }
+
   // transfer sorted array back into sub
   sub->seg_list = NULL;
 
   for (i=total-1; i >= 0; i--)
   {
-    array[i]->next = sub->seg_list;
-    sub->seg_list  = array[i];
+    int j = (i + first) % total;
+
+    array[j]->next = sub->seg_list;
+    sub->seg_list  = array[j];
   }
  
   if (total > 32)
     UtilFree(array);
 
-  #if DEBUG_SORTER
+# if DEBUG_SORTER
   PrintDebug("Sorted SEGS around (%1.1f,%1.1f)\n", sub->mid_x, sub->mid_y);
 
   for (cur=sub->seg_list; cur; cur=cur->next)
   {
-    angle_g angle = ComputeAngle(cur->start->x - sub->mid_x,
+    angle_g angle = UtilComputeAngle(cur->start->x - sub->mid_x,
         cur->start->y - sub->mid_y);
     
     PrintDebug("  Seg %p: Angle %1.6f  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
       cur, angle, cur->start->x, cur->start->y, cur->end->x, cur->end->y);
   }
-  #endif
+# endif
 }
 
 //
@@ -593,13 +649,13 @@ static void SanityCheckClosed(subsec_t *sub)
         "(%d gaps, %d segs)\n", sub->index, 
         sub->mid_x, sub->mid_y, gaps, total);
 
-    #if DEBUG_SUBSEC
+#   if DEBUG_SUBSEC
     for (cur=sub->seg_list; cur; cur=cur->next)
     {
       PrintDebug("  SEG %p  (%1.1f,%1.1f) --> (%1.1f,%1.1f)\n", cur,
           cur->start->x, cur->start->y, cur->end->x, cur->end->y);
     }
-    #endif
+#   endif
   }
 }
 
@@ -639,6 +695,12 @@ static void SanityCheckSameSector(subsec_t *sub)
     if (cur->sector->coalesce)
       continue;
 
+    // prevent excessive number of warnings
+    if (compare->sector->warned_facing == cur->sector->index)
+      continue;
+
+    compare->sector->warned_facing = cur->sector->index;
+
     if (cur->linedef)
       PrintMiniWarn("Sector #%d has sidedef facing #%d (line #%d) "
           "near (%1.0f,%1.0f).\n", compare->sector->index,
@@ -652,15 +714,32 @@ static void SanityCheckSameSector(subsec_t *sub)
 }
 
 //
+// SanityCheckHasRealSeg
+//
+static void SanityCheckHasRealSeg(subsec_t *sub)
+{
+  seg_t *cur;
+
+  for (cur=sub->seg_list; cur; cur=cur->next)
+  {
+    if (cur->linedef)
+      return;
+  }
+
+  InternalError("Subsector #%d near (%1.1f,%1.1f) has no real seg !",
+      sub->index, sub->mid_x, sub->mid_y);
+}
+
+//
 // RenumberSubsecSegs
 //
 static void RenumberSubsecSegs(subsec_t *sub)
 {
   seg_t *cur;
 
-  #if DEBUG_SUBSEC
+# if DEBUG_SUBSEC
   PrintDebug("Subsec: Renumbering %d\n", sub->index);
-  #endif
+# endif
 
   sub->seg_count = 0;
 
@@ -671,10 +750,10 @@ static void RenumberSubsecSegs(subsec_t *sub)
 
     sub->seg_count++;
 
-    #if DEBUG_SUBSEC
+#   if DEBUG_SUBSEC
     PrintDebug("Subsec:   %d: Seg %p  Index %d\n", sub->seg_count,
         cur, cur->index);
-    #endif
+#   endif
   }
 }
 
@@ -734,24 +813,24 @@ static subsec_t *CreateSubsec(superblock_t *seg_list)
 
   DetermineMiddle(sub);
 
-  #if DEBUG_SUBSEC
+# if DEBUG_SUBSEC
   PrintDebug("Subsec: Creating %d\n", sub->index);
-  #endif
+# endif
 
   return sub;
 }
 
 //
-// ComputeHeight
+// ComputeBspHeight
 //
-int ComputeHeight(node_t *node)
+int ComputeBspHeight(node_t *node)
 {
   if (node)
   {
     int left, right;
     
-    right = ComputeHeight(node->r.node);
-    left  = ComputeHeight(node->l.node);
+    right = ComputeBspHeight(node->r.node);
+    left  = ComputeBspHeight(node->l.node);
 
     return MAX(left, right) + 1;
   }
@@ -760,7 +839,7 @@ int ComputeHeight(node_t *node)
 }
 
 
-#ifdef DEBUG_BUILDER
+#if DEBUG_BUILDER
 
 static void DebugShowSegs(superblock_t *seg_list)
 {
@@ -786,7 +865,7 @@ static void DebugShowSegs(superblock_t *seg_list)
 // BuildNodes
 //
 glbsp_ret_e BuildNodes(superblock_t *seg_list, 
-    node_t ** N, subsec_t ** S, int depth)
+    node_t ** N, subsec_t ** S, int depth, node_t *stale_nd)
 {
   node_t *node;
   seg_t *best;
@@ -795,6 +874,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
   superblock_t *lefts;
 
   intersection_t *cut_list;
+  int stale_opposite = 0;
 
   glbsp_ret_e ret;
 
@@ -804,33 +884,33 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
   if (cur_comms->cancelled)
     return GLBSP_E_Cancelled;
 
-  #if DEBUG_BUILDER
+# if DEBUG_BUILDER
   PrintDebug("Build: BEGUN @ %d\n", depth);
   DebugShowSegs(seg_list);
-  #endif
+# endif
 
-  // pick best node to use.  None indicates convexicity.
-  best = PickNode(seg_list, depth);
+  /* pick best node to use.  None indicates convexicity */
+  best = PickNode(seg_list, depth, &stale_nd, &stale_opposite);
 
   if (best == NULL)
   {
     if (cur_comms->cancelled)
       return GLBSP_E_Cancelled;
 
-    #if DEBUG_BUILDER
+#   if DEBUG_BUILDER
     PrintDebug("Build: CONVEX\n");
-    #endif
+#   endif
 
     *S = CreateSubsec(seg_list);
     return GLBSP_E_OK;
   }
 
-  #if DEBUG_BUILDER
+# if DEBUG_BUILDER
   PrintDebug("Build: PARTITION %p (%1.0f,%1.0f) -> (%1.0f,%1.0f)\n",
       best, best->start->x, best->start->y, best->end->x, best->end->y);
-  #endif
+# endif
 
-  // create left and right super blocks
+  /* create left and right super blocks */
   lefts  = (superblock_t *) NewSuperBlock();
   rights = (superblock_t *) NewSuperBlock();
 
@@ -839,12 +919,12 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
   lefts->x2 = rights->x2 = seg_list->x2;
   lefts->y2 = rights->y2 = seg_list->y2;
 
-  // divide the segs into two lists: left & right
+  /* divide the segs into two lists: left & right */
   cut_list = NULL;
 
   SeparateSegs(seg_list, best, lefts, rights, &cut_list);
 
-  // sanity checks...
+  /* sanity checks... */
   if (rights->real_num + rights->mini_num == 0)
     InternalError("Separated seg-list has no RIGHT side");
 
@@ -857,12 +937,24 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
 
   *N = node = NewNode();
 
-  node->x  = (int)best->psx;
-  node->y  = (int)best->psy;
-  node->dx = (int)best->pdx;
-  node->dy = (int)best->pdy;
+  assert(best->linedef);
 
-  // check for really long partition (overflows dx,dy in NODES)
+  if (best->side == 0)
+  {
+    node->x  = best->linedef->start->x;
+    node->y  = best->linedef->start->y;
+    node->dx = best->linedef->end->x - node->x;
+    node->dy = best->linedef->end->y - node->y;
+  }
+  else  /* left side */
+  {
+    node->x  = best->linedef->end->x;
+    node->y  = best->linedef->end->y;
+    node->dx = best->linedef->start->x - node->x;
+    node->dy = best->linedef->start->y - node->y;
+  }
+
+  /* check for really long partition (overflows dx,dy in NODES) */
   if (best->p_length >= 30000)
   {
     if (node->dx && node->dy && ((node->dx & 1) || (node->dy & 1)))
@@ -875,15 +967,17 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
     node->too_long = 1;
   }
 
-  // find limits of vertices
+  /* find limits of vertices */
   FindLimits(lefts,  &node->l.bounds);
   FindLimits(rights, &node->r.bounds);
 
-  #if DEBUG_BUILDER
+# if DEBUG_BUILDER
   PrintDebug("Build: Going LEFT\n");
-  #endif
+# endif
 
-  ret = BuildNodes(lefts,  &node->l.node, &node->l.subsec, depth+1);
+  ret = BuildNodes(lefts,  &node->l.node, &node->l.subsec, depth+1,
+      stale_nd ? (stale_opposite ? stale_nd->r.node : stale_nd->l.node) 
+      : NULL);
   FreeSuper(lefts);
 
   if (ret != GLBSP_E_OK)
@@ -892,16 +986,18 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
     return ret;
   }
 
-  #if DEBUG_BUILDER
+# if DEBUG_BUILDER
   PrintDebug("Build: Going RIGHT\n");
-  #endif
+# endif
 
-  ret = BuildNodes(rights, &node->r.node, &node->r.subsec, depth+1);
+  ret = BuildNodes(rights, &node->r.node, &node->r.subsec, depth+1,
+      stale_nd ? (stale_opposite ? stale_nd->l.node : stale_nd->r.node) 
+      : NULL);
   FreeSuper(rights);
 
-  #if DEBUG_BUILDER
+# if DEBUG_BUILDER
   PrintDebug("Build: DONE\n");
-  #endif
+# endif
 
   return ret;
 }
@@ -927,6 +1023,7 @@ void ClockwiseBspTree(node_t *root)
     // do some sanity checks
     SanityCheckClosed(sub);
     SanityCheckSameSector(sub);
+    SanityCheckHasRealSeg(sub);
   }
 }
 
@@ -935,9 +1032,9 @@ static void NormaliseSubsector(subsec_t *sub)
   seg_t *new_head = NULL;
   seg_t *new_tail = NULL;
 
-  #if DEBUG_SUBSEC
+# if DEBUG_SUBSEC
   PrintDebug("Subsec: Normalising %d\n", sub->index);
-  #endif
+# endif
 
   while (sub->seg_list)
   {
@@ -962,9 +1059,9 @@ static void NormaliseSubsector(subsec_t *sub)
     }
     else
     {
-      #if DEBUG_SUBSEC
+#     if DEBUG_SUBSEC
       PrintDebug("Subsec: Removing miniseg %p\n", cur);
-      #endif
+#     endif
 
       // set index to a really high value, so that SortSegs() will
       // move all the minisegs to the top of the seg array.
@@ -1013,9 +1110,9 @@ static void RoundOffSubsector(subsec_t *sub)
   int real_total  = 0;
   int degen_total = 0;
 
-  #if DEBUG_SUBSEC
+# if DEBUG_SUBSEC
   PrintDebug("Subsec: Rounding off %d\n", sub->index);
-  #endif
+# endif
 
   // do an initial pass, just counting the degenerates
   for (cur=sub->seg_list; cur; cur=cur->next)
@@ -1028,8 +1125,8 @@ static void RoundOffSubsector(subsec_t *sub)
       cur->end = cur->end->normal_dup;
 
     // is the seg degenerate ?
-    if ((int)cur->start->x == (int)cur->end->x &&
-        (int)cur->start->y == (int)cur->end->y)
+    if (I_ROUND(cur->start->x) == I_ROUND(cur->end->x) &&
+        I_ROUND(cur->start->y) == I_ROUND(cur->end->y))
     {
       cur->degenerate = 1;
 
@@ -1044,9 +1141,9 @@ static void RoundOffSubsector(subsec_t *sub)
       real_total++;
   }
 
-  #if DEBUG_SUBSEC
+# if DEBUG_SUBSEC
   PrintDebug("Subsec: degen=%d real=%d\n", degen_total, real_total);
-  #endif
+# endif
 
   // handle the (hopefully rare) case where all of the real segs
   // became degenerate.
@@ -1056,21 +1153,23 @@ static void RoundOffSubsector(subsec_t *sub)
       InternalError("Subsector %d rounded off with NO real segs",
         sub->index);
     
-    #if DEBUG_SUBSEC
+#   if DEBUG_SUBSEC
     PrintDebug("Degenerate before: (%1.2f,%1.2f) -> (%1.2f,%1.2f)\n", 
         last_real_degen->start->x, last_real_degen->start->y,
         last_real_degen->end->x, last_real_degen->end->y);
-    #endif
+#   endif
 
     // create a new vertex for this baby
     last_real_degen->end = NewVertexDegenerate(last_real_degen->start,
         last_real_degen->end);
 
-    #if DEBUG_SUBSEC
+#   if DEBUG_SUBSEC
     PrintDebug("Degenerate after:  (%d,%d) -> (%d,%d)\n", 
-        (int)last_real_degen->start->x, (int)last_real_degen->start->y,
-        (int)last_real_degen->end->x, (int)last_real_degen->end->y);
-    #endif
+        I_ROUND(last_real_degen->start->x),
+        I_ROUND(last_real_degen->start->y),
+        I_ROUND(last_real_degen->end->x),
+        I_ROUND(last_real_degen->end->y));
+#   endif
 
     last_real_degen->degenerate = 0;
   }
@@ -1098,9 +1197,9 @@ static void RoundOffSubsector(subsec_t *sub)
     }
     else
     {
-      #if DEBUG_SUBSEC
+#     if DEBUG_SUBSEC
       PrintDebug("Subsec: Removing degenerate %p\n", cur);
-      #endif
+#     endif
 
       // set index to a really high value, so that SortSegs() will
       // move all the minisegs to the top of the seg array.
@@ -1135,20 +1234,6 @@ void RoundOffBspTree(node_t *root)
     RenumberSubsecSegs(sub);
   }
 }
-
-
-//---------------------------------------------------------------------------
-//
-//    This log message by Colin Phipps:
-//
-// Make rounding better in DivideSegs()
-// Fix logic errors in IsItConvex:
-// - Even if both ends of a seg are the same side of a possible
-// dividing seg, we must check that both are not on the wrong side
-// still (one could be on the line)
-// - Even if a split would be near the end of a line, the other end
-// must be on the right side still
-//
 
 
 //---------------------------------------------------------------------------

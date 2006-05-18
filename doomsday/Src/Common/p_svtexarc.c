@@ -1,9 +1,19 @@
-
-//**************************************************************************
-//**
-//** P_SVTEXARC.C
-//**
-//**************************************************************************
+/* DE1: $Id$
+ * Copyright (C) 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -20,9 +30,13 @@
 #  include "jStrife/r_local.h"
 #endif
 
+#include "Common/p_mapsetup.h"
 #include "p_svtexarc.h"
 
 // MACROS ------------------------------------------------------------------
+
+#define BADTEXNAME  "DD_BADTX"  // string that will be written in the texture
+                                // archives to denote a missing texture.
 
 // TYPES -------------------------------------------------------------------
 
@@ -58,176 +72,177 @@ texarchive_t tex_archive;
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-// SV_PrepareTexture
-//  Called for every texture and flat in the level before saving by
-//  Sv_InitTextureArchives.
-//==========================================================================
+/*
+ * Called for every texture and flat in the level before saving by
+ * Sv_InitTextureArchives.
+ */
 void SV_PrepareTexture(int tex, boolean isflat, texarchive_t * arc)
 {
-	int     c;
-	char    name[9];
+    int     c;
+    char    name[9];
 
-	// Get the name of the texture/flat.
-	if(isflat)
-		strcpy(name, W_CacheLumpNum(tex, PU_GETNAME));
-	else
-	{
-		strncpy(name, R_TextureNameForNum(tex), 8);
-		name[8] = 0;
-	}
-	// Has this already been registered?
-	for(c = 0; c < arc->count; c++)
-	{
-		if(!stricmp(arc->table[c].name, name))
-		{
-			// Yes, skip it...
-			break;
-		}
-	}
-	if(c == arc->count)
-		strcpy(arc->table[arc->count++].name, name);
+    // Get the name of the texture/flat.
+    if(isflat)
+   {
+        if(tex > 0)
+            strcpy(name, W_CacheLumpNum(tex, PU_GETNAME));
+        else
+        {
+            strncpy(name, BADTEXNAME, 8);
+            name[8] = 0;
+        }
+    }
+    else
+    {
+        if(R_TextureNameForNum(tex))
+            strncpy(name, R_TextureNameForNum(tex), 8);
+        else
+            strncpy(name, BADTEXNAME, 8);
+        name[8] = 0;
+    }
+    // Has this already been registered?
+    for(c = 0; c < arc->count; c++)
+    {
+        if(!stricmp(arc->table[c].name, name))
+        {
+            // Yes, skip it...
+            break;
+        }
+    }
+    if(c == arc->count)
+        strcpy(arc->table[arc->count++].name, name);
 }
 
-//==========================================================================
-// SV_InitTextureArchives
-//  Initializes the texture and flat archives (translation tables).
-//  Must be called before saving. The tables are written before any
-//  world data is saved.
-//==========================================================================
+/*
+ * Initializes the texture and flat archives (translation tables).
+ * Must be called before saving. The tables are written before any
+ * world data is saved.
+ */
 void SV_InitTextureArchives(void)
 {
-	int     i;
-	sector_t *sect;
-	side_t *sid;
+    int     i;
 
-	// Init flats.
-	flat_archive.count = 0;
-	for(sect = sectors, i = 0; i < numsectors; i++, sect++)
-	{
-		SV_PrepareTexture(sect->floorpic, true, &flat_archive);
-		SV_PrepareTexture(sect->ceilingpic, true, &flat_archive);
-	}
-	// Init textures.
-	tex_archive.count = 0;
-	for(sid = sides, i = 0; i < numsides; i++, sid++)
-	{
-		SV_PrepareTexture(sid->midtexture, false, &tex_archive);
-		SV_PrepareTexture(sid->toptexture, false, &tex_archive);
-		SV_PrepareTexture(sid->bottomtexture, false, &tex_archive);
-	}
+    // Init flats.
+    flat_archive.count = 0;
+
+    for(i = 0; i < numsectors; i++)
+    {
+        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_FLOOR_TEXTURE), true, &flat_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_CEILING_TEXTURE), true, &flat_archive);
+    }
+    // Init textures.
+    tex_archive.count = 0;
+
+    for(i = 0; i < numsides; i++)
+    {
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_MIDDLE_TEXTURE), false, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_TOP_TEXTURE), false, &tex_archive);
+        SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_BOTTOM_TEXTURE), false, &tex_archive);
+    }
 }
 
-//==========================================================================
-// SV_SearchArchive
-//==========================================================================
 unsigned short SV_SearchArchive(texarchive_t * arc, char *name)
 {
-	int     i;
+    int     i;
 
-	for(i = 0; i < arc->count; i++)
-		if(!stricmp(arc->table[i].name, name))
-			return i;
-	// Not found?!!!
-	return 0;
+    for(i = 0; i < arc->count; i++)
+        if(!stricmp(arc->table[i].name, name))
+            return i;
+    // Not found?!!!
+    return 0;
 }
 
-//==========================================================================
-// SV_TextureArchiveNum
-//  Returns the archive number of the given texture.
-//  It will be written to the savegame file.
-//==========================================================================
+/*
+ * Returns the archive number of the given texture.
+ * It will be written to the savegame file.
+ */
 unsigned short SV_TextureArchiveNum(int texnum)
 {
-	char    name[9];
+    char    name[9];
 
-	strncpy(name, R_TextureNameForNum(texnum), 8);
-	name[8] = 0;
-	return SV_SearchArchive(&tex_archive, name);
+    if(R_TextureNameForNum(texnum))
+        strncpy(name, R_TextureNameForNum(texnum), 8);
+    else
+        strncpy(name, BADTEXNAME, 8);
+    name[8] = 0;
+    return SV_SearchArchive(&tex_archive, name);
 }
 
-//==========================================================================
-// SV_TextureArchiveNum
-//  Returns the archive number of the given flat.
-//  It will be written to the savegame file.
-//==========================================================================
+/*
+ * Returns the archive number of the given flat.
+ * It will be written to the savegame file.
+ */
 unsigned short SV_FlatArchiveNum(int flatnum)
 {
-	return SV_SearchArchive(&flat_archive,
-							W_CacheLumpNum(flatnum, PU_GETNAME));
+    char name[9];
+
+    if(flatnum > 0)
+        strncpy(name, W_CacheLumpNum(flatnum, PU_GETNAME), 8);
+    else
+        strncpy(name, BADTEXNAME, 8);
+    name[8] = 0;
+    return SV_SearchArchive(&flat_archive, name);
 }
 
-//==========================================================================
-// SV_GetArchiveFlat
-//==========================================================================
 int SV_GetArchiveFlat(int archivenum)
 {
-	return R_FlatNumForName(flat_archive.table[archivenum].name);
+    if(!strncmp(flat_archive.table[archivenum].name, BADTEXNAME, 8))
+        return -1;
+    else
+        return R_FlatNumForName(flat_archive.table[archivenum].name);
 }
 
-//==========================================================================
-// SV_GetArchiveTexture
-//==========================================================================
 int SV_GetArchiveTexture(int archivenum)
 {
-	return R_TextureNumForName(tex_archive.table[archivenum].name);
+    if(!strncmp(tex_archive.table[archivenum].name, BADTEXNAME, 8))
+        return -1;
+    else
+        return R_TextureNumForName(tex_archive.table[archivenum].name);
 }
 
-//==========================================================================
-// SV_WriteTexArchive
-//==========================================================================
 void SV_WriteTexArchive(texarchive_t * arc)
 {
-	int     i;
+    int     i;
 
 #ifdef __JDOOM__
-	SV_WriteShort(arc->count);
+    SV_WriteShort(arc->count);
 #elif __JHERETIC__
-	SV_WriteShort(arc->count);
+    SV_WriteShort(arc->count);
 #else
-	StreamOutWord(arc->count);
+    StreamOutWord(arc->count);
 #endif
-	for(i = 0; i < arc->count; i++)
-	{
+    for(i = 0; i < arc->count; i++)
+    {
 #ifdef __JDOOM__
-		SV_Write(arc->table[i].name, 8);
+        SV_Write(arc->table[i].name, 8);
 #elif __JHERETIC__
-		SV_Write(arc->table[i].name, 8);
+        SV_Write(arc->table[i].name, 8);
 #else
-		StreamOutBuffer(arc->table[i].name, 8);
+        StreamOutBuffer(arc->table[i].name, 8);
 #endif
-	}
+    }
 }
 
-//==========================================================================
-// SV_ReadTexArchive
-//==========================================================================
 void SV_ReadTexArchive(texarchive_t * arc)
 {
-	int     i;
+    int     i;
 
-	arc->count = SV_ReadShort();
-	for(i = 0; i < arc->count; i++)
-	{
-		SV_Read(arc->table[i].name, 8);
-		arc->table[i].name[8] = 0;
-	}
+    arc->count = SV_ReadShort();
+    for(i = 0; i < arc->count; i++)
+    {
+        SV_Read(arc->table[i].name, 8);
+        arc->table[i].name[8] = 0;
+    }
 }
 
-//==========================================================================
-// SV_WriteTextureArchive
-//==========================================================================
 void SV_WriteTextureArchive(void)
 {
-	SV_WriteTexArchive(&flat_archive);
-	SV_WriteTexArchive(&tex_archive);
+    SV_WriteTexArchive(&flat_archive);
+    SV_WriteTexArchive(&tex_archive);
 }
 
-//==========================================================================
-// SV_ReadTextureArchive
-//==========================================================================
 void SV_ReadTextureArchive(void)
 {
-	SV_ReadTexArchive(&flat_archive);
-	SV_ReadTexArchive(&tex_archive);
+    SV_ReadTexArchive(&flat_archive);
+    SV_ReadTexArchive(&tex_archive);
 }

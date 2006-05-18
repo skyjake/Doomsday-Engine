@@ -2,9 +2,9 @@
 // WAD : WAD read/write functions.
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -55,6 +55,50 @@ typedef struct wad_s
 wad_t;
 
 
+// level information
+
+typedef struct level_s
+{
+  // various flags
+  int flags;
+
+  // the child lump list
+  struct lump_s *children;
+
+  // for normal levels, this is the associated GL level lump
+  struct lump_s *buddy;
+
+  // information on overflow
+  int soft_limit;
+  int hard_limit;
+  int v5_switch;
+}
+level_t;
+
+/* this level information holds GL lumps */
+#define LEVEL_IS_GL      0x0002
+
+/* limit flags, to show what went wrong */
+#define LIMIT_VERTEXES     0x000001
+#define LIMIT_SECTORS      0x000002
+#define LIMIT_SIDEDEFS     0x000004
+#define LIMIT_LINEDEFS     0x000008
+
+#define LIMIT_SEGS         0x000010
+#define LIMIT_SSECTORS     0x000020
+#define LIMIT_NODES        0x000040
+
+#define LIMIT_GL_VERT      0x000100
+#define LIMIT_GL_SEGS      0x000200
+#define LIMIT_GL_SSECT     0x000400
+#define LIMIT_GL_NODES     0x000800
+
+#define LIMIT_BAD_SIDE     0x001000
+#define LIMIT_BMAP_TRUNC   0x002000
+#define LIMIT_BLOCKMAP     0x004000
+#define LIMIT_ZDBSP        0x008000
+
+
 // directory entry
 
 typedef struct lump_s
@@ -80,27 +124,22 @@ typedef struct lump_s
   // data of lump
   void *data;
 
-  // for levels, these are the child lump lists
-  struct lump_s *level_list;
-  struct lump_s *level_gl_list;
-
-  // for normal levels, this is the associated GL level lump
-  struct lump_s *level_buddy;
+  // level information, usually NULL
+  level_t *lev_info;
 }
 lump_t;
 
-// this lump is a level marker
-#define LUMP_IS_LEVEL     0x0001
-#define LUMP_IS_GL_LEVEL  0x0002
+/* this lump should be copied from the input wad */
+#define LUMP_COPY_ME       0x0004
 
-// this lump should be copied from the input wad
-#define LUMP_COPY_ME      0x0004
+/* this lump shouldn't be written to the output wad */
+#define LUMP_IGNORE_ME     0x0008
 
-// this lump shouldn't be written to the output wad
-#define LUMP_IGNORE_ME    0x0008
+/* this lump needs to be loaded */
+#define LUMP_READ_ME       0x0100
 
-// this lump needs to be loaded
-#define LUMP_READ_ME      0x0100
+/* this lump is new (didn't exist in the original) */
+#define LUMP_NEW           0x0200
 
 
 /* ----- function prototypes --------------------- */
@@ -116,7 +155,7 @@ int CheckExtension(const char *filename, const char *ext);
 char *ReplaceExtension(const char *filename, const char *ext);
 
 // open the input wad file and read the contents into memory.  When
-// `load_all' is false, lumps other than level info will be marked as
+// 'load_all' is false, lumps other than level info will be marked as
 // copyable instead of loaded.
 //
 // Returns GLBSP_E_OK if all went well, otherwise an error code (in
@@ -138,11 +177,16 @@ glbsp_ret_e WriteWadFile(const char *filename);
 // close all wad files and free any memory.
 void CloseWads(void);
 
+// delete the GWA file that is associated with the given normal
+// wad file.  It doesn't have to exist.
+//
+void DeleteGwaFile(const char *base_wad_name);
+
 // returns the number of levels found in the wad.
 int CountLevels(void);
 
 // find the next level lump in the wad directory, and store the
-// reference in `wad.current_level'.  Call this straight after
+// reference in 'wad.current_level'.  Call this straight after
 // ReadWadFile() to get the first level.  Returns 1 if found,
 // otherwise 0 if there are no more levels in the wad.
 //
@@ -170,33 +214,38 @@ lump_t *CreateGLLump(const char *name);
 // append some raw data to the end of the given level lump (created
 // with the above function).
 //
-void AppendLevelLump(lump_t *lump, void *data, int length);
+void AppendLevelLump(lump_t *lump, const void *data, int length);
+
+// for the current GL lump, add a keyword/value pair into the
+// level marker lump.
+void AddGLTextLine(const char *keyword, const char *value);
+
+// Zlib compression support
+void ZLibBeginLump(lump_t *lump);
+void ZLibAppendLump(const void *data, int length);
+void ZLibFinishLump(void);
+
+// mark the fact that this level failed to build.
+void MarkSoftFailure(int soft);
+void MarkHardFailure(int hard);
+void MarkV5Switch(int v5);
+void MarkZDSwitch(void);
+
+// alert the user if any levels failed to build properly.
+void ReportFailedLevels(void);
 
 
 /* ----- conversion macros ----------------------- */
 
 
-// -AJA- I wanted this to simply be `BIG_ENDIAN', but some
-//       system header already defines it.  Grrrr !
-#ifdef __BIG_ENDIAN__
-
-#define UINT16(x)  \
-	( ((uint16_g)((x) & 0xff00) >> 8) | ((uint16_g)((x) & 0xff) << 8) )
-
-#define UINT32(x)  \
-  ( ((uint32_g)(x) >> 24) | (((uint32_g)(x) >> 8) & 0xff00) |  \
-    (((uint32_g)(x) << 8) & 0xff0000) | ((uint32_g)(x) << 24) )
-
-#else
-#define UINT16(x)  ((uint16_g) (x))
-#define UINT32(x)  ((uint32_g) (x))
-#endif
-
 #define UINT8(x)   ((uint8_g) (x))
 #define SINT8(x)   ((sint8_g) (x))
 
-#define SINT16(x)  ((sint16_g) UINT16(x))
-#define SINT32(x)  ((sint32_g) UINT32(x))
+#define UINT16(x)  Endian_U16(x)
+#define UINT32(x)  Endian_U32(x)
+
+#define SINT16(x)  ((sint16_g) Endian_U16((uint16_g) (x)))
+#define SINT32(x)  ((sint32_g) Endian_U32((uint32_g) (x)))
 
 
 #endif /* __GLBSP_WAD_H__ */

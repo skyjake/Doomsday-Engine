@@ -2,9 +2,9 @@
 // UTILITY : general purpose functions
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -39,6 +39,10 @@
 #define ABS(x)  ((x) >= 0 ? (x) : -(x))
 #endif
 
+#ifndef I_ROUND
+#define I_ROUND(x)  ((int) (((x) < 0.0f) ? ((x) - 0.5f) : ((x) + 0.5f)))
+#endif
+
 /* ----- function prototypes ---------------------------- */
 
 // allocate and clear some memory.  guaranteed not to fail.
@@ -47,18 +51,43 @@ void *UtilCalloc(int size);
 // re-allocate some memory.  guaranteed not to fail.
 void *UtilRealloc(void *old, int size);
 
-// duplicate a string
+// duplicate a string.
 char *UtilStrDup(const char *str);
 char *UtilStrNDup(const char *str, int size);
 
-// free some memory or a string
+// free some memory or a string.
 void UtilFree(void *data);
 
-// compare two strings case insensitively
-int StrCaseCmp(const char *A, const char *B);
+// compare two strings case insensitively.
+int UtilStrCaseCmp(const char *A, const char *B);
+
+// return a string for the current data and time
+const char *UtilTimeString(void);
 
 // round a positive value up to the nearest power of two.
-int RoundPOW2(int x);
+int UtilRoundPOW2(int x);
 
+// compute angle & distance from (0,0) to (dx,dy)
+angle_g UtilComputeAngle(float_g dx, float_g dy);
+#define UtilComputeDist(dx,dy)  sqrt((dx) * (dx) + (dy) * (dy))
+
+// compute the parallel and perpendicular distances from a partition
+// line to a point.
+//
+#define UtilParallelDist(part,x,y)  \
+    (((x) * (part)->pdx + (y) * (part)->pdy + (part)->p_para)  \
+     / (part)->p_length)
+
+#define UtilPerpDist(part,x,y)  \
+    (((x) * (part)->pdy - (y) * (part)->pdx + (part)->p_perp)  \
+     / (part)->p_length)
+
+// check if the file exists.
+int UtilFileExists(const char *filename);
+
+// checksum functions
+void Adler32_Begin(uint32_g *crc);
+void Adler32_AddBlock(uint32_g *crc, const uint8_g *data, int length);
+void Adler32_Finish(uint32_g *crc);
 
 #endif /* __GLBSP_UTIL_H__ */

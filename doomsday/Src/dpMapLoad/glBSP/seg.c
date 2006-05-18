@@ -2,9 +2,9 @@
 // SEG : Choose the best Seg to use for a node line.
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -46,6 +46,7 @@
 #include <limits.h>
 #include <assert.h>
 
+#include "analyze.h"
 #include "blockmap.h"
 #include "level.h"
 #include "node.h"
@@ -55,7 +56,9 @@
 #include "wad.h"
 
 
-#define PRECIOUS_MULTIPLY  64
+#define PRECIOUS_MULTIPLY  100
+
+#define SEG_REUSE_THRESHHOLD  200
 
 
 #define DEBUG_PICKNODE  0
@@ -79,27 +82,6 @@ eval_info_t;
 
 
 static intersection_t *quick_alloc_cuts = NULL;
-
-
-//
-// ComputeAngle
-//
-// Translate (dx, dy) into an angle value (degrees)
-//
-angle_g ComputeAngle(float_g dx, float_g dy)
-{
-  double angle;
-
-  if (dx == 0)
-    return (dy > 0) ? 90.0 : 270.0;
-
-  angle = atan2((double) dy, (double) dx) * 180.0 / M_PI;
-
-  if (angle < 0) 
-    angle += 360.0;
-
-  return angle;
-}
 
 
 //
@@ -140,7 +122,7 @@ void FreeQuickAllocCuts(void)
 //
 // RecomputeSeg
 //
-// Fill in the fields `angle', `len', `pdx', `pdy', etc...
+// Fill in the fields 'angle', 'len', 'pdx', 'pdy', etc...
 //
 void RecomputeSeg(seg_t *seg)
 {
@@ -151,8 +133,8 @@ void RecomputeSeg(seg_t *seg)
   seg->pdx = seg->pex - seg->psx;
   seg->pdy = seg->pey - seg->psy;
   
-  seg->p_length = ComputeDist(seg->pdx, seg->pdy);
-  seg->p_angle = ComputeAngle(seg->pdx, seg->pdy);
+  seg->p_length = UtilComputeDist(seg->pdx, seg->pdy);
+  seg->p_angle  = UtilComputeAngle(seg->pdx, seg->pdy);
 
   if (seg->p_length <= 0)
     InternalError("Seg %p has zero p_length.", seg);
@@ -185,13 +167,13 @@ static seg_t *SplitSeg(seg_t *old_seg, float_g x, float_g y)
   seg_t *new_seg;
   vertex_t *new_vert;
 
-  #if DEBUG_SPLIT
+# if DEBUG_SPLIT
   if (old_seg->linedef)
     PrintDebug("Splitting Linedef %d (%p) at (%1.1f,%1.1f)\n",
         old_seg->linedef->index, old_seg, x, y);
   else
     PrintDebug("Splitting Miniseg %p at (%1.1f,%1.1f)\n", old_seg, x, y);
-  #endif
+# endif
 
   // update superblock, if needed
   if (old_seg->block)
@@ -210,18 +192,18 @@ static seg_t *SplitSeg(seg_t *old_seg, float_g x, float_g y)
   new_seg->start = new_vert;
   RecomputeSeg(new_seg);
 
-  #if DEBUG_SPLIT
+# if DEBUG_SPLIT
   PrintDebug("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
       new_vert->index, new_vert->x, new_vert->y);
-  #endif
+# endif
 
   // handle partners
 
   if (old_seg->partner)
   {
-    #if DEBUG_SPLIT
+#   if DEBUG_SPLIT
     PrintDebug("Splitting Partner %p\n", old_seg->partner);
-    #endif
+#   endif
 
     // update superblock, if needed
     if (old_seg->partner->block)
@@ -297,31 +279,29 @@ static INLINE_G void ComputeIntersection(seg_t *cur, seg_t *part,
 // AddIntersection
 //
 static void AddIntersection(intersection_t ** cut_list,
-    vertex_t *vert, seg_t *part)
+    vertex_t *vert, seg_t *part, boolean_g self_ref)
 {
   intersection_t *cut;
   intersection_t *after;
 
-  // check if vertex already present
+  /* check if vertex already present */
   for (cut=(*cut_list); cut; cut=cut->next)
   {
     if (vert == cut->vertex)
       return;
   }
 
-  // create new intersection
+  /* create new intersection */
   cut = NewIntersection();
 
   cut->vertex = vert;
-  cut->along_dist = ComputeParallelDist(part, vert->x, vert->y);
-  
-  cut->l.open = VertexCheckOpen(vert, -part->pdx, -part->pdy,
-      &cut->l.right, &cut->l.left);
-
-  cut->r.open = VertexCheckOpen(vert, part->pdx, part->pdy,
-      &cut->r.left, &cut->r.right);
-  
-  // enqueue the new intersection into the list
+  cut->along_dist = UtilParallelDist(part, vert->x, vert->y);
+  cut->self_ref = self_ref;
+ 
+  cut->before = VertexCheckOpen(vert, -part->pdx, -part->pdy);
+  cut->after  = VertexCheckOpen(vert,  part->pdx,  part->pdy);
+ 
+  /* enqueue the new intersection into the list */
 
   for (after=(*cut_list); after && after->next; after=after->next)
   { }
@@ -329,7 +309,7 @@ static void AddIntersection(intersection_t ** cut_list,
   while (after && cut->along_dist < after->along_dist) 
     after = after->prev;
   
-  // link it in
+  /* link it in */
   cut->next = after ? after->next : (*cut_list);
   cut->prev = after;
 
@@ -392,19 +372,19 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
     return FALSE;
   }
 
-  #define ADD_LEFT()  \
+# define ADD_LEFT()  \
       do {  \
         if (check->linedef) info->real_left += 1;  \
         else                info->mini_left += 1;  \
       } while (0)
 
-  #define ADD_RIGHT()  \
+# define ADD_RIGHT()  \
       do {  \
         if (check->linedef) info->real_right += 1;  \
         else                info->mini_right += 1;  \
       } while (0)
 
-  // check partition against all Segs
+  /* check partition against all Segs */
 
   for (check=seg_list->segs; check; check=check->next)
   { 
@@ -414,21 +394,21 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
     if (info->cost > best_cost)
       return TRUE;
 
-    // get state of lines' relation to each other
+    /* get state of lines' relation to each other */
     if (check->source_line == part->source_line)
     {
       a = b = fa = fb = 0;
     }
     else
     {
-      a = ComputePerpDist(part, check->psx, check->psy);
-      b = ComputePerpDist(part, check->pex, check->pey);
+      a = UtilPerpDist(part, check->psx, check->psy);
+      b = UtilPerpDist(part, check->pex, check->pey);
 
       fa = fabs(a);
       fb = fabs(b);
     }
 
-    // check for being on the same line
+    /* check for being on the same line */
     if (fa <= DIST_EPSILON && fb <= DIST_EPSILON)
     {
       // this seg runs along the same line as the partition.  Check
@@ -446,12 +426,24 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
       continue;
     }
 
-    // check for right side
+    // -AJA- check for passing through a vertex.  Normally this is fine
+    //       (even ideal), but the vertex could on a sector that we
+    //       DONT want to split, and the normal linedef-based checks
+    //       may fail to detect the sector being cut in half.  Thanks
+    //       to Janis Legzdinsh for spotting this obscure bug.
+
+    if (fa <= DIST_EPSILON || fb <= DIST_EPSILON)
+    {
+      if (check->linedef && check->linedef->is_precious)
+        info->cost += 40 * factor * PRECIOUS_MULTIPLY;
+    }
+
+    /* check for right side */
     if (a > -DIST_EPSILON && b > -DIST_EPSILON)
     {
       ADD_RIGHT();
 
-      // check for a near miss
+      /* check for a near miss */
       if ((a >= IFFY_LEN && b >= IFFY_LEN) ||
           (a <= DIST_EPSILON && b >= IFFY_LEN) ||
           (b <= DIST_EPSILON && a >= IFFY_LEN))
@@ -475,12 +467,12 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
       continue;
     }
 
-    // check for left side
+    /* check for left side */
     if (a < DIST_EPSILON && b < DIST_EPSILON)
     {
       ADD_LEFT();
 
-      // check for a near miss
+      /* check for a near miss */
       if ((a <= -IFFY_LEN && b <= -IFFY_LEN) ||
           (a >= -DIST_EPSILON && b <= -IFFY_LEN) ||
           (b >= -DIST_EPSILON && a <= -IFFY_LEN))
@@ -496,7 +488,7 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
       else
         qnty = IFFY_LEN / -MAX(a, b);
 
-      info->cost += (int) (100 * factor * (qnty * qnty - 1.0));
+      info->cost += (int) (70 * factor * (qnty * qnty - 1.0));
       continue;
     }
 
@@ -517,9 +509,9 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
 
     // -AJA- check if the split point is very close to one end, which
     //       is quite an undesirable situation (producing really short
-    //       segs).  This is perhaps is _one_ source of those darn
-    //       slime trails.  Hence the name "IFFY segs", and a rather
-    //       hefty surcharge :->.
+    //       segs).  This is perhaps _one_ source of those darn slime
+    //       trails.  Hence the name "IFFY segs", and a rather hefty
+    //       surcharge :->.
 
     if (fa < IFFY_LEN || fb < IFFY_LEN)
     {
@@ -527,11 +519,11 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
 
       // the closer to the end, the higher the cost
       qnty = IFFY_LEN / MIN(fa, fb);
-      info->cost += (int) (100 * factor * (qnty * qnty - 1.0));
+      info->cost += (int) (140 * factor * (qnty * qnty - 1.0));
     }
   }
 
-  // handle sub-blocks recursively
+  /* handle sub-blocks recursively */
 
   for (num=0; num < 2; num++)
   {
@@ -542,7 +534,7 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
       return TRUE;
   }
 
-  // no "bad seg" was found.
+  /* no "bad seg" was found */
   return FALSE;
 }
 
@@ -551,7 +543,7 @@ static int EvalPartitionWorker(superblock_t *seg_list, seg_t *part,
 //
 // -AJA- Evaluate a partition seg & determine the cost, taking into
 //       account the number of splits, difference between left &
-//       right, and linedefs that are tagged `precious'.
+//       right, and linedefs that are tagged 'precious'.
 //
 // Returns the computed cost, or a negative value if the seg should be
 // skipped altogether.
@@ -561,7 +553,7 @@ static int EvalPartition(superblock_t *seg_list, seg_t *part,
 {
   eval_info_t info;
 
-  // initialise info structure
+  /* initialise info structure */
   info.cost   = 0;
   info.splits = 0;
   info.iffy   = 0;
@@ -575,19 +567,19 @@ static int EvalPartition(superblock_t *seg_list, seg_t *part,
   if (EvalPartitionWorker(seg_list, part, best_cost, &info))
     return -1;
   
-  // make sure there is at least one real seg on each side
+  /* make sure there is at least one real seg on each side */
   if (!info.real_left || !info.real_right)
   {
-    #if DEBUG_PICKNODE
+#   if DEBUG_PICKNODE
     PrintDebug("Eval : No real segs on %s%sside\n", 
         info.real_left  ? "" : "left ", 
         info.real_right ? "" : "right ");
-    #endif
+#   endif
 
     return -1;
   }
 
-  // increase cost by the difference between left & right
+  /* increase cost by the difference between left & right */
   info.cost += 100 * ABS(info.real_left - info.real_right);
 
   // -AJA- allow miniseg counts to affect the outcome, but only to a
@@ -602,19 +594,66 @@ static int EvalPartition(superblock_t *seg_list, seg_t *part,
   if (part->pdx != 0 && part->pdy != 0)
     info.cost += 25;
 
-  #if DEBUG_PICKNODE
+# if DEBUG_PICKNODE
   PrintDebug("Eval %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d "
       "cost=%d.%02d\n", part, info.splits, info.iffy, info.near_miss, 
       info.real_left, info.mini_left, info.real_right, info.mini_right, 
       info.cost / 100, info.cost % 100);
-  #endif
+# endif
  
   return info.cost;
 }
 
 
-// returns FALSE if cancelled
-static boolean_g PickNodeWorker(superblock_t *part_list, 
+static seg_t *FindSegFromStaleNode(superblock_t *part_list,
+    node_t *stale_nd, int *stale_opposite)
+{
+  seg_t *part;
+  int num;
+
+  for (part=part_list->segs; part; part = part->next)
+  {
+    float_g fa, fb; 
+
+    /* ignore minisegs as partition candidates */
+    if (! part->linedef)
+      continue;
+    
+    fa = fabs(UtilPerpDist(part, stale_nd->x, stale_nd->y));
+    fb = fabs(UtilPerpDist(part, stale_nd->x + stale_nd->dx, 
+         stale_nd->y + stale_nd->dy));
+
+    if (fa < DIST_EPSILON && fb < DIST_EPSILON)
+    {
+      /* OK found it.  check if runs in same direction */
+
+      (*stale_opposite) = (stale_nd->dx * part->pdx + 
+          stale_nd->dy * part->pdy < 0) ? 1 : 0;
+ 
+      return part;
+    }
+  }
+
+  /* handle sub-blocks recursively */
+
+  for (num=0; num < 2; num++)
+  {
+    if (! part_list->subs[num])
+      continue;
+
+    part = FindSegFromStaleNode(part_list->subs[num], stale_nd,
+        stale_opposite);
+
+    if (part)
+      return part;
+  }
+
+  return NULL;
+}
+
+
+/* returns FALSE if cancelled */
+static int PickNodeWorker(superblock_t *part_list, 
     superblock_t *seg_list, seg_t ** best, int *best_cost,
     int *progress, int prog_step)
 {
@@ -623,49 +662,49 @@ static boolean_g PickNodeWorker(superblock_t *part_list,
   int num;
   int cost;
 
-  // use each Seg as partition
+  /* use each Seg as partition */
   for (part=part_list->segs; part; part = part->next)
   {
     if (cur_comms->cancelled)
       return FALSE;
 
-    #if DEBUG_PICKNODE
+#   if DEBUG_PICKNODE
     PrintDebug("PickNode:   %sSEG %p  sector=%d  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
       part->linedef ? "" : "MINI", part, 
       part->sector ? part->sector->index : -1,
       part->start->x, part->start->y, part->end->x, part->end->y);
-    #endif
+#   endif
 
-    // something for the user to look at
+    /* something for the user to look at */
     (*progress) += 1;
 
     if ((*progress % prog_step) == 0)
     {
-      cur_build_pos++;
-      DisplaySetBar(1, cur_build_pos);
-      DisplaySetBar(2, cur_file_pos + cur_build_pos / 10);
+      cur_comms->build_pos++;
+      DisplaySetBar(1, cur_comms->build_pos);
+      DisplaySetBar(2, cur_comms->file_pos + cur_comms->build_pos / 100);
     }
 
-    DisplayTicker();
-
-    // ignore minisegs as partition candidates
+    /* ignore minisegs as partition candidates */
     if (! part->linedef)
       continue;
     
     cost = EvalPartition(seg_list, part, *best_cost);
 
-    // seg unsuitable or too costly ?
+    /* seg unsuitable or too costly ? */
     if (cost < 0 || cost >= *best_cost)
       continue;
 
-    // we have a new better choice
+    /* we have a new better choice */
     (*best_cost) = cost;
 
-    // remember which Seg
+    /* remember which Seg */
     (*best) = part;
   }
 
-  // recursively handle sub-blocks
+  DisplayTicker();
+
+  /* recursively handle sub-blocks */
 
   for (num=0; num < 2; num++)
   {
@@ -682,7 +721,8 @@ static boolean_g PickNodeWorker(superblock_t *part_list,
 //
 // Find the best seg in the seg_list to use as a partition line.
 //
-seg_t *PickNode(superblock_t *seg_list, int depth)
+seg_t *PickNode(superblock_t *seg_list, int depth,
+    node_t ** stale_nd, int *stale_opposite)
 {
   seg_t *best=NULL;
 
@@ -690,37 +730,82 @@ seg_t *PickNode(superblock_t *seg_list, int depth)
 
   int progress=0;
   int prog_step=1<<24;
+  int build_step=0;
 
-  #if DEBUG_PICKNODE
-  PrintDebug("PickNode: BEGUN\n");
-  #endif
+# if DEBUG_PICKNODE
+  PrintDebug("PickNode: BEGUN (depth %d)\n", depth);
+# endif
 
-  // compute info for showing progress
-  if (depth <= 3)
+  /* compute info for showing progress */
+  if (depth <= 6)
   {
-    static int depth_counts[4] = { 28, 12, 6, 3 };
+    static int depth_counts[7] = { 248, 100, 30, 10, 6, 4, 2 };
     
     int total = seg_list->real_num + seg_list->mini_num;
-    int want  = depth_counts[depth];
 
-    prog_step = 1 + ((total - 1) / want);
+    build_step = depth_counts[depth];
+    prog_step = 1 + ((total - 1) / build_step);
 
-    if (total / prog_step < want)
+    if (total / prog_step < build_step)
     {
-      cur_build_pos += want - total / prog_step;
-      DisplaySetBar(1, cur_build_pos);
-      DisplaySetBar(2, cur_file_pos + cur_build_pos / 10);
+      cur_comms->build_pos += build_step - total / prog_step;
+      build_step = total / prog_step;
+
+      DisplaySetBar(1, cur_comms->build_pos);
+      DisplaySetBar(2, cur_comms->file_pos + cur_comms->build_pos / 100);
     }
   }
+
+  DisplayTicker();
+
+  /* -AJA- another (optional) optimisation, when building just the GL
+   *       nodes.  We assume that the original nodes are reasonably
+   *       good choices, and re-use them as much as possible, saving
+   *       *heaps* of time on really large levels.
+   */
+  if (*stale_nd && seg_list->real_num >= SEG_REUSE_THRESHHOLD)
+  {
+    best = FindSegFromStaleNode(seg_list, *stale_nd, stale_opposite);
+
+#   if DEBUG_PICKNODE
+    PrintDebug("PickNode: Trying stale node %p\n", best);
+#   endif
+
+    if (best && EvalPartition(seg_list, best, best_cost) < 0)
+    {
+      best = NULL;
  
+#     if DEBUG_PICKNODE
+      PrintDebug("PickNode: Stale node unsuitable !\n");
+#     endif
+    }
+
+    if (best)
+    {
+      /* update progress */
+      cur_comms->build_pos += build_step;
+      DisplaySetBar(1, cur_comms->build_pos);
+      DisplaySetBar(2, cur_comms->file_pos + cur_comms->build_pos / 100);
+
+#     if DEBUG_PICKNODE
+      PrintDebug("PickNode: Using Stale node (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
+          best->start->x, best->start->y, best->end->x, best->end->y);
+#     endif
+
+      return best;
+    }
+  }
+
+  (*stale_nd) = NULL;
+
   if (FALSE == PickNodeWorker(seg_list, seg_list, &best, &best_cost, 
       &progress, prog_step))
   {
-    // hack here : BuildNodes will detect the cancellation
+    /* hack here : BuildNodes will detect the cancellation */
     return NULL;
   }
 
-  #if DEBUG_PICKNODE
+# if DEBUG_PICKNODE
   if (! best)
   {
     PrintDebug("PickNode: NO BEST FOUND !\n");
@@ -731,9 +816,9 @@ seg_t *PickNode(superblock_t *seg_list, int depth)
       best_cost / 100, best_cost % 100, best->start->x, best->start->y,
       best->end->x, best->end->y);
   }
-  #endif
+# endif
 
-  // all finished, return best Seg
+  /* all finished, return best Seg */
   return best;
 }
 
@@ -759,18 +844,20 @@ void DivideOneSeg(seg_t *cur, seg_t *part,
 
   float_g x, y;
 
-  // get state of lines' relation to each other
-  float_g a = ComputePerpDist(part, cur->psx, cur->psy);
-  float_g b = ComputePerpDist(part, cur->pex, cur->pey);
+  /* get state of lines' relation to each other */
+  float_g a = UtilPerpDist(part, cur->psx, cur->psy);
+  float_g b = UtilPerpDist(part, cur->pex, cur->pey);
+
+  boolean_g self_ref = cur->linedef ? cur->linedef->self_ref : FALSE;
 
   if (cur->source_line == part->source_line)
     a = b = 0;
 
-  // check for being on the same line
+  /* check for being on the same line */
   if (fabs(a) <= DIST_EPSILON && fabs(b) <= DIST_EPSILON)
   {
-    AddIntersection(cut_list, cur->start, part);
-    AddIntersection(cut_list, cur->end, part);
+    AddIntersection(cut_list, cur->start, part, self_ref);
+    AddIntersection(cut_list, cur->end,   part, self_ref);
 
     // this seg runs along the same line as the partition.  check
     // whether it goes in the same direction or the opposite.
@@ -787,25 +874,25 @@ void DivideOneSeg(seg_t *cur, seg_t *part,
     return;
   }
 
-  // check for right side
+  /* check for right side */
   if (a > -DIST_EPSILON && b > -DIST_EPSILON)
   {
     if (a < DIST_EPSILON)
-      AddIntersection(cut_list, cur->start, part);
+      AddIntersection(cut_list, cur->start, part, self_ref);
     else if (b < DIST_EPSILON)
-      AddIntersection(cut_list, cur->end, part);
+      AddIntersection(cut_list, cur->end, part, self_ref);
 
     AddSegToSuper(right_list, cur);
     return;
   }
  
-  // check for left side
+  /* check for left side */
   if (a < DIST_EPSILON && b < DIST_EPSILON)
   {
     if (a > -DIST_EPSILON)
-      AddIntersection(cut_list, cur->start, part);
+      AddIntersection(cut_list, cur->start, part, self_ref);
     else if (b > -DIST_EPSILON)
-      AddIntersection(cut_list, cur->end, part);
+      AddIntersection(cut_list, cur->end, part, self_ref);
 
     AddSegToSuper(left_list, cur);
     return;
@@ -818,7 +905,7 @@ void DivideOneSeg(seg_t *cur, seg_t *part,
 
   new_seg = SplitSeg(cur, x, y);
 
-  AddIntersection(cut_list, cur->end, part);
+  AddIntersection(cut_list, cur->end, part, self_ref);
 
   if (a < 0)
   {
@@ -840,8 +927,6 @@ void SeparateSegs(superblock_t *seg_list, seg_t *part,
     intersection_t ** cut_list)
 {
   int num;
-
-  DisplayTicker();
 
   while (seg_list->segs)
   {
@@ -886,10 +971,10 @@ static void FindLimitWorker(superblock_t *block, bbox_t *bbox)
     float_g x2 = cur->end->x;
     float_g y2 = cur->end->y;
 
-    int lx = floor(MIN(x1, x2));
-    int ly = floor(MIN(y1, y2));
-    int hx = ceil(MAX(x1, x2));
-    int hy = ceil(MAX(y1, y2));
+    int lx = (int) floor(MIN(x1, x2));
+    int ly = (int) floor(MIN(y1, y2));
+    int hx = (int) ceil(MAX(x1, x2));
+    int hy = (int) ceil(MAX(y1, y2));
 
     if (lx < bbox->minx) bbox->minx = lx;
     if (ly < bbox->miny) bbox->miny = ly;
@@ -931,90 +1016,149 @@ void AddMinisegs(seg_t *part,
   intersection_t *cur, *next;
   seg_t *seg, *buddy;
 
-  #if DEBUG_CUTLIST
+  if (! cut_list)
+    return;
+
+# if DEBUG_CUTLIST
   PrintDebug("CUT LIST:\n");
+  PrintDebug("PARTITION: (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
+      part->psx, part->psy, part->pdx, part->pdy);
+
   for (cur=cut_list; cur; cur=cur->next)
   {
-    PrintDebug("  %s-%s  Vertex %04X  Along %1.2f  Left %d/%d  Right %d/%d\n", 
-        cur->l.open ? "O" : "C", cur->r.open ? "O" : "C", 
-        cur->vertex->index, cur->along_dist,
-        cur->l.left ? cur->l.left->index : -1,
-        cur->l.right ? cur->l.right->index : -1,
-        cur->r.left ? cur->r.left->index : -1,
-        cur->r.right ? cur->r.right->index : -1);
+    PrintDebug("  Vertex %8X (%1.1f,%1.1f)  Along %1.2f  [%d/%d]  %s\n", 
+        cur->vertex->index, cur->vertex->x, cur->vertex->y,
+        cur->along_dist,
+        cur->before ? cur->before->index : -1,
+        cur->after ? cur->after->index : -1,
+        cur->self_ref ? "SELFREF" : "");
   }
-  #endif
+# endif
 
-  // scan the intersection list...
+  // STEP 1: fix problems the intersection list...
 
-  for (cur=cut_list; cur && cur->next; cur=cur->next)
+  cur  = cut_list;
+  next = cur->next;
+
+  while (cur && next)
+  {
+    float_g len = next->along_dist - cur->along_dist;
+
+    if (len < -0.1)
+      InternalError("Bad order in intersect list: %1.3f > %1.3f\n",
+          cur->along_dist, next->along_dist);
+
+    if (len > 0.2)
+    {
+      cur  = next;
+      next = cur->next;
+      continue;
+    }
+
+    if (len > DIST_EPSILON)
+    {
+      PrintMiniWarn("Skipping very short seg (len=%1.3f) near (%1.1f,%1.1f)\n",
+          len, cur->vertex->x, cur->vertex->y);
+    }
+
+    // merge the two intersections into one
+
+# if DEBUG_CUTLIST
+    PrintDebug("Merging cut (%1.0f,%1.0f) [%d/%d] with %p (%1.0f,%1.0f) [%d/%d]\n",
+        cur->vertex->x, cur->vertex->y,
+        cur->before ? cur->before->index : -1,
+        cur->after ? cur->after->index : -1,
+        next->vertex->x, next->vertex->y,
+        next->before ? next->before->index : -1,
+        next->after ? next->after->index : -1);
+# endif
+
+    if (cur->self_ref && !next->self_ref)
+    {
+      if (cur->before && next->before)
+        cur->before = next->before;
+
+      if (cur->after && next->after)
+        cur->after = next->after;
+
+      cur->self_ref = FALSE;
+    }
+
+    if (!cur->before && next->before)
+      cur->before = next->before;
+
+    if (!cur->after && next->after)
+      cur->after = next->after;
+
+# if DEBUG_CUTLIST
+    PrintDebug("---> merged (%1.0f,%1.0f) [%d/%d] %s\n",
+        cur->vertex->x, cur->vertex->y,
+        cur->before ? cur->before->index : -1,
+        cur->after ? cur->after->index : -1,
+        cur->self_ref ? "SELFREF" : "");
+# endif
+
+    // free the unused cut
+
+    cur->next = next->next;
+
+    next->next = quick_alloc_cuts;
+    quick_alloc_cuts = next;
+
+    next = cur->next;
+  }
+
+  // STEP 2: find connections in the intersection list...
+
+  for (cur = cut_list; cur && cur->next; cur = cur->next)
   {
     next = cur->next;
     
-    if (!cur->r.open && !next->l.open)
+    if (!cur->after && !next->before)
       continue;
-    
-    // ignore identical intersection points, which can happen when two
-    // or more segs originate from the same vertex.
-
-    if (fabs(cur->along_dist - next->along_dist) < DIST_EPSILON)
-      continue;
-
-    // check for cuts that are too short.
-    if (fabs(cur->along_dist - next->along_dist) < 0.2)
-    {
-      PrintMiniWarn("Skipping very short seg (len=%1.3f) near (%1.1f,%1.1f)\n",
-          ABS(cur->along_dist - next->along_dist),
-          cur->vertex->x, cur->vertex->y);
-      continue;
-    }
  
     // check for some nasty OPEN/CLOSED or CLOSED/OPEN cases
-    if ((cur->r.open && !next->l.open) ||
-        (!cur->r.open && next->l.open))
+    if (cur->after && !next->before)
     {
-      if (cur->r.open && cur->r.right)
+      if (!cur->self_ref && !cur->after->warned_unclosed)
       {
-        PrintMiniWarn("Sector #%d is unclosed near (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-            cur->r.right->index, cur->vertex->x, cur->vertex->y,
-            next->vertex->x, next->vertex->y);
+        PrintMiniWarn("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
+            cur->after->index,
+            (cur->vertex->x + next->vertex->x) / 2.0,
+            (cur->vertex->y + next->vertex->y) / 2.0);
+        cur->after->warned_unclosed = 1;
       }
-      else if (cur->r.open && cur->r.left)
+      continue;
+    }
+    else if (!cur->after && next->before)
+    {
+      if (!next->self_ref && !next->before->warned_unclosed)
       {
-        PrintMiniWarn("Sector #%d is unclosed near (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-            cur->r.left->index, cur->vertex->x, cur->vertex->y,
-            next->vertex->x, next->vertex->y);
+        PrintMiniWarn("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
+            next->before->index,
+            (cur->vertex->x + next->vertex->x) / 2.0,
+            (cur->vertex->y + next->vertex->y) / 2.0);
+        next->before->warned_unclosed = 1;
       }
-      else if (next->l.open && next->l.right)
-      {
-        PrintMiniWarn("Sector #%d is unclosed near (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-            next->l.right->index, next->vertex->x, next->vertex->y,
-            cur->vertex->x, cur->vertex->y);
-      }
-      else if (next->l.open && next->l.left)
-      {
-        PrintMiniWarn("Sector #%d is unclosed near (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-            next->l.left->index, next->vertex->x, next->vertex->y,
-            cur->vertex->x, cur->vertex->y);
-      }
-      else
-      {
-        PrintMiniWarn("Unclosed sector found between (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-            cur->vertex->x, cur->vertex->y,
-            next->vertex->x, next->vertex->y);
-      }
-
       continue;
     }
 
-    // righteo, here we have definite open space.  Do a sanity check
-    // on the sectors (just for good measure).
+    // righteo, here we have definite open space.
+    // do a sanity check on the sectors (just for good measure).
 
-    if (cur->r.right != next->l.right || cur->r.left != next->l.left)
+    if (cur->after != next->before)
     {
-      PrintMiniWarn("Sector mismatch between (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-          cur->vertex->x, cur->vertex->y,
-          next->vertex->x, next->vertex->y);
+      if (!cur->self_ref && !next->self_ref)
+        PrintMiniWarn("Sector mismatch: #%d (%1.1f,%1.1f) != #%d (%1.1f,%1.1f)\n",
+            cur->after->index, next->before->index,
+            cur->vertex->x, cur->vertex->y,
+            next->vertex->x, next->vertex->y);
+
+      // choose the non-self-referencing sector when we can
+      if (cur->self_ref && !next->self_ref)
+      {
+        cur->after = next->before;
+      }
     }
 
     // create the miniseg pair
@@ -1030,11 +1174,10 @@ void AddMinisegs(seg_t *part,
     buddy->start = next->vertex;
     buddy->end   = cur->vertex;
 
-    // leave `linedef' field as NULL.
-    // leave `side' as zero too (not needed for minisegs).
+    // leave 'linedef' field as NULL.
+    // leave 'side' as zero too (not needed for minisegs).
 
-    seg->sector = cur->r.right;
-    buddy->sector = next->l.left;
+    seg->sector = buddy->sector = cur->after;
 
     seg->index = buddy->index = -1;
 
@@ -1047,7 +1190,7 @@ void AddMinisegs(seg_t *part,
     AddSegToSuper(right_list, seg);
     AddSegToSuper(left_list, buddy);
 
-    #if DEBUG_CUTLIST
+#   if DEBUG_CUTLIST
     PrintDebug("AddMiniseg: %p RIGHT  sector %d  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
         seg, seg->sector ? seg->sector->index : -1, 
         seg->start->x, seg->start->y, seg->end->x, seg->end->y);
@@ -1055,7 +1198,7 @@ void AddMinisegs(seg_t *part,
     PrintDebug("AddMiniseg: %p LEFT   sector %d  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
         buddy, buddy->sector ? buddy->sector->index : -1, 
         buddy->start->x, buddy->start->y, buddy->end->x, buddy->end->y);
-    #endif
+#   endif
   }
 
   // free intersection structures into quick-alloc list

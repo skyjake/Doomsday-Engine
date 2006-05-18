@@ -38,23 +38,23 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct direcnode_s {
-	struct direcnode_s *next;
-	struct direcnode_s *parent;
-	char   *path;
-	uint    count;
-	boolean processed;
-	boolean isOnPath;
+    struct direcnode_s *next;
+    struct direcnode_s *parent;
+    char   *path;
+    uint    count;
+    boolean processed;
+    boolean isOnPath;
 } direcnode_t;
 
 typedef struct hashnode_s {
-	struct hashnode_s *next;
-	direcnode_t *directory;
-	char   *fileName;
+    struct hashnode_s *next;
+    direcnode_t *directory;
+    char   *fileName;
 } hashnode_t;
 
 typedef struct hashentry_s {
-	hashnode_t *first;
-	hashnode_t *last;
+    hashnode_t *first;
+    hashnode_t *last;
 } hashentry_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -81,35 +81,35 @@ static direcnode_t *direcFirst, *direcLast;
  */
 void FH_Clear(void)
 {
-	direcnode_t *next;
-	hashentry_t *entry;
-	hashnode_t *nextNode;
-	int     i;
+    direcnode_t *next;
+    hashentry_t *entry;
+    hashnode_t *nextNode;
+    int     i;
 
-	// Free the directory nodes.
-	while(direcFirst)
-	{
-		next = direcFirst->next;
-		free(direcFirst->path);
-		free(direcFirst);
-		direcFirst = next;
-	}
-	direcLast = NULL;
+    // Free the directory nodes.
+    while(direcFirst)
+    {
+        next = direcFirst->next;
+        free(direcFirst->path);
+        free(direcFirst);
+        direcFirst = next;
+    }
+    direcLast = NULL;
 
-	// Free the hash table.
-	for(i = 0, entry = hashTable; i < HASH_SIZE; i++, entry++)
-	{
-		while(entry->first)
-		{
-			nextNode = entry->first->next;
-			free(entry->first->fileName);
-			free(entry->first);
-			entry->first = nextNode;
-		}
-	}
+    // Free the hash table.
+    for(i = 0, entry = hashTable; i < HASH_SIZE; i++, entry++)
+    {
+        while(entry->first)
+        {
+            nextNode = entry->first->next;
+            free(entry->first->fileName);
+            free(entry->first);
+            entry->first = nextNode;
+        }
+    }
 
-	// Clear the entire table.
-	memset(hashTable, 0, sizeof(hashTable));
+    // Clear the entire table.
+    memset(hashTable, 0, sizeof(hashTable));
 }
 
 /*
@@ -117,22 +117,22 @@ void FH_Clear(void)
  */
 char   *M_StrTok(char **cursor, char *delimiters)
 {
-	char   *begin = *cursor;
+    char   *begin = *cursor;
 
-	while(**cursor && !strchr(delimiters, **cursor))
-		(*cursor)++;
+    while(**cursor && !strchr(delimiters, **cursor))
+        (*cursor)++;
 
-	if(**cursor)
-	{
-		// Stop here.
-		**cursor = 0;
+    if(**cursor)
+    {
+        // Stop here.
+        **cursor = 0;
 
-		// Advance one more so we'll start from the right character on 
-		// the next call.
-		(*cursor)++;
-	}
+        // Advance one more so we'll start from the right character on
+        // the next call.
+        (*cursor)++;
+    }
 
-	return begin;
+    return begin;
 }
 
 /*
@@ -141,64 +141,73 @@ char   *M_StrTok(char **cursor, char *delimiters)
  */
 direcnode_t *FH_DirecNode(const char *name, direcnode_t * parent)
 {
-	direcnode_t *node;
+    direcnode_t *node;
 
-	// Just iterate through all directory nodes.
-	for(node = direcFirst; node; node = node->next)
-		if(!stricmp(node->path, name) && node->parent == parent)
-			return node;
+    // Just iterate through all directory nodes.
+    for(node = direcFirst; node; node = node->next)
+        if(!stricmp(node->path, name) && node->parent == parent)
+            return node;
 
-	// Add a new node.
-	node = malloc(sizeof(*node));
-	node->next = NULL;
-	node->parent = parent;
-	if(direcLast)
-		direcLast->next = node;
-	direcLast = node;
-	if(!direcFirst)
-		direcFirst = node;
+    // Add a new node.
+    if((node = malloc(sizeof(*node))) == NULL)
+        Con_Error("FH_DirecNode: failed on allocation of %d bytes for new node.",
+                   sizeof(*node));
 
-	// Make a copy of the path. Freed in FH_Clear().
-	node->path = malloc(strlen(name) + 1);
-	strcpy(node->path, name);
+    node->next = NULL;
+    node->parent = parent;
+    if(direcLast)
+        direcLast->next = node;
+    direcLast = node;
+    if(!direcFirst)
+        direcFirst = node;
 
-	// No files yet.
-	node->count = 0;
-	node->isOnPath = false;
-	node->processed = false;
+    // Make a copy of the path. Freed in FH_Clear().
+    if((node->path = malloc(strlen(name) + 1)) == NULL)
+        Con_Error("FH_DirecNode: failed on allocation of %d bytes for path.",
+                   strlen(name) + 1);
 
-	return node;
+    strcpy(node->path, name);
+
+    // No files yet.
+    node->count = 0;
+    node->isOnPath = false;
+    node->processed = false;
+
+    return node;
 }
 
 /*
- * The path is split into as many nodes as necessary. 
- * Parent links are set. Returns the node that identifies the 
+ * The path is split into as many nodes as necessary.
+ * Parent links are set. Returns the node that identifies the
  * given path.
  */
 direcnode_t *FH_BuildDirecNodes(const char *path)
 {
-	char   *tokPath, *cursor;
-	char   *part;
-	direcnode_t *node, *parent;
-	char    relPath[256];
+    char   *tokPath, *cursor;
+    char   *part;
+    direcnode_t *node, *parent;
+    char    relPath[256];
 
-	// Let's try to make it a relative path.
-	M_RemoveBasePath(path, relPath);
-	//strlwr(relPath);
+    // Let's try to make it a relative path.
+    M_RemoveBasePath(path, relPath);
+    //strlwr(relPath);
 
-	tokPath = cursor = malloc(strlen(relPath) + 1);
-	strcpy(tokPath, relPath);
-	parent = NULL;
+    if((tokPath = cursor = malloc(strlen(relPath) + 1)) == NULL)
+        Con_Error("FH_BuildDirecNodes: failed on allocation of %d bytes.",
+                  strlen(relPath) + 1);
 
-	// Continue splitting as long as there are parts.
-	while(*(part = M_StrTok(&cursor, DIR_SEP_STR)))
-	{
-		node = FH_DirecNode(part, parent);
-		parent = node;
-	}
+    strcpy(tokPath, relPath);
+    parent = NULL;
 
-	free(tokPath);
-	return node;
+    // Continue splitting as long as there are parts.
+    while(*(part = M_StrTok(&cursor, DIR_SEP_STR)))
+    {
+        node = FH_DirecNode(part, parent);
+        parent = node;
+    }
+
+    free(tokPath);
+    return node;
 }
 
 /*
@@ -207,146 +216,153 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
  */
 uint FH_HashFunction(const char *name)
 {
-	unsigned short key = 0;
-	int     i, ch;
+    unsigned short key = 0;
+    int     i, ch;
 
-	// We stop when the name ends or the extension begins.
-	for(i = 0; *name && *name != '.'; i++, name++)
-	{
+    // We stop when the name ends or the extension begins.
+    for(i = 0; *name && *name != '.'; i++, name++)
+    {
         ch = tolower(*name);
-        
-		if(i == 0)
-			key ^= ch;
-		else if(i == 1)
-			key *= ch;
-		else if(i == 2)
-		{
-			key -= ch;
-			i = -1;
-		}
-	}
 
-	return key % HASH_SIZE;
+        if(i == 0)
+            key ^= ch;
+        else if(i == 1)
+            key *= ch;
+        else if(i == 2)
+        {
+            key -= ch;
+            i = -1;
+        }
+    }
+
+    return key % HASH_SIZE;
 }
 
 /*
- * Creates a file node into a directory. 
+ * Creates a file node into a directory.
  */
 void FH_AddFile(const char *filePath, direcnode_t * dir)
 {
-	char    name[256];
-	hashnode_t *node;
-	hashentry_t *slot;
+    char    name[256];
+    hashnode_t *node;
+    hashentry_t *slot;
 
-	// Extract the file name.
-	Dir_FileName(filePath, name);
-	//strlwr(name);
+    // Extract the file name.
+    Dir_FileName(filePath, name);
+    //strlwr(name);
 
-	// Create a new node and link it to the hash table.
-	node = malloc(sizeof(hashnode_t));
-	node->directory = dir;
-	node->fileName = malloc(strlen(name) + 1);
-	strcpy(node->fileName, name);
-	node->next = NULL;
+    // Create a new node and link it to the hash table.
+    if((node = malloc(sizeof(hashnode_t))) == NULL)
+        Con_Error("FH_AddFile: failed on allocation of %d bytes for node.",
+                  sizeof(hashnode_t));
 
-	// Calculate the key.
-	slot = &hashTable[FH_HashFunction(name)];
-	if(slot->last)
-		slot->last->next = node;
-	slot->last = node;
-	if(!slot->first)
-		slot->first = node;
+    node->directory = dir;
 
-	// There's now one more file in the directory.
-	dir->count++;
+    if((node->fileName = malloc(strlen(name) + 1)) == NULL)
+        Con_Error("FH_AddFile: failed on allocation of %d bytes for fileName.",
+                  strlen(name) + 1);
+
+    strcpy(node->fileName, name);
+    node->next = NULL;
+
+    // Calculate the key.
+    slot = &hashTable[FH_HashFunction(name)];
+    if(slot->last)
+        slot->last->next = node;
+    slot->last = node;
+    if(!slot->first)
+        slot->first = node;
+
+    // There's now one more file in the directory.
+    dir->count++;
 }
 
 /*
- * Adds a file/directory to a directory. 
+ * Adds a file/directory to a directory.
  * fn is an absolute path.
  */
 int FH_ProcessFile(const char *fn, filetype_t type, void *parm)
 {
-	char    path[256], *pos;
+    char    path[256], *pos;
 
-	if(type != FT_NORMAL)
-		return true;
+    if(type != FT_NORMAL)
+        return true;
 
-	// Extract the path from the full file name.
-	strcpy(path, fn);
-	pos = strrchr(path, DIR_SEP_CHAR);
-	if(pos)
-		*pos = 0;
+    // Extract the path from the full file name.
+    strcpy(path, fn);
+    pos = strrchr(path, DIR_SEP_CHAR);
+    if(pos)
+        *pos = 0;
 
     VERBOSE2(Con_Message("FH_ProcessFile: %s\n", path));
-    
-	// Add a node for this file.
-	FH_AddFile(fn, FH_BuildDirecNodes(path));
 
-	return true;
+    // Add a node for this file.
+    FH_AddFile(fn, FH_BuildDirecNodes(path));
+
+    return true;
 }
 
 /*
- * Process a directory and add its contents to the file hash. 
+ * Process a directory and add its contents to the file hash.
  * If the path is relative, it is relative to the base path.
  */
 void FH_AddDirectory(const char *path)
 {
-	direcnode_t *direc = FH_BuildDirecNodes(path);
-	char    searchPattern[256];
+    direcnode_t *direc = FH_BuildDirecNodes(path);
+    char    searchPattern[256];
 
-	// This directory is now on the search path.
-	direc->isOnPath = true;
+    // This directory is now on the search path.
+    direc->isOnPath = true;
 
-	if(direc->processed)
-	{
-		// This directory has already been processed. It means the 
-		// given path was a duplicate. We won't process it again.
-		return;
-	}
+    if(direc->processed)
+    {
+        // This directory has already been processed. It means the
+        // given path was a duplicate. We won't process it again.
+        return;
+    }
 
-	// Compose the search pattern.
-	M_PrependBasePath(path, searchPattern);
-	strcat(searchPattern, DIR_SEP_STR "*");	// We're interested in *everything*.
-	F_ForAll(searchPattern, NULL, FH_ProcessFile);
+    // Compose the search pattern.
+    M_PrependBasePath(path, searchPattern);
+    strcat(searchPattern, DIR_SEP_STR "*"); // We're interested in *everything*.
+    F_ForAll(searchPattern, NULL, FH_ProcessFile);
 
-	// Mark all existing directories processed.
-	// Everything they contain is already in the table.
-	for(direc = direcFirst; direc; direc = direc->next)
-		direc->processed = true;
+    // Mark all existing directories processed.
+    // Everything they contain is already in the table.
+    for(direc = direcFirst; direc; direc = direc->next)
+        direc->processed = true;
 }
 
 /*
- * Initialize the file hash using the given list of paths. 
+ * Initialize the file hash using the given list of paths.
  * The paths must be separated with semicolons.
  */
 void FH_Init(const char *pathList)
 {
-	char   *tokenPaths = malloc(strlen(pathList) + 1);
-	char   *path;
+    char   *tokenPaths = malloc(strlen(pathList) + 1);
+    char   *path;
 
     FH_Clear();
-    
-	strcpy(tokenPaths, pathList);
-	path = strtok(tokenPaths, ";");
-	while(path)
-	{
-		// We'll be using strcmp.
-		//strlwr(path);
+
+    strcpy(tokenPaths, pathList);
+    path = strtok(tokenPaths, ";");
+    while(path)
+    {
+        // We'll be using strcmp.
+        //strlwr(path);
 
         VERBOSE2(Con_Message("FH_Init: %s\n", path));
-        
-		// Convert all slashes to backslashes, so things are compatible 
-		// with the sys_file routines.
-		Dir_FixSlashes(path);
 
-		// Add this path to the hash.
-		FH_AddDirectory(path);
+        // Convert all slashes to backslashes, so things are compatible
+        // with the sys_file routines.
+        Dir_FixSlashes(path);
 
-		// Get the next path.
-		path = strtok(NULL, ";");
-	}
-	free(tokenPaths);
+        // Add this path to the hash.
+        FH_AddDirectory(path);
+
+        // Get the next path.
+        path = strtok(NULL, ";");
+    }
+    free(tokenPaths);
 }
 
 /*
@@ -355,41 +371,41 @@ void FH_Init(const char *pathList)
  */
 boolean FH_MatchDirectory(hashnode_t * node, const char *name)
 {
-	char   *pos;
-	char    dir[256];
-	direcnode_t *direc = node->directory;
+    char   *pos;
+    char    dir[256];
+    direcnode_t *direc = node->directory;
 
-	// We'll do this in reverse order.
-	strcpy(dir, name);
-	while((pos = strrchr(dir, DIR_SEP_CHAR)) != NULL)
-	{
-		// The string now ends here.
-		*pos = 0;
+    // We'll do this in reverse order.
+    strcpy(dir, name);
+    while((pos = strrchr(dir, DIR_SEP_CHAR)) != NULL)
+    {
+        // The string now ends here.
+        *pos = 0;
 
-		// Where does the directory name begin?
-		pos = strrchr(dir, DIR_SEP_CHAR);
-		if(!pos)
-			pos = dir;
-		else
-			pos++;
+        // Where does the directory name begin?
+        pos = strrchr(dir, DIR_SEP_CHAR);
+        if(!pos)
+            pos = dir;
+        else
+            pos++;
 
-		// Is there no more parent directories?
-		if(!direc)
-			return false;
+        // Is there no more parent directories?
+        if(!direc)
+            return false;
 
-		// Does this match the node's directory?
-		if(stricmp(direc->path, pos))
-		{
-			// Mismatch! This is not it.
-			return false;
-		}
+        // Does this match the node's directory?
+        if(stricmp(direc->path, pos))
+        {
+            // Mismatch! This is not it.
+            return false;
+        }
 
-		// So far so good. Move one directory level upwards.
-		direc = direc->parent;
-	}
+        // So far so good. Move one directory level upwards.
+        direc = direc->parent;
+    }
 
-	// We must have now arrived at a directory on the search path.
-	return direc && direc->isOnPath;
+    // We must have now arrived at a directory on the search path.
+    return direc && direc->isOnPath;
 }
 
 /*
@@ -397,19 +413,19 @@ boolean FH_MatchDirectory(hashnode_t * node, const char *name)
  */
 void FH_ComposePath(hashnode_t * node, char *foundPath)
 {
-	direcnode_t *direc = node->directory;
-	char    buf[256];
+    direcnode_t *direc = node->directory;
+    char    buf[256];
 
-	strcpy(foundPath, node->fileName);
-	while(direc)
-	{
-		sprintf(buf, "%s" DIR_SEP_STR "%s", direc->path, foundPath);
-		strcpy(foundPath, buf);
-		direc = direc->parent;
-	}
+    strcpy(foundPath, node->fileName);
+    while(direc)
+    {
+        sprintf(buf, "%s" DIR_SEP_STR "%s", direc->path, foundPath);
+        strcpy(foundPath, buf);
+        direc = direc->parent;
+    }
 
-	// Add the base path.
-	M_PrependBasePath(foundPath, foundPath);
+    // Add the base path.
+    M_PrependBasePath(foundPath, foundPath);
 }
 
 /*
@@ -418,52 +434,52 @@ void FH_ComposePath(hashnode_t * node, char *foundPath)
  */
 boolean FH_Find(const char *name, char *foundPath)
 {
-	char    validName[256];
-	char    baseName[256];
-	hashentry_t *slot;
-	hashnode_t *node;
+    char    validName[256];
+    char    baseName[256];
+    hashentry_t *slot;
+    hashnode_t *node;
 
-	// Absolute paths are not in the hash (no need to put them there).
-	if(Dir_IsAbsolute(name))
-	{
-		if(F_Access(name))
-		{
-			strcpy(foundPath, name);
-			return true;
-		}
-		return false;
-	}
+    // Absolute paths are not in the hash (no need to put them there).
+    if(Dir_IsAbsolute(name))
+    {
+        if(F_Access(name))
+        {
+            strcpy(foundPath, name);
+            return true;
+        }
+        return false;
+    }
 
-	// Convert the given file name into a file name we can process.
-	strcpy(validName, name);
-	//strlwr(validName);
-	Dir_FixSlashes(validName);
+    // Convert the given file name into a file name we can process.
+    strcpy(validName, name);
+    //strlwr(validName);
+    Dir_FixSlashes(validName);
 
-	// Extract the base name.
-	Dir_FileName(validName, baseName);
+    // Extract the base name.
+    Dir_FileName(validName, baseName);
 
-	// Which slot in the hash table?
-	slot = &hashTable[FH_HashFunction(baseName)];
+    // Which slot in the hash table?
+    slot = &hashTable[FH_HashFunction(baseName)];
 
-	// Paths in the hash are relative to their directory node.
-	// There is one direcnode per search path directory.
+    // Paths in the hash are relative to their directory node.
+    // There is one direcnode per search path directory.
 
-	// Go through the candidates.
-	for(node = slot->first; node; node = node->next)
-	{
-		// The file name in the node has no path.
-		if(stricmp(node->fileName, baseName))
-			continue;
+    // Go through the candidates.
+    for(node = slot->first; node; node = node->next)
+    {
+        // The file name in the node has no path.
+        if(stricmp(node->fileName, baseName))
+            continue;
 
-		// If the directory compare passes, this is the match.
-		// The directory must be on the search path for the test to pass.
-		if(FH_MatchDirectory(node, validName))
-		{
-			FH_ComposePath(node, foundPath);
-			return true;
-		}
-	}
+        // If the directory compare passes, this is the match.
+        // The directory must be on the search path for the test to pass.
+        if(FH_MatchDirectory(node, validName))
+        {
+            FH_ComposePath(node, foundPath);
+            return true;
+        }
+    }
 
-	// Nothing suitable was found.
-	return false;
+    // Nothing suitable was found.
+    return false;
 }

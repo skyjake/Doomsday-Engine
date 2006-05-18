@@ -1,13 +1,21 @@
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ */
+
 /*
- *
- * AM_MAP.C
- *
- * Basen on the DOOM Automap. Modified GL version of the original.
- *
- * "commonised" by DaniJ - Based on code by ID and Raven, heavily modified by Skyjake
+ * Compiles for jDoom/jHeretic/jHexen
  *
  *  TODO: Clean up!
- *
  *    Baby mode Keys in jHexen!
  */
 
@@ -18,6 +26,7 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
+# include "jDoom/m_ctrl.h"
 # include "jDoom/doomdef.h"
 # include "jDoom/d_config.h"
 # include "jDoom/st_stuff.h"
@@ -25,23 +34,29 @@
 # include "jDoom/m_cheat.h"
 # include "jDoom/D_Action.h"
 # include "jDoom/doomstat.h"
-# include "jDoom/r_state.h"
 # include "jDoom/dstrings.h"
 # include "jDoom/Mn_def.h"
 # include "jDoom/m_menu.h"
 # include "jDoom/wi_stuff.h"
 #elif __JHERETIC__
-# include "jHeretic/H_Action.h"
+# include "jHeretic/m_ctrl.h"
 # include "jHeretic/Doomdef.h"
-# include "jHeretic/Mn_def.h"
+# include "jHeretic/h_config.h"
+# include "jHeretic/st_stuff.h"
 # include "jHeretic/P_local.h"
-# include "h_config.h"
+# include "jHeretic/m_cheat.h"
+# include "jHeretic/H_Action.h"
+# include "jHeretic/h_stat.h"
 # include "jHeretic/Dstrings.h"
+# include "jHeretic/Mn_def.h"
+# include "jHeretic/m_menu.h"
 #elif __JHEXEN__
+# include "jHexen/m_ctrl.h"
 # include "jHexen/h2_actn.h"
 # include "jHexen/mn_def.h"
 # include "jHexen/h2def.h"
-# include "x_config.h"
+# include "jHexen/x_config.h"
+# include "jHexen/st_stuff.h"
 #elif __JSTRIFE__
 # include "jStrife/h2_actn.h"
 # include "jStrife/Mn_def.h"
@@ -49,32 +64,23 @@
 # include "jStrife/d_config.h"
 #endif
 
+#include "Common/p_mapsetup.h"
 #include "Common/hu_stuff.h"
 #include "Common/am_map.h"
+#include "Common/g_common.h"
+#include "Common/p_player.h"
 
 // TYPES -------------------------------------------------------------------
 
-#ifdef __JDOOM__
-
 typedef struct {
-    fixed_t x, y;
+    float pos[3];
 } mpoint_t;
-
-#endif
 
 typedef struct {
     float r, g, b, a, a2, w;    // a2 is used in glow mode in case the glow needs a different alpha
     boolean glow;
     boolean scale;
 } mapline_t;
-
-typedef struct {
-    int     x, y;
-} fpoint_t;
-
-typedef struct {
-    fpoint_t a, b;
-} fline_t;
 
 typedef struct {
     mpoint_t a, b;
@@ -93,8 +99,6 @@ enum {
 
 // MACROS ------------------------------------------------------------------
 
-#define DEFCC(name)        int name(int argc, char **argv)
-
 #define thinkercap    (*gi.thinkercap)
 
 //
@@ -103,7 +107,7 @@ enum {
 //   starting from the middle.
 //
 
-#define R ((8*PLAYERRADIUS)/7)
+#define R (1.0f)
 mline_t         keysquare[] = {
     {{0, 0}, {R / 4, -R / 2}},
     {{R / 4, -R / 2}, {R / 2, -R / 2}},
@@ -115,31 +119,23 @@ mline_t         keysquare[] = {
     {{-3 * R / 4, 0}, {-3 * R / 4, -R / 4}}
 };
 #undef R
-#define NUMKEYSQUARELINES (sizeof(keysquare)/sizeof(mline_t))
+#define NUMKEYSQUARELINES (sizeof(keysquare) / sizeof(mline_t))
 
-#define R (FRACUNIT)
-mline_t         triangle_guy[] = {
-    {{-.867 * R, -.5 * R}, {.867 * R, -.5 * R}},
-    {{.867 * R, -.5 * R}, {0, R}},
-    {{0, R}, {-.867 * R, -.5 * R}}
-};
-#undef R
-#define NUMTRIANGLEGUYLINES (sizeof(triangle_guy)/sizeof(mline_t))
-
-#define R (FRACUNIT)
+#define R (1.0f)
 mline_t         thintriangle_guy[] = {
-    {{-.5 * R, -.7 * R}, {R, 0}},
-    {{R, 0}, {-.5 * R, .7 * R}},
-    {{-.5 * R, .7 * R}, {-.5 * R, -.7 * R}}
+    {{-R / 2, R - R / 2}, {R, 0}}, // >
+    {{R, 0}, {-R / 2, -R + R / 2}},
+    {{-R / 2, -R + R / 2}, {-R / 2, R - R / 2}} // |>
 };
 #undef R
-#define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
+
+#define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy) / sizeof(mline_t))
 
 
 // JDOOM Stuff
 #ifdef __JDOOM__
 
-#define R ((8*PLAYERRADIUS)/7)
+#define R (1.0f)
 mline_t player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},    // -----
     {{R, 0}, {R - R / 2, R / 4}},    // ----->
@@ -152,7 +148,7 @@ mline_t player_arrow[] = {
 #undef R
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
-#define R ((8*PLAYERRADIUS)/7)
+#define R (1.0f)
 mline_t cheat_player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},    // -----
     {{R, 0}, {R - R / 2, R / 6}},    // ----->
@@ -181,8 +177,7 @@ mline_t cheat_player_arrow[] = {
 // JHERETIC Stuff
 #ifdef __JHERETIC__
 
-#define R ((8*PLAYERRADIUS)/7)
-
+#define R (1.0f)
 mline_t         player_arrow[] = {
     {{-R + R / 4, 0}, {0, 0}},       // center line.
     {{-R + R / 4, R / 8}, {R, 0}}, // blade
@@ -198,7 +193,7 @@ mline_t         player_arrow[] = {
 #undef R
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
-#define R ((8*PLAYERRADIUS)/7)
+#define R (1.0f)
 mline_t         cheat_player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},       // -----
     {{R, 0}, {R - R / 2, R / 6}},  // ----->
@@ -226,8 +221,7 @@ mline_t         cheat_player_arrow[] = {
 // JHEXEN Stuff ------------------------------------------------------------
 #ifdef __JHEXEN__
 
-#define R ((8*PLAYERRADIUS)/7)
-
+#define R (1.0f)
 mline_t         player_arrow[] = {
     {{-R + R / 4, 0}, {0, 0}},       // center line.
     {{-R + R / 4, R / 8}, {R, 0}}, // blade
@@ -243,15 +237,13 @@ mline_t         player_arrow[] = {
 
 #undef R
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
-#define NUMKEYSQUARELINES (sizeof(keysquare)/sizeof(mline_t))
 
 #endif
 
 // JSTRIFE Stuff ------------------------------------------------------------
 #if __JSTRIFE__
 
-#define R ((8*PLAYERRADIUS)/7)
-
+#define R (1.0f)
 mline_t         player_arrow[] = {
     {{-R + R / 4, 0}, {0, 0}},       // center line.
     {{-R + R / 4, R / 8}, {R, 0}}, // blade
@@ -267,12 +259,11 @@ mline_t         player_arrow[] = {
 
 #undef R
 #define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
-#define NUMKEYSQUARELINES (sizeof(keysquare)/sizeof(mline_t))
 
 #endif
 
 // Used for Baby mode
-vertex_t KeyPoints[NUMBEROFKEYS];
+ddvertex_t KeyPoints[NUMBEROFKEYS];
 
 // scale on entry
 #define INITSCALEMTOF (.2*FRACUNIT)
@@ -317,7 +308,7 @@ static void AM_changeWindowScale(void);
 static void AM_drawLevelName(void);
 static void AM_drawWorldTimer(void);
 
-void    AM_drawMline2(mline_t * ml, mapline_t c, boolean caps, \
+void    AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps, \
                       boolean glowmode, boolean blend);
 
 void    AM_Start(void);
@@ -355,12 +346,12 @@ boolean automapactive = false;
 boolean amap_fullyopen = false;
 
 cvar_t  mapCVars[] = {
-    {"map-position", 0, CVT_INT, &cfg.automapPos, 0, 8,
+/*    {"map-position", 0, CVT_INT, &cfg.automapPos, 0, 8,
         "Relative position of the automap.\n0-8 Left to right, top to bottom"},
     {"map-width", 0, CVT_FLOAT, &cfg.automapWidth, 0, 1,
         "Automap width scale factor."},
     {"map-height", 0, CVT_FLOAT, &cfg.automapHeight, 0, 1,
-        "Automap height scale factor."},
+        "Automap height scale factor."},*/
     {"map-color-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1,
         "Automap unseen areas, red component."},
     {"map-color-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1,
@@ -433,9 +424,6 @@ ccmd_t  mapCCmds[] = {
 
 static int keycolors[] = { KEY1, KEY2, KEY3, KEY4, KEY5, KEY6 };
 
-static unsigned char cheat_amap_seq[] = { 0xb2, 0x26, 0x26, 0x2e, 0xff };
-static cheatseq_t cheat_amap = { cheat_amap_seq, 0 };
-
 static int maplumpnum = 0;    // pointer to the raw data for the automap background.
                 // if 0 no background image will be drawn
 
@@ -443,20 +431,14 @@ static int maplumpnum = 0;    // pointer to the raw data for the automap backgro
 
 static int keycolors[] = { KEY1, KEY2, KEY3 };
 
-static char cheat_amap[] = { 'r', 'a', 'v', 'm', 'a', 'p' };
-
-static byte cheatcount = 0;
-
 static int maplumpnum = 1;    // pointer to the raw data for the automap background.
                 // if 0 no background image will be drawn
-
 #else
 
 static int keycolors[] = { KEY1, KEY2, KEY3 };
 
-static char cheat_kills[] = { 'k', 'i', 'l', 'l', 's' };
-static boolean ShowKills = 0;
-static unsigned ShowKillsCount = 0;
+boolean ShowKills = 0;
+unsigned ShowKillsCount = 0;
 
 static int their_colors[] = {
     AM_PLR1_COLOR,
@@ -484,7 +466,6 @@ static float am_alpha = 0;
 
 static int bigstate = 0;
 static int grid = 0;
-static int cheatstate = 0;
 static int followplayer = 1;        // specifies whether to follow the player around
 
 static int leveljuststarted = 1;    // kluge until AM_LevelInit() is called
@@ -565,6 +546,9 @@ static int winh = 0;
 static int oldwin_w = 0;
 static int oldwin_h = 0;
 
+// Used in subsector debug display.
+static mapline_t subColors[10];
+
 // CODE --------------------------------------------------------------------
 
 /*
@@ -584,7 +568,7 @@ void AM_Register(void)
 /*
  * Handle the console commands for the automap
  */
-int CCmdMapAction(int argc, char **argv)
+DEFCC(CCmdMapAction)
 {
     static char buffer[20];
 
@@ -603,29 +587,29 @@ int CCmdMapAction(int argc, char **argv)
             viewactive = true;
 
             // Disable the automap binding classes
-            Con_Execute("enablebindclass map 0", true);
+            DD_SetBindClass(GBC_CLASS1, false);
 
             if(!followplayer)
-                Con_Execute("enablebindclass mapfollowoff 0", true);
+                DD_SetBindClass(GBC_CLASS2, false);
 
             AM_Stop();
-            return true; 
+            return true;
         }
 
         if(!stricmp(argv[0], "follow"))  // follow mode toggle
         {
             followplayer = !followplayer;
-            f_oldloc.x = DDMAXINT;
-            
+            f_oldloc.pos[VX] = (float) DDMAXINT;
+
             // Enable/disable the follow mode binding class
             if(!followplayer)
-                Con_Execute("enablebindclass mapfollowoff 1", true);
+                DD_SetBindClass(GBC_CLASS2, true);
             else
-                Con_Execute("enablebindclass mapfollowoff 0", true);
+                DD_SetBindClass(GBC_CLASS2, false);
 
             P_SetMessage(plr, followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF  );
             Con_Printf("Follow mode toggle.\n");
-            return true; 
+            return true;
         }
 
         if(!stricmp(argv[0], "rotate"))  // rotate mode toggle
@@ -682,12 +666,12 @@ int CCmdMapAction(int argc, char **argv)
         {
             AM_Start();
             // Enable/disable the automap binding classes
-            Con_Execute("enablebindclass map 1", true);
+            DD_SetBindClass(GBC_CLASS1, true);
             if(!followplayer)
-                Con_Execute("enablebindclass mapfollowoff 1", true);
+                DD_SetBindClass(GBC_CLASS2, true);
 
             viewactive = false;
-            return true; 
+            return true;
         }
     }
 
@@ -705,8 +689,8 @@ void AM_getIslope(mline_t * ml, islope_t * is)
 {
     int     dx, dy;
 
-    dy = ml->a.y - ml->b.y;
-    dx = ml->b.x - ml->a.x;
+    dy = ml->a.pos[VY] - ml->b.pos[VY];
+    dx = ml->b.pos[VX] - ml->a.pos[VX];
 
     if(!dy)
         is->islp = (dx < 0 ? -DDMAXINT : DDMAXINT);
@@ -759,8 +743,8 @@ void AM_restoreScaleAndLoc(void)
     }
     else
     {
-        m_x = plr->plr->mo->x - m_w / 2;
-        m_y = plr->plr->mo->y - m_h / 2;
+        m_x = plr->plr->mo->pos[VX] - m_w / 2;
+        m_y = plr->plr->mo->pos[VY] - m_h / 2;
     }
     m_x2 = m_x + m_w;
     m_y2 = m_y + m_h;
@@ -781,8 +765,9 @@ void AM_addMark(void)
                             m_y + m_h / 2);
     */
 
-    markpoints[markpointnum].x = m_x + m_w / 2;
-    markpoints[markpointnum].y = m_y + m_h / 2;
+    markpoints[markpointnum].pos[VX] = m_x + m_w / 2;
+    markpoints[markpointnum].pos[VY] = m_y + m_h / 2;
+    markpoints[markpointnum].pos[VZ] = 0;
     markpointnum = (markpointnum + 1) % AM_NUMMARKPOINTS;
 
 }
@@ -794,6 +779,7 @@ void AM_addMark(void)
 void AM_findMinMaxBoundaries(void)
 {
     int     i;
+    fixed_t x, y;
     fixed_t a;
     fixed_t b;
 
@@ -802,15 +788,18 @@ void AM_findMinMaxBoundaries(void)
 
     for(i = 0; i < numvertexes; i++)
     {
-        if(vertexes[i].x < min_x)
-            min_x = vertexes[i].x;
-        else if(vertexes[i].x > max_x)
-            max_x = vertexes[i].x;
+        x = P_GetFixed(DMU_VERTEX, i, DMU_X);
+        y = P_GetFixed(DMU_VERTEX, i, DMU_Y);
 
-        if(vertexes[i].y < min_y)
-            min_y = vertexes[i].y;
-        else if(vertexes[i].y > max_y)
-            max_y = vertexes[i].y;
+        if(x < min_x)
+            min_x = x;
+        else if(x > max_x)
+            max_x = x;
+
+        if(y < min_y)
+            min_y = y;
+        else if(y > max_y)
+            max_y = y;
     }
 
     max_w = max_x - min_x;
@@ -832,15 +821,15 @@ void AM_findMinMaxBoundaries(void)
  */
 void AM_changeWindowLoc(void)
 {
-    if(m_paninc.x || m_paninc.y)
+    if(m_paninc.pos[VX] || m_paninc.pos[VY])
     {
         followplayer = 0;
 
-        f_oldloc.x = DDMAXINT;
+        f_oldloc.pos[VX] = (float) DDMAXINT;
     }
 
-    m_x += m_paninc.x;
-    m_y += m_paninc.y;
+    m_x += m_paninc.pos[VX];
+    m_y += m_paninc.pos[VY];
 
     if(m_x + m_w / 2 > max_x)
         m_x = max_x - m_w / 2;
@@ -861,38 +850,48 @@ void AM_changeWindowLoc(void)
  */
 void AM_initVariables(void)
 {
-    int     pnum;
-#ifdef __JDOOM__    
-    static event_t st_notify = { ev_keyup, AM_MSGENTERED };
-#endif
+    int     i, pnum;
 
     thinker_t *think;
     mobj_t *mo;
 
     automapactive = true;
 
-    f_oldloc.x = DDMAXINT;
+    f_oldloc.pos[VX] = (float) DDMAXINT;
 
     amclock = 0;
     lightlev = 0;
 
-    m_paninc.x = m_paninc.y = 0;
+    m_paninc.pos[VX] = m_paninc.pos[VY] = 0;
 
-    if(cfg.automapWidth == 1 && cfg.automapHeight == 1)
+    // Set the colors for the subsector debug display
+    for(i = 0; i < 10; ++i)
+    {
+        subColors[i].r = ((float) M_Random()) / 255.f;
+        subColors[i].g = ((float) M_Random()) / 255.f;
+        subColors[i].b = ((float) M_Random()) / 255.f;
+        subColors[i].a = 1.0f;
+        subColors[i].a2 =  1.0f;
+        subColors[i].glow = FRONT_GLOW;
+        subColors[i].w = 7.5f;
+        subColors[i].scale = false;
+    }
+
+//    if(cfg.automapWidth == 1 && cfg.automapHeight == 1)
     {
         winx = 0;
         winy = 0;
         winw = scrwidth;
         winh = scrheight;
-    } 
-    else 
-    { 
+    }
+/*    else
+    {
         // smooth scale/move from center
         winx = 160;
         winy = 100;
         winw = 0;
         winh = 0;
-    }
+    }*/
 
     m_w = FTOM(f_w);
     m_h = FTOM(f_h);
@@ -906,8 +905,8 @@ void AM_initVariables(void)
     }
 
     plr = &players[pnum];
-    m_x = plr->plr->mo->x - m_w / 2;
-    m_y = plr->plr->mo->y - m_h / 2;
+    m_x = plr->plr->mo->pos[VX] - m_w / 2;
+    m_y = plr->plr->mo->pos[VY] - m_h / 2;
     AM_changeWindowLoc();
 
     // for saving & restoring
@@ -918,7 +917,7 @@ void AM_initVariables(void)
 
     AM_setWinPos();
 
-    memset(KeyPoints, 0, sizeof(vertex_t) * NUMBEROFKEYS );
+    memset(KeyPoints, 0, sizeof(ddvertex_t) * NUMBEROFKEYS);
 
     // load in the location of keys, if in baby mode
     if(gameskill == sk_baby)
@@ -933,60 +932,55 @@ void AM_initVariables(void)
 #ifdef __JDOOM__
             if(mo->type == MT_MISC4)
             {
-                KeyPoints[0].x = mo->x;
-                KeyPoints[0].y = mo->y;
+                KeyPoints[0].x = mo->pos[VX];
+                KeyPoints[0].y = mo->pos[VY];
             }
             if(mo->type == MT_MISC5)
             {
-                KeyPoints[1].x = mo->x;
-                KeyPoints[1].y = mo->y;
+                KeyPoints[1].x = mo->pos[VX];
+                KeyPoints[1].y = mo->pos[VY];
             }
             if(mo->type == MT_MISC6)
             {
-                KeyPoints[2].x = mo->x;
-                KeyPoints[2].y = mo->y;
+                KeyPoints[2].x = mo->pos[VX];
+                KeyPoints[2].y = mo->pos[VY];
             }
             if(mo->type == MT_MISC7)
             {
-                KeyPoints[3].x = mo->x;
-                KeyPoints[3].y = mo->y;
+                KeyPoints[3].x = mo->pos[VX];
+                KeyPoints[3].y = mo->pos[VY];
             }
             if(mo->type == MT_MISC8)
             {
-                KeyPoints[4].x = mo->x;
-                KeyPoints[4].y = mo->y;
+                KeyPoints[4].x = mo->pos[VX];
+                KeyPoints[4].y = mo->pos[VY];
             }
             if(mo->type == MT_MISC9)
             {
-                KeyPoints[5].x = mo->x;
-                KeyPoints[5].y = mo->y;
+                KeyPoints[5].x = mo->pos[VX];
+                KeyPoints[5].y = mo->pos[VY];
             }
 #elif __JHERETIC__              // NB - Should really put the keys into a struct for neatness.
                                 // name of the vector object, object keyname, colour etc.
                                 // could easily display other objects on the map then...
             if(mo->type == MT_CKEY)
             {
-                KeyPoints[0].x = mo->x;
-                KeyPoints[0].y = mo->y;
+                KeyPoints[0].x = mo->pos[VX];
+                KeyPoints[0].y = mo->pos[VY];
             }
             else if(mo->type == MT_BKYY)
             {
-                KeyPoints[1].x = mo->x;
-                KeyPoints[1].y = mo->y;
+                KeyPoints[1].x = mo->pos[VX];
+                KeyPoints[1].y = mo->pos[VY];
             }
             else if(mo->type == MT_AKYY)
             {
-                KeyPoints[2].x = mo->x;
-                KeyPoints[2].y = mo->y;
+                KeyPoints[2].x = mo->pos[VX];
+                KeyPoints[2].y = mo->pos[VY];
             }
 #endif                                // FIXME: Keys in jHexen!
         }
     }
-
-#ifdef __JDOOM__
-    // inform the status bar of the change
-    ST_Responder(&st_notify);
-#endif
 }
 
 /*
@@ -1000,7 +994,7 @@ void AM_loadPics(void)
     for(i = 0; i < 10; i++)
     {
         MARKERPATCHES;        // Check the macros eg: "sprintf(namebuf, "AMMNUM%d", i)" for jDoom
- 
+
         markpnums[i] = W_GetNumForName(namebuf);
     }
 
@@ -1019,15 +1013,15 @@ void AM_unloadPics(void)
 
 /*
  * Clears markpoint array
+ * fixme THIS IS BOLLOCKS!
  */
 void AM_clearMarks(void)
 {
     int     i;
 
     for(i = 0; i < AM_NUMMARKPOINTS; i++)
-        markpoints[i].x = -1;    // means empty
+        markpoints[i].pos[VX] = -1;    // means empty
     markpointnum = 0;
-
 }
 
 /*
@@ -1057,18 +1051,11 @@ void AM_LevelInit(void)
  */
 void AM_Stop(void)
 {
-#ifdef __JDOOM__
-    static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED };
-#endif    
-
     AM_unloadPics();
     automapactive = false;
     amap_fullyopen = false;
     am_alpha = 0;
 
-#ifdef __JDOOM__
-    ST_Responder(&st_notify);
-#endif
     stopped = true;
 
     GL_Update(DDUF_BORDER);
@@ -1079,7 +1066,7 @@ void AM_Stop(void)
  */
 void AM_Start(void)
 {
-    static int lastlevel = -1, lastepisode = -1;
+    //static int lastlevel = -1, lastepisode = -1;
 
     if(!stopped)
         AM_Stop();
@@ -1089,12 +1076,6 @@ void AM_Start(void)
     if(gamestate != GS_LEVEL)
         return;                    // don't show automap if we aren't in a game!
 
-    if(lastlevel != gamemap || lastepisode != gameepisode)
-    {
-        AM_LevelInit();
-        lastlevel = gamemap;
-        lastepisode = gameepisode;
-    }
     AM_initVariables();
     AM_loadPics();
 }
@@ -1120,72 +1101,6 @@ void AM_maxOutWindowScale(void)
 }
 
 /*
- * Handle input events in the automap.
- * Shouldn't really be here anyway...
- */
-boolean AM_Responder(event_t *ev)
-{
-    int     rc;
-    //static int cheatstate = 0;
-    //static int bigstate = 0;
-    //static char buffer[20];
-
-    rc = false;
-
-    if(automapactive)
-    {
-        if(ev->type == ev_keydown )
-        {
-            cheatstate = 0;
-            rc = false;
-
-#ifdef __JDOOM__
-            if(!deathmatch && cht_CheckCheat(&cheat_amap, (char) ev->data1))
-            {
-                rc = false;
-                cheating = (cheating + 1) % 3;
-            }
-#elif __JHERETIC__
-            if(cheat_amap[cheatcount] == ev->data1 && !IS_NETGAME)
-                cheatcount++;
-            else
-                cheatcount = 0;
-            if(cheatcount == 6)
-            {
-                cheatcount = 0;
-                rc = false;
-                cheating = (cheating + 1) % 3;
-            }
-#else
-            if(cheat_kills[ShowKillsCount] == ev->data1 && IS_NETGAME && deathmatch)
-            {
-                ShowKillsCount++;
-                if(ShowKillsCount == 5)
-                {
-                    ShowKillsCount = 0;
-                    rc = false;
-                    ShowKills ^= 1;
-                }
-            }
-            else
-            {
-                ShowKillsCount = 0;
-            }
-#endif
-        }
-        else if(ev->type == ev_keyup)
-        {
-            rc = false;
-        }
-        else if(ev->type == ev_keyrepeat)
-            return true;
-    }
-
-    return rc;
-
-}
-
-/*
  * Changes the map scale values
  */
 void AM_changeWindowScale(void)
@@ -1208,16 +1123,16 @@ void AM_changeWindowScale(void)
  */
 void AM_doFollowPlayer(void)
 {
-    if(f_oldloc.x != plr->plr->mo->x || f_oldloc.y != plr->plr->mo->y)
+    if(f_oldloc.pos[VX] != plr->plr->mo->pos[VX] || f_oldloc.pos[VY] != plr->plr->mo->pos[VY])
     {
         // Now that a high resolution is used (compared to 320x200!)
         // there is no need to quantify map scrolling. -jk
-        m_x =  plr->plr->mo->x - m_w / 2;
-        m_y =  plr->plr->mo->y  - m_h / 2;
+        m_x =  plr->plr->mo->pos[VX] - m_w / 2;
+        m_y =  plr->plr->mo->pos[VY]  - m_h / 2;
         m_x2 = m_x + m_w;
         m_y2 = m_y + m_h;
-        f_oldloc.x = plr->plr->mo->x;
-        f_oldloc.y = plr->plr->mo->y;
+        f_oldloc.pos[VX] = plr->plr->mo->pos[VX];
+        f_oldloc.pos[VY] = plr->plr->mo->pos[VY];
     }
 }
 
@@ -1270,7 +1185,7 @@ void AM_Ticker(void)
     if( winx == sx0 && winy == sy0 && winw == sx1 && winh == sy1)
         amap_fullyopen = true;
     else
-        amap_fullyopen = false;        
+        amap_fullyopen = false;
 
     // Zooming
     if(actions[A_MAPZOOMOUT].on)  // zoom out
@@ -1293,20 +1208,20 @@ void AM_Ticker(void)
     if(!followplayer)
     {
         // X axis pan
-        if(actions[A_MAPPANRIGHT].on) // pan right?     
-            m_paninc.x = FTOM(F_PANINC);
+        if(actions[A_MAPPANRIGHT].on) // pan right?
+            m_paninc.pos[VX] = FTOM(F_PANINC);
         else if(actions[A_MAPPANLEFT].on) // pan left?
-            m_paninc.x = -FTOM(F_PANINC);
+            m_paninc.pos[VX] = -FTOM(F_PANINC);
         else
-            m_paninc.x = 0;
+            m_paninc.pos[VX] = 0;
 
         // Y axis pan
         if(actions[A_MAPPANUP].on)  // pan up?
-            m_paninc.y = FTOM(F_PANINC);
+            m_paninc.pos[VY] = FTOM(F_PANINC);
         else if(actions[A_MAPPANDOWN].on)  // pan down?
-            m_paninc.y = -FTOM(F_PANINC);
+            m_paninc.pos[VY] = -FTOM(F_PANINC);
         else
-            m_paninc.y = 0;
+            m_paninc.pos[VY] = 0;
     }
     else  // Camera follows the player
         AM_doFollowPlayer();
@@ -1315,7 +1230,7 @@ void AM_Ticker(void)
     AM_changeWindowScale();
 
     // Change window location
-    if(m_paninc.x || m_paninc.y || oldwin_w != cfg.automapWidth || oldwin_h != cfg.automapHeight)
+    if(m_paninc.pos[VX] || m_paninc.pos[VY] /*|| oldwin_w != cfg.automapWidth || oldwin_h != cfg.automapHeight*/)
         AM_changeWindowLoc();
 }
 
@@ -1624,30 +1539,38 @@ void AM_drawMline(mline_t * ml, int color)
 {
     GL_SetColor2(color, (am_alpha - (1-cfg.automapLineAlpha)));
 
-    gl.Vertex2f(FIX2FLT(CXMTOFX(ml->a.x)), FIX2FLT(CYMTOFX(ml->a.y)));
-    gl.Vertex2f(FIX2FLT(CXMTOFX(ml->b.x)), FIX2FLT(CYMTOFX(ml->b.y)));
+    gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX]))),
+                FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY]))));
+    gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX]))),
+                FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY]))));
 }
 
 /*
- * Draws the given line including any optional extras 
+ * Draws the given line including any optional extras
  */
-void AM_drawMline2(mline_t * ml, mapline_t c, boolean caps, boolean glowmode, boolean blend)
+void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps, boolean glowmode,
+                   boolean blend)
 {
 
     float   a[2], b[2], normal[2], unit[2], thickness;
     float   length, dx, dy;
 
     // scale line thickness relative to zoom level?
-    if(c.scale)
+    if(c->scale)
         thickness = cfg.automapDoorGlow * FIX2FLT(scale_mtof) * 2.5f + 3;
     else
-        thickness = c.w;
+        thickness = c->w;
 
-    // get colour from the passed line. if the line glows and this is glow mode - use alpha 2 else alpha 1
-    GL_SetColorAndAlpha(c.r, c.g, c.b, (glowmode && c.glow) ? (am_alpha - ( 1 - c.a2)) : (am_alpha - ( 1 - c.a)) );
+    // get colour from the passed line.
+    // if the line glows and this is glow mode - use alpha 2 else alpha 1
+    if(glowmode && c->glow)
+        GL_SetColorAndAlpha(c->r, c->g, c->b, am_alpha - (1 - c->a2));
+    else
+        GL_SetColorAndAlpha(c->r, c->g, c->b, am_alpha - (1 - c->a));
 
     // If we are in glow mode and the line has glow - draw it
-    if(glowmode && c.glow > NO_GLOW){
+    if(glowmode && c->glow > NO_GLOW)
+    {
         gl.Enable(DGL_TEXTURING);
 
         if(blend)
@@ -1657,10 +1580,10 @@ void AM_drawMline2(mline_t * ml, mapline_t c, boolean caps, boolean glowmode, bo
 
         gl.Begin(DGL_QUADS);
 
-        a[VX] = FIX2FLT(CXMTOFX(ml->a.x));
-        a[VY] = FIX2FLT(CYMTOFX(ml->a.y));
-        b[VX] = FIX2FLT(CXMTOFX(ml->b.x));
-        b[VY] = FIX2FLT(CYMTOFX(ml->b.y));
+        a[VX] = FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX])));
+        a[VY] = FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY])));
+        b[VX] = FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX])));
+        b[VY] = FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY])));
 
         dx = b[VX] - a[VX];
         dy = b[VY] - a[VY];
@@ -1693,52 +1616,48 @@ void AM_drawMline2(mline_t * ml, mapline_t c, boolean caps, boolean glowmode, bo
         }
 
         // The middle part of the line.
-        if(c.glow == TWOSIDED_GLOW )
+        if(c->glow == TWOSIDED_GLOW )
         {
             // two sided
             gl.TexCoord2f(0.5f, 0);
             gl.Vertex2f(a[VX] + normal[VX] * thickness,
-                    a[VY] + normal[VY] * thickness);
+                        a[VY] + normal[VY] * thickness);
             gl.Vertex2f(b[VX] + normal[VX] * thickness,
-                    b[VY] + normal[VY] * thickness);
+                        b[VY] + normal[VY] * thickness);
 
             gl.TexCoord2f(0.5f, 1);
             gl.Vertex2f(b[VX] - normal[VX] * thickness,
-                    b[VY] - normal[VY] * thickness);
+                        b[VY] - normal[VY] * thickness);
             gl.Vertex2f(a[VX] - normal[VX] * thickness,
-                    a[VY] - normal[VY] * thickness);
+                        a[VY] - normal[VY] * thickness);
 
         }
-        else if (c.glow == BACK_GLOW)
+        else if (c->glow == BACK_GLOW)
         {
             // back side only
             gl.TexCoord2f(0, 0.25f);
             gl.Vertex2f(a[VX] + normal[VX] * thickness,
-                    a[VY] + normal[VY] * thickness);
+                        a[VY] + normal[VY] * thickness);
             gl.Vertex2f(b[VX] + normal[VX] * thickness,
-                    b[VY] + normal[VY] * thickness);
+                        b[VY] + normal[VY] * thickness);
 
             gl.TexCoord2f(0.5f, 0.25f);
-            gl.Vertex2f(b[VX],
-                    b[VY]);
-            gl.Vertex2f(a[VX],
-                    a[VY]);
+            gl.Vertex2f(b[VX], b[VY]);
+            gl.Vertex2f(a[VX], a[VY]);
 
         }
         else
         {
             // front side only
             gl.TexCoord2f(0.75f, 0.5f);
-            gl.Vertex2f(a[VX],
-                    a[VY]);
-            gl.Vertex2f(b[VX],
-                    b[VY]);
+            gl.Vertex2f(a[VX], a[VY]);
+            gl.Vertex2f(b[VX], b[VY]);
 
             gl.TexCoord2f(0.75f, 1);
             gl.Vertex2f(b[VX] - normal[VX] * thickness,
-                    b[VY] - normal[VY] * thickness);
+                        b[VY] - normal[VY] * thickness);
             gl.Vertex2f(a[VX] - normal[VX] * thickness,
-                    a[VY] - normal[VY] * thickness);
+                        a[VY] - normal[VY] * thickness);
         }
 
         if(caps)
@@ -1776,8 +1695,10 @@ void AM_drawMline2(mline_t * ml, mapline_t c, boolean caps, boolean glowmode, bo
         // No glow? then draw a regular line
         gl.Begin(DGL_LINES);
 
-        gl.Vertex2f(FIX2FLT(CXMTOFX(ml->a.x)), FIX2FLT(CYMTOFX(ml->a.y)));
-        gl.Vertex2f(FIX2FLT(CXMTOFX(ml->b.x)), FIX2FLT(CYMTOFX(ml->b.y)));
+        gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX]))),
+                    FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY]))));
+        gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX]))),
+                    FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY]))));
         gl.End();
     }
 }
@@ -1789,43 +1710,47 @@ void AM_drawGrid(int color)
 {
     fixed_t x, y;
     fixed_t start, end;
+
+    fixed_t originx = *((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_X));
+    fixed_t originy = *((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_Y));
+
     mline_t ml;
 
     // Figure out start of vertical gridlines
     start = m_x;
-    if((start - bmaporgx) % (MAPBLOCKUNITS << FRACBITS))
+    if((start - originx) % (MAPBLOCKUNITS << FRACBITS))
         start +=
             (MAPBLOCKUNITS << FRACBITS) -
-            ((start - bmaporgx) % (MAPBLOCKUNITS << FRACBITS));
+            ((start - originx) % (MAPBLOCKUNITS << FRACBITS));
     end = m_x + m_w;
 
     // draw vertical gridlines
-    ml.a.y = m_y;
-    ml.b.y = m_y + m_h;
+    ml.a.pos[VY] = FIX2FLT(m_y);
+    ml.b.pos[VY] = FIX2FLT(m_y + m_h);
 
     gl.Begin(DGL_LINES);
     for(x = start; x < end; x += (MAPBLOCKUNITS << FRACBITS))
     {
-        ml.a.x = x;
-        ml.b.x = x;
+        ml.a.pos[VX] = FIX2FLT(x);
+        ml.b.pos[VX] = FIX2FLT(x);
         AM_drawMline(&ml, color);
     }
 
     // Figure out start of horizontal gridlines
     start = m_y;
-    if((start - bmaporgy) % (MAPBLOCKUNITS << FRACBITS))
+    if((start - originy) % (MAPBLOCKUNITS << FRACBITS))
         start +=
             (MAPBLOCKUNITS << FRACBITS) -
-            ((start - bmaporgy) % (MAPBLOCKUNITS << FRACBITS));
+            ((start - originy) % (MAPBLOCKUNITS << FRACBITS));
     end = m_y + m_h;
 
     // draw horizontal gridlines
-    ml.a.x = m_x;
-    ml.b.x = m_x + m_w;
+    ml.a.pos[VX] = FIX2FLT(m_x);
+    ml.b.pos[VX] = FIX2FLT(m_x + m_w);
     for(y = start; y < end; y += (MAPBLOCKUNITS << FRACBITS))
     {
-        ml.a.y = y;
-        ml.b.y = y;
+        ml.a.pos[VY] = FIX2FLT(y);
+        ml.b.pos[VY] = FIX2FLT(y);
         AM_drawMline(&ml, color);
     }
     gl.End();
@@ -1836,101 +1761,149 @@ void AM_drawGrid(int color)
  */
 void AM_drawWalls(boolean glowmode)
 {
-    int     i;
-    static mline_t l;
+    int     i, s, subColor = 0;
+    line_t  *line;
+    xline_t *xline;
+    mline_t l;
+    subsector_t *ssec;
+    sector_t *sec, *frontsector, *backsector;
+    seg_t *seg;
     mapline_t templine;
     boolean withglow = false;
 
-    for(i = 0; i < numlines; i++)
+    for(s = 0; s < numsubsectors; ++s)
     {
-        l.a.x = lines[i].v1->x;
-        l.a.y = lines[i].v1->y;
-        l.b.x = lines[i].v2->x;
-        l.b.y = lines[i].v2->y;
+        ssec = P_ToPtr(DMU_SUBSECTOR, s);
+        sec = P_GetPtrp(ssec, DMU_SECTOR);
+
+        if(cheating == 3)        // Debug cheat, show subsectors
+        {
+            subColor++;
+            if(subColor == 10)
+                subColor = 0;
+        }
+
+        for(i = 0; i < P_GetIntp(ssec, DMU_LINE_COUNT); ++i)
+        {
+            seg = P_GetPtrp(ssec, DMU_SEG_OF_SUBSECTOR | i);
+
+            frontsector = P_GetPtrp(seg, DMU_FRONT_SECTOR);
+            backsector = P_GetPtrp(seg, DMU_BACK_SECTOR);
+
+            line = P_GetPtrp(seg, DMU_LINE);
+            if(!line)
+                continue;
+
+            l.a.pos[VX] = P_GetFloatp(seg, DMU_VERTEX1_X);
+            l.a.pos[VY] = P_GetFloatp(seg, DMU_VERTEX1_Y);
+            l.b.pos[VX] = P_GetFloatp(seg, DMU_VERTEX2_X);
+            l.b.pos[VY] = P_GetFloatp(seg, DMU_VERTEX2_Y);
+
+            if(cheating == 3)        // Debug cheat, show subsectors
+            {
+                AM_drawMline2(&l, &subColors[subColor], false, glowmode, true);
+                continue;
+            }
+
+            if(frontsector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
+                continue; // we only want to draw twosided lines once.
+
+            xline = P_XLine(line);
 
 #if !__JHEXEN__
 #if !__JSTRIFE__
-        if(cheating == 2)        // Debug cheat.
-        {
-            // Show active XG lines.
-            if(lines[i].xg && lines[i].xg->active && (leveltime & 4))
+            if(cheating == 2)        // Debug cheat.
             {
-                templine = AM_getLine( 1, 0);
-                AM_drawMline2(&l, templine, false, glowmode, true);
-            }
-        }
-#endif
-#endif
-        if(cheating || (lines[i].flags & ML_MAPPED))
-        {
-            if((lines[i].flags & LINE_NEVERSEE) && !cheating)
-                continue;
-            if(!lines[i].backsector)        // solid wall (well probably anyway...)
-            {
-                templine = AM_getLine( 1, 0);
-
-                AM_drawMline2(&l, templine, false, glowmode, false);
-            }
-            else
-            {
-                if(lines[i].flags & ML_SECRET)    // secret door
+                // Show active XG lines.
+                if(xline->xg && xline->xg->active && (leveltime & 4))
                 {
                     templine = AM_getLine( 1, 0);
-
-                    AM_drawMline2(&l, templine, false, glowmode, false);
-                }
-                else if(cfg.automapShowDoors && AM_checkSpecial(lines[i].special) > 0 )    // some sort of special
-                {
-                    if(cfg.automapDoorGlow > 0 && glowmode) withglow = true;
-
-                    templine = AM_getLine( 2, lines[i].special);
-
-                    AM_drawMline2(&l, templine, withglow, glowmode, withglow);
-                }
-                else if(lines[i].backsector->floorheight !=
-                        lines[i].frontsector->floorheight)        // floor level change
-                {
-                    templine = AM_getLine( 3, 0);
-
-                    AM_drawMline2(&l, templine, false, glowmode, false);
-                }
-                else if(lines[i].backsector->ceilingheight !=
-                        lines[i].frontsector->ceilingheight )        // ceiling level change
-                {
-                    templine = AM_getLine( 4, 0);
-
-                    AM_drawMline2(&l, templine, false, glowmode, false);
-                }
-                else if(cheating)
-                {
-                    templine = AM_getLine( 0, 0);
-
-                    AM_drawMline2(&l, templine, false, glowmode, false);
+                    AM_drawMline2(&l, &templine, false, glowmode, true);
                 }
             }
-        }
-        else if(plr->powers[pw_allmap])
-        {
-            if(!(lines[i].flags & LINE_NEVERSEE))            // as yet unseen line
+#endif
+#endif
+            if(cheating || (P_GetIntp(line, DMU_FLAGS) & ML_MAPPED))
             {
-                templine = AM_getLine( 0, 0);
-                AM_drawMline2(&l, templine, false, glowmode, false);
+                if((P_GetIntp(line, DMU_FLAGS) & LINE_NEVERSEE) && !cheating)
+                    continue;
+
+                if(!backsector)
+                {
+                    // solid wall (well probably anyway...)
+                    templine = AM_getLine( 1, 0);
+
+                    AM_drawMline2(&l, &templine, false, glowmode, false);
+                }
+                else
+                {
+                    if(P_GetIntp(line, DMU_FLAGS) & ML_SECRET)
+                    {
+                        // secret door
+                        templine = AM_getLine( 1, 0);
+
+                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                    }
+                    else if(cfg.automapShowDoors && AM_checkSpecial(xline->special) > 0 )
+                    {
+                        // some sort of special
+
+                        if(cfg.automapDoorGlow > 0 && glowmode)
+                            withglow = true;
+
+                        templine = AM_getLine( 2, xline->special);
+
+                        AM_drawMline2(&l, &templine, withglow, glowmode, withglow);
+                    }
+                    else if(P_GetFixedp(backsector, DMU_FLOOR_HEIGHT) !=
+                            P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT))
+                    {
+                        // floor level change
+                        templine = AM_getLine( 3, 0);
+
+                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                    }
+                    else if(P_GetFixedp(backsector, DMU_CEILING_HEIGHT) !=
+                            P_GetFixedp(frontsector, DMU_CEILING_HEIGHT))
+                    {
+                        // ceiling level change
+                        templine = AM_getLine( 4, 0);
+
+                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                    }
+                    else if(cheating)
+                    {
+                        templine = AM_getLine( 0, 0);
+
+                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                    }
+                }
+            }
+            else if(plr->powers[pw_allmap])
+            {
+                if(!(P_GetIntp(line, DMU_FLAGS) & LINE_NEVERSEE))
+                {
+                    // as yet unseen line
+                    templine = AM_getLine( 0, 0);
+                    AM_drawMline2(&l, &templine, false, glowmode, false);
+                }
             }
         }
-
     }
 }
 
 /*
  * Rotation in 2D. Used to rotate player arrow line character.
  */
-void AM_rotate(fixed_t *x, fixed_t *y, angle_t a)
+void AM_rotate(float *x, float *y, angle_t a)
 {
-    fixed_t tmpx;
+    float tmpx;
 
-    tmpx = FixedMul(*x, finecosine[a >> ANGLETOFINESHIFT]) - FixedMul(*y, finesine[a >> ANGLETOFINESHIFT]);
+    tmpx = (*x * FIX2FLT(finecosine[a >> ANGLETOFINESHIFT])) -
+           (*y * FIX2FLT(finesine[a >> ANGLETOFINESHIFT]));
 
-    *y = FixedMul(*x, finesine[a >> ANGLETOFINESHIFT]) + FixedMul(*y, finecosine[a >> ANGLETOFINESHIFT]);
+    *y = (*x * FIX2FLT(finesine[a >> ANGLETOFINESHIFT])) +
+         (*y * FIX2FLT(finecosine[a >> ANGLETOFINESHIFT]));
 
     *x = tmpx;
 }
@@ -1938,8 +1911,8 @@ void AM_rotate(fixed_t *x, fixed_t *y, angle_t a)
 /*
  * Draws a line character (eg the player arrow)
  */
-void AM_drawLineCharacter(mline_t * lineguy, int lineguylines, fixed_t scale,
-                          angle_t angle, int color, fixed_t x, fixed_t y)
+void AM_drawLineCharacter(mline_t * lineguy, int lineguylines, float scale,
+                          angle_t angle, int color, float x, float y)
 {
     int     i;
     mline_t l;
@@ -1947,35 +1920,27 @@ void AM_drawLineCharacter(mline_t * lineguy, int lineguylines, fixed_t scale,
     gl.Begin(DGL_LINES);
     for(i = 0; i < lineguylines; i++)
     {
-        l.a.x = lineguy[i].a.x;
-        l.a.y = lineguy[i].a.y;
+        l.a.pos[VX] = lineguy[i].a.pos[VX];
+        l.a.pos[VY] = lineguy[i].a.pos[VY];
 
-        if(scale)
-        {
-            l.a.x = FixedMul(scale, l.a.x);
-            l.a.y = FixedMul(scale, l.a.y);
-        }
+        l.a.pos[VX] = scale * l.a.pos[VX];
+        l.a.pos[VY] = scale * l.a.pos[VY];
 
-        if(angle)
-            AM_rotate(&l.a.x, &l.a.y, angle);
+        AM_rotate(&l.a.pos[VX], &l.a.pos[VY], angle);
 
-        l.a.x += x;
-        l.a.y += y;
+        l.a.pos[VX] += x;
+        l.a.pos[VY] += y;
 
-        l.b.x = lineguy[i].b.x;
-        l.b.y = lineguy[i].b.y;
+        l.b.pos[VX] = lineguy[i].b.pos[VX];
+        l.b.pos[VY] = lineguy[i].b.pos[VY];
 
-        if(scale)
-        {
-            l.b.x = FixedMul(scale, l.b.x);
-            l.b.y = FixedMul(scale, l.b.y);
-        }
+        l.b.pos[VX] = scale * l.b.pos[VX];
+        l.b.pos[VY] = scale * l.b.pos[VY];
 
-        if(angle)
-            AM_rotate(&l.b.x, &l.b.y, angle);
+        AM_rotate(&l.b.pos[VX], &l.b.pos[VY], angle);
 
-        l.b.x += x;
-        l.b.y += y;
+        l.b.pos[VX] += x;
+        l.b.pos[VY] += y;
 
         AM_drawMline(&l, color);
     }
@@ -1997,6 +1962,7 @@ void AM_drawPlayers(void)
     static int their_colors[] = { KEY3, KEY2, BLOODRED, KEY1 };
 #endif
     int     color;
+    float   size = FIX2FLT(PLAYERRADIUS);
     angle_t ang;
 
     if(!IS_NETGAME)
@@ -2004,14 +1970,17 @@ void AM_drawPlayers(void)
         ang = plr->plr->clAngle;
 #if __JDOOM__
         if(cheating)
-            AM_drawLineCharacter(cheat_player_arrow, NUMCHEATPLYRLINES, 0, ang,
-                                 WHITE, plr->plr->mo->x, plr->plr->mo->y);
+            AM_drawLineCharacter(cheat_player_arrow, NUMCHEATPLYRLINES, size, ang,
+                                 WHITE, FIX2FLT(plr->plr->mo->pos[VX]),
+                                 FIX2FLT(plr->plr->mo->pos[VY]));
         else
-            AM_drawLineCharacter(player_arrow, NUMPLYRLINES, 0, ang, WHITE,
-                                 plr->plr->mo->x, plr->plr->mo->y);
+            AM_drawLineCharacter(player_arrow, NUMPLYRLINES, size, ang, WHITE,
+                                 FIX2FLT(plr->plr->mo->pos[VX]),
+                                 FIX2FLT(plr->plr->mo->pos[VY]));
 #else
-        AM_drawLineCharacter(player_arrow, NUMPLYRLINES, 0, plr->plr->clAngle,    //mo->angle,
-                             WHITE, plr->plr->mo->x, plr->plr->mo->y);
+        AM_drawLineCharacter(player_arrow, NUMPLYRLINES, size, plr->plr->clAngle,    //mo->angle,
+                             WHITE, FIX2FLT(plr->plr->mo->pos[VX]),
+                             FIX2FLT(plr->plr->mo->pos[VY]));
 #endif
         return;
     }
@@ -2046,10 +2015,11 @@ void AM_drawPlayers(void)
 #endif
             color = their_colors[cfg.PlayerColor[i]];
 
-        AM_drawLineCharacter(player_arrow, NUMPLYRLINES, 0,
+        AM_drawLineCharacter(player_arrow, NUMPLYRLINES, size,
                              consoleplayer ==
                              i ? p->plr->clAngle : p->plr->mo->angle, color,
-                             p->plr->mo->x, p->plr->mo->y);
+                             FIX2FLT(p->plr->mo->pos[VX]),
+                             FIX2FLT(p->plr->mo->pos[VY]));
     }
 }
 
@@ -2059,18 +2029,16 @@ void AM_drawPlayers(void)
 void AM_drawThings(int colors, int colorrange)
 {
     int     i;
-    mobj_t *t;
+    mobj_t *iter;
+    float size = FIX2FLT(PLAYERRADIUS);
 
     for(i = 0; i < numsectors; i++)
     {
-        t = sectors[i].thinglist;
-        while(t)
+        for(iter = P_GetPtr(DMU_SECTOR,i,DMU_THINGS); iter; iter = iter->snext)
         {
             AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
-                                 16 << FRACBITS, t->angle, colors + lightlev,
-                                 t->x, t->y);
-
-            t = t->snext;
+                                 size, iter->angle, colors + lightlev,
+                                 FIX2FLT(iter->pos[VX]), FIX2FLT(iter->pos[VY]));
         }
     }
 }
@@ -2085,13 +2053,13 @@ void AM_drawMarks(void)
 
     for(i = 0; i < AM_NUMMARKPOINTS; i++)
     {
-        if(markpoints[i].x != -1)
+        if(markpoints[i].pos[VX] != -1)
         {
             w = 5;                // because something's wrong with the wad, i guess
             h = 6;                // because something's wrong with the wad, i guess
 
-            fx = FIX2FLT( CXMTOF( markpoints[i].x ) << FRACBITS );
-            fy = FIX2FLT( CYMTOF( markpoints[i].y ) << FRACBITS );
+            fx = FIX2FLT( CXMTOF(markpoints[i].pos[VX]) << FRACBITS );
+            fy = FIX2FLT( CYMTOF(markpoints[i].pos[VY]) << FRACBITS );
 
             GL_DrawPatch_CS(fx, fy, markpnums[i]);
         }
@@ -2104,14 +2072,15 @@ void AM_drawMarks(void)
 void AM_drawKeys(void)
 {
     int i;
+    float size = FIX2FLT(PLAYERRADIUS);
 
     gl.Begin(DGL_LINES);
 
     for (i=0; i< NUMBEROFKEYS; i++){
         if(KeyPoints[i].x != 0 || KeyPoints[i].y != 0)
         {
-            AM_drawLineCharacter(keysquare, NUMKEYSQUARELINES, 0, 0, keycolors[i],
-                             KeyPoints[i].x, KeyPoints[i].y);
+            AM_drawLineCharacter(keysquare, NUMKEYSQUARELINES, size, 0, keycolors[i],
+                                 FIX2FLT(KeyPoints[i].x), FIX2FLT(KeyPoints[i].y));
         }
     }
     gl.End();
@@ -2125,8 +2094,8 @@ void AM_setWinPos(void)
     scrwidth = Get(DD_SCREEN_WIDTH);
     scrheight = Get(DD_SCREEN_HEIGHT);
 
-    winw = f_w = (scrwidth/ 1.0f) * (cfg.automapWidth);
-    winh = f_h = (scrheight/ 1.0f) * (cfg.automapHeight);
+    winw = f_w = (scrwidth/ 1.0f) * 1; //(cfg.automapWidth);
+    winh = f_h = (scrheight/ 1.0f) * 1; //(cfg.automapHeight);
 
     // work out the position & dimensions of the automap when fully open
     /*
@@ -2142,7 +2111,7 @@ void AM_setWinPos(void)
      */
 
     // X Position
-    switch (cfg.automapPos)
+    switch (4)//cfg.automapPos)
     {
        case 1:
        case 4:
@@ -2162,7 +2131,7 @@ void AM_setWinPos(void)
     }
 
     // Y Position
-    switch (cfg.automapPos)
+    switch (4)//cfg.automapPos)
     {
        case 0:
        case 1:
@@ -2186,8 +2155,8 @@ void AM_setWinPos(void)
     sx1 = winw;
     sy1 = winh;
 
-    oldwin_w = cfg.automapWidth;
-    oldwin_h = cfg.automapHeight;
+    oldwin_w = 1; //cfg.automapWidth;
+    oldwin_h = 1; //cfg.automapHeight;
 }
 
 /*
@@ -2197,10 +2166,10 @@ int     scissorState[5];
 
 void AM_GL_SetupState()
 {
-    float extrascale = 0;
+    //float extrascale = 0;
 
     // Update the window scale vars
-    if(oldwin_w != cfg.automapWidth || oldwin_h != cfg.automapHeight)
+    if(oldwin_w != 1 /*cfg.automapWidth*/ || oldwin_h != 1 /*cfg.automapHeight*/)
         AM_setWinPos();
 
     // check for scissor box (to clip the map lines and stuff).
@@ -2221,19 +2190,24 @@ void AM_GL_SetupState()
     {
         gl.Enable(DGL_TEXTURING);
 
-        GL_SetColorAndAlpha(cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], (am_alpha - (1- cfg.automapBack[3])));
+        GL_SetColorAndAlpha(cfg.automapBack[0],
+                            cfg.automapBack[1],
+                            cfg.automapBack[2],
+                            (am_alpha - (1- cfg.automapBack[3])));
         GL_SetRawImage(maplumpnum, 0);        // We only want the left portion.
         GL_DrawRectTiled(winx, winy, winw, winh, 128, 100);
-    } 
-    else 
+    }
+    else
     {
         // nope just a solid color
         GL_SetNoTexture();
-        GL_DrawRect(winx, winy, winw, winh, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], (am_alpha - (1- cfg.automapBack[3])));
+        GL_DrawRect(winx, winy, winw, winh,
+                    cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2],
+                    (am_alpha - (1- cfg.automapBack[3])));
     }
 
     // How about an outside border?
-    if (cfg.automapHeight != 1 || cfg.automapWidth != 1 )
+/*    if (cfg.automapHeight != 1 || cfg.automapWidth != 1 )
     {
         gl.Begin(DGL_LINES);
         gl.Color4f(0.5f, 1, 0.5f, am_alpha - (1 - (cfg.automapLineAlpha /2)) );
@@ -2255,7 +2229,7 @@ void AM_GL_SetupState()
             gl.Vertex2f(winx-1, winy-1);
         }
         gl.End();
-    }
+    }*/
 
     // setup the scissor clipper
     gl.Scissor( winx, winy, winw, winh);
@@ -2264,8 +2238,8 @@ void AM_GL_SetupState()
     gl.Translatef(winx+(winw / 2.0f), winy+(winh /2.0f), 0);
 
     // apply some extra zoom to counteract the size of the window
-    extrascale = ((cfg.automapWidth + cfg.automapHeight)/2);
-    gl.Scalef( extrascale, extrascale , 0);
+    //extrascale = ((cfg.automapWidth + cfg.automapHeight)/2);
+    //gl.Scalef( extrascale, extrascale , 0);
 
     if(cfg.automapRotate && followplayer)    // Rotate map?
         gl.Rotatef(plr->plr->clAngle / (float) ANGLE_MAX * 360 - 90, 0, 0, 1);
@@ -2278,9 +2252,6 @@ void AM_GL_SetupState()
  */
 void AM_GL_RestoreState()
 {
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
-
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
 
@@ -2296,8 +2267,7 @@ void AM_GL_RestoreState()
 void AM_drawCounters(void)
 {
 
-#if !__JHEXEN__
-#if !__JSTRIFE__
+#if __JDOOM__ || __JHERETIC__
     char    buf[40], tmp[20];
 
     int     x = 5, y = LINEHEIGHT_A * 3;
@@ -2307,15 +2277,12 @@ void AM_drawCounters(void)
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PushMatrix();
 #endif
-#endif
 
     gl.Enable(DGL_TEXTURING);
 
     AM_drawWorldTimer();
 
-#if !__JHEXEN__
-#if !__JSTRIFE__
-
+#if __JDOOM__ || __JHERETIC__
     Draw_BeginZoom(cfg.counterCheatScale, x, y);
 
     if(cfg.counterCheat){
@@ -2395,16 +2362,13 @@ void AM_drawCounters(void)
     gl.PopMatrix();
 
 #endif
-#endif
 
-#if !__JHERETIC__
-#if !__JDOOM__
+#if __JHEXEN__ || __JSTRIFE__
     if(IS_NETGAME)                    //  if(ShowKills && netgame && deathmatch)
     {
         // Always draw deathmatch stats in a netgame, even in coop
         AM_drawDeathmatchStats();
     }
-#endif
 #endif
 }
 
@@ -2413,40 +2377,22 @@ void AM_drawCounters(void)
  */
 void AM_drawLevelName(void)
 {
-    int    x;
-    int     y ;
-    char   *lname;
+#define FIXXTOSCREENX(x) (scrwidth * (x / (float) SCREENWIDTH))
+#define FIXYTOSCREENY(y) (scrheight * (y / (float) SCREENHEIGHT))
+    int    x, y, otherY;
+    const char *lname = "";
 
-#ifdef __JHEXEN__
-    lname =  (char *) Get(DD_MAP_NAME);
-#elif __JSTRIFE__
-    lname =  (char *) Get(DD_MAP_NAME);
-
-#elif __JHERETIC__
-    if((gameepisode < (ExtendedWAD ? 6 : 4)) && gamemap < 10)
+#if __JHERETIC__
+    if((gameepisode < (gamemode == extended? 6 : 4)) && gamemap < 10)
     {
-        lname =  (char *) Get(DD_MAP_NAME);
+        lname = DD_GetVariable(DD_MAP_NAME);
     }
-#elif __JDOOM__
-
-    lname = (char *) Get(DD_MAP_NAME);
-
-    // Plutonia and TNT are special cases.
-    if(gamemission == pack_plut)
-    {
-        lname = mapnamesp[gamemap - 1];
-    }
-    else if(gamemission == pack_tnt)
-    {
-        lname = mapnamest[gamemap - 1];
-    }
-
+#else
+    lname = DD_GetVariable(DD_MAP_NAME);
 #endif
 
     if(lname)
     {
-        gl.PopMatrix();
-
         gl.MatrixMode(DGL_PROJECTION);
         gl.PushMatrix();
         gl.LoadIdentity();
@@ -2455,11 +2401,35 @@ void AM_drawLevelName(void)
         while(*lname && isspace(*lname))
                 lname++;
 
-        x = (sx0+(sx1/2) - (M_StringWidth(lname, hu_font_a)/2));
-        y = (sy0+sy1 - 32);
+        x = (sx0+(sx1 * .5f) - (M_StringWidth((char*)lname, hu_font_a) * .5f));
+        y = (sy0+sy1);
 
-        M_WriteText2(x, y, lname, hu_font_a, 1, 1, 1, am_alpha);
+        if(cfg.setblocks <= 11 || cfg.automapHudDisplay == 2)
+        {   // We may need to adjust for the height of the statusbar
+            otherY = FIXYTOSCREENY(ST_Y);
+            otherY += FIXYTOSCREENY(ST_HEIGHT) * (1 - (cfg.sbarscale / 20.0f));
+
+            if(y > otherY)
+                y = otherY;
+        }
+        else if(cfg.setblocks == 12)
+        {   // We may need to adjust for the height of the HUD icons.
+            otherY = y;
+            otherY += -(y * (cfg.hudScale / 10.0f));
+
+            if(y > otherY)
+                y = otherY;
+        }
+
+        y -= 24; // border
+
+        M_WriteText2(x, y, (char*)lname, hu_font_a, 1, 1, 1, am_alpha);
+
+        gl.MatrixMode(DGL_PROJECTION);
+        gl.PopMatrix();
     }
+#undef FIXXTOSCREENX
+#undef FIXYTOSCREENY
 }
 
 /*
@@ -2501,6 +2471,8 @@ void AM_Drawer(void)
     // Draw any marked points
     AM_drawMarks();
 
+    gl.PopMatrix();
+
     // Draw the level names
     AM_drawLevelName();
 
@@ -2520,7 +2492,7 @@ void AM_drawFragsTable(void)
 #define FRAGS_DRAWN    -99999
     int     i, k, y, inCount = 0;    // How many players in the game?
     int     totalFrags[MAXPLAYERS];
-    int     max, choose;
+    int     max, choose = 0;
     int     w = 30;
     char   *name, tmp[40];
 
@@ -2554,7 +2526,7 @@ void AM_drawFragsTable(void)
         name = Net_GetPlayerName(choose);
         switch (cfg.PlayerColor[choose])
         {
-        case 0:                // green 
+        case 0:                // green
             gl.Color3f(0, .8f, 0);
             break;
 
@@ -2737,183 +2709,146 @@ static void AM_drawWorldTimer(void)
 #ifdef __JDOOM__
 
 MenuItem_t MAPItems[] = {
-    {ITT_LRFUNC, "window position : ",    M_MapPosition, 0 },
-    {ITT_LRFUNC, "window width :       ",    M_MapWidth, 0 },
-    {ITT_LRFUNC, "window height :     ",    M_MapHeight, 0 },
-    {ITT_LRFUNC, "hud display :        ",    M_MapStatusbar, 0 },
-    {ITT_LRFUNC, "kills count :         ", M_MapKills, 0 },
-    {ITT_LRFUNC, "items count :         ", M_MapItems, 0 },
-    {ITT_LRFUNC, "secrets count :    ",    M_MapSecrets, 0 },
-    {ITT_EMPTY,  "automap colours",        NULL, 0 },
-    {ITT_EFUNC,  "   walls",        SCColorWidget, 1 },
-    {ITT_EFUNC,  "   floor height changes", SCColorWidget, 2 },
-    {ITT_EFUNC,  "   ceiling height changes",SCColorWidget, 3 },
-    {ITT_EFUNC,  "   unseen areas",        SCColorWidget, 0 },
-    {ITT_EFUNC,  "   background",        SCColorWidget, 4 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_EFUNC,  "door colors :        ",    M_MapDoorColors, 0 },
-    {ITT_LRFUNC, "door glow : ",        M_MapDoorGlow, 0 },
-    {ITT_LRFUNC, "line alpha :          ",    M_MapLineAlpha, 0 },
+/*    {ITT_LRFUNC, 0, "window position : ",    M_MapPosition, 0 },
+    {ITT_LRFUNC, 0, "window width :       ",    M_MapWidth, 0 },
+    {ITT_LRFUNC, 0, "window height :     ",    M_MapHeight, 0 },*/
+    {ITT_LRFUNC, 0, "hud display :        ",    M_MapStatusbar, 0 },
+    {ITT_LRFUNC, 0, "kills count :         ", M_MapKills, 0 },
+    {ITT_LRFUNC, 0, "items count :         ", M_MapItems, 0 },
+    {ITT_LRFUNC, 0, "secrets count :    ",    M_MapSecrets, 0 },
+    {ITT_EMPTY, 0, "automap colours",        NULL, 0 },
+    {ITT_EFUNC, 0, "   walls",        SCColorWidget, 1 },
+    {ITT_EFUNC, 0, "   floor height changes", SCColorWidget, 2 },
+    {ITT_EFUNC, 0, "   ceiling height changes",SCColorWidget, 3 },
+    {ITT_EFUNC, 0, "   unseen areas",        SCColorWidget, 0 },
+    {ITT_EFUNC, 0, "   background",        SCColorWidget, 4 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EFUNC, 0, "door colors :        ",    M_MapDoorColors, 0 },
+    {ITT_LRFUNC, 0, "door glow : ",        M_MapDoorGlow, 0 },
+    {ITT_LRFUNC, 0, "line alpha :          ",    M_MapLineAlpha, 0 },
 };
 
 Menu_t MapDef = {
     70, 40,
     M_DrawMapMenu,
-    17, MAPItems,
-    0, MENU_OPTIONS,
+    14, MAPItems,
+    0, MENU_OPTIONS, 0,
     hu_font_a,
     cfg.menuColor2,
     LINEHEIGHT_A,
-    0, 17
+    0, 14
 };
 
 #else
 
 MenuItem_t MAPItems[] = {
-    {ITT_LRFUNC, "window position : ", M_MapPosition, 0 },
-    {ITT_LRFUNC, "window width :       ", M_MapWidth, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_LRFUNC, "window height :     ", M_MapHeight, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_LRFUNC,  "hud display :      ", M_MapStatusbar, 0 },
+/*    {ITT_LRFUNC, 0, "window position : ", M_MapPosition, 0 },
+    {ITT_LRFUNC, 0, "window width :       ", M_MapWidth, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_LRFUNC, 0, "window height :     ", M_MapHeight, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },*/
+    {ITT_LRFUNC, 0, "hud display :      ", M_MapStatusbar, 0 },
 #ifdef __JHERETIC__
-    {ITT_LRFUNC, "kills count :           ", M_MapKills, 0 },
-    {ITT_LRFUNC, "items count :          ", M_MapItems, 0 },
-    {ITT_LRFUNC, "secrets count :     ", M_MapSecrets, 0 },
+    {ITT_LRFUNC, 0, "kills count :           ", M_MapKills, 0 },
+    {ITT_LRFUNC, 0, "items count :          ", M_MapItems, 0 },
+    {ITT_LRFUNC, 0, "secrets count :     ", M_MapSecrets, 0 },
 #endif
-    {ITT_INERT, "automap colours", NULL, 0 },
-#ifndef __JHERETIC__
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-#endif
-    {ITT_INERT, "automap colours", NULL, 0 },
-    {ITT_EFUNC, "   walls", SCColorWidget, 1 },
-    {ITT_EFUNC, "   floor height changes", SCColorWidget, 2 },
-    {ITT_EFUNC, "   ceiling height changes", SCColorWidget, 3 },
-    {ITT_EFUNC, "   unseen areas", SCColorWidget, 0 },
-    {ITT_EFUNC, "   background", SCColorWidget, 4 },
-    {ITT_EFUNC,  "door colors :        ", M_MapDoorColors, 0 },
-    {ITT_LRFUNC, "door glow :", M_MapDoorGlow, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_EMPTY, NULL, NULL, 0 },
-    {ITT_LRFUNC, "line alpha :         ", M_MapLineAlpha, 0 }
+    {ITT_NAVLEFT, 0, "automap colours", NULL, 0 },
+    {ITT_EFUNC, 0, "   walls", SCColorWidget, 1 },
+    {ITT_EFUNC, 0, "   floor height changes", SCColorWidget, 2 },
+    {ITT_EFUNC, 0, "   ceiling height changes", SCColorWidget, 3 },
+    {ITT_EFUNC, 0, "   unseen areas", SCColorWidget, 0 },
+    {ITT_EFUNC, 0, "   background", SCColorWidget, 4 },
+    {ITT_EFUNC, 0, "door colors :        ", M_MapDoorColors, 0 },
+    {ITT_LRFUNC, 0, "door glow :", M_MapDoorGlow, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_LRFUNC, 0, "line alpha :         ", M_MapLineAlpha, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 }
 };
 
 Menu_t MapDef = {
-    64, 30,
+    64, 28,
     M_DrawMapMenu,
-    23, MAPItems,
-    0, MENU_OPTIONS,
+#if __JHERETIC__
+    17, MAPItems,
+#else
+    14, MAPItems,
+#endif
+    0, MENU_OPTIONS, 0,
     hu_font_a,
     cfg.menuColor2,
     LINEHEIGHT_A,
-    0, 12
+#if __JHERETIC__
+    0, 17
+#else
+    0, 14
+#endif
 };
 #endif
 
-extern short    itemOn;
-
 /*
  * Draws the automap options menu
- * Uses a bit of a kludge for multi pages with jHeretic/jHexen. 
  */
 void M_DrawMapMenu(void)
 {
     const Menu_t *menu = &MapDef;
-#if !defined( __JDOOM__ ) && !defined( __JHERETIC__ )
-    const MenuItem_t *item = menu->items + menu->firstItem;
-#endif
-
-    char   *posnames[9] = { "TOP LEFT", "TOP CENTER", "TOP RIGHT", "CENTER LEFT", "CENTER", \
-                            "CENTER RIGHT", "BOTTOM LEFT", "BOTTOM CENTER", "BOTTOM RIGHT" };
     char   *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
     char *yesno[2] = { "NO", "YES" };
 #if !defined(__JHEXEN__) && !defined(__JSTRIFE__)
     char   *countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
 #endif
 
-#ifndef __JDOOM__
-    char  *token;
-#endif
-
-    M_DrawTitle("Automap OPTIONS", menu->y - 28);
+    M_DrawTitle("Automap OPTIONS", menu->y - 26);
 
 #ifdef __JDOOM__
-
-    M_WriteMenuText(menu, 0, posnames[cfg.automapPos]);
-    M_DrawSlider(menu, 1, 11, cfg.automapWidth * 10 + .25f);
-    M_DrawSlider(menu, 2, 11, cfg.automapHeight * 10 + .25f);
-    M_WriteMenuText(menu, 3, hudviewnames[cfg.automapHudDisplay]);
-    M_WriteMenuText(menu, 4, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
-    M_WriteMenuText(menu, 5, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
-    M_WriteMenuText(menu, 6, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    M_DrawColorBox(menu, 8, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-    M_DrawColorBox(menu, 9, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-    M_DrawColorBox(menu, 10, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-    M_DrawColorBox(menu, 11, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-    M_DrawColorBox(menu, 12, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
-    M_WriteMenuText(menu, 14, yesno[cfg.automapShowDoors]);
-    M_DrawSlider(menu, 15, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    M_DrawSlider(menu, 16, 11, cfg.automapLineAlpha * 10 + .5f);
+    M_WriteMenuText(menu, 0, hudviewnames[cfg.automapHudDisplay]);
+    M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
+    M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
+    M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
+    M_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
+    M_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
+    M_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
+    M_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
+    M_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    M_WriteMenuText(menu, 11, yesno[cfg.automapShowDoors]);
+    M_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+    M_DrawSlider(menu, 13, 11, cfg.automapLineAlpha * 10 + .5f);
 
 #else
 
-    // Draw the page arrows.
-    gl.Color4f( 1, 1, 1, menu_alpha);
-    token = (!menu->firstItem || MenuTime & 8) ? "invgeml2" : "invgeml1";
-    GL_DrawPatch_CS(menu->x -20, menu->y - 16, W_GetNumForName(token));
-    token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
-             MenuTime & 8) ? "invgemr2" : "invgemr1";
-    GL_DrawPatch_CS(312 - (menu->x -20), menu->y - 16, W_GetNumForName(token));
-
+    M_WriteMenuText(menu, 0, hudviewnames[cfg.automapHudDisplay]);
 #ifdef __JHERETIC__
-    if(menu->firstItem < menu->numVisItems){
-        M_WriteMenuText(menu, 0, posnames[cfg.automapPos]);
-        M_DrawSlider(menu, 2, 11, cfg.automapWidth * 10 + .25f);
-        M_DrawSlider(menu, 5, 11, cfg.automapHeight * 10 + .25f);
-        M_WriteMenuText(menu, 7, hudviewnames[cfg.automapHudDisplay]);
-        M_WriteMenuText(menu, 8, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
-        M_WriteMenuText(menu, 9, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
-        M_WriteMenuText(menu, 10, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    } 
-    else 
-    {
-        M_DrawColorBox(menu, 13, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-        M_DrawColorBox(menu, 14, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-        M_DrawColorBox(menu, 15, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-        M_DrawColorBox(menu, 16, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-        M_DrawColorBox(menu, 17, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
-        M_WriteMenuText(menu, 18, yesno[cfg.automapShowDoors]);
-        M_DrawSlider(menu, 20, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-        M_DrawSlider(menu, 23, 11, cfg.automapLineAlpha * 10 + .5f);
-    }
+    M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
+    M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
+    M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
+    M_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
+    M_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
+    M_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
+    M_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
+    M_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    M_WriteMenuText(menu, 10, yesno[cfg.automapShowDoors]);
+    M_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+    M_DrawSlider(menu, 15, 11, cfg.automapLineAlpha * 10 + .5f);
 #else
-    if(menu->firstItem < menu->numVisItems){
-        M_WriteMenuText(menu, 0, posnames[cfg.automapPos]);
-        M_DrawSlider(menu, 2, 11, cfg.automapWidth * 10 + .25f);
-        M_DrawSlider(menu, 5, 11, cfg.automapHeight * 10 + .25f);
-        M_WriteMenuText(menu, 7, hudviewnames[cfg.automapHudDisplay]);
-    } 
-    else 
-    {
-        M_DrawColorBox(menu, 13, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-        M_DrawColorBox(menu, 14, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-        M_DrawColorBox(menu, 15, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-        M_DrawColorBox(menu, 16, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-        M_DrawColorBox(menu, 17, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
-        M_WriteMenuText(menu, 18, yesno[cfg.automapShowDoors]);
-        M_DrawSlider(menu, 20, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-        M_DrawSlider(menu, 23, 11, cfg.automapLineAlpha * 10 + .5f);
-    }
+    M_DrawColorBox(menu, 2, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
+    M_DrawColorBox(menu, 3, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
+    M_DrawColorBox(menu, 4, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
+    M_DrawColorBox(menu, 5, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
+    M_DrawColorBox(menu, 6, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    M_WriteMenuText(menu, 7, yesno[cfg.automapShowDoors]);
+    M_DrawSlider(menu, 9, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+    M_DrawSlider(menu, 12, 11, cfg.automapLineAlpha * 10 + .5f);
 #endif
 
 #endif
 
 }
 
+#if 0
 /*
  * Set automap window width
  */
@@ -2929,6 +2864,7 @@ void M_MapHeight(int option, void *data)
 {
     M_FloatMod10(&cfg.automapHeight, option);
 }
+#endif
 
 /*
  * Set automap line alpha
@@ -2982,6 +2918,7 @@ void M_MapStatusbar(int option, void *data)
         cfg.automapHudDisplay--;
 }
 
+#if 0
 /*
  * Set map window position
  */
@@ -2995,6 +2932,7 @@ void M_MapPosition(int option, void *data)
     else if(cfg.automapPos > 0)
         cfg.automapPos--;
 }
+#endif
 
 /*
  * Set the show kills counter

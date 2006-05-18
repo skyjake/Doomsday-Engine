@@ -2,9 +2,9 @@
 // GLBSP.H : Interface to Node Builder
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -22,7 +22,8 @@
 #define __GLBSP_GLBSP_H__
 
 
-#define GLBSP_VER  "1.96"
+#define GLBSP_VER  "2.20"
+#define GLBSP_VER_HEX  0x220
 
 
 // certain GCC attributes can be useful
@@ -38,9 +39,9 @@ extern "C" {
 
 /* ----- basic types --------------------------- */
 
-typedef char  sint8_g;
-typedef short sint16_g;
-typedef int   sint32_g;
+typedef signed char  sint8_g;
+typedef signed short sint16_g;
+typedef signed int   sint32_g;
    
 typedef unsigned char  uint8_g;
 typedef unsigned short uint16_g;
@@ -74,22 +75,31 @@ typedef struct nodebuildinfo_s
   const char *input_file;
   const char *output_file;
 
+  // pointer to a NULL terminated array of strings containing extra
+  // input filenames.  Normally this field is NULL.  When there are
+  // extra filenames, 'output_file' will be NULL -- also the build
+  // mode will be GWA.
+  const char **extra_files;
+
   int factor;
 
   boolean_g no_reject;
   boolean_g no_progress;
+  boolean_g quiet;
   boolean_g mini_warnings;
   boolean_g force_hexen;
   boolean_g pack_sides;
-  boolean_g v1_vert;
+  boolean_g fast;
+
+  int spec_version;  // 1, 2, 3 or 5
 
   boolean_g load_all;
-  boolean_g no_gl;
   boolean_g no_normal;
   boolean_g force_normal;
   boolean_g gwa_mode;  
-  boolean_g keep_sect;
+  boolean_g prune_sect;
   boolean_g no_prune;
+  boolean_g merge_vert;
 
   int block_limit;
 
@@ -102,7 +112,7 @@ typedef struct nodebuildinfo_s
 nodebuildinfo_t;
 
 // This is for two-way communication (esp. with the GUI).
-// Should be flagged `volatile' since multiple threads (real or
+// Should be flagged 'volatile' since multiple threads (real or
 // otherwise, e.g. signals) may read or change the values.
 //
 typedef struct nodebuildcomms_s
@@ -112,6 +122,10 @@ typedef struct nodebuildcomms_s
 
   // the GUI can set this to tell the node builder to stop
   boolean_g cancelled;
+
+  // from here on, various bits of internal state
+  int total_small_warn, total_big_warn;
+  int build_pos, file_pos;
 }
 nodebuildcomms_t;
 
@@ -154,7 +168,7 @@ typedef struct nodebuildfuncs_s
   // The command line version could show a percentage value, or even
   // draw a bar using characters.
  
-  // Display_open is called at the beginning, and `type' holds the
+  // Display_open is called at the beginning, and 'type' holds the
   // type of progress (and determines how many bars to display).
   // Returns TRUE if all went well, or FALSE if it failed (in which
   // case the other routines should do nothing when called).
@@ -213,7 +227,7 @@ typedef enum
 }
 glbsp_ret_e;
 
-// parses the arguments, modifying the `info' structure accordingly.
+// parses the arguments, modifying the 'info' structure accordingly.
 // Returns GLBSP_E_OK if all went well, otherwise another error code.
 // Upon error, comms->message may be set to an string describing the
 // error.  Typical errors are unrecognised options and invalid option
@@ -224,11 +238,11 @@ glbsp_ret_e GlbspParseArgs(nodebuildinfo_t *info,
     volatile nodebuildcomms_t *comms,
     const char ** argv, int argc);
 
-// checks the node building parameters in `info'.  If they are valid,
+// checks the node building parameters in 'info'.  If they are valid,
 // returns GLBSP_E_OK, otherwise an error code is returned.  This
 // routine should always be called shortly before GlbspBuildNodes().
-// Note that when `output_file' is NULL, this routine will silently
-// update it to the correct GWA filename (and set the gwa_mode flag).  
+// Note that when 'output_file' is NULL, this routine will silently
+// update it to the correct GWA filename (and set the gwa_mode flag).
 //
 // If the GLBSP_E_BadInfoFixed error code is returned, the parameter
 // causing the problem has been changed.  You could either treat it as
@@ -236,6 +250,10 @@ glbsp_ret_e GlbspParseArgs(nodebuildinfo_t *info,
 // until something different than GLBSP_E_BadInfoFixed is returned,
 // showing the user the returned messages (e.g. as warnings or in
 // pop-up dialog boxes).
+//
+// If there are multiple input files (extra_files is non-NULL), this
+// routine should be called once for each input file, setting the
+// 'output_file' field to NULL each time.
 //
 glbsp_ret_e GlbspCheckInfo(nodebuildinfo_t *info,
     volatile nodebuildcomms_t *comms);

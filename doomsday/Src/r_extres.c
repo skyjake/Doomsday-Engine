@@ -31,13 +31,13 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_EXTENSIONS		10
+#define MAX_EXTENSIONS      10
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct resclass_s {
-	char    path[256];
-	char    overridePath[256];
+    char    path[256];
+    char    overridePath[256];
 } resclass_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -57,42 +57,45 @@ char    dataPath[256];
 
 // Command line options for setting the path explicitly.
 static char *explicitOption[NUM_RESOURCE_CLASSES][2] = {
-	{"-texdir", "-texdir2"},
-	{"-flatdir", "-flatdir2"},
-	{"-patdir", "-patdir2"},
-	{"-lmdir", "-lmdir2"},
-	{"-musdir", "-musdir2"},
-	{"-sfxdir", "-sfxdir2"},
-	{"-gfxdir", "-gfxdir2"}
+    {"-texdir", "-texdir2"},
+    {"-flatdir", "-flatdir2"},
+    {"-patdir", "-patdir2"},
+    {"-lmdir", "-lmdir2"},
+    {"-flaredir", "-flaredir2"},
+    {"-musdir", "-musdir2"},
+    {"-sfxdir", "-sfxdir2"},
+    {"-gfxdir", "-gfxdir2"}
 };
 
 // Class paths.
 static const char *defaultResourcePath[NUM_RESOURCE_CLASSES] = {
-	"Textures\\",
+    "Textures\\",
     "Flats\\",
-	"Patches\\",
-	"LightMaps\\",
-	"Music\\",
-	"Sfx\\",
-	"Graphics\\"
+    "Patches\\",
+    "LightMaps\\",
+    "Flares\\",
+    "Music\\",
+    "Sfx\\",
+    "Graphics\\"
 };
 
 // Recognized extensions (in order of importance). "*" means 'anything'.
 static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
-	// Graphics favor quality.
-	{".png", ".tga", ".pcx", NULL},
-	{".png", ".tga", ".pcx", NULL},
-	{".png", ".tga", ".pcx", NULL},
-	{".png", ".tga", ".pcx", NULL},
+    // Graphics favor quality.
+    {".png", ".tga", ".pcx", NULL},
+    {".png", ".tga", ".pcx", NULL},
+    {".png", ".tga", ".pcx", NULL},
+    {".png", ".tga", ".pcx", NULL},
+    {".png", ".tga", ".pcx", NULL},
 
-	// Extension doesn't matter with music, FMOD will either recognize 
-	// it or not.
-	{".mp3", ".ogg", ".wav", ".xm", ".s3m", ".mod", ".it", ".mid", NULL},
+    // Extension doesn't matter with music, FMOD will either recognize
+    // it or not.
+    {".mp3", ".ogg", ".wav", ".xm", ".s3m", ".mod", ".it", ".mid", NULL},
 
-	// Only WAV files for sound effects.
-	{".wav", NULL},
+    // Only WAV files for sound effects.
+    {".wav", NULL},
 
-	{".png", ".tga", ".pcx", NULL}
+    {".png", ".tga", ".pcx", NULL}
 };
 
 static resclass_t classInfo[NUM_RESOURCE_CLASSES];
@@ -104,7 +107,7 @@ static resclass_t classInfo[NUM_RESOURCE_CLASSES];
  */
 void R_InitExternalResources(void)
 {
-	R_InitDataPaths("}Data\\", false);
+    R_InitDataPaths("}Data\\", false);
 }
 
 /*
@@ -112,7 +115,7 @@ void R_InitExternalResources(void)
  */
 const char *R_GetDataPath(void)
 {
-	return dataPath;
+    return dataPath;
 }
 
 /*
@@ -120,7 +123,7 @@ const char *R_GetDataPath(void)
  */
 void R_SetDataPath(const char *path)
 {
-	R_InitDataPaths(path, true);
+    R_InitDataPaths(path, true);
 }
 
 /*
@@ -128,66 +131,66 @@ void R_SetDataPath(const char *path)
  */
 void R_InitDataPaths(const char *path, boolean justGamePaths)
 {
-	int     i;
+    int     i;
 
-	M_TranslatePath(path, dataPath);
-	Dir_ValidDir(dataPath);
-	VERBOSE(Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)));
+    M_TranslatePath(path, dataPath);
+    Dir_ValidDir(dataPath);
+    VERBOSE(Con_Message("R_SetDataPath: %s\n", M_Pretty(dataPath)));
 
-	// Update the paths of each class.
-	for(i = 0; i < NUM_RESOURCE_CLASSES; i++)
-	{
-		// The Graphics class resources are under Doomsday's control.
-		if(justGamePaths && i == RC_GRAPHICS)
-			continue;
+    // Update the paths of each class.
+    for(i = 0; i < NUM_RESOURCE_CLASSES; i++)
+    {
+        // The Graphics class resources are under Doomsday's control.
+        if(justGamePaths && i == RC_GRAPHICS)
+            continue;
 
-		memset(&classInfo[i], 0, sizeof(classInfo[i]));
+        memset(&classInfo[i], 0, sizeof(classInfo[i]));
 
-		// The -texdir option specifies a path to look for TGA textures.
-		if(ArgCheckWith(explicitOption[i][0], 1))
-		{
-			M_TranslatePath(ArgNext(), classInfo[i].path);
-		}
-		else
-		{
-			// Build the path for the resource class using the default 
-			// elements.
-			strcpy(classInfo[i].path, dataPath);
-			strcat(classInfo[i].path, defaultResourcePath[i]);
-		}
-		Dir_ValidDir(classInfo[i].path);
+        // The -texdir option specifies a path to look for TGA textures.
+        if(ArgCheckWith(explicitOption[i][0], 1))
+        {
+            M_TranslatePath(ArgNext(), classInfo[i].path);
+        }
+        else
+        {
+            // Build the path for the resource class using the default
+            // elements.
+            strcpy(classInfo[i].path, dataPath);
+            strcat(classInfo[i].path, defaultResourcePath[i]);
+        }
+        Dir_ValidDir(classInfo[i].path);
 
-		// The overriding path.
-		if(ArgCheckWith(explicitOption[i][1], 1))
-		{
-			M_TranslatePath(ArgNext(), classInfo[i].overridePath);
-		}
-		Dir_ValidDir(classInfo[i].overridePath);
+        // The overriding path.
+        if(ArgCheckWith(explicitOption[i][1], 1))
+        {
+            M_TranslatePath(ArgNext(), classInfo[i].overridePath);
+        }
+        Dir_ValidDir(classInfo[i].overridePath);
 
-		VERBOSE2(Con_Message
-				 ("  %i: %s (%s)\n", i, M_Pretty(classInfo[i].path),
-				  M_Pretty(classInfo[i].overridePath)));
-	}
+        VERBOSE2(Con_Message
+                 ("  %i: %s (%s)\n", i, M_Pretty(classInfo[i].path),
+                  M_Pretty(classInfo[i].overridePath)));
+    }
 }
 
 /*
- * If the origPath is a relative path, the data path is added in 
+ * If the origPath is a relative path, the data path is added in
  * front of it.
  */
 void R_PrependDataPath(const char *origPath, char *newPath)
 {
-	char    buf[300];
+    char    buf[300];
 
-	if(Dir_IsAbsolute(origPath))
-	{
-		// Can't prepend to absolute paths.
-		strcpy(newPath, origPath);
-	}
-	else
-	{
-		sprintf(buf, "%s%s", dataPath, origPath);
-		strcpy(newPath, buf);
-	}
+    if(Dir_IsAbsolute(origPath))
+    {
+        // Can't prepend to absolute paths.
+        strcpy(newPath, origPath);
+    }
+    else
+    {
+        sprintf(buf, "%s%s", dataPath, origPath);
+        strcpy(newPath, buf);
+    }
 }
 
 /*
@@ -195,16 +198,16 @@ void R_PrependDataPath(const char *origPath, char *newPath)
  */
 int R_FileFinder(const char *fn, filetype_t type, void *buf)
 {
-	// Skip directories.
-	if(type == FT_DIRECTORY)
-		return true;
+    // Skip directories.
+    if(type == FT_DIRECTORY)
+        return true;
 
-	// This'll do fine!
-	if(buf)
-		strcpy(buf, fn);
+    // This'll do fine!
+    if(buf)
+        strcpy(buf, fn);
 
-	// Return false to stop searching.
-	return false;
+    // Return false to stop searching.
+    return false;
 }
 
 /*
@@ -212,41 +215,41 @@ int R_FileFinder(const char *fn, filetype_t type, void *buf)
  * 'path' is complete, sans extension. Returns true if it's found.
  */
 boolean R_TryResourceFile(resourceclass_t resClass, const char *path,
-						  char *foundFileName)
+                          char *foundFileName)
 {
-	const char **ext;
-	char    buf[256], *extPlace;
-	int     i;
+    const char **ext;
+    char    buf[256], *extPlace;
+    int     i;
 
-	strcpy(buf, path);
-	extPlace = buf + strlen(buf);
+    strcpy(buf, path);
+    extPlace = buf + strlen(buf);
 
-	for(i = 0, ext = classExtension[resClass]; *ext; ext++)
-	{
-		if(**ext == '*')		// Anything goes?
-		{
-			strcpy(extPlace, ".*");
-			if(!F_ForAll(buf, foundFileName, R_FileFinder))
-			{
-				// A match was found.
-				return true;
-			}
-		}
-		else
-		{
-			strcpy(extPlace, *ext);
-			if(F_Access(buf))
-			{
-				// Found it.
-				if(foundFileName)
-					strcpy(foundFileName, buf);
-				return true;
-			}
-		}
-	}
+    for(i = 0, ext = classExtension[resClass]; *ext; ext++)
+    {
+        if(**ext == '*')        // Anything goes?
+        {
+            strcpy(extPlace, ".*");
+            if(!F_ForAll(buf, foundFileName, R_FileFinder))
+            {
+                // A match was found.
+                return true;
+            }
+        }
+        else
+        {
+            strcpy(extPlace, *ext);
+            if(F_Access(buf))
+            {
+                // Found it.
+                if(foundFileName)
+                    strcpy(foundFileName, buf);
+                return true;
+            }
+        }
+    }
 
-	// No hits.
-	return false;
+    // No hits.
+    return false;
 }
 
 /*
@@ -257,32 +260,32 @@ boolean R_TryResourceFile(resourceclass_t resClass, const char *path,
  * needed.
  */
 boolean R_FindResource(resourceclass_t resClass, const char *name,
-					   const char *optionalSuffix, char *fileName)
+                       const char *optionalSuffix, char *fileName)
 {
-	resclass_t *info = &classInfo[resClass];
-	const char *gameMode;
-	char    path[256];
-	char    fn[256];
-	int     i;
+    resclass_t *info = &classInfo[resClass];
+    const char *gameMode;
+    char    path[256];
+    char    fn[256];
+    int     i;
 
-	// The tries:
-	// 0. override + game
-	// 1. override
-	// 2. game
-	// 3. default
+    // The tries:
+    // 0. override + game
+    // 1. override
+    // 2. game
+    // 3. default
     // 4. base path
-	for(i = 0; i <= 4; i++)
-	{
-		// First try the overriding path, if it's set.
-		if(i < 2)
-		{
-			if(info->overridePath[0])
-				strcpy(path, info->overridePath);
-			else
-				continue;
-		}
-		else
-		{
+    for(i = 0; i <= 4; i++)
+    {
+        // First try the overriding path, if it's set.
+        if(i < 2)
+        {
+            if(info->overridePath[0])
+                strcpy(path, info->overridePath);
+            else
+                continue;
+        }
+        else
+        {
             if(i == 4)
             {
                 // Begin with the base path.
@@ -292,37 +295,37 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
             {
                 strcpy(path, info->path);
             }
-		}
+        }
 
-		// Should the game mode subdir be included?
-		if(i == 0 || i == 2)
-		{
-			// A string that identifies the game mode (e.g. doom2-plut).
-			gameMode = gx.Get(DD_GAME_MODE);
-			if(!gameMode || !gameMode[0])
-				continue;		// Not set?!
-			strcat(path, gameMode);
-			strcat(path, "\\");
-		}
+        // Should the game mode subdir be included?
+        if(i == 0 || i == 2)
+        {
+            // A string that identifies the game mode (e.g. doom2-plut).
+            gameMode = gx.Get(DD_GAME_MODE);
+            if(!gameMode || !gameMode[0])
+                continue;       // Not set?!
+            strcat(path, gameMode);
+            strcat(path, "\\");
+        }
 
-		// First try with the optional suffix.
-		if(optionalSuffix)
-		{
-			strcpy(fn, path);
-			strcat(fn, name);
-			strcat(fn, optionalSuffix);
-			if(R_TryResourceFile(resClass, fn, fileName))
-				return true;
-		}
+        // First try with the optional suffix.
+        if(optionalSuffix)
+        {
+            strcpy(fn, path);
+            strcat(fn, name);
+            strcat(fn, optionalSuffix);
+            if(R_TryResourceFile(resClass, fn, fileName))
+                return true;
+        }
 
-		// Try without a suffix.
-		strcpy(fn, path);
-		strcat(fn, name);
-		if(R_TryResourceFile(resClass, fn, fileName))
-			return true;
-	}
+        // Try without a suffix.
+        strcpy(fn, path);
+        strcat(fn, name);
+        if(R_TryResourceFile(resClass, fn, fileName))
+            return true;
+    }
 
-	// Couldn't find anything.
+    // Couldn't find anything.
     VERBOSE2(Con_Message("Failed to locate resource: %s\n", name));
-	return false;
+    return false;
 }

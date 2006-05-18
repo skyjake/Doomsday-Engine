@@ -32,12 +32,6 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    event_t event;
-    int     flags;
-    char   *command[NUMBINDCLASSES];
-} binding_t;
-
-typedef struct {
     int     key;                // DDKEY
     char   *name;
 } keyname_t;
@@ -56,6 +50,10 @@ extern action_t *ddactions;
 
 binding_t *binds = NULL;
 int     numBinds = 0;
+
+bindclass_t *bindClasses = NULL;
+int    numBindClasses = 0;
+int    maxBindClasses = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -109,7 +107,7 @@ static keyname_t keyNames[] = {
     {DDKEY_NUMPAD8, "pad8"},
     {DDKEY_NUMPAD9, "pad9"},
     {DDKEY_DECIMAL, "pad,"},
-    {DDKEY_SUBTRACT, "pad-"},    // not really used 
+    {DDKEY_SUBTRACT, "pad-"},    // not really used
     {DDKEY_ADD, "pad+"},        // not really used
 
     {0, NULL}                    // The terminator
@@ -123,12 +121,16 @@ static char *povDirNames[] = {
 // Binding Classes
 //       (very handy for gamepads with a limited number of buttons ;-))
 
-// Idealy it should be possible to create/destroy binding classes dynamically
-// at runtime using a console command. The game would then register any
-// classes it NEEDS on init (and mark them as indestructable). Users would
-// also be allowed to create any additional binding classes they required.
-// However that would mean a fair amount of extra book keeping, so for
-// now we have a static array and the names of the classes are set here.
+// Binding classes are created dynamically at runtime. During (pre)init the
+// game register the classes it NEEDS. The order of the bind Classes in the
+// array (the class stack) determines the order in which bindings are checked
+// in B_Responder(). Thus it is important that bind classes are created in the
+// correct order (game specific).
+
+// It would also be possible for users to create any additional binding classes
+// they required at runtime via console commands.
+// However that would mean a fair amount of extra book keeping, so for now there
+// are three generic classes which can be used for this purpose.
 
 // Bindings are saved with the classnames eg:
 //   bind game +w +forward
@@ -144,18 +146,30 @@ static char *povDirNames[] = {
 // rule that only the command in the highest active binding class being executed
 // we only need to check commands for bindings with a lower binding class id.
 
-bindclass_t bindClasses[] = {
-    {BDC_NORMAL, 1, "game"},
-    {BDC_BIASEDITOR, 0, "biaseditor"},
-    {BDC_CLASS1, 0, "map"},
-    {BDC_CLASS2, 0, "mapfollowoff"}, // additonal classes that can be purposed by users
-    {BDC_CLASS3, 0, "class1"},
-    {BDC_CLASS4, 0, "class2"},
-    {BDC_CLASS5, 0, "class3"},
-    {0, 0, NULL},
+// A binding class may be "absolute". This means that when the class is active,
+// if there is no binding in the current class (while decending the bind class
+// stack in B_Responder()) and that class is "absolute" - all classes BELOW the
+// current will be ignored and no binding will be found for the event.
+// The event is NOT eaten and may continue on down the event responder chain.
+
+bindclass_t ddBindClasses[] = {
+    {"game", DDBC_NORMAL, 1, 0},
+    {"class1", DDBC_UCLASS1, 0, 0}, // additonal classes that can be purposed by users
+    {"class2", DDBC_UCLASS2, 0, 0},
+    {"class3", DDBC_UCLASS3, 0, 0},
+    {"biaseditor", DDBC_BIASEDITOR, 0, 0},
+    {NULL}
 };
 
 // CODE --------------------------------------------------------------------
+
+void B_RegisterBindClasses(void)
+{
+    int    i;
+
+    for(i = 0; ddBindClasses[i].name; i++)
+        DD_AddBindClass(ddBindClasses + i);
+}
 
 /*
  * B_EventMatch
@@ -201,7 +215,7 @@ boolean B_Responder(event_t *ev)
         return false;
 
     // Check all the bindings and execute the necessary commands.
-    for(i = 0, bnd = binds; i < numBinds; i++, bnd++)
+    for(i = 0, bnd = binds; i < numBinds; ++i, ++bnd)
     {
         // Do we need to execute a command?
         if(B_EventMatch(ev, &bnd->event))
@@ -209,27 +223,37 @@ boolean B_Responder(event_t *ev)
             if(ev->useclass != -1) // use a specific class? (regardless if it is active or not)
             {
                 // FYI: These kind of events aren't sent via direct user input
-                // Only by "us" when we need to switch binding classes and a 
-                // current input is active eg; a key is held down during the 
+                // Only by "us" when we need to switch binding classes and a
+                // current input is active eg; a key is held down during the
                 // switch that has commands in multiple binding classes.
-                if(bnd->command[ev->useclass])
+                if(bnd->commands[ev->useclass].command)
                 {
                      //Con_Message("forced %s\n",bnd->command[ev->useclass]);
-                    Con_Execute(bnd->command[ev->useclass], true);
+                    Con_Execute(CMDS_BIND, bnd->commands[ev->useclass].command, true);
+                    return true;
                 }
-            } 
-            else 
+            }
+            else
             {
                 // loop backwards through the active binding classes,
                 // the command in the highest binding class slot that
                 // is currently active is executed
-                for(k = NUMBINDCLASSES; k >= BDC_NORMAL; k--)
-                    if(bindClasses[k].active && bnd->command[k])
+                for(k = numBindClasses; k >= 0; k--)
+                {
+                    if(bindClasses[k].active == 1)
                     {
-                         //Con_Message("%s\n",bnd->command[k]);
-                        Con_Execute(bnd->command[k], true);
-                        break;
+                        if(bnd->commands[k].command != NULL)
+                        {
+                             //Con_Message("%s\n",bnd->commands[k].command);
+                            Con_Execute(CMDS_BIND, bnd->commands[k].command, true);
+                            return true;
+                        }
+
+                        // Should we ignore commands in lower classes?
+                        if(bindClasses[k].absolute == 1)
+                            return false;
                     }
+                }
             }
         }
     }
@@ -257,6 +281,11 @@ binding_t *B_GetBinding(event_t *event, boolean create_new)
     binds = realloc(binds, sizeof(binding_t) * (numBinds + 1));
     newb = binds + numBinds++;
     memset(newb, 0, sizeof(*newb));
+    newb->commands = malloc(sizeof(command_t) * maxBindClasses);
+
+    for(i = 0; i < maxBindClasses; i++)
+        newb->commands[i].command = NULL;
+
     // Copy the event data.
     memcpy(&newb->event, event, sizeof(*event));
     return newb;
@@ -272,9 +301,11 @@ void B_DeleteBindingIdx(int index)
     if(index < 0 || index > numBinds - 1)
         return;                    // What?
 
-    for(i = BDC_NORMAL; i < NUMBINDCLASSES; i++)
-        if(binds[index].command[i])
-            free(binds[index].command[i]);
+    for(i = 0; i < numBindClasses; ++i)
+        if(binds[index].commands[i].command)
+            free(binds[index].commands[i].command);
+
+    free(binds[index].commands);
 
     if(index < numBinds - 1)    // If not the last one, do some rollback.
     {
@@ -304,13 +335,13 @@ void B_Bind(event_t *event, char *command, int bindClass)
             B_DeleteBindingIdx(bnd - binds); // so del the binding_t
         else {
             // clear the command in bindClass only
-            for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
+            for(k = 0; k < numBindClasses; k++)
             {
-                if(bnd->command[k])
+                if(bnd->commands[k].command)
                 {
                     count++;
                     if(k == bindClass)
-                        bnd->command[k] = NULL;
+                        bnd->commands[k].command = NULL;
                 }
             }
             if(count == 1)
@@ -320,12 +351,12 @@ void B_Bind(event_t *event, char *command, int bindClass)
         return;
     }
     // Set the command.
-    bnd->command[bindClass] = realloc(bnd->command[bindClass], 
+    bnd->commands[bindClass].command = realloc(bnd->commands[bindClass].command,
         strlen(command) + 1);
-    strcpy(bnd->command[bindClass], command);
+    strcpy(bnd->commands[bindClass].command, command);
 
     //  Con_Printf( "B_Bind: evtype:%d data:%d cmd:%s\n", bnd->event.type,
-    //  bnd->event.data1, bnd->command[bindclass]);
+    //  bnd->event.data1, bnd->commands[bindclass].command);
 }
 
 /*
@@ -336,28 +367,28 @@ void B_ClearBinding(char *command, int bindClass)
     int     i, k, count;
     boolean match;
 
-    for(i = 0; i < numBinds; i++)
+    for(i = 0; i < numBinds; ++i)
     {
         match = false;
         count = 0;
         if(bindClass == -1)
         {
             // clear all commands in all binding classes
-            for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
-                if(binds[i].command[k])
-                    if(!stricmp(binds[i].command[k], command))
+            for(k = 0; k < numBindClasses; k++)
+                if(binds[i].commands[k].command)
+                    if(!stricmp(binds[i].commands[k].command, command))
                         B_DeleteBindingIdx(i--);
         } else {
             // clear the command in bindClass only
-            for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
+            for(k = 0; k < numBindClasses; k++)
             {
-                if(binds[i].command[k])
+                if(binds[i].commands[k].command)
                 {
                     count++;
-                    if((!stricmp(binds[i].command[k], command)) && k == bindClass)
+                    if((!stricmp(binds[i].commands[k].command, command)) && k == bindClass)
                     {
                         match = true;
-                        binds[i].command[k] = NULL;
+                        binds[i].commands[k].command = NULL;
                     }
                 }
             }
@@ -376,17 +407,27 @@ void B_Shutdown()
 {
     int     i, k;
 
-    for(i = 0; i < numBinds; i++)
+    for(i = 0; i < numBinds; ++i)
     {
-        for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
+        for(k = 0; k < numBindClasses; ++k)
         {
-            if(binds[i].command[k])
-                free(binds[i].command[k]);
+            if(binds[i].commands[k].command)
+                free(binds[i].commands[k].command);
         }
+
+        free(binds[i].commands);
     }
     free(binds);
     binds = NULL;
     numBinds = 0;
+
+    // Now we can clear the bindClasses
+    for(i = 0; i < numBindClasses; ++i)
+        free(bindClasses[i].name);
+
+    free(bindClasses);
+    bindClasses = NULL;
+    numBindClasses = maxBindClasses = 0;
 }
 
 /*
@@ -568,17 +609,17 @@ D_CMD(Bind)
     {
         Con_Printf("Usage: %s (class) (event) (cmd)\n", argv[0]);
         Con_Printf("Binding Classes:\n");
-            for(i = BDC_NORMAL; i < NUMBINDCLASSES; i++)
-                Con_Printf("  %s\n", bindClasses[i].name);
+        for(i = 0; i < numBindClasses; i++)
+            Con_Printf("  %s\n", bindClasses[i].name);
         return true;
     }
 
     // Check for a specified binding class
-    for(i = BDC_NORMAL; i < NUMBINDCLASSES; i++)
+    for(i = 0; i < numBindClasses; ++i)
     {
-        if(!(stricmp(argv[1],bindClasses[i].name)) ||
+        if(!(stricmp(argv[1], bindClasses[i].name)) ||
             ((!strnicmp(argv[1], "bdc", 3) &&
-			(atoi(argv[1]+3) == bindClasses[i].id) )))
+            (atoi(argv[1]+3) == bindClasses[i].id) )))
         {
             bc = bindClasses[i].id;
             bindClassGiven = true;
@@ -590,7 +631,7 @@ D_CMD(Bind)
     if(!bindClassGiven)
     {
         // No it hasn't! default to normal
-        bc = BDC_NORMAL;
+        bc = DDBC_NORMAL;
         evntptr = argv[1];
         cmdptr = argv[2];
     }
@@ -639,7 +680,7 @@ D_CMD(Bind)
             {
                 B_EventBuilder(validEventName, &event, true);
                 if(safe && (existing = B_GetBinding(&event, false)))
-                    if(existing->command[bc])
+                    if(existing->commands[bc].command)
                         return false;
 
                 B_Bind(&event, buff,bc);
@@ -658,12 +699,12 @@ D_CMD(Bind)
     // Convert the name to an event.
     B_EventBuilder(validEventName, &event, true);
     if(safe && (existing = B_GetBinding(&event, false)))
-        if(existing->command[bc])
+        if(existing->commands[bc].command)
             return false;
 
     // Now we can create a binding for it.
-    if(argc == 2 && !bindClassGiven && !prefixGiven ||
-            argc == 3 && bindClassGiven)
+    if((argc == 2 && !bindClassGiven && !prefixGiven) ||
+            (argc == 3 && bindClassGiven))
         B_Bind(&event, NULL, bc);
     else
         B_Bind(&event, cmdptr, bc);
@@ -673,8 +714,8 @@ D_CMD(Bind)
     {
         event.type = ev_keyrepeat;
 
-        if(argc == 2 && !bindClassGiven && !prefixGiven ||
-                argc == 3 && bindClassGiven)
+        if((argc == 2 && !bindClassGiven && !prefixGiven) ||
+                (argc == 3 && bindClassGiven))
             B_Bind(&event, NULL, bc);
         else
             B_Bind(&event, cmdptr, bc);
@@ -704,9 +745,9 @@ D_CMD(DeleteBind)
 
     // Check for a specified binding class
     if(argc > 2)
-        for(i = BDC_NORMAL; i < NUMBINDCLASSES; i++)
+        for(i = 0 ; i < numBindClasses; ++i)
         {
-            if((!stricmp(argv[1],bindClasses[i].name)) ||
+            if((!stricmp(argv[1], bindClasses[i].name)) ||
                 (atoi(argv[1]) == bindClasses[i].id))
             {
                 if(argc < 3)
@@ -714,8 +755,8 @@ D_CMD(DeleteBind)
                     Con_Printf("Usage: %s (binding class) (cmd) ...\n", argv[0]);
                     Con_Printf(": Omit Binding class to clear cmds in all binding classes\n");
                     return true;
-                } 
-                else 
+                }
+                else
                 {
                     bc = i;
                     cmdptr = argv[2];
@@ -725,12 +766,12 @@ D_CMD(DeleteBind)
             }
         }
 
-    if(bc == -1 || bc < NUMBINDCLASSES)
+    if(bc == -1 || bc < numBindClasses)
     {
         for(i = start; i < argc && cmdptr; cmdptr = argv[i++])
             B_ClearBinding(cmdptr, bc);
-    } 
-    else 
+    }
+    else
     {
         Con_Printf("Not a valid binding class. Enter listbindclasses.\n");
         return false;
@@ -746,7 +787,7 @@ D_CMD(ListBindClasses)
     // Show the available binding classes
     Con_Printf("Binding Classes:\n");
 
-    for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
+    for(k = 0; k < numBindClasses; ++k)
         Con_Printf("  %s\n", bindClasses[k].name);
 
     return true;
@@ -761,8 +802,8 @@ D_CMD(ListBindings)
     // Are we showing bindings in a particular class only?
     if(argc >= 2)
     {
-        for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
-            if(!stricmp(argv[1],bindClasses[k].name))
+        for(k = 0; k < numBindClasses; ++k)
+            if(!stricmp(argv[1], bindClasses[k].name))
             {
                 // only show bindings in this class
                 onlythis = bindClasses[k].id;
@@ -770,15 +811,15 @@ D_CMD(ListBindings)
     }
 
     // loop through the bindings
-    for(i = 0; i < numBinds; i++)
+    for(i = 0; i < numBinds; ++i)
     {
         // build the event
         B_EventBuilder(buffer, &binds[i].event, false);
 
         // loop through the bindclasses
-        for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
+        for(k = 0; k < numBindClasses; ++k)
         {
-            if(binds[i].command[k])
+            if(binds[i].commands[k].command)
             {
                 if(argc >= 2)
                 {
@@ -790,135 +831,209 @@ D_CMD(ListBindings)
                         {
                             if(strnicmp(buffer + 1, argv[2], strlen(argv[2])) || (k != -1 && k != onlythis))
                                 continue; // Doesn't match the search pattern
-                        } else if(onlythis != -1 && k != onlythis)
+                        }
+                        else if(onlythis != -1 && k != onlythis)
                             continue;    // Doesn't match the search pattern
                     }
                 }
                 comcount++;
                 if(onlythis != -1)
-                    Con_Printf("%-8s : %s\n", buffer, binds[i].command[k]);
+                    Con_Printf("%-8s : %s\n", buffer, binds[i].commands[k].command);
                 else
-                    Con_Printf("%-8s : %s : %s\n", buffer, bindClasses[k].name, binds[i].command[k]);
+                    Con_Printf("%-8s : %s : %s\n", buffer, bindClasses[k].name,
+                               binds[i].commands[k].command);
             }
         }
     }
     if(onlythis != -1)
     {
-        Con_Printf("Showing %d (%s class) commands from %d bindings.\n", 
+        Con_Printf("Showing %d (%s class) commands from %d bindings.\n",
             comcount, bindClasses[onlythis].name, numBinds);
     }
     else
     {
-        Con_Printf("Showing %d commands from %d bindings.\n", 
+        Con_Printf("Showing %d commands from %d bindings.\n",
             comcount, numBinds);
     }
     return true;
 }
 
 /*
- *  CCmdEnableBindClass
- *        Enables/disables binding classes
- *        Ques extra input events as required
+ *  Add a new binding class
+ */
+void DD_AddBindClass(bindclass_t *newbc)
+{
+    int i;
+    bindclass_t *added;
+
+    VERBOSE2(Con_Printf("DD_AddBindClass: %s.\n", newbc->name));
+
+    if(++numBindClasses > maxBindClasses)
+    {
+        // Allocate more memory.
+        maxBindClasses *= 2;
+        if(maxBindClasses < numBindClasses)
+            maxBindClasses = numBindClasses;
+
+        bindClasses = realloc(bindClasses, sizeof(bindclass_t) * maxBindClasses);
+
+        for(i = 0; i < numBinds; ++i)
+        {
+            binds[i].commands = realloc(binds[i].commands,
+                                        sizeof(command_t) * maxBindClasses);
+        }
+    }
+
+    added = &bindClasses[numBindClasses - 1];
+    memcpy(added, newbc, sizeof(bindclass_t));
+    added->id = numBindClasses - 1;
+
+    // Allocate a copy of the class name.
+    added->name = strdup(newbc->name);
+}
+
+/*
+ * Enables/disables binding classes
+ * Ques extra input events as required
  */
 D_CMD(EnableBindClass)
 {
-    int i = -1, j, k;
-    int        count;
+    int i = -1;
 
     if(argc < 2 || argc > 3)
     {
-        for(i = BDC_NORMAL; i < NUMBINDCLASSES; i++)
-            Con_Printf("%d: %s is %s\n",i,bindClasses[i].name,(bindClasses[i].active)? "On" : "Off");
+        for(i = 0; i < numBindClasses; ++i)
+            Con_Printf("%d: %s is %s\n", i, bindClasses[i].name,
+                       (bindClasses[i].active)? "On" : "Off");
 
-        Con_Printf("Usage: %s (binding class) (1= On 0= Off (leave blank to toggle))\n", argv[0]);
+        Con_Printf("Usage: %s (binding class) (1=On, 0=Off (leave blank to toggle))\n", argv[0]);
         return true;
     }
 
     // look for a binding class with either a name or id
     // that matches the argument
-    for(i = BDC_NORMAL; i < NUMBINDCLASSES; i++)
+    for(i = 0; i < numBindClasses; ++i)
     {
-        if(!(stricmp(argv[1],bindClasses[i].name)))
+        if(!(stricmp(argv[1], bindClasses[i].name)))
         {
             i = bindClasses[i].id;
             break;
         }
     }
 
-	Con_Printf("Class is %d %s\n",i, bindClasses[i].name);
-
-    if(i >= BDC_NORMAL && i < NUMBINDCLASSES)
+    if(i >= 0 && i < numBindClasses)
     {
-        // Set the bind class as requested
-        if(argc == 3)
-            bindClasses[i].active = (atoi(argv[2]))? 1 : 0; // implicitly set
-        else
-            bindClasses[i].active = bindClasses[i].active? 0: 1; // toggle
-    } else {
-        Con_Printf("Not a valid binding class. Enter listbindclasses.\n");
-        return false;
+        if(B_SetBindClass(i, (argc == 3)? atoi(argv[2]) : 2))
+            return true;
     }
-    
+    else
+        Con_Printf("Not a valid binding class. Enter listbindclasses.\n");
+
+    return false;
+}
+
+/*
+ *  Enables/disables binding classes
+ *  Wrapper for the game dll.
+ *  This way we can allow users to create their own binding classes that can be placed
+ *  anywhere in the bindClass stack without the dll having to keep track of the classIDs
+ */
+boolean DD_SetBindClass(int classID, int type)
+{
+    // creation of user bind classes not implemented yet so there is no offset
+    return B_SetBindClass(classID, type);
+}
+
+/*
+ *  Enables/disables binding classes
+ *  Ques extra input events as required
+ */
+boolean B_SetBindClass(int classID, int type)
+{
+    int    i, k;
+    int    count;
+    binding_t *bind;
+
+    // Change the active state of the bindClass
+    switch(type)
+    {
+        case 0:  // implicitly set
+        case 1:
+            bindClasses[classID].active = type? 1 : 0;
+            break;
+        case 2:  // toggle
+            bindClasses[classID].active = bindClasses[classID].active? 0 : 1;
+            break;
+    }
+
+    VERBOSE2(Con_Printf("B_SetBindClass: %s %s %s.\n",
+                        bindClasses[classID].name,
+                        (type==2)? "TOGGLE" : "SET",
+                        bindClasses[classID].active? "ON" : "OFF"));
+
     // Now we need to do a check in case there are keys currently
     // being pressed that should be released if the event binding they are
     // bound too has commands in the bind class being enabled/disabled.
 
     // loop through the bindings
-    for(j = 0; j < numBinds; j++)
+    for(i=0, bind = binds; i < numBinds; ++i, ++bind)
     {
         // we're only interested in bindings for down events currently being pressed
-        // that have a binding in the class being enabled/disabled (i)
-        if( binds[j].command[i] &&
-            ( (binds[j].event.type == ev_keydown && (DD_IsKeyDown(binds[j].event.data1))) ||
-                (binds[j].event.type == ev_mousebdown && (DD_IsMouseBDown(binds[j].event.data1))) ||
-                (binds[j].event.type == ev_joybdown && (DD_IsJoyBDown(binds[j].event.data1))) ))
+        // that have a binding in the class being enabled/disabled (classID)
+        if(bind->commands[classID].command != NULL &&
+            ( (bind->event.type == ev_keydown && (DD_IsKeyDown(bind->event.data1))) ||
+                (bind->event.type == ev_mousebdown && (DD_IsMouseBDown(bind->event.data1))) ||
+                (bind->event.type == ev_joybdown && (DD_IsJoyBDown(bind->event.data1))) ))
         {
             count = 0;
             // loop through the commands for this binding,
             // count the number of commands for this binding that are for currently active
             // bind classes with a lower id than the class being enabled/disabled (i)
-            for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
-                if(bindClasses[k].active && binds[j].command[k])
+            for(k = 0; k < numBindClasses; ++k)
+                if(bindClasses[k].active && bind->commands[k].command)
                 {
                     // if there is a command for this event binding in a class that is currently active
-                    // (current is k), that has a greater id than the class being enabled/disabled (i)
+                    // (current is k), that has a greater id than the class being enabled/disabled (classID)
                     // then we don't need to que any extra events at all as that will have been done
                     // when the binding class with the higher id was enabled. The commands in the lower
                     // classes can't have been active (for this event), as the highest class command
                     // is ALWAYS executed unless a specific class is requested.
-                    if(k > i)
+                    if(k > classID)
                     {
                         // don't need to que any extra events
                         count = 0;
                         break;
-                    } else
-                      count++;
+                    }
+                    else
+                        count++;
                 }
 
             if(count > 0)
             {
                 // We need to send up events with a forced binding
                 // command request for all the binding classes with a
-                // lower id than the class being enabled/disabled (i)
+                // lower id than the class being enabled/disabled (classID)
                 // that are also active.
-                for(k = BDC_NORMAL; k < i; k++)
+                for(k = 0; k < classID; ++k)
                 {
-                    if(bindClasses[k].active && binds[j].command[k])
+                    if(bindClasses[k].active && bind->commands[k].command)
                     {
                         event_t ev;
                         // que an up event for this down event.
-                        ev = binds[j].event;
+                        ev = bind->event;
                         switch(ev.type)
                         {
-                            case ev_keydown:
-                                ev.type = ev_keyup;
-                                break;
-                            case ev_mousebdown:
-                                ev.type = ev_mousebup;
-                                break;
-                            case ev_joybdown:
-                                ev.type = ev_joybup;
-                                break;
+                        case ev_keydown:
+                            ev.type = ev_keyup;
+                            break;
+                        case ev_mousebdown:
+                            ev.type = ev_mousebup;
+                            break;
+                        case ev_joybdown:
+                            ev.type = ev_joybup;
+                            break;
+                        default:
+                            break;
                         }
                         // request a command in this class
                         ev.useclass = bindClasses[k].id;
@@ -932,35 +1047,37 @@ D_CMD(EnableBindClass)
             // currently active command is in the class being disabled
             // and it has the highest id of the active bindClass commands
             // for this binding
-            for(k = NUMBINDCLASSES - 1; k > BDC_NORMAL; k--)
+            for(k = numBindClasses - 1; k > 0; --k)
             {
-                if((k > i && bindClasses[k].active && binds[j].command[k])
-                   || k < i)
+                if((k > classID && bindClasses[k].active && bind->commands[k].command)
+                   || k < classID)
                     break;
 
-                if(!bindClasses[k].active && binds[j].command[k])
+                if(!bindClasses[k].active && bind->commands[k].command)
                 {
                     event_t ev;
                     // que an up event for this down event.
-                    ev = binds[j].event;
+                    ev = bind->event;
                     switch(ev.type)
                     {
-                        case ev_keydown:
-                            ev.type = ev_keyup;
-                            break;
-                        case ev_mousebdown:
-                            ev.type = ev_mousebup;
-                            break;
-                        case ev_joybdown:
-                            ev.type = ev_joybup;
-                            break;
-                     }
-                     // request a command in this class
-                     ev.useclass = bindClasses[k].id;
-                     // Finally, post the event
-                     DD_PostEvent(&ev);
+                    case ev_keydown:
+                        ev.type = ev_keyup;
+                        break;
+                    case ev_mousebdown:
+                        ev.type = ev_mousebup;
+                        break;
+                    case ev_joybdown:
+                        ev.type = ev_joybup;
+                        break;
+                    default:
+                        break;
+                    }
+                    // request a command in this class
+                    ev.useclass = bindClasses[k].id;
+                    // Finally, post the event
+                    DD_PostEvent(&ev);
                 }
-			}
+            }
         }
     }
 
@@ -969,24 +1086,29 @@ D_CMD(EnableBindClass)
 
 void B_WriteToFile(FILE * file)
 {
-    int     i, k;
+    int     i, k, count;
     char    buffer[20];
 
-    for(i = 0; i < numBinds; i++)
+    for(k = 0; k < numBindClasses; ++k)
     {
-        for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
+        count = 0;
+        for(i = 0; i < numBinds; i++)
         {
             B_EventBuilder(buffer, &binds[i].event, false);
-            if(binds[i].command[k])
+            if(binds[i].commands[k].command)
             {
                 fprintf(file, "bind ");
                 fprintf(file, "%s ", bindClasses[k].name);
                 fprintf(file, "%s", buffer);
                 fprintf(file, " \"");
-                M_WriteTextEsc(file, binds[i].command[k]);
+                M_WriteTextEsc(file, binds[i].commands[k].command);
                 fprintf(file, "\"\n");
+                count++;
             }
         }
+
+        if(count > 0)
+            fprintf(file,"\n");
     }
 }
 
@@ -1001,38 +1123,45 @@ int B_BindingsForCommand(char *command, char *buffer, int bindClass)
     char    bindname[20];
 
     strcpy(buffer, "");
+
+    if(bindClass > numBindClasses)
+        return count;
+
     for(i = 0; i < numBinds; i++)
     {
-        B_EventBuilder(bindname, &binds[i].event, false);
-        // If bindClass is -1 check all bindclasses
-        if(bindClass == -1)
+        if(&binds[i].event != NULL)
         {
-            for(k = BDC_NORMAL; k < NUMBINDCLASSES; k++)
-                if(binds[i].command[k])
+            B_EventBuilder(bindname, &binds[i].event, false);
+            // If bindClass is -1 check all bindclasses
+            if(bindClass == -1)
+            {
+                for(k = 0; k < numBindClasses; ++k)
+                    if(binds[i].commands[k].command)
+                    {
+                        if(!stricmp(command, binds[i].commands[k].command))
+                        {
+                            if(buffer[0])        // If the buffer is not empty...
+                                strcat(buffer, " ");
+                            strcat(buffer, bindname);
+                            count++;
+                        }
+                    }
+            }
+            else
+            {
+                // only check bindClass
+              //  assert(bindClass >= 0 && bindClass < sizeof(binds[i].command)/
+              //      sizeof(binds[i].command[0]));
+
+                if(binds[i].commands[bindClass].command)
                 {
-                    if(!stricmp(command, binds[i].command[k]))
+                    if(!stricmp(command, binds[i].commands[bindClass].command))
                     {
                         if(buffer[0])        // If the buffer is not empty...
                             strcat(buffer, " ");
                         strcat(buffer, bindname);
                         count++;
                     }
-                }
-        } 
-        else 
-        {
-            // only check bindClass
-            assert(bindClass >= 0 && bindClass < sizeof(binds[i].command)/
-                sizeof(binds[i].command[0]));
-                
-            if(binds[i].command[bindClass])
-            {
-                if(!stricmp(command, binds[i].command[bindClass]))
-                {
-                    if(buffer[0])        // If the buffer is not empty...
-                        strcat(buffer, " ");
-                    strcat(buffer, bindname);
-                    count++;
                 }
             }
         }

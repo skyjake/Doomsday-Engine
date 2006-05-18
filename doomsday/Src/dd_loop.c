@@ -62,7 +62,7 @@ void    DD_RunTics(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     maxFrameRate = 200;		// Zero means 'unlimited'.
+int     maxFrameRate = 200;     // Zero means 'unlimited'.
 
 timespan_t sysTime, gameTime, demoTime, levelTime;
 timespan_t frameStartTime;
@@ -79,6 +79,7 @@ static double lastFrameTime;
 
 static float fps;
 static int lastFrameCount;
+static boolean firstTic = true;
 
 // CODE --------------------------------------------------------------------
 
@@ -98,147 +99,156 @@ void DD_RegisterLoop(void)
 void DD_GameLoop(void)
 {
 #ifdef WIN32
-	MSG     msg;
+    MSG     msg;
 #endif
 
-	// Now we've surely finished startup.
-	Con_StartupDone();
-	Sys_ShowWindow(true);
+    // Now we've surely finished startup.
+    Con_StartupDone();
+    Sys_ShowWindow(true);
 
-	// Limit the frame rate to 35 when running in dedicated mode.
-	if(isDedicated)
-	{
-		maxFrameRate = 35;
-	}
+    // Limit the frame rate to 35 when running in dedicated mode.
+    if(isDedicated)
+    {
+        maxFrameRate = 35;
+    }
 
-	while(true)
-	{
+    while(true)
+    {
 #ifdef WIN32
-		// Start by checking Windows messages. 
-		// This is the message pump.
-		// Could be in a separate thread?
-		while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+        // Start by checking Windows messages.
+        // This is the message pump.
+        // Could be in a separate thread?
+        while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
 #endif
-		// Frame syncronous I/O operations.
-		DD_StartFrame();
+        // Frame syncronous I/O operations.
+        DD_StartFrame();
 
-		// Run at least one tic. If no tics are available (maxfps interval 
-		// not reached yet), the function blocks.
-		DD_RunTics();
+        // Run at least one tic. If no tics are available (maxfps interval
+        // not reached yet), the function blocks.
+        DD_RunTics();
 
-		// Update clients.
-		Sv_TransmitFrame();
+        // Update clients.
+        Sv_TransmitFrame();
 
-		// Finish the refresh frame.
-		DD_EndFrame();
+        // Finish the refresh frame.
+        DD_EndFrame();
 
-		// Send out new accumulation. Drawing will take the longest.
-		Net_Update();
-		DD_DrawAndBlit();
-		Net_Update();
+        // Send out new accumulation. Drawing will take the longest.
+        Net_Update();
+        DD_DrawAndBlit();
+        Net_Update();
 
-		// After the first frame, start timedemo.
-		DD_CheckTimeDemo();
-	}
+        // After the first frame, start timedemo.
+        DD_CheckTimeDemo();
+    }
 }
 
 /*
- * Drawing anything outside this routine is frowned upon. 
+ * Drawing anything outside this routine is frowned upon.
  * Seriously frowned!
  */
 void DD_DrawAndBlit(void)
 {
-	if(novideo)
-		return;
+    if(novideo)
+        return;
 
-	// This'll let DGL know that some serious rendering is about to begin.
-	// OpenGL doesn't need it, but Direct3D will do the BeginScene call.
-	// If rendering happens outside The Sequence, DGL is forced, in 
-	// Direct3D's case, to call BeginScene/EndScene before and after the
-	// aforementioned operation.
-	gl.Begin(DGL_SEQUENCE);
+    // This'll let DGL know that some serious rendering is about to begin.
+    // OpenGL doesn't need it, but Direct3D will do the BeginScene call.
+    // If rendering happens outside The Sequence, DGL is forced, in
+    // Direct3D's case, to call BeginScene/EndScene before and after the
+    // aforementioned operation.
+    gl.Begin(DGL_SEQUENCE);
 
-	if(drawGame)
-	{
-		// Draw the game graphics.
-		gx.G_Drawer();
-		// The colored filter. 
-		if(GL_DrawFilter())
-			BorderNeedRefresh = true;
-		// Draw Menu
-		gx.MN_Drawer();
-		// Debug information.
-		Net_Drawer();
-		S_Drawer();
-	}
+    if(drawGame)
+    {
+        // Set up the basic 320x200 legacy projection for the game.
+        gl.MatrixMode(DGL_PROJECTION);
+        gl.PushMatrix();
+        gl.LoadIdentity();
+        gl.Ortho(0, 0, 320, 200, -1, 1);
+        
+        // Update the world ready for drawing view(s) of it.
+        R_SetupWorldFrame();
+        // Draw the game graphics.
+        gx.G_Drawer();
+        // The colored filter.
+        if(GL_DrawFilter())
+            BorderNeedRefresh = true;
 
-	if(ui_active)
-	{
-		// Draw user interface.
-		UI_Drawer();
-		UpdateState = I_FULLSCRN;
-	}
+        // Menu is not drawn if the UI fading is in effect.
+        if(!ui_active || UI_Alpha() >= 1.0)
+        {
+            // Draw Menu
+            gx.MN_Drawer();
+        }
+        
+        // Restore the projection mode that was previously in effect.
+        gl.MatrixMode(DGL_PROJECTION);
+        gl.PopMatrix();
+        
+        // Debug information.
+        Net_Drawer();
+        S_Drawer();
+    }
 
-	// Draw console.
-	Con_Drawer();
+    if(ui_active)
+    {
+        // Draw user interface.
+        UI_Drawer();
+        UpdateState = I_FULLSCRN;
+    }
 
-	// End the sequence.
-	gl.End();
+    // Draw console.
+    Con_Drawer();
 
-	// Flush buffered stuff to screen (blits everything).
-	GL_DoUpdate();
+    // End the sequence.
+    gl.End();
+
+    // Flush buffered stuff to screen (blits everything).
+    GL_DoUpdate();
 }
 
-//==========================================================================
-// DD_StartFrame
-//==========================================================================
 void DD_StartFrame(void)
 {
-	frameStartTime = Sys_GetTimef();
+    frameStartTime = Sys_GetTimef();
 
-	S_StartFrame();
-	if(gx.BeginFrame)
-	{
-		gx.BeginFrame();
-	}
+    S_StartFrame();
+    if(gx.BeginFrame)
+    {
+        gx.BeginFrame();
+    }
 }
 
-//===========================================================================
-// DD_EndFrame
-//===========================================================================
 void DD_EndFrame(void)
 {
-	uint nowTime = Sys_GetRealTime();
-	static uint lastFpsTime = 0;
-	
-	// Increment the frame counter.
-	framecount++;
+    uint nowTime = Sys_GetRealTime();
+    static uint lastFpsTime = 0;
 
-	// Count the frames every other second.
-	if(nowTime - 2000 >= lastFpsTime)
-	{
-		fps = (framecount - lastFrameCount) /
-			((nowTime - lastFpsTime)/1000.0f);
-		lastFpsTime = nowTime;
-		lastFrameCount = framecount;
-	}
+    // Increment the frame counter.
+    framecount++;
 
-	if(gx.EndFrame)
-		gx.EndFrame();
+    // Count the frames every other second.
+    if(nowTime - 2000 >= lastFpsTime)
+    {
+        fps = (framecount - lastFrameCount) /
+            ((nowTime - lastFpsTime)/1000.0f);
+        lastFpsTime = nowTime;
+        lastFrameCount = framecount;
+    }
 
-	S_EndFrame();
+    if(gx.EndFrame)
+        gx.EndFrame();
+
+    S_EndFrame();
 }
 
-//===========================================================================
-// DD_GetFrameRate
-//===========================================================================
 float DD_GetFrameRate(void)
 {
-	return fps;
+    return fps;
 }
 
 /*
@@ -247,60 +257,60 @@ float DD_GetFrameRate(void)
  */
 void DD_Ticker(timespan_t time)
 {
-	static trigger_t fixed = { 1 / 35.0 };
-	static float realFrameTimePos = 0;
+    static trigger_t fixed = { 1 / 35.0 };
+    static float realFrameTimePos = 0;
 
-	// Demo ticker. Does stuff like smoothing of view angles.
-	Net_BuildLocalCommands(time);
-	Demo_Ticker(time);
-	P_Ticker(time);
+    // Demo ticker. Does stuff like smoothing of view angles.
+    Net_BuildLocalCommands(time);
+    Demo_Ticker(time);
+    P_Ticker(time);
 
-	if(tickFrame || netgame)
-	{
-		// Advance frametime.  It will be reduced when new sharp world
-		// positions are calculated, so that frametime always stays within
-		// the range 0..1.
-		realFrameTimePos += time * TICSPERSEC;
-	
-		if(M_CheckTrigger(&fixed, time))
-		{
-			gx.Ticker( /* time */ );	// Game DLL.
+    if(tickFrame || netgame)
+    {
+        // Advance frametime.  It will be reduced when new sharp world
+        // positions are calculated, so that frametime always stays within
+        // the range 0..1.
+        realFrameTimePos += time * TICSPERSEC;
 
-			// Server ticks.  These are placed here because
-			// they still rely on fixed ticks and thus it's best to
-			// keep them in sync with the fixed game ticks.
-			if(isClient)
-				Cl_Ticker( /* time */ );
-			else
-				Sv_Ticker( /* time */ );
+        if(M_CheckTrigger(&fixed, time))
+        {
+            gx.Ticker( /* time */ );    // Game DLL.
 
-			// This is needed by camera smoothing.  It needs to know
-			// when the world tic has occured so the next sharp
-			// position can be processed.
+            // Server ticks.  These are placed here because
+            // they still rely on fixed ticks and thus it's best to
+            // keep them in sync with the fixed game ticks.
+            if(isClient)
+                Cl_Ticker( /* time */ );
+            else
+                Sv_Ticker( /* time */ );
 
-			// Frametime will be set back by one tick.
-			realFrameTimePos -= 1;
+            // This is needed by camera smoothing.  It needs to know
+            // when the world tic has occured so the next sharp
+            // position can be processed.
 
-			R_NewSharpWorld();
-		}
+            // Frametime will be set back by one tick.
+            realFrameTimePos -= 1;
 
-		// While paused, don't modify frametime so things keep still.
-		if(!clientPaused)
-			frameTimePos = realFrameTimePos;
+            R_NewSharpWorld();
+        }
 
-		// We can't sent FixAngles messages to ourselves, so it's
-		// done here.
-		Sv_FixLocalAngles();
-	}
+        // While paused, don't modify frametime so things keep still.
+        if(!clientPaused)
+            frameTimePos = realFrameTimePos;
+
+        // We can't sent FixAngles messages to ourselves, so it's
+        // done here.
+        Sv_FixLocalAngles();
+    }
 
     // Console is always ticking.
-	Con_Ticker(time);		
+    Con_Ticker(time);
 
-	if(tickUI)
-	{
-		// User interface ticks.
-		UI_Ticker(time);
-	}
+    if(tickUI)
+    {
+        // User interface ticks.
+        UI_Ticker(time);
+    }
 }
 
 /*
@@ -308,25 +318,23 @@ void DD_Ticker(timespan_t time)
  */
 void DD_AdvanceTime(timespan_t time)
 {
-	sysTime += time;
+    sysTime += time;
 
-	if(!stopTime || netgame)
-	{
-		// The difference between gametic and demotic is that demotic
-		// is not altered at any point. Gametic changes at handshakes.
-		gameTime += time;
-		demoTime += time;
+    if(!stopTime || netgame)
+    {
+        // The difference between gametic and demotic is that demotic
+        // is not altered at any point. Gametic changes at handshakes.
+        gameTime += time;
+        demoTime += time;
 
-		// Leveltic is reset to zero at every map change.
-		// The level time only advances when the game is not paused.
-		if(!clientPaused)
-		{
-			levelTime += time;
-		}
-	}
+        // Leveltic is reset to zero at every map change.
+        // The level time only advances when the game is not paused.
+        if(!clientPaused)
+        {
+            levelTime += time;
+        }
+    }
 }
-
-static boolean firstTic = true;
 
 /*
  * Reset the game time so that on the next frame, the effect will be
@@ -334,8 +342,8 @@ static boolean firstTic = true;
  */
 void DD_ResetTimer(void)
 {
-	firstTic = true;
-	Net_ResetTimer();
+    firstTic = true;
+    Net_ResetTimer();
 }
 
 /*
@@ -343,60 +351,60 @@ void DD_ResetTimer(void)
  */
 void DD_RunTics(void)
 {
-	double  frameTime, ticLength;
-	double  nowTime = Sys_GetSeconds();
+    double  frameTime, ticLength;
+    double  nowTime = Sys_GetSeconds();
 
-	// Do a network update first.
-	N_Update();
-	Net_Update();
+    // Do a network update first.
+    N_Update();
+    Net_Update();
 
-	// Check the clock. 
-	if(firstTic)
-	{
-		// On the first tic, no time actually passes.
-		firstTic = false;
-		lastFrameTime = nowTime;
-		return;
-	}
+    // Check the clock.
+    if(firstTic)
+    {
+        // On the first tic, no time actually passes.
+        firstTic = false;
+        lastFrameTime = nowTime;
+        return;
+    }
 
-	// We'll sleep until we go past the maxfps interval (the shortest
-	// allowed interval between tics).
-	if(maxFrameRate > 0)
-	{
-		while((nowTime =
-			   Sys_GetSeconds()) - lastFrameTime < 1.0 / maxFrameRate)
-		{
-			// Wait for a short while.
-			Sys_Sleep(2);
-		}
-	}
+    // We'll sleep until we go past the maxfps interval (the shortest
+    // allowed interval between tics).
+    if(maxFrameRate > 0)
+    {
+        while((nowTime =
+               Sys_GetSeconds()) - lastFrameTime < 1.0 / maxFrameRate)
+        {
+            // Wait for a short while.
+            Sys_Sleep(2);
+        }
+    }
 
-	// How much time do we have for this frame?
-	frameTime = nowTime - lastFrameTime;
-	lastFrameTime = nowTime;
+    // How much time do we have for this frame?
+    frameTime = nowTime - lastFrameTime;
+    lastFrameTime = nowTime;
 
-	// Tic length is determined by the minfps rate.
-	while(frameTime > 0)
-	{
-		ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
-		frameTime -= ticLength;
+    // Tic length is determined by the minfps rate.
+    while(frameTime > 0)
+    {
+        ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
+        frameTime -= ticLength;
 
-		// Process input events.
-		DD_ProcessEvents();
-		
-		// Call all the tickers.
-		DD_Ticker(ticLength);
+        // Process input events.
+        DD_ProcessEvents();
 
-		// The netcode gets to tick, too.
-		Net_Ticker(ticLength);
+        // Call all the tickers.
+        DD_Ticker(ticLength);
 
-		// Various global variables are used for counting time.
-		DD_AdvanceTime(ticLength);
-	}
+        // The netcode gets to tick, too.
+        Net_Ticker(ticLength);
 
-	// Clients send commands periodically, not on every frame.
-	if(!isClient)
-	{
-		Net_SendCommands();
-	}
+        // Various global variables are used for counting time.
+        DD_AdvanceTime(ticLength);
+    }
+
+    // Clients send commands periodically, not on every frame.
+    if(!isClient)
+    {
+        Net_SendCommands();
+    }
 }

@@ -47,94 +47,90 @@
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// P_MobjTicker
-//===========================================================================
 void P_MobjTicker(mobj_t *mo)
 {
-	lumobj_t *lum = DL_GetLuminous(mo->light);
-	int     i;
+    lumobj_t *lum = NULL;
+    int     i;
 
-	// Set the high bit of halofactor if the light is clipped. This will 
-	// make P_Ticker diminish the factor to zero. Take the first step here
-	// and now, though.
-	if(!lum || lum->flags & LUMF_CLIPPED)
-	{
-		if(mo->halofactor & 0x80)
-		{
-			i = (mo->halofactor & 0x7f);	// - haloOccludeSpeed;
-			if(i < 0)
-				i = 0;
-			mo->halofactor = i;
-		}
-	}
-	else
-	{
-		if(!(mo->halofactor & 0x80))
-		{
-			i = (mo->halofactor & 0x7f);	// + haloOccludeSpeed;
-			if(i > 127)
-				i = 127;
-			mo->halofactor = 0x80 | i;
-		}
-	}
+    if(!mo->usingBias)
+        lum = DL_GetLuminous(mo->light);
 
-	// Handle halofactor.
-	i = mo->halofactor & 0x7f;
-	if(mo->halofactor & 0x80)
-	{
-		// Going up.
-		i += haloOccludeSpeed;
-		if(i > 127)
-			i = 127;
-	}
-	else
-	{
-		// Going down.
-		i -= haloOccludeSpeed;
-		if(i < 0)
-			i = 0;
-	}
-	mo->halofactor &= ~0x7f;
-	mo->halofactor |= i;
+    // Set the high bit of halofactor if the light is clipped. This will
+    // make P_Ticker diminish the factor to zero. Take the first step here
+    // and now, though.
+    if(!lum || lum->flags & LUMF_CLIPPED)
+    {
+        if(mo->halofactor & 0x80)
+        {
+            i = (mo->halofactor & 0x7f);    // - haloOccludeSpeed;
+            if(i < 0)
+                i = 0;
+            mo->halofactor = i;
+        }
+    }
+    else
+    {
+        if(!(mo->halofactor & 0x80))
+        {
+            i = (mo->halofactor & 0x7f);    // + haloOccludeSpeed;
+            if(i > 127)
+                i = 127;
+            mo->halofactor = 0x80 | i;
+        }
+    }
+
+    // Handle halofactor.
+    i = mo->halofactor & 0x7f;
+    if(mo->halofactor & 0x80)
+    {
+        // Going up.
+        i += haloOccludeSpeed;
+        if(i > 127)
+            i = 127;
+    }
+    else
+    {
+        // Going down.
+        i -= haloOccludeSpeed;
+        if(i < 0)
+            i = 0;
+    }
+    mo->halofactor &= ~0x7f;
+    mo->halofactor |= i;
 }
 
-//===========================================================================
-// PIT_ClientMobjTicker
-//===========================================================================
 boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
 {
-	P_MobjTicker(&cmo->mo);
-	// Continue iteration.
-	return true;
+    P_MobjTicker(&cmo->mo);
+    // Continue iteration.
+    return true;
 }
 
-//===========================================================================
-// P_Ticker
-//  Doomsday's own play-ticker.
-//===========================================================================
+/*
+ * Doomsday's own play-ticker.
+ */
 void P_Ticker(timespan_t time)
 {
-	thinker_t *th;
-	static trigger_t fixed = { 1.0 / 35 };
+    thinker_t *th;
+    static trigger_t fixed = { 1.0 / 35 };
 
-	if(!thinkercap.next)
-		return;					// Not initialized yet.
-	if(!M_CheckTrigger(&fixed, time))
-		return;
+    if(!thinkercap.next)
+        return;                 // Not initialized yet.
+    if(!M_CheckTrigger(&fixed, time))
+        return;
 
-	// New ptcgens for planes?
-	P_CheckPtcPlanes();
-	R_AnimateAnimGroups();
-	R_SkyTicker();
+    // New ptcgens for planes?
+    P_CheckPtcPlanes();
+    R_AnimateAnimGroups();
+    R_SkyTicker();
 
-	// Check all mobjs.
-	for(th = thinkercap.next; th != &thinkercap; th = th->next)
-	{
-		if(!P_IsMobjThinker(th->function))
-			continue;
-		P_MobjTicker((mobj_t *) th);
-	}
+    // Check all mobjs.
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(!P_IsMobjThinker(th->function))
+            continue;
+        P_MobjTicker((mobj_t *) th);
+    }
 
-	Cl_MobjIterator(PIT_ClientMobjTicker, NULL);
+    Cl_MobjIterator(PIT_ClientMobjTicker, NULL);
 }

@@ -53,13 +53,13 @@ extern boolean novideo;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     joydevice = 0;			// Joystick index to use.
-boolean usejoystick = false;	// Joystick input enabled?
+byte    usejoystick = false;	// Joystick input enabled?
 int     joyInverseAxis[8];		// Axis inversion (default: all false).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initOk;
-static boolean useMouse, useJoystick;
+static byte useMouse, useJoystick;
 
 static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;

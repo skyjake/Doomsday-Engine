@@ -51,122 +51,120 @@
 
 void Msg_Begin(int type)
 {
-	netBuffer.cursor = netBuffer.msg.data;
-	netBuffer.length = 0;
-	netBuffer.msg.type = type;
+    netBuffer.cursor = netBuffer.msg.data;
+    netBuffer.length = 0;
+    netBuffer.msg.type = type;
 }
 
 void Msg_WriteByte(byte b)
 {
-	*netBuffer.cursor++ = b;
+    *netBuffer.cursor++ = b;
 }
 
 void Msg_WriteShort(short w)
 {
-	*(short *) netBuffer.cursor = SHORT(w);
-	netBuffer.cursor += 2;
+    *(short *) netBuffer.cursor = SHORT(w);
+    netBuffer.cursor += 2;
 }
 
-//==========================================================================
-// Msg_WritePackedShort
-//  Only 15 bits can be used for the number because the high bit of the 
-//  lower byte is used to determine whether the upper byte follows or not.
-//==========================================================================
+/*
+ * Only 15 bits can be used for the number because the high bit of the
+ * lower byte is used to determine whether the upper byte follows or not.
+ */
 void Msg_WritePackedShort(short w)
-{    
-	if(w < 0x80)				// Can the number be represented with 7 bits?
-		Msg_WriteByte(w);
-	else
-	{
-		Msg_WriteByte(0x80 | (w & 0x7f));
-		Msg_WriteByte(w >> 7);	// Highest bit is lost.
-	}
+{
+    if(w < 0x80)                // Can the number be represented with 7 bits?
+        Msg_WriteByte(w);
+    else
+    {
+        Msg_WriteByte(0x80 | (w & 0x7f));
+        Msg_WriteByte(w >> 7);  // Highest bit is lost.
+    }
 }
 
 void Msg_WriteLong(int l)
 {
-	*(int *) netBuffer.cursor = LONG(l);
-	netBuffer.cursor += 4;
+    *(int *) netBuffer.cursor = LONG(l);
+    netBuffer.cursor += 4;
 }
 
 void Msg_Write(const void *src, int len)
 {
-	memcpy(netBuffer.cursor, src, len);
-	netBuffer.cursor += len;
+    memcpy(netBuffer.cursor, src, len);
+    netBuffer.cursor += len;
 }
 
 byte Msg_ReadByte(void)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Packet read overflow!\n");
+    if(Msg_Offset() >= netBuffer.length)
+        Con_Error("Packet read overflow!\n");
 #endif
-	return *netBuffer.cursor++;
+    return *netBuffer.cursor++;
 }
 
 short Msg_ReadShort(void)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Packet read overflow!\n");
+    if(Msg_Offset() >= netBuffer.length)
+        Con_Error("Packet read overflow!\n");
 #endif
-	netBuffer.cursor += 2;
-	return SHORT( *(short *) (netBuffer.cursor - 2) );
+    netBuffer.cursor += 2;
+    return SHORT( *(short *) (netBuffer.cursor - 2) );
 }
 
-//==========================================================================
-// Msg_ReadPackedShort
-//  Only 15 bits can be used for the number because the high bit of the 
-//  lower byte is used to determine whether the upper byte follows or not.
-//==========================================================================
+/*
+ * Only 15 bits can be used for the number because the high bit of the
+ * lower byte is used to determine whether the upper byte follows or not.
+ */
 short Msg_ReadPackedShort(void)
 {
-	short   pack = *netBuffer.cursor++;
+    short   pack = *netBuffer.cursor++;
 
-	if(pack & 0x80)
-	{
-		pack &= ~0x80;
-		pack |= (*netBuffer.cursor++) << 7;
-	}
-	return pack;
+    if(pack & 0x80)
+    {
+        pack &= ~0x80;
+        pack |= (*netBuffer.cursor++) << 7;
+    }
+    return pack;
 }
 
 int Msg_ReadLong(void)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Packet read overflow!\n");
+    if(Msg_Offset() >= netBuffer.length)
+        Con_Error("Packet read overflow!\n");
 #endif
-	netBuffer.cursor += 4;
-	return LONG( *(int *) (netBuffer.cursor - 4) );
+    netBuffer.cursor += 4;
+    return LONG( *(int *) (netBuffer.cursor - 4) );
 }
 
 void Msg_Read(void *dest, int len)
 {
 #ifdef _DEBUG
-	if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Packet read overflow!\n");
+    if(Msg_Offset() >= netBuffer.length)
+        Con_Error("Packet read overflow!\n");
 #endif
-	memcpy(dest, netBuffer.cursor, len);
-	netBuffer.cursor += len;
+    memcpy(dest, netBuffer.cursor, len);
+    netBuffer.cursor += len;
 }
 
 int Msg_Offset(void)
 {
-	return netBuffer.cursor - netBuffer.msg.data;
+    return netBuffer.cursor - netBuffer.msg.data;
 }
 
 void Msg_SetOffset(int offset)
 {
-	netBuffer.cursor = netBuffer.msg.data + offset;
+    netBuffer.cursor = netBuffer.msg.data + offset;
 }
 
 int Msg_MemoryLeft(void)
 {
-	return NETBUFFER_MAXDATA - (netBuffer.cursor - netBuffer.msg.data);
+    return NETBUFFER_MAXDATA - (netBuffer.cursor - netBuffer.msg.data);
 }
 
 boolean Msg_End(void)
 {
-	return (netBuffer.cursor - netBuffer.msg.data >= netBuffer.length);
+    return (netBuffer.cursor - netBuffer.msg.data >= netBuffer.length);
 }

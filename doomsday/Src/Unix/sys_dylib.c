@@ -27,7 +27,7 @@
 
 #include "de_base.h"
 #include "m_args.h"
-#include "sys_dylib.h"
+#include "Unix/sys_dylib.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -119,6 +119,7 @@ int lt_dlforeachfile(const char *searchPath,
  */
 lt_dlhandle lt_dlopenext(const char *baseFileName)
 {
+    lt_dlhandle handle;
 	filename_t bundleName;
 	char* ptr;
 	
@@ -134,7 +135,12 @@ lt_dlhandle lt_dlopenext(const char *baseFileName)
 	if((ptr = strrchr(bundleName, '.')) != NULL)
 		*ptr = 0;
 	
-	return dlopen(bundleName, RTLD_NOW);
+	handle = dlopen(bundleName, RTLD_NOW);
+    if(!handle)
+    {
+        printf("While opening dynamic library\n%s:\n  %s\n", bundleName, dlerror());
+    }
+    return handle;
 }
 
 lt_ptr lt_dlsym(lt_dlhandle module, const char *symbolName)

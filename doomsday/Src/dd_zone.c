@@ -313,7 +313,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 {
                     // Free the rover block (adding the size to base).
                     base = base->prev;	// the rover can be the base block
+#ifdef FAKE_MEMORY_ZONE
+                    Z_Free(rover->area);
+#else                    
                     Z_Free((byte *) rover + sizeof(memblock_t));
+#endif                    
                     base = base->next;
                     rover = base->next;
                 }

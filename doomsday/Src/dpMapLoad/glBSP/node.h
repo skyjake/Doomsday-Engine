@@ -2,9 +2,9 @@
 // NODE : Recursively create nodes and return the pointers.
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -46,17 +46,17 @@ superblock_t *CreateSegs(void);
 void FreeSuper(superblock_t *block);
 
 // takes the seg list and determines if it is convex.  When it is, the
-// segs are converted to a subsector, and `*S' is the new subsector
-// (and `*N' is set to NULL).  Otherwise the seg list is divided into
+// segs are converted to a subsector, and '*S' is the new subsector
+// (and '*N' is set to NULL).  Otherwise the seg list is divided into
 // two halves, a node is created by calling this routine recursively,
-// and `*N' is the new node (and `*S' is set to NULL).  Normally
+// and '*N' is the new node (and '*S' is set to NULL).  Normally
 // returns GLBSP_E_OK, or GLBSP_E_Cancelled if user stopped it.
 //
 glbsp_ret_e BuildNodes(superblock_t *seg_list,
-    node_t ** N, subsec_t ** S, int depth);
+    node_t ** N, subsec_t ** S, int depth, node_t *stale_nd);
 
-// compute the height of the bsp tree, starting at `node'.
-int ComputeHeight(node_t *node);
+// compute the height of the bsp tree, starting at 'node'.
+int ComputeBspHeight(node_t *node);
 
 // traverse the BSP tree and put all the segs in each subsector into
 // clockwise order, and renumber the seg indices.  This cannot be done

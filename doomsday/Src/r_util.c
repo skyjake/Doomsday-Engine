@@ -28,9 +28,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define	SLOPERANGE	2048
-#define	SLOPEBITS	11
-#define	DBITS		(FRACBITS-SLOPEBITS)
+#define SLOPERANGE  2048
+#define SLOPEBITS   11
+#define DBITS       (FRACBITS-SLOPEBITS)
 
 // TYPES -------------------------------------------------------------------
 
@@ -42,7 +42,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int tantoangle[SLOPERANGE + 1];	// get from tables.c
+extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -50,51 +50,51 @@ extern int tantoangle[SLOPERANGE + 1];	// get from tables.c
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// R_PointOnSide
-//  Returns side 0 (front) or 1 (back).
-//===========================================================================
+/*
+ * Which side of the node does the point lie?
+ *
+ * @param x         X coordinate to test.
+ * @param y         Y coordinate to test.
+ * @return int      (0) if the front. OR (1) the back.
+ */
 int R_PointOnSide(fixed_t x, fixed_t y, node_t * node)
 {
-	fixed_t dx, dy;
-	fixed_t left, right;
+    fixed_t dx, dy;
+    fixed_t left, right;
 
-	if(!node->dx)
-	{
-		if(x <= node->x)
-			return node->dy > 0;
-		return node->dy < 0;
-	}
-	if(!node->dy)
-	{
-		if(y <= node->y)
-			return node->dx < 0;
-		return node->dx > 0;
-	}
+    if(!node->dx)
+    {
+        if(x <= node->x)
+            return node->dy > 0;
+        return node->dy < 0;
+    }
+    if(!node->dy)
+    {
+        if(y <= node->y)
+            return node->dx < 0;
+        return node->dx > 0;
+    }
 
-	dx = (x - node->x);
-	dy = (y - node->y);
+    dx = (x - node->x);
+    dy = (y - node->y);
 
-	// Try to quickly decide by looking at sign bits.
-	if((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
-	{
-		if((node->dy ^ dx) & 0x80000000)
-			return 1;			// (left is negative)
-		return 0;
-	}
+    // Try to quickly decide by looking at sign bits.
+    if((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
+    {
+        if((node->dy ^ dx) & 0x80000000)
+            return 1;           // (left is negative)
+        return 0;
+    }
 
-	left = FixedMul(node->dy >> FRACBITS, dx);
-	right = FixedMul(dy, node->dx >> FRACBITS);
+    left = FixedMul(node->dy >> FRACBITS, dx);
+    right = FixedMul(dy, node->dx >> FRACBITS);
 
-	if(right < left)
-		return 0;				// front side
-	return 1;					// back side
+    if(right < left)
+        return 0;               // front side
+    return 1;                   // back side
 }
 
 /*
-   //===========================================================================
-   // R_PointOnSegSide
-   //===========================================================================
    int  R_PointOnSegSide (fixed_t x, fixed_t y, seg_t *line)
    {
    fixed_t  lx, ly;
@@ -141,207 +141,206 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t * node)
    }
  */
 
-//===========================================================================
-// R_SlopeDiv
-//===========================================================================
 int R_SlopeDiv(unsigned num, unsigned den)
 {
-	unsigned ans;
+    unsigned ans;
 
-	if(den < 512)
-		return SLOPERANGE;
-	ans = (num << 3) / (den >> 8);
-	return ans <= SLOPERANGE ? ans : SLOPERANGE;
+    if(den < 512)
+        return SLOPERANGE;
+    ans = (num << 3) / (den >> 8);
+    return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
-//===========================================================================
-// R_PointToAngle
-// to get a global angle from cartesian coordinates, the coordinates are
-// flipped until they are in the first octant of the coordinate system, then
-// the y (<=x) is scaled and divided by x to get a tangent (slope) value
-// which is looked up in the tantoangle[] table.  The +1 size is to handle
-// the case when x==y without additional checking.
-//===========================================================================
+/*
+ * To get a global angle from cartesian coordinates, the coordinates are
+ * flipped until they are in the first octant of the coordinate system, then
+ * the y (<=x) is scaled and divided by x to get a tangent (slope) value
+ * which is looked up in the tantoangle[] table.  The +1 size is to handle
+ * the case when x==y without additional checking.
+ *
+ * @param   x           X coordinate to test.
+ * @param   y           Y coordinate to test.
+ *
+ * @return  angle_t     Angle between the test point and viewx,y.
+ */
 angle_t R_PointToAngle(fixed_t x, fixed_t y)
 {
-	x -= viewx;
-	y -= viewy;
-	if((!x) && (!y))
-		return 0;
-	if(x >= 0)
-	{							// x >=0
-		if(y >= 0)
-		{						// y>= 0
-			if(x > y)
-				return tantoangle[R_SlopeDiv(y, x)];	// octant 0
-			else
-				return ANG90 - 1 - tantoangle[R_SlopeDiv(x, y)];	// octant 1
-		}
-		else
-		{						// y<0
-			y = -y;
-			if(x > y)
-				return -tantoangle[R_SlopeDiv(y, x)];	// octant 8
-			else
-				return ANG270 + tantoangle[R_SlopeDiv(x, y)];	// octant 7
-		}
-	}
-	else
-	{							// x<0
-		x = -x;
-		if(y >= 0)
-		{						// y>= 0
-			if(x > y)
-				return ANG180 - 1 - tantoangle[R_SlopeDiv(y, x)];	// octant 3
-			else
-				return ANG90 + tantoangle[R_SlopeDiv(x, y)];	// octant 2
-		}
-		else
-		{						// y<0
-			y = -y;
-			if(x > y)
-				return ANG180 + tantoangle[R_SlopeDiv(y, x)];	// octant 4
-			else
-				return ANG270 - 1 - tantoangle[R_SlopeDiv(x, y)];	// octant 5
-		}
-	}
+    x -= viewx;
+    y -= viewy;
+    if((!x) && (!y))
+        return 0;
+    if(x >= 0)
+    {                           // x >=0
+        if(y >= 0)
+        {                       // y>= 0
+            if(x > y)
+                return tantoangle[R_SlopeDiv(y, x)];    // octant 0
+            else
+                return ANG90 - 1 - tantoangle[R_SlopeDiv(x, y)];    // octant 1
+        }
+        else
+        {                       // y<0
+            y = -y;
+            if(x > y)
+                return -tantoangle[R_SlopeDiv(y, x)];   // octant 8
+            else
+                return ANG270 + tantoangle[R_SlopeDiv(x, y)];   // octant 7
+        }
+    }
+    else
+    {                           // x<0
+        x = -x;
+        if(y >= 0)
+        {                       // y>= 0
+            if(x > y)
+                return ANG180 - 1 - tantoangle[R_SlopeDiv(y, x)];   // octant 3
+            else
+                return ANG90 + tantoangle[R_SlopeDiv(x, y)];    // octant 2
+        }
+        else
+        {                       // y<0
+            y = -y;
+            if(x > y)
+                return ANG180 + tantoangle[R_SlopeDiv(y, x)];   // octant 4
+            else
+                return ANG270 - 1 - tantoangle[R_SlopeDiv(x, y)];   // octant 5
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
-//===========================================================================
-// R_PointToAngle2
-//===========================================================================
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {
-	viewx = x1;
-	viewy = y1;
-	return R_PointToAngle(x2, y2);
+    viewx = x1;
+    viewy = y1;
+    return R_PointToAngle(x2, y2);
 }
 
-//===========================================================================
-// R_PointToDist
-//===========================================================================
 fixed_t R_PointToDist(fixed_t x, fixed_t y)
 {
-	int     angle;
-	fixed_t dx, dy, temp;
-	fixed_t dist;
+    int     angle;
+    fixed_t dx, dy, temp;
+    fixed_t dist;
 
-	dx = abs(x - viewx);
-	dy = abs(y - viewy);
+    dx = abs(x - viewx);
+    dy = abs(y - viewy);
 
-	if(dy > dx)
-	{
-		temp = dx;
-		dx = dy;
-		dy = temp;
-	}
+    if(dy > dx)
+    {
+        temp = dx;
+        dx = dy;
+        dy = temp;
+    }
 
-	angle =
-		(tantoangle[FixedDiv(dy, dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT;
+    angle =
+        (tantoangle[FixedDiv(dy, dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT;
 
-	dist = FixedDiv(dx, finesine[angle]);	// use as cosine
+    dist = FixedDiv(dx, finesine[angle]);   // use as cosine
 
-	return dist;
+    return dist;
 }
 
-//===========================================================================
-// R_PointInSubsector
-//===========================================================================
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 {
-	node_t *node;
-	int     side, nodenum;
+    node_t *node;
+    int     side, nodenum;
 
-	if(!numnodes)				// single subsector is a special case
-		return (subsector_t *) subsectors;
+    if(!numnodes)               // single subsector is a special case
+        return (subsector_t *) subsectors;
 
-	nodenum = numnodes - 1;
+    nodenum = numnodes - 1;
 
-	while(!(nodenum & NF_SUBSECTOR))
-	{
-		node = NODE_PTR(nodenum);
-		side = R_PointOnSide(x, y, node);
-		nodenum = node->children[side];
-	}
-	return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
+    while(!(nodenum & NF_SUBSECTOR))
+    {
+        node = NODE_PTR(nodenum);
+        side = R_PointOnSide(x, y, node);
+        nodenum = node->children[side];
+    }
+    return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
 }
 
-//===========================================================================
-// R_GetLineForSide
-//===========================================================================
 line_t *R_GetLineForSide(int sideNumber)
 {
-	side_t *side = SIDE_PTR(sideNumber);
-	sector_t *sector = side->sector;
-	int     i;
+    side_t *side = SIDE_PTR(sideNumber);
+    sector_t *sector = side->sector;
+    int     i;
 
-	// All sides may not have a sector.
-	if(!sector)
-		return NULL;
+    // All sides may not have a sector.
+    if(!sector)
+        return NULL;
 
-	for(i = 0; i < sector->linecount; i++)
-		if(sector->lines[i]->sidenum[0] == sideNumber ||
-		   sector->lines[i]->sidenum[1] == sideNumber)
-		{
-			return sector->lines[i];
-		}
+    for(i = 0; i < sector->linecount; i++)
+        if(sector->Lines[i]->sidenum[0] == sideNumber ||
+           sector->Lines[i]->sidenum[1] == sideNumber)
+        {
+            return sector->Lines[i];
+        }
 
-	return NULL;
+    return NULL;
 }
 
-//===========================================================================
-// R_IsPointInSector
-//  Returns true if the point is inside the sector, according to the lines
-//  that completely surround the sector. Uses the well-known algorithm 
-//  described here: http://www.alienryderflex.com/polygon/
-//===========================================================================
+/*
+ * Is the point inside the sector, according to the edge lines of the
+ * subsector. Uses the well-known algorithm described here:
+ * http://www.alienryderflex.com/polygon/
+ *
+ * @param   x           X coordinate to test.
+ * @param   y           Y coordinate to test.
+ * @param   sector      Sector to test.
+ *
+ * @return  boolean     (TRUE) If the point is inside the sector.
+ */
 boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 {
-	int     i;
-	boolean isOdd = false;
-	vertex_t *vi, *vj;
+    int     i;
+    boolean isOdd = false;
+    vertex_t *vi, *vj;
 
-	for(i = 0; i < sector->linecount; i++)
-	{
-		// Skip lines that aren't sector boundaries.
-		if(sector->lines[i]->frontsector == sector &&
-		   sector->lines[i]->backsector == sector)
-			continue;
+    for(i = 0; i < sector->linecount; i++)
+    {
+        // Skip lines that aren't sector boundaries.
+        if(sector->Lines[i]->frontsector == sector &&
+           sector->Lines[i]->backsector == sector)
+            continue;
 
-		// It shouldn't matter whether the line faces inward or outward.
-		vi = sector->lines[i]->v1;
-		vj = sector->lines[i]->v2;
+        // It shouldn't matter whether the line faces inward or outward.
+        vi = sector->Lines[i]->v1;
+        vj = sector->Lines[i]->v2;
 
-		if((vi->y < y && vj->y >= y) || (vj->y < y && vi->y >= y))
-		{
-			if(vi->x +
-			   FixedMul(FixedDiv(y - vi->y, vj->y - vi->y), vj->x - vi->x) < x)
-			{
-				// Toggle oddness.
-				isOdd = !isOdd;
-			}
-		}
-	}
+        if((vi->y < y && vj->y >= y) || (vj->y < y && vi->y >= y))
+        {
+            if(vi->x +
+               FixedMul(FixedDiv(y - vi->y, vj->y - vi->y), vj->x - vi->x) < x)
+            {
+                // Toggle oddness.
+                isOdd = !isOdd;
+            }
+        }
+    }
 
-	// The point is inside if the number of crossed nodes is odd.
-	return isOdd;
+    // The point is inside if the number of crossed nodes is odd.
+    return isOdd;
 }
 
-//===========================================================================
-// R_IsPointInSector2
-//  Returns true if the point is inside the sector, according
-//  to the edge lines of the subsector. Uses the well-known algorithm 
-//  described here: http://www.alienryderflex.com/polygon/
-//
-//  More accurate than R_IsPointInSector.
-//===========================================================================
+/*
+ * Is the point inside the sector, according to the edge lines of the
+ * subsector. Uses the well-known algorithm described here:
+ * http://www.alienryderflex.com/polygon/
+ *
+ * More accurate than R_IsPointInSector.
+ *
+ * @param   x           X coordinate to test.
+ * @param   y           Y coordinate to test.
+ * @param   sector      Sector to test.
+ *
+ * @return  boolean     (TRUE) If the point is inside the sector.
+ */
 boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
 {
-	int     i;
+    int     i;
     subsector_t *subsector;
-	fvertex_t *vi, *vj;
+    fvertex_t *vi, *vj;
     float fx, fy;
 
     subsector = R_PointInSubsector(x, y);
@@ -353,10 +352,10 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
 
     fx = FIX2FLT(x);
     fy = FIX2FLT(y);
-   
-	for(i = 0; i < subsector->numverts; i++)
-	{
-		vi = &subsector->verts[i];
+
+    for(i = 0; i < subsector->numverts; i++)
+    {
+        vi = &subsector->verts[i];
         vj = &subsector->verts[(i + 1) % subsector->numverts];
 
         if(((vi->y - fy) * (vj->x - vi->x) -
@@ -366,35 +365,44 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
             return false;
         }
 
-/*		if((vi->y < fy && vj->y >= fy) || (vj->y < fy && vi->y >= fy))
-		{
-			if(vi->x + (((fy - vi->y)/(vj->y - vi->y)) * (vj->x - vi->x)) < fx)
-			{
-				// Toggle oddness.
-				isOdd = !isOdd;
-			}
+/*      if((vi->y < fy && vj->y >= fy) || (vj->y < fy && vi->y >= fy))
+        {
+            if(vi->x + (((fy - vi->y)/(vj->y - vi->y)) * (vj->x - vi->x)) < fx)
+            {
+                // Toggle oddness.
+                isOdd = !isOdd;
+            }
             }*/
-	}
+    }
 
     // All tests passed.
-	return true;
+    return true;
 }
 
-//===========================================================================
-// R_GetSectorNumForDegen
-//  Returns the index of the sector who owns the given degenmobj.
-//===========================================================================
+/*
+ * Returns the index of the sector who owns the given degenmobj.
+ *
+ * @param degenmobj     degenmobj to search for.
+ *
+ * @return int          Sector number where the degenmobj resides else -1.
+ */
 int R_GetSectorNumForDegen(void *degenmobj)
 {
-	int     i;
+    int     i, k;
 
-	// Check all sectors; find where the sound is coming from.
-	for(i = 0; i < numsectors; i++)
-	{
-		if(degenmobj == &SECTOR_PTR(i)->soundorg)
-		{
-			return i;
-		}
-	}
-	return -1;
+    // Check all sectors; find where the sound is coming from.
+    for(i = 0; i < numsectors; i++)
+    {
+        if(degenmobj == &SECTOR_PTR(i)->soundorg)
+            return i;
+        else
+        {   // Check the planes of this sector
+            for(k=0; k < NUM_PLANES; ++k)
+                if(degenmobj == &SECTOR_PTR(i)->planes[k].soundorg)
+                {
+                    return i;
+                }
+        }
+    }
+    return -1;
 }

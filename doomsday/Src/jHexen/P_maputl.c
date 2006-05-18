@@ -12,8 +12,112 @@
 
 #include "h2def.h"
 #include "jHexen/p_local.h"
+#include "jHexen/soundst.h"
+#include "r_common.h"
+
+// MACROS ------------------------------------------------------------------
+
+#define MAPINFO_SCRIPT_NAME "MAPINFO"
+#define MCMD_SKY1 1
+#define MCMD_SKY2 2
+#define MCMD_LIGHTNING 3
+#define MCMD_FADETABLE 4
+#define MCMD_DOUBLESKY 5
+#define MCMD_CLUSTER 6
+#define MCMD_WARPTRANS 7
+#define MCMD_NEXT 8
+#define MCMD_CDTRACK 9
+#define MCMD_CD_STARTTRACK 10
+#define MCMD_CD_END1TRACK 11
+#define MCMD_CD_END2TRACK 12
+#define MCMD_CD_END3TRACK 13
+#define MCMD_CD_INTERTRACK 14
+#define MCMD_CD_TITLETRACK 15
+
+#define UNKNOWN_MAP_NAME "DEVELOPMENT MAP"
+#define DEFAULT_SKY_NAME "SKY1"
+#define DEFAULT_SONG_LUMP "DEFSONG"
+#define DEFAULT_FADE_TABLE "COLORMAP"
+
+// TYPES -------------------------------------------------------------------
+
+typedef struct mapInfo_s mapInfo_t;
+struct mapInfo_s {
+    short   cluster;
+    short   warpTrans;
+    short   nextMap;
+    short   cdTrack;
+    char    name[32];
+    short   sky1Texture;
+    short   sky2Texture;
+    fixed_t sky1ScrollDelta;
+    fixed_t sky2ScrollDelta;
+    boolean doubleSky;
+    boolean lightning;
+    int     fadetable;
+    char    songLump[10];
+};
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static int QualifyMap(int map);
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+int     MapCount;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static mobj_t *RoughBlockCheck(mobj_t *mo, int index);
+
+static mapInfo_t MapInfo[99];
+static char *MapCmdNames[] = {
+    "SKY1",
+    "SKY2",
+    "DOUBLESKY",
+    "LIGHTNING",
+    "FADETABLE",
+    "CLUSTER",
+    "WARPTRANS",
+    "NEXT",
+    "CDTRACK",
+    "CD_START_TRACK",
+    "CD_END1_TRACK",
+    "CD_END2_TRACK",
+    "CD_END3_TRACK",
+    "CD_INTERMISSION_TRACK",
+    "CD_TITLE_TRACK",
+    NULL
+};
+static int MapCmdIDs[] = {
+    MCMD_SKY1,
+    MCMD_SKY2,
+    MCMD_DOUBLESKY,
+    MCMD_LIGHTNING,
+    MCMD_FADETABLE,
+    MCMD_CLUSTER,
+    MCMD_WARPTRANS,
+    MCMD_NEXT,
+    MCMD_CDTRACK,
+    MCMD_CD_STARTTRACK,
+    MCMD_CD_END1TRACK,
+    MCMD_CD_END2TRACK,
+    MCMD_CD_END3TRACK,
+    MCMD_CD_INTERTRACK,
+    MCMD_CD_TITLETRACK
+};
+
+static int cd_NonLevelTracks[6];    // Non-level specific song cd track numbers
+
+static char *cd_SongDefIDs[] =  // Music defs that correspond the above.
+{
+    "startup",
+    "hall",
+    "orb",
+    "chess",
+    "hub",
+    "hexen"
+};
 
 /*
    ===================
@@ -296,7 +400,7 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index);
 
 void P_UnsetThingPosition(mobj_t *thing)
 {
-	P_UnlinkThing(thing);
+    P_UnlinkThing(thing);
 }
 
 /*
@@ -312,14 +416,14 @@ void P_UnsetThingPosition(mobj_t *thing)
 
 void P_SetThingPosition(mobj_t *thing)
 {
-	P_LinkThing(thing,
-				(!(thing->
-				   flags & MF_NOSECTOR) ? DDLINK_SECTOR : 0) | (!(thing->
-																  flags &
-																  MF_NOBLOCKMAP)
-																?
-																DDLINK_BLOCKMAP
-																: 0));
+    P_LinkThing(thing,
+                (!(thing->
+                   flags & MF_NOSECTOR) ? DDLINK_SECTOR : 0) | (!(thing->
+                                                                  flags &
+                                                                  MF_NOBLOCKMAP)
+                                                                ?
+                                                                DDLINK_BLOCKMAP
+                                                                : 0));
 }
 
 /*
@@ -682,7 +786,7 @@ int     ptflags;
    mapystep = 0;
    partial = FRACUNIT;
    xstep = 256*FRACUNIT;
-   }       
+   }
    xintercept = (x1>>MAPBTOFRAC) + FixedMul (partial, xstep);
 
    //
@@ -736,106 +840,108 @@ int     ptflags;
 
 mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
 {
-	int     blockX;
-	int     blockY;
-	int     startX, startY;
-	int     blockIndex;
-	int     firstStop;
-	int     secondStop;
-	int     thirdStop;
-	int     finalStop;
-	int     count;
-	mobj_t *target;
+    int     blockX;
+    int     blockY;
+    int     startX, startY;
+    int     blockIndex;
+    int     firstStop;
+    int     secondStop;
+    int     thirdStop;
+    int     finalStop;
+    int     count;
+    mobj_t *target;
+    int     bmapwidth = DD_GetInteger(DD_BLOCKMAP_WIDTH);
+    int     bmapheight = DD_GetInteger(DD_BLOCKMAP_HEIGHT);
 
-	startX = (mo->x - bmaporgx) >> MAPBLOCKSHIFT;
-	startY = (mo->y - bmaporgy) >> MAPBLOCKSHIFT;
+    P_PointToBlock(mo->pos[VX], mo->pos[VY], &startX, &startY);
 
-	if(startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
-	{
-		if((target = RoughBlockCheck(mo, startY * bmapwidth + startX)) != NULL)
-		{						// found a target right away
-			return target;
-		}
-	}
-	for(count = 1; count <= distance; count++)
-	{
-		blockX = startX - count;
-		blockY = startY - count;
+    if(startX >= 0 && startX < bmapwidth &&
+       startY >= 0 && startY < bmapheight)
+    {
+        if((target = RoughBlockCheck(mo, startY * bmapwidth + startX)) != NULL)
+        {                       // found a target right away
+            return target;
+        }
+    }
+    for(count = 1; count <= distance; count++)
+    {
+        blockX = startX - count;
+        blockY = startY - count;
 
-		if(blockY < 0)
-		{
-			blockY = 0;
-		}
-		else if(blockY >= bmapheight)
-		{
-			blockY = bmapheight - 1;
-		}
-		if(blockX < 0)
-		{
-			blockX = 0;
-		}
-		else if(blockX >= bmapwidth)
-		{
-			blockX = bmapwidth - 1;
-		}
-		blockIndex = blockY * bmapwidth + blockX;
-		firstStop = startX + count;
-		if(firstStop < 0)
-		{
-			continue;
-		}
-		if(firstStop >= bmapwidth)
-		{
-			firstStop = bmapwidth - 1;
-		}
-		secondStop = startY + count;
-		if(secondStop < 0)
-		{
-			continue;
-		}
-		if(secondStop >= bmapheight)
-		{
-			secondStop = bmapheight - 1;
-		}
-		thirdStop = secondStop * bmapwidth + blockX;
-		secondStop = secondStop * bmapwidth + firstStop;
-		firstStop += blockY * bmapwidth;
-		finalStop = blockIndex;
+        if(blockY < 0)
+        {
+            blockY = 0;
+        }
+        else if(blockY >= bmapheight)
+        {
+            blockY = bmapheight - 1;
+        }
+        if(blockX < 0)
+        {
+            blockX = 0;
+        }
+        else if(blockX >= bmapwidth)
+        {
+            blockX = bmapwidth - 1;
+        }
+        blockIndex = blockY * bmapwidth + blockX;
+        firstStop = startX + count;
+        if(firstStop < 0)
+        {
+            continue;
+        }
+        if(firstStop >= bmapwidth)
+        {
+            firstStop = bmapwidth - 1;
+        }
+        secondStop = startY + count;
+        if(secondStop < 0)
+        {
+            continue;
+        }
+        if(secondStop >= bmapheight)
+        {
+            secondStop = bmapheight - 1;
+        }
+        thirdStop = secondStop * bmapwidth + blockX;
+        secondStop = secondStop * bmapwidth + firstStop;
+        firstStop += blockY * bmapwidth;
+        finalStop = blockIndex;
 
-		// Trace the first block section (along the top)
-		for(; blockIndex <= firstStop; blockIndex++)
-		{
-			if(target = RoughBlockCheck(mo, blockIndex))
-			{
-				return target;
-			}
-		}
-		// Trace the second block section (right edge)
-		for(blockIndex--; blockIndex <= secondStop; blockIndex += bmapwidth)
-		{
-			if(target = RoughBlockCheck(mo, blockIndex))
-			{
-				return target;
-			}
-		}
-		// Trace the third block section (bottom edge)
-		for(blockIndex -= bmapwidth; blockIndex >= thirdStop; blockIndex--)
-		{
-			if(target = RoughBlockCheck(mo, blockIndex))
-			{
-				return target;
-			}
-		}
-		// Trace the final block section (left edge)
-		for(blockIndex++; blockIndex > finalStop; blockIndex -= bmapwidth)
-		{
-			if(target = RoughBlockCheck(mo, blockIndex))
-			{
-				return target;
-			}
-		}
-	}
-	return NULL;
+        // Trace the first block section (along the top)
+        for(; blockIndex <= firstStop; blockIndex++)
+        {
+            if((target = RoughBlockCheck(mo, blockIndex)))
+            {
+                return target;
+            }
+        }
+        // Trace the second block section (right edge)
+        for(blockIndex--; blockIndex <= secondStop; blockIndex += bmapwidth)
+        {
+            if((target = RoughBlockCheck(mo, blockIndex)))
+            {
+                return target;
+            }
+        }
+        // Trace the third block section (bottom edge)
+        for(blockIndex -= bmapwidth; blockIndex >= thirdStop; blockIndex--)
+        {
+            if((target = RoughBlockCheck(mo, blockIndex)))
+            {
+                return target;
+            }
+        }
+        // Trace the final block section (left edge)
+        for(blockIndex++; blockIndex > finalStop; blockIndex -= bmapwidth)
+        {
+            if((target = RoughBlockCheck(mo, blockIndex)))
+            {
+                return target;
+            }
+        }
+    }
+    return NULL;
 }
 
 //===========================================================================
@@ -843,89 +949,516 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
 //===========================================================================
 static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 {
-	mobj_t *link, *root = P_GetBlockRootIdx(index);
-	mobj_t *master;
-	angle_t angle;
+    mobj_t *link, *root = P_GetBlockRootIdx(index);
+    mobj_t *master;
+    angle_t angle;
 
-	//
-	// If this doesn't work, check the backed-up version!
-	//
-	for(link = root->bnext; link != root; link = link->bnext)
-	{
-		if(mo->player)			// Minotaur looking around player
-		{
-			if((link->flags & MF_COUNTKILL) || (link->player && (link != mo)))
-			{
-				if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
-				   || ((link->type == MT_MINOTAUR) &&
-					   (((mobj_t *) link->special1) == mo)) || (IS_NETGAME &&
-																!deathmatch &&
-																link->player))
-					continue;
+    //
+    // If this doesn't work, check the backed-up version!
+    //
+    for(link = root->bnext; link != root; link = link->bnext)
+    {
+        if(mo->player)          // Minotaur looking around player
+        {
+            if((link->flags & MF_COUNTKILL) || (link->player && (link != mo)))
+            {
+                if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
+                   || ((link->type == MT_MINOTAUR) &&
+                       (((mobj_t *) link->special1) == mo)) || (IS_NETGAME &&
+                                                                !deathmatch &&
+                                                                link->player))
+                    continue;
 
-				if(P_CheckSight(mo, link))
-					return link;
-			}
-			//link = link->bnext;
-		}
-		else if(mo->type == MT_MINOTAUR)	// looking around minotaur
-		{
-			master = (mobj_t *) mo->special1;
-			if((link->flags & MF_COUNTKILL) ||
-			   (link->player && (link != master)))
-			{
-				if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
-				   || ((link->type == MT_MINOTAUR) &&
-					   (link->special1 == mo->special1)) || (IS_NETGAME &&
-															 !deathmatch &&
-															 link->player))
-					continue;
+                if(P_CheckSight(mo, link))
+                    return link;
+            }
+            //link = link->bnext;
+        }
+        else if(mo->type == MT_MINOTAUR)    // looking around minotaur
+        {
+            master = (mobj_t *) mo->special1;
+            if((link->flags & MF_COUNTKILL) ||
+               (link->player && (link != master)))
+            {
+                if(!(link->flags & MF_SHOOTABLE) || link->flags2 & MF2_DORMANT
+                   || ((link->type == MT_MINOTAUR) &&
+                       (link->special1 == mo->special1)) || (IS_NETGAME &&
+                                                             !deathmatch &&
+                                                             link->player))
+                    continue;
 
-				if(P_CheckSight(mo, link))
-					return link;
-			}
-			//link = link->bnext;
-		}
-		else if(mo->type == MT_MSTAFF_FX2)	// bloodscourge
-		{
-			if((link->flags & MF_COUNTKILL ||
-				(link->player && link != mo->target)) &&
-			   !(link->flags2 & MF2_DORMANT))
-			{
-				if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
-				   link->player)
-					continue;
+                if(P_CheckSight(mo, link))
+                    return link;
+            }
+            //link = link->bnext;
+        }
+        else if(mo->type == MT_MSTAFF_FX2)  // bloodscourge
+        {
+            if((link->flags & MF_COUNTKILL ||
+                (link->player && link != mo->target)) &&
+               !(link->flags2 & MF2_DORMANT))
+            {
+                if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
+                   link->player)
+                    continue;
 
-				if(P_CheckSight(mo, link))
-				{
-					master = mo->target;
-					angle =
-						R_PointToAngle2(master->x, master->y, link->x,
-										link->y) - master->angle;
-					angle >>= 24;
-					if(angle > 226 || angle < 30)
-					{
-						return link;
-					}
-				}
-			}
-			//link = link->bnext;
-		}
-		else					// spirits
-		{
-			if((link->flags & MF_COUNTKILL ||
-				(link->player && link != mo->target)) &&
-			   !(link->flags2 & MF2_DORMANT))
-			{
-				if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
-				   link->player || link == mo->target)
-					continue;
+                if(P_CheckSight(mo, link))
+                {
+                    master = mo->target;
+                    angle =
+                        R_PointToAngle2(master->pos[VX], master->pos[VY],
+                                        link->pos[VY], link->pos[VY]) - master->angle;
+                    angle >>= 24;
+                    if(angle > 226 || angle < 30)
+                    {
+                        return link;
+                    }
+                }
+            }
+            //link = link->bnext;
+        }
+        else                    // spirits
+        {
+            if((link->flags & MF_COUNTKILL ||
+                (link->player && link != mo->target)) &&
+               !(link->flags2 & MF2_DORMANT))
+            {
+                if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
+                   link->player || link == mo->target)
+                    continue;
 
-				if(P_CheckSight(mo, link))
-					return link;
-			}
-			//link = link->bnext;
-		}
-	}
-	return NULL;
+                if(P_CheckSight(mo, link))
+                    return link;
+            }
+            //link = link->bnext;
+        }
+    }
+    return NULL;
+}
+
+// Bellow stuff is for MAPINFO
+
+//===========================================================================
+// P_SetSongCDTrack
+//===========================================================================
+void P_SetSongCDTrack(int index, int track)
+{
+    // Set the internal array.
+    cd_NonLevelTracks[index] = sc_Number;
+
+    // Update the corresponding Doomsday definition.
+    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cd_SongDefIDs[index], 0),
+            DD_CD_TRACK, (void *) track);
+}
+
+//==========================================================================
+// InitMapInfo
+//==========================================================================
+void InitMapInfo(void)
+{
+    int     map;
+    int     mapMax;
+    int     mcmdValue;
+    mapInfo_t *info;
+    char    songMulch[10];
+
+    mapMax = 1;
+
+    // Put defaults into MapInfo[0]
+    info = MapInfo;
+    info->cluster = 0;
+    info->warpTrans = 0;
+    info->nextMap = 1;          // Always go to map 1 if not specified
+    info->cdTrack = 1;
+    info->sky1Texture =
+        R_TextureNumForName(shareware ? "SKY2" : DEFAULT_SKY_NAME);
+    info->sky2Texture = info->sky1Texture;
+    info->sky1ScrollDelta = 0;
+    info->sky2ScrollDelta = 0;
+    info->doubleSky = false;
+    info->lightning = false;
+    info->fadetable = W_GetNumForName(DEFAULT_FADE_TABLE);
+    strcpy(info->name, UNKNOWN_MAP_NAME);
+
+    for(map = 0; map < 99; map++)
+        MapInfo[map].warpTrans = 0;
+
+    //  strcpy(info->songLump, DEFAULT_SONG_LUMP);
+    SC_Open(MAPINFO_SCRIPT_NAME);
+    while(SC_GetString())
+    {
+        if(SC_Compare("MAP") == false)
+        {
+            SC_ScriptError(NULL);
+        }
+        SC_MustGetNumber();
+        if(sc_Number < 1 || sc_Number > 99)
+        {                       //
+            SC_ScriptError(NULL);
+        }
+        map = sc_Number;
+
+        info = &MapInfo[map];
+
+        // Save song lump name
+        strcpy(songMulch, info->songLump);
+
+        // Copy defaults to current map definition
+        memcpy(info, &MapInfo[0], sizeof(*info));
+
+        // Restore song lump name
+        strcpy(info->songLump, songMulch);
+
+        // The warp translation defaults to the map number
+        info->warpTrans = map;
+
+        // Map name must follow the number
+        SC_MustGetString();
+        strcpy(info->name, sc_String);
+
+        // Process optional tokens
+        while(SC_GetString())
+        {
+            if(SC_Compare("MAP"))
+            {                   // Start next map definition
+                SC_UnGet();
+                break;
+            }
+            mcmdValue = MapCmdIDs[SC_MustMatchString(MapCmdNames)];
+            switch (mcmdValue)
+            {
+            case MCMD_CLUSTER:
+                SC_MustGetNumber();
+                info->cluster = sc_Number;
+                break;
+            case MCMD_WARPTRANS:
+                SC_MustGetNumber();
+                info->warpTrans = sc_Number;
+                break;
+            case MCMD_NEXT:
+                SC_MustGetNumber();
+                info->nextMap = sc_Number;
+                break;
+            case MCMD_CDTRACK:
+                SC_MustGetNumber();
+                info->cdTrack = sc_Number;
+                break;
+            case MCMD_SKY1:
+                SC_MustGetString();
+                info->sky1Texture = R_TextureNumForName(sc_String);
+                SC_MustGetNumber();
+                info->sky1ScrollDelta = sc_Number << 8;
+                break;
+            case MCMD_SKY2:
+                SC_MustGetString();
+                info->sky2Texture = R_TextureNumForName(sc_String);
+                SC_MustGetNumber();
+                info->sky2ScrollDelta = sc_Number << 8;
+                break;
+            case MCMD_DOUBLESKY:
+                info->doubleSky = true;
+                break;
+            case MCMD_LIGHTNING:
+                info->lightning = true;
+                break;
+            case MCMD_FADETABLE:
+                SC_MustGetString();
+                info->fadetable = W_GetNumForName(sc_String);
+                break;
+            case MCMD_CD_STARTTRACK:
+            case MCMD_CD_END1TRACK:
+            case MCMD_CD_END2TRACK:
+            case MCMD_CD_END3TRACK:
+            case MCMD_CD_INTERTRACK:
+            case MCMD_CD_TITLETRACK:
+                SC_MustGetNumber();
+                P_SetSongCDTrack(mcmdValue - MCMD_CD_STARTTRACK, sc_Number);
+                break;
+            }
+        }
+        mapMax = map > mapMax ? map : mapMax;
+    }
+    SC_Close();
+    MapCount = mapMax;
+}
+
+//==========================================================================
+//
+// P_GetMapCluster
+//
+//==========================================================================
+
+int P_GetMapCluster(int map)
+{
+    return MapInfo[QualifyMap(map)].cluster;
+}
+
+//==========================================================================
+//
+// P_GetMapCDTrack
+//
+//==========================================================================
+
+int P_GetMapCDTrack(int map)
+{
+    return MapInfo[QualifyMap(map)].cdTrack;
+}
+
+//==========================================================================
+//
+// P_GetMapWarpTrans
+//
+//==========================================================================
+
+int P_GetMapWarpTrans(int map)
+{
+    return MapInfo[QualifyMap(map)].warpTrans;
+}
+
+//==========================================================================
+//
+// P_GetMapNextMap
+//
+//==========================================================================
+
+int P_GetMapNextMap(int map)
+{
+    return MapInfo[QualifyMap(map)].nextMap;
+}
+
+//==========================================================================
+//
+// P_TranslateMap
+//
+// Returns the actual map number given a warp map number.
+//
+//==========================================================================
+
+int P_TranslateMap(int map)
+{
+    int     i;
+
+    /*  ST_Message("P_TranslateMap(%d):\n", map);
+       for(i = 1; i < 99; i++) // Make this a macro
+       ST_Message("- %d: warp to %d\n", i, MapInfo[i].warpTrans); */
+
+    for(i = 1; i < 99; i++)     // Make this a macro (?)
+    {
+        if(MapInfo[i].warpTrans == map)
+        {
+            return i;
+        }
+    }
+    // Not found
+    return -1;
+}
+
+//==========================================================================
+//
+// P_GetMapSky1Texture
+//
+//==========================================================================
+
+int P_GetMapSky1Texture(int map)
+{
+    return MapInfo[QualifyMap(map)].sky1Texture;
+}
+
+//==========================================================================
+//
+// P_GetMapSky2Texture
+//
+//==========================================================================
+
+int P_GetMapSky2Texture(int map)
+{
+    return MapInfo[QualifyMap(map)].sky2Texture;
+}
+
+//==========================================================================
+//
+// P_GetMapName
+//
+//==========================================================================
+
+char   *P_GetMapName(int map)
+{
+    return MapInfo[QualifyMap(map)].name;
+}
+
+//==========================================================================
+//
+// P_GetMapSky1ScrollDelta
+//
+//==========================================================================
+
+fixed_t P_GetMapSky1ScrollDelta(int map)
+{
+    return MapInfo[QualifyMap(map)].sky1ScrollDelta;
+}
+
+//==========================================================================
+//
+// P_GetMapSky2ScrollDelta
+//
+//==========================================================================
+
+fixed_t P_GetMapSky2ScrollDelta(int map)
+{
+    return MapInfo[QualifyMap(map)].sky2ScrollDelta;
+}
+
+//==========================================================================
+//
+// P_GetMapDoubleSky
+//
+//==========================================================================
+
+boolean P_GetMapDoubleSky(int map)
+{
+    return MapInfo[QualifyMap(map)].doubleSky;
+}
+
+//==========================================================================
+//
+// P_GetMapLightning
+//
+//==========================================================================
+
+boolean P_GetMapLightning(int map)
+{
+    return MapInfo[QualifyMap(map)].lightning;
+}
+
+//==========================================================================
+//
+// P_GetMapFadeTable
+//
+//==========================================================================
+
+boolean P_GetMapFadeTable(int map)
+{
+    return MapInfo[QualifyMap(map)].fadetable;
+}
+
+//==========================================================================
+//
+// P_GetMapSongLump
+//
+//==========================================================================
+
+char   *P_GetMapSongLump(int map)
+{
+    if(!strcasecmp(MapInfo[QualifyMap(map)].songLump, DEFAULT_SONG_LUMP))
+    {
+        return NULL;
+    }
+    else
+    {
+        return MapInfo[QualifyMap(map)].songLump;
+    }
+}
+
+//==========================================================================
+//
+// P_PutMapSongLump
+//
+//==========================================================================
+
+void P_PutMapSongLump(int map, char *lumpName)
+{
+    if(map < 1 || map > MapCount)
+    {
+        return;
+    }
+    strcpy(MapInfo[map].songLump, lumpName);
+}
+
+//==========================================================================
+//
+// P_GetCDStartTrack
+//
+//==========================================================================
+
+int P_GetCDStartTrack(void)
+{
+    return cd_NonLevelTracks[MCMD_CD_STARTTRACK - MCMD_CD_STARTTRACK];
+}
+
+//==========================================================================
+//
+// P_GetCDEnd1Track
+//
+//==========================================================================
+
+int P_GetCDEnd1Track(void)
+{
+    return cd_NonLevelTracks[MCMD_CD_END1TRACK - MCMD_CD_STARTTRACK];
+}
+
+//==========================================================================
+//
+// P_GetCDEnd2Track
+//
+//==========================================================================
+
+int P_GetCDEnd2Track(void)
+{
+    return cd_NonLevelTracks[MCMD_CD_END2TRACK - MCMD_CD_STARTTRACK];
+}
+
+//==========================================================================
+//
+// P_GetCDEnd3Track
+//
+//==========================================================================
+
+int P_GetCDEnd3Track(void)
+{
+    return cd_NonLevelTracks[MCMD_CD_END3TRACK - MCMD_CD_STARTTRACK];
+}
+
+//==========================================================================
+//
+// P_GetCDIntermissionTrack
+//
+//==========================================================================
+
+int P_GetCDIntermissionTrack(void)
+{
+    return cd_NonLevelTracks[MCMD_CD_INTERTRACK - MCMD_CD_STARTTRACK];
+}
+
+//==========================================================================
+//
+// P_GetCDTitleTrack
+//
+//==========================================================================
+
+int P_GetCDTitleTrack(void)
+{
+    return cd_NonLevelTracks[MCMD_CD_TITLETRACK - MCMD_CD_STARTTRACK];
+}
+
+//==========================================================================
+//
+// QualifyMap
+//
+//==========================================================================
+
+static int QualifyMap(int map)
+{
+    return (map < 1 || map > MapCount) ? 0 : map;
+}
+
+// Special early initializer needed to start sound before R_Init()
+void InitMapMusicInfo(void)
+{
+    int     i;
+
+    for(i = 0; i < 99; i++)
+    {
+        strcpy(MapInfo[i].songLump, DEFAULT_SONG_LUMP);
+    }
+    MapCount = 98;
 }

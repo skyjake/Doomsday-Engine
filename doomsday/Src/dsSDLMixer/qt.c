@@ -325,6 +325,6 @@ int	DM_Mus_Play(int looped)
     char fileName[256];
     
     sprintf(fileName, "%s.mid", BUFFERED_MUSIC_FILE);
-	convertMusToMidi(song, songSize, fileName);
+	convertMusToMidi((byte*) song, songSize, fileName);
 	return playFile(fileName, looped);
 }

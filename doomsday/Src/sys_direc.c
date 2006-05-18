@@ -26,10 +26,10 @@
 #include "de_platform.h"
 
 #if defined(WIN32)
-#  	include <direct.h>
+#   include <direct.h>
 #endif
 #if defined(UNIX)
-#  	include <unistd.h>
+#   include <unistd.h>
 #endif
 
 #include "de_platform.h"
@@ -73,64 +73,63 @@
 
 void Dir_GetDir(directory_t * dir)
 {
-	memset(dir, 0, sizeof(*dir));
+    memset(dir, 0, sizeof(*dir));
 
-	dir->drive = _getdrive();
-	_getcwd(dir->path, 255);
+    dir->drive = _getdrive();
+    _getcwd(dir->path, 255);
 
-	if(LAST_CHAR(dir->path) != DIR_SEP_CHAR)
-		strcat(dir->path, DIR_SEP_STR);
+    if(LAST_CHAR(dir->path) != DIR_SEP_CHAR)
+        strcat(dir->path, DIR_SEP_STR);
 
-	/* VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) ); */
+    /* VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) ); */
 }
 
 int Dir_ChDir(directory_t * dir)
 {
-	int     success;
+    int     success;
 
-	_chdrive(dir->drive);
-	success = !_chdir(dir->path);	// Successful if == 0.
+    _chdrive(dir->drive);
+    success = !_chdir(dir->path);   // Successful if == 0.
 
-	VERBOSE2(Con_Printf
-			 ("Dir_ChDir: %s: %s\n", success ? "Succeeded" : "Failed",
-			  M_Pretty(dir->path)));
+    VERBOSE2(Con_Printf
+             ("Dir_ChDir: %s: %s\n", success ? "Succeeded" : "Failed",
+              M_Pretty(dir->path)));
 
-	return success;
+    return success;
 }
 
 void Dir_MakeDir(const char *path, directory_t * dir)
 {
-	char    temp[256];
+    char    temp[256];
 
-	Dir_FileDir(path, dir);
-	Dir_FileName(path, temp);
-	strcat(dir->path, temp);
-	Dir_ValidDir(dir->path);	// Make it a well formed path.
+    Dir_FileDir(path, dir);
+    Dir_FileName(path, temp);
+    strcat(dir->path, temp);
+    Dir_ValidDir(dir->path);    // Make it a well formed path.
 }
 
-//===========================================================================
-// Dir_FileDir
-//  Translates the given filename (>,} => basedir).
-//===========================================================================
+/*
+ * Translates the given filename (>,} => basedir).
+ */
 void Dir_FileDir(const char *str, directory_t * dir)
 {
-	char    temp[256], pth[256];
+    char    temp[256], pth[256];
 
-	M_TranslatePath(str, pth);
-	_fullpath(temp, pth, 255);
-	_splitpath(temp, dir->path, pth, 0, 0);
-	strcat(dir->path, pth);
+    M_TranslatePath(str, pth);
+    _fullpath(temp, pth, 255);
+    _splitpath(temp, dir->path, pth, 0, 0);
+    strcat(dir->path, pth);
 #ifdef WIN32
-	dir->drive = toupper(dir->path[0]) - 'A' + 1;
+    dir->drive = toupper(dir->path[0]) - 'A' + 1;
 #endif
 }
 
 void Dir_FileName(const char *str, char *name)
 {
-	char    ext[100];
+    char    ext[100];
 
-	_splitpath(str, 0, 0, name, ext);
-	strcat(name, ext);
+    _splitpath(str, 0, 0, name, ext);
+    strcat(name, ext);
 }
 
 /*
@@ -141,49 +140,47 @@ void Dir_FileName(const char *str, char *name)
 int Dir_FileID(const char *str)
 {
     char temp[256];
-    
+
     // First normalize the name.
-	memset(temp, 0, sizeof(temp));
-	_fullpath(temp, str, 255);
+    memset(temp, 0, sizeof(temp));
+    _fullpath(temp, str, 255);
 
 #if defined(WIN32) || defined(MACOSX)
     // This is a case insensitive operation.
-	strupr(temp);
+    strupr(temp);
 #endif
 
     VERBOSE2(Con_Message("Dir_FileID: %s = 0x%08x\n", temp,
                          M_CRC32(temp, strlen(temp))));
-    
+
     return M_CRC32(temp, strlen(temp));
 }
 
-//===========================================================================
-// Dir_IsEqual
-//  Returns true if the directories are equal.
-//===========================================================================
+/*
+ * Returns true if the directories are equal.
+ */
 boolean Dir_IsEqual(directory_t * a, directory_t * b)
 {
-	if(a->drive != b->drive)
-		return false;
-	return !stricmp(a->path, b->path);
+    if(a->drive != b->drive)
+        return false;
+    return !stricmp(a->path, b->path);
 }
 
-//===========================================================================
-// Dir_IsAbsolute
-//  Returns true iff the given path is absolute (starts with \ or / or
-//  the second character is a ':' (drive).
-//===========================================================================
+/*
+ * Returns true iff the given path is absolute (starts with \ or / or
+ * the second character is a ':' (drive).
+ */
 int Dir_IsAbsolute(const char *str)
 {
-	if(!str)
-		return 0;
-	if(str[0] == '\\' || str[0] == '/' || str[1] == ':')
-		return true;
+    if(!str)
+        return 0;
+    if(str[0] == '\\' || str[0] == '/' || str[1] == ':')
+        return true;
 #ifdef UNIX
-	if(str[0] == '~')
-		return true;
+    if(str[0] == '~')
+        return true;
 #endif
-	return false;
+    return false;
 }
 
 /*
@@ -191,13 +188,13 @@ int Dir_IsAbsolute(const char *str)
  */
 void Dir_FixSlashes(char *path)
 {
-	int     i, len = strlen(path);
+    int     i, len = strlen(path);
 
-	for(i = 0; i < len; i++)
-	{
-		if(path[i] == DIR_WRONG_SEP_CHAR)
-			path[i] = DIR_SEP_CHAR;
-	}
+    for(i = 0; i < len; i++)
+    {
+        if(path[i] == DIR_WRONG_SEP_CHAR)
+            path[i] = DIR_SEP_CHAR;
+    }
 }
 
 #ifdef UNIX
@@ -208,83 +205,81 @@ void Dir_FixSlashes(char *path)
  */
 void Dir_ExpandHome(char *str)
 {
-	char    buf[PATH_MAX];
+    char    buf[PATH_MAX];
 
-	if(str[0] != '~')
-		return;
+    if(str[0] != '~')
+        return;
 
-	memset(buf, 0, sizeof(buf));
+    memset(buf, 0, sizeof(buf));
 
-	if(str[1] == '/')
-	{
-		// Replace it with the HOME environment variable.
-		strcpy(buf, getenv("HOME"));
-		if(LAST_CHAR(buf) != '/')
-			strcat(buf, "/");
+    if(str[1] == '/')
+    {
+        // Replace it with the HOME environment variable.
+        strcpy(buf, getenv("HOME"));
+        if(LAST_CHAR(buf) != '/')
+            strcat(buf, "/");
 
-		// Append the rest of the original path.
-		strcat(buf, str + 2);
-	}
-	else
-	{
-		char    userName[PATH_MAX], *end = NULL;
-		struct passwd *pw;
+        // Append the rest of the original path.
+        strcat(buf, str + 2);
+    }
+    else
+    {
+        char    userName[PATH_MAX], *end = NULL;
+        struct passwd *pw;
 
-		end = strchr(str + 1, '/');
-		strncpy(userName, str, end - str - 1);
-		userName[end - str - 1] = 0;
+        end = strchr(str + 1, '/');
+        strncpy(userName, str, end - str - 1);
+        userName[end - str - 1] = 0;
 
-		if((pw = getpwnam(userName)) != NULL)
-		{
-			strcpy(buf, pw->pw_dir);
-			if(LAST_CHAR(buf) != '/')
-				strcat(buf, "/");
-		}
+        if((pw = getpwnam(userName)) != NULL)
+        {
+            strcpy(buf, pw->pw_dir);
+            if(LAST_CHAR(buf) != '/')
+                strcat(buf, "/");
+        }
 
-		strcat(buf, str + 1);
-	}
+        strcat(buf, str + 1);
+    }
 
-	// Replace the original.
-	strcpy(str, buf);
+    // Replace the original.
+    strcpy(str, buf);
 }
 #endif
 
-//===========================================================================
-// Dir_ValidDir
-//  Appends a backslash, if necessary. Also converts forward slashes into
-//  backward ones. Does not check if the directory actually exists, just
-//  that it's a well-formed path name.
-//===========================================================================
+/*
+ * Appends a backslash, if necessary. Also converts forward slashes into
+ * backward ones. Does not check if the directory actually exists, just
+ * that it's a well-formed path name.
+ */
 void Dir_ValidDir(char *str)
 {
-	int     i, len = strlen(str);
+    int     i, len = strlen(str);
 
-	if(!len)
-		return;					// Nothing to do.
+    if(!len)
+        return;                 // Nothing to do.
 
-	Dir_FixSlashes(str);
+    Dir_FixSlashes(str);
 
-	// Remove whitespace from the end.
-	for(i = len - 1; isspace(str[i]) && i >= 0; i--)
-		str[i] = 0;
+    // Remove whitespace from the end.
+    for(i = len - 1; isspace(str[i]) && i >= 0; i--)
+        str[i] = 0;
 
-	// Make sure it ends in a directory separator character.
-	if(str[len - 1] != DIR_SEP_CHAR)
-		strcat(str, DIR_SEP_STR);
+    // Make sure it ends in a directory separator character.
+    if(str[len - 1] != DIR_SEP_CHAR)
+        strcat(str, DIR_SEP_STR);
 
 #ifdef UNIX
-	Dir_ExpandHome(str);
+    Dir_ExpandHome(str);
 #endif
 }
 
-//===========================================================================
-// Dir_MakeAbsolute
-//  Converts a possibly relative path to a full path.
-//===========================================================================
+/*
+ * Converts a possibly relative path to a full path.
+ */
 void Dir_MakeAbsolute(char *path)
 {
-	char    buf[300];
+    char    buf[300];
 
-	_fullpath(buf, path, 255);
-	strcpy(path, buf);
+    _fullpath(buf, path, 255);
+    strcpy(path, buf);
 }

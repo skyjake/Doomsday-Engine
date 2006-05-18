@@ -2,9 +2,9 @@
 // LEVEL : Level structures & read/write functions.
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2002 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
 //
-//  Based on `BSP 2.3' by Colin Reed, Lee Killough and others.
+//  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ typedef struct vertex_s
   float_g x, y;
 
   // vertex index.  Always valid after loading and pruning of unused
-  // vertices has occurred.  For GL vertices, bit 15 will be set.
+  // vertices has occurred.  For GL vertices, bit 30 will be set.
   int index;
 
   // reference count.  When building normal node info, unused vertices
@@ -69,10 +69,6 @@ typedef struct vertex_s
   // set of wall_tips
   wall_tip_t *tip_set;
 
-  // non-zero if this vertex is part of a polyobj.  Only valid during
-  // the polyobj detection phase.
-  int polyobj;
-
   // contains a duplicate vertex, needed when both normal and V2 GL
   // nodes are being built at the same time (this is the vertex used
   // for the normal segs).  Normally NULL.  Note: the wall tips on
@@ -81,14 +77,19 @@ typedef struct vertex_s
 }
 vertex_t;
 
+#define IS_GL_VERTEX  (1 << 30)
+
 
 typedef struct sector_s
 {
   // sector index.  Always valid after loading & pruning.
   int index;
 
-  // allow segs from other sectors to coexist in a subsector
-  int coalesce;
+  // allow segs from other sectors to coexist in a subsector.
+  char coalesce;
+
+  // -JL- non-zero if this sector contains a polyobj.
+  int has_polyobj;
 
   // reference count.  When building normal nodes, unused sectors will
   // be pruned.
@@ -106,9 +107,6 @@ typedef struct sector_s
   int special;
   int tag;
 
-  // -JL- non-zero if this sector contains a polyobj.
-  int polyobj;
-
   // used when building REJECT table.  Each set of sectors that are
   // isolated from other sectors will have a different group number.
   // Thus: on every 2-sided linedef, the sectors on both sides will be
@@ -118,6 +116,10 @@ typedef struct sector_s
 
   struct sector_s *rej_next;
   struct sector_s *rej_prev;
+
+  // suppress superfluous mini warnings
+  int warned_facing;
+  char warned_unclosed;
 }
 sector_t;
 
@@ -166,13 +168,19 @@ typedef struct linedef_s
   sidedef_t *left;    // left sidede, or NULL if none
 
   // line is marked two-sided
-  int two_sided;
+  char two_sided;
 
   // prefer not to split
-  int is_precious;
+  char is_precious;
 
   // zero length (line should be totally ignored)
-  int zero_len;
+  char zero_len;
+
+  // sector is the same on both sides
+  char self_ref;
+
+  // one-sided linedef used for a special effect (windows)
+  char window_effect;
 
   int flags;
   int type;
@@ -180,15 +188,32 @@ typedef struct linedef_s
 
   // Hexen support
   int specials[5];
+  
+  // normally NULL, except when this linedef directly overlaps an earlier
+  // one (a rarely-used trick to create higher mid-masked textures).
+  // No segs should be created for these overlapping linedefs.
+  struct linedef_s *overlap;
 
-  // part of a hexen polyobj
-  int polyobj;
- 
   // linedef index.  Always valid after loading & pruning of zero
   // length lines has occurred.
   int index;
 }
 linedef_t;
+
+
+typedef struct thing_s
+{
+  int x, y;
+  int type;
+  int options;
+
+  // other info (angle, and hexen stuff) omitted.  We don't need to
+  // write the THING lump, only read it.
+
+  // Always valid (thing indices never change).
+  int index;
+}
+thing_t;
 
 
 typedef struct seg_s
@@ -228,7 +253,7 @@ typedef struct seg_s
   // longer in any superblock (e.g. now in a subsector).
   struct superblock_s *block;
 
-  // precomputed data for fast calculations
+  // precomputed data for faster calculations
   float_g psx, psy;
   float_g pex, pey;
   float_g pdx, pdy;
@@ -239,7 +264,7 @@ typedef struct seg_s
   float_g p_perp;
 
   // linedef that this seg initially comes from.  For "real" segs,
-  // this is just the same as the `linedef' field above.  For
+  // this is just the same as the 'linedef' field above.  For
   // "minisegs", this is the linedef of the partition line.
   linedef_t *source_line;
 }
@@ -341,9 +366,11 @@ extern int num_vertices;
 extern int num_linedefs;
 extern int num_sidedefs;
 extern int num_sectors;
+extern int num_things;
 extern int num_segs;
 extern int num_subsecs;
 extern int num_nodes;
+extern int num_stale_nodes;
 
 extern int num_normal_vert;
 extern int num_gl_vert;
@@ -357,18 +384,23 @@ vertex_t *NewVertex(void);
 linedef_t *NewLinedef(void);
 sidedef_t *NewSidedef(void);
 sector_t *NewSector(void);
+thing_t *NewThing(void);
 seg_t *NewSeg(void);
 subsec_t *NewSubsec(void);
 node_t *NewNode(void);
+node_t *NewStaleNode(void);
+wall_tip_t *NewWallTip(void);
 
 // lookup routines
 vertex_t *LookupVertex(int index);
 linedef_t *LookupLinedef(int index);
 sidedef_t *LookupSidedef(int index);
 sector_t *LookupSector(int index);
+thing_t *LookupThing(int index);
 seg_t *LookupSeg(int index);
 subsec_t *LookupSubsec(int index);
 node_t *LookupNode(int index);
+node_t *LookupStaleNode(int index);
 
 // check whether the current level already has normal nodes
 int CheckForNormalNodes(void);
@@ -381,26 +413,5 @@ void FreeLevel(void);
 
 // save the newly computed NODE info etc..
 void SaveLevel(node_t *root_node);
-
-// return a new vertex (with correct wall_tip info) for the split that
-// happens along the given seg at the given location.
-//
-vertex_t *NewVertexFromSplitSeg(seg_t *seg, float_g x, float_g y);
-
-// return a new end vertex to compensate for a seg that would end up
-// being zero-length (after integer rounding).  Doesn't compute the
-// wall_tip info (thus this routine should only be used _after_ node
-// building).
-//
-vertex_t *NewVertexDegenerate(vertex_t *start, vertex_t *end);
-
-// check whether a line with the given delta coordinates and beginning
-// at this vertex is open.  Returns 1 if open, or 0 if closed.  The
-// sectors that lie on the left & right side of the given line are
-// also determined (NULL if the area is void space).
-//
-int VertexCheckOpen(vertex_t *vert, float_g dx, float_g dy,
-    sector_t ** left_sec, sector_t ** right_sec);
-
 
 #endif /* __GLBSP_LEVEL_H__ */
