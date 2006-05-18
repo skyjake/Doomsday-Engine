@@ -30,12 +30,12 @@
 #define STARTREDPALS    1
 #define STARTBONUSPALS  9
 #define STARTPOISONPALS 13
-#define STARTICEPAL		21
-#define STARTHOLYPAL	22
+#define STARTICEPAL     21
+#define STARTHOLYPAL    22
 #define STARTSCOURGEPAL 25
 #define NUMREDPALS      8
 #define NUMBONUSPALS    4
-#define NUMPOISONPALS	8
+#define NUMPOISONPALS   8
 
 #define TOCENTER TICCMD_FALL_DOWN
 #define FLOATSPEED (FRACUNIT*4)
@@ -67,32 +67,32 @@
 #define MISSILERANGE (32*64*FRACUNIT)
 
 typedef enum {
-	DI_EAST,
-	DI_NORTHEAST,
-	DI_NORTH,
-	DI_NORTHWEST,
-	DI_WEST,
-	DI_SOUTHWEST,
-	DI_SOUTH,
-	DI_SOUTHEAST,
-	DI_NODIR,
-	NUMDIRS
+    DI_EAST,
+    DI_NORTHEAST,
+    DI_NORTH,
+    DI_NORTHWEST,
+    DI_WEST,
+    DI_SOUTHWEST,
+    DI_SOUTH,
+    DI_SOUTHEAST,
+    DI_NODIR,
+    NUMDIRS
 } dirtype_t;
 
-#define BASETHRESHOLD 100		   // follow a player exlusively for 3 seconds
+#define BASETHRESHOLD 100          // follow a player exlusively for 3 seconds
 
 // ***** P_TICK *****
 
-extern int      TimerGame;		   // tic countdown for deathmatch
+extern int      TimerGame;         // tic countdown for deathmatch
 
 // ***** P_PSPR *****
 
-#define USE_MANA1	1
-#define USE_MANA2	1
+#define USE_MANA1   1
+#define USE_MANA2   1
 
 void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
 void            P_SetPspriteNF(player_t *player, int position,
-							   statenum_t stnum);
+                               statenum_t stnum);
 void            P_SetupPsprites(player_t *curplayer);
 void            P_MovePsprites(player_t *curplayer);
 void            P_DropWeapon(player_t *player);
@@ -101,17 +101,11 @@ void            P_PostMorphWeapon(player_t *player, weapontype_t weapon);
 
 // ***** P_USER *****
 
-extern int      PStateNormal[NUMCLASSES];
-extern int      PStateRun[NUMCLASSES];
-extern int      PStateAttack[NUMCLASSES];
-extern int      PStateAttackEnd[NUMCLASSES];
-
 void            P_PlayerThink(player_t *player);
 void            P_Thrust(player_t *player, angle_t angle, fixed_t move);
 void            P_PlayerRemoveArtifact(player_t *player, int slot);
 void            P_PlayerUseArtifact(player_t *player, artitype_t arti);
 boolean         P_UseArtifact(player_t *player, artitype_t arti);
-int             P_GetPlayerNum(player_t *player);
 void            P_TeleportOther(mobj_t *victim);
 void            ResetBlasted(mobj_t *mo);
 
@@ -119,12 +113,12 @@ void            ResetBlasted(mobj_t *mo);
 
 // Any floor type >= FLOOR_LIQUID will floorclip sprites
 enum {
-	FLOOR_SOLID,
-	FLOOR_ICE,
-	FLOOR_LIQUID,
-	FLOOR_WATER,
-	FLOOR_LAVA,
-	FLOOR_SLUDGE
+    FLOOR_SOLID,
+    FLOOR_ICE,
+    FLOOR_LIQUID,
+    FLOOR_WATER,
+    FLOOR_LAVA,
+    FLOOR_SLUDGE
 };
 
 #define ONFLOORZ DDMININT
@@ -142,40 +136,40 @@ boolean         P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
 void            P_ThrustMobj(mobj_t *mo, angle_t angle, fixed_t move);
 int             P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
 boolean         P_SeekerMissile(mobj_t *actor, angle_t thresh,
-								angle_t turnMax);
+                                angle_t turnMax);
 void            P_MobjThinker(mobj_t *mobj);
 void            P_BlasterMobjThinker(mobj_t *mobj);
 void            P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
 void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
 void            P_BloodSplatter(fixed_t x, fixed_t y, fixed_t z,
-								mobj_t *originator);
+                                mobj_t *originator);
 void            P_BloodSplatter2(fixed_t x, fixed_t y, fixed_t z,
-								 mobj_t *originator);
+                                 mobj_t *originator);
 void            P_RipperBlood(mobj_t *mo);
 int             P_GetThingFloorType(mobj_t *thing);
 int             P_HitFloor(mobj_t *thing);
 boolean         P_CheckMissileSpawn(mobj_t *missile);
 mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
 mobj_t         *P_SpawnMissileXYZ(fixed_t x, fixed_t y, fixed_t z,
-								  mobj_t *source, mobj_t *dest,
-								  mobjtype_t type);
+                                  mobj_t *source, mobj_t *dest,
+                                  mobjtype_t type);
 mobj_t         *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type,
-									angle_t angle, fixed_t momz);
+                                    angle_t angle, fixed_t momz);
 mobj_t         *P_SpawnMissileAngleSpeed(mobj_t *source, mobjtype_t type,
-										 angle_t angle, fixed_t momz,
-										 fixed_t speed);
-void            P_SpawnPlayer(mapthing_t * mthing, int playernum);
+                                         angle_t angle, fixed_t momz,
+                                         fixed_t speed);
+void            P_SpawnPlayer(thing_t * mthing, int playernum);
 mobj_t         *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
 mobj_t         *P_SPMAngle(mobj_t *source, mobjtype_t type, angle_t angle);
 mobj_t         *P_SPMAngleXYZ(mobj_t *source, fixed_t x, fixed_t y, fixed_t z,
-							  mobjtype_t type, angle_t angle);
+                              mobjtype_t type, angle_t angle);
 void            P_CreateTIDList(void);
 void            P_RemoveMobjFromTIDList(mobj_t *mobj);
 void            P_InsertMobjIntoTIDList(mobj_t *mobj, int tid);
 mobj_t         *P_FindMobjFromTID(int tid, int *searchPosition);
 mobj_t         *P_SpawnKoraxMissile(fixed_t x, fixed_t y, fixed_t z,
-									mobj_t *source, mobj_t *dest,
-									mobjtype_t type);
+                                    mobj_t *source, mobj_t *dest,
+                                    mobjtype_t type);
 
 int             P_GetMobjFriction(mobj_t *mo);
 mobj_t         *P_SpawnTeleFog(int x, int y);
@@ -206,8 +200,8 @@ mobj_t         *P_RoughMonsterSearch(mobj_t *mo, int distance);
 
 // ***** P_MAP *****
 
-extern boolean  floatok;		   // if true, move would be ok if
-extern fixed_t  tmfloorz, tmceilingz;	// within tmfloorz - tmceilingz
+extern boolean  floatok;           // if true, move would be ok if
+extern fixed_t  tmfloorz, tmceilingz;   // within tmfloorz - tmceilingz
 extern int      tmfloorpic;
 extern mobj_t  *BlockingMobj;
 
@@ -217,7 +211,7 @@ boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
 mobj_t         *P_CheckOnmobj(mobj_t *thing);
 void            P_FakeZMovement(mobj_t *mo);
 boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y);
-boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y);
+boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp);
 void            P_SlideMove(mobj_t *mo);
 void            P_BounceWall(mobj_t *mo);
 
@@ -228,59 +222,52 @@ void            PIT_ThrustSpike(mobj_t *actor);
 
 boolean         P_ChangeSector(sector_t *sector, int crunch);
 
-extern mobj_t  *PuffSpawned;	   // true if a puff was spawned
-extern mobj_t  *linetarget;		   // who got hit (or NULL)
+extern mobj_t  *PuffSpawned;       // true if a puff was spawned
+extern mobj_t  *linetarget;        // who got hit (or NULL)
 fixed_t         P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance);
 
 void            P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
-							 fixed_t slope, int damage);
+                             fixed_t slope, int damage);
 
 void            P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage,
-							   int distance, boolean damageSource);
+                               int distance, boolean damageSource);
 
 // ***** P_SETUP *****
 
 void            P_Validate();
 
-#define bmapwidth		(*gi.bmapwidth)
-#define bmapheight		(*gi.bmapheight)
-#define bmaporgx		(*gi.bmaporgx)
-#define bmaporgy		(*gi.bmaporgy)
-#define blockmap		(*gi.blockmap)
-#define blockmaplump	(*gi.blockmaplump)
-#define rejectmatrix	(*gi.rejectmatrix)
-#define blocklinks		(*gi.blocklinks)
+//#define rejectmatrix    (*gi.rejectmatrix)
+//#define blocklinks      (*gi.blocklinks)
 
-#define openrange		Get(DD_OPENRANGE)
-#define opentop			Get(DD_OPENTOP)
-#define openbottom		Get(DD_OPENBOTTOM)
-#define lowfloor		Get(DD_LOWFLOOR)
+#define openrange       Get(DD_OPENRANGE)
+#define opentop         Get(DD_OPENTOP)
+#define openbottom      Get(DD_OPENBOTTOM)
+#define lowfloor        Get(DD_LOWFLOOR)
 
 // ***** P_INTER *****
 
-extern int      clipmana[NUMMANA];
+extern int      clipmana[NUMAMMO];
 
 void            P_SetMessage(player_t *pl, char *msg);
 void            P_SetYellowMessage(player_t *pl, char *msg);
 void            P_ClearMessage(player_t *player);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-							 int damage);
+                             int damage);
 void            P_FallingDamage(player_t *player);
 void            P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison);
 void            P_PoisonDamage(player_t *player, mobj_t *source, int damage,
-							   boolean playPainSound);
-boolean         P_GiveMana(player_t *player, manatype_t mana, int count);
+                               boolean playPainSound);
+boolean         P_GiveMana(player_t *player, ammotype_t mana, int count);
 boolean         P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo);
 boolean         P_GiveArmor(player_t *player, armortype_t armortype,
-							int amount);
+                            int amount);
 boolean         P_GiveBody(player_t *player, int num);
 boolean         P_GivePower(player_t *player, powertype_t power);
 boolean         P_MorphPlayer(player_t *player);
 
 // ***** AM_MAP *****
 
-boolean         AM_Responder(event_t *ev);
 void            AM_Ticker(void);
 void            AM_Drawer(void);
 
@@ -298,60 +285,57 @@ void            SB_PaletteFlash(boolean forceChange);
 // ===== PO_MAN =====
 
 typedef enum {
-	PODOOR_NONE,
-	PODOOR_SLIDE,
-	PODOOR_SWING,
+    PODOOR_NONE,
+    PODOOR_SLIDE,
+    PODOOR_SWING,
 } podoortype_t;
 
 typedef struct {
-	thinker_t       thinker;
-	int             polyobj;
-	int             speed;
-	unsigned int    dist;
-	int             angle;
-	fixed_t         xSpeed;		   // for sliding walls
-	fixed_t         ySpeed;
+    thinker_t       thinker;
+    int             polyobj;
+    int             speed;
+    unsigned int    dist;
+    int             angle;
+    fixed_t         xSpeed;        // for sliding walls
+    fixed_t         ySpeed;
 } polyevent_t;
 
 typedef struct {
-	thinker_t       thinker;
-	int             polyobj;
-	int             speed;
-	int             dist;
-	int             totalDist;
-	int             direction;
-	fixed_t         xSpeed, ySpeed;
-	int             tics;
-	int             waitTics;
-	podoortype_t    type;
-	boolean         close;
+    thinker_t       thinker;
+    int             polyobj;
+    int             speed;
+    int             dist;
+    int             totalDist;
+    int             direction;
+    fixed_t         xSpeed, ySpeed;
+    int             tics;
+    int             waitTics;
+    podoortype_t    type;
+    boolean         close;
 } polydoor_t;
 
 enum {
-	PO_ANCHOR_TYPE = 3000,
-	PO_SPAWN_TYPE,
-	PO_SPAWNCRUSH_TYPE
+    PO_ANCHOR_TYPE = 3000,
+    PO_SPAWN_TYPE,
+    PO_SPAWNCRUSH_TYPE
 };
 
-#define PO_LINE_START 1			   // polyobj line start special
+#define PO_LINE_START 1            // polyobj line start special
 #define PO_LINE_EXPLICIT 5
 
-#define PolyBlockMap	((polyblock_t**) *gi.polyblockmap)
+#define PolyBlockMap    ((polyblock_t**) *gi.polyblockmap)
 
-extern polyobj_t *polyobjs;		   // list of all poly-objects on the level
+extern polyobj_t *polyobjs;        // list of all poly-objects on the level
 extern int      po_NumPolyobjs;
 
 void            T_PolyDoor(polydoor_t * pd);
 void            T_RotatePoly(polyevent_t * pe);
 boolean         EV_RotatePoly(line_t *line, byte *args, int direction,
-							  boolean overRide);
+                              boolean overRide);
 void            T_MovePoly(polyevent_t * pe);
 boolean         EV_MovePoly(line_t *line, byte *args, boolean timesEight,
-							boolean overRide);
+                            boolean overRide);
 boolean         EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type);
-
-#define polyobjs			(*(polyobj_t**)gi.polyobjs)
-#define po_NumPolyobjs		(*gi.numpolyobjs)
 
 void            PO_Init(int lump);
 boolean         PO_Busy(int polyobj);
@@ -361,4 +345,4 @@ boolean         PO_Busy(int polyobj);
 #define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
 #define LOOKDIR2RAD(x) (LOOKDIR2DEG(x)/180*PI)
 
-#endif							// __P_LOCAL__
+#endif                          // __P_LOCAL__

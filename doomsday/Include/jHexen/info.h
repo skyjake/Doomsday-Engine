@@ -3569,7 +3569,7 @@ typedef enum {
 
 // Text.
 typedef enum {
-    TXT_PRESSKEY = 22,            // 22
+    TXT_PRESSKEY,
     TXT_PRESSYN,
     TXT_TXT_PAUSED,
     TXT_QUITMSG,

@@ -18,7 +18,7 @@
 #endif
 
 #include "h2def.h"
-      
+
 //#pragma pack(1)
 
 #define ANGLETOSKYSHIFT         22 // sky map is 256*128*4 maps
@@ -34,7 +34,7 @@
 
 #define MINZ                    (FRACUNIT*4)
 
-#define FIELDOFVIEW             2048	// fineangles in the SCREENWIDTH wide window
+#define FIELDOFVIEW             2048    // fineangles in the SCREENWIDTH wide window
 
 //
 // lighting constants
@@ -58,147 +58,85 @@
 
 //================ used by play and refresh
 
-/*typedef struct
-   {
-   fixed_t         x,y;
+// Base plane ids.
+enum {
+    PLN_FLOOR,
+    PLN_CEILING
+};
 
-   // --- You can freely make changes after this.   
+typedef struct xsector_s {
+#if 0
+    fixed_t         floorheight, ceilingheight;
+    short           floorpic, ceilingpic;
+    short           lightlevel;
+    byte            rgb[3];
+    int             validcount;    // if == validcount, already checked
+    mobj_t         *thinglist;     // list of mobjs in sector
+    int             linecount;
+    struct line_s **Lines;         // [linecount] size
+    float           flatoffx, flatoffy; // Scrolling flats.
+    float           ceiloffx, ceiloffy; // Scrolling ceilings.
+    int             skyfix;        // Offset to ceiling height rendering w/sky.
+    float           reverb[NUM_REVERB_DATA];
+    int             blockbox[4];   // mapblock bounding box for height changes
+    plane_t         planes[2];     // PLN_*
+    degenmobj_t     soundorg;      // for any sounds played by the sector
+#endif
+    // --- You can freely make changes after this.
 
-   } vertex_t; */
+    short           special, tag;
+    int             soundtraversed; // 0 = untraversed, 1,2 = sndlines -1
+    mobj_t         *soundtarget;   // thing that made a sound (or null)
+    seqtype_t       seqType;       // stone, metal, heavy, etc...
+    void           *specialdata;   // thinker_t for reversable actions
+} xsector_t;
 
-struct line_s;
+typedef struct xline_s {
+    byte            special;
+    byte            arg1;
+    byte            arg2;
+    byte            arg3;
+    byte            arg4;
+    byte            arg5;
+    void           *specialdata;
+} xline_t;
 
-typedef struct sector_s {
-	fixed_t         floorheight, ceilingheight;
-	short           floorpic, ceilingpic;
-	short           lightlevel;
-	byte            rgb[3];
-	int             validcount;	   // if == validcount, already checked
-	mobj_t         *thinglist;	   // list of mobjs in sector
-	int             linecount;
-	struct line_s **Lines;		   // [linecount] size
-	float           flatoffx, flatoffy;	// Scrolling flats.
-	float           ceiloffx, ceiloffy;	// Scrolling ceilings.
-	int             skyfix;		   // Offset to ceiling height rendering w/sky.
-	float           reverb[NUM_REVERB_DATA];
-	int             blockbox[4];   // mapblock bounding box for height changes
-	plane_t         planes[2];	   // PLN_*
-	degenmobj_t     soundorg;	   // for any sounds played by the sector
-
-	// --- You can freely make changes after this.
-
-	short           special, tag;
-	int             soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
-	mobj_t         *soundtarget;   // thing that made a sound (or null)
-	seqtype_t       seqType;	   // stone, metal, heavy, etc...
-	void           *specialdata;   // thinker_t for reversable actions
-} sector_t;
-
-typedef struct side_s {
-	fixed_t         textureoffset; // add this to the calculated texture col
-	fixed_t         rowoffset;	   // add this to the calculated texture top
-	short           toptexture, bottomtexture, midtexture;
-	sector_t       *sector;
-
-	// --- You can freely make changes after this.  
-
-} side_t;
-
-typedef struct line_s {
-	vertex_t       *v1;
-	vertex_t       *v2;
-	short           flags;
-	sector_t       *frontsector;
-	sector_t       *backsector;
-	fixed_t         dx;
-	fixed_t         dy;
-	slopetype_t     slopetype;
-	int             validcount;
-	short           sidenum[2];
-	fixed_t         bbox[4];
-
-	// --- You can freely make changes after this.  
-
-	byte            special;
-	byte            arg1;
-	byte            arg2;
-	byte            arg3;
-	byte            arg4;
-	byte            arg5;
-	void           *specialdata;
-} line_t;
-
-/*typedef struct
-   {
-   vertex_t        *v1, *v2;
-   float            length;         // Length of the segment (v1 -> v2).
-   fixed_t         offset;
-   side_t          *sidedef;
-   line_t          *linedef;
-   sector_t        *frontsector;
-   sector_t        *backsector;            // NULL for one sided lines
-   byte         flags;
-   angle_t         angle;
-
-   // --- You can freely make changes after this.   
-
-   } seg_t; */
-
+/*
 // ===== Polyobj data =====
-typedef struct polyobj_s {
-	int             numSegs;
-	seg_t         **Segs;
-	int             validcount;
-	degenmobj_t     startSpot;
-	angle_t         angle;
-	vertex_t       *originalPts;   // used as the base for the rotations
-	vertex_t       *prevPts;	   // use to restore the old point values
-	int             tag;		   // reference tag assigned in HereticEd
-	int             bbox[4];
-	vertex_t        dest;
-	int             speed;		   // Destination XY and speed.
-	angle_t         destAngle, angleSpeed;	// Destination angle and rotation speed.
+typedef struct xpolyobj_s {
+#if 0
+    int             numSegs;
+    seg_t         **Segs;
+    int             validcount;
+    degenmobj_t     startSpot;
+    angle_t         angle;
+    vertex_t       *originalPts;   // used as the base for the rotations
+    vertex_t       *prevPts;       // use to restore the old point values
+    int             tag;           // reference tag assigned in HereticEd
+    int             bbox[4];
+    vertex_t        dest;
+    int             speed;         // Destination XY and speed.
+    angle_t         destAngle, angleSpeed;  // Destination angle and rotation speed.
 
-	// --- You can freely make changes after this.  
+    // --- You can freely make changes after this.
+#endif
 
-	boolean         crush;		   // should the polyobj attempt to crush mobjs?
-	int             seqType;
-	fixed_t         size;		   // polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
-	void           *specialdata;   // pointer a thinker, if the poly is moving
-} polyobj_t;
-
+    boolean         crush;         // should the polyobj attempt to crush mobjs?
+    int             seqType;
+    fixed_t         size;          // polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
+    void           *specialdata;   // pointer a thinker, if the poly is moving
+} xpolyobj_t;
+*/
+/*
+#if 0
 typedef struct polyblock_s {
-	polyobj_t      *polyobj;
-	struct polyblock_s *prev;
-	struct polyblock_s *next;
-	// Don't change this; engine uses a similar struct.
+    polyobj_t      *polyobj;
+    struct polyblock_s *prev;
+    struct polyblock_s *next;
+    // Don't change this; engine uses a similar struct.
 } polyblock_t;
-
-/*typedef struct subsector_s
-   {
-   sector_t        *sector;
-   unsigned short   numLines;
-   unsigned short   firstline;
-   polyobj_t        *poly;
-   // Sorted edge vertices for rendering floors and ceilings.
-   char         numverts;
-   fvertex_t        *verts;         // A list of edge vertices.
-   fvertex_t        bbox[2];        // Min and max points.
-   fvertex_t        midpoint;       // Center of vertices.
-   byte         flags;
-
-   // --- You can freely make changes after this.   
-
-   } subsector_t; */
-
-typedef struct {
-	fixed_t         x, y, dx, dy;  // partition line
-	fixed_t         bbox[2][4];	   // bounding box for each child
-	unsigned short  children[2];   // if NF_SUBSECTOR its a subsector
-
-	// --- You can freely make changes after this.  
-
-} node_t;
+#endif
+*/
 
 /*
    ==============================================================================
@@ -208,91 +146,12 @@ typedef struct {
    ==============================================================================
  */
 
-typedef byte    lighttable_t;	   // this could be wider for >8 bit display
+typedef byte    lighttable_t;      // this could be wider for >8 bit display
 
-/*#define MAXVISPLANES    160
-   #define MAXOPENINGS             SCREENWIDTH*64
-
-   typedef struct
-   {
-   fixed_t         height;
-   int                     picnum;
-   int                     lightlevel;
-   int                     special;
-   int                     minx, maxx;
-   byte            pad1;                                           // leave pads for [minx-1]/[maxx+1]
-   byte            top[SCREENWIDTH];
-   byte            pad2;
-   byte            pad3;
-   byte            bottom[SCREENWIDTH];
-   byte            pad4;
-   } visplane_t;
- */
-/*typedef struct drawseg_s
-   {
-   seg_t           *curline;
-   int                     x1, x2;
-   fixed_t         scale1, scale2, scalestep;
-   int                     silhouette;                     // 0=none, 1=bottom, 2=top, 3=both
-   fixed_t         bsilheight;                     // don't clip sprites above this
-   fixed_t         tsilheight;                     // don't clip sprites below this
-   // pointers to lists for sprite clipping
-   short           *sprtopclip;            // adjusted so [x1] is first value
-   short           *sprbottomclip;         // adjusted so [x1] is first value
-   short           *maskedtexturecol;      // adjusted so [x1] is first value
-   } drawseg_t;
- */
-#define SIL_NONE        0
-#define SIL_BOTTOM      1
-#define SIL_TOP         2
-#define SIL_BOTH        3
-
-//#define MAXDRAWSEGS             256
-/*
-   // A vissprite_t is a thing that will be drawn during a refresh
-   typedef struct vissprite_s
-   {
-   struct vissprite_s *prev, *next;
-   int             x1, x2;
-   fixed_t         gx, gy;                 // for line side calculation
-   fixed_t         gz, gzt;                // global bottom / top for silhouette clipping
-   fixed_t         startfrac;              // horizontal position of x1
-   fixed_t         scale;
-   fixed_t         xiscale;                // negative if flipped
-   fixed_t         texturemid;
-   int             patch;
-   //   lighttable_t    *colormap;
-   int              lightlevel;
-   float            v1[2], v2[2];       // The vertices (v1 is the left one).
-   float            secfloor, secceil;
-   int             mobjflags;        // for color translation and shadow draw
-   boolean         psprite;                // true if psprite
-   int              class;          // player class (used in translation)
-   fixed_t         floorclip;               
-
-   boolean          viewAligned;        // Align to view plane.
-   } vissprite_t;
- */
 
 //=============================================================================
 
 // Map data is in the main engine, so these are helpers...
-#define numvertexes		(*gi.numvertexes)
-#define numsegs			(*gi.numsegs)
-#define	numsectors		(*gi.numsectors)
-#define numsubsectors	(*gi.numsubsectors)
-#define numnodes		(*gi.numnodes)
-#define numlines		(*gi.numlines)
-#define numsides		(*gi.numsides)
-
-#define vertexes		(*(vertex_t**)gi.vertexes)
-#define segs			(*(seg_t**)gi.segs)
-#define	sectors			(*(sector_t**)gi.sectors)
-#define subsectors		(*(subsector_t**)gi.subsectors)
-#define nodes			(*(node_t**)gi.nodes)
-#define lines			(*(line_t**)gi.lines)
-#define sides			(*(side_t**)gi.sides)
-
 extern angle_t  clipangle;
 
 extern int      viewangletox[FINEANGLES / 2];
@@ -308,7 +167,7 @@ extern angle_t  rw_normalangle;
 extern int      centerx, centery;
 extern int      flyheight;
 
-#define Validcount		(*gi.validcount)
+#define validCount      (*gi.validcount)
 
 extern int      sscount, linecount, loopcount;
 extern lighttable_t *scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
@@ -319,7 +178,7 @@ extern int      extralight;
 
 extern fixed_t  viewcos, viewsin;
 
-extern int      detailshift;	   // 0 = high, 1 = low
+extern int      detailshift;       // 0 = high, 1 = low
 
 extern void     (*colfunc) (void);
 extern void     (*basecolfunc) (void);
@@ -338,9 +197,12 @@ extern int      rw_x;
 extern int      rw_stopx;
 
 extern boolean  segtextured;
-extern boolean  markfloor;		   // false if the back side is the same plane
+extern boolean  markfloor;         // false if the back side is the same plane
 extern boolean  markceiling;
 extern boolean  skymap;
+
+// SKY, store the number for name.
+#define SKYFLATNAME  "F_SKY"
 
 //extern  drawseg_t       drawsegs[MAXDRAWSEGS], *ds_p;
 
@@ -357,7 +219,7 @@ void            R_RenderBSPNode(int bspnum);
 //
 // R_segs.c
 //
-extern int      rw_angle1;		   // angle to line origin
+extern int      rw_angle1;         // angle to line origin
 extern int      TransTextureStart;
 extern int      TransTextureEnd;
 
@@ -371,7 +233,7 @@ extern int      TransTextureEnd;
 
 //extern  int                     skyflatnum;
 //#define skyflatnum (*gi.skyflatnum)
-#define skyflatnum		Get(DD_SKYFLATNUM)
+#define skyflatnum      Get(DD_SKYFLATNUM)
 
 //extern  short                   openings[MAXOPENINGS], *lastopening;
 
@@ -408,32 +270,32 @@ void            RD_DrawBBox(fixed_t *bbox);
 // R_data.c
 //
 typedef struct {
-	int             originx;	   // block origin (allways UL), which has allready
-	int             originy;	   // accounted  for the patch's internal origin
-	int             patch;
+    int             originx;       // block origin (allways UL), which has allready
+    int             originy;       // accounted  for the patch's internal origin
+    int             patch;
 } texpatch_t;
 
 // a maptexturedef_t describes a rectangular texture, which is composed of one
 // or more mappatch_t structures that arrange graphic patches
 typedef struct {
-	char            name[8];	   // for switch changing, etc
-	short           width;
-	short           height;
-	short           patchcount;
-	texpatch_t      patches[1];	   // [patchcount] drawn back to front
-	//  into the cached texture
-	// Extra stuff. -jk
-	boolean         masked;		   // from maptexture_t
+    char            name[8];       // for switch changing, etc
+    short           width;
+    short           height;
+    short           patchcount;
+    texpatch_t      patches[1];    // [patchcount] drawn back to front
+    //  into the cached texture
+    // Extra stuff. -jk
+    boolean         masked;        // from maptexture_t
 } texture_t;
 
-extern fixed_t *textureheight;	   // needed for texture pegging
-extern fixed_t *spritewidth;	   // needed for pre rendering (fracs)
+extern fixed_t *textureheight;     // needed for texture pegging
+extern fixed_t *spritewidth;       // needed for pre rendering (fracs)
 extern fixed_t *spriteoffset;
 extern fixed_t *spritetopoffset;
 extern int      viewwidth, scaledviewwidth, viewheight;
 
-#define firstflat		gi.Get(DD_FIRSTFLAT)
-#define numflats		gi.Get(DD_NUMFLATS)
+#define firstflat       gi.Get(DD_FIRSTFLAT)
+#define numflats        gi.Get(DD_NUMFLATS)
 
 extern int      firstspritelump, lastspritelump, numspritelumps;
 
@@ -448,7 +310,7 @@ void            R_UpdateData(void);
 //
 // R_things.c
 //
-#define MAXVISSPRITES   1024	   //192
+#define MAXVISSPRITES   1024       //192
 
 //extern  vissprite_t     vissprites[MAXVISSPRITES], *vissprite_p;
 //extern  vissprite_t     vsprsortedhead;
@@ -495,4 +357,4 @@ void            R_UpdateTranslationTables(void);
 
 //#pragma pack()
 
-#endif							// __R_LOCAL__
+#endif                          // __R_LOCAL__
