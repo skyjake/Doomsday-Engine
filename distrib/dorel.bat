@@ -1,5 +1,11 @@
 REM -- Does a complete Release distribution.
 
+REM -- Package Snowberry.
+c:
+cd "\Documents and Settings\jaakko\Desktop\Snowberry"
+call build.bat
+d:
+
 REM -- Rebuild Docs.
 cd ..\doomsday\Doc\Ame
 call make h t
