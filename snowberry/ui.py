@@ -72,14 +72,14 @@ popupMenuItems = [[], [], []]
 
 def addPopupMenuCommand(level, identifier, label=None):
     """Insert a new popup menu item for the Menu button.
-    
+
     @param level       Priority level (0, 1, 2).
     @param identifier  Identifier of the command.
     @param label       Label for the command. If not specified, the same
                        as the identifier.
     """
     global popupMenuItems
-    
+
     if(label == None):
         popupMenuItems[level].append(identifier)
     else:
@@ -125,7 +125,7 @@ def createTab(id):
 
     # Register this area so it can be found with getArea().
     _newArea(area)
-    
+
     return area
 
 
@@ -225,7 +225,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
 
     area.setWeight(1)
     area.setBorderDirs(Area.BORDER_NOT_BOTTOM)
-    contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL, 
+    contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL,
                                   border=6)
     contentArea.setWeight(0)
     #if titleText != None:
@@ -250,13 +250,13 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     contentArea.setBorderDirs(Area.BORDER_NOT_TOP)
     buttonArea = contentArea.createArea(alignment=Area.ALIGN_HORIZONTAL,
                                         border=0)
-                                        
+
     # If no explicit spacing is defined, use the default right
     # alignment.
     if '' not in buttons:
         # The implied spacer.
         buttonArea.addSpacer()
-        
+
     buttonArea.setBorder(6, Area.BORDER_LEFT_RIGHT)
     buttonArea.setWeight(0)
 
@@ -278,12 +278,12 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
             buttonArea.addSpacer()
             buttonArea.setWeight(0)
             continue
-        
+
         if button == defaultButton:
             style = widgets.Button.STYLE_DEFAULT
         else:
             style = widgets.Button.STYLE_NORMAL
-            
+
         widget = buttonArea.createButton(button, style=style)
         dialog.identifyWidget(button, widget)
 
@@ -319,7 +319,7 @@ class Area (widgets.Widget):
     # Layout alignments.
     ALIGN_HORIZONTAL = 0
     ALIGN_VERTICAL = 1
-    
+
     # Border flags.
     BORDER_TOP = 1
     BORDER_RIGHT = 2
@@ -414,7 +414,7 @@ class Area (widgets.Widget):
         self.border = border
         if dirs is not None:
             self.borderDirs = dirs
-            
+
     def setBorderDirs(self, dirs):
         self.borderDirs = dirs
 
@@ -538,7 +538,7 @@ class Area (widgets.Widget):
         then be set."""
 
         return wx.Panel(self.panel, -1)
-        
+
     def createArea(self, alignment=1, border=0, boxedWithTitle=None,
                    backgroundColor=None):
         """Create a sub-area that is a part of the parent area and can
@@ -732,7 +732,7 @@ class Area (widgets.Widget):
 
             # Create the multiarea and pair it up.
             sub.setWeight(14)
-            multi = sub.createMultiArea()            
+            multi = sub.createMultiArea()
             widget.setMultiArea(multi)
         else:
             widget = widgets.TabArea(self.panel, self.__getNewId(),
@@ -754,9 +754,9 @@ class Area (widgets.Widget):
                                   name, isChecked)
         self.__addWidget(widget)
         return widget
-        
+
     def createRadioButton(self, name, isChecked, isFirst=False):
-        widget = widgets.RadioButton(self.panel, self.__getNewId(), name, 
+        widget = widgets.RadioButton(self.panel, self.__getNewId(), name,
                                      isChecked, isFirst)
         self.__addWidget(widget)
         return widget
@@ -799,7 +799,7 @@ class Area (widgets.Widget):
         if setting.getType() == 'implicit':
             # No widgets for implicit settings.
             return
-        
+
         # Create a subarea for all the widgets of the setting.
         area = self.createArea(alignment = Area.ALIGN_HORIZONTAL)
         area.setExpanding(False)
@@ -808,7 +808,7 @@ class Area (widgets.Widget):
         # side.
         area.setWeight(leftWeight)
 
-        if setting.getType() != 'toggle':       
+        if setting.getType() != 'toggle':
             area.createText(setting.getId(), ':', 16, widgets.Text.RIGHT)
         else:
             # Check boxes use a secondary indicator label.
@@ -817,7 +817,7 @@ class Area (widgets.Widget):
 
         area.setWeight(0)
         area.addSpacer()
-        
+
         # Create the actual widget(s) for the setting.
         area.setWeight(rightWeight)
 
@@ -829,7 +829,7 @@ class Area (widgets.Widget):
                              getValue() == 'yes')
             check = area.createCheckBox(setting.getId(), isChecked)
             check.setDefaultIndicator(label)
-            
+
             #drop = area.createDropList(setting.getId())
 
             # Add all the possible choices into the list.
@@ -903,12 +903,12 @@ class Area (widgets.Widget):
                     currentValue = ''
                 else:
                     currentValue = value.getValue()
-                
+
                 selection = chooseFile(settingId + '-selection-title',
                                        currentValue,
                                        setting.hasToExist(),
                                        setting.getAllowedTypes())
-                
+
                 if len(selection) > 0:
                     pr.getActive().setValue(settingId, selection)
 
@@ -936,10 +936,10 @@ class Area (widgets.Widget):
                     currentValue = ''
                 else:
                     currentValue = value.getValue()
-                
+
                 selection = chooseFolder(settingId + '-selection-title',
                                          currentValue)
-                
+
                 if len(selection) > 0:
                     pr.getActive().setValue(settingId, selection)
 
@@ -1005,7 +1005,7 @@ class BoxedArea (Area):
     def retranslate(self):
         """Update the title of the box."""
         pass
-        
+
     def createSetting(self, setting):
         self.setBorder(AREA_BORDER_BOXED)
         #return self.doCreateSetting(setting, 19, 40)
@@ -1044,7 +1044,7 @@ class MultiArea (Area):
 
         self.currentPage = None
         self.pages = {}
-        
+
         events.addNotifyListener(self.onNotify, ['preparing-windows'])
 
     def destroy(self):
@@ -1085,7 +1085,7 @@ class MultiArea (Area):
         area = Area('', panel, alignment=align, border=border)
         area.setExpanding(True)
         area.setWeight(1)
-        
+
         self.pages[identifier] = area
 
         return area
@@ -1103,7 +1103,7 @@ class MultiArea (Area):
             if sizer:
                 sizer.Detach(area.panel)
             area.destroy()
-            
+
             # Remove the page from the dictionary.
             del self.pages[identifier]
         except KeyError:
@@ -1118,7 +1118,7 @@ class MultiArea (Area):
         all pages are hidden.
         """
         changed = False
-        
+
         for pageId in self.pages.keys():
             area = self.pages[pageId]
             sizer = area.panel.GetContainingSizer()
@@ -1161,9 +1161,9 @@ class MultiArea (Area):
 
     def refresh(self):
         """Redraw the contents of the multiarea."""
-        
+
         self.panel.Refresh()
-                
+
 
 class AreaDialog (wx.Dialog):
     """AreaDialog implements a wxDialog that has an Area inside it."""
@@ -1196,7 +1196,7 @@ class AreaDialog (wx.Dialog):
 
         @param command A command identifier.
         """
-        self.dialogEndCommands.append(command)        
+        self.dialogEndCommands.append(command)
 
     def center(self):
         """Position the dialog in the center of the screen."""
@@ -1286,7 +1286,7 @@ class WizardDialog (wiz.Wizard):
         """Add a new page into the wizard.  This is done automatically
         when a new WizardPage is constructed.  Does not affect the
         order of the pages."""
-        
+
         self.ownedPages.append(page)
 
     def onPageChange(self, event):
@@ -1299,7 +1299,7 @@ class WizardDialog (wiz.Wizard):
         """
         # Make sure the wizard window is large enough.
         self.FitToPage(firstPage)
-        
+
         if self.RunWizard(firstPage):
             # The wizard was successful.
             return 'ok'
@@ -1315,7 +1315,7 @@ class WizardDialog (wiz.Wizard):
 
 class WizardPage (wiz.PyWizardPage):
     """A wizard page that contains an Area for the widgets."""
-    
+
     def __init__(self, wizard, title):
         wiz.PyWizardPage.__init__(self, wizard)
 
@@ -1365,13 +1365,13 @@ class WizardPage (wiz.PyWizardPage):
     def GetNext(self):
         """Returns the next page of the wizard.  Called by
         WizardDialog."""
-        
+
         return self.next
 
     def GetPrev(self):
         """Returns the previous page of the wizard.  Called by
         WizardDialog."""
-        
+
         return self.prev
 
 
@@ -1382,7 +1382,7 @@ class Timer (wx.Timer):
         """Initialize the timer."""
         wx.Timer.__init__(self)
         self.notifyId = notifyId
-        
+
     def Notify(self):
         """Called when the timer expires."""
         self.expire()
@@ -1400,7 +1400,7 @@ class Timer (wx.Timer):
         """
         if self.notifyId:
             events.send(events.Notify(self.notifyId))
-        
+
 
 class MainPanel (wx.Panel):
     def __init__(self, parent):
@@ -1461,7 +1461,7 @@ class MainPanel (wx.Panel):
         area.setExpanding(False)
         area.setWeight(0)
         _newArea(area)
-        
+
         # Create the Menu button in the Preferences Command area.
         self.menuButton = area.createButton('popup-menu')
 
@@ -1526,8 +1526,8 @@ class MainFrame (wx.Frame):
         elif host.isUnix():
             initialSize = (900, 610)
         else:
-            initialSize = (925, 600)
-            
+            initialSize = (733, 527)
+
         # The configuration may define a window size.
         if st.isDefined('main-width'):
             initialSize = (st.getSystemInteger('main-width'), initialSize[1])
@@ -1541,7 +1541,7 @@ class MainFrame (wx.Frame):
         # Set the icon for the frame.
         icon = wx.Icon('graphics/snowberry.ico', wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
-        
+
         #self.Iconize(True)
         #self.Hide()
 
@@ -1549,7 +1549,7 @@ class MainFrame (wx.Frame):
         PROF_SPLITTER_ID = 9502
         self.splitter = None
         self.profSplitter = None
-        
+
         # The parentWin is where the profSplitter and the help panel
         # are inside.
         parentWin = self
@@ -1619,7 +1619,7 @@ class MainFrame (wx.Frame):
         #if self.splitter:
         #    self.splitter.Freeze()
 
-            
+
         #if self.helpPanel:
         #    self.helpPanel.Freeze()
         #    self.helpPanel.Hide()
@@ -1652,7 +1652,7 @@ class MainFrame (wx.Frame):
         pass
 #=======
 #        """Show the main window."""
-#        
+#
 #        self.mainPanel.Thaw()
 #        self.Show()
 #        if self.helpPanel:
@@ -1662,15 +1662,15 @@ class MainFrame (wx.Frame):
 
     def updateLayout(self):
         """Update the layout of the widgets inside the main window."""
-        
+
         # Also update all UI areas.
         for key in uiAreas:
             uiAreas[key].updateLayout()
 
         self.mainPanel.updateLayout()
         #self.Show()
-        
-        if not host.isMac(): 
+
+        if not host.isMac():
             self.mainPanel.GetSizer().Fit(self.mainPanel)
 
         # The main panel's sizer does not account for the help panel.
@@ -1679,9 +1679,9 @@ class MainFrame (wx.Frame):
         #    self.SetSize((windowSize[0] + INITIAL_SASH_POS, windowSize[1]))
 
     def onWindowSize(self, ev):
-        """Handle the wxWidgets event that is sent when the main window 
+        """Handle the wxWidgets event that is sent when the main window
         size changes.
-        
+
         @param ev The wxWidgets event.
         """
         # Allow others to handle this event as well.
@@ -1694,7 +1694,7 @@ class MainFrame (wx.Frame):
                 pos = INITIAL_SASH_POS
 
             self.splitter.SetSashPosition(ev.GetSize()[0] - pos)
-            
+
     def onSplitChange(self, ev):
         """Update the splitter anchor position."""
 
@@ -1717,7 +1717,7 @@ class MainFrame (wx.Frame):
         # Send a 'quit' command so that everyone has a chance to save
         # their current status.
         events.send(events.Notify('quit'))
-        
+
         # Save window size to UserHome/conf/window.conf.
         winSize = self.GetSizeTuple()
         fileName = os.path.join(paths.getUserPath(paths.CONF), 'window.conf')
@@ -1730,7 +1730,7 @@ class MainFrame (wx.Frame):
                 f.write('  split-position = %i\n' % self.splitPos)
             f.write('  profile-split-position = %i\n' % self.profSplitPos)
             f.write(')\n')
-        except: 
+        except:
             # Window size not saved.
             pass
 
@@ -1748,7 +1748,7 @@ class MainFrame (wx.Frame):
         """
         if event.hasId('quit'):
             self.Close()
-            
+
         elif event.hasId('popup-menu'):
             # TODO: This would be more logical as a part of MainPanel.
             # Show the popup commands menu.
@@ -1756,16 +1756,16 @@ class MainFrame (wx.Frame):
             self.menuCommandMap = {}
 
             global popupMenuItems
-            
+
             menuItems = []
-            
+
             # Three levels of priority.
             for prio in range(3):
                 # Sort the items based on translated labels.
                 popupMenuItems[prio].sort(
                     lambda x, y: cmp(language.translate('menu-' + x),
                                      language.translate('menu-' + y)))
-                
+
                 if len(popupMenuItems[prio]) > 0 and len(menuItems) > 0:
                     # Separate the priority levels.
                     menuItems.append('-')
@@ -1784,7 +1784,7 @@ class MainFrame (wx.Frame):
                     # This is just a separator.
                     menu.AppendSeparator()
                     continue
-                
+
                 # Generate a new ID for the item.
                 wxId = wx.NewId()
                 self.menuCommandMap[wxId] = itemCommand
