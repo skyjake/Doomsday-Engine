@@ -45,6 +45,7 @@ mapListBox = None
 def init():
     # Create the Maps page.
     area = ui.createTab(MAPS)
+    area.setBorderDirs(ui.Area.BORDER_NOT_BOTTOM)
     area.setWeight(1)
 
     global mapListBox
@@ -56,8 +57,9 @@ def init():
 
     # Some buttons in the bottom.
     area.setWeight(0)
+    area.setBorderDirs(ui.Area.BORDER_ALL)
     buttonArea = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
-
+    buttonArea.setBorderDirs(ui.Area.BORDER_LEFT_RIGHT)
     buttonArea.setWeight(0)
     clearButton = buttonArea.createButton('maps-list-clear')
 

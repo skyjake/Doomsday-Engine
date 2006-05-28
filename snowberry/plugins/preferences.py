@@ -60,7 +60,7 @@ def handleNotify(event):
         box.setWeight(0)
         box.createText('addon-paths-info')
         pathList = box.createList('addon-paths-list')
-        pathList.setMinSize(100, 90)
+        pathList.setMinSize(100, 70)
 
         # Insert the current custom paths into the list.
         for p in paths.getAddonPaths():

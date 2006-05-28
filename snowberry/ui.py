@@ -121,7 +121,7 @@ def createTab(id):
     @return An Area object that represents the new tab.
     """
     area = mainPanel.getTabs().addTab(id)
-    area.setBorder(3)
+    area.setBorder(10)
 
     # Register this area so it can be found with getArea().
     _newArea(area)
@@ -211,41 +211,43 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
     dialog = createDialog(id, Area.ALIGN_HORIZONTAL)
     area = dialog.getArea()
 
+    area.setMinSize(400, 20)
+
     # The Snowberry logo is on the left.
-    area.setWeight(0)
-    imageArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0,
-                                backgroundColor=wx.Colour(255, 255, 255))
-    imageArea.setWeight(1)
-    imageArea.setExpanding(True)
-    imageArea.addSpacer()
-    imageArea.setWeight(0)
-    imageArea.createImage('snowberry')
+    #area.setWeight(0)
+    #imageArea = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0,
+    #                            backgroundColor=wx.Colour(255, 255, 255))
+    #imageArea.setWeight(1)
+    #imageArea.setExpanding(True)
+    #imageArea.addSpacer()
+    #imageArea.setWeight(0)
+    #imageArea.createImage('snowberry')
 
     area.setWeight(1)
+    area.setBorderDirs(Area.BORDER_NOT_BOTTOM)
     contentArea = area.createArea(alignment=Area.ALIGN_VERTICAL, 
                                   border=6)
     contentArea.setWeight(0)
-    if titleText != None:
-        contentArea.setBorder(0)
-        titleArea = contentArea.createArea(border=6,
-            backgroundColor=wx.Colour(255, 255, 255))
-        contentArea.setBorder(6)
-        title = titleArea.createText('')
-        title.setTitleStyle()
-        title.setText(titleText)
-        title.setMinSize(400, 20)
+    #if titleText != None:
+    #    contentArea.setBorder(0)
+    #    titleArea = contentArea.createArea(border=6,
+    #        backgroundColor=wx.Colour(255, 255, 255))
+    #    contentArea.setBorder(6)
+    #    title = titleArea.createText('')
+    #    title.setTitleStyle()
+    #    title.setText(titleText)
+    #    title.setMinSize(400, 20)
 
-        #contentArea.createLine()
-
-    if host.isMac():
-        # Generous borders on the Mac.
-        contentArea.setBorder(10)
+    #if host.isMac():
+    # Generous borders on the Mac.
+    contentArea.setBorder(16)
 
     contentArea.setWeight(1)
     userArea = contentArea.createArea(border=6)
 
     # Create the buttons.
     contentArea.setWeight(0)
+    contentArea.setBorderDirs(Area.BORDER_NOT_TOP)
     buttonArea = contentArea.createArea(alignment=Area.ALIGN_HORIZONTAL,
                                         border=0)
                                         
@@ -255,7 +257,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
         # The implied spacer.
         buttonArea.addSpacer()
         
-    buttonArea.setBorder(6)
+    buttonArea.setBorder(6, Area.BORDER_LEFT_RIGHT)
     buttonArea.setWeight(0)
 
     if not host.isMac():
@@ -317,11 +319,23 @@ class Area (widgets.Widget):
     # Layout alignments.
     ALIGN_HORIZONTAL = 0
     ALIGN_VERTICAL = 1
+    
+    # Border flags.
+    BORDER_TOP = 1
+    BORDER_RIGHT = 2
+    BORDER_BOTTOM = 4
+    BORDER_LEFT = 8
+    BORDER_TOP_BOTTOM = (1 | 4)
+    BORDER_LEFT_RIGHT = (2 | 8)
+    BORDER_NOT_TOP = (2 | 4 | 8)
+    BORDER_NOT_BOTTOM = (1 | 2 | 8)
+    BORDER_ALL = (1 | 2 | 4 | 8)
 
     # wxWidget ID counters.
     WIDGET_ID = 100
 
-    def __init__(self, id, panel, alignment=0, border=0, parentArea=None):
+    def __init__(self, id, panel, alignment=0, border=0, parentArea=None,
+                 borderDirs=15):
         """The constructor initializes the Area instance so that it
         can be used immediately afterwards.
 
@@ -340,6 +354,7 @@ class Area (widgets.Widget):
         self.id = id
         self.panel = panel
         self.border = border
+        self.borderDirs = borderDirs
 
         # Widget layout parameters.
         # Weight for sizer when adding widgets.
@@ -391,12 +406,17 @@ class Area (widgets.Widget):
         that is created."""
         self.weight = weight
 
-    def setBorder(self, border):
+    def setBorder(self, border, dirs=None):
         """Set the width of empty space around widgets.
 
         @param border Number of pixels for new borders.
         """
         self.border = border
+        if dirs is not None:
+            self.borderDirs = dirs
+            
+    def setBorderDirs(self, dirs):
+        self.borderDirs = dirs
 
     def setBackgroundColor(self, red, green, blue):
         self.panel.SetBackgroundColour(wx.Colour(red, green, blue))
@@ -444,10 +464,14 @@ class Area (widgets.Widget):
         flags = 0
         if self.expanding: flags |= wx.EXPAND
         if self.border > 0:
-            if len(self.widgets) > 1:
-                flags |= wx.ALL
-            else:
-                flags |= wx.NORTH | wx.SOUTH | wx.WEST | wx.EAST
+            if self.borderDirs & 0x1:
+                flags |= wx.TOP
+            if self.borderDirs & 0x2:
+                flags |= wx.RIGHT
+            if self.borderDirs & 0x4:
+                flags |= wx.BOTTOM
+            if self.borderDirs & 0x8:
+                flags |= wx.LEFT
         flags |= wx.ALIGN_CENTER_VERTICAL
         flags |= wx.ALIGN_CENTER
         return flags
@@ -701,12 +725,14 @@ class Area (widgets.Widget):
             # Create the formatted list (with extended functionality).
             widget = widgets.FormattedTabArea(self.panel, self.__getNewId(),
                                               name)
-            sub.setWeight(2)
+            sub.setWeight(5)
+            sub.setBorder(8, Area.BORDER_RIGHT)
             sub.__addWidget(widget)
+            sub.setBorder(0)
 
             # Create the multiarea and pair it up.
-            sub.setWeight(7)
-            multi = sub.createMultiArea()
+            sub.setWeight(14)
+            multi = sub.createMultiArea()            
             widget.setMultiArea(multi)
         else:
             widget = widgets.TabArea(self.panel, self.__getNewId(),
@@ -1018,7 +1044,7 @@ class MultiArea (Area):
 
         self.currentPage = None
         self.pages = {}
-
+        
         events.addNotifyListener(self.onNotify, ['preparing-windows'])
 
     def destroy(self):
@@ -1059,7 +1085,7 @@ class MultiArea (Area):
         area = Area('', panel, alignment=align, border=border)
         area.setExpanding(True)
         area.setWeight(1)
-
+        
         self.pages[identifier] = area
 
         return area
@@ -1408,7 +1434,7 @@ class MainPanel (wx.Panel):
 
         tabPanel = wx.Panel(self, -1,
                             style=wx.NO_BORDER | wx.CLIP_CHILDREN)
-        tabsArea = Area(Area.TABS, tabPanel, Area.ALIGN_VERTICAL, 0)
+        tabsArea = Area(Area.TABS, tabPanel, Area.ALIGN_VERTICAL, 16)
         _newArea(tabsArea)
 
         dSizer.Add(tabPanel, 5, wx.EXPAND | wx.ALL, 3)
@@ -1416,7 +1442,9 @@ class MainPanel (wx.Panel):
         # Command area.
         commandPanel = wx.Panel(self, -1, style=wx.NO_BORDER
                                  | wx.CLIP_CHILDREN)
-        area = Area(Area.COMMAND, commandPanel, Area.ALIGN_HORIZONTAL, 10)
+        area = Area(Area.COMMAND, commandPanel, Area.ALIGN_HORIZONTAL, 18,
+                    borderDirs=Area.BORDER_LEFT | Area.BORDER_RIGHT |
+                               Area.BORDER_BOTTOM)
         # The command area is aligned to the right.
         area.addSpacer()
         area.setExpanding(False)
@@ -1427,7 +1455,9 @@ class MainPanel (wx.Panel):
         prefCommandPanel = wx.Panel(self, -1, style=wx.NO_BORDER |
                                     wx.CLIP_CHILDREN)
         area = Area(Area.PREFCOMMAND, prefCommandPanel,
-                    Area.ALIGN_HORIZONTAL, 10)
+                    Area.ALIGN_HORIZONTAL, 18,
+                    borderDirs=Area.BORDER_LEFT | Area.BORDER_RIGHT |
+                               Area.BORDER_BOTTOM)
         area.setExpanding(False)
         area.setWeight(0)
         _newArea(area)
@@ -1492,7 +1522,7 @@ class MainFrame (wx.Frame):
 
         # FIXME: Layout is botched. Way too wide.
         if host.isMac():
-            initialSize = (900, 550)
+            initialSize = (769, 559)
         elif host.isUnix():
             initialSize = (900, 610)
         else:

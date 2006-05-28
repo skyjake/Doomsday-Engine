@@ -54,6 +54,7 @@ commonItems = ['-',
 def init():
     # Create the Addons page.
     area = ui.createTab(ADDONS)
+    area.setBorderDirs(ui.Area.BORDER_NOT_BOTTOM)
     
     # Let's create the addons tree...
     area.setWeight(1)
@@ -66,7 +67,9 @@ def init():
 
     # The addon control buttons.
     area.setWeight(0)
+    area.setBorderDirs(ui.Area.BORDER_ALL)
     buttonArea = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
+    buttonArea.setBorderDirs(ui.Area.BORDER_LEFT_RIGHT)
 
     buttonArea.setWeight(0)
     buttonArea.createButton('install-addon', wg.Button.STYLE_MINI)

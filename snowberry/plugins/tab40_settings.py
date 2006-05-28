@@ -267,7 +267,7 @@ def populateTabs():
     for areaId, area in categoryTabs:
         # Use the appropriate layout parameters.
         area.setWeight(0)
-        area.setBorder(2)
+        #area.setBorder(2)
 
         # Create a title inside the tab.
         if areaId != 'addons-options' and areaId[-8:] == '-options':

@@ -30,7 +30,7 @@ cp graphics/{*.jpg,*.png,*.bmp,*.ico} build/graphics
 cp lang/english.lang build/lang
 cp profiles/*.prof build/profiles
 cp plugins/tab*.py build/plugins
-cp plugins/{example.plugin,about.py,help.py,launcher.py,preferences.py,profilelist.py,wizard.py} build/plugins
+cp -R plugins/{example.plugin,about.py,help.py,launcher.py,preferences.py,profilelist.py,wizard.py} build/plugins
 
 # Build the bundle.
 python buildapp.py py2app
