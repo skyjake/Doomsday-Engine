@@ -839,10 +839,10 @@ void Net_Drawer(void)
         }
         strcat(buf, "]");
         i = screenWidth - FR_TextWidth(buf);
-        gl.Color3f(0, 0, 0);
-        FR_TextOut(buf, i - 8, 12);
+        //gl.Color3f(0, 0, 0);
+        //FR_TextOut(buf, i - 8, 12);
         gl.Color3f(1, 1, 1);
-        FR_TextOut(buf, i - 10, 10);
+        FR_ShadowTextOut(buf, i - 10, 10);
     }
     if(net_dev)
     {

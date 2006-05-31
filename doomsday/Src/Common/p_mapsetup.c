@@ -372,6 +372,12 @@ static void P_ResetWorldState(void)
 
     // Only used with 666/7 specials
     bossKilled = false;
+
+    // Brain info
+    numbraintargets = 0;
+    numbraintargets_alloc = -1;
+    brain.targeton = 0;
+    brain.easy = 0;           // killough 3/26/98: always init easy to 0
 #endif
 
     // clear special respawning que

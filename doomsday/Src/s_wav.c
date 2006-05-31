@@ -82,8 +82,8 @@ static void WRead(void **ptr, void **dest, int length)
  * Z_Free when it's no longer needed. The WAV file must have only one
  * channel! All parameters must be passed, no NULLs are allowed.
  */
-void   *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
-                       int *samples)
+void *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
+                     int *samples)
 {
     byte   *end = data + datalength;
     byte   *sampledata = NULL;
@@ -99,6 +99,9 @@ void   *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
         return NULL;
     }
 
+    // Correct endianness.
+    riff_header->len = ULONG(riff_header->len);
+    
     // Check that it's really a WAVE file.
     if(strncmp(data, "WAVE", 4))
     {
@@ -113,12 +116,24 @@ void   *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
         // Read next chunk header.
         WRead((void **) &data, (void **) &riff_chunk, sizeof(*riff_chunk));
 
+        // Correct endianness.
+        riff_chunk->len = ULONG(riff_chunk->len);
+        
         // What have we got here?
         if(!strncmp(riff_chunk->id, "fmt ", 4))
         {
             // Read format chunk.
             WRead((void **) &data, (void **) &wave_format,
                   sizeof(*wave_format));
+            
+            // Correct endianness.
+            wave_format->wFormatTag = USHORT(wave_format->wFormatTag);
+            wave_format->wChannels = USHORT(wave_format->wChannels);
+            wave_format->dwSamplesPerSec = ULONG(wave_format->dwSamplesPerSec);
+            wave_format->dwAvgBytesPerSec = ULONG(wave_format->dwAvgBytesPerSec);
+            wave_format->wBlockAlign = USHORT(wave_format->wBlockAlign);
+            wave_format->wBitsPerSample = USHORT(wave_format->wBitsPerSample);
+            
             // Check that it's a format we know how to read.
             if(wave_format->wFormatTag != WAVE_FORMAT_PCM)
             {
@@ -163,6 +178,15 @@ void   *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
             // Allocate the sample buffer.
             sampledata = Z_Malloc(riff_chunk->len, PU_STATIC, 0);
             memcpy(sampledata, data, riff_chunk->len);
+#ifdef __BIG_ENDIAN__
+            // Correct endianness.
+            /*if(wave_format->wBitsPerSample == 16)
+            {
+                ushort* sample = sampledata;
+                for(; sample < ((short*)sampledata) + *samples; ++sample)
+                    *sample = USHORT(*sample);
+            }*/
+#endif
             // We're satisfied with this! Let's get out of here.
             break;
         }
@@ -175,7 +199,7 @@ void   *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
     return sampledata;
 }
 
-void   *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
+void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
 {
     DFILE  *file;
     byte   *data;

@@ -37,9 +37,6 @@
 extern          "C" {
 #endif
 
-#include "dd_share.h"
-#include "dd_plugin.h"
-
 /*
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
@@ -50,28 +47,20 @@ extern          "C" {
  * structures is needed.
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
-    typedef void node_s;
-    typedef void vertex_s;
-    typedef void line_s;
-    typedef void side_s;
-    typedef void seg_s;
-    typedef void subsector_s;
-    typedef void sector_s;
-    typedef void polyblock_s;
-    typedef void polyobj_s;
-    typedef void plane_s;
-
-    typedef struct node_s node_t;
-    typedef struct vertex_s vertex_t;
-    typedef struct line_s line_t;
-    typedef struct side_s side_t;
-    typedef struct seg_s seg_t;
-    typedef struct subsector_s subsector_t;
-    typedef struct sector_s sector_t;
-    typedef struct polyblock_s polyblock_t;
-    typedef struct polyobj_s polyobj_t;
-    typedef struct plane_s plane_t;
+    typedef struct node_s { int type; } node_t;
+    typedef struct vertex_s {int type; } vertex_t;
+    typedef struct line_s { int type; } line_t;
+    typedef struct side_s { int type; } side_t;
+    typedef struct seg_s { int type; } seg_t;
+    typedef struct subsector_s { int type; } subsector_t;
+    typedef struct sector_s { int type; } sector_t;
+    typedef struct polyblock_s { int type; } polyblock_t;
+    typedef struct polyobj_s { int type; } polyobj_t;
+    typedef struct plane_s { int type; } plane_t;
 #endif
+
+#include "dd_share.h"
+#include "dd_plugin.h"
 
     // Base.
     void           *DD_GetDGLProcAddress(const char *name);

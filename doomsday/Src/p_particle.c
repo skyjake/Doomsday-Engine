@@ -1111,6 +1111,9 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
     int     g;
     flat_t *flat = R_GetFlat(flatpic);
 
+    if(!flat)
+        return NULL;
+    
     if(flatpic <= 0)
         return flat->ptcgen = NULL;
 

@@ -149,7 +149,7 @@ int     CmdReturnValue = 0;
 
 float   ConsoleOpenY;           // Where the console bottom is when open.
 int     consoleTurn;            // The rotation variable.
-int     consoleLight = 50, consoleAlpha = 75;
+int     consoleLight = 14, consoleAlpha = 75;
 int     conCompMode = 0;        // Completion mode.
 int     conSilentCVars = 1;
 byte    consoleDump = true;
@@ -1993,6 +1993,7 @@ void Con_DrawSideText(const char *text, int line, float alpha)
         if(Cfont.Filter)
             Cfont.Filter(buf);
 
+        /*
         if(consoleShadowText)
         {
             // Draw a shadow.
@@ -2000,6 +2001,7 @@ void Con_DrawSideText(const char *text, int line, float alpha)
             Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 2,
                           y / Cfont.sizeY + 1);
         }
+        */
         gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha);
         Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 3, y / Cfont.sizeY);
     }
@@ -2017,7 +2019,8 @@ void Con_Drawer(void)
     char    buff[256], temp[256];
     float   fontScaledY;
     int     bgX = 64, bgY = 64;
-
+    int     textOffsetY = 0;
+    
     if(ConsoleY == 0)
         return;                 // We have nothing to do here.
 
@@ -2025,16 +2028,19 @@ void Con_Drawer(void)
     if(Cfont.TextOut == NULL)
     {
         Cfont.flags = DDFONT_WHITE;
-        Cfont.height = FR_TextHeight("Con");
+        Cfont.height = FR_SingleLineHeight("Con");
         Cfont.sizeX = 1;
         Cfont.sizeY = 1;
-        Cfont.TextOut = FR_TextOut;
+        Cfont.TextOut = FR_ShadowTextOut;
         Cfont.Width = FR_TextWidth;
         Cfont.Filter = NULL;
     }
 
+    FR_SetFont(glFontFixed);
+
     fontScaledY = Cfont.height * Cfont.sizeY;
     fontSy = fontScaledY / gtosMulY;
+    textOffsetY = fontScaledY / 4;
 
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
@@ -2088,13 +2094,14 @@ void Con_Drawer(void)
     gl.Scalef(Cfont.sizeX, Cfont.sizeY, 1);
 
     // The game & version number.
-    Con_DrawSideText(gx.Get(DD_GAME_ID), 2, closeFade);
-    Con_DrawSideText(gx.Get(DD_GAME_MODE), 1, closeFade);
+    //Con_DrawSideText(gx.Get(DD_GAME_ID), 2, closeFade);
+    //Con_DrawSideText(gx.Get(DD_GAME_MODE), 1, closeFade);
 
     gl.Color4f(1, 1, 1, closeFade);
 
     // The text in the console buffer will be drawn from the bottom up (!).
-    for(i = bPos - bLineOff - 1, y = ConsoleY * gtosMulY - fontScaledY * 2;
+    for(i = bPos - bLineOff - 1, 
+        y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
         i >= 0 && i < bufferLines && y > -fontScaledY; i--)
     {
         cbline_t *line = cbuffer + i;
@@ -2115,12 +2122,12 @@ void Con_Drawer(void)
 
             if(Cfont.Filter)
                 Cfont.Filter(buff);
-            else if(consoleShadowText)
+            /*else if(consoleShadowText)
             {
                 // Draw a shadow.
                 gl.Color3f(0, 0, 0);
                 Cfont.TextOut(buff, x + 2, y / Cfont.sizeY + 2);
-            }
+            }*/
 
             // Set the color.
             if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
@@ -2137,18 +2144,19 @@ void Con_Drawer(void)
 
     if(Cfont.Filter)
         Cfont.Filter(buff);
-    if(consoleShadowText)
+    /*if(consoleShadowText)
     {
         // Draw a shadow.
         gl.Color3f(0, 0, 0);
         Cfont.TextOut(buff, 4,
                       2 + (ConsoleY * gtosMulY - fontScaledY) / Cfont.sizeY);
-    }
+    }*/
     if(Cfont.flags & DDFONT_WHITE)
         gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], closeFade);
     else
         gl.Color4f(1, 1, 1, closeFade);
-    Cfont.TextOut(buff, 2, (ConsoleY * gtosMulY - fontScaledY) / Cfont.sizeY);
+    Cfont.TextOut(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) / 
+                  Cfont.sizeY);
 
     // Width of the current char.
     temp[0] = cmdLine[cmdCursor];
@@ -2166,12 +2174,15 @@ void Con_Drawer(void)
     if(!conInputLock)
     {
         gl.Disable(DGL_TEXTURING);
-        GL_DrawRect(2 + i, ((ConsoleY * gtosMulY - fontScaledY) / Cfont.sizeY) + Cfont.height,
+        GL_DrawRect(2 + i, -textOffsetY + ((ConsoleY * gtosMulY - fontScaledY) / 
+                                           Cfont.sizeY) + Cfont.height,
                     k, -((cmdInsMode)? Cfont.height : Cfont.height/4),
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
                     closeFade * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         gl.Enable(DGL_TEXTURING);
     }
+    
+    Con_DrawTitle(closeFade);
 
     // Restore the original matrices.
     gl.MatrixMode(DGL_MODELVIEW);
@@ -2362,17 +2373,17 @@ D_CMD(Console)
             Con_Printf("Tilde         Open/close the console.\n");
             Con_Printf
                 ("Shift-Tilde   Switch between half and full screen mode.\n");
-            Con_Printf("PageUp/Down   Scroll up/down two lines.\n");
+            Con_Printf("F5            Clear the buffer.\n");
+            Con_Printf("Alt-C         Clear the command line.\n");
+            Con_Printf("Shift-Left    Move cursor to the start of the command line.\n");
+            Con_Printf("Shift-Right   Move cursor to the end of the command line.\n");
             Con_Printf
                 ("Ins/Del       Move console window up/down one line.\n");
             Con_Printf
                 ("Shift-Ins/Del Move console window three lines at a time.\n");
             Con_Printf("Home          Jump to the beginning of the buffer.\n");
             Con_Printf("End           Jump to the end of the buffer.\n");
-            Con_Printf("F5            Clear the buffer.\n");
-            Con_Printf("Alt-C         Clear the command-lne.\n");
-            Con_Printf("Shift-left    Move cursor to the start of the command line.\n");
-            Con_Printf("Shift-right   Move cursor to the end of the command line.\n");
+            Con_Printf("PageUp/Down   Scroll up/down two lines.\n");
             Con_Printf("\n");
             Con_Printf
                 ("Type \"listcmds\" to see a list of available commands.\n");
@@ -2657,22 +2668,26 @@ D_CMD(Font)
     }
     if(!stricmp(argv[1], "default"))
     {
+        FR_SetFont(glFontFixed);
         FR_DestroyFont(FR_GetCurrent());
-        FR_PrepareFont("Fixed");
+        FR_PrepareFont(GL_ChooseFixedFont());
+        glFontFixed = FR_GetCurrent();
         Cfont.flags = DDFONT_WHITE;
-        Cfont.height = FR_TextHeight("Con");
+        Cfont.height = FR_SingleLineHeight("Con");
         Cfont.sizeX = 1;
         Cfont.sizeY = 1;
-        Cfont.TextOut = FR_TextOut;
+        Cfont.TextOut = FR_ShadowTextOut;
         Cfont.Width = FR_TextWidth;
         Cfont.Filter = NULL;
     }
     else if(!stricmp(argv[1], "name") && argc == 3)
     {
+        FR_SetFont(glFontFixed);
         FR_DestroyFont(FR_GetCurrent());
         if(!FR_PrepareFont(argv[2]))
-            FR_PrepareFont("Fixed");
-        Cfont.height = FR_TextHeight("Con");
+            FR_PrepareFont(GL_ChooseFixedFont());
+        glFontFixed = FR_GetCurrent();
+        Cfont.height = FR_SingleLineHeight("Con");
     }
     else if(argc == 3)
     {

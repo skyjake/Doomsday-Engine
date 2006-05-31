@@ -482,14 +482,22 @@ void RL_AddShinyFlat(planeinfo_t *plane, rendpoly_t *poly,
     RL_AddPoly(poly);
 }
 
-void Rend_PolyTextureBlend(int texture, rendpoly_t *poly)
+static void Rend_PolyTexBlend(int texture, boolean isFlat, rendpoly_t *poly)
 {
-    translation_t *xlat = &texturetranslation[texture];
+    translation_t *xlat = NULL;
+
+    if(texture >= 0)
+    {
+        if(isFlat)
+            xlat = &R_GetFlat(texture)->translation;
+        else
+            xlat = &texturetranslation[texture];
+    }
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
     // unblended surfaces.
-    if(!smoothTexAnim || numTexUnits < 2 || !texture ||
+    if(!xlat || !smoothTexAnim || numTexUnits < 2 ||
        xlat->current == xlat->next || (!useFog && xlat->inter < 0))
     {
         // No blending for you, my friend.
@@ -499,36 +507,15 @@ void Rend_PolyTextureBlend(int texture, rendpoly_t *poly)
     }
 
     // Get info of the blend target. The globals texw and texh are modified.
-    poly->intertex.id = GL_PrepareTexture2(xlat->next, false);
+    if(isFlat)
+        poly->intertex.id = GL_PrepareFlat2(xlat->next, false);
+    else
+        poly->intertex.id = GL_PrepareTexture2(xlat->next, false);
+
     poly->intertex.width = texw;
     poly->intertex.height = texh;
     poly->intertex.detail = texdetail;
     poly->interpos = xlat->inter;
-}
-
-void Rend_PolyFlatBlend(int flat, rendpoly_t *poly)
-{
-    flat_t *ptr = R_GetFlat(flat);
-
-    // If fog is active, inter=0 is accepted as well. Otherwise flickering
-    // may occur if the rendering passes don't match for blended and
-    // unblended surfaces.
-    if(!smoothTexAnim || numTexUnits < 2 ||
-       ptr->translation.current == ptr->translation.next || (!useFog &&
-                                                             ptr->translation.
-                                                             inter < 0))
-    {
-        memset(&poly->intertex, 0, sizeof(poly->intertex));
-        poly->interpos = 0;
-        return;
-    }
-
-    // Get info of the blend target. The globals texw and texh are modified.
-    poly->intertex.id = GL_PrepareFlat2(ptr->translation.next, false);
-    poly->intertex.width = texw;
-    poly->intertex.height = texh;
-    poly->intertex.detail = texdetail;
-    poly->interpos = ptr->translation.inter;
 }
 
 /*
@@ -647,7 +634,12 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, int tex, boolean isFlat)
     {
         // Prepare the flat/texture
         if(isFlat)
+        {
+            if(R_IsSkyFlat(tex))
+                return 0;
+
             poly->tex.id = curtex = GL_PrepareFlat(tex);
+        }
         else
             poly->tex.id = curtex = GL_PrepareTexture(tex);
 
@@ -815,12 +807,14 @@ int Rend_MidTexturePos(float *top, float *bottom, float *texoffy, float tcyoff,
  *
  * TODO: Combine all the boolean (hint) parameters into a single flags var.
  */
-void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
-                            sector_t *frontsec, int texture, int mode, byte alpha,
-                            boolean blend, boolean shadow, boolean shiny, boolean glow)
+static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
+                            sector_t *frontsec, int texture, boolean isFlat,
+                            int mode, byte alpha,
+                            boolean shadow, boolean shiny, boolean glow)
 {
     int  i;
     int  segIndex = GET_SEG_IDX(seg);
+    rendpoly_vertex_t *vtx;
     const byte *colorPtr;
     const byte *color2Ptr;
 
@@ -886,13 +880,12 @@ void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
     RL_VertexColors(quad, Rend_SectorLight(frontsec), colorPtr);
 
     // Alpha?
-    for(i = 0; i < 2; i++)
-        quad->vertices[i].color.rgba[3] = alpha;
+    for(i = 0, vtx = quad->vertices; i < quad->numvertices; i++, vtx++)
+        vtx->color.rgba[3] = alpha;
 
     // Bottom color (if different from top)?
     if(color2Ptr != NULL)
     {
-        int i;
         for(i=0; i < 2; i++)
             memcpy(quad->bottomcolor[i].rgba, color2Ptr, 3);
     }
@@ -900,13 +893,12 @@ void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
     // Dynamic lights.
     quad->lights = DL_GetSegLightLinks(segIndex, mode);
 
-    if(blend)       // Smooth Texture Animation?
-        Rend_PolyTextureBlend(texture, quad);
-
-    // Do BIAS lighting for this poly
+    // Do BIAS lighting for this poly.
     SB_RendPoly(quad, false, frontsec, seginfo[segIndex].illum[1],
                 &seginfo[segIndex].tracker[1], segIndex);
 
+    // Smooth Texture Animation?
+    Rend_PolyTexBlend(texture, isFlat, quad);
     // Add the poly to the appropriate list
     RL_AddPoly(quad);
 
@@ -915,6 +907,54 @@ void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
 
     if(shiny)       // Render Shiny polys for this seg?
         Rend_AddShinyWallSeg(texture, quad);
+}
+
+/*
+ * Same as above but for planes. Ultimately we should consider merging the
+ * two into a Rend_RenderSurface.
+ */
+static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
+                planeinfo_t* plane, int texture, boolean isFlat, byte alpha,
+                boolean shadow, boolean shiny,
+                boolean glow)
+{
+    int i;
+    int subIndex = GET_SUBSECTOR_IDX(subsector);
+    rendpoly_vertex_t *vtx;
+
+    if(glow)        // Make it fullbright?
+        poly->flags |= RPF_GLOW;
+
+    // Surface color/light.
+    RL_PrepareFlat(plane, poly, subsector);
+
+    // Alpha?
+    for(i = 0, vtx = poly->vertices; i < poly->numvertices; i++, vtx++)
+        vtx->color.rgba[3] = alpha;
+
+    // Dynamic lights. Check for sky.
+    if(isFlat && R_IsSkyFlat(texture))
+    {
+        poly->lights = NULL;
+        skyhemispheres |= (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
+    }
+    else
+        poly->lights = DL_GetSubSecLightLinks(subIndex, plane->type);
+
+    // Do BIAS lighting for this poly.
+    SB_RendPoly(poly, plane->type, subsector->sector, plane->illumination,
+                &plane->tracker, subIndex);
+
+    // Smooth Texture Animation?
+    Rend_PolyTexBlend(texture, isFlat, poly);
+    // Add the poly to the appropriate list
+    RL_AddPoly(poly);
+
+    //if(shadow)      // Fakeradio uses a seperate algorithm for planes.
+
+    // Add a shine to this flat existence.
+    if(shiny)
+        RL_AddShinyFlat(plane, poly, subsector);
 }
 
 /*
@@ -1094,9 +1134,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad.texoffy += texh - fsh;
 
-                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, SEG_MIDDLE,
+                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_MIDDLE,
                           /*Alpha*/    255,
-                          /*Blend?*/   (tex != -1),
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
                           /*Shiny?*/   (tex != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
@@ -1182,14 +1221,20 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 
                                 if(distance < (FIX2FLT(mo->radius)*.8f))
                                 {
-                                    solidSeg = false;
+                                    int temp = 0;
+                                    
                                     // Fade it out the closer the viewplayer gets.
-                                    alpha = ((float)alpha / (FIX2FLT(mo->radius)*.8f));
-                                    alpha *= distance;
+                                    solidSeg = false;
+                                    temp = ((float)alpha / (FIX2FLT(mo->radius)*.8f));
+                                    temp *= distance;
 
                                     // Clamp it.
-                                    if(alpha < 0)
-                                        alpha = 0;
+                                    if(temp > 255) 
+                                        temp = 255;
+                                    if(temp < 0)
+                                        temp = 0;
+                                    
+                                    alpha = temp;
                                 }
                             }
                         }
@@ -1207,9 +1252,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     else
                         quad.flags = 0;
 
-                    Rend_RenderWallSection(&quad, seg, side, frontsec, tex, SEG_MIDDLE,
+                    Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_MIDDLE,
                               /*Alpha*/    alpha,
-                              /*Blend?*/   (tex != -1),
                               /*Shadow?*/  (solidSeg && !(flags & RWSF_NO_RADIO) && !texmask),
                               /*Shiny?*/   (solidSeg && tex != -1 && !texmask),
                               /*Glow?*/    (texFlags & TXF_GLOW));
@@ -1227,8 +1271,20 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             tex = side->toptexture;
             isFlat = false;
 
-            // TODO: fix missing textures.
-            texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
+            if(!tex)
+            {
+                // Texture has not been defined. Do as in the original Doom,
+                // extend the ceiling to fill the space (unless its the skyflat).
+                if(R_IsSkyFlat(frontsec->SP_ceilpic))
+                    texFlags = -1;
+                else
+                    texFlags = Rend_PrepareTextureForPoly
+                        (&quad, frontsec->SP_ceilpic, true /*isFlat*/);
+            }
+            else
+            {
+                texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
+            }
 
             // Is there a visible surface?
             if(texFlags != -1)
@@ -1244,9 +1300,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 if(quad.bottom < ffloor)
                     quad.bottom = ffloor;
 
-                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, SEG_TOP,
+                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_TOP,
                           /*Alpha*/    255,
-                          /*Blend?*/   (tex != -1),
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
                           /*Shiny?*/   (tex != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
@@ -1262,8 +1317,20 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             tex = side->bottomtexture;
             isFlat = false;
 
-            // TODO: fix missing textures.
-            texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
+            if(!tex)
+            {
+                // Texture has not been defined. Do as in the original Doom,
+                // extend the floor to fill the space (unless its the skyflat).
+                if(R_IsSkyFlat(frontsec->SP_floorpic))
+                    texFlags = -1;
+                else
+                    texFlags = Rend_PrepareTextureForPoly
+                        (&quad, frontsec->SP_floorpic, true /*isFlat*/);
+            }
+            else
+            {
+                texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
+            }
 
             // Is there a visible surface?
             if(texFlags != -1)
@@ -1283,9 +1350,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     quad.top = fceil;
                 }
 
-                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, SEG_BOTTOM,
+                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_BOTTOM,
                           /*Alpha*/    255,
-                          /*Blend?*/   (tex != -1),
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
                           /*Shiny?*/   (tex != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
@@ -1722,12 +1788,9 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
 {
     rendpoly_t poly;
     sector_t *sector = subsector->sector, *link = NULL;
-    int     planepic;
+    int     tex, texFlags;
     float   height;
-
-    // We're creating a flat.
-    poly.type = RP_FLAT;
-    poly.lights = DL_GetSubSecLightLinks(GET_SUBSECTOR_IDX(subsector), plane->type);
+    boolean isFlat;
 
     // Sky planes of self-referrencing hack sectors are never rendered.
     if(checkSelfRef && sin->selfRefHack && R_IsSkyFlat(sector->planes[plane->type].pic))
@@ -1741,7 +1804,8 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
 
         // This sector has an invisible plane.
         height = SECT_INFO(link)->planeinfo[plane->type].visheight;
-        planepic = link->planes[plane->type].pic;
+        tex = link->planes[plane->type].pic;
+        isFlat = true;
     }
     else
     {
@@ -1750,57 +1814,54 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
         if(plane->type == PLN_CEILING)
             height += sector->skyfix;  // Add the skyfix.
 
-        planepic = sector->planes[plane->type].pic;
+        tex = sector->planes[plane->type].pic;
+        isFlat = true;
     }
 
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
-    if(sin->unclosed && R_IsSkyFlat(planepic))
+    if(sin->unclosed && R_IsSkyFlat(tex))
         return;
 
     // Has the texture changed?
-    if(planepic != plane->pic)
+    if(tex != plane->pic)
     {
-        plane->pic = planepic;
+        plane->pic = tex;
 
         // The sky?
-        if(R_IsSkyFlat(planepic))
+        if(R_IsSkyFlat(tex))
             plane->flags |= RPF_SKY_MASK;
         else
             plane->flags &= ~RPF_SKY_MASK;
     }
-    poly.flags = plane->flags;
 
     // Is the plane visible?
     if((plane->type == PLN_FLOOR && vy > height) ||
        (plane->type == PLN_CEILING && vy < height))
     {
-        // Check for sky.
-        if(R_IsSkyFlat(plane->pic))
+        texFlags = Rend_PrepareTextureForPoly(&poly, tex, isFlat);
+
+        // Is there a visible surface?
+        if(texFlags != -1)
         {
-            poly.lights = NULL;
-            skyhemispheres |= (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
+            // Fill in the remaining quad data.
+            poly.type = RP_FLAT; // We're creating a flat.
+            poly.flags = plane->flags;
+
+            // Check for sky.
+            if(!R_IsSkyFlat(tex))
+            {
+                poly.texoffx = sector->planes[plane->type].offx;
+                poly.texoffy = sector->planes[plane->type].offy;
+            }
+            poly.top = height;
+
+            Rend_DoRenderPlane(&poly, subsector, plane, tex, isFlat,
+                /*Alpha*/    255,
+                /*Shadow?*/  false, // unused
+                /*Shiny?*/   (tex != -1),
+                /*Glow?*/    (texFlags & TXF_GLOW));
         }
-        else
-        {
-            Rend_PrepareTextureForPoly(&poly, planepic, true);
-
-            poly.texoffx = sector->planes[plane->type].offx;
-            poly.texoffy = sector->planes[plane->type].offy;
-        }
-        poly.top = height;
-
-        RL_PrepareFlat(plane, &poly, subsector);
-
-        SB_RendPoly(&poly, plane->type, sector, plane->illumination,
-                    &plane->tracker, GET_SUBSECTOR_IDX(subsector));
-
-        Rend_PolyFlatBlend(plane->pic, &poly);
-        RL_AddPoly(&poly);
-
-        // Add a shine to this flat existence.
-        if(planepic)
-            RL_AddShinyFlat(plane, &poly, subsector);
     }
 }
 
@@ -1923,31 +1984,33 @@ void Rend_RenderSubsector(int ssecidx)
     }
 }
 
-void Rend_RenderNode(int bspnum)
+void Rend_RenderNode(uint bspnum)
 {
     node_t *bsp;
     int     side;
 
-    // If the clipper is full we're pretty much done.
+    // If the clipper is full we're pretty much done. This means no geometry
+    // will be visible in the distance because every direction has already been 
+    // fully covered by geometry.
     if(C_IsFull())
         return;
 
     if(bspnum & NF_SUBSECTOR)
     {
-        if(bspnum == -1)
-            Rend_RenderSubsector(0);
-        else
-            Rend_RenderSubsector(bspnum & (~NF_SUBSECTOR));
-        return;
+        // We've arrived at a subsector. Render it.
+        Rend_RenderSubsector(bspnum & ~NF_SUBSECTOR);
     }
-
-    bsp = NODE_PTR(bspnum);
-
-    // Decide which side the view point is on.
-    side = R_PointOnSide(viewx, viewy, bsp);
-
-    Rend_RenderNode(bsp->children[side]);   // Recursively divide front space.
-    Rend_RenderNode(bsp->children[side ^ 1]);   // ...and back space.
+    else
+    {
+        // Descend deeper into the nodes.
+        bsp = NODE_PTR(bspnum);
+        
+        // Decide which side the view point is on.
+        side = R_PointOnSide(viewx, viewy, bsp);
+        
+        Rend_RenderNode(bsp->children[side]);   // Recursively divide front space.
+        Rend_RenderNode(bsp->children[side ^ 1]);   // ...and back space.
+    }
 }
 
 void Rend_RenderMap(void)
@@ -2047,7 +2110,6 @@ void R_DrawLightRange(void)
     int y;
     char *title = "Light Range Matrix";
     signed short v;
-    float barwidth = 2.5f;
     byte a, c;
     ui_color_t color;
 

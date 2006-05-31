@@ -86,6 +86,9 @@ ded_decor_t *Rend_GetFlatDecoration(int index)
 {
     flat_t *flat = R_GetFlat(index);
 
+    if(!flat)
+        return NULL;
+    
     // Get the translated one?
     if(flat->translation.current != index)
     {

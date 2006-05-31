@@ -169,10 +169,10 @@ void Con_Progress(int count, int flags)
     x += 5;
     y += 5;
     w -= 10;
-    gl.Color4f(0, 0, 0, .5f);
-    FR_TextOut(progress_title, x + 3, y + 3);
+    //gl.Color4f(0, 0, 0, .5f);
+    //FR_TextOut(progress_title, x + 3, y + 3);
     gl.Color3f(1, 1, 1);
-    FR_TextOut(progress_title, x + 1, y + 1);
+    FR_ShadowTextOut(progress_title, x + 1, y + 1);
     y += fonthgt + 5;
 
     // Bar.

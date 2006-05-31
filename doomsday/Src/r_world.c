@@ -373,7 +373,8 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
     else
     {
         // We need these with dynamic lights.
-        ssec->verts = Z_Malloc(sizeof(fvertex_t) * numedgepoints, PU_LEVEL, 0);
+        ssec->verts = Z_Malloc(sizeof(fvertex_t) * numedgepoints, 
+                               PU_LEVELSTATIC, 0);
         memcpy(ssec->verts, edgepoints, sizeof(fvertex_t) * numedgepoints);
         ssec->numverts = numedgepoints;
 
@@ -423,7 +424,7 @@ void R_PolygonizeWithoutCarving()
         sub->numverts = sub->linecount;
         sub->verts =
             (fvertex_t *) Z_Malloc(sizeof(fvertex_t) * sub->linecount,
-                                   PU_LEVEL, 0);
+                                   PU_LEVELSTATIC, 0);
         for(j = 0; j < sub->linecount; j++)
         {
             sub->verts[j].x = FIX2FLT(SEG_PTR(sub->firstline + j)->v1->x);
@@ -437,7 +438,7 @@ void R_PolygonizeWithoutCarving()
 /*
  * Recursively polygonizes all ceilings and floors.
  */
-void R_CreateFloorsAndCeilings(int bspnode, int numdivlines,
+void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
                                divline_t * divlines)
 {
     node_t *nod;
@@ -450,9 +451,8 @@ void R_CreateFloorsAndCeilings(int bspnode, int numdivlines,
     {
         // We have arrived at a subsector. The divline list contains all
         // the partition lines that carve out the subsector.
-        int     ssidx = bspnode & (~NF_SUBSECTOR);
-
-        R_ConvexClipper(SUBSECTOR_PTR(ssidx), numdivlines, divlines);
+        R_ConvexClipper(SUBSECTOR_PTR(bspnode & ~NF_SUBSECTOR), 
+                        numdivlines, divlines);
         // This leaf is done.
         return;
     }
@@ -678,7 +678,7 @@ void R_SetVertexOwner(int idx, sector_t *secptr)
     // Add a new owner.
     own->num++;
     // Allocate a new list.
-    list = (int*) Z_Malloc(sizeof(int) * own->num, PU_LEVEL, 0);
+    list = (int*) Z_Malloc(sizeof(int) * own->num, PU_LEVELSTATIC, 0);
     // If there are previous references, copy them.
     if(own->num > 1)
     {
@@ -715,7 +715,7 @@ void R_SetVertexLineOwner(int idx, line_t *lineptr)
     // Add a new owner.
     own->numlines++;
     // Allocate a new list.
-    list = (int *) Z_Malloc(sizeof(int) * own->numlines, PU_LEVEL, 0);
+    list = (int *) Z_Malloc(sizeof(int) * own->numlines, PU_LEVELSTATIC, 0);
     // If there are previous references, copy them.
     if(own->numlines > 1)
     {
@@ -981,7 +981,7 @@ void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
         // Triangle fan base is the midpoint of the subsector.
         plane->numvertices = 2 + numvrts;
         plane->vertices =
-            Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVEL, 0);
+            Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVELSTATIC, 0);
 
         memcpy(plane->vertices, &subsector->midpoint, sizeof(fvertex_t));
 
@@ -992,7 +992,7 @@ void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
     {
         plane->numvertices = numvrts;
         plane->vertices =
-            Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVEL, 0);
+            Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVELSTATIC, 0);
 
         // The first vertex is always the same: vertex zero.
         pv = plane->vertices;
@@ -1015,7 +1015,7 @@ void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
 
     // Initialize the illumination for the subsector.
     plane->illumination = Z_Calloc(plane->numvertices * sizeof(vertexillum_t),
-                                   PU_LEVEL, NULL);
+                                   PU_LEVELSTATIC, NULL);
     for(i = 0; i < plane->numvertices; ++i)
     {
         plane->illumination[i].flags |= VIF_STILL_UNSEEN;
@@ -1796,6 +1796,10 @@ void R_SetupLevel(char *level_id, int flags)
 
     if(flags & DDSLF_INITIALIZE)
     {
+        // Switch to fast malloc mode in the zone. This is intended for large
+        // numbers of mallocs with no frees in between.
+        Z_EnableFastMalloc(false);
+        
         // A new level is about to be setup.
         levelSetup = true;
 
@@ -1888,6 +1892,10 @@ void R_SetupLevel(char *level_id, int flags)
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
+
+        // Switch back to normal malloc mode in the zone. Z_Malloc will look
+        // for free blocks in the entire zone and purge purgable blocks.
+        Z_EnableFastMalloc(false);
         return;
     }
 

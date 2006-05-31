@@ -6,19 +6,124 @@
 
 Version 1.9.0
 -------------
+API:
++ DMU (Doomsday Map Update): map data objects are no longer directly accessible 
+  from plugins; all changes go through DMU, and notifications are routed to the
+  correct places inside the engine for efficient operation
+
+User Interface:
+* tweaks to the console appearance (new defaults for background picture, color,
+  and alpha)
++ console uses the Doomsday title bar, which is visible in the other UI screens
+* console: game information texts moved to the title bar 
++ control panel UI fades away to display the game view when adjusting gamma,
+  contrast, and brightness
++ control panel offers 16:10 resolutions
+- sliders now eat up/down keys (so the user isn't confused when the focus jumps
+  to some other control when up/down is pressed in a slider)
+- game view window is now resized in the ticker
+- cursor offsets in menus, and save/load items
++ new console controls:
+  F5: Clear console text buffer
+  Alt + C: Clear command line
+  Shift + cursorleft/cursorright: Move cursor to start/end of the command line
+  Delete: Delete the character under the cursor
+  Insert: Toggle character insert input mode. When off - new replaces old
+  Shift + Tab: Use "other" unknown word autocompletion mode
+  Right arrow: a "command history fill" to the command line (ala DOS command prompt)
+  when the cursor is at the end of the command line
++ cvar 'con-move-speed': (0 - 1.0f) speed of console opening/closing
+* improved: console history buffer uses different colours for items based on their
+  type (yellow for commands, white for variables)
+
+Resources:
+* removed: Doomsday.wad is obsolete, all data is now loaded from Doomsday.PK3
++ new fixed and variable-width fonts (with normal, bold, and light variants)
+
+Renderer:
 + bias lighting: direct sources and smooth sector lighting
-+ option '-vdmap': map files in one directory to another directory
-  (virtual directory mapping)
-+ subdirectory "Auto" of the runtime directory mapped automatically to
-  both "Defs/<Game>/Auto" and "Data/<Game>/Auto"
+- fixed usage of GL_ATI_texture_env_combine3 (caused problems with rendering 
+  shiny surfaces)
+* slightly more pronounced fakeradio (default darkness changed from 1.0 to 1.2)
++ cvar 'rend-bias-grid-multisample': multisample factor used when determining sector
+  to lightgrid mapping. Larger values increase accuracy at the expense of map load times.
++ light range compression: increase light in dark sectors/decrease light in bright sectors
 + cvar 'rend-fog-default': default fog algorithm
++ Flaremaps: loaded from "Data/FlareMaps" - used for custom halos on objects
+  (see Readme for details)
++ surface colours: individual walls and planes can be given a unqiue color.
+  Wall section surface colors are blended between sections to achieve color fades.
+  Surface colors and fades can be used to accurately recreate Doom64 style lighting.
++ alpha'd/blended midtextures on twosided linedefs
++ flag 'LUMF_DONTTURNHALO': disable the view angle rotation of halos and flares
+  for this luminous object.
++ blendmode: BM_ZEROALPHA (GL_ONE, GL_ZERO) "draw with no translucency"
++ cvar 'rend-sprite-mode': 1 = draw sprites and masked walls with hard edges
+- fixed: light & halo not centered to sprite correctly (BatmanTC, wall torches)
+- fixed: mobj shadows sometimes rendered above the object casting the shadow
+- fixed: animated textures/flats would flicker after a console RESET
+- fixed: pegged middle textures "bouncing" on moving planes
++ cvar 'rend-dev-mobj-bbox': debugging aid - render mobj bounding boxes
+  (sized to match the box used for collision detection) for debug.
++ cvar 'rend-dev-cull-subsectors': disable non-visible subsector culling for debug.
++ cvar 'rend-glow-scale': multiplier for wall glow height
+
+Map Data:
+* optimized allocation and handling of runtime map data (zblocks, levelstatic
+  blocks, fast alloc mode), reduced map setup times significantly
+* changed: expanded map structure element limits.
+* changed: expanded blockmap limits by enlarging BLOCKMAP data at runtime
++ ccmd 'listmobjs': print a list of the mobj ids + names (if set via DED) to the console.
+* changed: BSP data is no longer required to load maps if runtime node building is
+  enabled (cvar 'bsp-build' = 1). This allows playing eg maps created by SLIGE without
+  generating the BSP data prior to loading the map in Doomsday
+* improved: map load time greatly improved with large maps
+* improved: emulation of DOOM.exe faked sector-over-sector tricks
+* improved: sectors now have three sound origins (center, floor, ceiling). Sector sounds
+  are played from the most appropriate source.
+* improved: fakeradio now handles complex geometry and DOOM.exe tricks better
+* improved: fakeradio wall shadows are now affected by plane glows and the sky
+- fixed: missing textures/flats nolonger cause a fatal error. Surfaces with an
+  unknown/missing textures/flats are now rendered with a "Missing" texture
++ unknown/missing textures/flats are reported in the console after loading a map
++ cvar 'blockmap-build': when/if new data is generated (default = when needed)
+
+Definitions:
+- removed fixed limit on the number of particle generator stages
++ Light -> Halo radius : radius of halo
++ Light -> Flare map: the flare map to use for this light's halo. Either a path
+  and resource name OR a built-in flare resource number
++ Decoration -> Light -> Flare map: same as above for light decorations.
+* Decoration -> Light -> Flare texture: is depreciated. Use "Flare map" instead
++ Flag -> Info: text string containing a comment about this flag
++ DED reader: the "Copy"/"*" directive (used to initialize the current definition
+  being read with the values of the last) can now be used with Mobj, State, Line and
+  Sector (type) definitions.
+- fixed: minor memory leaks concerning definition data
+
+Engine:
 * memory zone expands as necessary
 - removed the "-maxzone" option as obsolete
-- removed fixed limit on the number of particle generator stages
++ option '-vdmap': map files in one directory to another directory
+  (virtual directory mapping)
++ PK3 path mapping: files in 'keyword-named' folders in the root of a PK3
+  mapped to directories (see Readme for details)
++ subdirectory "Auto" of the runtime directory mapped automatically to
+  both "Defs/<Game>/Auto" and "Data/<Game>/Auto"
++ new DFN font format that supports RGBA bitmaps
++ DeHackED patches (.deh files) are now loaded automatically from Data/Game/Auto
+  and from the root folder in PK3/ZIP archives.
 - removed fixed limit on the number of opened files
-- fixed: minor memory leaks concerning definition data
 - less chance of file name collisions thanks to CRC32 in Dir_FileID
 - fixed: crash during startup when running with extra verbosity
+- fixed: vsprintf security vulnerabilities (buffer overflow) on all platforms
+  Thanks to the Gentoo crew, Florian Westphal and Alexey Dobriyan for their
+  part in helping to resolve these issues.
+* changed: always do a full texture reset after using the "lowres" ccmd
+* changed: cameras can now move above/below the ceiling/floor unrestricted.
+- fixed: auxiliary lump cache not checked for lump names when searching
+
+Input/Controllers:
 + binding classes: multiple commands can be bound to the same event
 + ccmd 'enablebindclass': Enable/disable/toggle binding classes or view their status
 + ccmd 'listbindclasses': Print a list of available binding classes
@@ -28,22 +133,24 @@ Version 1.9.0
   (eg 'bind map +f follow')
 * ccmd 'delbind': Delete a binding in a specific binding class
   (eg 'delbind map mpanup')
-+ PK3 path mapping: files in 'keyword-named' folders in the root of a PK3
-  mapped to directories (see Readme for details)
-+ F5 in console: Clear console text buffer
-+ Alt + C in console: Clear command line
-+ Shift + cursorleft/cursorright: Move cursor to start/end of the command line
 
 All Games:
 + game status cvars
   read-only cvars that show the status of various player/game values
   ('player-health' 'map-name' etc)
-+ windowed automap:
-  cvar 'map-width': width of automap window
-  cvar 'map-height': height of automap window
-  cvar 'map-position': (0-8) position of automap window, left to right, top to bottom 
-  (eg 'map-position 3' automap window relative to top right corner)
 + automap options menu
++ weapons options menu
++ customisable weapon change order preferences: via weapons menu and cvars
++ cvar 'player-weapon-nextmode': use custom order for next/previous weapon cycle
+* changed: Automatic weapon switching has two modes: 1= If better 2= Always
++ The level title drawn when entering a map is now drawn with the patch used
+  during intermissions (eg "WILV01") if it has been replaced in a PWAD. These
+  custom patches take priority over patch replacement strings.
++ The level title patch draw during intermissions is drawn using the name set
+  in the MapInfo defintion for the level. Intermission patches have priority
+  over patch replacement strings.
+* Improved menu "Patch Replacement" feature to better support PWADS with custom
+  menu patches
 + menu widget for changing colors
 + cvars 'msg-color-x': Color used for HUD messages
 + cvar 'msg-align': Set the horizontal alignment of HUD messages
@@ -57,43 +164,122 @@ All Games:
 + cvar 'menu-slam': 'Slam' menu when opening/closing
 + cvar 'map-huddisplay': Set the HUD display mode while in the automap
   (0 = none, 1 = current HUD, 2 = statusbar)
++ cvar 'menu-quick-ask': Ask me to confirm when quick saving/loading
++ cvar 'server-game-monster-meleeattack-nomaxz': to disable the fix added in the lxDoom
+  source release to prevent monsters melee attacks having infinite z range.
++ cvar 'server-game-radiusattack-nomaxz': all radius attacks are infinitely tall in netgames
 + menu-fog mode 3: "Grey fog"
 + menu-fog mode 4: "Darken"
+* cheat 'reveal': 4 = show subsectors in automap
+* removed fixed limit on the number of active plats
+* removed fixed limit on the number of active switches
+* removed MAX_ADJOINING_SECTORS fixed limit
+* changed cvar 'msg-blink': number of tics to blink before fading to normal
+* changed cvar 'menu-patch-replacement': 2= Use built-in patch replacement when available
 * Improved cfg consistency between games
 * Automap keys are bindable
 * Automap colors can be customised via console, cfg files and the menu.
+* Menu navigation keys are bindable
+* Widget/Message response keys are bindable
+* Save & Load slots are now sync'd in the menu
+* changed: cvar 'ctl-look-speed' is now specified using a float value
+* changed: ccmd 'spawnmobj' now accepts the mobj name as well as the mobj id
++ cvar 'ctl-turn-speed': controls player turn rate
 - fixed: alignment in view border patch drawing
 
 jDoom:
-+ Doom.exe compatibility options/fixes
++ DOOM.exe compatibility options/fixes
   maxskulls: remove max LostSoul spawn limit on Pain Elementals (off by default)
   skullsinwalls: prevent LostSouls from being spawned inside walls (on by default)
   raiseghosts: prevent Archviles from raising ghosts (on by default)
+  anybossdeath666: The death of ANY boss monster triggers a 666 special (off by default)
+  monsters-stuckindoors: Monsters can get stuck in doortracks (off by default)
+  objects-hangoverledges: Only some objects can hang over tall ledges (on by default)
+  objects-clipping: Use EXACTLY DOOM's clipping code (off by default)
+  zombiescanexit: Zombie players can exit levels (off by default)
+  player-wallrun-northonly: Players can only wallrun North (off by default)
+  objects-falloff: Objects fall under their own weight (on by default)
++ support for most of jHeretic's MF2_ flags: includes floorclip, floatbob etc
++ support the "skill 0 trick"
++ BOOM THING flags: "Not Deathmatch","Not Coop" supported
++ BOOM LINEDEF flags: "Pass Thru", "Any Trigger" supported
+  "Any Trigger" overrides XG activation type requirements unless
+  the "ltf2_override_any" flag is set in Flags2
++ BOOM "ANIMATED" lump support
++ BOOM "SWITCHES" lump support
 + ccmd 'suicide': commit suicide in non deathmatch games
++ ccmd 'exitlevel': exit the current level via the normal exit and go to the intermission
 + cvar 'map-babykeys': show key locations in the automap on easy skill
 + cvar 'hud-face': show Doom Guy's face in the fullscreen HUD
++ cvar 'server-game-mod-damage': Enemy (mob) damage modifier, multiplayer (1..100)
++ cvar 'server-game-mod-health': Enemy (mob) health modifier, multiplayer (1..20)
 + cvar 'server-game-respawn-monsters-nightmare': monsters respawn in Nightmare
   skill
-* removed fixed limit on the number of active plats
-* removed fixed limit on the number of active switches
-- fixed: Automatic weapon switching now works in Co-op games
++ cvar 'server-game-bfg-freeaim': Allow free-aim with BFG in multiplayer games
++ cvar 'player-berserkswitch': automatically switch to fists when collected
++ cvar 'player-death-lookup': makes the player look upwards when killed
+- fixed: automatic weapon switching now works in Co-op games
+- fixed: voodoo doll spawning bug exhibited on maps such as caesar.wad
++ Thing -> flags2 'mf2_radiusattacknomaxz': z dimension is ignored when calculating
+  if a radius attack hits a mobj with this attribute (in PIT_RadiusAttack).
++ DeHackED: 'Misc' patches are fully supported
++ value 'Player|Green Armor Class': armor class of the Green Armor pickup
++ value 'Player|Blue Armor Class': armor class of the Blue Armor pickup
++ value 'Player|God Health': health displayed when in god mode
++ value 'Player|IDFA Armor': armor given with 'IDFA' cheat
++ value 'Player|IDKFA Armor': armor given with 'IDKFA' cheat
++ value 'Player|IDFA Armor Class': armor class given with 'IDFA' cheat
++ value 'Player|IDKFA Armor Class': armor class given with 'IDKFA' cheat
++ value 'MegaSphere|Give|Health': health given when MegaSphere collected
++ value 'SoulSphere|Give|Health': health given when SoulSphere collected
++ value 'SoulSphere|Give|Health Limit': max health when SoulSphere collected
+* ccmd 'give': number (0-NUMWEAPONS) = give an individual weapon (as if found)
+   f = give the player the power of flight
+* removed fixed limit on number of boss brain spawnspots
+* removed fixed limit on number of archived mobjs
+- fixed: "Boss Brain doesn't die by rockets as easily" splash damage is considered to be
+  infinetly tall when checking the boss brain
+- fixed: Doom2 MAP30 could not be completed with game-corpse-time = 1
+- fixed: soundtarget data is now saved. Fixes bug where monsters would forget where
+  they heard the player(s) after a save
+- fixed: tracer data is now saved. Fixes bug where the Archvile fire attack and the Revenant
+  missile would loose their target when saving
+- fixed: animated textures in TNT and Plutonia were messed up.
+- fixed: DOOM logic error which prevented the GOTMEDINEED message from ever being used
+- fixed: DOOM inversed test which prevented the OUCH face from ever being used
 
 jHeretic:
++ Heretic.exe compatibility options/fixes
+  monsters-stuckindoors: Monsters can get stuck in doortracks (off by default)
+  objects-hangoverledges: Only some objects can hang over tall ledges (on by default)
+  objects-clipping: Use EXACTLY DOOM's clipping code (off by default)
+  player-wallrun-northonly: Players can only wallrun North (off by default)
+  objects-falloff: Objects fall under their own weight (on by default)
 * Uses jDoom's Menu code
   All features, cvars, ccmds from jDoom supported
 * Uses jDoom's HUD message code (msg buffer)
   All features, cvars, ccmds from jDoom supported
++ BOOM "ANIMATED" lump support
++ BOOM "SWITCHES" lump support
 + ccmd 'suicide': commit suicide in non deathmatch games
 + ccmd 'hereticfont': Use the Heretic font in the console
++ ccmd 'exitlevel': exit the current level via the normal exit and go to the intermission
 + cvar 'map-babykeys': show key locations in the automap on easy skill
 + cvar 'hud-artifact': show the current artifact in the fullscreen HUD
 + cvar 'hud-keys': show keys in the fullscreen HUD
 + cvar 'hud-health': show health in the fullscreen HUD
++ cvar 'server-game-mod-damage': Enemy (mob) damage modifier, multiplayer (1..100)
++ cvar 'server-game-mod-health': Enemy (mob) health modifier, multiplayer (1..20)
++ cvar 'hud-inventory-timer': number of tics before the inventory auto-hides
 + Added patches for missing ASCII characters to jHeretic.wad
-* removed fixed limit on the number of active plats
-* removed fixed limit on the number of active switches
 - fixed: lineattack weapons hit planes
 - fixed: various alignment glitches in statusbar drawing
+- fixed: float bobbing would not activate until the player moved in the X/Y dimension(s).
+- fixed: soundtarget data is now saved. Fixes bug where monsters would forget where
+  they heard the player(s) after a save.
++ Thing -> flags2 'mf2_radiusattacknomaxz': z dimension is ignored when calculating
+  if a radius attack hits a mobj with this attribute (in PIT_RadiusAttack).
+* removed fixed limit on number of archived mobjs
 * changed: command-line option -ravpic is now -devparm 
 
 jHexen:
@@ -104,22 +290,61 @@ jHexen:
 + ccmd 'hexenfont': Use the Hexen font in the console
 + cvar 'hud-artifact': show current artifact in fullscreen HUD
 + cvar 'hud-health': show health in fullscreen HUD
++ cvar 'hud-inventory-timer': number of tics before the inventory auto-hides
 + Added patches for missing ASCII characters to jHexen.wad
+- fixed: players would continue receiving damage after a telporting out of a damaging
+  sector with a Chaos Device, until they moved.
 * changed: command-line option -ravpic is now -devparm 
 
 XG:
-+ ltc_end_level: Specify next level on exit (Ip3)
+* changed: the DD_XGDATA lump is now depreciated.
++ Line (type): XG line type definitions now have alternate names for the iparms.
+  (see wiki for more details - http://dew.dengine.net)
++ line class "ltc_line_teleport": BOOM-style line->line (silent) teleport
++ line class "ltc_teleport"
+* improved: line class "ltc_end_level": specify next level on exit (Ip3)
+* improved: line classes "ltc_wall_texture" & "ltc_plane_texture": set the surface
+  color, blendmode and alpha properties of the referenced surfaces.
+* improved: line class "ltc_wall_texture" -> Set Mid If None: add/remove
+  midtextures on twosided linedefs.
++ Added more XG_Dev messages. Reference types are printed by name instead of ID.
+* fixed: bug that prevented sector chains from working correctly under certain circumstances
+  (due to dummy activators in sector functions)
+* fixed: XS_GetPlane - when a act_tag reference was specified it was incorrectly being
+  compared to the regular sector tag during iteration.
+* fixed: XS_GetPlane was incorrectly referencing sector tag 0 when called during XS_Trav
+  functions which implicitly set ref data to zero when used in conjunction with spref_tagged_
+  or spref_act_tagged_. Now checked with -1 and an XG_Dev warning message is printed.
+* changed: ltc_mimic_sector was using the line's Act Tag when the mimic target reference was
+  set to SPREF_ACT_TAGGED_ This is the opposite to the way it works with all other classes
+  which use these data references. New sprefs have been added which retain this functionality.
+  IF YOU'VE USED SPREF_ACT_TAGGED_FLOOR/CEILING AS THE MIMIC TARGET REFERENCE
+  IN YOUR PWAD:
+  Your PWAD will no longer work as expected and you should update and redistribute it.
+* fixed: XSTrav_PlaneTexture - the XG_Dev message "couldn't find suitable" was printed
+  even when a suitable reference WAS found.
+* fixed: ltc_plane_move sector type was incorrectly being set to type 0 when the move finished
+  if no end type change was specified. Result was sectors "losing" their type after a plane move.
++ Line type -> Act type: Set line type on activation
++ Line type -> Deact type: Set line type on deactivation
++ Flag 'ltf2_override_any': override BOOM 'Any Trigger' Linedef flag
 + line->line references (lrefs):
   lref_none
 + line->plane references (lprefs):
   lpref_back_floor
   lpref_back_ceiling
+  lpref_thing_exist_floors
+  lpref_thing_exist_ceilings
+  lpref_thing_none_floors
+  lpref_thing_none_ceilings
 + sector->plane references (sprefs):
   spref_back_floor
   spref_back_ceiling
 + line->sector references (lsrefs):
   lsref_none
   lsref_back
+  lsref_thing_exist
+  lsref_thing_none
 + light level reference (lightref):
   lightref_back
 
@@ -129,10 +354,18 @@ Multiplayer:
 Linux:
 + SDL joystick support (by zachkeene)
 - fixed: disappearing enemies in jHeretic and jHexen (fix by zachkeene)
+* Build scripts require zip (package zip on Debian/Ubuntu)
+- fixed: fixed some segfaults caused by missing data in *Nix builds.
 
 Mac OS X:
+* optimized release builds now work correctly
+- fixed several endianness issues in model rendering, XG, WAV loading, buttons
 - fixed: network games (now compatible with Win + Linux)
+- fixed rendering of shiny models (multitex and non-multitex)
+- fixed many minor compilation issues
 
+Security:
+- fixed: CVE-2006-1618 buffer overflow.
 
 Version 1.8.6
 -------------

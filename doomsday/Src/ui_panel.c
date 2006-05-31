@@ -335,7 +335,7 @@ ui_object_t ob_panel[] =
     { UI_BOX,       0,  CPID_FRAME,     280, 55, 720, 945,  "",         CP_DrawBorder },
 
     { UI_META,      2 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Video Options", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Video Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 70, 0, 55,     "Gamma correction", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_gamma },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Display contrast", UIText_Drawer },
@@ -354,7 +354,7 @@ ui_object_t ob_panel[] =
     { UI_BOX,       0,  0,              300, 910, 0, 60,    "",         CP_ResolutionInfo },
 
     { UI_META,      3 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Audio Options", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Audio Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Sound volume", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_sound_volume },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Music volume", UIText_Drawer },
@@ -373,7 +373,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 680, 70, 55,   "sound-info", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
     { UI_META,      4 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Input Options", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Input Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Invert mouse Y axis", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "input-mouse-y-inverse", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      4,  0,              0, 60 },
@@ -397,7 +397,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 550, 70, 55,   "input-key-show-scancodes", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
     { UI_META,      5 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
     { UI_META,      5,  0,              0, -60 },
 //  { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Smooth camera movement", UIText_Drawer },
 //  { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-camera-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -428,7 +428,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 675, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fakeradio_dark },
 
     { UI_META,      6 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Lights", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Lights", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable dynamic lights", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-light", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Blending mode", UIText_Drawer },
@@ -464,7 +464,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 1030, 70, 55,   "rend-light-decor", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
     { UI_META,      7 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Halos", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Halos", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Number of flares per halo", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Use realistic halos", UIText_Drawer },
@@ -488,7 +488,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo_zmagdiv },
 
     { UI_META,      8 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Textures", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Textures", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable textures", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-tex", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Multitexturing", UIText_Drawer },
@@ -519,7 +519,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON,    0,  0,              680, 730, 110, 60,  "Reset!", UIButton_Drawer, UIButton_Responder, 0, CP_TexReset },
 
     { UI_META,      9 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable 3D models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-model", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Interpolate between frames", UIText_Drawer },
@@ -548,7 +548,7 @@ ui_object_t ob_panel[] =
     { UI_LIST,      0,  0,              680, 850, 300, 115, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_smooth_move },
 
     { UI_META,      10 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Particles", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Particles", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable particle effects", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-particle", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Maximum number of particles", UIText_Drawer },
@@ -561,7 +561,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_particle_visnear },
 
     { UI_META,      11 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Network Options", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Network Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Continuous screen refresh", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "net-nosleep", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Show development info", UIText_Drawer },
@@ -574,7 +574,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
 
     { UI_META,      12 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_Drawer },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display FPS counter", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-fps",  UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      12, 0,              0, 60 },
@@ -761,6 +761,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (sel ? -1 : 1),
                   false, UI_COL(UIC_BRD_HI), NULL, alpha, -1);
     sprintf(buf, "%i", key);
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, true, true,
                  UI_COL(UIC_TEXT), alpha);
 }
@@ -783,6 +784,7 @@ void CP_ResolutionInfo(ui_object_t *ob)
         sprintf(buf, "%i x %i", defResX, defResY);
     else
         sprintf(buf, "Current resolution: %i x %i", screenWidth, screenHeight);
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_COL(UIC_TEXT),
                  1);
 }
@@ -939,6 +941,7 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h,
 {
     int     ind;
     
+    FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_ColorA(UI_COL(UIC_TEXT), .5f * alpha * UI_Alpha());
     FR_TextOut(label, x, y);
     ind = FR_TextWidth(label);
@@ -957,6 +960,7 @@ void CP_Drawer(ui_page_t * page)
     UIPage_Drawer(page);
 
     // Project home.
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(homeURL, screenWidth - UI_BORDER - FR_TextWidth(homeURL),
         UI_ScreenY(25), false, true, UI_COL(UIC_TEXT), 0.4f);
 
@@ -979,8 +983,9 @@ void CP_Drawer(ui_page_t * page)
     h -= 4 * bor;
 
     // The title (with shadow).
-    UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET,
-                     y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);
+    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    /*UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET,
+                     y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);*/
     y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h,
                          UI_COL(UIC_TITLE), alpha) + ui_fonthgt + 3;
     UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, alpha * .5f, 0);
@@ -998,6 +1003,7 @@ void CP_Drawer(ui_page_t * page)
     if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
     {
         y += ui_fonthgt / 2;
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutWrapEx(str, x, y, w, h, UI_COL(UIC_TEXT), alpha);
     }
 }

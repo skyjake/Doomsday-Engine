@@ -72,32 +72,36 @@ static int num_sectypes;
 
 // CODE --------------------------------------------------------------------
 
-void WriteByte(byte b)
+static void WriteByte(byte b)
 {
     fputc(b, file);
 }
 
-void WriteShort(short s)
+static void WriteShort(short s)
 {
+    s = SHORT(s);
     fwrite(&s, 2, 1, file);
 }
 
-void WriteLong(long l)
+static void WriteLong(long l)
 {
+    l = LONG(l);
     fwrite(&l, 4, 1, file);
 }
 
-void WriteFloat(float f)
+static void WriteFloat(float f)
 {
+    f = FLOAT(f);
     fwrite(&f, 4, 1, file);
 }
 
-void Write(void *data, int len)
+/*void Write(void *data, int len)
 {
     fwrite(data, len, 1, file);
 }
+*/
 
-void WriteString(char *str)
+static void WriteString(char *str)
 {
     int     len;
 
@@ -108,35 +112,36 @@ void WriteString(char *str)
     }
     len = strlen(str);
     WriteShort(len);
-    Write(str, len);
+    //Write(str, len);
+    fwrite(str, len, 1, file);
 }
 
-byte ReadByte()
+static byte ReadByte()
 {
     return *readptr++;
 }
 
-short ReadShort()
+static short ReadShort()
 {
     short   s = *(short *) readptr;
 
     readptr += 2;
     // Swap the bytes.
     //s = (s<<8) + (s>>8);
-    return s;
+    return SHORT(s);
 }
 
-long ReadLong()
+static long ReadLong()
 {
     long    l = *(long *) readptr;
 
     readptr += 4;
     // Swap the bytes.
     //l = (l<<24) + (l>>24) + ((l & 0xff0000) >> 8) + ((l & 0xff00) << 8);
-    return l;
+    return LONG(l);
 }
 
-float ReadFloat()
+static float ReadFloat()
 {
     long    f = ReadLong();
     float   returnValue = 0;
@@ -145,20 +150,22 @@ float ReadFloat()
     return returnValue;
 }
 
+/*
 void Read(void *data, int len)
 {
     memcpy(data, readptr, len);
     readptr += len;
 }
+*/
 
 // I could just return a pointer to the string, but that risks losing
 // it somewhere. Now we can be absolutely sure it can't be lost.
-void ReadString(char **str)
+static void ReadString(char **str)
 {
     int     len = ReadShort();
 
     if(!len)                    // Null string?
-    {
+    {   
         *str = 0;
         return;
     }
@@ -166,8 +173,9 @@ void ReadString(char **str)
         Con_Error("ReadString: Bogus len!\n");
     // Allocate memory for the string.
     *str = Z_Malloc(len + 1, PU_STATIC, 0);
-    memset(*str, 0, len + 1);
-    Read(*str, len);
+    memcpy(*str, readptr, len);
+    readptr += len;
+    (*str)[len] = 0;
 }
 
 void XG_WriteTypes(FILE * f)
@@ -181,8 +189,8 @@ void XG_WriteTypes(FILE * f)
 
     // The first four four bytes are a header.
     // They will be updated with the real counts afterwards.
-    i = 0;
-    fwrite(&i, 4, 1, file);        // Number of lines & sectors (two shorts).
+    WriteShort(0);              // Number of lines & sectors (two shorts).
+    WriteShort(0);
 
     // This is a very simple way to get the definitions.
     for(i = 1; i < 65536; i++)
@@ -204,7 +212,8 @@ void XG_WriteTypes(FILE * f)
         WriteShort(line.act_count);
         WriteFloat(line.act_time);
         WriteLong(line.act_tag);
-        Write(line.aparm, sizeof(line.aparm));
+        for(k = 0; k < DDLT_MAX_APARAMS; ++k)
+            WriteLong(line.aparm[k]);
         WriteFloat(line.ticker_start);
         WriteFloat(line.ticker_end);
         WriteLong(line.ticker_interval);
@@ -220,8 +229,10 @@ void XG_WriteTypes(FILE * f)
         WriteString(line.deact_msg);
         WriteFloat(line.texmove_angle);
         WriteFloat(line.texmove_speed);
-        Write(line.iparm, sizeof(line.iparm));
-        Write(line.fparm, sizeof(line.fparm));
+        for(k = 0; k < DDLT_MAX_PARAMS; ++k)
+            WriteLong(line.iparm[k]);
+        for(k = 0; k < DDLT_MAX_PARAMS; ++k)
+            WriteFloat(line.fparm[k]);
         for(k = 0; k < DDLT_MAX_SPARAMS; k++)
             WriteString(line.sparm[k]);
     }
@@ -240,16 +251,28 @@ void XG_WriteTypes(FILE * f)
         WriteShort(sec.id);
         WriteLong(sec.flags);
         WriteLong(sec.act_tag);
-        Write(sec.chain, sizeof(sec.chain));
-        Write(sec.chain_flags, sizeof(sec.chain_flags));
-        Write(sec.start, sizeof(sec.start));
-        Write(sec.end, sizeof(sec.end));
-        Write(sec.interval, sizeof(sec.interval));
-        Write(sec.count, sizeof(sec.count));
+        for(k = 0; k < DDLT_MAX_CHAINS; ++k)
+            WriteLong(sec.chain[k]);
+        for(k = 0; k < DDLT_MAX_CHAINS; ++k)
+            WriteLong(sec.chain_flags[k]);
+        for(k = 0; k < DDLT_MAX_CHAINS; ++k)
+            WriteFloat(sec.start[k]);
+        for(k = 0; k < DDLT_MAX_CHAINS; ++k)
+            WriteFloat(sec.end[k]);
+        for(k = 0; k < DDLT_MAX_CHAINS; ++k)
+        {
+            WriteFloat(sec.interval[k][0]);
+            WriteFloat(sec.interval[k][1]);
+        }
+        for(k = 0; k < DDLT_MAX_CHAINS; ++k)
+            WriteLong(sec.count[k]);
         WriteShort(sec.ambient_sound);
-        Write(sec.sound_interval, sizeof(sec.sound_interval));
-        Write(sec.texmove_angle, sizeof(sec.texmove_angle));
-        Write(sec.texmove_speed, sizeof(sec.texmove_speed));
+        WriteFloat(sec.sound_interval[0]);
+        WriteFloat(sec.sound_interval[1]);
+        WriteFloat(sec.texmove_angle[0]);
+        WriteFloat(sec.texmove_angle[1]);
+        WriteFloat(sec.texmove_speed[0]);
+        WriteFloat(sec.texmove_speed[1]);
         WriteFloat(sec.wind_angle);
         WriteFloat(sec.wind_speed);
         WriteFloat(sec.vertical_wind);
@@ -283,15 +306,15 @@ void XG_WriteTypes(FILE * f)
 
     // Update header.
     rewind(file);
-    fwrite(&linecount, 2, 1, file);
-    fwrite(&sectorcount, 2, 1, file);
+    WriteShort(linecount);
+    WriteShort(sectorcount);
 }
 
 void XG_ReadXGLump(char *name)
 {
     int     lump = W_CheckNumForName(name);
     void   *buffer;
-    int     lc = 0, sc = 0, len, i;
+    int     lc = 0, sc = 0, i;
     linetype_t *li;
     sectortype_t *sec;
     boolean done = false;
@@ -309,12 +332,8 @@ void XG_ReadXGLump(char *name)
     num_sectypes = ReadShort();
 
     // Allocate the arrays.
-    linetypes = Z_Malloc(len =
-                         sizeof(*linetypes) * num_linetypes, PU_STATIC, 0);
-    memset(linetypes, 0, len);
-
-    sectypes = Z_Malloc(len = sizeof(*sectypes) * num_sectypes, PU_STATIC, 0);
-    memset(sectypes, 0, len);
+    linetypes = Z_Calloc(sizeof(*linetypes) * num_linetypes, PU_STATIC, 0);
+    sectypes = Z_Calloc(sizeof(*sectypes) * num_sectypes, PU_STATIC, 0);
 
     while(!done)
     {
@@ -337,7 +356,8 @@ void XG_ReadXGLump(char *name)
             li->act_count = ReadShort();
             li->act_time = ReadFloat();
             li->act_tag = ReadLong();
-            Read(li->aparm, sizeof(li->aparm));
+            for(i = 0; i < DDLT_MAX_APARAMS; ++i)
+                li->aparm[i] = ReadLong();
             li->ticker_start = ReadFloat();
             li->ticker_end = ReadFloat();
             li->ticker_interval = ReadLong();
@@ -353,9 +373,11 @@ void XG_ReadXGLump(char *name)
             ReadString(&li->deact_msg);
             li->texmove_angle = ReadFloat();
             li->texmove_speed = ReadFloat();
-            Read(li->iparm, sizeof(li->iparm));
-            Read(li->fparm, sizeof(li->fparm));
-            for(i = 0; i < DDLT_MAX_SPARAMS; i++)
+            for(i = 0; i < DDLT_MAX_PARAMS; ++i)
+                li->iparm[i] = ReadLong();
+            for(i = 0; i < DDLT_MAX_PARAMS; ++i)
+                li->fparm[i] = ReadFloat();
+            for(i = 0; i < DDLT_MAX_SPARAMS; ++i)
                 ReadString(&li->sparm[i]);
             break;
 
@@ -365,16 +387,28 @@ void XG_ReadXGLump(char *name)
             sec->id = ReadShort();
             sec->flags = ReadLong();
             sec->act_tag = ReadLong();
-            Read(sec->chain, sizeof(sec->chain));
-            Read(sec->chain_flags, sizeof(sec->chain_flags));
-            Read(sec->start, sizeof(sec->start));
-            Read(sec->end, sizeof(sec->end));
-            Read(sec->interval, sizeof(sec->interval));
-            Read(sec->count, sizeof(sec->count));
+            for(i = 0; i < DDLT_MAX_CHAINS; ++i)
+                sec->chain[i] = ReadLong();
+            for(i = 0; i < DDLT_MAX_CHAINS; ++i)
+                sec->chain_flags[i] = ReadLong();
+            for(i = 0; i < DDLT_MAX_CHAINS; ++i)
+                sec->start[i] = ReadFloat();
+            for(i = 0; i < DDLT_MAX_CHAINS; ++i)
+                sec->end[i] = ReadFloat();
+            for(i = 0; i < DDLT_MAX_CHAINS; ++i)
+            {
+                sec->interval[i][0] = ReadFloat();
+                sec->interval[i][1] = ReadFloat();
+            }
+            for(i = 0; i < DDLT_MAX_CHAINS; ++i)
+                sec->count[i] = ReadLong();
             sec->ambient_sound = ReadShort();
-            Read(sec->sound_interval, sizeof(sec->sound_interval));
-            Read(sec->texmove_angle, sizeof(sec->texmove_angle));
-            Read(sec->texmove_speed, sizeof(sec->texmove_speed));
+            sec->sound_interval[0] = ReadFloat();
+            sec->sound_interval[1] = ReadFloat();
+            sec->texmove_angle[0] = ReadFloat();
+            sec->texmove_angle[1] = ReadFloat();
+            sec->texmove_speed[0] = ReadFloat();
+            sec->texmove_speed[1] = ReadFloat();
             sec->wind_angle = ReadFloat();
             sec->wind_speed = ReadFloat();
             sec->vertical_wind = ReadFloat();

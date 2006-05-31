@@ -34,11 +34,12 @@
 // MACROS ------------------------------------------------------------------
 
 // map data type flags
-#define DT_UNSIGNED 0x01
-#define DT_FRACBITS 0x02
-#define DT_FLAT     0x04
-#define DT_TEXTURE  0x08
-#define DT_NOINDEX  0x10
+#define DT_UNSIGNED   0x01
+#define DT_FRACBITS   0x02
+#define DT_FLAT       0x04
+#define DT_TEXTURE    0x08
+#define DT_NOINDEX    0x10
+#define DT_MSBCONVERT 0x20
 
 // Internal data types
 #define MAPDATA_FORMATS 2
@@ -1768,7 +1769,7 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                     sec->planes[j].glow = 0;
 
                     // The back pointer (temporary)
-                    sec->planes[j].sector = &map->sectors[i];
+                    sec->planes[j].sector = &map->sectors[k];
                 }
 
                 // Set plane normals
@@ -1987,6 +1988,58 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                       value_Str(prop->size));
         }
     }
+    else if(valueType == DDVT_UINT)
+    {
+        unsigned int* d = dst;
+
+        switch(prop->size) // Number of src bytes
+        {
+        case 2:
+            if(flags & DT_UNSIGNED)
+            {
+                if(flags & DT_FRACBITS)
+                    *d = USHORT(*((short*)(src))) << FRACBITS;
+                else
+                    *d = USHORT(*((short*)(src)));
+            }
+            else
+            {
+                if(flags & DT_NOINDEX)
+                {
+                    unsigned short num = SHORT(*((short*)(src)));
+
+                    *d = NO_INDEX;
+
+                    if(num != ((unsigned short)-1))
+                        *d = num;
+                }
+                else
+                {
+                    if(flags & DT_FRACBITS)
+                        *d = SHORT(*((short*)(src))) << FRACBITS;
+                    else
+                        *d = USHORT(*((short*)(src)));
+                }
+            }
+            if((flags & DT_MSBCONVERT) && (*d & 0x8000))
+            {
+                *d &= ~0x8000;
+                *d |= 0x80000000;
+            }
+            break;
+
+        case 4:
+            if(flags & DT_UNSIGNED)
+                *d = ULONG(*((long*)(src)));
+            else
+                *d = LONG(*((long*)(src)));
+            break;
+
+        default:
+            Con_Error("ReadValue: DDVT_INT incompatible with value type %s.\n",
+                      value_Str(prop->size));
+        }
+    }
     else if(valueType == DDVT_INT)
     {
         int* d = dst;
@@ -2019,6 +2072,11 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                     else
                         *d = SHORT(*((short*)(src)));
                 }
+            }
+            if((flags & DT_MSBCONVERT) && (*d & 0x8000))
+            {
+                *d &= ~0x8000;
+                *d |= 0x80000000;
             }
             break;
 
@@ -2498,11 +2556,11 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
             break;
 
         case DAM_CHILD_RIGHT:
-            ReadValue(map, DDVT_INT, &p->children[0], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_UINT, &p->children[0], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_CHILD_LEFT:
-            ReadValue(map, DDVT_INT, &p->children[1], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_UINT, &p->children[1], buffer + prop->offset, prop, idx);
             break;
 
         default:
@@ -2933,6 +2991,7 @@ static void P_GroupLines(gamemap_t* map)
         for(j = 0; j < ss->linecount; j++, seg++)
             if(seg->sidedef)
             {
+                ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
                 ss->sector = seg->sidedef->sector;
                 ss->sector->subscount++;
                 break;
@@ -4002,13 +4061,13 @@ void P_InitMapDataFormats(void)
                 stiptr->verInfo[index].values[11].gameprop = 0;
                 // children[0]
                 stiptr->verInfo[index].values[12].property = DAM_CHILD_RIGHT;
-                stiptr->verInfo[index].values[12].flags = 0;
+                stiptr->verInfo[index].values[12].flags = DT_MSBCONVERT;
                 stiptr->verInfo[index].values[12].size =  2;
                 stiptr->verInfo[index].values[12].offset = 24;
                 stiptr->verInfo[index].values[12].gameprop = 0;
                 // children[1]
                 stiptr->verInfo[index].values[13].property = DAM_CHILD_LEFT;
-                stiptr->verInfo[index].values[13].flags = 0;
+                stiptr->verInfo[index].values[13].flags = DT_MSBCONVERT;
                 stiptr->verInfo[index].values[13].size =  2;
                 stiptr->verInfo[index].values[13].offset = 26;
                 stiptr->verInfo[index].values[13].gameprop = 0;
@@ -4310,13 +4369,13 @@ void P_InitMapDataFormats(void)
                     glstiptr->verInfo[index].values[11].gameprop = 0;
                     // children[0]
                     glstiptr->verInfo[index].values[12].property = DAM_CHILD_RIGHT;
-                    glstiptr->verInfo[index].values[12].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].values[12].flags = DT_UNSIGNED | DT_MSBCONVERT;
                     glstiptr->verInfo[index].values[12].size =  2;
                     glstiptr->verInfo[index].values[12].offset = 24;
                     glstiptr->verInfo[index].values[12].gameprop = 0;
                     // children[1]
                     glstiptr->verInfo[index].values[13].property = DAM_CHILD_LEFT;
-                    glstiptr->verInfo[index].values[13].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].values[13].flags = DT_UNSIGNED | DT_MSBCONVERT;
                     glstiptr->verInfo[index].values[13].size =  2;
                     glstiptr->verInfo[index].values[13].offset = 26;
                     glstiptr->verInfo[index].values[13].gameprop = 0;

@@ -761,6 +761,7 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		B00B8A370A261D2C0019238B /* createfont_osx.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = createfont_osx.py; path = Scripts/createfont_osx.py; sourceTree = "<group>"; };
 		B0107851085633C6000BF0D8 /* hu_lib.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = hu_lib.h; path = Include/Common/hu_lib.h; sourceTree = "<group>"; };
 		B0107852085633C6000BF0D8 /* hu_msg.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = hu_msg.h; path = Include/Common/hu_msg.h; sourceTree = "<group>"; };
 		B0107853085633C6000BF0D8 /* hu_stuff.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = hu_stuff.h; path = Include/Common/hu_stuff.h; sourceTree = "<group>"; };
@@ -1158,6 +1159,7 @@
 		B0346DC60A10F1B100C8BAB2 /* edit_bias.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = edit_bias.h; path = Include/edit_bias.h; sourceTree = "<group>"; };
 		B0346DC70A10F1B100C8BAB2 /* p_maptypes.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_maptypes.h; path = Include/p_maptypes.h; sourceTree = "<group>"; };
 		B0346DD60A10F29600C8BAB2 /* p_player.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_player.c; path = Src/Common/p_player.c; sourceTree = "<group>"; };
+		B03822F20A28A78A00EE56D1 /* ChangeLog.txt */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = ChangeLog.txt; path = Doc/ChangeLog.txt; sourceTree = "<group>"; wrapsLines = 0; };
 		B04027EC0982F53A00C5F03E /* dmu_lib.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = dmu_lib.c; path = Src/Common/dmu_lib.c; sourceTree = "<group>"; };
 		B04027ED0982F53A00C5F03E /* p_mapsetup.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_mapsetup.c; path = Src/Common/p_mapsetup.c; sourceTree = "<group>"; };
 		B04027F60982F59100C5F03E /* am_map.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = am_map.h; path = Include/Common/am_map.h; sourceTree = "<group>"; };
@@ -1443,6 +1445,7 @@
 		29B97314FDCFA39411CA2CEA /* Doomsday */ = {
 			isa = PBXGroup;
 			children = (
+				B03822F20A28A78A00EE56D1 /* ChangeLog.txt */,
 				B0A8094D06F1F45D007AEB2E /* Readme.rtf */,
 				B0DAE7600982B154000A8265 /* Engine */,
 				B0DAE75E0982B10F000A8265 /* Common to All Games */,
@@ -1607,6 +1610,7 @@
 		B0111A8609E9891800475FB2 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
+				B00B8A370A261D2C0019238B /* createfont_osx.py */,
 				B0111A8709E9896B00475FB2 /* mapdata.hs */,
 				B0111A8509E9891100475FB2 /* makedmt.py */,
 			);
@@ -4265,7 +4269,7 @@
 				GCC_WARN_MISSING_PARENTHESES = YES;
 				GCC_WARN_PEDANTIC = NO;
 				GCC_WARN_SHADOW = NO;
-				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_SIGN_COMPARE = NO;
 				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
@@ -4527,6 +4531,7 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					NDEBUG,
 					UNIX,
 					MACOSX,
 					NO_FIXED_ASM,

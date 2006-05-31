@@ -237,7 +237,7 @@ void SV_WriteXGPlaneMover(thinker_t *th)
 /*
  * Reads the plane mover thinker.
  */
-void SV_ReadXGPlaneMover(xgplanemover_t* mov)
+int SV_ReadXGPlaneMover(xgplanemover_t* mov)
 {
     int     i;
 
@@ -247,7 +247,6 @@ void SV_ReadXGPlaneMover(xgplanemover_t* mov)
 
     mov->ceiling = SV_ReadByte();
     mov->flags = SV_ReadLong();
-
 
     i = SV_ReadLong();
     if(i)
@@ -266,6 +265,7 @@ void SV_ReadXGPlaneMover(xgplanemover_t* mov)
     mov->timer = SV_ReadLong();
 
     mov->thinker.function = XS_PlaneMover;
+    return true; // Add this thinker.
 }
 
 /*

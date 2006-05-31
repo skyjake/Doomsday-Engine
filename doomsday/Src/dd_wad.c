@@ -22,6 +22,18 @@
  *
  * This version supports runtime (un)loading, replacement of flats and
  * sprites, GWA files and IWAD checking.
+ *
+ * Internally, the cache has two parts: the Primary cache, which is loaded
+ * from data files, and the Auxiliary cache, which is generated at runtime.
+ * To outsiders, there is no difference between these two caches. The
+ * only visible difference is that lumps in the auxiliary cache use indices
+ * starting from AUXILIARY_BASE. Everything in the auxiliary cache takes
+ * precedence over lumps in the primary cache.
+ *
+ * The W_Select() function is responsible for activating the right cache
+ * when a lump index is provided. Functions that don't know the lump index
+ * will have to check both the primary and the auxiliary caches (e.g.,
+ * W_CheckNumForName()).                                         
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -68,7 +80,7 @@ char    retname[9];
 static void W_CloseAuxiliary(void);
 static void W_CloseAuxiliaryFile(void);
 static void W_UsePrimary(void);
-static void W_UseAuxiliary(void);
+static boolean W_UseAuxiliary(void); // may not be available
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -125,6 +137,10 @@ static int W_Index(int lump)
     return lump;
 }
 
+/*
+ * Selects which lump cache to use, given a logical lump index. This is called
+ * in all the functions that access the lump cache.
+ */
 static int W_Select(int lump)
 {
     if(lump >= AUXILIARY_BASE)
@@ -911,20 +927,38 @@ static void W_UsePrimary(void)
     lumpcache = PrimaryLumpCache;
 }
 
-static void W_UseAuxiliary(void)
+static boolean W_UseAuxiliary(void)
 {
     if(AuxiliaryOpened == false)
     {
-        Con_Error("W_UseAuxiliary: WAD not opened.");
+        // The auxiliary cache is not available at this time.
+        return false;
     }
     lumpinfo = AuxiliaryLumpInfo;
     numlumps = AuxiliaryNumLumps;
     lumpcache = AuxiliaryLumpCache;
+    return true;
 }
 
 int W_NumLumps(void)
 {
     return numlumps;
+}
+
+static int W_ScanLumpInfo(int v[2])
+{
+    // Scan backwards so patch lump files take precedence.
+    lumpinfo_t *lump_p = lumpinfo + numlumps;
+    while(lump_p-- != lumpinfo)
+    {
+        if(*(int *) lump_p->name == v[0] && *(int *) &lump_p->name[4] == v[1])
+        {
+            // W_Index handles the conversion to a logical index that is
+            // independent of the 
+            return W_Index(lump_p - lumpinfo);
+        }
+    }
+    return -1;
 }
 
 /*
@@ -933,8 +967,8 @@ int W_NumLumps(void)
 int W_CheckNumForName(char *name)
 {
     char    name8[9];
-    int     v1, v2;
-    lumpinfo_t *lump_p;
+    int     v[2];
+    int     idx = -1;
 
     // If the name string is empty, don't bother to search.
     if(!name[0])
@@ -948,18 +982,23 @@ int W_CheckNumForName(char *name)
     // Make the name into two integers for easy compares
     strncpy(name8, name, 8);
     strupr(name8);              // case insensitive
-    v1 = *(int *) name8;
-    v2 = *(int *) &name8[4];
+    v[0] = *(int *) name8;
+    v[1] = *(int *) &name8[4];
 
-    // Scan backwards so patch lump files take precedence
-    lump_p = lumpinfo + numlumps;
-    while(lump_p-- != lumpinfo)
+    // We have to check both the primary and auxiliary caches because 
+    // we've only got a name and don't know where it is located. Start with
+    // the auxiliary lumps because they take precedence.
+    if(W_UseAuxiliary())
     {
-        if(*(int *) lump_p->name == v1 && *(int *) &lump_p->name[4] == v2)
-        {
-            return W_Index(lump_p - lumpinfo);
-        }
+        idx = W_ScanLumpInfo(v);
+        if(idx != -1)
+            return idx;
     }
+
+    W_UsePrimary();
+    idx = W_ScanLumpInfo(v);
+    if(idx != -1)
+        return idx;    
 
     VERBOSE2(Con_Message("W_CheckNumForName: \"%s\" not found.\n", name8));
     return -1;

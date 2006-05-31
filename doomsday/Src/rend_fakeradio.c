@@ -143,7 +143,8 @@ void Rend_RadioInitForSector(sector_t *sector)
  */
 boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
 {
-    return !(sector->planes[plane].pic == skyflatnum || sector->planes[plane].glow);
+    return !(sector->planes[plane].pic <= 0 || sector->planes[plane].glow ||
+             R_IsSkyFlat(sector->planes[plane].pic));
 }
 
 /*
@@ -1187,7 +1188,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
  * is at the same height as this one.  2 means that the other edge is
  * past our height ("clearly open").
  */
-float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isFloor)
+float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
 {
     sector_t *front = (frontside ? line->frontsector : line->backsector);
     sector_t *back = (frontside ? line->backsector : line->frontsector);
@@ -1202,7 +1203,16 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isFloor)
     bInfo = SECT_INFO(back);
     fside = SIDE_PTR(line->sidenum[frontside? 0 : 1]);
 
-    if(isFloor)
+    if(isCeiling)
+    {
+        fz = -fInfo->planeinfo[PLN_CEILING].visheight;
+        bz = -bInfo->planeinfo[PLN_CEILING].visheight;
+        bhz = -bInfo->planeinfo[PLN_FLOOR].visheight;
+
+        if(fz < bz && fside->toptexture == 0)
+            return 2; // Consider it fully open.
+    }
+    else
     {
         fz = fInfo->planeinfo[PLN_FLOOR].visheight;
         bz = bInfo->planeinfo[PLN_FLOOR].visheight;
@@ -1213,15 +1223,6 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isFloor)
         // TODO: does not consider any replacements we might make in
         // Rend_RenderWallSeg to fix the missing texture...
         if(fz < bz && fside->bottomtexture == 0)
-            return 2; // Consider it fully open.
-    }
-    else
-    {
-        fz = -fInfo->planeinfo[PLN_CEILING].visheight;
-        bz = -bInfo->planeinfo[PLN_CEILING].visheight;
-        bhz = -bInfo->planeinfo[PLN_FLOOR].visheight;
-
-        if(fz < bz && fside->toptexture == 0)
             return 2; // Consider it fully open.
     }
 
@@ -1255,7 +1256,7 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isFloor)
  * Calculate the corner coordinates and add a new shadow polygon to
  * the rendering lists.
  */
-void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isFloor,
+void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
                              float darkness, float sideOpen[2])
 {
     rendpoly_t q;
@@ -1272,7 +1273,7 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isFloor,
         (shadow->flags & SHPF_FRONTSIDE ? shadow->line->frontsector : shadow->
          line->backsector);
 
-    z = (isFloor ? SECT_FLOOR(sector) : SECT_CEIL(sector));
+    z = (isCeiling ? SECT_CEIL(sector) : SECT_FLOOR(sector));
 
     // Sector lightlevel affects the darkness of the shadows.
     if(darkness > 1)
@@ -1317,7 +1318,7 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isFloor,
     memset(q.vertices, 0, q.numvertices * sizeof(rendpoly_vertex_t));
 
     vtx = q.vertices;
-    idx = (isFloor ? floorIndices : ceilIndices);
+    idx = (isCeiling ? ceilIndices : floorIndices);
 
     // Left outer corner.
     vtx[idx[0]].pos[VX] = FIX2FLT(shadow->outer[0]->x);
@@ -1361,7 +1362,7 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
     sector_t *sector;
     line_t *neighbor;
     float   open, sideOpen[2];
-    int     i, surface;
+    int     i, pln;
 
     if(!rendFakeRadio || LevelFullBright)
         return;
@@ -1387,17 +1388,16 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
 
         sector = R_GetShadowSector(shadow);
 
-        for(surface = 0; surface < 2; surface++)
+        for(pln = 0; pln < NUM_PLANES; pln++)
         {
-            // Glowing surfaces shouldn't have shadows on them.
-            if(!Rend_RadioNonGlowingFlat
-               (sector, surface ? PLN_FLOOR : PLN_CEILING))
+            // Glowing surfaces or missing textures shouldn't have shadows.
+            if(!Rend_RadioNonGlowingFlat(sector, pln))
                 continue;
 
             open =
                 Rend_RadioEdgeOpenness(shadow->line,
                                        (shadow->flags & SHPF_FRONTSIDE) != 0,
-                                       surface);
+                                       pln);
             if(open >= 1)
                 continue;
 
@@ -1414,10 +1414,10 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
                 sideOpen[i] =
                     Rend_RadioEdgeOpenness(neighbor,
                                            neighbor->frontsector == sector,
-                                           surface);
+                                           pln);
             }
 
-            Rend_RadioAddShadowEdge(shadow, surface, 1 - open, sideOpen);
+            Rend_RadioAddShadowEdge(shadow, pln, 1 - open, sideOpen);
         }
     }
 }

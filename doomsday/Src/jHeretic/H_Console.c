@@ -76,7 +76,7 @@ DEFCC(CCmdHereticFont);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     consoleFlat = 6;
+int     consoleFlat = 0;
 float   consoleZoom = 1;
 
 // Console variables.

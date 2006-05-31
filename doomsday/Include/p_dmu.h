@@ -36,4 +36,12 @@ int         P_ToIndex(const void* ptr);
 
 const char *DMU_Str(int prop);
 
+#ifndef NDEBUG
+# define ASSERT_DMU_TYPE(ptr, dmuType) \
+    if(!ptr || ((runtime_mapdata_header_t*)ptr)->type != dmuType) \
+        Con_Error("ASSERT_DMU_TYPE failure on line %i in "__FILE__". " #ptr " is not %s.\n", __LINE__, DMU_Str(dmuType));
+#else
+# define ASSERT_DMU_TYPE(ptr, dmuType)
+#endif
+
 #endif

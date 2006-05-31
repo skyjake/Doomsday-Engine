@@ -58,7 +58,7 @@ typedef enum {
 // Standard dimensions.
 #define UI_BORDER		(screenWidth/120)	// All borders are this wide.
 #define UI_SHADOW_OFFSET (MIN_OF(3, screenWidth/320))
-#define UI_TITLE_HGT	(ui_fonthgt + UI_BORDER*2)
+#define UI_TITLE_HGT	(ui_fonthgt + UI_BORDER)
 #define UI_BUTTON_BORDER (UI_BORDER)
 #define UI_BAR_WDH		(UI_BORDER * 3)
 #define UI_BAR_BORDER	(UI_BORDER / 2)
@@ -206,6 +206,7 @@ void            UIPage_Ticker(ui_page_t * page);
 void            UIPage_Drawer(ui_page_t * page);
 void            UIFrame_Drawer(ui_object_t *ob);
 void            UIText_Drawer(ui_object_t *ob);
+void            UIText_BrightDrawer(ui_object_t *ob);
 int             UIButton_Responder(ui_object_t *ob, event_t *ev);
 void            UIButton_Drawer(ui_object_t *ob);
 int             UIEdit_Responder(ui_object_t *ob, event_t *ev);
@@ -230,7 +231,7 @@ int             UI_ListFindItem(ui_object_t *ob, int data_value);
 void            UI_DrawLogo(int x, int y, int w, int h);
 void            UI_DrawMouse(int x, int y);
 void            UI_DrawTitle(ui_page_t * page);
-void            UI_DrawTitleEx(char *text, int height);
+void            UI_DrawTitleEx(char *text, int height, float alpha);
 void            UI_MixColors(ui_color_t * a, ui_color_t * b, ui_color_t * dest,
 							 float amount);
 void            UI_ColorA(ui_color_t * color, float alpha);

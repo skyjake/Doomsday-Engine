@@ -26,6 +26,8 @@ You will need these tools and libraries for building everything:
 - SDL_net
 - SDL_mixer (used for sound by default)
 - OpenAL (alternative sound library, provides 3D sound)
+- zip (to create Doomsday.pk3)
+- python (to generate p_maptypes.h and dd_maptypes.h)
 
 
 IF YOU HAVE A SOURCE TARBALL:

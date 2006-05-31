@@ -388,9 +388,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 
                     if(P_GetIntp(ln, DMU_FLAGS) & ML_TWOSIDED)
                     {
-                        side = P_GetPtrp(ln, DMU_FRONT_SECTOR);
-                        bottomtexture = P_GetIntp(side,
-                                                  DMU_BOTTOM_TEXTURE);
+                        side = P_GetPtrp(ln, DMU_SIDE0);
+                        bottomtexture = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
                         if(bottomtexture >= 0)
                         {
                             Set(DD_TEXTURE_HEIGHT_QUERY, bottomtexture);
@@ -398,9 +397,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                                 minsize = Get(DD_QUERY_RESULT);
                         }
 
-                        side = P_GetPtrp(ln, DMU_BACK_SECTOR);
-                        bottomtexture = P_GetIntp(side,
-                                                  DMU_BOTTOM_TEXTURE);
+                        side = P_GetPtrp(ln, DMU_SIDE1);
+                        bottomtexture = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
                         if(bottomtexture >= 0)
                         {
                             Set(DD_TEXTURE_HEIGHT_QUERY, bottomtexture);

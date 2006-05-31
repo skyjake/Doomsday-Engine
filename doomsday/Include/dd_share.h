@@ -111,6 +111,7 @@ extern          "C" {
         DDVT_BYTE,
         DDVT_SHORT,
         DDVT_INT,    // 32 or 64
+        DDVT_UINT,
         DDVT_FIXED,
         DDVT_ANGLE,
         DDVT_FLOAT,
@@ -517,9 +518,11 @@ extern          "C" {
 #define PU_USER9        48
 #define PU_USER10       49
 
-#define PU_LEVEL        50         // static until level exited
-#define PU_LEVSPEC      51         /* a special thinker in a level
-                                      tags >= 100 are purgable whenever needed */
+#define PU_LEVEL        50          // static until level exited (may be freed
+                                    // during the level, though)
+#define PU_LEVSPEC      51          // a special thinker in a level
+                                    // tags >= 100 are purgable whenever needed
+#define PU_LEVELSTATIC  52          // not freed until level exited
 #define PU_PURGELEVEL   100
 #define PU_CACHE        101
 

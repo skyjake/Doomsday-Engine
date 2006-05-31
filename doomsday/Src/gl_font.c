@@ -53,6 +53,9 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void* FR_ReadFormat0(DFILE* file, jfrfont_t* font);
+static void* FR_ReadFormat2(DFILE* file, jfrfont_t* font);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 #ifdef WIN32
@@ -106,7 +109,7 @@ static void FR_DestroyFontIdx(int idx)
 {
     jfrfont_t *font = fonts + idx;
 
-    gl.DeleteTextures(1, &font->texture);
+    gl.DeleteTextures(1, (DGLuint*) &font->texture);
     memmove(fonts + idx, fonts + idx + 1,
             sizeof(jfrfont_t) * (numFonts - idx - 1));
     numFonts--;
@@ -190,7 +193,6 @@ static int FR_GetMaxId()
     return grid;
 }
 
-#ifdef WIN32
 static int findPow2(int num)
 {
     int     cumul = 1;
@@ -198,7 +200,6 @@ static int findPow2(int num)
     for(; num > cumul; cumul *= 2);
     return cumul;
 }
-#endif
 
 int FR_SaveFont(char *filename, jfrfont_t * font, unsigned int *image)
 {
@@ -254,7 +255,7 @@ int FR_NewFont(void)
  * Prepares a font from a file. If the given file is not found,
  * prepares the corresponding GDI font.
  */
-int FR_PrepareFont(char *name)
+int FR_PrepareFont(const char *name)
 {
 #ifdef WIN32
     struct {
@@ -276,11 +277,9 @@ int FR_PrepareFont(char *name)
 #endif
     filename_t buf;
     DFILE  *file;
-    int     i, c, bit, mask, version, format, numPels;
+    int     version;
     jfrfont_t *font;
-    jfrchar_t *ch;
-    int     numChars;
-    int    *image;
+    void   *image;
 
     strcpy(buf, fontpath);
     strcat(buf, name);
@@ -288,6 +287,7 @@ int FR_PrepareFont(char *name)
     if(ArgCheck("-gdifonts") || (file = F_Open(buf, "rb")) == NULL)
     {
 #ifdef WIN32
+        int i;
         // No luck...
         for(i = 0; fontmapper[i].name; i++)
             if(!stricmp(fontmapper[i].name, name))
@@ -341,6 +341,57 @@ int FR_PrepareFont(char *name)
     VERBOSE(Con_Printf("FR_PrepareFont: New font %i: %s.\n", currentFontIndex,
                        font->name));
 
+    // Font glyph map.
+    image = 0;
+
+    switch(version)
+    {
+    case 0: // Original format.
+        image = FR_ReadFormat0(file, font);
+        break;
+
+    case 2: // Enhanced format.
+        image = FR_ReadFormat2(file, font);
+        break;
+
+    default:
+        Con_Error("FR_PrepareFont: Format is unsupported.\n");
+        break;
+    }
+
+    if(image)
+    {
+        VERBOSE2(Con_Printf("FR_PrepareFont: Creating GL texture.\n"));
+
+        // Load in the texture.
+        font->texture = gl.NewTexture();
+        gl.TexImage(DGL_RGBA, font->texWidth, font->texHeight, 0, image);
+        gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
+        gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
+        free(image); image = 0;
+
+        F_Close(file);
+    }
+
+    VERBOSE2(Con_Printf("FR_PrepareFont: Loaded %s.\n", name));
+    return true;
+}
+
+static void* FR_ReadFormat0(DFILE* file, jfrfont_t* font)
+{
+    int     numChars = 0;
+    int     i;
+    int     format;
+    int     numPels;
+    int     c, bit, mask;
+    int    *image;
+    jfrchar_t *ch;
+
+    font->hasEmbeddedShadow = false;
+
+    font->marginWidth = 0;
+    font->marginHeight = 0;
+
     // Load in the data.
     font->texWidth = InShort(file);
     font->texHeight = InShort(file);
@@ -360,9 +411,8 @@ int FR_PrepareFont(char *name)
     format = InByte(file);
     if(format > 0)
     {
-        Con_Printf("FR_PrepareFont: Font %s is in unknown format %i.\n", buf,
-                   format);
-        goto unknown_format;
+        Con_Error("FR_PrepareFont: Font %s uses unknown bitmap format %i.\n",
+                  font->name, format);
     }
 
     numPels = font->texWidth * font->texHeight;
@@ -378,21 +428,81 @@ int FR_PrepareFont(char *name)
                 image[c] = ~0;
         }
     }
+    return image;
+}
 
-    VERBOSE2(Con_Printf("FR_PrepareFont: Creating GL texture.\n"));
+static void* FR_ReadFormat2(DFILE* file, jfrfont_t* font)
+{
+    int     i;
+    int     glyphCount = 0;
+    byte    bitmapFormat = 0;
+    int     numPels;
+    uint   *image, *ptr;
+    int     dataHeight;
 
-    // Load in the texture.
-    font->texture = gl.NewTexture();
-    gl.TexImage(DGL_RGBA, font->texWidth, font->texHeight, 0, image);
-    gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-    gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
-    free(image); image = 0;
+    bitmapFormat = InByte(file);
+    if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
+    {
+        Con_Error("FR_ReadFormat1: Bitmap format %i not implemented.\n",
+                  bitmapFormat);
+    }
 
-  unknown_format:
-    F_Close(file);
+    font->hasEmbeddedShadow = true;
 
-    VERBOSE2(Con_Printf("FR_PrepareFont: Loaded %s.\n", name));
-    return true;
+    // Load in the data.
+    font->texWidth = InShort(file);
+    dataHeight = InShort(file);
+    font->texHeight = findPow2(dataHeight);
+    glyphCount = InShort(file);
+    font->marginWidth = font->marginHeight = InShort(file);
+    font->lineHeight = InShort(file);
+    font->glyphHeight = InShort(file);
+    font->ascent = InShort(file);
+    font->descent = InShort(file);
+
+    for(i = 0; i < glyphCount; ++i)
+    {
+        unsigned short code = InShort(file);
+        unsigned short x = InShort(file);
+        unsigned short y = InShort(file);
+        unsigned short w = InShort(file);
+        unsigned short h = InShort(file);
+
+        if(code < MAX_CHARS)
+        {
+            font->chars[code].x = x;
+            font->chars[code].y = y;
+            font->chars[code].w = w;
+            font->chars[code].h = h;
+        }
+    }
+
+    // Read the bitmap.
+    numPels = font->texWidth * font->texHeight;
+    image = ptr = calloc(numPels, 4);
+    if(bitmapFormat == 0)
+    {
+        for(i = 0; i < numPels; ++i)
+        {
+            byte red = InByte(file);
+            byte green = InByte(file);
+            byte blue = InByte(file);
+            byte alpha = InByte(file);
+            *ptr++ = ULONG(red | (green << 8) | (blue << 16) | (alpha << 24));
+        }
+    }
+    else if(bitmapFormat == 1)
+    {
+        for(i = 0; i < numPels; ++i)
+        {
+            byte luminance = InByte(file);
+            byte alpha = InByte(file);
+            *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) |
+                      (alpha << 24));
+        }
+    }
+
+    return image;
 }
 
 /*
@@ -528,7 +638,8 @@ int FR_CharWidth(int ch)
 {
     if(currentFontIndex == -1)
         return 0;
-    return fonts[currentFontIndex].chars[ch].w;
+    return fonts[currentFontIndex].chars[ch].w - 
+        fonts[currentFontIndex].marginWidth * 2;
 }
 
 int FR_TextWidth(char *text)
@@ -541,7 +652,7 @@ int FR_TextWidth(char *text)
 
     // Just add them together.
     for(cf = fonts + currentFontIndex, i = 0; i < len; i++)
-        width += cf->chars[(byte) text[i]].w;
+        width += cf->chars[(byte) text[i]].w - 2*cf->marginWidth;
 
     return width;
 }
@@ -554,64 +665,42 @@ int FR_TextHeight(char *text)
     if(currentFontIndex == -1 || !text)
         return 0;
 
+    cf = fonts + currentFontIndex;
+            
     // Find the greatest height.
-    for(len = strlen(text), cf = fonts + currentFontIndex, i = 0; i < len; i++)
-        height = MAX_OF(height, cf->chars[(byte) text[i]].h);
+    for(len = strlen(text), i = 0; i < len; i++)
+        height = MAX_OF(height, cf->chars[(byte) text[i]].h - 2*cf->marginHeight);
 
     return height;
 }
 
-/*
- * (x,y) is the upper left corner. Returns the length.
- */
-int FR_TextOut(char *text, int x, int y)
+int FR_SingleLineHeight(char *text)
 {
-    float   dx, dy;
-    int     i, width = 0, len;
     jfrfont_t *cf;
 
-    if(!text)
+    if(currentFontIndex == -1 || !text)
         return 0;
-    len = strlen(text);
 
-    // Check the font.
-    if(currentFontIndex == -1)
-        return 0;               // No selected font.
     cf = fonts + currentFontIndex;
-
-    // Set the texture.
-    gl.Bind(cf->texture);
-
-    // Print it.
-    gl.Begin(DGL_QUADS);
-    for(i = 0; i < len; i++)
+    if(cf->ascent)
     {
-        jfrchar_t *ch = cf->chars + (byte) text[i];
-        float   coff = 0;       //.5f;
-        float   cx = (float) ch->x + coff, cy = (float) ch->y + coff;
-        float   texw = (float) cf->texWidth, texh = (float) cf->texHeight;
-
-        dx = x + coff;
-        dy = y + coff;
-
-        // Upper left.
-        gl.TexCoord2f(cx / texw, cy / texh);
-        gl.Vertex2f(dx, dy);
-        // Upper right.
-        gl.TexCoord2f((cx + ch->w) / texw, cy / texh);
-        gl.Vertex2f(dx + ch->w + coff, dy);
-        // Lower right.
-        gl.TexCoord2f((cx + ch->w) / texw, (cy + ch->h) / texh);
-        gl.Vertex2f(dx + ch->w + coff, dy + ch->h + coff);
-        // Lower left.
-        gl.TexCoord2f(cx / texw, (cy + ch->h) / texh);
-        gl.Vertex2f(dx, dy + ch->h + coff);
-        // Move on.
-        width += ch->w;
-        x += ch->w;
+        return cf->ascent;
     }
-    gl.End();
-    return width;
+    return cf->chars[(byte)text[0]].h - 2*cf->marginHeight;
+}
+
+int FR_GlyphTopToAscent(char *text)
+{
+    jfrfont_t *cf;
+    
+    if(currentFontIndex == -1 || !text)
+        return 0;
+    
+    cf = fonts + currentFontIndex;
+    if(!cf->lineHeight)
+        return 0;
+    
+    return cf->lineHeight - cf->ascent;
 }
 
 int FR_GetCurrent()
@@ -619,4 +708,123 @@ int FR_GetCurrent()
     if(currentFontIndex == -1)
         return 0;
     return fonts[currentFontIndex].id;
+}
+
+/*
+ * (x,y) is the upper left corner. Returns the length.
+ */
+int FR_CustomShadowTextOut(char *text, int x, int y, int shadowX, int shadowY,
+                           float shadowAlpha)
+{
+    int     i, width = 0, len, step;
+    jfrfont_t *cf;
+    int     origColor[4];
+    boolean drawShadow = (shadowX || shadowY);
+
+    if(!text)
+        return 0;
+
+    len = strlen(text);
+
+    // Check the font.
+    if(currentFontIndex == -1)
+        return 0;               // No selected font.
+    cf = fonts + currentFontIndex;
+
+    if(cf->hasEmbeddedShadow)
+        drawShadow = false;
+
+    if(drawShadow)
+    {
+        // The color of the text itself.
+        gl.GetIntegerv(DGL_RGBA, origColor);
+        gl.Color4ub(0, 0, 0, origColor[3] * shadowAlpha);
+    }
+
+    // Set the texture.
+    gl.Bind(cf->texture);
+
+    gl.MatrixMode(DGL_TEXTURE);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Scalef(1.f / cf->texWidth, 1.f / cf->texHeight, 1.f);
+
+    // Print it.
+    gl.Begin(DGL_QUADS);
+
+    if(drawShadow)
+    {
+        int startX = x;
+        int startY = y;
+
+        x += shadowX;
+        y += shadowY;
+
+        for(i = 0; i < len; i++)
+        {
+            // First draw the shadow.
+            jfrchar_t *ch = cf->chars + (byte) text[i];
+
+            // Upper left.
+            gl.TexCoord2f(ch->x, ch->y);
+            gl.Vertex2f(x, y);
+            // Upper right.
+            gl.TexCoord2f(ch->x + ch->w, ch->y);
+            gl.Vertex2f(x + ch->w, y);
+            // Lower right.
+            gl.TexCoord2f(ch->x + ch->w, ch->y + ch->h);
+            gl.Vertex2f(x + ch->w, y + ch->h);
+            // Lower left.
+            gl.TexCoord2f(ch->x, ch->y + ch->h);
+            gl.Vertex2f(x, y + ch->h);
+            // Move on.
+            x += ch->w;
+        }
+
+        x = startX;
+        y = startY;
+    }
+
+    if(drawShadow)
+        gl.Color4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
+
+    x -= cf->marginWidth;
+    y -= cf->marginHeight;
+
+    for(i = 0; i < len; i++)
+    {
+        jfrchar_t *ch = cf->chars + (byte) text[i];
+
+        // Upper left.
+        gl.TexCoord2f(ch->x, ch->y);
+        gl.Vertex2f(x, y);
+        // Upper right.
+        gl.TexCoord2f(ch->x + ch->w, ch->y);
+        gl.Vertex2f(x + ch->w, y);
+        // Lower right.
+        gl.TexCoord2f(ch->x + ch->w, ch->y + ch->h);
+        gl.Vertex2f(x + ch->w, y + ch->h);
+        // Lower left.
+        gl.TexCoord2f(ch->x, ch->y + ch->h);
+        gl.Vertex2f(x, y + ch->h);
+        // Move on.
+        step = ch->w - 2*cf->marginWidth;
+        width += step;
+        x += step;
+    }
+    gl.End();
+
+    gl.MatrixMode(DGL_TEXTURE);
+    gl.PopMatrix();
+    return width;
+}
+
+int FR_TextOut(char *text, int x, int y)
+{
+    return FR_CustomShadowTextOut(text, x, y, 0, 0, 0);
+}
+
+int FR_ShadowTextOut(char *text, int x, int y)
+{
+    return FR_CustomShadowTextOut(text, x, y, 2, 2, .5f);
 }

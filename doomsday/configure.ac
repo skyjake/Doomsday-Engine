@@ -124,4 +124,14 @@ AC_CONFIG_FILES([ Makefile Src/Makefile Src/drOpenGL/Makefile
 	Src/dpDehRead/Makefile Src/dpMapLoad/Makefile
 	Src/dsSDLMixer/Makefile	Src/dsOpenAL/Makefile ])
 
+cd ..
+rm -f ./Data/Doomsday.pk3
+zip -v -0  ./Data/Doomsday.pk3  ./Data/Graphics/* ./Data/Fonts/* ./Data/KeyMaps/*
+cd Build
+
+#cd ..
+#python ./Scripts/makedmt.py < ./Include/mapdata.hs
+#mv -f dd_maptypes.h ./Include
+#mv -f p_maptypes.h ./Include
+#cd Build
 AC_OUTPUT

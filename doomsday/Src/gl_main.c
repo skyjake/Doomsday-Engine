@@ -98,7 +98,7 @@ int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
-int     glFontFixed, glFontVariable;
+int     glFontFixed, glFontVariable[NUM_GLFS];
 
 float   nearClip, farClip;
 
@@ -341,24 +341,73 @@ void GL_SetGamma(void)
     GL_SetGammaRamp(myramp);
 }
 
+const char* GL_ChooseFixedFont()
+{
+    if(screenHeight < 300)
+        return "console11";
+    if(screenHeight > 768)
+        return "console18";
+    return "console14";
+}
+
+const char* GL_ChooseVariableFont(glfontstyle_t style)
+{
+    const int SMALL_LIMIT = 500;
+    const int MED_LIMIT = 800;
+    
+    switch(style)
+    {
+    default:
+        return (screenHeight < SMALL_LIMIT ? "normal12" :
+                screenHeight < MED_LIMIT ? "normal18" :
+                "normal24");
+
+    case GLFS_LIGHT:
+        return (screenHeight < SMALL_LIMIT ? "normallight12" :
+                screenHeight < MED_LIMIT ? "normallight18" :
+                "normallight24");
+
+    case GLFS_BOLD:
+        return (screenHeight < SMALL_LIMIT ? "normalbold12" :
+                screenHeight < MED_LIMIT ? "normalbold18" :
+                "normalbold24");
+    }
+    return "normal18";
+}
+
 void GL_InitFont(void)
 {
     FR_Init();
-    FR_PrepareFont("Fixed");
-    glFontFixed = glFontVariable = FR_GetCurrent();
+    FR_PrepareFont(GL_ChooseFixedFont());
+    glFontFixed = 
+        glFontVariable[GLFS_NORMAL] = 
+        glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
+    
     Con_MaxLineLength();
-    //Con_Execute("font default", true);    // Set the console font.
+
+    // Also keep the bold and light fonts loaded.
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD));
+    glFontVariable[GLFS_BOLD] = FR_GetCurrent();
+
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT));
+    glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
+
+    FR_SetFont(glFontFixed);
 }
 
 void GL_ShutdownFont(void)
 {
     FR_Shutdown();
-    glFontFixed = glFontVariable = 0;
+    glFontFixed = 
+        glFontVariable[GLFS_NORMAL] = 
+        glFontVariable[GLFS_BOLD] = 
+        glFontVariable[GLFS_LIGHT] = 0;
 }
 
 void GL_InitVarFont(void)
 {
     int     old_font;
+    int     i;
 
     if(novideo || varFontInited)
         return;
@@ -368,12 +417,15 @@ void GL_InitVarFont(void)
     old_font = FR_GetCurrent();
     VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", old_font));
 
-    FR_PrepareFont(screenHeight < 300 ? "Small7" : screenHeight <
-                   400 ? "Small8" : screenHeight <
-                   480 ? "Small10" : screenHeight <
-                   600 ? "System" : screenHeight < 800 ? "System12" : "Large");
-    glFontVariable = FR_GetCurrent();
-    VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n", glFontVariable));
+    for(i = 0; i < NUM_GLFS; ++i)
+    {
+        // The bold font and light fonts are always loaded.
+        if(i == GLFS_BOLD || i == GLFS_LIGHT) continue;
+        
+        FR_PrepareFont(GL_ChooseVariableFont(i));
+        glFontVariable[i] = FR_GetCurrent();
+        VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n", glFontVariable[i]));
+    }
 
     FR_SetFont(old_font);
     VERBOSE2(Con_Message("GL_InitVarFont: Restored old font %i.\n", old_font));
@@ -383,11 +435,19 @@ void GL_InitVarFont(void)
 
 void GL_ShutdownVarFont(void)
 {
+    int i;
+    
     if(novideo || !varFontInited)
         return;
-    FR_DestroyFont(glFontVariable);
     FR_SetFont(glFontFixed);
-    glFontVariable = glFontFixed;
+    for(i = 0; i < NUM_GLFS; ++i)
+    {
+        // Keep the bold and light fonts loaded.
+        if(i == GLFS_BOLD || i == GLFS_LIGHT) continue;
+
+        FR_DestroyFont(glFontVariable[i]);
+        glFontVariable[i] = glFontFixed;
+    }
     varFontInited = false;
 }
 
@@ -701,7 +761,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         else
         {
             // Restore the old font.
-            Con_Executef(CMDS_DDAY, true, "font name %s", oldFontName);
+            //Con_Executef(CMDS_DDAY, true, "font name %s", oldFontName);
             GL_Init2DState();
         }
         GL_InitRefresh(loadLightMaps, loadFlares);

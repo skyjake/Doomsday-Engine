@@ -25,7 +25,6 @@
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_misc.h"
-
 #include "p_bmap.h"
 
 // MACROS ------------------------------------------------------------------
@@ -48,6 +47,8 @@ typedef struct boundary_s {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static zblockset_t *shadowLinksBlockSet;
 
 // CODE --------------------------------------------------------------------
 
@@ -272,7 +273,7 @@ void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
 #endif
 
     // We'll need to allocate a new link.
-    link = Z_Malloc(sizeof(*link), PU_LEVEL, NULL);
+    link = Z_BlockNewElement(shadowLinksBlockSet);
 
     // The links are stored into a linked list.
     link->next = info->shadows;
@@ -578,6 +579,8 @@ void R_InitSectorShadows(void)
      *    shadow's edges cross one of the subsector's edges (not parallel),
      *    link the shadow to the subsector.
      */
+    shadowLinksBlockSet = Z_BlockCreate(sizeof(shadowlink_t), 1024, PU_LEVEL);
+
     for(i = 0, poly = shadows; i < maxCount; i++, poly++)
     {
         V2_Set(point, FIX2FLT(poly->outer[0]->x), FIX2FLT(poly->outer[0]->y));

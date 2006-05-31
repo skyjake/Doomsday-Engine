@@ -1721,9 +1721,6 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
-    // Only activate once (rare Dead simple bug)
-    bossKilled = true;
-
     // victory!
     if(gamemode == commercial)
     {
@@ -1744,6 +1741,9 @@ void C_DECL A_BossDeath(mobj_t *mo)
                 P_XLine(dummyLine)->tag = 667;
                 EV_DoFloor(dummyLine, raiseToTexture);
                 P_FreeDummyLine(dummyLine);
+
+                // Only activate once (rare Dead simple bug)
+                bossKilled = true;
                 return;
             }
         }
@@ -1757,6 +1757,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             P_XLine(dummyLine)->tag = 666;
             EV_DoFloor(dummyLine, lowerFloorToLowest);
             P_FreeDummyLine(dummyLine);
+            bossKilled = true;
             return;
             break;
 
@@ -1768,6 +1769,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
                 P_XLine(dummyLine)->tag = 666;
                 EV_DoFloor(dummyLine, blazeOpen);
                 P_FreeDummyLine(dummyLine);
+                bossKilled = true;
                 return;
                 break;
 
@@ -1776,6 +1778,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
                 P_XLine(dummyLine)->tag = 666;
                 EV_DoFloor(dummyLine, lowerFloorToLowest);
                 P_FreeDummyLine(dummyLine);
+                bossKilled = true;
                 return;
                 break;
             }
@@ -1836,10 +1839,6 @@ void P_SpawnBrainTargets(void)
     mobj_t *m;
 
     // find all the target spots
-    numbraintargets = 0;
-    brain.targeton = 0;
-    brain.easy = 0;           // killough 3/26/98: always init easy to 0
-
     for(thinker = thinkercap.next; thinker != &thinkercap;
         thinker = thinker->next)
     {
@@ -1854,12 +1853,20 @@ void P_SpawnBrainTargets(void)
             {
                 // Do we need to alloc more targets?
                 if(numbraintargets == numbraintargets_alloc)
+                {
+                    numbraintargets_alloc *= 2;
                     braintargets =
-                        realloc(braintargets,
-                                numbraintargets_alloc*2 * sizeof *braintargets);
+                        Z_Realloc(braintargets,
+                                  numbraintargets_alloc * sizeof(*braintargets),
+                                  PU_LEVEL);
+                }
                 else
+                {
+                    numbraintargets_alloc = 32;
                     braintargets =
-                        realloc(braintargets, 32 * sizeof *braintargets);
+                        Z_Malloc(numbraintargets_alloc * sizeof(*braintargets),
+                                 PU_LEVEL, NULL);
+                }
             }
 
             braintargets[numbraintargets++] = m;

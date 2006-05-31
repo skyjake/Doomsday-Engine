@@ -4,7 +4,9 @@ DISTCLEANFILES = *~
 
 #
 # TODO: Having all the headers here is perhaps not the best solution.
-#
+# Include/sys_musd_win.h and Include/sys_sfxd_ds.h should be removed, but
+# Include/sys_audio.h wants them. Fix post beta4
+
 
 Headers = Include/cl_def.h \
 Include/cl_frame.h \
@@ -62,6 +64,7 @@ Include/dd_share.h \
 Include/dd_types.h \
 Include/dd_version.h \
 Include/dd_wad.h \
+Include/dd_winit.h \
 Include/dd_zip.h \
 Include/dd_zone.h \
 Include/de_audio.h \
@@ -95,6 +98,7 @@ Include/gl_pcx.h \
 Include/gl_png.h \
 Include/gl_tex.h \
 Include/gl_tga.h \
+Src/jDoom/AcFnLink.h \
 Include/jDoom/D_Action.h \
 Include/jDoom/Mn_def.h \
 Include/jDoom/SndIdx.h \
@@ -184,7 +188,6 @@ Include/jHexen/version.h \
 Include/jHexen/x_config.h \
 Include/jHexen/xddefs.h \
 Include/LZSS.h \
-Include/mapdata.h \
 Include/m_args.h \
 Include/m_bams.h \
 Include/m_filehash.h \
@@ -277,13 +280,76 @@ Include/Unix/sys_dylib.h \
 Include/Unix/sys_findfile.h \
 Include/Unix/sys_path.h \
 Include/zconf.h \
-Include/zlib.h
+Include/zlib.h \
+Include/sys_musd_win.h \
+Include/sys_sfxd_ds.h
 
-EXTRA_DIST = LICENSE apply-style.sh autogen.sh deng-header-style.sh   \
-deng-style.sh indent-typenames.sh tags.sh Doc/ChangeLog.txt	      \
-Doc/DEDDoc.txt Doc/SrcNotes.txt Doc/Network.txt Doc/jDoom/DoomLic.txt \
-Doc/jDoom/JDoom.txt Doc/jHeretic/JHeretic.txt Doc/jHexen/JHexen.txt   \
-Doc/Ravenlic.txt Doc/TexC.txt Doc/CVars.txt Build/COMPILING $(Headers)
+EXTRA_DIST = LICENSE \
+apply-style.sh \
+autogen.sh \
+deng-header-style.sh \
+deng-style.sh \
+indent-typenames.sh \
+Doc/ChangeLog.txt \
+Doc/DEDDoc.txt \
+Doc/SrcNotes.txt \
+Doc/Network.txt \
+Doc/jDoom/DoomLic.txt \
+Doc/jDoom/JDoom.txt \
+Doc/jHeretic/JHeretic.txt \
+Doc/jHexen/JHexen.txt \
+Doc/Ravenlic.txt \
+Doc/TexC.txt \
+Doc/CVars.txt \
+Build/COMPILING \
+Data/Fonts/console11.dfn \
+Data/Fonts/console14.dfn \
+Data/Fonts/console18.dfn \
+Data/Fonts/Fixed12.dfn \
+Data/Fonts/Fixed.dfn \
+Data/Fonts/Large.dfn \
+Data/Fonts/normal12.dfn \
+Data/Fonts/normal18.dfn \
+Data/Fonts/normal24.dfn \
+Data/Fonts/normalbold12.dfn \
+Data/Fonts/normalbold18.dfn \
+Data/Fonts/normalbold24.dfn \
+Data/Fonts/normallight12.dfn \
+Data/Fonts/normallight18.dfn \
+Data/Fonts/normallight24.dfn \
+Data/Fonts/readme.txt \
+Data/Fonts/Small10.dfn \
+Data/Fonts/Small7.dfn \
+Data/Fonts/Small8.dfn \
+Data/Fonts/System12.dfn \
+Data/Fonts/System.dfn \
+Data/Graphics/Background.pcx \
+Data/Graphics/BBox.pcx \
+Data/Graphics/BigFlare.pcx \
+Data/Graphics/BoxCorner.png \
+Data/Graphics/BoxFill.png \
+Data/Graphics/BoxShade.png \
+Data/Graphics/BRFlare.pcx \
+Data/Graphics/DLight.pcx \
+Data/Graphics/Flare.pcx \
+Data/Graphics/Flare.png \
+Data/Graphics/Hint.png \
+Data/Graphics/Logo.png \
+Data/Graphics/Missing.png \
+Data/Graphics/Mouse.png \
+Data/Graphics/RadioCC.pcx \
+Data/Graphics/RadioCO.pcx \
+Data/Graphics/RadioOE.pcx \
+Data/Graphics/RadioOO.pcx \
+Data/Graphics/WallGlow.pcx \
+Data/Graphics/Zeroth.pcx \
+Data/KeyMaps/de.dkm \
+Data/KeyMaps/default.dkm \
+Data/KeyMaps/fi.dkm \
+Scripts/createfont_osx.py \
+Scripts/makedmt.py \
+Scripts/Makefile \
+$(Headers)
 
 jDoomDataFiles = Data/jDoom/jDoom.wad \
 Defs/jDoom/Anim.ded \
@@ -335,43 +401,11 @@ Defs/jHexen/Text.ded \
 Defs/jHexen/jHexen.ded \
 Runtime/jHexen/Startup.cfg
 
-nobase_dist_pkgdata_DATA = Data/Doomsday.wad \
+nobase_dist_pkgdata_DATA =  Data/Doomsday.pk3	\
 Data/CPHelp.txt	\
-Data/KeyMaps/default.dkm \
-Data/KeyMaps/de.dkm \
-Data/KeyMaps/fi.dkm \
 Defs/Doomsday.ded \
 Defs/Flags.ded \
 Defs/XG.ded \
-Data/Graphics/BBox.pcx \
-Data/Graphics/BRFlare.pcx \
-Data/Graphics/Background.pcx \
-Data/Graphics/BigFlare.pcx \
-Data/Graphics/BoxCorner.png \
-Data/Graphics/BoxFill.png \
-Data/Graphics/BoxShade.png \
-Data/Graphics/DLight.pcx \
-Data/Graphics/Flare.pcx \
-Data/Graphics/Flare.png \
-Data/Graphics/Hint.png \
-Data/Graphics/Logo.png \
-Data/Graphics/Missing.png \
-Data/Graphics/Mouse.png \
-Data/Graphics/RadioCC.pcx \
-Data/Graphics/RadioCO.pcx \
-Data/Graphics/RadioOE.pcx \
-Data/Graphics/RadioOO.pcx \
-Data/Graphics/WallGlow.pcx \
-Data/Graphics/Zeroth.pcx \
-Data/Fonts/Fixed.dfn \
-Data/Fonts/Fixed12.dfn \
-Data/Fonts/Large.dfn \
-Data/Fonts/Small10.dfn \
-Data/Fonts/Small7.dfn \
-Data/Fonts/Small8.dfn \
-Data/Fonts/System.dfn \
-Data/Fonts/System12.dfn \
 $(jDoomDataFiles) \
 $(jHereticDataFiles) \
 $(jHexenDataFiles)
-

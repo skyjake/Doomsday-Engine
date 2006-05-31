@@ -879,17 +879,21 @@ boolean G_Responder(event_t *ev)
         return false;
     }
 
-    // Try Infine
-    if(FI_Responder(ev))
-        return true;
+    // With the menu active, none of these should respond to input events.
+    if(!menuactive)
+    {
+        // Try Infine
+        if(FI_Responder(ev))
+            return true;
 
-    // Try the chatmode responder
-    if(HU_Responder(ev))
-        return true;
+        // Try the chatmode responder
+        if(HU_Responder(ev))
+            return true;
 
-    // Check for cheats
-    if(cht_Responder(ev))
-        return true;
+        // Check for cheats
+        if(cht_Responder(ev))
+            return true;
+    }
 
     // Try the edit responder
     if(M_EditResponder(ev))

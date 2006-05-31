@@ -28,6 +28,7 @@
 #  include <GL/gl.h>
 #  include <GL/glext.h>
 #  include <GL/glu.h>
+#  include <GL/wglext.h>
 #endif
 
 #ifdef UNIX
@@ -145,11 +146,11 @@ extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
 extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
 extern PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
-
 extern PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
 extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
+extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 #endif
 
 extern int      extMultiTex;

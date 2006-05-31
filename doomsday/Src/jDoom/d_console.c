@@ -72,7 +72,7 @@ DEFCC(CCmdDoomFont);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     consoleFlat = 10;
+int     consoleFlat = 0;
 float   consoleZoom = 1;
 
 // Console variables.

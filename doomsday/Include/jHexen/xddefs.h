@@ -68,8 +68,6 @@ enum {
 #define SPAC_PUSH       4          // when player/monster pushes line
 #define SPAC_PCROSS     5          // when projectile crosses line
 
-#define NF_SUBSECTOR    0x8000
-
 typedef struct {
     short           tid;
     short         x;

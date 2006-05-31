@@ -13,6 +13,7 @@ typedef enum lineclass_e {
 } lineclass_t;
 
 typedef enum {
+    tc_null = -1,
     tc_end,
     tc_mobj,
     tc_xgmover,
@@ -22,8 +23,12 @@ typedef enum {
     tc_plat,
     tc_flash,
     tc_strobe,
+#if __JDOOM__
     tc_glow,
     tc_flicker
+#else
+    tc_glow
+#endif
 } thinkerclass_t;
 
 void            SV_Init(void);

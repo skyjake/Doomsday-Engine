@@ -26,6 +26,8 @@
 #include "de_base.h"
 #include "de_refresh.h"
 
+#include "p_dmu.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define SLOPERANGE  2048
@@ -243,8 +245,8 @@ fixed_t R_PointToDist(fixed_t x, fixed_t y)
 
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 {
-    node_t *node;
-    int     side, nodenum;
+    node_t *node = 0;
+    uint    nodenum = 0;
 
     if(!numnodes)               // single subsector is a special case
         return (subsector_t *) subsectors;
@@ -254,8 +256,8 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
     while(!(nodenum & NF_SUBSECTOR))
     {
         node = NODE_PTR(nodenum);
-        side = R_PointOnSide(x, y, node);
-        nodenum = node->children[side];
+        ASSERT_DMU_TYPE(node, DMU_NODE);
+        nodenum = node->children[ R_PointOnSide(x, y, node) ];
     }
     return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
 }

@@ -76,7 +76,7 @@ typedef struct gridblock_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-int             lgEnabled = true;
+int             lgEnabled = false;
 static boolean  lgInited;
 static boolean  needsUpdate = true;
 
@@ -159,14 +159,16 @@ void LG_Init(void)
     int     count;
     int     changedCount;
     size_t  bitfieldSize;
-    uint   *indexBitfield;
-    uint   *contributorBitfield;
+    uint   *indexBitfield = 0;
+    uint   *contributorBitfield = 0;
     gridblock_t *block;
-    sector_t **sampleSectors;
-    int      *sampleResults;
+    int      *sampleResults = 0;
     int       n, size, numSamples, center, best;
     fixed_t   xOff, yOff;
-    vertex_t *samplePoints, sample;
+    vertex_t *samplePoints = 0, sample;
+
+    sector_t **ssamples;
+    sector_t **blkSampleSectors;
 
     if(!lgEnabled)
     {
@@ -185,22 +187,6 @@ void LG_Init(void)
     lgBlockWidth = ((width / blockSize) >> FRACBITS) + 1;
     lgBlockHeight = ((height / blockSize) >> FRACBITS) + 1;
 
-    // Bitfields for marking affected blocks. Make sure each bit is in a word.
-    bitfieldSize = 4 * (31 + lgBlockWidth * lgBlockHeight) / 32;
-    indexBitfield = M_Calloc(bitfieldSize);
-    contributorBitfield = M_Calloc(bitfieldSize);
-
-    // TODO: It would be possible to only allocate memory for the grid
-    // blocks that are going to be in use.
-
-    // Allocate memory for the entire grid.
-    grid = Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
-                    PU_LEVEL, NULL);
-
-    Con_Message("LG_Init: %i x %i grid (%i bytes).\n",
-                lgBlockWidth, lgBlockHeight,
-                sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight);
-
     // Clamp the multisample factor.
     if(lgMXSample > MSFACTORS)
         lgMXSample = MSFACTORS;
@@ -209,11 +195,31 @@ void LG_Init(void)
 
     numSamples = multisample[lgMXSample];
 
-    // Allocate memory for sector to block sampling.
-    sampleSectors = M_Malloc(sizeof(sector_t*) * numSamples);
+    // Allocate memory for sample points array.
     samplePoints = M_Malloc(sizeof(vertex_t) * numSamples);
-    if(numSamples > 1)
-        sampleResults = M_Calloc(sizeof(int) * numSamples);
+
+    // TODO: It would be possible to only allocate memory for the unique
+    // sample results. And then select the appropriate sample in the loop
+    // for initializing the grid instead of copying the previous results in
+    // the loop for acquiring the sample points.
+    //
+    // Calculate with the equation (number of unique sample points):
+    //
+    // ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
+    // (size % 2 == 0? numBlocks : 0)
+    //
+    // OR
+    //
+    // We don't actually need to store the ENTIRE sample points array. It
+    // would be sufficent to only store the results from the start of the
+    // previous row to current col index. This would save a bit of memory.
+    //
+    // However until lightgrid init is finalized it would be rather silly
+    // to optimize this much further.
+
+    // Allocate memory for all the sample results.
+    ssamples = M_Malloc(sizeof(sector_t*) *
+                        ((lgBlockWidth * lgBlockHeight) * numSamples));
 
     // Determine the size^2 of the samplePoint array plus its center.
     size = center = 0;
@@ -236,6 +242,7 @@ void LG_Init(void)
     // Construct the sample point offset array.
     // This way we can use addition only during calculation of:
     // (lgBlockHeight*lgBlockWidth)*numSamples
+
     if(center == 0)
     {   // Zero is the center so do that first.
         samplePoints[0].x = (blockSize << (FRACBITS - 1));
@@ -268,6 +275,109 @@ void LG_Init(void)
                     FIX2FLT(samplePoints[n].x), FIX2FLT(samplePoints[n].y));
 */
 
+    // Acquire the sectors at ALL the sample points.
+    for(y = 0; y < lgBlockHeight; ++y)
+    {
+        yOff = y * (blockSize << FRACBITS);
+        for(x = 0; x < lgBlockWidth; ++x)
+        {
+            int blk = (x + y * lgBlockWidth);
+            int idx;
+
+            xOff = x * (blockSize << FRACBITS);
+
+            n = 0;
+            if(center == 0)
+            {   // Center point is not considered with the term 'size'.
+                // Sample this point and place at index 0 (at the start
+                // of the samples for this block).
+                idx = blk * (numSamples);
+
+                sample.x = lgOrigin.x + xOff + samplePoints[0].x;
+                sample.y = lgOrigin.y + yOff + samplePoints[0].y;
+
+                ssamples[idx] =
+                    R_PointInSubsector(sample.x, sample.y)->sector;
+                if(!R_IsPointInSector2(sample.x, sample.y, ssamples[idx]))
+                   ssamples[idx] = NULL;
+
+                n++; // Offset the index in the samplePoints array bellow.
+            }
+
+            count = blk * size;
+            for(b = 0; b < size; ++b)
+            {
+                i = (b + count) * size;
+                for(a = 0; a < size; ++a, ++n)
+                {
+                    idx = a + i;
+
+                    if(center == 0)
+                        idx += blk + 1;
+
+                    if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
+                    {   // We have already sampled this point.
+                        // Get the previous result.
+                        int prevX, prevY, prevA, prevB;
+                        int previdx;
+
+                        prevX = x; prevY = y; prevA = a; prevB = b;
+                        if(x > 0 && a == 0)
+                        {
+                            prevA = size -1;
+                            prevX--;
+                        }
+                        if(y > 0 && b == 0)
+                        {
+                            prevB = size -1;
+                            prevY--;
+                        }
+
+                        previdx = prevA + (prevB + (prevX + prevY * lgBlockWidth) * size) * size;
+
+                        if(center == 0)
+                            previdx += (prevX + prevY * lgBlockWidth) + 1;
+
+                        ssamples[idx] = ssamples[previdx];
+                    }
+                    else
+                    {   // We haven't sampled this point yet.
+                        sample.x = lgOrigin.x + xOff + samplePoints[n].x;
+                        sample.y = lgOrigin.y + yOff + samplePoints[n].y;
+
+                        ssamples[idx] =
+                            R_PointInSubsector(sample.x, sample.y)->sector;
+                        if(!R_IsPointInSector2(sample.x, sample.y, ssamples[idx]))
+                           ssamples[idx] = NULL;
+                    }
+                }
+            }
+        }
+    }
+    // We're done with the samplePoints block.
+    M_Free(samplePoints);
+
+    // Bitfields for marking affected blocks. Make sure each bit is in a word.
+    bitfieldSize = 4 * (31 + lgBlockWidth * lgBlockHeight) / 32;
+    indexBitfield = M_Calloc(bitfieldSize);
+    contributorBitfield = M_Calloc(bitfieldSize);
+
+    // TODO: It would be possible to only allocate memory for the grid
+    // blocks that are going to be in use.
+
+    // Allocate memory for the entire grid.
+    grid = Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
+                    PU_LEVEL, NULL);
+
+    Con_Message("LG_Init: %i x %i grid (%i bytes).\n",
+                lgBlockWidth, lgBlockHeight,
+                sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight);
+
+    // Allocate memory used for the collection of the sample results.
+    blkSampleSectors = M_Malloc(sizeof(sector_t*) * numSamples);
+    if(numSamples > 1)
+        sampleResults = M_Calloc(sizeof(int) * numSamples);
+
     // Initialize the grid.
     for(block = grid, y = 0; y < lgBlockHeight; ++y)
     {
@@ -276,33 +386,32 @@ void LG_Init(void)
         {
             xOff = x * (blockSize << FRACBITS);
 
-            // Find the sector at each of the sample points.
+            // Pick the sector at each of the sample points.
+            // TODO: We don't actually need the blkSampleSectors array
+            // anymore. Now that ssamples stores the results consecutively
+            // a simple index into ssamples would suffice.
+            // However if the optimization to save memory is implemented as
+            // described in the comments above we WOULD still require it.
+            // Therefore, for now I'm making use of it to clarify the code.
+            n = (x + y * lgBlockWidth) * numSamples;
             for(i = 0; i < numSamples; ++i)
-            {
-                sample.x = lgOrigin.x + xOff + samplePoints[i].x;
-                sample.y = lgOrigin.y + yOff + samplePoints[i].y;
-
-                sampleSectors[i] =
-                    R_PointInSubsector(sample.x, sample.y)->sector;
-                if(!R_IsPointInSector2(sample.x, sample.y, sampleSectors[i]))
-                   sampleSectors[i] = NULL;
-            }
+                blkSampleSectors[i] = ssamples[i + n];
 
             block->sector = NULL;
 
             if(numSamples == 1)
             {
-                block->sector = sampleSectors[center];
+                block->sector = blkSampleSectors[center];
             }
             else
             {   // Pick the sector which had the most hits.
                 best = -1;
                 memset(sampleResults, 0, sizeof(int) * numSamples);
                 for(i = 0; i < numSamples; ++i)
-                    if(sampleSectors[i])
+                    if(blkSampleSectors[i])
                         for(a = 0; a < numSamples; ++a)
-                            if(sampleSectors[a] == sampleSectors[i] &&
-                               sampleSectors[a])
+                            if(blkSampleSectors[a] == blkSampleSectors[i] &&
+                               blkSampleSectors[a])
                             {
                                 sampleResults[a]++;
                                 if(sampleResults[a] > best)
@@ -312,16 +421,18 @@ void LG_Init(void)
                 if(best != -1)
                 {   // Favour the center sample if its a draw.
                     if(sampleResults[best] == sampleResults[center] &&
-                       sampleSectors[center])
-                        block->sector = sampleSectors[center];
+                       blkSampleSectors[center])
+                        block->sector = blkSampleSectors[center];
                     else
-                        block->sector = sampleSectors[best];
+                        block->sector = blkSampleSectors[best];
                 }
             }
         }
     }
-    M_Free(samplePoints);
-    M_Free(sampleSectors);
+    // We're done with sector samples completely.
+    M_Free(ssamples);
+    // We're done with the sample results arrays.
+    M_Free(blkSampleSectors);
     if(numSamples > 1)
         M_Free(sampleResults);
 
@@ -397,7 +508,7 @@ void LG_Init(void)
         info->blockcount = changedCount + count;
 
         info->blocks = Z_Malloc(sizeof(unsigned short) * info->blockcount,
-                                PU_LEVEL, 0);
+                                PU_LEVELSTATIC, 0);
         for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
             ++x)
         {

@@ -392,13 +392,6 @@ void P_InitMapUpdate(void)
     //   and all existing dummies are invalidated.
     dummyLines = Z_Calloc(dummyCount * sizeof(dummyline_t), PU_STATIC, NULL);
     dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_STATIC, NULL);
-
-    // Set the types of the dummy objects
-    for(i=0; i < dummyCount; ++i)
-    {
-        dummyLines[i].line.header.type = DMU_LINE;
-        dummySectors[i].sector.header.type = DMU_SECTOR;
-    }
 }
 
 /*
@@ -421,6 +414,9 @@ void* P_AllocDummy(int type, void* extraData)
             {
                 dummyLines[i].inUse = true;
                 dummyLines[i].extraData = extraData;
+                dummyLines[i].line.header.type = DMU_LINE;
+                dummyLines[i].line.sidenum[0] = -1;
+                dummyLines[i].line.sidenum[1] = -1;                
                 return &dummyLines[i];
             }
         }
@@ -433,6 +429,7 @@ void* P_AllocDummy(int type, void* extraData)
             {
                 dummySectors[i].inUse = true;
                 dummySectors[i].extraData = extraData;
+                dummySectors[i].sector.header.type = DMU_SECTOR;
                 return &dummySectors[i];
             }
         }
@@ -1282,6 +1279,15 @@ static int SetProperty(void* ptr, void* context)
         case DMU_VALID_COUNT:
             SetValue(DMT_SECTOR_VALIDCOUNT, &p->validcount, args, 0);
             break;
+        case DMU_SOUND_REVERB:
+        {
+            int i;
+            for(i = 0; i < NUM_REVERB_DATA; ++i)
+            {
+                SetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i); 
+            }
+            break;
+        }
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_SECTOR.\n",
                       DMU_Str(args->prop));
@@ -1747,6 +1753,15 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
             break;
         }
+        case DMU_SOUND_REVERB:
+        {
+            int i;
+            for(i = 0; i < NUM_REVERB_DATA; ++i)
+            {
+                GetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i); 
+            }
+            break;
+        }
         case DMU_LINE_COUNT:
             GetValue(DMT_SECTOR_LINECOUNT, &p->linecount, args, 0);
             break;
@@ -2023,7 +2038,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_SIDE0:
         {
-            side_t* sidePtr = SIDE_PTR(p->sidenum[0]);
+            side_t* sidePtr = (p->sidenum[0] == NO_INDEX? NULL : SIDE_PTR(p->sidenum[0]));
             GetValue(DDVT_PTR, &sidePtr, args, 0);
             break;
         }

@@ -5,12 +5,15 @@ import sys, string
 
 
 def error(line, cause):
+    """Reports a parsing error."""
     err = sys.stderr
     err.write("At input line \"%s\":\nProcessing aborted: %s\n" % (line.rstrip(), cause))
     sys.exit(1)
 
 
 def add_comment(line, comment):
+    """Appends a comment to a line of text. Appropriate number of padding
+    whitespace is added to align comments."""
     if comment == '':
        return line
     if len(line) < 39:
@@ -19,10 +22,17 @@ def add_comment(line, comment):
         line += ' '
     return line + comment
 
-    
+
 def println(f, line, comment=''):
+    """Print a line of text. Comment will be added optionally."""
     f.write(add_comment(line, comment) + "\n")
 
+
+# Type symbol to real C types mapping table.
+type_replacements = {
+    'uint': 'unsigned int',
+    'ushort': 'unsigned short'
+}
 
 current = None
 verbatim = None
@@ -101,8 +111,11 @@ for input_line in sys.stdin.readlines():
                 indexed = c_type[pos:]
                 c_type = c_type[:pos]
                 
+            # Translate the type into a real C type.
             if '_s' in c_type:
                 c_type = 'struct ' + c_type
+            for symbol, real in type_replacements.items():
+                c_type = c_type.replace(symbol, real)
             
             # Add some visual padding to align the members.
             padding = 24 - len(c_type) - 4

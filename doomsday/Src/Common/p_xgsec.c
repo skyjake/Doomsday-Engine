@@ -644,7 +644,7 @@ int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
 
         if(heightlist)
         {
-            if(heightlist[count] == ceiling)
+            if(ceiling)
                 heightlist[count] = P_GetFixedp(other, DMU_CEILING_HEIGHT);
             else
                 heightlist[count] = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
@@ -652,7 +652,7 @@ int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
 
         if(piclist)
         {
-            if(piclist[count] == ceiling)
+            if(ceiling)
                 piclist[count] = P_GetFixedp(other, DMU_CEILING_TEXTURE);
             else
                 piclist[count] = P_GetFixedp(other, DMU_FLOOR_TEXTURE);
@@ -814,7 +814,7 @@ int XS_TextureHeight(line_t *line, int part)
     }
     else if(part == LWS_LOWER)
     {
-        int texid = P_GetIntp(side, DMU_MIDDLE_TEXTURE);
+        int texid = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
 
         if(!texid)
             return DDMAXINT;
@@ -2311,11 +2311,9 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
     // Prepare the dummy line to use for the event.
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_XLine(dummyLine);
-    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_LEVEL, 0);
+    xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_LEVEL, 0);
 
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
-    P_SetIntp(dummyLine, DMU_SIDE0, -1);
-    P_SetIntp(dummyLine, DMU_SIDE1, -1);
 
     xdummyLine->special =
         (ch == XSCE_FUNCTION ? activating : info->chain[ch]);

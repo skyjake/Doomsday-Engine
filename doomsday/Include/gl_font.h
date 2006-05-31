@@ -50,6 +50,13 @@ typedef struct {
 	char            name[256];
 	unsigned int    texture;	   // The name of the texture for this font.
 	int             texWidth, texHeight;
+    boolean         hasEmbeddedShadow;
+    int             marginWidth;
+    int             marginHeight;
+    int             lineHeight;
+    int             glyphHeight;
+    int             ascent;
+    int             descent;
 	jfrchar_t       chars[MAX_CHARS];
 } jfrfont_t;
 
@@ -63,18 +70,23 @@ jfrfont_t      *FR_GetFont(int id);
 int             FR_PrepareGDIFont(HFONT hfont);
 #endif
 
-int             FR_PrepareFont(char *name);
+int             FR_PrepareFont(const char *name);
 
 // Change the current font.
 void            FR_SetFont(int id);
 int             FR_GetCurrent();
 void            FR_DestroyFont(int id);
-
 int             FR_CharWidth(int ch);
 int             FR_TextWidth(char *text);
 int             FR_TextHeight(char *text);
+int             FR_SingleLineHeight(char *text);
+int             FR_GlyphTopToAscent(char *text);
 
 // (x,y) is the upper left corner. Returns the length.
 int             FR_TextOut(char *text, int x, int y);
+int             FR_ShadowTextOut(char *text, int x, int y);
+int             FR_CustomShadowTextOut(char *text, int x, int y, 
+                                       int shadowX, int shadowY,
+                                       float shadowAlpha);
 
 #endif							// __OGL_FONT_RENDERER_H__

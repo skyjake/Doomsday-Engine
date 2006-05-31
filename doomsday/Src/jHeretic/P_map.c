@@ -1389,9 +1389,13 @@ boolean PTR_ShootTraverse(intercept_t * in)
     // FIXME: This routine is getting rather bloated.
     boolean lineWasHit;
     subsector_t *contact, *originSub;
-    fixed_t ctop, cbottom, dx, dy, dz, step, stepx, stepy, stepz;
+    fixed_t ctop, cbottom, d[3], step, stepv[3], tracepos[3];
     fixed_t cfloor, cceil;
     int     divisor;
+
+    tracepos[VX] = trace->x;
+    tracepos[VY] = trace->y;
+    tracepos[VZ] = shootz;
 
     if(in->isaline)
     {
@@ -1411,21 +1415,13 @@ boolean PTR_ShootTraverse(intercept_t * in)
         frontsector = P_GetPtrp(li, DMU_FRONT_SECTOR);
         backsector = P_GetPtrp(li, DMU_BACK_SECTOR);
 
-        if(P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT) !=
-           P_GetFixedp(backsector, DMU_FLOOR_HEIGHT))
-        {
-            slope = FixedDiv(openbottom - shootz, dist);
-            if(slope > aimslope)
-                goto hitline;
-        }
+        slope = FixedDiv(openbottom - tracepos[VZ], dist);
+        if(slope > aimslope)
+            goto hitline;
 
-        if(P_GetFixedp(frontsector, DMU_CEILING_HEIGHT) !=
-           P_GetFixedp(backsector, DMU_CEILING_HEIGHT))
-        {
-            slope = FixedDiv(opentop - shootz, dist);
-            if(slope < aimslope)
-                goto hitline;
-        }
+        slope = FixedDiv(opentop - tracepos[VZ], dist);
+        if(slope < aimslope)
+            goto hitline;
 
         // shot continues
         return true;
@@ -1436,9 +1432,9 @@ boolean PTR_ShootTraverse(intercept_t * in)
 
         // Position a bit closer.
         frac = in->frac - FixedDiv(4 * FRACUNIT, attackrange);
-        pos[VX] = trace->x + FixedMul(trace->dx, frac);
-        pos[VY] = trace->y + FixedMul(trace->dy, frac);
-        pos[VZ] = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
+        pos[VX] = tracepos[VX] + FixedMul(trace->dx, frac);
+        pos[VY] = tracepos[VY] + FixedMul(trace->dy, frac);
+        pos[VZ] = tracepos[VZ] + FixedMul(aimslope, FixedMul(frac, attackrange));
 
         // Is it a sky hack wall? If the hitpoint is above the visible
         // line, no puff must be shown.
@@ -1450,31 +1446,31 @@ boolean PTR_ShootTraverse(intercept_t * in)
             return false;
 
         // This is subsector where the trace originates.
-        originSub = R_PointInSubsector(trace->x, trace->y);
+        originSub = R_PointInSubsector(tracepos[VX], tracepos[VY]);
 
-        dx = pos[VX] - trace->x;
-        dy = pos[VY] - trace->y;
-        dz = pos[VZ] - shootz;
+        d[VX] = pos[VX] - tracepos[VX];
+        d[VY] = pos[VY] - tracepos[VY];
+        d[VZ] = pos[VZ] - tracepos[VZ];
 
-        if(dz != 0)
+        if(d[VZ] != 0)
         {
             contact = R_PointInSubsector(pos[VX], pos[VY]);
-            step = P_ApproxDistance3(dx, dy, dz);
-            stepx = FixedDiv(dx, step);
-            stepy = FixedDiv(dy, step);
-            stepz = FixedDiv(dz, step);
+            step = P_ApproxDistance3(d[VX], d[VY], d[VZ]);
+            stepv[VX] = FixedDiv(d[VX], step);
+            stepv[VY] = FixedDiv(d[VY], step);
+            stepv[VZ] = FixedDiv(d[VZ], step);
 
             cfloor = P_GetFixedp(contact, DMU_FLOOR_HEIGHT);
             cceil = P_GetFixedp(contact, DMU_CEILING_HEIGHT);
             // Backtrack until we find a non-empty sector.
             while(cceil <= cfloor && contact != originSub)
             {
-                dx -= 8 * stepx;
-                dy -= 8 * stepy;
-                dz -= 8 * stepz;
-                pos[VX] = trace->x + dx;
-                pos[VY] = trace->y + dy;
-                pos[VZ] = shootz + dz;
+                d[VX] -= 8 * stepv[VX];
+                d[VY] -= 8 * stepv[VY];
+                d[VZ] -= 8 * stepv[VZ];
+                pos[VX] = tracepos[VX] + d[VX];
+                pos[VY] = tracepos[VY] + d[VY];
+                pos[VZ] = tracepos[VZ] + d[VZ];
                 contact = R_PointInSubsector(pos[VX], pos[VY]);
             }
 
@@ -1498,19 +1494,19 @@ boolean PTR_ShootTraverse(intercept_t * in)
                 lineWasHit = false;
 
                 // Take a step backwards.
-                pos[VX] -= dx / divisor;
-                pos[VY] -= dy / divisor;
-                pos[VZ] -= dz / divisor;
+                pos[VX] -= d[VX] / divisor;
+                pos[VY] -= d[VY] / divisor;
+                pos[VZ] -= d[VZ] / divisor;
 
                 // Divisor grows.
                 divisor <<= 1;
 
                 // Move forward until limits breached.
-                while((dz > 0 && pos[VZ] <= ctop) || (dz < 0 && pos[VZ] >= cbottom))
+                while((d[VZ] > 0 && pos[VZ] <= ctop) || (d[VZ] < 0 && pos[VZ] >= cbottom))
                 {
-                    pos[VX] += dx / divisor;
-                    pos[VY] += dy / divisor;
-                    pos[VZ] += dz / divisor;
+                    pos[VX] += d[VX] / divisor;
+                    pos[VY] += d[VY] / divisor;
+                    pos[VZ] += d[VZ] / divisor;
                 }
             }
         }
@@ -1545,12 +1541,12 @@ boolean PTR_ShootTraverse(intercept_t * in)
 
     // check angles to see if the thing can be aimed at
     dist = FixedMul(attackrange, in->frac);
-    thingtopslope = FixedDiv(th->pos[VZ] + th->height - shootz, dist);
+    thingtopslope = FixedDiv(th->pos[VZ] + th->height - tracepos[VZ], dist);
 
     if(thingtopslope < aimslope)
         return true;            // shot over the thing
 
-    thingbottomslope = FixedDiv(th->pos[VZ] - shootz, dist);
+    thingbottomslope = FixedDiv(th->pos[VZ] - tracepos[VZ], dist);
 
     if(thingbottomslope > aimslope)
         return true;            // shot under the thing
@@ -1559,9 +1555,9 @@ boolean PTR_ShootTraverse(intercept_t * in)
     // position a bit closer
     frac = in->frac - FixedDiv(10 * FRACUNIT, attackrange);
 
-    pos[VX] = trace->x + FixedMul(trace->dx, frac);
-    pos[VY] = trace->y + FixedMul(trace->dy, frac);
-    pos[VZ] = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
+    pos[VX] = tracepos[VX] + FixedMul(trace->dx, frac);
+    pos[VY] = tracepos[VY] + FixedMul(trace->dy, frac);
+    pos[VZ] = tracepos[VZ] + FixedMul(aimslope, FixedMul(frac, attackrange));
 
     // Spawn bullet puffs or blod spots,
     // depending on target type.

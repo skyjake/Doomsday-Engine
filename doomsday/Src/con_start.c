@@ -51,7 +51,9 @@ int     startupLogo;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char *titletext;
+static char *titleText = "";
+static char secondaryTitleText[256];
+static char statusText[256];
 static int fontHgt = 8;			// Height of the font.
 static DGLuint bgflat;
 char   *bitmap = NULL;
@@ -70,7 +72,7 @@ void Con_StartupInit(void)
 		return;
 
 	GL_InitVarFont();
-	fontHgt = FR_TextHeight("Doomsday!");
+	fontHgt = FR_SingleLineHeight("Doomsday!");
 
 	startupScreen = true;
 
@@ -81,15 +83,15 @@ void Con_StartupInit(void)
 
 	if(firstTime)
 	{
-		titletext = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
+		titleText = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
 		firstTime = false;
 		bgflat = 0;
 	}
 	else
 	{
-		titletext = "Doomsday " DOOMSDAY_VERSION_TEXT;
+		titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
 	}
-
+    
 	// Load graphics.
 	startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
 }
@@ -103,12 +105,19 @@ void Con_StartupDone(void)
 {
 	if(isDedicated)
 		return;
+    titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
 	startupScreen = false;
-	gl.DeleteTextures(1, &startupLogo);
+	gl.DeleteTextures(1, (DGLuint*) &startupLogo);
 	startupLogo = 0;
 	gl.MatrixMode(DGL_PROJECTION);
 	gl.PopMatrix();
 	GL_ShutdownVarFont();
+    
+    // Update the secondary title and the game status.
+    strncpy(secondaryTitleText, gx.Get(DD_GAME_ID), 
+            sizeof(secondaryTitleText) - 1);
+    strncpy(statusText, gx.Get(DD_GAME_MODE), 
+            sizeof(statusText) - 1);
 }
 
 /*
@@ -150,6 +159,45 @@ void Con_DrawStartupBackground(float alpha)
 }
 
 /*
+ * Draws the title bar of the console. 
+ * 
+ * @return  Title bar height.
+ */
+int Con_DrawTitle(float alpha)
+{
+    int width = 0;
+    int height = UI_TITLE_HGT;
+    
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    
+	FR_SetFont(glFontVariable[GLFS_BOLD]);
+    height = FR_TextHeight("W") + UI_BORDER;
+	UI_DrawTitleEx(titleText, height, alpha);
+    if(secondaryTitleText[0])
+    {
+        width = FR_TextWidth(titleText) + FR_TextWidth("  ");
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        UI_TextOutEx(secondaryTitleText, UI_BORDER + width, height / 2, 
+                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
+    }
+    if(statusText[0])
+    {
+        width = FR_TextWidth(statusText);
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        UI_TextOutEx(statusText, screenWidth - UI_BORDER - width, height / 2,
+                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
+    }
+
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
+    
+	FR_SetFont(glFontFixed);
+    return height;
+}
+
+/*
  * Draw the background and the current console output.
  */
 void Con_DrawStartupScreen(int show)
@@ -168,9 +216,7 @@ void Con_DrawStartupScreen(int show)
 	Con_DrawStartupBackground(1.0);
 
 	// Draw the title.
-	FR_SetFont(glFontVariable);
-	UI_DrawTitleEx(titletext, topy = FR_TextHeight("W") + UI_BORDER * 2);
-	FR_SetFont(glFontFixed);
+    topy = Con_DrawTitle(1.0);
 
 	topy += UI_BORDER;
 	vislines = (screenHeight - topy + fontHgt / 2) / fontHgt;
@@ -196,10 +242,10 @@ void Con_DrawStartupScreen(int show)
 		{
 			x = line->flags & CBLF_CENTER ? (screenWidth -
 											 FR_TextWidth(line->text)) / 2 : 3;
-			gl.Color3f(0, 0, 0);
-			FR_TextOut(line->text, x + 1, y + 1);
+			//gl.Color3f(0, 0, 0);
+			//FR_TextOut(line->text, x + 1, y + 1);
 			gl.Color3f(1, 1, 1);
-			FR_TextOut(line->text, x, y);
+			FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
 		}
 		y += fontHgt;
 	}

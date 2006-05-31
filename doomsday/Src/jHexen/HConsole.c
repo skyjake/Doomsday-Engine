@@ -84,7 +84,7 @@ extern ccmd_t netCCmds[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     consoleFlat = 60;
+int     consoleFlat = 0;
 float   consoleZoom = 1;
 
 // Console variables.

@@ -25,6 +25,13 @@
 #include "con_decl.h"
 #include "r_main.h"
 
+typedef enum glfontstyle_e {
+    GLFS_NORMAL,
+    GLFS_BOLD,
+    GLFS_LIGHT,
+    NUM_GLFS
+} glfontstyle_t;
+
 boolean         GL_IsInited(void);
 
 void            GL_Register(void);
@@ -47,6 +54,8 @@ void            GL_ShutdownRefresh(void);
 void            GL_UseFog(int yes);
 void            GL_InitVarFont(void);
 void            GL_ShutdownVarFont(void);
+const char*     GL_ChooseFixedFont();
+const char*     GL_ChooseVariableFont(glfontstyle_t style);
 
 // Returns a pointer to a copy of the screen. The pointer must be
 // deallocated by the caller.
@@ -62,7 +71,7 @@ extern int      r_framecounter;
 extern char     hiTexPath[], hiTexPath2[];
 extern int      UpdateState;
 extern float    vid_gamma, vid_bright, vid_contrast;
-extern int      glFontFixed, glFontVariable;
+extern int      glFontFixed, glFontVariable[NUM_GLFS];
 extern int      r_detail;
 
 // Console commands.

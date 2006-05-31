@@ -1222,18 +1222,18 @@ void Sfx_DebugInfo(void)
     gl.Color3f(1, 1, 0);
     if(!sfx_avail)
     {
-        FR_TextOut("Sfx disabled", 0, 0);
+        FR_ShadowTextOut("Sfx disabled", 0, 0);
         return;
     }
 
     if(refmonitor)
-        FR_TextOut("!", 0, 0);
+        FR_ShadowTextOut("!", 0, 0);
 
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
     gl.Color3f(1, 1, 1);
-    FR_TextOut(buf, 10, 0);
+    FR_ShadowTextOut(buf, 10, 0);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < num_channels; i++, ch++)
@@ -1248,7 +1248,7 @@ void Sfx_DebugInfo(void)
                 !(ch->flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch->emitter ? 'E' : '.', ch->volume, ch->frequency,
                 ch->starttime, ch->buffer ? ch->buffer->endtime : 0);
-        FR_TextOut(buf, 5, lh * (1 + i * 2));
+        FR_ShadowTextOut(buf, 5, lh * (1 + i * 2));
 
         if(!ch->buffer)
             continue;
@@ -1263,6 +1263,6 @@ void Sfx_DebugInfo(void)
                 id : "", ch->buffer->sample ? ch->buffer->sample->size : 0,
                 ch->buffer->bytes, ch->buffer->rate / 1000, ch->buffer->length,
                 ch->buffer->cursor, ch->buffer->written);
-        FR_TextOut(buf, 5, lh * (2 + i * 2));
+        FR_ShadowTextOut(buf, 5, lh * (2 + i * 2));
     }
 }

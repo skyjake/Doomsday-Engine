@@ -139,7 +139,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     Con_StartupInit();
 
     // Change font.
-    FR_SetFont(glFontVariable);
+    FR_SetFont(glFontVariable[GLFS_NORMAL]);
     ui_fonthgt = FR_TextHeight("W");
 
     // Should the mouse cursor be visible?
@@ -473,7 +473,7 @@ void UI_Ticker(timespan_t time)
 
     // Move towards the target alpha level for the entire UI.
     diff = ui_target_alpha - ui_alpha;
-#define UI_ALPHA_FADE_STEP .05
+#define UI_ALPHA_FADE_STEP .07
     if(fabs(diff) > UI_ALPHA_FADE_STEP)
     {
         ui_alpha += UI_ALPHA_FADE_STEP * (diff > 0? 1 : -1);
@@ -863,8 +863,16 @@ void UIFrame_Drawer(ui_object_t *ob)
 
 void UIText_Drawer(ui_object_t *ob)
 {
+    FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true,
                  UI_COL(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
+}
+
+void UIText_BrightDrawer(ui_object_t *ob)
+{
+    FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true,
+                 UI_COL(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
 int UIButton_Responder(ui_object_t *ob, event_t *ev)
@@ -932,6 +940,7 @@ void UIButton_Drawer(ui_object_t *ob)
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h,
                   UI_BUTTON_BORDER * (down ? -1 : 1), false,
                   UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+    FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text,
                  down + ob->x +
                  (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w /
@@ -1040,6 +1049,7 @@ void UIEdit_Drawer(ui_object_t *ob)
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1),
                   false, UI_COL(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
     // Draw text.
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
     memset(buf, 0, sizeof(buf));
     // Does all of it fit in the box?
     if(FR_TextWidth(ob->text) > maxw)
@@ -1269,6 +1279,7 @@ void UIList_Drawer(ui_object_t *ob)
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false,
                   UI_COL(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
+    FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - ui_fonthgt, false, false,
                  UI_COL(UIC_TEXT), alpha);
     // Is a scroll bar necessary?
@@ -1305,6 +1316,7 @@ void UIList_Drawer(ui_object_t *ob)
         UI_Gradient(x + UI_BORDER + dat->column[c] - 2, ob->y + UI_BORDER, 1,
                     maxh, UI_COL(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
     }
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
     for(i = dat->first; i < dat->count && i < dat->first + dat->numvis;
         i++, y += ihgt)
     {
@@ -1560,6 +1572,7 @@ void UISlider_Drawer(ui_object_t *ob)
         sprintf(buf, "%i", (int) dat->value);
     if(dat->zerotext && dat->value == dat->min)
         strcpy(buf, dat->zerotext);
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf,
                  x + (dat->value <
                       (dat->min + dat->max) / 2 ? inwidth - butw -
@@ -1629,8 +1642,8 @@ int UI_ListItemHeight(uidata_list_t * listdata)
 {
     int     h = listdata->itemhgt;
 
-    if(h < ui_fonthgt)
-        h = ui_fonthgt;
+    if(h < ui_fonthgt * 8 / 10)
+        h = ui_fonthgt * 8 / 10;
     return h;
 }
 
@@ -1724,18 +1737,20 @@ void UI_Color(ui_color_t * color)
     gl.Color3f(color->red, color->green, color->blue);
 }
 
-void UI_DrawTitleEx(char *text, int height)
+void UI_DrawTitleEx(char *text, int height, float alpha)
 {
+    FR_SetFont(glFontVariable[GLFS_BOLD]);
     UI_Gradient(0, 0, screenWidth, height, UI_COL(UIC_BG_MEDIUM),
-                UI_COL(UIC_BG_LIGHT), .8f, 1);
+                UI_COL(UIC_BG_LIGHT), .8f * alpha, alpha);
     UI_Gradient(0, height, screenWidth, UI_BORDER, UI_COL(UIC_SHADOW),
-                UI_COL(UIC_BG_DARK), 1, 0);
-    UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_COL(UIC_TITLE), 1);
+                UI_COL(UIC_BG_DARK), alpha, 0);
+    UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_COL(UIC_TITLE), 
+                 alpha);
 }
 
 void UI_DrawTitle(ui_page_t* page)
 {
-    UI_DrawTitleEx(page->title, UI_TITLE_HGT);
+    UI_DrawTitleEx(page->title, UI_TITLE_HGT, 1.f);
     if(1 || !ui_showmouse)
     {
         char *msg = "(Move with Tab/S-Tab)";
@@ -1743,6 +1758,7 @@ void UI_DrawTitle(ui_page_t* page)
         ui_alpha = 1.0;
         
         // If the mouse cursor is not visible, print a short help message.
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx(msg, screenWidth - UI_BORDER - FR_TextWidth(msg),
                      UI_TITLE_HGT / 2, false, true, UI_COL(UIC_TEXT), 0.33f);
         
@@ -1872,13 +1888,16 @@ void UI_TextOutEx(char *text, int x, int y, int horiz_center, int vert_center,
     if(horiz_center)
         x -= FR_TextWidth(text) / 2;
     if(vert_center)
-        y -= FR_TextHeight(text) / 2;
+    {
+        //y -= FR_TextHeight(text) / 2;
+        y -= FR_SingleLineHeight(text)/2 + FR_GlyphTopToAscent(text);
+    }
     // Shadow.
-    UI_ColorA(UI_COL(UIC_SHADOW), .6f * alpha);
-    FR_TextOut((char*)text, x + UI_SHADOW_OFFSET, y + UI_SHADOW_OFFSET);
+    //UI_ColorA(UI_COL(UIC_SHADOW), .6f * alpha);
+    //FR_TextOut((char*)text, x + UI_SHADOW_OFFSET, y + UI_SHADOW_OFFSET);
     // Actual text.
     UI_ColorA(color, alpha);
-    FR_TextOut(text, x, y);
+    FR_CustomShadowTextOut(text, x, y, UI_SHADOW_OFFSET, UI_SHADOW_OFFSET, .6f);
 }
 
 int UI_TextOutWrap(char *text, int x, int y, int w, int h)
@@ -1896,6 +1915,7 @@ int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
     char    word[2048], *wp = word;
     int     len, tx = x, ty = y;
     byte    c;
+    int     linehgt = FR_SingleLineHeight("A");
     
     alpha *= ui_alpha;
     
@@ -1914,10 +1934,10 @@ int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
             if(tx + len > x + w)    // Doesn't fit?
             {
                 tx = x;
-                ty += ui_fonthgt;
+                ty += linehgt;
             }
             // Can't print any more? (always print the 1st line)
-            if(ty + ui_fonthgt > y + h && ty != y)
+            if(ty + linehgt > y + h && ty != y)
                 return ty;
             FR_TextOut(word, tx, ty);
             tx += len;
@@ -1934,12 +1954,12 @@ int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
 
             case '\n':
                 tx = x;
-                ty += ui_fonthgt;
+                ty += linehgt;
                 break;
 
             case '\b':          // Break.
                 tx = x;
-                ty += 3 * ui_fonthgt / 2;
+                ty += 3 * linehgt / 2;
                 break;
             }
         }
@@ -2224,6 +2244,7 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
     if(text)
     {
         bor = 2 * UI_BORDER / 3;
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor,
                          h - 4 * bor, UI_COL(UIC_TEXT), alpha);
     }

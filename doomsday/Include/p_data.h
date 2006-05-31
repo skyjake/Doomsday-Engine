@@ -76,7 +76,7 @@ typedef struct {
 #define MAX_POLY_SIDES      64     // A subsector has at most this many edges.
 
 // Node flags.
-#define NF_SUBSECTOR    0x8000
+#define NF_SUBSECTOR    0x80000000
 
 // Sidedef flags
 #define SDF_BLENDTOPTOMID       0x1

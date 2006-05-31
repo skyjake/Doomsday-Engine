@@ -2150,7 +2150,11 @@ void SCColorWidget(int index, void *data)
 
 void M_ToggleVar(int index, void *data)
 {
-    *(byte *)data = !*(byte *)data;
+    Con_Error("M_ToggleVar: Needs to be reimplemented.\n");
+    // TODO: This is illegal: casting an int to byte on big-endian CPUs will
+    // modify the most significant byte! Instead, use *data to point to the
+    // name of the cvar (or the cvar_t) and use the "toggle" ccmd.
+    /* *(byte *)data = !*(byte *)data; */
     S_LocalSound(menusnds[0], NULL);
 }
 

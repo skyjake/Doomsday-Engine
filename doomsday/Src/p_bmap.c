@@ -143,8 +143,8 @@ void P_InitSubsectorBlockMap(void)
         {
             // An NULL-terminated array of pointers to subsectors.
             ptr = subMap[i] =
-                Z_Malloc((block->count + 1) * sizeof(subsector_t *), PU_LEVEL,
-                         NULL);
+                Z_Malloc((block->count + 1) * sizeof(subsector_t *), 
+                         PU_LEVELSTATIC, NULL);
 
             // Copy pointers to the array, delete the nodes.
             for(iter = block->nodes; iter; iter = next)

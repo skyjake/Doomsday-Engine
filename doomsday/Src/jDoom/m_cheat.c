@@ -159,9 +159,9 @@ boolean cht_Responder(event_t *ev)
 
     plyr = &players[consoleplayer];
 
-    if(gameskill != sk_nightmare)
+    if(gameskill != sk_nightmare && ev->type == ev_keydown)
     {
-        if(ev->type == ev_keydown && !IS_NETGAME)
+        if(!IS_NETGAME)
         {
             // b. - enabled for more debug fun.
             // if (gameskill != sk_nightmare) {
@@ -227,9 +227,8 @@ boolean cht_Responder(event_t *ev)
             }
         }
 
-        // 'clev' change-level cheat
         if(cht_CheckCheat(&cheat_clev, ev->data1))
-        {
+        {   // 'clev' change-level cheat
             char    buf[3];
 
             cht_GetParam(&cheat_clev, buf);
@@ -278,7 +277,7 @@ int cht_CheckCheat(cheatseq_t * cht, char key)
 
     if(*cht->p == 0)
         *(cht->p++) = key;
-    else if(cheat_xlate_table[(unsigned char) key] == *cht->p)
+    else if(cheat_xlate_table[key] == *cht->p)
         cht->p++;
     else
         cht->p = cht->sequence;
@@ -290,7 +289,6 @@ int cht_CheckCheat(cheatseq_t * cht, char key)
         cht->p = cht->sequence;
         rc = 1;
     }
-
     return rc;
 }
 

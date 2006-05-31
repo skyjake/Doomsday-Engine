@@ -30,7 +30,7 @@
 #include "Unix/sys_dylib.h"
 
 #include <sys/types.h>
-#include <unistd.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <dlfcn.h>
 #include <string.h>
@@ -128,8 +128,8 @@ lt_dlhandle lt_dlopenext(const char *baseFileName)
 	strcat(bundleName, baseFileName);
 	strcat(bundleName, "/Contents/MacOS/");
 	strcat(bundleName, baseFileName);
-/*	sprintf(bundleName, "Bundles/%s/Contents/MacOS/%s", baseFileName, 
-			baseFileName);*/
+/*  sprintf(bundleName, "Bundles/%s/Contents/MacOS/%s", baseFileName, 
+            baseFileName);*/
 	
 	// Get rid of the ".bundle" in the end.
 	if((ptr = strrchr(bundleName, '.')) != NULL)

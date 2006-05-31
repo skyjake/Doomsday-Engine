@@ -576,7 +576,7 @@ int R_FlatFlags(int flat)
 {
     flat_t *fl = R_GetFlat(flat);
 
-    if(!r_texglow)
+    if(!r_texglow || !fl)
         return 0;
     return fl->flags;
 }

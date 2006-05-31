@@ -720,6 +720,9 @@ void SB_BeginFrame(void)
     int i, j, k;
     seginfo_t *sin;
     source_t *s;
+    
+    if(!useBias)
+        return;
 
     // The time that applies on this frame.
     currentTimeSB = Sys_GetRealTime();
@@ -845,6 +848,7 @@ void SB_AddLight(gl_rgba_t *dest, const byte *color, float howMuch)
     }
 }
 
+#if 0
 /*
  * Color override forces the bias light color to override biased
  * sectorlight.
@@ -865,6 +869,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
             }*/
     return false;
 }
+#endif
 
 /*
  * Poly can be a either a wall or a plane (ceiling or a floor).

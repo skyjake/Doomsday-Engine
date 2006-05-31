@@ -92,7 +92,7 @@ struct sector
     INT     int         skyfix
     PTR     degenmobj_t soundorg
 
-    -       float[NUM_REVERB_DATA] reverb
+    FLOAT   float[NUM_REVERB_DATA] reverb
     -       int[4]      blockbox    // Mapblock bounding box.
     -       plane_t[2]  planes
 end
@@ -151,5 +151,5 @@ struct node
     FIXED   fixed_t     dx          // Partition line.
     FIXED   fixed_t     dy          // Partition line.
     -       fixed_t[2][4] bbox      // Bounding box for each child.
-    -       int[2]      children    // If NF_SUBSECTOR it's a subsector.
+    -       uint[2]     children    // If NF_SUBSECTOR it's a subsector.
 end
