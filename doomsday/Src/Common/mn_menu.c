@@ -1695,11 +1695,13 @@ void M_SetMenuMatrix(float time)
  */
 void M_Drawer(void)
 {
+#define BUFSIZE 80
+
     static short x;
     static short y;
     short   i;
     short   max;
-    char    string[40];
+    char    string[BUFSIZE];
     int     start;
     float   scale;
     int     w, h, off_x, off_y;
@@ -1743,14 +1745,16 @@ void M_Drawer(void)
     if(messageToPrint)
     {
         start = 0;
+
         y = 100 - M_StringHeight(messageString, hu_font_a) / 2;
         while(*(messageString + start))
         {
             for(i = 0; i < strlen(messageString + start); i++)
-                if(*(messageString + start + i) == '\n')
+                if(*(messageString + start + i) == '\n' || i > BUFSIZE-1)
                 {
-                    memset(string, 0, 40);
+                    memset(string, 0, BUFSIZE);
                     strncpy(string, messageString + start, i);
+                    string[BUFSIZE] = 0;
                     start += i + 1;
                     break;
                 }
@@ -1764,6 +1768,7 @@ void M_Drawer(void)
             x = 160 - M_StringWidth(string, hu_font_a) / 2;
             M_WriteText2(x, y, string, hu_font_a, cfg.menuColor2[0],
                          cfg.menuColor2[1], cfg.menuColor2[2], 1);
+
             y += SHORT(hu_font_a[17].height);
         }
 
@@ -1990,6 +1995,13 @@ boolean M_EditResponder(event_t *ev)
     return false;
 }
 
+void M_EndAnyKeyMsg(void)
+{
+    M_StopMessage();
+    M_ClearMenus();
+    S_LocalSound(menusnds[1], NULL);
+}
+
 /*
  * This is the "fallback" responder, its the last stage in the event chain
  * so if an event reaches here it means there was no suitable binding for it.
@@ -2017,9 +2029,7 @@ boolean M_Responder(event_t *ev)
     // Handle "Press any key to continue" messages
     if(messageToPrint && !messageNeedsInput)
     {
-        M_StopMessage();
-        M_ClearMenus();
-        S_LocalSound(menusnds[1], NULL);
+        M_EndAnyKeyMsg();
         return true;
     }
 
@@ -4136,20 +4146,29 @@ DEFCC(CCmdMsgResponse)
 {
     if(messageToPrint)
     {
-        if(!stricmp(argv[0], "messageyes"))
+        // Handle "Press any key to continue" messages
+        if(!messageNeedsInput)
         {
-            messageResponse = 1;
+            M_EndAnyKeyMsg();
             return true;
         }
-        else if(!stricmp(argv[0], "messageno"))
+        else
         {
-            messageResponse = -1;
-            return true;
-        }
-        else if(!stricmp(argv[0], "messagecancel"))
-        {
-            messageResponse = -2;
-            return true;
+            if(!stricmp(argv[0], "messageyes"))
+            {
+                messageResponse = 1;
+                return true;
+            }
+            else if(!stricmp(argv[0], "messageno"))
+            {
+                messageResponse = -1;
+                return true;
+            }
+            else if(!stricmp(argv[0], "messagecancel"))
+            {
+                messageResponse = -2;
+                return true;
+            }
         }
     }
 
