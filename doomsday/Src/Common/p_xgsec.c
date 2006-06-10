@@ -2651,9 +2651,17 @@ void XS_Ticker(void)
 int XS_Gravity(struct sector_s *sector)
 {
     if(!P_XSector(sector)->xg || !(P_XSector(sector)->xg->info.flags & STF_GRAVITY))
-        return GRAVITY;         // Normal gravity.
+        return GRAVITY;         // World gravity.
+    else
+    {   // Sector-specific gravity.
+        int grav = FRACUNIT * P_XSector(sector)->xg->info.gravity;
 
-    return FRACUNIT * P_XSector(sector)->xg->info.gravity;
+        // Apply gravity modifier.
+        if(IS_NETGAME && cfg.netGravity != -1)
+            grav *= (fixed_t) ((float) cfg.netGravity / 100);
+
+        return grav;
+    }
 }
 
 int XS_Friction(struct sector_s *sector)

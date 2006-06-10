@@ -305,6 +305,7 @@ void H_PreInit(void)
     cfg.netColor = 4;           // Use the default color by default.
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
+    cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = 41;
     cfg.levelTitle = true;
   //cfg.hideAuthorIdSoft = true;

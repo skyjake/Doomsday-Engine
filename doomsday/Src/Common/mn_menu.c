@@ -843,11 +843,11 @@ Menu_t  ReadDef3 = {
 
 static MenuItem_t HUDItems[] = {
 #ifdef __JDOOM__
-    {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_AMMO] },
-    {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_ARMOR] },
-    {ITT_EFUNC, 0, "show face :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_FACE] },
-    {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_HEALTH] },
-    {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_KEYS] },
+    {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, "hud-ammo" },
+    {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, "hud-armor" },
+    {ITT_EFUNC, 0, "show face :", M_ToggleVar, 0, NULL, "hud-face" },
+    {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL,"hud-health" },
+    {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, "hud-keys" },
 
     {ITT_LRFUNC, 0, "scale", M_HUDScale, 0},
     {ITT_EFUNC, 0, "   HUD color", SCColorWidget, 5},
@@ -877,9 +877,9 @@ static MenuItem_t HUDItems[] = {
 #if __JHEXEN__ || __JSTRIFE__
     {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
     {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
-    {ITT_EFUNC, 0, "SHOW MANA :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_MANA] },
-    {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_HEALTH] },
-    {ITT_EFUNC, 0, "SHOW ARTIFACT :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_ARTI] },
+    {ITT_EFUNC, 0, "SHOW MANA :", M_ToggleVar, 0, NULL, "hud-mana" },
+    {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, "hud-health" },
+    {ITT_EFUNC, 0, "SHOW ARTIFACT :", M_ToggleVar, 0, NULL, "hud-artifact" },
     {ITT_EFUNC, 0, "   HUD COLOUR", SCColorWidget, 5},
     {ITT_LRFUNC, 0, "SCALE", M_HUDScale, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -887,11 +887,11 @@ static MenuItem_t HUDItems[] = {
 #elif __JHERETIC__
     {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
     {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
-    {ITT_EFUNC, 0, "SHOW AMMO :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_AMMO] },
-    {ITT_EFUNC, 0, "SHOW ARMOR :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_ARMOR] },
-    {ITT_EFUNC, 0, "SHOW ARTIFACT :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_ARTI] },
-    {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_HEALTH] },
-    {ITT_EFUNC, 0, "SHOW KEYS :", M_ToggleVar, 0, NULL, &cfg.hudShown[HUD_KEYS] },
+    {ITT_EFUNC, 0, "SHOW AMMO :", M_ToggleVar, 0, NULL, "hud-ammo" },
+    {ITT_EFUNC, 0, "SHOW ARMOR :", M_ToggleVar, 0, NULL, "hud-armor" },
+    {ITT_EFUNC, 0, "SHOW ARTIFACT :", M_ToggleVar, 0, NULL, "hud-artifact" },
+    {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, "hud-health" },
+    {ITT_EFUNC, 0, "SHOW KEYS :", M_ToggleVar, 0, NULL, "hud-keys" },
     {ITT_EFUNC, 0, "   HUD COLOUR", SCColorWidget, 5},
     {ITT_LRFUNC, 0, "SCALE", M_HUDScale, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -983,11 +983,11 @@ static MenuItem_t WeaponItems[] = {
 #if __JDOOM__
     {ITT_LRFUNC, 0, "9 :", M_WeaponOrder, 8 << NUMWEAPONS },
 #endif
-    {ITT_EFUNC, 0, "Use with Next/Previous :", M_ToggleVar, 0, NULL, &cfg.weaponNextMode},
+    {ITT_EFUNC, 0, "Use with Next/Previous :", M_ToggleVar, 0, NULL, "player-weapon-nextmode"},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_LRFUNC, 0, "AUTOSWITCH :", M_AutoSwitch, 0},
 #if __JDOOM__
-    {ITT_EFUNC, 0, "BERSERK AUTOSWITCH :", M_ToggleVar, 0, NULL, &cfg.berserkAutoSwitch}
+    {ITT_EFUNC, 0, "BERSERK AUTOSWITCH :", M_ToggleVar, 0, NULL, "player-autoswitch-berserk"}
 #endif
 };
 
@@ -1019,11 +1019,11 @@ static Menu_t WeaponDef = {
 };
 
 static MenuItem_t GameplayItems[] = {
-    {ITT_EFUNC, 0, "ALWAYS RUN :", M_ToggleVar, 0, NULL, &cfg.alwaysRun},
-    {ITT_EFUNC, 0, "USE LOOKSPRING :", M_ToggleVar, 0, NULL, &cfg.lookSpring},
-    {ITT_EFUNC, 0, "USE AUTOAIM :", M_ToggleVar, 0, NULL, &cfg.noAutoAim},
+    {ITT_EFUNC, 0, "ALWAYS RUN :", M_ToggleVar, 0, NULL, "ctl-run"},
+    {ITT_EFUNC, 0, "USE LOOKSPRING :", M_ToggleVar, 0, NULL, "ctl-look-spring"},
+    {ITT_EFUNC, 0, "USE AUTOAIM :", M_ToggleVar, 0, NULL, "ctl-aim-noauto"},
 #if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
-    {ITT_EFUNC, 0, "ALLOW JUMPING :", M_ToggleVar, 0, NULL, &cfg.jumpEnabled},
+    {ITT_EFUNC, 0, "ALLOW JUMPING :", M_ToggleVar, 0, NULL, "player-jump"},
 #endif
 
 #if __JDOOM__ || __JHERETIC__
@@ -1031,31 +1031,31 @@ static MenuItem_t GameplayItems[] = {
     {ITT_EMPTY, 0, "COMPATIBILITY", NULL, 0 },
 #  if __JDOOM__
     {ITT_EFUNC, 0, "ANY BOSS TRIGGER 666 :", M_ToggleVar, 0, NULL,
-        &cfg.anybossdeath},
+        "game-anybossdeath666"},
     {ITT_EFUNC, 0, "AV RESURRECTS GHOSTS :", M_ToggleVar, 0, NULL,
-        &cfg.raiseghosts},
+        "game-raiseghosts"},
     {ITT_EFUNC, 0, "PE LIMITED TO 20 LOST SOULS :", M_ToggleVar, 0, NULL,
-        &cfg.maxskulls},
+        "game-maxskulls"},
     {ITT_EFUNC, 0, "LS CAN GET STUCK INSIDE WALLS :", M_ToggleVar, 0, NULL,
-        &cfg.allowskullsinwalls},
+        "game-skullsinwalls"},
 #  endif
 #  if __JDOOM__ || __JHERETIC__
     {ITT_EFUNC, 0, "MONSTERS CAN GET STUCK IN DOORS :", M_ToggleVar, 0, NULL,
-        &cfg.monstersStuckInDoors},
+        "game-monsters-stuckindoors"},
     {ITT_EFUNC, 0, "SOME OBJECTS HANG OVER LEDGES :", M_ToggleVar, 0, NULL,
-        &cfg.avoidDropoffs},
+        "game-objects-hangoverledges"},
     {ITT_EFUNC, 0, "OBJECTS FALL UNDER OWN WEIGHT :", M_ToggleVar, 0, NULL,
-        &cfg.fallOff},
+        "game-objects-falloff"},
     {ITT_EFUNC, 0, "CORPSES SLIDE DOWN STAIRS :", M_ToggleVar, 0, NULL,
-        &cfg.slidingCorpses},
+        "game-corpse-sliding"},
     {ITT_EFUNC, 0, "USE EXACTLY DOOM'S CLIPPING CODE :", M_ToggleVar, 0, NULL,
-        &cfg.moveBlock},
+        "game-objects-clipping"},
     {ITT_EFUNC, 0, "  ^IFNOT NORTHONLY WALLRUNNING :", M_ToggleVar, 0, NULL,
-        &cfg.wallRunNorthOnly},
+        "game-player-wallrun-northonly"},
 #  endif
 #  if __JDOOM__
     {ITT_EFUNC, 0, "ZOMBIE PLAYERS CAN EXIT LEVELS :", M_ToggleVar, 0, NULL,
-        &cfg.zombiesCanExit},
+        "game-zombiescanexit"},
 #  endif
 #endif
 };
@@ -1097,8 +1097,8 @@ static Menu_t GameplayDef = {
 #endif
 
 static MenuItem_t MouseOptsItems[] = {
-    {ITT_EFUNC, 0, "MOUSE LOOK :", M_ToggleVar, 0, NULL, &cfg.usemlook},
-    {ITT_EFUNC, 0, "INVERSE MLOOK :", M_ToggleVar, 0, NULL, &cfg.mlookInverseY},
+    {ITT_EFUNC, 0, "MOUSE LOOK :", M_ToggleVar, 0, NULL, "ctl-look-mouse"},
+    {ITT_EFUNC, 0, "INVERSE MLOOK :", M_ToggleVar, 0, NULL, "ctl-look-mouse-inverse"},
     {ITT_LRFUNC, 0, "X SENSITIVITY", M_MouseXSensi, 0},
 #ifndef __JDOOM__
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -1145,9 +1145,9 @@ static MenuItem_t JoyConfigItems[] = {
     {ITT_LRFUNC, 0, "RZ AXIS :", M_JoyAxis, 5 << 8},
     {ITT_LRFUNC, 0, "SLIDER 1 :", M_JoyAxis, 6 << 8},
     {ITT_LRFUNC, 0, "SLIDER 2 :", M_JoyAxis, 7 << 8},
-    {ITT_EFUNC, 0, "JOY LOOK :", M_ToggleVar, 0, NULL, &cfg.usejlook},
-    {ITT_EFUNC, 0, "INVERSE LOOK :", M_ToggleVar, 0, NULL, &cfg.jlookInverseY},
-    {ITT_EFUNC, 0, "POV LOOK :", M_ToggleVar, 0, NULL, &cfg.povLookAround}
+    {ITT_EFUNC, 0, "JOY LOOK :", M_ToggleVar, 0, NULL, "ctl-look-joy"},
+    {ITT_EFUNC, 0, "INVERSE LOOK :", M_ToggleVar, 0, NULL, "ctl-look-joy-inverse"},
+    {ITT_EFUNC, 0, "POV LOOK :", M_ToggleVar, 0, NULL, "ctl-look-pov"}
 };
 
 static Menu_t JoyConfigMenu = {
@@ -1880,7 +1880,7 @@ void M_Drawer(void)
                 off_y = mn->y;
                 off_y += (itemOn - mn->firstItem + 1) * mn->itemHeight;
                 off_y -= h/2.f;
-                
+
 #ifndef __JDOOM__
                 if(mn->itemHeight < LINEHEIGHT)
                 {
@@ -2150,11 +2150,12 @@ void SCColorWidget(int index, void *data)
 
 void M_ToggleVar(int index, void *data)
 {
-    Con_Error("M_ToggleVar: Needs to be reimplemented.\n");
-    // TODO: This is illegal: casting an int to byte on big-endian CPUs will
-    // modify the most significant byte! Instead, use *data to point to the
-    // name of the cvar (or the cvar_t) and use the "toggle" ccmd.
-    /* *(byte *)data = !*(byte *)data; */
+    char *cvarname = (char *) data;
+
+    if(!data)
+        return;
+
+    DD_Executef(true, "toggle %s", cvarname);
     S_LocalSound(menusnds[0], NULL);
 }
 
@@ -2462,7 +2463,7 @@ void M_DrawEpisode(void)
 #ifdef __JDOOM__
     Menu_t *menu = &EpiDef;
 #endif
-    
+
 #ifdef __JHERETIC__
     M_DrawTitle("WHICH EPISODE?", 4);
 #elif __JDOOM__
@@ -2582,8 +2583,8 @@ void M_DrawLoad(void)
     for(i = 0; i < load_end; i++)
     {
         M_DrawSaveLoadBorder(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i));
-        M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), 
-                     savegamestrings[i], menu->font, 
+        M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i),
+                     savegamestrings[i], menu->font,
                      menu->color[0], menu->color[1], menu->color[2], menu_alpha);
     }
 
@@ -2609,8 +2610,8 @@ void M_DrawSave(void)
     for(i = 0; i < load_end; i++)
     {
         M_DrawSaveLoadBorder(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i));
-        M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), 
-                     savegamestrings[i], menu->font, 
+        M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i),
+                     savegamestrings[i], menu->font,
                      menu->color[0], menu->color[1], menu->color[2], menu_alpha);
     }
 
@@ -3993,7 +3994,7 @@ void M_DrawColorBox(const Menu_t * menu, int index, float r, float g, float b, f
  *  Draws a box using the border patches.
  *        Border is drawn outside.
  */
-void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green, 
+void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
                          float blue, float alpha, boolean background, int border)
 {
     dpatch_t    *t = 0, *b = 0, *l = 0, *r = 0, *tl = 0, *tr = 0, *br = 0, *bl = 0;

@@ -276,6 +276,7 @@ void H2_PreInit(void)
     cfg.netColor = 8;           // Use the default color by default.
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
+    cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = 41;
     cfg.levelTitle = true;
     cfg.menuScale = .75f;

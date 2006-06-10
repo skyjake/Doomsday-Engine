@@ -45,6 +45,7 @@ typedef struct {
     byte            netDeathmatch, netNomonsters, netRandomclass;
     byte            netMobDamageModifier;   // multiplier for non-player mobj damage
     byte            netMobHealthModifier;   // health modifier for non-player mobjs
+    int             netGravity;              // multiplayer custom gravity
     byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
     byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
     byte            overrideHubMsg; // skip the transition hub message when 1

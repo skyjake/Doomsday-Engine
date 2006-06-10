@@ -86,6 +86,7 @@ void    SCGameSetupSkill(int option, void *data);
 void    SCGameSetupDeathmatch(int option, void *data);
 void    SCGameSetupDamageMod(int option, void *data);
 void    SCGameSetupHealthMod(int option, void *data);
+void    SCGameSetupGravity(int option, void *data);
 void    SCOpenServer(int option, void *data);
 void    SCCloseServer(int option, void *data);
 void    SCChooseHost(int option, void *data);
@@ -142,7 +143,7 @@ Menu_t  MultiplayerMenu = {
 
 #if __JHEXEN__ || __JSTRIFE__
 
-#  define NUM_GAMESETUP_ITEMS       10
+#  define NUM_GAMESETUP_ITEMS       11
 
 MenuItem_t GameSetupItems1[] = {
     {ITT_LRFUNC, 0, "MAP:", SCGameSetupMission, 0},
@@ -154,6 +155,7 @@ MenuItem_t GameSetupItems1[] = {
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
     {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
     {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0}
 };
 
@@ -161,7 +163,7 @@ MenuItem_t GameSetupItems1[] = {
 
 #  if __JHERETIC__
 
-#    define NUM_GAMESETUP_ITEMS     11
+#    define NUM_GAMESETUP_ITEMS     12
 
 MenuItem_t GameSetupItems1[] =  // for Heretic
 {
@@ -175,12 +177,13 @@ MenuItem_t GameSetupItems1[] =  // for Heretic
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
     {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
     {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
 #  elif __JDOOM__
 
-#    define NUM_GAMESETUP_ITEMS     17
+#    define NUM_GAMESETUP_ITEMS     18
 
 MenuItem_t GameSetupItems1[] =  // for Doom 1
 {
@@ -200,6 +203,7 @@ MenuItem_t GameSetupItems1[] =  // for Doom 1
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
     {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
     {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
@@ -220,6 +224,7 @@ MenuItem_t GameSetupItems2[] =  // for Doom 2
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
     {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
     {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
@@ -369,32 +374,32 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, boolText[cfg.noNetBFG]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
 #  endif                        // __JDOOM__
-    M_WriteMenuText(menu, idx++, boolText[cfg.netNoMaxZRadiusAttack]);
-
-    sprintf(buf, "%i", cfg.netMobDamageModifier);
-    M_WriteMenuText(menu, idx++, buf);
-    sprintf(buf, "%i", cfg.netMobHealthModifier);
-    M_WriteMenuText(menu, idx++, buf);
-
 #elif __JHEXEN__ || __JSTRIFE__
 
     sprintf(buf, "%i", cfg.netMap);
-    M_WriteMenuText(menu, 0, buf);
+    M_WriteMenuText(menu, idx++, buf);
     M_WriteText2(160 - M_StringWidth(mapName, hu_font_a) / 2,
                  menu->y + menu->itemHeight, mapName,
                  hu_font_a, 1, 0.7f, 0.3f, menu_alpha);
 
-    M_WriteMenuText(menu, 2, skillText[cfg.netSkill]);
-    M_WriteMenuText(menu, 3, dmText[cfg.netDeathmatch]);
-    M_WriteMenuText(menu, 4, boolText[!cfg.netNomonsters]);
-    M_WriteMenuText(menu, 5, boolText[cfg.netRandomclass]);
-    M_WriteMenuText(menu, 6, boolText[cfg.netNoMaxZRadiusAttack]);
-    sprintf(buf, "%i", cfg.netMobDamageModifier);
-    M_WriteMenuText(menu, 7, buf);
-    sprintf(buf, "%i", cfg.netMobHealthModifier);
-    M_WriteMenuText(menu, 8, buf);
-
+    idx++;
+    M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
+    M_WriteMenuText(menu, idx++, dmText[cfg.netDeathmatch]);
+    M_WriteMenuText(menu, idx++, boolText[!cfg.netNomonsters]);
+    M_WriteMenuText(menu, idx++, boolText[cfg.netRandomclass]);
 #endif                          // __JHEXEN__
+
+    M_WriteMenuText(menu, idx++, boolText[cfg.netNoMaxZRadiusAttack]);
+    sprintf(buf, "%i", cfg.netMobDamageModifier);
+    M_WriteMenuText(menu, idx++, buf);
+    sprintf(buf, "%i", cfg.netMobHealthModifier);
+    M_WriteMenuText(menu, idx++, buf);
+
+    if(cfg.netGravity != -1)
+        sprintf(buf, "%i", cfg.netGravity);
+    else
+        sprintf(buf, "MAP DEFAULT");
+    M_WriteMenuText(menu, idx++, buf);
 }
 
 /*
@@ -787,6 +792,17 @@ void SCGameSetupHealthMod(int option, void *data)
     }
     else if(cfg.netMobHealthModifier > 1)
         cfg.netMobHealthModifier--;
+}
+
+void SCGameSetupGravity(int option, void *data)
+{
+    if(option == RIGHT_DIR)
+    {
+        if(cfg.netGravity < 100)
+            cfg.netGravity++;
+    }
+    else if(cfg.netGravity > -1) // -1 = map default, 0 = zero gravity.
+        cfg.netGravity--;
 }
 
 void MN_TickerEx(void)          // The extended ticker.

@@ -155,6 +155,7 @@ typedef struct jheretic_config_s {
 
     byte            netMobDamageModifier;    // multiplier for non-player mobj damage
     byte            netMobHealthModifier;    // health modifier for non-player mobjs
+    int             netGravity;              // multiplayer custom gravity
     byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
     byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
     byte            netNomonsters;

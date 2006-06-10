@@ -121,6 +121,10 @@ cvar_t  gameCVars[] = {
         &cfg.netMobHealthModifier, 1, 20,
         "Enemy (mob) health modifier, multiplayer (1..20)."},
 
+    {"server-game-mod-gravity", 0, CVT_INT,
+        &cfg.netGravity, -1, 100,
+        "World gravity modifier, multiplayer (-1..100). -1 = Map default."},
+
     // Items
     {"server-game-nobfg", 0, CVT_BYTE,
         &cfg.noNetBFG, 0, 1,
@@ -183,7 +187,7 @@ cvar_t  gameCVars[] = {
     {"player-jump", 0, CVT_INT, &cfg.jumpEnabled, 0, 1,
         "1=Allow jumping."},
     {"player-jump-power", 0, CVT_FLOAT, &cfg.jumpPower, 0, 100,
-        "Jump power."},
+        "Jump power (for all clients if this is the server)."},
     {"player-air-movement", 0, CVT_BYTE, &cfg.airborneMovement, 0, 32,
         "Player movement speed while airborne."},
 

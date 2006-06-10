@@ -59,7 +59,8 @@
 // nearby
 #define MAXRADIUS 32*FRACUNIT
 
-#define GRAVITY FRACUNIT
+#define GRAVITY     ((IS_NETGAME && cfg.netGravity != -1)? \
+                     (fixed_t) (((float) cfg.netGravity / 100) * FRACUNIT) : Get(DD_GRAVITY)) //FRACUNIT
 #define MAXMOVE (30*FRACUNIT)
 
 #define USERANGE (64*FRACUNIT)

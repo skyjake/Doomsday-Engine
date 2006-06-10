@@ -850,8 +850,8 @@ void NetSv_SendGameState(int flags, int to)
 #else
         ptr[5] = gameskill & 0x7;
 #endif
-        ptr[6] = (Get(DD_GRAVITY) >> 8) & 0xff; // low byte
-        ptr[7] = (Get(DD_GRAVITY) >> 16) & 0xff; // high byte
+        ptr[6] = (GRAVITY >> 8) & 0xff; // low byte
+        ptr[7] = (GRAVITY >> 16) & 0xff; // high byte
         memset(ptr + 8, 0, 8);
         /*
         Con_Message("Alternative state packet:\n");
@@ -876,7 +876,7 @@ void NetSv_SendGameState(int flags, int to)
 #if __JDOOM__ || __JHERETIC__
         gs->jumping = cfg.jumpEnabled;
 #endif
-        gs->gravity = SHORT((Get(DD_GRAVITY) >> 8) & 0xffff);
+        gs->gravity = SHORT((GRAVITY >> 8) & 0xffff);
         ptr += sizeof(packet_gamestate_t);
 #endif // #if 0
 

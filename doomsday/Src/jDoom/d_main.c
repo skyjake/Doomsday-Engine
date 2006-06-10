@@ -408,6 +408,7 @@ void D_PreInit(void)
     cfg.netBFGFreeLook = 0;    // allow free-aim 0=none 1=not BFG 2=All
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
+    cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = 41;
     cfg.levelTitle = true;
     cfg.hideAuthorIdSoft = true;
