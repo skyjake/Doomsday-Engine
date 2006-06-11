@@ -1,0 +1,15 @@
+########========-------- DAEMON CODEX (BOOK) --------========########
+
+Model {
+  State = "ARTIPUZZBOOK1";
+  Scale = 1.2;
+  Md2 { File = "Items/Book/Book1.md2"; };
+}
+
+########========-------- LIBER OBSCURA (BOOK) --------========########
+
+Model {
+  State = "ARTIPUZZBOOK2";
+  Scale = 1.2;
+  Md2 { File = "Items/Book/Book2.md2"; };
+}

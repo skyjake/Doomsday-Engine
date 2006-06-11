@@ -1,0 +1,21 @@
+########========----- YELLOW KEY (by Yoalieh) -----========########
+
+Model {
+  State = "CKYY1";
+  Flags = "df_spin df_specular";
+  Scale = 1.5;
+  Md2 {
+    File = "Items/Key/Yellow/YellowKey.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.35;
+  };
+}
+
+Copy Model { State = "CKYY2"; }
+Copy Model { State = "CKYY3"; }
+Copy Model { State = "CKYY4"; }
+Copy Model { State = "CKYY5"; }
+Copy Model { State = "CKYY6"; }
+Copy Model { State = "CKYY7"; }
+Copy Model { State = "CKYY8"; }
+Copy Model { State = "CKYY9"; }

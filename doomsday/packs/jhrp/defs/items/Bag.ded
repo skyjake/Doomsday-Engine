@@ -1,0 +1,9 @@
+########========-------- BAG OF HOLDING --------========########
+
+Model {
+  State = "ITEM_BAGH1";
+  Flags = "df_spin";
+  Scale = 0.75;
+  Offset = 5;
+  Md2 { File = "Items/Bag/Bag.md2"; };
+}

@@ -1,0 +1,25 @@
+########========-------- GREEN MANA --------========########
+
+Model {
+  State = "MANA2_1";
+  Flags = "df_spin";
+  Scale = 0.8;
+  Offset = 10;
+  Md2 { File = "Items/Mana/Green/Green.md2"; };
+}
+
+* Model { State = "MANA2_2"; }
+* Model { State = "MANA2_3"; }
+* Model { State = "MANA2_4"; }
+* Model { State = "MANA2_5"; }
+* Model { State = "MANA2_6"; }
+* Model { State = "MANA2_7"; }
+* Model { State = "MANA2_8"; }
+* Model { State = "MANA2_9"; }
+* Model { State = "MANA2_10"; }
+* Model { State = "MANA2_11"; }
+* Model { State = "MANA2_12"; }
+* Model { State = "MANA2_13"; }
+* Model { State = "MANA2_14"; }
+* Model { State = "MANA2_15"; }
+* Model { State = "MANA2_16"; }

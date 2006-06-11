@@ -1,0 +1,24 @@
+Header { Version = 6 }
+
+## Hanging Corpse
+
+Model {
+  State = "HANGINGCORPSE";
+  Scale XYZ { .9 0.72 .9 };
+  Flags = idangle | worldtime;
+  Interpolate { 9 0 };
+  Inter = 0;
+  Sub { 
+    File = "Decor\Corpse\HangCorpse.dmd"; 
+    Frame = "idle01";    
+  }
+}
+
+Copy Model { Inter = .1250; Sub { Frame = "idle03"; } }
+Copy Model { Inter = .2500; Sub { Frame = "idle05"; } }
+Copy Model { Inter = .3750; Sub { Frame = "idle07"; } }
+Copy Model { Inter = .5000; Sub { Frame = "idle09"; } }
+Copy Model { Inter = .6250; Sub { Frame = "idle11"; } }
+Copy Model { Inter = .7500; Sub { Frame = "idle13"; } }
+Copy Model { Inter = .8750; Sub { Frame = "idle15"; } }
+

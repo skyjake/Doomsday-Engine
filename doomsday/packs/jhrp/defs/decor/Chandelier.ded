@@ -1,0 +1,13 @@
+Header { Version = 5; }
+
+########========-------- CHANDELIER --------========########
+
+Model {
+  State = "CHANDELIER1";
+  Scale = 0.8;
+  Offset = 23;
+  Md2 { File = "Decor\Chandelier\Chandelier.md2"; };
+}
+
+* Model { State = "CHANDELIER2"; }
+* Model { State = "CHANDELIER3"; }

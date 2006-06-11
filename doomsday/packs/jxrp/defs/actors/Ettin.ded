@@ -1,0 +1,163 @@
+Header { Version = 5; }
+
+########========-------- Ettin --------========########
+###   Model by Kazashi    (kazashi@planetblood.com)
+###   Skin by Devin Beals (biggreen@Acolyte.zzn.com)
+###   Defs by Yoalieh     (yoalieh@hotmail.com)
+
+Model { State="ETTIN_LOOK1"; Scale=3.5 ;Md2 {File="Actors/Ettin/ettin.md2"; Frame="idle0"; Skin=0;};  }
+* Model {State="ETTIN_LOOK2"; Md2 {Frame="idle0";};}
+* Model {State="ETTIN_CHASE1"; Md2 {Frame="chase0";};}
+* Model {State="ETTIN_CHASE2"; Md2 {Frame="chase1";};}
+* Model {State="ETTIN_CHASE3"; Md2 {Frame="chase2";};}
+* Model {State="ETTIN_CHASE4"; Md2 {Frame="chase3";};}
+* Model {State="ETTIN_ATK1_1"; Md2 {Frame="attack0";};}
+* Model {State="ETTIN_ATK1_2"; Md2 {Frame="attack1";};}
+* Model {State="ETTIN_ATK1_3"; Md2 {Frame="attack2";};}
+* Model {State="ETTIN_PAIN1"; Md2 {Frame="pain0";};}
+* Model {State="ETTIN_DEATH1_1"; Md2 {Frame="deatha0";};}
+* Model {State="ETTIN_DEATH1_2"; Md2 {Frame="deatha1";};}
+* Model {State="ETTIN_DEATH1_3"; Md2 {Frame="deatha2";};}
+* Model {State="ETTIN_DEATH1_4"; Md2 {Frame="deatha3";};}
+* Model {State="ETTIN_DEATH1_5"; Md2 {Frame="deatha4";};}
+* Model {State="ETTIN_DEATH1_6"; Md2 {Frame="deatha5";};}
+* Model {State="ETTIN_DEATH1_7"; Md2 {Frame="deatha6";};}
+* Model {State="ETTIN_DEATH1_8"; Md2 {Frame="deatha7";};}
+* Model {State="ETTIN_DEATH1_9"; Md2 {Frame="deatha8";};}
+* Model {State="ETTIN_ATK1_3"; Md2 {Frame="attack1";}; Inter=0.6;}
+* Model {State="ETTIN_ATK1_3"; Md2 {Frame="attack0";}; Inter=1.0;}
+
+Model { State="ETTIN_MACE1"; Scale=1.3 ;Md2 {File="Actors/Ettin/ettin_mace.md2"; Frame="spin0";};  }
+* Model {State="ETTIN_MACE1"; Md2 {Frame="spin0";};}
+* Model {State="ETTIN_MACE2"; Md2 {Frame="spin1";};}
+* Model {State="ETTIN_MACE3"; Md2 {Frame="spin2";};}
+* Model {State="ETTIN_MACE4"; Md2 {Frame="spin3";};}
+* Model {State="ETTIN_MACE5"; Md2 {Frame="spin4";};}
+* Model {State="ETTIN_MACE6"; Md2 {Frame="spin5";};}
+* Model {State="ETTIN_MACE7"; Md2 {Frame="spin6";};}
+
+Model { State="ETTIN_DEATH2_1"; Scale=3.3 ;Md2 {File="Actors/Ettin/ettin_die.md2"; Frame="deathb0";};  }
+* Model {State="ETTIN_DEATH2_1"; Md2 {Frame="deathb0";};}
+* Model {State="ETTIN_DEATH2_2"; Md2 {Frame="deathb1";};}
+* Model {State="ETTIN_DEATH2_3"; Md2 {Frame="deathb2";};}
+* Model {State="ETTIN_DEATH2_4"; Md2 {Frame="deathb3";};}
+* Model {State="ETTIN_DEATH2_5"; Md2 {Frame="deathb4";};}
+* Model {State="ETTIN_DEATH2_6"; Md2 {Frame="deathb5";};}
+* Model {State="ETTIN_DEATH2_7"; Md2 {Frame="deathb6";};}
+* Model {State="ETTIN_DEATH2_8"; Md2 {Frame="deathb7";};}
+* Model {State="ETTIN_DEATH2_9"; Md2 {Frame="deathb8";};}
+* Model {State="ETTIN_DEATH2_0"; Md2 {Frame="deathb9";};}
+* Model {State="ETTIN_DEATH2_A"; Md2 {Frame="deathb10";};}
+* Model {State="ETTIN_DEATH2_B"; Md2 {Frame="deathb11";};}
+
+## Yoalieh's SPLAT Generator 
+## Notes: 
+## 1) Maybe some of the tags are trivial and shouldn't been used
+
+Generator {
+  State = "ETTIN_DEATH2_1";
+  Flags = "gnf_modelonly";
+  Speed = 1.1;
+  Speed Rnd = 5.0;
+  Vector { 0.1 0.1 0.1 };
+  Vector Rnd = 5;
+  Center { 0.0 0.0 40.0 };
+  Spawn radius = 40.0;
+  Min spawn radius = 15.0;
+  Distance = 600.0;
+  Spawn age = 5;
+  Max age = 450;
+  Particles = 200;
+  Spawn rate = 100.0;
+  Stage {
+    Type = "pt_point";
+    Tics = 35;
+    Color { 0.8 0.0 0.0 0.9 };
+    Radius = 14.0;
+    Flags = "ptf_stagetouch ptf_flat";
+    Gravity = 0.6;
+    Resistance = 0.01;
+    Radius rnd = 1; 
+  };
+  Stage {
+    Type = "pt_point";
+    Tics = 350;
+    Color { 0.8 0.0 0.0 0.9 };
+    Flags = "ptf_flat";
+    Resistance = 0.8;
+    Rnd=1;
+  };
+  Stage {
+    Type = "pt_point";
+    Tics = 1;
+    Color { 0.8 0.0 0.0 0.1 };
+    Flags = "ptf_flat";
+    Radius = 25;
+    Radius rnd = 1; 
+    Rnd=1;
+  };
+}
+
+Model { 
+  State = "ETTIN_ICE1"; 
+  Scale = 3.3; 
+  Md2 {   
+    Flags = "df_specular";
+    File="Actors/Ettin/ettin.md2";
+    Skin=1;
+    Frame="pain0";
+    Shiny = 0.4;
+    Shiny skin = "Common/shiny.pcx";
+    Shiny color = {0.5 0.5 0.8 } ;
+  };
+  
+  Md2 {
+    Flags = "df_specular";
+    File="Actors/Ettin/ettin_ice.md2";
+    Frame="Icy";
+    Transparent = 0.6;
+    Shiny = 0.06;
+    Shiny skin = "Actors/Ettin/icy_shin.pcx";
+    Shiny color = {0.5 0.5 0.8 } ;
+  };
+}
+
+* Model { State="ETTIN_ICE2"; }
+
+Generator {
+  State = "ETTIN_ICE1";
+  Speed = 0.5;
+  Speed Rnd = 3.0;
+  Vector { 0.1 0.1 0.1 };
+  Vector Rnd = 5;
+  Center { 0.0 0.0 40.0 };
+  Spawn radius = 50.0;
+  Min spawn radius = 20;
+  Distance = 0.0;
+  Spawn age = 7;
+  Max age = 120;
+  Particles = 200;
+  Spawn rate = 50.0;
+  Stage {
+    Type = "pt_point";
+    Tics = 65;
+    Rnd = 0.6;
+    Color { 0.5 0.5 1 0.15 };
+    Radius = 25.0;
+    Flags = "ptf_stagetouch";
+    Bounce = 0.1;
+    Gravity = 0.2;
+    Resistance = 0.5;
+    Radius Rnd = 1;
+  };
+  Stage {
+    Type = "pt_point";
+    Tics = 35;
+    Color { 0.7 0.7 1 0.08 };
+    Radius = 0.5;
+    Flags = "ptf_bright ptf_dietouch";
+    Bounce = 0.0;
+    Gravity = 0.2;
+    Resistance = 0.5;
+  };
+}

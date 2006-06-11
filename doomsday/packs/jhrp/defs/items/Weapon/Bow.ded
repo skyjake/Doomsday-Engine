@@ -1,0 +1,13 @@
+Header { Version = 6; }
+
+########========-------- Pickup Item: Crossbow --------========########
+# Model and skin by Slyrr
+# Defs by skyjake
+
+Model {
+  State = "WBOW";
+  Flags = autoscale | spin;
+  Sub {
+    File = "Items/Weapon/Bow/Crossbow.md2";
+  }
+}

@@ -1,0 +1,6 @@
+Model {
+  State = "SMALLPILLAR";
+  Scale = 0.37;
+  Flags = "df_idangle";
+  Sub { File = "Decor/Pillar/Small/PillarSmall.md2"; };
+}

@@ -1,0 +1,36 @@
+########========-------- INVINCIBILITY RING --------========########
+
+Model {
+  State = "ARTI_INVU1";
+  Flags = "df_spin";
+  Scale = 1.7;
+  Offset = 30;
+  Md2 {
+    File = "Items/Ring/InvRing.md2";
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.12;
+  };
+  Md2 {
+    File = "Items/Ring/Ring-Jewel.md2";
+    Flags = "df_fullbright";
+    Skin = 0;
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.12;
+  };
+}
+
+*Model {
+  State = "ARTI_INVU2";
+  Md2 {};
+  Md2 { Skin = 1; };
+}
+*Model {
+  State = "ARTI_INVU3";
+  Md2 {};
+  Md2 { Skin = 2; };
+}
+*Model {
+  State = "ARTI_INVU4";
+  Md2 {};
+  Md2 { Skin = 3; };
+}

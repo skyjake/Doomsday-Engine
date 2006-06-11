@@ -1,0 +1,16 @@
+Header { Version = 6; }
+
+########========-------- Pickup Item: Phoenix Rod --------========########
+# Model and skin by Slyrr
+# Defs by skyjake
+
+Model {
+  State = "WPHX";
+  Flags = autoscale | spin | litshiny;
+  Sub {
+    File = "Items/Weapon/Rod/PhoenixRod.md2";
+    Shiny = .3;
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny color { 1 .8 .5 };
+  }
+}

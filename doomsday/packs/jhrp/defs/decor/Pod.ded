@@ -1,0 +1,60 @@
+Header { Version = 6; }
+
+########========-------- Spore Pod --------========########
+# Model and skin by Slyrr
+# Defs by skyjake
+
+Model {
+  State = "POD_WAIT1";
+  Flags = idangle | autoscale;
+  Sub {
+    File = "Decor/Pod/Spore.md2";
+  }
+}
+
+Copy Model { State = "POD_GROW1"; }
+Copy Model { State = "POD_GROW2"; }
+Copy Model { State = "POD_GROW3"; }
+Copy Model { State = "POD_GROW4"; }
+Copy Model { State = "POD_GROW5"; }
+Copy Model { State = "POD_GROW6"; }
+Copy Model { State = "POD_GROW7"; }
+Copy Model { State = "POD_GROW8"; }
+
+Copy Model {
+  State = "POD_PAIN1";
+  Flags = idangle;
+  Scale XYZ { .42 .35 .42 };
+  Offset = 18;
+  Sub {
+    Frame = "pain01";
+  }
+}
+
+Copy Model {
+  State = "POD_PAIN1";
+  Inter = 0.2;
+  Sub {
+    Frame = "pain02";
+  }
+}
+
+# Pain gibs
+Model {
+  State = "PODGOO1";
+  Flags = movyaw | movpitch;
+  Scale = .3;
+  Sub {
+    File = "Decor/Pod/Gib.md2";
+    Offset XYZ { 0 -10 0 };
+  }
+}
+
+Copy Model { State = "PODGOO2"; Offset XYZ { 0 0 0 }; }
+Copy Model { State = "PODGOOX"; }
+
+# Gib shrinks on the floor.
+Copy Model {
+  Inter = .999;
+  Scale = .001;
+}

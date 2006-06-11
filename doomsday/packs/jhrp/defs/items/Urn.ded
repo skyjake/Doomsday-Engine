@@ -1,0 +1,9 @@
+########========-------- MYSTIC URN --------========########
+
+Model {
+  State = "ARTI_SPHL1";
+  Flags = "df_spin";
+  Scale = 1.15;
+  Offset = -2;
+  Md2 { File = "Items/Urn/Urn.md2"; };
+}

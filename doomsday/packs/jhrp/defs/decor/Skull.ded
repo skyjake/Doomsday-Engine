@@ -1,0 +1,79 @@
+########========-------- HANGING SKULLS --------========########
+
+# 70 units tall.
+Model {
+  State = "SKULLHANG70_1";
+  Flags = "df_idangle";
+  Scale XYZ { 0.37 0.28 0.37 };
+  Offset = -5;
+  Sub { 
+    File = "Decor/Skull/LongSkull.md2";
+    Frame = "hang01";
+  };
+}
+
+*Model {                            Inter = 0.25;   Sub { Frame = "hang03"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang05"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang07"; }; }
+*Model { State = "SKULLHANG70_2";   Inter = 0;      Sub { Frame = "hang09"; }; }
+*Model {                            Inter = 0.25;   Sub { Frame = "hang11"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang13"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang15"; }; }
+
+# 60 units tall.
+*Model {
+  State = "SKULLHANG60_1";
+  Offset = -4;
+  Inter = 0;
+  Sub { 
+    File = "Decor/Skull/LongSkull.md2";
+    Frame = "hang01";
+  };
+}
+
+*Model {                            Inter = 0.25;   Sub { Frame = "hang03"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang05"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang07"; }; }
+*Model { State = "SKULLHANG60_2";   Inter = 0;      Sub { Frame = "hang09"; }; }
+*Model {                            Inter = 0.25;   Sub { Frame = "hang11"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang13"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang15"; }; }
+
+# 45 units tall.
+*Model {
+  State = "SKULLHANG45_1";
+  Scale XYZ { 0.33 0.25 0.33 };
+  Offset = -5;
+  Inter = 0;
+  Sub { 
+    File = "Decor/Skull/LongSkull.md2";
+    Frame = "hang01";
+  };
+}
+
+*Model {                            Inter = 0.25;   Sub { Frame = "hang03"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang05"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang07"; }; }
+*Model { State = "SKULLHANG45_2";   Inter = 0;      Sub { Frame = "hang09"; }; }
+*Model {                            Inter = 0.25;   Sub { Frame = "hang11"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang13"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang15"; }; }
+
+# 35 units tall.
+*Model {
+  State = "SKULLHANG35_1";
+  Offset = -5;
+  Inter = 0;
+  Sub { 
+    File = "Decor/Skull/LongSkull.md2";
+    Frame = "hang01";
+  };
+}
+
+*Model {                            Inter = 0.25;   Sub { Frame = "hang03"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang05"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang07"; }; }
+*Model { State = "SKULLHANG35_2";   Inter = 0;      Sub { Frame = "hang09"; }; }
+*Model {                            Inter = 0.25;   Sub { Frame = "hang11"; }; }
+*Model {                            Inter = 0.5;    Sub { Frame = "hang13"; }; }
+*Model {                            Inter = 0.75;   Sub { Frame = "hang15"; }; }

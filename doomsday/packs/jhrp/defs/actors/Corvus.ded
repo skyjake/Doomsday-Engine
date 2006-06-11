@@ -1,0 +1,129 @@
+Header { Version = 6; }
+
+#####=========--------- CORVUS ---------=========#####
+# Model by JJ.
+
+Model {
+  State = "PLAY_DIE1";
+  Scale XYZ { 0.65 0.5 0.55 };
+  Group = "mg_player";
+  Md2 { File = "Actors/Corvus/Corvus.md2"; Flags = skintrans; Frame = "Death1"; };
+  Md2 { File = "Actors/Corvus/Corvus_Head.md2"; Flags = skintrans; Frame = "Death1"; };
+}
+
+*Model {
+  State = "PLAY_DIE2";
+  Md2 { Frame = "Death2"; };
+  Md2 { Frame = "Death2"; };
+}
+
+*Model {
+  State = "PLAY_DIE3";
+  Md2 { Frame = "Death3"; };
+  Md2 { Frame = "Death3"; };
+}
+
+*Model {
+  State = "PLAY_DIE4";
+  Md2 { Frame = "Death4"; };
+  Md2 { Frame = "Death4"; };
+}
+
+*Model {
+  State = "PLAY_DIE5";
+  Md2 { Frame = "Death5"; };
+  Md2 { Frame = "Death5"; };
+}
+
+*Model {
+  State = "PLAY_DIE6";
+  Md2 { Frame = "Death6"; };
+  Md2 { Frame = "Death6"; };
+}
+
+*Model {
+  State = "PLAY_DIE7";
+  Md2 { Frame = "Death6"; };
+  Md2 { Frame = "Death6"; };
+}
+
+*Model {
+  State = "PLAY_DIE8";
+  Md2 { Frame = "Death6"; };
+  Md2 { Frame = "Death6"; };
+}
+
+*Model {
+  State = "PLAY_DIE9";
+  Md2 { Frame = "Death6"; };
+  Md2 { Frame = "Death6"; };
+}
+
+### Wand ###
+
+Model {
+  State = "PLAY";
+  Scale XYZ { 0.65 0.5 0.55 };
+  Selector = 2;
+  Group = "mg_player";
+  Md2 { File = "Actors/Corvus/Corvus.md2"; Flags = skintrans; Frame = "Spawn"; };
+  Md2 { File = "Actors/Corvus/Corvus_Head.md2"; Flags = skintrans; Frame = "Spawn"; };
+  Md2 { File = "Actors/Corvus/Weapon_Wand.md2"; Frame = "Spawn"; };
+}
+
+*Model {
+  State = "PLAY_RUN1";
+  Md2 { Frame = "Run1"; };
+  Md2 { Frame = "Run1"; };
+  Md2 { Frame = "Run1"; };
+}
+
+*Model {
+  State = "PLAY_RUN2";
+  Md2 { Frame = "Run2"; };
+  Md2 { Frame = "Run2"; };
+  Md2 { Frame = "Run2"; };
+}
+
+*Model {
+  State = "PLAY_RUN3";
+  Md2 { Frame = "Run3"; };
+  Md2 { Frame = "Run3"; };
+  Md2 { Frame = "Run3"; };
+}
+
+*Model {
+  State = "PLAY_RUN4";
+  Md2 { Frame = "Run4"; };
+  Md2 { Frame = "Run4"; };
+  Md2 { Frame = "Run4"; };
+}
+
+
+*Model {
+  State = "PLAY_ATK1";
+  Md2 { Frame = "Atk"; };
+  Md2 { Frame = "Atk"; };
+  Md2 { Frame = "Atk"; };
+}
+
+*Model {
+  State = "PLAY_ATK2";
+  Md2 { Frame = "Atk"; };
+  Md2 { Frame = "Atk"; };
+  Md2 { Frame = "Atk"; };
+}
+
+*Model {
+  State = "PLAY_PAIN";
+  Md2 { Frame = "Hit"; };
+  Md2 { Frame = "Hit"; };
+  Md2 { Frame = "Hit"; };
+}
+
+*Model {
+  State = "PLAY_PAIN2";
+  Md2 { Frame = "Hit"; };
+  Md2 { Frame = "Hit"; };
+  Md2 { Frame = "Hit"; };
+}

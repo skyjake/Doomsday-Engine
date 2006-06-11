@@ -1,0 +1,7 @@
+########========-------- BARREL --------========########
+
+Model {
+  State = "ZBARREL1";
+  Flags = "df_autoscale";
+  Md2 { File = "Decor/Barrel/Barrel.md2"; Frame = "resting1"; };
+}

@@ -1,0 +1,11 @@
+Header { Version = 6; }
+
+Model {
+  State = "ITEM_SHLD1";
+  Flags = spin | autoscale | litshiny;
+  Sub { 
+    File = "Items/Shield/Silver/SilverShield.md2"; 
+    Shiny skin = "Common/Shiny.pcx";
+    Shiny = 0.4;
+  }
+}

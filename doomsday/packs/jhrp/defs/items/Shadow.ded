@@ -1,0 +1,13 @@
+Header { Version = 6 }
+
+## The Shadow Sphere
+
+Model {
+  State = "ARTI_INVS1";
+  Flags = noz | alignyaw | alignpitch;
+  Scale XYZ { .4 0.35 .4 };
+  Offset = 10;
+  Sub {
+    File = "Items/Shadow/Sphere.md2";
+  }
+}

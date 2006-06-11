@@ -1,0 +1,209 @@
+# jDoom: Plutonia Maps
+
+Map Info {
+  ID = "MAP01";
+  Name = "Level 1: Congo";
+  Author = "Dario Casali and Milo Casali";
+  Par time = 30;
+  Gravity = 1;
+  Sky height = 0.49;
+  Horizon offset = -0.105;
+  Sky Layer 1 {
+    Flags = enable;
+    Texture = "SKY1";
+  };
+}
+
+Copy Map Info {
+  ID = "MAP02";
+  Name = "Level 2: Well of Souls";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP03";
+  Name = "Level 3: Aztec";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP04";
+  Name = "Level 4: Caged";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP05";
+  Name = "Level 5: Ghost Town";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP06";
+  Name = "Level 6: Baron's Lair";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP07";
+  Name = "Level 7: Caughtyard";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP08";
+  Name = "Level 8: Realm";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP09";
+  Name = "Level 9: Abattoire";
+  Par time = 270;
+}
+
+Copy Map Info {
+  ID = "MAP10";
+  Name = "Level 10: Onslaught";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP11";
+  Name = "Level 11: Hunted";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP12";
+  Name = "Level 12: Speed";
+  Par time = 150;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY2";
+  };
+}
+
+Copy Map Info {
+  ID = "MAP13";
+  Name = "Level 13: The Crypt";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP14";
+  Name = "Level 14: Genesis";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP15";
+  Name = "Level 15: The Twilight";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP16";
+  Name = "Level 16: The Omen";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP17";
+  Name = "Level 17: Compound";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP18";
+  Name = "Level 18: Neurosphere";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP19";
+  Name = "Level 19: Nme";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP20";
+  Name = "Level 20: The Death Domain";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP21";
+  Name = "Level 21: Slayer";
+  Par time = 240;
+  Sky Layer 1 {
+    Flags = "slf_enable";
+    Texture = "SKY3";
+  };
+}
+
+Copy Map Info {
+  ID = "MAP22";
+  Name = "Level 22: Impossible Mission";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP23";
+  Name = "Level 23: Tombstone";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP24";
+  Name = "Level 24: The Final Frontier";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP25";
+  Name = "Level 25: The Temple of Darkness";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP26";
+  Name = "Level 26: Bunker";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP27";
+  Name = "Level 27: Anti-Christ";
+  Par time = 330;
+}
+
+Copy Map Info {
+  ID = "MAP28";
+  Name = "Level 28: The Sewers";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP29";
+  Name = "Level 29: Odyssey of Noises";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP30";
+  Name = "Level 30: The Gateway of Hell";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP31";
+  Name = "Level 31: Cyberden";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP32";
+  Name = "Level 32: Go 2 It";
+  Par time = 30;
+}
