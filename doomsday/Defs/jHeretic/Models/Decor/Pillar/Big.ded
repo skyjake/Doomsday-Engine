@@ -1,6 +1,0 @@
-Model {
-  State = "BRPILLAR";
-  Scale = 1.3;
-  Flags = "df_idangle";
-  Sub { File = "Decor/Pillar/Big/PillarBig.md2"; };
-}

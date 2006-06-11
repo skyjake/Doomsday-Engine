@@ -1,8 +1,0 @@
-# jHexen: Additional Animation Sequences
-#
-# Hexen uses the ANIMDEFS lump to define texture animation sequences.
-# In order to remain compatible with existing WADs, jHexen reads 
-# ANIMDEFS and creates texture animation groups for the sequences in it.
-# The flags "tgf_smooth" and "tgf_first_only" are set for each group.
-#
-# Additional sequences can be defined using Group definitions.
