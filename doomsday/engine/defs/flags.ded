@@ -1,0 +1,197 @@
+# Doomsday: Flags
+
+# Texture Groups
+Flag { ID = "tgf_smooth"; Value = 0x1; }
+Flag { ID = "tgf_first_only"; Value = 0x2; }
+
+# Sounds
+Flag { ID = "sf_shift"; Value = 0x1; }
+Flag { ID = "sf_shift2"; Value = 0x2; }
+Flag { ID = "sf_exclude"; Value = 0x4; }
+Flag { ID = "sf_nodist"; Value = 0x8; }
+Flag { ID = "sf_repeat"; Value = 0x10; }
+Flag { ID = "sf_dontstop"; Value = 0x20; }
+
+# Decorations
+Flag { # Decoration will not be used with IWAD resources.
+  ID = "dcf_noiwad"; Value = 0x1; 
+}
+
+Flag { # Allow using decoration with PWAD resources.
+  ID = "dcf_pwad"; Value = 0x2; 
+}    
+
+Flag { # Allow using decoration with external resources.
+  ID = "dcf_ext"; Value = 0x4; 
+}
+
+# Lights
+Flag { ID = "lgf_nohalo"; Value = 0x100; }
+Flag { ID = "lgf_dontturnhalo"; Value = 0x200; }
+
+# Map Info
+Flag { ID = "mif_fog"; Value = 0x1; }
+Flag { # Draw the sky sphere even when models are in use.
+  ID = "mif_sphere"; Value = 0x2; 
+} 
+
+# Sky Layers
+Flag { ID = "slf_enable"; Value = 0x1; }
+Flag { ID = "slf_mask"; Value = 0x2; }
+
+# Blending Modes
+Flag { ID = "bm_normal"; Value = 0; }
+Flag { ID = "bm_add"; Value = 1; }
+Flag { ID = "bm_dark"; Value = 2; }
+Flag { ID = "bm_sub"; Value = 3; }   # src_alpha multiplied with dest_color
+Flag { ID = "bm_sub2"; Value = 7; }  # src_alpha multiplied with src_color
+Flag { ID = "bm_revsub"; Value = 4; }
+Flag { ID = "bm_mul"; Value = 5; }
+Flag { ID = "bm_invmul"; Value = 6; }
+
+# Models
+Flag { ID = "df_fullbright"; Value = 0x1; }
+Flag { ID = "df_shadow1"; Value = 0x2; }
+Flag { ID = "df_shadow2"; Value = 0x4; }
+Flag { ID = "df_brightshadow"; Value = 0x8; }
+Flag { ID = "df_movpitch"; Value = 0x10; }
+Flag { ID = "df_spin"; Value = 0x20; }
+Flag { ID = "df_skintrans"; Value = 0x40; }
+Flag { ID = "df_autoscale"; Value = 0x80; }
+Flag { ID = "df_movyaw"; Value = 0x100; }
+Flag { ID = "df_nointerpol"; Value = 0x200; }
+Flag { ID = "df_brightshadow2"; Value = 0x400; }
+Flag { ID = "df_alignyaw"; Value = 0x800; }
+Flag { ID = "df_alignpitch"; Value = 0x1000; }
+Flag { ID = "df_darkshadow"; Value = 0x2000; }
+Flag { ID = "df_idskin"; Value = 0x4000; }
+Flag { ID = "df_noz"; Value = 0x8000; }
+Flag { ID = "df_nomaxz"; Value = 0x10000; }
+Flag { ID = "df_selskin"; Value = 0x20000; }
+Flag { ID = "df_ptoffsub1"; Value = 0x40000; }
+Flag { ID = "df_noptc"; Value = 0x80000; }
+Flag { ID = "df_specular"; Value = 0x100000; }
+Flag { ID = "df_litshiny"; Value = 0x200000; }
+Flag { ID = "df_idframe"; Value = 0x400000; }
+Flag { ID = "df_idangle"; Value = 0x800000; }
+Flag { ID = "df_dim"; Value = 0x1000000; }
+Flag { ID = "df_subtract"; Value = 0x2000000; }
+Flag { ID = "df_revsubtract"; Value = 0x4000000; }
+Flag { ID = "df_twosided"; Value = 0x8000000; }
+Flag { ID = "df_notexcomp"; Value = 0x10000000; }
+Flag { ID = "df_worldtime"; Value = 0x20000000; }
+
+# Model grouping
+Flag { ID = "mg_hud"; Value = 0x2; }
+Flag { ID = "mg_player"; Value = 0x4; }
+Flag { ID = "mg_monster"; Value = 0x8; }
+Flag { ID = "mg_weapon"; Value = 0x10; }
+Flag { ID = "mg_ammo"; Value = 0x20; }
+Flag { ID = "mg_bonus"; Value = 0x40; }
+Flag { ID = "mg_light"; Value = 0x80; }
+Flag { ID = "mg_decor"; Value = 0x100; }
+Flag { ID = "mg_misc"; Value = 0x200; }
+
+# Generators
+Flag { ID = "gnf_static"; Value = 1; }
+Flag { ID = "gnf_srcvel"; Value = 2; }
+Flag { ID = "gnf_spawn"; Value = 4; }
+Flag { ID = "gnf_srcdir"; Value = 8; }
+Flag { ID = "gnf_blend"; Value = 0x10; }
+Flag { ID = "gnf_floor"; Value = 0x20; }
+Flag { ID = "gnf_ceiling"; Value = 0x40; }
+Flag { ID = "gnf_space"; Value = 0x80; }
+Flag { ID = "gnf_density"; Value = 0x100; }
+Flag { ID = "gnf_modelonly"; Value = 0x200; }
+Flag { ID = "gnf_scalerate"; Value = 0x400; }
+Flag { ID = "gnf_group"; Value = 0x800; }
+Flag { ID = "gnf_blendadd"; Value = 0x10; }
+Flag { ID = "gnf_blendsub"; Value = 0x1000; }
+Flag { ID = "gnf_blendrsub"; Value = 0x2000; }
+Flag { ID = "gnf_blendmul"; Value = 0x4000; }
+Flag { ID = "gnf_blendimul"; Value = 0x8000; }
+Flag { ID = "gnf_extra"; Value = 0x10000; }
+
+# Particle types
+Flag { ID = "pt_point"; Value = 1; }
+Flag { ID = "pt_line"; Value = 2; }
+Flag { ID = "pt_tex00"; Value = 100; }
+Flag { ID = "pt_tex01"; Value = 101; }
+Flag { ID = "pt_tex02"; Value = 102; }
+Flag { ID = "pt_tex03"; Value = 103; }
+Flag { ID = "pt_tex04"; Value = 104; }
+Flag { ID = "pt_tex05"; Value = 105; }
+Flag { ID = "pt_tex06"; Value = 106; }
+Flag { ID = "pt_tex07"; Value = 107; }
+Flag { ID = "pt_tex08"; Value = 108; }
+Flag { ID = "pt_tex09"; Value = 109; }
+Flag { ID = "pt_tex10"; Value = 110; }
+Flag { ID = "pt_tex11"; Value = 111; }
+Flag { ID = "pt_tex12"; Value = 112; }
+Flag { ID = "pt_tex13"; Value = 113; }
+Flag { ID = "pt_tex14"; Value = 114; }
+Flag { ID = "pt_tex15"; Value = 115; }
+Flag { ID = "pt_tex16"; Value = 116; }
+Flag { ID = "pt_tex17"; Value = 117; }
+Flag { ID = "pt_tex18"; Value = 118; }
+Flag { ID = "pt_tex19"; Value = 119; }
+Flag { ID = "pt_tex20"; Value = 120; }
+Flag { ID = "pt_tex21"; Value = 121; }
+Flag { ID = "pt_tex22"; Value = 122; }
+Flag { ID = "pt_tex23"; Value = 123; }
+Flag { ID = "pt_tex24"; Value = 124; }
+Flag { ID = "pt_tex25"; Value = 125; }
+Flag { ID = "pt_tex26"; Value = 126; }
+Flag { ID = "pt_tex27"; Value = 127; }
+Flag { ID = "pt_tex28"; Value = 128; }
+Flag { ID = "pt_tex29"; Value = 129; }
+Flag { ID = "pt_tex30"; Value = 130; }
+Flag { ID = "pt_tex31"; Value = 131; }
+Flag { ID = "pt_model00"; Value = 1000; }
+Flag { ID = "pt_model01"; Value = 1001; }
+Flag { ID = "pt_model02"; Value = 1002; }
+Flag { ID = "pt_model03"; Value = 1003; }
+Flag { ID = "pt_model04"; Value = 1004; }
+Flag { ID = "pt_model05"; Value = 1005; }
+Flag { ID = "pt_model06"; Value = 1006; }
+Flag { ID = "pt_model07"; Value = 1007; }
+Flag { ID = "pt_model08"; Value = 1008; }
+Flag { ID = "pt_model09"; Value = 1009; }
+Flag { ID = "pt_model10"; Value = 1010; }
+Flag { ID = "pt_model11"; Value = 1011; }
+Flag { ID = "pt_model12"; Value = 1012; }
+Flag { ID = "pt_model13"; Value = 1013; }
+Flag { ID = "pt_model14"; Value = 1014; }
+Flag { ID = "pt_model15"; Value = 1015; }
+Flag { ID = "pt_model16"; Value = 1016; }
+Flag { ID = "pt_model17"; Value = 1017; }
+Flag { ID = "pt_model18"; Value = 1018; }
+Flag { ID = "pt_model19"; Value = 1019; }
+Flag { ID = "pt_model20"; Value = 1020; }
+Flag { ID = "pt_model21"; Value = 1021; }
+Flag { ID = "pt_model22"; Value = 1022; }
+Flag { ID = "pt_model23"; Value = 1023; }
+Flag { ID = "pt_model24"; Value = 1024; }
+Flag { ID = "pt_model25"; Value = 1025; }
+Flag { ID = "pt_model26"; Value = 1026; }
+Flag { ID = "pt_model27"; Value = 1027; }
+Flag { ID = "pt_model28"; Value = 1028; }
+Flag { ID = "pt_model29"; Value = 1029; }
+Flag { ID = "pt_model30"; Value = 1030; }
+Flag { ID = "pt_model31"; Value = 1031; }
+
+# Particle flags (for Generator Stages)
+Flag { ID = "ptf_stagetouch"; Value = 0x1; }
+Flag { ID = "ptf_stagevtouch"; Value = 0x20; }
+Flag { ID = "ptf_stagehtouch"; Value = 0x40; }
+Flag { ID = "ptf_dietouch"; Value = 0x2; }
+Flag { ID = "ptf_bright"; Value = 0x4; }
+Flag { ID = "ptf_shading"; Value = 0x8; }
+Flag { ID = "ptf_hflat"; Value = 0x10; }
+Flag { ID = "ptf_vflat"; Value = 0x80; }
+Flag { ID = "ptf_flat"; Value = 0x90; }
+Flag { ID = "ptf_force"; Value = 0x100; }
+Flag { ID = "ptf_zeroyaw"; Value = 0x200; }
+Flag { ID = "ptf_zeropitch"; Value = 0x400; }
+Flag { ID = "ptf_rndyaw"; Value = 0x800; }
+Flag { ID = "ptf_rndpitch"; Value = 0x1000; }
