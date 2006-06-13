@@ -22,21 +22,21 @@
 #include <string.h>
 #include <ctype.h>
 #include "h2def.h"
-#include "jHexen/p_local.h"
-#include "jHexen/soundst.h"
+#include "p_local.h"
+#include "soundst.h"
 #include "x_config.h"
-#include "jHexen/mn_def.h"
-#include "../Common/hu_stuff.h"
-#include "jHexen/st_stuff.h"
-#include "../Common/am_map.h"
-#include "jHexen/h2_actn.h"
-#include "jHexen/p_setup.h"
+#include "mn_def.h"
+#include "hu_stuff.h"
+#include "st_stuff.h"
+#include "am_map.h"
+#include "h2_actn.h"
+#include "p_setup.h"
 #include "d_net.h"
 #include "g_update.h"
-#include "jHexen/m_ctrl.h"
-#include "Common/g_common.h"
+#include "m_ctrl.h"
+#include "g_common.h"
 
-#include "AcFnLink.h"
+#include "acfnlink.h"
 
 // MACROS ------------------------------------------------------------------
 

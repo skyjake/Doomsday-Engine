@@ -33,7 +33,7 @@
 #include <ctype.h>
 
 // XGClass.h is actually a part of the engine.
-#include "Common/xgclass.h"
+#include "xgclass.h"
 
 // MACROS ------------------------------------------------------------------
 

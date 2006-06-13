@@ -4,15 +4,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/G_game.h"
-#include "jHeretic/Soundst.h"
-#include "jHeretic/h_stat.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/m_menu.h"
-#include "jHeretic/Mn_def.h"
-#include "Common/hu_stuff.h"
-#include "Common/d_net.h"
+#include "doomdef.h"
+#include "g_game.h"
+#include "soundst.h"
+#include "h_stat.h"
+#include "h_config.h"
+#include "m_menu.h"
+#include "mn_def.h"
+#include "hu_stuff.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 

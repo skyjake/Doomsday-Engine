@@ -13,14 +13,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHexen/h2def.h"
-#include "jHexen/p_local.h"
-#include "jHexen/soundst.h"
-#include "Common/hu_stuff.h"
-#include "jHexen/st_stuff.h"
-#include "jHexen/mn_def.h"
+#include "h2def.h"
+#include "p_local.h"
+#include "soundst.h"
+#include "hu_stuff.h"
+#include "st_stuff.h"
+#include "mn_def.h"
 #include "x_config.h"
-#include "Common/st_lib.h"
+#include "st_lib.h"
 #include "d_net.h"
 
 #ifdef DEMOCAM

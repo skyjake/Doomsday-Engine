@@ -11,10 +11,10 @@
 //**************************************************************************
 
 #include "h2def.h"
-#include "jHexen/p_local.h"
-#include "jHexen/soundst.h"
-#include "jHexen/st_stuff.h"
-#include "jHexen/x_config.h"
+#include "p_local.h"
+#include "soundst.h"
+#include "st_stuff.h"
+#include "x_config.h"
 
 // Macros
 // Types

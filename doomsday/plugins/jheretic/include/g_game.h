@@ -19,9 +19,9 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_event.h"
-#include "jHeretic/h_player.h"
+#include "doomdef.h"
+#include "h_event.h"
+#include "h_player.h"
 
 //
 // GAME

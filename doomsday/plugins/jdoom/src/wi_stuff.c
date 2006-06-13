@@ -27,16 +27,15 @@
 #include <ctype.h>
 #include "doomdef.h"
 #include "m_random.h"
-#include "m_swap.h"
 #include "g_game.h"
 #include "s_sound.h"
 #include "doomstat.h"
 #include "wi_stuff.h"
 #include "d_config.h"
 #include "m_menu.h"
-#include "Mn_def.h"
+#include "mn_def.h"
 #include "hu_stuff.h"
-#include "Common/d_net.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 

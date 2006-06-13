@@ -23,7 +23,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "Common/hu_stuff.h"
+#include "hu_stuff.h"
 #include "r_defs.h"
 
 // Macros

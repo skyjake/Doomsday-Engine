@@ -25,8 +25,8 @@
 #include "m_argv.h"
 #include "m_menu.h"
 #include "g_game.h"
-#include "Common/hu_stuff.h"
-#include "Common/p_saveg.h"
+#include "hu_stuff.h"
+#include "p_saveg.h"
 
 // MACROS ------------------------------------------------------------------
 

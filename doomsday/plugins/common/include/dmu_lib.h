@@ -22,7 +22,7 @@
 #ifndef __DMU_LIB_H__
 #define __DMU_LIB_H__
 
-#include "../doomsday.h"
+#include "doomsday.h"
 
 line_t     *P_AllocDummyLine(void);
 void        P_FreeDummyLine(line_t* line);

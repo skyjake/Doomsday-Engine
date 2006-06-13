@@ -27,13 +27,13 @@
 # include "d_event.h"
 # include "r_defs.h"
 #elif __JHERETIC__
-# include "jHeretic/h_event.h"
-# include "jHeretic/r_defs.h"
+# include "h_event.h"
+# include "r_defs.h"
 #elif __JHEXEN__
 //#include "jHexen/mn_def.h"
 
 #elif __JSTRIFE__
-# include "jStrife/mn_def.h"
+# include "mn_def.h"
 #endif
 
 enum {

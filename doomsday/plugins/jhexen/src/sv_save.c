@@ -12,14 +12,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "LZSS.h"
+#include <LZSS.h>
+
 #include "h2def.h"
-#include "jHexen/p_local.h"
+#include "p_local.h"
 #include "x_config.h"
 #include "p_svtexarc.h"
 #include "f_infine.h"
 
-#include "Common/p_mapsetup.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -783,7 +784,7 @@ void SV_HxLoadMap(void)
 
     // Read the level timer
     leveltime = GET_LONG;
-    
+
     UnarchiveWorld();
     UnarchivePolyobjs();
     UnarchiveMobjs();

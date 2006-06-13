@@ -6,17 +6,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/h_event.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/h_stat.h"
-#include "jHeretic/Sounds.h"
+#include "doomdef.h"
+#include "h_config.h"
+#include "h_event.h"
+#include "p_local.h"
+#include "h_stat.h"
+#include "sounds.h"
 
-#include "Common/p_view.h"
-#include "Common/r_common.h"
-#include "Common/d_net.h"
-#include "Common/p_player.h"
+#include "p_view.h"
+#include "r_common.h"
+#include "d_net.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

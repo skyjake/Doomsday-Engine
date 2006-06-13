@@ -2,19 +2,19 @@
 #define __NETSV_H__
 
 #ifdef __JDOOM__
-#include "../jDoom/p_local.h"
+#include "p_local.h"
 #endif
 
 #ifdef __JHERETIC__
-#include "../jHeretic/P_local.h"
+#include "p_local.h"
 #endif
 
 #ifdef __JHEXEN__
-#include "../jHexen/p_local.h"
+#include "p_local.h"
 #endif
 
 #ifdef __JSTRIFE__
-#include "../jStrife/p_local.h"
+#include "p_local.h"
 #endif
 
 extern boolean  cyclingMaps, mapCycleNoExit;

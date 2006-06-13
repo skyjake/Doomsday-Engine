@@ -31,16 +31,16 @@
 #endif
 
 #ifdef __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/P_local.h"
+#  include "doomdef.h"
+#  include "p_local.h"
 #endif
 
 #ifdef __JSTRIFE__
-#  include "jStrife/h2def.h"
-#  include "jStrife/p_local.h"
+#  include "h2def.h"
+#  include "p_local.h"
 #endif
 
-#include "Common/p_mapsetup.h"
+#include "p_mapsetup.h"
 #include "p_saveg.h"
 #include "p_xg.h"
 

@@ -9,14 +9,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/Soundst.h"
-#include "jHeretic/G_game.h"
+#include "doomdef.h"
+#include "h_config.h"
+#include "p_local.h"
+#include "soundst.h"
+#include "g_game.h"
 
 // State.
-#include "jHeretic/h_stat.h"
+#include "h_stat.h"
 
 #include "dmu_lib.h"
 

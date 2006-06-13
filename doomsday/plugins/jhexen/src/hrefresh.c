@@ -14,12 +14,12 @@
 #include <string.h>
 #include <ctype.h>
 #include "h2def.h"
-#include "jHexen/p_local.h"
+#include "p_local.h"
 #include "x_config.h"
-#include "jHexen/mn_def.h"
-#include "../Common/hu_stuff.h"
-#include "jHexen/st_stuff.h"
-#include "../Common/am_map.h"
+#include "mn_def.h"
+#include "hu_stuff.h"
+#include "st_stuff.h"
+#include "am_map.h"
 #include "f_infine.h"
 #include "r_common.h"
 
@@ -250,13 +250,13 @@ void G_Drawer(void)
                               (200 - SBARHEIGHT * cfg.sbarscale / 20 - h) >> 1,
                               w, h);
     }
-    
+
     {
         float x, y, w, h;
         R_GetViewWindow(&x, &y, &w, &h);
         R_ViewWindow((int) x, (int) y, (int) w, (int) h);
-    } 
-    
+    }
+
     // Do buffered drawing
     switch (gamestate)
     {

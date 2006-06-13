@@ -23,34 +23,34 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-#  include "jDoom/doomdef.h"
-#  include "jDoom/doomstat.h"
-#  include "jDoom/d_config.h"
-#  include "jDoom/p_local.h"
-#  include "jDoom/s_sound.h"
-#  include "jDoom/p_setup.h"
+#  include "doomdef.h"
+#  include "doomstat.h"
+#  include "d_config.h"
+#  include "p_local.h"
+#  include "s_sound.h"
+#  include "p_setup.h"
 #  include "hu_stuff.h"
 #elif __JHERETIC__
 #  include <math.h>
 #  include <ctype.h>              // has isspace
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/h_stat.h"
-#  include "jHeretic/P_local.h"
-#  include "jHeretic/Soundst.h"
-#  include "jHeretic/p_setup.h"
+#  include "doomdef.h"
+#  include "h_stat.h"
+#  include "p_local.h"
+#  include "soundst.h"
+#  include "p_setup.h"
 #elif __JHEXEN__
 #  include <math.h>
 #  include "h2def.h"
-#  include "jHexen/p_local.h"
-#  include "jHexen/r_local.h"
-#  include "jHexen/p_setup.h"
-#  include "Common/p_start.h"
+#  include "p_local.h"
+#  include "r_local.h"
+#  include "p_setup.h"
+#  include "p_start.h"
 #elif __JSTRIFE__
 #  include "h2def.h"
-#  include "jStrife/p_local.h"
+#  include "p_local.h"
 #endif
 
-#include "Common/dmu_lib.h"
+#include "dmu_lib.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
 

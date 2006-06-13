@@ -11,8 +11,8 @@
 //**************************************************************************
 
 #include "h2def.h"
-#include "jHexen/p_local.h"
-#include "jHexen/soundst.h"
+#include "p_local.h"
+#include "soundst.h"
 
 extern fixed_t FloatBobOffsets[64];
 

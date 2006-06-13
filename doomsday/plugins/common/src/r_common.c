@@ -1,9 +1,19 @@
-
-//**************************************************************************
-//**
-//** R_COMMON.C
-//**
-//**************************************************************************
+/* DE1: $Id$
+ * Copyright (C) 2005 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not: http://www.opensource.org/
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -14,13 +24,13 @@
 #  include "doomstat.h"
 #  include "d_items.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/h_items.h"
-#  include "jHeretic/h_stat.h"
+#  include "doomdef.h"
+#  include "h_items.h"
+#  include "h_stat.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
+#  include "h2def.h"
 #elif __JSTRIFE__
-#  include "jStrife/h2def.h"
+#  include "h2def.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -39,9 +49,9 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// View window current position. 
+// View window current position.
 static float windowX = 0;
-static float windowY = 0; 
+static float windowY = 0;
 static float windowWidth = 320;
 static float windowHeight = 200;
 static int targetX = 0, targetY = 0, targetWidth = 320, targetHeight = 200;
@@ -78,15 +88,15 @@ void R_SetViewWindowTarget(int x, int y, int w, int h)
     {
         return;
     }
-    
+
     oldWindowX = windowX;
     oldWindowY = windowY;
     oldWindowWidth = windowWidth;
     oldWindowHeight = windowHeight;
-    
+
     // Restart the timer.
     windowPos = 0;
-    
+
     targetX = x;
     targetY = y;
     targetWidth = w;

@@ -38,22 +38,22 @@
 #  include "r_defs.h"
 #  include "g_game.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/P_local.h"
-#  include "jHeretic/h_stat.h"
+#  include "doomdef.h"
+#  include "p_local.h"
+#  include "h_stat.h"
 #  include "h_config.h"
-#  include "jHeretic/Soundst.h"
-#  include "jHeretic/G_game.h"
+#  include "soundst.h"
+#  include "g_game.h"
 #elif __JSTRIFE__
-#  include "jStrife/h2def.h"
-#  include "jStrife/p_local.h"
-#  include "jStrife/d_config.h"
-#  include "jStrife/sounds.h"
+#  include "h2def.h"
+#  include "p_local.h"
+#  include "d_config.h"
+#  include "sounds.h"
 #endif
 
 #include "dmu_lib.h"
 
-#include "Common/p_mapsetup.h"
+#include "p_mapsetup.h"
 #include "d_net.h"
 #include "p_xgline.h"
 #include "p_xgsec.h"

@@ -23,7 +23,7 @@
 #include "s_sound.h"
 #include "doomstat.h"
 
-#include "Common/dmu_lib.h"
+#include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
 

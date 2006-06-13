@@ -26,7 +26,7 @@
 #include "g_game.h"
 #include "s_sound.h"
 #include "hu_stuff.h"
-#include "Mn_def.h"
+#include "mn_def.h"
 #include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------

@@ -21,8 +21,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../doomsday.h"
-#include "../dd_api.h"
+#include "doomsday.h"
+#include "dd_api.h"
 #include "g_dgl.h"
 #include "version.h"
 #include "p_ticcmd.h"

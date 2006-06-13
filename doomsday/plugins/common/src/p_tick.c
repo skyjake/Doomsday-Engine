@@ -27,16 +27,16 @@
 #  include "doomstat.h"
 #  include "g_game.h"
 #elif __JHERETIC__
-#  include "jHeretic/h_event.h"
-#  include "jHeretic/P_local.h"
-#  include "jHeretic/h_stat.h"
-#  include "jHeretic/G_game.h"
+#  include "h_event.h"
+#  include "p_local.h"
+#  include "h_stat.h"
+#  include "g_game.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
-#  include "jHexen/p_local.h"
+#  include "h2def.h"
+#  include "p_local.h"
 #elif __JSTRIFE__
-#  include "jStrife/h2def.h"
-#  include "jStrife/p_local.h"
+#  include "h2def.h"
+#  include "p_local.h"
 #endif
 
 #include "g_common.h"

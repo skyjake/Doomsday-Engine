@@ -24,8 +24,8 @@
 #include "doomstat.h"
 #include "dstrings.h"
 
-#include "Common/dmu_lib.h"
-#include "Common/p_player.h"
+#include "dmu_lib.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

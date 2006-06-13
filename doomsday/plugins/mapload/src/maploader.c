@@ -39,7 +39,7 @@
 #include "doomsday.h"
 #include "dd_api.h"
 
-#include "glBSP/glbsp.h"
+#include "glbsp.h"
 
 #include <stdio.h>
 #include <stdarg.h>

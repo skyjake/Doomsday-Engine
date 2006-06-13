@@ -20,11 +20,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/P_local.h"
+#include "doomdef.h"
+#include "p_local.h"
 
-#include "Common/dmu_lib.h"
-#include "Common/p_mapsetup.h"
+#include "dmu_lib.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 

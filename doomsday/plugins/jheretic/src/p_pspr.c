@@ -12,15 +12,15 @@
 
 #include <math.h>
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/h_event.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/Soundst.h"
-#include "jHeretic/h_stat.h"
-#include "jHeretic/p_pspr.h"
-#include "Common/d_net.h"
-#include "Common/p_player.h"
+#include "doomdef.h"
+#include "h_config.h"
+#include "h_event.h"
+#include "p_local.h"
+#include "soundst.h"
+#include "h_stat.h"
+#include "p_pspr.h"
+#include "d_net.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

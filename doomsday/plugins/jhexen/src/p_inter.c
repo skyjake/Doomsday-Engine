@@ -11,13 +11,13 @@
 //**************************************************************************
 
 #include "h2def.h"
-#include "jHexen/p_local.h"
-#include "jHexen/soundst.h"
+#include "p_local.h"
+#include "soundst.h"
 #include "x_config.h"
-#include "jHexen/st_stuff.h"
-#include "Common/hu_msg.h"
+#include "st_stuff.h"
+#include "hu_msg.h"
 
-#include "Common/am_map.h"
+#include "am_map.h"
 
 int     echoMsg = 1;
 

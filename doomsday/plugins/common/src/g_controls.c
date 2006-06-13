@@ -21,24 +21,24 @@
 #include <math.h> // required for sqrt, fabs
 
 #if __JDOOM__
-#  include "jDoom/doomdef.h"
-#  include "jDoom/doomstat.h"
-#  include "jDoom/d_config.h"
-#  include "jDoom/d_player.h"
-#  include "jDoom/p_local.h"
-#  include "jDoom/m_ctrl.h"
+#  include "doomdef.h"
+#  include "doomstat.h"
+#  include "d_config.h"
+#  include "d_player.h"
+#  include "p_local.h"
+#  include "m_ctrl.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/h_stat.h"
-#  include "jHeretic/h_config.h"
-#  include "jHeretic/h_player.h"
-#  include "jHeretic/P_local.h"
-#  include "jHeretic/m_ctrl.h"
+#  include "doomdef.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "h_player.h"
+#  include "p_local.h"
+#  include "m_ctrl.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
-#  include "jHexen/x_config.h"
-#  include "jHexen/p_local.h"
-#  include "jHexen/m_ctrl.h"
+#  include "h2def.h"
+#  include "x_config.h"
+#  include "p_local.h"
+#  include "m_ctrl.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

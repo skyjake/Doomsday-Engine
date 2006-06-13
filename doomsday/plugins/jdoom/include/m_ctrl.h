@@ -26,8 +26,8 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "jDoom/Mn_def.h"
-#include "jDoom/D_Action.h"
+#include "mn_def.h"
+#include "d_action.h"
 
 #define CTLCFG_TYPE void
 

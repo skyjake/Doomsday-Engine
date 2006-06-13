@@ -21,13 +21,13 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/h_stat.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/G_game.h"
-#include "jHeretic/Sounds.h"
-#include "Common/hu_stuff.h"
-#include "jHeretic/Mn_def.h"
-#include "Common/f_infine.h"
+#include "h_stat.h"
+#include "h_config.h"
+#include "g_game.h"
+#include "sounds.h"
+#include "hu_stuff.h"
+#include "mn_def.h"
+#include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
 

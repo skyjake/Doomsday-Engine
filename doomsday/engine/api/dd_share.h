@@ -38,11 +38,11 @@ extern          "C" {
      */
 
 #include <stdlib.h>
-#include "dd_version.h"
+#include "../portable/include/dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
-#include "p_think.h"        // TODO: Not officially a public header file!
-#include "def_share.h"      // TODO: Not officially a public header file!
+#include "../portable/include/p_think.h"        // TODO: Not officially a public header file!
+#include "../portable/include/def_share.h"      // TODO: Not officially a public header file!
 
     //------------------------------------------------------------------------
     //

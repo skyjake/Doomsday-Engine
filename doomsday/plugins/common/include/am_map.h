@@ -27,9 +27,9 @@
 
 // DJS - Common\f_infine.c is calling here when compiling jHexen looking for this...
 #ifdef __JHEXEN__
-#include "jHexen/p_local.h"
+#include "p_local.h"
 #elif __JSTRIFE__
-#include "jStrife/p_local.h"
+#include "p_local.h"
 #endif
 
 

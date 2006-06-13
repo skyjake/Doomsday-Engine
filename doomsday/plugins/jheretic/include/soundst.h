@@ -8,9 +8,9 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "jHeretic/r_defs.h"
+#include "r_defs.h"
 
-#include "jHeretic/Sounds.h"                // Sfx and music indices.
+#include "sounds.h"                // Sfx and music indices.
 
 enum {
     SORG_CENTER,

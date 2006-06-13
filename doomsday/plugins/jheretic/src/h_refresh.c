@@ -23,18 +23,18 @@
 
 #include <ctype.h>  // has isspace
 #include <math.h>
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_stat.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/R_local.h"
-#include "jHeretic/Mn_def.h"
-#include "jHeretic/m_menu.h"
-#include "jHeretic/h_config.h"
+#include "doomdef.h"
+#include "h_stat.h"
+#include "p_local.h"
+#include "r_local.h"
+#include "mn_def.h"
+#include "m_menu.h"
+#include "h_config.h"
 #include "f_infine.h"
 
-#include "Common/am_map.h"
-#include "Common/x_hair.h"
-#include "Common/r_common.h"
+#include "am_map.h"
+#include "x_hair.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -224,7 +224,7 @@ void D_Display(void)
         float x, y, w, h;
         R_GetViewWindow(&x, &y, &w, &h);
         R_ViewWindow((int) x, (int) y, (int) w, (int) h);
-    } 
+    }
 
     // Do buffered drawing
     switch (gamestate)
@@ -286,11 +286,11 @@ void D_Display(void)
                     {
                         // Fullscreen. Which mode?
                         ST_Drawer(cfg.setblocks - 10, true);    // $democam
-                    } 
-                    else 
+                    }
+                    else
                     {
                         ST_Drawer(0, true);    // $democam
-                    }            
+                    }
                 }
                 //fullscreenmode = (viewheight == 200);
             }
@@ -301,7 +301,7 @@ void D_Display(void)
         // Need to update the borders?
         if(oldgamestate != GS_LEVEL ||
             ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow() || 
+                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow() ||
               (automapactive && cfg.automapHudDisplay == 0 ))))
         {
             // Update the borders.

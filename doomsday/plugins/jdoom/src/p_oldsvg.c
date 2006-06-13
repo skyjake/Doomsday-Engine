@@ -18,9 +18,9 @@
 #include "p_local.h"
 #include "doomstat.h"
 #include "g_game.h"
-#include "m_misc.h"
+//#include "m_misc.h"
 
-#include "Common/p_mapsetup.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 

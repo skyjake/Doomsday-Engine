@@ -21,34 +21,33 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-#include "jDoom/doomdef.h"
-#include "jDoom/d_config.h"
-#include "jDoom/st_stuff.h"
-#include "jDoom/r_local.h"
-#include "Common/hu_stuff.h"
-#include "Common/m_swap.h"
-#include "Common/st_lib.h"
+#include "doomdef.h"
+#include "d_config.h"
+#include "st_stuff.h"
+#include "r_local.h"
+#include "hu_stuff.h"
+#include "st_lib.h"
 
 #elif __JHERETIC__
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/st_stuff.h"
-#include "jHeretic/R_local.h"
-#include "Common/st_lib.h"
+#include "doomdef.h"
+#include "h_config.h"
+#include "st_stuff.h"
+#include "r_local.h"
+#include "st_lib.h"
 
 #elif __JHEXEN__
-#include "jHexen/h2def.h"
-#include "jHexen/x_config.h"
-#include "jHexen/st_stuff.h"
-#include "jHexen/r_local.h"
-#include "Common/st_lib.h"
+#include "h2def.h"
+#include "x_config.h"
+#include "st_stuff.h"
+#include "r_local.h"
+#include "st_lib.h"
 
 #elif __JSTRIFE__
-#include "jStrife/h2def.h"
-#include "jStrife/d_config.h"
-#include "jStrife/st_stuff.h"
-#include "jStrife/r_local.h"
-#include "Common/st_lib.h"
+#include "h2def.h"
+#include "d_config.h"
+#include "st_stuff.h"
+#include "r_local.h"
+#include "st_lib.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

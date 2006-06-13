@@ -22,11 +22,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-# include "jDoom/r_defs.h"
+# include "r_defs.h"
 #elif __JHERETIC__
-# include "jHeretic/r_defs.h"
+# include "r_defs.h"
 #elif __JHEXEN__
-# include "jHexen/r_local.h"
+# include "r_local.h"
 #endif
 
 #include "dmu_lib.h"

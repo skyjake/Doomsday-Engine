@@ -26,12 +26,12 @@
 #  include "doomdef.h"
 #  include "p_local.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/P_local.h"
+#  include "doomdef.h"
+#  include "p_local.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
+#  include "h2def.h"
 #elif __JSTRIFE__
-#  include "jStrife/h2def.h"
+#  include "h2def.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

@@ -21,13 +21,13 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHexen/h2def.h"
-#include "jHexen/x_config.h"
-#include "Common/d_net.h"
-#include "jHexen/mn_def.h"
-#include "Common/hu_stuff.h"
-#include "Common/f_infine.h"
-#include "Common/g_common.h"
+#include "h2def.h"
+#include "x_config.h"
+#include "d_net.h"
+#include "mn_def.h"
+#include "hu_stuff.h"
+#include "f_infine.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 

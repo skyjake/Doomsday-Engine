@@ -4,13 +4,13 @@
 #include "dd_share.h"
 
 #if __JDOOM__
-# include "jDoom/p_mobj.h"
+# include "p_mobj.h"
 #elif __JHERETIC__
-# include "jHeretic/p_mobj.h"
+# include "p_mobj.h"
 #elif __JHEXEN__
-# include "jHexen/h2def.h"
+# include "h2def.h"
 #elif __JSTRIFE__
-# include "jStrife/h2def.h"
+# include "h2def.h"
 #endif
 
 #define OBSOLETE        CVF_HIDE|CVF_NO_ARCHIVE

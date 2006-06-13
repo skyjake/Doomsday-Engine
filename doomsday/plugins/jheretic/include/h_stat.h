@@ -30,7 +30,7 @@
 
 // We need globally shared data structures,
 //  for defining the global state variables.
-#include "Doomdata.h"
+#include "doomdata.h"
 
 // We need the playr data structure as well.
 #include "h_player.h"

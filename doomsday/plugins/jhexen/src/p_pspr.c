@@ -45,10 +45,10 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "h2def.h"
-#include "jHexen/p_local.h"
-#include "jHexen/soundst.h"
+#include "p_local.h"
+#include "soundst.h"
 
-#include "Common/p_player.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

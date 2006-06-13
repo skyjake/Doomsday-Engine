@@ -6,15 +6,15 @@
 
 #include <math.h>
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/h_type.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/st_stuff.h"
-#include "Common/hu_stuff.h"
-#include "jHeretic/Soundst.h"
-#include "jHeretic/h_stat.h"
-#include "Common/g_common.h"
+#include "doomdef.h"
+#include "h_config.h"
+#include "h_type.h"
+#include "p_local.h"
+#include "st_stuff.h"
+#include "hu_stuff.h"
+#include "soundst.h"
+#include "h_stat.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 

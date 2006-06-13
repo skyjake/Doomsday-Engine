@@ -9,10 +9,10 @@
 #endif
 
 #ifndef __R_LOCAL__
-#include "R_local.h"
+#include "r_local.h"
 #endif
 
-#include "P_spec.h"
+#include "p_spec.h"
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_xg.h"

@@ -21,20 +21,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_stat.h"
+#include "doomdef.h"
+#include "h_stat.h"
 
-#include "Common/d_net.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/Soundst.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/m_menu.h"
-#include "jHeretic/G_game.h"
+#include "d_net.h"
+#include "p_local.h"
+#include "soundst.h"
+#include "h_config.h"
+#include "m_menu.h"
+#include "g_game.h"
 
-#include "Common/hu_msg.h"
-#include "Common/hu_stuff.h"
-#include "Common/am_map.h"
-#include "Common/p_saveg.h"
+#include "hu_msg.h"
+#include "hu_stuff.h"
+#include "am_map.h"
+#include "p_saveg.h"
 
 // MACROS ------------------------------------------------------------------
 

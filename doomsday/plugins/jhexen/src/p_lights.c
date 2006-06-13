@@ -11,9 +11,9 @@
 //**************************************************************************
 
 #include "h2def.h"
-#include "jHexen/p_local.h"
-#include "Common/p_start.h"
-#include "Common/dmu_lib.h"
+#include "p_local.h"
+#include "p_start.h"
+#include "dmu_lib.h"
 
 void T_Light(light_t * light)
 {

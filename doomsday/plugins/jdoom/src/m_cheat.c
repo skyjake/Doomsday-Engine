@@ -28,10 +28,10 @@
 #include "f_infine.h"
 #include "d_net.h"
 #include "st_stuff.h"
-#include "Mn_def.h"
+#include "mn_def.h"
 
-#include "Common/g_common.h"
-#include "Common/p_player.h"
+#include "g_common.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

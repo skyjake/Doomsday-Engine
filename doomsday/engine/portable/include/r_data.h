@@ -29,6 +29,7 @@
 #include "m_nodepile.h"
 #include "def_data.h"
 #include "rend_bias.h"
+#include "r_extres.h"
 
 #define SIF_VISIBLE         0x1    // Sector is visible on this frame.
 #define SIF_FRAME_CLEAR     0x1    // Flags to clear before each frame.
@@ -425,8 +426,7 @@ void            R_InitAnimGroup(ded_group_t * def);
 void            R_ResetAnimGroups(void);
 boolean         R_IsInAnimGroup(int groupNum, int type, int number);
 void            R_AnimateAnimGroups(void);
-int             R_TextureFlags(int texture);
-int             R_FlatFlags(int flat);
+int             R_GraphicResourceFlags(resourceclass_t rclass, int id);
 flat_t         *R_FindFlat(int lumpnum);    // May return NULL.
 flat_t         *R_GetFlat(int lumpnum); // Creates new entries.
 flat_t        **R_CollectFlats(int *count);

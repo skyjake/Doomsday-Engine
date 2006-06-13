@@ -373,7 +373,7 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
     else
     {
         // We need these with dynamic lights.
-        ssec->verts = Z_Malloc(sizeof(fvertex_t) * numedgepoints, 
+        ssec->verts = Z_Malloc(sizeof(fvertex_t) * numedgepoints,
                                PU_LEVELSTATIC, 0);
         memcpy(ssec->verts, edgepoints, sizeof(fvertex_t) * numedgepoints);
         ssec->numverts = numedgepoints;
@@ -451,7 +451,7 @@ void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
     {
         // We have arrived at a subsector. The divline list contains all
         // the partition lines that carve out the subsector.
-        R_ConvexClipper(SUBSECTOR_PTR(bspnode & ~NF_SUBSECTOR), 
+        R_ConvexClipper(SUBSECTOR_PTR(bspnode & ~NF_SUBSECTOR),
                         numdivlines, divlines);
         // This leaf is done.
         return;
@@ -1799,7 +1799,7 @@ void R_SetupLevel(char *level_id, int flags)
         // Switch to fast malloc mode in the zone. This is intended for large
         // numbers of mallocs with no frees in between.
         Z_EnableFastMalloc(false);
-        
+
         // A new level is about to be setup.
         levelSetup = true;
 
@@ -2128,7 +2128,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             // flats that are declared as glowing we would need some method
             // of telling Doomsday IF we want to inherit these properties when
             // the plane flat changes...
-            if(R_FlatFlags(sec->planes[i].pic) & TXF_GLOW)
+            if(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW)
             {
                 // The new texture is glowing.
 
@@ -2141,13 +2141,13 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
                 // Do we need to update the plane glow flags?
                 if(sin->planeinfo[i].oldpic)
                 {
-                    if(!(R_FlatFlags(sin->planeinfo[i].oldpic) & TXF_GLOW))
+                    if(!(R_GraphicResourceFlags(RC_FLAT, sin->planeinfo[i].oldpic) & TXF_GLOW))
                         setGlow[i] = 1; // Turn the subsector plane glow flags on
                 }
                 else
                     setGlow[i] = 1;
             }
-            else if(sin->planeinfo[i].oldpic && (R_FlatFlags(sin->planeinfo[i].oldpic) & TXF_GLOW))
+            else if(sin->planeinfo[i].oldpic && (R_GraphicResourceFlags(RC_FLAT, sin->planeinfo[i].oldpic) & TXF_GLOW))
             {
                 // The old texture was glowing but the new one is not.
                 // Clear the glow properties for this plane.
@@ -2159,7 +2159,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
             sin->planeinfo[i].oldpic = sec->planes[i].pic;
         }
-        else if((R_FlatFlags(sec->planes[i].pic) & TXF_GLOW) != (sec->planes[i].glow != 0))
+        else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW) != (sec->planes[i].glow != 0))
         {
             // The glow property of the current flat has been changed
             // since last update.
@@ -2170,14 +2170,14 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             // gameplay (the RENDER_GLOWFLATS text string is depreciated and
             // the only time this property might change is after a console
             // RESET) so it doesn't matter.
-            if(!(R_FlatFlags(sec->planes[i].pic) & TXF_GLOW) && sec->planes[i].glow != 0)
+            if(!(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW) && sec->planes[i].glow != 0)
             {
                 // The current flat is no longer glowing
                 sec->planes[i].glow = 0;
                 memset(sec->planes[i].glowrgb, 0, 3);
                 setGlow[i] = -1; // Turn the subsector plane glow flags off
             }
-            else if((R_FlatFlags(sec->planes[i].pic) & TXF_GLOW) && sec->planes[i].glow == 0)
+            else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW) && sec->planes[i].glow == 0)
             {
                 // The current flat is now glowing
                 sec->planes[i].glow = 4;

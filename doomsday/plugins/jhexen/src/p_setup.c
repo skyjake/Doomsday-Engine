@@ -22,8 +22,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "h2def.h"
-#include "jHexen/p_setup.h"
-#include "jHexen/r_local.h"
+#include "p_setup.h"
+#include "r_local.h"
 
 // MACROS ------------------------------------------------------------------
 

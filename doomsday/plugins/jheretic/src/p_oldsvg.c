@@ -1,11 +1,11 @@
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/h_stat.h"
-#include "jHeretic/G_game.h"
+#include "doomdef.h"
+#include "p_local.h"
+#include "h_stat.h"
+#include "g_game.h"
 
-#include "Common/p_mapsetup.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 

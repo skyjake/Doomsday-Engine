@@ -562,23 +562,34 @@ void R_UpdateTextures(void)
     R_InitTextures();
 }
 
-int R_TextureFlags(int texture)
+int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
 {
-    if(!r_texglow)
-        return 0;
-    texture = texturetranslation[texture].current;
-    if(!texture)
-        return 0;
-    return textures[texture]->flags;
-}
+    switch(rclass)
+    {
+    case RC_TEXTURE:  // picid is a texture id
+        if(!r_texglow)
+            return 0;
 
-int R_FlatFlags(int flat)
-{
-    flat_t *fl = R_GetFlat(flat);
+        picid = texturetranslation[picid].current;
+        if(!picid)
+            return 0;
 
-    if(!r_texglow || !fl)
+        return textures[picid]->flags;
+
+    case RC_FLAT:  // picid is a lumpnum
+        {
+        flat_t *fl = R_GetFlat(picid);
+
+        if(!r_texglow || !fl)
+            return 0;
+
+        return fl->flags;
+        }
+        break;
+
+    default:
         return 0;
-    return fl->flags;
+    };
 }
 
 void R_InitFlats(void)

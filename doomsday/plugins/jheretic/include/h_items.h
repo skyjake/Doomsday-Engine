@@ -23,7 +23,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "Doomdef.h"
+#include "doomdef.h"
 
 #ifdef __GNUG__
 #pragma interface

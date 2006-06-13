@@ -8,8 +8,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "jHexen/mn_def.h"
-#include "jHexen/h2_actn.h"
+#include "mn_def.h"
+#include "h2_actn.h"
 
 #define CTLCFG_TYPE void
 

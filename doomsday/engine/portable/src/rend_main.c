@@ -350,15 +350,20 @@ static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
 }
 
 /*
- * The poly that is passed as argument to this function must not be
- * modified because others may be using it afterwards.  A shiny wall
- * segment polygon is created.
+ * Pre: As we modify param poly quite a bit it is the responsibility of
+ *      the caller to ensure this is OK (ie if not it should pass us a
+ *      copy instead (eg wall segs)).
+ *
+ * @param   texture     The texture/flat id of the texture on the poly.
+ * @param   isFlat      (TRUE) = param texture is a flat.
+ * @param   poly        The poly to add the shiny poly for.
  */
-void Rend_AddShinyWallSeg(int texture, const rendpoly_t *poly)
+void Rend_AddShinyPoly(int texture, boolean isFlat, rendpoly_t *poly)
 {
-    rendpoly_t q;
+    int i;
     ded_reflection_t *ref = NULL;
-    texture_t *texptr = NULL;
+    short width = 0;
+    short height = 0;
 
     if(!useShinySurfaces)
     {
@@ -366,9 +371,31 @@ void Rend_AddShinyWallSeg(int texture, const rendpoly_t *poly)
         return;
     }
 
-    // Get the surface reflection properties of this texture.
-    texptr = textures[texturetranslation[texture].current];
-    ref = texptr->reflection;
+    // Figure out what kind of surface properties have been defined
+    // for the texture or flat in question.
+    if(isFlat)
+    {
+        flat_t *flat = R_GetFlat(texture);
+
+        if(flat->translation.current != texture)
+        {
+            // The flat is currently translated to another one.
+            flat = R_GetFlat(flat->translation.current);
+        }
+
+        ref = flat->reflection;
+        width = 64;
+        height = 64;
+    }
+    else
+    {
+        texture_t *texptr = textures[texturetranslation[texture].current];
+
+        ref = texptr->reflection;
+        width = texptr->width;
+        height = texptr->height;
+    }
+
     if(ref == NULL)
     {
         // The surface doesn't shine.
@@ -382,100 +409,31 @@ void Rend_AddShinyWallSeg(int texture, const rendpoly_t *poly)
         return;
     }
 
-    // We're going to modify the polygon quite a bit.
-    memcpy(&q, poly, sizeof(rendpoly_t));
-
-    // Make it a shiny polygon.
-    q.flags |= RPF_SHINY;
-    q.blendmode = ref->blend_mode;
-    q.tex.id = ref->use_shiny->shiny_tex;
-    q.tex.detail = NULL;
-    q.intertex.detail = NULL;
-    q.interpos = 0;
-
-    // Strength of the shine.
-    Rend_ShinySurfaceColor(&q.vertices[0].color, ref);
-    Rend_ShinySurfaceColor(&q.vertices[1].color, ref);
-
-    // The mask texture is stored in the intertex.
-    if(ref->use_mask && ref->use_mask->mask_tex)
-    {
-        q.intertex.id = ref->use_mask->mask_tex;
-        q.tex.width = q.intertex.width = texptr->width * ref->mask_width;
-        q.tex.height = q.intertex.height = texptr->height * ref->mask_height;
-    }
-    else
-    {
-        // No mask.
-        q.intertex.id = 0;
-    }
-
-    RL_AddPoly(&q);
-}
-
-/*
- * The poly that is passed as argument to this function WILL be modified
- * during the execution of this function.
- */
-void RL_AddShinyFlat(planeinfo_t *plane, rendpoly_t *poly,
-                     subsector_t *subsector)
-{
-    int i;
-    flat_t *flat = NULL;
-    ded_reflection_t *ref = NULL;
-
-    if(!useShinySurfaces)
-    {
-        // Shiny surfaces are not enabled.
-        return;
-    }
-
-    // Figure out what kind of surface properties have been defined
-    // for the texture in question.
-    flat = R_GetFlat(plane->pic);
-    if(flat->translation.current != plane->pic)
-    {
-        // The flat is currently translated to another one.
-        flat = R_GetFlat(flat->translation.current);
-    }
-    ref = flat->reflection;
-    if(ref == NULL)
-    {
-        // Unshiny.
-        return;
-    }
-
-    // Make sure the texture has been loaded.
-    if(!GL_LoadReflectionMap(ref))
-    {
-        // Can't shine because there is no shiny map.
-        return;
-    }
-
     // Make it a shiny polygon.
     poly->lights = NULL;
-    poly->flags = RPF_SHINY;
+    poly->flags |= RPF_SHINY;
     poly->blendmode = ref->blend_mode;
     poly->tex.id = ref->use_shiny->shiny_tex;
     poly->tex.detail = NULL;
     poly->intertex.detail = NULL;
     poly->interpos = 0;
 
-    // Set shine strength.
+    // Strength of the shine.
     for(i = 0; i < poly->numvertices; ++i)
     {
         Rend_ShinySurfaceColor(&poly->vertices[i].color, ref);
     }
 
-    // Set the mask texture.
+    // The mask texture is stored in the intertex.
     if(ref->use_mask && ref->use_mask->mask_tex)
     {
         poly->intertex.id = ref->use_mask->mask_tex;
-        poly->tex.width = poly->intertex.width = 64 * ref->mask_width;
-        poly->tex.height = poly->intertex.height = 64 * ref->mask_height;
+        poly->tex.width = poly->intertex.width = width * ref->mask_width;
+        poly->tex.height = poly->intertex.height = height * ref->mask_height;
     }
     else
     {
+        // No mask.
         poly->intertex.id = 0;
     }
 
@@ -648,10 +606,7 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, int tex, boolean isFlat)
         poly->tex.detail = texdetail;
 
         // Return the parameters for this surface texture.
-        if(isFlat)
-            return R_FlatFlags(tex);
-        else
-            return R_TextureFlags(tex);
+        return R_GraphicResourceFlags((isFlat? RC_FLAT : RC_TEXTURE), tex);
     }
 }
 
@@ -906,7 +861,14 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
         Rend_RadioWallSection(seg, quad);
 
     if(shiny)       // Render Shiny polys for this seg?
-        Rend_AddShinyWallSeg(texture, quad);
+    {
+        rendpoly_t q;
+
+        // We're going to modify the polygon quite a bit.
+        memcpy(&q, quad, sizeof(rendpoly_t));
+
+        Rend_AddShinyPoly(texture, isFlat, &q);
+    }
 }
 
 /*
@@ -954,7 +916,9 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
 
     // Add a shine to this flat existence.
     if(shiny)
-        RL_AddShinyFlat(plane, poly, subsector);
+    {
+        Rend_AddShinyPoly(texture, isFlat, poly);
+    }
 }
 
 /*
@@ -1222,18 +1186,18 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                                 if(distance < (FIX2FLT(mo->radius)*.8f))
                                 {
                                     int temp = 0;
-                                    
+
                                     // Fade it out the closer the viewplayer gets.
                                     solidSeg = false;
                                     temp = ((float)alpha / (FIX2FLT(mo->radius)*.8f));
                                     temp *= distance;
 
                                     // Clamp it.
-                                    if(temp > 255) 
+                                    if(temp > 255)
                                         temp = 255;
                                     if(temp < 0)
                                         temp = 0;
-                                    
+
                                     alpha = temp;
                                 }
                             }
@@ -1990,7 +1954,7 @@ void Rend_RenderNode(uint bspnum)
     int     side;
 
     // If the clipper is full we're pretty much done. This means no geometry
-    // will be visible in the distance because every direction has already been 
+    // will be visible in the distance because every direction has already been
     // fully covered by geometry.
     if(C_IsFull())
         return;
@@ -2004,10 +1968,10 @@ void Rend_RenderNode(uint bspnum)
     {
         // Descend deeper into the nodes.
         bsp = NODE_PTR(bspnum);
-        
+
         // Decide which side the view point is on.
         side = R_PointOnSide(viewx, viewy, bsp);
-        
+
         Rend_RenderNode(bsp->children[side]);   // Recursively divide front space.
         Rend_RenderNode(bsp->children[side ^ 1]);   // ...and back space.
     }

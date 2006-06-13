@@ -24,15 +24,15 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-#  include "jDoom/doomdef.h"
+#  include "doomdef.h"
 #endif
 
 #ifdef __JHERETIC__
-#  include "jHeretic/Doomdef.h"
+#  include "doomdef.h"
 #endif
 
 #ifdef __JSTRIFE__
-#  include "jStrife/h2def.h"
+#  include "h2def.h"
 #endif
 
 #include "p_xg.h"
@@ -145,7 +145,7 @@ static float ReadFloat()
 {
     long    f = ReadLong();
     float   returnValue = 0;
-    
+
     memcpy(&returnValue, &f, 4);
     return returnValue;
 }
@@ -165,7 +165,7 @@ static void ReadString(char **str)
     int     len = ReadShort();
 
     if(!len)                    // Null string?
-    {   
+    {
         *str = 0;
         return;
     }

@@ -7,8 +7,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "jHexen/h2def.h"
-#include "Common/hu_stuff.h"
+#include "h2def.h"
+#include "hu_stuff.h"
 
 // Macros
 

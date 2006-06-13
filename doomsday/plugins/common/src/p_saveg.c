@@ -25,18 +25,18 @@
 #include <LZSS.h>
 
 #ifdef __JDOOM__
-#  include "jDoom/doomdef.h"
-#  include "jDoom/dstrings.h"
-#  include "jDoom/p_local.h"
-#  include "jDoom/g_game.h"
-#  include "jDoom/doomstat.h"
+#  include "doomdef.h"
+#  include "dstrings.h"
+#  include "p_local.h"
+#  include "g_game.h"
+#  include "doomstat.h"
 #  include "p_oldsvg.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/Dstrings.h"
-#  include "jHeretic/G_game.h"
-#  include "jHeretic/h_stat.h"
-#  include "jHeretic/p_oldsvg.h"
+#  include "doomdef.h"
+#  include "dstrings.h"
+#  include "g_game.h"
+#  include "h_stat.h"
+#  include "p_oldsvg.h"
 #endif
 
 #include "p_saveg.h"
@@ -45,8 +45,8 @@
 #include "p_svtexarc.h"
 
 #include "dmu_lib.h"
-#include "Common/p_mapsetup.h"
-#include "Common/p_player.h"
+#include "p_mapsetup.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

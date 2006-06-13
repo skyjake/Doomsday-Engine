@@ -4,11 +4,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_stat.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/G_game.h"
-#include "jHeretic/Sounds.h"
+#include "doomdef.h"
+#include "h_stat.h"
+#include "p_local.h"
+#include "g_game.h"
+#include "sounds.h"
 #include "d_net.h"
 
 // MACROS ------------------------------------------------------------------

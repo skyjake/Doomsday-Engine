@@ -22,7 +22,7 @@
 #ifndef __JDOOM_ACTIONS_H__
 #define __JDOOM_ACTIONS_H__
 
-#include "../dd_share.h"
+#include "dd_share.h"
 
 // These must correspond the action_t's in the actions array!
 // Info needed in building ticcmds should be here.

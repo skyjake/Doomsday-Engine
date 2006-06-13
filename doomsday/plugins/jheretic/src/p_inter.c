@@ -4,17 +4,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jHeretic/Doomdef.h"
-#include "jHeretic/h_config.h"
-#include "jHeretic/Dstrings.h"
-#include "jHeretic/h_stat.h"
-#include "Common/am_map.h"
-#include "Common/d_net.h"
-#include "jHeretic/P_local.h"
-#include "jHeretic/Soundst.h"
+#include "doomdef.h"
+#include "h_config.h"
+#include "dstrings.h"
+#include "h_stat.h"
+#include "am_map.h"
+#include "d_net.h"
+#include "p_local.h"
+#include "soundst.h"
 
-#include "Common/dmu_lib.h"
-#include "Common/p_player.h"
+#include "dmu_lib.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

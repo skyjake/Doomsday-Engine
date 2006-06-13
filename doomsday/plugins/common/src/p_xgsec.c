@@ -37,23 +37,23 @@
 #  include "p_inter.h"
 #  include "r_defs.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/P_local.h"
-#  include "jHeretic/h_stat.h"
-#  include "jHeretic/h_config.h"
-#  include "jHeretic/Soundst.h"
+#  include "doomdef.h"
+#  include "p_local.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "soundst.h"
 #elif __JSTRIFE__
-#  include "jStrife/h2def.h"
-#  include "jStrife/d_config.h"
-#  include "jStrife/p_local.h"
-#  include "jStrife/Soundst.h"
+#  include "h2def.h"
+#  include "d_config.h"
+#  include "p_local.h"
+#  include "soundst.h"
 #endif
 
 #include "dmu_lib.h"
-#include "Common/p_mapsetup.h"
+#include "p_mapsetup.h"
 #include "p_xgline.h"
 #include "p_xgsec.h"
-#include "Common/g_common.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 

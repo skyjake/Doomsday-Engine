@@ -13,7 +13,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "h2def.h"
-#include "jHexen/p_local.h"
+#include "p_local.h"
 #include "x_config.h"
 
 // MACROS ------------------------------------------------------------------

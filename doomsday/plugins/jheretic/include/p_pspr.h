@@ -34,7 +34,7 @@
 // This includes all the data for thing animation,
 // i.e. the Thing Atrributes table
 // and the Frame Sequence table.
-#include "Info.h"
+#include "info.h"
 
 #ifdef __GNUG__
 #pragma interface

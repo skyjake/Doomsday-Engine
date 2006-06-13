@@ -22,27 +22,26 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "jDoom/doomstat.h"
-# include "jDoom/doomdef.h"
-# include "jDoom/d_config.h"
-# include "jDoom/r_local.h"
+# include "doomstat.h"
+# include "doomdef.h"
+# include "d_config.h"
+# include "r_local.h"
 #elif __JHERETIC__
-# include "jHeretic/Doomdef.h"
-# include "jHeretic/h_config.h"
-# include "jHeretic/R_local.h"
+# include "doomdef.h"
+# include "h_config.h"
+# include "r_local.h"
 #elif __JHEXEN__
-# include "jHexen/h2def.h"
-# include "jHexen/x_config.h"
-# include "jHexen/r_local.h"
+# include "h2def.h"
+# include "x_config.h"
+# include "r_local.h"
 #elif __JSTRIFE__
-# include "jStrife/h2def.h"
-# include "jStrife/d_config.h"
-# include "jStrife/r_local.h"
+# include "h2def.h"
+# include "d_config.h"
+# include "r_local.h"
 #endif
 
-#include "Common/m_swap.h"
-#include "Common/hu_lib.h"
-#include "r_draw.h"
+#include "hu_lib.h"
+#include "../../engine/portable/include/r_draw.h"
 
 // MACROS ------------------------------------------------------------------
 

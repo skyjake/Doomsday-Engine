@@ -24,7 +24,7 @@
 #endif
 
 // Screenwidth.
-#include "Doomdef.h"
+#include "doomdef.h"
 
 #include "p_xg.h"
 

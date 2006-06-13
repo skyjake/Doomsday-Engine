@@ -27,14 +27,14 @@
 #include "dstrings.h"
 #include "doomstat.h"
 #include "m_random.h"
-#include "Common/am_map.h"
-#include "Common/d_net.h"
+#include "am_map.h"
+#include "d_net.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "p_inter.h"
 
-#include "Common/dmu_lib.h"
-#include "Common/p_player.h"
+#include "dmu_lib.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

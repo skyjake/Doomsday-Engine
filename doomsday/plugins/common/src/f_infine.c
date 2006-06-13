@@ -26,28 +26,27 @@
 #ifdef __JDOOM__
 # include "doomdef.h"
 # include "doomstat.h"
-# include "m_swap.h"
 # include "s_sound.h"
 #elif __JHERETIC__
-# include "jHeretic/Doomdef.h"
-# include "jHeretic/h_stat.h"
-# include "jHeretic/Soundst.h"
-# include "Common/am_map.h"
+# include "doomdef.h"
+# include "h_stat.h"
+# include "soundst.h"
+# include "am_map.h"
 #elif __JHEXEN__
-# include "jHexen/h2def.h"
-# include "jHexen/x_config.h"
-# include "Common/am_map.h"
+# include "h2def.h"
+# include "x_config.h"
+# include "am_map.h"
 #elif __JSTRIFE__
-# include "jStrife/h2def.h"
-# include "jStrife/d_config.h"
-# include "Common/am_map.h"
+# include "h2def.h"
+# include "d_config.h"
+# include "am_map.h"
 #endif
 
-#include "Common/hu_stuff.h"
+#include "hu_stuff.h"
 
 #include "f_infine.h"
-#include "Common/g_common.h"
-#include "Common/d_net.h"
+#include "g_common.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 

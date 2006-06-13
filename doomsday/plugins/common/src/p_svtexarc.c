@@ -21,16 +21,16 @@
 #  include "doomdef.h"
 #  include "r_local.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
+#  include "doomdef.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
-#  include "jHexen/r_local.h"
+#  include "h2def.h"
+#  include "r_local.h"
 #elif __JSTRIFE__
-#  include "jStrife/h2def.h"
-#  include "jStrife/r_local.h"
+#  include "h2def.h"
+#  include "r_local.h"
 #endif
 
-#include "Common/p_mapsetup.h"
+#include "p_mapsetup.h"
 #include "p_svtexarc.h"
 
 // MACROS ------------------------------------------------------------------

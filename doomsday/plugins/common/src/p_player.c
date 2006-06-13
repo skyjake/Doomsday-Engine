@@ -27,14 +27,14 @@
 #include "dd_share.h"
 
 #if __JDOOM__
-#  include "jDoom/doomdef.h"
-#  include "jDoom/p_local.h"
+#  include "doomdef.h"
+#  include "p_local.h"
 #  include "doomstat.h"
 #  include "d_config.h"
 #  include "d_items.h"
 #elif __JHERETIC__
-#  include "jHeretic/Doomdef.h"
-#  include "jHeretic/P_local.h"
+#  include "doomdef.h"
+#  include "p_local.h"
 #  include "h_stat.h"
 #  include "h_config.h"
 #  include "h_items.h"
@@ -43,8 +43,8 @@
 #  include "x_config.h"
 #endif
 
-#include "Common/d_netsv.h"
-#include "Common/d_net.h"
+#include "d_netsv.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 

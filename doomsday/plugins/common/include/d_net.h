@@ -1,10 +1,10 @@
 #ifndef __GAME_NETWORK_DEF_H__
 #define __GAME_NETWORK_DEF_H__
 
-#include "../dd_share.h"
+#include "dd_share.h"
 
 #ifdef __JHERETIC__
-#include "../jHeretic/Doomdef.h"
+#include "doomdef.h"
 #endif
 
 #ifdef __JHEXEN__

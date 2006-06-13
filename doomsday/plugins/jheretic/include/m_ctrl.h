@@ -8,8 +8,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "jHeretic/Mn_def.h"
-#include "jHeretic/H_Action.h"
+#include "mn_def.h"
+#include "h_action.h"
 
 #define CTLCFG_TYPE void
 

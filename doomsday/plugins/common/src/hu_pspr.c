@@ -25,18 +25,18 @@
 # include "d_config.h"
 # include "st_stuff.h"
 #elif __JHERETIC__
-# include "jHeretic/Doomdef.h"
-# include "jHeretic/h_stat.h"
-# include "jHeretic/P_local.h"
-# include "jHeretic/h_config.h"
+# include "doomdef.h"
+# include "h_stat.h"
+# include "p_local.h"
+# include "h_config.h"
 #elif __JHEXEN__
-# include "jHexen/h2def.h"
+# include "h2def.h"
 # include "x_config.h"
-# include "jHexen/p_local.h"
+# include "p_local.h"
 #elif __JSTRIFE__
-# include "jStrife/h2def.h"
-# include "jStrife/d_config.h"
-# include "jStrife/p_local.h"
+# include "h2def.h"
+# include "d_config.h"
+# include "p_local.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

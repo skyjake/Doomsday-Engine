@@ -33,8 +33,8 @@
 #include "p_pspr.h"
 #include "s_sound.h"
 
-#include "Common/d_net.h"
-#include "Common/p_player.h"
+#include "d_net.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

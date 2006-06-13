@@ -20,7 +20,7 @@
 #ifndef __COMMON_STLIB__
 #define __COMMON_STLIB__
 
-#include "Common/hu_stuff.h"
+#include "hu_stuff.h"
 
 //
 // Background and foreground screen numbers

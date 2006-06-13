@@ -31,20 +31,20 @@
 # include "dstrings.h"
 # include "s_sound.h"
 #elif __JHERETIC__
-# include "jHeretic/Doomdef.h"
-# include "jHeretic/h_stat.h"
-# include "jHeretic/P_local.h"
-# include "jHeretic/m_menu.h"
-# include "jHeretic/Dstrings.h"
-# include "jHeretic/Soundst.h"
+# include "doomdef.h"
+# include "h_stat.h"
+# include "p_local.h"
+# include "m_menu.h"
+# include "dstrings.h"
+# include "soundst.h"
 #elif __JHEXEN__
-# include "jHexen/h2def.h"
-# include "jHexen/p_local.h"
-# include "jHexen/st_stuff.h"
+# include "h2def.h"
+# include "p_local.h"
+# include "st_stuff.h"
 #elif __JSTRIFE__
-# include "jStrife/h2def.h"
-# include "jStrife/p_local.h"
-# include "jStrife/st_stuff.h"
+# include "h2def.h"
+# include "p_local.h"
+# include "st_stuff.h"
 #endif
 
 #include <ctype.h>

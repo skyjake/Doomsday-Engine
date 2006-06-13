@@ -1,7 +1,7 @@
 #ifndef __JHERETIC_ACTIONS_H__
 #define __JHERETIC_ACTIONS_H__
 
-#include "../dd_share.h"
+#include "dd_share.h"
 
 // These must correspond the action_t's in the actions array!
 // Things that are needed in building ticcmds should be here.

@@ -29,8 +29,8 @@
 #include "doomstat.h"
 #include "g_common.h"
 
-#include "Common/d_net.h"
-#include "Common/p_player.h"
+#include "d_net.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

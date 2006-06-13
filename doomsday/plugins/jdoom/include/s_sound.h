@@ -21,7 +21,7 @@
 
 #include "r_defs.h"
 
-#include "SndIdx.h"                // Sfx and music indices.
+#include "sndidx.h"                // Sfx and music indices.
 
 enum {
     SORG_CENTER,

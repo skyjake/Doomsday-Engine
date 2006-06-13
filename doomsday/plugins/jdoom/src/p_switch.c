@@ -26,7 +26,7 @@
 #include "d_net.h"
 #include "d_config.h"
 
-#include "Common/dmu_lib.h"
+#include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
 

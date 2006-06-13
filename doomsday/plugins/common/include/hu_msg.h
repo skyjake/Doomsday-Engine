@@ -3,16 +3,16 @@
 
 #ifdef __JDOOM__
 #  include "d_event.h"
-#  include "jDoom/r_defs.h"
+#  include "r_defs.h"
 #elif __JHERETIC__
-#  include "jHeretic/h_event.h"
-#  include "jHeretic/r_defs.h"
+#  include "h_event.h"
+#  include "r_defs.h"
 #elif __JHEXEN__
-#  include "jHexen/h2def.h"
-#  include "jHexen/r_local.h"
+#  include "h2def.h"
+#  include "r_local.h"
 #elif __JSTRIFE__
-#  include "jStrife/h2def.h"
-#  include "jStrife/R_local.h"
+#  include "h2def.h"
+#  include "r_local.h"
 #endif
 
 #define HU_MSGREFRESH   DDKEY_ENTER

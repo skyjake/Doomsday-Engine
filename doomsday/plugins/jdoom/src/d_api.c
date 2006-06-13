@@ -21,10 +21,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jDoom/doomdef.h"
-#include "jDoom/doomstat.h"
-#include "jDoom/d_config.h"
-#include "AcFnLink.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_config.h"
+#include "acfnlink.h"
 #include "xgclass.h"
 
 // MACROS ------------------------------------------------------------------

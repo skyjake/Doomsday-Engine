@@ -23,7 +23,7 @@
 
 #include "h2def.h"
 #include "x_config.h"
-#include "AcFnLink.h"
+#include "acfnlink.h"
 
 // MACROS ------------------------------------------------------------------
 

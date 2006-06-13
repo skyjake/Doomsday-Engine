@@ -26,30 +26,30 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "Common/hu_stuff.h"
-#include "Common/hu_msg.h"
+#include "hu_stuff.h"
+#include "hu_msg.h"
 
 #ifdef __JDOOM__
-# include "jDoom/Mn_def.h"
-# include "jDoom/m_menu.h"
-# include "jDoom/doomstat.h"
-# include "jDoom/p_local.h"
-# include "jDoom/d_config.h"
-# include "jDoom/dstrings.h"
+# include "mn_def.h"
+# include "m_menu.h"
+# include "doomstat.h"
+# include "p_local.h"
+# include "d_config.h"
+# include "dstrings.h"
 #elif __JHERETIC__
-# include "jHeretic/Mn_def.h"
-# include "jHeretic/m_menu.h"
-# include "jHeretic/h_stat.h"
-# include "jHeretic/P_local.h"
-# include "jHeretic/h_config.h"
+# include "mn_def.h"
+# include "m_menu.h"
+# include "h_stat.h"
+# include "p_local.h"
+# include "h_config.h"
 #elif __JHEXEN__
-# include "jHexen/h2def.h"
-# include "jHexen/mn_def.h"
-# include "jHexen/x_config.h"
+# include "h2def.h"
+# include "mn_def.h"
+# include "x_config.h"
 #elif __JSTRIFE__
-# include "jStrife/h2def.h"
-# include "jStrife/mn_def.h"
-# include "jStrife/d_config.h"
+# include "h2def.h"
+# include "mn_def.h"
+# include "d_config.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

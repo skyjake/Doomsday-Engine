@@ -28,17 +28,17 @@
 #include "wi_stuff.h"
 #include "hu_stuff.h"
 #include "hu_pspr.h"
-#include "Common/am_map.h"
+#include "am_map.h"
 #include "d_config.h"
 #include "x_hair.h"
-#include "Mn_def.h"
+#include "mn_def.h"
 #include "m_menu.h"
 #include "g_common.h"
 #include "r_common.h"
 #include "d_net.h"
 #include "f_infine.h"
 
-#include "Common/x_hair.h"
+#include "x_hair.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -266,12 +266,12 @@ void D_Display(void)
                               (200 - ST_HEIGHT * cfg.sbarscale / 20 - h) >> 1,
                               w, h);
     }
-    
+
     {
         float x, y, w, h;
         R_GetViewWindow(&x, &y, &w, &h);
         R_ViewWindow((int) x, (int) y, (int) w, (int) h);
-    } 
+    }
 
     // Do buffered drawing.
     switch (gamestate)

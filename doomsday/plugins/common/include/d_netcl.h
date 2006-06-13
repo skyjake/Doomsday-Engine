@@ -2,7 +2,7 @@
 #define __NETCL_H__
 
 #ifdef __JHERETIC__
-#include "../jHeretic/Doomdef.h"
+#include "doomdef.h"
 #endif
 
 #include "d_net.h"

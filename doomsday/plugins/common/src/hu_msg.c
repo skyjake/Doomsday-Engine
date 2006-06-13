@@ -23,52 +23,52 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "jDoom/doomdef.h"
-# include "jDoom/d_config.h"
-# include "jDoom/m_menu.h"
-# include "jDoom/Mn_def.h"
-# include "jDoom/s_sound.h"
-# include "jDoom/doomstat.h"
-# include "jDoom/r_local.h"
-# include "jDoom/p_local.h"
-# include "jDoom/m_ctrl.h"
-# include "jDoom/dstrings.h"  // Data.
+# include "doomdef.h"
+# include "d_config.h"
+# include "m_menu.h"
+# include "Mn_def.h"
+# include "s_sound.h"
+# include "doomstat.h"
+# include "r_local.h"
+# include "p_local.h"
+# include "m_ctrl.h"
+# include "dstrings.h"  // Data.
 #elif __JHERETIC__
-# include "jHeretic/Doomdef.h"
-# include "jHeretic/h_config.h"
-# include "jHeretic/m_menu.h"
-# include "jHeretic/Mn_def.h"
-# include "jHeretic/Soundst.h"
-# include "jHeretic/h_stat.h"
-# include "jHeretic/R_local.h"
-# include "jHeretic/P_local.h"
-# include "jHeretic/m_ctrl.h"
-# include "jHeretic/Dstrings.h"  // Data.
+# include "doomdef.h"
+# include "h_config.h"
+# include "m_menu.h"
+# include "mn_def.h"
+# include "soundst.h"
+# include "h_stat.h"
+# include "r_local.h"
+# include "p_local.h"
+# include "m_ctrl.h"
+# include "dstrings.h"  // Data.
 #elif __JHEXEN__
-# include "jHexen/h2def.h"
-# include "jHexen/x_config.h"
-# include "jHexen/mn_def.h"
-# include "jHexen/sounds.h"
-# include "jHexen/r_local.h"
-# include "jHexen/p_local.h"
-# include "jHexen/m_ctrl.h"
-# include "jHexen/textdefs.h"  // Data.
+# include "h2def.h"
+# include "x_config.h"
+# include "mn_def.h"
+# include "sounds.h"
+# include "r_local.h"
+# include "p_local.h"
+# include "m_ctrl.h"
+# include "textdefs.h"  // Data.
 #elif __JSTRIFE__
-# include "jStrife/h2def.h"
-# include "jStrife/d_config.h"
-# include "jStrife/mn_def.h"
-# include "jStrife/sounds.h"
-# include "jStrife/r_local.h"
-# include "jStrife/p_local.h"
-# include "jStrife/m_ctrl.h"
-# include "jStrife/textdefs.h"  // Data.
+# include "h2def.h"
+# include "d_config.h"
+# include "mn_def.h"
+# include "sounds.h"
+# include "r_local.h"
+# include "p_local.h"
+# include "m_ctrl.h"
+# include "textdefs.h"  // Data.
 #endif
 
-#include "Common/hu_stuff.h"
-#include "Common/hu_msg.h"
-#include "Common/hu_lib.h"
-#include "Common/g_common.h"
-#include "Common/d_net.h"
+#include "hu_stuff.h"
+#include "hu_msg.h"
+#include "hu_lib.h"
+#include "g_common.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 

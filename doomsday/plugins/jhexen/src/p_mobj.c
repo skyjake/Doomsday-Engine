@@ -18,13 +18,13 @@
 
 #include <math.h>
 #include "h2def.h"
-#include "jHexen/p_local.h"
-#include "jHexen/sounds.h"
-#include "jHexen/soundst.h"
+#include "p_local.h"
+#include "sounds.h"
+#include "soundst.h"
 #include "x_config.h"
-#include "jHexen/st_stuff.h"
-#include "Common/hu_stuff.h"
-#include "m_bams.h"
+#include "st_stuff.h"
+#include "hu_stuff.h"
+#include "../../engine/portable/include/m_bams.h" // for BANG2RAD
 
 // MACROS ------------------------------------------------------------------
 

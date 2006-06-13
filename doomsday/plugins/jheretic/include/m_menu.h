@@ -23,8 +23,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "Common/hu_stuff.h"
-#include "jHeretic/h_event.h"
+#include "hu_stuff.h"
+#include "h_event.h"
 
 //
 // MENUS
