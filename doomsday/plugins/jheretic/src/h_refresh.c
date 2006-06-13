@@ -23,17 +23,8 @@
 
 #include <ctype.h>  // has isspace
 #include <math.h>
-#include "../../jheretic/include/doomdef.h"
-#include "h_stat.h"
-#include "../../jheretic/include/p_local.h"
-#include "r_local.h"
-#include "../../jheretic/include/mn_def.h"
-#include "../../jheretic/include/m_menu.h"
-#include "h_config.h"
+#include "jheretic.h"
 #include "f_infine.h"
-
-#include "am_map.h"
-#include "x_hair.h"
 #include "r_common.h"
 
 // MACROS ------------------------------------------------------------------

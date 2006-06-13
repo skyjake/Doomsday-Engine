@@ -13,13 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "h2def.h"
-#include "p_local.h"
-#include "x_config.h"
-#include "mn_def.h"
-#include "hu_stuff.h"
-#include "st_stuff.h"
-#include "am_map.h"
+#include "jhexen.h"
 #include "f_infine.h"
 #include "r_common.h"
 

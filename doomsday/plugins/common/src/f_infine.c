@@ -28,14 +28,9 @@
 # include "doomstat.h"
 # include "s_sound.h"
 #elif __JHERETIC__
-# include "../../jheretic/include/doomdef.h"
-# include "h_stat.h"
-# include "soundst.h"
-# include "am_map.h"
+# include "jheretic.h"
 #elif __JHEXEN__
-# include "h2def.h"
-# include "x_config.h"
-# include "am_map.h"
+# include "jhexen.h"
 #elif __JSTRIFE__
 # include "h2def.h"
 # include "d_config.h"

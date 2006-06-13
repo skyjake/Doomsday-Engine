@@ -21,10 +21,9 @@
 #  include "doomdef.h"
 #  include "r_local.h"
 #elif __JHERETIC__
-#  include "../../jheretic/include/doomdef.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-#  include "h2def.h"
-#  include "r_local.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
 #  include "h2def.h"
 #  include "r_local.h"

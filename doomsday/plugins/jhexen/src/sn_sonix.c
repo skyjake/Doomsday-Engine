@@ -13,8 +13,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
-#include "h2def.h"
-#include "soundst.h"
+#include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
 

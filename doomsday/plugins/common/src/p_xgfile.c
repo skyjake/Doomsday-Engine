@@ -28,7 +28,7 @@
 #endif
 
 #ifdef __JHERETIC__
-#  include "../../jheretic/include/doomdef.h"
+#  include "jheretic.h"
 #endif
 
 #ifdef __JSTRIFE__

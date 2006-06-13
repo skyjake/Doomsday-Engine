@@ -4,17 +4,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "../../jheretic/include/doomdef.h"
-#include "h_config.h"
-#include "../../jheretic/include/dstrings.h"
-#include "h_stat.h"
-#include "am_map.h"
+#include "jheretic.h"
 #include "d_net.h"
-#include "../../jheretic/include/p_local.h"
-#include "../../jheretic/include/soundst.h"
-
 #include "dmu_lib.h"
-#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

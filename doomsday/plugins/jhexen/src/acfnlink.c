@@ -1,7 +1,7 @@
 // The action routine link table
 // Generated with DED Manager 1.13
 
-#include "acfnlink.h"
+#include "jhexen.h"
 
 actionlink_t actionlinks[] = {
     {"A_AddPlayerCorpse", A_AddPlayerCorpse},

@@ -39,5 +39,6 @@
 #include "../../jhexen/include/version.h"
 #include "../../jhexen/include/x_config.h"
 #include "../../jhexen/include/xddefs.h"
+#include "../../jhexen/include/p_setup.h"
 
 #endif // __JHEXEN_CONVENIENCE_H__

@@ -10,9 +10,7 @@
 //**
 //**************************************************************************
 
-#include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
+#include "jhexen.h"
 
 plat_t *activeplats[MAXPLATS];
 

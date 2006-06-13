@@ -1,7 +1,7 @@
 // The action routine link table
 // Generated with DED Manager 1.1
 
-#include "../../jheretic/include/acfnlink.h"
+#include "jheretic.h"
 
 actionlink_t actionlinks[] = {
     {"A_AccTeleGlitter", A_AccTeleGlitter}

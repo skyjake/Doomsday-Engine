@@ -9,15 +9,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "../../jheretic/include/doomdef.h"
-#include "h_config.h"
-#include "../../jheretic/include/p_local.h"
-#include "../../jheretic/include/soundst.h"
-#include "../../jheretic/include/g_game.h"
-
-// State.
-#include "h_stat.h"
-
+#include "jheretic.h"
 #include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------

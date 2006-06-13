@@ -27,8 +27,7 @@
 # include "d_event.h"
 # include "r_defs.h"
 #elif __JHERETIC__
-# include "h_event.h"
-# include "../../jheretic/include/r_defs.h"
+//# include "jheretic.h"
 #elif __JHEXEN__
 //#include "jHexen/mn_def.h"
 

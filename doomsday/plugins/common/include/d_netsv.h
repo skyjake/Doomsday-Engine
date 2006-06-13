@@ -6,11 +6,11 @@
 #endif
 
 #ifdef __JHERETIC__
-#include "../../jheretic/include/p_local.h"
+#include "jheretic.h"
 #endif
 
 #ifdef __JHEXEN__
-#include "p_local.h"
+#include "jhexen.h"
 #endif
 
 #ifdef __JSTRIFE__

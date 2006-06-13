@@ -10,9 +10,7 @@
 //**
 //**************************************************************************
 
-#include "h2def.h"
-#include "p_local.h"
-#include "p_start.h"
+#include "jhexen.h"
 #include "dmu_lib.h"
 
 void T_Light(light_t * light)

@@ -33,19 +33,9 @@
 #  include "hu_stuff.h"
 #  include "st_stuff.h"
 #elif __JHERETIC__
-#  include "../../jheretic/include/doomdef.h"
-#  include "h_stat.h"
-#  include "../../jheretic/include/p_local.h"
-#  include "sounds.h"
-#  include "../../jheretic/include/g_game.h"
-#  include "../../jheretic/include/m_menu.h"
-#  include "h_config.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "soundst.h"
-#  include "mn_def.h"
-#  include "x_config.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
 #  include "h2def.h"
 #  include "p_local.h"

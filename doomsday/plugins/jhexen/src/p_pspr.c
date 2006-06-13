@@ -44,11 +44,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-
-#include "p_player.h"
+#include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
 

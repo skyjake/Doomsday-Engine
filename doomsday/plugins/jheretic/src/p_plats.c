@@ -19,10 +19,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "../../jheretic/include/doomdef.h"
-#include "h_stat.h"
-#include "../../jheretic/include/p_local.h"
-#include "../../jheretic/include/soundst.h"
+#include "jheretic.h"
 
 // MACROS ------------------------------------------------------------------
 

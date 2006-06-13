@@ -23,7 +23,7 @@
 #define __DOOMSDAY_NETWORK_H__
 
 #include <stdio.h>
-#include "LZSS.h"
+#include "lzss.h"
 #include "dd_share.h"
 #include "sys_network.h"
 #include "net_msg.h"

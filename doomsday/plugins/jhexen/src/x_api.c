@@ -21,9 +21,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h2def.h"
-#include "x_config.h"
-#include "acfnlink.h"
+#include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
 

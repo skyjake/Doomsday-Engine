@@ -21,9 +21,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "../../jheretic/include/doomdef.h"
-#include "../../jheretic/include/r_defs.h"
-#include "../../jheretic/include/p_setup.h"
+#include "jheretic.h"
 
 // MACROS ------------------------------------------------------------------
 

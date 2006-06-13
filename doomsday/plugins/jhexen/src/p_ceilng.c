@@ -10,9 +10,7 @@
 //**
 //**************************************************************************
 
-#include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
+#include "jhexen.h"
 #include "p_start.h"
 #include "dmu_lib.h"
 

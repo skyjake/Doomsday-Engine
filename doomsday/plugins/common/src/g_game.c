@@ -37,28 +37,12 @@
 #  include <stdio.h>
 #  include <string.h>
 #  include <math.h>
-#  include "../../jheretic/include/doomdef.h"
-#  include "h_stat.h"
-#  include "h_action.h"
-#  include "h_config.h"
-#  include "../../jheretic/include/m_menu.h"
-#  include "../../jheretic/include/p_local.h"
-#  include "soundst.h"
-#  include "../../jheretic/include/dstrings.h"
-#  include "../../jheretic/include/g_game.h"
-#  include "../../jheretic/include/st_stuff.h"
-#  include "p_saveg.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include <string.h>
 #  include <math.h>
 #  include <assert.h>
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "soundst.h"
-#  include "x_config.h"
-#  include "h2_actn.h"
-#  include "st_stuff.h"
-#  include "mn_def.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
 #  include <string.h>
 #  include <math.h>

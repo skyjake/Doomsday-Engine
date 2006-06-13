@@ -42,10 +42,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "x_config.h"
+#include "jhexen.h"
 
 #include <math.h>
 

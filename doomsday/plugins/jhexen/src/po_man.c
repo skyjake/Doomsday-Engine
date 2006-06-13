@@ -41,9 +41,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h2def.h"
-#include "p_local.h"
-#include "r_local.h"
+#include "jhexen.h"
 
 #include "p_mapsetup.h"
 

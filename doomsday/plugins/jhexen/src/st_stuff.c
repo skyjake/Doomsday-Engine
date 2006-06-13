@@ -13,13 +13,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "hu_stuff.h"
-#include "st_stuff.h"
-#include "mn_def.h"
-#include "x_config.h"
+#include "jhexen.h"
 #include "st_lib.h"
 #include "d_net.h"
 

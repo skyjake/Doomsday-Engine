@@ -21,22 +21,10 @@
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
-#include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "x_config.h"
-#include "mn_def.h"
-#include "hu_stuff.h"
-#include "st_stuff.h"
-#include "am_map.h"
-#include "h2_actn.h"
-#include "p_setup.h"
+#include "jhexen.h"
 #include "d_net.h"
 #include "g_update.h"
-#include "m_ctrl.h"
 #include "g_common.h"
-
-#include "acfnlink.h"
 
 // MACROS ------------------------------------------------------------------
 

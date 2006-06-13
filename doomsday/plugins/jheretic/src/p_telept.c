@@ -2,10 +2,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "../../jheretic/include/doomdef.h"
-#include "../../jheretic/include/p_local.h"
-#include "sounds.h"
-
+#include "jheretic.h"
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 

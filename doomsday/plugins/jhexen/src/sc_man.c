@@ -14,7 +14,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "h2def.h"
+#include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
 

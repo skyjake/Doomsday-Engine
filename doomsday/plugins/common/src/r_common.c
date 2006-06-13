@@ -24,9 +24,7 @@
 #  include "doomstat.h"
 #  include "d_items.h"
 #elif __JHERETIC__
-#  include "../../jheretic/include/doomdef.h"
-#  include "h_items.h"
-#  include "h_stat.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "h2def.h"
 #elif __JSTRIFE__

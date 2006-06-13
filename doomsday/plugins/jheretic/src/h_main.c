@@ -21,20 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "../../jheretic/include/doomdef.h"
-#include "h_stat.h"
-
+#include "jheretic.h"
 #include "d_net.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "h_config.h"
-#include "../../jheretic/include/m_menu.h"
-#include "../../jheretic/include/g_game.h"
-
-#include "hu_msg.h"
-#include "hu_stuff.h"
-#include "am_map.h"
-#include "p_saveg.h"
 
 // MACROS ------------------------------------------------------------------
 

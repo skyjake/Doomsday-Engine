@@ -12,12 +12,8 @@
 
 #include <math.h>
 
-#include "h2def.h"
-#include "p_local.h"
+#include "jhexen.h"
 #include "p_view.h"
-#include "soundst.h"
-#include "x_config.h"
-#include "p_player.h"
 
 void    P_PlayerNextArtifact(player_t *player);
 

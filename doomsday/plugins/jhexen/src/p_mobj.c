@@ -17,14 +17,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
-#include "h2def.h"
-#include "p_local.h"
-#include "sounds.h"
-#include "soundst.h"
-#include "x_config.h"
-#include "st_stuff.h"
-#include "hu_stuff.h"
-#include "../../engine/portable/include/m_bams.h" // for BANG2RAD
+#include "jhexen.h"
+#include "../../../engine/portable/include/m_bams.h" // for BANG2RAD
 
 // MACROS ------------------------------------------------------------------
 

@@ -34,25 +34,9 @@
 # include "m_ctrl.h"
 # include "dstrings.h"  // Data.
 #elif __JHERETIC__
-# include "../../jheretic/include/doomdef.h"
-# include "h_config.h"
-# include "../../jheretic/include/m_menu.h"
-# include "../../jheretic/include/mn_def.h"
-# include "../../jheretic/include/soundst.h"
-# include "h_stat.h"
-# include "../../jheretic/include/r_local.h"
-# include "../../jheretic/include/p_local.h"
-# include "../../jheretic/include/m_ctrl.h"
-# include "../../jheretic/include/dstrings.h"  // Data.
+# include "jheretic.h"
 #elif __JHEXEN__
-# include "h2def.h"
-# include "x_config.h"
-# include "mn_def.h"
-# include "sounds.h"
-# include "r_local.h"
-# include "p_local.h"
-# include "m_ctrl.h"
-# include "textdefs.h"  // Data.
+# include "jhexen.h"
 #elif __JSTRIFE__
 # include "h2def.h"
 # include "d_config.h"

@@ -12,15 +12,8 @@
 
 #include <math.h>
 
-#include "../../jheretic/include/doomdef.h"
-#include "h_config.h"
-#include "h_event.h"
-#include "../../jheretic/include/p_local.h"
-#include "../../jheretic/include/soundst.h"
-#include "h_stat.h"
-#include "p_pspr.h"
+#include "jheretic.h"
 #include "d_net.h"
-#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

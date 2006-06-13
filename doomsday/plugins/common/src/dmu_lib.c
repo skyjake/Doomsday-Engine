@@ -24,9 +24,9 @@
 #ifdef __JDOOM__
 # include "r_defs.h"
 #elif __JHERETIC__
-# include "../../jheretic/include/r_defs.h"
+# include "jheretic.h"
 #elif __JHEXEN__
-# include "r_local.h"
+# include "jhexen.h"
 #endif
 
 #include "dmu_lib.h"

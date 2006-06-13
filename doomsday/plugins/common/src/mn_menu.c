@@ -52,28 +52,10 @@
 # include "wi_stuff.h"
 # include "p_saveg.h"
 #elif __JHERETIC__
-# include "../../jheretic/include/doomdef.h"
-# include "../../jheretic/include/dstrings.h"
-# include "h_config.h"
-# include "../../jheretic/include/g_game.h"
-# include "../../jheretic/include/info.h"
-# include "../../jheretic/include/p_local.h"
-# include "../../jheretic/include/m_menu.h"
-# include "../../jheretic/include/sounds.h"
-# include "h_stat.h"
-# include "../../jheretic/include/mn_def.h"
-# include "../../jheretic/include/m_ctrl.h"
-# include "p_saveg.h"
+# include "jheretic.h"
 #elif __JHEXEN__
-# include "h2def.h"
-# include "p_local.h"
-# include "r_local.h"
-# include "soundst.h"
-# include "h2_actn.h"
-# include "mn_def.h"
-# include "m_ctrl.h"
-# include "x_config.h"
-# include <LZSS.h>
+# include "jhexen.h"
+# include <lzss.h>
 #elif __JSTRIFE__
 # include "h2def.h"
 # include "p_local.h"

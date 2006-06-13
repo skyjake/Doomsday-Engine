@@ -6,14 +6,7 @@
 
 #include <math.h>
 
-#include "../../jheretic/include/doomdef.h"
-#include "h_config.h"
-#include "h_type.h"
-#include "../../jheretic/include/p_local.h"
-#include "../../jheretic/include/st_stuff.h"
-#include "hu_stuff.h"
-#include "../../jheretic/include/soundst.h"
-#include "h_stat.h"
+#include "jheretic.h"
 #include "g_common.h"
 
 // MACROS ------------------------------------------------------------------

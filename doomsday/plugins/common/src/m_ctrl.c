@@ -33,22 +33,9 @@
 # include "d_config.h"
 # include "m_ctrl.h"
 #elif __JHERETIC__
-# include "../../jheretic/include/doomdef.h"
-# include "h_stat.h"
-# include "../../jheretic/include/m_menu.h"
-# include "../../jheretic/include/mn_def.h"
-# include "h_action.h"
-# include "h_config.h"
-# include "../../jheretic/include/g_game.h"
-# include "h_config.h"
-# include "../../jheretic/include/m_ctrl.h"
+# include "jheretic.h"
 #elif __JHEXEN__
-# include "h2def.h"
-# include "mn_def.h"
-# include "h2_actn.h"
-# include "x_config.h"
-# include "hu_stuff.h"
-# include "m_ctrl.h"
+# include "jhexen.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

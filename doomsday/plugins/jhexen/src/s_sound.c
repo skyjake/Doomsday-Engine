@@ -14,11 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "h2def.h"
-#include "r_local.h"
-#include "p_local.h"            // for P_ApproxDistance
-#include "sounds.h"
-#include "x_config.h"
+#include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
 

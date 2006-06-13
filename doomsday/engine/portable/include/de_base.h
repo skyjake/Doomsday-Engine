@@ -30,10 +30,13 @@
 #include "dd_wad.h"
 #include "dd_zone.h"
 #include "dd_main.h"
-#include "dd_winit.h"
 #include "dd_input.h"
 #include "dd_loop.h"
 #include "dd_help.h"
 #include "dd_zip.h"
+
+#ifdef WIN32
+#  include "dd_winit.h"
+#endif
 
 #endif

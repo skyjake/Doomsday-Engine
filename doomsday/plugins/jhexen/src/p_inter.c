@@ -10,14 +10,7 @@
 //**
 //**************************************************************************
 
-#include "h2def.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "x_config.h"
-#include "st_stuff.h"
-#include "hu_msg.h"
-
-#include "am_map.h"
+#include "jhexen.h"
 
 int     echoMsg = 1;
 

@@ -21,12 +21,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h_stat.h"
-#include "h_config.h"
-#include "../../jheretic/include/g_game.h"
-#include "sounds.h"
-#include "hu_stuff.h"
-#include "../../jheretic/include/mn_def.h"
+#include "jheretic.h"
 #include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------

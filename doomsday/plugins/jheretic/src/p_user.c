@@ -6,17 +6,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "../../jheretic/include/doomdef.h"
-#include "h_config.h"
-#include "h_event.h"
-#include "../../jheretic/include/p_local.h"
-#include "h_stat.h"
-#include "sounds.h"
-
+#include "jheretic.h"
 #include "p_view.h"
 #include "r_common.h"
 #include "d_net.h"
-#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

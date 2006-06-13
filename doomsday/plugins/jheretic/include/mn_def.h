@@ -10,7 +10,6 @@
 #endif
 
 #include "hu_stuff.h"
-#include "r_defs.h"
 
 // Macros
 
