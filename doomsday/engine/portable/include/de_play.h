@@ -24,7 +24,7 @@
 #ifndef __DOOMSDAY_PLAYSIM__
 #define __DOOMSDAY_PLAYSIM__
 
-#include "p_data.h"
+#include "p_mapdata.h"
 #include "p_dmu.h"
 #include "p_arch.h"
 #include "p_think.h"

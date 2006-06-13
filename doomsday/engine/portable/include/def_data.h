@@ -29,7 +29,7 @@ extern          "C" {
 #endif
 
 #include "def_share.h"
-#include "p_data.h"
+#include "p_mapdata.h"
 
     // Version 6 does not require semicolons.
 #define DED_VERSION         6

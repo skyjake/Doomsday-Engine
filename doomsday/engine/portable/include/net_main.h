@@ -27,7 +27,7 @@
 #include "dd_share.h"
 #include "sys_network.h"
 #include "net_msg.h"
-#include "p_data.h"
+#include "p_mapdata.h"
 #include "con_decl.h"
 
 #define SV_VERSION			6

@@ -24,7 +24,7 @@
 
 #include "gl_main.h"
 #include "dd_def.h"
-#include "p_data.h"
+#include "p_mapdata.h"
 #include "p_think.h"
 #include "m_nodepile.h"
 #include "def_data.h"

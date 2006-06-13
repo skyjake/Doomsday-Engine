@@ -3,7 +3,7 @@
 #ifndef __DOOMSDAY_PLAY_MAP_DATA_TYPES_H__
 #define __DOOMSDAY_PLAY_MAP_DATA_TYPES_H__
 
-#include "p_data.h"
+#include "p_mapdata.h"
 
 typedef struct vertex_s {
     runtime_mapdata_header_t header;

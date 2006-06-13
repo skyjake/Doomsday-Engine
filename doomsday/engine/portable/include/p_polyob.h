@@ -24,7 +24,7 @@
 #ifndef __DOOMSDAY_POLYOB_H__
 #define __DOOMSDAY_POLYOB_H__
 
-#include "p_data.h"
+#include "p_mapdata.h"
 
 //==========================================================================
 // Data

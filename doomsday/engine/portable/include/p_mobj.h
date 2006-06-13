@@ -24,7 +24,7 @@
 #ifndef __DOOMSDAY_MOBJ_H__
 #define __DOOMSDAY_MOBJ_H__
 
-#include "p_data.h"
+#include "p_mapdata.h"
 
 // This macro can be used to calculate a thing-specific 'random' number.
 #define THING_TO_ID(mo) ( (mo)->thinker.id * 48 + ((unsigned)(mo)/1000) )
