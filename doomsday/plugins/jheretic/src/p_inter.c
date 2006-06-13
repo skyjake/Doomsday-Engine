@@ -7,6 +7,8 @@
 #include "jheretic.h"
 #include "d_net.h"
 #include "dmu_lib.h"
+#include "am_map.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-#include <LZSS.h>
+#include "lzss.h"
 
 #include "de_base.h"
 #include "de_console.h"

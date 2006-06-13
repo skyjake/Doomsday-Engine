@@ -1,4 +1,4 @@
-#import "StartupWindowController.h"
+#import "../include/StartupWindowController.h"
 
 @implementation StartupWindowController
 

@@ -39,4 +39,8 @@
 #  include "dd_winit.h"
 #endif
 
+#ifdef UNIX
+#  include "dd_uinit.h"
+#endif
+
 #endif

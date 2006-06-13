@@ -233,6 +233,8 @@
 		B0C8F4560A3F112400CFA4A5 /* StartupWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = B0C8F4530A3F112400CFA4A5 /* StartupWindowController.h */; };
 		B0C8F81B0A3F380200CFA4A5 /* p_acs.c in Sources */ = {isa = PBXBuildFile; fileRef = B0C8F81A0A3F380200CFA4A5 /* p_acs.c */; };
 		B0C8FB1A0A3F474F00CFA4A5 /* mus2midi.c in Sources */ = {isa = PBXBuildFile; fileRef = B0C8FB190A3F474F00CFA4A5 /* mus2midi.c */; };
+		B0C8FB470A3F4B4E00CFA4A5 /* sys_console.h in Headers */ = {isa = PBXBuildFile; fileRef = B0C8FB460A3F4B4E00CFA4A5 /* sys_console.h */; };
+		B0C8FBEA0A3F4DEF00CFA4A5 /* dd_uinit.h in Headers */ = {isa = PBXBuildFile; fileRef = B0C8FBE90A3F4DEF00CFA4A5 /* dd_uinit.h */; };
 		B0CB90BB078B393C007EE194 /* driver.h in Resources */ = {isa = PBXBuildFile; fileRef = B0CB90BA078B393C007EE194 /* driver.h */; };
 		B0CB90EE078B3DCD007EE194 /* qt.c in Sources */ = {isa = PBXBuildFile; fileRef = B0CB90ED078B3DCD007EE194 /* qt.c */; };
 		B0CB9107078B4FFB007EE194 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0CB9105078B4FFB007EE194 /* Carbon.framework */; };
@@ -1088,7 +1090,7 @@
 		B02AC8B406B41788005824AD /* ui_main.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = ui_main.c; path = ../../engine/portable/src/ui_main.c; sourceTree = SOURCE_ROOT; };
 		B02AC8B506B41788005824AD /* ui_mpi.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = ui_mpi.c; path = ../../engine/portable/src/ui_mpi.c; sourceTree = SOURCE_ROOT; };
 		B02AC8B606B41788005824AD /* ui_panel.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = ui_panel.c; path = ../../engine/portable/src/ui_panel.c; sourceTree = SOURCE_ROOT; };
-		B02AC8B906B41788005824AD /* lzss.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lzss.c; path = ../../engine/unix/src/lzss.c; sourceTree = SOURCE_ROOT; };
+		B02AC8B906B41788005824AD /* lzss.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lzss.c; path = ../../external/lzss/unix/src/lzss.c; sourceTree = SOURCE_ROOT; };
 		B02AC8BA06B41788005824AD /* sys_console.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = sys_console.c; path = ../../engine/unix/src/sys_console.c; sourceTree = SOURCE_ROOT; };
 		B02AC8BB06B41788005824AD /* sys_findfile.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = sys_findfile.c; path = ../../engine/unix/src/sys_findfile.c; sourceTree = SOURCE_ROOT; };
 		B02AC8BC06B41788005824AD /* sys_input.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = sys_input.c; path = ../../engine/unix/src/sys_input.c; sourceTree = SOURCE_ROOT; };
@@ -1153,6 +1155,8 @@
 		B0C8F9660A3F412D00CFA4A5 /* m_menu.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = m_menu.h; path = ../../plugins/jheretic/include/m_menu.h; sourceTree = SOURCE_ROOT; };
 		B0C8FA9A0A3F457000CFA4A5 /* tables.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = tables.h; path = ../../plugins/jheretic/include/tables.h; sourceTree = SOURCE_ROOT; };
 		B0C8FB190A3F474F00CFA4A5 /* mus2midi.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = mus2midi.c; path = ../../plugins/sdlmixer/portable/src/mus2midi.c; sourceTree = SOURCE_ROOT; };
+		B0C8FB460A3F4B4E00CFA4A5 /* sys_console.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = sys_console.h; path = ../../engine/portable/include/sys_console.h; sourceTree = SOURCE_ROOT; };
+		B0C8FBE90A3F4DEF00CFA4A5 /* dd_uinit.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = dd_uinit.h; path = ../../engine/unix/include/dd_uinit.h; sourceTree = SOURCE_ROOT; };
 		B0CB90BA078B393C007EE194 /* driver.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../plugins/sdlmixer/portable/include/driver.h; sourceTree = SOURCE_ROOT; };
 		B0CB90ED078B3DCD007EE194 /* qt.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = qt.c; path = ../../plugins/sdlmixer/mac/src/qt.c; sourceTree = SOURCE_ROOT; };
 		B0CB9105078B4FFB007EE194 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
@@ -1774,6 +1778,8 @@
 		B02AC73506B3FBD4005824AD /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B0C8FBE90A3F4DEF00CFA4A5 /* dd_uinit.h */,
+				B0C8FB460A3F4B4E00CFA4A5 /* sys_console.h */,
 				B0346DC40A10F1B100C8BAB2 /* dd_maptypes.h */,
 				B0346DC50A10F1B100C8BAB2 /* de_edit.h */,
 				B0346DC60A10F1B100C8BAB2 /* edit_bias.h */,
@@ -2326,6 +2332,8 @@
 				B0C8F4540A3F112400CFA4A5 /* DoomsdayRunner.h in Headers */,
 				B0C8F4550A3F112400CFA4A5 /* SDLMain.h in Headers */,
 				B0C8F4560A3F112400CFA4A5 /* StartupWindowController.h in Headers */,
+				B0C8FB470A3F4B4E00CFA4A5 /* sys_console.h in Headers */,
+				B0C8FBEA0A3F4DEF00CFA4A5 /* dd_uinit.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4032,7 +4040,7 @@
 				HEADER_SEARCH_PATHS = (
 					../../engine/unix/include,
 					../../engine/portable/include,
-					../../external/lzss/include,
+					../../external/lzss/portable/include,
 					../../engine/api,
 					/sw/include/libpng12,
 					"$(HOME)/Library/Frameworks/SDL.framework/Headers",

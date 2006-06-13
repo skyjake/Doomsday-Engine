@@ -14,6 +14,7 @@
 
 #include "jheretic.h"
 #include "d_net.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

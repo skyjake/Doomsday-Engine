@@ -6,13 +6,13 @@
 */
 
 #import "SDL.h"
-#import "SDLMain.h"
+#import "../include/SDLMain.h"
 #import <sys/param.h> /* for MAXPATHLEN */
 #import <unistd.h>
 
 #import <AppKit/NSWindowController.h>
-#import "StartupWindowController.h"
-#import "DoomsdayRunner.h"
+#import "../include/StartupWindowController.h"
+#import "../include/DoomsdayRunner.h"
 
 /* Use this flag to determine whether we use SDLMain.nib or not */
 #define		SDL_USE_NIB_FILE	0

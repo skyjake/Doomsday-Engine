@@ -50,7 +50,7 @@
 #include "de_defs.h"
 
 // XGClass.h is actually a part of the engine.
-#include "xgclass.h"
+#include "../../../plugins/common/include/xgclass.h"
 
 // MACROS ------------------------------------------------------------------
 

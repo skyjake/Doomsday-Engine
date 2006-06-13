@@ -1,4 +1,4 @@
-/* DE1: $Id$
+/* DE1: $Id: dd_winit.h 3311 2006-06-11 17:36:34Z skyjake $
  * Copyright (C) 2003, 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,24 +16,14 @@
  */
 
 /*
- * sys_audio.h: OS Specific Audio Drivers
- *
- * Not included in de_system.h because this is only needed by the 
- * Sfx/Mus modules.
+ * dd_uinit.h: Unix Initialization
  */
 
-#ifndef __DOOMSDAY_SYSTEM_AUDIO_H__
-#define __DOOMSDAY_SYSTEM_AUDIO_H__
+#ifndef __DOOMSDAY_UINIT_H__
+#define __DOOMSDAY_UINIT_H__
 
-#include "sys_sfxd.h"
-#include "sys_sfxd_dummy.h"
-#include "sys_sfxd_loader.h"
-#include "sys_musd.h"
+#include "dd_pinit.h"
 
-#ifdef WIN32
-#  include "sys_sfxd_ds.h"
-#  include "sys_musd_win.h"
-#  include "sys_musd_fmod.h"
-#endif
+void            DD_Shutdown(void);
 
 #endif

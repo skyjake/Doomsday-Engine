@@ -12,7 +12,9 @@
 
 #include <math.h>
 
+
 #include "jhexen.h"
+#include "p_player.h"
 #include "p_view.h"
 
 void    P_PlayerNextArtifact(player_t *player);

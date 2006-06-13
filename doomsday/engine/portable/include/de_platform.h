@@ -74,12 +74,12 @@ typedef unsigned int DWORD;
 #define DIR_SEP_STR			"/"
 #define DIR_WRONG_SEP_CHAR 	'\\'
 
-#include "Unix/sys_path.h"
+#include "../../unix/include/sys_path.h"
 
 /*
  * Replacements for the Win32 findfirst/next routines.
  */
-#include "Unix/sys_findfile.h"
+#include "../../unix/include/sys_findfile.h"
 
 #define _A_SUBDIR 	A_SUBDIR
 

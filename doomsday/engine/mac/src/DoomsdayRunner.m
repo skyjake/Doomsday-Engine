@@ -1,5 +1,5 @@
 #import "SDL.h"
-#import "DoomsdayRunner.h"
+#import "../include/DoomsdayRunner.h"
 
 @implementation DoomsdayRunner
 

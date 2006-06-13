@@ -10,6 +10,7 @@
 #include "p_view.h"
 #include "r_common.h"
 #include "d_net.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -50,4 +50,6 @@
 #include "../../jheretic/include/tables.h"
 #include "../../jheretic/include/version.h"
 
+#include "p_saveg.h"
+
 #endif // __JHERETIC_CONVENIENCE_H__

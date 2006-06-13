@@ -48,8 +48,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include "Unix/sys_findfile.h"
-#include "LZSS.h"
+#include "../../../engine/unix/include/sys_findfile.h"
+#include "lzss.h"
 
 // MACROS ------------------------------------------------------------------
 

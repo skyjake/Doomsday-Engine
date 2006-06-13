@@ -26,6 +26,7 @@
 #include "jheretic.h"
 #include "f_infine.h"
 #include "r_common.h"
+#include "x_hair.h"
 
 // MACROS ------------------------------------------------------------------
 

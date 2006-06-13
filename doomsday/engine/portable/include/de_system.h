@@ -35,7 +35,7 @@
 #include "sys_stwin.h"
 
 #ifdef UNIX
-#  include "Unix/sys_path.h"
+#  include "../../unix/include/sys_path.h"
 #endif
 
 #endif
