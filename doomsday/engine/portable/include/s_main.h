@@ -23,7 +23,7 @@
 #define __DOOMSDAY_SOUND_MAIN_H__
 
 #include "con_decl.h"
-#include "p_mobj.h"
+#include "p_object.h"
 #include "def_main.h"
 
 #define SF_RANDOM_SHIFT		0x1	   // Random frequency shift.

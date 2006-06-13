@@ -23,7 +23,7 @@
 #define __DOOMSDAY_SERVER_POOL_H__
 
 #include "dd_share.h"
-#include "p_mobj.h"
+#include "p_object.h"
 
 typedef enum {
     DT_MOBJ,

@@ -25,7 +25,7 @@
 #define __DOOMSDAY_MAP_UTILITIES_H__
 
 #include "m_vector.h"
-#include "p_mobj.h"
+#include "p_object.h"
 
 #define	MAXINTERCEPTS	128
 

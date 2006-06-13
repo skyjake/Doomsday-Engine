@@ -28,7 +28,7 @@
 #include "p_dmu.h"
 #include "p_arch.h"
 #include "p_think.h"
-#include "p_mobj.h"
+#include "p_object.h"
 #include "p_intercept.h"
 #include "p_maputil.h"
 #include "p_bmap.h"

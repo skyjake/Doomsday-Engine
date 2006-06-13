@@ -18,7 +18,7 @@
  */
 
 /*
- * p_data.h: Playsim Data Structures, Macros and Constants
+ * p_mapdata.h: Playsim Data Structures, Macros and Constants
  *
  * These are internal to Doomsday. The games have no direct access to
  * this data.
@@ -28,7 +28,7 @@
 #define __DOOMSDAY_PLAY_DATA_H__
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
-#  error "Attempted to include internal Doomsday p_data.h from a game"
+#  error "Attempted to include internal Doomsday p_mapdata.h from a game"
 #endif
 
 #include "dd_share.h"
