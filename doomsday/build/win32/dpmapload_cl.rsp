@@ -1,0 +1,11 @@
+ ./../../external/glbsp/src/analyze.c
+ ./../../external/glbsp/src/wad.c
+ ./../../external/glbsp/src/util.c
+ ./../../external/glbsp/src/system.c
+ ./../../external/glbsp/src/seg.c
+ ./../../external/glbsp/src/reject.c
+ ./../../external/glbsp/src/node.c
+ ./../../external/glbsp/src/level.c
+ ./../../external/glbsp/src/glbsp.c
+ ./../../external/glbsp/src/blockmap.c
+ ./../../plugins/mapload/src/maploader.c
