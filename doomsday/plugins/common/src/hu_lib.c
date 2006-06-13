@@ -27,9 +27,9 @@
 # include "d_config.h"
 # include "r_local.h"
 #elif __JHERETIC__
-# include "doomdef.h"
+# include "../../jheretic/include/doomdef.h"
 # include "h_config.h"
-# include "r_local.h"
+# include "../../jheretic/include/r_local.h"
 #elif __JHEXEN__
 # include "h2def.h"
 # include "x_config.h"
@@ -41,7 +41,7 @@
 #endif
 
 #include "hu_lib.h"
-#include "../../engine/portable/include/r_draw.h"
+#include "../../../engine/portable/include/r_draw.h"
 
 // MACROS ------------------------------------------------------------------
 

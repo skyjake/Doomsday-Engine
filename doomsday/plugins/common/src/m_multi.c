@@ -32,12 +32,12 @@
 #  include "p_local.h"
 #  include "mn_def.h"
 #elif defined __JHERETIC__
-#  include "doomdef.h"
-#  include "m_menu.h"
+#  include "../../jheretic/include/doomdef.h"
+#  include "../../jheretic/include/m_menu.h"
 #  include "h_config.h"
 #  include "soundst.h"
-#  include "p_local.h"
-#  include "mn_def.h"
+#  include "../../jheretic/include/p_local.h"
+#  include "../../jheretic/include/mn_def.h"
 #elif defined __JHEXEN__
 #  include "h2def.h"
 #  include "x_config.h"

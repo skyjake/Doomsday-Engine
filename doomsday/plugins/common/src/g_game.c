@@ -37,16 +37,16 @@
 #  include <stdio.h>
 #  include <string.h>
 #  include <math.h>
-#  include "doomdef.h"
+#  include "../../jheretic/include/doomdef.h"
 #  include "h_stat.h"
 #  include "h_action.h"
 #  include "h_config.h"
-#  include "m_menu.h"
-#  include "p_local.h"
+#  include "../../jheretic/include/m_menu.h"
+#  include "../../jheretic/include/p_local.h"
 #  include "soundst.h"
-#  include "dstrings.h"
-#  include "g_game.h"
-#  include "st_stuff.h"
+#  include "../../jheretic/include/dstrings.h"
+#  include "../../jheretic/include/g_game.h"
+#  include "../../jheretic/include/st_stuff.h"
 #  include "p_saveg.h"
 #elif __JHEXEN__
 #  include <string.h>

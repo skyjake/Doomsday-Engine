@@ -6,10 +6,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
 #include "h_event.h"
-#include "p_local.h"
+#include "../../jheretic/include/p_local.h"
 #include "h_stat.h"
 #include "sounds.h"
 

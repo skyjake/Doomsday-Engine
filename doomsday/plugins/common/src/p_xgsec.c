@@ -37,8 +37,8 @@
 #  include "p_inter.h"
 #  include "r_defs.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "p_local.h"
+#  include "../../jheretic/include/doomdef.h"
+#  include "../../jheretic/include/p_local.h"
 #  include "h_stat.h"
 #  include "h_config.h"
 #  include "soundst.h"

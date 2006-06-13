@@ -7,11 +7,11 @@
 
 #include <math.h>
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
-#include "p_local.h"
+#include "../../jheretic/include/p_local.h"
 #include "g_common.h"
-#include "soundst.h"
+#include "../../jheretic/include/soundst.h"
 #include "h_stat.h"
 
 #include "dmu_lib.h"

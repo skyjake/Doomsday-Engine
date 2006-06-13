@@ -5,19 +5,19 @@
 
  // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
 #include "d_net.h"
-#include "g_game.h"
-#include "st_stuff.h"
-#include "mn_def.h"
+#include "../../jheretic/include/g_game.h"
+#include "../../jheretic/include/st_stuff.h"
+#include "../../jheretic/include/mn_def.h"
 #include "st_lib.h"
-#include "p_local.h"
-#include "m_cheat.h"
+#include "../../jheretic/include/p_local.h"
+#include "../../jheretic/include/m_cheat.h"
 #include "hu_stuff.h"
 #include "soundst.h"
 #include "h_stat.h"
-#include "dstrings.h"
+#include "../../jheretic/include/dstrings.h"
 
 // MACROS ------------------------------------------------------------------
 

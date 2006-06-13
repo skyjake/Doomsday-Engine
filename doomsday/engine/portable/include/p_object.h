@@ -18,13 +18,17 @@
  */
 
 /*
- * p_mobj.h: Map Objects
+ * p_object.h: Map Objects
  */
 
 #ifndef __DOOMSDAY_MOBJ_H__
 #define __DOOMSDAY_MOBJ_H__
 
 #include "p_mapdata.h"
+
+#if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
+#  error "Attempted to include internal Doomsday p_object.h from a game"
+#endif
 
 // This macro can be used to calculate a thing-specific 'random' number.
 #define THING_TO_ID(mo) ( (mo)->thinker.id * 48 + ((unsigned)(mo)/1000) )

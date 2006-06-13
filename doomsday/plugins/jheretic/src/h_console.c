@@ -23,10 +23,10 @@
 
 #include "h_stat.h"
 #include "h_config.h"
-#include "g_game.h"
+#include "../../jheretic/include/g_game.h"
 #include "sounds.h"
 #include "hu_stuff.h"
-#include "mn_def.h"
+#include "../../jheretic/include/mn_def.h"
 #include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------

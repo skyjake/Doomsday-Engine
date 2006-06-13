@@ -7,7 +7,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_action.h"
 
 // MACROS ------------------------------------------------------------------

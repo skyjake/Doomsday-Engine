@@ -23,12 +23,12 @@
 
 #include <ctype.h>  // has isspace
 #include <math.h>
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_stat.h"
-#include "p_local.h"
+#include "../../jheretic/include/p_local.h"
 #include "r_local.h"
-#include "mn_def.h"
-#include "m_menu.h"
+#include "../../jheretic/include/mn_def.h"
+#include "../../jheretic/include/m_menu.h"
 #include "h_config.h"
 #include "f_infine.h"
 

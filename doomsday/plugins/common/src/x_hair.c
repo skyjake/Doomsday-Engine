@@ -28,7 +28,7 @@
 #  include "doomdef.h"
 #  include "d_config.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
+#  include "../../jheretic/include/doomdef.h"
 #  include "h_config.h"
 #elif __JHEXEN__
 #  include "h2def.h"

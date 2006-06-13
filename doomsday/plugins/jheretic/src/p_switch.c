@@ -4,10 +4,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_stat.h"
-#include "p_local.h"
-#include "g_game.h"
+#include "../../jheretic/include/p_local.h"
+#include "../../jheretic/include/g_game.h"
 #include "sounds.h"
 #include "d_net.h"
 

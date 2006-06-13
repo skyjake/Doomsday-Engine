@@ -3,7 +3,6 @@
 #define __XG_LINETYPE_H__
 
 #include "xgclass.h"
-//#include "p_mobj.h"
 
 // Line events.
 #define XLE_CHAIN   0x001
@@ -128,7 +127,7 @@
 
 #define LTACT_CNT_INFINITE  -1     // Activate infinite number of times.
 
-// Sidedef flags (same as the flags in p_data.h)
+// Sidedef flags (same as the flags in p_mapdata.h)
 #define SDF_BLENDTOPTOMID       0x1
 #define SDF_BLENDMIDTOTOP       0x2
 #define SDF_BLENDMIDTOBOTTOM    0x4

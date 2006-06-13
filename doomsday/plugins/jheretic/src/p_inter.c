@@ -4,14 +4,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
-#include "dstrings.h"
+#include "../../jheretic/include/dstrings.h"
 #include "h_stat.h"
 #include "am_map.h"
 #include "d_net.h"
-#include "p_local.h"
-#include "soundst.h"
+#include "../../jheretic/include/p_local.h"
+#include "../../jheretic/include/soundst.h"
 
 #include "dmu_lib.h"
 #include "p_player.h"

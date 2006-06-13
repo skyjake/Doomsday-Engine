@@ -6,13 +6,13 @@
 
 #include <math.h>
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
 #include "h_type.h"
-#include "p_local.h"
-#include "st_stuff.h"
+#include "../../jheretic/include/p_local.h"
+#include "../../jheretic/include/st_stuff.h"
 #include "hu_stuff.h"
-#include "soundst.h"
+#include "../../jheretic/include/soundst.h"
 #include "h_stat.h"
 #include "g_common.h"
 

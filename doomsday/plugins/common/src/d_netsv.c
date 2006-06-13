@@ -31,12 +31,12 @@
 #  include "m_cheat.h"
 #  include "g_common.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
+#  include "../../jheretic/include/doomdef.h"
 #  include "h_stat.h"
 #  include "sounds.h"
-#  include "p_local.h"
+#  include "../../jheretic/include/p_local.h"
 #  include "h_config.h"
-#  include "m_cheat.h"
+#  include "../../jheretic/include/m_cheat.h"
 #elif __JHEXEN__
 #  include "h2def.h"
 #  include "p_local.h"

@@ -21,10 +21,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_stat.h"
 #include "h_config.h"
-#include "acfnlink.h"
+#include "../../jheretic/include/acfnlink.h"
 
 // MACROS ------------------------------------------------------------------
 

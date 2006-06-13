@@ -21,9 +21,9 @@
 
 #include <stdlib.h>
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
-#include "p_local.h"
+#include "../../jheretic/include/p_local.h"
 
 // MACROS ------------------------------------------------------------------
 

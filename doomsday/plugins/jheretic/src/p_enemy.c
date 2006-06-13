@@ -9,11 +9,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
-#include "p_local.h"
-#include "soundst.h"
-#include "g_game.h"
+#include "../../jheretic/include/p_local.h"
+#include "../../jheretic/include/soundst.h"
+#include "../../jheretic/include/g_game.h"
 
 // State.
 #include "h_stat.h"

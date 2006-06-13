@@ -31,10 +31,10 @@
 #  include "hu_stuff.h"
 #elif __JHERETIC__
 #  include <ctype.h>              // has isspace
-#  include "doomdef.h"
+#  include "../../jheretic/include/doomdef.h"
 #  include "h_stat.h"
-#  include "p_local.h"
-#  include "soundst.h"
+#  include "../../jheretic/include/p_local.h"
+#  include "../../jheretic/include/soundst.h"
 #  include "h_config.h"
 #  include "r_common.h"
 #elif __JHEXEN__

@@ -6,7 +6,7 @@
 #endif
 
 #ifdef __JHERETIC__
-#include "p_local.h"
+#include "../../jheretic/include/p_local.h"
 #endif
 
 #ifdef __JHEXEN__

@@ -33,12 +33,12 @@
 #  include "hu_stuff.h"
 #  include "st_stuff.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
+#  include "../../jheretic/include/doomdef.h"
 #  include "h_stat.h"
-#  include "p_local.h"
+#  include "../../jheretic/include/p_local.h"
 #  include "sounds.h"
-#  include "g_game.h"
-#  include "m_menu.h"
+#  include "../../jheretic/include/g_game.h"
+#  include "../../jheretic/include/m_menu.h"
 #  include "h_config.h"
 #elif __JHEXEN__
 #  include "h2def.h"

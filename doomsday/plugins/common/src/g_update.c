@@ -31,11 +31,11 @@
 # include "dstrings.h"
 # include "s_sound.h"
 #elif __JHERETIC__
-# include "doomdef.h"
+# include "../../jheretic/include/doomdef.h"
 # include "h_stat.h"
-# include "p_local.h"
-# include "m_menu.h"
-# include "dstrings.h"
+# include "../../jheretic/include/p_local.h"
+# include "../../jheretic/include/m_menu.h"
+# include "../../jheretic/include/dstrings.h"
 # include "soundst.h"
 #elif __JHEXEN__
 # include "h2def.h"

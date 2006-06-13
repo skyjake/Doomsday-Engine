@@ -29,10 +29,10 @@
 #include "st_lib.h"
 
 #elif __JHERETIC__
-#include "doomdef.h"
+#include "../../jheretic/include/doomdef.h"
 #include "h_config.h"
-#include "st_stuff.h"
-#include "r_local.h"
+#include "../../jheretic/include/st_stuff.h"
+#include "../../jheretic/include/r_local.h"
 #include "st_lib.h"
 
 #elif __JHEXEN__

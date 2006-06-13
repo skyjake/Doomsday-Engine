@@ -28,12 +28,12 @@
 #  include "p_local.h"
 #  include "m_ctrl.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
+#  include "../../jheretic/include/doomdef.h"
 #  include "h_stat.h"
 #  include "h_config.h"
 #  include "h_player.h"
-#  include "p_local.h"
-#  include "m_ctrl.h"
+#  include "../../jheretic/include/p_local.h"
+#  include "../../jheretic/include/m_ctrl.h"
 #elif __JHEXEN__
 #  include "h2def.h"
 #  include "x_config.h"
