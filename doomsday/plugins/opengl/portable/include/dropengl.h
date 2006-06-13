@@ -41,8 +41,8 @@
 
 #include <string.h>
 
-#include "../doomsday.h"
-#include "../dglib.h"
+#include <doomsday.h>
+#include <dglib.h>
 
 #define USE_MULTITEXTURE    1
 #define MAX_TEX_UNITS       2      // More won't be used.
