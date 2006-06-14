@@ -41,7 +41,7 @@
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
 #define DOOMSDAY_VERSION		10801 // Don't touch; see above.
-#define DOOMSDAY_RELEASE_NAME	"0-beta4"
+#define DOOMSDAY_RELEASE_NAME	"0-beta5"
 #define DOOMSDAY_VERSION_TEXT	"1.9."DOOMSDAY_RELEASE_NAME
 
 #endif
