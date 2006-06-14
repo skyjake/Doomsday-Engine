@@ -903,7 +903,11 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
         break;
 
     case SFXD_SDL_MIXER:
+#ifdef MACOSX
+        if(!(driver = DS_Load("SDLMixer")))
+#else        
         if(!(driver = DS_Load("sdlmixer")))
+#endif            
             return false;
         break;
 
