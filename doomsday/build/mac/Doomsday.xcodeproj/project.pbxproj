@@ -3408,9 +3408,9 @@
 					__JDOOM__,
 				);
 				HEADER_SEARCH_PATHS = (
-					Include/jDoom,
-					Include/Common,
-					Include,
+					../../plugins/jdoom/include,
+					../../plugins/common/include,
+					../../engine/portable/include,
 				);
 				INFOPLIST_FILE = "jDoom-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
@@ -3446,9 +3446,9 @@
 					__JDOOM__,
 				);
 				HEADER_SEARCH_PATHS = (
-					Include/jDoom,
-					Include/Common,
-					Include,
+					../../plugins/jdoom/include,
+					../../plugins/common/include,
+					../../engine/portable/include,
 				);
 				INFOPLIST_FILE = "jDoom-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
