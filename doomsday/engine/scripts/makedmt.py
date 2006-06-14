@@ -50,7 +50,7 @@ public_file.write(banner)
 # Begin writing to the internal header.
 internal_file.write("#ifndef __DOOMSDAY_PLAY_MAP_DATA_TYPES_H__\n")
 internal_file.write("#define __DOOMSDAY_PLAY_MAP_DATA_TYPES_H__\n\n")
-internal_file.write("#include \"p_data.h\"\n\n")
+internal_file.write("#include \"p_mapdata.h\"\n\n")
 
 # Begin writing to the public header.
 public_file.write("#ifndef __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__\n")
