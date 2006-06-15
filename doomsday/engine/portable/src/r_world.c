@@ -2052,11 +2052,11 @@ sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
             return sec;
         link = sin->planeinfo[plane].linked;
 
-#if _DEBUG
+#ifdef _DEBUG
         if(sec == link || startsec == link)
         {
             Con_Error("R_GetLinkedSector: linked to self! (%s)\n",
-                      (plane == PLNFLOOR ? "flr" :
+                      (plane == PLN_FLOOR ? "flr" :
                        plane == PLN_CEILING ? "ceil" : "mid"));
             return startsec;
         }

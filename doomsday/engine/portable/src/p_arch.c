@@ -4482,7 +4482,7 @@ void P_InitMapDataFormats(void)
     }
 }
 
-#if _DEBUG
+#if 0 // needs updating _DEBUG
 static void P_PrintDebugMapData(gamemap_t* map)
 {
     int i;
