@@ -648,7 +648,7 @@ int Cl_ReadPolyDelta(void)
  * Reads a sector delta from the psv_frame2 message buffer and applies it
  * to the world.
  */
-void Cl_ReadSectorDelta2(boolean skip)
+void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
     unsigned short num;
     sector_t *sec;
@@ -660,7 +660,14 @@ void Cl_ReadSectorDelta2(boolean skip)
     num = Msg_ReadShort();
 
     // Flags.
-    df = Msg_ReadShort();
+    if(deltaType == DT_SECTOR_SHORT_FLAGS)
+    {
+        df = Msg_ReadShort();
+    }
+    else
+    {
+        df = Msg_ReadLong();
+    }
 
     if(!skip)
     {
@@ -755,9 +762,9 @@ void Cl_ReadSectorDelta2(boolean skip)
         sec->planes[PLN_CEILING].glowrgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_GLOW)
-        sec->planes[PLN_FLOOR].glow = (float) (Msg_ReadShort() / DDMAXSHORT);
+        sec->planes[PLN_FLOOR].glow = (float) Msg_ReadShort() / DDMAXSHORT;
     if(df & SDF_CEIL_GLOW)
-        sec->planes[PLN_CEILING].glow = (float) (Msg_ReadShort() / DDMAXSHORT);
+        sec->planes[PLN_CEILING].glow = (float) Msg_ReadShort() / DDMAXSHORT;
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)

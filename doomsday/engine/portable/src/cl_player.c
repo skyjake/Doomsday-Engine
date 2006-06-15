@@ -149,14 +149,14 @@ int Cl_ReadPlayerDelta(void)
 
             // Find the new mobj.
             s->cmo = Cl_FindMobj(s->mobjId);
-#if _DEBUG
+#ifdef _DEBUG
             Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjId, old);
-            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.x, s->cmo->mo.y,
-                        s->cmo->mo.z);
+            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX], 
+                        s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
 #endif
             s->cmo->mo.dplayer = pl;
 
-#if _DEBUG
+#ifdef _DEBUG
             Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
                         s->cmo->mo.dplayer - players, s->mobjId);
 #endif
@@ -552,8 +552,8 @@ void Cl_ReadPlayerDelta2(boolean skip)
 #if _DEBUG
             Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
                         old);
-            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.x, s->cmo->mo.y,
-                        s->cmo->mo.z);
+            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX], 
+                        s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
             Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
                         s->cmo->mo.dplayer - players, s->mobjId);
 #endif

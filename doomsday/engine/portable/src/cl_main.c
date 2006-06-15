@@ -67,6 +67,14 @@ boolean clientPaused = false;   // Set by the server.
 void Cl_InitID(void)
 {
     FILE   *file;
+    int     i;
+    
+    if((i = ArgCheckWith("-id", 1)) != 0)
+    {
+        clientID = strtoul(Argv(i + 1), 0, 0);
+        Con_Message("Cl_InitID: Using custom id 0x%08x.\n", clientID);
+        return;
+    }
 
     // Read the client ID number file.
     srand(time(NULL));
@@ -132,7 +140,7 @@ void Cl_AnswerHandshake(handshake_packet_t * pShake)
 
     // Copy the data to a buffer of our own.
     memcpy(&shake, pShake, sizeof(shake));
-    shake.playerMask = SHORT(shake.playerMask);
+    shake.playerMask = USHORT(shake.playerMask);
     shake.gameTime = LONG(shake.gameTime);
 
     // Immediately send an acknowledgement.
@@ -326,6 +334,13 @@ void Cl_GetPackets(void)
             {
                 gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
                                 netBuffer.msg.data, netBuffer.length);
+            }
+            else
+            {
+#ifdef _DEBUG
+                Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
+                           netBuffer.msg.type);
+#endif
             }
         }
     }

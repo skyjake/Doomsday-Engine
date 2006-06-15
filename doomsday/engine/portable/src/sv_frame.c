@@ -453,8 +453,8 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     // Sector number first.
     Msg_WriteShort(delta->delta.id);
 
-    // Flags as a packed short. (Usually only one byte, though.)
-    Msg_WriteShort(df & 0xffff);
+    // Flags.
+    Msg_WriteLong(df);
 
     if(df & SDF_FLOORPIC)
         Msg_WritePackedShort(d->SP_floorpic);

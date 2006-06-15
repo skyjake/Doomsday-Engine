@@ -217,21 +217,31 @@ void NetCl_UpdateGameState(byte *data)
         mobj_t *mo;
 
         mo = pl->plr->mo;
-        P_UnsetThingPosition(mo);
-        mo->pos[VX] = NetCl_ReadShort() << 16;
-        mo->pos[VY] = NetCl_ReadShort() << 16;
-        mo->pos[VZ] = NetCl_ReadShort() << 16;
-        P_SetThingPosition(mo);
-        pl->plr->clAngle = mo->angle = NetCl_ReadShort() << 16;
-        pl->plr->viewz = mo->pos[VZ] + pl->plr->viewheight;
-        // Update floorz and ceilingz.
+        if(mo)
+        {
+            P_UnsetThingPosition(mo);
+            mo->pos[VX] = NetCl_ReadShort() << 16;
+            mo->pos[VY] = NetCl_ReadShort() << 16;
+            mo->pos[VZ] = NetCl_ReadShort() << 16;
+            P_SetThingPosition(mo);
+            pl->plr->clAngle = mo->angle = NetCl_ReadShort() << 16;
+            pl->plr->viewz = mo->pos[VZ] + pl->plr->viewheight;
+            // Update floorz and ceilingz.
 #ifdef __JDOOM__
-        P_CheckPosition2(mo, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+            P_CheckPosition2(mo, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
 #else
-        P_CheckPosition(mo, mo->pos[VX], mo->pos[VY]);
+            P_CheckPosition(mo, mo->pos[VX], mo->pos[VY]);
 #endif
-        mo->floorz = tmfloorz;
-        mo->ceilingz = tmceilingz;
+            mo->floorz = tmfloorz;
+            mo->ceilingz = tmceilingz;        
+        }
+        else // mo == NULL
+        {
+            Con_Message("NetCl_UpdateGameState: Got camera init, but player has no mobj.\n");
+            Con_Message("  Pos=%i,%i,%i Angle=%i\n",
+                        NetCl_ReadShort(), NetCl_ReadShort(), NetCl_ReadShort(),
+                        NetCl_ReadShort());
+        }
     }
 
     // Tell the server we're ready to begin receiving frames.

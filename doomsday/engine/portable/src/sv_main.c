@@ -753,18 +753,19 @@ void Sv_Handshake(int playernum, boolean newplayer)
 
     Con_Printf("Sv_Handshake: Shaking hands with player %i.\n", playernum);
 
-    shake.version = SV_VERSION;
-    shake.yourConsole = playernum;
+    shake.version = SV_VERSION; // byte
+    shake.yourConsole = playernum; // byte
     shake.playerMask = 0;
-    shake.gameTime = gameTime * 100;
+    shake.gameTime = LONG(gameTime * 100);
     for(i = 0; i < MAXPLAYERS; i++)
         if(clients[i].connected)
             shake.playerMask |= 1 << i;
-    Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake,
+    shake.playerMask = USHORT(shake.playerMask);
+    Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake, 
                    sizeof(shake));
 
 #if _DEBUG
-    Con_Message("Sv_Handshake: plmask=%x\n", shake.playerMask);
+    Con_Message("Sv_Handshake: plmask=%x\n", USHORT(shake.playerMask));
 #endif
 
     if(newplayer)

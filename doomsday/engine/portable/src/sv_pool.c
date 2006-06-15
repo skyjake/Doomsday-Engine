@@ -2606,7 +2606,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
     float   baseScores[NUM_DELTA_TYPES] = {
         1000,                   // DT_MOBJ
         1000,                   // DT_PLAYER
-        2000,                   // DT_SECTOR
+        2000,                   // DT_SECTOR_SHORT_FLAGS
         800,                    // DT_SIDE
         2000,                   // DT_POLY
         0,                      // DT_LUMP
@@ -2614,6 +2614,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
         3000,                   // DT_MOBJ_SOUND
         5000,                   // DT_SECTOR_SOUND
         5000,                   // DT_POLY_SOUND
+        2000,                   // DT_SECTOR
     };
 
     float   score, distance, size;

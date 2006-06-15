@@ -165,17 +165,17 @@ void Cl_Frame2Received(int packetType)
 	if(packetType == psv_first_frame2)
 	{
 		gotFirstFrame = true;
-		/*#ifdef _DEBUG
-		   Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set);
-		   #endif */
+#ifdef _DEBUG
+        VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
+#endif 
 	}
 	else if(!gotFirstFrame)
 	{
 		// Just ignore. If this was a legitimate frame, the server will
 		// send it again when it notices no ack is coming.
-		/*#ifdef _DEBUG
-		   Con_Printf("==> Ignored set%i\n", set);
-		   #endif */
+#ifdef _DEBUG
+		VERBOSE( Con_Printf("==> Ignored set %i\n", set) );
+#endif 
 		return;
 	}
 
@@ -186,15 +186,21 @@ void Cl_Frame2Received(int packetType)
 		// It isn't yet in the history, so add it there.
 		Cl_HistoryAdd(set);
 
+        VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
+
 		// Read and process the message.
 		while(!Msg_End())
 		{
 			deltaType = Msg_ReadByte();
 			skip = false;
+            
+            VERBOSE2( Con_Printf("Received delta %i.\n", deltaType & ~DT_RESENT) );
 
 			// Is this a resent delta?
 			if(deltaType & DT_RESENT)
 			{
+                VERBOSE2( Con_Printf("  This is a resent delta.\n") );
+                
 				deltaType &= ~DT_RESENT;
 
 				// Read the set number this was originally in.
@@ -225,6 +231,10 @@ void Cl_Frame2Received(int packetType)
 				resendAcks[numResendAcks++] = resend;
 				Cl_ResendHistoryAdd(resend);
 			}
+            else
+            {
+                VERBOSE2( Con_Printf("  Not resent.\n") );
+            }
 
 			switch (deltaType)
 			{
@@ -247,8 +257,9 @@ void Cl_Frame2Received(int packetType)
 				Cl_ReadPlayerDelta2(skip);
 				break;
 
-			case DT_SECTOR:
-				Cl_ReadSectorDelta2(skip);
+			case DT_SECTOR_SHORT_FLAGS: // Old format.
+            case DT_SECTOR:
+				Cl_ReadSectorDelta2(deltaType, skip);
 				break;
 
 			case DT_SIDE:
@@ -300,6 +311,8 @@ void Cl_Frame2Received(int packetType)
 
 /*
  * Read and ack a psv_frame delta set.
+ *
+ * THIS FUNCTION IS OBSOLETE (psv_frame is no longer used)
  */
 void Cl_ReadDeltaSet(void)
 {
@@ -316,7 +329,7 @@ void Cl_ReadDeltaSet(void)
 		while(Cl_ReadPlayerDelta());
 	if(present & BIT(DT_LUMP))
 		while(Cl_ReadLumpDelta());
-	if(present & BIT(DT_SECTOR))
+	if(present & BIT(DT_SECTOR_SHORT_FLAGS))
 		while(Cl_ReadSectorDelta());
 	if(present & BIT(DT_SIDE))
 		while(Cl_ReadSideDelta());

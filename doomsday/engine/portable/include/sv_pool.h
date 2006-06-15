@@ -26,21 +26,25 @@
 #include "p_object.h"
 
 typedef enum {
-    DT_MOBJ,
-    DT_PLAYER,
-    DT_SECTOR,
-    DT_SIDE,
-    DT_POLY,
-    DT_LUMP,
-    DT_SOUND,                      // No emitter
-    DT_MOBJ_SOUND,
-    DT_SECTOR_SOUND,
-    DT_POLY_SOUND,
+    DT_MOBJ = 0,
+    DT_PLAYER = 1,
+    DT_SECTOR_SHORT_FLAGS = 2,     // 2 bytes for flags.
+    DT_SIDE = 3,
+    DT_POLY = 4,
+    DT_LUMP = 5, 
+    DT_SOUND = 6,                  // No emitter
+    DT_MOBJ_SOUND = 7,
+    DT_SECTOR_SOUND = 8,
+    DT_POLY_SOUND = 9,
+    DT_SECTOR = 10,                // 4 bytes for flags.
+
     NUM_DELTA_TYPES,
 
     // Special types: (only in the psv_frame2 packet)
-    DT_NULL_MOBJ,                  // Mobj was removed (just type and ID).
-    DT_CREATE_MOBJ                 // Regular DT_MOBJ, but the mobj was just created.
+    // These will cause a bit of a problem if new delta types need to be added,
+    // as the numbers 11 and 12 will be reserved.
+    DT_NULL_MOBJ = 11,             // Mobj was removed (just type and ID).
+    DT_CREATE_MOBJ = 12            // Regular DT_MOBJ, but the mobj was just created.
 } deltatype_t;
 
 // OR'd with the type number when resending Unacked deltas.
