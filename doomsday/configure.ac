@@ -121,30 +121,30 @@ AC_CONFIG_SUBDIRS(libltdl)
 ################################################################################
 # Check for OpenGL.
 AC_CHECK_LIB([GL], [glGetIntegerv],,
-[AC_MSG_ERROR("libGL not found. On Ubuntu install libgl1-mesa-dev.")])
+[AC_MSG_ERROR("*** libGL not found. On Ubuntu install libgl1-mesa-dev.")])
 
 # Check for GLU
 AC_CHECK_LIB([GLU], [gluBuild2DMipmaps],,
-[AC_MSG_ERROR("libGLU not found. On Ubuntu install libglu1-mesa-dev.")])
+[AC_MSG_ERROR("*** libGLU not found. On Ubuntu install libglu1-mesa-dev.")])
 
 # Check for SDL 1.2.0 or greater
 AC_CHECK_LIB([SDL], [SDL_Init],,
-[AC_MSG_ERROR("SDL not found. On Ubuntu install libsdl1.2-dev.")])
+[AC_MSG_ERROR("*** SDL not found. On Ubuntu install libsdl1.2-dev.")])
 SDL_VERSION=1.2.0
 AM_PATH_SDL($SDL_VERSION,:,
 AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
 
 # Check for SDL Mixer.
 AC_CHECK_LIB([SDL_mixer], [Mix_OpenAudio],,
-[AC_MSG_ERROR("SDL Mixer not found. On Ubuntu install libsdl-mixer1.2-dev.")])
+[AC_MSG_ERROR("*** SDL Mixer not found. On Ubuntu install libsdl-mixer1.2-dev.")])
 
 # Check for SDL Net
 AC_CHECK_LIB([SDL_net], [SDLNet_UDP_Send],,
-[AC_MSG_ERROR("SDL Net not found. On Ubuntu install libsdl-net1.2-dev.")])
+[AC_MSG_ERROR("*** SDL Net not found. On Ubuntu install libsdl-net1.2-dev.")])
 
 # Needed on *NIX
 AC_CHECK_LIB([X11], [XOpenDisplay],,
-[AC_MSG_ERROR("X11 not found. On Ubuntu install libx11-dev.")])
+[AC_MSG_ERROR("*** X11 not found. On Ubuntu install libx11-dev.")])
 
 # What are we using that needs this ?
 # FIXME: Replace `main' with a function in `-lXext':
@@ -155,11 +155,11 @@ AC_CHECK_LIB([ncurses], [main])
 
 # Check for OpenAL
 AC_CHECK_LIB([openal], [alSourcePlay],,
-[AC_MSG_ERROR("OpenAL not found. On Ubuntu install libopenal-dev.")])
+[AC_MSG_ERROR("*** OpenAL not found. On Ubuntu install libopenal-dev.")])
 
 # Check for libPNG
 AC_CHECK_LIB([png], [png_create_read_struct],,
-[AC_MSG_ERROR("libPNG not found. On Ubuntu install libpng-dev.")])
+[AC_MSG_ERROR("*** libPNG not found. On Ubuntu install libpng-dev.")])
 
 # FIXME: Replace `main' with a function in `-lz':
 AC_CHECK_LIB([z], [main])
@@ -169,7 +169,30 @@ AC_CHECK_LIB([z], [main])
 ################################################################################
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([argz.h arpa/inet.h fcntl.h limits.h malloc.h netdb.h netinet/in.h SDL/SDL.h SDL/SDL_opengl.h SDL/SDL_mixer.h SDL/SDL_net.h stddef.h stdlib.h string.h strings.h sys/socket.h unistd.h])
+
+AC_CHECK_HEADER([SDL/SDL.h],
+		[],
+		[AC_MSG_ERROR([*** SDL include files not found!
+You should install the SDL development package.])])
+
+AC_CHECK_HEADER([SDL/SDL_opengl.h],
+		[],
+		[AC_MSG_ERROR([*** SDL_opengl include files not found!
+You should install the SDL development package.])])
+
+AC_CHECK_HEADER([SDL/SDL_mixer.h],
+		[],
+		[AC_MSG_ERROR([*** SDL_mixer include files not found!
+You should install the SDL Mixer development package.])])
+
+AC_CHECK_HEADER([SDL/SDL_net.h],
+		[],
+		[AC_MSG_ERROR([*** SDL_net include files not found!
+You should install the SDL Net development package.])])
+
+
+
+AC_CHECK_HEADERS([argz.h arpa/inet.h fcntl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdlib.h string.h strings.h sys/socket.h unistd.h])
 
 ################################################################################
 ## Required typedefs, structures, and compiler characteristics.
@@ -182,6 +205,66 @@ AC_TYPE_SIZE_T
 AC_STRUCT_TM
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
+
+################################################################################
+# Check for OGG support in SDL_mixer                                           
+################################################################################
+
+if test -e "build/unix/tests/doom_intro.ogg" ; then
+        AC_LANG([C])
+	AC_MSG_CHECKING([for OGG support in SDL_mixer])
+
+        CFLAGS="$CFLAGS $SDL_CFLAGS"
+	LIBS="$LIBS $SDL_LIBS $SDL_MIXER_LIBS"
+
+	ac_link="$LDPREFIX $ac_link"
+        AC_RUN_IFELSE([AC_LANG_SOURCE([
+	#include <SDL_mixer.h>
+        #include <stdlib.h>
+
+	int main(int argc, char **argv)
+        {
+	    Mix_Music* music = Mix_LoadMUS("build/unix/tests/doom_intro.ogg");
+	    if (music == NULL)
+		exit(1);
+	    exit(0);
+        }
+	])],
+	[AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)]
+	[AC_MSG_ERROR([*** SDL_mixer has no OGG support! You need SDL_mixer with OGG support])],
+	[AC_MSG_RESULT([not tested in cross-compiling])])
+fi
+
+################################################################################
+# Check for MP3 support in SDL_mixer                                           
+################################################################################
+
+if test -e "build/unix/tests/doom_intro.mp3" ; then
+        AC_LANG([C])
+	AC_MSG_CHECKING([for MP3 support in SDL_mixer])
+
+        CFLAGS="$CFLAGS $SDL_CFLAGS"
+	LIBS="$LIBS $SDL_LIBS $SDL_MIXER_LIBS"
+
+	ac_link="$LDPREFIX $ac_link"
+        AC_RUN_IFELSE([AC_LANG_SOURCE([
+	#include <SDL_mixer.h>
+        #include <stdlib.h>
+
+	int main(int argc, char **argv)
+        {
+	    Mix_Music* music = Mix_LoadMUS("build/unix/tests/doom_intro.mp3");
+	    if (music == NULL)
+		exit(1);
+	    exit(0);
+        }
+	])],
+	[AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)]
+	[AC_MSG_ERROR([*** SDL_mixer has no MP3 support! You need SDL_mixer with MP3 support])],
+	[AC_MSG_RESULT([not tested in cross-compiling])])
+fi
 
 ################################################################################
 ## Required library functions.
@@ -214,27 +297,3 @@ AC_CONFIG_FILES([Makefile
 		external/lzss/unix/src/Makefile
 		external/glbsp/src/Makefile])
 AC_OUTPUT
-
-################################################################################
-## Display Configure Status
-################################################################################
-##AC_MSG_NOTICE([========================================])
-##AC_MSG_NOTICE([     Deng DENG_VERSION Configure Status])
-##AC_MSG_NOTICE([========================================])
-##
-##AC_MSG_CHECKING([build system])
-##AC_MSG_RESULT([$build])
-##AC_MSG_CHECKING([target system])
-##AC_MSG_RESULT([$target])
-##AC_MSG_CHECKING([CFLAGS])
-##AC_MSG_RESULT([$CFLAGS])
-##AC_MSG_CHECKING([using assembler FixedMul and FixedDiv2 routines])
-##AC_MSG_RESULT([$fixedasm])
-##AC_MSG_CHECKING([building jDoom])
-##AC_MSG_RESULT([$buildjdoom])
-##AC_MSG_CHECKING([building jHeretic])
-##AC_MSG_RESULT([$buildjheretic])
-##AC_MSG_CHECKING([building jHexen])
-##AC_MSG_RESULT([$buildjhexen])
-
-##AC_MSG_NOTICE([========================================])

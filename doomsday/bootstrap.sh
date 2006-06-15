@@ -4,7 +4,6 @@
 
 test -w config.cache && rm config.cache
 test -w config.cross.cache && rm config.cross.cache
-libtoolize -c -f --ltdl --automake
-cp ./libltdl/install-sh .
+libtoolize -c --ltdl --automake
 autoreconf -i
 echo " You are now ready to run \"cd ./build/unix; ../../configure && make \" "
