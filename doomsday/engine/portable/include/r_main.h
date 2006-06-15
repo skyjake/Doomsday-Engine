@@ -41,7 +41,6 @@ extern int      framecount;
 extern int      viewangleoffset;
 extern int      extralight;
 extern fixed_t  viewcos, viewsin;
-extern int      skyflatnum;
 extern int      rend_info_tris;
 
 void            R_Register(void);

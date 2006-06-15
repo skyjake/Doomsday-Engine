@@ -851,6 +851,8 @@ void R_PrecacheLevel(void)
     int     i, j, k, lump, mocount;
     thinker_t *th;
     spriteframe_t *sf;
+    sector_t *sec;
+    side_t *side;
     float   starttime;
 
     // Don't precache when playing demo.
@@ -864,28 +866,48 @@ void R_PrecacheLevel(void)
 
     starttime = Sys_GetSeconds();
 
-    // Precache flats.
-    for(i = 0; i < numsectors; i++)
-    {
-        for(j = 0; j < NUM_PLANES; ++j)
-            R_PrecacheFlat(SECTOR_PTR(i)->planes[j].pic);
-
-        if(i % SAFEDIV(numsectors, 10) == 0)
-            Con_Progress(1, PBARF_DONTSHOW);
-    }
-
     // Precache textures.
     texturepresent = M_Malloc(numtextures);
     memset(texturepresent, 0, numtextures);
 
     for(i = 0; i < numsides; i++)
     {
-        if(SIDE_PTR(i)->toptexture != -1)
-            texturepresent[SIDE_PTR(i)->toptexture] = 1;
-        if(SIDE_PTR(i)->midtexture != -1)
-            texturepresent[SIDE_PTR(i)->midtexture] = 1;
-        if(SIDE_PTR(i)->bottomtexture != -1)
-            texturepresent[SIDE_PTR(i)->bottomtexture] = 1;
+        side = SIDE_PTR(i);
+
+        if(side->top.texture != -1)
+            if(side->top.isflat)
+                R_PrecacheFlat(side->top.texture);
+            else
+                texturepresent[side->top.texture] = 1;
+
+        if(side->middle.texture != -1)
+            if(side->middle.isflat)
+                R_PrecacheFlat(side->middle.texture);
+            else
+                texturepresent[side->middle.texture] = 1;
+
+        if(side->bottom.texture != -1)
+            if(side->bottom.isflat)
+                R_PrecacheFlat(side->bottom.texture);
+            else
+                texturepresent[side->bottom.texture] = 1;
+    }
+
+    // Precache flats.
+    for(i = 0; i < numsectors; i++)
+    {
+        sec = SECTOR_PTR(i);
+
+        for(j = 0; j < NUM_PLANES; ++j)
+        {
+            if(sec->planes[j].surface.isflat)
+                R_PrecacheFlat(sec->planes[j].surface.texture);
+            else
+                texturepresent[sec->planes[j].surface.texture] = 1;
+        }
+
+        if(i % SAFEDIV(numsectors, 10) == 0)
+            Con_Progress(1, PBARF_DONTSHOW);
     }
 
     // FIXME: Precache sky textures!

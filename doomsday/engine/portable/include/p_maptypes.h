@@ -38,48 +38,59 @@ typedef struct subsector_s {
     fvertex_t           midpoint;      // Center of vertices.
 } subsector_t;
 
+typedef struct surface_s {
+    runtime_mapdata_header_t header;
+    int                 flags;         // SUF_ flags
+    short               texture;
+    boolean             isflat;        // true if current texture is a flat
+    int                 texmove[2];    // Texture movement X and Y.
+    byte                rgba[4];       // Surface color tint
+} surface_t;
+
 typedef struct plane_s {
     runtime_mapdata_header_t header;
     fixed_t             height;        // Current height.
+    surface_t           surface;
     float               normal[3];     // Plane normal.
-    short               pic;           // Texture.
     float               offx;          // Texture x offset.
     float               offy;          // Texture y offset.
-    byte                rgb[3];        // Surface color tint.
     float               glow;          // Glow amount.
     byte                glowrgb[3];    // Glow color.
     int                 target;        // Target height.
     int                 speed;         // Move speed.
-    int                 texmove[2];    // Texture movement X and Y.
     degenmobj_t         soundorg;      // Sound origin for plane.
     struct sector_s*    sector;        // Owner of the plane (temp)
 } plane_t;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.
+#define SP_ceilsurface          planes[PLN_CEILING].surface
 #define SP_ceilheight           planes[PLN_CEILING].height
 #define SP_ceilnormal           planes[PLN_CEILING].normal
-#define SP_ceilpic              planes[PLN_CEILING].pic
+#define SP_ceilpic              planes[PLN_CEILING].surface.texture
+#define SP_ceilisflat           planes[PLN_CEILING].surface.isflat
 #define SP_ceiloffx             planes[PLN_CEILING].offx
 #define SP_ceiloffy             planes[PLN_CEILING].offy
-#define SP_ceilrgb              planes[PLN_CEILING].rgb
+#define SP_ceilrgb              planes[PLN_CEILING].surface.rgba
 #define SP_ceilglow             planes[PLN_CEILING].glow
 #define SP_ceilglowrgb          planes[PLN_CEILING].glowrgb
 #define SP_ceiltarget           planes[PLN_CEILING].target
 #define SP_ceilspeed            planes[PLN_CEILING].speed
-#define SP_ceiltexmove          planes[PLN_CEILING].texmove
+#define SP_ceiltexmove          planes[PLN_CEILING].surface.texmove
 #define SP_ceilsoundorg         planes[PLN_CEILING].soundorg
 
+#define SP_floorsurface         planes[PLN_FLOOR].surface
 #define SP_floorheight          planes[PLN_FLOOR].height
 #define SP_floornormal          planes[PLN_FLOOR].normal
-#define SP_floorpic             planes[PLN_FLOOR].pic
+#define SP_floorpic             planes[PLN_FLOOR].surface.texture
+#define SP_floorisflat          planes[PLN_FLOOR].surface.isflat
 #define SP_flooroffx            planes[PLN_FLOOR].offx
 #define SP_flooroffy            planes[PLN_FLOOR].offy
-#define SP_floorrgb             planes[PLN_FLOOR].rgb
+#define SP_floorrgb             planes[PLN_FLOOR].surface.rgba
 #define SP_floorglow            planes[PLN_FLOOR].glow
 #define SP_floorglowrgb         planes[PLN_FLOOR].glowrgb
 #define SP_floortarget          planes[PLN_FLOOR].target
 #define SP_floorspeed           planes[PLN_FLOOR].speed
-#define SP_floortexmove         planes[PLN_FLOOR].texmove
+#define SP_floortexmove         planes[PLN_FLOOR].surface.texmove
 #define SP_floorsoundorg        planes[PLN_FLOOR].soundorg
 
 typedef struct sector_s {
@@ -103,12 +114,9 @@ typedef struct side_s {
     runtime_mapdata_header_t header;
     fixed_t             textureoffset; // Add this to the calculated texture col.
     fixed_t             rowoffset;     // Add this to the calculated texture top.
-    short               toptexture;
-    short               bottomtexture;
-    short               midtexture;
-    byte                toprgb[3];
-    byte                bottomrgb[3];
-    byte                midrgba[4];
+    surface_t           top;
+    surface_t           middle;
+    surface_t           bottom;
     blendmode_t         blendmode;
     struct sector_s*    sector;
     short               flags;

@@ -241,19 +241,9 @@ typedef struct {
 } playerdelta_t;
 
 typedef struct {
-    short           floorPic;
-    short           ceilingPic;
     short           lightlevel;
     byte            rgb[3];
     plane_t         planes[2];
-    int             floorHeight;
-    int             ceilingHeight;
-    byte            floorrgb[3];
-    byte            ceilingrgb[3];
-    byte            floorglowrgb[3];
-    byte            ceilingglowrgb[3];
-    float           floorglow;
-    float           ceilingglow;
 } dt_sector_t;
 
 typedef struct {
@@ -266,13 +256,10 @@ typedef struct {
 } lumpdelta_t;
 
 typedef struct {
-    short           topTexture;
-    short           midTexture;
-    short           bottomTexture;
+    surface_t       top;
+    surface_t       middle;
+    surface_t       bottom;
     byte            lineFlags;     // note: only a byte!
-    byte            toprgb[3];
-    byte            midrgba[4];
-    byte            bottomrgb[3];
     int             blendmode;
     byte            flags;         // Sidedef flags.
 } dt_side_t;

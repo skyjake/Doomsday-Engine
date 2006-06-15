@@ -1297,12 +1297,12 @@ static void FinalizeMapData(gamemap_t* map)
     {
         side = &map->sides[i];
         // Make sure the texture references are good.
-        if(side->toptexture >= numtextures)
-            side->toptexture = 0;
-        if(side->midtexture >= numtextures)
-            side->midtexture = 0;
-        if(side->bottomtexture >= numtextures)
-            side->bottomtexture = 0;
+        if(!side->top.isflat && side->top.texture >= numtextures)
+            side->top.texture = 0;
+        if(!side->middle.isflat && side->middle.texture >= numtextures)
+            side->middle.texture = 0;
+        if(!side->bottom.isflat && side->bottom.texture >= numtextures)
+            side->bottom.texture = 0;
     }
 
     // Set target heights of all planes.
@@ -1677,9 +1677,9 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
 
                 side->header.type = DMU_SIDE;
 
-                memset(side->toprgb, 0xff, 3);
-                memset(side->midrgba, 0xff, 4);
-                memset(side->bottomrgb, 0xff, 3);
+                memset(side->top.rgba, 0xff, 3);
+                memset(side->middle.rgba, 0xff, 4);
+                memset(side->bottom.rgba, 0xff, 3);
                 side->blendmode = BM_NORMAL;
             }
             break;
@@ -1764,7 +1764,8 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                 {
                     sec->planes[j].header.type = DMU_PLANE;
 
-                    memset(sec->planes[j].rgb, 0xff, 3);
+                    sec->planes[j].surface.isflat = true;
+                    memset(sec->planes[j].surface.rgba, 0xff, 3);
                     memset(sec->planes[j].glowrgb, 0xff, 3);
                     sec->planes[j].glow = 0;
 
@@ -2381,15 +2382,15 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
             break;
 
         case DAM_TOP_TEXTURE:
-            ReadValue(map, DMT_SIDE_TOPTEXTURE, &p->toptexture, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->top.texture, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_MIDDLE_TEXTURE:
-            ReadValue(map, DMT_SIDE_MIDTEXTURE, &p->midtexture, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->middle.texture, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BOTTOM_TEXTURE:
-            ReadValue(map, DMT_SIDE_BOTTOMTEXTURE, &p->bottomtexture, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->bottom.texture, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_FRONT_SECTOR:
@@ -2419,11 +2420,11 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
             break;
 
         case DAM_FLOOR_TEXTURE:
-            ReadValue(map, DMT_PLANE_PIC, &p->planes[PLN_FLOOR].pic, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->planes[PLN_FLOOR].surface.texture, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_CEILING_TEXTURE:
-            ReadValue(map, DMT_PLANE_PIC, &p->planes[PLN_CEILING].pic, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->planes[PLN_CEILING].surface.texture, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_LIGHT_LEVEL:
@@ -2944,14 +2945,20 @@ static void P_ReadSideDefTextures(gamemap_t* map, int lump)
     for(i = 0; i < map->numsides; i++, msd++)
     {
         sd = &map->sides[i];
-        sd->toptexture = P_CheckTexture(msd->toptexture, false, DAM_SIDE,
+        sd->top.texture = P_CheckTexture(msd->toptexture, false, DAM_SIDE,
                                         i, DAM_TOP_TEXTURE);
+        sd->top.isflat = false;
+        sd->top.flags = 0;
 
-        sd->bottomtexture = P_CheckTexture(msd->bottomtexture, false, DAM_SIDE,
+        sd->bottom.texture = P_CheckTexture(msd->bottomtexture, false, DAM_SIDE,
                                            i, DAM_BOTTOM_TEXTURE);
+        sd->bottom.isflat = false;
+        sd->bottom.flags = 0;
 
-        sd->midtexture = P_CheckTexture(msd->midtexture, false, DAM_SIDE,
+        sd->middle.texture = P_CheckTexture(msd->midtexture, false, DAM_SIDE,
                                         i, DAM_MIDDLE_TEXTURE);
+        sd->middle.isflat = false;
+        sd->middle.flags = 0;
     }
 
     Z_Free(data);

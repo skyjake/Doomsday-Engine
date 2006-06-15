@@ -90,6 +90,7 @@ extern HINSTANCE hInstDGL;
 #endif
 
 extern int renderTextures;
+extern int skyflatnum;
 extern char skyflatname[9];
 extern fixed_t mapgravity;
 extern int gotframe;

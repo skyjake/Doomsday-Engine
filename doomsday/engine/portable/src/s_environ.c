@@ -139,18 +139,18 @@ void S_CalcSectorReverbs(void)
         seg = (seg_t *) segs;
         for(j = 0; j < sub->linecount; j++, seg++)
         {
-            if(!seg->linedef || !seg->sidedef || !seg->sidedef->midtexture)
+            if(!seg->linedef || !seg->sidedef || !seg->sidedef->middle.texture)
                 continue;
             total += seg->length;
             // The texture of the seg determines its type.
-            if(seg->sidedef->midtexture == -1)
+            if(seg->sidedef->middle.texture == -1)
             {
                 type = TEXTYPE_WOOD;
             }
             else
                 type =
                     S_TextureTypeForName(R_TextureNameForNum
-                                         (seg->sidedef->midtexture));
+                                         (seg->sidedef->middle.texture));
             switch (type)
             {
             case TEXTYPE_METAL:
@@ -295,7 +295,7 @@ void S_CalcSectorReverbs(void)
         if(sec->reverb[SRD_SPACE] > .99)
             sec->reverb[SRD_SPACE] = .99f;
 
-        if(sec->planes[PLN_CEILING].pic == skyflatnum)   // An open sector?
+        if(R_IsSkySurface(&sec->SP_ceilsurface))   // An open sector?
         {
             // An open sector can still be small. In that case the reverb
             // is diminished a bit.

@@ -752,11 +752,11 @@ void LG_Update(void)
             color = R_GetSectorLightColor(sector);
             height = (sector->SP_ceilheight - sector->SP_floorheight) >> FRACBITS;
 
-            if(sector->SP_ceilpic == skyflatnum)
+            if(R_IsSkySurface(&sector->SP_ceilsurface))
             {
                 bias = -height / 6;
             }
-            else if(sector->SP_floorpic == skyflatnum)
+            else if(R_IsSkySurface(&sector->SP_floorsurface))
             {
                 bias = height / 6;
             }

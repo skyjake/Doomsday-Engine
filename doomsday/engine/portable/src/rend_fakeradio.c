@@ -143,8 +143,8 @@ void Rend_RadioInitForSector(sector_t *sector)
  */
 boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
 {
-    return !(sector->planes[plane].pic <= 0 || sector->planes[plane].glow ||
-             R_IsSkyFlat(sector->planes[plane].pic));
+    return !(sector->planes[plane].surface.texture <= 0 || sector->planes[plane].glow ||
+             R_IsSkySurface(&sector->planes[plane].surface));
 }
 
 /*
@@ -188,14 +188,14 @@ boolean Rend_DoesMidTextureFillGap(line_t* line, boolean frontside)
         side_t* side = (frontside ? SIDE_PTR(line->sidenum[0]) :
                         SIDE_PTR(line->sidenum[1]));
 
-        if(side->midtexture != 0)
+        if(side->middle.texture != 0)
         {
             boolean masked;
             int     texheight;
 
-            if(side->midtexture > 0)
+            if(side->middle.texture > 0)
             {
-                GL_GetTextureInfo(side->midtexture);
+                GL_GetTextureInfo(side->middle.texture);
                 masked = texmask;
                 texheight = texh;
             }
@@ -205,7 +205,7 @@ boolean Rend_DoesMidTextureFillGap(line_t* line, boolean frontside)
                 texheight = 64;
             }
 
-            if(!side->blendmode && side->midrgba[3] == 255 && !masked)
+            if(!side->blendmode && side->middle.rgba[3] == 255 && !masked)
             {
                 float openTop, gapTop;
                 float openBottom, gapBottom;
@@ -1209,7 +1209,7 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
         bz = -bInfo->planeinfo[PLN_CEILING].visheight;
         bhz = -bInfo->planeinfo[PLN_FLOOR].visheight;
 
-        if(fz < bz && fside->toptexture == 0)
+        if(fz < bz && fside->top.texture == 0)
             return 2; // Consider it fully open.
     }
     else
@@ -1222,7 +1222,7 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
         // different - never consider this edge for a plane shadow.
         // TODO: does not consider any replacements we might make in
         // Rend_RenderWallSeg to fix the missing texture...
-        if(fz < bz && fside->bottomtexture == 0)
+        if(fz < bz && fside->bottom.texture == 0)
             return 2; // Consider it fully open.
     }
 

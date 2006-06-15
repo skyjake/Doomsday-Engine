@@ -447,8 +447,8 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
         if(backsec)
         {
             // Check the middle texture's mask status.
-            if(sdef->midtexture > 0)
-                GL_GetTextureInfo(sdef->midtexture);
+            if(sdef->middle.texture > 0)
+                GL_GetTextureInfo(sdef->middle.texture);
             /*if(texmask)
                {
                // We can't light masked textures.
@@ -708,8 +708,8 @@ void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
         // Is there a middle?
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
         {
-            if(sdef->midtexture > 0)
-                GL_GetTextureInfo(sdef->midtexture);
+            if(sdef->middle.texture > 0)
+                GL_GetTextureInfo(sdef->middle.texture);
 
             if(!texmask)
             {
@@ -1467,15 +1467,18 @@ boolean DL_LightIteratorFunc(lumobj_t * lum, flatitervars_t * fi)
  * Return the texture name of the decoration light map for the flat.
  * (Zero if no such texture exists.)
  */
-DGLuint DL_GetFlatDecorLightMap(int pic)
+#if 0 // Unused
+DGLuint DL_GetFlatDecorLightMap(surface_t *surface)
 {
     ded_decor_t *decor;
 
-    if(pic == skyflatnum)
+    if(R_IsSkySurface(surface) || !surface->isflat)
         return 0;
-    decor = R_GetFlat(pic)->decoration;
+
+    decor = R_GetFlat(surface->texture)->decoration;
     return decor ? decor->pregen_lightmap : 0;
 }
+#endif
 
 /*
  * Process dynamic lights for the specified subsector.
@@ -1498,8 +1501,8 @@ void DL_ProcessSubsector(subsector_t *ssec)
     fi.ffloor = SECT_FLOOR(sect);
 
     // Check if lighting can be skipped.
-    fi.lightFloor = (sect->planes[PLN_FLOOR].pic != skyflatnum);
-    fi.lightCeiling = (sect->planes[PLN_CEILING].pic != skyflatnum);
+    fi.lightFloor = (!R_IsSkySurface(&sect->SP_floorsurface));
+    fi.lightCeiling = (!R_IsSkySurface(&sect->SP_ceilsurface));
 
     // View height might prevent us from seeing the lights.
     if(vy < fi.ffloor)
@@ -1513,7 +1516,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
 
     // Check glowing planes.
     if(useWallGlow &&
-       (sect->planes[PLN_FLOOR].glow || sect->planes[PLN_CEILING].glow))
+       (sect->SP_floorglow || sect->SP_ceilglow))
     {
         // The wall segments.
         for(j = 0, seg = &segs[ssec->firstline]; j < ssec->linecount;

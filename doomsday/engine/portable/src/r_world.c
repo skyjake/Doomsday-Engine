@@ -132,8 +132,8 @@ void R_SetSectorLinks(sector_t *sec)
     if(!sec || !sec->linecount || secinfo[i].permanentlink)
         return;                 // Can't touch permanent links.
 
-    hackfloor = (sec->planes[PLN_FLOOR].pic != skyflatnum);
-    hackceil = (sec->planes[PLN_CEILING].pic != skyflatnum);
+    hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
+    hackceil = (!R_IsSkySurface(&sec->SP_ceilsurface));
     for(k = 0; k < sec->linecount; k++)
     {
         if(!hackfloor && !hackceil)
@@ -180,11 +180,12 @@ void R_SetSectorLinks(sector_t *sec)
             else
                 sid = backsid;
 
-            if(sid->bottomtexture || sid->midtexture)
+            if(sid->bottom.texture || sid->middle.texture)
                 hackfloor = false;
             else if(R_IsValidLink(sec, back, PLN_FLOOR))
                 floorlink_candidate = back;
         }
+
         if(back->planes[PLN_CEILING].height == sec->planes[PLN_CEILING].height)
             hackceil = false;
         else
@@ -193,7 +194,7 @@ void R_SetSectorLinks(sector_t *sec)
                 sid = frontsid;
             else
                 sid = backsid;
-            if(sid->toptexture || sid->midtexture)
+            if(sid->top.texture || sid->middle.texture)
                 hackceil = false;
             else if(R_IsValidLink(sec, back, PLN_CEILING))
                 ceillink_candidate = back;
@@ -502,14 +503,14 @@ void R_SkyFix(void)
         mobj_t *it;
 
         // Must have a sky ceiling.
-        if(sec->planes[PLN_CEILING].pic != skyflatnum)
+        if(!R_IsSkySurface(&sec->SP_ceilsurface))
             continue;
         // Check that all the things in the sector fit in.
         for(it = sec->thinglist; it; it = it->snext)
         {
             b = it->height >> FRACBITS;
-            f = (sec->planes[PLN_CEILING].height >> FRACBITS) + sec->skyfix -
-                (sec->planes[PLN_FLOOR].height >> FRACBITS);
+            f = (sec->SP_ceilheight >> FRACBITS) + sec->skyfix -
+                (sec->SP_floorheight >> FRACBITS);
             if(b > f)
             {
                 // Must increase skyfix.
@@ -518,7 +519,7 @@ void R_SkyFix(void)
                 {
                     Con_Printf("S%i: (mo)skyfix to %i (ceil=%i)\n",
                                GET_SECTOR_IDX(sec), sec->skyfix,
-                               (sec->planes[PLN_CEILING].height >> FRACBITS) + sec->skyfix);
+                               (sec->SP_ceilheight >> FRACBITS) + sec->skyfix);
                 }
             }
         }
@@ -541,15 +542,15 @@ void R_SkyFix(void)
                 continue;
 
             // Both the front and back sectors must have the sky ceiling.
-            if(front->planes[PLN_CEILING].pic != skyflatnum ||
-               back->planes[PLN_CEILING].pic != skyflatnum)
+            if(!R_IsSkySurface(&front->SP_ceilsurface) ||
+               !R_IsSkySurface(&back->SP_ceilsurface))
                 continue;
 
-            f = (front->planes[PLN_CEILING].height >> FRACBITS) + front->skyfix;
-            b = (back->planes[PLN_CEILING].height >> FRACBITS) + back->skyfix;
+            f = (front->SP_ceilheight >> FRACBITS) + front->skyfix;
+            b = (back->SP_ceilheight >> FRACBITS) + back->skyfix;
             if(f < b)
             {
-                fix = b - (front->planes[PLN_CEILING].height >> FRACBITS);
+                fix = b - (front->SP_ceilheight >> FRACBITS);
                 if(fix > front->skyfix)
                 {
                     front->skyfix = fix;
@@ -557,7 +558,7 @@ void R_SkyFix(void)
                     {
                         Con_Printf("S%i: skyfix to %i (ceil=%i)\n",
                                    GET_SECTOR_IDX(front), front->skyfix,
-                                   (front->planes[PLN_CEILING].height >> FRACBITS) +
+                                   (front->SP_ceilheight >> FRACBITS) +
                                    front->skyfix);
                     }
                     adjusted = true;
@@ -565,7 +566,7 @@ void R_SkyFix(void)
             }
             else if(f > b)
             {
-                fix = f - (back->planes[PLN_CEILING].height >> FRACBITS);
+                fix = f - (back->SP_ceilheight >> FRACBITS);
                 if(fix > back->skyfix)
                 {
                     back->skyfix = fix;
@@ -573,7 +574,7 @@ void R_SkyFix(void)
                     {
                         Con_Printf("S%i: skyfix to %i (ceil=%i)\n",
                                    GET_SECTOR_IDX(back), back->skyfix,
-                                   (back->planes[PLN_CEILING].height >> FRACBITS) +
+                                   (back->SP_ceilheight >> FRACBITS) +
                                    back->skyfix);
                     }
                     adjusted = true;
@@ -917,7 +918,8 @@ void R_InitSectorInfo(void)
 
         // Is this sector large enough to be a dominant light source?
         if(info->lightsource == NULL &&
-           (sec->planes[PLN_CEILING].pic == skyflatnum || sec->planes[PLN_FLOOR].pic == skyflatnum) &&
+           (R_IsSkySurface(&sec->SP_ceilsurface) ||
+            R_IsSkySurface(&sec->SP_floorsurface)) &&
            info->bounds[BRIGHT] - info->bounds[BLEFT] > DOMINANT_SIZE &&
            info->bounds[BBOTTOM] - info->bounds[BTOP] > DOMINANT_SIZE)
         {
@@ -2095,11 +2097,11 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         if(forceUpdate ||
-           (sec->planes[i].rgb[0] != sin->planeinfo[i].oldrgb[0] ||
-            sec->planes[i].rgb[1] != sin->planeinfo[i].oldrgb[1] ||
-            sec->planes[i].rgb[2] != sin->planeinfo[i].oldrgb[2]))
+           (sec->planes[i].surface.rgba[0] != sin->planeinfo[i].oldrgb[0] ||
+            sec->planes[i].surface.rgba[1] != sin->planeinfo[i].oldrgb[1] ||
+            sec->planes[i].surface.rgba[2] != sin->planeinfo[i].oldrgb[2]))
         {
-            memcpy(sin->planeinfo[i].oldrgb, sec->planes[i].rgb, 3);
+            memcpy(sin->planeinfo[i].oldrgb, sec->planes[i].surface.rgba, 3);
         }
 
         // Geometry change?
@@ -2116,7 +2118,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         // TODO: Implement Decoration{ Glow{}} definitions.
         setGlow[i] = 0;
         // The order of these tests is important.
-        if(forceUpdate || (sec->planes[i].pic != sin->planeinfo[i].oldpic))
+        if(forceUpdate || (sec->planes[i].surface.texture != sin->planeinfo[i].oldpic))
         {
             // Check if the new texture is declared as glowing.
             // NOTE: Currently, we always discard the glow settings of the
@@ -2128,7 +2130,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             // flats that are declared as glowing we would need some method
             // of telling Doomsday IF we want to inherit these properties when
             // the plane flat changes...
-            if(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW)
+            if(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW)
             {
                 // The new texture is glowing.
 
@@ -2136,7 +2138,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
                 sec->planes[i].glow = 4;
 
                 // Always use the average colour.
-                GL_GetFlatColor(sec->planes[i].pic, sec->planes[i].glowrgb);
+                GL_GetFlatColor(sec->planes[i].surface.texture, sec->planes[i].glowrgb);
 
                 // Do we need to update the plane glow flags?
                 if(sin->planeinfo[i].oldpic)
@@ -2157,9 +2159,9 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
                 setGlow[i] = -1; // Turn the subsector plane glow flags off
             }
 
-            sin->planeinfo[i].oldpic = sec->planes[i].pic;
+            sin->planeinfo[i].oldpic = sec->planes[i].surface.texture;
         }
-        else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW) != (sec->planes[i].glow != 0))
+        else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW) != (sec->planes[i].glow != 0))
         {
             // The glow property of the current flat has been changed
             // since last update.
@@ -2170,18 +2172,18 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             // gameplay (the RENDER_GLOWFLATS text string is depreciated and
             // the only time this property might change is after a console
             // RESET) so it doesn't matter.
-            if(!(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW) && sec->planes[i].glow != 0)
+            if(!(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW) && sec->planes[i].glow != 0)
             {
                 // The current flat is no longer glowing
                 sec->planes[i].glow = 0;
                 memset(sec->planes[i].glowrgb, 0, 3);
                 setGlow[i] = -1; // Turn the subsector plane glow flags off
             }
-            else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].pic) & TXF_GLOW) && sec->planes[i].glow == 0)
+            else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW) && sec->planes[i].glow == 0)
             {
                 // The current flat is now glowing
                 sec->planes[i].glow = 4;
-                GL_GetFlatColor(sec->planes[i].pic, sec->planes[i].glowrgb);
+                GL_GetFlatColor(sec->planes[i].surface.texture, sec->planes[i].glowrgb);
                 setGlow[i] = 1; // Turn the subsector plane glow flags on
             }
         }
@@ -2259,17 +2261,6 @@ const char *R_GetUniqueLevelID(void)
 }
 
 /*
- * Is the specified flat id the same as that used for the sky?
- *
- * @param   flat        Flat id to test.
- * @return  boolean     (True) if flat num is that used for the sky.
- */
-boolean R_IsSkyFlat(int flat)
-{
-    return flat == skyflatnum;
-}
-
-/*
  * Sector light color may be affected by the sky light color.
  */
 const byte *R_GetSectorLightColor(sector_t *sector)
@@ -2280,7 +2271,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
     if(!rendSkyLight || noSkyColorGiven)
         return sector->rgb;     // The sector's real color.
 
-    if(sector->planes[PLN_CEILING].pic != skyflatnum && sector->planes[PLN_FLOOR].pic != skyflatnum)
+    if(!R_IsSkySurface(&sector->SP_ceilsurface) && !R_IsSkySurface(&sector->SP_floorsurface))
     {
         // A dominant light source affects this sector?
         src = SECT_INFO(sector)->lightsource;

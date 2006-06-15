@@ -986,7 +986,7 @@ void R_AddSprites(sector_t *sec)
         {
             visibleTop = thing->pos[VZ] + (spriteInfo.height << FRACBITS);
 
-            if(R_IsSkyFlat(sec->SP_ceilpic) &&
+            if(R_IsSkySurface(&sec->SP_ceilsurface) &&
                visibleTop > sec->SP_ceilheight + (sec->skyfix << FRACBITS))
             {
                 // Raise sector skyfix.

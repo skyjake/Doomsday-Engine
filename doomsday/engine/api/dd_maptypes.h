@@ -23,16 +23,18 @@
 #define DMT_SUBSECTOR_POLY DDVT_PTR    // NULL, if there is no polyobj.
 #define DMT_SUBSECTOR_FLAGS DDVT_BYTE
 
+#define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
+#define DMT_SURFACE_TEXTURE DDVT_SHORT
+#define DMT_SURFACE_TEXMOVE DDVT_INT   // Texture movement X and Y.
+#define DMT_SURFACE_RGBA DDVT_BYTE     // Surface color tint
+
 #define DMT_PLANE_HEIGHT DDVT_FIXED    // Current height.
-#define DMT_PLANE_PIC DDVT_SHORT       // Texture.
 #define DMT_PLANE_OFFX DDVT_FLOAT      // Texture x offset.
 #define DMT_PLANE_OFFY DDVT_FLOAT      // Texture y offset.
-#define DMT_PLANE_RGB DDVT_BYTE        // Surface color tint.
 #define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount.
 #define DMT_PLANE_GLOWRGB DDVT_BYTE    // Glow color.
 #define DMT_PLANE_TARGET DDVT_INT      // Target height.
 #define DMT_PLANE_SPEED DDVT_INT       // Move speed.
-#define DMT_PLANE_TEXMOVE DDVT_INT     // Texture movement X and Y.
 #define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane.
 
 #define DMT_PLANE_SECTOR        DDVT_PTR
@@ -51,12 +53,6 @@
 
 #define DMT_SIDE_TEXTUREOFFSET DDVT_FIXED // Add this to the calculated texture col.
 #define DMT_SIDE_ROWOFFSET DDVT_FIXED  // Add this to the calculated texture top.
-#define DMT_SIDE_TOPTEXTURE DDVT_SHORT
-#define DMT_SIDE_BOTTOMTEXTURE DDVT_SHORT
-#define DMT_SIDE_MIDTEXTURE DDVT_SHORT
-#define DMT_SIDE_TOPRGB DDVT_BYTE
-#define DMT_SIDE_BOTTOMRGB DDVT_BYTE
-#define DMT_SIDE_MIDRGBA DDVT_BYTE
 #define DMT_SIDE_BLENDMODE DDVT_BLENDMODE
 #define DMT_SIDE_SECTOR DDVT_PTR
 #define DMT_SIDE_FLAGS DDVT_SHORT

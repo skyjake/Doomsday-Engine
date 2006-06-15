@@ -97,6 +97,8 @@ extern int ratioLimit;
 extern boolean palettedTextureExtAvailable;
 extern boolean s3tcAvailable;
 
+extern int skyflatnum;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean filloutlines = true;

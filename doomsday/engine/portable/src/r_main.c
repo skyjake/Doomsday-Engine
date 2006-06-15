@@ -152,6 +152,17 @@ void R_InitSkyMap(void)
 }
 
 /*
+ * Is the specified flat id the same as that used for the sky?
+ *
+ * @param   flat        Flat id to test.
+ * @return  boolean     (True) if flat num is that used for the sky.
+ */
+boolean R_IsSkySurface(surface_t* surface)
+{
+    return surface->isflat && surface->texture == skyflatnum;
+}
+
+/*
  * Don't really change anything here, because i might be in the middle of
  * a refresh.  The change will take effect next refresh.
  */

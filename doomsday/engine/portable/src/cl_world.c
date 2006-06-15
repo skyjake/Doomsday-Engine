@@ -428,9 +428,9 @@ int Cl_ReadSectorDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & SDF_FLOORPIC)
-        sec->planes[PLN_FLOOR].pic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_floorpic = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_CEILINGPIC)
-        sec->planes[PLN_CEILING].pic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_ceilpic = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte();
     if(df & SDF_FLOOR_TARGET)
@@ -442,8 +442,8 @@ int Cl_ReadSectorDelta(void)
     }
     if(df & SDF_FLOOR_TEXMOVE)
     {
-        sec->planes[PLN_FLOOR].texmove[0] = Msg_ReadShort() << 8;
-        sec->planes[PLN_FLOOR].texmove[1] = Msg_ReadShort() << 8;
+        sec->SP_floortexmove[0] = Msg_ReadShort() << 8;
+        sec->SP_floortexmove[1] = Msg_ReadShort() << 8;
     }
     if(df & SDF_CEILING_TARGET)
         sec->planes[PLN_CEILING].target = Msg_ReadShort() << 16;
@@ -454,8 +454,8 @@ int Cl_ReadSectorDelta(void)
     }
     if(df & SDF_CEILING_TEXMOVE)
     {
-        sec->planes[PLN_CEILING].texmove[0] = Msg_ReadShort() << 8;
-        sec->planes[PLN_CEILING].texmove[1] = Msg_ReadShort() << 8;
+        sec->SP_ceiltexmove[0] = Msg_ReadShort() << 8;
+        sec->SP_ceiltexmove[1] = Msg_ReadShort() << 8;
     }
     if(df & SDF_COLOR_RED)
         sec->rgb[0] = Msg_ReadByte();
@@ -465,37 +465,37 @@ int Cl_ReadSectorDelta(void)
         sec->rgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->planes[PLN_FLOOR].rgb[0] = Msg_ReadByte();
+        sec->SP_floorrgb[0] = Msg_ReadByte();
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->planes[PLN_FLOOR].rgb[1] = Msg_ReadByte();
+        sec->SP_floorrgb[1] = Msg_ReadByte();
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->planes[PLN_FLOOR].rgb[2] = Msg_ReadByte();
+        sec->SP_floorrgb[2] = Msg_ReadByte();
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->planes[PLN_CEILING].rgb[0] = Msg_ReadByte();
+        sec->SP_ceilrgb[0] = Msg_ReadByte();
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->planes[PLN_CEILING].rgb[1] = Msg_ReadByte();
+        sec->SP_ceilrgb[1] = Msg_ReadByte();
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->planes[PLN_CEILING].rgb[2] = Msg_ReadByte();
+        sec->SP_ceilrgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_GLOW_RED)
-        sec->planes[PLN_FLOOR].glowrgb[0] = Msg_ReadByte();
+        sec->SP_floorglowrgb[0] = Msg_ReadByte();
     if(df & SDF_FLOOR_GLOW_GREEN)
-        sec->planes[PLN_FLOOR].glowrgb[1] = Msg_ReadByte();
+        sec->SP_floorglowrgb[1] = Msg_ReadByte();
     if(df & SDF_FLOOR_GLOW_BLUE)
-        sec->planes[PLN_FLOOR].glowrgb[2] = Msg_ReadByte();
+        sec->SP_floorglowrgb[2] = Msg_ReadByte();
 
     if(df & SDF_CEIL_GLOW_RED)
-        sec->planes[PLN_CEILING].glowrgb[0] = Msg_ReadByte();
+        sec->SP_ceilglowrgb[0] = Msg_ReadByte();
     if(df & SDF_CEIL_GLOW_GREEN)
-        sec->planes[PLN_CEILING].glowrgb[1] = Msg_ReadByte();
+        sec->SP_ceilglowrgb[1] = Msg_ReadByte();
     if(df & SDF_CEIL_GLOW_BLUE)
-        sec->planes[PLN_CEILING].glowrgb[2] = Msg_ReadByte();
+        sec->SP_ceilglowrgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_GLOW)
-        sec->planes[PLN_FLOOR].glow = (float) (Msg_ReadShort() / DDMAXSHORT);
+        sec->SP_floorglow = (float) (Msg_ReadShort() / DDMAXSHORT);
     if(df & SDF_CEIL_GLOW)
-        sec->planes[PLN_CEILING].glow = (float) (Msg_ReadShort() / DDMAXSHORT);
+        sec->SP_ceilglow = (float) (Msg_ReadShort() / DDMAXSHORT);
 
     // Do we need to start any moving planes?
     if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
@@ -535,11 +535,11 @@ int Cl_ReadSideDelta(void)
     df = Msg_ReadByte();
 
     if(df & SIDF_TOPTEX)
-        sid->toptexture = Msg_ReadPackedShort();
+        sid->top.texture = Msg_ReadPackedShort();
     if(df & SIDF_MIDTEX)
-        sid->midtexture = Msg_ReadPackedShort();
+        sid->middle.texture = Msg_ReadPackedShort();
     if(df & SIDF_BOTTOMTEX)
-        sid->bottomtexture = Msg_ReadPackedShort();
+        sid->bottom.texture = Msg_ReadPackedShort();
 
     if(df & SIDF_LINE_FLAGS)
     {
@@ -559,27 +559,27 @@ int Cl_ReadSideDelta(void)
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        sid->toprgb[0] = Msg_ReadByte();
+        sid->top.rgba[0] = Msg_ReadByte();
     if(df & SIDF_TOP_COLOR_GREEN)
-        sid->toprgb[1] = Msg_ReadByte();
+        sid->top.rgba[1] = Msg_ReadByte();
     if(df & SIDF_TOP_COLOR_BLUE)
-        sid->toprgb[2] = Msg_ReadByte();
+        sid->top.rgba[2] = Msg_ReadByte();
 
     if(df & SIDF_MID_COLOR_RED)
-        sid->midrgba[0] = Msg_ReadByte();
+        sid->middle.rgba[0] = Msg_ReadByte();
     if(df & SIDF_MID_COLOR_GREEN)
-        sid->midrgba[1] = Msg_ReadByte();
+        sid->middle.rgba[1] = Msg_ReadByte();
     if(df & SIDF_MID_COLOR_BLUE)
-        sid->midrgba[2] = Msg_ReadByte();
+        sid->middle.rgba[2] = Msg_ReadByte();
     if(df & SIDF_MID_COLOR_ALPHA)
-        sid->midrgba[3] = Msg_ReadByte();
+        sid->middle.rgba[3] = Msg_ReadByte();
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sid->bottomrgb[0] = Msg_ReadByte();
+        sid->bottom.rgba[0] = Msg_ReadByte();
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sid->bottomrgb[1] = Msg_ReadByte();
+        sid->bottom.rgba[1] = Msg_ReadByte();
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sid->bottomrgb[2] = Msg_ReadByte();
+        sid->bottom.rgba[2] = Msg_ReadByte();
 
     if(df & SIDF_MID_BLENDMODE)
         sid->blendmode = Msg_ReadShort() << 16;
@@ -680,9 +680,9 @@ void Cl_ReadSectorDelta2(boolean skip)
     }
 
     if(df & SDF_FLOORPIC)
-        sec->planes[PLN_FLOOR].pic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_floorpic = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_CEILINGPIC)
-        sec->planes[PLN_CEILING].pic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_ceilpic = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte();
     if(df & SDF_FLOOR_HEIGHT)
@@ -704,8 +704,8 @@ void Cl_ReadSectorDelta2(boolean skip)
     }
     if(df & SDF_FLOOR_TEXMOVE)
     {
-        sec->planes[PLN_FLOOR].texmove[0] = Msg_ReadShort() << 8;
-        sec->planes[PLN_FLOOR].texmove[1] = Msg_ReadShort() << 8;
+        sec->SP_floortexmove[0] = Msg_ReadShort() << 8;
+        sec->SP_floortexmove[1] = Msg_ReadShort() << 8;
     }
     if(df & SDF_CEILING_TARGET)
         sec->planes[PLN_CEILING].target = Msg_ReadShort() << 16;
@@ -716,8 +716,8 @@ void Cl_ReadSectorDelta2(boolean skip)
     }
     if(df & SDF_CEILING_TEXMOVE)
     {
-        sec->planes[PLN_CEILING].texmove[0] = Msg_ReadShort() << 8;
-        sec->planes[PLN_CEILING].texmove[1] = Msg_ReadShort() << 8;
+        sec->SP_ceiltexmove[0] = Msg_ReadShort() << 8;
+        sec->SP_ceiltexmove[1] = Msg_ReadShort() << 8;
     }
     if(df & SDF_COLOR_RED)
         sec->rgb[0] = Msg_ReadByte();
@@ -727,18 +727,18 @@ void Cl_ReadSectorDelta2(boolean skip)
         sec->rgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->planes[PLN_FLOOR].rgb[0] = Msg_ReadByte();
+        sec->SP_floorrgb[0] = Msg_ReadByte();
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->planes[PLN_FLOOR].rgb[1] = Msg_ReadByte();
+        sec->SP_floorrgb[1] = Msg_ReadByte();
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->planes[PLN_FLOOR].rgb[2] = Msg_ReadByte();
+        sec->SP_floorrgb[2] = Msg_ReadByte();
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->planes[PLN_CEILING].rgb[0] = Msg_ReadByte();
+        sec->SP_ceilrgb[0] = Msg_ReadByte();
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->planes[PLN_CEILING].rgb[1] = Msg_ReadByte();
+        sec->SP_ceilrgb[1] = Msg_ReadByte();
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->planes[PLN_CEILING].rgb[2] = Msg_ReadByte();
+        sec->SP_ceilrgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_GLOW_RED)
         sec->planes[PLN_FLOOR].glowrgb[0] = Msg_ReadByte();
@@ -853,34 +853,34 @@ void Cl_ReadSideDelta2(boolean skip)
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOPTEX)
-        sid->toptexture = toptexture;
+        sid->top.texture = toptexture;
     if(df & SIDF_MIDTEX)
-        sid->midtexture = midtexture;
+        sid->middle.texture = midtexture;
     if(df & SIDF_BOTTOMTEX)
-        sid->bottomtexture = bottomtexture;
+        sid->bottom.texture = bottomtexture;
 
     if(df & SIDF_TOP_COLOR_RED)
-        sid->toprgb[0] = toprgb[0];
+        sid->top.rgba[0] = toprgb[0];
     if(df & SIDF_TOP_COLOR_GREEN)
-        sid->toprgb[1] = toprgb[1];
+        sid->top.rgba[1] = toprgb[1];
     if(df & SIDF_TOP_COLOR_BLUE)
-        sid->toprgb[2] = toprgb[2];
+        sid->top.rgba[2] = toprgb[2];
 
     if(df & SIDF_MID_COLOR_RED)
-        sid->midrgba[0] = midrgba[0];
+        sid->middle.rgba[0] = midrgba[0];
     if(df & SIDF_MID_COLOR_GREEN)
-        sid->midrgba[1] = midrgba[1];
+        sid->middle.rgba[1] = midrgba[1];
     if(df & SIDF_MID_COLOR_BLUE)
-        sid->midrgba[2] = midrgba[2];
+        sid->middle.rgba[2] = midrgba[2];
     if(df & SIDF_MID_COLOR_ALPHA)
-        sid->midrgba[3] = midrgba[3];
+        sid->middle.rgba[3] = midrgba[3];
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sid->bottomrgb[0] = bottomrgb[0];
+        sid->bottom.rgba[0] = bottomrgb[0];
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sid->bottomrgb[1] = bottomrgb[1];
+        sid->bottom.rgba[1] = bottomrgb[1];
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sid->bottomrgb[2] = bottomrgb[2];
+        sid->bottom.rgba[2] = bottomrgb[2];
 
     if(df & SIDF_MID_BLENDMODE)
         sid->blendmode = blendmode;

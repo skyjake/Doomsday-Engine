@@ -2742,9 +2742,6 @@ DEFCC(CCmdMovePlane)
     fixed_t floorheight, ceilingheight;
     xgplanemover_t *mover;
 
-    floorheight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
-    ceilingheight = P_GetFixedp(sector, DMU_CEILING_HEIGHT);
-
     if(argc < 2)
     {
         Con_Printf("Usage: %s (opts)\n", argv[0]);
@@ -2789,6 +2786,9 @@ DEFCC(CCmdMovePlane)
                 break;
             }
     }
+
+    floorheight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
+    ceilingheight = P_GetFixedp(sector, DMU_CEILING_HEIGHT);
 
     // No more arguments?
     if(argc == p)

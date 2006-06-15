@@ -357,12 +357,112 @@ void P_PlaneChanged(sector_t *sector, int plane)
     int k;
     subsector_t *sub;
     seg_t *seg;
+    side_t *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
     sector->planes[plane].soundorg.z = sector->planes[plane].height;
 
     if(plane == PLN_FLOOR || plane == PLN_CEILING)
         sector->soundorg.z = (sector->SP_ceilheight - sector->SP_floorheight) / 2;
+
+    for(i = 0; i < sector->linecount; ++i)
+    {
+        front = SIDE_PTR(sector->Lines[i]->sidenum[0]);
+        back = SIDE_PTR(sector->Lines[i]->sidenum[1]);
+
+        if(!front || !front->sector ||
+           SECT_INFO(front->sector)->planeinfo[plane].linked ||
+           !back || !back->sector ||
+           SECT_INFO(back->sector)->planeinfo[plane].linked)
+            continue;
+
+        // Do as in the original Doom if the texture has not been defined -
+        // extend the floor/ceiling to fill the space (unless its the skyflat).
+        if(plane == PLN_FLOOR)
+        {
+            // Check for missing lowers.
+            if(front->sector->SP_floorheight < back->sector->SP_floorheight &&
+               front->bottom.texture == 0)
+            {
+                if(!R_IsSkySurface(&front->sector->SP_floorsurface))
+                {
+                    front->bottom.flags |= SUF_TEXFIX;
+                    front->bottom.texture =
+                        front->sector->planes[PLN_FLOOR].surface.texture;
+
+                    front->bottom.isflat =
+                        front->sector->planes[PLN_FLOOR].surface.isflat;
+                }
+
+                if(back->bottom.flags & SUF_TEXFIX)
+                {
+                    back->bottom.flags &= ~SUF_TEXFIX;
+                    back->bottom.texture = 0;
+                }
+            }
+            else if(front->sector->SP_floorheight > back->sector->SP_floorheight &&
+               back->bottom.texture == 0)
+            {
+                if(!R_IsSkySurface(&back->sector->SP_floorsurface))
+                {
+                    back->bottom.flags |= SUF_TEXFIX;
+                    back->bottom.texture =
+                        back->sector->planes[PLN_FLOOR].surface.texture;
+
+                    back->bottom.isflat =
+                        back->sector->planes[PLN_FLOOR].surface.isflat;
+                }
+
+                if(front->bottom.flags & SUF_TEXFIX)
+                {
+                    front->bottom.flags &= ~SUF_TEXFIX;
+                    front->bottom.texture = 0;
+                }
+            }
+        }
+        else
+        {
+            // Check for missing uppers.
+            if(front->sector->SP_ceilheight > back->sector->SP_ceilheight &&
+               front->top.texture == 0)
+            {
+                if(!R_IsSkySurface(&front->sector->SP_ceilsurface))
+                {
+                    front->top.flags |= SUF_TEXFIX;
+                    front->top.texture =
+                        front->sector->planes[PLN_CEILING].surface.texture;
+
+                    front->top.isflat =
+                        front->sector->planes[PLN_CEILING].surface.isflat;
+                }
+
+                if(back->top.flags & SUF_TEXFIX)
+                {
+                    back->top.flags &= ~SUF_TEXFIX;
+                    back->top.texture = 0;
+                }
+            }
+            else if(front->sector->SP_ceilheight < back->sector->SP_ceilheight &&
+               back->top.texture == 0)
+            {
+                if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
+                {
+                    back->top.flags |= SUF_TEXFIX;
+                    back->top.texture =
+                        back->sector->planes[PLN_CEILING].surface.texture;
+
+                    back->top.isflat =
+                        back->sector->planes[PLN_CEILING].surface.isflat;
+                }
+
+                if(front->top.flags & SUF_TEXFIX)
+                {
+                    front->top.flags &= ~SUF_TEXFIX;
+                    front->top.texture = 0;
+                }
+            }
+        }
+    }
 
     for(i = 0; i < sector->subscount; ++i)
     {

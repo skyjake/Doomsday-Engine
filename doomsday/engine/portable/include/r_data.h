@@ -52,6 +52,10 @@
 #define DCRF_PWAD       0x2        // Can use if from PWAD.
 #define DCRF_EXTERNAL   0x4        // Can use if from external resource.
 
+// Surface flags.
+#define SUF_TEXFIX      0x1        // Current texture is a fix replacement
+                                   // (not sent to clients, returned via DMU etc)
+
 // Texture flags.
 #define TXF_MASKED      0x1
 #define TXF_GLOW        0x2        // For lava etc, textures that glow.

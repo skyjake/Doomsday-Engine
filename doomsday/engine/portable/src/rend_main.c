@@ -512,11 +512,11 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
             side_t* side = SIDE_PTR(line->sidenum[backside]);
 
             // Check middle texture
-            if(!(side->midtexture || side->midtexture == -1))
+            if(!(side->middle.texture || side->middle.texture == -1))
                 return false;
 
             // Check alpha
-            if(side->midrgba[3] == 0)
+            if(side->middle.rgba[3] == 0)
                 return false;
 
             // Check Y placement?
@@ -524,8 +524,8 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
         break;
 
     case SEG_TOP:
-        if(R_IsSkyFlat(line->backsector->SP_ceilpic) &&
-           R_IsSkyFlat(line->frontsector->SP_ceilpic))
+        if(R_IsSkySurface(&line->backsector->SP_ceilsurface) &&
+           R_IsSkySurface(&line->frontsector->SP_ceilsurface))
            return false;
 
         if(backside)
@@ -541,8 +541,8 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
         break;
 
     case SEG_BOTTOM:
-        if(R_IsSkyFlat(line->backsector->SP_floorpic) &&
-           R_IsSkyFlat(line->frontsector->SP_floorpic))
+        if(R_IsSkySurface(&line->backsector->SP_floorsurface) &&
+           R_IsSkySurface(&line->frontsector->SP_floorsurface))
            return false;
 
         if(backside)
@@ -568,6 +568,12 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
 /*
  * Prepares the correct flat/texture for the passed poly.
  *
+ * TODO: We shouldn't pass tex and isFlat and use the properties of the
+ * surface instead. However due to dynamic texture replacements (missing
+ * texture fixes) we cannot yet. Fixing these needs to be moved higher up
+ * the logic chain (ie when a plane move exposes the missing surface the
+ * fix should be made).
+ *
  * @param poly:     Ptr to the poly to apply the texture to.
  * @param tex:      Texture/Flat id number. If -1 we'll apply the
  *                  special "missing" texture instead.
@@ -575,12 +581,15 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
  * @return int      (-1) If the texture reference is invalid.
  *                  Else return the flags for the texture chosen.
  */
-int Rend_PrepareTextureForPoly(rendpoly_t *poly, int tex, boolean isFlat)
+int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
 {
-    if(tex == 0)
+    if(surface->texture == 0)
         return -1;
 
-    if(tex == -1) // A missing texture, draw the "missing" graphic
+    if(R_IsSkySurface(surface))
+        return 0;
+
+    if(surface->texture == -1) // A missing texture, draw the "missing" graphic
     {
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_MISSING);
         poly->tex.width = texw;
@@ -591,22 +600,18 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, int tex, boolean isFlat)
     else
     {
         // Prepare the flat/texture
-        if(isFlat)
-        {
-            if(R_IsSkyFlat(tex))
-                return 0;
-
-            poly->tex.id = curtex = GL_PrepareFlat(tex);
-        }
+        if(surface->isflat)
+            poly->tex.id = curtex = GL_PrepareFlat(surface->texture);
         else
-            poly->tex.id = curtex = GL_PrepareTexture(tex);
+            poly->tex.id = curtex = GL_PrepareTexture(surface->texture);
 
         poly->tex.width = texw;
         poly->tex.height = texh;
         poly->tex.detail = texdetail;
 
         // Return the parameters for this surface texture.
-        return R_GraphicResourceFlags((isFlat? RC_FLAT : RC_TEXTURE), tex);
+        return R_GraphicResourceFlags((surface->isflat? RC_FLAT : RC_TEXTURE),
+                                      surface->texture);
     }
 }
 
@@ -763,7 +768,7 @@ int Rend_MidTexturePos(float *top, float *bottom, float *texoffy, float tcyoff,
  * TODO: Combine all the boolean (hint) parameters into a single flags var.
  */
 static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
-                            sector_t *frontsec, int texture, boolean isFlat,
+                            sector_t *frontsec, surface_t *surface,
                             int mode, byte alpha,
                             boolean shadow, boolean shiny, boolean glow)
 {
@@ -853,7 +858,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
                 &seginfo[segIndex].tracker[1], segIndex);
 
     // Smooth Texture Animation?
-    Rend_PolyTexBlend(texture, isFlat, quad);
+    Rend_PolyTexBlend(surface->texture, surface->isflat, quad);
     // Add the poly to the appropriate list
     RL_AddPoly(quad);
 
@@ -867,7 +872,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
         // We're going to modify the polygon quite a bit.
         memcpy(&q, quad, sizeof(rendpoly_t));
 
-        Rend_AddShinyPoly(texture, isFlat, &q);
+        Rend_AddShinyPoly(surface->texture, surface->isflat, &q);
     }
 }
 
@@ -876,7 +881,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
  * two into a Rend_RenderSurface.
  */
 static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
-                planeinfo_t* plane, int texture, boolean isFlat, byte alpha,
+                planeinfo_t* plane, surface_t *surface, byte alpha,
                 boolean shadow, boolean shiny,
                 boolean glow)
 {
@@ -888,14 +893,14 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.
-    RL_PrepareFlat(plane, poly, subsector);
+    RL_PreparePlane(plane, poly, subsector);
 
     // Alpha?
     for(i = 0, vtx = poly->vertices; i < poly->numvertices; i++, vtx++)
         vtx->color.rgba[3] = alpha;
 
     // Dynamic lights. Check for sky.
-    if(isFlat && R_IsSkyFlat(texture))
+    if(R_IsSkySurface(surface))
     {
         poly->lights = NULL;
         skyhemispheres |= (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
@@ -908,7 +913,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
                 &plane->tracker, subIndex);
 
     // Smooth Texture Animation?
-    Rend_PolyTexBlend(texture, isFlat, poly);
+    Rend_PolyTexBlend(surface->texture, surface->isflat, poly);
     // Add the poly to the appropriate list
     RL_AddPoly(poly);
 
@@ -917,7 +922,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
     // Add a shine to this flat existence.
     if(shiny)
     {
-        Rend_AddShinyPoly(texture, isFlat, poly);
+        Rend_AddShinyPoly(surface->texture, surface->isflat, poly);
     }
 }
 
@@ -929,10 +934,10 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
 void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 {
     int i;
-    int tex, texFlags;
+    int texFlags;
     int solidSeg = false; // -1 means NEVER.
-    boolean isFlat;
     sector_t *backsec;
+    surface_t *surface;
     side_t *sid, *backsid, *side;
     line_t *ldef;
     float   ffloor, fceil, bfloor, bceil, fsh, mceil, tcyoff;
@@ -963,7 +968,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         side = backsid;
 
     if(backsec && backsec == seg->frontsector &&
-       side->toptexture == 0 && side->bottomtexture == 0 && side->midtexture == 0)
+       side->top.texture == 0 && side->bottom.texture == 0 && side->middle.texture == 0)
        return; // Ugh... an obvious wall seg hack. Best take no chances...
 
     ffloor = SECT_FLOOR(frontsec);
@@ -1004,10 +1009,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     tcyoff = FIX2FLT(side->rowoffset);
 
     // Top wall section color offset?
-    if(side->toprgb[0] < 255 || side->toprgb[1] < 255 || side->toprgb[2] < 255)
+    if(side->top.rgba[0] < 255 || side->top.rgba[1] < 255 || side->top.rgba[2] < 255)
     {
         for(i=0; i < 3; i++)
-            topColor[i] = (byte)(((side->toprgb[i]/ 255.0f)) * sLightColor[i]);
+            topColor[i] = (byte)(((side->top.rgba[i]/ 255.0f)) * sLightColor[i]);
 
         topColorPtr = topColor;
     }
@@ -1015,10 +1020,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         topColorPtr = sLightColor;
 
     // Mid wall section color offset?
-    if(side->midrgba[0] < 255 || side->midrgba[1] < 255 || side->midrgba[2] < 255)
+    if(side->middle.rgba[0] < 255 || side->middle.rgba[1] < 255 || side->middle.rgba[2] < 255)
     {
         for(i=0; i < 3; i++)
-            midColor[i] = (byte)(((side->midrgba[i]/ 255.0f)) * sLightColor[i]);
+            midColor[i] = (byte)(((side->middle.rgba[i]/ 255.0f)) * sLightColor[i]);
 
         midColorPtr = midColor;
     }
@@ -1026,10 +1031,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         midColorPtr = sLightColor;
 
     // Bottom wall section color offset?
-    if(side->bottomrgb[0] < 255 || side->bottomrgb[1] < 255 || side->bottomrgb[2] < 255)
+    if(side->bottom.rgba[0] < 255 || side->bottom.rgba[1] < 255 || side->bottom.rgba[2] < 255)
     {
         for(i=0; i < 3; i++)
-            bottomColor[i] = (byte)(((side->bottomrgb[i]/ 255.0f)) * sLightColor[i]);
+            bottomColor[i] = (byte)(((side->bottom.rgba[i]/ 255.0f)) * sLightColor[i]);
 
         bottomColorPtr = bottomColor;
     }
@@ -1043,7 +1048,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
            (backsec && backsec != seg->frontsector &&
             (bceil + backsec->skyfix < fceil + frontsec->skyfix)))
         {
-            if(backsec && backSide && sid->midtexture != 0)
+            if(backsec && backSide && sid->middle.texture != 0)
             {
                 // This traps the skyfix glitch as seen in ICARUS.wad MAP01's
                 // engine tubes (scrolling mid texture doors)
@@ -1061,8 +1066,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         }
     }
     if(backsec && bceil - bfloor <= 0 &&
-       ((R_IsSkyFlat(frontsec->SP_floorpic) && R_IsSkyFlat(backsec->SP_floorpic)) ||
-        (R_IsSkyFlat(frontsec->SP_ceilpic) && R_IsSkyFlat(backsec->SP_ceilpic))))
+       ((R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface)) ||
+        (R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface))))
     {
         quad.flags = RPF_SKY_MASK;
         quad.top = fceil + frontsec->skyfix;
@@ -1082,9 +1087,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         // We only need one wall section extending from floor to ceiling.
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
         {
-            tex = side->midtexture;
-            isFlat = false;
-            texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
+            surface = &side->middle;
+            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
             if(texFlags != -1)
@@ -1098,10 +1102,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad.texoffy += texh - fsh;
 
-                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_MIDDLE,
+                Rend_RenderWallSection(&quad, seg, side, frontsec, surface, SEG_MIDDLE,
                           /*Alpha*/    255,
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
-                          /*Shiny?*/   (tex != -1),
+                          /*Shiny?*/   (surface->texture != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
             }
 
@@ -1124,11 +1128,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             float   rfceil = SECT_CEIL(seg->frontsector);
             float  rffloor = SECT_FLOOR(seg->frontsector);
             float   gaptop, gapbottom;
-            byte    alpha = side->midrgba[3];
+            byte    alpha = side->middle.rgba[3];
 
-            tex = side->midtexture;
-            isFlat = false;
-            texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
+            surface = &side->middle;
+            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
             if(texFlags != -1)
@@ -1137,7 +1140,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 quad.top = gaptop = MIN_OF(rbceil, rfceil);
                 quad.bottom = gapbottom = MAX_OF(rbfloor, rffloor);
 
-                if(bceil < fceil && side->toptexture == 0)
+                if(bceil < fceil && side->top.texture == 0)
                 {
                     mceil = quad.top;
                     // Extend to cover missing top texture.
@@ -1216,10 +1219,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     else
                         quad.flags = 0;
 
-                    Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_MIDDLE,
+                    Rend_RenderWallSection(&quad, seg, side, frontsec, surface, SEG_MIDDLE,
                               /*Alpha*/    alpha,
                               /*Shadow?*/  (solidSeg && !(flags & RWSF_NO_RADIO) && !texmask),
-                              /*Shiny?*/   (solidSeg && tex != -1 && !texmask),
+                              /*Shiny?*/   (solidSeg && surface->texture != -1 && !texmask),
                               /*Glow?*/    (texFlags & TXF_GLOW));
                 }
             }
@@ -1232,23 +1235,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide) &&
            !mid_covers_top)
         {
-            tex = side->toptexture;
-            isFlat = false;
-
-            if(!tex)
-            {
-                // Texture has not been defined. Do as in the original Doom,
-                // extend the ceiling to fill the space (unless its the skyflat).
-                if(R_IsSkyFlat(frontsec->SP_ceilpic))
-                    texFlags = -1;
-                else
-                    texFlags = Rend_PrepareTextureForPoly
-                        (&quad, frontsec->SP_ceilpic, true /*isFlat*/);
-            }
-            else
-            {
-                texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
-            }
+            surface = &side->top;
+            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
             if(texFlags != -1)
@@ -1264,10 +1252,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 if(quad.bottom < ffloor)
                     quad.bottom = ffloor;
 
-                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_TOP,
+                Rend_RenderWallSection(&quad, seg, side, frontsec, surface, SEG_TOP,
                           /*Alpha*/    255,
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
-                          /*Shiny?*/   (tex != -1),
+                          /*Shiny?*/   (surface->texture != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
             }
         }
@@ -1278,23 +1266,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         // Lower wall.
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
         {
-            tex = side->bottomtexture;
-            isFlat = false;
-
-            if(!tex)
-            {
-                // Texture has not been defined. Do as in the original Doom,
-                // extend the floor to fill the space (unless its the skyflat).
-                if(R_IsSkyFlat(frontsec->SP_floorpic))
-                    texFlags = -1;
-                else
-                    texFlags = Rend_PrepareTextureForPoly
-                        (&quad, frontsec->SP_floorpic, true /*isFlat*/);
-            }
-            else
-            {
-                texFlags = Rend_PrepareTextureForPoly(&quad, tex, isFlat);
-            }
+            surface = &side->bottom;
+            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
             if(texFlags != -1)
@@ -1314,10 +1287,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     quad.top = fceil;
                 }
 
-                Rend_RenderWallSection(&quad, seg, side, frontsec, tex, isFlat, SEG_BOTTOM,
+                Rend_RenderWallSection(&quad, seg, side, frontsec, surface, SEG_BOTTOM,
                           /*Alpha*/    255,
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
-                          /*Shiny?*/   (tex != -1),
+                          /*Shiny?*/   (surface->texture != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
             }
         }
@@ -1338,15 +1311,15 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         {
             // An obvious hack, what to do though??
         }
-        else if((bceil <= ffloor && (side->toptexture != 0 || side->midtexture != 0)) ||
-                (bfloor >= fceil && (side->bottomtexture != 0 || side->midtexture !=0)))
+        else if((bceil <= ffloor && (side->top.texture != 0 || side->middle.texture != 0)) ||
+                (bfloor >= fceil && (side->bottom.texture != 0 || side->middle.texture !=0)))
         {
             // A closed gap.
             solidSeg = true;
         }
         else if(backsecSkyFix ||
                 (bsh == 0 && bfloor > ffloor && bceil < fceil &&
-                side->toptexture != 0 && side->bottomtexture != 0))
+                side->top.texture != 0 && side->bottom.texture != 0))
         {
             // A zero height back segment
             solidSeg = true;
@@ -1723,7 +1696,7 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
             endv = v1;
         }
         // Do not create an occlusion for sky floors.
-        if(!R_IsSkyFlat(back->SP_floorpic) || !R_IsSkyFlat(front->SP_floorpic))
+        if(!R_IsSkySurface(&back->SP_floorsurface) || !R_IsSkySurface(&front->SP_floorsurface))
         {
             // Do the floors create an occlusion?
             if((backh[0] > fronth[0] && vy <= backh[0]) ||
@@ -1734,7 +1707,7 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
             }
         }
         // Do not create an occlusion for sky ceilings.
-        if(!R_IsSkyFlat(back->SP_ceilpic) || !R_IsSkyFlat(front->SP_ceilpic))
+        if(!R_IsSkySurface(&back->SP_ceilsurface) || !R_IsSkySurface(&front->SP_ceilsurface))
         {
             // Do the ceilings create an occlusion?
             if((backh[1] < fronth[1] && vy >= backh[1]) ||
@@ -1752,12 +1725,12 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
 {
     rendpoly_t poly;
     sector_t *sector = subsector->sector, *link = NULL;
-    int     tex, texFlags;
+    int     texFlags;
     float   height;
-    boolean isFlat;
+    surface_t *surface;
 
     // Sky planes of self-referrencing hack sectors are never rendered.
-    if(checkSelfRef && sin->selfRefHack && R_IsSkyFlat(sector->planes[plane->type].pic))
+    if(checkSelfRef && sin->selfRefHack && R_IsSkySurface(&sector->planes[plane->type].surface))
         return;
 
     // Determine the height of the plane.
@@ -1768,8 +1741,8 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
 
         // This sector has an invisible plane.
         height = SECT_INFO(link)->planeinfo[plane->type].visheight;
-        tex = link->planes[plane->type].pic;
-        isFlat = true;
+
+        surface = &link->planes[plane->type].surface;
     }
     else
     {
@@ -1778,22 +1751,21 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
         if(plane->type == PLN_CEILING)
             height += sector->skyfix;  // Add the skyfix.
 
-        tex = sector->planes[plane->type].pic;
-        isFlat = true;
+        surface = &sector->planes[plane->type].surface;
     }
 
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
-    if(sin->unclosed && R_IsSkyFlat(tex))
+    if(sin->unclosed && R_IsSkySurface(surface))
         return;
 
     // Has the texture changed?
-    if(tex != plane->pic)
+    if(surface->texture != plane->pic)
     {
-        plane->pic = tex;
+        plane->pic = surface->texture;
 
         // The sky?
-        if(R_IsSkyFlat(tex))
+        if(R_IsSkySurface(surface))
             plane->flags |= RPF_SKY_MASK;
         else
             plane->flags &= ~RPF_SKY_MASK;
@@ -1803,7 +1775,8 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
     if((plane->type == PLN_FLOOR && vy > height) ||
        (plane->type == PLN_CEILING && vy < height))
     {
-        texFlags = Rend_PrepareTextureForPoly(&poly, tex, isFlat);
+        texFlags =
+            Rend_PrepareTextureForPoly(&poly, surface);
 
         // Is there a visible surface?
         if(texFlags != -1)
@@ -1813,17 +1786,17 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
             poly.flags = plane->flags;
 
             // Check for sky.
-            if(!R_IsSkyFlat(tex))
+            if(!R_IsSkySurface(surface))
             {
                 poly.texoffx = sector->planes[plane->type].offx;
                 poly.texoffy = sector->planes[plane->type].offy;
             }
             poly.top = height;
 
-            Rend_DoRenderPlane(&poly, subsector, plane, tex, isFlat,
+            Rend_DoRenderPlane(&poly, subsector, plane, surface,
                 /*Alpha*/    255,
                 /*Shadow?*/  false, // unused
-                /*Shiny?*/   (tex != -1),
+                /*Shiny?*/   (surface->texture != -1),
                 /*Glow?*/    (texFlags & TXF_GLOW));
         }
     }
@@ -1922,12 +1895,12 @@ void Rend_RenderSubsector(int ssecidx)
                 // These checks are placed here instead of in the initial
                 // selfref hack test as the textures can change at any time,
                 // whilest the front/back sectors can't.
-                if(SIDE_PTR(seg->linedef->sidenum[0])->toptexture == 0 &&
-                   SIDE_PTR(seg->linedef->sidenum[1])->toptexture == 0)
+                if(SIDE_PTR(seg->linedef->sidenum[0])->top.texture == 0 &&
+                   SIDE_PTR(seg->linedef->sidenum[1])->top.texture == 0)
                     checkSelfRef[PLN_CEILING] = true;
 
-                if(SIDE_PTR(seg->linedef->sidenum[0])->bottomtexture == 0 &&
-                   SIDE_PTR(seg->linedef->sidenum[1])->bottomtexture == 0)
+                if(SIDE_PTR(seg->linedef->sidenum[0])->bottom.texture == 0 &&
+                   SIDE_PTR(seg->linedef->sidenum[1])->bottom.texture == 0)
                     checkSelfRef[PLN_FLOOR] = true;
             }
         }

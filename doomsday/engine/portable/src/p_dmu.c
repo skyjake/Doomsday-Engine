@@ -371,8 +371,6 @@ static void InitArgs(setargs_t* args, int type, int prop)
  */
 void P_InitMapUpdate(void)
 {
-    int i;
-
     // Request the DMU API version the game is expecting.
     usingDMUAPIver = (int) gx.Get(DD_GAME_DMUAPI_VER);
     if(!usingDMUAPIver)
@@ -416,7 +414,7 @@ void* P_AllocDummy(int type, void* extraData)
                 dummyLines[i].extraData = extraData;
                 dummyLines[i].line.header.type = DMU_LINE;
                 dummyLines[i].line.sidenum[0] = -1;
-                dummyLines[i].line.sidenum[1] = -1;                
+                dummyLines[i].line.sidenum[1] = -1;
                 return &dummyLines[i];
             }
         }
@@ -1022,24 +1020,25 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_PLANE_COLOR:
-            SetValue(DMT_PLANE_RGB, &p->rgb[0], args, 0);
-            SetValue(DMT_PLANE_RGB, &p->rgb[1], args, 1);
-            SetValue(DMT_PLANE_RGB, &p->rgb[2], args, 2);
+            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 1);
+            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 2);
             break;
         case DMU_PLANE_COLOR_RED:
-            SetValue(DMT_PLANE_RGB, &p->rgb[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
             break;
         case DMU_PLANE_COLOR_GREEN:
-            SetValue(DMT_PLANE_RGB, &p->rgb[1], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 0);
             break;
         case DMU_PLANE_COLOR_BLUE:
-            SetValue(DMT_PLANE_RGB, &p->rgb[2], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 0);
             break;
         case DMU_PLANE_HEIGHT:
             SetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
             break;
         case DMU_PLANE_TEXTURE:
-            SetValue(DMT_PLANE_PIC, &p->pic, args, 0);
+            SetValue(DMT_SURFACE_TEXTURE, &p->surface.texture, args, 0);
+            p->surface.isflat = true;
             break;
         case DMU_PLANE_OFFSET_X:
             SetValue(DMT_PLANE_OFFX, &p->offx, args, 0);
@@ -1052,14 +1051,14 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_PLANE_OFFY, &p->offy, args, 1);
             break;
         case DMU_PLANE_TEXTURE_MOVE_X:
-            SetValue(DMT_PLANE_TEXMOVE, &p->texmove[0], args, 0);
+            SetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);
             break;
         case DMU_PLANE_TEXTURE_MOVE_Y:
-            SetValue(DMT_PLANE_TEXMOVE, &p->texmove[1], args, 0);
+            SetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[1], args, 0);
             break;
         case DMU_PLANE_TEXTURE_MOVE_XY:
-            SetValue(DMT_PLANE_TEXMOVE, &p->texmove[0], args, 0);
-            SetValue(DMT_PLANE_TEXMOVE, &p->texmove[1], args, 1);
+            SetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);
+            SetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[1], args, 1);
             break;
         case DMU_PLANE_TARGET:
             SetValue(DMT_PLANE_TARGET, &p->target, args, 0);
@@ -1172,62 +1171,68 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SIDE_ROWOFFSET, &p->rowoffset, args, 1);
             break;
         case DMU_TOP_COLOR:
-            SetValue(DMT_SIDE_TOPRGB, &p->toprgb[0], args, 0);
-            SetValue(DMT_SIDE_TOPRGB, &p->toprgb[1], args, 1);
-            SetValue(DMT_SIDE_TOPRGB, &p->toprgb[2], args, 2);
+            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 1);
+            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 2);
             break;
         case DMU_TOP_COLOR_RED:
-            SetValue(DMT_SIDE_TOPRGB, &p->toprgb[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
             break;
         case DMU_TOP_COLOR_GREEN:
-            SetValue(DMT_SIDE_TOPRGB, &p->toprgb[1], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 0);
             break;
         case DMU_TOP_COLOR_BLUE:
-            SetValue(DMT_SIDE_TOPRGB, &p->toprgb[2], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 0);
             break;
         case DMU_TOP_TEXTURE:
-            SetValue(DMT_SIDE_TOPTEXTURE, &p->toptexture, args, 0);
+            SetValue(DMT_SURFACE_TEXTURE, &p->top.texture, args, 0);
+            p->top.isflat = false;
+            p->top.flags &= ~SUF_TEXFIX;
             break;
         case DMU_MIDDLE_COLOR:
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[0], args, 0);
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[1], args, 1);
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[2], args, 2);
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[3], args, 3);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 1);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 2);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 3);
             break;
         case DMU_MIDDLE_COLOR_RED:
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
             break;
         case DMU_MIDDLE_COLOR_GREEN:
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[1], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 0);
             break;
         case DMU_MIDDLE_COLOR_BLUE:
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[2], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 0);
             break;
         case DMU_MIDDLE_COLOR_ALPHA:
-            SetValue(DMT_SIDE_MIDRGBA, &p->midrgba[3], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 0);
             break;
         case DMU_MIDDLE_BLENDMODE:
             SetValue(DMT_SIDE_BLENDMODE, &p->blendmode, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE:
-            SetValue(DMT_SIDE_MIDTEXTURE, &p->midtexture, args, 0);
+            SetValue(DMT_SURFACE_TEXTURE, &p->middle.texture, args, 0);
+            p->middle.isflat = false;
+            p->middle.flags &= ~SUF_TEXFIX;
             break;
         case DMU_BOTTOM_COLOR:
-            SetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[0], args, 0);
-            SetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[1], args, 1);
-            SetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[2], args, 2);
+            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 1);
+            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 2);
             break;
         case DMU_BOTTOM_COLOR_RED:
-            SetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
             break;
         case DMU_BOTTOM_COLOR_GREEN:
-            SetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[1], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 0);
             break;
         case DMU_BOTTOM_COLOR_BLUE:
-            SetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[2], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 0);
             break;
         case DMU_BOTTOM_TEXTURE:
-            SetValue(DMT_SIDE_BOTTOMTEXTURE, &p->bottomtexture, args, 0);
+            SetValue(DMT_SURFACE_TEXTURE, &p->bottom.texture, args, 0);
+            p->bottom.isflat = false;
+            p->bottom.flags &= ~SUF_TEXFIX;
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_SIDE.\n",
@@ -1284,7 +1289,7 @@ static int SetProperty(void* ptr, void* context)
             int i;
             for(i = 0; i < NUM_REVERB_DATA; ++i)
             {
-                SetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i); 
+                SetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i);
             }
             break;
         }
@@ -1658,24 +1663,24 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_PLANE_SECTOR, &p->sector, args, 0);
             break;
         case DMU_PLANE_COLOR:
-            GetValue(DMT_PLANE_RGB, &p->rgb[0], args, 0);
-            GetValue(DMT_PLANE_RGB, &p->rgb[1], args, 1);
-            GetValue(DMT_PLANE_RGB, &p->rgb[2], args, 2);
+            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 1);
+            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 2);
             break;
         case DMU_PLANE_COLOR_RED:
-            GetValue(DMT_PLANE_RGB, &p->rgb[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[0], args, 0);
             break;
         case DMU_PLANE_COLOR_GREEN:
-            GetValue(DMT_PLANE_RGB, &p->rgb[1], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[1], args, 0);
             break;
         case DMU_PLANE_COLOR_BLUE:
-            GetValue(DMT_PLANE_RGB, &p->rgb[2], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->surface.rgba[2], args, 0);
             break;
         case DMU_PLANE_HEIGHT:
             GetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
             break;
         case DMU_PLANE_TEXTURE:
-            GetValue(DMT_PLANE_PIC, &p->pic, args, 0);
+            GetValue(DMT_SURFACE_TEXTURE, &p->surface.texture, args, 0);
             break;
         case DMU_PLANE_SOUND_ORIGIN:
         {
@@ -1694,14 +1699,14 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_PLANE_OFFY, &p->offy, args, 1);
             break;
         case DMU_PLANE_TEXTURE_MOVE_X:
-            GetValue(DMT_PLANE_TEXMOVE, &p->texmove[0], args, 0);
+            GetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);
             break;
         case DMU_PLANE_TEXTURE_MOVE_Y:
-            GetValue(DMT_PLANE_TEXMOVE, &p->texmove[1], args, 0);
+            GetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[1], args, 0);
             break;
         case DMU_PLANE_TEXTURE_MOVE_XY:
-            GetValue(DMT_PLANE_TEXMOVE, &p->texmove[0], args, 0);
-            GetValue(DMT_PLANE_TEXMOVE, &p->texmove[1], args, 1);
+            GetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);
+            GetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[1], args, 1);
             break;
         case DMU_PLANE_TARGET:
             GetValue(DMT_PLANE_TARGET, &p->target, args, 0);
@@ -1758,7 +1763,7 @@ static int GetProperty(void* ptr, void* context)
             int i;
             for(i = 0; i < NUM_REVERB_DATA; ++i)
             {
-                GetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i); 
+                GetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i);
             }
             break;
         }
@@ -1819,62 +1824,83 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SIDE_ROWOFFSET, &p->rowoffset, args, 1);
             break;
         case DMU_TOP_TEXTURE:
-            GetValue(DMT_SIDE_TOPTEXTURE, &p->toptexture, args, 0);
+            {
+            int texture = p->top.texture;
+
+            if(p->top.flags & SUF_TEXFIX)
+                texture = 0;
+
+            GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
+            }
         case DMU_TOP_COLOR:
-            GetValue(DMT_SIDE_TOPRGB, &p->toprgb[0], args, 0);
-            GetValue(DMT_SIDE_TOPRGB, &p->toprgb[1], args, 1);
-            GetValue(DMT_SIDE_TOPRGB, &p->toprgb[2], args, 2);
+            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 1);
+            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 2);
             break;
         case DMU_TOP_COLOR_RED:
-            GetValue(DMT_SIDE_TOPRGB, &p->toprgb[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
             break;
         case DMU_TOP_COLOR_GREEN:
-            GetValue(DMT_SIDE_TOPRGB, &p->toprgb[1], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 0);
             break;
         case DMU_TOP_COLOR_BLUE:
-            GetValue(DMT_SIDE_TOPRGB, &p->toprgb[2], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 0);
             break;
         case DMU_MIDDLE_TEXTURE:
-            GetValue(DMT_SIDE_MIDTEXTURE, &p->midtexture, args, 0);
+            {
+            int texture = p->middle.texture;
+
+            if(p->middle.flags & SUF_TEXFIX)
+                texture = 0;
+
+            GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
+            }
         case DMU_MIDDLE_COLOR:
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[0], args, 0);
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[1], args, 1);
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[2], args, 2);
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[3], args, 3);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 1);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 2);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 3);
             break;
         case DMU_MIDDLE_COLOR_RED:
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
             break;
         case DMU_MIDDLE_COLOR_GREEN:
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[1], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 0);
             break;
         case DMU_MIDDLE_COLOR_BLUE:
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[2], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 0);
             break;
         case DMU_MIDDLE_COLOR_ALPHA:
-            GetValue(DMT_SIDE_MIDRGBA, &p->midrgba[3], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 0);
             break;
         case DMU_MIDDLE_BLENDMODE:
             GetValue(DMT_SIDE_BLENDMODE, &p->blendmode, args, 0);
             break;
         case DMU_BOTTOM_TEXTURE:
-            GetValue(DMT_SIDE_BOTTOMTEXTURE, &p->bottomtexture, args, 0);
+            {
+            int texture = p->bottom.texture;
+
+            if(p->bottom.flags & SUF_TEXFIX)
+                texture = 0;
+
+            GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
+            }
         case DMU_BOTTOM_COLOR:
-            GetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[0], args, 0);
-            GetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[1], args, 1);
-            GetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[2], args, 2);
+            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 1);
+            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 2);
             break;
         case DMU_BOTTOM_COLOR_RED:
-            GetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
             break;
         case DMU_BOTTOM_COLOR_GREEN:
-            GetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[1], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 0);
             break;
         case DMU_BOTTOM_COLOR_BLUE:
-            GetValue(DMT_SIDE_BOTTOMRGB, &p->bottomrgb[2], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 0);
             break;
         case DMU_FLAGS:
             GetValue(DMT_SIDE_FLAGS, &p->flags, args, 0);

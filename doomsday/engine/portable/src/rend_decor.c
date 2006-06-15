@@ -72,29 +72,24 @@ static float surfaceNormal[3];
 /*
  * Returns a pointer to the surface decoration, if any.
  */
-ded_decor_t *Rend_GetTextureDecoration(int texture)
+ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
 {
-    if(!texture)
+    if(!id)
         return NULL;
-    return textures[texturetranslation[texture].current]->decoration;
-}
 
-/*
- * Returns a pointer to the surface decoration, if any.
- */
-ded_decor_t *Rend_GetFlatDecoration(int index)
-{
-    flat_t *flat = R_GetFlat(index);
-
-    if(!flat)
-        return NULL;
-    
-    // Get the translated one?
-    if(flat->translation.current != index)
+    if(isFlat)
     {
-        flat = R_GetFlat(flat->translation.current);
+        flat_t *flat = R_GetFlat(id);
+
+        // Get the translated one?
+        if(flat->translation.current != id)
+        {
+            flat = R_GetFlat(flat->translation.current);
+        }
+        return flat->decoration;
     }
-    return flat->decoration;
+    else
+        return textures[texturetranslation[id].current]->decoration;
 }
 
 /*
@@ -345,7 +340,8 @@ void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
  * Generate decorations for the specified section of a line.
  */
 void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
-                              float top, float bottom, float texOffY)
+                              boolean isFlat, float top, float bottom,
+                              float texOffY)
 {
     lineinfo_t *linfo = &lineinfo[GET_LINE_IDX(line)];
     ded_decor_t *def;
@@ -361,7 +357,7 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
         return;
 
     // Should this be decorated at all?
-    if(!(def = Rend_GetTextureDecoration(texture)))
+    if(!(def = Rend_GetGraphicResourceDecoration(texture, isFlat)))
         return;
 
     v1 = line->v1;
@@ -527,8 +523,8 @@ void Rend_DecorateLine(int index)
 
         // Is there a top section visible on either side?
         if(backCeil != frontCeil &&
-           (line->backsector->planes[PLN_CEILING].pic != skyflatnum ||
-            line->frontsector->planes[PLN_CEILING].pic != skyflatnum))
+           (!R_IsSkySurface(&line->backsector->SP_ceilsurface) ||
+            !R_IsSkySurface(&line->frontsector->SP_ceilsurface)))
         {
             if(frontCeil > backCeil)
             {
@@ -544,10 +540,11 @@ void Rend_DecorateLine(int index)
             // Figure out the right side.
             side = R_GetSectorSide(line, highSector);
 
-            if(side->toptexture != -1)
+            if(side->top.texture != -1)
             {
-                GL_GetTextureInfo(side->toptexture);
-                Rend_DecorateLineSection(line, side, side->toptexture,
+                GL_GetTextureInfo(side->top.texture);
+                Rend_DecorateLineSection(line, side, side->top.texture,
+                                         side->top.isflat,
                                          SECT_CEIL(highSector),
                                          SECT_CEIL(lowSector),
                                          line->flags & ML_DONTPEGTOP ? 0 : -texh +
@@ -558,8 +555,8 @@ void Rend_DecorateLine(int index)
 
         // Is there a bottom section visible?
         if(backFloor != frontFloor &&
-           (line->backsector->planes[PLN_FLOOR].pic != skyflatnum ||
-            line->frontsector->planes[PLN_FLOOR].pic != skyflatnum))
+           (!R_IsSkySurface(&line->backsector->SP_floorsurface) ||
+            !R_IsSkySurface(&line->frontsector->SP_floorsurface)))
         {
             if(frontFloor > backFloor)
             {
@@ -575,14 +572,14 @@ void Rend_DecorateLine(int index)
             // Figure out the right side.
             side = R_GetSectorSide(line, lowSector);
 
-            if(side->bottomtexture != -1)
+            if(side->bottom.texture != -1)
             {
-                GL_GetTextureInfo(side->bottomtexture);
-                Rend_DecorateLineSection(line, side, side->bottomtexture,
+                GL_GetTextureInfo(side->bottom.texture);
+                Rend_DecorateLineSection(line, side, side->bottom.texture,
+                                         side->bottom.isflat,
                                          SECT_FLOOR(highSector),
                                          SECT_FLOOR(lowSector),
-                                         line->
-                                         flags & ML_DONTPEGBOTTOM ?
+                                         line->flags & ML_DONTPEGBOTTOM ?
                                          SECT_FLOOR(highSector) -
                                          SECT_CEIL(lowSector) : 0);
             }
@@ -603,7 +600,7 @@ void Rend_DecorateLine(int index)
             if(Rend_MidTexturePos(&quad.top, &quad.bottom, &quad.texoffy, 0,
                                   (line->flags & ML_DONTPEGBOTTOM) != 0))
             {
-                Rend_DecorateLineSection(line, side, side->midtexture,
+                Rend_DecorateLineSection(line, side, side->midtexture, false,
                                          quad.top, quad.bottom, quad.texoffy);
             }
         }*/
@@ -615,10 +612,11 @@ void Rend_DecorateLine(int index)
         side =
             SIDE_PTR(line->sidenum[0] != NO_INDEX ? line->sidenum[0] : line->sidenum[1]);
 
-        if(side->midtexture != -1)
+        if(side->middle.texture != -1)
         {
-            GL_GetTextureInfo(side->midtexture);
-            Rend_DecorateLineSection(line, side, side->midtexture, frontCeil,
+            GL_GetTextureInfo(side->middle.texture);
+            Rend_DecorateLineSection(line, side, side->middle.texture,
+                                     side->middle.isflat, frontCeil,
                                      frontFloor,
                                      line->flags & ML_DONTPEGBOTTOM ? -texh +
                                      (frontCeil - frontFloor) : 0);
@@ -709,14 +707,14 @@ void Rend_DecorateSector(int index)
     if(!Rend_SectorDecorationBounds(sector, &secinfo[index]))
         return;
 
-    if((def = Rend_GetFlatDecoration(sector->planes[PLN_FLOOR].pic)) != NULL)
+    if((def = Rend_GetGraphicResourceDecoration(sector->SP_floorpic, true)) != NULL)
     {
         // The floor is decorated.
         Rend_DecoratePlane(index, SECT_FLOOR(sector), 1, sector->planes[PLN_FLOOR].offx,
                            sector->planes[PLN_FLOOR].offy, def);
     }
 
-    if((def = Rend_GetFlatDecoration(sector->planes[PLN_CEILING].pic)) != NULL)
+    if((def = Rend_GetGraphicResourceDecoration(sector->SP_floorpic, true)) != NULL)
     {
         // The ceiling is decorated.
         Rend_DecoratePlane(index, SECT_CEIL(sector), -1, sector->planes[PLN_CEILING].offx,

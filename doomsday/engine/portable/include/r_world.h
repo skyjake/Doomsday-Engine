@@ -33,7 +33,7 @@ extern int      rendSkyLight;      // cvar
 const char     *R_GetCurrentLevelID(void);
 const char     *R_GetUniqueLevelID(void);
 const byte     *R_GetSectorLightColor(sector_t *sector);
-boolean         R_IsSkyFlat(int flat);
+boolean         R_IsSkySurface(surface_t *surface);
 void            R_SetupLevel(char *level_id, int flags);
 void            R_SetupFog(void);
 void            R_SetupSky(void);

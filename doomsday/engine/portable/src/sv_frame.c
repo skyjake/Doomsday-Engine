@@ -457,9 +457,9 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     Msg_WriteShort(df & 0xffff);
 
     if(df & SDF_FLOORPIC)
-        Msg_WritePackedShort(d->floorPic);
+        Msg_WritePackedShort(d->SP_floorpic);
     if(df & SDF_CEILINGPIC)
-        Msg_WritePackedShort(d->ceilingPic);
+        Msg_WritePackedShort(d->SP_ceilpic);
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
@@ -467,17 +467,17 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
                       255 ? 255 : d->lightlevel);
     }
     if(df & SDF_FLOOR_HEIGHT)
-        Msg_WriteShort(d->floorHeight >> 16);
+        Msg_WriteShort(d->planes[PLN_FLOOR].height >> 16);
     if(df & SDF_CEILING_HEIGHT)
-        Msg_WriteShort(d->ceilingHeight >> 16);
+        Msg_WriteShort(d->planes[PLN_CEILING].height >> 16);
     if(df & SDF_FLOOR_TARGET)
         Msg_WriteShort(d->planes[PLN_FLOOR].target >> 16);
     if(df & SDF_FLOOR_SPEED)    // 7.1/4.4 fixed-point
         Msg_WriteByte(floorspd);
     if(df & SDF_FLOOR_TEXMOVE)
     {
-        Msg_WriteShort(d->planes[PLN_FLOOR].texmove[0] >> 8);
-        Msg_WriteShort(d->planes[PLN_FLOOR].texmove[1] >> 8);
+        Msg_WriteShort(d->SP_floortexmove[0] >> 8);
+        Msg_WriteShort(d->SP_floortexmove[1] >> 8);
     }
     if(df & SDF_CEILING_TARGET)
         Msg_WriteShort(d->planes[PLN_CEILING].target >> 16);
@@ -485,8 +485,8 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
         Msg_WriteByte(ceilspd);
     if(df & SDF_CEILING_TEXMOVE)
     {
-        Msg_WriteShort(d->planes[PLN_CEILING].texmove[0] >> 8);
-        Msg_WriteShort(d->planes[PLN_CEILING].texmove[1] >> 8);
+        Msg_WriteShort(d->SP_ceiltexmove[0] >> 8);
+        Msg_WriteShort(d->SP_ceiltexmove[1] >> 8);
     }
     if(df & SDF_COLOR_RED)
         Msg_WriteByte(d->rgb[0]);
@@ -496,39 +496,39 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
         Msg_WriteByte(d->rgb[2]);
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Msg_WriteByte(d->floorrgb[0]);
+        Msg_WriteByte(d->SP_floorrgb[0]);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Msg_WriteByte(d->floorrgb[1]);
+        Msg_WriteByte(d->SP_floorrgb[1]);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Msg_WriteByte(d->floorrgb[2]);
+        Msg_WriteByte(d->SP_floorrgb[2]);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Msg_WriteByte(d->ceilingrgb[0]);
+        Msg_WriteByte(d->SP_ceilrgb[0]);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Msg_WriteByte(d->ceilingrgb[1]);
+        Msg_WriteByte(d->SP_ceilrgb[1]);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Msg_WriteByte(d->ceilingrgb[2]);
+        Msg_WriteByte(d->SP_ceilrgb[2]);
 
     if(df & SDF_FLOOR_GLOW_RED)
-        Msg_WriteByte(d->floorglowrgb[0]);
+        Msg_WriteByte(d->SP_floorglowrgb[0]);
     if(df & SDF_FLOOR_GLOW_GREEN)
-        Msg_WriteByte(d->floorglowrgb[1]);
+        Msg_WriteByte(d->SP_floorglowrgb[1]);
     if(df & SDF_FLOOR_GLOW_BLUE)
-        Msg_WriteByte(d->floorglowrgb[2]);
+        Msg_WriteByte(d->SP_floorglowrgb[2]);
 
     if(df & SDF_CEIL_GLOW_RED)
-        Msg_WriteByte(d->ceilingglowrgb[0]);
+        Msg_WriteByte(d->SP_ceilglowrgb[0]);
     if(df & SDF_CEIL_GLOW_GREEN)
-        Msg_WriteByte(d->ceilingglowrgb[1]);
+        Msg_WriteByte(d->SP_ceilglowrgb[1]);
     if(df & SDF_CEIL_GLOW_BLUE)
-        Msg_WriteByte(d->ceilingglowrgb[2]);
+        Msg_WriteByte(d->SP_ceilglowrgb[2]);
 
     if(df & SDF_FLOOR_GLOW)
-        Msg_WriteShort(d->floorglow < 0 ? 0 : d->floorglow > 1 ? DDMAXSHORT :
-                       (short)(d->floorglow * DDMAXSHORT));
+        Msg_WriteShort(d->SP_floorglow < 0 ? 0 : d->SP_floorglow > 1 ? DDMAXSHORT :
+                       (short)(d->SP_floorglow * DDMAXSHORT));
     if(df & SDF_CEIL_GLOW)
-        Msg_WriteShort(d->ceilingglow < 0 ? 0 : d->ceilingglow > 1 ? DDMAXSHORT :
-                       (short)(d->ceilingglow * DDMAXSHORT));
+        Msg_WriteShort(d->SP_ceilglow < 0 ? 0 : d->SP_ceilglow > 1 ? DDMAXSHORT :
+                       (short)(d->SP_ceilglow * DDMAXSHORT));
 }
 
 /*
@@ -547,37 +547,37 @@ void Sv_WriteSideDelta(const void *deltaPtr)
     Msg_WriteByte(df & 0xff);
 
     if(df & SIDF_TOPTEX)
-        Msg_WritePackedShort(d->topTexture);
+        Msg_WritePackedShort(d->top.texture);
     if(df & SIDF_MIDTEX)
-        Msg_WritePackedShort(d->midTexture);
+        Msg_WritePackedShort(d->middle.texture);
     if(df & SIDF_BOTTOMTEX)
-        Msg_WritePackedShort(d->bottomTexture);
+        Msg_WritePackedShort(d->bottom.texture);
 
     if(df & SIDF_LINE_FLAGS)
         Msg_WriteByte(d->lineFlags);
 
     if(df & SIDF_TOP_COLOR_RED)
-        Msg_WriteByte(d->toprgb[0]);
+        Msg_WriteByte(d->top.rgba[0]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        Msg_WriteByte(d->toprgb[1]);
+        Msg_WriteByte(d->top.rgba[1]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        Msg_WriteByte(d->toprgb[2]);
+        Msg_WriteByte(d->top.rgba[2]);
 
     if(df & SIDF_MID_COLOR_RED)
-        Msg_WriteByte(d->midrgba[0]);
+        Msg_WriteByte(d->middle.rgba[0]);
     if(df & SIDF_MID_COLOR_GREEN)
-        Msg_WriteByte(d->midrgba[1]);
+        Msg_WriteByte(d->middle.rgba[1]);
     if(df & SIDF_MID_COLOR_BLUE)
-        Msg_WriteByte(d->midrgba[2]);
+        Msg_WriteByte(d->middle.rgba[2]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        Msg_WriteByte(d->midrgba[3]);
+        Msg_WriteByte(d->middle.rgba[3]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Msg_WriteByte(d->bottomrgb[0]);
+        Msg_WriteByte(d->bottom.rgba[0]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Msg_WriteByte(d->bottomrgb[1]);
+        Msg_WriteByte(d->bottom.rgba[1]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Msg_WriteByte(d->bottomrgb[2]);
+        Msg_WriteByte(d->bottom.rgba[2]);
 
     if(df & SIDF_MID_BLENDMODE)
         Msg_WriteShort(d->blendmode >> 16);

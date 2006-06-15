@@ -856,10 +856,10 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
     z = pt->pos[VZ] + pt->mov[VZ];
     if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT)
     {
-        if(z > pt->sector->planes[PLN_CEILING].height - hardRadius)
+        if(z > pt->sector->SP_ceilheight - hardRadius)
         {
             // The Z is through the roof!
-            if(pt->sector->planes[PLN_CEILING].pic == skyflatnum)
+            if(R_IsSkySurface(&pt->sector->SP_ceilsurface))
             {
                 // Special case: particle gets lost in the sky.
                 pt->stage = -1;
@@ -867,21 +867,21 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
             }
             if(!P_TouchParticle(pt, st, stDef, false))
                 return;
-            z = pt->sector->planes[PLN_CEILING].height - hardRadius;
+            z = pt->sector->SP_ceilheight - hardRadius;
             zBounce = true;
             hitFloor = false;
         }
         // Also check the floor.
-        if(z < pt->sector->planes[PLN_FLOOR].height + hardRadius)
+        if(z < pt->sector->SP_floorheight + hardRadius)
         {
-            if(pt->sector->planes[PLN_FLOOR].pic == skyflatnum)
+            if(R_IsSkySurface(&pt->sector->SP_floorsurface))
             {
                 pt->stage = -1;
                 return;
             }
             if(!P_TouchParticle(pt, st, stDef, false))
                 return;
-            z = pt->sector->planes[PLN_FLOOR].height + hardRadius;
+            z = pt->sector->SP_floorheight + hardRadius;
             zBounce = true;
             hitFloor = true;
         }
@@ -1113,7 +1113,7 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
 
     if(!flat)
         return NULL;
-    
+
     if(flatpic <= 0)
         return flat->ptcgen = NULL;
 
@@ -1196,7 +1196,7 @@ void P_CheckPtcPlanes(void)
         for(p = 0; p < 2; p++)
         {
             plane = p;
-            def = P_GetPtcGenForFlat(sector->planes[plane].pic);
+            def = P_GetPtcGenForFlat(sector->planes[plane].surface.texture);
 
             if(!def)
                 continue;
