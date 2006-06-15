@@ -1421,7 +1421,7 @@ void C_DECL A_MntrFloorFire(mobj_t *actor)
 
     actor->pos[VZ] = actor->floorz;
     mo = P_SpawnMobj(actor->pos[VX] + ((P_Random() - P_Random()) << 10),
-                     actor->pos[VZ] + ((P_Random() - P_Random()) << 10),
+                     actor->pos[VY] + ((P_Random() - P_Random()) << 10),
                      ONFLOORZ, MT_MNTRFX3);
     mo->target = actor->target;
     mo->momx = 1;               // Force block checking
@@ -4057,7 +4057,8 @@ void C_DECL A_SorcBallOrbit(mobj_t *actor)
     memcpy(pos, parent->pos, sizeof(pos));
     pos[VX] += FixedMul(dist, finecosine[angle]);
     pos[VY] += FixedMul(dist, finesine[angle]);
-    pos[VZ] -= parent->floorclip + parent->info->height;
+    pos[VZ] += parent->info->height;
+    pos[VZ] -= parent->floorclip;
     memcpy(actor->pos, pos, sizeof(pos));
 }
 
@@ -4295,7 +4296,8 @@ void C_DECL A_SpawnFizzle(mobj_t *actor)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FixedMul(dist, finecosine[angle]);
     pos[VY] += FixedMul(dist, finesine[angle]);
-    pos[VZ] -= actor->floorclip + (actor->height >> 1);
+    pos[VZ] += (actor->height >> 1);
+    pos[VZ] -= actor->floorclip;
 
     for(ix = 0; ix < 5; ix++)
     {
@@ -4388,8 +4390,8 @@ void C_DECL A_SorcFX2Orbit(mobj_t *actor)
         memcpy(pos, parent->pos, sizeof(pos));
         pos[VX] += FixedMul(dist, finecosine[angle]);
         pos[VY] += FixedMul(dist, finesine[angle]);
-        pos[VZ] += FixedMul(15 * FRACUNIT, finecosine[angle]);
-        pos[VZ] -= parent->floorclip + SORC_DEFENSE_HEIGHT * FRACUNIT;
+        pos[VZ] += SORC_DEFENSE_HEIGHT * FRACUNIT + FixedMul(15 * FRACUNIT, finecosine[angle]);
+        pos[VZ] -= parent->floorclip;
 
         // Spawn trailer
         P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_SORCFX2_T1);
@@ -4402,8 +4404,8 @@ void C_DECL A_SorcFX2Orbit(mobj_t *actor)
         memcpy(pos, parent->pos, sizeof(pos));
         pos[VX] += FixedMul(dist, finecosine[angle]);
         pos[VY] += FixedMul(dist, finesine[angle]);
-        pos[VZ] += FixedMul(20 * FRACUNIT, finesine[angle]);
-        pos[VZ] -= parent->floorclip + SORC_DEFENSE_HEIGHT * FRACUNIT;
+        pos[VZ] += (SORC_DEFENSE_HEIGHT * FRACUNIT) + FixedMul(20 * FRACUNIT, finesine[angle]);
+        pos[VZ] -= parent->floorclip;
 
         // Spawn trailer
         P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_SORCFX2_T1);
@@ -5141,7 +5143,8 @@ void KoraxFire1(mobj_t *actor, int type)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FixedMul(KORAX_ARM_EXTENSION_SHORT, finecosine[ang]);
     pos[VY] += FixedMul(KORAX_ARM_EXTENSION_SHORT, finesine[ang]);
-    pos[VZ] -= actor->floorclip + KORAX_ARM1_HEIGHT;
+    pos[VZ] -= actor->floorclip;
+    pos[VZ] += KORAX_ARM1_HEIGHT;
     mo = P_SpawnKoraxMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target, type);
 }
 
@@ -5157,7 +5160,8 @@ void KoraxFire2(mobj_t *actor, int type)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FixedMul(KORAX_ARM_EXTENSION_LONG, finecosine[ang]);
     pos[VY] += FixedMul(KORAX_ARM_EXTENSION_LONG, finesine[ang]);
-    pos[VZ] -= actor->floorclip + KORAX_ARM2_HEIGHT;
+    pos[VZ] -= actor->floorclip;
+    pos[VZ] += KORAX_ARM2_HEIGHT;
     mo = P_SpawnKoraxMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target, type);
 }
 
@@ -5173,7 +5177,8 @@ void KoraxFire3(mobj_t *actor, int type)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FixedMul(KORAX_ARM_EXTENSION_LONG, finecosine[ang]);
     pos[VY] += FixedMul(KORAX_ARM_EXTENSION_LONG, finesine[ang]);
-    pos[VZ] -= actor->floorclip + KORAX_ARM3_HEIGHT;
+    pos[VZ] -= actor->floorclip;
+    pos[VZ] += KORAX_ARM3_HEIGHT;
     mo = P_SpawnKoraxMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target, type);
 }
 
@@ -5189,7 +5194,8 @@ void KoraxFire4(mobj_t *actor, int type)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FixedMul(KORAX_ARM_EXTENSION_SHORT, finecosine[ang]);
     pos[VY] += FixedMul(KORAX_ARM_EXTENSION_SHORT, finesine[ang]);
-    pos[VZ] -= actor->floorclip + KORAX_ARM4_HEIGHT;
+    pos[VZ] -= actor->floorclip;
+    pos[VZ] += KORAX_ARM4_HEIGHT;
     mo = P_SpawnKoraxMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target, type);
 }
 
@@ -5205,7 +5211,8 @@ void KoraxFire5(mobj_t *actor, int type)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FixedMul(KORAX_ARM_EXTENSION_LONG, finecosine[ang]);
     pos[VY] += FixedMul(KORAX_ARM_EXTENSION_LONG, finesine[ang]);
-    pos[VZ] -= actor->floorclip + KORAX_ARM5_HEIGHT;
+    pos[VZ] -= actor->floorclip;
+    pos[VZ] += KORAX_ARM5_HEIGHT;
     mo = P_SpawnKoraxMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target, type);
 }
 
@@ -5221,7 +5228,8 @@ void KoraxFire6(mobj_t *actor, int type)
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FixedMul(KORAX_ARM_EXTENSION_LONG, finecosine[ang]);
     pos[VY] += FixedMul(KORAX_ARM_EXTENSION_LONG, finesine[ang]);
-    pos[VZ] -= actor->floorclip + KORAX_ARM6_HEIGHT;
+    pos[VZ] -= actor->floorclip;
+    pos[VZ] += KORAX_ARM6_HEIGHT;
     mo = P_SpawnKoraxMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target, type);
 }
 
