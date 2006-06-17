@@ -960,11 +960,14 @@ void G_Ticker(void)
                 P_SpawnTeleFog(players[i].plr->mo->pos[VX], players[i].plr->mo->pos[VY]);
             }
             // Let's get rid of the mobj.
-#if _DEBUG
-            Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
+            if(players[i].plr->mo)
+            {
+#ifdef _DEBUG
+                Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
-            P_RemoveMobj(players[i].plr->mo);
-            players[i].plr->mo = NULL;
+                P_RemoveMobj(players[i].plr->mo);
+                players[i].plr->mo = NULL;
+            }
         }
     }
 
