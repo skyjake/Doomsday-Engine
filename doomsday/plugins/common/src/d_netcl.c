@@ -117,7 +117,6 @@ int NetCl_IsCompatible(int other, int us)
 
 void NetCl_UpdateGameState(byte *data)
 {
-    fixed_t grav;
     byte gsGameMode = 0;
     byte gsFlags = 0;
     byte gsEpisode = 0;
@@ -129,7 +128,7 @@ void NetCl_UpdateGameState(byte *data)
     byte gsJumping = 0;
 #endif
     byte gsSkill = 0;
-    short gsGravity = 0;
+    fixed_t gsGravity = 0;
 
     gsGameMode = data[0];
     gsFlags = data[1];
@@ -144,7 +143,7 @@ void NetCl_UpdateGameState(byte *data)
 #else
     gsSkill = data[5] & 0x7;
 #endif
-    gsGravity = data[6] | (data[7] << 8);
+    gsGravity = (data[6] << 8) | (data[7] << 16);
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
@@ -164,7 +163,6 @@ void NetCl_UpdateGameState(byte *data)
     deathmatch = gsDeathmatch;
     nomonsters = !gsMonsters;
     respawnparm = gsRespawn;
-    grav = SHORT((gsGravity) << 8);
 
     // Some statistics.
 #if __JHEXEN__ || __JSTRIFE__
@@ -173,7 +171,7 @@ void NetCl_UpdateGameState(byte *data)
                 2 ? "Deathmatch2" : "Co-op");
     Con_Message("  Respawn=%s Monsters=%s Gravity=%.1f\n",
                 respawnparm ? "yes" : "no", !nomonsters ? "yes" : "no",
-                FIX2FLT(grav));
+                FIX2FLT(gsGravity));
 #else
     Con_Message("Game state: Map=%i Episode=%i Skill=%i %s\n", gsMap,
                 gsEpisode, gsSkill,
@@ -181,7 +179,7 @@ void NetCl_UpdateGameState(byte *data)
                 2 ? "Deathmatch2" : "Co-op");
     Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
                 respawnparm ? "yes" : "no", !nomonsters ? "yes" : "no",
-                gsJumping ? "yes" : "no", FIX2FLT(grav));
+                gsJumping ? "yes" : "no", FIX2FLT(gsGravity));
 #endif
 
 #ifdef __JHERETIC__
@@ -208,7 +206,7 @@ void NetCl_UpdateGameState(byte *data)
     }
 
     // Set gravity.
-    Set(DD_GRAVITY, grav);
+    Set(DD_GRAVITY, gsGravity);
 
     // Camera init included?
     if(gsFlags & GSF_CAMERA_INIT)
