@@ -15,7 +15,7 @@
  ./../../plugins/common/src/p_xgline.c
  ./../../plugins/common/src/p_xgfile.c
  ./../../plugins/common/src/p_view.c
- ./../../plugins/jdoom/src/p_user.c
+ ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/jdoom/src/p_telept.c
  ./../../plugins/jdoom/src/p_switch.c

@@ -19,7 +19,7 @@
  ./../../plugins/common/src/p_mapsetup.c
  ./../../plugins/common/src/p_actor.c
  ./../../plugins/common/src/p_player.c
- ./../../plugins/jhexen/src/p_user.c
+ ./../../plugins/common/src/p_user.c
  ./../../plugins/jhexen/src/p_things.c
  ./../../plugins/jhexen/src/p_telept.c
  ./../../plugins/jhexen/src/p_switch.c

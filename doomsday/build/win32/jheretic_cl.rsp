@@ -15,7 +15,7 @@
  ./../../plugins/common/src/p_xgline.c
  ./../../plugins/common/src/p_xgfile.c
  ./../../plugins/common/src/p_view.c
- ./../../plugins/jheretic/src/p_user.c
+ ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/jheretic/src/p_telept.c
  ./../../plugins/jheretic/src/p_switch.c
