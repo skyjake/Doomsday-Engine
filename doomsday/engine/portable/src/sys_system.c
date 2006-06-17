@@ -10,8 +10,9 @@
 #ifdef WIN32
 #  include <windows.h>
 #  include <process.h>
-#  include <signal.h>
 #endif
+
+#include <signal.h>
 
 #include <SDL.h>
 #include <SDL_thread.h>
@@ -98,6 +99,9 @@ void Sys_Init(void)
     signal(SIGILL, handler);
     signal(SIGABRT, handler);
 #endif
+    
+    // We are not worried about broken pipes.
+    signal(SIGPIPE, SIG_IGN);
 }
 
 /*

@@ -30,6 +30,8 @@
 #  include <SDL_net.h>
 #endif
 
+#include <errno.h>
+
 #include "de_base.h"
 #include "de_network.h"
 #include "de_console.h"
@@ -413,7 +415,11 @@ boolean N_ReceiveReliably(nodeid_t from)
     UDPpacket *packet = NULL;
 
     if(SDLNet_TCP_Recv(sock, &size, 2) != 2)
+    {        
+        Con_Message("N_ReceiveReliably: Packet header was truncated.\n");
+        Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(errno));
         return false;
+    }
 
     size = SHORT(size);
 
@@ -434,6 +440,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     else
     {
         SDLNet_FreePacket(packet);
+        Con_Message("N_ReceiveReliably: Packet data was truncated.\n");
         return false;
     }
 
@@ -1512,6 +1519,8 @@ void N_Listen(void)
             if(!N_ReceiveReliably(0))
             {
                 netevent_t nev;
+                
+                Con_Message("N_Listen: N_ReceiveReliably failed. Terminating!\n");
 
                 nev.id = 0;
                 nev.type = NE_END_CONNECTION;

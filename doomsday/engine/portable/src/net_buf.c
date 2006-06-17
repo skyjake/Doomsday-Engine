@@ -596,9 +596,8 @@ void N_SendPacket(int flags)
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
     // Compress using Huffman codes.
-    data =
-        Huff_Encode((byte *) &netBuffer.msg,
-                    netBuffer.headerLength + netBuffer.length, &size);
+    data = Huff_Encode((byte *) &netBuffer.msg,
+                       netBuffer.headerLength + netBuffer.length, &size);
 
     // This many bytes are actually sent.
     numSentBytes += size;
