@@ -22,9 +22,18 @@
 #ifndef __DOOMSDAY_CLIENT_WORLD_H__
 #define __DOOMSDAY_CLIENT_WORLD_H__
 
+typedef enum {
+    MVT_FLOOR,
+    MVT_CEILING
+} clmovertype_t;
+
 void            Cl_InitTranslations(void);
-void            Cl_InitMovers();
-void            Cl_RemoveMovers();
+void            Cl_InitMovers(void);
+void            Cl_RemoveMovers(void);
+short           Cl_TranslateLump(short lump);
+void            Cl_SetPolyMover(int number, int move, int rotate);
+void            Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, 
+                            fixed_t speed);
 
 int             Cl_ReadSectorDelta(void);
 int             Cl_ReadLumpDelta(void);
