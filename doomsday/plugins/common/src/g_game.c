@@ -955,13 +955,13 @@ void G_Ticker(void)
         if(players[i].playerstate == PST_GONE)
         {
             players[i].playerstate = PST_REBORN;
-            if(!IS_CLIENT)
-            {
-                P_SpawnTeleFog(players[i].plr->mo->pos[VX], players[i].plr->mo->pos[VY]);
-            }
-            // Let's get rid of the mobj.
             if(players[i].plr->mo)
             {
+                if(!IS_CLIENT)
+                {
+                    P_SpawnTeleFog(players[i].plr->mo->pos[VX], players[i].plr->mo->pos[VY]);
+                }
+                // Let's get rid of the mobj.
 #ifdef _DEBUG
                 Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
