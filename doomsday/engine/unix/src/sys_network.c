@@ -482,8 +482,8 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
     // There is a chance that the packet is dropped.
     if(M_FRandom() < RANDOMIZER_DROP_PERCENT / 100.0)
     {
-        Con_Message("N_SendDataBuffer: Randomizer dropped packet to %i "
-                    "(%i bytes).\n", destination, size);
+        VERBOSE( Con_Message("N_SendDataBuffer: Randomizer dropped packet to %i "
+                             "(%i bytes).\n", destination, size) );
         return;
     }
 #endif
