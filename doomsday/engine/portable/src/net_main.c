@@ -44,7 +44,7 @@
 #define OBSOLETE        CVF_NO_ARCHIVE|CVF_HIDE // Old ccmds.
 
 // The threshold is the average ack time * mul.
-#define ACK_THRESHOLD_MUL       4
+#define ACK_THRESHOLD_MUL       1.5f
 
 // Never wait a too short time for acks.
 #define ACK_MINIMUM_THRESHOLD   50
@@ -892,6 +892,11 @@ void Net_SetAckTime(int clientNumber, uint period)
     // Add the new time into the array.
     client->ackTimes[client->ackIdx++] = period;
     client->ackIdx %= NUM_ACK_TIMES;
+    
+#ifdef _DEBUG
+    VERBOSE( Con_Printf("Net_SetAckTime: Client %i, new ack sample of %05u ms.\n", 
+                        clientNumber, period) );
+#endif
 }
 
 /*
@@ -901,14 +906,37 @@ uint Net_GetAckTime(int clientNumber)
 {
     client_t *client = &clients[clientNumber];
     uint    average = 0;
-    int     i;
+    int     i, count = 0;
+    uint    smallest = 0, largest = 0;
+    
+    // Find the smallest and largest so that they can be ignored.
+    smallest = largest = client->ackTimes[0];
+    for(i = 0; i < NUM_ACK_TIMES; i++)
+    {
+        if(client->ackTimes[i] < smallest)
+            smallest = client->ackTimes[i];
+        
+        if(client->ackTimes[i] > largest)
+            largest = client->ackTimes[i];
+    }
 
     // Calculate the average.
     for(i = 0; i < NUM_ACK_TIMES; i++)
     {
-        average += client->ackTimes[i];
+        if(client->ackTimes[i] != largest && client->ackTimes[i] != smallest)
+        {
+            average += client->ackTimes[i];
+            count++;
+        }
     }
-    return average / NUM_ACK_TIMES;
+    if(count > 0)
+    {
+        return average / count;
+    }
+    else
+    {
+        return client->ackTimes[0];
+    }
 }
 
 /*
@@ -959,12 +987,13 @@ void Net_Ticker(timespan_t time)
                 if(Sv_IsFrameTarget(i))
                 {
                     Con_Message("%i(rdy%i): avg=%05ims thres=%05ims "
-                                "bwr=%05i (adj:%i) maxfs=%05ib\n", i,
+                                "bwr=%05i (adj:%i) maxfs=%05ib unakd=%05i\n", i,
                                 clients[i].ready, Net_GetAckTime(i),
                                 Net_GetAckThreshold(i),
                                 clients[i].bandwidthRating,
                                 clients[i].bwrAdjustTime,
-                                Sv_GetMaxFrameSize(i));
+                                Sv_GetMaxFrameSize(i),
+                                Sv_CountUnackedDeltas(i));
                 }
                 if(players[i].ingame)
                     Con_Message("%i: cmds=%i\n", i, clients[i].numTics);
