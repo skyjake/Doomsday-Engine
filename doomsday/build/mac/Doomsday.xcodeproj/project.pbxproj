@@ -223,6 +223,7 @@
 		B083A6D4085CCD2C000D4BAB /* st_stuff.c in Sources */ = {isa = PBXBuildFile; fileRef = B01078D508563728000BF0D8 /* st_stuff.c */; };
 		B083A6D5085CCD2C000D4BAB /* sv_save.c in Sources */ = {isa = PBXBuildFile; fileRef = B0237C4606F443120059676A /* sv_save.c */; };
 		B083A6D6085CCD2C000D4BAB /* tables.c in Sources */ = {isa = PBXBuildFile; fileRef = B0237C4706F443120059676A /* tables.c */; };
+		B0A904F90A452FAA00DD2583 /* cl_oldworld.c in Sources */ = {isa = PBXBuildFile; fileRef = B0A904F80A452FAA00DD2583 /* cl_oldworld.c */; };
 		B0AE9D0709839BE1008EFFD0 /* p_mapsetup.c in Sources */ = {isa = PBXBuildFile; fileRef = B04027ED0982F53A00C5F03E /* p_mapsetup.c */; };
 		B0AE9D0809839BE2008EFFD0 /* p_mapsetup.c in Sources */ = {isa = PBXBuildFile; fileRef = B04027ED0982F53A00C5F03E /* p_mapsetup.c */; };
 		B0C8F44C0A3F10FC00CFA4A5 /* DoomsdayRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = B0C8F4490A3F10FC00CFA4A5 /* DoomsdayRunner.m */; };
@@ -1133,6 +1134,7 @@
 		B083A53B085CC153000D4BAB /* xddefs.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = xddefs.h; path = ../../plugins/jhexen/include/xddefs.h; sourceTree = SOURCE_ROOT; };
 		B083A6AE085CCCEE000D4BAB /* jHexen.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = jHexen.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		B0A8094D06F1F45D007AEB2E /* Readme.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Readme.rtf; sourceTree = "<group>"; };
+		B0A904F80A452FAA00DD2583 /* cl_oldworld.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_oldworld.c; path = ../../engine/portable/src/cl_oldworld.c; sourceTree = SOURCE_ROOT; };
 		B0BBED3007DB998600663713 /* deng.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = deng.icns; path = ../../engine/mac/res/deng.icns; sourceTree = SOURCE_ROOT; };
 		B0C8F4490A3F10FC00CFA4A5 /* DoomsdayRunner.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = DoomsdayRunner.m; path = ../../engine/mac/src/DoomsdayRunner.m; sourceTree = SOURCE_ROOT; };
 		B0C8F44A0A3F10FC00CFA4A5 /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = SDLMain.m; path = ../../engine/mac/src/SDLMain.m; sourceTree = SOURCE_ROOT; };
@@ -1436,6 +1438,7 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B0A904F80A452FAA00DD2583 /* cl_oldworld.c */,
 				B0346DC20A10F18D00C8BAB2 /* edit_bias.c */,
 				B0DAE5BD09823D6C000A8265 /* template.c */,
 				B0DAE5B209823CEB000A8265 /* p_dmu.c */,
@@ -3031,6 +3034,7 @@
 				B0C8F44C0A3F10FC00CFA4A5 /* DoomsdayRunner.m in Sources */,
 				B0C8F44D0A3F10FC00CFA4A5 /* SDLMain.m in Sources */,
 				B0C8F44E0A3F10FC00CFA4A5 /* StartupWindowController.m in Sources */,
+				B0A904F90A452FAA00DD2583 /* cl_oldworld.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
