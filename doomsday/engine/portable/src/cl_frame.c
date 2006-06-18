@@ -55,18 +55,15 @@ int     predicted_tics;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int num_acks;
-byte    acks[MAX_ACKS];
-
 // The set history keeps track of received sets and is used to detect
 // duplicate frames.
-short   setHistory[SET_HISTORY_SIZE];
-int     historyIdx;
+static short    setHistory[SET_HISTORY_SIZE];
+static int      historyIdx;
 
 // The resend ID history keeps track of received resend deltas. Used
 // to detect duplicate resends.
-byte    resendHistory[RESEND_HISTORY_SIZE];
-int     resendHistoryIdx;
+static byte     resendHistory[RESEND_HISTORY_SIZE];
+static int      resendHistoryIdx;
 
 // CODE --------------------------------------------------------------------
 
@@ -307,67 +304,4 @@ void Cl_Frame2Received(int packetType)
 		}
 	}
 	Net_SendBuffer(0, 0);
-}
-
-/*
- * Read and ack a psv_frame delta set.
- *
- * THIS FUNCTION IS OBSOLETE (psv_frame is no longer used)
- */
-void Cl_ReadDeltaSet(void)
-{
-	byte    present = Msg_ReadByte();
-	byte    set = Msg_ReadByte();
-
-	// Add the set number to the list of acks.
-	if(num_acks < MAX_ACKS)
-		acks[num_acks++] = set;
-
-	if(present & BIT(DT_MOBJ))
-		while(Cl_ReadMobjDelta());
-	if(present & BIT(DT_PLAYER))
-		while(Cl_ReadPlayerDelta());
-	if(present & BIT(DT_LUMP))
-		while(Cl_ReadLumpDelta());
-	if(present & BIT(DT_SECTOR_SHORT_FLAGS))
-		while(Cl_ReadSectorDelta());
-	if(present & BIT(DT_SIDE))
-		while(Cl_ReadSideDelta());
-	if(present & BIT(DT_POLY))
-		while(Cl_ReadPolyDelta());
-}
-
-/*
- * Reads a psv_frame packet from the message buffer and applies the deltas
- * in it. Also acks the sets in the packet immediately.
- *
- * THIS FUNCTION IS OBSOLETE (psv_frame is no longer used)
- */
-void Cl_FrameReceived(void)
-{
-	int     i, frametime;
-
-	gotframe = true;
-	gotFirstFrame = true;
-
-#if _DEBUG
-	if(!gameReady)
-		Con_Message("Got frame but GAME NOT READY!\n");
-#endif
-
-	// Frame time, lowest byte of gametic.
-	frametime = Msg_ReadByte();
-
-	num_acks = 0;
-	while(!Msg_End())
-		Cl_ReadDeltaSet();
-
-	// Acknowledge all sets.
-	Msg_Begin(pcl_ack_sets);
-	for(i = 0; i < num_acks; i++)
-		Msg_WriteByte(acks[i]);
-	Net_SendBuffer(0, 0);
-
-	// Reset the predict counter.
-	predicted_tics = 0;
 }
