@@ -373,14 +373,15 @@ void            Sv_ShutdownPools(void);
 void            Sv_DrainPool(int clientNumber);
 void            Sv_InitPoolForClient(int clientNumber);
 void            Sv_MobjRemoved(thid_t id);
-void            Sv_PlayerRemoved(int playerNumber);
+void            Sv_PlayerRemoved(int clientNumber);
 void            Sv_GenerateFrameDeltas(void);
-boolean         Sv_IsFrameTarget(int number);
+boolean         Sv_IsFrameTarget(int clientNumber);
 uint            Sv_GetTimeStamp(void);
-pool_t         *Sv_GetPool(int consoleNumber);
+pool_t         *Sv_GetPool(int clientNumber);
 void            Sv_RatePool(pool_t * pool);
 delta_t        *Sv_PoolQueueExtract(pool_t * pool);
-void            Sv_AckDeltaSet(int consoleNumber, int set, byte resent);
+void            Sv_AckDeltaSet(int clientNumber, int set, byte resent);
+int             Sv_CountUnackedDeltas(int clientNumber);
 
 void            Sv_NewSoundDelta(int soundId, mobj_t *emitter,
                                  int sourceSector, int sourcePoly,
