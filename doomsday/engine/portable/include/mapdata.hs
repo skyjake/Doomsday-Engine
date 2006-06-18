@@ -35,7 +35,7 @@ struct surface
     INT     int         flags   // SUF_ flags
     SHORT   short       texture
     -       boolean     isflat  // true if current texture is a flat
-    INT     int[2]      texmove // Texture movement X and Y.
+    FIXED   fixed_t[2]  texmove // Texture movement X and Y.
     BYTE    byte[4]     rgba    // Surface color tint
 end
 
@@ -47,8 +47,8 @@ struct plane
     FLOAT   float       offy    // Texture y offset.
     FLOAT   float       glow    // Glow amount.
     BYTE    byte[3]     glowrgb // Glow color.
-    INT     int         target  // Target height.
-    INT     int         speed   // Move speed.
+    FIXED   fixed_t     target  // Target height.
+    FIXED   fixed_t     speed   // Move speed.
     PTR     degenmobj_t soundorg // Sound origin for plane.
     -       sector_s*   sector  // Owner of the plane (temp)
 end
