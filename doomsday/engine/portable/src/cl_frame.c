@@ -27,10 +27,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BIT(x)				(1 << (x))
-#define MAX_ACKS			40
-#define SET_HISTORY_SIZE	100
-#define RESEND_HISTORY_SIZE	200
+#define SET_HISTORY_SIZE	50 
+#define RESEND_HISTORY_SIZE	50 
 
 // TYPES -------------------------------------------------------------------
 
@@ -54,6 +52,17 @@ boolean gotFirstFrame;
 int     predicted_tics;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// Ordinal of the latest set received by the client. Used for detecting deltas
+// that arrive out of order. The ordinal is the logical equivalent of the set
+// identifier (which is 0...255).
+static uint     latestSetOrdinal;
+static byte     latestSet;
+
+// The ordinal base is added to the set number to convert it from a set 
+// identifier to an ordinal. Every time the set numbers wrap around from 255 
+// to zero, the ordinal is incremented by 256.
+static uint     setOrdinalBase;
 
 // The set history keeps track of received sets and is used to detect
 // duplicate frames.
@@ -81,6 +90,11 @@ void Cl_InitFrame(void)
 	// Clear the resend ID history.
 	memset(resendHistory, 0, sizeof(resendHistory));
 	resendHistoryIdx = 0;
+    
+    // Reset ordinal counters.
+    latestSet = 0;
+    latestSetOrdinal = 0;
+    setOrdinalBase = 256;
 }
 
 /*
@@ -148,6 +162,37 @@ boolean Cl_ResendHistoryCheck(byte id)
 }
 
 /*
+ * Converts a set identifier, which ranges from 0...255, into a logical ordinal.
+ * Checks for set identifier wraparounds and updates the set ordinal base
+ * accordingly.
+ */
+uint Cl_ConvertSetToOrdinal(byte set)
+{
+    uint ordinal = 0;
+    
+    if(latestSet > 185 && set < 70)
+    {
+        // We must conclude that wraparound has occured.
+        setOrdinalBase += 256;
+        
+        VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
+                             setOrdinalBase) );
+    }
+    ordinal = set + setOrdinalBase;
+
+    if(latestSet < 35 && set > 220)
+    {
+        // This is most likely a set that came in before wraparound.
+        ordinal -= 256;
+    }
+    else
+    {
+        latestSet = set;
+    }
+    return ordinal;
+}
+
+/*
  * Read a psv_frame2/psv_first_frame2 packet.
  */
 void Cl_Frame2Received(int packetType)
@@ -155,7 +200,7 @@ void Cl_Frame2Received(int packetType)
 	byte    set = Msg_ReadByte(), oldSet, resend, deltaType;
 	byte    resendAcks[300];
 	int     i, numResendAcks = 0;
-	boolean skip;
+	boolean skip = false;
 
 	// All frames that arrive before the first frame are ignored.
 	// They are most likely from the wrong map.
@@ -176,6 +221,27 @@ void Cl_Frame2Received(int packetType)
 		return;
 	}
 
+#ifdef _DEBUG    
+    VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
+#endif
+
+    if(packetType != psv_first_frame2)
+    {
+        // If this is not the first frame, it will be ignored if it arrives 
+        // out of order.
+        uint ordinal = Cl_ConvertSetToOrdinal(set);
+        
+        if(ordinal < latestSetOrdinal)
+        {
+            VERBOSE2( Con_Printf("==> Ignored set %i because it arrived out of order.\n",
+                                set) );
+            return;
+        }
+        latestSetOrdinal = ordinal;
+
+        VERBOSE2( Con_Printf("Latest set ordinal is %i.\n", latestSetOrdinal) );
+    }
+    
 	// Check for duplicates (might happen if ack doesn't get through
 	// or ack arrives too late).
 	if(!Cl_HistoryCheck(set))
@@ -207,22 +273,20 @@ void Cl_Frame2Received(int packetType)
 				resend = Msg_ReadByte();
 
 				// Did we already receive this delta?
-				if(Cl_HistoryCheck(oldSet) || Cl_ResendHistoryCheck(resend))
-				{
-					// Yes, we've already got this. Must skip.
-					skip = true;
+                {
+                    boolean historyChecked = Cl_HistoryCheck(oldSet);
+                    boolean resendChecked = Cl_ResendHistoryCheck(resend);
+                    
+                    if(historyChecked || resendChecked)
+                    {
+                        // Yes, we've already got this. Must skip.
+                        skip = true;
 
-					/*#ifdef _DEBUG
-					   Con_Printf("Got resend *DUPE* (id %i, set %i)\n", 
-					   resend, oldSet);
-					   #endif */
-				}
-				/*#ifdef _DEBUG
-				   else
-				   {
-				   Con_Printf("Got resend: id %i, set %i\n", resend, oldSet);
-				   }
-				   #endif */
+                        VERBOSE2( Con_Printf("  Skipping delta %i (oldset=%i, rsid=%i), because history=%i resend=%i\n",
+                                             deltaType, oldSet, resend, 
+                                             historyChecked, resendChecked) );
+                    }
+                }
 
 				// We must acknowledge that we've received this.
 				resendAcks[numResendAcks++] = resend;
@@ -292,16 +356,33 @@ void Cl_Frame2Received(int packetType)
 		// Acknowledge the set.
 		Msg_Begin(pcl_ack_sets);
 		Msg_WriteByte(set);
+        
+#ifdef _DEBUG
+        VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
+                             "Nothing was resent.\n", set) );
+#endif
 	}
 	else
 	{
 		// Acknowledge the set and the resent deltas.
 		Msg_Begin(pcl_acks);
 		Msg_WriteByte(set);
+#ifdef _DEBUG
+        VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
+                             "Contained %i resent deltas: \n", 
+                             set, numResendAcks) );
+#endif
 		for(i = 0; i < numResendAcks; i++)
 		{
 			Msg_WriteByte(resendAcks[i]);
+
+#ifdef _DEBUG
+            VERBOSE2( Con_Printf("%i ", resendAcks[i]) );
+#endif
 		}
+#ifdef _DEBUG
+        VERBOSE2( Con_Printf("\n") );
+#endif
 	}
 	Net_SendBuffer(0, 0);
 }
