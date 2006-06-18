@@ -692,11 +692,13 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     // Check planes, too.
     if(r->planes[PLN_FLOOR].target != s->planes[PLN_FLOOR].target)
     {
-        df |= SDF_FLOOR_TARGET;
+        // Target and speed are always sent together.
+        df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
     if(r->planes[PLN_FLOOR].speed != s->planes[PLN_FLOOR].speed)
     {
-        df |= SDF_FLOOR_SPEED;
+        // Target and speed are always sent together.
+        df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
     if(r->planes[PLN_FLOOR].surface.texmove[0] != s->planes[PLN_FLOOR].surface.texmove[0] ||
        r->planes[PLN_FLOOR].surface.texmove[1] != s->planes[PLN_FLOOR].surface.texmove[1])
@@ -705,11 +707,13 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     }
     if(r->planes[PLN_CEILING].target != s->planes[PLN_CEILING].target)
     {
-        df |= SDF_CEILING_TARGET;
+        // Target and speed are always sent together.
+        df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
     if(r->planes[PLN_CEILING].speed != s->planes[PLN_CEILING].speed)
     {
-        df |= SDF_CEILING_SPEED;
+        // Target and speed are always sent together.
+        df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
     if(r->planes[PLN_CEILING].surface.texmove[0] != s->planes[PLN_CEILING].surface.texmove[0]
        || r->planes[PLN_CEILING].surface.texmove[1] !=
@@ -2622,8 +2626,8 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
     int     df = delta->flags;
     uint    age = Sv_DeltaAge(delta);
 
-    // The importance doubles normally in 5 seconds.
-    float   ageScoreDouble = 5.0f;
+    // The importance doubles normally in 1 second.
+    float   ageScoreDouble = 1.0f;
 
     if(Sv_IsPostponedDelta(delta, info))
     {
@@ -2720,7 +2724,7 @@ void Sv_RatePool(pool_t * pool)
 {
 #ifdef _DEBUG
     ddplayer_t *player = &players[pool->owner];
-    client_t *client = &clients[pool->owner];
+    //client_t *client = &clients[pool->owner];
 #endif
     delta_t *delta;
     int     i;
@@ -2752,7 +2756,7 @@ void Sv_RatePool(pool_t * pool)
 /*
  * Do special things that need to be done when the delta has been acked.
  */
-void Sv_AckDelta(pool_t * pool, delta_t * delta)
+void Sv_AckDelta(pool_t *pool, delta_t *delta)
 {
     if(Sv_IsCreateMobjDelta(delta))
     {
@@ -2773,9 +2777,9 @@ void Sv_AckDelta(pool_t * pool, delta_t * delta)
  * Clients ack deltas to tell the server they've received them.
  * If 'resent' is nonzero, ignore 'set' and ack by resend ID.
  */
-void Sv_AckDeltaSet(int consoleNumber, int set, byte resent)
+void Sv_AckDeltaSet(int clientNumber, int set, byte resent)
 {
-    pool_t *pool = &pools[consoleNumber];
+    pool_t *pool = &pools[clientNumber];
     delta_t *delta, *next = NULL;
     boolean ackTimeRegistered = false;
     int     i;
@@ -2793,7 +2797,7 @@ void Sv_AckDeltaSet(int consoleNumber, int set, byte resent)
                 // Register the ack time only for the first acked delta.
                 if(!ackTimeRegistered)
                 {
-                    Net_SetAckTime(consoleNumber, Sv_DeltaAge(delta));
+                    Net_SetAckTime(clientNumber, Sv_DeltaAge(delta));
                     ackTimeRegistered = true;
                 }
 
@@ -2807,3 +2811,25 @@ void Sv_AckDeltaSet(int consoleNumber, int set, byte resent)
         }
     }
 }
+
+/*
+ * Debugging metric.
+ */
+int Sv_CountUnackedDeltas(int clientNumber)
+{
+    pool_t *pool = Sv_GetPool(clientNumber);    
+    delta_t *delta;
+    int i, count = 0;
+    
+    // Iterate through the entire hash table.
+    for(i = 0; i < POOL_HASH_SIZE; i++)
+    {
+        for(delta = pool->hash[i].first; delta; delta = delta->next)
+        {
+            if(delta->state == DELTA_UNACKED)
+               ++count;
+        }
+    }
+    return count;
+}
+
