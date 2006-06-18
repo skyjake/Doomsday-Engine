@@ -467,9 +467,18 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
                       255 ? 255 : d->lightlevel);
     }
     if(df & SDF_FLOOR_HEIGHT)
+    {
         Msg_WriteShort(d->planes[PLN_FLOOR].height >> 16);
+    }
     if(df & SDF_CEILING_HEIGHT)
+    {   
+#ifdef _DEBUG
+        VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
+                            delta->delta.id, FIX2FLT(d->SP_ceilheight)) );
+#endif
+
         Msg_WriteShort(d->planes[PLN_CEILING].height >> 16);
+    }
     if(df & SDF_FLOOR_TARGET)
         Msg_WriteShort(d->planes[PLN_FLOOR].target >> 16);
     if(df & SDF_FLOOR_SPEED)    // 7.1/4.4 fixed-point
@@ -854,13 +863,11 @@ void Sv_SendFrame(int playerNumber)
     while((delta = Sv_PoolQueueExtract(pool)) != NULL &&
           (lastStart = Msg_Offset()) < maxFrameSize)
     {
-        oldResend = 0;
+        oldResend = pool->resendDealer;
 
         // Is this going to be a resent?
         if(delta->state == DELTA_UNACKED && !delta->resend)
         {
-            oldResend = pool->resendDealer;
-
             // Assign a new unique ID for this delta.
             // This ID won't be changed after this.
             delta->resend = Sv_GetNewResendID(pool);
@@ -901,9 +908,9 @@ void Sv_SendFrame(int playerNumber)
             // New deltas are assigned to this set. Unacked deltas will
             // remain in the set they were initially sent in.
             delta->set = pool->setDealer;
+            delta->timeStamp = Sv_GetTimeStamp();
+            delta->state = DELTA_UNACKED;
         }
-        delta->timeStamp = Sv_GetTimeStamp();
-        delta->state = DELTA_UNACKED;
     }
 
     // The psv_first_frame2 packet is sent Ordered, which means it'll
