@@ -110,7 +110,7 @@ enum {
 
 // A client's acknowledgement threshold depends on the average of his
 // acknowledgement times.
-#define NUM_ACK_TIMES		32
+#define NUM_ACK_TIMES		8
 
 // The consoleplayer's camera position is written to the demo file
 // every 3rd tic.
