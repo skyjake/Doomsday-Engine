@@ -53,7 +53,13 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
     boolean flag;
     fixed_t lastpos;
     fixed_t floorheight, ceilingheight;
+    int ptarget = (floorOrCeiling? DMU_CEILING_TARGET : DMU_FLOOR_TARGET);
+    int pspeed = (floorOrCeiling? DMU_CEILING_SPEED : DMU_FLOOR_SPEED);
 
+    // Let the engine know about the movement of this plane.
+    P_SetFixedp(sector, ptarget, dest);
+    P_SetFixedp(sector, pspeed, speed);
+    
     floorheight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
     ceilingheight = P_GetFixedp(sector, DMU_CEILING_HEIGHT);
 
@@ -67,17 +73,19 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
             // DOWN
             if(floorheight - speed < dest)
             {
+                // The move is complete.
                 lastpos = floorheight;
                 P_SetFixedp(sector, DMU_FLOOR_HEIGHT, dest);
+                //P_SetFixedp(sector, pspeed, 0);
+
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
-                    P_SetFixedp(sector, DMU_FLOOR_TARGET, lastpos);
+                    // Oh no, the move failed.
                     P_SetFixedp(sector, DMU_FLOOR_HEIGHT, lastpos);
-                    P_SetFixedp(sector, DMU_FLOOR_SPEED, 0);
+                    P_SetFixedp(sector, ptarget, lastpos);
                     P_ChangeSector(sector, crush);
                 }
-
                 return pastdest;
             }
             else
@@ -87,11 +95,10 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
-                    P_SetFixedp(sector, DMU_FLOOR_TARGET, lastpos);
                     P_SetFixedp(sector, DMU_FLOOR_HEIGHT, lastpos);
-                    P_SetFixedp(sector, DMU_FLOOR_SPEED, 0);
+                    P_SetFixedp(sector, ptarget, lastpos);
+                    //P_SetFixedp(sector, pspeed, 0);
                     P_ChangeSector(sector, crush);
-
                     return crushed;
                 }
             }
@@ -101,17 +108,18 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
             // UP
             if(floorheight + speed > dest)
             {
+                // The move is complete.
                 lastpos = floorheight;
                 P_SetFixedp(sector, DMU_FLOOR_HEIGHT, dest);
+                //P_SetFixedp(sector, pspeed, 0);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
-                    P_SetFixedp(sector, DMU_FLOOR_TARGET, lastpos);
+                    // Oh no, the move failed.
                     P_SetFixedp(sector, DMU_FLOOR_HEIGHT, lastpos);
-                    P_SetFixedp(sector, DMU_FLOOR_SPEED, 0);
+                    P_SetFixedp(sector, ptarget, lastpos);
                     P_ChangeSector(sector, crush);
                 }
-
                 return pastdest;
             }
             else
@@ -125,11 +133,10 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
                     if(crush == true)
                         return crushed;
 
-                    P_SetFixedp(sector, DMU_FLOOR_TARGET, lastpos);
                     P_SetFixedp(sector, DMU_FLOOR_HEIGHT, lastpos);
-                    P_SetFixedp(sector, DMU_FLOOR_SPEED, 0);
+                    P_SetFixedp(sector, ptarget, lastpos);
+                    //P_SetFixedp(sector, pspeed, 0);
                     P_ChangeSector(sector, crush);
-
                     return crushed;
                 }
             }
@@ -145,17 +152,17 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
             // DOWN
             if(ceilingheight - speed < dest)
             {
+                // The move is complete.
                 lastpos = ceilingheight;
                 P_SetFixedp(sector, DMU_CEILING_HEIGHT, dest);
+                //P_SetFixedp(sector, pspeed, 0);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
-                    P_SetFixedp(sector, DMU_CEILING_TARGET, lastpos);
                     P_SetFixedp(sector, DMU_CEILING_HEIGHT, lastpos);
-                    P_SetFixedp(sector, DMU_CEILING_SPEED, 0);
+                    P_SetFixedp(sector, ptarget, lastpos);
                     P_ChangeSector(sector, crush);
                 }
-
                 return pastdest;
             }
             else
@@ -169,9 +176,9 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
                     if(crush == true)
                         return crushed;
 
-                    P_SetFixedp(sector, DMU_CEILING_TARGET, lastpos);
                     P_SetFixedp(sector, DMU_CEILING_HEIGHT, lastpos);
-                    P_SetFixedp(sector, DMU_CEILING_SPEED, 0);
+                    P_SetFixedp(sector, ptarget, lastpos);
+                    //P_SetFixedp(sector, pspeed, 0);
                     P_ChangeSector(sector, crush);
 
                     return crushed;
@@ -183,17 +190,17 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
             // UP
             if(ceilingheight + speed > dest)
             {
+                // The move is complete.
                 lastpos = ceilingheight;
                 P_SetFixedp(sector, DMU_CEILING_HEIGHT, dest);
+                //P_SetFixedp(sector, pspeed, 0);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
-                    P_SetFixedp(sector, DMU_CEILING_TARGET, lastpos);
                     P_SetFixedp(sector, DMU_CEILING_HEIGHT, lastpos);
-                    P_SetFixedp(sector, DMU_CEILING_SPEED, 0);
+                    P_SetFixedp(sector, ptarget, lastpos);
                     P_ChangeSector(sector, crush);
                 }
-
                 return pastdest;
             }
             else
