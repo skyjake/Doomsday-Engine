@@ -454,7 +454,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     Msg_WriteShort(delta->delta.id);
 
     // Flags.
-    Msg_WriteLong(df);
+    Msg_WritePackedLong(df);
 
     if(df & SDF_FLOORPIC)
         Msg_WritePackedShort(d->SP_floorpic);
@@ -553,7 +553,7 @@ void Sv_WriteSideDelta(const void *deltaPtr)
     Msg_WriteShort(delta->delta.id);
 
     // Flags.
-    Msg_WriteByte(df & 0xff);
+    Msg_WritePackedLong(df);
 
     if(df & SIDF_TOPTEX)
         Msg_WritePackedShort(d->top.texture);

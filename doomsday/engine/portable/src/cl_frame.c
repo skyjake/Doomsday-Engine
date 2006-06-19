@@ -318,13 +318,14 @@ void Cl_Frame2Received(int packetType)
 				Cl_ReadPlayerDelta2(skip);
 				break;
 
-			case DT_SECTOR_SHORT_FLAGS: // Old format.
+			case DT_SECTOR_R6: // Old format.
             case DT_SECTOR:
 				Cl_ReadSectorDelta2(deltaType, skip);
 				break;
 
+            case DT_SIDE_R6: // Old format.
 			case DT_SIDE:
-				Cl_ReadSideDelta2(skip);
+				Cl_ReadSideDelta2(deltaType, skip);
 				break;
 
 			case DT_POLY:

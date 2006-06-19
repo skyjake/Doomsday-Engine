@@ -79,9 +79,9 @@ void Cl_ReadDeltaSet(void)
 		while(Cl_ReadPlayerDelta());
 	if(present & BIT(DT_LUMP))
 		while(Cl_ReadLumpDelta());
-	if(present & BIT(DT_SECTOR_SHORT_FLAGS))
+	if(present & BIT(DT_SECTOR_R6))
 		while(Cl_ReadSectorDelta());
-	if(present & BIT(DT_SIDE))
+	if(present & BIT(DT_SIDE_R6))
 		while(Cl_ReadSideDelta());
 	if(present & BIT(DT_POLY))
 		while(Cl_ReadPolyDelta());

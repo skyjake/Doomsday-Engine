@@ -41,7 +41,7 @@ int             Cl_ReadSideDelta(void);
 int             Cl_ReadPolyDelta(void);
 
 void            Cl_ReadSectorDelta2(int deltaType, boolean skip);
-void            Cl_ReadSideDelta2(boolean skip);
+void            Cl_ReadSideDelta2(int deltaType, boolean skip);
 void            Cl_ReadPolyDelta2(boolean skip);
 
 #endif

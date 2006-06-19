@@ -30,7 +30,6 @@
 #include "p_mapdata.h"
 #include "con_decl.h"
 
-#define SV_VERSION			6
 #define BIT(x)				(1 << (x))
 
 #define NSP_BROADCAST		-1	   // For Net_SendBuffer.

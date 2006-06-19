@@ -421,13 +421,14 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     num = Msg_ReadShort();
 
     // Flags.
-    if(deltaType == DT_SECTOR_SHORT_FLAGS)
+    if(deltaType == DT_SECTOR_R6)
     {
+        // The R6 protocol reserves two bytes for the flags.
         df = Msg_ReadShort();
     }
     else
     {
-        df = Msg_ReadLong();
+        df = Msg_ReadPackedLong();
     }
 
     if(!skip)
@@ -591,7 +592,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 /*
  * Reads a side delta from the message buffer and applies it to the world.
  */
-void Cl_ReadSideDelta2(boolean skip)
+void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
     unsigned short num;
     int     df, toptexture, midtexture, bottomtexture, blendmode;
@@ -603,7 +604,15 @@ void Cl_ReadSideDelta2(boolean skip)
     num = Msg_ReadShort();
 
     // Flags.
-    df = Msg_ReadByte();
+    if(deltaType == DT_SIDE_R6)
+    {
+        // The R6 protocol reserves a single byte for a side delta.
+        df = Msg_ReadByte();
+    }
+    else
+    {
+        df = Msg_ReadPackedLong();
+    }
 
     if(df & SIDF_TOPTEX)
         toptexture = Msg_ReadPackedShort();
@@ -662,7 +671,14 @@ void Cl_ReadSideDelta2(boolean skip)
     if(df & SIDF_MIDTEX)
         sid->middle.texture = midtexture;
     if(df & SIDF_BOTTOMTEX)
+    {    
         sid->bottom.texture = bottomtexture;
+        
+#ifdef _DEBUG
+        Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num, 
+                   bottomtexture);
+#endif
+    }
 
     if(df & SIDF_TOP_COLOR_RED)
         sid->top.rgba[0] = toprgb[0];

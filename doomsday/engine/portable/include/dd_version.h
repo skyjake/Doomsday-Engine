@@ -40,7 +40,7 @@
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
-#define DOOMSDAY_VERSION		10801 // Don't touch; see above.
+#define DOOMSDAY_VERSION		10900 // Don't touch; see above.
 #define DOOMSDAY_RELEASE_NAME	"0-beta5"
 #define DOOMSDAY_VERSION_TEXT	"1.9."DOOMSDAY_RELEASE_NAME
 
