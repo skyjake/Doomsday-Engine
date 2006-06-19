@@ -13,7 +13,6 @@
 #endif
 
 #include <signal.h>
-
 #include <SDL.h>
 #include <SDL_thread.h>
 
@@ -100,8 +99,11 @@ void Sys_Init(void)
     signal(SIGABRT, handler);
 #endif
     
-    // We are not worried about broken pipes.
+#ifndef WIN32
+    // We are not worried about broken pipes. When a TCP connection closes,
+    // we prefer to receive an error code instead of a signal.
     signal(SIGPIPE, SIG_IGN);
+#endif
 }
 
 /*
