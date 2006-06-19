@@ -1825,7 +1825,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_TOP_TEXTURE:
             {
-            int texture = p->top.texture;
+            short texture = p->top.texture;
 
             if(p->top.flags & SUF_TEXFIX)
                 texture = 0;
@@ -1849,7 +1849,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_MIDDLE_TEXTURE:
             {
-            int texture = p->middle.texture;
+            short texture = p->middle.texture;
 
             if(p->middle.flags & SUF_TEXFIX)
                 texture = 0;
@@ -1880,7 +1880,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_BOTTOM_TEXTURE:
             {
-            int texture = p->bottom.texture;
+            short texture = p->bottom.texture;
 
             if(p->bottom.flags & SUF_TEXFIX)
                 texture = 0;
