@@ -283,6 +283,7 @@ void HU_Drawer(void)
 #ifdef __JDOOM__
     int     i, k, x, y;
     char    buf[80];
+    player_t *plr;
 #endif
 
     HUMsg_Drawer();
@@ -290,16 +291,27 @@ void HU_Drawer(void)
 #ifdef __JDOOM__
     if(hu_showallfrags)
     {
-        for(y = 8, i = 0; i < MAXPLAYERS; i++, y += 10)
+        for(y = 8, i = 0; i < MAXPLAYERS; i++)
         {
-            sprintf(buf, "%i%s", i, i == consoleplayer ? "=" : ":");
+            plr = &players[i];
+            if(!plr->plr || !plr->plr->ingame)
+                continue;
+
+            sprintf(buf, "%i%s", i, (i == consoleplayer ? "=" : ":"));
+
             M_WriteText(0, y, buf);
+
             x = 20;
             for(k = 0; k < MAXPLAYERS; k++, x += 18)
             {
-                sprintf(buf, "%i", players[i].frags[k]);
+                if(players[k].plr || !players[k].plr->ingame)
+                    continue;
+
+                sprintf(buf, "%i", plr->frags[k]);
                 M_WriteText(x, y, buf);
             }
+
+            y += 10;
         }
     }
 #endif
@@ -659,7 +671,7 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float red,
  */
 void M_WriteText(int x, int y, char *string)
 {
-    M_WriteText2(x, y, string, 0, 1, 1, 1, 1);
+    M_WriteText2(x, y, string, hu_font_a, 1, 1, 1, 1);
 }
 
 void M_WriteText2(int x, int y, char *string, dpatch_t *font, float red,
