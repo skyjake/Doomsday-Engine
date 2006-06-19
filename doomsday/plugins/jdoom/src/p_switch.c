@@ -246,35 +246,29 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
 
             return;
         }
-        else
+        else if(switchlist[i] == texMid)
         {
-            if(switchlist[i] == texMid)
-            {
-                S_StartSound(sound, P_GetPtrp(frontsector,
-                                              DMU_SOUND_ORIGIN));
+            S_StartSound(sound, P_GetPtrp(frontsector,
+                                          DMU_SOUND_ORIGIN));
 
-                P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, switchlist[i ^ 1]);
+            P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, switchlist[i ^ 1]);
 
-                if(useAgain)
-                    P_StartButton(line, middle, switchlist[i], BUTTONTIME);
+            if(useAgain)
+                P_StartButton(line, middle, switchlist[i], BUTTONTIME);
 
-                return;
-            }
-            else
-            {
-                if(switchlist[i] == texBot)
-                {
-                    S_StartSound(sound, P_GetPtrp(frontsector,
-                                                  DMU_SOUND_ORIGIN));
+            return;
+        }
+        else if(switchlist[i] == texBot)
+        {
+            S_StartSound(sound, P_GetPtrp(frontsector,
+                                          DMU_SOUND_ORIGIN));
 
-                    P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, switchlist[i ^ 1]);
+            P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, switchlist[i ^ 1]);
 
-                    if(useAgain)
-                        P_StartButton(line, bottom, switchlist[i], BUTTONTIME);
+            if(useAgain)
+                P_StartButton(line, bottom, switchlist[i], BUTTONTIME);
 
-                    return;
-                }
-            }
+            return;
         }
     }
 }
