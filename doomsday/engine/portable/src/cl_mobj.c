@@ -758,7 +758,7 @@ void Cl_PredictMovement(void)
     }
 #ifdef _DEBUG
     {
-        static  timer = 0;
+        static int timer = 0;
 
         if(++timer > 5 * 35)
         {
