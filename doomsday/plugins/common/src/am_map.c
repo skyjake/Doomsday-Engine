@@ -2533,7 +2533,7 @@ void AM_drawFragsTable(void)
         M_WriteText2(320 - w - 5, y, ":", hu_font_a, -1, -1, -1, -1);
         // The frags count.
         sprintf(tmp, "%i", totalFrags[choose]);
-        M_WriteText2(320 - w, y, tmp, hu_font_a, 1, 1, 1, -1);
+        M_WriteText2(320 - w, y, tmp, hu_font_a, -1, -1, -1, -1);
         // Mark to ignore in the future.
         totalFrags[choose] = FRAGS_DRAWN;
     }
