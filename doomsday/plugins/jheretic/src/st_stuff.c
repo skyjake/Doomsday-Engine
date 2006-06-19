@@ -730,22 +730,23 @@ void ST_updateWidgets(void)
 {
     static int largeammo = 1994;    // means "n/a"
     int     i, x;
-    int     lvl = (plyr->powers[pw_weaponlevel2]? 1 : 0);
     ammotype_t ammotype;
     boolean found;
+    player_t *plr = &players[consoleplayer];
+    int     lvl = (plr->powers[pw_weaponlevel2]? 1 : 0);
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
     for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
     {
-        if(!weaponinfo[plyr->readyweapon][plyr->class].mode[lvl].ammotype[ammotype])
+        if(!weaponinfo[plr->readyweapon][plr->class].mode[lvl].ammotype[ammotype])
             continue; // Weapon does not use this type of ammo.
 
         // TODO: Only supports one type of ammo per weapon
-        w_ready.num = &plyr->ammo[ammotype];
+        w_ready.num = &plr->ammo[ammotype];
 
-        if(oldammo != plyr->ammo[ammotype] || oldweapon != plyr->readyweapon)
-            st_ammoicon = plyr->readyweapon - 1;
+        if(oldammo != plr->ammo[ammotype] || oldweapon != plr->readyweapon)
+            st_ammoicon = plr->readyweapon - 1;
 
         found = true;
     }
@@ -754,13 +755,12 @@ void ST_updateWidgets(void)
         w_ready.num = &largeammo;
     }
 
-    w_ready.data = plyr->readyweapon;
+    w_ready.data = plr->readyweapon;
 
     // update keycard multiple widgets
     for(i = 0; i < 3; i++)
     {
-        keyboxes[i] = plyr->keys[i] ? true : false;
-
+        keyboxes[i] = plr->keys[i] ? true : false;
     }
 
     // used by w_frags widget
@@ -769,10 +769,10 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        if(i != consoleplayer)
-            st_fragscount += plyr->frags[i];
-        else
-            st_fragscount -= plyr->frags[i];
+        if(!players[i].plr->ingame)
+            continue;
+
+        st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
     }
 
     // current artifact
@@ -782,15 +782,15 @@ void ST_updateWidgets(void)
         ArtifactFlash--;
         oldarti = -1;           // so that the correct artifact fills in after the flash
     }
-    else if(oldarti != plyr->readyArtifact ||
-            oldartiCount != plyr->inventory[inv_ptr].count)
+    else if(oldarti != plr->readyArtifact ||
+            oldartiCount != plr->inventory[inv_ptr].count)
     {
         if(CPlayer->readyArtifact > 0)
         {
-            st_artici = plyr->readyArtifact + 5;
+            st_artici = plr->readyArtifact + 5;
         }
-        oldarti = plyr->readyArtifact;
-        oldartiCount = plyr->inventory[inv_ptr].count;
+        oldarti = plr->readyArtifact;
+        oldartiCount = plr->inventory[inv_ptr].count;
     }
 
     // update the inventory
@@ -799,8 +799,8 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < NUMVISINVSLOTS; i++)
     {
-        st_invslot[i] = plyr->inventory[x + i].type +5;  // plus 5 for useartifact patches
-        st_invslotcount[i] = plyr->inventory[x + i].count;
+        st_invslot[i] = plr->inventory[x + i].type +5;  // plus 5 for useartifact patches
+        st_invslotcount[i] = plr->inventory[x + i].count;
     }
 }
 

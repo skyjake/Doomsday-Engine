@@ -1076,6 +1076,7 @@ void SB_SetClassData(void)
 void ST_updateWidgets(void)
 {
     int     i, x;
+    player_t *plr = &players[consoleplayer];
 
     // used by w_frags widget
     st_fragson = deathmatch && st_statusbaron;
@@ -1084,10 +1085,10 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        if(i != consoleplayer)
-            st_fragscount += plyr->frags[i];
-        else
-            st_fragscount -= plyr->frags[i];
+        if(!players[i].plr->ingame)
+            continue;
+
+        st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
     }
 
     // current artifact
@@ -1097,42 +1098,42 @@ void ST_updateWidgets(void)
         ArtifactFlash--;
         oldarti = -1;           // so that the correct artifact fills in after the flash
     }
-    else if(oldarti != plyr->readyArtifact ||
-            oldartiCount != plyr->inventory[inv_ptr].count)
+    else if(oldarti != plr->readyArtifact ||
+            oldartiCount != plr->inventory[inv_ptr].count)
     {
-        if(plyr->readyArtifact > 0)
+        if(plr->readyArtifact > 0)
         {
-            st_artici = plyr->readyArtifact + 5;
+            st_artici = plr->readyArtifact + 5;
         }
-        oldarti = plyr->readyArtifact;
-        oldartiCount = plyr->inventory[inv_ptr].count;
+        oldarti = plr->readyArtifact;
+        oldartiCount = plr->inventory[inv_ptr].count;
     }
 
     // Armor
     armorlevel = FixedDiv(
-        PCLASS_INFO(plyr->class)->autoarmorsave + plyr->armorpoints[ARMOR_ARMOR] +
-        plyr->armorpoints[ARMOR_SHIELD] +
-        plyr->armorpoints[ARMOR_HELMET] +
-        plyr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+        PCLASS_INFO(plr->class)->autoarmorsave + plr->armorpoints[ARMOR_ARMOR] +
+        plr->armorpoints[ARMOR_SHIELD] +
+        plr->armorpoints[ARMOR_HELMET] +
+        plr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 
     // mana A
-    manaACount = plyr->ammo[0];
+    manaACount = plr->ammo[0];
 
     // mana B
-    manaBCount = plyr->ammo[1];
+    manaBCount = plr->ammo[1];
 
     st_manaAicon = st_manaBicon = st_manaAvial = st_manaBvial = -1;
 
     // Mana
-    if(plyr->ammo[0] == 0)              // Draw Dim Mana icon
+    if(plr->ammo[0] == 0)              // Draw Dim Mana icon
         st_manaAicon = 0;
 
-    if(plyr->ammo[1] == 0)              // Draw Dim Mana icon
+    if(plr->ammo[1] == 0)              // Draw Dim Mana icon
         st_manaBicon = 0;
 
 
     // Update mana graphics based upon mana count weapon type
-    if(plyr->readyweapon == WP_FIRST)
+    if(plr->readyweapon == WP_FIRST)
     {
         st_manaAicon = 0;
         st_manaBicon = 0;
@@ -1140,7 +1141,7 @@ void ST_updateWidgets(void)
         st_manaAvial = 0;
         st_manaBvial = 0;
     }
-    else if(plyr->readyweapon == WP_SECOND)
+    else if(plr->readyweapon == WP_SECOND)
     {
         // If there is mana for this weapon, make it bright!
         if(st_manaAicon == -1)
@@ -1153,7 +1154,7 @@ void ST_updateWidgets(void)
         st_manaBicon = 0;
         st_manaBvial = 0;
     }
-    else if(plyr->readyweapon == WP_THIRD)
+    else if(plr->readyweapon == WP_THIRD)
     {
         st_manaAicon = 0;
         st_manaAvial = 0;
@@ -1188,8 +1189,8 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < NUMVISINVSLOTS; i++)
     {
-        st_invslot[i] = plyr->inventory[x + i].type +5;  // plus 5 for useartifact patches
-        st_invslotcount[i] = plyr->inventory[x + i].count;
+        st_invslot[i] = plr->inventory[x + i].type +5;  // plus 5 for useartifact patches
+        st_invslotcount[i] = plr->inventory[x + i].count;
     }
 
 /*

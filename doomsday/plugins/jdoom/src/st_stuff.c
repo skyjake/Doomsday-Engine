@@ -733,16 +733,17 @@ void ST_updateWidgets(void)
     int     i;
     ammotype_t ammotype;
     boolean found;
+    player_t *plr = &players[consoleplayer];
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
     for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
     {
-        if(!weaponinfo[plyr->readyweapon][plyr->class].mode[0].ammotype[ammotype])
+        if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
             continue; // Weapon does not use this type of ammo.
 
         // TODO: Only supports one type of ammo per weapon
-        w_ready.num = &plyr->ammo[ammotype];
+        w_ready.num = &plr->ammo[ammotype];
         found = true;
     }
     if(!found) // Weapon takes no ammo at all.
@@ -750,14 +751,14 @@ void ST_updateWidgets(void)
         w_ready.num = &largeammo;
     }
 
-    w_ready.data = plyr->readyweapon;
+    w_ready.data = plr->readyweapon;
 
     // update keycard multiple widgets
     for(i = 0; i < 3; i++)
     {
-        keyboxes[i] = plyr->keys[i] ? i : -1;
+        keyboxes[i] = plr->keys[i] ? i : -1;
 
-        if(plyr->keys[i + 3])
+        if(plr->keys[i + 3])
             keyboxes[i] = i + 3;
     }
 
@@ -776,10 +777,10 @@ void ST_updateWidgets(void)
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        if(i != consoleplayer)
-            st_fragscount += plyr->frags[i];
-        else
-            st_fragscount -= plyr->frags[i];
+        if(!players[i].plr->ingame)
+            continue;
+
+        st_fragscount += plr->frags[i] * (i != consoleplayer ? 1 : -1);
     }
 
     // get rid of chat window if up because of message

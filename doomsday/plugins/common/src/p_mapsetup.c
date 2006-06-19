@@ -214,7 +214,9 @@ void P_SetupForMapData(int type, int num)
  */
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
+#if !__JHEXEN__
     int     i, flags;
+#endif
     char    levelId[9];
 
     // It begins
