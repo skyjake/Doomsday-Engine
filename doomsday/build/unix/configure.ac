@@ -14,7 +14,7 @@ define([DENG_VERSION],[1.9.0beta5])
 ## Autoconf initialisation.
 ################################################################################
 AC_INIT(deng, [DENG_VERSION], [skyjake@users.sourceforge.net])
-AC_CONFIG_SRCDIR([./engine/api/dd_api.h])
+AC_CONFIG_SRCDIR([../../engine/api/dd_api.h])
 AC_CANONICAL_SYSTEM
 
 ################################################################################
@@ -78,18 +78,16 @@ CFLAGS="$CFLAGS"
 ## Otherwise cross-compiles may fail
 ################################################################################
 
-### Check architecture and choose a fixed-point math implementation.
-##case $target_cpu in
-##  i*86)
-##    FIXED_IMPL="GNU_X86_FIXED_ASM"
-##    fixedasm="yes"
-##    break ;;
-##  *)
-##    FIXED_IMPL="NO_FIXED_ASM"
-##    fixedasm="no"
-##    break ;;
-##esac
-##AC_SUBST(FIXED_IMPL)
+# Check architecture and choose a fixed-point math implementation.
+case $target_cpu in
+  i*86)
+    FIXED_IMPL="GNU_X86_FIXED_ASM"
+    break ;;
+  *)
+    FIXED_IMPL="NO_FIXED_ASM"
+    break ;;
+esac
+AC_SUBST(FIXED_IMPL)
 
 ################################################################################
 ################################################################################
@@ -154,8 +152,9 @@ AC_CHECK_LIB([Xext], [main])
 AC_CHECK_LIB([ncurses], [main])
 
 # Check for OpenAL
-AC_CHECK_LIB([openal], [alSourcePlay],,
-[AC_MSG_ERROR("*** OpenAL not found. On Ubuntu install libopenal-dev.")])
+AC_CHECK_LIB([openal], [alSourcePlay],
+AC_CONFIG_FILES([../../plugins/openal/src/Makefile]),
+[AC_MSG_WARN("*** OpenAL not found. 3D Positional Audio Not Available. On Ubuntu install libopenal-dev.")])
 
 # Check for libPNG
 AC_CHECK_LIB([png], [png_create_read_struct],,
@@ -210,7 +209,7 @@ AC_CHECK_TYPES([ptrdiff_t])
 # Check for OGG support in SDL_mixer                                           
 ################################################################################
 
-if test -e "build/unix/tests/doom_intro.ogg" ; then
+if test -e "tests/doom_intro.ogg" ; then
         AC_LANG([C])
 	AC_MSG_CHECKING([for OGG support in SDL_mixer])
 
@@ -224,7 +223,7 @@ if test -e "build/unix/tests/doom_intro.ogg" ; then
 
 	int main(int argc, char **argv)
         {
-	    Mix_Music* music = Mix_LoadMUS("build/unix/tests/doom_intro.ogg");
+	    Mix_Music* music = Mix_LoadMUS("tests/doom_intro.ogg");
 	    if (music == NULL)
 		exit(1);
 	    exit(0);
@@ -240,7 +239,7 @@ fi
 # Check for MP3 support in SDL_mixer                                           
 ################################################################################
 
-if test -e "build/unix/tests/doom_intro.mp3" ; then
+if test -e "tests/doom_intro.mp3" ; then
         AC_LANG([C])
 	AC_MSG_CHECKING([for MP3 support in SDL_mixer])
 
@@ -254,7 +253,7 @@ if test -e "build/unix/tests/doom_intro.mp3" ; then
 
 	int main(int argc, char **argv)
         {
-	    Mix_Music* music = Mix_LoadMUS("build/unix/tests/doom_intro.mp3");
+	    Mix_Music* music = Mix_LoadMUS("tests/doom_intro.mp3");
 	    if (music == NULL)
 		exit(1);
 	    exit(0);
@@ -282,18 +281,40 @@ AC_CHECK_FUNCS([floor getcwd gethostbyaddr gethostbyname memmove memset mkdir po
 ################################################################################
 ## Outputs.
 ################################################################################
+
+## First Emit Portable files.
+
 AC_CONFIG_FILES([Makefile
-		engine/portable/src/Makefile
-		plugins/common/src/Makefile
-		plugins/dehread/src/Makefile
-		plugins/jdoom/src/Makefile
-		plugins/jheretic/src/Makefile
-		plugins/jhexen/src/Makefile
-		plugins/mapload/src/Makefile
-		plugins/openal/src/Makefile
-		plugins/sdlmixer/portable/src/Makefile
-		plugins/opengl/portable/src/Makefile
-		plugins/opengl/unix/src/Makefile
-		external/lzss/unix/src/Makefile
-		external/glbsp/src/Makefile])
+		../../engine/portable/src/Makefile
+		../../plugins/common/src/Makefile
+		../../plugins/dehread/src/Makefile
+		../../plugins/jdoom/src/Makefile
+		../../plugins/jheretic/src/Makefile
+		../../plugins/jhexen/src/Makefile
+		../../plugins/mapload/src/Makefile
+		../../plugins/sdlmixer/portable/src/Makefile
+		../../plugins/opengl/portable/src/Makefile
+		../../plugins/opengl/unix/src/Makefile
+		../../external/lzss/unix/src/Makefile
+		../../external/glbsp/src/Makefile])
 AC_OUTPUT
+
+
+################################################################################
+## Display Configure Status
+################################################################################
+AC_MSG_NOTICE([========================================])
+AC_MSG_NOTICE([     Deng DENG_VERSION Configure Status])
+AC_MSG_NOTICE([========================================])
+
+AC_MSG_CHECKING([build system])
+AC_MSG_RESULT([$build])
+AC_MSG_CHECKING([target system])
+AC_MSG_RESULT([$target])
+AC_MSG_CHECKING([CFLAGS])
+AC_MSG_RESULT([$CFLAGS])
+AC_MSG_CHECKING([using assembler FixedMul and FixedDiv2 routines])
+AC_MSG_RESULT([$FIXED_IMPL])
+
+
+AC_MSG_NOTICE([========================================])
