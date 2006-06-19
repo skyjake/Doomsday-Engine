@@ -73,11 +73,13 @@
  ./../../engine/portable/src/sv_main.c
  ./../../engine/portable/src/sv_frame.c
  ./../../engine/portable/src/cl_world.c
+ ./../../engine/portable/src/cl_oldworld.c
  ./../../engine/portable/src/cl_sound.c
  ./../../engine/portable/src/cl_player.c
  ./../../engine/portable/src/cl_mobj.c
  ./../../engine/portable/src/cl_main.c
  ./../../engine/portable/src/cl_frame.c
+ ./../../engine/portable/src/cl_oldframe.c
  ./../../engine/portable/src/net_ping.c
  ./../../engine/portable/src/net_msg.c
  ./../../engine/portable/src/net_main.c
@@ -93,7 +95,7 @@
  ./../../engine/portable/src/sys_system.c
  ./../../engine/win32/src/sys_stwin.c
  ./../../engine/portable/src/sys_sock.c
- ./../../engine/unix/src/sys_network.c
+ ./../../engine/portable/src/sys_network.c
  ./../../engine/win32/src/sys_mixer.c
  ./../../engine/portable/src/sys_master.c
  ./../../engine/win32/src/sys_input.c
