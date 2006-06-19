@@ -21,6 +21,9 @@
  * Buffer overflow checks *ARE NOT* made.
  * The caller must know what it's doing.
  * The data is stored using little-endian ordering.
+ *
+ * Note that negative values are not good for the packed write/read routines,
+ * as they always have the high bits set.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -88,6 +91,20 @@ void Msg_WriteLong(int l)
     netBuffer.cursor += 4;
 }
 
+void Msg_WritePackedLong(unsigned int l)
+{
+    while(l >= 0x80) 
+    {
+        // Write the lowest 7 bits, and set the high bit to indicate that 
+        // at least one more byte will follow.
+        Msg_WriteByte(0x80 | (l & 0x7f));
+        
+        l >>= 7;
+    }
+    // Write the last byte, with the high bit clear.
+    Msg_WriteByte(l);
+}
+
 void Msg_Write(const void *src, int len)
 {
     memcpy(netBuffer.cursor, src, len);
@@ -137,6 +154,28 @@ int Msg_ReadLong(void)
 #endif
     netBuffer.cursor += 4;
     return LONG( *(int *) (netBuffer.cursor - 4) );
+}
+
+unsigned int Msg_ReadPackedLong(void)
+{
+    byte pack = 0;
+    int pos = 0;
+    unsigned int value = 0;
+    
+    do
+    {
+#ifdef _DEBUG
+        if(Msg_Offset() >= netBuffer.length)
+            Con_Error("Packet read overflow!\n");
+#endif
+
+        pack = *netBuffer.cursor++;
+        value |= ((pack & 0x7f) << pos);
+        pos += 7;
+    }
+    while(pack & 0x80);
+    
+    return value;
 }
 
 void Msg_Read(void *dest, int len)
