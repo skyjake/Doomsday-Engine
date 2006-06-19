@@ -36,6 +36,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DEFAULT_DELTA_BASE_SCORE    10000
+
 #define REG_MOBJ_HASH_SIZE          1024
 #define REG_MOBJ_HASH_FUNCTION_MASK 0x3ff
 
@@ -113,6 +115,8 @@ pool_t  pools[MAXPLAYERS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static float deltaBaseScores[NUM_DELTA_TYPES];
+
 // Keep this zeroed out. Used if the register doesn't have data for
 // the mobj being compared.
 static dt_mobj_t dummyZeroMobj;
@@ -136,6 +140,25 @@ void Sv_InitPools(void)
     // Clients don't register anything.
     if(isClient)
         return;
+
+    // Set base priority scores for all the delta types.
+    for(i = 0; i < NUM_DELTA_TYPES; ++i)
+    {
+        deltaBaseScores[i] = DEFAULT_DELTA_BASE_SCORE;
+    }
+
+    // Priorities for all deltas that will be sent out by the server.
+    // No priorities need to be declared for obsolete delta types.
+    deltaBaseScores[DT_MOBJ] = 1000;
+    deltaBaseScores[DT_PLAYER] = 1000;
+    deltaBaseScores[DT_SECTOR] = 2000;
+    deltaBaseScores[DT_SIDE] = 800;
+    deltaBaseScores[DT_POLY] = 2000;
+    deltaBaseScores[DT_LUMP] = 0;
+    deltaBaseScores[DT_SOUND] = 2000;
+    deltaBaseScores[DT_MOBJ_SOUND] = 3000;
+    deltaBaseScores[DT_SECTOR_SOUND] = 5000;
+    deltaBaseScores[DT_POLY_SOUND] = 5000;
 
     // Since the level has changed, PU_LEVEL memory has been freed.
     // Reset all pools (set numbers are kept, though).
@@ -2607,20 +2630,6 @@ boolean Sv_IsPostponedDelta(void *deltaPtr, ownerinfo_t * info)
  */
 boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
 {
-    float   baseScores[NUM_DELTA_TYPES] = {
-        1000,                   // DT_MOBJ
-        1000,                   // DT_PLAYER
-        2000,                   // DT_SECTOR_SHORT_FLAGS
-        800,                    // DT_SIDE
-        2000,                   // DT_POLY
-        0,                      // DT_LUMP
-        2000,                   // DT_SOUND
-        3000,                   // DT_MOBJ_SOUND
-        5000,                   // DT_SECTOR_SOUND
-        5000,                   // DT_POLY_SOUND
-        2000,                   // DT_SECTOR
-    };
-
     float   score, distance, size;
     delta_t *delta = deltaPtr;
     int     df = delta->flags;
@@ -2640,7 +2649,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
     distance = FIX2FLT(Sv_DeltaDistance(delta, info));
 
     // What is the base score?
-    score = baseScores[delta->type] / distance;
+    score = deltaBaseScores[delta->type] / distance;
 
     // It's very important to send sound deltas in time.
     if(Sv_IsSoundDelta(delta))
