@@ -613,6 +613,10 @@ void Con_AddCommandList(ccmd_t *cmdlist)
 
 void Con_AddCommand(ccmd_t *cmd)
 {
+    if(Con_GetCommand(cmd->name))
+        Con_Error("Con_AddCommand: A CCmd by the name \"%s\" is already registered",
+                  cmd->name);
+
     if(++numCCmds > maxCCmds)
     {
         maxCCmds *= 2;
@@ -657,6 +661,10 @@ void Con_AddVariableList(cvar_t *varlist)
 
 void Con_AddVariable(cvar_t *var)
 {
+    if(Con_GetVariable(var->name))
+        Con_Error("Con_AddVariable: A CVAR by the name \"%s\" is already registered",
+                  var->name);
+
     if(++numCVars > maxCVars)
     {
         // Allocate more memory.
@@ -2020,7 +2028,7 @@ void Con_Drawer(void)
     float   fontScaledY;
     int     bgX = 64, bgY = 64;
     int     textOffsetY = 0;
-    
+
     if(ConsoleY == 0)
         return;                 // We have nothing to do here.
 
@@ -2100,7 +2108,7 @@ void Con_Drawer(void)
     gl.Color4f(1, 1, 1, closeFade);
 
     // The text in the console buffer will be drawn from the bottom up (!).
-    for(i = bPos - bLineOff - 1, 
+    for(i = bPos - bLineOff - 1,
         y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
         i >= 0 && i < bufferLines && y > -fontScaledY; i--)
     {
@@ -2155,7 +2163,7 @@ void Con_Drawer(void)
         gl.Color4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], closeFade);
     else
         gl.Color4f(1, 1, 1, closeFade);
-    Cfont.TextOut(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) / 
+    Cfont.TextOut(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) /
                   Cfont.sizeY);
 
     // Width of the current char.
@@ -2174,14 +2182,14 @@ void Con_Drawer(void)
     if(!conInputLock)
     {
         gl.Disable(DGL_TEXTURING);
-        GL_DrawRect(2 + i, -textOffsetY + ((ConsoleY * gtosMulY - fontScaledY) / 
+        GL_DrawRect(2 + i, -textOffsetY + ((ConsoleY * gtosMulY - fontScaledY) /
                                            Cfont.sizeY) + Cfont.height,
                     k, -((cmdInsMode)? Cfont.height : Cfont.height/4),
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
                     closeFade * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         gl.Enable(DGL_TEXTURING);
     }
-    
+
     Con_DrawTitle(closeFade);
 
     // Restore the original matrices.
@@ -3038,7 +3046,7 @@ void Con_Message(const char *message, ...)
 
     if(message[0])
     {
-	buffer = malloc(PRBUFF_SIZE);
+    buffer = malloc(PRBUFF_SIZE);
         va_start(argptr, message);
         vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
         va_end(argptr);
