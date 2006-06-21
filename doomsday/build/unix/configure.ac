@@ -21,7 +21,7 @@ AC_CANONICAL_SYSTEM
 ## Automake Initialisation.
 ################################################################################
 AM_INIT_AUTOMAKE([-Wall foreign])
-AC_CONFIG_HEADER([config.h])
+AM_CONFIG_HEADER([config.h])
 
 ################################################################################
 ## Build Flags. (If needed)
@@ -96,12 +96,16 @@ AC_SUBST(FIXED_IMPL)
 ################################################################################
 
 ################################################################################
-## Compiler checks.
+## Compiler checks, and other build tools.
 ################################################################################
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_CHECK_PROG(ZIP, zip, yes, no)
+if test "$ZIP" = "no" ; then
+ 	AC_MSG_ERROR(["*** zip not found. Unable to generate .pk3 files. On Ubuntu install zip."])
+fi
 
 ################################################################################
 ## Libtool initialisation.
@@ -151,10 +155,10 @@ AC_CHECK_LIB([Xext], [main])
 # FIXME: Replace `main' with a function in `-lncurses':
 AC_CHECK_LIB([ncurses], [main])
 
-# Check for OpenAL
-AC_CHECK_LIB([openal], [alSourcePlay],
-AC_CONFIG_FILES([../../plugins/openal/src/Makefile]),
-[AC_MSG_WARN("*** OpenAL not found. 3D Positional Audio Not Available. On Ubuntu install libopenal-dev.")])
+### Check for OpenAL
+##AC_CHECK_LIB([openal], [alSourcePlay],
+##AC_CONFIG_FILES([../../plugins/openal/src/Makefile]),
+##[AC_MSG_WARN("*** OpenAL not found. 3D Positional Audio Not Available. On Ubuntu install libopenal-dev.")])
 
 # Check for libPNG
 AC_CHECK_LIB([png], [png_create_read_struct],,
@@ -284,19 +288,19 @@ AC_CHECK_FUNCS([floor getcwd gethostbyaddr gethostbyname memmove memset mkdir po
 
 ## First Emit Portable files.
 
-AC_CONFIG_FILES([Makefile
-		../../engine/portable/src/Makefile
-		../../plugins/common/src/Makefile
-		../../plugins/dehread/src/Makefile
-		../../plugins/jdoom/src/Makefile
-		../../plugins/jheretic/src/Makefile
-		../../plugins/jhexen/src/Makefile
-		../../plugins/mapload/src/Makefile
-		../../plugins/sdlmixer/portable/src/Makefile
-		../../plugins/opengl/portable/src/Makefile
-		../../plugins/opengl/unix/src/Makefile
-		../../external/lzss/unix/src/Makefile
-		../../external/glbsp/src/Makefile])
+AC_CONFIG_FILES([Makefile])
+##		../../engine/portable/src/Makefile
+##		../../plugins/common/src/Makefile
+##		../../plugins/dehread/src/Makefile
+##		../../plugins/jdoom/src/Makefile
+##		../../plugins/jheretic/src/Makefile
+##		../../plugins/jhexen/src/Makefile
+##		../../plugins/mapload/src/Makefile
+##		../../plugins/sdlmixer/portable/src/Makefile
+##		../../plugins/opengl/portable/src/Makefile
+##		../../plugins/opengl/unix/src/Makefile
+##		../../external/lzss/unix/src/Makefile
+##		../../external/glbsp/src/Makefile])
 AC_OUTPUT
 
 
