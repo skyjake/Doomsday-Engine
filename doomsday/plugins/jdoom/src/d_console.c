@@ -310,11 +310,6 @@ ccmd_t  gameCCmds[] = {
     {"makecam",     CCmdSetCamera,      "Toggle camera mode.", 0 },
     {"setlock",     CCmdSetViewLock,    "Set camera viewlock.", 0 },
     {"lockmode",    CCmdSetViewLock,    "Set camera viewlock mode.", 0 },
-
-    // $moveplane
-    {"movefloor",   CCmdMovePlane,      "Move a sector's floor plane.", 0 },
-    {"moveceil",    CCmdMovePlane,      "Move a sector's ceiling plane.", 0 },
-    {"movesec",     CCmdMovePlane,      "Move a sector's both planes.", 0 },
     {NULL}
 };
 
