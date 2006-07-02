@@ -89,9 +89,27 @@ ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 ## No test yet for finding openAl. FIXME
 
 ################################################################################
-######################## Set Definitions  ######################################
+######################## Set Common Definitions  ###############################
 
-ADD_DEFINITIONS (-D__DOOMSDAY__ -DNORANGECHECKING -DUNIX -DGNU_X86_FIXED_ASM )
+ADD_DEFINITIONS (-DNORANGECHECKING)
+
+## If x86 (32bit) we want this. FIXME
+## ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
+## Otherwise we want this. FIXME
+ADD_DEFINITIONS (-DNO_FIXED_ASM )
+
+IF (UNIX)
+IF (NOT APPLE)
+IF (NOT WIN32)
+ADD_DEFINITIONS ( -DUNIX)
+ENDIF (NOT WIN32)
+ENDIF (NOT APPLE)
+ENDIF (UNIX)
+
+IF (WIN32)
+ADD_DEFINITIONS ( -DWIN32)
+ENDIF (WIN32)
+
 
 ################################################################################
 ######################## Plugin Common Files ###################################
@@ -110,6 +128,11 @@ FILE(GLOB LZSS_SOURCES external/lzss/unix/src/*.c)
 
 ################################################################################
 ######################## The Doomsday Engine  ##################################
+
+ADD_DEFINITIONS (-D__DOOMSDAY__ )
+
+## FIXME FIXME FIXME FIXME FIXME - AWFUL HACK - HIGH PRIORITY
+ADD_DEFINITIONS ('-DDENG_BASE_DIR=\"/usr/local/share/deng\"')
 
 INCLUDE_DIRECTORIES (engine/api 
 engine/portable/include )
