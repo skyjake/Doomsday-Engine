@@ -134,8 +134,7 @@ ADD_DEFINITIONS (-D__DOOMSDAY__ )
 ## FIXME FIXME FIXME FIXME FIXME - AWFUL HACK - HIGH PRIORITY
 ADD_DEFINITIONS ('-DDENG_BASE_DIR=\"/usr/local/share/deng\"')
 
-INCLUDE_DIRECTORIES (engine/api 
-engine/portable/include )
+INCLUDE_DIRECTORIES (engine/api engine/portable/include )
 
 FILE(GLOB DENG_PORTABLE_SOURCES engine/portable/src/*.c)
 
@@ -149,6 +148,7 @@ INCLUDE_DIRECTORIES (engine/unix/include )
 FILE(GLOB DENG_UNIX_SOURCES engine/unix/src/*.c)
 
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_UNIX_SOURCES} )
+
 ENDIF (NOT WIN32)
 ENDIF (NOT APPLE)
 ENDIF (UNIX)
@@ -163,18 +163,16 @@ ENDIF (WIN32)
 ## FIXME - Add OSX here
 
 ADD_EXECUTABLE (doomsday ${DENG_SOURCES})
-TARGET_LINK_LIBRARIES (doomsday ${OPENGL_LIBRARIES} ${SDL_LIBRARY}
-${SDLMIXER_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${X11_LIBRARIES}
-${CURSES_LIBRARY} ${PNG_LIBRARY} )
+TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY}
+${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARY} ${PNG_LIBRARY} )
 
-MESSAGE ( STATUS ${OPENGL_LIBRARIES}" - opengl")
-MESSAGE ( STATUS  ${SDL_LIBRARY}" - sdl ")
-MESSAGE ( STATUS ${SDLMIXER_LIBRARY}" - sdlmixer ")
-MESSAGE ( STATUS  ${SDLNET_LIBRARY}" - sdlnet ")
-MESSAGE ( STATUS ${ZLIB_LIBRARIES}" - zlib")
-MESSAGE ( STATUS ${X11_LIBRARIES}" - x11")
-MESSAGE ( STATUS  ${CURSES_LIBRARY}" - curses ")
-MESSAGE ( STATUS  ${PNG_LIBRARY}" - png ")
+IF (UNIX)
+IF (NOT APPLE)
+IF (NOT WIN32)
+TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES} )
+ENDIF (NOT WIN32)
+ENDIF (NOT APPLE)
+ENDIF (UNIX)
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
@@ -198,7 +196,7 @@ SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_WIN32_SOURCES} )
 ENDIF (WIN32)
 
 SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${COMMON_PLUGIN_SOURCES} )
-ADD_LIBRARY (libdropengl SHARED ${OPENGL_SOURCES})
+##ADD_LIBRARY (libdropengl SHARED ${OPENGL_SOURCES})
 
 
 ################################################################################
