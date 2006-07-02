@@ -4,6 +4,7 @@
 ################################################################################
 
 PROJECT(deng C)
+
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 
@@ -91,7 +92,7 @@ ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 
-INCLUDE_DIRECTORIES (engine/portable/api 
+INCLUDE_DIRECTORIES (engine/api 
 engine/portable/include )
 
 FILE(GLOB DENG_PORTABLE_SOURCES engine/portable/src/*.c)
