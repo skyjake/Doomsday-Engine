@@ -94,9 +94,9 @@ ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 ADD_DEFINITIONS (-DNORANGECHECKING)
 
 ## If x86 (32bit) we want this. FIXME
-## ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
+ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
 ## Otherwise we want this. FIXME
-ADD_DEFINITIONS (-DNO_FIXED_ASM )
+##　ADD_DEFINITIONS (-DNO_FIXED_ASM )
 
 IF (UNIX)
 IF (NOT APPLE)
@@ -139,7 +139,8 @@ engine/portable/include )
 
 FILE(GLOB DENG_PORTABLE_SOURCES engine/portable/src/*.c)
 
-SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} ${LZSS_SOURCES})
+SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} ${LZSS_SOURCES}
+ plugins/common/src/m_fixed.c)
 
 IF (UNIX)
 IF (NOT APPLE)
@@ -162,6 +163,18 @@ ENDIF (WIN32)
 ## FIXME - Add OSX here
 
 ADD_EXECUTABLE (doomsday ${DENG_SOURCES})
+TARGET_LINK_LIBRARIES (doomsday ${OPENGL_LIBRARIES} ${SDL_LIBRARY}
+${SDLMIXER_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${X11_LIBRARIES}
+${CURSES_LIBRARY} ${PNG_LIBRARY} )
+
+MESSAGE ( STATUS ${OPENGL_LIBRARIES}" - opengl")
+MESSAGE ( STATUS  ${SDL_LIBRARY}" - sdl ")
+MESSAGE ( STATUS ${SDLMIXER_LIBRARY}" - sdlmixer ")
+MESSAGE ( STATUS  ${SDLNET_LIBRARY}" - sdlnet ")
+MESSAGE ( STATUS ${ZLIB_LIBRARIES}" - zlib")
+MESSAGE ( STATUS ${X11_LIBRARIES}" - x11")
+MESSAGE ( STATUS  ${CURSES_LIBRARY}" - curses ")
+MESSAGE ( STATUS  ${PNG_LIBRARY}" - png ")
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
