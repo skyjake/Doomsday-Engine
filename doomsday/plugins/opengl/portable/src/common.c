@@ -13,7 +13,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "drOpenGL.h"
+#include "dropengl.h"
 
 #include <stdlib.h>
 

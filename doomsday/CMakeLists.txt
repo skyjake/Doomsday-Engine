@@ -177,6 +177,9 @@ ENDIF (UNIX)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 
+ADD_DEFINITIONS (-D__DROPENGL__ )
+ADD_DEFINITIONS (-DUSE_MULTITEXTURE )
+
 INCLUDE_DIRECTORIES ( plugins/opengl/portable/include )
 
 FILE(GLOB OPENGL_PORTABLE_SOURCES plugins/opengl/portable/src/*.c)
@@ -195,8 +198,15 @@ FILE(GLOB OPENGL_WIN32_SOURCES plugins/opengl/win32/src/*.c)
 SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_WIN32_SOURCES} )
 ENDIF (WIN32)
 
-SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${COMMON_PLUGIN_SOURCES} )
-##ADD_LIBRARY (libdropengl SHARED ${OPENGL_SOURCES})
+SET (OPENGL_SOURCES ${OPENGL_SOURCES})
+ADD_LIBRARY (dropengl SHARED ${OPENGL_SOURCES})
+
+TARGET_LINK_LIBRARIES (dropengl ${OPENGL_LIBRARIES})
+IF (UNIX)
+IF (NOT WIN32)
+TARGET_LINK_LIBRARIES (dropengl  ${SDL_LIBRARIES} )
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
 
 
 ################################################################################

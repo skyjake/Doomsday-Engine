@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "drOpenGL.h"
+#include "dropengl.h"
 
 // MACROS ------------------------------------------------------------------
 
