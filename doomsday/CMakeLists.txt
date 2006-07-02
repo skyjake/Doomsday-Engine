@@ -88,6 +88,25 @@ ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 ## No test yet for finding X11. FIXME
 ## No test yet for finding openAl. FIXME
 
+################################################################################
+######################## Set Definitions  ######################################
+
+ADD_DEFINITIONS (-D__DOOMSDAY__ -DNORANGECHECKING -DUNIX -DGNU_X86_FIXED_ASM )
+
+################################################################################
+######################## Plugin Common Files ###################################
+
+INCLUDE_DIRECTORIES ( plugins/common/include )
+FILE(GLOB COMMON_PLUGIN_SOURCES plugins/common/src/*.c)
+
+
+################################################################################
+######################## External LZSS Files ###################################
+
+INCLUDE_DIRECTORIES ( external/lzss/portable/include )
+FILE(GLOB LZSS_SOURCES external/lzss/unix/src/*.c)
+
+
 
 ################################################################################
 ######################## The Doomsday Engine  ##################################
@@ -97,7 +116,7 @@ engine/portable/include )
 
 FILE(GLOB DENG_PORTABLE_SOURCES engine/portable/src/*.c)
 
-SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} )
+SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} ${LZSS_SOURCES})
 
 IF (UNIX)
 IF (NOT APPLE)
@@ -114,7 +133,7 @@ IF (WIN32)
 INCLUDE_DIRECTORIES (engine/win32/include )
 FILE(GLOB DENG_WIN32_SOURCES engine/win32/src/*.c)
 
-SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES} )
+SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
 ENDIF (WIN32)
 
 ## FIXME - Add OSX here
@@ -123,6 +142,28 @@ ADD_EXECUTABLE (doomsday ${DENG_SOURCES})
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
+
+INCLUDE_DIRECTORIES ( plugins/opengl/portable/include )
+
+FILE(GLOB OPENGL_PORTABLE_SOURCES plugins/opengl/portable/src/*.c)
+
+SET (OPENGL_SOURCES ${OPENGL_PORTABLE_SOURCES} )
+
+IF (UNIX)
+FILE(GLOB OPENGL_UNIX_SOURCES plugins/opengl/unix/src/*.c)
+
+SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_UNIX_SOURCES} )
+ENDIF (UNIX)
+
+IF (WIN32)
+FILE(GLOB OPENGL_WIN32_SOURCES plugins/opengl/win32/src/*.c)
+
+SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_WIN32_SOURCES} )
+ENDIF (WIN32)
+
+SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+ADD_LIBRARY (libdropengl SHARED ${OPENGL_SOURCES})
+
 
 ################################################################################
 ######################## Maploader Plugin  #####################################
