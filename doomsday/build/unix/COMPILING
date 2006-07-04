@@ -2,10 +2,7 @@ COMPILING DOOMSDAY AND THE LIBRARIES
 ====================================
 
 This document describes the recommended way for building Doomsday and
-the libraries on a *nix system (i.e. only Linux at the moment).
-
-If you want generic instructions on compiling see the INSTALL file in
-the base of the Doomsday source tree.
+the libraries on any system.
 
 
 REQUIREMENTS:
@@ -13,21 +10,17 @@ REQUIREMENTS:
 
 You will need these tools and libraries for building everything:
 
-- gcc (obviously)
-- GNU automake 1.7 (or newer)
-- GNU Autoconf
-- libtool (I'm using 1.5.6, earlier versions probably work)
-- libltdl
-- GNU Make
+- Cmake (http://www.cmake.org/HTML/Download.html
+- A C Compiler (GCC on *NIX, OSX. Cygwin, MingGW, Borland or Visual C on Windows)
+- GNU Make on *NIX, Cygwin or MinGW
 - ncurses
-- OpenGL (use "--without-opengl" when configuring to disable)
-- GLU
+- OpenGL (This can be disabled in cmake for a dedicated build)
+- GLU (This can be disabled in cmake for a dedicated build)
 - Simple Directmedia Layer (http://www.libsdl.org/)
 - SDL_net
-- SDL_mixer (used for sound by default)
-- OpenAL (alternative sound library, provides 3D sound)
+- SDL_mixer (This can be disabled in cmake for a dedicated build)
+- OpenAL (This can be disabled in cmake for a dedicated build)
 - zip (to create Doomsday.pk3)
-- python (to generate p_maptypes.h and dd_maptypes.h)
 
 
 IF YOU HAVE A SOURCE TARBALL:
@@ -40,30 +33,28 @@ IF YOU HAVE A SOURCE TARBALL:
    It also prevents conflicts in the Src/Common/ directory, which is
    used in a slightly different way by each game.
 
-3. Run "../configure".  By default, everything will be installed under
-   /usr/local.  You might want to use e.g. "--prefix=/home/user/deng".
+3. Run "cmake ../"  By default, everything will be installed under
+   FIXME.  You might want to use e.g. FIXME.
 
-4. If configure failed due to missing libraries, install the required
+4. If cmake failed due to missing libraries, install the required
    ones.  Make sure you have the development files for each.
 
-5. Run "make" and then "su -c 'make install'".  (If you are installing
-   into your home directory, just run "make install".)  This will
-   compile everything and install the executable (doomsday), the
-   libraries (games, renderer, sound), data files and definitions
+5. On *NIX run "make" and then "su -c 'make install'" or
+   "sudo 'make install'" depending on you *NIX distribution.
+   This will compile everything and install the executable (doomsday),
+   the libraries (games, renderer, sound), data files and definitions
    files under the directory specified by the configured prefix.
 
 6. See the main README for tips on running the game.
 
 
-IF YOU USE CVS:
+IF YOU USE SVN:
 ---------------
 
 1. Check out a copy of the project files from the SourceForge CVS.
    You will only need the "doomsday" module.  You can find
    instructions on how to accomplish this here:
 
-      http://sourceforge.net/cvs/?group_id=74815
+      http://sourceforge.net/svn/?group_id=74815
 
-2. Run "./autogen.sh".
-
-3. Proceed to compiling as with a source tarball (from step 3).
+2. Proceed to compiling as with a source tarball (from step 2).
