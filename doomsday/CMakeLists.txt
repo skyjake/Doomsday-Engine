@@ -6,6 +6,10 @@
 PROJECT(deng C)
 
 ################################################################################
+######################## Configure Build Options  ##############################
+
+
+################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 
 INCLUDE (FindOpenGL)
@@ -125,7 +129,6 @@ INCLUDE_DIRECTORIES ( external/lzss/portable/include )
 FILE(GLOB LZSS_SOURCES external/lzss/unix/src/*.c)
 
 
-
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 
@@ -164,12 +167,13 @@ ENDIF (WIN32)
 
 ADD_EXECUTABLE (doomsday ${DENG_SOURCES})
 TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY}
-${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARY} ${PNG_LIBRARY} )
+${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARY} ${PNG_LIBRARY}
+dropengl dpdehread dpmapload)
 
 IF (UNIX)
 IF (NOT APPLE)
 IF (NOT WIN32)
-TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES} )
+TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT WIN32)
 ENDIF (NOT APPLE)
 ENDIF (UNIX)
@@ -212,8 +216,22 @@ ENDIF (UNIX)
 ################################################################################
 ######################## Maploader Plugin  #####################################
 
+ADD_DEFINITIONS (-DGLBSP_PLUGIN )
+
+INCLUDE_DIRECTORIES ( external/glbsp/include )
+
+FILE(GLOB MAPLOAD_SOURCES plugins/mapload/src/*.c)
+FILE(GLOB GLBSP_SOURCES external/glbsp/src/*.c)
+
+ADD_LIBRARY (dpmapload SHARED ${MAPLOAD_SOURCES} ${GLBSP_SOURCES})
+
+
 ################################################################################
 ######################## Dehacked Reader Plugin  ###############################
+
+FILE(GLOB DEHREAD_SOURCES plugins/dehread/src/*.c)
+
+ADD_LIBRARY (dpdehread SHARED ${DEHREAD_SOURCES})
 
 ################################################################################
 ######################## SDLMixer Output Plugin  ###############################
