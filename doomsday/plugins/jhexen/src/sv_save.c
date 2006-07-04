@@ -12,7 +12,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <LZSS.h>
+#include <lzss.h>
 
 #include "jhexen.h"
 #include "p_svtexarc.h"
