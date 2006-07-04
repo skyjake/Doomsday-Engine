@@ -81,8 +81,17 @@ static void getBundlePath(char *path)
     }
 	else
     {
+#ifdef MACOSX
         // This is the default location where bundles are.
         sprintf(path, "%s/Bundles", appDir);
+#endif
+#ifdef UNIX
+#ifdef DENG_LIBRARY_DIR
+		sprintf(path, DENG_LIBRARY_DIR, appDir);
+#endif
+	// There should be a fallback here, but as DENG_LIBRARY_DIR is
+	// defined by cmake there is not. FIXME
+#endif
     }
 }
 
@@ -124,17 +133,24 @@ lt_dlhandle lt_dlopenext(const char *baseFileName)
 	char* ptr;
 	
 	getBundlePath(bundleName);
+#ifdef MACOSX
 	strcat(bundleName, "/");
 	strcat(bundleName, baseFileName);
 	strcat(bundleName, "/Contents/MacOS/");
+#endif
 	strcat(bundleName, baseFileName);
+#ifdef UNIX
+	strcat(bundleName, ".so");
+#endif
+
+
 /*  sprintf(bundleName, "Bundles/%s/Contents/MacOS/%s", baseFileName, 
             baseFileName);*/
-	
+#ifdef MACOSX	
 	// Get rid of the ".bundle" in the end.
 	if((ptr = strrchr(bundleName, '.')) != NULL)
 		*ptr = 0;
-	
+#endif	
 	handle = dlopen(bundleName, RTLD_NOW);
     if(!handle)
     {
