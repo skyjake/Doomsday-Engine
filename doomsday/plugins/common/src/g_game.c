@@ -19,7 +19,7 @@
 #  include <math.h>
 #  include "doomdef.h"
 #  include "doomstat.h"
-#  include "D_Action.h"
+#  include "d_action.h"
 #  include "d_config.h"
 #  include "m_argv.h"
 //#  include "../engine/portable/include/m_misc.h"

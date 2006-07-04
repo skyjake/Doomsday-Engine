@@ -32,7 +32,7 @@
 # include "st_stuff.h"
 # include "p_local.h"
 # include "m_cheat.h"
-# include "D_Action.h"
+# include "d_action.h"
 # include "doomstat.h"
 # include "dstrings.h"
 # include "mn_def.h"

@@ -22,7 +22,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <LZSS.h>
+#include <lzss.h>
 
 #ifdef __JDOOM__
 #  include "doomdef.h"

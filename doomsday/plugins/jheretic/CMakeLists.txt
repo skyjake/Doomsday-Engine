@@ -3,6 +3,8 @@
 ## Licensed under the GNU GPLv2 or later versions.
 ################################################################################
 
+INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
+FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
 
 ################################################################################
 ######################## jHeretic Game Plugin  ####################################
@@ -13,4 +15,4 @@ INCLUDE_DIRECTORIES ( include )
 
 FILE(GLOB JHERETIC_SOURCES src/*.c)
 
-ADD_LIBRARY (jheretic SHARED ${JHERETIC_SOURCES})
+ADD_LIBRARY (jheretic SHARED ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES} )

@@ -3,12 +3,14 @@
 ## Licensed under the GNU GPLv2 or later versions.
 ################################################################################
 
+INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
+FILE(GLOB COMMON_PLUGIN_SOURCES p${CMAKE_SOURCE_DIR}/lugins/common/src/*.c)
 
 ################################################################################
 ######################## External LZSS Files ###################################
 
-INCLUDE_DIRECTORIES ( external/lzss/portable/include )
-FILE(GLOB LZSS_SOURCES external/lzss/unix/src/*.c)
+INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
+FILE(GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c)
 
 ################################################################################
 ######################## jHexen Game Plugin  ####################################
@@ -19,4 +21,5 @@ INCLUDE_DIRECTORIES ( include )
 
 FILE(GLOB JHEXEN_SOURCES src/*.c)
 
-ADD_LIBRARY (jhexen SHARED ${JHEXEN_SOURCES} ${LZSS_SOURCES})
+ADD_LIBRARY (jhexen SHARED ${JHEXEN_SOURCES} ${LZSS_SOURCES}
+${COMMON_PLUGIN_SOURCES} )

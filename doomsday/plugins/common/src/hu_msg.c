@@ -26,7 +26,7 @@
 # include "doomdef.h"
 # include "d_config.h"
 # include "m_menu.h"
-# include "Mn_def.h"
+# include "mn_def.h"
 # include "s_sound.h"
 # include "doomstat.h"
 # include "r_local.h"

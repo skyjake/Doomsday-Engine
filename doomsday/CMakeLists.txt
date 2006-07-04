@@ -2,28 +2,87 @@
 ## Copyright © 2006:	Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
 ## Licensed under the GNU GPLv2 or later versions.
 ################################################################################
-
 PROJECT(deng C)
-
 ################################################################################
 ######################## Configure Build Options  ##############################
+OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
+OPTION (BUILDJHERETIC "Optionally build the jHeretc plugin. Default ON" ON)
+OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
+OPTION (BUILDJWOLFTC "Optionally build the jWolf64 plugin. Default OFF" OFF)
+OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
+OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
+OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
+OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
+OPTION (BUILDOPENAL "Optionally build the SDLMixer plugin. Default ON" ON)
+OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 
 
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
-
+IF (NOT BUILDDEDICATED)
+IF (BUILDOPENGL)
 INCLUDE (FindOpenGL)
+ENDIF (BUILDOPENGL)
+ENDIF (NOT BUILDDEDICATED)
+
 INCLUDE (FindSDL)
+
+IF (NOT BUILDDEDICATED)
+IF (BUILDSDLMIXER)
 INCLUDE (FindSDL_mixer)
+ENDIF (BUILDSDLMIXER)
+ENDIF (NOT BUILDDEDICATED)
+
 INCLUDE (FindSDL_net)
+
 INCLUDE (FindZLIB)
+
 INCLUDE (FindPNG)
+
 INCLUDE (FindCurses)
+
+IF (NOT BUILDDEDICATED)
+IF (UNIX)
+IF (NOT APPLE)
 INCLUDE (FindX11)
+ENDIF (NOT APPLE)
+ENDIF (UNIX)
+
+IF (BUILDOPENAL)
 INCLUDE (FindOpenAL)
+ENDIF (BUILDOPENAL)
+ENDIF (NOT BUILDDEDICATED)
+
+IF (NOT BUILDDEDICATED AND NOT BUILDOPENGL)
+MESSAGE( FATAL_ERROR
+"If not building a dedicated server, the OPENGL renderer must be built.")
+ENDIF (NOT BUILDDEDICATED AND NOT BUILDOPENGL)
+
+IF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
+MESSAGE( FATAL_ERROR
+"If not building a dedicated server, a sound plugin must be built")
+ENDIF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
+################################################################################
+######################## Show Build Details  ###################################
+
+MESSAGE( STATUS "CMAKE_SYSTEM: " ${CMAKE_SYSTEM} )
+MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
+MESSAGE( STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS} )
+MESSAGE( STATUS "CMAKE_C_COMPILER: " ${CMAKE_C_COMPILER} )
+MESSAGE( STATUS "BUILDJDOOM: " ${BUILDJDOOM} )
+MESSAGE( STATUS "BUILDJHERETIC: " ${BUILDJHERETIC} )
+MESSAGE( STATUS "BUILDJHEXEN: " ${BUILDJHEXEN} )
+MESSAGE( STATUS "BUILDJWOLFTC: " ${BUILDJWOLFTC} )
+MESSAGE( STATUS "BUILDJDOOM64: " ${BUILDJDOOM64} )
+MESSAGE( STATUS "BUILDJSTRIFE: " ${BUILDJSTRIFE} )
+MESSAGE( STATUS "BUILDOPENGL: " ${BUILDOPENGL} )
+MESSAGE( STATUS "BUILDOPENAL: " ${BUILDOPENAL} )
+MESSAGE( STATUS "BUILDSDLMIXER: " ${BUILDSDLMIXER} )
+MESSAGE( STATUS "BUILDDEDICATED: " ${BUILDDEDICATED} )
+
 ################################################################################
 ######################## Find Our Build Deps  ##################################
-
+IF (BUILDOPENGL)
 ## Confirm we have OpenGL
 IF (OPENGL_FOUND STREQUAL "NO")
 MESSAGE (FATAL_ERROR
@@ -43,6 +102,7 @@ On Windows install FIXME.")
 ENDIF (OPENGL_GLU_FOUND STREQUAL "NO")
 
 INCLUDE_DIRECTORIES ( ${OPENGL_INCLUDE_DIR})
+ENDIF (BUILDOPENGL)
 
 ## Confirm we have SDL
 IF (SDL_FOUND STREQUAL "NO")
@@ -55,6 +115,7 @@ ENDIF (SDL_FOUND STREQUAL "NO")
 
 INCLUDE_DIRECTORIES ( ${SDL_INCLUDE_DIR})
 
+IF (BUILDSDLMIXER)
 ## Confirm we have SDL_mixer
 IF (SDLMIXER_FOUND STREQUAL "NO")
 MESSAGE (FATAL_ERROR
@@ -65,6 +126,7 @@ On Windows install FIXME.")
 ENDIF (SDLMIXER_FOUND STREQUAL "NO")
 
 INCLUDE_DIRECTORIES ( ${SDLMIXER_INCLUDE_DIR})
+ENDIF (BUILDSDLMIXER)
 
 ## Confirm we have SDL_net
 IF (SDLNET_FOUND STREQUAL "NO")
@@ -94,8 +156,7 @@ ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 
 ################################################################################
 ######################## Set Common Definitions  ###############################
-
-ADD_DEFINITIONS (-DNORANGECHECKING)
+##ADD_DEFINITIONS (-DNORANGECHECKING)
 
 ## If x86 (32bit) we want this. FIXME
 ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
@@ -113,15 +174,11 @@ ENDIF (UNIX)
 IF (WIN32)
 ADD_DEFINITIONS ( -DWIN32)
 ENDIF (WIN32)
-
-
 ################################################################################
 ######################## Plugin Common Files ###################################
-
-INCLUDE_DIRECTORIES ( plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES plugins/common/src/*.c)
-
-
+## Seems not needed here
+##INCLUDE_DIRECTORIES ( plugins/common/include )
+##FILE(GLOB COMMON_PLUGIN_SOURCES plugins/common/src/*.c)
 ################################################################################
 ######################## External LZSS Files ###################################
 
@@ -166,9 +223,8 @@ ENDIF (WIN32)
 ## FIXME - Add OSX here
 
 ADD_EXECUTABLE (doomsday ${DENG_SOURCES})
-TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY}
-${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARY} ${PNG_LIBRARY}
-dropengl dpdehread dpmapload)
+TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY}
+${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARY} ${PNG_LIBRARY} )
 
 IF (UNIX)
 IF (NOT APPLE)
@@ -180,108 +236,52 @@ ENDIF (UNIX)
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
-
-ADD_DEFINITIONS (-D__DROPENGL__ )
-ADD_DEFINITIONS (-DUSE_MULTITEXTURE )
-
-INCLUDE_DIRECTORIES ( plugins/opengl/portable/include )
-
-FILE(GLOB OPENGL_PORTABLE_SOURCES plugins/opengl/portable/src/*.c)
-
-SET (OPENGL_SOURCES ${OPENGL_PORTABLE_SOURCES} )
-
-IF (UNIX)
-FILE(GLOB OPENGL_UNIX_SOURCES plugins/opengl/unix/src/*.c)
-
-SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_UNIX_SOURCES} )
-ENDIF (UNIX)
-
-IF (WIN32)
-FILE(GLOB OPENGL_WIN32_SOURCES plugins/opengl/win32/src/*.c)
-
-SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_WIN32_SOURCES} )
-ENDIF (WIN32)
-
-SET (OPENGL_SOURCES ${OPENGL_SOURCES})
-ADD_LIBRARY (dropengl SHARED ${OPENGL_SOURCES})
-
-TARGET_LINK_LIBRARIES (dropengl ${OPENGL_LIBRARIES})
-IF (UNIX)
-IF (NOT WIN32)
-TARGET_LINK_LIBRARIES (dropengl  ${SDL_LIBRARIES} )
-ENDIF (NOT WIN32)
-ENDIF (UNIX)
-
-
+IF (BUILDOPENGL)
+ADD_SUBDIRECTORY (plugins/opengl )
+ENDIF (BUILDOPENGL)
 ################################################################################
 ######################## Maploader Plugin  #####################################
-
-ADD_DEFINITIONS (-DGLBSP_PLUGIN )
-
-INCLUDE_DIRECTORIES ( external/glbsp/include )
-
-FILE(GLOB MAPLOAD_SOURCES plugins/mapload/src/*.c)
-FILE(GLOB GLBSP_SOURCES external/glbsp/src/*.c)
-
-ADD_LIBRARY (dpmapload SHARED ${MAPLOAD_SOURCES} ${GLBSP_SOURCES})
-
-
+ADD_SUBDIRECTORY (plugins/mapload )
 ################################################################################
 ######################## Dehacked Reader Plugin  ###############################
-
-FILE(GLOB DEHREAD_SOURCES plugins/dehread/src/*.c)
-
-ADD_LIBRARY (dpdehread SHARED ${DEHREAD_SOURCES})
-
+ADD_SUBDIRECTORY (plugins/dehread )
 ################################################################################
 ######################## SDLMixer Output Plugin  ###############################
-
-INCLUDE_DIRECTORIES ( plugins/sdlmixer/portable/include )
-
-FILE(GLOB SDLMIXER_PORTABLE_SOURCES plugins/sdlmixer/portable/src/*.c)
-
-SET (SDLMIXER_SOURCES ${SDLMIXER_PORTABLE_SOURCES} )
-
-IF (APPLE)
-FILE(GLOB SDLMIXER_APPLE_SOURCES plugins/sdlmixer/mac/src/*.c)
-
-SET (SDLMIXER_SOURCES ${SDLMIXER_SOURCES} ${SDLMIXER_APPLE_SOURCES} )
-ENDIF (APPLE)
-
-ADD_LIBRARY (dssdlmixer SHARED ${SDLMIXER_SOURCES})
-
-TARGET_LINK_LIBRARIES (dssdlmixer ${SDL_LIBRARY} ${SDLMIXER_LIBRARY})
-
+IF (BUILDSDLMIXER)
+ADD_SUBDIRECTORY (plugins/sdlmixer )
+ENDIF (BUILDSDLMIXER)
 ################################################################################
 ######################## OpenAL Output Plugin  #################################
-
-FILE(GLOB OPENAL_SOURCES plugins/openal/src/*.c)
-
-ADD_LIBRARY (dsopenal SHARED ${OPENAL_SOURCES})
-
-## We should link to openal here. FIXME
-
-
+IF (BUILDOPENAL)
+ADD_SUBDIRECTORY (plugins/openal )
+ENDIF (BUILDOPENAL)
 ################################################################################
 ######################## jDoom Game Plugin  ####################################
-
+IF (BUILDJDOOM)
 ADD_SUBDIRECTORY (plugins/jdoom )
-
+ENDIF (BUILDJDOOM)
 ################################################################################
 ######################## jHeretic Game Plugin  #################################
-
+IF (BUILDJHERETIC)
 ADD_SUBDIRECTORY (plugins/jheretic )
-
+ENDIF (BUILDJHERETIC)
 ################################################################################
 ######################## jHexen Game Plugin  ###################################
-
+IF (BUILDJHEXEN)
 ADD_SUBDIRECTORY (plugins/jhexen )
-
+ENDIF (BUILDJHEXEN)
 ################################################################################
 ######################## jWolfTC Game Plugin  ##################################
-
+IF (BUILDJWOLFTC)
+#ADD_SUBDIRECTORY (plugins/jwolftc )
+ENDIF (BUILDJWOLFTC)
 ################################################################################
 ######################## jDoom64 Game Plugin  ##################################
-
+IF (BUILDJDOOM64)
+#ADD_SUBDIRECTORY (plugins/jdoom64 )
+ENDIF (BUILDJDOOM64)
 ################################################################################
 ######################## jStrife Game Plugin  ##################################
+IF (BUILDJSTRIFE)
+#ADD_SUBDIRECTORY (plugins/jstrife )
+ENDIF (BUILDJSTRIFE)
