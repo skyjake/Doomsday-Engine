@@ -236,8 +236,31 @@ ADD_LIBRARY (dpdehread SHARED ${DEHREAD_SOURCES})
 ################################################################################
 ######################## SDLMixer Output Plugin  ###############################
 
+INCLUDE_DIRECTORIES ( plugins/sdlmixer/portable/include )
+
+FILE(GLOB SDLMIXER_PORTABLE_SOURCES plugins/sdlmixer/portable/src/*.c)
+
+SET (SDLMIXER_SOURCES ${SDLMIXER_PORTABLE_SOURCES} )
+
+IF (APPLE)
+FILE(GLOB SDLMIXER_APPLE_SOURCES plugins/sdlmixer/mac/src/*.c)
+
+SET (SDLMIXER_SOURCES ${SDLMIXER_SOURCES} ${SDLMIXER_APPLE_SOURCES} )
+ENDIF (APPLE)
+
+ADD_LIBRARY (dssdlmixer SHARED ${SDLMIXER_SOURCES})
+
+TARGET_LINK_LIBRARIES (dssdlmixer ${SDL_LIBRARY} ${SDLMIXER_LIBRARY})
+
 ################################################################################
 ######################## OpenAL Output Plugin  #################################
+
+FILE(GLOB OPENAL_SOURCES plugins/openal/src/*.c)
+
+ADD_LIBRARY (dsopenal SHARED ${OPENAL_SOURCES})
+
+## We should link to openal here. FIXME
+
 
 ################################################################################
 ######################## jDoom Game Plugin  ####################################
