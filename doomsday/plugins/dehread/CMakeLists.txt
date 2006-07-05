@@ -9,3 +9,8 @@
 
 FILE(GLOB DEHREAD_SOURCES src/*.c)
 ADD_LIBRARY (dpdehread SHARED ${DEHREAD_SOURCES})
+################################################################################
+######################## Install Targets  ######################################
+INSTALL(TARGETS dpdehread
+RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )

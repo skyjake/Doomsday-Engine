@@ -16,3 +16,8 @@ INCLUDE_DIRECTORIES ( include )
 FILE(GLOB JDOOM_SOURCES src/*.c)
 
 ADD_LIBRARY (jdoom SHARED ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+################################################################################
+######################## Install Targets  ######################################
+INSTALL(TARGETS jdoom
+RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )

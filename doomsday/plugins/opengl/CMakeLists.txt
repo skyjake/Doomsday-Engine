@@ -34,3 +34,9 @@ IF (NOT WIN32)
 TARGET_LINK_LIBRARIES (dropengl  ${SDL_LIBRARIES} )
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
+
+################################################################################
+######################## Install Targets  ######################################
+INSTALL(TARGETS dropengl
+RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )

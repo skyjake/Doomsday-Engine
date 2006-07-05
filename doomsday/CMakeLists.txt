@@ -48,8 +48,9 @@ IF (WIN32)
 ## FIXME. Add location here for WIN32
 ENDIF (WIN32)
 
-ADD_DEFINITIONS ('-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}\\"\" ')
-ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR}\\"\" ')
+ADD_DEFINITIONS ('-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/" ')
+ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR}/" ')
+
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
@@ -326,7 +327,6 @@ IF (BUILDJSTRIFE)
 ENDIF (BUILDJSTRIFE)
 ################################################################################
 ######################## Show Build Details  ###################################
-
 MESSAGE( STATUS "CMAKE_SYSTEM:           " ${CMAKE_SYSTEM} )
 MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 MESSAGE( STATUS "CMAKE_C_FLAGS:          " ${CMAKE_C_FLAGS} )
@@ -346,3 +346,14 @@ MESSAGE( STATUS "BUILDDEDICATED:         " ${BUILDDEDICATED} )
 MESSAGE( STATUS "BUILDFIXEDASM:          " ${BUILDFIXEDASM} )
 MESSAGE( STATUS "BUILDSYSTEM:            " ${BUILDSYSTEM} )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX    " ${CMAKE_INSTALL_PREFIX} )
+MESSAGE( STATUS "DENG_BASE_DIR           " ${DENG_BASE_DIR} )
+MESSAGE( STATUS "DENG_LIBRARY_DIR        " ${DENG_LIBRARY_DIR} )
+MESSAGE( STATUS "DENG_BINARY_DIR         " ${DENG_BINARY_DIR} )
+
+################################################################################
+######################## Install Targets  ######################################
+##INSTALL(TARGETS doomsday libdpdehread libdpmapload libdropengl libdsopenal
+##libdssdlmixer libjdoom libjheretic libjhexen
+INSTALL(TARGETS doomsday
+RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )

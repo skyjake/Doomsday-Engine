@@ -16,3 +16,9 @@ INCLUDE_DIRECTORIES ( include )
 FILE(GLOB JHERETIC_SOURCES src/*.c)
 
 ADD_LIBRARY (jheretic SHARED ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+
+################################################################################
+######################## Install Targets  ######################################
+INSTALL(TARGETS jheretic
+RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )

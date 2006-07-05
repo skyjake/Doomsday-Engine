@@ -23,3 +23,9 @@ FILE(GLOB JHEXEN_SOURCES src/*.c)
 
 ADD_LIBRARY (jhexen SHARED ${JHEXEN_SOURCES} ${LZSS_SOURCES}
 ${COMMON_PLUGIN_SOURCES} )
+
+################################################################################
+######################## Install Targets  ######################################
+INSTALL(TARGETS jhexen
+RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
+LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
