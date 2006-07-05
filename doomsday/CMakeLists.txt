@@ -3,6 +3,7 @@
 ## Licensed under the GNU GPLv2 or later versions.
 ################################################################################
 PROJECT(deng C)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.4 FATAL_ERROR)
 ################################################################################
 ######################## Configure Build Options  ##############################
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
@@ -20,6 +21,35 @@ IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
 MESSAGE( FATAL_ERROR
 "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
 ENDIF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+################################################################################
+######################## Doomsday Paths  ##############################
+## Default Install Prefix on Win32 is C:/Program Files/deng
+## Default Install Prefix on *NIX is /usr/local
+## Default Install Prefix on OSX is FIXME
+## This is set by Cmake automagically in CMAKE_INSTALL_PREFIX
+
+## Default *NIX paths
+## /usr/local/bin			<- Doomsday binary
+## /usr/local/lib			<- libdropengl, libjdoom etc
+## /usr/local/share/games/deng		<- jPacks and other data
+
+IF (UNIX)
+IF (NOT WIN32)
+IF (APPLE)
+## FIXME. Add location here for OSX
+ELSE (APPLE)
+SET (DENG_BASE_DIR "/share/games/deng")
+SET (DENG_LIBRARY_DIR "/lib")
+SET (DENG_BINARY_DIR "/bin")
+ENDIF (APPLE)
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
+IF (WIN32)
+## FIXME. Add location here for WIN32
+ENDIF (WIN32)
+
+ADD_DEFINITIONS ('-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}\\"\" ')
+ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR}\\"\" ')
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
@@ -203,10 +233,6 @@ FILE(GLOB LZSS_SOURCES external/lzss/unix/src/*.c)
 ######################## The Doomsday Engine  ##################################
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
-## FIXME FIXME FIXME FIXME FIXME - AWFUL HACK - HIGH PRIORITY
-ADD_DEFINITIONS ('-DDENG_BASE_DIR=\"/usr/local/share/deng\"')
-ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR=\"/usr/local/lib/\"')
-
 INCLUDE_DIRECTORIES (engine/api engine/portable/include )
 
 FILE(GLOB DENG_PORTABLE_SOURCES engine/portable/src/*.c)
@@ -319,4 +345,4 @@ MESSAGE( STATUS "BUILDSDLMIXER:          " ${BUILDSDLMIXER} )
 MESSAGE( STATUS "BUILDDEDICATED:         " ${BUILDDEDICATED} )
 MESSAGE( STATUS "BUILDFIXEDASM:          " ${BUILDFIXEDASM} )
 MESSAGE( STATUS "BUILDSYSTEM:            " ${BUILDSYSTEM} )
-
+MESSAGE( STATUS "CMAKE_INSTALL_PREFIX    " ${CMAKE_INSTALL_PREFIX} )
