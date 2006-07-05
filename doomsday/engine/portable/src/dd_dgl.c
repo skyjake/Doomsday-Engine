@@ -18,11 +18,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
-#  ifdef MACOSX
-#    include "sys_dylib.h"
-#  else
-#    include <ltdl.h>
-#  endif
+#include "sys_dylib.h"
 typedef lt_dlhandle HINSTANCE;
 #endif
 

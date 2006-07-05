@@ -26,10 +26,8 @@
 
 #include <string.h>
 
-#ifdef MACOSX
+#ifdef UNIX
 #  include "sys_dylib.h"
-#else
-#  include <ltdl.h>
 #endif
 
 #include "de_console.h"

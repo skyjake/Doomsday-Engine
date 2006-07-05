@@ -16,7 +16,10 @@ OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the SDLMixer plugin. Default ON" ON)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 
-
+IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+MESSAGE( FATAL_ERROR
+"In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
+ENDIF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
@@ -63,23 +66,34 @@ MESSAGE( FATAL_ERROR
 "If not building a dedicated server, a sound plugin must be built")
 ENDIF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
 ################################################################################
-######################## Show Build Details  ###################################
+######################## Set Common Definitions  ###############################
+##ADD_DEFINITIONS (-DNORANGECHECKING)
 
-MESSAGE( STATUS "CMAKE_SYSTEM: " ${CMAKE_SYSTEM} )
-MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
-MESSAGE( STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS} )
-MESSAGE( STATUS "CMAKE_C_COMPILER: " ${CMAKE_C_COMPILER} )
-MESSAGE( STATUS "BUILDJDOOM: " ${BUILDJDOOM} )
-MESSAGE( STATUS "BUILDJHERETIC: " ${BUILDJHERETIC} )
-MESSAGE( STATUS "BUILDJHEXEN: " ${BUILDJHEXEN} )
-MESSAGE( STATUS "BUILDJWOLFTC: " ${BUILDJWOLFTC} )
-MESSAGE( STATUS "BUILDJDOOM64: " ${BUILDJDOOM64} )
-MESSAGE( STATUS "BUILDJSTRIFE: " ${BUILDJSTRIFE} )
-MESSAGE( STATUS "BUILDOPENGL: " ${BUILDOPENGL} )
-MESSAGE( STATUS "BUILDOPENAL: " ${BUILDOPENAL} )
-MESSAGE( STATUS "BUILDSDLMIXER: " ${BUILDSDLMIXER} )
-MESSAGE( STATUS "BUILDDEDICATED: " ${BUILDDEDICATED} )
+IF (WIN32 OR CMAKE_SYSTEM_MACHINE MATCHES "i.86")
+ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
+SET (BUILDFIXEDASM ON)
+ELSE (WIN32 OR CMAKE_SYSTEM_MACHINE MATCHES "i.86")
+ADD_DEFINITIONS (-DNO_FIXED_ASM )
+SET (BUILDFIXEDASM OFF)
+ENDIF (WIN32 OR CMAKE_SYSTEM_MACHINE MATCHES "i.86")
 
+## Apple also needs -DUNIX in places
+IF (UNIX)
+IF (NOT WIN32)
+ADD_DEFINITIONS ( -DUNIX)
+SET (BUILDSYSTEM UNIX)
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
+
+IF (WIN32)
+ADD_DEFINITIONS ( -DWIN32)
+SET (BUILDSYSTEM WIN32)
+ENDIF (WIN32)
+
+IF (APPLE)
+ADD_DEFINITIONS ( -DMACOSX)
+SET (BUILDSYSTEM MACOSX)
+ENDIF (APPLE)
 ################################################################################
 ######################## Find Our Build Deps  ##################################
 IF (BUILDOPENGL)
@@ -154,30 +168,28 @@ ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 ## No test yet for finding X11. FIXME
 ## No test yet for finding openAl. FIXME
 
-################################################################################
-######################## Set Common Definitions  ###############################
-##ADD_DEFINITIONS (-DNORANGECHECKING)
-
-## If x86 (32bit) we want this. FIXME
-IF (WIN32)
-ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
-ENDIF (WIN32)
-## Otherwise we want this. FIXME
-IF (NOT WIN32)
-ADD_DEFINITIONS (-DNO_FIXED_ASM )
-ENDIF (NOT WIN32)
-
 IF (UNIX)
-IF (NOT APPLE)
 IF (NOT WIN32)
-ADD_DEFINITIONS ( -DUNIX)
+CHECK_INCLUDE_FILE("dlfcn.h" HAVE_DL)
+IF(HAVE_DL)
+CHECK_LIBRARY_EXISTS("dl" "dlopen" "" HAVE_LIB_DL)
+IF(NOT HAVE_LIB_DL)
+MESSAGE (FATAL_ERROR
+"** dlopen not found.
+On Ubuntu install FIXME
+On Mac OSX install FIXME.
+On Windows install FIXME.")
+ENDIF(NOT HAVE_LIB_DL)
+ELSE(HAVE_DL)
+MESSAGE (FATAL_ERROR
+"** dlopen not found.
+On Ubuntu install FIXME
+On Mac OSX install FIXME.
+On Windows install FIXME.")
+ENDIF(HAVE_DL)
 ENDIF (NOT WIN32)
-ENDIF (NOT APPLE)
 ENDIF (UNIX)
 
-IF (WIN32)
-ADD_DEFINITIONS ( -DWIN32)
-ENDIF (WIN32)
 ################################################################################
 ######################## Plugin Common Files ###################################
 ## Seems not needed here
@@ -185,14 +197,10 @@ ENDIF (WIN32)
 ##FILE(GLOB COMMON_PLUGIN_SOURCES plugins/common/src/*.c)
 ################################################################################
 ######################## External LZSS Files ###################################
-
 INCLUDE_DIRECTORIES ( external/lzss/portable/include )
 FILE(GLOB LZSS_SOURCES external/lzss/unix/src/*.c)
-
-
 ################################################################################
 ######################## The Doomsday Engine  ##################################
-
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 ## FIXME FIXME FIXME FIXME FIXME - AWFUL HACK - HIGH PRIORITY
@@ -207,7 +215,6 @@ SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} ${LZSS_SOURCES}
  plugins/common/src/m_fixed.c)
 
 IF (UNIX)
-IF (NOT APPLE)
 IF (NOT WIN32)
 INCLUDE_DIRECTORIES (engine/unix/include )
 FILE(GLOB DENG_UNIX_SOURCES engine/unix/src/*.c)
@@ -215,7 +222,6 @@ FILE(GLOB DENG_UNIX_SOURCES engine/unix/src/*.c)
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_UNIX_SOURCES} )
 
 ENDIF (NOT WIN32)
-ENDIF (NOT APPLE)
 ENDIF (UNIX)
 
 IF (WIN32)
@@ -226,19 +232,21 @@ SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
 ENDIF (WIN32)
 
 ## FIXME - Add OSX here
+## What is a .m file ???
 
 ADD_EXECUTABLE (doomsday ${DENG_SOURCES})
 TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY}
 ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARY} ${PNG_LIBRARY} )
 
-IF (UNIX)
-IF (NOT APPLE)
-IF (NOT WIN32)
-TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
-ENDIF (NOT WIN32)
-ENDIF (NOT APPLE)
-ENDIF (UNIX)
 
+IF (UNIX)
+IF (NOT WIN32)
+TARGET_LINK_LIBRARIES (doomsday dl)
+IF (NOT APPLE)
+TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
+ENDIF (NOT APPLE)
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)
@@ -290,3 +298,25 @@ ENDIF (BUILDJDOOM64)
 IF (BUILDJSTRIFE)
 #ADD_SUBDIRECTORY (plugins/jstrife )
 ENDIF (BUILDJSTRIFE)
+################################################################################
+######################## Show Build Details  ###################################
+
+MESSAGE( STATUS "CMAKE_SYSTEM:           " ${CMAKE_SYSTEM} )
+MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
+MESSAGE( STATUS "CMAKE_C_FLAGS:          " ${CMAKE_C_FLAGS} )
+MESSAGE( STATUS "CMAKE_C_COMPILER:       " ${CMAKE_C_COMPILER} )
+MESSAGE( STATUS "CMAKE_SOURCE_DIR:       " ${CMAKE_SOURCE_DIR} )
+MESSAGE( STATUS "CMAKE_BINARY_DIR:       " ${CMAKE_BINARY_DIR} )
+MESSAGE( STATUS "BUILDJDOOM:             " ${BUILDJDOOM} )
+MESSAGE( STATUS "BUILDJHERETIC:          " ${BUILDJHERETIC} )
+MESSAGE( STATUS "BUILDJHEXEN:            " ${BUILDJHEXEN} )
+MESSAGE( STATUS "BUILDJWOLFTC:           " ${BUILDJWOLFTC} )
+MESSAGE( STATUS "BUILDJDOOM64:           " ${BUILDJDOOM64} )
+MESSAGE( STATUS "BUILDJSTRIFE:           " ${BUILDJSTRIFE} )
+MESSAGE( STATUS "BUILDOPENGL:            " ${BUILDOPENGL} )
+MESSAGE( STATUS "BUILDOPENAL:            " ${BUILDOPENAL} )
+MESSAGE( STATUS "BUILDSDLMIXER:          " ${BUILDSDLMIXER} )
+MESSAGE( STATUS "BUILDDEDICATED:         " ${BUILDDEDICATED} )
+MESSAGE( STATUS "BUILDFIXEDASM:          " ${BUILDFIXEDASM} )
+MESSAGE( STATUS "BUILDSYSTEM:            " ${BUILDSYSTEM} )
+

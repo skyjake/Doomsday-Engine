@@ -27,7 +27,7 @@
 
 #include "de_base.h"
 #include "m_args.h"
-#include "../include/sys_dylib.h"
+#include "sys_dylib.h"
 
 #include <sys/types.h>
 #include <unistd.h>

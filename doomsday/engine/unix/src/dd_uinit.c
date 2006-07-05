@@ -29,10 +29,8 @@
 #include <limits.h>
 #include <SDL.h>
 
-#ifdef MACOSX
+#ifdef UNIX
 #  include "sys_dylib.h"
-#else
-#  include <ltdl.h>
 #endif
 
 #include "de_base.h"
