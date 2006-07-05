@@ -221,6 +221,15 @@ ENDIF(HAVE_DL)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
+FIND_PROGRAM(ZIP zip)
+IF (ZIP STREQUAL "ZIP-NOTFOUND")
+MESSAGE( FATAL_ERROR
+"** zip not found.
+On Ubuntu install zip.
+On Mac OSX install FIXME.
+On Windows install FIXME.")
+ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
+
 ################################################################################
 ######################## Plugin Common Files ###################################
 ## Seems not needed here
@@ -272,6 +281,8 @@ TARGET_LINK_LIBRARIES (doomsday dl)
 IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
+ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
+   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 ################################################################################
