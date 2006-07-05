@@ -285,6 +285,10 @@ ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
    COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
+IF (WIN32)
+ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
+   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}\Doomsday.pk3 ${CMAKE_SOURCE_DIR}\engine\data\graphics\* ${CMAKE_SOURCE_DIR}\engine\data\fonts\* ${CMAKE_SOURCE_DIR}\engine\data\keymaps\*   )
+ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)
