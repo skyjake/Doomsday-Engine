@@ -168,7 +168,7 @@ static boolean Sv_Tokenize(const char *line, char *label, char *value, int max)
     // Copy the value.
     memset(value, 0, max);
     strncpy(value, colon + 1,
-            MIN_OF(strlen(line) - (colon - src + 1), max - 1));
+            MIN_OF(strlen(line) - (colon - src + 1), (unsigned) max - 1));
 
     // Everything is OK.
     return true;
@@ -761,7 +761,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
         if(clients[i].connected)
             shake.playerMask |= 1 << i;
     shake.playerMask = USHORT(shake.playerMask);
-    Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake, 
+    Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake,
                    sizeof(shake));
 
 #if _DEBUG

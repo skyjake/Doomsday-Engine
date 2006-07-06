@@ -352,7 +352,7 @@ void F_InitDirec(void)
 
 void F_ResetMapping(void)
 {
-    int     i;
+    unsigned int     i;
 
     // Free the allocated memory.
     for(i = 0; i < vdMappingsCount; ++i)
@@ -377,7 +377,7 @@ void F_ResetDirec(void)
 
 void F_CloseAll(void)
 {
-    int     i;
+    unsigned int     i;
 
     for(i = 0; i < filesCount; i++)
         //if(files[i].file->flags.open)
@@ -414,7 +414,7 @@ int F_Access(const char *path)
 
 DFILE *F_GetFreeFile(void)
 {
-    int     i, oldCount;
+    unsigned int     i, oldCount;
 
     for(i = 0; i < filesCount; i++)
         if(files[i].file == NULL)
@@ -447,7 +447,7 @@ DFILE *F_GetFreeFile(void)
  */
 void F_Release(DFILE *file)
 {
-    int     i;
+    unsigned int     i;
 
     // Clear references to the handle.
     for(i = 0; i < filesCount; ++i)
@@ -521,7 +521,7 @@ DFILE *F_OpenFile(const char *path, const char *mymode)
 {
     DFILE  *file = F_GetFreeFile();
     char    mode[8];
-    int     i;
+    unsigned int     i;
     filename_t mapped;
 
     if(!file)
