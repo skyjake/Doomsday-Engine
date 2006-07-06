@@ -102,7 +102,7 @@
  ./../../engine/win32/src/sys_findfile.c
  ./../../engine/portable/src/sys_filein.c
  ./../../engine/portable/src/sys_direc.c
- ./../../engine/portable/src/sys_console.c
+ ./../../engine/win32/src/sys_console.c
  ./../../engine/portable/src/con_start.c
  ./../../engine/portable/src/con_main.c
  ./../../engine/portable/src/con_config.c
