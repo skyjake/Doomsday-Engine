@@ -220,7 +220,7 @@ void DD_InitHelp(void)
     helpRoot.next = helpRoot.prev = &helpRoot;
 
     // Control Panel help.
-    M_TranslatePath("}Data\\CPHelp.txt", helpFileName);
+    M_TranslatePath("}Data\\cphelp.txt", helpFileName);
     DH_ReadStrings(helpFileName);
 
     // Help is now available.
