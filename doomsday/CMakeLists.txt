@@ -74,9 +74,34 @@ IF (WIN32)
 ## FIXME. Add location here for WIN32
 ENDIF (WIN32)
 
+IF (UNIX)
+IF (NOT WIN32)
+## Where does it go on OSX ? FIXME
+## This .pk3 is generated in the doomsday target.
+SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3)
+FILE(GLOB DENG_ENGINE_DEFS ${CMAKE_SOURCE_DIR}/engine/defs/*.ded)
+SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/Data)
+SET (DENG_ENGINE_DEFS_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/Defs)
+
+SET (DENG_JDOOM_DATA ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/jdoom.wad)
+FILE(GLOB DENG_JDOOM_DEFS ${CMAKE_SOURCE_DIR}/plugins/jdoom/defs/*.ded)
+SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jDoom)
+SET (DENG_JDOOM_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jDoom)
+
+SET (DENG_JHERETIC_DATA ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/jheretic.wad)
+FILE(GLOB DENG_JHERETIC_DEFS ${CMAKE_SOURCE_DIR}/plugins/jheretic/defs/*.ded)
+SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jHeretic)
+SET (DENG_JHERETIC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jHeretic)
+
+SET (DENG_JHEXEN_DATA ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/jhexen.wad)
+FILE(GLOB DENG_JHEXEN_DEFS ${CMAKE_SOURCE_DIR}/plugins/jhexen/defs/*.ded)
+SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jHexen)
+SET (DENG_JHEXEN_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jHexen)
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
+
 ADD_DEFINITIONS ('-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/" ')
 ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR}/" ')
-
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
@@ -263,23 +288,23 @@ ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
 ##FILE(GLOB COMMON_PLUGIN_SOURCES plugins/common/src/*.c)
 ################################################################################
 ######################## External LZSS Files ###################################
-INCLUDE_DIRECTORIES ( external/lzss/portable/include )
-FILE(GLOB LZSS_SOURCES external/lzss/unix/src/*.c)
+INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
+FILE(GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
-INCLUDE_DIRECTORIES (engine/api engine/portable/include )
+INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
-FILE(GLOB DENG_PORTABLE_SOURCES engine/portable/src/*.c)
+FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c)
 
 SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} ${LZSS_SOURCES}
  plugins/common/src/m_fixed.c)
 
 IF (UNIX)
 IF (NOT WIN32)
-INCLUDE_DIRECTORIES (engine/unix/include )
-FILE(GLOB DENG_UNIX_SOURCES engine/unix/src/*.c)
+INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
+FILE(GLOB DENG_UNIX_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c)
 
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_UNIX_SOURCES} )
 
@@ -287,8 +312,8 @@ ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
-INCLUDE_DIRECTORIES (engine/win32/include )
-FILE(GLOB DENG_WIN32_SOURCES engine/win32/src/*.c)
+INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/win32/include )
+FILE(GLOB DENG_WIN32_SOURCES ${CMAKE_SOURCE_DIR}/engine/win32/src/*.c)
 
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
 ENDIF (WIN32)
@@ -308,7 +333,7 @@ IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
+   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/cphelp.txt ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 IF (WIN32)
@@ -318,53 +343,53 @@ ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)
-ADD_SUBDIRECTORY (plugins/opengl )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/opengl )
 ENDIF (BUILDOPENGL)
 ################################################################################
 ######################## Maploader Plugin  #####################################
-ADD_SUBDIRECTORY (plugins/mapload )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/mapload )
 ################################################################################
 ######################## Dehacked Reader Plugin  ###############################
-ADD_SUBDIRECTORY (plugins/dehread )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/dehread )
 ################################################################################
 ######################## SDLMixer Output Plugin  ###############################
 IF (BUILDSDLMIXER)
-ADD_SUBDIRECTORY (plugins/sdlmixer )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/sdlmixer )
 ENDIF (BUILDSDLMIXER)
 ################################################################################
 ######################## OpenAL Output Plugin  #################################
 IF (BUILDOPENAL)
-ADD_SUBDIRECTORY (plugins/openal )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/openal )
 ENDIF (BUILDOPENAL)
 ################################################################################
 ######################## jDoom Game Plugin  ####################################
 IF (BUILDJDOOM)
-ADD_SUBDIRECTORY (plugins/jdoom )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jdoom )
 ENDIF (BUILDJDOOM)
 ################################################################################
 ######################## jHeretic Game Plugin  #################################
 IF (BUILDJHERETIC)
-ADD_SUBDIRECTORY (plugins/jheretic )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jheretic )
 ENDIF (BUILDJHERETIC)
 ################################################################################
 ######################## jHexen Game Plugin  ###################################
 IF (BUILDJHEXEN)
-ADD_SUBDIRECTORY (plugins/jhexen )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jhexen )
 ENDIF (BUILDJHEXEN)
 ################################################################################
 ######################## jWolfTC Game Plugin  ##################################
 IF (BUILDJWOLFTC)
-#ADD_SUBDIRECTORY (plugins/jwolftc )
+#ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jwolftc )
 ENDIF (BUILDJWOLFTC)
 ################################################################################
 ######################## jDoom64 Game Plugin  ##################################
 IF (BUILDJDOOM64)
-#ADD_SUBDIRECTORY (plugins/jdoom64 )
+#ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jdoom64 )
 ENDIF (BUILDJDOOM64)
 ################################################################################
 ######################## jStrife Game Plugin  ##################################
 IF (BUILDJSTRIFE)
-#ADD_SUBDIRECTORY (plugins/jstrife )
+#ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
 ENDIF (BUILDJSTRIFE)
 ################################################################################
 ######################## Show Build Details  ###################################
@@ -405,11 +430,24 @@ MESSAGE( STATUS "CMAKE_INSTALL_PREFIX          " ${CMAKE_INSTALL_PREFIX} )
 MESSAGE( STATUS "DENG_BASE_DIR                 " ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR} )
 MESSAGE( STATUS "DENG_LIBRARY_DIR              " ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
 MESSAGE( STATUS "DENG_BINARY_DIR               " ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR} )
+MESSAGE( STATUS "DENG_ENGINE_DATA_DIR          " ${CMAKE_INSTALL_PREFIX}${DENG_ENGINE_DATA_DIR} )
+MESSAGE( STATUS "DENG_ENGINE_DEFS_DIR          " ${CMAKE_INSTALL_PREFIX}${DENG_ENGINE_DEFS_DIR} )
+MESSAGE( STATUS "DENG_JDOOM_DATA_DIR           " ${CMAKE_INSTALL_PREFIX}${DENG_JDOOM_DATA_DIR} )
+MESSAGE( STATUS "DENG_JDOOM_DEFS_DIR           " ${CMAKE_INSTALL_PREFIX}${DENG_JDOOM_DEFS_DIR} )
+MESSAGE( STATUS "DENG_JHERETIC_DATA_DIR        " ${CMAKE_INSTALL_PREFIX}${DENG_JHERETIC_DATA_DIR} )
+MESSAGE( STATUS "DENG_JHERETIC_DEFS_DIR        " ${CMAKE_INSTALL_PREFIX}${DENG_JHERETIC_DEFS_DIR} )
+MESSAGE( STATUS "DENG_JHEXEN_DATA_DIR          " ${CMAKE_INSTALL_PREFIX}${DENG_JHEXEN_DATA_DIR} )
+MESSAGE( STATUS "DENG_JHEXEN_DEFS_DIR          " ${CMAKE_INSTALL_PREFIX}${DENG_JHEXEN_DEFS_DIR} )
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS doomsday
 RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR} 
 LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
-
-
-
+INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION ${DENG_ENGINE_DATA_DIR} )
+INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION ${DENG_JDOOM_DATA_DIR} )
+INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION ${DENG_JHERETIC_DATA_DIR} )
+INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION ${DENG_JHEXEN_DATA_DIR} )
+INSTALL(FILES ${DENG_ENGINE_DEFS} DESTINATION ${DENG_ENGINE_DEFS_DIR} )
+INSTALL(FILES ${DENG_JDOOM_DEFS} DESTINATION ${DENG_JDOOM_DEFS_DIR} )
+INSTALL(FILES ${DENG_JHERETIC_DEFS} DESTINATION ${DENG_JHERETIC_DEFS_DIR} )
+INSTALL(FILES ${DENG_JHEXEN_DEFS} DESTINATION ${DENG_JHEXEN_DEFS_DIR} )
