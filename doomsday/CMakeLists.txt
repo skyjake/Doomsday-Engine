@@ -78,7 +78,7 @@ IF (UNIX)
 IF (NOT WIN32)
 ## Where does it go on OSX ? FIXME
 ## This .pk3 is generated in the doomsday target.
-SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3)
+SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/cphelp.txt)
 FILE(GLOB DENG_ENGINE_DEFS ${CMAKE_SOURCE_DIR}/engine/defs/*.ded)
 SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/Data)
 SET (DENG_ENGINE_DEFS_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/Defs)
@@ -333,7 +333,7 @@ IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/cphelp.txt ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
+   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 IF (WIN32)
