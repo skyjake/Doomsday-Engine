@@ -328,12 +328,14 @@ IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
+   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 IF (WIN32)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}\doomsday.pk3 ${CMAKE_SOURCE_DIR}\engine\data\graphics\* ${CMAKE_SOURCE_DIR}\engine\data\fonts\* ${CMAKE_SOURCE_DIR}\engine\data\keymaps\*   )
+   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}\doomsday.pk3 data\*
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\engine)
 ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
