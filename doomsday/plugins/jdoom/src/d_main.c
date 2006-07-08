@@ -164,20 +164,20 @@ void DetectIWADs(void)
 
     // The '>' means the paths are affected by the base path.
     char   *paths[] = {
-        "}Data\\"GAMENAMETEXT"\\",
-        "}Data\\",
+        "}data\\"GAMENAMETEXT"\\",
+        "}data\\",
         "}",
-        "}Iwads\\",
+        "}iwads\\",
         "",
         0
     };
     fspec_t iwads[] = {
-        {"TNT.wad", "-tnt"},
-        {"Plutonia.wad", "-plutonia"},
-        {"Doom2.wad", "-doom2"},
-        {"Doom1.wad", "-sdoom"},
-        {"Doom.wad", "-doom"},
-        {"Doom.wad", "-ultimate"},
+        {"tnt.wad", "-tnt"},
+        {"plutonia.wad", "-plutonia"},
+        {"doom2.wad", "-doom2"},
+        {"doom1.wad", "-sdoom"},
+        {"doom.wad", "-doom"},
+        {"doom.wad", "-ultimate"},
         {0, 0}
     };
     int     i, k;

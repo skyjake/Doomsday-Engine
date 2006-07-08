@@ -255,12 +255,12 @@ void DD_DefineBuiltinVDM(void)
     filename_t dest;
 
     // Data files.
-    sprintf(dest, "%sAuto", R_GetDataPath());
-    F_AddMapping("Auto", dest);
+    sprintf(dest, "%sauto", R_GetDataPath());
+    F_AddMapping("auto", dest);
 
     // Definition files.
     Def_GetAutoPath(dest);
-    F_AddMapping("Auto", dest);
+    F_AddMapping("auto", dest);
 }
 
 /*
@@ -271,7 +271,7 @@ void DD_Main(void)
 {
     int     p;
     char    buff[10];
-    char   *outfilename = "Doomsday.out";
+    char   *outfilename = "doomsday.out";
     boolean userdir_ok = true;
 
     DD_Verbosity();
@@ -349,12 +349,12 @@ void DD_Main(void)
     // Any startup hooks?
     Plug_DoHook(HOOK_STARTUP, 0, 0);
 
-    DD_AddStartupWAD("}Data\\Doomsday.pk3");
+    DD_AddStartupWAD("}data\\doomsday.pk3");
     R_InitExternalResources();
 
     // The name of the .cfg will invariably be overwritten by the Game.
-    strcpy(configFileName, "Doomsday.cfg");
-    sprintf(defsFileName, "%sDefs\\Doomsday.ded", ddBasePath);
+    strcpy(configFileName, "doomsday.cfg");
+    sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
 
     // Was the change to userdir OK?
     if(!userdir_ok)
@@ -455,7 +455,7 @@ void DD_Main(void)
     VERBOSE(W_PrintMapList());
 
     // Execute the startup script (Startup.cfg).
-    Con_ParseCommands("Startup.cfg", false);
+    Con_ParseCommands("startup.cfg", false);
 
     // Now the game can identify the game mode.
     gx.UpdateState(DD_GAME_MODE);
@@ -541,7 +541,7 @@ void DD_Main(void)
     // Try to load the autoexec file. This is done here to make sure
     // everything is initialized: the user can do here anything that
     // s/he'd be able to do in the game.
-    Con_ParseCommands("Autoexec.cfg", false);
+    Con_ParseCommands("autoexec.cfg", false);
 
     // Parse additional files.
     if(ArgCheckWith("-parse", 1))

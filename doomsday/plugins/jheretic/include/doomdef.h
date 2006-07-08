@@ -42,8 +42,8 @@
 
 #define CONFIGFILE    GAMENAMETEXT".cfg"
 #define DEFSFILE      GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH      "}Data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD    "}Data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
+#define DATAPATH      "}data\\"GAMENAMETEXT"\\"
+#define STARTUPWAD    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }

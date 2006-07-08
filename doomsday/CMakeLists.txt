@@ -78,25 +78,25 @@ IF (UNIX)
 IF (NOT WIN32)
 ## Where does it go on OSX ? FIXME
 ## This .pk3 is generated in the doomsday target.
-SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/cphelp.txt)
+SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/cphelp.txt)
 FILE(GLOB DENG_ENGINE_DEFS ${CMAKE_SOURCE_DIR}/engine/defs/*.ded)
-SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/Data)
-SET (DENG_ENGINE_DEFS_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/Defs)
+SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/data)
+SET (DENG_ENGINE_DEFS_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/defs)
 
 SET (DENG_JDOOM_DATA ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/jdoom.wad)
 FILE(GLOB DENG_JDOOM_DEFS ${CMAKE_SOURCE_DIR}/plugins/jdoom/defs/*.ded)
-SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jDoom)
-SET (DENG_JDOOM_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jDoom)
+SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
+SET (DENG_JDOOM_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jdoom)
 
 SET (DENG_JHERETIC_DATA ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/jheretic.wad)
 FILE(GLOB DENG_JHERETIC_DEFS ${CMAKE_SOURCE_DIR}/plugins/jheretic/defs/*.ded)
-SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jHeretic)
-SET (DENG_JHERETIC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jHeretic)
+SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
+SET (DENG_JHERETIC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jheretic)
 
 SET (DENG_JHEXEN_DATA ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/jhexen.wad)
 FILE(GLOB DENG_JHEXEN_DEFS ${CMAKE_SOURCE_DIR}/plugins/jhexen/defs/*.ded)
-SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jHexen)
-SET (DENG_JHEXEN_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jHexen)
+SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
+SET (DENG_JHEXEN_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jhexen)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
@@ -282,11 +282,6 @@ On Windows install FIXME.")
 ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
 
 ################################################################################
-######################## Plugin Common Files ###################################
-## Seems not needed here
-##INCLUDE_DIRECTORIES ( plugins/common/include )
-##FILE(GLOB COMMON_PLUGIN_SOURCES plugins/common/src/*.c)
-################################################################################
 ######################## External LZSS Files ###################################
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 FILE(GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c)
@@ -333,12 +328,12 @@ IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/Doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
+   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/graphics/* ${CMAKE_SOURCE_DIR}/engine/data/fonts/* ${CMAKE_SOURCE_DIR}/engine/data/keymaps/*   )
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 IF (WIN32)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}\Doomsday.pk3 ${CMAKE_SOURCE_DIR}\engine\data\graphics\* ${CMAKE_SOURCE_DIR}\engine\data\fonts\* ${CMAKE_SOURCE_DIR}\engine\data\keymaps\*   )
+   COMMAND ${ZIP} -v -0 ${CMAKE_CURRENT_BINARY_DIR}\doomsday.pk3 ${CMAKE_SOURCE_DIR}\engine\data\graphics\* ${CMAKE_SOURCE_DIR}\engine\data\fonts\* ${CMAKE_SOURCE_DIR}\engine\data\keymaps\*   )
 ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################

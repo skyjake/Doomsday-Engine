@@ -32,8 +32,8 @@
 
 #define CONFIGFILE    GAMENAMETEXT".cfg"
 #define DEFSFILE      GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH      "}Data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD    "}Data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
+#define DATAPATH      "}data\\"GAMENAMETEXT"\\"
+#define STARTUPWAD    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
 
 #ifdef WIN32
 #pragma warning (disable:4761 4244)

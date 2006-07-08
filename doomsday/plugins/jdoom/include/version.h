@@ -32,7 +32,7 @@
 #  endif
 #endif
 
-#define GAMENAMETEXT "jDoom"
+#define GAMENAMETEXT "jdoom"
 
 // My my, the names of these #defines are really well chosen...
 #define VERSION_TEXT "1.15."DOOMSDAY_RELEASE_NAME

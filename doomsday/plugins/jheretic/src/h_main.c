@@ -205,10 +205,10 @@ void D_AddFile(char *file)
 void DetectIWADs(void)
 {
     // Add a couple of probable locations for Heretic.wad.
-    DD_AddIWAD("}Data\\"GAMENAMETEXT"\\Heretic.wad");
-    DD_AddIWAD("}Data\\Heretic.wad");
-    DD_AddIWAD("}Heretic.wad");
-    DD_AddIWAD("Heretic.wad");
+    DD_AddIWAD("}data\\"GAMENAMETEXT"\\heretic.wad");
+    DD_AddIWAD("}data\\heretic.wad");
+    DD_AddIWAD("}heretic.wad");
+    DD_AddIWAD("heretic.wad");
 }
 
 /*

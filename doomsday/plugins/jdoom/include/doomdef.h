@@ -42,8 +42,8 @@
 
 #define CONFIGFILE    GAMENAMETEXT".cfg"
 #define DEFSFILE      GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH      "}Data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD    "}Data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
+#define DATAPATH      "}data\\"GAMENAMETEXT"\\"
+#define STARTUPWAD    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
 
 extern game_import_t gi;
 extern game_export_t gx;

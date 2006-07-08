@@ -9,7 +9,7 @@
 #  define VER_ID "Doomsday"
 #endif
 
-#define GAMENAMETEXT "jHexen"
+#define GAMENAMETEXT "jhexen"
 
 // Version numbering changes: 200 means JHexen v1.0.
 #define VERSION 200

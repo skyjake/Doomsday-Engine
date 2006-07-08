@@ -221,10 +221,10 @@ void H2_IdentifyVersion(void)
 void DetectIWADs(void)
 {
     // The startup WADs.
-    DD_AddIWAD("}Data\\jHexen\\Hexen.wad");
-    DD_AddIWAD("}Data\\Hexen.wad");
-    DD_AddIWAD("}Hexen.wad");
-    DD_AddIWAD("Hexen.wad");
+    DD_AddIWAD("}data\\jhexen\\hexen.wad");
+    DD_AddIWAD("}data\\hexen.wad");
+    DD_AddIWAD("}hexen.wad");
+    DD_AddIWAD("hexen.wad");
 }
 
 /*
