@@ -210,7 +210,7 @@ int DD_AddAutoData(boolean loadFiles)
 
     for(i = 0; extensions[i]; i++)
     {
-        sprintf(pattern, "%sAuto\\*.%s", R_GetDataPath(), extensions[i]);
+        sprintf(pattern, "%sauto\\*.%s", R_GetDataPath(), extensions[i]);
         Dir_FixSlashes(pattern);
         F_ForAll(pattern, &data, autoDataAdder);
     }
@@ -230,7 +230,7 @@ void DD_SetConfigFile(char *filename)
  */
 void DD_SetDefsFile(char *filename)
 {
-    sprintf(topDefsFileName, "%sDefs\\%s", ddBasePath, filename);
+    sprintf(topDefsFileName, "%sdefs\\%s", ddBasePath, filename);
     Dir_FixSlashes(topDefsFileName);
 }
 

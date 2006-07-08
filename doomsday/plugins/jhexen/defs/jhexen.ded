@@ -10,20 +10,20 @@
 Header {
   Version = 5;
   Default model scale = 1.2;
-  Model path = "Data\jHexen\Models";
+  Model path = "data\jhexen\models";
 }
 
-Include "Objects.ded";
-Include "Sprites.ded";
-Include "Audio.ded";
-Include "Special.ded";
-Include "Details.ded";
-Include "Lights.ded";
-Include "Maps.ded";
-Include "Finales.ded";
-Include "Text.ded";
-Include "Values.ded";
-Include "Models.ded";
-Include "User.ded";
+Include "objects.ded";
+Include "sprites.ded";
+Include "audio.ded";
+Include "special.ded";
+Include "details.ded";
+Include "lights.ded";
+Include "maps.ded";
+Include "finales.ded";
+Include "text.ded";
+Include "values.ded";
+Include "models.ded";
+Include "user.ded";
 
-IncludeIf Not -noauto "Auto\*.ded";
+IncludeIf Not -noauto "auto\*.ded";

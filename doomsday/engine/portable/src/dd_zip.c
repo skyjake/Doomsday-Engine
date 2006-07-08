@@ -379,7 +379,7 @@ void Zip_MapPath(char *path)
     }
     else if(path[0] == '#') // Manually mapped to Data.
     {
-        sprintf(mapped, "%sAuto" DIR_SEP_STR "%s", R_GetDataPath(),
+        sprintf(mapped, "%sauto" DIR_SEP_STR "%s", R_GetDataPath(),
             path + 1);
         strcpy(path, mapped);
     }
@@ -399,7 +399,7 @@ void Zip_MapPath(char *path)
                !stricmp(ext, "deh"))
             {
                 // Data files are mapped to the Data directory.
-                sprintf(mapped, "%sAuto" DIR_SEP_STR, R_GetDataPath());
+                sprintf(mapped, "%sauto" DIR_SEP_STR, R_GetDataPath());
             }
             else if(!stricmp(ext, "ded"))
             {

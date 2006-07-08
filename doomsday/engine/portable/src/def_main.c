@@ -214,7 +214,7 @@ void Def_GetAutoPath(char *path)
         return;
     }
 
-    strcpy(lastSlash + 1, "Auto" DIR_SEP_STR);
+    strcpy(lastSlash + 1, "auto" DIR_SEP_STR);
 }
 
 /*
