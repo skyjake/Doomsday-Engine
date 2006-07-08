@@ -6,8 +6,8 @@ SkipIf -nodefaultfx;
 
 #####====--- LIGHT DECORATIONS ---====#####
 
-Include "Doom1Lights.ded";
-Include "Doom2Lights.ded";
+Include "doom1lights.ded";
+Include "doom2lights.ded";
 
 
 #####====--- LIGHT SOURCE PROPERTIES ---====#####

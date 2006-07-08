@@ -1,6 +1,6 @@
 # jHeretic: Models
 
-Include "Models\*.ded";
+Include "models\*.ded";
 
 # This can be removed if jHeretic.ded sets the default path.
-ModelPath "Data\jHeretic\Models";
+ModelPath "data\jheretic\models";

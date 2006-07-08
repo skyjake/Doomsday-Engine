@@ -2,4 +2,4 @@
 
 Header { Version = 5; }
 
-Include "Particles.ded";
+Include "particles.ded";
