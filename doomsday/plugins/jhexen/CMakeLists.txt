@@ -4,7 +4,7 @@
 ################################################################################
 
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES p${CMAKE_SOURCE_DIR}/lugins/common/src/*.c)
+FILE(GLOB COMMON_PLUGIN_SOURCES p${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
 
 ################################################################################
 ######################## External LZSS Files ###################################

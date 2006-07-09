@@ -327,16 +327,20 @@ TARGET_LINK_LIBRARIES (doomsday dl)
 IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
+
+## Make this common code. Hopefully fixes http://forums.newdoom.com/showpost.php?p=476109&postcount=4
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
    COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine)
-ENDIF (NOT WIN32)
-ENDIF (UNIX)
-IF (WIN32)
-ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}\doomsday.pk3 data\*
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\engine)
-ENDIF (WIN32)
+
+## 
+## IF (WIN32)
+## ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
+##   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}\doomsday.pk3 data\*
+##    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\engine)
+## ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)
