@@ -4,6 +4,7 @@
 ################################################################################
 PROJECT(deng C)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.4 FATAL_ERROR)
+SET (BUILDSCRIPTSDATE $LastChangedDate$)
 ################################################################################
 ######################## Configure Build Options  ##############################
 SET(BUILD_SHARED_LIBS ON) 
@@ -327,16 +328,16 @@ TARGET_LINK_LIBRARIES (doomsday dl)
 IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
+ENDIF (NOT WIN32)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
    COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine)
-ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
 ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}\\doomsday.pk3 data\\*
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\\engine)
+   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}\doomsday.pk3 data\*
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\engine)
 ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
@@ -391,6 +392,7 @@ IF (BUILDJSTRIFE)
 ENDIF (BUILDJSTRIFE)
 ################################################################################
 ######################## Show Build Details  ###################################
+MESSAGE( STATUS "BUILDSCRIPTSDATE:             " ${BUILDSCRIPTSDATE} )
 MESSAGE( STATUS "CMAKE_SYSTEM:                 " ${CMAKE_SYSTEM} )
 MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR:       " ${CMAKE_SYSTEM_PROCESSOR} )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE:             " ${CMAKE_BUILD_TYPE} )
