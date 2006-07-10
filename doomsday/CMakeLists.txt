@@ -4,7 +4,7 @@
 ################################################################################
 PROJECT(deng C)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.4 FATAL_ERROR)
-SET (BUILDSCRIPTSDATE $LastChangedDate$)
+SET (BUILDSCRIPTSDATE "$LastChangedDate$")
 ################################################################################
 ######################## Configure Build Options  ##############################
 SET(BUILD_SHARED_LIBS ON) 
