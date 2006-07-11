@@ -281,6 +281,9 @@ On Ubuntu install zip.
 On Mac OSX install FIXME.
 On Windows install FIXME.")
 ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
+## Generate doomsday.pk3
+EXEC_PROGRAM(${ZIP} ${CMAKE_SOURCE_DIR}/engine/ ARGS " -r -q -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*")
+
 
 ################################################################################
 ######################## External LZSS Files ###################################
@@ -329,16 +332,7 @@ IF (NOT APPLE)
 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
 ENDIF (NOT WIN32)
-ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine)
 ENDIF (UNIX)
-
-IF (WIN32)
-ADD_CUSTOM_COMMAND(TARGET doomsday POST_BUILD
-   COMMAND ${ZIP} -r -v -0 ${CMAKE_CURRENT_BINARY_DIR}\doomsday.pk3 data\*
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\engine)
-ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)
