@@ -104,6 +104,11 @@ FILE(GLOB DENG_JSTRIFE_DEFS ${CMAKE_SOURCE_DIR}/plugins/jstrife/defs/*.ded)
 SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
 SET (DENG_JSTRIFE_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jstrife)
 
+SET (DENG_JWOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/jwolftc/data/jwolftc.wad)
+FILE(GLOB DENG_JWOLFTC_DEFS ${CMAKE_SOURCE_DIR}/plugins/jwolftc/defs/*.ded)
+SET (DENG_JWOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jwolftc)
+SET (DENG_JWOLFTC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jwolftc)
+
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
@@ -378,7 +383,7 @@ ENDIF (BUILDJHEXEN)
 ################################################################################
 ######################## jWolfTC Game Plugin  ##################################
 IF (BUILDJWOLFTC)
-#ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jwolftc )
+ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jwolftc )
 ENDIF (BUILDJWOLFTC)
 ################################################################################
 ######################## jDoom64 Game Plugin  ##################################
@@ -440,6 +445,8 @@ MESSAGE( STATUS "DENG_JHEXEN_DATA_DIR          " ${CMAKE_INSTALL_PREFIX}${DENG_J
 MESSAGE( STATUS "DENG_JHEXEN_DEFS_DIR          " ${CMAKE_INSTALL_PREFIX}${DENG_JHEXEN_DEFS_DIR} )
 MESSAGE( STATUS "DENG_JSTRIFE_DATA_DIR         " ${CMAKE_INSTALL_PREFIX}${DENG_JSTRIFE_DATA_DIR} )
 MESSAGE( STATUS "DENG_JSTRIFE_DEFS_DIR         " ${CMAKE_INSTALL_PREFIX}${DENG_JSTRIFE_DEFS_DIR} )
+MESSAGE( STATUS "DENG_JWOLFTC_DATA_DIR         " ${CMAKE_INSTALL_PREFIX}${DENG_JWOLFTC_DATA_DIR} )
+MESSAGE( STATUS "DENG_JWOLFTC_DEFS_DIR         " ${CMAKE_INSTALL_PREFIX}${DENG_JWOLFTC_DEFS_DIR} )
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS doomsday
@@ -467,3 +474,8 @@ IF (BUILDJSTRIFE)
 INSTALL(FILES ${DENG_JSTRIFE_DATA} DESTINATION ${DENG_JSTRIFE_DATA_DIR} )
 INSTALL(FILES ${DENG_JSTRIFE_DEFS} DESTINATION ${DENG_JSTRIFE_DEFS_DIR} )
 ENDIF (BUILDJSTRIFE)
+
+IF (BUILDJWOLFTC)
+INSTALL(FILES ${DENG_JWOLFTC_DATA} DESTINATION ${DENG_JWOLFTC_DATA_DIR} )
+INSTALL(FILES ${DENG_JWOLFTC_DEFS} DESTINATION ${DENG_JWOLFTC_DEFS_DIR} )
+ENDIF (BUILDJWOLFTC)
