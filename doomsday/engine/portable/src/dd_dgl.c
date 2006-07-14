@@ -35,7 +35,7 @@ typedef lt_dlhandle HINSTANCE;
 #  ifdef MACOSX
 #    define DEFAULT_LIB_NAME "drOpenGL.bundle"
 #  else
-#    define DEFAULT_LIB_NAME "libdropengl"
+#    define DEFAULT_LIB_NAME "libdropengl.so"
 #  endif
 #endif
 

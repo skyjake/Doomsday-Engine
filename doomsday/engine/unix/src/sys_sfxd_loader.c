@@ -169,6 +169,7 @@ sfxdriver_t *DS_Load(const char *name)
 #else
 	// Compose the name, use the prefix "ds".
 	sprintf(fn, "libds%s", name);
+	strcat(fn, ".so");
 #endif
 
 	if((handle = lt_dlopenext(fn)) == NULL)

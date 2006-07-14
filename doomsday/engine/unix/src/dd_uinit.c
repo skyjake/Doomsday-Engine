@@ -95,6 +95,7 @@ boolean InitGame(void)
 	strcpy(libName, gameName);
 #else
 	sprintf(libName, "lib%s", gameName);
+	strcat(libName, ".so");
 #endif
 	if(!(hGame = lt_dlopenext(libName)))
 	{
@@ -128,7 +129,7 @@ static lt_dlhandle *NextPluginHandle(void)
 	return NULL;
 }
 
-
+/*
 #if 0
 int LoadPlugin(const char *pluginPath, lt_ptr data)
 {
@@ -153,11 +154,11 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 #endif
 		//if(strchr(name, '.'))
 			strcpy(name, pluginPath);
-/*		else
+		else
 		{
 			strcpy(name, pluginPath);
 			strcat(name, ".dylib");
-			}*/
+			}
 #endif
 		// Try loading this one as a Doomsday plugin.
 		if(NULL == (plugin = lt_dlopenext(pluginPath)))
@@ -184,9 +185,11 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 	return 0;
 }
 #endif
+*/
 
 int LoadPlugin(const char *pluginPath, lt_ptr data)
 {
+	printf("Yagi - LoadPlugin: Entered\n");
 #ifndef MACOSX
 	filename_t name;
 #endif
@@ -196,6 +199,8 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 #ifndef MACOSX
 	// What is the actual file name?
 	_splitpath(pluginPath, NULL, NULL, name, NULL);
+	printf("Yagi - LoadPlugin: %s\n", pluginPath);
+	printf("Yagi - LoadPlugin: %s\n", name);
 	if(!strncmp(name, "libdp", 5))
 #endif
 	{
@@ -226,8 +231,10 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
  */
 boolean InitPlugins(void)
 {
+	printf("Yagi - Start of InitPlugins\n");
 	// Try to load all libraries that begin with libdp.
 	lt_dlforeachfile(NULL, LoadPlugin, NULL);
+	printf("Yagi - End of InitPlugins\n");
 	return true;
 }
 
@@ -265,19 +272,19 @@ int main(int argc, char **argv)
 
 	free(cmdLine);
 	cmdLine = NULL;
-
+	printf("Yagi - Calling InitDGL\n");
 	// Load the rendering DLL.
 	if(!DD_InitDGL())
 		return 1;
-
+	printf("Yagi - Calling InitGame\n");
 	// Load the game DLL.
 	if(!InitGame())
 		return 2;
-
+	printf("Yagi - Calling InitPlugins\n");
 	// Load all plugins that are found.
 	if(!InitPlugins())
 		return 3;				// Fatal error occured?
-
+	printf("Yagi - Calling SDL_Init\n");
 	// Initialize SDL.
 	if(SDL_Init(SDL_INIT_TIMER))
 	{
