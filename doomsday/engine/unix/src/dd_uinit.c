@@ -198,8 +198,6 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 #ifndef MACOSX
 	// What is the actual file name?
 	_splitpath(pluginPath, NULL, NULL, name, NULL);
-	printf("Yagi - LoadPlugin: %s\n", pluginPath);
-	printf("Yagi - LoadPlugin: %s\n", name);
 	if(!strncmp(name, "libdp", 5))
 #endif
 	{
