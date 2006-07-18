@@ -6,6 +6,12 @@ PROJECT(deng C)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.4 FATAL_ERROR)
 SET (BUILDSCRIPTSDATE "$LastChangedDate$")
 ################################################################################
+######################## Additional Win32 Path Setup  ##########################
+##IF (WIN32)
+##SET(ENV{SDLDIR} "C:\SDK\SDL")
+##SET(ENV{OPENALDIR} "C:\SDK\OPENAL")
+##ENDIF (WIN32)
+################################################################################
 ######################## Configure Build Options  ##############################
 SET(BUILD_SHARED_LIBS ON) 
 SET (CMAKE_BUILD_TYPE RelWithDebInfo)
@@ -24,7 +30,7 @@ OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
 OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
 OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
 OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
-OPTION (BUILDOPENAL "Optionally build the SDLMixer plugin. Default ON" ON)
+OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default ON" ON)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
@@ -49,7 +55,7 @@ SET (CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_MINSIZEREL} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 
 ################################################################################
-######################## Doomsday Paths  ##############################
+######################## Doomsday Paths  #######################################
 ## Default Install Prefix on Win32 is C:/Program Files/deng
 ## Default Install Prefix on *NIX is /usr/local
 ## Default Install Prefix on OSX is FIXME
@@ -261,6 +267,15 @@ ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 ## No test yet for finding ncurses. FIXME
 ## No test yet for finding X11. FIXME
 ## No test yet for finding openAl. FIXME
+## Confirm we have openAL
+IF (NOT OPENAL_FOUND STREQUAL "YES")
+MESSAGE (FATAL_ERROR
+"** openal not found.
+On Ubuntu install libopenal-dev.
+On Mac OSX install FIXME.
+On Windows install FIXME.")
+ENDIF (NOT OPENAL_FOUND STREQUAL "YES")
+
 
 IF (UNIX)
 IF (NOT WIN32)

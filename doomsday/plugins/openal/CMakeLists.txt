@@ -9,8 +9,7 @@
 FILE(GLOB OPENAL_SOURCES src/*.c)
 ADD_LIBRARY (dsopenal SHARED ${OPENAL_SOURCES})
 
-## We should link to openal here. FIXME
-
+TARGET_LINK_LIBRARIES (dsopenal ${OPENAL_LIBRARY} )
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dsopenal
