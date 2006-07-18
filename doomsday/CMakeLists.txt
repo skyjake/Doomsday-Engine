@@ -142,7 +142,9 @@ INCLUDE (FindZLIB)
 
 INCLUDE (FindPNG)
 
+IF (UNIX)
 INCLUDE (FindCurses)
+ENDIF (UNIX)
 
 IF (NOT BUILDDEDICATED)
 IF (UNIX)
@@ -214,8 +216,7 @@ On Ubuntu install libglu1-mesa-dev.
 On Mac OSX install FIXME.
 On Windows install FIXME.")
 ENDIF (OPENGL_GLU_FOUND STREQUAL "NO")
-
-INCLUDE_DIRECTORIES ( ${OPENGL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES (${OPENGL_INCLUDE_DIR})
 ENDIF (BUILDOPENGL)
 
 ## Confirm we have SDL
@@ -226,8 +227,7 @@ On Ubuntu install libsdl1.2-dev.
 On Mac OSX install FIXME.
 On Windows install FIXME.")
 ENDIF (SDL_FOUND STREQUAL "NO")
-
-INCLUDE_DIRECTORIES ( ${SDL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES (${SDL_INCLUDE_DIR})
 
 IF (BUILDSDLMIXER)
 ## Confirm we have SDL_mixer
@@ -238,8 +238,7 @@ On Ubuntu install libsdl-mixer1.2-dev.
 On Mac OSX install FIXME.
 On Windows install FIXME.")
 ENDIF (SDLMIXER_FOUND STREQUAL "NO")
-
-INCLUDE_DIRECTORIES ( ${SDLMIXER_INCLUDE_DIR})
+INCLUDE_DIRECTORIES (${SDLMIXER_INCLUDE_DIR})
 ENDIF (BUILDSDLMIXER)
 
 ## Confirm we have SDL_net
@@ -250,8 +249,7 @@ On Ubuntu install libsdl-net1.2-dev.
 On Mac OSX install FIXME.
 On Windows install FIXME.")
 ENDIF (SDLNET_FOUND STREQUAL "NO")
-
-INCLUDE_DIRECTORIES ( ${SDLNET_INCLUDE_DIR})
+INCLUDE_DIRECTORIES (${SDLNET_INCLUDE_DIR})
 
 ## Confirm we have zlib
 IF (NOT ZLIB_FOUND STREQUAL "YES")
@@ -261,24 +259,56 @@ On Ubuntu install zlib1g-dev.
 On Mac OSX install FIXME.
 On Windows install FIXME.")
 ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
+INCLUDE_DIRECTORIES (${ZLIB_INCLUDE_DIR})
 
+## confirm we have libPNG.
+IF (NOT PNG_FOUND)
+MESSAGE (FATAL_ERROR
+"** libpng not found.
+On Ubuntu install libpng-dev.
+On Mac OSX install FIXME.
+On Windows install FIXME.")
+ENDIF (NOT PNG_FOUND)
+INCLUDE_DIRECTORIES (${PNG_INCLUDE_DIR})
 
-## No test yet for finding libPNG. FIXME
-## No test yet for finding ncurses. FIXME
-## No test yet for finding X11. FIXME
-## No test yet for finding openAl. FIXME
-## Confirm we have openAL
+## Confirm we have ncurses
+IF (UNIX)
+IF (CURSES_LIBRARIES STREQUAL "")
+MESSAGE (FATAL_ERROR
+"** ncurses not found.
+On Ubuntu install libncurses5-dev.
+On Mac OSX install FIXME.")
+ENDIF (CURSES_LIBRARIES STREQUAL "")
+INCLUDE_DIRECTORIES (${CURSES_INCLUDE_DIR})
+ENDIF (UNIX)
+
+## Confirm we have X11
+IF (UNIX)
+IF (NOT APPLE)
+IF (NOT X11_FOUND)
+MESSAGE (FATAL_ERROR
+"** X11 not found.
+On Ubuntu install libx11-dev, libxext-dev.")
+ENDIF (NOT X11_FOUND)
+INCLUDE_DIRECTORIES (${X11_INCLUDE_DIR})
+ENDIF (NOT APPLE)
+ENDIF (UNIX)
+
+IF (BUILDOPENAL)
+## Confirm we have OpenAL
 IF (NOT OPENAL_FOUND STREQUAL "YES")
 MESSAGE (FATAL_ERROR
-"** openal not found.
+"** Openal not found.
 On Ubuntu install libopenal-dev.
 On Mac OSX install FIXME.
 On Windows install FIXME.")
 ENDIF (NOT OPENAL_FOUND STREQUAL "YES")
-
+INCLUDE_DIRECTORIES (${OPENAL_INCLUDE_DIR})
+ENDIF (BUILDOPENAL)
 
 IF (UNIX)
 IF (NOT WIN32)
+## Confirm we have dlopen
 CHECK_INCLUDE_FILE("dlfcn.h" HAVE_DL)
 IF(HAVE_DL)
 CHECK_LIBRARY_EXISTS("dl" "dlopen" "" HAVE_LIB_DL)
@@ -348,7 +378,7 @@ ENDIF (WIN32)
 
 ADD_EXECUTABLE (doomsday ${DENG_SOURCES})
 TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY}
-${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARY} ${PNG_LIBRARY} )
+${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} )
 
 
 IF (UNIX)
