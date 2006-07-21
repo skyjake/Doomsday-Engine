@@ -194,8 +194,8 @@ InFine {
 
 # How about some custom finales for Plutonia and TNT?
 
-IncludeIf doom2-plut "PlutFinales.ded";
-IncludeIf doom2-tnt "TNTFinales.ded";
+IncludeIf doom2-plut "plutfinales.ded";
+IncludeIf doom2-tnt "tntfinales.ded";
 
 ######======------ SHAREWARE/REG/ULTIMATE DOOM ------======######
 

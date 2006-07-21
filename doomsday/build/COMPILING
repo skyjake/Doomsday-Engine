@@ -10,17 +10,17 @@ REQUIREMENTS:
 
 You will need these tools and libraries for building everything:
 
-- Cmake (http://www.cmake.org/HTML/Download.html
+- Cmake 2.4 or latter ( http://www.cmake.org/HTML/Download.html )
 - A C Compiler (GCC on *NIX, OSX. Cygwin, MingGW, Borland or Visual C on Windows)
 - GNU Make on *NIX, Cygwin or MinGW
-- ncurses
+- ncurses on *NIX, OSX
 - OpenGL (This can be disabled in cmake for a dedicated build)
 - GLU (This can be disabled in cmake for a dedicated build)
-- Simple Directmedia Layer (http://www.libsdl.org/)
+- SDL (http://www.libsdl.org/)
 - SDL_net
 - SDL_mixer (This can be disabled in cmake for a dedicated build)
 - OpenAL (This can be disabled in cmake for a dedicated build)
-- zip (to create Doomsday.pk3)
+- zip (to create Doomsday.pk3) ( http://www.info-zip.org/ )
 
 
 IF YOU HAVE A SOURCE TARBALL:
@@ -51,7 +51,7 @@ IF YOU HAVE A SOURCE TARBALL:
 IF YOU USE SVN:
 ---------------
 
-1. Check out a copy of the project files from the SourceForge CVS.
+1. Check out a copy of the project files from the SourceForge SVN.
    You will only need the "doomsday" module.  You can find
    instructions on how to accomplish this here:
 

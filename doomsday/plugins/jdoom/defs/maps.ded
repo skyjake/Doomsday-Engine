@@ -251,8 +251,8 @@ Copy Map Info {
 }
 
 # Plutonia and TNT have different map definitions
-IncludeIf doom2-plut "PlutMaps.ded";
-IncludeIf doom2-tnt "TNTMaps.ded";
+IncludeIf doom2-plut "plutmaps.ded";
+IncludeIf doom2-tnt "tntmaps.ded";
 
 # The rest of this file is skipped if not Doom2
 SkipIf Not doom2;

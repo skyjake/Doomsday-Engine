@@ -191,5 +191,5 @@ Group
   Texture { ID = "DBRAIN4"; Tics = 8; };
 }
 
-IncludeIf doom2-plut "PlutAnim.ded";
-IncludeIf doom2-tnt "TNTAnim.ded";
+IncludeIf doom2-plut "plutanim.ded";
+IncludeIf doom2-tnt "tntanim.ded";
