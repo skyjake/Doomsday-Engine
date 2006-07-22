@@ -7,10 +7,13 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.4 FATAL_ERROR)
 SET (BUILDSCRIPTSDATE "$LastChangedDate$")
 ################################################################################
 ######################## Additional Win32 Path Setup  ##########################
-##IF (WIN32)
-##SET(ENV{SDLDIR} "C:\SDK\SDL")
-##SET(ENV{OPENALDIR} "C:\SDK\OPENAL")
-##ENDIF (WIN32)
+IF (WIN32)
+## Cmake NEEDS UNIX style paths ie / not \
+SET(ENV{SDLDIR} "C:/SDK/SDL")
+SET(ENV{OPENALDIR} "C:/SDK/OPENAL")
+SET(ENV{ZLIBDIR} "C:/SDK/ZLIB")
+SET(ENV{LIBPNGDIR} "C:/SDK/LIBPNG")
+ENDIF (WIN32)
 ################################################################################
 ######################## Configure Build Options  ##############################
 SET(BUILD_SHARED_LIBS ON) 
@@ -138,9 +141,9 @@ ENDIF (NOT BUILDDEDICATED)
 
 INCLUDE (FindSDL_net)
 
-INCLUDE (FindZLIB)
+INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindZLIB.cmake)
 
-INCLUDE (FindPNG)
+INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindPNG.cmake)
 
 IF (UNIX)
 INCLUDE (FindCurses)
@@ -154,7 +157,7 @@ ENDIF (NOT APPLE)
 ENDIF (UNIX)
 
 IF (BUILDOPENAL)
-INCLUDE (FindOpenAL)
+INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindOpenAL.cmake)
 ENDIF (BUILDOPENAL)
 ENDIF (NOT BUILDDEDICATED)
 
@@ -225,7 +228,7 @@ MESSAGE (FATAL_ERROR
 "** SDL not found.
 On Ubuntu install libsdl1.2-dev.
 On Mac OSX install FIXME.
-On Windows install FIXME.")
+On Windows/MSVC install SDL-devel-1.2.11-VC6.zip.")
 ENDIF (SDL_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDL_INCLUDE_DIR})
 
@@ -236,7 +239,7 @@ MESSAGE (FATAL_ERROR
 "** SDL Mixer not found.
 On Ubuntu install libsdl-mixer1.2-dev.
 On Mac OSX install FIXME.
-On Windows install FIXME.")
+On Windows/MSVC install SDL_mixer-devel-1.2.7-VC6.zip.")
 ENDIF (SDLMIXER_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDLMIXER_INCLUDE_DIR})
 ENDIF (BUILDSDLMIXER)
@@ -247,7 +250,7 @@ MESSAGE (FATAL_ERROR
 "** SDL Net not found.
 On Ubuntu install libsdl-net1.2-dev.
 On Mac OSX install FIXME.
-On Windows install FIXME.")
+On Windows/MSVC install SDL_net-devel-1.2.6-VC6.zip.")
 ENDIF (SDLNET_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDLNET_INCLUDE_DIR})
 
@@ -257,7 +260,7 @@ MESSAGE (FATAL_ERROR
 "** zlib not found.
 On Ubuntu install zlib1g-dev.
 On Mac OSX install FIXME.
-On Windows install FIXME.")
+On Windows install zlib123-dll.zip.")
 ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 INCLUDE_DIRECTORIES (${ZLIB_INCLUDE_DIR})
 
@@ -267,7 +270,7 @@ MESSAGE (FATAL_ERROR
 "** libpng not found.
 On Ubuntu install libpng-dev.
 On Mac OSX install FIXME.
-On Windows install FIXME.")
+On Windows install libpng-1.2.8-lib.zip.")
 ENDIF (NOT PNG_FOUND)
 INCLUDE_DIRECTORIES (${PNG_INCLUDE_DIR})
 
@@ -301,7 +304,7 @@ MESSAGE (FATAL_ERROR
 "** Openal not found.
 On Ubuntu install libopenal-dev.
 On Mac OSX install FIXME.
-On Windows install FIXME.")
+On Windows install OpenAL11CoreSDK.exe.")
 ENDIF (NOT OPENAL_FOUND STREQUAL "YES")
 INCLUDE_DIRECTORIES (${OPENAL_INCLUDE_DIR})
 ENDIF (BUILDOPENAL)
@@ -335,7 +338,7 @@ MESSAGE( FATAL_ERROR
 "** zip not found.
 On Ubuntu install zip.
 On Mac OSX install FIXME.
-On Windows install FIXME.")
+On Windows install zip232xN.zip.")
 ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
 ## Generate doomsday.pk3
 EXEC_PROGRAM(${ZIP} ${CMAKE_SOURCE_DIR}/engine/ ARGS " -r -q -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*")
