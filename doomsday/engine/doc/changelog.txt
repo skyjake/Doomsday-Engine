@@ -3,6 +3,12 @@
                         ==========================
                Legend: + added, - fixed, * improved/changed
 
+***
+*** -=- THIS CHANGELOG IS DEPRECATED -=-
+***
+***  More recent history is at the Doomsday Engine Wiki:
+***  http://dengine.net/dew/index.php?title=Category:Releases
+***
 
 Version 1.9.0
 -------------
