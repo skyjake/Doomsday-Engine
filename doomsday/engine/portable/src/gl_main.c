@@ -53,7 +53,7 @@
 
 #if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
 #  define SDL_GAMMA
-#  include <SDL/SDL.h>
+#  include <SDL.h>
 #endif
 
 // MACROS ------------------------------------------------------------------

@@ -1,0 +1,34 @@
+# - Find DirectX Direct Input
+# Find the DirectX includes and libraries
+#
+#  DIRECTX_DINPUT_INCLUDE_DIR - where to find dinput.h
+#  DIRECTX_DINPUT_LIBRARIES   - List of libraries when using DirectX DInput.
+#  DIRECTX_DINPUT_FOUND       - True if DirectX DInputfound.
+
+FIND_PATH(DIRECTX_DINPUT_INCLUDE_DIR dinput.h
+  $ENV{DIRECTXDIR}/include
+  /usr/local/include/directx
+  /usr/local/include
+  /usr/include
+)
+
+SET(DIRECTX_DINPUT_NAMES ${DIRECTX_DINPUT_NAMES} dinput)
+FIND_LIBRARY(DIRECTX_DINPUT_LIBRARY
+  NAMES ${DIRECTX_DINPUT_NAMES}
+  PATHS 
+  $ENV{DIRECTXDIR}/lib
+  /usr/lib
+  /usr/local/lib
+  /usr/local/lib/directx
+)
+
+IF(DIRECTX_INCLUDE_DIR)
+  IF(DIRECTX_DINPUT_LIBRARY)
+    SET( DIRECTX_DINPUT_LIBRARIES ${DIRECTX_DINPUT_LIBRARY} )
+  ENDIF(DIRECTX_DINPUT_LIBRARY)
+ENDIF(DIRECTX_INCLUDE_DIR)
+
+SET(DIRECTX_DINPUT_FOUND "NO")
+IF(DIRECTX_DINPUT_LIBRARY)
+  SET(DIRECTX_DINPUT_FOUND "YES")
+ENDIF(DIRECTX_DINPUT_LIBRARY)
