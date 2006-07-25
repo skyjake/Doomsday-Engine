@@ -205,7 +205,12 @@ ADD_DEFINITIONS ( -DWIN32)
 SET (BUILDSYSTEM WIN32)
 IF (MSVC80)
 ADD_DEFINITIONS ( -D_CRT_SECURE_NO_DEPRECATE)
+SET (BUILDSYSTEM WIN32-MSVC80)
 ENDIF (MSVC80)
+IF (MINGW)
+ADD_DEFINITIONS ( -DUNICODE)
+SET (BUILDSYSTEM WIN32-MINGW)
+ENDIF (MINGW)
 ENDIF (WIN32)
 
 IF (APPLE)
@@ -370,7 +375,16 @@ EXEC_PROGRAM(${ZIP} ${CMAKE_SOURCE_DIR}/engine/ ARGS " -r -q -0 ${CMAKE_CURRENT_
 ################################################################################
 ######################## External LZSS Files ###################################
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
+
+IF (UNIX)
+IF (NOT WIN32)
 FILE(GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c)
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
+
+IF (WIN32)
+SET (LZSS_SOURCES "")
+ENDIF (WIN32)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
@@ -424,6 +438,10 @@ TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
 ENDIF (NOT APPLE)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
+
+IF (WIN32)
+TARGET_LINK_LIBRARIES (doomsday ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss)
+ENDIF (WIN32)
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)

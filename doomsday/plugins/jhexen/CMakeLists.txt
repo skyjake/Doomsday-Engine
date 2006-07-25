@@ -44,10 +44,17 @@ ${CMAKE_SOURCE_DIR}/plugins/common/src/x_hair.c )
 ##${CMAKE_SOURCE_DIR}/plugins/common/src/p_xgsec.c
 ################################################################################
 ######################## External LZSS Files ###################################
-
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
-FILE(GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c)
 
+IF (UNIX)
+IF (NOT WIN32)
+FILE(GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c)
+ENDIF (NOT WIN32)
+ENDIF (UNIX)
+
+IF (WIN32)
+SET (LZSS_SOURCES "")
+ENDIF (WIN32)
 ################################################################################
 ######################## jHexen Game Plugin  ####################################
 
@@ -60,6 +67,9 @@ FILE(GLOB JHEXEN_SOURCES src/*.c)
 ADD_LIBRARY (jhexen SHARED ${JHEXEN_SOURCES} ${LZSS_SOURCES}
 ${COMMON_PLUGIN_SOURCES} )
 
+IF (WIN32)
+TARGET_LINK_LIBRARIES (jhexen ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss)
+ENDIF (WIN32)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jhexen
