@@ -448,7 +448,12 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
         {
             // Check the middle texture's mask status.
             if(sdef->middle.texture > 0)
-                GL_GetTextureInfo(sdef->middle.texture);
+            {
+                if(sdef->middle.isflat)
+                    GL_PrepareFlat2(sdef->middle.texture, true);
+                else
+                    GL_GetTextureInfo(sdef->middle.texture);
+            }
             /*if(texmask)
                {
                // We can't light masked textures.
@@ -709,7 +714,12 @@ void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
         {
             if(sdef->middle.texture > 0)
-                GL_GetTextureInfo(sdef->middle.texture);
+            {
+                if(sdef->middle.isflat)
+                    GL_PrepareFlat2(sdef->middle.texture, true);
+                else
+                    GL_GetTextureInfo(sdef->middle.texture);
+            }
 
             if(!texmask)
             {

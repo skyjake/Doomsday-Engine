@@ -381,7 +381,11 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
     lh = top - bottom;
 
     // Setup the global texture info variables.
-    GL_GetTextureInfo(texture);
+    if(isFlat)
+        GL_PrepareFlat2(texture, true);
+    else
+        GL_GetTextureInfo(texture);
+
     surfTexW = texw;
     surfTexH = texh;
 
@@ -542,7 +546,11 @@ void Rend_DecorateLine(int index)
 
             if(side->top.texture != -1)
             {
-                GL_GetTextureInfo(side->top.texture);
+                if(side->top.isflat)
+                    GL_PrepareFlat2(side->top.texture, true);
+                else
+                    GL_GetTextureInfo(side->top.texture);
+
                 Rend_DecorateLineSection(line, side, side->top.texture,
                                          side->top.isflat,
                                          SECT_CEIL(highSector),
@@ -574,7 +582,11 @@ void Rend_DecorateLine(int index)
 
             if(side->bottom.texture != -1)
             {
-                GL_GetTextureInfo(side->bottom.texture);
+                if(side->bottom.isflat)
+                    GL_PrepareFlat2(side->bottom.texture, true);
+                else
+                    GL_GetTextureInfo(side->bottom.texture);
+
                 Rend_DecorateLineSection(line, side, side->bottom.texture,
                                          side->bottom.isflat,
                                          SECT_FLOOR(highSector),
@@ -593,7 +605,11 @@ void Rend_DecorateLine(int index)
             rendpoly_t quad;
 
             // If there is an opening, process it.
-            GL_GetTextureInfo(side->midtexture);
+            if(side->middle.texture.isflat)
+                GL_PrepareFlat2(side->middle.texture, true);
+            else
+                GL_GetTextureInfo(side->middle.texture);
+
             quad.top = MIN_OF(frontCeil, backCeil);
             quad.bottom = MAX_OF(frontFloor, backFloor);
             quad.texoffy = FIX2FLT(side->textureoffset);
@@ -614,7 +630,11 @@ void Rend_DecorateLine(int index)
 
         if(side->middle.texture != -1)
         {
-            GL_GetTextureInfo(side->middle.texture);
+            if(side->middle.isflat)
+                GL_PrepareFlat2(side->middle.texture, true);
+            else
+                GL_GetTextureInfo(side->middle.texture);
+
             Rend_DecorateLineSection(line, side, side->middle.texture,
                                      side->middle.isflat, frontCeil,
                                      frontFloor,

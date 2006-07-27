@@ -195,7 +195,10 @@ boolean Rend_DoesMidTextureFillGap(line_t* line, boolean frontside)
 
             if(side->middle.texture > 0)
             {
-                GL_GetTextureInfo(side->middle.texture);
+                if(side->middle.isflat)
+                    GL_PrepareFlat2(side->middle.texture, true);
+                else
+                    GL_GetTextureInfo(side->middle.texture);
                 masked = texmask;
                 texheight = texh;
             }
