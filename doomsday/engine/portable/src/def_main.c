@@ -224,6 +224,9 @@ int Def_GetSpriteNum(char *name)
 {
     int     i;
 
+    if(!name || !name[0])
+        return -1;
+
     for(i = 0; i < count_sprnames.num; i++)
         if(!stricmp(sprnames[i].name, name))
             return i;
@@ -248,6 +251,9 @@ int Def_GetMobjNumForName(char *name)
 {
     int i;
 
+    if(!name || !name[0])
+        return -1;
+
     for(i = defs.count.mobjs.num -1; i >= 0; --i)
         if(!stricmp(defs.mobjs[i].name, name))
             return i;
@@ -258,6 +264,9 @@ int Def_GetMobjNumForName(char *name)
 int Def_GetStateNum(char *id)
 {
     int     i;
+
+    if(!id || !id[0])
+        return -1;
 
     for(i = 0; i < defs.count.states.num; i++)
         if(!strcmp(defs.states[i].id, id))
@@ -301,6 +310,9 @@ int Def_GetSoundNumForName(char *name)
 {
     int     i;
 
+    if(!name || !name[0])
+        return -1;
+
     for(i = 0; i < defs.count.sounds.num; i++)
         if(!stricmp(defs.sounds[i].name, name))
             return i;
@@ -332,6 +344,9 @@ acfnptr_t Def_GetActionPtr(char *name)
     // action functions.
     actionlink_t *link = (void *) gx.Get(DD_ACTION_LINK);
 
+    if(!name || !name[0])
+        return 0;
+
     if(!link)
     {
         Con_Error("GetActionPtr: Game DLL doesn't have an action "
@@ -353,6 +368,9 @@ acfnptr_t Def_GetActionPtr(char *name)
 ded_mapinfo_t *Def_GetMapInfo(char *map_id)
 {
     int     i;
+
+    if(!map_id || !map_id[0])
+        return 0;
 
     for(i = defs.count.mapinfo.num - 1; i >= 0; i--)
         if(!stricmp(defs.mapinfo[i].id, map_id))
@@ -407,6 +425,9 @@ ded_xgclass_t *Def_GetXGClass(char *name)
 {
     ded_xgclass_t *def;
     int i;
+
+    if(!name || !name[0])
+        return 0;
 
     for(i = defs.count.xgclasses.num - 1, def = defs.xgclasses + i;
         i >= 0; i--, def--)
