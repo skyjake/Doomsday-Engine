@@ -187,8 +187,10 @@ boolean S_IsRepeating(int idFlags)
     if(idFlags & DDSF_REPEAT)
         return true;
 
-    info = S_GetSoundInfo(idFlags & ~DDSF_FLAG_MASK, NULL, NULL);
-    return (info->flags & SF_REPEAT) != 0;
+    if(!(info = S_GetSoundInfo(idFlags & ~DDSF_FLAG_MASK, NULL, NULL)))
+        return false;
+    else
+        return (info->flags & SF_REPEAT) != 0;
 }
 
 /*
