@@ -40,6 +40,14 @@
 
 // CODE --------------------------------------------------------------------
 
+mobj_t *P_SpawnTeleFog(int x, int y)
+{
+    subsector_t *ss = R_PointInSubsector(x, y);
+
+    return P_SpawnMobj(x, y, P_GetFixedp(ss, DMU_FLOOR_HEIGHT) +
+                             TELEFOGHEIGHT, MT_TFOG);
+}
+
 int EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
     int     i;

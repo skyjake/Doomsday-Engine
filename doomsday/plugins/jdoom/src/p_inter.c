@@ -26,12 +26,12 @@
 #include "d_config.h"
 #include "dstrings.h"
 #include "doomstat.h"
-#include "m_random.h"
 #include "am_map.h"
 #include "d_net.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "p_inter.h"
+#include "st_stuff.h"
 
 #include "dmu_lib.h"
 #include "p_player.h"
@@ -97,6 +97,9 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 
     if(player->ammo[ammo] > player->maxammo[ammo])
         player->ammo[ammo] = player->maxammo[ammo];
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
     return true;
 }
@@ -173,6 +176,10 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
             P_MaybeChangeWeapon(player, weapon, AM_NOAMMO, false);
         }
 
+        // Maybe unhide the HUD?
+        if(gaveweapon)
+            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+
         return (gaveweapon || gaveammo);
     }
 }
@@ -191,6 +198,9 @@ boolean P_GiveBody(player_t *player, int num)
 
     player->plr->mo->health = player->health;
     player->update |= PSF_HEALTH;
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
 
     return true;
 }
@@ -216,6 +226,9 @@ boolean P_GiveArmor(player_t *player, int armortype)
     player->armorpoints = hits;
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+
     return true;
 }
 
@@ -227,6 +240,9 @@ void P_GiveKey(player_t *player, card_t card)
     player->bonuscount = BONUSADD;
     player->keys[card] = 1;
     player->update |= PSF_KEYS;
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 }
 
 void P_GiveBackpack(player_t *player)
@@ -249,20 +265,18 @@ boolean P_GivePower(player_t *player, int power)
 {
     player->update |= PSF_POWERS;
 
-    if(power == pw_invulnerability)
+    switch (power)
     {
+    case pw_invulnerability:
         player->powers[power] = INVULNTICS;
-        return true;
-    }
+        break;
 
-    if(power == pw_invisibility)
-    {
+    case pw_invisibility:
         player->powers[power] = INVISTICS;
-        player->plr->mo->flags |= MF_SHADOW;
-        return true;
-    }
-    if(power == pw_flight)
-    {
+        player->plr->mo->flags |= MF_SHADOW;;
+        break;
+
+    case pw_flight:
         player->powers[power] = 1;
         player->plr->mo->flags2 |= MF2_FLY;
         player->plr->mo->flags |= MF_NOGRAVITY;
@@ -271,31 +285,31 @@ boolean P_GivePower(player_t *player, int power)
             player->flyheight = 10; // thrust the player in the air a bit
             player->plr->mo->flags |= DDPF_FIXMOM;
         }
-        return true;
-    }
-    if(power == pw_infrared)
-    {
+        break;
+
+    case pw_infrared:
         player->powers[power] = INFRATICS;
-        return true;
-    }
+        break;
 
-    if(power == pw_ironfeet)
-    {
+    case pw_ironfeet:
         player->powers[power] = IRONTICS;
-        return true;
-    }
+        break;
 
-    if(power == pw_strength)
-    {
+    case pw_strength:
         P_GiveBody(player, maxhealth);
         player->powers[power] = 1;
-        return true;
+        break;
+
+    default:
+        if(player->powers[power])
+            return false;           // already got it
+        break;
     }
 
-    if(player->powers[power])
-        return false;           // already got it
-
     player->powers[power] = 1;
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_POWER);
     return true;
 }
 
@@ -372,6 +386,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTHTHBONUS);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
     case SPR_BON2:
@@ -382,6 +399,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
             player->armortype = armorclass[0];
         player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
         P_SetMessage(player, GOTARMBONUS);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
     case SPR_SOUL:
@@ -392,6 +412,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         player->update |= PSF_HEALTH;
         P_SetMessage(player, GOTSUPER);
         sound = sfx_getpow;
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
     case SPR_MEGA:
@@ -403,6 +426,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         P_GiveArmor(player, armorclass[1]);
         P_SetMessage(player, GOTMSPHERE);
         sound = sfx_getpow;
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         break;
 
         // cards
@@ -917,6 +943,10 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             player->damagecount = 100;  // teleport stomp does 10k points...
 
         temp = damage < 100 ? damage : 100;
+
+        // Maybe unhide the HUD?
+        if(player == &players[consoleplayer]);
+            ST_HUDUnHide(HUE_ON_DAMAGE);
     }
 
     // How about some particles, yes?

@@ -404,6 +404,7 @@ void            T_MoveFloor(floormove_t * floor);
 //
 // P_TELEPT
 //
+#define         TELEFOGHEIGHT 0
 int             EV_Teleport(line_t *line, int side, mobj_t *thing);
 
 #endif

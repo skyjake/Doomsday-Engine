@@ -212,7 +212,7 @@ enum {
 
 void    ST_Stop(void);
 
-// Console commands for the HUD/Statusbar
+DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -225,14 +225,16 @@ extern boolean hu_showallfrags; // in hu_stuff.c currently
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int hudHideTics;
+static float hudHideAmount;
+
 // slide statusbar amount 1.0 is fully open
 static float showbar = 0.0f;
 
 // fullscreen hud alpha value
 static float hudalpha = 0.0f;
 
-// main player in game
-static player_t *plyr;
+static float statusbarCounterAlpha = 0.0f;
 
 // ST_Start() has just been called
 static boolean st_firsttime;
@@ -402,12 +404,31 @@ cvar_t hudCVars[] =
 
     {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1,
         "Debug: HUD shows all frags of all players."},
+
+    {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60,
+        "Number of seconds before the hud auto-hides."},
+
+    {"hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1,
+        "1=Unhide the HUD when player receives damaged."},
+    {"hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1,
+        "1=Unhide the HUD when player collects a health item."},
+    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1,
+        "1=Unhide the HUD when player collects an armor item."},
+    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1,
+        "1=Unhide the HUD when player collects a powerup or item of equipment."},
+    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1,
+        "1=Unhide the HUD when player collects a weapon."},
+    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1,
+        "1=Unhide the HUD when player collects an ammo item."},
+    {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1,
+        "1=Unhide the HUD when player collects a key."},
     {NULL}
 };
 
 // Console commands for the HUD/Status bar
 ccmd_t  hudCCmds[] = {
     {"sbsize",      CCmdStatusBarSize,  "Status bar size adjustment.", 0 },
+    {"showhud",     CCmdHUDShow,        "Show the HUD if hidden.", 0 },
     {NULL}
 };
 
@@ -431,14 +452,19 @@ void ST_refreshBackground(void)
 
     int x, y, w, h;
     float cw, cw2, ch;
+    float alpha;
 
     GL_SetPatch(sbar.lump);
 
-    if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
+    alpha = cfg.statusbarAlpha - hudHideAmount;
+    // Clamp
+    CLAMP(alpha, 0.0f, 1.0f);
+
+    if(st_blended && ((alpha < 1.0f) && (alpha > 0.0f)))
     {
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
 
-        gl.Color4f(1, 1, 1, cfg.statusbarAlpha);
+        gl.Color4f(1, 1, 1, alpha);
 
         gl.Begin(DGL_QUADS);
 
@@ -516,7 +542,7 @@ void ST_refreshBackground(void)
                 GL_DrawPatch_CS(ST_FX, ST_Y+1, faceback.lump);
 
     }
-    else if(cfg.statusbarAlpha != 0.0f)
+    else if(alpha != 0.0f)
     {
 
             // we can just render the full thing as normal
@@ -528,7 +554,23 @@ void ST_refreshBackground(void)
             if(IS_NETGAME) // faceback
                 GL_DrawPatch(ST_FX, ST_Y+1, faceback.lump);
     }
+}
 
+/*
+ * Unhides the current HUD display if hidden.
+ *
+ * @param event         The HUD Update Event type to check for triggering.
+ */
+void ST_HUDUnHide(hueevent_t event)
+{
+    if(event < HUE_FORCE || event > NUMHUDUNHIDEEVENTS)
+        return;
+
+    if(event == HUE_FORCE || cfg.hudUnHide[event])
+    {
+        hudHideTics = (cfg.hudTimer * TICSPERSEC);
+        hudHideAmount = 0;
+    }
 }
 
 int ST_calcPainOffset(void)
@@ -536,8 +578,9 @@ int ST_calcPainOffset(void)
     int     health;
     static int lastcalc;
     static int oldhealth = -1;
+    player_t *plyr = &players[consoleplayer];
 
-    health = plyr->health > 100 ? 100 : plyr->health;
+    health = (plyr->health > 100 ? 100 : plyr->health);
 
     if(health != oldhealth)
     {
@@ -561,6 +604,7 @@ void ST_updateFaceWidget(void)
     static int lastattackdown = -1;
     static int priority = 0;
     boolean doevilgrin;
+    player_t *plyr = &players[consoleplayer];
 
     if(priority < 10)
     {
@@ -735,6 +779,9 @@ void ST_updateWidgets(void)
     boolean found;
     player_t *plr = &players[consoleplayer];
 
+    statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
+    CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+
     // must redirect the pointer if the ready weapon has changed.
     found = false;
     for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
@@ -791,15 +838,27 @@ void ST_updateWidgets(void)
 
 void ST_Ticker(void)
 {
+    player_t *plyr = &players[consoleplayer];
+
+    if(cfg.hudTimer == 0)
+    {
+        hudHideTics = hudHideAmount = 0;
+    }
+    else
+    {
+        if(hudHideTics > 0)
+            hudHideTics--;
+        if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
+            hudHideAmount += 0.1f;
+    }
 
     st_clock++;
     st_randomnumber = M_Random();
     ST_updateWidgets();
     st_oldhealth = plyr->health;
-
 }
 
-int D_GetFilterColor(int filter)
+int R_GetFilterColor(int filter)
 {
     int     rgba = 0;
 
@@ -814,7 +873,7 @@ int D_GetFilterColor(int filter)
         // Green.
         rgba = FMAKERGBA(0, .7, 0, .15f);
     else if(filter)
-        Con_Error("D_SetFilter: Real strange filter number: %d.\n", filter);
+        Con_Error("R_GetFilterColor: Real strange filter number: %d.\n", filter);
     return rgba;
 }
 
@@ -823,6 +882,7 @@ void ST_doPaletteStuff(void)
     int     palette;
     int     cnt;
     int     bzc;
+    player_t *plyr = &players[consoleplayer];
 
     cnt = plyr->damagecount;
 
@@ -864,7 +924,7 @@ void ST_doPaletteStuff(void)
     if(palette != st_palette)
     {
         st_palette = palette;
-        plyr->plr->filter = D_GetFilterColor(palette);  // $democam
+        plyr->plr->filter = R_GetFilterColor(palette);  // $democam
     }
 }
 
@@ -951,6 +1011,10 @@ void ST_drawHUDSprite(int sprite, int x, int y, int hotspot, float alpha)
     spriteinfo_t sprInfo;
     int     w, h;
 
+    CLAMP(alpha, 0.0f, 1.0f);
+    if(alpha == 0.0f)
+        return;
+
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
@@ -983,14 +1047,17 @@ void ST_doFullscreenStuff(void)
     char    buf[20];
     int     w, h, pos = 0, spr, i;
     int     h_width = 320 / cfg.hudScale, h_height = 200 / cfg.hudScale;
-    float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
-    float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
+    float textalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
+    float iconalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
     int     ammo_sprite[NUMAMMO] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
         SPR_ROCK
     };
+
+    CLAMP(textalpha, 0.0f, 1.0f);
+    CLAMP(iconalpha, 0.0f, 1.0f);
 
     if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
     {
@@ -1004,7 +1071,6 @@ void ST_doFullscreenStuff(void)
         M_WriteText2(2, i, buf, hu_font_a, cfg.hudColor[0], cfg.hudColor[1],
                      cfg.hudColor[2], textalpha);
     }
-
 
     // Setup the scaling matrix.
     gl.MatrixMode(DGL_MODELVIEW);
@@ -1048,13 +1114,16 @@ void ST_doFullscreenStuff(void)
     {
         pos = (h_width/2) -(faceback.width/2) + 6;
 
+        if(iconalpha != 0.0f)
+        {
 Draw_BeginZoom(0.7f, pos , h_height - 1);
-        gl.Color4f(1,1,1,iconalpha);
-        if(IS_NETGAME)
-            GL_DrawPatch_CS( pos, h_height - faceback.height + 1, faceback.lump);
+            gl.Color4f(1, 1, 1, iconalpha);
+            if(IS_NETGAME)
+                GL_DrawPatch_CS( pos, h_height - faceback.height + 1, faceback.lump);
 
-        GL_DrawPatch_CS( pos, h_height - faceback.height, faces[st_faceindex].lump);
+            GL_DrawPatch_CS( pos, h_height - faceback.height, faces[st_faceindex].lump);
 Draw_EndZoom();
+        }
     }
 
     pos = h_width - 1;
@@ -1247,9 +1316,9 @@ void ST_loadData(void)
 void ST_initData(void)
 {
     int     i;
+    player_t *plyr = &players[consoleplayer];
 
     st_firsttime = true;
-    plyr = &players[consoleplayer];
 
     st_clock = 0;
     st_chatstate = StartChatState;
@@ -1275,14 +1344,18 @@ void ST_initData(void)
     }
 
     STlib_init();
+
+    ST_HUDUnHide(HUE_FORCE);
 }
 
 void ST_createWidgets(void)
 {
     int     i;
     static int largeammo = 1994;    // means "n/a"
+    static
     ammotype_t ammotype;
     boolean    found;
+    player_t *plyr = &players[consoleplayer];
 
     // ready weapon ammo
     // TODO: Only supports one type of ammo per weapon.
@@ -1293,7 +1366,7 @@ void ST_createWidgets(void)
             continue; // Weapon does not take this ammo.
 
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum, &plyr->ammo[ammotype],
-                      &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+                      &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
         found = true;
     }
     if(!found) // Weapon requires no ammo at all.
@@ -1304,11 +1377,11 @@ void ST_createWidgets(void)
 
         //STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum,
         //              &plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
-        //              &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+        //              &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
 
 
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum, &largeammo,
-                      &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+                      &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
     }
 
     // the last weapon type
@@ -1317,7 +1390,7 @@ void ST_createWidgets(void)
     // health percentage
     STlib_initPercent(&w_health, ST_HEALTHX, ST_HEALTHY, tallnum,
                       &plyr->health, &st_statusbaron, &tallpercent,
-                      &cfg.statusbarCounterAlpha);
+                      &statusbarCounterAlpha);
 
     // weapons owned
     for(i = 0; i < 6; i++)
@@ -1325,67 +1398,66 @@ void ST_createWidgets(void)
         STlib_initMultIcon(&w_arms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
                            ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i],
                            (int *) &plyr->weaponowned[i + 1], &st_armson,
-                           &cfg.statusbarCounterAlpha);
+                           &statusbarCounterAlpha);
     }
 
     // frags sum
     STlib_initNum(&w_frags, ST_FRAGSX, ST_FRAGSY, tallnum, &st_fragscount,
-                  &st_fragson, ST_FRAGSWIDTH, &cfg.statusbarCounterAlpha);
+                  &st_fragson, ST_FRAGSWIDTH, &statusbarCounterAlpha);
 
     // faces
     STlib_initMultIcon(&w_faces, ST_FACESX, ST_FACESY, faces, &st_faceindex,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     // armor percentage - should be colored later
     STlib_initPercent(&w_armor, ST_ARMORX, ST_ARMORY, tallnum,
                       &plyr->armorpoints, &st_statusbaron, &tallpercent,
-                      &cfg.statusbarCounterAlpha);
+                      &statusbarCounterAlpha);
 
     // keyboxes 0-2
     STlib_initMultIcon(&w_keyboxes[0], ST_KEY0X, ST_KEY0Y, keys, &keyboxes[0],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     STlib_initMultIcon(&w_keyboxes[1], ST_KEY1X, ST_KEY1Y, keys, &keyboxes[1],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     STlib_initMultIcon(&w_keyboxes[2], ST_KEY2X, ST_KEY2Y, keys, &keyboxes[2],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     // ammo count (all four kinds)
     STlib_initNum(&w_ammo[0], ST_AMMO0X, ST_AMMO0Y, shortnum, &plyr->ammo[0],
-                  &st_statusbaron, ST_AMMO0WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO0WIDTH, &statusbarCounterAlpha);
 
     STlib_initNum(&w_ammo[1], ST_AMMO1X, ST_AMMO1Y, shortnum, &plyr->ammo[1],
-                  &st_statusbaron, ST_AMMO1WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO1WIDTH, &statusbarCounterAlpha);
 
     STlib_initNum(&w_ammo[2], ST_AMMO2X, ST_AMMO2Y, shortnum, &plyr->ammo[2],
-                  &st_statusbaron, ST_AMMO2WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO2WIDTH, &statusbarCounterAlpha);
 
     STlib_initNum(&w_ammo[3], ST_AMMO3X, ST_AMMO3Y, shortnum, &plyr->ammo[3],
-                  &st_statusbaron, ST_AMMO3WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO3WIDTH, &statusbarCounterAlpha);
 
     // max ammo count (all four kinds)
     STlib_initNum(&w_maxammo[0], ST_MAXAMMO0X, ST_MAXAMMO0Y, shortnum,
                   &plyr->maxammo[0], &st_statusbaron, ST_MAXAMMO0WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[1], ST_MAXAMMO1X, ST_MAXAMMO1Y, shortnum,
                   &plyr->maxammo[1], &st_statusbaron, ST_MAXAMMO1WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[2], ST_MAXAMMO2X, ST_MAXAMMO2Y, shortnum,
                   &plyr->maxammo[2], &st_statusbaron, ST_MAXAMMO2WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, shortnum,
                   &plyr->maxammo[3], &st_statusbaron, ST_MAXAMMO3WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
 }
 
 void ST_Start(void)
 {
-
     if(!st_stopped)
         ST_Stop();
 
@@ -1406,6 +1478,15 @@ void ST_Init(void)
 {
     veryfirsttime = 0;
     ST_loadData();
+}
+
+/*
+ * Console command to show the hud if hidden.
+ */
+DEFCC(CCmdHUDShow)
+{
+    ST_HUDUnHide(HUE_FORCE);
+    return true;
 }
 
 /*

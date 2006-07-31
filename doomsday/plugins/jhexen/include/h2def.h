@@ -35,6 +35,9 @@
 #define DATAPATH      "}data\\"GAMENAMETEXT"\\"
 #define STARTUPWAD    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
 
+// Misc macros.
+#define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
+
 #ifdef WIN32
 #pragma warning (disable:4761 4244)
 #define strcasecmp stricmp
@@ -342,6 +345,7 @@ typedef enum {
 #define PCLASS_INFO(class)  (&classInfo[class])
 
 typedef struct classinfo_s{
+    mobjtype_t  mobjtype;
     int         normalstate;
     int         runstate;
     int         attackstate;
@@ -351,6 +355,8 @@ typedef struct classinfo_s{
     fixed_t     maxmove;
     fixed_t     forwardmove[2];     // walk, run
     fixed_t     sidemove[2];        // walk, run
+    int         movemul;            // multiplier for above
+    int         jumptics;           // wait inbetween jumps
     int         armorincrement[NUMARMOR];
     int         piecex[3];          // temp
 } classinfo_t;
@@ -487,7 +493,7 @@ typedef enum {
     arti_puzzgear3,
     arti_puzzgear4,
     NUMARTIFACTS
-} artitype_t;
+} artitype_e;
 
 #define MAXARTICOUNT 25
 
@@ -588,7 +594,7 @@ typedef struct saveplayer_s {
     int             colormap;      // 0-3 for which color to draw player
     pspdef_t        psprites[NUMPSPRITES];  // view sprites (gun, etc)
     int             morphTics;     // player is a pig if > 0
-    uint            jumpTics;      // delay the next jump for a moment
+    uint            jumptics;      // delay the next jump for a moment
     unsigned int    worldTimer;    // total time the player's been playing
 } saveplayer_t;
 #pragma pack()
@@ -614,7 +620,7 @@ typedef struct player_s {
     int             armorpoints[NUMARMOR];
 
     inventory_t     inventory[NUMINVENTORYSLOTS];
-    artitype_t      readyArtifact;
+    artitype_e      readyArtifact;
     int             artifactCount;
     int             inventorySlotNum;
     int             powers[NUMPOWERS];
@@ -642,7 +648,7 @@ typedef struct player_s {
     int             colormap;      // 0-3 for which color to draw player
     pspdef_t        psprites[NUMPSPRITES];  // view sprites (gun, etc)
     int             morphTics;     // player is a pig if > 0
-    uint            jumpTics;      // delay the next jump for a moment
+    uint            jumptics;      // delay the next jump for a moment
     unsigned int    worldTimer;    // total time the player's been playing
     int             update, startspot;
     int             viewlock;      // $democam
@@ -759,9 +765,6 @@ extern int      leveltime;         // tics in game play for par
 extern thing_t *deathmatch_p;
 extern thing_t deathmatchstarts[MAX_DM_STARTS];
 
-// Position indicator for cooperative net-play reborn
-extern int      RebornPosition;
-
 #define MAX_PLAYER_STARTS 8
 
 
@@ -802,9 +805,9 @@ void            H2_Main(void);
 // calls all startup code
 // parses command line options
 
-void            H2_IdentifyVersion(void);
-void            H2_SetFilter(int filter);
-int             H2_GetFilterColor(int filter);
+void            G_IdentifyVersion(void);
+void            R_SetFilter(int filter);
+int             R_GetFilterColor(int filter);
 
 char           *G_Get(int id);
 
@@ -950,23 +953,16 @@ extern int      localQuakeHappening[MAXPLAYERS];
 extern unsigned char rndtable[256];
 extern int      prndindex;
 
-#ifndef TIC_DEBUG
-
-byte            P_Random();
-
-#else                           // TIC_DEBUG defined
+#ifdef TIC_DEBUG
 
 extern FILE    *rndDebugfile;
 
-#define P_Random() \
-    ((rndDebugfile && netgame)? (fprintf(rndDebugfile, "%i:"__FILE__", %i\n", gametic, __LINE__), \
-    rndtable[(++prndindex)&0xff]) : rndtable[(++prndindex)&0xff])
 #define FUNTAG(fun) { if(rndDebugfile) fprintf(rndDebugfile, "%i: %s\n", gametic, fun); }
 
 #endif                          // TIC_DEBUG
 
-// as M_Random, but used only by the play simulation
-
+//returns a number from 0 to 255
+byte            P_Random(void);
 void            M_ClearRandom(void);
 
 extern unsigned char rndtable[256];

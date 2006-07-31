@@ -26,7 +26,6 @@
 
 #include "doomdef.h"
 #include "d_config.h"
-#include "m_random.h"
 #include "p_local.h"
 #include "st_stuff.h"
 #include "hu_stuff.h"
@@ -35,8 +34,6 @@
 #include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
 
 #define VANISHTICS  (2*TICSPERSEC)
 
@@ -73,12 +70,12 @@ extern fixed_t attackrange;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
 spawnobj_t itemrespawnque[ITEMQUESIZE];
 int     itemrespawntime[ITEMQUESIZE];
 int     iquehead;
 int     iquetail;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
@@ -463,7 +460,9 @@ void P_ZMovement(mobj_t *mo)
                 // after hitting the ground (hard),
                 // and utter appropriate sound.
                 mo->dplayer->deltaviewheight = mo->momz >> 3;
-                S_StartSound(sfx_oof, mo);
+
+                if(mo->player->health > 0)
+                    S_StartSound(sfx_oof, mo);
             }
             mo->momz = 0;
         }
@@ -524,7 +523,11 @@ void P_ZMovement(mobj_t *mo)
                 // after hitting the ground (hard),
                 // and utter appropriate sound.
                 mo->dplayer->deltaviewheight = mo->momz >> 3;
-                S_StartSound(sfx_oof, mo);
+
+                // Fix DOOM bug - dead players grunting when hitting the ground
+                // (e.g., after an archvile attack)
+                if(mo->player->health > 0)
+                    S_StartSound(sfx_oof, mo);
             }
             P_HitFloor(mo);
             mo->momz = 0;
@@ -1001,13 +1004,6 @@ void P_RespawnSpecials(void)
     iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
 }
 
-mobj_t *P_SpawnTeleFog(int x, int y)
-{
-    return P_SpawnMobj(x, y,
-                       P_GetFixedp(R_PointInSubsector(x, y), DMU_FLOOR_HEIGHT),
-                       MT_TFOG);
-}
-
 /*
  * Called when a player is spawned on the level.
  * Most of the player structure stays unchanged between levels.
@@ -1110,7 +1106,7 @@ void P_SpawnMapThing(thing_t *th)
     // Count deathmatch start positions
     if(th->type == 11)
     {
-        if(deathmatch_p < &deathmatchstarts[10])
+        if(deathmatch_p < &deathmatchstarts[MAX_DM_STARTS])
         {
             memcpy(deathmatch_p, th, sizeof(*th));
             deathmatch_p++;

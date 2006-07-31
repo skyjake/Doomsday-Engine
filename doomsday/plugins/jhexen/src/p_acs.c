@@ -211,13 +211,13 @@ CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// P_LoadACScripts
-//
-// Clients have nothing to do with scripts.
-//
-//==========================================================================
+char *GetACString(int id)
+{
+    if(id < 0 || id > ACStringCount)
+        return NULL;
+
+    return ACStrings[id];
+}
 
 void P_LoadACScripts(int lump)
 {
@@ -1227,7 +1227,7 @@ static void ThingCount(int type, int tid)
     }
     else
     {                           // Count only types
-        for(think = gi.thinkercap->next; think != gi.thinkercap;
+        for(think = thinkercap.next; think != &thinkercap && think;
             think = think->next)
         {
             if(think->function != P_MobjThinker)
@@ -1283,7 +1283,7 @@ static int CmdChangeFloor(void)
     int     flat;
     int     sectorIndex;
 
-    flat = R_FlatNumForName(ACStrings[Pop()]);
+    flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
     sectorIndex = -1;
     while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
@@ -1300,7 +1300,7 @@ static int CmdChangeFloorDirect(void)
     int     sectorIndex;
 
     tag = LONG(*PCodePtr++);
-    flat = R_FlatNumForName(ACStrings[LONG(*PCodePtr++)]);
+    flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
     sectorIndex = -1;
     while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
     {
@@ -1315,7 +1315,7 @@ static int CmdChangeCeiling(void)
     int     flat;
     int     sectorIndex;
 
-    flat = R_FlatNumForName(ACStrings[Pop()]);
+    flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
     sectorIndex = -1;
     while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
@@ -1332,7 +1332,7 @@ static int CmdChangeCeilingDirect(void)
     int     sectorIndex;
 
     tag = LONG(*PCodePtr++);
-    flat = R_FlatNumForName(ACStrings[LONG(*PCodePtr++)]);
+    flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
     sectorIndex = -1;
     while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
     {
@@ -1504,7 +1504,7 @@ static int CmdEndPrintBold(void)
 
 static int CmdPrintString(void)
 {
-    strcat(PrintBuffer, ACStrings[Pop()]);
+    strcat(PrintBuffer, GetACString(Pop()));
     return SCRIPT_CONTINUE;
 }
 
@@ -1588,7 +1588,7 @@ static int CmdSectorSound(void)
 #if _DEBUG
     Con_Printf("CmdSectorSound: volume=%i\n", volume);
 #endif
-    S_StartSoundAtVolume(S_GetSoundID(ACStrings[Pop()]), mobj,
+    S_StartSoundAtVolume(S_GetSoundID(GetACString(Pop())), mobj,
                          volume / 127.0f);
     return SCRIPT_CONTINUE;
 }
@@ -1602,7 +1602,7 @@ static int CmdThingSound(void)
     int     searcher;
 
     volume = Pop();
-    sound = S_GetSoundID(ACStrings[Pop()]);
+    sound = S_GetSoundID(GetACString(Pop()));
     tid = Pop();
     searcher = -1;
     while(sound && (mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
@@ -1614,7 +1614,7 @@ static int CmdThingSound(void)
 
 static int CmdAmbientSound(void)
 {
-    int     volume;
+    int     volume, sound;
     mobj_t *mobj = NULL;        // For 3D positioning.
     mobj_t *plrmo = players[displayplayer].plr->mo;
 
@@ -1631,8 +1631,10 @@ static int CmdAmbientSound(void)
                            MT_CAMERA); // A camera's a good temporary source.
         mobj->tics = 5 * 35;    // Five seconds should be enough.
     }
-    S_StartSoundAtVolume(S_GetSoundID(ACStrings[Pop()]), mobj,
-                         volume / 127.0f);
+
+    sound = S_GetSoundID(GetACString(Pop()));
+    S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
+
     return SCRIPT_CONTINUE;
 }
 
@@ -1646,7 +1648,7 @@ static int CmdSoundSequence(void)
         sector_t* front = P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
         mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
     }
-    SN_StartSequenceName(mobj, ACStrings[Pop()]);
+    SN_StartSequenceName(mobj, GetACString(Pop()));
     return SCRIPT_CONTINUE;
 }
 
@@ -1659,7 +1661,7 @@ static int CmdSetLineTexture(void)
     int     texture;
     int     searcher;
 
-    texture = R_TextureNumForName(ACStrings[Pop()]);
+    texture = R_TextureNumForName(GetACString(Pop()));
     position = Pop();
     side = Pop();
     lineTag = Pop();

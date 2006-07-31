@@ -49,6 +49,9 @@
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
+// Misc macros.
+#define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
+
 extern game_import_t gi;
 extern game_export_t gx;
 
@@ -116,6 +119,8 @@ typedef struct classinfo_s{
     fixed_t     maxmove;
     fixed_t     forwardmove[2];     // walk, run
     fixed_t     sidemove[2];        // walk, run
+    int         movemul;            // multiplier for above
+    int         jumptics;           // wait inbetween jumps
 } classinfo_t;
 
 extern classinfo_t classInfo[NUMCLASSES];
@@ -233,7 +238,7 @@ typedef enum {
     arti_fly,
     arti_teleport,
     NUMARTIFACTS
-} artitype_t;
+} artitype_e;
 
 #define MAXARTICOUNT 16
 
@@ -256,7 +261,7 @@ enum { VX, VY, VZ };               // Vertex indices.
 #define IS_DEDICATED    Get(DD_DEDICATED)
 
 
-void            H_IdentifyVersion(void);
+void            G_IdentifyVersion(void);
 char           *G_Get(int id);
 
 void            R_SetViewSize(int blocks, int detail);
@@ -417,12 +422,8 @@ void            M_ForceUppercase(char *text);
 
 // Changes a string to uppercase
 
-//int M_Random (void);
-// returns a number from 0 to 255
+//returns a number from 0 to 255
 int             P_Random(void);
-
-// as M_Random, but used only by the play simulation
-
 void            M_ClearRandom(void);
 
 // fix randoms for demos

@@ -60,6 +60,9 @@ extern game_export_t gx;
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
+// Misc macros.
+#define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
+
 // Game mode handling - identify IWAD version
 //  to handle IWAD dependend animations etc.
 typedef enum {
@@ -141,6 +144,8 @@ typedef struct classinfo_s{
     fixed_t     maxmove;
     fixed_t     forwardmove[2];     // walk, run
     fixed_t     sidemove[2];        // walk, run
+    int         movemul;            // multiplier for above
+    int         jumptics;           // wait inbetween jumps
 } classinfo_t;
 
 extern classinfo_t classInfo[NUMCLASSES];
@@ -212,7 +217,7 @@ typedef enum {
     AM_NOAMMO                      // Unlimited for chainsaw / fist.
 } ammotype_t;
 
-// Power up artifacts.
+// Power ups.
 typedef enum {
     pw_invulnerability,
     pw_strength,
@@ -243,7 +248,11 @@ enum { VX, VY, VZ };               // Vertex indices.
 #define IS_NETGAME      Get(DD_NETGAME)
 #define IS_DEDICATED    Get(DD_DEDICATED)
 
-void            D_IdentifyVersion(void);
+//returns a number from 0 to 255
+int             P_Random(void);
+void            M_ClearRandom(void);
+
+void            G_IdentifyVersion(void);
 char           *G_Get(int id);
 
 void            R_SetViewSize(int blocks, int detail);

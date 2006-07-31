@@ -32,11 +32,89 @@
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// P_SpawnTeleFog
-//
-//==========================================================================
+void P_ArtiTeleportOther(player_t *player)
+{
+    mobj_t *mo;
+
+    mo = P_SpawnPlayerMissile(player->plr->mo, MT_TELOTHER_FX1);
+
+    if(mo)
+        mo->target = player->plr->mo;
+}
+
+void P_TeleportToPlayerStarts(mobj_t *victim)
+{
+    int     i, selections = 0;
+    fixed_t destX, destY;
+    angle_t destAngle;
+    thing_t *start;
+
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        if(!players[i].plr->ingame)
+            continue;
+
+        selections++;
+    }
+
+    i = P_Random() % selections;
+    start = P_GetPlayerStart(0, i);
+
+    destX = start->x << FRACBITS;
+    destY = start->y << FRACBITS;
+    destAngle = ANG45 * (playerstarts[i].angle / 45);
+
+    P_Teleport(victim, destX, destY, destAngle, true);
+    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+}
+
+void P_TeleportToDeathmatchStarts(mobj_t *victim)
+{
+    int     i, selections;
+    fixed_t destX, destY;
+    angle_t destAngle;
+
+    selections = deathmatch_p - deathmatchstarts;
+    if(selections)
+    {
+        i = P_Random() % selections;
+        destX = deathmatchstarts[i].x << FRACBITS;
+        destY = deathmatchstarts[i].y << FRACBITS;
+        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
+
+        P_Teleport(victim, destX, destY, destAngle, true);
+        //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+    }
+    else
+    {
+        P_TeleportToPlayerStarts(victim);
+    }
+}
+
+void P_TeleportOther(mobj_t *victim)
+{
+    if(victim->player)
+    {
+        if(deathmatch)
+            P_TeleportToDeathmatchStarts(victim);
+        else
+            P_TeleportToPlayerStarts(victim);
+    }
+    else
+    {
+        // If death action, run it upon teleport
+        if(victim->flags & MF_COUNTKILL && victim->special)
+        {
+            P_RemoveMobjFromTIDList(victim);
+            P_ExecuteLineSpecial(victim->special, victim->args, NULL, 0,
+                                 victim);
+            victim->special = 0;
+        }
+
+        // Send all monsters to deathmatch spots
+        P_TeleportToDeathmatchStarts(victim);
+    }
+}
 
 mobj_t *P_SpawnTeleFog(int x, int y)
 {
@@ -191,3 +269,44 @@ boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
         Con_Error("Can't find teleport mapspot\n");
     return P_Teleport(thing, mo->pos[VX], mo->pos[VY], mo->angle, fog);
 }
+
+#if __JHERETIC__ || __JHEXEN__
+void P_ArtiTele(player_t *player)
+{
+    int     i;
+    int     selections;
+    fixed_t destX;
+    fixed_t destY;
+    angle_t destAngle;
+
+    if(deathmatch)
+    {
+        selections = deathmatch_p - deathmatchstarts;
+        i = P_Random() % selections;
+        destX = deathmatchstarts[i].x << FRACBITS;
+        destY = deathmatchstarts[i].y << FRACBITS;
+        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
+    }
+    else
+    {
+        // FIXME?: DJS - this doesn't seem right...
+        destX = playerstarts[0].x << FRACBITS;
+        destY = playerstarts[0].y << FRACBITS;
+        destAngle = ANG45 * (playerstarts[0].angle / 45);
+    }
+
+# if __JHEXEN__
+    P_Teleport(player->plr->mo, destX, destY, destAngle, true);
+    if(player->morphTics)
+    {   // Teleporting away will undo any morph effects (pig)
+        P_UndoPlayerMorph(player);
+    }
+    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+# else
+    P_Teleport(player->plr->mo, destX, destY, destAngle);
+    /*S_StartSound(sfx_wpnup, NULL); // Full volume laugh
+       NetSv_Sound(NULL, sfx_wpnup, player-players); */
+    S_StartSound(sfx_wpnup, NULL);
+# endif
+}
+#endif

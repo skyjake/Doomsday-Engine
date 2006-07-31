@@ -41,8 +41,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void M_ClearMenus(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -50,9 +48,8 @@ void M_ClearMenus(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean automapactive;
-extern int cheating;
-
 extern int messageResponse;
+extern int cheating;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -751,11 +748,9 @@ DEFCC(CCmdCheatGive)
             if(weapNum >= 0 && weapNum < NUMWEAPONS)
             {
                P_GiveWeapon(plyr, weapNum, false);
-               return true;
-
             }
-            // Unrecognized
-            Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            else // Unrecognized
+                Con_Printf("What do you mean, '%c'?\n", buf[i]);
         }
     }
     return true;

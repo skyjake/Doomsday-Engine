@@ -49,8 +49,6 @@ void    R_SetAllDoomsdayFlags();
 extern boolean finalestage;
 
 extern boolean amap_fullyopen;
-
-extern boolean inhelpscreens;
 extern float lookOffset;
 
 extern const float deffontRGB[];
@@ -190,7 +188,6 @@ void D_Display(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    static boolean inhelpscreensstate = false;
     //static int fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
     int     ay;
@@ -318,7 +315,6 @@ void D_Display(void)
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;
-    inhelpscreensstate = inhelpscreens;
     oldgamestate = wipegamestate = gamestate;
 
     // draw pause pic (but not if InFine active)

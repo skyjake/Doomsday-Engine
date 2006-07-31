@@ -52,20 +52,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JDOOM__ || __JHERETIC__
-// Index of the special effects (INVUL inverse) map.
-#define INVERSECOLORMAP     32
-
 #define ANG5    (ANG90/18)
-
-#elif __JHEXEN__
-
-#define BLAST_RADIUS_DIST   255*FRACUNIT
-#define BLAST_SPEED         20*FRACUNIT
-#define BLAST_FULLSTRENGTH  255
-#define HEAL_RADIUS_DIST    255*FRACUNIT
-
-#endif
 
 // 16 pixels of bob
 #define MAXBOB  0x100000
@@ -73,19 +60,12 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-#if __JHERETIC__ || __JHEXEN__
-void    P_PlayerNextArtifact(player_t *player);
-#endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-#if __JHERETIC__
-extern int inv_ptr;
-extern int curpos;
-#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 boolean onground;
@@ -110,11 +90,13 @@ classinfo_t classInfo[NUMCLASSES] = {
         0x3C,
         {0x19, 0x32},
         {0x18, 0x28},
+        2048,
+        24
     }
 };
 #elif __JHERETIC__
-int     newtorch;               // used in the torch flicker effect.
-int     newtorchdelta;
+int     newtorch[MAXPLAYERS];   // used in the torch flicker effect.
+int     newtorchdelta[MAXPLAYERS];
 
 classinfo_t classInfo[NUMCLASSES] = {
     {   // Player
@@ -126,6 +108,8 @@ classinfo_t classInfo[NUMCLASSES] = {
         0x3C,
         {0x19, 0x32},
         {0x18, 0x28},
+        2048,
+        24
     },
     {   // Chicken
         S_CHICPLAY,
@@ -136,15 +120,17 @@ classinfo_t classInfo[NUMCLASSES] = {
         0x3C,
         {0x19, 0x32},
         {0x18, 0x28},
+        2500,
+        24
     },
 };
 #elif __JHEXEN__
-int     lookdirSpeed = 3, quakeFly = 0;
 int     newtorch[MAXPLAYERS];   // used in the torch flicker effect.
 int     newtorchdelta[MAXPLAYERS];
 
 classinfo_t classInfo[NUMCLASSES] = {
     {   // Fighter
+        MT_PLAYER_FIGHTER,
         S_FPLAY,
         S_FPLAY_RUN1,
         S_FPLAY_ATK1,
@@ -154,10 +140,13 @@ classinfo_t classInfo[NUMCLASSES] = {
         0x3C,
         {0x1D, 0x3C},
         {0x1B, 0x3B},
+        2048,
+        18,
         {25 * FRACUNIT, 20 * FRACUNIT, 15 * FRACUNIT, 5 * FRACUNIT},
         {190, 225, 234}
     },
     {   // Cleric
+        MT_PLAYER_CLERIC,
         S_CPLAY,
         S_CPLAY_RUN1,
         S_CPLAY_ATK1,
@@ -167,10 +156,13 @@ classinfo_t classInfo[NUMCLASSES] = {
         0x32,
         {0x19, 0x32},
         {0x18, 0x28},
+        2048,
+        18,
         {10 * FRACUNIT, 25 * FRACUNIT, 5 * FRACUNIT, 20 * FRACUNIT},
         {190, 212, 225}
     },
     {   // Mage
+        MT_PLAYER_MAGE,
         S_MPLAY,
         S_MPLAY_RUN1,
         S_MPLAY_ATK1,
@@ -180,10 +172,13 @@ classinfo_t classInfo[NUMCLASSES] = {
         0x2D,
         {0x16, 0x2E},
         {0x15, 0x25},
+        2048,
+        18,
         {5 * FRACUNIT, 15 * FRACUNIT, 10 * FRACUNIT, 25 * FRACUNIT},
         {190, 205, 224}
     },
     {   // Pig
+        MT_PIGPLAYER,
         S_PIGPLAY,
         S_PIGPLAY_RUN1,
         S_PIGPLAY_ATK1,
@@ -193,6 +188,8 @@ classinfo_t classInfo[NUMCLASSES] = {
         0x31,
         {0x18, 0x31},
         {0x17, 0x27},
+        2048,
+        18,
         {0, 0, 0, 0},
         {0, 0, 0}
     },
@@ -285,22 +282,32 @@ boolean P_IsPlayerOnGround(player_t *player)
  * Will make the player jump if the latest command so instructs,
  * providing that jumping is possible.
  */
-#if __JDOOM__ || __JHERETIC__
 void P_CheckPlayerJump(player_t *player)
 {
+    float   power;
     ticcmd_t *cmd = &player->cmd;
 
+    // Check if we are allowed to jump.
     if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0) &&
-       P_IsPlayerOnGround(player) && cmd->jump &&
-       player->jumptics <= 0)
+       P_IsPlayerOnGround(player) && cmd->jump && player->jumptics <= 0)
     {
         // Jump, then!
-        player->plr->mo->momz =
-            FRACUNIT * (IS_CLIENT ? netJumpPower : cfg.jumpPower);
-        player->jumptics = 24;
+        power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
+
+#if __JHEXEN__
+        if(player->morphTics) // Pigs don't jump that high.
+            player->plr->mo->momz = FRACUNIT * (2 * power / 3);
+        else
+#endif
+            player->plr->mo->momz = FRACUNIT * power;
+
+        player->jumptics = PCLASS_INFO(player->class)->jumptics;
+
+#if __JHEXEN__
+        player->plr->mo->flags2 &= ~MF2_ONMOBJ;
+#endif
     }
 }
-#endif
 
 void P_MovePlayer(player_t *player)
 {
@@ -329,33 +336,21 @@ void P_MovePlayer(player_t *player)
     }
     else
     {
-#if __JHERETIC__
-        if(player->morphTics)
-        {                           // Chicken speed
-            if(cmd->forwardMove && (onground || plrmo->flags2 & MF2_FLY))
-                P_Thrust(player, plrmo->angle, cmd->forwardMove * 2500);
-            if(cmd->sideMove && (onground || plrmo->flags2 & MF2_FLY))
-                P_Thrust(player, plrmo->angle - ANG90, cmd->sideMove * 2500);
-        }
-        else
-#endif
+        // 'Move while in air' hack (server doesn't know about this!!).
+        // Movement while in air traditionally disabled.
+        int movemul = (onground || plrmo->flags2 & MF2_FLY) ? PCLASS_INFO(player->class)->movemul :
+                       (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
+
+        if(cmd->forwardMove && movemul)
         {
-            // 'Move while in air' hack (server doesn't know about this!!).
-            // Movement while in air traditionally disabled.
-            int     movemul = (onground || plrmo->flags2 & MF2_FLY) ? 2048 :
-                        cfg.airborneMovement ? cfg.airborneMovement * 64 : 0;
+            P_Thrust(player, player->plr->mo->angle,
+                     cmd->forwardMove * movemul);
+        }
 
-            if(cmd->forwardMove && movemul)
-            {
-                P_Thrust(player, player->plr->mo->angle,
-                         cmd->forwardMove * movemul);
-            }
-
-            if(cmd->sideMove && movemul)
-            {
-                P_Thrust(player, player->plr->mo->angle - ANG90,
-                         cmd->sideMove * movemul);
-            }
+        if(cmd->sideMove && movemul)
+        {
+            P_Thrust(player, player->plr->mo->angle - ANG90,
+                     cmd->sideMove * movemul);
         }
 
         if((cmd->forwardMove || cmd->sideMove) &&
@@ -394,7 +389,7 @@ void P_MovePlayer(player_t *player)
 #if __JHERETIC__ || __JHEXEN__
         else if(fly > 0)
         {
-            P_PlayerUseArtifact(player, arti_fly);
+            P_InventoryUseArtifact(player, arti_fly);
         }
 #endif
         if(plrmo->flags2 & MF2_FLY)
@@ -405,9 +400,8 @@ void P_MovePlayer(player_t *player)
                 player->flyheight /= 2;
             }
         }
-#if __JDOOM__ || __JHERETIC__
+
         P_CheckPlayerJump(player);
-#endif
     }
 #if __JHEXEN__
     // Look up/down using the delta.
@@ -571,17 +565,12 @@ void P_DeathThink(player_t *player)
         {
             inv_ptr = 0;
             curpos = 0;
-# if __JHERETIC__
-            newtorch = 0;
-            newtorchdelta = 0;
-            H_SetFilter(0);
-# else
-            H2_SetFilter(0);
-# endif
+            R_SetFilter(0);
         }
-# if __JHEXEN__
+
         newtorch[player - players] = 0;
         newtorchdelta[player - players] = 0;
+# if __JHEXEN__
         player->plr->mo->special1 = player->class;
         if(player->plr->mo->special1 > 2)
         {
@@ -596,7 +585,6 @@ void P_DeathThink(player_t *player)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-
 void P_MorphPlayerThink(player_t *player)
 {
     mobj_t *pmo;
@@ -656,9 +644,9 @@ boolean P_UndoPlayerMorph(player_t *player)
     weapontype_t weapon;
     int     oldFlags;
     int     oldFlags2;
-# if __JHEXEN__
     int     oldBeast;
 
+# if __JHEXEN__
     player->update |= PSF_MORPH_TIME | PSF_POWERS | PSF_HEALTH;
 # endif
 
@@ -671,26 +659,15 @@ boolean P_UndoPlayerMorph(player_t *player)
     oldFlags2 = pmo->flags2;
 # if __JHEXEN__
     oldBeast = pmo->type;
+# else
+    oldBeast = MT_CHICPLAYER;
 # endif
     P_SetMobjState(pmo, S_FREETARGMOBJ);
 
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
-    switch (cfg.PlayerClass[playerNum])
-    {
-    case PCLASS_FIGHTER:
-        mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER_FIGHTER);
-        break;
-    case PCLASS_CLERIC:
-        mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER_CLERIC);
-        break;
-    case PCLASS_MAGE:
-        mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER_MAGE);
-        break;
-    default:
-        Con_Error("P_UndoPlayerMorph:  Unknown player class %d\n",
-                  player->class);
-    }
+    mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ],
+                     PCLASS_INFO(cfg.PlayerClass[playerNum])->mobjtype);
 # else
     mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER);
 # endif
@@ -698,11 +675,8 @@ boolean P_UndoPlayerMorph(player_t *player)
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
         P_RemoveMobj(mo);
-# if __JHERETIC__
-        mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_CHICPLAYER);
-# else
         mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], oldBeast);
-# endif
+
         mo->angle = angle;
         mo->health = player->health;
         mo->special1 = weapon;
@@ -772,802 +746,6 @@ boolean P_UndoPlayerMorph(player_t *player)
 }
 #endif
 
-#if __JHEXEN__
-void P_PlayerJump(player_t *player)
-{
-    float   power;
-
-    // Check if we are allowed to jump.
-    if((!IS_CLIENT || netJumpPower > 0) &&
-       P_IsPlayerOnGround(player) &&
-       player->jumpTics <= 0)
-    {
-        power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
-
-        if(player->morphTics) // Pigs don't jump that high.
-            player->plr->mo->momz = (2 * power / 3) * FRACUNIT;
-        else
-            player->plr->mo->momz = power * FRACUNIT;
-
-        player->plr->mo->flags2 &= ~MF2_ONMOBJ;
-        player->jumpTics = 18;
-    }
-}
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-void P_ArtiTele(player_t *player)
-{
-    int     i;
-    int     selections;
-    fixed_t destX;
-    fixed_t destY;
-    angle_t destAngle;
-
-    if(deathmatch)
-    {
-        selections = deathmatch_p - deathmatchstarts;
-        i = P_Random() % selections;
-        destX = deathmatchstarts[i].x << FRACBITS;
-        destY = deathmatchstarts[i].y << FRACBITS;
-        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
-    }
-    else
-    {
-        // FIXME?: DJS - this doesn't seem right...
-        destX = playerstarts[0].x << FRACBITS;
-        destY = playerstarts[0].y << FRACBITS;
-        destAngle = ANG45 * (playerstarts[0].angle / 45);
-    }
-
-# if __JHEXEN__
-    P_Teleport(player->plr->mo, destX, destY, destAngle, true);
-    if(player->morphTics)
-    {   // Teleporting away will undo any morph effects (pig)
-        P_UndoPlayerMorph(player);
-    }
-    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
-# else
-    P_Teleport(player->plr->mo, destX, destY, destAngle);
-    /*S_StartSound(sfx_wpnup, NULL); // Full volume laugh
-       NetSv_Sound(NULL, sfx_wpnup, player-players); */
-    S_StartSound(sfx_wpnup, NULL);
-# endif
-}
-#endif
-
-#if __JHEXEN__
-void P_ArtiTeleportOther(player_t *player)
-{
-    mobj_t *mo;
-
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_TELOTHER_FX1);
-
-    if(mo)
-        mo->target = player->plr->mo;
-}
-
-void P_TeleportToPlayerStarts(mobj_t *victim)
-{
-    int     i, selections = 0;
-    fixed_t destX, destY;
-    angle_t destAngle;
-    thing_t *start;
-
-    for(i = 0; i < MAXPLAYERS; i++)
-    {
-        if(!players[i].plr->ingame)
-            continue;
-
-        selections++;
-    }
-
-    i = P_Random() % selections;
-    start = P_GetPlayerStart(0, i);
-
-    destX = start->x << FRACBITS;
-    destY = start->y << FRACBITS;
-    destAngle = ANG45 * (playerstarts[i].angle / 45);
-
-    P_Teleport(victim, destX, destY, destAngle, true);
-    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
-}
-
-void P_TeleportToDeathmatchStarts(mobj_t *victim)
-{
-    int     i, selections;
-    fixed_t destX, destY;
-    angle_t destAngle;
-
-    selections = deathmatch_p - deathmatchstarts;
-    if(selections)
-    {
-        i = P_Random() % selections;
-        destX = deathmatchstarts[i].x << FRACBITS;
-        destY = deathmatchstarts[i].y << FRACBITS;
-        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
-
-        P_Teleport(victim, destX, destY, destAngle, true);
-        //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
-    }
-    else
-    {
-        P_TeleportToPlayerStarts(victim);
-    }
-}
-
-void P_TeleportOther(mobj_t *victim)
-{
-    if(victim->player)
-    {
-        if(deathmatch)
-            P_TeleportToDeathmatchStarts(victim);
-        else
-            P_TeleportToPlayerStarts(victim);
-    }
-    else
-    {
-        // If death action, run it upon teleport
-        if(victim->flags & MF_COUNTKILL && victim->special)
-        {
-            P_RemoveMobjFromTIDList(victim);
-            P_ExecuteLineSpecial(victim->special, victim->args, NULL, 0,
-                                 victim);
-            victim->special = 0;
-        }
-
-        // Send all monsters to deathmatch spots
-        P_TeleportToDeathmatchStarts(victim);
-    }
-}
-
-void ResetBlasted(mobj_t *mo)
-{
-    mo->flags2 &= ~MF2_BLASTED;
-    if(!(mo->flags & MF_ICECORPSE))
-    {
-        mo->flags2 &= ~MF2_SLIDE;
-    }
-}
-
-void P_BlastMobj(mobj_t *source, mobj_t *victim, fixed_t strength)
-{
-    angle_t angle, ang;
-    mobj_t *mo;
-    fixed_t pos[3];
-
-    angle = R_PointToAngle2(source->pos[VX], source->pos[VY],
-                            victim->pos[VX], victim->pos[VY]);
-    angle >>= ANGLETOFINESHIFT;
-    if(strength < BLAST_FULLSTRENGTH)
-    {
-        victim->momx = FixedMul(strength, finecosine[angle]);
-        victim->momy = FixedMul(strength, finesine[angle]);
-        if(victim->player)
-        {
-            // Players handled automatically
-        }
-        else
-        {
-            victim->flags2 |= MF2_SLIDE;
-            victim->flags2 |= MF2_BLASTED;
-        }
-    }
-    else // full strength blast from artifact
-    {
-        if(victim->flags & MF_MISSILE)
-        {
-            switch (victim->type)
-            {
-            case MT_SORCBALL1: // don't blast sorcerer balls
-            case MT_SORCBALL2:
-            case MT_SORCBALL3:
-                return;
-                break;
-            case MT_MSTAFF_FX2: // Reflect to originator
-                victim->special1 = (int) victim->target;
-                victim->target = source;
-                break;
-            default:
-                break;
-            }
-        }
-        if(victim->type == MT_HOLY_FX)
-        {
-            if((mobj_t *) (victim->special1) == source)
-            {
-                victim->special1 = (int) victim->target;
-                victim->target = source;
-            }
-        }
-        victim->momx = FixedMul(BLAST_SPEED, finecosine[angle]);
-        victim->momy = FixedMul(BLAST_SPEED, finesine[angle]);
-
-        // Spawn blast puff
-        ang = R_PointToAngle2(victim->pos[VX], victim->pos[VY],
-                              source->pos[VX], source->pos[VY]);
-        ang >>= ANGLETOFINESHIFT;
-
-        memcpy(pos, victim->pos, sizeof(pos));
-        pos[VX] += FixedMul(victim->radius + FRACUNIT, finecosine[ang]);
-        pos[VY] += FixedMul(victim->radius + FRACUNIT, finesine[ang]);
-        pos[VZ] -= victim->floorclip + (victim->height >> 1);
-
-        mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_BLASTEFFECT);
-        if(mo)
-        {
-            mo->momx = victim->momx;
-            mo->momy = victim->momy;
-        }
-
-        if(victim->flags & MF_MISSILE)
-        {
-            victim->momz = 8 * FRACUNIT;
-            mo->momz = victim->momz;
-        }
-        else
-        {
-            victim->momz = (1000 / victim->info->mass) << FRACBITS;
-        }
-
-        if(victim->player)
-        {
-            // Players handled automatically
-        }
-        else
-        {
-            victim->flags2 |= MF2_SLIDE;
-            victim->flags2 |= MF2_BLASTED;
-        }
-    }
-}
-
-/*
- * Blast all mobj things away
- */
-void P_BlastRadius(player_t *player)
-{
-    mobj_t *mo;
-    mobj_t *pmo = player->plr->mo;
-    thinker_t *think;
-    fixed_t dist;
-
-    S_StartSound(SFX_ARTIFACT_BLAST, pmo);
-    P_NoiseAlert(player->plr->mo, player->plr->mo);
-
-    for(think = gi.thinkercap->next; think != gi.thinkercap;
-        think = think->next)
-    {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker
-
-        mo = (mobj_t *) think;
-        if((mo == pmo) || (mo->flags2 & MF2_BOSS))
-            continue; // Not a valid monster
-
-        if((mo->type == MT_POISONCLOUD) ||  // poison cloud
-           (mo->type == MT_HOLY_FX) ||  // holy fx
-           (mo->flags & MF_ICECORPSE))  // frozen corpse
-        {
-            // Let these special cases go
-        }
-        else if((mo->flags & MF_COUNTKILL) && (mo->health <= 0))
-        {
-            continue;
-        }
-        else if(!(mo->flags & MF_COUNTKILL) && !(mo->player) &&
-                !(mo->flags & MF_MISSILE))
-        {                       // Must be monster, player, or missile
-            continue;
-        }
-
-        if(mo->flags2 & MF2_DORMANT)
-            continue;           // no dormant creatures
-
-        if((mo->type == MT_WRAITHB) && (mo->flags2 & MF2_DONTDRAW))
-            continue;           // no underground wraiths
-
-        if((mo->type == MT_SPLASHBASE) || (mo->type == MT_SPLASH))
-            continue;
-
-        if(mo->type == MT_SERPENT || mo->type == MT_SERPENTLEADER)
-            continue;
-
-        dist = P_ApproxDistance(pmo->pos[VX] - mo->pos[VX],
-                                pmo->pos[VY] - mo->pos[VY]);
-        if(dist > BLAST_RADIUS_DIST)
-            continue; // Out of range
-
-        P_BlastMobj(pmo, mo, BLAST_FULLSTRENGTH);
-    }
-}
-
-/*
- * Do class specific effect for everyone in radius
- */
-boolean P_HealRadius(player_t *player)
-{
-    mobj_t *mo;
-    mobj_t *pmo = player->plr->mo;
-    thinker_t *think;
-    fixed_t dist;
-    int     effective = false;
-    int     amount;
-
-    for(think = gi.thinkercap->next; think != gi.thinkercap;
-        think = think->next)
-    {
-        if(think->function != P_MobjThinker)
-            continue; // Not a mobj thinker
-
-        mo = (mobj_t *) think;
-        if(!mo->player || mo->health <= 0)
-            continue;
-
-        dist = P_ApproxDistance(pmo->pos[VX] - mo->pos[VX],
-                                pmo->pos[VY] - mo->pos[VY]);
-        if(dist > HEAL_RADIUS_DIST)
-            continue; // Out of range
-
-        switch (player->class)
-        {
-        case PCLASS_FIGHTER: // Radius armor boost
-            if((P_GiveArmor(mo->player, ARMOR_ARMOR, 1)) ||
-               (P_GiveArmor(mo->player, ARMOR_SHIELD, 1)) ||
-               (P_GiveArmor(mo->player, ARMOR_HELMET, 1)) ||
-               (P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
-            {
-                effective = true;
-                S_StartSound(SFX_MYSTICINCANT, mo);
-            }
-            break;
-        case PCLASS_CLERIC: // Radius heal
-            amount = 50 + (P_Random() % 50);
-            if(P_GiveBody(mo->player, amount))
-            {
-                effective = true;
-                S_StartSound(SFX_MYSTICINCANT, mo);
-            }
-            break;
-        case PCLASS_MAGE: // Radius mana boost
-            amount = 50 + (P_Random() % 50);
-            if((P_GiveMana(mo->player, MANA_1, amount)) ||
-               (P_GiveMana(mo->player, MANA_2, amount)))
-            {
-                effective = true;
-                S_StartSound(SFX_MYSTICINCANT, mo);
-            }
-            break;
-        case PCLASS_PIG:
-        default:
-            break;
-        }
-    }
-    return (effective);
-}
-#endif
-
-#if __JHERETIC__
-void P_CheckReadyArtifact()
-{
-    player_t *player = &players[consoleplayer];
-
-    if(!player->inventory[inv_ptr].count)
-    {
-        // Set position markers and get next readyArtifact
-        inv_ptr--;
-        if(inv_ptr < 6)
-        {
-            curpos--;
-            if(curpos < 0)
-            {
-                curpos = 0;
-            }
-        }
-        if(inv_ptr >= player->inventorySlotNum)
-        {
-            inv_ptr = player->inventorySlotNum - 1;
-        }
-        if(inv_ptr < 0)
-        {
-            inv_ptr = 0;
-        }
-        player->readyArtifact = player->inventory[inv_ptr].type;
-
-        if(!player->inventorySlotNum)
-            player->readyArtifact = arti_none;
-    }
-}
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-void P_PlayerNextArtifact(player_t *player)
-{
-    if(player == &players[consoleplayer])
-    {
-        inv_ptr--;
-        if(inv_ptr < 6)
-        {
-            curpos--;
-            if(curpos < 0)
-            {
-                curpos = 0;
-            }
-        }
-        if(inv_ptr < 0)
-        {
-            inv_ptr = player->inventorySlotNum - 1;
-            if(inv_ptr < 6)
-            {
-                curpos = inv_ptr;
-            }
-            else
-            {
-                curpos = 6;
-            }
-        }
-        player->readyArtifact = player->inventory[inv_ptr].type;
-    }
-}
-
-void P_PlayerRemoveArtifact(player_t *player, int slot)
-{
-    int     i;
-    extern int inv_ptr;
-    extern int curpos;
-
-    player->update |= PSF_INVENTORY;
-    player->artifactCount--;
-    if(!(--player->inventory[slot].count))
-    {   // Used last of a type - compact the artifact list
-        player->readyArtifact = arti_none;
-        player->inventory[slot].type = arti_none;
-        for(i = slot + 1; i < player->inventorySlotNum; i++)
-        {
-            player->inventory[i - 1] = player->inventory[i];
-        }
-        player->inventorySlotNum--;
-        if(player == &players[consoleplayer])
-        {   // Set position markers and get next readyArtifact
-            inv_ptr--;
-            if(inv_ptr < 6)
-            {
-                curpos--;
-                if(curpos < 0)
-                {
-                    curpos = 0;
-                }
-            }
-            if(inv_ptr >= player->inventorySlotNum)
-            {
-                inv_ptr = player->inventorySlotNum - 1;
-            }
-            if(inv_ptr < 0)
-            {
-                inv_ptr = 0;
-            }
-            player->readyArtifact = player->inventory[inv_ptr].type;
-        }
-    }
-}
-
-void P_PlayerUseArtifact(player_t *player, artitype_t arti)
-{
-    int     i;
-# if __JHERETIC__
-    boolean play_sound = false;
-# endif
-    for(i = 0; i < player->inventorySlotNum; i++)
-    {
-# if __JHERETIC__
-        if(arti == NUMARTIFACTS)    // Use everything in panic?
-        {
-            if(P_UseArtifact(player, player->inventory[i].type))
-            {                   // Artifact was used - remove it from inventory
-                P_PlayerRemoveArtifact(player, i);
-                play_sound = true;
-                if(player == &players[consoleplayer])
-                    ArtifactFlash = 4;
-            }
-        }
-        else
-# endif
-        if(player->inventory[i].type == arti)
-        {   // Found match - try to use
-            if(P_UseArtifact(player, arti))
-            {   // Artifact was used - remove it from inventory
-                P_PlayerRemoveArtifact(player, i);
-# if __JHERETIC__
-                play_sound = true;
-# else
-                if(arti < arti_firstpuzzitem)
-                {
-                    S_ConsoleSound(SFX_ARTIFACT_USE, NULL, player - players);
-                }
-                else
-                {
-                    S_ConsoleSound(SFX_PUZZLE_SUCCESS, NULL, player - players);
-                }
-# endif
-                if(player == &players[consoleplayer])
-                    ArtifactFlash = 4;
-            }
-# if __JHERETIC__
-            else
-# else
-            else if(arti < arti_firstpuzzitem)
-# endif
-            {   // Unable to use artifact, advance pointer
-                P_PlayerNextArtifact(player);
-            }
-            break;
-        }
-    }
-
-# if __JHERETIC__
-    if(play_sound)
-        S_ConsoleSound(sfx_artiuse, NULL, player - players);
-# endif
-}
-
-/*
- * Returns true if the artifact was used.
- */
-boolean P_UseArtifact(player_t *player, artitype_t arti)
-{
-    mobj_t *mo;
-    angle_t angle;
-# if __JHEXEN__
-    int     i;
-    int     count;
-# endif
-
-    switch (arti)
-    {
-    case arti_invulnerability:
-        if(!P_GivePower(player, pw_invulnerability))
-        {
-            return (false);
-        }
-        break;
-# if __JHERETIC__
-    case arti_invisibility:
-        if(!P_GivePower(player, pw_invisibility))
-        {
-            return (false);
-        }
-        break;
-# endif
-    case arti_health:
-        if(!P_GiveBody(player, 25))
-        {
-            return (false);
-        }
-        break;
-    case arti_superhealth:
-        if(!P_GiveBody(player, 100))
-        {
-            return (false);
-        }
-        break;
-# if __JHEXEN__
-    case arti_healingradius:
-        if(!P_HealRadius(player))
-        {
-            return (false);
-        }
-        break;
-# endif
-# if __JHERETIC__
-    case arti_tomeofpower:
-        if(player->morphTics)
-        {                       // Attempt to undo chicken
-            if(P_UndoPlayerMorph(player) == false)
-            {                   // Failed
-                P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
-            }
-            else
-            {                   // Succeeded
-                player->morphTics = 0;
-                S_StartSound(sfx_wpnup, player->plr->mo);
-            }
-        }
-        else
-        {
-            if(!P_GivePower(player, pw_weaponlevel2))
-            {
-                return (false);
-            }
-            if(player->readyweapon == WP_FIRST)
-            {
-                P_SetPsprite(player, ps_weapon, S_STAFFREADY2_1);
-            }
-            else if(player->readyweapon == WP_EIGHTH)
-            {
-                P_SetPsprite(player, ps_weapon, S_GAUNTLETREADY2_1);
-            }
-        }
-        break;
-# endif
-    case arti_torch:
-        if(!P_GivePower(player, pw_infrared))
-        {
-            return (false);
-        }
-        break;
-# if __JHERETIC__
-    case arti_firebomb:
-        angle = player->plr->mo->angle >> ANGLETOFINESHIFT;
-        mo = P_SpawnMobj(player->plr->mo->pos[VX] + 24 * finecosine[angle],
-                         player->plr->mo->pos[VY] + 24 * finesine[angle],
-                         player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                         15 * FRACUNIT, MT_FIREBOMB);
-        mo->target = player->plr->mo;
-        break;
-# endif
-    case arti_egg:
-        mo = player->plr->mo;
-        P_SpawnPlayerMissile(mo, MT_EGGFX);
-        P_SPMAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 6));
-        P_SPMAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 6));
-        P_SPMAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 3));
-        P_SPMAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 3));
-        break;
-    case arti_teleport:
-        P_ArtiTele(player);
-        break;
-    case arti_fly:
-        if(!P_GivePower(player, pw_flight))
-        {
-            return (false);
-        }
-# if __JHEXEN__
-        if(player->plr->mo->momz <= -35 * FRACUNIT)
-        {   // stop falling scream
-            S_StopSound(0, player->plr->mo);
-        }
-#endif
-        break;
-# if __JHEXEN__
-    case arti_summon:
-        mo = P_SpawnPlayerMissile(player->plr->mo, MT_SUMMON_FX);
-        if(mo)
-        {
-            mo->target = player->plr->mo;
-            mo->special1 = (int) (player->plr->mo);
-            mo->momz = 5 * FRACUNIT;
-        }
-        break;
-    case arti_teleportother:
-        P_ArtiTeleportOther(player);
-        break;
-    case arti_poisonbag:
-        angle = player->plr->mo->angle >> ANGLETOFINESHIFT;
-        if(player->class == PCLASS_CLERIC)
-        {
-            mo = P_SpawnMobj(player->plr->mo->pos[VX] + 16 * finecosine[angle],
-                             player->plr->mo->pos[VY] + 24 * finesine[angle],
-                             player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                             8 * FRACUNIT, MT_POISONBAG);
-            if(mo)
-            {
-                mo->target = player->plr->mo;
-            }
-        }
-        else if(player->class == PCLASS_MAGE)
-        {
-            mo = P_SpawnMobj(player->plr->mo->pos[VX] + 16 * finecosine[angle],
-                             player->plr->mo->pos[VY] + 24 * finesine[angle],
-                             player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                             8 * FRACUNIT, MT_FIREBOMB);
-            if(mo)
-            {
-                mo->target = player->plr->mo;
-            }
-        }
-        else // PCLASS_FIGHTER, obviously (also pig, not so obviously)
-        {
-            mo = P_SpawnMobj(player->plr->mo->pos[VX],
-                             player->plr->mo->pos[VY],
-                             player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                             35 * FRACUNIT, MT_THROWINGBOMB);
-            if(mo)
-            {
-                mo->angle =
-                    player->plr->mo->angle + (((P_Random() & 7) - 4) << 24);
-                mo->momz =
-                    4 * FRACUNIT +
-                    (((int) player->plr->lookdir) << (FRACBITS - 4));
-                mo->pos[VZ] += ((int) player->plr->lookdir) << (FRACBITS - 4);
-                P_ThrustMobj(mo, mo->angle, mo->info->speed);
-                mo->momx += player->plr->mo->momx >> 1;
-                mo->momy += player->plr->mo->momy >> 1;
-                mo->target = player->plr->mo;
-                mo->tics -= P_Random() & 3;
-                P_CheckMissileSpawn(mo);
-            }
-        }
-        break;
-    case arti_speed:
-        if(!P_GivePower(player, pw_speed))
-        {
-            return (false);
-        }
-        break;
-    case arti_boostmana:
-        if(!P_GiveMana(player, MANA_1, MAX_MANA))
-        {
-            if(!P_GiveMana(player, MANA_2, MAX_MANA))
-            {
-                return false;
-            }
-
-        }
-        else
-        {
-            P_GiveMana(player, MANA_2, MAX_MANA);
-        }
-        break;
-    case arti_boostarmor:
-        count = 0;
-
-        for(i = 0; i < NUMARMOR; i++)
-        {
-            count += P_GiveArmor(player, i, 1); // 1 point per armor type
-        }
-        if(!count)
-        {
-            return false;
-        }
-        break;
-    case arti_blastradius:
-        P_BlastRadius(player);
-        break;
-
-    case arti_puzzskull:
-    case arti_puzzgembig:
-    case arti_puzzgemred:
-    case arti_puzzgemgreen1:
-    case arti_puzzgemgreen2:
-    case arti_puzzgemblue1:
-    case arti_puzzgemblue2:
-    case arti_puzzbook1:
-    case arti_puzzbook2:
-    case arti_puzzskull2:
-    case arti_puzzfweapon:
-    case arti_puzzcweapon:
-    case arti_puzzmweapon:
-    case arti_puzzgear1:
-    case arti_puzzgear2:
-    case arti_puzzgear3:
-    case arti_puzzgear4:
-        if(P_UsePuzzleItem(player, arti - arti_firstpuzzitem))
-        {
-            return true;
-        }
-        else
-        {
-            P_SetYellowMessage(player, TXT_USEPUZZLEFAILED);
-            return false;
-        }
-        break;
-# endif
-    default:
-        return false;
-    }
-    return true;
-}
-#endif
-
-#if __JHEXEN__
-void C_DECL A_SpeedFade(mobj_t *actor)
-{
-    actor->flags |= MF_SHADOW;
-    actor->flags &= ~MF_ALTSHADOW;
-    actor->sprite = actor->target->sprite;
-}
-#endif
-
 /*
  * Called once per tick by P_Ticker.
  * This routine does all the thinking for the console player during
@@ -1597,11 +775,7 @@ void P_ClientSideThink()
 
     // Message timer.
     pl->messageTics--;          // Can go negative
-    if(!pl->messageTics
-#if __JHEXEN__
-       || pl->messageTics == -1
-#endif
-       )
+    if(!pl->messageTics)
     {   // Refresh the screen when a message goes away
 #if __JHEXEN__
         pl->ultimateMessage = false;    // clear out any chat messages.
@@ -1613,8 +787,6 @@ void P_ClientSideThink()
 #if __JHEXEN__
     if(pl->morphTics > 0)
         pl->morphTics--;
-    if(pl->jumpTics)
-        pl->jumpTics--;
 #endif
 
     // Powers tic away.
@@ -1627,6 +799,7 @@ void P_ClientSideThink()
         case pw_invisibility:
         case pw_ironfeet:
         case pw_infrared:
+        case pw_strength:
 #elif __JHEXEN__
         case pw_invulnerability:
         case pw_infrared:
@@ -1642,24 +815,11 @@ void P_ClientSideThink()
         }
     }
 
-#if __JDOOM__
-    // Are we dead?
-    if(pl->playerstate == PST_DEAD)
-    {
-        if(dpl->viewheight > 6 * FRACUNIT)
-            dpl->viewheight -= FRACUNIT;
-        if(dpl->viewheight < 6 * FRACUNIT)
-            dpl->viewheight = 6 * FRACUNIT;
-    }
-
     // Jumping.
     if(pl->jumptics)
         pl->jumptics--;
+
     P_CheckPlayerJump(pl);
-#elif __JHEXEN__
-    if(cmd->jump)
-        P_PlayerJump(pl);
-#endif
 
     // Flying.
     fly = cmd->fly; //lookfly >> 4;
@@ -1745,7 +905,6 @@ void P_PlayerThink(player_t *player)
     weapontype_t newweapon, oldweapon;
 #if __JHEXEN__
     int     floorType;
-    int     playerNumber = player - players;
 #endif
 
     // jDoom
@@ -1788,11 +947,7 @@ void P_PlayerThink(player_t *player)
     // messageTics is above the rest of the counters so that messages will
     //              go away, even in death.
     player->messageTics--;      // Can go negative
-    if(!player->messageTics
-#if __JHEXEN__
-       || player->messageTics == -1
-#endif
-      )
+    if(!player->messageTics)
     {   // Refresh the screen when a message goes away
 #if __JHEXEN__
         player->ultimateMessage = false;    // clear out any chat messages.
@@ -1811,10 +966,6 @@ void P_PlayerThink(player_t *player)
     }
 
 #if __JHEXEN__
-    if(player->jumpTics)
-    {
-        player->jumpTics--;
-    }
     if(player->morphTics)
     {
         P_MorphPlayerThink(player);
@@ -1881,6 +1032,7 @@ void P_PlayerThink(player_t *player)
 
     if(P_XSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
+
 #if __JHEXEN__
     if((floorType = P_GetThingFloorType(player->plr->mo)) != FLOOR_SOLID)
     {
@@ -1915,32 +1067,37 @@ void P_PlayerThink(player_t *player)
     default:
         break;
     }
+#endif
 
-    if(cmd->jump && onground && !player->jumpTics)
-    {
-        P_PlayerJump(player);
-    }
+    if(player->jumptics)
+        player->jumptics--;
 
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(cmd->arti)
     {                           // Use an artifact
         if(cmd->arti == NUMARTIFACTS)
         {                       // use one of each artifact (except puzzle artifacts)
             int     i;
-
-            for(i = 1; i < arti_firstpuzzitem; i++)
+# if __JHEXEN__ || __JSTRIFE__
+            for(i = arti_none + 1; i < arti_firstpuzzitem; i++)
+# else
+            for(i = arti_none + 1; i < NUMARTIFACTS; i++)
+# endif
             {
-                P_PlayerUseArtifact(player, i);
+                P_InventoryUseArtifact(player, i);
             }
+        }
+        else if(cmd->arti == 0xff)
+        {
+            P_InventoryNextArtifact(player);
         }
         else
         {
-            P_PlayerUseArtifact(player, cmd->arti);
+            P_InventoryUseArtifact(player, cmd->arti);
         }
     }
-#elif __JDOOM__
-    if(player->jumptics)
-        player->jumptics--;
 #endif
+
     oldweapon = player->pendingweapon;
 
     // There might be a special weapon change.
@@ -1954,11 +1111,11 @@ void P_PlayerThink(player_t *player)
     }
 
     // Check for weapon change.
-    if(cmd->changeWeapon
 #if __JHEXEN__
-       && !player->morphTics
+    if(cmd->changeWeapon && !player->morphTics)
+#else
+    if(cmd->changeWeapon)
 #endif
-      )
     {
         // The actual changing of the weapon is done
         //  when the weapon psprite can do it
@@ -1982,11 +1139,13 @@ void P_PlayerThink(player_t *player)
     }
 
     if(player->pendingweapon != oldweapon)
+    {
 #if __JDOOM__
         player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
 #elif __JHEXEN__
         player->update |= PSF_PENDING_WEAPON;
 #endif
+    }
 
     // check for use
     if(cmd->use)
@@ -2015,11 +1174,17 @@ void P_PlayerThink(player_t *player)
     P_MovePsprites(player);
 
     // Counters, time dependend power ups.
+
 #if __JDOOM__
     // Strength counts up to diminish fade.
     if(player->powers[pw_strength])
         player->powers[pw_strength]++;
 
+    if(player->powers[pw_ironfeet])
+        player->powers[pw_ironfeet]--;
+#endif
+
+#if __JDOOM__ || __JHERETIC__
     if(player->powers[pw_invulnerability])
         player->powers[pw_invulnerability]--;
 
@@ -2028,19 +1193,115 @@ void P_PlayerThink(player_t *player)
         if(!--player->powers[pw_invisibility])
             player->plr->mo->flags &= ~MF_SHADOW;
     }
+#endif
 
+#if __JDOOM__ || __JHEXEN__
     if(player->powers[pw_infrared])
         player->powers[pw_infrared]--;
-
-    if(player->powers[pw_ironfeet])
-        player->powers[pw_ironfeet]--;
+#endif
 
     if(player->damagecount)
         player->damagecount--;
 
     if(player->bonuscount)
         player->bonuscount--;
-#elif __JHEXEN__
+
+#if __JHERETIC__ || __JHEXEN__
+# if __JHERETIC__
+    if(player->powers[pw_flight])
+# elif __JHEXEN__
+    if(player->powers[pw_flight] && IS_NETGAME)
+# endif
+    {
+        if(!--player->powers[pw_flight])
+        {
+            if(player->plr->mo->pos[VZ] != player->plr->mo->floorz)
+            {
+                player->centering = true;
+            }
+            player->plr->mo->flags2 &= ~MF2_FLY;
+            player->plr->mo->flags &= ~MF_NOGRAVITY;
+            //BorderTopRefresh = true; //make sure the sprite's cleared out
+            GL_Update(DDUF_TOP);
+        }
+    }
+#endif
+
+#if __JHERETIC__
+    if(player->powers[pw_weaponlevel2])
+    {
+        if(!--player->powers[pw_weaponlevel2])
+        {
+            if((player->readyweapon == WP_SIXTH) &&
+               (player->psprites[ps_weapon].state != &states[S_PHOENIXREADY])
+               && (player->psprites[ps_weapon].state != &states[S_PHOENIXUP]))
+            {
+                P_SetPsprite(player, ps_weapon, S_PHOENIXREADY);
+                player->ammo[am_phoenixrod] -= USE_PHRD_AMMO_2;
+                player->refire = 0;
+                player->update |= PSF_AMMO;
+            }
+            else if((player->readyweapon == WP_EIGHTH) ||
+                    (player->readyweapon == WP_FIRST))
+            {
+                player->pendingweapon = player->readyweapon;
+                player->update |= PSF_PENDING_WEAPON;
+            }
+            //BorderTopRefresh = true;
+            GL_Update(DDUF_TOP);
+        }
+    }
+#endif
+
+    // Colormaps
+#if __JHERETIC__ || __JHEXEN__
+    if(player->powers[pw_infrared])
+    {
+        if(player->powers[pw_infrared] <= BLINKTHRESHOLD)
+        {
+            if(player->powers[pw_infrared] & 8)
+            {
+                player->plr->fixedcolormap = 0;
+            }
+            else
+            {
+                player->plr->fixedcolormap = 1;
+            }
+        }
+        else if(!(leveltime & 16))  /* && player == &players[consoleplayer]) */
+        {
+            ddplayer_t *dp = player->plr;
+            int     playerNumber = player - players;
+
+            if(newtorch[playerNumber])
+            {
+                if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7 ||
+                   dp->fixedcolormap + newtorchdelta[playerNumber] < 1 ||
+                   newtorch[playerNumber] == dp->fixedcolormap)
+                {
+                    newtorch[playerNumber] = 0;
+                }
+                else
+                {
+                    dp->fixedcolormap += newtorchdelta[playerNumber];
+                }
+            }
+            else
+            {
+                newtorch[playerNumber] = (M_Random() & 7) + 1;
+                newtorchdelta[playerNumber] =
+                    (newtorch[playerNumber] ==
+                     dp->fixedcolormap) ? 0 : ((newtorch[playerNumber] >
+                                                dp->fixedcolormap) ? 1 : -1);
+            }
+        }
+    }
+    else
+    {
+        player->plr->fixedcolormap = 0;
+    }
+
+# if __JHEXEN__
     if(player->powers[pw_invulnerability])
     {
         if(player->class == PCLASS_CLERIC)
@@ -2089,36 +1350,12 @@ void P_PlayerThink(player_t *player)
     {
         player->powers[pw_minotaur]--;
     }
-    if(player->powers[pw_infrared])
-    {
-        player->powers[pw_infrared]--;
-    }
-    if(player->powers[pw_flight] && IS_NETGAME)
-    {
-        if(!--player->powers[pw_flight])
-        {
-            if(player->plr->mo->pos[VZ] != player->plr->mo->floorz)
-            {
-                player->centering = true;
-            }
-            player->plr->mo->flags2 &= ~MF2_FLY;
-            player->plr->mo->flags &= ~MF_NOGRAVITY;
-            //BorderTopRefresh = true; //make sure the sprite's cleared out
-            GL_Update(DDUF_TOP);
-        }
-    }
+
     if(player->powers[pw_speed])
     {
         player->powers[pw_speed]--;
     }
-    if(player->damagecount)
-    {
-        player->damagecount--;
-    }
-    if(player->bonuscount)
-    {
-        player->bonuscount--;
-    }
+
     if(player->poisoncount && !(leveltime & 15))
     {
         player->poisoncount -= 5;
@@ -2128,63 +1365,6 @@ void P_PlayerThink(player_t *player)
         }
         P_PoisonDamage(player, player->poisoner, 1, true);
     }
-    // Colormaps
-    //  if(player->powers[pw_invulnerability])
-    //  {
-    //      if(player->powers[pw_invulnerability] > BLINKTHRESHOLD
-    //          || (player->powers[pw_invulnerability]&8))
-    //      {
-    //          player->plr->fixedcolormap = INVERSECOLORMAP;
-    //      }
-    //      else
-    //      {
-    //          player->plr->fixedcolormap = 0;
-    //      }
-    //  }
-    //  else
-    if(player->powers[pw_infrared])
-    {
-        if(player->powers[pw_infrared] <= BLINKTHRESHOLD)
-        {
-            if(player->powers[pw_infrared] & 8)
-            {
-                player->plr->fixedcolormap = 0;
-            }
-            else
-            {
-                player->plr->fixedcolormap = 1;
-            }
-        }
-        else if(!(leveltime & 16))  /* && player == &players[consoleplayer]) */
-        {
-            ddplayer_t *dp = player->plr;
-
-            if(newtorch[playerNumber])
-            {
-                if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7 ||
-                   dp->fixedcolormap + newtorchdelta[playerNumber] < 1 ||
-                   newtorch[playerNumber] == dp->fixedcolormap)
-                {
-                    newtorch[playerNumber] = 0;
-                }
-                else
-                {
-                    dp->fixedcolormap += newtorchdelta[playerNumber];
-                }
-            }
-            else
-            {
-                newtorch[playerNumber] = (M_Random() & 7) + 1;
-                newtorchdelta[playerNumber] =
-                    (newtorch[playerNumber] ==
-                     dp->fixedcolormap) ? 0 : ((newtorch[playerNumber] >
-                                                dp->fixedcolormap) ? 1 : -1);
-            }
-        }
-    }
-    else
-    {
-        player->plr->fixedcolormap = 0;
-    }
+# endif
 #endif
 }

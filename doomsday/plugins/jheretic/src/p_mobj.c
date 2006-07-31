@@ -44,8 +44,6 @@ void    P_ApplyTorque(mobj_t *mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    P_SpawnMapThing(thing_t * mthing);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -569,7 +567,9 @@ void P_ZMovement(mobj_t *mo)
                 // after hitting the ground (hard),
                 // and utter appropriate sound.
                 mo->dplayer->deltaviewheight = mo->momz >> 3;
-                S_StartSound(sfx_plroof, mo);
+
+                if(mo->player->health > 0)
+                    S_StartSound(sfx_plroof, mo);
             }
             mo->momz = 0;
         }
@@ -631,7 +631,10 @@ void P_ZMovement(mobj_t *mo)
 #if __JHERETIC__
                 mo->player->jumptics = 12;  // can't jump in a while.
 #endif
-                S_StartSound(sfx_plroof, mo);
+                // Fix DOOM bug - dead players grunting when hitting the ground
+                // (e.g., after an archvile attack)
+                if(mo->player->health > 0)
+                    S_StartSound(sfx_plroof, mo);
             }
             P_HitFloor(mo);
             mo->momz = 0;
@@ -1233,7 +1236,7 @@ void P_SpawnMapThing(thing_t * th)
     // count deathmatch start positions
     if(th->type == 11)
     {
-        if(deathmatch_p < &deathmatchstarts[16])
+        if(deathmatch_p < &deathmatchstarts[MAX_DM_STARTS])
         {
             memcpy(deathmatch_p, th, sizeof(*th));
             deathmatch_p++;

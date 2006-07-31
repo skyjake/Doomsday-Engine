@@ -882,7 +882,7 @@ void ArchivePlayer(player_t *player)
     StreamOutLong(p->colormap);
     StreamOutBuffer(p->psprites, sizeof(p->psprites));
     StreamOutLong(p->morphTics);
-    StreamOutLong(p->jumpTics);
+    StreamOutLong(p->jumptics);
     StreamOutLong(p->worldTimer);
 }
 
@@ -942,7 +942,7 @@ void UnarchivePlayer(player_t *p)
     p->colormap = GET_LONG;
     GET_BUFFER(p->psprites);
     p->morphTics = GET_LONG;
-    p->jumpTics = GET_LONG;
+    p->jumptics = GET_LONG;
     p->worldTimer = GET_LONG;
 
     // Demangle it.
@@ -1315,7 +1315,7 @@ static void SetMobjArchiveNums(void)
             mobj->archiveNum = MOBJ_NULL;
     }
 
-    for(thinker = gi.thinkercap->next; thinker != gi.thinkercap;
+    for(thinker = thinkercap.next; thinker != &thinkercap && thinker;
         thinker = thinker->next)
     {
         if(thinker->function == P_MobjThinker)
@@ -1459,7 +1459,7 @@ static void ArchiveMobjs(void)
     StreamOutLong(ASEG_MOBJS);
     StreamOutLong(MobjCount);
     count = 0;
-    for(thinker = gi.thinkercap->next; thinker != gi.thinkercap;
+    for(thinker = thinkercap.next; thinker != &thinkercap && thinker;
         thinker = thinker->next)
     {
         if(thinker->function != P_MobjThinker)
@@ -1770,7 +1770,7 @@ static void ArchiveThinkers(void)
     byte    buffer[MAX_THINKER_SIZE];
 
     StreamOutLong(ASEG_THINKERS);
-    for(thinker = gi.thinkercap->next; thinker != gi.thinkercap;
+    for(thinker = thinkercap.next; thinker != &thinkercap && thinker;
         thinker = thinker->next)
     {
         for(info = ThinkerInfo; info->tClass != TC_NULL; info++)
@@ -2009,8 +2009,8 @@ static void RemoveAllThinkers(void)
     thinker_t *thinker;
     thinker_t *nextThinker;
 
-    thinker = gi.thinkercap->next;
-    while(thinker != gi.thinkercap)
+    thinker = thinkercap.next;
+    while(thinker != &thinkercap && thinker)
     {
         nextThinker = thinker->next;
         if(thinker->function == P_MobjThinker)

@@ -50,6 +50,9 @@ void    ST_Init(void);
 
 void    ST_updateGraphics(void);
 
+// Called when it might be neccessary for the hud to unhide.
+void    ST_HUDUnHide(enum hueevent_e event);
+
 // States for status bar code.
 typedef enum {
     AutomapState,
@@ -63,6 +66,6 @@ typedef enum {
     GetChatState
 } st_chatstateenum_t;
 
-int             D_GetFilterColor(int filter);
+int             R_GetFilterColor(int filter);
 
 #endif

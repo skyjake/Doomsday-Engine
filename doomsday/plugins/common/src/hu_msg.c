@@ -31,27 +31,20 @@
 # include "doomstat.h"
 # include "r_local.h"
 # include "p_local.h"
-# include "m_ctrl.h"
 # include "dstrings.h"  // Data.
 #elif __JHERETIC__
 # include "jheretic.h"
 #elif __JHEXEN__
 # include "jhexen.h"
 #elif __JSTRIFE__
-# include "h2def.h"
-# include "d_config.h"
-# include "mn_def.h"
-# include "sounds.h"
-# include "r_local.h"
-# include "p_local.h"
-# include "m_ctrl.h"
-# include "textdefs.h"  // Data.
+# include "jstrife.h"
 #endif
 
 #include "hu_stuff.h"
 #include "hu_msg.h"
 #include "hu_lib.h"
 #include "g_common.h"
+#include "g_controls.h"
 #include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
@@ -576,7 +569,12 @@ void HUMsg_SendMessage(char *msg)
                 DD_Execute(buff, false);
             }
     }
-#ifdef __JDOOM__
+#if __WOLFTC__
+    if(gamemode == commercial)
+        S_LocalSound(sfx_hudms1, 0);
+    else
+        S_LocalSound(sfx_hudms2, 0);
+#elif __JDOOM__
     if(gamemode == commercial)
         S_LocalSound(sfx_radio, 0);
     else

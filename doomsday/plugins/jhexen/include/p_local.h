@@ -86,6 +86,8 @@ typedef enum {
 
 extern int      TimerGame;         // tic countdown for deathmatch
 
+#define thinkercap      (*gi.thinkercap)
+
 // ***** P_PSPR *****
 
 #define USE_MANA1   1
@@ -101,14 +103,11 @@ void            P_ActivateMorphWeapon(player_t *player);
 void            P_PostMorphWeapon(player_t *player, weapontype_t weapon);
 
 // ***** P_USER *****
-
-void            P_PlayerThink(player_t *player);
 void            P_Thrust(player_t *player, angle_t angle, fixed_t move);
-void            P_PlayerRemoveArtifact(player_t *player, int slot);
-void            P_PlayerUseArtifact(player_t *player, artitype_t arti);
-boolean         P_UseArtifact(player_t *player, artitype_t arti);
 void            P_TeleportOther(mobj_t *victim);
+void            P_ArtiTeleportOther(player_t *player);
 void            ResetBlasted(mobj_t *mo);
+boolean         P_UndoPlayerMorph(player_t *player);
 
 // ***** P_MOBJ *****
 
@@ -127,9 +126,16 @@ enum {
 #define FLOATRANDZ (DDMAXINT-1)
 #define FROMCEILINGZ128 (DDMAXINT-2)
 
+// Time interval for item respawning.
+#define ITEMQUESIZE     128
+
+extern int      iquehead;
+extern int      iquetail;
+
 extern mobjtype_t PuffType;
 extern mobj_t  *MissileMobj;
 
+void            P_SpawnMapThing(thing_t * th);
 mobj_t         *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
 void            P_RemoveMobj(mobj_t *th);
 boolean         P_SetMobjState(mobj_t *mobj, statenum_t state);
@@ -140,6 +146,8 @@ boolean         P_SeekerMissile(mobj_t *actor, angle_t thresh,
                                 angle_t turnMax);
 void            P_MobjThinker(mobj_t *mobj);
 void            P_BlasterMobjThinker(mobj_t *mobj);
+boolean         P_HealRadius(player_t *player);
+void            P_BlastRadius(player_t *player);
 void            P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
 void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
 void            P_BloodSplatter(fixed_t x, fixed_t y, fixed_t z,
@@ -260,7 +268,6 @@ void            P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison);
 void            P_PoisonDamage(player_t *player, mobj_t *source, int damage,
                                boolean playPainSound);
 boolean         P_GiveMana(player_t *player, ammotype_t mana, int count);
-boolean         P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo);
 boolean         P_GiveArmor(player_t *player, armortype_t armortype,
                             int amount);
 boolean         P_GiveBody(player_t *player, int num);
@@ -277,10 +284,16 @@ boolean         A_LocalQuake(byte *args, mobj_t *victim);
 void            P_SpawnDirt(mobj_t *actor, fixed_t radius);
 void C_DECL     A_BridgeRemove(mobj_t *actor);
 
-// ***** SB_BAR *****
+// ***** ST_STUFF *****
+
+extern int      curpos;
+
+void            ST_Inventory(boolean show);
+boolean         ST_IsInventoryVisible(void);
+
+void            ST_InventoryFlashCurrent(player_t *player);
 
 extern int      SB_state;
-extern int      ArtifactFlash;
 void            SB_PaletteFlash(boolean forceChange);
 
 // ===== PO_MAN =====

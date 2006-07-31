@@ -19,6 +19,10 @@
 #ifndef __D_ITEMS__
 #define __D_ITEMS__
 
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
 #include "doomdef.h"
 
 #ifdef __GNUG__

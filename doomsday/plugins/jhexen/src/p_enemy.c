@@ -430,7 +430,7 @@ boolean P_LookForMonsters(mobj_t *actor)
         return (false);
     }
     count = 0;
-    for(think = gi.thinkercap->next; think != gi.thinkercap;
+    for(think = thinkercap.next; think != &thinkercap && think;
         think = think->next)
     {
         if(think->function != P_MobjThinker)
@@ -1143,7 +1143,7 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
 
     if(!actor->target)          // Normal monster search
     {
-        for(think = gi.thinkercap->next; think != gi.thinkercap;
+        for(think = thinkercap.next; think != &thinkercap && think;
             think = think->next)
         {
             if(think->function != P_MobjThinker)
@@ -1674,7 +1674,7 @@ int P_Massacre(void)
         return 0;
 
     count = 0;
-    for(think = gi.thinkercap->next; think != gi.thinkercap;
+    for(think = thinkercap.next; think != &thinkercap && think;
         think = think->next)
     {
         if(think->function != P_MobjThinker)
@@ -1847,7 +1847,7 @@ void P_InitCreatureCorpseQueue(boolean corpseScan)
         return;
 
     // Search mobj list for corpses and place them in this queue
-    for(think = gi.thinkercap->next; think != gi.thinkercap;
+    for(think = thinkercap.next; think != &thinkercap && think;
         think = think->next)
     {
         if(think->function != P_MobjThinker)
@@ -2049,6 +2049,13 @@ void C_DECL A_SerpentChase(mobj_t *actor)
     {
         S_StartSound(actor->info->activesound, actor);
     }
+}
+
+void C_DECL A_SpeedFade(mobj_t *actor)
+{
+    actor->flags |= MF_SHADOW;
+    actor->flags &= ~MF_ALTSHADOW;
+    actor->sprite = actor->target->sprite;
 }
 
 //============================================================================

@@ -1088,7 +1088,7 @@ void C_DECL A_MStaffAttack(player_t *player, pspdef_t * psp)
         player->damagecount = 0;
         player->bonuscount = 0;
 
-        H2_SetFilter(STARTSCOURGEPAL);
+        R_SetFilter(STARTSCOURGEPAL);
     }
 }
 
@@ -1104,7 +1104,7 @@ void C_DECL A_MStaffPalette(player_t *player, pspdef_t * psp)
             pal = 0;
         }
 
-        H2_SetFilter(pal);
+        R_SetFilter(pal);
     }
 }
 
@@ -1615,7 +1615,7 @@ void C_DECL A_CHolyAttack(player_t *player, pspdef_t * psp)
         player->damagecount = 0;
         player->bonuscount = 0;
 
-        H2_SetFilter(STARTHOLYPAL);
+        R_SetFilter(STARTHOLYPAL);
     }
     S_StartSound(SFX_CHOLY_FIRE, player->plr->mo);
 }
@@ -1632,7 +1632,7 @@ void C_DECL A_CHolyPalette(player_t *player, pspdef_t * psp)
             pal = 0;
         }
 
-        H2_SetFilter(pal);
+        R_SetFilter(pal);
     }
 }
 

@@ -462,9 +462,11 @@ boolean         EV_StartFloorWaggle(int tag, int height, int speed, int offset,
 //
 //--------------------------------------------------------------------------
 
+#define         TELEFOGHEIGHT (32*FRACUNIT)
 boolean         P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
                            boolean useFog);
 boolean         EV_Teleport(int tid, mobj_t *thing, boolean fog);
+void            P_ArtiTele(player_t *player);
 
 //--------------------------------------------------------------------------
 //

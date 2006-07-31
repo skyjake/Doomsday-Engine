@@ -64,8 +64,6 @@ extern int actual_leveltime;
 extern dpatch_t *lnames;
 
 extern boolean amap_fullyopen;
-
-extern boolean inhelpscreens;
 extern float lookOffset;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -239,16 +237,12 @@ void D_Display(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    static boolean inhelpscreensstate = false;
     static int fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
     int     ay;
     boolean redrawsbar;
     player_t *player = &players[displayplayer];
     boolean iscam = (player->plr->flags & DDPF_CAMERA) != 0;    // $democam
-
-    if(nodrawers)
-        return;                 // for comparative timing / profiling
 
     redrawsbar = false;
 
@@ -326,8 +320,6 @@ void D_Display(void)
 
             if((viewheight != 200))
                 redrawsbar = true;
-            if(inhelpscreensstate && !inhelpscreens)
-                redrawsbar = true;  // just put away the help screen
 
             // Do we need to render a full status bar at this point?
             if (!(automapactive && cfg.automapHudDisplay == 0 ))
@@ -378,7 +370,6 @@ void D_Display(void)
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;
-    inhelpscreensstate = inhelpscreens;
     oldgamestate = wipegamestate = gamestate;
 
     // draw pause pic (but not if InFine active)

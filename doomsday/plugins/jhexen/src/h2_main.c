@@ -190,7 +190,7 @@ boolean D_SetGameMode(GameMode_t mode)
 /*
  * Set the game mode string.
  */
-void H2_IdentifyVersion(void)
+void G_IdentifyVersion(void)
 {
     // Determine the game mode. Assume demo mode.
     strcpy(gameModeString, "hexen-demo");
@@ -243,6 +243,7 @@ void H2_PreInit(void)
     cfg.playerMoveSpeed = 1;
     cfg.sbarscale = 20;
     cfg.dclickuse = false;
+    cfg.inventoryNextOnUnuse = true;
     cfg.mouseSensiX = 8;
     cfg.mouseSensiY = 8;
     cfg.joyaxis[0] = JOYAXIS_TURN;
@@ -256,7 +257,7 @@ void H2_PreInit(void)
     cfg.xhairSize = 1;
     for(i = 0; i < 4; i++)
         cfg.xhairColor[i] = 255;
-    cfg.jumpEnabled = true;     // Always true in Hexen
+    cfg.jumpEnabled = cfg.netJumping = true;     // true by default in Hexen
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;
     cfg.netMap = 1;

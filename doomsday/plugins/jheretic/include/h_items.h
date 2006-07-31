@@ -58,7 +58,7 @@ void            P_InitWeaponInfo(void);
 
 #define NUMINVENTORYSLOTS   14
 typedef struct {
-    int             type;
+    artitype_e      type;
     int             count;
 } inventory_t;
 

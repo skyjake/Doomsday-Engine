@@ -214,7 +214,7 @@ void DetectIWADs(void)
 /*
  * gamemode, gamemission and the gameModeString are set.
  */
-void H_IdentifyVersion(void)
+void G_IdentifyVersion(void)
 {
     // The game mode string is used in netgames.
     strcpy(gameModeString, "heretic");
@@ -246,6 +246,7 @@ void H_PreInit(void)
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
     cfg.dclickuse = false;
+    cfg.inventoryNextOnUnuse = true;
     cfg.mouseSensiX = cfg.mouseSensiY = 8;
     cfg.povLookAround = true;
     cfg.joyaxis[0] = JOYAXIS_TURN;

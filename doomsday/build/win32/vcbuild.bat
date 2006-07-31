@@ -100,15 +100,14 @@ md %BIN_DIR%
 md %OBJ_DIR%
 GOTO Done
 
-
 :: *** Resources (dialogs for Doomsday and drD3D)
 :: Requires rc.exe and cvtres.exe from the Platform SDK.
 :Res
 rc ./../../engine/win32/res/Doomsday.rc
-cvtres /OUT:doomsday_res.obj /MACHINE:X86 ./../../engine/win32/doomsday.res
+cvtres /OUT:%OBJ_DIR%doomsday_res.obj /MACHINE:X86 ./../../engine/win32/res/Doomsday.res
 rc ./../../plugins/d3d/res/drD3D.rc
 IF NOT EXIST %OBJ_DIR%/drD3D md %OBJ_DIR%/drD3D
-cvtres /OUT:drD3D_res.obj /MACHINE:X86 ./../../plugins/d3d/res/drD3D.res
+cvtres /OUT:%OBJ_DIR%/drD3D/drD3D_res.obj /MACHINE:X86 ./../../plugins/d3d/res/drD3D.res
 GOTO Done
 
 
@@ -143,7 +142,7 @@ GOTO DONE
 :Doomsday
 CALL vcbuild checkdmt
 ECHO Compiling Doomsday.exe (Engine)...
-cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% /D "__DOOMSDAY__"  ./../../engine/win32/res/doomsday_res.obj @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib fmodvc.lib %EXTERNAL%/lzss/win32/lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/LZSS.lib gdi32.lib ole32.lib user32.lib
+cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib fmodvc.lib %EXTERNAL%/lzss/win32/lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/LZSS.lib gdi32.lib ole32.lib user32.lib
 GOTO Done
 
 

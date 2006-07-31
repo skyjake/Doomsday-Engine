@@ -33,7 +33,6 @@
 #  include "doomstat.h"
 #  include "d_config.h"
 #  include "s_sound.h"
-#  include "m_random.h"
 #  include "p_inter.h"
 #  include "r_defs.h"
 #  include "g_game.h"

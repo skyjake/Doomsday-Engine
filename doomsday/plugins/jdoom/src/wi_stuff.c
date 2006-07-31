@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "doomdef.h"
-#include "m_random.h"
 #include "g_game.h"
 #include "s_sound.h"
 #include "doomstat.h"

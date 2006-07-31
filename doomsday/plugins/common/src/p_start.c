@@ -45,20 +45,22 @@
 
 // MACROS ------------------------------------------------------------------
 
-// Maximum number of different player starts.
 #if __JDOOM__ || __JHERETIC__
-#  define MAX_START_SPOTS 4
+#  define TELEPORTSOUND   sfx_telept
+#  define MAX_START_SPOTS 4 // Maximum number of different player starts.
 #else
+#  define TELEPORTSOUND   SFX_TELEPORT
 #  define MAX_START_SPOTS 8
 #endif
+
+// Time interval for item respawning.
+#define ITEMQUESIZE     128
 
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void P_SpawnMapThing(thing_t * mthing);
 
 #if __JHERETIC__
 char *P_GetLevelName(int episode, int map);
@@ -76,11 +78,12 @@ void InitMapInfo(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Maintain single and multi player starting spots.
-thing_t deathmatchstarts[MAX_DM_STARTS];
+thing_t  deathmatchstarts[MAX_DM_STARTS];
 thing_t *deathmatch_p;
 
 thing_t *playerstarts;
 int      numPlayerStarts = 0;
+
 thing_t *things;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -233,105 +236,59 @@ void P_DealPlayerStarts(void)
 /*
  * Returns false if the player cannot be respawned
  * at the given thing_t spot because something is occupying it
- * FIXME: Quite a mess!
  */
-boolean P_CheckSpot(int playernum, thing_t * mthing, boolean doTeleSpark)
+boolean P_CheckSpot(int playernum, thing_t *mthing, boolean doTeleSpark)
 {
-    fixed_t x;
-    fixed_t y;
-    unsigned an;
-    mobj_t *mo;
+    fixed_t     pos[3];
+    ddplayer_t *ddplyr = players[playernum].plr;
+    boolean     using_dummy = false;
 
-#if __JDOOM__ || __JSTRIFE__
-    int     i;
-#endif
-#if __JHERETIC__ || __JHEXEN__
-    boolean using_dummy = false;
-    thing_t faraway;
-#endif
+    pos[VX] = mthing->x << FRACBITS;
+    pos[VY] = mthing->y << FRACBITS;
 
-#if __JDOOM__ || __JSTRIFE__
-    if(!players[playernum].plr->mo)
-    {
-        // first spawn of level, before corpses
-        for(i = 0; i < playernum; i++)
-        {
-            if(players[i].plr->mo &&
-               players[i].plr->mo->pos[VX] == mthing->x << FRACBITS &&
-               players[i].plr->mo->pos[VY] == mthing->y << FRACBITS)
-                return false;
-        }
-        return true;
-    }
-#endif
-
-
-    x = mthing->x << FRACBITS;
-    y = mthing->y << FRACBITS;
-
-#if __JHERETIC__ || __JHEXEN__
-    if(!players[playernum].plr->mo)
+    if(!ddplyr->mo)
     {
         // The player doesn't have a mobj. Let's create a dummy.
-        faraway.x = faraway.y = DDMAXSHORT;
-        P_SpawnPlayer(&faraway, playernum);
+        G_DummySpawnPlayer(playernum);
         using_dummy = true;
     }
-#endif
-    players[playernum].plr->mo->flags2 &= ~MF2_PASSMOBJ;
 
-    if(!P_CheckPosition(players[playernum].plr->mo, x, y))
+    ddplyr->mo->flags2 &= ~MF2_PASSMOBJ;
+
+    if(!P_CheckPosition(ddplyr->mo, pos[VX], pos[VY]))
     {
-        players[playernum].plr->mo->flags2 |= MF2_PASSMOBJ;
-#if __JHERETIC__ || __JHEXEN__
+        ddplyr->mo->flags2 |= MF2_PASSMOBJ;
+
         if(using_dummy)
         {
-            P_RemoveMobj(players[playernum].plr->mo);
-            players[playernum].plr->mo = NULL;
+            P_RemoveMobj(ddplyr->mo);
+            ddplyr->mo = NULL;
         }
-#endif
         return false;
     }
+    ddplyr->mo->flags2 |= MF2_PASSMOBJ;
 
-#if __JDOOM__ || __JHERETIC__
-    players[playernum].plr->mo->flags2 |= MF2_PASSMOBJ;
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
     if(using_dummy)
     {
-        P_RemoveMobj(players[playernum].plr->mo);
-        players[playernum].plr->mo = NULL;
+        P_RemoveMobj(ddplyr->mo);
+        ddplyr->mo = NULL;
     }
-#endif
 
 #if __JDOOM__
-    G_QueueBody(players[playernum].plr->mo);
+    G_QueueBody(ddplyr->mo);
 #endif
 
-    if(doTeleSpark)
+    if(doTeleSpark) // spawn a teleport fog
     {
-        // spawn a teleport fog
-        an = (ANG45 * (mthing->angle / 45)) >> ANGLETOFINESHIFT;
+        mobj_t *mo;
+        fixed_t an = (ANG45 * (mthing->angle / 45)) >> ANGLETOFINESHIFT;
 
-#if __JDOOM__ || __JHEXEN__ || __JSTRIFE__
-        mo = P_SpawnMobj(x + 20 * finecosine[an], y + 20 * finesine[an],
-                         P_GetFixedp(R_PointInSubsector(x, y),
-                                     DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT),
-                         MT_TFOG);
-#else                           // __JHERETIC__
-        mo = P_SpawnTeleFog(x + 20 * finecosine[an], y + 20 * finesine[an]);
-#endif
+        mo = P_SpawnTeleFog(pos[VX] + 20 * finecosine[an],
+                            pos[VY] + 20 * finesine[an]);
 
         // don't start sound on first frame
         if(players[consoleplayer].plr->viewz != 1)
-        {
-#if __JHEXEN__ || __JSTRIFE__
-            S_StartSound(SFX_TELEPORT, mo);
-#else
-            S_StartSound(sfx_telept, mo);
-#endif
-        }
+            S_StartSound(TELEPORTSOUND, mo);
     }
 
     return true;
@@ -343,15 +300,15 @@ boolean P_CheckSpot(int playernum, thing_t * mthing, boolean doTeleSpark)
  */
 boolean P_FuzzySpawn(thing_t * spot, int playernum, boolean doTeleSpark)
 {
-    thing_t place;
-
     int     i, k, x, y;
     int     offset = 33;        // Player radius = 16
+    thing_t place;
 
     // Try some spots in the vicinity.
     for(i = 0; i < 9; i++)
     {
         memcpy(&place, spot, sizeof(*spot));
+
         if(i != 0)
         {
             k = (i == 4 ? 0 : i);
@@ -361,6 +318,7 @@ boolean P_FuzzySpawn(thing_t * spot, int playernum, boolean doTeleSpark)
             place.x += x * offset;
             place.y += y * offset;
         }
+
         if(P_CheckSpot(playernum, &place, doTeleSpark))
         {
             // This is good!
@@ -415,8 +373,8 @@ void P_SpawnThings(void)
                 break;
             }
         }
-        if(spawn == false)
-            break;
+        if(!spawn)
+            continue;
 #endif
         P_SpawnMapThing(th);
     }
@@ -434,7 +392,8 @@ void P_SpawnThings(void)
     playerCount = 0;
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        playerCount += players[i].plr->ingame;
+        if(players[i].plr->ingame)
+            playerCount++;
     }
 
     deathSpotsCount = deathmatch_p - deathmatchstarts;
@@ -498,16 +457,82 @@ void P_SpawnPlayers(void)
     }
 }
 
-#if __JHEXEN__ || __JSTRIFE__
 /*
- * Hexen specific. Returns the correct start for the player. The start
+ *  Spawns the given player at a dummy place.
+ */
+void G_DummySpawnPlayer(int playernum)
+{
+    thing_t faraway;
+
+    faraway.x = faraway.y = DDMAXSHORT;
+    faraway.angle = (short) 0;
+    P_SpawnPlayer(&faraway, playernum);
+}
+
+/*
+ * Spawns a player at one of the random death match spots
+ * called at level load and each death
+ */
+void G_DeathMatchSpawnPlayer(int playernum)
+{
+    int     i, j;
+    int     selections;
+    boolean using_dummy = false;
+    ddplayer_t *pl = players[playernum].plr;
+
+    // Spawn player initially at a distant location.
+    if(!pl->mo)
+    {
+        G_DummySpawnPlayer(playernum);
+        using_dummy = true;
+    }
+
+    // Now let's find an available deathmatch start.
+    selections = deathmatch_p - deathmatchstarts;
+    if(selections < 2)
+        Con_Error("Only %i deathmatch spots, 2 required", selections);
+
+    for(j = 0; j < 20; j++)
+    {
+        i = P_Random() % selections;
+        if(P_CheckSpot(playernum, &deathmatchstarts[i], true))
+        {
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+            deathmatchstarts[i].type = playernum + 1;
+#endif
+            break;
+        }
+    }
+
+    if(using_dummy)
+    {
+        // Destroy the dummy.
+        P_RemoveMobj(pl->mo);
+        pl->mo = NULL;
+    }
+
+    P_SpawnPlayer(&deathmatchstarts[i], playernum);
+
+#if __JDOOM__ || __JHERETIC__
+    // Gib anything at the spot.
+    P_Telefrag(players[playernum].plr->mo);
+#endif
+}
+
+/*
+ * Returns the correct start for the player. The start
  * is in the given group, or zero if no such group exists.
+ *
+ * With jDoom groups arn't used at all.
  */
 thing_t *P_GetPlayerStart(int group, int pnum)
 {
+#if __JDOOM__ || __JHERETIC__
+    return &playerstarts[players[pnum].startspot];
+#else
     int i;
 
-    thing_t *mt, *g0choice = playerstarts;
+    thing_t *mt, *g0choice;
 
     for(i = 0; i < numPlayerStarts; ++i)
     {
@@ -520,8 +545,8 @@ thing_t *P_GetPlayerStart(int group, int pnum)
     }
     // Return the group zero choice.
     return g0choice;
-}
 #endif
+}
 
 #if __JHERETIC__ || __JHEXEN__
 fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
@@ -554,7 +579,7 @@ fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
  * original maps. The DOOM engine allowed these kinds of things but
  * a Z-buffer doesn't.
  */
-void P_MoveThingsOutOfWalls()
+void P_MoveThingsOutOfWalls(void)
 {
 #define MAXLIST 200
     sector_t *sec;
@@ -625,7 +650,7 @@ void P_MoveThingsOutOfWalls()
 /*
  * Fails in some places, but works most of the time.
  */
-void P_TurnGizmosAwayFromDoors()
+void P_TurnGizmosAwayFromDoors(void)
 {
 #define MAXLIST 200
     sector_t *sec;
@@ -698,7 +723,7 @@ void P_TurnGizmosAwayFromDoors()
  * Pretty much the same as P_TurnGizmosAwayFromDoors()
  * TODO: Merge them together
  */
-void P_TurnTorchesToFaceWalls()
+void P_TurnTorchesToFaceWalls(void)
 {
 #define MAXLIST 200
     sector_t *sec;

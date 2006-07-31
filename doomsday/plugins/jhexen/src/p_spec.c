@@ -481,47 +481,18 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock)
 
 boolean EV_LineSearchForPuzzleItem(line_t *line, byte *args, mobj_t *mo)
 {
-    player_t *player;
-    int     i;
-    artitype_t type, arti;
+    artitype_e arti;
 
-    if(!mo)
+    if(!mo || !mo->player || !line)
         return false;
-    player = mo->player;
-    if(!player)
+
+    arti = arti_firstpuzzitem + P_XLine(line)->arg1;
+
+    if(arti < arti_firstpuzzitem)
         return false;
 
     // Search player's inventory for puzzle items
-    for(i = 0; i < player->artifactCount; i++)
-    {
-        arti = player->inventory[i].type;
-        type = arti - arti_firstpuzzitem;
-        if(type < 0)
-            continue;
-        if(type == P_XLine(line)->arg1)
-        {
-            // A puzzle item was found for the line
-            if(P_UseArtifact(player, arti))
-            {
-                // A puzzle item was found for the line
-                P_PlayerRemoveArtifact(player, i);
-                if(arti < arti_firstpuzzitem)
-                {
-                    S_ConsoleSound(SFX_ARTIFACT_USE, NULL, player - players);
-                }
-                else
-                {
-                    S_ConsoleSound(SFX_PUZZLE_SUCCESS, NULL, player - players);
-                }
-                if(player == &players[consoleplayer])
-                {
-                    ArtifactFlash = 4;
-                }
-                return true;
-            }
-        }
-    }
-    return false;
+    return P_InventoryUseArtifact(mo->player, arti);
 }
 
 /*

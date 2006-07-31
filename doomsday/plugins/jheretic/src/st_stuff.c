@@ -102,8 +102,6 @@ typedef struct Cheat_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void M_ClearMenus(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 boolean cht_Responder(event_t *ev);
@@ -148,12 +146,15 @@ extern byte *screen;
 
 extern int messageResponse;
 
+extern boolean hu_showallfrags; // in hu_stuff.c currently
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean inventory = false;
 int     curpos;
-int     inv_ptr;
-int     ArtifactFlash;
+int     inventoryTics;
+boolean inventory = false;
+
+static int     ArtifactFlash;
 
 int     lu_palette;
 
@@ -286,7 +287,6 @@ static boolean st_blended = false;
 
 static int HealthMarker;
 static int ChainWiggle;
-static player_t *CPlayer;
 
 static int oldarti = 0;
 static int oldartiCount = 0;
@@ -565,6 +565,9 @@ cvar_t hudCVars[] =
         "Seconds for countdown sound of Tome of Power."},
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30,
         "Seconds before the inventory auto-hides."},
+
+    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1,
+        "Debug: HUD shows all frags of all players."},
     {NULL}
 };
 
@@ -750,6 +753,7 @@ void ST_updateWidgets(void)
 
         found = true;
     }
+
     if(!found) // Weapon takes no ammo at all.
     {
         w_ready.num = &largeammo;
@@ -785,18 +789,18 @@ void ST_updateWidgets(void)
     else if(oldarti != plr->readyArtifact ||
             oldartiCount != plr->inventory[inv_ptr].count)
     {
-        if(CPlayer->readyArtifact > 0)
+
+        if(plr->readyArtifact > 0)
         {
             st_artici = plr->readyArtifact + 5;
         }
+
         oldarti = plr->readyArtifact;
         oldartiCount = plr->inventory[inv_ptr].count;
     }
 
     // update the inventory
-
     x = inv_ptr - curpos;
-
     for(i = 0; i < NUMVISINVSLOTS; i++)
     {
         st_invslot[i] = plr->inventory[x + i].type +5;  // plus 5 for useartifact patches
@@ -919,14 +923,39 @@ void ST_Init(void)
     ST_loadData();
 }
 
+void ST_Inventory(boolean show)
+{
+    if(show)
+    {
+        inventory = true;
+
+        inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
+        if(inventoryTics < 1)
+            inventoryTics = 1;
+    }
+    else
+        inventory = false;
+}
+
+boolean ST_IsInventoryVisible(void)
+{
+    return inventory;
+}
+
+void ST_InventoryFlashCurrent(player_t *player)
+{
+    if(player == &players[consoleplayer])
+        ArtifactFlash = 4;
+}
+
 void ST_Ticker(void)
 {
     int     delta;
     int     curHealth;
     static int tomePlay = 0;
-
+Con_Message("ST_updateWidgets\n");
     ST_updateWidgets();
-
+Con_Message("done\n");
     if(leveltime & 1)
     {
         ChainWiggle = P_Random() & 1;
@@ -973,6 +1002,14 @@ void ST_Ticker(void)
             tomePlay = timeleft;
             S_LocalSound(sfx_keyup, NULL);
         }
+    }
+
+    // turn inventory off after a certain amount of time
+    if(inventory && !(--inventoryTics))
+    {
+        players[consoleplayer].readyArtifact =
+            players[consoleplayer].inventory[inv_ptr].type;
+        inventory = false;
     }
 }
 
@@ -1184,20 +1221,21 @@ void ST_drawIcons(void)
     static boolean hitCenterFrame;
     float iconalpha = cfg.hudIconAlpha;
     float textalpha = cfg.hudColor[3];
+    player_t *plyr = &players[consoleplayer];
 
     Draw_BeginZoom(cfg.hudScale, 2, 2);
 
     // Flight icons
-    if(CPlayer->powers[pw_flight])
+    if(plyr->powers[pw_flight])
     {
         int     offset = (cfg.hudShown[HUD_AMMO] && cfg.screenblocks > 10 &&
-                          CPlayer->readyweapon > 0 &&
-                          CPlayer->readyweapon < 7) ? 43 : 0;
-        if(CPlayer->powers[pw_flight] > BLINKTHRESHOLD ||
-           !(CPlayer->powers[pw_flight] & 16))
+                          plyr->readyweapon > 0 &&
+                          plyr->readyweapon < 7) ? 43 : 0;
+        if(plyr->powers[pw_flight] > BLINKTHRESHOLD ||
+           !(plyr->powers[pw_flight] & 16))
         {
             frame = (leveltime / 3) & 15;
-            if(CPlayer->plr->mo->flags2 & MF2_FLY)
+            if(plyr->plr->mo->flags2 & MF2_FLY)
             {
                 if(hitCenterFrame && (frame != 15 && frame != 0))
                 {
@@ -1234,15 +1272,15 @@ void ST_drawIcons(void)
 
     Draw_BeginZoom(cfg.hudScale, 318, 2);
 
-    if(CPlayer->powers[pw_weaponlevel2] && !CPlayer->morphTics)
+    if(plyr->powers[pw_weaponlevel2] && !plyr->morphTics)
     {
-        if(cfg.tomeCounter || CPlayer->powers[pw_weaponlevel2] > BLINKTHRESHOLD
-           || !(CPlayer->powers[pw_weaponlevel2] & 16))
+        if(cfg.tomeCounter || plyr->powers[pw_weaponlevel2] > BLINKTHRESHOLD
+           || !(plyr->powers[pw_weaponlevel2] & 16))
         {
             frame = (leveltime / 3) & 15;
-            if(cfg.tomeCounter && CPlayer->powers[pw_weaponlevel2] < 35)
+            if(cfg.tomeCounter && plyr->powers[pw_weaponlevel2] < 35)
             {
-                gl.Color4f(1, 1, 1, CPlayer->powers[pw_weaponlevel2] / 35.0f);
+                gl.Color4f(1, 1, 1, plyr->powers[pw_weaponlevel2] / 35.0f);
             }
             GL_DrawPatchLitAlpha(300, 17, 1, iconalpha, spinbooklump.lump + frame);
             GL_Update(DDUF_TOP | DDUF_MESSAGES);
@@ -1251,9 +1289,9 @@ void ST_drawIcons(void)
         {
             GL_Update(DDUF_TOP | DDUF_MESSAGES);
         }
-        if(CPlayer->powers[pw_weaponlevel2] < cfg.tomeCounter * 35)
+        if(plyr->powers[pw_weaponlevel2] < cfg.tomeCounter * 35)
         {
-            _DrSmallNumber(1 + CPlayer->powers[pw_weaponlevel2] / 35, 303, 30,
+            _DrSmallNumber(1 + plyr->powers[pw_weaponlevel2] / 35, 303, 30,
                            false,1,1,1,textalpha);
         }
     }
@@ -1346,7 +1384,7 @@ void ST_Drawer(int fullscreenmode, boolean refresh )
     ST_drawIcons();
 }
 
-int H_GetFilterColor(int filter)
+int R_GetFilterColor(int filter)
 {
     int     rgba = 0;
 
@@ -1360,9 +1398,9 @@ int H_GetFilterColor(int filter)
     return rgba;
 }
 
-void H_SetFilter(int filter)
+void R_SetFilter(int filter)
 {
-    GL_SetFilter(H_GetFilterColor(filter));
+    GL_SetFilter(R_GetFilterColor(filter));
 }
 
 /*
@@ -1373,23 +1411,20 @@ void ST_doPaletteStuff(void)
 {
     static int sb_palette = 0;
     int     palette;
+    player_t *plyr = &players[consoleplayer];
 
-    //  byte *pal;
-
-    CPlayer = &players[consoleplayer];
-
-    if(CPlayer->damagecount)
+    if(plyr->damagecount)
     {
-        palette = (CPlayer->damagecount + 7) >> 3;
+        palette = (plyr->damagecount + 7) >> 3;
         if(palette >= NUMREDPALS)
         {
             palette = NUMREDPALS - 1;
         }
         palette += STARTREDPALS;
     }
-    else if(CPlayer->bonuscount)
+    else if(plyr->bonuscount)
     {
-        palette = (CPlayer->bonuscount + 7) >> 3;
+        palette = (plyr->bonuscount + 7) >> 3;
         if(palette >= NUMBONUSPALS)
         {
             palette = NUMBONUSPALS - 1;
@@ -1404,7 +1439,7 @@ void ST_doPaletteStuff(void)
     {
         sb_palette = palette;
 
-        CPlayer->plr->filter = H_GetFilterColor(palette);   // $democam
+        plyr->plr->filter = R_GetFilterColor(palette);   // $democam
     }
 }
 
@@ -1433,7 +1468,7 @@ void DrawChain(void)
         gemglow = healthPos / 100;
         chainY =
             (HealthMarker ==
-             CPlayer->plr->mo->health) ? 191 : 191 + ChainWiggle;
+             plyr->plr->mo->health) ? 191 : 191 + ChainWiggle;
 
         // draw the chain
 
@@ -1488,6 +1523,7 @@ void DrawChain(void)
 void ST_drawWidgets(boolean refresh)
 {
     int     x, i;
+    player_t *plyr = &players[consoleplayer];
 
     oldhealth = -1;
     if(!inventory)
@@ -1542,7 +1578,7 @@ void ST_drawWidgets(boolean refresh)
             GL_DrawPatchLitAlpha(38, 159, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchINVLFGEM1.lump : PatchINVLFGEM2.lump);
 
         // Draw more right indicator
-        if(CPlayer->inventorySlotNum - x > 7)
+        if(plyr->inventorySlotNum - x > 7)
             GL_DrawPatchLitAlpha(269, 159, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchINVRTGEM1.lump : PatchINVRTGEM2.lump);
     }
 }
@@ -1554,26 +1590,27 @@ void ST_doFullscreenStuff(void)
     int     temp;
     float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
     float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
+    player_t *plyr = &players[consoleplayer];
 
     GL_Update(DDUF_FULLSCREEN);
     if(cfg.hudShown[HUD_AMMO])
     {
-        if(CPlayer->readyweapon > 0 && CPlayer->readyweapon < 7)
+        if(plyr->readyweapon > 0 && plyr->readyweapon < 7)
         {
             ammotype_t ammotype;
-            int lvl = (CPlayer->powers[pw_weaponlevel2]? 1 : 0);
+            int lvl = (plyr->powers[pw_weaponlevel2]? 1 : 0);
 
             // TODO: Only supports one type of ammo per weapon.
             // for each type of ammo this weapon takes.
             for(ammotype=0; ammotype < NUMAMMO; ++ammotype)
             {
-                if(!weaponinfo[CPlayer->readyweapon][CPlayer->class].mode[lvl].ammotype[ammotype])
+                if(!weaponinfo[plyr->readyweapon][plyr->class].mode[lvl].ammotype[ammotype])
                     continue;
 
                 Draw_BeginZoom(cfg.hudScale, 2, 2);
                 GL_DrawPatchLitAlpha(-1, 0, 1, iconalpha,
-                             W_GetNumForName(ammopic[CPlayer->readyweapon - 1]));
-                DrINumber(CPlayer->ammo[ammotype], 18, 2, 1, 1, 1, textalpha);
+                             W_GetNumForName(ammopic[plyr->readyweapon - 1]));
+                DrINumber(plyr->ammo[ammotype], 18, 2, 1, 1, 1, textalpha);
 
                 Draw_EndZoom();
                 GL_Update(DDUF_TOP);
@@ -1585,9 +1622,9 @@ void ST_doFullscreenStuff(void)
    Draw_BeginZoom(cfg.hudScale, 2, 198);
     if(cfg.hudShown[HUD_HEALTH])
     {
-        if(CPlayer->plr->mo->health > 0)
+        if(plyr->plr->mo->health > 0)
         {
-            DrBNumber(CPlayer->plr->mo->health, 2, 180,
+            DrBNumber(plyr->plr->mo->health, 2, 180,
                       cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
         }
         else
@@ -1605,24 +1642,24 @@ void ST_doFullscreenStuff(void)
         else
         if(!cfg.hudShown[HUD_HEALTH] && !cfg.hudShown[HUD_KEYS]) temp = 186;
 
-        DrINumber(CPlayer->armorpoints, 6, temp, 1, 1, 1, textalpha);
+        DrINumber(plyr->armorpoints, 6, temp, 1, 1, 1, textalpha);
     }
     if(cfg.hudShown[HUD_KEYS])
     {
         x = 6;
 
         // Draw keys above health?
-        if(CPlayer->keys[key_yellow])
+        if(plyr->keys[key_yellow])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1, iconalpha, W_GetNumForName("ykeyicon"));
             x += 11;
         }
-        if(CPlayer->keys[key_green])
+        if(plyr->keys[key_green])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1, iconalpha, W_GetNumForName("gkeyicon"));
             x += 11;
         }
-        if(CPlayer->keys[key_blue])
+        if(plyr->keys[key_blue])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1, iconalpha, W_GetNumForName("bkeyicon"));
         }
@@ -1636,7 +1673,7 @@ void ST_doFullscreenStuff(void)
         {
             if(players[i].plr->ingame)
             {
-                temp += CPlayer->frags[i];
+                temp += plyr->frags[i];
             }
         }
             Draw_BeginZoom(cfg.hudScale, 2, 198);
@@ -1645,14 +1682,14 @@ void ST_doFullscreenStuff(void)
     }
     if(!inventory)
     {
-        if(cfg.hudShown[HUD_ARTI] && CPlayer->readyArtifact > 0)
+        if(cfg.hudShown[HUD_ARTI] && plyr->readyArtifact > 0)
         {
             Draw_BeginZoom(cfg.hudScale, 318, 198);
 
             GL_DrawPatchLitAlpha(286, 166, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
             GL_DrawPatchLitAlpha(286, 166, 1, iconalpha,
-                         W_GetNumForName(artifactlist[CPlayer->readyArtifact + 5]));  //plus 5 for useartifact flashes
-            DrSmallNumber(CPlayer->inventory[inv_ptr].count, 307, 188, 1, 1, 1, textalpha);
+                         W_GetNumForName(artifactlist[plyr->readyArtifact + 5]));  //plus 5 for useartifact flashes
+            DrSmallNumber(plyr->inventory[inv_ptr].count, 307, 188, 1, 1, 1, textalpha);
             Draw_EndZoom();
         }
     }
@@ -1667,13 +1704,13 @@ void ST_doFullscreenStuff(void)
         for(i = 0; i < 7; i++)
         {
             GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
-            if(CPlayer->inventorySlotNum > x + i &&
-               CPlayer->inventory[x + i].type != arti_none)
+            if(plyr->inventorySlotNum > x + i &&
+               plyr->inventory[x + i].type != arti_none)
             {
                 GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, i==curpos? hudalpha : iconalpha,
-                             W_GetNumForName(artifactlist[CPlayer->inventory[x + i].
+                             W_GetNumForName(artifactlist[plyr->inventory[x + i].
                                               type +5])); //plus 5 for useartifact flashes
-                DrSmallNumber(CPlayer->inventory[x + i].count, 69 + i * 31, 190, 1, 1, 1, i==curpos? hudalpha : textalpha/2);
+                DrSmallNumber(plyr->inventory[x + i].count, 69 + i * 31, 190, 1, 1, 1, i==curpos? hudalpha : textalpha/2);
             }
         }
         GL_DrawPatchLitAlpha(50 + curpos * 31, 197, 1, hudalpha, PatchSELECTBOX.lump);
@@ -1682,7 +1719,7 @@ void ST_doFullscreenStuff(void)
             GL_DrawPatchLitAlpha(38, 167, 1, iconalpha,
                          !(leveltime & 4) ? PatchINVLFGEM1.lump : PatchINVLFGEM2.lump);
         }
-        if(CPlayer->inventorySlotNum - x > 7)
+        if(plyr->inventorySlotNum - x > 7)
         {
             GL_DrawPatchLitAlpha(269, 167, 1, iconalpha,
                          !(leveltime & 4) ? PatchINVRTGEM1.lump : PatchINVRTGEM2.lump);
@@ -1886,7 +1923,7 @@ static void CheatWeaponsFunc(player_t *player, Cheat_t * cheat)
         }
         player->backpack = true;
     }
-    for(i = 0; i < NUMWEAPONS - 1; i++)
+    for(i = 0; i < NUMWEAPONS; i++)
     {
         if(weaponinfo[i][0].mode[0].gamemodebits & gamemodebits)
             player->weaponowned[i] = true;
@@ -1909,7 +1946,7 @@ static void CheatPowerFunc(player_t *player, Cheat_t * cheat)
     }
     else
     {
-        P_UseArtifact(player, arti_tomeofpower);
+        P_UseArtifactOnPlayer(player, arti_tomeofpower);
         P_SetMessage(player, TXT_CHEATPOWERON);
     }
 }
@@ -1982,23 +2019,22 @@ static void CheatArtifact2Func(player_t *player, Cheat_t * cheat)
 static void CheatArtifact3Func(player_t *player, Cheat_t * cheat)
 {
     int     i;
-    int     j;
-    artitype_t type;
+    artitype_e type;
     int     count;
 
     type = cheat->args[0] - 'a' + 1;
     count = cheat->args[1] - '0';
     if(type == 26 && count == 0)
     {                           // All artifacts
-        for(i = arti_none + 1; i < NUMARTIFACTS; i++)
+        for(type = arti_none + 1; type < NUMARTIFACTS; type++)
         {
-            if(gamemode == shareware && (i == arti_superhealth || i == arti_teleport))
+            if(gamemode == shareware && (type == arti_superhealth || type == arti_teleport))
             {
                 continue;
             }
-            for(j = 0; j < 16; j++)
+            for(i = 0; i < MAXARTICOUNT; i++)
             {
-                P_GiveArtifact(player, i, NULL);
+                P_GiveArtifact(player, type, NULL);
             }
         }
         P_SetMessage(player, TXT_CHEATARTIFACTS3);

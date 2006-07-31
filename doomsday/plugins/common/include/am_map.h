@@ -98,21 +98,34 @@ void            AM_Stop(void);
 #define WHITE       (256-47)
 #define YOURCOLORS      WHITE
 #define YOURRANGE       0
-#define WALLRANGE       REDRANGE
-#define TSWALLCOLORS        GRAYS
-#define TSWALLRANGE     GRAYSRANGE
-#define FDWALLRANGE     BROWNRANGE
-#define CDWALLRANGE     YELLOWRANGE
-#define THINGCOLORS     GREENS
-#define THINGRANGE      GREENRANGE
+
+# ifdef __WOLFTC__
+#  define WALLCOLORS      GRAYS
+#  define WALLRANGE       GRAYSRANGE
+#  define TSWALLCOLORS    BROWNS
+#  define TSWALLRANGE     BROWNRANGE
+#  define CDWALLCOLORS    BROWNS
+#  define CDWALLRANGE     BROWNRANGE
+#  define THINGCOLORS     REDS
+#  define THINGRANGE      REDRANGE
+# else
+#  define WALLCOLORS      REDS
+#  define WALLRANGE       REDRANGE
+#  define TSWALLCOLORS    GRAYS
+#  define TSWALLRANGE     GRAYSRANGE
+#  define CDWALLCOLORS    YELLOWS
+#  define CDWALLRANGE     YELLOWRANGE
+#  define THINGCOLORS     GREENS
+#  define THINGRANGE      GREENRANGE
+#endif
+
 #define SECRETWALLCOLORS WALLCOLORS
 #define SECRETWALLRANGE WALLRANGE
 #define GRIDCOLORS      (GRAYS + GRAYSRANGE/2)
 #define GRIDRANGE       0
 #define XHAIRCOLORS     GRAYS
-#define WALLCOLORS      REDS
 #define FDWALLCOLORS        BROWNS
-#define CDWALLCOLORS        YELLOWS
+#define FDWALLRANGE     BROWNRANGE
 
 #define BORDEROFFSET 3
 

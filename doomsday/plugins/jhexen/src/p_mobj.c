@@ -26,6 +26,11 @@
 
 #define MAX_BOB_OFFSET  0x80000
 
+#define BLAST_RADIUS_DIST   255*FRACUNIT
+#define BLAST_SPEED         20*FRACUNIT
+#define BLAST_FULLSTRENGTH  255
+#define HEAL_RADIUS_DIST    255*FRACUNIT
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -837,7 +842,7 @@ void P_ZMovement(mobj_t *mo)
             }
             if(mo->player)
             {
-                mo->player->jumpTics = 7;   // delay any jumping for a short time
+                mo->player->jumptics = 7;   // delay any jumping for a short time
                 if(mo->momz < -GRAVITY * 8 && !(mo->flags2 & MF2_FLY))
                 {               // squat down
                     mo->player->plr->deltaviewheight = mo->momz >> 3;
@@ -849,20 +854,24 @@ void P_ZMovement(mobj_t *mo)
                     else if(mo->momz < -GRAVITY * 12 && !mo->player->morphTics)
                     {
                         S_StartSound(SFX_PLAYER_LAND, mo);
-                        switch (mo->player->class)
-                        {
-                        case PCLASS_FIGHTER:
-                            S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
-                            break;
-                        case PCLASS_CLERIC:
-                            S_StartSound(SFX_PLAYER_CLERIC_GRUNT, mo);
-                            break;
-                        case PCLASS_MAGE:
-                            S_StartSound(SFX_PLAYER_MAGE_GRUNT, mo);
-                            break;
-                        default:
-                            break;
-                        }
+
+                        // Fix DOOM bug - dead players grunting when hitting the ground
+                        // (e.g., after an archvile attack)
+                        if(mo->player->health > 0)
+                            switch (mo->player->class)
+                            {
+                            case PCLASS_FIGHTER:
+                                S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
+                                break;
+                            case PCLASS_CLERIC:
+                                S_StartSound(SFX_PLAYER_CLERIC_GRUNT, mo);
+                                break;
+                            case PCLASS_MAGE:
+                                S_StartSound(SFX_PLAYER_MAGE_GRUNT, mo);
+                                break;
+                            default:
+                                break;
+                            }
                     }
                     else if((P_GetThingFloorType(mo) < FLOOR_LIQUID) &&
                             (!mo->player->morphTics))
@@ -1469,21 +1478,8 @@ void P_SpawnPlayer(thing_t * mthing, int playernum)
     {
         p->class = cfg.PlayerClass[playernum];
     }
-    switch (p->class)
-    {
-    case PCLASS_FIGHTER:
-        mobj = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER_FIGHTER);
-        break;
-    case PCLASS_CLERIC:
-        mobj = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER_CLERIC);
-        break;
-    case PCLASS_MAGE:
-        mobj = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER_MAGE);
-        break;
-    default:
-        Con_Error("P_SpawnPlayer: Unknown class type");
-        break;
-    }
+
+    mobj = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], PCLASS_INFO(p->class)->mobjtype);
 
     // With clients all player mobjs are remote, even the consoleplayer.
     if(IS_CLIENT)
@@ -1826,7 +1822,7 @@ void P_CreateTIDList(void)
     thinker_t *t;
 
     i = 0;
-    for(t = gi.thinkercap->next; t != gi.thinkercap; t = t->next)
+    for(t = thinkercap.next; t != &thinkercap && t; t = t->next)
     {                           // Search all current thinkers
         if(t->function != P_MobjThinker)
         {                       // Not a mobj thinker
@@ -2170,6 +2166,231 @@ int P_HitFloor(mobj_t *thing)
         return (FLOOR_SLUDGE);
     }
     return (FLOOR_SOLID);
+}
+
+void ResetBlasted(mobj_t *mo)
+{
+    mo->flags2 &= ~MF2_BLASTED;
+    if(!(mo->flags & MF_ICECORPSE))
+    {
+        mo->flags2 &= ~MF2_SLIDE;
+    }
+}
+
+void P_BlastMobj(mobj_t *source, mobj_t *victim, fixed_t strength)
+{
+    angle_t angle, ang;
+    mobj_t *mo;
+    fixed_t pos[3];
+
+    angle = R_PointToAngle2(source->pos[VX], source->pos[VY],
+                            victim->pos[VX], victim->pos[VY]);
+    angle >>= ANGLETOFINESHIFT;
+    if(strength < BLAST_FULLSTRENGTH)
+    {
+        victim->momx = FixedMul(strength, finecosine[angle]);
+        victim->momy = FixedMul(strength, finesine[angle]);
+        if(victim->player)
+        {
+            // Players handled automatically
+        }
+        else
+        {
+            victim->flags2 |= MF2_SLIDE;
+            victim->flags2 |= MF2_BLASTED;
+        }
+    }
+    else // full strength blast from artifact
+    {
+        if(victim->flags & MF_MISSILE)
+        {
+            switch (victim->type)
+            {
+            case MT_SORCBALL1: // don't blast sorcerer balls
+            case MT_SORCBALL2:
+            case MT_SORCBALL3:
+                return;
+                break;
+            case MT_MSTAFF_FX2: // Reflect to originator
+                victim->special1 = (int) victim->target;
+                victim->target = source;
+                break;
+            default:
+                break;
+            }
+        }
+        if(victim->type == MT_HOLY_FX)
+        {
+            if((mobj_t *) (victim->special1) == source)
+            {
+                victim->special1 = (int) victim->target;
+                victim->target = source;
+            }
+        }
+        victim->momx = FixedMul(BLAST_SPEED, finecosine[angle]);
+        victim->momy = FixedMul(BLAST_SPEED, finesine[angle]);
+
+        // Spawn blast puff
+        ang = R_PointToAngle2(victim->pos[VX], victim->pos[VY],
+                              source->pos[VX], source->pos[VY]);
+        ang >>= ANGLETOFINESHIFT;
+
+        memcpy(pos, victim->pos, sizeof(pos));
+        pos[VX] += FixedMul(victim->radius + FRACUNIT, finecosine[ang]);
+        pos[VY] += FixedMul(victim->radius + FRACUNIT, finesine[ang]);
+        pos[VZ] -= victim->floorclip + (victim->height >> 1);
+
+        mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_BLASTEFFECT);
+        if(mo)
+        {
+            mo->momx = victim->momx;
+            mo->momy = victim->momy;
+        }
+
+        if(victim->flags & MF_MISSILE)
+        {
+            victim->momz = 8 * FRACUNIT;
+            mo->momz = victim->momz;
+        }
+        else
+        {
+            victim->momz = (1000 / victim->info->mass) << FRACBITS;
+        }
+
+        if(victim->player)
+        {
+            // Players handled automatically
+        }
+        else
+        {
+            victim->flags2 |= MF2_SLIDE;
+            victim->flags2 |= MF2_BLASTED;
+        }
+    }
+}
+
+/*
+ * Blast all mobj things away
+ */
+void P_BlastRadius(player_t *player)
+{
+    mobj_t *mo;
+    mobj_t *pmo = player->plr->mo;
+    thinker_t *think;
+    fixed_t dist;
+
+    S_StartSound(SFX_ARTIFACT_BLAST, pmo);
+    P_NoiseAlert(player->plr->mo, player->plr->mo);
+
+    for(think = thinkercap.next; think != &thinkercap && think;
+        think = think->next)
+    {
+        if(think->function != P_MobjThinker)
+            continue; // Not a mobj thinker
+
+        mo = (mobj_t *) think;
+        if((mo == pmo) || (mo->flags2 & MF2_BOSS))
+            continue; // Not a valid monster
+
+        if((mo->type == MT_POISONCLOUD) ||  // poison cloud
+           (mo->type == MT_HOLY_FX) ||  // holy fx
+           (mo->flags & MF_ICECORPSE))  // frozen corpse
+        {
+            // Let these special cases go
+        }
+        else if((mo->flags & MF_COUNTKILL) && (mo->health <= 0))
+        {
+            continue;
+        }
+        else if(!(mo->flags & MF_COUNTKILL) && !(mo->player) &&
+                !(mo->flags & MF_MISSILE))
+        {                       // Must be monster, player, or missile
+            continue;
+        }
+
+        if(mo->flags2 & MF2_DORMANT)
+            continue;           // no dormant creatures
+
+        if((mo->type == MT_WRAITHB) && (mo->flags2 & MF2_DONTDRAW))
+            continue;           // no underground wraiths
+
+        if((mo->type == MT_SPLASHBASE) || (mo->type == MT_SPLASH))
+            continue;
+
+        if(mo->type == MT_SERPENT || mo->type == MT_SERPENTLEADER)
+            continue;
+
+        dist = P_ApproxDistance(pmo->pos[VX] - mo->pos[VX],
+                                pmo->pos[VY] - mo->pos[VY]);
+        if(dist > BLAST_RADIUS_DIST)
+            continue; // Out of range
+
+        P_BlastMobj(pmo, mo, BLAST_FULLSTRENGTH);
+    }
+}
+
+/*
+ * Do class specific effect for everyone in radius
+ */
+boolean P_HealRadius(player_t *player)
+{
+    mobj_t *mo;
+    mobj_t *pmo = player->plr->mo;
+    thinker_t *think;
+    fixed_t dist;
+    int     effective = false;
+    int     amount;
+
+    for(think = thinkercap.next; think != &thinkercap && think;
+        think = think->next)
+    {
+        if(think->function != P_MobjThinker)
+            continue; // Not a mobj thinker
+
+        mo = (mobj_t *) think;
+        if(!mo->player || mo->health <= 0)
+            continue;
+
+        dist = P_ApproxDistance(pmo->pos[VX] - mo->pos[VX],
+                                pmo->pos[VY] - mo->pos[VY]);
+        if(dist > HEAL_RADIUS_DIST)
+            continue; // Out of range
+
+        switch (player->class)
+        {
+        case PCLASS_FIGHTER: // Radius armor boost
+            if((P_GiveArmor(mo->player, ARMOR_ARMOR, 1)) ||
+               (P_GiveArmor(mo->player, ARMOR_SHIELD, 1)) ||
+               (P_GiveArmor(mo->player, ARMOR_HELMET, 1)) ||
+               (P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
+            {
+                effective = true;
+                S_StartSound(SFX_MYSTICINCANT, mo);
+            }
+            break;
+        case PCLASS_CLERIC: // Radius heal
+            amount = 50 + (P_Random() % 50);
+            if(P_GiveBody(mo->player, amount))
+            {
+                effective = true;
+                S_StartSound(SFX_MYSTICINCANT, mo);
+            }
+            break;
+        case PCLASS_MAGE: // Radius mana boost
+            amount = 50 + (P_Random() % 50);
+            if((P_GiveMana(mo->player, MANA_1, amount)) ||
+               (P_GiveMana(mo->player, MANA_2, amount)))
+            {
+                effective = true;
+                S_StartSound(SFX_MYSTICINCANT, mo);
+            }
+            break;
+        case PCLASS_PIG:
+        default:
+            break;
+        }
+    }
+    return (effective);
 }
 
 //---------------------------------------------------------------------------

@@ -28,6 +28,7 @@
 #include "hu_stuff.h"
 #include "f_infine.h"
 #include "g_common.h"
+#include "g_controls.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -64,8 +65,6 @@ DEFCC(CCmdSetDemoMode);
 DEFCC(CCmdSpawnMobj);
 
 DEFCC(CCmdPrintPlayerCoords);
-
-DEFCC(CCmdInventory);
 
 DEFCC(CCmdScriptInfo);
 DEFCC(CCmdTest);
@@ -131,6 +130,9 @@ cvar_t  gameCVars[] = {
         "World gravity modifier, multiplayer (-1..100). -1 = Map default."},
 
     // Gameplay options
+    {"server-game-jump", 0, CVT_BYTE,
+        &cfg.netJumping, 0, 1,
+        "1=Allow jumping in multiplayer games."},
     {"server-game-nomonsters", 0, CVT_BYTE,
         &cfg.netNomonsters, 0, 1,
         "1=No monsters."},
@@ -159,6 +161,8 @@ cvar_t  gameCVars[] = {
     // Movment
     {"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1,
         "Player movement speed modifier."},
+    {"player-jump", 0, CVT_INT, &cfg.jumpEnabled, 0, 1,
+        "1=Allow jumping."},
     {"player-jump-power", 0, CVT_FLOAT, &cfg.jumpPower, 0, 100,
         "Jump power (for all clients if this is the server)."},
     {"player-air-movement", 0, CVT_BYTE, &cfg.airborneMovement, 0, 32,

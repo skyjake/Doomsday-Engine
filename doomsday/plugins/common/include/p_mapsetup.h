@@ -37,7 +37,6 @@ extern int numthings;
 #endif
 
 void        P_SetupLevel(int episode, int map, int playermask, skill_t skill);
-void        P_LocateMapLumps(int episode, int map, int *lumpIndices);
 
 
 #endif

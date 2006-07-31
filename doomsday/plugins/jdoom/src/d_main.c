@@ -325,7 +325,7 @@ void D_IdentifyFromData(void)
 /*
  * gamemode, gamemission and the gameModeString are set.
  */
-void D_IdentifyVersion(void)
+void G_IdentifyVersion(void)
 {
     D_IdentifyFromData();
 

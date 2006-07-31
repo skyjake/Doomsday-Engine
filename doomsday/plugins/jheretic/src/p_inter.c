@@ -308,45 +308,6 @@ boolean P_GivePower(player_t *player, powertype_t power)
 }
 
 /*
- * Returns true if artifact accepted.
- */
-boolean P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo)
-{
-    int     i;
-
-    player->update |= PSF_INVENTORY;
-    i = 0;
-    while(player->inventory[i].type != arti && i < player->inventorySlotNum)
-    {
-        i++;
-    }
-    if(i == player->inventorySlotNum)
-    {
-        player->inventory[i].count = 1;
-        player->inventory[i].type = arti;
-        player->inventorySlotNum++;
-    }
-    else
-    {
-        if(player->inventory[i].count >= 16)
-        {                       // Player already has 16 of this item
-            return (false);
-        }
-        player->inventory[i].count++;
-    }
-    if(player->artifactCount == 0)
-    {
-        player->readyArtifact = arti;
-    }
-    player->artifactCount++;
-    if(mo && (mo->flags & MF_COUNTITEM))
-    {
-        player->itemcount++;
-    }
-    return (true);
-}
-
-/*
  * Removes the MF_SPECIAL flag, and initiates the artifact pickup
  * animation.
  */
@@ -975,7 +936,7 @@ boolean P_AutoUseChaosDevice(player_t *player)
     {
         if(player->inventory[i].type == arti_teleport)
         {
-            P_PlayerUseArtifact(player, arti_teleport);
+            P_InventoryUseArtifact(player, arti_teleport);
             player->health = player->plr->mo->health =
                 (player->health + 1) / 2;
             return (true);
@@ -1014,7 +975,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 25;
-            P_PlayerRemoveArtifact(player, normalSlot);
+            P_InventoryRemoveArtifact(player, normalSlot);
         }
     }
     else if(superCount * 100 >= saveHealth)
@@ -1024,7 +985,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 100;
-            P_PlayerRemoveArtifact(player, superSlot);
+            P_InventoryRemoveArtifact(player, superSlot);
         }
     }
     else if((gameskill == sk_baby) &&
@@ -1036,13 +997,13 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 25;
-            P_PlayerRemoveArtifact(player, normalSlot);
+            P_InventoryRemoveArtifact(player, normalSlot);
         }
         count = (saveHealth + 99) / 100;
         for(i = 0; i < count; i++)
         {
             player->health += 100;
-            P_PlayerRemoveArtifact(player, normalSlot);
+            P_InventoryRemoveArtifact(player, normalSlot);
         }
     }
     player->plr->mo->health = player->health;

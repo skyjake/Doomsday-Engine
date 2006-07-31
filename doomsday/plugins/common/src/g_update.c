@@ -45,10 +45,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JHEXEN__ || __JSTRIFE__
-#  define thinkercap                    (*gi.thinkercap)
-#endif
-
 #define MANGLE_STATE(x)     ((state_t*) ((x)? (x)-states : -1))
 #define RESTORE_STATE(x)    ((int)(x)==-1? NULL : &states[(int)(x)])
 
@@ -58,9 +54,6 @@
 
 #if __JHEXEN__
 void    S_InitScript(void);
-#endif
-
-#ifndef __JDOOM__
 void    M_LoadData(void);
 void    M_UnloadData(void);
 #endif
@@ -133,13 +126,7 @@ void G_UpdateState(int step)
     {
     case DD_GAME_MODE:
         // Set the game mode string.
-#ifdef __JDOOM__
-        D_IdentifyVersion();
-#elif __JHERETIC__
-        H_IdentifyVersion();
-#else                           // __JHEXEN__
-        H2_IdentifyVersion();
-#endif
+        G_IdentifyVersion();
         break;
 
     case DD_PRE:
@@ -149,25 +136,22 @@ void G_UpdateState(int step)
     case DD_POST:
         G_RestoreState();
         P_Init();
-#if __JDOOM__
         // FIXME: Detect gamemode changes (doom -> doom2, for instance).
+#if !__JHEXEN__
         XG_Update();
+#endif
+
+#if !__JDOOM__
+        ST_Init();
+#endif
+
         MN_Init();
-        S_LevelMusic();
-#elif __JHERETIC__
-        XG_Update();
-        ST_Init();              // Updates the status bar patches.
-        MN_Init();
-        S_LevelMusic();
-#elif __JHEXEN__
-        ST_Init();              // Updates the status bar patches.
-        MN_Init();
+
+#if __JHEXEN__
         S_InitScript();
-        SN_InitSequenceScript();
-#elif __JSTRIFE__
-        XG_Update();
-        ST_Init();              // Updates the status bar patches.
-        MN_Init();
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
         S_LevelMusic();
 #endif
         G_SetGlowing();

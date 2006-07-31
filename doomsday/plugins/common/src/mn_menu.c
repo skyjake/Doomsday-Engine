@@ -55,6 +55,7 @@
 # include "jheretic.h"
 #elif __JHEXEN__
 # include "jhexen.h"
+# include "m_ctrl.h"
 # include <lzss.h>
 #elif __JSTRIFE__
 # include "h2def.h"

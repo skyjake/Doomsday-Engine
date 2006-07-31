@@ -169,3 +169,44 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
     }
     return (false);
 }
+
+#if __JHERETIC__ || __JHEXEN__
+void P_ArtiTele(player_t *player)
+{
+    int     i;
+    int     selections;
+    fixed_t destX;
+    fixed_t destY;
+    angle_t destAngle;
+
+    if(deathmatch)
+    {
+        selections = deathmatch_p - deathmatchstarts;
+        i = P_Random() % selections;
+        destX = deathmatchstarts[i].x << FRACBITS;
+        destY = deathmatchstarts[i].y << FRACBITS;
+        destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
+    }
+    else
+    {
+        // FIXME?: DJS - this doesn't seem right...
+        destX = playerstarts[0].x << FRACBITS;
+        destY = playerstarts[0].y << FRACBITS;
+        destAngle = ANG45 * (playerstarts[0].angle / 45);
+    }
+
+# if __JHEXEN__
+    P_Teleport(player->plr->mo, destX, destY, destAngle, true);
+    if(player->morphTics)
+    {   // Teleporting away will undo any morph effects (pig)
+        P_UndoPlayerMorph(player);
+    }
+    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+# else
+    P_Teleport(player->plr->mo, destX, destY, destAngle);
+    /*S_StartSound(sfx_wpnup, NULL); // Full volume laugh
+       NetSv_Sound(NULL, sfx_wpnup, player-players); */
+    S_StartSound(sfx_wpnup, NULL);
+# endif
+}
+#endif

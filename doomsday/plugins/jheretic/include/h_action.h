@@ -1,6 +1,10 @@
 #ifndef __JHERETIC_ACTIONS_H__
 #define __JHERETIC_ACTIONS_H__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 #include "dd_share.h"
 
 // These must correspond the action_t's in the actions array!

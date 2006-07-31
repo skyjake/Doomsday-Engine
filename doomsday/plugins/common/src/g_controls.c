@@ -21,29 +21,32 @@
 #include <math.h> // required for sqrt, fabs
 
 #if __JDOOM__
+#  include "d_action.h"
 #  include "doomdef.h"
 #  include "doomstat.h"
 #  include "d_config.h"
 #  include "d_player.h"
 #  include "p_local.h"
-#  include "m_ctrl.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
+#elif __JSTRIFE__
+#  include "jstrife.h"
 #endif
+
+#include "g_controls.h"
 
 // MACROS ------------------------------------------------------------------
 
-#if __JDOOM__
-#  define TURBOTHRESHOLD    0x32
+#if __JDOOM__ || __JHERETIC__
+#  define GOTWPN(x) (cplr->weaponowned[x])
+#  define ISWPN(x)  (cplr->readyweapon == x)
 #endif
 
 #define SLOWTURNTICS        6
-#define NUMGKEYS            256
 
 #define JOY(x)              (x) / (100)
-#define NUM_MOUSE_BUTTONS   6
 
 // TYPES -------------------------------------------------------------------
 
@@ -80,14 +83,6 @@ ArtifactHotkeys[] =
 
 boolean P_IsPaused(void);
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-boolean inventoryMove(player_t *plr, int dir);
-#endif
-
-#if __JHEXEN__
-void    P_PlayerNextArtifact(player_t *player);
-#endif
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -97,15 +92,6 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean sendpause;
-
-#if __JHERETIC__ || __JHEXEN__
-extern boolean inventory;
-extern boolean artiskip;
-#endif
-
-#if __JHERETIC__
-extern int inv_ptr;
-#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -142,8 +128,6 @@ int     dclicks;
 int     dclicktime2;
 int     dclickstate2;
 int     dclicks2;
-
-boolean usearti = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -191,6 +175,8 @@ cvar_t  controlCVars[] = {
 #if !__JDOOM__
     {"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1,
         "1=Use items immediately from the inventory."},
+    {"ctl-use-next", 0, CVT_INT, &cfg.inventoryNextOnUnuse, 0, 1,
+        "1=Automatically select the next inventory item when unusable."},
 #endif
 
     {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5,
@@ -305,6 +291,7 @@ void G_DefaultBindings(void)
  * Offset is in 'angles', where 110 corresponds 85 degrees.
  * The delta has higher precision with small offsets.
  */
+#if 0
 char G_MakeLookDelta(float offset)
 {
     boolean minus = offset < 0;
@@ -319,12 +306,13 @@ char G_MakeLookDelta(float offset)
         offset = -128;
     return (signed char) offset;
 }
+#endif
 
 /*
  * Turn client angle.  If 'elapsed' is negative, the turn delta is
  * considered an immediate change.
  */
-void G_AdjustAngle(player_t *player, int turn, float elapsed)
+static void G_AdjustAngle(player_t *player, int turn, float elapsed)
 {
     fixed_t delta = 0;
 
@@ -340,7 +328,7 @@ void G_AdjustAngle(player_t *player, int turn, float elapsed)
     player->plr->clAngle += delta;
 }
 
-void G_AdjustLookDir(player_t *player, int look, float elapsed)
+static void G_AdjustLookDir(player_t *player, int look, float elapsed)
 {
     ddplayer_t *ddplr = player->plr;
 
@@ -410,7 +398,7 @@ void G_LookAround(void)
     }
 }
 
-void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
+static void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
 {
     // These will be sent to the server (or P_MovePlayer).
     cmd->angle = pl->plr->clAngle >> 16;
@@ -507,11 +495,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     int    *axes[5] = { 0, &joyfwd, &joyturn, &joystrafe, &joylook };
     int     look = 0, lspeed = 0;
     int     flyheight = 0;
-#if __JHEXEN__ || __JSTRIFE__
     int     pClass = players[consoleplayer].class;
-#else
-    int     pClass = 0;
-#endif
 
     // Check the joystick axes.
     for(i = 0; i < 8; i++)
@@ -650,20 +634,19 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
             if(players[consoleplayer].inventory[inv_ptr].type != arti_none)
             {
                 actions[A_USEARTIFACT].on = false;
-#if __JHERETIC__
-                cmd->arti = 0xff;   // skip artifact code
-#else
-                P_PlayerNextArtifact(&players[consoleplayer]);
-#endif
+
+                cmd->arti = 0xff;
             }
         }
         else
         {
-            if(inventory)
+            if(ST_IsInventoryVisible())
             {
                 players[consoleplayer].readyArtifact =
                     players[consoleplayer].inventory[inv_ptr].type;
-                inventory = false;
+
+                ST_Inventory(false); // close the inventory
+
                 if(cfg.chooseAndUse)
                     cmd->arti =
                         players[consoleplayer].inventory[inv_ptr].type;
@@ -789,10 +772,6 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         cmd->jump = true;
 
 #if __JDOOM__
-
-#  define GOTWPN(x) (cplr->weaponowned[x])
-#  define ISWPN(x)  (cplr->readyweapon == x)
-
     // Determine whether a weapon change should be done.
     if(actions[A_WEAPONCYCLE1].on)  // Fist/chainsaw.
     {
@@ -823,10 +802,6 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     }
     else
 #elif __JHERETIC__
-
-#  define GOTWPN(x) (cplr->weaponowned[x])
-#  define ISWPN(x)  (cplr->readyweapon == x)
-
     // Determine whether a weapon change should be done.
     if(actions[A_WEAPONCYCLE1].on)  // Staff/Gauntlets.
     {
@@ -845,11 +820,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 #endif
     {
         // Take the first weapon action.
-#if __JHERETIC__
-        for(i = 0; i < NUMWEAPONS - 2; i++)
-#else
         for(i = 0; i < NUMWEAPONS; i++)
-#endif
             if(actions[A_WEAPON1 + i].on)
             {
                 cmd->changeWeapon = i + 1;
@@ -957,7 +928,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         }
     }
 
-    mousex = mousey = 0;
+    G_ResetMousePos();
 
 #define MAXPLMOVE PCLASS_INFO(pClass)->maxmove
 
@@ -1094,14 +1065,3 @@ void G_ResetMousePos(void)
 {
     mousex = mousey = 0;
 }
-
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-/*
- * Move the inventory selector
- */
-DEFCC(CCmdInventory)
-{
-    inventoryMove(players + consoleplayer, !stricmp(argv[0], "invright"));
-    return true;
-}
-#endif

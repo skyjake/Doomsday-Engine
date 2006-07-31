@@ -216,14 +216,12 @@ void R_DrawMapTitle(void)
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t wipegamestate = GS_DEMOSCREEN;
-extern boolean inhelpscreens;
 #define SIZEFACT 4
 #define SIZEFACT2 16
 void G_Drawer(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    static boolean inhelpscreensstate = false;
     static int fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
     int     py;
@@ -392,7 +390,6 @@ void G_Drawer(void)
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;
-    inhelpscreensstate = inhelpscreens;
     oldgamestate = wipegamestate = gamestate;
 
     if(paused && !fi_active)
@@ -409,26 +406,9 @@ void G_Drawer(void)
     FI_Drawer();
 }
 
-//==========================================================================
-//
-// PageDrawer
-//
-//==========================================================================
-
-/*static void PageDrawer(void)
-   {
-   if(!pagename) return;
-   GL_DrawRawScreen(W_GetNumForName(pagename), 0, 0);
-   if(demosequence == 1)
-   {
-   GL_DrawPatch(4, 160, W_GetNumForName("ADVISOR"));
-   }
-   GL_Update(DDUF_FULLSCREEN);
-   } */
-
 #define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
 
-int H2_GetFilterColor(int filter)
+int R_GetFilterColor(int filter)
 {
     //int rgba = 0;
 
@@ -453,13 +433,13 @@ int H2_GetFilterColor(int filter)
         // Light blue?
         return FMAKERGBA(.5f, .5f, 1, .4f);
     else if(filter)
-        Con_Error("H2_GetFilterColor: Strange filter number: %d.\n", filter);
+        Con_Error("R_GetFilterColor: Strange filter number: %d.\n", filter);
     return 0;
 }
 
-void H2_SetFilter(int filter)
+void R_SetFilter(int filter)
 {
-    GL_SetFilter(H2_GetFilterColor(filter));
+    GL_SetFilter(R_GetFilterColor(filter));
 }
 
 void H2_EndFrame(void)

@@ -15,6 +15,10 @@
  * along with this program; if not: http://www.opensource.org/
  */
 
+/*
+ * d_netsv.c : Common code related to net games (server-side).
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
@@ -26,7 +30,6 @@
 #  include "d_config.h"
 #  include "s_sound.h"
 #  include "st_stuff.h"
-#  include "m_random.h"
 #  include "dstrings.h"
 #  include "m_cheat.h"
 #  include "g_common.h"
@@ -35,9 +38,7 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "d_config.h"
+#  include "jstrife.h"
 #endif
 
 #include "d_net.h"
@@ -145,10 +146,9 @@ void NetSv_UpdateGameConfig(void)
         strcat(gameConfigString, " nomonst");
     if(respawnparm)
         strcat(gameConfigString, " respawn");
-#if !__JHEXEN__
+
     if(cfg.jumpEnabled)
         strcat(gameConfigString, " jump");
-#endif
 }
 
 /*
@@ -232,10 +232,6 @@ void NetSv_Ticker(void)
     int     i, red, palette;
     float   power;
 
-#if __JDOOM__
-    int     bz;
-#endif
-
     // Map rotation checker.
     NetSv_CheckCycling();
 
@@ -254,6 +250,7 @@ void NetSv_Ticker(void)
 #ifdef __JDOOM__
         if(plr->powers[pw_strength])
         {
+            int     bz;
             // Slowly fade the berzerk out.
             bz = 12 - (plr->powers[pw_strength] >> 6);
             if(bz > red)
@@ -307,14 +304,8 @@ void NetSv_Ticker(void)
             plr->plr->flags |= DDPF_FILTER;
             oldPals[i] = palette;
         }
-#if __JDOOM__
-        plr->plr->filter = D_GetFilterColor(palette);
-#elif __JHERETIC__
-        plr->plr->filter = H_GetFilterColor(palette);
 
-#else /*__JHEXEN__*/
-        plr->plr->filter = H2_GetFilterColor(palette);
-#endif
+        plr->plr->filter = R_GetFilterColor(palette);
     }
 
 #if !__JDOOM__
@@ -813,13 +804,6 @@ void NetSv_SendGameState(int flags, int to)
         // The contents of the game state package are a bit messy
         // due to compatibility with older versions.
 
-        /*byte setup[16];
-        Con_Message("Sizeof(gs)=%i\n", sizeof(packet_gamestate_t));
-        Con_Message("Sent game state packet (len=%i):\n", ptr - buffer);
-        for(k = 0; k < ptr - buffer; ++k)
-            Con_Message("%02x ", buffer[k]);
-        Con_Message("\n");*/
-
 #ifdef __JDOOM__
         ptr[0] = gamemode;
 #else
@@ -831,8 +815,8 @@ void NetSv_SendGameState(int flags, int to)
         ptr[4] = (deathmatch & 0x3)
             | (!nomonsters? 0x4 : 0)
             | (respawnparm? 0x8 : 0)
-#if __JDOOM__ || __JHERETIC__
             | (cfg.jumpEnabled? 0x10 : 0)
+#if __JDOOM__ || __JHERETIC__
             | (gameskill << 5);
 #else
         ;
@@ -846,32 +830,8 @@ void NetSv_SendGameState(int flags, int to)
         ptr[6] = (GRAVITY >> 8) & 0xff; // low byte
         ptr[7] = (GRAVITY >> 16) & 0xff; // high byte
         memset(ptr + 8, 0, 8);
-        /*
-        Con_Message("Alternative state packet:\n");
-        for(k = 0; k < gameStateSize; ++k)
-            Con_Message("%02x ", setup[k]);
-        Con_Message("\n");
-        */
 
         ptr += gameStateSize;
-
-#if 0
-#ifdef __JDOOM__
-        gs->gamemode = gamemode;
-#endif
-        gs->flags = flags;
-        gs->episode = gameepisode;
-        gs->map = gamemap;
-        gs->skill = gameskill;
-        gs->deathmatch = deathmatch;
-        gs->monsters = !nomonsters;
-        gs->respawn = respawnparm;
-#if __JDOOM__ || __JHERETIC__
-        gs->jumping = cfg.jumpEnabled;
-#endif
-        gs->gravity = SHORT((GRAVITY >> 8) & 0xffff);
-        ptr += sizeof(packet_gamestate_t);
-#endif // #if 0
 
         if(flags & GSF_CAMERA_INIT)
         {
@@ -1064,12 +1024,10 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     }
     if(flags & PSF_AMMO)
     {
-#if __JHEXEN__ || __JSTRIFE__
-        // 200 is the mana limit for Hexen.
         for(i = 0; i < NUMAMMO; i++)
+#if __JHEXEN__ || __JSTRIFE__
             *ptr++ = pl->ammo[i];
 #else
-        for(i = 0; i < NUMAMMO; i++)
             WRITE_SHORT(ptr, pl->ammo[i]);
 #endif
     }
@@ -1116,14 +1074,6 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
         *ptr++ = localQuakeHappening[srcPlrNum];
     }
 #endif
-
-    /*Con_Printf( "PlrUpd (%i bytes, flags=%x):\n", ptr-buffer, flags);
-       for(i=0; i<ptr-buffer; i++)
-       {
-       Con_Printf( "%02x ", buffer[i]);
-       if(i && !(i%10)) Con_Printf( "\n");
-       }
-       Con_Printf( "\n"); */
 
     // Finally, send the packet.
     Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType, buffer,

@@ -16,7 +16,9 @@
  */
 
 /*
- * Common code related to net games. Connecting to/from a netgame server.
+ * d_net.c : Common code related to net games.
+
+ * Connecting to/from a netgame server.
  * Netgame events (player and world) and netgame commands.
  */
 
@@ -37,10 +39,7 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "soundst.h"
-#  include "d_config.h"
+# include "jstrife.h"
 #endif
 
 #include "g_common.h"
@@ -152,12 +151,12 @@ int D_NetServerStarted(int before)
     deathmatch = cfg.netDeathmatch;
     nomonsters = cfg.netNomonsters;
 
+    cfg.jumpEnabled = cfg.netJumping;
+
 #if __JDOOM__
     respawnparm = cfg.netRespawn;
-    cfg.jumpEnabled = cfg.netJumping;
 #elif __JHERETIC__
     respawnparm = cfg.netRespawn;
-    cfg.jumpEnabled = cfg.netJumping;
 #elif __JHEXEN__
     randomclass = cfg.netRandomclass;
 #endif
@@ -285,13 +284,6 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     else if(peType == DDPE_EXIT)
     {
         Con_Message("PE: player %i has left.\n", plrNumber);
-        // Spawn a teleport fog.
-        /*P_SpawnTeleFog(players[plrNumber].plr->mo->x,
-           players[plrNumber].plr->mo->y);
-           // Let's get rid of the mobj.
-           P_RemoveMobj(players[plrNumber].plr->mo);
-           players[plrNumber].plr->mo = NULL;
-           players[plrNumber].playerstate = PST_REBORN; */
 
         players[plrNumber].playerstate = PST_GONE;
 
@@ -703,13 +695,7 @@ DEFCC(CCmdSetMap)
     // Only the server can change the map.
     if(!IS_SERVER)
         return false;
-#ifdef __JDOOM__
-    if(argc != 3)
-    {
-        Con_Printf("Usage: %s (episode) (map)\n", argv[0]);
-        return true;
-    }
-#elif __JHERETIC__
+#if __JDOOM__ || __JHERETIC__
     if(argc != 3)
     {
         Con_Printf("Usage: %s (episode) (map)\n", argv[0]);
@@ -727,14 +713,10 @@ DEFCC(CCmdSetMap)
     deathmatch = cfg.netDeathmatch;
     nomonsters = cfg.netNomonsters;
 
-#ifdef __JDOOM__
-    respawnparm = cfg.netRespawn;
     cfg.jumpEnabled = cfg.netJumping;
-    ep = atoi(argv[1]);
-    map = atoi(argv[2]);
-#elif __JHERETIC__
+
+#if __JDOOM__ || __JHERETIC__
     respawnparm = cfg.netRespawn;
-    cfg.jumpEnabled = cfg.netJumping;
     ep = atoi(argv[1]);
     map = atoi(argv[2]);
 #elif __JSTRIFE__

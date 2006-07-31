@@ -27,7 +27,6 @@
 #include "doomdef.h"
 #include "d_config.h"
 #include "d_event.h"
-#include "m_random.h"
 #include "p_local.h"
 #include "doomstat.h"
 #include "p_pspr.h"

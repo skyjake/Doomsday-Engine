@@ -843,7 +843,7 @@ int EV_FloorCrushStop(line_t *line, byte *args)
     boolean rtn;
 
     rtn = 0;
-    for(think = gi.thinkercap->next; think != gi.thinkercap;
+    for(think = thinkercap.next; think != &thinkercap && think;
         think = think->next)
     {
         if(think->function != T_MoveFloor)

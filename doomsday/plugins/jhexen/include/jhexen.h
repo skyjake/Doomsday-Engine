@@ -27,7 +27,6 @@
 #include "../../jhexen/include/h2def.h"
 #include "../../jhexen/include/acfnlink.h"
 #include "../../jhexen/include/h2_actn.h"
-#include "../../jhexen/include/m_ctrl.h"
 #include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_local.h"
 #include "../../jhexen/include/p_spec.h"
@@ -40,5 +39,8 @@
 #include "../../jhexen/include/x_config.h"
 #include "../../jhexen/include/xddefs.h"
 #include "../../jhexen/include/p_setup.h"
+
+#include "p_inventory.h"
+#include "g_controls.h"
 
 #endif // __JHEXEN_CONVENIENCE_H__

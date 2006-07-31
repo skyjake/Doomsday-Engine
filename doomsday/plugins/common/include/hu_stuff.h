@@ -79,7 +79,15 @@ void    WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont,
                          float defAlpha, boolean defCase, boolean defTypeIn,
                          int halign);
 
+void    M_WriteText(int x, int y, char *string);
+void    M_WriteText2(int x, int y, char *string, dpatch_t *font, float red,
+                     float green, float blue, float alpha);
+void    M_WriteText3(int x, int y, const char *string, dpatch_t *font,
+                     float red, float green, float blue, float alpha,
+                     boolean doTypeIn, int initialCount);
+
 int     M_DrawText(int x, int y, boolean direct, char *string);
+void    M_DrawTitle(char *text, int y);
 
 int     M_StringWidth(char *string, dpatch_t * font);
 int     M_StringHeight(char *string, dpatch_t * font);

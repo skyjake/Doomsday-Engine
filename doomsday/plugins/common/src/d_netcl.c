@@ -15,6 +15,10 @@
  * along with this program; if not: http://www.opensource.org/
  */
 
+/*
+ * d_netcl.c : Common code related to net games (client-side).
+ */
+
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
@@ -32,9 +36,7 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "d_config.h"
+# include "jstrife.h"
 #endif
 
 #include "am_map.h"
@@ -55,8 +57,6 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern char msgbuff[256];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -124,9 +124,7 @@ void NetCl_UpdateGameState(byte *data)
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
     byte gsRespawn = 0;
-#ifndef __JHEXEN__
     byte gsJumping = 0;
-#endif
     byte gsSkill = 0;
     fixed_t gsGravity = 0;
 
@@ -137,8 +135,8 @@ void NetCl_UpdateGameState(byte *data)
     gsDeathmatch = data[4] & 0x3;
     gsMonsters = (data[4] & 0x4? true : false);
     gsRespawn = (data[4] & 0x8? true : false);
-#if __JDOOM__ || __JHERETIC__
     gsJumping = (data[4] & 0x10? true : false);
+#if __JDOOM__ || __JHERETIC__
     gsSkill = (data[4] >> 5);
 #else
     gsSkill = data[5] & 0x7;
@@ -169,18 +167,15 @@ void NetCl_UpdateGameState(byte *data)
     Con_Message("Game state: Map=%i Skill=%i %s\n", gsMap, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
-    Con_Message("  Respawn=%s Monsters=%s Gravity=%.1f\n",
-                respawnparm ? "yes" : "no", !nomonsters ? "yes" : "no",
-                FIX2FLT(gsGravity));
 #else
     Con_Message("Game state: Map=%i Episode=%i Skill=%i %s\n", gsMap,
                 gsEpisode, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
+#endif
     Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
                 respawnparm ? "yes" : "no", !nomonsters ? "yes" : "no",
                 gsJumping ? "yes" : "no", FIX2FLT(gsGravity));
-#endif
 
 #ifdef __JHERETIC__
     prevmap = gamemap;
@@ -231,7 +226,7 @@ void NetCl_UpdateGameState(byte *data)
             P_CheckPosition(mo, mo->pos[VX], mo->pos[VY]);
 #endif
             mo->floorz = tmfloorz;
-            mo->ceilingz = tmceilingz;        
+            mo->ceilingz = tmceilingz;
         }
         else // mo == NULL
         {
@@ -355,7 +350,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         }
 #  if __JHERETIC__
         if(plrNum == consoleplayer)
-            P_CheckReadyArtifact();
+            P_InventoryCheckReadyArtifact(&players[consoleplayer]);
 #  endif
     }
 #endif

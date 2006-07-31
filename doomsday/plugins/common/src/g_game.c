@@ -1,14 +1,22 @@
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ */
 
-//**************************************************************************
-//**
-//** G_GAME.C
-//**
-//** Top-level game routines.
-//** Compiles for jDoom, jHeretic and jHexen.
-//**
-//** Could use a LOT of tidying up!
-//**
-//**************************************************************************
+/*
+ * g_game.c : Top-level game routines.
+ *
+ * Compiles for jDoom, jHeretic and jHexen.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 #include <ctype.h>
@@ -22,11 +30,7 @@
 #  include "d_action.h"
 #  include "d_config.h"
 #  include "m_argv.h"
-//#  include "../engine/portable/include/m_misc.h"
-#  include "m_menu.h"
-#  include "m_random.h"
 #  include "p_local.h"
-//#  include "p_tick.h"
 #  include "wi_stuff.h"
 #  include "st_stuff.h"
 #  include "s_sound.h"
@@ -41,12 +45,10 @@
 #elif __JHEXEN__
 #  include <string.h>
 #  include <math.h>
-#  include <assert.h>
 #  include "jhexen.h"
 #elif __JSTRIFE__
 #  include <string.h>
 #  include <math.h>
-#  include <assert.h>
 #  include "h2def.h"
 #  include "p_local.h"
 #  include "soundst.h"
@@ -55,10 +57,14 @@
 #  include "st_stuff.h"
 #endif
 
+#include "g_controls.h"
 #include "p_mapsetup.h"
 #include "am_map.h"
 #include "hu_stuff.h"
 #include "hu_msg.h"
+#if !__JHEXEN__
+#  include "m_menu.h"
+#endif
 #include "g_common.h"
 #include "g_update.h"
 #include "d_net.h"
@@ -110,12 +116,6 @@ MonsterMissileInfo[] =
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    G_DefaultBindings(void);
-void    G_BindClassRegistration(void);
-void    G_ResetMousePos(void);
-boolean G_AdjustControlState(event_t* ev);
-void    G_LookAround(void);
-
 boolean cht_Responder(event_t *ev);
 
 boolean M_EditResponder(event_t *ev);
@@ -133,8 +133,6 @@ void    HU_UpdatePsprites(void);
 
 void    G_ConsoleRegistration(void);
 void    DetectIWADs(void);
-
-void    G_ControlRegister(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -167,25 +165,12 @@ void    G_StopDemo(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 #if __JDOOM__
-extern char *pagename;
 extern GameMission_t gamemission;
-#endif
-
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-extern boolean inventory;
-extern int curpos;
-extern boolean usearti;
-extern int inv_ptr;
-extern boolean artiskip;
 #endif
 
 #if __JHERETIC__
 extern int playerkeys;
 #endif
-
-extern int povangle;
-extern float targetLookOffset;
-extern float lookOffset;
 
 extern char *borderLumps[];
 
@@ -219,20 +204,9 @@ boolean respawnmonsters;
 int     prevmap;
 #endif
 
-#if __JDOOM__ || __JHERETIC__
-skill_t d_skill;
-int     d_episode;
-int     d_map;
-#endif
-
 boolean paused;
 boolean sendpause;              // send a pause event next tic
 boolean usergame;               // ok to save / end game
-
-boolean timingdemo;             // if true, exit with report on completion
-boolean nodrawers;              // for comparative timing purposes
-boolean noblit;                 // for comparative timing purposes
-int     starttime;              // for comparative timing purposes
 
 boolean viewactive;
 
@@ -259,13 +233,7 @@ mobj_t *bodyque[BODYQUESIZE];
 int     bodyqueslot;
 #endif
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-int     inventoryTics;
-#endif
-
 #if __JHEXEN__ || __JSTRIFE__
-byte    demoDisabled = 0;       // is demo playing disabled?
-
 // Position indicator for cooperative net-play reborn
 int     RebornPosition;
 int     LeaveMap;
@@ -572,10 +540,11 @@ cvar_t gamestatusCVars[] =
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static skill_t d_skill;
+static int d_episode;
+static int d_map;
+
 #if __JHEXEN__ || __JSTRIFE__
-static skill_t TempSkill;
-static int TempEpisode;
-static int TempMap;
 static int GameLoadSlot;
 #endif
 
@@ -696,57 +665,6 @@ void G_StartTitle(void)
     FI_Start(script, FIMODE_LOCAL);
 }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-boolean inventoryMove(player_t *plr, int dir)
-{
-    inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
-    if(inventoryTics < 1)
-        inventoryTics = 1;
-
-    if(!inventory)
-    {
-        inventory = true;
-        return (false);
-    }
-
-    if(dir == 0)
-    {
-        inv_ptr--;
-        if(inv_ptr < 0)
-        {
-            inv_ptr = 0;
-        }
-        else
-        {
-            curpos--;
-            if(curpos < 0)
-            {
-                curpos = 0;
-            }
-        }
-    }
-    else
-    {
-        inv_ptr++;
-        if(inv_ptr >= plr->inventorySlotNum)
-        {
-            inv_ptr--;
-            if(inv_ptr < 0)
-                inv_ptr = 0;
-        }
-        else
-        {
-            curpos++;
-            if(curpos > 6)
-            {
-                curpos = 6;
-            }
-        }
-    }
-    return (true);
-}
-#endif
-
 void G_DoLoadLevel(void)
 {
     action_t *act;
@@ -789,7 +707,6 @@ void G_DoLoadLevel(void)
 
     P_SetupLevel(gameepisode, gamemap, 0, gameskill);
     Set(DD_DISPLAYPLAYER, consoleplayer);   // view the guy you are playing
-    starttime = Sys_GetTime();
     gameaction = ga_nothing;
 
     Z_CheckHeap();
@@ -842,7 +759,7 @@ boolean G_Responder(event_t *ev)
 
     if(!actions[A_USEARTIFACT].on)
     {                           // flag to denote that it's okay to use an artifact
-        if(!inventory)
+        if(!ST_IsInventoryVisible())
         {
             plr->readyArtifact = plr->inventory[inv_ptr].type;
         }
@@ -890,22 +807,6 @@ boolean G_Responder(event_t *ev)
     // The event wasn't used.
     return false;
 }
-
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-void G_InventoryTicker(void)
-{
-    if(!players[consoleplayer].plr->ingame)
-        return;
-
-    // turn inventory off after a certain amount of time
-    if(inventory && !(--inventoryTics))
-    {
-        players[consoleplayer].readyArtifact =
-            players[consoleplayer].inventory[inv_ptr].type;
-        inventory = false;
-    }
-}
-#endif
 
 void G_SpecialButton(player_t *pl)
 {
@@ -1024,10 +925,6 @@ void G_Ticker(void)
     // Update the viewer's look angle
     G_LookAround();
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    G_InventoryTicker();
-#endif
-
     // Enable/disable sending of frames (delta sets) to clients.
     Set(DD_ALLOW_FRAMES, gamestate == GS_LEVEL);
     if(!IS_CLIENT)
@@ -1097,27 +994,26 @@ void G_Ticker(void)
 #endif
         // armor
 #if __JHEXEN__
-        gsvArmor = FixedDiv(
-        PCLASS_INFO(plyr->class)->autoarmorsave + plyr->armorpoints[ARMOR_ARMOR] +
-        plyr->armorpoints[ARMOR_SHIELD] +
-        plyr->armorpoints[ARMOR_HELMET] +
-        plyr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+        gsvArmor = FixedDiv(PCLASS_INFO(plyr->class)->autoarmorsave +
+                            plyr->armorpoints[ARMOR_ARMOR] +
+                            plyr->armorpoints[ARMOR_SHIELD] +
+                            plyr->armorpoints[ARMOR_HELMET] +
+                            plyr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 #else
         gsvArmor = plyr->armorpoints;
 #endif
         // owned keys
+        for(i = 0; i < NUMKEYS; i++)
 #if __JHEXEN__
-        for( i= 0; i < NUMKEYS; i++)
             gsvKeys[i] = (plyr->keys & (1 << i))? 1 : 0;
 #else
-        for( i= 0; i < NUMKEYS; i++)
             gsvKeys[i] = plyr->keys[i];
 #endif
         // current weapon
         gsvCurrentWeapon = plyr->readyweapon;
 
         // owned weapons
-        for( i= 0; i < NUMWEAPONS; i++)
+        for(i = 0; i < NUMWEAPONS; i++)
             gsvWeapons[i] = plyr->weaponowned[i];
 
 #if __JHEXEN__
@@ -1128,12 +1024,12 @@ void G_Ticker(void)
         gsvWPieces[3] = (plyr->pieces == 7)? 1 : 0;
 #endif
         // current ammo amounts
-        for( i= 0; i < NUMAMMO; i++)
+        for(i = 0; i < NUMAMMO; i++)
             gsvAmmo[i] = plyr->ammo[i];
 
 #if __JHERETIC__ || __JHEXEN__
         // artifacts
-        for( i= 0; i < NUMINVENTORYSLOTS; i++)
+        for(i = 0; i < NUMINVENTORYSLOTS; i++)
             gsvArtifacts[plyr->inventory[i].type] = plyr->inventory[i].count;
 #endif
     }
@@ -1211,7 +1107,7 @@ void G_PlayerExitMap(int player)
         p->powers[pw_flight] = 0;
 
         for(i = 0; i < MAXARTICOUNT; i++)
-            P_PlayerUseArtifact(p, arti_fly);
+            P_InventoryUseArtifact(p, arti_fly);
     }
 #endif
     // Remove their powers.
@@ -1409,69 +1305,6 @@ void G_PlayerReborn(int player)
     p->plr->flags &= ~DDPF_DEAD;
 }
 
-/*
- * Spawns a player at one of the random death match spots
- * called at level load and each death
- */
-void G_DeathMatchSpawnPlayer(int playernum)
-{
-    int     i, j;
-    int     selections;
-    thing_t faraway;
-    boolean using_dummy = false;
-    ddplayer_t *pl = players[playernum].plr;
-
-    // Spawn player initially at a distant location.
-    if(!pl->mo)
-    {
-        faraway.x = faraway.y = DDMAXSHORT;
-        faraway.angle = 0;
-        P_SpawnPlayer(&faraway, playernum);
-        using_dummy = true;
-    }
-
-    // Now let's find an available deathmatch start.
-    selections = deathmatch_p - deathmatchstarts;
-    if(selections < 2)
-        Con_Error("Only %i deathmatch spots, 2 required", selections);
-
-    for(j = 0; j < 20; j++)
-    {
-        i = P_Random() % selections;
-        if(P_CheckSpot(playernum, &deathmatchstarts[i], true))
-        {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-            deathmatchstarts[i].type = playernum + 1;
-#endif
-            break;
-        }
-    }
-    if(using_dummy)
-    {
-        // Destroy the dummy.
-        P_RemoveMobj(pl->mo);
-        pl->mo = NULL;
-    }
-    P_SpawnPlayer(&deathmatchstarts[i], playernum);
-
-#if __JDOOM__ || __JHERETIC__
-    // Gib anything at the spot.
-    P_Telefrag(players[playernum].plr->mo);
-#endif
-}
-
-/*
- *  Spawns the given player at a dummy place.
- */
-void G_DummySpawnPlayer(int playernum)
-{
-    thing_t faraway;
-
-    faraway.x = faraway.y = DDMAXSHORT;
-    faraway.angle = (short) 0;
-    P_SpawnPlayer(&faraway, playernum);
-}
-
 #ifdef __JDOOM__
 void G_QueueBody(mobj_t *body)
 {
@@ -1490,11 +1323,10 @@ void G_DoReborn(int playernum)
     boolean oldWeaponowned[NUMWEAPONS];
     int     oldKeys;
     int     oldPieces;
-    boolean foundSpot;
     int     bestWeapon;
-#else
-    thing_t *assigned;
 #endif
+    boolean foundSpot;
+    thing_t *assigned;
 
     // Clear the currently playing script, if any.
     FI_Reset();
@@ -1506,11 +1338,11 @@ void G_DoReborn(int playernum)
 
 #if __JHEXEN__ || __JSTRIFE__
         if(SV_HxRebornSlotAvailable())
-        {                       // Use the reborn code if the slot is available
+        {   // Use the reborn code if the slot is available
             gameaction = ga_singlereborn;
         }
         else
-        {                       // Start a new game if there's no reborn info
+        {   // Start a new game if there's no reborn info
             gameaction = ga_newgame;
         }
 #else
@@ -1550,27 +1382,35 @@ void G_DoReborn(int playernum)
             oldWeaponowned[i] = players[playernum].weaponowned[i];
 #endif
 
-#if __JDOOM__ || __JHERETIC__
         // Try to spawn at the assigned spot.
-        assigned = &playerstarts[players[playernum].startspot];
+        foundSpot = false;
+        assigned = P_GetPlayerStart(
+#if __JHEXEN__ || __JSTRIFE__
+                                    RebornPosition,
+#else
+                                    0,
+#endif
+                                    playernum);
         if(P_CheckSpot(playernum, assigned, true))
         {
-            Con_Printf("- spawning at assigned spot %i.\n",
-                       players[playernum].startspot);
-            P_SpawnPlayer(assigned, playernum);
-            return;
-        }
-#elif __JHEXEN__ || __JSTRIFE__
-        foundSpot = false;
-        // Try to spawn at the assigned spot.
-        if(P_CheckSpot
-           (playernum, P_GetPlayerStart(RebornPosition, playernum), true))
-        {
             // Appropriate player start spot is open
-            P_SpawnPlayer(P_GetPlayerStart(RebornPosition, playernum),
-                          playernum);
+            Con_Printf("- spawning at assigned spot\n");
+            P_SpawnPlayer(assigned, playernum);
             foundSpot = true;
         }
+#if __JDOOM__ || __JHERETIC__
+        else
+        {
+            Con_Printf("- force spawning at %i.\n", players[playernum].startspot);
+
+            // Fuzzy returns false if it needs telefragging.
+            if(!P_FuzzySpawn(assigned, playernum, true))
+            {
+                // Spawn at the assigned spot, telefrag whoever's there.
+                P_Telefrag(players[playernum].plr->mo);
+            }
+        }
+#else
         else
         {
             // Try to spawn at one of the other player start spots
@@ -1587,7 +1427,7 @@ void G_DoReborn(int playernum)
                 }
             }
         }
-        if(foundSpot == false)
+        if(!foundSpot)
         {
             // Player's going to be inside something
             P_SpawnPlayer(P_GetPlayerStart(RebornPosition, playernum),
@@ -1613,17 +1453,6 @@ void G_DoReborn(int playernum)
             players[playernum].pendingweapon = bestWeapon;
         }
 #endif
-
-#if __JDOOM__ || __JHERETIC__
-        Con_Printf("- force spawning at %i.\n", players[playernum].startspot);
-
-        // Fuzzy returns false if it needs telefragging.
-        if(!P_FuzzySpawn(assigned, playernum, true))
-        {
-            // Spawn at the assigned spot, telefrag whoever's there.
-            P_Telefrag(players[playernum].plr->mo);
-        }
-#endif
     }
 }
 
@@ -1633,9 +1462,9 @@ void G_StartNewInit(void)
     SV_HxInitBaseSlot();
     SV_HxClearRebornSlot();
 
-#   if __JHEXEN__
+# if __JHEXEN__
     P_ACSInitNewGame();
-#   endif
+# endif
 
     // Default the player start spot group to 0
     RebornPosition = 0;
@@ -1655,7 +1484,7 @@ void G_StartNewGame(skill_t skill)
     {
         realMap = 1;
     }
-    G_InitNew(TempSkill, 1, realMap);
+    G_InitNew(d_skill, 1, realMap);
 }
 
 /*
@@ -2048,14 +1877,14 @@ void G_DoSaveGame(void)
 #if __JHEXEN__ || __JSTRIFE__
 void G_DeferredNewGame(skill_t skill)
 {
-    TempSkill = skill;
+    d_skill = skill;
     gameaction = ga_newgame;
 }
 
 void G_DoInitNew(void)
 {
     SV_HxInitBaseSlot();
-    G_InitNew(TempSkill, TempEpisode, TempMap);
+    G_InitNew(d_skill, d_episode, d_map);
     gameaction = ga_nothing;
 }
 #endif
@@ -2066,15 +1895,13 @@ void G_DoInitNew(void)
  */
 void G_DeferedInitNew(skill_t skill, int episode, int map)
 {
-#if __JHEXEN__ || __JSTRIFE__
-    TempSkill = skill;
-    TempEpisode = episode;
-    TempMap = map;
-    gameaction = ga_initnew;
-#else
     d_skill = skill;
     d_episode = episode;
     d_map = map;
+
+#if __JHEXEN__ || __JSTRIFE__
+    gameaction = ga_initnew;
+#else
     gameaction = ga_newgame;
 #endif
 }
@@ -2091,7 +1918,7 @@ void G_DoNewGame(void)
     }
     G_InitNew(d_skill, d_episode, d_map);
 #else
-    G_StartNewGame(TempSkill);
+    G_StartNewGame(d_skill);
 #endif
     gameaction = ga_nothing;
 }
@@ -2438,11 +2265,6 @@ void G_DoPlayDemo(void)
     char    buf[128];
 
     gameaction = ga_nothing;
-
-#if __JHEXEN__ || __JSTRIFE__
-    if(demoDisabled)
-        return;
-#endif
 
     // The lump should contain the path of the demo file.
     if(lnum < 0 || W_LumpLength(lnum) != 64)

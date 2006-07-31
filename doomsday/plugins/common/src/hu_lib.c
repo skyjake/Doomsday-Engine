@@ -41,9 +41,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// boolean : whether the screen is always erased
-#define noterased viewwindowx
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -53,8 +50,6 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern boolean automapactive;   // in AM_map.c
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

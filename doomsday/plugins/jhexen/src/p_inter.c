@@ -33,7 +33,7 @@ int     TextKeyMessages[] = {
 };
 
 static void SetDormantArtifact(mobj_t *arti);
-static void TryPickupArtifact(player_t *player, artitype_t artifactType,
+static void TryPickupArtifact(player_t *player, artitype_e artifactType,
                               mobj_t *artifact);
 static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
                             weapontype_t weaponType, mobj_t *weapon,
@@ -635,7 +635,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
 //
 //==========================================================================
 
-static void TryPickupArtifact(player_t *player, artitype_t artifactType,
+static void TryPickupArtifact(player_t *player, artitype_e artifactType,
                               mobj_t *artifact)
 {
     //static char *artifactMessages[NUMARTIFACTS] =
@@ -700,81 +700,6 @@ static void TryPickupArtifact(player_t *player, artitype_t artifactType,
             }
         }
     }
-}
-
-//---------------------------------------------------------------------------
-//
-// FUNC P_GiveArtifact
-//
-// Returns true if artifact accepted.
-//
-//---------------------------------------------------------------------------
-
-boolean P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo)
-{
-    int     i;
-    int     j;
-    boolean slidePointer;
-
-    player->update |= PSF_INVENTORY;
-    slidePointer = false;
-    i = 0;
-    while(player->inventory[i].type != arti && i < player->inventorySlotNum)
-    {
-        i++;
-    }
-    if(i == player->inventorySlotNum)
-    {
-        if(arti < arti_firstpuzzitem)
-        {
-            i = 0;
-            while(player->inventory[i].type < arti_firstpuzzitem &&
-                  i < player->inventorySlotNum)
-            {
-                i++;
-            }
-            if(i != player->inventorySlotNum)
-            {
-                for(j = player->inventorySlotNum; j > i; j--)
-                {
-                    player->inventory[j].count =
-                        player->inventory[j - 1].count;
-                    player->inventory[j].type = player->inventory[j - 1].type;
-                    slidePointer = true;
-                }
-            }
-        }
-        player->inventory[i].count = 1;
-        player->inventory[i].type = arti;
-        player->inventorySlotNum++;
-    }
-    else
-    {
-        if(arti >= arti_firstpuzzitem && IS_NETGAME && !deathmatch)
-        {                       // Can't carry more than 1 puzzle item in coop netplay
-            return false;
-        }
-        if(player->inventory[i].count >= 25)
-        {                       // Player already has 25 of this item
-            return false;
-        }
-        player->inventory[i].count++;
-    }
-    if(!player->artifactCount)
-    {
-        player->readyArtifact = arti;
-    }
-    else if(player == &players[consoleplayer] && slidePointer && i <= inv_ptr)
-    {
-        inv_ptr++;
-        curpos++;
-        if(curpos > 6)
-        {
-            curpos = 6;
-        }
-    }
-    player->artifactCount++;
-    return (true);
 }
 
 //==========================================================================
@@ -1181,7 +1106,7 @@ mobj_t *ActiveMinotaur(player_t *master)
     thinker_t *think;
     unsigned int *starttime;
 
-    for(think = gi.thinkercap->next; think != gi.thinkercap;
+    for(think = thinkercap.next; think != &thinkercap && think;
         think = think->next)
     {
         if(think->function != P_MobjThinker)
@@ -1658,7 +1583,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 25;
-            P_PlayerRemoveArtifact(player, normalSlot);
+            P_InventoryRemoveArtifact(player, normalSlot);
         }
     }
     else if(superCount * 100 >= saveHealth)
@@ -1667,7 +1592,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 100;
-            P_PlayerRemoveArtifact(player, superSlot);
+            P_InventoryRemoveArtifact(player, superSlot);
         }
     }
     else if((gameskill == sk_baby) &&
@@ -1678,13 +1603,13 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 25;
-            P_PlayerRemoveArtifact(player, normalSlot);
+            P_InventoryRemoveArtifact(player, normalSlot);
         }
         count = (saveHealth + 99) / 100;
         for(i = 0; i < count; i++)
         {
             player->health += 100;
-            P_PlayerRemoveArtifact(player, normalSlot);
+            P_InventoryRemoveArtifact(player, normalSlot);
         }
     }
     player->plr->mo->health = player->health;

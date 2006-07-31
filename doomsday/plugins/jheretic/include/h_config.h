@@ -173,6 +173,7 @@ typedef struct jheretic_config_s {
     // jHeretic specific
     int             ringFilter;
     int             chooseAndUse;
+    int             inventoryNextOnUnuse;
     int             tomeCounter, tomeSound;
     byte            fastMonsters;
 } jheretic_config_t;

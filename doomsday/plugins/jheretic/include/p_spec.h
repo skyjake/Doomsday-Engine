@@ -392,7 +392,9 @@ void            T_MoveFloor(floormove_t * floor);
 //
 // P_TELEPT
 //
+#define         TELEFOGHEIGHT (32*FRACUNIT)
 boolean         P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle);
 boolean         EV_Teleport(line_t *line, int side, mobj_t *thing);
+void            P_ArtiTele(player_t *player);
 
 #endif

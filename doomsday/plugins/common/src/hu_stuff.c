@@ -50,11 +50,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#ifdef __JDOOM__
-// Locally used constants, shortcuts.
-#define NUMMAPS         8
-#endif
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,9 +72,9 @@ int     typein_time = 0;
 #ifdef __JDOOM__
  // Name graphics of each level (centered)
 dpatch_t *lnames;
+#endif
 
 boolean hu_showallfrags = false;
-#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -280,15 +275,12 @@ void HU_Start(void)
 
 void HU_Drawer(void)
 {
-#ifdef __JDOOM__
     int     i, k, x, y;
     char    buf[80];
     player_t *plr;
-#endif
 
     HUMsg_Drawer();
 
-#ifdef __JDOOM__
     if(hu_showallfrags)
     {
         for(y = 8, i = 0; i < MAXPLAYERS; i++)
@@ -314,7 +306,6 @@ void HU_Drawer(void)
             y += 10;
         }
     }
-#endif
 }
 
 void HU_Ticker(void)
@@ -646,6 +637,16 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float red,
     // Don't draw anything for very small letters.
     if(h <= 4)
         return;
+
+    CLAMP(alpha, 0.0f, 1.0f);
+
+    // Don't bother with hidden letters.
+    if(alpha == 0.0f)
+        return;
+
+    CLAMP(red, 0.0f, 1.0f);
+    CLAMP(green, 0.0f, 1.0f);
+    CLAMP(blue, 0.0f, 1.0f);
 
     // Store original color.
     gl.GetIntegerv(DGL_RGBA, origColor);

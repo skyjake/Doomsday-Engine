@@ -94,17 +94,10 @@ int HU_PSpriteYOffset(player_t *pl)
         offy -= FRACUNIT * ((ST_HEIGHT * cfg.sbarscale) / (2 * 20) - 1);
     return offy;
 
-#elif __JHERETIC__
+#else
     if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT)
         return PSpriteSY[pl->class][pl->readyweapon];
     return PSpriteSY[pl->class][pl->readyweapon] * (20 - cfg.sbarscale) / 20.0f -
-        FRACUNIT * (39 * cfg.sbarscale) / 40.0f;
-
-#elif __JHEXEN__ || __JSTRIFE__
-    if(Get(DD_VIEWWINDOW_HEIGHT) == SCREENHEIGHT)
-        return PSpriteSY[pl->class][pl->readyweapon];
-    return PSpriteSY[pl->class][pl->readyweapon] * (20 -
-                                                    cfg.sbarscale) / 20.0f -
         FRACUNIT * (39 * cfg.sbarscale) / 40.0f;
 #endif
 }
@@ -154,56 +147,14 @@ void HU_UpdatePlayerSprite(int pnum)
         ddpsp->light = 1;
         ddpsp->alpha = 1;
 
-#if __JDOOM__
-        if(pl->powers[pw_invisibility] > 4 * 32 ||
-           pl->powers[pw_invisibility] & 8)
+#if __JDOOM__ || __JHERETIC__
+        if((pl->powers[pw_invisibility] > 4 * 32) ||
+           (pl->powers[pw_invisibility] & 8))
         {
             // shadow draw
             ddpsp->alpha = .25f;
         }
-        else if(psp->state->frame & FF_FULLBRIGHT)
-        {
-            // full bright
-            ddpsp->light = 1;
-        }
         else
-        {
-            // local light
-            ddpsp->light =
-                P_GetIntp(pl->plr->mo->subsector, DMU_LIGHT_LEVEL) / 255.0;
-        }
-        // Needs fullbright?
-        if((pl->powers[pw_infrared] > 4 * 32) || (pl->powers[pw_infrared] & 8)
-           || pl->powers[pw_invulnerability] > 30)
-        {
-            ddpsp->light = 1;
-        }
-
-#elif __JHERETIC__
-        if(pl->powers[pw_invisibility] > 4 * 32 ||
-           pl->powers[pw_invisibility] & 8)
-        {
-            // shadow draw
-            ddpsp->alpha = .25f;
-        }
-        else if(psp->state->frame & FF_FULLBRIGHT)
-        {
-            // full bright
-            ddpsp->light = 1;
-        }
-        else
-        {
-            // local light
-            ddpsp->light =
-                P_GetIntp(pl->plr->mo->subsector, DMU_LIGHT_LEVEL) / 255.0;
-        }
-        // Needs fullbright?
-        if(pl->powers[pw_infrared] > 4 * 32 || pl->powers[pw_infrared] & 8)
-        {
-            // Torch lights up the psprite.
-            ddpsp->light = 1;
-        }
-
 #elif __JHEXEN__
         if(pl->powers[pw_invulnerability] && pl->class == PCLASS_CLERIC)
         {
@@ -223,21 +174,11 @@ void HU_UpdatePlayerSprite(int pnum)
                 ddpsp->alpha = .333f;
             }
         }
-        else if(psp->state->frame & FF_FULLBRIGHT)
-        {
-            // Full bright
-            ddpsp->light = 1;
-        }
         else
-        {
-            // local light
-            ddpsp->light =
-                P_GetIntp(pl->plr->mo->subsector, DMU_LIGHT_LEVEL) / 255.0;
-        }
-#elif __JSTRIFE__
+#endif
         if(psp->state->frame & FF_FULLBRIGHT)
         {
-            // Full bright
+            // full bright
             ddpsp->light = 1;
         }
         else
@@ -245,6 +186,17 @@ void HU_UpdatePlayerSprite(int pnum)
             // local light
             ddpsp->light =
                 P_GetIntp(pl->plr->mo->subsector, DMU_LIGHT_LEVEL) / 255.0;
+        }
+#if !__JSTRIFE__
+        // Needs fullbright?
+        if((pl->powers[pw_infrared] > 4 * 32) || (pl->powers[pw_infrared] & 8)
+# if __JDOOM__
+           || (pl->powers[pw_invulnerability] > 30)
+# endif
+           )
+        {
+            // Torch lights up the psprite.
+            ddpsp->light = 1;
         }
 #endif
         // Add some extra light.

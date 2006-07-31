@@ -20,6 +20,7 @@ enum {
 typedef struct {
     float           playerMoveSpeed;
     int             chooseAndUse;
+    int             inventoryNextOnUnuse;
     float           lookSpeed;
     float           turnSpeed;
     int             quakeFly;
@@ -43,17 +44,17 @@ typedef struct {
     byte            netMap, netClass, netColor, netSkill;
     byte            netEpisode;    // unused in Hexen
     byte            netDeathmatch, netNomonsters, netRandomclass;
+    byte            netJumping;
     byte            netMobDamageModifier;   // multiplier for non-player mobj damage
     byte            netMobHealthModifier;   // health modifier for non-player mobjs
     int             netGravity;              // multiplayer custom gravity
     byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
     byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
     byte            overrideHubMsg; // skip the transition hub message when 1
-    byte            demoDisabled;  // disable demos
     int             cameraNoClip;
     float           bobView, bobWeapon;
     byte            askQuickSaveLoad;
-    int             jumpEnabled;   // Always true
+    int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
     int             usemouse, noAutoAim, alwaysRun;

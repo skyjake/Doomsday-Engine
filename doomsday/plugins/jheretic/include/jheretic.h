@@ -50,6 +50,8 @@
 #include "../../jheretic/include/tables.h"
 #include "../../jheretic/include/version.h"
 
+#include "p_inventory.h"
+#include "g_controls.h"
 #include "p_saveg.h"
 
 #endif // __JHERETIC_CONVENIENCE_H__

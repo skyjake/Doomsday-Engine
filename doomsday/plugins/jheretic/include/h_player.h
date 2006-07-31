@@ -143,7 +143,7 @@ typedef struct player_s {
     // DJS - Here follows Heretic specific player_t properties
     //
     inventory_t     inventory[NUMINVENTORYSLOTS];
-    artitype_t      readyArtifact;
+    artitype_e      readyArtifact;
     int             artifactCount;
     int             inventorySlotNum;
 

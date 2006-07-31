@@ -26,8 +26,6 @@ enum {
 void            G_Register(void);
 void            G_PreInit(void);
 void            G_PostInit(void);
-void            G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime);
-void            G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src);
 void            G_StartTitle(void);
 void            G_PostInit(void);
 void            G_PreInit(void);

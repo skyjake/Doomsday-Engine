@@ -3,13 +3,16 @@
 
 // DStrings.h
 
-#define GET_TXT(x)		((*gi.text)[x].text)
+#define GET_TXT(x)      ((*gi.text)[x].text)
 
 //---------------------------------------------------------------------------
 //
 // M_menu.c
 //
 //---------------------------------------------------------------------------
+
+#define NUM_QUITMESSAGES   0
+
 #define PRESSKEY GET_TXT(TXT_PRESSKEY)
 #define PRESSYN GET_TXT(TXT_PRESSYN)
 #define TXT_PAUSED GET_TXT(TXT_TXT_PAUSED)
@@ -35,7 +38,7 @@
 #define GAMMALVL2 GET_TXT(TXT_GAMMALVL2)
 #define GAMMALVL3 GET_TXT(TXT_GAMMALVL3)
 #define GAMMALVL4 GET_TXT(TXT_GAMMALVL4)
-#define	EMPTYSTRING	GET_TXT(TXT_EMPTYSTRING)
+#define EMPTYSTRING GET_TXT(TXT_EMPTYSTRING)
 
 //---------------------------------------------------------------------------
 //
@@ -178,10 +181,10 @@
 #define HUSTR_PLRBROWN GET_TXT(TXT_HUSTR_PLRBROWN)
 #define HUSTR_PLRRED GET_TXT(TXT_HUSTR_PLRRED)
 
-#define HUSTR_KEYGREEN	'g'
-#define HUSTR_KEYINDIGO	'i'
-#define HUSTR_KEYBROWN	'b'
-#define HUSTR_KEYRED	'r'
+#define HUSTR_KEYGREEN  'g'
+#define HUSTR_KEYINDIGO 'i'
+#define HUSTR_KEYBROWN  'b'
+#define HUSTR_KEYRED    'r'
 
 //---------------------------------------------------------------------------
 //

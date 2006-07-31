@@ -16,7 +16,7 @@
  */
 
 /*
- * The "In Fine" finale engine.
+ * f_infine.c : The "In Fine" finale engine.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -32,9 +32,7 @@
 #elif __JHEXEN__
 # include "jhexen.h"
 #elif __JSTRIFE__
-# include "h2def.h"
-# include "d_config.h"
-# include "am_map.h"
+# include "jstrife.h"
 #endif
 
 #include "hu_stuff.h"

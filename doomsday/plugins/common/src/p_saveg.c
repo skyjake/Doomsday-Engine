@@ -46,26 +46,33 @@
 
 // MACROS ------------------------------------------------------------------
 
-#ifdef __JDOOM__
-#  define MY_SAVE_MAGIC         0x1DEAD666
-#  define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
-#  define MY_SAVE_VERSION       5
-#  define SAVESTRINGSIZE        24
-#  define CONSISTENCY           0x2c
-#  define SAVEGAMENAME          "DoomSav"
-#  define CLIENTSAVEGAMENAME    "DoomCl"
-#  define SAVEGAMEEXTENSION     "dsg"
-#endif
-
-#ifdef __JHERETIC__
-#  define MY_SAVE_MAGIC         0x7D9A12C5
-#  define MY_CLIENT_SAVE_MAGIC  0x1062AF43
-#  define MY_SAVE_VERSION       5
-#  define SAVESTRINGSIZE        24
-#  define CONSISTENCY           0x9d
-#  define SAVEGAMENAME          "HticSav"
-#  define CLIENTSAVEGAMENAME    "HticCl"
-#  define SAVEGAMEEXTENSION     "hsg"
+#if __WOLFTC__
+# define MY_SAVE_MAGIC         0x1A8AFF08
+# define MY_CLIENT_SAVE_MAGIC  0x2A8AFF08
+# define MY_SAVE_VERSION       5
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x2c
+# define SAVEGAMENAME          "WolfSav"
+# define CLIENTSAVEGAMENAME    "WolfCl"
+# define SAVEGAMEEXTENSION     "wsg"
+#elif __JDOOM__
+# define MY_SAVE_MAGIC         0x1DEAD666
+# define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
+# define MY_SAVE_VERSION       5
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x2c
+# define SAVEGAMENAME          "DoomSav"
+# define CLIENTSAVEGAMENAME    "DoomCl"
+# define SAVEGAMEEXTENSION     "dsg"
+#elif __JHERETIC__
+# define MY_SAVE_MAGIC         0x7D9A12C5
+# define MY_CLIENT_SAVE_MAGIC  0x1062AF43
+# define MY_SAVE_VERSION       5
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x9d
+# define SAVEGAMENAME          "HticSav"
+# define CLIENTSAVEGAMENAME    "HticCl"
+# define SAVEGAMEEXTENSION     "hsg"
 #endif
 
 #define PRE_VER5_END_SPECIALS   7

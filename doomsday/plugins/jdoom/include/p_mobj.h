@@ -269,4 +269,6 @@ typedef struct mobj_s {
 
 } mobj_t;
 
+void        P_RespawnSpecials(void);
+
 #endif

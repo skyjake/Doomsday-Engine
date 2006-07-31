@@ -320,14 +320,10 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     P_LoadACScripts(W_GetNumForName(levelId) + ML_BEHAVIOR); // ACS object code
 #else
     // Now we can init the server.
-    Con_Message("Init server\n");
     R_SetupLevel(levelId, DDSLF_SERVER_ONLY);
 #endif
-    Con_Message("Deal starts\n");
     P_DealPlayerStarts();
-    Con_Message("Spawn players\n");
     P_SpawnPlayers();
-    Con_Message("Done\n");
 
     // set up world state
     P_SpawnSpecials();

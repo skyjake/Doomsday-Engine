@@ -10,33 +10,7 @@
 
 #include "mn_def.h"
 #include "h2_actn.h"
-
-#define CTLCFG_TYPE void
-
-CTLCFG_TYPE SCControlConfig(int option, void *data);
-
-// Control flags.
-#define CLF_ACTION      0x1     // The control is an action (+/- in front).
-#define CLF_REPEAT      0x2     // Bind down + repeat.
-
-typedef struct {
-    char   *command;            // The command to execute.
-    int     flags;
-    int     bindClass;          // Class it should be bound into
-    int     defKey;             //
-    int     defMouse;           // Zero means there is no default.
-    int     defJoy;             //
-} Control_t;
-
-// Game registered bindClasses
-enum {
-    GBC_CLASS1 = NUM_DDBINDCLASSES,
-    GBC_CLASS2,
-    GBC_CLASS3,
-    GBC_MENUHOTKEY,
-    GBC_CHAT,
-    GBC_MESSAGE
-};
+#include "g_controls.h"
 
 //
 // !!! Add new controls to the end, the existing indices must remain unchanged !!!

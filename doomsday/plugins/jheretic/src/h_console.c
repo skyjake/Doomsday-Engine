@@ -22,7 +22,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "jheretic.h"
+
 #include "f_infine.h"
+#include "g_controls.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -57,8 +59,6 @@ DEFCC(CCmdStopDemo);
 DEFCC(CCmdSpawnMobj);
 
 DEFCC(CCmdPrintPlayerCoords);
-
-DEFCC(CCmdInventory);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 

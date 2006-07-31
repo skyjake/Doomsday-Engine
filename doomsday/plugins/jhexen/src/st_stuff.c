@@ -118,8 +118,6 @@ typedef struct Cheat_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void M_ClearMenus(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // Console commands for the HUD/Statusbar
@@ -179,13 +177,16 @@ extern unsigned ShowKillsCount;
 
 extern int messageResponse;
 
+extern boolean hu_showallfrags; // in hu_stuff.c currently
+
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-int     DebugSound;             // Debug flag for displaying sound info
-boolean inventory;
 int     curpos;
-int     inv_ptr;
-int     ArtifactFlash;
+int     inventoryTics;
+boolean inventory = false;
+
+int     DebugSound;             // Debug flag for displaying sound info
+static int     ArtifactFlash;
 
 // ST_Start() has just been called
 static boolean st_firsttime;
@@ -198,9 +199,6 @@ static float showbar = 0.0f;
 
 // whether left-side main status bar is active
 static boolean st_statusbaron;
-
-// main player in game
-static player_t *plyr;
 
 // used for timing
 static unsigned int st_clock;
@@ -795,6 +793,9 @@ cvar_t hudCVars[] =
     // HUD displays
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30,
         "Seconds before the inventory auto-hides."},
+
+    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1,
+        "Debug: HUD shows all frags of all players."},
     {NULL}
 };
 
@@ -903,9 +904,9 @@ void ST_loadData(void)
 void ST_initData(void)
 {
     int i;
+    player_t *plyr = &players[consoleplayer];
 
     st_firsttime = true;
-    plyr = &players[consoleplayer];
 
     st_clock = 0;
     st_chatstate = StartChatState;
@@ -927,6 +928,7 @@ void ST_initData(void)
 void ST_createWidgets(void)
 {
     int i, width, temp;
+    player_t *plyr = &players[consoleplayer];
 
     // health num
     STlib_initNum(&w_health, ST_HEALTHX, ST_HEALTHY, PatchNumINumbers,
@@ -1012,6 +1014,31 @@ void ST_Stop(void)
 void ST_Init(void)
 {
     ST_loadData();
+}
+
+void ST_Inventory(boolean show)
+{
+    if(show)
+    {
+        inventory = true;
+
+        inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
+        if(inventoryTics < 1)
+            inventoryTics = 1;
+    }
+    else
+        inventory = false;
+}
+
+boolean ST_IsInventoryVisible(void)
+{
+    return inventory;
+}
+
+void ST_InventoryFlashCurrent(player_t *player)
+{
+    if(player == &players[consoleplayer])
+        ArtifactFlash = 4;
 }
 
 //==========================================================================
@@ -1247,6 +1274,14 @@ void ST_Ticker(void)
             delta = 6;
         }
         HealthMarker += delta;
+    }
+
+    // turn inventory off after a certain amount of time
+    if(inventory && !(--inventoryTics))
+    {
+        players[consoleplayer].readyArtifact =
+            players[consoleplayer].inventory[inv_ptr].type;
+        inventory = false;
     }
 }
 
@@ -1967,7 +2002,7 @@ void ST_doPaletteStuff(boolean forceChange)
     {
         sb_palette = palette;
         // $democam
-        CPlayer->plr->filter = H2_GetFilterColor(palette);
+        CPlayer->plr->filter = R_GetFilterColor(palette);
     }
 }
 
@@ -2097,6 +2132,7 @@ void ST_drawWidgets(boolean refresh)
 {
     int     i;
     int     x;
+    player_t *plyr = &players[consoleplayer];
 
     oldhealth = -1;
     if(!inventory)
@@ -2234,6 +2270,7 @@ void DrawKeyBar(void)
 //==========================================================================
 static void DrawWeaponPieces(void)
 {
+    player_t *plyr = &players[consoleplayer];
 
     GL_DrawPatchLitAlpha(190, 162, 1, cfg.statusbarAlpha, PatchNumWEAPONSLOT.lump);
 
@@ -3192,8 +3229,10 @@ DEFCC(CCmdCheatSuicide)
 
 DEFCC(CCmdCheatGive)
 {
-    int     tellUsage = false;
-    int     target = consoleplayer;
+    char    buf[100];
+    int     i;
+    int     weapNum;
+    player_t *plyr = &players[consoleplayer];
 
     if(IS_CLIENT)
     {
@@ -3209,35 +3248,69 @@ DEFCC(CCmdCheatGive)
     if(!canCheat())
         return false;           // Can't cheat!
 
-    // Check the arguments.
+    if(argc != 2 && argc != 3)
+    {
+        Con_Printf("Usage:\n  give (stuff)\n");
+        Con_Printf("  give (stuff) (player)\n");
+        Con_Printf("Stuff consists of one or more of:\n");
+        Con_Printf(" a - artifacts\n");
+        Con_Printf(" h - health\n");
+        Con_Printf(" k - keys\n");
+        Con_Printf(" p - puzzle\n");
+        Con_Printf(" w - weapons\n");
+        Con_Printf(" 0-4 - weapon\n");
+        return true;
+    }
     if(argc == 3)
     {
-        target = atoi(argv[2]);
-        if(target < 0 || target >= MAXPLAYERS || !players[target].plr->ingame)
+        i = atoi(argv[2]);
+        if(i < 0 || i >= MAXPLAYERS || !players[i].plr->ingame)
             return false;
+        plyr = &players[i];
     }
-
-    // Check the arguments.
-    if(argc != 2 && argc != 3)
-        tellUsage = true;
-    else if(!strnicmp(argv[1], "weapons", 1))
-        CheatWeaponsFunc(players + target, NULL);
-    else if(!strnicmp(argv[1], "health", 1))
-        CheatHealthFunc(players + target, NULL);
-    else if(!strnicmp(argv[1], "keys", 1))
-        CheatKeysFunc(players + target, NULL);
-    else if(!strnicmp(argv[1], "artifacts", 1))
-        CheatArtifactAllFunc(players + target, NULL);
-    else if(!strnicmp(argv[1], "puzzle", 1))
-        CheatPuzzleFunc(players + target, NULL);
-    else
-        tellUsage = true;
-
-    if(tellUsage)
+    strcpy(buf, argv[1]);       // Stuff is the 2nd arg.
+    strlwr(buf);
+    for(i = 0; buf[i]; i++)
     {
-        Con_Printf("Usage: give weapons/health/keys/artifacts/puzzle\n");
-        Con_Printf("The first letter is enough, e.g. 'give h'.\n");
+        switch (buf[i])
+        {
+        case 'a':
+            Con_Printf("Artifacts given.\n");
+            CheatArtifactAllFunc(plyr, NULL);
+            break;
+
+        case 'h':
+            Con_Printf("Health given.\n");
+            CheatHealthFunc(plyr, NULL);
+            break;
+
+        case 'k':
+            Con_Printf("Keys given.\n");
+            CheatKeysFunc(plyr, NULL);
+            break;
+
+        case 'p':
+            Con_Printf("Puzzle parts given.\n");
+            CheatPuzzleFunc(plyr, NULL);
+            break;
+
+        case 'w':
+            Con_Printf("Weapons given.\n");
+            CheatWeaponsFunc(plyr, NULL);
+            break;
+
+        default:
+            // Individual Weapon
+            weapNum = ((int) buf[i]) - 48;
+            if(weapNum >= 0 && weapNum < NUMWEAPONS)
+            {
+               plyr->weaponowned[weapNum] = true;
+            }
+            else// Unrecognized
+                Con_Printf("What do you mean, '%c'?\n", buf[i]);
+        }
     }
+
     return true;
 }
 

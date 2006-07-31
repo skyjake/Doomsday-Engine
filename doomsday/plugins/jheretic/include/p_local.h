@@ -129,12 +129,8 @@ void            P_FireWeapon(player_t *player);
 // ***** P_USER *****
 
 void            P_ClientSideThink();
-void            P_CheckReadyArtifact();
-void            P_PlayerThink(player_t *player);
 void            P_Thrust(player_t *player, angle_t angle, fixed_t move);
-void            P_PlayerRemoveArtifact(player_t *player, int slot);
-void            P_PlayerUseArtifact(player_t *player, artitype_t arti);
-boolean         P_UseArtifact(player_t *player, artitype_t arti);
+boolean         P_UndoPlayerMorph(player_t *player);
 
 // ***** P_MOBJ *****
 
@@ -160,6 +156,7 @@ extern int      iquetail;
 extern mobjtype_t PuffType;
 extern mobj_t  *MissileMobj;
 
+void            P_SpawnMapThing(thing_t * th);
 mobj_t         *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
 void            P_RemoveMobj(mobj_t *th);
 boolean         P_SetMobjState(mobj_t *mobj, statenum_t state);
@@ -262,7 +259,6 @@ void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                              int damage);
 boolean         P_GiveAmmo(player_t *player, ammotype_t ammo, int count);
-boolean         P_GiveArtifact(player_t *player, artitype_t arti, mobj_t *mo);
 boolean         P_GiveBody(player_t *player, int num);
 boolean         P_GivePower(player_t *player, powertype_t power);
 boolean         P_MorphPlayer(player_t *player);
@@ -276,15 +272,21 @@ void            AM_Drawer(void);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
-// ***** SB_BAR *****
+// ***** ST_STUFF *****
 
-extern int      ArtifactFlash;
+extern int      curpos;
+
+void            ST_Inventory(boolean show);
+boolean         ST_IsInventoryVisible(void);
+
+void            ST_InventoryFlashCurrent(player_t *player);
+
 void            ST_doPaletteStuff(void);
 
 #define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
 #define LOOKDIR2RAD(x) (LOOKDIR2DEG(x)/180*PI)
 
-void            H_SetFilter(int filter);
-int             H_GetFilterColor(int filter);
+void            R_SetFilter(int filter);
+int             R_GetFilterColor(int filter);
 
 #endif                          // __P_LOCAL__

@@ -25,8 +25,6 @@
 #  include "doomstat.h"
 #  include "m_menu.h"
 #  include "d_config.h"
-//#  include "m_misc.h"
-#  include "m_random.h"
 #  include "s_sound.h"
 #  include "dstrings.h"
 #  include "p_local.h"

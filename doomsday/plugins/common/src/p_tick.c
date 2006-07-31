@@ -36,6 +36,7 @@
 #endif
 
 #include "g_common.h"
+#include "g_controls.h"
 #include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
