@@ -656,7 +656,7 @@ DEFCC(CCmdMakeLocal)
     players[p].plr->ingame = true;
     sprintf(buf, "conlocp %i", p);
     DD_Execute(buf, false);
-    P_DealPlayerStarts();
+    P_DealPlayerStarts(0);
     return true;
 }
 

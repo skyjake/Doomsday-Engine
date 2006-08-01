@@ -667,7 +667,7 @@ void NetSv_NewPlayerEnters(int plrnumber)
     plr->playerstate = PST_REBORN;  // Force an init.
 
     // Re-deal player starts.
-    P_DealPlayerStarts();
+    P_DealPlayerStarts(0);
 
     if(deathmatch)
     {
@@ -1142,7 +1142,7 @@ void NetSv_ChangePlayerInfo(int from, byte *data)
 #endif
 
     // Re-deal start spots.
-    P_DealPlayerStarts();
+    P_DealPlayerStarts(0);
 
     // Tell the other clients about the change.
     NetSv_SendPlayerInfo(from, DDSP_ALL_PLAYERS);

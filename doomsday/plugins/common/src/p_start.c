@@ -181,7 +181,7 @@ void P_FreePlayerStarts(void)
  * Gives all the players in the game a playerstart.
  * Only needed in co-op games (start spots are random in deathmatch).
  */
-void P_DealPlayerStarts(void)
+void P_DealPlayerStarts(int group)
 {
     int     i, k;
     player_t *pl;
@@ -200,13 +200,19 @@ void P_DealPlayerStarts(void)
         // The number of the start spot this player will use.
         spotNumber = i % MAX_START_SPOTS;
         pl->startspot = -1;
+        found = false;
 
         for(k = 0, mt = playerstarts; k < numPlayerStarts; k++, mt++)
         {
             if(spotNumber == mt->type - 1)
             {
                 // This is a match.
+#if __JHEXEN__
+                if(mt->arg1 == group) // Group must match too.
+                    pl->startspot = k;
+#else
                 pl->startspot = k;
+#endif
                 // Keep looking.
             }
         }

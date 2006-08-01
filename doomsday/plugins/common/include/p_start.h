@@ -34,7 +34,7 @@ boolean         P_CheckSpot(int playernum, thing_t * mthing,
 boolean         P_FuzzySpawn(thing_t * spot, int playernum,
                              boolean doTeleSpark);
 thing_t        *P_GetPlayerStart(int group, int pnum);
-void            P_DealPlayerStarts(void);
+void            P_DealPlayerStarts(int group);
 void            P_SpawnPlayers(void);
 
 void            P_GetMapLumpName(int episode, int map, char *lumpName);

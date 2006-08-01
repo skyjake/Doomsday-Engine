@@ -322,7 +322,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     // Now we can init the server.
     R_SetupLevel(levelId, DDSLF_SERVER_ONLY);
 #endif
-    P_DealPlayerStarts();
+    P_DealPlayerStarts(0);
     P_SpawnPlayers();
 
     // set up world state
