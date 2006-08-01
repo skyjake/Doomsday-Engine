@@ -44,6 +44,7 @@
  ./../../plugins/jhexen/src/s_sound.c
  ./../../plugins/common/src/r_common.c
  ./../../plugins/common/src/m_fixed.c
+ ./../../plugins/jhexen/src/m_cheat.c
  ./../../plugins/common/src/hu_pspr.c
  ./../../plugins/common/src/g_game.c
  ./../../plugins/common/src/g_controls.c

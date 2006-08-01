@@ -329,10 +329,10 @@ void cht_Init(void)
 }
 
 /*
- * Responds to user input to see if a cheat sequence
- * has been entered. Events are never eaten.
+ * Responds to user input to see if a cheat sequence has been entered.
  *
- * @parm ev: ptr to the event to be checked
+ * @param       ev          ptr to the event to be checked
+ * @returnval   boolean     (True) if the caller should eat the key.
  */
 boolean cht_Responder(event_t *ev)
 {

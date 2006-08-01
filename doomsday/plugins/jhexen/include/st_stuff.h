@@ -30,6 +30,9 @@ void    ST_Init(void);
 
 void    ST_updateGraphics(void);
 
+// Called to execute the change of player class.
+void    SB_ChangePlayerClass(player_t *player, int newclass);
+
 // Called in P_inter & P_enemy
 void        ST_doPaletteStuff(boolean forceChange);
 
