@@ -25,6 +25,7 @@ ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c
 ${CMAKE_SOURCE_DIR}/plugins/common/src/m_multi.c
 ${CMAKE_SOURCE_DIR}/plugins/common/src/mn_menu.c
 ${CMAKE_SOURCE_DIR}/plugins/common/src/p_actor.c
+${CMAKE_SOURCE_DIR}/plugins/common/src/p_inventory.c
 ${CMAKE_SOURCE_DIR}/plugins/common/src/p_mapsetup.c
 ${CMAKE_SOURCE_DIR}/plugins/common/src/p_player.c
 ${CMAKE_SOURCE_DIR}/plugins/common/src/p_start.c
