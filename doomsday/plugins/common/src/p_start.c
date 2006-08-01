@@ -200,7 +200,6 @@ void P_DealPlayerStarts(int group)
         // The number of the start spot this player will use.
         spotNumber = i % MAX_START_SPOTS;
         pl->startspot = -1;
-        found = false;
 
         for(k = 0, mt = playerstarts; k < numPlayerStarts; k++, mt++)
         {
