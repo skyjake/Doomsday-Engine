@@ -42,7 +42,18 @@
 #  include <stdio.h>
 #  include <string.h>
 #  include <math.h>
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "h_action.h"
+#  include "h_config.h"
+#  include "m_argv.h"
+#  include "m_cheat.h"
+#  include "p_local.h"
+#  include "st_stuff.h"
+#  include "soundst.h"
+#  include "dstrings.h"
+#  include "g_game.h"
+#  include "p_saveg.h"
+#  include "p_inventory.h"
 #elif __JHEXEN__
 #  include <string.h>
 #  include <math.h>

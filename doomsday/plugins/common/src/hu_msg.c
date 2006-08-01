@@ -33,7 +33,15 @@
 # include "p_local.h"
 # include "dstrings.h"  // Data.
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "doomdef.h"
+# include "h_config.h"
+# include "m_menu.h"
+# include "mn_def.h"
+# include "soundst.h"
+# include "h_stat.h"
+# include "r_local.h"
+# include "p_local.h"
+# include "dstrings.h"  // Data.
 #elif __JHEXEN__
 # include "jhexen.h"
 #elif __JSTRIFE__

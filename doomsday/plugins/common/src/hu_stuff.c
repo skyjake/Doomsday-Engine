@@ -37,7 +37,11 @@
 # include "d_config.h"
 # include "dstrings.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "mn_def.h"
+# include "m_menu.h"
+# include "h_stat.h"
+# include "p_local.h"
+# include "h_config.h"
 #elif __JHEXEN__
 # include "h2def.h"
 # include "mn_def.h"

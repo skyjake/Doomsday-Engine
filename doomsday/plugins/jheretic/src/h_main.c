@@ -21,7 +21,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "jheretic.h"
+
+#include "doomdef.h"
+#include "h_stat.h"
+#include "h_config.h"
+#include "m_argv.h"
+#include "m_menu.h"
+#include "g_game.h"
+#include "hu_stuff.h"
+#include "p_saveg.h"
 #include "d_net.h"
 
 // MACROS ------------------------------------------------------------------

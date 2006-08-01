@@ -8,6 +8,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "mn_def.h"
+#include "h_action.h"
 #include "g_controls.h"
 
 extern const Control_t *grabbing;

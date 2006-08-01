@@ -28,7 +28,13 @@
 #  include "d_player.h"
 #  include "p_local.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "h_action.h"
+#  include "doomdef.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "h_player.h"
+#  include "p_local.h"
+#  include "p_inventory.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

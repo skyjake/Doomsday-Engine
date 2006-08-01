@@ -38,8 +38,16 @@
 # include "doomstat.h"
 # include "g_common.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "doomdef.h"
+# include "h_config.h"
+# include "h_event.h"
+# include "p_local.h"
+//# include "p_inter.h"
+# include "h_stat.h"
+# include "g_common.h"
 # include "r_common.h"
+# include "p_inventory.h"
+# include "soundst.h"
 #elif __JHEXEN__
 # include <math.h>
 # include "jhexen.h"

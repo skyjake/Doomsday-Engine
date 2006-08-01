@@ -33,7 +33,13 @@
 #elif __JHERETIC__
 #  include <math.h>
 #  include <ctype.h>              // has isspace
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "p_local.h"
+#  include "soundst.h"
+#  include "p_setup.h"
+#  include "hu_stuff.h"
 #elif __JHEXEN__
 #  include <math.h>
 #  include "jhexen.h"

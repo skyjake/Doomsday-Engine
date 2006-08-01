@@ -21,7 +21,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jheretic.h"
+#include "doomdef.h"
+#include "h_stat.h"
+#include "h_config.h"
+#include "acfnlink.h"
+#include "xgclass.h"
 
 // MACROS ------------------------------------------------------------------
 

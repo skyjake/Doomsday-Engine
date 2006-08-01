@@ -30,7 +30,12 @@
 #  include "p_local.h"
 #  include "mn_def.h"
 #elif defined __JHERETIC__
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "m_menu.h"
+#  include "h_config.h"
+#  include "soundst.h"
+#  include "p_local.h"
+#  include "mn_def.h"
 #elif defined __JHEXEN__
 #  include "jhexen.h"
 #elif defined __JSTRIFE__

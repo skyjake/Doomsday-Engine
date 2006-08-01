@@ -5,7 +5,7 @@
 #  include "d_event.h"
 #  include "r_defs.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+//#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

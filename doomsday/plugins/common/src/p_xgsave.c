@@ -23,18 +23,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef __JDOOM__
+#if __JDOOM__
 #  include "doomdef.h"
 #  include "p_local.h"
 #  include "r_local.h"
 #  include "r_defs.h"
-#endif
-
-#ifdef __JHERETIC__
-#  include "jheretic.h"
-#endif
-
-#ifdef __JSTRIFE__
+#elif __JHERETIC__
+#  include "doomdef.h"
+#  include "p_local.h"
+#  include "r_local.h"
+#  include "r_defs.h"
+#elif __JSTRIFE__
 #  include "h2def.h"
 #  include "p_local.h"
 #endif

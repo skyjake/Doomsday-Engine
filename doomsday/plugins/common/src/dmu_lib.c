@@ -24,7 +24,7 @@
 #ifdef __JDOOM__
 # include "r_defs.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "r_defs.h"
 #elif __JHEXEN__
 # include "jhexen.h"
 #elif __JSTRIFE__

@@ -1,4 +1,54 @@
-#include "jheretic.h"
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ */
+
+/*
+ * Lookup tables.
+ * Do not try to look them up :-).
+ * In the order of appearance:
+ *
+ * int finetangent[4096]   - Tangens LUT.
+ *  Should work with BAM fairly well (12 of 16bit,
+ *     effectively, by shifting).
+ *
+ * int finesine[10240]     - Sine lookup.
+ *  Guess what, serves as cosine, too.
+ *  Remarkable thing is, how to use BAMs with this?
+ *
+ * int tantoangle[2049]    - ArcTan LUT,
+ *   maps tan(angle) to angle fast. Gotta search.
+ */
+
+// HEADER FILES ------------------------------------------------------------
+
+#include "tables.h"
+
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// finecosine and finesine use the same array of values.
+fixed_t *finecosine = &finesine[FINEANGLES / 4];
 
 int     finetangent[4096] = {
     -170910304, -56965752, -34178904, -24413316, -18988036, -15535599,
@@ -2322,4 +2372,18 @@ angle_t tantoangle[SLOPERANGE + 1] = {
     536870912
 };
 
-fixed_t *finecosine = &finesine[FINEANGLES / 4];
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
+
+int SlopeDiv(unsigned num, unsigned den)
+{
+    unsigned ans;
+
+    if(den < 512)
+        return SLOPERANGE;
+
+    ans = (num << 3) / (den >> 8);
+
+    return ans <= SLOPERANGE ? ans : SLOPERANGE;
+}

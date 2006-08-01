@@ -27,6 +27,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "doomdef.h"
+
 enum {
     HUD_AMMO,
     HUD_ARMOR,

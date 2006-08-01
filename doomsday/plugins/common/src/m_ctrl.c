@@ -33,7 +33,16 @@
 # include "d_config.h"
 # include "m_ctrl.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "doomdef.h"
+# include "h_stat.h"
+# include "m_menu.h"
+# include "mn_def.h"
+# include "h_action.h"
+# include "hu_stuff.h"
+# include "soundst.h"
+# include "g_game.h"
+# include "h_config.h"
+# include "m_ctrl.h"
 #elif __JHEXEN__
 # include "jhexen.h"
 #endif

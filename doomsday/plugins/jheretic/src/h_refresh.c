@@ -23,9 +23,21 @@
 
 #include <ctype.h>  // has isspace
 #include <math.h>
-#include "jheretic.h"
-#include "f_infine.h"
+#include "doomdef.h"
+#include "h_stat.h"
+#include "st_stuff.h"
+#include "hu_stuff.h"
+#include "hu_pspr.h"
+#include "am_map.h"
+#include "h_config.h"
+#include "x_hair.h"
+#include "mn_def.h"
+#include "m_menu.h"
+#include "g_common.h"
 #include "r_common.h"
+#include "d_net.h"
+#include "f_infine.h"
+
 #include "x_hair.h"
 
 // MACROS ------------------------------------------------------------------

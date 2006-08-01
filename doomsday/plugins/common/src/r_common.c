@@ -19,12 +19,14 @@
 
 #include <math.h>
 
-#ifdef __JDOOM__
+#if __JDOOM__
 #  include "doomdef.h"
 #  include "doomstat.h"
 #  include "d_items.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "h_stat.h"
+#  include "h_items.h"
 #elif __JHEXEN__
 #  include "h2def.h"
 #elif __JSTRIFE__

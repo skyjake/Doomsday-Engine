@@ -33,7 +33,11 @@
 #  include "d_config.h"
 #  include "d_items.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "p_local.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "h_items.h"
 #elif __JHEXEN__
 #  include "h2def.h"
 #  include "x_config.h"

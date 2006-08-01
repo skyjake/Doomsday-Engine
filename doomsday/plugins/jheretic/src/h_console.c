@@ -21,10 +21,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jheretic.h"
-
+#include "h_stat.h"
+#include "h_config.h"
+#include "g_game.h"
+#include "soundst.h"
+#include "hu_stuff.h"
+#include "mn_def.h"
 #include "f_infine.h"
-#include "g_controls.h"
+
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 

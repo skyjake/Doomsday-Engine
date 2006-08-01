@@ -27,7 +27,10 @@
 #  include "doomstat.h"
 #  include "g_game.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "h_event.h"
+#  include "p_local.h"
+#  include "h_stat.h"
+#  include "g_game.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

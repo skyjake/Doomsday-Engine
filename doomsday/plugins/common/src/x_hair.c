@@ -28,7 +28,8 @@
 #  include "doomdef.h"
 #  include "d_config.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "h_config.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

@@ -12,7 +12,14 @@
 
 #include <math.h>
 
-#include "jheretic.h"
+#include "doomdef.h"
+#include "h_stat.h"
+#include "h_config.h"
+#include "h_event.h"
+#include "p_local.h"
+#include "p_pspr.h"
+#include "soundst.h"
+
 #include "d_net.h"
 #include "p_player.h"
 

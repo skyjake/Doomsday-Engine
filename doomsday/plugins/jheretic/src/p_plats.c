@@ -19,7 +19,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "jheretic.h"
+#include "doomdef.h"
+#include "h_stat.h"
+#include "p_local.h"
+#include "soundst.h"
+
+#include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
 

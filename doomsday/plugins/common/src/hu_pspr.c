@@ -25,7 +25,11 @@
 # include "d_config.h"
 # include "st_stuff.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "doomdef.h"
+# include "h_stat.h"
+# include "p_local.h"
+# include "h_config.h"
+# include "st_stuff.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

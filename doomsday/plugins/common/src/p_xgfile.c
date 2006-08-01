@@ -23,15 +23,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef __JDOOM__
+#if __JDOOM__
 #  include "doomdef.h"
-#endif
-
-#ifdef __JHERETIC__
-#  include "jheretic.h"
-#endif
-
-#ifdef __JSTRIFE__
+#elif __JHERETIC__
+#  include "doomdef.h"
+#elif __JSTRIFE__
 #  include "h2def.h"
 #endif
 

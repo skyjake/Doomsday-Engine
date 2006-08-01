@@ -26,7 +26,8 @@
 #  include "doomdef.h"
 #  include "p_local.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "p_local.h"
 #elif __JHEXEN__
 #  include "h2def.h"
 #elif __JSTRIFE__

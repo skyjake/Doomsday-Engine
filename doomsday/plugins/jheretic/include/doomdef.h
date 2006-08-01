@@ -409,8 +409,6 @@ void            R_InitTranslationTables(void);
 //----
 //MISC
 //----
-#define myargc  Argc()
-
 void            strcatQuoted(char *dest, char *src);
 
 boolean         M_ValidEpisodeMap(int episode, int map);

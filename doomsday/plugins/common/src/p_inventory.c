@@ -49,7 +49,10 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JHERETIC__
-#  include "jheretic.h"
+#  include "p_inventory.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "soundst.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #endif

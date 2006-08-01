@@ -28,7 +28,10 @@
 # include "doomstat.h"
 # include "s_sound.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "doomdef.h"
+# include "h_stat.h"
+# include "h_event.h"
+# include "soundst.h"
 #elif __JHEXEN__
 # include "jhexen.h"
 #elif __JSTRIFE__

@@ -39,7 +39,13 @@
 # include "m_menu.h"
 # include "wi_stuff.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "m_ctrl.h"
+# include "doomdef.h"
+# include "h_config.h"
+# include "st_stuff.h"
+# include "p_local.h"
+# include "m_cheat.h"
+# include "dstrings.h"
 #elif __JHEXEN__
 # include "jhexen.h"
 #elif __JSTRIFE__

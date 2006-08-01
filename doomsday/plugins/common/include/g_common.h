@@ -6,7 +6,7 @@
 #if __JDOOM__
 # include "p_mobj.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "p_mobj.h"
 #elif __JHEXEN__
 # include "jhexen.h"
 #elif __JSTRIFE__

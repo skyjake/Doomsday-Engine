@@ -27,6 +27,8 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "doomdef.h"
+
 enum {
     HUD_HEALTH,
     HUD_ARMOR,

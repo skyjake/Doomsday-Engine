@@ -1,6 +1,12 @@
 // HEADER FILES ------------------------------------------------------------
 
-#include "jheretic.h"
+#include "doomdef.h"
+#include "h_stat.h"
+#include "p_local.h"
+#include "g_game.h"
+//#include "m_misc.h"
+
+#include "p_saveg.h"
 #include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------

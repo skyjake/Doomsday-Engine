@@ -27,7 +27,7 @@
 #include <math.h>
 #include <stdarg.h>
 
-#ifdef __JDOOM__
+#if __JDOOM__
 #  include "doomdef.h"
 #  include "p_local.h"
 #  include "doomstat.h"
@@ -37,7 +37,14 @@
 #  include "r_defs.h"
 #  include "g_game.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "p_local.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "soundst.h"
+//#  include "p_inter.h"
+#  include "r_defs.h"
+#  include "g_game.h"
 #elif __JSTRIFE__
 #  include "h2def.h"
 #  include "p_local.h"

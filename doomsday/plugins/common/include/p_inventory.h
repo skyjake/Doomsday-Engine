@@ -43,6 +43,12 @@
 #ifndef __COMMON_INVENTORY_H__
 #define __COMMON_INVENTORY_H__
 
+#if __JHERETIC__
+# include "h_player.h"
+#elif __JHEXEN__
+# include "h2def.h"
+#endif
+
 extern boolean artiskip;
 extern boolean usearti;
 extern int inv_ptr;

@@ -34,7 +34,10 @@
 #  include "m_cheat.h"
 #  include "g_common.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "h_stat.h"
+#  include "h_config.h"
+#  include "soundst.h"
+#  include "m_cheat.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

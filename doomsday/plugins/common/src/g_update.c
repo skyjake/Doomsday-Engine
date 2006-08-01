@@ -32,7 +32,13 @@
 # include "s_sound.h"
 # include "m_cheat.h"
 #elif __JHERETIC__
-# include "jheretic.h"
+# include "doomdef.h"
+# include "p_setup.h"
+# include "p_local.h"
+# include "m_menu.h"
+# include "dstrings.h"
+# include "soundst.h"
+# include "m_cheat.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

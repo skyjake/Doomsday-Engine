@@ -32,7 +32,12 @@
 #  include "doomstat.h"
 #  include "p_oldsvg.h"
 #elif __JHERETIC__
-#  include "jheretic.h"
+#  include "doomdef.h"
+#  include "dstrings.h"
+#  include "p_local.h"
+#  include "g_game.h"
+#  include "h_stat.h"
+#  include "p_oldsvg.h"
 #endif
 
 #include "p_saveg.h"
