@@ -30,6 +30,7 @@
 #  include "d_action.h"
 #  include "d_config.h"
 #  include "m_argv.h"
+#  include "m_cheat.h"
 #  include "p_local.h"
 #  include "wi_stuff.h"
 #  include "st_stuff.h"
@@ -639,6 +640,8 @@ void G_PostInit(void)
 
     Con_Message("ST_Init: Init status bar.\n");
     ST_Init();
+
+    cht_Init();
 
     Con_Message("MN_Init: Init miscellaneous info.\n");
     MN_Init();

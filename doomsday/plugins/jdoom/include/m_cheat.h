@@ -39,6 +39,8 @@ typedef struct {
 
 } cheatseq_t;
 
+void        cht_Init(void);
+
 int         cht_CheckCheat(cheatseq_t * cht, char key);
 
 void        cht_GetParam(cheatseq_t * cht, char *buffer);

@@ -30,6 +30,7 @@
 # include "m_menu.h"
 # include "dstrings.h"
 # include "s_sound.h"
+# include "m_cheat.h"
 #elif __JHERETIC__
 # include "jheretic.h"
 #elif __JHEXEN__
@@ -145,6 +146,7 @@ void G_UpdateState(int step)
         ST_Init();
 #endif
 
+        cht_Init();
         MN_Init();
 
 #if __JHEXEN__

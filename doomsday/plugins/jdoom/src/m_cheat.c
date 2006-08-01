@@ -141,6 +141,11 @@ static unsigned char cheat_xlate_table[256];
 
 // CODE --------------------------------------------------------------------
 
+void cht_Init(void)
+{
+    // Nothing to do
+}
+
 /*
  * Responds to user input to see if a cheat sequence
  * has been entered. Events are never eaten.
@@ -252,6 +257,11 @@ boolean cht_Responder(event_t *ev)
     }
 
     return false;
+}
+
+boolean can_cheat(void)
+{
+    return !IS_NETGAME;
 }
 
 /*
@@ -514,11 +524,6 @@ DEFCC(CCmdCheat)
         cht_Responder(&ev);
     }
     return true;
-}
-
-boolean can_cheat(void)
-{
-    return !IS_NETGAME;
 }
 
 DEFCC(CCmdCheatGod)
