@@ -106,11 +106,9 @@ int lt_dlforeachfile(const char *searchPath,
 
 	// This is the default location where bundles are.
 	getBundlePath(bundlePath);
-	printf("Yagi - lt_dlforeachfile - bundlePath: %s\n", bundlePath);
 
 	if(searchPath == NULL)
 		searchPath = bundlePath;
-	printf("Yagi - lt_dlforeachfile - searchPath: %s\n", searchPath);
 	
 	dir = opendir(searchPath);
 	while((entry = readdir(dir)) != NULL)
@@ -123,7 +121,7 @@ int lt_dlforeachfile(const char *searchPath,
 		if(entry->d_type == DT_DIR && 
 		   !strncmp(entry->d_name, "dp", 2))
 #endif
-	printf("Yagi - lt_dlforeachfile - entry->d_name: %s\n", entry->d_name);
+
 		{
 
 			if(func(entry->d_name, data))

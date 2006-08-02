@@ -154,7 +154,7 @@ int DG_Init(int width, int height, int bpp, int mode)
         token = strtok(extbuf, " ");
         while(token)
         {
-            Con_Message("      ");  // Indent.
+            Con_Message("  ");  // Indent.
             if(verbose)
             {
                 // Show full names.
@@ -162,11 +162,11 @@ int DG_Init(int width, int height, int bpp, int mode)
             }
             else
             {
-                // Two on one line, clamp to 30 characters.
-                Con_Message("%-30.30s", token);
+                // Two on one line, clamp to 33 characters.
+                Con_Message("%-33.33s", token);
                 token = strtok(NULL, " ");
                 if(token)
-                    Con_Message(" %-30.30s", token);
+                    Con_Message(" %-33.33s", token);
                 Con_Message("\n");
             }
             token = strtok(NULL, " ");
@@ -174,13 +174,14 @@ int DG_Init(int width, int height, int bpp, int mode)
         Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
+        Con_Message("  Found Texture units: %i\n", maxTexUnits);
 #ifndef USE_MULTITEXTURE
         maxTexUnits = 1;
 #endif
         // But sir, we are simple people; two units is enough.
         if(maxTexUnits > 2)
             maxTexUnits = 2;
-        Con_Message("  Texture units: %i\n", maxTexUnits);
+        Con_Message("  Utilised Texture units: %i\n", maxTexUnits);
 
         Con_Message("  Maximum texture size: %i\n", maxTexSize);
         if(extAniso)

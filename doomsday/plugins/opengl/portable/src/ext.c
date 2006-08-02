@@ -115,8 +115,8 @@ int query(const char *ext, int *var)
 {
     if((*var = queryExtension(ext)) != DGL_FALSE)
     {
-        if(verbose)
-            Con_Message("OpenGL extension: %s\n", ext);
+//        if(verbose)
+            Con_Message("Checking OpenGL extension: %s\n", ext);
         return true;
     }
     return false;
@@ -170,9 +170,8 @@ void initExtensions(void)
     query("GL_ATI_texture_env_combine3", &extAtiTexEnvComb);
 
     // Texture compression.
-    useCompr = DGL_FALSE;
-    if(ArgExists("-texcomp"))
-    {
+    query("GL_EXT_texture_compression_s3tc", &extS3TC);
+    // On by default if we have it.
         glGetError();
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, (GLint*)&i);
         if(i && glGetError() == GL_NO_ERROR)
@@ -180,9 +179,12 @@ void initExtensions(void)
             useCompr = DGL_TRUE;
             Con_Message("OpenGL: Texture compression (%i formats).\n", i);
         }
+
+    if(ArgExists("-notexcomp"))
+    {
+    useCompr = DGL_FALSE;
     }
 
-    query("GL_EXT_texture_compression_s3tc", &extS3TC);
 
 #ifdef USE_MULTITEXTURE
     // ARB_multitexture

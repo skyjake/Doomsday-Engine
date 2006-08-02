@@ -27,9 +27,9 @@ SET (CMAKE_BUILD_TYPE RelWithDebInfo)
 ##    * MinSizeRel (CMAKE_C_FLAGS_MINSIZEREL) Cmake default of "-Os -DNDEBUG"
 
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
-OPTION (BUILDJHERETIC "Optionally build the jHeretc plugin. Default ON" ON)
+OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
 OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
-OPTION (BUILDJWOLFTC "Optionally build the jWolf64 plugin. Default OFF" OFF)
+OPTION (BUILDJWOLFTC "Optionally build the jWolf plugin. Default OFF" OFF)
 OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
 OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
 OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
