@@ -303,10 +303,10 @@ boolean P_GivePower(player_t *player, int power)
     default:
         if(player->powers[power])
             return false;           // already got it
+
+        player->powers[power] = 1;
         break;
     }
-
-    player->powers[power] = 1;
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(HUE_ON_PICKUP_POWER);
