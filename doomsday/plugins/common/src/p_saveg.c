@@ -115,7 +115,6 @@ typedef struct {
 
 typedef struct {
     thinkerclass_t  thinkclass;
-    char           *name;
     think_t         function;
     int             flags;
     void          (*Write) ();
@@ -177,7 +176,7 @@ static playerheader_t playerHeader;
  */
 static thinkerinfo_t thinkerInfo[] = {
     {
-      tc_end, NULL,
+      tc_end,
       NULL,
       0,
       NULL,
@@ -185,7 +184,7 @@ static thinkerinfo_t thinkerInfo[] = {
       0
     },
     {
-      tc_mobj, "tc_mobj",
+      tc_mobj,
       P_MobjThinker,
       TSF_SERVERONLY,
       SV_WriteMobj,
@@ -193,7 +192,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(mobj_t)
     },
     {
-      tc_xgmover, "tc_xgmover",
+      tc_xgmover,
       XS_PlaneMover,
       0,
       SV_WriteXGPlaneMover,
@@ -201,7 +200,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(xgplanemover_t)
     },
     {
-      tc_ceiling, "tc_ceiling",
+      tc_ceiling,
       T_MoveCeiling,
       TSF_SPECIAL,
       SV_WriteCeiling,
@@ -209,7 +208,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(ceiling_t)
     },
     {
-      tc_door, "tc_door",
+      tc_door,
       T_VerticalDoor,
       TSF_SPECIAL,
       SV_WriteDoor,
@@ -217,7 +216,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(vldoor_t)
     },
     {
-      tc_floor, "tc_floor",
+      tc_floor,
       T_MoveFloor,
       TSF_SPECIAL,
       SV_WriteFloor,
@@ -225,7 +224,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(floormove_t)
     },
     {
-      tc_plat, "tc_plat",
+      tc_plat,
       T_PlatRaise,
       TSF_SPECIAL,
       SV_WritePlat,
@@ -233,7 +232,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(plat_t)
     },
     {
-      tc_flash, "tc_flash",
+      tc_flash,
       T_LightFlash,
       TSF_SPECIAL,
       SV_WriteFlash,
@@ -241,7 +240,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(lightflash_t)
     },
     {
-      tc_strobe, "tc_strobe",
+      tc_strobe,
       T_StrobeFlash,
       TSF_SPECIAL,
       SV_WriteStrobe,
@@ -249,7 +248,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(strobe_t)
     },
     {
-      tc_glow, "tc_glow",
+      tc_glow,
       T_Glow,
       TSF_SPECIAL,
       SV_WriteGlow,
@@ -258,7 +257,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
 #if __JDOOM__
     {
-      tc_flicker, "tc_flicker",
+      tc_flicker,
       T_FireFlicker,
       TSF_SPECIAL,
       SV_WriteFlicker,
@@ -267,7 +266,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
 #endif
     // Terminator
-    { tc_null, NULL, NULL, 0, NULL, NULL, 0 }
+    { tc_null, NULL, 0, NULL, NULL, 0 }
 };
 
 // CODE --------------------------------------------------------------------
