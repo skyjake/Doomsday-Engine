@@ -115,10 +115,11 @@ typedef struct {
 
 typedef struct {
     thinkerclass_t  thinkclass;
+    char           *name;
     think_t         function;
     int             flags;
-    void            (*Write) ();
-    int             (*Read) ();
+    void          (*Write) ();
+    int           (*Read) ();
     size_t          size;
 } thinkerinfo_t;
 
@@ -176,7 +177,7 @@ static playerheader_t playerHeader;
  */
 static thinkerinfo_t thinkerInfo[] = {
     {
-      tc_end,
+      tc_end, NULL,
       NULL,
       0,
       NULL,
@@ -184,7 +185,7 @@ static thinkerinfo_t thinkerInfo[] = {
       0
     },
     {
-      tc_mobj,
+      tc_mobj, "tc_mobj",
       P_MobjThinker,
       TSF_SERVERONLY,
       SV_WriteMobj,
@@ -192,7 +193,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(mobj_t)
     },
     {
-      tc_xgmover,
+      tc_xgmover, "tc_xgmover",
       XS_PlaneMover,
       0,
       SV_WriteXGPlaneMover,
@@ -200,7 +201,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(xgplanemover_t)
     },
     {
-      tc_ceiling,
+      tc_ceiling, "tc_ceiling",
       T_MoveCeiling,
       TSF_SPECIAL,
       SV_WriteCeiling,
@@ -208,7 +209,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(ceiling_t)
     },
     {
-      tc_door,
+      tc_door, "tc_door",
       T_VerticalDoor,
       TSF_SPECIAL,
       SV_WriteDoor,
@@ -216,7 +217,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(vldoor_t)
     },
     {
-      tc_floor,
+      tc_floor, "tc_floor",
       T_MoveFloor,
       TSF_SPECIAL,
       SV_WriteFloor,
@@ -224,7 +225,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(floormove_t)
     },
     {
-      tc_plat,
+      tc_plat, "tc_plat",
       T_PlatRaise,
       TSF_SPECIAL,
       SV_WritePlat,
@@ -232,7 +233,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(plat_t)
     },
     {
-      tc_flash,
+      tc_flash, "tc_flash",
       T_LightFlash,
       TSF_SPECIAL,
       SV_WriteFlash,
@@ -240,7 +241,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(lightflash_t)
     },
     {
-      tc_strobe,
+      tc_strobe, "tc_strobe",
       T_StrobeFlash,
       TSF_SPECIAL,
       SV_WriteStrobe,
@@ -248,7 +249,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(strobe_t)
     },
     {
-      tc_glow,
+      tc_glow, "tc_glow",
       T_Glow,
       TSF_SPECIAL,
       SV_WriteGlow,
@@ -257,7 +258,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
 #if __JDOOM__
     {
-      tc_flicker,
+      tc_flicker, "tc_flicker",
       T_FireFlicker,
       TSF_SPECIAL,
       SV_WriteFlicker,
@@ -266,10 +267,31 @@ static thinkerinfo_t thinkerInfo[] = {
     },
 #endif
     // Terminator
-    { tc_null, NULL, 0, NULL, NULL, 0 }
+    { tc_null, NULL, NULL, 0, NULL, NULL, 0 }
 };
 
 // CODE --------------------------------------------------------------------
+
+/*
+ * Return a ptr to the thinkerinfo for the given thinker.
+ */
+static thinkerinfo_t* ThinkerInfo(thinker_t *th)
+{
+    thinkerinfo_t *thInfo = thinkerInfo;
+
+    if(!th)
+        return NULL;
+
+    while(thInfo->thinkclass != tc_null)
+    {
+        if(thInfo->function == th->function)
+            return thInfo;
+
+        thInfo++;
+    }
+
+    return NULL;
+}
 
 /*
  * Must be called before saving or loading any data.
@@ -325,8 +347,9 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
     int     i;
     int     first_empty = -1;
 
-    // Null things always have the number zero.
-    if(!mo)
+    // We only archive valid mobj thinkers.
+    if(mo == NULL || ((thinker_t *) mo)->function == NULL ||
+       ((thinker_t *) mo)->function != P_MobjThinker)
         return 0;
 
     for(i = 0; i < thing_archiveSize; i++)
@@ -339,11 +362,13 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
         if(thing_archive[i] == mo)
             return i + 1;
     }
-    if(first_empty < 0)
+
+    if(first_empty == -1)
     {
-        Con_Message("Thing archive exhausted?\n");
+        Con_Error("SV_ThingArchiveNum: Thing archive exhausted!\n");
         return 0;               // No number available!
     }
+
     // OK, place it in an empty pos.
     *(thing_archive + first_empty) = mo;
     return first_empty + 1;
@@ -629,6 +654,7 @@ static void SV_WriteMobj(mobj_t *mobj)
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
     SV_WriteShort(SV_ThingArchiveNum(mo.tracer));
 #endif
+
     SV_WriteShort(SV_ThingArchiveNum(mo.onmobj));
 
     // Info for drawing: position.
@@ -2024,8 +2050,12 @@ static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
  */
 static void DoArchiveThinker(thinker_t *th, thinkerclass_t tclass)
 {
-    thinkerinfo_t *thInfo = &thinkerInfo[tclass];
+    thinkerinfo_t *thInfo;
 
+    if(!th || tclass < tc_end + 1 || tclass > NUMTHINKERCLASSES - 1)
+        return;
+
+    thInfo = &thinkerInfo[tclass];
     // Only the server saves this class of thinker?
     if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
         return;
@@ -2044,11 +2074,11 @@ static void DoArchiveThinker(thinker_t *th, thinkerclass_t tclass)
 static void P_ArchiveThinkers(void)
 {
     thinker_t  *th = 0;
-    thinkerinfo_t *thInfo = 0;
+    thinkerinfo_t *thInfo;
     boolean     found;
 
     // Save off the current thinkers
-    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    for(th = thinkercap.next; th != &thinkercap && th; th = th->next)
     {
         if(th->function == NULL) // Special case for thinkers in stasis.
         {
@@ -2059,7 +2089,6 @@ static void P_ArchiveThinkers(void)
             // Since acv==NULL, this could be a plat in stasis.
             // so check the active plats list, and save this
             // plat (jff: or ceiling) even if it is in stasis.
-
             found = false;
             for(pl = activeplats; pl && !found; pl = pl->next)
                 if(pl->plat == (plat_t *) th)      // killough 2/14/98
@@ -2077,18 +2106,9 @@ static void P_ArchiveThinkers(void)
         }
         else
         {
-            found = false;
-            thInfo = thinkerInfo;
-            while(thInfo->thinkclass != tc_null && !found)
-            {
-                if(thInfo->function == th->function)
-                {
-                    DoArchiveThinker(th, thInfo->thinkclass);
-                    found = true;
-                }
-
-                thInfo++;
-            }
+            thInfo = ThinkerInfo(th);
+            if(thInfo != NULL)
+                DoArchiveThinker(th, thInfo->thinkclass);
         }
     }
 

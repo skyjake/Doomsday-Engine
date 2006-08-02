@@ -25,10 +25,11 @@ typedef enum {
     tc_strobe,
 #if __JDOOM__
     tc_glow,
-    tc_flicker
+    tc_flicker,
 #else
-    tc_glow
+    tc_glow,
 #endif
+    NUMTHINKERCLASSES
 } thinkerclass_t;
 
 void            SV_Init(void);
