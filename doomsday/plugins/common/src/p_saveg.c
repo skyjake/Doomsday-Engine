@@ -316,6 +316,7 @@ static void SV_InitThingArchive(boolean load)
         {
             if(th->function == P_MobjThinker)
                 count++;
+
             th = th->next;
         }
 
@@ -347,8 +348,7 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
     int     first_empty = -1;
 
     // We only archive valid mobj thinkers.
-    if(mo == NULL || ((thinker_t *) mo)->function == NULL ||
-       ((thinker_t *) mo)->function != P_MobjThinker)
+    if(mo == NULL || ((thinker_t *) mo)->function == NOPFUNC)
         return 0;
 
     for(i = 0; i < thing_archiveSize; i++)
@@ -2079,7 +2079,7 @@ static void P_ArchiveThinkers(void)
     // Save off the current thinkers
     for(th = thinkercap.next; th != &thinkercap && th; th = th->next)
     {
-        if(th->function == NULL) // Special case for thinkers in stasis.
+        if(th->function == NOPFUNC) // Special case for thinkers in stasis.
         {
             platlist_t *pl;
             ceilinglist_t *cl;     //jff 2/22/98 need this for ceilings too now

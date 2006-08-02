@@ -26,6 +26,9 @@
 // Basics.
 #include "tables.h"
 
+// We need the thinker_t stuff.
+#include "h_think.h"
+
 // We need the WAD data structure for Map things,
 // from the THINGS lump.
 #include "doomdata.h"
@@ -252,26 +255,5 @@ typedef struct mobj_s {
     int             turntime;      // $visangle-facetarget
     int             corpsetics;    // $vanish: how long has this been dead?
 } mobj_t;
-
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-//
-// Experimental stuff.
-// To compile this as "ANSI C with classes"
-//  we will need to handle the various
-//  action functions cleanly.
-//
-typedef void    (*actionf_v) ();
-typedef void    (*actionf_p1) (void *);
-typedef void    (*actionf_p2) (void *, void *);
-
-typedef union {
-    actionf_p1      acp1;
-    actionf_v       acv;
-    actionf_p2      acp2;
-
-} actionf_t;
 
 #endif

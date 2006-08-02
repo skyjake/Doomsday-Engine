@@ -299,7 +299,7 @@ int EV_StopPlat(line_t *line)
             // put it in stasis
             plat->oldstatus = plat->status;
             plat->status = in_stasis;
-            plat->thinker.function = NULL;
+            plat->thinker.function = NOPFUNC;
         }
     }
     return 1;
