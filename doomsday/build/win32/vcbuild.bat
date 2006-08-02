@@ -103,9 +103,12 @@ GOTO Done
 :: *** Resources (dialogs for Doomsday and drD3D)
 :: Requires rc.exe and cvtres.exe from the Platform SDK.
 :Res
-rc ./../../engine/win32/res/Doomsday.rc
+ECHO Generating resources for Doomsday (doomsday_res.obj)...
+rc /i "%PLATFORM_INC%" ./../../engine/win32/res/Doomsday.rc
 cvtres /OUT:%OBJ_DIR%doomsday_res.obj /MACHINE:X86 ./../../engine/win32/res/Doomsday.res
-rc ./../../plugins/d3d/res/drD3D.rc
+ECHO.
+ECHO Generating resources for drD3D (drD3D_res.obj)...
+rc /i "%PLATFORM_INC%" ./../../plugins/d3d/res/drD3D.rc
 IF NOT EXIST %OBJ_DIR%/drD3D md %OBJ_DIR%/drD3D
 cvtres /OUT:%OBJ_DIR%/drD3D/drD3D_res.obj /MACHINE:X86 ./../../plugins/d3d/res/drD3D.res
 GOTO Done
@@ -166,7 +169,7 @@ GOTO Done
 :drD3D
 ECHO Compiling drD3D.dll (Direct3D 8.1 driver)...
 md %OBJ_DIR%\drD3D
-cl /O2 /Ob1 /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 /Gz drD3D_res.obj  @drd3d_cl.rsp  /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" /LIBPATH:"%LIBCI_LIB%" %LIBS% ./%BIN_DIR%/doomsday.lib d3d8.lib d3dx8.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
+cl /O2 /Ob1 /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" /LIBPATH:"%LIBCI_LIB%" %LIBS% ./%BIN_DIR%/doomsday.lib d3d8.lib d3dx8.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
 GOTO Done
 
 

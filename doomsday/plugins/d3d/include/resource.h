@@ -10,9 +10,10 @@
 #define IDC_LIST3                       1002
 #define IDC_ZBUFFER_LIST                1002
 #define IDC_TEXTURE_LIST                1003
+#define IDC_STATIC                      -1
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
