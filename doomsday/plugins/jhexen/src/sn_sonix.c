@@ -188,8 +188,7 @@ void SN_InitSequenceScript(void)
             {
                 SC_ScriptError("SN_InitSequenceScript:  Nested Script Error");
             }
-            tempDataStart =
-                (int *) Z_Malloc(SS_TEMPBUFFER_SIZE, PU_STATIC, NULL);
+            tempDataStart = Z_Malloc(SS_TEMPBUFFER_SIZE, PU_STATIC, NULL);
             memset(tempDataStart, 0, SS_TEMPBUFFER_SIZE);
             tempDataPtr = tempDataStart;
             for(i = 0; i < SS_MAX_SCRIPTS; i++)
@@ -279,7 +278,7 @@ void SN_InitSequenceScript(void)
 
             *tempDataPtr++ = SS_CMD_END;
             dataSize = (tempDataPtr - tempDataStart) * sizeof(int);
-            SequenceData[i] = (int *) Z_Malloc(dataSize, PU_STATIC, NULL);
+            SequenceData[i] = Z_Malloc(dataSize, PU_STATIC, NULL);
             memcpy(SequenceData[i], tempDataStart, dataSize);
             Z_Free(tempDataStart);
             inSequence = -1;
@@ -309,7 +308,7 @@ void SN_StartSequence(mobj_t *mobj, int sequence)
     seqnode_t *node;
 
     SN_StopSequence(mobj);      // Stop any previous sequence
-    node = (seqnode_t *) Z_Malloc(sizeof(seqnode_t), PU_STATIC, NULL);
+    node = Z_Malloc(sizeof(seqnode_t), PU_STATIC, NULL);
     node->sequencePtr = SequenceData[SequenceTranslate[sequence].scriptNum];
     node->sequence = sequence;
     node->mobj = mobj;

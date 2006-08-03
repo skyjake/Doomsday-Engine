@@ -389,8 +389,7 @@ void P_SetMessage(player_t *pl, char *msg)
         Z_Free(pl->message); // bin it.
 
     // Alloc a new buffer.
-    pl->message =
-        (char *) Z_Malloc((strlen(msg)+1) * sizeof(char), PU_LEVEL, NULL);
+    pl->message = Z_Malloc((strlen(msg)+1) * sizeof(char), PU_LEVEL, NULL);
     // Copy the message
     strcpy(pl->message, msg);
 
@@ -420,7 +419,7 @@ void P_SetYellowMessage(player_t *pl, char *msg)
         Z_Free(pl->message); // bin it.
 
     // Alloc a new buffer.
-    pl->message = (char *) Z_Malloc((strlen(msg)+strlen(yellow)+1) * sizeof(char),
+    pl->message = Z_Malloc((strlen(msg)+strlen(yellow)+1) * sizeof(char),
                                     PU_LEVEL, NULL);
     // Copy the format string
     sprintf(pl->message, "%s%s", yellow, msg);

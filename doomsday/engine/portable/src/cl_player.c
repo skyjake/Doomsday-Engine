@@ -151,7 +151,7 @@ int Cl_ReadPlayerDelta(void)
             s->cmo = Cl_FindMobj(s->mobjId);
 #ifdef _DEBUG
             Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjId, old);
-            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX], 
+            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX],
                         s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
 #endif
             s->cmo->mo.dplayer = pl;
@@ -453,8 +453,8 @@ void Cl_MovePsprites(void)
     case DDPSP_BOBBING:
         pspy = TOP_PSPY;
         // Get bobbing from the Game DLL.
-        psp->x = FIX2FLT((int) gx.Get(DD_PSPRITE_BOB_X));
-        psp->y = FIX2FLT((int) gx.Get(DD_PSPRITE_BOB_Y));
+        psp->x = FIX2FLT((fixed_t) gx.GetInteger(DD_PSPRITE_BOB_X));
+        psp->y = FIX2FLT((fixed_t) gx.GetInteger(DD_PSPRITE_BOB_Y));
         break;
     }
     if(psp->state != DDPSP_BOBBING)
@@ -552,7 +552,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
 #if _DEBUG
             Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
                         old);
-            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX], 
+            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX],
                         s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
             Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
                         s->cmo->mo.dplayer - players, s->mobjId);

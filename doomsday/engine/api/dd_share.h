@@ -1108,10 +1108,10 @@ typedef enum blendmode_e {
 
     // Bind Class
     typedef struct bindclass_s {
-        const char *name;
-        int id;
-        int active;
-        int absolute;
+        char           *name;
+        int             id;
+        int             active;
+        int             absolute;
     } bindclass_t;
 
     // Console command.

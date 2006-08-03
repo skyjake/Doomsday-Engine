@@ -609,10 +609,12 @@ void R_ProjectSprite(mobj_t *thing)
     vissprite_t *vis;
     angle_t ang;
     float   v1[2], v2[2];
-    float   sinrv, cosrv, thangle;  // rv = real value
+    float   sinrv, cosrv, thangle = 0;  // rv = real value
     boolean align;
     modeldef_t *mf = NULL, *nextmf = NULL;
     float   interp = 0, distance;
+
+    v2[VX] = v2[VY] = 0; // initialize
 
     if(thing->ddflags & DDMF_DONTDRAW || thing->translucency == 0xff)
     {

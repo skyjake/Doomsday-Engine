@@ -75,7 +75,7 @@ void Sys_ConInit()
 
     // Compose the title.
     sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " (Dedicated) : %s",
-            gx.Get(DD_GAME_ID));
+            gx.GetVariable(DD_GAME_ID));
 
     if(!SetConsoleTitle(title))
         Con_Error("setting console title: error %i\n", GetLastError());

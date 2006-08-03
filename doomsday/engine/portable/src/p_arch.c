@@ -598,7 +598,7 @@ const char* DAM_Str(int prop)
 
 static void ParseGLBSPInf(mapdatalumpinfo_t* mapLump)
 {
-    int i, n, keylength;
+    int i, n, keylength = -1;
     char* ch;
     char line[250];
 
@@ -1545,12 +1545,12 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
     int lumpCount;
     unsigned int i;
     unsigned int k;
-    unsigned int elements;
-    unsigned int oldNum, newNum;
+    unsigned int elements = 0;
+    unsigned int oldNum = 0, newNum;
 
-    datatype_t *dataTypes;
+    datatype_t *dataTypes = NULL;
     mapdatalumpinfo_t* mapLump = mapDataLumps;
-    mapdatalumpformat_t* lumpFormat;
+    mapdatalumpformat_t* lumpFormat = NULL;
     maplumpinfo_t*  lumpInfo;
 
     uint startTime;
@@ -2244,8 +2244,8 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
 static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
                                  const datatype_t* prop, const byte *buffer)
 {
-    void*   dest;
-    int     idx;
+    void*   dest = NULL;
+    int     idx = -1;
 
     byte    tmpbyte = 0;
     short   tmpshort = 0;
@@ -2649,7 +2649,7 @@ int P_CallbackEX(int dataType, int index, unsigned int startIndex,
         buffer += args->elmsize; \
         ++idx;
 
-    int              objectCount;
+    int              objectCount = -1;
     unsigned int     idx;
     unsigned int     i = 0, k;
     damargs_t*       args = (damargs_t*) context;

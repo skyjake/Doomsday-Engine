@@ -185,7 +185,7 @@ direcnode_t *FH_BuildDirecNodes(const char *path)
 {
     char   *tokPath, *cursor;
     char   *part;
-    direcnode_t *node, *parent;
+    direcnode_t *node = NULL, *parent;
     char    relPath[256];
 
     // Let's try to make it a relative path.

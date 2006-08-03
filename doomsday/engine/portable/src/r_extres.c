@@ -301,7 +301,7 @@ boolean R_FindResource(resourceclass_t resClass, const char *name,
         if(i == 0 || i == 2)
         {
             // A string that identifies the game mode (e.g. doom2-plut).
-            gameMode = gx.Get(DD_GAME_MODE);
+            gameMode = gx.GetVariable(DD_GAME_MODE);
             if(!gameMode || !gameMode[0])
                 continue;       // Not set?!
             strcat(path, gameMode);

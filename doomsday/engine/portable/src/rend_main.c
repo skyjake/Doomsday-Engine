@@ -775,8 +775,8 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     int  i;
     int  segIndex = GET_SEG_IDX(seg);
     rendpoly_vertex_t *vtx;
-    const byte *colorPtr;
-    const byte *color2Ptr;
+    const byte *colorPtr = NULL;
+    const byte *color2Ptr = NULL;
 
     // Select the correct colors for this surface.
     switch(mode)
@@ -940,8 +940,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     surface_t *surface;
     side_t *sid, *backsid, *side;
     line_t *ldef;
-    float   ffloor, fceil, bfloor, bceil, fsh, mceil, tcyoff;
-    float bsh = 0;
+    float   ffloor, fceil, bfloor, bceil, fsh, bsh, mceil, tcyoff;
     rendpoly_t quad;
     float  *v1, *v2;
     boolean backSide = true;
@@ -981,6 +980,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         bfloor = SECT_FLOOR(backsec);
         bsh = bceil - bfloor;
     }
+    else
+        bfloor = bceil = bsh = 0;
 
     // Init the quad.
     quad.type = RP_QUAD;

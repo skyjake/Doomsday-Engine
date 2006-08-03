@@ -425,7 +425,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     const sectordelta_t *delta = deltaPtr;
     const dt_sector_t *d = &delta->sector;
     int     df = delta->delta.flags, spd;
-    byte    floorspd, ceilspd;
+    byte    floorspd = 0, ceilspd = 0;
 
     // Is there need to use 4.4 fixed-point speeds?
     // (7.1 is too inaccurate for very slow movement)
@@ -471,7 +471,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
         Msg_WriteShort(d->planes[PLN_FLOOR].height >> 16);
     }
     if(df & SDF_CEILING_HEIGHT)
-    {   
+    {
 #ifdef _DEBUG
         VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
                             delta->delta.id, FIX2FLT(d->SP_ceilheight)) );

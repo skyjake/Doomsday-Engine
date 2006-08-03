@@ -157,8 +157,7 @@ void HU_Init(void)
     if(gamemode == commercial)
     {
         int NUMCMAPS = 32;
-        lnames =
-            (dpatch_t *) Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        lnames = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; i++)
         {
             sprintf(name, "CWILV%2.2d", i);
@@ -169,8 +168,7 @@ void HU_Init(void)
     {
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        lnames =
-            (dpatch_t *) Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
+        lnames = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
         for(j = 0; j < 4; j++) // number of episodes
         {
             for(i = 0; i < 9; i++) // number of maps per episode

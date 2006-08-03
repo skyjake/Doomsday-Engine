@@ -186,7 +186,7 @@ static source_t *SBE_GetNearest(void)
 {
     float hand[3];
     source_t *nearest = NULL, *s;
-    float minDist, len;
+    float minDist = 0, len;
     int i;
 
     SBE_GetHand(hand);
@@ -418,7 +418,7 @@ static boolean SBE_Save(const char *name)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", gx.Get(DD_GAME_MODE));
+    fprintf(file, "SkipIf Not %s\n", gx.GetVariable(DD_GAME_MODE));
 
     s = SB_GetSource(0);
     for(i = 0; i < numSources; ++i, ++s)
@@ -700,7 +700,7 @@ static void SBE_DrawLevelGauge(void)
     int height = 255;
     int x = 20, y = screenHeight/2 - height/2;
     int off = FR_TextWidth("000");
-    int secY, maxY, minY, p;
+    int secY, maxY = 0, minY = 0, p;
     char buf[80];
     source_t *src;
 

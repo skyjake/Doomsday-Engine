@@ -94,7 +94,7 @@ int DH_ReadStrings(char *fileName)
     DFILE  *file = F_Open(fileName, "rt");
     char    line[2048], *ptr, *eol, *end;
     helpnode_t *node = NULL;
-    int     count, length;
+    int     count = 0, length;
 
     if(!file)
     {

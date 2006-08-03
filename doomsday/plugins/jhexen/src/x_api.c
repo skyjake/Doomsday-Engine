@@ -107,7 +107,45 @@ game_import_t gi;
 
 // CODE --------------------------------------------------------------------
 
-char *G_Get(int id)
+/*
+ * Get a 32-bit integer value.
+ */
+int G_GetInteger(int id)
+{
+    switch (id)
+    {
+    case DD_PSPRITE_BOB_X:
+        if(players[consoleplayer].morphTics > 0)
+            return 0;
+        return (int) (FRACUNIT +
+                         FixedMul(FixedMul
+                                  (FRACUNIT * cfg.bobWeapon,
+                                   players[consoleplayer].bob),
+                                  finecosine[(128 * leveltime) & FINEMASK]));
+
+    case DD_PSPRITE_BOB_Y:
+        if(players[consoleplayer].morphTics > 0)
+            return (32 * FRACUNIT);
+        return (int) (32 * FRACUNIT +
+                         FixedMul(FixedMul
+                                  (FRACUNIT * cfg.bobWeapon,
+                                   players[consoleplayer].bob),
+                                  finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]));
+
+    case DD_GAME_DMUAPI_VER:
+        return DMUAPI_VER;
+
+    default:
+        break;
+    }
+    // ID not recognized, return NULL.
+    return 0;
+}
+
+/*
+ * Get a pointer to the value of a variable. Added for 64-bit support.
+ */
+void *G_GetVariable(int id)
 {
     switch (id)
     {
@@ -131,34 +169,13 @@ char *G_Get(int id)
             "\n"GAMENAMETEXT" is based on Hexen v1.1 by Raven Software.";
 
     case DD_ACTION_LINK:
-        return (char *) actionlinks;
-
-    case DD_PSPRITE_BOB_X:
-        if(players[consoleplayer].morphTics > 0)
-            return 0;
-        return (char *) (FRACUNIT +
-                         FixedMul(FixedMul
-                                  (FRACUNIT * cfg.bobWeapon,
-                                   players[consoleplayer].bob),
-                                  finecosine[(128 * leveltime) & FINEMASK]));
-
-    case DD_PSPRITE_BOB_Y:
-        if(players[consoleplayer].morphTics > 0)
-            return (char *) (32 * FRACUNIT);
-        return (char *) (32 * FRACUNIT +
-                         FixedMul(FixedMul
-                                  (FRACUNIT * cfg.bobWeapon,
-                                   players[consoleplayer].bob),
-                                  finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]));
+        return actionlinks;
 
     case DD_ALT_MOBJ_THINKER:
-        return (char *) P_BlasterMobjThinker;
+        return P_BlasterMobjThinker;
 
     case DD_XGFUNC_LINK:
-        return 0;
-
-    case DD_GAME_DMUAPI_VER:
-        return (char *) DMUAPI_VER;
+        return NULL;
     }
     // ID not recognized, return NULL.
     return 0;
@@ -197,8 +214,8 @@ game_export_t *GetGameAPI(game_import_t * imports)
     gx.ConsoleBackground = H2_ConsoleBg;
     gx.UpdateState = G_UpdateState;
 #undef Get
-    gx.Get = G_Get;
-
+    gx.GetInteger = G_GetInteger;
+    gx.GetVariable = G_GetVariable;
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;
     gx.NetConnect = D_NetConnect;

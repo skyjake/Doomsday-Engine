@@ -543,7 +543,7 @@ thing_t *P_GetPlayerStart(int group, int pnum)
 #else
     int i;
 
-    thing_t *mt, *g0choice;
+    thing_t *mt, *g0choice = NULL;
 
     for(i = 0; i < numPlayerStarts; ++i)
     {

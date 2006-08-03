@@ -108,7 +108,7 @@ void S_CalcSectorReverbs(void)
     subreverb_t *sub_reverb, *rev;
 
     // Allocate memory for the subsector temporary reverb data.
-    sub_reverb = (subreverb_t *) M_Malloc(sizeof(subreverb_t) * numsubsectors);
+    sub_reverb = M_Malloc(sizeof(subreverb_t) * numsubsectors);
     memset(sub_reverb, 0, sizeof(subreverb_t) * numsubsectors);
 
     // First determine each subsectors' individual characteristics.

@@ -55,7 +55,7 @@ thinker_t thinkercap;           // The head and tail of the thinker list
 
 boolean P_IsMobjThinker(think_t thinker)
 {
-    think_t altfunc = (think_t) gx.Get(DD_ALT_MOBJ_THINKER);
+    think_t altfunc = gx.GetVariable(DD_ALT_MOBJ_THINKER);
 
     return (thinker == gx.MobjThinker || (altfunc && thinker == altfunc));
 }

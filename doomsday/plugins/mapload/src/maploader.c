@@ -106,7 +106,7 @@ static void GetWorkDir(char *dir, int mainLump)
         identifier ^= sourceFile[i] << ((i * 3) % 11);
 
     // The work directory path is relative to the runtime directory.
-    sprintf(dir, "%s%s\\%s-%04X\\", bspDir, gex->Get(DD_GAME_MODE),
+    sprintf(dir, "%s%s\\%s-%04X\\", bspDir, gex->GetVariable(DD_GAME_MODE),
             base, identifier);
 
     M_TranslatePath(dir, dir);

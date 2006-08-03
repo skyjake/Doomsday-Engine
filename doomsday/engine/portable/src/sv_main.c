@@ -76,9 +76,9 @@ void Sv_GetInfo(serverinfo_t *info)
 
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
-    strncpy(info->game, gx.Get(DD_GAME_ID), sizeof(info->game) - 1);
-    strncpy(info->gameMode, gx.Get(DD_GAME_MODE), sizeof(info->gameMode) - 1);
-    strncpy(info->gameConfig, gx.Get(DD_GAME_CONFIG),
+    strncpy(info->game, gx.GetVariable(DD_GAME_ID), sizeof(info->game) - 1);
+    strncpy(info->gameMode, gx.GetVariable(DD_GAME_MODE), sizeof(info->gameMode) - 1);
+    strncpy(info->gameConfig, gx.GetVariable(DD_GAME_CONFIG),
             sizeof(info->gameConfig) - 1);
     strncpy(info->name, serverName, sizeof(info->name) - 1);
     strncpy(info->description, serverInfo, sizeof(info->description) - 1);
@@ -355,7 +355,7 @@ void Sv_HandlePacket(void)
         {
             // Check the game mode (max 16 chars).
             Msg_Read(buf, 16);
-            if(strnicmp(buf, gx.Get(DD_GAME_MODE), 16))
+            if(strnicmp(buf, gx.GetVariable(DD_GAME_MODE), 16))
             {
                 Con_Printf("  Bad Game ID: %-.16s\n", buf);
                 N_TerminateClient(from);

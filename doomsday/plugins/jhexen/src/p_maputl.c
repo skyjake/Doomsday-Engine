@@ -996,8 +996,8 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
                 (link->player && link != mo->target)) &&
                !(link->flags2 & MF2_DORMANT))
             {
-                if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
-                   link->player)
+                if(!(link->flags & MF_SHOOTABLE) || (IS_NETGAME && !deathmatch &&
+                   link->player))
                     continue;
 
                 if(P_CheckSight(mo, link))
@@ -1021,8 +1021,8 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
                 (link->player && link != mo->target)) &&
                !(link->flags2 & MF2_DORMANT))
             {
-                if(!(link->flags & MF_SHOOTABLE) || IS_NETGAME && !deathmatch &&
-                   link->player || link == mo->target)
+                if(!(link->flags & MF_SHOOTABLE) || (IS_NETGAME && !deathmatch &&
+                   link->player) || link == mo->target)
                     continue;
 
                 if(P_CheckSight(mo, link))

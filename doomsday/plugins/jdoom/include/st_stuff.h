@@ -25,6 +25,8 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "d_config.h"
+
 // Size of statusbar.
 // Now sensitive for scaling.
 #define ST_HEIGHT   32*SCREEN_MUL
@@ -51,7 +53,7 @@ void    ST_Init(void);
 void    ST_updateGraphics(void);
 
 // Called when it might be neccessary for the hud to unhide.
-void    ST_HUDUnHide(enum hueevent_e event);
+void    ST_HUDUnHide(hueevent_t event);
 
 // States for status bar code.
 typedef enum {

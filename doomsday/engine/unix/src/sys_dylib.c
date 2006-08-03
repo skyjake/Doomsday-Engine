@@ -18,8 +18,8 @@
 /*
  * sys_dylib.c: Dynamic Libraries
  *
- * These functions provide roughly the same functionality as the ltdl 
- * library.  Since the ltdl library appears to be broken on Mac OS X, 
+ * These functions provide roughly the same functionality as the ltdl
+ * library.  Since the ltdl library appears to be broken on Mac OS X,
  * these will be used instead when loading plugin libraries.
  */
 
@@ -57,7 +57,7 @@ static filename_t appDir;
 
 void lt_dlinit(void)
 {
-	getcwd(appDir, sizeof(appDir));
+    getcwd(appDir, sizeof(appDir));
 }
 
 void lt_dlexit(void)
@@ -66,7 +66,7 @@ void lt_dlexit(void)
 
 const char *lt_dlerror(void)
 {
-	return dlerror();
+    return dlerror();
 }
 
 void lt_dladdsearchdir(const char *searchPath)
@@ -79,7 +79,7 @@ static void getBundlePath(char *path)
     {
         sprintf(path, "%s/%s", appDir, ArgNext());
     }
-	else
+    else
     {
 #ifdef MACOSX
         // This is the default location where bundles are.
@@ -87,50 +87,50 @@ static void getBundlePath(char *path)
 #endif
 #ifdef UNIX
 #ifdef DENG_LIBRARY_DIR
-		sprintf(path, DENG_LIBRARY_DIR, appDir);
+        sprintf(path, DENG_LIBRARY_DIR, appDir);
 #endif
-	// There should be a fallback here, but as DENG_LIBRARY_DIR is
-	// defined by cmake there is not. FIXME
+    // There should be a fallback here, but as DENG_LIBRARY_DIR is
+    // defined by cmake there is not. FIXME
 #endif
     }
 }
 
-int lt_dlforeachfile(const char *searchPath, 
-                     int (*func) (const char *fileName, lt_ptr data), 
-					 lt_ptr data)
+int lt_dlforeachfile(const char *searchPath,
+                     int (*func) (const char *fileName, lt_ptr data),
+                     lt_ptr data)
 {
-	DIR *dir = NULL;
-	struct dirent *entry = NULL;
-	filename_t bundlePath;
+    DIR *dir = NULL;
+    struct dirent *entry = NULL;
+    filename_t bundlePath;
 
 
-	// This is the default location where bundles are.
-	getBundlePath(bundlePath);
+    // This is the default location where bundles are.
+    getBundlePath(bundlePath);
 
-	if(searchPath == NULL)
-		searchPath = bundlePath;
-	
-	dir = opendir(searchPath);
-	while((entry = readdir(dir)) != NULL)
-	{
+    if(searchPath == NULL)
+        searchPath = bundlePath;
+
+    dir = opendir(searchPath);
+    while((entry = readdir(dir)) != NULL)
+    {
 #ifndef MACOSX
-		if(entry->d_type == DT_DIR && 
-		   !strncmp(entry->d_name, "libdp", 5))
+        if(entry->d_type == DT_DIR &&
+           !strncmp(entry->d_name, "libdp", 5))
 #endif
 #ifdef MACOSX
-		if(entry->d_type == DT_DIR && 
-		   !strncmp(entry->d_name, "dp", 2))
+        if(entry->d_type == DT_DIR &&
+           !strncmp(entry->d_name, "dp", 2))
 #endif
 
-		{
+        {
 
-			if(func(entry->d_name, data))
-				break;
-		}
+            if(func(entry->d_name, data))
+                break;
+        }
 
-	}
-	closedir(dir);
-	return 0;
+    }
+    closedir(dir);
+    return 0;
 }
 
 /*
@@ -139,31 +139,33 @@ int lt_dlforeachfile(const char *searchPath,
 lt_dlhandle lt_dlopenext(const char *baseFileName)
 {
     lt_dlhandle handle;
-	filename_t bundleName;
-	char* ptr;
-	
-	getBundlePath(bundleName);
+    filename_t bundleName;
 #ifdef MACOSX
-	strcat(bundleName, "/");
-	strcat(bundleName, baseFileName);
-	strcat(bundleName, "/Contents/MacOS/");
+    char* ptr;
 #endif
-	strcat(bundleName, baseFileName);
+
+    getBundlePath(bundleName);
+#ifdef MACOSX
+    strcat(bundleName, "/");
+    strcat(bundleName, baseFileName);
+    strcat(bundleName, "/Contents/MacOS/");
+#endif
+    strcat(bundleName, baseFileName);
 //#ifdef UNIX
 //#ifndef MACOSX
-//	strcat(bundleName, ".so");
+//  strcat(bundleName, ".so");
 //#endif
 //#endif
 
 
-/*  sprintf(bundleName, "Bundles/%s/Contents/MacOS/%s", baseFileName, 
+/*  sprintf(bundleName, "Bundles/%s/Contents/MacOS/%s", baseFileName,
             baseFileName);*/
-#ifdef MACOSX	
-	// Get rid of the ".bundle" in the end.
-	if((ptr = strrchr(bundleName, '.')) != NULL)
-		*ptr = 0;
-#endif	
-	handle = dlopen(bundleName, RTLD_NOW);
+#ifdef MACOSX
+    // Get rid of the ".bundle" in the end.
+    if((ptr = strrchr(bundleName, '.')) != NULL)
+        *ptr = 0;
+#endif
+    handle = dlopen(bundleName, RTLD_NOW);
     if(!handle)
     {
         printf("While opening dynamic library\n%s:\n  %s\n", bundleName, dlerror());
@@ -173,10 +175,10 @@ lt_dlhandle lt_dlopenext(const char *baseFileName)
 
 lt_ptr lt_dlsym(lt_dlhandle module, const char *symbolName)
 {
-	return dlsym(module, symbolName);
+    return dlsym(module, symbolName);
 }
 
 void lt_dlclose(lt_dlhandle module)
 {
-	dlclose(module);
+    dlclose(module);
 }

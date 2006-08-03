@@ -486,7 +486,6 @@ void ST_loadData(void)
 void ST_initData(void)
 {
     int i;
-    player_t *plyr = &players[consoleplayer];
 
     st_firsttime = true;
 

@@ -1555,7 +1555,7 @@ void MN_Ticker(void)
     }
 
     // Smooth the menu & fog alpha on a curved ramp
-    if((menuactive && !messageToPrint) || quitAsk && menuactive)
+    if(menuactive && (!messageToPrint || quitAsk))
     {
 
         if(mfAlpha < (cfg.menuFog == 3 ? 0.65f : 1))

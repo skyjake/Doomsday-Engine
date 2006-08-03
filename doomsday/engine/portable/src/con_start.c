@@ -54,7 +54,7 @@ int     startupLogo;
 static char *titleText = "";
 static char secondaryTitleText[256];
 static char statusText[256];
-static int fontHgt = 8;			// Height of the font.
+static int fontHgt = 8;         // Height of the font.
 static DGLuint bgflat;
 char   *bitmap = NULL;
 
@@ -66,57 +66,57 @@ char   *bitmap = NULL;
  */
 void Con_StartupInit(void)
 {
-	static boolean firstTime = true;
+    static boolean firstTime = true;
 
-	if(novideo)
-		return;
+    if(novideo)
+        return;
 
-	GL_InitVarFont();
-	fontHgt = FR_SingleLineHeight("Doomsday!");
+    GL_InitVarFont();
+    fontHgt = FR_SingleLineHeight("Doomsday!");
 
-	startupScreen = true;
+    startupScreen = true;
 
-	gl.MatrixMode(DGL_PROJECTION);
-	gl.PushMatrix();
-	gl.LoadIdentity();
-	gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
 
-	if(firstTime)
-	{
-		titleText = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
-		firstTime = false;
-		bgflat = 0;
-	}
-	else
-	{
-		titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-	}
-    
-	// Load graphics.
-	startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
+    if(firstTime)
+    {
+        titleText = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
+        firstTime = false;
+        bgflat = 0;
+    }
+    else
+    {
+        titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
+    }
+
+    // Load graphics.
+    startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
 }
 
 void Con_SetBgFlat(int lump)
 {
-	bgflat = GL_BindTexFlat(R_GetFlat(lump));
+    bgflat = GL_BindTexFlat(R_GetFlat(lump));
 }
 
 void Con_StartupDone(void)
 {
-	if(isDedicated)
-		return;
+    if(isDedicated)
+        return;
     titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-	startupScreen = false;
-	gl.DeleteTextures(1, (DGLuint*) &startupLogo);
-	startupLogo = 0;
-	gl.MatrixMode(DGL_PROJECTION);
-	gl.PopMatrix();
-	GL_ShutdownVarFont();
-    
+    startupScreen = false;
+    gl.DeleteTextures(1, (DGLuint*) &startupLogo);
+    startupLogo = 0;
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PopMatrix();
+    GL_ShutdownVarFont();
+
     // Update the secondary title and the game status.
-    strncpy(secondaryTitleText, gx.Get(DD_GAME_ID), 
+    strncpy(secondaryTitleText, gx.GetVariable(DD_GAME_ID),
             sizeof(secondaryTitleText) - 1);
-    strncpy(statusText, gx.Get(DD_GAME_MODE), 
+    strncpy(statusText, gx.GetVariable(DD_GAME_MODE),
             sizeof(statusText) - 1);
 }
 
@@ -127,11 +127,11 @@ void Con_StartupDone(void)
  */
 void Con_DrawStartupBackground(float alpha)
 {
-	float   mul = (startupLogo ? 1.5f : 1.0f);
-	ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
+    float   mul = (startupLogo ? 1.5f : 1.0f);
+    ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
 
-	// Background gradient picture.
-	gl.Bind(startupLogo);
+    // Background gradient picture.
+    gl.Bind(startupLogo);
     if(alpha < 1.0)
     {
         gl.Enable(DGL_BLENDING);
@@ -141,45 +141,45 @@ void Con_DrawStartupBackground(float alpha)
     {
         gl.Disable(DGL_BLENDING);
     }
-	gl.Begin(DGL_QUADS);
-	// Top color.
-	gl.Color4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-	gl.TexCoord2f(0, 0);
-	gl.Vertex2f(0, 0);
-	gl.TexCoord2f(1, 0);
-	gl.Vertex2f(screenWidth, 0);
-	// Bottom color.
-	gl.Color4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-	gl.TexCoord2f(1, 1);
-	gl.Vertex2f(screenWidth, screenHeight);
-	gl.TexCoord2f(0, 1);
-	gl.Vertex2f(0, screenHeight);
-	gl.End();
-	gl.Enable(DGL_BLENDING);
+    gl.Begin(DGL_QUADS);
+    // Top color.
+    gl.Color4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
+    gl.TexCoord2f(0, 0);
+    gl.Vertex2f(0, 0);
+    gl.TexCoord2f(1, 0);
+    gl.Vertex2f(screenWidth, 0);
+    // Bottom color.
+    gl.Color4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
+    gl.TexCoord2f(1, 1);
+    gl.Vertex2f(screenWidth, screenHeight);
+    gl.TexCoord2f(0, 1);
+    gl.Vertex2f(0, screenHeight);
+    gl.End();
+    gl.Enable(DGL_BLENDING);
 }
 
 /*
- * Draws the title bar of the console. 
- * 
+ * Draws the title bar of the console.
+ *
  * @return  Title bar height.
  */
 int Con_DrawTitle(float alpha)
 {
     int width = 0;
     int height = UI_TITLE_HGT;
-    
+
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PushMatrix();
     gl.LoadIdentity();
-    
-	FR_SetFont(glFontVariable[GLFS_BOLD]);
+
+    FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = FR_TextHeight("W") + UI_BORDER;
-	UI_DrawTitleEx(titleText, height, alpha);
+    UI_DrawTitleEx(titleText, height, alpha);
     if(secondaryTitleText[0])
     {
         width = FR_TextWidth(titleText) + FR_TextWidth("  ");
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(secondaryTitleText, UI_BORDER + width, height / 2, 
+        UI_TextOutEx(secondaryTitleText, UI_BORDER + width, height / 2,
                      false, true, UI_COL(UIC_TEXT), .75f * alpha);
     }
     if(statusText[0])
@@ -192,8 +192,8 @@ int Con_DrawTitle(float alpha)
 
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
-    
-	FR_SetFont(glFontFixed);
+
+    FR_SetFont(glFontFixed);
     return height;
 }
 
@@ -202,57 +202,57 @@ int Con_DrawTitle(float alpha)
  */
 void Con_DrawStartupScreen(int show)
 {
-	int     i, vislines, y, x, st;
-	int     topy;
+    int     i, vislines, y, x, st;
+    int     topy;
 
-	// Print the messages in the console.
-	if(!startupScreen || ui_active)
-		return;
-        
+    // Print the messages in the console.
+    if(!startupScreen || ui_active)
+        return;
+
     //gl.MatrixMode(DGL_PROJECTION);
-    //gl.LoadIdentity();       
+    //gl.LoadIdentity();
     //gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
 
-	Con_DrawStartupBackground(1.0);
+    Con_DrawStartupBackground(1.0);
 
-	// Draw the title.
+    // Draw the title.
     topy = Con_DrawTitle(1.0);
 
-	topy += UI_BORDER;
-	vislines = (screenHeight - topy + fontHgt / 2) / fontHgt;
-	y = topy;
+    topy += UI_BORDER;
+    vislines = (screenHeight - topy + fontHgt / 2) / fontHgt;
+    y = topy;
 
-	st = bufferLines - vislines;
-	// Show the last line, too, if there's something.
-	if(Con_GetBufferLine(bufferLines - 1)->len)
-		st++;
-	if(st < 0)
-		st = 0;
-	for(i = 0; i < vislines && st + i < bufferLines; i++)
-	{
-		cbline_t *line = Con_GetBufferLine(st + i);
+    st = bufferLines - vislines;
+    // Show the last line, too, if there's something.
+    if(Con_GetBufferLine(bufferLines - 1)->len)
+        st++;
+    if(st < 0)
+        st = 0;
+    for(i = 0; i < vislines && st + i < bufferLines; i++)
+    {
+        cbline_t *line = Con_GetBufferLine(st + i);
 
-		if(!line)
-			break;
-		if(line->flags & CBLF_RULER)
-		{
-			Con_DrawRuler(y, fontHgt, 1);
-		}
-		else
-		{
-			x = line->flags & CBLF_CENTER ? (screenWidth -
-											 FR_TextWidth(line->text)) / 2 : 3;
-			//gl.Color3f(0, 0, 0);
-			//FR_TextOut(line->text, x + 1, y + 1);
-			gl.Color3f(1, 1, 1);
-			FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
-		}
-		y += fontHgt;
-	}
-	if(show)
-	{
-		// Update the progress bar, if one is active.
-		Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
-		gl.Show();
-	}
+        if(!line)
+            break;
+        if(line->flags & CBLF_RULER)
+        {
+            Con_DrawRuler(y, fontHgt, 1);
+        }
+        else
+        {
+            x = line->flags & CBLF_CENTER ? (screenWidth -
+                                             FR_TextWidth(line->text)) / 2 : 3;
+            //gl.Color3f(0, 0, 0);
+            //FR_TextOut(line->text, x + 1, y + 1);
+            gl.Color3f(1, 1, 1);
+            FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
+        }
+        y += fontHgt;
+    }
+    if(show)
+    {
+        // Update the progress bar, if one is active.
+        Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
+        gl.Show();
+    }
 }

@@ -634,7 +634,7 @@ boolean DED_CheckCondition(const char *cond, boolean expected)
     else if(isalnum(cond[0]))
     {
         // Then it must be a game mode.
-        value = !stricmp(cond, gx.Get(DD_GAME_MODE));
+        value = !stricmp(cond, gx.GetVariable(DD_GAME_MODE));
     }
 
     return value == expected;
@@ -679,7 +679,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
     ded_sectortype_t *sec;
     int prev_sectortype_idx = -1; // For "Copy".
     ded_lumpformat_t *lmpf;
-    ded_xgclass_t *xgc;
+//    ded_xgclass_t *xgc;
 
     int sub;
     int depth;

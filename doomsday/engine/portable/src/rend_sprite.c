@@ -219,7 +219,7 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
 {
     float   color[4];
     boolean withDyn = false;
-    int     normal, dyn;
+    int     normal, dyn = DGL_TEXTURE1;
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.

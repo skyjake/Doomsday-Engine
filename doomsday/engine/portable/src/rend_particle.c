@@ -394,7 +394,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
     ded_ptcstage_t *dst, *next_dst;
     int     i, c;
     int     using_texture = -1;
-    int     prim_type;
+    int     prim_type = DGL_QUADS;
     blendmode_t mode = BM_NORMAL, new_mode;
     vissprite_t vis;
     boolean flatonplane, flatonwall, nearplane, nearwall;

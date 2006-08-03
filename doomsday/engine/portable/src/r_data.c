@@ -875,22 +875,28 @@ void R_PrecacheLevel(void)
         side = SIDE_PTR(i);
 
         if(side->top.texture != -1)
+        {
             if(side->top.isflat)
                 R_PrecacheFlat(side->top.texture);
             else
                 texturepresent[side->top.texture] = 1;
+        }
 
         if(side->middle.texture != -1)
+        {
             if(side->middle.isflat)
                 R_PrecacheFlat(side->middle.texture);
             else
                 texturepresent[side->middle.texture] = 1;
+        }
 
         if(side->bottom.texture != -1)
+        {
             if(side->bottom.isflat)
                 R_PrecacheFlat(side->bottom.texture);
             else
                 texturepresent[side->bottom.texture] = 1;
+        }
     }
 
     // Precache flats.

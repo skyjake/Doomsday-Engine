@@ -1767,7 +1767,7 @@ boolean Con_Responder(event_t *event)
         // Attempt to complete the word and return the number of possibilites.
         completions = completeWord(mode);
 
-        if((completions == 1 || mode == 1 && completions >= 1) &&
+        if((completions == 1 || (mode == 1 && completions >= 1)) &&
            lastCompletion != -1)
         {
             // Finish the completion ASAP.
@@ -2461,7 +2461,7 @@ D_CMD(Version)
     Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
     if(gl.GetString)
         Con_Printf("%s\n", gl.GetString(DGL_VERSION));
-    Con_Printf("Game DLL: %s\n", gx.Get(DD_VERSION_LONG));
+    Con_Printf("Game DLL: %s\n", gx.GetVariable(DD_VERSION_LONG));
     Con_Printf("http://sourceforge.net/projects/deng/\n");
     return true;
 }

@@ -279,7 +279,7 @@ void SV_Init(void)
     else
     {
         // Use the default save path.
-        sprintf(SavePath, DEFAULT_SAVEPATH "%s\\", G_Get(DD_GAME_MODE));
+        sprintf(SavePath, DEFAULT_SAVEPATH "%s\\", G_GetVariable(DD_GAME_MODE));
     }
     M_CheckPath(SavePath);
 }

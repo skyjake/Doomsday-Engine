@@ -896,7 +896,7 @@ void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
 {
     vec2_t surface, normal, projected, s, reflected;
     vec2_t view;
-    float distance, angle, prevAngle;
+    float distance, angle, prevAngle = 0;
     int i;
 
     // Quad surface vector.
@@ -935,7 +935,8 @@ void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
         }
         else
         {
-            if(angle > prevAngle) angle -= 1;
+            if(angle > prevAngle)
+                angle -= 1;
         }
 
         // Horizontal coordinates.

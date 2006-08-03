@@ -479,7 +479,7 @@ void SB_UpdateSegAffected(int seg, rendpoly_t *poly)
     int i, k;
     vec2_t delta;
     source_t *src;
-    float distance, len, normal[3];
+    float distance = 0, len, normal[3];
     float intensity;
     affection_t aff;
 
@@ -564,7 +564,7 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
     vec2_t delta;
     float point[3];
     source_t *src;
-    float distance, len, dot;
+    float distance = 0, len, dot;
     float intensity;
     affection_t aff[NUM_PLANES];
 
@@ -720,7 +720,7 @@ void SB_BeginFrame(void)
     int i, j, k;
     seginfo_t *sin;
     source_t *s;
-    
+
     if(!useBias)
         return;
 
@@ -813,7 +813,7 @@ void SB_EndFrame(void)
 void SB_AddLight(gl_rgba_t *dest, const byte *color, float howMuch)
 {
     int i, new;
-    byte amplified[3], largest;
+    byte amplified[3], largest = 0;
 
     if(color == NULL)
     {
@@ -823,6 +823,7 @@ void SB_AddLight(gl_rgba_t *dest, const byte *color, float howMuch)
             if(i == 0 || dest->rgba[i] > largest)
                 largest = dest->rgba[i];
         }
+
         if(largest == 0) // Black!
         {
             amplified[0] = amplified[1] = amplified[2] = 255;

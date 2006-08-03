@@ -438,6 +438,10 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
         bceil = SECT_CEIL(backsec);
         bfloor = SECT_FLOOR(backsec);
     }
+    else
+    {
+        bceil = bfloor = 0;
+    }
 
     // Let's begin with an analysis of the visible surfaces.
     // Is there a mid wall segment?

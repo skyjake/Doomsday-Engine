@@ -266,7 +266,7 @@ static void LookupPal18to8(byte *palette)
 {
     int     r, g, b, i;
     byte    palRGB[3];
-    unsigned int diff, smallestDiff, closestIndex;
+    unsigned int diff, smallestDiff, closestIndex = 0;
 
     for(r = 0; r < 64; r++)
         for(g = 0; g < 64; g++)
@@ -2235,7 +2235,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
                          int *has_big_patch)
 {
     int     i, len;
-    boolean alphaChannel;
+    boolean alphaChannel = false;
     byte   *palette = W_CacheLumpNum(pallump, PU_STATIC);
     patch_t *patch;
 
@@ -4074,7 +4074,7 @@ D_CMD(TranslateFont)
         {
             Con_Message("%s...\n", name);
             size = W_LumpLength(lump);
-            patch = (patch_t *) M_Malloc(size);
+            patch = M_Malloc(size);
             memcpy(patch, W_CacheLumpNum(lump, PU_CACHE), size);
             TranslatePatch(patch, redToWhite);
             sprintf(name, "%s%.3d.lmp", argv[2], i);

@@ -187,7 +187,7 @@ sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
     src->SetAudioFormat((void*)f);
 
     // Create the buffer.
-    buf = (sfxbuffer_t*) Z_Malloc(sizeof(*buf), PU_STATIC, 0);
+    buf = Z_Malloc(sizeof(*buf), PU_STATIC, 0);
     memset(buf, 0, sizeof(*buf));
     buf->ptr = src;
     buf->bytes = bits/8;

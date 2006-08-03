@@ -809,7 +809,8 @@ void            G_IdentifyVersion(void);
 void            R_SetFilter(int filter);
 int             R_GetFilterColor(int filter);
 
-char           *G_Get(int id);
+int             G_GetInteger(int id);
+void           *G_GetVariable(int id);
 
 //----
 //GAME

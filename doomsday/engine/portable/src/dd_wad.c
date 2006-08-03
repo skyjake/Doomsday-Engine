@@ -33,7 +33,7 @@
  * The W_Select() function is responsible for activating the right cache
  * when a lump index is provided. Functions that don't know the lump index
  * will have to check both the primary and the auxiliary caches (e.g.,
- * W_CheckNumForName()).                                         
+ * W_CheckNumForName()).
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -954,7 +954,7 @@ static int W_ScanLumpInfo(int v[2])
         if(*(int *) lump_p->name == v[0] && *(int *) &lump_p->name[4] == v[1])
         {
             // W_Index handles the conversion to a logical index that is
-            // independent of the 
+            // independent of the
             return W_Index(lump_p - lumpinfo);
         }
     }
@@ -985,7 +985,7 @@ int W_CheckNumForName(char *name)
     v[0] = *(int *) name8;
     v[1] = *(int *) &name8[4];
 
-    // We have to check both the primary and auxiliary caches because 
+    // We have to check both the primary and auxiliary caches because
     // we've only got a name and don't know where it is located. Start with
     // the auxiliary lumps because they take precedence.
     if(W_UseAuxiliary())
@@ -998,7 +998,7 @@ int W_CheckNumForName(char *name)
     W_UsePrimary();
     idx = W_ScanLumpInfo(v);
     if(idx != -1)
-        return idx;    
+        return idx;
 
     VERBOSE2(Con_Message("W_CheckNumForName: \"%s\" not found.\n", name8));
     return -1;
@@ -1347,7 +1347,7 @@ void W_PrintFormattedMapList(int episode, const char **files, int count)
     const char *current = NULL;
     char    lump[20];
     int     i, k;
-    int     rangeStart, len;
+    int     rangeStart = 0, len;
 
     for(i = 0; i < count; i++)
     {

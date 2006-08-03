@@ -387,7 +387,7 @@ void Sfx_PurgeCache(void)
     int     totalsize = 0, maxsize = sfx_max_cache_kb * 1024;
     sfxcache_t *it, *next;
     sfxcache_t *lowest;
-    int     i, lowhits, nowtime = Sys_GetTime();
+    int     i, lowhits = 0, nowtime = Sys_GetTime();
     static int lastpurge = 0;
 
     if(!sfx_avail)

@@ -111,7 +111,7 @@ boolean Con_WriteState(const char *fileName)
     }
 
     fprintf(file, "# %s / Doomsday Engine " DOOMSDAY_VERSION_TEXT "\n",
-            gx.Get(DD_GAME_ID));
+            gx.GetVariable(DD_GAME_ID));
     fprintf(file,
             "# This configuration file is generated automatically. Each line is a\n");
     fprintf(file,

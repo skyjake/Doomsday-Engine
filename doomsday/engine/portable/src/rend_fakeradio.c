@@ -462,6 +462,8 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             iBFloor = SECT_FLOOR(iter->backsector);
             iBCeil  = SECT_CEIL(iter->backsector);
         }
+        else
+            iBFloor = iBCeil = 0;
 
         // We'll do the bottom and top simultaneously.
         for(i = 0; i < 2; ++i)
@@ -691,6 +693,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         bFloor = SECT_FLOOR(backSector);
         bCeil = SECT_CEIL(backSector);
     }
+    else
+        bFloor = bCeil = 0;
 
     // FIXME: rendpoly_t is quite large and this gets called *many*
     // times. Better to copy less stuff, or do something more
@@ -732,6 +736,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
        Rend_RadioNonGlowingFlat(frontSector, PLN_CEILING))
     {
         Rend_RadioTexCoordY(q, size);
+        texture = LST_RADIO_OO;
         // Corners without a neighbour backsector
         if(sideCn[0].corner == -1 || sideCn[1].corner == -1)  // At least one corner faces outwards
         {
@@ -897,6 +902,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
        Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR))
     {
         Rend_RadioTexCoordY(q, -size);
+        texture = LST_RADIO_OO;
         // Corners without a neighbour backsector
         if(sideCn[0].corner == -1 || sideCn[1].corner == -1)  // At least one corner faces outwards
         {

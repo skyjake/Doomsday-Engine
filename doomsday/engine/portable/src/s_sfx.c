@@ -591,7 +591,7 @@ int Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
     sfxchannel_t *ch, *selch, *prioch;
     sfxinfo_t *info;
     int     i, count, nowtime;
-    float   myprio, lowprio, channel_prios[SFX_MAX_CHANNELS];
+    float   myprio, lowprio = 0, channel_prios[SFX_MAX_CHANNELS];
     boolean have_channel_prios = false;
     boolean play3d = sfx_3d && (emitter || fixedpos);
 
@@ -905,9 +905,9 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
     case SFXD_SDL_MIXER:
 #ifdef MACOSX
         if(!(driver = DS_Load("SDLMixer")))
-#else        
+#else
         if(!(driver = DS_Load("sdlmixer")))
-#endif            
+#endif
             return false;
         break;
 

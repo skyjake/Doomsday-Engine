@@ -112,7 +112,37 @@ game_export_t gx;
 
 // CODE --------------------------------------------------------------------
 
-char *G_Get(int id)
+/*
+ * Get a 32-bit integer value.
+ */
+int G_GetInteger(int id)
+{
+    switch (id)
+    {
+    case DD_PSPRITE_BOB_X:
+        return (int) (FRACUNIT +
+            FixedMul(FixedMul(FRACUNIT * cfg.bobWeapon, players[consoleplayer].bob),
+                     finecosine[(128 * leveltime) & FINEMASK]));
+
+    case DD_PSPRITE_BOB_Y:
+        return (int) (32 * FRACUNIT +
+            FixedMul(FixedMul(FRACUNIT * cfg.bobWeapon, players[consoleplayer].bob),
+                     finesine[(128 * leveltime) & FINEMASK & (FINEANGLES / 2 - 1)]));
+
+    case DD_GAME_DMUAPI_VER:
+        return DMUAPI_VER;
+
+    default:
+        break;
+    }
+    // ID not recognized, return NULL.
+    return 0;
+}
+
+/*
+ * Get a pointer to the value of a variable. Added for 64-bit support.
+ */
+void *G_GetVariable(int id)
 {
     switch (id)
     {
@@ -135,29 +165,10 @@ char *G_Get(int id)
         return VERSIONTEXT "\n"GAMENAMETEXT" is based on linuxdoom-1.10.";
 
     case DD_ACTION_LINK:
-        return (char *) actionlinks;
+        return actionlinks;
 
-    case DD_PSPRITE_BOB_X:
-        return (char *) (FRACUNIT +
-                         FixedMul(FixedMul
-                                  (FRACUNIT * cfg.bobWeapon,
-                                   players[consoleplayer].bob),
-                                  finecosine[(128 * leveltime) & FINEMASK]));
-
-    case DD_PSPRITE_BOB_Y:
-        return (char *) (32 * FRACUNIT +
-                         FixedMul(FixedMul
-                                  (FRACUNIT * cfg.bobWeapon,
-                                   players[consoleplayer].bob),
-                                  finesine[(128 *
-                                            leveltime) & FINEMASK & (FINEANGLES
-                                                                     / 2 -
-                                                                     1)]));
     case DD_XGFUNC_LINK:
-        return (char *) xgClasses;
-
-    case DD_GAME_DMUAPI_VER:
-        return (char *) DMUAPI_VER;
+        return xgClasses;
 
     default:
         break;
@@ -199,7 +210,8 @@ game_export_t *GetGameAPI(game_import_t * imports)
     gx.ConsoleBackground = D_ConsoleBg;
     gx.UpdateState = G_UpdateState;
 #undef Get
-    gx.Get = G_Get;
+    gx.GetInteger = G_GetInteger;
+    gx.GetVariable = G_GetVariable;
     gx.R_Init = R_InitTranslation;
 
     gx.NetServerStart = D_NetServerStarted;

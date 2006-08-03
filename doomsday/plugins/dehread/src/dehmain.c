@@ -1800,7 +1800,7 @@ int PatchStrings(int dummy)
        DPrintf ("[Strings]\n");
 
        if (!holdstring)
-       holdstring = (char *)Malloc (maxstrlen);
+       holdstring = Malloc (maxstrlen);
 
        while ((result = GetLine()) == 1) {
        int i;

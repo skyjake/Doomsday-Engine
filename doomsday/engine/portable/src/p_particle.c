@@ -762,7 +762,7 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
     ptcstage_t *st = gen->stages + pt->stage;
     ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
     boolean zBounce = false;
-    boolean hitFloor;
+    boolean hitFloor = false;
     fixed_t hardRadius = st->radius / 2;
 
     // Particle rotates according to spin speed.

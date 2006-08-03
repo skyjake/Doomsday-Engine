@@ -372,7 +372,7 @@ static void InitArgs(setargs_t* args, int type, int prop)
 void P_InitMapUpdate(void)
 {
     // Request the DMU API version the game is expecting.
-    usingDMUAPIver = (int) gx.Get(DD_GAME_DMUAPI_VER);
+    usingDMUAPIver = gx.GetInteger(DD_GAME_DMUAPI_VER);
     if(!usingDMUAPIver)
         Con_Error("P_InitMapUpdate: Game dll is not compatible with "
                   "Doomsday " DOOMSDAY_VERSION_TEXT ".");
@@ -2883,7 +2883,7 @@ void P_GetPtrpv(void* ptr, int prop, void* params)
 
 void P_Copy(int type, int prop, int fromIndex, int toIndex)
 {
-    setargs_t args;
+//    setargs_t args;
 //    int ptype = propertyTypes[prop];
 
     Con_Error("P_Copy: Not implemented yet.");
@@ -2971,9 +2971,11 @@ void P_Copy(int type, int prop, int fromIndex, int toIndex)
 
 void P_Copyp(int prop, void* from, void* to)
 {
+#if 0
     int type = DMU_GetType(from);
     setargs_t args;
 //    int ptype = propertyTypes[prop];
+#endif
 
     Con_Error("P_Copyp: Not implemented yet.");
 #if 0
@@ -3065,7 +3067,7 @@ void P_Copyp(int prop, void* from, void* to)
 
 void P_Swap(int type, int prop, int fromIndex, int toIndex)
 {
-    setargs_t argsA, argsB;
+//    setargs_t argsA, argsB;
 //    int ptype = propertyTypes[prop];
 
     Con_Error("P_Swap: Not implemented yet.");
@@ -3191,9 +3193,11 @@ void P_Swap(int type, int prop, int fromIndex, int toIndex)
 
 void P_Swapp(int prop, void* from, void* to)
 {
+#if 0
     int type = DMU_GetType(from);
     setargs_t argsA, argsB;
 //    int ptype = propertyTypes[prop];
+#endif
 
     Con_Error("P_Swapp: Not implemented yet.");
 #if 0

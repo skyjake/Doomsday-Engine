@@ -40,7 +40,7 @@ enum {
 };
 
 // Hud Unhide Events (the hud will unhide on these events if enabled).
-typedef enum hueevent_e {
+typedef enum {
     HUE_FORCE = -1,
     HUE_ON_DAMAGE,
     HUE_ON_PICKUP_HEALTH,

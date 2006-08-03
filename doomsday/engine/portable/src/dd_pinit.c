@@ -99,7 +99,7 @@ void DD_ErrorBox(boolean error, char *format, ...)
 void DD_MainWindowTitle(char *title)
 {
     sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " : %s",
-            __gx.Get(DD_GAME_ID));
+            __gx.GetVariable(DD_GAME_ID));
 }
 
 void SetGameImports(game_import_t * imp)

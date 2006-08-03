@@ -68,7 +68,7 @@ void Cl_InitID(void)
 {
     FILE   *file;
     int     i;
-    
+
     if((i = ArgCheckWith("-id", 1)) != 0)
     {
         clientID = strtoul(Argv(i + 1), 0, 0);
@@ -127,7 +127,7 @@ void Cl_SendHello(void)
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, gx.Get(DD_GAME_MODE), sizeof(buf));
+    strncpy(buf, gx.GetVariable(DD_GAME_MODE), sizeof(buf));
     Msg_Write(buf, 16);
 
     Net_SendBuffer(0, SPF_ORDERED);

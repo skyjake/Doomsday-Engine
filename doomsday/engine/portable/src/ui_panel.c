@@ -224,7 +224,7 @@ uidata_listitem_t lstit_resolution[] = {
     {"1024 x 640 (16:10)", RES(1024, 640)},
     {"1280 x 800 (16:10)", RES(1280, 800)},
     {"1600 x 1000 (16:10)", RES(1600, 1000)},
-    {"1680 x 1050 (16:10)", RES(1680, 1050)}    
+    {"1680 x 1050 (16:10)", RES(1680, 1050)}
 };
 uidata_list_t lst_resolution = {
     lstit_resolution, NUMITEMS(lstit_resolution)
@@ -940,7 +940,7 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h,
                  float alpha)
 {
     int     ind;
-    
+
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_ColorA(UI_COL(UIC_TEXT), .5f * alpha * UI_Alpha());
     FR_TextOut(label, x, y);
@@ -1055,6 +1055,7 @@ D_CMD(OpenPanel)
     if(argc != 2)
     {
         // Choose the group that was last visible.
+        foc = NULL;
         for(i = 0; i < NUM_CP_BUTTONS; i++)
             if(panel_buttons[i])
                 CP_ChooseGroup(foc = ob_panel + i);

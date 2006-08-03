@@ -2322,7 +2322,7 @@ void SV_Init(void)
     else
     {
         // Use the default path.
-        sprintf(save_path, "savegame\\%s\\", G_Get(DD_GAME_MODE));
+        sprintf(save_path, "savegame\\%s\\", G_GetVariable(DD_GAME_MODE));
     }
 
     // Build the client save path.

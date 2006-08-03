@@ -94,7 +94,8 @@ typedef struct {
     void            (*PostInit) (void);
     void            (*Shutdown) (void);
     void            (*UpdateState) (int step);
-    char           *(*Get) (int id);
+    int             (*GetInteger) (int id);
+    void           *(*GetVariable) (int id);
 
     // Ticcmds.
     void            (*BuildTicCmd) (void *cmd, float elapsedTime);

@@ -264,8 +264,8 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
         player->attackdown = false;
 
     // Bob the weapon based on movement speed.
-    psp->sx = (int) G_Get(DD_PSPRITE_BOB_X);
-    psp->sy = (int) G_Get(DD_PSPRITE_BOB_Y);
+    psp->sx = G_GetInteger(DD_PSPRITE_BOB_X);
+    psp->sy = G_GetInteger(DD_PSPRITE_BOB_Y);
 
     // Psprite state.
     player->plr->psprites[0].state = DDPSP_BOBBING;

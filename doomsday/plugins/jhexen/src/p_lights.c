@@ -111,7 +111,7 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
     while((secNum = P_FindSectorFromTag(arg[0], secNum)) >= 0)
     {
         think = false;
-        light = (light_t *) Z_Malloc(sizeof(light_t), PU_LEVSPEC, 0);
+        light = Z_Malloc(sizeof(light_t), PU_LEVSPEC, 0);
         light->type = type;
         light->sector = P_ToPtr(DMU_SECTOR, secNum);
         light->count = 0;

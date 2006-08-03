@@ -253,7 +253,8 @@ int             P_Random(void);
 void            M_ClearRandom(void);
 
 void            G_IdentifyVersion(void);
-char           *G_Get(int id);
+int             G_GetInteger(int id);
+void           *G_GetVariable(int id);
 
 void            R_SetViewSize(int blocks, int detail);
 

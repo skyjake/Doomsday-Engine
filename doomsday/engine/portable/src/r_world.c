@@ -320,7 +320,7 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
     int     numclippers = num + ssec->linecount;
     int     i, numedgepoints;
     fvertex_t *edgepoints;
-    fdivline_t *clippers = (fdivline_t *)
+    fdivline_t *clippers =
         Z_Malloc(numclippers * sizeof(fdivline_t), PU_STATIC, 0);
 
     // Convert the divlines to float, in reverse order.
@@ -346,7 +346,7 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
 
     // Setup the 'worldwide' polygon.
     numedgepoints = 4;
-    edgepoints = (fvertex_t *) malloc(numedgepoints * sizeof(fvertex_t));
+    edgepoints = malloc(numedgepoints * sizeof(fvertex_t));
 
     edgepoints[0].x = -32768;
     edgepoints[0].y = 32768;
@@ -423,8 +423,7 @@ void R_PolygonizeWithoutCarving()
     {
         sub = SUBSECTOR_PTR(i);
         sub->numverts = sub->linecount;
-        sub->verts =
-            (fvertex_t *) Z_Malloc(sizeof(fvertex_t) * sub->linecount,
+        sub->verts = Z_Malloc(sizeof(fvertex_t) * sub->linecount,
                                    PU_LEVELSTATIC, 0);
         for(j = 0; j < sub->linecount; j++)
         {
@@ -462,7 +461,7 @@ void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
     nod = NODE_PTR(bspnode);
 
     // Allocate a new list for each child.
-    childlist = (divline_t *) malloc(childlistsize * sizeof(divline_t));
+    childlist = malloc(childlistsize * sizeof(divline_t));
 
     // Copy the previous lines, from the parent nodes.
     if(divlines)
@@ -679,7 +678,7 @@ void R_SetVertexOwner(int idx, sector_t *secptr)
     // Add a new owner.
     own->num++;
     // Allocate a new list.
-    list = (int*) Z_Malloc(sizeof(int) * own->num, PU_LEVELSTATIC, 0);
+    list = Z_Malloc(sizeof(int) * own->num, PU_LEVELSTATIC, 0);
     // If there are previous references, copy them.
     if(own->num > 1)
     {
@@ -716,7 +715,7 @@ void R_SetVertexLineOwner(int idx, line_t *lineptr)
     // Add a new owner.
     own->numlines++;
     // Allocate a new list.
-    list = (int *) Z_Malloc(sizeof(int) * own->numlines, PU_LEVELSTATIC, 0);
+    list = Z_Malloc(sizeof(int) * own->numlines, PU_LEVELSTATIC, 0);
     // If there are previous references, copy them.
     if(own->numlines > 1)
     {
@@ -741,8 +740,7 @@ void R_InitVertexOwners(void)
     sector_t *sec;
 
     // Allocate enough memory.
-    vertexowners =
-        (vertexowner_t *) Z_Malloc(sizeof(vertexowner_t) * numvertexes,
+    vertexowners = Z_Malloc(sizeof(vertexowner_t) * numvertexes,
                                    PU_LEVEL, 0);
     memset(vertexowners, 0, sizeof(vertexowner_t) * numvertexes);
 
@@ -1293,8 +1291,8 @@ void R_RationalizeSectors(void)
                             if(line == collectedLines[m])
                             {
                                 int n, o, p, q;
-                                line_t *lcand;
-                                vertexowner_t *vown;
+                                line_t *lcand = NULL;
+                                vertexowner_t *vown = NULL;
 
                                 // Pick another candidate to continue line collection.
 
@@ -1723,7 +1721,7 @@ void R_InitLineNeighbors(void)
                          other->v2 == line->v1 || other->v2 == line->v2))
                     {
                         boolean ok, ok2;
-                        ok = false;
+                        ok = ok2 = false;
                         owner = &vertexowners[GET_VERTEX_IDX(other->v1)];
                         for(m = 0; m < owner->num && !ok; ++m)
                             if(owner->list[m] == k) // k == sector id
@@ -1731,7 +1729,6 @@ void R_InitLineNeighbors(void)
 
                         if(ok)
                         {
-                            ok2 = false;
                             owner = &vertexowners[GET_VERTEX_IDX(other->v2)];
                             for(m = 0; m < owner->num && !ok2; ++m)
                                 if(owner->list[m] == k) // k == sector id
@@ -2254,7 +2251,7 @@ const char *R_GetUniqueLevelID(void)
     sprintf(uid, "%s|%s|%s|%s",
             R_GetCurrentLevelID(),
             base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
-            gx.Get(DD_GAME_MODE));
+            gx.GetVariable(DD_GAME_MODE));
 
     strlwr(uid);
     return uid;

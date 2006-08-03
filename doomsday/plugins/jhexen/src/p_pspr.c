@@ -615,8 +615,8 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     if(!player->morphTics)
     {
         // Bob the weapon based on movement speed.
-        psp->sx = (int) G_Get(DD_PSPRITE_BOB_X);
-        psp->sy = (int) G_Get(DD_PSPRITE_BOB_Y);
+        psp->sx = G_GetInteger(DD_PSPRITE_BOB_X);
+        psp->sy = G_GetInteger(DD_PSPRITE_BOB_Y);
 
         ddpsp->offx = ddpsp->offy = 0;
     }

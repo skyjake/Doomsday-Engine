@@ -1961,7 +1961,7 @@ void FIC_If(void)
     // Generic game mode string checking.
     else if(!strnicmp(fi_token, "mode:", 5))
     {
-        val = !stricmp(fi_token + 5, G_Get(DD_GAME_MODE));
+        val = !stricmp(fi_token + 5, G_GetVariable(DD_GAME_MODE));
     }
 #if __JDOOM__
     // Game modes.
