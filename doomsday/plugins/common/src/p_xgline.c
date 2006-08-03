@@ -989,7 +989,7 @@ void XL_DoFunction(linetype_t * info, line_t *line, int sidenum,
         switch(xgClass->traverse)
         {
             case TRAV_NONE: // No need for traversal, call the doFunc
-                xgClass->doFunc(line, true, (int) line, info, act_thing);
+                xgClass->doFunc(line, true, line, info, act_thing);
                 break;
             case TRAV_LINES: // Traverse lines, executing doFunc for each
                 XL_TraverseLines(line, info->iparm[xgClass->travref],
@@ -1014,7 +1014,8 @@ int C_DECL XLTrav_QuickActivate(line_t *line, boolean dummy, void *context,
 
     if(!xline->xg)
         return true;
-    xline->xg->active = (int) context;
+
+    xline->xg->active = (context? true : false);
     xline->xg->timer = XLTIMER_STOPPED;    // Stop timer.
     return true;
 }
@@ -1029,22 +1030,22 @@ int C_DECL XLTrav_CheckLine(line_t *line, boolean dummy, void *context,
 
     if(!xline->xg)
         return false;    // Stop checking!
-    return (xline->xg->active != 0) == ((int) context != 0);
+    return !(xline->xg->active) == (context? true : false);
 }
 
 /*
  * &param data  If true, the line will receive a chain event if not activate.
  *      If data=false, then ... if active.
  */
-int C_DECL XLTrav_SmartActivate(line_t *line, boolean dummy, void *context, void *context2,
-                         mobj_t *activator)
+int C_DECL XLTrav_SmartActivate(line_t *line, boolean dummy, void *context,
+                                void *context2, mobj_t *activator)
 {
     xline_t *xline = P_XLine(line);
 
     if(!xline->xg)
         return false;
 
-    if((int)context != xline->xg->active)
+    if((context? true : false) != xline->xg->active)
         XL_LineEvent(XLE_CHAIN, 0, line, 0, context2);
     return true;
 }
