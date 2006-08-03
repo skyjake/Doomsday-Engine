@@ -29,13 +29,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef MACOSX
-#  include <SDL/SDL.h>
-#  include <SDL_mixer/SDL_mixer.h>
-#else
-#  include <SDL.h>
-#  include <SDL_mixer.h>
-#endif
+#include <SDL.h>
+#include <SDL_mixer.h>
+
 
 #define BUFFERED_MUSIC_FILE "deng-sdlmixer-buffered-song"
 #define DEFAULT_MIDI_COMMAND "" //"timidity"
