@@ -456,7 +456,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         if(mo)
         {
             mo->target = player->plr->mo;
-            mo->special1 = (int) (player->plr->mo);
+            mo->tracer = player->plr->mo;
             mo->momz = 5 * FRACUNIT;
         }
         break;

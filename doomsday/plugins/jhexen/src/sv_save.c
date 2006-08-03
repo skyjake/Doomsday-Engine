@@ -120,7 +120,7 @@ static void UnarchiveMisc(void);
 static void SetMobjArchiveNums(void);
 static void RemoveAllThinkers(void);
 static void MangleMobj(mobj_t *mobj);
-static void RestoreMobj(mobj_t *mobj);
+static void RestoreMobj(mobj_t *mobj, int version);
 static int GetMobjNum(mobj_t *mobj);
 static void SetMobjPtr(int *archiveNum);
 static void MangleSSThinker(ssthinker_t * sst);
@@ -1343,7 +1343,8 @@ void ArchiveMobj(mobj_t *original)
     // Version number.
     // 2: Added the 'translucency' byte.
     // 3: Added byte 'vistarget'
-    StreamOutByte(3);
+    // 4: Added long 'tracer'
+    StreamOutByte(4);
 
     StreamOutLong(mo->pos[VX]);
     StreamOutLong(mo->pos[VY]);
@@ -1382,6 +1383,7 @@ void ArchiveMobj(mobj_t *original)
     StreamOutBuffer(mo->args, sizeof(mo->args));
     StreamOutByte(mo->translucency);
     StreamOutByte((byte)(mo->vistarget +1));
+    StreamOutLong((int) mo->tracer);
 }
 
 //==========================================================================
@@ -1440,7 +1442,10 @@ void UnarchiveMobj(mobj_t *mo)
         mo->vistarget = (GET_BYTE) -1;
     }
 
-    RestoreMobj(mo);
+    if(version >= 4)
+        mo->tracer = (mobj_t *) GET_LONG;
+
+    RestoreMobj(mo, version);
 }
 
 //==========================================================================
@@ -1575,7 +1580,7 @@ static void MangleMobj(mobj_t *mobj)
     }
     switch (mobj->type)
     {
-        // Just special1
+        // Just tracer
     case MT_BISH_FX:
     case MT_HOLY_FX:
     case MT_DRAGON:
@@ -1586,11 +1591,11 @@ static void MangleMobj(mobj_t *mobj)
     case MT_MSTAFF_FX2:
         if(corpse)
         {
-            mobj->special1 = MOBJ_NULL;
+            mobj->tracer = (mobj_t *) MOBJ_NULL;
         }
         else
         {
-            mobj->special1 = GetMobjNum((mobj_t *) mobj->special1);
+            mobj->tracer = (mobj_t *) GetMobjNum(mobj->tracer);
         }
         break;
 
@@ -1607,17 +1612,17 @@ static void MangleMobj(mobj_t *mobj)
         }
         break;
 
-        // Both special1 and special2
+        // Both tracer and special2
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
         if(corpse)
         {
-            mobj->special1 = MOBJ_NULL;
+            mobj->tracer = (mobj_t *) MOBJ_NULL;
             mobj->special2 = MOBJ_NULL;
         }
         else
         {
-            mobj->special1 = GetMobjNum((mobj_t *) mobj->special1);
+            mobj->tracer = (mobj_t *) GetMobjNum(mobj->tracer);
             mobj->special2 = GetMobjNum((mobj_t *) mobj->special2);
         }
         break;
@@ -1657,7 +1662,7 @@ static int GetMobjNum(mobj_t *mobj)
 //
 //==========================================================================
 
-static void RestoreMobj(mobj_t *mobj)
+static void RestoreMobj(mobj_t *mobj, int ver)
 {
     // Restore DDMF flags set only in P_SpawnMobj. R_SetAllDoomsdayFlags
     // might not set these because it only iterates seclinked mobjs.
@@ -1696,7 +1701,7 @@ static void RestoreMobj(mobj_t *mobj)
     SetMobjPtr((int *) &mobj->target);
     switch (mobj->type)
     {
-        // Just special1
+        // Just tracer
     case MT_BISH_FX:
     case MT_HOLY_FX:
     case MT_DRAGON:
@@ -1704,7 +1709,10 @@ static void RestoreMobj(mobj_t *mobj)
     case MT_THRUSTFLOOR_DOWN:
     case MT_MINOTAUR:
     case MT_SORCFX1:
-        SetMobjPtr(&mobj->special1);
+        if(ver >= 4)
+            SetMobjPtr((int *) &mobj->tracer);
+        else
+            SetMobjPtr((int *) &mobj->special1);
         break;
 
         // Just special2
@@ -1713,10 +1721,13 @@ static void RestoreMobj(mobj_t *mobj)
         SetMobjPtr(&mobj->special2);
         break;
 
-        // Both special1 and special2
+        // Both tracer and special2
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
-        SetMobjPtr(&mobj->special1);
+        if(ver >= 4)
+            SetMobjPtr((int *) &mobj->tracer);
+        else
+            SetMobjPtr((int *) &mobj->special1);
         SetMobjPtr(&mobj->special2);
         break;
 

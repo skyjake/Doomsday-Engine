@@ -220,6 +220,9 @@ typedef struct mobj_s {
     byte            args[5];       // special arguments
     int             turntime;      // $visangle-facetarget
     int             alpha;         // $mobjalpha
+
+    // Thing being chased/attacked for tracers.
+    struct mobj_s  *tracer;
 } mobj_t;
 
 // each sector has a degenmobj_t in it's center for sound origin purposes

@@ -314,7 +314,7 @@ int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta)
 //----------------------------------------------------------------------------
 //
 //
-// The missile special1 field must be mobj_t *target.  Returns true if
+// The missile tracer field must be mobj_t *target.  Returns true if
 // target was tracked, false if not.
 //
 //----------------------------------------------------------------------------
@@ -327,14 +327,14 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     angle_t angle;
     mobj_t *target;
 
-    target = (mobj_t *) actor->special1;
+    target = actor->tracer;
     if(target == NULL)
     {
         return (false);
     }
     if(!(target->flags & MF_SHOOTABLE))
-    {                           // Target died
-        actor->special1 = 0;
+    {   // Target died
+        actor->tracer = NULL;
         return (false);
     }
     dir = P_FaceMobj(actor, target, &delta);
@@ -615,7 +615,7 @@ void P_XYMovement(mobj_t *mo)
                     //                  mo->momz = -mo->momz;
                     if(mo->flags2 & MF2_SEEKERMISSILE)
                     {
-                        mo->special1 = (int) (mo->target);
+                        mo->tracer = mo->target;
                     }
                     mo->target = BlockingMobj;
                     return;
@@ -2212,7 +2212,7 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, fixed_t strength)
                 return;
                 break;
             case MT_MSTAFF_FX2: // Reflect to originator
-                victim->special1 = (int) victim->target;
+                victim->tracer = victim->target;
                 victim->target = source;
                 break;
             default:
@@ -2221,9 +2221,9 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, fixed_t strength)
         }
         if(victim->type == MT_HOLY_FX)
         {
-            if((mobj_t *) (victim->special1) == source)
+            if(victim->tracer == source)
             {
-                victim->special1 = (int) victim->target;
+                victim->tracer = victim->target;
                 victim->target = source;
             }
         }

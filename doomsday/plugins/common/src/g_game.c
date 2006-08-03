@@ -58,6 +58,7 @@
 #  include <string.h>
 #  include <math.h>
 #  include "jhexen.h"
+#  include "m_cheat.h"
 #elif __JSTRIFE__
 #  include <string.h>
 #  include <math.h>

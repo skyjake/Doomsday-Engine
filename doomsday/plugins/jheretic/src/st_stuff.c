@@ -1349,7 +1349,7 @@ void ST_doFullscreenStuff(void)
 {
     int     i;
     int     x;
-    int     temp;
+    int     temp = 0;
     float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
     float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
     player_t *plyr = &players[consoleplayer];

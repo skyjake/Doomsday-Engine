@@ -241,6 +241,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
         {
             z = mobj->pos[VZ];
         }
+
         newMobj = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], z, moType);
         if(P_TestMobjLocation(newMobj) == false)
         {                       // Didn't fit

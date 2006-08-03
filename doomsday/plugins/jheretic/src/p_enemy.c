@@ -1109,7 +1109,7 @@ void C_DECL A_MummyAttack2(mobj_t *actor)
     mo = P_SpawnMissile(actor, actor->target, MT_MUMMYFX1);
 
     if(mo != NULL)
-        mo->special1 = (int) actor->target;
+        mo->target = actor->target;
 }
 
 void C_DECL A_MummyFX1Seek(mobj_t *actor)
@@ -1662,7 +1662,8 @@ void C_DECL A_HeadAttack(mobj_t *actor)
         if(mo != NULL)
         {
             mo->pos[VZ] -= 32 * FRACUNIT;
-            mo->special1 = (int) target;
+            mo->tracer = target;
+            mo->special1 = 60;
             mo->special2 = 50;  // Timer for active sound
             mo->health = 20 * TICSPERSEC;   // Duration
 
@@ -1688,7 +1689,7 @@ void C_DECL A_WhirlwindSeek(mobj_t *actor)
         S_StartSound(sfx_hedat3, actor);
     }
 
-    if(actor->special1 && (((mobj_t *) (actor->special1))->flags & MF_SHADOW))
+    if(actor->tracer && actor->tracer->flags & MF_SHADOW)
         return;
 
     P_SeekerMissile(actor, ANGLE_1 * 10, ANGLE_1 * 30);

@@ -41,6 +41,7 @@
 # include "m_cheat.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
+#  include "m_cheat.h"
 #elif __JSTRIFE__
 # include "h2def.h"
 # include "p_local.h"

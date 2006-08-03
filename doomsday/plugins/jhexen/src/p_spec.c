@@ -995,7 +995,6 @@ void P_PlayerInSpecialSector(player_t *player)
 // P_PlayerOnSpecialFlat
 //
 //============================================================================
-
 void P_PlayerOnSpecialFlat(player_t *player, int floorType)
 {
     if(player->plr->mo->pos[VZ]       /*!= player->plr->mo->floorz */

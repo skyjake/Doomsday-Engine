@@ -617,8 +617,8 @@ void C_DECL A_Summon(mobj_t *actor)
     mo = P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_MINOTAUR);
     if(mo)
     {
-        if(P_TestMobjLocation(mo) == false || !actor->special1)
-        {                       // Didn't fit - change back to artifact
+        if(P_TestMobjLocation(mo) == false || !actor->tracer)
+        {   // Didn't fit - change back to artifact
             P_SetMobjState(mo, S_NULL);
             mo = P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_SUMMONMAULATOR);
             if(mo)
@@ -627,14 +627,14 @@ void C_DECL A_Summon(mobj_t *actor)
         }
 
         memcpy((void *) mo->args, &leveltime, sizeof(leveltime));
-        master = (mobj_t *) actor->special1;
+        master = actor->tracer;
         if(master->flags & MF_CORPSE)
-        {                       // Master dead
-            mo->special1 = 0;   // No master
+        {   // Master dead
+            mo->tracer = NULL;   // No master
         }
         else
         {
-            mo->special1 = actor->special1; // Pointer to master (mobj_t *)
+            mo->tracer = actor->tracer; // Pointer to master (mobj_t *)
             P_GivePower(master->player, pw_minotaur);
         }
 
@@ -1059,7 +1059,7 @@ void P_SpawnDirt(mobj_t *actor, fixed_t radius)
 // Thrust floor stuff
 //
 // Thrust Spike Variables
-//      special1        pointer to dirt clump mobj
+//      tracer          pointer to dirt clump mobj
 //      special2        speed of raise
 //      args[0]     0 = lowered,  1 = raised
 //      args[1]     0 = normal,   1 = bloody
@@ -1072,7 +1072,7 @@ void C_DECL A_ThrustInitUp(mobj_t *actor)
     actor->floorclip = 0;
     actor->flags = MF_SOLID;
     actor->flags2 = MF2_NOTELEPORT | MF2_FLOORCLIP;
-    actor->special1 = 0L;
+    actor->tracer = NULL;
 }
 
 void C_DECL A_ThrustInitDn(mobj_t *actor)
@@ -1085,7 +1085,7 @@ void C_DECL A_ThrustInitDn(mobj_t *actor)
     actor->flags = 0;
     actor->flags2 = MF2_NOTELEPORT | MF2_FLOORCLIP | MF2_DONTDRAW;
     mo = P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_DIRTCLUMP);
-    actor->special1 = (int) mo;
+    actor->tracer = mo;
 }
 
 void C_DECL A_ThrustRaise(mobj_t *actor)
@@ -1100,10 +1100,10 @@ void C_DECL A_ThrustRaise(mobj_t *actor)
     }
 
     // Lose the dirt clump
-    if((actor->floorclip < actor->height) && actor->special1)
+    if((actor->floorclip < actor->height) && actor->tracer)
     {
-        P_RemoveMobj((mobj_t *) actor->special1);
-        actor->special1 = 0;
+        P_RemoveMobj(actor->tracer);
+        actor->tracer = NULL;
     }
 
     // Spawn some dirt

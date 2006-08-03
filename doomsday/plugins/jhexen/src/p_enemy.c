@@ -463,7 +463,7 @@ boolean P_LookForMonsters(mobj_t *actor)
         if(actor->type == MT_MINOTAUR)
         {
             if((mo->type == MT_MINOTAUR) &&
-               (mo->target != ((player_t *) actor->special1)->plr->mo))
+               (mo->target != ((player_t *) actor->tracer)->plr->mo))
             {
                 continue;
             }
@@ -550,7 +550,7 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
         }
         if(actor->type == MT_MINOTAUR)
         {
-            if(((player_t *) (actor->special1)) == player)
+            if(((player_t *) (actor->tracer)) == player)
             {
                 continue;       // Don't target master
             }
@@ -1108,7 +1108,7 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
     thinker_t *think;
     fixed_t dist;
     int     i;
-    mobj_t *master = (mobj_t *) (actor->special1);
+    mobj_t *master = actor->tracer;
 
     actor->target = NULL;
     if(deathmatch)              // Quick search for players
@@ -1163,7 +1163,7 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
                 continue;
             if((mo == master) || (mo == actor))
                 continue;
-            if((mo->type == MT_MINOTAUR) && (mo->special1 == actor->special1))
+            if((mo->type == MT_MINOTAUR) && (mo->tracer == actor->tracer))
                 continue;
             actor->target = mo;
             break;              // Found mobj to attack
@@ -2575,7 +2575,7 @@ void C_DECL A_BishopAttack2(mobj_t *actor)
     mo = P_SpawnMissile(actor, actor->target, MT_BISH_FX);
     if(mo)
     {
-        mo->special1 = (int) actor->target;
+        mo->tracer = actor->target;
         mo->special2 = 16;      // High word == x/y, Low word == z
     }
     actor->special1--;
@@ -2772,7 +2772,7 @@ static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
     angle_t angleToSpot, angleToTarget;
     mobj_t *mo;
 
-    target = (mobj_t *) actor->special1;
+    target = actor->tracer;
     if(target == NULL)
         return;
 
@@ -2868,8 +2868,8 @@ static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
             if(bestArg != -1)
             {
                 search = -1;
-                actor->special1 =
-                    (int) P_FindMobjFromTID(target->args[bestArg], &search);
+                actor->tracer =
+                    P_FindMobjFromTID(target->args[bestArg], &search);
             }
         }
         else
@@ -2879,8 +2879,8 @@ static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
                 i = (P_Random() >> 2) % 5;
             } while(!target->args[i]);
             search = -1;
-            actor->special1 =
-                (int) P_FindMobjFromTID(target->args[i], &search);
+            actor->tracer =
+                P_FindMobjFromTID(target->args[i], &search);
         }
     }
 }
@@ -2897,14 +2897,14 @@ void C_DECL A_DragonInitFlight(mobj_t *actor)
 
     search = -1;
     do
-    {                           // find the first tid identical to the dragon's tid
-        actor->special1 = (int) P_FindMobjFromTID(actor->tid, &search);
+    {   // find the first tid identical to the dragon's tid
+        actor->tracer = P_FindMobjFromTID(actor->tid, &search);
         if(search == -1)
         {
             P_SetMobjState(actor, actor->info->spawnstate);
             return;
         }
-    } while(actor->special1 == (int) actor);
+    } while(actor->tracer == actor);
     P_RemoveMobjFromTIDList(actor);
 }
 
@@ -3014,7 +3014,7 @@ void C_DECL A_DragonFX2(mobj_t *actor)
 void C_DECL A_DragonPain(mobj_t *actor)
 {
     A_Pain(actor);
-    if(!actor->special1)
+    if(!actor->tracer)
     {                           // no destination spot yet
         P_SetMobjState(actor, S_DRAGON_INIT);
     }
@@ -4240,7 +4240,7 @@ void C_DECL A_SorcOffense1(mobj_t *actor)
     if(mo)
     {
         mo->target = parent;
-        mo->special1 = (int) parent->target;
+        mo->tracer = parent->target;
         mo->args[4] = BOUNCE_TIME_UNIT;
         mo->args[3] = 15;       // Bounce time in seconds
     }
@@ -4248,7 +4248,7 @@ void C_DECL A_SorcOffense1(mobj_t *actor)
     if(mo)
     {
         mo->target = parent;
-        mo->special1 = (int) parent->target;
+        mo->tracer = parent->target;
         mo->args[4] = BOUNCE_TIME_UNIT;
         mo->args[3] = 15;       // Bounce time in seconds
     }
@@ -4928,7 +4928,7 @@ void C_DECL A_KoraxChase(mobj_t *actor)
         {
             lastfound = actor->special1;
             spot = P_FindMobjFromTID(KORAX_TELEPORT_TID, &lastfound);
-            actor->special1 = lastfound;
+            actor->tracer = spot;
             if(spot)
             {
                 P_Teleport(actor, spot->pos[VX], spot->pos[VY], spot->angle, true);
@@ -4991,7 +4991,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax)
 
     spirit->health = KORAX_SPIRIT_LIFETIME;
 
-    spirit->special1 = (int) korax; // Swarm around korax
+    spirit->tracer = korax; // Swarm around korax
     spirit->special2 = 32 + (P_Random() & 7);   // Float bob index
     spirit->args[0] = 10;       // initial turn value
     spirit->args[1] = 0;        // initial look angle
@@ -5005,10 +5005,10 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax)
         next = P_SpawnMobj(spirit->pos[VX], spirit->pos[VY], spirit->pos[VZ],
                            MT_HOLY_TAIL);
         P_SetMobjState(next, next->info->spawnstate + 1);
-        tail->special1 = (int) next;
+        tail->tracer = next;
         tail = next;
     }
-    tail->special1 = 0;         // last tail bit
+    tail->tracer = NULL;         // last tail bit
 }
 
 void C_DECL A_KoraxDecide(mobj_t *actor)
@@ -5276,7 +5276,7 @@ void C_DECL A_KSpiritSeeker(mobj_t *actor, angle_t thresh, angle_t turnMax)
     fixed_t newZ;
     fixed_t deltaZ;
 
-    target = (mobj_t *) actor->special1;
+    target = actor->tracer;
     if(target == NULL)
         return;
 
@@ -5339,7 +5339,7 @@ void C_DECL A_KSpiritRoam(mobj_t *actor)
     }
     else
     {
-        if(actor->special1)
+        if(actor->tracer)
         {
             A_KSpiritSeeker(actor, actor->args[0] * ANGLE_1,
                             actor->args[0] * ANGLE_1 * 2);

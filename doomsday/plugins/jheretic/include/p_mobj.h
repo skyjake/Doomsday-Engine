@@ -252,6 +252,9 @@ typedef struct mobj_s {
         int     options;
     } spawninfo;
 
+    // Thing being chased/attacked for tracers.
+    struct mobj_s  *tracer;
+
     int             turntime;      // $visangle-facetarget
     int             corpsetics;    // $vanish: how long has this been dead?
 } mobj_t;

@@ -209,7 +209,7 @@ int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta)
 }
 
 /*
- * The missile special1 field must be mobj_t *target.  Returns true if
+ * The missile tracer field must be the target.  Returns true if
  * target was tracked, false if not.
  */
 boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
@@ -220,15 +220,15 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     angle_t angle;
     mobj_t *target;
 
-    target = (mobj_t *) actor->special1;
+    target = actor->tracer;
     if(target == NULL)
     {
-        return (false);
+        return false;
     }
     if(!(target->flags & MF_SHOOTABLE))
-    {                           // Target died
-        actor->special1 = 0;
-        return (false);
+    {   // Target died
+        actor->tracer = NULL;
+        return false;
     }
     dir = P_FaceMobj(actor, target, &delta);
     if(delta > thresh)
@@ -240,11 +240,11 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
         }
     }
     if(dir)
-    {                           // Turn clockwise
+    {   // Turn clockwise
         actor->angle += delta;
     }
     else
-    {                           // Turn counter clockwise
+    {   // Turn counter clockwise
         actor->angle -= delta;
     }
     angle = actor->angle >> ANGLETOFINESHIFT;
@@ -262,7 +262,7 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
         }
         actor->momz = (target->pos[VZ] - actor->pos[VZ]) / dist;
     }
-    return (true);
+    return true;
 }
 
 /*

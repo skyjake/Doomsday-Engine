@@ -894,15 +894,15 @@ void C_DECL A_LightningClip(mobj_t *actor)
     if(actor->type == MT_LIGHTNING_FLOOR)
     {
         actor->pos[VZ] = actor->floorz;
-        target = (mobj_t *) ((mobj_t *) actor->special2)->special1;
+        target = ((mobj_t *) actor->special2)->tracer;
     }
     else if(actor->type == MT_LIGHTNING_CEILING)
     {
         actor->pos[VZ] = actor->ceilingz - actor->height;
-        target = (mobj_t *) actor->special1;
+        target = actor->tracer;
     }
     if(actor->type == MT_LIGHTNING_FLOOR)
-    {                           // floor lightning zig-zags, and forces the ceiling lightning to mimic
+    {   // floor lightning zig-zags, and forces the ceiling lightning to mimic
         cMo = (mobj_t *) actor->special2;
         zigZag = P_Random();
         if((zigZag > 128 && actor->special1 < 2) || actor->special1 < -2)
@@ -1001,7 +1001,7 @@ void C_DECL A_MLightningAttack2(mobj_t *actor)
     }
     if(cmo)
     {
-        cmo->special1 = 0;      // mobj that it will track
+        cmo->tracer = NULL;      // mobj that it will track
         cmo->special2 = (int) fmo;
         A_LightningZap(cmo);
     }
@@ -1066,7 +1066,7 @@ void MStaffSpawn(mobj_t *pmo, angle_t angle)
     if(mo)
     {
         mo->target = pmo;
-        mo->special1 = (int) P_RoughMonsterSearch(mo, 10);
+        mo->tracer = P_RoughMonsterSearch(mo, 10);
     }
 }
 
@@ -1136,9 +1136,9 @@ void C_DECL A_MStaffWeave(mobj_t *actor)
 
 void C_DECL A_MStaffTrack(mobj_t *actor)
 {
-    if((actor->special1 == 0) && (P_Random() < 50))
+    if((actor->tracer == 0) && (P_Random() < 50))
     {
-        actor->special1 = (int) P_RoughMonsterSearch(actor, 10);
+        actor->tracer = P_RoughMonsterSearch(actor, 10);
     }
     P_SeekerMissile(actor, ANGLE_1 * 2, ANGLE_1 * 10);
 }
@@ -1154,7 +1154,7 @@ void MStaffSpawn2(mobj_t *actor, angle_t angle)
     if(mo)
     {
         mo->target = actor;
-        mo->special1 = (int) P_RoughMonsterSearch(mo, 10);
+        mo->tracer = P_RoughMonsterSearch(mo, 10);
     }
 }
 
@@ -1587,7 +1587,7 @@ void C_DECL A_CHolyAttack2(mobj_t *actor)
         }
         if(linetarget)
         {
-            mo->special1 = (int) linetarget;
+            mo->tracer = linetarget;
             mo->flags |= MF_NOCLIP | MF_SKULLFLY;
             mo->flags &= ~MF_MISSILE;
         }
@@ -1597,10 +1597,10 @@ void C_DECL A_CHolyAttack2(mobj_t *actor)
         {
             next = P_SpawnMobj(mo->pos[VX], mo->pos[VY], mo->pos[VZ], MT_HOLY_TAIL);
             P_SetMobjState(next, next->info->spawnstate + 1);
-            tail->special1 = (int) next;
+            tail->tracer = next;
             tail = next;
         }
-        tail->special1 = 0;     // last tail bit
+        tail->tracer = NULL;     // last tail bit
     }
 }
 
@@ -1643,7 +1643,7 @@ static void CHolyFindTarget(mobj_t *actor)
     if((target = P_RoughMonsterSearch(actor, 6)))
     {
         Con_Message("CHolyFindTarget: mobj_t* converted to int! Not 64-bit compatible.\n");
-        actor->special1 = (int) target;
+        actor->tracer = target;
         actor->flags |= MF_NOCLIP | MF_SKULLFLY;
         actor->flags &= ~MF_MISSILE;
     }
@@ -1662,7 +1662,7 @@ static void CHolySeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     fixed_t newZ;
     fixed_t deltaZ;
 
-    target = (mobj_t *) actor->special1;
+    target = actor->tracer;
     if(target == NULL)
     {
         return;
@@ -1670,7 +1670,7 @@ static void CHolySeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     if(!(target->flags & MF_SHOOTABLE) ||
        (!(target->flags & MF_COUNTKILL) && !target->player))
     {   // Target died/target isn't a player or creature
-        actor->special1 = 0;
+        actor->tracer = NULL;
         actor->flags &= ~(MF_NOCLIP | MF_SKULLFLY);
         actor->flags |= MF_MISSILE;
         CHolyFindTarget(actor);
@@ -1758,7 +1758,7 @@ void C_DECL A_CHolySeek(mobj_t *actor)
         actor->tics -= P_Random() & 3;
         return;
     }
-    if(actor->special1)
+    if(actor->tracer)
     {
         CHolySeekerMissile(actor, actor->args[0] * ANGLE_1,
                            actor->args[0] * ANGLE_1 * 2);
@@ -1776,7 +1776,7 @@ static void CHolyTailFollow(mobj_t *actor, fixed_t dist)
     int     an;
     fixed_t oldDistance, newDistance;
 
-    child = (mobj_t *) actor->special1;
+    child = actor->tracer;
     if(child)
     {
         an = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
@@ -1817,7 +1817,7 @@ static void CHolyTailRemove(mobj_t *actor)
 {
     mobj_t *child;
 
-    child = (mobj_t *) actor->special1;
+    child = actor->tracer;
     if(child)
     {
         CHolyTailRemove(child);
@@ -1860,7 +1860,7 @@ void C_DECL A_CHolyCheckScream(mobj_t *actor)
     {
         S_StartSound(SFX_SPIRIT_ACTIVE, actor);
     }
-    if(!actor->special1)
+    if(!actor->tracer)
     {
         CHolyFindTarget(actor);
     }

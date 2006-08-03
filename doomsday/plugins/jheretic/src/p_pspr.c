@@ -1478,7 +1478,7 @@ void C_DECL A_FireMacePL2(player_t *player, pspdef_t * psp)
             2 * FRACUNIT + (((int) player->plr->lookdir) << (FRACBITS - 5));
 
         if(linetarget)
-            mo->special1 = (int) linetarget;
+            mo->tracer = linetarget;
     }
 }
 
@@ -1496,31 +1496,31 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
     }
 
     if((ball->pos[VZ] <= ball->floorz) && ball->momz)
-    {                           // Bounce
+    {   // Bounce
         newAngle = false;
-        target = (mobj_t *) ball->special1;
+        target = ball->tracer;
         if(target)
         {
             if(!(target->flags & MF_SHOOTABLE))
-            {                   // Target died
-                ball->special1 = 0;
+            {   // Target died
+                ball->tracer = NULL;
             }
             else
-            {                   // Seek
+            {   // Seek
                 angle = R_PointToAngle2(ball->pos[VX], ball->pos[VY],
                                         target->pos[VX], target->pos[VY]);
                 newAngle = true;
             }
         }
         else
-        {                       // Find new target
+        {   // Find new target
             angle = 0;
             for(i = 0; i < 16; i++)
             {
                 P_AimLineAttack(ball, angle, 10 * 64 * FRACUNIT);
                 if(linetarget && ball->target != linetarget)
                 {
-                    ball->special1 = (int) linetarget;
+                    ball->tracer = linetarget;
                     angle = R_PointToAngle2(ball->pos[VX], ball->pos[VY],
                                             linetarget->pos[VX], linetarget->pos[VY]);
                     newAngle = true;
@@ -1628,8 +1628,7 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t * psp)
 
 /*
  * The special2 field holds the player number that shot the rain missile.
- * The special1 field is used for the seeking routines, then as a counter
- * for the sound looping.
+ * The special1 field is used as a counter for the sound looping.
  */
 void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t * psp)
 {
@@ -1652,7 +1651,7 @@ void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t * psp)
     }
 
     if(linetarget)
-        MissileMobj->special1 = (int) linetarget;
+        MissileMobj->tracer = linetarget;
 
     S_StartSound(sfx_hrnpow, MissileMobj);
 }
@@ -1721,12 +1720,12 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
         P_SetMobjState(actor, S_NULL);
         playerNum = IS_NETGAME ? actor->special2 : 0;
         if(!players[playerNum].plr->ingame)
-        {                       // Player left the game
+        {   // Player left the game
             return;
         }
         player = &players[playerNum];
         if(player->health <= 0)
-        {                       // Player is dead
+        {   // Player is dead
             return;
         }
         if(player->rain1 == actor)
@@ -1740,7 +1739,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
         return;
     }
     if(P_Random() < 25)
-    {                           // Fudge rain frequency
+    {   // Fudge rain frequency
         return;
     }
     x = actor->pos[VX] + ((P_Random() & 127) - 64) * FRACUNIT;

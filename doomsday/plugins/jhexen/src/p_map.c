@@ -464,13 +464,13 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                 if(thing->flags2 & MF2_REFLECTIVE &&
                    (thing->player || thing->flags2 & MF2_BOSS))
                 {
-                    tmthing->special1 = (int) tmthing->target;
+                    tmthing->tracer = tmthing->target;
                     tmthing->target = thing;
                     return true;
                 }
                 if(thing->flags & MF_COUNTKILL || thing->player)
                 {
-                    tmthing->special1 = (int) thing;
+                    tmthing->tracer = thing;
                 }
                 if(P_Random() < 96)
                 {
@@ -501,7 +501,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                 }
                 if(thing->health <= 0)
                 {
-                    tmthing->special1 = 0;
+                    tmthing->tracer = NULL;
                 }
             }
             return true;
@@ -607,14 +607,14 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                 if(tmthing->type == MT_LIGHTNING_FLOOR)
                 {
                     if(tmthing->special2 &&
-                       !((mobj_t *) tmthing->special2)->special1)
+                       !((mobj_t *) tmthing->special2)->tracer)
                     {
-                        ((mobj_t *) tmthing->special2)->special1 = (int) thing;
+                        ((mobj_t *) tmthing->special2)->tracer = thing;
                     }
                 }
-                else if(!tmthing->special1)
+                else if(!tmthing->tracer)
                 {
-                    tmthing->special1 = (int) thing;
+                    tmthing->tracer = thing;
                 }
             }
             return true;        // lightning zaps through all sprites
@@ -631,14 +631,14 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                     if(lmo->type == MT_LIGHTNING_FLOOR)
                     {
                         if(lmo->special2 &&
-                           !((mobj_t *) lmo->special2)->special1)
+                           !((mobj_t *) lmo->special2)->tracer)
                         {
-                            ((mobj_t *) lmo->special2)->special1 = (int) thing;
+                            ((mobj_t *) lmo->special2)->tracer = thing;
                         }
                     }
-                    else if(!lmo->special1)
+                    else if(!lmo->tracer)
                     {
-                        lmo->special1 = (int) thing;
+                        lmo->tracer = thing;
                     }
                     if(!(leveltime & 3))
                     {

@@ -1123,7 +1123,7 @@ mobj_t *ActiveMinotaur(player_t *master)
         starttime = (unsigned int *) mo->args;
         if((leveltime - *starttime) >= MAULATORTICS)
             continue;
-        plr = ((mobj_t *) mo->special1)->player;
+        plr = mo->tracer->player;
         if(plr == master)
             return (mo);
     }
@@ -1370,7 +1370,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 
     if(target->type == MT_MINOTAUR)
     {
-        master = (mobj_t *) target->special1;
+        master = target->tracer;
         if(master && master->health > 0)
         {
             if(!ActiveMinotaur(master->player))
@@ -1536,7 +1536,7 @@ boolean P_MorphMonster(mobj_t *actor)
     // check for turning off minotaur power for active icon
     if(moType == MT_MINOTAUR)
     {
-        master = (mobj_t *) oldMonster.special1;
+        master = oldMonster.tracer;
         if(master->health > 0)
         {
             if(!ActiveMinotaur(master->player))
@@ -1959,8 +1959,8 @@ void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             }
         }
         if(source && (source->type == MT_MINOTAUR))
-        {                       // Minotaur's kills go to his master
-            master = (mobj_t *) (source->special1);
+        {   // Minotaur's kills go to his master
+            master = source->tracer;
             // Make sure still alive and not a pointer to fighter head
             if(master->player && (master->player->plr->mo == master))
             {
