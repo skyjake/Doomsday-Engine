@@ -333,7 +333,7 @@ void DL_ThingColor(lumobj_t * lum, DGLubyte * outRGB, float light)
 
     // If fog is enabled, make the light dimmer.
     // FIXME: This should be a cvar.
-    if(useFog)
+    if(usingFog)
         light *= .5f;           // Would be too much.
 
     if(lum->decorMap)
@@ -658,7 +658,7 @@ void DL_CreateGlowLights(seg_t *seg, int part, float segtop, float segbottom,
 
             // In fog, additive blending is used. The normal fog color
             // is way too bright.
-            if(useFog)
+            if(usingFog)
                 dyn->color[i] *= glowFogBright;
         }
         DL_SegLink(dyn, segindex, part);

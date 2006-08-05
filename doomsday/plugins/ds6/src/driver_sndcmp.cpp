@@ -835,8 +835,8 @@ static LPKSPROPERTYSET          eaxListener = NULL;
 static HRESULT                  hr;
 static DSCAPS                   dsCaps;
 
-static sndsource_t              *sources = 0;
-static int                      numSources = 0;
+static sndsource_t              *sndSources = 0;
+static int                      numSndSources = 0;
 
 /*
 static playstack_t              playstack[MAX_PLAYSTACK];
@@ -947,9 +947,9 @@ static sndsource_t *GetSource(int handle)
 {
     int i;
 
-    for(i=0; i<numSources; i++)
-        if(sources[i].id == handle)
-            return sources + i;
+    for(i=0; i<numSndSources; i++)
+        if(sndSources[i].id == handle)
+            return sndSources + i;
     return NULL;
 }
 
@@ -1190,31 +1190,31 @@ sndsource_t *I2_GetFreeSource(boolean play3d)
     unsigned int    num3D = 0;
     sndsource_t     *suitable = NULL, *oldest = NULL;
 
-    if(numSources) oldest = sources;
+    if(numSndSources) oldest = sndSources;
     // We are not going to have software 3D sounds, of all things.
     // Release stopped sources and count the number of playing 3D sources.
-    for(i=0; i<numSources; i++)
+    for(i=0; i<numSndSources; i++)
     {
-        if(!sources[i].source)
+        if(!sndSources[i].source)
         {
-            if(!suitable) suitable = sources + i;
+            if(!suitable) suitable = sndSources + i;
             continue;
         }
         // See if this is the oldest buffer.
-        if(sources[i].startTime < oldest->startTime)
+        if(sndSources[i].startTime < oldest->startTime)
         {
             // This buffer will be stopped if need be.
-            oldest = sources + i;
+            oldest = sndSources + i;
         }
-        if(I2_IsSourcePlaying(sources + i))
+        if(I2_IsSourcePlaying(sndSources + i))
         {
-            if(sources[i].source3D) num3D++;
+            if(sndSources[i].source3D) num3D++;
         }
         else
         {
-            I2_KillSource(sources + i); // All stopped sources will be killed on sight.
+            I2_KillSource(sndSources + i); // All stopped sources will be killed on sight.
             // This buffer is not playing.
-            if(!suitable) suitable = sources + i;
+            if(!suitable) suitable = sndSources + i;
         }
     }
     if(play3d && num3D >= dsCaps.dwMaxHw3DAllBuffers && oldest)
@@ -1227,11 +1227,11 @@ sndsource_t *I2_GetFreeSource(boolean play3d)
     if(suitable) return suitable;
 
     // Ah well. We need to allocate a new one.
-    sources = realloc(sources, sizeof(sndsource_t) * ++numSources);
+    sndSources = realloc(sndSources, sizeof(sndsource_t) * ++numSndSources);
     // Clear it.
-    memset(sources + numSources-1, 0, sizeof(sndsource_t));
+    memset(sndSources + numSndSources-1, 0, sizeof(sndsource_t));
     // Return a pointer to it.
-    return sources + numSources-1;
+    return sndSources + numSndSources-1;
 }
 
 // Vol is linear, from 0 to 1.
@@ -1456,10 +1456,10 @@ void I2_DestroyAllSources()
 {
     int     i;
 
-    for(i=0; i<numSources; i++) I2_KillSource(sources + i);
-    free(sources);
-    sources = NULL;
-    numSources = 0;
+    for(i=0; i<numSndSources; i++) I2_KillSource(sndSources + i);
+    free(sndSources);
+    sndSources = NULL;
+    numSndSources = 0;
 }
 
 void I_Update2DSound(int handle, int volume, int pan, int pitch)

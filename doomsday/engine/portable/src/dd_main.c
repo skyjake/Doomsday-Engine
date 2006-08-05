@@ -697,8 +697,8 @@ void DD_CheckQuery(int query, int parm)
 
 /* *INDENT-OFF* */
 ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
-    {&screenWidth, 0},
-    {&screenHeight, 0},
+    {&glScreenWidth, 0},
+    {&glScreenHeight, 0},
     {&netgame, 0},
     {&isServer, 0},                         // An *open* server?
     {&isClient, 0},

@@ -9,11 +9,11 @@ SET (BUILDSCRIPTSDATE "$LastChangedDate$")
 ######################## Additional Win32 Path Setup  ##########################
 IF (WIN32)
 ## Cmake NEEDS UNIX style paths ie / not \
-SET(ENV{SDLDIR} "C:/SDK/SDL")
-SET(ENV{OPENALDIR} "C:/SDK/OPENAL")
-SET(ENV{ZLIBDIR} "C:/SDK/ZLIB")
-SET(ENV{LIBPNGDIR} "C:/SDK/LIBPNG")
-SET(ENV{DIRECTXDIR} "C:/SDK/DX9SDK")
+SET(ENV{SDLDIR} "H:/sdk/SDL-1.2.8")
+SET(ENV{OPENALDIR} "H:/sdk/OpenAL 1.1 SDK")
+SET(ENV{ZLIBDIR} "H:/sdk/zlib")
+SET(ENV{LIBPNGDIR} "H:/sdk/libpng")
+SET(ENV{DIRECTXDIR} "H:/sdk/dx8")
 ENDIF (WIN32)
 ################################################################################
 ######################## Configure Build Options  ##############################

@@ -63,7 +63,7 @@ int     joyInverseAxis[8];      // Axis inversion (default: all false).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean initOk = false;
+static boolean initIOk = false;
 
 static HRESULT hr;
 static LPDIRECTINPUT8 dInput;
@@ -345,7 +345,7 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 * dev)
  */
 int I_Init(void)
 {
-    if(initOk)
+    if(initIOk)
         return true;            // Already initialized.
 
     // We'll create the DirectInput object. The only required input device
@@ -425,15 +425,15 @@ int I_Init(void)
     // fails for them.
     I_InitMouse();
     I_InitJoystick();
-    initOk = true;
+    initIOk = true;
     return true;
 }
 
 void I_Shutdown(void)
 {
-    if(!initOk)
+    if(!initIOk)
         return;                 // Not initialized.
-    initOk = false;
+    initIOk = false;
 
     // Release all the input devices.
     I_KillDevice(&didKeyb);
@@ -460,7 +460,7 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
     DIDEVICEOBJECTDATA keyData[KEYBUFSIZE];
     int     tries, i, num;
 
-    if(!initOk)
+    if(!initIOk)
         return 0;
 
     // Try two times to get the data.
@@ -499,7 +499,7 @@ void I_GetMouseState(mousestate_t *state)
     memset(state, 0, sizeof(*state));
 
     // Has the mouse been initialized?
-    if(!didMouse || !initOk)
+    if(!didMouse || !initIOk)
         return;
 
     // Try to get the mouse state.
@@ -538,7 +538,7 @@ void I_GetJoystickState(joystate_t * state)
     memset(state, 0, sizeof(*state));
 
     // Initialization has not been done.
-    if(!didJoy || !usejoystick || !initOk)
+    if(!didJoy || !usejoystick || !initIOk)
         return;
 
     // Some joysticks need to be polled.

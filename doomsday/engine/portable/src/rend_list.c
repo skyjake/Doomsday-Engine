@@ -50,7 +50,7 @@
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
                               defs.count.details.num > 0)
 #define IS_MTEX_DETAILS     (MTEX_DETAILS_ENABLED && numTexUnits > 1)
-#define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !useFog && useMultiTexLights \
+#define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !usingFog && useMultiTexLights \
                              && numTexUnits > 1 && envModAdd)
 
 // Drawing condition flags.
@@ -178,7 +178,7 @@ void    RL_SetupState(listmode_t mode, rendlist_t * list);
 
 extern int skyhemispheres;
 extern int useDynLights, dlBlend, simpleSky;
-extern boolean useFog;
+extern boolean usingFog;
 extern float maxLightDist;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -1975,7 +1975,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_BLENDING);
         gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE);
         // No need for fog.
-        if(useFog)
+        if(usingFog)
             gl.Disable(DGL_FOG);
         break;
 
@@ -1990,7 +1990,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
         // Fog is allowed during this pass.
-        if(useFog)
+        if(usingFog)
             gl.Enable(DGL_FOG);
         // All of the surfaces are opaque.
         gl.Disable(DGL_BLENDING);
@@ -2017,7 +2017,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
         // Fog is allowed during this pass.
-        if(useFog)
+        if(usingFog)
             gl.Enable(DGL_FOG);
         // All of the surfaces are opaque.
         gl.Disable(DGL_BLENDING);
@@ -2033,7 +2033,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LESS, 0);
         // Fog is allowed during this pass.
-        if(useFog)
+        if(usingFog)
             gl.Disable(DGL_FOG);
         // All of the surfaces are opaque.
         gl.Disable(DGL_BLENDING);
@@ -2050,7 +2050,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
         // Fog is allowed during this pass.
-        if(useFog)
+        if(usingFog)
             gl.Disable(DGL_FOG);
         // All of the surfaces are opaque.
         gl.Enable(DGL_BLENDING);
@@ -2112,7 +2112,7 @@ void RL_SetupPassState(listmode_t mode)
         // All of the surfaces are opaque.
         gl.Disable(DGL_BLENDING);
         // Fog is allowed.
-        if(useFog)
+        if(usingFog)
             gl.Enable(DGL_FOG);
         break;
 
@@ -2142,7 +2142,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_BLENDING);
         gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
-        if(useFog)
+        if(usingFog)
             RL_DetailFogState();
         break;
 
@@ -2159,7 +2159,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_BLENDING);
         gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
-        if(useFog)
+        if(usingFog)
             RL_DetailFogState();
         break;
 
@@ -2174,7 +2174,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
         // Set normal fog, if it's enabled.
-        if(useFog)
+        if(usingFog)
         {
             gl.Enable(DGL_FOG);
             gl.Fogv(DGL_FOG_COLOR, fogColor);
@@ -2191,7 +2191,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Disable(DGL_DEPTH_WRITE);
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-        if(useFog)
+        if(usingFog)
         {
             // Fog makes the shininess diminish in the distance.
             gl.Enable(DGL_FOG);
@@ -2214,7 +2214,7 @@ void RL_SetupPassState(listmode_t mode)
         gl.Disable(DGL_DEPTH_WRITE);
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-        if(useFog)
+        if(usingFog)
         {
             // Fog makes the shininess diminish in the distance.
             gl.Enable(DGL_FOG);
@@ -2525,7 +2525,7 @@ void RL_RenderAllLists(void)
     gl.Func(DGL_ALPHA_TEST, DGL_GREATER, 0);
     gl.Enable(DGL_BLENDING);
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-    if(useFog)
+    if(usingFog)
     {
         gl.Enable(DGL_FOG);
         gl.Fogv(DGL_FOG_COLOR, fogColor);

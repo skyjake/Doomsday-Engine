@@ -316,7 +316,7 @@ int     menu_color = 0;
 float   skull_angle = 0;
 
 int     frame;    // used by any graphic animations that need to be pumped
-int     usegamma;
+int     gammaLevel;
 int     MenuTime;
 
 short   itemOn;    // menu item skull is on
@@ -4610,13 +4610,13 @@ DEFCC(CCmdMenuAction)
     {
         char    buf[50];
 
-        usegamma++;
-        if(usegamma > 4)
-            usegamma = 0;
+        gammaLevel++;
+        if(gammaLevel > 4)
+            gammaLevel = 0;
 #ifdef __JDOOM__
-        P_SetMessage(players + consoleplayer, gammamsg[usegamma]);
+        P_SetMessage(players + consoleplayer, gammamsg[gammaLevel]);
 #endif
-        sprintf(buf, "setgamma %i", usegamma);
+        sprintf(buf, "setgamma %i", gammaLevel);
         DD_Execute(buf, false);
     }
 

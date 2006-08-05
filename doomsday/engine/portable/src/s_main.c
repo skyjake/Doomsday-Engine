@@ -454,7 +454,7 @@ void S_Drawer(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     Sfx_DebugInfo();
 

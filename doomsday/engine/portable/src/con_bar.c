@@ -136,22 +136,22 @@ void Con_Progress(int count, int flags)
     gl.PushMatrix();
     gl.LoadIdentity();
     // 1-to-1 mapping for the whole window.
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     // Calculate the size and dimensions of the progress window.
-    w = screenWidth - 30;
+    w = glScreenWidth - 30;
     if(w < 50)
         w = 50;                 // An unusual occurance...
     if(w > maxWidth)
         w = maxWidth;           // Restrict width to the case of 640x480.
-    x = (screenWidth - w) / 2;  // Center on screen.
+    x = (glScreenWidth - w) / 2;  // Center on screen.
     h = 2 * bor + fonthgt + 15 + bar;
-    y = screenHeight - 15 - h;
+    y = glScreenHeight - 15 - h;
 
     /*x = 15;
-       w = screenWidth - 2*x;
+       w = glScreenWidth - 2*x;
        h = 2*bor + fonthgt + 15 + bar;
-       y = screenHeight - 15 - h; */
+       y = glScreenHeight - 15 - h; */
 
     // Draw the (opaque black) shadow.
     UI_GradientEx(x, y, w, h, mainBor, UI_COL(UIC_SHADOW), 0, 1, 1);

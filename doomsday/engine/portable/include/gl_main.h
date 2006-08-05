@@ -61,11 +61,11 @@ const char*     GL_ChooseVariableFont(glfontstyle_t style);
 // deallocated by the caller.
 unsigned char  *GL_GrabScreen(void);
 
-extern int      screenWidth, screenHeight, screenBits;
+extern int      glScreenWidth, glScreenHeight, glScreenbits;
 extern int      numTexUnits;
 extern boolean  envModAdd;
 extern int      defResX, defResY;
-extern float    nearClip, farClip;
+extern float    nearClip, glFarClip;
 extern int      viewph, viewpw, viewpx, viewpy;
 extern int      r_framecounter;
 extern char     hiTexPath[], hiTexPath2[];

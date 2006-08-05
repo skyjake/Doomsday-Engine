@@ -1162,7 +1162,6 @@ void            strcatQuoted(char *dest, char *src);
 extern boolean  modifiedgame;
 
 extern byte     gammatable[5][256];
-extern int      usegamma;
 
 #include "sounds.h"
 #include "soundst.h"

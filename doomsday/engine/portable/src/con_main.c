@@ -554,7 +554,7 @@ void Con_MaxLineLength(void)
         maxLineLen = 70;
         return;
     }
-    maxLineLen = screenWidth / cw - 2;
+    maxLineLen = glScreenWidth / cw - 2;
     if(maxLineLen > 250)
         maxLineLen = 250;
 }
@@ -1973,7 +1973,7 @@ void Con_DrawRuler2(int y, int lineHeight, float alpha, int scrWidth)
 
 void Con_DrawRuler(int y, int lineHeight, float alpha)
 {
-    Con_DrawRuler2(y, lineHeight, alpha, screenWidth);
+    Con_DrawRuler2(y, lineHeight, alpha, glScreenWidth);
 }
 
 /*
@@ -1983,7 +1983,7 @@ void Con_DrawRuler(int y, int lineHeight, float alpha)
 void Con_DrawSideText(const char *text, int line, float alpha)
 {
     char    buf[300];
-    float   gtosMulY = screenHeight / 200.0f;
+    float   gtosMulY = glScreenHeight / 200.0f;
     float   fontScaledY = Cfont.height * Cfont.sizeY;
     float   y = ConsoleY * gtosMulY - fontScaledY * (1 + line);
     int     ssw;
@@ -1994,7 +1994,7 @@ void Con_DrawSideText(const char *text, int line, float alpha)
         alpha *= .75f;
 
         // scaled screen width
-        ssw = (int) (screenWidth / Cfont.sizeX);
+        ssw = (int) (glScreenWidth / Cfont.sizeX);
 
         // Print the version.
         strncpy(buf, text, sizeof(buf));
@@ -2023,7 +2023,7 @@ void Con_Drawer(void)
     int     i, k;               // Line count and buffer cursor.
     float   x, y;
     float   closeFade = 1;
-    float   gtosMulY = screenHeight / 200.0f;
+    float   gtosMulY = glScreenHeight / 200.0f;
     char    buff[256], temp[256];
     float   fontScaledY;
     int     bgX = 64, bgY = 64;
@@ -2054,7 +2054,7 @@ void Con_Drawer(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     BorderNeedRefresh = true;
 
@@ -2078,21 +2078,21 @@ void Con_Drawer(void)
     gl.LoadIdentity();
     gl.Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
     gl.Rotatef(funnyAng * 3, 0, 0, 1);
-    GL_DrawRectTiled(0, (int) ConsoleY * gtosMulY + 4, screenWidth,
-                     -screenHeight - 4, bgX, bgY);
+    GL_DrawRectTiled(0, (int) ConsoleY * gtosMulY + 4, glScreenWidth,
+                     -glScreenHeight - 4, bgX, bgY);
     gl.PopMatrix();
 
     // The border.
-    GL_DrawRect(0, (int) ConsoleY * gtosMulY + 3, screenWidth, 2, 0, 0, 0,
+    GL_DrawRect(0, (int) ConsoleY * gtosMulY + 3, glScreenWidth, 2, 0, 0, 0,
                 closeFade);
 
     // Subtle shadow.
     gl.Begin(DGL_QUADS);
     gl.Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
     gl.Vertex2f(0, (int) ConsoleY * gtosMulY + 5);
-    gl.Vertex2f(screenWidth, (int) ConsoleY * gtosMulY + 5);
+    gl.Vertex2f(glScreenWidth, (int) ConsoleY * gtosMulY + 5);
     gl.Color4f(0, 0, 0, 0);
-    gl.Vertex2f(screenWidth, (int) ConsoleY * gtosMulY + 13);
+    gl.Vertex2f(glScreenWidth, (int) ConsoleY * gtosMulY + 13);
     gl.Vertex2f(0, (int) ConsoleY * gtosMulY + 13);
     gl.End();
 
@@ -2118,14 +2118,14 @@ void Con_Drawer(void)
         {
             // Draw a ruler here, and nothing else.
             Con_DrawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
-                           screenWidth / Cfont.sizeX);
+                           glScreenWidth / Cfont.sizeX);
         }
         else
         {
             memset(buff, 0, sizeof(buff));
             strncpy(buff, line->text, 255);
 
-            x = line->flags & CBLF_CENTER ? (screenWidth / Cfont.sizeX -
+            x = line->flags & CBLF_CENTER ? (glScreenWidth / Cfont.sizeX -
                                              Cfont.Width(buff)) / 2 : 2;
 
             if(Cfont.Filter)

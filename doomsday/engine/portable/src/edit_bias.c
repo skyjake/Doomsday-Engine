@@ -639,7 +639,7 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     float eye[3] = { vx, vz, vy };
     int w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
     int th = FR_TextHeight("a"), h = th * 6 + 16;
-    int x = screenWidth - 10 - w - rightX, y = screenHeight - 10 - h;
+    int x = glScreenWidth - 10 - w - rightX, y = glScreenHeight - 10 - h;
     char buf[80];
     ui_color_t color;
 
@@ -698,7 +698,7 @@ static void SBE_DrawLevelGauge(void)
     static int minLevel = 0, maxLevel = 0;
     sector_t *sector;
     int height = 255;
-    int x = 20, y = screenHeight/2 - height/2;
+    int x = 20, y = glScreenHeight/2 - height/2;
     int off = FR_TextWidth("000");
     int secY, maxY = 0, minY = 0, p;
     char buf[80];
@@ -787,14 +787,14 @@ void SBE_DrawHUD(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     // Overall stats: numSources / MAX (left)
     sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS,
             MAX_BIAS_LIGHTS - numSources);
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
-    y = screenHeight - 10 - h;
+    y = glScreenHeight - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
     UI_TextOutEx(buf, 18, y + h / 2, false, true,
                  UI_COL(UIC_TITLE), alpha);
@@ -859,7 +859,7 @@ static void SBE_DrawIndex(source_t *src)
 {
     char buf[80];
     float eye[3] = { vx, vz, vy };
-    float scale = M_Distance(src->pos, eye)/(screenWidth/2);
+    float scale = M_Distance(src->pos, eye)/(glScreenWidth/2);
 
     if(!editShowIndices)
         return;

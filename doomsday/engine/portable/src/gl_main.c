@@ -85,11 +85,11 @@ int     UpdateState;
 
 // The display mode and the default values.
 // ScreenBits is ignored.
-int     screenWidth = 640, screenHeight = 480, screenBits = 32;
+int     glScreenWidth = 640, glScreenHeight = 480, glScreenBits = 32;
 
 // The default resolution (config file).
 int     defResX = 640, defResY = 480, defBPP = 0;
-int     maxTexSize;
+int     glMaxTexSize;
 int     numTexUnits;
 boolean envModAdd;              // TexEnv: modulate and add is available.
 int     ratioLimit = 0;         // Zero if none.
@@ -100,11 +100,11 @@ int     r_detail = true;        // Render detail textures (if available).
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
 int     glFontFixed, glFontVariable[NUM_GLFS];
 
-float   nearClip, farClip;
+float   glNearClip, glFarClip;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean initOk = false;
+static boolean initGLOk = false;
 static boolean varFontInited = false;
 
 static gramp_t original_gamma_ramp;
@@ -122,7 +122,7 @@ void GL_Register(void)
 
 boolean GL_IsInited(void)
 {
-    return initOk;
+    return initGLOk;
 }
 
 /*
@@ -343,9 +343,9 @@ void GL_SetGamma(void)
 
 const char* GL_ChooseFixedFont()
 {
-    if(screenHeight < 300)
+    if(glScreenHeight < 300)
         return "console11";
-    if(screenHeight > 768)
+    if(glScreenHeight > 768)
         return "console18";
     return "console14";
 }
@@ -354,22 +354,22 @@ const char* GL_ChooseVariableFont(glfontstyle_t style)
 {
     const int SMALL_LIMIT = 500;
     const int MED_LIMIT = 800;
-    
+
     switch(style)
     {
     default:
-        return (screenHeight < SMALL_LIMIT ? "normal12" :
-                screenHeight < MED_LIMIT ? "normal18" :
+        return (glScreenHeight < SMALL_LIMIT ? "normal12" :
+                glScreenHeight < MED_LIMIT ? "normal18" :
                 "normal24");
 
     case GLFS_LIGHT:
-        return (screenHeight < SMALL_LIMIT ? "normallight12" :
-                screenHeight < MED_LIMIT ? "normallight18" :
+        return (glScreenHeight < SMALL_LIMIT ? "normallight12" :
+                glScreenHeight < MED_LIMIT ? "normallight18" :
                 "normallight24");
 
     case GLFS_BOLD:
-        return (screenHeight < SMALL_LIMIT ? "normalbold12" :
-                screenHeight < MED_LIMIT ? "normalbold18" :
+        return (glScreenHeight < SMALL_LIMIT ? "normalbold12" :
+                glScreenHeight < MED_LIMIT ? "normalbold18" :
                 "normalbold24");
     }
     return "normal18";
@@ -379,10 +379,10 @@ void GL_InitFont(void)
 {
     FR_Init();
     FR_PrepareFont(GL_ChooseFixedFont());
-    glFontFixed = 
-        glFontVariable[GLFS_NORMAL] = 
+    glFontFixed =
+        glFontVariable[GLFS_NORMAL] =
         glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
-    
+
     Con_MaxLineLength();
 
     // Also keep the bold and light fonts loaded.
@@ -398,9 +398,9 @@ void GL_InitFont(void)
 void GL_ShutdownFont(void)
 {
     FR_Shutdown();
-    glFontFixed = 
-        glFontVariable[GLFS_NORMAL] = 
-        glFontVariable[GLFS_BOLD] = 
+    glFontFixed =
+        glFontVariable[GLFS_NORMAL] =
+        glFontVariable[GLFS_BOLD] =
         glFontVariable[GLFS_LIGHT] = 0;
 }
 
@@ -421,7 +421,7 @@ void GL_InitVarFont(void)
     {
         // The bold font and light fonts are always loaded.
         if(i == GLFS_BOLD || i == GLFS_LIGHT) continue;
-        
+
         FR_PrepareFont(GL_ChooseVariableFont(i));
         glFontVariable[i] = FR_GetCurrent();
         VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n", glFontVariable[i]));
@@ -436,7 +436,7 @@ void GL_InitVarFont(void)
 void GL_ShutdownVarFont(void)
 {
     int i;
-    
+
     if(novideo || !varFontInited)
         return;
     FR_SetFont(glFontFixed);
@@ -456,7 +456,7 @@ void GL_ShutdownVarFont(void)
  */
 void GL_Init(void)
 {
-    if(initOk)
+    if(initGLOk)
         return;                 // Already initialized.
     if(novideo)
         return;
@@ -467,24 +467,24 @@ void GL_Init(void)
     GL_GetGammaRamp(original_gamma_ramp);
 
     // By default, use the resolution defined in (default).cfg.
-    screenWidth = defResX;
-    screenHeight = defResY;
-    screenBits = defBPP;
+    glScreenWidth = defResX;
+    glScreenHeight = defResY;
+    glScreenBits = defBPP;
 
     // Check for command line options modifying the defaults.
     if(ArgCheckWith("-width", 1))
-        screenWidth = atoi(ArgNext());
+        glScreenWidth = atoi(ArgNext());
     if(ArgCheckWith("-height", 1))
-        screenHeight = atoi(ArgNext());
+        glScreenHeight = atoi(ArgNext());
     if(ArgCheckWith("-winsize", 2))
     {
-        screenWidth = atoi(ArgNext());
-        screenHeight = atoi(ArgNext());
+        glScreenWidth = atoi(ArgNext());
+        glScreenHeight = atoi(ArgNext());
     }
     if(ArgCheckWith("-bpp", 1))
-        screenBits = atoi(ArgNext());
+        glScreenBits = atoi(ArgNext());
 
-    gl.Init(screenWidth, screenHeight, screenBits, !ArgExists("-window"));
+    gl.Init(glScreenWidth, glScreenHeight, glScreenBits, !ArgExists("-window"));
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
@@ -497,12 +497,12 @@ void GL_Init(void)
     GL_SetGamma();
 
     // Check the maximum texture size.
-    gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &maxTexSize);
-    if(maxTexSize == 256)
+    gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &glMaxTexSize);
+    if(glMaxTexSize == 256)
     {
         Con_Message("  Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
-        if(screenBits == 32)
+        if(glScreenBits == 32)
         {
             Con_Message("  Warning: Are you sure your video card accelerates"
                         " a 32 bit mode?\n");
@@ -513,11 +513,11 @@ void GL_Init(void)
     {
         int     customSize = CeilPow2(strtol(ArgNext(), 0, 0));
 
-        if(maxTexSize < customSize)
-            customSize = maxTexSize;
-        maxTexSize = customSize;
-        Con_Message("  Using maximum texture size of %i x %i.\n", maxTexSize,
-                    maxTexSize);
+        if(glMaxTexSize < customSize)
+            customSize = glMaxTexSize;
+        glMaxTexSize = customSize;
+        Con_Message("  Using maximum texture size of %i x %i.\n", glMaxTexSize,
+                    glMaxTexSize);
     }
     if(ArgCheck("-outlines"))
     {
@@ -539,7 +539,7 @@ void GL_Init(void)
         Con_Printf("  Multitexturing not available.\n");
     }
 
-    initOk = true;
+    initGLOk = true;
 }
 
 /*
@@ -566,7 +566,7 @@ void GL_ShutdownRefresh(void)
  */
 void GL_Shutdown(void)
 {
-    if(!initOk)
+    if(!initGLOk)
         return;                 // Not yet initialized fully.
 
     GL_ShutdownFont();
@@ -583,7 +583,7 @@ void GL_Shutdown(void)
         GL_SetGammaRamp(original_gamma_ramp);
     }
 
-    initOk = false;
+    initGLOk = false;
 }
 
 /*
@@ -592,8 +592,8 @@ void GL_Shutdown(void)
 void GL_Init2DState(void)
 {
     // The variables.
-    nearClip = 5;
-    farClip = 16500;
+    glNearClip = 5;
+    glFarClip = 16500;
 
     // Here we configure the OpenGL state and set the projection matrix.
     gl.Disable(DGL_CULL_FACE);
@@ -606,7 +606,7 @@ void GL_Init2DState(void)
     gl.Ortho(0, 0, 320, 200, -1, 1);
 
     // Default state for the white fog is off.
-    useFog = false;
+    usingFog = false;
     gl.Disable(DGL_FOG);
     gl.Fog(DGL_FOG_MODE, (fogModeDefault == 0 ? DGL_LINEAR :
                           fogModeDefault == 1 ? DGL_EXP :
@@ -634,19 +634,19 @@ void GL_SwitchTo3DState(boolean push_state)
     gl.Enable(DGL_CULL_FACE);
     gl.Enable(DGL_DEPTH_TEST);
 
-    viewpx = viewwindowx * screenWidth / 320, viewpy =
-        viewwindowy * screenHeight / 200;
+    viewpx = viewwindowx * glScreenWidth / 320, viewpy =
+        viewwindowy * glScreenHeight / 200;
     // Set the viewport.
     if(viewheight != SCREENHEIGHT)
     {
-        viewpw = viewwidth * screenWidth / 320;
-        viewph = viewheight * screenHeight / 200 + 1;
+        viewpw = viewwidth * glScreenWidth / 320;
+        viewph = viewheight * glScreenHeight / 200 + 1;
         gl.Viewport(viewpx, viewpy, viewpw, viewph);
     }
     else
     {
-        viewpw = screenWidth;
-        viewph = screenHeight;
+        viewpw = glScreenWidth;
+        viewph = glScreenHeight;
     }
 
     // The 3D projection matrix.
@@ -672,7 +672,7 @@ void GL_Restore2DState(int step)
 
     case 2:
         // After Restore Step 2 nothing special happens.
-        gl.Viewport(0, 0, screenWidth, screenHeight);
+        gl.Viewport(0, 0, glScreenWidth, glScreenHeight);
         break;
 
     case 3:
@@ -694,7 +694,7 @@ void GL_ProjectionMatrix(void)
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.LoadIdentity();
-    gl.Perspective(yfov = fieldOfView / aspect, aspect, nearClip, farClip);
+    gl.Perspective(yfov = fieldOfView / aspect, aspect, glNearClip, glFarClip);
 
     // We'd like to have a left-handed coordinate system.
     gl.Scalef(1, 1, -1);
@@ -702,16 +702,16 @@ void GL_ProjectionMatrix(void)
 
 void GL_UseFog(int yes)
 {
-    if(!useFog && yes)
+    if(!usingFog && yes)
     {
         // Fog is turned on.
-        useFog = true;
+        usingFog = true;
         gl.Enable(DGL_FOG);
     }
-    else if(useFog && !yes)
+    else if(usingFog && !yes)
     {
         // Fog must be turned off.
-        useFog = false;
+        usingFog = false;
         gl.Disable(DGL_FOG);
     }
     // Otherwise we won't do a thing.
@@ -735,7 +735,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 
     if(doShutdown)
     {
-        hadFog = useFog;
+        hadFog = usingFog;
         wasStartup = startupScreen;
 
         // Remember the name of the font.
@@ -785,16 +785,16 @@ int GL_ChangeResolution(int w, int h, int bits)
 {
     if(novideo)
         return false;
-    if(screenWidth == w && screenHeight == h && (!bits || screenBits == bits))
+    if(glScreenWidth == w && glScreenHeight == h && (!bits || glScreenBits == bits))
         return true;
 
     // Shut everything down, but remember our settings.
     GL_TotalReset(true, 0, 0);
     gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-    screenWidth = w;
-    screenHeight = h;
-    screenBits = bits;
+    glScreenWidth = w;
+    glScreenHeight = h;
+    glScreenBits = bits;
 
     // Shutdown and re-initialize DGL.
     gl.Shutdown();
@@ -804,9 +804,9 @@ int GL_ChangeResolution(int w, int h, int bits)
     GL_TotalReset(false, true, true);
     gx.UpdateState(DD_RENDER_RESTART_POST);
 
-    Con_Message("Display mode: %i x %i", screenWidth, screenHeight);
-    if(screenBits)
-        Con_Message(" x %i", screenBits);
+    Con_Message("Display mode: %i x %i", glScreenWidth, glScreenHeight);
+    if(glScreenBits)
+        Con_Message(" x %i", glScreenBits);
     Con_Message(".\n");
     return true;
 }
@@ -818,9 +818,9 @@ int GL_ChangeResolution(int w, int h, int bits)
  */
 unsigned char *GL_GrabScreen(void)
 {
-    unsigned char *buffer = malloc(screenWidth * screenHeight * 3);
+    unsigned char *buffer = malloc(glScreenWidth * glScreenHeight * 3);
 
-    gl.Grab(0, 0, screenWidth, screenHeight, DGL_RGB, buffer);
+    gl.Grab(0, 0, glScreenWidth, glScreenHeight, DGL_RGB, buffer);
     return buffer;
 }
 

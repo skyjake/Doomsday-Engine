@@ -92,7 +92,7 @@ void    GL_DeleteDetailTexture(detailtex_t * dtex);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int maxTexSize;          // Maximum supported texture size.
+extern int glMaxTexSize;          // Maximum supported texture size.
 extern int ratioLimit;
 extern boolean palettedTextureExtAvailable;
 extern boolean s3tcAvailable;
@@ -1187,14 +1187,14 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
         *optHeight = CeilPow2(height);
 
         // MaxTexSize may prevent using noStretch.
-        if(*optWidth > maxTexSize)
+        if(*optWidth > glMaxTexSize)
         {
-            *optWidth = maxTexSize;
+            *optWidth = glMaxTexSize;
             noStretch = false;
         }
-        if(*optHeight > maxTexSize)
+        if(*optHeight > glMaxTexSize)
         {
-            *optHeight = maxTexSize;
+            *optHeight = glMaxTexSize;
             noStretch = false;
         }
     }
@@ -1228,10 +1228,10 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
 
     // Hardware limitations may force us to modify the preferred
     // texture size.
-    if(*optWidth > maxTexSize)
-        *optWidth = maxTexSize;
-    if(*optHeight > maxTexSize)
-        *optHeight = maxTexSize;
+    if(*optWidth > glMaxTexSize)
+        *optWidth = glMaxTexSize;
+    if(*optHeight > glMaxTexSize)
+        *optHeight = glMaxTexSize;
     if(ratioLimit)
     {
         if(*optWidth > *optHeight)  // Wide texture.
@@ -2173,10 +2173,10 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
        GL_LoadImage(&image, fileName, false))
     {
         // Too big for us?
-        if(image.width > maxTexSize || image.height > maxTexSize)
+        if(image.width > glMaxTexSize || image.height > glMaxTexSize)
         {
-            int     newWidth = MIN_OF(image.width, maxTexSize);
-            int     newHeight = MIN_OF(image.height, maxTexSize);
+            int     newWidth = MIN_OF(image.width, glMaxTexSize);
+            int     newHeight = MIN_OF(image.height, glMaxTexSize);
             byte   *temp = M_Malloc(newWidth * newHeight * image.pixelSize);
 
             GL_ScaleBuffer32(image.pixels, image.width, image.height, temp,
@@ -3026,13 +3026,13 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 /*
  * Calculates texture coordinates based on the given dimensions. The
  * coordinates are calculated as width/CeilPow2(width), or 1 if the
- * CeilPow2 would go over maxTexSize.
+ * CeilPow2 would go over glMaxTexSize.
  */
 void GL_SetTexCoords(float *tc, int wid, int hgt)
 {
     int     pw = CeilPow2(wid), ph = CeilPow2(hgt);
 
-    if(pw > maxTexSize || ph > maxTexSize)
+    if(pw > glMaxTexSize || ph > glMaxTexSize)
         tc[VX] = tc[VY] = 1;
     else
     {
@@ -3456,21 +3456,21 @@ void GL_PrepareLumpPatch(int lump)
     // This is done to conserve the quality of wide textures
     // (like the status bar) on video cards that have a pitifully
     // small maximum texture size. ;-)
-    if(SHORT(patch->width) > maxTexSize)
+    if(SHORT(patch->width) > glMaxTexSize)
     {
-        // The width of the first part is maxTexSize.
-        int     part2width = SHORT(patch->width) - maxTexSize;
+        // The width of the first part is glMaxTexSize.
+        int     part2width = SHORT(patch->width) - glMaxTexSize;
         byte   *tempbuff =
-            M_Malloc(2 * MAX_OF(maxTexSize, part2width) *
+            M_Malloc(2 * MAX_OF(glMaxTexSize, part2width) *
                      SHORT(patch->height));
 
         // We'll use a temporary buffer for doing to splitting.
         // First, part one.
         pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
-               maxTexSize, SHORT(patch->height), alphaChannel,
-               0, 0, 0, 0, maxTexSize, SHORT(patch->height));
+               glMaxTexSize, SHORT(patch->height), alphaChannel,
+               0, 0, 0, 0, glMaxTexSize, SHORT(patch->height));
         lumptexinfo[lump].tex[0] =
-            GL_UploadTexture(tempbuff, maxTexSize, SHORT(patch->height),
+            GL_UploadTexture(tempbuff, glMaxTexSize, SHORT(patch->height),
                              alphaChannel, false, false, false);
 
         gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
@@ -3480,7 +3480,7 @@ void GL_PrepareLumpPatch(int lump)
 
         // Then part two.
         pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
-               part2width, SHORT(patch->height), alphaChannel, maxTexSize,
+               part2width, SHORT(patch->height), alphaChannel, glMaxTexSize,
                0, 0, 0, part2width, SHORT(patch->height));
         lumptexinfo[lump].tex[1] =
             GL_UploadTexture(tempbuff, part2width, SHORT(patch->height),
@@ -3493,8 +3493,8 @@ void GL_PrepareLumpPatch(int lump)
 
         GL_BindTexture(lumptexinfo[lump].tex[0]);
 
-        lumptexinfo[lump].width[0] = maxTexSize;
-        lumptexinfo[lump].width[1] = SHORT(patch->width) - maxTexSize;
+        lumptexinfo[lump].width[0] = glMaxTexSize;
+        lumptexinfo[lump].width[1] = SHORT(patch->width) - glMaxTexSize;
 
         M_Free(tempbuff);
     }

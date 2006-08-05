@@ -25,7 +25,7 @@
 #include "r_data.h"
 
 // Multiplicative blending for dynamic lights?
-#define IS_MUL  (!dlBlend && !useFog)
+#define IS_MUL  (!dlBlend && !usingFog)
 
 // PrepareFlat directions.
 #define RLPF_NORMAL     0

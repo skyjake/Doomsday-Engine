@@ -72,26 +72,28 @@ extern fixed_t mapgravity;
 // If set to true, P_CheckPosition will skip the mobj hit test.
 boolean dontHitMobjs = false;
 
-fixed_t tmfloorz;
-fixed_t tmceilingz;
-fixed_t tmdropoffz;
+fixed_t tmpFloorZ;
+fixed_t tmpCeilingZ;
 
 // When a mobj is contacted in PIT_CheckThing, this pointer is set.
 // It's reset to NULL in the beginning of P_CheckPosition.
 mobj_t *blockingMobj;
 
-// Slide variables.
-fixed_t bestslidefrac;
-fixed_t secondslidefrac;
-line_t *bestslideline;
-line_t *secondslideline;
-mobj_t *slidemo;
-fixed_t tmxmove;
-fixed_t tmymove;
-
-boolean nofit;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// Slide variables.
+static fixed_t bestSlideFrac;
+static fixed_t secondSlideFrac;
+static line_t *bestSlideLine;
+static line_t *secondSlideLine;
+
+static mobj_t *slideMo;
+
+static boolean noFit;
+
+static fixed_t tmpDropOffZ;
+static fixed_t tmpXMove;
+static fixed_t tmpYMove;
 
 // CODE --------------------------------------------------------------------
 
@@ -129,7 +131,7 @@ void P_SetState(mobj_t *mobj, int statenum)
 }
 
 /*
- * Adjusts tmfloorz and tmceilingz as lines are contacted.
+ * Adjusts tmpFloorZ and tmpCeilingZ as lines are contacted.
  */
 static boolean PIT_CheckLine(line_t *ld, void *parm)
 {
@@ -330,9 +332,9 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
             }
 
   checkpos_done:
-    tmceilingz = data.ceilingz;
-    tmfloorz = data.floorz;
-    tmdropoffz = data.dropoffz;
+    tmpCeilingZ = data.ceilingz;
+    tmpFloorZ = data.floorz;
+    tmpDropOffZ = data.dropoffz;
     return result;
 }
 
@@ -376,22 +378,22 @@ boolean P_TryMoveXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
         }
 
         // Does it fit between contacted ceiling and floor?
-        if(tmceilingz - tmfloorz < thing->height)
+        if(tmpCeilingZ - tmpFloorZ < thing->height)
             return false;
 
-        if(tmceilingz - z < thing->height)
+        if(tmpCeilingZ - z < thing->height)
             return false;       // mobj must lower itself to fit
 
         if(thing->dplayer)
         {
             // Players are allowed a stepup.
-            if(tmfloorz - z > 24 * FRACUNIT)
+            if(tmpFloorZ - z > 24 * FRACUNIT)
                 return false;   // too big a step up
         }
         else
         {
             // Normals mobjs are not...
-            if(tmfloorz > z)
+            if(tmpFloorZ > z)
                 return false;   // below the floor
         }
     }
@@ -403,8 +405,8 @@ boolean P_TryMoveXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
         links |= DDLINK_BLOCKMAP;
     P_UnlinkThing(thing);
 
-    thing->floorz = tmfloorz;
-    thing->ceilingz = tmceilingz;
+    thing->floorz = tmpFloorZ;
+    thing->ceilingz = tmpCeilingZ;
     thing->pos[VX] = x;
     thing->pos[VY] = y;
     thing->pos[VZ] = z;
@@ -495,8 +497,8 @@ static boolean P_HeightClip(mobj_t *thing)
     onfloor = (thing->pos[VZ] <= thing->floorz);
 
     P_CheckPosXYZ(thing, thing->pos[VX], thing->pos[VY], thing->pos[VZ]);
-    thing->floorz = tmfloorz;
-    thing->ceilingz = tmceilingz;
+    thing->floorz = tmpFloorZ;
+    thing->ceilingz = tmpCeilingZ;
 
     if(onfloor)
     {
@@ -566,22 +568,22 @@ static void P_WallMomSlide(line_t *ld)
     // First check the simple cases.
     if(ld->slopetype == ST_HORIZONTAL)
     {
-        tmymove = 0;
+        tmpYMove = 0;
         return;
     }
     if(ld->slopetype == ST_VERTICAL)
     {
-        tmxmove = 0;
+        tmpXMove = 0;
         return;
     }
 
-    side = P_PointOnLineSide(slidemo->pos[VX], slidemo->pos[VY], ld);
+    side = P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], ld);
     lineangle = R_PointToAngle2(0, 0, ld->dx, ld->dy);
 
     if(side == 1)
         lineangle += ANG180;
 
-    moveangle = R_PointToAngle2(0, 0, tmxmove, tmymove);
+    moveangle = R_PointToAngle2(0, 0, tmpXMove, tmpYMove);
     deltaangle = moveangle - lineangle;
 
     if(deltaangle > ANG180)
@@ -590,11 +592,11 @@ static void P_WallMomSlide(line_t *ld)
     lineangle >>= ANGLETOFINESHIFT;
     deltaangle >>= ANGLETOFINESHIFT;
 
-    movelen = P_ApproxDistance(tmxmove, tmymove);
+    movelen = P_ApproxDistance(tmpXMove, tmpYMove);
     newlen = FixedMul(movelen, finecosine[deltaangle]);
 
-    tmxmove = FixedMul(newlen, finecosine[lineangle]);
-    tmymove = FixedMul(newlen, finesine[lineangle]);
+    tmpXMove = FixedMul(newlen, finecosine[lineangle]);
+    tmpYMove = FixedMul(newlen, finesine[lineangle]);
 }
 
 static boolean PTR_SlideTraverse(intercept_t * in)
@@ -608,7 +610,7 @@ static boolean PTR_SlideTraverse(intercept_t * in)
 
     if(!(li->flags & ML_TWOSIDED))
     {
-        if(P_PointOnLineSide(slidemo->pos[VX], slidemo->pos[VY], li))
+        if(P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], li))
         {
             // don't hit the back side
             return true;
@@ -619,13 +621,13 @@ static boolean PTR_SlideTraverse(intercept_t * in)
     // set openrange, opentop, openbottom
     P_LineOpening(li);
 
-    if(openrange < slidemo->height)
+    if(openrange < slideMo->height)
         goto isblocking;        // doesn't fit
 
-    if(opentop - slidemo->pos[VZ] < slidemo->height)
+    if(opentop - slideMo->pos[VZ] < slideMo->height)
         goto isblocking;        // mobj is too high
 
-    if(openbottom - slidemo->pos[VZ] > 24 * FRACUNIT)
+    if(openbottom - slideMo->pos[VZ] > 24 * FRACUNIT)
         goto isblocking;        // too big a step up
 
     // this line doesn't block movement
@@ -634,12 +636,12 @@ static boolean PTR_SlideTraverse(intercept_t * in)
     // the line does block movement,
     // see if it is closer than best so far
   isblocking:
-    if(in->frac < bestslidefrac)
+    if(in->frac < bestSlideFrac)
     {
-        secondslidefrac = bestslidefrac;
-        secondslideline = bestslideline;
-        bestslidefrac = in->frac;
-        bestslideline = li;
+        secondSlideFrac = bestSlideFrac;
+        secondSlideLine = bestSlideLine;
+        bestSlideFrac = in->frac;
+        bestSlideLine = li;
     }
     return false;               // stop
 }
@@ -660,7 +662,7 @@ static void P_ThingSlidingMove(mobj_t *mo)
     fixed_t newy;
     int     hitcount;
 
-    slidemo = mo;
+    slideMo = mo;
     hitcount = 0;
 
   retry:
@@ -690,7 +692,7 @@ static void P_ThingSlidingMove(mobj_t *mo)
         traily = mo->pos[VY] + mo->radius;
     }
 
-    bestslidefrac = FRACUNIT + 1;
+    bestSlideFrac = FRACUNIT + 1;
 
     P_PathTraverse(leadx, leady, leadx + mo->momx, leady + mo->momy,
                    PT_ADDLINES, PTR_SlideTraverse);
@@ -700,7 +702,7 @@ static void P_ThingSlidingMove(mobj_t *mo)
                    PT_ADDLINES, PTR_SlideTraverse);
 
     // Move up to the wall.
-    if(bestslidefrac == FRACUNIT + 1)
+    if(bestSlideFrac == FRACUNIT + 1)
     {
         // The move most have hit the middle, so stairstep.
       stairstep:
@@ -710,34 +712,34 @@ static void P_ThingSlidingMove(mobj_t *mo)
     }
 
     // Fudge a bit to make sure it doesn't hit.
-    bestslidefrac -= 0x800;
-    if(bestslidefrac > 0)
+    bestSlideFrac -= 0x800;
+    if(bestSlideFrac > 0)
     {
-        newx = FixedMul(mo->momx, bestslidefrac);
-        newy = FixedMul(mo->momy, bestslidefrac);
+        newx = FixedMul(mo->momx, bestSlideFrac);
+        newy = FixedMul(mo->momy, bestSlideFrac);
         if(!P_TryMoveXYZ(mo, mo->pos[VX] + newx, mo->pos[VY] + newy, mo->pos[VZ]))
             goto stairstep;
     }
 
     // Now continue along the wall.
     // First calculate remainder.
-    bestslidefrac = FRACUNIT - (bestslidefrac + 0x800);
+    bestSlideFrac = FRACUNIT - (bestSlideFrac + 0x800);
 
-    if(bestslidefrac > FRACUNIT)
-        bestslidefrac = FRACUNIT;
+    if(bestSlideFrac > FRACUNIT)
+        bestSlideFrac = FRACUNIT;
 
-    if(bestslidefrac <= 0)
+    if(bestSlideFrac <= 0)
         return;
 
-    tmxmove = FixedMul(mo->momx, bestslidefrac);
-    tmymove = FixedMul(mo->momy, bestslidefrac);
+    tmpXMove = FixedMul(mo->momx, bestSlideFrac);
+    tmpYMove = FixedMul(mo->momy, bestSlideFrac);
 
-    P_WallMomSlide(bestslideline);  // clip the moves
+    P_WallMomSlide(bestSlideLine);  // clip the moves
 
-    mo->momx = tmxmove;
-    mo->momy = tmymove;
+    mo->momx = tmpXMove;
+    mo->momy = tmpYMove;
 
-    if(!P_TryMoveXYZ(mo, mo->pos[VX] + tmxmove, mo->pos[VY] + tmymove, mo->pos[VZ]))
+    if(!P_TryMoveXYZ(mo, mo->pos[VX] + tmpXMove, mo->pos[VY] + tmpYMove, mo->pos[VZ]))
     {
         goto retry;
     }
@@ -754,7 +756,7 @@ static boolean PIT_SectorPlanesChanged(mobj_t *thing, void *data)
     // Always keep checking.
     if(P_HeightClip(thing))
         return true;
-    nofit = true;
+    noFit = true;
     return true;
 }
 
@@ -764,13 +766,13 @@ static boolean PIT_SectorPlanesChanged(mobj_t *thing, void *data)
  */
 boolean P_SectorPlanesChanged(sector_t *sector)
 {
-    nofit = false;
+    noFit = false;
 
     // We'll use validcount to make sure things are only checked once.
     validcount++;
     P_SectorTouchingThingsIterator(sector, PIT_SectorPlanesChanged, 0);
 
-    return nofit;
+    return noFit;
 }
 
 void P_ThingMovement(mobj_t *mo)

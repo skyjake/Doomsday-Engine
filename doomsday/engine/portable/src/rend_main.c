@@ -62,7 +62,7 @@ extern int devNoCulling;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean useFog = false;         // Is the fog in use?
+boolean usingFog = false;         // Is the fog in use?
 byte    fogColor[4];
 float   fieldOfView = 95.0f;
 float   maxLightDist = 1024;
@@ -456,7 +456,7 @@ static void Rend_PolyTexBlend(int texture, boolean isFlat, rendpoly_t *poly)
     // may occur if the rendering passes don't match for blended and
     // unblended surfaces.
     if(!xlat || !smoothTexAnim || numTexUnits < 2 ||
-       xlat->current == xlat->next || (!useFog && xlat->inter < 0))
+       xlat->current == xlat->next || (!usingFog && xlat->inter < 0))
     {
         // No blending for you, my friend.
         memset(&poly->intertex, 0, sizeof(poly->intertex));
@@ -2057,7 +2057,7 @@ void R_DrawLightRange(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     gl.Translatef(BORDER, BORDER + BORDER, 0);
 
@@ -2272,7 +2272,7 @@ static void Rend_RenderBoundingBoxes(void)
             pos[VX] = FIX2FLT(mo->pos[VX]);
             pos[VY] = FIX2FLT(mo->pos[VY]);
             pos[VZ] = FIX2FLT(mo->pos[VZ]);
-            alpha = 1 - ((M_Distance(pos, eye)/(screenWidth/2))/4);
+            alpha = 1 - ((M_Distance(pos, eye)/(glScreenWidth/2))/4);
 
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.

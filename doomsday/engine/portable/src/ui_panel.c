@@ -42,7 +42,7 @@
 #define CPID_SET_RES    UIF_ID2
 #define CPID_RES_LIST   UIF_ID3
 #define CPG_VIDEO       2
-#define HELP_OFFSET     (screenWidth*290/1000)
+#define HELP_OFFSET     (glScreenWidth*290/1000)
 
 // TYPES -------------------------------------------------------------------
 
@@ -783,7 +783,7 @@ void CP_ResolutionInfo(ui_object_t *ob)
     if(!strcmp(ob->text, "default"))
         sprintf(buf, "%i x %i", defResX, defResY);
     else
-        sprintf(buf, "Current resolution: %i x %i", screenWidth, screenHeight);
+        sprintf(buf, "Current resolution: %i x %i", glScreenWidth, glScreenHeight);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_COL(UIC_TEXT),
                  1);
@@ -794,7 +794,7 @@ void CP_UpdateSetResButton(int w, int h)
     ui_object_t *ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
 
     sprintf(ob->text, "Change To %i x %i", w, h);
-    if(w == screenWidth && h == screenHeight)
+    if(w == glScreenWidth && h == glScreenHeight)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -864,7 +864,7 @@ ui_object_t *CP_FindHover(void)
             continue;
 
         // Extend the detection area to the right edge of the screen.
-        if(UI_MouseInsideBox(ob->x, ob->y, screenWidth, ob->h))
+        if(UI_MouseInsideBox(ob->x, ob->y, glScreenWidth, ob->h))
             return ob;
     }
     return NULL;
@@ -961,7 +961,7 @@ void CP_Drawer(ui_page_t * page)
 
     // Project home.
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx(homeURL, screenWidth - UI_BORDER - FR_TextWidth(homeURL),
+    UI_TextOutEx(homeURL, glScreenWidth - UI_BORDER - FR_TextWidth(homeURL),
         UI_ScreenY(25), false, true, UI_COL(UIC_TEXT), 0.4f);
 
     // Is the help box visible?
@@ -1130,7 +1130,7 @@ D_CMD(OpenPanel)
     // Update width the current resolution.
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
     list = ob->data;
-    list->selection = UI_ListFindItem(ob, RES(screenWidth, screenHeight));
+    list->selection = UI_ListFindItem(ob, RES(glScreenWidth, glScreenHeight));
     if(list->selection == -1)
         // Then use a reasonable default.
         list->selection = UI_ListFindItem(ob, RES(640, 480));

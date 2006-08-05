@@ -74,7 +74,7 @@ void Rend_Draw3DPlayerSprites(void)
     gl.Clear(DGL_DEPTH_BUFFER_BIT);
 
     // Turn off fog.
-    if(useFog)
+    if(usingFog)
         gl.Disable(DGL_FOG);
 
     for(i = 0; i < DDMAXPSPRITES; i++)
@@ -85,7 +85,7 @@ void Rend_Draw3DPlayerSprites(void)
     }
 
     // Should we turn the fog back on?
-    if(useFog)
+    if(usingFog)
         gl.Enable(DGL_FOG);
 }
 

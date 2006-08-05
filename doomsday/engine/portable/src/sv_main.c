@@ -1012,8 +1012,8 @@ void Sv_ClientCoords(int playerNum)
         mo->pos[VY] = cly;
         mo->pos[VZ] = clz;
         P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-        mo->floorz = tmfloorz;
-        mo->ceilingz = tmceilingz;
+        mo->floorz = tmpFloorZ;
+        mo->ceilingz = tmpCeilingZ;
         if(onFloor)
         {
             mo->pos[VZ] = mo->floorz;

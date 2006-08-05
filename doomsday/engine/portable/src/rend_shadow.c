@@ -112,7 +112,7 @@ void Rend_ProcessThingShadow(mobj_t *mo)
     halfmoh = moh / 2;
     if(height > halfmoh)
         color *= 1 - (height - halfmoh) / (moh - halfmoh);
-    if(useFog)
+    if(usingFog)
         color /= 2;
     if(distance > 3 * shadowMaxDist / 4)
     {

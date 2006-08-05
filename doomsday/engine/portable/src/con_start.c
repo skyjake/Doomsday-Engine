@@ -79,7 +79,7 @@ void Con_StartupInit(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     if(firstTime)
     {
@@ -147,13 +147,13 @@ void Con_DrawStartupBackground(float alpha)
     gl.TexCoord2f(0, 0);
     gl.Vertex2f(0, 0);
     gl.TexCoord2f(1, 0);
-    gl.Vertex2f(screenWidth, 0);
+    gl.Vertex2f(glScreenWidth, 0);
     // Bottom color.
     gl.Color4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
     gl.TexCoord2f(1, 1);
-    gl.Vertex2f(screenWidth, screenHeight);
+    gl.Vertex2f(glScreenWidth, glScreenHeight);
     gl.TexCoord2f(0, 1);
-    gl.Vertex2f(0, screenHeight);
+    gl.Vertex2f(0, glScreenHeight);
     gl.End();
     gl.Enable(DGL_BLENDING);
 }
@@ -186,7 +186,7 @@ int Con_DrawTitle(float alpha)
     {
         width = FR_TextWidth(statusText);
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(statusText, screenWidth - UI_BORDER - width, height / 2,
+        UI_TextOutEx(statusText, glScreenWidth - UI_BORDER - width, height / 2,
                      false, true, UI_COL(UIC_TEXT), .75f * alpha);
     }
 
@@ -211,7 +211,7 @@ void Con_DrawStartupScreen(int show)
 
     //gl.MatrixMode(DGL_PROJECTION);
     //gl.LoadIdentity();
-    //gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    //gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     Con_DrawStartupBackground(1.0);
 
@@ -219,7 +219,7 @@ void Con_DrawStartupScreen(int show)
     topy = Con_DrawTitle(1.0);
 
     topy += UI_BORDER;
-    vislines = (screenHeight - topy + fontHgt / 2) / fontHgt;
+    vislines = (glScreenHeight - topy + fontHgt / 2) / fontHgt;
     y = topy;
 
     st = bufferLines - vislines;
@@ -240,7 +240,7 @@ void Con_DrawStartupScreen(int show)
         }
         else
         {
-            x = line->flags & CBLF_CENTER ? (screenWidth -
+            x = line->flags & CBLF_CENTER ? (glScreenWidth -
                                              FR_TextWidth(line->text)) / 2 : 3;
             //gl.Color3f(0, 0, 0);
             //FR_TextOut(line->text, x + 1, y + 1);

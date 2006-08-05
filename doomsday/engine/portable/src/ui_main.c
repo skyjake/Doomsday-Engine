@@ -64,7 +64,7 @@ void    UI_MouseFocus(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int maxTexSize;
+extern int glMaxTexSize;
 
 extern boolean stopTime;
 extern boolean tickUI;
@@ -89,7 +89,7 @@ int     ui_rest_offset_limit = 2;
 int     ui_moved;                       // True if the mouse has been moved.
 float   ui_alpha = 1.0;                 // Main alpha for the entire UI.
 float   ui_target_alpha = 1.0;          // Target alpha for the entire UI.
-boolean ui_draw_game = false;           // The game view should be drawn while 
+boolean ui_draw_game = false;           // The game view should be drawn while
                                         // the UI active.
 
 int     uiMouseWidth = 16;
@@ -152,8 +152,8 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     allowEscape = !noescape;
 
     // Load graphics.
-    ui_cx = screenWidth / 2;
-    ui_cy = screenHeight / 2;
+    ui_cx = glScreenWidth / 2;
+    ui_cy = glScreenHeight / 2;
     ui_moved = false;
 }
 
@@ -170,7 +170,7 @@ void UI_End(void)
 
     // Restore full alpha.
     ui_alpha = ui_target_alpha = 1.0;
-    
+
     // Restore old state.
     Con_StartupDone();
 
@@ -194,7 +194,7 @@ void UI_End(void)
 
 /*
  * Set the alpha level of the entire UI. Alpha levels below one automatically
- * show the game view in addition to the UI. 
+ * show the game view in addition to the UI.
  */
 void UI_SetAlpha(float alpha)
 {
@@ -242,7 +242,7 @@ void UI_DefaultFocus(ui_page_t* page)
 {
     ui_object_t *deffocus = NULL;
     int i;
-    
+
     for(i = 0; i < page->count; i++)
     {
         page->objects[i].flags &= ~UIF_FOCUS;
@@ -267,7 +267,7 @@ void UI_DefaultFocus(ui_page_t* page)
                 break;
             }
         }
-    }    
+    }
 }
 
 /*
@@ -330,12 +330,12 @@ void UI_InitPage(ui_page_t * page, ui_object_t *objects)
  */
 int UI_AvailableWidth(void)
 {
-    return screenWidth - UI_BORDER * 4;
+    return glScreenWidth - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return screenHeight - UI_TITLE_HGT - UI_BORDER * 4;
+    return glScreenHeight - UI_TITLE_HGT - UI_BORDER * 4;
 }
 
 /*
@@ -441,10 +441,10 @@ int UI_Responder(event_t *ev)
             ui_cx = 0;
         if(ui_cy < 0)
             ui_cy = 0;
-        if(ui_cx >= screenWidth)
-            ui_cx = screenWidth - 1;
-        if(ui_cy >= screenHeight)
-            ui_cy = screenHeight - 1;
+        if(ui_cx >= glScreenWidth)
+            ui_cx = glScreenWidth - 1;
+        if(ui_cy >= glScreenHeight)
+            ui_cy = glScreenHeight - 1;
         break;
 
     default:
@@ -482,7 +482,7 @@ void UI_Ticker(timespan_t time)
     {
         ui_alpha = ui_target_alpha;
     }
-    
+
     if(!ui_draw_game)
     {
         // By default, the game is not visible, but since the alpha is not
@@ -508,7 +508,7 @@ void UI_Drawer(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     // Call the active page's drawer.
     ui_page->drawer(ui_page);
@@ -710,12 +710,12 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
         // Check the flags of this object.
         if(ob->flags & UIF_HIDDEN || ob->flags & UIF_DISABLED)
             continue;           // These flags prevent response.
-        // When the UI is faded, a click on a nonfocusable object brings 
+        // When the UI is faded, a click on a nonfocusable object brings
         // back the UI.
-        /*if(ui_target_alpha < 1.0 && ev->type == ev_mousebdown && 
+        /*if(ui_target_alpha < 1.0 && ev->type == ev_mousebdown &&
            UI_MouseInside(ob) && (!ob->responder || ob->flags & UIF_NO_FOCUS))
         {
-            // Restore default focus 
+            // Restore default focus
             UI_DefaultFocus(page);
         }*/
         if(!ob->responder)
@@ -727,13 +727,13 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
             return true;
         }
     }
-    
+
     if(ui_target_alpha < 1.0 && ev->type == ev_mousebdown)
     {
         // When the UI the faded, an unhandled click brings back the UI.
         UI_DefaultFocus(page);
     }
-    
+
     // We didn't use the event.
     return false;
 }
@@ -752,7 +752,7 @@ void UIPage_Ticker(ui_page_t * page)
     {
         if(ob->flags & UIF_PAUSED || ob->flags & UIF_HIDDEN)
             continue;
-        
+
         // Fadeaway objects cause the UI to fade away when the mouse is over
         // the control.
         if(ob->flags & UIF_FOCUS && ob->flags & UIF_FADE_AWAY)
@@ -760,18 +760,18 @@ void UIPage_Ticker(ui_page_t * page)
             UI_SetAlpha(0);
             faded_away = true;
         }
-                
+
         if(ob->ticker)
             ob->ticker(ob);
         // Advance object timer.
         ob->timer++;
     }
-    
+
     if(!faded_away)
     {
         UI_SetAlpha(1.0);
     }
-    
+
     page->timer++;
 
     // Check mouse resting.
@@ -798,19 +798,19 @@ void UIPage_Drawer(ui_page_t * page)
     // Draw background?
     if(page->background)
         Con_DrawStartupBackground(ui_alpha);
-    
+
     // Draw title?
     if(page->header)
         UI_DrawTitle(page);
-    
+
     // Draw each object, unless they're hidden.
     for(i = 0, ob = page->objects; i < page->count; i++, ob++)
     {
         float current_ui_alpha = ui_alpha;
-        
+
         if(ob->flags & UIF_HIDDEN || !ob->drawer)
             continue;
-        
+
         if(ob->flags & UIF_FADE_AWAY)
         {
             if(ob->flags & UIF_FOCUS)
@@ -828,7 +828,7 @@ void UIPage_Drawer(ui_page_t * page)
         {
             ui_alpha = 1.0;
         }
-        
+
         // Draw the object itself.
         ob->drawer(ob);
 
@@ -845,7 +845,7 @@ void UIPage_Drawer(ui_page_t * page)
                         &focuscol, 1);
             gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         }
-        
+
         // Restore the correct UI alpha.
         ui_alpha = current_ui_alpha;
     }
@@ -1445,10 +1445,10 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
             break;
 
         case DDKEY_UPARROW:
-        case DDKEY_DOWNARROW:   
+        case DDKEY_DOWNARROW:
             // Ignore up/down while in the slider.
             break;
-            
+
         default:
             used = false;
         }
@@ -1740,11 +1740,11 @@ void UI_Color(ui_color_t * color)
 void UI_DrawTitleEx(char *text, int height, float alpha)
 {
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    UI_Gradient(0, 0, screenWidth, height, UI_COL(UIC_BG_MEDIUM),
+    UI_Gradient(0, 0, glScreenWidth, height, UI_COL(UIC_BG_MEDIUM),
                 UI_COL(UIC_BG_LIGHT), .8f * alpha, alpha);
-    UI_Gradient(0, height, screenWidth, UI_BORDER, UI_COL(UIC_SHADOW),
+    UI_Gradient(0, height, glScreenWidth, UI_BORDER, UI_COL(UIC_SHADOW),
                 UI_COL(UIC_BG_DARK), alpha, 0);
-    UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_COL(UIC_TITLE), 
+    UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_COL(UIC_TITLE),
                  alpha);
 }
 
@@ -1756,12 +1756,12 @@ void UI_DrawTitle(ui_page_t* page)
         char *msg = "(Move with Tab/S-Tab)";
         float current_ui_alpha = ui_alpha; // Never fade this text.
         ui_alpha = 1.0;
-        
+
         // If the mouse cursor is not visible, print a short help message.
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(msg, screenWidth - UI_BORDER - FR_TextWidth(msg),
+        UI_TextOutEx(msg, glScreenWidth - UI_BORDER - FR_TextWidth(msg),
                      UI_TITLE_HGT / 2, false, true, UI_COL(UIC_TEXT), 0.33f);
-        
+
         ui_alpha = current_ui_alpha;
     }
 }
@@ -1779,7 +1779,7 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t * main,
 
     alpha *= ui_alpha;
     bottom_alpha *= ui_alpha;
-    
+
     if(border < 0)
     {
         //flip = true;
@@ -1835,7 +1835,7 @@ void UI_HorizGradient(int x, int y, int w, int h, ui_color_t * left,
 {
     left_alpha *= ui_alpha;
     right_alpha *= ui_alpha;
-    
+
     gl.Bind(ui_textures[UITEX_HINT]);
     gl.Begin(DGL_QUADS);
     UI_ColorA(left, left_alpha);
@@ -1856,7 +1856,7 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t * start,
 {
     start_alpha *= ui_alpha;
     end_alpha *= ui_alpha;
-    
+
     gl.Disable(DGL_TEXTURING);
     gl.Begin(DGL_LINES);
     UI_ColorA(start, start_alpha);
@@ -1883,7 +1883,7 @@ void UI_TextOutEx(char *text, int x, int y, int horiz_center, int vert_center,
 {
     alpha *= ui_alpha;
     if(alpha <= 0) return;
-    
+
     // Center, if requested.
     if(horiz_center)
         x -= FR_TextWidth(text) / 2;
@@ -1916,9 +1916,9 @@ int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
     int     len, tx = x, ty = y;
     byte    c;
     int     linehgt = FR_SingleLineHeight("A");
-    
+
     alpha *= ui_alpha;
-    
+
     UI_ColorA(color, alpha);
     for(;; text++)
     {
@@ -2106,7 +2106,7 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t * hi,
 
     alpha *= ui_alpha;
     if(alpha <= 0) return;
-    
+
     gl.Disable(DGL_TEXTURING);
     gl.Begin(DGL_TRIANGLES);
 
@@ -2252,7 +2252,7 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
 
 void UI_DrawMouse(int x, int y)
 {
-    float   scale = MAX_OF(1, screenWidth / 640.0f);
+    float   scale = MAX_OF(1, glScreenWidth / 640.0f);
 
     if(!ui_showmouse)
         return;

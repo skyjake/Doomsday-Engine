@@ -56,7 +56,7 @@ typedef struct mixerdata_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int initOk = 0;
+static int initMixerOk = 0;
 static MMRESULT res;
 static HMIXER mixer = NULL;
 static mixerdata_t mixCD, mixMidi;
@@ -128,7 +128,7 @@ int Sys_InitMixer(void)
     MIXERCAPS mixerCaps;
     int     num = mixerGetNumDevs();    // Number of mixer devices.
 
-    if(initOk || ArgCheck("-nomixer") || ArgCheck("-nomusic") || isDedicated)
+    if(initMixerOk || ArgCheck("-nomixer") || ArgCheck("-nomusic") || isDedicated)
         return true;
 
     if(verbose)
@@ -163,18 +163,18 @@ int Sys_InitMixer(void)
     Sys_InitMixerLine(&mixMidi, MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER);
 
     // We're successful.
-    initOk = true;
+    initMixerOk = true;
     return true;
 }
 
 void Sys_ShutdownMixer(void)
 {
-    if(!initOk)
+    if(!initMixerOk)
         return;                 // Can't uninitialize if not inited.
 
     mixerClose(mixer);
     mixer = NULL;
-    initOk = false;
+    initMixerOk = false;
 }
 
 int Sys_Mixer4i(int device, int action, int control, int parm)
@@ -186,7 +186,7 @@ int Sys_Mixer4i(int device, int action, int control, int parm)
     mixerdata_t *mix;
     int     i;
 
-    if(!initOk)
+    if(!initMixerOk)
         return MIX_ERROR;
 
     // This is quite specific at the moment.

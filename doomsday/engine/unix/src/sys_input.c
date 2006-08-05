@@ -31,12 +31,12 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define EVBUFSIZE		64
+#define EVBUFSIZE       64
 
-#define KEYBUFSIZE		32
-#define INV(x, axis)	(joyInverseAxis[axis]? -x : x)
+#define KEYBUFSIZE      32
+#define INV(x, axis)    (joyInverseAxis[axis]? -x : x)
 
-#define CONVCONST		((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)
+#define CONVCONST       ((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)
 
 // TYPES -------------------------------------------------------------------
 
@@ -52,13 +52,13 @@ extern boolean novideo;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     joydevice = 0;			// Joystick index to use.
-byte    usejoystick = false;	// Joystick input enabled?
-int     joyInverseAxis[8];		// Axis inversion (default: all false).
+int     joydevice = 0;          // Joystick index to use.
+byte    usejoystick = false;    // Joystick input enabled?
+int     joyInverseAxis[8];      // Axis inversion (default: all false).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean initOk;
+static boolean initIOk;
 static byte useMouse, useJoystick;
 
 static keyevent_t keyEvents[EVBUFSIZE];
@@ -73,25 +73,25 @@ static int numbuttons, numaxes;
 
 void I_Register(void)
 {
-	C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0,
-			  "ID of joystick to use (if more than one).");
-	C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1, "1=Enable joystick input.");
-	C_VAR_INT("input-joy-x-inverse", &joyInverseAxis[0], 0, 0, 1,
-			  "1=Inverse joystick X axis.");
-	C_VAR_INT("input-joy-y-inverse", &joyInverseAxis[1], 0, 0, 1,
-			  "1=Inverse joystick Y axis.");
-	C_VAR_INT("input-joy-z-inverse", &joyInverseAxis[2], 0, 0, 1,
-			  "1=Inverse joystick Z axis.");
-	C_VAR_INT("input-joy-rx-inverse", &joyInverseAxis[3], 0, 0, 1,
-			  "1=Inverse joystick RX axis.");
-	C_VAR_INT("input-joy-ry-inverse", &joyInverseAxis[4], 0, 0, 1,
-			  "1=Inverse joystick RY axis.");
-	C_VAR_INT("input-joy-rz-inverse", &joyInverseAxis[5], 0, 0, 1,
-			  "1=Inverse joystick RZ axis.");
-	C_VAR_INT("input-joy-slider1-inverse", &joyInverseAxis[6], 0, 0, 1,
-			  "1=Inverse joystick slider 1.");
-	C_VAR_INT("input-joy-slider2-inverse", &joyInverseAxis[7], 0, 0, 1,
-			  "1=Inverse joystick slider 2.");
+    C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0,
+              "ID of joystick to use (if more than one).");
+    C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1, "1=Enable joystick input.");
+    C_VAR_INT("input-joy-x-inverse", &joyInverseAxis[0], 0, 0, 1,
+              "1=Inverse joystick X axis.");
+    C_VAR_INT("input-joy-y-inverse", &joyInverseAxis[1], 0, 0, 1,
+              "1=Inverse joystick Y axis.");
+    C_VAR_INT("input-joy-z-inverse", &joyInverseAxis[2], 0, 0, 1,
+              "1=Inverse joystick Z axis.");
+    C_VAR_INT("input-joy-rx-inverse", &joyInverseAxis[3], 0, 0, 1,
+              "1=Inverse joystick RX axis.");
+    C_VAR_INT("input-joy-ry-inverse", &joyInverseAxis[4], 0, 0, 1,
+              "1=Inverse joystick RY axis.");
+    C_VAR_INT("input-joy-rz-inverse", &joyInverseAxis[5], 0, 0, 1,
+              "1=Inverse joystick RZ axis.");
+    C_VAR_INT("input-joy-slider1-inverse", &joyInverseAxis[6], 0, 0, 1,
+              "1=Inverse joystick slider 1.");
+    C_VAR_INT("input-joy-slider2-inverse", &joyInverseAxis[7], 0, 0, 1,
+              "1=Inverse joystick slider 2.");
 }
 
 /*
@@ -99,11 +99,11 @@ void I_Register(void)
  */
 keyevent_t *I_NewKeyEvent(void)
 {
-	keyevent_t *ev = keyEvents + evHead;
+    keyevent_t *ev = keyEvents + evHead;
 
-	evHead = (evHead + 1) % EVBUFSIZE;
-	memset(ev, 0, sizeof(*ev));
-	return ev;
+    evHead = (evHead + 1) % EVBUFSIZE;
+    memset(ev, 0, sizeof(*ev));
+    return ev;
 }
 
 /*
@@ -111,13 +111,13 @@ keyevent_t *I_NewKeyEvent(void)
  */
 keyevent_t *I_GetKeyEvent(void)
 {
-	keyevent_t *ev;
+    keyevent_t *ev;
 
-	if(evHead == evTail)
-		return NULL;			// No more...
-	ev = keyEvents + evTail;
-	evTail = (evTail + 1) % EVBUFSIZE;
-	return ev;
+    if(evHead == evTail)
+        return NULL;            // No more...
+    ev = keyEvents + evTail;
+    evTail = (evTail + 1) % EVBUFSIZE;
+    return ev;
 }
 
 /*
@@ -126,153 +126,153 @@ keyevent_t *I_GetKeyEvent(void)
  */
 int I_TranslateKeyCode(SDLKey sym)
 {
-	switch (sym)
-	{
-	case 167:					// Tilde
-		return 96;				// ASCII: '`'
+    switch (sym)
+    {
+    case 167:                   // Tilde
+        return 96;              // ASCII: '`'
 
-	case '\b':					// Backspace
-		return DDKEY_BACKSPACE;
+    case '\b':                  // Backspace
+        return DDKEY_BACKSPACE;
 
-	case SDLK_PAUSE:
-		return DDKEY_PAUSE;
+    case SDLK_PAUSE:
+        return DDKEY_PAUSE;
 
-	case SDLK_UP:
-		return DDKEY_UPARROW;
+    case SDLK_UP:
+        return DDKEY_UPARROW;
 
-	case SDLK_DOWN:
-		return DDKEY_DOWNARROW;
+    case SDLK_DOWN:
+        return DDKEY_DOWNARROW;
 
-	case SDLK_LEFT:
-		return DDKEY_LEFTARROW;
+    case SDLK_LEFT:
+        return DDKEY_LEFTARROW;
 
-	case SDLK_RIGHT:
-		return DDKEY_RIGHTARROW;
+    case SDLK_RIGHT:
+        return DDKEY_RIGHTARROW;
 
-	case SDLK_RSHIFT:
-	case SDLK_LSHIFT:
-		return DDKEY_RSHIFT;
+    case SDLK_RSHIFT:
+    case SDLK_LSHIFT:
+        return DDKEY_RSHIFT;
 
-	case SDLK_RALT:
-	case SDLK_LALT:
-		return DDKEY_RALT;
+    case SDLK_RALT:
+    case SDLK_LALT:
+        return DDKEY_RALT;
 
-	case SDLK_RCTRL:
-	case SDLK_LCTRL:
-		return DDKEY_RCTRL;
+    case SDLK_RCTRL:
+    case SDLK_LCTRL:
+        return DDKEY_RCTRL;
 
-	case SDLK_F1:
-		return DDKEY_F1;
+    case SDLK_F1:
+        return DDKEY_F1;
 
-	case SDLK_F2:
-		return DDKEY_F2;
+    case SDLK_F2:
+        return DDKEY_F2;
 
-	case SDLK_F3:
-		return DDKEY_F3;
+    case SDLK_F3:
+        return DDKEY_F3;
 
-	case SDLK_F4:
-		return DDKEY_F4;
+    case SDLK_F4:
+        return DDKEY_F4;
 
-	case SDLK_F5:
-		return DDKEY_F5;
+    case SDLK_F5:
+        return DDKEY_F5;
 
-	case SDLK_F6:
-		return DDKEY_F6;
+    case SDLK_F6:
+        return DDKEY_F6;
 
-	case SDLK_F7:
-		return DDKEY_F7;
+    case SDLK_F7:
+        return DDKEY_F7;
 
-	case SDLK_F8:
-		return DDKEY_F8;
+    case SDLK_F8:
+        return DDKEY_F8;
 
-	case SDLK_F9:
-		return DDKEY_F9;
+    case SDLK_F9:
+        return DDKEY_F9;
 
-	case SDLK_F10:
-		return DDKEY_F10;
+    case SDLK_F10:
+        return DDKEY_F10;
 
-	case SDLK_F11:
-		return DDKEY_F11;
+    case SDLK_F11:
+        return DDKEY_F11;
 
-	case SDLK_F12:
-		return DDKEY_F12;
+    case SDLK_F12:
+        return DDKEY_F12;
 
-	case SDLK_NUMLOCK:
-		return DDKEY_NUMLOCK;
+    case SDLK_NUMLOCK:
+        return DDKEY_NUMLOCK;
 
-	case SDLK_SCROLLOCK:
-		return DDKEY_SCROLL;
+    case SDLK_SCROLLOCK:
+        return DDKEY_SCROLL;
 
-	case SDLK_KP0:
-		return DDKEY_NUMPAD0;
+    case SDLK_KP0:
+        return DDKEY_NUMPAD0;
 
-	case SDLK_KP1:
-		return DDKEY_NUMPAD1;
+    case SDLK_KP1:
+        return DDKEY_NUMPAD1;
 
-	case SDLK_KP2:
-		return DDKEY_NUMPAD2;
+    case SDLK_KP2:
+        return DDKEY_NUMPAD2;
 
-	case SDLK_KP3:
-		return DDKEY_NUMPAD3;
+    case SDLK_KP3:
+        return DDKEY_NUMPAD3;
 
-	case SDLK_KP4:
-		return DDKEY_NUMPAD4;
+    case SDLK_KP4:
+        return DDKEY_NUMPAD4;
 
-	case SDLK_KP5:
-		return DDKEY_NUMPAD5;
+    case SDLK_KP5:
+        return DDKEY_NUMPAD5;
 
-	case SDLK_KP6:
-		return DDKEY_NUMPAD6;
+    case SDLK_KP6:
+        return DDKEY_NUMPAD6;
 
-	case SDLK_KP7:
-		return DDKEY_NUMPAD7;
+    case SDLK_KP7:
+        return DDKEY_NUMPAD7;
 
-	case SDLK_KP8:
-		return DDKEY_NUMPAD8;
+    case SDLK_KP8:
+        return DDKEY_NUMPAD8;
 
-	case SDLK_KP9:
-		return DDKEY_NUMPAD9;
+    case SDLK_KP9:
+        return DDKEY_NUMPAD9;
 
-	case SDLK_KP_PERIOD:
-		return DDKEY_DECIMAL;
+    case SDLK_KP_PERIOD:
+        return DDKEY_DECIMAL;
 
-	case SDLK_KP_PLUS:
-		return DDKEY_ADD;
+    case SDLK_KP_PLUS:
+        return DDKEY_ADD;
 
-	case SDLK_KP_MINUS:
-		return DDKEY_SUBTRACT;
+    case SDLK_KP_MINUS:
+        return DDKEY_SUBTRACT;
 
-	case SDLK_KP_DIVIDE:
-		return '/';
+    case SDLK_KP_DIVIDE:
+        return '/';
 
-	case SDLK_KP_MULTIPLY:
-		return '*';
+    case SDLK_KP_MULTIPLY:
+        return '*';
 
-	case SDLK_KP_ENTER:
-		return DDKEY_ENTER;
+    case SDLK_KP_ENTER:
+        return DDKEY_ENTER;
 
-	case SDLK_INSERT:
-		return DDKEY_INS;
+    case SDLK_INSERT:
+        return DDKEY_INS;
 
-	case SDLK_DELETE:
-		return DDKEY_DEL;
+    case SDLK_DELETE:
+        return DDKEY_DEL;
 
-	case SDLK_HOME:
-		return DDKEY_HOME;
+    case SDLK_HOME:
+        return DDKEY_HOME;
 
-	case SDLK_END:
-		return DDKEY_END;
+    case SDLK_END:
+        return DDKEY_END;
 
-	case SDLK_PAGEUP:
-		return DDKEY_PGUP;
+    case SDLK_PAGEUP:
+        return DDKEY_PGUP;
 
-	case SDLK_PAGEDOWN:
-		return DDKEY_PGDN;
+    case SDLK_PAGEDOWN:
+        return DDKEY_PGDN;
 
-	default:
-		break;
-	}
-	return sym;
+    default:
+        break;
+    }
+    return sym;
 }
 
 /*
@@ -282,38 +282,38 @@ int I_TranslateKeyCode(SDLKey sym)
  */
 void I_PollEvents(void)
 {
-	SDL_Event event;
-	keyevent_t *e;
+    SDL_Event event;
+    keyevent_t *e;
 
-	while(SDL_PollEvent(&event))
-	{
-		switch (event.type)
-		{
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
-			e = I_NewKeyEvent();
-			e->event = (event.type == SDL_KEYDOWN ? IKE_KEY_DOWN : IKE_KEY_UP);
-			e->code = I_TranslateKeyCode(event.key.keysym.sym);
-			/*printf("sdl:%i code:%i\n", event.key.keysym.scancode, e->code);*/
-			break;
+    while(SDL_PollEvent(&event))
+    {
+        switch (event.type)
+        {
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+            e = I_NewKeyEvent();
+            e->event = (event.type == SDL_KEYDOWN ? IKE_KEY_DOWN : IKE_KEY_UP);
+            e->code = I_TranslateKeyCode(event.key.keysym.sym);
+            /*printf("sdl:%i code:%i\n", event.key.keysym.scancode, e->code);*/
+            break;
 
-		case SDL_MOUSEBUTTONDOWN:
-			if(event.button.button == SDL_BUTTON_WHEELUP)
-				wheelCount++;
-			if(event.button.button == SDL_BUTTON_WHEELDOWN)
-				wheelCount--;
-			break;
+        case SDL_MOUSEBUTTONDOWN:
+            if(event.button.button == SDL_BUTTON_WHEELUP)
+                wheelCount++;
+            if(event.button.button == SDL_BUTTON_WHEELDOWN)
+                wheelCount--;
+            break;
 
-		case SDL_QUIT:
-			// The system wishes to close the program immediately...
-			Sys_Quit();
-			break;
+        case SDL_QUIT:
+            // The system wishes to close the program immediately...
+            Sys_Quit();
+            break;
 
-		default:
-			// The rest of the events are ignored.
-			break;
-		}
-	}
+        default:
+            // The rest of the events are ignored.
+            break;
+        }
+    }
 }
 
 //===========================================================================
@@ -321,14 +321,14 @@ void I_PollEvents(void)
 //===========================================================================
 void I_InitMouse(void)
 {
-	if(ArgCheck("-nomouse") || novideo)
-		return;
+    if(ArgCheck("-nomouse") || novideo)
+        return;
 
-	// Init was successful.
-	useMouse = true;
+    // Init was successful.
+    useMouse = true;
 
-	// Grab all input.
-	SDL_WM_GrabInput(SDL_GRAB_ON);
+    // Grab all input.
+    SDL_WM_GrabInput(SDL_GRAB_ON);
 }
 
 //===========================================================================
@@ -338,36 +338,36 @@ void I_InitJoystick(void)
 {
         int joycount;
 
-	if(ArgCheck("-nojoy"))
-		return;
+    if(ArgCheck("-nojoy"))
+        return;
 
-	if ((joycount = SDL_NumJoysticks()) > 0) {
-        	if (joydevice > joycount) {
-                	Con_Message("I_InitJoystick: joydevice = %i, out of range.\n",
-				joydevice);
-			joy = SDL_JoystickOpen(0);
-		}
-		else joy = SDL_JoystickOpen(joydevice);
+    if ((joycount = SDL_NumJoysticks()) > 0) {
+            if (joydevice > joycount) {
+                    Con_Message("I_InitJoystick: joydevice = %i, out of range.\n",
+                joydevice);
+            joy = SDL_JoystickOpen(0);
         }
-        
-	if (joy) {
-		// Show some info.
-		Con_Message("I_InitJoystick: %s\n", SDL_JoystickName(SDL_JoystickIndex(joy)));
-		
-		// We'll handle joystick events manually
-		SDL_JoystickEventState(SDL_IGNORE);
+        else joy = SDL_JoystickOpen(joydevice);
+        }
 
-		numaxes = SDL_JoystickNumAxes(joy);
-		numbuttons = SDL_JoystickNumButtons(joy);
-		if (numbuttons > IJOY_MAXBUTTONS)
-			numbuttons = IJOY_MAXBUTTONS;
+    if (joy) {
+        // Show some info.
+        Con_Message("I_InitJoystick: %s\n", SDL_JoystickName(SDL_JoystickIndex(joy)));
 
-		useJoystick = true;
-	}
-	else {
-		Con_Message("I_InitJoystick: No joysticks found\n");
-		useJoystick = false;
- 	}
+        // We'll handle joystick events manually
+        SDL_JoystickEventState(SDL_IGNORE);
+
+        numaxes = SDL_JoystickNumAxes(joy);
+        numbuttons = SDL_JoystickNumButtons(joy);
+        if (numbuttons > IJOY_MAXBUTTONS)
+            numbuttons = IJOY_MAXBUTTONS;
+
+        useJoystick = true;
+    }
+    else {
+        Con_Message("I_InitJoystick: No joysticks found\n");
+        useJoystick = false;
+    }
 }
 
 //===========================================================================
@@ -376,12 +376,12 @@ void I_InitJoystick(void)
 //===========================================================================
 int I_Init(void)
 {
-	if(initOk)
-		return true;			// Already initialized.
-	I_InitMouse();
-	I_InitJoystick();
-	initOk = true;
-	return true;
+    if(initIOk)
+        return true;            // Already initialized.
+    I_InitMouse();
+    I_InitJoystick();
+    initIOk = true;
+    return true;
 }
 
 //===========================================================================
@@ -389,10 +389,10 @@ int I_Init(void)
 //===========================================================================
 void I_Shutdown(void)
 {
-	if(!initOk)
-		return;					// Not initialized.
-	if (joy) SDL_JoystickClose(joy);
-	initOk = false;
+    if(!initIOk)
+        return;                 // Not initialized.
+    if (joy) SDL_JoystickClose(joy);
+    initIOk = false;
 }
 
 //===========================================================================
@@ -400,7 +400,7 @@ void I_Shutdown(void)
 //===========================================================================
 boolean I_MousePresent(void)
 {
-	return useMouse;
+    return useMouse;
 }
 
 //===========================================================================
@@ -408,7 +408,7 @@ boolean I_MousePresent(void)
 //===========================================================================
 boolean I_JoystickPresent(void)
 {
-	return useJoystick;
+    return useJoystick;
 }
 
 //===========================================================================
@@ -416,24 +416,24 @@ boolean I_JoystickPresent(void)
 //===========================================================================
 int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 {
-	keyevent_t *e;
-	int     i = 0;
+    keyevent_t *e;
+    int     i = 0;
 
-	if(!initOk)
-		return 0;
+    if(!initIOk)
+        return 0;
 
-	// Get new events from SDL.
-	I_PollEvents();
+    // Get new events from SDL.
+    I_PollEvents();
 
-	// Get the events.
-	for(i = 0; i < bufsize; i++)
-	{
-		e = I_GetKeyEvent();
-		if(!e)
-			break;				// No more events.
-		memcpy(&evbuf[i], e, sizeof(*e));
-	}
-	return i;
+    // Get the events.
+    for(i = 0; i < bufsize; i++)
+    {
+        e = I_GetKeyEvent();
+        if(!e)
+            break;              // No more events.
+        memcpy(&evbuf[i], e, sizeof(*e));
+    }
+    return i;
 }
 
 //===========================================================================
@@ -441,108 +441,108 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 //===========================================================================
 void I_GetMouseState(mousestate_t *state)
 {
-	Uint8   buttons;
-	int     i;
+    Uint8   buttons;
+    int     i;
 
-	memset(state, 0, sizeof(*state));
+    memset(state, 0, sizeof(*state));
 
-	// Has the mouse been initialized?
-	if(!I_MousePresent() || !initOk)
-		return;
+    // Has the mouse been initialized?
+    if(!I_MousePresent() || !initIOk)
+        return;
 
-	buttons = SDL_GetRelativeMouseState(&state->x, &state->y);
+    buttons = SDL_GetRelativeMouseState(&state->x, &state->y);
 
-	if(buttons & SDL_BUTTON(SDL_BUTTON_LEFT))
-		state->buttons |= IMB_LEFT;
-	if(buttons & SDL_BUTTON(SDL_BUTTON_RIGHT))
-		state->buttons |= IMB_RIGHT;
-	if(buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
-		state->buttons |= IMB_MIDDLE;
+    if(buttons & SDL_BUTTON(SDL_BUTTON_LEFT))
+        state->buttons |= IMB_LEFT;
+    if(buttons & SDL_BUTTON(SDL_BUTTON_RIGHT))
+        state->buttons |= IMB_RIGHT;
+    if(buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
+        state->buttons |= IMB_MIDDLE;
 
-	// The buttons bitfield is ordered according to the numbering.
-	for(i = 4; i < 8; i++)
-	{
-		if(buttons & SDL_BUTTON(i))
-			state->buttons |= 1 << (i - 1);
-	}
+    // The buttons bitfield is ordered according to the numbering.
+    for(i = 4; i < 8; i++)
+    {
+        if(buttons & SDL_BUTTON(i))
+            state->buttons |= 1 << (i - 1);
+    }
 
-	state->z = wheelCount * 20;
-	wheelCount = 0;
+    state->z = wheelCount * 20;
+    wheelCount = 0;
 }
 
 //===========================================================================
 // I_GetJoystickState
 //===========================================================================
 void I_GetJoystickState(joystate_t * state)
-{	
-	int i, pov;
-	memset(state, 0, sizeof(*state));
+{
+    int i, pov;
+    memset(state, 0, sizeof(*state));
 
-	// Initialization has not been done.
-	if(!I_JoystickPresent() || !usejoystick || !initOk)
-		return;
+    // Initialization has not been done.
+    if(!I_JoystickPresent() || !usejoystick || !initIOk)
+        return;
 
-	// Update joysticks
-	SDL_JoystickUpdate();
+    // Update joysticks
+    SDL_JoystickUpdate();
 
-	// Grab the first three axes. SDL returns a value between -32768 and
+    // Grab the first three axes. SDL returns a value between -32768 and
         // 32767, but Doomsday is expecting -10000 to 10000. We'll convert
         // as we go.
 
-	// FIXME: would changing IJOY_AXISMIN and IJOY_AXISMAX to -32768 and
-	// 32767 break the Windows version? If not that would make this 
-	// cleaner.
+    // FIXME: would changing IJOY_AXISMIN and IJOY_AXISMAX to -32768 and
+    // 32767 break the Windows version? If not that would make this
+    // cleaner.
 
-	for (i = 0; i < 3; i++) {
-		int value;
-		if (i > numaxes) break;
-		
-		value = SDL_JoystickGetAxis(joy, i);
-		value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN; 
+    for (i = 0; i < 3; i++) {
+        int value;
+        if (i > numaxes) break;
 
-		state->axis[i] = INV(value, i);
-	}
+        value = SDL_JoystickGetAxis(joy, i);
+        value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN;
 
-	// Dunno what to do with these using SDL so we'll set them
-	// all to 0 for now.
+        state->axis[i] = INV(value, i);
+    }
 
-	state->rotAxis[0] = 0;
-	state->rotAxis[1] = 0;
-	state->rotAxis[2] = 0;
+    // Dunno what to do with these using SDL so we'll set them
+    // all to 0 for now.
 
-	state->slider[0] = 0;
-	state->slider[1] = 0;
+    state->rotAxis[0] = 0;
+    state->rotAxis[1] = 0;
+    state->rotAxis[2] = 0;
 
-	for(i = 0; i < numbuttons; i++)
-		state->buttons[i] = SDL_JoystickGetButton(joy, i);
+    state->slider[0] = 0;
+    state->slider[1] = 0;
 
-	pov = SDL_JoystickGetHat(joy, 0);
-	switch(pov) {
-		case SDL_HAT_UP:
-			state->povAngle = 0;
-			break;
-		case SDL_HAT_RIGHT:
-			state->povAngle = 90;
-			break;
-		case SDL_HAT_DOWN:
-			state->povAngle = 180;
-			break;
-		case SDL_HAT_LEFT:
-			state->povAngle = 270;
-			break;
-		case SDL_HAT_RIGHTUP:
-			state->povAngle = 45;
-			break;
-		case SDL_HAT_RIGHTDOWN:
-			state->povAngle = 135;
-			break;
-		case SDL_HAT_LEFTUP:
-			state->povAngle = 315;
-			break;
-		case SDL_HAT_LEFTDOWN:
-			state->povAngle = 225;
-			break;
-		default:
-			state->povAngle = IJOY_POV_CENTER;
-	}
+    for(i = 0; i < numbuttons; i++)
+        state->buttons[i] = SDL_JoystickGetButton(joy, i);
+
+    pov = SDL_JoystickGetHat(joy, 0);
+    switch(pov) {
+        case SDL_HAT_UP:
+            state->povAngle = 0;
+            break;
+        case SDL_HAT_RIGHT:
+            state->povAngle = 90;
+            break;
+        case SDL_HAT_DOWN:
+            state->povAngle = 180;
+            break;
+        case SDL_HAT_LEFT:
+            state->povAngle = 270;
+            break;
+        case SDL_HAT_RIGHTUP:
+            state->povAngle = 45;
+            break;
+        case SDL_HAT_RIGHTDOWN:
+            state->povAngle = 135;
+            break;
+        case SDL_HAT_LEFTUP:
+            state->povAngle = 315;
+            break;
+        case SDL_HAT_LEFTDOWN:
+            state->povAngle = 225;
+            break;
+        default:
+            state->povAngle = IJOY_POV_CENTER;
+    }
 }

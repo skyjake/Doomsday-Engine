@@ -823,7 +823,7 @@ void Net_Drawer(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     if(show_blink_r && SECONDS_TO_TICKS(gameTime) & 8)
     {
@@ -838,7 +838,7 @@ void Net_Drawer(void)
             strcat(buf, tmp);
         }
         strcat(buf, "]");
-        i = screenWidth - FR_TextWidth(buf);
+        i = glScreenWidth - FR_TextWidth(buf);
         //gl.Color3f(0, 0, 0);
         //FR_TextOut(buf, i - 8, 12);
         gl.Color3f(1, 1, 1);
@@ -869,7 +869,7 @@ void Net_Drawer(void)
         sprintf(buf, "%.1f FPS", DD_GetFrameRate());
         w = FR_TextWidth(buf) + 16;
         h = FR_TextHeight(buf) + 16;
-        x = screenWidth - w - 10;
+        x = glScreenWidth - w - 10;
         UI_GradientEx(x, y, w, h, 6, UI_COL(UIC_BG_MEDIUM),
                       UI_COL(UIC_BG_LIGHT), .5f, .5f);
         UI_DrawRectEx(x, y, w, h, 6, false, UI_COL(UIC_BRD_HI), NULL, .5f, -1);
@@ -892,9 +892,9 @@ void Net_SetAckTime(int clientNumber, uint period)
     // Add the new time into the array.
     client->ackTimes[client->ackIdx++] = period;
     client->ackIdx %= NUM_ACK_TIMES;
-    
+
 #ifdef _DEBUG
-    VERBOSE( Con_Printf("Net_SetAckTime: Client %i, new ack sample of %05u ms.\n", 
+    VERBOSE( Con_Printf("Net_SetAckTime: Client %i, new ack sample of %05u ms.\n",
                         clientNumber, period) );
 #endif
 }
@@ -908,14 +908,14 @@ uint Net_GetAckTime(int clientNumber)
     uint    average = 0;
     int     i, count = 0;
     uint    smallest = 0, largest = 0;
-    
+
     // Find the smallest and largest so that they can be ignored.
     smallest = largest = client->ackTimes[0];
     for(i = 0; i < NUM_ACK_TIMES; i++)
     {
         if(client->ackTimes[i] < smallest)
             smallest = client->ackTimes[i];
-        
+
         if(client->ackTimes[i] > largest)
             largest = client->ackTimes[i];
     }

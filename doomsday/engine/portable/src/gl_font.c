@@ -66,7 +66,7 @@ extern HWND hWndMain;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int initOk = 0;
+static int initFROk = 0;
 static int numFonts = 0;
 static jfrfont_t *fonts = NULL; // The list of fonts.
 static int currentFontIndex;                // Index of the current font.
@@ -79,13 +79,13 @@ static char fontpath[256] = "";
  */
 int FR_Init()
 {
-    if(initOk)
+    if(initFROk)
         return -1;              // No reinitializations...
 
     numFonts = 0;
     fonts = 0;                  // No fonts!
     currentFontIndex = -1;
-    initOk = 1;
+    initFROk = 1;
 
     // Check the font path.
     if(ArgCheckWith("-fontdir", 1))
@@ -125,7 +125,7 @@ void FR_Shutdown()
         FR_DestroyFontIdx(0);
     fonts = 0;
     currentFontIndex = -1;
-    initOk = 0;
+    initFROk = 0;
 }
 
 static void OutByte(FILE *f, byte b)
@@ -638,7 +638,7 @@ int FR_CharWidth(int ch)
 {
     if(currentFontIndex == -1)
         return 0;
-    return fonts[currentFontIndex].chars[ch].w - 
+    return fonts[currentFontIndex].chars[ch].w -
         fonts[currentFontIndex].marginWidth * 2;
 }
 
@@ -666,7 +666,7 @@ int FR_TextHeight(char *text)
         return 0;
 
     cf = fonts + currentFontIndex;
-            
+
     // Find the greatest height.
     for(len = strlen(text), i = 0; i < len; i++)
         height = MAX_OF(height, cf->chars[(byte) text[i]].h - 2*cf->marginHeight);
@@ -692,14 +692,14 @@ int FR_SingleLineHeight(char *text)
 int FR_GlyphTopToAscent(char *text)
 {
     jfrfont_t *cf;
-    
+
     if(currentFontIndex == -1 || !text)
         return 0;
-    
+
     cf = fonts + currentFontIndex;
     if(!cf->lineHeight)
         return 0;
-    
+
     return cf->lineHeight - cf->ascent;
 }
 

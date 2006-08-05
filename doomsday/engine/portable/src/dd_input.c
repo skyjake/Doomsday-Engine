@@ -715,8 +715,8 @@ void DD_ReadMouse(void)
     else                        // In UI mode.
     {
         // Scale the movement depending on screen resolution.
-        ev.data1 *= MAX_OF(1, screenWidth / 800.0f);
-        ev.data2 *= MAX_OF(1, screenHeight / 600.0f);
+        ev.data1 *= MAX_OF(1, glScreenWidth / 800.0f);
+        ev.data2 *= MAX_OF(1, glScreenHeight / 600.0f);
     }
 
     // Don't post empty events.

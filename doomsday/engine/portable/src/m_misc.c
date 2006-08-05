@@ -712,9 +712,9 @@ int M_ScreenShot(char *filename, int bits)
     screen = GL_GrabScreen();
 
     if(bits == 16)
-        TGA_Save16_rgb888(filename, screenWidth, screenHeight, screen);
+        TGA_Save16_rgb888(filename, glScreenWidth, glScreenHeight, screen);
     else
-        TGA_Save24_rgb888(filename, screenWidth, screenHeight, screen);
+        TGA_Save24_rgb888(filename, glScreenWidth, glScreenHeight, screen);
 
     free(screen);
     return true;

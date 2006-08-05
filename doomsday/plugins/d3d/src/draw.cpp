@@ -54,7 +54,7 @@ int         primOrder;
 drvertex_t  stack[STACK_SIZE], currentVertex;*/
 
 int         vertexPos;
-drvertex_t  vertices[VERTICES_SIZE], currentVertex;
+drvertex_t  verticesStack[VERTICES_SIZE], currentVertex;
 
 int         indexPos;
 unsigned short indices[INDICES_SIZE];
@@ -96,7 +96,7 @@ void VtxToBuffer(drvertex_t *vtx)
     if(vertexPos == VERTICES_SIZE) return; // Stop drawing...
 
     // Place a copy of the current vertex to the vertex buffer.
-    memcpy(vertices + vertexPos, vtx, sizeof(*vtx));
+    memcpy(verticesStack + vertexPos, vtx, sizeof(*vtx));
 
     // Quads are translated to a triangle list.
     if(primType == DGL_QUADS)
@@ -443,7 +443,7 @@ void DG_End(void)
         PrimCount(type, indexPos),  // PrimitiveCount
         indices,
         D3DFMT_INDEX16,
-        vertices,
+        verticesStack,
         sizeof(drvertex_t));
 
     primType = 0;

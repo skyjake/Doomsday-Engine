@@ -682,7 +682,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
     if(mdl->info.numLODs > 1 && rend_model_lod != 0)
     {
         float   lodFactor =
-            rend_model_lod * screenWidth / 640.0f / (fieldOfView / 90.0f);
+            rend_model_lod * glScreenWidth / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
             lodFactor = 1 / lodFactor;
 

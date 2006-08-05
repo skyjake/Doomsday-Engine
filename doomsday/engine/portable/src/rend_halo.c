@@ -113,7 +113,7 @@ void H_SetupState(boolean dosetup)
 {
     if(dosetup)
     {
-        if(useFog)
+        if(usingFog)
             gl.Disable(DGL_FOG);
         gl.Disable(DGL_DEPTH_WRITE);
         gl.Disable(DGL_DEPTH_TEST);
@@ -121,7 +121,7 @@ void H_SetupState(boolean dosetup)
     }
     else
     {
-        if(useFog)
+        if(usingFog)
             gl.Enable(DGL_FOG);
         gl.Enable(DGL_DEPTH_WRITE);
         gl.Enable(DGL_DEPTH_TEST);

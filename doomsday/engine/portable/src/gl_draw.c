@@ -70,14 +70,14 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
 
     // Setup offset and scale.
     // Scale the offsets to match the resolution.
-    gl.Translatef(offx * screenWidth / 320.0f, offy * screenHeight / 200.0f,
+    gl.Translatef(offx * glScreenWidth / 320.0f, offy * glScreenHeight / 200.0f,
                   0);
     gl.Scalef(scalex, scaley, 1);
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, screenWidth, screenHeight, -1, 1);
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     GL_SetRawImage(lump, 1);
     isTwoPart = (lumptexinfo[lump].tex[1] != 0);
@@ -91,7 +91,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
         // Bottom texture coordinate.
         tcb = 1;
     }
-    pixelBorder = lumptexinfo[lump].width[0] * screenWidth / 320;
+    pixelBorder = lumptexinfo[lump].width[0] * glScreenWidth / 320;
 
     // The first part is rendered in any case.
     gl.Begin(DGL_QUADS);
@@ -100,9 +100,9 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     gl.TexCoord2f(1, 0);
     gl.Vertex2f(pixelBorder, 0);
     gl.TexCoord2f(1, tcb);
-    gl.Vertex2f(pixelBorder, screenHeight);
+    gl.Vertex2f(pixelBorder, glScreenHeight);
     gl.TexCoord2f(0, tcb);
-    gl.Vertex2f(0, screenHeight);
+    gl.Vertex2f(0, glScreenHeight);
     gl.End();
 
     if(isTwoPart)
@@ -113,11 +113,11 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
         gl.TexCoord2f(0, 0);
         gl.Vertex2f(pixelBorder - 1, 0);
         gl.TexCoord2f(1, 0);
-        gl.Vertex2f(screenWidth, 0);
+        gl.Vertex2f(glScreenWidth, 0);
         gl.TexCoord2f(1, tcb);
-        gl.Vertex2f(screenWidth, screenHeight);
+        gl.Vertex2f(glScreenWidth, glScreenHeight);
         gl.TexCoord2f(0, tcb);
-        gl.Vertex2f(pixelBorder - 1, screenHeight);
+        gl.Vertex2f(pixelBorder - 1, glScreenHeight);
         gl.End();
     }
 
