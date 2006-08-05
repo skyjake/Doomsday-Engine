@@ -544,7 +544,7 @@ void Rend_DecorateLine(int index)
             // Figure out the right side.
             side = R_GetSectorSide(line, highSector);
 
-            if(side->top.texture != -1)
+            if(side->top.texture > 0)
             {
                 if(side->top.isflat)
                     GL_PrepareFlat2(side->top.texture, true);
@@ -580,7 +580,7 @@ void Rend_DecorateLine(int index)
             // Figure out the right side.
             side = R_GetSectorSide(line, lowSector);
 
-            if(side->bottom.texture != -1)
+            if(side->bottom.texture > 0)
             {
                 if(side->bottom.isflat)
                     GL_PrepareFlat2(side->bottom.texture, true);
@@ -628,7 +628,7 @@ void Rend_DecorateLine(int index)
         side =
             SIDE_PTR(line->sidenum[0] != NO_INDEX ? line->sidenum[0] : line->sidenum[1]);
 
-        if(side->middle.texture != -1)
+        if(side->middle.texture > 0)
         {
             if(side->middle.isflat)
                 GL_PrepareFlat2(side->middle.texture, true);
