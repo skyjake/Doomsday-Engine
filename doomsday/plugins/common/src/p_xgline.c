@@ -29,6 +29,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #if __JDOOM__
 #  include "doomdef.h"
@@ -570,7 +571,8 @@ linetype_t *XL_GetType(int id)
         return &typebuffer;
     }
     // Does Doomsday have a definition for this?
-    if(Def_Get(DD_DEF_LINE_TYPE, itoa(id, &buff[0], 10), &typebuffer))
+    sprintf(buff, "%i", id);
+    if(Def_Get(DD_DEF_LINE_TYPE, buff, &typebuffer))
         return &typebuffer;
 
     // Is this a type we can generate automatically?

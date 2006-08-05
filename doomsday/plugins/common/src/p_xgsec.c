@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #if __JDOOM__
 #  include "doomdef.h"
@@ -163,7 +164,8 @@ sectortype_t *XS_GetType(int id)
         memcpy(&sectypebuffer, ptr, sizeof(*ptr));
         return &sectypebuffer;
     }
-    if(Def_Get(DD_DEF_SECTOR_TYPE, itoa(id, &buff[0], 10), &sectypebuffer))
+    sprintf(buff, "%i", id);
+    if(Def_Get(DD_DEF_SECTOR_TYPE, buff, &sectypebuffer))
         return &sectypebuffer;  // A definition was found.
     // Sorry...
     return NULL;

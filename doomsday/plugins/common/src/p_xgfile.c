@@ -26,6 +26,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+
 #if __JDOOM__
 #  include "doomdef.h"
 #elif __JHERETIC__
@@ -181,7 +183,7 @@ void XG_WriteTypes(FILE * f)
 {
     int     i, k;
     int     linecount = 0, sectorcount = 0;
-    char    buff[5];
+    char    buff[6];
     linetype_t line;
     sectortype_t sec;
 
@@ -195,8 +197,8 @@ void XG_WriteTypes(FILE * f)
     // This is a very simple way to get the definitions.
     for(i = 1; i < 65536; i++)
     {
-        memset(buff, 0, sizeof(buff));
-        if(!Def_Get(DD_DEF_LINE_TYPE, itoa(i, &buff[0], 10), &line))
+        sprintf(buff, "%i", i);
+        if(!Def_Get(DD_DEF_LINE_TYPE, buff, &line))
             continue;
 
         linecount++;
@@ -241,8 +243,8 @@ void XG_WriteTypes(FILE * f)
     // Then the sectors.
     for(i = 1; i < 65536; i++)
     {
-        memset(buff, 0, sizeof(buff));
-        if(!Def_Get(DD_DEF_SECTOR_TYPE, itoa(i, &buff[0], 10), &sec))
+        sprintf(buff, "%i", i);
+        if(!Def_Get(DD_DEF_SECTOR_TYPE, buff, &sec))
             continue;
 
         sectorcount++;
