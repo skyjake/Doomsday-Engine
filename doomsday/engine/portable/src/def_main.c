@@ -100,7 +100,7 @@ xgclass_t *xgClassLinks;
  */
 static int GetXGClasses(void)
 {
-    xgClassLinks = gx.GetVariable(DD_XGFUNC_LINK);
+    xgClassLinks = (xgclass_t *) gx.GetVariable(DD_XGFUNC_LINK);
     if(!xgClassLinks)
     {
         memset(&nullXgClassLinks, 0, sizeof(nullXgClassLinks));
@@ -342,7 +342,7 @@ acfnptr_t Def_GetActionPtr(char *name)
 {
     // Action links are provided by the Game, who owns the actual
     // action functions.
-    actionlink_t *link = gx.GetVariable(DD_ACTION_LINK);
+    actionlink_t *link = (actionlink_t *) gx.GetVariable(DD_ACTION_LINK);
 
     if(!name || !name[0])
         return 0;
@@ -1477,7 +1477,7 @@ int Def_Get(int type, char *id, void *out)
 
     case DD_DEF_LINE_TYPE:
         for(i = defs.count.lines.num - 1; i >= 0; i--)
-            if(defs.lines[i].id == (int) id)
+            if(defs.lines[i].id == strtol(id, (char **)NULL, 10))
             {
                 if(out)
                     Def_CopyLineType(out, &defs.lines[i]);
@@ -1487,7 +1487,7 @@ int Def_Get(int type, char *id, void *out)
 
     case DD_DEF_SECTOR_TYPE:
         for(i = defs.count.sectors.num - 1; i >= 0; i--)
-            if(defs.sectors[i].id == (int) id)
+            if(defs.sectors[i].id == strtol(id, (char **)NULL, 10))
             {
                 if(out)
                     Def_CopySectorType(out, &defs.sectors[i]);
@@ -1552,7 +1552,7 @@ int Def_Set(int type, int index, int value, void *ptr)
             break;
 
         case DD_CD_TRACK:
-            musdef->cdtrack = (int) ptr;
+            musdef->cdtrack = *(int *) ptr;
             break;
         }
         // If the def was just created, return its index.

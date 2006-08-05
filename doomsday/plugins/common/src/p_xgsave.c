@@ -19,7 +19,10 @@
  * p_xgsave.c: Extended Generalized Line Types.
  *
  * Implements: Saving and loading routines for the XG data.
+ * Compiles for jDoom and jHeretic
  */
+
+#if __JDOOM__ || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -283,3 +286,5 @@ void XL_UnArchiveLines(void)
             line->xg->activator = (activator ? activator : &dummything);
         }
 }
+
+#endif

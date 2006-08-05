@@ -418,7 +418,7 @@ static boolean SBE_Save(const char *name)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", gx.GetVariable(DD_GAME_MODE));
+    fprintf(file, "SkipIf Not %s\n", (char *) gx.GetVariable(DD_GAME_MODE));
 
     s = SB_GetSource(0);
     for(i = 0; i < numSources; ++i, ++s)

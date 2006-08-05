@@ -488,10 +488,12 @@ void S_Reset(void)
 void S_LevelMusic(void)
 {
     int     idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
+    int     cdTrack;
 
     // Update the 'currentmap' music definition.
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gamemap));
-    Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, (void *) P_GetMapCDTrack(gamemap));
+    cdTrack = P_GetMapCDTrack(gamemap);
+    Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
     S_StartMusic("currentmap", true);
 
     // set the game status cvar for the map music
@@ -548,6 +550,8 @@ void S_InitScript(void)
     // All sounds left without a lumpname will use "DEFAULT".
     for(i = 0; i < Get(DD_NUMSOUNDS); i++)
     {
+        // DJS - This uses a kludge to traverse the entire sound list.
+        // FIXME: Implement a mechanism for walking the Def databases.
         Def_Get(DD_DEF_SOUND_LUMPNAME, (char *) i, buf);
         if(!strcmp(buf, ""))
             Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");

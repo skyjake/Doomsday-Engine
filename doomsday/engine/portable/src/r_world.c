@@ -365,7 +365,9 @@ void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
 
     if(!numedgepoints)
     {
-        printf("All clipped away: subsector %i\n", GET_SUBSECTOR_IDX(ssec));
+        int idx = GET_SUBSECTOR_IDX(ssec);
+
+        printf("All clipped away: subsector %i\n", idx);
         ssec->numverts = 0;
         ssec->verts = 0;
         //ssec->origverts = 0;
@@ -1313,12 +1315,13 @@ void R_RationalizeSectors(void)
                                         else
                                             vown = &vertexowners[GET_VERTEX_IDX(collectedLines[n]->v2)];
 
-                                        if(vown->numlines > 2)
+                                        if(vown && vown->numlines > 2)
                                         {
                                             for(o = 0; o <= vown->numlines && !found; ++o)
                                             {
                                                 lcand = LINE_PTR(vown->linelist[o]);
-                                                if(lcand->frontsector && lcand->backsector &&
+                                                if(lcand &&
+                                                   lcand->frontsector && lcand->backsector &&
                                                    lcand->frontsector == lcand->backsector &&
                                                    lcand->frontsector == sec)
                                                 {
@@ -2251,7 +2254,7 @@ const char *R_GetUniqueLevelID(void)
     sprintf(uid, "%s|%s|%s|%s",
             R_GetCurrentLevelID(),
             base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
-            gx.GetVariable(DD_GAME_MODE));
+            (char *) gx.GetVariable(DD_GAME_MODE));
 
     strlwr(uid);
     return uid;

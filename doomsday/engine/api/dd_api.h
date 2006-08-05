@@ -106,7 +106,7 @@ typedef struct {
     int             (*NetServerStop) (int before);
     int             (*NetConnect) (int before);
     int             (*NetDisconnect) (int before);
-    int             (*NetPlayerEvent) (int playernum, int type, void *data);
+    long int        (*NetPlayerEvent) (int playernum, int type, void *data);
     int             (*NetWorldEvent) (int type, int parm, void *data);
     void            (*HandlePacket) (int fromplayer, int type, void *data,
                                      int length);

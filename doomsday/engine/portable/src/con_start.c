@@ -114,9 +114,9 @@ void Con_StartupDone(void)
     GL_ShutdownVarFont();
 
     // Update the secondary title and the game status.
-    strncpy(secondaryTitleText, gx.GetVariable(DD_GAME_ID),
+    strncpy(secondaryTitleText, (char *) gx.GetVariable(DD_GAME_ID),
             sizeof(secondaryTitleText) - 1);
-    strncpy(statusText, gx.GetVariable(DD_GAME_MODE),
+    strncpy(statusText, (char *) gx.GetVariable(DD_GAME_MODE),
             sizeof(statusText) - 1);
 }
 

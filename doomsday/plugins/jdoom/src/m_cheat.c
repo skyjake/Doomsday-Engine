@@ -284,7 +284,7 @@ int cht_CheckCheat(cheatseq_t * cht, char key)
 
     if(*cht->p == 0)
         *(cht->p++) = key;
-    else if(cheat_xlate_table[key] == *cht->p)
+    else if(cheat_xlate_table[(int) key] == *cht->p)
         cht->p++;
     else
         cht->p = cht->sequence;

@@ -2461,7 +2461,7 @@ D_CMD(Version)
     Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
     if(gl.GetString)
         Con_Printf("%s\n", gl.GetString(DGL_VERSION));
-    Con_Printf("Game DLL: %s\n", gx.GetVariable(DD_VERSION_LONG));
+    Con_Printf("Game DLL: %s\n", (char *) gx.GetVariable(DD_VERSION_LONG));
     Con_Printf("http://sourceforge.net/projects/deng/\n");
     return true;
 }

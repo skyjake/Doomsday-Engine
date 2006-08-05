@@ -1040,12 +1040,14 @@ static mobj_t *RoughBlockCheck(mobj_t *mo, int index)
 //===========================================================================
 void P_SetSongCDTrack(int index, int track)
 {
+    int cdTrack = track;
+
     // Set the internal array.
     cd_NonLevelTracks[index] = sc_Number;
 
     // Update the corresponding Doomsday definition.
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cd_SongDefIDs[index], 0),
-            DD_CD_TRACK, (void *) track);
+            DD_CD_TRACK, &cdTrack);
 }
 
 //==========================================================================

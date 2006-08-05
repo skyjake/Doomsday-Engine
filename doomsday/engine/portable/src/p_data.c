@@ -558,7 +558,7 @@ boolean P_CheckLevel(char *levelID, boolean silent)
 {
     int i, printCount;
     boolean canContinue = !numMissingFronts;
-    boolean hasErrors = (numBadTexNames != 0 || numMissingFronts != 0);
+//    boolean hasErrors = (numBadTexNames != 0 || numMissingFronts != 0);
 
     Con_Message("P_CheckLevel: Checking %s for errors...\n", levelID);
 

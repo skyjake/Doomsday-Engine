@@ -19,7 +19,10 @@
  * p_xgsec.c: Extended Generalized Sector Types.
  *
  * Implements all XG line interactions on a map
+ * Compiles for jDoom and jHeretic
  */
+
+#if __JDOOM__ || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -150,6 +153,7 @@ static sectortype_t sectypebuffer;
 sectortype_t *XS_GetType(int id)
 {
     sectortype_t *ptr;
+    char buff[5];
 
     // Try finding it from the DDXGDATA lump.
     ptr = XG_GetLumpSector(id);
@@ -159,7 +163,7 @@ sectortype_t *XS_GetType(int id)
         memcpy(&sectypebuffer, ptr, sizeof(*ptr));
         return &sectypebuffer;
     }
-    if(Def_Get(DD_DEF_SECTOR_TYPE, (char *) id, &sectypebuffer))
+    if(Def_Get(DD_DEF_SECTOR_TYPE, itoa(id, &buff[0], 10), &sectypebuffer))
         return &sectypebuffer;  // A definition was found.
     // Sorry...
     return NULL;
@@ -2872,3 +2876,5 @@ DEFCC(CCmdMovePlane)
     P_AddThinker(&mover->thinker);
     return true;
 }
+
+#endif

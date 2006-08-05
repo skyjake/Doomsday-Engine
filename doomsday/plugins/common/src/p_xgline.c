@@ -19,7 +19,10 @@
  * p_xgline.c: Extended Generalized Line Types.
  *
  * Implements all XG line interactions on a map
+ * Compiles for jDoom and jHeretic
  */
+
+#if __JDOOM__ || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -556,6 +559,7 @@ int XL_AutoGenType(int id, linetype_t *outptr)
 linetype_t *XL_GetType(int id)
 {
     linetype_t *ptr;
+    char buff[5];
 
     // Try finding it from the DDXGDATA lump.
     ptr = XG_GetLumpLine(id);
@@ -566,7 +570,7 @@ linetype_t *XL_GetType(int id)
         return &typebuffer;
     }
     // Does Doomsday have a definition for this?
-    if(Def_Get(DD_DEF_LINE_TYPE, (char *) id, &typebuffer))
+    if(Def_Get(DD_DEF_LINE_TYPE, itoa(id, &buff[0], 10), &typebuffer))
         return &typebuffer;
 
     // Is this a type we can generate automatically?
@@ -1030,7 +1034,7 @@ int C_DECL XLTrav_CheckLine(line_t *line, boolean dummy, void *context,
 
     if(!xline->xg)
         return false;    // Stop checking!
-    return !(xline->xg->active) == (context? true : false);
+    return (xline->xg->active == true) == (context? true : false);
 }
 
 /*
@@ -2558,3 +2562,5 @@ void XL_Update(void)
             xlines[i].special = 0;
         }
 }
+
+#endif

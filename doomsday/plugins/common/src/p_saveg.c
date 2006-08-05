@@ -18,7 +18,10 @@
 /*
  * p_saveg.c: Save Game I/O
  *
+ * Compiles for jDoom and jHeretic
  */
+
+#if __JDOOM__ || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -1472,7 +1475,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
         // Should we set the function?
         if(SV_ReadByte())
@@ -1559,7 +1562,7 @@ static int SV_ReadDoor(vldoor_t* door)
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
         door->type = (vldoor_e) SV_ReadByte();
 
@@ -1638,7 +1641,7 @@ static int SV_ReadFloor(floormove_t* floor)
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
         floor->type = (floor_e) SV_ReadByte();
 
@@ -1726,7 +1729,7 @@ static int SV_ReadPlat(plat_t* plat)
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
         // Should we set the function?
         if(SV_ReadByte())
@@ -1814,7 +1817,7 @@ static int SV_ReadFlash(lightflash_t* flash)
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -1880,7 +1883,7 @@ static int SV_ReadStrobe(strobe_t* strobe)
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -1944,7 +1947,7 @@ static int SV_ReadGlow(glow_t* glow)
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -2004,8 +2007,8 @@ static void SV_WriteFlicker(fireflicker_t* flicker)
  */
 static int SV_ReadFlicker(fireflicker_t* flicker)
 {
-    int ver = SV_ReadByte(); // version byte.
     sector_t* sector;
+    /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
     sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
@@ -2322,7 +2325,7 @@ void SV_Init(void)
     else
     {
         // Use the default path.
-        sprintf(save_path, "savegame\\%s\\", G_GetVariable(DD_GAME_MODE));
+        sprintf(save_path, "savegame\\%s\\", (char *) G_GetVariable(DD_GAME_MODE));
     }
 
     // Build the client save path.
@@ -2679,3 +2682,5 @@ void SV_LoadClient(unsigned int gameid)
 
     return;
 }
+
+#endif

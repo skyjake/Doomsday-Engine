@@ -679,7 +679,8 @@ void DD_CheckQuery(int query, int parm)
     case DD_TEXTURE_HEIGHT_QUERY:
         queryResult = textures[parm]->height << FRACBITS;
         break;
-
+#if 0
+    // Unused
     case DD_NET_QUERY:
         switch (parm)
         {
@@ -688,7 +689,7 @@ void DD_CheckQuery(int query, int parm)
             break;
         }
         break;
-
+#endif
     default:
         break;
     }

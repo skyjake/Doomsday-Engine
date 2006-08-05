@@ -2333,7 +2333,7 @@ void G_DoScreenShot(void)
     char   *numPos;
 
     // Use game mode as the file name base.
-    sprintf(name, "%s-", G_GetVariable(DD_GAME_MODE));
+    sprintf(name, "%s-", (char *) G_GetVariable(DD_GAME_MODE));
     numPos = name + strlen(name);
 
     // Find an unused file name.

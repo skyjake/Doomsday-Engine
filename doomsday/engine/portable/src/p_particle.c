@@ -729,7 +729,7 @@ fixed_t P_GetParticleZ(particle_t *pt)
 void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
 {
     ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
-    uint    index = pt - gen->ptcs + (int) gen / 8;
+    uint    index = pt - gen->ptcs + (int) gen / 8; // DJS - skyjake, what does this do?
     static int yawSigns[4] = { 1, 1, -1, -1 };
     static int pitchSigns[4] = { 1, -1, 1, -1 };
     int     yawSign, pitchSign;

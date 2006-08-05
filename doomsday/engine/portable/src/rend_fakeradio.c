@@ -651,7 +651,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     sector_t *backSector;
     float   bFloor, bCeil, limit, size, segOffset;
     rendpoly_t quad, *q = &quad;
-    int     i, texture, sideNum;
+    int     i, texture = 0, sideNum;
     lineinfo_t *info;
     lineinfo_side_t *sInfo;
     shadowcorner_t topCn[2], botCn[2], sideCn[2];

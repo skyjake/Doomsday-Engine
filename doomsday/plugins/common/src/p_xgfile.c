@@ -19,7 +19,10 @@
  * p_xgfile.c: Extended Generalized Line Types.
  *
  * Writes XG data to file. Parses DD_XGDATA lumps
+ * Compiles for jDoom and jHeretic
  */
+
+#if __JDOOM__ || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -178,6 +181,7 @@ void XG_WriteTypes(FILE * f)
 {
     int     i, k;
     int     linecount = 0, sectorcount = 0;
+    char    buff[5];
     linetype_t line;
     sectortype_t sec;
 
@@ -191,7 +195,8 @@ void XG_WriteTypes(FILE * f)
     // This is a very simple way to get the definitions.
     for(i = 1; i < 65536; i++)
     {
-        if(!Def_Get(DD_DEF_LINE_TYPE, (char *) i, &line))
+        memset(buff, 0, sizeof(buff));
+        if(!Def_Get(DD_DEF_LINE_TYPE, itoa(i, &buff[0], 10), &line))
             continue;
 
         linecount++;
@@ -236,7 +241,8 @@ void XG_WriteTypes(FILE * f)
     // Then the sectors.
     for(i = 1; i < 65536; i++)
     {
-        if(!Def_Get(DD_DEF_SECTOR_TYPE, (char *) i, &sec))
+        memset(buff, 0, sizeof(buff));
+        if(!Def_Get(DD_DEF_SECTOR_TYPE, itoa(i, &buff[0], 10), &sec))
             continue;
 
         sectorcount++;
@@ -475,3 +481,5 @@ sectortype_t *XG_GetLumpSector(int id)
             return sectypes + i;
     return NULL;                // Not found.
 }
+
+#endif
