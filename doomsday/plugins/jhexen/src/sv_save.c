@@ -1344,6 +1344,7 @@ void ArchiveMobj(mobj_t *original)
     // 2: Added the 'translucency' byte.
     // 3: Added byte 'vistarget'
     // 4: Added long 'tracer'
+    // 4: Added long 'lastenemy'
     StreamOutByte(4);
 
     StreamOutLong(mo->pos[VX]);
@@ -1384,6 +1385,7 @@ void ArchiveMobj(mobj_t *original)
     StreamOutByte(mo->translucency);
     StreamOutByte((byte)(mo->vistarget +1));
     StreamOutLong((int) mo->tracer);
+    StreamOutLong((int) mo->lastenemy);
 }
 
 //==========================================================================
@@ -1444,6 +1446,9 @@ void UnarchiveMobj(mobj_t *mo)
 
     if(version >= 4)
         mo->tracer = (mobj_t *) GET_LONG;
+
+    if(version >= 4)
+        mo->lastenemy = (mobj_t *) GET_LONG;
 
     RestoreMobj(mo, version);
 }

@@ -624,7 +624,7 @@ static void SV_ReadPlayer(player_t *pl)
     pl->update = PSF_REBORN;
 }
 
-#define MOBJ_SAVEVERSION 6
+#define MOBJ_SAVEVERSION 7
 static void SV_WriteMobj(mobj_t *mobj)
 {
     mobj_t  mo;
@@ -646,6 +646,7 @@ static void SV_WriteMobj(mobj_t *mobj)
     // 6: Added proper respawn data
     // 6: Added flags 2 in jDoom
     // 6: Added damage
+    // 7: Added generator in jHeretic
     SV_WriteByte(MOBJ_SAVEVERSION);
 
     // A version 2 features: archive number and target.
@@ -734,6 +735,11 @@ static void SV_WriteMobj(mobj_t *mobj)
     SV_WriteByte((byte)(mo.vistarget +1));
 
     SV_WriteLong(mo.floorclip);
+
+#ifdef __JHERETIC__
+    // Ver 7 features: generator
+    SV_WriteShort(SV_ThingArchiveNum(mo.generator));
+#endif
 }
 
 /*
@@ -935,6 +941,13 @@ static int SV_ReadMobj(thinker_t *th)
         mo->vistarget = ((short)SV_ReadByte())-1;
         mo->floorclip = SV_ReadLong();
     }
+
+#if __JHERETIC__
+    if(ver >= 7)
+        mo->generator = (mobj_t *) (int) SV_ReadShort();
+    else
+        mo->generator = NULL;
+#endif
 
     // Restore! (unmangle)
     mo->state = &states[(int) mo->state];
@@ -2230,6 +2243,11 @@ static void P_UnArchiveThinkers(void)
 #endif
             // Update onmobj.
             mobj->onmobj = SV_GetArchiveThing((int) mobj->onmobj);
+
+#if __JHERETIC__
+            // Update generator.
+            mobj->generator = SV_GetArchiveThing((int) mobj->generator);
+#endif
         }
 
         // The activator mobjs must be set.

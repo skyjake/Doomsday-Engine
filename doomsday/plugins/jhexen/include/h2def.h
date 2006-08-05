@@ -223,6 +223,9 @@ typedef struct mobj_s {
 
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
+
+    // Used by lightning zap
+    struct mobj_s  *lastenemy;
 } mobj_t;
 
 // each sector has a degenmobj_t in it's center for sound origin purposes

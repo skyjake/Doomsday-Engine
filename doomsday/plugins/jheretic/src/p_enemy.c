@@ -1987,9 +1987,9 @@ void C_DECL A_RemovePod(mobj_t *actor)
 {
     mobj_t *mo;
 
-    if(actor->special2)
+    if(actor->generator)
     {
-        mo = (mobj_t *) actor->special2;
+        mo = actor->generator;
 
         if(mo->special1 > 0)
             mo->special1--;
@@ -2025,7 +2025,7 @@ void C_DECL A_MakePod(mobj_t *actor)
     actor->special1++;
 
     // Link the generator to the pod
-    mo->special2 = (int) actor;
+    mo->generator = actor;
     return;
 }
 

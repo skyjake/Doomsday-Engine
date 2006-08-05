@@ -894,7 +894,7 @@ void C_DECL A_LightningClip(mobj_t *actor)
     if(actor->type == MT_LIGHTNING_FLOOR)
     {
         actor->pos[VZ] = actor->floorz;
-        target = ((mobj_t *) actor->special2)->tracer;
+        target = actor->lastenemy->tracer;
     }
     else if(actor->type == MT_LIGHTNING_CEILING)
     {
@@ -903,7 +903,7 @@ void C_DECL A_LightningClip(mobj_t *actor)
     }
     if(actor->type == MT_LIGHTNING_FLOOR)
     {   // floor lightning zig-zags, and forces the ceiling lightning to mimic
-        cMo = (mobj_t *) actor->special2;
+        cMo = actor->lastenemy;
         zigZag = P_Random();
         if((zigZag > 128 && actor->special1 < 2) || actor->special1 < -2)
         {
@@ -967,7 +967,7 @@ void C_DECL A_LightningZap(mobj_t *actor)
                      actor->pos[VZ] + deltaZ, MT_LIGHTNING_ZAP);
     if(mo)
     {
-        mo->special2 = (int) actor;
+        mo->lastenemy = actor;
         mo->momx = actor->momx;
         mo->momy = actor->momy;
         mo->target = actor->target;
@@ -996,13 +996,13 @@ void C_DECL A_MLightningAttack2(mobj_t *actor)
     if(fmo)
     {
         fmo->special1 = 0;
-        fmo->special2 = (int) cmo;
+        fmo->lastenemy = cmo;
         A_LightningZap(fmo);
     }
     if(cmo)
     {
         cmo->tracer = NULL;      // mobj that it will track
-        cmo->special2 = (int) fmo;
+        cmo->lastenemy = fmo;
         A_LightningZap(cmo);
     }
     S_StartSound(SFX_MAGE_LIGHTNING_FIRE, actor);
@@ -1018,7 +1018,7 @@ void C_DECL A_ZapMimic(mobj_t *actor)
 {
     mobj_t *mo;
 
-    mo = (mobj_t *) actor->special2;
+    mo = actor->lastenemy;
     if(mo)
     {
         if(mo->state >= &states[mo->info->deathstate] ||
@@ -1050,10 +1050,10 @@ void C_DECL A_LightningRemove(mobj_t *actor)
 {
     mobj_t *mo;
 
-    mo = (mobj_t *) actor->special2;
+    mo = actor->lastenemy;
     if(mo)
     {
-        mo->special2 = 0;
+        mo->lastenemy = NULL;
         P_ExplodeMissile(mo);
     }
 }
@@ -1592,7 +1592,7 @@ void C_DECL A_CHolyAttack2(mobj_t *actor)
             mo->flags &= ~MF_MISSILE;
         }
         tail = P_SpawnMobj(mo->pos[VX], mo->pos[VY], mo->pos[VZ], MT_HOLY_TAIL);
-        tail->special2 = (int) mo;  // parent
+        tail->target = mo;  // parent
         for(i = 1; i < 3; i++)
         {
             next = P_SpawnMobj(mo->pos[VX], mo->pos[VY], mo->pos[VZ], MT_HOLY_TAIL);
@@ -1829,7 +1829,7 @@ void C_DECL A_CHolyTail(mobj_t *actor)
 {
     mobj_t *parent;
 
-    parent = (mobj_t *) actor->special2;
+    parent = actor->target;
 
     if(parent)
     {

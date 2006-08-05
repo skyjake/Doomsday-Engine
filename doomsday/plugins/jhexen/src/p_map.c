@@ -606,10 +606,10 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                 }
                 if(tmthing->type == MT_LIGHTNING_FLOOR)
                 {
-                    if(tmthing->special2 &&
-                       !((mobj_t *) tmthing->special2)->tracer)
+                    if(tmthing->lastenemy &&
+                       !tmthing->lastenemy->tracer)
                     {
-                        ((mobj_t *) tmthing->special2)->tracer = thing;
+                        tmthing->lastenemy->tracer = thing;
                     }
                 }
                 else if(!tmthing->tracer)
@@ -625,15 +625,15 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 
             if(thing->flags & MF_SHOOTABLE && thing != tmthing->target)
             {
-                lmo = (mobj_t *) tmthing->special2;
+                lmo = tmthing->lastenemy;
                 if(lmo)
                 {
                     if(lmo->type == MT_LIGHTNING_FLOOR)
                     {
-                        if(lmo->special2 &&
-                           !((mobj_t *) lmo->special2)->tracer)
+                        if(lmo->lastenemy &&
+                           !lmo->lastenemy->tracer)
                         {
-                            ((mobj_t *) lmo->special2)->tracer = thing;
+                            lmo->lastenemy->tracer = thing;
                         }
                     }
                     else if(!lmo->tracer)

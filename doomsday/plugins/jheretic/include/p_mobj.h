@@ -255,6 +255,9 @@ typedef struct mobj_s {
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
 
+    // Used for pod generating.
+    struct mobj_s  *generator;
+
     int             turntime;      // $visangle-facetarget
     int             corpsetics;    // $vanish: how long has this been dead?
 } mobj_t;

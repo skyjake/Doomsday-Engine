@@ -4999,7 +4999,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax)
     // Spawn a tail for spirit
     tail = P_SpawnMobj(spirit->pos[VX], spirit->pos[VY], spirit->pos[VZ],
                        MT_HOLY_TAIL);
-    tail->special2 = (int) spirit;  // parent
+    tail->target = spirit;  // parent
     for(i = 1; i < 3; i++)
     {
         next = P_SpawnMobj(spirit->pos[VX], spirit->pos[VY], spirit->pos[VZ],
