@@ -33,8 +33,13 @@
 
 #ifdef UNIX
 #  define GL_GLEXT_PROTOTYPES
-#  include <SDL.h>
-#  include <SDL_opengl.h>
+#  ifdef MACOSX
+#    include <SDL/SDL.h>
+#    include <SDL/SDL_opengl.h>
+#  else
+#    include <SDL.h>
+#    include <SDL_opengl.h>
+#  endif
 #  include "atiext.h"
 #  define wglGetProcAddress SDL_GL_GetProcAddress
 #endif
