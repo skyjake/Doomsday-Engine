@@ -23,7 +23,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum gametype_e {
     SINGLE,
     COOPERATIVE,
     DEATHMATCH

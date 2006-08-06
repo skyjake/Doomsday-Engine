@@ -94,7 +94,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct rgba_s {
     float *r, *g, *b, *a;
 } rgba_t;
 
@@ -216,10 +216,10 @@ extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-enum {
+typedef enum border_e {
     BORDERUP = 1,
     BORDERDOWN
-} border_e;
+} border_t;
 
 #ifndef __JDOOM__
 char   *endmsg[] = {
@@ -417,26 +417,11 @@ static float menu_calpha = 0;
 static int quicksave;
 static int quickload;
 
-enum {
 #ifndef __JDOOM__
-    newgame = 0,
-    multiplayer,
-    options,
-    gamefiles,
-    readthis,
-    quitdoom,
-    main_end
+#define READTHISID 4
 #else
-    newgame = 0,
-    multiplayer,
-    options,
-    loadgame,
-    savegame,
-    readthis,
-    quitdoom,
-    main_end
+#define READTHISID  6
 #endif
-} main_e;
 
 MenuItem_t MainItems[] = {
 #if __JDOOM__
@@ -582,8 +567,6 @@ static Menu_t FilesMenu = {
     0, 2
 };
 #endif
-
-enum { load_end = NUMSAVESLOTS };
 
 static MenuItem_t LoadItems[] = {
     {ITT_EFUNC, 0, "1", M_LoadSelect, 0, ""},
@@ -1451,7 +1434,7 @@ void MN_Init(void)
         // This is used because DOOM 2 had only one HELP
         //  page. I use CREDIT as second page now, but
         //  kept this hack for educational purposes.
-        item = &MainItems[readthis];
+        item = &MainItems[READTHISID];
         item->func = M_QuitDOOM;
         item->text = "{case}Quit Game";
         item->lumpname = "M_QUITG";
@@ -1469,7 +1452,7 @@ void MN_Init(void)
     case registered:
         // We need to remove the fourth episode.
         EpiDef.itemCount = 3;
-        item = &MainItems[readthis];
+        item = &MainItems[READTHISID];
         item->func = M_ReadThis;
         item->text = "{case}Read This!";
         item->lumpname = "M_RDTHIS";
@@ -1483,7 +1466,7 @@ void MN_Init(void)
         break;
     }
 #else
-        item = &MainItems[readthis];
+        item = &MainItems[READTHISID];
         item->func = M_ReadThis;
 #endif
 
@@ -2510,7 +2493,7 @@ void M_ReadSaveStrings(void)
     int     i;
     char    name[256];
 
-    for(i = 0; i < load_end; i++)
+    for(i = 0; i < NUMSAVESLOTS; i++)
     {
         SV_SaveGameFile(i, name);
         if(!SV_GetSaveDescription(name, savegamestrings[i]))
@@ -2529,7 +2512,7 @@ void M_ReadSaveStrings(void)
     char    description[HXS_DESCRIPTION_LENGTH];
     boolean found;
 
-    for(i = 0; i < load_end; i++)
+    for(i = 0; i < NUMSAVESLOTS; i++)
     {
         found = false;
         sprintf(name, "%shex%d.hxs", SavePath, i);
@@ -2584,7 +2567,7 @@ void M_DrawLoad(void)
     WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
                  W_GetNumForName("M_LOADG"), "{case}LOAD GAME", true, ALIGN_LEFT);
 #endif
-    for(i = 0; i < load_end; i++)
+    for(i = 0; i < NUMSAVESLOTS; i++)
     {
         M_DrawSaveLoadBorder(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i));
         M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i),
@@ -2611,7 +2594,7 @@ void M_DrawSave(void)
     WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
                  W_GetNumForName("M_SAVEG"), "{case}SAVE GAME", true, ALIGN_LEFT);
 #endif
-    for(i = 0; i < load_end; i++)
+    for(i = 0; i < NUMSAVESLOTS; i++)
     {
         M_DrawSaveLoadBorder(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i));
         M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i),

@@ -42,11 +42,11 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum xgsegenum_e {
     XGSEG_END,
     XGSEG_LINE,
     XGSEG_SECTOR
-} xgsegenum_e;
+} xgsegenum_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

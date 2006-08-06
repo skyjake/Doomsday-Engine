@@ -57,15 +57,13 @@
 // TYPES -------------------------------------------------------------------
 
 // Joystick axes.
-enum
-{
+typedef enum joyaxis_e {
     JA_X, JA_Y, JA_Z, JA_RX, JA_RY, JA_RZ, JA_SLIDER0, JA_SLIDER1,
     NUM_JOYSTICK_AXES
-};
+} joyaxis_t;
 
 #if __JHERETIC__
-struct
-{
+struct artifacthotkey_s {
     int     action;
     int     artifact;
 }

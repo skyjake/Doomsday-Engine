@@ -33,11 +33,11 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct bossspot_e {
     fixed_t x;
     fixed_t y;
     angle_t angle;
-} BossSpot_t;
+} bossspot_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -74,7 +74,7 @@ int     bodyqueslot;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int BossSpotCount;
-static BossSpot_t BossSpots[MAX_BOSS_SPOTS];
+static bossspot_t BossSpots[MAX_BOSS_SPOTS];
 
 static fixed_t dropoff_deltax, dropoff_deltay, floorz;
 

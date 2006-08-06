@@ -96,8 +96,7 @@
 // TYPES -------------------------------------------------------------------
 
 #if __JDOOM__ || __JHERETIC__
-struct
-{
+struct missileinfo_s {
     mobjtype_t type;
     int     speed[2];
 }

@@ -30,7 +30,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum thinkerclass_e {
     tc_end,
     tc_mobj
 } thinkerclass_t;

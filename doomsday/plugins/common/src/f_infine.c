@@ -59,7 +59,7 @@
 
 typedef char handle_t[32];
 
-typedef struct {
+typedef struct ficmd_s {
     char   *token;
     int     operands;
     void    (*func) (void);
@@ -67,13 +67,13 @@ typedef struct {
     boolean when_cond_skipping; // Skipping because condition failed.
 } ficmd_t;
 
-typedef struct {
+typedef struct fivalue_s {
     float   value;
     float   target;
     int     steps;
 } fivalue_t;
 
-typedef struct {
+typedef struct fi_obj_s {
     boolean used;
     handle_t handle;
     fivalue_t color[4];
@@ -83,9 +83,9 @@ typedef struct {
     //byte centered[2];     // Should be centered in X/Y direction?
 } fiobj_t;
 
-typedef struct {
+typedef struct fipic_s {
     fiobj_t object;
-    struct {
+    struct fipicflags_s {
         char    is_patch:1;     // Raw image or patch.
         char    done:1;         // Animation finished (or repeated).
         char    is_rect:1;
@@ -103,9 +103,9 @@ typedef struct {
     fivalue_t other_edge_color[4];
 } fipic_t;
 
-typedef struct {
+typedef struct fitext_s {
     fiobj_t object;
-    struct {
+    struct fitextflags_s {
         char    centered:1;
         char    font_b:1;
         char    all_visible:1;
@@ -117,12 +117,12 @@ typedef struct {
     char   *text;
 } fitext_t;
 
-typedef struct {
+typedef struct fihandler_s {
     int     code;
     handle_t marker;
 } fihandler_t;
 
-typedef struct {
+typedef struct fistate_s {
     char   *script;             // A copy of the script.
     char   *cp;                 // The command cursor.
     infinemode_t mode;

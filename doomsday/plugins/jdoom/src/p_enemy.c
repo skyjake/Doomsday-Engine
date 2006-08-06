@@ -45,7 +45,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum dirtype_s {
     DI_EAST,
     DI_NORTHEAST,
     DI_NORTH,

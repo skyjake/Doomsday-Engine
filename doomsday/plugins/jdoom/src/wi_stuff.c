@@ -82,18 +82,18 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum animenum_e {
     ANIM_ALWAYS,
     ANIM_RANDOM,
     ANIM_LEVEL
 } animenum_t;
 
-typedef struct {
+typedef struct point_s {
     int     x;
     int     y;
 } point_t;
 
-typedef struct {
+typedef struct wianim_s {
     animenum_t type;
 
     // period in tics between animations
@@ -134,7 +134,7 @@ typedef struct {
 
 } wianim_t;
 
-typedef struct {
+typedef struct teaminfo_s {
     int     members;            // 0 if team not present.
     int     frags[NUM_TEAMS];
     int     totalfrags;         // Kills minus suicides.

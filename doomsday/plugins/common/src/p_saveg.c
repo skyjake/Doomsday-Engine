@@ -87,7 +87,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct saveheader_s {
     int     magic;
     int     version;
     int     gamemode;
@@ -103,7 +103,7 @@ typedef struct {
     unsigned int gameid;
 } saveheader_t;
 
-typedef struct {
+typedef struct playerheader_s {
     int     numpowers;
     int     numkeys;
     int     numfrags;
@@ -116,7 +116,7 @@ typedef struct {
 #define TSF_SERVERONLY      0x01    // Only saved by servers.
 #define TSF_SPECIAL         0x02    // Its a special (eg T_MoveCeiling)
 
-typedef struct {
+typedef struct thinkerinfo_s {
     thinkerclass_t  thinkclass;
     think_t         function;
     int             flags;

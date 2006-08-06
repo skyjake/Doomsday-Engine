@@ -480,28 +480,25 @@ void            P_ArtiTele(player_t *player);
 #define ACS_STACK_DEPTH 32
 #define MAX_ACS_STORE 20
 
-typedef enum {
+typedef enum aste_e {
     ASTE_INACTIVE,
     ASTE_RUNNING,
     ASTE_SUSPENDED,
-    ASTE_WAITINGFORTAG,
-    ASTE_WAITINGFORPOLY,
-    ASTE_WAITINGFORSCRIPT,
+    ASTE_WAITING_FOR_TAG,
+    ASTE_WAITING_FOR_POLY,
+    ASTE_WAITING_FOR_SCRIPT,
     ASTE_TERMINATING
 } aste_t;
 
-typedef struct acs_s acs_t;
-typedef struct acsInfo_s acsInfo_t;
-
-struct acsInfo_s {
+typedef struct acsinfo_s {
     int             number;
     int            *address;
     int             argCount;
     aste_t          state;
     int             waitValue;
-};
+} acsinfo_t ;
 
-struct acs_s {
+typedef struct acs_s {
     thinker_t       thinker;
     mobj_t         *activator;
     line_t         *line;
@@ -513,9 +510,9 @@ struct acs_s {
     int             stackPtr;
     int             vars[MAX_ACS_SCRIPT_VARS];
     int            *ip;
-};
+} acs_t;
 
-typedef struct {
+typedef struct acsstore_s {
     int             map;           // Target map
     int             script;        // Script number on target map
     byte            args[4];       // Padded to 4 for alignment
@@ -536,7 +533,7 @@ void            P_CheckACSStore(void);
 
 extern int      ACScriptCount;
 extern byte    *ActionCodeBase;
-extern acsInfo_t *ACSInfo;
+extern acsinfo_t *ACSInfo;
 extern int      MapVars[MAX_ACS_MAP_VARS];
 extern int      WorldVars[MAX_ACS_WORLD_VARS];
 extern acsstore_t ACSStore[MAX_ACS_STORE + 1];  // +1 for termination marker

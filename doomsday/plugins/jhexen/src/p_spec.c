@@ -33,7 +33,7 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int    *TerrainTypes = 0;
-struct {
+struct terraindef_s {
     char   *name;
     int     type;
 } TerrainTypeDefs[] =
@@ -47,7 +47,7 @@ struct {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static struct {
+static struct taggedline_s {
     line_t *line;
     int     lineTag;
 } TaggedLines[MAX_TAGGED_LINES];

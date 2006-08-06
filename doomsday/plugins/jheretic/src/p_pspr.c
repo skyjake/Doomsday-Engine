@@ -27,7 +27,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-static struct {
+static struct macespot_s{
     fixed_t x;
     fixed_t y;
 } MaceSpots[MAX_MACE_SPOTS];

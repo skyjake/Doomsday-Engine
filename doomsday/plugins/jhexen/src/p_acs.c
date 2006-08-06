@@ -33,11 +33,11 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct acsheader_s {
     int     marker;
     int     infoOffset;
     int     code;
-} acsHeader_t;
+} acsheader_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -166,7 +166,7 @@ static void ThingCount(int type, int tid);
 
 int     ACScriptCount;
 byte   *ActionCodeBase;
-acsInfo_t *ACSInfo;
+acsinfo_t *ACSInfo;
 int     MapVars[MAX_ACS_MAP_VARS];
 int     WorldVars[MAX_ACS_WORLD_VARS];
 acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker
@@ -223,8 +223,8 @@ void P_LoadACScripts(int lump)
 {
     int     i;
     int    *buffer;
-    acsHeader_t *header;
-    acsInfo_t *info;
+    acsheader_t *header;
+    acsinfo_t *info;
 
     header = W_CacheLumpNum(lump, PU_LEVEL);
     ActionCodeBase = (byte *) header;
@@ -235,8 +235,8 @@ void P_LoadACScripts(int lump)
         ACScriptCount = 0;
         return;
     }
-    ACSInfo = Z_Malloc(ACScriptCount * sizeof(acsInfo_t), PU_LEVEL, 0);
-    memset(ACSInfo, 0, ACScriptCount * sizeof(acsInfo_t));
+    ACSInfo = Z_Malloc(ACScriptCount * sizeof(acsinfo_t), PU_LEVEL, 0);
+    memset(ACSInfo, 0, ACScriptCount * sizeof(acsinfo_t));
     for(i = 0, info = ACSInfo; i < ACScriptCount; i++, info++)
     {
         info->number = LONG(*buffer++);
@@ -568,7 +568,7 @@ void P_TagFinished(int tag)
     }
     for(i = 0; i < ACScriptCount; i++)
     {
-        if(ACSInfo[i].state == ASTE_WAITINGFORTAG &&
+        if(ACSInfo[i].state == ASTE_WAITING_FOR_TAG &&
            ACSInfo[i].waitValue == tag)
         {
             ACSInfo[i].state = ASTE_RUNNING;
@@ -592,7 +592,7 @@ void P_PolyobjFinished(int po)
     }
     for(i = 0; i < ACScriptCount; i++)
     {
-        if(ACSInfo[i].state == ASTE_WAITINGFORPOLY &&
+        if(ACSInfo[i].state == ASTE_WAITING_FOR_POLY &&
            ACSInfo[i].waitValue == po)
         {
             ACSInfo[i].state = ASTE_RUNNING;
@@ -612,7 +612,7 @@ static void ScriptFinished(int number)
 
     for(i = 0; i < ACScriptCount; i++)
     {
-        if(ACSInfo[i].state == ASTE_WAITINGFORSCRIPT &&
+        if(ACSInfo[i].state == ASTE_WAITING_FOR_SCRIPT &&
            ACSInfo[i].waitValue == number)
         {
             ACSInfo[i].state = ASTE_RUNNING;
@@ -1252,28 +1252,28 @@ static void ThingCount(int type, int tid)
 static int CmdTagWait(void)
 {
     ACSInfo[ACScript->infoIndex].waitValue = Pop();
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITINGFORTAG;
+    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
     return SCRIPT_STOP;
 }
 
 static int CmdTagWaitDirect(void)
 {
     ACSInfo[ACScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITINGFORTAG;
+    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
     return SCRIPT_STOP;
 }
 
 static int CmdPolyWait(void)
 {
     ACSInfo[ACScript->infoIndex].waitValue = Pop();
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITINGFORPOLY;
+    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
     return SCRIPT_STOP;
 }
 
 static int CmdPolyWaitDirect(void)
 {
     ACSInfo[ACScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITINGFORPOLY;
+    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
     return SCRIPT_STOP;
 }
 
@@ -1429,14 +1429,14 @@ static int CmdLineSide(void)
 static int CmdScriptWait(void)
 {
     ACSInfo[ACScript->infoIndex].waitValue = Pop();
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITINGFORSCRIPT;
+    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
     return SCRIPT_STOP;
 }
 
 static int CmdScriptWaitDirect(void)
 {
     ACSInfo[ACScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITINGFORSCRIPT;
+    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
     return SCRIPT_STOP;
 }
 
@@ -1745,7 +1745,7 @@ DEFCC(CCmdScriptInfo)
         whichOne = atoi(argv[1]);
     for(i = 0; i < ACScriptCount; i++)
     {
-        acsInfo_t *aptr = ACSInfo + i;
+        acsinfo_t *aptr = ACSInfo + i;
 
         if(whichOne != -1 && whichOne != aptr->number)
             continue;

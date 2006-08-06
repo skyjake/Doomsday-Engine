@@ -30,12 +30,12 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct execopt_s {
     char   *name;
     void    (*func) (char **args, int tag);
     int     requiredArgs;
     int     tag;
-} execOpt_t;
+} execopt_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -134,7 +134,7 @@ char   *borderLumps[] = {
 
 static int WarpMap;
 
-static execOpt_t ExecOptions[] = {
+static execopt_t ExecOptions[] = {
     {"-scripts", ExecOptionSCRIPTS, 1, 0},
     {"-devmaps", ExecOptionDEVMAPS, 1, 0},
     {"-skill", ExecOptionSKILL, 1, 0},
@@ -459,7 +459,7 @@ void H2_PostInit(void)
 static void HandleArgs()
 {
     int     p;
-    execOpt_t *opt;
+    execopt_t *opt;
 
     nomonsters = ArgExists("-nomonsters");
     respawnparm = ArgExists("-respawn");

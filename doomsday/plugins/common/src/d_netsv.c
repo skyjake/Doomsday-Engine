@@ -70,17 +70,17 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct maprule_s {
     boolean usetime, usefrags;
     int     time;               // Minutes.
     int     frags;              // Maximum frags for one player.
 } maprule_t;
 
-enum {
+typedef enum cyclemode_s {
     CYCLE_IDLE,
     CYCLE_TELL_RULES,
     CYCLE_COUNTDOWN
-};
+} cyclemode_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

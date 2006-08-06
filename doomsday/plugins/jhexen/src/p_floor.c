@@ -442,7 +442,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
 #define STAIR_SECTOR_TYPE       26
 #define STAIR_QUEUE_SIZE        32
 
-struct {
+struct stairqueue_s {
     sector_t *sector;
     int     type;
     int     height;

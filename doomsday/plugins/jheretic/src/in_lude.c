@@ -57,19 +57,19 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum gametype_e {
     SINGLE,
     COOPERATIVE,
     DEATHMATCH
 } gametype_t;
 
-typedef struct {
+typedef struct teaminfo_s {
     int     members;
     int     frags[NUMTEAMS];
     int     totalFrags;
 } teaminfo_t;
 
-typedef struct {
+typedef struct yahpt_s {
     int     x;
     int     y;
 } yahpt_t;

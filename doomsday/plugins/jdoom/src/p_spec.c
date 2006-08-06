@@ -53,8 +53,7 @@
 // This struct is directly read from the lump.
 // So its important we keep it aligned.
 #pragma pack(1)
-typedef struct
-{
+typedef struct animdef_s {
     /* Do NOT change these members in any way */
     signed char istexture;  //  if false, it is a flat (instead of bool)
     char        endname[9];
@@ -78,7 +77,7 @@ line_t *linespeciallist[MAXLINEANIMS];
 
 // TODO: From jHeretic, replace!
 int    *TerrainTypes;
-struct {
+struct terraindef_s {
     char   *name;
     int     type;
 } TerrainTypeDefs[] =

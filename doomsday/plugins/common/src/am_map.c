@@ -63,30 +63,31 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct mpoint_s {
     float pos[3];
 } mpoint_t;
 
-typedef struct {
-    float r, g, b, a, a2, w;    // a2 is used in glow mode in case the glow needs a different alpha
+typedef struct mapline_s {
+    float r, g, b, a, a2, w;    // a2 is used in glow mode in case the glow
+                                // needs a different alpha
     boolean glow;
     boolean scale;
 } mapline_t;
 
-typedef struct {
+typedef struct mline_s {
     mpoint_t a, b;
 } mline_t;
 
-typedef struct {
+typedef struct islope_s {
     fixed_t slp, islp;
 } islope_t;
 
-enum {
+typedef enum glowtype_e {
     NO_GLOW = -1,
     TWOSIDED_GLOW,
     BACK_GLOW,
     FRONT_GLOW
-};
+} glowtype_t;
 
 // MACROS ------------------------------------------------------------------
 

@@ -24,7 +24,7 @@
 // TYPES -------------------------------------------------------------------
 
 // This could hold much more detailed information...
-typedef struct {
+typedef struct textype_s {
     char    name[9];            // Name of the texture.
     int     type;               // Which type?
 } textype_t;

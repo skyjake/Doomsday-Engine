@@ -43,15 +43,15 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct crosspoint_s {
     int     x, y;               // In window coordinates (*not* 320x200!).
 } crosspoint_t;
 
-typedef struct {
+typedef struct crossline_s {
     crosspoint_t a, b;
 } crossline_t;
 
-typedef struct {
+typedef struct cross_s {
     int     numLines;
     crossline_t Lines[MAX_XLINES];
 } cross_t;

@@ -199,12 +199,12 @@
 
 // TYPES -------------------------------------------------------------------
 
-enum {
+typedef enum hotloc_e {
     HOT_TLEFT,
     HOT_TRIGHT,
     HOT_BRIGHT,
     HOT_BLEFT
-};
+} hotloc_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

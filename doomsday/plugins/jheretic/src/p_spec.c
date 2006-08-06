@@ -55,8 +55,7 @@
 // This struct is directly read from the lump.
 // So its important we keep it aligned.
 #pragma pack(1)
-typedef struct
-{
+typedef struct animdef_s {
     /* Do NOT change these members in any way */
     signed char istexture;  //  if false, it is a flat (instead of bool)
     char        endname[9];
@@ -1329,7 +1328,7 @@ void P_SpawnSpecials(void)
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum afxcmd_e {
     afxcmd_play,                // (sound)
     afxcmd_playabsvol,          // (sound, volume)
     afxcmd_playrelvol,          // (sound, volume)
@@ -1479,7 +1478,7 @@ int    *AmbientSfx[] = {
 };
 
 int    *TerrainTypes;
-struct {
+struct terraindef_s {
     char   *name;
     int     type;
 } TerrainTypeDefs[] =

@@ -33,19 +33,19 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct framedef_s {
     int     index;
     int     tics;
-} frameDef_t;
+} framedef_t;
 
-typedef struct {
+typedef struct animdef_s {
     int     type;
     int     index;
     int     tics;
     int     currentFrameDef;
     int     startFrameDef;
     int     endFrameDef;
-} animDef_t;
+} animdef_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

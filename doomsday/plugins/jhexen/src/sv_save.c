@@ -46,7 +46,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum gamearchivesegment_e {
     ASEG_GAME_HEADER = 101,
     ASEG_MAP_HEADER,
     ASEG_WORLD,
@@ -59,9 +59,9 @@ typedef enum {
     ASEG_MISC,
     ASEG_END,
     ASEG_TEX_ARCHIVE
-} gameArchiveSegment_t;
+} gamearchivesegment_t;
 
-typedef enum {
+typedef enum thinkclass_e {
     TC_NULL,
     TC_MOVE_CEILING,
     TC_VERTICAL_DOOR,
@@ -75,18 +75,18 @@ typedef enum {
     TC_ROTATE_POLY,
     TC_MOVE_POLY,
     TC_POLY_DOOR
-} thinkClass_t;
+} thinkclass_t;
 
 #pragma pack(1)
-typedef struct {
-    thinkClass_t tClass;
+typedef struct thinkinfo_s {
+    thinkclass_t tClass;
     think_t thinkerFunc;
     void    (*mangleFunc) ();
     void    (*restoreFunc) ();
     size_t  size;
-} thinkInfo_t;
+} thinkinfo_t;
 
-typedef struct {
+typedef struct ssthinker_s {
     thinker_t thinker;
     sector_t *sector;
 } ssthinker_t;
@@ -130,7 +130,7 @@ static void MangleScript(acs_t * script);
 static void RestoreScript(acs_t * script);
 static void RestorePlatRaise(plat_t * plat);
 static void RestoreMoveCeiling(ceiling_t * ceiling);
-static void AssertSegment(gameArchiveSegment_t segType);
+static void AssertSegment(gamearchivesegment_t segType);
 static void ClearSaveSlot(int slot);
 static void CopySaveSlot(int sourceSlot, int destSlot);
 static void CopyFile(char *sourceName, char *destName);
@@ -147,7 +147,7 @@ static void StreamOutFloat(float val);
 
 extern int ACScriptCount;
 extern byte *ActionCodeBase;
-extern acsInfo_t *ACSInfo;
+extern acsinfo_t *ACSInfo;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -163,7 +163,7 @@ static int **TargetPlayerAddrs;
 static int TargetPlayerCount;
 static byte *SaveBuffer;
 static boolean SavingPlayers;
-static union {
+static union saveptr_u {
     byte   *b;
     short  *w;
     int    *l;
@@ -172,7 +172,7 @@ static union {
 static LZFILE *SavingFP;
 
 // This list has been prioritized using frequency estimates
-static thinkInfo_t ThinkerInfo[] = {
+static thinkinfo_t ThinkerInfo[] = {
     {
      TC_MOVE_FLOOR,
      T_MoveFloor,
@@ -1782,7 +1782,7 @@ static void SetMobjPtr(int *archiveNum)
 static void ArchiveThinkers(void)
 {
     thinker_t *thinker;
-    thinkInfo_t *info;
+    thinkinfo_t *info;
     byte    buffer[MAX_THINKER_SIZE];
 
     StreamOutLong(ASEG_THINKERS);
@@ -1818,7 +1818,7 @@ static void UnarchiveThinkers(void)
 {
     int     tClass;
     thinker_t *thinker;
-    thinkInfo_t *info;
+    thinkinfo_t *info;
 
     AssertSegment(ASEG_THINKERS);
     while((tClass = GET_BYTE) != TC_NULL)
@@ -2202,7 +2202,7 @@ static void UnarchivePolyobjs(void)
 //
 //==========================================================================
 
-static void AssertSegment(gameArchiveSegment_t segType)
+static void AssertSegment(gamearchivesegment_t segType)
 {
     if(GET_LONG != segType)
     {

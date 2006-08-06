@@ -64,7 +64,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
+typedef struct message_s {
     char    text[MAX_LINELEN];
     int     time;
     int     duration; // time when posted.

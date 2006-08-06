@@ -34,7 +34,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
+typedef enum sscmds_e {
     SS_CMD_NONE,
     SS_CMD_PLAY,
     SS_CMD_WAITUNTILDONE,       // used by PLAYUNTILDONE
@@ -64,7 +64,7 @@ static int GetSoundOffset(char *name);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static struct {
+static struct sstranslation_s {
     char    name[SS_SEQUENCE_NAME_LENGTH];
     int     scriptNum;
     int     stopSound;
