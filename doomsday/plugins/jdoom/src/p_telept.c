@@ -14,10 +14,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "s_sound.h"
-#include "p_local.h"
+#include "jdoom.h"
 
 #include "dmu_lib.h"
 #include "p_mapsetup.h"

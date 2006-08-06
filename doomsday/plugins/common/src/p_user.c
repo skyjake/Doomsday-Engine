@@ -29,28 +29,22 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#if __JHEXEN__
+#  include <math.h>
+#endif
+
 #if __JDOOM__
-# include "doomdef.h"
-# include "d_config.h"
-# include "d_event.h"
-# include "p_local.h"
-# include "p_inter.h"
-# include "doomstat.h"
-# include "g_common.h"
+#  include "jdoom.h"
+#  include "g_common.h"
 #elif __JHERETIC__
-# include "doomdef.h"
-# include "h_config.h"
-# include "h_event.h"
-# include "p_local.h"
-//# include "p_inter.h"
-# include "h_stat.h"
-# include "g_common.h"
-# include "r_common.h"
-# include "p_inventory.h"
-# include "soundst.h"
+#  include "jheretic.h"
+#  include "g_common.h"
+#  include "r_common.h"
+#  include "p_inventory.h"
 #elif __JHEXEN__
-# include <math.h>
-# include "jhexen.h"
+#  include <math.h>
+#  include "jhexen.h"
+#  include "p_inventory.h"
 #endif
 
 #include "p_player.h"

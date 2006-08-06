@@ -21,24 +21,15 @@
 #include <ctype.h>
 
 #if __JDOOM__
-# include "doomdef.h"
-# include "d_config.h"
-# include "st_stuff.h"
-# include "r_local.h"
-# include "hu_stuff.h"
+#  include "jdoom.h"
+#  include "hu_stuff.h"
 #elif __JHERETIC__
-# include "doomdef.h"
-# include "h_config.h"
-# include "st_stuff.h"
-# include "r_local.h"
-# include "hu_stuff.h"
+#  include "jheretic.h"
+#  include "hu_stuff.h"
 #elif __JHEXEN__
-# include "jhexen.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
-# include "h2def.h"
-# include "d_config.h"
-# include "st_stuff.h"
-# include "r_local.h"
+#  include "jstrife.h"
 #endif
 
 #include "st_lib.h"

@@ -25,49 +25,24 @@
 #  include <string.h>
 #  include <stdlib.h>
 #  include <math.h>
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "d_action.h"
-#  include "d_config.h"
-#  include "m_argv.h"
-#  include "m_cheat.h"
-#  include "p_local.h"
-#  include "wi_stuff.h"
-#  include "st_stuff.h"
-#  include "s_sound.h"
-#  include "dstrings.h"
-#  include "g_game.h"
+#  include "jdoom.h"
 #  include "p_saveg.h"
 #elif __JHERETIC__
 #  include <stdio.h>
 #  include <string.h>
 #  include <math.h>
-#  include "doomdef.h"
-#  include "h_action.h"
-#  include "h_config.h"
-#  include "m_argv.h"
-#  include "m_cheat.h"
-#  include "p_local.h"
-#  include "st_stuff.h"
-#  include "soundst.h"
-#  include "dstrings.h"
-#  include "g_game.h"
+#  include "jheretic.h"
 #  include "p_saveg.h"
 #  include "p_inventory.h"
 #elif __JHEXEN__
 #  include <string.h>
 #  include <math.h>
 #  include "jhexen.h"
-#  include "m_cheat.h"
+#  include "p_inventory.h"
 #elif __JSTRIFE__
 #  include <string.h>
 #  include <math.h>
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "soundst.h"
-#  include "d_config.h"
-#  include "h2_actn.h"
-#  include "st_stuff.h"
+#  include "jstrife.h"
 #endif
 
 #include "g_controls.h"
@@ -75,9 +50,6 @@
 #include "am_map.h"
 #include "hu_stuff.h"
 #include "hu_msg.h"
-#if !__JHEXEN__
-#  include "m_menu.h"
-#endif
 #include "g_common.h"
 #include "g_update.h"
 #include "d_net.h"

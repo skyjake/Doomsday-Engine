@@ -38,15 +38,18 @@
 /*
  * p_inventory.h: Common code for player inventory
  *
+ * Compiles for jHeretic and jHexen
  */
+
+#if __JHERETIC__ || __JHEXEN__
 
 #ifndef __COMMON_INVENTORY_H__
 #define __COMMON_INVENTORY_H__
 
 #if __JHERETIC__
-# include "h_player.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-# include "h2def.h"
+#  include "jhexen.h"
 #endif
 
 extern boolean artiskip;
@@ -67,4 +70,5 @@ boolean         P_UseArtifactOnPlayer(player_t *player, artitype_e arti);
 
 DEFCC(CCmdInventory);
 
+#endif
 #endif

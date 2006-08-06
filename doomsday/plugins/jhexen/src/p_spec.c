@@ -14,6 +14,8 @@
 
 #include "jhexen.h"
 
+#include "p_inventory.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MAX_TAGGED_LINES 64

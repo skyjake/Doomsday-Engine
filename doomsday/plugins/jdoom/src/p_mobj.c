@@ -24,13 +24,9 @@
 
 #include <math.h>
 
-#include "doomdef.h"
-#include "d_config.h"
-#include "p_local.h"
-#include "st_stuff.h"
+#include "jdoom.h"
+
 #include "hu_stuff.h"
-#include "s_sound.h"
-#include "doomstat.h"
 #include "g_common.h"
 
 // MACROS ------------------------------------------------------------------

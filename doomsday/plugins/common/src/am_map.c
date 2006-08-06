@@ -26,33 +26,13 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "m_ctrl.h"
-# include "doomdef.h"
-# include "d_config.h"
-# include "st_stuff.h"
-# include "p_local.h"
-# include "m_cheat.h"
-# include "d_action.h"
-# include "doomstat.h"
-# include "dstrings.h"
-# include "mn_def.h"
-# include "m_menu.h"
-# include "wi_stuff.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-# include "m_ctrl.h"
-# include "doomdef.h"
-# include "h_config.h"
-# include "st_stuff.h"
-# include "p_local.h"
-# include "m_cheat.h"
-# include "dstrings.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-# include "jhexen.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
-# include "h2_actn.h"
-# include "mn_def.h"
-# include "h2def.h"
-# include "d_config.h"
+#  include "jstrife.h"
 #endif
 
 #include "p_mapsetup.h"

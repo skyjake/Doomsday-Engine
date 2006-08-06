@@ -20,17 +20,13 @@
 #include <math.h>
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "d_items.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "h_stat.h"
-#  include "h_items.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-#  include "h2def.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
+#  include "jstrife.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

@@ -22,20 +22,13 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "doomstat.h"
-# include "doomdef.h"
-# include "d_config.h"
-# include "r_local.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-# include "doomdef.h"
-# include "h_config.h"
-# include "r_local.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-# include "jhexen.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
-# include "h2def.h"
-# include "d_config.h"
-# include "r_local.h"
+#  include "jstrife.h"
 #endif
 
 #include "hu_lib.h"

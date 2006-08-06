@@ -19,10 +19,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "h_stat.h"
-#include "p_local.h"
-#include "soundst.h"
+#include "jheretic.h"
 
 #include "dmu_lib.h"
 

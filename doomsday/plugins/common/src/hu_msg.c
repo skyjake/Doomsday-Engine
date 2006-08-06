@@ -23,29 +23,13 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "doomdef.h"
-# include "d_config.h"
-# include "m_menu.h"
-# include "mn_def.h"
-# include "s_sound.h"
-# include "doomstat.h"
-# include "r_local.h"
-# include "p_local.h"
-# include "dstrings.h"  // Data.
+#  include "jdoom.h"
 #elif __JHERETIC__
-# include "doomdef.h"
-# include "h_config.h"
-# include "m_menu.h"
-# include "mn_def.h"
-# include "soundst.h"
-# include "h_stat.h"
-# include "r_local.h"
-# include "p_local.h"
-# include "dstrings.h"  // Data.
+#  include "jheretic.h"
 #elif __JHEXEN__
-# include "jhexen.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
-# include "jstrife.h"
+#  include "jstrife.h"
 #endif
 
 #include "hu_stuff.h"

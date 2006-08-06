@@ -3,10 +3,6 @@
 
 #include "dd_share.h"
 
-#ifdef __JHERETIC__
-#include "doomdef.h"
-#endif
-
 #ifdef __JHEXEN__
 #define PLR_COLOR(pl, x)    (((unsigned)(x)) > 7? (pl) % 8 : (x))
 #elif __JSTRIFE__

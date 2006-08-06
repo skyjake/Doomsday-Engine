@@ -18,16 +18,13 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "r_local.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "r_local.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "r_local.h"
+#  include "jstrife.h"
 #endif
 
 #include "p_mapsetup.h"

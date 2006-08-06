@@ -27,20 +27,11 @@
 #include "dd_share.h"
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "p_local.h"
-#  include "doomstat.h"
-#  include "d_config.h"
-#  include "d_items.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "p_local.h"
-#  include "h_stat.h"
-#  include "h_config.h"
-#  include "h_items.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-#  include "h2def.h"
-#  include "x_config.h"
+#  include "jhexen.h"
 #endif
 
 #include "d_netsv.h"

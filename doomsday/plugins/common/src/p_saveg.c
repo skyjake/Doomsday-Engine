@@ -28,26 +28,15 @@
 #include <lzss.h>
 
 #ifdef __JDOOM__
-#  include "doomdef.h"
-#  include "dstrings.h"
-#  include "p_local.h"
-#  include "g_game.h"
-#  include "doomstat.h"
-#  include "p_oldsvg.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "dstrings.h"
-#  include "p_local.h"
-#  include "g_game.h"
-#  include "h_stat.h"
-#  include "p_oldsvg.h"
+#  include "jheretic.h"
 #endif
 
 #include "p_saveg.h"
 #include "f_infine.h"
 #include "d_net.h"
 #include "p_svtexarc.h"
-
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_player.h"

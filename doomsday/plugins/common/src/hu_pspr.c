@@ -19,23 +19,13 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-# include "doomdef.h"
-# include "doomstat.h"
-# include "p_local.h"
-# include "d_config.h"
-# include "st_stuff.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-# include "doomdef.h"
-# include "h_stat.h"
-# include "p_local.h"
-# include "h_config.h"
-# include "st_stuff.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-# include "h2def.h"
-# include "d_config.h"
-# include "p_local.h"
+#  include "jstrife.h
 #endif
 
 // MACROS ------------------------------------------------------------------

@@ -30,55 +30,29 @@
 #include <ctype.h>
 #include <math.h>
 
+#if __JHEXEN__ || __JSTRIFE__
+#  include <LZSS.h>
+#endif
+
+#if __JDOOM__
+#  include "jdoom.h"
+#  include "p_saveg.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#  include "g_common.h"
+#  include "m_argv.h"
+#  include "p_saveg.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#elif __JSTRIFE__
+#  include "jstrife.h"
+#endif
+
 #include "hu_stuff.h"
 #include "f_infine.h"
 #include "am_map.h"
 #include "x_hair.h"
 #include "p_player.h"
-
-#if __JDOOM__
-# include "doomdef.h"
-# include "dstrings.h"
-# include "d_config.h"
-# include "g_game.h"
-# include "g_common.h"
-# include "m_argv.h"
-# include "s_sound.h"
-# include "doomstat.h"
-# include "p_local.h"
-# include "m_menu.h"
-# include "m_ctrl.h"
-# include "mn_def.h"
-# include "wi_stuff.h"
-# include "p_saveg.h"
-#elif __JHERETIC__
-# include "doomdef.h"
-# include "dstrings.h"
-# include "h_config.h"
-# include "g_game.h"
-# include "g_common.h"
-# include "m_argv.h"
-# include "soundst.h"
-# include "h_stat.h"
-# include "p_local.h"
-# include "m_menu.h"
-# include "m_ctrl.h"
-# include "mn_def.h"
-# include "p_saveg.h"
-#elif __JHEXEN__
-# include "jhexen.h"
-# include "m_ctrl.h"
-# include <lzss.h>
-#elif __JSTRIFE__
-# include "h2def.h"
-# include "p_local.h"
-# include "r_local.h"
-# include "soundst.h"
-# include "h2_actn.h"
-# include "mn_def.h"
-# include "d_config.h"
-# include <LZSS.h>
-#endif
 
 // MACROS ------------------------------------------------------------------
 

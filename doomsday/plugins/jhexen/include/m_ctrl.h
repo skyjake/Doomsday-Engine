@@ -8,8 +8,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "jhexen.h"
 #include "mn_def.h"
-#include "h2_actn.h"
 #include "g_controls.h"
 
 extern const Control_t *grabbing;

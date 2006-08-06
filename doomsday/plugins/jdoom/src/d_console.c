@@ -21,12 +21,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomstat.h"
-#include "d_config.h"
-#include "g_game.h"
-#include "s_sound.h"
+#include "jdoom.h"
+
 #include "hu_stuff.h"
-#include "mn_def.h"
 #include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------

@@ -5,20 +5,12 @@
 
  // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "h_config.h"
-#include "d_net.h"
-#include "g_game.h"
-#include "st_stuff.h"
+#include "jheretic.h"
+
 #include "st_lib.h"
-#include "p_local.h"
-//#include "p_inter.h"
 #include "am_map.h"
-#include "m_menu.h"
-#include "m_cheat.h"
 #include "hu_stuff.h"
-#include "soundst.h"
-#include "dstrings.h"
+#include "d_net.h"
 #include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------

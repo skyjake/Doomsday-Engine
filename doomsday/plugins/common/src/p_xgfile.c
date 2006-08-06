@@ -29,11 +29,11 @@
 #include <stdio.h>
 
 #if __JDOOM__
-#  include "doomdef.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
+#  include "jheretic.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
+#  include "jstrife.h"
 #endif
 
 #include "p_xg.h"

@@ -10,11 +10,12 @@
 //**
 //**************************************************************************
 
-#include "h2def.h"
+#include <ctype.h>
+
+#include "jhexen.h"
+
 #include "d_net.h"
 #include "hu_stuff.h"
-#include "mn_def.h"
-#include <ctype.h>
 
 // MACROS ------------------------------------------------------------------
 

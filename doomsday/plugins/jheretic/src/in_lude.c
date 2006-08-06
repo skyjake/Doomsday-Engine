@@ -41,13 +41,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "g_game.h"
-#include "soundst.h"
-#include "h_stat.h"
-#include "h_config.h"
-#include "m_menu.h"
-#include "mn_def.h"
+#include "jheretic.h"
+
 #include "hu_stuff.h"
 #include "d_net.h"
 

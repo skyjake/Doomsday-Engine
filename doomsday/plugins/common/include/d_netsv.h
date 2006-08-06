@@ -2,19 +2,13 @@
 #define __NETSV_H__
 
 #ifdef __JDOOM__
-#include "p_local.h"
-#endif
-
-#ifdef __JHERETIC__
-#include "p_local.h"
-#endif
-
-#ifdef __JHEXEN__
-#include "jhexen.h"
-#endif
-
-#ifdef __JSTRIFE__
-#include "p_local.h"
+#  include "jdoom.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#elif __JSTRIFE__
+#  include "jstrife.h"
 #endif
 
 extern boolean  cyclingMaps, mapCycleNoExit;

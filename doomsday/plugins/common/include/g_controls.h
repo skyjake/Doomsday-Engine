@@ -24,7 +24,6 @@
 #define __COMMON_CONTROLS_H__
 
 #include "p_ticcmd.h"
-#include "mn_def.h"
 
 #define CTLCFG_TYPE void
 

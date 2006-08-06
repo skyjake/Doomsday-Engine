@@ -26,8 +26,8 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "jdoom.h"
 #include "mn_def.h"
-#include "d_action.h"
 #include "g_controls.h"
 
 extern const Control_t *grabbing;

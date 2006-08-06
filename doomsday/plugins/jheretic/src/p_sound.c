@@ -17,9 +17,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "h_stat.h"
-#include "soundst.h"
+#include "jheretic.h"
 
 // MACROS ------------------------------------------------------------------
 

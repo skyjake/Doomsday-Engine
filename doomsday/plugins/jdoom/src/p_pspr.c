@@ -24,13 +24,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "d_config.h"
-#include "d_event.h"
-#include "p_local.h"
-#include "doomstat.h"
-#include "p_pspr.h"
-#include "s_sound.h"
+#include "jdoom.h"
 
 #include "d_net.h"
 #include "p_player.h"

@@ -7,13 +7,9 @@
 
 #include <math.h>
 
-#include "doomdef.h"
-#include "h_stat.h"
-#include "h_config.h"
-#include "p_local.h"
-#include "g_common.h"
-#include "soundst.h"
+#include "jheretic.h"
 
+#include "g_common.h"
 #include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------

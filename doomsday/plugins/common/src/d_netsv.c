@@ -24,20 +24,9 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "p_local.h"
-#  include "d_config.h"
-#  include "s_sound.h"
-#  include "st_stuff.h"
-#  include "dstrings.h"
-#  include "m_cheat.h"
-#  include "g_common.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "h_stat.h"
-#  include "h_config.h"
-#  include "soundst.h"
-#  include "m_cheat.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__

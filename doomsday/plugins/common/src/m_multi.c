@@ -20,37 +20,21 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if defined __JDOOM__
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "m_menu.h"
-#  include "d_config.h"
-#  include "s_sound.h"
-#  include "dstrings.h"
-#  include "p_local.h"
-#  include "mn_def.h"
-#elif defined __JHERETIC__
-#  include "doomdef.h"
-#  include "m_menu.h"
-#  include "h_config.h"
-#  include "soundst.h"
-#  include "p_local.h"
-#  include "mn_def.h"
-#elif defined __JHEXEN__
-#  include "jhexen.h"
-#elif defined __JSTRIFE__
-#  include "h2def.h"
-#  include "d_config.h"
-#  include "soundst.h"
-#  include "p_local.h"
-#  include "mn_def.h"
-#endif
-
-#include "hu_stuff.h"
-
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#elif __JSTRIFE__
+#  include "jstrife.h
+#endif
+
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 

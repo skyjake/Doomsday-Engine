@@ -21,14 +21,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "h2def.h"
-#include "x_config.h"
+#include "jhexen.h"
+
 #include "d_net.h"
-#include "mn_def.h"
 #include "hu_stuff.h"
 #include "f_infine.h"
 #include "g_common.h"
 #include "g_controls.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 

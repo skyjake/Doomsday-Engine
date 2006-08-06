@@ -2,10 +2,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "h_stat.h"
-#include "soundst.h"
-#include "p_local.h"
+#include "jheretic.h"
 
 #include "dmu_lib.h"
 #include "p_mapsetup.h"

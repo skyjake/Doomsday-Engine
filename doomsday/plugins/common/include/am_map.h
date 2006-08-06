@@ -25,14 +25,6 @@
 #ifndef __AMMAP_H__
 #define __AMMAP_H__
 
-// DJS - Common\f_infine.c is calling here when compiling jHexen looking for this...
-#ifdef __JHEXEN__
-#  include "jhexen.h"
-#elif __JSTRIFE__
-#include "p_local.h"
-#endif
-
-
 #ifndef __JDOOM__
 extern boolean  automapactive;  // Common\f_infine.c is looking for this if not jDoom... ??
 

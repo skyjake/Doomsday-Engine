@@ -25,14 +25,9 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "doomdef.h"
-#include "g_game.h"
-#include "s_sound.h"
-#include "doomstat.h"
-#include "wi_stuff.h"
-#include "d_config.h"
-#include "m_menu.h"
-#include "mn_def.h"
+
+#include "jdoom.h"
+
 #include "hu_stuff.h"
 #include "d_net.h"
 

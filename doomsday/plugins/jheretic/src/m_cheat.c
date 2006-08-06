@@ -42,18 +42,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "m_cheat.h"
-#include "soundst.h"
-#include "dstrings.h"
-#include "g_game.h"
-//#include "p_inter.h"
-#include "p_local.h"
-#include "p_setup.h"
+#include "jheretic.h"
+
 #include "f_infine.h"
 #include "d_net.h"
-#include "st_stuff.h"
-#include "mn_def.h"
-
 #include "g_common.h"
 #include "p_player.h"
 #include "p_inventory.h"

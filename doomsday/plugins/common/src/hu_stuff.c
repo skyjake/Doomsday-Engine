@@ -26,31 +26,18 @@
 #include <ctype.h>
 #include <math.h>
 
+#ifdef __JDOOM__
+#  include "jdoom.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#elif __JSTRIFE__
+#  include "jstrife.h"
+#endif
+
 #include "hu_stuff.h"
 #include "hu_msg.h"
-
-#ifdef __JDOOM__
-# include "mn_def.h"
-# include "m_menu.h"
-# include "doomstat.h"
-# include "p_local.h"
-# include "d_config.h"
-# include "dstrings.h"
-#elif __JHERETIC__
-# include "mn_def.h"
-# include "m_menu.h"
-# include "h_stat.h"
-# include "p_local.h"
-# include "h_config.h"
-#elif __JHEXEN__
-# include "h2def.h"
-# include "mn_def.h"
-# include "x_config.h"
-#elif __JSTRIFE__
-# include "h2def.h"
-# include "mn_def.h"
-# include "d_config.h"
-#endif
 
 // MACROS ------------------------------------------------------------------
 

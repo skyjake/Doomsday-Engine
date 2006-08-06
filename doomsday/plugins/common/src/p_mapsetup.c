@@ -22,31 +22,23 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __JDOOM__
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "d_config.h"
-#  include "p_local.h"
-#  include "s_sound.h"
-#  include "p_setup.h"
-#  include "hu_stuff.h"
-#elif __JHERETIC__
+#if __JHERETIC__ || __JHEXEN__
 #  include <math.h>
+# if __JHERETIC__
 #  include <ctype.h>              // has isspace
-#  include "doomdef.h"
-#  include "h_stat.h"
-#  include "h_config.h"
-#  include "p_local.h"
-#  include "soundst.h"
-#  include "p_setup.h"
+# endif
+#endif
+
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
 #  include "hu_stuff.h"
 #elif __JHEXEN__
-#  include <math.h>
 #  include "jhexen.h"
 #  include "p_start.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "p_local.h"
+#  include "jstrife.h"
 #endif
 
 #include "dmu_lib.h"

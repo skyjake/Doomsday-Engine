@@ -27,14 +27,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "h_stat.h"
-#include "h_config.h"
-#include "m_argv.h"
-#include "p_local.h"
-#include "g_game.h"
-#include "soundst.h"
+#include "jheretic.h"
 
+#include "m_argv.h"
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_player.h"

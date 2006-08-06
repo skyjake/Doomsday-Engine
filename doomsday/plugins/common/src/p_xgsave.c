@@ -27,18 +27,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "p_local.h"
-#  include "r_local.h"
-#  include "r_defs.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "p_local.h"
-#  include "r_local.h"
-#  include "r_defs.h"
+#  include "jheretic.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "p_local.h"
+#  include "jstrife.h"
 #endif
 
 #include "p_mapsetup.h"

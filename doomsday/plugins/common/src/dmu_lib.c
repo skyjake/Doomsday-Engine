@@ -22,11 +22,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-# include "r_defs.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-# include "r_defs.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-# include "jhexen.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
 #  include "jstrife.h"
 #endif

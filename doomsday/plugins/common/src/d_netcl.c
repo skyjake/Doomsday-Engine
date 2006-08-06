@@ -22,25 +22,16 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-#  include "doomdef.h"
-#  include "doomstat.h"
-#  include "dstrings.h"
-#  include "p_local.h"
-#  include "s_sound.h"
-#  include "d_config.h"
-#  include "g_game.h"
-#  include "st_stuff.h"
-#  include "wi_stuff.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "h_stat.h"
-#  include "h_config.h"
-#  include "g_game.h"
-#  include "st_stuff.h"
+#  include "jheretic.h"
 #  include "p_inventory.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
+#  include "p_inventory.h"
 #elif __JSTRIFE__
-# include "jstrife.h"
+#  include "jstrife.h"
+#  include "p_inventory.h"
 #endif
 
 #include "am_map.h"

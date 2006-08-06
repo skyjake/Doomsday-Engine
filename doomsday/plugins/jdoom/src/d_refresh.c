@@ -22,22 +22,16 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
-#include "doomdef.h"
-#include "doomstat.h"
-#include "st_stuff.h"
-#include "wi_stuff.h"
+
+#include "jdoom.h"
+
 #include "hu_stuff.h"
 #include "hu_pspr.h"
 #include "am_map.h"
-#include "d_config.h"
-#include "x_hair.h"
-#include "mn_def.h"
-#include "m_menu.h"
 #include "g_common.h"
 #include "r_common.h"
 #include "d_net.h"
 #include "f_infine.h"
-
 #include "x_hair.h"
 
 // MACROS ------------------------------------------------------------------

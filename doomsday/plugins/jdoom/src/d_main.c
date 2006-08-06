@@ -18,13 +18,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "doomstat.h"
+#include "jdoom.h"
 
-#include "d_config.h"
 #include "m_argv.h"
-#include "m_menu.h"
-#include "g_game.h"
 #include "hu_stuff.h"
 #include "p_saveg.h"
 

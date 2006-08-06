@@ -32,28 +32,11 @@
 #include <stdio.h>
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "p_local.h"
-#  include "doomstat.h"
-#  include "d_config.h"
-#  include "s_sound.h"
-#  include "p_inter.h"
-#  include "r_defs.h"
-#  include "g_game.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "p_local.h"
-#  include "h_stat.h"
-#  include "h_config.h"
-#  include "soundst.h"
-//#  include "p_inter.h"
-#  include "r_defs.h"
-#  include "g_game.h"
+#  include "jheretic.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "p_local.h"
-#  include "d_config.h"
-#  include "sounds.h"
+#  include "jstrife.h"
 #endif
 
 #include "dmu_lib.h"

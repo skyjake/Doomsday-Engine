@@ -21,13 +21,13 @@
  */
 
 #if __JDOOM__
-#  include "d_player.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "h_player.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-#  include "h2def.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "s_player.h"
+#  include "jstrife.h"
 #endif
 
 int         P_GetPlayerNum(player_t *player);

@@ -11,7 +11,9 @@
 //**************************************************************************
 
 #include "jhexen.h"
+
 #include "am_map.h"
+#include "p_inventory.h"
 
 int     echoMsg = 1;
 

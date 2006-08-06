@@ -17,7 +17,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "h2def.h"
+#include "jhexen.h"
 
 //#pragma pack(1)
 

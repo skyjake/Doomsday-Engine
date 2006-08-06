@@ -4,17 +4,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "h_stat.h"
-#include "h_config.h"
-#include "dstrings.h"
+#include "jheretic.h"
+
 #include "am_map.h"
 #include "d_net.h"
-#include "p_local.h"
-#include "soundst.h"
-//#include "p_inter.h"
-#include "st_stuff.h"
-
 #include "dmu_lib.h"
 #include "p_player.h"
 #include "p_inventory.h"

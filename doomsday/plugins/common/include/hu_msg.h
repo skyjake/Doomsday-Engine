@@ -2,15 +2,13 @@
 #define __HUD_MESSAGES_H__
 
 #ifdef __JDOOM__
-#  include "d_event.h"
-#  include "r_defs.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-//#  include "jheretic.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "r_local.h"
+#  include "jstrife.h"
 #endif
 
 #define HU_MSGREFRESH   DDKEY_ENTER

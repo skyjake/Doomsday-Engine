@@ -49,15 +49,13 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JHERETIC__
-#  include "p_inventory.h"
-#  include "h_stat.h"
-#  include "h_config.h"
-#  include "soundst.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #endif
 
 #include "d_net.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -23,18 +23,6 @@
 
 #include "doomsday.h"
 
-#ifdef __JDOOM__
-# include "d_event.h"
-# include "r_defs.h"
-#elif __JHERETIC__
-//# include "jheretic.h"
-#elif __JHEXEN__
-//#include "jHexen/mn_def.h"
-
-#elif __JSTRIFE__
-# include "mn_def.h"
-#endif
-
 enum {
     ALIGN_LEFT = 0,
     ALIGN_CENTER,

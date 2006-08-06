@@ -22,20 +22,18 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
-#include "x_hair.h"
 
 #if __JDOOM__
-#  include "doomdef.h"
-#  include "d_config.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "doomdef.h"
-#  include "h_config.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "d_config.h"
+#  include "jstrife.h"
 #endif
+
+#include "x_hair.h"
 
 // MACROS ------------------------------------------------------------------
 

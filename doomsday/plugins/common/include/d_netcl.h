@@ -1,10 +1,6 @@
 #ifndef __NETCL_H__
 #define __NETCL_H__
 
-#ifdef __JHERETIC__
-#include "doomdef.h"
-#endif
-
 #include "d_net.h"
 
 void           *NetCl_WriteCommands(ticcmd_t * cmd, int count);

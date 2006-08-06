@@ -23,29 +23,14 @@
 // HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
-# include "doomdef.h"
-# include "doomstat.h"
-# include "p_setup.h"
-# include "p_local.h"
-# include "m_menu.h"
-# include "dstrings.h"
-# include "s_sound.h"
-# include "m_cheat.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-# include "doomdef.h"
-# include "p_setup.h"
-# include "p_local.h"
-# include "m_menu.h"
-# include "dstrings.h"
-# include "soundst.h"
-# include "m_cheat.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #  include "m_cheat.h"
 #elif __JSTRIFE__
-# include "h2def.h"
-# include "p_local.h"
-# include "st_stuff.h"
+#  include "jstrife.h"
 #endif
 
 #include <ctype.h>

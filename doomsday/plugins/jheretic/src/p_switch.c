@@ -4,14 +4,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "h_stat.h"
-#include "p_local.h"
-#include "g_game.h"
-#include "soundst.h"
-#include "d_net.h"
-#include "h_config.h"
+#include "jheretic.h"
 
+#include "d_net.h"
 #include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------

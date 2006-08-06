@@ -24,22 +24,16 @@
 #include <ctype.h>
 
 #ifdef __JDOOM__
-# include "doomdef.h"
-# include "doomstat.h"
-# include "s_sound.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-# include "doomdef.h"
-# include "h_stat.h"
-# include "h_event.h"
-# include "soundst.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
-# include "jhexen.h"
+#  include "jhexen.h"
 #elif __JSTRIFE__
-# include "jstrife.h"
+#  include "jstrife.h"
 #endif
 
 #include "hu_stuff.h"
-
 #include "f_infine.h"
 #include "g_common.h"
 #include "d_net.h"

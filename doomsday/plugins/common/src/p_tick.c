@@ -22,20 +22,13 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef __JDOOM__
-#  include "d_event.h"
-#  include "p_local.h"
-#  include "doomstat.h"
-#  include "g_game.h"
+#  include "jdoom.h"
 #elif __JHERETIC__
-#  include "h_event.h"
-#  include "p_local.h"
-#  include "h_stat.h"
-#  include "g_game.h"
+#  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "h2def.h"
-#  include "p_local.h"
+#  include "jstrife.h"
 #endif
 
 #include "g_common.h"

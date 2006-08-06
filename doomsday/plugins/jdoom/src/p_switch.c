@@ -18,14 +18,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "p_local.h"
-#include "g_game.h"
-#include "s_sound.h"
-#include "doomstat.h"
-#include "d_net.h"
-#include "d_config.h"
+#include "jdoom.h"
 
+#include "d_net.h"
 #include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
