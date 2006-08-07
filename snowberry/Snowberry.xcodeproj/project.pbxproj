@@ -6,23 +6,6 @@
 	objectVersion = 42;
 	objects = {
 
-/* Begin PBXBuildStyle section */
-		B060CEFC087DC3C300A57E45 /* Development */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-			};
-			name = Development;
-		};
-		B060CEFD087DC3C400A57E45 /* Deployment */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-			};
-			name = Deployment;
-		};
-/* End PBXBuildStyle section */
-
 /* Begin PBXFileReference section */
 		B012234808A6AE4A00A6E775 /* tab10_summary.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab10_summary.py; path = plugins/tab10_summary.py; sourceTree = "<group>"; };
 		B012234908A6AE4A00A6E775 /* tab20_maps.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab20_maps.py; path = plugins/tab20_maps.py; sourceTree = "<group>"; };
@@ -134,19 +117,6 @@
 			buildConfigurationList = B0F176F3087C3A6D0051F24A /* Build configuration list for PBXLegacyTarget "Snowberry" */;
 			buildPhases = (
 			);
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = Snowberry;
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
 			buildToolPath = "";
 			comments = "Builds a distribution disk image.";
 			dependencies = (
@@ -161,12 +131,6 @@
 		B0F176B3087C36620051F24A /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = B0F176B4087C36620051F24A /* Build configuration list for PBXProject "Snowberry" */;
-			buildSettings = {
-			};
-			buildStyles = (
-				B060CEFC087DC3C300A57E45 /* Development */,
-				B060CEFD087DC3C400A57E45 /* Deployment */,
-			);
 			hasScannedForEncodings = 0;
 			mainGroup = B0F176B1087C36610051F24A;
 			projectDirPath = "";
