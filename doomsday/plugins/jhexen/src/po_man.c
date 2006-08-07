@@ -1052,8 +1052,9 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
     sub = R_PointInSubsector(avg.x << FRACBITS, avg.y << FRACBITS);
     if(P_GetPtrp(sub, DMU_POLYOBJ) != NULL)
     {
-        Con_Error
-            ("PO_TranslateToStartSpot:  Multiple polyobjs in a single subsector.\n");
+        Con_Message("PO_TranslateToStartSpot: Warning: Multiple polyobjs in a single subsector\n"
+                    "  (ssec %i, sector %i). Previous polyobj overridden.\n",
+                    P_ToIndex(sub), P_GetIntp(sub, DMU_SECTOR));
     }
     P_SetPtrp(sub, DMU_POLYOBJ, po);
 }
