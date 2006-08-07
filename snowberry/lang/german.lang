@@ -1,9 +1,9 @@
-# $Id: german.lang 2006-06-21 15:30 CEST Doomgater $
+# $Id: german.lang 2006-08-02 9:40 CEST Doomgater $
 #
 # Strings for German
 # Supposed to appear in the language selection list.
-# firstv try, first version, probably with 100000 errors !
-language-german: Deutsch(DE)
+# 3rd try, 3rd version, probably with even more errors !
+language-german:Deutsch(DE)
 
 #
 # Setup Wizard
@@ -11,32 +11,31 @@ language-german: Deutsch(DE)
 run-setup-wizard: Setup Wizard
 setup-wizard: Setup Wizard
 wizard-language: Sprache
-wizard-language-explanation = "Das Snowberry Benutzer-Interface unterstÃ¼tzt Mehrsprachigkeit.
-WÃ¤hlen Sie die Sprache, die Sie nutzen mÃ¶chten."
+wizard-language-explanation = "Das Snowberry Benutzer-Interface unterstützt Mehrsprachigkeit.
+Wählen Sie die Sprache, die Sie nutzen möchten."
 wizard-games: Game Profile
-wizard-games-all: Alle auswÃ¤hlen
-wizard-games-clear: Alle abwÃ¤hlen
-wizard-select-games =
-"WÃ¤hlen Sie die Spiele aus, die Sie konfigurieren mÃ¶chten.
-Beachten Sie, dass die jeweiligen Orginale bereits installiert sein mÃ¼ssen."
-wizard-locate-iwad = "Um dieses Spiel nutzen zu kÃ¶nnen, mÃ¼ssen Sie die Haupt-Datei (IWAD) ausfindig machen."
+wizard-games-all: Alle auswählen
+wizard-games-clear: Alle abwählen
+wizard-select-games ="Wählen Sie die Spiele aus, die Sie konfigurieren möchten.
+Beachten Sie, dass die jeweiligen Orginale bereits installiert sein müssen."
+wizard-locate-iwad = "Um dieses Spiel nutzen zu können, müssen Sie die Haupt-Datei (IWAD) ausfindig machen."
 wizard-locate-iwad-deathkings = "Death Kings WAD wird -nicht wie andere Spiele- als Erweiterung installiert.
 Death Kings ist das offizielle Zusatzpack zum Spiel HeXen."
 wizard-suggested-iwad: Originalname:
 deathkings-selection-title: Suche HEXDD.WAD
 wizard-addon-paths: Erweiterungsordner
-wizard-addon-paths-explanation: Falls Sie schon WAD-Dateien, Resource Packs, oder andere Erweiterungen auf einer Festplatte gespeichert haben, kann Snowberry diese von ihrem momentanen Speicherort laden. Bitte geben Sie hier die entsprechenden Ordner an. Diese Angaben kÃ¶nnen spÃ¤ter in den Snowberry Einstellungen geÃ¤ndert werden. Wenn Sie spÃ¤ter Erweiterungen mittels der 'Erweiterungen'-Registerkarte hinzufÃ¼gen, werden diese automatisch in den Erweiterungen-Ordner kopiert.
+wizard-addon-paths-explanation: Falls Sie schon WAD-Dateien, Resource Packs, oder andere Erweiterungen auf einer Festplatte gespeichert haben, kann Snowberry diese von ihrem momentanen Speicherort laden. Bitte geben Sie hier die entsprechenden Ordner an. Diese Angaben können später in den Snowberry Einstellungen geändert werden. Wenn Sie später Erweiterungen mittels der Erweiterungen-Registerkarte hinzufügen, werden diese automatisch in den Erweiterungen-Ordner kopiert.
 wizard-launching: Startoptionen
 wizard-launching-explanation: Soll Snowberry beim Start eines Spieles beendet werden?
 
 #
 # Windows and Dialogs
 #
-about-dialog: Ãœber Snowberry
+about-dialog: Über Snowberry
 about-title: Snowberry
-about-subtitle: Erweiterbares Startprogramm fÃ¼r die Doomsday Engine
+about-subtitle: Erweiterbares Startprogramm für die Doomsday Engine
 about-version: Version
-about-credits: Details und DankeschÃ¶ns
+about-credits: Details und Dankeschöns
 about-info = "<b>Webseite:</b><br><tt>http://deng.sourceforge.net/</tt>
 <p>Dieses Programm wird unter der <i>GNU General Public
 License.</i> vertrieben
@@ -54,7 +53,7 @@ Daniel Swanson"
 
 ok: OK
 cancel: Abbrechen
-reset: ZurÃ¼cksetzen
+reset: Zurücksetzen
 browse: Durchsuchen
 install: Installieren
 launch-message: Los geht's...
@@ -65,30 +64,30 @@ new-profile-game: Spiel-Dll
 rename-profile-dialog: Profil umbenennen
 rename-profile-title: Profil umbennenen
 rename-profile-name: Neuer Name
-reset-profile-dialog: Profil zurÃ¼cksetzen
+reset-profile-dialog: Profil zurücksetzen
 reset-profile-title: Sicher?
-reset-profile-query: Sind Sie sicher, dass Sie <b>%1</b> auf die Vorgabeeinstellungen zurÃ¼cksetzten mÃ¶chten? Dabei werden alle VerÃ¤nderungen des Profils gelÃ¶scht und alle Erweiterungen abgewÃ¤hlt.
-delete-profile-dialog: Profil lÃ¶schen?
+reset-profile-query: Sind Sie sicher, dass Sie <b>%1</b> auf die Vorgabeeinstellungen zurücksetzten möchten? Dabei werden alle Veränderungen des Profils gelöscht und alle Erweiterungen abgewählt.
+delete-profile-dialog: Profil löschen? 
 delete-profile-title: Sicher?
-delete-profile-query: Sind Sie sicher, dass Sie <b>%1</b> lÃ¶schen mÃ¶chten?
+delete-profile-query: Sind Sie sicher, dass Sie <b>%1</b> löschen möchten?
 duplicate-profile-dialog: Profil kopieren
 duplicate-profile-title: Profil kopieren
 duplicating-profile: Sie erstellen ein Duplikat von <b>%1</b>.
 unhide-profile-dialog: Profile anzeigen
 unhide-profile-title: Verborgene Profile anzeigen
-unhiding-profiles: WÃ¤hlen Sie ein oder mehrere verborgene Profile zum Anzeigen.
-unhide-select-all: Alle wÃ¤hlen
-unhide-clear-all: Alle abwÃ¤hlen
-view-command-line-dialog: Eingabeaufforderung
+unhiding-profiles: Wählen Sie ein oder mehrere verborgene Profile zum Anzeigen.
+unhide-select-all: Alle wählen
+unhide-clear-all: Alle abwählen
+view-command-line-dialog: Eingabeaufforderung 
 view-command-line-title: Vorschau der Eingabeaufforderungs-Optionen
 install-addon-dialog: Installation von Erweiterungen
-install-addon-title: WÃ¤hlen Sie die zu installierenden Erweiterungen
+install-addon-title: Wählen Sie die zu installierenden Erweiterungen
 addon-dialog-folder: Ordner:
 addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Nicht installiert
-addon-dialog-browse-prompt: WÃ¤hlen Sie einen Ordner
-addon-dialog-found: Erweiterungen im gewÃ¤hlten Ordner:
-addon-dialog-addons-copied: Installierte Erweiterungen werden in den persÃ¶nlichen Erweiterungsordner kopiert.
+addon-dialog-browse-prompt: Wählen Sie einen Ordner
+addon-dialog-found: Erweiterungen im gewählten Ordner:
+addon-dialog-addons-copied: Installierte Erweiterungen werden in den persönlichen Erweiterungsordner kopiert.
 addon-dialog-name: Name
 addon-dialog-type: Typ
 addon-dialog-type-box: Box Container
@@ -124,24 +123,24 @@ conflict-wizard: Erweiterungs-Wizard
 conflict-wizard-title: Erweiterungs-Konflikte beseitigen
 
 category-conflict-message = "<b>%1</b> kann nicht mit den folgenden Erweiterungen
-genutzt werden:%2 <p>WÃ¤hlen Sie, welche dieser Erweiterungen geladen werden sollen."
+genutzt werden:%2 <p>Wählen Sie, welche dieser Erweiterungen geladen werden sollen."
 
 conflict-choice1 = "Lade %1.
 Die inkompatiblen Erweiterungen werden nicht geladen."
-conflict-choice2: Lade %1 nicht.
+conflict-choice2: Lade %1 nicht. 
 
-value-conflict-message = "<b>%1</b> kann nicht mit folgenden Einstellungen
+value-conflict-message = "<b>%1</b> kann nicht mit folgenden Einstellungen 
 genutzt werden:%2 <p>%1 wird nicht geladen."
 
 keyword-conflict-message = "<b>%1</b> kann nicht mit folgenden Ressourcen geladen werden:%2 <p>
-WÃ¤hlen Sie, welche dieser Erweiterungen geladen werden sollen."
+Wählen Sie, welche dieser Erweiterungen geladen werden sollen."
 
 provide-conflict-message = "Ressourcen-Konflikt:%1
 <p>Die aufgelisteten Erweiterungen enthalten nicht kompatible Versionen derselben Ressource. Nur eine dieser Erweiterungen kann geladen werden.
-<p>WÃ¤hlen Sie die zu ladende Erweiterung."
+<p>Wählen Sie die zu ladende Erweiterung."
 
-missing-requirements-message = "<b>%1</b> kann nicht genutzt werden, da keine der benÃ¶tigten Ressourcen geladen wird <p>Um %1 nutzen zu kÃ¶nnen,
-mÃ¼ssen Sie zusÃ¤tzliche Erweiterungen mit den benÃ¶tigten Ressourcen laden:"
+missing-requirements-message = "<b>%1</b> kann nicht genutzt werden, da keine der benötigten Ressourcen geladen wird  <p>Um %1 nutzen zu können,
+müssen Sie zusätzliche Erweiterungen mit den benötigten Ressourcen laden:"
 
 #
 # Profiles and Components
@@ -167,7 +166,7 @@ install-addon: +
 uninstall-addon: -
 load-order: Reihenfolge
 addon-settings: Einstellungen
-about: Ãœber
+about: Über
 popup-menu: Menu
 preferences: Vorgabeeinstellungen
 
@@ -176,9 +175,9 @@ preferences: Vorgabeeinstellungen
 #
 menu-new-profile: Neu
 menu-rename-profile: Umbenennen
-menu-reset-profile: ZurÃ¼cksetzen
+menu-reset-profile: Zurücksetzen
 menu-duplicate-profile: Kopieren
-menu-delete-profile: LÃ¶schen
+menu-delete-profile: Löschen
 menu-hide-profile: Verbergen
 menu-unhide-profiles: Anzeigen...
 menu-uninstall-addon: De-installieren
@@ -190,12 +189,12 @@ menu-check-category: Markiere Kategorie
 menu-uncheck-category: Demarkiere Kategorie
 menu-expand-all-categories: Alle ausklappen
 menu-collapse-all-categories: Alle zusammenklappen
-menu-reset-slider: Auf Vorgabewerte zurÃ¼cksetzen
-menu-play: AusgewÃ¤hltes Spiel starten
+menu-reset-slider: Auf Vorgabewerte zurücksetzen
+menu-play: Ausgewähltes Spiel starten
 menu-view-command-line: Vorschau der Eingabeaufforderung
 menu-run-setup-wizard: Zeige den Setup-Wizard
 menu-show-snowberry-settings: Vorgabeeinstellungen
-menu-about: Ãœber
+menu-about: Über
 menu-quit: Ende
 
 #
@@ -230,9 +229,9 @@ developer-options-icon: developer
 # Labels for the Summary Tab
 #
 loaded-addons: Geladene Erweiterungen
-custom-settings = "GeÃ¤nderte Einstellungen"
+custom-settings = "Geänderte Einstellungen"
 system-settings: Systemeinstellungen
-summary-run-in-window: Im Fenster ausfÃ¼hren
+summary-run-in-window: Im Fenster ausführen
 summary-color-depth-16: 16-bit Farbe
 summary-color-depth-32: 32-bit Farbe
 
@@ -241,7 +240,7 @@ summary-color-depth-32: 32-bit Farbe
 #
 maps-list-identifier: PWAD Erweiterungen
 maps-list-count: Inhalt
-maps-list-clear: Liste leeren
+maps-list-clear: Liste leeren 
 
 wad-analysis-maps: %1 map(s)
 wad-analysis-custom-textures: textures
@@ -259,7 +258,7 @@ category: Alle Kategorien
 category-graphics: Grafik
 category-graphics-3d: 3D Ressourcen
 category-graphics-textures: Texturen
-category-graphics-ui: BenutzeroberflÃ¤che
+category-graphics-ui: Benutzeroberfläche
 category-music: Musik
 category-sound: Sound
 category-effects: Effects
@@ -267,7 +266,7 @@ category-effects-particle: Particle Effects
 category-effects-light: Lighting Effects
 category-gamedata: Spieledateien
 category-gamedata-doomsday: Doomsday Game Files
-category-gamedata-primary: PrimÃ¤re Dateien
+category-gamedata-primary: IWAD-Haupt-Spieledateien 
 category-gamedata-maps: Maps
 category-gamedata-maps-ag: A-G
 category-gamedata-maps-hm: H-M
@@ -304,10 +303,10 @@ language: Sprache
 quit-on-launch: Beim Spielstart beenden
 game: Spielkomponente
 iwad: Haupt-Spieledatei
-iwad-selection-title: WÃ¤hlen Sie die Haupt-Spieledatei
+iwad-selection-title: Wählen Sie die Haupt-Spieledatei
 memory-zone: Speicherbedarf (MB)
 
-renderer: Renderer
+renderer: Renderer 
 renderer-opengl: OpenGL
 renderer-direct3d: Microsoft Direct3D
 
@@ -318,9 +317,9 @@ color-depth: Farbtiefe
 color-depth-16: 16-bit
 color-depth-32: 32-bit
 
-run-in-window: Spiel im Fenster ausfÃ¼hren
+run-in-window: Spiel im Fenster ausführen
 
-window-size: BildschirmauflÃ¶sung
+window-size: Bildschirmauflösung
 window-size-640x480: 640 x 480
 window-size-800x600: 800 x 600
 window-size-1024x768: 1024 x 768
@@ -330,7 +329,7 @@ window-size-1280x1024: 1280 x 1024
 window-size-1400x1050: 1400 x 1050
 window-size-1600x1200: 1600 x 1200
 window-size-800x500: 800 x 500 (16:10)
-window-size-1024x640: 1024 x 640 (16:10)
+window-size-1024x640: 1024 x 640 (16:10) 
 window-size-1280x800: 1280 x 800 (16:10)
 window-size-1600x1000: 1600 x 1000 (16:10)
 window-size-1680x1050: 1680 x 1050 (16:10)
@@ -338,7 +337,7 @@ window-size-custom: Andere
 
 custom-window-group: Eigene Angaben
 window-width: Breite
-window-height: HÃ¶he
+window-height: Höhe
 center-window: Fenstermitte
 window-pos-x: X Position
 window-pos-y: Y Position
@@ -368,7 +367,7 @@ extres-with-pwad: Erlaube externe Texturen in PWADs
 anisotropic-filter: Anisotropische Filterung
 paletted-textures: Texturen mit eigener Palette
 
-maximum-texture-size: Maximle GrÃ¶ÃŸe
+maximum-texture-size: Maximle Größe
 maximum-texture-size-unlimited: Hardware
 maximum-texture-size-64: 64 x 64
 maximum-texture-size-128: 128 x 128
@@ -386,7 +385,7 @@ sound-driver-sdlmixer: SDL_mixer
 sound-driver-openal: OpenAL
 sound-driver-dummy: Dummy (kein Sound)
 
-sound-channels: Sound KanÃ¤le
+sound-channels: Sound Kanäle
 disable-audio: Gar Kein Audio
 disable-sound-effects: Soundeffeke abschalten
 disable-music: Musik abschalten
@@ -402,23 +401,23 @@ disable-mouse: Maus abschalten
 disable-joystick: Joystick abschalten
 
 verbosity: Weitergehende Meldungen
-verbosity-none: NÃ¶.
+verbosity-none: Nö.
 verbosity-devel: Level 1
 verbosity-extra: Level 2
 
 custom-cmdline: Eigene Einstellungen
 
 addon-paths: Eigene Erweiterungsordner
-addon-paths-info: Weitere Order, aus denen Erweiterungen geladen werden kÃ¶nnen:
+addon-paths-info: Weitere Order, aus denen Erweiterungen geladen werden können:
 new-addon-path: +
 delete-addon-path: -
-addon-paths-add-prompt: Eigenen Erweiterungspfad hinzufÃ¼gen
+addon-paths-add-prompt: Eigenen Erweiterungspfad hinzufügen
 
-ui-parts: BenutzeroberflÃ¤che
+ui-parts: Benutzeroberfläche
 main-hide-title: Titelgrafik verbergen
 main-hide-help: Hilfe-Panel verbergen
 summary-profile-change-autoselect: Zusammenfassung beim Profilwechsel zeigen
-profile-large-icons: GroÃŸe Profilsymbole
+profile-large-icons: Große Profilsymbole
 
 restart-required: Erfordert einen Neustart.
 
@@ -426,28 +425,23 @@ restart-required: Erfordert einen Neustart.
 #
 # Help
 #
-help-welcome = "Willkommen zu Snowberry. Dieses ist ein Startprogramm, mit dem Sie
-die <b>Doomsday Engine</b> einfach und komfortabel starten kÃ¶nnen. WÃ¤hlen Sie ein
-Spieleprofil aus der Liste an der linken Seite.<p>Das Benutzerinterface kann im
-<b>Menu</b> -&gt; <b>Vorgabeeinstellungen</b> verÃ¤ndert werden."
+help-welcome = "Willkommen bei Snowberry. Snowberry ist ein Startprogramm, mit dem Sie die <b>Doomsday Engine</b> komfortabel starten können. Wählen Sie ein Spieleprofil aus der Liste auf der linken Seite. <p>Das Benutzerinterface kann im <b>Menu</b> -&gt; <b>Vorgabeeinstellungen</b> verändert werden."
 
-help-command = "Um ein Spiel zu starten, klicken Sie auf die SchaltflÃ¤che <b>Play</b>."
+help-command = "Klicken Sie auf die Schaltfläche <b>Play</b>, um ein Spiel zu starten."
 
-help-command-defaults = "Das <b>Basisprofil</b> enthÃ¤lt Einstellungen, die fÃ¼r alle Profile gelten."
+help-command-defaults = "Das <b>Basisprofil</b> enthält Einstellungen, 
+die für alle Profile gelten."
 
-help-tab-summary = "Die Registerkarte Zusammenfassung zeigt wichtige informationen Ã¼ber das aktuelle Profil."
+help-tab-summary = "Die Registerkarte Zusammenfassung zeigt wichtige Informationen zum aktuellen Profil."
 
-help-tab-maps = "Die Registerkarte Maps bietet eine schnelle MÃ¶glichkeit, zu wÃ¤hlen, welche WAD-Erweiterungen
-mit dem aktuellen Profil benutzt werden sollen. Hier getÃ¤tigte Ã„nderungen spiegeln sich in der
-Registerkarte Erweiterungen wieder."
+help-tab-maps = "Die Registerkarte Maps bietet eine schnelle Möglichkeit, zu wählen, welche Wad-Erweiterungen 
+mit dem aktuellen Profil genutzt werden sollen. Hier vorgenommene Änderungen spiegeln sich in der 
+Registerkarte Erweiterungen wider."
 
-help-tab-addons = "Hier wÃ¤hlen Sie die Erweiterungen, welche Sie mit dem aktuellen Profil nutzen wollen.
-<p>Die SchaltflÃ¤che <b>Einstellungen</b> ermÃ¶glicht es, die ausgewÃ¤hlten Erweiterungen anzupassen.<p>Um die Reihenfolge zu Ã¤ndern, in der die Erweiterungen geladen werden,
-klicken Sie auf die SchaltflÃ¤che <b>Reihenfolge</b>."
+help-tab-addons = "Wählen Sie die Erweiterungen aus, die Sie mit dem aktuellen Profil nutzen möchten.<p>Die Schaltfläche <b>Einstellungen</b> ermöglicht es, die ausgewählten Erweiterungen anzupassen.<p>Um die Reihenfolge zu ändern, in der Erweiterungen geladen werden, klicken Sie auf die Schaltfläche <b>Reihenfolge</b>."
 
-help-tab-settings = "Die Registerkarte Einstellungen ermÃ¶glicht VerÃ¤nderungen des aktuellen Profils und der ausgewÃ¤hlten Erweiterungen.
-<p>Um Einstellungen fÃ¼r alle Profile gemeinsam zu Ã¤ndern, wÃ¤hlen Sie einfach das <b>Basisprofil</b>."
-
+help-tab-settings = "Die Registerkarte Einstellungen ermöglicht Veränderungen des aktuellen Profils und ausgewählter Erweiterungen.
+<p>Um die vorgegebenen Einstellungen für alle Profile zu ändern, nutzen Sie das<b>Basisprofil</b>."
 #
 # Settings Help
 #
@@ -457,17 +451,17 @@ help-value-min: Minimum
 help-value-max: Maximum
 help-value-default: Vorgabe
 
-iwad-help = "Die Haupt-Spieledatei (IWAD) enthÃ¤lt unter anderem alle Maps, Grafiken, Sounds und Effekte. Sie mÃ¼ssen eine Haupt-Spieledatei angeben, um spielen zu kÃ¶nnen.<p> Diese Dateien werden IWAD (=interne WAD) genannt und besitzen die Dateiendung '.wad'. Ãœblicherweise sind sie 4-20 MB groÃŸ. Man findet diese IWAD Dateien in dem Ordner, in den das ursprÃ¼ngliche Spiel (Doom, Heretic, oder Hexen) installiert wurde. "
+iwad-help = "Die Haupt-Spieledatei (IWAD) enthält unter anderem alle Maps, Grafiken, Sounds und Effekte. Sie müssen eine Haupt-Spieledatei angeben, um spielen zu können.<p> Diese Dateien werden IWAD (=interne WAD) genannt und besitzen die Dateiendung '.wad'. Üblicherweise sind sie 4-20 MB groß. Man findet diese IWAD Dateien in dem Ordner, in den das ursprüngliche Spiel (Doom, Heretic, oder Hexen) installiert wurde. "
 
-window-size-help = "Eigene BildschirmauflÃ¶sungen (um z.B. im Widescreen-Format spielen zu kÃ¶nnen):
+window-size-help = "Eigene Bildschirmauflösungen (um z.B. im Widescreen-Format spielen zu können): 
 <ul>
 <li>Stellen Sie dies hier auf Eigene Einstellung.
-<li>Geben Sie Breite und HÃ¶he in die entsprechenden Felder ein.
+<li>Geben Sie Breite und Höhe in die entsprechenden Felder ein.
 </ul>"
 
-window-width-help = "Die Breite des Spielebildschirms, oder die selbstdefinierte waagerechte AuflÃ¶sung."
+window-width-help = "Die Breite des Spielebildschirms, oder die selbstdefinierte waagerechte Auflösung."
 
-window-height-help = "Die HÃ¶he des Spielebildschirms, oder die selbstdefinierte senkrechte AuflÃ¶sung."
+window-height-help = "Die Höhe des Spielebildschirms, oder die selbstdefinierte senkrechte Auflösung."
 
 center-window-help: Der Spielebildschirm wird in der Mitte des Bildschirms positioniert.
 
@@ -483,11 +477,11 @@ help-addon-author: Author
 help-addon-copyright: Copyright
 help-addon-license: Lizens
 help-addon-date: Datum
-help-addon-dependencies: AbhÃ¤ngigkeiten
+help-addon-dependencies: Abhängigkeiten
 help-addon-excluded-categories: Ausgeschlossene Kategorien
-help-addon-excludes: SchlieÃŸt aus
-help-addon-requires: BenÃ¶tigt
-help-addon-provides: EnthÃ¤lt
+help-addon-excludes: Schließt aus
+help-addon-requires: Benötigt
+help-addon-provides: Enthält
 help-addon-offers: Bietet
 help-addon-part-of-box: Diese Erweiterung ist ein Teil von <a href="%1">%2</a>.
 
@@ -498,7 +492,7 @@ issue-dialog: Probleme erkannt
 issue-dialog-title: Probleme erkannt
 
 error-runtime-exception-during-event: Laufzeitfehler
-error-runtime-exception-during-event-text: AbgestÃ¼rtzt wÃ¤hrend Event <b>%1</b>. Bitte englischen Bericht an <tt>skyjake@users.sourceforge.net</tt> schicken.<p><b>Exception:</b><p>%2<p><b>Traceback:</b><p>%3
+error-runtime-exception-during-event-text: Abgestürtzt während Event <b>%1</b>. Bitte englischen Bericht an <tt>skyjake@users.sourceforge.net</tt> schicken.<p><b>Exception:</b><p>%2<p><b>Traceback:</b><p>%3
 
 error-addon-installation-failed: Fehler bei der Installation einer Erweiterung
 error-addon-installation-failed-text: Die Installation der Erweiterung <tt>%1</tt> schlug fehl. <p><b>Grund:</b><p>%2
@@ -513,16 +507,16 @@ error-read-zip-info-file: PK3 Info Fehler
 error-read-zip-info-file-text: Die Metadaten der Erweiterung<b>%2</b> sind in der Datei <tt>%1</tt> fehlerhaft.
 
 error-parsing-profile: Profilfehler
-error-parsing-profile-text: Das Profil <tt>%1</tt> wurde nicht geladen, da sein Inhalt ungÃ¼ltig ist. Um das Problem zu lÃ¶sen, sollten Sie die Datei von Hand bearbeiten und den fehler korrigieren oder das Profil lÃ¶schen.<p><b>Grund:</b><p>%2
+error-parsing-profile-text: Das Profil <tt>%1</tt> wurde nicht geladen, da sein Inhalt ungültig ist. Um das Problem zu lösen, sollten Sie die Datei von Hand bearbeiten und den fehler korrigieren oder das Profil löschen.<p><b>Grund:</b><p>%2
 
 error-read-profile: Profilfehler
-error-read-profile-text: Das Profil <tt>%1</tt> konnte aufgrund eines unerwarteten Fehlers nicht geladen werden. Um das Problem zu lÃ¶sen, sollten Sie die Datei von Hand bearbeiten und den fehler korrigieren oder das Profil lÃ¶schen.<p><b>Traceback:</b><p>%2
+error-read-profile-text: Das Profil <tt>%1</tt> konnte aufgrund eines unerwarteten Fehlers nicht geladen werden.  Um das Problem zu lösen, sollten Sie die Datei von Hand bearbeiten und den fehler korrigieren oder das Profil löschen.<p><b>Traceback:</b><p>%2
 
 error-read-manifest: Erweiterungs Manifest Fehler
 error-read-manifest-text: Im Manifest <tt>%1</tt> wurde ein fehler gefunden.<p><b>Grund:</b><p>%2
 
 warning-obsolete-plugin: Veraltetes Plugin
-warning-obsolete-plugin-text: Das Plugin <b>%1</b>, das von <tt>%2</tt> geladen wurde, ist veraltet und sollte gelÃ¶scht werden. Andernfalls kÃ¶nnen unerwartete Probleme auftreten.
+warning-obsolete-plugin-text: Das Plugin <b>%1</b>, das von <tt>%2</tt> geladen wurde, ist veraltet und sollte gelöscht werden. Andernfalls können unerwartete Probleme auftreten.
 
 warning-read-language: Sprachdatei
 warning-read-language-text: Beim Lesen der Sprachdatei <b>%1</b> von <tt>%2</tt> gab es Probleme. Es konnte nur ein Teil gelesen werden. Eventuell fehlen einige Textteile.
