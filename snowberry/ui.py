@@ -198,7 +198,7 @@ def createDialog(id, alignment=1, size=None):
     return dialog
 
 
-def createButtonDialog(id, titleText, buttons, defaultButton=None):
+def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None):
     """Returns the area where the caller may add the contents of the
     dialog.
 
@@ -208,7 +208,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None):
 
     @return Tuple (dialog, user-area)
     """
-    dialog = createDialog(id, Area.ALIGN_HORIZONTAL)
+    dialog = createDialog(id, Area.ALIGN_HORIZONTAL, size)
     area = dialog.getArea()
 
     area.setMinSize(400, 20)
@@ -1176,7 +1176,9 @@ class AreaDialog (wx.Dialog):
         self.widgetMap = {}
 
         if size:
-            self.SetMinSize(size)
+            self.recommendedSize = size
+        else:
+            self.recommendedSize = None
 
         # All the commands that will cause the dialog to be closed.
         self.dialogEndCommands = ['ok', 'cancel', 'yes', 'no']
@@ -1218,6 +1220,9 @@ class AreaDialog (wx.Dialog):
         # The command that closes the dialog.  We'll assume the dialog
         # gets closed.
         self.closingCommand = 'cancel'
+
+        if self.recommendedSize is not None:
+            self.SetSize(self.recommendedSize)
 
         # Won't return until the dialog closes.
         self.ShowModal()
