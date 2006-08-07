@@ -36,8 +36,8 @@ ADDONS = 'tab-addons'
 
 
 # Popup menu items.
-addonItems = ['addon-settings',
-              'addon-info',
+addonItems = ['addon-info',
+              'addon-settings',
               'uninstall-addon']
 
 categoryItems = ['check-category',
@@ -255,36 +255,36 @@ def showInspector(addon):
     
     dialog, area = ui.createButtonDialog('addon-inspector-dialog',
                                          language.translate(ident),
-                                         ['ok'], 'ok')
+                                         ['ok'], 'ok', size=(570, 450))
 
     msg = ""
 
-    msg += '<h3>General Information</h3>'
+    msg += '<h3>' + language.translate(ident) + '</h3>'
     if language.isDefined(ident + '-readme'):
         msg += "<p>" + language.translate(ident + '-readme')
 
     def makeField(header, content):
-        return '<tr><td width="20%" bgcolor="#E8E8E8"><b>' + header + \
+        return '<tr><td width="20%" bgcolor="#E8E8E8" align="right"><b>' + header + \
                '</b><td width="80%">' + content
 
-    beginTable = '<p><table width="100%" border=1 cellpadding=4 cellspacing=0>'
+    beginTable = '<p><table width="100%" border=0 cellpadding=6 cellspacing=0>'
     endTable = '</table>'
 
     #
     # General Information
     #
     msg += beginTable
-    msg += makeField('Identifier', addon.getId())
-    msg += makeField('Format', language.translate(addon.getType()))
-    msg += makeField('Category', addon.getCategory().getPath())
-    msg += makeField('Summary', language.translate(ident + '-summary', '-'))
-    msg += makeField('Version', language.translate(ident + '-version', '-'))
-    msg += makeField('Author(s)', language.translate(ident + '-author', '-'))
-    msg += makeField('Contact', language.translate(ident + '-contact', '-'))
-    msg += makeField('Copyright',
+    msg += makeField('Identifier:', addon.getId())
+    msg += makeField('Format:', language.translate(addon.getType()))
+    msg += makeField('Category:', addon.getCategory().getPath())
+    msg += makeField('Summary:', language.translate(ident + '-summary', '-'))
+    msg += makeField('Version:', language.translate(ident + '-version', '-'))
+    msg += makeField('Author(s):', language.translate(ident + '-author', '-'))
+    msg += makeField('Contact:', language.translate(ident + '-contact', '-'))
+    msg += makeField('Copyright:',
                      language.translate(ident + '-copyright', '-'))
-    msg += makeField('License', language.translate(ident + '-license', '-'))
-    msg += makeField('Last Modified',
+    msg += makeField('License:', language.translate(ident + '-license', '-'))
+    msg += makeField('Last Modified:',
                      time.strftime("%a, %d %b %Y %H:%M:%S",
                                    time.localtime(addon.getLastModified())))
     msg += endTable
@@ -299,13 +299,13 @@ def showInspector(addon):
     dep = []
     for category in addon.getExcludedCategories():
         dep.append(category.getPath())
-    allDeps.append(('Excluded Categories', dep))
+    allDeps.append(('Excluded Categories:', dep))
 
     # Keywords.
-    for type, label in [(ao.Addon.EXCLUDES, 'Excludes'),
-                        (ao.Addon.REQUIRES, 'Requires'),
-                        (ao.Addon.PROVIDES, 'Provides'),
-                        (ao.Addon.OFFERS, 'Offers')]:
+    for type, label in [(ao.Addon.EXCLUDES, 'Excludes:'),
+                        (ao.Addon.REQUIRES, 'Requires:'),
+                        (ao.Addon.PROVIDES, 'Provides:'),
+                        (ao.Addon.OFFERS, 'Offers:')]:
         # Make a copy of the list so we can modify it.
         dep = []
         for kw in addon.getKeywords(type):
@@ -322,21 +322,21 @@ def showInspector(addon):
     # Content Analysis
     # 
     msg += '<h3>Contents</h3>' + beginTable
-    msg += makeField('Content Path', addon.getContentPath())
+    msg += makeField('Content Path:', addon.getContentPath())
     msg += endTable
     
     #msg += "<p>format-specific data"
     #msg += "<br>content analysis, size"
     #msg += "<br>list of files, if a bundle"
 
-    msg += '<h3>Identifiers</h3>'
+    #msg += '<h3>Identifiers</h3>'
     #msg += "<br>all internal identifiers used by the addon"
 
-    msg += '<h3>Metadata</h3>'
+    #msg += '<h3>Metadata</h3>'
     #msg += "<br>metadata analysis, source"
 
     text = area.createFormattedText()
-    text.setMinSize(600, 400)
+    text.setMinSize(500, 200)
     text.setText(msg)
     dialog.run()        
 
