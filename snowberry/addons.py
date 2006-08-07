@@ -1528,7 +1528,8 @@ loadAll()
 
 # Load all the manifests.
 for folder in [paths.getSystemPath(paths.MANIFESTS),
-               paths.getUserPath(paths.MANIFESTS)]:
+               paths.getUserPath(paths.MANIFESTS)] + \
+               paths.getAddonPaths():
     for name in paths.listFiles(folder):
         # Case insensitive.
         if paths.hasExtension('manifest', name):
