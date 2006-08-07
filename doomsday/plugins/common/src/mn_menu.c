@@ -31,7 +31,7 @@
 #include <math.h>
 
 #if __JHEXEN__ || __JSTRIFE__
-#  include <LZSS.h>
+#  include <lzss.h>
 #endif
 
 #if __JDOOM__
