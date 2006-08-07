@@ -249,6 +249,12 @@ void Z_Free(void *ptr)
     memblock_t *block, *other;
     memvolume_t *volume;
 
+    if(!ptr)
+    {
+        VERBOSE( Con_Message("Z_Free: Warning: Attempt to free NULL ignored.\n") );
+        return;
+    }
+    
     block = Z_GetBlock(ptr);
     if(block->id != ZONEID)
     {
