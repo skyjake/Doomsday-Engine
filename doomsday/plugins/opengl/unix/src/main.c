@@ -52,6 +52,7 @@ int     verbose;
 boolean wireframeMode;
 boolean allowCompression;
 boolean noArrays;
+boolean forceFinishBeforeSwap = DGL_FALSE; 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -207,6 +208,11 @@ int DG_Init(int width, int height, int bpp, int mode)
         useAnisotropic = DGL_TRUE;
         Con_Message("  Using anisotropic texture filtering.\n");
     }
+    if(ArgExists("-glfinish"))
+    {
+        forceFinishBeforeSwap = DGL_TRUE;
+        Con_Message("  glFinish() forced before swapping buffers.\n");
+    }
     return DGL_OK;
 }
 
@@ -223,6 +229,11 @@ void DG_Shutdown(void)
 //===========================================================================
 void DG_Show(void)
 {
+    if(forceFinishBeforeSwap)
+    {
+        glFinish();
+    }
+    
     // Swap buffers.
     SDL_GL_SwapBuffers();
 
