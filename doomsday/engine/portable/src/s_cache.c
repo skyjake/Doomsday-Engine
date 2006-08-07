@@ -494,7 +494,7 @@ sfxsample_t *Sfx_Cache(int id)
     boolean needFree = false;
     char    buf[300];
 
-    if(!sfx_avail)
+    if(!id || !sfx_avail)
         return NULL;
 
     // Are we so lucky that the sound is already cached?
@@ -506,6 +506,11 @@ sfxsample_t *Sfx_Cache(int id)
 
     // Get the sound decription.
     info = S_GetSoundInfo(id, NULL, NULL);
+    if(!info) 
+    {
+        Con_Message("Sfx_Cache: Warning: Sound info for ID %i is missing.\n", id);
+        return NULL;        
+    }
 
     VERBOSE2(Con_Message("Sfx_Cache: Caching sound %i (%s).\n", id, info->id));
 
