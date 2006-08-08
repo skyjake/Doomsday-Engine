@@ -723,8 +723,13 @@ int W_IsIWAD(char *fn)
 void W_InitMultipleFiles(char **filenames)
 {
     char  **ptr;
-    byte    loaded[64];         // Enough?
+    int     numLoaded = 0;
+    byte   *loaded = 0;
 
+    // Count number of files.
+    for(ptr = filenames; *ptr; ptr++, numLoaded++);
+    loaded = calloc(numLoaded, 1);
+    
     iwadLoaded = false;
 
     // Open all the files, load headers, and count lumps
@@ -733,8 +738,6 @@ void W_InitMultipleFiles(char **filenames)
 
     // This'll force the loader NOT the flag new records Runtime. (?)
     loadingForStartup = true;
-
-    memset(loaded, 0, sizeof(loaded));
 
     // IWAD(s) must be loaded first. Let's see if one has been specified
     // with -iwad or -file options.
@@ -754,9 +757,13 @@ void W_InitMultipleFiles(char **filenames)
         if(!loaded[ptr - filenames])
             W_AddFile(*ptr, false);
 
+    // Bookkeeping no longer needed.
+    free(loaded);
+    loaded = NULL;
+    
     if(!numlumps)
     {
-        Con_Error("W_InitMultipleFiles: no files found");
+        Con_Error("W_InitMultipleFiles: no files found.\n");
     }
 }
 
