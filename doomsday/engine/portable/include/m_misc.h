@@ -33,7 +33,6 @@ typedef struct trigger_s {
     timespan_t      accum;
 } trigger_t;
 
-extern int      read_count;
 extern int      rndindex;
 
 // Memory.
@@ -43,6 +42,7 @@ void           *M_Realloc(void *ptr, size_t size);
 void            M_Free(void *ptr);
 
 // File system routines.
+void            M_ResetFileIDs(void);
 boolean         M_CheckFileID(const char *path);
 int             M_ReadFile(char const *name, byte **buffer);
 int             M_ReadFileCLib(char const *name, byte **buffer);

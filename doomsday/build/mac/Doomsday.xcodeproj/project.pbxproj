@@ -152,6 +152,8 @@
 		B063C7E609CF296900F0354B /* x_api.c in Sources */ = {isa = PBXBuildFile; fileRef = B063C7E509CF296900F0354B /* x_api.c */; };
 		B063C7EF09CF2A7C00F0354B /* h_api.c in Sources */ = {isa = PBXBuildFile; fileRef = B063C7EE09CF2A7C00F0354B /* h_api.c */; };
 		B063C80809CF2ADA00F0354B /* m_random.c in Sources */ = {isa = PBXBuildFile; fileRef = B063C80709CF2ADA00F0354B /* m_random.c */; };
+		B08174010A88FD2C0081B2E1 /* m_md5.c in Sources */ = {isa = PBXBuildFile; fileRef = B08174000A88FD2C0081B2E1 /* m_md5.c */; };
+		B08174040A88FD5A0081B2E1 /* m_md5.h in Headers */ = {isa = PBXBuildFile; fileRef = B08174030A88FD5A0081B2E1 /* m_md5.h */; };
 		B083A65D085CCCEE000D4BAB /* d_net.h in Resources */ = {isa = PBXBuildFile; fileRef = B018334407E6082000217C5A /* d_net.h */; };
 		B083A65E085CCCEE000D4BAB /* d_netcl.h in Resources */ = {isa = PBXBuildFile; fileRef = B018334507E6082000217C5A /* d_netcl.h */; };
 		B083A65F085CCCEE000D4BAB /* d_netsv.h in Resources */ = {isa = PBXBuildFile; fileRef = B018334607E6082000217C5A /* d_netsv.h */; };
@@ -1125,6 +1127,8 @@
 		B063C7EE09CF2A7C00F0354B /* h_api.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = h_api.c; path = ../../plugins/jheretic/src/h_api.c; sourceTree = SOURCE_ROOT; };
 		B063C80709CF2ADA00F0354B /* m_random.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = m_random.c; path = ../../plugins/jheretic/src/m_random.c; sourceTree = SOURCE_ROOT; };
 		B0724918085CDC4D000C8E3B /* r_lgrid.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = r_lgrid.c; path = ../../engine/portable/src/r_lgrid.c; sourceTree = SOURCE_ROOT; };
+		B08174000A88FD2C0081B2E1 /* m_md5.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = m_md5.c; path = ../../engine/portable/src/m_md5.c; sourceTree = SOURCE_ROOT; };
+		B08174030A88FD5A0081B2E1 /* m_md5.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = m_md5.h; path = ../../engine/portable/include/m_md5.h; sourceTree = SOURCE_ROOT; };
 		B083A52C085CC153000D4BAB /* acfnlink.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = acfnlink.h; path = ../../plugins/jhexen/include/acfnlink.h; sourceTree = SOURCE_ROOT; };
 		B083A52E085CC153000D4BAB /* h2_actn.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = h2_actn.h; path = ../../plugins/jhexen/include/h2_actn.h; sourceTree = SOURCE_ROOT; };
 		B083A52F085CC153000D4BAB /* h2def.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = h2def.h; path = ../../plugins/jhexen/include/h2def.h; sourceTree = SOURCE_ROOT; };
@@ -1450,6 +1454,7 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B08174000A88FD2C0081B2E1 /* m_md5.c */,
 				B0A905540A45357D00DD2583 /* cl_oldframe.c */,
 				B0A904F80A452FAA00DD2583 /* cl_oldworld.c */,
 				B0346DC20A10F18D00C8BAB2 /* edit_bias.c */,
@@ -1796,6 +1801,7 @@
 		B02AC73506B3FBD4005824AD /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B08174030A88FD5A0081B2E1 /* m_md5.h */,
 				B0C8FBE90A3F4DEF00CFA4A5 /* dd_uinit.h */,
 				B0C8FB460A3F4B4E00CFA4A5 /* sys_console.h */,
 				B0346DC40A10F1B100C8BAB2 /* dd_maptypes.h */,
@@ -2353,6 +2359,7 @@
 				B0C8F4560A3F112400CFA4A5 /* StartupWindowController.h in Headers */,
 				B0C8FB470A3F4B4E00CFA4A5 /* sys_console.h in Headers */,
 				B0C8FBEA0A3F4DEF00CFA4A5 /* dd_uinit.h in Headers */,
+				B08174040A88FD5A0081B2E1 /* m_md5.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3059,6 +3066,7 @@
 				B0C8F44E0A3F10FC00CFA4A5 /* StartupWindowController.m in Sources */,
 				B0A904F90A452FAA00DD2583 /* cl_oldworld.c in Sources */,
 				B0A905550A45357D00DD2583 /* cl_oldframe.c in Sources */,
+				B08174010A88FD2C0081B2E1 /* m_md5.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

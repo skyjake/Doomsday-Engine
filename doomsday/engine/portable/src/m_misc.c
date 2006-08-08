@@ -57,6 +57,10 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct file_identifier_s {
+    byte hash[16];
+} file_identifier_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -69,25 +73,25 @@ static int FileReader(char const *name, byte **buffer, int mallocType);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     read_count;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int read_ids[MAX_READ];
+static int numReadFiles = 0;
+static int maxReadFiles = 0;
+static file_identifier_t *readFiles = NULL;
 
 // CODE --------------------------------------------------------------------
 
-void   *M_Malloc(size_t size)
+void *M_Malloc(size_t size)
 {
     return malloc(size);
 }
 
-void   *M_Calloc(size_t size)
+void *M_Calloc(size_t size)
 {
     return calloc(size, 1);
 }
 
-void   *M_Realloc(void *ptr, size_t size)
+void *M_Realloc(void *ptr, size_t size)
 {
     return realloc(ptr, size);
 }
@@ -98,47 +102,73 @@ void M_Free(void *ptr)
 }
 
 /*
+ * Resets the array of known file IDs. The next time M_CheckFileID() is
+ * called on a file, it passes.
+ */
+void M_ResetFileIDs(void)
+{
+    numReadFiles = 0;
+}
+
+/*
  * Returns true if the given file can be read, or false if it has already
- * been read.
+ * been read. Maintains a list of identifiers already seen.
  */
 boolean M_CheckFileID(const char *path)
 {
-    int     id = Dir_FileID(path);
+    byte    id[16];
     int     i;
 
-    if(read_count >= MAX_READ)
-    {
-        Con_Message("CheckFile: Too many files.\n");
-        return false;
-    }
     if(!F_Access(path))
     {
         if(verbose)
             Con_Message("CheckFile: %s not found.\n", path);
         return false;
     }
-    for(i = 0; i < read_count; i++)
-        if(read_ids[i] == id)
+    
+    // Calculate the identifier.
+    Dir_FileID(path, id);
+    
+    for(i = 0; i < numReadFiles; i++)
+    {    
+        if(!memcmp(readFiles[i].hash, id, 16))
+        {
+            // This identifier has already been encountered.
             return false;
-    read_ids[read_count++] = id;
+        }            
+    }
+
+    // Allocate a new entry.
+    numReadFiles++;
+    if(numReadFiles > maxReadFiles)
+    {
+        if(!maxReadFiles)
+            maxReadFiles = 16;
+        else
+            maxReadFiles *= 2;
+        
+        readFiles = realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
+    }
+            
+    memcpy(readFiles[numReadFiles - 1].hash, id, 16);
     return true;
 }
 
-char   *M_SkipWhite(char *str)
+char *M_SkipWhite(char *str)
 {
     while(*str && ISSPACE(*str))
         str++;
     return str;
 }
 
-char   *M_FindWhite(char *str)
+char *M_FindWhite(char *str)
 {
     while(*str && !ISSPACE(*str))
         str++;
     return str;
 }
 
-char   *M_SkipLine(char *str)
+char *M_SkipLine(char *str)
 {
     while(*str && *str != '\n')
         str++;
@@ -148,8 +178,8 @@ char   *M_SkipLine(char *str)
     return str;
 }
 
-char   *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
-                        char *buf, unsigned int bufLength)
+char *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
+                      char *buf, unsigned int bufLength)
 {
     unsigned int isEmpty = !buf[0], length;
 

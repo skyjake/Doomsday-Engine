@@ -683,7 +683,10 @@ void Def_Read(void)
     DED_Destroy(&defs);
     DED_Init(&defs);
 
-    for(read_count = 0, i = 0; dedFiles[i]; i++)
+    // Reset file IDs so previously seen files can be processed again.
+    M_ResetFileIDs();
+    
+    for(i = 0; dedFiles[i]; i++)
     {
         Con_Message("Reading definition file: %s\n", M_Pretty(dedFiles[i]));
         Def_ReadProcessDED(dedFiles[i]);

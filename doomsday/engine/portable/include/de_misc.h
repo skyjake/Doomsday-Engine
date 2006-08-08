@@ -32,5 +32,6 @@
 #include "m_huffman.h"
 #include "m_vector.h"
 #include "m_profiler.h"
+#include "m_md5.h"
 
 #endif

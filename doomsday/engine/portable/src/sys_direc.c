@@ -134,26 +134,26 @@ void Dir_FileName(const char *str, char *name)
 
 /*
  * Calculate an identifier for the file based on its full path name.
- * The identifier is the CRC-32 value for the path.  (Sufficiently low
- * danger of collisions?)
+ * The identifier is the MD5 hash of the path.
  */
-int Dir_FileID(const char *str)
+void Dir_FileID(const char *str, byte identifier[16])
 {
     char temp[256];
+    md5_ctx_t context;
 
     // First normalize the name.
     memset(temp, 0, sizeof(temp));
     _fullpath(temp, str, 255);
+    Dir_FixSlashes(temp);
 
 #if defined(WIN32) || defined(MACOSX)
     // This is a case insensitive operation.
     strupr(temp);
 #endif
 
-    VERBOSE2(Con_Message("Dir_FileID: %s = 0x%08x\n", temp,
-                         M_CRC32(temp, strlen(temp))));
-
-    return M_CRC32(temp, strlen(temp));
+    md5_init(&context);
+    md5_update(&context, (byte*) temp, strlen(temp));
+    md5_final(&context, identifier);
 }
 
 /*
