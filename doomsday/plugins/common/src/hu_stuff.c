@@ -344,14 +344,14 @@ float WI_ParseFloat(char **str)
 /*
  * Draw a string of text controlled by parameter blocks.
  */
-void WI_DrawParamText(int x, int y, char *string, dpatch_t *defFont,
+void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
                       float defRed, float defGreen, float defBlue, float defAlpha,
                       boolean defCase, boolean defTypeIn, int halign)
 {
-    char    temp[256], *end;
+    char    temp[256], *end, *string;
     dpatch_t  *font = defFont;
     float   r = defRed, g = defGreen, b = defBlue, a = defAlpha;
-    float   offX = 0, offY = 0;
+    float   offX = 0, offY = 0, width = 0;
     float   scaleX = 1, scaleY = 1, angle = 0, extraScale;
     float   cx = x, cy = y;
     int     charCount = 0;
@@ -369,6 +369,63 @@ void WI_DrawParamText(int x, int y, char *string, dpatch_t *defFont,
     caseMod[1].scale = 1.25f;
     caseMod[1].offset = 0;
 
+    // With centrally aligned strings we need to calculate the width
+    // of the whole visible string before we can draw any characters.
+    // So we'll need to make two passes on the string.
+    if(halign == ALIGN_CENTER)
+    {
+        string = str;
+        while(*string)
+        {
+            if(*string == '{')      // Parameters included?
+            {
+                string++;
+                while(*string && *string != '}')
+                {
+                    string = M_SkipWhite(string);
+
+                    // We are only interested in font changes
+                    // at this stage.
+                    if(!strnicmp(string, "fonta", 5))
+                    {
+                        font = hu_font_a;
+                        string += 5;
+                    }
+                    else if(!strnicmp(string, "fontb", 5))
+                    {
+                        font = hu_font_b;
+                        string += 5;
+                    }
+                    else
+                    {
+                        // Unknown, skip it.
+                        if(*string != '}')
+                            string++;
+                    }
+                }
+
+                // Skip over the closing brace.
+                if(*string)
+                    string++;
+            }
+
+            for(end = string; *end && *end != '{';)
+            {
+                // Find the end of the visible part of the string.
+                for(; *end && *end != '{'; end++);
+
+                strncpy(temp, string, end - string);
+                temp[end - string] = 0;
+
+                width += M_StringWidth(temp, font);
+
+                string = end;       // Continue from here.
+            }
+        }
+        width /= 2;
+    }
+
+    string = str;
     while(*string)
     {
         // Parse and draw the replacement string.
@@ -524,7 +581,7 @@ void WI_DrawParamText(int x, int y, char *string, dpatch_t *defFont,
             string = end;       // Continue from here.
 
             if(halign == ALIGN_CENTER){
-                alignx = (scaleX * M_StringWidth(temp, font)) / 2;
+                alignx = width;
             } else if (halign == ALIGN_RIGHT){
                 alignx = scaleX * M_StringWidth(temp, font);
             } else {
