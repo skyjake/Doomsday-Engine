@@ -404,17 +404,15 @@ char   *COM_Parse(char *data)
     if(c == '\"')
     {
         data++;
-        do
+
+        while((c = *data++) != '\"')
         {
-            c = *data++;
-            if(c == '\"')
-            {
-                com_token[len] = 0;
-                return data;
-            }
             com_token[len] = c;
             len++;
-        } while(1);
+        }
+
+        com_token[len] = 0;
+        return data;
     }
 
     // parse single characters

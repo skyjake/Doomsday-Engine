@@ -708,7 +708,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
         cx = x;
         cy = y;
 
-        while(1)
+        for(;;)
         {
             c = *ch++;
             count++;

@@ -392,9 +392,9 @@ static int quicksave;
 static int quickload;
 
 #ifndef __JDOOM__
-#define READTHISID 4
+#define READTHISID 3
 #else
-#define READTHISID  6
+#define READTHISID  5
 #endif
 
 MenuItem_t MainItems[] = {

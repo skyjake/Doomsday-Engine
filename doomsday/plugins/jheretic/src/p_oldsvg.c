@@ -265,7 +265,7 @@ void P_v13_UnArchiveThinkers(void)
     P_InitThinkers();
 
     // read in saved thinkers
-    while(1)
+    for(;;)
     {
         tclass = *save_p++;
         switch (tclass)
@@ -337,7 +337,7 @@ void P_v13_UnArchiveSpecials(void)
     glow_t *glow;
 
     // read in saved thinkers
-    while(1)
+    for(;;)
     {
         tclass = *save_p++;
         switch (tclass)

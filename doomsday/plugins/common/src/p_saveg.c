@@ -2152,7 +2152,7 @@ static void P_UnArchiveThinkers(void)
     }
 
     // Read in saved thinkers
-    while(1)
+    for(;;)
     {
         tclass = SV_ReadByte();
 
