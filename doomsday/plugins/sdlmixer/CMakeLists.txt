@@ -7,7 +7,12 @@
 ################################################################################
 ######################## SDLMixer Output Plugin  ###############################
 INCLUDE_DIRECTORIES ( portable/include )
+IF (NOT APPLE)
 FILE(GLOB SDLMIXER_PORTABLE_SOURCES portable/src/*.c)
+ELSE (NOT APPLE)
+SET (SDLMIXER_SOURCES portable/src/driver_sdlmixer.c
+portable/src/mus2midi.c )
+ENDIF (NOT APPLE)
 SET (SDLMIXER_SOURCES ${SDLMIXER_PORTABLE_SOURCES} )
 
 IF (APPLE)
