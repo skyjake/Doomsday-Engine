@@ -11,6 +11,7 @@
 		B012234908A6AE4A00A6E775 /* tab20_maps.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab20_maps.py; path = plugins/tab20_maps.py; sourceTree = "<group>"; };
 		B012234A08A6AE4A00A6E775 /* tab30_addons.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab30_addons.py; path = plugins/tab30_addons.py; sourceTree = "<group>"; };
 		B012234B08A6AE4A00A6E775 /* tab40_settings.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab40_settings.py; path = plugins/tab40_settings.py; sourceTree = "<group>"; };
+		B05FA5230A8A3CCD00A9FE0E /* german.lang */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = german.lang; path = lang/german.lang; sourceTree = "<group>"; };
 		B0F176BC087C37940051F24A /* addons.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = addons.py; sourceTree = "<group>"; };
 		B0F176BD087C37940051F24A /* cfparser.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = cfparser.py; sourceTree = "<group>"; };
 		B0F176BE087C37940051F24A /* events.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = events.py; sourceTree = "<group>"; };
@@ -103,6 +104,7 @@
 		B0F17731087C43560051F24A /* lang */ = {
 			isa = PBXGroup;
 			children = (
+				B05FA5230A8A3CCD00A9FE0E /* german.lang */,
 				B0F17732087C436C0051F24A /* english.lang */,
 			);
 			name = lang;
