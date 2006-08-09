@@ -2491,9 +2491,13 @@ class Tree (Widget):
         
         @return True, if the addon resides under the parentItem.
         """
-        for ancestor in self.itemAncestors[addon]:
-            if ancestor == parentItem:
-                return True
+        try:
+            for ancestor in self.itemAncestors[addon]:
+                if ancestor == parentItem:
+                    return True
+        except:
+            # Not defined.
+            pass
         return False        
 
     def insertSorted(self, parentItem, label):
