@@ -2953,6 +2953,6 @@ class Tree (Widget):
                     break
 
         # Enable notifications and update with the current profile.
-        self.listenToNotifications = False
+        self.listenToNotifications = True
         self.refreshCategoryLabels(profile)
         self.refreshItems(profile)
