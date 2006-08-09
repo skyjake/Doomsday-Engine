@@ -88,7 +88,7 @@ GOTO %1
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dsa3d dscompat jdoom jheretic jhexen
+CALL vcbuild cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dsa3d dscompat jdoom jheretic jhexen wolftc
 GOTO Done
 
 
@@ -218,6 +218,14 @@ GOTO Done
 ECHO Compiling jHexen.dll (jHexen Game Library)...
 md %OBJ_DIR%\jHexen
 cl /O2 /Ob1 %INCS_PLUGIN_COMMON% %INCS_ENGINE_API% %INCS_LZSS_PORTABLE% /I "./../../plugins/jhexen/include" /D "__JHEXEN__" %DLLDEFINES% /D "JHEXEN_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/jHexen/" /Fd"./%OBJ_DIR%/jHexen/" /W3 /Gz  @jhexen_cl.rsp  /link /OUT:"./%BIN_DIR%/jHexen.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:"./../../plugins/jhexen/api/jhexen.def" /IMPLIB:"./%BIN_DIR%/jHexen.lib" ./%BIN_DIR%/doomsday.lib %EXTERNAL%/lzss/win32/lzss.lib
+GOTO Done
+
+
+:: *** WolfTC.dll
+:WolfTC
+ECHO Compiling WolfTC.dll (WolfTC Game Library)...
+md %OBJ_DIR%\WolfTC
+cl /O2 /Ob1 %INCS_PLUGIN_COMMON% %INCS_ENGINE_API% %INCS_LZSS_PORTABLE% /I "./../../plugins/wolftc/include" /D "__WOLFTC__" /D "__JDOOM__" %DLLDEFINES% /D "WOLFTC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/WolfTC/" /Fd"./%OBJ_DIR%/WolfTC/" /W3 /Gz  @wolftc_cl.rsp  /link  /OUT:"./%BIN_DIR%/WolfTC.dll" %LFLAGS% /LIBPATH:"./Lib" /DLL /DEF:"./../../plugins/jdoom/api/wolftc.def" /IMPLIB:"./%BIN_DIR%/WolfTC.lib" ./%BIN_DIR%/doomsday.lib %EXTERNAL%/lzss/win32/lzss.lib
 GOTO Done
 
 
