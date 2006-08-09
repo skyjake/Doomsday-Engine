@@ -1,0 +1,6 @@
+FIREWALL 128,64 masked      # And other flag-words.
+    @ FIRE01 0,96
+    @ FIRE02 0,0
+;
+
+mytex 32,32 @ fire02;
