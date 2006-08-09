@@ -49,6 +49,11 @@ allComponents = {}
 # Dictionary for all normal settings (no system settings).
 allSettings = {}
 
+# Array of setting identifiers used to select components.
+# [number of settings, number of components, array]
+# Recalculated when the first two change.
+compSettings = [0, 0, []]
+
 # Dictionary for system settings.
 systemSettings = {}
 
@@ -730,15 +735,23 @@ def getComponentSettings():
 
     @return An array of setting identifiers.
     """
-    compSettings = []
+    global compSettings
 
-    for s in allSettings.values():
-        for c in allComponents.values():
-            if c.getSetting() == s.getId():
-                compSettings.append(s.getId())
-                break
+    # Do we need to look again?
+    if len(allSettings) != compSettings[0] or \
+       len(allComponents) != compSettings[1]:
+        # Look again.
+        compSettings[0] = len(allSettings)
+        compSettings[1] = len(allComponents)
+        compSettings[2] = []
 
-    return compSettings
+        for s in allSettings.values():
+            for c in allComponents.values():
+                if c.getSetting() == s.getId():
+                    compSettings[2].append(s.getId())
+                    break
+
+    return compSettings[2]
 
 
 def haveSettingsForAddon(addon):
