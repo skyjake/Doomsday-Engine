@@ -2378,6 +2378,9 @@ class Tree (Widget):
 
         # The root items.
         self.removeAll()
+
+        # Clear the list of item ancestors (addon name -> [parent items]).
+        self.itemAncestors = {}
         
         # In addition to the normal notifications, listen to addon attachment
         # and detachment notifications.
@@ -2479,16 +2482,19 @@ class Tree (Widget):
         """
         pass
 
-    def isItemUnder(self, child, parent):
-        """Returns True if the parent is truly an ancestor of the
-        child."""
-        tree = self.getWxWidget()
-        item = tree.GetItemParent(child)
-        while item:
-            if item == parent:
+    def isAddonUnder(self, addon, parentItem):
+        """Returns True if the addon is a descendent of the parentItem in the
+        Tree.
+        
+        @param addon  Addon identifier.
+        @param parentItem  wxTreeItemId, under which the addon is to be under.
+        
+        @return True, if the addon resides under the parentItem.
+        """
+        for ancestor in self.itemAncestors[addon]:
+            if ancestor == parentItem:
                 return True
-            item = tree.GetItemParent(item)
-        return False
+        return False        
 
     def insertSorted(self, parentItem, label):
         """Insert a tree item under the parent item, so that it's in
@@ -2522,6 +2528,19 @@ class Tree (Widget):
         except:
             return None
 
+    def getItemAncestors(self, item):
+        """Builds an array of the ancestor items of the item.
+        
+        @return Array of wxTreeItemIds.
+        """
+        tree = self.getWxWidget()
+        ancestors = []
+        parent = tree.GetItemParent(item)
+        while parent:
+            ancestors.append(parent)
+            parent = tree.GetItemParent(parent)
+        return ancestors
+
     def showAddons(self, addons, hierarchy):
         """Make sure that only the specified addons are visible in the
         tree.  All other items are removed from the tree.
@@ -2551,6 +2570,9 @@ class Tree (Widget):
                 item = self.insertSorted(parentItem,
                                          language.translate(addon))
                 hierarchy.items[addon] = item
+                
+                # Determine the ancestors of the item.
+                self.itemAncestors[addon] = self.getItemAncestors(item)
 
                 # The extra data contains information about the addon.
                 self.setItemData(item, addon)
@@ -2561,8 +2583,9 @@ class Tree (Widget):
             if addon not in addons:
                 # Remove the item from the tree.
                 tree.Delete(hierarchy.items[addon])
-                # Remove the entry from the dictionary.
+                # Remove the entry from the dictionaries.
                 del hierarchy.items[addon]
+                del self.itemAncestors[addon]
 
         tree.Thaw()
 
@@ -2605,9 +2628,8 @@ class Tree (Widget):
 
         # The addons that will actually be used when launching.
         usedAddons = profile.getUsedAddons()
-        
-        for hier in [self.defaults, self.available]:
 
+        for hier in [self.defaults, self.available]:
             rootLabel = language.translate(hier.rootId)
             totalCount = len(hier.items)
 
@@ -2633,8 +2655,7 @@ class Tree (Widget):
                     justBoxParts = True
                     
                     for addon in hier.items.keys():
-                        if self.isItemUnder(hier.items[addon],
-                                            hier.categories[category]):
+                        if self.isAddonUnder(addon, hier.categories[category]):
                             count += 1
                             if addon in usedAddons:
                                 checkCount += 1
@@ -2673,7 +2694,7 @@ class Tree (Widget):
         else:
             tree.Collapse(self.defaults.root)
             tree.Expand(self.available.root)
-
+            
     def refreshItems(self, forProfile, justAddon=None):
         """Refresh the appearance of items."""
 
@@ -2713,8 +2734,11 @@ class Tree (Widget):
         
         if event.hasId('addon-attached') or event.hasId('addon-detached'):
             if event.getProfile() is pr.getActive():
+                #print "categ labels"
                 self.refreshCategoryLabels(event.getProfile())
+                #print "items"
                 self.refreshItems(event.getProfile())
+                #print " done!"                
 
     def retranslate(self):
         """Update all the items in the tree."""
@@ -2867,8 +2891,8 @@ class Tree (Widget):
         """
         hier = self.getHierarchy(ev.GetItem())
 
-        for item in hier.items.values():
-            if self.isItemUnder(item, ev.GetItem()):
+        for addon in hier.items.keys():
+            if self.isAddonUnder(addon, ev.GetItem()):
                 # There is something under the category.
                 ev.Skip()
                 return
@@ -2909,9 +2933,8 @@ class Tree (Widget):
                     # This is the category we are looking for.  We'll
                     # have to iterate through all the addons.
                     for addon in hier.items.keys():
-                        if self.isItemUnder(hier.items[addon],
-                                            categoryItem):
-                            print addon
+                        if self.isAddonUnder(addon, categoryItem):
+                            #print addon
                             if doCheck:
                                 profile.useAddon(addon)
                             else:
