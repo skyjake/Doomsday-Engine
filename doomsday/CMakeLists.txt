@@ -116,10 +116,10 @@ FILE(GLOB DENG_JSTRIFE_DEFS ${CMAKE_SOURCE_DIR}/plugins/jstrife/defs/*.ded)
 SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
 SET (DENG_JSTRIFE_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jstrife)
 
-SET (DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/jwolftc/data/jwolftc.wad)
-FILE(GLOB DENG_WOLFTC_DEFS ${CMAKE_SOURCE_DIR}/plugins/jwolftc/defs/*.ded)
-SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jwolftc)
-SET (DENG_WOLFTC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jwolftc)
+SET (DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/wolftc.wad)
+FILE(GLOB DENG_WOLFTC_DEFS ${CMAKE_SOURCE_DIR}/plugins/wolftc/defs/*.ded)
+SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/wolftc)
+SET (DENG_WOLFTC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/wolftc)
 
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
@@ -541,7 +541,7 @@ IF (BUILDJHEXEN)
 ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jhexen )
 ENDIF (BUILDJHEXEN)
 ################################################################################
-######################## WolfTC Game Plugin  ##################################
+######################## WolfTC Game Plugin  ###################################
 IF (BUILDWOLFTC)
 ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/wolftc )
 ENDIF (BUILDWOLFTC)

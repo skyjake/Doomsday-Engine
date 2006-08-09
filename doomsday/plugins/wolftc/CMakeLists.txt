@@ -14,7 +14,7 @@ ADD_DEFINITIONS (-D__JDOOM__ )
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE(GLOB JDOOM_SOURCES src/*.c)
+FILE(GLOB WOLFTC_SOURCES src/*.c)
 
 ADD_LIBRARY (wolftc SHARED ${WOLFTC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 ################################################################################
