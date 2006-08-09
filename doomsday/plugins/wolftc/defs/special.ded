@@ -1,0 +1,5 @@
+# jDoom: Special Effects
+
+Header { Version = 5; }
+
+Include "Particles.ded";

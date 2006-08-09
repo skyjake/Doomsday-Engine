@@ -1,0 +1,195 @@
+# jDoom: Animation Sequences
+
+Header { Version = 5; }
+
+Group 
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "NUKAGE1"; Tics = 8; }; 
+  Flat { ID = "NUKAGE2"; Tics = 8; };
+  Flat { ID = "NUKAGE3"; Tics = 8; };
+}
+
+Group 
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "FWATER1"; Tics = 8; }; 
+  Flat { ID = "FWATER2"; Tics = 8; };
+  Flat { ID = "FWATER3"; Tics = 8; };
+  Flat { ID = "FWATER4"; Tics = 8; };
+}
+
+Group 
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "SWATER1"; Tics = 8; }; 
+  Flat { ID = "SWATER2"; Tics = 8; };
+  Flat { ID = "SWATER3"; Tics = 8; };
+  Flat { ID = "SWATER4"; Tics = 8; };
+}
+
+Group 
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "LAVA1"; Tics = 8; }; 
+  Flat { ID = "LAVA2"; Tics = 8; };
+  Flat { ID = "LAVA3"; Tics = 8; };
+  Flat { ID = "LAVA4"; Tics = 8; };
+}
+
+Group 
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "BLOOD1"; Tics = 8; }; 
+  Flat { ID = "BLOOD2"; Tics = 8; };
+  Flat { ID = "BLOOD3"; Tics = 8; };
+}
+
+# DOOM II flat animations.
+Group
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "RROCK05"; Tics = 8; }; 
+  Flat { ID = "RROCK06"; Tics = 8; };
+  Flat { ID = "RROCK07"; Tics = 8; };
+  Flat { ID = "RROCK08"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "SLIME01"; Tics = 8; }; 
+  Flat { ID = "SLIME02"; Tics = 8; };
+  Flat { ID = "SLIME03"; Tics = 8; };
+  Flat { ID = "SLIME04"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "SLIME05"; Tics = 8; }; 
+  Flat { ID = "SLIME06"; Tics = 8; };
+  Flat { ID = "SLIME07"; Tics = 8; };
+  Flat { ID = "SLIME08"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Flat { ID = "SLIME09"; Tics = 8; }; 
+  Flat { ID = "SLIME10"; Tics = 8; };
+  Flat { ID = "SLIME11"; Tics = 8; };
+  Flat { ID = "SLIME12"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "BLODGR1"; Tics = 8; };
+  Texture { ID = "BLODGR2"; Tics = 8; };
+  Texture { ID = "BLODGR3"; Tics = 8; };
+  Texture { ID = "BLODGR4"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "SLADRIP1"; Tics = 8; };
+  Texture { ID = "SLADRIP2"; Tics = 8; };
+  Texture { ID = "SLADRIP3"; Tics = 8; };
+  Texture { ID = "SLADRIP4"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "BLODRIP1"; Tics = 8; };
+  Texture { ID = "BLODRIP2"; Tics = 8; };
+  Texture { ID = "BLODRIP3"; Tics = 8; };
+  Texture { ID = "BLODRIP4"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "FIREWALA"; Tics = 8; };
+  Texture { ID = "FIREWALB"; Tics = 8; };
+  Texture { ID = "FIREWALL"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "GSTFONT1"; Tics = 8; };
+  Texture { ID = "GSTFONT2"; Tics = 8; };
+  Texture { ID = "GSTFONT3"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "FIRELAV3"; Tics = 8; };
+  Texture { ID = "FIRELAVA"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "FIREMAG1"; Tics = 8; };
+  Texture { ID = "FIREMAG2"; Tics = 8; };
+  Texture { ID = "FIREMAG3"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "FIREBLU1"; Tics = 8; };
+  Texture { ID = "FIREBLU2"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "ROCKRED1"; Tics = 8; };
+  Texture { ID = "ROCKRED2"; Tics = 8; };
+  Texture { ID = "ROCKRED3"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "BFALL1"; Tics = 8; };
+  Texture { ID = "BFALL2"; Tics = 8; };
+  Texture { ID = "BFALL3"; Tics = 8; };
+  Texture { ID = "BFALL4"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "SFALL1"; Tics = 8; };
+  Texture { ID = "SFALL2"; Tics = 8; };
+  Texture { ID = "SFALL3"; Tics = 8; };
+  Texture { ID = "SFALL4"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "WFALL1"; Tics = 8; };
+  Texture { ID = "WFALL2"; Tics = 8; };
+  Texture { ID = "WFALL3"; Tics = 8; };
+  Texture { ID = "WFALL4"; Tics = 8; };
+}
+
+Group
+{
+  Flags = "tgf_smooth";
+  Texture { ID = "DBRAIN1"; Tics = 8; };
+  Texture { ID = "DBRAIN2"; Tics = 8; };
+  Texture { ID = "DBRAIN3"; Tics = 8; };
+  Texture { ID = "DBRAIN4"; Tics = 8; };
+}
+
+IncludeIf doom2-plut "PlutAnim.ded";
+IncludeIf doom2-tnt "TNTAnim.ded";
