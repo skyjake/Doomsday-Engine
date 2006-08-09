@@ -66,6 +66,8 @@ def loadAll():
             exec(initStatement)
         except:
             # Any problems during init cause the plugin to be ignored.
+            import traceback
+            traceback.print_exc()
             pass
     
     sys.path = oldPath
