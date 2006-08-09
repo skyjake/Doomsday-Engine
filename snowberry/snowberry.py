@@ -36,6 +36,8 @@ def main():
     profiles.restore()
 
     # Start the main loop.
+    #import profile
+    #profile.run('ui.startMainLoop()', 'prof.log')
     ui.startMainLoop()
 
 #profile.run('main()', 'report.log')
