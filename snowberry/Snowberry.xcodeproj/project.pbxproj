@@ -12,6 +12,9 @@
 		B012234A08A6AE4A00A6E775 /* tab30_addons.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab30_addons.py; path = plugins/tab30_addons.py; sourceTree = "<group>"; };
 		B012234B08A6AE4A00A6E775 /* tab40_settings.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab40_settings.py; path = plugins/tab40_settings.py; sourceTree = "<group>"; };
 		B05FA5230A8A3CCD00A9FE0E /* german.lang */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = german.lang; path = lang/german.lang; sourceTree = "<group>"; };
+		B05FA5FA0A8A7C1500A9FE0E /* tree.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tree.py; path = sb/widget/tree.py; sourceTree = "<group>"; };
+		B05FA6200A8A80E900A9FE0E /* tab.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab.py; path = sb/widget/tab.py; sourceTree = "<group>"; };
+		B05FA62A0A8A81D500A9FE0E /* list.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = list.py; path = sb/widget/list.py; sourceTree = "<group>"; };
 		B0F176BC087C37940051F24A /* addons.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = addons.py; sourceTree = "<group>"; };
 		B0F176BD087C37940051F24A /* cfparser.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = cfparser.py; sourceTree = "<group>"; };
 		B0F176BE087C37940051F24A /* events.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = events.py; sourceTree = "<group>"; };
@@ -45,9 +48,36 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		B05FA5F70A8A7BEA00A9FE0E /* sb */ = {
+			isa = PBXGroup;
+			children = (
+				B05FA5F90A8A7BFE00A9FE0E /* ui */,
+				B05FA5F80A8A7BF600A9FE0E /* widget */,
+			);
+			name = sb;
+			sourceTree = "<group>";
+		};
+		B05FA5F80A8A7BF600A9FE0E /* widget */ = {
+			isa = PBXGroup;
+			children = (
+				B05FA62A0A8A81D500A9FE0E /* list.py */,
+				B05FA6200A8A80E900A9FE0E /* tab.py */,
+				B05FA5FA0A8A7C1500A9FE0E /* tree.py */,
+			);
+			name = widget;
+			sourceTree = "<group>";
+		};
+		B05FA5F90A8A7BFE00A9FE0E /* ui */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = ui;
+			sourceTree = "<group>";
+		};
 		B0F176B1087C36610051F24A = {
 			isa = PBXGroup;
 			children = (
+				B05FA5F70A8A7BEA00A9FE0E /* sb */,
 				B0F176D7087C38050051F24A /* conf */,
 				B0F17731087C43560051F24A /* lang */,
 				B0F176C9087C37C30051F24A /* plugins */,

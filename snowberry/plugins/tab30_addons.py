@@ -27,6 +27,7 @@
 import os, time, string
 import paths, events, ui, language
 import widgets as wg
+import sb.widget.list
 import profiles as pr
 import settings as st
 import addons as ao
@@ -461,7 +462,7 @@ def chooseAddons(dialogId, title, actionButton):
 
     area.createText('addon-dialog-found')
     area.setWeight(1)
-    foundList = area.createList('', style=wg.List.STYLE_COLUMNS)
+    foundList = area.createList('', style=sb.widget.list.List.STYLE_COLUMNS)
     foundList.setMinSize(500, 300)
 
     area.setWeight(0)

@@ -22,6 +22,7 @@
 
 import ui, paths, events, language
 import widgets as wg
+import sb.widget.list
 import settings as st
 import profiles as pr
 import addons as ao
@@ -145,7 +146,7 @@ def runWizard():
     gamePage.follows(langPage)
     area = gamePage.getArea()
     area.createText('wizard-select-games').resizeToBestSize()
-    games = area.createList('', style=wg.List.STYLE_CHECKBOX)
+    games = area.createList('', style=sb.widget.list.List.STYLE_CHECKBOX)
     games.setMinSize(50, 200)
     gamePage.setGameList(games)
 

@@ -23,6 +23,7 @@ import settings as st
 import profiles as pr
 import addons as ao
 import widgets as wg
+import sb.widget.tab
 
 # Identifiers:
 SETTINGS = 'tab-settings'
@@ -42,7 +43,7 @@ def init():
 
     # Create the area where all the setting categories are placed.
     categoryArea = area.createTabArea(CATEGORY_AREA,
-                                      wg.TabArea.STYLE_FORMATTED)
+                                      sb.widget.tab.TabArea.STYLE_FORMATTED)
 
     createWidgets()
 
@@ -84,7 +85,7 @@ def createWidgets():
     # The Addons tab contains another tab area, where we'll have one
     # tab for each configurable addon that will be loaded.
     global addonArea
-    addonArea = area.createTabArea('addontab', wg.TabArea.STYLE_DROP_LIST)
+    addonArea = area.createTabArea('addontab', sb.widget.tab.TabArea.STYLE_DROP_LIST)
 
     # Get all addons that exist, get their identifiers, and sort them
     # by name.
@@ -105,7 +106,7 @@ def createWidgets():
             if len(addonGroups) > 0:
                 # Create tabs for each group.
                 area = area.createTabArea(addon + '-tab',
-                                          wg.TabArea.STYLE_HORIZ_ICON)
+                                          sb.widget.tab.TabArea.STYLE_HORIZ_ICON)
                 for group in addonGroups:
                     groupId = addon + '-' + group
                     categoryTabs.append((groupId, area.addTab(groupId)))

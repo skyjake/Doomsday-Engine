@@ -21,6 +21,7 @@
 
 import ui, events
 import widgets as wg
+import sb.widget.list
 import profiles as pr
 import settings as st
 import language
@@ -368,7 +369,7 @@ def commandHandler(event):
         area.createText('unhiding-profiles')
 
         area.setWeight(3)
-        profList = area.createList('', wg.List.STYLE_CHECKBOX)
+        profList = area.createList('', sb.widget.list.List.STYLE_CHECKBOX)
         profList.setMinSize(50, 150)
 
         def selectAll():

@@ -28,6 +28,7 @@
 import os
 import ui, events, language
 import widgets as wg
+import sb.widget.list
 import addons as ao
 import profiles as pr
 
@@ -49,7 +50,7 @@ def init():
     area.setWeight(1)
 
     global mapListBox
-    mapListBox = area.createList('maps-list', wg.List.STYLE_COLUMNS)
+    mapListBox = area.createList('maps-list', sb.widget.list.List.STYLE_COLUMNS)
 
     # The columns.
     mapListBox.addColumn('maps-list-identifier', 180)

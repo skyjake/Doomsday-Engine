@@ -37,6 +37,9 @@
 import sys, os, wx, string
 import wx.wizard as wiz
 import host, events, widgets, language, paths
+import sb.widget.list
+import sb.widget.tab
+import sb.widget.tree
 import profiles as pr
 import settings as st
 import logger
@@ -652,7 +655,7 @@ class Area (widgets.Widget):
         self.__addWidget(widget)
         return widget
 
-    def createList(self, name, style=widgets.List.STYLE_SINGLE):
+    def createList(self, name, style=sb.widget.list.List.STYLE_SINGLE):
         """Create a list widget inside the area.  Initially the list
         is empty.
 
@@ -661,9 +664,9 @@ class Area (widgets.Widget):
         selection of an item causes the notification
         '(name)-selected'.
 
-        @return A widgets.List object.
+        @return A sb.widget.list.List object.
         """
-        widget = widgets.List(self.panel, self.__getNewId(), name, style)
+        widget = sb.widget.list.List(self.panel, self.__getNewId(), name, style)
         self.__addWidget(widget)
         return widget
 
@@ -674,9 +677,9 @@ class Area (widgets.Widget):
         @param name Identifier of the list widget.  This is used when
         the widget sends notifications.
 
-        @param A widgets.FormattedList widget.
+        @param A sb.widget.list.FormattedList widget.
         """
-        widget = widgets.FormattedList(self.panel, self.__getNewId(), name)
+        widget = sb.widget.list.FormattedList(self.panel, self.__getNewId(), name)
         self.__addWidget(widget)
         return widget
 
@@ -689,26 +692,26 @@ class Area (widgets.Widget):
         For example, selection of an item causes the notification
         '(name)-selected'.
 
-        @return A widgets.DropList object.
+        @return A sb.widget.list.DropList object.
         """
-        widget = widgets.DropList(self.panel, self.__getNewId(), name)
+        widget = sb.widget.list.DropList(self.panel, self.__getNewId(), name)
         self.__addWidget(widget)
         return widget
 
     def createTree(self):
         """Create a tree widget inside the area.  Initially the tree
-        is empty.  The widgets.Tree class provides methods for
+        is empty.  The Tree class provides methods for
         populating the tree with items.
 
         @return A widgets.Tree object.
 
         @see widgets.Tree
         """
-        widget = widgets.Tree(self.panel, self.__getNewId())
+        widget = sb.widget.tree.Tree(self.panel, self.__getNewId())
         self.__addWidget(widget)
         return widget
 
-    def createTabArea(self, name, style=widgets.TabArea.STYLE_ICON):
+    def createTabArea(self, name, style=sb.widget.tab.TabArea.STYLE_ICON):
         """Create a TabArea widget inside the area.  The widget is
         composed of an icon list and a notebook-like tabbing area.
 
@@ -717,14 +720,14 @@ class Area (widgets.Widget):
 
         @return A widgets.TabArea widget.
         """
-        if style == widgets.TabArea.STYLE_FORMATTED:
+        if style == sb.widget.tab.TabArea.STYLE_FORMATTED:
             # Create a subarea and a separate MultiArea in there.
             sub = self.createArea(alignment=Area.ALIGN_HORIZONTAL,
                                   border=0)
 
             # Create the formatted list (with extended functionality).
-            widget = widgets.FormattedTabArea(self.panel, self.__getNewId(),
-                                              name)
+            widget = sb.widget.tab.FormattedTabArea(self.panel, self.__getNewId(),
+                                                    name)
             sub.setWeight(5)
             sub.setBorder(8, Area.BORDER_RIGHT)
             sub.__addWidget(widget)
@@ -735,8 +738,8 @@ class Area (widgets.Widget):
             multi = sub.createMultiArea()
             widget.setMultiArea(multi)
         else:
-            widget = widgets.TabArea(self.panel, self.__getNewId(),
-                                     name, style)
+            widget = sb.widget.tab.TabArea(self.panel, self.__getNewId(),
+                                           name, style)
             self.__addWidget(widget)
         return widget
 
@@ -1492,7 +1495,7 @@ class MainPanel (wx.Panel):
 
         # Create a TabArea into the TABS area.
         self.tabs = tabsArea.createTabArea(
-            'tab', style=widgets.TabArea.STYLE_BASIC)
+            'tab', style=sb.widget.tab.TabArea.STYLE_BASIC)
 
     def getTabs(self):
         """Returns the TabArea widget that contains the main tabbing
