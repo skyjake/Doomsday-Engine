@@ -2382,6 +2382,8 @@ class Tree (Widget):
         # Clear the list of item ancestors (addon name -> [parent items]).
         self.itemAncestors = {}
         
+        self.listenToNotifications = True
+        
         # In addition to the normal notifications, listen to addon attachment
         # and detachment notifications.
         events.addNotifyListener(self.onNotify, ['addon-attached', 
@@ -2734,6 +2736,9 @@ class Tree (Widget):
 
         @param event An events.Notify object.
         """
+        if not self.listenToNotifications:
+            return
+        
         Widget.onNotify(self, event)
         
         if event.hasId('addon-attached') or event.hasId('addon-detached'):
@@ -2931,6 +2936,8 @@ class Tree (Widget):
         # This is probably a category item.  We'll need to be careful.
         categoryItem = tree.GetSelection()
 
+        self.listenToNotifications = False
+
         for hier in [self.available, self.defaults]:
             for category in hier.categories.keys():
                 if hier.categories[category] == categoryItem:
@@ -2944,3 +2951,8 @@ class Tree (Widget):
                             else:
                                 profile.dontUseAddon(addon)
                     break
+
+        # Enable notifications and update with the current profile.
+        self.listenToNotifications = False
+        self.refreshCategoryLabels(profile)
+        self.refreshItems(profile)
