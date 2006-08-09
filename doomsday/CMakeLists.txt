@@ -132,6 +132,11 @@ ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR}
 ENDIF (NOT WIN32)
 ENDIF (NOT APPLE)
 ENDIF (UNIX)
+IF (APPLE)
+ADD_DEFINITIONS ('-DDENG_BASE_DIR="./" ')
+ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="./" ')
+ENDIF (APPLE)
+
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
