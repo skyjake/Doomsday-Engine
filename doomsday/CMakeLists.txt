@@ -124,8 +124,14 @@ SET (DENG_JWOLFTC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jwolftc)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
+IF (UNIX)
+IF (NOT APPLE)
+IF (NOT WIN32)
 ADD_DEFINITIONS ('-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/" ')
 ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR}/" ')
+ENDIF (NOT WIN32)
+ENDIF (NOT APPLE)
+ENDIF (UNIX)
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
@@ -227,7 +233,7 @@ IF (APPLE)
 ADD_DEFINITIONS ( -DMACOSX)
 SET (BUILDSYSTEM MACOSX)
 
-## Add Compiler flags for OSX
+## Add needed Compiler and Linker flags for OSX
 IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flat_namespace -undefined suppress" )
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress" )
