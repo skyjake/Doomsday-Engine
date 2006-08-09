@@ -36,7 +36,7 @@ OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
 OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
 OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
 OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
-OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default ON" ON)
+OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
