@@ -27,14 +27,7 @@
 #  pragma optimize("g", off)
 #endif
 
-#include "doomdef.h"
-#include "d_config.h"
-#include "p_local.h"
-#include "s_sound.h"
-#include "g_game.h"
-
-// State.
-#include "doomstat.h"
+#include "wolftc.h"
 
 #include "dmu_lib.h"
 

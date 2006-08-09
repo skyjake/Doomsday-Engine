@@ -20,7 +20,11 @@
 
 #include <math.h>
 
-#if __JDOOM__
+#if   __WOLFTC__
+#  include "wolftc.h"
+#  include "r_common.h"
+#  include "hu_stuff.h"
+#elif __JDOOM__
 #  include "jdoom.h"
 #  include "r_common.h"
 #  include "hu_stuff.h"

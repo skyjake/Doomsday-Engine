@@ -13,17 +13,14 @@
  */
 
 /*
- * d_main.c: DOOM specifc Initialization.
+ * d_main.c: WOLFTC specifc Initialization.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "doomstat.h"
+#include "wolftc.h"
 
-#include "d_config.h"
 #include "m_argv.h"
-#include "m_menu.h"
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "p_saveg.h"

@@ -21,7 +21,13 @@
 // HEADER FILES ------------------------------------------------------------
 #include <ctype.h>
 
-#if __JDOOM__
+#if   __WOLFTC__
+#  include <string.h>
+#  include <stdlib.h>
+#  include <math.h>
+#  include "wolftc.h"
+#  include "p_saveg.h"
+#elif __JDOOM__
 #  include <string.h>
 #  include <stdlib.h>
 #  include <math.h>

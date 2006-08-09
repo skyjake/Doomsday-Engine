@@ -22,7 +22,7 @@
  * Compiles for jDoom and jHeretic
  */
 
-#if __JDOOM__ || __JHERETIC__
+#if __JDOOM__ || __WOLFTC__|| __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -31,7 +31,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#if __JDOOM__
+#if   __WOLFTC__
+#  include "wolftc.h"
+#elif __JDOOM__
 #  include "jdoom.h"
 #elif __JHERETIC__
 #  include "jheretic.h"

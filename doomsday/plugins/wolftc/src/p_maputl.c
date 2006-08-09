@@ -21,9 +21,7 @@
 
 #include <stdlib.h>
 
-#include "doomdef.h"
-#include "d_config.h"
-#include "p_local.h"
+#include "wolftc.h"
 
 // MACROS ------------------------------------------------------------------
 

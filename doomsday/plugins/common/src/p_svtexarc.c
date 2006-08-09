@@ -17,7 +17,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __JDOOM__
+#if   __WOLFTC__
+#  include "wolftc.h"
+#elif __JDOOM__
 #  include "jdoom.h"
 #elif __JHERETIC__
 #  include "jheretic.h"

@@ -18,10 +18,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "p_local.h"
-#include "s_sound.h"
-#include "doomstat.h"
+#include "wolftc.h"
 
 #include "dmu_lib.h"
 

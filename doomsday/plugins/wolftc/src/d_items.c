@@ -14,11 +14,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-// We are referring to sprite numbers.
-#include "info.h"
-#include "d_items.h"
-#include "s_sound.h"
-#include "p_local.h"
+#include "wolftc.h"
 
 // MACROS ------------------------------------------------------------------
 

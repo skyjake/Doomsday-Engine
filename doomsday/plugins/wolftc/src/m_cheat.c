@@ -142,6 +142,11 @@ static unsigned char cheat_xlate_table[256];
 
 // CODE --------------------------------------------------------------------
 
+void cht_Init(void)
+{
+    // Nothing to do
+}
+
 /*
  * Responds to user input to see if a cheat sequence
  * has been entered. Events are never eaten.
@@ -337,14 +342,14 @@ boolean SuicideResponse(int option, void *data)
     {
         GL_Update(DDUF_BORDER);
         M_StopMessage();
-        M_ClearMenus(false);
+        M_ClearMenus();
         cht_SuicideFunc(&players[consoleplayer]);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        M_ClearMenus(false);
+        M_ClearMenus();
         return true;
     }
     return false;
@@ -450,7 +455,7 @@ boolean cht_WarpFunc(player_t *plyr, char *buf)
     G_DeferedInitNew(gameskill, epsd, map);
 
     // Clear the menu if open
-    M_ClearMenus(false);
+    M_ClearMenus();
     brief_disabled = true;
     return true;
 }

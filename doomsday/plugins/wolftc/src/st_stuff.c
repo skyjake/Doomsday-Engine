@@ -27,21 +27,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "doomdef.h"
-#include "d_config.h"
+#include "wolftc.h"
+
 #include "d_net.h"
-#include "g_game.h"
-#include "st_stuff.h"
 #include "st_lib.h"
-#include "p_local.h"
-#include "p_inter.h"
 #include "am_map.h"
-#include "m_menu.h"
-#include "m_cheat.h"
 #include "hu_stuff.h"
-#include "s_sound.h"
-#include "doomstat.h"
-#include "dstrings.h"
 
 // MACROS ------------------------------------------------------------------
 

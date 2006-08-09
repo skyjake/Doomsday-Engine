@@ -25,14 +25,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_config.h"
-#include "m_argv.h"
-#include "p_local.h"
-#include "g_game.h"
-#include "s_sound.h"
+#include "wolftc.h"
 
+#include "m_argv.h"
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_player.h"

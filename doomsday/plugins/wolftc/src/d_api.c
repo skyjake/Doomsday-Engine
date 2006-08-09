@@ -21,10 +21,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_config.h"
-#include "acfnlink.h"
+#include "wolftc.h"
+
 #include "xgclass.h"
 
 // MACROS ------------------------------------------------------------------

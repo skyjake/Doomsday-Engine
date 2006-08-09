@@ -22,16 +22,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomdef.h"
-#include "d_config.h"
-#include "dstrings.h"
-#include "doomstat.h"
+#include "wolftc.h"
+
 #include "am_map.h"
 #include "d_net.h"
-#include "p_local.h"
-#include "s_sound.h"
-#include "p_inter.h"
-
 #include "dmu_lib.h"
 #include "p_player.h"
 

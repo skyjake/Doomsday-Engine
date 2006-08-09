@@ -27,7 +27,6 @@
 #endif
 
 #include "jdoom.h"
-#include "mn_def.h"
 #include "g_controls.h"
 
 extern const Control_t *grabbing;
