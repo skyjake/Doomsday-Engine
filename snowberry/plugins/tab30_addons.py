@@ -274,19 +274,19 @@ def showInspector(addon):
     # General Information
     #
     msg += beginTable
-    msg += makeField('Identifier:', addon.getId())
-    msg += makeField('Format:', language.translate(addon.getType()))
-    msg += makeField('Category:', addon.getCategory().getPath())
     msg += makeField('Summary:', language.translate(ident + '-summary', '-'))
     msg += makeField('Version:', language.translate(ident + '-version', '-'))
+    msg += makeField('Last Modified:',
+                     time.strftime("%a, %d %b %Y %H:%M:%S",
+                                   time.localtime(addon.getLastModified())))
     msg += makeField('Author(s):', language.translate(ident + '-author', '-'))
     msg += makeField('Contact:', language.translate(ident + '-contact', '-'))
     msg += makeField('Copyright:',
                      language.translate(ident + '-copyright', '-'))
     msg += makeField('License:', language.translate(ident + '-license', '-'))
-    msg += makeField('Last Modified:',
-                     time.strftime("%a, %d %b %Y %H:%M:%S",
-                                   time.localtime(addon.getLastModified())))
+    msg += makeField('Category:', addon.getCategory().getPath())
+    msg += makeField('Format:', language.translate(addon.getType()))
+    msg += makeField('Identifier:', addon.getId())
     msg += endTable
 
     #
