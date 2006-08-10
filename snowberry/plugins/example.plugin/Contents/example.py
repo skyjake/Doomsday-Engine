@@ -5,7 +5,7 @@ import ui
 def init():
     print "Example init called!"
 
-    area = ui.getArea(ui.Area.COMMAND)
+    area = ui.getArea(ui.COMMAND)
     #area.createButton('quit')
 
 

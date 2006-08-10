@@ -2,7 +2,7 @@
 # $Id$
 # Snowberry: Extensible Launcher for the Doomsday Engine
 #
-# Copyright (C) 2004, 2005
+# Copyright (C) 2004, 2006
 #   Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -29,16 +29,20 @@
 ## from the configuration directories.  We'll expect to find both
 ## components and settings.
 
-# The addons may contain extra settings.
+print "entered settings.py"
+
+# Import modules required for initialization.
 import os, re, string
+import language
+import paths
+import events    
 import logger
 import host
 import language
-import paths, cfparser
-import addons as ao
+import cfparser
 import profiles as pr
-import expressions as ex
-import events
+import sb.expressions as ex
+
 
 # Dictionary for system configuration (fonts, buttons sizes).
 sysConfig = {}
@@ -254,7 +258,8 @@ class Setting:
         if len(self.addons) > 0:
             # This is hardcoded to take the first addon.  Settings
             # don't need to be bound to just one addon...!
-            return ao.get(self.addons[0])
+            import sb.aodb
+            return sb.aodb.get(self.addons[0])
         else:
             return None                
     
@@ -846,11 +851,15 @@ def readConfigPath(path):
 
     @param path Directory path.
     """
-    for name in os.listdir(path):
-        # We'll load all the files with the .conf extension.
-        if paths.hasExtension('conf', name):
-            # Load this configuration file.
-            readConfigFile(os.path.join(path, name))
+    try:
+        for name in os.listdir(path):
+            # We'll load all the files with the .conf extension.
+            if paths.hasExtension('conf', name):
+                # Load this configuration file.
+                readConfigFile(os.path.join(path, name))
+    except OSError:
+        # Path does not exist.
+        pass
 
 
 def handleNotify(event):
@@ -889,40 +898,49 @@ def saveSystemConfigSettings():
         # Paths not saved.
         import traceback
         traceback.print_exc()
+  
+
+def init():
+    """Initialize the module."""
+    
+    print "settings init"
+
+    # Built-in settings.
+    allLangs = language.getLanguages()
+    lang = ChoiceSetting('language', '', allLangs, [], 'english')
+    lang.setGroup('general-options')
+    lang.setSorted(True)
+    _newSetting(lang)
+
+    quitLaunch = ToggleSetting('quit-on-launch', '', 'yes', '')
+    quitLaunch.setGroup('general-options')
+    _newSetting(quitLaunch)
+
+    # System settings.
+    tog = ToggleSetting('main-hide-title', '', 'yes', '')
+    _newSystemSetting(tog)
+    tog = ToggleSetting('main-hide-help', '', 'yes', '')
+    _newSystemSetting(tog)
+    tog = ToggleSetting('summary-profile-change-autoselect', '', 'no', '')
+    _newSystemSetting(tog)
+    tog = ToggleSetting('profile-large-icons', '', 'yes', '')
+    _newSystemSetting(tog)
+
+    # Load all .conf files.
+    for path in paths.listPaths(paths.CONF, False):
+        readConfigPath(path)
+
+    # Any custom paths?
+    if isDefined('doomsday-runtime'):
+        paths.setCustomPath(paths.RUNTIME, getSystemString('doomsday-runtime'))
+
+    # Listen for the quit notification so we can save some settings.
+    events.addNotifyListener(handleNotify, ['quit', 'widget-edited'])
+
+    print "addon paths:", paths.getAddonPaths()
+
+    print "settings init done"
 
 
-#
-# Module Initialization:
-#
-
-# Built-in settings.
-allLangs = language.getLanguages()
-lang = ChoiceSetting('language', '', allLangs, [], 'english')
-lang.setGroup('general-options')
-lang.setSorted(True)
-_newSetting(lang)
-
-quitLaunch = ToggleSetting('quit-on-launch', '', 'yes', '')
-quitLaunch.setGroup('general-options')
-_newSetting(quitLaunch)
-
-# System settings.
-tog = ToggleSetting('main-hide-title', '', 'yes', '')
-_newSystemSetting(tog)
-tog = ToggleSetting('main-hide-help', '', 'yes', '')
-_newSystemSetting(tog)
-tog = ToggleSetting('summary-profile-change-autoselect', '', 'no', '')
-_newSystemSetting(tog)
-tog = ToggleSetting('profile-large-icons', '', 'yes', '')
-_newSystemSetting(tog)
-
-# Load all .conf files.
-for path in paths.listPaths(paths.CONF, False):
-    readConfigPath(path)
-
-# Any custom paths?
-if isDefined('doomsday-runtime'):
-    paths.setCustomPath(paths.RUNTIME, getSystemString('doomsday-runtime'))
-
-# Listen for the quit notification so we can save some settings.
-events.addNotifyListener(handleNotify, ['quit', 'widget-edited'])
+# Initialize module.    
+init()    

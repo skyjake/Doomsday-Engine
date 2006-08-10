@@ -336,7 +336,8 @@ class TabArea (Widget):
         # Insert the page into the book.
         book.AddPage(tab, language.translate(id))
 
-        area = ui.Area(id, tab, ui.Area.ALIGN_VERTICAL)
+        import sb.widget.area
+        area = sb.widget.area.Area(id, tab, ui.ALIGN_VERTICAL)
         area.setExpanding(True)
         area.setWeight(1)
 

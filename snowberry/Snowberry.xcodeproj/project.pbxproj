@@ -15,7 +15,12 @@
 		B05FA5FA0A8A7C1500A9FE0E /* tree.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tree.py; path = sb/widget/tree.py; sourceTree = "<group>"; };
 		B05FA6200A8A80E900A9FE0E /* tab.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab.py; path = sb/widget/tab.py; sourceTree = "<group>"; };
 		B05FA62A0A8A81D500A9FE0E /* list.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = list.py; path = sb/widget/list.py; sourceTree = "<group>"; };
-		B0F176BC087C37940051F24A /* addons.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = addons.py; sourceTree = "<group>"; };
+		B0E388AC0A8B972000C553A3 /* addon.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = addon.py; path = sb/addon.py; sourceTree = "<group>"; };
+		B0E388B60A8B987400C553A3 /* aodb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = aodb.py; path = sb/aodb.py; sourceTree = "<group>"; };
+		B0E38AB30A8BB6E800C553A3 /* expressions.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = expressions.py; path = sb/expressions.py; sourceTree = "<group>"; };
+		B0E38ABB0A8BB97F00C553A3 /* area.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = area.py; path = sb/widget/area.py; sourceTree = "<group>"; };
+		B0E38B7B0A8BC7AD00C553A3 /* example.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = example.py; path = plugins/example.plugin/Contents/example.py; sourceTree = "<group>"; };
+		B0E38BB00A8BC9BE00C553A3 /* dialog.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = dialog.py; path = sb/ui/dialog.py; sourceTree = "<group>"; };
 		B0F176BD087C37940051F24A /* cfparser.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = cfparser.py; sourceTree = "<group>"; };
 		B0F176BE087C37940051F24A /* events.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = events.py; sourceTree = "<group>"; };
 		B0F176BF087C37940051F24A /* host.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = host.py; sourceTree = "<group>"; };
@@ -51,6 +56,9 @@
 		B05FA5F70A8A7BEA00A9FE0E /* sb */ = {
 			isa = PBXGroup;
 			children = (
+				B0E388AC0A8B972000C553A3 /* addon.py */,
+				B0E388B60A8B987400C553A3 /* aodb.py */,
+				B0E38AB30A8BB6E800C553A3 /* expressions.py */,
 				B05FA5F90A8A7BFE00A9FE0E /* ui */,
 				B05FA5F80A8A7BF600A9FE0E /* widget */,
 			);
@@ -60,6 +68,7 @@
 		B05FA5F80A8A7BF600A9FE0E /* widget */ = {
 			isa = PBXGroup;
 			children = (
+				B0E38ABB0A8BB97F00C553A3 /* area.py */,
 				B05FA62A0A8A81D500A9FE0E /* list.py */,
 				B05FA6200A8A80E900A9FE0E /* tab.py */,
 				B05FA5FA0A8A7C1500A9FE0E /* tree.py */,
@@ -70,8 +79,17 @@
 		B05FA5F90A8A7BFE00A9FE0E /* ui */ = {
 			isa = PBXGroup;
 			children = (
+				B0E38BB00A8BC9BE00C553A3 /* dialog.py */,
 			);
 			name = ui;
+			sourceTree = "<group>";
+		};
+		B0E38B7C0A8BC7B200C553A3 /* example */ = {
+			isa = PBXGroup;
+			children = (
+				B0E38B7B0A8BC7AD00C553A3 /* example.py */,
+			);
+			name = example;
 			sourceTree = "<group>";
 		};
 		B0F176B1087C36610051F24A = {
@@ -81,7 +99,6 @@
 				B0F176D7087C38050051F24A /* conf */,
 				B0F17731087C43560051F24A /* lang */,
 				B0F176C9087C37C30051F24A /* plugins */,
-				B0F176BC087C37940051F24A /* addons.py */,
 				B0F176BD087C37940051F24A /* cfparser.py */,
 				B0F176BE087C37940051F24A /* events.py */,
 				B0F176BF087C37940051F24A /* host.py */,
@@ -111,6 +128,7 @@
 				B012234A08A6AE4A00A6E775 /* tab30_addons.py */,
 				B012234B08A6AE4A00A6E775 /* tab40_settings.py */,
 				B0F176D6087C37FC0051F24A /* wizard.py */,
+				B0E38B7C0A8BC7B200C553A3 /* example */,
 			);
 			name = plugins;
 			sourceTree = "<group>";

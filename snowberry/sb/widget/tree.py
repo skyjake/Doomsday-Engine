@@ -22,7 +22,7 @@
 
 import wx
 import host, events, language, paths
-import addons as ao
+import sb.aodb as ao
 import profiles as pr
 from widgets import Widget, uniConv
 

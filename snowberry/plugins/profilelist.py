@@ -20,12 +20,14 @@
 # along with this program; if not: http://www.opensource.org/
 
 import ui, events
+import sb.ui.dialog
 import widgets as wg
 import sb.widget.list
 import profiles as pr
 import settings as st
 import language
 import paths
+from ui import ALIGN_HORIZONTAL
 
 profileList = None
 
@@ -88,7 +90,7 @@ def makeProfileHTML(profile):
 
 def init():
     # Create the profile list and the profile control buttons.
-    area = ui.getArea(ui.Area.PROFILES)
+    area = ui.getArea(ui.PROFILES)
     area.setWeight(1)
     area.setBorder(0) #3)
 
@@ -98,7 +100,7 @@ def init():
     # This should be a small button.
     area.setWeight(0)
     area.setBorder(3)
-    controls = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
+    controls = area.createArea(alignment=ALIGN_HORIZONTAL, border=2)
     controls.setExpanding(False)
     #area.setExpanding(False)
     controls.setWeight(0)
@@ -115,7 +117,7 @@ def init():
     # Set the title graphics.
     global bannerImage
     try:
-        area = ui.getArea(ui.Area.TITLE)
+        area = ui.getArea(ui.TITLE)
         bannerImage = area.createImage('banner-default')
     except:
         # There is no title area.
@@ -223,13 +225,13 @@ def commandHandler(event):
         pr.refresh()
 
     elif event.hasId('new-profile'):
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'new-profile-dialog',
             language.translate('new-profile-title'),
             ['cancel', 'ok'], 'ok')
         dialog.disableWidget('ok')
 
-        entry = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)
+        entry = area.createArea(alignment=ALIGN_HORIZONTAL)
         entry.setExpanding(False)
 
         # The name of the profile.
@@ -245,7 +247,7 @@ def commandHandler(event):
         nameField.addReaction(buttonEnabler)
 
         # The game component.
-        entry = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)
+        entry = area.createArea(alignment=ALIGN_HORIZONTAL)
         entry.setExpanding(False)
 
         entry.setWeight(1)
@@ -266,7 +268,7 @@ def commandHandler(event):
             pr.create(nameField.getText(), gameDrop.getSelectedItem())
 
     elif event.hasId('rename-profile'):
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'rename-profile-dialog',
             language.translate('rename-profile-title'),
             ['cancel', 'ok'], 'ok')
@@ -274,7 +276,7 @@ def commandHandler(event):
         prof = pr.getActive()
 
         # A text field of the new name.
-        entry = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)
+        entry = area.createArea(alignment=ALIGN_HORIZONTAL)
         entry.setExpanding(False)
 
         # The name of the profile.
@@ -298,7 +300,7 @@ def commandHandler(event):
             pr.refresh()
 
     elif event.hasId('reset-profile'):
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'reset-profile-dialog',
             language.translate('reset-profile-title'),
             ['no', 'yes'], 'no')
@@ -311,7 +313,7 @@ def commandHandler(event):
             pr.reset(pr.getActive().getId())
 
     elif event.hasId('delete-profile'):
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'delete-profile-dialog',
             language.translate('delete-profile-title'),
             ['no', 'yes'], 'no')
@@ -324,7 +326,7 @@ def commandHandler(event):
             pr.remove(pr.getActive().getId())
 
     elif event.hasId('duplicate-profile'):
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'duplicate-profile-dialog',
             language.translate('duplicate-profile-title'),
             ['cancel', 'ok'], 'ok')
@@ -334,7 +336,7 @@ def commandHandler(event):
         area.createRichText(language.expand(text, pr.getActive().getName()))
 
         area.setWeight(1)
-        entry = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)
+        entry = area.createArea(alignment=ALIGN_HORIZONTAL)
         entry.setExpanding(False)
 
         # The name of the profile.
@@ -360,7 +362,7 @@ def commandHandler(event):
         # Display a dialog bog for unhiding hidden profiles.
         hiddenProfiles = pr.getProfiles(lambda p: p.isHidden())
 
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'unhide-profile-dialog',
             language.translate('unhide-profile-title'),
             ['cancel', 'ok'], 'ok')
@@ -383,7 +385,7 @@ def commandHandler(event):
                 profList.checkItem(item, False)
 
         area.setWeight(0)
-        controls = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL,
+        controls = area.createArea(alignment=ALIGN_HORIZONTAL,
                                    border=2)
         controls.setWeight(0)
         controls.createButton('unhide-select-all').addReaction(selectAll)

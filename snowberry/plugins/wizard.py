@@ -20,22 +20,19 @@
 
 ## @file Configuration Wizard
 
-import ui, paths, events, language
+import ui, paths, events, language, sb.ui.dialog
+from sb.ui.dialog import WizardPage, WizardDialog
 import widgets as wg
 import sb.widget.list
 import settings as st
 import profiles as pr
-import addons as ao
+import sb.aodb as ao
 
 
 HAS_BEEN_RUN = 'setup-wizard-shown'
 
 
 def init():
-    # Create the Rerun button in the Preferences Command area.
-    #area = ui.getArea(ui.Area.PREFCOMMAND)
-    #area.createButton('run-setup-wizard')
-    
     # Register a listener for detecting the completion of Snowberry
     # startup.
     events.addNotifyListener(handleNotify, ['init-done', 'wizard-selected'])
@@ -70,11 +67,11 @@ def handleCommand(event):
         runWizard()
 
 
-class ProfileWizardPage (ui.WizardPage):
+class ProfileWizardPage (WizardPage):
     """A profile page is skipped if it's not checked in the game list."""
 
     def __init__(self, parentWizard, identifier, gameList):
-        ui.WizardPage.__init__(self, parentWizard, identifier)
+        WizardPage.__init__(self, parentWizard, identifier)
         self.gameList = gameList
 
     def setGameList(self, list):
@@ -86,9 +83,9 @@ class ProfileWizardPage (ui.WizardPage):
         while True:
             # Which direction are we going?
             if theNext:
-                next = ui.WizardPage.GetNext(next)
+                next = WizardPage.GetNext(next)
             else:
-                next = ui.WizardPage.GetPrev(next)
+                next = WizardPage.GetPrev(next)
 
             # Should we skip or stop?
             if (next != None and self.gameList != None and
@@ -132,11 +129,11 @@ def runWizard():
     # Make the Defaults profile active.
     pr.setActive(pr.getDefaults())
     
-    wiz = ui.WizardDialog(language.translate('setup-wizard'),
-                          paths.findBitmap('wizard'))
+    wiz = WizardDialog(language.translate('setup-wizard'),
+                       paths.findBitmap('wizard'))
 
     # Language selection page.
-    langPage = ui.WizardPage(wiz, 'wizard-language')
+    langPage = WizardPage(wiz, 'wizard-language')
     area = langPage.getArea()
     area.createText('wizard-language-explanation').resizeToBestSize()
     area.createSetting(st.getSetting('language'))
@@ -160,7 +157,7 @@ def runWizard():
         for item in games.getItems():
             games.checkItem(item, False)
 
-    controls = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
+    controls = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
     controls.setWeight(0)
     controls.createButton('wizard-games-all').addReaction(allGames)
     controls.createButton('wizard-games-clear').addReaction(clearGames)
@@ -213,9 +210,9 @@ def runWizard():
 
                 def browseDeathKings():
                     # Open a file browser.
-                    selection = ui.chooseFile('deathkings-selection-title',
-                                              '', True,
-                                              [('file-type-wad', 'wad')])
+                    selection = sb.ui.dialog.chooseFile('deathkings-selection-title',
+                                                        '', True,
+                                                        [('file-type-wad', 'wad')])
                 
                     if len(selection) > 0:
                         deathKingsWad.setText(selection)
@@ -237,7 +234,7 @@ def runWizard():
         pathList.addItem(p)
 
     def addAddonPath():
-        selection = ui.chooseFolder('addon-paths-add-prompt', '')
+        selection = sb.ui.dialog.chooseFolder('addon-paths-add-prompt', '')
         if selection:
             pathList.addItem(selection)
             pathList.selectItem(selection)
@@ -248,7 +245,7 @@ def runWizard():
             pathList.removeItem(selection)
 
     area.setWeight(0)
-    commands = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
+    commands = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
     commands.setWeight(0)
 
     # Button for adding new paths.
@@ -260,7 +257,7 @@ def runWizard():
     button.addReaction(removeAddonPath)
 
     # Launch options.
-    quitPage = ui.WizardPage(wiz, 'wizard-launching') 
+    quitPage = WizardPage(wiz, 'wizard-launching') 
     quitPage.follows(pathsPage)
     area = quitPage.getArea()
     area.createText('wizard-launching-explanation').resizeToBestSize()

@@ -21,7 +21,7 @@
 import ui, events
 import settings as st
 import profiles as pr
-import addons as ao
+import sb.aodb as ao
 import widgets as wg
 import sb.widget.tab
 

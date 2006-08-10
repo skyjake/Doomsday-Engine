@@ -19,9 +19,10 @@
 # along with this program; if not: http://www.opensource.org/
 
 import string, time
-import events, ui, language
+import language, events, ui
+import sb.aodb as ao
+import sb.addon
 import profiles as pr
-import addons as ao
 import settings as st
 
 
@@ -52,7 +53,7 @@ currentSetting = None
 
 def init():
     "Create the HTML text widget into the help area."
-    helpArea = ui.getArea(ui.Area.HELP)
+    helpArea = ui.getArea(ui.HELP)
     helpArea.setExpanding(True)
     helpArea.setWeight(1)
 
@@ -94,7 +95,7 @@ def showLogo(doShow=True):
     """
     global logo
 
-    helpArea = ui.getArea(ui.Area.HELP)
+    helpArea = ui.getArea(ui.HELP)
 
     if not logo and doShow:
         logo = helpArea.createImage('help-logo')
@@ -315,16 +316,16 @@ def showAddonInfo(addon):
         deps.append((language.translate('help-addon-excluded-categories'),
                      map(lambda c: language.translate(c.getLongId()), exCats)))
 
-    for type, label in [(ao.Addon.EXCLUDES, 'help-addon-excludes'),
-                        (ao.Addon.REQUIRES, 'help-addon-requires'),
-                        (ao.Addon.PROVIDES, 'help-addon-provides'),
-                        (ao.Addon.OFFERS, 'help-addon-offers')]:
+    for type, label in [(sb.addon.EXCLUDES, 'help-addon-excludes'),
+                        (sb.addon.REQUIRES, 'help-addon-requires'),
+                        (sb.addon.PROVIDES, 'help-addon-provides'),
+                        (sb.addon.OFFERS, 'help-addon-offers')]:
         # Make a copy of the list so we can modify it.
         keywords = [kw for kw in addon.getKeywords(type)]
 
         # In the Brief mode, hide the identifier of the addon in the
         # Provides field.
-        if not detailedAddonMode and type == ao.Addon.PROVIDES:
+        if not detailedAddonMode and type == sb.addon.PROVIDES:
             keywords.remove(addon.getId())            
         
         if len(keywords) > 0:

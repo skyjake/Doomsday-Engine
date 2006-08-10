@@ -21,16 +21,12 @@
 ## @file about.py About dialog
 
 import ui, events, language
+import sb.ui.dialog
 import widgets as wg
 import settings as st
-from ui import Area
 
 
 def init():
-    # Create the About button in the Preferences Command area.
-    #area = ui.getArea(Area.PREFCOMMAND)
-    #area.createButton('about')
-
     # Listen for the About button.
     events.addCommandListener(handleCommand, ['about'])
     
@@ -47,10 +43,10 @@ def handleCommand(event):
 
     if event.hasId('about'):
         # Create the About dialog and show it.
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'about-dialog', language.translate('about-title'), ['ok'], 'ok')
 
-        content = area.createArea(alignment=Area.ALIGN_VERTICAL, border=0)
+        content = area.createArea(alignment=ui.ALIGN_VERTICAL, border=0)
         content.setWeight(0)
 
         content.createText('').setText(

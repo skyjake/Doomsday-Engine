@@ -291,9 +291,7 @@ def quote(fileName):
 
 def fixSlashes(path):
     """Replace all forward and backward slashes with the correct
-    slashes of the host OS."""
-
-    
+    slashes of the host OS."""  
 
 
 def addAddonPath(path):

@@ -30,13 +30,14 @@
 
 import os, string, time
 import ui
+import sb.ui.dialog
 import events
 import paths
 import language
 import widgets as wg
 import profiles as pr
 import settings as st
-import addons as ao
+import sb.aodb as ao
 
 
 class MessageTimer (ui.Timer):
@@ -88,7 +89,7 @@ class ResolveStatus:
 def init():
     """Create the Play button."""
     
-    area = ui.getArea(ui.Area.COMMAND)
+    area = ui.getArea(ui.COMMAND)
     area.addSpacer()
 
     global logFileName
@@ -163,7 +164,7 @@ def handleCommand(event):
                 options = options[:pos] + '</b>' + options[pos:]
             pos += 1
 
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'view-command-line-dialog',
             language.translate('view-command-line-title'),
             ['ok'], 'ok')
@@ -179,7 +180,7 @@ def setLaunchMessage(text):
     
     launchText.setText(text)
     launchText.resizeToBestSize()
-    ui.getArea(ui.Area.COMMAND).updateLayout()
+    ui.getArea(ui.COMMAND).updateLayout()
     
     if text:
         # Clear the message after a short delay.
@@ -431,7 +432,7 @@ def resolveAddonConflicts(addons, profile):
         # Wizard, which will take care of the issue.
         resolving = ResolveStatus()
         resolving.profile = profile
-        resolving.dialog, resolving.area = ui.createButtonDialog(
+        resolving.dialog, resolving.area = sb.ui.dialog.createButtonDialog(
             'conflict-wizard',
             language.translate('conflict-wizard-title'),
             ['cancel', 'continue'], 'continue')

@@ -24,7 +24,7 @@
 ## asked to.
 
 import sys, traceback
-import ui, language, string
+import language, string
 
 
 # An array with the currently collection issues.
@@ -66,7 +66,8 @@ def show():
         # Nothing to report.
         return
 
-    dialog, area = ui.createButtonDialog(
+    import sb.ui.dialog
+    dialog, area = sb.ui.dialog.createButtonDialog(
         'issue-dialog',
         language.translate('issue-dialog-title'),
         ['ok'], 'ok')

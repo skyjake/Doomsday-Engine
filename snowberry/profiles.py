@@ -28,8 +28,8 @@
 import os, re, string, shutil
 import events, paths, cfparser, language, logger
 import settings as st
-import addons as ao
-import ui
+import sb.aodb
+
 
 # The list of available profiles.  All of these will be displayed in the
 # Profile List Box.
@@ -307,7 +307,7 @@ class Profile:
         """Higher-level addon attaching.  Takes care of the proper
         handling of defaults."""
 
-        if ao.get(identifier).isOptIn(self):
+        if sb.aodb.get(identifier).isOptIn(self):
             self.addAddon(identifier)
         else:
             self.removeAddon(identifier)
@@ -316,7 +316,7 @@ class Profile:
         """Higher-level addon detaching.  Takes care of the proper
         handling of defaults."""
         
-        if ao.get(identifier).isOptIn(self):
+        if sb.aodb.get(identifier).isOptIn(self):
             self.removeAddon(identifier)
         else:
             self.addAddon(identifier)
@@ -345,7 +345,7 @@ class Profile:
 
     def getAddons(self):
         """Returns the list of addons attached to the profile."""
-        return [a for a in self.addons if ao.exists(a)]
+        return [a for a in self.addons if sb.aodb.exists(a)]
 
     def getUsedAddons(self):
         """Returns the list of all addons that will be used with the
@@ -375,7 +375,7 @@ class Profile:
                     usedAddons.append(d)
 
         # Any inversed addons that should be used?
-        for addon in ao.getAddons():
+        for addon in sb.aodb.getAddons():
             if addon.isInversed():
                 if addon.getId() not in usedAddons:
                     usedAddons.append(addon.getId())
@@ -383,7 +383,7 @@ class Profile:
                     usedAddons.remove(addon.getId())
             
         # Filter out the incompatible ones.
-        return [a for a in usedAddons if ao.get(a).isCompatibleWith(self)]
+        return [a for a in usedAddons if sb.aodb.get(a).isCompatibleWith(self)]
 
     def getFinalAddons(self):
         """The final addons of a profile are the ones that will be
@@ -397,7 +397,7 @@ class Profile:
         """
         if self is defaults:
             # Return all existing addons.
-            finalAddons = map(lambda a: a.getId(), ao.getAddons())
+            finalAddons = map(lambda a: a.getId(), sb.aodb.getAddons())
 
         else:
             usedAddons = self.getUsedAddons()
@@ -406,7 +406,7 @@ class Profile:
 
             # Any boxes?
             for ident in usedAddons:
-                addon = ao.get(ident)
+                addon = sb.aodb.get(ident)
 
                 if addon.getBox():
                     # If the box hasn't been selected by the user, forget it.
@@ -491,7 +491,7 @@ class Profile:
                     return cmp(order.index(a), order.index(b))
 
             # Compare the priority classes, then.
-            return cmp(ao.get(a).getPriority(), ao.get(b).getPriority())
+            return cmp(sb.aodb.get(a).getPriority(), sb.aodb.get(b).getPriority())
 
         # Sort them.
         addons.sort(orderCompare)
@@ -517,7 +517,10 @@ def getProfiles(func=None):
 def refresh(hasChanged=False):
     """Send a notification that will cause everybody to refresh their
     state with regards to the active profile.
+    
+    @todo  Move this out of the module so the import is unnecessary?
     """
+    import ui
     ui.freeze()
     
     if hasChanged:

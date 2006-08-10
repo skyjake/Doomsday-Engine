@@ -26,11 +26,13 @@
 
 import os, time, string
 import paths, events, ui, language
+import sb.ui.dialog
 import widgets as wg
 import sb.widget.list
 import profiles as pr
 import settings as st
-import addons as ao
+import sb.aodb as ao
+import sb.addon
 import logger
 
 ADDONS = 'tab-addons'
@@ -55,7 +57,7 @@ commonItems = ['-',
 def init():
     # Create the Addons page.
     area = ui.createTab(ADDONS)
-    area.setBorderDirs(ui.Area.BORDER_NOT_BOTTOM)
+    area.setBorderDirs(ui.BORDER_NOT_BOTTOM)
     
     # Let's create the addons tree...
     area.setWeight(1)
@@ -68,9 +70,9 @@ def init():
 
     # The addon control buttons.
     area.setWeight(0)
-    area.setBorderDirs(ui.Area.BORDER_ALL)
-    buttonArea = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
-    buttonArea.setBorderDirs(ui.Area.BORDER_LEFT_RIGHT)
+    area.setBorderDirs(ui.BORDER_ALL)
+    buttonArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
+    buttonArea.setBorderDirs(ui.BORDER_LEFT_RIGHT)
 
     buttonArea.setWeight(0)
     buttonArea.createButton('install-addon', wg.Button.STYLE_MINI)
@@ -205,7 +207,7 @@ def handleCommand(event):
             return
         
         # Make sure the user want to uninstall.
-        dialog, area = ui.createButtonDialog(
+        dialog, area = sb.ui.dialog.createButtonDialog(
             'uninstall-addon-dialog',
             language.translate('uninstall-addon-title'),
             ['no', 'yes'], 'no')
@@ -254,7 +256,7 @@ def showInspector(addon):
     """
     ident = addon.getId()
     
-    dialog, area = ui.createButtonDialog('addon-inspector-dialog',
+    dialog, area = sb.ui.dialog.createButtonDialog('addon-inspector-dialog',
                                          language.translate(ident),
                                          ['ok'], 'ok', size=(570, 450))
 
@@ -303,10 +305,10 @@ def showInspector(addon):
     allDeps.append(('Excluded Categories:', dep))
 
     # Keywords.
-    for type, label in [(ao.Addon.EXCLUDES, 'Excludes:'),
-                        (ao.Addon.REQUIRES, 'Requires:'),
-                        (ao.Addon.PROVIDES, 'Provides:'),
-                        (ao.Addon.OFFERS, 'Offers:')]:
+    for type, label in [(sb.addon.EXCLUDES, 'Excludes:'),
+                        (sb.addon.REQUIRES, 'Requires:'),
+                        (sb.addon.PROVIDES, 'Provides:'),
+                        (sb.addon.OFFERS, 'Offers:')]:
         # Make a copy of the list so we can modify it.
         dep = []
         for kw in addon.getKeywords(type):
@@ -348,7 +350,7 @@ def showLoadOrder(profile):
     @param profile The profile whose order is being edited.
     """
 
-    dialog, area = ui.createButtonDialog(
+    dialog, area = sb.ui.dialog.createButtonDialog(
         'load-order-dialog',
         language.translate('load-order-title'),
         ['reset', '', 'cancel', 'ok'], 'ok')
@@ -358,7 +360,7 @@ def showLoadOrder(profile):
 
     # Create the widgets that will be used to edit the order.
     area.setWeight(1)
-    top = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=0)
+    top = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=0)
 
     top.setWeight(3)
     listArea = top.createArea(border=3)
@@ -431,7 +433,7 @@ def chooseAddons(dialogId, title, actionButton):
     @param actionButton The button that will perform the affirmative
     action of the dialog.
     """
-    dialog, area = ui.createButtonDialog(
+    dialog, area = sb.ui.dialog.createButtonDialog(
         dialogId, title,
         ['cancel', actionButton], actionButton)
 
@@ -440,7 +442,7 @@ def chooseAddons(dialogId, title, actionButton):
     dialog.disableWidget(actionButton)
 
     area.setWeight(0)
-    folderArea = area.createArea(alignment=ui.Area.ALIGN_HORIZONTAL)
+    folderArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL)
     folderArea.setExpanding(False)
     folderArea.setBorder(2)
     folderArea.setWeight(0)
@@ -524,8 +526,8 @@ def chooseAddons(dialogId, title, actionButton):
 
     def browseAction():
         # Show a directory browser.
-        selection = ui.chooseFolder('addon-dialog-browse-prompt',
-                                    pathField.getText())
+        selection = sb.ui.dialog.chooseFolder('addon-dialog-browse-prompt',
+                                              pathField.getText())
         if len(selection):
             pathField.setText(selection)
 

@@ -67,7 +67,7 @@ def handleNotify(event):
             pathList.addItem(p)
 
         def addAddonPath():
-            selection = ui.chooseFolder('addon-paths-add-prompt', '')
+            selection = sb.ui.dialog.chooseFolder('addon-paths-add-prompt', '')
             if selection:
                 pathList.addItem(selection)
                 pathList.selectItem(selection)
@@ -80,7 +80,7 @@ def handleNotify(event):
                 paths.removeAddonPath(selection)
         
         box.setWeight(0)
-        commands = box.createArea(alignment=ui.Area.ALIGN_HORIZONTAL, border=2)
+        commands = box.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
         commands.setWeight(0)
 
         # Button for adding new paths.

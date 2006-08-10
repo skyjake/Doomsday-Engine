@@ -30,8 +30,9 @@ import string
 import ui, events
 import profiles as pr
 import settings as st
-import addons as ao
+import sb.aodb as ao
 import language
+from ui import ALIGN_HORIZONTAL
 
 SUMMARY = 'tab-summary'
 
@@ -64,10 +65,10 @@ def init():
     area.createLine()
 
     area.setBorder(10)
-    addonInfo = area.createArea(alignment = ui.Area.ALIGN_HORIZONTAL)
+    addonInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
     area.setWeight(0)
-    systemInfo = area.createArea(alignment = ui.Area.ALIGN_HORIZONTAL)
-    valuesInfo = area.createArea(alignment = ui.Area.ALIGN_HORIZONTAL)
+    systemInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
+    valuesInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
 
     # Information about addons selected into the profile.
     addonInfo.setWeight(2)
