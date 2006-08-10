@@ -1,4 +1,5 @@
-# jDoom: Maps
+# WolfTC: Maps
+# 10 Aug 2006 - Contents Identical to jDoom
 
 # Used for any maps without a map info definition
 Map Info {
@@ -250,9 +251,6 @@ Copy Map Info {
   Par time = 90;
 }
 
-# Plutonia and TNT have different map definitions
-IncludeIf doom2-plut "PlutMaps.ded";
-IncludeIf doom2-tnt "TNTMaps.ded";
 
 # The rest of this file is skipped if not Doom2
 SkipIf Not doom2;

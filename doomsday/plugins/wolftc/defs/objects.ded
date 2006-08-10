@@ -1,4 +1,5 @@
-# jDoom: Objects
+# WolfTC: Objects
+# 10 Aug 2006 - Contents Identical to jDoom
 #
 # Order of definitions is very important here!
 # Only add new States and Things *after* the existing definitions.

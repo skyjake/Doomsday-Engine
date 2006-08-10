@@ -1,4 +1,5 @@
-# jDoom: Sprites
+# WolfTC: Sprites
+# 10 Aug 2006 - Contents Identical to jDoom
 #
 # Order of definitions is very important here!
 # Only add new Sprites *after* the existing definitions.
