@@ -150,18 +150,6 @@ typedef struct classinfo_s{
 
 extern classinfo_t classInfo[NUMCLASSES];
 
-//
-// Difficulty/skill settings/filters.
-//
-
-// Skill flags.
-#define MTF_EASY        1
-#define MTF_NORMAL      2
-#define MTF_HARD        4
-
-// Deaf monsters/do not react to sound.
-#define MTF_AMBUSH      8
-
 typedef enum {
     sk_noitems = -1, // skill mode 0
     sk_baby = 0,

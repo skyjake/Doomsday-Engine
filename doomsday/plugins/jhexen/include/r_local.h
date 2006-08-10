@@ -58,12 +58,6 @@
 
 //================ used by play and refresh
 
-// Base plane ids.
-enum {
-    PLN_FLOOR,
-    PLN_CEILING
-};
-
 typedef struct xsector_s {
 #if 0
     fixed_t         floorheight, ceilingheight;
@@ -201,9 +195,6 @@ extern boolean  markfloor;         // false if the back side is the same plane
 extern boolean  markceiling;
 extern boolean  skymap;
 
-// SKY, store the number for name.
-#define SKYFLATNAME  "F_SKY"
-
 //extern  drawseg_t       drawsegs[MAXDRAWSEGS], *ds_p;
 
 extern lighttable_t **hscalelight, **vscalelight, **dscalelight;
@@ -224,16 +215,6 @@ extern int      TransTextureStart;
 extern int      TransTextureEnd;
 
 //void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
-
-//
-// R_plane.c
-//
-//typedef void (*planefunction_t) (int top, int bottom);
-//extern  planefunction_t         floorfunc, ceilingfunc;
-
-//extern  int                     skyflatnum;
-//#define skyflatnum (*gi.skyflatnum)
-#define skyflatnum      Get(DD_SKYFLATNUM)
 
 //extern  short                   openings[MAXOPENINGS], *lastopening;
 

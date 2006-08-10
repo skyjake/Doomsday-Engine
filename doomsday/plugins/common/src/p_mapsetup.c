@@ -310,14 +310,16 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 #if __JHEXEN__
     // Initialize polyobjs.
     Con_Message("Polyobject init\n");
-    PO_Init(W_GetNumForName(levelId) + ML_THINGS);   // Initialize the polyobjs
+    // FIXME: Custom map data format support
+    PO_Init(W_GetNumForName(levelId) + 1 /*ML_THINGS*/);   // Initialize the polyobjs
 
     // Now we can init the server.
     Con_Message("Init server\n");
     R_SetupLevel(levelId, DDSLF_SERVER_ONLY);
 
     Con_Message("Load ACS scripts\n");
-    P_LoadACScripts(W_GetNumForName(levelId) + ML_BEHAVIOR); // ACS object code
+    // FIXME: Custom map data format support
+    P_LoadACScripts(W_GetNumForName(levelId) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #else
     // Now we can init the server.
     R_SetupLevel(levelId, DDSLF_SERVER_ONLY);

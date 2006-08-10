@@ -370,36 +370,6 @@ typedef struct classinfo_s{
 extern classinfo_t classInfo[NUMCLASSES];
 
 typedef enum {
-    PST_LIVE,                      // playing
-    PST_DEAD,                      // dead on the ground
-    PST_REBORN                     // ready to restart
-} playerstate_t;
-
-// psprites are scaled shapes directly on the view screen
-// coordinates are given for a 320*200 view screen
-typedef enum {
-    ps_weapon,
-    ps_flash,
-    NUMPSPRITES
-} psprnum_t;
-
-typedef struct {
-    state_t        *state;         // a NULL state means not active
-    int             tics;
-    fixed_t         sx, sy;
-} pspdef_t;
-
-/* Old Heretic key type
-   typedef enum
-   {
-   key_yellow,
-   key_green,
-   key_blue,
-   NUMKEYS
-   } keytype_t;
- */
-
-typedef enum {
     KKEY_1,
     KKEY_2,
     KKEY_3,
@@ -606,64 +576,6 @@ typedef struct saveplayer_s {
 #pragma pack()
 #endif
 
-// Extended player information, Hexen specific.
-typedef struct player_s {
-    ddplayer_t     *plr;           // Pointer to the engine's player data.
-    playerstate_t   playerstate;
-    ticcmd_t        cmd;
-
-    pclass_t        class;         // player class type
-
-    //  fixed_t     viewheight;             // base height above floor for viewz
-    //  fixed_t     deltaviewheight;        // squat speed
-    fixed_t         bob;           // bounded/scaled total momentum
-
-    int             flyheight;
-    //int           lookdir;
-    boolean         centering;
-    int             health;        // only used between levels, mo->health
-    // is used during levels
-    int             armorpoints[NUMARMOR];
-
-    inventory_t     inventory[NUMINVENTORYSLOTS];
-    artitype_e      readyArtifact;
-    int             artifactCount;
-    int             inventorySlotNum;
-    int             powers[NUMPOWERS];
-    int             keys;
-    int             pieces;        // Fourth Weapon pieces
-    weapontype_t    readyweapon;
-    weapontype_t    pendingweapon; // wp_nochange if not changing
-    boolean         weaponowned[NUMWEAPONS];
-    int             ammo[NUMAMMO];  // mana
-    int             attackdown, usedown;    // true if button down last tic
-    int             cheats;        // bit flags
-    signed int      frags[MAXPLAYERS];  // kills of other players
-
-    int             refire;        // refired shots are less accurate
-
-    int             killcount, itemcount, secretcount;  // for intermission
-    char           *message;   // hint messages
-    int             messageTics;   // counter for showing messages
-    short           ultimateMessage;
-    short           yellowMessage;
-    int             damagecount, bonuscount;    // for screen flashing
-    int             poisoncount;   // screen flash for poison damage
-    mobj_t         *poisoner;      // NULL for non-player mobjs
-    mobj_t         *attacker;      // who did damage (NULL for floors)
-    int             colormap;      // 0-3 for which color to draw player
-    pspdef_t        psprites[NUMPSPRITES];  // view sprites (gun, etc)
-    int             morphTics;     // player is a pig if > 0
-    uint            jumptics;      // delay the next jump for a moment
-    unsigned int    worldTimer;    // total time the player's been playing
-    int             update, startspot;
-    int             viewlock;      // $democam
-} player_t;
-
-#define CF_NOCLIP       1
-#define CF_GODMODE      2
-#define CF_NOMOMENTUM   4          // not really a cheat, just a debug aid
-
 #define SBARHEIGHT  39             // status bar height at bottom of screen
 
 /*
@@ -681,45 +593,8 @@ extern fixed_t *finecosine;
 
 extern gameaction_t gameaction;
 
-extern boolean  automapactive;     // In AutoMap mode?
-extern boolean  menuactive;        // Menu overlayed?
-extern boolean  paused;            // Game Pause?
-
-extern boolean  viewactive;
-
-// -----------------------------------------------------
-// Game Mode - identify IWAD as shareware, retail etc.
-//
-extern GameMode_t gamemode;
-extern int      gamemodebits;
-
 extern boolean  DevMaps;           // true = map development mode
 extern char    *DevMapsDir;        // development maps directory
-
-extern boolean  nomonsters;        // checkparm of -nomonsters
-
-extern boolean  respawnparm;       // checkparm of -respawn
-
-extern boolean  randomclass;       // checkparm of -randclass
-
-extern boolean  debugmode;         // checkparm of -debug
-
-extern boolean  nofullscreen;      // checkparm of -nofullscreen
-
-extern boolean  usergame;          // ok to save / end game
-
-extern boolean  devparm;           // checkparm of -devparm
-
-extern boolean  altpal;            // checkparm to use an alternate palette routine
-
-extern boolean  cdrom;             // true if cd-rom mode active ("-cdrom")
-
-extern boolean  deathmatch;        // only if started as net death
-
-extern boolean  netcheat;          // allow cheating during netgames
-
-// Verbose messages.
-extern int     verbose;
 
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
@@ -728,10 +603,6 @@ extern int     verbose;
 #define IS_NETGAME   Get(DD_NETGAME)
 
 extern boolean  cmdfrag;           // true if a CMD_FRAG packet should be sent out every
-
-                        // kill
-
-extern player_t players[MAXPLAYERS];
 
 //extern boolean playeringame[MAXPLAYERS];
 //extern pclass_t PlayerClass[MAXPLAYERS];
@@ -743,10 +614,6 @@ extern player_t players[MAXPLAYERS];
 //extern int displayplayer;
 #define displayplayer Get(DD_DISPLAYPLAYER)
 
-//extern int viewangleoffset;   // ANG90 = left side, ANG270 = right
-
-extern boolean  singletics;        // debug flag to cancel adaptiveness
-
 extern int      DebugSound;        // debug flag for displaying sound info
 
 //extern boolean demoplayback;
@@ -755,40 +622,11 @@ extern int      maxzone;           // Maximum chunk allocated for zone heap
 extern int      Sky1Texture;
 extern int      Sky2Texture;
 
-extern gamestate_t gamestate;
-extern skill_t  gameskill;
-extern int      gameepisode;
-extern int      gamemap;
 extern int      prevmap;
-extern int      levelstarttic;     // gametic at level start
-extern int      leveltime;         // tics in game play for par
-
-#define gametic     Get(DD_GAMETIC)
-#define maketic     Get(DD_MAKETIC)
-#define ticdup      Get(DD_TICDUP)
-
-#define MAX_DM_STARTS 16
-extern thing_t *deathmatch_p;
-extern thing_t deathmatchstarts[MAX_DM_STARTS];
 
 #define MAX_PLAYER_STARTS 8
 
-
-//extern int mouseSensitivityX, mouseSensitivityY, usemlook, usejlook;
-//extern int mouseInverseY;
-
-extern boolean  precache;          // if true, load all graphics at level load
-
 extern byte    *memscreen;         // off screen work buffer, from V_video.c
-
-extern boolean  singledemo;        // quit after playing a demo from cmdline
-
-extern FILE    *debugfile;
-extern int      bodyqueslot;
-extern skill_t  startskill;
-extern int      startepisode;
-extern int      startmap;
-extern boolean  autostart;
 
 /*
    ===============================================================================
@@ -957,9 +795,6 @@ extern int      localQuakeHappening[MAXPLAYERS];
 //int M_Random (void);
 // returns a number from 0 to 255
 
-extern unsigned char rndtable[256];
-extern int      prndindex;
-
 #ifdef TIC_DEBUG
 
 extern FILE    *rndDebugfile;
@@ -1126,9 +961,6 @@ void            Draw_SaveIcon(void);
 void            Draw_LoadIcon(void);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
-void            cht_GodFunc(player_t *player);
-void            cht_SuicideFunc(player_t *player);
-void            cht_NoClipFunc(player_t *player);
 
 //-----------------
 // MENU (MN_menu.c)

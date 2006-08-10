@@ -31,6 +31,7 @@
 #include "../../jhexen/include/m_ctrl.h"
 #include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_local.h"
+#include "../../jhexen/include/p_pspr.h"
 #include "../../jhexen/include/p_setup.h"
 #include "../../jhexen/include/p_spec.h"
 #include "../../jhexen/include/r_local.h"
@@ -40,6 +41,8 @@
 #include "../../jhexen/include/textdefs.h"
 #include "../../jhexen/include/version.h"
 #include "../../jhexen/include/x_config.h"
+#include "../../jhexen/include/x_player.h"
+#include "../../jhexen/include/x_state.h"
 #include "../../jhexen/include/xddefs.h"
 
 #endif // __JHEXEN_CONVENIENCE_H__

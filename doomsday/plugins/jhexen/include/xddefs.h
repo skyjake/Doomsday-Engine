@@ -17,34 +17,29 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-/*#ifndef __BYTEBOOL__
-   #define __BYTEBOOL__
-   typedef enum {false, true} h2bool;
-   typedef unsigned char byte;
-   #define boolean h2bool
-   #endif */
-
-//--------------------------------------------------------------------------
-//
-// Map level types
-//
-//--------------------------------------------------------------------------
-
-// lump order in a map wad
+// Base plane ids.
 enum {
-    ML_LABEL,
-    ML_THINGS,
-    ML_LINEDEFS,
-    ML_SIDEDEFS,
-    ML_VERTEXES,
-    ML_SEGS,
-    ML_SSECTORS,
-    ML_NODES,
-    ML_SECTORS,
-    ML_REJECT,
-    ML_BLOCKMAP,
-    ML_BEHAVIOR
+    PLN_FLOOR,
+    PLN_CEILING
 };
+
+typedef struct {
+    short           tid;
+    short         x;
+    short         y;
+    short           height;
+    short           angle;
+    short           type;
+    short           options;
+    byte            special;
+    byte            arg1;
+    byte            arg2;
+    byte            arg3;
+    byte            arg4;
+    byte            arg5;
+} thing_t;
+
+extern thing_t* things;
 
 #define ML_BLOCKING         0x0001
 #define ML_BLOCKMONSTERS    0x0002
@@ -68,24 +63,6 @@ enum {
 #define SPAC_PUSH       4          // when player/monster pushes line
 #define SPAC_PCROSS     5          // when projectile crosses line
 
-typedef struct {
-    short           tid;
-    short         x;
-    short         y;
-    short           height;
-    short           angle;
-    short           type;
-    short           options;
-    byte            special;
-    byte            arg1;
-    byte            arg2;
-    byte            arg3;
-    byte            arg4;
-    byte            arg5;
-} thing_t;
-
-extern thing_t* things;
-
 #define MTF_EASY        1
 #define MTF_NORMAL      2
 #define MTF_HARD        4
@@ -98,66 +75,4 @@ extern thing_t* things;
 #define MTF_GCOOP       512
 #define MTF_GDEATHMATCH 1024
 
-//--------------------------------------------------------------------------
-//
-// Texture definition
-//
-//--------------------------------------------------------------------------
-/*
-   typedef struct
-   {
-   short    originx;
-   short    originy;
-   short    patch;
-   short    stepdir;
-   short    colormap;
-   } mappatch_t;
-
-   typedef struct
-   {
-   char     name[8];
-   boolean      masked;
-   short        width;
-   short        height;
-   void     **columndirectory;  // OBSOLETE
-   short        patchcount;
-   mappatch_t   patches[1];
-   } maptexture_t;
-
-   //--------------------------------------------------------------------------
-   //
-   // Graphics
-   //
-   //--------------------------------------------------------------------------
-
-   // posts are runs of non masked source pixels
-   typedef struct
-   {
-   byte     topdelta;       // -1 is the last post in a column
-   byte     length;
-   // length data bytes follows
-   } post_t;
-
-   // column_t is a list of 0 or more post_t, (byte)-1 terminated
-   typedef post_t   column_t;
-
-   // a patch holds one or more columns
-   // patches are used for sprites and all masked pictures
-   typedef struct
-   {
-   short        width;              // bounding box size
-   short        height;
-   short        leftoffset;         // pixels to the left of origin
-   short        topoffset;          // pixels below the origin
-   int          columnofs[8];       // only [width] used
-   // the [0] is &columnofs[width]
-   } patch_t;
-
-   // a pic is an unmasked block of pixels
-   typedef struct
-   {
-   byte     width,height;
-   byte     data;
-   } pic_t;
- */
 #endif                          // __XDDEFS__

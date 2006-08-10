@@ -23,6 +23,12 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "x_state.h"
+
 void        cht_Init(void);
+
+void            cht_GodFunc(player_t *player);
+void            cht_SuicideFunc(player_t *player);
+void            cht_NoClipFunc(player_t *player);
 
 #endif
