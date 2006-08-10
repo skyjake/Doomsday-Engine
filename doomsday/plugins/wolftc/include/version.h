@@ -18,8 +18,8 @@
 #ifndef __JDOOM_VERSION_H__
 #define __JDOOM_VERSION_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __WOLFTC__
+#  error "Using WolfTC headers without __WOLFTC__"
 #endif
 
 // DOOM version
@@ -32,7 +32,7 @@
 #  endif
 #endif
 
-#define GAMENAMETEXT "WolfTC"
+#define GAMENAMETEXT "wolftc"
 
 // My my, the names of these #defines are really well chosen...
 #define VERSION_TEXT "1.15."DOOMSDAY_RELEASE_NAME

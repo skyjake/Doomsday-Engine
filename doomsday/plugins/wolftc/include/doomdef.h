@@ -20,8 +20,8 @@
 #ifndef __DOOMDEF__
 #define __DOOMDEF__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __WOLFTC__
+#  error "Using WolfTC headers without __WOLFTC__"
 #endif
 
 #ifdef WIN32
@@ -42,8 +42,8 @@
 
 #define CONFIGFILE    GAMENAMETEXT".cfg"
 #define DEFSFILE      GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH      "}Data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD    "}Data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
+#define DATAPATH      "}data\\"GAMENAMETEXT"\\"
+#define STARTUPWAD    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
 
 // Misc macros.
 #define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)

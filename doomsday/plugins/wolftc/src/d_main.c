@@ -150,7 +150,7 @@ void D_GetDemoLump(int num, char *out)
  * Check which known IWADs are found. The purpose of this routine is to
  * find out which IWADs the user lets us to know about, but we don't
  * decide which one gets loaded or even see if the WADs are actually
- * there. The default location for IWADs is Data\GAMENAMETEXT\.
+ * there. The default location for IWADs is data\GAMENAMETEXT\.
  */
 void DetectIWADs(void)
 {
@@ -161,20 +161,20 @@ void DetectIWADs(void)
 
     // The '>' means the paths are affected by the base path.
     char   *paths[] = {
-        "}Data\\"GAMENAMETEXT"\\",
-        "}Data\\",
+        "}data\\"GAMENAMETEXT"\\",
+        "}data\\",
         "}",
-        "}Iwads\\",
+        "}iwads\\",
         "",
         0
     };
     fspec_t iwads[] = {
-        {"TNT.wad", "-tnt"},
-        {"Plutonia.wad", "-plutonia"},
-        {"Doom2.wad", "-doom2"},
-        {"Doom1.wad", "-sdoom"},
-        {"Doom.wad", "-doom"},
-        {"Doom.wad", "-ultimate"},
+        {"tnt.wad", "-tnt"},
+        {"plutonia.wad", "-plutonia"},
+        {"doom2.wad", "-doom2"},
+        {"doom1.wad", "-sdoom"},
+        {"doom.wad", "-doom"},
+        {"doomu.wad", "-ultimate"},
         {0, 0}
     };
     int     i, k;
