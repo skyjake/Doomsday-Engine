@@ -15,12 +15,17 @@
 		B05FA5FA0A8A7C1500A9FE0E /* tree.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tree.py; path = sb/widget/tree.py; sourceTree = "<group>"; };
 		B05FA6200A8A80E900A9FE0E /* tab.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab.py; path = sb/widget/tab.py; sourceTree = "<group>"; };
 		B05FA62A0A8A81D500A9FE0E /* list.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = list.py; path = sb/widget/list.py; sourceTree = "<group>"; };
+		B0AC1B480A8CD4B60095D788 /* profile.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = profile.py; path = sb/profile.py; sourceTree = "<group>"; };
+		B0AC1B500A8CD5730095D788 /* profdb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = profdb.py; path = sb/profdb.py; sourceTree = "<group>"; };
+		B0AC1BD30A8CDD5D0095D788 /* __init__.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = __init__.py; path = sb/__init__.py; sourceTree = "<group>"; };
+		B0AC1BD40A8CDD6B0095D788 /* __init__.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = __init__.py; path = sb/util/__init__.py; sourceTree = "<group>"; };
+		B0AC1BD50A8CDD750095D788 /* __init__.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = __init__.py; path = sb/widget/__init__.py; sourceTree = "<group>"; };
 		B0E388AC0A8B972000C553A3 /* addon.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = addon.py; path = sb/addon.py; sourceTree = "<group>"; };
 		B0E388B60A8B987400C553A3 /* aodb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = aodb.py; path = sb/aodb.py; sourceTree = "<group>"; };
 		B0E38AB30A8BB6E800C553A3 /* expressions.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = expressions.py; path = sb/expressions.py; sourceTree = "<group>"; };
 		B0E38ABB0A8BB97F00C553A3 /* area.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = area.py; path = sb/widget/area.py; sourceTree = "<group>"; };
 		B0E38B7B0A8BC7AD00C553A3 /* example.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = example.py; path = plugins/example.plugin/Contents/example.py; sourceTree = "<group>"; };
-		B0E38BB00A8BC9BE00C553A3 /* dialog.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = dialog.py; path = sb/ui/dialog.py; sourceTree = "<group>"; };
+		B0E38BB00A8BC9BE00C553A3 /* dialog.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = dialog.py; path = sb/util/dialog.py; sourceTree = "<group>"; };
 		B0F176BD087C37940051F24A /* cfparser.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = cfparser.py; sourceTree = "<group>"; };
 		B0F176BE087C37940051F24A /* events.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = events.py; sourceTree = "<group>"; };
 		B0F176BF087C37940051F24A /* host.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = host.py; sourceTree = "<group>"; };
@@ -28,7 +33,6 @@
 		B0F176C1087C37940051F24A /* logger.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = logger.py; sourceTree = "<group>"; };
 		B0F176C2087C37940051F24A /* paths.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = paths.py; sourceTree = "<group>"; };
 		B0F176C3087C37940051F24A /* plugins.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = plugins.py; sourceTree = "<group>"; };
-		B0F176C4087C37940051F24A /* profiles.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = profiles.py; sourceTree = "<group>"; };
 		B0F176C5087C37940051F24A /* settings.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = settings.py; sourceTree = "<group>"; };
 		B0F176C6087C37940051F24A /* snowberry.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = snowberry.py; sourceTree = "<group>"; };
 		B0F176C7087C37A70051F24A /* ui.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = ui.py; sourceTree = "<group>"; };
@@ -56,10 +60,13 @@
 		B05FA5F70A8A7BEA00A9FE0E /* sb */ = {
 			isa = PBXGroup;
 			children = (
+				B0AC1BD30A8CDD5D0095D788 /* __init__.py */,
 				B0E388AC0A8B972000C553A3 /* addon.py */,
 				B0E388B60A8B987400C553A3 /* aodb.py */,
 				B0E38AB30A8BB6E800C553A3 /* expressions.py */,
-				B05FA5F90A8A7BFE00A9FE0E /* ui */,
+				B0AC1B500A8CD5730095D788 /* profdb.py */,
+				B0AC1B480A8CD4B60095D788 /* profile.py */,
+				B05FA5F90A8A7BFE00A9FE0E /* util */,
 				B05FA5F80A8A7BF600A9FE0E /* widget */,
 			);
 			name = sb;
@@ -68,6 +75,7 @@
 		B05FA5F80A8A7BF600A9FE0E /* widget */ = {
 			isa = PBXGroup;
 			children = (
+				B0AC1BD50A8CDD750095D788 /* __init__.py */,
 				B0E38ABB0A8BB97F00C553A3 /* area.py */,
 				B05FA62A0A8A81D500A9FE0E /* list.py */,
 				B05FA6200A8A80E900A9FE0E /* tab.py */,
@@ -76,12 +84,13 @@
 			name = widget;
 			sourceTree = "<group>";
 		};
-		B05FA5F90A8A7BFE00A9FE0E /* ui */ = {
+		B05FA5F90A8A7BFE00A9FE0E /* util */ = {
 			isa = PBXGroup;
 			children = (
+				B0AC1BD40A8CDD6B0095D788 /* __init__.py */,
 				B0E38BB00A8BC9BE00C553A3 /* dialog.py */,
 			);
-			name = ui;
+			name = util;
 			sourceTree = "<group>";
 		};
 		B0E38B7C0A8BC7B200C553A3 /* example */ = {
@@ -106,7 +115,6 @@
 				B0F176C1087C37940051F24A /* logger.py */,
 				B0F176C2087C37940051F24A /* paths.py */,
 				B0F176C3087C37940051F24A /* plugins.py */,
-				B0F176C4087C37940051F24A /* profiles.py */,
 				B0F176C5087C37940051F24A /* settings.py */,
 				B0F176C6087C37940051F24A /* snowberry.py */,
 				B0F176C7087C37A70051F24A /* ui.py */,

@@ -23,7 +23,7 @@
 ## This module is the main module for the entire launcher.
 
 #import profile
-import language, ui, plugins, profiles
+import language, ui, plugins, sb.profdb
 
 def main():
     # Load all plugins.
@@ -33,7 +33,7 @@ def main():
     ui.prepareWindows()
 
     # Load all profiles from disk.
-    profiles.restore()
+    sb.profdb.restore()
 
     # Start the main loop.
     #import profile

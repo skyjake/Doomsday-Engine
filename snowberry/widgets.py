@@ -34,7 +34,7 @@ import wx.lib.intctrl as intctrl
 import wx.lib.scrolledpanel as scrolled
 import wx.lib.fancytext as fancy
 import host, events, ui, language, paths
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 
 

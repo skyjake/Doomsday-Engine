@@ -26,10 +26,10 @@
 
 import os, time, string
 import paths, events, ui, language
-import sb.ui.dialog
+import sb.util.dialog
 import widgets as wg
 import sb.widget.list
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 import sb.aodb as ao
 import sb.addon
@@ -207,7 +207,7 @@ def handleCommand(event):
             return
         
         # Make sure the user want to uninstall.
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'uninstall-addon-dialog',
             language.translate('uninstall-addon-title'),
             ['no', 'yes'], 'no')
@@ -256,9 +256,10 @@ def showInspector(addon):
     """
     ident = addon.getId()
     
-    dialog, area = sb.ui.dialog.createButtonDialog('addon-inspector-dialog',
-                                         language.translate(ident),
-                                         ['ok'], 'ok', size=(570, 450))
+    dialog, area = sb.util.dialog.createButtonDialog(
+        'addon-inspector-dialog',
+         language.translate(ident),
+         ['ok'], 'ok', size=(570, 450))
 
     msg = ""
 
@@ -350,7 +351,7 @@ def showLoadOrder(profile):
     @param profile The profile whose order is being edited.
     """
 
-    dialog, area = sb.ui.dialog.createButtonDialog(
+    dialog, area = sb.util.dialog.createButtonDialog(
         'load-order-dialog',
         language.translate('load-order-title'),
         ['reset', '', 'cancel', 'ok'], 'ok')
@@ -433,7 +434,7 @@ def chooseAddons(dialogId, title, actionButton):
     @param actionButton The button that will perform the affirmative
     action of the dialog.
     """
-    dialog, area = sb.ui.dialog.createButtonDialog(
+    dialog, area = sb.util.dialog.createButtonDialog(
         dialogId, title,
         ['cancel', actionButton], actionButton)
 
@@ -526,8 +527,8 @@ def chooseAddons(dialogId, title, actionButton):
 
     def browseAction():
         # Show a directory browser.
-        selection = sb.ui.dialog.chooseFolder('addon-dialog-browse-prompt',
-                                              pathField.getText())
+        selection = sb.util.dialog.chooseFolder('addon-dialog-browse-prompt',
+                                                pathField.getText())
         if len(selection):
             pathField.setText(selection)
 

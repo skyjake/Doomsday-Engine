@@ -66,8 +66,8 @@ def show():
         # Nothing to report.
         return
 
-    import sb.ui.dialog
-    dialog, area = sb.ui.dialog.createButtonDialog(
+    import sb.util.dialog
+    dialog, area = sb.util.dialog.createButtonDialog(
         'issue-dialog',
         language.translate('issue-dialog-title'),
         ['ok'], 'ok')

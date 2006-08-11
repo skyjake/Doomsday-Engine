@@ -22,7 +22,7 @@
 
 import wx
 import ui, host, events, language, paths
-import profiles as pr
+import sb.profdb as pr
 import widgets as wg
 from widgets import Widget
 from list import FormattedList

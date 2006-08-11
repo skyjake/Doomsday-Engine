@@ -40,7 +40,6 @@ import logger
 import host
 import language
 import cfparser
-import profiles as pr
 import sb.expressions as ex
 
 
@@ -712,12 +711,14 @@ def getCompatibleSettings(profile):
     profileComponents = profile.getComponents()
     profileAddons = profile.getAddons()
 
+    import sb.profdb
+
     # Iterate through all the available settings.
     for setting in allSettings.values():
 
         # Check the required components.  All settings are compatible
         # with the Defaults profile.
-        if profile is not pr.getDefaults():
+        if profile is not sb.profdb.getDefaults():
 
             for requirement in setting.getRequiredComponents():
                 if requirement not in profileComponents:

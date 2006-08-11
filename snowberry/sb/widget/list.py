@@ -22,7 +22,7 @@
 
 import wx
 import host, events, language, paths
-import profiles as pr
+import sb.profdb as pr
 from widgets import Widget, uniConv
 
 

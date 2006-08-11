@@ -20,12 +20,12 @@
 
 ## @file Configuration Wizard
 
-import ui, paths, events, language, sb.ui.dialog
-from sb.ui.dialog import WizardPage, WizardDialog
+import ui, paths, events, language, sb.util.dialog
+from sb.util.dialog import WizardPage, WizardDialog
 import widgets as wg
 import sb.widget.list
 import settings as st
-import profiles as pr
+import sb.profdb as pr
 import sb.aodb as ao
 
 
@@ -41,7 +41,7 @@ def init():
     events.addCommandListener(handleCommand, ['run-setup-wizard'])
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(1, 'run-setup-wizard')    
+    ui.addPopupMenuCommand(2, 'run-setup-wizard')    
 
 
 def handleNotify(event):
@@ -210,9 +210,9 @@ def runWizard():
 
                 def browseDeathKings():
                     # Open a file browser.
-                    selection = sb.ui.dialog.chooseFile('deathkings-selection-title',
-                                                        '', True,
-                                                        [('file-type-wad', 'wad')])
+                    selection = sb.util.dialog.chooseFile('deathkings-selection-title',
+                                                          '', True,
+                                                          [('file-type-wad', 'wad')])
                 
                     if len(selection) > 0:
                         deathKingsWad.setText(selection)
@@ -234,7 +234,7 @@ def runWizard():
         pathList.addItem(p)
 
     def addAddonPath():
-        selection = sb.ui.dialog.chooseFolder('addon-paths-add-prompt', '')
+        selection = sb.util.dialog.chooseFolder('addon-paths-add-prompt', '')
         if selection:
             pathList.addItem(selection)
             pathList.selectItem(selection)

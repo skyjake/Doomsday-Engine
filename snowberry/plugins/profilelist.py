@@ -20,10 +20,10 @@
 # along with this program; if not: http://www.opensource.org/
 
 import ui, events
-import sb.ui.dialog
+import sb.util.dialog
 import widgets as wg
 import sb.widget.list
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 import language
 import paths
@@ -80,6 +80,7 @@ def makeProfileHTML(profile):
            '<td width="48"><img src="' + iconPath + '"></table>'
 
     else:
+        c = 'game-other'
         for c in profile.getComponents():
             if c[:5] == 'game-':
                 game = c
@@ -225,7 +226,7 @@ def commandHandler(event):
         pr.refresh()
 
     elif event.hasId('new-profile'):
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'new-profile-dialog',
             language.translate('new-profile-title'),
             ['cancel', 'ok'], 'ok')
@@ -268,7 +269,7 @@ def commandHandler(event):
             pr.create(nameField.getText(), gameDrop.getSelectedItem())
 
     elif event.hasId('rename-profile'):
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'rename-profile-dialog',
             language.translate('rename-profile-title'),
             ['cancel', 'ok'], 'ok')
@@ -300,7 +301,7 @@ def commandHandler(event):
             pr.refresh()
 
     elif event.hasId('reset-profile'):
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'reset-profile-dialog',
             language.translate('reset-profile-title'),
             ['no', 'yes'], 'no')
@@ -313,7 +314,7 @@ def commandHandler(event):
             pr.reset(pr.getActive().getId())
 
     elif event.hasId('delete-profile'):
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'delete-profile-dialog',
             language.translate('delete-profile-title'),
             ['no', 'yes'], 'no')
@@ -326,7 +327,7 @@ def commandHandler(event):
             pr.remove(pr.getActive().getId())
 
     elif event.hasId('duplicate-profile'):
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'duplicate-profile-dialog',
             language.translate('duplicate-profile-title'),
             ['cancel', 'ok'], 'ok')
@@ -362,7 +363,7 @@ def commandHandler(event):
         # Display a dialog bog for unhiding hidden profiles.
         hiddenProfiles = pr.getProfiles(lambda p: p.isHidden())
 
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'unhide-profile-dialog',
             language.translate('unhide-profile-title'),
             ['cancel', 'ok'], 'ok')

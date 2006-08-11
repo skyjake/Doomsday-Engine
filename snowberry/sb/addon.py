@@ -22,7 +22,7 @@
 ## @file addon.py Addon Classes
 
 import os, re, string, zipfile, shutil, struct, traceback
-import logger, paths, profiles as pr, language, cfparser
+import logger, paths, language, cfparser
 import aodb
 
 
@@ -188,7 +188,8 @@ class Addon:
         @param contextProfile The profiles.Profile object that will be
         used as the context.
         """
-        defaults = pr.getDefaults()
+        import sb.profdb
+        defaults = sb.profdb.getDefaults()
 
         optIn = True
 
@@ -283,7 +284,8 @@ class Addon:
             return False
         
         # The Defaults profile is compatible with everything.
-        if profile is pr.getDefaults():
+        import sb.profdb
+        if profile is sb.profdb.getDefaults():
             return True
 
         # Check the required components.  The profile must have all of

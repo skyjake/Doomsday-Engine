@@ -22,7 +22,7 @@ import string, time
 import language, events, ui
 import sb.aodb as ao
 import sb.addon
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 
 

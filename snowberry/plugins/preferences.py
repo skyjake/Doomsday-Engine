@@ -39,7 +39,7 @@ def init():
     #events.addCommandListener(handleCommand)
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(1, 'show-snowberry-settings')
+    ui.addPopupMenuCommand(2, 'show-snowberry-settings')
 
 
 def handleNotify(event):
@@ -67,7 +67,7 @@ def handleNotify(event):
             pathList.addItem(p)
 
         def addAddonPath():
-            selection = sb.ui.dialog.chooseFolder('addon-paths-add-prompt', '')
+            selection = sb.util.dialog.chooseFolder('addon-paths-add-prompt', '')
             if selection:
                 pathList.addItem(selection)
                 pathList.selectItem(selection)

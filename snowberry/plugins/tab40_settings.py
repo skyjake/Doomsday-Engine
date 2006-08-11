@@ -20,7 +20,7 @@
 
 import ui, events
 import settings as st
-import profiles as pr
+import sb.profdb as pr
 import sb.aodb as ao
 import widgets as wg
 import sb.widget.tab
@@ -271,9 +271,9 @@ def populateTabs():
         #area.setBorder(2)
 
         # Create a title inside the tab.
-        if areaId != 'addons-options' and areaId[-8:] == '-options':
-            area.createText(areaId).setHeadingStyle()
-            area.createLine()
+        #if areaId != 'addons-options' and areaId[-8:] == '-options':
+        #    area.createText(areaId).setHeadingStyle()
+        #    area.createLine()
 
         def settingFilter(s):
             if len(s.getRequiredAddons()) > 0:

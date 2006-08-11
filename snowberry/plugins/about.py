@@ -21,7 +21,7 @@
 ## @file about.py About dialog
 
 import ui, events, language
-import sb.ui.dialog
+import sb.util.dialog
 import widgets as wg
 import settings as st
 
@@ -31,7 +31,7 @@ def init():
     events.addCommandListener(handleCommand, ['about'])
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(2, 'about')
+    ui.addPopupMenuCommand(0, 'about')
 
 
 def handleCommand(event):
@@ -43,7 +43,7 @@ def handleCommand(event):
 
     if event.hasId('about'):
         # Create the About dialog and show it.
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'about-dialog', language.translate('about-title'), ['ok'], 'ok')
 
         content = area.createArea(alignment=ui.ALIGN_VERTICAL, border=0)

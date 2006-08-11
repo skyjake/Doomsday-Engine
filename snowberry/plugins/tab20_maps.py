@@ -30,7 +30,7 @@ import ui, events, language
 import widgets as wg
 import sb.widget.list
 import sb.aodb as ao
-import profiles as pr
+import sb.profdb as pr
 
 
 MAPS = 'tab-maps'

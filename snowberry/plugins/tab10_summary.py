@@ -28,7 +28,7 @@
 
 import string
 import ui, events
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 import sb.aodb as ao
 import language

@@ -26,7 +26,7 @@
 ## addons.
 
 import os, re, string, zipfile, shutil, struct
-import logger, events, paths, profiles as pr, language, cfparser
+import logger, events, paths, language, cfparser
 import settings as st
 import addon as ao
 
@@ -215,8 +215,9 @@ def getAvailableAddons(profile):
 
     @return An array of Addon objects.
     """
+    import sb.profdb
     return [a for a in addons.values()
-            if profile is pr.getDefaults() or a.isCompatibleWith(profile)]
+            if profile is sb.profdb.getDefaults() or a.isCompatibleWith(profile)]
 
 
 def getAddons(func=None):
@@ -338,7 +339,8 @@ def uninstall(identifier):
     addon.uninstall()
 
     # Detach from all profiles.
-    for p in pr.getProfiles():
+        
+    for p in sb.profdb.getProfiles():
         p.dontUseAddon(identifier)
 
     # Send a notification.

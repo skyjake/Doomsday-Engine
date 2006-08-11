@@ -34,7 +34,7 @@ import host, events, widgets, language, paths, ui
 import sb.widget.list
 import sb.widget.tab
 import sb.widget.tree
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 import logger
 from widgets import uniConv
@@ -642,7 +642,7 @@ class Area (widgets.Widget):
                 else:
                     currentValue = value.getValue()
 
-                selection = sb.ui.dialog.chooseFile(
+                selection = sb.util.dialog.chooseFile(
                     settingId + '-selection-title',
                     currentValue,
                     setting.hasToExist(),
@@ -676,8 +676,8 @@ class Area (widgets.Widget):
                 else:
                     currentValue = value.getValue()
 
-                selection = sb.ui.dialog.chooseFolder(settingId + '-selection-title',
-                                                      currentValue)
+                selection = sb.util.dialog.chooseFolder(settingId + '-selection-title',
+                                                        currentValue)
 
                 if len(selection) > 0:
                     pr.getActive().setValue(settingId, selection)

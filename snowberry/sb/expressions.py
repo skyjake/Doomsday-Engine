@@ -24,7 +24,6 @@
 
 import string
 import os
-import profiles as pr
 import settings as st
 import paths
 
@@ -163,7 +162,8 @@ def execute(src, contextAddon):
 
     if command == 'VALUE':
         arg = evaluate(argSrc, contextAddon)
-        activeProfile = pr.getActive()
+        import sb.profdb
+        activeProfile = sb.profdb.getActive()
 
         # Try local value identifier first.
         if contextAddon:

@@ -30,12 +30,12 @@
 
 import os, string, time
 import ui
-import sb.ui.dialog
+import sb.util.dialog
 import events
 import paths
 import language
 import widgets as wg
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 import sb.aodb as ao
 
@@ -115,9 +115,9 @@ def init():
                                               'continue'])
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(0, 'play')
-    ui.addPopupMenuCommand(1, 'view-command-line')
-    ui.addPopupMenuCommand(2, 'quit')
+    ui.addPopupMenuCommand(0, 'quit')
+    ui.addPopupMenuCommand(1, 'play')
+    ui.addPopupMenuCommand(2, 'view-command-line')
 
 
 def handleNotify(event):
@@ -164,7 +164,7 @@ def handleCommand(event):
                 options = options[:pos] + '</b>' + options[pos:]
             pos += 1
 
-        dialog, area = sb.ui.dialog.createButtonDialog(
+        dialog, area = sb.util.dialog.createButtonDialog(
             'view-command-line-dialog',
             language.translate('view-command-line-title'),
             ['ok'], 'ok')
@@ -432,7 +432,7 @@ def resolveAddonConflicts(addons, profile):
         # Wizard, which will take care of the issue.
         resolving = ResolveStatus()
         resolving.profile = profile
-        resolving.dialog, resolving.area = sb.ui.dialog.createButtonDialog(
+        resolving.dialog, resolving.area = sb.util.dialog.createButtonDialog(
             'conflict-wizard',
             language.translate('conflict-wizard-title'),
             ['cancel', 'continue'], 'continue')

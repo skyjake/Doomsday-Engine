@@ -37,7 +37,7 @@
 import sys, os, wx, string
 import host, events, widgets, language, paths
 import sb.widget.tab
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 import logger
 from widgets import uniConv
@@ -73,72 +73,8 @@ USE_HELP_AREA = not st.getSystemBoolean('main-hide-help')
 uiAreas = {}
 mainPanel = None
 
-# Items for the popup menu. Three separate levels of priority.
-popupMenuItems = [[], [], []]
-
-
-def getMainPanel():
-    """Returns the wxPanel of the main window."""
-    return mainPanel
-
-
-def addPopupMenuCommand(level, identifier, label=None):
-    """Insert a new popup menu item for the Menu button.
-
-    @param level       Priority level (0, 1, 2).
-    @param identifier  Identifier of the command.
-    @param label       Label for the command. If not specified, the same
-                       as the identifier.
-    """
-    global popupMenuItems
-
-    if(label == None):
-        popupMenuItems[level].append(identifier)
-    else:
-        popupMenuItems[level].append((identifier, label))
-
-
-def getArea(id):
-    """Returns the UI area with the specified ID.
-
-    @return An Area object.
-    """
-    return uiAreas[id]
-
-
-def _newArea(area):
-    """A private helper function for adding a new area to the list of
-    identifiable areas.  Sub-areas are not identifiable.
-
-    @param area An Area object.
-    """
-    global uiAreas
-    uiAreas[area.getId()] = area
-
-
-def selectTab(id):
-    """Select a tab in the tab switcher.
-
-    @param id Identifier of the tab.
-    """
-    mainPanel.getTabs().selectTab(id)
-
-
-def createTab(id):
-    """Create a new tab in the tab switcher.
-
-    @param id The identifier of the new tab.  The label of the tab
-    will be the translation of this identifier.
-
-    @return An Area object that represents the new tab.
-    """
-    area = mainPanel.getTabs().addTab(id)
-    area.setBorder(10)
-
-    # Register this area so it can be found with getArea().
-    _newArea(area)
-
-    return area
+# Items for the popup menu. Up to seven menus.
+popupMenuItems = [[], [], [], [], [], [], []]
 
 
 class Timer (wx.Timer):
@@ -229,7 +165,7 @@ class MainPanel (wx.Panel):
         _newArea(area)
 
         # Create the Menu button in the Preferences Command area.
-        self.menuButton = area.createButton('popup-menu')
+        #self.menuButton = area.createButton('popup-menu')
 
         eSizer.Add(prefCommandPanel, 0, wx.EXPAND)
         eSizer.Add(commandPanel, 1, wx.EXPAND)
@@ -380,7 +316,7 @@ class MainFrame (wx.Frame):
         wx.EVT_SIZE(self, self.onWindowSize)
 
         # Listen to some commands.
-        events.addCommandListener(self.handleCommand, ['quit', 'popup-menu'])
+        events.addCommandListener(self.handleCommand, ['quit'])
 
         #self.mainPanel.Hide()
 
@@ -394,7 +330,8 @@ class MainFrame (wx.Frame):
         #self.Hide()
 
         # Create a menu bar.
-        #menuBar = wx.MenuBar()
+        self.menuBar = wx.MenuBar()
+        self.SetMenuBar(self.menuBar)
 
         #menu = wx.Menu()
         #menu.Append(wx.ID_ABOUT, language.translate('menu-about'))
@@ -517,30 +454,39 @@ class MainFrame (wx.Frame):
         if event.hasId('quit'):
             self.Close()
 
-        elif event.hasId('popup-menu'):
-            # TODO: This would be more logical as a part of MainPanel.
-            # Show the popup commands menu.
-            menu = wx.Menu()
-            self.menuCommandMap = {}
+    def updateMenus(self):
+        """Create the main frame menus based on popupMenuItems array."""
 
-            global popupMenuItems
+        global popupMenuItems
+        self.menuCommandMap = {}
+        #menuItems = {}
 
-            menuItems = []
+        # Array of menus. Number to wxMenu.
+        self.menus = {}
 
-            # Three levels of priority.
-            for prio in range(3):
-                # Sort the items based on translated labels.
-                popupMenuItems[prio].sort(
-                    lambda x, y: cmp(language.translate('menu-' + x),
-                                     language.translate('menu-' + y)))
+        # Three levels of priority.
+        for prio in range(len(popupMenuItems)):
+            if len(popupMenuItems[prio]) == 0:
+                # No menu for this.
+                self.menus[prio] = None
+                continue
+                
+            self.menus[prio] = wx.Menu()
+            self.menuBar.Append(self.menus[prio], 
+                                language.translate("menu-" + str(prio)))
+        
+            # Sort the items based on translated labels.
+            popupMenuItems[prio].sort(
+                lambda x, y: cmp(language.translate('menu-' + x),
+                                 language.translate('menu-' + y)))
 
-                if len(popupMenuItems[prio]) > 0 and len(menuItems) > 0:
-                    # Separate the priority levels.
-                    menuItems.append('-')
-                menuItems += popupMenuItems[prio]
-
+            #if len(popupMenuItems[prio]) > 0 and len(menuItems) > 0:
+            #    # Separate the priority levels.
+            #    menuItems.append('-')
+            #menuItems[prio] += popupMenuItems[prio]
+            
             # Create the menu items.
-            for item in menuItems:
+            for item in popupMenuItems[prio]:
                 if type(item) == tuple:
                     itemId = item[0]
                     itemCommand = item[1]
@@ -552,18 +498,28 @@ class MainFrame (wx.Frame):
                     # This is just a separator.
                     menu.AppendSeparator()
                     continue
-
+                
+                menuItemId = 'menu-' + itemId
+                
+                accel = ''
+                if language.isDefined(menuItemId + '-accel'):
+                    accel = "\t" + language.translate(menuItemId + '-accel')
+                    
                 # Generate a new ID for the item.
                 wxId = wx.NewId()
                 self.menuCommandMap[wxId] = itemCommand
-                menu.Append(wxId,
-                            uniConv(language.translate('menu-' + itemId)))
+                self.menus[prio].Append(wxId,
+                                        uniConv(language.translate(menuItemId) + accel))
                 wx.EVT_MENU(self, wxId, self.onPopupCommand)
-
-            # Display the menu.  The callback gets called during this.
-            button = self.mainPanel.menuButton.getWxWidget()
-            button.PopupMenu(menu, (0, button.GetSizeTuple()[1]))
-            menu.Destroy()
+                
+                if host.isMac():
+                    # Special menu items on Mac.
+                    if itemId == 'about':
+                        wx.App_SetMacAboutMenuItemId(wxId)
+                    if itemId == 'quit':
+                        wx.App_SetMacExitMenuItemId(wxId)
+                    if itemId == 'show-snowberry-settings':
+                        wx.App_SetMacPreferencesMenuItemId(wxId)
 
     def onPopupCommand(self, ev):
         """Called when a selection is made in the popup menu."""
@@ -594,11 +550,83 @@ class SnowberryApp (wx.App):
         #self.mainFrame.show()
 
 
+def getMainPanel():
+    """Returns the wxPanel of the main window."""
+    return mainPanel
+
+
+def addPopupMenuCommand(level, identifier, label=None):
+    """Insert a new popup menu item for the Menu button.
+
+    @param level       Priority level (0, 1, 2).
+    @param identifier  Identifier of the command.
+    @param label       Label for the command. If not specified, the same
+                       as the identifier.
+    """
+    global popupMenuItems
+    
+    if host.isMac() and level == 0:
+        # On the Mac, the Snowberry menu is integrated into the app menu.
+        # There is no need for a level zero menu.
+        # Put the items temporarily on level 1, where they will be moved
+        # by wxPython to the app menu.
+        level = 1
+
+    if(label == None):
+        popupMenuItems[level].append(identifier)
+    else:
+        popupMenuItems[level].append((identifier, label))
+
+
+def getArea(id):
+    """Returns the UI area with the specified ID.
+
+    @return An Area object.
+    """
+    return uiAreas[id]
+
+
+def _newArea(area):
+    """A private helper function for adding a new area to the list of
+    identifiable areas.  Sub-areas are not identifiable.
+
+    @param area An Area object.
+    """
+    global uiAreas
+    uiAreas[area.getId()] = area
+
+
+def selectTab(id):
+    """Select a tab in the tab switcher.
+
+    @param id Identifier of the tab.
+    """
+    mainPanel.getTabs().selectTab(id)
+
+
+def createTab(id):
+    """Create a new tab in the tab switcher.
+
+    @param id The identifier of the new tab.  The label of the tab
+    will be the translation of this identifier.
+
+    @return An Area object that represents the new tab.
+    """
+    area = mainPanel.getTabs().addTab(id)
+    area.setBorder(10)
+
+    # Register this area so it can be found with getArea().
+    _newArea(area)
+
+    return area
+
+
 def prepareWindows():
     """Layout windows and make everything ready for action."""
 
     events.send(events.Notify('preparing-windows'))
 
+    app.mainFrame.updateMenus()
     app.mainFrame.updateLayout()
     app.mainFrame.Show()
     app.mainFrame.Freeze()

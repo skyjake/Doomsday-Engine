@@ -187,8 +187,11 @@ popup-menu: Menu
 preferences: Preferences
 
 #
-# Popup Menu Items
+# Menu Items
 #
+menu-0: Snowberry
+menu-1: Profile
+menu-2: Tools
 menu-new-profile: New...
 menu-rename-profile: Rename
 menu-reset-profile: Reset to defaults
@@ -207,11 +210,15 @@ menu-expand-all-categories: Expand all
 menu-collapse-all-categories: Collapse all
 menu-reset-slider: Reset to default
 menu-play: Launch selected game
+menu-play-accel: Ctrl-L
 menu-view-command-line: Preview command line
+menu-view-command-line-accel: Alt-P
 menu-run-setup-wizard: Show setup wizard
 menu-show-snowberry-settings: Preferences
-menu-about: About
+menu-show-snowberry-settings-accel: Ctrl-,
+menu-about: About Snowberry
 menu-quit: Quit
+menu-quit-accel: Ctrl-Q
 
 #
 # Tab Labels

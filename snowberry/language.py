@@ -43,7 +43,7 @@ def _newString(language, id, text):
     #if sys.platform == 'win32':
     #    ## @todo Check this later... Apparently not supported?
     #    text = text.replace('\n', ' ')
-    
+
     if not library.has_key(language):
         # Start a new language.
         library[language] = {}
