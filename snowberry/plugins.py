@@ -23,7 +23,7 @@
 ## If a plugin init() raises an exception, the plugin is ignored.
 
 import sys, os, re
-import settings as st
+import sb.confdb as st
 import language, paths, logger
 
 PLUGIN_PATH = 'plugins'

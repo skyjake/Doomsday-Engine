@@ -29,7 +29,7 @@
 import string
 import ui, events
 import sb.profdb as pr
-import settings as st
+import sb.confdb as st
 import sb.aodb as ao
 import language
 from ui import ALIGN_HORIZONTAL

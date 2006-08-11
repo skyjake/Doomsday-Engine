@@ -38,7 +38,7 @@ import sys, os, wx, string
 import host, events, widgets, language, paths
 import sb.widget.tab
 import sb.profdb as pr
-import settings as st
+import sb.confdb as st
 import logger
 from widgets import uniConv
 

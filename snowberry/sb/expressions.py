@@ -24,7 +24,7 @@
 
 import string
 import os
-import settings as st
+#import sb.confdb as st
 import paths
 
 

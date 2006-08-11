@@ -27,7 +27,6 @@
 
 import os, re, string, zipfile, shutil, struct
 import logger, events, paths, language, cfparser
-import settings as st
 import addon as ao
 
 # This is a list of all the categories that include exclusions regarding

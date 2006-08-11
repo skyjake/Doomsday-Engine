@@ -24,20 +24,25 @@
 ## the same way as the top-level areas.  The Area class can represent
 ## either a top-level area or a sub-area.
 
-# TODO: Make these .conf'able.
-SETTING_WEIGHT_LEFT = 1
-SETTING_WEIGHT_RIGHT = 2
-
 import sys, os, wx, string
 import wx.wizard as wiz
 import host, events, widgets, language, paths, ui
+import base
+import sb.widget.bar
+import sb.widget.base
+import sb.widget.button
+import sb.widget.field
 import sb.widget.list
 import sb.widget.tab
+import sb.widget.text
 import sb.widget.tree
 import sb.profdb as pr
-import settings as st
 import logger
 from widgets import uniConv
+
+# TODO: Make these .conf'able.
+SETTING_WEIGHT_LEFT = 1
+SETTING_WEIGHT_RIGHT = 2
 
 # Border widths in areas.
 # TODO: Move these to a .conf.
@@ -55,13 +60,13 @@ else:
 WIDGET_ID = 100
 
 
-class Area (widgets.Widget):
+class Area (base.Widget):
     """Each Area instance governs the contents of a wxPanel widget.
     Together with the classes in widgets.py, the Area class
     encapsulates all management of the user interface.  Modules that
     use ui.py or widgets.py need not access wxWidgets directly at all.
 
-    The Area class implements the widgets.Widget interface from
+    The Area class implements the base.Widget interface from
     widgets.py.  getWxWidget() and clear() are the important
     Widget-inherited methods that Area uses.
 
@@ -316,16 +321,16 @@ class Area (widgets.Widget):
         self.__addWidget(multi)
         return multi
 
-    def createButton(self, name, style=widgets.Button.STYLE_NORMAL):
+    def createButton(self, name, style=sb.widget.button.Button.STYLE_NORMAL):
         """Create a button widget inside the area.
 
         @param name Identifier of the button.  The text label that
         appears in the button will be the translation of this
         identifier.
 
-        @return A widgets.Button object.
+        @return A sb.widget.button.Button object.
         """
-        w = widgets.Button(self.panel, self.__getNewId(), name, style)
+        w = sb.widget.button.Button(self.panel, self.__getNewId(), name, style)
         self.__addWidget(w)
         return w
 
@@ -346,7 +351,7 @@ class Area (widgets.Widget):
         return widget
 
     def createText(self, name='', suffix='', maxLineLength=0,
-                   align=widgets.Text.LEFT):
+                   align=sb.widget.text.Text.LEFT):
         """Create a text label widget inside the area.
 
         @param name Identifier of the text label widget.  The actual
@@ -355,8 +360,8 @@ class Area (widgets.Widget):
 
         @return A widgets.Text object.
         """
-        widget = widgets.Text(self.panel, -1, name, suffix, maxLineLength,
-                              align)
+        widget = sb.widget.text.Text(self.panel, -1, name, suffix, 
+                                     maxLineLength, align)
         self.__addWidget(widget)
         return widget
 
@@ -367,7 +372,7 @@ class Area (widgets.Widget):
 
         @return A widgets.TextField object.
         """
-        widget = widgets.TextField(self.panel, -1, name)
+        widget = sb.widget.field.TextField(self.panel, -1, name)
         self.__addWidget(widget)
         return widget
 
@@ -377,7 +382,7 @@ class Area (widgets.Widget):
 
         @return A widgets.FormattedText object.
         """
-        widget = widgets.FormattedText(self.panel, -1)
+        widget = sb.widget.text.FormattedText(self.panel, -1)
         self.__addWidget(widget)
         return widget
 
@@ -387,7 +392,7 @@ class Area (widgets.Widget):
 
         @return A widgets.FormattedText object.
         """
-        widget = widgets.FormattedText(self.panel, -1, False, text)
+        widget = sb.widget.text.FormattedText(self.panel, -1, False, text)
         self.__addWidget(widget)
         return widget
 
@@ -488,14 +493,14 @@ class Area (widgets.Widget):
 
         @return A widgets.CheckBox obejct.
         """
-        widget = widgets.CheckBox(self.panel, self.__getNewId(),
-                                  name, isChecked)
+        widget = sb.widget.button.CheckBox(self.panel, self.__getNewId(),
+                                           name, isChecked)
         self.__addWidget(widget)
         return widget
 
     def createRadioButton(self, name, isChecked, isFirst=False):
-        widget = widgets.RadioButton(self.panel, self.__getNewId(), name,
-                                     isChecked, isFirst)
+        widget = sb.widget.button.RadioButton(self.panel, self.__getNewId(), name,
+                                              isChecked, isFirst)
         self.__addWidget(widget)
         return widget
 
@@ -509,12 +514,12 @@ class Area (widgets.Widget):
 
         @return A widgets.NumberField object.
         """
-        widget = widgets.NumberField(self.panel, self.__getNewId(), name)
+        widget = sb.widget.field.NumberField(self.panel, self.__getNewId(), name)
         self.__addWidget(widget)
         return widget
 
     def createSlider(self, name):
-        widget = widgets.Slider(self.panel, self.__getNewId(), name)
+        widget = sb.widget.bar.Slider(self.panel, self.__getNewId(), name)
         self.__addWidget(widget)
         return widget
 
@@ -547,11 +552,11 @@ class Area (widgets.Widget):
         area.setWeight(leftWeight)
 
         if setting.getType() != 'toggle':
-            area.createText(setting.getId(), ':', 16, widgets.Text.RIGHT)
+            area.createText(setting.getId(), ':', 16, sb.widget.text.Text.RIGHT)
         else:
             # Check boxes use a secondary indicator label.
             label = area.createText('toggle-use-default-value',
-                                    align=widgets.Text.RIGHT)
+                                    align=sb.widget.text.Text.RIGHT)
 
         area.setWeight(0)
         area.addSpacer()
@@ -630,7 +635,7 @@ class Area (widgets.Widget):
             text = sub.createTextField(setting.getId())
             sub.setWeight(0)
             browseButton = sub.createButton('browse-button',
-                                            style=widgets.Button.STYLE_MINI)
+                                            style=sb.widget.button.Button.STYLE_MINI)
 
             def browseAction():
                 # Open a file browser for selecting the value for a file
@@ -664,7 +669,7 @@ class Area (widgets.Widget):
             text = sub.createTextField(setting.getId())
             sub.setWeight(0)
             browseButton = sub.createButton('browse-button',
-                                            style=widgets.Button.STYLE_MINI)
+                                            style=sb.widget.button.Button.STYLE_MINI)
 
             def folderBrowseAction():
                 # Open a folder browser for selecting the value for a file

@@ -20,6 +20,13 @@
 		B0AC1BD30A8CDD5D0095D788 /* __init__.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = __init__.py; path = sb/__init__.py; sourceTree = "<group>"; };
 		B0AC1BD40A8CDD6B0095D788 /* __init__.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = __init__.py; path = sb/util/__init__.py; sourceTree = "<group>"; };
 		B0AC1BD50A8CDD750095D788 /* __init__.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = __init__.py; path = sb/widget/__init__.py; sourceTree = "<group>"; };
+		B0AC1CEE0A8D206C0095D788 /* base.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = base.py; path = sb/widget/base.py; sourceTree = "<group>"; };
+		B0AC1CFE0A8D21910095D788 /* button.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = button.py; path = sb/widget/button.py; sourceTree = "<group>"; };
+		B0AC1D240A8D243D0095D788 /* field.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = field.py; path = sb/widget/field.py; sourceTree = "<group>"; };
+		B0AC1D360A8D24B00095D788 /* text.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = text.py; path = sb/widget/text.py; sourceTree = "<group>"; };
+		B0AC1D460A8D25780095D788 /* bar.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = bar.py; path = sb/widget/bar.py; sourceTree = "<group>"; };
+		B0AC1E230A8D2D570095D788 /* conf.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = conf.py; path = sb/conf.py; sourceTree = "<group>"; };
+		B0AC1E240A8D2D570095D788 /* confdb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = confdb.py; path = sb/confdb.py; sourceTree = "<group>"; };
 		B0E388AC0A8B972000C553A3 /* addon.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = addon.py; path = sb/addon.py; sourceTree = "<group>"; };
 		B0E388B60A8B987400C553A3 /* aodb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = aodb.py; path = sb/aodb.py; sourceTree = "<group>"; };
 		B0E38AB30A8BB6E800C553A3 /* expressions.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = expressions.py; path = sb/expressions.py; sourceTree = "<group>"; };
@@ -33,7 +40,6 @@
 		B0F176C1087C37940051F24A /* logger.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = logger.py; sourceTree = "<group>"; };
 		B0F176C2087C37940051F24A /* paths.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = paths.py; sourceTree = "<group>"; };
 		B0F176C3087C37940051F24A /* plugins.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = plugins.py; sourceTree = "<group>"; };
-		B0F176C5087C37940051F24A /* settings.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = settings.py; sourceTree = "<group>"; };
 		B0F176C6087C37940051F24A /* snowberry.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = snowberry.py; sourceTree = "<group>"; };
 		B0F176C7087C37A70051F24A /* ui.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = ui.py; sourceTree = "<group>"; };
 		B0F176C8087C37A70051F24A /* widgets.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = widgets.py; sourceTree = "<group>"; };
@@ -63,6 +69,8 @@
 				B0AC1BD30A8CDD5D0095D788 /* __init__.py */,
 				B0E388AC0A8B972000C553A3 /* addon.py */,
 				B0E388B60A8B987400C553A3 /* aodb.py */,
+				B0AC1E230A8D2D570095D788 /* conf.py */,
+				B0AC1E240A8D2D570095D788 /* confdb.py */,
 				B0E38AB30A8BB6E800C553A3 /* expressions.py */,
 				B0AC1B500A8CD5730095D788 /* profdb.py */,
 				B0AC1B480A8CD4B60095D788 /* profile.py */,
@@ -77,8 +85,13 @@
 			children = (
 				B0AC1BD50A8CDD750095D788 /* __init__.py */,
 				B0E38ABB0A8BB97F00C553A3 /* area.py */,
+				B0AC1D460A8D25780095D788 /* bar.py */,
+				B0AC1CEE0A8D206C0095D788 /* base.py */,
+				B0AC1CFE0A8D21910095D788 /* button.py */,
+				B0AC1D240A8D243D0095D788 /* field.py */,
 				B05FA62A0A8A81D500A9FE0E /* list.py */,
 				B05FA6200A8A80E900A9FE0E /* tab.py */,
+				B0AC1D360A8D24B00095D788 /* text.py */,
 				B05FA5FA0A8A7C1500A9FE0E /* tree.py */,
 			);
 			name = widget;
@@ -115,7 +128,6 @@
 				B0F176C1087C37940051F24A /* logger.py */,
 				B0F176C2087C37940051F24A /* paths.py */,
 				B0F176C3087C37940051F24A /* plugins.py */,
-				B0F176C5087C37940051F24A /* settings.py */,
 				B0F176C6087C37940051F24A /* snowberry.py */,
 				B0F176C7087C37A70051F24A /* ui.py */,
 				B0F176C8087C37A70051F24A /* widgets.py */,

@@ -23,7 +23,7 @@
 import ui, events, language
 import sb.util.dialog
 import widgets as wg
-import settings as st
+import sb.confdb as st
 
 
 def init():

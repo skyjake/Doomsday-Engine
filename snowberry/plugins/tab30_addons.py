@@ -27,10 +27,10 @@
 import os, time, string
 import paths, events, ui, language
 import sb.util.dialog
-import widgets as wg
+import sb.widget.button as wg
 import sb.widget.list
 import sb.profdb as pr
-import settings as st
+import sb.confdb as st
 import sb.aodb as ao
 import sb.addon
 import logger

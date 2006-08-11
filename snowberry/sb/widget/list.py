@@ -23,10 +23,11 @@
 import wx
 import host, events, language, paths
 import sb.profdb as pr
-from widgets import Widget, uniConv
+from widgets import uniConv
+import base
 
 
-class List (Widget):
+class List (base.Widget):
     """List control widget.  Supports several styles."""
 
     # List styles.
@@ -40,11 +41,11 @@ class List (Widget):
         
         if style == List.STYLE_CHECKBOX:
             # Listbox with checkable items.
-            Widget.__init__(self, wx.CheckListBox(parent, wxId))
+            base.Widget.__init__(self, wx.CheckListBox(parent, wxId))
         elif style == List.STYLE_COLUMNS:
-            Widget.__init__(self, wx.ListCtrl(parent, wxId,
-                                              style=(wx.LC_REPORT |
-                                                     wx.SIMPLE_BORDER)))
+            base.Widget.__init__(self, wx.ListCtrl(parent, wxId,
+                                                   style=(wx.LC_REPORT |
+                                                          wx.SIMPLE_BORDER)))
             wx.EVT_LIST_ITEM_SELECTED(parent, wxId, self.onItemSelected)
             wx.EVT_LIST_ITEM_DESELECTED(parent, wxId, self.onItemDeselected)
         else:
@@ -53,7 +54,7 @@ class List (Widget):
                 styleFlags = wx.LB_MULTIPLE
             elif style == List.STYLE_SINGLE:
                 styleFlags = wx.LB_SINGLE
-            Widget.__init__(self, wx.ListBox(parent, wxId, style=styleFlags))
+            base.Widget.__init__(self, wx.ListBox(parent, wxId, style=styleFlags))
 
         # Will be used when sending notifications.
         self.widgetId = id
@@ -286,11 +287,11 @@ class List (Widget):
         event.Skip()
         
 
-class DropList (Widget):
+class DropList (base.Widget):
     """A drop-down list widget."""
 
     def __init__(self, parent, wxId, id):
-        Widget.__init__(self, wx.Choice(parent, wxId))
+        base.Widget.__init__(self, wx.Choice(parent, wxId))
 
         # Will be used when sending notifications.
         self.widgetId = id
@@ -331,7 +332,7 @@ class DropList (Widget):
             events.send(events.EditNotify(self.widgetId, newSelection))
 
     def onNotify(self, event):
-        Widget.onNotify(self, event)
+        base.Widget.onNotify(self, event)
 
         if self.widgetId:
             if event.hasId('active-profile-changed'):
@@ -448,7 +449,7 @@ class HtmlListBox (wx.HtmlListBox):
         return self.itemsListOwner.items[n][1]
 
 
-class FormattedList (Widget):
+class FormattedList (base.Widget):
     """A list widget with HTML-formatted items."""
 
     def __init__(self, parent, wxId, id, style=0):
@@ -462,7 +463,7 @@ class FormattedList (Widget):
         # This is a list of tuples: (id, presentation)
         self.items = []
 
-        Widget.__init__(self, HtmlListBox(parent, wxId, self, style=style))
+        base.Widget.__init__(self, HtmlListBox(parent, wxId, self, style=style))
 
         self.widgetId = id
 

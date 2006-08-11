@@ -354,7 +354,7 @@ def create(name, gameComponent):
     # Generate an unused identifier.
     identifier = _getNewProfileId()
 
-    p = Profile(identifier)
+    p = sb.profile.Profile(identifier)
 
     # Set the basic information of the profile.
     p.setName(name)

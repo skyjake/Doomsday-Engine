@@ -22,9 +22,9 @@
 
 import ui, paths, events, language, sb.util.dialog
 from sb.util.dialog import WizardPage, WizardDialog
-import widgets as wg
+import sb.widget.button as wg
 import sb.widget.list
-import settings as st
+import sb.confdb as st
 import sb.profdb as pr
 import sb.aodb as ao
 

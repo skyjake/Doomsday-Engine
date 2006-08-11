@@ -21,10 +21,10 @@
 
 import ui, events
 import sb.util.dialog
-import widgets as wg
+import sb.widget.button as wg
 import sb.widget.list
 import sb.profdb as pr
-import settings as st
+import sb.confdb as st
 import language
 import paths
 from ui import ALIGN_HORIZONTAL

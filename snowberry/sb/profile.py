@@ -23,7 +23,7 @@
 
 import os, re, string, shutil
 import events, paths, cfparser, language, logger
-import settings as st
+import sb.confdb as st
 import aodb
 import profdb
 
@@ -279,7 +279,7 @@ class Profile:
             if self is profdb.defaults:
                 # Detach from others.  The appropriate detach events
                 # will be transmitted.
-                for p in profiles:
+                for p in profdb.getProfiles():
                     if p is not self:
                         p.removeAddon(identifier)
 

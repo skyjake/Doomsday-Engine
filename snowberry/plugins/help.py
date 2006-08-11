@@ -23,7 +23,7 @@ import language, events, ui
 import sb.aodb as ao
 import sb.addon
 import sb.profdb as pr
-import settings as st
+import sb.confdb as st
 
 
 # An instance of the message timer.

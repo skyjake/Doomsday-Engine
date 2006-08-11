@@ -23,7 +23,7 @@
 
 import os, re, string, zipfile, shutil, struct, traceback
 import logger, paths, language, cfparser
-import aodb
+import aodb, confdb
 
 
 EXCLUDES = 0
@@ -370,8 +370,8 @@ class Addon:
                         # The addon's identifier determines the group.
                         elem.add(cfparser.KeyElement('group', self.getId()))
                     elem.add(cfparser.KeyElement('addon', ownerId))
-                    import settings
-                    settings.processSettingBlock(elem)
+                    import confdb
+                    confdb.processSettingBlock(elem)
 
         except cfparser.OutOfElements:
             pass
@@ -652,6 +652,13 @@ class WADAddon (Addon):
         elif 'doom' in path or 'doom2' in path or 'final' in path or \
              'finaldoom' in path or 'tnt' in path or 'plutonia' in path:
             game = 'jdoom'
+
+        # Check for a game component name in the path.
+        for component in confdb.getGameComponents():
+            compName = component.getId()[5:]
+            if compName in path:
+                game = compName
+                break
 
         # Read the WAD directory.
         self.lumps = self.readLumpDirectory()

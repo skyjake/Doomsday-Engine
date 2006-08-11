@@ -24,7 +24,8 @@ import wx
 import host, events, language, paths
 import sb.aodb as ao
 import sb.profdb as pr
-from widgets import Widget, uniConv
+import base
+from widgets import uniConv
 
 
 class MyTreeCtrl (wx.TreeCtrl):
@@ -61,7 +62,7 @@ class MyTreeCtrl (wx.TreeCtrl):
             return 1
 
 
-class Tree (Widget):
+class Tree (base.Widget):
     """The addon browser tree widget."""
 
     class Hierarchy:
@@ -94,7 +95,7 @@ class Tree (Widget):
             return None
 
     def __init__(self, parent, wxId):
-        Widget.__init__(self, MyTreeCtrl(parent, wxId))
+        base.Widget.__init__(self, MyTreeCtrl(parent, wxId))
 
         # The addon tree uses a fixed identifier.
         self.widgetId = 'addon-tree'
@@ -487,7 +488,7 @@ class Tree (Widget):
         if not self.listenToNotifications:
             return
         
-        Widget.onNotify(self, event)
+        base.Widget.onNotify(self, event)
         
         if event.hasId('addon-attached') or event.hasId('addon-detached'):
             if event.getProfile() is pr.getActive():
@@ -625,7 +626,7 @@ class Tree (Widget):
             self.selectItem(item)
 
         # Continue with the normal event handling.
-        Widget.onRightClick(self, ev)
+        base.Widget.onRightClick(self, ev)
 
     def getHierarchy(self, item):
         """Finds the hierarchy where the item is in."""

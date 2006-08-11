@@ -21,8 +21,9 @@
 ## @file preferences.py Preferences in the Defaults/Snowberry Settings
 
 import ui, events, language, paths
-import widgets as wg
-import settings as st
+import sb.widget.button as wb
+import sb.widget.text as wt
+import sb.confdb as st
 
 
 # List widget of custom addon paths.
@@ -84,17 +85,17 @@ def handleNotify(event):
         commands.setWeight(0)
 
         # Button for adding new paths.
-        button = commands.createButton('new-addon-path', wg.Button.STYLE_MINI)
+        button = commands.createButton('new-addon-path', wb.Button.STYLE_MINI)
         button.addReaction(addAddonPath)
         
         # Button for removing a path.
         button = commands.createButton('delete-addon-path',
-                                       wg.Button.STYLE_MINI)
+                                       wb.Button.STYLE_MINI)
         button.addReaction(removeAddonPath)
         
         commands.setExpanding(False)
         commands.setWeight(1)
-        commands.createText('restart-required', align=wg.Text.RIGHT
+        commands.createText('restart-required', align=wt.Text.RIGHT
                             ).setSmallStyle()
         
         # Checkboxes for hiding parts of the UI.
@@ -108,7 +109,7 @@ def handleNotify(event):
             'summary-profile-change-autoselect'))
         box.createSetting(st.getSystemSetting('profile-large-icons'))
         
-        box.createText('restart-required', align=wg.Text.RIGHT).setSmallStyle()
+        box.createText('restart-required', align=wt.Text.RIGHT).setSmallStyle()
 
     elif event.hasId('addon-paths-changed'):
         # Insert the current custom paths into the list.

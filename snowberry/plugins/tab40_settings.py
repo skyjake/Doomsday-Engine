@@ -19,7 +19,7 @@
 # along with this program; if not: http://www.opensource.org/
 
 import ui, events
-import settings as st
+import sb.confdb as st
 import sb.profdb as pr
 import sb.aodb as ao
 import widgets as wg

@@ -24,10 +24,10 @@ import sys, os, wx, string
 import wx.wizard as wiz
 import ui, host, events, widgets, language
 import sb.profdb as pr
-import settings as st
 import logger
 from widgets import uniConv
 import sb.widget.area
+import sb.widget.button as wb
 
 
 def chooseFile(prompt, default, mustExist, fileTypes, defExt=None):
@@ -180,9 +180,9 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None):
             continue
 
         if button == defaultButton:
-            style = widgets.Button.STYLE_DEFAULT
+            style = wb.Button.STYLE_DEFAULT
         else:
-            style = widgets.Button.STYLE_NORMAL
+            style = wb.Button.STYLE_NORMAL
 
         widget = buttonArea.createButton(button, style=style)
         dialog.identifyWidget(button, widget)

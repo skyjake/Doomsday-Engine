@@ -24,7 +24,7 @@ import wx
 import ui, host, events, language, paths
 import sb.profdb as pr
 import widgets as wg
-from widgets import Widget
+import base
 from list import FormattedList
 
 
@@ -207,7 +207,7 @@ class FormattedTabArea (FormattedList):
     
 
 
-class TabArea (Widget):
+class TabArea (base.Widget):
     """TabArea is a widget that implements a tab area.  It supports a
     number of different styles: TabArea.STYLE_ICON and
     TabArea.STYLE_CHOICE.  In the icon style, the user can select the
@@ -238,7 +238,7 @@ class TabArea (Widget):
         else:
             w = wx.Choicebook(parent, wxId, style=wx.CHB_TOP)
 
-        Widget.__init__(self, w)
+        base.Widget.__init__(self, w)
 
         self.style = style
 

@@ -34,9 +34,9 @@ import sb.util.dialog
 import events
 import paths
 import language
-import widgets as wg
+import sb.widget.button as wg
 import sb.profdb as pr
-import settings as st
+import sb.confdb as st
 import sb.aodb as ao
 
 
