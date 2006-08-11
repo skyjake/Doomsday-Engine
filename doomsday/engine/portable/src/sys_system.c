@@ -256,10 +256,6 @@ void Sys_OpenTextEditor(const char *filename)
  */
 int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
 {
-/* This code dies when using cmake and the Visual Studio project generator
-so we will comment it out, and see if the SDL version used on *NIX and OSX works better
-- Yagisan 12 Aug 2006
-
 #ifdef WIN32
     HANDLE  handle;
     DWORD   id;
@@ -288,9 +284,8 @@ so we will comment it out, and see if the SDL version used on *NIX and OSX works
     }
     return (int) handle;
 #else
-*/
     return (int) SDL_CreateThread(startpos, parm);
-// #endif
+#endif
 }
 
 /*
@@ -315,10 +310,6 @@ void Sys_SuspendThread(int handle, boolean dopause)
  */
 int Sys_WaitThread(int handle)
 {
-/* Commented out while trying SDL_CreateThread on Win32
-- Yagisan 12 Aug 2006
-
-
 #ifdef WIN32
     DWORD   exitCode = 0;
 
@@ -335,12 +326,11 @@ int Sys_WaitThread(int handle)
     } while(exitCode == STILL_ACTIVE);
     return exitCode;
 #else
-*/
     int     result;
 
     SDL_WaitThread((SDL_Thread *) handle, &result);
     return result;
-// #endif
+#endif
 }
 
 int Sys_CreateMutex(const char *name)
