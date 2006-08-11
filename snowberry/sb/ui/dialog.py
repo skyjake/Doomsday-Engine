@@ -23,7 +23,7 @@
 import sys, os, wx, string
 import wx.wizard as wiz
 import ui, host, events, widgets, language
-import profiles as pr
+import sb.profdb as pr
 import settings as st
 import logger
 from widgets import uniConv
