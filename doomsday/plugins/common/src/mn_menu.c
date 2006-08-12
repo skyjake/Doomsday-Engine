@@ -2003,7 +2003,7 @@ boolean M_Responder(event_t *ev)
             if(currentMenu->items[i].text[0] == '{')
             {   // A parameter string, skip till '}' is found
                 for(cid = 0, skip = true;
-                     cid < strlen(currentMenu->items[i].text), skip; ++cid)
+                     cid < strlen(currentMenu->items[i].text) && skip; ++cid)
                     if(currentMenu->items[i].text[cid] == '}')
                         skip = false;
             }

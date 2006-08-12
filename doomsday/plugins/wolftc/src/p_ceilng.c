@@ -243,7 +243,7 @@ void P_AddActiveCeiling(ceiling_t *ceiling)
     list->ceiling = ceiling;
     ceiling->list = list;
 
-    if((list->next = activeceilings))
+    if((list->next = activeceilings) != NULL)
         list->next->prev = &list->next;
 
     list->prev = &activeceilings;
@@ -262,7 +262,7 @@ void P_RemoveActiveCeiling(ceiling_t *ceiling)
     P_XSector(ceiling->sector)->specialdata = NULL;
     P_RemoveThinker(&ceiling->thinker);
 
-    if((*list->prev = list->next))
+    if((*list->prev = list->next) != NULL)
         list->next->prev = list->prev;
 
     free(list);

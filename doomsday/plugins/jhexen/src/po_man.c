@@ -163,7 +163,8 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
     polyobj_t *poly;
 
     polyNum = args[0];
-    if((poly = GetPolyobj(polyNum)))
+    poly = GetPolyobj(polyNum);
+    if(poly)
     {
         if(PO_SpecialData(poly) && !overRide)
         {                       // poly is already moving
@@ -205,7 +206,7 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
     P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->speed);
     PO_StartSequence(poly, SEQ_DOOR_STONE);
 
-    while((mirror = GetPolyobjMirror(polyNum)))
+    while((mirror = GetPolyobjMirror(polyNum)) != 0)
     {
         poly = GetPolyobj(mirror);
         if(poly && PO_SpecialData(poly) && !overRide)
@@ -242,7 +243,8 @@ boolean EV_RotatePoly(line_t *line, byte *args, int direction,
         direction = -direction;
         pe->speed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
         P_SetAnglep(poly, DMU_ANGLE_SPEED, pe->speed);
-        if((poly = GetPolyobj(polyNum)))
+        poly = GetPolyobj(polyNum);
+        if(poly)
         {
             P_SetPtrp(poly, DMU_SPECIAL_DATA, pe);
         }
@@ -308,7 +310,8 @@ boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight,
     angle_t an;
 
     polyNum = args[0];
-    if((poly = GetPolyobj(polyNum)))
+    poly = GetPolyobj(polyNum);
+    if(poly)
     {
         if(PO_SpecialData(poly) && !overRide)
         {                       // poly is already moving
@@ -343,7 +346,7 @@ boolean EV_MovePoly(line_t *line, byte *args, boolean timesEight,
 
     PO_SetDestination(poly, pe->dist, pe->angle, pe->speed);
 
-    while((mirror = GetPolyobjMirror(polyNum)))
+    while((mirror = GetPolyobjMirror(polyNum)) != 0)
     {
         poly = GetPolyobj(mirror);
         if(poly && PO_SpecialData(poly) && !overRide)
@@ -521,7 +524,8 @@ boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
     angle_t an = 0;
 
     polyNum = args[0];
-    if((poly = GetPolyobj(polyNum)))
+    poly = GetPolyobj(polyNum);
+    if(poly)
     {
         if(PO_SpecialData(poly))
         {                       // poly is already moving
@@ -563,7 +567,7 @@ boolean EV_OpenPolyDoor(line_t *line, byte *args, podoortype_t type)
     P_SetPtrp(poly, DMU_SPECIAL_DATA, pd);
     PO_SetDestination(poly, pd->dist, pd->direction, pd->speed);
 
-    while((mirror = GetPolyobjMirror(polyNum)))
+    while((mirror = GetPolyobjMirror(polyNum)) != 0)
     {
         poly = GetPolyobj(mirror);
         if(poly && PO_SpecialData(poly))

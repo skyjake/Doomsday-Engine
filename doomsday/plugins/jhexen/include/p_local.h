@@ -218,7 +218,6 @@ extern line_t  *ceilingline;
 boolean         P_TestMobjLocation(mobj_t *mobj);
 boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
 mobj_t         *P_CheckOnmobj(mobj_t *thing);
-void            P_FakeZMovement(mobj_t *mo);
 boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y);
 boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp);
 void            P_SlideMove(mobj_t *mo);
@@ -229,7 +228,7 @@ void            P_UseLines(player_t *player);
 boolean         P_UsePuzzleItem(player_t *player, int itemType);
 void            PIT_ThrustSpike(mobj_t *actor);
 
-boolean         P_ChangeSector(sector_t *sector, int crunch);
+boolean         P_ChangeSector(sector_t *sector, boolean crunch);
 
 extern mobj_t  *PuffSpawned;       // true if a puff was spawned
 extern mobj_t  *linetarget;        // who got hit (or NULL)

@@ -314,7 +314,7 @@ void P_AddActivePlat(plat_t *plat)
     list->plat = plat;
     plat->list = list;
 
-    if((list->next = activeplats))
+    if((list->next = activeplats) != NULL)
         list->next->prev = &list->next;
 
     list->prev = &activeplats;
@@ -334,7 +334,7 @@ void P_RemoveActivePlat(plat_t *plat)
 
     P_RemoveThinker(&plat->thinker);
 
-    if((*list->prev = list->next))
+    if((*list->prev = list->next) != NULL)
         list->next->prev = list->prev;
 
     free(list);

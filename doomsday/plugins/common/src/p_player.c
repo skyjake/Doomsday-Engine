@@ -740,7 +740,8 @@ DEFCC(CCmdSpawnMobj)
             P_GetFixedp(R_PointInSubsector(pos[VX], pos[VY]), DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
     }
 
-    if((mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type)) && argc == 6)
+    mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
+    if(mo && argc == 6)
     {
         mo->angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
     }

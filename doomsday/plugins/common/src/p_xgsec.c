@@ -948,7 +948,8 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
     {
     case SPREF_SECTOR_TAGGED_FLOOR:
     case SPREF_SECTOR_TAGGED_CEILING:
-        if(!(iter = XS_FindTagged(P_XSector(sector)->tag)))
+        iter = XS_FindTagged(P_XSector(sector)->tag);
+        if(!iter)
             return false;
         break;
 
@@ -956,7 +957,9 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
     case SPREF_LINE_TAGGED_CEILING:
         if(!actline)
             return false;
-        if(!(iter = XS_FindTagged(P_XLine(actline)->tag)))
+
+        iter = XS_FindTagged(P_XLine(actline)->tag);
+        if(!iter)
             return false;
         break;
 
@@ -968,7 +971,8 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
             return false;
         }
 
-        if(!(iter = XS_FindTagged(refdata)))
+        iter = XS_FindTagged(refdata);
+        if(!iter)
             return false;
         break;
     case SPREF_LINE_ACT_TAGGED_FLOOR:
@@ -989,7 +993,8 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
             return false;
         }
 
-        if(!(iter = XS_FindActTagged(xline->xg->info.act_tag)))
+        iter = XS_FindActTagged(xline->xg->info.act_tag);
+        if(!iter)
             return false;
         break;
 
@@ -1001,7 +1006,8 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
             return false;
         }
 
-        if(!(iter = XS_FindActTagged(refdata)))
+        iter = XS_FindActTagged(refdata);
+        if(!iter)
             return false;
         break;
 
@@ -1834,7 +1840,7 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
 int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                            void *context2, mobj_t *thing)
 {
-    mobj_t *mo;
+    mobj_t *mo = NULL;
     boolean    ok = false;
     linetype_t *info = context2;
     mobj_t *flash;

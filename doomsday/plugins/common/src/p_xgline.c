@@ -468,9 +468,10 @@ int XL_AddAutoGenType(linetype_t *newtype)
  */
 int XL_AutoGenType(int id, linetype_t *outptr)
 {
-    linetype_t *l;
-
     return false; // Cos we don't work yet
+
+#if 0
+    linetype_t *l;
 
     // Do the magic
     // is the ID in the range 12160 -> 32768
@@ -537,6 +538,7 @@ int XL_AutoGenType(int id, linetype_t *outptr)
 #endif
 
     return true;
+#endif
  }
 
 /*

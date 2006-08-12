@@ -111,4 +111,9 @@ extern thing_t* things;
 // THING is invulnerble and inert
 #define MTF_DORMANT    512
 
+// Special activation types
+#define SPAC_CROSS      0          // when player crosses line
+#define SPAC_USE        1          // when player uses line
+#define SPAC_IMPACT     3          // when projectile hits line
+
 #endif

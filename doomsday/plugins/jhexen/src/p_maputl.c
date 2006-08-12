@@ -909,34 +909,30 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
         // Trace the first block section (along the top)
         for(; blockIndex <= firstStop; blockIndex++)
         {
-            if((target = RoughBlockCheck(mo, blockIndex)))
-            {
+            target = RoughBlockCheck(mo, blockIndex);
+            if(target)
                 return target;
-            }
         }
         // Trace the second block section (right edge)
         for(blockIndex--; blockIndex <= secondStop; blockIndex += bmapwidth)
         {
-            if((target = RoughBlockCheck(mo, blockIndex)))
-            {
+            target = RoughBlockCheck(mo, blockIndex);
+            if(target)
                 return target;
-            }
         }
         // Trace the third block section (bottom edge)
         for(blockIndex -= bmapwidth; blockIndex >= thirdStop; blockIndex--)
         {
-            if((target = RoughBlockCheck(mo, blockIndex)))
-            {
+            target = RoughBlockCheck(mo, blockIndex);
+            if(target)
                 return target;
-            }
         }
         // Trace the final block section (left edge)
         for(blockIndex++; blockIndex > finalStop; blockIndex -= bmapwidth)
         {
-            if((target = RoughBlockCheck(mo, blockIndex)))
-            {
+            target = RoughBlockCheck(mo, blockIndex);
+            if(target)
                 return target;
-            }
         }
     }
     return NULL;

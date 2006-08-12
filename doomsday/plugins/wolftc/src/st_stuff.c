@@ -20,10 +20,6 @@
 
  // HEADER FILES ------------------------------------------------------------
 
-#ifdef WIN32
-#  pragma warning(disable:4761)
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 

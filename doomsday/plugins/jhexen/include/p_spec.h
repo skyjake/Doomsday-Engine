@@ -47,9 +47,6 @@ boolean         P_ExecuteLineSpecial(int special, byte *args, line_t *line,
                                      int side, mobj_t *mo);
 boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
                                int activationType);
-//boolean P_UseSpecialLine ( mobj_t *thing, line_t *line);
-//void    P_ShootSpecialLine ( mobj_t *thing, line_t *line);
-//void    P_CrossSpecialLine (int linenum, int side, mobj_t *thing);
 
 int             P_GetTerrainType(sector_t* sec, int plane);
 int             P_FlatToTerrainType(int flatlumpnum);

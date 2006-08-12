@@ -478,7 +478,7 @@ void G_DummySpawnPlayer(int playernum)
  */
 void G_DeathMatchSpawnPlayer(int playernum)
 {
-    int     i, j;
+    int     i = 0, j;
     int     selections;
     boolean using_dummy = false;
     ddplayer_t *pl = players[playernum].plr;

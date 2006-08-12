@@ -532,7 +532,8 @@ void S_InitScript(void)
         }
         else
         {
-            if((i = Def_Get(DD_DEF_SOUND_BY_NAME, sc_String, 0)))
+            i = Def_Get(DD_DEF_SOUND_BY_NAME, sc_String, 0);
+            if(i)
             {
                 SC_MustGetString();
                 Def_Set(DD_DEF_SOUND, i, DD_LUMP,

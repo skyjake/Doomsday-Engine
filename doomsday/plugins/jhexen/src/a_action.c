@@ -1145,7 +1145,7 @@ void C_DECL A_ThrustImpale(mobj_t *actor)
 #endif
 void C_DECL A_SoAExplode(mobj_t *actor)
 {
-    mobj_t *mo;
+    mobj_t *mo = NULL;
     int     i;
 
     for(i = 0; i < 10; i++)

@@ -291,7 +291,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
             // Do NOT simply return false 1/4th of the time (causes monsters to
             // back out when they shouldn't, and creates secondary stickiness).
 
-            if(P_UseSpecialLine(actor, ld, 0))
+            if(P_ActivateLine(ld, actor, 0, SPAC_USE))
                 good |= ld == blockline ? 1 : 2;
         }
 
@@ -618,7 +618,6 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
         actor->target = plrmo;
         return true;
     }
-    return false;
 }
 
 /*

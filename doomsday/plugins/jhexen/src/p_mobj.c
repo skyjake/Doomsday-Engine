@@ -1209,7 +1209,8 @@ void P_MobjThinker(mobj_t *mobj)
     {                           // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
         {
-            if(!(onmo = P_CheckOnmobj(mobj)))
+            onmo = P_CheckOnmobj(mobj);
+            if(!onmo)
             {
                 P_ZMovement(mobj);
                 if(mobj->player && mobj->flags & MF2_ONMOBJ)

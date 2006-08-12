@@ -55,11 +55,8 @@ void            P_UpdateSpecials(void);
 // when needed
 int             P_GetTerrainType(sector_t* sec, int plane);
 int             P_FlatToTerrainType(int flatlumpnum);
-boolean         P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
-
-void            P_ShootSpecialLine(mobj_t *thing, line_t *line);
-
-void            P_CrossSpecialLine(int linenum, int side, mobj_t *thing);
+boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
+                               int activationType);
 
 void            P_PlayerInSpecialSector(player_t *player);
 

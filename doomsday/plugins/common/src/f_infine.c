@@ -1303,8 +1303,8 @@ void FI_Ticker(void)
 
     // Execute commands until a wait time is set or we reach the end of
     // the script. If the end is reached, the finale really ends (FI_End).
-    while(fi_active && !fi->wait && !fi->waitingtext && !fi->waitingpic &&
-          !(last = !FI_ExecuteNextCommand()));
+    while(fi_active && !fi->wait && !fi->waitingtext && !fi->waitingpic && !last)
+        last = FI_ExecuteNextCommand();
 
     // The script has ended!
     if(last)

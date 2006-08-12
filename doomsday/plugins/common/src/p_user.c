@@ -816,6 +816,12 @@ void P_ClientSideThink()
         case pw_ironfeet:
         case pw_infrared:
         case pw_strength:
+#elif __JHERETIC__
+        case pw_invulnerability:
+        case pw_weaponlevel2:
+        case pw_invisibility:
+        case pw_flight:
+        case pw_infrared:
 #elif __JHEXEN__
         case pw_invulnerability:
         case pw_infrared:

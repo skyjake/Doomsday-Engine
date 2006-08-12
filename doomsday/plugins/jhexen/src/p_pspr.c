@@ -1640,7 +1640,8 @@ static void CHolyFindTarget(mobj_t *actor)
 {
     mobj_t *target;
 
-    if((target = P_RoughMonsterSearch(actor, 6)))
+    target = P_RoughMonsterSearch(actor, 6);
+    if(target)
     {
         Con_Message("CHolyFindTarget: mobj_t* converted to int! Not 64-bit compatible.\n");
         actor->tracer = target;

@@ -597,7 +597,8 @@ void D_PostInit(void)
     }
 
     // turbo option
-    if((p = ArgCheck("-turbo")))
+    p = ArgCheck("-turbo");
+    if(p)
     {
         int     scale = 200;
         classinfo_t *pclass = PCLASS_INFO(PCLASS_PLAYER);

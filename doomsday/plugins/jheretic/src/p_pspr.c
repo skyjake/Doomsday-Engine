@@ -1493,6 +1493,7 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
     {   // Bounce
         newAngle = false;
         target = ball->tracer;
+        angle = 0;
         if(target)
         {
             if(!(target->flags & MF_SHOOTABLE))
@@ -1508,7 +1509,6 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
         }
         else
         {   // Find new target
-            angle = 0;
             for(i = 0; i < 16; i++)
             {
                 P_AimLineAttack(ball, angle, 10 * 64 * FRACUNIT);

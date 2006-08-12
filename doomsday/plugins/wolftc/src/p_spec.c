@@ -60,9 +60,14 @@ typedef struct
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+extern boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void P_CrossSpecialLine(int linenum, int side, mobj_t *thing);
+static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -460,6 +465,29 @@ int P_FindMinSurroundingLight(sector_t *sector, int max)
             min = P_GetIntp(check, DMU_LIGHT_LEVEL);
     }
     return min;
+}
+
+boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
+{
+    switch(actType)
+    {
+    case SPAC_CROSS:
+        P_CrossSpecialLine(P_ToIndex(ld), side, mo);
+        return true;
+
+    case SPAC_USE:
+        return P_UseSpecialLine(mo, ld, side);
+
+    case SPAC_IMPACT:
+        P_ShootSpecialLine(mo, ld);
+        return true;
+
+    default:
+        Con_Error("P_ActivateLine: Unknown Activation Type %i", actType);
+        break;
+    }
+
+    return false;
 }
 
 /*
