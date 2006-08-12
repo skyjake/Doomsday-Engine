@@ -209,50 +209,57 @@ ENDIF (UNIX)
 ################################################################################
 ######################## Cpack - Generate packages and source tarballs  ########
 
-# If the cmake version includes cpack, use it
-IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
-  IF(EXISTS "${CMAKE_ROOT}/Modules/InstallRequiredSystemLibraries.cmake")
-    SET(CMAKE_INSTALL_MFC_LIBRARIES 1)
-    INCLUDE(${CMAKE_ROOT}/Modules/InstallRequiredSystemLibraries.cmake)
-  ENDIF(EXISTS "${CMAKE_ROOT}/Modules/InstallRequiredSystemLibraries.cmake")
-  SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Doomsday Engine: for jDoom, jHeretic, jHexen")
-  SET(CPACK_PACKAGE_VENDOR "DaniJ, Skyjake, Yagisan")
-  SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/build/README")
-  SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-  SET(CPACK_PACKAGE_VERSION_MAJOR "${deng_VERSION_MAJOR}")
-  SET(CPACK_PACKAGE_VERSION_MINOR "${deng_VERSION_MINOR}")
-  SET(CPACK_PACKAGE_VERSION_PATCH "${deng_VERSION_PATCH}.${deng_VERSION_REVISON}")
-  SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
-  SET(CPACK_SOURCE_PACKAGE_FILE_NAME
-    "deng-${deng_VERSION}")
-  IF(NOT DEFINED CPACK_SYSTEM_NAME)
-    SET(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  ENDIF(NOT DEFINED CPACK_SYSTEM_NAME)
-  IF(${CPACK_SYSTEM_NAME} MATCHES Windows)
-    IF(CMAKE_CL_64)
-      SET(CPACK_SYSTEM_NAME win64-${CMAKE_SYSTEM_PROCESSOR})
-    ELSE(CMAKE_CL_64)
-      SET(CPACK_SYSTEM_NAME win32-${CMAKE_SYSTEM_PROCESSOR})
-    ENDIF(CMAKE_CL_64)
-  ENDIF(${CPACK_SYSTEM_NAME} MATCHES Windows)
-  IF(NOT DEFINED CPACK_PACKAGE_FILE_NAME)
-    SET(CPACK_PACKAGE_FILE_NAME "${CPACK_SOURCE_PACKAGE_FILE_NAME}-${CPACK_SYSTEM_NAME}")
-  ENDIF(NOT DEFINED CPACK_PACKAGE_FILE_NAME)
-  IF(WIN32 AND NOT UNIX)
-    # There is a bug in NSI that does not handle full unix paths properly. Make
-    # sure there is at least one set of four (4) backlasshes.
-    SET(CPACK_PACKAGE_EXECUTABLES "doomsday.exe")
-    SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} - The Doomsday Engine: for jDoom, jHeretic, jHexen")
-    SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.doomsdayhq.com")
-    SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.doomsdayhq.com")
-    SET(CPACK_NSIS_CONTACT "deng-devel@lists.sourceforge.net")
-    SET(CPACK_NSIS_MODIFY_PATH ON)
-  ELSE(WIN32 AND NOT UNIX)
-    SET(CPACK_SOURCE_STRIP_FILES "")
-    SET(CPACK_PACKAGE_EXECUTABLES "doomsday")
-  ENDIF(WIN32 AND NOT UNIX)
-  INCLUDE(CPack)
-ENDIF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
+
+SET(CMAKE_INSTALL_MFC_LIBRARIES 1)
+INCLUDE(${CMAKE_ROOT}/Modules/InstallRequiredSystemLibraries.cmake)
+
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Doomsday Engine: for jDoom, jHeretic, jHexen")
+SET(CPACK_PACKAGE_VENDOR "DaniJ, Skyjake, Yagisan")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/build/README")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+SET(CPACK_PACKAGE_VERSION_MAJOR "${deng_VERSION_MAJOR}")
+SET(CPACK_PACKAGE_VERSION_MINOR "${deng_VERSION_MINOR}")
+SET(CPACK_PACKAGE_VERSION_PATCH "${deng_VERSION_PATCH}.${deng_VERSION_REVISON}")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "deng-${deng_VERSION}")
+
+IF(NOT DEFINED CPACK_SYSTEM_NAME)
+SET(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+ENDIF(NOT DEFINED CPACK_SYSTEM_NAME)
+
+IF(${CPACK_SYSTEM_NAME} MATCHES Windows)
+IF(CMAKE_CL_64)
+SET(CPACK_SYSTEM_NAME win64-${CMAKE_SYSTEM_PROCESSOR})
+ELSE(CMAKE_CL_64)
+SET(CPACK_SYSTEM_NAME win32-${CMAKE_SYSTEM_PROCESSOR})
+ENDIF(CMAKE_CL_64)
+ENDIF(${CPACK_SYSTEM_NAME} MATCHES Windows)
+
+SET(CPACK_PACKAGE_FILE_NAME "${CPACK_SOURCE_PACKAGE_FILE_NAME}-${CPACK_SYSTEM_NAME}")
+
+
+IF(WIN32 AND NOT UNIX)
+# Win32 packaging setup (MSVC Built)
+# There is a bug in NSI that does not handle full unix paths properly. Make
+# sure there is at least one set of four (4) backlasshes.
+SET(CPACK_PACKAGE_EXECUTABLES "doomsday.exe")
+SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} - The Doomsday Engine: for jDoom, jHeretic, jHexen")
+SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.doomsdayhq.com")
+SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.doomsdayhq.com")
+SET(CPACK_NSIS_CONTACT "deng-devel@lists.sourceforge.net")
+SET(CPACK_NSIS_MODIFY_PATH ON)
+ELSE(WIN32 AND NOT UNIX)
+
+IF (APPLE)
+# OSX packaging setup
+ELSE (APPLE)
+
+# *Nix packaging setup (Inc Cygwin/MinGw)
+SET(CPACK_SOURCE_STRIP_FILES "")
+SET(CPACK_PACKAGE_EXECUTABLES "doomsday")
+ENDIF (APPLE)
+ENDIF(WIN32 AND NOT UNIX)
+INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 
 ################################################################################
 ######################## Set Common Definitions  ###############################
