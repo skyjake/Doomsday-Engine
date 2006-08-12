@@ -263,6 +263,8 @@ void            P_ClearMessage(player_t *player);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                              int damage);
+void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
+                              mobj_t *source, int damage, boolean stomping);
 void            P_FallingDamage(player_t *player);
 void            P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison);
 void            P_PoisonDamage(player_t *player, mobj_t *source, int damage,

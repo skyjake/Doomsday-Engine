@@ -1617,23 +1617,25 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
     player->plr->mo->health = player->health;
 }
 
-/*
-   =================
-   =
-   = P_DamageMobj
-   =
-   = Damages both enemies and players
-   = inflictor is the thing that caused the damage
-   =        creature or missile, can be NULL (slime, etc)
-   = source is the thing to target after taking damage
-   =        creature or NULL
-   = Source and inflictor are the same for melee attacks
-   = source can be null for barrel explosions and other environmental stuff
-   ==================
- */
-
 void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damageP)
+                  int damage)
+{
+    P_DamageMobj2(target, inflictor, source, damage, false);
+}
+
+/*
+ * Damages both enemies and players
+ * Source and inflictor are the same for melee attacks.
+ * Source can be NULL for slime, barrel explosions
+ * and other environmental stuff.
+ *
+ * @parm inflictor: is the thing that caused the damage
+ *                  creature or missile, can be NULL (slime, etc)
+ * @parm source: is the thing to target after taking damage
+ *               creature or NULL
+ */
+void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                  int damageP, boolean stomping)
 {
     unsigned ang;
     int     saved;

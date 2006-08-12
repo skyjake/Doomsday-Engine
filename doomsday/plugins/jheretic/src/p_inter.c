@@ -1011,6 +1011,12 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
     player->plr->mo->health = player->health;
 }
 
+void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                  int damage)
+{
+    P_DamageMobj2(target, inflictor, source, damage, false);
+}
+
 /*
  * Damages both enemies and players
  * inflictor is the thing that caused the damage
@@ -1020,8 +1026,8 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
  * Source and inflictor are the same for melee attacks
  * source can be null for barrel explosions and other environmental stuff
  */
-void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damage)
+void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                  int damage, boolean stomping)
 {
     unsigned ang;
     int     saved;

@@ -640,7 +640,7 @@ void P_NightmareRespawn(mobj_t *mobj)
     mo->angle = mobj->spawninfo.angle;
 
     if(mobj->spawninfo.options & MTF_DEAF)
-        mo->flags |= MTF_DEAF;
+        mo->flags |= MF_AMBUSH;
 
     mo->reactiontime = 18;
 
@@ -1215,7 +1215,7 @@ void P_SpawnMapThing(thing_t *th)
 
     mobj->visangle = mobj->angle >> 16; // "angle-servo"; smooth actor turning
     if(th->options & MTF_DEAF)
-        mobj->flags |= MTF_DEAF;
+        mobj->flags |= MF_AMBUSH;
 
     // Set the spawn info for this mobj
     memcpy(mobj->spawninfo.pos, pos, sizeof(mobj->spawninfo.pos));

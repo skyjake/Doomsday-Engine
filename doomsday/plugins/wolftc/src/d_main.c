@@ -24,6 +24,7 @@
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "p_saveg.h"
+#include "p_spechit.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -674,6 +675,7 @@ void D_PostInit(void)
 void D_Shutdown(void)
 {
     HU_UnloadData();
+    P_FreeSpecHit();
 }
 
 void D_Ticker(void)

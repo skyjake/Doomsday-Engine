@@ -28,6 +28,7 @@
 #include "hu_stuff.h"
 #include "p_saveg.h"
 #include "d_net.h"
+#include "p_spechit.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -535,6 +536,7 @@ void H_PostInit(void)
 void H_Shutdown(void)
 {
     HU_UnloadData();
+    P_FreeSpecHit();
 }
 
 void H_Ticker(void)

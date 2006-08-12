@@ -96,7 +96,12 @@ classinfo_t classInfo[NUMCLASSES] = {
         {0x19, 0x32},
         {0x18, 0x28},
         2048,
-        24
+        24,
+# if __WOLFTC__
+        sfx_blockd
+# else
+        sfx_noway
+# endif
     }
 };
 #elif __JHERETIC__
@@ -114,7 +119,8 @@ classinfo_t classInfo[NUMCLASSES] = {
         {0x19, 0x32},
         {0x18, 0x28},
         2048,
-        24
+        24,
+        sfx_None
     },
     {   // Chicken
         S_CHICPLAY,
@@ -126,7 +132,8 @@ classinfo_t classInfo[NUMCLASSES] = {
         {0x19, 0x32},
         {0x18, 0x28},
         2500,
-        24
+        24,
+        sfx_None
     },
 };
 #elif __JHEXEN__
@@ -147,6 +154,7 @@ classinfo_t classInfo[NUMCLASSES] = {
         {0x1B, 0x3B},
         2048,
         18,
+        SFX_PLAYER_FIGHTER_FAILED_USE,
         {25 * FRACUNIT, 20 * FRACUNIT, 15 * FRACUNIT, 5 * FRACUNIT},
         {190, 225, 234}
     },
@@ -163,6 +171,7 @@ classinfo_t classInfo[NUMCLASSES] = {
         {0x18, 0x28},
         2048,
         18,
+        SFX_PLAYER_CLERIC_FAILED_USE,
         {10 * FRACUNIT, 25 * FRACUNIT, 5 * FRACUNIT, 20 * FRACUNIT},
         {190, 212, 225}
     },
@@ -179,6 +188,7 @@ classinfo_t classInfo[NUMCLASSES] = {
         {0x15, 0x25},
         2048,
         18,
+        SFX_PLAYER_MAGE_FAILED_USE,
         {5 * FRACUNIT, 15 * FRACUNIT, 10 * FRACUNIT, 25 * FRACUNIT},
         {190, 205, 224}
     },
@@ -195,6 +205,7 @@ classinfo_t classInfo[NUMCLASSES] = {
         {0x17, 0x27},
         2048,
         18,
+        SFX_NONE,
         {0, 0, 0, 0},
         {0, 0, 0}
     },

@@ -1,33 +1,79 @@
+/* DE1: $Id$
+ * Copyright (C) 1999- Activision
+ *
+ * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
+ * code license; you can redistribute it and/or modify it under the terms
+ * of the HERETIC / HEXEN source code license as published by Activision.
+ *
+ * THIS MATERIAL IS NOT MADE OR SUPPORTED BY ACTIVISION.
+ *
+ * WARRANTY INFORMATION.
+ * This program is provided as is. Activision and it's affiliates make no
+ * warranties of any kind, whether oral or written , express or implied,
+ * including any warranty of merchantability, fitness for a particular
+ * purpose or non-infringement, and no other representations or claims of
+ * any kind shall be binding on or obligate Activision or it's affiliates.
+ *
+ * LICENSE CONDITIONS.
+ * You shall not:
+ *
+ * 1) Exploit this Program or any of its parts commercially.
+ * 2) Use this Program, or permit use of this Program, on more than one
+ *    computer, computer terminal, or workstation at the same time.
+ * 3) Make copies of this Program or any part thereof, or make copies of
+ *    the materials accompanying this Program.
+ * 4) Use the program, or permit use of this Program, in a network,
+ *    multi-user arrangement or remote access arrangement, including any
+ *    online use, except as otherwise explicitly provided by this Program.
+ * 5) Sell, rent, lease or license any copies of this Program, without
+ *    the express prior written consent of Activision.
+ * 6) Remove, disable or circumvent any proprietary notices or labels
+ *    contained on or within the Program.
+ *
+ * You should have received a copy of the HERETIC / HEXEN source code
+ * license along with this program (Ravenlic.txt); if not:
+ * http://www.ravensoft.com/
+ */
 
-//**************************************************************************
-//**
-//** p_enemy.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile$
-//** $Revision$
-//** $Date$
-//** $Author$
-//**
-//**************************************************************************
+/*
+ * Enemy thinking, AI.
+ * Action Pointer Functions that are associated with states/frames.
+ *
+ * Enemies are allways spawned with targetplayer = -1, threshold = 0
+ * Most monsters are spawned unaware of all players,
+ * but some can be made preaware
+ */
+
+// HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
 
-// Macros
-// Types
-// Private Data
-// External Data
+#include "p_spechit.h"
+
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
 extern fixed_t FloatBobOffsets[64];
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     MaulatorSeconds = 25;
 boolean fastMonsters = false;
 
-//----------------------------------------------------------------------------
-//
-// PROC P_RecursiveSound
-//
-//----------------------------------------------------------------------------
-
 mobj_t *soundtarget;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
 
 void P_RecursiveSound(sector_t *sec, int soundblocks)
 {
@@ -192,10 +238,6 @@ fixed_t xspeed[8] =
 fixed_t yspeed[8] =
     { 0, 47000, FRACUNIT, 47000, 0, -47000, -FRACUNIT, -47000 };
 
-//#define MAXSPECIALCROSS         8
-extern line_t **spechit;
-extern int numspechit;
-
 boolean P_Move(mobj_t *actor)
 {
     fixed_t tryx, tryy, stepx, stepy;
@@ -227,26 +269,19 @@ boolean P_Move(mobj_t *actor)
             actor->flags |= MF_INFLOAT;
             return (true);
         }
-        if(!numspechit)
-        {
+
+        if(!P_SpecHitSize())
             return false;
-        }
+
         actor->movedir = DI_NODIR;
         good = false;
-        while(numspechit--)
+        while((ld = P_PopSpecHit()) != NULL)
         {
-            ld = spechit[numspechit];
             // if the special isn't a door that can be opened, return false
             if(P_ActivateLine(ld, actor, 0, SPAC_USE))
             {
                 good = true;
             }
-            /* Old version before use/cross/impact specials were combined
-               if(P_UseSpecialLine(actor, ld))
-               {
-               good = true;
-               }
-             */
         }
         return (good);
     }

@@ -146,6 +146,7 @@ typedef struct classinfo_s{
     fixed_t     sidemove[2];        // walk, run
     int         movemul;            // multiplier for above
     int         jumptics;           // wait inbetween jumps
+    int         failUseSound;       // sound played when a use fails.
 } classinfo_t;
 
 extern classinfo_t classInfo[NUMCLASSES];

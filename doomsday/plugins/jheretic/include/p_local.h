@@ -213,7 +213,6 @@ extern line_t  *ceilingline;
 boolean         P_TestMobjLocation(mobj_t *mobj);
 boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
 mobj_t         *P_CheckOnmobj(mobj_t *thing);
-void            P_FakeZMovement(mobj_t *mo);
 boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff,
                           boolean slide);
 boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, int alwaysstomp);
@@ -258,6 +257,8 @@ void            P_SetMessage(player_t *pl, char *message);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                              int damage);
+void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
+                              mobj_t *source, int damage, boolean stomping);
 boolean         P_GiveAmmo(player_t *player, ammotype_t ammo, int count);
 boolean         P_GiveBody(player_t *player, int num);
 boolean         P_GivePower(player_t *player, powertype_t power);

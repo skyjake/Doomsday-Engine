@@ -144,7 +144,7 @@ extern int      bodyqueslot;
 // Needed to store the number of the dummy sky flat.
 // Used for rendering, as well as tracking projectiles etc.
 #define skyflatnum  Get(DD_SKYFLATNUM)
-#define SKYFLATNAME  "F_SKY1"
+#define SKYFLATNAME  "F_SKY"
 
 extern unsigned char rndtable[256];
 extern int      prndindex;

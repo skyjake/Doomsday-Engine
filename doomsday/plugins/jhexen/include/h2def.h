@@ -363,6 +363,7 @@ typedef struct classinfo_s{
     fixed_t     sidemove[2];        // walk, run
     int         movemul;            // multiplier for above
     int         jumptics;           // wait inbetween jumps
+    int         failUseSound;       // sound played when a use fails.
     int         armorincrement[NUMARMOR];
     int         piecex[3];          // temp
 } classinfo_t;

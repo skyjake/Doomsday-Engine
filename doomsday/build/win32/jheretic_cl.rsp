@@ -33,7 +33,8 @@
  ./../../plugins/jheretic/src/p_oldsvg.c
  ./../../plugins/jheretic/src/p_mobj.c
  ./../../plugins/jheretic/src/p_maputl.c
- ./../../plugins/jheretic/src/p_map.c
+ ./../../plugins/common/src/p_spechit.c
+ ./../../plugins/common/src/p_map.c
  ./../../plugins/jheretic/src/p_lights.c
  ./../../plugins/jheretic/src/p_inter.c
  ./../../plugins/jheretic/src/p_floor.c

@@ -30,6 +30,7 @@
 #include "wolftc.h"
 
 #include "dmu_lib.h"
+#include "p_spechit.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -64,8 +65,6 @@ void C_DECL A_SpawnFly(mobj_t *mo);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern line_t **spechit;
-extern int numspechit;
 extern boolean felldown;        //$dropoff_fix: used to flag pushed off ledge
 extern line_t *blockline;       // $unstuck: blocking linedef
 extern fixed_t   tmbbox[4];     // for line intersection checks
@@ -288,15 +287,13 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
             return true;
         }
 
-        if(!numspechit)
+        if(!P_SpecHitSize())
             return false;
 
         actor->movedir = DI_NODIR;
         good = false;
-        while(numspechit--)
+        while((ld = P_PopSpecHit()) != NULL)
         {
-            ld = spechit[numspechit];
-
             // if the special is not a door that can be opened, return false
             //
             // killough $unstuck: this is what caused monsters to get stuck in

@@ -21,10 +21,13 @@
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "jhexen.h"
+
 #include "d_net.h"
 #include "g_update.h"
 #include "g_common.h"
+#include "p_spechit.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -603,6 +606,7 @@ static void ExecOptionDEVMAPS(char **args, int tag)
 
 void H2_Shutdown(void)
 {
+    P_FreeSpecHit();
 }
 
 void H2_Ticker(void)

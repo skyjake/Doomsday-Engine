@@ -39,7 +39,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static mobj_t *tmthing;
+extern mobj_t *tmthing;
 
 // CODE --------------------------------------------------------------------
 
