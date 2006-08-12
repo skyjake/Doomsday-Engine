@@ -655,7 +655,7 @@ class WADAddon (Addon):
 
         # Check for a game component name in the path.
         for component in confdb.getGameComponents():
-            compName = component.getId()[5:]
+            compName = component.getId()[5:] # skip "game-" prefix
             if compName in path:
                 game = compName
                 break
