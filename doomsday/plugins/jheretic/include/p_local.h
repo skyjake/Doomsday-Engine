@@ -215,7 +215,7 @@ boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
 mobj_t         *P_CheckOnmobj(mobj_t *thing);
 boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff,
                           boolean slide);
-boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, int alwaysstomp);
+boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp);
 void            P_SlideMove(mobj_t *mo);
 boolean         P_CheckSight(mobj_t *t1, mobj_t *t2);
 void            P_UseLines(player_t *player);
