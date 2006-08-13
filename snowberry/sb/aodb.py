@@ -371,6 +371,9 @@ def formIdentifier(fileName):
 
     # The identifier also includes the type of the addon.
     identifier += "-" + extension
+    
+    # Replace spaces with dashes.
+    identifier = identifier.replace(' ', '-')
 
     return (identifier, extension)
 
