@@ -261,7 +261,7 @@ void G_Drawer(void)
         if(!vplayer->plr->mo)
             break;
 
-        if(leveltime < 2)
+        if(!IS_CLIENT && leveltime < 2)
         {
             // Don't render too early; the first couple of frames
             // might be a bit unstable -- this should be considered

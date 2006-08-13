@@ -267,7 +267,7 @@ void D_Display(void)
     case GS_LEVEL:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
-        if(leveltime < 2)
+        if(!IS_CLIENT && leveltime < 2)
         {
             // Don't render too early; the first couple of frames
             // might be a bit unstable -- this should be considered
