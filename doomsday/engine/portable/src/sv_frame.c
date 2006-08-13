@@ -37,7 +37,7 @@
 
 // The minimum frame size is used when bandwidth rating is zero (poorest
 // possible connection).
-#define MINIMUM_FRAME_SIZE  75  // bytes
+#define MINIMUM_FRAME_SIZE  400  // bytes
 
 // The frame size is calculated by multiplying the bandwidth rating
 // (max 100) with this factor (+min).
@@ -729,6 +729,7 @@ void Sv_WriteDelta(const delta_t * delta)
             return;
         }
 
+#if 0
         if(delta->flags & MDFC_CREATE)
         {
             // This mobj was just created, let's use a different
@@ -739,6 +740,7 @@ void Sv_WriteDelta(const delta_t * delta)
                delta->flags, delta->state);
                #endif */
         }
+#endif        
     }
 
     // First the type of the delta.
