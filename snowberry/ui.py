@@ -69,6 +69,12 @@ BORDER_ALL = (1 | 2 | 4 | 8)
 USE_TITLE_AREA = not st.getSystemBoolean('main-hide-title')
 USE_HELP_AREA = not st.getSystemBoolean('main-hide-help')
 
+# A Windows kludge: background colour for tabs and the controls in them.
+tabBgColour = wx.Colour(250, 250, 250)
+#st.getSystemInteger('tab-background-red'),
+#                        st.getSystemInteger('tab-background-green'),
+#                        st.getSystemInteger('tab-background-blue'))
+
 # An array of UI areas.
 uiAreas = {}
 mainPanel = None

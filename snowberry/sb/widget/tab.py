@@ -326,7 +326,7 @@ class TabArea (base.Widget):
         tab = wx.Panel(book, -1, style=wx.CLIP_CHILDREN)
 
         if host.isWindows():
-            tab.SetBackgroundColour(tabBgColour)
+            tab.SetBackgroundColour(ui.tabBgColour)
             tab.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
 
         # Put the new tab in the page map so that when an event
