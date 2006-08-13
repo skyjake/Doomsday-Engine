@@ -702,6 +702,12 @@ void GL_ProjectionMatrix(void)
 
 void GL_UseFog(int yes)
 {
+    if(isDedicated) 
+    {
+        // The dedicated server does not care about fog.
+        return;
+    }
+    
     if(!usingFog && yes)
     {
         // Fog is turned on.
