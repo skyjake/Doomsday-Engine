@@ -349,6 +349,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
 
         // Send info about our jump power.
         NetSv_SendJumpPower(parm, cfg.jumpEnabled ? cfg.jumpPower : 0);
+        NetSv_Paused(paused);
         break;
 
         //
