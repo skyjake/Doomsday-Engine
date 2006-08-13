@@ -49,22 +49,21 @@ typedef unsigned short msgid_t;
 
 #pragma pack(1)
 typedef struct {
-	msgid_t         id;
-	byte            type;
+	msgid_t         id;             // Unused.
+	byte            type;           // Type of the message.
 	byte            data[NETBUFFER_MAXDATA];
 } netdata_t;
-
 #pragma pack()
 
 typedef struct netbuffer_s {
-	int             player;		   // Recipient or sender.
-	int             length;		   // Number of bytes in the data buffer.
-	int             headerLength;  // 1 byte at the moment.
+	int             player;         // Recipient or sender.
+	int             length;         // Number of bytes in the data buffer.
+	int             headerLength;   // 1 byte at the moment.
 
-	byte           *cursor;		   // Points into the data buffer.
+	byte           *cursor;         // Points into the data buffer.
 
-	netdata_t       msg;		   // The data buffer for sending and
-	// receiving packets.
+	netdata_t       msg;            // The data buffer for sending and
+                                    // receiving packets.
 } netbuffer_t;
 
 /*
@@ -82,7 +81,8 @@ void            N_ClearMessages(void);
 void            N_SendPacket(int flags);
 boolean         N_GetPacket(void);
 int             N_IdentifyPlayer(nodeid_t id);
-
+void            N_PrintBufferInfo(void);
+void            N_PrintHuffmanStats(void);
 void            N_PostMessage(netmessage_t * msg);
 
 D_CMD(HuffmanStats);
