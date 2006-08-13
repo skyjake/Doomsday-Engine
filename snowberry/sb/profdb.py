@@ -213,8 +213,15 @@ def restore():
     # directory.
     for name in _listProfilesIn(userProfilePath):
         load(os.path.join(userProfilePath, name), False)
+    logger.show()
 
     defaults = get('defaults')
+
+    if defaults is None:
+        # Recreate the Defaults profile.
+        load(os.path.join(systemProfilePath, "defaults.prof"), False)
+        defaults = get('defaults')
+        logger.show()
 
     # Set the default language.
     lang = defaults.getValue('language')
