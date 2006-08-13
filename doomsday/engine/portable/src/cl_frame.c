@@ -306,7 +306,7 @@ void Cl_Frame2Received(int packetType)
 
 			case DT_MOBJ:
 				// The mobj will be hidden if it's not yet Created.
-				Cl_ReadMobjDelta2(false, skip);
+				Cl_ReadMobjDelta2(true /*false*/, skip);
 				break;
 
 			case DT_NULL_MOBJ:
