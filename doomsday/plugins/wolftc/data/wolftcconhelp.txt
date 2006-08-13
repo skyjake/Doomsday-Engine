@@ -1,0 +1,204 @@
+#
+# CONSOLE COMMANDS - JDOOM SPECFIC
+#
+
+[setcolor]
+desc = Set player color.
+
+[setmap]
+desc = Set map.
+
+[setclass]
+desc = Set player class.
+
+[startcycle]
+desc = Begin map rotation.
+
+[endcycle]
+desc = End map rotation.
+
+[menu]
+desc = Open/Close the menu.
+
+[menuup]
+desc = Move the menu cursor up.
+
+[menudown]
+desc = Move the menu cursor down.
+
+[menuleft]
+desc = Move the menu cursor left.
+
+[menuright]
+desc = Move the menu cursor right.
+
+[menuselect]
+desc = Select/Accept the current menu item.
+
+[menucancel]
+desc = Return to the previous menu page.
+
+[helpscreen]
+desc = Show the Help screens.
+
+[savegame]
+desc = Open the save game menu.
+
+[loadgame]
+desc = Open the load game menu.
+
+[soundmenu]
+desc = Open the sound settings menu.
+
+[quicksave]
+desc = Quicksave the game.
+
+[endgame]
+desc = End the game.
+
+[togglemsgs]
+desc = Messages on/off.
+
+[quickload]
+desc = Load the quicksaved game.
+
+[quit]
+desc = Quit the game and return to the OS.
+
+[togglegamma]
+desc = Cycle gamma correction levels.
+
+[messageyes]
+desc = Respond - YES to the message promt.
+
+[messageno]
+desc = Respond - NO to the message promt.
+
+[messagecancel]
+desc = Respond - CANCEL to the message promt.
+    
+[spy]
+desc = Spy mode: cycle player views in co-op.
+    
+[screenshot]
+desc = Takes a screenshot. Saved to DOOMnn.TGA.
+    
+[viewsize]
+desc = View size adjustment.
+    
+[pause]
+desc = Pause the game.
+    
+[cheat]
+desc = Issue a cheat code using the original Doom cheats.
+    
+[god]
+desc = God mode.
+
+[noclip]
+desc = No movement clipping (walk through walls).
+    
+[warp]
+desc = Warp to another map.
+    
+[reveal]
+desc = Map cheat.
+    
+[give]
+desc = Gives you weapons, ammo, power-ups, etc.
+    
+[kill]
+desc = Kill all the monsters on the level.
+    
+[exitlevel]
+desc = Exit the current level.
+    
+[suicide]
+desc = Kill yourself. What did you think?
+    
+[doomfont]
+desc = Use the Doom font in the console.
+    
+[startinf]
+desc = Start an InFine script.
+    
+[stopinf]
+desc = Stop the currently playing interlude/finale.
+    
+[stopfinale]
+desc = Stop the currently playing interlude/finale.
+    
+[spawnmobj]
+desc = Spawn a new mobj.
+    
+[coord]
+desc = Print the coordinates of the consoleplayer.
+
+[makelocp]
+desc = Make local player.
+    
+[makecam]
+desc = Toggle camera mode.
+    
+[setlock]
+desc = Set camera viewlock.
+
+[lockmode]
+desc = Set camera viewlock mode.
+
+[sbsize]
+desc = Status bar size adjustment.
+    
+[movefloor]
+desc = Move a sector's floor plane.
+    
+[moveceil]
+desc = Move a sector's ceiling plane.
+
+[movesec]
+desc = Move a sector's both planes.
+    
+[crosshair]
+desc = Crosshair setup.
+        
+[chatcomplete]
+desc = Send the chat message and exit chat mode.
+	
+[chatdelete]
+desc = Delete a character from the chat buffer.
+	
+[chatcancel]
+desc = Exit chat mode without sending the message.
+	
+[chatsendmacro]
+desc = Send a chat macro.
+	
+[beginchat]
+desc = Begin chat mode.
+	
+[msgrefresh]
+desc = Show last HUD message.
+
+[message]
+desc = Show a local game message.
+    
+[automap]
+desc = Show automap.
+    
+[follow]
+desc = Toggle Follow mode in the automap.
+    
+[rotate]
+desc = Toggle Rotate mode in the automap.
+    
+[addmark]
+desc = Add a mark in the automap.
+    
+[clearmarks]
+desc = Clear all marks in the automap.
+    
+[grid]
+desc = Toggle the grid in the automap.
+
+[zoommax]
+desc = Zoom out to the max in the automap.

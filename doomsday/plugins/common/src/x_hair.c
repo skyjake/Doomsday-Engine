@@ -113,7 +113,7 @@ cvar_t xhairCVars[] =
 
 // Console commands for the crosshair
 ccmd_t  xhairCCmds[] = {
-    {"crosshair",      CCmdCrosshair,  "Crosshair setup.", 0 },
+    {"crosshair",      CCmdCrosshair},
     {NULL}
 };
 

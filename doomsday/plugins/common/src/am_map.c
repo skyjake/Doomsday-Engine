@@ -382,13 +382,13 @@ cvar_t  mapCVars[] = {
 };
 
 ccmd_t  mapCCmds[] = {
-    {"automap", CCmdMapAction, "Show automap."},
-    {"follow", CCmdMapAction, "Toggle Follow mode in the automap."},
-    {"rotate", CCmdMapAction, "Toggle Rotate mode in the automap."},
-    {"addmark", CCmdMapAction, "Add a mark in the automap."},
-    {"clearmarks", CCmdMapAction, "Clear all marks in the automap."},
-    {"grid", CCmdMapAction, "Toggle the grid in the automap."},
-    {"zoommax", CCmdMapAction, "Zoom out to the max in the automap."},
+    {"automap",     CCmdMapAction},
+    {"follow",      CCmdMapAction},
+    {"rotate",      CCmdMapAction},
+    {"addmark",     CCmdMapAction},
+    {"clearmarks",  CCmdMapAction},
+    {"grid",        CCmdMapAction},
+    {"zoommax",     CCmdMapAction},
     {NULL}
 };
 

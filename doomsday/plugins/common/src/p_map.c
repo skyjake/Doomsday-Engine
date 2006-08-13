@@ -97,7 +97,6 @@ mobj_t *BlockingMobj;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int     tmflags;
 static fixed_t tm[3];
 static fixed_t tmheight;
 static line_t *tmhitline;
@@ -197,7 +196,6 @@ boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp)
 
     // kill anything occupying the position
     tmthing = thing;
-    tmflags = thing->flags;
 
     stomping = alwaysstomp;
 
@@ -810,7 +808,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
     if(thing->flags & MF_SPECIAL)
     {
         solid = thing->flags & MF_SOLID;
-        if(tmflags & MF_PICKUP)
+        if(tmthing->flags & MF_PICKUP)
         {
             // can remove thing
             P_TouchSpecialThing(thing, tmthing);
@@ -999,7 +997,7 @@ boolean P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     sector_t *newsec;
 
     tmthing = thing;
-    tmflags = thing->flags;
+
 #if !__JHEXEN__
     thing->onmobj = NULL;
     thing->wallhit = false;
@@ -1036,10 +1034,10 @@ boolean P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     P_EmptySpecHit();
 
 #if __JHEXEN__
-    if((tmflags & MF_NOCLIP) && !(tmflags & MF_SKULLFLY))
+    if((tmthing->flags & MF_NOCLIP) && !(tmthing->flags & MF_SKULLFLY))
         return true;
 #else
-    if((tmflags & MF_NOCLIP))
+    if((tmthing->flags & MF_NOCLIP))
         return true;
 #endif
 
@@ -1067,7 +1065,7 @@ boolean P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
 #endif
      // check lines
 #if __JHEXEN__
-    if(tmflags & MF_NOCLIP)
+    if(tmthing->flags & MF_NOCLIP)
         return true;
 
     BlockingMobj = NULL;
@@ -2551,7 +2549,6 @@ mobj_t *P_CheckOnmobj(mobj_t *thing)
     memcpy(pos, thing->pos, sizeof(pos));
 
     tmthing = thing;
-    tmflags = thing->flags;
     oldmo = *thing;             // save the old mobj before the fake zmovement
 
     P_FakeZMovement(tmthing);
@@ -2576,7 +2573,7 @@ mobj_t *P_CheckOnmobj(mobj_t *thing)
     validCount++;
     P_EmptySpecHit();
 
-    if(tmflags & MF_NOCLIP)
+    if(tmthing->flags & MF_NOCLIP)
         return NULL;
 
     // check things first, possibly picking things up

@@ -223,6 +223,13 @@ void DD_InitHelp(void)
     M_TranslatePath("}data\\cphelp.txt", helpFileName);
     DH_ReadStrings(helpFileName);
 
+    // Ccmd help (game-specific).
+    sprintf(helpFileName, "}data\\%s\\%sconhelp.txt",
+            (char *) gx.GetVariable(DD_GAME_NAME),
+            (char *) gx.GetVariable(DD_GAME_NAME));
+    M_TranslatePath(helpFileName, helpFileName);
+    DH_ReadStrings(helpFileName);
+
     // Help is now available.
     helpInited = true;
 }

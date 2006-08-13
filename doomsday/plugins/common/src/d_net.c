@@ -72,13 +72,13 @@ float   netJumpPower = 9;
 
 // Net code related console commands
 ccmd_t netCCmds[] = {
-    {"setcolor", CCmdSetColor, "Set player color."},
-    {"setmap", CCmdSetMap, "Set map."},
+    {"setcolor", CCmdSetColor},
+    {"setmap", CCmdSetMap},
 #if __JHEXEN__
-    {"setclass", CCmdSetClass, "Set player class."},
+    {"setclass", CCmdSetClass},
 #endif
-    {"startcycle", CCmdMapCycle, "Begin map rotation."},
-    {"endcycle", CCmdMapCycle, "End map rotation."},
+    {"startcycle", CCmdMapCycle},
+    {"endcycle", CCmdMapCycle},
     {NULL}
 };
 

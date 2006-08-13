@@ -266,7 +266,6 @@ cvar_t  gameCVars[] = {
         "1=Fast monsters in non-demo single player."},
 
 // Gameplay
-// FIXME: This should not affect gameplay but it does!
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0,
         "Corpse vanish time in seconds, 0=disabled."},
 
@@ -276,37 +275,37 @@ cvar_t  gameCVars[] = {
 
 //  Console commands
 ccmd_t  gameCCmds[] = {
-    {"spy",         CCmdCycleSpy,       "Spy mode: cycle player views in co-op.", 0 },
-    {"screenshot",  CCmdScreenShot,     "Takes a screenshot. Saved to DOOMnn.TGA.", 0 },
-    {"viewsize",    CCmdViewSize,       "View size adjustment.", 0 },
-    {"pause",       CCmdPause,          "Pause the game.", 0 },
+    {"spy",         CCmdCycleSpy},
+    {"screenshot",  CCmdScreenShot},
+    {"viewsize",    CCmdViewSize},
+    {"pause",       CCmdPause},
 
     // $cheats
-    {"cheat",       CCmdCheat,          "Issue a cheat code using the original Doom cheats.", 0 },
-    {"god",         CCmdCheatGod,       "God mode.", 0 },
-    {"noclip",      CCmdCheatNoClip,    "No movement clipping (walk through walls).", 0 },
-    {"warp",        CCmdCheatWarp,      "Warp to another map.", 0 },
-    {"reveal",      CCmdCheatReveal,    "Map cheat.", 0 },
-    {"give",        CCmdCheatGive,      "Gives you weapons, ammo, power-ups, etc.", 0 },
-    {"kill",        CCmdCheatMassacre,  "Kill all the monsters on the level.", 0 },
-    {"exitlevel",   CCmdCheatExitLevel, "Exit the current level.", 0 },
-    {"suicide",     CCmdCheatSuicide,   "Kill yourself. What did you think?", 0 },
+    {"cheat",       CCmdCheat},
+    {"god",         CCmdCheatGod},
+    {"noclip",      CCmdCheatNoClip},
+    {"warp",        CCmdCheatWarp},
+    {"reveal",      CCmdCheatReveal},
+    {"give",        CCmdCheatGive},
+    {"kill",        CCmdCheatMassacre},
+    {"exitlevel",   CCmdCheatExitLevel},
+    {"suicide",     CCmdCheatSuicide},
 
-    {"doomfont",    CCmdDoomFont,       "Use the Doom font in the console.", 0 },
+    {"doomfont",    CCmdDoomFont},
 
     // $infine
-    {"startinf",    CCmdStartInFine,    "Start an InFine script.", 0 },
-    {"stopinf",     CCmdStopInFine,     "Stop the currently playing interlude/finale.", 0 },
-    {"stopfinale",  CCmdStopInFine,     "Stop the currently playing interlude/finale.", 0 },
+    {"startinf",    CCmdStartInFine},
+    {"stopinf",     CCmdStopInFine},
+    {"stopfinale",  CCmdStopInFine},
 
-    {"spawnmobj",   CCmdSpawnMobj,      "Spawn a new mobj.", 0 },
-    {"coord",       CCmdPrintPlayerCoords,"Print the coordinates of the consoleplayer.", 0 },
+    {"spawnmobj",   CCmdSpawnMobj},
+    {"coord",       CCmdPrintPlayerCoords},
 
     // $democam
-    {"makelocp",    CCmdMakeLocal,      "Make local player.", 0 },
-    {"makecam",     CCmdSetCamera,      "Toggle camera mode.", 0 },
-    {"setlock",     CCmdSetViewLock,    "Set camera viewlock.", 0 },
-    {"lockmode",    CCmdSetViewLock,    "Set camera viewlock mode.", 0 },
+    {"makelocp",    CCmdMakeLocal},
+    {"makecam",     CCmdSetCamera},
+    {"setlock",     CCmdSetViewLock},
+    {"lockmode",    CCmdSetViewLock},
     {NULL}
 };
 

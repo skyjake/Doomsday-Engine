@@ -239,13 +239,13 @@ cvar_t msgCVars[] = {
 
 // Console commands for the message buffer
 ccmd_t  msgCCmds[] = {
-    {"chatcomplete",    CCmdMsgAction, "Send the chat message and exit chat mode.", 0 },
-    {"chatdelete",      CCmdMsgAction, "Delete a character from the chat buffer.", 0},
-    {"chatcancel",      CCmdMsgAction, "Exit chat mode without sending the message.", 0 },
-    {"chatsendmacro",   CCmdMsgAction, "Send a chat macro.", 0 },
-    {"beginchat",       CCmdMsgAction, "Begin chat mode.", 0 },
-    {"msgrefresh",      CCmdMsgAction, "Show last HUD message.", 0 },
-    {"message",      CCmdLocalMessage, "Show a local game message.", 0 },
+    {"chatcomplete",    CCmdMsgAction},
+    {"chatdelete",      CCmdMsgAction},
+    {"chatcancel",      CCmdMsgAction},
+    {"chatsendmacro",   CCmdMsgAction},
+    {"beginchat",       CCmdMsgAction},
+    {"msgrefresh",      CCmdMsgAction},
+    {"message",      CCmdLocalMessage},
     {NULL}
 };
 

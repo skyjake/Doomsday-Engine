@@ -2351,18 +2351,25 @@ D_CMD(Console)
         if(argc == 2)
         {
             int     i;
+            char    *str;
+            void *ccmd_help;
 
             if(!stricmp(argv[1], "(what)"))
             {
                 Con_Printf("You've got to be kidding!\n");
                 return true;
             }
+
             // We need to look through the cvars and ccmds to see if there's a match.
             for(i = 0; i < numCCmds; i++)
                 if(!stricmp(argv[1], ccmds[i].name))
                 {
-                    Con_Printf("%s\n", ccmds[i].help);
-                    return true;
+                    ccmd_help = DH_Find(ccmds[i].name);
+                    if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
+                    {
+                        Con_Printf("%s\n", str);
+                        return true;
+                    }
                 }
             for(i = 0; i < numCVars; i++)
                 if(!stricmp(argv[1], cvars[i].name))
@@ -2410,6 +2417,8 @@ D_CMD(Console)
 D_CMD(ListCmds)
 {
     int     i;
+    char    *str;
+    void *ccmd_help;
 
     Con_Printf("Console commands:\n");
     for(i = 0; i < numCCmds; i++)
@@ -2417,8 +2426,12 @@ D_CMD(ListCmds)
         if(argc > 1)            // Is there a filter?
             if(strnicmp(ccmds[i].name, argv[1], strlen(argv[1])))
                 continue;
-        Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s (%s)\n", ccmds[i].name,
-                     ccmds[i].help);
+
+        ccmd_help = DH_Find(ccmds[i].name);
+        if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
+            Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s (%s)\n", ccmds[i].name, str);
+        else
+            Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s\n", ccmds[i].name);
     }
     return true;
 }
@@ -3191,110 +3204,93 @@ D_CMD(TranslateFont);
 // Register console commands.  The names should be in LOWER CASE.
 static void registerCommands(void)
 {
-    C_CMD("actions", ListActs, "List all action commands.", 0);
-    C_CMD("add", AddSub, "Add something to a cvar.", 0);
-    C_CMD("after", Wait, "Execute the specified command after a delay.", 0);
-    C_CMD("alias", Alias, "Create aliases for a (set of) console commands.", 0);
-    C_CMD("bgturn", BackgroundTurn, "Set console background rotation speed.", 0);
-    C_CMD("bind", Bind, "Bind a console command to an event.", 0);
-    C_CMD("bindr", Bind,
-          "Bind a console command to an event (keys with repeat).", 0);
-    C_CMD("chat", Chat, "Broadcast a chat message.", 0);
-    C_CMD("chatnum", Chat, "Send a chat message to the specified player.", 0);
-    C_CMD("chatto", Chat, "Send a chat message to the specified player.", 0);
-    C_CMD("clear", Console, "Clear the console buffer.", 0);
-    C_CMD("clearbinds", ClearBindings, "Deletes all existing bindings.", 0);
-    C_CMD("conclose", OpenClose, "Close the console prompt.", 0);
-    C_CMD("conlocp", MakeCamera, "Connect a local player.", 0);
-    C_CMD("connect", Connect, "Connect to a server using TCP/IP.", 0);
-    C_CMD("conopen", OpenClose, "Open the console prompt.", 0);
-    C_CMD("contoggle", OpenClose, "Open/close the console prompt.", 0);
-    C_CMD("dec", AddSub, "Subtract 1 from a cvar.", 0);
-    C_CMD("delbind", DeleteBind,
-          "Deletes all bindings to the given console command.", 0);
-    C_CMD("demolump", DemoLump, "Write a reference lump file for a demo.", 0);
-    C_CMD("dir", Dir, "Print contents of directories.", 0);
-    C_CMD("dump", Dump, "Dump a data lump currently loaded in memory.", 0);
-    C_CMD("dumpkeymap", DumpKeyMap, "Write the current keymap to a file.", 0);
-    C_CMD("echo", Echo, "Echo the parameters on separate lines.", 0);
-    C_CMD("enablebindclass", EnableBindClass, "Enable a binding class.", 0);
-    C_CMD("exec", Parse,
-          "Loads and executes a file containing console commands.", 0);
-    C_CMD("flareconfig", FlareConfig, "Configure lens flares.", 0);
-    C_CMD("fog", Fog, "Modify fog settings.", 0);
-    C_CMD("font", Font, "Modify console font settings.", 0);
-    C_CMD("help", Console, "Show information about the console.", 0);
-    C_CMD("huffman", HuffmanStats,
-          "Print Huffman efficiency and number of bytes sent.", 0);
-    C_CMD("if", If, "Execute a command if the condition is true.", 0);
-    C_CMD("inc", AddSub, "Add 1 to a cvar.", 0);
-    C_CMD("keymap", KeyMap, "Load a DKM keymap file.", 0);
-    C_CMD("kick", Kick, "Kick client out of the game.", 0);
-    C_CMD("listaliases", ListAliases,
-          "List all aliases and their expanded forms.", 0);
-    C_CMD("listbindings", ListBindings, "List all event bindings.", 0);
-    C_CMD("listbindclasses", ListBindClasses, "List all event binding classes.", 0);
-    C_CMD("listcmds", ListCmds, "List all console commands.", 0);
-    C_CMD("listfiles", ListFiles,
-          "List all the loaded data files and show information about them.", 0);
-    C_CMD("listmaps", ListMaps, "List all loaded maps.", 0);
-    C_CMD("listmobjs", ListMobjs, "List all known mobj types.", 0);
-    C_CMD("listvars", ListVars,
-          "List all console variables and their values.", 0);
-    C_CMD("load", LoadFile, "Load a data file (a WAD or a lump).", 0);
-    C_CMD("login", Login, "Log in to server console.", 0);
-    C_CMD("logout", Logout, "Terminate remote connection to server console.", 0);
-    C_CMD("lowres", LowRes, "Select the poorest rendering quality.", 0);
-    C_CMD("ls", Dir, "Print contents of directories.", 0);
-    C_CMD("mipmap", MipMap, "Set the mipmapping mode.", 0);
-    C_CMD("net", Net, "Network setup and control.", 0);
-    C_CMD("panel", OpenPanel, "Open the Doomsday Control Panel.", 0);
-    C_CMD("pausedemo", PauseDemo, "Pause/resume demo recording.", 0);
-    C_CMD("ping", Ping, "Ping the server (or a player if you're the server).", 0);
-    C_CMD("playdemo", PlayDemo, "Play a demo.", 0);
-    C_CMD("playext", PlayExt, "Play an external music file.", 0);
-    C_CMD("playmusic", PlayMusic,
-          "Play a song, an external music file or a CD track.", 0);
-    C_CMD("playsound", PlaySound, "Play a sound effect.", 0);
-    C_CMD("quit!", Quit, "Exit the game immediately.", 0);
-    C_CMD("recorddemo", RecordDemo, "Start recording a demo.", 0);
-    C_CMD("repeat", Repeat, "Repeat a command at given intervals.", 0);
-    C_CMD("reset", ResetLumps,
-          "Reset the data files into what they were at startup.", 0);
-    C_CMD("safebind", Bind,
-          "Bind a command to an event, unless the event is already bound.", 0);
-    C_CMD("safebindr", Bind,
-          "Bind a command to an event, unless the event is already bound.", 0);
-    C_CMD("say", Chat, "Broadcast a chat message.", 0);
-    C_CMD("saynum", Chat, "Send a chat message to the specified player.", 0);
-    C_CMD("sayto", Chat, "Send a chat message to the specified player.", 0);
-    C_CMD("setcon", SetConsole, "Set console and viewplayer.", 0);
-    C_CMD("setgamma", SetGamma, "Set the gamma correction level.", 0);
-    C_CMD("setname", SetName, "Set your name.", 0);
-    C_CMD("setres", SetRes, "Change video mode resolution or window size.", 0);
-    C_CMD("settics", SetTicks,
-          "Set number of game tics per second (default: 35).", 0);
-    C_CMD("setvidramp", UpdateGammaRamp,
-          "Update display's hardware gamma ramp.", 0);
-    C_CMD("skydetail", SkyDetail,
-          "Set the number of sky sphere quadrant subdivisions.", 0);
-    C_CMD("skyrows", SkyDetail, "Set the number of sky sphere rows.", 0);
-    C_CMD("smoothscr", SmoothRaw,
-          "Set the rendering mode of fullscreen images.", 0);
-    C_CMD("stopdemo", StopDemo, "Stop currently playing demo.", 0);
-    C_CMD("stopmusic", StopMusic, "Stop any currently playing music.", 0);
-    C_CMD("sub", AddSub, "Subtract something from a cvar.", 0);
-    C_CMD("texreset", ResetTextures, "Force a texture reload.", 0);
-    C_CMD("toggle", Toggle,
-          "Toggle the value of a cvar between zero and nonzero.", 0);
-    C_CMD("uicolor", UIColor, "Change Doomsday user interface colors.", 0);
-    C_CMD("unload", UnloadFile, "Unload a data file from memory.", 0);
-    C_CMD("version", Version, "Show detailed version information.", 0);
-    C_CMD("write", WriteConsole,
-          "Write variables, bindings and aliases to a file.", 0);
+    C_CMD("actions", ListActs);
+    C_CMD("add", AddSub);
+    C_CMD("after", Wait);
+    C_CMD("alias", Alias);
+    C_CMD("bgturn", BackgroundTurn);
+    C_CMD("bind", Bind);
+    C_CMD("bindr", Bind);
+    C_CMD("chat", Chat);
+    C_CMD("chatnum", Chat);
+    C_CMD("chatto", Chat);
+    C_CMD("clear", Console);
+    C_CMD("clearbinds", ClearBindings);
+    C_CMD("conclose", OpenClose);
+    C_CMD("conlocp", MakeCamera);
+    C_CMD("connect", Connect);
+    C_CMD("conopen", OpenClose);
+    C_CMD("contoggle", OpenClose);
+    C_CMD("dec", AddSub);
+    C_CMD("delbind", DeleteBind);
+    C_CMD("demolump", DemoLump);
+    C_CMD("dir", Dir);
+    C_CMD("dump", Dump);
+    C_CMD("dumpkeymap", DumpKeyMap);
+    C_CMD("echo", Echo);
+    C_CMD("enablebindclass", EnableBindClass);
+    C_CMD("exec", Parse);
+    C_CMD("flareconfig", FlareConfig);
+    C_CMD("fog", Fog);
+    C_CMD("font", Font);
+    C_CMD("help", Console);
+    C_CMD("huffman", HuffmanStats);
+    C_CMD("if", If);
+    C_CMD("inc", AddSub);
+    C_CMD("keymap", KeyMap);
+    C_CMD("kick", Kick);
+    C_CMD("listaliases", ListAliases);
+    C_CMD("listbindings", ListBindings);
+    C_CMD("listbindclasses", ListBindClasses);
+    C_CMD("listcmds", ListCmds);
+    C_CMD("listfiles", ListFiles);
+    C_CMD("listmaps", ListMaps);
+    C_CMD("listmobjs", ListMobjs);
+    C_CMD("listvars", ListVars);
+    C_CMD("load", LoadFile);
+    C_CMD("login", Login);
+    C_CMD("logout", Logout);
+    C_CMD("lowres", LowRes);
+    C_CMD("ls", Dir);
+    C_CMD("mipmap", MipMap);
+    C_CMD("net", Net);
+    C_CMD("panel", OpenPanel);
+    C_CMD("pausedemo", PauseDemo);
+    C_CMD("ping", Ping);
+    C_CMD("playdemo", PlayDemo);
+    C_CMD("playext", PlayExt);
+    C_CMD("playmusic", PlayMusic);
+    C_CMD("playsound", PlaySound);
+    C_CMD("quit!", Quit);
+    C_CMD("recorddemo", RecordDemo);
+    C_CMD("repeat", Repeat);
+    C_CMD("reset", ResetLumps);
+    C_CMD("safebind", Bind);
+    C_CMD("safebindr", Bind);
+    C_CMD("say", Chat);
+    C_CMD("saynum", Chat);
+    C_CMD("sayto", Chat);
+    C_CMD("setcon", SetConsole);
+    C_CMD("setgamma", SetGamma);
+    C_CMD("setname", SetName);
+    C_CMD("setres", SetRes);
+    C_CMD("settics", SetTicks);
+    C_CMD("setvidramp", UpdateGammaRamp);
+    C_CMD("skydetail", SkyDetail);
+    C_CMD("skyrows", SkyDetail);
+    C_CMD("smoothscr", SmoothRaw);
+    C_CMD("stopdemo", StopDemo);
+    C_CMD("stopmusic", StopMusic);
+    C_CMD("sub", AddSub);
+    C_CMD("texreset", ResetTextures);
+    C_CMD("toggle", Toggle);
+    C_CMD("uicolor", UIColor);
+    C_CMD("unload", UnloadFile);
+    C_CMD("version", Version);
+    C_CMD("write", WriteConsole);
 
 #ifdef _DEBUG
-    C_CMD("translatefont", TranslateFont, "Ha ha.", 0);
+    C_CMD("translatefont", TranslateFont);
 #endif
 }
 

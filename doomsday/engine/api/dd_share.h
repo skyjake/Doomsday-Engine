@@ -1118,7 +1118,6 @@ typedef enum blendmode_e {
     typedef struct ccmd_s {
         char           *name;
         int             (*func) (int src, int argc, char **argv);
-        char           *help;      // A short help text.
         int             flags;
     } ccmd_t;
 

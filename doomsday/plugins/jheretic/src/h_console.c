@@ -235,43 +235,43 @@ cvar_t  gameCVars[] = {
 
 //  Console commands
 ccmd_t  gameCCmds[] = {
-    {"spy",        CCmdCycleSpy,       "Change the viewplayer when not in deathmatch.", 0 },
-    {"screenshot", CCmdScreenShot,     "Take a screenshot.", 0 },
-    {"viewsize",   CCmdViewSize,       "Set the view size.", 0 },
-    {"pause",      CCmdPause,          "Pause the game (same as pressing the pause key).", 0 },
+    {"spy",        CCmdCycleSpy},
+    {"screenshot", CCmdScreenShot},
+    {"viewsize",   CCmdViewSize},
+    {"pause",      CCmdPause},
 
     // $cheats
-    {"cheat",      CCmdCheat,          "Issue a cheat code using the original Hexen cheats.", 0 },
-    {"god",        CCmdCheatGod,       "I don't think He needs any help...", 0 },
-    {"noclip",     CCmdCheatClip,      "Movement clipping on/off.", 0 },
-    {"warp",       CCmdCheatWarp,      "Warp to a map.", 0 },
-    {"reveal",     CCmdCheatReveal,    "Map cheat.", 0 },
-    {"give",       CCmdCheatGive,      "Cheat command to give you various kinds of things.", 0 },
-    {"kill",       CCmdCheatMassacre,  "Kill all the monsters on the level.", 0 },
-    {"exitlevel",  CCmdCheatExitLevel, "Exit the current level.", 0 },
-    {"suicide",    CCmdCheatSuicide,   "Kill yourself. What did you think?", 0 },
+    {"cheat",      CCmdCheat},
+    {"god",        CCmdCheatGod},
+    {"noclip",     CCmdCheatClip},
+    {"warp",       CCmdCheatWarp},
+    {"reveal",     CCmdCheatReveal},
+    {"give",       CCmdCheatGive},
+    {"kill",       CCmdCheatMassacre},
+    {"exitlevel",  CCmdCheatExitLevel},
+    {"suicide",    CCmdCheatSuicide},
 
-    {"hereticfont",CCmdHereticFont,    "Use the Heretic font.", 0 },
+    {"hereticfont",CCmdHereticFont},
 
     // $infine
-    {"startinf",   CCmdStartInFine,    "Start an InFine script.", 0 },
-    {"stopinf",    CCmdStopInFine,     "Stop the currently playing interlude/finale.", 0 },
-    {"stopfinale", CCmdStopInFine,     "Stop the currently playing interlude/finale.", 0 },
+    {"startinf",   CCmdStartInFine},
+    {"stopinf",    CCmdStopInFine},
+    {"stopfinale", CCmdStopInFine},
 
-    {"spawnmobj",  CCmdSpawnMobj,      "Spawn a new mobj.", 0 },
-    {"coord",      CCmdPrintPlayerCoords,   "Print the coordinates of the consoleplayer.", 0 },
+    {"spawnmobj",  CCmdSpawnMobj},
+    {"coord",      CCmdPrintPlayerCoords},
 
     // $democam
-    {"makelocp",   CCmdMakeLocal,      "Make local player.", 0 },
-    {"makecam",    CCmdSetCamera,      "Toggle camera mode.", 0 },
-    {"setlock",    CCmdSetViewLock,    "Set camera viewlock.", 0 },
-    {"lockmode",   CCmdSetViewLock,    "Set camera viewlock mode.", 0 },
+    {"makelocp",   CCmdMakeLocal},
+    {"makecam",    CCmdSetCamera},
+    {"setlock",    CCmdSetViewLock},
+    {"lockmode",   CCmdSetViewLock},
 
     // Heretic specific
-    {"invleft",    CCmdInventory,      "Move inventory cursor to the left.", 0 },
-    {"invright",   CCmdInventory,      "Move inventory cursor to the right.", 0 },
-    {"chicken",    CCmdCheatPig,       "Turn yourself into a chicken. Go ahead.", 0 },
-    {"where",      CCmdCheatWhere,     "Prints your map number and exact location.", 0 },
+    {"invleft",    CCmdInventory},
+    {"invright",   CCmdInventory},
+    {"chicken",    CCmdCheatPig},
+    {"where",      CCmdCheatWhere},
     {NULL}
 };
 

@@ -219,3 +219,300 @@ desc = If you have several modem devices, select the one to use here.\bWhen host
 
 [Serial Link]
 desc = Make sure both computers are using the same settings.
+
+#
+# CONSOLE COMMANDS
+#
+[actions]
+desc = List all action commands.
+
+[add]
+desc = Add something to a cvar.
+
+[after]
+desc = Execute the specified command after a delay.
+
+[alias]
+desc = Create aliases for a (set of) console commands.
+
+[bgturn]
+desc = Set console background rotation speed.
+
+[bind]
+desc = Bind a console command to an event.
+
+[bindr]
+desc = Bind a console command to an event (keys with repeat).
+
+[bledit]
+desc = Enter bias light edit mode.
+
+[blquit]
+desc = Exit bias light edit mode.
+
+[blclear]
+desc = Delete all lights.
+
+[blsave]
+desc = Write the current lights to a DED file.
+
+[blnew]
+desc = Allocate new light and grab it.
+
+[bldel]
+desc = Delete current/specified light.
+
+[bllock]
+desc = Lock current/specified light.
+
+[blunlock]
+desc = Unlock current/specified light.
+
+[blgrab]
+desc = Grab current/specified light, or ubgrab.
+
+[bldup]
+desc = Duplicate current/specified light, grab it.
+
+[blc]
+desc = Set color of light at cursor.
+
+[bli]
+desc = Set intensity of light at cursor.
+
+[blhue]
+desc = Show/hide the hue circle for color selection.
+
+[blmenu]
+desc = Show/hide the bias menu.
+
+[chat]
+desc = Broadcast a chat message.
+
+[chatnum]
+desc = Send a chat message to the specified player.
+
+[chatto]
+desc = Send a chat message to the specified player.
+
+[clear]
+desc = Clear the console buffer.
+
+[clearbinds]
+desc = Deletes all existing bindings.
+
+[conclose]
+desc = Close the console prompt.
+
+[conlocp]
+desc = Connect a local player.
+
+[connect]
+desc = Connect to a server using TCP/IP.
+
+[conopen]
+desc = Open the console prompt.
+
+[contoggle]
+desc = Open/close the console prompt.
+
+[dec]
+desc = Subtract 1 from a cvar.
+
+[delbind]
+desc = Deletes all bindings to the given console command.
+
+[demolump]
+desc = Write a reference lump file for a demo.
+
+[dir]
+desc = Print contents of directories.
+
+[dump]
+desc = Dump a data lump currently loaded in memory.
+
+[dumpkeymap]
+desc = Write the current keymap to a file.
+
+[echo]
+desc = Echo the parameters on separate lines.
+
+[enablebindclass]
+desc = Enable a binding class.
+
+[exec]
+desc = Loads and executes a file containing console commands.
+
+[flareconfig]
+desc = Configure lens flares.
+
+[fog]
+desc = Modify fog settings.
+
+[font]
+desc = Modify console font settings.
+
+[help]
+desc = Show information about the console.
+
+[huffman]
+desc = Print Huffman efficiency and number of bytes sent.
+
+[if]
+desc = Execute a command if the condition is true.
+
+[inc]
+desc = Add 1 to a cvar.
+
+[keymap]
+desc = Load a DKM keymap file.
+
+[kick]
+desc = Kick client out of the game.
+
+[listaliases]
+desc = List all aliases and their expanded forms.
+
+[listbindings]
+desc = List all event bindings.
+
+[listbindclasses]
+desc = List all event binding classes.
+
+[listcmds]
+desc = List all console commands.
+
+[listfiles]
+desc = List all the loaded data files and show information about them.
+
+[listmaps]
+desc = List all loaded maps.
+
+[listmobjs]
+desc = List all known mobj types.
+
+[listvars]
+desc = List all console variables and their values.
+
+[load]
+desc = Load a data file (a WAD or a lump).
+
+[login]
+desc = Log in to server console.
+
+[logout]
+desc = Terminate remote connection to server console.
+
+[lowres]
+desc = Select the poorest rendering quality.
+
+[ls]
+desc = Print contents of directories.
+
+[mipmap]
+desc = Set the mipmapping mode.
+
+[net]
+desc = Network setup and control.
+
+[panel]
+desc = Open the Doomsday Control Panel.
+
+[pausedemo]
+desc = Pause/resume demo recording.
+
+[ping]
+desc = Ping the server (or a player if you're the server).
+
+[playdemo]
+desc = Play a demo.
+
+[playext]
+desc = Play an external music file.
+
+[playmusic]
+desc = Play a  an external music file or a CD track.
+
+[playsound]
+desc = Play a sound effect.
+
+[quit!]
+desc = Exit the game immediately.
+
+[recorddemo]
+desc = Start recording a demo.
+
+[repeat]
+desc = Repeat a command at given intervals.
+
+[reset]
+desc = Reset the data files into what they were at startup.
+
+[safebind]
+desc = Bind a command to an  unless the event is already bound.
+
+[safebindr]
+desc = Bind a command to an  unless the event is already bound.
+
+[say]
+desc = Broadcast a chat message.
+
+[saynum]
+desc = Send a chat message to the specified player.
+
+[sayto]
+desc = Send a chat message to the specified player.
+
+[setcon]
+desc = Set console and viewplayer.
+
+[setgamma]
+desc = Set the gamma correction level.
+
+[setname]
+desc = Set your name.
+
+[setres]
+desc = Change video mode resolution or window size.
+
+[settics]
+desc = Set number of game tics per second (default: 35).
+
+[setvidramp]
+desc = Update display's hardware gamma ramp.
+
+[skydetail]
+desc = Set the number of sky sphere quadrant subdivisions.
+
+[skyrows]
+desc = Set the number of sky sphere rows.
+
+[smoothscr]
+desc = Set the rendering mode of fullscreen images.
+
+[stopdemo]
+desc = Stop currently playing demo.
+
+[stopmusic]
+desc = Stop any currently playing music.
+
+[sub]
+desc = Subtract something from a cvar.
+
+[texreset]
+desc = Force a texture reload.
+
+[toggle]
+desc = Toggle the value of a cvar between zero and nonzero.
+
+[uicolor]
+desc = Change Doomsday user interface colors.
+
+[unload]
+desc = Unload a data file from memory.
+
+[version]
+desc = Show detailed version information.
+
+[write]
+desc = Write  bindings and aliases to a file.

@@ -391,7 +391,7 @@ cvar_t hudCVars[] =
 
 // Console commands for the HUD/Status bar
 ccmd_t  hudCCmds[] = {
-    {"sbsize",      CCmdStatusBarSize,  "Status bar size adjustment.", 0 },
+    {"sbsize",      CCmdStatusBarSize},
     {NULL}
 };
 

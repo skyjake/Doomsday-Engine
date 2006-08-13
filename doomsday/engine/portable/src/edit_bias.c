@@ -130,20 +130,20 @@ void SBE_Register(void)
               "1=Show source indices in 3D view.");
 
     // Commands for light editing.
-    C_CMD("bledit", BLEditor, "Enter bias light edit mode.", 0);
-    C_CMD("blquit", BLEditor, "Exit bias light edit mode.", 0);
-    C_CMD("blclear", BLEditor, "Delete all lights.", 0);
-    C_CMD("blsave", BLEditor, "Write the current lights to a DED file.", 0);
-    C_CMD("blnew", BLEditor, "Allocate new light and grab it.", 0);
-    C_CMD("bldel", BLEditor, "Delete current/specified light.", 0);
-    C_CMD("bllock", BLEditor, "Lock current/specified light.", 0);
-    C_CMD("blunlock", BLEditor, "Unlock current/specified light.", 0);
-    C_CMD("blgrab", BLEditor, "Grab current/specified light, or ubgrab.", 0);
-    C_CMD("bldup", BLEditor, "Duplicate current/specified light, grab it.", 0);
-    C_CMD("blc", BLEditor, "Set color of light at cursor.", 0);
-    C_CMD("bli", BLEditor, "Set intensity of light at cursor.", 0);
-    C_CMD("blhue", BLEditor, "Show/hide the hue circle for color selection.", 0);
-    C_CMD("blmenu", BLEditor, "Show/hide the bias menu.", 0);
+    C_CMD("bledit", BLEditor);
+    C_CMD("blquit", BLEditor);
+    C_CMD("blclear", BLEditor);
+    C_CMD("blsave", BLEditor);
+    C_CMD("blnew", BLEditor);
+    C_CMD("bldel", BLEditor);
+    C_CMD("bllock", BLEditor);
+    C_CMD("blunlock", BLEditor);
+    C_CMD("blgrab", BLEditor);
+    C_CMD("bldup", BLEditor);
+    C_CMD("blc", BLEditor);
+    C_CMD("bli", BLEditor);
+    C_CMD("blhue", BLEditor);
+    C_CMD("blmenu", BLEditor);
 }
 
 /*
