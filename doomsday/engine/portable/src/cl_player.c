@@ -523,6 +523,11 @@ void Cl_ReadPlayerDelta2(boolean skip)
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
                 s->cmo = Cl_CreateMobj(s->mobjId);
+                if(num == consoleplayer)
+                {
+                    // Mark everything known about our local player.
+                    s->cmo->flags |= CLMF_KNOWN;
+                }
                 justCreated = true;
             }
             else
