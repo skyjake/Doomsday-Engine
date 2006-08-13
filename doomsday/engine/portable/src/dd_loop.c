@@ -112,7 +112,7 @@ void DD_GameLoop(void)
         maxFrameRate = 35;
     }
 
-    while(true)
+    for(;;)
     {
 #ifdef WIN32
         // Start by checking Windows messages.
@@ -173,6 +173,7 @@ void DD_DrawAndBlit(void)
         
         // Update the world ready for drawing view(s) of it.
         R_SetupWorldFrame();
+        
         // Draw the game graphics.
         gx.G_Drawer();
         // The colored filter.
