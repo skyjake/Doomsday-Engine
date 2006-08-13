@@ -414,7 +414,7 @@ void R_SetupWorldFrame(void)
     }
     // While the game is paused there is no need to calculate any
     // visual plane offsets $smoothplane.
-    else if(!clientPaused)
+    else //if(!clientPaused)
     {
         // $smoothplane: Set the visible offsets.
         for(i = 0; i < numsectors; ++i)
@@ -476,7 +476,7 @@ void R_SetupFrame(ddplayer_t *player)
     }
     // While the game is paused there is no need to calculate any
     // time offsets or interpolated camera positions.
-    else if(!clientPaused)
+    else //if(!clientPaused)
     {
         // Calculate the smoothed camera position, which is somewhere
         // between the previous and current sharp positions. This
