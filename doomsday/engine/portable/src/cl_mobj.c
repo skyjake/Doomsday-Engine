@@ -757,6 +757,7 @@ void Cl_PredictMovement(void)
         }
     }
 #ifdef _DEBUG
+    if(verbose)
     {
         static int timer = 0;
 
@@ -819,6 +820,11 @@ void Cl_RevealMobj(clmobj_t *cmo)
         cmo->flags &= ~CLMF_SOUND;
         S_StartSoundAtVolume(cmo->sound, &cmo->mo, cmo->volume);
     }
+    
+#ifdef _DEBUG
+    Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n", 
+               cmo->mo.thinker.id, cmo->mo.state, cmo->mo.state - states);
+#endif
 }
 
 /*
@@ -1056,6 +1062,10 @@ void Cl_ReadNullMobjDelta2(boolean skip)
     if((cmo = Cl_FindMobj(id)) == NULL)
     {
         // Wasted bandwidth...
+#ifdef _DEBUG
+        Con_Printf("Cl_ReadNullMobjDelta2: Request to remove id %i that has "
+                   "not been received.\n", id);
+#endif
         return;
     }
 
