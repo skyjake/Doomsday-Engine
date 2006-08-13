@@ -42,7 +42,7 @@
 // removed from the hash. Under normal circumstances, the special
 // status should be removed fairly quickly (a matter of out-of-sequence
 // frames or sounds playing before a mobj is sent).
-#define CLMOBJ_TIMEOUT  20000   // 20 seconds
+#define CLMOBJ_TIMEOUT  10000   // 10 seconds
 
 // Missiles don't hit mobjs only after a short delay. This'll
 // allow the missile to move free of the shooter. (Quite a hack!)
@@ -710,7 +710,9 @@ void Cl_PredictMovement(void)
             next = cmo->next;
             moCount++;
 
-            if(cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
+            if(cmo->mo.dplayer != &ddplayers[consoleplayer] && 
+               cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN) /*||
+               cmo->mo.ddflags & DDMF_MISSILE*/)
             {
                 // Has this mobj timed out?
                 if(nowTime - cmo->time > CLMOBJ_TIMEOUT)
@@ -803,9 +805,22 @@ void Cl_DestroyMobj(clmobj_t *cmo)
 /*
  * Call for Hidden client mobjs to make then visible.
  * If a sound is waiting, it's now played.
+ *
+ * @param  Returns true if the mobj was revealed.
  */
-void Cl_RevealMobj(clmobj_t *cmo)
+boolean Cl_RevealMobj(clmobj_t *cmo)
 {
+    // Check that we know enough about the clmobj.
+    if(cmo->mo.dplayer != &ddplayers[consoleplayer] && 
+       (!(cmo->flags & CLMF_KNOWN_X) ||
+        !(cmo->flags & CLMF_KNOWN_Y) ||
+        !(cmo->flags & CLMF_KNOWN_Z) ||
+        !(cmo->flags & CLMF_KNOWN_STATE)))
+    {
+        // Don't reveal just yet. We lack a vital piece of information.
+        return false;
+    }
+    
     /*#ifdef _DEBUG
        Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
        #endif */
@@ -822,9 +837,12 @@ void Cl_RevealMobj(clmobj_t *cmo)
     }
     
 #ifdef _DEBUG
-    Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n", 
-               cmo->mo.thinker.id, cmo->mo.state, cmo->mo.state - states);
+    VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n", 
+                         cmo->mo.thinker.id, cmo->mo.state, 
+                         cmo->mo.state - states) );
 #endif
+
+    return true;
 }
 
 /*
@@ -835,7 +853,7 @@ void Cl_RevealMobj(clmobj_t *cmo)
  */
 void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 {
-    boolean linked = true, justCreated = false;
+    boolean needsLinking = false, justCreated = false;
     clmobj_t *cmo = NULL;
     mobj_t *d;
     static mobj_t dummy;
@@ -865,19 +883,13 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
         {
             // This is a new ID, allocate a new mobj.
             cmo = Cl_CreateMobj(id);
+            cmo->mo.ddflags |= DDMF_NOGRAVITY; // safer this way
             justCreated = true;
-            linked = false;
+            needsLinking = true;
 
-            if(!allowCreate)
-            {
-                // This clmobj should be hidden until the Create mobj
-                // delta arrives. (created, but not linked to the world)
-                cmo->flags |= CLMF_HIDDEN;
-
-                /*#ifdef _DEBUG
-                   Con_Printf("Cl_RMD2: Mobj %i created as Hidden.\n", id);
-                   #endif */
-            }
+            // Always create new mobjs as hidden. They will be revealed when
+            // we know enough about them.
+            cmo->flags |= CLMF_HIDDEN;
         }
 
         if(!(cmo->flags & CLMF_NULLED))
@@ -890,12 +902,18 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
         }
 
         d = &cmo->mo;
+        
+        /*if(d->dplayer && d->dplayer == &ddplayers[consoleplayer])
+        {
+            // Mark the local player known.
+            cmo->flags |= CLMF_KNOWN;
+        }*/
 
         // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-        if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked &&
-           !d->dplayer)
+        if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && 
+           !justCreated && !d->dplayer)
         {
-            linked = false;
+            needsLinking = true;
             Cl_UnsetThingPosition(cmo);
         }
     }
@@ -909,28 +927,35 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
     if(df & MDF_POS_X)
     {
         d->pos[VX] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
+        if(cmo) cmo->flags |= CLMF_KNOWN_X;
     }
     if(df & MDF_POS_Y)
     {
         d->pos[VY] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
+        if(cmo) cmo->flags |= CLMF_KNOWN_Y;
     }
     if(df & MDF_POS_Z)
     {
         d->pos[VZ] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
+        if(cmo) 
+        {
+            cmo->flags |= CLMF_KNOWN_Z;
 
-        // The mobj won't stick if an explicit coordinate is supplied.
-        if(cmo)
+            // The mobj won't stick if an explicit coordinate is supplied.
             cmo->flags &= ~(CLMF_STICK_FLOOR | CLMF_STICK_CEILING);
+        }
     }
 
     // When these flags are set, the normal Z coord is not included.
     if(moreFlags & MDFE_Z_FLOOR)
     {
         d->pos[VZ] = DDMININT;
+        if(cmo) cmo->flags |= CLMF_KNOWN_Z;
     }
     if(moreFlags & MDFE_Z_CEILING)
     {
         d->pos[VZ] = DDMAXINT;
+        if(cmo) cmo->flags |= CLMF_KNOWN_Z;
     }
 
     // Momentum using 8.8 fixed point.
@@ -962,10 +987,12 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 
     if(df & MDF_STATE)
     {
-        ushort  stateIdx = Msg_ReadPackedShort();
-
+        ushort stateIdx = Msg_ReadPackedShort();
         if(!skip)
+        {
             Cl_SetThingState(d, stateIdx);
+            cmo->flags |= CLMF_KNOWN_STATE;
+        }
     }
 
     // Pack flags into a word (3 bytes?).
@@ -1007,28 +1034,32 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
         return;
 
     // Is it time to remove the Hidden status?
-    if(allowCreate && cmo->flags & CLMF_HIDDEN)
+    if(cmo->flags & CLMF_HIDDEN)
     {
-        // Now it can be displayed.
-        Cl_RevealMobj(cmo);
+        // Now it can be displayed (potentially).
+        if(Cl_RevealMobj(cmo))
+        {
+            // Now it can be linked to the world.
+            needsLinking = true;
+        }
     }
 
-    // If the clmobj is Hidden, it will not be linked back to the world
-    // until it's officially Created. (Otherwise, partially updated mobjs
-    // may be visible for a while.)
-    if(!(cmo->flags & CLMF_HIDDEN))
+    if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z) ||
+       moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
+    {
+        // This'll update floorz and ceilingz.
+        Cl_CheckMobj(cmo, justCreated);
+    }
+    
+    // If the clmobj is Hidden (or Nulled), it will not be linked back to 
+    // the world until it's officially Created. (Otherwise, partially updated 
+    // mobjs may be visible for a while.)
+    if(!(cmo->flags & (CLMF_HIDDEN | CLMF_NULLED)))
     {
         // Link again.
-        if(!linked && !d->dplayer)
+        if(needsLinking && !d->dplayer)
         {
             Cl_SetThingPosition(cmo);
-        }
-
-        if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z) ||
-           moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
-        {
-            // This'll update floorz and ceilingz.
-            Cl_CheckMobj(cmo, justCreated);
         }
 
         // Update players.

@@ -30,9 +30,17 @@
 #define CLMF_STICK_FLOOR	0x10   // Mobj will stick to the floor.
 #define CLMF_STICK_CEILING	0x20   // Mobj will stick to the ceiling.
 
+// Clmobj knowledge flags. This keeps track of the information that has been
+// received.
+#define CLMF_KNOWN_X        0x10000
+#define CLMF_KNOWN_Y        0x20000
+#define CLMF_KNOWN_Z        0x40000
+#define CLMF_KNOWN_STATE    0x80000
+#define CLMF_KNOWN          0xf0000 // combination of all the KNOWN-flags
+
 typedef struct clmobj_s {
 	struct clmobj_s *next, *prev;
-	byte            flags;
+	int             flags;
 	uint            time;		   // Time of last update.
 	int             sound;		   // Queued sound ID.
 	float           volume;		   // Volume for queued sound.
