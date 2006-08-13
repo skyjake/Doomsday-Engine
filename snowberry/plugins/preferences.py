@@ -24,6 +24,7 @@ import ui, events, language, paths
 import sb.widget.button as wb
 import sb.widget.text as wt
 import sb.confdb as st
+import sb.util.dialog
 
 
 # List widget of custom addon paths.

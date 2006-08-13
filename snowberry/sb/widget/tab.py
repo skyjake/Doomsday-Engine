@@ -271,7 +271,7 @@ class TabArea (base.Widget):
         which contain subareas."""
         
         self.removeAllTabs()
-        Widget.clear(self)
+        base.Widget.clear(self)
 
     def getTabs(self):
         """Compose a list of all the areas of the tab area.  Hidden
