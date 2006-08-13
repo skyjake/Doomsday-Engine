@@ -402,9 +402,14 @@ class TextSetting (Setting):
     def composeCommandLine(self, profile):
         value = profile.getValue(self.getId())
         if value:
-            if self.isValueAfterOption():
-                v = self.getOption() + ' ' + paths.quote(value.getValue())
+            if self.getOption() != '':
+                # An option has been defined for the setting.
+                if self.isValueAfterOption():
+                    v = self.getOption() + ' ' + paths.quote(value.getValue())
+                else:
+                    v = self.getOption()
             else:
-                v = self.getOption()
+                # No option has been defined, so just add the text as-is.
+                v = value.getValue()
             return v
         return ""
