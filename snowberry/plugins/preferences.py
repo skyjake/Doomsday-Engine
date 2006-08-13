@@ -114,6 +114,13 @@ def handleNotify(event):
 
     elif event.hasId('addon-paths-changed'):
         # Insert the current custom paths into the list.
-        pathList.removeAllItems()
-        for p in paths.getAddonPaths():
-            pathList.addItem(p)
+        try:
+            pathList.removeAllItems()
+            for p in paths.getAddonPaths():
+                pathList.addItem(p)
+        except:
+            # Ignore errors in this operation. 
+            # TODO: Figure out under which circumstances this notification
+            # is received when the pathList C++ part has already been 
+            # destroyed.
+            pass
