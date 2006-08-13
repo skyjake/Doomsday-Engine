@@ -374,6 +374,13 @@ def formIdentifier(fileName):
     
     # Replace spaces with dashes.
     identifier = identifier.replace(' ', '-')
+    
+    # Replace reserved characters with underscores.
+    identifier = identifier.replace('(', '_')
+    identifier = identifier.replace(')', '_')
+    identifier = identifier.replace('>', '_')
+    identifier = identifier.replace('<', '_')
+    identifier = identifier.replace(',', '_')
 
     return (identifier, extension)
 
