@@ -465,15 +465,15 @@ def loadManifest(fileName):
     identifier = paths.getBase(fileName)
 
     if exists(identifier):
-        addon = get(identifier)
+        a = get(identifier)
     else:
         # Create a new addon.
-        addon = Addon(identifier, fileName)
-        addons[identifier] = addon
+        a = ao.Addon(identifier, fileName)
+        addons[identifier] = a
 
     # The manifest contains metadata configuration.
     try:
-        addon.parseConfiguration(file(fileName).read())
+        a.parseConfiguration(file(fileName).read())
         
     except Exception, x:
         logger.add(logger.HIGH, 'error-read-manifest', fileName, str(x))
