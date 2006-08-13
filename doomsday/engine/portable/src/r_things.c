@@ -616,10 +616,12 @@ void R_ProjectSprite(mobj_t *thing)
 
     v2[VX] = v2[VY] = 0; // initialize
 
-    if(thing->ddflags & DDMF_DONTDRAW || thing->translucency == 0xff)
+    if(thing->ddflags & DDMF_DONTDRAW || thing->translucency == 0xff ||
+       thing->state == NULL || thing->state == states)
     {
         // Never make a vissprite when DDMF_DONTDRAW is set or when
-        // the thing is fully transparent.
+        // the thing is fully transparent, or when the thing hasn't got
+        // a valid state.
         return;
     }
 
