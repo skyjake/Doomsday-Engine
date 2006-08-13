@@ -42,8 +42,13 @@
 
 /* The randomized transmitted is only used for simulating a poor
  * network connection. */
+/*
 #undef TRANSMIT_RANDOMIZER
 #define RANDOMIZER_DROP_PERCENT 1
+#define RANDOMIZER_MAX_DELAY    500
+ */
+#undef TRANSMIT_RANDOMIZER
+#define RANDOMIZER_DROP_PERCENT 25
 #define RANDOMIZER_MAX_DELAY    500
 
 /* Defining PRINT_PACKETS will cause the UDP transmitter and receiver
@@ -1536,4 +1541,11 @@ void N_Listen(void)
 void N_PrintInfo(void)
 {
     // TODO: Print information about send queues, ports, etc.
+ 
+#ifdef TRANSMIT_RANDOMIZER
+    Con_Printf("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",
+               RANDOMIZER_MAX_DELAY, RANDOMIZER_DROP_PERCENT);
+#endif
+    
+    N_PrintBufferInfo();
 }
