@@ -40,9 +40,11 @@
 #    include <SDL.h>
 #    include <SDL_opengl.h>
 #  endif
-#  include "atiext.h"
+
 #  define wglGetProcAddress SDL_GL_GetProcAddress
 #endif
+
+#include "atiext.h"
 
 #include <string.h>
 
