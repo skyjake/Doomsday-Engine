@@ -1001,7 +1001,7 @@
 		B02AC49D06B3FA91005824AD /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = zconf.h; path = ../../external/zlib/include/zconf.h; sourceTree = SOURCE_ROOT; };
 		B02AC85006B41788005824AD /* cl_frame.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_frame.c; path = ../../engine/portable/src/cl_frame.c; sourceTree = SOURCE_ROOT; };
 		B02AC85106B41788005824AD /* cl_main.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_main.c; path = ../../engine/portable/src/cl_main.c; sourceTree = SOURCE_ROOT; };
-		B02AC85206B41788005824AD /* cl_mobj.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_mobj.c; path = ../../engine/portable/src/cl_mobj.c; sourceTree = SOURCE_ROOT; };
+		B02AC85206B41788005824AD /* cl_mobj.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_mobj.c; path = ../../engine/portable/src/cl_mobj.c; sourceTree = SOURCE_ROOT; wrapsLines = 1; };
 		B02AC85306B41788005824AD /* cl_player.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_player.c; path = ../../engine/portable/src/cl_player.c; sourceTree = SOURCE_ROOT; };
 		B02AC85406B41788005824AD /* cl_sound.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_sound.c; path = ../../engine/portable/src/cl_sound.c; sourceTree = SOURCE_ROOT; };
 		B02AC85506B41788005824AD /* cl_world.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_world.c; path = ../../engine/portable/src/cl_world.c; sourceTree = SOURCE_ROOT; };
@@ -1461,11 +1461,11 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B0DAE5BD09823D6C000A8265 /* template.c.template */,
 				B08174000A88FD2C0081B2E1 /* m_md5.c */,
 				B0A905540A45357D00DD2583 /* cl_oldframe.c */,
 				B0A904F80A452FAA00DD2583 /* cl_oldworld.c */,
 				B0346DC20A10F18D00C8BAB2 /* edit_bias.c */,
-				B0DAE5BD09823D6C000A8265 /* template.c.template */,
 				B0DAE5B209823CEB000A8265 /* p_dmu.c */,
 				B0724918085CDC4D000C8E3B /* r_lgrid.c */,
 				B0E3D3DF07903950007811F6 /* rend_bias.c */,
@@ -1575,7 +1575,18 @@
 				B02AC8B506B41788005824AD /* ui_mpi.c */,
 				B02AC8B606B41788005824AD /* ui_panel.c */,
 				B0DAE5E8098261F8000A8265 /* p_arch.c */,
-				B02AC8B706B41788005824AD /* Unix */,
+				B0134FE006ECEFAD007861F2 /* dd_uinit.c */,
+				B02AC8B906B41788005824AD /* lzss.c */,
+				B02AC8BA06B41788005824AD /* sys_console.c */,
+				B02AC8BB06B41788005824AD /* sys_findfile.c */,
+				B02AC8BC06B41788005824AD /* sys_input.c */,
+				B02AC8BD06B41788005824AD /* sys_mixer.c */,
+				B02AC8BE06B41788005824AD /* sys_musd_fmod.c */,
+				B02AC8BF06B41788005824AD /* sys_network.c */,
+				B02AC8C006B41788005824AD /* sys_path.c */,
+				B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */,
+				B02AC8C206B41788005824AD /* sys_sfxd_loader.c */,
+				B02AC8C306B41788005824AD /* sys_stwin.c */,
 			);
 			name = Sources;
 			sourceTree = "<group>";
@@ -1964,26 +1975,6 @@
 				B02AC39306B3FA91005824AD /* Common */,
 			);
 			name = Headers;
-			sourceTree = "<group>";
-		};
-		B02AC8B706B41788005824AD /* Unix */ = {
-			isa = PBXGroup;
-			children = (
-				B0134FE006ECEFAD007861F2 /* dd_uinit.c */,
-				B02AC8B906B41788005824AD /* lzss.c */,
-				B02AC8BA06B41788005824AD /* sys_console.c */,
-				B02AC8BB06B41788005824AD /* sys_findfile.c */,
-				B02AC8BC06B41788005824AD /* sys_input.c */,
-				B02AC8BD06B41788005824AD /* sys_mixer.c */,
-				B02AC8BE06B41788005824AD /* sys_musd_fmod.c */,
-				B02AC8BF06B41788005824AD /* sys_network.c */,
-				B02AC8C006B41788005824AD /* sys_path.c */,
-				B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */,
-				B02AC8C206B41788005824AD /* sys_sfxd_loader.c */,
-				B02AC8C306B41788005824AD /* sys_stwin.c */,
-			);
-			name = Unix;
-			path = Src/Unix;
 			sourceTree = "<group>";
 		};
 		B083A52B085CC113000D4BAB /* Headers */ = {
