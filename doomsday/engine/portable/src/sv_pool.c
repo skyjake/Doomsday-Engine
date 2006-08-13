@@ -52,6 +52,9 @@ typedef struct reg_mobj_s {
     // Links to next and prev mobj in the register hash.
     struct reg_mobj_s *next, *prev;
 
+    // The tic when the mobj state was last sent.
+    int lastTimeStateSent;
+    
     // The state of the mobj.
     dt_mobj_t mo;
 } reg_mobj_t;
@@ -491,7 +494,7 @@ boolean Sv_RegisterCompareMobj(cregister_t * reg, const mobj_t *s,
                                mobjdelta_t * d)
 {
     int     df;
-    const reg_mobj_t *regMo;
+    reg_mobj_t *regMo = NULL;
     const dt_mobj_t *r = &dummyZeroMobj;
 
     //int age = gametic - reg->gametic; // Always > 0
@@ -532,8 +535,22 @@ boolean Sv_RegisterCompareMobj(cregister_t * reg, const mobj_t *s,
     if(r->vistarget != s->vistarget)
         df |= MDFC_FADETARGET;
 
-    if(!Def_SameStateSequence(r->state, s->state))
+    // Mobj state sent periodically, if it keeps changing.
+    if((!(s->ddflags & DDMF_MISSILE) && regMo && 
+        Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35) &&
+        r->state != s->state) || 
+       !Def_SameStateSequence(r->state, s->state))
+    {
         df |= MDF_STATE;
+       
+#ifdef _DEBUG
+        VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35))
+            Con_Message("Sv_RegisterCompareMobj: (%i) Sending state due to time.\n",
+                        s->thinker.id) );
+#endif
+        
+        if(regMo) regMo->lastTimeStateSent = Sys_GetTime();
+    }
 
     if(r->radius != s->radius)
         df |= MDF_RADIUS;
@@ -2647,6 +2664,9 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
     // Calculate the distance to the delta's origin.
     // If no distance can be determined, it's 1.0.
     distance = FIX2FLT(Sv_DeltaDistance(delta, info));
+    if(distance < 1) 
+        distance = 1;
+    distance = distance * distance; // power of two
 
     // What is the base score?
     score = deltaBaseScores[delta->type] / distance;
@@ -2670,7 +2690,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
 
         // Seeing new mobjs is interesting.
         if(df & MDFC_CREATE)
-            score *= 1.1f;
+            score *= 1.5f;
 
         // Position changes are important.
         if(df & (MDF_POS_X | MDF_POS_Y))
