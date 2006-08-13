@@ -663,14 +663,8 @@ class WADAddon (Addon):
         # Read the WAD directory.
         self.lumps = self.readLumpDirectory()
         lumps = self.lumps
-
-        # What can be determined by looking at the lump names?
-        for lump in lumps:
-            if lump[:2] == 'D_':
-                # Doom music lump.
-                game = 'jdoom'
-
-        if 'BEHAVIOR' in lumps or 'MAPINFO' in lumps:
+        
+        if 'BEHAVIOR' in lumps:
             # Hexen-specific lumps.
             game = 'jhexen'
 
@@ -679,6 +673,12 @@ class WADAddon (Addon):
 
         if 'M_DOOM' in lumps:
             game = 'jdoom'
+
+        # What can be determined by looking at the lump names?
+        for lump in lumps:
+            if lump[:2] == 'D_':
+                # Doom music lump.
+                game = 'jdoom'
 
         episodic = False
         maps = False
@@ -690,7 +690,7 @@ class WADAddon (Addon):
                 episodic = True
 
                 # Episodes 5 and 6 exist in Heretic.
-                if lump[1] == '5' or lump[1] == '6':
+                if game == '' and (lump[1] == '5' or lump[1] == '6'):
                     game = 'jheretic'
 
         # Are there any MAPxy in the WAD?
