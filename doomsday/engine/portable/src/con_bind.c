@@ -202,34 +202,77 @@ static boolean B_EventMatch(event_t *ev, event_t *bev)
     return false;
 }
 
+#if _DEBUG
+const char* EventType_Str(int type)
+{
+    static char typeStr[40];
+    struct evnttype_s {
+        int type;
+        const char* str;
+    } evnts[] =
+    {
+        { ev_keydown,   "key down"},
+        { ev_keyup,     "key up"},
+        { ev_keyrepeat, "key repeat"},
+        { ev_mouse,     "mouse axis"},
+        { ev_mousebdown,"mouse button down"},
+        { ev_mousebup,  "mouse button up"},
+        { ev_joystick,  "joy axis"},
+        { ev_joyslider, "joy slider"},
+        { ev_joybdown,  "joy button down"},
+        { ev_joybup,    "joy button up"},
+        { ev_povdown,   "pov down"},
+        { ev_povup,     "pov up"},
+        { 0, NULL}
+    };
+    int i;
+
+    for(i = 0; evnts[i].str; ++i)
+        if(evnts[i].type == type)
+            return evnts[i].str;
+
+    sprintf(typeStr, "(unnamed %i)", type);
+    return typeStr;
+}
+#endif
+
 /*
  * B_Responder
  */
 boolean B_Responder(event_t *ev)
 {
-    binding_t *bnd;
     int     i, k;
+    binding_t *bnd;
+    command_t *cmd;
 
     // We won't even bother with axis data.
     if(ev->type == ev_mouse || ev->type == ev_joystick)
         return false;
 
     // Check all the bindings and execute the necessary commands.
-    for(i = 0, bnd = binds; i < numBinds; ++i, ++bnd)
+    for(i = 0, bnd = binds; i < numBinds; ++i, bnd++)
     {
         // Do we need to execute a command?
         if(B_EventMatch(ev, &bnd->event))
         {
-            if(ev->useclass != -1) // use a specific class? (regardless if it is active or not)
+#if _DEBUG
+            Con_Message("Generated (%s) Event: Match for bind %i\n",
+                        EventType_Str(ev->type), i);
+#endif
+            if(ev->useclass != -1) // use a specific class? (active or not)
             {
                 // FYI: These kind of events aren't sent via direct user input
                 // Only by "us" when we need to switch binding classes and a
                 // current input is active eg; a key is held down during the
                 // switch that has commands in multiple binding classes.
-                if(bnd->commands[ev->useclass].command)
+                cmd = &bnd->commands[ev->useclass];
+                if(cmd->command)
                 {
-                     //Con_Message("forced %s\n",bnd->command[ev->useclass]);
-                    Con_Execute(CMDS_BIND, bnd->commands[ev->useclass].command, true);
+#if _DEBUG
+                    Con_Message(" forced (%s) \"%s\"\n",
+                                bindClasses[ev->useclass].name, cmd->command);
+#endif
+                    Con_Execute(CMDS_BIND, cmd->command, true);
                     return true;
                 }
             }
@@ -240,12 +283,17 @@ boolean B_Responder(event_t *ev)
                 // is currently active is executed
                 for(k = numBindClasses; k >= 0; k--)
                 {
+                    cmd = &bnd->commands[k];
+
                     if(bindClasses[k].active == 1)
                     {
-                        if(bnd->commands[k].command != NULL)
+                        if(cmd->command)
                         {
-                             //Con_Message("%s\n",bnd->commands[k].command);
-                            Con_Execute(CMDS_BIND, bnd->commands[k].command, true);
+#if _DEBUG
+                            Con_Message(" (%s) \"%s\"\n", bindClasses[k].name,
+                                        cmd->command);
+#endif
+                            Con_Execute(CMDS_BIND, cmd->command, true);
                             return true;
                         }
 
@@ -255,6 +303,9 @@ boolean B_Responder(event_t *ev)
                     }
                 }
             }
+#if _DEBUG
+            Con_Message(" No binding for event in any active class\n");
+#endif
         }
     }
     return false;
