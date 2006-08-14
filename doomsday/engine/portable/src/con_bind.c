@@ -331,7 +331,7 @@ void B_Bind(event_t *event, char *command, int bindClass)
     if(!command)                // No string given?
     {
         // What about a bind class?
-        if(!bindClass)
+        if(bindClass < 0)
             B_DeleteBindingIdx(bnd - binds); // so del the binding_t
         else {
             // clear the command in bindClass only
@@ -615,7 +615,7 @@ D_CMD(Bind)
     }
 
     // Check for a specified binding class
-    for(i = 0; i < numBindClasses; ++i)
+    for(i = 0; i < numBindClasses && !bindClassGiven; ++i)
     {
         if(!(stricmp(argv[1], bindClasses[i].name)) ||
             ((!strnicmp(argv[1], "bdc", 3) &&
@@ -623,7 +623,6 @@ D_CMD(Bind)
         {
             bc = bindClasses[i].id;
             bindClassGiven = true;
-            break;
         }
     }
 
@@ -683,7 +682,7 @@ D_CMD(Bind)
                     if(existing->commands[bc].command)
                         return false;
 
-                B_Bind(&event, buff,bc);
+                B_Bind(&event, buff, bc);
                 sprintf(validEventName, "+%s", evntptr);
                 sprintf(buff, "+%s", cmdptr);
                 B_EventBuilder(validEventName, &event, true);
