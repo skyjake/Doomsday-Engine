@@ -133,46 +133,34 @@ const byte *sLightColor;
 
 void Rend_Register(void)
 {
-    C_VAR_INT("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1,
-              "1=Stop updating rendering lists.");
+    C_VAR_INT("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
 
-    C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling, CVF_NO_ARCHIVE, 0, 1,
-              "1=Disable non-visible subsector culling\n");
+    C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling, CVF_NO_ARCHIVE, 0, 1);
 
-    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, 0, 0, 1,
-              "1=Render mobj bounding boxes (as used for collision detection).");
+    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, 0, 0, 1);
 
-    C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179, "Field of view.");
+    C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
 
-    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1,
-               "1=Enable interpolated texture animation.");
+    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
 
-    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1,
-              "1=Enable shiny textures on surfaces of the map.");
+    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
 
     C_VAR_FLOAT2("rend-light-compression", &r_lightcompression, 0, -100, 100,
-                 "Sector light range compression (brighten dark areas / darken light areas).",
                  Rend_CalcLightRangeModMatrix);
 
-
-    C_VAR_FLOAT("rend-light-adaptation", &r_lightAdapt, 0, 0, 1,
-                "Controls the overall strength of light adaptation");
+    C_VAR_FLOAT("rend-light-adaptation", &r_lightAdapt, 0, 0, 1);
 
     C_VAR_FLOAT2("rend-light-adaptation-mul", &r_lightAdaptMul, CVF_PROTECTED, 0, 1,
-                 "Light adaptation range multiplier.", Rend_CalcLightRangeModMatrix);
+                 Rend_CalcLightRangeModMatrix);
 
     C_VAR_FLOAT2("rend-light-adaptation-ramp", &r_lightAdaptRamp, CVF_PROTECTED, 0, 1,
-                 "Light adaptation range ramp multiplier.", Rend_CalcLightRangeModMatrix);
+                 Rend_CalcLightRangeModMatrix);
 
-    C_VAR_INT("rend-light-adaptation-darktime", &r_lightAdaptDarkTime, 0, 0, 200,
-              "Time it takes to adapt to dark lighting conditions in seconds.");
+    C_VAR_INT("rend-light-adaptation-darktime", &r_lightAdaptDarkTime, 0, 0, 200);
 
-    C_VAR_INT("rend-light-adaptation-brighttime", &r_lightAdaptBrightTime, 0, 0, 200,
-              "Time it takes to adapt to bright lighting conditions in seconds.");
+    C_VAR_INT("rend-light-adaptation-brighttime", &r_lightAdaptBrightTime, 0, 0, 200);
 
-
-    C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix, CVF_NO_ARCHIVE, 0, 1,
-              "Show light modification matrix.");
+    C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix, CVF_NO_ARCHIVE, 0, 1);
 
     RL_Register();
     SB_Register();

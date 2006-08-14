@@ -284,51 +284,33 @@ static dpatch_t keys[NUMKEYS];
 cvar_t hudCVars[] =
 {
     // HUD scale
-    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10,
-        "Scaling for HUD info."},
+    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20,
-        "Status bar size (1-20)."},
+    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20},
 
     // HUD colour + alpha
-    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1,
-        "HUD info color red component."},
-    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1,
-        "HUD info color green component."},
-    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1,
-        "HUD info color alpha component."},
-    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1,
-        "HUD info alpha value."},
-    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1,
-        "HUD icon alpha value."},
+    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
+    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1},
+    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1},
+    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
+    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1,
-        "Status bar Alpha level."},
-    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1,
-        "Status bar icons & counters Alpha level."},
+    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1},
+    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
 
     // HUD icons
-    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1,
-        "1=Show ammo when the status bar is hidden."},
-    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1,
-        "1=Show armor when the status bar is hidden."},
-    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1,
-        "1=Show keys when the status bar is hidden."},
-    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1,
-        "1=Show health when the status bar is hidden."},
-    {"hud-artifact", 0, CVT_BYTE, &cfg.hudShown[HUD_ARTI], 0, 1,
-        "1=Show artifact when the status bar is hidden."},
+    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
+    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
+    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
+    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1},
+    {"hud-artifact", 0, CVT_BYTE, &cfg.hudShown[HUD_ARTI], 0, 1},
 
     // HUD displays
-    {"hud-tome-timer", CVF_NO_MAX, CVT_INT, &cfg.tomeCounter, 0, 0,
-        "Countdown seconds for the Tome of Power."},
-    {"hud-tome-sound", CVF_NO_MAX, CVT_INT, &cfg.tomeSound, 0, 0,
-        "Seconds for countdown sound of Tome of Power."},
-    {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30,
-        "Seconds before the inventory auto-hides."},
+    {"hud-tome-timer", CVF_NO_MAX, CVT_INT, &cfg.tomeCounter, 0, 0},
+    {"hud-tome-sound", CVF_NO_MAX, CVT_INT, &cfg.tomeSound, 0, 0},
+    {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
 
-    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1,
-        "Debug: HUD shows all frags of all players."},
+    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1},
     {NULL}
 };
 

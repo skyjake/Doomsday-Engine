@@ -150,14 +150,10 @@ static volatile boolean stopReceiver;
 
 void N_Register(void)
 {
-    C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0,
-                  "TCP/IP address for searching servers.");
-    C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0,
-              "TCP port to use for control connections.");
-    C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0,
-              "TCP port to use for control connections.");
-    C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0,
-              "UDP port to use for client data traffic.");
+    C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
+    C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
 }
 
 /*
@@ -420,7 +416,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     UDPpacket *packet = NULL;
 
     if(SDLNet_TCP_Recv(sock, &size, 2) != 2)
-    {        
+    {
         Con_Message("N_ReceiveReliably: Packet header was truncated.\n");
         Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(errno));
         return false;
@@ -1524,7 +1520,7 @@ void N_Listen(void)
             if(!N_ReceiveReliably(0))
             {
                 netevent_t nev;
-                
+
                 Con_Message("N_Listen: N_ReceiveReliably failed. Terminating!\n");
 
                 nev.id = 0;
@@ -1541,11 +1537,11 @@ void N_Listen(void)
 void N_PrintInfo(void)
 {
     // TODO: Print information about send queues, ports, etc.
- 
+
 #ifdef TRANSMIT_RANDOMIZER
     Con_Printf("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",
                RANDOMIZER_MAX_DELAY, RANDOMIZER_DROP_PERCENT);
 #endif
-    
+
     N_PrintBufferInfo();
 }

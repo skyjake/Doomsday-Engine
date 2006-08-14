@@ -345,47 +345,31 @@ static int st_palette = 0;
 cvar_t hudCVars[] =
 {
     // HUD scale
-    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10,
-        "Scaling for HUD info."},
+    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20,
-        "Status bar size (1-20)."},
+    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20},
 
     // HUD colour + alpha
-    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1,
-        "HUD info color red component."},
-    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1,
-        "HUD info color green component."},
-    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1,
-        "HUD info color alpha component."},
-    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1,
-        "HUD info alpha value."},
-    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1,
-        "HUD icon alpha value."},
+    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
+    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1},
+    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1},
+    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
+    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1,
-        "Status bar Alpha level."},
-    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1,
-        "Status bar icons & counters Alpha level."},
+    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1},
+    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
 
     // HUD icons
-    {"hud-face", 0, CVT_BYTE, &cfg.hudShown[HUD_FACE], 0, 1,
-        "1=Show Doom guy's face in HUD."},
-    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1,
-        "1=Show health in HUD."},
-    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1,
-        "1=Show armor in HUD."},
-    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1,
-        "1=Show ammo in HUD."},
-    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1,
-        "1=Show keys in HUD."},
+    {"hud-face", 0, CVT_BYTE, &cfg.hudShown[HUD_FACE], 0, 1},
+    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1},
+    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
+    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
+    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
 
     // HUD displays
-    {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1,
-        "1=Show deathmatch frags in HUD."},
+    {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
 
-    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1,
-        "Debug: HUD shows all frags of all players."},
+    {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1},
     {NULL}
 };
 

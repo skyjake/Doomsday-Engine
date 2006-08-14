@@ -96,14 +96,13 @@ float   haloFadeMax = 0, haloFadeMin = 0, minHaloSize = 1;
 void H_Register(void)
 {
     cvar_t  cvars[] = {
-        {"rend-halo-zmag-div", CVF_NO_MAX, CVT_FLOAT, &haloZMagDiv, 1, 1,
-         "Halo Z magnification."},
-        {"rend-halo-radius-min", CVF_NO_MAX, CVT_FLOAT, &haloMinRadius, 0, 0,
-         "Minimum halo radius."},
-        {"rend-halo-dim-near", CVF_NO_MAX, CVT_FLOAT, &haloDimStart, 0, 0,
-         "Halo dimming relative start distance."},
-        {"rend-halo-dim-far", CVF_NO_MAX, CVT_FLOAT, &haloDimEnd, 0, 0,
-         "Halo dimming relative end distance."},
+        {"rend-halo-zmag-div", CVF_NO_MAX, CVT_FLOAT, &haloZMagDiv, 1, 1},
+
+        {"rend-halo-radius-min", CVF_NO_MAX, CVT_FLOAT, &haloMinRadius, 0, 0},
+
+        {"rend-halo-dim-near", CVF_NO_MAX, CVT_FLOAT, &haloDimStart, 0, 0},
+
+        {"rend-halo-dim-far", CVF_NO_MAX, CVT_FLOAT, &haloDimEnd, 0, 0},
         {NULL}
     };
     Con_AddVariableList(cvars);

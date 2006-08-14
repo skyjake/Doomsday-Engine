@@ -118,8 +118,7 @@ static char *vertexUsage;
 
 void Rend_ModelRegister(void)
 {
-    C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor, 0, 0, 10,
-                "General strength of model shininess effects.");
+    C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor, 0, 0, 10);
 }
 
 static float __inline qatan2(float y, float x)

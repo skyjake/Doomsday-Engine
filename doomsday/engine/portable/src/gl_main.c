@@ -116,8 +116,7 @@ static int fogModeDefault = 0;
 
 void GL_Register(void)
 {
-    C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2,
-              "Default fog mode: 0=linear, 1=exp, 2=exp2.");
+    C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
 }
 
 boolean GL_IsInited(void)
@@ -702,12 +701,12 @@ void GL_ProjectionMatrix(void)
 
 void GL_UseFog(int yes)
 {
-    if(isDedicated) 
+    if(isDedicated)
     {
         // The dedicated server does not care about fog.
         return;
     }
-    
+
     if(!usingFog && yes)
     {
         // Fog is turned on.

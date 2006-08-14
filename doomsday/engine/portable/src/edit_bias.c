@@ -102,32 +102,23 @@ static vec3_t hueOrigin, hueSide, hueUp;
 void SBE_Register(void)
 {
     // Editing variables.
-    C_VAR_INT("edit-bias-blink", &editBlink, 0, 0, 1,
-              "1=Blink the cursor.");
+    C_VAR_INT("edit-bias-blink", &editBlink, 0, 0, 1);
 
-    C_VAR_FLOAT("edit-bias-grab-distance", &editDistance, 0, 10, 1000,
-                "Distance to the grabbed bias light.");
+    C_VAR_FLOAT("edit-bias-grab-distance", &editDistance, 0, 10, 1000);
 
-    C_VAR_FLOAT("edit-bias-red", &editColor[0], 0, 0, 1,
-                "Red component of the bias light color.");
+    C_VAR_FLOAT("edit-bias-red", &editColor[0], 0, 0, 1);
 
-    C_VAR_FLOAT("edit-bias-green", &editColor[1], 0, 0, 1,
-                "Green component of the bias light color.");
+    C_VAR_FLOAT("edit-bias-green", &editColor[1], 0, 0, 1);
 
-    C_VAR_FLOAT("edit-bias-blue", &editColor[2], 0, 0, 1,
-                "Blue component of the bias light color.");
+    C_VAR_FLOAT("edit-bias-blue", &editColor[2], 0, 0, 1);
 
-    C_VAR_FLOAT("edit-bias-intensity", &editIntensity, 0, 1, 50000,
-                "Intensity of the bias light.");
+    C_VAR_FLOAT("edit-bias-intensity", &editIntensity, 0, 1, 50000);
 
-    C_VAR_INT("edit-bias-hide", &editHidden, 0, 0, 1,
-              "1=Hide bias light editor's HUD.");
+    C_VAR_INT("edit-bias-hide", &editHidden, 0, 0, 1);
 
-    C_VAR_INT("edit-bias-show-sources", &editShowAll, 0, 0, 1,
-              "1=Show all light sources.");
+    C_VAR_INT("edit-bias-show-sources", &editShowAll, 0, 0, 1);
 
-    C_VAR_INT("edit-bias-show-indices", &editShowIndices, 0, 0, 1,
-              "1=Show source indices in 3D view.");
+    C_VAR_INT("edit-bias-show-indices", &editShowIndices, 0, 0, 1);
 
     // Commands for light editing.
     C_CMD("bledit", BLEditor);

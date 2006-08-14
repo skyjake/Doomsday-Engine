@@ -39,33 +39,33 @@
 /*
  * Macros for creating new console variables.
  */
-#define C_VAR(name, ptr, type, flags, min, max, help, notifyChanged)            \
-    { cvar_t _v = { name, flags, type, ptr, min, max, help, notifyChanged };    \
+#define C_VAR(name, ptr, type, flags, min, max, notifyChanged)            \
+    { cvar_t _v = { name, flags, type, ptr, min, max, notifyChanged };    \
         Con_AddVariable(&_v); }
 
-#define C_VAR_BYTE(name, ptr, flags, min, max, help)    \
-    C_VAR(name, ptr, CVT_BYTE, flags, min, max, help, NULL)
+#define C_VAR_BYTE(name, ptr, flags, min, max)    \
+    C_VAR(name, ptr, CVT_BYTE, flags, min, max, NULL)
 
-#define C_VAR_INT(name, ptr, flags, min, max, help)     \
-    C_VAR(name, ptr, CVT_INT, flags, min, max, help, NULL)
+#define C_VAR_INT(name, ptr, flags, min, max)     \
+    C_VAR(name, ptr, CVT_INT, flags, min, max, NULL)
 
-#define C_VAR_FLOAT(name, ptr, flags, min, max, help) \
-    C_VAR(name, ptr, CVT_FLOAT, flags, min, max, help, NULL)
+#define C_VAR_FLOAT(name, ptr, flags, min, max) \
+    C_VAR(name, ptr, CVT_FLOAT, flags, min, max, NULL)
 
-#define C_VAR_CHARPTR(name, ptr, flags, min, max, help) \
-    C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, help, NULL)
+#define C_VAR_CHARPTR(name, ptr, flags, min, max) \
+    C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, NULL)
 
 // Same as above but allow for a change notification callback func
-#define C_VAR_BYTE2(name, ptr, flags, min, max, help, notifyChanged)    \
-    C_VAR(name, ptr, CVT_BYTE, flags, min, max, help, notifyChanged)
+#define C_VAR_BYTE2(name, ptr, flags, min, max, notifyChanged)    \
+    C_VAR(name, ptr, CVT_BYTE, flags, min, max, notifyChanged)
 
-#define C_VAR_INT2(name, ptr, flags, min, max, help, notifyChanged)     \
-    C_VAR(name, ptr, CVT_INT, flags, min, max, help, notifyChanged)
+#define C_VAR_INT2(name, ptr, flags, min, max, notifyChanged)     \
+    C_VAR(name, ptr, CVT_INT, flags, min, max, notifyChanged)
 
-#define C_VAR_FLOAT2(name, ptr, flags, min, max, help, notifyChanged) \
-    C_VAR(name, ptr, CVT_FLOAT, flags, min, max, help, notifyChanged)
+#define C_VAR_FLOAT2(name, ptr, flags, min, max, notifyChanged) \
+    C_VAR(name, ptr, CVT_FLOAT, flags, min, max, notifyChanged)
 
-#define C_VAR_CHARPTR2(name, ptr, flags, min, max, help, notifyChanged) \
-    C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, help, notifyChanged)
+#define C_VAR_CHARPTR2(name, ptr, flags, min, max, notifyChanged) \
+    C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, notifyChanged)
 
 #endif

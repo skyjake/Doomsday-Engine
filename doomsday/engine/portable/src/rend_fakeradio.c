@@ -91,11 +91,9 @@ static float fFloor, fCeil;
 
 void Rend_RadioRegister(void)
 {
-    C_VAR_INT("rend-fakeradio", &rendFakeRadio, 0, 0, 1,
-              "1=Enable simulated radiosity lighting.");
+    C_VAR_INT("rend-fakeradio", &rendFakeRadio, 0, 0, 1);
 
-    C_VAR_FLOAT("rend-fakeradio-darkness", &rendFakeRadioDarkness, 0, 0, 2,
-                "Darkness of simulated radiosity shadows.");
+    C_VAR_FLOAT("rend-fakeradio-darkness", &rendFakeRadioDarkness, 0, 0, 2);
 }
 
 float Rend_RadioShadowDarkness(int lightlevel)

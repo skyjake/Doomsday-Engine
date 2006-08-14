@@ -94,20 +94,14 @@ cross_t crosshairs[NUM_XHAIRS] = {
 // CVARs for the crosshair
 cvar_t xhairCVars[] =
 {
-    {"view-cross-type", CVF_NO_MAX | CVF_PROTECTED, CVT_INT, &cfg.xhair, 0, 0,
-        "The current crosshair."},
+    {"view-cross-type", CVF_NO_MAX | CVF_PROTECTED, CVT_INT, &cfg.xhair, 0, 0},
 
-    {"view-cross-size", CVF_NO_MAX, CVT_INT, &cfg.xhairSize, 0, 0,
-        "Crosshair size: 1=Normal."},
+    {"view-cross-size", CVF_NO_MAX, CVT_INT, &cfg.xhairSize, 0, 0},
 
-    {"view-cross-r", 0, CVT_BYTE, &cfg.xhairColor[0], 0, 255,
-        "Crosshair color red component."},
-    {"view-cross-g", 0, CVT_BYTE, &cfg.xhairColor[1], 0, 255,
-        "Crosshair color green component."},
-    {"view-cross-b", 0, CVT_BYTE, &cfg.xhairColor[2], 0, 255,
-        "Crosshair color blue component."},
-    {"view-cross-a", 0, CVT_BYTE, &cfg.xhairColor[3], 0, 255,
-        "Crosshair color alpha component."},
+    {"view-cross-r", 0, CVT_BYTE, &cfg.xhairColor[0], 0, 255},
+    {"view-cross-g", 0, CVT_BYTE, &cfg.xhairColor[1], 0, 255},
+    {"view-cross-b", 0, CVT_BYTE, &cfg.xhairColor[2], 0, 255},
+    {"view-cross-a", 0, CVT_BYTE, &cfg.xhairColor[3], 0, 255},
     {NULL}
 };
 

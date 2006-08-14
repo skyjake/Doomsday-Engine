@@ -89,123 +89,71 @@ float   consoleZoom = 1;
 // Console variables.
 cvar_t  gameCVars[] = {
 // Console
-    {"con-flat", CVF_NO_MAX, CVT_INT, &consoleFlat, 0, 0,
-        "The number of the flat to use for the console background."},
-    {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f,
-        "Zoom factor for the console background."},
+    {"con-flat", CVF_NO_MAX, CVT_INT, &consoleFlat, 0, 0},
+    {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13,
-        "View window size (3-13)."},
-    {"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1,
-        "1=Show level title and author in the beginning."},
+    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13},
+    {"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1},
 
-    {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1,
-        "Scale for viewheight bobbing."},
-    {"view-bob-weapon", 0, CVT_FLOAT, &cfg.bobWeapon, 0, 1,
-        "Scale for player weapon bobbing."},
+    {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1},
+    {"view-bob-weapon", 0, CVT_FLOAT, &cfg.bobWeapon, 0, 1},
 
 // Server-side options
     // Game state
-    {"server-game-skill", 0, CVT_BYTE,
-        &cfg.netSkill, 0, 4,
-        "Skill level in multiplayer games."},
-    {"server-game-map", 0, CVT_BYTE,
-        &cfg.netMap, 1, 99,
-        "Map to use in multiplayer games."},
+    {"server-game-skill", 0, CVT_BYTE, &cfg.netSkill, 0, 4},
+    {"server-game-map", 0, CVT_BYTE, &cfg.netMap, 1, 99},
     {"server-game-deathmatch", 0, CVT_BYTE,
-        &cfg.netDeathmatch, 0, 1, /* jHexen only has one deathmatch mode */
-        "1=Start multiplayers games as deathmatch."},
+        &cfg.netDeathmatch, 0, 1}, /* jHexen only has one deathmatch mode */
 
     // Modifiers
-    {"server-game-mod-damage", 0, CVT_BYTE,
-        &cfg.netMobDamageModifier, 1, 100,
-        "Enemy (mob) damage modifier, multiplayer (1..100)."},
-    {"server-game-mod-health", 0, CVT_BYTE,
-        &cfg.netMobHealthModifier, 1, 20,
-        "Enemy (mob) health modifier, multiplayer (1..20)."},
-
-    {"server-game-mod-gravity", 0, CVT_INT,
-        &cfg.netGravity, -1, 100,
-        "World gravity modifier, multiplayer (-1..100). -1 = Map default."},
+    {"server-game-mod-damage", 0, CVT_BYTE, &cfg.netMobDamageModifier, 1, 100},
+    {"server-game-mod-health", 0, CVT_BYTE, &cfg.netMobHealthModifier, 1, 20},
+    {"server-game-mod-gravity", 0, CVT_INT, &cfg.netGravity, -1, 100},
 
     // Gameplay options
-    {"server-game-jump", 0, CVT_BYTE,
-        &cfg.netJumping, 0, 1,
-        "1=Allow jumping in multiplayer games."},
-    {"server-game-nomonsters", 0, CVT_BYTE,
-        &cfg.netNomonsters, 0, 1,
-        "1=No monsters."},
-    {"server-game-randclass", 0, CVT_BYTE,
-        &cfg.netRandomclass, 0, 1,
-        "1=Respawn in a random class (deathmatch)."},
+    {"server-game-jump", 0, CVT_BYTE, &cfg.netJumping, 0, 1},
+    {"server-game-nomonsters", 0, CVT_BYTE, &cfg.netNomonsters, 0, 1},
+    {"server-game-randclass", 0, CVT_BYTE, &cfg.netRandomclass, 0, 1},
     {"server-game-radiusattack-nomaxz", 0, CVT_BYTE,
-        &cfg.netNoMaxZRadiusAttack, 0, 1,
-        "1=ALL radius attacks are infinitely tall."},
+        &cfg.netNoMaxZRadiusAttack, 0, 1},
     {"server-game-monster-meleeattack-nomaxz", 0, CVT_BYTE,
-        &cfg.netNoMaxZMonsterMeleeAttack, 0, 1,
-        "1=Monster melee attacks are infinitely tall."},
+        &cfg.netNoMaxZMonsterMeleeAttack, 0, 1},
 
 // Player
     // Player data
-    {"player-color", 0, CVT_BYTE,
-        &cfg.netColor, 0, 8,
-        "Player color: 0=blue, 1=red, 2=yellow, 3=green, 4=jade, 5=white,\n6=hazel, 7=purple, 8=auto."},
-    {"player-eyeheight", 0, CVT_INT,
-        &cfg.plrViewHeight, 41, 54,
-        "Player eye height (the original is 41)."},
-    {"player-class", 0, CVT_BYTE,
-        &cfg.netClass, 0, 2,
-        "Player class in multiplayer games."},
+    {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 8},
+    {"player-eyeheight", 0, CVT_INT, &cfg.plrViewHeight, 41, 54},
+    {"player-class", 0, CVT_BYTE, &cfg.netClass, 0, 2},
 
     // Movment
-    {"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1,
-        "Player movement speed modifier."},
-    {"player-jump", 0, CVT_INT, &cfg.jumpEnabled, 0, 1,
-        "1=Allow jumping."},
-    {"player-jump-power", 0, CVT_FLOAT, &cfg.jumpPower, 0, 100,
-        "Jump power (for all clients if this is the server)."},
-    {"player-air-movement", 0, CVT_BYTE, &cfg.airborneMovement, 0, 32,
-        "Player movement speed while airborne and NOT flying."},
+    {"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1},
+    {"player-jump", 0, CVT_INT, &cfg.jumpEnabled, 0, 1},
+    {"player-jump-power", 0, CVT_FLOAT, &cfg.jumpPower, 0, 100},
+    {"player-air-movement", 0, CVT_BYTE, &cfg.airborneMovement, 0, 32},
 
     // Weapon switch preferences
-    {"player-autoswitch", 0, CVT_BYTE,
-        &cfg.weaponAutoSwitch, 0, 2,
-        "Change weapon automatically when picking one up. 1=If better 2=Always"},
+    {"player-autoswitch", 0, CVT_BYTE, &cfg.weaponAutoSwitch, 0, 2},
 
     // Weapon Order preferences
-    {"player-weapon-order0", 0, CVT_INT,
-        &cfg.weaponOrder[0], 0, NUMWEAPONS,
-        "Weapon change order, slot 0."},
-    {"player-weapon-order1", 0, CVT_INT,
-        &cfg.weaponOrder[1], 0, NUMWEAPONS,
-        "Weapon change order, slot 1."},
-    {"player-weapon-order2", 0, CVT_INT,
-        &cfg.weaponOrder[2], 0, NUMWEAPONS,
-        "Weapon change order, slot 2."},
-    {"player-weapon-order3", 0, CVT_INT,
-        &cfg.weaponOrder[3], 0, NUMWEAPONS,
-        "Weapon change order, slot 3."},
+    {"player-weapon-order0", 0, CVT_INT, &cfg.weaponOrder[0], 0, NUMWEAPONS},
+    {"player-weapon-order1", 0, CVT_INT, &cfg.weaponOrder[1], 0, NUMWEAPONS},
+    {"player-weapon-order2", 0, CVT_INT, &cfg.weaponOrder[2], 0, NUMWEAPONS},
+    {"player-weapon-order3", 0, CVT_INT, &cfg.weaponOrder[3], 0, NUMWEAPONS},
 
-    {"player-weapon-nextmode", 0, CVT_BYTE,
-        &cfg.weaponNextMode, 0, 1,
-        "1= Use custom weapon order with Next/Previous weapon."},
+    {"player-weapon-nextmode", 0, CVT_BYTE, &cfg.weaponNextMode, 0, 1},
 
     // Misc
-    {"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1,
-        "1=Camera players have no movement clipping."},
+    {"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1,
-        "1=Fast monsters in non-demo single player."},
+    {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
 
 // Gameplay
-    {"game-maulator-time", CVF_NO_MAX, CVT_INT, &MaulatorSeconds, 1, 0,
-        "Dark Servant lifetime, in seconds (default: 25)."},
+    {"game-maulator-time", CVF_NO_MAX, CVT_INT, &MaulatorSeconds, 1, 0},
 
 // Game options (non-gameplay affecting)
-    {"game-icecorpse", 0, CVT_INT, &cfg.translucentIceCorpse, 0, 1,
-        "1=Translucent frozen monsters."},
+    {"game-icecorpse", 0, CVT_INT, &cfg.translucentIceCorpse, 0, 1},
 
     {NULL}
 };

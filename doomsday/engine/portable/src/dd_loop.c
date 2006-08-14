@@ -88,8 +88,7 @@ static boolean firstTic = true;
  */
 void DD_RegisterLoop(void)
 {
-    C_VAR_INT("refresh-rate-maximum", &maxFrameRate, 0, 35, 1000,
-        "Maximum limit for the frame rate (default: 200).");
+    C_VAR_INT("refresh-rate-maximum", &maxFrameRate, 0, 35, 1000);
 }
 
 /*
@@ -170,10 +169,10 @@ void DD_DrawAndBlit(void)
         gl.PushMatrix();
         gl.LoadIdentity();
         gl.Ortho(0, 0, 320, 200, -1, 1);
-        
+
         // Update the world ready for drawing view(s) of it.
         R_SetupWorldFrame();
-        
+
         // Draw the game graphics.
         gx.G_Drawer();
         // The colored filter.
@@ -186,11 +185,11 @@ void DD_DrawAndBlit(void)
             // Draw Menu
             gx.MN_Drawer();
         }
-        
+
         // Restore the projection mode that was previously in effect.
         gl.MatrixMode(DGL_PROJECTION);
         gl.PopMatrix();
-        
+
         // Debug information.
         Net_Drawer();
         S_Drawer();

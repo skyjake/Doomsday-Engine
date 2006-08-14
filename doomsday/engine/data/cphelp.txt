@@ -516,3 +516,615 @@ desc = Show detailed version information.
 
 [write]
 desc = Write  bindings and aliases to a file.
+
+#
+# CONSOLE VARIABLES
+#
+[con-alpha]
+desc = Console background translucency.
+
+[con-light]
+desc = Console background light level.
+
+[con-completion]
+desc = How to complete words when pressing Tab: 0=Show completions, 1=Cycle through them.
+
+[con-dump]
+desc = 1=Dump all console messages to Doomsday.out.
+
+[con-key-activate]
+desc = Key to activate the console (ASCII code, default is tilde, 96).
+
+[con-key-show]
+desc = 1=Show ASCII codes of pressed keys in the console.
+
+[con-var-silent]
+desc = 1=Don't show the value of a cvar when setting it.
+
+[con-progress]
+desc = 1=Show progress bar.
+
+[con-fps]
+desc = 1=Show FPS counter on screen.
+
+[con-text-shadow]
+desc = 1=Text in the console has a shadow (might be slow).
+
+[con-move-speed]
+desc = Speed of console opening/closing.
+
+[ui-panel-help]
+desc = 1=Enable help window in Control Panel.
+
+[ui-panel-tips]
+desc = 1=Show help indicators in Control Panel.
+
+[ui-cursor-width]
+desc = Mouse cursor width.
+
+[ui-cursor-height]
+desc = Mouse cursor height.
+
+[vid-res-x]
+desc = Default resolution (X).
+
+[vid-res-y]
+desc = Default resolution (Y).
+
+[vid-gamma]
+desc = Display gamma correction factor: 1=normal.
+
+[vid-contrast]
+desc = Display contrast: 1=normal.
+
+[vid-bright]
+desc = Display brightness: -1=dark, 0=normal, 1=light.
+
+[rend-dev-wireframe]
+desc = 1=Render player view in wireframe mode.
+
+[rend-dev-framecount]
+desc = Frame counter.
+
+[rend-info-lums]
+desc = =Print lumobj count after rendering a frame.
+
+[rend-light-ambient]
+desc = Ambient light level.
+
+[rend-light]
+desc = 1=Render dynamic lights.
+
+[rend-light-blend]
+desc = Dynamic lights color blending mode: 0=normal, 1=additive, 2=no blending.
+
+[rend-light-bright]
+desc = Intensity factor for dynamic lights.
+
+[rend-light-num]
+desc = The maximum number of dynamic lights. 0=no limit.
+
+[rend-light-radius-scale]
+desc = A multiplier for dynlight radii (default: 1).
+
+[rend-light-radius-max]
+desc = Maximum radius of dynamic lights (default: 128).
+
+[rend-light-radius-min-bias]
+desc = Minimum dynamic light radius to convert to BIAS light source.
+
+[rend-light-wall-angle]
+desc = Intensity of angle-based wall light.
+
+[rend-light-multitex]
+desc = 1=Use multitexturing when rendering dynamic lights.
+
+[rend-light-decor]
+desc = 1=Enable surface light decorations.
+
+[rend-light-decor-plane-far]
+desc = Maximum distance at which plane light decorations are visible.
+
+[rend-light-decor-wall-far]
+desc = Maximum distance at which wall light decorations are visible.
+
+[rend-light-decor-plane-bright]
+desc = Brightness of plane light decorations.
+
+[rend-light-decor-wall-bright]
+desc = Brightness of wall light decorations.
+
+[rend-light-decor-angle]
+desc = Reduce brightness if surface/view angle too steep.
+
+[rend-light-sky]
+desc = 1=Use special light color in sky sectors.
+
+[rend-glow]
+desc = 1=Enable glowing textures.
+
+[rend-glow-wall]
+desc = 1=Render glow on walls.
+
+[rend-glow-height]
+desc = Max height of wall glow (default: 100).
+
+[rend-glow-scale]
+desc = A multiplier for glow height (default: 1).
+
+[rend-glow-fog-bright]
+desc = Brightness of wall glow when fog is enabled.
+
+[rend-halo]
+desc = Number of flares to draw per light.
+
+[rend-halo-realistic]
+desc = 1=Use more realistic halo effects.
+
+[rend-halo-bright]
+desc = Halo/flare brightness.
+
+[rend-halo-occlusion]
+desc = Rate at which occluded halos fade.
+
+[rend-halo-size]
+desc = Size of halos.
+
+[rend-halo-secondary-limit]
+desc = Minimum halo size.
+
+[rend-halo-fade-far]
+desc = Distance at which halos are no longer visible.
+
+[rend-halo-fade-near]
+desc = Distance to begin fading halos.
+
+[rend-tex]
+desc = 1=Render with textures.
+
+[rend-tex-gamma]
+desc = The gamma correction level (0-4).
+
+[rend-tex-mipmap]
+desc = The mipmapping mode for textures.
+
+[rend-tex-paletted]
+desc = 1=Use the GL_EXT_shared_texture_palette extension.
+
+[rend-tex-external-always]
+desc = 1=Always use external texture resources (overrides -pwadtex).
+
+[rend-tex-quality]
+desc = The quality of textures (0-8).
+
+[rend-tex-filter-sprite]
+desc = 1=Render smooth sprites.
+
+[rend-tex-filter-raw]
+desc = 1=Fullscreen images (320x200) use linear interpolation.
+
+[rend-tex-filter-smart]
+desc = 1=Use hq2x-filtering on all textures.
+
+[rend-tex-filter-mag]
+desc = 1=Use bilinear filtering for texture magnification.
+
+[rend-tex-detail]
+desc = 1=Render with detail textures.
+
+[rend-tex-detail-scale]
+desc = Global detail texture factor.
+
+[rend-tex-detail-strength]
+desc = Global detail texture strength factor.
+
+[rend-tex-detail-multitex]
+desc = 1=Use multitexturing when rendering detail textures.
+
+[rend-sky-detail]
+desc = Number of sky sphere quadrant subdivisions.
+
+[rend-sky-rows]
+desc = Number of sky sphere rows.
+
+[rend-sky-distance]
+desc = Sky sphere radius.
+
+[rend-sky-full]
+desc = 1=Always render the full sky sphere.
+
+[rend-sky-simple]
+desc = Sky rendering mode: 0=normal, 1=quads.
+
+[rend-sprite-align-angle]
+desc = Maximum angle for slanted sprites (spralign 2).
+
+[rend-sprite-noz]
+desc = 1=Don't write sprites in the Z buffer.
+
+[rend-sprite-precache]
+desc = 1=Precache sprites at level setup (slow).
+
+[rend-sprite-align]
+desc = 1=Always align sprites with the view plane. 2=Align to camera, unless slant > r_maxSpriteAngle.
+
+[rend-sprite-blend]
+desc = 1=Use additive blending for explosions.
+
+[rend-sprite-lit]
+desc = 1=Sprites lit using dynamic lights.
+
+[rend-sprite-mode]
+desc = 1=Draw sprites and masked walls with hard edges.
+
+[rend-model]
+desc = Render using 3D models when possible.
+
+[rend-model-lights]
+desc = Maximum number of light sources on models.
+
+[rend-model-inter]
+desc = 1=Interpolate frames.
+
+[rend-model-aspect]
+desc = Scale for MD2 z-axis when model is loaded.
+
+[rend-model-distance]
+desc = Farther than this models revert back to sprites.
+
+[rend-model-precache]
+desc = 1=Precache 3D models at level setup (slow).
+
+[rend-model-lod]
+desc = Custom level of detail factor. 0=LOD disabled, 1=normal.
+
+[rend-model-mirror-hud]
+desc = 1=Mirror HUD weapon models.
+
+[rend-model-spin-speed]
+desc = Speed of model spinning, 1=normal.
+
+[rend-model-shiny-multitex]
+desc = 1=Enable multitexturing with shiny model skins.
+
+[rend-hud-offset-scale]
+desc = Scaling of player weapon (x,y) offset.
+
+[rend-hud-fov-shift]
+desc = When FOV > 90 player weapon is shifted downward.
+
+[rend-mobj-smooth-move]
+desc = 1=Use short-range visual offsets for models. 2=Use SRVO for sprites, too (unjags actor movement).
+
+[rend-mobj-smooth-turn]
+desc = 1=Use separate visual angle for mobjs (unjag actors).
+
+[rend-particle]
+desc = 1=Render particle effects.
+
+[rend-particle-max]
+desc = Maximum number of particles to render. 0=no limit.
+
+[rend-particle-rate]
+desc = Particle spawn rate multiplier (default: 1).
+
+[rend-particle-diffuse]
+desc = Diffuse factor for particles near the camera.
+
+[rend-particle-visible-near]
+desc = Minimum visible distance for a particle.
+
+[rend-shadow]
+desc = 1=Render shadows under objects.
+
+[rend-shadow-darkness]
+desc = Darkness factor for object shadows.
+
+[rend-shadow-far]
+desc = Maximum distance where shadows are visible.
+
+[rend-shadow-radius-max]
+desc = Maximum radius of object shadows.
+
+[server-name]
+desc = The name of this computer if it's a server.
+
+[server-info]
+desc = The description given of this computer if it's a server.
+
+[server-public]
+desc = 1=Send info to master server.
+
+[net-name]
+desc = Your name in multiplayer games.
+
+[net-master-address]
+desc = Master server IP address / name.
+
+[net-master-port]
+desc = Master server TCP/IP port.
+
+[net-master-path]
+desc = Master server path name.
+
+[sound-volume]
+desc = Sound effects volume (0-255).
+
+[sound-info]
+desc = 1=Show sound debug information.
+
+[sound-rate]
+desc = Sound effects sample rate (11025, 22050, 44100).
+
+[sound-16bit]
+desc = 1=16-bit sound effects/resampling.
+
+[sound-3d]
+desc = 1=Play sound effects in 3D.
+
+[sound-reverb-volume]
+desc = Reverb effects general volume (0=disable).
+
+[music-volume]
+desc = Music volume (0-255).
+
+[music-source]
+desc = Preferred music source: 0=Original MUS, 1=External files, 2=CD.
+
+[file-startup]
+desc = The list of WADs to be loaded at startup.
+
+[blockmap-build]
+desc = Automatically generate blockmap data when necessary, 0=Never, 1=When needed, 2=Always.
+
+[reject-build]
+desc = Automatically generate reject data when necessary, 0=Never, 1=When needed, 2=Always.
+
+[refresh-rate-maximum]
+desc = Maximum limit for the frame rate (default: 200).
+
+[input-key-delay1]
+desc = The number of milliseconds to wait before first key repeat.
+
+[input-key-delay2]
+desc = The number of milliseconds to wait between key repeats.
+
+[input-key-show-scancodes]
+desc = 1=Show scancodes of all pressed keys in the console.
+
+[input-joy-sensi]
+desc = Joystick sensitivity.
+
+[input-joy-deadzone]
+desc = Joystick dead zone, in percents.
+
+[input-mouse-wheel-sensi]
+desc = Mouse wheel sensitivity.
+
+[input-mouse-x-disable]
+desc = 1=Disable mouse X axis.
+
+[input-mouse-y-disable]
+desc = 1=Disable mouse Y axis.
+
+[input-mouse-y-inverse]
+desc = 1=Inversed mouse Y axis.
+
+[input-mouse-filter]
+desc = Filter strength for mouse movement.
+
+[input-mouse-frequency]
+desc = Mouse input polling frequency (events per second). 0=unlimited.
+
+[input-joy-device]
+desc = ID of joystick to use (if more than one).
+
+[input-joy]
+desc = 1=Enable joystick input.
+
+[input-joy-x-inverse]
+desc = 1=Inverse joystick X axis.
+
+[input-joy-y-inverse]
+desc = 1=Inverse joystick Y axis.
+
+[input-joy-z-inverse]
+desc = 1=Inverse joystick Z axis.
+
+[input-joy-rx-inverse]
+desc = 1=Inverse joystick RX axis.
+
+[input-joy-ry-inverse]
+desc = 1=Inverse joystick RY axis.
+
+[input-joy-rz-inverse]
+desc = 1=Inverse joystick RZ axis.
+
+[input-joy-slider1-inverse]
+desc = 1=Inverse joystick slider 1.
+
+[input-joy-slider2-inverse]
+desc = 1=Inverse joystick slider 2.
+
+[net-ip-address]
+desc = TCP/IP address for searching servers.
+
+[net-ip-port]
+desc = TCP port to use for control connections.
+
+[net-port-control]
+desc = TCP port to use for control connections.
+
+[net-port-data]
+desc = UDP port to use for client data traffic.
+
+[net-queue-show]
+desc = Monitor send queue.
+
+[net-dev]
+desc = Network development mode.
+
+[net-nosleep]
+desc = 1=Don't sleep while waiting for tics.
+
+[client-pos-interval]
+desc = Number of tics between client coord packets.
+
+[client-connect-timeout]
+desc = Maximum number of seconds to attempt connecting to a server.
+
+[server-password]
+desc = Password for remote login.
+
+[server-latencies]
+desc = Show client latencies.
+
+[server-frame-interval]
+desc = Minimum number of tics between sent frames.
+
+[server-player-limit]
+desc = Maximum number of players on the server.
+
+[rend-bias-grid]
+desc = 1=Smooth sector lighting is enabled.
+
+[rend-bias-grid-debug]
+desc = 1=Show the light grid (for debugging).
+
+[rend-bias-grid-debug-size]
+desc = Size of a grid block in the light grid debug display.
+
+[rend-bias-grid-blocksize]
+desc = Size of a grid block in the light grid (default: 31).
+
+[rend-bias-grid-multisample]
+desc = Sector to grid block, conversion accuracy multiplier.
+
+[rend-info-tris]
+desc = 1=Print triangle count after rendering a frame.
+
+[rend-info-frametime]
+desc = 1=Print frame time offsets.
+
+[rend-camera-smooth]
+desc = 1=Filter camera movement between game tics (OBSOLETE).
+
+[bsp-build]
+desc = 1=Build GL nodes when loading a map.
+
+[bsp-cache]
+desc = 1=Load generated GL nodes data from the bspcache directory. 0=Always generate new GL data.
+
+[bsp-factor]
+desc = glBSP: changes the cost assigned to SEG splits (default: 7).
+
+[con-show-during-setup]
+desc = 1=Show console when a map is being loaded.
+
+[rend-fakeradio]
+desc = 1=Enable simulated radiosity lighting.
+
+[rend-fakeradio-darkness]
+desc = Darkness of simulated radiosity shadows.
+
+[rend-halo-zmag-div]
+desc = Halo Z magnification.
+
+[rend-halo-radius-min]
+desc = Minimum halo radius.
+
+[rend-halo-dim-near]
+desc = Halo dimming relative start distance.
+
+[rend-halo-dim-far]
+desc = Halo dimming relative end distance.
+
+[rend-dev-freeze]
+desc = 1=Stop updating rendering lists.
+
+[rend-dev-cull-subsectors]
+desc = 1=Disable non-visible subsector culling.
+
+[rend-dev-mobj-bbox]
+desc = 1=Render mobj bounding boxes (as used for collision detection).
+
+[rend-camera-fov]
+desc = Field of view.
+
+[rend-tex-anim-smooth]
+desc = 1=Enable interpolated texture animation.
+
+[rend-tex-shiny]
+desc = 1=Enable shiny textures on surfaces of the map.
+
+[rend-light-compression]
+desc = Sector light range compression (brighten dark areas / darken light areas).
+
+[rend-light-adaptation]
+desc = Controls the overall strength of light adaptation
+
+[rend-light-adaptation-mul]
+desc = Light adaptation range multiplier.
+
+[rend-light-adaptation-ramp]
+desc = Light adaptation range ramp multiplier.
+
+[rend-light-adaptation-darktime]
+desc = Time it takes to adapt to dark lighting conditions in seconds.
+
+[rend-light-adaptation-brighttime]
+desc = Time it takes to adapt to bright lighting conditions in seconds.
+
+[rend-dev-light-modmatrix]
+desc = Show light modification matrix.
+
+[rend-model-shiny-strength]
+desc = General strength of model shininess effects.
+
+[edit-bias-blink]
+desc = 1=Blink the cursor.
+
+[edit-bias-grab-distance]
+desc = Distance to the grabbed bias light.
+
+[edit-bias-red]
+desc = Red component of the bias light color.
+
+[edit-bias-green]
+desc = Green component of the bias light color.
+
+[edit-bias-blue]
+desc = Blue component of the bias light color.
+
+[edit-bias-intensity]
+desc = Intensity of the bias light.
+
+[edit-bias-hide]
+desc = 1=Hide bias light editor's HUD.
+
+[edit-bias-show-sources]
+desc = 1=Show all light sources.
+
+[edit-bias-show-indices]
+desc = 1=Show source indices in 3D view.
+
+[rend-fog-default]
+desc = Default fog mode: 0=linear, 1=exp, 2=exp2.
+
+[rend-bias]
+desc = 1=Enable the experimental shadow bias test setup.
+
+[rend-bias-min]
+desc = Sector lightlevel that is biased completely to zero.
+
+[rend-bias-max]
+desc = Sector lightlevel that retains its normal color.
+
+[rend-bias-lightspeed]
+desc = Milliseconds it takes for light changes to become effective.
+
+[rend-dev-bias-sight]
+desc = 1=Enable the use of line-of-sight checking with shadow bias.
+
+[rend-dev-bias-affected]
+desc = 1=Keep track which sources affect which surfaces.

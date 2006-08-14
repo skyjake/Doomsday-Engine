@@ -182,58 +182,46 @@ static const char english_shiftxform[] = {
 };
 
 cvar_t msgCVars[] = {
-    {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1,
-        "1=Show messages."},
+    {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1},
 
     // Behaviour
-    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1,
-        "1=Echo all messages to the console."},
+    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
 
 #if !__JHEXEN__
-    {"msg-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1,
-        "1=Announce the discovery of secret areas."},
+    {"msg-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1},
 #endif
 
-    {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8,
-        "Number of HUD messages displayed at the same time."},
+    {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
 
-    {"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0,
-        "Number of tics to keep HUD messages on screen."},
+    {"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0},
 
 #if __JHEXEN__
-    {"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2,
-        "Override the transition hub message."},
+    {"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2},
 #endif
 
     // Display style
-    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0,
-        "Scaling factor for HUD messages."},
+    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0},
 
-    {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2,
-        "Alignment of HUD messages. 0 = left, 1 = center, 2 = right."},
+    {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2},
 
     // Colour (default, individual message may have built-in colour settings)
-    {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1,
-        "Color of HUD messages red component."},
-    {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1,
-        "Color of HUD messages green component."},
-    {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1,
-        "Color of HUD messages blue component."},
+    {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1},
+    {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1},
+    {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1},
 
-    {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0,
-        "HUD messages blink for this number of tics when printed."},
+    {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0},
 
     // Chat macros
-    {"chat-macro0", 0, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0, "Chat macro 1."},
-    {"chat-macro1", 0, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0, "Chat macro 2."},
-    {"chat-macro2", 0, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0, "Chat macro 3."},
-    {"chat-macro3", 0, CVT_CHARPTR, &cfg.chat_macros[3], 0, 0, "Chat macro 4."},
-    {"chat-macro4", 0, CVT_CHARPTR, &cfg.chat_macros[4], 0, 0, "Chat macro 5."},
-    {"chat-macro5", 0, CVT_CHARPTR, &cfg.chat_macros[5], 0, 0, "Chat macro 6."},
-    {"chat-macro6", 0, CVT_CHARPTR, &cfg.chat_macros[6], 0, 0, "Chat macro 7."},
-    {"chat-macro7", 0, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0, "Chat macro 8."},
-    {"chat-macro8", 0, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0, "Chat macro 9."},
-    {"chat-macro9", 0, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0, "Chat macro 10."},
+    {"chat-macro0", 0, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0},
+    {"chat-macro1", 0, CVT_CHARPTR, &cfg.chat_macros[1], 0, 0},
+    {"chat-macro2", 0, CVT_CHARPTR, &cfg.chat_macros[2], 0, 0},
+    {"chat-macro3", 0, CVT_CHARPTR, &cfg.chat_macros[3], 0, 0},
+    {"chat-macro4", 0, CVT_CHARPTR, &cfg.chat_macros[4], 0, 0},
+    {"chat-macro5", 0, CVT_CHARPTR, &cfg.chat_macros[5], 0, 0},
+    {"chat-macro6", 0, CVT_CHARPTR, &cfg.chat_macros[6], 0, 0},
+    {"chat-macro7", 0, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0},
+    {"chat-macro8", 0, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0},
+    {"chat-macro9", 0, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0},
     {NULL}
 };
 

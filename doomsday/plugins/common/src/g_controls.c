@@ -94,12 +94,12 @@ extern boolean sendpause;
 
 // Binding classes (for the dynamic event responder chain)
 bindclass_t BindClasses[] = {
-    {"map", GBC_CLASS1, 0, 0},
-    {"mapfollowoff", GBC_CLASS2, 0, 0},
-    {"menu", GBC_CLASS3, 0, 1},
-    {"menuhotkey", GBC_MENUHOTKEY, 1, 0},
-    {"chat", GBC_CHAT, 0, 0},
-    {"message", GBC_MESSAGE, 0, 1},
+    {"map",             GBC_CLASS1,     0, 0},
+    {"mapfollowoff",    GBC_CLASS2,     0, 0},
+    {"menu",            GBC_CLASS3,     0, 1},
+    {"menuhotkey",      GBC_MENUHOTKEY, 1, 0},
+    {"chat",            GBC_CHAT,       0, 0},
+    {"message",         GBC_MESSAGE,    0, 1},
     {NULL}
 };
 
@@ -134,66 +134,42 @@ static int     joymove[NUM_JOYSTICK_AXES];
 cvar_t  controlCVars[] = {
 // Input (settings)
     // Mouse
-    {"input-mouse-x-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiX, 0, 25,
-        "Mouse X axis sensitivity."},
-    {"input-mouse-y-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiY, 0, 25,
-        "Mouse Y axis sensitivity."},
+    {"input-mouse-x-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiX, 0, 25},
+    {"input-mouse-y-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiY, 0, 25},
 
     // Joystick/Gamepad
-    {"input-joy-x", 0, CVT_INT, &cfg.joyaxis[0], 0, 4,
-        "X axis control: 0=None, 1=Move, 2=Turn, 3=Strafe, 4=Look."},
-    {"input-joy-y", 0, CVT_INT, &cfg.joyaxis[1], 0, 4,
-        "Y axis control."},
-    {"input-joy-z", 0, CVT_INT, &cfg.joyaxis[2], 0, 4,
-        "Z axis control."},
-    {"input-joy-rx", 0, CVT_INT, &cfg.joyaxis[3], 0, 4,
-        "X rotational axis control."},
-    {"input-joy-ry", 0, CVT_INT, &cfg.joyaxis[4], 0, 4,
-        "Y rotational axis control."},
-    {"input-joy-rz", 0, CVT_INT, &cfg.joyaxis[5], 0, 4,
-        "Z rotational axis control."},
+    {"input-joy-x", 0, CVT_INT, &cfg.joyaxis[0], 0, 4},
+    {"input-joy-y", 0, CVT_INT, &cfg.joyaxis[1], 0, 4},
+    {"input-joy-z", 0, CVT_INT, &cfg.joyaxis[2], 0, 4},
+    {"input-joy-rx", 0, CVT_INT, &cfg.joyaxis[3], 0, 4},
+    {"input-joy-ry", 0, CVT_INT, &cfg.joyaxis[4], 0, 4},
+    {"input-joy-rz", 0, CVT_INT, &cfg.joyaxis[5], 0, 4},
 
-    {"input-joy-slider1", 0, CVT_INT, &cfg.joyaxis[6], 0, 4,
-        "First slider control."},
-    {"input-joy-slider2", 0, CVT_INT, &cfg.joyaxis[7], 0, 4,
-        "Second slider control."},
+    {"input-joy-slider1", 0, CVT_INT, &cfg.joyaxis[6], 0, 4},
+    {"input-joy-slider2", 0, CVT_INT, &cfg.joyaxis[7], 0, 4},
 
 // Control (options/preferences)
-    {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1,
-        "1=Autoaiming disabled."},
+    {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1},
 
-    {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5,
-        "The speed of turning left/right."},
-    {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1,
-        "1=Always run."},
+    {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5},
+    {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
 
-    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickuse, 0, 1,
-        "1=Doubleclick forward/strafe equals use key."},
+    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickuse, 0, 1},
 #if !__JDOOM__
-    {"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1,
-        "1=Use items immediately from the inventory."},
-    {"ctl-use-next", 0, CVT_INT, &cfg.inventoryNextOnUnuse, 0, 1,
-        "1=Automatically select the next inventory item when unusable."},
+    {"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1},
+    {"ctl-use-next", 0, CVT_INT, &cfg.inventoryNextOnUnuse, 0, 1},
 #endif
 
-    {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5,
-        "The speed of looking up/down."},
-    {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1,
-        "1=Lookspring active."},
+    {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
+    {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
 
-    {"ctl-look-mouse", 0, CVT_INT, &cfg.usemlook, 0, 1,
-        "1=Mouse look active."},
-    {"ctl-look-mouse-inverse", 0, CVT_INT, &cfg.mlookInverseY, 0, 1,
-        "1=Inverse mouse look Y axis."},
+    {"ctl-look-mouse", 0, CVT_INT, &cfg.usemlook, 0, 1},
+    {"ctl-look-mouse-inverse", 0, CVT_INT, &cfg.mlookInverseY, 0, 1},
 
-    {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1,
-        "1=Look around using the POV hat."},
-    {"ctl-look-joy", 0, CVT_INT, &cfg.usejlook, 0, 1,
-        "1=Joystick look active."},
-    {"ctl-look-joy-inverse", 0, CVT_INT, &cfg.jlookInverseY, 0, 1,
-        "1=Inverse joystick look Y axis."},
-    {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jlookDeltaMode, 0, 1,
-        "1=Joystick values => look angle delta."},
+    {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
+    {"ctl-look-joy", 0, CVT_INT, &cfg.usejlook, 0, 1},
+    {"ctl-look-joy-inverse", 0, CVT_INT, &cfg.jlookInverseY, 0, 1},
+    {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jlookDeltaMode, 0, 1},
 
     {NULL}
 };

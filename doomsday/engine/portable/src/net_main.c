@@ -107,25 +107,15 @@ static int coordTimer = 0;
 
 void Net_Register(void)
 {
-    C_VAR_BYTE("net-queue-show", &monitorSendQueue, 0, 0, 1,
-               "Monitor send queue.");
-    C_VAR_BYTE("net-dev", &net_dev, 0, 0, 1, "Network development mode.");
-    C_VAR_BYTE("net-nosleep", &net_dontsleep, 0, 0, 1,
-               "1=Don't sleep while waiting for tics.");
-    C_VAR_INT("client-pos-interval", &net_coordtime, CVF_NO_MAX, 0, 0,
-              "Number of tics between client coord packets.");
-    C_VAR_FLOAT("client-connect-timeout", &net_connecttimeout, CVF_NO_MAX, 0,
-                0,
-                "Maximum number of seconds to attempt connecting "
-                "to a server.");
-    C_VAR_CHARPTR("server-password", &net_password, 0, 0, 0,
-                  "Password for remote login.");
-    C_VAR_BYTE("server-latencies", &net_showlatencies, 0, 0, 1,
-               "Show client latencies.");
-    C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0,
-              "Minimum number of tics between sent frames.");
-    C_VAR_INT("server-player-limit", &sv_maxPlayers, 0, 0, MAXPLAYERS,
-              "Maximum number of players on the server.");
+    C_VAR_BYTE("net-queue-show", &monitorSendQueue, 0, 0, 1);
+    C_VAR_BYTE("net-dev", &net_dev, 0, 0, 1);
+    C_VAR_BYTE("net-nosleep", &net_dontsleep, 0, 0, 1);
+    C_VAR_INT("client-pos-interval", &net_coordtime, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("client-connect-timeout", &net_connecttimeout, CVF_NO_MAX, 0, 0);
+    C_VAR_CHARPTR("server-password", &net_password, 0, 0, 0);
+    C_VAR_BYTE("server-latencies", &net_showlatencies, 0, 0, 1);
+    C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("server-player-limit", &sv_maxPlayers, 0, 0, MAXPLAYERS);
 
     N_Register();
 }

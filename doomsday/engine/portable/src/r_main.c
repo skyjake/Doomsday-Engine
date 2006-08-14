@@ -116,30 +116,21 @@ static int bspFactor = 7;
  */
 void R_Register(void)
 {
-    C_VAR_INT("rend-info-tris", &rend_info_tris, 0, 0, 1,
-              "1=Print triangle count after rendering a frame.");
+    C_VAR_INT("rend-info-tris", &rend_info_tris, 0, 0, 1);
 
-    C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1,
-               "1=Print frame time offsets.");
+    C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1);
 
-    C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, CVF_HIDE, 0, 1,
-              "1=Filter camera movement between game tics (OBSOLETE).");
+    C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, CVF_HIDE, 0, 1);
 
-    C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1,
-              "1=Build GL nodes when loading a map.");
+    C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1);
 
-    C_VAR_INT("bsp-cache", &bspCache, 0, 0, 1,
-              "1=Load generated GL nodes data from the bspcache directory.\n"
-              "0=Always generate new GL data.");
+    C_VAR_INT("bsp-cache", &bspCache, 0, 0, 1);
 
-    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0,
-              "glBSP: changes the cost assigned to SEG splits (default: 7).");
+    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 
-    C_VAR_INT("con-show-during-setup", &loadInStartupMode, 0, 0, 1,
-              "1=Show console when a map is being loaded.");
+    C_VAR_INT("con-show-during-setup", &loadInStartupMode, 0, 0, 1);
 
-    C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1,
-              "1=Enable Vertical Sync.");
+    C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
 }
 
 /*

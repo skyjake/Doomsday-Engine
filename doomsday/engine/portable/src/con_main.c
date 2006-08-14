@@ -2374,8 +2374,12 @@ D_CMD(Console)
             for(i = 0; i < numCVars; i++)
                 if(!stricmp(argv[1], cvars[i].name))
                 {
-                    Con_Printf("%s\n", cvars[i].help);
-                    return true;
+                    ccmd_help = DH_Find(cvars[i].name);
+                    if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
+                    {
+                        Con_Printf("%s\n", str);
+                        return true;
+                    }
                 }
             Con_Printf("There's no help about '%s'.\n", argv[1]);
         }
@@ -3297,290 +3301,162 @@ static void registerCommands(void)
 static void registerVariables(void)
 {
     // Console
-    C_VAR_INT("con-alpha", &consoleAlpha, 0, 0, 100,
-              "Console background translucency.");
-    C_VAR_INT("con-light", &consoleLight, 0, 0, 100,
-              "Console background light level.");
-    C_VAR_INT("con-completion", &conCompMode, 0, 0, 1,
-              "How to complete words when pressing Tab:\n"
-              "0=Show completions, 1=Cycle through them.");
-    C_VAR_BYTE("con-dump", &consoleDump, 0, 0, 1,
-               "1=Dump all console messages to Doomsday.out.");
-    C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255,
-              "Key to activate the console (ASCII code, "
-              "default is tilde, 96).");
-    C_VAR_BYTE("con-key-show", &consoleShowKeys, 0, 0, 1,
-               "1=Show ASCII codes of pressed keys in the console.");
-    C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1,
-               "1=Don't show the value of a cvar when setting it.");
-    C_VAR_BYTE("con-progress", &progress_enabled, 0, 0, 1,
-               "1=Show progress bar.");
-    C_VAR_BYTE("con-fps", &consoleShowFPS, 0, 0, 1,
-               "1=Show FPS counter on screen.");
-    C_VAR_BYTE("con-text-shadow", &consoleShadowText, 0, 0, 1,
-               "1=Text in the console has a shadow (might be slow).");
-    C_VAR_FLOAT("con-move-speed", &consoleMoveSpeed, 0, 0, 1,
-                "Speed of console opening/closing.");
+    C_VAR_INT("con-alpha", &consoleAlpha, 0, 0, 100);
+    C_VAR_INT("con-light", &consoleLight, 0, 0, 100);
+    C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);
+    C_VAR_BYTE("con-dump", &consoleDump, 0, 0, 1);
+    C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255);
+    C_VAR_BYTE("con-key-show", &consoleShowKeys, 0, 0, 1);
+    C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
+    C_VAR_BYTE("con-progress", &progress_enabled, 0, 0, 1);
+    C_VAR_BYTE("con-fps", &consoleShowFPS, 0, 0, 1);
+    C_VAR_BYTE("con-text-shadow", &consoleShadowText, 0, 0, 1);
+    C_VAR_FLOAT("con-move-speed", &consoleMoveSpeed, 0, 0, 1);
 
     // User Interface
-    C_VAR_BYTE("ui-panel-help", &panel_show_help, 0, 0, 1,
-               "1=Enable help window in Control Panel.");
-    C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1,
-               "1=Show help indicators in Control Panel.");
-    C_VAR_INT("ui-cursor-width", &uiMouseWidth, CVF_NO_MAX, 1, 0,
-              "Mouse cursor width.");
-    C_VAR_INT("ui-cursor-height", &uiMouseHeight, CVF_NO_MAX, 1, 0,
-              "Mouse cursor height.");
+    C_VAR_BYTE("ui-panel-help", &panel_show_help, 0, 0, 1);
+    C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1);
+    C_VAR_INT("ui-cursor-width", &uiMouseWidth, CVF_NO_MAX, 1, 0);
+    C_VAR_INT("ui-cursor-height", &uiMouseHeight, CVF_NO_MAX, 1, 0);
 
     // Video
-    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0,
-              "Default resolution (X).");
-    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0,
-              "Default resolution (Y).");
-    C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6,
-                "Display gamma correction factor: 1=normal.");
-    C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10,
-                "Display contrast: 1=normal.");
-    C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2,
-                "Display brightness: -1=dark, 0=normal, 1=light.");
+    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);
+    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0);
+    C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
+    C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
+    C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
 
     // Render
-    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1,
-              "1=Render player view in wireframe mode.");
+    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1);
     C_VAR_INT("rend-dev-framecount", &framecount,
-              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0,
-              "Frame counter.");
+              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     // * Render-Info
-    C_VAR_BYTE("rend-info-lums", &rend_info_lums, 0, 0, 1,
-               "1=Print lumobj count after rendering a frame.");
+    C_VAR_BYTE("rend-info-lums", &rend_info_lums, 0, 0, 1);
     // * Render-Light
     C_VAR_INT2("rend-light-ambient", &r_ambient, 0, -255, 255,
-              "Ambient light level.", Rend_CalcLightRangeModMatrix);
+               Rend_CalcLightRangeModMatrix);
 
-    C_VAR_INT("rend-light", &useDynLights, 0, 0, 1,
-              "1=Render dynamic lights.");
-    C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 3,
-              "Dynamic lights color blending mode:\n"
-              "0=normal, 1=additive, 2=no blending.");
+    C_VAR_INT("rend-light", &useDynLights, 0, 0, 1);
+    C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 3);
 
-    C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1,
-                "Intensity factor for dynamic lights.");
-    C_VAR_INT("rend-light-num", &maxDynLights, 0, 0, 8000,
-              "The maximum number of dynamic lights. 0=no limit.");
+    C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1);
+    C_VAR_INT("rend-light-num", &maxDynLights, 0, 0, 8000);
 
-    C_VAR_FLOAT("rend-light-radius-scale", &dlRadFactor, 0, 0.1f, 10,
-                "A multiplier for dynlight radii (default: 1).");
-    C_VAR_INT("rend-light-radius-max", &dlMaxRad, 0, 64, 512,
-              "Maximum radius of dynamic lights (default: 128).");
-    C_VAR_INT("rend-light-radius-min-bias", &dlMinRadForBias, 0, 128, 1024,
-              "Minimum dynamic light radius to convert to BIAS light source.");
-    C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX, 0,
-                0, "Intensity of angle-based wall light.");
-    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1,
-              "1=Use multitexturing when rendering dynamic lights.");
+    C_VAR_FLOAT("rend-light-radius-scale", &dlRadFactor, 0, 0.1f, 10);
+    C_VAR_INT("rend-light-radius-max", &dlMaxRad, 0, 64, 512);
+    C_VAR_INT("rend-light-radius-min-bias", &dlMinRadForBias, 0, 128, 1024);
+    C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
     // * Render-Light-Decor
-    C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1,
-               "1=Enable surface light decorations.");
-    C_VAR_FLOAT("rend-light-decor-plane-far", &decorPlaneMaxDist, CVF_NO_MAX,
-                0, 0,
-                "Maximum distance at which plane light "
-                "decorations are visible.");
-    C_VAR_FLOAT("rend-light-decor-wall-far", &decorWallMaxDist, CVF_NO_MAX, 0,
-                0,
-                "Maximum distance at which wall light decorations "
-                "are visible.");
-    C_VAR_FLOAT("rend-light-decor-plane-bright", &decorPlaneFactor, 0, 0, 10,
-                "Brightness of plane light decorations.");
-    C_VAR_FLOAT("rend-light-decor-wall-bright", &decorWallFactor, 0, 0, 10,
-                "Brightness of wall light decorations.");
-    C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1,
-                "Reduce brightness if surface/view angle too steep.");
-    C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1,
-              "1=Use special light color in sky sectors.");
+    C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-decor-plane-far", &decorPlaneMaxDist, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-light-decor-wall-far", &decorWallMaxDist, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-light-decor-plane-bright", &decorPlaneFactor, 0, 0, 10);
+    C_VAR_FLOAT("rend-light-decor-wall-bright", &decorWallFactor, 0, 0, 10);
+    C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1);
+    C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1);
     // * Render-Glow
-    C_VAR_INT("rend-glow", &r_texglow, 0, 0, 1, "1=Enable glowing textures.");
-    C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1,
-              "1=Render glow on walls.");
-    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024,
-              "Max height of wall glow (default: 100).");
-    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10,
-                "A multiplier for glow height (default: 1).");
-    C_VAR_FLOAT("rend-glow-fog-bright", &glowFogBright, 0, 0, 1,
-                "Brightness of wall glow when fog is enabled.");
+    C_VAR_INT("rend-glow", &r_texglow, 0, 0, 1);
+    C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
+    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
+    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
+    C_VAR_FLOAT("rend-glow-fog-bright", &glowFogBright, 0, 0, 1);
     // * Render-Halo
-    C_VAR_INT("rend-halo", &haloMode, 0, 0, 5,
-              "Number of flares to draw per light.");
-    C_VAR_INT("rend-halo-realistic", &haloRealistic, 0, 0, 1,
-              "1=Use more realistic halo effects.");
-    C_VAR_INT("rend-halo-bright", &haloBright, 0, 0, 100,
-              "Halo/flare brightness.");
-    C_VAR_INT("rend-halo-occlusion", &haloOccludeSpeed, CVF_NO_MAX, 0, 0,
-              "Rate at which occluded halos fade.");
-    C_VAR_INT("rend-halo-size", &haloSize, 0, 0, 100, "Size of halos.");
-    C_VAR_FLOAT("rend-halo-secondary-limit", &minHaloSize, CVF_NO_MAX, 0, 0,
-                "Minimum halo size.");
-    C_VAR_FLOAT("rend-halo-fade-far", &haloFadeMax, CVF_NO_MAX, 0, 0,
-                "Distance at which halos are no longer visible.");
-    C_VAR_FLOAT("rend-halo-fade-near", &haloFadeMin, CVF_NO_MAX, 0, 0,
-                "Distance to begin fading halos.");
+    C_VAR_INT("rend-halo", &haloMode, 0, 0, 5);
+    C_VAR_INT("rend-halo-realistic", &haloRealistic, 0, 0, 1);
+    C_VAR_INT("rend-halo-bright", &haloBright, 0, 0, 100);
+    C_VAR_INT("rend-halo-occlusion", &haloOccludeSpeed, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-halo-size", &haloSize, 0, 0, 100);
+    C_VAR_FLOAT("rend-halo-secondary-limit", &minHaloSize, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-halo-fade-far", &haloFadeMax, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-halo-fade-near", &haloFadeMin, CVF_NO_MAX, 0, 0);
     // * Render-Texture
-    C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1,
-              "1=Render with textures.");
-    C_VAR_INT("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4,
-              "The gamma correction level (0-4).");
-    C_VAR_INT("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
-              "The mipmapping mode for textures.");
-    C_VAR_BYTE("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
-               "1=Use the GL_EXT_shared_texture_palette extension.");
-    C_VAR_BYTE("rend-tex-external-always", &loadExtAlways, 0, 0, 1,
-               "1=Always use external texture resources (overrides -pwadtex).");
-    C_VAR_INT("rend-tex-quality", &texQuality, 0, 0, 8,
-              "The quality of textures (0-8).");
-    C_VAR_INT("rend-tex-filter-sprite", &filterSprites, 0, 0, 1,
-              "1=Render smooth sprites.");
-    C_VAR_INT("rend-tex-filter-raw", &linearRaw, CVF_PROTECTED, 0, 1,
-              "1=Fullscreen images (320x200) use linear interpolation.");
-    C_VAR_INT("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1,
-              "1=Use hq2x-filtering on all textures.");
-    C_VAR_INT("rend-tex-filter-mag", &texMagMode, 0, 0, 1,
-              "1=Use bilinear filtering for texture magnification.");
-    C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1,
-              "1=Render with detail textures.");
-    C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX,
-                0, 0, "Global detail texture factor.");
-    C_VAR_FLOAT("rend-tex-detail-strength", &detailFactor, 0, 0, 10,
-                "Global detail texture strength factor.");
-    C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1,
-              "1=Use multitexturing when rendering detail textures.");
+    C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4);
+    C_VAR_INT("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5);
+    C_VAR_BYTE("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1);
+    C_VAR_BYTE("rend-tex-external-always", &loadExtAlways, 0, 0, 1);
+    C_VAR_INT("rend-tex-quality", &texQuality, 0, 0, 8);
+    C_VAR_INT("rend-tex-filter-sprite", &filterSprites, 0, 0, 1);
+    C_VAR_INT("rend-tex-filter-raw", &linearRaw, CVF_PROTECTED, 0, 1);
+    C_VAR_INT("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1);
+    C_VAR_INT("rend-tex-filter-mag", &texMagMode, 0, 0, 1);
+    C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
+    C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-tex-detail-strength", &detailFactor, 0, 0, 10);
+    C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
     // * Render-Sky
-    C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7,
-              "Number of sky sphere quadrant subdivisions.");
-    C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8,
-              "Number of sky sphere rows.");
-    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0,
-                "Sky sphere radius.");
-    C_VAR_INT("rend-sky-full", &r_fullsky, 0, 0, 1,
-              "1=Always render the full sky sphere.");
-    C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2,
-              "Sky rendering mode: 0=normal, 1=quads.");
+    C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7);
+    C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8);
+    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
+    C_VAR_INT("rend-sky-full", &r_fullsky, 0, 0, 1);
+    C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
     // * Render-Sprite
-    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90,
-                "Maximum angle for slanted sprites (spralign 2).");
-    C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1,
-              "1=Don't write sprites in the Z buffer.");
-    C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1,
-               "1=Precache sprites at level setup (slow).");
-    C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3,
-              "1=Always align sprites with the view plane.\n"
-              "2=Align to camera, unless slant > r_maxSpriteAngle.");
-    C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1,
-              "1=Use additive blending for explosions.");
-    C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1,
-              "1=Sprites lit using dynamic lights.");
-    C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1,
-               "1=Draw sprites and masked walls with hard edges.");
+    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
+    C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1);
+    C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1);
+    C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3);
+    C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1);
+    C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1);
+    C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
 
     // * Render-Model
-    C_VAR_INT("rend-model", &useModels, CVF_NO_MAX, 0, 1,
-              "Render using 3D models when possible.");
-    C_VAR_INT("rend-model-lights", &modelLight, 0, 0, 10,
-              "Maximum number of light sources on models.");
-    C_VAR_INT("rend-model-inter", &frameInter, 0, 0, 1,
-              "1=Interpolate frames.");
-    C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod, CVF_NO_MAX | CVF_NO_MIN,
-                0, 0, "Scale for MD2 z-axis when model is loaded.");
-    C_VAR_INT("rend-model-distance", &r_maxmodelz, CVF_NO_MAX, 0, 0,
-              "Farther than this models revert back to sprites.");
-    C_VAR_BYTE("rend-model-precache", &r_precache_skins, 0, 0, 1,
-               "1=Precache 3D models at level setup (slow).");
-    C_VAR_FLOAT("rend-model-lod", &rend_model_lod, CVF_NO_MAX, 0, 0,
-                "Custom level of detail factor. 0=LOD disabled, 1=normal.");
-    C_VAR_INT("rend-model-mirror-hud", &mirrorHudModels, 0, 0, 1,
-              "1=Mirror HUD weapon models.");
+    C_VAR_INT("rend-model", &useModels, CVF_NO_MAX, 0, 1);
+    C_VAR_INT("rend-model-lights", &modelLight, 0, 0, 10);
+    C_VAR_INT("rend-model-inter", &frameInter, 0, 0, 1);
+    C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod, CVF_NO_MAX | CVF_NO_MIN, 0, 0);
+    C_VAR_INT("rend-model-distance", &r_maxmodelz, CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE("rend-model-precache", &r_precache_skins, 0, 0, 1);
+    C_VAR_FLOAT("rend-model-lod", &rend_model_lod, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-model-mirror-hud", &mirrorHudModels, 0, 0, 1);
     C_VAR_FLOAT("rend-model-spin-speed", &modelSpinSpeed,
-                CVF_NO_MAX | CVF_NO_MIN, 0, 0,
-                "Speed of model spinning, 1=normal.");
-    C_VAR_INT("rend-model-shiny-multitex", &modelShinyMultitex, 0, 0, 1,
-              "1=Enable multitexturing with shiny model skins.");
+                CVF_NO_MAX | CVF_NO_MIN, 0, 0);
+    C_VAR_INT("rend-model-shiny-multitex", &modelShinyMultitex, 0, 0, 1);
     // * Render-HUD
-    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX, 0, 0,
-                "Scaling of player weapon (x,y) offset.");
-    C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1,
-                "When FOV > 90 player weapon is shifted downward.");
+    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1);
     // * Render-Mobj
-    C_VAR_INT("rend-mobj-smooth-move", &r_use_srvo, 0, 0, 2,
-              "1=Use short-range visual offsets for models.\n"
-              "2=Use SRVO for sprites, too (unjags actor movement).");
-    C_VAR_INT("rend-mobj-smooth-turn", &r_use_srvo_angle, 0, 0, 1,
-              "1=Use separate visual angle for mobjs (unjag actors).");
+    C_VAR_INT("rend-mobj-smooth-move", &r_use_srvo, 0, 0, 2);
+    C_VAR_INT("rend-mobj-smooth-turn", &r_use_srvo_angle, 0, 0, 1);
     // * Rend-Particle
-    C_VAR_INT("rend-particle", &r_use_particles, 0, 0, 1,
-              "1=Render particle effects.");
-    C_VAR_INT("rend-particle-max", &r_max_particles, CVF_NO_MAX, 0, 0,
-              "Maximum number of particles to render. 0=no limit.");
-    C_VAR_FLOAT("rend-particle-rate", &r_particle_spawn_rate, 0, 0, 5,
-                "Particle spawn rate multiplier (default: 1).");
-    C_VAR_FLOAT("rend-particle-diffuse", &rend_particle_diffuse, CVF_NO_MAX, 0,
-                0, "Diffuse factor for particles near the camera.");
-    C_VAR_INT("rend-particle-visible-near", &rend_particle_nearlimit,
-              CVF_NO_MAX, 0, 0, "Minimum visible distance for a particle.");
+    C_VAR_INT("rend-particle", &r_use_particles, 0, 0, 1);
+    C_VAR_INT("rend-particle-max", &r_max_particles, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-particle-rate", &r_particle_spawn_rate, 0, 0, 5);
+    C_VAR_FLOAT("rend-particle-diffuse", &rend_particle_diffuse, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-particle-visible-near", &rend_particle_nearlimit, CVF_NO_MAX, 0, 0);
     // * Rend-Shadow
-    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1,
-              "1=Render shadows under objects.");
-    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 1,
-                "Darkness factor for object shadows.");
-    C_VAR_INT("rend-shadow-far", &shadowMaxDist, CVF_NO_MAX, 0, 0,
-              "Maximum distance where shadows are visible.");
-    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRad, CVF_NO_MAX, 0, 0,
-              "Maximum radius of object shadows.");
+    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
+    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 1);
+    C_VAR_INT("rend-shadow-far", &shadowMaxDist, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRad, CVF_NO_MAX, 0, 0);
 
     // Server
-    C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0,
-                  "The name of this computer if it's a server.");
-    C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0,
-                  "The description given of this computer if it's a server.");
-    C_VAR_INT("server-public", &masterAware, 0, 0, 1,
-              "1=Send info to master server.");
+    C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0);
+    C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0);
+    C_VAR_INT("server-public", &masterAware, 0, 0, 1);
 
     // Network
-    C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0,
-                  "Your name in multiplayer games.");
-    C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0,
-                  "Master server IP address / name.");
-    C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535,
-              "Master server TCP/IP port.");
-    C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0,
-                  "Master server path name.");
+    C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
+    C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
+    C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
+    C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
 
     // Sound
-    C_VAR_INT("sound-volume", &sfx_volume, 0, 0, 255,
-              "Sound effects volume (0-255).");
-    C_VAR_INT("sound-info", &sound_info, 0, 0, 1,
-              "1=Show sound debug information.");
-    C_VAR_INT("sound-rate", &sound_rate, 0, 11025, 44100,
-              "Sound effects sample rate (11025, 22050, 44100).");
-    C_VAR_INT("sound-16bit", &sound_16bit, 0, 0, 1,
-              "1=16-bit sound effects/resampling.");
-    C_VAR_INT("sound-3d", &sound_3dmode, 0, 0, 1,
-              "1=Play sound effects in 3D.");
-    C_VAR_FLOAT("sound-reverb-volume", &sfx_reverb_strength, 0, 0, 10,
-                "Reverb effects general volume (0=disable).");
+    C_VAR_INT("sound-volume", &sfx_volume, 0, 0, 255);
+    C_VAR_INT("sound-info", &sound_info, 0, 0, 1);
+    C_VAR_INT("sound-rate", &sound_rate, 0, 11025, 44100);
+    C_VAR_INT("sound-16bit", &sound_16bit, 0, 0, 1);
+    C_VAR_INT("sound-3d", &sound_3dmode, 0, 0, 1);
+    C_VAR_FLOAT("sound-reverb-volume", &sfx_reverb_strength, 0, 0, 10);
 
     // Music
-    C_VAR_INT("music-volume", &mus_volume, 0, 0, 255, "Music volume (0-255).");
-    C_VAR_INT("music-source", &mus_preference, 0, 0, 2,
-              "Preferred music source: 0=Original MUS, "
-              "1=External files, 2=CD.");
+    C_VAR_INT("music-volume", &mus_volume, 0, 0, 255);
+    C_VAR_INT("music-source", &mus_preference, 0, 0, 2);
 
     // File
-    C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0,
-                  "The list of WADs to be loaded at startup.");
+    C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0);
 
     // Misc
-    C_VAR_INT("blockmap-build", &createBMap, 0, 0, 2,
-              "Automatically generate blockmap data when necessary, "
-              "0=Never, 1=When needed, 2=Always.");
-    C_VAR_INT("reject-build", &createReject, 0, 0, 2,
-              "Automatically generate reject data when necessary, "
-              "0=Never, 1=When needed, 2=Always.");
+    C_VAR_INT("blockmap-build", &createBMap, 0, 0, 2);
+    C_VAR_INT("reject-build", &createReject, 0, 0, 2);
 }

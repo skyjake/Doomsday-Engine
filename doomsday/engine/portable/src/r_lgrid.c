@@ -98,20 +98,15 @@ static int      lgMXSample = 1; // Default is mode 1 (5 samples per block)
  */
 void LG_Register(void)
 {
-    C_VAR_INT("rend-bias-grid", &lgEnabled, 0, 0, 1,
-              "1=Smooth sector lighting is enabled.");
+    C_VAR_INT("rend-bias-grid", &lgEnabled, 0, 0, 1);
 
-    C_VAR_INT("rend-bias-grid-debug", &lgShowDebug, 0, 0, 1,
-              "1=Show the light grid (for debugging).");
+    C_VAR_INT("rend-bias-grid-debug", &lgShowDebug, 0, 0, 1);
 
-    C_VAR_FLOAT("rend-bias-grid-debug-size", &lgDebugSize, 0, .1f, 100,
-                "Size of a grid block in the light grid debug display.");
+    C_VAR_FLOAT("rend-bias-grid-debug-size", &lgDebugSize, 0, .1f, 100);
 
-    C_VAR_INT("rend-bias-grid-blocksize", &blockSize, 0, 8, 1024,
-              "Size of a grid block in the light grid (default: 31).");
+    C_VAR_INT("rend-bias-grid-blocksize", &blockSize, 0, 8, 1024);
 
-    C_VAR_INT("rend-bias-grid-multisample", &lgMXSample, 0, 0, 7,
-              "Sector to grid block, conversion accuracy multiplier.");
+    C_VAR_INT("rend-bias-grid-multisample", &lgMXSample, 0, 0, 7);
 }
 
 /*

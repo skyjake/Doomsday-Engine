@@ -101,6 +101,8 @@ boolean Con_WriteState(const char *fileName)
     int     i;
     cvar_t *var;
     FILE   *file;
+    char    *str;
+    void *ccmd_help;
 
     VERBOSE(Con_Printf("Con_WriteState: %s\n", fileName));
 
@@ -128,7 +130,10 @@ boolean Con_WriteState(const char *fileName)
             continue;
 
         // First print the comment (help text).
-        M_WriteCommented(file, var->help);
+        ccmd_help = DH_Find(var->name);
+        if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
+            M_WriteCommented(file, str);
+
         fprintf(file, "%s ", var->name);
         if(var->flags & CVF_PROTECTED)
             fprintf(file, "force ");

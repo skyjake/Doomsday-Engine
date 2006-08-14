@@ -93,28 +93,20 @@ static float biasAmount;
  */
 void SB_Register(void)
 {
-    C_VAR_INT("rend-bias", &useBias, 0, 0, 1,
-              "1=Enable the experimental shadow bias test setup.");
+    C_VAR_INT("rend-bias", &useBias, 0, 0, 1);
 
-    C_VAR_INT("rend-bias-min", &biasMin, 0, 0, 255,
-              "Sector lightlevel that is biased completely to zero.");
+    C_VAR_INT("rend-bias-min", &biasMin, 0, 0, 255);
 
-    C_VAR_INT("rend-bias-max", &biasMax, 0, 0, 255,
-              "Sector lightlevel that retains its normal color.");
+    C_VAR_INT("rend-bias-max", &biasMax, 0, 0, 255);
 
-    C_VAR_INT("rend-bias-lightspeed", &lightSpeed, 0, 0, 5000,
-              "Milliseconds it takes for light changes to "
-              "become effective.");
+    C_VAR_INT("rend-bias-lightspeed", &lightSpeed, 0, 0, 5000);
 
     // Development variables.
-    C_VAR_INT("rend-dev-bias-sight", &useSightCheck, CVF_NO_ARCHIVE, 0, 1,
-              "1=Enable the use of line-of-sight checking with shadow bias.");
+    C_VAR_INT("rend-dev-bias-sight", &useSightCheck, CVF_NO_ARCHIVE, 0, 1);
 
-    C_VAR_INT("rend-dev-bias-affected", &updateAffected, CVF_NO_ARCHIVE, 0, 1,
-              "1=Keep track which sources affect which surfaces.");
+    C_VAR_INT("rend-dev-bias-affected", &updateAffected, CVF_NO_ARCHIVE, 0, 1);
 
-/*    C_VAR_INT("rend-dev-bias-solo", &editSelector, CVF_NO_ARCHIVE, -1, 255,
-      "Solo light source.");*/
+/*    C_VAR_INT("rend-dev-bias-solo", &editSelector, CVF_NO_ARCHIVE, -1, 255);*/
 }
 
 /*

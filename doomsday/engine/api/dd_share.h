@@ -1178,7 +1178,6 @@ typedef enum blendmode_e {
         void           *ptr;       // Pointer to the data.
         float           min, max;  /* Minimum and maximum values
                                       (for ints and floats). */
-        const char     *help;      // A short help text.
         void          (*notifyChanged)(struct cvar_s* cvar);
     } cvar_t;
 
