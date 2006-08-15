@@ -248,7 +248,7 @@ static byte debugSky = false;
 void RL_Register(void)
 {
     // TODO: Move cvars here.
-    C_VAR_INT("rend-dev-sky", &debugSky, 0, 0, 1);
+    C_VAR_BYTE("rend-dev-sky", &debugSky, 0, 0, 1);
 }
 
 /*
