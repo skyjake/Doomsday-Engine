@@ -2037,11 +2037,14 @@ void P_UseLines(player_t *player)
  * false will be returned
  *
  * @param thing         The mobj whoose position to adjust.
- * @return boolean      (True) if the thing didn't fit.
+ * @return boolean      (True) if the thing did fit.
  */
 static boolean P_ThingHeightClip(mobj_t *thing)
 {
     boolean onfloor;
+
+    if(P_IsCamera(thing))
+        return false; // Don't height clip cameras.
 
     onfloor = (thing->pos[VZ] == thing->floorz);
     P_CheckPosition2(thing, thing->pos[VX], thing->pos[VY], thing->pos[VZ]);

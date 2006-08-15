@@ -2108,6 +2108,25 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         if(forceUpdate ||
            sec->planes[i].height != sin->planeinfo[i].oldheight[1])
         {
+            ddplayer_t *player;
+
+            // Check if there are any camera players in this sector. If their
+            // height is now above the ceiling/below the floor they are now in
+            // the void.
+            for(j = 0; j < MAXPLAYERS; ++j)
+            {
+                player = &players[j];
+                if(!player->ingame || !player->mo || !player->mo->subsector)
+                    continue;
+
+                if((player->flags & DDPF_CAMERA) && player->mo->subsector->sector == sec &&
+                   (player->mo->pos[VZ] > sec->SP_ceilheight ||
+                    player->mo->pos[VZ] < sec->SP_floorheight))
+                {
+                    player->invoid = true;
+                }
+            }
+
             P_PlaneChanged(sec, i);
         }
 
