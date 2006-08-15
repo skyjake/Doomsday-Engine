@@ -1192,6 +1192,8 @@ void P_SpawnPlayer(thing_t * mthing, int plrnum)
     p->plr->extralight = 0;
     p->plr->fixedcolormap = 0;
     p->plr->viewheight = (cfg.plrViewHeight << FRACBITS);
+    if(p->plr->flags & DDPF_CAMERA)
+            p->plr->mo->pos[VZ] += p->plr->viewheight;
     p->plr->viewz = mobj->pos[VZ] + p->plr->viewheight;
     P_SetupPsprites(p);         // setup gun psprite
 

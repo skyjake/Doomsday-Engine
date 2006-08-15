@@ -1947,7 +1947,7 @@ void Rend_RenderMap(void)
     dlInited = false;
 
     // This is all the clearing we'll do.
-    if(P_IsInVoid(viewplayer))
+    if(P_IsInVoid(viewplayer) || freezeRLs)
         gl.Clear(DGL_COLOR_BUFFER_BIT | DGL_DEPTH_BUFFER_BIT);
     else
         gl.Clear(DGL_DEPTH_BUFFER_BIT);

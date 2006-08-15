@@ -53,6 +53,7 @@ void SBE_MenuSave(ui_object_t *ob);
 
 extern int gamedrawhud;
 extern int numSources;
+extern int freezeRLs;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1020,7 +1021,7 @@ void SBE_DrawCursor(void)
     float col[4];
     float eye[3] = { vx, vz, vy };
 
-    if(!editActive || !numSources || editHidden)
+    if(!editActive || !numSources || editHidden || freezeRLs)
         return;
 
     if(editHueCircle && SBE_GetGrabbed())

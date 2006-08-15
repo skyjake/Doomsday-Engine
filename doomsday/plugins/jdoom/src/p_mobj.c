@@ -1028,6 +1028,7 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     pos[VX] = mthing->x << FRACBITS;
     pos[VY] = mthing->y << FRACBITS;
     pos[VZ] = ONFLOORZ;
+
     mobj = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER);
 
     // With clients all player mobjs are remote, even the consoleplayer.
@@ -1066,6 +1067,8 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     p->plr->fixedcolormap = 0;
     p->plr->lookdir = 0;
     p->plr->viewheight = (cfg.plrViewHeight << FRACBITS);
+    if(p->plr->flags & DDPF_CAMERA)
+            p->plr->mo->pos[VZ] += p->plr->viewheight;
 
     p->class = PCLASS_PLAYER;
 

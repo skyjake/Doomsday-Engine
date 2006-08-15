@@ -180,6 +180,7 @@ extern int skyhemispheres;
 extern int useDynLights, dlBlend, simpleSky;
 extern boolean usingFog;
 extern float maxLightDist;
+extern int freezeRLs;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -236,6 +237,8 @@ static listhash_t shinyHash[RL_HASH_SIZE];
 
 static listhash_t shadowHash[RL_HASH_SIZE];
 static rendlist_t skyMaskList;
+
+static boolean rendSky;
 
 // CODE --------------------------------------------------------------------
 
@@ -2319,10 +2322,13 @@ void RL_RenderAllLists(void)
     rendlist_t *lists[MAX_RLISTS];
     uint    count;
 
+    if(!freezeRLs) // only update when lists arn't frozen
+        rendSky = !P_IsInVoid(viewplayer);
+
     // When in the void we don't render a sky.
     // FIXME: We could use a stencil when rendering the sky, using the
     //        already collected skymask polys as a mask.
-    if(!P_IsInVoid(viewplayer))
+    if(rendSky)
         // The sky might be visible. Render the needed hemispheres.
         Rend_RenderSky(skyhemispheres);
 
@@ -2333,7 +2339,7 @@ void RL_RenderAllLists(void)
 
     // FIXME: As we arn't rendering the sky when in the void we have
     //        have no need to render the skymask.
-    if(!P_IsInVoid(viewplayer))
+    if(rendSky)
         RL_RenderLists(LM_SKYMASK, lists, 1);
 
     // Render the real surfaces of the visible world.
