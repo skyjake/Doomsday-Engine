@@ -928,7 +928,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     surface_t *surface;
     side_t *sid, *backsid, *side;
     line_t *ldef;
-    float   ffloor, fceil, bfloor, bceil, fsh, bsh, mceil, tcyoff;
+    float   ffloor, fceil, bfloor, bceil, fsh, bsh, mceil, tcxoff, tcyoff;
     rendpoly_t quad;
     float  *v1, *v2;
     boolean backSide = true;
@@ -994,7 +994,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 
     // Some texture coordinates.
     quad.length = seg->length;
-    quad.texoffx = FIX2FLT(side->textureoffset + seg->offset);
+    tcxoff = FIX2FLT(side->textureoffset + seg->offset);
     tcyoff = FIX2FLT(side->rowoffset);
 
     // Top wall section color offset?
@@ -1087,6 +1087,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 quad.top = fceil;
                 quad.bottom = ffloor;
 
+                quad.texoffx = tcxoff;
                 quad.texoffy = tcyoff;
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad.texoffy += texh - fsh;
@@ -1140,9 +1141,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                         tcyoff -= quad.top - mceil;
                     }
                 }
+                quad.texoffx = tcxoff;
 
                 if(Rend_MidTexturePos
-                   (&quad.top, &quad.bottom, &quad.texoffy, tcyoff,
+                   (&quad.top, &quad.bottom, &tcxoff, tcyoff,
                     0 != (ldef->flags & ML_DONTPEGBOTTOM)))
                 {
                     // Should a solid segment be added here?
@@ -1231,6 +1233,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             if(texFlags != -1)
             {
                 // Calculate texture coordinates.
+                quad.texoffx = tcxoff;
                 quad.texoffy = tcyoff;
                 if(!(ldef->flags & ML_DONTPEGTOP)) // Normal alignment to bottom.
                     quad.texoffy += texh - (fceil - bceil);
@@ -1262,6 +1265,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             if(texFlags != -1)
             {
                 // Calculate texture coordinates.
+                quad.texoffx = tcxoff;
                 quad.texoffy = tcyoff;
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad.texoffy += fceil - bfloor; // Align with normal middle texture.
