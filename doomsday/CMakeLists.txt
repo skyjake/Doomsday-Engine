@@ -16,11 +16,11 @@ IF (WIN32)
 ## Cmake NEEDS UNIX style paths ie / not \
 ## We should really read these varibles from the path
 ## not hardcode them here
-SET(ENV{SDLDIR} "H:/sdk/SDL-1.2.8")
-SET(ENV{OPENALDIR} "H:/sdk/OpenAL 1.1 SDK")
-SET(ENV{ZLIBDIR} "H:/sdk/zlib")
-SET(ENV{LIBPNGDIR} "H:/sdk/libpng")
-SET(ENV{DIRECTXDIR} "H:/sdk/dx8")
+SET(ENV{SDLDIR} "c:/sdk/sdl")
+SET(ENV{OPENALDIR} "c:/sdk/openal")
+SET(ENV{ZLIBDIR} "c:/sdk/zlib")
+SET(ENV{LIBPNGDIR} "c:/sdk/libpng")
+SET(ENV{DIRECTXDIR} "c:/sdk/dx8mgw")
 ENDIF (WIN32)
 ################################################################################
 ######################## Configure Build Options  ##############################
@@ -36,7 +36,7 @@ SET (CMAKE_BUILD_TYPE RelWithDebInfo)
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
 OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
 OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
-OPTION (BUILDWOLFTC "Optionally build the WolfTC plugin. Default OFF" OFF)
+OPTION (BUILDWOLFTC "Optionally build the WolfTC plugin. Default OFF" ON)
 OPTION (BUILDD64TC "Optionally build the D64TC plugin. Default OFF" OFF)
 OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
 OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
@@ -101,32 +101,32 @@ FILE(GLOB DENG_ENGINE_DEFS ${CMAKE_SOURCE_DIR}/engine/defs/*.ded)
 SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/data)
 SET (DENG_ENGINE_DEFS_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/defs)
 
-SET (DENG_JDOOM_DATA ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/jdoom.wad)
+SET (DENG_JDOOM_DATA ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/*.txt)
 FILE(GLOB DENG_JDOOM_DEFS ${CMAKE_SOURCE_DIR}/plugins/jdoom/defs/*.ded)
 SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
 SET (DENG_JDOOM_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jdoom)
 
-SET (DENG_JHERETIC_DATA ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/jheretic.wad)
+SET (DENG_JHERETIC_DATA ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/*.txt)
 FILE(GLOB DENG_JHERETIC_DEFS ${CMAKE_SOURCE_DIR}/plugins/jheretic/defs/*.ded)
 SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
 SET (DENG_JHERETIC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jheretic)
 
-SET (DENG_JHEXEN_DATA ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/jhexen.wad)
+SET (DENG_JHEXEN_DATA ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/*.txt)
 FILE(GLOB DENG_JHEXEN_DEFS ${CMAKE_SOURCE_DIR}/plugins/jhexen/defs/*.ded)
 SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
 SET (DENG_JHEXEN_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jhexen)
 
-SET (DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/jstrife.wad)
+SET (DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/*.wad DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/*.txt)
 FILE(GLOB DENG_JSTRIFE_DEFS ${CMAKE_SOURCE_DIR}/plugins/jstrife/defs/*.ded)
 SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
 SET (DENG_JSTRIFE_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jstrife)
 
-SET (DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/wolftc.wad)
+SET (DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/*.wad DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/*.txt)
 FILE(GLOB DENG_WOLFTC_DEFS ${CMAKE_SOURCE_DIR}/plugins/wolftc/defs/*.ded)
 SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/wolftc)
 SET (DENG_WOLFTC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/wolftc)
 
-SET (DENG_D64TC_DATA ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/d64tc.wad)
+SET (DENG_D64TC_DATA ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/*.txt)
 FILE(GLOB DENG_D64TC_DEFS ${CMAKE_SOURCE_DIR}/plugins/d64tc/defs/*.ded)
 SET (DENG_D64TC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/d64tc)
 SET (DENG_D64TC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/d64tc)
@@ -297,42 +297,6 @@ IF (MINGW)
 ADD_DEFINITIONS ( -DUNICODE)
 SET (BUILDSYSTEM WIN32-MINGW)
 ENDIF (MINGW)
-
-## Add needed Compiler and Linker flags for Win32
-IF (MSVC)
-SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /INCREMENTAL:NO" )
-SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL:NO" )
-
-SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
-SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
-
-SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
-SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
-
-SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} /INCREMENTAL:NO" )
-SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} /INCREMENTAL:NO" )
-
-SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} /INCREMENTAL:NO" )
-SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} /INCREMENTAL:NO" )
-ENDIF (MSVC)
-
-##IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-##SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -undefined suppress" )
-##SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined suppress" )
-
-##SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -undefined suppress" )
-##SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -undefined suppress" )
-
-##SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -undefined suppress" )
-##SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -undefined suppress" )
-
-##SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} -undefined suppress" )
-##SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} -undefined suppress" )
-
-##SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} -undefined suppress" )
-##SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} -undefined suppress" )
-##ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-
 ENDIF (WIN32)
 
 IF (APPLE)
@@ -571,11 +535,12 @@ SET (DENG_WIN32_SOURCES
 ${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c )
+
+##${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c
 
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
 ENDIF (WIN32)
@@ -615,8 +580,18 @@ ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
-TARGET_LINK_LIBRARIES (doomsday ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss)
+TARGET_LINK_LIBRARIES (doomsday ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss
+wsock32 winmm gdi32 ole32 user32)
 ENDIF (WIN32)
+
+## Work around for Win32 wanting something for the plugins to link to
+IF (WIN32)
+ADD_LIBRARY (deng SHARED ${DENG_SOURCES})
+TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES}
+${CURSES_LIBRARIES} ${PNG_LIBRARIES} ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss
+wsock32 winmm gdi32 ole32 user32)
+ENDIF (WIN32)
+
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)
