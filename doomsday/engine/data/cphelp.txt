@@ -1048,6 +1048,9 @@ desc = 1=Disable non-visible subsector culling.
 [rend-dev-mobj-bbox]
 desc = 1=Render mobj bounding boxes (as used for collision detection).
 
+[rend-dev-sky]
+desc = 1=Render the sky as a solid surface.
+
 [rend-camera-fov]
 desc = Field of view.
 

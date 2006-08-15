@@ -2236,6 +2236,9 @@ static void Rend_RenderBoundingBoxes(void)
     if(!devMobjBBox || netgame)
         return;
 
+    if(usingFog)
+        gl.Disable(DGL_FOG);
+
     gl.Disable(DGL_DEPTH_TEST);
     gl.Enable(DGL_TEXTURING);
     gl.Disable(DGL_CULL_FACE);
@@ -2282,6 +2285,9 @@ static void Rend_RenderBoundingBoxes(void)
 
     gl.Enable(DGL_CULL_FACE);
     gl.Enable(DGL_DEPTH_TEST);
+
+    if(usingFog)
+        gl.Enable(DGL_FOG);
 }
 
 // Console commands.

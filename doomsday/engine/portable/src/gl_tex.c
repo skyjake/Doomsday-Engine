@@ -1626,7 +1626,7 @@ unsigned int GL_BindTexFlat(flat_t * fl)
     image_t image;
     boolean hasExternal = false;
 
-    if(lump < 0 || lump >= numlumps || lump == skyflatnum)
+    if(lump < 0 || lump >= numlumps)
     {
         // The sky flat is not a real flat at all.
         GL_BindTexture(0);

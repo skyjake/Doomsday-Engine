@@ -180,7 +180,9 @@ extern int skyhemispheres;
 extern int useDynLights, dlBlend, simpleSky;
 extern boolean usingFog;
 extern float maxLightDist;
+
 extern int freezeRLs;
+extern int skyflatnum;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -239,12 +241,14 @@ static listhash_t shadowHash[RL_HASH_SIZE];
 static rendlist_t skyMaskList;
 
 static boolean rendSky;
+static byte debugSky = false;
 
 // CODE --------------------------------------------------------------------
 
 void RL_Register(void)
 {
     // TODO: Move cvars here.
+    C_VAR_INT("rend-dev-sky", &debugSky, 0, 0, 1);
 }
 
 /*
@@ -1571,6 +1575,20 @@ void RL_AddPoly(rendpoly_t *poly)
         return;
     }
 
+    // In debugSky mode we render all polys destined for the skymask as
+    // regular world polys (with a few obvious properties).
+    if((poly->flags & RPF_SKY_MASK) && debugSky)
+    {
+        poly->tex.id = curtex = GL_PrepareFlat(skyflatnum);
+        poly->tex.width = texw;
+        poly->tex.height = texh;
+        poly->tex.detail = 0;
+        poly->texoffy = poly->texoffx = 0;
+        poly->lights = NULL;
+        poly->flags &= ~RPF_SKY_MASK;
+        poly->flags |= RPF_GLOW;
+    }
+
     // Are lights allowed?
     if(!(poly->flags & (RPF_SKY_MASK | RPF_SHADOW | RPF_SHINY)))
     {
@@ -2328,7 +2346,7 @@ void RL_RenderAllLists(void)
     // When in the void we don't render a sky.
     // FIXME: We could use a stencil when rendering the sky, using the
     //        already collected skymask polys as a mask.
-    if(rendSky)
+    if(rendSky && !debugSky)
         // The sky might be visible. Render the needed hemispheres.
         Rend_RenderSky(skyhemispheres);
 
