@@ -275,6 +275,7 @@ void I_PollEvents(void)
 {
 // Yagi
 Con_Message("Entered I_PollEvents:");
+
     SDL_Event event;
     keyevent_t *e;
 
@@ -375,14 +376,14 @@ Con_Message("Entered I_InitJoystick:");
 int I_Init(void)
 {
 // Yagi
-Con_Message("Entered I_Init: initIOk is %i");
+Con_Message("Entered I_Init");
     if(initIOk)
         return true;            // Already initialized.
     I_InitMouse();
     I_InitJoystick();
     initIOk = true;
 // Yagi
-Con_Message("Leaving I_Init: initIOk is %i");
+Con_Message("Leaving I_Init");
     return true;
 }
 
