@@ -273,11 +273,12 @@ int I_TranslateKeyCode(SDLKey sym)
  */
 void I_PollEvents(void)
 {
-// Yagi
-Con_Message("Entered I_PollEvents:");
 
     SDL_Event event;
     keyevent_t *e;
+
+// Yagi
+Con_Message("Entered I_PollEvents:");
 
     while(SDL_PollEvent(&event))
     {
@@ -333,9 +334,10 @@ Con_Message("Entered I_InitMouse:");
 //===========================================================================
 void I_InitJoystick(void)
 {
+        int joycount;
+
 // Yagi
 Con_Message("Entered I_InitJoystick:");
-        int joycount;
 
     if(ArgCheck("-nojoy"))
         return;
