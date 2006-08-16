@@ -287,7 +287,7 @@ ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
-ADD_DEFINITIONS ( -DWIN32)
+ADD_DEFINITIONS ( -DWIN32 -D_USRDLL -D_WINDLL -D_WINDOWS )
 SET (BUILDSYSTEM WIN32)
 IF (MSVC)
 ADD_DEFINITIONS ( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -499,9 +499,7 @@ EXEC_PROGRAM(${ZIP} ${CMAKE_SOURCE_DIR}/engine/ ARGS " -r -q -0 ${CMAKE_CURRENT_
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 
 IF (UNIX)
-IF (NOT WIN32)
-FILE(GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c)
-ENDIF (NOT WIN32)
+FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
 ENDIF (UNIX)
 
 IF (WIN32)
@@ -512,9 +510,7 @@ ENDIF (WIN32)
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
-
 FILE(GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c)
-
 SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} ${LZSS_SOURCES}
  plugins/common/src/m_fixed.c)
 
@@ -540,7 +536,6 @@ ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c )
 
-##${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c
 
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
 ENDIF (WIN32)
@@ -549,10 +544,8 @@ ENDIF (WIN32)
 IF (APPLE)
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/mac/include )
 FILE(GLOB DENG_OSX_SOURCES ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m)
-
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_OSX_SOURCES})
 ENDIF (APPLE)
-
 
 IF (APPLE)
 SET (MACOSX_BUNDLE_INFO_STRING "The Doomsday Engine: For jDoom, jHeretic and jHexen" )
@@ -580,16 +573,16 @@ ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
-TARGET_LINK_LIBRARIES (doomsday ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss
-wsock32 winmm gdi32 ole32 user32)
+TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32
+${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
 ENDIF (WIN32)
 
 ## Work around for Win32 wanting something for the plugins to link to
 IF (WIN32)
-ADD_LIBRARY (deng SHARED ${DENG_SOURCES})
+ADD_LIBRARY (deng STATIC ${DENG_SOURCES} engine/api/doomsday.def)
 TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES}
-${CURSES_LIBRARIES} ${PNG_LIBRARIES} ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss
-wsock32 winmm gdi32 ole32 user32)
+${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
+${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
 ENDIF (WIN32)
 
 ################################################################################
