@@ -21,7 +21,7 @@ SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_UNIX_SOURCES} )
 ENDIF (UNIX)
 
 IF (WIN32)
-FILE(GLOB OPENGL_WIN32_SOURCES win32/src/*.c)
+SET (OPENGL_WIN32_SOURCES win32/src/main.c)
 SET (OPENGL_SOURCES ${OPENGL_SOURCES} ${OPENGL_WIN32_SOURCES} )
 ENDIF (WIN32)
 
@@ -35,6 +35,9 @@ TARGET_LINK_LIBRARIES (dropengl  ${SDL_LIBRARIES} )
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
+IF (WIN32)
+TARGET_LINK_LIBRARIES (dropengl deng)
+ENDIF (WIN32)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dropengl
