@@ -400,18 +400,28 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 void RL_PreparePlane(planeinfo_t *plane, rendpoly_t *poly,
                     subsector_t *subsector)
 {
-    int     i, sectorlight;
+    int     i, vid, sectorlight;
     const byte *pLightColor;
     byte    vColor[] = { 0, 0, 0, 0};
+    subsectorinfo_t *ssecinfo = SUBSECT_INFO(subsector);
 
-    poly->numvertices = plane->numvertices;
+    poly->numvertices = ssecinfo->numvertices;
+
+    // Copy the vertices in reverse order for ceilings (flip faces).
+    if(plane->type == PLN_CEILING)
+        vid = ssecinfo->numvertices - 1;
+    else
+        vid = 0;
 
     // Calculate the distance to each vertex.
-    for(i = 0; i < plane->numvertices; i++)
+    for(i = 0; i < ssecinfo->numvertices; i++)
     {
-        poly->vertices[i].pos[VX] = plane->vertices[i].x;
-        poly->vertices[i].pos[VY] = plane->vertices[i].y;
+        poly->vertices[i].pos[VX] = ssecinfo->vertices[vid].x;
+        poly->vertices[i].pos[VY] = ssecinfo->vertices[vid].y;
+
         poly->vertices[i].dist = Rend_PointDist2D(poly->vertices[i].pos);
+
+        (plane->type == PLN_CEILING? vid-- : vid++);
     }
 
     sectorlight = Rend_SectorLight(poly->sector);

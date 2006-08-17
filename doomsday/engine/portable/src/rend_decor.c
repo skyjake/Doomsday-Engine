@@ -734,7 +734,7 @@ void Rend_DecorateSector(int index)
                            sector->planes[PLN_FLOOR].offy, def);
     }
 
-    if((def = Rend_GetGraphicResourceDecoration(sector->SP_floorpic, true)) != NULL)
+    if((def = Rend_GetGraphicResourceDecoration(sector->SP_ceilpic, true)) != NULL)
     {
         // The ceiling is decorated.
         Rend_DecoratePlane(index, SECT_CEIL(sector), -1, sector->planes[PLN_CEILING].offx,

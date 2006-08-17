@@ -1144,7 +1144,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 quad.texoffx = tcxoff;
 
                 if(Rend_MidTexturePos
-                   (&quad.top, &quad.bottom, &tcxoff, tcyoff,
+                   (&quad.top, &quad.bottom, &quad.texoffy, tcyoff,
                     0 != (ldef->flags & ML_DONTPEGBOTTOM)))
                 {
                     // Should a solid segment be added here?
@@ -1333,310 +1333,6 @@ int Rend_SectorLight(sector_t *sec)
     Rend_ApplyLightAdaptation(&i);
 
     return i;
-}
-
-/*
- * Updates the lightRangeModMatrix which is used to applify sector light to
- * help compensate for the differences between the OpenGL lighting equation,
- * the software Doom lighting model and the light grid (ambient lighting).
- *
- * Also calculates applified values (the curve of set with r_lightAdaptMul),
- * used for emulation of the effects of light adaptation in the human eye.
- * This is not strictly accurate as the amplification happens at differing
- * rates in each color range but we'll just use one value applied uniformly
- * to each range (RGB).
- *
- * The offsets in the lightRangeModTables are added to the sector->lightlevel
- * during rendering (both positive and negative).
- */
-void Rend_CalcLightRangeModMatrix(cvar_t* unused)
-{
-    int r, j, n;
-    int mid = MOD_RANGE / 2;
-    float f, mod, factor;
-    double multiplier, mx;
-
-    memset(lightRangeModMatrix, 0, (sizeof(byte) * 255) * MOD_RANGE);
-
-    if(r_lightcompression > 0)
-        factor = r_lightcompression;
-    else
-        factor = 1;
-
-    multiplier = r_lightAdaptMul / MOD_RANGE;
-
-    for(n = 0, r = -mid; r < mid; ++n, ++r)
-    {
-        // Calculate the light mod value for this range
-        mod = (MOD_RANGE + n) / 255.0f;
-
-        // Calculate the multiplier.
-        mx = (r * multiplier) * MOD_RANGE;
-
-        for(j = 0; j < 255; ++j)
-        {
-            if(r < 0)  // Dark to light range
-            {
-                // Apply the mod factor
-                f = -((mod * j) / (n + 1));
-
-                // Apply the multiplier
-                f += -r * ((f * (mx * j)) * r_lightAdaptRamp);
-            }
-            else  // Light to dark range
-            {
-                f = ((255 - j) * mod) / (MOD_RANGE - n);
-                f -= r * ((f * (mx * (255 - j))) * r_lightAdaptRamp);
-            }
-
-            // Adjust the white point/dark point
-            if(r_lightcompression >= 0)
-                f += (int)((255.f - j) * (r_lightcompression / 255.f));
-            else
-                f += (int)((j) * (r_lightcompression / 255.f));
-
-            // Apply the linear range shift
-            f += r_lightrangeshift;
-
-            // Round to nearest (signed) whole.
-            if(f >= 0)
-                f += 0.5f;
-            else
-                f -= 0.5f;
-
-            // Clamp the result as a modifier to the light value (j).
-            if(r < 0)
-            {
-                if((j+f) >= 255)
-                    f = 254 - j;
-            }
-            else
-            {
-                if((j+f) <= 0)
-                    f = -j;
-            }
-
-            // Lower than the ambient limit?
-            if(j+f <= r_ambient)
-                f = r_ambient - j;
-
-            // Insert it into the matrix
-            lightRangeModMatrix[n][j] = (signed short) f;
-        }
-    }
-}
-
-/*
- * Grabs the light value of the sector each player is currently
- * in and chooses an appropriate light range.
- *
- * TODO: Interpolate between current range and last when player
- *       changes sector.
- */
-void Rend_RetrieveLightSample(void)
-{
-    int i, diff, midpoint;
-    short light;
-    float range;
-    float mod;
-    float inter;
-    ddplayer_t *player;
-    subsector_t *sub;
-
-    unsigned int currentTime = Sys_GetRealTime();
-
-    midpoint = MOD_RANGE / 2;
-    for(i = 0; i < MAXPLAYERS; i++)
-    {
-        if(!players[i].ingame)
-            continue;
-
-        player = &players[i];
-        if(!player->mo || !player->mo->subsector)
-            continue;
-
-        sub = player->mo->subsector;
-
-        // In some circumstances we should disable light adaptation.
-        if(LevelFullBright || P_IsInVoid(player))
-        {
-            playerLightRange[i] = midpoint;
-            continue;
-        }
-
-        // Evaluate the light level at the point this player is at.
-        // Uses a very simply method which uses the sector in which the player
-        // is at currently and uses the light level of that sector.
-        // Really this is junk. We should evaluate the lighting condition using
-        // a much better method (perhaps obtain an average color from all the
-        // vertexes (selected lists only) rendered in the previous frame?)
-     /*   if(useBias)
-        {
-            byte color[3];
-
-            // use the bias lighting to evaluate the point.
-            // todo this we'll create a vertex at the players position
-            // so that it can be evaluated with both ambient light (light grid)
-            // and with the bias light sources.
-
-            // Use the players postion.
-            pos[VX] = FIX2FLT(player->mo->[VX]);
-            pos[VY] = FIX2FLT(player->mo->[VY]);
-            pos[VZ] = FIX2FLT(player->mo->[VZ]);
-
-            // TODO: Should be affected by BIAS sources...
-            LG_Evaluate(pos, color);
-            light = (int) ((color[0] + color[1] + color[2]) / 3);
-        }
-        else*/
-        {
-            // use the light level of the sector they are currently in.
-            light = sub->sector->lightlevel;
-        }
-
-        // Pick the range based on the current lighting conditions compared
-        // to the previous lighting conditions.
-        // We adapt to predominantly bright lighting conditions (mere seconds)
-        // much quicker than very dark lighting conditions (upto 30mins).
-        // Obviously that would be much too slow for a fast paced action game.
-        if(light < playerLastLightSample[i].value)
-        {
-            // Going from a bright area to a darker one
-            inter = (currentTime - playerLastLightSample[i].updateTime) /
-                           (float) SECONDS_TO_TICKS(r_lightAdaptDarkTime);
-
-            if(inter > 1)
-                mod = 0;
-            else
-            {
-                diff = playerLastLightSample[i].value - light;
-                mod = -(((diff - (diff * inter)) / MOD_RANGE) * 25); //midpoint
-            }
-        }
-        else if(light > playerLastLightSample[i].value)
-        {
-            // Going from a dark area to a bright one
-            inter = (currentTime - playerLastLightSample[i].updateTime) /
-                           (float) SECONDS_TO_TICKS(r_lightAdaptBrightTime);
-
-            if(inter > 1)
-                mod = 0;
-            else
-            {
-                diff = light - playerLastLightSample[i].value;
-                mod = ((diff - (diff * inter)) / MOD_RANGE) * 25;
-            }
-        }
-        else
-            mod = 0;
-
-        range = midpoint -
-                ((/*( ((float) light / 255.f) * 10) +*/ mod) * r_lightAdapt);
-        // Round to nearest whole.
-        range += 0.5f;
-
-        // Clamp the range
-        if(range >= MOD_RANGE)
-            range = MOD_RANGE - 1;
-        else if(range < 0)
-            range = 0;
-
-        playerLightRange[i] = (int) range;
-
-        // Have the lighting conditions changed?
-
-        // Light differences between sectors?
-        if(!(playerLastLightSample[i].sector == sub->sector))
-        {
-            // If this sample is different to the previous sample
-            // update the last sample value;
-            if(playerLastLightSample[i].sector)
-                playerLastLightSample[i].value = playerLastLightSample[i].sector->lightlevel;
-            else
-                playerLastLightSample[i].value = light;
-
-            playerLastLightSample[i].updateTime = currentTime;
-
-            playerLastLightSample[i].sector = sub->sector;
-
-            playerLastLightSample[i].currentlight = light;
-        }
-        else // Light changes in the same sector?
-        {
-            if(playerLastLightSample[i].currentlight != light)
-            {
-                playerLastLightSample[i].value = light;
-                playerLastLightSample[i].updateTime = currentTime;
-            }
-        }
-    }
-}
-
-/*
- * Applies the offset from the lightRangeModMatrix to the given light value.
- *
- * The range chosen is that of the current viewplayer.
- * (calculated based on the lighting conditions for that player)
- *
- * The lightRangeModMatrix is used to implement (precalculated) ambient light
- * limit, light range compression, light range shift AND light adaptation
- * response curves. By generating this precalculated matrix we save on a LOT
- * of calculations (replacing them all with one single addition) which would
- * otherwise all have to be performed each frame for each call. The values are
- * applied to sector lightlevels, lightgrid point evaluations, vissprite
- * lightlevels, fakeradio shadows etc, etc...
- *
- * NOTE: There is no need to clamp the result. Since the offset values in
- *       the lightRangeModMatrix have already been clamped so that the resultant
- *       lightvalue is NEVER outside the range 0-254 when the original lightvalue
- *       is used as the index.
- *
- * @param lightvar    Ptr to the value to apply the adaptation to.
- */
-void Rend_ApplyLightAdaptation(int* lightvar)
-{
-    // The default range.
-    int range = MOD_RANGE / 2;
-    int lightval;
-
-    if(lightvar == NULL)
-        return; // Can't apply adaptation to a NULL val ptr...
-
-    lightval = *lightvar;
-
-    if(lightval > 255)
-        lightval = 255;
-    else if(lightval < 0)
-        lightval = 0;
-
-    // Apply light adaptation?
-    if(r_lightAdapt)
-        range = playerLightRange[viewplayer - players];
-
-    *lightvar += lightRangeModMatrix[range][lightval];
-}
-
-/*
- * Same as above but instead of applying light adaptation to the var directly
- * it returns the light adaptation value for the passed light value.
- *
- * @param lightvalue    Light value to look up the adaptation value of.
- * @return int          Adaptation value for the passed light value.
- */
-int Rend_GetLightAdaptVal(int lightvalue)
-{
-    int range = MOD_RANGE / 2;
-    int lightval = lightvalue;
-
-    if(lightval > 255)
-        lightval = 255;
-    else if(lightval < 0)
-        lightval = 0;
-
-    if(r_lightAdapt)
-        range = playerLightRange[viewplayer - players];
-
-    return lightRangeModMatrix[range][lightval];
 }
 
 /*
@@ -2015,6 +1711,310 @@ void Rend_RenderMap(void)
     // Draw the Shadow Bias Editor's draw that identifies the current
     // light.
     SBE_DrawCursor();
+}
+
+/*
+ * Updates the lightRangeModMatrix which is used to applify sector light to
+ * help compensate for the differences between the OpenGL lighting equation,
+ * the software Doom lighting model and the light grid (ambient lighting).
+ *
+ * Also calculates applified values (the curve of set with r_lightAdaptMul),
+ * used for emulation of the effects of light adaptation in the human eye.
+ * This is not strictly accurate as the amplification happens at differing
+ * rates in each color range but we'll just use one value applied uniformly
+ * to each range (RGB).
+ *
+ * The offsets in the lightRangeModTables are added to the sector->lightlevel
+ * during rendering (both positive and negative).
+ */
+void Rend_CalcLightRangeModMatrix(cvar_t* unused)
+{
+    int r, j, n;
+    int mid = MOD_RANGE / 2;
+    float f, mod, factor;
+    double multiplier, mx;
+
+    memset(lightRangeModMatrix, 0, (sizeof(byte) * 255) * MOD_RANGE);
+
+    if(r_lightcompression > 0)
+        factor = r_lightcompression;
+    else
+        factor = 1;
+
+    multiplier = r_lightAdaptMul / MOD_RANGE;
+
+    for(n = 0, r = -mid; r < mid; ++n, ++r)
+    {
+        // Calculate the light mod value for this range
+        mod = (MOD_RANGE + n) / 255.0f;
+
+        // Calculate the multiplier.
+        mx = (r * multiplier) * MOD_RANGE;
+
+        for(j = 0; j < 255; ++j)
+        {
+            if(r < 0)  // Dark to light range
+            {
+                // Apply the mod factor
+                f = -((mod * j) / (n + 1));
+
+                // Apply the multiplier
+                f += -r * ((f * (mx * j)) * r_lightAdaptRamp);
+            }
+            else  // Light to dark range
+            {
+                f = ((255 - j) * mod) / (MOD_RANGE - n);
+                f -= r * ((f * (mx * (255 - j))) * r_lightAdaptRamp);
+            }
+
+            // Adjust the white point/dark point
+            if(r_lightcompression >= 0)
+                f += (int)((255.f - j) * (r_lightcompression / 255.f));
+            else
+                f += (int)((j) * (r_lightcompression / 255.f));
+
+            // Apply the linear range shift
+            f += r_lightrangeshift;
+
+            // Round to nearest (signed) whole.
+            if(f >= 0)
+                f += 0.5f;
+            else
+                f -= 0.5f;
+
+            // Clamp the result as a modifier to the light value (j).
+            if(r < 0)
+            {
+                if((j+f) >= 255)
+                    f = 254 - j;
+            }
+            else
+            {
+                if((j+f) <= 0)
+                    f = -j;
+            }
+
+            // Lower than the ambient limit?
+            if(j+f <= r_ambient)
+                f = r_ambient - j;
+
+            // Insert it into the matrix
+            lightRangeModMatrix[n][j] = (signed short) f;
+        }
+    }
+}
+
+/*
+ * Grabs the light value of the sector each player is currently
+ * in and chooses an appropriate light range.
+ *
+ * TODO: Interpolate between current range and last when player
+ *       changes sector.
+ */
+void Rend_RetrieveLightSample(void)
+{
+    int i, diff, midpoint;
+    short light;
+    float range;
+    float mod;
+    float inter;
+    ddplayer_t *player;
+    subsector_t *sub;
+
+    unsigned int currentTime = Sys_GetRealTime();
+
+    midpoint = MOD_RANGE / 2;
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        if(!players[i].ingame)
+            continue;
+
+        player = &players[i];
+        if(!player->mo || !player->mo->subsector)
+            continue;
+
+        sub = player->mo->subsector;
+
+        // In some circumstances we should disable light adaptation.
+        if(LevelFullBright || P_IsInVoid(player))
+        {
+            playerLightRange[i] = midpoint;
+            continue;
+        }
+
+        // Evaluate the light level at the point this player is at.
+        // Uses a very simply method which uses the sector in which the player
+        // is at currently and uses the light level of that sector.
+        // Really this is junk. We should evaluate the lighting condition using
+        // a much better method (perhaps obtain an average color from all the
+        // vertexes (selected lists only) rendered in the previous frame?)
+     /*   if(useBias)
+        {
+            byte color[3];
+
+            // use the bias lighting to evaluate the point.
+            // todo this we'll create a vertex at the players position
+            // so that it can be evaluated with both ambient light (light grid)
+            // and with the bias light sources.
+
+            // Use the players postion.
+            pos[VX] = FIX2FLT(player->mo->[VX]);
+            pos[VY] = FIX2FLT(player->mo->[VY]);
+            pos[VZ] = FIX2FLT(player->mo->[VZ]);
+
+            // TODO: Should be affected by BIAS sources...
+            LG_Evaluate(pos, color);
+            light = (int) ((color[0] + color[1] + color[2]) / 3);
+        }
+        else*/
+        {
+            // use the light level of the sector they are currently in.
+            light = sub->sector->lightlevel;
+        }
+
+        // Pick the range based on the current lighting conditions compared
+        // to the previous lighting conditions.
+        // We adapt to predominantly bright lighting conditions (mere seconds)
+        // much quicker than very dark lighting conditions (upto 30mins).
+        // Obviously that would be much too slow for a fast paced action game.
+        if(light < playerLastLightSample[i].value)
+        {
+            // Going from a bright area to a darker one
+            inter = (currentTime - playerLastLightSample[i].updateTime) /
+                           (float) SECONDS_TO_TICKS(r_lightAdaptDarkTime);
+
+            if(inter > 1)
+                mod = 0;
+            else
+            {
+                diff = playerLastLightSample[i].value - light;
+                mod = -(((diff - (diff * inter)) / MOD_RANGE) * 25); //midpoint
+            }
+        }
+        else if(light > playerLastLightSample[i].value)
+        {
+            // Going from a dark area to a bright one
+            inter = (currentTime - playerLastLightSample[i].updateTime) /
+                           (float) SECONDS_TO_TICKS(r_lightAdaptBrightTime);
+
+            if(inter > 1)
+                mod = 0;
+            else
+            {
+                diff = light - playerLastLightSample[i].value;
+                mod = ((diff - (diff * inter)) / MOD_RANGE) * 25;
+            }
+        }
+        else
+            mod = 0;
+
+        range = midpoint -
+                ((/*( ((float) light / 255.f) * 10) +*/ mod) * r_lightAdapt);
+        // Round to nearest whole.
+        range += 0.5f;
+
+        // Clamp the range
+        if(range >= MOD_RANGE)
+            range = MOD_RANGE - 1;
+        else if(range < 0)
+            range = 0;
+
+        playerLightRange[i] = (int) range;
+
+        // Have the lighting conditions changed?
+
+        // Light differences between sectors?
+        if(!(playerLastLightSample[i].sector == sub->sector))
+        {
+            // If this sample is different to the previous sample
+            // update the last sample value;
+            if(playerLastLightSample[i].sector)
+                playerLastLightSample[i].value = playerLastLightSample[i].sector->lightlevel;
+            else
+                playerLastLightSample[i].value = light;
+
+            playerLastLightSample[i].updateTime = currentTime;
+
+            playerLastLightSample[i].sector = sub->sector;
+
+            playerLastLightSample[i].currentlight = light;
+        }
+        else // Light changes in the same sector?
+        {
+            if(playerLastLightSample[i].currentlight != light)
+            {
+                playerLastLightSample[i].value = light;
+                playerLastLightSample[i].updateTime = currentTime;
+            }
+        }
+    }
+}
+
+/*
+ * Applies the offset from the lightRangeModMatrix to the given light value.
+ *
+ * The range chosen is that of the current viewplayer.
+ * (calculated based on the lighting conditions for that player)
+ *
+ * The lightRangeModMatrix is used to implement (precalculated) ambient light
+ * limit, light range compression, light range shift AND light adaptation
+ * response curves. By generating this precalculated matrix we save on a LOT
+ * of calculations (replacing them all with one single addition) which would
+ * otherwise all have to be performed each frame for each call. The values are
+ * applied to sector lightlevels, lightgrid point evaluations, vissprite
+ * lightlevels, fakeradio shadows etc, etc...
+ *
+ * NOTE: There is no need to clamp the result. Since the offset values in
+ *       the lightRangeModMatrix have already been clamped so that the resultant
+ *       lightvalue is NEVER outside the range 0-254 when the original lightvalue
+ *       is used as the index.
+ *
+ * @param lightvar    Ptr to the value to apply the adaptation to.
+ */
+void Rend_ApplyLightAdaptation(int* lightvar)
+{
+    // The default range.
+    int range = MOD_RANGE / 2;
+    int lightval;
+
+    if(lightvar == NULL)
+        return; // Can't apply adaptation to a NULL val ptr...
+
+    lightval = *lightvar;
+
+    if(lightval > 255)
+        lightval = 255;
+    else if(lightval < 0)
+        lightval = 0;
+
+    // Apply light adaptation?
+    if(r_lightAdapt)
+        range = playerLightRange[viewplayer - players];
+
+    *lightvar += lightRangeModMatrix[range][lightval];
+}
+
+/*
+ * Same as above but instead of applying light adaptation to the var directly
+ * it returns the light adaptation value for the passed light value.
+ *
+ * @param lightvalue    Light value to look up the adaptation value of.
+ * @return int          Adaptation value for the passed light value.
+ */
+int Rend_GetLightAdaptVal(int lightvalue)
+{
+    int range = MOD_RANGE / 2;
+    int lightval = lightvalue;
+
+    if(lightval > 255)
+        lightval = 255;
+    else if(lightval < 0)
+        lightval = 0;
+
+    if(r_lightAdapt)
+        range = playerLightRange[viewplayer - players];
+
+    return lightRangeModMatrix[range][lightval];
 }
 
 static void DrawRangeBox(int x, int y, int w, int h, ui_color_t *c)

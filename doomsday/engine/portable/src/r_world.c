@@ -23,6 +23,7 @@
 
 #include <math.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -729,27 +730,70 @@ void R_SetVertexLineOwner(int idx, line_t *lineptr)
     own->linelist[own->numlines - 1] = line;
 }
 
+static vertex_t *rootVtx;
+/*
+ * Compares the angles of two lines that share a common vertex.
+ *
+ * pre: rootVtx must point to the vertex common between a and b
+ *      which are (int*) line indexs.
+ */
+static int C_DECL lineAngleSorter(const void *a, const void *b)
+{
+    fixed_t dx, dy;
+    binangle_t angleA, angleB;
+    line_t *lineA = LINE_PTR(*(int *)a);
+    line_t *lineB = LINE_PTR(*(int *)b);
+
+    if(lineA->v1 == rootVtx)
+    {
+        dx = lineA->v2->x - rootVtx->x;
+        dy = lineA->v2->y - rootVtx->y;
+    }
+    else
+    {
+        dx = lineA->v1->x - rootVtx->x;
+        dy = lineA->v1->y - rootVtx->y;
+    }
+    angleA = bamsAtan2(-(dx >> 13), dy >> 13);
+
+    if(lineB->v1 == rootVtx)
+    {
+        dx = lineB->v2->x - rootVtx->x;
+        dy = lineB->v2->y - rootVtx->y;
+    }
+    else
+    {
+        dx = lineB->v1->x - rootVtx->x;
+        dy = lineB->v1->y - rootVtx->y;
+    }
+    angleB = bamsAtan2(-(dx >> 13), dy >> 13);
+
+    return (angleB - angleA);
+}
+
 /*
  * Generates an array of sector references for each vertex. The list
  * includes all the sectors the vertex belongs to.
  *
  * Generates an array of line references for each vertex. The list
- * includes all the lines the vertex belongs to.
+ * includes all the lines the vertex belongs to sorted by angle.
+ * (the list is arranged in clockwise order, east = 0).
  */
 void R_InitVertexOwners(void)
 {
     int     i, k, p, v[2];
-    sector_t *sec;
+    sector_t      *sec;
+    vertexowner_t *own;
 
     // Allocate enough memory.
     vertexowners = Z_Malloc(sizeof(vertexowner_t) * numvertexes,
                                    PU_LEVEL, 0);
     memset(vertexowners, 0, sizeof(vertexowner_t) * numvertexes);
 
-    for(i = 0, sec = sectors; i < numsectors; i++, sec++)
+    for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
     {
         // Traversing the line list will do fine.
-        for(k = 0; k < sec->linecount; k++)
+        for(k = 0; k < sec->linecount; ++k)
         {
             line_t* line = sec->Lines[k];
             v[0] = GET_VERTEX_IDX(line->v1);
@@ -761,6 +805,16 @@ void R_InitVertexOwners(void)
                 R_SetVertexLineOwner(v[p], line);
             }
         }
+    }
+
+    // Sort lineowner lists for each vertex clockwise based on line angle,
+    // so we can walk around the lines attached to each vertex.
+    // qsort is fast enough? (need to profile large maps)
+    for(i = 0, own = vertexowners; i < numvertexes; ++i, own++)
+    {
+        rootVtx = &vertexes[i];
+        if(own->numlines > 1)
+            qsort(own->linelist, own->numlines, sizeof(int), lineAngleSorter);
     }
 }
 
@@ -967,11 +1021,29 @@ void R_InitSegInfo(void)
     }
 }
 
-void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
-                     subsector_t *subsector)
+void R_InitPlaneIllumination(subsector_t *sub, int planeid)
 {
-    int     numvrts, i, j;
+    int i, j;
+    subsectorinfo_t *ssecinfo = SUBSECT_INFO(sub);
+    planeinfo_t *plane = &ssecinfo->plane[planeid];
+
+    plane->illumination = Z_Calloc(ssecinfo->numvertices * sizeof(vertexillum_t),
+                                   PU_LEVELSTATIC, NULL);
+
+    for(i = 0; i < ssecinfo->numvertices; ++i)
+    {
+        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
+
+        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
+            plane->illumination[i].casted[j].source = -1;
+    }
+}
+
+void R_InitPlanePolys(subsector_t *subsector)
+{
+    int     numvrts, i;
     fvertex_t *vrts, *vtx, *pv;
+    subsectorinfo_t *ssecinfo = SUBSECT_INFO(subsector);
 
     // Take the subsector's vertices.
     numvrts = subsector->numverts;
@@ -981,58 +1053,54 @@ void R_InitPlanePoly(planeinfo_t *plane, boolean reverse,
     if(subsector->flags & DDSUBF_MIDPOINT)
     {
         // Triangle fan base is the midpoint of the subsector.
-        plane->numvertices = 2 + numvrts;
-        plane->vertices =
-            Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVELSTATIC, 0);
+        ssecinfo->numvertices = 2 + numvrts;
+        ssecinfo->vertices =
+            Z_Malloc(sizeof(fvertex_t) * ssecinfo->numvertices, PU_LEVELSTATIC, 0);
 
-        memcpy(plane->vertices, &subsector->midpoint, sizeof(fvertex_t));
+        memcpy(ssecinfo->vertices, &subsector->midpoint, sizeof(fvertex_t));
 
-        vtx = vrts + (!reverse ? 0 : numvrts - 1);
-        pv = plane->vertices + 1;
+        vtx = vrts;
+        pv = ssecinfo->vertices + 1;
     }
     else
     {
-        plane->numvertices = numvrts;
-        plane->vertices =
-            Z_Malloc(sizeof(fvertex_t) * plane->numvertices, PU_LEVELSTATIC, 0);
+        ssecinfo->numvertices = numvrts;
+        ssecinfo->vertices =
+            Z_Malloc(sizeof(fvertex_t) * ssecinfo->numvertices, PU_LEVELSTATIC, 0);
 
         // The first vertex is always the same: vertex zero.
-        pv = plane->vertices;
+        pv = ssecinfo->vertices;
         memcpy(pv, &vrts[0], sizeof(*pv));
 
-        vtx = vrts + (!reverse ? 1 : numvrts - 1);
+        vtx = vrts + 1;
         pv++;
         numvrts--;
     }
 
     // Add the rest of the vertices.
-    for(; numvrts > 0; numvrts--, (!reverse ? vtx++ : vtx--), pv++)
+    for(; numvrts > 0; numvrts--, vtx++, pv++)
         memcpy(pv, vtx, sizeof(*vtx));
 
     if(subsector->flags & DDSUBF_MIDPOINT)
     {
         // Re-add the first vertex so the triangle fan wraps around.
-        memcpy(pv, &plane->vertices[1], sizeof(*pv));
+        memcpy(pv, &ssecinfo->vertices[1], sizeof(*pv));
     }
 
     // Initialize the illumination for the subsector.
-    plane->illumination = Z_Calloc(plane->numvertices * sizeof(vertexillum_t),
-                                   PU_LEVELSTATIC, NULL);
-    for(i = 0; i < plane->numvertices; ++i)
-    {
-        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
+    for(i = 0; i < NUM_PLANES; ++i)
+        R_InitPlaneIllumination(subsector, i);
 
-        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
-            plane->illumination[i].casted[j].source = -1;
-    }
+    // FIXME: $nplanes
+    // Initialize the plane types.
+    ssecinfo->plane[PLN_FLOOR].type = PLN_FLOOR;
+    ssecinfo->plane[PLN_CEILING].type = PLN_CEILING;
 }
 
 void R_InitSubsectorInfo(void)
 {
     int     i;
-    subsector_t *sub;
     subsectorinfo_t *info;
-    sector_t *sector;
 
     i = sizeof(subsectorinfo_t) * numsubsectors;
 #ifdef _DEBUG
@@ -1044,16 +1112,7 @@ void R_InitSubsectorInfo(void)
 
     for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
     {
-        sub = SUBSECTOR_PTR(i);
-        sector = sub->sector;
-
-        // Init floor plane.
-        info->plane[PLN_FLOOR].type = PLN_FLOOR;
-        R_InitPlanePoly(&info->plane[PLN_FLOOR], false, sub);
-
-        // Init ceiling plane.
-        info->plane[PLN_CEILING].type = PLN_CEILING;
-        R_InitPlanePoly(&info->plane[PLN_CEILING], true, sub);
+        R_InitPlanePolys(SUBSECTOR_PTR(i));
     }
 
     Z_CheckHeap();
@@ -1920,8 +1979,6 @@ void R_SetupLevel(char *level_id, int flags)
     Con_InitProgress("Setting up level...", 100);
     strcpy(currentLevelId, level_id);
 
-    // First compose the vertex owners array.
-    R_InitVertexOwners();
     Con_Progress(10, 0);
 
     // Polygonize.
@@ -1949,6 +2006,9 @@ void R_SetupLevel(char *level_id, int flags)
     R_InitSegInfo();
     R_InitSubsectorInfo();
     R_InitLineInfo();
+
+    // Compose the vertex owners array.
+    R_InitVertexOwners();
 
     // Init blockmap for searching subsectors.
     P_InitSubsectorBlockMap();

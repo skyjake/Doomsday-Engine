@@ -687,17 +687,19 @@ static boolean SB_ChangeInAffected(biasaffection_t *affected,
  * changed.  The planes that the change affects will need to be
  * re-evaluated.
  */
-void SB_MarkPlaneChanges(planeinfo_t *plane, biastracker_t *allChanges)
+void SB_MarkPlaneChanges(subsectorinfo_t *ssecinfo, int plane,
+                         biastracker_t *allChanges)
 {
     int i;
+    planeinfo_t *pinfo = &ssecinfo->plane[plane];
 
-    SB_TrackerApply(&plane->tracker, allChanges);
+    SB_TrackerApply(&pinfo->tracker, allChanges);
 
-    if(SB_ChangeInAffected(plane->affected, allChanges))
+    if(SB_ChangeInAffected(pinfo->affected, allChanges))
     {
         // Mark the illumination unseen to force an update.
-        for(i = 0; i < plane->numvertices; ++i)
-            plane->illumination[i].flags |= VIF_STILL_UNSEEN;
+        for(i = 0; i < ssecinfo->numvertices; ++i)
+            pinfo->illumination[i].flags |= VIF_STILL_UNSEEN;
     }
 }
 
@@ -786,7 +788,7 @@ void SB_BeginFrame(void)
     for(i = 0; i < numsubsectors; ++i)
     {
         for(j = 0; j < NUM_PLANES; ++j)
-            SB_MarkPlaneChanges(&subsecinfo[i].plane[j], &allChanges);
+            SB_MarkPlaneChanges(&subsecinfo[i], j, &allChanges);
     }
 }
 

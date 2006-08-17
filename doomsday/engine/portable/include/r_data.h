@@ -243,8 +243,6 @@ typedef struct biasaffection_s {
 
 typedef struct planeinfo_s {
     short           flags;
-    ushort          numvertices;
-    fvertex_t      *vertices;
     int             pic;
     int             type;           // Plane type (ie PLN_FLOOR or PLN_CEILING)
     vertexillum_t  *illumination;
@@ -280,6 +278,8 @@ typedef struct seginfo_s {
 
 typedef struct subsectorinfo_s {
     planeinfo_t     plane[NUM_PLANES];
+    ushort          numvertices;
+    fvertex_t      *vertices;
     int             validcount;
     shadowlink_t   *shadows;
 } subsectorinfo_t;
