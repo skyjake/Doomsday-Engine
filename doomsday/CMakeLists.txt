@@ -101,32 +101,32 @@ FILE(GLOB DENG_ENGINE_DEFS ${CMAKE_SOURCE_DIR}/engine/defs/*.ded)
 SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/data)
 SET (DENG_ENGINE_DEFS_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/defs)
 
-SET (DENG_JDOOM_DATA ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/*.txt)
+SET (DENG_JDOOM_DATA ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/jdoom.wad ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/jdoomconhelp.txt)
 FILE(GLOB DENG_JDOOM_DEFS ${CMAKE_SOURCE_DIR}/plugins/jdoom/defs/*.ded)
 SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
 SET (DENG_JDOOM_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jdoom)
 
-SET (DENG_JHERETIC_DATA ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/*.txt)
+SET (DENG_JHERETIC_DATA ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/jheretic.wad ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/jhereticconhelp.txt)
 FILE(GLOB DENG_JHERETIC_DEFS ${CMAKE_SOURCE_DIR}/plugins/jheretic/defs/*.ded)
 SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
 SET (DENG_JHERETIC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jheretic)
 
-SET (DENG_JHEXEN_DATA ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/*.txt)
+SET (DENG_JHEXEN_DATA ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/jhexen.wad ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/jhexenconhelp.txt)
 FILE(GLOB DENG_JHEXEN_DEFS ${CMAKE_SOURCE_DIR}/plugins/jhexen/defs/*.ded)
 SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
 SET (DENG_JHEXEN_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jhexen)
 
-SET (DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/*.wad DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/*.txt)
+SET (DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/jstrife.wad.wad DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/jstrifeconhelp.txt)
 FILE(GLOB DENG_JSTRIFE_DEFS ${CMAKE_SOURCE_DIR}/plugins/jstrife/defs/*.ded)
 SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
 SET (DENG_JSTRIFE_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jstrife)
 
-SET (DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/*.wad DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/*.txt)
+SET (DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/wolftc.wad DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/wolftcconhelp.txt)
 FILE(GLOB DENG_WOLFTC_DEFS ${CMAKE_SOURCE_DIR}/plugins/wolftc/defs/*.ded)
 SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/wolftc)
 SET (DENG_WOLFTC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/wolftc)
 
-SET (DENG_D64TC_DATA ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/*.wad ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/*.txt)
+SET (DENG_D64TC_DATA ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/d64tc.wad ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/d64tcconhelp.txt)
 FILE(GLOB DENG_D64TC_DEFS ${CMAKE_SOURCE_DIR}/plugins/d64tc/defs/*.ded)
 SET (DENG_D64TC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/d64tc)
 SET (DENG_D64TC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/d64tc)
@@ -534,7 +534,8 @@ ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
 ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c )
+${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c
+${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
 
 
 SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
