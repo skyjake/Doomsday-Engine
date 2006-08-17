@@ -1007,6 +1007,7 @@ void Rend_RenderModel(vissprite_t * spr)
     // This way the distance darkening has an effect.
     quad.vertices[0].dist = Rend_PointDist2D(spr->data.mo.v1);
     quad.numvertices = 1;
+    quad.isWall = false;
 
     Rend_ApplyLightAdaptation(&lightLevel);
     RL_VertexColors(&quad, lightLevel, spr->data.mo.rgb);

@@ -427,7 +427,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
     {
         gl.Disable(DGL_DEPTH_WRITE);
         gl.Disable(DGL_CULL_FACE);
-        gl.Bind(ptctexname[using_texture]);
+        gl.Bind(renderTextures ? ptctexname[using_texture] : 0);
         gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
         gl.Begin(prim_type = DGL_QUADS);
     }

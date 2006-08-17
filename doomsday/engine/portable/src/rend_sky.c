@@ -95,7 +95,7 @@ void Rend_RenderSkyModels(void)
     // Setup basic translation.
     gl.Translatef(vx, vy, vz);
 
-    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
+    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; ++i, sky++)
     {
         if(!sky->def)
             continue;
@@ -132,7 +132,7 @@ void Rend_RenderSkyModels(void)
         R_SetModelFrame(sky->model, sky->frame);
         vis.data.mo.yaw = sky->yaw;
         vis.data.mo.lightlevel = -1;    // Fullbright.
-        for(k = 0; k < 3; k++)
+        for(k = 0; k < 3; ++k)
         {
             vis.data.mo.rgb[k] = sky->def->color[k] * 255;
         }
@@ -225,7 +225,7 @@ void Rend_SkyRenderer(int hemi)
 
         // Draw the cap.
         gl.Begin(DGL_TRIANGLE_FAN);
-        for(c = 0; c < skyColumns; c++)
+        for(c = 0; c < skyColumns; ++c)
             CapSideVertex(0, c);
         gl.End();
 
@@ -236,7 +236,7 @@ void Rend_SkyRenderer(int hemi)
             // be partially translucent.
             gl.Begin(DGL_TRIANGLE_STRIP);
             CapSideVertex(0, 0);
-            for(c = 0; c < skyColumns; c++)
+            for(c = 0; c < skyColumns; ++c)
             {
                 CapSideVertex(1, c);    // One step down.
                 CapSideVertex(0, c + 1);    // And one step right.
@@ -250,12 +250,12 @@ void Rend_SkyRenderer(int hemi)
 
     // The total number of triangles per hemisphere can be calculated
     // as follows: rows * columns * 2 + 2 (for the top cap).
-    for(r = 0; r < skyRows; r++)
+    for(r = 0; r < skyRows; ++r)
     {
         if(simpleSky)
         {
             gl.Begin(DGL_QUADS);
-            for(c = 0; c < skyColumns; c++)
+            for(c = 0; c < skyColumns; ++c)
             {
                 SkyVertex(r, c);
                 SkyVertex(r + 1, c);
@@ -269,7 +269,7 @@ void Rend_SkyRenderer(int hemi)
             gl.Begin(DGL_TRIANGLE_STRIP);
             SkyVertex(r, 0);
             SkyVertex(r + 1, 0);
-            for(c = 1; c <= skyColumns; c++)
+            for(c = 1; c <= skyColumns; ++c)
             {
                 SkyVertex(r, c);
                 SkyVertex(r + 1, c);
@@ -285,11 +285,11 @@ static void SetupFadeout(skylayer_t * slayer)
     byte    rgb[3];
 
     GL_GetSkyTopColor(slayer->texture, rgb);
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         slayer->fadeout.rgb[i] = rgb[i] / 255.0f;
 
     // Determine if it should be used.
-    for(slayer->fadeout.use = false, i = 0; i < 3; i++)
+    for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
         if(slayer->fadeout.rgb[i] > slayer->fadeout.limit)
         {
             // Colored fadeout is needed.
@@ -312,7 +312,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                      (currentFO->use ? SKYHEMI_FADEOUT_BG : 0));
 
     for(i = firstLayer, slayer = skyLayers + firstLayer; i < MAXSKYLAYERS;
-        i++, slayer++)
+        ++i, slayer++)
     {
         if(slayer->flags & SLF_ENABLED)
         {
@@ -329,9 +329,9 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                 resetup = true;
 
             // The texture is actually loaded when an update is done.
-            gl.Bind(GL_PrepareSky
-                    (slayer->texture,
-                     slayer->flags & SLF_MASKED ? true : false));
+            gl.Bind(renderTextures ?
+                    GL_PrepareSky(slayer->texture,
+                                  slayer->flags & SLF_MASKED ? true : false) : 0);
 
             if(resetup)
                 SetupFadeout(slayer);
@@ -403,7 +403,7 @@ void Rend_InitSky()
     Rend_SkyDetail(skyDetail, skyRows);
 
     // Initialize the layers.
-    for(i = 0; i < MAXSKYLAYERS; i++)
+    for(i = 0; i < MAXSKYLAYERS; ++i)
     {
         skyLayers[i].texture = -1;  // No texture.
         skyLayers[i].fadeout.limit = .3f;
@@ -439,8 +439,8 @@ void Rend_SkyDetail(int quarterDivs, int rows)
     skyVerts = realloc(skyVerts, sizeof(*skyVerts) * numSkyVerts);
 
     // Calculate the vertices.
-    for(r = 0; r <= skyRows; r++)
-        for(c = 0; c < skyColumns; c++)
+    for(r = 0; r <= skyRows; ++r)
+        for(c = 0; c < skyColumns; ++c)
         {
             svtx = skyVerts + SKYVTX_IDX(c, r);
             topAngle = ((c / (float) skyColumns) *2) * PI;
@@ -460,7 +460,7 @@ static void updateLayerStats()
     // -1 denotes 'no active layers'.
     firstLayer = -1;
     activeLayers = 0;
-    for(i = 0; i < MAXSKYLAYERS; i++)
+    for(i = 0; i < MAXSKYLAYERS; ++i)
     {
         if(skyLayers[i].flags & SLF_ENABLED)
         {

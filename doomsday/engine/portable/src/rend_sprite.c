@@ -299,7 +299,8 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
                            vis->data.wall.light->t[1]);
     }
-    gl.Vertex3f(vis->data.wall.vertices[0].pos[VX], vis->data.wall.bottom,
+    gl.Vertex3f(vis->data.wall.vertices[0].pos[VX],
+                vis->data.wall.vertices[0].pos[VZ],
                 vis->data.wall.vertices[0].pos[VY]);
 
     gl.MultiTexCoord2fv(normal, vis->data.wall.texc[0]);
@@ -308,8 +309,9 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
                            vis->data.wall.light->t[0]);
     }
-    gl.Vertex3f(vis->data.wall.vertices[0].pos[VX], vis->data.wall.top,
-                vis->data.wall.vertices[0].pos[VY]);
+    gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
+                vis->data.wall.vertices[2].pos[VZ],
+                vis->data.wall.vertices[2].pos[VY]);
 
     gl.Color4ubv(vis->data.wall.vertices[1].color);
     gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
@@ -319,8 +321,9 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
                            vis->data.wall.light->t[0]);
     }
-    gl.Vertex3f(vis->data.wall.vertices[1].pos[VX], vis->data.wall.top,
-                vis->data.wall.vertices[1].pos[VY]);
+    gl.Vertex3f(vis->data.wall.vertices[3].pos[VX],
+                vis->data.wall.vertices[3].pos[VZ],
+                vis->data.wall.vertices[3].pos[VY]);
 
     gl.MultiTexCoord2fv(normal, vis->data.wall.texc[1]);
     if(withDyn)
@@ -328,7 +331,8 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
                            vis->data.wall.light->t[1]);
     }
-    gl.Vertex3f(vis->data.wall.vertices[1].pos[VX], vis->data.wall.bottom,
+    gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
+                vis->data.wall.vertices[1].pos[VZ],
                 vis->data.wall.vertices[1].pos[VY]);
 
     gl.End();
@@ -557,15 +561,21 @@ void Rend_RenderSprite(vissprite_t * spr)
     if(spr->data.mo.flags & DDMF_TRANSLATION)
     {
         // We need to prepare a translated version of the sprite.
+        if(renderTextures)
         GL_SetTranslatedSprite(patch,
                                (spr->data.mo.
                                 flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT,
                                spr->data.mo.class);
+        else
+            gl.Bind(0);
     }
     else
     {
         // Set the texture. No translation required.
-        GL_SetSprite(patch, 0);
+        if(renderTextures)
+            GL_SetSprite(patch, 0);
+        else
+            gl.Bind(0);
     }
     sprh = spritelumps[patch].height;
 
@@ -599,6 +609,7 @@ void Rend_RenderSprite(vissprite_t * spr)
         v1[VY] = Q_FIX2FLT(spr->data.mo.gy);
         tempquad.vertices[0].dist = Rend_PointDist2D(v1);
         tempquad.numvertices = 1;
+        tempquad.isWall = false;
 
         RL_VertexColors(&tempquad, lightLevel, spr->data.mo.rgb);
 

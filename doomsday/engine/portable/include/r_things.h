@@ -79,14 +79,12 @@ typedef struct vissprite_s {
         struct vissprite_wall_s {
             int             texture;
             boolean         masked;
-            float           top;   // Top and bottom height.
-            float           bottom;
             blendmode_t     blendmode; // Blendmode to be used when drawing
                                        // (two sided mid textures only)
             struct vissprite_wall_vertex_s {
-                float           pos[2]; // x and y coordinates.
+                float           pos[3]; // x y and z coordinates.
                 unsigned char   color[4];
-            } vertices[2];
+            } vertices[4];
             float           texc[2][2]; // u and v coordinates.
             struct dynlight_s *light;
         } wall;

@@ -149,7 +149,7 @@ typedef enum {
 } rendpolytype_t;
 
 typedef struct {
-    float           pos[2];        // X and Y coordinates.
+    float           pos[3];        // X and Y coordinates.
     gl_rgba_t       color;         // Color of the vertex.
     float           dist;          // Distance to the vertex.
 } rendpoly_vertex_t;
@@ -157,6 +157,7 @@ typedef struct {
 // rendpoly_t is only for convenience; the data written in the rendering
 // list data buffer is taken from this struct.
 typedef struct rendpoly_s {
+    boolean         isWall;
     rendpolytype_t  type;
     short           flags;         // RPF_*.
     float           texoffx, texoffy;   /* Texture coordinates for left/top
@@ -170,15 +171,18 @@ typedef struct rendpoly_s {
     blendmode_t     blendmode;     // Primitive-specific blending mode.
 
     // The geometry:
-    float           top, bottom;
-    float           length;
     byte            numvertices;   // Number of vertices for the poly.
     rendpoly_vertex_t vertices[RL_MAX_POLY_SIDES];
-    gl_rgba_t       bottomcolor[2];
-    struct div_t {
-        byte            num;
-        float           pos[RL_MAX_DIVS];
-    } divs[2];                     // For wall segments (two vertices).
+
+    // Wall specific data
+    struct rendpoly_wall_s {
+        float           length;
+        //gl_rgba_t       bottomcolor[2];
+        struct div_t {
+            byte            num;
+            float           pos[RL_MAX_DIVS];
+        } divs[2];                     // For wall segments (two vertices).
+    } wall;
 } rendpoly_t;
 
 // This is the dummy mobj_t used for blockring roots.

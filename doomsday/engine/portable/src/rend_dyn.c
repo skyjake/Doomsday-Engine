@@ -417,7 +417,7 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
     float   pos[2][2], s[2], t[2];
     float   dist, pntLight[2];
     float   fceil, ffloor, bceil, bfloor;
-    float   top, bottom;
+    float   top[2], bottom[2];
     dynlight_t *dyn;
     int     segindex = GET_SEG_IDX(seg);
     boolean backSide = false;
@@ -479,13 +479,6 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
     if(!present)
         return;
 
-    /*  dlq.type = rp_quad;
-       dlq.numvertices = 2;
-       dlq.vertices[0].pos[VX] = FIX2FLT(seg->v1->x);
-       dlq.vertices[0].pos[VY] = FIX2FLT(seg->v1->y);
-       dlq.vertices[1].pos[VX] = FIX2FLT(seg->v2->x);
-       dlq.vertices[1].pos[VY] = FIX2FLT(seg->v2->y); */
-
     pos[0][VX] = FIX2FLT(seg->v1->x);
     pos[0][VY] = FIX2FLT(seg->v1->y);
     pos[1][VX] = FIX2FLT(seg->v2->x);
@@ -536,20 +529,22 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
     {
         if(backsec)
         {
-            top = (fceil < bceil ? fceil : bceil);
-            bottom = (ffloor > bfloor ? ffloor : bfloor);
-            Rend_MidTexturePos(&top, &bottom, NULL, FIX2FLT(sdef->rowoffset),
+            top[0] = top[1] = (fceil < bceil ? fceil : bceil);
+            bottom[0] = bottom[1] = (ffloor > bfloor ? ffloor : bfloor);
+            Rend_MidTexturePos(&bottom[0], &bottom[1], &top[0], &top[1],
+                               NULL, FIX2FLT(sdef->rowoffset),
                                seg->linedef ? (seg->linedef->
                                                flags & ML_DONTPEGBOTTOM) !=
                                0 : false);
         }
         else
         {
-            top = fceil;
-            bottom = ffloor;
+            top[0] = top[1] = fceil;
+            bottom[0] = bottom[1] = ffloor;
         }
 
-        if(DL_SegTexCoords(t, top, bottom, lum))
+        if(DL_SegTexCoords(t, top[0], bottom[0], lum) &&
+           DL_SegTexCoords(t, top[1], bottom[1], lum))
         {
             dyn = DL_New(s, t);
             DL_ThingColor(lum, dyn->color, LUM_FACTOR(dist));

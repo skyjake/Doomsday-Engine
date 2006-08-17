@@ -142,21 +142,26 @@ void Rend_ProcessThingShadow(mobj_t *mo)
     memset(&poly, 0, sizeof(poly));
     poly.type = RP_FLAT;
     poly.flags = RPF_SHADOW;
+    poly.isWall = false;
     poly.tex.id = GL_PrepareLSTexture(LST_DYNAMIC);
     poly.tex.width = poly.tex.height = radius * 2;
     poly.texoffx = -pos[VX] + radius;
     poly.texoffy = -pos[VY] - radius;
-    poly.top = floor + 0.2f;    // A bit above the floor.
+    floor += 0.2f;    // A bit above the floor.
 
     poly.numvertices = 4;
     poly.vertices[0].pos[VX] = pos[VX] - radius;
     poly.vertices[0].pos[VY] = pos[VY] + radius;
+    poly.vertices[0].pos[VZ] = floor;
     poly.vertices[1].pos[VX] = pos[VX] + radius;
     poly.vertices[1].pos[VY] = pos[VY] + radius;
+    poly.vertices[1].pos[VZ] = floor;
     poly.vertices[2].pos[VX] = pos[VX] + radius;
     poly.vertices[2].pos[VY] = pos[VY] - radius;
+    poly.vertices[2].pos[VZ] = floor;
     poly.vertices[3].pos[VX] = pos[VX] - radius;
     poly.vertices[3].pos[VY] = pos[VY] - radius;
+    poly.vertices[3].pos[VZ] = floor;
     for(i = 0; i < 4; i++)
     {
         // Shadows are black.

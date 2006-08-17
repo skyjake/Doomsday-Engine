@@ -57,8 +57,10 @@ float           Rend_PointDist3D(float c[3]);
 float           Rend_SignedPointDist2D(float c[2]);
 int             Rend_SectorLight(sector_t *sec);
 int             Rend_SegFacingDir(float v1[2], float v2[2]);
-int             Rend_MidTexturePos(float *top, float *bottom, float *texoffy,
-                                   float tcyoff, boolean lower_unpeg);
+int             Rend_MidTexturePos(float *bottomleft, float *bottomright,
+                                   float *topleft, float *topright,
+                                   float *texoffy, float tcyoff,
+                                   boolean lower_unpeg);
 boolean         Rend_IsWallSectionPVisible(line_t* line, int section,
                                            boolean backside);
 

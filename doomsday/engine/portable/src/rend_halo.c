@@ -352,7 +352,10 @@ boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
             }
         }
 
-        GL_BindTexture(tex);
+        if(renderTextures)
+            GL_BindTexture(tex);
+        else
+            gl.Bind(0);
 
         // Don't wrap the texture. Evidently some drivers can't just
         // take a hint... (or then something's changing the wrapping
