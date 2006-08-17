@@ -273,12 +273,8 @@ int I_TranslateKeyCode(SDLKey sym)
  */
 void I_PollEvents(void)
 {
-
     SDL_Event event;
     keyevent_t *e;
-
-// Yagi
-Con_Message("Entered I_PollEvents:");
 
     while(SDL_PollEvent(&event))
     {
@@ -316,9 +312,6 @@ Con_Message("Entered I_PollEvents:");
 //===========================================================================
 void I_InitMouse(void)
 {
-// Yagi
-Con_Message("Entered I_InitMouse:");
-
     if(ArgCheck("-nomouse") || novideo)
         return;
 
@@ -335,9 +328,6 @@ Con_Message("Entered I_InitMouse:");
 void I_InitJoystick(void)
 {
         int joycount;
-
-// Yagi
-Con_Message("Entered I_InitJoystick:");
 
     if(ArgCheck("-nojoy"))
         return;
@@ -377,15 +367,11 @@ Con_Message("Entered I_InitJoystick:");
 //===========================================================================
 int I_Init(void)
 {
-// Yagi
-Con_Message("Entered I_Init");
     if(initIOk)
         return true;            // Already initialized.
     I_InitMouse();
     I_InitJoystick();
     initIOk = true;
-// Yagi
-Con_Message("Leaving I_Init");
     return true;
 }
 
