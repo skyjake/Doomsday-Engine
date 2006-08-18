@@ -2394,7 +2394,7 @@ int SV_SaveGame(char *filename, char *description)
     hdr.map = gamemap;
     hdr.deathmatch = deathmatch;
     hdr.nomonsters = nomonsters;
-    hdr.respawn = respawnparm;
+    hdr.respawn = respawnmonsters;
     hdr.leveltime = leveltime;
     hdr.gameid = SV_GameID();
     for(i = 0; i < MAXPLAYERS; i++)
@@ -2501,7 +2501,7 @@ int SV_LoadGame(char *filename)
     gamemap = hdr.map;
     deathmatch = hdr.deathmatch;
     nomonsters = hdr.nomonsters;
-    respawnparm = hdr.respawn;
+    respawnmonsters = hdr.respawn;
     // We don't have the right to say which players are in the game. The
     // players that already are will continue to be. If the data for a given
     // player is not in the savegame file, he will be notified. The data for
@@ -2607,7 +2607,7 @@ void SV_SaveClient(unsigned int gameid)
     hdr.map = gamemap;
     hdr.deathmatch = deathmatch;
     hdr.nomonsters = nomonsters;
-    hdr.respawn = respawnparm;
+    hdr.respawn = respawnmonsters;
     hdr.leveltime = leveltime;
     hdr.gameid = gameid;
     SV_Write(&hdr, sizeof(hdr));
@@ -2661,7 +2661,7 @@ void SV_LoadClient(unsigned int gameid)
     gameskill = hdr.skill;
     deathmatch = hdr.deathmatch;
     nomonsters = hdr.nomonsters;
-    respawnparm = hdr.respawn;
+    respawnmonsters = hdr.respawn;
     // Do we need to change the map?
     if(gamemap != hdr.map || gameepisode != hdr.episode)
     {

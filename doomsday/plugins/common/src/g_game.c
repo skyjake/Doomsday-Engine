@@ -1789,7 +1789,7 @@ void G_DoNewGame(void)
     if(!IS_NETGAME)
     {
         deathmatch = false;
-        respawnparm = false;
+        respawnmonsters = false;
         nomonsters = ArgExists("-nomonsters");  //false;
     }
     G_InitNew(d_skill, d_episode, d_map);

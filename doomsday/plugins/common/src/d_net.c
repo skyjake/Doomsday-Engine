@@ -144,9 +144,9 @@ int D_NetServerStarted(int before)
     cfg.jumpEnabled = cfg.netJumping;
 
 #if __JDOOM__
-    respawnparm = cfg.netRespawn;
+    respawnmonsters = cfg.netRespawn;
 #elif __JHERETIC__
-    respawnparm = cfg.netRespawn;
+    respawnmonsters = cfg.netRespawn;
 #elif __JHEXEN__
     randomclass = cfg.netRandomclass;
 #endif
@@ -406,7 +406,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         deathmatch = false;
         nomonsters = false;
 #if __JDOOM__ || __JHERETIC__
-        respawnparm = false;
+        respawnmonsters = false;
 #endif
 
 #if __JHEXEN__
@@ -707,7 +707,7 @@ DEFCC(CCmdSetMap)
     cfg.jumpEnabled = cfg.netJumping;
 
 #if __JDOOM__ || __JHERETIC__
-    respawnparm = cfg.netRespawn;
+    respawnmonsters = cfg.netRespawn;
     ep = atoi(argv[1]);
     map = atoi(argv[2]);
 #elif __JSTRIFE__
