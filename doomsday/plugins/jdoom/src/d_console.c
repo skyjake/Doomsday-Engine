@@ -39,6 +39,7 @@ DEFCC(CCmdCheatWarp);
 DEFCC(CCmdCheatReveal);
 DEFCC(CCmdCheatGive);
 DEFCC(CCmdCheatMassacre);
+DEFCC(CCmdCheatWhere);
 DEFCC(CCmdCheatExitLevel);
 DEFCC(CCmdCheatSuicide);
 
@@ -200,6 +201,7 @@ ccmd_t  gameCCmds[] = {
     {"kill",        CCmdCheatMassacre},
     {"exitlevel",   CCmdCheatExitLevel},
     {"suicide",     CCmdCheatSuicide},
+    {"where",       CCmdCheatWhere},
 
     {"doomfont",    CCmdDoomFont},
 

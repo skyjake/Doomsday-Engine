@@ -182,6 +182,7 @@ ccmd_t  gameCCmds[] = {
     {"kill",       CCmdCheatMassacre},
     {"exitlevel",  CCmdCheatExitLevel},
     {"suicide",    CCmdCheatSuicide},
+    {"where",      CCmdCheatWhere},
 
     {"hereticfont",CCmdHereticFont},
 
@@ -203,7 +204,6 @@ ccmd_t  gameCCmds[] = {
     {"invleft",    CCmdInventory},
     {"invright",   CCmdInventory},
     {"chicken",    CCmdCheatPig},
-    {"where",      CCmdCheatWhere},
     {NULL}
 };
 

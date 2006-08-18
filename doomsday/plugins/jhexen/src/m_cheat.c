@@ -926,14 +926,16 @@ static void CheatVersionFunc(player_t *player, cheat_t * cheat)
 
 static void CheatDebugFunc(player_t *player, cheat_t * cheat)
 {
+    char    lumpName[9];
     char    textBuffer[256];
     subsector_t *sub;
 
-    if(!player->plr->mo)
+    if(!player->plr->mo || !usergame)
         return;
 
-    sprintf(textBuffer, "MAP %d (%d)  X:%5d  Y:%5d  Z:%5d",
-            P_GetMapWarpTrans(gamemap), gamemap,
+    P_GetMapLumpName(gameepisode, gamemap, lumpName);
+    sprintf(textBuffer, "MAP [%s]  X:%5d  Y:%5d  Z:%5d",
+            lumpName,
             player->plr->mo->pos[VX] >> FRACBITS,
             player->plr->mo->pos[VY] >> FRACBITS,
             player->plr->mo->pos[VZ] >> FRACBITS);
@@ -1258,7 +1260,8 @@ DEFCC(CCmdCheatShadowcaster)
 
 DEFCC(CCmdCheatWhere)
 {
-    //if(!canCheat()) return false; // Can't cheat!
+    if(!canCheat())
+        return false;           // Can't cheat!
     CheatDebugFunc(players + consoleplayer, NULL);
     return true;
 }

@@ -174,6 +174,7 @@ ccmd_t  gameCCmds[] = {
     {"give",        CCmdCheatGive},
     {"kill",        CCmdCheatMassacre},
     {"suicide",     CCmdCheatSuicide},
+    {"where",       CCmdCheatWhere},
 
     {"hexenfont",   CCmdHexenFont},
 
@@ -197,7 +198,6 @@ ccmd_t  gameCCmds[] = {
     {"pig",         CCmdCheatPig},
     {"runscript",   CCmdCheatRunScript},
     {"scriptinfo",  CCmdScriptInfo},
-    {"where",       CCmdCheatWhere},
     {"class",       CCmdCheatShadowcaster},
 #ifdef DEMOCAM
     {"demomode",    CCmdSetDemoMode},

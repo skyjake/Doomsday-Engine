@@ -692,6 +692,35 @@ static void CheatIDDQDFunc(player_t *player, Cheat_t * cheat)
     P_SetMessage(player, TXT_CHEATIDDQD);
 }
 
+static void CheatDebugFunc(player_t *player, cheat_t * cheat)
+{
+    char    lumpName[9];
+    char    textBuffer[256];
+    subsector_t *sub;
+
+    if(!player->plr->mo || !usergame)
+        return;
+
+    P_GetMapLumpName(gameepisode, gamemap, lumpName);
+    sprintf(textBuffer, "MAP [%s]  X:%5d  Y:%5d  Z:%5d",
+            lumpName,
+            player->plr->mo->pos[VX] >> FRACBITS,
+            player->plr->mo->pos[VY] >> FRACBITS,
+            player->plr->mo->pos[VZ] >> FRACBITS);
+    P_SetMessage(player, textBuffer);
+
+    // Also print some information to the console.
+    Con_Message(textBuffer);
+    sub = player->plr->mo->subsector;
+    Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
+    Con_Message("  Floorz:%d pic:%d\n", P_GetIntp(sub, DMU_FLOOR_HEIGHT),
+                P_GetIntp(sub, DMU_FLOOR_TEXTURE));
+    Con_Message("  Ceilingz:%d pic:%d\n", P_GetIntp(sub, DMU_CEILING_HEIGHT),
+                P_GetIntp(sub, DMU_CEILING_TEXTURE));
+    Con_Message("Player height:%x   Player radius:%x\n",
+                player->plr->mo->height, player->plr->mo->radius);
+}
+
 // This is the multipurpose cheat ccmd.
 DEFCC(CCmdCheat)
 {
@@ -887,8 +916,9 @@ DEFCC(CCmdCheatMassacre)
 
 DEFCC(CCmdCheatWhere)
 {
-    /*  if(!canCheat()) return false; // Can't cheat!
-       CheatDebugFunc(players+consoleplayer, NULL); */
+    if(!canCheat())
+        return false;           // Can't cheat!
+    CheatDebugFunc(players+consoleplayer, NULL);
     return true;
 }
 
