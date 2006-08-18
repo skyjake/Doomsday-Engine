@@ -293,7 +293,7 @@ static void LookupPal18to8(byte *palette)
 
     if(ArgCheck("-dump_pal18to8"))
     {
-        FILE   *file = fopen("Pal18to8.lmp", "wb");
+        FILE   *file = fopen("pal18to8.lmp", "wb");
 
         fwrite(pal18to8, sizeof(pal18to8), 1, file);
         fclose(file);
@@ -1735,9 +1735,9 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate)
 DGLuint GL_PrepareDDTexture(ddtexture_t which)
 {
     static const char *ddTexNames[NUM_DD_TEXTURES] = {
-        "Unknown",
-        "Missing",
-        "BBox"
+        "unknown",
+        "missing",
+        "bbox"
     };
 
     if(which >= 0 && which < NUM_DD_TEXTURES)
@@ -2156,7 +2156,7 @@ byte *GL_LoadHighResFlat(image_t * img, char *name)
         return ptr;
 
     // Try the old-fashioned "Flat-NAME" in the Textures category.
-    return GL_LoadHighRes(img, name, "Flat-", false, RC_TEXTURE);
+    return GL_LoadHighRes(img, name, "flat-", false, RC_TEXTURE);
 }
 
 /*
@@ -3600,7 +3600,7 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
             gl.Disable(DGL_TEXTURE_COMPRESSION);
 
             lightingTexNames[LST_DYNAMIC] =
-                GL_LoadGraphics("DLight", LGM_WHITE_ALPHA);
+                GL_LoadGraphics("dLight", LGM_WHITE_ALPHA);
 
             gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
             gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
@@ -3617,7 +3617,7 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
         if(!lightingTexNames[LST_GRADIENT])
         {
             lightingTexNames[LST_GRADIENT] =
-                GL_LoadGraphics("WallGlow", LGM_WHITE_ALPHA);
+                GL_LoadGraphics("wallglow", LGM_WHITE_ALPHA);
 
             gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
             gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
@@ -3641,22 +3641,22 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
             {
             case LST_RADIO_CO:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("RadioCO", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics("radioCO", LGM_WHITE_ALPHA);
                 break;
 
             case LST_RADIO_CC:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("RadioCC", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics("radioCC", LGM_WHITE_ALPHA);
                 break;
 
             case LST_RADIO_OO:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("RadioOO", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics("radioOO", LGM_WHITE_ALPHA);
                 break;
 
             case LST_RADIO_OE:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("RadioOE", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics("radioOE", LGM_WHITE_ALPHA);
                 break;
 
             default:
@@ -3691,8 +3691,8 @@ DGLuint GL_PrepareFlareTexture(flaretex_t flare)
         gl.Disable(DGL_TEXTURE_COMPRESSION);
 
         flaretexnames[flare] =
-            GL_LoadGraphics(flare == 0 ? "Flare" : flare == 1 ? "BRFlare" :
-                           "BigFlare", LGM_WHITE_ALPHA);
+            GL_LoadGraphics(flare == 0 ? "flare" : flare == 1 ? "brflare" :
+                           "bigflare", LGM_WHITE_ALPHA);
 
         if(flaretexnames[flare] == 0)
         {
