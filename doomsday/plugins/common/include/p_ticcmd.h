@@ -29,7 +29,6 @@ typedef struct ticcmd_s {
     short           pitch;         // view pitch
     char            fly;           // Fly up/down; fall down
     byte            arti;
-    byte            speed;
     // Actions:
     char            attack;
     char            use;
