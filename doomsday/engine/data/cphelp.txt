@@ -1051,6 +1051,9 @@ desc = 1=Render mobj bounding boxes (as used for collision detection).
 [rend-dev-sky]
 desc = 1=Render the sky as a solid surface.
 
+[rend-dev-tex-showfix]
+desc = 1=Render the missing texture instead of fixing with a suitable game texture.
+
 [rend-camera-fov]
 desc = Field of view.
 

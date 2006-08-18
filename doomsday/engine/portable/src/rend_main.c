@@ -129,6 +129,8 @@ static byte bottomColor[3];
 // Current sector light color.
 const byte *sLightColor;
 
+static byte devNoTexFix = 0;
+
 // CODE --------------------------------------------------------------------
 
 void Rend_Register(void)
@@ -161,6 +163,8 @@ void Rend_Register(void)
     C_VAR_INT("rend-light-adaptation-brighttime", &r_lightAdaptBrightTime, 0, 0, 200);
 
     C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix, CVF_NO_ARCHIVE, 0, 1);
+
+    C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
 
     RL_Register();
     SB_Register();
@@ -428,23 +432,24 @@ void Rend_AddShinyPoly(int texture, boolean isFlat, rendpoly_t *poly)
     RL_AddPoly(poly);
 }
 
-static void Rend_PolyTexBlend(int texture, boolean isFlat, rendpoly_t *poly)
+static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly)
 {
     translation_t *xlat = NULL;
 
-    if(texture >= 0)
+    if(surface->texture >= 0)
     {
-        if(isFlat)
-            xlat = &R_GetFlat(texture)->translation;
+        if(surface->isflat)
+            xlat = &R_GetFlat(surface->texture)->translation;
         else
-            xlat = &texturetranslation[texture];
+            xlat = &texturetranslation[surface->texture];
     }
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
     // unblended surfaces.
     if(!xlat || !smoothTexAnim || numTexUnits < 2 ||
-       xlat->current == xlat->next || (!usingFog && xlat->inter < 0))
+       xlat->current == xlat->next || (!usingFog && xlat->inter < 0) ||
+       ((surface->flags & SUF_TEXFIX) && devNoTexFix))
     {
         // No blending for you, my friend.
         memset(&poly->intertex, 0, sizeof(poly->intertex));
@@ -453,7 +458,7 @@ static void Rend_PolyTexBlend(int texture, boolean isFlat, rendpoly_t *poly)
     }
 
     // Get info of the blend target. The globals texw and texh are modified.
-    if(isFlat)
+    if(surface->isflat)
         poly->intertex.id = GL_PrepareFlat2(xlat->next, false);
     else
         poly->intertex.id = GL_PrepareTexture2(xlat->next, false);
@@ -564,9 +569,19 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
     if(R_IsSkySurface(surface))
         return 0;
 
-    if(surface->texture == -1) // A missing texture, draw the "missing" graphic
-    {
+    if((surface->flags & SUF_TEXFIX) && devNoTexFix)
+    {   // For debug, render the "missing" texture instead of the texture
+        // chosen for surfaces to fix the HOMs.
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_MISSING);
+        poly->tex.width = texw;
+        poly->tex.height = texh;
+        poly->tex.detail = texdetail;
+        return 0 | TXF_GLOW; // Make it stand out
+    }
+
+    if(surface->texture == -1) // An unknown texture, draw the "unknown" graphic
+    {
+        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN);
         poly->tex.width = texw;
         poly->tex.height = texh;
         poly->tex.detail = texdetail;
@@ -861,7 +876,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
                 &seginfo[segIndex].tracker[1], segIndex);
 
     // Smooth Texture Animation?
-    Rend_PolyTexBlend(surface->texture, surface->isflat, quad);
+    Rend_PolyTexBlend(surface, quad);
     // Add the poly to the appropriate list
     RL_AddPoly(quad);
 
@@ -916,7 +931,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
                 &plane->tracker, subIndex);
 
     // Smooth Texture Animation?
-    Rend_PolyTexBlend(surface->texture, surface->isflat, poly);
+    Rend_PolyTexBlend(surface, poly);
     // Add the poly to the appropriate list
     RL_AddPoly(poly);
 

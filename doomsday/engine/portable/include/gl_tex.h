@@ -77,7 +77,8 @@ typedef enum flaretex_e {
  * eg a surface with a missing tex/flat is drawn using the "missing" graphic
  */
 typedef enum ddtexture_e {
-    DDT_MISSING,          // Drawn if a texture/flat is missing
+    DDT_UNKNOWN,          // Drawn if a texture/flat is unknown
+    DDT_MISSING,          // Drawn in place of HOMs in dev mode.
     DDT_BBOX,             // Drawn when rendering bounding boxes
     NUM_DD_TEXTURES
 } ddtexture_t;

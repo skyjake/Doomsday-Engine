@@ -695,6 +695,7 @@ void GL_DeleteReflectionMap(ded_reflection_t *ref)
  */
 void GL_LoadDDTextures(void)
 {
+    GL_PrepareDDTexture(DDT_UNKNOWN);
     GL_PrepareDDTexture(DDT_MISSING);
     GL_PrepareDDTexture(DDT_BBOX);
 }
@@ -1734,6 +1735,7 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate)
 DGLuint GL_PrepareDDTexture(ddtexture_t which)
 {
     static const char *ddTexNames[NUM_DD_TEXTURES] = {
+        "Unknown",
         "Missing",
         "BBox"
     };
