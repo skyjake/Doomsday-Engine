@@ -1754,7 +1754,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             case 6:
                 dummyLine = P_AllocDummyLine();
                 P_XLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, blazeOpen);
+                EV_DoDoor(dummyLine, blazeOpen);
                 P_FreeDummyLine(dummyLine);
                 bossKilled = true;
                 return;

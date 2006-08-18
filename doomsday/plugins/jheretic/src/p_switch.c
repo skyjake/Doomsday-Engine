@@ -260,16 +260,14 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
 
         // SWITCHES
     case 7:                 // Switch_Build_Stairs (8 pixel steps)
-        if(EV_BuildStairs(line, 8 * FRACUNIT))
-        {
+        if(EV_BuildStairs(line, build8))
             P_ChangeSwitchTexture(line, 0);
-        }
+
         break;
     case 107:                   // Switch_Build_Stairs_16 (16 pixel steps)
-        if(EV_BuildStairs(line, 16 * FRACUNIT))
-        {
+        if(EV_BuildStairs(line, build16))
             P_ChangeSwitchTexture(line, 0);
-        }
+
         break;
     case 9:                 // Change Donut
         if(EV_DoDonut(line))
