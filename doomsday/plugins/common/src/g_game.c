@@ -1841,6 +1841,7 @@ void G_InitNew(skill_t skill, int episode, int map)
         respawnmonsters = cfg.respawnMonstersNightmare;
 #endif
 
+// KLUDGE:
 #if __JDOOM__
     // Fast monsters?
     if(fastparm || (skill == sk_nightmare && gameskill != sk_nightmare))
@@ -1877,6 +1878,7 @@ void G_InitNew(skill_t skill, int episode, int map)
             MonsterMissileInfo[i].speed[speed] << FRACBITS;
     }
 #endif
+// <-- KLUDGE
 
     if(!IS_CLIENT)
     {

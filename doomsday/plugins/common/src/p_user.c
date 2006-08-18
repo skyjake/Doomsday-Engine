@@ -790,7 +790,7 @@ void P_ClientSideThink()
     {
         P_DeathThink(pl);
     }
-    
+
     cmd = &pl->cmd; // The latest local command.
     P_CalcHeight(pl);
 
@@ -986,7 +986,7 @@ void P_PlayerThink(player_t *player)
 #if __JHEXEN__
     player->worldTimer++;
 #endif
-    
+
     if(player->playerstate == PST_DEAD)
     {
         P_DeathThink(player);

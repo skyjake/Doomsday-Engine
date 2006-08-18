@@ -60,6 +60,8 @@ int     verbose;
 boolean devparm;                // checkparm of -devparm
 boolean nomonsters;             // checkparm of -nomonsters
 boolean respawnparm;            // checkparm of -respawn
+boolean turboparm;              // checkparm of -turbo
+float   turbomul;               // multiplier for turbo
 
 boolean cdrom;                  // true if cd-rom mode active
 boolean singletics;             // debug flag to cancel adaptiveness
@@ -473,6 +475,26 @@ void H_PostInit(void)
         startepisode = Argv(p + 1)[0] - '0';
         startmap = Argv(p + 2)[0] - '0';
         autostart = true;
+    }
+
+    // turbo option
+    p = ArgCheck("-turbo");
+    turbomul = 1.0f;
+    if(p)
+    {
+        int     scale = 200;
+        classinfo_t *pclass = PCLASS_INFO(PCLASS_PLAYER);
+
+        turboparm = true;
+        if(p < myargc - 1)
+            scale = atoi(Argv(p + 1));
+        if(scale < 10)
+            scale = 10;
+        if(scale > 400)
+            scale = 400;
+
+        Con_Message("turbo scale: %i%%\n", scale);
+        turbomul = scale / 100.f;
     }
 
     // -DEVMAP <episode> <map>

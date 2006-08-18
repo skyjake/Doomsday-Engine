@@ -50,6 +50,7 @@ boolean nomonsters;             // checkparm of -nomonsters
 boolean respawnparm;            // checkparm of -respawn
 boolean fastparm;               // checkparm of -fast
 boolean turboparm;              // checkparm of -turbo
+float   turbomul;               // multiplier for turbo
 
 skill_t startskill;
 int     startepisode;
@@ -598,6 +599,7 @@ void D_PostInit(void)
 
     // turbo option
     p = ArgCheck("-turbo");
+    turbomul = 1.0f;
     if(p)
     {
         int     scale = 200;
@@ -610,11 +612,9 @@ void D_PostInit(void)
             scale = 10;
         if(scale > 400)
             scale = 400;
+
         Con_Message("turbo scale: %i%%\n", scale);
-        pclass->forwardmove[0] = pclass->forwardmove[0] * scale / 100;
-        pclass->forwardmove[1] = pclass->forwardmove[1] * scale / 100;
-        pclass->sidemove[0] = pclass->sidemove[0] * scale / 100;
-        pclass->sidemove[1] = pclass->sidemove[1] * scale / 100;
+        turbomul = scale / 100.f;
     }
 
     // Are we autostarting?

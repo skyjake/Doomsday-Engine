@@ -90,6 +90,9 @@ boolean DevMaps;                // true = Map development mode
 char   *DevMapsDir = "";        // development maps directory
 boolean nomonsters;             // checkparm of -nomonsters
 boolean respawnparm;            // checkparm of -respawn
+boolean turboparm;              // checkparm of -turbo
+float   turbomul;               // multiplier for turbo
+
 boolean randomclass;            // checkparm of -randclass
 boolean debugmode;              // checkparm of -debug
 boolean devparm;                // checkparm of -devparm
@@ -476,6 +479,26 @@ static void HandleArgs()
     nofullscreen = ArgExists("-nofullscreen");
     netcheat = ArgExists("-netcheat");
     dontrender = ArgExists("-noview");
+
+    // turbo option
+    p = ArgCheck("-turbo");
+    turbomul = 1.0f;
+    if(p)
+    {
+        int     scale = 200;
+        classinfo_t *pclass = PCLASS_INFO(PCLASS_PLAYER);
+
+        turboparm = true;
+        if(p < myargc - 1)
+            scale = atoi(Argv(p + 1));
+        if(scale < 10)
+            scale = 10;
+        if(scale > 400)
+            scale = 400;
+
+        Con_Message("turbo scale: %i%%\n", scale);
+        turbomul = scale / 100.f;
+    }
 
     // Process command line options
     for(opt = ExecOptions; opt->name != NULL; opt++)

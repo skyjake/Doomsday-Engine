@@ -89,6 +89,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean sendpause;
+extern float   turbomul;               // multiplier for turbo
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -459,7 +460,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     boolean strafe = 0;
     boolean bstrafe = 0;
     int     speed = 0;
-    int     tspeed = 0;
+    int     turnSpeed = 0, fwdMoveSpeed = 0, sideMoveSpeed = 0;
     int     forward = 0;
     int     side = 0;
     int     turn = 0;
@@ -468,7 +469,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     int    *axes[5] = { 0, &joyfwd, &joyturn, &joystrafe, &joylook };
     int     look = 0, lspeed = 0;
     int     flyheight = 0;
-    int     pClass = players[consoleplayer].class;
+    classinfo_t *pClassInfo = PCLASS_INFO(players[consoleplayer].class);
 
     // Check the joystick axes.
     for(i = 0; i < 8; i++)
@@ -491,9 +492,9 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         turnheld = 0;
 
     if(turnheld < SLOWTURNTICS)
-        tspeed = 2;             // slow turn
+        turnSpeed = 2;             // slow turn
     else
-        tspeed = speed;
+        turnSpeed = speed;
 
     // Determine the appropriate look speed based on how long the key
     // has been held down.
@@ -507,13 +508,18 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     else
         lspeed = 2;
 
+    // Return the max speed for the player's class.
+    // FIXME: the Turbo movement multiplier should happen server-side!
+    sideMoveSpeed = pClassInfo->sidemove[speed] * turbomul;
+    fwdMoveSpeed = pClassInfo->forwardmove[speed] * turbomul;
+
     // let movement keys cancel each other out
     if(strafe)
     {
         if(actions[A_TURNRIGHT].on)
-            side += PCLASS_INFO(pClass)->sidemove[speed];
+            side += sideMoveSpeed;
         if(actions[A_TURNLEFT].on)
-            side -= PCLASS_INFO(pClass)->sidemove[speed];
+            side -= sideMoveSpeed;
 
         // Swap strafing and turning.
         i = joystrafe;
@@ -523,43 +529,39 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     else
     {
         if(actions[A_TURNRIGHT].on)
-            turn -= angleturn[tspeed];
+            turn -= angleturn[turnSpeed];
         if(actions[A_TURNLEFT].on)
-            turn += angleturn[tspeed];
+            turn += angleturn[turnSpeed];
     }
 
     // Joystick turn.
     if(joyturn > 0)
-        turn -= angleturn[tspeed] * JOY(joyturn);
+        turn -= angleturn[turnSpeed] * JOY(joyturn);
     if(joyturn < -0)
-        turn += angleturn[tspeed] * JOY(-joyturn);
+        turn += angleturn[turnSpeed] * JOY(-joyturn);
 
     // Joystick strafe.
     if(joystrafe < -0)
-        side -= PCLASS_INFO(pClass)->sidemove[speed] * JOY(-joystrafe);
+        side -= sideMoveSpeed * JOY(-joystrafe);
     if(joystrafe > 0)
-        side += PCLASS_INFO(pClass)->sidemove[speed] * JOY(joystrafe);
-
-    if(actions[A_FORWARD].on)
-        forward += PCLASS_INFO(pClass)->forwardmove[speed];
-
-    if(actions[A_BACKWARD].on)
-        forward -= PCLASS_INFO(pClass)->forwardmove[speed];
+        side += sideMoveSpeed * JOY(joystrafe);
 
     if(joyfwd < -0)
-        forward += PCLASS_INFO(pClass)->forwardmove[speed] * JOY(-joyfwd);
+        forward += fwdMoveSpeed * JOY(-joyfwd);
     if(joyfwd > 0)
-        forward -= PCLASS_INFO(pClass)->forwardmove[speed] * JOY(joyfwd);
+        forward -= fwdMoveSpeed * JOY(joyfwd);
+
+
+    if(actions[A_FORWARD].on)
+        forward += fwdMoveSpeed;
+
+    if(actions[A_BACKWARD].on)
+        forward -= fwdMoveSpeed;
 
     if(actions[A_STRAFERIGHT].on)
-        side += PCLASS_INFO(pClass)->sidemove[speed];
+        side += sideMoveSpeed;
     if(actions[A_STRAFELEFT].on)
-        side -= PCLASS_INFO(pClass)->sidemove[speed];
-
-    if(joystrafe < -0)
-        side -= PCLASS_INFO(pClass)->sidemove[speed] * JOY(-joystrafe);
-    if(joystrafe > 0)
-        side += PCLASS_INFO(pClass)->sidemove[speed] * JOY(joystrafe);
+        side -= sideMoveSpeed;
 
     // Look up/down/center keys
     if(!cfg.lookSpring || (cfg.lookSpring && !forward))
@@ -903,7 +905,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 
     G_ResetMousePos();
 
-#define MAXPLMOVE PCLASS_INFO(pClass)->maxmove
+#define MAXPLMOVE pClassInfo->maxmove
 
     if(forward > MAXPLMOVE)
         forward = MAXPLMOVE;
@@ -926,11 +928,8 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     if(cfg.playerMoveSpeed > 1)
         cfg.playerMoveSpeed = 1;
 
-    forward *= cfg.playerMoveSpeed;
-    side *= cfg.playerMoveSpeed;
-
-    cmd->forwardMove += forward;
-    cmd->sideMove += side;
+    cmd->forwardMove += forward * cfg.playerMoveSpeed;
+    cmd->sideMove += side * cfg.playerMoveSpeed;;
 
     if(cfg.lookSpring && !actions[A_MLOOK].on &&
        (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3
