@@ -486,10 +486,9 @@ static void HandleArgs()
     if(p)
     {
         int     scale = 200;
-        classinfo_t *pclass = PCLASS_INFO(PCLASS_PLAYER);
 
         turboparm = true;
-        if(p < myargc - 1)
+        if(p < Argc() - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
             scale = 10;

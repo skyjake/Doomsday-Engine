@@ -138,8 +138,10 @@ void NetSv_UpdateGameConfig(void)
 
     if(nomonsters)
         strcat(gameConfigString, " nomonst");
+#if !__JHEXEN__
     if(respawnmonsters)
         strcat(gameConfigString, " respawn");
+#endif
 
     if(cfg.jumpEnabled)
         strcat(gameConfigString, " jump");
@@ -808,7 +810,11 @@ void NetSv_SendGameState(int flags, int to)
         ptr[3] = gamemap;
         ptr[4] = (deathmatch & 0x3)
             | (!nomonsters? 0x4 : 0)
+#if !__JHEXEN__
             | (respawnmonsters? 0x8 : 0)
+#else
+            | 0
+#endif
             | (cfg.jumpEnabled? 0x10 : 0)
 #if __JDOOM__ || __JHERETIC__
             | (gameskill << 5);

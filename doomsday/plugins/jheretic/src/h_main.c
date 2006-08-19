@@ -483,7 +483,6 @@ void H_PostInit(void)
     if(p)
     {
         int     scale = 200;
-        classinfo_t *pclass = PCLASS_INFO(PCLASS_PLAYER);
 
         turboparm = true;
         if(p < myargc - 1)

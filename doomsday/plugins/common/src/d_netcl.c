@@ -157,7 +157,9 @@ void NetCl_UpdateGameState(byte *data)
 
     deathmatch = gsDeathmatch;
     nomonsters = !gsMonsters;
+#if !__JHEXEN__
     respawnmonsters = gsRespawn;
+#endif
 
     // Some statistics.
 #if __JHEXEN__ || __JSTRIFE__
@@ -170,9 +172,15 @@ void NetCl_UpdateGameState(byte *data)
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
 #endif
+#if !__JHEXEN__
     Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
                 respawnmonsters ? "yes" : "no", !nomonsters ? "yes" : "no",
                 gsJumping ? "yes" : "no", FIX2FLT(gsGravity));
+#else
+    Con_Message("  Monsters=%s Jumping=%s Gravity=%.1f\n",
+                !nomonsters ? "yes" : "no",
+                gsJumping ? "yes" : "no", FIX2FLT(gsGravity));
+#endif
 
 #ifdef __JHERETIC__
     prevmap = gamemap;
