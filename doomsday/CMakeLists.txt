@@ -492,8 +492,7 @@ On Ubuntu install zip.
 On Mac OSX install FIXME.
 On Windows install zip232xN.zip.")
 ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
-## Generate doomsday.pk3 - FIXME this shoulbe be a serperate target
-EXEC_PROGRAM(${ZIP} ${CMAKE_SOURCE_DIR}/engine/ ARGS " -r -q -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*")
+
 
 ## confirm we have Doxygen.
 IF (NOT DOXYGEN)
@@ -664,6 +663,10 @@ ADD_CUSTOM_TARGET (Doxygenate  doxygen
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 ENDIF (DOT)
 ENDIF (DOXYGEN)
+################################################################################
+######################## Doomsday.pk3 ##########################################
+ADD_CUSTOM_TARGET (Doomsday.pk3  ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine/ )
 ################################################################################
 ######################## Show Build Details  ###################################
 MESSAGE( STATUS "BUILDSCRIPTSDATE:             " ${BUILDSCRIPTSDATE} )
