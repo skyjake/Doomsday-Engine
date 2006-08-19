@@ -128,7 +128,7 @@ void            P_FireWeapon(player_t *player);
 
 // ***** P_USER *****
 
-void            P_ClientSideThink();
+void            P_ClientSideThink(void);
 void            P_Thrust(player_t *player, angle_t angle, fixed_t move);
 boolean         P_UndoPlayerMorph(player_t *player);
 

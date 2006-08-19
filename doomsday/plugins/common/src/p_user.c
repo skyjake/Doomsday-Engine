@@ -329,9 +329,7 @@ void P_MovePlayer(player_t *player)
 {
     int     fly;
     mobj_t *plrmo = player->plr->mo;
-    ticcmd_t *cmd;
-
-    cmd = &player->cmd;
+    ticcmd_t *cmd = &player->cmd;
 
     //  player->plr->mo->angle += (cmd->angleturn<<16);
 
@@ -601,7 +599,7 @@ void P_DeathThink(player_t *player)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void P_MorphPlayerThink(player_t *player)
+void P_MorphThink(player_t *player)
 {
     mobj_t *pmo;
 
@@ -767,7 +765,7 @@ boolean P_UndoPlayerMorph(player_t *player)
  * This routine does all the thinking for the console player during
  * netgames.
  */
-void P_ClientSideThink()
+void P_ClientSideThink(void)
 {
     int     i;
     player_t *pl;
@@ -925,15 +923,10 @@ void P_ClientSideThink()
     dpl->lookdir = dpl->clLookDir;
 }
 
-void P_PlayerThink(player_t *player)
+void P_PlayerThinkState(player_t *player)
 {
     mobj_t *plrmo = player->plr->mo;
-    ticcmd_t *cmd;
-    weapontype_t newweapon, oldweapon;
-#if __JHEXEN__
-    int     floorType;
-#endif
-
+    
     // jDoom
     // Selector 0 = Generic (used by default)
     // Selector 1 = Fist
@@ -946,65 +939,98 @@ void P_PlayerThink(player_t *player)
     // Selector 8 = BFG
     // Selector 9 = Chainsaw
     // Selector 10 = Super shotgun
+    
     // jHexen
     // Selector 0 = Generic (used by default)
     // Selector 1..4 = Weapon 1..4
     plrmo->selector =
         (plrmo->selector & ~DDMOBJ_SELECTOR_MASK) | (player->readyweapon + 1);
 
-    P_CameraThink(player);      // $democam
+#if __JHEXEN__  
+    player->worldTimer++;
+#endif  
+}
 
+void P_PlayerThinkCheat(player_t *player)
+{
     // fixme: do this in the cheat code
     if(player->cheats & CF_NOCLIP)
         player->plr->mo->flags |= MF_NOCLIP;
     else
         player->plr->mo->flags &= ~MF_NOCLIP;
+}
 
-    cmd = &player->cmd;
-    if(player->plr->mo->flags & MF_JUSTATTACKED)
+void P_PlayerThinkAttackLunge(player_t *player)
+{    
+    mobj_t *plrmo = player->plr->mo;
+    ticcmd_t *cmd = &player->cmd;
+    
+    if(plrmo->flags & MF_JUSTATTACKED)
     {
         cmd->angle = plrmo->angle >> 16;    // Don't turn.
-        // The client must know of this.
+                                            // The client must know of this.
         player->plr->flags |= DDPF_FIXANGLES;
         cmd->forwardMove = 0xc800 / 512;
         cmd->sideMove = 0;
-        player->plr->mo->flags &= ~MF_JUSTATTACKED;
+        plrmo->flags &= ~MF_JUSTATTACKED;
     }
+}
 
+void P_PlayerThinkMessage(player_t *player)
+{
     // messageTics is above the rest of the counters so that messages will
-    //              go away, even in death.
+    // go away, even in death.
     player->messageTics--;      // Can go negative
     if(!player->messageTics)
-    {   // Refresh the screen when a message goes away
+    {   
+        // Refresh the screen when a message goes away
 #if __JHEXEN__
         player->ultimateMessage = false;    // clear out any chat messages.
         player->yellowMessage = false;
 #endif
-        //BorderTopRefresh = true;
         GL_Update(DDUF_TOP);
     }
-#if __JHEXEN__
-    player->worldTimer++;
-#endif
+}
 
+/**
+ * @return  <code>true</code>, if thinking should be stopped. Otherwhise,
+ * <code>false</code>.
+ */
+boolean P_PlayerThinkDeath(player_t *player)
+{
     if(player->playerstate == PST_DEAD)
     {
         P_DeathThink(player);
-        return;
+        return true; // stop!
     }
+    return false; // don't stop
+}
 
+void P_PlayerThinkMorph(player_t *player)
+{
 #if __JHEXEN__
     if(player->morphTics)
     {
-        P_MorphPlayerThink(player);
-    }
+        P_MorphThink    (player);
+        if(!--player->morphTics)
+        {                       // Attempt to undo the pig
+            P_UndoPlayerMorph(player);
+        }
+    }   
 #endif
+}
+
+void P_PlayerThinkMove(player_t *player)
+{
+    mobj_t *plrmo = player->plr->mo;
 
     // Move around.
     // Reactiontime is used to prevent movement
     //  for a bit after a teleport.
-    if(player->plr->mo->reactiontime)
-        player->plr->mo->reactiontime--;
+    if(plrmo->reactiontime)
+    {   
+        plrmo->reactiontime--;
+    }
     else
     {
         P_MovePlayer(player);
@@ -1015,7 +1041,7 @@ void P_PlayerThink(player_t *player)
         {
             mobj_t *speedMo;
             int     playerNum;
-
+            
             speedMo = P_SpawnMobj(plrmo->pos[VX], plrmo->pos[VY], plrmo->pos[VZ],
                                   MT_PLAYER_SPEED);
             if(speedMo)
@@ -1055,52 +1081,77 @@ void P_PlayerThink(player_t *player)
         }
 #endif
     }
+    
+    if(player->jumptics)
+    {   
+        player->jumptics--;
+    }
+}
 
+void P_PlayerThinkView(player_t *player)
+{
     P_CalcHeight(player);
+}
 
+void P_PlayerThinkSpecial(player_t *player)
+{
+#if __JHEXEN__
+    int     floorType;
+#endif
+    
     if(P_XSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
-
+    
 #if __JHEXEN__
     if((floorType = P_GetThingFloorType(player->plr->mo)) != FLOOR_SOLID)
     {
         P_PlayerOnSpecialFlat(player, floorType);
     }
-    switch (player->class)
+#endif
+}
+
+void P_PlayerThinkSounds(player_t *player)
+{
+#ifdef __JHEXEN__
+    mobj_t *plrmo = player->plr->mo;
+    
+    switch(player->class)
     {
-    case PCLASS_FIGHTER:
-        if(player->plr->mo->momz <= -35 * FRACUNIT &&
-           player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics &&
-           !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, player->plr->mo))
-        {
-            S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, player->plr->mo);
-        }
-        break;
-    case PCLASS_CLERIC:
-        if(player->plr->mo->momz <= -35 * FRACUNIT &&
-           player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics &&
-           !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, player->plr->mo))
-        {
-            S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, player->plr->mo);
-        }
-        break;
-    case PCLASS_MAGE:
-        if(player->plr->mo->momz <= -35 * FRACUNIT &&
-           player->plr->mo->momz >= -40 * FRACUNIT && !player->morphTics &&
-           !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, player->plr->mo))
-        {
-            S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, player->plr->mo);
-        }
-        break;
-    default:
-        break;
+        case PCLASS_FIGHTER:
+            if(plrmo->momz <= -35 * FRACUNIT &&
+               plrmo->momz >= -40 * FRACUNIT && !player->morphTics &&
+               !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo))
+            {
+                S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo);
+            }
+            break;
+        case PCLASS_CLERIC:
+            if(plrmo->momz <= -35 * FRACUNIT &&
+               plrmo->momz >= -40 * FRACUNIT && !player->morphTics &&
+               !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo))
+            {
+                S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo);
+            }
+            break;
+        case PCLASS_MAGE:
+            if(plrmo->momz <= -35 * FRACUNIT &&
+               plrmo->momz >= -40 * FRACUNIT && !player->morphTics &&
+               !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo))
+            {
+                S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo);
+            }
+            break;
+        default:
+            break;
     }
 #endif
+}
 
-    if(player->jumptics)
-        player->jumptics--;
-
+void P_PlayerThinkItems(player_t *player)
+{
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+    ticcmd_t *cmd = &player->cmd;
+
     if(cmd->arti)
     {                           // Use an artifact
         if(cmd->arti == NUMARTIFACTS)
@@ -1109,11 +1160,11 @@ void P_PlayerThink(player_t *player)
 # if __JHEXEN__ || __JSTRIFE__
             for(i = arti_none + 1; i < arti_firstpuzzitem; i++)
 # else
-            for(i = arti_none + 1; i < NUMARTIFACTS; i++)
+                for(i = arti_none + 1; i < NUMARTIFACTS; i++)
 # endif
-            {
-                P_InventoryUseArtifact(player, i);
-            }
+                {
+                    P_InventoryUseArtifact(player, i);
+                }
         }
         else if(cmd->arti == 0xff)
         {
@@ -1125,9 +1176,14 @@ void P_PlayerThink(player_t *player)
         }
     }
 #endif
+}
 
-    oldweapon = player->pendingweapon;
-
+void P_PlayerThinkWeapons(player_t *player)
+{
+    ticcmd_t *cmd = &player->cmd;
+    weapontype_t oldweapon = player->pendingweapon;
+    weapontype_t newweapon;
+    
     // There might be a special weapon change.
     if(cmd->changeWeapon == TICCMD_NEXT_WEAPON ||
        cmd->changeWeapon == TICCMD_PREV_WEAPON)
@@ -1137,7 +1193,7 @@ void P_PlayerThink(player_t *player)
                                cmd->changeWeapon == TICCMD_NEXT_WEAPON);
         cmd->changeWeapon = 0;
     }
-
+    
     // Check for weapon change.
 #if __JHEXEN__
     if(cmd->changeWeapon && !player->morphTics)
@@ -1159,13 +1215,13 @@ void P_PlayerThink(player_t *player)
         if(player->weaponowned[newweapon] && newweapon != player->readyweapon)
         {
             if(weaponinfo[newweapon][player->class].mode[0].gamemodebits
-                & gamemodebits)
+               & gamemodebits)
             {
                 player->pendingweapon = newweapon;
             }
         }
     }
-
+            
     if(player->pendingweapon != oldweapon)
     {
 #if __JDOOM__
@@ -1174,6 +1230,11 @@ void P_PlayerThink(player_t *player)
         player->update |= PSF_PENDING_WEAPON;
 #endif
     }
+}
+
+void P_PlayerThinkUse(player_t *player)
+{
+    ticcmd_t *cmd = &player->cmd;
 
     // check for use
     if(cmd->use)
@@ -1186,54 +1247,49 @@ void P_PlayerThink(player_t *player)
     }
     else
         player->usedown = false;
+}
 
-#if __JHEXEN__
-    // Morph counter
-    if(player->morphTics)
-    {
-        if(!--player->morphTics)
-        {                       // Attempt to undo the pig
-            P_UndoPlayerMorph(player);
-        }
-    }
-#endif
-
+void P_PlayerThinkPsprites(player_t *player)
+{
     // cycle psprites
-    P_MovePsprites(player);
+    P_MovePsprites(player);    
+}
 
+void P_PlayerThinkPowers(player_t *player)
+{
     // Counters, time dependend power ups.
-
+    
 #if __JDOOM__
     // Strength counts up to diminish fade.
     if(player->powers[pw_strength])
         player->powers[pw_strength]++;
-
+    
     if(player->powers[pw_ironfeet])
         player->powers[pw_ironfeet]--;
 #endif
-
+    
 #if __JDOOM__ || __JHERETIC__
     if(player->powers[pw_invulnerability])
         player->powers[pw_invulnerability]--;
-
+    
     if(player->powers[pw_invisibility])
     {
         if(!--player->powers[pw_invisibility])
             player->plr->mo->flags &= ~MF_SHADOW;
     }
 #endif
-
+    
 #if __JDOOM__ || __JHEXEN__
     if(player->powers[pw_infrared])
         player->powers[pw_infrared]--;
 #endif
-
+    
     if(player->damagecount)
         player->damagecount--;
-
+    
     if(player->bonuscount)
         player->bonuscount--;
-
+    
 #if __JHERETIC__ || __JHEXEN__
 # if __JHERETIC__
     if(player->powers[pw_flight])
@@ -1249,12 +1305,11 @@ void P_PlayerThink(player_t *player)
             }
             player->plr->mo->flags2 &= ~MF2_FLY;
             player->plr->mo->flags &= ~MF_NOGRAVITY;
-            //BorderTopRefresh = true; //make sure the sprite's cleared out
             GL_Update(DDUF_TOP);
         }
     }
 #endif
-
+            
 #if __JHERETIC__
     if(player->powers[pw_weaponlevel2])
     {
@@ -1275,12 +1330,11 @@ void P_PlayerThink(player_t *player)
                 player->pendingweapon = player->readyweapon;
                 player->update |= PSF_PENDING_WEAPON;
             }
-            //BorderTopRefresh = true;
             GL_Update(DDUF_TOP);
         }
     }
 #endif
-
+            
     // Colormaps
 #if __JHERETIC__ || __JHEXEN__
     if(player->powers[pw_infrared])
@@ -1300,7 +1354,7 @@ void P_PlayerThink(player_t *player)
         {
             ddplayer_t *dp = player->plr;
             int     playerNumber = player - players;
-
+            
             if(newtorch[playerNumber])
             {
                 if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7 ||
@@ -1328,8 +1382,9 @@ void P_PlayerThink(player_t *player)
     {
         player->plr->fixedcolormap = 0;
     }
-
-# if __JHEXEN__
+#endif
+    
+#ifdef __JHEXEN__
     if(player->powers[pw_invulnerability])
     {
         if(player->class == PCLASS_CLERIC)
@@ -1354,7 +1409,7 @@ void P_PlayerThink(player_t *player)
                     else
                     {
                         player->plr->mo->flags2 &=
-                            ~(MF2_DONTDRAW | MF2_NONSHOOTABLE);
+                        ~(MF2_DONTDRAW | MF2_NONSHOOTABLE);
                     }
                 }
                 else
@@ -1378,12 +1433,12 @@ void P_PlayerThink(player_t *player)
     {
         player->powers[pw_minotaur]--;
     }
-
+    
     if(player->powers[pw_speed])
     {
         player->powers[pw_speed]--;
     }
-
+    
     if(player->poisoncount && !(leveltime & 15))
     {
         player->poisoncount -= 5;
@@ -1393,6 +1448,32 @@ void P_PlayerThink(player_t *player)
         }
         P_PoisonDamage(player, player->poisoner, 1, true);
     }
-# endif
-#endif
+#endif // __JHEXEN__
+}
+
+/**
+ * Main thinker function for players. Handles both single player and multiplayer
+ * games, as well as all the different types of players (normal/camera).
+ * Functionality is divided to various other functions whose name begins with
+ * "P_PlayerThink".
+ */
+void P_PlayerThink(player_t *player)
+{
+    P_PlayerThinkState(player);
+    P_PlayerThinkCamera(player);      // $democam
+    P_PlayerThinkCheat(player);
+    P_PlayerThinkAttackLunge(player);
+    P_PlayerThinkMessage(player);
+    if(P_PlayerThinkDeath(player))
+        return; // I'm dead!
+    P_PlayerThinkMorph(player);
+    P_PlayerThinkMove(player);
+    P_PlayerThinkView(player);
+    P_PlayerThinkSpecial(player);
+    P_PlayerThinkSounds(player);
+    P_PlayerThinkItems(player);
+    P_PlayerThinkWeapons(player);
+    P_PlayerThinkUse(player);
+    P_PlayerThinkPsprites(player);
+    P_PlayerThinkPowers(player);
 }

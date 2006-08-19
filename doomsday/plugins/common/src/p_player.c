@@ -517,7 +517,7 @@ int P_CameraZMovement(mobj_t *mo)
 /*
  * Set appropriate parameters for a camera.
  */
-void P_CameraThink(player_t *player)
+void P_PlayerThinkCamera(player_t *player)
 {
     angle_t angle;
     int     tp, full, dist;

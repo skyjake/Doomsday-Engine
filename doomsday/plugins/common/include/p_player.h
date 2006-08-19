@@ -48,4 +48,4 @@ void        P_SetYellowMessage(player_t *pl, char *msg);
 void        P_ClearMessage(player_t *player);
 
 boolean     P_IsCamera(mobj_t *mo);
-void        P_CameraThink(player_t *player);
+void        P_PlayerThinkCamera(player_t *player);
