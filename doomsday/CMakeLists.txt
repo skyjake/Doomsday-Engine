@@ -206,6 +206,8 @@ INCLUDE (${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
+INCLUDE (${CMAKE_ROOT}/Modules/FindDoxygen.cmake)
+
 ################################################################################
 ######################## Cpack - Generate packages and source tarballs  ########
 
@@ -490,9 +492,26 @@ On Ubuntu install zip.
 On Mac OSX install FIXME.
 On Windows install zip232xN.zip.")
 ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
-## Generate doomsday.pk3
+## Generate doomsday.pk3 - FIXME this shoulbe be a serperate target
 EXEC_PROGRAM(${ZIP} ${CMAKE_SOURCE_DIR}/engine/ ARGS " -r -q -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*")
 
+## confirm we have Doxygen.
+IF (NOT DOXYGEN)
+MESSAGE (STATUS
+"** Doxygen not found.
+On Ubuntu install doxygen.
+On Mac OSX install FIXME.
+On Windows install FIXME.")
+ENDIF (NOT DOXYGEN)
+
+## confirm we have Graphviz.
+IF (NOT DOT)
+MESSAGE (STATUS
+"** Graphviz not found.
+On Ubuntu install graphviz.
+On Mac OSX install FIXME.
+On Windows install FIXME.")
+ENDIF (NOT DOT)
 
 ################################################################################
 ######################## External LZSS Files ###################################
@@ -637,6 +656,14 @@ ENDIF (BUILDD64TC)
 IF (BUILDJSTRIFE)
 ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
 ENDIF (BUILDJSTRIFE)
+################################################################################
+######################## Doxygenate Deng  ######################################
+IF (DOXYGEN)
+IF (DOT)
+ADD_CUSTOM_TARGET (Doxygenate  doxygen
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
+ENDIF (DOT)
+ENDIF (DOXYGEN)
 ################################################################################
 ######################## Show Build Details  ###################################
 MESSAGE( STATUS "BUILDSCRIPTSDATE:             " ${BUILDSCRIPTSDATE} )
