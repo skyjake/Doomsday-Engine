@@ -659,13 +659,13 @@ ENDIF (BUILDJSTRIFE)
 ######################## Doxygenate Deng  ######################################
 IF (DOXYGEN)
 IF (DOT)
-ADD_CUSTOM_TARGET (Doxygenate  doxygen
+ADD_CUSTOM_TARGET (Doxygenate  ALL doxygen
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 ENDIF (DOT)
 ENDIF (DOXYGEN)
 ################################################################################
 ######################## Doomsday.pk3 ##########################################
-ADD_CUSTOM_TARGET (Doomsday.pk3  ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
+ADD_CUSTOM_TARGET (Doomsday.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine/ )
 ################################################################################
 ######################## Show Build Details  ###################################
