@@ -1362,9 +1362,8 @@ boolean FI_IsMenuTrigger(event_t *ev)
 
 int FI_AteEvent(event_t *ev)
 {
-    // We'll never eat key/mb/jb up events.
-    if(ev->type == ev_keyup || ev->type == ev_mousebup ||
-       ev->type == ev_joybup)
+    // We'll never eat up events.
+    if(ev->state == EVS_UP)
         return false;
 
     return fi->eatevents;
@@ -1381,7 +1380,7 @@ int FI_Responder(event_t *ev)
     if(fi->timer < 20)
         return FI_AteEvent(ev);
 
-    if(ev->type == ev_keydown && ev->data1)
+    if(ev->type == EV_KEY && ev->state == EVS_DOWN && ev->data1)
     {
         // Any handlers for this key event?
         for(i = 0; i < MAX_HANDLERS; i++)
@@ -1398,13 +1397,13 @@ int FI_Responder(event_t *ev)
     if(!fi->canskip && !fi->paused)
         return FI_AteEvent(ev);
 
-    // We are only interested in key/button presses.
-    if(ev->type != ev_keydown && ev->type != ev_mousebdown &&
-       ev->type != ev_joybdown)
+    // We are only interested in key/button down presses.
+    if(ev->type != EV_KEY && ev->type != EV_MOUSE_BUTTON &&
+       ev->type != EV_JOY_BUTTON && ev->state != EVS_DOWN)
         return FI_AteEvent(ev);
 
     // We're not interested in the Escape key.
-    if(ev->type == ev_keydown && ev->data1 == DDKEY_ESCAPE)
+    if(ev->type == EV_KEY && ev->data1 == DDKEY_ESCAPE)
         return FI_AteEvent(ev);
 
     // Servers tell clients to skip.

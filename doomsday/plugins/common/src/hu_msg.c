@@ -457,13 +457,13 @@ boolean HU_Responder(event_t *ev)
     if(gamestate != GS_LEVEL || !chat_on)
         return false;
 
-    if(ev->data1 == DDKEY_RSHIFT)
+    if(ev->type == EV_KEY && ev->data1 == DDKEY_RSHIFT)
     {
-        shiftdown = ev->type == ev_keydown || ev->type == ev_keyrepeat;
+        shiftdown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
         return false;
     }
 
-    if(ev->type != ev_keydown && ev->type != ev_keyrepeat)
+    if(ev->type != EV_KEY && ev->state != EVS_DOWN && ev->state != EVS_REPEAT)
         return false;
 
     c = (unsigned char) ev->data1;

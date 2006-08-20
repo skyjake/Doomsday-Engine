@@ -1380,14 +1380,14 @@ int Con_Execute(int src, const char *command, int silent)
 {
     int     ret;
 
-    if(silent)
-        ConsoleSilent = true;
+    //if(silent)
+    //    ConsoleSilent = true;
 
     Con_SplitIntoSubCommands(command, 0, src);
     ret = Con_CheckExecBuffer();
 
-    if(silent)
-        ConsoleSilent = false;
+    //if(silent)
+    //    ConsoleSilent = false;
 
     return ret;
 }
@@ -1568,14 +1568,18 @@ boolean Con_Responder(event_t *event)
 {
     byte    ch;
 
-    if(consoleShowKeys && event->type == ev_keydown)
+    // The console is only interested in key events.
+    if(!event->type == EV_KEY)
+        return false;
+
+    if(consoleShowKeys && event->state == EVS_DOWN)
     {
         Con_Printf("Keydown: ASCII %i (0x%x)\n", event->data1, event->data1);
     }
 
     // Special console key: Shift-Escape opens the Control Panel.
     if(!conInputLock &&
-       shiftDown && event->type == ev_keydown && event->data1 == DDKEY_ESCAPE)
+       shiftDown && event->state == EVS_DOWN && event->data1 == DDKEY_ESCAPE)
     {
         Con_Execute(CMDS_DDAY, "panel", true);
         return true;
@@ -1584,7 +1588,7 @@ boolean Con_Responder(event_t *event)
     if(!ConsoleActive)
     {
         // In this case we are only interested in the activation key.
-        if(event->type == ev_keydown &&
+        if(event->state == EVS_DOWN &&
            event->data1 == consoleActiveKey /* && !MenuActive */ )
         {
             Con_Open(true);
@@ -1594,7 +1598,7 @@ boolean Con_Responder(event_t *event)
     }
 
     // All keyups are eaten by the console.
-    if(event->type == ev_keyup)
+    if(event->state == EVS_UP)
     {
         if(!shiftDown && conInputLock)
             conInputLock = false; // release the lock
@@ -1602,7 +1606,7 @@ boolean Con_Responder(event_t *event)
     }
 
     // We only want keydown events.
-    if(event->type != ev_keydown && event->type != ev_keyrepeat)
+    if(event->state != EVS_DOWN && event->state != EVS_REPEAT)
         return false;
 
     // In this case the console is active and operational.

@@ -110,10 +110,12 @@ void Sys_ConPostEvents()
     ReadConsoleInput(hcInput, rec, MAXRECS, &read);
     for(ptr = rec; read > 0; read--, ptr++)
     {
+Con_Message("Sys_ConPostEvents\n");
         if(ptr->EventType != KEY_EVENT)
             continue;
         key = &ptr->Event.KeyEvent;
-        ev.type = key->bKeyDown ? ev_keydown : ev_keyup;
+        ev.type = EV_KEY;
+        ev.state = (key->bKeyDown ? EVS_DOWN : EVS_UP);
         if(key->wVirtualKeyCode == VK_UP)
             ev.data1 = DDKEY_UPARROW;
         else if(key->wVirtualKeyCode == VK_DOWN)
@@ -122,6 +124,7 @@ void Sys_ConPostEvents()
             ev.data1 = DD_ScanToKey(key->wVirtualScanCode);
         ev.useclass = -1;
         DD_PostEvent(&ev);
+Con_Message("Sys_ConPostEvents: Done\n");
     }
 }
 

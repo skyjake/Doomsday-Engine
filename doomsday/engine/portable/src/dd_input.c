@@ -426,18 +426,18 @@ void DD_ProcessEvents(void)
     while((ev = DD_GetEvent()) != NULL)
     {
         // Track the state of Shift and Alt.
-        if(ev->data1 == DDKEY_RSHIFT)
+        if(ev->data1 == DDKEY_RSHIFT && ev->type == EV_KEY)
         {
-            if(ev->type == ev_keydown)
+            if(ev->state == EVS_DOWN)
                 shiftDown = true;
-            else if(ev->type == ev_keyup)
+            else if(ev->state == EVS_UP)
                 shiftDown = false;
         }
-        if(ev->data1 == DDKEY_RALT)
+        if(ev->data1 == DDKEY_RALT && ev->type == EV_KEY)
         {
-            if(ev->type == ev_keydown)
+            if(ev->state == EVS_DOWN)
                 altDown = true;
-            else if(ev->type == ev_keyup)
+            else if(ev->state == EVS_UP)
                 altDown = false;
         }
 
@@ -534,7 +534,8 @@ void DD_ReadKeyboard(void)
     }
 
     // Check the repeaters.
-    ev.type = ev_keyrepeat;
+    ev.type  = EV_KEY;
+    ev.state = EVS_REPEAT;
 
     // Don't specify a class
     ev.useclass = -1;
@@ -583,21 +584,21 @@ void DD_ReadKeyboard(void)
         // Check the type of the event.
         if(ke->event == IKE_KEY_DOWN)   // Key pressed?
         {
-            ev.type = ev_keydown;
+            ev.state = EVS_DOWN;
             downKeys[ev.data1] = true;
         }
         else if(ke->event == IKE_KEY_UP) // Key released?
         {
-            ev.type = ev_keyup;
+            ev.state = EVS_UP;
             downKeys[ev.data1] = false;
         }
 
         // Should we print a message in the console?
-        if(showScanCodes && ev.type == ev_keydown)
+        if(showScanCodes && ev.type == EVS_DOWN)
             Con_Printf("Scancode: %i (0x%x)\n", ev.data1, ev.data1);
 
         // Maintain the repeater table.
-        if(ev.type == ev_keydown)
+        if(ev.state == EVS_DOWN)
         {
             // Find an empty repeater.
             for(k = 0; k < MAX_DOWNKEYS; k++)
@@ -609,7 +610,7 @@ void DD_ReadKeyboard(void)
                     break;
                 }
         }
-        else if(ev.type == ev_keyup)
+        else if(ev.state == EVS_UP)
         {
             // Clear any repeaters with this key.
             for(k = 0; k < MAX_DOWNKEYS; k++)
@@ -660,7 +661,8 @@ void DD_ReadMouse(void)
         I_GetMouseState(&mouse);
     }
 
-    ev.type = ev_mouse;
+    ev.type = EV_MOUSE_AXIS;
+    ev.state = 0;
     ev.data1 = mouse.x;
     ev.data2 = mouse.y;
     ev.data3 = mouse.z;
@@ -722,13 +724,15 @@ void DD_ReadMouse(void)
     // Send the relevant events.
     if((ev.data1 = mouse.buttons & change))
     {
-        ev.type = ev_mousebdown;
+        ev.type = EV_MOUSE_BUTTON;
+        ev.state = EVS_DOWN;
         downMouseButtons[ev.data1] = true;
         DD_PostEvent(&ev);
     }
     if((ev.data1 = oldMouseButtons & change))
     {
-        ev.type = ev_mousebup;
+        ev.type = EV_MOUSE_BUTTON;
+        ev.state = EVS_UP;
         downMouseButtons[ev.data1] = false;
         DD_PostEvent(&ev);
     }
@@ -782,19 +786,22 @@ void DD_ReadJoystick(void)
 
     // Don't specify a class
     ev.useclass = -1;
+    ev.state = 0;
 
     // Check for button state changes.
     i = oldJoyBState ^ bstate;  // The change mask.
     // Send the relevant events.
     if((ev.data1 = bstate & i))
     {
-        ev.type = ev_joybdown;
+        ev.type = EV_JOY_BUTTON;
+        ev.state = EVS_DOWN;
         downJoyButtons[ev.data1] = true;
         DD_PostEvent(&ev);
     }
     if((ev.data1 = oldJoyBState & i))
     {
-        ev.type = ev_joybup;
+        ev.type = EV_JOY_BUTTON;
+        ev.state = EVS_UP;
         downJoyButtons[ev.data1] = false;
         DD_PostEvent(&ev);
     }
@@ -807,14 +814,16 @@ void DD_ReadJoystick(void)
         {
             // Send a notification that the existing POV angle is no
             // longer active.
-            ev.type = ev_povup;
+            ev.type = EV_POV;
+            ev.state = EVS_UP;
             ev.data1 = (int) (oldPOV / 45 + .5);    // Round off correctly w/.5.
             DD_PostEvent(&ev);
         }
         if(state.povAngle != IJOY_POV_CENTER)
         {
             // The new angle becomes active.
-            ev.type = ev_povdown;
+            ev.type = EV_POV;
+            ev.state = EVS_DOWN;
             ev.data1 = (int) (state.povAngle / 45 + .5);
             DD_PostEvent(&ev);
         }
@@ -822,7 +831,7 @@ void DD_ReadJoystick(void)
     }
 
     // Send the joystick movement event (XYZ and rotation-XYZ).
-    ev.type = ev_joystick;
+    ev.type = EV_JOY_AXIS;
 
     // The input code returns the axis positions in the range -10000..10000.
     // The output axis data must be in range -100..100.
@@ -850,7 +859,7 @@ void DD_ReadJoystick(void)
 
     // The sliders.
     memset(&ev, 0, sizeof(ev));
-    ev.type = ev_joyslider;
+    ev.type = EV_JOY_SLIDER;
 
     ev.data1 = state.slider[0] / div;
     ev.data2 = state.slider[1] / div;

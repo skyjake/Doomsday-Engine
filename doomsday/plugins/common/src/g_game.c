@@ -643,12 +643,13 @@ boolean G_Responder(event_t *ev)
     }
 
 #endif
-    // any key pops up menu if in demos
+    // any key/button down pops up menu if in demos
     if(gameaction == ga_nothing && !singledemo && !menuactive &&
        (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
     {
-        if(ev->type == ev_keydown || ev->type == ev_mousebdown ||
-           ev->type == ev_joybdown)
+        if(ev->state == EVS_DOWN &&
+           (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
+            ev->type == EV_JOY_BUTTON))
         {
             M_StartControlPanel();
             return true;

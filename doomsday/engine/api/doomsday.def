@@ -83,7 +83,7 @@ EXPORTS
 	Con_DefineActions	@43 NONAME
 
 ; Console: Bindings.
-	B_EventBuilder			@44 NONAME
+	B_FormEventString		@44 NONAME
 	B_BindingsForCommand	@45 NONAME
 	DD_AddBindClass		@251 NONAME
 	DD_SetBindClass		@252 NONAME

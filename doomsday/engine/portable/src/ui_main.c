@@ -185,7 +185,8 @@ void UI_End(void)
     // the UI was eating all the input events.
     if(!shiftDown)
     {
-        rel.type = ev_keyup;
+        rel.type = EV_KEY;
+        rel.state = EVS_UP;
         rel.data1 = DDKEY_RSHIFT;
         rel.useclass = -1;
         DD_PostEvent(&rel);
@@ -432,7 +433,7 @@ int UI_Responder(event_t *ev)
     // Check for Shift events.
     switch (ev->type)
     {
-    case ev_mouse:
+    case EV_MOUSE_AXIS:
         if(ev->data1 || ev->data2)
             ui_moved = true;
         ui_cx += ev->data1;
@@ -634,12 +635,13 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
     event_t translated;
 
     // Translate mouse wheel?
-    if(ev->type == ev_mousebdown)
+    if(ev->type == EV_MOUSE_BUTTON)
     {
         if(ev->data1 & (DDMB_MWHEELUP | DDMB_MWHEELDOWN))
         {
             UI_MouseFocus();
-            translated.type = ev_keydown;
+            translated.type = EV_KEY;
+            translated.state = EVS_DOWN;
             translated.data1 =
                 (ev->data1 & DDMB_MWHEELUP ? DDKEY_UPARROW : DDKEY_DOWNARROW);
             ev = &translated;
@@ -656,10 +658,10 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
     }
 
     // Check for Esc key.
-    if(ev->type == ev_keydown || ev->type == ev_keyrepeat)
+    if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
     {
         // We won't accept repeats with Esc.
-        if(ev->data1 == DDKEY_ESCAPE && ev->type == ev_keydown && allowEscape)
+        if(ev->data1 == DDKEY_ESCAPE && ev->state == EVS_DOWN && allowEscape)
         {
             UI_SetPage(page->previous);
             // If we have no more a page, disactive UI.
@@ -712,7 +714,7 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
             continue;           // These flags prevent response.
         // When the UI is faded, a click on a nonfocusable object brings
         // back the UI.
-        /*if(ui_target_alpha < 1.0 && ev->type == ev_mousebdown &&
+        /*if(ui_target_alpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN &&
            UI_MouseInside(ob) && (!ob->responder || ob->flags & UIF_NO_FOCUS))
         {
             // Restore default focus
@@ -728,7 +730,7 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
         }
     }
 
-    if(ui_target_alpha < 1.0 && ev->type == ev_mousebdown)
+    if(ui_target_alpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN)
     {
         // When the UI the faded, an unhandled click brings back the UI.
         UI_DefaultFocus(page);
@@ -879,11 +881,12 @@ int UIButton_Responder(ui_object_t *ob, event_t *ev)
 {
     if(ob->flags & UIF_CLICKED)
     {
-        if(ev->type == ev_mousebup || ev->type == ev_keyup)
+        if(ev->state == EVS_UP &&
+           (ev->type == EV_MOUSE_BUTTON || ev->type == EV_KEY))
         {
             UI_Capture(0);
             ob->flags &= ~UIF_CLICKED;
-            if(UI_MouseInside(ob) || ev->type == ev_keyup)
+            if(UI_MouseInside(ob) || ev->type == EV_KEY)
             {
                 // Activate?
                 if(ob->action)
@@ -892,8 +895,9 @@ int UIButton_Responder(ui_object_t *ob, event_t *ev)
             return true;
         }
     }
-    else if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
-            (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
+    else if(ev->state == EVS_DOWN &&
+            ((ev->type == EV_MOUSE_BUTTON && UI_MouseInside(ob)) ||
+             (ev->type == EV_KEY && IS_ACTKEY(ev->data1))))
     {
         if(ob->type == UI_BUTTON)
         {
@@ -954,8 +958,10 @@ int UIEdit_Responder(ui_object_t *ob, event_t *ev)
 
     if(ob->flags & UIF_ACTIVE)
     {
-        if(ev->type != ev_keydown && ev->type != ev_keyrepeat)
+        if(ev->type != EV_KEY &&
+           (ev->state != EVS_DOWN || ev->state != EVS_REPEAT))
             return false;
+
         switch (ev->data1)
         {
         case DDKEY_LEFTARROW:
@@ -1013,8 +1019,9 @@ int UIEdit_Responder(ui_object_t *ob, event_t *ev)
         }
         return true;
     }
-    else if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
-            (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
+    else if(ev->state == EVS_DOWN &&
+            ((ev->type == EV_MOUSE_BUTTON && UI_MouseInside(ob)) ||
+             (ev->type == EV_KEY && IS_ACTKEY(ev->data1))))
     {
         // Activate and capture.
         ob->flags |= UIF_ACTIVE;
@@ -1097,14 +1104,14 @@ int UIList_Responder(ui_object_t *ob, event_t *ev)
     if(ob->flags & UIF_CLICKED)
     {
         // We've captured all input.
-        if(ev->type == ev_mousebup)
+        if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
         {
             dat->button[1] = false;
             // Release capture.
             UI_Capture(0);
             ob->flags &= ~UIF_CLICKED;
         }
-        if(ev->type == ev_mouse)
+        if(ev->type == EV_MOUSE_AXIS)
         {
             // Calculate the new position.
             buth = UI_ListButtonHeight(ob);
@@ -1130,7 +1137,8 @@ int UIList_Responder(ui_object_t *ob, event_t *ev)
         // We're eating everything.
         return true;
     }
-    else if(ev->type == ev_keydown || ev->type == ev_keyrepeat)
+    else if(ev->type == EV_KEY &&
+            (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
     {
         used = true;
         switch (ev->data1)
@@ -1157,7 +1165,7 @@ int UIList_Responder(ui_object_t *ob, event_t *ev)
             used = false;
         }
     }
-    else if(ev->type == ev_mousebdown)
+    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN)
     {
         if(!UI_MouseInside(ob))
             return false;
@@ -1217,7 +1225,7 @@ int UIList_Responder(ui_object_t *ob, event_t *ev)
         else
             return false;
     }
-    else if(ev->type == ev_mousebup)
+    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
     {
         // Release all buttons.
         for(i = 0; i < 3; i++)
@@ -1385,13 +1393,14 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
     if(ob->flags & UIF_CLICKED)
     {
         // We've captured all input.
-        if(ev->type == ev_mousebup)
+        if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
         {
             dat->button[1] = false; // Release thumb.
             UI_Capture(0);
             ob->flags &= ~UIF_CLICKED;
         }
-        if(ev->type == ev_mouse)
+
+        if(ev->type == EV_MOUSE_AXIS)
         {
             // Calculate new value from the mouse position.
             butw = UI_SliderButtonWidth(ob);
@@ -1419,7 +1428,8 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
         }
         return true;
     }
-    else if(ev->type == ev_keydown || ev->type == ev_keyrepeat)
+    else if(ev->type == EV_KEY &&
+            (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
     {
         used = true;
         switch (ev->data1)
@@ -1453,7 +1463,7 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
             used = false;
         }
     }
-    else if(ev->type == ev_mousebdown)
+    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN)
     {
         if(!UI_MouseInside(ob))
             return false;
@@ -1485,7 +1495,7 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
             return true;
         }
     }
-    else if(ev->type == ev_mousebup)
+    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
     {
         // Release all buttons.
         for(i = 0; i < 3; i++)

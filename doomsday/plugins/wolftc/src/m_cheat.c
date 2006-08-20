@@ -162,7 +162,7 @@ boolean cht_Responder(event_t *ev)
 
     plyr = &players[consoleplayer];
 
-    if(gameskill != sk_nightmare && ev->type == ev_keydown)
+    if(gameskill != sk_nightmare && (ev->type == EV_KEY && ev->state == EVS_DOWN))
     {
         if(!IS_NETGAME)
         {
@@ -239,9 +239,9 @@ boolean cht_Responder(event_t *ev)
         }
     }
 
-    if(automapactive)
+    if(automapactive && ev->type == EV_KEY)
     {
-        if(ev->type == ev_keydown )
+        if(ev->state == EVS_DOWN)
         {
             if(!deathmatch && cht_CheckCheat(&cheat_amap, (char) ev->data1))
             {
@@ -249,11 +249,11 @@ boolean cht_Responder(event_t *ev)
                 return false;
             }
         }
-        else if(ev->type == ev_keyup)
+        else if(ev->state == EVS_UP)
         {
             return false;
         }
-        else if(ev->type == ev_keyrepeat)
+        else if(ev->state == EVS_REPEAT)
             return true;
     }
 
@@ -543,7 +543,8 @@ DEFCC(CCmdCheat)
     {
         event_t ev;
 
-        ev.type = ev_keydown;
+        ev.type = EV_KEY;
+        ev.state = EVS_DOWN;
         ev.data1 = argv[1][i];
         ev.data2 = ev.data3 = 0;
         cht_Responder(&ev);

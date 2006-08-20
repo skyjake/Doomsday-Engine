@@ -727,8 +727,9 @@ void CP_CvarSlider(ui_object_t *ob)
 
 int CP_KeyGrabResponder(ui_object_t *ob, event_t *ev)
 {
-    if((ev->type == ev_mousebdown && UI_MouseInside(ob)) ||
-       (ev->type == ev_keydown && IS_ACTKEY(ev->data1)))
+    if(ev->state == EVS_DOWN &&
+       (ev->type == EV_MOUSE_BUTTON && UI_MouseInside(ob)) ||
+       (ev->type == EV_KEY && IS_ACTKEY(ev->data1)))
     {
         // We want the focus.
         return true;
@@ -737,7 +738,7 @@ int CP_KeyGrabResponder(ui_object_t *ob, event_t *ev)
     if(!(ob->flags & UIF_FOCUS))
         return false;
 
-    if(ev->type == ev_keydown)
+    if(ev->type == EV_KEY && ev->state == EVS_DOWN)
     {
         Con_SetInteger(ob->text, ev->data1, true);
         // All keydown events are eaten.

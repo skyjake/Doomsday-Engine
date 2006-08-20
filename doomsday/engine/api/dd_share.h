@@ -468,22 +468,24 @@ extern          "C" {
     //------------------------------------------------------------------------
 
     typedef enum {
-        ev_keydown,
-        ev_keyup,
-        ev_keyrepeat,
-        ev_mouse,
-        ev_mousebdown,
-        ev_mousebup,
-        ev_joystick,               // Joystick main axes (xyz + Rxyz)
-        ev_joyslider,              // Joystick sliders
-        ev_joybdown,
-        ev_joybup,
-        ev_povdown,
-        ev_povup
+        EV_KEY,
+        EV_MOUSE_AXIS,
+        EV_MOUSE_BUTTON,
+        EV_JOY_AXIS,               // Joystick main axes (xyz + Rxyz)
+        EV_JOY_SLIDER,             // Joystick sliders
+        EV_JOY_BUTTON,
+        EV_POV
     } evtype_t;
+
+    typedef enum {
+        EVS_DOWN,
+        EVS_UP,
+        EVS_REPEAT,
+    } evstate_t;
 
     typedef struct {
         evtype_t        type;
+        evstate_t       state;     // only used with digital controls
         int             data1;     // keys/mouse/joystick buttons
         int             data2;     // mouse/joystick x move
         int             data3;     // mouse/joystick y move

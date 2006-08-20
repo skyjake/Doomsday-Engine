@@ -182,15 +182,15 @@ int D_PrivilegedResponder(event_t *event)
     char    cmd[256], buff[256], evname[80];
 
     // We're interested in key or button down events.
-    if(grabbing &&
-       (event->type == ev_keydown || event->type == ev_mousebdown ||
-        event->type == ev_joybdown || event->type == ev_povdown))
+    if(grabbing && event->state == EVS_DOWN &&
+       (event->type == EV_KEY || event->type == EV_MOUSE_BUTTON ||
+        event->type == EV_JOY_BUTTON || event->type == EV_POV))
     {
         // We'll grab this event.
         boolean del = false;
 
         // Check for a cancel.
-        if(event->type == ev_keydown)
+        if(event->type == EV_KEY)
         {
             if(event->data1 == DDKEY_ESCAPE)
             {
@@ -201,7 +201,7 @@ int D_PrivilegedResponder(event_t *event)
 
         // We shall issue a silent console command, but first we need
         // a textual representation of the event.
-        B_EventBuilder(evname, event, false);    // "Deconstruct" into a name.
+        B_FormEventString(evname, event->type, event->state, event->data1);
 
         // If this binding already exists, remove it.
         sprintf(cmd, "%s%s", grabbing->flags & CLF_ACTION ? "+" : "",
@@ -234,9 +234,9 @@ int D_PrivilegedResponder(event_t *event)
     }
 
     // Process the screen shot key right away.
-    if(devparm && event->data1 == DDKEY_F1)
+    if(devparm && event->type == EV_KEY && event->data1 == DDKEY_F1)
     {
-        if(event->type == ev_keydown)
+        if(event->state == EVS_DOWN)
             G_ScreenShot();
         // All F1 events are eaten.
         return true;

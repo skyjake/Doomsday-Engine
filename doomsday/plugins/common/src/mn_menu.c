@@ -1874,9 +1874,9 @@ boolean M_EditResponder(event_t *ev)
         return false;
 
     if(ev->data1 == DDKEY_RSHIFT)
-        shiftdown = (ev->type == ev_keydown || ev->type == ev_keyrepeat);
+        shiftdown = (ev->state == EVS_DOWN);
 
-    if(ev->type == ev_keydown || ev->type == ev_keyrepeat)
+    if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
         ch = ev->data1;
 
     if(ch == -1)
@@ -1954,7 +1954,7 @@ boolean M_Responder(event_t *ev)
     if(!menuactive || WidgetEdit || currentMenu->noHotKeys)
         return false;
 
-    if(ev->type == ev_keydown || ev->type == ev_keyrepeat)
+    if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
         ch = ev->data1;
 
     if(ch == -1)

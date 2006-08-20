@@ -332,7 +332,7 @@ boolean cht_Responder(event_t *ev)
     byte key = ev->data1;
     boolean eat;
 
-    if(gamestate != GS_LEVEL || ev->type != ev_keydown)
+    if(gamestate != GS_LEVEL || ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
 
     if(IS_NETGAME || gameskill == sk_nightmare)
@@ -355,7 +355,7 @@ boolean cht_Responder(event_t *ev)
 
     if(automapactive)
     {
-        if(ev->type == ev_keydown )
+        if(ev->state == EVS_DOWN)
         {
             if(cheat_amap[cheatcount] == ev->data1 && !IS_NETGAME)
                 cheatcount++;
@@ -369,9 +369,9 @@ boolean cht_Responder(event_t *ev)
             }
             return false;
         }
-        else if(ev->type == ev_keyup)
+        else if(ev->state == EVS_UP)
             return false;
-        else if(ev->type == ev_keyrepeat)
+        else if(ev->state == EVS_REPEAT)
             return true;
     }
 
@@ -737,7 +737,8 @@ DEFCC(CCmdCheat)
     {
         event_t ev;
 
-        ev.type = ev_keydown;
+        ev.type = EV_KEY;
+        ev.state = EVS_DOWN;
         ev.data1 = argv[1][i];
         ev.data2 = ev.data3 = 0;
         cht_Responder(&ev);

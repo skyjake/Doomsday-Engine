@@ -209,10 +209,12 @@ void G_BindClassRegistration(void)
  */
 void G_DefaultBindings(void)
 {
-    int     i;
-    const Control_t *ctr;
-    char    evname[80], cmd[256], buff[256];
-    event_t event;
+    int         i;
+    const       Control_t *ctr;
+    char        evname[80], cmd[256], buff[256];
+    evtype_t    evType;
+    evstate_t   evState;
+    int         evData;
 
     // Check all Controls.
     for(i = 0; controls[i].command[0]; i++)
@@ -228,9 +230,10 @@ void G_DefaultBindings(void)
         sprintf(buff, "\"%s\"", ctr->command);
         if(ctr->defKey)
         {
-            event.type = ev_keydown;
-            event.data1 = ctr->defKey;
-            B_EventBuilder(evname, &event, false);
+            evType = EV_KEY;
+            evState = EVS_DOWN;
+            evData = ctr->defKey;
+            B_FormEventString(evname, evType, evState, evData);
             sprintf(cmd, "%s bdc%d %s %s",
                     ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
                     controls[i].bindClass, evname + 1, buff);
@@ -239,9 +242,10 @@ void G_DefaultBindings(void)
 
         if(ctr->defMouse)
         {
-            event.type = ev_mousebdown;
-            event.data1 = 1 << (ctr->defMouse - 1);
-            B_EventBuilder(evname, &event, false);
+            evType = EV_MOUSE_BUTTON;
+            evState = EVS_DOWN;
+            evData = 1 << (ctr->defMouse - 1);
+            B_FormEventString(evname, evType, evState, evData);
             sprintf(cmd, "%s bdc%d %s %s",
                     ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
                     controls[i].bindClass, evname + 1, buff);
@@ -250,9 +254,10 @@ void G_DefaultBindings(void)
 
         if(ctr->defJoy)
         {
-            event.type = ev_joybdown;
-            event.data1 = 1 << (ctr->defJoy - 1);
-            B_EventBuilder(evname, &event, false);
+            evType = EV_JOY_BUTTON;
+            evState = EVS_DOWN;
+            evData = 1 << (ctr->defJoy - 1);
+            B_FormEventString(evname, evType, evState, evData);
             sprintf(cmd, "%s bdc%d %s %s",
                     ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
                     controls[i].bindClass, evname + 1, buff);
@@ -963,27 +968,18 @@ boolean G_AdjustControlState(event_t* ev)
 {
     switch (ev->type)
     {
-    case ev_keydown:
-        return false;
+    case EV_KEY:
+        return false;           // always let key events filter down
 
-    case ev_keyup:
-        return false;           // always let key up events filter down
-
-    case ev_keyrepeat:
-        return false;
-
-    case ev_mouse:
+    case EV_MOUSE_AXIS:
         mousex += ev->data1 * (1 + cfg.mouseSensiX/5.0f);
         mousey += ev->data2 * (1 + cfg.mouseSensiY/5.0f);
         return true;            // eat events
 
-    case ev_mousebdown:
-        return false;
+    case EV_MOUSE_BUTTON:
+        return false;           // always let mouse button events filter down
 
-    case ev_mousebup:
-        return false;
-
-    case ev_joystick:           // Joystick movement
+    case EV_JOY_AXIS:           // Joystick movement
         joymove[JA_X] = ev->data1;
         joymove[JA_Y] = ev->data2;
         joymove[JA_Z] = ev->data3;
@@ -992,31 +988,23 @@ boolean G_AdjustControlState(event_t* ev)
         joymove[JA_RZ] = ev->data6;
         return true;            // eat events
 
-    case ev_joyslider:          // Joystick slider movement
+    case EV_JOY_SLIDER:         // Joystick slider movement
         joymove[JA_SLIDER0] = ev->data1;
         joymove[JA_SLIDER1] = ev->data2;
         return true;
 
-    case ev_joybdown:
-        return false;           // eat events
+    case EV_JOY_BUTTON:
+        return false;           // always let joy button events filter down
 
-    case ev_joybup:
-        return false;           // eat events
-
-    case ev_povup:
+    case EV_POV:
         if(!automapactive && !menuactive)
         {
-            povangle = -1;
+            if(ev->state == EVS_UP)
+                povangle = -1;
+            else
+                povangle = ev->data1;
+
             // If looking around with PoV, don't allow bindings.
-            if(cfg.povLookAround)
-                return true;
-        }
-        break;
-
-    case ev_povdown:
-        if(!automapactive && !menuactive)
-        {
-            povangle = ev->data1;
             if(cfg.povLookAround)
                 return true;
         }

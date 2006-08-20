@@ -26,20 +26,20 @@
 #include "de_base.h"
 
 typedef struct {
-    char *command;
+    char *command[3];       // { down, up, repeat }
 } command_t;
 
 typedef struct {
-    event_t event;
-    int     flags;
-    command_t *commands;
+    evtype_t    type;
+    int         data1;      // keys/mouse/joystick buttons
+    int         flags;
+    command_t  *commands;
 } binding_t;
 
 void            B_Bind(event_t *event, char *command, int bindClass);
 void            DD_AddBindClass(struct bindclass_s *);
 boolean         B_SetBindClass(int classID, int type);
 void            B_RegisterBindClasses(void);
-void            B_EventBuilder(char *buff, event_t *ev, boolean to_event);
 int             B_BindingsForCommand(char *command, char *buffer, int bindClass);
 void            B_ClearBinding(char *command, int bindClass);
 boolean         B_Responder(event_t *ev);
