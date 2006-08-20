@@ -414,7 +414,6 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
             }
         }
     }
-
 }
 
 /*

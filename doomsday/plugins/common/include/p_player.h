@@ -40,6 +40,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 void        P_ShotAmmo(player_t *player);
 
 void        P_PlayerThink(player_t *player);
+void        P_RaiseDeadPlayer(player_t *player);
 
 void        P_SetMessage(player_t *pl, char *msg);
 #if __JHEXEN__ || __JSTRIFE__

@@ -417,7 +417,8 @@ extern          "C" {
                                          float volume);
     int             S_LocalSound(int sound_id, struct mobj_s *origin);
     int             S_LocalSoundFrom(int sound_id, float *fixedpos);
-    int             S_StartSound(int sound_id, struct mobj_s *origin);
+    int             S_StartSound(int soundId, struct mobj_s *origin);
+    int             S_StartSoundEx(int soundId, struct mobj_s *origin);
     int             S_StartSoundAtVolume(int sound_id, struct mobj_s *origin,
                                          float volume);
     int             S_ConsoleSound(int sound_id, struct mobj_s *origin,

@@ -32,6 +32,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "d_net.h"
 #include "g_common.h"
 #include "dmu_lib.h"
 #include "p_spechit.h"
@@ -2014,6 +2015,16 @@ void P_UseLines(player_t *player)
     int     angle;
     fixed_t pos1[3], pos2[3];
 
+    if(IS_CLIENT)
+    {
+#ifdef _DEBUG
+        Con_Message("P_UseLines: Sending a use request for player %i.\n",
+                    player - players);
+#endif
+        NetCl_PlayerActionRequest(player, GPA_USE);
+        return;
+    }
+    
     usething = player->plr->mo;
 
     angle = player->plr->mo->angle >> ANGLETOFINESHIFT;

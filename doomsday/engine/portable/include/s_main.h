@@ -51,7 +51,8 @@ int             S_LocalSoundAtVolume(int sound_id, mobj_t *origin,
 									 float volume);
 int             S_LocalSound(int sound_id, mobj_t *origin);
 int             S_LocalSoundFrom(int sound_id, float *fixedpos);
-int             S_StartSound(int sound_id, mobj_t *origin);
+int             S_StartSound(int soundId, mobj_t *origin);
+int             S_StartSoundEx(int soundId, mobj_t *origin);
 int             S_StartSoundAtVolume(int sound_id, mobj_t *origin,
 									 float volume);
 int             S_ConsoleSound(int sound_id, mobj_t *origin,

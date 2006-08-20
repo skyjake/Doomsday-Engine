@@ -327,13 +327,29 @@ int S_LocalSoundFrom(int sound_id, float *fixedpos)
  *
  * @return: int         Nonzero if a sound was started.
  */
-int S_StartSound(int sound_id, mobj_t *origin)
+int S_StartSound(int soundId, mobj_t *origin)
 {
     // The sound is audible to everybody.
-    Sv_Sound(sound_id, origin, SVSF_TO_ALL);
-    Sfx_StartLogical(sound_id, origin, S_IsRepeating(sound_id));
+    Sv_Sound(soundId, origin, SVSF_TO_ALL);
+    Sfx_StartLogical(soundId, origin, S_IsRepeating(soundId));
 
-    return S_LocalSound(sound_id, origin);
+    return S_LocalSound(soundId, origin);
+}
+
+/**
+ * Play a world sound. The sound is sent to all players except the one who
+ * owns the origin mobj. It is assumed at the owner of the origin has already
+ * played the sound locally.
+ *
+ * @param soundId  Id of the sound.
+ * @param origin   Origin mobj for the sound.
+ */
+int S_StartSoundEx(int soundId, mobj_t *origin)
+{
+    Sv_Sound(soundId, origin, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
+    Sfx_StartLogical(soundId, origin, S_IsRepeating(soundId));
+    
+    return S_LocalSound(soundId, origin);
 }
 
 /*

@@ -77,8 +77,8 @@ void Cl_InitPlayers(void)
     // Clear psprites. The server will send them.
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        players[i].psprites[0].stateptr = NULL;
-        players[i].psprites[1].stateptr = NULL;
+        //players[i].psprites[0].stateptr = NULL;
+        //players[i].psprites[1].stateptr = NULL;
         memset(clients[i].lastCmd, 0, sizeof(*clients[i].lastCmd));
     }
 }

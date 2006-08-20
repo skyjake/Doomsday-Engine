@@ -218,10 +218,15 @@ void HU_UpdatePsprites(void)
     Set(DD_PSPRITE_OFFSET_Y,
         HU_PSpriteYOffset(players + consoleplayer) >> (FRACBITS - 4));
 
-    if(IS_CLIENT)
-        return;
+    //if(IS_CLIENT)
+    //  return;
 
     for(i = 0; i < MAXPLAYERS; i++)
         if(players[i].plr->ingame)
-            HU_UpdatePlayerSprite(i);
+        {
+            if(!IS_CLIENT || consoleplayer == i)
+            {
+                HU_UpdatePlayerSprite(i);
+            }
+        }
 }

@@ -37,8 +37,9 @@
 #define STOPSNDF_SECTOR		0x04
 
 // Sv_Sound toPlr flags.
-#define SVSF_TO_ALL		0x00000010
-#define SVSF_MASK		0x7fffffff
+#define SVSF_TO_ALL         0x01000000
+#define SVSF_EXCLUDE_ORIGIN 0x02000000 // Sound is not sent to origin player.
+#define SVSF_MASK           0x7fffffff
 
 void            Sv_Sound(int sound_id, mobj_t *origin, int toPlr);
 void            Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin,

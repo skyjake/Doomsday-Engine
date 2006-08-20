@@ -583,7 +583,7 @@ boolean Sv_RegisterComparePlayer(cregister_t * reg, int number,
 {
     const dt_player_t *r = &reg->players[number];
     dt_player_t *s = &d->player;
-    int     df = 0, i;
+    int     df = 0;
 
     // Init the delta with current data.
     Sv_NewDelta(d, DT_PLAYER, number);
@@ -612,7 +612,8 @@ boolean Sv_RegisterComparePlayer(cregister_t * reg, int number,
         df |= PDF_CLYAW;
     if(r->clPitch != s->clPitch)
         df |= PDF_CLPITCH;
-
+    
+    /*
     // The player sprites are a bit more complicated to check.
     for(i = 0; i < 2; i++)
     {
@@ -637,6 +638,7 @@ boolean Sv_RegisterComparePlayer(cregister_t * reg, int number,
     // Check for any psprite flags.
     if(df & 0xffff0000)
         df |= PDF_PSPRITES;
+    */
 
     d->delta.flags = df;
     return !Sv_IsVoidDelta(d);
@@ -2045,11 +2047,19 @@ boolean Sv_IsPoolTargeted(pool_t * pool, pool_t ** targets)
  * Fills the array with pointers to the pools of the connected clients,
  * if specificClient is < 0. Returns the number of pools in the list.
  */
-int Sv_GetTargetPools(pool_t ** targets, int specificClient)
+int Sv_GetTargetPools(pool_t ** targets, int clientsMask)
 {
     int     i, numTargets = 0;
 
-    if(specificClient >= 0)
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        if(clientsMask & (1 << i) && clients[i].connected)
+        {
+            targets[numTargets++] = &pools[i];
+        }
+    }
+/*    
+    if(specificClient & SVSF_ specificClient >= 0)
     {
         targets[0] = &pools[specificClient];
         targets[1] = NULL;
@@ -2062,10 +2072,11 @@ int Sv_GetTargetPools(pool_t ** targets, int specificClient)
         // if they aren't yet ready to receive them.
         if(clients[i].connected)
         {
-            targets[numTargets++] = &pools[i];
+            if(specificClient == SV_TARGET_ALL_POOLS || i != -specificClient)
+                targets[numTargets++] = &pools[i];
         }
     }
-
+*/
     // A NULL pointer marks the end of target pools.
     targets[numTargets] = NULL;
 
@@ -2323,7 +2334,6 @@ void Sv_NewPolyDeltas(cregister_t * reg, boolean doUpdate, pool_t ** targets)
 
 /*
  * Adds a new sound delta to the appropriate pools.
- * Set 'justForClient' to < 0, if all clients should be targeted.
  * Because the starting of a sound is in itself a 'delta-like' event,
  * there is no need for comparing or to have a register.
  * Set 'volume' to zero to create a sound-stopping delta.
@@ -2333,7 +2343,7 @@ void Sv_NewPolyDeltas(cregister_t * reg, boolean doUpdate, pool_t ** targets)
  */
 void Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector,
                       int sourcePoly, float volume, boolean isRepeating,
-                      int justForClient)
+                      int clientsMask)
 {
     pool_t *targets[MAXPLAYERS + 1];
     sounddelta_t soundDelta;
@@ -2342,7 +2352,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector,
     int     df = 0;
 
     // Determine the target pools.
-    Sv_GetTargetPools(targets, justForClient);
+    Sv_GetTargetPools(targets, clientsMask);
 
     if(sourceSector >= 0)
     {
@@ -2417,7 +2427,7 @@ void Sv_GenerateNewDeltas(cregister_t * reg, int clientNumber,
     pool_t *targets[MAXPLAYERS + 1], **pool;
 
     // Determine the target pools.
-    Sv_GetTargetPools(targets, clientNumber);
+    Sv_GetTargetPools(targets, (clientNumber < 0 ? 0xff : (1 << clientNumber)));
 
     // Update the info of the pool owners.
     for(pool = targets; *pool; pool++)

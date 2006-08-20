@@ -387,6 +387,6 @@ int             Sv_CountUnackedDeltas(int clientNumber);
 void            Sv_NewSoundDelta(int soundId, mobj_t *emitter,
                                  int sourceSector, int sourcePoly,
                                  float volume, boolean isRepeating,
-                                 int justForClient);
+                                 int clientsMask);
 
 #endif

@@ -87,15 +87,39 @@ void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
 {
     int     sound_id = (sound_id_and_flags & ~DDSF_FLAG_MASK);
     int     sector, poly;
+    int     targetPlayers = 0;
 
     if(isClient || !sound_id)
         return;
 
     Sv_IdentifySoundOrigin(&origin, &sector, &poly);
 
+    if(toPlr & SVSF_TO_ALL)
+    {
+        targetPlayers = -1;
+    }
+    else
+    {
+        targetPlayers = (1 << (toPlr & 0xf));
+    }
+
+    if(toPlr & SVSF_EXCLUDE_ORIGIN)
+    {
+        // Remove the bit of the player who owns the origin mobj (if any).
+        if(origin && origin->dplayer)
+        {
+            targetPlayers &= ~(1 << (origin->dplayer - ddplayers));
+        }
+    }
+
+#ifdef _DEBUG
+    Con_Message("Sv_SoundAtVolume: Id=%i, vol=%g, targets=%x\n", 
+                sound_id, volume, targetPlayers);
+#endif
+    
     Sv_NewSoundDelta(sound_id, origin, sector, poly, volume,
                      (sound_id_and_flags & DDSF_REPEAT) != 0,
-                     toPlr & SVSF_TO_ALL ? -1 : (toPlr & 0xf));
+                     targetPlayers);
 }
 
 /*
