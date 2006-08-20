@@ -1456,6 +1456,8 @@ void P_PlayerThinkPowers(player_t *player)
  * games, as well as all the different types of players (normal/camera).
  * Functionality is divided to various other functions whose name begins with
  * "P_PlayerThink".
+ *
+ * @param player  Player that is doing the thinking.
  */
 void P_PlayerThink(player_t *player)
 {
