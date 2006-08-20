@@ -37,6 +37,7 @@
 
 #include "d_net.h"
 #include "p_svtexarc.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -80,6 +81,8 @@ void    R_SetAllDoomsdayFlags();
 #if !__JDOOM__
 void    SB_ChangePlayerClass(player_t *player, int newclass);
 #endif
+
+void    P_FireWeapon(player_t *player);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -1269,6 +1272,70 @@ void NetSv_DoCheat(int player, const char *data)
     else if(!strnicmp(command, "give", 4))
     {
         DD_Executef(false, "%s %i", command, player);
+    }
+}
+
+/*
+ * Process the requested player action, if possible.
+ */
+void NetSv_DoAction(int player, const char *data)
+{
+    const int *ptr = (const int*) data;
+    int type = 0;
+    fixed_t pos[3];
+    angle_t angle = 0;
+    float lookDir = 0;
+    int readyWeapon = 0;
+    player_t *pl = &players[player];
+
+    type = LONG(*ptr++);
+    pos[VX] = LONG(*ptr++);
+    pos[VY] = LONG(*ptr++);
+    pos[VZ] = LONG(*ptr++);
+    angle = LONG(*ptr++);
+    lookDir = FIX2FLT( LONG(*ptr++) );
+    readyWeapon = LONG(*ptr++);
+
+#ifdef _DEBUG
+    Con_Message("NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
+                "angle=%x lookDir=%g\n", 
+                player, type, 
+                FIX2FLT(pos[VX]), FIX2FLT(pos[VY]), FIX2FLT(pos[VZ]),
+                angle, lookDir);
+#endif
+    
+    if(pl->playerstate == PST_DEAD)
+    {
+        // This player is dead. Rise, my friend!
+        P_RaiseDeadPlayer(pl);
+        return;
+    }
+    
+    switch(type)
+    {
+    case GPA_USE:
+    case GPA_FIRE:
+        if(pl->plr->mo)
+        {
+            if(P_CheckPosition2(pl->plr->mo, pos[VX], pos[VY], pos[VZ]))
+            {
+                P_UnlinkThing(pl->plr->mo);
+                pl->plr->mo->pos[VX] = pos[VX];
+                pl->plr->mo->pos[VY] = pos[VY];
+                pl->plr->mo->pos[VZ] = pos[VZ];
+                P_LinkThing(pl->plr->mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+                pl->plr->mo->floorz = tmfloorz;
+                pl->plr->mo->ceilingz = tmceilingz;
+            }
+            pl->plr->mo->angle = angle;
+            pl->plr->lookdir = lookDir;
+
+            if(type == GPA_USE)                     
+                P_UseLines(pl);
+            else
+                P_FireWeapon(pl);
+        }
+        break;
     }
 }
 

@@ -41,6 +41,7 @@ enum {
     GPT_FINALE2,
     GPT_CHEAT_REQUEST,
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
+    GPT_ACTION_REQUEST,
 };
 
 #if 0
@@ -68,6 +69,12 @@ typedef struct {
 #endif
 } packet_gamestate_t;
 #endif
+
+// Player action requests.
+enum {
+    GPA_FIRE = 1,
+    GPA_USE = 2
+};
 
 // Game state flags.
 #define GSF_CHANGE_MAP      0x01   // Level has changed.

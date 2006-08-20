@@ -439,6 +439,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
         case GPT_CHEAT_REQUEST:
             NetSv_DoCheat(fromplayer, data);
             break;
+            
+        case GPT_ACTION_REQUEST:
+            NetSv_DoAction(fromplayer, data);
+            break;
         }
         return;
     }

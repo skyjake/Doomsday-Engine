@@ -482,11 +482,14 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
 void NetCl_UpdatePSpriteState(byte *data)
 {
+    // Not used.
+    /*
     unsigned short s;
 
     NetCl_SetReadBuffer(data);
     s = NetCl_ReadShort();
     P_SetPsprite(&players[consoleplayer], ps_weapon, s);
+     */
 }
 
 void NetCl_Intermission(byte *data)
@@ -743,10 +746,14 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 
         // Compile the button flags.
         buttons = 0;
-        if(cmd->attack)
-            buttons |= CMDF_BTN_ATTACK;
-        if(cmd->use)
-            buttons |= CMDF_BTN_USE;
+        // Client sends player action requests sent instead.
+        if(!IS_CLIENT)
+        {
+            if(cmd->attack)
+                buttons |= CMDF_BTN_ATTACK;
+            if(cmd->use)
+                buttons |= CMDF_BTN_USE;
+        }
         if(cmd->jump)
             buttons |= CMDF_BTN_JUMP;
         if(cmd->pause)
@@ -813,4 +820,43 @@ void NetCl_UpdateJumpPower(void *data)
 #ifdef _DEBUG
     Con_Printf("NetCl_UpdateJumpPower: %g\n", netJumpPower);
 #endif
+}
+
+/**
+ * Sends a player action request. The server will execute the action.
+ * This is more reliable than sending via the ticcmds, as the client will
+ * determine exactly when and where the action takes place. On serverside,
+ * the clients position and angle may not be up to date when a ticcmd
+ * arrives.
+ */
+void NetCl_PlayerActionRequest(player_t *player, int actionType)
+{
+#define MSG_SIZE 28
+    char msg[MSG_SIZE];
+    int* ptr = (int*) msg;
+    
+    if(!IS_CLIENT)
+        return;
+    
+#ifdef _DEBUG
+    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n", 
+                player - players, actionType);
+#endif
+    
+    // Type of the request.
+    *ptr++ = LONG(actionType);
+    
+    // Position of the action.
+    *ptr++ = LONG(player->plr->mo->pos[VX]);
+    *ptr++ = LONG(player->plr->mo->pos[VY]);
+    *ptr++ = LONG(player->plr->mo->pos[VZ]);
+    
+    // Which way is the player looking at?
+    *ptr++ = LONG(player->plr->mo->angle);
+    *ptr++ = LONG(FLT2FIX(player->plr->lookdir));
+    
+    // Currently active weapon.
+    *ptr++ = LONG(player->readyweapon);
+    
+    Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, msg, MSG_SIZE);
 }
