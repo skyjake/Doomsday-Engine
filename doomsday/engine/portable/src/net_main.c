@@ -380,7 +380,9 @@ void Net_SendCommands(void)
     Msg_Write(msg + 2, *(ushort *) msg);
 
     // Send the packet to the server, i.e. player zero.
-    Net_SendBuffer(0, isClient ? 0 : SPF_REBOUND);
+    // Player commands are sent over TCP so their integrity and order
+    // are guaranteed.
+    Net_SendBuffer(0, (isClient ? 0 : SPF_REBOUND) | SPF_ORDERED);
 
     // Clients will begin composing a new aggregate now that this
     // one has been sent.
