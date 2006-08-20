@@ -16,6 +16,13 @@ INCLUDE_DIRECTORIES ( include )
 FILE(GLOB JDOOM_SOURCES src/*.c)
 
 ADD_LIBRARY (jdoom SHARED ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+
+## Generate .bundle suffixes on OSX rather then .dylib for skyjake.
+## Isn't this a nasty hack ?
+IF (APPLE)
+SET_TARGET_PROPERTIES (jdoom
+			PROPERTIES SUFFIX ".bundle")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jdoom
