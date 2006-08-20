@@ -219,6 +219,9 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
             return true;
         }
 
+        // This was causing problems in Doom E1M1, where a client was able
+        // to walk through the barrel obstacle and get the shotgun. -jk
+        /*
         // To prevent getting stuck, don't block if moving away from
         // the object.
         if(tm->thing->dplayer &&
@@ -232,7 +235,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
             // The Z movement test is done to prevent a 'falling through'
             // case when a thing is moving at a high speed.
             return true;
-        }
+        }*/
 
         if(abs(thing->pos[VX] - tm->x) >= blockdist ||
            abs(thing->pos[VY] - tm->y) >= blockdist)
@@ -811,7 +814,8 @@ void P_ThingMovement2(mobj_t *mo, void *pstate)
     ymove = mo->momy;
     do
     {
-        if(xmove > MAXMOVE / 2 || ymove > MAXMOVE / 2)
+        if(xmove > MAXMOVE / 2 || ymove > MAXMOVE / 2 ||
+           xmove < -MAXMOVE / 2 || ymove < -MAXMOVE / 2)
         {
             ptryx = mo->pos[VX] + xmove / 2;
             ptryy = mo->pos[VY] + ymove / 2;
