@@ -22,6 +22,13 @@ ENDIF (APPLE)
 
 ADD_LIBRARY (dssdlmixer SHARED ${SDLMIXER_SOURCES})
 TARGET_LINK_LIBRARIES (dssdlmixer ${SDL_LIBRARY} ${SDLMIXER_LIBRARY})
+
+## Generate .bundle suffixes on OSX rather then .dylib for skyjake.
+## Isn't this a nasty hack ?
+IF (APPLE)
+SET_TARGET_PROPERTIES (dssdlmixer
+			PROPERTIES SUFFIX ".bundle")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dssdlmixer
