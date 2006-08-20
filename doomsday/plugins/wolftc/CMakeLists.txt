@@ -17,6 +17,13 @@ INCLUDE_DIRECTORIES ( include )
 FILE(GLOB WOLFTC_SOURCES src/*.c)
 
 ADD_LIBRARY (wolftc SHARED ${WOLFTC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+
+## Generate .bundle suffixes on OSX rather then .dylib for skyjake.
+## Isn't this a nasty hack ?
+IF (APPLE)
+SET_TARGET_PROPERTIES (wolftc
+			PROPERTIES SUFFIX ".bundle")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS wolftc
