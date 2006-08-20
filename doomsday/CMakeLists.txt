@@ -681,7 +681,7 @@ ENDIF (DOT)
 ENDIF (DOXYGEN)
 ################################################################################
 ######################## Doxygenate All Source  ################################
-## This traget mixes all the documentation together. It's sometimes useful,
+## This target mixes all the documentation together. It's sometimes useful,
 ## but the 3 seperate functionaliy targets are better in most cases.
 ## In other words, don't build this, if you build the 3 othe Doxygenate targets
 IF (DOXYGEN)
