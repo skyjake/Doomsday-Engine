@@ -3402,6 +3402,7 @@
 					MACOSX,
 					NO_FIXED_ASM,
 					__JDOOM__,
+					_DEBUG,
 				);
 				HEADER_SEARCH_PATHS = (
 					../../plugins/jdoom/include,
@@ -3739,6 +3740,7 @@
 					MACOSX,
 					NO_FIXED_ASM,
 					__JHERETIC__,
+					_DEBUG,
 				);
 				HEADER_SEARCH_PATHS = (
 					../../plugins/jheretic/include,
@@ -3954,6 +3956,7 @@
 					MACOSX,
 					NO_FIXED_ASM,
 					__JHEXEN__,
+					_DEBUG,
 				);
 				HEADER_SEARCH_PATHS = (
 					../../plugins/jhexen/include,
