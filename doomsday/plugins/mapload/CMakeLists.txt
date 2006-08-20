@@ -14,13 +14,6 @@ FILE(GLOB MAPLOAD_SOURCES src/*.c)
 FILE(GLOB GLBSP_SOURCES ${CMAKE_SOURCE_DIR}/external/glbsp/src/*.c)
 
 ADD_LIBRARY (dpmapload SHARED ${MAPLOAD_SOURCES} ${GLBSP_SOURCES})
-
-## Generate .bundle suffixes on OSX rather then .dylib for skyjake.
-## Isn't this a nasty hack ?
-IF (APPLE)
-SET_TARGET_PROPERTIES (dpmapload
-			PROPERTIES SUFFIX ".bundle")
-ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dpmapload
