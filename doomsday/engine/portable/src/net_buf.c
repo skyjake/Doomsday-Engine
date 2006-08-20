@@ -282,6 +282,10 @@ void N_SendPacket(int flags)
     {
         // Ordered and confirmed messages are send over a TCP connection.
         N_SendDataBufferReliably(data, size, dest);
+#ifdef _DEBUG
+        VERBOSE2( Con_Message("N_SendPacket: Sending %i bytes reliably to %i.\n", size,
+                              dest) );
+#endif
     }
     else
     {

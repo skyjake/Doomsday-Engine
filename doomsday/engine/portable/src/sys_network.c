@@ -55,8 +55,9 @@
  * to print a message each time they send or receive a packet. */
 #undef PRINT_PACKETS
 
-#define MAX_NODES           32
-#define MAX_DATAGRAM_SIZE   1300
+#define MAX_NODES                   32
+#define MAX_DATAGRAM_SIZE           1300
+#define DEFAULT_TRANSMISSION_SIZE   4096
 
 // TYPES -------------------------------------------------------------------
 
@@ -145,6 +146,8 @@ static int hReceiver, hTransmitter;
 static sendqueue_t sendQ;
 static foundhost_t located;
 static volatile boolean stopReceiver;
+static byte* transmissionBuffer;
+static int transmissionBufferSize;
 
 // CODE --------------------------------------------------------------------
 
@@ -414,11 +417,15 @@ boolean N_ReceiveReliably(nodeid_t from)
     ushort  size = 0;
     TCPsocket sock = netNodes[from].sock;
     UDPpacket *packet = NULL;
+    int     bytes = 0;
 
-    if(SDLNet_TCP_Recv(sock, &size, 2) != 2)
+    // TODO: What if we get one byte? How come we are here if there's nothing
+    // to receive?
+    if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
     {
-        Con_Message("N_ReceiveReliably: Packet header was truncated.\n");
-        Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(errno));
+        int number = errno;
+        Con_Message("N_ReceiveReliably: Packet header was truncated. Got %i bytes.\n", bytes);
+        Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(number));
         return false;
     }
 
@@ -426,7 +433,21 @@ boolean N_ReceiveReliably(nodeid_t from)
 
     // Read the entire packet's data.
     packet = SDLNet_AllocPacket(size);
-    if(SDLNet_TCP_Recv(sock, packet->data, size) == size)
+    bytes = 0;
+    while(bytes < size)
+    {
+        int received = SDLNet_TCP_Recv(sock, packet->data + bytes, size);
+        if(received == -1)
+        {
+            SDLNet_FreePacket(packet);
+            Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)", 
+                        SDLNet_GetError(), strerror(errno));
+            return false;            
+        }
+        bytes += received;
+    }
+        
+    // Post the received message.
     {
         netmessage_t *msg = calloc(sizeof(netmessage_t), 1);
 
@@ -438,13 +459,6 @@ boolean N_ReceiveReliably(nodeid_t from)
         // The message queue will handle the message from now on.
         N_PostMessage(msg);
     }
-    else
-    {
-        SDLNet_FreePacket(packet);
-        Con_Message("N_ReceiveReliably: Packet data was truncated.\n");
-        return false;
-    }
-
     return true;
 }
 
@@ -456,12 +470,40 @@ void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
 {
     netnode_t *node = &netNodes[destination];
     ushort  packetSize = SHORT(size);
+    int result;
 
     if(size <= 0 || !node->sock || !node->hasJoined)
         return;
+    
+    if(size > SHORT(packetSize))
+    {
+        Con_Error("N_SendDataBufferReliably: Trying to send a too large data "
+                  "buffer.\n  Attempted size is %i bytes.\n", size);
+    }
 
-    SDLNet_TCP_Send(node->sock, &packetSize, 2);
-    SDLNet_TCP_Send(node->sock, data, SHORT(packetSize));
+    // Compose the entire message in the transmission buffer.
+    if(transmissionBufferSize < size + 2)
+    {
+        transmissionBufferSize = size + 2;
+        transmissionBuffer = realloc(transmissionBuffer, size + 2);
+    }
+    
+    memcpy(transmissionBuffer, &packetSize, 2);
+    memcpy(transmissionBuffer + 2, data, size);
+    
+    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, size + 2);
+#ifdef _DEBUG
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %i bytes, result=%i\n", 
+                          size + 2, result) );
+#endif
+    if(result != size + 2) 
+        perror("Socket error");
+
+/*    result = SDLNet_TCP_Send(node->sock, data, SHORT(packetSize));
+#ifdef _DEBUG
+    Con_Message("N_SendDataBufferReliably: Sent data, result=%i\n", result);
+    if(result != size) perror("System error");
+#endif*/
 }
 
 /*
@@ -733,6 +775,10 @@ void N_SystemInit(void)
     {
         Con_Message("N_SystemInit: %s\n", SDLNet_GetError());
     }
+    
+    // Allocate the transmission buffer.
+    transmissionBufferSize = DEFAULT_TRANSMISSION_SIZE;
+    transmissionBuffer = malloc(transmissionBufferSize);
 }
 
 /*
@@ -741,6 +787,10 @@ void N_SystemInit(void)
  */
 void N_SystemShutdown(void)
 {
+    free(transmissionBuffer);
+    transmissionBuffer = NULL;
+    transmissionBufferSize = 0;
+    
     N_ShutdownService();
     SDLNet_Quit();
 }
