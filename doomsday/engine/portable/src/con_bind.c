@@ -259,7 +259,7 @@ static char *B_GetCommandForEvent(evtype_t eventType, evstate_t eventState,
 {
     int     i, k;
     binding_t *bnd;
-    command_t *cmd, *repeatCmd = NULL;
+    command_t *cmd;
     boolean done = false;
 
     for(i = 0, bnd = binds; i < numBinds && !done; ++i, bnd++)

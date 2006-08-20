@@ -1380,14 +1380,14 @@ int Con_Execute(int src, const char *command, int silent)
 {
     int     ret;
 
-    //if(silent)
-    //    ConsoleSilent = true;
+    if(silent)
+        ConsoleSilent = true;
 
     Con_SplitIntoSubCommands(command, 0, src);
     ret = Con_CheckExecBuffer();
 
-    //if(silent)
-    //    ConsoleSilent = false;
+    if(silent)
+        ConsoleSilent = false;
 
     return ret;
 }
