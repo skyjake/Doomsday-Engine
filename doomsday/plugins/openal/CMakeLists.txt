@@ -10,6 +10,13 @@ FILE(GLOB OPENAL_SOURCES src/*.c)
 ADD_LIBRARY (dsopenal SHARED ${OPENAL_SOURCES})
 
 TARGET_LINK_LIBRARIES (dsopenal ${OPENAL_LIBRARY} )
+
+## Generate .bundle suffixes on OSX rather then .dylib for skyjake.
+## Isn't this a nasty hack ?
+IF (APPLE)
+SET_TARGET_PROPERTIES (dsopenal
+			PROPERTIES SUFFIX ".bundle")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dsopenal
