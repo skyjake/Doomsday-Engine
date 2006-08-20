@@ -656,10 +656,37 @@ IF (BUILDJSTRIFE)
 ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
 ENDIF (BUILDJSTRIFE)
 ################################################################################
-######################## Doxygenate Deng  ######################################
+######################## Doxygenate Engine  ####################################
 IF (DOXYGEN)
 IF (DOT)
-ADD_CUSTOM_TARGET (Doxygenate  ALL doxygen
+ADD_CUSTOM_TARGET (Doxygenate.engine  ALL doxygen
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine )
+ENDIF (DOT)
+ENDIF (DOXYGEN)
+################################################################################
+######################## Doxygenate Externals  #################################
+IF (DOXYGEN)
+IF (DOT)
+ADD_CUSTOM_TARGET (Doxygenate.externals  ALL doxygen
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/external )
+ENDIF (DOT)
+ENDIF (DOXYGEN)
+################################################################################
+######################## Doxygenate Plugins  ###################################
+IF (DOXYGEN)
+IF (DOT)
+ADD_CUSTOM_TARGET (Doxygenate.plugins  ALL doxygen
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins )
+ENDIF (DOT)
+ENDIF (DOXYGEN)
+################################################################################
+######################## Doxygenate All Source  ################################
+## This traget mixes all the documentation together. It's sometimes useful,
+## but the 3 seperate functionaliy targets are better in most cases.
+## In other words, don't build this, if you build the 3 othe Doxygenate targets
+IF (DOXYGEN)
+IF (DOT)
+ADD_CUSTOM_TARGET (Doxygenate.all  doxygen
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 ENDIF (DOT)
 ENDIF (DOXYGEN)
