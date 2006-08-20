@@ -43,6 +43,7 @@ OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
 OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
+OPTION (BUILDDDOX "Build doxygen documentation. Default OFF" OFF)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
 MESSAGE( FATAL_ERROR
@@ -660,45 +661,53 @@ ENDIF (BUILDJSTRIFE)
 ##
 ## 25m20.447s to genereate on a 2GHz Athlon64 (64bit mode)
 
+IF (BUILDDOX)
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.engine  ALL doxygen
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine )
 ENDIF (DOT)
 ENDIF (DOXYGEN)
+ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doxygenate Externals  #################################
 ##
 ## 2m30.932s to genereate on a 2GHz Athlon64 (64bit mode)
 
+IF (BUILDDOX)
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.externals  ALL doxygen
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/external )
 ENDIF (DOT)
 ENDIF (DOXYGEN)
+ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doxygenate Plugins  ###################################
 ##
 ## 22m27.128s to genereate on a 2GHz Athlon64 (64bit mode)
 
+IF (BUILDDOX)
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.plugins  ALL doxygen
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins )
 ENDIF (DOT)
 ENDIF (DOXYGEN)
+ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doxygenate All Source  ################################
 ## This target mixes all the documentation together. It's sometimes useful,
 ## but the 3 seperate functionaliy targets are better in most cases.
 ## In other words, don't build this, if you build the 3 other Doxygenate targets
+IF (BUILDDOX)
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.all  doxygen
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 ENDIF (DOT)
 ENDIF (DOXYGEN)
+ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doomsday.pk3 ##########################################
 ADD_CUSTOM_TARGET (Doomsday.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
