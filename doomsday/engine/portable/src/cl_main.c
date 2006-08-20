@@ -36,8 +36,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-// Clients don't send commands on every tic.
-#define CLIENT_TICCMD_INTERVAL  2
+// Clients send commands on every tic.
+#define CLIENT_TICCMD_INTERVAL  0
 
 // TYPES -------------------------------------------------------------------
 
