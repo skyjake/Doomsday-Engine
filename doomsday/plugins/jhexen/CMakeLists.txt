@@ -34,13 +34,6 @@ ${COMMON_PLUGIN_SOURCES} )
 IF (WIN32)
 TARGET_LINK_LIBRARIES (jhexen ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss)
 ENDIF (WIN32)
-
-## Generate .bundle suffixes on OSX rather then .dylib for skyjake.
-## Isn't this a nasty hack ?
-IF (APPLE)
-SET_TARGET_PROPERTIES (jhexen
-			PROPERTIES SUFFIX ".bundle")
-ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jhexen
