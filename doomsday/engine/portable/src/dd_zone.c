@@ -557,7 +557,9 @@ void Z_CheckHeap(void)
     memvolume_t *volume;
     memblock_t *block;
 
-    printf("Z_CheckHeap\n");
+#ifdef _DEBUG
+    VERBOSE2( printf("Z_CheckHeap\n") );
+#endif
     
     for(volume = volumeRoot; volume; volume = volume->next)
     {
