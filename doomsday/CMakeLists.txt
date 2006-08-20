@@ -657,6 +657,9 @@ ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
 ENDIF (BUILDJSTRIFE)
 ################################################################################
 ######################## Doxygenate Engine  ####################################
+##
+## 25m20.447s to genereate on a 2GHz Athlon64 (64bit mode)
+
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.engine  ALL doxygen
@@ -665,6 +668,9 @@ ENDIF (DOT)
 ENDIF (DOXYGEN)
 ################################################################################
 ######################## Doxygenate Externals  #################################
+##
+## 2m30.932s to genereate on a 2GHz Athlon64 (64bit mode)
+
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.externals  ALL doxygen
@@ -673,6 +679,9 @@ ENDIF (DOT)
 ENDIF (DOXYGEN)
 ################################################################################
 ######################## Doxygenate Plugins  ###################################
+##
+## 22m27.128s to genereate on a 2GHz Athlon64 (64bit mode)
+
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.plugins  ALL doxygen
@@ -683,7 +692,7 @@ ENDIF (DOXYGEN)
 ######################## Doxygenate All Source  ################################
 ## This target mixes all the documentation together. It's sometimes useful,
 ## but the 3 seperate functionaliy targets are better in most cases.
-## In other words, don't build this, if you build the 3 othe Doxygenate targets
+## In other words, don't build this, if you build the 3 other Doxygenate targets
 IF (DOXYGEN)
 IF (DOT)
 ADD_CUSTOM_TARGET (Doxygenate.all  doxygen
