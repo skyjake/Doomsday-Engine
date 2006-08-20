@@ -1108,14 +1108,18 @@ void R_InitSubsectorInfo(void)
 #endif
     subsecinfo = Z_Calloc(i, PU_LEVEL, NULL);
 
+#ifdef _DEBUG
     Z_CheckHeap();
+#endif
 
     for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
     {
         R_InitPlanePolys(SUBSECTOR_PTR(i));
     }
 
+#ifdef _DEBUG
     Z_CheckHeap();
+#endif
 }
 
 /*
