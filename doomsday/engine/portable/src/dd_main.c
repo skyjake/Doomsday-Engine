@@ -54,7 +54,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXWADFILES 1024
+#define MAXWADFILES 4096
 
 // TYPES -------------------------------------------------------------------
 
@@ -374,10 +374,6 @@ void DD_Main(void)
         Sys_ConInit();
     }
 
-    // Load help resources.
-    if(!isDedicated)
-        DD_InitHelp();
-
     autostart = false;
     shareware = false;          // Always false for Hexen
 
@@ -430,7 +426,7 @@ void DD_Main(void)
     if(defaultWads)
         AddToWadList(defaultWads);  // These must take precedence.
     HandleArgs(1);              // Only the WADs.
-
+    
     Con_Message("W_Init: Init WADfiles.\n");
 
     // Add real files from the Auto directory to the wadfiles list.
@@ -439,6 +435,10 @@ void DD_Main(void)
     W_InitMultipleFiles(wadfiles);
     F_InitDirec();
 
+    // Load help resources. Now virtual files are available as well.
+    if(!isDedicated)
+        DD_InitHelp();
+    
     // Load files from the Auto directory.  (If already loaded, won't
     // be loaded again.)  This is done again because virtual files may
     // now exist in the Auto directory.  Repeated until no new files
