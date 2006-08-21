@@ -714,6 +714,18 @@ int W_IsIWAD(char *fn)
     return !stricmp(id, "IWAD");
 }
 
+/**
+ * Determines if a file name refers to a PK3 package.
+ * @param fn  Path of the file.
+ * @return  <code>true</code>, if the file is a PK3 package.
+ */
+boolean W_IsPK3(const char *fn)
+{
+    int len = strlen(fn);
+    return (len > 3 && (!strnicmp(fn + len - 4, ".pk3", 4) ||
+                        !strnicmp(fn + len - 4, ".zip", 4)));
+}
+
 /*
  * Pass a null terminated list of files to use.  All files are optional,
  * but at least one file must be found.  Lump names can appear multiple
@@ -739,8 +751,17 @@ void W_InitMultipleFiles(char **filenames)
     // This'll force the loader NOT the flag new records Runtime. (?)
     loadingForStartup = true;
 
-    // IWAD(s) must be loaded first. Let's see if one has been specified
-    // with -iwad or -file options.
+    // Before anything else, load PK3s, because they may contain virtual
+    // WAD files.
+    for(ptr = filenames; *ptr; ptr++)
+        if(W_IsPK3(*ptr))
+        {
+            loaded[ptr - filenames] = true;
+            W_AddFile(*ptr, false);
+        }
+    
+    // IWAD(s) must be loaded before other WADs. Let's see if one has been
+    // specified with -iwad or -file options.
     for(ptr = filenames; *ptr; ptr++)
     {
         if(W_IsIWAD(*ptr))
