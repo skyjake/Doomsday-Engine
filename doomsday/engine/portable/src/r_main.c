@@ -512,22 +512,6 @@ void R_SetupFrame(ddplayer_t *player)
     viewsin = finesine[tableAngle];
     viewcos = finecosine[tableAngle];
     validcount++;
-    if(BorderNeedRefresh)
-    {
-        R_DrawViewBorder();
-        BorderNeedRefresh = false;
-        BorderTopRefresh = false;
-        UpdateState |= I_FULLSCRN;
-    }
-    if(BorderTopRefresh)
-    {
-        if(viewwindowx > 0)
-        {
-            R_DrawTopBorder();
-        }
-        BorderTopRefresh = false;
-        UpdateState |= I_MESSAGES;
-    }
 
     // Calculate the front, up and side unit vectors.
     // The vectors are in the DGL coordinate system, which is a left-handed
@@ -557,7 +541,7 @@ void R_SetupFrame(ddplayer_t *player)
  */
 void R_RenderPlayerView(ddplayer_t *player)
 {
-    extern boolean firstFrameAfterLoad;
+    extern boolean firstFrameAfterLoad, freezeRLs;
     extern int psp3d, model_tri_count;
     int     i, oldFlags;
 
@@ -572,7 +556,9 @@ void R_RenderPlayerView(ddplayer_t *player)
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
-    R_ClearSprites();
+    if(!freezeRLs)
+        R_ClearSprites();
+
     R_ProjectPlayerSprites();   // Only if 3D models exists for them.
     PG_InitForNewFrame();
 
@@ -589,7 +575,14 @@ void R_RenderPlayerView(ddplayer_t *player)
     Rend_RenderMap();
     // Orthogonal projection to the view window.
     GL_Restore2DState(1);
+
+    // Don't render in wireframe mode with 2D psprites.
+    if(renderWireframe)
+        gl.Disable(DGL_WIREFRAME_MODE);
     Rend_DrawPlayerSprites();   // If the 2D versions are needed.
+    if(renderWireframe)
+        gl.Enable(DGL_WIREFRAME_MODE);
+
     // Fullscreen viewport.
     GL_Restore2DState(2);
     // Do we need to render any 3D psprites?
@@ -620,5 +613,22 @@ void R_RenderPlayerView(ddplayer_t *player)
     if(rend_info_lums)
     {
         Con_Printf("LumObjs: %-4i\n", numLuminous);
+    }
+
+    // View border?
+    if(BorderNeedRefresh)
+    {
+        R_DrawViewBorder();
+        BorderNeedRefresh = false;
+        BorderTopRefresh = false;
+        UpdateState |= I_FULLSCRN;
+    }
+    else if(BorderTopRefresh)
+    {
+        if(viewwindowx > 0)
+            R_DrawTopBorder();
+
+        BorderTopRefresh = false;
+        UpdateState |= I_MESSAGES;
     }
 }
