@@ -187,7 +187,6 @@ void P_v13_UnArchivePlayers(void)
 
         SV_v13_ReadPlayer(players + i);
         players[i].plr->mo = NULL;  // will be set when unarc thinker
-        players[i].message = NULL;
         players[i].attacker = NULL;
         for(j = 0; j < NUMPSPRITES; j++)
             if(players[i].psprites[j].state)

@@ -107,6 +107,8 @@ DEFCC(CCmdLocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void     HUMsg_ClearBuffer(messagebuffer_t *msgBuff);
+static void     HUMsg_CloseChat(void);
 static void     HUMsg_DropLast(messagebuffer_t *msgBuff);
 static void     HUMsg_Message(messagebuffer_t *msgBuff, char *msg,
                               int msgtics);
@@ -287,6 +289,7 @@ void HUMsg_Init(void)
         if(!cfg.chat_macros[i]) // Don't overwrite if already set.
             cfg.chat_macros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
 
+#define INIT_STRINGS(x, x_idx) \
     INIT_STRINGS(player_names, player_names_idx);
 }
 

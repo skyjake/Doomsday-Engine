@@ -901,7 +901,6 @@ void ArchivePlayer(player_t *player)
     StreamOutLong(p->killcount);
     StreamOutLong(p->itemcount);
     StreamOutLong(p->secretcount);
-    StreamOutLong(p->messageTics);
     StreamOutLong(p->ultimateMessage);
     StreamOutLong(p->yellowMessage);
     StreamOutLong(p->damagecount);
@@ -961,9 +960,9 @@ void UnarchivePlayer(player_t *p)
     p->killcount = GET_LONG;
     p->itemcount = GET_LONG;
     p->secretcount = GET_LONG;
-    p->messageTics = GET_LONG;
-    p->ultimateMessage = GET_LONG;
-    p->yellowMessage = GET_LONG;
+    /*p->messageTics =*/ GET_LONG;
+    /*p->ultimateMessage =*/ GET_LONG;
+    /*p->yellowMessage =*/ GET_LONG;
     p->damagecount = GET_LONG;
     p->bonuscount = GET_LONG;
     p->poisoncount = GET_LONG;

@@ -228,7 +228,6 @@ void P_v19_UnArchivePlayers(void)
 
         // will be set when unarc thinker
         players[i].plr->mo = NULL;
-        players[i].message = NULL;
         players[i].attacker = NULL;
 
         for(j = 0; j < NUMPSPRITES; j++)

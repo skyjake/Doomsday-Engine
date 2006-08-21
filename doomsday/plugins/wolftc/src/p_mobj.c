@@ -1060,7 +1060,6 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     p->plr->mo = mobj;
     p->playerstate = PST_LIVE;
     p->refire = 0;
-    p->message = NULL;
     p->damagecount = 0;
     p->bonuscount = 0;
     p->plr->extralight = 0;
