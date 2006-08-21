@@ -3,11 +3,11 @@
 # that Doomsday needs at runtime. The PK3 files are organized using the 
 # traditional data/ and defs/ structure.
 
-import time, sys, os, os.path, zipfile
+import sys, os, os.path, zipfile
 
 if len(sys.argv) < 2:
     print "Usage: %s pk3-target-dir" % sys.argv[0]
-    print "Run from build/scripts/."
+    print "(run in build/scripts/)"
     sys.exit(0)
 
 deng_dir = '../..'
