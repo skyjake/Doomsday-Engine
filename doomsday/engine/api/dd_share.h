@@ -822,9 +822,9 @@ extern          "C" {
         int             data;
     } linknode_t;
 
-    // Frame flags.
-#define FF_FULLBRIGHT       0x8000 // flag in thing->frame
-#define FF_FRAMEMASK        0x7fff
+// State flags.
+#define STF_FULLBRIGHT      0x00000001
+#define STF_NOAUTOLIGHT     0x00000002  // Don't automatically add light if fullbright
 
     // Doomsday mobj flags.
 #define DDMF_DONTDRAW       0x00000001

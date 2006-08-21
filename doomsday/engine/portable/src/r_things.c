@@ -348,14 +348,14 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo)
 
     sprdef = &sprites[sprite];
 
-    if((frame & FF_FRAMEMASK) >= sprdef->numframes)
+    if(frame >= sprdef->numframes)
     {
         // We have no information to return.
         memset(sprinfo, 0, sizeof(*sprinfo));
         return;
     }
 
-    sprframe = &sprdef->spriteframes[frame & FF_FRAMEMASK];
+    sprframe = &sprdef->spriteframes[frame];
     sprlump = spritelumps + sprframe->lump[0];
 
     sprinfo->numFrames = sprdef->numframes;
@@ -639,12 +639,12 @@ void R_ProjectSprite(mobj_t *thing)
     }
 #endif
     sprdef = &sprites[thing->sprite];
-    if((thing->frame & FF_FRAMEMASK) >= sprdef->numframes)
+    if(thing->frame >= sprdef->numframes)
     {
         // The frame is not defined, we can't display this object.
         return;
     }
-    sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+    sprframe = &sprdef->spriteframes[thing->frame];
 
     // Calculate edges of the shape.
     v1[VX] = FIX2FLT(thing->pos[VX]);
@@ -871,7 +871,7 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.patch = lump;
 
     // Set light level.
-    if((LevelFullBright || thing->frame & FF_FULLBRIGHT) &&
+    if((LevelFullBright || thing->state->flags & STF_FULLBRIGHT) &&
        (!mf || !(mf->sub[0].flags & MFF_DIM)))
     {
         vis->data.mo.lightlevel = -1;

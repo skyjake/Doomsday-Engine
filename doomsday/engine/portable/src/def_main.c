@@ -40,6 +40,10 @@
 #define LOOPi(n)    for(i = 0; i < (n); i++)
 #define LOOPk(n)    for(k = 0; k < (n); k++)
 
+// Legacy frame flags.
+#define FF_FULLBRIGHT       0x8000 // flag in thing->frame
+#define FF_FRAMEMASK        0x7fff
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
@@ -685,7 +689,7 @@ void Def_Read(void)
 
     // Reset file IDs so previously seen files can be processed again.
     M_ResetFileIDs();
-    
+
     for(i = 0; dedFiles[i]; i++)
     {
         Con_Message("Reading definition file: %s\n", M_Pretty(dedFiles[i]));
@@ -724,6 +728,14 @@ void Def_Read(void)
         st->sprite = Def_GetSpriteNum(dst->sprite.id);
         st->flags = dst->flags;
         st->frame = dst->frame;
+
+        // check for the old or'd in fullbright flag.
+        if(st->frame & FF_FULLBRIGHT)
+        {
+            st->frame &= FF_FRAMEMASK;
+            st->flags |= STF_FULLBRIGHT;
+        }
+
         st->tics = dst->tics;
         st->action = Def_GetActionPtr(dst->action);
         st->nextstate = Def_GetStateNum(dst->nextstate);

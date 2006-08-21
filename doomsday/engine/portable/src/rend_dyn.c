@@ -870,12 +870,19 @@ void DL_AddLuminous(mobj_t *thing)
     else
         thing->light = 0;
 
-    if((thing->frame & FF_FULLBRIGHT && !(thing->ddflags & DDMF_DONTDRAW)) ||
-       thing->ddflags & DDMF_ALWAYSLIT)
+    if(((thing->state && (thing->state->flags & STF_FULLBRIGHT)) &&
+         !(thing->ddflags & DDMF_DONTDRAW)) ||
+       (thing->ddflags & DDMF_ALWAYSLIT))
     {
+        // Are the automatically calculated light values for fullbright
+        // sprite frames in use?
+        if(thing->state && (thing->state->flags & STF_NOAUTOLIGHT) &&
+           !thing->state->light)
+           return;
+
         // Determine the sprite frame lump of the source.
         sprdef = &sprites[thing->sprite];
-        sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+        sprframe = &sprdef->spriteframes[thing->frame];
         if(sprframe->rotate)
         {
             lump =

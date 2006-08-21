@@ -120,15 +120,15 @@ void Rend_DrawPlayerSprites(void)
             continue;           // No...
 
         // If one of the psprites is fullbright, both are.
-        if(psp->stateptr->frame & FF_FULLBRIGHT)
+        if(psp->stateptr->flags & STF_FULLBRIGHT)
             isFullBright = true;
 
         // Something will be drawn.
         somethingVisible = true;
         psp->flags |= DDPSPF_RENDERED;
 
-        R_GetSpriteInfo(psp->stateptr->sprite,
-                        psp->stateptr->frame & FF_FRAMEMASK, &info[i]);
+        R_GetSpriteInfo(psp->stateptr->sprite, psp->stateptr->frame,
+                        &info[i]);
     }
 
     if(!somethingVisible)

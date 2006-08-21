@@ -222,7 +222,7 @@ void Rend_AddLightDecoration(float pos[3], ded_decorlight_t * def,
     source->thing.pos[VX] = pos[VX] * FRACUNIT;
     source->thing.pos[VY] = pos[VY] * FRACUNIT;
     source->thing.pos[VZ] = pos[VZ] * FRACUNIT;
-    source->thing.frame = FF_FULLBRIGHT;
+    source->thing.ddflags = DDMF_ALWAYSLIT;
     source->thing.halofactor = 0xff;    // Assumed visible.
     source->thing.subsector =
         R_PointInSubsector(source->thing.pos[VX], source->thing.pos[VY]);
