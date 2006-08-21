@@ -23,7 +23,9 @@
 
 #include <ctype.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -39,6 +41,7 @@
 #include "f_infine.h"
 #include "g_common.h"
 #include "d_net.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -390,7 +393,7 @@ void FI_ClearState(void)
 {
     int     i, c;
 
-    players[consoleplayer].message = NULL;
+    P_ClearMessage(&players[consoleplayer]);
 
     // General game state.
     gameaction = ga_nothing;

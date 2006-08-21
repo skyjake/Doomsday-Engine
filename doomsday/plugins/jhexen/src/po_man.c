@@ -44,6 +44,7 @@
 #include "jhexen.h"
 
 #include "p_mapsetup.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 

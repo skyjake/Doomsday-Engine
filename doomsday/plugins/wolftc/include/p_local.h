@@ -176,41 +176,6 @@ void            P_SetThingPosition(mobj_t *thing);
 int             P_Massacre(void);
 
 //
-// P_MAP
-//
-
-// If "floatok" true, move would be ok
-// if within "tmfloorz - tmceilingz".
-extern boolean  floatok;
-extern fixed_t  tmfloorz;
-extern fixed_t  tmceilingz;
-
-extern line_t  *ceilingline;
-
-boolean        P_CheckSides(mobj_t* actor, int x, int y);   // DJS - from prBoom
-
-boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
-boolean         P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y,
-                                 fixed_t z);
-boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y,
-                          boolean dropoff, boolean slide);
-boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp);
-void            P_SlideMove(mobj_t *mo);
-
-void            P_UseLines(player_t *player);
-
-boolean         P_ChangeSector(sector_t *sector, boolean crunch);
-
-extern mobj_t  *linetarget;        // who got hit (or NULL)
-
-fixed_t         P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance);
-
-void            P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
-                             fixed_t slope, int damage);
-
-void            P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage);
-
-//
 // P_INTER
 //
 extern int      maxammo[NUMAMMO];

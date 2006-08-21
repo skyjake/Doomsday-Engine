@@ -22,7 +22,7 @@
  * Compiles for jDoom and jHeretic
  */
 
-#if __JDOOM__ || __WOLFTC__|| __JHERETIC__
+#if __JDOOM__ || __WOLFTC__|| __DOOM64TC__ || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -31,7 +31,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -48,6 +50,7 @@
 #include "p_xgline.h"
 #include "p_xgsec.h"
 #include "p_player.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1827,7 +1830,7 @@ void XL_Message(mobj_t *act, char *msg, boolean global)
         // Send to all players in the game.
         for(i = 0; i < MAXPLAYERS; i++)
             if(players[i].plr->ingame)
-                P_SetMessage(players + i, msg);
+                P_SetMessage(players + i, msg, false);
         return;
     }
 
@@ -1847,7 +1850,7 @@ void XL_Message(mobj_t *act, char *msg, boolean global)
         XG_Dev("  NO DESTINATION, MESSAGE DISCARDED");
         return;
     }
-    P_SetMessage(pl, msg);
+    P_SetMessage(pl, msg, false);
 }
 
 /*

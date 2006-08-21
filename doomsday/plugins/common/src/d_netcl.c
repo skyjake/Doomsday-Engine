@@ -21,7 +21,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+# include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -42,6 +44,7 @@
 #include "d_netsv.h"
 #include "f_infine.h"
 #include "p_player.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -672,7 +675,7 @@ void NetCl_SaveGame(void *data)
         return;
     SV_SaveClient(*(unsigned int *) data);
 #ifdef __JDOOM__
-    P_SetMessage(&players[consoleplayer], TXT_GAMESAVED);
+    P_SetMessage(&players[consoleplayer], TXT_GAMESAVED, false);
 #endif
 }
 
@@ -685,7 +688,7 @@ void NetCl_LoadGame(void *data)
     SV_LoadClient(*(unsigned int *) data);
     //  Net_SendPacket(DDSP_RELIABLE, GPT_LOAD, &con, 1);
 #ifdef __JDOOM__
-    P_SetMessage(&players[consoleplayer], GET_TXT(TXT_CLNETLOAD));
+    P_SetMessage(&players[consoleplayer], GET_TXT(TXT_CLNETLOAD), false);
 #endif
 }
 
@@ -834,29 +837,29 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType)
 #define MSG_SIZE 28
     char msg[MSG_SIZE];
     int* ptr = (int*) msg;
-    
+
     if(!IS_CLIENT)
         return;
-    
+
 #ifdef _DEBUG
-    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n", 
+    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n",
                 player - players, actionType);
 #endif
-    
+
     // Type of the request.
     *ptr++ = LONG(actionType);
-    
+
     // Position of the action.
     *ptr++ = LONG(player->plr->mo->pos[VX]);
     *ptr++ = LONG(player->plr->mo->pos[VY]);
     *ptr++ = LONG(player->plr->mo->pos[VZ]);
-    
+
     // Which way is the player looking at?
     *ptr++ = LONG(player->plr->mo->angle);
     *ptr++ = LONG(FLT2FIX(player->plr->lookdir));
-    
+
     // Currently active weapon.
     *ptr++ = LONG(player->readyweapon);
-    
+
     Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, msg, MSG_SIZE);
 }

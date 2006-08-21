@@ -49,12 +49,15 @@
 #include "jhexen.h"
 
 #include "p_spechit.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+boolean     P_TestMobjLocation(mobj_t *mobj);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

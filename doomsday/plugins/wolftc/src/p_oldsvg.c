@@ -24,6 +24,8 @@
 #define SAVESTRINGSIZE  24
 #define VERSIONSIZE     16
 
+#define FF_FRAMEMASK        0x7fff
+
 // TYPES -------------------------------------------------------------------
 
 typedef enum {
@@ -136,6 +138,7 @@ static void SV_ReadMobj(mobj_t *mo)
     mo->angle = SV_ReadLong();  // orientation
     mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
     mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
+    mo->frame &= ~FF_FRAMEMASK; // not used anymore.
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).

@@ -1,7 +1,23 @@
+/* $Id$
+ *
+ * Copyright (C) 1993-1996 by id Software, Inc.
+ *
+ * This source is available for distribution and/or modification
+ * only under the terms of the DOOM Source Code License as
+ * published by id Software. All rights reserved.
+ *
+ * The source is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+ * for more details.
+ */
+
 #ifndef __HUD_MESSAGES_H__
 #define __HUD_MESSAGES_H__
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+# include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -13,27 +29,14 @@
 #  include "jstrife.h"
 #endif
 
-#define HU_MSGREFRESH   DDKEY_ENTER
-#define HU_MSGX     0
-#define HU_MSGY     0
-#define HU_MSGWIDTH 64             // in characters
-#define HU_MSGHEIGHT    1          // in lines
+void        HUMsg_Register(void);
 
-#define HU_MSGTIMEOUT   (4*TICRATE)
+void        HUMsg_Drawer(void);
+void        HUMsg_Ticker(void);
+void        HUMsg_Start(void);
+void        HUMsg_Init(void);
 
-#define MAX_MESSAGES    8
-#define MAX_LINELEN     140
-#define IN_RANGE(x)     ((x)>=MAX_MESSAGES? (x)-MAX_MESSAGES : (x)<0? (x)+MAX_MESSAGES : (x))
-
-void            HUMsg_Register(void);
-void            HUMsg_SendMessage(char *msg);
-boolean         HUMsg_SendMacro(int num);
-
-void            HUMsg_Message(char *msg, int msgtics);
-void            HUMsg_Drawer(void);
-void            HUMsg_Ticker(void);
-void            HUMsg_Start(void);
-void            HUMsg_Init(void);
-void            HUMsg_Clear(void);
+void        HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
+                                boolean noHide, boolean yellow);
 
 #endif

@@ -20,7 +20,9 @@
 
 #include <math.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -2024,7 +2026,7 @@ void P_UseLines(player_t *player)
         NetCl_PlayerActionRequest(player, GPA_USE);
         return;
     }
-    
+
     usething = player->plr->mo;
 
     angle = player->plr->mo->angle >> ANGLETOFINESHIFT;

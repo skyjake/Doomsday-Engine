@@ -52,6 +52,7 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
+#  include "p_player.h" // for P_SetYellowMessage()
 #endif
 
 #include "d_net.h"
@@ -62,6 +63,10 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+#if __JHEXEN__
+boolean     P_UsePuzzleItem(player_t *player, int itemType);
+#endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -567,7 +572,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         }
         else
         {
-            P_SetYellowMessage(player, TXT_USEPUZZLEFAILED);
+            P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
             return false;
         }
         break;

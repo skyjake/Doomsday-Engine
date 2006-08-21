@@ -26,7 +26,9 @@
 
 #include "dd_share.h"
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -38,6 +40,8 @@
 
 #include "d_netsv.h"
 #include "d_net.h"
+#include "hu_msg.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -373,20 +377,12 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
  *
  * @param player        The player to send the message to.
  * @param msg           The message to be sent.
+ * @param noHide        <code>true</code> = show message even if messages
+ *                      have been disabled by the player.
  */
-void P_SetMessage(player_t *pl, char *msg)
+void P_SetMessage(player_t *pl, char *msg, boolean noHide)
 {
-    // FIXME: DOOM logic flaw:
-    // Only one message per tic! Newest overrides old.
-    if(pl->message) // Already received a message this tic.
-        Z_Free(pl->message); // bin it.
-
-    // Alloc a new buffer.
-    pl->message = Z_Malloc((strlen(msg)+1) * sizeof(char), PU_LEVEL, NULL);
-    // Copy the message
-    strcpy(pl->message, msg);
-
-    pl->messageTics = MESSAGETICS;
+    HUMsg_PlayerMessage(pl, msg, MESSAGETICS, noHide, false);
 
     if(pl == &players[consoleplayer] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
@@ -401,23 +397,12 @@ void P_SetMessage(player_t *pl, char *msg)
  *
  * @param player        The player to send the message to.
  * @param msg           The message to be sent.
+ * @param noHide        <code>true</code> = show message even if messages
+ *                      have been disabled by the player.
  */
-void P_SetYellowMessage(player_t *pl, char *msg)
+void P_SetYellowMessage(player_t *pl, char *msg, boolean noHide)
 {
-    char *yellow = "{r=1; g=0.7; b=0.3;}";
-
-    // FIXME: DOOM logic flaw:
-    // Only one message per tic! Newest overrides old.
-    if(pl->message) // Already received a message this tic.
-        Z_Free(pl->message); // bin it.
-
-    // Alloc a new buffer.
-    pl->message = Z_Malloc((strlen(msg)+strlen(yellow)+1) * sizeof(char),
-                                    PU_LEVEL, NULL);
-    // Copy the format string
-    sprintf(pl->message, "%s%s", yellow, msg);
-
-    pl->messageTics = 5 * MESSAGETICS;  // Bold messages last longer
+    HUMsg_PlayerMessage(pl, msg, 5 * MESSAGETICS, noHide, true);
 
     if(pl == &players[consoleplayer] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
@@ -427,17 +412,6 @@ void P_SetYellowMessage(player_t *pl, char *msg)
 }
 #endif
 
-void P_ClearMessage(player_t *player)
-{
-    player->message = NULL;
-    player->messageTics = 0;
-    if(player == &players[consoleplayer])
-    {
-        //BorderTopRefresh = true;
-        GL_Update(DDUF_TOP);
-    }
-}
-
 void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
                 int forwardmove, int sidemove)
 {
@@ -445,23 +419,23 @@ void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
     angle_t sideangle = angle - ANG90;
     mobj_t *mo = player->plr->mo;
     int     zmul;
-    int     x, y, z;
+    fixed_t mom[3];
 
     angle >>= ANGLETOFINESHIFT;
     sideangle >>= ANGLETOFINESHIFT;
     pitch >>= ANGLETOFINESHIFT;
 
-    x = FixedMul(forwardmove, finecosine[angle]);
-    y = FixedMul(forwardmove, finesine[angle]);
-    z = FixedMul(forwardmove, finesine[pitch]);
+    mom[VX] = FixedMul(forwardmove, finecosine[angle]);
+    mom[VY] = FixedMul(forwardmove, finesine[angle]);
+    mom[VZ] = FixedMul(forwardmove, finesine[pitch]);
 
     zmul = finecosine[pitch];
-    x = FixedMul(x, zmul) + FixedMul(sidemove, finecosine[sideangle]);
-    y = FixedMul(y, zmul) + FixedMul(sidemove, finesine[sideangle]);
+    mom[VX] = FixedMul(mom[VX], zmul) + FixedMul(sidemove, finecosine[sideangle]);
+    mom[VY] = FixedMul(mom[VY], zmul) + FixedMul(sidemove, finesine[sideangle]);
 
-    mo->momx += x;
-    mo->momy += y;
-    mo->momz += z;
+    mo->momx += mom[VX];
+    mo->momy += mom[VY];
+    mo->momz += mom[VZ];
 }
 
 boolean P_IsCamera(mobj_t *mo)

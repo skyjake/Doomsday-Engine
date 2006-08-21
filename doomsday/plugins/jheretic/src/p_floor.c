@@ -22,6 +22,7 @@
 #include "jheretic.h"
 
 #include "dmu_lib.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 

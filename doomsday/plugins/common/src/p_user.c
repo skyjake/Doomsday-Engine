@@ -33,7 +33,10 @@
 #  include <math.h>
 #endif
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#  include "g_common.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #  include "g_common.h"
 #elif __JDOOM__
@@ -54,6 +57,7 @@
 #include "p_view.h"
 #include "d_net.h"
 #include "p_player.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -65,6 +69,10 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+#if !__JDOOM__
+boolean     P_TestMobjLocation(mobj_t *mobj);
+#endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -305,7 +313,7 @@ void P_CheckPlayerJump(player_t *player)
 
     if(player->plr->flags & DDPF_CAMERA)
         return; // Cameras don't jump.
-    
+
     // Check if we are allowed to jump.
     if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0) &&
        P_IsPlayerOnGround(player) && cmd->jump && player->jumptics <= 0)
@@ -552,7 +560,7 @@ void P_RaiseDeadPlayer(player_t *player)
         curpos = 0;
         R_SetFilter(0);
     }
-    
+
     newtorch[player - players] = 0;
     newtorchdelta[player - players] = 0;
 # if __JHEXEN__
@@ -740,21 +748,21 @@ void P_ClientSideThink(void)
     player_t *pl;
     ddplayer_t *dpl;
     mobj_t *mo;
-    
+
     /*    int     i;
     ticcmd_t *cmd;
     int     fly;
 */
     if(!IS_CLIENT || !Get(DD_GAME_READY))
         return;
-    
+
     pl = &players[consoleplayer];
     dpl = pl->plr;
     mo = dpl->mo;
 
     // Applicable parts of the regular P_PlayerThink routine will be used.
     P_PlayerThink(pl);
-    
+
     /*
 
     if(!mo)
@@ -767,17 +775,6 @@ void P_ClientSideThink(void)
 
     cmd = &pl->cmd; // The latest local command.
     P_CalcHeight(pl);
-
-    // Message timer.
-    pl->messageTics--;          // Can go negative
-    if(!pl->messageTics)
-    {   // Refresh the screen when a message goes away
-#if __JHEXEN__
-        pl->ultimateMessage = false;    // clear out any chat messages.
-        pl->yellowMessage = false;
-#endif
-        GL_Update(DDUF_TOP);
-    }
 
 #if __JHEXEN__
     if(pl->morphTics > 0)
@@ -866,7 +863,7 @@ void P_ClientSideThink(void)
     }
 #endif
 */
-    
+
 #if __JHEXEN__
 /*    if(xsectors[P_GetIntp(mo->subsector, DMU_SECTOR)].special)
         P_PlayerInSpecialSector(pl);
@@ -888,7 +885,7 @@ void P_ClientSideThink(void)
     // routine, in fact.)
     Set(DD_CPLAYER_THRUST_MUL,
         XS_ThrustMul(P_GetPtrp(mo->subsector, DMU_SECTOR)));
-#endif    
+#endif
 
     // Update view angles. The server fixes them if necessary.
     mo->angle = dpl->clAngle;
@@ -898,7 +895,7 @@ void P_ClientSideThink(void)
 void P_PlayerThinkState(player_t *player)
 {
     mobj_t *plrmo = player->plr->mo;
-    
+
     // jDoom
     // Selector 0 = Generic (used by default)
     // Selector 1 = Fist
@@ -911,20 +908,20 @@ void P_PlayerThinkState(player_t *player)
     // Selector 8 = BFG
     // Selector 9 = Chainsaw
     // Selector 10 = Super shotgun
-    
+
     // jHexen
     // Selector 0 = Generic (used by default)
     // Selector 1..4 = Weapon 1..4
     plrmo->selector =
         (plrmo->selector & ~DDMOBJ_SELECTOR_MASK) | (player->readyweapon + 1);
 
-#if __JHEXEN__  
+#if __JHEXEN__
     player->worldTimer++;
-#endif  
-    
+#endif
+
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(plrmo->reactiontime > 0)
-    {   
+    {
         plrmo->reactiontime--;
     }
     else
@@ -943,10 +940,10 @@ void P_PlayerThinkCheat(player_t *player)
 }
 
 void P_PlayerThinkAttackLunge(player_t *player)
-{    
+{
     mobj_t *plrmo = player->plr->mo;
     ticcmd_t *cmd = &player->cmd;
-    
+
     if(plrmo->flags & MF_JUSTATTACKED)
     {
         cmd->angle = plrmo->angle >> 16;    // Don't turn.
@@ -955,22 +952,6 @@ void P_PlayerThinkAttackLunge(player_t *player)
         cmd->forwardMove = 0xc800 / 512;
         cmd->sideMove = 0;
         plrmo->flags &= ~MF_JUSTATTACKED;
-    }
-}
-
-void P_PlayerThinkMessage(player_t *player)
-{
-    // messageTics is above the rest of the counters so that messages will
-    // go away, even in death.
-    player->messageTics--;      // Can go negative
-    if(!player->messageTics)
-    {   
-        // Refresh the screen when a message goes away
-#if __JHEXEN__
-        player->ultimateMessage = false;    // clear out any chat messages.
-        player->yellowMessage = false;
-#endif
-        GL_Update(DDUF_TOP);
     }
 }
 
@@ -998,7 +979,7 @@ void P_PlayerThinkMorph(player_t *player)
         {                       // Attempt to undo the pig
             P_UndoPlayerMorph(player);
         }
-    }   
+    }
 #endif
 }
 
@@ -1010,9 +991,9 @@ void P_PlayerThinkMove(player_t *player)
     // Reactiontime is used to prevent movement
     //  for a bit after a teleport.
     if(!plrmo->reactiontime)
-    {   
+    {
         P_MovePlayer(player);
-        
+
 #if __JHEXEN__
         plrmo = player->plr->mo;
         if(player->powers[pw_speed] && !(leveltime & 1) &&
@@ -1020,7 +1001,7 @@ void P_PlayerThinkMove(player_t *player)
         {
             mobj_t *speedMo;
             int     playerNum;
-            
+
             speedMo = P_SpawnMobj(plrmo->pos[VX], plrmo->pos[VY], plrmo->pos[VZ],
                                   MT_PLAYER_SPEED);
             if(speedMo)
@@ -1067,16 +1048,16 @@ void P_PlayerThinkFly(player_t *player)
     mobj_t *plrmo = player->plr->mo;
     ticcmd_t *cmd = &player->cmd;
     int     fly;
-    
+
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(plrmo->reactiontime)
-        return; 
-    
+        return;
+
     // Is flying allowed?
     if(player->plr->flags & DDPF_CAMERA)
         return;
-        
-    fly = cmd->fly; 
+
+    fly = cmd->fly;
     if(fly && player->powers[pw_flight])
     {
         if(fly != TOCENTER)
@@ -1115,11 +1096,11 @@ void P_PlayerThinkJump(player_t *player)
 {
     if(player->plr->mo->reactiontime)
         return; // Not yet.
-    
+
     // Jumping.
     if(player->jumptics)
         player->jumptics--;
-    
+
     P_CheckPlayerJump(player);
 }
 
@@ -1133,10 +1114,10 @@ void P_PlayerThinkSpecial(player_t *player)
 #if __JHEXEN__
     int     floorType;
 #endif
-    
+
     if(P_XSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
-    
+
 #if __JHEXEN__
     if((floorType = P_GetThingFloorType(player->plr->mo)) != FLOOR_SOLID)
     {
@@ -1149,7 +1130,7 @@ void P_PlayerThinkSounds(player_t *player)
 {
 #ifdef __JHEXEN__
     mobj_t *plrmo = player->plr->mo;
-    
+
     switch(player->class)
     {
         case PCLASS_FIGHTER:
@@ -1187,7 +1168,7 @@ void P_PlayerThinkItems(player_t *player)
 #if __JHERETIC__ || __JHEXEN__
     int fly;
 #endif
-    
+
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     ticcmd_t *cmd = &player->cmd;
 
@@ -1215,15 +1196,15 @@ void P_PlayerThinkItems(player_t *player)
         }
     }
 #endif
-        
+
 #if __JHERETIC__ || __JHEXEN__
-    fly = cmd->fly; 
+    fly = cmd->fly;
     if(fly > 0 && !player->powers[pw_flight])
     {
         // Start flying automatically.
         P_InventoryUseArtifact(player, arti_fly);
     }
-#endif        
+#endif
 }
 
 void P_PlayerThinkWeapons(player_t *player)
@@ -1231,7 +1212,7 @@ void P_PlayerThinkWeapons(player_t *player)
     ticcmd_t *cmd = &player->cmd;
     weapontype_t oldweapon = player->pendingweapon;
     weapontype_t newweapon;
-    
+
     // There might be a special weapon change.
     if(cmd->changeWeapon == TICCMD_NEXT_WEAPON ||
        cmd->changeWeapon == TICCMD_PREV_WEAPON)
@@ -1241,7 +1222,7 @@ void P_PlayerThinkWeapons(player_t *player)
                                cmd->changeWeapon == TICCMD_NEXT_WEAPON);
         cmd->changeWeapon = 0;
     }
-    
+
     // Check for weapon change.
 #if __JHEXEN__
     if(cmd->changeWeapon && !player->morphTics)
@@ -1269,7 +1250,7 @@ void P_PlayerThinkWeapons(player_t *player)
             }
         }
     }
-            
+
     if(player->pendingweapon != oldweapon)
     {
 #if __JDOOM__
@@ -1289,7 +1270,7 @@ void P_PlayerThinkUse(player_t *player)
         // Clients send use requests instead.
         return;
     }
-    
+
     // check for use
     if(cmd->use)
     {
@@ -1306,44 +1287,44 @@ void P_PlayerThinkUse(player_t *player)
 void P_PlayerThinkPsprites(player_t *player)
 {
     // cycle psprites
-    P_MovePsprites(player);    
+    P_MovePsprites(player);
 }
 
 void P_PlayerThinkPowers(player_t *player)
 {
     // Counters, time dependend power ups.
-    
+
 #if __JDOOM__
     // Strength counts up to diminish fade.
     if(player->powers[pw_strength])
         player->powers[pw_strength]++;
-    
+
     if(player->powers[pw_ironfeet])
         player->powers[pw_ironfeet]--;
 #endif
-    
+
 #if __JDOOM__ || __JHERETIC__
     if(player->powers[pw_invulnerability])
         player->powers[pw_invulnerability]--;
-    
+
     if(player->powers[pw_invisibility])
     {
         if(!--player->powers[pw_invisibility])
             player->plr->mo->flags &= ~MF_SHADOW;
     }
 #endif
-    
+
 #if __JDOOM__ || __JHEXEN__
     if(player->powers[pw_infrared])
         player->powers[pw_infrared]--;
 #endif
-    
+
     if(player->damagecount)
         player->damagecount--;
-    
+
     if(player->bonuscount)
         player->bonuscount--;
-    
+
 #if __JHERETIC__ || __JHEXEN__
 # if __JHERETIC__
     if(player->powers[pw_flight])
@@ -1363,7 +1344,7 @@ void P_PlayerThinkPowers(player_t *player)
         }
     }
 #endif
-            
+
 #if __JHERETIC__
     if(player->powers[pw_weaponlevel2])
     {
@@ -1388,7 +1369,7 @@ void P_PlayerThinkPowers(player_t *player)
         }
     }
 #endif
-            
+
     // Colormaps
 #if __JHERETIC__ || __JHEXEN__
     if(player->powers[pw_infrared])
@@ -1408,7 +1389,7 @@ void P_PlayerThinkPowers(player_t *player)
         {
             ddplayer_t *dp = player->plr;
             int     playerNumber = player - players;
-            
+
             if(newtorch[playerNumber])
             {
                 if(dp->fixedcolormap + newtorchdelta[playerNumber] > 7 ||
@@ -1437,7 +1418,7 @@ void P_PlayerThinkPowers(player_t *player)
         player->plr->fixedcolormap = 0;
     }
 #endif
-    
+
 #ifdef __JHEXEN__
     if(player->powers[pw_invulnerability])
     {
@@ -1487,12 +1468,12 @@ void P_PlayerThinkPowers(player_t *player)
     {
         player->powers[pw_minotaur]--;
     }
-    
+
     if(player->powers[pw_speed])
     {
         player->powers[pw_speed]--;
     }
-    
+
     if(player->poisoncount && !(leveltime & 15))
     {
         player->poisoncount -= 5;
@@ -1523,18 +1504,17 @@ void P_PlayerThink(player_t *player)
         P_PlayerThinkCheat(player);
         P_PlayerThinkAttackLunge(player);
     }
-    
-    P_PlayerThinkMessage(player);
+
     if(P_PlayerThinkDeath(player))
         return; // I'm dead!
-    
+
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkMorph(player);
         P_PlayerThinkMove(player);
     }
-    
-    P_PlayerThinkFly(player);    
+
+    P_PlayerThinkFly(player);
     P_PlayerThinkJump(player);
     P_PlayerThinkView(player);
     P_PlayerThinkSpecial(player);

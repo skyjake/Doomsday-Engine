@@ -106,10 +106,6 @@ typedef struct player_s {
     int             itemcount;
     int             secretcount;
 
-    // Hint messages.
-    char           *message;
-    int             messageTics;   // counter for showing messages
-
     // For screen flashing (red or bright).
     int             damagecount;
     int             bonuscount;

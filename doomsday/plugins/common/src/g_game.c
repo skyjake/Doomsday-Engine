@@ -20,34 +20,30 @@
 
 // HEADER FILES ------------------------------------------------------------
 #include <ctype.h>
+#include <string.h>
+#include <math.h>
 
-#if   __WOLFTC__
-#  include <string.h>
+#if  __DOOM64TC__
 #  include <stdlib.h>
-#  include <math.h>
+#  include "doom64tc.h"
+#  include "p_saveg.h"
+#elif __WOLFTC__
+#  include <stdlib.h>
 #  include "wolftc.h"
 #  include "p_saveg.h"
 #elif __JDOOM__
-#  include <string.h>
 #  include <stdlib.h>
-#  include <math.h>
 #  include "jdoom.h"
 #  include "p_saveg.h"
 #elif __JHERETIC__
 #  include <stdio.h>
-#  include <string.h>
-#  include <math.h>
 #  include "jheretic.h"
 #  include "p_saveg.h"
 #  include "p_inventory.h"
 #elif __JHEXEN__
-#  include <string.h>
-#  include <math.h>
 #  include "jhexen.h"
 #  include "p_inventory.h"
 #elif __JSTRIFE__
-#  include <string.h>
-#  include <math.h>
 #  include "jstrife.h"
 #endif
 
@@ -1040,7 +1036,7 @@ void G_PlayerExitMap(int player)
     p->poisoncount = 0;
 #endif
 
-    p->messageTics = 0;
+    P_ClearMessage(p);
 }
 
 /*
@@ -1412,7 +1408,7 @@ void G_LeaveLevel(int map, int position, boolean secret)
     if(shareware && map > 4)
     {
         // Not possible in the 4-level demo.
-        P_SetMessage(&players[consoleplayer], "PORTAL INACTIVE -- DEMO");
+        P_SetMessage(&players[consoleplayer], "PORTAL INACTIVE -- DEMO", false);
         return;
     }
 #endif
@@ -1606,7 +1602,6 @@ void G_DoCompleted(void)
 
     for(i = 0; i < MAXPLAYERS; i++)
         P_ClearMessage(&players[i]);
-    HUMsg_Clear();
 
 #if __JDOOM__
     WI_Start(&wminfo);
@@ -1748,7 +1743,7 @@ void G_DoSaveGame(void)
     gameaction = ga_nothing;
     savedescription[0] = 0;
 
-    P_SetMessage(players + consoleplayer, TXT_GAMESAVED);
+    P_SetMessage(players + consoleplayer, TXT_GAMESAVED, false);
 }
 
 #if __JHEXEN__ || __JSTRIFE__

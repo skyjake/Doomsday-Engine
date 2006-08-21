@@ -23,7 +23,9 @@
 
 #include <ctype.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -38,6 +40,7 @@
 #include "d_net.h"
 #include "p_svtexarc.h"
 #include "p_player.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1298,19 +1301,19 @@ void NetSv_DoAction(int player, const char *data)
 
 #ifdef _DEBUG
     Con_Message("NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
-                "angle=%x lookDir=%g\n", 
-                player, type, 
+                "angle=%x lookDir=%g\n",
+                player, type,
                 FIX2FLT(pos[VX]), FIX2FLT(pos[VY]), FIX2FLT(pos[VZ]),
                 angle, lookDir);
 #endif
-    
+
     if(pl->playerstate == PST_DEAD)
     {
         // This player is dead. Rise, my friend!
         P_RaiseDeadPlayer(pl);
         return;
     }
-    
+
     switch(type)
     {
     case GPA_USE:
@@ -1330,7 +1333,7 @@ void NetSv_DoAction(int player, const char *data)
             pl->plr->mo->angle = angle;
             pl->plr->lookdir = lookDir;
 
-            if(type == GPA_USE)                     
+            if(type == GPA_USE)
                 P_UseLines(pl);
             else
                 P_FireWeapon(pl);

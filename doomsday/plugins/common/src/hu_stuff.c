@@ -26,7 +26,9 @@
 #include <ctype.h>
 #include <math.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -110,13 +112,12 @@ void HU_Init(void)
 
 #ifdef __JDOOM__
     char    name[9];
+#endif
 
     // Setup strings.
 #define INIT_STRINGS(x, x_idx) \
     for(i=0; i<sizeof(x_idx)/sizeof(int); i++) \
         x[i] = x_idx[i]==-1? "NEWLEVEL" : GET_TXT(x_idx[i]);
-
-#endif
 
 #ifdef __JDOOM__
     // load the heads-up fonts

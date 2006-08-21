@@ -20,7 +20,10 @@
 
 #include <ctype.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#  include "hu_stuff.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #  include "hu_stuff.h"
 #elif __JDOOM__

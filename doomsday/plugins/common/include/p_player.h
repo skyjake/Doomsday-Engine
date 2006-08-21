@@ -20,7 +20,9 @@
  * p_player.h: Common playsim routines relating to players.
  */
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+# include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -42,9 +44,9 @@ void        P_ShotAmmo(player_t *player);
 void        P_PlayerThink(player_t *player);
 void        P_RaiseDeadPlayer(player_t *player);
 
-void        P_SetMessage(player_t *pl, char *msg);
+void        P_SetMessage(player_t *pl, char *msg, boolean noHide);
 #if __JHEXEN__ || __JSTRIFE__
-void        P_SetYellowMessage(player_t *pl, char *msg);
+void        P_SetYellowMessage(player_t *pl, char *msg, boolean noHide);
 #endif
 void        P_ClearMessage(player_t *player);
 

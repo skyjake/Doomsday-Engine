@@ -34,7 +34,10 @@
 #  include <lzss.h>
 #endif
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#  include "p_saveg.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #  include "p_saveg.h"
 #elif __JDOOM__
@@ -175,7 +178,6 @@ void M_DrawBackgroundBox(int x, int y, int w, int h,
 
 extern EditField_t *ActiveEdit;    // in Mn_def.h
 
-extern boolean message_dontfuckwithme;
 extern boolean chat_on;            // in heads-up code
 
 #ifdef __JDOOM__
@@ -3408,8 +3410,7 @@ void M_EndGame(int option, void *data)
 void M_ChangeMessages(int option, void *data)
 {
     cfg.msgShow = !cfg.msgShow;
-    P_SetMessage(players + consoleplayer, !cfg.msgShow ? MSGOFF : MSGON);
-    message_dontfuckwithme = true;
+    P_SetMessage(players + consoleplayer, !cfg.msgShow ? MSGOFF : MSGON, true);
 }
 
 void M_HUDScale(int option, void *data)
@@ -3513,7 +3514,7 @@ void M_ChooseClass(int option, void *data)
     if(IS_NETGAME)
     {
         P_SetMessage(&players[consoleplayer],
-                     "YOU CAN'T START A NEW GAME FROM WITHIN A NETGAME!");
+                     "YOU CAN'T START A NEW GAME FROM WITHIN A NETGAME!", false);
         return;
     }
     MenuPClass = option;
@@ -4554,7 +4555,7 @@ DEFCC(CCmdMenuAction)
         if(gammaLevel > 4)
             gammaLevel = 0;
 #ifdef __JDOOM__
-        P_SetMessage(players + consoleplayer, gammamsg[gammaLevel]);
+        P_SetMessage(players + consoleplayer, gammamsg[gammaLevel], true);
 #endif
         sprintf(buf, "setgamma %i", gammaLevel);
         DD_Execute(buf, false);

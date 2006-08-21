@@ -24,7 +24,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+# include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -439,7 +441,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
         case GPT_CHEAT_REQUEST:
             NetSv_DoCheat(fromplayer, data);
             break;
-            
+
         case GPT_ACTION_REQUEST:
             NetSv_DoAction(fromplayer, data);
             break;
@@ -462,7 +464,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 
     case GPT_MESSAGE:
         strcpy(msgBuff, data);
-        P_SetMessage(&players[consoleplayer], msgBuff);
+        P_SetMessage(&players[consoleplayer], msgBuff, false);
 
         break;
 
@@ -470,7 +472,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
 #ifndef __JHERETIC__
     case GPT_YELLOW_MESSAGE:
         strcpy(msgBuff, data);
-        P_SetYellowMessage(&players[consoleplayer], msgBuff);
+        P_SetYellowMessage(&players[consoleplayer], msgBuff, false);
         break;
 #endif
 #endif
@@ -565,7 +567,7 @@ void D_NetMessageEx(char *msg, boolean play_sound)
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.
     netSvAllowSendMsg = false;
-    P_SetMessage(players + consoleplayer, msgBuff);
+    P_SetMessage(players + consoleplayer, msgBuff, false);
 
     if(play_sound)
         D_ChatSound();

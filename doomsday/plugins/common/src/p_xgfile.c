@@ -22,13 +22,15 @@
  * Compiles for jDoom and jHeretic
  */
 
-#if __JDOOM__ || __WOLFTC__ || __JHERETIC__
+#if __JDOOM__ || __WOLFTC__ || __DOOM64TC || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+# include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"

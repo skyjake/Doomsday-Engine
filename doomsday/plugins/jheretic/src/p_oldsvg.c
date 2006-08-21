@@ -12,6 +12,8 @@
 
 #define SAVESTRINGSIZE 24
 
+#define FF_FRAMEMASK        0x7fff
+
 // TYPES -------------------------------------------------------------------
 
 /*
@@ -91,7 +93,6 @@ static void SV_v13_ReadPlayer(player_t *pl)
     pl->itemcount = SV_v13_ReadLong();
     pl->secretcount = SV_v13_ReadLong();
     SV_v13_ReadLong();          // message, char*
-    pl->messageTics = SV_v13_ReadLong();
     pl->damagecount = SV_v13_ReadLong();
     pl->bonuscount = SV_v13_ReadLong();
     pl->flamecount = SV_v13_ReadLong();
@@ -128,6 +129,7 @@ static void SV_v13_ReadMobj(mobj_t *mo)
     mo->angle = SV_v13_ReadLong();
     mo->sprite = SV_v13_ReadLong();
     mo->frame = SV_v13_ReadLong();
+    mo->frame &= ~FF_FRAMEMASK; // not used anymore.
 
     // Block links.
     SV_v13_ReadLong();

@@ -31,6 +31,7 @@
 
 #include "dmu_lib.h"
 #include "p_spechit.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 

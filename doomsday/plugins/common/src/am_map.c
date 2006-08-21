@@ -25,7 +25,9 @@
 #include <math.h>
 #include <ctype.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -554,7 +556,7 @@ DEFCC(CCmdMapAction)
             else
                 DD_SetBindClass(GBC_CLASS2, false);
 
-            P_SetMessage(plr, followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF  );
+            P_SetMessage(plr, (followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), false);
             Con_Printf("Follow mode toggle.\n");
             return true;
         }
@@ -562,7 +564,7 @@ DEFCC(CCmdMapAction)
         if(!stricmp(argv[0], "rotate"))  // rotate mode toggle
         {
             cfg.automapRotate = !cfg.automapRotate;
-            P_SetMessage(plr, cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF  );
+            P_SetMessage(plr, (cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), false);
             Con_Printf("Rotate mode toggle.\n");
             return true;
         }
@@ -570,7 +572,7 @@ DEFCC(CCmdMapAction)
         if(!stricmp(argv[0], "addmark"))  // add a mark
         {
             sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, markpointnum);
-            P_SetMessage(plr, buffer  );
+            P_SetMessage(plr, buffer, false);
             AM_addMark();
             Con_Printf("Marker added at current location.\n");
             return true;
@@ -579,7 +581,7 @@ DEFCC(CCmdMapAction)
         if(!stricmp(argv[0], "clearmarks"))  // clear all marked points
         {
             AM_clearMarks();
-            P_SetMessage(plr, AMSTR_MARKSCLEARED  );
+            P_SetMessage(plr, AMSTR_MARKSCLEARED, false);
             Con_Printf("All markers cleared on automap.\n");
             return true;
         }
@@ -587,7 +589,7 @@ DEFCC(CCmdMapAction)
         if(!stricmp(argv[0], "grid")) // toggle drawing of grid
         {
             grid = !grid;
-            P_SetMessage(plr, grid ? AMSTR_GRIDON : AMSTR_GRIDOFF  );
+            P_SetMessage(plr, (grid ? AMSTR_GRIDON : AMSTR_GRIDOFF), false);
             Con_Printf("Grid toggled in automap.\n");
             return true;
         }

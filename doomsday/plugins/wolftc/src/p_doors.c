@@ -203,7 +203,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
             return 0;
         if(!p->keys[it_bluecard] && !p->keys[it_blueskull])
         {
-            P_SetMessage(p, PD_BLUEO);
+            P_SetMessage(p, PD_BLUEO, false);
             S_StartSound(sfx_dorlck, p->plr->mo);
             return 0;
         }
@@ -215,7 +215,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
             return 0;
         if(!p->keys[it_redcard] && !p->keys[it_redskull])
         {
-            P_SetMessage(p, PD_REDO);
+            P_SetMessage(p, PD_REDO, false);
             S_StartSound(sfx_dorlck, p->plr->mo);
             return 0;
         }
@@ -227,7 +227,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
             return 0;
         if(!p->keys[it_yellowcard] && !p->keys[it_yellowskull])
         {
-            P_SetMessage(p, PD_YELLOWO);
+            P_SetMessage(p, PD_YELLOWO, false);
             S_StartSound(sfx_dorlck, p->plr->mo);
             return 0;
         }
@@ -350,7 +350,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 
         if(!player->keys[it_bluecard] && !player->keys[it_blueskull])
         {
-            P_SetMessage(player, PD_BLUEK);
+            P_SetMessage(player, PD_BLUEK, false);
             S_StartSound(sfx_dorlck, player->plr->mo);
             return;
         }
@@ -364,7 +364,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 
         if(!player->keys[it_yellowcard] && !player->keys[it_yellowskull])
         {
-            P_SetMessage(player, PD_YELLOWK);
+            P_SetMessage(player, PD_YELLOWK, false);
             S_StartSound(sfx_dorlck, player->plr->mo);
             return;
         }
@@ -378,7 +378,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 
         if(!player->keys[it_redcard] && !player->keys[it_redskull])
         {
-            P_SetMessage(player, PD_REDK);
+            P_SetMessage(player, PD_REDK, false);
             S_StartSound(sfx_dorlck, player->plr->mo);
             return;
         }

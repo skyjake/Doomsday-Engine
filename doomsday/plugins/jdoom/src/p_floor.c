@@ -21,6 +21,7 @@
 #include "jdoom.h"
 
 #include "dmu_lib.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -55,7 +56,7 @@ result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
     // Let the engine know about the movement of this plane.
     P_SetFixedp(sector, ptarget, dest);
     P_SetFixedp(sector, pspeed, speed);
-    
+
     floorheight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
     ceilingheight = P_GetFixedp(sector, DMU_CEILING_HEIGHT);
 

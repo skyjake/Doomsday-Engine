@@ -45,6 +45,8 @@
 #include "jhexen.h"
 
 #include "p_inventory.h"
+#include "p_player.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -631,11 +633,11 @@ static void CheatGodFunc(player_t *player, cheat_t * cheat)
     player->update |= PSF_STATE;
     if(player->cheats & CF_GODMODE)
     {
-        P_SetMessage(player, TXT_CHEATGODON);
+        P_SetMessage(player, TXT_CHEATGODON, false);
     }
     else
     {
-        P_SetMessage(player, TXT_CHEATGODOFF);
+        P_SetMessage(player, TXT_CHEATGODOFF, false);
     }
     SB_state = -1;
 }
@@ -646,11 +648,11 @@ static void CheatNoClipFunc(player_t *player, cheat_t * cheat)
     player->update |= PSF_STATE;
     if(player->cheats & CF_NOCLIP)
     {
-        P_SetMessage(player, TXT_CHEATNOCLIPON);
+        P_SetMessage(player, TXT_CHEATNOCLIPON, false);
     }
     else
     {
-        P_SetMessage(player, TXT_CHEATNOCLIPOFF);
+        P_SetMessage(player, TXT_CHEATNOCLIPOFF, false);
     }
 }
 
@@ -699,7 +701,7 @@ static void CheatWeaponsFunc(player_t *player, cheat_t * cheat)
         player->ammo[i] = MAX_MANA;
     }
 
-    P_SetMessage(player, TXT_CHEATWEAPONS);
+    P_SetMessage(player, TXT_CHEATWEAPONS, false);
 }
 
 static void CheatHealthFunc(player_t *player, cheat_t * cheat)
@@ -713,14 +715,14 @@ static void CheatHealthFunc(player_t *player, cheat_t * cheat)
     {
         player->health = player->plr->mo->health = MAXHEALTH;
     }
-    P_SetMessage(player, TXT_CHEATHEALTH);
+    P_SetMessage(player, TXT_CHEATHEALTH, false);
 }
 
 static void CheatKeysFunc(player_t *player, cheat_t * cheat)
 {
     player->update |= PSF_KEYS;
     player->keys = 2047;
-    P_SetMessage(player, TXT_CHEATKEYS);
+    P_SetMessage(player, TXT_CHEATKEYS, false);
 }
 
 static void CheatSoundFunc(player_t *player, cheat_t * cheat)
@@ -728,11 +730,11 @@ static void CheatSoundFunc(player_t *player, cheat_t * cheat)
     DebugSound = !DebugSound;
     if(DebugSound)
     {
-        P_SetMessage(player, TXT_CHEATSOUNDON);
+        P_SetMessage(player, TXT_CHEATSOUNDON, false);
     }
     else
     {
-        P_SetMessage(player, TXT_CHEATSOUNDOFF);
+        P_SetMessage(player, TXT_CHEATSOUNDOFF, false);
     }
 }
 
@@ -743,11 +745,11 @@ static void CheatTickerFunc(player_t *player, cheat_t * cheat)
        DisplayTicker = !DisplayTicker;
        if(DisplayTicker)
        {
-       P_SetMessage(player, TXT_CHEATTICKERON);
+       P_SetMessage(player, TXT_CHEATTICKERON, false);
        }
        else
        {
-       P_SetMessage(player, TXT_CHEATTICKEROFF);
+       P_SetMessage(player, TXT_CHEATTICKEROFF, false);
        } */
 }
 
@@ -763,7 +765,7 @@ static void CheatArtifactAllFunc(player_t *player, cheat_t * cheat)
             P_GiveArtifact(player, i, NULL);
         }
     }
-    P_SetMessage(player, TXT_CHEATARTIFACTS3);
+    P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
 }
 
 static void CheatPuzzleFunc(player_t *player, cheat_t * cheat)
@@ -774,13 +776,13 @@ static void CheatPuzzleFunc(player_t *player, cheat_t * cheat)
     {
         P_GiveArtifact(player, i, NULL);
     }
-    P_SetMessage(player, TXT_CHEATARTIFACTS3);
+    P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
 }
 
 static void CheatInitFunc(player_t *player, cheat_t * cheat)
 {
     G_DeferedInitNew(gameskill, gameepisode, gamemap);
-    P_SetMessage(player, TXT_CHEATWARP);
+    P_SetMessage(player, TXT_CHEATWARP, false);
 }
 
 static void CheatWarpFunc(player_t *player, cheat_t * cheat)
@@ -796,19 +798,19 @@ static void CheatWarpFunc(player_t *player, cheat_t * cheat)
     ones = cheat->args[1] - '0';
     if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
     {   // Bad map
-        P_SetMessage(player, TXT_CHEATBADINPUT);
+        P_SetMessage(player, TXT_CHEATBADINPUT, false);
         return;
     }
     //map = P_TranslateMap((cheat->args[0]-'0')*10+cheat->args[1]-'0');
     map = P_TranslateMap(tens * 10 + ones);
     if(map == -1)
     {   // Not found
-        P_SetMessage(player, TXT_CHEATNOMAP);
+        P_SetMessage(player, TXT_CHEATNOMAP, false);
         return;
     }
     if(map == gamemap)
     {   // Don't try to teleport to current map
-        P_SetMessage(player, TXT_CHEATBADINPUT);
+        P_SetMessage(player, TXT_CHEATBADINPUT, false);
         return;
     }
     if(DevMaps)
@@ -821,7 +823,7 @@ static void CheatWarpFunc(player_t *player, cheat_t * cheat)
         }
         else
         {   // Can't find
-            P_SetMessage(player, TXT_CHEATNOMAP);
+            P_SetMessage(player, TXT_CHEATNOMAP, false);
             return;
         }
     }
@@ -830,11 +832,11 @@ static void CheatWarpFunc(player_t *player, cheat_t * cheat)
         sprintf(mapName, "MAP%02d", map);
         if(W_CheckNumForName(mapName) == -1)
         {   // Can't find
-            P_SetMessage(player, TXT_CHEATNOMAP);
+            P_SetMessage(player, TXT_CHEATNOMAP, false);
             return;
         }
     }
-    P_SetMessage(player, TXT_CHEATWARP);
+    P_SetMessage(player, TXT_CHEATWARP, false);
 
     M_ClearMenus();
     G_TeleportNewMap(map, 0);
@@ -852,7 +854,7 @@ static void CheatPigFunc(player_t *player, cheat_t * cheat)
     {
         P_MorphPlayer(player);
     }
-    P_SetMessage(player, "SQUEAL!!");
+    P_SetMessage(player, "SQUEAL!!", false);
 }
 
 static void CheatMassacreFunc(player_t *player, cheat_t * cheat)
@@ -862,7 +864,7 @@ static void CheatMassacreFunc(player_t *player, cheat_t * cheat)
 
     count = P_Massacre();
     sprintf(buffer, "%d MONSTERS KILLED\n", count);
-    P_SetMessage(player, buffer);
+    P_SetMessage(player, buffer, false);
 }
 
 static void CheatIDKFAFunc(player_t *player, cheat_t * cheat)
@@ -878,28 +880,28 @@ static void CheatIDKFAFunc(player_t *player, cheat_t * cheat)
         player->weaponowned[i] = false;
     }
     player->pendingweapon = WP_FIRST;
-    P_SetMessage(player, TXT_CHEATIDKFA);
+    P_SetMessage(player, TXT_CHEATIDKFA, false);
 }
 
 static void CheatQuickenFunc1(player_t *player, cheat_t * cheat)
 {
-    P_SetMessage(player, "TRYING TO CHEAT?  THAT'S ONE....");
+    P_SetMessage(player, "TRYING TO CHEAT?  THAT'S ONE....", false);
 }
 
 static void CheatQuickenFunc2(player_t *player, cheat_t * cheat)
 {
-    P_SetMessage(player, "THAT'S TWO....");
+    P_SetMessage(player, "THAT'S TWO....", false);
 }
 
 static void CheatQuickenFunc3(player_t *player, cheat_t * cheat)
 {
     P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000);
-    P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.");
+    P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.", false);
 }
 
 static void CheatClassFunc1(player_t *player, cheat_t * cheat)
 {
-    P_SetMessage(player, "ENTER NEW PLAYER CLASS (0 - 2)");
+    P_SetMessage(player, "ENTER NEW PLAYER CLASS (0 - 2)", false);
 }
 
 static void CheatClassFunc2(player_t *player, cheat_t * cheat)
@@ -913,7 +915,7 @@ static void CheatClassFunc2(player_t *player, cheat_t * cheat)
     class = cheat->args[0] - '0';
     if(class > 2 || class < 0)
     {
-        P_SetMessage(player, "INVALID PLAYER CLASS");
+        P_SetMessage(player, "INVALID PLAYER CLASS", false);
         return;
     }
     SB_ChangePlayerClass(player, class);
@@ -921,7 +923,7 @@ static void CheatClassFunc2(player_t *player, cheat_t * cheat)
 
 static void CheatVersionFunc(player_t *player, cheat_t * cheat)
 {
-    P_SetMessage(player, VERSIONTEXT);
+    P_SetMessage(player, VERSIONTEXT, false);
 }
 
 static void CheatDebugFunc(player_t *player, cheat_t * cheat)
@@ -939,7 +941,7 @@ static void CheatDebugFunc(player_t *player, cheat_t * cheat)
             player->plr->mo->pos[VX] >> FRACBITS,
             player->plr->mo->pos[VY] >> FRACBITS,
             player->plr->mo->pos[VZ] >> FRACBITS);
-    P_SetMessage(player, textBuffer);
+    P_SetMessage(player, textBuffer, false);
 
     // Also print some information to the console.
     Con_Message(textBuffer);
@@ -955,12 +957,12 @@ static void CheatDebugFunc(player_t *player, cheat_t * cheat)
 
 static void CheatScriptFunc1(player_t *player, cheat_t * cheat)
 {
-    P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?");
+    P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?", false);
 }
 
 static void CheatScriptFunc2(player_t *player, cheat_t * cheat)
 {
-    P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?");
+    P_SetMessage(player, "RUN WHICH SCRIPT(01-99)?", false);
 }
 
 static void CheatScriptFunc3(player_t *player, cheat_t * cheat)
@@ -982,7 +984,7 @@ static void CheatScriptFunc3(player_t *player, cheat_t * cheat)
     if(P_StartACS(script, 0, args, player->plr->mo, NULL, 0))
     {
         sprintf(textBuffer, "RUNNING SCRIPT %.2d", script);
-        P_SetMessage(player, textBuffer);
+        P_SetMessage(player, textBuffer, false);
     }
 }
 
@@ -1001,11 +1003,11 @@ static void CheatTrackFunc1(player_t *player, cheat_t * cheat)
        }
        if(gi.CD(DD_INIT, 0) == -1)
        {
-       P_SetMessage(player, "ERROR INITIALIZING CD");
+       P_SetMessage(player, "ERROR INITIALIZING CD", false);
        }
        sprintf(buffer, "ENTER DESIRED CD TRACK (%.2d - %.2d):\n",
        gi.CD(DD_GET_FIRST_TRACK, 0), gi.CD(DD_GET_LAST_TRACK, 0));
-       P_SetMessage(player, buffer); */
+       P_SetMessage(player, buffer, false); */
 }
 
 static void CheatTrackFunc2(player_t *player, cheat_t * cheat)
@@ -1020,7 +1022,7 @@ static void CheatTrackFunc2(player_t *player, cheat_t * cheat)
        track = (cheat->args[0]-'0')*10+(cheat->args[1]-'0');
        if(track < gi.CD(DD_GET_FIRST_TRACK, 0) || track > gi.CD(DD_GET_LAST_TRACK, 0))
        {
-       P_SetMessage(player, "INVALID TRACK NUMBER\n");
+       P_SetMessage(player, "INVALID TRACK NUMBER\n", false);
        return;
        }
        if(track == gi.CD(DD_GET_CURRENT_TRACK,0))
@@ -1030,12 +1032,12 @@ static void CheatTrackFunc2(player_t *player, cheat_t * cheat)
        if(gi.CD(DD_PLAY_LOOP, track))
        {
        sprintf(buffer, "ERROR WHILE TRYING TO PLAY CD TRACK: %.2d\n", track);
-       P_SetMessage(player, buffer);
+       P_SetMessage(player, buffer, false);
        }
        else
        { // No error encountered while attempting to play the track
        sprintf(buffer, "PLAYING TRACK: %.2d\n", track);
-       P_SetMessage(player, buffer);
+       P_SetMessage(player, buffer, false);
        } */
 }
 

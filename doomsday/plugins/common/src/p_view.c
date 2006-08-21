@@ -17,7 +17,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#  include "g_common.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #  include "g_common.h"
 #elif __JDOOM__

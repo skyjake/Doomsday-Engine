@@ -30,7 +30,9 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -45,6 +47,7 @@
 #include "p_xgline.h"
 #include "p_xgsec.h"
 #include "g_common.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 

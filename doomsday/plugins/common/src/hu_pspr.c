@@ -18,7 +18,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -27,7 +29,7 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "jstrife.h
+#  include "jstrife.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -122,22 +124,7 @@ void HU_UpdatePlayerSprite(int pnum)
             continue;
         }
         ddpsp->stateptr = psp->state;
-        //ddpsp->sprite = psp->state->sprite;
-        //ddpsp->frame = psp->state->frame & FF_FRAMEMASK;
         ddpsp->tics = psp->tics;
-        // Assume there is no next frame.
-        /*ddpsp->nextframe = -1;
-           // Is there a next frame?
-           if(psp->state->nextstate != S_NULL)
-           {
-           st = &states[psp->state->nextstate];
-           if(st->sprite == ddpsp->sprite)
-           {
-           // Same sprite, can interpolate.
-           ddpsp->nextframe = st->frame & FF_FRAMEMASK;
-           ddpsp->nexttime = psp->state->tics;
-           }
-           } */
 
         // Choose color and alpha.
         ddpsp->light = 1;
@@ -172,7 +159,7 @@ void HU_UpdatePlayerSprite(int pnum)
         }
         else
 #endif
-        if(psp->state->frame & FF_FULLBRIGHT)
+        if(psp->state->flags & STF_FULLBRIGHT)
         {
             // full bright
             ddpsp->light = 1;

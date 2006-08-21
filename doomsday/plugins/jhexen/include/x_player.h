@@ -104,10 +104,10 @@ typedef struct player_s {
     int             refire;        // refired shots are less accurate
 
     int             killcount, itemcount, secretcount;  // for intermission
-    char           *message;   // hint messages
-    int             messageTics;   // counter for showing messages
+
     short           ultimateMessage;
     short           yellowMessage;
+
     int             damagecount, bonuscount;    // for screen flashing
     int             poisoncount;   // screen flash for poison damage
     mobj_t         *poisoner;      // NULL for non-player mobjs

@@ -1,23 +1,75 @@
+/* DE1: $Id$
+ * Copyright (C) 1999- Activision
+ *
+ * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
+ * code license; you can redistribute it and/or modify it under the terms
+ * of the HERETIC / HEXEN source code license as published by Activision.
+ *
+ * THIS MATERIAL IS NOT MADE OR SUPPORTED BY ACTIVISION.
+ *
+ * WARRANTY INFORMATION.
+ * This program is provided as is. Activision and it's affiliates make no
+ * warranties of any kind, whether oral or written , express or implied,
+ * including any warranty of merchantability, fitness for a particular
+ * purpose or non-infringement, and no other representations or claims of
+ * any kind shall be binding on or obligate Activision or it's affiliates.
+ *
+ * LICENSE CONDITIONS.
+ * You shall not:
+ *
+ * 1) Exploit this Program or any of its parts commercially.
+ * 2) Use this Program, or permit use of this Program, on more than one
+ *    computer, computer terminal, or workstation at the same time.
+ * 3) Make copies of this Program or any part thereof, or make copies of
+ *    the materials accompanying this Program.
+ * 4) Use the program, or permit use of this Program, in a network,
+ *    multi-user arrangement or remote access arrangement, including any
+ *    online use, except as otherwise explicitly provided by this Program.
+ * 5) Sell, rent, lease or license any copies of this Program, without
+ *    the express prior written consent of Activision.
+ * 6) Remove, disable or circumvent any proprietary notices or labels
+ *    contained on or within the Program.
+ *
+ * You should have received a copy of the HERETIC / HEXEN source code
+ * license along with this program (Ravenlic.txt); if not:
+ * http://www.ravensoft.com/
+ */
 
-//**************************************************************************
-//**
-//** p_inter.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile$
-//** $Revision$
-//** $Date$
-//** $Author$
-//**
-//**************************************************************************
+// HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
 
 #include "am_map.h"
 #include "p_inventory.h"
+#include "p_player.h"
+#include "p_map.h"
 
-int     echoMsg = 1;
+// MACROS ------------------------------------------------------------------
 
 #define BONUSADD 6
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void SetDormantArtifact(mobj_t *arti);
+static void TryPickupArtifact(player_t *player, artitype_e artifactType,
+                              mobj_t *artifact);
+static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
+                            weapontype_t weaponType, mobj_t *weapon,
+                            char *message);
+static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
+                                 int pieceValue, mobj_t *pieceMobj);
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+int     echoMsg = 1;
 
 //char *TextKeyMessages[] =
 int     TextKeyMessages[] = {
@@ -34,14 +86,9 @@ int     TextKeyMessages[] = {
     TXT_TXT_KEY_CASTLE
 };
 
-static void SetDormantArtifact(mobj_t *arti);
-static void TryPickupArtifact(player_t *player, artitype_e artifactType,
-                              mobj_t *artifact);
-static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
-                            weapontype_t weaponType, mobj_t *weapon,
-                            char *message);
-static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
-                                 int pieceValue, mobj_t *pieceMobj);
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
 //
@@ -190,7 +237,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
         }
     }
 
-    P_SetMessage(player, message);
+    P_SetMessage(player, message, false);
     if(weapon->special)
     {
         P_ExecuteLineSpecial(weapon->special, weapon->args, NULL, 0,
@@ -439,13 +486,13 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
 
     if(gaveWeapon)
     {
-        P_SetMessage(player, GET_TXT(fourthWeaponText[matchClass]));
+        P_SetMessage(player, GET_TXT(fourthWeaponText[matchClass]), false);
         // Play the build-sound full volume for all players
         S_StartSound(SFX_WEAPON_BUILD, NULL);
     }
     else
     {
-        P_SetMessage(player, GET_TXT(weaponPieceText[matchClass]));
+        P_SetMessage(player, GET_TXT(weaponPieceText[matchClass]), false);
         S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, player - players);
     }
 }
@@ -690,12 +737,12 @@ static void TryPickupArtifact(player_t *player, artitype_e artifactType,
         {
             SetDormantArtifact(artifact);
             S_StartSound(SFX_PICKUP_ARTIFACT, artifact);
-            P_SetMessage(player, GET_TXT(artifactMessages[artifactType]));
+            P_SetMessage(player, GET_TXT(artifactMessages[artifactType]), false);
         }
         else
         {                       // Puzzle item
             S_StartSound(SFX_PICKUP_ITEM, NULL);
-            P_SetMessage(player, GET_TXT(artifactMessages[artifactType]));
+            P_SetMessage(player, GET_TXT(artifactMessages[artifactType]), false);
             if(!IS_NETGAME || deathmatch)
             {                   // Remove puzzle items if not cooperative netplay
                 P_RemoveMobj(artifact);
@@ -815,35 +862,35 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         {
             return;
         }
-        P_SetMessage(player, TXT_ITEMHEALTH);
+        P_SetMessage(player, TXT_ITEMHEALTH, false);
         break;
     case SPR_ARM1:
         if(!P_GiveArmor(player, ARMOR_ARMOR, -1))
         {
             return;
         }
-        P_SetMessage(player, TXT_ARMOR1);
+        P_SetMessage(player, TXT_ARMOR1, false);
         break;
     case SPR_ARM2:
         if(!P_GiveArmor(player, ARMOR_SHIELD, -1))
         {
             return;
         }
-        P_SetMessage(player, TXT_ARMOR2);
+        P_SetMessage(player, TXT_ARMOR2, false);
         break;
     case SPR_ARM3:
         if(!P_GiveArmor(player, ARMOR_HELMET, -1))
         {
             return;
         }
-        P_SetMessage(player, TXT_ARMOR3);
+        P_SetMessage(player, TXT_ARMOR3, false);
         break;
     case SPR_ARM4:
         if(!P_GiveArmor(player, ARMOR_AMULET, -1))
         {
             return;
         }
-        P_SetMessage(player, TXT_ARMOR4);
+        P_SetMessage(player, TXT_ARMOR4, false);
         break;
 
         // Keys
@@ -863,7 +910,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
             return;
         }
         P_SetMessage(player,
-                     GET_TXT(TextKeyMessages[special->sprite - SPR_KEY1]));
+                     GET_TXT(TextKeyMessages[special->sprite - SPR_KEY1]), false);
         sound = SFX_PICKUP_KEY;
 
         // Check and process the special now in case the key doesn't
@@ -993,14 +1040,14 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         {
             return;
         }
-        P_SetMessage(player, TXT_MANA_1);
+        P_SetMessage(player, TXT_MANA_1, false);
         break;
     case SPR_MAN2:
         if(!P_GiveMana(player, MANA_2, 15))
         {
             return;
         }
-        P_SetMessage(player, TXT_MANA_2);
+        P_SetMessage(player, TXT_MANA_2, false);
         break;
     case SPR_MAN3:              // Double Mana Dodecahedron
         if(!P_GiveMana(player, MANA_1, 20))
@@ -1014,7 +1061,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         {
             P_GiveMana(player, MANA_2, 20);
         }
-        P_SetMessage(player, TXT_MANA_BOTH);
+        P_SetMessage(player, TXT_MANA_BOTH, false);
         break;
 
         // 2nd and 3rd Mage Weapons
@@ -1994,7 +2041,9 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             }
             else
             {                   // "electrocute" the target
-                target->frame |= FF_FULLBRIGHT;
+// fixme make fullbright for this frame -->
+                //target->frame |= FF_FULLBRIGHT;
+// <-- fixme
                 if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
                    !S_IsPlaying(SFX_PUPPYBEAT, target))
                 {

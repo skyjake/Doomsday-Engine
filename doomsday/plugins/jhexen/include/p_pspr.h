@@ -36,13 +36,6 @@
 #pragma interface
 #endif
 
-//
-// Frame flags:
-// handles maximum brightness (torches, muzzle flare, light sources)
-//
-#define FF_FULLBRIGHT   0x8000     // flag in thing->frame
-#define FF_FRAMEMASK    0x7fff
-
 // psprites are scaled shapes directly on the view screen
 // coordinates are given for a 320*200 view screen
 typedef enum {

@@ -17,6 +17,7 @@
 
 #include "dmu_lib.h"
 #include "p_spechit.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -40,6 +41,8 @@ typedef struct bossspot_e {
 } bossspot_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+boolean     P_TestMobjLocation(mobj_t *mobj);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

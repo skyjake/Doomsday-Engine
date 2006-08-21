@@ -207,39 +207,6 @@ void            P_UnsetThingPosition(mobj_t *thing);
 void            P_SetThingPosition(mobj_t *thing);
 mobj_t         *P_RoughMonsterSearch(mobj_t *mo, int distance);
 
-// ***** P_MAP *****
-
-extern boolean  floatok;           // if true, move would be ok if
-extern fixed_t  tmfloorz, tmceilingz;   // within tmfloorz - tmceilingz
-extern int      tmfloorpic;
-extern mobj_t  *BlockingMobj;
-
-extern line_t  *ceilingline;
-boolean         P_TestMobjLocation(mobj_t *mobj);
-boolean         P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
-mobj_t         *P_CheckOnmobj(mobj_t *thing);
-boolean         P_TryMove(mobj_t *thing, fixed_t x, fixed_t y);
-boolean         P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp);
-void            P_SlideMove(mobj_t *mo);
-void            P_BounceWall(mobj_t *mo);
-
-//boolean P_CheckSight(mobj_t *t1, mobj_t *t2);
-void            P_UseLines(player_t *player);
-boolean         P_UsePuzzleItem(player_t *player, int itemType);
-void            PIT_ThrustSpike(mobj_t *actor);
-
-boolean         P_ChangeSector(sector_t *sector, boolean crunch);
-
-extern mobj_t  *PuffSpawned;       // true if a puff was spawned
-extern mobj_t  *linetarget;        // who got hit (or NULL)
-fixed_t         P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance);
-
-void            P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
-                             fixed_t slope, int damage);
-
-void            P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage,
-                               int distance, boolean damageSource);
-
 // ***** P_SETUP *****
 
 void            P_Validate();
@@ -256,8 +223,6 @@ void            P_Validate();
 
 extern int      clipmana[NUMAMMO];
 
-void            P_SetMessage(player_t *pl, char *msg);
-void            P_SetYellowMessage(player_t *pl, char *msg);
 void            P_ClearMessage(player_t *player);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,

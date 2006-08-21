@@ -20,7 +20,11 @@
 
 #include <math.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#  include "r_common.h"
+#  include "hu_stuff.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #  include "r_common.h"
 #  include "hu_stuff.h"
@@ -40,6 +44,7 @@
 
 #include "p_mapsetup.h"
 #include "d_net.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 

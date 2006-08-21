@@ -170,20 +170,20 @@ boolean cht_Responder(event_t *ev)
             else if(cht_CheckCheat(&cheat_ammonokey, ev->data1))
             {
                 cht_GiveFunc(plyr, true, true, true, false, &cheat_ammonokey);
-                P_SetMessage(plyr, STSTR_FAADDED);
+                P_SetMessage(plyr, STSTR_FAADDED, false);
             }
             // 'kfa' cheat for key full ammo
             else if(cht_CheckCheat(&cheat_ammo, ev->data1))
             {
                 cht_GiveFunc(plyr, true, true, true, true, &cheat_ammo);
-                P_SetMessage(plyr, STSTR_KFAADDED);
+                P_SetMessage(plyr, STSTR_KFAADDED, false);
             }
             // 'mus' cheat for changing music
             else if(cht_CheckCheat(&cheat_mus, ev->data1))
             {
                 char    buf[3];
 
-                P_SetMessage(plyr, STSTR_MUS);
+                P_SetMessage(plyr, STSTR_MUS, false);
                 cht_GetParam(&cheat_mus, buf);
                 cht_MusicFunc(plyr, buf);   // Might set plyr->message.
             }
@@ -200,20 +200,20 @@ boolean cht_Responder(event_t *ev)
                 if(cht_CheckCheat(&cheat_powerup[i], ev->data1))
                 {
                     cht_PowerUpFunc(plyr, i);
-                    P_SetMessage(plyr, STSTR_BEHOLDX);
+                    P_SetMessage(plyr, STSTR_BEHOLDX, false);
                 }
             }
 
             // 'behold' power-up menu
             if(cht_CheckCheat(&cheat_powerup[6], ev->data1))
             {
-                P_SetMessage(plyr, STSTR_BEHOLD);
+                P_SetMessage(plyr, STSTR_BEHOLD, false);
             }
             // 'choppers' invulnerability & chainsaw
             else if(cht_CheckCheat(&cheat_choppers, ev->data1))
             {
                 cht_ChoppersFunc(plyr);
-                P_SetMessage(plyr, STSTR_CHOPPERS);
+                P_SetMessage(plyr, STSTR_CHOPPERS, false);
             }
             // 'mypos' for player position
             else if(cht_CheckCheat(&cheat_mypos, ev->data1))
@@ -325,7 +325,7 @@ void cht_GodFunc(player_t *plyr)
         plyr->update |= PSF_HEALTH;
     }
     P_SetMessage(plyr,
-                 (plyr->cheats & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF);
+                 ((plyr->cheats & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
 }
 
 void cht_SuicideFunc(player_t *plyr)
@@ -406,7 +406,7 @@ void cht_MusicFunc(player_t *plyr, char *buf)
         off = (buf[0] - '0') * 10 + buf[1] - '0';
         musnum = mus_runnin + off - 1;
         if(off < 1 || off > 35)
-            P_SetMessage(plyr, STSTR_NOMUS);
+            P_SetMessage(plyr, STSTR_NOMUS, false);
         else
             S_StartMusicNum(musnum, true);
     }
@@ -415,7 +415,7 @@ void cht_MusicFunc(player_t *plyr, char *buf)
         off = (buf[0] - '1') * 9 + (buf[1] - '1');
         musnum = mus_e1m1 + off;
         if(off > 31)
-            P_SetMessage(plyr, STSTR_NOMUS);
+            P_SetMessage(plyr, STSTR_NOMUS, false);
         else
             S_StartMusicNum(musnum, true);
     }
@@ -425,7 +425,9 @@ void cht_NoClipFunc(player_t *plyr)
 {
     plyr->cheats ^= CF_NOCLIP;
     plyr->update |= PSF_STATE;
-    P_SetMessage(plyr, (plyr->cheats & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF);
+    P_SetMessage(plyr,
+                 ((plyr->cheats & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF),
+                 false);
 }
 
 boolean cht_WarpFunc(player_t *plyr, char *buf)
@@ -448,7 +450,7 @@ boolean cht_WarpFunc(player_t *plyr, char *buf)
         return false;
 
     // So be it.
-    P_SetMessage(plyr, STSTR_CLEV);
+    P_SetMessage(plyr, STSTR_CLEV, false);
     G_DeferedInitNew(gameskill, epsd, map);
 
     // Clear the menu if open
@@ -490,7 +492,7 @@ void cht_PosFunc(player_t *plyr)
             players[consoleplayer].plr->mo->pos[VX],
             players[consoleplayer].plr->mo->pos[VY],
             players[consoleplayer].plr->mo->pos[VZ]);
-    P_SetMessage(plyr, buf);
+    P_SetMessage(plyr, buf, false);
 }
 
 static void CheatDebugFunc(player_t *player, cheat_t * cheat)
@@ -508,7 +510,7 @@ static void CheatDebugFunc(player_t *player, cheat_t * cheat)
             player->plr->mo->pos[VX] >> FRACBITS,
             player->plr->mo->pos[VY] >> FRACBITS,
             player->plr->mo->pos[VZ] >> FRACBITS);
-    P_SetMessage(player, textBuffer);
+    P_SetMessage(player, textBuffer, false);
 
     // Also print some information to the console.
     Con_Message(textBuffer);

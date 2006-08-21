@@ -27,7 +27,9 @@
 
 #include <lzss.h>
 
-#if   __WOLFTC__
+#if  __DOOM64TC__
+#  include "doom64tc.h"
+#elif __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
@@ -75,6 +77,9 @@
 #endif
 
 #define PRE_VER5_END_SPECIALS   7
+
+#define FF_FULLBRIGHT       0x8000 // used to be flag in thing->frame
+#define FF_FRAMEMASK        0x7fff
 
 // TYPES -------------------------------------------------------------------
 
@@ -466,7 +471,7 @@ static void SV_WritePlayer(int playernum)
         }
     }
 
-    SV_WriteByte(2);            // Write a version byte.
+    SV_WriteByte(3);            // Write a version byte.
     SV_WriteLong(pl->playerstate);
     SV_WriteLong(dpl->viewz);
     SV_WriteLong(dpl->viewheight);
@@ -511,8 +516,6 @@ static void SV_WritePlayer(int playernum)
 
     SV_WriteLong(pl->didsecret);
 
-    // Added in ver 2 with __JDOOM__
-    SV_WriteLong(pl->messageTics);
     // Added in ver 2 with __JDOOM__
     SV_WriteLong(pl->flyheight);
 #ifdef __JHERETIC__
@@ -582,15 +585,17 @@ static void SV_ReadPlayer(player_t *pl)
     pl->didsecret = SV_ReadLong();
 
 #ifdef __JDOOM__
+    if(ver == 2) // nolonger used in >= ver 3
+        /*pl->messageTics =*/ SV_ReadLong();
+
     if(ver >= 2)
-    {
-        pl->messageTics = SV_ReadLong();
         pl->flyheight = SV_ReadLong();
-    }
 #endif
 
 #ifdef __JHERETIC__
-    pl->messageTics = SV_ReadLong();
+    if(ver < 3) // nolonger used in >= ver 3
+        /*pl->messageTics =*/ SV_ReadLong();
+
     pl->flyheight = SV_ReadLong();
     SV_Read(pl->inventory, 4 * 2 * 14);
     pl->readyArtifact = SV_ReadLong();
@@ -659,7 +664,7 @@ static void SV_WriteMobj(mobj_t *mobj)
     //More drawing info: to determine current sprite.
     SV_WriteLong(mo.angle);     // orientation
     SV_WriteLong(mo.sprite);    // used to find patch_t and flip value
-    SV_WriteLong(mo.frame);     // might be ORed with FF_FULLBRIGHT
+    SV_WriteLong(mo.frame);
 
     // The closest interval over all contacted Sectors.
     SV_WriteLong(mo.floorz);
@@ -819,6 +824,8 @@ static int SV_ReadMobj(thinker_t *th)
     mo->angle = SV_ReadLong();  // orientation
     mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
     mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
+    if(mo->frame & FF_FULLBRIGHT)
+        mo->frame &= FF_FRAMEMASK; // not used anymore.
 
     // The closest interval over all contacted Sectors.
     mo->floorz = SV_ReadLong();
@@ -1409,7 +1416,6 @@ static void P_UnArchivePlayers(boolean *infile, boolean *loaded)
 
         // Will be set when unarc thinker.
         player->plr->mo = NULL;
-        player->message = NULL;
         player->attacker = NULL;
     }
 }
@@ -2553,7 +2559,7 @@ int SV_LoadGame(char *filename)
             {
 #ifndef __JHEXEN__
 #ifndef __JSTRIFE__
-                P_SetMessage(players, GET_TXT(TXT_LOADMISSING));
+                P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
 #endif
 #endif
             }

@@ -28,6 +28,7 @@
 
 #include "d_net.h"
 #include "p_player.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -194,7 +195,7 @@ void P_FireWeapon(player_t *player)
         return;
 
     NetCl_PlayerActionRequest(player, GPA_FIRE);
-    
+
     // Psprite state.
     player->plr->psprites[0].state = DDPSP_FIRE;
 
@@ -367,7 +368,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
 #ifdef _DEBUG
     Con_Message("A_Raise: psp->sy = %x\n", psp->sy);
 #endif
-    
+
     psp->sy -= RAISESPEED;
 
     if(psp->sy > WEAPONTOP)
@@ -567,7 +568,7 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t * psp)
 
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, 
+    P_SetPsprite(player, ps_flash,
                  weaponinfo[player->readyweapon][player->class].mode[0].flashstate);
 
     player->update |= PSF_AMMO;

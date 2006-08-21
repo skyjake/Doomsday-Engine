@@ -106,9 +106,6 @@ typedef struct player_s {
     int             itemcount;
     int             secretcount;
 
-    // Hint messages.
-    char           *message;
-
     // For screen flashing (red or bright).
     int             damagecount;
     int             bonuscount;
@@ -146,8 +143,6 @@ typedef struct player_s {
     artitype_e      readyArtifact;
     int             artifactCount;
     int             inventorySlotNum;
-
-    int             messageTics;   // counter for showing messages
 
     int             flamecount;    // for flame thrower duration
 

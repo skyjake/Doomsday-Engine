@@ -24,6 +24,8 @@
 #define SAVESTRINGSIZE  24
 #define VERSIONSIZE     16
 
+#define FF_FRAMEMASK        0x7fff
+
 // TYPES -------------------------------------------------------------------
 
 typedef enum thinkerclass_e {
@@ -136,6 +138,7 @@ static void SV_ReadMobj(mobj_t *mo)
     mo->angle = SV_ReadLong();  // orientation
     mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
     mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
+    mo->frame &= ~FF_FRAMEMASK;
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
@@ -225,7 +228,6 @@ void P_v19_UnArchivePlayers(void)
 
         // will be set when unarc thinker
         players[i].plr->mo = NULL;
-        players[i].message = NULL;
         players[i].attacker = NULL;
 
         for(j = 0; j < NUMPSPRITES; j++)
