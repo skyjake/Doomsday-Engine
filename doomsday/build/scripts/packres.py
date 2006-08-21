@@ -10,7 +10,7 @@ if len(sys.argv) < 2:
     print "(run in build/scripts/)"
     sys.exit(0)
 
-deng_dir = '../..'
+deng_dir = os.path.join('..', '..')
 target_dir = sys.argv[1]
 
 class Pack:
