@@ -867,7 +867,7 @@ void ArchivePlayer(player_t *player)
 
     // Version number. Increase when you make changes to the player data
     // segment format.
-    StreamOutByte(1);
+    StreamOutByte(2);
 
     // Class.
     StreamOutByte(cfg.PlayerClass[player - players]);
@@ -901,8 +901,6 @@ void ArchivePlayer(player_t *player)
     StreamOutLong(p->killcount);
     StreamOutLong(p->itemcount);
     StreamOutLong(p->secretcount);
-    StreamOutLong(p->ultimateMessage);
-    StreamOutLong(p->yellowMessage);
     StreamOutLong(p->damagecount);
     StreamOutLong(p->bonuscount);
     StreamOutLong(p->poisoncount);
@@ -924,7 +922,7 @@ void UnarchivePlayer(player_t *p)
     ddplayer_t *dp = p->plr;
     int     i, version;
 
-    version = GET_BYTE; // 1 for now...
+    version = GET_BYTE;
 
     cfg.PlayerClass[p - players] = GET_BYTE;
 
@@ -960,9 +958,12 @@ void UnarchivePlayer(player_t *p)
     p->killcount = GET_LONG;
     p->itemcount = GET_LONG;
     p->secretcount = GET_LONG;
-    /*p->messageTics =*/ GET_LONG;
-    /*p->ultimateMessage =*/ GET_LONG;
-    /*p->yellowMessage =*/ GET_LONG;
+    if(version <= 1)
+    {
+        /*p->messageTics =*/ GET_LONG;
+        /*p->ultimateMessage =*/ GET_LONG;
+        /*p->yellowMessage =*/ GET_LONG;
+    }
     p->damagecount = GET_LONG;
     p->bonuscount = GET_LONG;
     p->poisoncount = GET_LONG;

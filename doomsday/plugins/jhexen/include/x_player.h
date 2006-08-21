@@ -105,9 +105,6 @@ typedef struct player_s {
 
     int             killcount, itemcount, secretcount;  // for intermission
 
-    short           ultimateMessage;
-    short           yellowMessage;
-
     int             damagecount, bonuscount;    // for screen flashing
     int             poisoncount;   // screen flash for poison damage
     mobj_t         *poisoner;      // NULL for non-player mobjs
