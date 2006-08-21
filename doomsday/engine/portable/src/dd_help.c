@@ -191,7 +191,7 @@ void* DH_Find(char *id)
     if(!helpInited)
         return NULL;
     for(n = helpRoot.next; n != &helpRoot; n = n->next)
-        if(!strnicmp(id, n->id, strlen(n->id)))
+        if(!strnicmp(id, n->id, strlen(/*n->*/id)))
             return n;
     return NULL;
 }
