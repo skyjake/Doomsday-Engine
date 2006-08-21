@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 326 <--
+; --> 327 <--
 ; Other free ordinals:
 ; 77 formaly P_LoadBlockMap
 ; 78 formaly P_LoadReject
@@ -320,6 +320,7 @@ EXPORTS
 	S_LocalSound				@215 NONAME
 	S_LocalSoundFrom			@216 NONAME
 	S_StartSound				@217 NONAME
+	S_StartSoundEx		@327 NONAME
 	S_StartSoundAtVolume		@224 NONAME
 	S_ConsoleSound				@218 NONAME
 	S_StopSound					@223 NONAME
