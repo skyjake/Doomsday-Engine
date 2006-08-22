@@ -140,7 +140,7 @@ int     _packfile_datasize = 0;
 
 // CODE --------------------------------------------------------------------
 
-/** _sort_out_getc:
+/**
  *  Helper function for the lzGetC() macro.
  */
 int _sort_out_getc(LZFILE * f)
@@ -154,7 +154,7 @@ int _sort_out_getc(LZFILE * f)
 	return RefillBuffer(f);
 }
 
-/** _sort_out_putc:
+/**
  *  Helper function for the lzPutC() macro.
  */
 int _sort_out_putc(int c, LZFILE * f)
@@ -168,7 +168,7 @@ int _sort_out_putc(int c, LZFILE * f)
 	return (*(f->buf_pos++) = c);
 }
 
-/** pack_inittree:
+/**
  *  For i = 0 to N-1, rson[i] and lson[i] will be the right and left 
  *  children of node i. These nodes need not be initialized. Also, dad[i] 
  *  is the parent of node i. These are initialized to N, which stands for 
@@ -257,7 +257,7 @@ static void pack_insertnode(int r, PACK_DATA * dat)
 	dat->dad[p] = N;			/* remove p */
 }
 
-/** pack_deletenode:
+/**
  *  Removes a node from a tree.
  */
 static void pack_deletenode(int p, PACK_DATA * dat)
@@ -298,7 +298,7 @@ static void pack_deletenode(int p, PACK_DATA * dat)
 	dat->dad[p] = N;
 }
 
-/** pack_write:
+/**
  *  Called by FlushBuffer(). Packs size bytes from buf, using the pack 
  *  information contained in dat. Returns 0 on success.
  */
@@ -479,7 +479,7 @@ static int pack_write(LZFILE * file, PACK_DATA * dat, int size,
 	return ret;
 }
 
-/** pack_read:
+/**
  *  Called by RefillBuffer(). Unpacks from dat into buf, until either
  *  EOF is reached or s bytes have been extracted. Returns the number of
  *  bytes added to the buffer
@@ -575,7 +575,7 @@ static int pack_read(LZFILE * file, UNPACK_DATA * dat, int s,
 	return size;
 }
 
-/** Encrypt:
+/**
  *  Helper for encrypting magic numbers, using the current password.
  */
 long Encrypt(long x)
@@ -589,7 +589,7 @@ long Encrypt(long x)
 	return x ^ mask;
 }
 
-/** lzGetW:
+/**
  *  Reads a 16 bit word from a file, using intel byte ordering.
  */
 int lzGetW(LZFILE * f)
@@ -603,7 +603,7 @@ int lzGetW(LZFILE * f)
 	return EOF;
 }
 
-/** LZGetL:
+/**
  *  Reads a 32 bit long from a file, using intel byte ordering.
  */
 long lzGetL(LZFILE * f)
@@ -620,7 +620,7 @@ long lzGetL(LZFILE * f)
 	return EOF;
 }
 
-/** lzPutW:
+/**
  *  Writes a 16 bit int to a file, using intel byte ordering.
  */
 int lzPutW(int w, LZFILE * f)
@@ -637,7 +637,7 @@ int lzPutW(int w, LZFILE * f)
 	return EOF;
 }
 
-/** lzPutL:
+/**
  *  Writes a 32 bit long to a file, using intel byte ordering.
  */
 long lzPutL(long l, LZFILE * f)
@@ -658,7 +658,7 @@ long lzPutL(long l, LZFILE * f)
 	return EOF;
 }
 
-/** lzGetWm:
+/**
  *  Reads a 16 bit int from a file, using motorola byte-ordering.
  */
 int lzGetWm(LZFILE * f)
@@ -672,7 +672,7 @@ int lzGetWm(LZFILE * f)
 	return EOF;
 }
 
-/** lzGetLm:
+/**
  *  Reads a 32 bit long from a file, using motorola byte-ordering.
  */
 long lzGetLm(LZFILE * f)
@@ -689,7 +689,7 @@ long lzGetLm(LZFILE * f)
 	return EOF;
 }
 
-/** lzPutWm:
+/**
  *  Writes a 16 bit int to a file, using motorola byte-ordering.
  */
 int lzPutWm(int w, LZFILE * f)
@@ -706,7 +706,7 @@ int lzPutWm(int w, LZFILE * f)
 	return EOF;
 }
 
-/** lzPutLm:
+/**
  *  Writes a 32 bit long to a file, using motorola byte-ordering.
  */
 long lzPutLm(long l, LZFILE * f)
@@ -727,7 +727,7 @@ long lzPutLm(long l, LZFILE * f)
 	return EOF;
 }
 
-/** lzOpen:
+/**
  *  Opens a file according to mode, which may contain any of the flags:
  *  'r': open file for reading.
  *  'w': open file for writing, overwriting any existing data.
@@ -913,7 +913,7 @@ LZFILE *lzOpen(char *filename, char *mode)
 	return f;
 }
 
-/** lzClose:
+/**
  *  Closes a file after it has been read or written.
  *  Returns zero on success. On error it returns an error code which is
  *  also stored in errno. This function can fail only when writing to
@@ -946,7 +946,7 @@ int lzClose(LZFILE * f)
 	return 0;
 }
 
-/** lzSeek:
+/**
  *  Like the stdio fseek() function, but only supports forward seeks 
  *  relative to the current file position.
  */
@@ -1005,7 +1005,7 @@ int lzSeek(LZFILE * f, int offset)
 	return errno;
 }
 
-/** lzOpenChunk: 
+/**
  *  Opens a sub-chunk of the specified file, for reading or writing depending
  *  on the type of the file. The returned file pointer describes the sub
  *  chunk, and replaces the original file, which will no longer be valid.
@@ -1098,7 +1098,7 @@ LZFILE *lzOpenChunk(LZFILE * f, int pack)
 	return chunk;
 }
 
-/** lzCloseChunk:
+/**
  *  Call after reading or writing a sub-chunk. This closes the chunk file,
  *  and returns a pointer to the original file structure (the one you
  *  passed to lzOpenChunk()), to allow you to read or write data 
@@ -1163,7 +1163,7 @@ LZFILE *lzCloseChunk(LZFILE * f)
 	return parent;
 }
 
-/** lzRead:
+/**
  *  Reads n bytes from f and stores them at memory location p. Returns the 
  *  number of items read, which will be less than n if EOF is reached or an 
  *  error occurs. Error codes are stored in errno.
@@ -1191,7 +1191,7 @@ long lzRead(void *p, long n, LZFILE * f)
 	return n;
 }
 
-/** lzWrite:
+/**
  *  Writes n bytes to the file f from memory location p. Returns the number 
  *  of items written, which will be less than n if an error occurs. Error 
  *  codes are stored in errno.
@@ -1216,7 +1216,7 @@ long lzWrite(void *p, long n, LZFILE * f)
 	return n;
 }
 
-/** LZGetS:
+/**
  *  Reads a line from a text file, storing it at location p. Stops when a
  *  linefeed is encountered, or max characters have been read. Returns a
  *  pointer to where it stored the text, or NULL on error. The end of line
@@ -1249,7 +1249,7 @@ char   *lzGetS(char *p, int max, LZFILE * f)
 		return p;
 }
 
-/** LZPutS:
+/**
  *  Writes a string to a text file, returning zero on success, -1 on error.
  *  EOL ('\n') characters are expanded to CR/LF ('\r\n') pairs.
  */
@@ -1274,7 +1274,7 @@ int lzPutS(char *p, LZFILE * f)
 		return 0;
 }
 
-/** RefillBuffer:
+/**
  *  Refills the read buffer. The file must have been opened in read mode,
  *  and the buffer must be empty.
  */
@@ -1328,7 +1328,7 @@ int RefillBuffer(LZFILE * f)
 	return EOF;
 }
 
-/** FlushBuffer:
+/**
  * flushes a file buffer to the disk. The file must be open in write mode.
  */
 int FlushBuffer(LZFILE * f, int last)
@@ -1380,7 +1380,7 @@ int lzPutC(int c, LZFILE * f)
 		return (*(f->buf_pos++) = c);
 }
 
-/** LZPassword:
+/**
  *  Sets the password to be used by all future read/write operations.
  */
 void lzPassword(char *password)
