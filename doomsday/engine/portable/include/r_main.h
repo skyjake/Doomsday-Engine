@@ -41,7 +41,7 @@ extern int      framecount;
 extern int      viewangleoffset;
 extern int      extralight;
 extern fixed_t  viewcos, viewsin;
-extern int      rend_info_tris;
+extern int      rendInfoTris;
 
 void            R_Register(void);
 void            R_Init(void);

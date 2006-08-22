@@ -46,6 +46,7 @@
 #define SECT_INFO(x)    (secinfo + GET_SECTOR_IDX(x))
 #define SECT_FLOOR(x)   (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_FLOOR].visheight)
 #define SECT_CEIL(x)    (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_CEILING].visheight)
+#define SECT_PLANE_HEIGHT(x, n) (secinfo[GET_SECTOR_IDX(x)].planeinfo[n].visheight)
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1        // Don't use if from IWAD.

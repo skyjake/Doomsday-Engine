@@ -83,7 +83,7 @@ int     frameInter = true;
 int     mirrorHudModels = false;
 int     modelShinyMultitex = true;
 float   modelShinyFactor = 1.0f;
-int     model_tri_count;
+int     modelTriCount;
 float   rend_model_lod = 256;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -265,7 +265,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, uint numVertices,
             count = -count;
 
         // Increment the total model triangle counter.
-        model_tri_count += count - 2;
+        modelTriCount += count - 2;
 
         while(count--)
         {

@@ -68,7 +68,7 @@ void    Rend_RetrieveLightSample(void);
 int     viewangleoffset = 0;
 int     validcount = 1;         // increment every time a check is made
 int     framecount;             // just for profiling purposes
-int     rend_info_tris = 0;
+int     rendInfoTris = 0;
 int     useVSync = 0;
 fixed_t viewx, viewy, viewz;
 float   viewfrontvec[3], viewupvec[3], viewsidevec[3];
@@ -116,7 +116,7 @@ static int bspFactor = 7;
  */
 void R_Register(void)
 {
-    C_VAR_INT("rend-info-tris", &rend_info_tris, 0, 0, 1);
+    C_VAR_INT("rend-info-tris", &rendInfoTris, 0, 0, 1);
 
     C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1);
 
@@ -542,7 +542,7 @@ void R_SetupFrame(ddplayer_t *player)
 void R_RenderPlayerView(ddplayer_t *player)
 {
     extern boolean firstFrameAfterLoad, freezeRLs;
-    extern int psp3d, model_tri_count;
+    extern int psp3d, modelTriCount;
     int     i, oldFlags;
 
     if(firstFrameAfterLoad)
@@ -603,14 +603,14 @@ void R_RenderPlayerView(ddplayer_t *player)
     player->mo->ddflags = oldFlags;
 
     // Should we be counting triangles?
-    if(rend_info_tris)
+    if(rendInfoTris)
     {
         // This count includes all triangles drawn since R_SetupFrame.
         i = gl.GetInteger(DGL_POLY_COUNT);
-        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", i, model_tri_count);
-        model_tri_count = 0;
+        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", i, modelTriCount);
+        modelTriCount = 0;
     }
-    if(rend_info_lums)
+    if(rendInfoLums)
     {
         Con_Printf("LumObjs: %-4i\n", numLuminous);
     }

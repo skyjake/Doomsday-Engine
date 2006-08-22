@@ -3335,7 +3335,7 @@ static void registerVariables(void)
     C_VAR_INT("rend-dev-framecount", &framecount,
               CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     // * Render-Info
-    C_VAR_BYTE("rend-info-lums", &rend_info_lums, 0, 0, 1);
+    C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
     // * Render-Light
     C_VAR_INT2("rend-light-ambient", &r_ambient, 0, -255, 255,
                Rend_CalcLightRangeModMatrix);

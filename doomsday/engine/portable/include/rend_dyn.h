@@ -82,7 +82,7 @@ extern float    dlRadFactor, dlFactor;
 extern int      useWallGlow, glowHeightMax;
 extern float    glowHeightFactor;
 extern float    glowFogBright;
-extern byte     rend_info_lums;
+extern byte     rendInfoLums;
 extern int      dlMinRadForBias;
 
 // Setup.
