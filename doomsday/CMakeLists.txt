@@ -97,40 +97,26 @@ IF (UNIX)
 IF (NOT WIN32)
 ## Where does it go on OSX ? FIXME
 ## This .pk3 is generated in the doomsday target.
-SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 ${CMAKE_SOURCE_DIR}/engine/data/cphelp.txt)
-FILE(GLOB DENG_ENGINE_DEFS ${CMAKE_SOURCE_DIR}/engine/defs/*.ded)
+SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 )
 SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/data)
-SET (DENG_ENGINE_DEFS_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/defs)
 
-SET (DENG_JDOOM_DATA ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/jdoom.wad ${CMAKE_SOURCE_DIR}/plugins/jdoom/data/conhelp.txt)
-FILE(GLOB DENG_JDOOM_DEFS ${CMAKE_SOURCE_DIR}/plugins/jdoom/defs/*.ded)
+SET (DENG_JDOOM_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 )
 SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
-SET (DENG_JDOOM_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jdoom)
 
-SET (DENG_JHERETIC_DATA ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/jheretic.wad ${CMAKE_SOURCE_DIR}/plugins/jheretic/data/conhelp.txt)
-FILE(GLOB DENG_JHERETIC_DEFS ${CMAKE_SOURCE_DIR}/plugins/jheretic/defs/*.ded)
+SET (DENG_JHERETIC_DATA ${CMAKE_CURRENT_BINARY_DIR}/jheretic.pk3 )
 SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
-SET (DENG_JHERETIC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jheretic)
 
-SET (DENG_JHEXEN_DATA ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/jhexen.wad ${CMAKE_SOURCE_DIR}/plugins/jhexen/data/conhelp.txt)
-FILE(GLOB DENG_JHEXEN_DEFS ${CMAKE_SOURCE_DIR}/plugins/jhexen/defs/*.ded)
+SET (DENG_JHEXEN_DATA ${CMAKE_CURRENT_BINARY_DIR}/jhexen.pk3 )
 SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
-SET (DENG_JHEXEN_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jhexen)
 
-SET (DENG_JSTRIFE_DATA ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/jstrife.wad.wad ${CMAKE_SOURCE_DIR}/plugins/jstrife/data/conhelp.txt)
-FILE(GLOB DENG_JSTRIFE_DEFS ${CMAKE_SOURCE_DIR}/plugins/jstrife/defs/*.ded)
+SET (DENG_JSTRIFE_DATA ${CMAKE_CURRENT_BINARY_DIR}/jstrife.pk3 )
 SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
-SET (DENG_JSTRIFE_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/jstrife)
 
-SET (DENG_WOLFTC_DATA ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/wolftc.wad ${CMAKE_SOURCE_DIR}/plugins/wolftc/data/conhelp.txt)
-FILE(GLOB DENG_WOLFTC_DEFS ${CMAKE_SOURCE_DIR}/plugins/wolftc/defs/*.ded)
+SET (DENG_WOLFTC_DATA ${CMAKE_CURRENT_BINARY_DIR}/wolftc.pk3 )
 SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/wolftc)
-SET (DENG_WOLFTC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/wolftc)
 
-SET (DENG_D64TC_DATA ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/d64tc.wad ${CMAKE_SOURCE_DIR}/plugins/d64tc/data/conhelp.txt)
-FILE(GLOB DENG_D64TC_DEFS ${CMAKE_SOURCE_DIR}/plugins/d64tc/defs/*.ded)
+SET (DENG_D64TC_DATA ${CMAKE_CURRENT_BINARY_DIR}/d64tc.pk3 )
 SET (DENG_D64TC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/d64tc)
-SET (DENG_D64TC_DEFS_DIR ${DENG_ENGINE_DEFS_DIR}/d64tc)
 
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
@@ -710,8 +696,24 @@ ENDIF (DOXYGEN)
 ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doomsday.pk3 ##########################################
-ADD_CUSTOM_TARGET (Doomsday.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/*
+ADD_CUSTOM_TARGET (Doomsday.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/* defs/*
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine/ )
+################################################################################
+######################## jDoom.pk3 ##########################################
+ADD_CUSTOM_TARGET (jDoom.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 data/* defs/*
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/jdoom/ )
+################################################################################
+######################## jHeretic.pk3 ##########################################
+ADD_CUSTOM_TARGET (jHeretic.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/jheretic.pk3 data/* defs/*
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/jheretic/ )
+################################################################################
+######################## jHexen.pk3 ##########################################
+ADD_CUSTOM_TARGET (jHexen.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/jhexen.pk3 data/* defs/*
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/jhexen/ )
+################################################################################
+######################## Wolftc.pk3 ##########################################
+ADD_CUSTOM_TARGET (Wolftc.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/wolftc.pk3 data/* defs/*
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/wolftc/ )
 ################################################################################
 ######################## Show Build Details  ###################################
 MESSAGE( STATUS "BUILDSCRIPTSDATE:             " ${BUILDSCRIPTSDATE} )
@@ -754,53 +756,39 @@ MESSAGE( STATUS "DENG_BASE_DIR                 " ${CMAKE_INSTALL_PREFIX}${DENG_B
 MESSAGE( STATUS "DENG_LIBRARY_DIR              " ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
 MESSAGE( STATUS "DENG_BINARY_DIR               " ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR} )
 MESSAGE( STATUS "DENG_ENGINE_DATA_DIR          " ${DENG_ENGINE_DATA_DIR} )
-MESSAGE( STATUS "DENG_ENGINE_DEFS_DIR          " ${DENG_ENGINE_DEFS_DIR} )
 MESSAGE( STATUS "DENG_JDOOM_DATA_DIR           " ${DENG_JDOOM_DATA_DIR} )
-MESSAGE( STATUS "DENG_JDOOM_DEFS_DIR           " ${DENG_JDOOM_DEFS_DIR} )
 MESSAGE( STATUS "DENG_JHERETIC_DATA_DIR        " ${DENG_JHERETIC_DATA_DIR} )
-MESSAGE( STATUS "DENG_JHERETIC_DEFS_DIR        " ${DENG_JHERETIC_DEFS_DIR} )
 MESSAGE( STATUS "DENG_JHEXEN_DATA_DIR          " ${DENG_JHEXEN_DATA_DIR} )
-MESSAGE( STATUS "DENG_JHEXEN_DEFS_DIR          " ${DENG_JHEXEN_DEFS_DIR} )
 MESSAGE( STATUS "DENG_JSTRIFE_DATA_DIR         " ${DENG_JSTRIFE_DATA_DIR} )
-MESSAGE( STATUS "DENG_JSTRIFE_DEFS_DIR         " ${DENG_JSTRIFE_DEFS_DIR} )
 MESSAGE( STATUS "DENG_WOLFTC_DATA_DIR          " ${DENG_WOLFTC_DATA_DIR} )
-MESSAGE( STATUS "DENG_WOLFTC_DEFS_DIR          " ${DENG_WOLFTC_DEFS_DIR} )
 MESSAGE( STATUS "DENG_D64TC_DATA_DIR           " ${DENG_D64TC_DATA_DIR} )
-MESSAGE( STATUS "DENG_D64TC_DEFS_DIR           " ${DENG_D64TC_DEFS_DIR} )
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS doomsday
 RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR} 
 LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
 INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION ${DENG_ENGINE_DATA_DIR} )
-INSTALL(FILES ${DENG_ENGINE_DEFS} DESTINATION ${DENG_ENGINE_DEFS_DIR} )
 
 IF (BUILDJDOOM)
 INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION ${DENG_JDOOM_DATA_DIR} )
-INSTALL(FILES ${DENG_JDOOM_DEFS} DESTINATION ${DENG_JDOOM_DEFS_DIR} )
 ENDIF (BUILDJDOOM)
 
 IF (BUILDJHERETIC)
 INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION ${DENG_JHERETIC_DATA_DIR} )
-INSTALL(FILES ${DENG_JHERETIC_DEFS} DESTINATION ${DENG_JHERETIC_DEFS_DIR} )
 ENDIF (BUILDJHERETIC)
 
 IF (BUILDJHEXEN)
 INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION ${DENG_JHEXEN_DATA_DIR} )
-INSTALL(FILES ${DENG_JHEXEN_DEFS} DESTINATION ${DENG_JHEXEN_DEFS_DIR} )
 ENDIF (BUILDJHEXEN)
 
 IF (BUILDJSTRIFE)
 INSTALL(FILES ${DENG_JSTRIFE_DATA} DESTINATION ${DENG_JSTRIFE_DATA_DIR} )
-INSTALL(FILES ${DENG_JSTRIFE_DEFS} DESTINATION ${DENG_JSTRIFE_DEFS_DIR} )
 ENDIF (BUILDJSTRIFE)
 
 IF (BUILDWOLFTC)
 INSTALL(FILES ${DENG_WOLFTC_DATA} DESTINATION ${DENG_WOLFTC_DATA_DIR} )
-INSTALL(FILES ${DENG_WOLFTC_DEFS} DESTINATION ${DENG_WOLFTC_DEFS_DIR} )
 ENDIF (BUILDWOLFTC)
 
 IF (BUILDD64TC)
 INSTALL(FILES ${DENG_D64TC_DATA} DESTINATION ${DENG_D64TC_DATA_DIR} )
-INSTALL(FILES ${DENG_D64TC_DEFS} DESTINATION ${DENG_D64TC_DEFS_DIR} )
 ENDIF (BUILDD64TC)
