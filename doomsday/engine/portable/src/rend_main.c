@@ -2335,6 +2335,11 @@ D_CMD(Fog)
 {
     int     i;
 
+    if(isDedicated)
+    {
+        Con_Printf("Fog not supported in dedicated mode.\n");
+        return false;
+    }
     if(argc == 1)
     {
         Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
