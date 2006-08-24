@@ -141,8 +141,8 @@ void M_StartControlPanel(void);
 void M_ReadSaveStrings(void);
 void M_DoSave(int slot);
 void M_DoLoad(int slot);
-void M_QuickSave(void);
-void M_QuickLoad(void);
+static void M_QuickSave(void);
+static void M_QuickLoad(void);
 
 void M_DrawMainMenu(void);
 void M_DrawReadThis1(void);
@@ -2627,16 +2627,20 @@ boolean M_QuickSaveResponse(int ch, void *data)
     return false;
 }
 
-void M_QuickSave(void)
+/**
+ * Called via the bindings mechanism when a player wishes to save their
+ * game to a preselected save slot.
+ */
+static void M_QuickSave(void)
 {
-    if(!usergame)
+    player_t *player = &players[consoleplayer];
+
+    if(player->playerstate == PST_DEAD || gamestate != GS_LEVEL ||
+       Get(DD_PLAYBACK))
     {
-        S_LocalSound(menusnds[6], NULL);
+        M_StartMessage(SAVEDEAD, NULL, false);
         return;
     }
-
-    if(gamestate != GS_LEVEL)
-        return;
 
     if(quickSaveSlot < 0)
     {
@@ -2681,7 +2685,7 @@ boolean M_QuickLoadResponse(int ch, void *data)
     return false;
 }
 
-void M_QuickLoad(void)
+static void M_QuickLoad(void)
 {
     if(IS_NETGAME)
     {
@@ -3475,19 +3479,21 @@ void M_LoadGame(int option, void *data)
     M_ReadSaveStrings();
 }
 
-//---------------------------------------------------------------------------
-//
-// PROC M_SaveGame
-//
-//---------------------------------------------------------------------------
-
+/**
+ * Called via the menu or the control bindings mechanism when the player
+ * wishes to save their game.
+ */
 void M_SaveGame(int option, void *data)
 {
-    if(!usergame || Get(DD_PLAYBACK))
+    player_t *player = &players[consoleplayer];
+
+    if(player->playerstate == PST_DEAD || gamestate != GS_LEVEL ||
+       Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);
         return;
     }
+
     if(IS_CLIENT)
     {
 #ifdef __JDOOM__
@@ -3495,8 +3501,6 @@ void M_SaveGame(int option, void *data)
 #endif
         return;
     }
-    if(gamestate != GS_LEVEL)
-        return;
 
     M_SetupNextMenu(&SaveDef);;
     M_ReadSaveStrings();
