@@ -2660,6 +2660,9 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
             alphaChannel = image.isMasked = zeroMask;
         }
 
+        // Always disable compression on sky textures.
+        gl.Disable(DGL_TEXTURE_COMPRESSION);
+
         // Upload it.
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
@@ -2669,11 +2672,15 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
         gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
         gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
 
+        // Enable compression again.
+        gl.Enable(DGL_TEXTURE_COMPRESSION);
+
         // Do we have a masked texture?
         textures[idx]->masked = (image.isMasked != 0);
 
         // Free the buffer.
         GL_DestroyImage(&image);
+
     }
     texw = textures[idx]->width;
     texh = textures[idx]->height;
