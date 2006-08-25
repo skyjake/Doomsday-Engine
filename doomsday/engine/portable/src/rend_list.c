@@ -2111,8 +2111,15 @@ void RL_SetupPassState(listmode_t mode)
         gl.Disable(DGL_DEPTH_WRITE);
         gl.Enable(DGL_DEPTH_TEST);
         gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-        // Fog would mess with the color (this is an additive pass).
-        gl.Disable(DGL_FOG);
+
+        if(usingFog)
+        {
+            gl.Enable(DGL_FOG);
+            gl.Fogv(DGL_FOG_COLOR, blackColor);
+        }
+        else
+            gl.Disable(DGL_FOG);
+
         gl.Enable(DGL_BLENDING);
         gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
         break;

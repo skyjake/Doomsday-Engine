@@ -391,6 +391,9 @@ static boolean DL_SegTexCoords(float *t, float top, float bottom,
  */
 void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
 {
+#define SMIDDLE 0x1
+#define STOP    0x2
+#define SBOTTOM 0x4
     int     present = 0;
     sector_t *backsec = seg->backsector;
     side_t *sdef = seg->sidedef;
@@ -427,7 +430,7 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
     // Is there a mid wall segment?
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
     {
-        present |= SEG_MIDDLE;
+        present |= SMIDDLE;
         if(backsec)
         {
             // Check the middle texture's mask status.
@@ -442,18 +445,18 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
                {
                // We can't light masked textures.
                // FIXME: Use vertex lighting.
-               present &= ~SEG_MIDDLE;
+               present &= ~SMIDDLE;
                } */
         }
     }
 
     // Is there a top wall segment?
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
-        present |= SEG_TOP;
+        present |= STOP;
 
     // Is there a lower wall segment?
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
-        present |= SEG_BOTTOM;
+        present |= SBOTTOM;
 
     // There are no surfaces to light!
     if(!present)
@@ -497,7 +500,7 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
         return;  // Outside the seg.
 
     // Process the visible parts of the segment.
-    if(present & SEG_MIDDLE)
+    if(present & SMIDDLE)
     {
         if(backsec)
         {
@@ -524,7 +527,7 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
             DL_SegLink(dyn, segindex, SEG_MIDDLE);
         }
     }
-    if(present & SEG_TOP)
+    if(present & STOP)
     {
         if(DL_SegTexCoords(t, fceil, MAX_OF(ffloor, bceil), lum))
         {
@@ -534,7 +537,7 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
             DL_SegLink(dyn, segindex, SEG_TOP);
         }
     }
-    if(present & SEG_BOTTOM)
+    if(present & SBOTTOM)
     {
         if(DL_SegTexCoords(t, MIN_OF(bfloor, fceil), ffloor, lum))
         {
@@ -544,6 +547,9 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
             DL_SegLink(dyn, segindex, SEG_BOTTOM);
         }
     }
+#undef SMIDDLE
+#undef STOP
+#undef SBOTTOM
 }
 
 /**
@@ -572,7 +578,7 @@ static void DL_CreateGlowLights(seg_t *seg, int part, float segtop,
     if(segbottom < floor)
         segbottom = floor;
 
-    for(g = 0; g < 2; g++)
+    for(g = 0; g < 2; ++g)
     {
         // Only do what's told.
         if((g == PLN_CEILING && !glow_ceil) || (g == PLN_FLOOR && !glow_floor))
@@ -598,8 +604,8 @@ static void DL_CreateGlowLights(seg_t *seg, int part, float segtop,
             top = ceil;
             bottom = ceil - glowHeight;
 
-            t[0] = (top - segtop) / glowHeight;
-            t[1] = t[0] + (segtop - segbottom) / glowHeight;
+            t[1] = t[0] = (top - segtop) / glowHeight;
+            t[1]+= (segtop - segbottom) / glowHeight;
 
             if(t[0] > 1 || t[1] < 0)
                 continue;
@@ -609,8 +615,8 @@ static void DL_CreateGlowLights(seg_t *seg, int part, float segtop,
             bottom = floor;
             top = floor + glowHeight;
 
-            t[1] = (segbottom - bottom) / glowHeight;
-            t[0] = t[1] + (segtop - segbottom) / glowHeight;
+            t[0] = t[1] = (segbottom - bottom) / glowHeight;
+            t[0]+= (segtop - segbottom) / glowHeight;
 
             if(t[1] > 1 || t[0] < 0)
                 continue;
@@ -621,7 +627,7 @@ static void DL_CreateGlowLights(seg_t *seg, int part, float segtop,
 
         dyn->texture = GL_PrepareLSTexture(LST_GRADIENT);
 
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
         {
             dyn->color[i] *= dlFactor;
 
