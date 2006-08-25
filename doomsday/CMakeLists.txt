@@ -25,8 +25,7 @@ ENDIF (WIN32)
 ################################################################################
 ######################## Configure Build Options  ##############################
 SET(BUILD_SHARED_LIBS ON) 
-SET (CMAKE_BUILD_TYPE RelWithDebInfo)
-## Default Build type is RelWithDebInfo. Supported Build Types are:
+## Default Build type is None. Supported Build Types are:
 ##    * None (CMAKE_C_FLAGS) Cmake gcc default of $CFLAGS.
 ##    * Debug (CMAKE_C_FLAGS_DEBUG) Cmake gcc default of "-g"
 ##    * Release (CMAKE_C_FLAGS_RELEASE) Cmake gcc default of "-O3 -DNDEBUG"
@@ -720,9 +719,9 @@ MESSAGE( STATUS "BUILDSCRIPTSDATE:             " ${BUILDSCRIPTSDATE} )
 MESSAGE( STATUS "CMAKE_SYSTEM:                 " ${CMAKE_SYSTEM} )
 MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR:       " ${CMAKE_SYSTEM_PROCESSOR} )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE:             " ${CMAKE_BUILD_TYPE} )
-IF (CMAKE_BUILD_TYPE STREQUAL None)
+IF (CMAKE_BUILD_TYPE STREQUAL "")
 MESSAGE( STATUS "CMAKE_C_FLAGS:                " ${CMAKE_C_FLAGS} )
-ENDIF (CMAKE_BUILD_TYPE STREQUAL None)
+ENDIF (CMAKE_BUILD_TYPE STREQUAL "")
 IF (CMAKE_BUILD_TYPE STREQUAL Debug)
 MESSAGE( STATUS "CMAKE_C_FLAGS_DEBUG:          " ${CMAKE_C_FLAGS_DEBUG} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
