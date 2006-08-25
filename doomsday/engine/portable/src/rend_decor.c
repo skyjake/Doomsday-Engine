@@ -69,7 +69,7 @@ static float surfaceNormal[3];
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Returns a pointer to the surface decoration, if any.
  */
 ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
@@ -92,7 +92,7 @@ ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
         return textures[texturetranslation[id].current]->decoration;
 }
 
-/*
+/**
  * Clears the list of decoration dummies.
  */
 void Rend_ClearDecorations(void)
@@ -101,7 +101,7 @@ void Rend_ClearDecorations(void)
     sourceCursor = sourceFirst;
 }
 
-/*
+/**
  * Project all the non-clipped decorations. They become regular vissprites.
  * This is needed for rendering halos.
  */
@@ -126,7 +126,7 @@ void Rend_ProjectDecorations(void)
     }
 }
 
-/*
+/**
  * Create a new source for a light decoration.
  */
 decorsource_t *Rend_NewLightDecorationSource(void)
@@ -164,7 +164,7 @@ decorsource_t *Rend_NewLightDecorationSource(void)
     return src;
 }
 
-/*
+/**
  * A light decoration is created in the specified coordinates.
  * Does largely the same thing as DL_AddLuminous().
  */
@@ -269,7 +269,7 @@ void Rend_AddLightDecoration(float pos[3], ded_decorlight_t * def,
     // available.
     lum->decorMap = decorMap;
 
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         lum->rgb[i] = (byte) (255 * def->color[i] * fadeMul);
 
     // Approximate the distance.
@@ -278,7 +278,7 @@ void Rend_AddLightDecoration(float pos[3], ded_decorlight_t * def,
                           source->thing.pos[VZ] - viewz);
 }
 
-/*
+/**
  * Returns true if the view point is close enough to the bounding box
  * so that there could be visible decorations inside.
  */
@@ -292,7 +292,7 @@ boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
         viewz < bounds[BCEILING] + maxDist;
 }
 
-/*
+/**
  * Returns > 0 if the sector lightlevel passes the limit condition.
  */
 float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t * lightDef)
@@ -320,14 +320,14 @@ float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t * lightDef)
     return factor;
 }
 
-/*
+/**
  * Determine proper skip values.
  */
 void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
 {
     int     k;
 
-    for(k = 0; k < 2; k++)
+    for(k = 0; k < 2; ++k)
     {
         // Skip must be at least one.
         skip[k] = lightDef->pattern_skip[k] + 1;
@@ -336,7 +336,7 @@ void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
     }
 }
 
-/*
+/**
  * Generate decorations for the specified section of a line.
  */
 void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
@@ -390,7 +390,7 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
     surfTexH = texh;
 
     // Generate a number of lights.
-    for(i = 0; i < DED_DECOR_NUM_LIGHTS; i++)
+    for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
     {
         lightDef = def->lights + i;
 
@@ -435,7 +435,7 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
     }
 }
 
-/*
+/**
  * Returns the side that faces the sector (if any).
  */
 side_t *R_GetSectorSide(line_t *line, sector_t *sector)
@@ -449,7 +449,7 @@ side_t *R_GetSectorSide(line_t *line, sector_t *sector)
     return side;
 }
 
-/*
+/**
  * Return true if the line is within the visible decoration 'box'.
  */
 boolean Rend_LineDecorationBounds(line_t *line)
@@ -480,7 +480,7 @@ boolean Rend_LineDecorationBounds(line_t *line)
     return Rend_CheckDecorationBounds(bounds, decorWallMaxDist);
 }
 
-/*
+/**
  * Return true if the sector is within the visible decoration 'box'.
  */
 boolean Rend_SectorDecorationBounds(sector_t *sector, sectorinfo_t *sin)
@@ -498,7 +498,7 @@ boolean Rend_SectorDecorationBounds(sector_t *sector, sectorinfo_t *sin)
     return Rend_CheckDecorationBounds(bounds, decorPlaneMaxDist);
 }
 
-/*
+/**
  * Generate decorations for upper, middle and bottom parts of the line,
  * on both sides.
  */
@@ -644,7 +644,7 @@ void Rend_DecorateLine(int index)
     }
 }
 
-/*
+/**
  * Generate decorations for a plane.
  */
 void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
@@ -661,7 +661,7 @@ void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
     surfaceNormal[VZ] = 0;
 
     // Generate a number of lights.
-    for(i = 0; i < DED_DECOR_NUM_LIGHTS; i++)
+    for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
     {
         lightDef = def->lights + i;
 
@@ -711,11 +711,13 @@ void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
     }
 }
 
-/*
+/**
  * Generate decorations for the planes of the sector.
  */
 void Rend_DecorateSector(int index)
 {
+    int i;
+    plane_t *pln;
     sector_t *sector = SECTOR_PTR(index);
     ded_decor_t *def;
 
@@ -727,22 +729,17 @@ void Rend_DecorateSector(int index)
     if(!Rend_SectorDecorationBounds(sector, &secinfo[index]))
         return;
 
-    if((def = Rend_GetGraphicResourceDecoration(sector->SP_floorpic, true)) != NULL)
+    for(i = 0, pln = sector->planes; i < NUM_PLANES; ++i, pln++)
     {
-        // The floor is decorated.
-        Rend_DecoratePlane(index, SECT_FLOOR(sector), 1, sector->planes[PLN_FLOOR].offx,
-                           sector->planes[PLN_FLOOR].offy, def);
-    }
+        def = Rend_GetGraphicResourceDecoration(pln->surface.texture, pln->surface.isflat);
 
-    if((def = Rend_GetGraphicResourceDecoration(sector->SP_ceilpic, true)) != NULL)
-    {
-        // The ceiling is decorated.
-        Rend_DecoratePlane(index, SECT_CEIL(sector), -1, sector->planes[PLN_CEILING].offx,
-                           sector->planes[PLN_CEILING].offy, def);
+        if(def != NULL) // The surface is decorated.
+            Rend_DecoratePlane(index, SECT_PLANE_HEIGHT(sector, i), pln->normal[VZ],
+                               pln->offx, pln->offy, def);
     }
 }
 
-/*
+/**
  * Decorations are generated for each frame.
  */
 void Rend_InitDecorationsForFrame(void)
@@ -758,10 +755,10 @@ void Rend_InitDecorationsForFrame(void)
     // Process all lines. This could also be done during sectors,
     // but validcount would need to be used to prevent duplicate
     // processing.
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
         Rend_DecorateLine(i);
 
     // Process all planes.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
         Rend_DecorateSector(i);
 }
