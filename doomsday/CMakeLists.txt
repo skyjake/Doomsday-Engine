@@ -75,16 +75,46 @@ ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 ## Default *NIX paths
 ## /usr/local/bin			<- Doomsday binary
 ## /usr/local/lib			<- libdropengl, libjdoom etc
-## /usr/local/share/games/deng		<- jPacks and other data
+## /usr/local/share/${PROJECT_NAME}	<- jPacks and other data
+
 
 IF (UNIX)
 IF (NOT WIN32)
 IF (APPLE)
 ## FIXME. Add location here for OSX
 ELSE (APPLE)
-SET (DENG_BASE_DIR "/share/games/deng")
-SET (DENG_LIBRARY_DIR "/lib")
-SET (DENG_BINARY_DIR "/bin")
+
+## Do an approximation of the autotools install options. Should make an
+## easy transition for package maintainers (like me when I'm not hacking here)
+
+SET (bindir
+${CMAKE_INSTALL_PREFIX}/bin
+CACHE
+PATH
+"install location for executables"
+)
+
+SET (libdir
+${CMAKE_INSTALL_PREFIX}/lib
+CACHE
+PATH
+"install location for libraries"
+)
+
+SET (datadir
+${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
+CACHE
+PATH
+"install location for data files"
+)
+
+SET (mandir
+${CMAKE_INSTALL_PREFIX}/share/man
+CACHE
+PATH
+"install location for man files"
+)
+
 ENDIF (APPLE)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
@@ -97,7 +127,7 @@ IF (NOT WIN32)
 ## Where does it go on OSX ? FIXME
 ## This .pk3 is generated in the doomsday target.
 SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 )
-SET (DENG_ENGINE_DATA_DIR ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/data)
+SET (DENG_ENGINE_DATA_DIR ${datadir}/data)
 
 SET (DENG_JDOOM_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 )
 SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
@@ -123,8 +153,8 @@ ENDIF (UNIX)
 IF (UNIX)
 IF (NOT APPLE)
 IF (NOT WIN32)
-ADD_DEFINITIONS ('-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR}/" ')
-ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR}/" ')
+ADD_DEFINITIONS ('-DDENG_BASE_DIR="${datadir}/" ')
+ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${libdir}/" ')
 ENDIF (NOT WIN32)
 ENDIF (NOT APPLE)
 ENDIF (UNIX)
@@ -751,9 +781,9 @@ MESSAGE( STATUS "BUILDDOX:                     " ${BUILDDOX} )
 MESSAGE( STATUS "BUILDFIXEDASM:                " ${BUILDFIXEDASM} )
 MESSAGE( STATUS "BUILDSYSTEM:                  " ${BUILDSYSTEM} )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX          " ${CMAKE_INSTALL_PREFIX} )
-MESSAGE( STATUS "DENG_BASE_DIR                 " ${CMAKE_INSTALL_PREFIX}${DENG_BASE_DIR} )
-MESSAGE( STATUS "DENG_LIBRARY_DIR              " ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
-MESSAGE( STATUS "DENG_BINARY_DIR               " ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR} )
+MESSAGE( STATUS "DENG_BASE_DIR                 " ${datadir} )
+MESSAGE( STATUS "DENG_LIBRARY_DIR              " ${libdir} )
+MESSAGE( STATUS "DENG_BINARY_DIR               " ${bindir} )
 MESSAGE( STATUS "DENG_ENGINE_DATA_DIR          " ${DENG_ENGINE_DATA_DIR} )
 MESSAGE( STATUS "DENG_JDOOM_DATA_DIR           " ${DENG_JDOOM_DATA_DIR} )
 MESSAGE( STATUS "DENG_JHERETIC_DATA_DIR        " ${DENG_JHERETIC_DATA_DIR} )
@@ -764,8 +794,8 @@ MESSAGE( STATUS "DENG_D64TC_DATA_DIR           " ${DENG_D64TC_DATA_DIR} )
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS doomsday
-RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR} 
-LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
+RUNTIME DESTINATION ${bindir} 
+LIBRARY DESTINATION ${libdir} )
 INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION ${DENG_ENGINE_DATA_DIR} )
 
 IF (BUILDJDOOM)
