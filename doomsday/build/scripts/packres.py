@@ -81,3 +81,11 @@ p.add_files(
     [ ('plugins/jhexen/defs', 'defs/jhexen'),
       ('plugins/jhexen/data', 'data/jhexen') ] )
 p.create('jhexen.pk3')
+
+# Wolftc.pk3
+p = Pack()
+p.add_files(
+    [ ('plugins/wolftc/defs', 'defs/wolftc'),
+      ('plugins/wolftc/data', 'data/wolftc') ] )
+p.create('wolftc.pk3')
+
