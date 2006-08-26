@@ -19,5 +19,5 @@ ADD_LIBRARY (jdoom SHARED ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jdoom
-RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
-LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
+RUNTIME DESTINATION ${bindir}
+LIBRARY DESTINATION ${libdir} )

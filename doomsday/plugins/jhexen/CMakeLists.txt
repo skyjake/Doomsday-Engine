@@ -37,5 +37,5 @@ ENDIF (WIN32)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jhexen
-RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
-LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
+RUNTIME DESTINATION ${bindir}
+LIBRARY DESTINATION ${libdir} )

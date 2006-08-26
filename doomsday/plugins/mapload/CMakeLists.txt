@@ -17,5 +17,5 @@ ADD_LIBRARY (dpmapload SHARED ${MAPLOAD_SOURCES} ${GLBSP_SOURCES})
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dpmapload
-RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
-LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
+RUNTIME DESTINATION ${bindir}
+LIBRARY DESTINATION ${libdir} )

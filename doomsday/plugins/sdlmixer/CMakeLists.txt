@@ -25,5 +25,5 @@ TARGET_LINK_LIBRARIES (dssdlmixer ${SDL_LIBRARY} ${SDLMIXER_LIBRARY})
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dssdlmixer
-RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_BINARY_DIR}
-LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}${DENG_LIBRARY_DIR} )
+RUNTIME DESTINATION ${bindir}
+LIBRARY DESTINATION ${libdir} )
