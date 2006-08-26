@@ -479,7 +479,7 @@ void G_PreInit(void)
     ST_Register();              // for the hud/statusbar
     X_Register();               // for the crosshair
 
-    DD_AddStartupWAD( STARTUPWAD );
+    DD_AddStartupWAD( STARTUPPK3 );
     DetectIWADs();
 }
 
