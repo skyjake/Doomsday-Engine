@@ -44,6 +44,7 @@
 #define DEFSFILE      GAMENAMETEXT"\\"GAMENAMETEXT".ded"
 #define DATAPATH      "}data\\"GAMENAMETEXT"\\"
 #define STARTUPWAD    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
+#define STARTUPPK3    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
 
 extern game_import_t gi;
 extern game_export_t gx;

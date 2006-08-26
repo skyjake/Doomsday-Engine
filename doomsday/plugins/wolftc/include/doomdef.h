@@ -44,6 +44,7 @@
 #define DEFSFILE      GAMENAMETEXT"\\"GAMENAMETEXT".ded"
 #define DATAPATH      "}data\\"GAMENAMETEXT"\\"
 #define STARTUPWAD    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
+#define STARTUPPK3    "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
 
 // Misc macros.
 #define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
