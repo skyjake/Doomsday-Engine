@@ -185,6 +185,8 @@ INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindZLIB.cmake)
 
 INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindPNG.cmake)
 
+INCLUDE (${CMAKE_ROOT}/Modules/FindPythonInterp.cmake)
+
 IF (UNIX)
 INCLUDE (${CMAKE_ROOT}/Modules/FindCurses.cmake)
 ENDIF (UNIX)
@@ -500,15 +502,14 @@ ENDIF(HAVE_DL)
 ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
-FIND_PROGRAM(ZIP zip)
-IF (ZIP STREQUAL "ZIP-NOTFOUND")
-MESSAGE( FATAL_ERROR
-"** zip not found.
-On Ubuntu install zip.
+## confirm we have Python
+IF (NOT PYTHONINTERP_FOUND)
+MESSAGE (FATAL_ERROR
+"** Python not found.
+On Ubuntu install python.
 On Mac OSX install FIXME.
-On Windows install zip232xN.zip.")
-ENDIF (ZIP STREQUAL "ZIP-NOTFOUND")
-
+On Windows install FIXME.")
+ENDIF (NOT  PYTHONINTERP_FOUND)
 
 ## confirm we have Doxygen.
 IF (NOT DOXYGEN)
@@ -724,25 +725,9 @@ ENDIF (DOT)
 ENDIF (DOXYGEN)
 ENDIF (BUILDDOX)
 ################################################################################
-######################## Doomsday.pk3 ##########################################
-ADD_CUSTOM_TARGET (Doomsday.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 data/* defs/*
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine/ )
-################################################################################
-######################## jDoom.pk3 ##########################################
-ADD_CUSTOM_TARGET (jDoom.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 data/* defs/*
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/jdoom/ )
-################################################################################
-######################## jHeretic.pk3 ##########################################
-ADD_CUSTOM_TARGET (jHeretic.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/jheretic.pk3 data/* defs/*
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/jheretic/ )
-################################################################################
-######################## jHexen.pk3 ##########################################
-ADD_CUSTOM_TARGET (jHexen.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/jhexen.pk3 data/* defs/*
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/jhexen/ )
-################################################################################
-######################## Wolftc.pk3 ##########################################
-ADD_CUSTOM_TARGET (Wolftc.pk3  ALL ${ZIP} -q -r -0 ${CMAKE_CURRENT_BINARY_DIR}/wolftc.pk3 data/* defs/*
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins/wolftc/ )
+######################## Generate pk3s ##########################################
+ADD_CUSTOM_TARGET (Generate.pk3  ALL ${PYTHON_EXECUTABLE} ./packres.py ${CMAKE_CURRENT_BINARY_DIR}
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/build/scripts/ )
 ################################################################################
 ######################## Show Build Details  ###################################
 MESSAGE( STATUS "BUILDSCRIPTSDATE:             " ${BUILDSCRIPTSDATE} )
