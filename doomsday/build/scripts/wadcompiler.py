@@ -24,6 +24,8 @@ def valid_lump_name(name):
 
 class Lump:
     def __init__(self, name, data, offset):
+        if chr(0) in name:
+            name = name[:name.index(chr(0))]
         self.name = name
         self.data = data
         self.offset = offset
@@ -167,7 +169,7 @@ class Wad:
 
 def usage():
     print 'Usage: %s [command] [wad] [files]' % sys.argv[0]
-    print 'command = l(ist) | c(reate PWAD) | x(tract) | a(ppend) | i(nsert) | t(ype)'
+    print 'command = l(ist) | c(reate PWAD) | C(reate IWAD) | x(tract) | a(ppend) | i(nsert) | t(ype)'
     print 'Examples:'
     print '%s l some.wad' % sys.argv[0]
     print '%s c new.wad LUMP1 LUMP2 LUMP3' % sys.argv[0]
@@ -179,7 +181,8 @@ def usage():
     print 'You can specify files as realfilename@LUMPNAME.'
    
 # Call main function.
-print 'WAD Compiler 1.0 by skyjake@users.sourceforge.net'
+print 'WAD Compiler by skyjake@users.sourceforge.net'
+print '$Date$'
 
 # Check the args.
 if len(sys.argv) < 3:
@@ -188,7 +191,7 @@ if len(sys.argv) < 3:
 
 # Check the command.
 command = sys.argv[1][0]
-if command not in 'tlcxai':
+if command not in 'tlcCxai':
     usage()
     sys.exit(1)
      
@@ -201,8 +204,9 @@ else:
     names = sys.argv[3:]
 
 # Create a new WAD file.
-if command == 'c':
+if command == 'c' or command == 'C':
     wad = Wad(wad_name, 'wb')
+    if command == 'C': wad.set_type('IWAD')
     wad.insert(None, names)
 
 else:
