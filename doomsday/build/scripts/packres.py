@@ -98,5 +98,5 @@ p = Pack()
 p.add_files(
     [ ('plugins/doom64tc/defs', 'defs/doom64tc'),
       ('plugins/doom64tc/data/conhelp.txt', 'data/doom64tc/conhelp.txt'),
-      ('plugins/doom64tc/data/wolftc.wad', 'doom64tc.wad') ] )
+      ('plugins/doom64tc/data/lumps', '#.basedata') ] )
 p.create('doom64tc.pk3')
