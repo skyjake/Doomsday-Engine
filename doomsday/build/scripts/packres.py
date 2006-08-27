@@ -74,7 +74,7 @@ p = Pack()
 p.add_files(
     [ ('plugins/jheretic/defs', 'defs/jheretic'),
       ('plugins/jheretic/data/conhelp.txt', 'data/jheretic/conhelp.txt'),
-      ('plugins/jheretic/data/jheretic.wad', 'jheretic.wad') ] )
+      ('plugins/jheretic/data/lumps', '#.basedata') ] )
 p.create('jheretic.pk3')
 
 # jhexen.pk3
@@ -82,7 +82,7 @@ p = Pack()
 p.add_files(
     [ ('plugins/jhexen/defs', 'defs/jhexen'),
       ('plugins/jhexen/data/conhelp.txt', 'data/jhexen/conhelp.txt'),
-      ('plugins/jhexen/data/jhexen.wad', 'jhexen.wad') ] )
+      ('plugins/jhexen/data/lumps', '#.basedata') ] )
 p.create('jhexen.pk3')
 
 # Wolftc.pk3
