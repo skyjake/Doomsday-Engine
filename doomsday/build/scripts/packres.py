@@ -66,7 +66,7 @@ p = Pack()
 p.add_files(
     [ ('plugins/jdoom/defs', 'defs/jdoom'),
       ('plugins/jdoom/data/conhelp.txt', 'data/jdoom/conhelp.txt'),
-      ('plugins/jdoom/data/jdoom.wad', 'jdoom.wad') ] )
+      ('plugins/jdoom/data/lumps', '#.basedata') ] )
 p.create('jdoom.pk3')
 
 # jheretic.pk3
