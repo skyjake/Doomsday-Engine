@@ -65,27 +65,31 @@ p.create('doomsday.pk3')
 p = Pack()
 p.add_files(
     [ ('plugins/jdoom/defs', 'defs/jdoom'),
-      ('plugins/jdoom/data', 'data/jdoom') ] )
+      ('plugins/jdoom/data/conhelp.txt', 'data/jdoom/conhelp.txt'),
+      ('plugins/jdoom/data/jdoom.wad', 'jdoom.wad') ] )
 p.create('jdoom.pk3')
 
 # jheretic.pk3
 p = Pack()
 p.add_files(
     [ ('plugins/jheretic/defs', 'defs/jheretic'),
-      ('plugins/jheretic/data', 'data/jheretic') ] )
+      ('plugins/jheretic/data/conhelp.txt', 'data/jheretic/conhelp.txt'),
+      ('plugins/jheretic/data/jheretic.wad', 'jheretic.wad') ] )
 p.create('jheretic.pk3')
 
 # jhexen.pk3
 p = Pack()
 p.add_files(
     [ ('plugins/jhexen/defs', 'defs/jhexen'),
-      ('plugins/jhexen/data', 'data/jhexen') ] )
+      ('plugins/jhexen/data/conhelp.txt', 'data/jhexen/conhelp.txt'),
+      ('plugins/jhexen/data/jhexen.wad', 'jhexen.wad') ] )
 p.create('jhexen.pk3')
 
 # Wolftc.pk3
 p = Pack()
 p.add_files(
     [ ('plugins/wolftc/defs', 'defs/wolftc'),
-      ('plugins/wolftc/data', 'data/wolftc') ] )
+      ('plugins/wolftc/data/conhelp.txt', 'data/wolftc/conhelp.txt'),
+      ('plugins/wolftc/data/wolftc.wad', 'wolftc.wad') ] )
 p.create('wolftc.pk3')
 
