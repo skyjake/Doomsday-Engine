@@ -104,6 +104,11 @@ enum {
     NUM_PLANES
 };
 
+typedef struct skyfix_s {
+    int ceilOffset;
+    int floorOffset;
+} skyfix_t;
+
 #include "p_maptypes.h"
 
 /*
